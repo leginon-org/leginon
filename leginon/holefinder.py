@@ -4,11 +4,14 @@ import targetfinder
 import holefinderback
 import uidata
 import Mrc
+import camerafuncs
 
 class HoleFinder(targetfinder.TargetFinder):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, nodelocations, **kwargs)
 		self.hf = holefinderback.HoleFinder()
+		self.cam = camerafuncs.CameraFuncs(self)
+		self.icecalc = holefinderback.IceCalculator()
 
 		self.currentimage = None
 
@@ -23,11 +26,13 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.uidataqueueflag.set(False)
 
 		self.testfile = uidata.String('Filename', '', 'rw', persist=True)
-		testmeth = uidata.Method('Test All', self.testAll)
 		readmeth = uidata.Method('Read Image', self.readImage)
+		cameraconfigure = self.cam.configUIData()
+		acqmeth = uidata.Method('Acquire Image', self.acqImage)
+		testmeth = uidata.Method('Test All', self.everything)
 		self.originalimage = uidata.Image('Original', None, 'r')
 		originalcont = uidata.Container('Original')
-		originalcont.addObjects((testmeth, self.testfile, readmeth, self.originalimage))
+		originalcont.addObjects((self.testfile, readmeth, cameraconfigure, acqmeth, testmeth, self.originalimage))
 
 		### edge detection
 		self.edgeson = uidata.Boolean('Find Edges On', True, 'rw', persist=True)
@@ -58,23 +63,33 @@ class HoleFinder(targetfinder.TargetFinder):
 		threshcont.addObjects((self.threshvalue, threshmeth, self.threshimage))
 
 		### blobs
+		self.blobborder = uidata.Integer('Border', 20, 'rw', persist=True)
 		findblobmeth = uidata.Method('Find Blobs', self.findBlobs)
 		self.allblobs = uidata.Sequence('All Blobs', [])
+		self.allblobsimage = uidata.TargetImage('All Blobs Image', None, 'r')
+		self.allblobsimage.addTargetType('All Blobs')
 		self.latspacing = uidata.Float('Spacing', 150.0, 'rw', persist=True)
 		self.lattol = uidata.Float('Tolerance', 0.1, 'rw', persist=True)
-		fitlatmeth = uidata.Method('Fit Lattice', self.fitLattice)
-		self.latblobs = uidata.Sequence('Lattice Blobs', [])
 
 		self.holestatsrad = uidata.Float('Hole Stats Radius', 15, 'rw', persist=True)
 		self.icei0 = uidata.Float('Zero Thickness', 1000.0, 'rw', persist=True)
-		self.icetmin = uidata.Float('Minimum Thickness', 0.05, 'rw', persist=True)
-		self.icetmax = uidata.Float('Maximum Thickness', 0.2, 'rw', persist=True)
+
+
+		fitlatmeth = uidata.Method('Fit Lattice', self.fitLattice)
+		self.latblobs = uidata.Sequence('Lattice Blobs', [])
+		self.latblobsimage = uidata.TargetImage('Lattice Blobs Image', None, 'r')
+		self.latblobsimage.addTargetType('Lattice Blobs')
+
+		self.icetmin = uidata.Float('Minimum Mean Thickness', 0.05, 'rw', persist=True)
+		self.icetmax = uidata.Float('Maximum Mean Thickness', 0.2, 'rw', persist=True)
+		self.icetstd = uidata.Float('Maximum StdDev Thickness', 0.2, 'rw', persist=True)
+
 		icemeth = uidata.Method('Analyze Ice', self.ice)
 		self.goodholes = uidata.Sequence('Good Holes', [])
 		self.goodholesimage = uidata.TargetImage('Good Holes Image', None, 'r')
 		self.goodholesimage.addTargetType('Good Holes')
 		blobcont = uidata.Container('Blobs')
-		blobcont.addObjects((findblobmeth, self.allblobs, self.latspacing, self.lattol, fitlatmeth, self.latblobs, self.holestatsrad, self.icei0, self.icetmin, self.icetmax, icemeth, self.goodholes, self.goodholesimage))
+		blobcont.addObjects((self.blobborder, findblobmeth, self.allblobs, self.allblobsimage, self.latspacing, self.lattol, self.holestatsrad, self.icei0, fitlatmeth, self.latblobs, self.latblobsimage, self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.goodholesimage))
 
 		container = uidata.MediumContainer('Hole Finder')
 		container.addObjects((originalcont,edgecont,corcont,threshcont, blobcont))
@@ -83,6 +98,13 @@ class HoleFinder(targetfinder.TargetFinder):
 	def readImage(self):
 		filename = self.testfile.get()
 		orig = Mrc.mrc_to_numeric(filename)
+		self.hf['original'] = orig
+		self.originalimage.set(orig)
+
+	def acqImage(self):
+		config = self.cam.cameraConfig()
+		imdata = self.cam.acquireCameraImageData(config)
+		orig = imdata['image']
 		self.hf['original'] = orig
 		self.originalimage.set(orig)
 
@@ -116,42 +138,60 @@ class HoleFinder(targetfinder.TargetFinder):
 	def blobCenters(self, blobs):
 		centers = []
 		for blob in blobs:
-			centers.append(tuple(blob.stats['center']))
+			c = tuple(blob.stats['center'])
+			centers.append((c[1],c[0]))
 		return centers
 
 	def findBlobs(self):
+		border = self.blobborder.get()
+		self.hf.configure_blobs(border=border)
 		self.hf.find_blobs()
 		blobs = self.hf['blobs']
 		centers = self.blobCenters(blobs)
 		self.allblobs.set(centers)
+		self.allblobsimage.setImage(self.hf['original'])
+		self.allblobsimage.setTargetType('All Blobs', centers)
 
 	def fitLattice(self):
 		latspace = self.latspacing.get()
 		lattol = self.lattol.get()
+		r = self.holestatsrad.get()
+		i0 = self.icei0.get()
+		self.icecalc.set_i0(i0)
+
 		self.hf.configure_lattice(spacing=latspace, tolerance=lattol)
 		self.hf.blobs_to_lattice()
+
+		self.hf.configure_holestats(radius=r)
+		self.hf.calc_holestats()
+
 		holes = self.hf['holes']
 		centers = self.blobCenters(holes)
-		self.latblobs.set(centers)
+		mylist = []
+		for hole in holes:
+			mean = float(hole.stats['hole_mean'])
+			tmean = self.icecalc.get_thickness(mean)
+			std = float(hole.stats['hole_std'])
+			tstd = self.icecalc.get_stdev_thickness(std, mean)
+			center = tuple(hole.stats['center'])
+			mylist.append({'m':mean, 'tm': tmean, 's':std, 'ts': tstd, 'c':center})
+		self.latblobs.set(mylist)
+		self.latblobsimage.setImage(self.hf['original'])
+		self.latblobsimage.setTargetType('Lattice Blobs', centers)
 
 	def ice(self):
-		r = self.holestatsrad.get()
 		i0 = self.icei0.get()
 		tmin = self.icetmin.get()
 		tmax = self.icetmax.get()
-		self.hf.configure_holestats(radius=r)
-		self.hf.calc_holestats()
-		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax)
+		tstd = self.icetstd.get()
+		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax,tstd=tstd)
 		self.hf.calc_ice()
 		goodholes = self.hf['holes2']
 		centers = self.blobCenters(goodholes)
 		self.goodholes.set(centers)
 		self.goodholesimage.setImage(self.hf['original'])
 		# takes x,y instead of row,col
-		c2 = []
-		for c in centers:
-			c2.append((c[1],c[0]))
-		self.goodholesimage.setTargetType('Good Holes', c2)
+		self.goodholesimage.setTargetType('Good Holes', centers)
 
 	def everything(self):
 		# find edges
@@ -166,16 +206,13 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.fitLattice()
 		# ice
 		self.ice()
+
+	def findTargets(self, imdata):
+		self.hf['original'] = imdata['image']
+		self.currentimage = imdata['image']
+		self.everything()
 		# prepare targets for publishing
 		self.buildTargetDataList()
-
-	def testAll(self):
-		self.readImage()
-		self.everything()
-
-	def findTargets(self, numarray):
-		self.hf['original'] = numarray
-		self.everything()
 
 	def buildTargetDataList(self):
 		'''
