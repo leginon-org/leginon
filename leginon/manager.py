@@ -769,10 +769,11 @@ class Manager(node.Node):
 		self.application.kill()
 		self.setLauncherSelectors(selectors=None)
 
-	def exportApplication(self, filename):
+	def exportApplication(self, filename, appname=None):
 		if filename is None:
 			return
-		appname = self.uiapplicationlist.getSelectedValue()
+		if appname is None:
+			appname = self.uiapplicationlist.getSelectedValue()
 		app = importexport.ImportExport()
 		dump = app.exportApplication(appname)
 		if dump is None:

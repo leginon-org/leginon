@@ -1,9 +1,10 @@
 import event
 import manager
+import os
+import threading
 import uiclient
 import wx
 import wx.lib.intctrl
-import threading
 
 AddNodeEventType = wx.NewEventType()
 RemoveNodeEventType = wx.NewEventType()
@@ -112,10 +113,17 @@ class ManagerFrame(wx.Frame):
 		self.applicationmenu = wx.Menu()
 		self.runappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Run')
 		self.killappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Kill')
+		self.importappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Import')
+		self.exportappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Export')
 		self.Bind(wx.EVT_MENU, self.onMenuRunApplication, self.runappmenuitem)
 		self.Bind(wx.EVT_MENU, self.onMenuKillApplication, self.killappmenuitem)
+		self.Bind(wx.EVT_MENU, self.onMenuImportApplication, self.importappmenuitem)
+		self.Bind(wx.EVT_MENU, self.onMenuExportApplication, self.exportappmenuitem)
 		self.applicationmenu.AppendItem(self.runappmenuitem)
 		self.applicationmenu.AppendItem(self.killappmenuitem)
+		self.applicationmenu.AppendSeparator()
+		self.applicationmenu.AppendItem(self.importappmenuitem)
+		self.applicationmenu.AppendItem(self.exportappmenuitem)
 		self.menubar.Append(self.applicationmenu, '&Application')
 		self.runappmenuitem.Enable(False)
 		self.killappmenuitem.Enable(False)
@@ -198,6 +206,26 @@ class ManagerFrame(wx.Frame):
 	def onMenuKillApplication(self, evt):
 		threading.Thread(name='wxManager killApplication',
 											target=self.manager.killApplication).start()
+
+	def onMenuImportApplication(self, evt):
+		dlg = wx.FileDialog(self, message='Select Application File',
+												defaultDir=os.getcwd(),
+												defaultFile='',
+												wildcard='XML file (*.xml)|*.xml|'\
+																	'All files (*.*)|*.*',
+												style=wx.OPEN)
+		if dlg.ShowModal() == wx.ID_OK:
+			path = dlg.GetPath()
+			self.manager.importApplication(path)
+		dlg.Destroy()
+
+	def onMenuExportApplication(self, evt):
+		names = self.manager.getApplicationNames()
+		dialog = ExportApplicationDialog(self, names)
+		if dialog.ShowModal() == wx.ID_OK:
+			values = dialog.getValues()
+			self.manager.exportApplication(*values)
+		dialog.Destroy()
 
 	def onMenuCreate(self, evt):
 		launchernames = self.manager.getLauncherNames()
@@ -666,4 +694,56 @@ class RunApplicationDialog(wx.Dialog):
 		for alias, choice in self.launcherchoices.items():
 			self.app.setLauncherAlias(alias, choice.GetStringSelection())
 		return self.app
+
+class ExportApplicationDialog(wx.Dialog):
+	def __init__(self, parent, names):
+		self.names = names
+		wx.Dialog.__init__(self, parent, -1, 'Export Application')
+
+		self.dialogsizer = wx.GridBagSizer()
+		sizer = wx.GridBagSizer(5, 5)
+
+		sizer.Add(wx.StaticText(self, -1, 'Application:'), (0, 0), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+		self.appchoice = wx.Choice(self, -1, choices=names)
+		self.appchoice.SetSelection(0)
+		sizer.Add(self.appchoice, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		sizer.Add(wx.StaticText(self, -1, 'File name:'), (1, 0), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+		self.filenametextctrl = wx.TextCtrl(self, -1, '')
+		sizer.Add(self.filenametextctrl, (1, 1), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		browsebutton = wx.Button(self, -1, 'Browse...')
+		sizer.Add(browsebutton, (1, 2), (1, 1), wx.ALIGN_CENTER)
+		self.Bind(wx.EVT_BUTTON, self.onBrowse, browsebutton)
+
+		buttonsizer = wx.GridBagSizer(0, 3)
+		runbutton = wx.Button(self, wx.ID_OK, 'Export')
+		runbutton.SetDefault()
+		buttonsizer.Add(runbutton, (0, 0), (1, 1),
+										wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+
+		cancelbutton = wx.Button(self, wx.ID_CANCEL, 'Cancel')
+		buttonsizer.Add(cancelbutton, (0, 1), (1, 1), wx.ALIGN_CENTER)
+
+		buttonsizer.AddGrowableCol(0)
+
+		sizer.Add(buttonsizer, (2, 0), (1, 3), wx.EXPAND)
+
+		self.dialogsizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 10)
+		self.SetSizerAndFit(self.dialogsizer)
+
+	def onBrowse(self, evt):
+		dlg = wx.FileDialog(self, 'Export Application',
+												defaultFile=self.filenametextctrl.GetValue(),
+												wildcard='XML file (*.xml)|*.xml|'\
+																	'All files (*.*)|*.*',
+												style=wx.SAVE)
+		if dlg.ShowModal() == wx.ID_OK:
+			self.filenametextctrl.SetValue(dlg.GetPath())
+		dlg.Destroy()
+
+	def getValues(self):
+		return self.filenametextctrl.GetValue(), self.appchoice.GetStringSelection()
 
