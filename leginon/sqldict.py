@@ -159,6 +159,7 @@ import strictdict
 import Mrc
 import os
 import leginonconfig
+import cPickle
 
 class SQLDict(object):
 
@@ -1101,10 +1102,7 @@ def sqltype(object,key=None):
 	"""
 	t = type(object)
 	if t is type(""):
-		if key is not None and re.findall('^BIN\%s'%(sep),key):
-			return "LONGBLOB"
-		else:
-			return "TEXT"
+		return "TEXT"
 	elif t is float:
 		return "DOUBLE"
 	elif t in (int,long):
@@ -1169,12 +1167,8 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 			column['Key'] = 'INDEX'
 			column['Index'] = [column['Field']]
 			columns.append(column)
-		elif isinstance(value, data.Object):
+		elif isinstance(value, strictdict.AnyObject):
 			column['Field'] = object2sqlColumn(key)
-			column['Type'] = 'LONGBLOB'
-			columns.append(column)
-		elif isinstance(value, data.Binary):
-			column['Field'] = bin2sqlColumn(key)
 			column['Type'] = 'LONGBLOB'
 			columns.append(column)
 		elif type(value) is Numeric.ArrayType:
@@ -1205,15 +1199,9 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 			
 	return columns
 
-def bin2sqlColumn(key):
-	"""
-	Add BIN| if value is instance of data.binary
-	"""
-	return "BIN%s%s"%(sep,key,)
-
 def object2sqlColumn(key):
 	"""
-	Add PICKLE| if value is instance of data.Object
+	Add PICKLE| if value is instance of strictdict.AnyObject
 	"""
 	return "PICKLE%s%s"%(sep,key,)
 
@@ -1282,10 +1270,10 @@ def sqlColumnsFormat(in_dict):
 			columns.update(nf)
 		elif isinstance(value, data.Data):
 			columns[ref2field(key,value)] = value.dbid
-		elif isinstance(value, data.Binary):
-			columns[bin2sqlColumn(key)] = value.getPickledObject()
-		elif isinstance(value, data.Object):
-			columns[object2sqlColumn(key)] = value.toPickle()
+		elif isinstance(value, strictdict.AnyObject):
+			### AnyObject contains an object,
+			### convert it to a pickle string
+			columns[object2sqlColumn(key)] = cPickle.dumps(value.o, cPickle.HIGHEST_PROTOCOL)
 		elif type(value) in [tuple, list]:
 			columns[seq2sqlColumn(key)] = repr(value)
 	return columns
@@ -1349,11 +1337,13 @@ def datatype(in_dict, qikey=None, qinfo=None):
 			except SyntaxError:
 				content[a[1]] = None
 		elif a[0] == 'PICKLE':
-			content[a[1]] = data.Object(new_pickle=value)
-		elif a[0] == 'BIN':
-			po = data.Binary(data.Pickle(value))
-			content[a[1]] = po.getObject()
-
+			## contains a python pickle string,
+			## convert it to strictdict.AnyObject
+			try:
+				ob = cPickle.loads(value)
+			except:
+				ob = None
+			content[a[1]] = strictdict.AnyObject(ob)
 		elif a[0] == 'MRC':
 			## set up a FileReference, to be used later
 			## when we know the full path

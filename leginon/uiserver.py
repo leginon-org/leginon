@@ -247,9 +247,10 @@ class Server(xmlrpc.Server, uidata.Container):
 			results = self.dbdatakeeper.query(odata, results=1)
 			if results:
 				try:
-					value = results[0]['binary value']
-					if isinstance(value, data.Binary):
-						value = value.getObject()
+					value = results[0]['value']
+					### get object from Object
+					if value is not None:
+						value = value.o
 					uiobject.set(value, server=False, postcallback=False)
 					return True
 				except KeyError:
@@ -271,7 +272,7 @@ class Server(xmlrpc.Server, uidata.Container):
 		value = uiobject.get()
 		initializer = {'session': self.session,
 										'object': namelist,
-										'binary value': value}
+										'value': value}
 		odata = data.UIData(initializer=initializer)
 		self.dbdatakeeper.insert(odata, force=True)
 

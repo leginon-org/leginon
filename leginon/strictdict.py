@@ -18,6 +18,17 @@ import copy
 import time
 import os
 
+class AnyObject(object):
+	'''
+	The AnyObject type can be used in the typemap and can be initialized
+	with any object
+	'''
+	def __init__(self, new_object):
+		if isinstance(new_object, AnyObject):
+			self.o = new_object.o
+		else:
+			self.o = new_object
+
 ### The type Numeric.ArrayType will not pickle properly, so here I create
 ### an object here to represent it
 class _NumericArrayType:
