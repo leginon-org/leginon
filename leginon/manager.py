@@ -301,7 +301,7 @@ if __name__ == '__main__':
 	m = Manager(manager_id)
 
 	## GUI
-	gui = 0
+	gui = 1
 	if gui:
 		import nodegui
 		import Tkinter
