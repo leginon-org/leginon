@@ -177,8 +177,8 @@ class Tecnai(object):
 				prevalue['y'] = value['y'] - delta
 			else:
 				prevalue['y'] = stagenow['y'] - delta
-			return self._setStagePosition(self, prevalue, type)
-		return self._setStagePosition(self, value, type)
+			self._setStagePosition(prevalue)
+		return self._setStagePosition(value)
 
 	def normalizeLens(self, lens = 'all'):
 		if lens == 'all':
