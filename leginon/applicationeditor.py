@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import Tkinter
 import tkSimpleDialog
 import tkFileDialog
