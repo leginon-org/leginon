@@ -378,7 +378,7 @@ class ManagerSetup(object):
 		self.sessionselector.setCallback(self.onSessionSelect)
 
 		self.connectinstrument = uidata.Boolean('Connect to instrument launcher',
-																							True, 'rw', persist=True,
+																							False, 'rw', persist=True,
 				tooltip='When the session is started, connect to the launcher on the '
 									+ 'machine where the instrument is located')
 		self.startsessionmethod = uidata.Method('Begin Session',
