@@ -379,14 +379,13 @@ class LoggingConfigurationDialog(wx.Dialog):
 		self.tree.SetPyData(self.root, logging.root)
 		for loggername in getLoggerNames():
 			names = loggername.split('.')
-			parent = self.root
+			item = self.tree.GetRootItem()
 			for name in names[:-1]:
-				child, cookie = self.tree.GetFirstChild(parent)
-				while self.tree.GetItemText(child) != name:
-					child, cookie = self.tree.GetNextChild(child, cookie)
-				parent = child
-			child = self.tree.AppendItem(parent, names[-1])
-			self.tree.SetPyData(child, logging.getLogger(loggername))
+				item, cookie = self.tree.GetFirstChild(item)
+				while self.tree.GetItemText(item) != name:
+					item = self.tree.GetNextSibling(item)
+			item = self.tree.AppendItem(item, names[-1])
+			self.tree.SetPyData(item, logging.getLogger(loggername))
 		self.expandAll(self.root)
 		self.tree.SelectItem(self.root)
 		self.tree.EnsureVisible(self.root)
