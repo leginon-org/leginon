@@ -90,14 +90,16 @@ class DataHandler(node.DataHandler):
 		print 'EM query: creating data, (keys = %s)' % str(stuff.keys())
 
 		if emkey == 'scope':
-			result = data.ScopeEMData(id=('scope',), initializer=stuff)
+			result = data.ScopeEMData(id=('scope',))
+			result.friendly_update(stuff)
 		elif emkey in ('camera', 'camera no image data'):
 			result = data.CameraEMData(id=('camera',))
 			# this is a fix for the bigger problem of always 
 			# setting defocus
 			result.friendly_update(stuff)
 		elif emkey == 'all em':
-			result = data.AllEMData(id=('all em',), initializer=stuff)
+			result = data.AllEMData(id=('all em',))
+			result.friendly_update(stuff)
 		else:
 			### could be either CameraEMData or ScopeEMData
 			newid = self.ID()
