@@ -301,6 +301,7 @@ class StateImageMosaic(ImageMosaic):
 		self.imagemosaic[idata.id]['position'] = \
 			self.pixelLocation(idata.content['state']['stage position']['y'],
 														idata.content['state']['stage position']['x']) 
+		print idata.id, "position =", self.imagemosaic[idata.id]['position']
 
 	def processDataByCorrelation(self, idata):
 		ImageMosaic.processData(self, idata)
