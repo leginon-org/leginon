@@ -718,11 +718,15 @@ class EventDialog(mySimpleDialog):
 	def body(self, master):
 		Tkinter.Label(master, text='Event:').grid(row=0)
 
-		self.eventslistbox = Tkinter.Listbox(master)
+		scrollbar = Tkinter.Scrollbar(master, orient=Tkinter.VERTICAL)
+		self.eventslistbox = Tkinter.Listbox(master, yscrollcommand=scrollbar.set)
+		scrollbar.config(command=self.eventslistbox.yview)
+
 		for item in self.eventclasses:
 			self.eventslistbox.insert(Tkinter.END, item)
 		self.eventslistbox.select_set(0)
 
+		scrollbar.grid(row=0, column=2, sticky=Tkinter.N+Tkinter.S)
 		self.eventslistbox.grid(row=0, column=1)
 
 		if self.args is not None:
@@ -751,7 +755,9 @@ class NodeDialog(mySimpleDialog):
 
 		self.nameentry = Tkinter.Entry(master)
 
+		scrollbar = Tkinter.Scrollbar(master, orient=Tkinter.VERTICAL)
 		self.classlistbox = Tkinter.Listbox(master)
+		scrollbar.config(command=self.classlistbox.yview)
 		for item in self.nodeclasses:
 			self.classlistbox.insert(Tkinter.END, item)
 		self.classlistbox.select_set(0)
@@ -766,6 +772,7 @@ class NodeDialog(mySimpleDialog):
 		self.argumentsentry.insert(Tkinter.END, '()')
 
 		self.nameentry.grid(row=0, column=1)
+		scrollbar.grid(row=1, column=2, sticky=Tkinter.N+Tkinter.S)
 		self.classlistbox.grid(row=1, column=1)
 		self.launcherentry.grid(row=2, column=1)
 		self.processcheckbutton.grid(row=3, column=1)
