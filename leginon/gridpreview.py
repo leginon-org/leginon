@@ -7,6 +7,7 @@ import camerafuncs
 import cPickle
 import Mrc
 import calibrationclient
+import presets
 
 
 class GridPreview(node.Node):
@@ -19,9 +20,7 @@ class GridPreview(node.Node):
 		self.running = threading.Event()
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 		self.calclient = calibrationclient.StageCalibrationClient(self)
-
-		# will be in presets or something
-		self.magnification = 56.0
+		self.presetsclient = presets.PresetsClient(self)
 
 		## default camera config
 		currentconfig = self.cam.config()
@@ -43,13 +42,14 @@ class GridPreview(node.Node):
 	def defineUserInterface(self):
 		#nodespec = node.Node.defineUserInterface(self)
 		# will be in presets or something
-		mag = self.registerUIData('Magnification', 'float', callback=self.uiMagnification, default=self.magnification, permissions='rw')
+		self.presetname = self.registerUIData('Preset Name', 'string', default='vlm170', permissions='rw')
+
 		self.sim = self.registerUIData('Simulate TEM/camera', 'boolean', permissions='rw', default=0)
 		cam = self.cam.configUIData()
 		defprefs = {'center': {'x':0.0,'y':0.0}, 'overlap': 50, 'maxtargets': 4}
 		spiralprefs = self.registerUIData('Spiral', 'struct', callback=self.uiSpiralPrefs, default=defprefs, permissions='rw')
 		self.sim = self.registerUIData('Simulate TEM/camera', 'boolean', permissions='rw', default=0)
-		prefs = self.registerUIContainer('Preferences', (mag, cam, spiralprefs, self.sim))
+		prefs = self.registerUIContainer('Preferences', (self.presetname, cam, spiralprefs, self.sim))
 
 		start = self.registerUIMethod(self.runLoop, 'Run', ())
 		stop = self.registerUIMethod(self.stopLoop, 'Stop', ())
@@ -87,12 +87,6 @@ class GridPreview(node.Node):
 
 	def uiEstimate(self):
 		return ''
-
-	# will be in presets or something
-	def uiMagnification(self, value=None):
-		if value is not None:
-			self.magnification = value
-		return self.magnification
 
 	def getScope(self):
 		return self.researchByDataID(('scope',))['em']
@@ -135,8 +129,7 @@ class GridPreview(node.Node):
 			stagepos = stagepos['em']
 			print 'gridpreview stagepos', stagepos
 
-			imagedata = self.cam.acquireCameraImageData(camstate=None,
-																									correction=False)
+			imagedata = self.cam.acquireCameraImageData(camstate=None, correction=True)
 			imarray = imagedata['image']
 			thisid = self.ID()
 			if self.lastid is None:
@@ -221,12 +214,11 @@ class GridPreview(node.Node):
 		self.stoprunning.clear()
 		self.running.set()
 
-		# will be in presets or something
-		emdata = data.EMData(('scope',), em={'magnification': self.magnification})
+		presetname = self.presetname.get()
+		presetlist = self.presetsclient.retrievePresets(presetname)
+		presetdata = presetlist[0]
+		self.presetsclient.toScope(presetdata)
 		self.outputEvent(event.LockEvent(self.ID()))
-		self.publishRemote(emdata)
-
-		self.cam.state(self.cam.config()['state'])
 		try:
 			while self.temptodo and not self.stoprunning.isSet():
 				self.next_target()
