@@ -85,7 +85,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 		lastnumber = self.lastTargetNumber(image=imagedata,
 																				session=self.session)
 		number = lastnumber + 1
-		imagetargets = self.panel.getTargets(typename)
+		imagetargets = self.panel.getTargetPositions(typename)
 		if not imagetargets:
 			return
 		for imagetarget in imagetargets:
