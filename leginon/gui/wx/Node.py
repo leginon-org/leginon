@@ -59,10 +59,10 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		self.ststatus.SetLabel(evt.status)
 
 	def onSetImage(self, evt):
-		self.imagepanel.setNumericImage(evt.image)
+		self.imagepanel.setImage(evt.image)
 
 	def onSetCorrelationImage(self, evt):
-		self.ipcorrelation.setNumericImage(evt.image)
+		self.ipcorrelation.setImage(evt.image)
 		self.ipcorrelation.clearTargets()
 		self.ipcorrelation.addTarget('Peak', evt.peak[0], evt.peak[1])
 

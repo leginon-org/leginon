@@ -47,9 +47,9 @@ class Dialog(wx.Dialog):
 		szbuttons.Add(self.bapply, (0, 2), (1, 1), wx.ALIGN_CENTER)
 
 		szmain = wx.GridBagSizer(5, 5)
-		szmain.Add(sz, (0, 0), (1, 1),
-								wx.ALIGN_CENTER|wx.ALL, 10)
-		szmain.Add(szbuttons, (1, 0), (1, 1),
+		for i, s in enumerate(sz):
+			szmain.Add(s, (i, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		szmain.Add(szbuttons, (i+1, 0), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
 
 		# set values
@@ -64,7 +64,7 @@ class Dialog(wx.Dialog):
 			self.Bind(attributes[widget.__class__][2], self.onModified)
 
 	def initialize(self):
-		pass
+		return []
 
 	def onModified(self, evt):
 		if self.getSettings() == self.settings:

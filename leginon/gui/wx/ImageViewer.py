@@ -1021,10 +1021,12 @@ class TargetImagePanel(ImagePanel):
 		if name in self.target_types:
 			raise ValueError('Target type already exists')
 		if color is None:
-			wx.color = self.removeTargetTypeColor()
+			wxcolor = self.removeTargetTypeColor()
+		elif isinstance(color, wx.Color):
+			wxcolor = color
 		else:
-			wx.color = wx.Color(*color)
-		self.target_types[name] = TargetType(name, wx.color)
+			wxcolor = wx.Color(*color)
+		self.target_types[name] = TargetType(name, wxcolor)
 
 		for tool in self.tools:
 			if hasattr(tool, 'addTargetType'):
@@ -1082,9 +1084,15 @@ class TargetImagePanel(ImagePanel):
 
 		return target_type.getName(), target_type.getTargetPositions()
 
-	def clearTargets(self):
-		for target_type in self.target_types.values():
-			target_type.clearTargets()
+	def clearTargets(self, name=None):
+		if name is None:
+			for target_type in self.target_types.values():
+				target_type.clearTargets()
+		else:
+			try:
+				self.target_types[name].clearTargets()
+			except KeyError:
+				raise ValueError
 		self.UpdateDrawing()
 
 	def getTargets(self):

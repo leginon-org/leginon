@@ -1623,6 +1623,13 @@ class TargetFinderSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class ClickTargetFinderSettingsData(TargetFinderSettingsData):
+	def typemap(cls):
+		return TargetFinderSettingsData.typemap() + (
+			('no resubmit', bool),
+		)
+	typemap = classmethod(typemap)
+
 class AcquisitionSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (

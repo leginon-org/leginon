@@ -21,6 +21,7 @@ import convolver
 import imagefun
 import numarray
 import gui.wx.TargetFinder
+import gui.wx.ClickTargetFinder
 
 class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 	panelclass = gui.wx.TargetFinder.Panel
@@ -75,6 +76,24 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 			dcol = column - imagearray.shape[1]/2
 
 			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist, number=number)
+			self.publish(targetdata, database=True)
+			number += 1
+
+	def publishTargets(self, typename, targetlist):
+		imagearray = self.imagedata['image']
+		lastnumber = self.lastTargetNumber(image=self.imagedata,
+																				session=self.session)
+		number = lastnumber + 1
+		for imagetarget in self.panel.getTargets(typename):
+			column, row = imagetarget
+			drow = row - imagearray.shape[0]/2
+			dcol = column - imagearray.shape[1]/2
+
+			targetdata = self.newTargetForImage(self.imagedata,
+																					drow, dcol,
+																					type=typename,
+																					list=targetlist,
+																					number=number)
 			self.publish(targetdata, database=True)
 			number += 1
 
@@ -138,14 +157,18 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 		self.confirmEvent(targetlistdoneevent)
 
 class ClickTargetFinder(TargetFinder):
+	panelclass = gui.wx.ClickTargetFinder.Panel
+	settingsclass = data.ClickTargetFinderSettingsData
+	defaultsettings = {
+		'no resubmit': True,
+	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 
 		self.userpause = threading.Event()
 
-		if self.__class__ == ClickTargetFinder:
-			self.defineUserInterface()
-			self.start()
+		self.typenames = ['acquisition', 'focus', 'done', 'position']
+		self.panel.addTargetTypes(self.typenames)
 
 	def findTargets(self, imdata, targetlist):
 		## check if targets already found on this image
@@ -153,16 +176,17 @@ class ClickTargetFinder(TargetFinder):
 		if previous:
 			self.logger.warning('There are %s existing targets for this image'
 													% (len(previous),))
-			if self.preventrepeat.get():
+			if self.settings['no resubmit']:
 				self.logger.error('You are not allowed to submit targets again')
 				return
 
 		# XXX would be nice to display existing targets too
 
 		# display image
-		self.clickimage.setTargets([])
-		self.clickimage.setImage(imdata['image'])
-		self.clickimage.imagedata = imdata
+		map(self.panel.setTargets, zip(self.typenames, [[]]*len(self.typenames)))
+		self.setImage(imdata['image'])
+		#self.clickimage.imagedata = imdata
+		self.imagedata = imdata
 
 		# user now clicks on targets
 		self.notifyUserSubmit()
@@ -171,28 +195,13 @@ class ClickTargetFinder(TargetFinder):
 		self.userpause.wait()
 		self.unNotifyUserSubmit()
 		self.logger.info('Done waiting')
-		self.targetsFromClickImage(self.clickimage, 'focus', targetlist)
-		self.targetsFromClickImage(self.clickimage, 'acquisition', targetlist)
+		#self.targetsFromClickImage(self.clickimage, 'focus', targetlist)
+		#self.targetsFromClickImage(self.clickimage, 'acquisition', targetlist)
+		self.publishTargets('focus', targetlist)
+		self.publishTargets('acquisition', targetlist)
 
 	def submitTargets(self):
 		self.userpause.set()
-
-	def defineUserInterface(self):
-		TargetFinder.defineUserInterface(self)
-
-		self.clickimage = uidata.TargetImage('Clickable Image', None, 'rw')
-		self.clickimage.addTargetType('acquisition', [], (0,255,0))
-		self.clickimage.addTargetType('focus', [], (0,0,255))
-		self.clickimage.addTargetType('done', [], (255,0,0))
-		self.clickimage.addTargetType('position', [], (255,255,0))
-
-		submitmethod = uidata.Method('Submit Targets', self.submitTargets)
-		self.preventrepeat = uidata.Boolean('Do not allow submit if already submitted on this image', True, 'rw', persist=True)
-
-		container = uidata.LargeContainer('Click Target Finder')
-		container.addObjects((self.clickimage, submitmethod, self.preventrepeat))
-
-		self.uicontainer.addObject(container)
 
 class MosaicClickTargetFinder(ClickTargetFinder):
 	eventoutputs = ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
@@ -233,7 +242,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def getTargetDataList(self, typename):
 		displayedtargetdata = {}
-		targetsfromimage = self.clickimage.getTargetType(typename)
+		targetsfromimage = self.panel.getTargets(typename)
 		for t in targetsfromimage:
 			## if displayed previously (not clicked)...
 			if t in self.displayedtargetdata and self.displayedtargetdata[t]:
@@ -289,7 +298,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def uiRefreshCurrentPosition(self):
 		self.updateCurrentPosition()
-		self.clickimage.setTargetType('position', self.currentposition)
+		self.panel.setTargets('position', self.currentposition)
 
 	def updateCurrentPosition(self):
 		try:
@@ -346,10 +355,10 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 					donetargets.append(vcoord)
 				else:
 					targets.append(vcoord)
-		self.clickimage.setTargetType('acquisition', targets)
-		self.clickimage.setTargetType('done', donetargets)
+		self.panel.setTargets('acquisition', targets)
+		self.panel.setTargets('done', donetargets)
 		self.updateCurrentPosition()
-		self.clickimage.setTargetType('position', self.currentposition)
+		self.panel.setTargets('position', self.currentposition)
 		n = len(targets)
 		ndone = len(donetargets)
 		self.setStatusMessage('displayed %s targets (%s done)' % (n+ndone, ndone))
@@ -497,14 +506,14 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.mosaicimagedata = None
 
 		self.setStatusMessage('Displaying mosaic image')
-		self.clickimage.setImage(self.mosaicimage)
+		self.setImage(self.mosaicimage)
 		## imagedata would be full mosaic image
 		#self.clickimage.imagedata = None
 		self.displayTargets()
 		node.beep()
 
 	def clearMosaicImage(self):
-		self.clickimage.setImage(None)
+		self.setImage(None)
 		self.mosaicimage = None
 		self.mosaicimagescale = None
 		self.mosaicimagedata = None
@@ -590,7 +599,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.publish(stats, database=True)
 
 		## display them
-		self.clickimage.setTargetType('acquisition', targets)
+		self.panel.setTargets('acquisition', targets)
 
 		message = 'found %s squares' % (len(targets),)
 		self.logger.info(message)

@@ -197,11 +197,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
-		sz = wx.GridBagSizer(5, 5)
-		sz.Add(asz, (0, 0), (1, 1), wx.EXPAND)
-		sz.Add(sbsz, (1, 0), (1, 1), wx.EXPAND)
-
-		return sz
+		return asz + [sbsz]
 
 class ManualFocusDialog(wx.Dialog):
 	def __init__(self, parent, title='Manual Focus'):
@@ -348,9 +344,9 @@ class ManualFocusDialog(wx.Dialog):
 	def onUpdateImages(self, evt):
 		string = self.rbimage.GetStringSelection()
 		if string == 'Image':
-			self.ipimage.setNumericImage(self.node.man_image)
+			self.ipimage.setImage(self.node.man_image)
 		elif string == 'Power Spectrum':
-			self.ipimage.setNumericImage(self.node.man_power)
+			self.ipimage.setImage(self.node.man_power)
 
 if __name__ == '__main__':
 	class App(wx.App):

@@ -236,7 +236,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
-		return sbsz
+		return [sbsz]
 
 class EditPlanDialog(wx.Dialog):
 	def __init__(self, parent):

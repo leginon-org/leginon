@@ -370,7 +370,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
-		return sbsz
+		return [sbsz]
 
 class NewDialog(wx.Dialog):
 	def __init__(self, parent):

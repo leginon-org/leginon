@@ -1,7 +1,4 @@
 import wx
-from gui.wx.Entry import FloatEntry
-import gui.wx.Camera
-import gui.wx.ImageViewer
 import gui.wx.Node
 import gui.wx.Settings
 
@@ -9,6 +6,12 @@ class Panel(gui.wx.Node.Panel):
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
+		self.initialize()
+
+		self.SetSizerAndFit(self.szmain)
+		self.SetupScrolling()
+
+	def initialize(self):
 		self.szmain = wx.GridBagSizer(5, 5)
 
 		# status
@@ -22,13 +25,10 @@ class Panel(gui.wx.Node.Panel):
 		self.bsettings = wx.Button(self, -1, 'Settings...')
 
 		self.szbuttons = wx.GridBagSizer(5, 5)
-		self.szbuttons.Add(self.bsettings, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		self.szbuttons.Add(self.bsettings, (0, 0), (1, 1), wx.EXPAND)
 		self.szmain.Add(self.szbuttons, (1, 0), (1, 1),
 										wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP)
 		self.szmain.AddGrowableCol(1)
-
-		self.SetSizerAndFit(self.szmain)
-		self.SetupScrolling()
 
 	def onNodeInitialized(self):
 		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
@@ -57,7 +57,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
-		return sbsz
+		return [sbsz]
 
 if __name__ == '__main__':
 	class App(wx.App):
