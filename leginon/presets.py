@@ -561,7 +561,7 @@ class PresetsManager(node.Node):
 		else:
 			self.presetparams.set(self.currentselection)
 			self.displayCalibrations(self.currentselection)
-			#self.setStatus(self.currentselection)
+			self.displayDose(self.currentselection)
 		return index
 
 	def getHighTension(self):
@@ -791,11 +791,16 @@ class PresetsManager(node.Node):
 		self.currentpreset = self.renewPreset(self.currentpreset)
 		self.currentpreset['dose'] = dose
 		self.presetToDB(self.currentpreset)
+		self.displayDose(self.currentpreset)
 
-		## update the display of dose in parameters
-		self.presetparams.set(self.currentselection)
-		## update other display of dose
-		self.acqdosevalue.set('for %s is %.4f' % (self.currentpreset['name'], dose))
+	def displayDose(self, preset):
+		dose = preset['dose']
+		if dose is None:
+			displaydose = 'N/A'
+		else:
+			displaydose = dose / 1e20
+			displaydose = '%.2f' % (displaydose,)
+		self.acqdosevalue.set('%s: %s' % (preset['name'], displaydose))
 
 	def XXXsetStatus(self, preset):
 		## dose
@@ -938,6 +943,8 @@ class PresetParameters(uidata.Container):
 			self.addObject(subcont, position={'position':(row,0),'span':(1,3)})
 		self.camera = camerafuncs.SmartCameraParameters(self.node, usercallback=self.usercallback)
 		self.addObject(self.camera)
+		self.dosestring = uidata.String('Dose', 'N/A', 'r')
+		self.addObject(self.dosestring)
 
 	def set(self, presetdata):
 		presetdict = presetdata.toDict()
@@ -949,6 +956,13 @@ class PresetParameters(uidata.Container):
 				self.doublesdict[double][axis].set(presetdict[double][axis], usercallback=False)
 		for other in self.others:
 			self.othersdict[other].set(presetdict[other], usercallback=False)
+		dose = presetdata['dose']
+		self.dose = dose
+		if dose is None:
+			displaydose = 'N/A'
+		else:
+			displaydose = '%.4f' % (dose/1e20,)
+		self.dosestring.set(displaydose)
 
 	def get(self):
 		presetdict = {}
@@ -964,7 +978,7 @@ class PresetParameters(uidata.Container):
 				presetdict[double][axis] = self.doublesdict[double][axis].get()
 		for other in self.others:
 			presetdict[other] = self.othersdict[other].get()
-
+		presetdict['dose'] = self.dose
 		return presetdict
 
 
