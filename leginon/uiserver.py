@@ -61,6 +61,7 @@ class XMLRPCServer(object):
 class Server(XMLRPCServer, uidata.Container):
 	def __init__(self, name='UI', port=None):
 		self.uiclients = []
+		self.pref_lock = threading.Lock()
 		XMLRPCServer.__init__(self, port=port)
 		uidata.Container.__init__(self, name)
 		self.server.register_function(self.setFromClient, 'SET')
@@ -121,6 +122,14 @@ class Server(XMLRPCServer, uidata.Container):
 				pass
 
 	def getPickle(self, namelist=None):
+		self.pref_lock.acquire()
+		try:
+			value = self._getPickle(namelist)
+		finally:
+			self.pref_lock.release()
+		return value
+
+	def _getPickle(self, namelist=None):
 		### maybe want a lock on this
 		fname = '%s.pref' % (self.name,)
 		fname = os.path.join(leginonconfig.PREFS_PATH, fname)
@@ -145,6 +154,13 @@ class Server(XMLRPCServer, uidata.Container):
 		return value
 
 	def updatePickle(self, namelist, value):
+		self.pref_lock.acquire()
+		try:
+			self._updatePickle(namelist, value)
+		finally:
+			self.pref_lock.release()
+
+	def _updatePickle(self, namelist, value):
 		### maybe want a lock on this
 		fname = '%s.pref' % (self.name,)
 		fname = os.path.join(leginonconfig.PREFS_PATH, fname)
