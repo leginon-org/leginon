@@ -24,13 +24,40 @@ function checkevents(e)
 	if (code == key_down_unicode || code == key_up_unicode)  {
 		if (e.type == eventdown) {
 			keydown=true;
+			stopInterval();
 		} else if (e.type == eventup) {
-			updateviews();
+			startInterval();
 			keydown=false;
 		}
 	} else if (e.type == eventchange && !keydown) {
 			updateviews();
 	}
+}
+
+function startInterval()
+{
+	begin = new Date();
+	interval = window.setInterval("trigger()",10);
+}
+
+function stopInterval()
+{
+    window.clearInterval (interval);
+    interval="";
+}
+
+function trigger()
+{
+	end = new Date();
+	diff = end-begin;
+	// --- if key released at least for 150ms
+	// --- then triggered his action 
+	if (diff > 150) {
+		stopInterval();
+		// --- action
+		updateviews();
+	}
+	
 }
 
 function setimgId() {

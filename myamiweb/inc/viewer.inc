@@ -164,6 +164,10 @@ class viewer {
 		$str .= 'var eventup = "keyup";'.$this->crlf;
 		$str .= 'var eventchange  = "change";'.$this->crlf;
 		$str .= 'var keydown = false;'.$this->crlf;
+		$str .= 'var interval;'.$this->crlf;
+		$str .= 'var count;'.$this->crlf;
+		$str .= 'var begin;'.$this->crlf;
+		$str .= 'var end;'.$this->crlf;
 
 		$str .= ''.$this->crlf;
 		if ($this->addloijavascript)
