@@ -568,9 +568,10 @@ class Method(SpecWidget):
 		if self.styled:
 			but = Button(self, text=self.name, command=self.butcom,
 																						bg=self.buttoncolor)
+			but.pack()
 		else:
 			but = Button(self, text=self.name, command=self.butcom)
-		but.pack(expand=YES, fill=X)
+			but.pack(expand=YES, fill=X)
 
 		if self.returnspec is not None:
 			dataclass = whichDataClass(self.returnspec)
