@@ -363,11 +363,11 @@ class EMMosaic(object):
 		## To use calibrationclient's itransform method, we need
 		## a fake image from which to calculate a pixel vector
 		## Maybe could use an actual final image data.
-		fakescope = data.ScopeEMData()
+		someimage = self.tiles[0].imagedata
+		fakescope = data.ScopeEMData(initializer=someimage['scope'])
 		fakescope[param] = center
-		fakecamera = data.CameraEMData()
 		## assume the final fake image has same binning as first tile
-		fakecamera['binning'] = self.tiles[0].imagedata['camera']['binning']
+		fakecamera = data.CameraEMData(initializer=someimage['scamera'])
 		self.fakeimage = data.CameraImageData(scope=fakescope, camera=fakecamera)
 		tile0 = self.tiles[0]
 		mosaic0 = mosaic1 = None
