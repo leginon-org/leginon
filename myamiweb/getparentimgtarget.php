@@ -60,9 +60,9 @@ if ($g) {
 
 	if ($preset=='atlas') {
 		
-		$types = $leginondata->getDataTypes($sessionId);
-		foreach ($types as $type) {
-			$d = $leginondata->findImage($id, $type);
+		$dtypes = $leginondata->getDataTypes($sessionId);
+		foreach ($dtypes as $dtype) {
+			$d = $leginondata->findImage($id, $dtype);
 			$nId = $d['id'];
 			if ($gridIds = $leginondata->getMosaicImages($nId))
 				break;

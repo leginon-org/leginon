@@ -1,8 +1,3 @@
-<html>
-<head>
-<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
-<link rel="stylesheet" type="text/css" href="css/view.css">
-<title>Leginon Image Viewer</title>
 <?
 require ('inc/leginon.inc');
 require ('inc/project.inc');
@@ -26,7 +21,8 @@ $projectdb = $projectdata->checkDBConnection();
 if($projectdb)
 	$projects = $projectdata->getProjects('all');
 
-$sessions = $leginondata->getSessions('description', $projectId);
+if(!$sessions)
+	$sessions = $leginondata->getSessions('description', $projectId);
 
 // --- update SessionId while a project is selected
 $sessionId_exists = $leginondata->sessionIdExists($sessions, $sessionId);
@@ -63,8 +59,13 @@ $viewer->add($view3);
 
 
 $javascript .= $viewer->getJavascriptInit();
-echo $javascript;
 ?>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
+<link rel="stylesheet" type="text/css" href="css/view.css">
+<title>Leginon Image Viewer</title>
+<?=$javascript?>
 </head>
 <body onload='initviewer();'>
 <?$viewer->display();?>
