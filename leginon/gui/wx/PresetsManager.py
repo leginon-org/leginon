@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.23 $
+# $Revision: 1.24 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-22 18:49:44 $
+# $Date: 2004-10-28 21:31:59 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -329,7 +329,7 @@ class DoseDialog(gui.wx.Dialog.Dialog):
 		if dose is None:
 			dosestr = 'N/A'
 		else:
-			dosestr = '%e' % dose
+			dosestr = '%e' % (dose/1e20)
 		dosestr = 'Use the measured dose %s for this preset?' % dosestr
 		self.doselabel.SetLabel(dosestr)
 
