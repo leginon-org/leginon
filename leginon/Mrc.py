@@ -182,7 +182,7 @@ class MrcData:
 		return narray
 
 	def fromNumeric(self, narray):
-		if not isinstance(narray, Numeric.arraytype):
+		if not isinstance(narray, Numeric.ArrayType):
 			raise TypeError('Value must be a Numeric array')
 
 		t = narray.typecode()

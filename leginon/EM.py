@@ -751,7 +751,7 @@ class EM(node.Node):
 		elif datatype == bool:
 			interfaceclass = uidata.Boolean
 			value = False
-		elif datatype == Numeric.arraytype:
+		elif datatype == Numeric.ArrayType:
 			raise ValueError('currently not displaying images')
 			interfaceclass = uidata.Image
 			value = None

@@ -338,7 +338,7 @@ class ImagePanel(wx.Panel):
 		'''
 		Set the internal wx.Bitmap to current Numeric image
 		'''
-		if isinstance(self.imagedata, Numeric.arraytype):
+		if isinstance(self.imagedata, Numeric.ArrayType):
 			clip = self.contrasttool.getRange()
 			wximage = wx.EmptyImage(self.imagedata.shape[1], self.imagedata.shape[0])
 			wximage.SetData(numextension.rgbstring(self.imagedata, clip[0], clip[1]))
@@ -416,7 +416,7 @@ class ImagePanel(wx.Panel):
 		self.offset = (xoffset, yoffset)
 
 	def setImage(self, imagedata, scroll=False):
-		if isinstance(imagedata, Numeric.arraytype):
+		if isinstance(imagedata, Numeric.ArrayType):
 			self.setNumericImage(imagedata, scroll)
 		elif isinstance(imagedata, Image.Image):
 			self.setPILImage(imagedata, scroll)
@@ -442,8 +442,8 @@ class ImagePanel(wx.Panel):
 		scroll, and refresh the screen.
 		'''
 
-		if not isinstance(numericimage, Numeric.arraytype):
-			raise TypeError('Numeric image must be of Numeric.arraytype')
+		if not isinstance(numericimage, Numeric.ArrayType):
+			raise TypeError('Numeric image must be of Numeric.ArrayType')
 
 		self.imagedata = numericimage
 		mn,mx = imagefun.minmax(self.imagedata)
@@ -521,7 +521,7 @@ class ImagePanel(wx.Panel):
 
 	def getValue(self, x, y):
 		try:
-			if isinstance(self.imagedata, Numeric.arraytype):
+			if isinstance(self.imagedata, Numeric.ArrayType):
 				return self.imagedata[y, x]
 			elif isinstance(self.imagedata, Image.Image):
 				return self.imagedata.getpixel((x, y))
