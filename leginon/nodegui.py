@@ -450,6 +450,7 @@ class StructTreeItem(TreeWidget.TreeItem):
 class NodeGUILauncher(Frame):
 	def __init__(self, parent):
 		#self.parent = parent
+		parent.wm_title('Node GUI Launcher')
 		Frame.__init__(self, parent)
 		self.__build()
 
