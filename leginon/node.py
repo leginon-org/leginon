@@ -53,19 +53,19 @@ class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 			raise event.InvalidEventError('eventclass must be Event subclass')
 
 class Node(leginonobject.LeginonObject):
-	def __init__(self, id, nodelocations = {}, dh = DataHandler,
-								dhargs = (), clientclass = Client):
+	def __init__(self, id, nodelocations = {}, dh = DataHandler, dhargs = (),
+								tcpport=None, xmlrpcport=None, clientclass = Client):
 		leginonobject.LeginonObject.__init__(self, id)
 
 		self.nodelocations = nodelocations
 
 		self.eventmapping = {'outputs':[], 'inputs':[]}
 
-		self.server = datatransport.Server(self.ID(), dh, dhargs)
+		self.server = datatransport.Server(self.ID(), dh, dhargs, tcpport)
 		self.clientclass = clientclass
 
 		uiserverid = self.ID()
-		self.uiserver = interface.Server(uiserverid)
+		self.uiserver = interface.Server(uiserverid, xmlrpcport)
 		self.uiactive = 0
 		self.defineUserInterface()
 

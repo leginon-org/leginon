@@ -11,12 +11,12 @@ False=0
 True=1
 
 class Manager(node.Node):
-	def __init__(self, id):
+	def __init__(self, id, tcpport=None, xmlrpcport=None):
 		# the id is manager (in a list)
 
 		self.clients = {}
 
-		node.Node.__init__(self, id, {})
+		node.Node.__init__(self, id, {}, tcpport=tcpport, xmlrpcport=xmlrpcport)
 
 		self.uiserver.server.register_function(self.uiGetNodeLocations,
 																						'getNodeLocations')
@@ -141,7 +141,7 @@ class Manager(node.Node):
 	# launcher related methods
 
 	def newLauncher(self, newid):
-		t = threading.Thread(name='launcher thread',
+		t = threading.Thread(name='%s launcher thread' % newid[-1],
 								target=launcher.Launcher, args=(newid, self.nodelocations))
 		t.start()
 
@@ -266,6 +266,12 @@ class Manager(node.Node):
 		self.outputEvent(ev, 0, launcher)
 		return newid
 
+	def addNode(self, hostname, port):
+		e = event.ManagerAvailableEvent(self.id, self.location())
+		client = self.clientclass(self.ID(),
+												{'hostname': hostname, 'TCP port': port})
+		client.push(e)
+
 	def killNode(self, nodeid):
 			try:
 				self.clients[nodeid].push(event.KillEvent(self.ID()))
@@ -357,14 +363,8 @@ class Manager(node.Node):
 		return nodeinfo
 
 	def uiAddNode(self, hostname, port):
-		e = event.ManagerAvailableEvent(self.id, self.location())
 		try:
-			client = self.clientclass(self.ID(),
-												{'hostname': hostname, 'TCP port': port})
-		except:
-			self.printerror('cannot connect to specified node')
-		try:
-			client.push(e)
+			self.addNode(hostname, port)
 		except:
 			self.printerror('cannot connect to specified node')
 		return ''
@@ -515,7 +515,6 @@ class Manager(node.Node):
 
 if __name__ == '__main__':
 	import sys
-	import time
 
 	m = Manager(('manager',))
 

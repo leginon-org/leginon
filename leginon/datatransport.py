@@ -53,18 +53,22 @@ class Client(Base):
 				return ret
 			except IOError:
 				pass
-		self.printerror("IOError, unable to push data " + str(idata))
+		self.printerror("IOError, unable to push data " + str(odata))
 		raise IOError
 
 class Server(Base):
-	def __init__(self, id, dhclass = datahandler.SimpleDataKeeper, dhargs = ()):
+	def __init__(self, id, dhclass = datahandler.SimpleDataKeeper, dhargs = (), tcpport=None):
 		Base.__init__(self, id)
 		ndhargs = [self.ID()]
 		ndhargs += list(dhargs)
 		self.datahandler = apply(dhclass, ndhargs)
 		self.servers = {}
 		for t in self.transportmodules:
-			self.servers[t] = apply(t.Server, (self.ID(), self.datahandler))
+			if tcpport is not None and t is tcptransport:
+				args = (self.ID(), self.datahandler, tcpport)
+			else:
+				args = (self.ID(), self.datahandler)
+			self.servers[t] = apply(t.Server, args)
 			self.servers[t].start()
 
 	def exit(self):

@@ -27,7 +27,7 @@ class Server(SocketServer.ThreadingTCPServer, socketstreamtransport.Server):
 						port += 1
 					else:
 						raise
-			self.port = port
+		self.port = port
 
 	def location(self):
 		loc = socketstreamtransport.Server.location(self)

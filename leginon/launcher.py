@@ -9,8 +9,8 @@ import time
 
 
 class Launcher(node.Node):
-	def __init__(self, id, nodelocations = {}):
-		node.Node.__init__(self, id, nodelocations)
+	def __init__(self, id, nodelocations = {}, port = None):
+		node.Node.__init__(self, id, nodelocations, tcpport=port)
 
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.addEventInput(event.UpdateNodeClassesEvent, self.publishNodeClasses)
@@ -84,10 +84,15 @@ if __name__ == '__main__':
 	managerlocation = {}
 	try:
 		managerlocation['hostname'] = sys.argv[1]
-		managerlocation['TCP port'] = int(sys.argv[2])
-		#managerlocation['UNIX pipe filename'] = str(sys.argv[3])
-		m = Launcher(myid, {'manager': managerlocation})
+		try:
+			managerlocation['TCP port'] = int(sys.argv[2])
+			#managerlocation['UNIX pipe filename'] = str(sys.argv[3])
+			m = Launcher(myid, {'manager': managerlocation})
+		except IndexError:
+			m = Launcher(myid, {}, int(sys.argv[1]))
 	except IndexError:
-		m = Launcher(myid, {})
-
+		try:
+			m = Launcher(myid, {}, 55555)
+		except:
+			m = Launcher(myid, {})
 

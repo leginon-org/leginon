@@ -706,8 +706,11 @@ class JimsTreeNode(TreeWidget.TreeNode):
 #		Pmw.ComboBox._postList(self, event)
 
 class NodeGUILauncher(Frame):
-	def __init__(self, parent):
+	def __init__(self, parent, hostname=None, port=None):
 		#self.parent = parent
+		if hostname is not None and port is not None:
+			self.uiclient = interface.Client(hostname, port)
+			self.getNodeLocations()
 		Frame.__init__(self, parent)
 		self.__build()
 
@@ -846,6 +849,73 @@ class NodeGUILauncher(Frame):
 		# only store host in history if launch worked
 		if tk is not None:
 			self.addHostHistory(host)
+
+	def newGUIWindow(self, host, port):
+		top = Toplevel()
+		top.title('Node GUI')
+		try:
+			gui = NodeGUI(top, host, port)
+			gui.pack(expand=YES, fill=BOTH)
+			return top
+		except:
+			top.destroy()
+			print "Error: cannot create new UI window for %s:%s" % (host, port)
+			return None
+
+class NodeUILauncher(Frame):
+	def __init__(self, parent, hostname, port):
+		#self.parent = parent
+		Frame.__init__(self, parent)
+		self.__build()
+		self.uiclient = interface.Client(hostname, port)
+		self.getNodeLocations()
+		for l in self.nodelocations:
+			hostname = self.nodelocations[l]['hostname']
+			uiport = self.nodelocations[l]['UI port']
+			self.newGUIWindow(hostname, uiport)
+			
+
+	def __build(self):
+		nodeidframe = Frame(self, bd=4, relief=SOLID)
+
+		nglabel = Label(nodeidframe, text='Node UI:')
+		nodeidlabel = Label(nodeidframe, text='Node ID')
+		self.nodeidsvar = StringVar()
+		self.nodeidsentry = Pmw.ComboBox(nodeidframe, entry_textvariable=self.nodeidsvar)
+		self.nodeidsentry.component('entryfield').component('entry')['width'] = 20
+		launchuibutton = Button(nodeidframe, text='Launch', command=self.launchUIbyNodeID)
+		refreshbutton = Button(nodeidframe, text='Refresh', command=self.getNodeLocations)
+
+		nglabel.pack(side=TOP)
+		nodeidlabel.pack(side=LEFT)
+		self.nodeidsentry.pack(side=LEFT)
+		launchuibutton.pack(side=LEFT)
+		refreshbutton.pack(side=LEFT)
+
+		nodeidframe.pack(side=TOP, fill=BOTH)
+
+	def getNodeLocations(self):
+		try:
+			self.nodelocations = self.uiclient.execute("getNodeLocations")
+		except:
+			self.nodelocations = {}
+
+		self.nodeidsentry.setlist(self.nodelocations.keys())
+
+		try:
+			self.nodeidsentry.selectitem(index=0, setentry=1)
+		except IndexError:
+			self.nodeidsentry.clear()
+
+	def launchUIbyNodeID(self):
+		nodeid = self.nodeidsvar.get()
+		try:
+			hostname = self.nodelocations[nodeid]['hostname']
+			uiport = self.nodelocations[nodeid]['UI port']
+			print "Launching interface to '%s' on %s:%d" % (nodeid, hostname, uiport)
+			self.newGUIWindow(hostname, uiport)
+		except:
+			print "Error: cannot launch '%s' by ID" % nodeid
 
 	def newGUIWindow(self, host, port):
 		top = Toplevel()

@@ -29,6 +29,12 @@ class Application(leginonobject.LeginonObject):
 	def delBindSpec(self):
 		pass
 
+	def getLaunchers(self):
+		launchers = []
+		for args in self.launchspec:
+			launchers.append(args[0])
+		return launchers
+
 	def launch(self):
 		for args in self.launchspec:
 			self.printerror('launching %s' % str(args))

@@ -122,8 +122,8 @@ class ContainerSpec(SpecObject):
 		return d
 
 class Server(xmlrpcserver.xmlrpcserver):
-	def __init__(self, id):
-		xmlrpcserver.xmlrpcserver.__init__(self, id)
+	def __init__(self, id, port=None):
+		xmlrpcserver.xmlrpcserver.__init__(self, id, port=port)
 		self.uidata = {}
 		#self.server.register_function(self.uiMethods, 'methods')
 		self.server.register_function(self.uiSpec, 'spec')
