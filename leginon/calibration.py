@@ -271,12 +271,9 @@ class Calibration(node.Node):
 			verdict = 'good'
 		else:
 			if shiftinfo['peak value'] > self.correlationthreshold:
-				verdict = 'good'
+				verdict = 'small shift'
 			else:
-				if shiftinfo['peak value'] > self.correlationthreshold * 2:
-					verdict = 'small shift'
-				else:
-					verdict = 'big shift'
+				verdict = 'big shift'
 
 		return verdict
 
