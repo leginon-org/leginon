@@ -72,6 +72,7 @@ class DBDataKeeper(datahandler.DataHandler):
 		isroot=0
 		if hasattr(mydata, 'isRoot'):
 			isroot = 1
+			del mydata.isRoot
 
 		info['root'] = isroot
 
