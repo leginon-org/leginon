@@ -209,33 +209,33 @@ class Robot(node.Node):
 
 	def vacuumReady(self):
 		self.logger.info('Verifying vacuum is ready')
-		self.waitScope('VacuumStatus', 'ready', 0.5, 600)
+		self.waitScope('VacuumStatus', 'ready', 0.25)
 		self.logger.info('Vacuum is ready')
 
 	def closeColumnValves(self):
 		self.logger.info('Closing column valves')
 		self.instrument.tem.ColumnValvePosition = 'closed'
 		self.logger.info('Verifying column valves are closed')
-		self.waitScope('ColumnValvePosition', 'closed', 0.5, 15)
+		self.waitScope('ColumnValvePosition', 'closed', 0.25)
 		self.logger.info('Column valves are closed')
 
 	def turboPumpOn(self):
 		self.logger.info('Turning on turbo pump')
 		self.instrument.tem.TurboPump = 'on'
 		self.logger.info('Verifying turbo pump is on')
-		self.waitScope('TurboPump', 'on', 0.5, 300)
+		self.waitScope('TurboPump', 'on', 0.25)
 		self.logger.info('Turbo pump is on')
 
 	def stageReady(self):
 		self.logger.info('Waiting for stage to be ready')
-		self.waitScope('StageStatus', 'ready', 0.5, 600)
+		self.waitScope('StageStatus', 'ready', 0.25)
 		self.logger.info('Stage is ready')
 
 	def setHolderType(self):
 		self.logger.info('Setting holder type to single tilt')
 		self.instrument.tem.HolderType = 'single tilt'
 		self.logger.info('Verifying holder type is set to single tilt')
-		self.waitScope('HolderType', 'single tilt', 0.5, 60)
+		self.waitScope('HolderType', 'single tilt', 0.25)
 		self.logger.info('Holder type is set to single tilt')
 
 	def scopeReadyForInsertion1(self):
@@ -301,6 +301,7 @@ class Robot(node.Node):
 		self.logger.warning('Waiting for confirmation that grid is clear')
 		self.setStatus('user input')
 		self.emailGridClear()
+		self.panel.clearGrid()
 		self.gridcleared.wait()
 		self.gridcleared = threading.Event()
 		self.setStatus('idle')
@@ -442,7 +443,7 @@ class Robot(node.Node):
 			try:
 				self.robotReadyForInsertion()
 			except GridQueueEmpty:
-				#self.insertmethod.enable()
+				self.panel.gridQueueEmpty()
 				return
 			self.logger.info('Insertion of holder successfully completed')
 			self.gridInserted()
@@ -456,13 +457,12 @@ class Robot(node.Node):
 		try:
 			self.robotReadyForInsertion()
 		except GridQueueEmpty:
-			#self.insertmethod.enable()
+			self.panel.gridQueueEmpty()
 			return
 
 		try:
 			self.scopeReadyForInsertion1()
 		except Exception, e:
-			#self.insertmethod.enable()
 			self.logger.error('Failed to get scope ready for insertion 1: %s' % e)
 			return
 		self.signalRobotToInsert1()
@@ -471,7 +471,6 @@ class Robot(node.Node):
 		try:
 			self.scopeReadyForInsertion2()
 		except Exception, e:
-			#self.insertmethod.enable()
 			self.logger.error('Failed to get scope ready for insertion 2: %s' % e)
 			return
 		self.signalRobotToInsert2()
@@ -526,13 +525,15 @@ class Robot(node.Node):
 			self.instrument.ccdcamera.Inserted = False
 
 			self.logger.info('Checking camera is retracted')
-			self.waitScope('Inserted', False, 0.5, 600)
+			self.waitScope('Inserted', False, 0.25)
 			self.logger.info('Camera is retracted')
 
 		request = ExtractRequest()
 		self.queue.put(request)
 
 	def handleGridDataCollectionDone(self, ievent):
+		# ...
+		self.panel.extractingGrid()
 		self.extract()
 
 	def getTrayLabels(self):
@@ -560,15 +561,16 @@ class Robot(node.Node):
 			evt = event.MakeTargetListEvent()
 			evt['grid'] = self.griddata
 			self.outputEvent(evt)
+			self.panel.gridInserted()
 			return
 
-		self.logger.info('Grid inserted (event received)')
+		self.logger.info('Grid inserted')
 
 		self.logger.info('Turning off turbo pump')
 		self.instrument.tem.TurboPump = 'off'
 
 		self.logger.info('Checking vacuum')
-		self.waitScope('VacuumStatus', 'ready', 0.5, 600)
+		self.waitScope('VacuumStatus', 'ready', 0.25)
 		self.logger.info('Vacuum ready')
 
 		self.logger.info('Checking column pressure')
@@ -586,7 +588,7 @@ class Robot(node.Node):
 			self.instrument.ccdcamera.Inserted = True
 
 			self.logger.info('Checking camera is inserted')
-			self.waitScope('Inserted', True, 0.5, 600)
+			self.waitScope('Inserted', True, 0.25)
 			self.logger.info('Camera is inserted')
 
 		self.logger.info('Outputting data collection event')
@@ -594,6 +596,7 @@ class Robot(node.Node):
 		evt['grid'] = self.griddata
 		self.outputEvent(evt)
 		self.logger.info('Data collection event outputted')
+		self.panel.gridInserted()
 
 	def waitScope(self, parameter, value, interval=None, timeout=0.0):
 		if self.instrument.tem.hasAttribute(parameter):

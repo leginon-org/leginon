@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Robot.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-02 22:12:00 $
+# $Date: 2005-03-02 23:05:12 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -28,13 +28,12 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
 													'play', shortHelpString='Start')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_EXTRACT,
-													'node', shortHelpString='Extract')
+													'extractgrid', shortHelpString='Extract')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_GRID,
-													'grid', shortHelpString='Grid Cleared')
-		#self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
-		#self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
-		#self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
+													'cleargrid', shortHelpString='Grid Cleared')
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
 		self.toolbar.Realize()
 
 		self.ctray = wx.Choice(self, -1)
@@ -74,6 +73,10 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onGridTool, id=gui.wx.ToolBar.ID_GRID)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onExtractTool,
 											id=gui.wx.ToolBar.ID_EXTRACT)
+		self.Bind(gui.wx.Events.EVT_GRID_QUEUE_EMPTY, self.onGridQueueEmpty)
+		self.Bind(gui.wx.Events.EVT_CLEAR_GRID, self.onClearGrid)
+		self.Bind(gui.wx.Events.EVT_GRID_INSERTED, self.onGridInserted)
+		self.Bind(gui.wx.Events.EVT_EXTRACTING_GRID, self.onExtractingGrid)
 
 		self.Bind(wx.EVT_CHOICE, self.onTrayChoice, self.ctray)
 		choices = self.node.getTrayLabels()
@@ -87,13 +90,44 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(wx.EVT_BUTTON, self.onSelectNoneButton, self.bselectnone)
 
 	def onPlayTool(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 		threading.Thread(target=self.node.insert).start()
 
 	def onGridTool(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
 		threading.Thread(target=self.node.gridCleared).start()
 
 	def onExtractTool(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
 		threading.Thread(target=self.node.extract).start()
+
+	def onGridQueueEmpty(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+
+	def gridQueueEmpty(self):
+		evt = gui.wx.Events.GridQueueEmptyEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def onClearGrid(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, True)
+
+	def clearGrid(self):
+		evt = gui.wx.Events.ClearGridEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def onGridInserted(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, True)
+
+	def extractingGrid(self):
+		evt = gui.wx.Events.ExtractingGridEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def onExtractingGrid(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
+
+	def gridInserted(self):
+		evt = gui.wx.Events.GridInsertedEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSelectAllButton(self, evt):
 		self.tray.selectAll()
