@@ -10,9 +10,9 @@ class ImageCanvas(Frame):
 		self.parent = parent
 		self.__build()
 		self.bindings()
-		self.zoomfactor = 1.0
 		self.cursorinfo = CursorInfo(self)
 		self.scalingwidget = None
+		self.zoomingwidget = None
 		self.numimage = None
 
 	def displayMessage(self, message):
@@ -113,12 +113,19 @@ class ImageCanvas(Frame):
 			return
 		self.numimage = NumericImage(ndata,clip=oldclip)
 		sw = self.scalingwidget
+		zw = self.zoomingwidget
 		if sw is not None:
 			extrema = self.extrema()
 			# this should probably not shrink the range
 			sw.set_limits(extrema)
 			if not sw.scalelock.get():
 				sw.set_values(extrema)
+		if zw is not None:
+			if zw.zoomlock.get():
+				self.zoom(zw.get())
+			else:
+				zw.set(1.0)
+				self.zoom(1.0)
 		self.update_canvas()
 
 	def clip(self, newclip=None):
@@ -154,12 +161,11 @@ class ImageCanvas(Frame):
 	def zoom(self, factor):
 		if self.numimage is None:
 			return
-		self.zoomfactor = self.zoomfactor * factor
+
 		oldsize = self.numimage.orig_size
-		newsizex = int(round(oldsize[0] * self.zoomfactor))
-		newsizey = int(round(oldsize[1] * self.zoomfactor))
+		newsizex = int(round(oldsize[0] * factor))
+		newsizey = int(round(oldsize[1] * factor))
 		self.numimage.transform['output_size'] = (newsizex, newsizey)
-		self.update_canvas()
 
 	def canvasx(self, *args, **kargs):
 		return self.canvas.canvasx(*args, **kargs)
@@ -220,6 +226,11 @@ class ImageCanvas(Frame):
 		self.scalingwidget = wid
 		return wid
 
+	def zooming_widget(self, parent, *args, **kwargs):
+		wid = ZoomingWidget(parent, self, *args, **kwargs)
+		self.zoomingwidget = wid
+		return wid
+
 
 class CursorInfo:
 	"""
@@ -271,6 +282,35 @@ class CursorInfoWidget(Frame):
 		self.xlab.pack(side=LEFT)
 		self.ylab.pack(side=LEFT)
 		self.ilab.pack(side=LEFT)
+
+class ZoomingWidget(Frame):
+	def __init__(self, parent, imagecanvas, *args, **kargs):
+		Frame.__init__(self, parent, *args, **kargs)
+		self.imagecanvas = imagecanvas
+		self.factor = 1.0
+		self.__build()
+
+	def __build(self):
+		Button(self, text='Zoom In', command=self.zoomin).pack(side=LEFT)
+		Button(self, text='Zoom Out', command=self.zoomout).pack(side=LEFT)
+		self.zoomlock = BooleanVar()
+		Checkbutton(self, text='Lock', variable=self.zoomlock).pack(side=LEFT)
+
+	def zoomin(self):
+		self.factor = self.factor * 2.0
+		self.imagecanvas.zoom(self.factor)
+		self.imagecanvas.update_canvas()
+
+	def zoomout(self):
+		self.factor = self.factor * 0.5
+		self.imagecanvas.zoom(self.factor)
+		self.imagecanvas.update_canvas()
+
+	def set(self, value):
+		self.factor = value
+
+	def get(self):
+		return self.factor
 
 class ScalingWidget(Frame):
 	def __init__(self, parent, imagecanvas, *args, **kargs):

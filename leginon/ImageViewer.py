@@ -24,14 +24,11 @@ class ImageViewer(Frame):
 		#self.canvas.bind('<Configure>', self.configure_callback)
 
 		self.scaler = self.canvas.scaling_widget(self)
-
-		self.zoomframe = Frame(self)
-		Button(self.zoomframe, text='Zoom In', command=self.zoomin).pack(side=LEFT)
-		Button(self.zoomframe, text='Zoom Out', command=self.zoomout).pack(side=LEFT)
+		self.zoomer = self.canvas.zooming_widget(self)
 
 		self.cursorinfowid.pack(side=TOP)
 		self.scaler.pack(side=TOP)
-		self.zoomframe.pack(side=TOP)
+		self.zoomer.pack(side=TOP)
 		self.canvas.pack(padx=4,pady=4,expand=YES,fill=BOTH,side=BOTTOM)
 
 		self.update()
@@ -52,11 +49,6 @@ class ImageViewer(Frame):
 
 	def clip(self, newclip=None):
 		return self.canvas.clip(newclip)
-
-	def zoomin(self):
-		self.canvas.zoom(2)
-	def zoomout(self):
-		self.canvas.zoom(0.5)
 
 	def bindCanvas(self, event, func):
 		self.canvas.bindCanvas(event, func)
