@@ -291,7 +291,7 @@ class wxContainerWidget(wxWidget):
 			self.notebooksizer = wxNotebookSizer(self.notebook)
 			if self.sizer is not None:
 				self.sizer.Add(self.notebooksizer, 0,
-												wxALIGN_CENTER_HORIZONTAL | wxALL, 5)
+												wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALL, 5)
 			self.layout()
 		return self.notebook
 
