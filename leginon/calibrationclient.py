@@ -29,7 +29,7 @@ class CalibrationClient(object):
 		## acquire image at this state
 		print 'creating EM data'
 		print 'state =', state
-		newemdata = data.ScopeEMData(('scope',), initializer=state)
+		newemdata = data.ScopeEMData(id=('scope',), initializer=state)
 #		needs unlock too
 #		print 'publishing lock'
 #		self.node.publish(event.LockEvent(self.node.ID()))
@@ -101,7 +101,7 @@ class CalibrationClient(object):
 				shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
 				shiftrows = shift[0]
 				shiftcols = shift[1]
-				d = data.DriftData(self.ID(), rows=shiftrows, cols=shiftcols)
+				d = data.DriftData(id=self.ID(), rows=shiftrows, cols=shiftcols)
 				self.publish(d, database=True)
 
 				drift = abs(shift[0] + 1j * shift[1])
@@ -134,7 +134,7 @@ class CalibrationClient(object):
 		print 'correlation'
 		pcimage = self.correlator.phaseCorrelate()
 		#pcimagedata = data.PhaseCorrelationImageData(self.node.ID(), pcimage, imagedata1.id, imagedata2.id)
-		pcimagedata = data.PhaseCorrelationImageData(self.node.ID(), image=pcimage, subject1=imagedata1['id'], subject2=imagedata2['id'])
+		pcimagedata = data.PhaseCorrelationImageData(id=self.node.ID(), image=pcimage, subject1=imagedata1['id'], subject2=imagedata2['id'])
 
 		#self.publish(pcimagedata, pubevent=True)
 
@@ -185,7 +185,7 @@ class MatrixCalibrationClient(CalibrationClient):
 		stores a new calibration matrix
 		'''
 		newmatrix = Numeric.array(matrix, Numeric.Float64)
-		caldata = data.MatrixCalibrationData(self.node.ID(), magnification=mag, type=type, matrix=matrix)
+		caldata = data.MatrixCalibrationData(id=self.node.ID(), magnification=mag, type=type, matrix=matrix)
 		self.node.publish(caldata, database=True)
 
 
@@ -226,7 +226,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				tilts[tiltaxis] = (0, tilt_value)
 
 		## return to original beam tilt
-		emdata = data.ScopeEMData(('scope',), initializer=tiltcenter)
+		emdata = data.ScopeEMData(id=('scope',), initializer=tiltcenter)
 		self.node.publishRemote(emdata)
 
 		print 'TILTS'
@@ -337,7 +337,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			print 'PIXELSHIFT2', pixelshift2
 		finally:
 			## return to original beam tilt
-			emdata = data.ScopeEMData(('scope',), initializer=beamtilt)
+			emdata = data.ScopeEMData(id=('scope',), initializer=beamtilt)
 			self.node.publishRemote(emdata)
 
 		return (pixelshift1, pixelshift2)
@@ -380,7 +380,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			print 'PIXELSHIFT2', pixelshift2
 		finally:
 			## return to original beam tilt
-			emdata = data.ScopeEMData(('scope',), initializer=beamtilt)
+			emdata = data.ScopeEMData(id=('scope',), initializer=beamtilt)
 			self.node.publishRemote(emdata)
 
 		pixelshiftdiff = {}
@@ -595,5 +595,5 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		current['stage position']['y'] += deltagon['y']
 		print 'current after delta', current
 
-		stagedata = data.ScopeEMData(('scope',), initializer=current)
+		stagedata = data.ScopeEMData(id=('scope',), initializer=current)
 		self.publishRemote(stagedata)
