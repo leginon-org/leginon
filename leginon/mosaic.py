@@ -431,10 +431,12 @@ class EMMosaic(object):
 			scale = 1.0
 		else:
 			maxdim = max(self.mosaicshape)
-			scale = float(maxdimension) / float(maxdim)
+			self.scale = float(maxdimension) / float(maxdim)
+			mshape = self.scaled(mshape)
+			## this is stupid, but avoids rounding problems
+			## and misaligned matrices errors
+			scale = float(maxdimension-1) / float(maxdim)
 		self.scale = scale
-
-		mshape = self.scaled(mshape)
 
 		### create mosaic image
 		typecode = self.tiles[0].image.typecode()
