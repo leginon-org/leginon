@@ -6,6 +6,7 @@ import gui.wx.ImageViewer
 import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.Stats
+import gui.wx.ToolBar
 import wx
 
 ImageUpdatedEventType = wx.NewEventType()
@@ -39,6 +40,27 @@ class Panel(gui.wx.Node.Panel):
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+													'settings',
+													shortHelpString='Settings')
+		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_GRID,
+													'grid',
+													shortHelpString='Grid')
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
+		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_ACQUIRE,
+													'acquire',
+													shortHelpString='Acquire')
+		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
+													'play',
+													shortHelpString='Continuous Acquire')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_STOP,
+													'stop',
+													shortHelpString='Stop')
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
+
 		self.initialize()
 
 		self.SetSizerAndFit(self.szmain)
@@ -48,20 +70,6 @@ class Panel(gui.wx.Node.Panel):
 		# stats
 		self.statspanel = gui.wx.Stats.StatsPanel(self)
 		self.szmain.Add(self.statspanel, (1, 0), (1, 1), wx.EXPAND)
-
-		# buttons
-		self.bsettings = wx.Button(self, -1, 'Settings...')
-		self.bgrid = wx.Button(self, -1, 'Grid...')
-		self.bgrid.Enable(False)
-		self.bacquire = wx.Button(self, -1, 'Acquire')
-		self.bcontinuous = wx.Button(self, -1, 'Continuous')
-
-		self.szbuttons = wx.GridBagSizer(5, 5)
-		self.szbuttons.Add(self.bsettings, (0, 0), (1, 1), wx.EXPAND)
-		self.szbuttons.Add(self.bgrid, (1, 0), (1, 1), wx.EXPAND)
-		self.szbuttons.Add(self.bacquire, (2, 0), (1, 1), wx.EXPAND)
-		self.szbuttons.Add(self.bcontinuous, (3, 0), (1, 1), wx.EXPAND)
-		self.szmain.Add(self.szbuttons, (2, 0), (1, 1), wx.ALIGN_CENTER)
 
 		# image
 		self.imagepanel = self.imageclass(self, -1)
@@ -80,20 +88,26 @@ class Panel(gui.wx.Node.Panel):
 
 	def onNodeInitialized(self):
 		self.settingsdialog = SettingsDialog(self)
-		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
-		self.Bind(wx.EVT_BUTTON, self.onAcquireButton, self.bacquire)
-		self.Bind(wx.EVT_BUTTON, self.onContinuousButton, self.bcontinuous)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+											id=gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool,
+											id=gui.wx.ToolBar.ID_ACQUIRE)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
+											id=gui.wx.ToolBar.ID_PLAY)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
+											id=gui.wx.ToolBar.ID_STOP)
 		self.Bind(gui.wx.Events.EVT_ACQUISITION_DONE, self.onAcquisitionDone)
 		if self.node.projectdata.isConnected():
-			self.Bind(wx.EVT_BUTTON, self.onGridButton, self.bgrid)
-			self.bgrid.Enable(True)
+			self.toolbar.Bind(wx.EVT_TOOL, self.onGridTool,
+												id=gui.wx.ToolBar.ID_GRID)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, True)
 
 	def _acquisitionEnable(self, enable):
-		self.bsettings.Enable(enable)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, enable)
 		if self.node.projectdata.isConnected():
-			self.bgrid.Enable(enable)
-		self.bacquire.Enable(enable)
-		self.bcontinuous.Enable(enable)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, enable)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ACQUIRE, enable)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, enable)
 
 	def onAcquisitionDone(self, evt):
 		self._acquisitionEnable(True)
@@ -110,45 +124,43 @@ class Panel(gui.wx.Node.Panel):
 		evt = ImageUpdatedEvent(self, name, image, targets, stats)
 		self.GetEventHandler().AddPendingEvent(evt)
 
-	def onSettingsButton(self, evt):
+	def onSettingsTool(self, evt):
 		self.settingsdialog.ShowModal()
 
-	def onGridButton(self, evt):
+	def onGridTool(self, evt):
 		dialog = GridDialog(self)
 		if dialog.ShowModal() == wx.ID_OK:
 			self.node.gridbox = dialog.gridbox
 			self.node.grid = dialog.grid
 		dialog.Destroy()
 
-	def onAcquireButton(self, evt):
+	def onAcquireTool(self, evt):
 		self._acquisitionEnable(False)
 		threading.Thread(target=self.node.acquireImage).start()
 
 	def onLoopStopped(self, evt):
-		self.bcontinuous.SetLabel('Continuous')
 		self._acquisitionEnable(True)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
 
 	def loopStopped(self):
 		evt = LoopStoppedEvent(self)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onLoopStarted(self, evt):
-		self.bcontinuous.SetLabel('Stop')
-		self.bcontinuous.Enable(True)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, True)
 
 	def loopStarted(self):
 		evt = LoopStartedEvent(self)
 		self.GetEventHandler().AddPendingEvent(evt)
 
-	def onContinuousButton(self, evt):
+	def onPlayTool(self, evt):
 		self._acquisitionEnable(False)
-		if self.bcontinuous.GetLabel() == 'Continuous':
-			self.node.acquisitionLoopStart()
-		elif self.bcontinuous.GetLabel() == 'Stop':
-			self.node.acquisitionLoopStop()
-		else:
-			self._acquisitionEnable(True)
-			raise RuntimeError
+		self.node.acquisitionLoopStart()
+
+	def onStopTool(self, evt):
+		self._acquisitionEnable(False)
+		self.node.acquisitionLoopStop()
 
 class GridDialog(wx.Dialog):
 	def __init__(self, parent):

@@ -19,6 +19,7 @@ ID_PAUSES = 1015
 ID_AUTOFOCUS = 1016
 ID_MANUAL_FOCUS = 1017
 ID_MODEL = 1018
+ID_GRID = 1019
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):
