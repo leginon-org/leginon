@@ -563,6 +563,7 @@ class SetupWizard(wx.wizard.Wizard):
 		self.Bind(wx.wizard.EVT_WIZARD_FINISHED, self.onFinished)
 
 		self.FitToPage(self.userpage)
+		self.Raise()
 		if self.userpage.skip:
 			self.RunWizard(self.userpage.GetNext())
 		else:

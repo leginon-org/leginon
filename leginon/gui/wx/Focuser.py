@@ -69,6 +69,7 @@ class Panel(gui.wx.Acquisition.Panel):
 
 	def onManualCheck(self, evt):
 		#self.manualdialog.MakeModal(True)
+		self.manualdialog.Raise()
 		self.manualdialog.Show()
 
 	def onManualCheckDone(self, evt):
@@ -246,7 +247,8 @@ class ManualFocusSettingsDialog(gui.wx.Dialog.Dialog):
 
 class ManualFocusDialog(wx.MiniFrame):
 	def __init__(self, parent, node, title='Manual Focus'):
-		wx.MiniFrame.__init__(self, parent, -1, title)
+		wx.MiniFrame.__init__(self, parent, -1, title,
+													style=wx.DEFAULT_FRAME_STYLE|wx.RESIZE_BORDER)
 		self.node = node
 
 		self.toolbar = wx.ToolBar(self, -1)
