@@ -37,11 +37,11 @@ class RasterFinder(targetfinder.TargetFinder):
 		'ice max mean': 0.2,
 		'ice max std': 0.2,
 		'focus convolve': False,
-		'focus convolve template': [(0, 0)],
-		'focus constant template': [(0, 0)],
+		'focus convolve template': [],
+		'focus constant template': [],
 		'acquisition convolve': False,
-		'acquisition convolve template': [(0, 0)],
-		'acquisition constant template': [(0, 0)],
+		'acquisition convolve template': [],
+		'acquisition constant template': [],
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
