@@ -35,20 +35,20 @@ class Acquisition(targetwatcher.TargetWatcher):
 		If called with targetdata=None, this simulates what occurs at
 		a target (going to presets, acquiring images, etc.)
 		'''
-		## wait for all focus targets to complete
-		for tid,teventinfo in self.targetevents.items():
-			print 'waiting for target %s to complete' % (tid,)
+		## wait for focus target list to complete
+		for tid,teventinfo in self.targetlistevents.items():
+			print 'waiting for target list %s to complete' % (tid,)
 			teventinfo['received'].wait()
 
 		## check status of all done focus targets
 		abort = True
-		if not self.targetevents:
+		if not self.targetlistevents:
 			abort = False
-		for tid,teventinfo in self.targetevents.items():
+		for tid,teventinfo in self.targetlistevents.items():
 			if teventinfo['status'] == 'success':
 				abort = False
 
-		self.targetevents.clear()
+		self.targetlistevents.clear()
 		
 		if abort:
 			print 'Aborting this target because focus failed'

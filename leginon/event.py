@@ -83,11 +83,19 @@ class NodeUninitializedEvent(NotificationEvent):
 	'Event sent by a node to indicate that it is no longer operational'
 	pass
 
-class TargetDoneEvent(NotificationEvent):
+class OLDTargetDoneEvent(NotificationEvent):
 	'Event indicating target is done'
 	def typemap(cls):
 		t = NotificationEvent.typemap()
 		t += [ ('targetid', tuple), ('status', str)]
+		return t
+	typemap = classmethod(typemap)
+
+class TargetListDoneEvent(NotificationEvent):
+	'Event indicating target list is done'
+	def typemap(cls):
+		t = NotificationEvent.typemap()
+		t += [ ('targetlistid', tuple), ('status', str)]
 		return t
 	typemap = classmethod(typemap)
 
