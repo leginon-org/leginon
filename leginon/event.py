@@ -93,8 +93,8 @@ class NodeEvents(object):
 
 
 class Event(object):
-	def __init__(self, extra=''):
-		self.extra = extra
+	def __init__(self):
+		pass
 
 	def hierarchy(cls):
 		mybasetup = bases_tup(cls)
@@ -106,20 +106,14 @@ class Event(object):
 		thing can be class or instance
 		"""
 
-		if type(thing) != type:
-			extra = thing.extra
-		else:
-			extra = ''
-
-
 		picklestring = cPickle.dumps(thing)
-		xmlrpcdict = {'class':thing.hierarchy(), 'pickle':picklestring, 'extra':extra}
+		xmlrpcdict = {'class':thing.hierarchy(), 'pickle':picklestring}
 		return xmlrpcdict
 
 	class_xmlrpc_repr = classmethod(xmlrpc_repr)
 
 	def __str__(self):
-		ret = `self.hierarchy()`
+		ret = 'hierarchy: ' + `self.hierarchy()`
 		return ret
 
 
@@ -147,12 +141,24 @@ class YourEvent(Event):
 
 
 class DataPublished(Event):
-	def __init__(self):
+	def __init__(self, dataid):
 		Event.__init__(self)
+		self.dataid = dataid
+
+	def xmlrpc_repr(self):
+		repr = Event.xmlrpc_repr(self)
+		repr['dataid'] = self.dataid
+		return repr
+
+	def __str__(self):
+		ret = Event.__str__(self)
+		ret = '%s\ndataid:  %d' % (ret, self.dataid)
+		return ret
+
 
 class ImagePublished(DataPublished):
-	def __init__(self):
-		DataPublished.__init__(self)
+	def __init__(self, dataid):
+		DataPublished.__init__(self, dataid)
 
 
 

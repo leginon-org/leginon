@@ -6,18 +6,18 @@ import location
 import registry
 import event
 
-class Node(xmlrpcserver.xmlrpcserver):
+class Node(object):
 	def __init__(self, manageraddress):
-		self.server = xmlrpcserver(self)
+		self.rpcserver = xmlrpcserver.xmlrpcserver(self)
 
 		self.datahandler = DataHandler(self)
 
 		# it might be better to change NodeLocation to take
 		# and instance of Location as part of the constructor
 		# or the whole thing could be a dictionary
-		self.location = location.NodeLocation(self.location.hostname,
-							self.location.rpcport,
-							self.location.pid,
+		self.location = location.NodeLocation(self.rpcserver.location.hostname,
+							self.rpcserver.location.rpcport,
+							self.rpcserver.location.pid,
 							self.datahandler.port)
 
 		self.init_events()
@@ -31,11 +31,13 @@ class Node(xmlrpcserver.xmlrpcserver):
 		raise NotImplementedError()
 
 	def __del__(self):
-		self.manager_close()
+		print 'Node del unregistering'
+		self.unregister()
+		print 'Node del done unregistering'
 
 	def register(self):
 
-		meths = self.EXPORT_methods()
+		meths = self.rpcserver.EXPORT_methods()
 
 		eventinfo = {}
 		eventinfo['inputs'] = self.events.inputmap.keys()
@@ -49,10 +51,11 @@ class Node(xmlrpcserver.xmlrpcserver):
 		id = self.managerlocation.rpc('addNode', (nodeinfo,))
 		return id
 
-	def manager_close(self):
-		print 'manager_close'
+	def unregister(self):
+		print 'unregister'
 		try:
 			self.managerlocation.rpc('deleteNode', (self.id,))
+			print 'deleteNode was just called on manager'
 		except:
 			pass
 
@@ -115,9 +118,9 @@ class DataHandler(object):
 
 		return data
 
-class Manager(xmlrpcserver.xmlrpcserver):
+class Manager(object):
 	def __init__(self, *args, **kwargs):
-		xmlrpcserver.xmlrpcserver.__init__(self)
+		self.rpcserver = xmlrpcserver.xmlrpcserver(self)
 		self.registry = registry.Registry()
 		self.distributor = event.EventDistributor(self.registry)
 		self.locations = {}
@@ -130,6 +133,12 @@ class Manager(xmlrpcserver.xmlrpcserver):
 				cPickle.loads(node['location pickle'])))
 
 		print 'node %s has been added' % id
+
+		print ''
+		print 'REGISTRY'
+		print self.registry
+		print ''
+
 		return id
 
 	def EXPORT_deleteNode(self, id):

@@ -39,9 +39,11 @@ class xmlrpcserver(SimpleXMLRPCServer):
 					raise
 		if not port:
 			raise RuntimeError('no ports available')
+
 		self.location = location.Location(hostname,
 						port,
 						os.getpid())
+
 		self.prefix_name = "EXPORT_"
 		self._start_serving()
 
@@ -51,7 +53,7 @@ class xmlrpcserver(SimpleXMLRPCServer):
 		print 'xml-rpc server %s:%s' % (hostname,port)
 		self.register_instance(self)
 		th = threading.Thread(target=self.serve_forever)
-		#th.setDaemon(1)
+		th.setDaemon(1)
 		th.start()
 		self.serverthread = th
 
