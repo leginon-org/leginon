@@ -94,8 +94,9 @@ class Node(leginonobject.LeginonObject):
 		self.server.exit()
 		print "%s exited" % (self.id,)
 
-	def die(self, ievent):
+	def die(self, ievent=None):
 		self.die_event.set()
+		return ''
 
 	def defineUserInterface(self):
 		'''
@@ -124,6 +125,7 @@ class Node(leginonobject.LeginonObject):
 		self.clientlistdata = self.registerUIData('clientlist', 'array', permissions='r')
 		self.clientlistdata.set(self.clientlist)
 
+		exitspec = self.registerUIMethod(self.die, 'Exit', ())
 
 		idspec = self.registerUIData('ID', 'array', permissions='r', default=self.id)
 		#idspec.set(self.id)
@@ -135,7 +137,7 @@ class Node(leginonobject.LeginonObject):
 		datatree = self.registerUIData('Data', 'struct', permissions='r')
 		datatree.set(self.uiDataDict)
 
-		c = self.registerUIContainer('Node Info', (idspec, classspec, locspec, datatree))
+		c = self.registerUIContainer('Node', (exitspec, idspec, classspec, locspec, datatree))
 
 		return c
 
