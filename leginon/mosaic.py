@@ -114,7 +114,9 @@ class Mosaic(object):
 		position = self.positionmethods[self.positionmethod](image, neighbors)
 		if image is None:
 			raise ValueError('invalid image for tile')
-		self.tiles.append(Tile(image, position))
+		tile = Tile(image, position)
+		self.tiles.append(tile)
+		return tile
 
 	def automaticPosition(self, image, neighbors):
 		for positionmethod in self.automaticpriority:
@@ -345,7 +347,9 @@ class EMMosaic(Mosaic):
 		state['camera'] = imagedata['camera']
 		position = self.positionmethods[self.positionmethod](imagedata)
 
-		self.tiles.append(EMTile(image, state, position, imagedata))
+		tile = EMTile(image, state, position, imagedata)
+		self.tiles.append(tile)
+		return tile
 
 	def positionByCalibration(self, state):
 		if self.calibration == 'all':
