@@ -1,6 +1,9 @@
 import math
 import numarray
 import numarray.fft
+import numarray.linear_algebra
+import numarray.mlab
+import numarray.nd_image
 import numextension
 
 def zeroEdges(image, n=4):
@@ -162,18 +165,20 @@ def logPolar(image, thetas=256, logrhos=256):
 			#logpolar[theta, logrho] = bicubic(image, x, y)
 	return logpolar
 
-def crossCorrelation(image1, image2):
+def crossCorrelate(image1, image2):
 	fft1 = numarray.fft.real_fft2d(image1)
 	fft2 = numarray.fft.real_fft2d(image2)
 	xc = fft1*fft2.conjugate()
 	return numarray.fft.inverse_real_fft2d(xc)
 
-def phaseCorrelation(image1, image2):
+def phaseCorrelate(image1, image2):
 	fft1 = numarray.fft.real_fft2d(image1)
 	fft2 = numarray.fft.real_fft2d(image2)
-	xc = fft1*fft2.conjugate()
+	xc = fft1*fft2.conjugate() + 1e-16
 	pc = xc/numarray.absolute(xc)
-	return numarray.fft.inverse_real_fft2d(pc)
+	pc = numarray.fft.inverse_real_fft2d(pc)
+	#pc[0, 0] = 0.0
+	return pc
 
 def findMax(image):
 	columns = image.shape[1]
@@ -184,21 +189,68 @@ def findMax(image):
 
 def findPeak(image):
 	i, j, value = findMax(image)
+
+	array = numarray.zeros((5,), image.type())
+
+	offset = i - 2
+	for k in range(5):
+		if k + offset >= image.shape[0]:
+			array[k] = image[k + offset - image.shape[0], j]
+		else:
+			array[k] = image[k + offset, j]
+	isubpixel = leastSquaresFindPeak(array)
+
+	offset = j - 2
+	for k in range(5):
+		if k + offset >= image.shape[1]:
+			array[k] = image[i, k + offset - image.shape[1]]
+		else:
+			array[k] = image[i, k + offset]
+	jsubpixel = leastSquaresFindPeak(array)
+
 	if i > image.shape[0]/2.0:
 		i -= image.shape[0]
+		i -= isubpixel
+	else:
+		i += isubpixel
+
 	if j > image.shape[1]/2.0:
 		j -= image.shape[1]
-	return i, j, value
+		j -= jsubpixel
+	else:
+		j += jsubpixel
 
-def findRotationAndScale(image1, image2, window=None, highpass=None):
+	return (i, j), value
+
+def leastSquaresFindPeak(array):
+	dm = numarray.zeros((array.shape[0], 3), numarray.Float)
+	for i in range(dm.shape[0]):
+		dm[i] = (i**2, i, 1)
+
+	fit = numarray.linear_algebra.linear_least_squares(dm, array)
+	coeffs = fit[0]
+	residuals = fit[1][0]
+
+	try:
+		peak = -coeffs[1] / 2.0 / coeffs[0]
+	except ZeroDivisionError:
+		raise RuntimeError('least squares fit has zero coefficient')
+
+	peak -= array.shape[0]/2.0
+
+	value = coeffs[0]*peak**2 + coeffs[1]*peak + coeffs[2]
+
+	return peak
+
+def findRotationScale(image1, image2, window=None, highpass=None):
 	if image1.shape != image2.shape:
 		raise ValueError
 
 	shape = image1.shape
 	if window is None:
 		window = numextension.hanning(shape[0], shape[1], a=0.54)
-	image1 *= window
-	image2 *= window
+	image1 = image1 * window
+	image2 = image2 * window
 
 	image1 = swapQuadrants(numarray.fft.real_fft2d(image1))
 	image2 = swapQuadrants(numarray.fft.real_fft2d(image2))
@@ -212,19 +264,29 @@ def findRotationAndScale(image1, image2, window=None, highpass=None):
 	image1 *= highpass
 	image2 *= highpass
 
-	logpolarshape = (256, 256)
+	#logpolarshape = (256, 256)
+	#logpolarshape = (shape[0], shape[1]/2)
+	logpolarshape = (shape[0]*2, shape[1])
 	image1 = numextension.logpolar(image1, *logpolarshape)
 	image2 = numextension.logpolar(image2, *logpolarshape)
 
-	pc = phaseCorrelation(image1, image2)
-
-	theta, logrho, value = findPeak(pc)
-
+	pc = phaseCorrelate(image1[image1.shape[0]/2:], image2[image2.shape[0]/2:])
+	peak, value = findPeak(pc)
+	theta, logrho = peak
 	rotation = (180.0*theta)/logpolarshape[0]
 	base = shape[1]**(1.0/logpolarshape[1])
 	scale = base**logrho
+	r1 = rotation, scale, value
 
-	return rotation, scale, value
+	pc = phaseCorrelate(image1[:image1.shape[0]/2], image2[:image2.shape[0]/2])
+	peak, value = findPeak(pc)
+	theta, logrho = peak
+	rotation = (180.0*theta)/logpolarshape[0]
+	base = shape[1]**(1.0/logpolarshape[1])
+	scale = base**logrho
+	r2 = rotation, scale, value
+
+	return r1, r2
 
 	'''
 	images = [hammingWindow(i) for i in [image1, image2]]
@@ -233,13 +295,178 @@ def findRotationAndScale(image1, image2, window=None, highpass=None):
 	ffts = [magnitude(f) for f in ffts]
 	ffts = [highPass(f) for f in ffts]
 	lps = [logPolar(f) for f in ffts]
-	pc = phaseCorrelation(*lps)
-	theta, logrho, value = findPeak(pc)
+	pc = phaseCorrelate(*lps)
+	peak, value = findPeak(pc)
+	theta, logrho = peak
 	rotation = (180.0*theta)/lps[0].shape[0]
 	base = ffts[0].shape[1]**(1.0/lps[0].shape[1])
 	scale = base**logrho
 	return rotation, scale, value
 	'''
+
+def rotateAndPad(image1, image2, theta):
+	r = numarray.nd_image.rotate(image2, theta)
+	m = 2**int(math.ceil(math.log(max(r.shape + image1.shape))/math.log(2)))
+	shape = (m, m)
+	p1 = numarray.zeros(shape, image1.type())
+	p2 = numarray.zeros(shape, r.type())
+	for p, i in [(p1, image1), (p2, r)]:
+		offset = ((p.shape[0] - i.shape[0])/2, (p.shape[0] - i.shape[0])/2)
+		p[offset[0]:offset[0] + i.shape[0], offset[1]:offset[1] + i.shape[1]] = i
+	return p1, p2
+
+def normalize(image):
+	min, max = numextension.minmax(image)
+	return (image - min)/(max - min)
+
+def _minmax(coor, minc, maxc):
+	if coor[0] < minc[0]:
+		minc[0] = coor[0]
+	if coor[0] > maxc[0]:
+		maxc[0] = coor[0]
+	if coor[1] < minc[1]:
+		minc[1] = coor[1]
+	if coor[1] > maxc[1]:
+		maxc[1] = coor[1]
+	return minc, maxc
+
+def _minmax(coor, minc, maxc):
+    if coor[0] < minc[0]:
+        minc[0] = coor[0]
+    if coor[0] > maxc[0]:
+        maxc[0] = coor[0]
+    if coor[1] < minc[1]:
+        minc[1] = coor[1]
+    if coor[1] > maxc[1]:
+        maxc[1] = coor[1]
+    return minc, maxc
+
+def findRotationScaleTranslation(image1, image2, window=None, highpass=None):
+	image1 = normalize(image1)
+	image2 = normalize(image2)
+
+	r1, r2 = findRotationScale(image1, image2, window, highpass)
+	angle1, angle2 = r1[0], r2[0]
+	scale1, scale2 = r1[1], r2[1]
+
+	shape = image2.shape[0]*2, image2.shape[1]*2
+
+	r = rotateScaleOffset(image2, (-angle1, -angle2), (scale1, scale2), (0.0, 0.0), shape)
+
+	'''
+	rotation = numarray.identity(2, numarray.Float)
+	rotation[0, 0] = math.cos(math.radians(-angle1))
+	rotation[0, 1] = math.sin(math.radians(-angle1))
+	rotation[1, 0] = -math.sin(math.radians(-angle1))
+	rotation[1, 1] = math.cos(math.radians(-angle1))
+
+	scale = numarray.identity(2, numarray.Float)
+	scale[0, 0] = scale1
+	scale[1, 1] = scale2
+
+	shear = numarray.identity(2, numarray.Float)
+	shear[0, 1] = (-angle2 - -angle1)/45.0
+
+	m = numarray.identity(2, numarray.Float)
+	m = numarray.matrixmultiply(rotation, m)
+	m = numarray.matrixmultiply(shear, m)
+	m = numarray.matrixmultiply(scale, m)
+
+	irotation = numarray.transpose(rotation)
+
+	iscale = numarray.identity(2, numarray.Float)
+	iscale[0, 0] = 1.0/scale[0, 0]
+	iscale[1, 1] = 1.0/scale[1, 1]
+
+	ishear = numarray.identity(2, numarray.Float)
+	ishear[0, 1] = -shear[0, 1]
+
+	im = numarray.identity(2, numarray.Float)
+	im = numarray.matrixmultiply(iscale, im)
+	im = numarray.matrixmultiply(ishear, im)
+	im = numarray.matrixmultiply(irotation, im)
+
+
+	offset = numarray.zeros((2,), numarray.Float)
+	offset = (-image2.shape[0]/2, -image2.shape[1]/2)
+	offset = numarray.matrixmultiply(im, offset)
+	offset = (-(offset[0] + shape[0]/2), -(offset[1] + shape[1]/2))
+	offset = numarray.matrixmultiply(m, offset)
+
+	r = numarray.nd_image.affine_transform(image2, m, offset, shape)
+	'''
+
+	o = ((shape[0] - image1.shape[0])/2, (shape[1] - image1.shape[1])/2)
+	i = numarray.zeros(shape, image1.type())
+	i[o[0]:o[0] + image1.shape[0], o[1]:o[1] + image1.shape[1]] = image1
+
+	offset = 0.0
+	pc = phaseCorrelate(i, r)
+	peak, value = findPeak(pc)
+	c = i - numarray.nd_image.shift(r, peak)
+	print '(%g, %g), %g' % (peak + (value,))
+
+	for a in range(1, 4):
+		r = numarray.mlab.rot90(r)
+		pc = phaseCorrelate(i, r)
+		p, v = findPeak(pc)
+		print '(%g, %g), %g' % (p + (v,))
+		if v > value:
+			peak = p
+			value = v
+			offset = a*90.0
+			c = i - numarray.nd_image.shift(r, peak)
+
+	angle1 += offset
+	angle2 += offset
+
+	return (angle1, angle2), (scale1, scale2), peak, value, c
+
+def rotateScaleOffset(image, angle, scale, offset, shape=None):
+	angle1, angle2 = angle
+	scale1, scale2 = scale
+	rotation = numarray.identity(2, numarray.Float)
+	rotation[0, 0] = math.cos(math.radians(angle1))
+	rotation[0, 1] = math.sin(math.radians(angle1))
+	rotation[1, 0] = -math.sin(math.radians(angle1))
+	rotation[1, 1] = math.cos(math.radians(angle1))
+
+	scale = numarray.identity(2, numarray.Float)
+	scale[0, 0] = scale1
+	scale[1, 1] = scale2
+
+	shear = numarray.identity(2, numarray.Float)
+	shear[0, 1] = (angle2 - angle1)/45.0
+
+	m = numarray.identity(2, numarray.Float)
+	m = numarray.matrixmultiply(rotation, m)
+	m = numarray.matrixmultiply(shear, m)
+	m = numarray.matrixmultiply(scale, m)
+
+	irotation = numarray.transpose(rotation)
+
+	iscale = numarray.identity(2, numarray.Float)
+	iscale[0, 0] = 1.0/scale[0, 0]
+	iscale[1, 1] = 1.0/scale[1, 1]
+
+	ishear = numarray.identity(2, numarray.Float)
+	ishear[0, 1] = -shear[0, 1]
+
+	im = numarray.identity(2, numarray.Float)
+	im = numarray.matrixmultiply(iscale, im)
+	im = numarray.matrixmultiply(ishear, im)
+	im = numarray.matrixmultiply(irotation, im)
+
+	if shape is None:
+		shape = image.shape
+
+	o = numarray.zeros((2,), numarray.Float)
+	o = (offset[0] - image.shape[0]/2.0, offset[1] - image.shape[1]/2.0)
+	o = numarray.matrixmultiply(im, o)
+	o = (-(o[0] + shape[0]/2.0), -(o[1] + shape[1]/2.0))
+	o = numarray.matrixmultiply(m, o)
+
+	return numarray.nd_image.affine_transform(image, m, o, shape)
 
 if __name__ == '__main__':
 	import Mrc
@@ -248,14 +475,18 @@ if __name__ == '__main__':
 
 	window = numextension.hanning(1024, 1024, a=0.54)
 	highpass = numextension.highpass(1024, 513)
+
 	for i in range(16):
-		for j in range(9):
+		#for j in range(9):
+		for j in [4]:
 			f1 = '04dec17b_000%d_0000%dgr.mrc' % (749 + i, j + 1)
 			f2 = '05jan20a_000%d_0000%dgr.mrc' % (749 + i, j + 1)
 			image1 = Mrc.mrc_to_numeric(f1)
-			image2 = Mrc.mrc_to_numeric(f2)
-			t = time.time()
-			results = findRotationAndScale(image1, image2, window, highpass)
-			t = time.time() - t
-			print results, t
+			#image2 = Mrc.mrc_to_numeric(f2)
+			image2 = rotateScaleOffset(image1, (30.0, 30.0), (1.0, 1.0), (0.0, 0.0))
+			
+			a, s, p, v, image =  findRotationScaleTranslation(image1, image2, window, highpass)
+			print '(%g, %g), (%g, %g), (%g, %g)' % (s + p + a)
+			Mrc.numeric_to_mrc(image, '%d_%d.mrc' % (749 + i, j + 1))
+			raise RuntimeError
 
