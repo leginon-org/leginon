@@ -362,6 +362,7 @@ class PresetsManager(node.Node):
 		if newname:
 			newpreset = self.fromScope(newname)
 			d = newpreset.toDict(noNone=True)
+			del d['session']
 			self.presetparams.set(d, callback=False)
 		else:
 			print 'Enter a preset name!'
@@ -373,6 +374,7 @@ class PresetsManager(node.Node):
 			self.currentselection = None
 		else:
 			d = self.currentselection.toDict(noNone=True)
+			del d['session']
 			self.presetparams.set(d, callback=False)
 		return index
 
