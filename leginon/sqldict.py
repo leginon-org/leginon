@@ -223,7 +223,10 @@ class SQLDict:
 		orderBy['fields'] = map(lambda id: sqlexpr.Field(self.table, id), orderBy['fields'])
 
 	    c = self.cursor()
-	    q = sqlexpr.Select(items=self.fields, table=self.table, where=where, orderBy=orderBy).sqlRepr()
+	    if self.columns:
+	    	q = sqlexpr.Select(items=self.fields, table=self.table, where=where, orderBy=orderBy).sqlRepr()
+	    else:
+	    	q = sqlexpr.SelectAll(self.table, where=where, orderBy=orderBy).sqlRepr()
 	    c.execute(q)
 	    return c
 
@@ -703,7 +706,7 @@ def sqlColumnsSelect(in_dict):
 			nd.sort()
 			columns += nd
 		elif type(value) in [tuple, list]:
-			nd = sqlColumnsDefinition({seq2sqlColumn(key):repr(value)})
+			nd = sqlColumnsSelect({seq2sqlColumn(key):repr(value)})
 			columns += nd
 	return columns
 

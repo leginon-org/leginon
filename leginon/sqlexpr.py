@@ -295,6 +295,38 @@ class Select(SQLExpression):
             select += " LIMIT %s" % sqlRepr(self.limit)
         return select
 
+class SelectAll(SQLExpression):
+    def __init__(self,table, where=None, groupBy=None,
+                 having=None, orderBy=None, limit=None):
+	self.table = table
+        self.whereClause = where
+        self.groupBy = groupBy
+        self.having = having
+        self.orderBy = orderBy
+        self.limit = limit
+
+    def sqlRepr(self):
+        select = "SELECT * " 
+
+        select += " FROM %s" % self.table
+        
+        if self.whereClause is not None:
+            select += " WHERE %s" % sqlRepr(self.whereClause)
+        if self.groupBy is not None:
+            select += " GROUP BY %s" % sqlRepr(self.groupBy)
+        if self.having is not None:
+            select += " HAVING %s" % sqlRepr(self.having)
+        if self.orderBy is not None:
+	    fields = self.orderBy['fields']
+	    sort = 'ASC'
+	    if self.orderBy.has_key('sort'):
+	        sort = self.orderBy['sort']
+	    fields = string.join(map(lambda id: sqlRepr(id), fields), ', ')
+            select += " ORDER BY %s %s" % (fields, sort,)
+        if self.limit is not None:
+            select += " LIMIT %s" % sqlRepr(self.limit)
+        return select
+
 class ColumnSpec(dict):
         """
         ColumnSpec is a dictionary describing one column of a table.
@@ -491,13 +523,6 @@ class Update(SQLExpression):
                 else:
                     update += ","
                 update += " %s=%s" % (self.template[i], sqlRepr(self.values[i]))
-        else:
-            for key, value in self.values.items():
-                if first:
-                    first = False
-                else:
-                    update += ","
-                update += " %s=%s" % (key, sqlRepr(value))
         if self.whereClause is not None:
             update += " WHERE %s" % repr(self.whereClause)
         return update
@@ -610,7 +635,7 @@ if __name__ == "__main__":
 >>> DropTable(table.preset)
 >>> CreateTable('OBJECT', [{'Field': 'Id', 'Type': 'int(20) unsigned', 'Key': 'PRIMARY', 'Extra':'auto_increment'}, {'Field': 'hash', 'Type': 'VARCHAR(64)', 'Key': 'UNIQUE', 'Index': ['hash']}, {'Field': 'objectKey', 'Type': 'varchar(50)', 'Key': 'UNIQUE', 'Index': ['objectKey(50)'], 'Null' : 'YES', 'Default': 'Denis'}, {'Field': 'object', 'Type': 'longblob'}, {'Field': 'objectKeyString', 'Type': 'text'}, {'Field': 'objectString', 'Type': 'text'},{'Field':'timestamp','Type':'timestamp','Null':'YES', 'Key':'INDEX'}])
 >>> Select([table.preset.name, table.preset.Defocus], where=LIKE(table.preset.name, "%square%"), orderBy={'fields':('id', 'name'), 'sort':'DESC'})
-result>>> Select([table.PRESET.name, table.PRESET.Defocus], where=LIKE(table.PRESET.name, "%square%"), orderBy=None)
+>>> SelectAll(table.PRESET, where=LIKE(table.PRESET.name, "%square%"), orderBy=None)
 """
     for expr in tests.split('\n'):
         if not expr.strip(): continue
