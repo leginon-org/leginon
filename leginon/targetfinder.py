@@ -194,6 +194,7 @@ class ClickTargetFinder(TargetFinder):
 		self.notifyUserSubmit()
 		self.userpause.clear()
 		self.setStatus('user input')
+		print 'userpasue is set', self.userpause.isSet()
 		self.userpause.wait()
 		self.setStatus('processing')
 		self.logger.info('User has submitted targets')
@@ -438,7 +439,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.logger.info('No targets to process')
 			return
 		imagelist = self.getMosaicImageList(targets)
-		self.logger.info('creating MosaicTileData')
 		self.logger.debug('creating MosaicTileData for image %s' % (imagedata.dbid,))
 		tiledata = data.MosaicTileData(image=imagedata, list=imagelist, session=self.session)
 		self.logger.debug('publishing MosaicTileData')
@@ -447,7 +447,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.addTile(imagedata)
 		if self.settings['mosaic image on tile change']:
 			self.createMosaicImage()
-		self.logger.info('Image data processed')
+		self.logger.debug('Image data processed')
 
 	def hasMosaicImage(self):
 		if None in (self.mosaicimage, self.mosaicimagescale):

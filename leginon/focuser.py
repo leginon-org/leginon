@@ -251,7 +251,9 @@ class Focuser(acquisition.Acquisition):
 
 		## pre manual check
 		if self.settings['check before']:
+			self.setStatus('user input')
 			self.manualCheckLoop(presettarget)
+			self.setStatus('processing')
 			resultdata['pre manual check'] = True
 			status = 'ok'
 		else:
@@ -275,7 +277,9 @@ class Focuser(acquisition.Acquisition):
 
 		## post manual check
 		if self.settings['check after']:
+			self.setStatus('user input')
 			self.manualCheckLoop(presettarget)
+			self.setStatus('processing')
 			resultdata['post manual check'] = True
 			status = 'ok'
 		else:

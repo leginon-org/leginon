@@ -184,6 +184,7 @@ class PresetsManager(node.Node):
 		'''
 		callback for received PresetChangeEvent from client
 		'''
+		self.setStatus('processing')
 		pname = ievent['name']
 		emtarget = ievent['emtarget']
 		try:
@@ -201,6 +202,7 @@ class PresetsManager(node.Node):
 			pass
 		## should we confirm if failure?
 		self.confirmEvent(ievent)
+		self.setStatus('idle')
 
 	def getPresetsFromDB(self):
 		'''

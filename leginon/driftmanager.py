@@ -150,6 +150,7 @@ class DriftManager(watcher.Watcher):
 		t.start()
 
 	def monitorDrift(self, driftdata=None):
+		self.setStatus('processing')
 		self.logger.info('DriftManager monitoring drift...')
 		if driftdata is not None:
 			## use driftdata to set up scope and camera
@@ -175,6 +176,7 @@ class DriftManager(watcher.Watcher):
 			ev = event.DriftDoneEvent()
 			self.outputEvent(ev)
 		self.logger.info('DriftManager done monitoring drift')
+		self.setStatus('idle')
 
 	def publishImageShifts(self, requested=False):
 		if requested:

@@ -431,6 +431,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		if previous:
 			return
 
+		self.setStatus('processing')
+
 		## auto or not?
 		self.hf['original'] = imdata['image']
 		self.currentimagedata = imdata
@@ -442,16 +444,19 @@ class HoleFinder(targetfinder.TargetFinder):
 
 		## user part
 		if self.settings['user check']:
+			self.setStatus('user input')
 			self.logger.info('Waiting for user to check targets...')
 			self.panel.submitTargets()
 			self.userpause.clear()
 			self.userpause.wait()
 			self.panel.targetsSubmitted()
+			self.setStatus('processing')
 
 		self.logger.info('Publising targets...')
 		### publish targets from goodholesimage
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)
+		self.setStatus('idle')
 
 	def submit(self):
 		self.userpause.set()
