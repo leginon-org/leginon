@@ -35,6 +35,9 @@ class Focuser(acquisition.Acquisition):
 		except calibrationclient.Abort:
 			print 'measureDefocusStig was aborted'
 			return 1
+		except calibrationclient.DriftingTimeout:
+			print 'drift timed out'
+			return 1
 		print 'MEASURED DEFOCUS AND STIG', correction
 		defoc = correction['defocus']
 		stigx = correction['stigx']
