@@ -196,7 +196,8 @@ class CameraPanel(wx.Panel):
 		for d in dimensions:
 			for b in self.binnings['x']:
 				if d*b <= self.size['x']:
-					key = '%d² × %d' % (d, b)
+					#key = '%d² × %d' % (d, b)
+					key = '%d^2 x %d' % (d, b)
 					geometries[key] = self.getCenteredGeometry(d, b)
 					keys.append(key)
 				else:
@@ -220,13 +221,15 @@ class CameraPanel(wx.Panel):
 			return False
 		if not self.validateGeometry(geometry):
 			raise ValueError
-		dimension = '%d × %d' % (geometry['dimension']['x'],
+		#dimension = '%d × %d' % (geometry['dimension']['x'],
+		dimension = '%d x %d' % (geometry['dimension']['x'],
 														geometry['dimension']['y'])
 		self.stdimension.SetLabel(dimension)
 		offset = '(%d, %d)' % (geometry['offset']['x'],
 															geometry['offset']['y'])
 		self.stoffset.SetLabel(offset)
-		binning = '%d × %d' % (geometry['binning']['x'],
+		#binning = '%d × %d' % (geometry['binning']['x'],
+		binning = '%d x %d' % (geometry['binning']['x'],
 														geometry['binning']['y'])
 		self.stbinning.SetLabel(binning)
 		self.geometry = geometry
@@ -256,7 +259,8 @@ class CameraPanel(wx.Panel):
 				if g == 'offset':
 					label = '(%d, %d)'
 				else:
-					label = '%d × %d'
+					#label = '%d × %d'
+					label = '%d x %d'
 				label = label % (self.geometry[g]['x'], self.geometry[g]['y'])
 				getattr(self, 'st' + g).SetLabel(label)
 			except KeyError:
