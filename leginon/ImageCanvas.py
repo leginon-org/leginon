@@ -15,6 +15,12 @@ class ImageCanvas(Frame):
 		self.scalingwidget = None
 		self.numimage = None
 
+	def displayMessage(self, message):
+		self.canvas.itemconfigure(self.canmessage, text=message,state='normal')
+
+	def deleteMessage(self):
+		self.canvas.itemconfigure(self.canmessage, state='hidden')
+
 	def bindings(self):
 		self.canvas.bind('<Configure>', self.configure_callback)
 		self.canvas.bind('<Motion>', self.motion_callback)
@@ -28,6 +34,8 @@ class ImageCanvas(Frame):
 		bgcolor = self['background']
 		can = self.canvas = Canvas(self, bg=bgcolor)
 		self.canimage = can.create_image(0, 0, anchor=NW)
+		self.canmessage = can.create_text(20,20, anchor=NW, fill='blue', state='hidden')
+
 		hs = self.hscroll = Scrollbar(self, orient=HORIZONTAL, background=bgcolor, troughcolor=bgcolor)
 		vs = self.vscroll = Scrollbar(self, orient=VERTICAL, background=bgcolor, troughcolor=bgcolor)
 
@@ -140,6 +148,7 @@ class ImageCanvas(Frame):
 			newwidth = self.photo.width()
 			newheight = self.photo.height()
 			self.resize(0,0,newwidth,newheight)
+		self.deleteMessage()
 		self.canvas.itemconfig(self.canimage, image=self.photo)
 
 	def zoom(self, factor):

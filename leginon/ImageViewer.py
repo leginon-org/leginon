@@ -44,6 +44,9 @@ class ImageViewer(Frame):
 		self.imagearray = data
 		self.canvas.use_numeric(data)
 
+	def displayMessage(self, message):
+		self.canvas.displayMessage(message)
+
 	def clip(self, newclip=None):
 		return self.canvas.clip(newclip)
 
