@@ -56,7 +56,6 @@ class Navigator(node.Node):
 		movetype = self.movetype.get()
 		calclient = self.calclients[movetype]
 		newstate = calclient.transform(pixelshift, clickscope, clickcamera)
-		print 'NEWSTATE', newstate
 		emdat = data.EMData('scope', newstate)
 		self.publishRemote(emdat)
 
