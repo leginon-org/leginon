@@ -250,7 +250,7 @@ class PresetsManager(node.Node):
 		if names is None:
 			names = self.presets.keys()
 
-		newdict = newdict.OrderedDict()
+		d = newdict.OrderedDict()
 		number = 0
 		for name in names:
 			p = self.presets[name]
@@ -259,9 +259,9 @@ class PresetsManager(node.Node):
 				self.presetToDB(newp)
 			else:
 				newp = p
-			newdict[name] = newp
+			d[name] = newp
 			number += 1
-		self.presets = newdict
+		self.presets = d
 
 		## update the selector list but keep the same preset
 		## selected
