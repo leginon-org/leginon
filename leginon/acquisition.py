@@ -161,16 +161,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		imarray = imagedata['image']
 
+		nodename = self.id[-1]
+
 		## attach preset to imagedata and create PresetImageData
 		## use same id as original imagedata
 		dataid = self.ID()
 
 		if trial:
-			trialimage = data.TrialImageData(id=dataid, initializer=imagedata, preset=presetdata)
+			trialimage = data.TrialImageData(id=dataid, initializer=imagedata, preset=presetdata, label=nodename)
 			print 'publishing trial image'
 			self.publish(trialimage, pubevent=True, database=False)
 		else:
-			pimagedata = data.AcquisitionImageData(id=dataid, initializer=imagedata, preset=presetdata)
+			pimagedata = data.AcquisitionImageData(id=dataid, initializer=imagedata, preset=presetdata, label=nodename)
 			self.publish(pimagedata, pubevent=True, database=self.databaseflag.get())
 			print 'PIMAGEDATA'
 			print '   scope image shift', pimagedata['scope']['image shift']
