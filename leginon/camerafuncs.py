@@ -22,6 +22,7 @@ class CameraFuncs(object):
 		self.node = node
 		self.__cameraconfig = data.CameraConfigData()
 		self.__cameraconfig.update(leginonconfig.CAMERA_CONFIG)
+		self.camsize = None
 
 	def acquireCameraImageData(self, camconfig=None, correction=None):
 		## configure camera
@@ -93,13 +94,18 @@ class CameraFuncs(object):
 		camconfig must be a CameraConfigData instance
 		camconfig['offset'] will be set to new value
 		'''
-		currentcamdata = self.currentCameraEMData()
-		if currentcamdata is None:
-			sizex = 4096
-			sizey = 4096
-		else:
-			sizex = currentcamdata['camera size']['x']
-			sizey = currentcamdata['camera size']['y'] 
+		if not self.camsize:
+			self.camsize = {}
+			currentcamdata = self.currentCameraEMData()
+			if currentcamdata is None:
+				self.camsize['x'] = 4096
+				self.camsize['y'] = 4096
+			else:
+				self.camsize['x'] = currentcamdata['camera size']['x']
+				self.camsize['y'] = currentcamdata['camera size']['y'] 
+
+		sizex = self.camsize['x']
+		sizey = self.camsize['y']
 
 		binx = camconfig['binning']['x']
 		biny = camconfig['binning']['y']
