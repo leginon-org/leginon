@@ -222,7 +222,6 @@ class UIApp(wxApp):
 		return true
 
 	def layout(self):
-		return
 		self.panel.Refresh()
 
 class wxWidget(object):
