@@ -51,7 +51,7 @@ class Focuser(acquisition.Acquisition):
 		'stig defocus max': 4e-6,
 		'acquire final': True,
 		'drift on z': True,
-		'correlation type': 'cross',
+		'correlation type': 'phase',
 	}
 
 	eventinputs = acquisition.Acquisition.eventinputs
