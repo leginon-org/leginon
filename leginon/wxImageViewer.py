@@ -246,7 +246,7 @@ class ImagePanel(wxPanel):
 
 		if self.smallScale():
 			xscale, yscale = self.getScale()
-			width, height = wximage.GetWidth()*xscale, wximage.GetHeight()*yscale
+			width, height = int(wximage.GetWidth()*xscale), int(wximage.GetHeight()*yscale)
 			self.bitmap = wxBitmapFromImage(wximage.Scale(width, height))
 		else:
 			self.bitmap = wxBitmapFromImage(wximage)
@@ -284,7 +284,7 @@ class ImagePanel(wxPanel):
 				virtualsize = (width - 1, height - 1)
 			else:
 				xscale, yscale = self.getScale()
-				virtualsize = ((width - 1) * xscale, (height - 1) * yscale)
+				virtualsize = (int((width - 1) * xscale), int((height - 1) * yscale))
 			self.panel.SetVirtualSize(virtualsize)
 			self.virtualsize = virtualsize
 		else:
@@ -961,7 +961,7 @@ class TargetImagePanel(ImagePanel):
 			width *= xscale
 			height *= yscale
 
-		dc.Blit(int(x - width/2), int(y - height/2), width, height,
+		dc.Blit(int(x - width/2), int(y - height/2), int(width), int(height),
 						memorydc, 0, 0, wxCOPY, True)
 
 		memorydc.SelectObject(wxNullBitmap)
@@ -996,7 +996,7 @@ class TargetImagePanel(ImagePanel):
 				height *= yscale
 
 			dc.Blit(int(x - width/2), int(y - height/2),
-							width, height, memorydc, 0, 0, wxCOPY, True)
+							int(width), int(height), memorydc, 0, 0, wxCOPY, True)
 
 			memorydc.SelectObject(wxNullBitmap)
 
