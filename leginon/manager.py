@@ -2,13 +2,14 @@
 
 import leginonobject
 import node
+import nodelib
 import event
 import signal
 
 
 class Manager(node.Node):
 	def __init__(self):
-		node.Node.__init__(self, managerloc=None)
+		node.Node.__init__(self, 'manager', managerloc=None)
 
 		## this makes every received event get distributed
 		self.addEventIn(event.Event, self.eventhandler.distribute)
@@ -31,12 +32,20 @@ class Manager(node.Node):
 		self.eventhandler.addDistmap(eventclass, from_node, to_node)
 
 	def registerNode(self, readyevent):
-		id = readyevent.origin['id']
+		newid = readyevent.origin['id']
 		loc = readyevent.origin['location']
 		hostname = loc['hostname']
 		eventport = loc['event port']
-		print 'registering node', id, hostname, eventport
-		self.addEventClient(id, hostname, eventport)
+		print 'registering node', newid, hostname, eventport
+		self.addEventClient(newid, hostname, eventport)
+		print self.eventhandler.clients
+
+	def launchNode(self, launcher, nodeid, nodeclass):
+		print 'launchNode with %s, %s, %s' % (launcher,nodeid,nodeclass)
+		ev = event.LaunchNodeEvent(nodeid, nodeclass)
+		print 'pushing LaunchNodeEvent', ev
+		self.eventhandler.push(launcher, ev)
+		print 'pushed'
 
 if __name__ == '__main__':
 	import signal, sys

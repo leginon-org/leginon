@@ -5,8 +5,8 @@ import time
 import data
 
 class MyNode(node.Node):
-	def __init__(self, managerlocation):
-		node.Node.__init__(self, managerlocation)
+	def __init__(self, nodeid, managerlocation):
+		node.Node.__init__(self, nodeid, managerlocation)
 
 		#self.addEventIn(event.ControlEvent, self.handle_intervalchange)
 		self.addEventIn(event.PublishEvent, self.handle_intervalpublished)
@@ -14,7 +14,7 @@ class MyNode(node.Node):
 
 		self.interval = 5
 		print self.location()
-		print self.id
+		print self.nodeid
 		self.main()
 
 	def main(self):
@@ -59,7 +59,7 @@ if __name__ == '__main__':
 	manloc['hostname'] = sys.argv[1]
 	manloc['event port'] = int(sys.argv[2])
 
-	m = MyNode(manloc)
+	m = MyNode(None, manloc)
 	try:
 		signal.pause()
 	except KeyboardInterrupt:

@@ -18,7 +18,3 @@ class StringData(Data):
 	def __init__(self, content):
 		Data.__init__(self, str(content))
 
-
-class NodeInfo(Data):
-	def __init__(self, content):
-		Data.__init__(self, content)

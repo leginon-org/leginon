@@ -5,16 +5,20 @@ import clientpull
 import datahandler
 
 class Node(leginonobject.LeginonObject):
-	def __init__(self, managerloc = None):
+	def __init__(self, nodeid, managerloc = None):
 		leginonobject.LeginonObject.__init__(self)
 		self.eventhandler = event.EventHandler()
 		self.datahandler = NodeDataHandler()
+		self.nodeid = nodeid
 		self.managerloc = managerloc
 		if managerloc:
-			managerhost = managerloc['hostname']
-			managerport = managerloc['event port']
-			self.addEventClient('manager', managerhost, managerport)
-			self.announce(event.NodeReadyEvent())
+			self.addManager()
+
+	def addManager(self):
+		managerhost = self.managerloc['hostname']
+		managerport = self.managerloc['event port']
+		self.addEventClient('manager', managerhost, managerport)
+		self.announce(event.NodeReadyEvent())
 
 	def main(self):
 		'''this is the node's parent method'''
@@ -32,7 +36,7 @@ class Node(leginonobject.LeginonObject):
 		self.announce(eventclass(data.id))
 
 	def mark_data(self, data):
-		data.origin['id'] = self.id
+		data.origin['id'] = self.nodeid
 		data.origin['location'] = self.location()
 
 	def research(self, creator, dataid):
@@ -46,8 +50,8 @@ class Node(leginonobject.LeginonObject):
 		loc['data port'] = self.datahandler.port
 		return loc
 
-	def addEventClient(self, id, host, port):
-		self.eventhandler.addClient(id, host, port)
+	def addEventClient(self, clientid, host, port):
+		self.eventhandler.addClient(clientid, host, port)
 
 	def addEventIn(self, eventclass, func):
 		self.eventhandler.addInput(eventclass, func)

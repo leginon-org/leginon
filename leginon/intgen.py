@@ -5,14 +5,14 @@ import time
 import data
 
 class IntGen(node.Node):
-	def __init__(self, managerlocation):
-		node.Node.__init__(self, managerlocation)
+	def __init__(self, nodeid, managerlocation):
+		node.Node.__init__(self, nodeid, managerlocation)
 
 		#self.addEventOut(event.ControlEvent)
 		self.addEventOut(event.PublishEvent)
 
 		print self.location()
-		print self.id
+		print self.nodeid
 		self.main()
 			
 	def main(self):
