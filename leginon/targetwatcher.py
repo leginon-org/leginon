@@ -37,7 +37,7 @@ class TargetWatcher(watcher.Watcher):
 		abortmeth = uidata.Method('Abort Target List', self.abortTargetListLoop)
 
 		container = uidata.MediumContainer('Target Watcher')
-		container.addObject(pausemeth, continuemeth, abortmeth)
+		container.addObjects((pausemeth, continuemeth, abortmeth))
 
 		self.uiserver.addObject(container)
 
