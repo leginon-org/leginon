@@ -22,6 +22,9 @@ class RobotControl(object):
 
 		# close column valves
 		print 'Closing column valves...',
+		self.scope.setColumnValves('closed')
+		if self.scope.getColumnValves() != 'closed':
+			raise RuntimeError('cannot close column valves')
 		print 'Done.'
 
 		# turn on turbo pump
@@ -44,7 +47,8 @@ class RobotControl(object):
 
 		# wait for led to turn off
 		print 'Waiting for stage...',
-		while self.scope.getStageStatus() != 'busy':
+		time.sleep(1.0)
+		while self.scope.getStageStatus() == 'busy':
 			time.sleep(0.5)
 		print 'Done.'
 
@@ -61,7 +65,7 @@ class RobotControl(object):
 
 		# verify holder in scope
 		print 'Verifying holder in scope...',
-		if self.scope.getHolderStatus() != 'inserted':
+		if self.scope.getHolderStatus() == 'inserted':
 			raise RuntimeError('no holder in scope')
 		print 'Done.'
 
@@ -71,6 +75,9 @@ class RobotControl(object):
 
 		# close column valves
 		print 'Closing column valves...',
+		self.scope.setColumnValves('closed')
+		if self.scope.getColumnValves() != 'closed':
+			raise RuntimeError('cannot close column valves')
 		print 'Done.'
 
 		# robot: unload probe
