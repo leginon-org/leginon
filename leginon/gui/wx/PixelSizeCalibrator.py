@@ -5,6 +5,7 @@ import gui.wx.ImageViewer
 import gui.wx.ToolBar
 
 class Panel(gui.wx.Calibrator.Panel):
+	icon = 'pixelsize'
 	def initialize(self):
 		gui.wx.Calibrator.Panel.initialize(self)
 

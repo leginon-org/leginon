@@ -14,6 +14,7 @@ def capitalize(string):
 	return string
 
 class Panel(gui.wx.Calibrator.Panel):
+	icon = 'matrix'
 	def initialize(self):
 		gui.wx.Calibrator.Panel.initialize(self)
 

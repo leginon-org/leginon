@@ -6,6 +6,7 @@ import gui.wx.Settings
 import gui.wx.ToolBar
 
 class Panel(gui.wx.Calibrator.Panel):
+	icon = 'beamtilt'
 	def initialize(self):
 		gui.wx.Calibrator.Panel.initialize(self)
 
