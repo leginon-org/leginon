@@ -1807,6 +1807,20 @@ class MatrixCalibratorSettingsData(CalibratorSettingsData):
 		return CalibratorSettingsData.typemap() + tuple(parameterstypemap)
 	typemap = classmethod(typemap)
 
+class ManualAcquisitionSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('camera settings', CameraSettingsData),
+			('screen up', bool),
+			('screen down', bool),
+			('correct image', bool),
+			('save image', bool),
+			('loop pause time', float),
+			('low dose', bool),
+			('low dose pause time', float),
+		)
+	typemap = classmethod(typemap)
+
 class Request(type):
 	def __new__(cls, dataclass):
 		return type.__new__(cls, 'Request' + dataclass.__name__, (Data,),

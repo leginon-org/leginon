@@ -98,6 +98,8 @@ class CameraPanel(wx.Panel):
 		self.ccommon.AppendItems(choices)
 		self.ccommon.SetSelection(0)
 		self.setGeometry(self.common[self.ccommon.GetStringSelection()])
+		if self.feexposuretime.GetValue() is None:
+			self.feexposuretime.SetValue(1000.0)
 		self.Enable(True)
 		self.szmain.Layout()
 		self.Thaw()

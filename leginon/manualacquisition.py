@@ -15,11 +15,24 @@ import threading
 import time
 import uidata
 import EM
+import gui.wx.ManualAcquisition
 
 class AcquireError(Exception):
 	pass
 
 class ManualAcquisition(node.Node):
+	panelclass = gui.wx.ManualAcquisition.Panel
+	settingsclass = data.ManualAcquisitionSettingsData
+	defaultsettings = {
+		'camera settings': None,
+		'screen up': False,
+		'screen down': False,
+		'correct image': False,
+		'save image': False,
+		'loop pause time': 0.0,
+		'low dose': False,
+		'low dose pause time': 0.0,
+	}
 	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
 	eventoutputs = node.Node.eventoutputs + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -61,7 +74,7 @@ class ManualAcquisition(node.Node):
 			prefix = 'un'
 		self.status.set('Acquiring %scorrected image...' % prefix)
 		try:
-			self.camerafuncs.uiApplyAsNeeded()
+			self.camerafuncs.setCameraDict(self.settings['camera settings'])
 			imagedata = self.camerafuncs.acquireCameraImageData(correction=correct)
 		except Exception, e:
 			if isinstance(e, node.ResearchError):
