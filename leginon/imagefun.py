@@ -342,12 +342,12 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=50):
 			if tmpmask[row,col]:
 				newblob = Blob(image, mask)
 				err = newblob.add_point(row, col, tmpmask)
-				if len(newblob.pixel_list) > maxblobsize:
+				if (maxblobsize is not None) and (len(newblob.pixel_list) > maxblobsize):
 					continue
 				if err:
 					continue
 				blobs.append(newblob)	
-				if len(blobs) > maxblobs:
+				if (maxblobs is not None) and (len(blobs) > maxblobs):
 					raise TooManyBlobs('found more than %s blobs' % (maxblobs,))
 
 	print 'Found %s blobs.' % (len(blobs),)
