@@ -397,10 +397,11 @@ class PresetsManager(node.Node):
 		node.Node.defineUserInterface(self)
 
 		## import
-#		self.othersession = uidata.String('Session', '', 'rw')
 		try:
 			sessionlist = self.research(dataclass=data.SessionData)
 		except IndexError:
+			print 'INDEX ERROR'
+			raise
 			sessionlist = []
 		sessionnamelist = map(lambda x: x['name'], sessionlist)
 		sessionnamelist.sort()
