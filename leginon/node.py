@@ -155,8 +155,7 @@ class Node(leginonobject.LeginonObject):
 			try:
 				self.setManager(self.nodelocations['manager'])
 			except:
-				self.printerror('exception in setManager')
-				self.printException()
+				self.logger.exception('exception in setManager')
 				raise
 			else:
 				pass
@@ -183,6 +182,7 @@ class Node(leginonobject.LeginonObject):
 		this is redefined so that idcounter is persistent
 		'''
 		newid = self.id + (self.IDCounter(),)
+		self.logger.debug('New ID %s generated' % (newid,))
 		return newid
 
 	def IDCounter(self):
@@ -217,8 +217,8 @@ class Node(leginonobject.LeginonObject):
 				cPickle.dump(new_count, f, 0)
 				f.close()
 			except:
-				print 'error while saving %s to pickle in file %s' % (new_count,
-																															fullname)
+				self.logger.exception('Error while saving %s to pickle in file %s'
+															% (new_count, fullname))
 				raise
 		finally:
 			self.id_count_lock.release()
@@ -292,7 +292,7 @@ class Node(leginonobject.LeginonObject):
 			if wait:
 				eventwait.set()
 			if not isinstance(e, IOError):
-				self.printException()
+				self.logger.exception('')
 			raise
 
 		confirmationevent = None
@@ -308,8 +308,7 @@ class Node(leginonobject.LeginonObject):
 				del self.confirmationevents[eventid]
 				del self.eventswaiting[eventid]
 			except KeyError:
-				pass
-				#print 'This could be bad to except KeyError'
+				self.logger.warning('This could be bad to except KeyError')
 			self.ewlock.release()
 			if not notimeout:
 				raise ConfirmationTimeout(str(ievent))
@@ -466,7 +465,10 @@ class Node(leginonobject.LeginonObject):
 				try:
 					self.addEmptyInstances1(datainstance)
 				except RuntimeError:
-					self.printerror('RuntimeError, probably exceded recursion limit in addEmptyInsance1.  You should probably set fill=False when calling Node.research(), and instead, construct your own filled instance.')
+					self.logger.warning(
+					'RuntimeError, possibly exceded recursion limit in addEmptyInsance1.'
+					+ 'Set fill=False when calling Node.research(),'
+					+ ' and construct your own filled instance.')
 					return []
 			try:
 				newresults = self.datahandler.dbQuery(datainstance, results, readimages=readimages)
@@ -622,7 +624,7 @@ class Node(leginonobject.LeginonObject):
 		if ievent['session'] == self.session:
 			self.setManager(ievent['location'])
 		else:
-			print 'Attempt to set manager rejected'
+			self.logger.warning('Attempt to set manager rejected')
 
 	# utility methods
 

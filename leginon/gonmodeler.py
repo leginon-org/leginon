@@ -49,10 +49,10 @@ class GonModeler(node.Node):
 		currentpos = self.getStagePosition()
 
 		for i in range(points):
-			print 'Acquiring Point %s...' % (i,)
+			self.logger.info('Acquiring Point %s...' % (i,))
 			t = timer.Timer('loop')
 			if self.threadstop.isSet():
-				print 'loop breaking before all points done'
+				self.logger.info('Loop breaking before all points done')
 				t.stop()
 				break
 			currentpos['stage position'][axis] += interval
@@ -63,21 +63,21 @@ class GonModeler(node.Node):
 			imx = datalist[3]
 			imy = datalist[4]
 
-			print '    position', gonx, gony
-			print '    delta', delta
-			print '    correlation shift', imx, imy
+			self.logger.info('Position %s, %s' % (gonx, gony))
+			self.logger.info('Delta %s' % (delta,))
+			self.logger.info('Correlation shift %s, %s' % (imx, imy))
 
 			measuredpixsize = delta / math.hypot(imx,imy)
-			print '    measured pixel size', measuredpixsize
+			self.logger.info('Measured pixel size %s' % (measuredpixsize,))
 			error = abs(measuredpixsize - known_pixelsize) / known_pixelsize
-			print '    error', error
+			self.logger.info('Error %s' % (error,))
 			if error > self.tolerance.get():
-				print '  ***REJECTED***'
+				self.logger.info('Rejected...')
 			else:
-				print '  writing to DB'
+				self.logger.info('Saving to database...')
 				self.writeData(label, ht, mag, axis, gonx, gony, delta, imx, imy)
 			t.stop()
-		print 'loop done'
+		self.logger.info('Loop done')
 		self.threadlock.release()
 
 	def acquireNextPosition(self, axis, state=None):

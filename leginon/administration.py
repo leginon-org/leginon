@@ -20,7 +20,6 @@ class Administration(node.Node):
 
 	def updateGroupDataDict(self):
 		groupdata = self.research(datainstance=data.GroupData())
-		print groupdata
 		for i in groupdata:
 			if 'name' in i and i['name'] is not None:
 				self.groupdatadict[i['name']] = i

@@ -500,7 +500,6 @@ class EMMosaic(object):
 		'''
 		position = self.calibrationclient.itransform(shift, self.fakeimage['scope'], self.fakeimage['camera'])
 		if position is None:
-			print 'calibration positioning error'
 			return None
 		# this makes it work with calibration
 		position['row'] *= -1

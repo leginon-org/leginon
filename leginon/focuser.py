@@ -49,29 +49,29 @@ class Focuser(acquisition.Acquisition):
 		autofocuspreset = self.autofocuspreset.get()
 		self.presetsclient.toScope(autofocuspreset, emtarget)
 		delay = self.uidelay.get()
-		print 'pausing for %s sec.' % (delay,)
+		self.logger.info('Pausing for %s seconds' % (delay,))
 		time.sleep(delay)
 
 		### report the current focus and defocus values
-		print 'before autofocus'
+		self.logger.info('Before autofocus...')
 		try:
 			defocdata = self.researchByDataID(('defocus',))
 			focdata = self.researchByDataID(('focus',))
-			print 'defocus', defocdata['defocus']
-			print 'focus', focdata['focus']
+			self.logger.info('Defocus %s' % defocdata['defocus'])
+			self.logger.info('Focus %s' % focdata['defocus'])
 		except:
-			print 'exception'
+			self.logger.exception('')
 
 		try:
 			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.ui_image.set)
 		except calibrationclient.Abort:
-			print 'measureDefocusStig was aborted'
+			self.logger.info('measureDefocusStig was aborted')
 			return 'aborted'
 		except calibrationclient.Drifting:
 			self.driftDetected()
 			return 'repeat'
 
-		print 'MEASURED DEFOCUS AND STIG', correction
+		self.logger.info('Measured defocus and stig %s' % correction)
 		defoc = correction['defocus']
 		stigx = correction['stigx']
 		stigy = correction['stigy']
@@ -85,11 +85,11 @@ class Focuser(acquisition.Acquisition):
 		fitlimit = self.fitlimit.get()
 		if fitmin <= fitlimit:
 			validdefocus = True
-			print 'good focus measurement'
+			self.logger.info('Good focus measurement')
 		else:
 			status = 'untrusted (%s>%s)' % (fitmin, fitlimit)
 			validdefocus = False
-			print 'focus measurement failed: fitmin = %s (limit = %s)' % (fitmin, fitlimit)
+			self.logger.info('Focus measurement failed: fitmin = %s (limit = %s)' % (fitmin, fitlimit))
 
 		### validate stig correction
 		# stig is only valid in a certain defocus range
@@ -99,19 +99,19 @@ class Focuser(acquisition.Acquisition):
 			validstig = False
 
 		if validstig and self.stigcorrection.get():
-			print 'Stig correction'
+			self.logger.info('Stig correction...')
 			self.correctStig(stigx, stigy)
 			resultdata['stig correction'] = 1
 		else:
 			resultdata['stig correction'] = 0
 
 		if validdefocus:
-			print 'Defocus correction'
+			self.logger.info('Defocus correction...')
 			try:
 				focustype = self.focustype.getSelectedValue()
 				focusmethod = self.focus_methods[focustype]
 			except (IndexError, KeyError):
-				print 'no method selected for correcting defocus'
+				self.logger.warning('No method selected for correcting defocus')
 			else:
 				resultdata['defocus correction'] = focustype
 				focusmethod(defoc)
@@ -141,9 +141,9 @@ class Focuser(acquisition.Acquisition):
 			camstate['exposure time'] = melt_time_ms
 			self.cam.setCameraEMData(camstate)
 
-			print 'Melting for %s seconds' % (melt_time,)
+			self.logger.info('Melting for %s seconds' % (melt_time,))
 			self.cam.acquireCameraImageData()
-			print 'Done melting, resetting exposure time'
+			self.logger.info('Done melting, resetting exposure time')
 
 			camstate['exposure time'] = current_exptime
 			self.cam.setCameraEMData(camstate)
@@ -178,7 +178,7 @@ class Focuser(acquisition.Acquisition):
 			## go back to focus preset and target
 			self.presetsclient.toScope(presetdata['name'], emtarget)
 			delay = self.uidelay.get()
-			print 'pausing for %s sec.' % (delay,)
+			self.logger.info('Pausing for %s seconds' % (delay,))
 			time.sleep(delay)
 
 			## acquire and publish image, like superclass does
@@ -204,10 +204,10 @@ class Focuser(acquisition.Acquisition):
 		## go to preset and target
 		self.presetsclient.toScope(presetname, emtarget)
 		delay = self.uidelay.get()
-		print 'pausing for %s sec.' % (delay,)
+		self.logger.info('Pausing for %s seconds' % (delay,))
 		time.sleep(delay)
 		self.manual_check_done.clear()
-		print 'starting manual focus loop'
+		self.logger.info('Starting manual focus loop...')
 		message = self.messagelog.information('Please confirm defocus')
 		node.beep()
 		while 1:
@@ -218,7 +218,7 @@ class Focuser(acquisition.Acquisition):
 			# acquire image, show image and power spectrum
 			# allow user to adjust defocus and stig
 			cor = self.uicorrectimage.get()
-			print 'COR', cor
+			self.logger.info('Correct image %s' % cor)
 			self.manualchecklock.acquire()
 			try:
 				imagedata = self.cam.acquireCameraImageData(correction=cor)
@@ -233,10 +233,10 @@ class Focuser(acquisition.Acquisition):
 			message.clear()
 		except:
 			pass
-		print 'manual focus loop done'
+		self.logger.info('Manual focus loop done')
 
 	def waitForContinue(self):
-		print 'manual focus paused'
+		self.logger.info('Manual focus paused')
 		message = self.messagelog.information('manual focus is paused')
 		self.manual_continue.wait()
 		self.manual_continue.clear()
@@ -251,7 +251,7 @@ class Focuser(acquisition.Acquisition):
 
 	def uiResetDefocus(self):
 		self.manualchecklock.acquire()
-		print 'reset defocus'
+		self.logger.info('Reset defocus')
 		try:
 			newemdata = data.ScopeEMData(id=('scope',))
 			newemdata['reset defocus'] = True
@@ -261,7 +261,7 @@ class Focuser(acquisition.Acquisition):
 
 	def uiChangeToZero(self):
 		self.manualchecklock.acquire()
-		print 'changing to zero defocus'
+		self.logger.info('Changing to zero defocus')
 		try:
 			newemdata = data.ScopeEMData(id=('scope',))
 			newemdata['defocus'] = 0.0
@@ -273,7 +273,7 @@ class Focuser(acquisition.Acquisition):
 		parameter = self.manual_parameter.getSelectedValue()
 		delta = self.manual_delta.get()
 		self.manualchecklock.acquire()
-		print 'changing %s %s %s' % (parameter, direction, delta)
+		self.logger.info('Changing %s %s %s' % (parameter, direction, delta))
 		try:
 			if parameter == 'Stage Z':
 				emdata = self.researchByDataID(('stage position',))
@@ -296,18 +296,18 @@ class Focuser(acquisition.Acquisition):
 			self.manualchecklock.release()
 
 
-		print 'changed %s %s %s' % (parameter, direction, delta,)
+		self.logger.info('Changed %s %s %s' % (parameter, direction, delta,))
 
 	def manualDone(self):
-		print 'will quit manual focus loop after this iteration'
+		self.logger.info('Will quit manual focus loop after this iteration...')
 		self.manual_check_done.set()
 
 	def manualPause(self):
-		print 'will pause manual focus loop after this iteration'
+		self.logger.info('Will pause manual focus loop after this iteration...')
 		self.manual_pause.set()
 
 	def manualContinue(self):
-		print 'continuing manual focus'
+		self.logger.info('Continuing manual focus')
 		self.manual_continue.set()
 
 	def correctStig(self, deltax, deltay):
@@ -315,16 +315,16 @@ class Focuser(acquisition.Acquisition):
 		stig['stigmator']['objective']['x'] += deltax
 		stig['stigmator']['objective']['y'] += deltay
 		emdata = data.ScopeEMData(id=('scope',), initializer=stig)
-		print 'correcting stig by %s,%s' % (deltax,deltay)
+		self.logger.info('Correcting stig by %s, %s' % (deltax, deltay))
 		self.publishRemote(emdata)
 
 	def correctDefocus(self, delta):
 		defocus = self.researchByDataID(('defocus',))
-		print 'defocus before applying correction', defocus
+		self.logger.info('Defocus before applying correction %s' % defocus)
 		defocus['defocus'] += delta
 		defocus['reset defocus'] = 1
 		emdata = data.ScopeEMData(id=('scope',), initializer=defocus)
-		print 'correcting defocus by %s' % (delta,)
+		self.logger.info('Correcting defocus by %s' % (delta,))
 		self.publishRemote(emdata)
 
 	def correctZ(self, delta):
@@ -333,11 +333,11 @@ class Focuser(acquisition.Acquisition):
 		newstage = {'stage position': {'z': newz }}
 		newstage['reset defocus'] = 1
 		emdata = data.ScopeEMData(id=('scope',), initializer=newstage)
-		print 'correcting stage Z by %s' % (delta,)
+		self.logger.info('Correcting stage Z by %s' % (delta,))
 		self.publishRemote(emdata)
 
 	def correctNone(self, delta):
-		print 'not applying defocus correction'
+		self.logger.info('Not applying defocus correction')
 
 	def uiTest(self):
 		self.acquire(None)

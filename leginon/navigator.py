@@ -65,7 +65,7 @@ class Navigator(node.Node):
 		return delta
 
 	def handleImageClick(self, clickevent):
-		print 'handling image click'
+		self.logger.info('Handling image click...')
 		## get relavent info from click event
 		clickrow = clickevent['array row']
 		clickcol = clickevent['array column']
@@ -90,9 +90,10 @@ class Navigator(node.Node):
 		try:
 			newstate = calclient.transform(pixelshift, clickscope, clickcamera)
 		except:
-			message = 'Error in transform.  Likely missing clibration for %s at %sx and current high tension' % (movetype, mag)
-			print message
+			message = 'Error in transform. Likely missing calibration for %s at %sx' \
+									+ ' and current high tension' % (movetype, mag)
 			self.messagelog.error(message)
+			self.logger.error(message)
 			node.beep()
 			return
 		if not self.completestate.get():
@@ -114,24 +115,22 @@ class Navigator(node.Node):
 		if self.calerror.get():
 			newshift = self.newShift()
 			if newshift is None:
-				print 'Error not calculated'
+				self.logger.info('Error not calculated')
 			else:
-				print 'REQUEST', pixelshift
-				print 'NEWSHIFT', newshift
+				self.logger.info('Request %s, new shift %s' % (pixelshift, newshift))
 				r_error = pixelshift['row'] - newshift[0]
 				c_error = pixelshift['col'] - newshift[1]
 				error = r_error, c_error
-				print 'ERROR VECTOR (pixels):', error
 				errordist = math.hypot(error[0], error[1])
-				print 'ERROR DISTANCE (pixels)', errordist
 
 				pixsize = self.pcal.retrievePixelSize(mag)
 				binning = clickcamera['binning']['x']
 				dist = errordist * pixsize * binning
 				umdist = dist * 1000000.0
-				print 'ERROR DISTANCE (um): %.4e' % (umdist,)
+				self.logger('Error %s pixels, distance %s pixels (%s microns)'
+										% (error, errordist, umdist))
 				if (abs(pixelshift['row']) > clickshape[0]/4) or (abs(pixelshift['col']) > clickshape[1]/4):
-					print 'Correlation untrusted due to large requested shift'
+					self.logger.info('Correlation untrusted due to large requested shift')
 				else:
 					## insert into DB?
 					pass
@@ -217,7 +216,7 @@ class Navigator(node.Node):
 
 		self.locationToDB(newloc)
 		locnames = self.locationNames()
-		print 'LOCNAMES', locnames
+		self.logger.info('Location names %s' % (locnames,))
 		self.uiselectlocation.set(locnames, len(locnames)-1)
 		return newloc
 
@@ -318,15 +317,15 @@ class Navigator(node.Node):
 		elif isinstance(loc, data.StageLocationData):
 			locdata = loc
 		else:
-			print 'Bad arg for toScope'
+			self.logger.error('Bad argument for toScope')
 			return
 
 		if locdata is None:
-			print 'no such location'
+			self.logger.error('No such location')
 			return
 
 		name = locdata['name']
-		print 'moving to location %s' % (name,)
+		self.logger.info('Moving to location %s' % (name,))
 
 		## should switch to using AllEMData
 		stagedict = {}
@@ -340,11 +339,10 @@ class Navigator(node.Node):
 		try:
 			self.publishRemote(scopedata)
 		except node.PublishError:
-			self.printException()
-			print '** Maybe EM is not running?'
+			self.logger.exception('Maybe EM is not running')
 		else:
 			self.currentlocation = locdata
-			print 'moved to location %s' % (name,)
+			self.logger.info('Moved to location %s' % (name,))
 
 	def locationToDict(self, locationdata):
 		d = {}

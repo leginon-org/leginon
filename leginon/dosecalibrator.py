@@ -62,7 +62,7 @@ class DoseCalibrator(calibrator.Calibrator):
 			self.ui_screenmag.set(self.results['screen magnification'])
 			self.ui_beamcurrent.set(self.results['beam current'])
 		elif status == 'screen':
-			print 'Screen is up. You must have screen down to measure the current'
+			self.logger.error('Cannot measure current with main screen down')
 
 		screen_mag = self.results['screen magnification']
 		beam_current = self.results['beam current']

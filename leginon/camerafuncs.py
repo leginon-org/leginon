@@ -136,7 +136,8 @@ class CameraFuncs(object):
 		try:
 			self.node.publishRemote(camdata)
 		except Exception, detail:
-			print 'camerafuncs.state: unable to set camera state'
+			self.node.logger.exception(
+															'camerafuncs.state: unable to set camera state')
 			raise
 
 	def getCameraEMData(self):
@@ -147,7 +148,8 @@ class CameraFuncs(object):
 			newcamdata = self.node.researchByDataID(('camera no image data',))
 			return newcamdata
 		except:
-			print('Cannot find current camera settings, EM may not be running.')
+			self.node.logger.exception(
+									'Cannot find current camera settings, EM may not be running.')
 			return None
 
 	def uiSetupContainer(self):
@@ -227,8 +229,8 @@ class SmartCameraParameters(uidata.Container):
 			self.camerasize = 0
 
 		if not self.camerasize:
-			print 'There was a problem getting the current instrument camera size.'
-			print 'camera size will be faked: 1024x1024'
+			self.node.logger.warning(
+					'Cannot get instrument camera size, camera size faked as 1024x1024')
 			self.camerasize = 1024
 
 	def squareToggleCallback(self, value):

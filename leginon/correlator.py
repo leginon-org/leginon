@@ -153,12 +153,7 @@ class MissingImageError(Exception):
 if __name__ == '__main__':
 	from Mrc import mrc_to_numeric
 	from Tkinter import *
-	from ImageViewer import ImageViewer
 	import fftengine, peakfinder
-
-	tk = Tk()
-	iv = ImageViewer(tk)
-	iv.pack()
 
 	if 1:
 		im1 = mrc_to_numeric('test1.mrc')
@@ -189,9 +184,6 @@ if __name__ == '__main__':
 		
 		shift = wrap_coord(peak, pcim.shape)
 		#print 'shift', shift
-
-		#iv.import_numeric(pcim)
-		#iv.update()
 
 		raw_input('continue')
 

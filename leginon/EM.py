@@ -461,27 +461,23 @@ class EM(node.Node):
 		if 'focus' in orderedkeys and 'defocus' in orderedkeys:
 			self.messagelog.warning('Focus and defocus changed at the same time defocus ' + str(state['focus']) +  ' focus ' + str(state['defocus']))
 
-		#print 'setEM'
 		for key in orderedkeys:
 			value = state[key]
-			#if key in watch_set:
-			#	print '%s\t\t%s' % (key, value)
+			if key in watch_set:
+				self.logger.info('Set \'%s\' %s' % (key, value))
 			if value is not None:
 				if key in scopekeys:
 					try:
 						self.scope[key] = value
 					except:	
-						self.messagelog.error("failed to set '%s' to %s" % (key, value))
-						#print "failed to set '%s' to %s" % (key, value)
-						#self.printException()
+						self.messagelog.error('Failed to set \'%s\' to %s' % (key, value))
+						self.logger.exception('Set \'%s\' %s failed' % (key, value))
 				elif key in camerakeys:
 					try:
 						self.camera[key] = value
 					except:	
-						self.messagelog.error("failed to set '%s' to %s"
-																	% (key, state[key]))
-						#print "failed to set '%s' to" % key, state[key]
-						#self.printException()
+						self.messagelog.error('Failed to set \'%s\' to %s' % (key, value))
+						self.logger.exception('Set \'%s\' %s failed' % (key, value))
 
 			if self.uipauses.get() and (key in self.pauses):
 				p = self.pauses[key]

@@ -38,7 +38,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		matdict = {}
 
 		for axis in ('x','y'):
-			print 'measuring %s tilt' % (axis,)
+			self.logger.info('Measuring %s tilt' % (axis,))
 
 			diff1 = self.calclient.measureDispDiff(axis, tilt_value, tilt_value)
 			diff2 = self.calclient.measureDispDiff(axis, -tilt_value, tilt_value)
@@ -46,18 +46,19 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			matcol = self.calclient.eq11(diff1, diff2, 0, 0, tilt_value)
 			matdict[axis] = matcol
 
-		print 'making matrix'
+		self.logger.info('Making matrix...')
 		matrix = Numeric.zeros((2,2), Numeric.Float32)
-		print 'matrix type', matrix.typecode()
-		print 'matdict type', matdict['x'].typecode()
+		self.logger.info('Matrix type %s, matrix dict type %s'
+											% (matrix.typecode(), matdict['x'].typecode()))
 		matrix[:,0] = matdict['x']
 		matrix[:,1] = matdict['y']
 
 		## store calibration
-		print 'storing calibration'
+		self.logger.info('Storing calibration...')
 		mag = self.getMagnification()
 		ht = self.getHighTension()
 		self.calclient.storeMatrix(ht, mag, 'coma-free', matrix)
+		self.logger.info('Calibration stored')
 		return ''
 
 	def calibrateDefocus(self, tilt_value, defocus1, defocus2):
@@ -66,13 +67,14 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		state2 = {'defocus': defocus2}
 		matdict = {}
 		for axis in ('x','y'):
-			print 'measuring %s tilt' % (axis,)
+			self.logger.info('Measuring %s tilt' % (axis,))
 			shift1, shift2 = self.calclient.measureDisplacements(axis, tilt_value, state1, state2)
 			matcol = self.calclient.eq11(shift1, shift2, defocus1, defocus2, tilt_value)
 			matdict[axis] = matcol
-		print 'making matrix'
+		self.logger.info('Making matrix...')
 		matrix = Numeric.zeros((2,2), Numeric.Float32)
-		print 'matdict type', matdict['x'].typecode()
+		self.logger.info('Matrix type %s, matrix dict type %s'
+											% (matrix.typecode(), matdict['x'].typecode()))
 
 		m00 = float(matdict['x'][0])
 		m10 = float(matdict['x'][1])
@@ -81,14 +83,13 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		matrix = Numeric.array([[m00,m01],[m10,m11]],Numeric.Float32)
 
 		## store calibration
-		print 'storing calibration'
+		self.logger.info('Storing calibration...')
 		ht = self.getHighTension()
 		mag = self.getMagnification()
-		print 'MATRIX', matrix
-		print 'MATRIX shape', matrix.shape
-		print 'MATRIX type', matrix.typecode()
-		print 'MATRIX flat', Numeric.ravel(matrix)
+		self.logger.info('Matrix %s, shape %s, type %s, flat %s'
+						% (matrix, matrix.shape, matrix.typecode(), Numeric.ravel(matrix)))
 		self.calclient.storeMatrix(ht, mag, 'defocus', matrix)
+		self.logger.info('Calibration stored')
 		return ''
 
 	def calibrateStigmators(self, tilt_value, delta):
@@ -106,17 +107,17 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					stig[axis][sign][axis] -= delta/2.0
 
 		for stigaxis in ('x','y'):
-			print 'calculating matrix for stig %s' % (stigaxis,)
+			self.logger.info('Calculating matrix for stig %s' % (stigaxis,))
 			matdict = {}
 			for tiltaxis in ('x','y'):
-				print 'measuring %s tilt' % (tiltaxis,)
+				self.logger.info('Measuring %s tilt' % (tiltaxis,))
 				stig1 = stig[stigaxis]['+']
 				stig2 = stig[stigaxis]['-']
 				state1 = data.ScopeEMData(id=('scope',),stigmator={'objective':stig1})
 				state2 = data.ScopeEMData(id=('scope',),stigmator={'objective':stig2})
 				shift1, shift2 = self.calclient.measureDisplacements(tiltaxis, tilt_value, state1, state2)
-				print 'shift1', shift1
-				print 'shift2', shift2
+				self.logger.info('Shift 1 %s' % shift1)
+				self.logger.info('Shift 2 %s' % shift2)
 				stigval1 = stig1[stigaxis]
 				stigval2 = stig2[stigaxis]
 				matcol = self.calclient.eq11(shift1, shift2, stigval1, stigval2, tilt_value)
@@ -142,9 +143,9 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		try:
 			ret = self.calclient.measureDefocusStig(btilt)
 		except:
-			self.printException()
+			self.logger.exception('')
 			ret = {}
-		print 'RET', ret
+		self.logger.info('RET %s' % ret)
 		return ret
 
 	def getDefocus(self):
@@ -213,7 +214,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	def uiCorrectDefocus(self):
 		delta = self.resultvalue.get()
 		if not delta:
-			print 'no result, you must measure first'
+			self.logger.info('No result, you must measure first')
 			return
 		current = self.getCurrentValues()	
 
@@ -224,7 +225,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	def uiCorrectStigmator(self):
 		delta = self.resultvalue.get()
 		if not delta:
-			print 'no result, you must measure first'
+			self.logger.info('No result, you must measure first')
 			return
 		current = self.getCurrentValues()	
 
@@ -267,7 +268,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		try:
 			self.publishRemote(scopedata)
 		except node.PublishError:
-			self.printException()
+			self.logger.exception('Cannot set instrument parameters')
 			self.messagelog.error('Cannot set instrument parameters')
 
 	def eucFromScope(self):

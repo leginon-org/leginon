@@ -33,7 +33,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 	def publishPowerImage(self, imagedata):
 		imarray = imagedata['image']
 		imid = imagedata['id']
-		print 'calculating power spectrum for image', imid
+		self.logger.info('Calculating power spectrum for image %s' % (imid,))
 		maskrad = self.maskrad.get()
 		pow = imagefun.power(imarray, maskrad)
 		powdata = data.AcquisitionFFTData(id=self.ID(), source=imagedata, image=pow)
@@ -43,7 +43,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 
 		# not raising publish event because there is not one yet
 		self.publish(powdata, database=True)
-		print 'published power spectrum for image', imid
+		self.logger.info('Published power spectrum for image %s' % (imid,))
 
 	def defineUserInterface(self):
 		imagewatcher.ImageWatcher.defineUserInterface(self)
@@ -63,14 +63,14 @@ class FFTMaker(imagewatcher.ImageWatcher):
 		if imagedata['filename']:
 			return
 		rootname = self.getRootName(imagedata)
-		print 'rootname', rootname
+		self.logger.info('Rootname %s' % (rootname,))
 
 		mystr = 'pow'
 		sep = '_'
 		parts = (rootname, mystr)
 
 		filename = sep.join(parts)
-		print 'FILENAME', filename
+		self.logger.info('Filename %s' % (filename,))
 
 		imagedata['filename'] = filename
 

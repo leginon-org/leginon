@@ -88,11 +88,9 @@ class TargetWatcher(watcher.Watcher):
 		self.uicontainer.addObject(container)
 
 	def handleTargetShift(self, ev):
-		#print 'Handling target shift'
 		dataid = ev['dataid']
 		driftdata = self.researchByDataID(dataid)
 		self.driftedimages = driftdata['shifts']
-		#print 'Drifted images:', self.driftedimages
 		# may be waiting for a requested image shift
 		req = driftdata['requested']
 		if req:
@@ -214,7 +212,7 @@ class TargetWatcher(watcher.Watcher):
 				try:
 					process_status = self.processTargetData(adjustedtarget)
 				except:
-					self.printException()
+					self.logger.exception('')
 					process_status = 'exception'
 				self.uitargetstatus.set('Target processed with status "%s"'
 																% process_status)
@@ -251,7 +249,7 @@ class TargetWatcher(watcher.Watcher):
 
 	def reportTargetListDone(self, listid, status):
 		self.uistatus.set('Target list processed.')
-		print '%s done with target list' % (self.id[-1],)
+		self.logger.info('%s done with target list' % (self.id[-1],))
 		e = event.TargetListDoneEvent(id=self.ID(), targetlistid=listid,
 																	status=status)
 		self.outputEvent(e)

@@ -66,7 +66,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 			try:
 				self.uiAcquire()
 			except:
-				self.printException()
+				self.logger.exception('')
 				break
 		try:
 			self.looplock.release()
@@ -91,33 +91,23 @@ class ImViewer(imagewatcher.ImageWatcher):
 		imarray = imdata['image']
 		return imarray
 
-#	def acquireAndDisplay(self, corr=0):
-#		print 'acquireArray'
-#		imarray = self.acquireArray(corr)
-#		print 'displayNumericArray'
-#		if imarray is None:
-#			self.iv.displayMessage('NO IMAGE ACQUIRED')
-#		else:
-#			self.displayNumericArray(imarray)
-#		print 'acquireAndDisplay done'
-
 	def acquireEvent(self):
 		e = event.ImageAcquireEvent(id=self.ID())
 		self.outputEvent(e)
 
 	def loadImage(self, filename):
-		print filename
+		self.logger.info('Loading %s...' % filename)
 		if filename is None:
 			return
 		try:
 			self.numarray = Mrc.mrc_to_numeric(filename)
-			print self.numarray.shape
+			self.logger.info('Image size %s' % (self.numarray.shape,))
 			self.ui_image.set(self.numarray)
-			print 'doPow'
+			self.logger.info('Performing FFT...')
 			self.doPow()
-			print 'done...'
+			self.logger.info('FFT done')
 		except (TypeError, IOError):
-			self.printerror('Unable to load image "%s"' % filename)
+			self.logger.error('Unable to load image \'%s\'' % filename)
 
 	def uiLoadImage(self):
 		try:
@@ -131,7 +121,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 		try:
 			Mrc.numeric_to_mrc(numarray, filename)
 		except (TypeError, IOError):
-			self.printerror('Unable to save image "%s"' % filename)
+			self.logger.error('Unable to save image \'%s\'' % filename)
 
 	def uiSaveImage(self):
 		try:

@@ -18,19 +18,19 @@ class ApplicationEditor(node.Node):
 		self.start()
 
 	def uiSave(self):
-		self.printerror('saving application')
+		self.logger.info('Saving application...')
 		applicationdata = self.applicationeditor.get()
-		print 'applicationdata =', applicationdata
+		self.logger.info('Application data %s' % applicationdata)
 		self.application.setName(applicationdata['name'])
 		self.application.clear()
 		for nodespec in applicationdata['nodes']:
-			print 'adding nodespec', nodespec
+			self.logger.info('Adding node spec %s' % nodespec)
 			apply(self.application.addNodeSpec, nodespec)
 		for bindingspec in applicationdata['bindings']:
-			print 'adding bindspec', bindingspec
+			self.logger.info('Adding bind spec %s' % bindspec)
 			apply(self.application.addBindingSpec, bindingspec)
 		self.application.save()
-		self.printerror('application saved')
+		self.logger.info('Application saved')
 
 	def uiUpdate(self):
 		applicationdatalist = self.research(dataclass=data.ApplicationData)

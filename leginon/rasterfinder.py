@@ -139,7 +139,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		self.rasterimage.setImage(self.original)
 		self.rasterimage.setTargetType('Raster Points', self.transpose_points(points))
 		self.rasterpoints = points
-		print 'full raster has %s points' % (len(points),)
+		self.logger.info('Full raster has %s points' % (len(points),))
 
 	def get_box_stats(self, image, coord, boxsize):
 		## select the region of interest
@@ -186,10 +186,10 @@ class RasterFinder(targetfinder.TargetFinder):
 				stat_str = 'BAD: '
 			ice_stat = '  mean: %.4f,     std: %.4f' % (t,ts)
 			stat_str = stat_str + str(rasterpoint) + ice_stat
-			print stat_str
+			self.logger.info(stat_str)
 
 		goodpoints = self.transpose_points(goodpoints)
-		print '%s points with good ice' % (len(goodpoints),)
+		self.logger.info('%s points with good ice' % (len(goodpoints),))
 
 		self.goodice.set(mylist)
 		self.goodiceimage.setImage(self.original)

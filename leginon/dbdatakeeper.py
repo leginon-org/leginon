@@ -18,9 +18,7 @@ class DBDataKeeper(datahandler.DataHandler):
 		self.lock = threading.RLock()
 
 	def query(self, idata, results=None, readimages=True):
-#		print "----------------------------"
-#		print idata
-#		print "----------------------------"
+		self.logger.info('query %s' % idata)
 		self.lock.acquire()
 		try:
 			ret = self._query(idata, results, readimages=readimages)

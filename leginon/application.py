@@ -130,8 +130,7 @@ class Application(object):
 			fromnodeid = self.getNodeIDFromAlias(bs['from node alias'])
 			tonodeid = self.getNodeIDFromAlias(bs['to node alias'])
 		except ValueError:
-			print 'Invalid binding specification'
-			raise
+			raise ValueError('Invalid binding specification')
 		return (eventclass, fromnodeid, tonodeid)
 
 	def launch(self):

@@ -157,8 +157,6 @@ class Watcher(node.Node):
 		raise NotImplementedError()
 
 	def processEventFromQueue(self, blocking=0):
-#		if blocking:
-#			print 'watcher blocking until event ready in queue'
 		try:
 			newevent = self.eventqueue.get(blocking)
 			self.getData(newevent)
@@ -167,8 +165,6 @@ class Watcher(node.Node):
 			return False
 
 	def processDataFromQueue(self, blocking=0):
-#		if blocking:
-#			print 'watcher blocking until data ready in queue'
 		try:
 			newdata = self.dataqueue.get(blocking)
 			self.processData(newdata)

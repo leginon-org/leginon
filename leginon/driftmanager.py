@@ -57,7 +57,7 @@ class DriftManager(watcher.Watcher):
 		## go through preset manager to ensure we follow the right
 		## cycle
 		pname = im['preset']['name']
-		print 'PNAME', pname
+		self.logger.info('Preset name %s' % pname)
 		self.presetsclient.toScope(pname)
 
 		## set the original state of the image
@@ -70,12 +70,10 @@ class DriftManager(watcher.Watcher):
 		## acquire new image
 		newim = self.acquireImage()
 
-		print 'OLD IMAGE'
-		print '  image shift: ', im['scope']['image shift']
-		print '  stage position: ', im['scope']['stage position']
-		print 'NEW IMAGE'
-		print '  image shift: ', newim['scope']['image shift']
-		print '  stage position: ', newim['scope']['stage position']
+		self.logger.info('Old image, image shift %s, stage position %s'
+									% (im['scope']['image shift'], im['scope']['stage position']))
+		self.logger.info('New image, image shift %s, stage position %s'
+						% (newim['scope']['image shift'], newim['scope']['stage position']))
 
 		## do correlation
 		self.correlator.insertImage(im['image'])
@@ -83,7 +81,7 @@ class DriftManager(watcher.Watcher):
 		pc = self.correlator.phaseCorrelate()
 		peak = self.peakfinder.subpixelPeak(newimage=pc)
 		rows,cols = self.peak2shift(peak, pc.shape)
-		print 'ROWS/COLS', rows, cols
+		self.logger.info('rows %s, columns %s' % (rows, cols))
 		return {'rows':rows,'columns':cols}
 
 	def processData(self, newdata):
@@ -124,7 +122,7 @@ class DriftManager(watcher.Watcher):
 		return emcopy
 
 	def monitorDrift(self, emdata=None):
-		print 'DriftManager monitoring drift'
+		self.logger.info('DriftManager monitoring drift...')
 		if emdata is not None:
 			## use emdata to set up scope and camera
 			emdata['id'] = ('all em',)
@@ -151,14 +149,15 @@ class DriftManager(watcher.Watcher):
 			self.outputEvent(ev)
 
 	def publishImageShifts(self, requested=False):
-		print 'PUBLISH IMAGE SHIFTS'
+		self.logger.info('Publishing image shifts...')
 		to_publish = {}
 		for value in self.references.values():
 			if not requested:
 				value['shift'] = {}
 			to_publish[value['imageid']] = value['shift']
-		print 'TO PUBLISH', to_publish
-		dat = data.ImageTargetShiftData(id=self.ID(), shifts=to_publish, requested=requested)
+		self.logger.info('to publish %s' % to_publish)
+		dat = data.ImageTargetShiftData(id=self.ID(), shifts=to_publish,
+																		requested=requested)
 		self.publish(dat, pubevent=True, confirm=True)
 
 	def acquireImage(self):
@@ -174,7 +173,7 @@ class DriftManager(watcher.Watcher):
 		t0 = imagedata['scope']['system time']
 		self.correlator.insertImage(numdata)
 		pixsize = self.pixsizeclient.retrievePixelSize(mag)
-		print 'PIXSIZE AT %sx is %s' % (mag, pixsize)
+		self.logger.info('Pixel size at %sx is %s' % (mag, pixsize))
 
 		## ensure that loop executes once
 		current_drift = self.threshold.get() + 1.0
@@ -194,7 +193,7 @@ class DriftManager(watcher.Watcher):
 			peak = self.peakfinder.subpixelPeak(newimage=pc)
 			rows,cols = self.peak2shift(peak, pc.shape)
 			dist = Numeric.hypot(rows,cols)
-			print 'DRIFT PIXELS', dist
+			self.logger.info('Pixels drifted %s' % dist)
 
 			## calculate drift 
 			meters = dist * binning * pixsize
@@ -203,7 +202,7 @@ class DriftManager(watcher.Watcher):
 			# rely on system time of EM node
 			seconds = t1 - t0
 			current_drift = meters / seconds
-			print 'DRIFT RATE:  %.4e' % (current_drift,)
+			self.logger.info('Drift rate: %.4e' % (current_drift,))
 			self.driftvalue.set(current_drift)
 
 			d = data.DriftData(id=self.ID(), rows=rows, cols=cols, interval=seconds, rowmeters=rowmeters, colmeters=colmeters)
@@ -240,7 +239,7 @@ class DriftManager(watcher.Watcher):
 		self.cam.uiApplyAsNeeded()
 		mag = self.getMag()
 		pixsize = self.pixsizeclient.retrievePixelSize(mag)
-		print 'PIXSIZE', pixsize
+		self.logger.info('Pixel size %s' % (pixsize,))
 
 		## acquire first image
 		imagedata = self.acquireImage()
@@ -262,16 +261,15 @@ class DriftManager(watcher.Watcher):
 		peak = self.peakfinder.subpixelPeak(newimage=pc)
 		rows,cols = self.peak2shift(peak, pc.shape)
 		dist = Numeric.hypot(rows,cols)
-		print 'PIXEL DISTANCE', dist
 
 		## calculate drift 
 		meters = dist * pixsize
-		print 'METERS', meters
+		self.logger.info('Pixel distance %s, (%s meters)' % (dist, meters))
 		# rely on system time of EM node
 		seconds = t1 - t0
-		print 'SECONDS', seconds
+		self.logger.info('Seconds %s' % seconds)
 		current_drift = meters / seconds
-		print 'Drift Rate:  %.4f' % (current_drift,)
+		self.logger.info('Drift rate: %.4f' % (current_drift,))
 		self.driftvalue.set(current_drift)
 
 	def targetsToDatabase(self):

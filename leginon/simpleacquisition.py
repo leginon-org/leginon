@@ -58,10 +58,10 @@ class SimpleAcquisition(acquisition.Acquisition):
 				break
 			self.processTargetData(None)
 			time.sleep(self.pausetime.get())
-		print 'loop done'
+		self.logger.info('Loop done')
 
 	def acquireImageLoopStop(self):
-		print 'will stop loop when this iteration completes'
+		self.logger.info('Will stop loop when this iteration completes')
 		self.loopstop.set()
 		return ''
 

@@ -618,7 +618,7 @@ class Corrector(node.Node):
 		try:
 			imagedata = self.acquireReference(dark=True)
 		except node.PublishError:
-			print 'Cannot set EM parameter, EM may not be running'
+			self.logger.exception('Cannot set EM parameter, EM may not be running')
 		else:
 			self.displayImage(imagedata)
 			node.beep()
@@ -627,7 +627,7 @@ class Corrector(node.Node):
 		try:
 			imagedata = self.acquireReference(dark=False)
 		except node.PublishError:
-			print 'Cannot set EM parameter, EM may not be running'
+			self.logger.exception('Cannot set EM parameter, EM may not be running')
 		else:
 			self.displayImage(imagedata)
 			node.beep()
@@ -637,7 +637,7 @@ class Corrector(node.Node):
 			self.cam.uiApplyAsNeeded()
 			imagedata = self.cam.acquireCameraImageData(correction=False)
 		except node.PublishError:
-			print 'Cannot set EM parameter, EM may not be running'
+			self.logger.exception('Cannot set EM parameter, EM may not be running')
 		else:
 			imagearray = imagedata['image']
 			self.displayImage(imagearray)
@@ -647,7 +647,7 @@ class Corrector(node.Node):
 			self.cam.uiApplyAsNeeded()
 			imagedata = self.acquireCorrectedArray()
 		except node.PublishError:
-			print 'Cannot set EM parameter, EM may not be running'
+			self.logger.exception('Cannot set EM parameter, EM may not be running')
 		else:
 			self.displayImage(imagedata)
 
@@ -658,7 +658,6 @@ class Corrector(node.Node):
 
 	def displayStats(self, imagedata):
 		stats = self.stats(imagedata)
-		#print 'STATS', stats
 		self.statsmean.set(stats['mean'])
 		self.statsmin.set(stats['min'])
 		self.statsmax.set(stats['max'])
@@ -841,7 +840,6 @@ class Corrector(node.Node):
 		# so make sure there are no zeros in norm
 		norm = Numeric.clip(norm, 1.0, imagefun.inf)
 		norm = normavg / norm
-		#print 'saving'
 		self.storeRef('norm', norm, corstate)
 
 	def acquireCorrectedArray(self):
@@ -877,10 +875,11 @@ class Corrector(node.Node):
 			good = normalized
 
 		if self.despikeon.get():
-			#print 'despiking'
+			self.logger.info('Despiking...')
 			thresh = self.despikevalue.get()
 			nsize = self.despikesize.get()
 			good = imagefun.despike(good, nsize, thresh)
+			self.logger.info('Despiked')
 
 		## this has been commented because original.typecode()
 		## might be unsigned and causes negative values to wrap
@@ -975,7 +974,6 @@ class Corrector(node.Node):
 			self.uistatus.set('Image mean: %s' % str(mean))
 
 			if minmean <= mean <= maxmean:
-				#print 'exposure time %s is good'
 				i = -1
 				break
 			else:

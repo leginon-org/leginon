@@ -52,7 +52,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		havelist = have.values()
 		havelist.sort(self.compareTargetNumber)
 		if havelist:
-			print 'found %s targets for image %s' % (len(havelist), imagedata['id'])
+			self.logger.info('Found %s targets for image %s'
+												% (len(havelist), imagedata['id']))
 
 		return havelist
 
@@ -125,7 +126,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 				## increment target number
 				targetnumbers[parentid] += 1
 				target['number'] = targetnumbers[parentid]
-			print 'PUBLISH', target['delta row'], target['delta column'], target['image']['id']
+			self.logger.info('Publishing (%s, %s) %s' %
+					(target['delta row'], target['delta column'], target['image']['id']))
 			#self.publish(target, database=True)
 
 #		if self.targetlist:
@@ -155,11 +157,11 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		Waits until theading events of all target list data are cleared.
 		'''
 		for tid, teventinfo in self.targetlistevents.items():
-			print '%s WAITING for %s' % (self.id,tid,)
+			self.logger.info('%s waiting for %s' % (self.id, tid))
 			teventinfo['received'].wait()
-			print '%s DONE WAITING for %s' % (self.id,tid,)
+			self.logger.info('%s done waiting for %s' % (self.id, tid))
 		self.targetlistevents.clear()
-		print '%s DONE WAITING' % (self.id,)
+		self.logger.info('%s done waiting' % (self.id,))
 
 	def passTargets(self, targetlistdata):
 		'''
@@ -186,7 +188,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		'''
 		targetlistid = targetlistdoneevent['targetlistid']
 		status = targetlistdoneevent['status']
-		print 'got targetlistdone event, setting threading event', targetlistid
+		self.logger.info('Got target list done event, setting threading event %s'
+											% (targetlistid,))
 		if targetlistid in self.targetlistevents:
 			self.targetlistevents[targetlistid]['status'] = status
 			self.targetlistevents[targetlistid]['received'].set()
@@ -237,10 +240,11 @@ class ClickTargetFinder(TargetFinder):
 		## check if targets already found on this image
 		previous = self.researchImageTargets(imdata)
 		if previous:
-			print 'there are %s existing targets for this image' % (len(previous),)
+			self.logger.warning('There are %s existing targets for this image'
+													% (len(previous),))
 			self.targetlist = previous
 			if self.preventrepeat.get():
-				print 'you are not allowed to submit targets again'
+				self.logger.error('You are not allowed to submit targets again')
 				return
 
 		# display image
@@ -251,9 +255,9 @@ class ClickTargetFinder(TargetFinder):
 		# user now clicks on targets
 		self.notifyUserSubmit()
 		self.userpause.clear()
-		print 'waiting for user to select targets'
+		self.logger.info('Waiting for user to select targets...')
 		self.userpause.wait()
-		print 'done waiting'
+		self.logger.info('Done waiting')
 		self.targetlist += self.getTargetDataList('focus')
 		self.targetlist += self.getTargetDataList('acquisition')
 
@@ -373,7 +377,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		try:
 			image = self.imagemap.values()[0]
 		except:
-			print 'need tiles and mosaic image'
+			self.logger.exception('Need tiles and mosaic image')
 			return
 		scope = image['scope'].toDict()
 		camera = image['camera'].toDict()
@@ -599,7 +603,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		tilescontainer = uidata.Container('Mosaic Tiles')
 
 		clearmethod = uidata.Method('Reset Tile List', self.clearTiles)
-		publishtilelist = uidata.Method('Publish Tile List', self.tileListToDatabase)
+		publishtilelist = uidata.Method('Publish Tile List',
+																		self.tileListToDatabase)
 
 		# load tiles from db
 		loadcontainer = uidata.Container('Tile Lists Published in This Session')
@@ -617,19 +622,32 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		mosaicimagecont = uidata.Container('Mosaic Image')
 
 		parameters = self.calclients.keys()
-		self.uicalibrationparameter = uidata.SingleSelectFromList( 'Calibration Parameter', parameters, 'stage position', callback=self.uiSetCalibrationParameter, persist=True)
+		self.uicalibrationparameter = uidata.SingleSelectFromList(
+																				'Calibration Parameter',
+																				parameters,
+																				parameters.index('stage position'),
+																				callback=self.uiSetCalibrationParameter,
+																				persist=True)
 		self.scaleimage = uidata.Boolean('Scale Image', True, 'rw', persist=True)
-		self.maxdimension = uidata.Integer('Maximum Dimension', 512, 'rw', persist=True)
-		createmethod = uidata.Method('Create Mosaic Image From Tile List', self.createMosaicImage)
-		pubmethod = uidata.Method('Publish Current Mosaic Image', self.uiPublishMosaicImage)
-		self.autocreate = uidata.Boolean('Create mosaic image whenever tile list changes', True, 'rw')
+		self.maxdimension = uidata.Integer('Maximum Dimension', 512, 'rw',
+																				persist=True)
+		createmethod = uidata.Method('Create Mosaic Image From Tile List',
+																	self.createMosaicImage)
+		pubmethod = uidata.Method('Publish Current Mosaic Image',
+															self.uiPublishMosaicImage)
+		self.autocreate = uidata.Boolean(
+									'Create mosaic image whenever tile list changes', True, 'rw')
 
-		mosaicimagecont.addObjects((self.uicalibrationparameter, self.scaleimage, self.maxdimension, createmethod, self.autocreate, pubmethod))
+		mosaicimagecont.addObjects((self.uicalibrationparameter, self.scaleimage,
+																self.maxdimension, createmethod,
+																self.autocreate, pubmethod))
 
 		### Targets
 		targetcont = uidata.Container('Targeting')
-		refreshtargets = uidata.Method('Refresh Targets', self.displayDatabaseTargets)
-		refreshposition = uidata.Method('Refresh Current Position', self.uiRefreshCurrentPosition)
+		refreshtargets = uidata.Method('Refresh Targets',
+																		self.displayDatabaseTargets)
+		refreshposition = uidata.Method('Refresh Current Position',
+																		self.uiRefreshCurrentPosition)
 		targetcont.addObjects((refreshtargets, refreshposition))
 
 		container = uidata.LargeContainer('Mosaic Click Target Finder')

@@ -86,7 +86,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		for axis, limits in stagelimits.items():
 			if stageposition[axis] < limits[0] or stageposition[axis] > limits[1]:
 				messagestr = 'target stage position %s out of range... target aborting' % (stageposition,)
-				#print messagestr
 				self.acquisitionlog.error(messagestr)
 				raise InvalidStagePosition(messagestr)
 
@@ -511,7 +510,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.driftdone.wait()
 
 	def reportStatus(self, type, message):
-		print '%s:  %s' % (type, message)
+		self.logger.info('%s:  %s' % (type, message))
 		if type == 'processing':
 			self.uiprocessingstatus.set(message)
 		elif type == 'output':

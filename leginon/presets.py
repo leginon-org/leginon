@@ -279,7 +279,7 @@ class PresetsManager(node.Node):
 			cameradata['id'] = ('camera',)
 
 		self.uistatus.set(beginmessage)
-		print beginmessage
+		self.logger.info(beginmessage)
 
 		## should switch to using AllEMData
 		try:
@@ -298,7 +298,7 @@ class PresetsManager(node.Node):
 		else:
 			self.currentpreset = presetdata
 		self.uistatus.set(endmessage)
-		print endmessage
+		self.logger.info(endmessage)
 		self.outputEvent(event.PresetChangedEvent(name=name))
 
 	def fromScope(self, name):
@@ -351,7 +351,7 @@ class PresetsManager(node.Node):
 		try:
 			self.cycleToScope(new)
 		except PresetChangeError:
-			print 'Preset Change Failed!'
+			self.logger.error('Preset change failed')
 		node.beep()
 
 	def cycleToScope(self, presetname, dofinal=True):
@@ -380,7 +380,7 @@ class PresetsManager(node.Node):
 		### In that case, immediately go to the requested preset
 		### and force a cycle anyway.
 		if self.currentpreset is None:
-			print 'First preset change, doing initial preset change, then forcing cycle'
+			self.logger.info('First preset change, changing preset and forcing cycle')
 			self.toScope(presetname)
 			force = True
 		else:
@@ -406,7 +406,8 @@ class PresetsManager(node.Node):
 				p = self.presetByName(reversecycle[0])
 				if p['magnification'] == self.currentpreset['magnification']:
 					thiscycle = reversecycle
-					print 'magnification adjacency detected, going directly to final preset'
+					self.logger.info(
+						'Magnification adjacency detected, going directly to final preset')
 
 		## go to every preset in thiscycle except the last
 		for pname in thiscycle[:-1]:
@@ -415,7 +416,7 @@ class PresetsManager(node.Node):
 		## final preset change
 		if dofinal:
 			self.toScope(thiscycle[-1])
-			print 'cycle complete'
+			self.logger.info('Cycle completed')
 
 	def createCycleList(self, current, final, magshortcut, reverse=False):
 		order = self.orderlist.get()
@@ -534,7 +535,6 @@ class PresetsManager(node.Node):
 		try:
 			ht = self.getHighTension()
 		except:
-			#print 'Cannot get high tension value, calibration display failed'
 			return
 		pcaltime = self.calclients['pixel size'].time(mag)
 		self.cal_pixelsize.set(str(pcaltime))
@@ -758,7 +758,7 @@ class PresetsManager(node.Node):
 		if self.currentpreset is None or self.currentpreset['name'] != newpresetname:
 			self.cycleToScope(newpresetname, dofinal=False)
 
-		print 'going to target and to preset %s' % (newpresetname,)
+		self.logger.info('Going to target and to preset %s' % (newpresetname,))
 
 		oldpreset = emtargetdata['preset']
 		newpreset = self.presetByName(newpresetname)
@@ -833,7 +833,7 @@ class PresetsManager(node.Node):
 		self.currentpreset = newpreset
 		message = 'Preset (with target) changed to %s' % (name,)
 		self.uistatus.set(message)
-		print message
+		self.logger.info(message)
 		self.outputEvent(event.PresetChangedEvent(name=name))
 
 class PresetParameters(uidata.Container):

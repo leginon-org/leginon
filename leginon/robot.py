@@ -134,7 +134,7 @@ class RobotNode(node.Node):
 		parameterdata = self.researchByDataID((key,))
 		if parameterdata is None:
 			raise ScopeException('cannot get parameter value')
-		print key, parameterdata[key]
+		self.logger.info('Get scope %s, %s' % (key, parameterdata[key]))
 		return parameterdata[key]
 
 	def setScope(self, key, value):

@@ -186,8 +186,8 @@ class Manager(node.Node):
 		try:
 			self.distmap[eventclass][fromnodeid].remove(tonodeid)
 		except (KeyError, ValueError):
-			self.printerror(str(eventclass) + ': ' + str(fromnodeid) + ' to '
-											+ str(tonodeid) + ' no such binding')
+			self.logger.info(str(eventclass) + ': ' + str(fromnodeid) + ' to '
+												+ str(tonodeid) + ' no such binding')
 			return
 
 	def distributeEvents(self, ievent):
@@ -212,7 +212,8 @@ class Manager(node.Node):
 
 		## if nothing to do, report a warning and return now
 		if not do:
-#			print 'FYI:  %s event from node %s is not bound to any nodes.' % (eventclass.__name__, from_node)
+#			self.logger.info('%s event from node %s is not bound to any nodes'
+#												% (eventclass.__name__, from_node))
 			return
 
 		### set up confirmation event waiting
@@ -232,13 +233,14 @@ class Manager(node.Node):
 					self.clients[to_node].push(ievent)
 				except IOError:
 					### bad client, get rid of it
-					self.printerror('cannot push to node ' + str(to_node) + ', unregistering')
+					self.logger.error('Cannot push to node ' + str(to_node)
+														+ ', unregistering')
 					self.removeNode(to_node)
 					self.delLauncher(to_node)
 					raise
 				self.logEvent(ievent, 'distributed to %s' % (to_node,))
 			except:
-				self.printException()
+				self.logger.exception('')
 				# make sure we don't wait for confirmation
 				if ievent['confirm']:
 					ewaits[eventid][to_node].set()
@@ -290,8 +292,8 @@ class Manager(node.Node):
 			nodeclassesdata = self.researchByLocation(location, dataid)
 		except:
 			nodeclassesdata = None
-			self.printException()
-			self.printerror('cannot find launcher %s, unregistering' % launcherid)
+			self.logger.exception('cannot find launcher %s, unregistering'
+														% launcherid)
 			# group into another function
 			self.removeNode(launcherid)
 			# also remove from launcher registry
@@ -338,7 +340,6 @@ class Manager(node.Node):
 	def registerNode(self, readyevent):
 		'''Event handler for registering a node with the manager. Initializes a client for the node and adds information regarding the node's location.'''
 		nodeid = readyevent['id'][:-1]
-#		self.printerror('registering node ' + str(nodeid))
 		nodelocationdata = self.datahandler.query(nodeid)
 		if nodelocationdata is not None:
 			self.killNode(nodeid)
@@ -384,8 +385,7 @@ class Manager(node.Node):
 			self.uicontainer.addObject(clientcontainer)
 			self.uiclientcontainers[nodeid] = clientcontainer
 		except:
-			self.printerror('cannot add client container for node')
-			self.printException()
+			self.logger.exception('cannot add client container for node')
 
 	def unregisterNode(self, unavailable_event):
 		'''Event handler for unregistering the node from the manager. Removes all information, event mappings and the client related to the node.'''
@@ -402,7 +402,7 @@ class Manager(node.Node):
 			del self.uiclientcontainers[nodeid]
 			self.uicontainer.deleteObject(name)
 		except:
-			self.printerror('cannot delete client container for node')
+			self.logger.exception('cannot delete client container for node')
 
 	def handleNodeStatus(self, ievent):
 		nodeid = ievent['id'][:-1]
@@ -432,9 +432,8 @@ class Manager(node.Node):
 			self.removeNodeDistmaps(nodeid)
 			self.datahandler.remove(nodeid)
 			self.delClient(nodeid)
-#			self.printerror('node ' + str(nodeid) + ' unregistered')
 		else:
-			self.printerror('Manager: node ' + str(nodeid) + ' does not exist')
+			self.logger.error('Manager: node ' + str(nodeid) + ' does not exist')
 
 	def removeNodeDistmaps(self, nodeid):
 		'''Remove event mappings related to the node with the specifed node ID.'''
@@ -538,9 +537,8 @@ class Manager(node.Node):
 		try:
 			self.outputEvent(ev, nodeid)
 		except:
-			self.printException()
-			self.printerror('cannot push KillEvent to ' + str(nodeid)
-												+ ', unregistering')
+			self.logger.exception('cannot push KillEvent to ' + str(nodeid)
+														+ ', unregistering')
 			# maybe didn't uninitialized
 			self.setNodeStatus(nodeid, False)
 			# group into another function
@@ -635,7 +633,7 @@ class Manager(node.Node):
 			f.write(dump)
 			f.close()
 		except IOError,e:
-			self.printerror('Unable to export application to "%s"' % filename)
+			self.logger.exception('Unable to export application to "%s"' % filename)
 
 	def importApplication(self, filename):
 		if filename is None:
@@ -645,7 +643,7 @@ class Manager(node.Node):
 			app = importexport.ImportExport()
 			app.importApplication(filename)
 		except ValueError:
-			self.printerror('Unable to import application from "%s"' % filename)
+			self.logger.exception('Unable to import application from "%s"' % filename)
 
 	# UI methods
 	def uiExportApp(self):
@@ -731,8 +729,8 @@ class Manager(node.Node):
 		eventclass_str = self.uieventselect.getSelectedValue()
 		fromnodeidstr = self.uifromnodeselect.getSelectedValue()
 		tonodeidstr = self.uitonodeselect.getSelectedValue()
-		self.printerror('binding event %s from %s to %s'
-										% (eventclass_str, fromnodeidstr, tonodeidstr))
+		self.logger.info('binding event %s from %s to %s'
+											% (eventclass_str, fromnodeidstr, tonodeidstr))
 		eventclass = self.uieventclasses[eventclass_str]
 		if fromnodeidstr is None or tonodeidstr is None:
 			self.messagelog.error('Invalid node to bind event')
@@ -744,8 +742,8 @@ class Manager(node.Node):
 		eventclass_str = self.uieventselect.getSelectedValue()
 		fromnodeidstr = self.uifromnodeselect.getSelectedValue()
 		tonodeidstr = self.uitonodeselect.getSelectedValue()
-		self.printerror('unbinding event %s from %s to %s'
-										% (eventclass_str, fromnodeidstr, tonodeidstr))
+		self.logger.info('unbinding event %s from %s to %s'
+											% (eventclass_str, fromnodeidstr, tonodeidstr))
 		eventclass = self.uieventclasses[eventclass_str]
 		if fromnodeidstr is None or tonodeidstr is None:
 			self.messagelog.error('Invalid node to unbind event')

@@ -186,7 +186,7 @@ class DataBinder(DataHandler):
 					self.handleData(item)
 					self.logger.info('%s handled unthreaded' % (id,))
 			except Exception, e:
-				print 'handlerLoop exception'
+				self.logger.exception('handlerLoop exception')
 
 	def insert(self, newdata):
 		self.queue.put(newdata)

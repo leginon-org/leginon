@@ -19,9 +19,6 @@ import Mrc
 import uidata
 import threading
 
-False=0
-True=1
-
 class CalibrationError(Exception):
 	pass
 
@@ -89,7 +86,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 		percent = self.shiftpercent.get()
 		delta = percent * camconfig['dimension']['x']*camconfig['binning']['x']*pixsize
-		print 'DELTA', delta
+		self.logger.info('Delta %s' % delta)
 
 		self.aborted.clear()
 
@@ -98,18 +95,18 @@ class MatrixCalibrator(calibrator.Calibrator):
 			shifts[axis] = {'row': 0.0, 'col': 0.0}
 			n = 0
 			for base in baselist:
-				print "axis =", axis
+				self.logger.info('Axis %s' % axis)
 				basevalue = base[axis]
 
 				### 
 				newvalue = basevalue + delta
-				print 'newvalue', newvalue
+				self.logger.info('New value %s' % newvalue)
 
 				state1 = self.makeState(basevalue, axis)
 				state2 = self.makeState(newvalue, axis)
-				print 'states', state1, state2
+				self.logger.info('States %s, %s' % (state1, state2))
 				shiftinfo = calclient.measureStateShift(state1, state2, 1, settle=self.settle[uiparameter])
-				print 'shiftinfo', shiftinfo
+				self.logger.info('Shift info %s' % shiftinfo)
 
 				rowpix = shiftinfo['pixel shift']['row']
 				colpix = shiftinfo['pixel shift']['col']
@@ -120,7 +117,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 				actual2 = actual_states[1][uiparameter][axis]
 				change = actual2 - actual1
 				perpix = change / totalpix
-				print '**PERPIX', perpix
+				self.logger.info('Per pixel %s' % perpix)
 
 				## deviation from pixsize should be less than
 				## 12%
@@ -128,7 +125,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 				tol = self.uitolerance.get()
 				err = abs(perpix - pixsize) / pixsize
 				if err > tol:
-					print 'FAILED PIXEL SIZE TOLERANCE'
+					self.info.warning('Failed pixel size tolerance')
 					continue
 
 				if change == 0.0:
@@ -138,7 +135,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 				shifts[axis]['row'] += rowpixelsper
 				shifts[axis]['col'] += colpixelsper
 				n += 1
-				print 'shifts', shifts
+				self.logger.info('Shifts %s' % shifts)
 
 				if self.aborted.isSet():
 					raise Aborted()
@@ -160,7 +157,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		ht = self.getHighTension()
 
 		matrix = calclient.measurementToMatrix(shifts)
-		print 'MATRIX', matrix
+		self.logger.info('Matrix %s' % matrix)
 		calclient.storeMatrix(ht, mag, uiparameter, matrix)
 
 	def fakeCalibration(self):
@@ -206,25 +203,28 @@ class MatrixCalibrator(calibrator.Calibrator):
 		try:
 			self.calibrate()
 		except calibrationclient.NoPixelSizeError:
-			print 'Cannot get pixel size for current state, halting calibration'
+			self.logger.error(
+								'Cannot get pixel size for current state, halting calibration')
 		except CalibrationError:
-			print 'No good measurement, halting calibration'
+			self.logger.error('No good measurement, halting calibration')
 		except camerafuncs.NoCorrectorError:
-			print 'Cannot get corrected images, Corrector may not be running'
+			self.logger.error(
+										'Cannot get corrected images, Corrector may not be running')
 		except:
 			pass
 		else:
-			print 'Calibration completed successfully'
+			self.logger.info('Calibration completed successfully')
 		# return to original state
 		self.setParameter()
 
 	def getParameter(self):
 		param = self.uiparameter.getSelectedValue()
 		self.saveparam = self.researchByDataID((param,))
-		print 'storing parameter', param, self.saveparam[param]
+		self.logger.info('Storing parameter %s, %s'
+											% (param, self.saveparam[param]))
 
 	def setParameter(self):
-		print 'returning to original state'
+		self.logger.info('Returning to original state')
 		self.publishRemote(self.saveparam)
 
 	def uiAbort(self):

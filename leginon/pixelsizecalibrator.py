@@ -63,7 +63,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		## calculate new pixel sizes
 		for tmag in tmags:
 			psize = scale / tmag
-			print 'Mag:  %s,  psize: %s' % (tmag, psize)
+			self.logger.info('Magnification: %sx, pixel size: %s' % (tmag, psize))
 			comment = 'extrapolated from %s' % (fmags,)
 			self._store(tmag, psize, comment)
 
