@@ -720,6 +720,13 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def parameter(self):
 		return 'image shift'
 
+class RawImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
+	def __init__(self, node):
+		SimpleMatrixCalibrationClient.__init__(self, node)
+
+	def parameter(self):
+		return 'raw image shift'
+
 class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def __init__(self, node):
 		SimpleMatrixCalibrationClient.__init__(self, node)
