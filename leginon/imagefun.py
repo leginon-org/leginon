@@ -49,6 +49,7 @@ faster.  For now you are using slower functions implemented in imagefun'''
 ## division, but I can find no infinity constant or any other way of 
 ## producing infinity without first doing a zero division
 ## Here is my infinity contant
+print 'ignore zero division warning that may follow...'
 inf = Numeric.array(1.0, Numeric.Float32) / Numeric.array(0.0, Numeric.Float32)
 
 def stdev_slow(inputarray, known_mean=None):
@@ -101,7 +102,7 @@ if numextension is not None:
 	def minmax(image):
 		return numextension.minmax(image.astype(Numeric.Float32))
 
-	def despike(image, size=11, sigma=3.5):
+	def despike(image, size=11, sigma=3.5, debug=0):
 		'''
 		size is the neighborhood size.  wide spikes require a wider
 		neighborhood.  size = 11 has been shown to work well on spikes
@@ -113,7 +114,7 @@ if numextension is not None:
 		dev. then the pixel will be set to the mean value.
 		'''
 		# last argument is debug flag
-		return numextension.despike(image.astype(Numeric.Float32), size, sigma, 0)
+		return numextension.despike(image.astype(Numeric.Float32), size, sigma, debug)
 
 
 def medianSeries(series):
