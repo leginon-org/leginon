@@ -545,7 +545,7 @@ class Node(leginonobject.LeginonObject):
 
 	def defineUserInterface(self):
 		idarray = uidata.Array('ID', self.id, 'r')
-		class_string = uidata.String('Class', self.__class__.__name__, 'r')
+		classstring = uidata.String('Class', self.__class__.__name__, 'r')
 		location = self.key2str(self.location())
 		locationstruct = uidata.Struct('Location', location, 'r')
 		datakeepercontainer = self.datahandler.datakeeper.UI()
@@ -554,8 +554,9 @@ class Node(leginonobject.LeginonObject):
 		container = uidata.LargeContainer('Node')
 		if datakeepercontainer is not None:
 			container.addObject(datakeepercontainer)
-		container.addObjects((idarray, class_string, locationstruct, exitmethod))
-		self.uiserver.addObject(container)
+#		container.addObjects((idarray, class_string, locationstruct, exitmethod))
+#		self.uiserver.addObject(container)
+		self.uiserver.addObjects((idarray, classstring, locationstruct, exitmethod))
 
 	def outputMessage(self, title, message, number=0):
 		# log too maybe
