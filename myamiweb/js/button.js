@@ -78,6 +78,15 @@ function toggleimage(imagename, name) {
 	return state;
 }
 
+function setToggleButton(imagename, name, state) {
+	if (state=="on") {
+		imageon(imagename, name, "");
+	}
+	if (state=="off") {
+		imageoff(imagename, name, "");
+	}
+}
+
 function imageonfocus(imagename, name, type) {
 	imagenamestr = document.images[eval("\"" + imagename + "\"")].src;
 	if (imagenamestr.search("_on") != -1)

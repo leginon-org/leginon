@@ -1,4 +1,5 @@
 <?
+print_r($_REQUEST);
 require ('inc/leginon.inc');
 require ('inc/project.inc');
 require ('inc/viewer.inc');

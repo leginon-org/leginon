@@ -163,24 +163,78 @@ function newfile(view){
 	}
 
 	lastoptions[vid] = options;
+}
 
+function toggleButton(imagename, name) {
+	state = toggleimage(imagename, name);
+	if (m = eval("document.viewerform."+imagename+"_st")) {
+		m.value=state;
+		displaydebug(m.value);
+	}
+	return state;
+}
+
+function setImageStatus(viewname) {
+	if (ccolormap= eval("jscolormap"+viewname)) colormap="&colormap="+ccolormap; else colormap="";
+	if (cmin = eval("jsmin"+viewname)) np="&min="+cmin; else np="";
+	if (cmax = eval("jsmax"+viewname)) xp="&max="+cmax; else xp="";
+	options = np+xp+colormap;
+	if (img = document.images[eval("\"" +viewname+ "imgstatgrad\"")]) 
+		img.src = 'img/dfe/grad.php?h=10&w=40'+options;
+	filter = eval("jsfilter"+viewname);
+	binning = eval("jsbinning"+viewname);
+	quality = eval("jsquality"+viewname);
+	quality = (isNaN(quality)) ? quality : "jpg"+quality;
+	newstatus = " filter:"+filter+" bin:"+binning+" "+quality;
+	if (imgstatus = document.getElementById(viewname+"imgstat")) {
+		imgstatus.childNodes[0].nodeValue = newstatus;
+	}
 }
 
 function setminmax(viewname, min,max) {
 	eval("jsmin"+viewname+"="+min);
 	eval("jsmax"+viewname+"="+max);
+	if (m = eval("document.viewerform."+viewname+"minpix")) {
+		m.value=min;
+	}
+	if (x = eval("document.viewerform."+viewname+"maxpix")) {
+		x.value=max;
+	}
 }
 
 function setcolormap(viewname, colormap) {
 	eval("jscolormap"+viewname+"="+colormap);
+	if (cm = eval("document.viewerform."+viewname+"cm")) {
+		cm.value=colormap;
+	}
 }
+
+function setquality(viewname, quality) {
+	eval('jsquality'+viewname+'="'+quality+'"');
+	if (q = eval("document.viewerform."+viewname+"q")) {
+		q.value=quality;
+	}
+}
+
+function displaydebug(string) {
+	cur = document.viewerform.debug.value;
+	document.viewerform.debug.value= cur+"\n"+string;
+}
+
+
 
 function setfilter(viewname, filter) {
 	eval("jsfilter"+viewname+"='"+filter+"'");
+	if (f = eval("document.viewerform."+viewname+"f")) {
+		f.value=filter;
+	}
 }
 
 function setbinning(viewname, binning) {
 	eval("jsbinning"+viewname+"='"+binning+"'");
+	if (b = eval("document.viewerform."+viewname+"b")) {
+		b.value=binning;
+	}
 }
 
 function popUpMap(URL)
@@ -193,12 +247,14 @@ function popUpAdjust(URL, view, param){
 	max = eval("jsmax"+view);
 	filter = eval("jsfilter"+view);
 	binning = eval("jsbinning"+view);
+	quality = eval("jsquality"+view);
 	colormap = eval("jscolormap"+view);
 	min = (min) ? "&pmin="+min : "";
 	max = (max) ? "&pmax="+max : "";
 	filter = (filter) ? "&filter="+filter : "";
 	binning = (binning) ? "&binning="+binning : "";
+	quality = (quality) ? "&t="+quality : "";
 	colormap= (colormap) ? "&colormap="+colormap : "";
 	param = (param) ? param : "left=0,top=0,height=35,width=370";
-	window.open(URL+min+max+filter+binning+colormap, view+"adj", param+",toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes");
+	window.open(URL+min+max+filter+binning+quality+colormap, view+"adj", param+",toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes");
 }

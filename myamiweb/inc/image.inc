@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.14 $
- *	@version $Id: image.inc,v 1.14 2004-12-09 19:09:11 dfellman Exp $
+ *	@version $Revision: 1.15 $
+ *	@version $Id: image.inc,v 1.15 2004-12-11 00:51:02 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -140,7 +140,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			imagestringshadow($img, 4, $ctx, $cty, $tn, $col);
 		    }
 		}
-		if ($driftdirection=1) {
+		if ($driftdirection=0) {
 		    if ($targets = $leginondata->getImageFocusTargets($imageId, true)) {
 
 			$ratioX = ($size) ? $size/$target[dimx] : (($binning) ? 1/$binning : 1);

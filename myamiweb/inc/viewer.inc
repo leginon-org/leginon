@@ -6,7 +6,7 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  */
-
+print_r($_GET);
 require_once("config.php");
 require_once("inc/util.inc");
 require_once('inc/mysql.inc');
@@ -226,7 +226,7 @@ class viewer {
 		$n=1;
 		$display = '<form method="post" name="viewerform"  '.
 				'action="'.$_SERVER['PHP_SELF'].'">'.$this->crlf;
-		if ($debug=0) {
+		if ($debug=1) {
 		$display .= '<textarea name=debug rows=10 cols=50></textarea>';
 		$display .= '<input type=button value="clear" onclick="javascript:document.viewerform.debug.value=\'\'">';
 		}
@@ -353,7 +353,41 @@ class view {
 		$this->scale_st = "false";
 		$this->target_st = "false";
 		$this->quality = "80";
+		$this->filter= "default";
+		$this->binning= "auto";
 		$this->colormap = "0";
+		$this->qualitymemo = $this->name.'q';
+		$this->binningmemo = $this->name.'b';
+		$this->filtermemo = $this->name.'f';
+		$this->maxpixmemo = $this->name.'maxpix';
+		$this->minpixmemo = $this->name.'minpix';
+		$this->colormapmemo = $this->name.'cm';
+		$this->btfiltermemo = $this->name.'filter_bt_st';
+		$this->btfftmemo = $this->name.'fft_bt_st';
+		$this->bttargetmemo = $this->name.'target_bt_st';
+		$this->btscalememo = $this->name.'scale_bt_st';
+		if ($quality=$_REQUEST[$this->qualitymemo])
+			$this->quality = $quality;
+		if ($binning=$_REQUEST[$this->binningmemo])
+			$this->binning = $binning;
+		if ($filter=$_REQUEST[$this->filtermemo])
+			$this->filter = $filter;
+		if ($minpix=$_REQUEST[$this->minpixmemo])
+			$this->minpix = $minpix;
+		if ($maxpix=$_REQUEST[$this->maxpixmemo])
+			$this->maxpix = $maxpix;
+		if ($colormap=$_REQUEST[$this->colormapmemo])
+			$this->colormap= $colormap;
+		if ($btfilterstate=$_REQUEST[$this->btfiltermemo])
+			$this->btfilterstate = $btfilterstate;
+		if ($btfftstate=$_REQUEST[$this->btfftmemo])
+			$this->btfftstate = $btfftstate;
+		if ($bttargetstate=$_REQUEST[$this->bttargetmemo])
+			$this->bttargetstate = $bttargetstate;
+		if ($btscalestate=$_REQUEST[$this->btscalememo])
+			$this->btscalestate = $btscalestate;
+
+
 		
 	}
 
@@ -457,10 +491,10 @@ class view {
 			.'var jsimagescript'.$this->name.'="'.$this->imagescript.'";'.$this->crlf
 			.'var jspresetscript'.$this->name.'="'.$this->presetscript.'";'.$this->crlf
 			.'var jsvfile'.$this->name.'=1;'.$this->crlf
-			.'var jsmin'.$this->name.';'.$this->crlf
-			.'var jsmax'.$this->name.';'.$this->crlf
-			.'var jsfilter'.$this->name.';'
-			.'var jsbinning'.$this->name.';'
+			.'var jsmin'.$this->name.'="'.$this->minpix.'";'.$this->crlf
+			.'var jsmax'.$this->name.'="'.$this->maxpix.'";'.$this->crlf
+			.'var jsfilter'.$this->name.'="'.$this->filter.'";'.$this->crlf
+			.'var jsbinning'.$this->name.'="'.$this->binning.'";'.$this->crlf
 			.'var jspreset'.$this->name.'="'.$this->preset.'";'.$this->crlf
 			.'var jsquality'.$this->name.'="'.$this->quality.'";'.$this->crlf
 			.'var jscolormap'.$this->name.'="'.$this->colormap.'";'.$this->crlf
@@ -479,12 +513,20 @@ class view {
 	function getJavascriptInit() {
 		$javascript = '';
 		if ($_POST[$this->displayname]=='off')
-			$javascript .= 'toggleimage(\''.$this->name.'close_bt\', \'close_bt\');'.$this->crlf;
+			$javascript .= 'toggleButton(\''.$this->name.'close_bt\', \'close_bt\');'.$this->crlf;
 		// --- set Scale, targets buttons on 
 		if ($this->displaytargeticon)
-			$javascript .= 'toggleimage(\''.$this->name.'target_bt\', \'target_bt\');'.$this->crlf;
+			$javascript .= 'setToggleButton(\''.$this->name.'target_bt\', \'target_bt\', \'on\');'.$this->crlf;
 		if ($this->displayscaleicon)
-			$javascript .= 'toggleimage(\''.$this->name.'scale_bt\', \'scale_bt\');'.$this->crlf;
+			$javascript .= 'setToggleButton(\''.$this->name.'scale_bt\', \'scale_bt\', \'on\');'.$this->crlf;
+		if ($this->btfilterstate=="on") 
+			$javascript .= 'setToggleButton(\''.$this->name.'filter_bt\', \'filter_bt\', \'on\');'.$this->crlf;
+		if ($this->btfftstate=="on") 
+			$javascript .= 'setToggleButton(\''.$this->name.'fft_bt\', \'fft_bt\', \'on\');'.$this->crlf;
+		if ($this->bttargetstate) 
+			$javascript .= 'setToggleButton(\''.$this->name.'target_bt\', \'target_bt\', \''.$this->bttargetstate.'\');'.$this->crlf;
+		if ($this->btscalestate) 
+			$javascript .= 'setToggleButton(\''.$this->name.'scale_bt\', \'scale_bt\', \''.$this->bttargetstate.'\');'.$this->crlf;
 		return $javascript;
 	}
 
@@ -527,7 +569,17 @@ class view {
 		$displayview = $this->getViewState();
 		$htmlframe = '
 		<input type="hidden" name="'.$displayname.'" value="'.$displayview.'">
-		<input type="hidden" name="'.$prename.'m" value="'.$selpre.'"> ';
+		<input type="hidden" name="'.$prename.'m" value="'.$selpre.'"> 
+		<input type="hidden" name="'.$this->qualitymemo.'" value="'.$this->quality.'"> 
+		<input type="hidden" name="'.$this->binningmemo.'" value="'.$this->binning.'"> 
+		<input type="hidden" name="'.$this->filtermemo.'" value="'.$this->filter.'">
+		<input type="hidden" name="'.$this->colormapmemo.'" value="'.$this->colormap.'">
+		<input type="hidden" name="'.$this->minpixmemo.'" value="'.$this->minpix.'">
+		<input type="hidden" name="'.$this->maxpixmemo.'" value="'.$this->maxpix.'"> 
+		<input type="hidden" name="'.$this->btfiltermemo.'" value="'.$this->btfilterstate.'"> 
+		<input type="hidden" name="'.$this->btfftmemo.'" value="'.$this->btfftstate.'"> 
+		<input type="hidden" name="'.$this->bttargetmemo.'" value="'.$this->bttargetstate.'"> 
+		<input type="hidden" name="'.$this->btscalememo.'" value="'.$this->btscalestate.'"> ';
 		if ($this->ismaster)
 			$htmlframe .= '
 		<input type="hidden" name="controlpre" value="'.$prename.'"> 
@@ -539,7 +591,7 @@ class view {
 		if ($this->displaycloseicon)
 		$htmlframe .= '
 			<td width="15">
-			<a href="javascript:t = toggleimage(\''.$this->name.'close_bt\', \'close_bt\');setview(\''.$displayname.'\',t); newexp() "
+			<a href="javascript:t = toggleButton(\''.$this->name.'close_bt\', \'close_bt\');setview(\''.$displayname.'\',t); newexp() "
 				onmouseover="imageonfocus(\''.$this->name.'close_bt\', \'close_bt\', \'_over\')" 
 				onmouseout="imageonfocus(\''.$this->name.'close_bt\', \'close_bt\', \'\')" 
 				>
@@ -565,12 +617,12 @@ class view {
 			<td width="15">'
 			.$this->btinfo->display().$this->crlf
 			.'
-			</td>
+	</td>
 		';
 		if ($this->displayfiltericon)
 		$htmlframe .= '
 			<td width="15">
-			<a href="javascript:'.$this->name.'filter_bt_state=toggleimage(\''.$this->name.'filter_bt\', \'filter_bt\');newfile(\''.$name.'\'); "
+			<a href="javascript:'.$this->name.'filter_bt_st=toggleButton(\''.$this->name.'filter_bt\', \'filter_bt\');newfile(\''.$name.'\'); "
 				onmouseover="imageonfocus(\''.$this->name.'filter_bt\', \'filter_bt\', \'_over\')" 
 				onmouseout="imageonfocus(\''.$this->name.'filter_bt\', \'filter_bt\', \'\')" 
 				>
@@ -581,7 +633,7 @@ class view {
 		if ($this->displayffticon)
 		$htmlframe .= '
 			<td width="15">
-			<a href="javascript:toggleimage(\''.$this->name.'fft_bt\', \'fft_bt\');newfile(\''.$name.'\'); "
+			<a href="javascript:toggleButton(\''.$this->name.'fft_bt\', \'fft_bt\');newfile(\''.$name.'\'); "
 				onmouseover="imageonfocus(\''.$this->name.'fft_bt\', \'fft_bt\', \'_over\')" 
 				onmouseout="imageonfocus(\''.$this->name.'fft_bt\', \'fft_bt\', \'\')" 
 				>
@@ -592,7 +644,7 @@ class view {
 		if ($this->displaytargeticon)
 		$htmlframe .= '
 			<td width="15">
-			<a href="javascript:toggleimage(\''.$this->name.'target_bt\', \'target_bt\');newfile(\''.$name.'\'); "
+			<a href="javascript:toggleButton(\''.$this->name.'target_bt\', \'target_bt\');newfile(\''.$name.'\'); "
 				onmouseover="imageonfocus(\''.$this->name.'target_bt\', \'target_bt\', \'_over\')" 
 				onmouseout="imageonfocus(\''.$this->name.'target_bt\', \'target_bt\', \'\')" 
 				>
@@ -603,7 +655,7 @@ class view {
 		if ($this->displayscaleicon)
 		$htmlframe .= '
 			<td width="15">
-			<a href="javascript:toggleimage(\''.$this->name.'scale_bt\', \'scale_bt\');newfile(\''.$name.'\'); "
+			<a href="javascript:toggleButton(\''.$this->name.'scale_bt\', \'scale_bt\');newfile(\''.$name.'\'); "
 				onmouseover="imageonfocus(\''.$this->name.'scale_bt\', \'scale_bt\', \'_over\')" 
 				onmouseout="imageonfocus(\''.$this->name.'scale_bt\', \'scale_bt\', \'\')" 
 				>
@@ -627,6 +679,11 @@ class view {
 			 <tr>
 				<td width="'.$this->size.'">
 		';
+		$htmlframe .='
+				<table class="bgcolor0" border="0" cellspacing="0" cellpadding="0">
+					<tr>
+						<td>
+		';
 		if (is_array($datatypes)) {
 		$htmlframe .='
 					<select name="'.$prename.'" onchange="newexp()" > 
@@ -639,12 +696,30 @@ class view {
 					</select>
 		';
 		}
+		$htmlframe .= '
+						</td>
+						<td>
+				';
 		$param = "left=0,top=".($this->viewnb*100).",height=35,width=370";
 		$url = "adjust.php?name=$name&displayname=$this->title";
-		if ($this->displayadjustlink)
 		$htmlframe .='
-			<a href="javascript:popUpAdjust(\''.$url.'\',\''.$name.'\',\''.$param.'\');">adjust&raquo;</a>
+			<a href="javascript:popUpAdjust(\''.$url.'\',\''.$name.'\',\''.$param.'\');">
 		';
+		$quality = (is_numeric($this->quality)) ? "jpg".$this->quality : $this->quality;
+		$filter = ($this->filter=='default') ? "no filter": "filter:".$this->filter;
+		$minpix = ($this->minpix) ? "&min=".$this->minpix : "";
+		$maxpix = ($this->maxpix) ? "&max=".$this->maxpix : "";
+		$colormap = ($this->colormap) ? "&colormap=".$this->colormap : "";
+		$gradoptions = "h=12&w=50".$minpix.$maxpix.$colormap;
+		$gradient = "img/dfe/grad.php?".$gradoptions;
+		$imgstatus = "<div id='".$this->name."imgstat'>".$filter." bin:".$this->binning." ".$quality." <img name='".$this->name."imgstatgrad' border='0' src='".$gradient."'></div>";
+		$htmlframe .= $imgstatus;
+		$htmlframe .='
+			</a>';
+		$htmlframe .= '
+						</td>
+					 </tr>
+				</table>';
 		$htmlframe .= '
 				</td>
 			 </tr>';

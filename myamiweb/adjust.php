@@ -24,6 +24,8 @@ if (!$currentfilter=$_REQUEST['filter'])
 	$currentfilter='default';
 if (!$currentbinning=$_REQUEST['binning'])
 	$currentbinning='auto';
+if (!$currentquality=$_REQUEST['t'])
+	$currentquality='80';
 if ($min > $defaultmax)
 	$min = $defaultmax;
 if ($max > $defaultmax)
@@ -61,6 +63,7 @@ var jsbaseurl = '$baseurl/';
 var jsviewname = '$name';
 var jsfilter = '$currentfilter';
 var jsbinning = '$currentbinning';
+var jsquality = '$currentquality';
 var gradient = '/img/dfe/$currentgradient';
 ";
 require('inc/filter.inc');
@@ -70,10 +73,6 @@ $binningtypes = $filterdata->getBinningTypes();
 
 ?>
 function update() {
-//	if (eval("parentwindow.jsmin"+jsviewname))
-//		eval("parentwindow.jsmin"+jsviewname+"="+jsminpix);
-//	if (eval("parentwindow.jsmax"+jsviewname))
-//		eval("parentwindow.jsmax"+jsviewname+"="+jsmaxpix);
 	if (binninglist = document.adjustform.binning)
 		jsbinning=binninglist.options[binninglist.selectedIndex].value;
 	parentwindow.setbinning(jsviewname,jsbinning);
@@ -83,9 +82,13 @@ function update() {
 	parentwindow.setfilter(jsviewname,jsfilter);
 	if (!eval("parentwindow."+jsviewname+"filter_bt_st"))
 		if (jsfilter!="default")
-			eval("parentwindow.toggleimage('"+jsviewname+"filter_bt', 'filter_bt')");
+			eval("parentwindow.toggleButton('"+jsviewname+"filter_bt', 'filter_bt')");
 	parentwindow.setminmax(jsviewname,jsminpix,jsmaxpix);
 	parentwindow.setcolormap(jsviewname,jscolormap);
+	if (qualitylist = document.adjustform.quality)
+		jsquality=qualitylist.options[qualitylist.selectedIndex].value;
+	parentwindow.setquality(jsviewname,jsquality);
+	parentwindow.setImageStatus(jsviewname);
 	parentwindow.newfile(jsviewname);
 
 }
@@ -189,7 +192,7 @@ function init(){
 	<?
 	foreach ($filtertypes as $k=>$filter) {
 		$sel = ($k==$currentfilter) ? 'selected' : '';
-		echo '<option value="'.$k.'"'.$sel.'>'.$filter.'</option>'."\n";
+		echo '<option value="'.$k.'" '.$sel.'>'.$filter.'</option>'."\n";
 	}
 	?>
 	</select>
@@ -202,7 +205,7 @@ function init(){
 	<?
 	foreach ($binningtypes as $k=>$binning) {
 		$sel = ($k==$currentbinning) ? 'selected' : '';
-		echo '<option value="'.$k.'"'.$sel.'>'.$binning.'</option>'."\n";
+		echo '<option value="'.$k.'" '.$sel.'>'.$binning.'</option>'."\n";
 	}
 	?>
 	</select>
@@ -212,7 +215,19 @@ function init(){
   </td>
  </tr>
  <tr>
+ <td colspan="2">
+	Quality
+ </td>
  <td>
+	<select name="quality">
+		<option value="png">png</option>
+	<?
+		for($q=100; $q>0; $q--) {
+		$sel = ($q==$currentquality) ? 'selected' : '';
+		echo '		<option value="'.$q.'" '.$sel.'>jpeg '.$q.'</option>'."\n";
+		}
+	?>
+	</select>
 	<input id="updatebutton" type="button" alt="Update Image" value="Update" onclick="update();">
  </td>
  </tr>
