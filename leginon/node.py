@@ -115,7 +115,7 @@ class Node(leginonobject.LeginonObject):
 		newid = self.ID()
 		myloc = self.location()
 		available_event = event.NodeAvailableEvent(newid, myloc)
-		self.outputEvent(ievent=available_event, wait=1)
+		self.outputEvent(ievent=available_event, wait=True)
 
 	def main(self):
 		raise NotImplementedError()
@@ -130,7 +130,7 @@ class Node(leginonobject.LeginonObject):
 		interact_thread.join()
 		self.exit()
 
-	def outputEvent(self, ievent, wait=0, nodeid=('manager',)):
+	def outputEvent(self, ievent, wait=False, nodeid=('manager',)):
 		self.clients[nodeid].push(ievent)
 		if wait:
 			self.waitEvent(ievent)
@@ -152,12 +152,12 @@ class Node(leginonobject.LeginonObject):
 		self.confirmwaitlist[ievent.content].set()
 		#del self.confirmwaitlist[ievent.content]
 
-	def publish(self, idata, eventclass=event.PublishEvent):
+	def publish(self, idata, eventclass=event.PublishEvent, confirm=False):
 		if not issubclass(eventclass, event.PublishEvent):
 			raise TypeError('PublishEvent subclass required')
 		self.server.datahandler._insert(idata)
 		# this idata.id is content, I think
-		e = eventclass(self.ID(), idata.id)
+		e = eventclass(self.ID(), idata.id, confirm)
 		self.outputEvent(e)
 		return e
 

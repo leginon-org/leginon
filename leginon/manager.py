@@ -16,6 +16,8 @@ class Manager(node.Node):
 
 		self.common = common
 		self.distmap = {}
+		# maps event id to list of node it was distributed to if event.confirm
+		self.confirmmap = {}
 
 		## this makes every received event get distributed
 		self.addEventInput(event.NodeAvailableEvent, self.registerNode)
@@ -62,9 +64,10 @@ class Manager(node.Node):
 				self.confirmwaitlist[ievent.content].set()
 				#del self.confirmwaitlist[ievent.content]
 		else:
-			# this could be in distribute
-			# could wait for all nodes given event to confirm
-			self.outputEvent(ievent, 0, nodeid)
+			self.confirmmap[ievent.content].remove(ievent.id[:-1])
+			if len(self.confirmmap[ievent.content]) == 0:
+				del self.confirmmap[ievent.content]
+				self.outputEvent(ievent, 0, nodeid)
 
 	def addLauncher(self, nodeid):
 		self.launcherlist.append(nodeid[-1])
@@ -208,22 +211,23 @@ class Manager(node.Node):
 		'''push event to eventclients based on event class and source'''
 		eventclass = ievent.__class__
 		from_node = ievent.id[:-1]
-		done = []
+		do = []
 		for distclass,fromnodes in self.distmap.items():
 			if issubclass(eventclass, distclass):
 				for fromnode in (from_node, None):
 					if fromnode in fromnodes:
 						for to_node in fromnodes[from_node]:
 							if to_node:
-								if to_node not in done:
-									self.clients[to_node].push(ievent)
-									done.append(to_node)
+								if to_node not in do:
+									do.append(to_node)
 							else:
 								for to_node in self.handler.clients:
-									if to_node not in done:
-										self.clients[to_node].push(ievent)
-										done.append(to_node)
-
+									if to_node not in do:
+										do.append(to_node)
+		if ievent.confirm:
+			self.confirmmap[ievent.id] = do
+		for to_node in do:
+			self.clients[to_node].push(ievent)
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
@@ -301,7 +305,7 @@ if __name__ == '__main__':
 	m = Manager(manager_id)
 
 	## GUI
-	gui = 1
+	gui = 0
 	if gui:
 		import nodegui
 		import Tkinter

@@ -39,7 +39,7 @@ class MyNode(node.Node):
 		print 'node %s says %s' % (self.id,self.timenow)
 		mydata = data.StringData(self.ID(), self.timenow)
 		#self.publish(mydata)
-		self.waitEvent(self.publish(mydata))
+		self.waitEvent(self.publish(mydata, confirm=True))
 
 	def handle_intervalchange(self, controlevent):
 		print 'got control event %s' % controlevent
