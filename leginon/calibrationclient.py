@@ -271,7 +271,7 @@ class DoseCalibrationClient(CalibrationClient):
 		camera_pixel_size = inst['camera pixel size']
 		self.node.logger.info('Camera pixel size %.4e' % camera_pixel_size)
 		camera_mag = camera_pixel_size / specimen_pixel_size
-		self.node.logger.info('Camera magnification %.1f' % camera_mag)
+		self.node.logger.info('CCD Camera magnification %.1f' % camera_mag)
 		exposure_time = imagedata['camera']['exposure time'] / 1000.0
 		binning = imagedata['camera']['binning']['x']
 		mean_counts = imagefun.mean(imagedata['image']) / (binning**2)
