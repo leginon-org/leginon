@@ -133,7 +133,7 @@ class Corrector(node.Node):
 		return xmlbinlib.Binary(mrcstr)
 
 	def newPlan(self, camstate):
-		plan = CorrectorPlanData(self.ID(), camstate=camstate)
+		plan = data.CorrectorPlanData(self.ID(), camstate=camstate)
 		return plan
 
 	def retrievePlan(self, camstate):
