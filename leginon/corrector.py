@@ -8,19 +8,13 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
+import camerafuncs
+import copy
 import data
+import event
+import imagefun
 import node
 import Numeric
-import imagefun
-import event
-import cPickle
-import string
-import threading
-import Mrc
-import camerafuncs
-import dbdatakeeper
-import os
-import copy
 import uidata
 
 class CameraError(Exception):
@@ -42,6 +36,7 @@ class SimpleCorrector(node.Node):
 																						event.BrightImagePublishEvent,
 																						event.ListPublishEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
+		self.references = {}
 		self.camerafuncs = camerafuncs.CameraFuncs(self)
 		node.Node.__init__(self, id, session, nodelocations,
 												datahandler=DataHandler, **kwargs)
@@ -52,12 +47,110 @@ class SimpleCorrector(node.Node):
 		self.defineUserInterface()
 		self.start()
 
+	def getReferenceDataClass(self, referencetype):
+		if referencetype == 'dark':
+			dataclass = data.DarkImageData
+		elif referencetype == 'normal':
+			dataclass = data.BrightImageData
+		elif referencetype == 'normalization':
+			dataclass = data.NormImageData
+		else:
+			raise ValueError('Invalid reference type specified')
+		return dataclass
+
+	def researchReference(self, binning, referencetype):
+		referencedata = self.getReferenceDataClass(referencetype)()
+
+		camerasize = self.session['instrument']['camera size']
+		correctorcamstatedata = data.CorrectorCamstateData()
+		correctorcamstatedata['offset'] = {'x': 0, 'y': 0}
+		correctorcamstatedata['binning'] = {'x': binning, 'y': binning}
+		correctorcamstatedata['dimension'] = {'x': camerasize/binning,
+																					'y': camerasize/binning}
+
+		referencedata['camstate'] = correctorcamstatedata
+		referencedata['session'] = data.SessionData()
+		referencedata['session']['instrument'] = self.session['instrument']
+
+		self.status.set('Researching reference image...')
+		try:
+			references = self.research(datainstance=referencedata, results=1)
+		except node.ResearchError, e:
+			message = 'Error researching reference image from the database'
+			if str(e):
+				message += ': %s' % str(e)
+			self.messagelog.error(message)
+			return None
+		self.status.set('Reference image researched')
+		try:
+			return references[0]['image']
+		except (TypeError, IndexError, KeyError):
+			return None
+
+	def correctImage(self, image, cameradata):
+		binning = cameradata['binning']['x']
+		rowoffset = cameradata['offset']['y']
+		columnoffset = cameradata['offset']['x']
+		rows = cameradata['dimension']['y']
+		columns = cameradata['dimension']['x']
+		try:
+			dark = self.references[binning]['dark']
+		except KeyError:
+			dark = self.researchReference(binning, 'dark')
+			if dark is None:
+				self.messagelog.error('No dark reference image for binning of %d'
+																% binning)
+				return None
+			if binning in self.references:
+				self.references[binning]['dark'] = dark
+			else:
+				self.references[binning] = {'dark': dark}
+		try:
+			normalization = self.references[binning]['normalization']
+		except KeyError:
+			normalization = self.researchReference(binning, 'normalization')
+			if normalization is None:
+				self.messagelog.error(
+					'No normalization reference image for binning of %d' % binning)
+				return None
+			if binning in self.references:
+				self.references[binning]['normalization'] = normalization
+			else:
+				self.references[binning] = {'normalization': normalization}
+		return (image - dark[rowoffset:rowoffset + rows,
+													columnoffset:columnoffset + columns]) \
+									* normalization[rowoffset:rowoffset + rows,
+																	columnoffset:columnoffset + columns]
+
+	def acquireCorrectedImageData(self):
+		imagedata = self.camerafuncs.acquireCameraImageData(correction=False)
+		image = imagedata['image']
+		cameradata = imagedata['camera']
+		correctedimage = self.correctImage(image, cameradata)
+		if correctedimage is None:
+			return None
+		imagedata['image'] = correctedimage
+		return imagedata
+
 	def getImageStats(self, image):
 		mean = imagefun.mean(image)
 		stdev = imagefun.stdev(image, known_mean=mean)
 		min = imagefun.min(image)
 		max = imagefun.max(image)
 		return {'mean': mean, 'stdev': stdev, 'min': min, 'max': max}
+
+	def displayImageStats(self, image):
+		if image is None:
+			self.mean.set(None)
+			self.min.set(None)
+			self.max.set(None)
+			self.std.set(None)
+		else:
+			stats = self.getImageStats(image)
+			self.mean.set(stats['mean'])
+			self.min.set(stats['min'])
+			self.max.set(stats['max'])
+			self.std.set(stats['stdev'])
 
 	def getCameraSettings(self, binning, exposuretype):
 		cameradata = self.camerafuncs.getCameraEMData()
@@ -84,23 +177,17 @@ class SimpleCorrector(node.Node):
 			imagedata = self.camerafuncs.acquireCameraImageData(correction=False)
 			images.append(imagedata['image'])
 			if self.displayacquire.get():
+				self.displayImageStats(imagedata['image'])
 				self.image.set(imagedata['image'])
 		self.status.set('Calculating median image...')
 		image = imagefun.medianSeries(images)
 		if self.displaymedian.get():
+			self.displayImageStats(image)
 			self.image.set(image)
 		return image
 
 	def publishReference(self, referencetype, image, camerastate):
-		if referencetype == 'dark':
-			imagedata = data.DarkImageData()
-		elif referencetype == 'normal':
-			imagedata = data.BrightImageData()
-		elif referencetype == 'normalized':
-			imagedata = data.NormImageData()
-		else:
-			raise ValueError('Invalid reference type specified')
-
+		imagedata = self.getReferenceDataClass(referencetype)()
 		imagedata['id'] = self.ID()
 		imagedata['image'] = image
 		correctorcamstatedata = data.CorrectorCamstateData()
@@ -117,18 +204,44 @@ class SimpleCorrector(node.Node):
 		self.status.set('Setting up camera...')
 		camerastate = self.setCameraSettings(binning, exposuretype)
 		image = self.getMedianImage(naverage)
-		print self.getImageStats(image)
 		self.publishReference(exposuretype, image, camerastate)
+		return image, camerastate
+
+	def calculateNormalizationImage(self, darkimage, brightimage, camerastate):
+		image = brightimage - darkimage
+		mean = imagefun.mean(image)
+		# clip to ensure corrected values are in range
+		image = Numeric.clip(image, 1.0, imagefun.inf)
+		image = mean/image
+		if self.displaynormalization.get():
+			self.displayImageStats(image)
+			self.image.set(image)
+		self.publishReference('normalization', image, camerastate)
+		return image
 
 	def acquireReferenceImages(self):
 		naverage = self.imagestoaverage.get()
 		exposuretypestrings = {'dark': 'Dark', 'normal': 'Bright'}
 		try:
-			for exposuretype in ['dark', 'normal']:
-				for binning in [1, 2, 4, 8]:
+			# invert binning/exposure type for calculating normalizations
+			# could be less than optimal if retracting camera on darks
+			for binning in [1, 2, 4, 8]:
+				for exposuretype in ['dark', 'normal']:
 					self.exposuretype.set(exposuretypestrings[exposuretype])
 					self.binning.set(str(binning))
-					image = self.acquireReferenceImage(binning, exposuretype, naverage)
+					image, camerastate = \
+						self.acquireReferenceImage(binning, exposuretype, naverage)
+					if binning not in self.references:
+						self.references[binning] = {}
+					self.references[binning][exposuretype] = image
+				self.references[binning]['normalization'] = \
+					 self.calculateNormalizationImage(self.references[binning]['dark'],
+																						self.references[binning]['normal'],
+																						camerastate)
+				try:
+					del self.references[binning]['normal']
+				except (TypeError, KeyError):
+					pass
 		except (CameraError, node.PublishError), e:
 			if isinstance(e, CameraError):
 				message = 'Error configuring camera'
@@ -142,11 +255,13 @@ class SimpleCorrector(node.Node):
 			self.status.set('Error acquiring reference images')
 			self.exposuretype.set('')
 			self.binning.set('')
+			self.displayImageStats(None)
 			return
 
 		self.status.set('Reference images acquired')
 		self.exposuretype.set('')
 		self.binning.set('')
+		self.displayImageStats(None)
 
 	def onAcquireReferenceImages(self):
 		self.automethod.disable()
@@ -165,15 +280,27 @@ class SimpleCorrector(node.Node):
 		self.status = uidata.String('Status', '', 'r')
 		self.exposuretype = uidata.String('Exposure type', '', 'r')
 		self.binning = uidata.String('Binning', '', 'r')
+
+		self.mean = uidata.Float('Mean', None, 'r')
+		self.min = uidata.Float('Min', None, 'r')
+		self.max = uidata.Float('Max', None, 'r')
+		self.std = uidata.Float('Std. Dev.', None, 'r')
+		statisticscontainer = uidata.Container('Statistics')
+		statisticscontainer.addObjects((self.mean, self.min, self.max, self.std))
+
 		statuscontainer = uidata.Container('Status')
-		statuscontainer.addObjects((self.status, self.exposuretype, self.binning))
+		statuscontainer.addObjects((self.status, self.exposuretype, self.binning,
+																statisticscontainer))
 
 		self.displayacquire = uidata.Boolean('Acquired images', False,
 																					'rw', persist=True)
 		self.displaymedian = uidata.Boolean('Median images', True,
 																					'rw', persist=True)
+		self.displaynormalization = uidata.Boolean('Normalization images', True,
+																								'rw', persist=True)
 		displaycontainer = uidata.Container('Display')
-		displaycontainer.addObjects((self.displayacquire, self.displaymedian))
+		displaycontainer.addObjects((self.displayacquire, self.displaymedian,
+																	self.displaynormalization))
 		self.imagestoaverage = uidata.Integer('Images to average', 3, 'rw',
 																					persist=True)
 		settingscontainer = uidata.Container('Settings')

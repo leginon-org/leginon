@@ -38,7 +38,7 @@ class ManualAcquisition(node.Node):
 			self.camerafuncs.uiApplyAsNeeded()
 			imagedata = self.camerafuncs.acquireCameraImageData(correction=correct)
 		except Exception, e:
-			if isinstance(e, ResearchError):
+			if isinstance(e, node.ResearchError):
 				self.messagelog.error('Cannot access EM node to acquire image')
 			elif isinstance(e, camerafuncs.NoCorrectorError):
 				self.messagelog.error('Cannot access Corrector node to correct image')
@@ -47,6 +47,10 @@ class ManualAcquisition(node.Node):
 			self.status.set('Error acquiring image')
 			raise AcquireError
 		if imagedata is None:
+			if correct:
+				self.messagelog.error('Corrector failed to acquire corrected image')
+			else:
+				self.messagelog.error('EM failed to acquire image')
 			self.status.set('Error acquiring image')
 			raise AcquireError
 		self.status.set('Displaying image...')
