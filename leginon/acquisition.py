@@ -34,8 +34,7 @@ class InvalidPresetsSequence(Exception):
 class Acquisition(targetwatcher.TargetWatcher):
 
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
-								+ [event.ImageClickEvent,
-										event.DriftDoneEvent,
+								+ [event.DriftDoneEvent,
 										event.ImageProcessDoneEvent] \
 								+ EM.EMClient.eventinputs
 	eventoutputs = targetwatcher.TargetWatcher.eventoutputs \

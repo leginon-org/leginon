@@ -287,32 +287,6 @@ class EmailEvent(Event):
 		return t
 	typemap = classmethod(typemap)
 
-## this is basically the same as data.ImageTargetData
-class ImageClickEvent(Event):
-	def typemap(cls):
-		t = Event.typemap()
-		t += [
-		  ('canvas x', int),
-		  ('canvas y', int),
-		  ('image x', int),
-		  ('image y', int),
-		  ('array shape', tuple),
-		  ('array row', int),
-		  ('array column', int),
-		  ('array value', float),
-
-		  ('image', data.ImageData),
-		  ('scope', dict),
-		  ('camera', dict),
-		  ('source', str),
-		  ('preset', data.PresetData)
-		]
-		return t
-	typemap = classmethod(typemap)
-
-class ImageAcquireEvent(Event):
-	pass
-
 class ChangePresetEvent(Event):
 	def typemap(cls):
 		t = Event.typemap()

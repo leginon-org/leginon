@@ -23,9 +23,7 @@ import EM
 
 class Navigator(node.Node):
 
-	eventinputs = node.Node.eventinputs + [event.ImageClickEvent,
-																					event.ImageAcquireEvent] \
-									+ EM.EMClient.eventinputs
+	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
 	eventoutputs = node.Node.eventoutputs + [event.CameraImagePublishEvent] \
 									+ EM.EMClient.eventoutputs
 
@@ -49,9 +47,6 @@ class Navigator(node.Node):
 		self.newshape = None
 		self.oldshape = None
 
-		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
-		self.addEventInput(event.ImageAcquireEvent, self.handleImageAcquire)
-
 	def newImage(self, newimage):
 		self.oldshape = self.newshape
 		self.newshape = newimage.shape
@@ -68,14 +63,14 @@ class Navigator(node.Node):
 		delta = correlator.wrap_coord(peak, pc.shape)
 		return delta
 
-	def handleImageClick(self, clickevent):
+	def handleImageClick(self, xy):
 		self.logger.info('Handling image click...')
 		## get relavent info from click event
-		clickrow = clickevent['array row']
-		clickcol = clickevent['array column']
-		clickshape = clickevent['array shape']
-		clickscope = clickevent['scope']
-		clickcamera = clickevent['camera']
+		clickrow = xy[1]
+		clickcol = xy[0]
+		clickshape = self.shape
+		clickscope = self.scope
+		clickcamera = self.camera
 
 		## calculate delta from image center
 		deltarow = clickrow - clickshape[0] / 2
@@ -139,26 +134,7 @@ class Navigator(node.Node):
 					## insert into DB?
 					pass
 
-
-		##just in case this is a fake click event
-		## (which it is now when it comes from navigator's own image
-		if isinstance(clickevent, event.ImageClickEvent):
-			self.confirmEvent(clickevent)
-
 		node.beep()
-
-	def handleImageAcquire(self, acqevent):
-		self.acquireImage()
-		self.confirmEvent(acqevent)
-
-	# I wouldn't expect this to actually work
-	def handleImageClick2(self, xy):
-		click = {'array row': xy[1],
-							'array column': xy[0],
-							'array shape': self.shape,
-							'scope': self.scope,
-							'camera': self.camera}
-		self.handleImageClick(click)
 
 	def acquireImage(self):
 		self.cam.uiApplyAsNeeded()
@@ -390,7 +366,7 @@ class Navigator(node.Node):
 		settingscontainer.addObjects((self.movetype, self.completestate, self.delaydata, cameraconfigure))
 
 		acqmeth = uidata.Method('Acquire', self.acquireImage)
-		self.image = uidata.ClickImage('Navigation', self.handleImageClick2, None)
+		self.image = uidata.ClickImage('Navigation', self.handleImageClick, None)
 		controlcontainer = uidata.Container('Control')
 		controlcontainer.addObjects((self.calerror, acqmeth, self.image))
 

@@ -20,7 +20,7 @@ import EM
 
 class ImViewer(imagewatcher.ImageWatcher):
 	eventinputs = imagewatcher.ImageWatcher.eventinputs + EM.EMClient.eventinputs
-	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [event.ImageAcquireEvent] + EM.EMClient.eventoutputs
+	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation, **kwargs)
 
@@ -94,10 +94,6 @@ class ImViewer(imagewatcher.ImageWatcher):
 		imarray = imdata['image']
 		return imarray
 
-	def acquireEvent(self):
-		e = event.ImageAcquireEvent()
-		self.outputEvent(e)
-
 	def loadImage(self, filename):
 		self.logger.info('Loading %s...' % filename)
 		if filename is None:
@@ -151,10 +147,9 @@ class ImViewer(imagewatcher.ImageWatcher):
 		self.maskrad = uidata.Float('Power Mask Radius (% of image width)', 0.01, 'rw', persist=True)
 		self.ui_image = uidata.Image('Image', None, 'r')
 		self.ui_image_pow = uidata.Image('Power Image', None, 'r')
-		eventmethod = uidata.Method('Event Acquire', self.acquireEvent)
 		acquirecontainer = uidata.Container('Acquisition')
 		acquirecontainer.addObjects((acqmethod, acqloopmethod, acqstopmethod,
-																	eventmethod, self.do_pow, self.maskrad, self.ui_image,
+																	self.do_pow, self.maskrad, self.ui_image,
 																	self.ui_image_pow))
 
 
