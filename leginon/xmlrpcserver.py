@@ -4,6 +4,9 @@ from SimpleXMLRPCServer import SimpleXMLRPCServer
 import threading, xmlrpclib, os, socket, inspect
 import leginonobject
 
+False=0
+True=1
+
 ## range defined by IANA as dynamic/private
 portrange = range(49152,65536)
 
