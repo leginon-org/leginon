@@ -388,8 +388,8 @@ class NodeGUI(Frame):
 		b=Button(f, text='Refresh', command=self.__refresh_components)
 		b.pack(side=LEFT)
 
-		ngl = NodeGUILauncher(f)
-		ngl.pack(side=LEFT)
+#		ngl = NodeGUILauncher(f)
+#		ngl.pack(side=LEFT)
 
 		f.pack(side=TOP, fill=BOTH)
 		self.mainframe = None
