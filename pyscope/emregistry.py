@@ -75,5 +75,8 @@ registerCamera('Tietz Simulation', 'tietz', 'TietzSimulation',
 registerCamera('Tietz PVCam', 'tietz', 'TietzPVCam', 'Tietz PVCam CCD Camera')
 registerCamera('Tietz FastScan', 'tietz', 'TietzFastScan',
 								'Tietz FastScan CCD Camera')
+registerCamera('Tietz FastScan Firewire', 'tietz', 'TietzFastScanFW',
+								'Tietz FastScan Firewire CCD Camera')
+registerCamera('Tietz SCX', 'tietz', 'TietzSCX', 'Tietz SCX CCD Camera')
 registerCamera('Gatan', 'gatan', 'Gatan', 'Gatan CCD Camera')
 

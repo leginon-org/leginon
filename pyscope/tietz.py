@@ -43,6 +43,10 @@ else:
 				self.camType = win32com.client.constants.ctPVCam
 			elif cameratype == 'FastScan':
 				self.camType = win32com.client.constants.ctFastScan
+			elif cameratype == 'FastScanFW':
+				self.camType = win32com.client.constants.ctF114_FW
+			elif cameratype == 'SCX':
+				self.camType = win32com.client.constants.ctSCX
 			else:
 				raise ValueError('Invalid camera type specified')
 	
@@ -114,6 +118,14 @@ else:
 	class TietzFastScan(Tietz):
 		def __init__(self):
 			Tietz.__init__(self, 'FastScan')
+	
+	class TietzFastScanFW(Tietz):
+		def __init__(self):
+			Tietz.__init__(self, 'FastScanFW')
+	
+	class TietzSCX(Tietz):
+		def __init__(self):
+			Tietz.__init__(self, 'SCX')
 	
 if __name__ == '__main__':
 	foo = tietz()
