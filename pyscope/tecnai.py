@@ -179,8 +179,8 @@ class Tecnai(object):
 			'film user code': {'type': str},
 			'film date type': {'type': str,
 										'values': ['no date', 'DD-MM-YY', 'MM/DD/YY', 'YY.MM.DD']},
-			'shutter': {'type': str},
-			'external shutter': {'type': str},
+			'shutter': {'type': str, 'values': ['open', 'closed']},
+			'external shutter': {'type': str, 'values': ['connected', 'disconnected']},
 		}
 
 	def setCorrectedStagePosition(self, value):
