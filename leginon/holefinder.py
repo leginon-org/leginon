@@ -32,7 +32,6 @@ class HoleFinder(targetfinder.TargetFinder):
 		'skip': False,
 		'image filename': '',
 		'edge lpf': {
-			'on': True,
 			'sigma': 1.0,
 		},
 		'edge': True,
@@ -44,7 +43,6 @@ class HoleFinder(targetfinder.TargetFinder):
 		'template rings': [(30, 40)],
 		'template type': 'cross',
 		'template lpf': {
-			'on': False,
 			'sigma': 1.0,
 		},
 		'threshold': 3.0,
@@ -131,10 +129,9 @@ class HoleFinder(targetfinder.TargetFinder):
 		edges = self.settings['edge']
 		filt = self.settings['edge type']
 		lpfsettings = self.settings['edge lpf']
-		lowpasson = lpfsettings['on']
 		lowpasssig = lpfsettings['sigma']
 		edgethresh = self.settings['edge threshold']
-		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lp=lowpasson, lpsig=lowpasssig, thresh=edgethresh, edges=edges)
+		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lpsig=lowpasssig, thresh=edgethresh, edges=edges)
 		self.hf.find_edges()
 		# convert to Float32 to prevent seg fault
 		self.setImage(self.hf['edges'].astype(Numeric.Float32), 'Edge')
@@ -424,7 +421,6 @@ class HoleFinder(targetfinder.TargetFinder):
 			'user-check': self.settings['user check'],
 			'skip-auto': self.settings['skip'],
 
-			'edge-lpf-on': self.settings['edge lpf']['on'],
 			'edge-lpf-sigma': self.settings['edge lpf']['sigma'],
 			'edge-filter-type': self.settings['edge type'],
 			'edge-threshold': self.settings['edge threshold'],

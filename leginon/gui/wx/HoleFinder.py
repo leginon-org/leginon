@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleFinder.py,v $
-# $Revision: 1.30 $
+# $Revision: 1.31 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-11 19:43:17 $
-# $Author: suloway $
+# $Date: 2004-11-14 00:55:36 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -145,20 +145,10 @@ class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 		gui.wx.Settings.Dialog.initialize(self)
 
 		self.widgets['template lpf'] = {}
-#		self.widgets['template lpf']['on'] = wx.CheckBox(self, -1,
-#																											'Use low pass filter')
-#		self.widgets['template lpf']['size'] = IntEntry(self, -1,
-#																										min=1, chars=4)
 		self.widgets['template lpf']['sigma'] = FloatEntry(self, -1,
 																												min=0.0, chars=4)
 
 		szlpf = wx.GridBagSizer(5, 5)
-#		szlpf.Add(self.widgets['template lpf']['on'], (0, 0), (1, 1),
-#						wx.ALIGN_CENTER_VERTICAL)
-#		label = wx.StaticText(self, -1, 'Size:')
-#		szlpf.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-#		szlpf.Add(self.widgets['template lpf']['size'], (1, 1), (1, 1),
-#						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Sigma:')
 		szlpf.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szlpf.Add(self.widgets['template lpf']['sigma'], (0, 1), (1, 1),
@@ -208,18 +198,9 @@ class EdgeSettingsDialog(gui.wx.Settings.Dialog):
 		gui.wx.Settings.Dialog.initialize(self)
 
 		self.widgets['edge lpf'] = {}
-#		self.widgets['edge lpf']['on'] = wx.CheckBox(self, -1,
-#																									'Use low pass filter')
-#		self.widgets['edge lpf']['size'] = IntEntry(self, -1, min=1, chars=4)
 		self.widgets['edge lpf']['sigma'] = FloatEntry(self, -1, min=0.0, chars=4)
 
 		szlpf = wx.GridBagSizer(5, 5)
-#		szlpf.Add(self.widgets['edge lpf']['on'], (0, 0), (1, 1),
-#						wx.ALIGN_CENTER_VERTICAL)
-#		label = wx.StaticText(self, -1, 'Size:')
-#		szlpf.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-#		szlpf.Add(self.widgets['edge lpf']['size'], (1, 1), (1, 1),
-#						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Sigma:')
 		szlpf.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szlpf.Add(self.widgets['edge lpf']['sigma'], (0, 1), (1, 1),

@@ -252,17 +252,13 @@ class HoleFinder(object):
 		## update this result
 		self.__results[key] = image
 
-	def configure_edges(self, filter=None, size=None, sigma=None, absvalue=None, lp=None, lpsig=None, thresh=None, edges=None):
+	def configure_edges(self, filter=None, size=None, sigma=None, absvalue=None, lpsig=None, thresh=None, edges=None):
 		if filter is not None:
 			self.edges_config['filter'] = filter
-		if size is not None:
-			self.edges_config['size'] = size
 		if sigma is not None:
 			self.edges_config['sigma'] = sigma
 		if absvalue is not None:
 			self.edges_config['abs'] = absvalue
-		if lp is not None:
-			self.edges_config['lp'] = lp
 		if lpsig is not None:
 			self.edges_config['lpsig'] = lpsig
 		if thresh is not None:
@@ -278,21 +274,17 @@ class HoleFinder(object):
 			raise RuntimeError('no original image to find edges on')
 
 		sourceim = self.__results['original']
-		n = self.edges_config['size']
 		filt = self.edges_config['filter']
 		sigma = self.edges_config['sigma']
 		ab = self.edges_config['abs']
-		lp = self.edges_config['lp']
 		lpsig = self.edges_config['lpsig']
 		edgethresh = self.edges_config['thresh']
 		edgesflag = self.edges_config['edges']
 
-		if lp:
-			kernel = convolver.gaussian_kernel(lpsig)
-			self.edgefinder.setKernel(kernel)
-			smooth = self.edgefinder.convolve(image=sourceim)
-		else:
-			smooth = sourceim
+		kernel = convolver.gaussian_kernel(lpsig)
+		n = len(kernel)
+		self.edgefinder.setKernel(kernel)
+		smooth = self.edgefinder.convolve(image=sourceim)
 
 		if not edgesflag:
 			edges = smooth
