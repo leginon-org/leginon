@@ -40,8 +40,8 @@ class ImagePanel(wxPanel):
 		self.ylabel = wxStaticText(self, -1, '0000',
 																style=wxALIGN_CENTRE | wxST_NO_AUTORESIZE)
 		self.ylabel.SetLabel('')
-		self.valuelabel = wxStaticText(self, -1, '00000',
-																		style=wxALIGN_CENTRE | wxST_NO_AUTORESIZE)
+		self.valuelabel = wxStaticText(self, -1, '',
+																		style=wxALIGN_CENTRE)
 		self.valuelabel.SetLabel('')
 		self.valuesizer = wxBoxSizer(wxHORIZONTAL)
 		self.valuesizer.Add(wxStaticText(self, -1, 'x: '))
