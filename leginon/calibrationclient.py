@@ -152,6 +152,12 @@ class ImageShiftCalibrationClient(MatrixCalibrationClient):
 	def parameter(self):
 		return 'image shift'
 
+class BeamShiftCalibrationClient(MatrixCalibrationClient):
+	def __init__(self, node):
+		MatrixCalibrationClient.__init__(self, node)
+
+	def parameter(self):
+		return 'beam shift'
 
 class StageCalibrationClient(MatrixCalibrationClient):
 	def __init__(self, node):
@@ -170,12 +176,12 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		key = self.magCalibrationKey(magnification, 'modeled stage position')
 		try:
 			old_mag_dict = self.getCalibration(key)
+			for dictkey in old_mag_dict:
+				old_mag_dict[dictkey].update(mag_dict[dictkey])
 		except KeyError:
-			old_mag_dict = {}
+			old_mag_dict = copy.deepcopy(mag_dict)
 
-		for mag_dict_key in mag_dict:
-			mag_dict[mag_dict_key].update(old_mag_dict[mag_dict_key])
-		self.setCalibration(key, mag_dict)
+		self.setCalibration(key, old_mag_dict)
 
 	def getMagCalibration(self, magnification):
 		key = self.magCalibrationKey(magnification, 'modeled stage position')
