@@ -237,7 +237,12 @@ class Node(leginonobject.LeginonObject):
 	def researchByLocation(self, loc, dataid):
 		client = self.clientclass(self.ID(), loc)
 		#print "data ID =", dataid
-		return client.pull(dataid)
+		cdata = client.pull(dataid)
+
+		print 'cdata type', type(cdata)
+		time.sleep(1)
+
+		return cdata
 
 	def researchByDataID(self, dataid):
 		# will change soon
@@ -249,6 +254,7 @@ class Node(leginonobject.LeginonObject):
 
 		# should interate over nodes, be crafty, etc.
 		datalocationdata = self.researchByLocation(self.managerloc, nodeiddata.content[0])
+
 		return self.researchByLocation(datalocationdata.content, dataid)
 
 	def location(self):

@@ -3,6 +3,7 @@
 import threading
 import node
 import event
+import time
 
 class TimedLoop(node.Node):
 	"""
@@ -26,7 +27,8 @@ class TimedLoop(node.Node):
 		self.addEventInput(event.StopEvent, self._handle_stop)
 		self.addEventInput(event.NumericControlEvent, self._handle_intervalchange)
 
-		self.interact()
+		#self.interact()
+		self.start()
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
@@ -39,6 +41,7 @@ class TimedLoop(node.Node):
 		### main can only be run once
 		if not self.mainlock.acquire(blocking=0):
 			return
+
 
 		self.stopevent.clear()
 		while 1:
@@ -68,7 +71,7 @@ class TimedLoop(node.Node):
 		"""
 		start a new main thread after receiving StartEvent
 		"""
-		print 'got start event %s' % startevent
+		#print 'got start event %s' % startevent
 		t = threading.Thread(name='self.main thread', target=self.main)
 		t.setDaemon(1)
 		t.start()

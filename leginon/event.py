@@ -79,11 +79,6 @@ class UnpublishEvent(NotificationEvent):
 	def __init__(self, id, dataid, confirm=False):
 		NotificationEvent.__init__(self, id, dataid, confirm)
 
-class PublishImageEvent(NotificationEvent):
-	'Event indicating image was published'
-	def __init__(self, id, dataid, confirm=False):
-		NotificationEvent.__init__(self, id, dataid, confirm)
-
 class ConfirmationEvent(NotificationEvent):
 	'Event sent to confirm event processing'
 	def __init__(self, id, eventid, confirm=False):
