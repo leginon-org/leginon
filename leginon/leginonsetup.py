@@ -17,15 +17,15 @@ class Wizard(Tkinter.Toplevel):
 			self.title(title)
 		buttonframe = Tkinter.Frame(self)
 		self.backbutton = Tkinter.Button(buttonframe, text='< Back')
-		self.backbutton.grid(row=0, column=0)
+		self.backbutton.grid(row=0, column=0, padx=5, pady=5)
 		self.backbutton['state'] = Tkinter.DISABLED
 
 		self.nextbutton = Tkinter.Button(buttonframe, text='Next >')
-		self.nextbutton.grid(row=0, column=1)
+		self.nextbutton.grid(row=0, column=1, padx=5, pady=5)
 		self.backbutton['state'] = Tkinter.DISABLED
 
 		self.cancelbutton = Tkinter.Button(buttonframe, text='Cancel')
-		self.cancelbutton.grid(row=0, column=2)
+		self.cancelbutton.grid(row=0, column=2, padx=5, pady=5)
 		self.backbutton['state'] = Tkinter.DISABLED
 
 		buttonframe.grid(row=1, column=0, sticky=Tkinter.E)
