@@ -19,10 +19,10 @@ import wx
 from wx.lib.buttons import GenBitmapToggleButton
 import NumericImage
 import Image
-import ImageOps
 import imagefun
 import icons
 import numextension
+from gui.wx.Entry import FloatEntry, EVT_ENTRY
 
 wx.InitAllImageHandlers()
 
@@ -39,6 +39,7 @@ def getToolBitmap(filename):
 		toolbitmaps[filename] = bitmap
 		return bitmap
 
+# needs to adjust buffer/wximage instead of reseting from numeric image
 class ContrastTool(object):
 	def __init__(self, imagepanel, sizer):
 		self.imagepanel = imagepanel
@@ -47,7 +48,8 @@ class ContrastTool(object):
 		self.contrastmin = 0
 		self.contrastmax = 0
 		self.slidermin = 0
-		self.slidermax = 100
+		self.slidermax = 255
+
 		self.minslider = wx.Slider(self.imagepanel, -1, self.slidermin,
 															self.slidermin, self.slidermax, size=(200, -1))
 		self.maxslider = wx.Slider(self.imagepanel, -1, self.slidermax,
@@ -58,10 +60,45 @@ class ContrastTool(object):
 		self.maxslider.Bind(wx.EVT_SCROLL_ENDSCROLL, self.onMaxSlider)
 		self.minslider.Bind(wx.EVT_SCROLL_THUMBTRACK, self.onMinSlider)
 		self.maxslider.Bind(wx.EVT_SCROLL_THUMBTRACK, self.onMaxSlider)
-		self.sizer = wx.BoxSizer(wx.VERTICAL)
-		self.sizer.Add(self.minslider, 0, wx.ALIGN_BOTTOM, 0)
-		self.sizer.Add(self.maxslider, 0, wx.ALIGN_TOP, 0)
-		sizer.Add(self.sizer, 0, wx.ALIGN_CENTER|wx.ALL, 0)
+
+		self.iemin = FloatEntry(imagepanel, -1, chars=6, allownone=False,
+														value=str(self.contrastmin))
+		self.iemax = FloatEntry(imagepanel, -1, chars=6, allownone=False,
+														value=str(self.contrastmax))
+
+		self.iemin.Bind(EVT_ENTRY, self.onMinEntry)
+		self.iemax.Bind(EVT_ENTRY, self.onMaxEntry)
+
+		self.sizer = wx.GridBagSizer(0, 0)
+		self.sizer.Add(self.minslider, (0, 0), (1, 1),
+										wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_BOTTOM)
+		self.sizer.Add(self.iemin, (0, 1), (1, 1),
+										wx.ALIGN_CENTER|wx.FIXED_MINSIZE|wx.ALL, 2)
+		self.sizer.Add(self.maxslider, (1, 0), (1, 1),
+										wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP)
+		self.sizer.Add(self.iemax, (1, 1), (1, 1),
+										wx.ALIGN_CENTER|wx.FIXED_MINSIZE|wx.ALL, 2)
+		sizer.Add(self.sizer, 0, wx.ALIGN_CENTER)
+
+	def _setSliders(self, value):
+		if value[0] is not None:
+			self.minslider.SetValue(self.getSliderValue(value[0]))
+		if value[1] is not None:
+			self.maxslider.SetValue(self.getSliderValue(value[1]))
+
+	def _setEntries(self, value):
+		if value[0] is not None:
+			self.iemin.SetValue(value[0])
+		if value[1] is not None:
+			self.iemax.SetValue(value[1])
+
+	def setSliders(self, value):
+		if value[0] is not None:
+			self.contrastmin = value[0]
+		if value[1] is not None:
+			self.contrastmax = value[1]
+		self._setSliders(value)
+		self._setEntries(value)
 
 	def updateNumericImage(self):
 		self.imagepanel.setBitmap()
@@ -80,32 +117,72 @@ class ContrastTool(object):
 		return int((self.slidermax - self.slidermin)*scale + self.slidermin)
 
 	def setRange(self, range, value=None):
-		self.imagemin = range[0]
-		self.imagemax = range[1]
-		if value is None:
-			self.contrastmin = self.getScaledValue(self.minslider.GetValue())
-			self.contrastmax = self.getScaledValue(self.maxslider.GetValue())
+		if range is None:
+			self.imagemin = 0
+			self.imagemax = 0
+			self.contrastmin = 0
+			self.contrastmax = 0
+			self.iemin.SetValue(0.0)
+			self.iemax.SetValue(0.0)
+			self.iemin.Enable(False)
+			self.iemax.Enable(False)
 		else:
-			self.contrastmin, self.contrastmax = value
-			self.minslider.SetValue(self.getSliderValue(self.contrastmin))
-			self.maxslider.SetValue(self.getSliderValue(self.contrastmax))
+			self.imagemin = range[0]
+			self.imagemax = range[1]
+			if value is None:
+				self.contrastmin = self.getScaledValue(self.minslider.GetValue())
+				self.contrastmax = self.getScaledValue(self.maxslider.GetValue())
+			else:
+				self.setSliders(value)
+			self.iemin.Enable(True)
+			self.iemax.Enable(True)
 
 	def onMinSlider(self, evt):
-		contrastmin = self.getScaledValue(evt.GetPosition())
-		if contrastmin > self.contrastmax:
+		position = evt.GetPosition()
+		maxposition = self.maxslider.GetValue()
+		if position > maxposition:
+			self.minslider.SetValue(maxposition)
 			self.contrastmin = self.contrastmax
-			self.minslider.SetValue(self.maxslider.GetValue())
 		else:
-			self.contrastmin = contrastmin
+			self.contrastmin = self.getScaledValue(position)
+		self._setEntries((self.contrastmin, None))
 		self.updateNumericImage()
 
 	def onMaxSlider(self, evt):
-		contrastmax = self.getScaledValue(evt.GetPosition())
-		if contrastmax < self.contrastmin:
+		position = evt.GetPosition()
+		minposition = self.minslider.GetValue()
+		if position < minposition:
+			self.maxslider.SetValue(minposition)
 			self.contrastmax = self.contrastmin
-			self.maxslider.SetValue(self.minslider.GetValue())
+		else:
+			self.contrastmax = self.getScaledValue(position)
+		self._setEntries((None, self.contrastmax))
+		self.updateNumericImage()
+
+	def onMinEntry(self, evt):
+		contrastmin = evt.GetValue()
+		if contrastmin < self.imagemin:
+			self.contrastmin = self.imagemin
+			self.iemin.SetValue(self.contrastmin)
+		if contrastmin > self.contrastmax:
+			self.contrastmin = self.contrastmax
+			self.iemin.SetValue(self.contrastmin)
+		else:
+			self.contrastmin = contrastmin
+		self._setSliders((self.contrastmin, None))
+		self.updateNumericImage()
+
+	def onMaxEntry(self, evt):
+		contrastmax = evt.GetValue()
+		if contrastmax > self.imagemax:
+			self.contrastmax = self.imagemax
+			self.iemax.SetValue(self.contrastmax)
+		elif contrastmax < self.contrastmin:
+			self.contrastmax = self.contrastmin
+			self.iemax.SetValue(self.contrastmax)
 		else:
 			self.contrastmax = contrastmax
+		self._setSliders((None, self.contrastmax))
 		self.updateNumericImage()
 
 class ImageTool(object):
@@ -483,6 +560,7 @@ class ImagePanel(wx.Panel):
 		self.panel.Refresh()
 
 	def clearImage(self):
+		self.contrasttool.setRange(None)
 		self.imagedata = None
 		self.setBitmap()
 		self.setVirtualSize()
