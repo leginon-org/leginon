@@ -1,9 +1,7 @@
-import dataserver
+import dataservernode
 import datahandler
 import scopedict
 import cameradict
-import clientpush
-import clientpull
 import threading
 # this is so the COM stuff will work
 # I don't know if this is a good place for it, perhaps the caller is
