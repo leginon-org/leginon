@@ -105,11 +105,15 @@ class RulerTool(ImageTool):
 	def DrawRuler(self, dc, x, y):
 		dc.SetPen(wxPen(wxRED, 1))
 		x0, y0 = self.imagepanel.image2view(self.start)
+		x0 -= self.imagepanel.offset[0]
+		y0 -= self.imagepanel.offset[1]
 		dc.DrawLine(x0, y0, x, y)
 
 	def OnMotion(self, evt, dc):
 		if self.button.GetToggle() and self.start is not None:
-			self.DrawRuler(dc, evt.m_x, evt.m_y)
+			x = evt.m_x - self.imagepanel.offset[0]
+			y = evt.m_y - self.imagepanel.offset[1]
+			self.DrawRuler(dc, x, y)
 
 	def getToolTipString(self, x, y, value):
 		if self.button.GetToggle() and self.start is not None:
@@ -243,6 +247,13 @@ class ImagePanel(wxPanel):
 		else:
 			self.panel.SetVirtualSize((0, 0))
 
+		if self.biggerView():
+			xsize, ysize = self.panel.GetVirtualSize()
+			xclientsize, yclientsize = self.panel.GetClientSize()
+			self.offset = ((xclientsize - xsize)/2, (yclientsize - ysize)/2)
+		else:
+			self.offset = (0, 0)
+
 	def setNumericImage(self, numericimage, scroll=False):
 		self.numericimage = numericimage
 		self.setBitmap()
@@ -279,6 +290,9 @@ class ImagePanel(wxPanel):
 			self.setBuffers()
 
 		self.setVirtualSize()
+		if self.biggerView():
+			clientdc = wxClientDC(self.panel)
+			clientdc.Clear()
 		self.UpdateDrawing()
 
 	# utility functions
@@ -312,16 +326,18 @@ class ImagePanel(wxPanel):
 			viewoffset = self.panel.GetViewStart()
 		if scale is None:
 			scale = self.getScale()
-		return (int(round((viewoffset[0] + xy[0]) / scale[0])),
-						int(round((viewoffset[1] + xy[1]) / scale[1])))
+		xoffset, yoffset = self.offset
+		return (int(round((viewoffset[0] + xy[0] - xoffset) / scale[0])),
+						int(round((viewoffset[1] + xy[1] - yoffset) / scale[1])))
 
 	def image2view(self, xy, viewoffset=None, scale=None):
 		if viewoffset is None:
 			viewoffset = self.panel.GetViewStart()
 		if scale is None:
 			scale = self.getScale()
-		return (int(round((xy[0] * scale[0]) - viewoffset[0])),
-						int(round((xy[1] * scale[1]) - viewoffset[1])))
+		xoffset, yoffset = self.offset
+		return (int(round(((xy[0]) * scale[0]) - viewoffset[0] + xoffset)),
+						int(round(((xy[1]) * scale[1]) - viewoffset[1] + yoffset)))
 
 	# tool utility functions
 
@@ -336,8 +352,7 @@ class ImagePanel(wxPanel):
 		dc = wxMemoryDC()
 		dc.SelectObject(self.motionbuffer)
 		dc.BeginDrawing()
-		if self.biggerView():
-			dc.Clear()
+		dc.Clear()
 
 		fromdc = wxMemoryDC()
 		fromdc.SelectObject(self.buffer)
@@ -345,6 +360,7 @@ class ImagePanel(wxPanel):
 
 		xviewoffset, yviewoffset = self.panel.GetViewStart()
 		xsize, ysize = self.panel.GetClientSize()
+		xoffset, yoffset = self.offset
 
 		if self.smallScale():
 			dc.Blit(0, 0, xsize, ysize, fromdc, xviewoffset, yviewoffset)
@@ -365,9 +381,10 @@ class ImagePanel(wxPanel):
 		dc.EndDrawing()
 		dc.SelectObject(wxNullBitmap)
 
+		xoffset, yoffset = self.offset
 		clientdc = wxClientDC(self.panel)
 		clientdc.BeginDrawing()
-		clientdc.DrawBitmap(self.motionbuffer, 0, 0)
+		clientdc.DrawBitmap(self.motionbuffer, xoffset, yoffset)
 		clientdc.EndDrawing()
 
 	def OnMotion(self, evt):
@@ -413,8 +430,10 @@ class ImagePanel(wxPanel):
 
 		xextent, yextent, d, e = dc.GetFullTextExtent(string, wxNORMAL_FONT)
 		xcenter, ycenter = self.getClientCenter()
+		print 'center =', xcenter, ycenter
 
 		ix, iy = self.image2view((x, y))
+		print 'image2view =', ix, iy
 
 		if ix <= xcenter:
 			xoffset = 10
@@ -424,6 +443,9 @@ class ImagePanel(wxPanel):
 			yoffset = 10
 		else:
 			yoffset = -(10 + yextent + 4)
+
+		ix -= self.offset[0]
+		iy -= self.offset[1]
 
 		x = int(round((ix + xoffset)))
 		y = int(round((iy + yoffset)))
@@ -450,7 +472,8 @@ class ImagePanel(wxPanel):
 		else:
 			xscale, yscale = self.getScale()
 			todc.SetUserScale(xscale, yscale)
-		todc.Blit(0, 0, xsize/xscale + 1, ysize/yscale + 1, fromdc,
+		xoffset, yoffset = self.offset
+		todc.Blit(xoffset, yoffset, xsize/xscale + 1, ysize/yscale + 1, fromdc,
 							xviewoffset/xscale, yviewoffset/yscale)
 
 	def UpdateDrawing(self):
@@ -739,10 +762,10 @@ if __name__ == '__main__':
 		def OnInit(self):
 			frame = wxFrame(NULL, -1, 'Image Viewer')
 			self.SetTopWindow(frame)
-#			self.panel = TargetImagePanel(frame, -1)
-			self.panel = ClickImagePanel(frame, -1, bar)
-#			self.panel.addTargetType('foo')
-#			self.panel.addTargetType('bar')
+			self.panel = TargetImagePanel(frame, -1)
+#			self.panel = ClickImagePanel(frame, -1, bar)
+			self.panel.addTargetType('foo')
+			self.panel.addTargetType('bar')
 			frame.Fit()
 			frame.Show(true)
 			return true
