@@ -158,6 +158,9 @@ class TargetWatcher(watcher.Watcher):
 				## pause
 				if self.pause.isSet():
 					print 'pausing'
+					title = '% pausing' % (self.id[-1],)
+					message = title
+					self.outputMessage(title, message)
 					self.cont.clear()
 					self.cont.wait()
 					self.pause.clear()
