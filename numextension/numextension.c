@@ -2,6 +2,18 @@
 #include <Numeric/arrayobject.h>
 #include <math.h>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+#ifndef M_PI_2
+#define M_PI_2 1.57079632679489661923
+#endif
+
+#ifndef M_SQRT2
+#define M_SQRT2 1.41421356237309504880
+#endif
+
 /******************************************
  statistical functions
 ******************************************/
@@ -549,8 +561,7 @@ static PyObject *nonmaximasuppress(PyObject *self, PyObject *args) {
 	PyArrayObject *inputarray, *gradientarray;
 	int window = 7;
 	int i, j, k;
-	double m, theta;
-	int sintheta, costheta;
+	double m, theta, sintheta, costheta;
 
 	if(!PyArg_ParseTuple(args, "OO|i", &input, &gradient, &window))
 		return NULL;
@@ -572,12 +583,12 @@ static PyObject *nonmaximasuppress(PyObject *self, PyObject *args) {
 																				+ j*inputarray->strides[1]);
 			theta = *(double *)(gradientarray->data + i*gradientarray->strides[0]
 																							+ j*gradientarray->strides[1]);
-			sintheta = (int)round(sin(theta));
-			costheta = (int)round(cos(theta));
+			sintheta = sin(theta);
+			costheta = cos(theta);
 			for(k = -window/2; k <= window/2; k++) {
 				if(m < *(double *)(inputarray->data
-													+ (i + k*sintheta)*inputarray->strides[0]
-													+ (j + k*costheta)*inputarray->strides[1]))
+													+ (i + (int)(k*sintheta + 0.5))*inputarray->strides[0]
+													+ (j + (int)(k*costheta + 0.5))*inputarray->strides[1]))
 					*(double *)(inputarray->data + i*inputarray->strides[0]
 																				+ j*inputarray->strides[1]) = 0.0;
 			}
