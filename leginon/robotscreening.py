@@ -3,10 +3,10 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/atlasviewer.py,v $
-# $Revision: 1.15 $
+# $Source: /ami/sw/cvsroot/pyleginon/robotscreening.py,v $
+# $Revision: 1.1 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-23 19:18:39 $
+# $Date: 2005-03-23 19:30:28 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -147,7 +147,7 @@ class Image(object):
 	def clearTargets(self):
 		self.targets = []
 
-class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
+class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 	panelclass = gui.wx.AtlasViewer.Panel
 	eventinputs = (
 		node.Node.eventinputs +

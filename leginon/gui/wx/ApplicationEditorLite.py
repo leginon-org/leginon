@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ApplicationEditorLite.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-09 23:13:02 $
+# $Date: 2005-03-23 19:30:28 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -569,7 +569,7 @@ class ApplicationEditorLite(wx.TreeCtrl):
 				string, eventname, tonodename = eventbinding
 				if eventname not in eventoutputs:
 					self.removeEventBinding(item, string)
-		if newname is not None:
+		if newname is not None and name != newname:
 			for nodename in self.getNodeNames():
 				for eventbinding in self.getEventBindings(nodename):
 					string, eventname, tonodename = eventbinding
