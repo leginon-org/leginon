@@ -696,10 +696,7 @@ class EM(node.Node):
 		return container, mapping
 
 	def defineUserInterface(self):
-		self.logger.container.addObject(self.datahandler.logger.container,
-																		position={'span': (1,2)})
-		self.logger.container.addObject(self.server.logger.container,
-																		position={'span': (1,2)})
+		self.initializeLoggerUserInterface()
 		node.Node.defineUserInterface(self)
 
 		self.uipauses = uidata.Boolean('Do Pauses', True, permissions='rw',

@@ -39,10 +39,7 @@ class Launcher(node.Node):
 		self.start()
 
 	def defineUserInterface(self):
-		self.logger.container.addObject(self.datahandler.logger.container,
-																		position={'span': (1,2)})
-		self.logger.container.addObject(self.server.logger.container,
-																		position={'span': (1,2)})
+		self.initializeLoggerUserInterface()
 		node.Node.defineUserInterface(self)
 
 	def start(self):

@@ -945,10 +945,7 @@ class Manager(node.Node):
 
 		container = uidata.LargeContainer('Manager')
 
-		self.logger.container.addObject(self.datahandler.logger.container,
-																		position={'span': (1,2)})
-		self.logger.container.addObject(self.server.logger.container,
-																		position={'span': (1,2)})
+		self.initializeLoggerUserInterface()
 
 #		container.addObject(uimanagersetup)
 		container.addObject(self.messagelog, position={'expand': 'all'})

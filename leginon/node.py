@@ -51,17 +51,20 @@ class DataHandler(object):
 								databinderclass=datahandler.DataBinder,
 								dbdatakeeperclass=dbdatakeeper.DBDataKeeper,
 								loggername=None):
-		self.logger = extendedlogging.Logger(self.__class__.__name__, loggername)
+		self.logger = extendedlogging.getLogger(self.__class__.__name__, loggername)
 
 		self.datakeeper = datakeeperclass(loggername=self.logger.name)
 		self.databinder = databinderclass(loggername=self.logger.name)
 		self.dbdatakeeper = dbdatakeeperclass(loggername=self.logger.name)
-		self.logger.container.addObject(self.datakeeper.logger.container,
-																		position={'span': (1,2)})
-		self.logger.container.addObject(self.databinder.logger.container,
-																		position={'span': (1,2)})
-		self.logger.container.addObject(self.dbdatakeeper.logger.container,
-																		position={'span': (1,2)})
+		if self.datakeeper.logger.container not in self.logger.container.values():
+			self.logger.container.addObject(self.datakeeper.logger.container,
+																			position={'span': (1,2)})
+		if self.databinder.logger.container not in self.logger.container.values():
+			self.logger.container.addObject(self.databinder.logger.container,
+																			position={'span': (1,2)})
+		if self.dbdatakeeper.logger.container not in self.logger.container.values():
+			self.logger.container.addObject(self.dbdatakeeper.logger.container,
+																			position={'span': (1,2)})
 		self.node = mynode
 
 	def exit(self):
@@ -158,12 +161,20 @@ class Node(leginonobject.LeginonObject):
 			else:
 				pass
 
+	def initializeLoggerUserInterface(self):
+		if self.datahandler.logger.container not in self.logger.container.values():
+			self.logger.container.addObject(self.datahandler.logger.container,
+																			position={'span': (1,2)})
+		if self.server.logger.container not in self.logger.container.values():
+			self.logger.container.addObject(self.server.logger.container,
+																			position={'span': (1,2)})
+
 	def initializeLogger(self, name=None):
 		if hasattr(self, 'logger'):
 			return
 		if name is None:
 			name = self.id[-1]
-		self.logger = extendedlogging.Logger(name)
+		self.logger = extendedlogging.getLogger(name)
 
 	# main, start/stop methods
 

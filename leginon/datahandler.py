@@ -16,7 +16,7 @@ import uidata
 
 class DataHandler(object):
 	def __init__(self, loggername=None):
-		self.logger = extendedlogging.Logger(self.__class__.__name__, loggername)
+		self.logger = extendedlogging.getLogger(self.__class__.__name__, loggername)
 
 	'''Base class for DataHandlers. Defines virtual functions.'''
 	def query(self, id):

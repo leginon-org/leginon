@@ -19,7 +19,7 @@ class Base(object):
 	def __init__(self, loggername=None):
 		# order matters
 		self.transportmodules = [localtransport, tcptransport]
-		self.logger = extendedlogging.Logger(self.__class__.__name__, loggername)
+		self.logger = extendedlogging.getLogger(self.__class__.__name__, loggername)
 
 class Client(Base):
 	# hostname/port -> location or whatever

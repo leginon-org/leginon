@@ -5,22 +5,16 @@ import sys
 import time
 import uidata
 
-class Logger(object):
-	def __init__(self, name, parentname=None):
-		name = name
-		if parentname is not None:
-			name = parentname + '.' + name
-		self.logger = logging.getLogger(name)
-		self.name = name
-
+class Logger(logging.Logger):
+	def __init__(self, name):
+		logging.Logger.__init__(self, name)
 		self.formatter = logging.Formatter(
 				'%(asctime)s %(name)s %(module)s:%(lineno)d %(levelname)s %(message)s',
 				'%H:%M:%S')
 		self.formatter.converter = time.localtime
 
-		self.handlers = {}
-		self.handlers['Print'] = logging.StreamHandler(sys.stdout)
-		self.handlers['Print'].setFormatter(self.formatter)
+		self.printhandler = None
+		self.filehandler = None
 
 		self.defineUserInterface()
 
@@ -36,18 +30,21 @@ class Logger(object):
 	def onLevelSelect(self, index):
 		value = self.loglevelselect.getSelectedValue(index)
 		level = logging._levelNames[value]
-		self.logger.setLevel(level)
+		self.setLevel(level)
 		return index
 
 	def onPropagate(self, value):
-		self.logger.propagate = value
+		self.propagate = value
 		return value
 
 	def onPrintLog(self, value):
 		if value:
-			self.logger.addHandler(self.handlers['Print'])
-		else:
-			self.logger.removeHandler(self.handlers['Print'])
+			self.printhandler = logging.StreamHandler(sys.stdout)
+			self.printhandler.setFormatter(self.formatter)
+			self.addHandler(self.printhandler)
+		elif self.printhandler is not None:
+			self.removeHandler(self.printhandler)
+			self.printhandler = None
 		return value
 
 	def addRotatingFileHandler(self, filename=None):
@@ -55,22 +52,19 @@ class Logger(object):
 			filename = self.filename.get()
 		elif filename == self.filename.get():
 			return
-		self.handlers['File'] = logging.handlers.RotatingFileHandler(filename,
+		self.filehandler = logging.handlers.RotatingFileHandler(filename,
 																																backupCount=32)
-		self.handlers['File'].setFormatter(self.formatter)
-		self.logger.addHandler(self.handlers['File'])
-		self.handlers['File'].doRollover()
+		self.filehandler.setFormatter(self.formatter)
+		self.addHandler(self.filehandler)
+		self.filehandler.doRollover()
 
 	def onFileLog(self, value):
 		if value:
 			self.addRotatingFileHandler()
-		else:
-			try:
-				self.logger.removeHandler(self.handlers['File'])
-				self.handlers['File'].close()
-				del self.handlers['File']
-			except KeyError:
-				pass
+		elif self.filehandler is not None:
+			self.removeHandler(self.filehandler)
+			self.filehandler.close()
+			self.filehandler = None
 		return value
 
 	def onFilename(self, value):
@@ -89,11 +83,11 @@ class Logger(object):
 		self.container.addObject(self.loglevelselect,
 															position={'position': (0, 0), 'span': (2, 1)})
 
-		self.propagate = uidata.Boolean('Propagate', False, 'rw',
+		self.propagateflag = uidata.Boolean('Propagate', False, 'rw',
 																		callback=self.onPropagate, persist=True,
 																		tooltip='If the log event is not handled,'
 																			+ ' propagate it up to the parent logger')
-		self.container.addObject(self.propagate, position={'position': (0, 1)})
+		self.container.addObject(self.propagateflag, position={'position': (0, 1)})
 
 		self.printlog = uidata.Boolean('Print', False, 'rw',
 																		callback=self.onPrintLog, persist=True,
@@ -110,60 +104,10 @@ class Logger(object):
 		self.container.addObject(self.filelog, position={'position': (2, 1)})
 		self.container.addObject(self.filename, position={'position': (3, 1)})
 
+logging.setLoggerClass(Logger)
 
-# oops
-	def setLevel(self, level):
-		self.logger.setLevel(level)
-
-	def debug(self, msg, *args, **kwargs):
-		self.logger.debug(msg, *args, **kwargs)
-
-	def info(self, msg, *args, **kwargs):
-		self.logger.info(msg, *args, **kwargs)
-
-	def warning(self, msg, *args, **kwargs):
-		self.logger.warning(msg, *args, **kwargs)
-
-	warn = warning
-
-	def error(self, msg, *args, **kwargs):
-		self.logger.error(msg, *args, **kwargs)
-
-	def exception(self, msg, *args):
-		self.logger.exception(msg, *args)
-
-	def critical(self, msg, *args, **kwargs):
-		self.logger.critical(msg, *args, **kwargs)
-
-	fatal = critical
-
-	def log(self, level, msg, *args, **kwargs):
-		self.logger.log(level, msg, *args, **kwargs)
-
-	def findCaller(self):
-		self.logger.findCaller(self)
-
-	def makeRecord(self, name, level, fn, lno, msg, args, exc_info):
-		self.logger.makeRecord(name, level, fn, lno, msg, args, exc_info)
-
-	def _log(self, level, msg, args, exc_info=None):
-		self.logger._log(level, msg, args, exc_info=None)
-
-	def handle(self, record):
-		self.logger.handle(record)
-
-	def addHandler(self, hdlr):
-		self.logger.addHandler(hdlr)
-
-	def removeHandler(self, hdlr):
-		self.logger.removeHandler(hdlr)
-
-	def callHandlers(self, record):
-		self.logger.callHandlers(record)
-
-	def getEffectiveLevel(self):
-		self.logger.getEffectiveLevel()
-
-	def isEnabledFor(self, level):
-		self.logger.isEnabledFor(level)
+def getLogger(name, parentname=None):
+	if parentname is not None:
+		name = parentname + '.' + name
+	return logging.getLogger(name)
 
