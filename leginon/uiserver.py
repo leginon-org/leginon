@@ -59,7 +59,6 @@ class XMLRPCServer(object):
 		t.start()
 		self.serverthread = t
 
-from uiclient import XMLRPCClient
 
 class Server(XMLRPCServer, uidata.Container):
 	def __init__(self, name='UI', port=None, tries=5):
@@ -117,6 +116,8 @@ class Server(XMLRPCServer, uidata.Container):
 #			client.execute('set', (namelist, value))
 
 	def addXMLRPCClientServer(self, hostname, port):
+		# &@**!&!!!
+		from uiclient import XMLRPCClient
 		addclient = XMLRPCClient(hostname, port)
 		self.xmlrpcclients.append(addclient)
 		self.failures.append(0)
