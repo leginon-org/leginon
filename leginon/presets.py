@@ -199,7 +199,7 @@ class PresetsManager(node.Node):
 		pname = ievent['name']
 		emtarget = ievent['emtarget']
 		try:
-			if emtarget is None:
+			if emtarget is None or emtarget['movetype'] is None:
 				self.uistatus.set('Changing preset to "%s"' % pname)
 				self.cycleToScope(pname)
 			else:
