@@ -235,9 +235,9 @@ class EM(node.Node):
 		self.statelock.acquire()
 		try:
 			done_event = threading.Event()
-			self.node.requestqueue.put(GetRequest(done_event, ['scope']))
+			self.requestqueue.put(GetRequest(done_event, ['scope']))
 			done_event.wait()
-			state = self.node.state
+			state = self.state
 		finally:
 			self.statelock.release()
 		newdata = data.ScopeEMData()
@@ -248,9 +248,9 @@ class EM(node.Node):
 		self.statelock.acquire()
 		try:
 			done_event = threading.Event()
-			self.node.requestqueue.put(GetRequest(done_event, ['camera no image data']))
+			self.requestqueue.put(GetRequest(done_event, ['camera no image data']))
 			done_event.wait()
-			state = self.node.state
+			state = self.state
 		finally:
 			self.statelock.release()
 		newdata = data.CameraEMData()
@@ -261,9 +261,9 @@ class EM(node.Node):
 		self.statelock.acquire()
 		try:
 			done_event = threading.Event()
-			self.node.requestqueue.put(GetRequest(done_event, ['camera']))
+			self.requestqueue.put(GetRequest(done_event, ['camera']))
 			done_event.wait()
-			state = self.node.state
+			state = self.state
 		finally:
 			self.statelock.release()
 		newdata = data.CameraEMData()
