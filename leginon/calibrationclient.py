@@ -10,6 +10,7 @@ import peakfinder
 import time
 import sys
 import threading
+import gonmodel
 
 class DriftingTimeout(Exception):
 	pass
@@ -600,34 +601,65 @@ class StageCalibrationClient(SimpleMatrixCalibrationClient):
 	def parameter(self):
 		return 'stage position'
 
-import gonmodel
-# XXX Not up to date with new calibration data research methods
 class ModeledStageCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def setMagCalibration(self, magnification, mag_dict):
-		key = self.magCalibrationKey(magnification, 'modeled stage position')
-		try:
-			old_mag_dict = self.getCalibration(key)
-			for dictkey in old_mag_dict:
-				old_mag_dict[dictkey].update(mag_dict[dictkey])
-		except KeyError:
-			old_mag_dict = copy.deepcopy(mag_dict)
+	def storeMagCalibration(self, mag, axis, angle, mean):
+		caldata = data.StageModelMagCalibrationData()
+		caldata['magnification'] = mag
+		caldata['axis'] = axis
+		caldata['angle'] = angle
+		caldata['mean'] = mean
+		self.node.publish(caldata, database=True)
 
-		self.setCalibration(key, old_mag_dict)
+	def retrieveMagCalibration(self, mag, axis):
+		qinst = data.StageModelMagCalibrationData(magnification=mag, axis=axis)
+		caldatalist = self.node.research(datainstance=qinst, results=1)
+		if len(caldatalist) > 0:
+			return caldatalist[0]
+		else:
+			raise RuntimeError('no mag calibration')
 
-	def getMagCalibration(self, magnification):
-		key = self.magCalibrationKey(magnification, 'modeled stage position')
-		return self.getCalibration(key)
+	def storeModelCalibration(self, axis, period, a, b):
+		caldata = data.StageModelCalibrationData()
+		caldata['axis'] = axis
+		caldata['period'] = period
+		caldata['a'] = a
+		caldata['b'] = b
+		self.node.publish(caldata, database=True)
 
-	def setModel(self, axis, mod_dict):
-		key = axis + ' stage position model'
-		self.setCalibration(key, mod_dict)
+	def retrieveModelCalibration(self, axis):
+		qinst = data.StageModelCalibrationData(axis=axis)
+		caldatalist = self.node.research(datainstance=qinst, results=1)
+		if len(caldatalist) > 0:
+			return caldatalist[0]
+		else:
+			raise RuntimeError('no mag calibration')
 
-	def getModel(self, axis):
-		key = axis + ' stage position model'
-		return self.getCalibration(key)
+	def fit(self, datfile, terms, magonly=1):
+		dat = gonmodel.GonData(datfile)
+		## fit a model to the data
+		mod = gonmodel.GonModel()
+		mod.fit_data(dat, terms)
+
+		### mag info
+		axis = dat.axis
+		mag = dat.mag
+		angle = dat.angle
+		# using data mean, could use model mean
+		mean = dat.avg
+		#mean = mod.a0
+
+		### model info
+		period = mod.period
+		a = mod.a
+		b = mod.b
+		
+		self.storeMagCalibration(mag, axis, angle, mean)
+		if magonly:
+			return
+		self.calclient.storeModelCalibration(axis, period, a, b)
 
 	def transform(self, pixelshift, scope, camera):
 		curstage = scope['stage position']
