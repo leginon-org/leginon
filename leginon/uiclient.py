@@ -903,7 +903,11 @@ class wxEntryWidget(wxDataWidget):
 		if 'write' in configuration and configuration['write']:
 #			self.applybutton = wxButton(parent, -1, 'Apply')
 #			self.applybutton.Enable(false)
-			self.entry = wxTextCtrl(parent, -1, style=wxTE_PROCESS_ENTER)
+			if str in self.types:
+				size = (150, -1)
+			else:
+				size = (-1, -1)
+			self.entry = wxTextCtrl(parent, -1, size=size, style=wxTE_PROCESS_ENTER)
 #			self.dirty = False
 		else:
 			self.entry = wxStaticText(parent, -1, '')
