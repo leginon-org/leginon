@@ -10,7 +10,7 @@ import Image, ImageFile
 ## PIL modes: F
 
 ## mrc mode to (PIL mode, raw mode)
-mrcmode_pilmode = {0: ('L','L'), 1: ('I','I;16NS'), 2: ('F','F;32NF')}
+mrcmode_pilmode = {0: ('L','L'), 1: ('I','I;16NS'), 2: ('F','F;32NF'), 3: ('I','I;16N')}
 
 pilmode_mrcmode = {'L':0, 'I':1, 'F':2}
 
