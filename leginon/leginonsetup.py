@@ -264,6 +264,7 @@ class SetupWizard(Wizard):
 	def __init__(self, parent):
 		Wizard.__init__(self, parent, 'Setup Wizard')
 		self.manager = None
+		self.remotelauncher = None
 		self.initialsetupwidget = InitialSetupWidget(self)
 		self.launchersetupwidget = LauncherSetupWidget(self)
 		self.startwidget = StartWidget(self)
@@ -305,6 +306,8 @@ class SetupWizard(Wizard):
 		if self.runwidget.run(launchers):
 			self.setWidget(self.runwidget, None, self.destroy, None)
 			self.manager = self.runwidget.manager
+			if self.launchersetupwidget.getHostnamePort() is not None:
+				self.remotelauncher = (self.launchersetupwidget.getHostname(),)
 			self.nextbutton['text'] = 'Done'
 		else:
 			self.setWidget(self.runwidget, self.startSetup, None, self.destroy)
