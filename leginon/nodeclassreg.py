@@ -1,7 +1,7 @@
 ### this module is used as a container for all node classes
-
 import node
 import imp
+import sys
 
 reg_dict = {}
 reg_list = []
@@ -54,7 +54,6 @@ def getNodeClassNames():
 
 ### register Node classes in the order you want them listed publicly
 #registerNodeClass('webcam', 'Webcam')
-registerNodeClass('EM', 'EM')
 registerNodeClass('corrector', 'Corrector')
 registerNodeClass('matrixcalibrator', 'MatrixCalibrator')
 registerNodeClass('pixelsizecalibrator', 'PixelSizeCalibrator')
@@ -74,7 +73,9 @@ registerNodeClass('simpleacquisition', 'SimpleAcquisition')
 registerNodeClass('targetmaker', 'SpiralTargetMaker')
 registerNodeClass('applicationeditor', 'ApplicationEditor')
 registerNodeClass('administration', 'Administration')
-registerNodeClass('robot', 'RobotControl')
 registerNodeClass('robot', 'RobotNotification')
 registerNodeClass('robot', 'RobotTest')
+if sys.platform == 'win32':
+	registerNodeClass('robot', 'RobotControl')
+	registerNodeClass('EM', 'EM')
 
