@@ -98,7 +98,7 @@ class UIApp(wxApp):
 		self.panel.SetSizer(self.container.wxwidget)
 #		self.container.wxwidget.Fit(self.frame)
 		size = self.panel.GetSize()
-		self.container.wxwidget.SetDimension(0, 0, size.GetWidth(), size.GetHeight())
+#		self.container.wxwidget.SetDimension(0, 0, size.GetWidth(), size.GetHeight())
 		self.SetTopWindow(self.frame)
 		self.panel.Show(true)
 		self.frame.Fit()
@@ -106,9 +106,9 @@ class UIApp(wxApp):
 		return true
 
 	def Fit(self):
-		self.container.wxwidget.SetVirtualSizeHints(self.panel)
-#		self.panel.Fit()
-#		self.frame.Fit()
+		print 'Fit size =', self.container.wxwidget.GetSize()
+		print 'panel size =', self.panel.GetSize()
+		print 'panel virtual size =', self.panel.GetVirtualSize()
 
 class Widget(object):
 	def __init__(self, uiclient, namelist):
@@ -318,6 +318,7 @@ class wxStaticBoxContainerWidget(wxContainerWidget):
 		self.container = container
 
 	def Fit(self):
+		self.wxwidget.FitInside(self.parent)
 		if self.container is not None:
 			self.container.Fit()
 
@@ -339,6 +340,8 @@ class wxNotebookContainerWidget(wxContainerWidget):
 		self.container = container
 
 	def Fit(self):
+		#self.parent.Fit()
+		self.panel.Fit()
 		if self.container is not None:
 			self.container.Fit()
 		#self.wxwidget.Layout()
@@ -416,7 +419,12 @@ def wxClientContainerFactory(wxcontainerwidget):
 			if hasattr(evt.container, 'wxwidget'):
 				evt.parent.Layout()
 				evt.container.wxwidget.Layout()
-			#evt.container.Fit()
+				minsize = evt.container.wxwidget.GetMinSize()
+				size = evt.parent.GetSize()
+				if minsize[0] > size[0] or minsize[1] > size[1]:
+					print size, minsize, evt.container.name
+					evt.parent.Fit()
+					evt.container.Fit()
 			evt.container.event.set()
 			evt.container.lock.release()
 
