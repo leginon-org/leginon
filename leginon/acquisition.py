@@ -367,41 +367,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		get the root name of an image from its parent
 		'''
 		parent_target = imagedata['target']
-
-		if parent_target is None:
-			## maybe parent target is in DB
-			imagequery = data.AcquisitionImageData()
-			for key in ('session',):
-				imagequery[key] = imagedata[key]
-			## this is what we really want
-			imagequery['target'] = data.AcquisitionImageTargetData()
-			imagequery['target']['image'] = data.AcquisitionImageData()
-			results = self.research(datainstance=imagequery, readimages=False)
-			if results:
-				if len(results) != 1:
-					self.acquisitionlog.warning('Found more than one image with same session and ID')
-				myimage = results[0]
-				parent_target = myimage['target']
-
 		if parent_target is None:
 			## there is no parent target
 			## create my own root name
 			return self.newRootName()
 
 		parent_image = parent_target['image']
-
-		if parent_image is None:
-			## maybe parent image is in DB
-			targetquery = data.AcquisitionImageTargetData()
-			for key in ('session',):
-				targetquery[key] = parent_target[key]
-			## this is what we really want
-			targetquery['image'] = data.AcquisitionImageData()
-			results = self.research(datainstance=targetquery, readimages=False)
-			if results:
-				mytarget = results[0]
-				parent_image = mytarget['image']
-
 		if parent_image is None:
 			## there is no parent image
 			return self.newRootName()
