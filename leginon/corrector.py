@@ -17,7 +17,7 @@ class DataHandler(node.DataHandler):
 	# acq/rel twice on normal data
 	def query(self, id):
 		self.lock.acquire()
-		if id == 'normalzed image data':
+		if id == 'normalized image data':
 			result = self.node.acquireCorrectedImageData()
 			self.lock.release()
 			return result
