@@ -37,9 +37,12 @@ class _fftEngine(object):
 ### this attempts to use sfftw to create the fft engine classs
 ### if that fails, it will use Numeric
 try:
+	## until we work out problems with using floats vs. doubles...
+	raise ImportError('sfftw disabled until some problems resolved')
 	import sfftw
 except ImportError:
-	print 'Using Numeric FFT (compile sfftw to optimize)'
+	print 'Warning:  you are using Numeric for FFTs.'
+	print 'Compile the sfftw module for faster FFTs.'
 
 	class fftEngine(_fftEngine):
 		'''subclass of fftEngine which uses FFT from Numeric module'''
