@@ -173,11 +173,11 @@ class PresetData(Data):
 		t = Data.typemap()
 		t += [
 			('name', str),
-			('spot size', int),
 			('magnification', int),
+			('spot size', int),
+			('intensity', float),
 			('image shift', dict),
 			('beam shift', dict),
-			('intensity', float),
 			('defocus', float),
 			('dimension', dict),
 			('binning', dict),
