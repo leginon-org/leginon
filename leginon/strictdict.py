@@ -145,9 +145,7 @@ class OrderedDict(dict):
 		return finalstr
 
 	def __repr__(self):
-		s = repr(self.__ordered_items)
-		r = '%s(%s)' % (self.__class__.__name__, s)
-		return r
+		return self.__str__()
 
 
 class KeyedDict(OrderedDict):
