@@ -9,6 +9,10 @@ import LinearAlgebra
 import threading
 from Tkinter import *
 import ImageViewer
+import Mrc
+import xmlrpclib
+#import xmlrpclib2 as xmlbinlib
+xmlbinlib = xmlrpclib
 
 class ImageMosaic(watcher.Watcher):
 	def __init__(self, id, nodelocations, watchfor = event.ImageTilePublishEvent, **kwargs):
@@ -278,9 +282,16 @@ class ImageMosaic(watcher.Watcher):
 		publishspec = self.registerUIMethod(self.uiPublishMosaicImage,
 										'Publish Image', ())
 		clearspec = self.registerUIMethod(self.uiClearMosaic, 'Clear', ())
+
+		getimagespec = self.registerUIData('Mosaic Image', 'binary', permissions='r', callback=self.uiGetImageCallback)
+
 		imagespec = self.registerUIContainer('Image',
 																					(showspec, publishspec, clearspec))
-		self.registerUISpec('Image Mosaic', (watcherspec, imagespec))
+		self.registerUISpec('Image Mosaic', (watcherspec, imagespec, getimagespec))
+
+	def uiGetImageCallback(self):
+		mrcstr = Mrc.numeric_to_mrcstr(self.makeImage(self.imagemosaic))
+		return xmlbinlib.Binary(mrcstr)
 
 class StateImageMosaic(ImageMosaic):
 	def __init__(self, id, nodelocations,
