@@ -18,11 +18,7 @@ class Panel(gui.wx.Node.Panel):
 													'play',
 													shortHelpString='Create Atlas')
 
-		self.bsettings = wx.Button(self, -1, 'Settings...')
-		self.bcreate = wx.Button(self, -1, 'Create Atlas')
-		self.szmain.Add(self.bsettings, (1, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szmain.Add(self.bcreate, (2, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szmain.AddGrowableCol(1)
+		self.szmain.AddGrowableCol(0)
 
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
