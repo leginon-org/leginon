@@ -4,6 +4,7 @@ import Numeric
 import Mrc
 import threading
 import cStringIO
+import data
 
 # Exceptions
 # maybe overdone
@@ -611,4 +612,33 @@ class TargetImage(Container):
 
 	def setImage(self, value):
 		self.image.set(value)
+
+class ResearchWidget(Container):
+	typelist = Container.typelist + ('research',)
+	def __init__(self, name, noderesearch, datatype, fields={}):
+		Container.__init__(self, name)
+		self.noderesearch = noderesearch
+		self.datatype = datatype
+
+		self.datalist = Struct('Data', {}, 'r')
+		self.researchmethod = Method('Research', self.research)
+		self.addObject(self.datalist)
+		self.addObject(self.researchmethod)
+
+	def research(self):
+		datainstances = self.noderesearch(dataclass=self.datatype)
+		self.datalist.set(self.datalistFromDataInstances(datainstances))
+
+	def datalistFromDataInstances(self, datainstances):
+		ids = {}
+		for typemap in self.datatype.typemap():
+			if not issubclass(typemap[1], data.Data):
+				values = []
+				for datainstance in datainstances:
+					value = datainstance[typemap[0]]
+					if value is None:
+						value = str(value)
+					values.append(value)
+				ids[typemap[0]] = values
+		return ids
 

@@ -439,7 +439,10 @@ class PresetsManager(node.Node):
 			self.currentselection = None
 		else:
 			d = self.currentselection.toDict(noNone=True)
-			del d['session']
+			try:
+				del d['session']
+			except KeyError:
+				pass
 			self.presetparams.set(d, callback=False)
 		return index
 
