@@ -193,11 +193,20 @@ class Focuser(acquisition.Acquisition):
 
 	def manualNow(self):
 		presetnames = self.uipresetnames.get()
-		### Warning:  not target is being used, you are exposing
+		try:
+			presetname = presetnames[0]
+		except IndexError:
+			message = 'no presets specified for manual focus'
+			self.messagelog.error(message)
+			self.logger.error(message)
+			return
+		self.logger.info('using preset %s for manual check' % (presetname,))
+		### Warning:  no target is being used, you are exposing
 		### whatever happens to be under the beam
-		t = threading.Thread(target=self.manualCheckLoop, args=(presetnames[0],))
+		t = threading.Thread(target=self.manualCheckLoop, args=(presetname,))
 		t.setDaemon(1)
 		t.start()
+
 	def manualCheckLoop(self, presetname, emtarget=None):
 		## go to preset and target
 		self.presetsclient.toScope(presetname, emtarget)
