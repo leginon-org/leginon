@@ -101,7 +101,7 @@ class EMClient(object):
 		else:
 			return dat[key]
 
-	def getImage(self, key=None):
+	def getImage(self, key=None, temp=False):
 		if self.cameraimageref is None:
 			raise CameraUnavailable()
 		dat = self.cameraimageref['data']
