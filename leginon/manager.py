@@ -16,6 +16,7 @@ class Manager(node.Node):
 	def __init__(self, id):
 		# the id is manager (in a list)
 		node.Node.__init__(self, id, {})
+		self.uiserver.server.register_function(self.getNodeLocations, 'getNodeLocations')
 
 		self.nodelocations['manager'] = self.location()
 		self.distmap = {}
@@ -471,6 +472,11 @@ class Manager(node.Node):
 
 		## just to make xmlrpc happy
 		return ''
+
+	def	getNodeLocations(self):
+		nodelocations = self.nodeDict()
+		nodelocations[self.id[-1]] = self.location()
+		return nodelocations
 
 if __name__ == '__main__':
 	import sys

@@ -702,6 +702,7 @@ class NodeGUILauncher(Frame):
 		launchportlab = Label(f, text='Port')
 
 		self.launchportent = Pmw.Counter(f, datatype='integer')
+		self.launchportent.component('entryfield').component('entry')['width'] = 5
 		portent = self.launchportent.component('entry')
 		portent.insert(0, 49153)
 
@@ -715,6 +716,66 @@ class NodeGUILauncher(Frame):
 		portent.bind('<KeyPress-Return>', self.launchgui)
 
 		f.pack(side=TOP, fill=BOTH)
+
+		###############################################
+
+		managerframe = Frame(self, bd=4, relief=SOLID)
+
+		mllabel = Label(managerframe, text='Manager Location:')
+
+		managerhostnamelabel = Label(managerframe, text='Hostname')
+		self.managerhostnamevar = StringVar()
+		self.managerhostnameentry = Pmw.ComboBox(managerframe, entry_textvariable=self.managerhostnamevar)
+		self.managerhostnameentry.component('entryfield').component('entry')['width'] = 12
+		self.managerhostnamevar.set(defaulthost)
+		self.managerhostnameentry.bind('<KeyPress-Return>', self.getNodeLocations)
+
+		managerportlabel = Label(managerframe, text='UI Port')
+		self.managerportentry = Pmw.Counter(managerframe, datatype='integer')
+		self.managerportentry.component('entryfield').component('entry')['width'] = 5
+		managerportentry = self.managerportentry.component('entry')
+		managerportentry.insert(0, 49153)
+		managerportentry.bind('<KeyPress-Return>', self.getNodeLocations)
+
+		refreshbutton = Button(managerframe, text='Refresh', command=self.getNodeLocations)
+
+		mllabel.pack(side=TOP)
+		managerhostnamelabel.pack(side=LEFT)
+		self.managerhostnameentry.pack(side=LEFT)
+		managerportlabel.pack(side=LEFT)
+		self.managerportentry.pack(side=LEFT)
+		refreshbutton.pack(side=LEFT)
+
+		managerframe.pack(side=TOP, fill=BOTH)
+
+		nodeidframe = Frame(self, bd=4, relief=SOLID)
+
+		nodeidlabel = Label(nodeidframe, text='Node ID')
+		self.nodeidsvar = StringVar()
+		self.nodeidsentry = Pmw.ComboBox(nodeidframe, entry_textvariable=self.nodeidsvar)
+		self.nodeidsentry.component('entryfield').component('entry')['width'] = 20
+		launchuibutton = Button(nodeidframe, text='Launch GUI', command=self.launchUIbyNodeID)
+
+		nodeidlabel.pack(side=LEFT)
+		self.nodeidsentry.pack(side=LEFT)
+		launchuibutton.pack(side=LEFT)
+
+		nodeidframe.pack(side=TOP, fill=BOTH)
+
+	def getNodeLocations(self):
+		hostname = self.managerhostnamevar.get()
+		uiport = self.managerportentry.get()
+		uiclient = interface.Client(hostname, uiport)
+		self.nodelocations = uiclient.execute("getNodeLocations")
+		self.nodeidsentry.setlist(self.nodelocations.keys())
+		self.nodeidsentry.selectitem(index=0, setentry=1)
+
+	def launchUIbyNodeID(self):
+		nodeid = self.nodeidsvar.get()
+		hostname = self.nodelocations[nodeid]['hostname']
+		uiport = self.nodelocations[nodeid]['UI port']
+		print "Launching interface to \'%s\' on %s:%d" % (nodeid, hostname, uiport)
+		tk = self.newGUIWindow(hostname, uiport)
 
 	def addHostHistory(self, host):
 		if host not in self.hosthistory:
