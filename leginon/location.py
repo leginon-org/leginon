@@ -1,26 +1,26 @@
 class Location(object):
-        def __init__(self, hostname, port, pid):
+        def __init__(self, hostname, rpcport, pid):
                 self.hostname = hostname
-                self.port = port
+                self.rpcport = rpcport
                 self.pid = pid
 
 	def getURI(self):
-		return "http://%s:%d" % (self.hostname, self.port)
+		return "http://%s:%d" % (self.hostname, self.rpcport)
 
 	def tostring(self):
-		return "PID %d on %s:%d" % (self.pid, self.hostname, self.port)
+		return "PID %d on %s:%d" % (self.pid, self.hostname, self.rpcport)
 
 	def __str__(self):
-		ret = 'Host: %s,  Port: %s,  PID: %s' % (self.hostname, self.port, self.pid)
+		ret = 'Host: %s,  RPC Port: %s,  PID: %s' % (self.hostname, self.rpcport, self.pid)
 		return ret
 
 	def xmlrpc_repr(self):
-		repr = {'host':self.hostname, 'port':self.port, 'pid': self.pid}
+		repr = {'host':self.hostname, 'rpcport':self.rpcport, 'pid': self.pid}
 		return repr
 
 class NodeLocation(Location):
-        def __init__(self, hostname, port, pid, dataport):
-                Location.__init__(self, hostname, port, pid)
+        def __init__(self, hostname, rpcport, pid, dataport):
+                Location.__init__(self, hostname, rpcport, pid)
                 self.dataport = dataport
 
 	def __str__(self):
