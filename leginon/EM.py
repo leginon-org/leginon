@@ -19,6 +19,23 @@ if sys.platform == 'win32':
 	sys.coinit_flags = 0
 	import pythoncom
 
+### I don't want to get these for now
+prunekeys = (
+	'gun shift',
+	'gun tilt',
+	'high tension',
+	'beam blank',
+	'dark field mode',
+	'diffraction mode',
+	'low dose',
+	'low dose mode',
+	'screen current',
+	'holder type',
+	'holder status',
+	'stage status',
+	'screen position'
+)
+
 #class DataHandler(datahandler.DataBinder):
 class DataHandler(node.DataHandler):
 	def query(self, id):
@@ -74,7 +91,12 @@ class DataHandler(node.DataHandler):
 			done_event = threading.Event()
 			#self.node.queue.put(Request(done_event, idata['em']))
 			print 'EM insert: requesting set (idata = %s)' % str(idata)
-			self.node.queue.put(Request(done_event, idata))
+			### using dict again...
+			d = dict(idata)
+			del d['id']
+			del d['session']
+			del d['system time']
+			self.node.queue.put(Request(done_event, d))
 			print 'EM insert: waiting for request to complete'
 			done_event.wait()
 			print 'EM insert: updating UI'
@@ -181,35 +203,34 @@ class EM(node.Node):
 		self.confirmEvent(ievent)
 
 	### now this is handled by EMData
-	def pruneEMdict(self, emdict):
+	def OLDpruneEMdict(self, emdict):
 		'''
 		restrict access to certain scope parameters
 		'''
-		prunekeys = (
-			'gun shift',
-			'gun tilt',
-			'high tension',
-			'beam blank',
-			'dark field mode',
-			'diffraction mode',
-			'low dose',
-			'low dose mode',
-			'screen current',
-			'holder type',
-			'holder status',
-			'stage status'
-		)
-
 		for key in prunekeys:
 			try:
 				del emdict[key]
 			except KeyError:
 				pass
 
-	def getEM(self, withkeys=None, withoutkeys=None):
+	def weird_update(self, source, destination):
+		'''
+		this replaces update() in cases where we don't want to update
+		certain keys
+		'''
+		for key in source:
+			if key not in prunekeys:
+				destination[key] = source[key]
+			else:
+
+	def getEM(self, withkeys=[], withoutkeys=[]):
 		self.lock.acquire()
 		result = {}
-		if withkeys is not None:
+		allwithoutkeys = list(withoutkeys) + list(prunekeys)
+		if 'fake' in self.scope:
+			pass
+
+		if withkeys:
 			for EMkey in withkeys:
 				if EMkey in self.scope:
 					try:
@@ -226,20 +247,20 @@ class EM(node.Node):
 						print "failed to get '%s'" % EMkey
 						self.printException()
 				elif EMkey == 'scope':
-					result.update(self.scope)
+					self.weird_update(self.scope, result)
 				elif EMkey == 'camera no image data':
 					for camerakey in self.camera:
 						if camerakey != 'image data':
 							result[camerakey] = self.camera[camerakey]
 				elif EMkey == 'camera':
-					result.update(self.camera)
+					self.weird_update(self.camera, result)
 				elif EMkey == 'all em':
-					result.update(self.scope)
-					result.update(self.camera)
-		elif withoutkeys is not None:
-			if not ('scope' in withoutkeys or 'all em' in withoutkeys):
+					self.weird_update(self.scope, result)
+					self.weird_update(self.camera, result)
+		elif allwithoutkeys:
+			if not ('scope' in allwithoutkeys or 'all em' in allwithoutkeys):
 				for EMkey in self.scope:
-					if not EMkey in withoutkeys:
+					if EMkey not in allwithoutkeys:
 						try:
 							result[EMkey] = self.scope[EMkey]
 						except:	
@@ -247,22 +268,22 @@ class EM(node.Node):
 							self.printException()
 				## always get defocus
 				result['defocus'] = self.scope['defocus']
-			if not ('camera' in withoutkeys or 'all em' in withoutkeys):
+			if not ('camera' in allwithoutkeys or 'all em' in allwithoutkeys):
 				for EMkey in self.camera:
-					if not EMkey in withoutkeys:
+					if EMkey not in allwithoutkeys:
 						try:
 							result[EMkey] = self.camera[EMkey]
 						except:	
 							print "failed to get '%s'" % EMkey
 							self.printException()
 		else:
-			result.update(self.scope)
-			result.update(self.camera)
+			self.weird_update(self.scope, result)
+			self.weird_update(self.camera, result)
 
 		## getting defocus no matter what, since it changes if reset
 		## defocus was called
 		#result['defocus'] = self.scope['defocus']
-		self.pruneEMdict(result)
+		#self.pruneEMdict(result)
 		result['system time'] = time.time()
 
 		self.lock.release()
