@@ -10,54 +10,36 @@ class PresetsClient(object):
 	def __init__(self, node):
 		self.node = node
 
-	def getPreset(self, key):
-		try:
-			# needs to research new style
-			presetdata = self.node.researchByDataID(('presets',))
-		except:
-			print 'PresetClient unable to use presets.  Is a PresetsManager node running?'
-			raise
-		try:
-			## make a new PresetData from the stored version
-			dictcopy = copy.deepcopy(presetdata)
-			presetdata = data.PresetData(self.ID())
-			presetdata.update(dictcopy)
-		except KeyError:
-			print '%s is not in presets' % (key,)
-			raise
+	def retrievePreset(self, presetname):
+		# needs to research new style
+		presetdata = self.node.research(dataclass=data.PresetData, name=presetname)
 		return presetdata
 
-	def setPreset(self, key, presetdict):
-		dictcopy = copy.deepcopy(dict(presetdict))
-		newdict = {key: dictcopy}
+	def storePreset(self, presetdata):
 		# should work
-		dat = data.PresetData(('presets',), newdict)
-		self.node.publishRemote(dat)
+		self.node.publish(presetdata, database=True)
 
-	def toScope(self, presetdict):
-		d = dict(presetdict)
+	def toScope(self, presetdata):
+		'''
+		push a PresetData object to the scope/camera
+		'''
+		d = dict(presetdata)
 		### this seems to work even if the preset contains camera keys
 		emdata = data.EMData(('scope',), em=d)
 		self.node.publishRemote(emdata)
 
-	def fromScope(self):
+	def fromScope(self, presetname):
 		'''
-		return a new preset 
+		return a new PresetData object using the current scope/camera
+		settings
 		'''
-		p = PresetData(self.ID())
 		scope = self.node.researchByDataID(('scope',))
 		camera = self.node.researchByDataID(('camera no image data',))
-		#p.update(scope)
-		#p.update(camera)
-		for key in p:
-			try:
-				p[key] = scope[key]
-			except KeyError:
-				pass
-			try:
-				p[key] = camera[key]
-			except KeyError:
-				pass
+
+		## create new preset data
+		p = PresetData(self.ID(), name=presetname)
+		p.friendly_update(scope)
+		p.friendlyy_update(camera)
 		return p
 
 

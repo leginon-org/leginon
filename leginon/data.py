@@ -147,6 +147,7 @@ class PresetData(Data):
 	def typemap(cls):
 		t = Data.typemap()
 		t += [
+			('name', str),
 			('spot size', int),
 			('magnification', int),
 			('image shift', dict),
