@@ -84,7 +84,8 @@ if sys.platform == 'win32':
 	
 			try:
 				self.communication = win32com.client.Dispatch('RobotCommunications.Signal')
-			except pywintypes.com_error:
+			except pywintypes.com_error, e:
+				print e
 				raise RuntimeError('Cannot initialized robot communications')
 	
 			self.addEventInput(event.InsertGridEvent, self.handleInsert)

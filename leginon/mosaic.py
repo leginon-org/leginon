@@ -330,7 +330,7 @@ class EMMosaic(Mosaic):
 																			state['scope'][calibration.parameter()],
 																			state['scope'], state['camera'])
 			if parameterposition is None:
-				self.printerror('calibration positioning error')
+				print 'calibration positioning error'
 				return None
 			position['row'] += parameterposition['row']
 			position['col'] += parameterposition['col']

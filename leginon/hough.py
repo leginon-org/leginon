@@ -57,7 +57,6 @@ def period(image):
 	m = image.shape[0]
 	for j in range(image.shape[1]):
 		fft = FFT.fft(image[:, j]).real
-		fft[0] = 0
 		fftimage[:m/2, j] = fft[m/2 + 1:]
 		fftimage[m/2 + 1:, j] = fft[:m/2]
 	return fftimage
@@ -78,7 +77,10 @@ def houghLine(image, threshold):
 	m, n = image.shape
 
 	r = int(Numeric.ceil(Numeric.sqrt(((m/2.0)**2 + (n/2.0)**2))))
-	houghimage = Numeric.zeros((r, 90))
+	houghimage = Numeric.zeros((r, 360, 5))
+
+	houghimage[:,:,1] = houghimage[:,:,1] + m
+	houghimage[:,:,2] = houghimage[:,:,2] + n
 
 	offset = r/2
 
@@ -111,12 +113,25 @@ def houghLine(image, threshold):
 		for j in nrange:
 			if image[i, j] > threshold: 
 				for theta in range(houghimage.shape[1]):
-					try:
-						r = int(round(icos[i - m, theta] + jsin[j - n, theta]))
-					except:
-						print 'hough image shape =', houghimage.shape
-						print 'r =', r
-					houghimage[r, theta] = houghimage[r, theta] + 1
+					r = int(round(icos[i - m, theta] + jsin[j - n, theta]))
+					houghimage[r, theta, 0] = houghimage[r, theta, 0] + 1
+
+					if i < houghimage[r, theta, 1]:
+						houghimage[r, theta, 1] = i
+					if j < houghimage[r, theta, 2]:
+						houghimage[r, theta, 2] = j
+					if i > houghimage[r, theta, 3]:
+						houghimage[r, theta, 3] = i
+					if j > houghimage[r, theta, 4]:
+						houghimage[r, theta, 4] = j
+
+	lengththreshold = 768
+	for r in range(houghimage.shape[0]):
+		for theta in range(houghimage.shape[1]):
+			m = Numeric.sqrt((houghimage[r, theta, 3] - houghimage[r, theta, 1])**2 +
+										(houghimage[r, theta, 4] - houghimage[r, theta, 2])**2)
+			if m < lengththreshold:
+				houghimage[r, theta, 0] = 0
 
 	return houghimage
 
@@ -162,6 +177,7 @@ if __name__=='__main__':
 	import Mrc
 	import timer
 	import holefinderback
+	import imagefun
 
 	def edges(image):
 		hf = holefinderback.HoleFinder()
@@ -187,10 +203,37 @@ if __name__=='__main__':
 
 	houghcircleimage = houghCircle(edgeimage, 300, [28,28])
 	houghcircleimage = Numeric.clip(houghcircleimage, 100, 30000)
+	houghcircleimage = houghcircleimage - 100
 	t.reset()
-	houghlineimage = houghLine(houghcircleimage, 101)
+
+	mask = houghcircleimage #Numeric.ones(houghcircleimage.shape)
+	blobs = imagefun.find_blobs(houghcircleimage, mask, maxblobsize=256)
+	blobimage = Numeric.zeros(houghcircleimage.shape)
+	for blob in blobs:
+		if blob.stats['n'] > 16:
+			i, j = blob.stats['center']
+			i, j = int(round(i)), int(round(j))
+			blobimage[i, j] = 100 #blob.stats['n']
+			blobimage[i-1:i+2, j-1:j+2] = blobimage[i-1:i+2, j-1:j+2] + 100
+	
+#	houghlineimage = houghLine(houghcircleimage, 101)[:,:,0]
+	houghlineimage = houghLine(blobimage, 1)[:,:,0]
+
+	tolerance = 5
+	angle = 90
+	for theta in range(houghlineimage.shape[1]/2):
+		sum = 0
+		for r in range(houghlineimage.shape[0]):
+			for i in range(theta+tolerance, theta+tolerance + 1):
+				sum += houghlineimage[r, i % 360]
+				sum += houghlineimage[r, (i + 90) % 360]
+				sum += houghlineimage[r, (i + 180) % 360]
+				sum += houghlineimage[r, (i + 270) % 360]
+		print 'theta:', theta, '#'*(sum/100)
+			
 	t.reset()
-	fftimage = period(houghlineimage)
+#	fftimage = period(houghlineimage)
+#	fftimage = Numeric.clip(fftimage, 1000, 100000)
 
 	t.stop()
 
@@ -223,7 +266,9 @@ if __name__=='__main__':
 	app = MyApp(0)
 	app.iv1.setNumericImage(edgeimage)
 	app.iv2.setNumericImage(houghcircleimage)
-	app.iv3.setNumericImage(houghlineimage)
-	app.iv4.setNumericImage(fftimage)
+#	app.iv3.setNumericImage(houghlineimage)
+	app.iv3.setNumericImage(blobimage)
+#	app.iv4.setNumericImage(fftimage)
+	app.iv4.setNumericImage(houghlineimage)
 	app.MainLoop()
 
