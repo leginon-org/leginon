@@ -279,8 +279,6 @@ class Node(leginonobject.LeginonObject):
 		if dataclass is not None:
 			pass
 
-		print 'HERE'
-
 		### standard search for data by ID
 		if 'id' in kwargs and 'session' in kwargs and len(kwargs) == 2:
 			if self.session == kwargs['session']:
@@ -289,16 +287,10 @@ class Node(leginonobject.LeginonObject):
 				except ResearchError:
 					pass
 
-		print 'NOW HERE'
-
 		### use DBDataKeeper query if not results yet
 		if not resultlist and datainstance is not None:
-			print 'DATAINST'
-			print datainstance
 			results = kwargs.get('results', None)
 			newresults = self.datahandler.dbQuery(datainstance, results)
-			print 'NEWRESULTS'
-			print newresults
 			resultlist += newresults
 
 		return resultlist
