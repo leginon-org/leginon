@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Launcher.py,v $
-# $Revision: 1.27 $
+# $Revision: 1.28 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-28 00:35:27 $
+# $Date: 2004-10-29 21:31:21 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -18,7 +18,7 @@ import threading
 import wx
 import wx.lib.scrolledpanel
 import gui.wx.Logging
-import gui.wx.MessageLog
+import gui.wx.Events
 import gui.wx.ToolBar
 import gui.wx.Selector
 
@@ -237,7 +237,7 @@ class Panel(ListCtrlPanel):
 			'PROCESSING': 'node',
 		}
 
-		self.Bind(gui.wx.MessageLog.EVT_STATUS_UPDATED, self.onStatusUpdated)
+		self.Bind(gui.wx.Events.EVT_STATUS_UPDATED, self.onStatusUpdated)
 		self.Bind(EVT_SET_ORDER, self.onSetOrder)
 		self.swmessage.Bind(wx.EVT_SIZE, self.onSize)
 
@@ -270,10 +270,14 @@ class Panel(ListCtrlPanel):
 		for name, panel in self.panelmap.items():
 			if panel is evtobj:
 				item = self.selector.getItem(name)
+				if evt.level == 'PROCESSING':
+					item.setProcessing(evt.value)
+					break
 				try:
 					item.setBitmap(2, self.statusicons[evt.level])
 				except KeyError:
 					item.setBitmap(2, None)
+				break
 
 	def sortOrder(self, x, y):
 		try:

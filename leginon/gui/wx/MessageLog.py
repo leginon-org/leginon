@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MessageLog.py,v $
-# $Revision: 1.9 $
+# $Revision: 1.10 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-10-29 21:31:21 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -15,6 +15,7 @@ import icons
 import time
 import wx
 from wx.lib.mixins.listctrl import ColumnSorterMixin
+import gui.wx.Events
 
 AddMessageEventType = wx.NewEventType()
 EVT_ADD_MESSAGE = wx.PyEventBinder(AddMessageEventType)
@@ -25,14 +26,6 @@ class AddMessageEvent(wx.PyCommandEvent):
 		self.level = level
 		self.message = message
 		self.secs = secs
-
-StatusUpdatedEventType = wx.NewEventType()
-EVT_STATUS_UPDATED = wx.PyEventBinder(StatusUpdatedEventType)
-class StatusUpdatedEvent(wx.PyCommandEvent):
-	def __init__(self, source, level):
-		wx.PyCommandEvent.__init__(self, StatusUpdatedEventType, source.GetId())
-		self.SetEventObject(source)
-		self.level = level
 
 class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 	def __init__(self, parent, evtsrc):
@@ -123,8 +116,7 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 		self.updateStatus(level)
 
 	def statusUpdated(self, level):
-		#evt = StatusUpdatedEvent(self.GetParent(), level)
-		evt = StatusUpdatedEvent(self.evtsrc, level)
+		evt = gui.wx.Events.StatusUpdatedEvent(self.evtsrc, level)
 		self.evtsrc.GetEventHandler().AddPendingEvent(evt)
 
 	def updateStatus(self, level=None):

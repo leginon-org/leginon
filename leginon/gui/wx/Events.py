@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Events.py,v $
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-10-29 21:31:21 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -48,10 +48,12 @@ eventFactory('Manual Updated')
 PlayerEventType = wx.NewEventType()
 SetImageEventType = wx.NewEventType()
 SetTargetsEventType = wx.NewEventType()
+StatusUpdatedEventType = wx.NewEventType()
 
 EVT_PLAYER = wx.PyEventBinder(PlayerEventType)
 EVT_SET_IMAGE = wx.PyEventBinder(SetImageEventType)
 EVT_SET_TARGETS = wx.PyEventBinder(SetTargetsEventType)
+EVT_STATUS_UPDATED = wx.PyEventBinder(StatusUpdatedEventType)
 
 class PlayerEvent(wx.PyEvent):
 	def __init__(self, state):
@@ -73,4 +75,11 @@ class SetTargetsEvent(wx.PyEvent):
 		self.SetEventType(SetTargetsEventType)
 		self.targets = targets
 		self.typename = typename
+
+class StatusUpdatedEvent(wx.PyCommandEvent):
+	def __init__(self, source, level, value=None):
+		wx.PyCommandEvent.__init__(self, StatusUpdatedEventType, source.GetId())
+		self.SetEventObject(source)
+		self.level = level
+		self.value = value
 

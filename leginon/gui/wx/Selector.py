@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Selector.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-28 16:52:08 $
+# $Date: 2004-10-29 21:31:21 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -14,6 +14,7 @@
 import wx
 import wx.lib.scrolledpanel
 import gui.wx.Icons
+import gui.wx.Processing
 
 bitmaps = {}
 
@@ -59,6 +60,8 @@ class SelectorItem(object):
 		self.items.append(label)
 
 		self.items.append(wx.StaticBitmap(self.panel, -1))
+		self.items.append(gui.wx.Processing.Throbber(self.panel))
+		self.items[-1].SetBackgroundColour(wx.WHITE)
 
 		for i, additem in enumerate(self.items):
 			if additem is None:
@@ -102,6 +105,12 @@ class SelectorItem(object):
 
 	def setBitmap(self, index, name):
 		self.items[index].SetBitmap(getBitmap(name))
+
+	def setProcessing(self, value):
+		if value and not self.items[3].Running():
+			self.items[3].Start()
+		elif not value and self.items[3].Running():
+			self.items[3].Rest()
 
 class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, parent):
