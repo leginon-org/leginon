@@ -191,7 +191,7 @@ class Navigator(node.Node):
 			self.logger.info(res)
 
 		self.beep()
-		self.panel.naviagteDone()
+		self.panel.navigateDone()
 
 	def acquireImage(self):
 		self._acquireImage()
