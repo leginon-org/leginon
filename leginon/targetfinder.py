@@ -364,7 +364,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.logger.debug('same targets')
 			return self.mosaicimagelist
 		self.logger.debug('new image list data')
-		self.mosaicimagelist = data.ImageListData(targets=targetlist)
+		self.mosaicimagelist = data.ImageListData(session=self.session, targets=targetlist)
 		self.logger.debug('publishing new mosaic image list')
 		self.publish(self.mosaicimagelist, database=True, dbforce=True)
 		self.logger.debug('published new mosaic image list')
@@ -382,7 +382,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		imagelist = self.getMosaicImageList(targets)
 		self.setStatusMessage('creating MosaicTileData')
 		self.logger.debug('creating MosaicTileData')
-		tiledata = data.MosaicTileData(image=imagedata, list=imagelist)
+		tiledata = data.MosaicTileData(image=imagedata, list=imagelist, session=self.session)
 		self.logger.debug('publishing MosaicTileData')
 		self.publish(tiledata, database=True)
 		self.logger.debug('published MosaicTileData')
