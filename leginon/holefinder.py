@@ -36,7 +36,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		acqmeth = uidata.Method('Acquire Image', self.acqImage)
 		testmeth = uidata.Method('Test All', self.everything)
 		self.originalimage = uidata.Image('Original', None, 'r')
-		originalcont = uidata.MediumContainer('Original')
+		originalcont = uidata.LargeContainer('Original')
 		originalcont.addObjects((self.testfile, readmeth, cameraconfigure, acqmeth, testmeth, self.originalimage))
 
 		### edge detection
@@ -50,7 +50,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.edgeabs = uidata.Boolean('Absolute Value', False, 'rw', persist=True)
 		edgemeth = uidata.Method('Find Edges', self.findEdges)
 		self.edgeimage = uidata.Image('Edge Image', None, 'r')
-		edgecont = uidata.MediumContainer('Edge Finder')
+		edgecont = uidata.LargeContainer('Edge Finder')
 		edgecont.addObjects((self.edgeson, self.lowpasson, self.lowpasssize, self.lowpasssigma, self.filtertype, self.glapsize, self.glapsigma, self.edgeabs, edgemeth, self.edgeimage,))
 
 
@@ -59,14 +59,14 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.cortype = uidata.SingleSelectFromList('Correlation Type', ['cross correlation', 'phase correlation'], 0, persist=True)
 		cormeth = uidata.Method('Correlate Template', self.correlateTemplate)
 		self.corimage = uidata.Image('Correlation Image', None, 'r')
-		corcont = uidata.MediumContainer('Template Correlation')
+		corcont = uidata.LargeContainer('Template Correlation')
 		corcont.addObjects((self.ringlist, self.cortype, cormeth, self.corimage))
 
 		### threshold
 		self.threshvalue = uidata.Float('Threshold Value', 3.0, 'rw', persist=True)
 		threshmeth = uidata.Method('Threshold', self.threshold)
 		self.threshimage = uidata.Image('Thresholded Image', None, 'r')
-		threshcont = uidata.MediumContainer('Threshold')
+		threshcont = uidata.LargeContainer('Threshold')
 		threshcont.addObjects((self.threshvalue, threshmeth, self.threshimage))
 
 		### blobs
@@ -103,17 +103,17 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.goodholesimage.addTargetType('acquisition')
 		self.goodholesimage.addTargetType('focus')
 
-		allblobscontainer = uidata.MediumContainer('All Blobs')
+		allblobscontainer = uidata.LargeContainer('All Blobs')
 		allblobscontainer.addObjects((self.blobborder, self.maxblobs, self.maxblobsize, findblobmeth, self.allblobs, self.allblobsimage))
-		laticeblobscontainer = uidata.MediumContainer('Latice Blobs')
+		laticeblobscontainer = uidata.LargeContainer('Latice Blobs')
 		laticeblobscontainer.addObjects(( self.latspacing, self.lattol, self.holestatsrad, self.icei0, fitlatmeth, self.latblobs, self.latblobsimage))
-		blobcont = uidata.MediumContainer('Blobs')
+		blobcont = uidata.LargeContainer('Blobs')
 		blobcont.addObjects((allblobscontainer, laticeblobscontainer))
 
-		goodholescontainer = uidata.MediumContainer('Good Holes')
+		goodholescontainer = uidata.LargeContainer('Good Holes')
 		goodholescontainer.addObjects((self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.use_target_template, self.foc_target_template, self.acq_target_template, self.goodholesimage, submitmeth))
 
-		container = uidata.MediumContainer('Hole Finder')
+		container = uidata.LargeContainer('Hole Finder')
 		container.addObjects((self.usercheckon, originalcont,edgecont,corcont,threshcont, blobcont, goodholescontainer))
 		self.uiserver.addObject(container)
 

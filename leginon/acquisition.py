@@ -351,7 +351,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		controlcontainer.addObjects((self.waitingforimages, stopwaiting,
 																	trialmethod))
 
-		container = uidata.MediumContainer('Acquisition')
+		container = uidata.LargeContainer('Acquisition')
 		container.addObjects((self.ui_image, settingscontainer, controlcontainer))
 
 		self.uiserver.addObject(container)

@@ -307,7 +307,7 @@ class Focuser(acquisition.Acquisition):
 		self.acquirefinal = uidata.Boolean('Acquire Final Image', True, 'rw', persist=True)
 		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)
 		testmethod = uidata.Method('Test Autofocus (broken)', self.uiTest)
-		container = uidata.MediumContainer('Focuser')
+		container = uidata.LargeContainer('Focuser')
 		container.addObjects((self.melt, self.drifton, self.driftthresh, self.btilt, self.publishimages, self.focustype, self.stigcorrection, self.stigfocthresh, mancont, self.acquirefinal, abortfailmethod, testmethod))
 		self.uiserver.addObject(container)
 

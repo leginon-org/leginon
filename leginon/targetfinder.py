@@ -104,7 +104,7 @@ class TargetFinder(imagewatcher.ImageWatcher):
 
 		self.wait_for_done = uidata.Boolean('Wait for "Done"', True, 'rw', persist=True)
 
-		container = uidata.MediumContainer('Target Finder')
+		container = uidata.LargeContainer('Target Finder')
 		container.addObjects((self.wait_for_done,))
 
 		self.uiserver.addObject(container)
@@ -141,7 +141,7 @@ class ClickTargetFinder(TargetFinder):
 		self.clickimage.addTargetType('focus')
 		#advancemethod = uidata.Method('Advance Image', self.advanceImage)
 		submitmethod = uidata.Method('Submit Targets', self.submitTargets)
-		container = uidata.MediumContainer('Click Target Finder')
+		container = uidata.LargeContainer('Click Target Finder')
 		container.addObjects((submitmethod, self.clickimage))
 		self.uiserver.addObject(container)
 
@@ -332,7 +332,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 																			callback=self.uiSetCalibrationParameter,
 																			persist=True)
 		clearmethod = uidata.Method('Reset Mosaic', self.mosaicClear)
-		container = uidata.MediumContainer('Mosaic Click Target Finder')
+		container = uidata.LargeContainer('Mosaic Click Target Finder')
 		container.addObjects((databasecontainer, clearmethod,
 													self.uicalibrationparameter))
 		self.uiserver.addObject(container)

@@ -139,7 +139,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 		acquirecontainer.addObjects((acqmethod, acqloopmethod, acqstopmethod, eventmethod, self.do_pow, self.ui_image, self.ui_image_pow))
 
 
-		container = uidata.MediumContainer('Image Viewer')
+		container = uidata.LargeContainer('Image Viewer')
 		container.addObjects((settingscontainer, filecontainer, acquirecontainer))
 
 		self.uiserver.addObject(container)

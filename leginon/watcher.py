@@ -100,7 +100,7 @@ class Watcher(node.Node):
 		datacontainer.addObjects((self.uidataqueueflag, self.uidataqueue,
 															processdatamethod, cleardatamethod))
 
-		container = uidata.MediumContainer('Watcher')
+		container = uidata.LargeContainer('Watcher')
 		container.addObjects((eventcontainer, datacontainer))
 		self.uiserver.addObject(container)
 

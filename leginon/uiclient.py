@@ -91,8 +91,10 @@ def WidgetClassFromTypeList(typelist):
 						elif typelist[2] == 'large':
 							if len(typelist) > 3:
 								if typelist[3] == 'client':
-									return wxClientContainerFactory(wxListBoxPanelContainerWidget)
-							return wxListBoxPanelContainerWidget
+#									return wxClientContainerFactory(wxListBoxPanelContainerWidget)
+#							return wxListBoxPanelContainerWidget
+									return wxClientContainerFactory(wxTreePanelContainerWidget)
+							return wxTreePanelContainerWidget
 					return wxStaticBoxContainerWidget
 				elif typelist[1] == 'method':
 					return wxButtonWidget
@@ -257,6 +259,15 @@ class wxWidget(object):
 	def show(self, show):
 		pass
 
+	def getParent(self):
+		return self.parent
+
+	def getName(self):
+		return self.name
+
+	def getContainer(self):
+		return self.container
+
 	def setServer(self, value):
 		evt = SetServerEvent([self.name], value)
 		wxPostEvent(self.container.widgethandler, evt)
@@ -274,6 +285,7 @@ class wxContainerWidget(wxWidget):
 
 		self.notebook = None
 		self.listboxcontainer = None
+		self.treecontainer = None
 
 		self.widgethandler.Connect(-1, -1, wxEVT_ADD_WIDGET, self.onAddWidget)
 		self.widgethandler.Connect(-1, -1, wxEVT_SET_WIDGET, self.onSetWidget)
@@ -286,7 +298,9 @@ class wxContainerWidget(wxWidget):
 		if self.notebook is not None:
 			self.notebook.Show(show)
 		if self.listboxcontainer is not None:	
-			self.listboxcontainer.Show(show)
+			self.listboxcontainer.show(show)
+		if self.treecontainer is not None:	
+			self.treecontainer.show(show)
 		for child in self.children.values():
 			if self.sizer is not None:
 				if isinstance(child, wxNotebookContainerWidget):
@@ -294,6 +308,8 @@ class wxContainerWidget(wxWidget):
 				elif isinstance(child, wxDialogContainerWidget):
 					childsizer = None
 				elif isinstance(child, wxListBoxPanelContainerWidget):
+					childsizer = None
+				elif isinstance(child, wxTreePanelContainerWidget):
 					childsizer = None
 				else:
 					childsizer = child.sizer
@@ -315,6 +331,8 @@ class wxContainerWidget(wxWidget):
 		elif isinstance(child, wxDialogContainerWidget):
 			childsizer = None
 		elif isinstance(child, wxListBoxPanelContainerWidget):
+			childsizer = None
+		elif isinstance(child, wxTreePanelContainerWidget):
 			childsizer = None
 		else:
 			childsizer = child.sizer
@@ -383,6 +401,8 @@ class wxContainerWidget(wxWidget):
 						childsizer = None
 					elif isinstance(child, wxListBoxPanelContainerWidget):
 						childsizer = None
+					elif isinstance(child, wxTreePanelContainerWidget):
+						childsizer = None
 					else:
 						childsizer = child.sizer
 					if self.sizer is not None and childsizer is not None:
@@ -427,7 +447,7 @@ class wxContainerWidget(wxWidget):
 			self.notebook = wxNotebook(self.childparent, -1)#, style=wxCLIP_CHILDREN)
 			self.notebooksizer = wxNotebookSizer(self.notebook)
 			if self.sizer is not None:
-				self.sizer.Add(self.notebooksizer, 1,
+				self.sizer.Add(self.notebooksizer, 0,
 												wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALL, 5)
 			self.layout()
 		return self.notebook
@@ -436,10 +456,19 @@ class wxContainerWidget(wxWidget):
 		if self.listboxcontainer is None:
 			self.listboxcontainer = wxListBoxPanel(self.childparent)
 			if self.sizer is not None:
-				self.sizer.Add(self.listboxcontainer.sizer, 1,
+				self.sizer.Add(self.listboxcontainer.sizer, 0,
 												wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALL, 5)
 			self.layout()
 		return self.listboxcontainer
+
+	def getTreePanel(self):
+		if self.treecontainer is None:
+			self.treecontainer = wxTreePanel(self.childparent)
+			if self.sizer is not None:
+				self.sizer.Add(self.treecontainer.sizer, 1,
+												wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALL, 5)
+			self.layout()
+		return self.treecontainer
 
 	def layout(self):
 		if self.sizer is not None:
@@ -460,6 +489,8 @@ class wxContainerWidget(wxWidget):
 				childsizer = None
 			elif isinstance(child, wxListBoxPanelContainerWidget):
 				childsizer = None
+			elif isinstance(child, wxTreePanelContainerWidget):
+				childsizer = None
 			else:
 				childsizer = self.sizer
 			if self.sizer is not None and childsizer is not None:
@@ -469,12 +500,6 @@ class wxContainerWidget(wxWidget):
 			self.notebook = None
 			self.sizer.Remove(self.notebooksizer)
 			self.notebooksizer = None
-
-	def show(self, value):
-		if self.notebook is not None:
-			self.notebook.Show(value)
-		if self.listboxcontainer is not None:
-			self.listboxcontainer.sizer.Show(value)
 
 class wxSimpleContainerWidget(wxContainerWidget):
 	def __init__(self, name, parent, container):
@@ -495,7 +520,7 @@ class wxStaticBoxContainerWidget(wxContainerWidget):
 		self.sizer = wxStaticBoxSizer(self.staticbox, wxVERTICAL)
 
 	def show(self, show):
-		self.staticbox.show(show)
+		self.staticbox.Show(show)
 		wxContainerWidget.show(self, show)
 
 	def destroy(self):
@@ -553,10 +578,8 @@ class wxDialogContainerWidget(wxContainerWidget):
 		self.dialog.Show(true)
 
 	def show(self, show):
-		print 'show =', show
 		self.panel.Show(show)
 		self.dialog.Show(show)
-		self.sizer.Show(show)
 
 	def destroy(self):
 		wxContainerWidget.destroy(self)
@@ -1271,7 +1294,6 @@ class wxListBoxPanel(object):
 	def show(self, show):
 		self.listbox.Show(show)
 		self.childpanel.Show(show)
-		self.sizer.Show(show)
 
 	def addContainer(self, name, container):
 		self.containers[name] = container
@@ -1323,6 +1345,9 @@ class wxListBoxPanelContainerWidget(wxContainerWidget):
 		wxContainerWidget._addWidget(self, name, typelist, value, settings)
 		self.layout()
 
+#	def getListBoxPanel(self):
+#		return self.listboxpanel
+
 	def layout(self):
 		wxContainerWidget.layout(self)
 		self.listboxpanel.childsizer.FitInside(self.childparent)
@@ -1330,6 +1355,123 @@ class wxListBoxPanelContainerWidget(wxContainerWidget):
 	def destroy(self):
 		wxContainerWidget.destroy(self)
 		self.listboxpanel.deleteContainer(self.name)
+
+class wxTreePanel(object):
+	def __init__(self, parent):
+		self.sizer = wxBoxSizer(wxHORIZONTAL)
+
+		# extended not working?
+		self.tree = wxTreeCtrl(parent, -1, style=wxTR_HIDE_ROOT|wxTR_NO_BUTTONS)
+		EVT_TREE_SEL_CHANGING(self.tree, self.tree.GetId(), self.OnTreeSelect)
+		self.root = self.tree.AddRoot('Containers')
+
+		self.sizer.Add(self.tree, 0, wxEXPAND|wxALL, 25)
+		self.childpanel = wxScrolledWindow(parent, -1, size=(512, 512),
+																	style=wxSUNKEN_BORDER)
+		self.childpanel.SetScrollRate(10, 10)
+		#self.childpanel.SetBackgroundColour(wxWHITE)
+		self.sizer.Add(self.childpanel, 1, wxEXPAND|wxALL, 5)
+		self.childsizer = wxBoxSizer(wxVERTICAL)
+		self.childpanel.SetSizer(self.childsizer)
+		self.treeids = {}
+		self.showncolor = wxBLACK
+		self.notshowncolor = wxColor(127, 127, 127)
+		self.containers = {}
+
+	def show(self, show):
+		self.tree.Show(show)
+		self.childpanel.Show(show)
+
+	def getContainers(self, container):
+		container = container.getContainer()
+		if container is None:
+			return []
+		if isinstance(container, wxTreePanelContainerWidget):
+			containers = self.getContainers(container)
+			containers.append(container)
+			return containers
+		else:
+			return []
+
+	def addContainer(self, container):
+		parentcontainer = container.getContainer()
+		if isinstance(parentcontainer, wxTreePanelContainerWidget):
+			parentid = self.containers[parentcontainer]
+		else:
+			parentid = self.root
+		containername = container.getName()
+		if containername is None:
+			raise ValueError('no name for container to add to Tree Container')
+		self.childsizer.Add(container.sizer, 0, wxEXPAND)
+		id = self.tree.AppendItem(parentid, containername)
+		if parentid != self.root:
+			self.tree.Expand(parentid)
+		self.containers[container] = id
+		self.tree.SetPyData(id, container)
+		self.tree.SetItemTextColour(id, self.notshowncolor)
+		self.tree.SelectItem(id)
+
+	def deleteContainer(self, container):
+		id = self.containers[container]
+		self.tree.Delete(id)
+		try:
+			self.childsizer.Remove(container.sizer)
+			del self.containers[container]
+		except KeyError:
+			pass
+
+	def OnTreeSelect(self, evt):
+		item = evt.GetItem()
+		container = self.tree.GetPyData(item)
+		if container is None:
+			return
+		if self.tree.GetItemTextColour(item) == self.showncolor:
+			show = false
+		else:
+			show = true
+		self.setShown(item, show)
+		container.show(show)
+		self.childsizer.Layout()
+		self.childsizer.FitInside(self.childpanel)
+		evt.Veto()
+
+	def setShown(self, item, show):
+		if show:
+			self.tree.SetItemTextColour(item, self.showncolor)
+		else:
+			self.tree.SetItemTextColour(item, self.notshowncolor)
+		cookie = 0
+		(child, cookie) = self.tree.GetFirstChild(item, cookie)
+		while child.IsOk():
+			self.setShown(child, show)
+			(child, cookie) = self.tree.GetNextChild(item, cookie)
+		
+class wxTreePanelContainerWidget(wxContainerWidget):
+	def __init__(self, name, parent, id):
+		wxContainerWidget.__init__(self, name, parent, id)
+		self.treepanel = self.container.getTreePanel()
+		self.childparent = self.treepanel.childpanel
+		self.sizer = wxBoxSizer(wxVERTICAL)
+		self.treepanel.addContainer(self)
+
+	def getTreePanel(self):
+		return self.treepanel
+
+	def show(self, show):
+		self.treepanel.childsizer.Show(self.sizer, show)
+		wxContainerWidget.show(self, show)
+
+	def _addWidget(self, name, typelist, value, settings):
+		wxContainerWidget._addWidget(self, name, typelist, value, settings)
+		self.layout()
+
+	def layout(self):
+		wxContainerWidget.layout(self)
+		self.treepanel.childsizer.FitInside(self.childparent)
+
+	def destroy(self):
+		wxContainerWidget.destroy(self)
+		self.treepanel.deleteContainer(self)
 
 if __name__ == '__main__':
 	import sys

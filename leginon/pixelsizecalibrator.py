@@ -26,7 +26,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		self.uipixsize = uidata.Float('Meters/Pixel', 1e-9, 'rw')
 		self.comment = uidata.String('Comment', '', 'rw')
 		storemethod = uidata.Method('Store', self.uiStore)
-		mycontainer = uidata.MediumContainer('Pixel Size Calibrator')
+		mycontainer = uidata.LargeContainer('Pixel Size Calibrator')
 
 		mycontainer.addObjects((self.uilisting, testmethod))
 

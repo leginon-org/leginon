@@ -125,7 +125,7 @@ class Navigator(node.Node):
 		controlcontainer = uidata.Container('Control')
 		controlcontainer.addObjects((acqmeth, self.image))
 
-		container = uidata.MediumContainer('Navigator')
+		container = uidata.LargeContainer('Navigator')
 		container.addObjects((settingscontainer, controlcontainer))
 		self.uiserver.addObject(container)
 

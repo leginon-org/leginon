@@ -92,7 +92,7 @@ class Administration(node.Node):
 																			self.addinstrumenthostname,
 																			addinstrument))
 
-		container = uidata.MediumContainer('Administration')
+		container = uidata.LargeContainer('Administration')
 		container.addObjects((groupcontainer, usercontainer, instrumentcontainer))
 		self.uiserver.addObject(container)
 

@@ -81,7 +81,7 @@ class Corrector(node.Node):
 		settingscontainer.addObjects((self.uiframestoaverage, self.uifakeflag,
 																	cameraconfigure, self.cliplimits,
 																	self.badrows, self.badcols, setplan))
-		container = uidata.MediumContainer('Corrector')
+		container = uidata.LargeContainer('Corrector')
 		container.addObjects((settingscontainer, controlcontainer, self.ui_image))
 		self.uiserver.addObject(container)
 

@@ -207,7 +207,7 @@ class GonModeler(node.Node):
 
 		camconfig = self.cam.configUIData()
 
-		maincont = uidata.MediumContainer('GonModeler')
+		maincont = uidata.LargeContainer('GonModeler')
 		maincont.addObjects((measurecont, modelcont, camconfig))
 		self.uiserver.addObject(maincont)
 

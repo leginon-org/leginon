@@ -35,6 +35,6 @@ class Calibrator(node.Node):
 		self.ui_image = uidata.Image('Calibrator Image', None, 'r')
 		cameraconfig = self.cam.configUIData()
 
-		container = uidata.MediumContainer('Calibrator')
+		container = uidata.LargeContainer('Calibrator')
 		container.addObjects((self.ui_image, cameraconfig))
 		self.uiserver.addObject(container)

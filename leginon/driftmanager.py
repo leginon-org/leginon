@@ -271,6 +271,6 @@ class DriftManager(watcher.Watcher):
 		#subcont = uidata.Container('Sub')
 		#subcont.addObjects((self.threshold,))
 
-		container = uidata.MediumContainer('Drift Manager')
+		container = uidata.LargeContainer('Drift Manager')
 		container.addObjects((abortmeth, self.threshold,self.pausetime,camconfig, measuremeth, monitormeth, self.driftvalue, self.im))
 		self.uiserver.addObject(container)

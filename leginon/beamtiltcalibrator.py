@@ -172,7 +172,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		measurecontainer = uidata.Container('Measure')
 		measurecontainer.addObjects((self.measuretiltvalue, self.resultvalue, measuremethod))
 
-		container = uidata.MediumContainer('Beam Tilt Calibrator')
+		container = uidata.LargeContainer('Beam Tilt Calibrator')
 		container.addObjects((defocuscontainer, stigcontainer, measurecontainer))
 		self.uiserver.addObject(container)
 

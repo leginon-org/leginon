@@ -23,7 +23,7 @@ class TargetMaker(node.Node):
 		node.Node.defineUserInterface(self)
 		publishtargetsmethod = uidata.Method('Publish Targets',
 																						self.publishTargetList)
-		container = uidata.MediumContainer('Target Maker')
+		container = uidata.LargeContainer('Target Maker')
 		container.addObjects((publishtargetsmethod,))
 		self.uiserver.addObject(container)
 
@@ -61,7 +61,7 @@ class SpiralTargetMaker(TargetMaker):
 		statuscontainer = uidata.Container('Status')
 		statuscontainer.addObjects((self.statusmessage,))
 
-		container = uidata.MediumContainer('Spiral Target Maker')
+		container = uidata.LargeContainer('Spiral Target Maker')
 		container.addObjects((settingscontainer, controlcontainer, statuscontainer))
 		self.uiserver.addObject(container)
 

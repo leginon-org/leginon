@@ -691,7 +691,7 @@ class Manager(node.Node):
 		launchobjects = (self.uilaunchname, self.uilauncherselect,
 											self.uiclassselect, self.uilaunchargs,
 											self.uilaunchflag, launchmethod)
-		launchcontainer = uidata.MediumContainer('Launch')
+		launchcontainer = uidata.LargeContainer('Launch')
 		launchcontainer.addObjects(launchobjects)
 
 
@@ -705,7 +705,7 @@ class Manager(node.Node):
 		self.uikillselect = uidata.SingleSelectFromList('Kill Node', [], 0)
 		killmethod = uidata.Method('Kill', self.uiKillNode)
 		killobjects = (self.uikillselect, killmethod)
-		nodemanagementcontainer = uidata.MediumContainer('Node Management')
+		nodemanagementcontainer = uidata.LargeContainer('Node Management')
 		nodemanagementcontainer.addObjects(infoobjects + addobjects + killobjects)
 
 		self.uiapplicationlist = uidata.SingleSelectFromList('Application', [], 0)
@@ -719,7 +719,7 @@ class Manager(node.Node):
 													applicationloadmethod, applicationlaunchmethod,
 													applicationkillmethod)
 		self.uilauncheraliascontainer = None
-		self.applicationcontainer = uidata.MediumContainer('Application')
+		self.applicationcontainer = uidata.LargeContainer('Application')
 		self.applicationcontainer.addObjects(applicationobjects)
 
 		self.uifromnodeselect = uidata.SingleSelectFromList('From Node', [], 0)
@@ -732,7 +732,7 @@ class Manager(node.Node):
 		unbindmethod = uidata.Method('Unbind', self.uiDelDistmap)
 		eventobjects = (self.uifromnodeselect, self.uieventselect,
 										self.uitonodeselect, bindmethod, unbindmethod)
-		eventcontainer = uidata.MediumContainer('Event Bindings')
+		eventcontainer = uidata.LargeContainer('Event Bindings')
 		eventcontainer.addObjects(eventobjects)
 
 		uimanagersetup = self.managersetup.getUserInterface()

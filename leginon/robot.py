@@ -246,7 +246,7 @@ if sys.platform == 'win32':
 			controlcontainer = uidata.Container('Control')
 			controlcontainer.addObjects((self.insertmethod, self.extractmethod))
 	
-			rccontainer = uidata.MediumContainer('Robot Control')
+			rccontainer = uidata.LargeContainer('Robot Control')
 			rccontainer.addObjects((statuscontainer, controlcontainer))
 			self.uiserver.addObject(rccontainer)
 
@@ -337,7 +337,7 @@ class RobotNotification(RobotNode):
 		statuscontainer = uidata.Container('Status')
 		statuscontainer.addObjects((self.statuslabel,))
 
-		container = uidata.MediumContainer('Robot Notification')
+		container = uidata.LargeContainer('Robot Notification')
 		container.addObjects((statuscontainer, self.insertonextract))
 		self.uiserver.addObject(container)
 
@@ -417,7 +417,7 @@ class RobotTest(node.Node):
 		controlcontainer.addObjects((self.insertmethod, self.extractmethod,
 																										self.mosaicmethod))
 
-		rccontainer = uidata.MediumContainer('Robot Test')
+		rccontainer = uidata.LargeContainer('Robot Test')
 		rccontainer.addObjects((controlcontainer,))
 		self.uiserver.addObject(rccontainer)
 

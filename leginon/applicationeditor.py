@@ -66,7 +66,7 @@ class ApplicationEditor(node.Node):
 		self.uiUpdate()
 		update = uidata.Method('Refresh', self.uiUpdate)
 		load = uidata.Method('Load', self.uiLoad)
-		container = uidata.MediumContainer('Application Editor')
+		container = uidata.LargeContainer('Application Editor')
 		container.addObjects((self.applicationeditor, save, self.uiapplicationlist, update, load))
 		self.uiserver.addObject(container)
 

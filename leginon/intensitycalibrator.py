@@ -16,6 +16,6 @@ class IntensityCalibrator(calibrator.Calibrator):
 	def defineUserInterface(self):
 		calibrator.Calibrator.defineUserInterface(self)
 
-		container = uidata.MediumContainer('Intensity Calibrator')
+		container = uidata.LargeContainer('Intensity Calibrator')
 		#container.addObjects((cameraconfig, calimage))
 		self.uiserver.addObject(container)

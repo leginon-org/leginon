@@ -171,7 +171,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 		calibratemethod = uidata.Method('Calibrate', self.uiCalibrate)
 
-		container = uidata.MediumContainer('Matrix Calibrator')
+		container = uidata.LargeContainer('Matrix Calibrator')
 		container.addObjects((settingscontainer, calibratemethod))
 		self.uiserver.addObject(container)
 

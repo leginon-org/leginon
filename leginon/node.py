@@ -566,7 +566,7 @@ class Node(leginonobject.LeginonObject):
 		datakeepercontainer = self.datahandler.datakeeper.UI()
 		exitmethod = uidata.Method('Exit', self.uiExit)
 
-		container = uidata.MediumContainer('Node')
+		container = uidata.LargeContainer('Node')
 		if datakeepercontainer is not None:
 			container.addObject(datakeepercontainer)
 		container.addObjects((idarray, class_string, locationstruct,

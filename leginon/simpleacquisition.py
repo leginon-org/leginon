@@ -69,7 +69,7 @@ class SimpleAcquisition(acquisition.Acquisition):
 		acqcont = uidata.Container('Acquire')
 		acqcont.addObjects((acq, acqloop, acqloopstop))
 
-		container = uidata.MediumContainer('Simple Acquisition')
+		container = uidata.LargeContainer('Simple Acquisition')
 		container.addObject(acqcont)
 		self.uiserver.addObject(container)
 

@@ -570,7 +570,7 @@ class EM(node.Node):
 				container.addObject(self.uicameradict[key][axis])
 			cameraparameterscontainer.addObject(container)
 
-		self.cameracontainer = uidata.MediumContainer('Camera')
+		self.cameracontainer = uidata.LargeContainer('Camera')
 		self.cameracontainer.addObject(cameraparameterscontainer)
 
 		setcamera = uidata.Method('Set', self.uiSetCamera)
@@ -627,7 +627,7 @@ class EM(node.Node):
 
 		scopeparameterscontainer.addObject(stigmatorcontainer)
 
-		self.scopecontainer = uidata.MediumContainer('Microscope')
+		self.scopecontainer = uidata.LargeContainer('Microscope')
 		self.scopecontainer.addObject(scopeparameterscontainer)
 
 		refreshscope = uidata.Method('Refresh', self.uiRefreshScope)
@@ -658,13 +658,13 @@ class EM(node.Node):
 				container.addObject(self.uicameradict[key][axis])
 			cameraparameterscontainer.addObject(container)
 
-		self.cameracontainer = uidata.MediumContainer('Camera')
+		self.cameracontainer = uidata.LargeContainer('Camera')
 		self.cameracontainer.addObject(cameraparameterscontainer)
 
 		setcamera = uidata.Method('Set', self.uiSetCamera)
 		self.cameracontainer.addObject(setcamera)
 
-		container = uidata.MediumContainer('EM')
+		container = uidata.LargeContainer('EM')
 		container.addObjects((self.scopecontainer, self.cameracontainer))
 		self.uiserver.addObject(container)
 

@@ -504,7 +504,7 @@ class PresetsManager(node.Node):
 		self.orderlist.set(pnames)
 
 		## main container
-		container = uidata.MediumContainer('Presets Manager')
+		container = uidata.LargeContainer('Presets Manager')
 		container.addObjects((importcont,createcont,selectcont))
 		self.uiserver.addObject(container)
 
