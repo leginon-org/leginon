@@ -125,6 +125,37 @@ class ImageMosaic(watcher.Watcher):
 
 		return (shift0, shift1)
 
+	def votePosition(self, positionvotes, tileposition, peakvalue):
+		# add a vote for this position per axis
+		# add the peak value to the sum of peak values for the position per axis
+		for i in [0, 1]:
+			if tileposition[i] in positionvotes[i]:
+				positionvotes[i][tileposition[i]]['votes'] += 1
+				positionvotes[i][tileposition[i]]['peaks value'] += peakvalue
+			else:
+				positionvotes[i][tileposition[i]] = {'votes': 1,
+					'peaks value': peakvalue}
+		return positionvotes
+
+	def bestPosition(self, positionvotes):
+		# which ever position has the most votes wins per axis
+		# the sum of the peak values for the position breaks ties
+		position = [0, 0]
+		for i in [0, 1]:
+			maxvotes = 0
+			maxpeakvalue = 0.0
+			for p in positionvotes[i]:
+				if positionvotes[i][p]['votes'] > maxvotes:
+					position[i] = p
+					maxvotes = positionvotes[i][p]['votes']
+					maxpeakvalue = positionvotes[i][p]['peaks value']
+				elif positionvotes[i][p]['votes'] == maxvotes:
+					if positionvotes[i][p]['peaks value'] > maxpeakvalue:
+						position[i] = p
+						maxvotes = positionvotes[i][p]['votes']
+						maxpeakvalue = positionvotes[i][p]['peaks value']
+		return tuple(position)
+
 	def processData(self, idata):
 		tileimage = idata.content['image']
 		neighbors = idata.content['neighbor tiles']
@@ -164,37 +195,15 @@ class ImageMosaic(watcher.Watcher):
 										neighborposition[1] + shift[1])
 				peakvalue = peak['pixel peak value']
 
-				# add a vote for this position per axis
-				# add the peak value to the sum of peak values for the position per axis
-				for i in [0, 1]:
-					if tileposition[i] in positionvotes[i]:
-						positionvotes[i][tileposition[i]]['votes'] += 1
-						positionvotes[i][tileposition[i]]['peaks value'] += peakvalue
-					else:
-						positionvotes[i][tileposition[i]] = {'votes': 1,
-							'peaks value': peakvalue}
-
-			# which ever position has the most votes wins per axis
-			# the sum of the peak values for the position breaks ties
-			position = [0, 0]
-			for i in [0, 1]:
-				maxvotes = 0
-				maxpeakvalue = 0.0
-				for p in positionvotes[i]:
-					if positionvotes[i][p]['votes'] > maxvotes:
-						position[i] = p
-						maxvotes = positionvotes[i][p]['votes']
-						maxpeakvalue = positionvotes[i][p]['peaks value']
-					elif positionvotes[i][p]['votes'] == maxvotes:
-						if positionvotes[i][p]['peaks value'] > maxpeakvalue:
-							position[i] = p
-							maxvotes = positionvotes[i][p]['votes']
-							maxpeakvalue = positionvotes[i][p]['peaks value']
+				# add a vote for this position
+				positionvotes = self.votePosition(positionvotes,
+													tileposition, peakvalue)
 
 			# add the tile image and position to the mosaic
 			self.imagemosaic[idata.id] = {}
 			self.imagemosaic[idata.id]['image'] = tileimage
-			self.imagemosaic[idata.id]['position'] = tuple(position)
+			self.imagemosaic[idata.id]['position'] = self.bestPosition(positionvotes)
+			print self.imagemosaic[idata.id]['position']
 
 	def makeImage(self, mosaic):
 		# could be Inf
@@ -212,8 +221,8 @@ class ImageMosaic(watcher.Watcher):
 									maxcoordinate[1] - mincoordinate[1]) 
 		image = Numeric.zeros(imageshape, Numeric.UnsignedInt8)
 		for tileid in mosaic:
-			row = mosaic[tileid]['position'][0]
-			column = mosaic[tileid]['position'][1]
+			row = mosaic[tileid]['position'][0] - mincoordinate[0]
+			column = mosaic[tileid]['position'][1] - mincoordinate[1]
 			iti = mosaic[tileid]['image']
 			image[row:row + iti.shape[0], column:column + iti.shape[1]] = iti
 		return image

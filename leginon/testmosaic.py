@@ -26,13 +26,13 @@ class TestMosaic(node.Node):
 		#		testimage[i, j] = random.randrange(50, 1024)
 		#print testimage
 
-		im = Image.open('c:\\dev\\pyleginon\\test.jpg')
+		im = Image.open('c:\\dev\\pyleginon\\test2.jpg')
 		testimage = Numeric.fromstring(im.tostring(), Numeric.UnsignedInt8)
 		testimage.shape = im.size[1], im.size[0]
 		#print testimage.shape
 
 		ntiles = (3, 3)
-		overlap = 0.9
+		overlap = 0.3
 
 		tilesize = (int(math.floor(testimage.shape[0]/(1 + (ntiles[0] - 1)
 									* (1 - overlap)))),
