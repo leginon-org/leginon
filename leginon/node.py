@@ -107,7 +107,7 @@ class Node(leginonobject.LeginonObject):
 		self.addEventOutput(event.NodeInitializedEvent)
 		self.addEventOutput(event.NodeUninitializedEvent)
 
-		self.addEventInput(event.Event, self.logEventReceived)
+		#self.addEventInput(event.Event, self.logEventReceived)
 		self.addEventInput(event.KillEvent, self.die)
 		self.addEventInput(event.ConfirmationEvent, self.handleConfirmedEvent)
 		self.addEventInput(event.NodeAvailableEvent, self.handleAddNode)
@@ -194,7 +194,7 @@ class Node(leginonobject.LeginonObject):
 		### send event and cross your fingers
 		try:
 			client.push(ievent)
-			self.logEvent(ievent, status='%s eventToClient' % (self.id,))
+			#self.logEvent(ievent, status='%s eventToClient' % (self.id,))
 		except:
 			# make sure we don't wait for an event that failed
 			if wait:
