@@ -134,11 +134,15 @@ class Corrector(node.Node):
 		return xmlbinlib.Binary(mrcstr)
 
 	def newPlan(self, camstate):
-		plan = data.CorrectorPlanData(self.ID(), camstate=camstate)
+		newcamstate = copy.deepcopy(camstate)
+		del newcamstate['exposure time']
+		plan = data.CorrectorPlanData(self.ID(), camstate=newcamstate)
 		return plan
 
 	def retrievePlan(self, camstate):
-		plandatalist = self.research(dataclass=data.CorrectorPlanData, camstate=camstate)
+		newcamstate = copy.deepcopy(camstate)
+		del newcamstate['exposure time']
+		plandatalist = self.research(dataclass=data.CorrectorPlanData, camstate=newcamstate)
 		plandata = plandatalist[0]
 		return plandata
 
@@ -187,6 +191,8 @@ class Corrector(node.Node):
 		return ref
 
 	def retrieveRef(self, camstate, type):
+		newcamstate = copy.deepcopy(camstate)
+		del newcamstate['exposure time']
 		if type == 'dark':
 			imageclass = data.DarkImageData
 		elif type == 'bright':
@@ -197,13 +203,15 @@ class Corrector(node.Node):
 			return None
 
 		try:
-			ref = self.research(dataclass=imageclass, camstate=camstate)
+			ref = self.research(dataclass=imageclass, camstate=newcamstate)
 			ref = ref[0]
 			return ref['image']
 		except:
 			return None
 
 	def storeRef(self, type, numdata, camstate):
+		newcamstate = copy.deepcopy(camstate)
+		del newcamstate['exposure time']
 		if type == 'dark':
 			imageclass = data.DarkImageData
 			eventclass = event.DarkImagePublishEvent
@@ -214,7 +222,7 @@ class Corrector(node.Node):
 			imageclass = data.NormImageData
 			eventclass = event.NormImagePublishEvent
 		
-		imagedata = imageclass(self.ID(), image=numdata, camstate=camstate)
+		imagedata = imageclass(self.ID(), image=numdata, camstate=newcamstate)
 		print 'publishing'
 		self.publish(imagedata, eventclass=eventclass, database=True)
 
