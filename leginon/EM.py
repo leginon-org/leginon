@@ -586,6 +586,7 @@ class EM(node.Node):
 			value = False
 		elif datatype == Numeric.arraytype:
 			raise ValueError('currently not displaying images')
+			interfaceclass = uidata.Image
 			value = None
 		elif datatype == dict:
 			interfaceclass = uidata.Container
