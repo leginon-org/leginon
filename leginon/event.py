@@ -110,15 +110,20 @@ class ImagePublishEvent(PublishEvent):
 	def __init__(self, id, content, confirm):
 		PublishEvent.__init__(self, id, content, confirm)
 
-class CrossCorrelationImagePublishEvent(ImagePublishEvent):
+class CorrelationImagePublishEvent(ImagePublishEvent):
 	'Event indicating image was published'
 	def __init__(self, id, content, confirm):
 		ImagePublishEvent.__init__(self, id, content, confirm)
 
-class PhaseCorrelationImagePublishEvent(ImagePublishEvent):
+class CrossCorrelationImagePublishEvent(CorrelationImagePublishEvent):
 	'Event indicating image was published'
 	def __init__(self, id, content, confirm):
-		ImagePublishEvent.__init__(self, id, content, confirm)
+		CorrelationImagePublishEvent.__init__(self, id, content, confirm)
+
+class PhaseCorrelationImagePublishEvent(CorrelationImagePublishEvent):
+	'Event indicating image was published'
+	def __init__(self, id, content, confirm):
+		CorrelationImagePublishEvent.__init__(self, id, content, confirm)
 
 class ControlEvent(Event):
 	'Event that passes a value with it'

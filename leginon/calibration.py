@@ -25,8 +25,12 @@ class Calibration(node.Node):
 		self.correlator = correlator.Correlator(ffteng)
 		self.peakfinder = peakfinder.PeakFinder()
 
+		#### parameters for user to set
+		self.emnode = None
 		self.attempts = 5
 		self.range = [0.000, 0.01]
+		####
+
 		self.validpixelshift = {'x': [self.camerastate['dimension']['x']/10,
 															5*self.camerastate['dimension']['x']/10],
 														'y': [self.camerastate['dimension']['y']/10,
@@ -47,47 +51,150 @@ class Calibration(node.Node):
 		self.publishRemote(EMnodeid, data.EMData(self.ID(), self.camerastate))
 
 		for i in range(self.attempts):
-			value = (self.range[1] - self.range[0]) / 2 + self.range[0]
-			self.publishRemote(EMnodeid, data.EMData(self.ID(), self.setting(0.0)))
-			time.sleep(1.0)
-			self.image1 = self.researchByDataID('image data').content['image data']
-			imagedata = data.ImageData(self.ID(), self.image1)
-			self.publish(imagedata, event.ImagePublishEvent)
-			self.correlator.setImage(0, self.image1)
+			value = (adjustedrange[1] - adjustedrange[0]) / 2 + adjustedrange[0]
 
-			print "value =", value
-			self.publishRemote(EMnodeid, data.EMData(self.ID(), self.setting(value)))
-			time.sleep(1.0)
-			self.image2 = self.researchByDataID('image data').content['image data']
-			imagedata = data.ImageData(self.ID(), self.image2)
-			self.publish(imagedata, event.ImagePublishEvent)
-			cdata = self.correlate(self.image2)
-			self.correlator.clearBuffer()
-			if self.valid(cdata):
+			state1 = self.setting(0.0)
+			state2 = self.setting(value)
+			shiftinfo = self.measureStateShift(state1, state2)
+
+			shiftinfo = self.correlate(self.image2)
+
+			verdict = self.validateShift(shiftinfo)
+
+			if verdict == 'good':
 				print "good", self.calculate(cdata, value) 
 				self.publishRemote(EMnodeid, data.EMData(self.ID(), self.setting(0.0)))
 				return self.calculate(cdata, value)
-			elif cdata['peak value'] > self.correlationthreshold * 2:
+			elif verdict == 'small shift':
 				print "too small"
 				adjustedrange[0] = value
-			else:
+			elif verdict == 'big shift':
 				print "too big"
 				adjustedrange[1] = value
+			else:
+				raise RuntimeError('hung jury')
+
+
+
+
 		self.publishRemote(EMnodeid, data.EMData(self.ID(), self.setting(0.0)))
 
-	def calculate(self, cdata, i):
-		return {'image shift': {'x': cdata['shift']['x'] / self.settingValue(i),
-														'y': cdata['shift']['y'] / self.settingValue(i)}}
+	def clearStateImages(self):
+		self.images = []
 
-	def valid(self, cdata):
-		if (self.inRange(abs(cdata['shift']['x']), self.validpixelshift['x']) or
-				self.inRange(abs(cdata['shift']['y']), self.validpixelshift['y'])):
-			if cdata['peak value'] > self.correlationthreshold:
-				return True
-			else:
-				return False
+	def acquireStateImage(self, state):
+		## determine if this state is already acquired
+		for info in self.images:
+			if info['state'] == state:
+				image = info['image']
+				return info
+
+		## acquire image at this state
+		emdata = data.EMData(self.ID(), state)
+		self.publishRemote(self.emnode, emdata)
+		time.sleep(1.0)
+		image = self.researchByDataID('image data').content['image data']
+		imagedata = data.ImageData(self.ID(), image)
+		self.publish(imagedata, event.ImagePublishEvent)
+
+		## should find image stats to help determine validity of image
+		## in correlations
+		image_stats = None
+
+		info = {'state': state, 'image': image, 'image stats': image_stats}
+		self.images.append(info)
+		return info
+
+	def measureStateShift(self, state1, state2):
+		'''measures the pixel shift between two states'''
+
+		info1 = self.acquireStateImage(state1)
+		info2 = self.acquireStateImage(state2)
+
+		image1 = info1['image']
+		image2 = info2['image']
+		stats1 = info1['image stats']
+		stats2 = info2['image stats']
+
+		## phase correlation
+		self.correlator.setImage(0, image1)
+		self.correlator.setImage(1, image2)
+		pcimage = self.correlator.phaseCorrelate()
+
+		## peak finding
+		self.peakfinder.setImage(pcimage)
+		self.peakfinder.subpixelPeak()
+		peak = self.peakfinder.getResults()
+		peakvalue = peak['pixel peak value']
+		shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
+		shiftinfo = {'shift': shift, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2)}
+		return shiftinfo
+
+	def calculate(self, cdata, value):
+		return {'image shift': {'x': cdata['shift']['x'] / value,
+			'y': cdata['shift']['y'] / value}}
+
+
+	### some of this should be put directly in Correlator 
+	### maybe have phaseCorrelate check validity of its result
+	def validateShift(self, shiftinfo):
+		'''
+		Calculate the validity of an image correlation
+		Reasons for rejection:
+		  - image shift too large to measure with given image size
+		        results in poor correlation
+		  - pixel shift too small to use as calibration data
+		  	results in good correlation, but reject anyway
+		'''
+		shift = shiftinfo['image shift']
+		## Jim is proud of coming up with this ingenious method
+		## of calculating a hypotenuse without importing math.
+		## It's definietly too late to be working on a Friday.
+		totalshift = abs(shift[0] * 1j + shift[1])
+		peakvalue = shiftinfo['peak value']
+		shape = shiftinfo['shape']
+		stats = shiftinfo['stats']
+
+		## judge based on image stats
+		## this should probably be done even before doing a 
+		## correlation to save time.  should reject doing doing
+		## a calibration over a big black area and stuff like that
+		## check that stats[0] is similar to stats[1]
+		# 
+
+		## judge based on correlation peak value
+		if peakvalue < minpeakvalue:
+			peakverdict = 'low'
+		elif peakvalue > maxpeakvalue:
+			peakverdict = 'high'
 		else:
-			return False
+			peakverdict = 'normal'
+
+		### Is this right?:
+		### We care about shift on each axis when it comes
+		### to validating the accuracy of the correlation.
+		### We care about total shift distance when it comes 
+		### to getting a good calibration, regardless of direction.
+
+		validshift = []
+		for dim in (0,1):
+			minshift = shape[dim] / 10.0
+			maxshift = 5.0 * shape[dim] / 10.0
+			validshift.append( (minshift,maxshift) )
+
+		if (self.inRange(abs(shift[0]), validshift[0]) and
+			self.inRange(abs(shift[1]), validshift[1])):
+
+
+			if shiftinfo['peak value'] > self.correlationthreshold:
+				verdict = 'good'
+			else:
+				elif cdata['peak value'] > self.correlationthreshold * 2:
+					verdict = 'small shift'
+				else:
+					verdict = 'big shift'
+
+		return verdict
 
 	def inRange(self, value, r):
 		if (len(r) != 2) or (r[0] > r[1]):
@@ -114,7 +221,7 @@ class Calibration(node.Node):
 		peak = self.peakfinder.subpixelPeak()
 		peak = self.peakfinder.getResults()
 		print 'peak', peak
-		peakvalue = pcimage[peak['pixel peak'][0], peak['pixel peak'][1]]
+		peakvalue = peak['pixel peak value']
 		print 'peak value', peakvalue
 		## interpret as a shift
 		shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
