@@ -244,10 +244,6 @@ class DriftManager(watcher.Watcher):
 		print 'Drift Rate:  %.4f' % (current_drift,)
 		self.driftvalue.set(current_drift)
 
-	def acquireNext(self):
-		imagedata = self.cam.acquireCameraImageData(correction=True)
-		numdata = imagedata['image']
-
 	def targetsToDatabase(self):
 		for target in self.targetlist:
 			self.publish(target, database=True)

@@ -124,8 +124,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.originalimage.set(orig)
 
 	def acqImage(self):
-		config = self.cam.cameraConfig()
-		imdata = self.cam.acquireCameraImageData(config)
+		imdata = self.cam.acquireCameraImageData(camconfig='UI')
 		orig = imdata['image']
 		self.hf['original'] = orig
 		self.originalimage.set(orig)

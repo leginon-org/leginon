@@ -86,8 +86,8 @@ class ImViewer(imagewatcher.ImageWatcher):
 		if self.loopconfig:
 			camconfig = None
 		else:
-			camconfig = self.cam.cameraConfig()
-		imdata = self.cam.acquireCameraImageData(camconfig)
+			camconfig = 'UI'
+		imdata = self.cam.acquireCameraImageData(camconfig=camconfig)
 		imarray = imdata['image']
 		return imarray
 
