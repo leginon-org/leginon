@@ -53,6 +53,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.lowpasson = uidata.Boolean('Low Pass Filter On', True, 'rw', persist=True)
 		self.lowpasssize = uidata.Integer('Low Pass Filter Size', 5, 'rw', persist=True)
 		self.lowpasssigma = uidata.Float('Low Pass Filter Sigma', 1.0, 'rw', persist=True)
+		self.edgethresh = uidata.Float('Threshold', 100.0, 'rw', persist=True)
 		self.filtertype = uidata.SingleSelectFromList('Filter Type', ['laplacian3', 'laplacian5', 'laplacian-gaussian', 'sobel'], 0, persist=True)
 		self.glapsize = uidata.Integer('LoG Size', 9, 'rw', persist=True)
 		self.glapsigma = uidata.Float('LoG Sigma', 1.4, 'rw', persist=True)
@@ -60,7 +61,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		edgemeth = uidata.Method('Find Edges', self.findEdges)
 		self.edgeimage = uidata.Image('Edge Image', None, 'r')
 		edgecont = uidata.LargeContainer('Edge Finder')
-		edgecont.addObjects((self.edgeson, self.lowpasson, self.lowpasssize, self.lowpasssigma, self.filtertype, self.glapsize, self.glapsigma, self.edgeabs, edgemeth, self.edgeimage,))
+		edgecont.addObjects((self.edgeson, self.lowpasson, self.lowpasssize, self.lowpasssigma, self.filtertype, self.glapsize, self.glapsigma, self.edgeabs, self.edgethresh, edgemeth, self.edgeimage,))
 
 
 		### Correlate Template
@@ -146,7 +147,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		lowpasson = self.lowpasson.get()
 		lowpassn = self.lowpasssize.get()
 		lowpasssig = self.lowpasssigma.get()
-		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lp=lowpasson, lpn=lowpassn, lpsig=lowpasssig)
+		edgethresh = self.edgethresh.get()
+		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lp=lowpasson, lpn=lowpassn, lpsig=lowpasssig, thresh=edgethresh)
 		self.hf.find_edges()
 		self.edgeimage.set(self.hf['edges'])
 

@@ -221,7 +221,7 @@ class HoleFinder(object):
 
 		## some default configuration parameters
 		self.save_mrc = True
-		self.edges_config = {'filter': 'laplacian', 'size': 9, 'sigma': 1.4, 'abs': False, 'lp':True, 'lpn':5, 'lpsig':1.0}
+		self.edges_config = {'filter': 'laplacian', 'size': 9, 'sigma': 1.4, 'abs': False, 'lp':True, 'lpn':5, 'lpsig':1.0, 'thresh':100.0}
 		self.template_config = {'ring_list': [(25,30)]}
 		self.correlation_config = {'cortype': 'cross correlation'}
 		self.threshold = 3.0
@@ -250,7 +250,7 @@ class HoleFinder(object):
 		## update this result
 		self.__results[key] = image
 
-	def configure_edges(self, filter=None, size=None, sigma=None, absvalue=None, lp=None, lpn=None, lpsig=None):
+	def configure_edges(self, filter=None, size=None, sigma=None, absvalue=None, lp=None, lpn=None, lpsig=None, thresh=None):
 		if filter is not None:
 			self.edges_config['filter'] = filter
 		if size is not None:
@@ -265,6 +265,8 @@ class HoleFinder(object):
 			self.edges_config['lpn'] = lpn
 		if lpsig is not None:
 			self.edges_config['lpsig'] = lpsig
+		if thresh is not None:
+			self.edges_config['thresh'] = thresh
 
 	def find_edges(self):
 		'''
@@ -281,6 +283,7 @@ class HoleFinder(object):
 		lp = self.edges_config['lp']
 		lpn = self.edges_config['lpn']
 		lpsig = self.edges_config['lpsig']
+		edgethresh = self.edges_config['thresh']
 
 		if lp:
 			print 'low pass filter'
@@ -316,6 +319,8 @@ class HoleFinder(object):
 
 		if ab:
 			edges = Numeric.absolute(edges)
+
+		edges = imagefun.threshold(edges, edgethresh)
 
 		self.__update_result('edges', edges)
 		if self.save_mrc:
