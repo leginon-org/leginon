@@ -51,7 +51,7 @@ if __name__ == '__main__':
 
 	loc = m.location()
 	# jorg
-	time.sleep(1)
+	time.sleep(1.0)
 	gui = nodegui.NodeUILauncher(root, loc['hostname'], loc['UI port'])
 	gui.pack(expand=Tkinter.YES, fill=Tkinter.BOTH)
 	root.mainloop()

@@ -1,8 +1,9 @@
 import data
 import time
 import calibration
+import node
 
-class AutoFocusCalibration(calibration.Calibration):
+class AutoFocusCalibration(node.Node, calibration.Calibration):
 	def __init__(self, id, nodelocations):
 		calibration.Calibration.__init__(self, id, nodelocations)
 		self.axislist = ['x']
