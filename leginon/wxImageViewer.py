@@ -1,8 +1,13 @@
+#!/usr/bin/env python
+
 from wxPython.wx import *
 import cStringIO
 import Numeric
 import Image
 import math
+
+import Mrc
+from NumericImage import NumericImage
 
 class ImagePanel(wxPanel):
 	def __init__(self, parent, id):
@@ -43,6 +48,14 @@ class ImagePanel(wxPanel):
 			image = self.image
 		wximage = wxEmptyImage(image.size[0], image.size[1])
 		wximage.SetData(image.convert('RGB').tostring())
+		self.setImage(wximage)
+
+	def NEWsetImageFromMrcString(self, imagestring):
+		self.clearImage()
+		numimage = Mrc.mrcstr_to_numeric(imagestring)
+		n = NumericImage(numimage)
+		n.update_image()
+		wximage = n.wxImage()
 		self.setImage(wximage)
 
 	def setImage(self, wximage):
@@ -282,6 +295,7 @@ if __name__ == '__main__':
 			return true
 
 	app = MyApp(0)
-	app.panel.setImage(open('test.jpg', 'rb').read())
+	#app.panel.setImage(open('test.jpg', 'rb').read())
+	app.panel.setImageFromMrcString(open('test1.mrc', 'rb').read())
 	app.MainLoop()
 
