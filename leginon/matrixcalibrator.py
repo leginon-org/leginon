@@ -40,8 +40,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 	# calibrate needs to take a specific value
 	def calibrate(self):
-		self.clearStateImages()
-
+		calclient = self.parameters[self.parameter]
 		size = self.camerastate['size']
 		bin = self.camerastate['binning']
 		exp = self.camerastate['exposure time']
@@ -79,7 +78,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 				state1 = self.makeState(basevalue, axis)
 				state2 = self.makeState(newvalue, axis)
 				print 'states', state1, state2
-				shiftinfo = self.measureStateShift(state1, state2, axis)
+				shiftinfo = calclient.measureStateShift(state1, state2)
 				print 'shiftinfo', shiftinfo
 
 				rowpix = shiftinfo['pixel shift']['row']
@@ -87,8 +86,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 				totalpix = abs(rowpix + 1j * colpix)
 
 				actual_states = shiftinfo['actual states']
-				actual1 = actual_state[0][self.parameter][axis]
-				actual2 = actual_state[1][self.parameter][axis]
+				actual1 = actual_states[0][self.parameter][axis]
+				actual2 = actual_states[1][self.parameter][axis]
 				change = actual2 - actual1
 				perpix = change / totalpix
 				print '**PERPIX', perpix
@@ -104,13 +103,12 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 		mag = self.getMagnification()
 		self.publish(event.UnlockEvent(self.ID()))
-		calclient = self.parameters[self.parameter]
 		calclient.setCalibration(mag, shifts)
 
 		print 'CALIBRATE DONE', shifts
 
 	def defineUserInterface(self):
-		nodespec = node.Node.defineUserInterface(self)
+		nodespec = calibrator.Calibrator.defineUserInterface(self)
 
 		#### parameters for user to set
 		self.navg = 1

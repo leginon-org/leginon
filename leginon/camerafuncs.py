@@ -15,40 +15,6 @@ class CameraFuncs(object):
 	def __init__(self, node):
 		self.node = node
 
-	def OLDacquireArray(self, camstate=None, correction=0):
-		'''
-		acquire an image with optional camstate and correction
-		'''
-		if camstate is not None:
-			self.state(camstate)
-		t = Timer('research image')
-		try:
-			if correction:
-				imdata = self.node.researchByDataID('corrected image data')
-				imagearray = imdata.content
-			else:
-				imdata = self.node.researchByDataID('image data')
-				imagearray = imdata.content['image data']
-		except Exception, detail:
-			print detail
-			print 'acquireArray: unable to acquire image data'
-			imagearray = None
-		t.stop()
-		return imagearray
-
-	def OLDacquireCamera(self, camstate=None, correction=0):
-		'''
-		this will return entire camera data
-		'''
-		try:
-			camdata = self.node.researchByDataID('camera')
-			camstate = camdata.content
-		except Exception, detail:
-			print detail
-			print 'acquireCamera: unable to acquire camera'
-			camstate = None
-		return camstate
-
 	def acquireCameraImageData(self, camstate=None, correction=0):
 		## configure camera
 		if camstate is not None:
@@ -90,9 +56,7 @@ class CameraFuncs(object):
 			newcamstate = self.node.researchByDataID('camera no image data')
 			t.stop()
 			return newcamstate.content
-		except Exception, detail:
-			print detail
-			print 'camerafuncs.state: unable to get camera state'
+		except:
 			return None
 
 	def autoOffset(self, camstate):
@@ -162,6 +126,7 @@ class CameraFuncs(object):
 			initstate = self.state()
 			## if that failed, set default
 			if initstate is None:
+				print '%s unable to get camera state' % (self.node.id,)
 				initstate = {
 					'exposure time': 500,
 					'dimension':{'x':512,'y':512},
