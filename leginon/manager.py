@@ -17,8 +17,6 @@ class Manager(node.Node):
 		# the id is manager (in a list)
 		node.Node.__init__(self, id, None)
 
-		self.nodeclasslist = []
-
 		self.distmap = {}
 		# maps event id to list of node it was distributed to if event.confirm
 		self.confirmmap = {}
@@ -80,26 +78,23 @@ class Manager(node.Node):
 		if name not in self.launcherlist:
 			self.launcherlist.append(name)
 		self.launcherdict[name] = {'id':nodeid, 'node classes':nodeclasses}
-		self.launcherlistdata.set(self.launcherlist)
 
-		### temporary, see def below
-		self.addNodeClasses(nodeclasses)
+		self.updateLauncherDictData()
 
 	def delLauncher(self, nodeid):
+		name = nodeid[-1]
 		try:
-			self.launcherlist.remove(nodeid[-1])
-			del self.launcherdict[nodeid[-1]]
+			self.launcherlist.remove(name)
+			del self.launcherdict[name]
 		except:
 			pass
-		self.launcherlistdata.set(self.launcherlist)
+		self.updateLauncherDictData()
 
-	### this is a temporary way of listing all available node classes
-	### until we do launcher specific node class lists
-	def addNodeClasses(self, nodeclasslist):
-		for nodeclass in  nodeclasslist:
-			if nodeclass not in self.nodeclasslist:
-				self.nodeclasslist.append(nodeclass)
-		self.nodeclasslistdata.set(self.nodeclasslist)
+	def updateLauncherDictData(self):
+		newdict = {}
+		for name,value in self.launcherdict.items():
+			newdict[name] = value['node classes']
+		self.launcherdictdata.set(newdict)
 
 	def registerNode(self, readyevent):
 		nodeid = readyevent.id[:-1]
@@ -298,15 +293,13 @@ class Manager(node.Node):
 		self.launcherlist = []
 		self.launcherdict = {}
 
-		## UI data to be used as enums for method args
-		self.launcherlistdata = self.registerUIData('launcherlist', 'array')
-		self.nodeclasslistdata = self.registerUIData('nodeclasslist', 'array', default=())
+		## UI data to be used as choices for method args
+		self.launcherdictdata = self.registerUIData('launcherdict', 'struct')
 		self.eventclasslistdata = self.registerUIData('eventclasslist', 'array', default=eventclass_list)
 
 		argspec = (
 		self.registerUIData('Name', 'string'),
-		self.registerUIData('Launcher', 'string', enum=self.launcherlistdata),
-		self.registerUIData('Node Class', 'string', enum=self.nodeclasslistdata),
+		self.registerUIData('Launcher and Class', 'array', choices=self.launcherdictdata),
 		self.registerUIData('Args', 'string', default=''),
 		self.registerUIData('New Process', 'boolean', default=False)
 		)
@@ -314,14 +307,14 @@ class Manager(node.Node):
 
 
 		argspec = (
-		self.registerUIData('Node', 'string', enum=self.clientlistdata),
+		self.registerUIData('Node', 'string', choices=self.clientlistdata),
 		)
 		spec2 = self.registerUIMethod(self.uiKill, 'Kill', argspec)
 
 		argspec = (
-		self.registerUIData('Event Class', 'string', enum=self.eventclasslistdata),
-		self.registerUIData('From Node', 'string', enum=self.clientlistdata),
-		self.registerUIData('To Node', 'string', enum=self.clientlistdata),
+		self.registerUIData('Event Class', 'string', choices=self.eventclasslistdata),
+		self.registerUIData('From Node', 'string', choices=self.clientlistdata),
+		self.registerUIData('To Node', 'string', choices=self.clientlistdata),
 		)
 		spec3 = self.registerUIMethod(self.uiAddDistmap, 'Bind', argspec)
 
@@ -355,12 +348,15 @@ class Manager(node.Node):
 				nodeinfo[nodename] = nodeloc
 		return nodeinfo
 
-	def uiLaunch(self, name, launcher_str, nodeclass, args, newproc=0):
+	def uiLaunch(self, name, launchclass, args, newproc=0):
 		"""
 		user interface to the launchNode method
 		This simplifies the call for a user by using a
 		string to represent the launcher ID, node class, and args
 		"""
+
+		launcher_str,nodeclass = launchclass
+
 		print 'LAUNCH %s,%s,%s,%s,%s' % (name, launcher_str, nodeclass, args, newproc)
 
 		launcher_id = self.launcherdict[launcher_str]['id']

@@ -98,14 +98,22 @@ def widgetFromSpec(parent, uiclient, spec):
 def whichDataClass(dataspec):
 	'''this checks a data spec to figure out what Data class to use'''
 	type = dataspec['xmlrpctype']
-	if 'enum' in dataspec:
-		enum = dataspec['enum']
+	if 'choices' in dataspec:
+		choices = dataspec['choices']
+		choicesid = choices['id']
+		choicestype  = choices['type']
 	else:
-		enum = None
+		choices = None
 
-	if enum is not None:
-		return ComboboxData
-
+	if choices is not None:
+		if choicestype == 'array':
+			return ComboboxData
+		elif choicestype == 'struct':
+			return TreeSelectorData
+			## could probably make this an option too if it works
+			## return DependentComboboxData
+		else:
+			raise RuntimeError('choices type %s not supported' % choicestype)
 	elif type == 'boolean':
 		return CheckbuttonData
 	elif type in ('integer', 'float', 'string', 'array'):
@@ -125,10 +133,12 @@ class Data(SpecWidget):
 	def initInfo(self, spec):
 		self.name = spec['name']
 		self.type = spec['xmlrpctype']
-		if 'enum' in spec:
-			self.enum = spec['enum']
+		if 'choices' in spec:
+			self.choices = spec['choices']
+			self.choicesid = self.choices['id']
+			self.choicestype = self.choices['type']
 		else:
-			self.enum = None
+			self.choices = None
 		if 'permissions' in spec:
 			self.permissions = spec['permissions']
 		else:
@@ -168,7 +178,8 @@ class Data(SpecWidget):
 	def refresh(self, spec):
 		SpecWidget.refresh(self, spec)
 		self.initInfo(spec)
-		self.setWidget(self.default)
+		if self.default is not None:
+			self.setWidget(self.default)
 
 	def setServer(self):
 		value = self.getWidget()
@@ -234,8 +245,10 @@ class CheckbuttonData(Data):
 class ComboboxData(Data):
 	def __init__(self, parent, uiclient, spec):
 		Data.__init__(self, parent, uiclient, spec)
-		if 'enum' not in self.spec:
-			raise RuntimeError('need enum for ComboboxData')
+		if self.choices is None:
+			raise RuntimeError('need choices for ComboboxData')
+		if self.choicestype != 'array':
+			raise RuntimeError('ComboboxData requires array type choices')
 
 	def buildWidget(self, parent):
 		self.tkvar = StringVar()
@@ -249,7 +262,7 @@ class ComboboxData(Data):
 		self.updateList()
 
 	def updateList(self):
-		newlist = self.uiclient.execute('GET', (self.enum,))
+		newlist = self.uiclient.execute('GET', (self.choicesid,))
 		self.combo.setlist(newlist)
 
 	def setWidget(self, value):
@@ -266,6 +279,113 @@ class ComboboxData(Data):
 		else:
 			value = eval(valuestr)
 		return value
+
+class DependentComboboxData(Data):
+	def __init__(self, parent, uiclient, spec):
+		Data.__init__(self, parent, uiclient, spec)
+		if self.choices is None:
+			raise RuntimeError('need choices for ComboboxData')
+		if self.choicestype != 'struct':
+			raise RuntimeError('DependentComboboxData requires struct type choices')
+
+	def buildWidget(self, parent):
+		self.tkvars = [StringVar(), StringVar()]
+		self.comboframe = Frame(parent)
+		choicedict = self.getChoiceDict()
+		for i in self.levels:
+			combo = Pmw.ComboBox(self.comboframe, entry_textvariable=self.tkvars[i])
+			combo.component('entryfield').component('entry')['bg'] = self.entrycolor
+			combo.pack(side=TOP)
+			self.combos.append(combo)
+			def callback():
+				self.updateList(i+1)
+			combo.component('entryfield')['modifiedcommand'] = junk
+
+		self.updateLists()
+		return self.comboframe
+
+	def levels(self, tree):
+		'''return the depth of a tree dict'''
+		### this is not right
+		if type(tree) in (tuple, list):
+			return 1
+		elif type(tree) is dict:
+			try:
+				child = tree.values()[0]
+			except IndexError:
+				pass
+
+	def refresh(self, spec):
+		Data.refresh(self, spec)
+		self.updateChoiceDict()
+
+	def getChoiceDict(self):
+		choicedict = self.uiclient.execute('GET', (self.choicesid,))
+		return choicedict
+
+	def updateList(self, index, newlist):
+		self.combos[index].setlist(newlist)
+
+	def updateLists(self):
+		for combo in self.combos:
+			newlist = self.uiclient.execute('GET', (self.choices,))
+			combo.setlist(newlist)
+
+	def setWidget(self, values):
+		if len(value) != self.levels:
+			raise RuntimeError('require one value per combobox')
+		i = 0
+		for value in values:
+			valuestr = str(value)
+			self.tkvars[i].set(valuestr)
+			i += 1
+
+	def getWidget(self):
+		values = []
+		for tkvar in self.tkvars:
+			valuestr = tkvar.get()
+			if self.type == 'string':
+				value = valuestr
+			else:
+				value = eval(valuestr)
+			values.append(value)
+		return values
+
+class TreeSelectorData(Data):
+	def __init__(self, parent, uiclient, spec):
+		Data.__init__(self, parent, uiclient, spec)
+		if self.type != 'array':
+			raise RuntimeError('TreeSelectorData requires array type')
+
+	def buildWidget(self, parent):
+		mainframe = Frame(parent)
+		self.sc = TreeWidget.ScrolledCanvas(mainframe, highlightthickness=0, bg=self.entrycolor)
+		self.sc.frame.pack(expand=YES, fill=BOTH)
+		choicedict = self.uiclient.execute('GET', (self.choicesid,))
+		self.buildTree(choicedict)
+		self.current = Frame(mainframe)
+		self.current.pack()
+		return mainframe
+
+	def refresh(self, spec):
+		Data.refresh(self, spec)
+		choicedict = self.uiclient.execute('GET', (self.choicesid,))
+		self.buildTree(choicedict)
+
+	def buildTree(self, newdict):
+		self.dict = newdict
+		item = StructTreeItem(None, ' ', self.dict)
+		node = JimsTreeNode(self.sc.canvas, None, item)
+		node.expand()
+		self.sc.canvas.selectedtrace = [' ',]
+
+	def setWidget(self, value):
+		raise NotImplementedError()
+
+	def getWidget(self):
+		## return the path to the selected item
+		return self.sc.canvas.selectedtrace[1:]
+
 
 class TreeData(Data):
 	def __init__(self, parent, uiclient, spec):
@@ -481,8 +601,83 @@ class StructTreeItem(TreeWidget.TreeItem):
 				item = StructTreeItem(self, k, self.value[k])
 				sublist.append(item)
 			return sublist
+		elif type(self.value) in (tuple,list):
+			sublist = []
+			for k in self.value:
+				item = StructTreeItem(self, None, k)
+				sublist.append(item)
+			return sublist
 		else:
 			return [StructTreeItem(self, None, self.value)]
+
+	def traceBack(self):
+		if self.key:
+			name = self.key
+		else:
+			name = self.value
+
+		if self.parent is None:
+			return  (name,)
+		else:
+			parents = self.parent.traceBack()
+			return parents + (name,)
+
+class JimsTreeNode(TreeWidget.TreeNode):
+	def __init__(self, canvas, parent, item):
+		TreeWidget.TreeNode.__init__(self, canvas, parent, item)
+
+	def select(self, event=None):
+		TreeWidget.TreeNode.select(self, event)
+		self.canvas.selectedtrace = self.traceBack()
+
+	def traceBack(self):
+		trace = self.item.traceBack()
+		return trace
+
+	## copied from TreeWidget.TreeNode
+	## changed TreeNode to JimsTreeNode
+	def draw(self, x, y):
+
+		# XXX This hard-codes too many geometry constants!
+		self.x, self.y = x, y
+		self.drawicon()
+		self.drawtext()
+		if self.state != 'expanded':
+			return y+17
+		# draw children
+		if not self.children:
+		    sublist = self.item._GetSubList()
+		    if not sublist:
+			# _IsExpandable() was mistaken; that's allowed
+			return y+17
+		    for item in sublist:
+			child = JimsTreeNode(self.canvas, self, item)
+			self.children.append(child)
+		cx = x+20
+		cy = y+17
+		cylast = 0
+		for child in self.children:
+		    cylast = cy
+		    self.canvas.create_line(x+9, cy+7, cx, cy+7, fill="gray50")
+		    cy = child.draw(cx, cy)
+		    if child.item._IsExpandable():
+			if child.state == 'expanded':
+			    iconname = "minusnode"
+			    callback = child.collapse
+			else:
+			    iconname = "plusnode"
+			    callback = child.expand
+			image = self.geticonimage(iconname)
+			id = self.canvas.create_image(x+9, cylast+7, image=image)
+			# XXX This leaks bindings until canvas is deleted:
+			self.canvas.tag_bind(id, "<1>", callback)
+			self.canvas.tag_bind(id, "<Double-1>", lambda x: None)
+		id = self.canvas.create_line(x+9, y+10, x+9, cylast+7,
+		    ##stipple="gray50",     # XXX Seems broken in Tk 8.0.x
+		    fill="gray50")
+		self.canvas.tag_lower(id) # XXX .lower(id) before Python 1.5.2
+		return cy
+
 
 class NodeGUILauncher(Frame):
 	def __init__(self, parent):

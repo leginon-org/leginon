@@ -138,8 +138,8 @@ class Node(leginonobject.LeginonObject):
 	def registerUIMethod(self, func, name, argspec, returnspec=None):
 		return self.uiserver.registerMethod(func, name, argspec, returnspec)
 
-	def registerUIData(self, name, xmlrpctype, permissions=None, enum=None, default=None):
-		return self.uiserver.registerData(name, xmlrpctype, permissions, enum, default)
+	def registerUIData(self, name, xmlrpctype, permissions=None, choices=None, default=None):
+		return self.uiserver.registerData(name, xmlrpctype, permissions, choices, default)
 
 	def registerUIContainer(self, name=None, content=()):
 		return self.uiserver.registerContainer(name, content)
