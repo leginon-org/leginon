@@ -324,7 +324,6 @@ class RunWidget(Tkinter.Frame):
 								['launcher.py', launcherpath])
 		else:
 			process = os.spawnv(os.P_WAIT, launcherpath, ['launcher.py'])
-			print process
 
 #		self.locallauncherprocess = process
 
