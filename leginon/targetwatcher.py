@@ -47,7 +47,7 @@ class TargetWatcher(watcher.Watcher):
 			print 'target id', target['id']
 			print 'target id id', id(target['id'])
 			self.processTargetData(target)
-			e = event.TargetDoneEvent(self.ID(), targetid=target['id'])
+			e = event.TargetDoneEvent(id=self.ID(), targetid=target['id'])
 			self.outputEvent(e)
 			print 'checking abort'
 			if self.abort.isSet():
