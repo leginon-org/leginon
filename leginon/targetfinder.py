@@ -42,13 +42,14 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		self.publishTargetList()
 
 	def publishTargetList(self):
-		self.targetsToDatabase()
-		if self.targetlist:
-			targetlistdata = data.ImageTargetListData(id=self.ID(), targets=self.targetlist)
+		for target in self.targetlist:
 			## XXX this might not work for mosaic
 			## XXX need to publish a mosaic image so this will work
-			for targetdata in targetlistdata['targets']:
-				targetdata['image'] = self.imagedata
+			target['image'] = self.imagedata
+			print 'TARGET publishing %s' % (target['id'],)
+			self.publish(target, database=True)
+		if self.targetlist:
+			targetlistdata = data.ImageTargetListData(id=self.ID(), targets=self.targetlist)
 
 			self.targetlistevents[targetlistdata['id']] = {}
 			self.targetlistevents[targetlistdata['id']]['received'] = threading.Event()
@@ -61,7 +62,6 @@ class TargetFinder(imagewatcher.ImageWatcher):
 				self.waitForTargetListDone()
 
 		self.targetlist = []
-
 
 	def waitForTargetListDone(self):
 		for tid, teventinfo in self.targetlistevents.items():
@@ -96,11 +96,6 @@ class TargetFinder(imagewatcher.ImageWatcher):
 			self.targetlistevents[targetlistid]['status'] = status
 			self.targetlistevents[targetlistid]['received'].set()
 		self.confirmEvent(targetlistdoneevent)
-
-	def targetsToDatabase(self):
-		for target in self.targetlist:
-			print 'TARGET publishing %s' % (target['id'],)
-			self.publish(target, database=True)
 
 	def defineUserInterface(self):
 		imagewatcher.ImageWatcher.defineUserInterface(self)
@@ -175,7 +170,7 @@ class ClickTargetFinder(TargetFinder):
 								'delta column': column - self.numarray.shape[1]/2}
 			imageinfo = self.imageInfo()
 			target.update(imageinfo)
-			targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=typename)
+			targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=typename, version=0)
 			targetdata.friendly_update(target)
 			self.targetlist.append(targetdata)
 
@@ -290,7 +285,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			### just need preset, everythin else is there already
 			target['preset'] = imageinfo['preset']
 
-			targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=typename)
+			targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=typename, version=0)
 			targetdata.friendly_update(target)
 			self.targetlist.append(targetdata)
 
