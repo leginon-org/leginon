@@ -15,19 +15,24 @@ class MosaicNavigator(navigator.Navigator):
 
 	def addStateMosaic(self, ievent):
 		idata = self.researchByDataID(ievent.content)
-		self.statemosaic.update(idata.content)
+		#self.statemosaic.update(idata.content)
+		self.statemosaic.update(idata)
 
 	def handleImageClick(self, clickevent):
-		imagedataid = clickevent.content['image id']
+		#imagedataid = clickevent.content['image id']
+		imagedataid = clickevent['image id']
 		try:
 			mosaicdata = self.statemosaic[imagedataid]
 		except KeyError:
 			self.printerror('unknown data ID for navigation, %s' % str(imagedataid))
 			return
 
-		row = clickevent.content['array row']
-		column = clickevent.content['array column']
-		shape = clickevent.content['array shape']
+		#row = clickevent.content['array row']
+		#column = clickevent.content['array column']
+		#shape = clickevent.content['array shape']
+		row = clickevent['array row']
+		column = clickevent['array column']
+		shape = clickevent['array shape']
 
 		# certainly not optimal
 		maxmagnitude = math.sqrt(shape[0]**2 + shape[1]**2)
@@ -53,7 +58,8 @@ class MosaicNavigator(navigator.Navigator):
 												'col': nearestdelta[1]*mosaicdata['scale']},
 															mosaicdata['tile states'][nearesttile]['scope'],
 															mosaicdata['tile states'][nearesttile]['camera'])
-		emdata = data.EMData('scope', newstate)
+		#emdata = data.EMData('scope', newstate)
+		emdata = data.EMData('scope', em=newstate)
 		self.publishRemote(emdata)
 
 		time.sleep(self.delaydata.get())

@@ -210,7 +210,8 @@ class Manager(node.Node):
 			self.removeNode(launcherid)
 			# also remove from launcher registry
 			self.delLauncher(launcherid)
-		nodeclasses = nodeclassesdata.content
+		#nodeclasses = nodeclassesdata.content
+		nodeclasses = nodeclassesdata['nodeclasses']
 		return nodeclasses
 
 	def handleNodeClassesPublish(self, event):
@@ -363,8 +364,10 @@ class Manager(node.Node):
 		if datalocationdata is None:
 			datalocationdata = data.DataLocationData(dataid, [nodeid])
 		else:
-			if nodeid not in datalocationdata.content:
-				datalocationdata.content.append(nodeid)
+			#if nodeid not in datalocationdata.content:
+			#	datalocationdata.content.append(nodeid)
+			if nodeid not in datalocationdata['location']:
+				datalocationdata['location'].append(nodeid)
 #		self.server.datahandler._insert(datalocationdata)
 		self.datahandlers[self.datahandler].insert(datalocationdata)
 
@@ -382,8 +385,10 @@ class Manager(node.Node):
 		datalocationdata = self.datahandlers[self.datahandler].query(dataid)
 		if (datalocationdata is not None) and (type(datalocationdata) == data.DataLocationData):
 			try:
-				datalocationdata.content.remove(nodeid)
-				if len(datalocationdata.content) == 0:
+				#datalocationdata.content.remove(nodeid)
+				#if len(datalocationdata.content) == 0:
+				datalocationdata['location'].remove(nodeid)
+				if len(datalocationdata['location']) == 0:
 #					self.server.datahandler.remove(dataid)
 					self.datahandlers[self.datahandler].remove(dataid)
 				else:
@@ -431,7 +436,8 @@ class Manager(node.Node):
 #			nodelocationdata = self.server.datahandler.query(nodeid)
 			nodelocationdata = self.datahandlers[self.datahandler].query(nodeid)
 			if nodelocationdata is not None:
-				nodeloc = nodelocationdata.content
+				#nodeloc = nodelocationdata.content
+				nodeloc = nodelocationdata['location']
 				nodeinfo[nodeidstr] = nodeloc
 		return nodeinfo
 
