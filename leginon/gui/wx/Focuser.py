@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.25 $
+# $Revision: 1.26 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-22 18:49:44 $
+# $Date: 2004-11-02 23:08:51 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -57,8 +57,7 @@ class Panel(gui.wx.Acquisition.Panel):
 													shortHelpString='Manual Focus')
 		# correlation image
 		self.imagepanel.addTypeTool('Correlation', display=True)
-		self.imagepanel.addTypeTool('Peak', display=True,
-																target=wx.Color(255, 128, 0))
+		self.imagepanel.addTargetTool('Peak', wx.Color(255, 128, 0))
 
 		self.szmain.Layout()
 

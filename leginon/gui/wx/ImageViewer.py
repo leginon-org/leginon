@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.37 $
+# $Revision: 1.38 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-02 21:53:37 $
+# $Date: 2004-11-02 23:08:51 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -1116,48 +1116,47 @@ class TypeTool(object):
 
 		self.label = wx.StaticText(parent, -1, name)
 
-		self.bitmaps = {
-			'red': getBitmap('red.png'),
-			'green': getBitmap('green.png'),
-		}
+		self.bitmaps = self.getBitmaps()
 
 		self.bitmap = wx.StaticBitmap(parent, -1, self.bitmaps['red'],
 																	(self.bitmaps['red'].GetWidth(),
 																		self.bitmaps['red'].GetHeight()))
 
-		self.tb = {}
+		self.togglebuttons = {}
 
 		if display is not None:
-			if target is None:
-				bitmap = getBitmap('display.png')
-			else:
-				bitmap = getTargetIconBitmap(target)
-
-			self.tb['display'] = GenBitmapToggleButton(self.parent, -1, bitmap,
-																									size=(24, 24))
-			self.tb['display'].SetToolTip(wx.ToolTip('Display'))
-			self.tb['display'].Bind(wx.EVT_BUTTON, self.onToggleDisplay)
-			self.tb['display'].SetBezelWidth(1)
-
-		if target is not None:
-			bitmap = getBitmap('arrow.png')
-			self.tb['target'] = GenBitmapToggleButton(self.parent, -1, bitmap,
-																								size=(24, 24))
-			self.tb['target'].SetBitmapDisabled(bitmap)
-			self.tb['target'].SetToolTip(wx.ToolTip('Add Targets'))
-			self.color = target
-			self.targettype = TargetType(self.name, self.color)
-			self.tb['target'].Bind(wx.EVT_BUTTON, self.onToggleTarget)
-			self.tb['target'].SetBezelWidth(0)
-			self.tb['target'].Enable(False)
+			togglebutton = self.addToggleButton('display', 'Display')
+			togglebutton.Bind(wx.EVT_BUTTON, self.onToggleDisplay)
 
 		if settings is not None:
-			bitmap = getBitmap('settings.png')
-			self.tb['settings'] = GenBitmapButton(self.parent, -1, bitmap,
-																						size=(24, 24))
-			self.tb['settings'].SetToolTip(wx.ToolTip('Settings'))
-			self.tb['settings'].Bind(wx.EVT_BUTTON, self.onSettingsButton)
-			self.tb['settings'].SetBezelWidth(1)
+			togglebutton = self.addToggleButton('settings', 'Settings')
+			togglebutton.Bind(wx.EVT_BUTTON, self.onSettingsButton)
+
+	def getBitmaps(self):
+		return {
+			'red': getBitmap('red.png'),
+			'green': getBitmap('green.png'),
+			'display': getBitmap('display.png'),
+			'settings': getBitmap('settings.png'),
+		}
+
+	def enableToggleButton(self, toolname, enable=True):
+		togglebutton = self.togglebuttons[toolname]
+		if enable:
+			togglebutton.SetBezelWidth(1)
+		else:
+			togglebutton.SetBezelWidth(0)
+		togglebutton.Enable(enable)
+
+	def addToggleButton(self, toolname, tooltip=None):
+		bitmap = self.bitmaps[toolname]
+		size = (24, 24)
+		togglebutton = GenBitmapToggleButton(self.parent, -1, bitmap, size=size)
+		togglebutton.SetBezelWidth(1)
+		if tooltip is not None:
+			togglebutton.SetToolTip(wx.ToolTip(tooltip))
+		self.togglebuttons[toolname] = togglebutton
+		return togglebutton
 
 	def SetBitmap(self, name):
 		try:
@@ -1167,18 +1166,38 @@ class TypeTool(object):
 
 	def onToggleDisplay(self, evt):
 		evt = DisplayEvent(evt.GetEventObject(), self.name, evt.GetIsDown())
-		self.tb['display'].GetEventHandler().AddPendingEvent(evt)
-
-	def onToggleTarget(self, evt):
-		if self.tb['target'].GetBezelWidth() == 0:
-			self.tb['target'].SetValue(False)
-			return
-		evt = TargetingEvent(evt.GetEventObject(), self.name, evt.GetIsDown())
-		self.tb['target'].GetEventHandler().AddPendingEvent(evt)
+		self.togglebuttons['display'].GetEventHandler().AddPendingEvent(evt)
 
 	def onSettingsButton(self, evt):
 		evt = SettingsEvent(evt.GetEventObject(), self.name)
-		self.tb['settings'].GetEventHandler().AddPendingEvent(evt)
+		self.togglebuttons['settings'].GetEventHandler().AddPendingEvent(evt)
+
+class TargetTypeTool(TypeTool):
+	def __init__(self, parent, name, display=None, settings=None, target=None):
+		self.color = display
+		TypeTool.__init__(self, parent, name, display=display, settings=settings)
+
+		self.targettype = TargetType(self.name, self.color)
+
+		self.togglebuttons['display'].SetBitmapDisabled(self.bitmaps['display'])
+
+		if target is not None:
+			togglebutton = self.addToggleButton('target', 'Add Targets')
+			self.enableToggleButton('target', False)
+			togglebutton.Bind(wx.EVT_BUTTON, self.onToggleTarget)
+
+	def getBitmaps(self):
+		bitmaps = TypeTool.getBitmaps(self)
+		bitmaps['display'] = getTargetIconBitmap(self.color)
+		bitmaps['target'] = getBitmap('arrow.png')
+		return bitmaps
+
+	def onToggleTarget(self, evt):
+		if not self.togglebuttons['target'].IsEnabled():
+			self.togglebuttons['target'].SetValue(False)
+			return
+		evt = TargetingEvent(evt.GetEventObject(), self.name, evt.GetIsDown())
+		self.togglebuttons['target'].GetEventHandler().AddPendingEvent(evt)
 
 class SelectionTool(wx.Panel):
 	def __init__(self, parent):
@@ -1203,22 +1222,22 @@ class SelectionTool(wx.Panel):
 		self.sz.Add(typetool.bitmap, (n, 0), (1, 1), wx.ALIGN_CENTER)
 		self.sz.Add(typetool.label, (n, 1), (1, 1),
 							wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
-		if 'display' in typetool.tb:
-			self.sz.Add(typetool.tb['display'], (n, 2), (1, 1), wx.ALIGN_CENTER)
-			typetool.tb['display'].Bind(EVT_DISPLAY, self.onDisplay)
-		if 'target' in typetool.tb:
-			self.sz.Add(typetool.tb['target'], (n, 3), (1, 1), wx.ALIGN_CENTER)
+		if 'display' in typetool.togglebuttons:
+			self.sz.Add(typetool.togglebuttons['display'], (n, 2), (1, 1), wx.ALIGN_CENTER)
+			typetool.togglebuttons['display'].Bind(EVT_DISPLAY, self.onDisplay)
+		if 'target' in typetool.togglebuttons:
+			self.sz.Add(typetool.togglebuttons['target'], (n, 3), (1, 1), wx.ALIGN_CENTER)
 			self.targets[typetool.name] = None
-			typetool.tb['target'].Bind(EVT_TARGETING, self.onTargeting)
+			typetool.togglebuttons['target'].Bind(EVT_TARGETING, self.onTargeting)
 		else:
 			self.images[typetool.name] = None
-		if 'settings' in typetool.tb:
-			self.sz.Add(typetool.tb['settings'], (n, 4), (1, 1), wx.ALIGN_CENTER)
+		if 'settings' in typetool.togglebuttons:
+			self.sz.Add(typetool.togglebuttons['settings'], (n, 4), (1, 1), wx.ALIGN_CENTER)
 
-	def addTypeTool(self, name, **kwargs):
+	def addTypeTool(self, name, toolclass=TypeTool, **kwargs):
 		if name in self.tools:
 			raise ValueError('Type \'%s\' already exists' % name)
-		typetool = TypeTool(self, name, **kwargs)
+		typetool = toolclass(self, name, **kwargs)
 		self._addTypeTool(typetool)
 		self.order.append(name)
 		self.tools[name] = typetool
@@ -1240,35 +1259,21 @@ class SelectionTool(wx.Panel):
 	def isDisplayed(self, name):
 		tool = self._getTypeTool(name)
 		try:
-			return tool.tb['display'].GetValue()
+			return tool.togglebuttons['display'].GetValue()
 		except KeyError:
 			return True
 
 	def setDisplayed(self, name, value):
 		tool = self._getTypeTool(name)
 		try:
-			tool.tb['display'].SetValue(value)
+			tool.togglebuttons['display'].SetValue(value)
 		except KeyError:
 			raise AttributeError
 		self._setDisplayed(name, value)
 
 	def _setDisplayed(self, name, value):
-		if name in self.images:
-			for n in self.images:
-				if n == name:
-					continue
-				tool = self._getTypeTool(n)
-				try:
-					tool.tb['display'].SetValue(False)
-				except KeyError:
-					pass
-			if value:
-				image = self.images[name]
-				self.parent.setImage(image)
-			else:
-				self.parent.setImage(None)
-		if name in self.targets:
-			tool = self._getTypeTool(name)
+		tool = self._getTypeTool(name)
+		if isinstance(tool, TargetTypeTool):
 			if value:
 				targets = self.getTargets(name)
 			else:
@@ -1276,6 +1281,20 @@ class SelectionTool(wx.Panel):
 			self.parent.setDisplayedTargets(tool.targettype, targets)
 			if not value and self.isTargeting(name):
 				self.setTargeting(name, False)
+		else:
+			for n in self.images:
+				if n == name:
+					continue
+				tool = self._getTypeTool(n)
+				try:
+					tool.togglebuttons['display'].SetValue(False)
+				except KeyError:
+					pass
+			if value:
+				image = self.images[name]
+				self.parent.setImage(image)
+			else:
+				self.parent.setImage(None)
 
 	def onDisplay(self, evt):
 		self._setDisplayed(evt.name, evt.value)
@@ -1324,23 +1343,24 @@ class SelectionTool(wx.Panel):
 		if self.isDisplayed(name):
 			self.parent.setDisplayedTargets(tool.targettype, tool.targettype.targets)
 		if targets is None:
-			if self.isTargeting(name):
-				self.setTargeting(name, False)
-			tool.tb['target'].SetBezelWidth(0)
-			tool.tb['target'].Enable(False)
+			#if self.isTargeting(name):
+			#	self.setTargeting(name, False)
+			if 'target' in tool.togglebuttons:
+				tool.enableToggleButton('target', False)
 			tool.SetBitmap('red')
 		else:
-			tool.tb['target'].SetBezelWidth(1)
-			tool.tb['target'].Enable(True)
+			if 'target' in tool.togglebuttons:
+				tool.enableToggleButton('target', True)
 			tool.SetBitmap('green')
-		tool.tb['target'].Refresh()
+		if 'target' in tool.togglebuttons:
+			tool.togglebuttons['target'].Refresh()
 
 	def getTargetPositions(self, name):
 		return self._getTypeTool(name).targettype.getTargetPositions()
 
 	def isTargeting(self, name):
 		tool = self._getTypeTool(name)
-		return tool.tb['target'].GetValue()
+		return tool.togglebuttons['target'].GetValue()
 
 	def _setTargeting(self, name, value):
 		tool = self._getTypeTool(name)
@@ -1353,7 +1373,7 @@ class SelectionTool(wx.Panel):
 				continue
 			t = self._getTypeTool(n)
 			try:
-				t.tb['target'].SetValue(False)
+				t.togglebuttons['target'].SetValue(False)
 			except KeyError:
 				pass
 
@@ -1374,9 +1394,9 @@ class SelectionTool(wx.Panel):
 	def setTargeting(self, name, value):
 		tool = self._getTypeTool(name)
 		try:
-			tool.tb['target'].SetValue(value)
+			tool.togglebuttons['target'].SetValue(value)
 		except KeyError:
-			raise AttributeError
+			pass
 		self._setTargeting(name, value)
 
 class Target(object):
@@ -1432,11 +1452,10 @@ class TargetImagePanel(ImagePanel):
 			raise ValueError('No types added')
 		return self.selectiontool
 
-	def addTargetType(self, name, color, **kwargs):
-		kwargs['target'] = color
-		self._getSelectionTool().addTypeTool(name, **kwargs)
-		self.sizer.SetItemMinSize(self.selectiontool, self.selectiontool.GetSize())
-		self.sizer.Layout()
+	def addTargetTool(self, name, color, **kwargs):
+		kwargs['display'] = color
+		kwargs['toolclass'] = TargetTypeTool
+		self.addTypeTool(name, **kwargs)
 
 	def getTargets(self, name):
 		return self._getSelectionTool().getTargets(name)
@@ -1583,7 +1602,7 @@ if __name__ == '__main__':
 #							lambda e: self.panel.setImage(self.panel.imagedata))
 
 			self.panel = TargetImagePanel(frame, -1)
-			self.panel.addTypeTool('Target Practice', display=True, target=wx.RED)
+			self.panel.addTypeTool('Target Practice', toolclass=TargetTypeTool, display=wx.RED, target=True)
 			self.panel.setTargets('Target Practice', [])
 
 			self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Calibrator.py,v $
-# $Revision: 1.20 $
+# $Revision: 1.21 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-11-02 23:08:51 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -93,7 +93,7 @@ class Panel(gui.wx.Node.Panel):
 		self.imagepanel.addTypeTool('Correlation', display=True)
 		if isinstance(self.imagepanel, gui.wx.ImageViewer.TargetImagePanel):
 			color = wx.Color(255, 128, 0)
-			self.imagepanel.addTargetType('Peak', color, display=True)
+			self.imagepanel.addTargetTool('Peak', color)
 
 		self.szmain.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableRow(0)

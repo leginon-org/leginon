@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-11-02 23:08:51 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -31,12 +31,12 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
-		self.imagepanel.addTypeTool('Raster', display=True,
-																target=wx.Color(0, 255, 255), settings=True)
-		self.imagepanel.addTypeTool('acquisition', display=True, target=wx.GREEN,
-																settings=True)
-		self.imagepanel.addTypeTool('focus', display=True, target=wx.BLUE,
-																settings=True)
+		self.imagepanel.addTargetTool('Raster', wx.Color(0, 255, 255),
+																	settings=True)
+		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True,
+																	settings=True)
+		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True,
+																	settings=True)
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableCol(0)
 		self.szmain.AddGrowableRow(1)

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleFinder.py,v $
-# $Revision: 1.27 $
+# $Revision: 1.28 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-11-02 23:08:51 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -38,14 +38,14 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel.addTypeTool('Edge', display=True, settings=True)
 		self.imagepanel.addTypeTool('Template', display=True, settings=True)
 		self.imagepanel.addTypeTool('Threshold', display=True, settings=True)
-		self.imagepanel.addTypeTool('Blobs', display=True,
-																target=wx.Color(0, 255, 255), settings=True)
-		self.imagepanel.addTypeTool('Lattice', display=True,
-																target=wx.Color(255, 0, 255), settings=True)
-		self.imagepanel.addTypeTool('acquisition', display=True, target=wx.GREEN,
+		self.imagepanel.addTargetTool('Blobs', wx.Color(0, 255, 255),
 																settings=True)
-		self.imagepanel.addTypeTool('focus', display=True, target=wx.BLUE,
-																settings=True)
+		self.imagepanel.addTargetTool('Lattice', wx.Color(255, 0, 255),
+																	settings=True)
+		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True,
+																	settings=True)
+		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True,
+																	settings=True)
 
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableRow(1)
