@@ -123,28 +123,35 @@ class DataReference(dict):
 class Data(DataDict, leginonobject.LeginonObject):
 	'''
 	Combines DataDict and LeginonObject to create the base class
-	for all leginon data.
+	for all leginon data.  This can be initialized with keyword args
+	as long as those keys are declared in the specific subclass of
+	Data.  The special keyword 'initializer' can also be used
+	to initialize with a dictionary.  If a key exists in both
+	initializer and kwargs, the kwargs value is used.
 	'''
-	def __init__(self, id, initializer=None, **kwargs):
-		# LeginonObject base class needs id
-		leginonobject.LeginonObject.__init__(self, id)
-		# DataDict base class
+	def __init__(self, **kwargs):
 		DataDict.__init__(self)
 
 		# if initializer was given, update my values
-		if initializer is not None:
-			## initializer can be mapping or sequence
-			## so it's easiest to let OrderedDict make
-			## sure of that
-			validinit = strictdict.OrderedDict(initializer)
-			self.update(validinit)
-
-		# initial values come from LeginonObject's attributes
-		self['id'] = self.id
-		self['session'] = self.session
+		if 'initializer' in kwargs:
+			self.update(kwargs['initializer'])
+			del kwargs['initializer']
 
 		# additional keyword arguments also update my values
+		# (overriding anything set by initializer)
 		self.update(kwargs)
+
+		# LeginonObject base class needs id
+		legid = self['id']
+		leginonobject.LeginonObject.__init__(self, legid)
+
+	def __setitem__(self, key, value):
+		'''
+		'''
+		### synch with leginonobject attributes
+		if key in ('id', 'session'):
+			super(Data,self).__setattr__(key, value)
+		DataDict.__setitem__(self, key, value)
 
 	def typemap(cls):
 		t = DataDict.typemap()
@@ -478,20 +485,20 @@ class CameraImageData(ImageData):
 
 ## the camstate key is redundant (it's a subset of 'camera')
 ## but for now it helps to query the same way we used to
-class CorrectionImageData(CameraImageData):
+class CorrectorImageData(CameraImageData):
 	def typemap(cls):
 		t = CameraImageData.typemap()
-		t += [ ('camstate', CameraEMData), ]
+		t += [ ('camstate', CorrectorCamstate), ]
 		return t
 	typemap = classmethod(typemap)
 
-class DarkImageData(CorrectionImageData):
+class DarkImageData(CorrectorImageData):
 	pass
 
-class BrightImageData(CorrectionImageData):
+class BrightImageData(CorrectorImageData):
 	pass
 
-class NormImageData(CorrectionImageData):
+class NormImageData(CorrectorImageData):
 	pass
 
 class MosaicImageData(CameraImageData):
@@ -543,10 +550,21 @@ class CorrectorPlanData(Data):
 	def typemap(cls):
 		t = Data.typemap()
 		t += [
-			('camstate', CameraEMData),
+			('camstate', CorrectorCamstate),
 			('bad_rows', tuple),
 			('bad_cols', tuple),
 			('clip_limits', tuple)
+		]
+		return t
+	typemap = classmethod(typemap)
+
+class CorrectorCamstateData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [
+			('dimension', dict),
+			('binning', dict),
+			('offset', dict),
 		]
 		return t
 	typemap = classmethod(typemap)
