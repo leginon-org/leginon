@@ -319,7 +319,7 @@ class SmartCameraParameters(uidata.Container):
 					pass
 
 	def fillXYContainer(self):
-		if not self.xycontainer:
+		if self.xycontainer is None:
 			return
 
 		self.clearXYContainer()
