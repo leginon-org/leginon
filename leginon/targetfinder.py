@@ -27,7 +27,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 	panelclass = gui.wx.TargetFinder.Panel
 	settingsclass = data.TargetFinderSettingsData
 	defaultsettings = {
-		'wait for done': False,
+		'wait for done': True,
 		'ignore images': False,
 	}
 	eventinputs = imagewatcher.ImageWatcher.eventinputs + [
@@ -161,7 +161,7 @@ class ClickTargetFinder(TargetFinder):
 	panelclass = gui.wx.ClickTargetFinder.Panel
 	settingsclass = data.ClickTargetFinderSettingsData
 	defaultsettings = {
-		'wait for done': False,
+		'wait for done': True,
 		'ignore images': False,
 		#'no resubmit': True,
 	}

@@ -26,7 +26,7 @@ class HoleFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.HoleFinder.Panel
 	settingsclass = data.HoleFinderSettingsData
 	defaultsettings = {
-		'wait for done': False,
+		'wait for done': True,
 		'ignore images': False,
 		'user check': False,
 		'skip': False,
