@@ -40,7 +40,40 @@ class PeakFinder(object):
 
 		return self.results['pixel peak']
 
-	def subpixelPeak(self, npix=3, newimage=None):
+	def quadFitPeak(self, numarray):
+		'''
+		fit 2d quadratic to a Numeric array which should
+		contain a peak.
+		Returns the peak coordinates, and the peak value
+		'''
+		rows,cols = numarray.shape
+
+		## create design matrix and vector
+		dm = Numeric.zeros(rows * cols * 5, Numeric.Float32)
+		dm.shape = (rows * cols, 5)
+		v = Numeric.zeros((rows * cols,), Numeric.Float32)
+
+		i = 0
+		for row in range(rows):
+			for col in range(cols):
+				dm[i] = (row**2, row, col**2, col, 1)
+				v[i] = numarray[row,col]
+				i += 1
+
+		## fit quadratic
+		fit = linear_least_squares(dm, v)
+		coeffs = fit[0]
+
+		## find root
+		row0 = -coeffs[1] / 2.0 / coeffs[0]
+		col0 = -coeffs[3] / 2.0 / coeffs[2]
+
+		## find peak value
+		peak = coeffs[0] * row0**2 + coeffs[1] * row0 + coeffs[2] * col0**2 + coeffs[3] * col0 + coeffs[4]
+
+		return {'row': row0, 'col': col0, 'value': peak}
+
+	def subpixelPeak(self, npix=5, newimage=None):
 		if newimage is not None:
 			self.setImage(newimage)
 
@@ -53,74 +86,30 @@ class PeakFinder(object):
 		rows,cols = self.shape
 
 		rowrange = (peakrow-npix/2, peakrow+npix/2+1)
-		rowinds = Numeric.arrayrange(rowrange[0], rowrange[1])
-
-		## fill in rowvals, wrap around array if necessary
-		rowvals = rowinds.astype(Numeric.Float32)
-		myind = 0
-		for row in rowinds:
-			if row < 0:
-				rowvals[myind] = self.image[rows + row, peakcol]
-			elif row >= rows:
-				rowvals[myind] = self.image[row - rows, peakcol]
-			else:
-				rowvals[myind] = self.image[row, peakcol]
-			myind += 1
+		rowinds = range(rowrange[0], rowrange[1])
 
 		colrange = (peakcol-npix/2, peakcol+npix/2+1)
-		colinds = Numeric.arrayrange(colrange[0], colrange[1])
+		colinds = range(colrange[0], colrange[1])
 
-		## fill in colvals, wrap around array if necessary
-		colvals = colinds.astype(Numeric.Float32)
-		myind = 0
-		for col in colinds:
-			if col < 0:
-				colvals[myind] = self.image[peakrow, cols + col]
-			elif col >= cols:
-				colvals[myind] = self.image[peakrow, col - cols]
-			else:
-				colvals[myind] = self.image[peakrow, col]
-			myind += 1
+		## cut out a region of interest around the peak
+		roi = Numeric.zeros((npix,npix), Numeric.Float32)
+		for row in range(npix):
+			for col in range(npix):
+				srow = peakrow + row - npix/2
+				if srow >= rows:
+					srow -= rows
+				scol = peakcol + col - npix/2
+				if scol >= cols:
+					scol -= cols
+				roi[row,col] = self.image[srow,scol]
 
-		## create quadratic design matrix for row data
-		row_dm = Numeric.zeros(npix * 3, Numeric.Float32)
-		row_dm.shape = (npix, 3)
-		i = 0
-		for row in rowinds:
-			row_dm[i] = (1.0, row, row*row)
-			i += 1
+		## fit a quadratic to it and find the subpixel peak
+		roipeak = self.quadFitPeak(roi)
+		srow = peakrow + roipeak['row'] - npix/2
+		scol = peakcol + roipeak['col'] - npix/2
+		peakvalue = roipeak['value']
 
-		## create quadratic design matrix for col data
-		col_dm = Numeric.zeros(npix * 3, Numeric.Float32)
-		col_dm.shape = (npix, 3)
-		i = 0
-		for col in colinds:
-			col_dm[i] = (1.0 ,col, col*col)
-			i += 1
-
-		## fit and find zero
-		## use simple equation solver for case of 3 points
-		if npix == 3:
-			rowcoeffs = solve_linear_equations(row_dm, rowvals)
-			colcoeffs = solve_linear_equations(col_dm, colvals)
-		else:
-			rowfit = linear_least_squares(row_dm, rowvals)
-			rowcoeffs = rowfit[0]
-			colfit = linear_least_squares(col_dm, colvals)
-			colcoeffs = colfit[0]
-
-		rowzero = -rowcoeffs[1] / 2 / rowcoeffs[2]
-		colzero = -colcoeffs[1] / 2 / colcoeffs[2]
-
-		### crazy way of finding subpixel peak
-		# insert rowzero and colzero back into the new function
-		rowvalue = rowcoeffs[0] + rowcoeffs[1] * rowzero + rowcoeffs[2] * rowzero * rowzero
-		colvalue = colcoeffs[0] + colcoeffs[1] * colzero + colcoeffs[2] * colzero * colzero
-		# average the two to get the peak value
-		peakvalue = (rowvalue + colvalue) / 2.0
-		#print 'subpixel peak value', peakvalue
-
-		subpixelpeak = (float(rowzero), float(colzero))
+		subpixelpeak = (srow, scol)
 		self.results['subpixel peak'] = subpixelpeak
 		self.results['subpixel peak value'] = peakvalue
 		return subpixelpeak
