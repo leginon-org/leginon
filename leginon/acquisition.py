@@ -21,6 +21,7 @@ import threading
 import uidata
 import node
 import EM
+import Numeric
 
 class NoMoveCalibration(Exception):
 	pass
@@ -381,7 +382,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.doneevents[dataid]['status'] = 'waiting'
 		if self.displayimageflag.get():
 			self.reportStatus('output', 'Displaying image...')
-			self.ui_image.set(imagedata['image'])
+			self.ui_image.set(imagedata['image'].astype(Numeric.Float32))
 			self.reportStatus('output', 'Image displayed')
 
 		if self.waitfordone.get():

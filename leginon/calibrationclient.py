@@ -68,7 +68,7 @@ class CalibrationClient(object):
 		if publish_image:
 			self.node.publish(imagedata, pubevent=True)
 			if self.node.ui_image is not None:
-				self.node.ui_image.set(imagedata['image'])
+				self.node.ui_image.set(imagedata['image'].astype(Numeric.Float32))
 
 		## should find image stats to help determine validity of image
 		## in correlations

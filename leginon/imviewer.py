@@ -34,14 +34,15 @@ class ImViewer(imagewatcher.ImageWatcher):
 		self.start()
 
 	def processImageData(self, imagedata):
-		self.ui_image.set(imagedata['image'])
+		if imagedata['image'] is not None:
+			self.ui_image.set(imagedata['image'].astype(Numeric.Float32))
 		self.doPow()
 
 	def doPow(self):
 		maskrad = self.maskrad.get()
 		if self.numarray is not None and self.do_pow.get():
 			pow = imagefun.power(self.numarray, maskrad)
-			self.ui_image_pow.set(pow)
+			self.ui_image_pow.set(pow.astype(Numeric.Float32))
 
 	def uiAcquireLoop(self):
 		if not self.looplock.acquire(0):
@@ -86,7 +87,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 		imarray = self.acquireArray()
 		if imarray is not None:
 			self.numarray = imarray
-			self.ui_image.set(imarray)
+			self.ui_image.set(imarray.astype(Numeric.Float32))
 		self.doPow()
 
 	def acquireArray(self):
@@ -101,7 +102,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 		try:
 			self.numarray = Mrc.mrc_to_numeric(filename)
 			self.logger.info('Image size %s' % (self.numarray.shape,))
-			self.ui_image.set(self.numarray)
+			self.ui_image.set(self.numarray.astype(Numeric.Float32))
 			self.logger.info('Performing FFT...')
 			self.doPow()
 			self.logger.info('FFT done')

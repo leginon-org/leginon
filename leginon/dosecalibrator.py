@@ -10,6 +10,7 @@ import calibrationclient
 import event, data
 import uidata
 import node
+import Numeric
 
 class DoseCalibrator(calibrator.Calibrator):
 	'''
@@ -99,7 +100,8 @@ class DoseCalibrator(calibrator.Calibrator):
 		self.screenUp()
 		self.cam.uiApplyAsNeeded()
 		imdata = self.cam.acquireCameraImageData(correction=True)
-		self.ui_image.set(imdata['image'])
+		if imdata is not None:
+			self.ui_image.set(imdata['image'].astype(Numeric.Float32))
 		return imdata
 
 	def uiCalibrateCamera(self):

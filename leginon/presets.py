@@ -754,7 +754,7 @@ class PresetsManager(node.Node):
 												% (self.currentpreset['name'],))
 
 		## display
-		self.ui_image.set(imagedata['image'])
+		self.ui_image.set(imagedata['image'].astype(Numeric.Float32))
 		self.setStatus(self.currentpreset)
 
 	def uiAcquireDose(self):
@@ -776,7 +776,7 @@ class PresetsManager(node.Node):
 			return
 
 		## display
-		self.ui_image.set(imagedata['image'])
+		self.ui_image.set(imagedata['image'].astype(Numeric.Float32))
 		dose = self.dosecal.dose_from_imagedata(imagedata)
 		## store the dose in the current preset
 		self.currentpreset['dose'] = dose
