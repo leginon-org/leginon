@@ -246,17 +246,18 @@ class SQLDict:
 			del result[i]['DEF_id']
 			del result[i]['DEF_timestamp']
 			newid = result[i]['id']
+			classname = self.queryinfo[qikey]['class name']
+			dataclass = getattr(data, classname)
+			newdata = dataclass(newid)
+
 			try:
-				classname = self.queryinfo[qikey]['class name']
-				dataclass = getattr(data, classname)
-				newdata = dataclass(newid)
 				newdata.update(result[i])
-				datalist.append(newdata)
 			except KeyError, e:
 				self.printerror('cannot convert database result to data instance')
 			### load things from files
-			if hasattr(result[i], 'load'):
-				result[i].load()
+			if hasattr(newdata, 'load'):
+				newdata.load()
+			datalist.append(newdata)
 
 		return datalist
 
@@ -652,7 +653,9 @@ def queryFormat(in_dict):
 					joinfield = join2ref(field, joinTable)
 					fieldname = joinFieldName(a, joinfield)
 					sqljoin.append(sqlexpr.joinFormat(fieldname, joinTable))
-			sqlwhere.append(sqlexpr.whereFormat(value))
+			sqlexprstr = sqlexpr.whereFormat(value)
+			if sqlexprstr:
+				sqlwhere.append(sqlexprstr)
 	sqljoinstr = ' '.join(sqljoin)
 	sqlwherestr= ' AND '.join(sqlwhere)
 	sqlquery = "%s %s WHERE %s %s" % (sqlfrom, sqljoinstr, sqlwherestr, sqlorder)
@@ -926,7 +929,6 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 			nd = sqlColumnsDefinition({seq2sqlColumn(key):repr(value)}, noDefault=[])
 			columns += nd
 			
-	#print 'COLUMNS', columns
 	return columns
 
 
