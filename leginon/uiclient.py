@@ -27,7 +27,8 @@ wxEVT_SET_SERVER = wxNewEventType()
 wxEVT_COMMAND_SERVER = wxNewEventType()
 
 class AddWidgetEvent(wxPyEvent):
-	def __init__(self, dependencies, namelist, typelist, value, configuration):
+	def __init__(self, dependencies, namelist, typelist, value,	
+								configuration, event):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_ADD_WIDGET)
 		self.namelist = namelist
@@ -35,6 +36,7 @@ class AddWidgetEvent(wxPyEvent):
 		self.value = value
 		self.configuration = configuration
 		self.dependencies = dependencies
+		self.event = event
 
 class SetWidgetEvent(wxPyEvent):
 	def __init__(self, namelist, value):
@@ -212,8 +214,16 @@ class wxUIClient(object):
 		except KeyError:
 			value = ''
 		configuration = properties['configuration']
-		evt = AddWidgetEvent(dependencies, namelist, typelist, value, configuration)
+		if 'block' in properties and properties['block']:
+			threadingevent = threading.Event()
+		else:
+			threadingevent = None
+		evt = AddWidgetEvent(dependencies, namelist, typelist, value,	
+													configuration, threadingevent)
 		wxPostEvent(self.container.widgethandler, evt)
+		if threadingevent is not None:
+			if not isinstance(threading.currentThread(), threading._MainThread):
+				threadingevent.wait()
 		return ''
 
 	def setFromServer(self, properties):
@@ -407,16 +417,19 @@ class wxContainerWidget(wxWidget):
 
 	def onAddWidget(self, evt):
 		if len(evt.namelist) == 1:
-			for name in self.children:
-				for i in evt.dependencies:
-					if i == name:
-						evt.dependencies.remove(i)
-			if evt.dependencies:
-				print 'too early', evt.namelist, evt.dependencies
-				self.pending.append(evt)
-			else:
+#			for name in self.children:
+#				for i in evt.dependencies:
+#					if i == name:
+#						evt.dependencies.remove(i)
+#			if evt.dependencies:
+#				print 'too early', evt.namelist, evt.dependencies
+#				self.pending.append(evt)
+#			else:
+			if True:
 				childname = evt.namelist[0]
 				self._addWidget(childname, evt.typelist, evt.value, evt.configuration)
+				if evt.event is not None:
+					evt.event.set()
 		else:
 			self._addWidgetToChild(evt)
 
@@ -1050,6 +1063,8 @@ class wxMessageDialogWidget(wxContainerWidget):
 			self.okflag = True
 		if self.messageflag and self.okflag:
 			self.display()
+		if evt.event is not None:
+			evt.event.set()
 
 	def onSetWidget(self, evt):
 		if evt.namelist == ['Message']:
@@ -1114,6 +1129,8 @@ class wxComboBoxWidget(wxContainerWidget):
 			self.setList(value)
 		elif name == 'Selected':
 			self.setSelected(value)
+		if evt.event is not None:
+			evt.event.set()
 
 	def onSetWidget(self, evt):
 		if evt.namelist == ['List']:
@@ -1162,6 +1179,8 @@ class wxOrderedListBoxWidget(wxContainerWidget):
 			self.setList(value)
 		elif name == 'Selected':
 			self.setSelected(value)
+		if evt.event is not None:
+			evt.event.set()
 
 	def onSetWidget(self, evt):
 		if evt.namelist == ['List']:
@@ -1214,6 +1233,8 @@ class wxTreeSelectWidget(wxContainerWidget):
 			self.setStruct(value)
 		elif name == 'Selected':
 			self.setSelected(value)
+		if evt.event is not None:
+			evt.event.set()
 
 	def onSetWidget(self, evt):
 		if evt.namelist == ['Struct']:
@@ -1269,6 +1290,8 @@ class wxClickImageWidget(wxContainerWidget):
 		value = evt.value
 		if name == 'Image':
 			self.setImage(value)
+		if evt.event is not None:
+			evt.event.set()
 
 	def onSetWidget(self, evt):
 		if evt.namelist == ['Image']:
@@ -1323,6 +1346,8 @@ class wxTargetImageWidget(wxContainerWidget):
 			self.setImage(value)
 		else:
 			self.setTargets(name, value)
+		if evt.event is not None:
+			evt.event.set()
 
 	def onSetWidget(self, evt):
 		if evt.namelist == ['Image']:

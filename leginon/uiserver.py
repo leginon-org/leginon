@@ -136,7 +136,8 @@ class Server(XMLRPCServer, uidata.Container):
 		for localclient in localclients:
 			target = getattr(localclient, commandstring)
 			args = (properties,)
-#			threading.Thread(target=target, args=args).start()
+#			thread = threading.Thread(target=target, args=args)
+#			thread.start()
 			apply(target, args)
 
 	def XMLRPCExecute(self, commandstring, properties, client=None):
@@ -165,7 +166,7 @@ class Server(XMLRPCServer, uidata.Container):
 		# updates the objects with stored preferences
 		self.usePreferences()
 
-	def _addObject(self, uiobject, client=None):
+	def _addObject(self, uiobject, client=None, block=True, thread=False):
 		uiobject.server = self
 		properties = {}
 		properties['dependencies'] = []
@@ -176,6 +177,7 @@ class Server(XMLRPCServer, uidata.Container):
 		except AttributeError:
 			pass
 		properties['configuration'] = uiobject.getConfiguration()
+		properties['block'] = block
 
 		if 'client' in properties['typelist']:
 			if properties['value'] is None:

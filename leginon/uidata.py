@@ -80,7 +80,7 @@ class Container(Object):
 		self.uiobjectdict = {}
 		self.uiobjectlist = []
 
-	def addObject(self, uiobject):
+	def addObject(self, uiobject, block=True, thread=False):
 		self.lock.acquire()
 		if uiobject.name in self.uiobjectdict:
 			self.lock.release()
@@ -93,26 +93,26 @@ class Container(Object):
 		uiobject.parent = self
 
 		if self.server is not None:
-			self.server._addObject(uiobject)
+			self.server._addObject(uiobject, None, block, thread)
 			if isinstance(uiobject, Container):
-				uiobject.addChildObjects()
+				uiobject.addChildObjects(None, block, thread)
 
 		self.uiobjectdict[uiobject.name] = uiobject
 		self.uiobjectlist.append(uiobject)
 		self.lock.release()
 
-	def addObjects(self, uiobjects):
+	def addObjects(self, uiobjects, block=True, thread=False):
 		self.lock.acquire()
 		for uiobject in uiobjects:
-			self.addObject(uiobject)
+			self.addObject(uiobject, block, thread)
 		self.lock.release()
 
-	def addChildObjects(self, client=None):
+	def addChildObjects(self, client=None, block=True, thread=False):
 		self.lock.acquire()
 		for uiobject in self.uiobjectlist:
-			self.server._addObject(uiobject, client)
+			self.server._addObject(uiobject, client, block, thread)
 			if isinstance(uiobject, Container):
-				uiobject.addChildObjects(client)
+				uiobject.addChildObjects(client, block, thread)
 		self.lock.release()
 
 	def deleteObject(self, name):
