@@ -23,7 +23,7 @@ import EM
 import imagefun
 import gui.wx.Acquisition
 import gui.wx.Presets
-
+import newdict
 try:
 	import numarray as Numeric
 except:
@@ -65,7 +65,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.AcquisitionImagePublishEvent,
 										
 	event.ChangePresetEvent,
-											event.DriftDetectedEvent,
+											event.DriftDetectedEvent, event.DriftDeclaredEvent,
 											event.ImageListPublishEvent, event.DriftWatchEvent] \
 									+ EM.EMClient.eventoutputs
 
@@ -79,12 +79,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.emclient = EM.EMClient(self)
 		self.cam = camerafuncs.CameraFuncs(self)
 
-		self.calclients = {
-			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
-			'image beam shift': calibrationclient.ImageBeamShiftCalibrationClient(self),
-			'stage position': calibrationclient.StageCalibrationClient(self),
-			'modeled stage position': calibrationclient.ModeledStageCalibrationClient(self)
-		}
+		self.calclients = newdict.OrderedDict()
+		self.calclients['image shift'] = calibrationclient.ImageShiftCalibrationClient(self)
+		self.calclients['stage position'] = calibrationclient.StageCalibrationClient(self)
+		self.calclients['modeled stage position'] = calibrationclient.ModeledStageCalibrationClient(self)
+		self.calclients['image beam shift'] = calibrationclient.ImageBeamShiftCalibrationClient(self)
+
 		self.presetsclient = presets.PresetsClient(self)
 		self.doneevents = {}
 		self.imagelistdata = None
@@ -159,7 +159,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		except InvalidPresetsSequence:
 			if targetdata is None or targetdata['type'] == 'simulated':
 				self.logger.error('correct the invalid presets sequence, then try again')
-				return
+				return 'aborted'
 			else:
 				## if there was a targetdata, then 
 				## we assume we are in a target list loop
@@ -507,6 +507,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def getPresetNames(self):
 		presetnames = self.presetsclient.getPresetNames()
 		return presetnames
+
+	def declareDrift(self):
+		evt = event.DriftDeclaredEvent()
+		self.outputEvent(evt, wait=True)
 
 	def driftDetected(self, presettarget):
 		'''
