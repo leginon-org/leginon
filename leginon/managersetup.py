@@ -243,18 +243,18 @@ class ManagerSetup(object):
 			return index
 		username = self.userselection.getSelectedValue(index)
 		if username in self.users:
-			userdata = self.users[username]
+			self.userdata = self.users[username]
 			try:
-				self.build_userfullname.set(userdata['full name'])
+				self.userfullname.set(self.userdata['full name'])
 			except KeyError:
-				self.build_userfullname.set('')
+				self.userfullname.set('')
 			try:
-				self.build_usergroup.set(userdata['group']['name'])
+				self.usergroup.set(self.userdata['group']['name'])
 			except KeyError:
-				self.build_usergroup.set('')
+				self.usergroup.set('')
 		else:
-			self.build_userfullname.set('')
-			self.build_usergroup.set('')
+			self.userfullname.set('')
+			self.usergroup.set('')
 		return index
 
 	def uiInstrumentSelectCallback(self, index):
@@ -305,13 +305,11 @@ class ManagerSetup(object):
 		self.load_sessioncomment.set(comment)
 
 		user = sessiondata['user']['name']
-		self.load_sessionuser.set(user)
 
 		inst = sessiondata['instrument']['name']
 		self.load_sessioninstrument.set(inst)
 
 		path = leginonconfig.mapPath(sessiondata['image path'])
-		print sessiondata['image path']
 		self.load_sessionpath.set(path)
 
 	def getSessionDataName(self, sessiondata):
@@ -321,12 +319,11 @@ class ManagerSetup(object):
 		sessionlist = self.researchSessions(self.session_limit)
 		session_names = map(self.getSessionDataName, sessionlist)
 		self.session_dict = dict(zip(session_names, sessionlist))
-		# XXX This will get into some kind of big loop if session_limit
-		# is too high
-		self.sessionselector.set(session_names,0)
+		# XXX This will get into some kind of big loop if session_limit is too high
+		self.sessionselector.set(session_names, 0)
 
 	def researchSessions(self, limit):
-		qsession = data.SessionData()
+		qsession = data.SessionData(user=self.userdata)
 		sessionlist = self.manager.research(datainstance=qsession, results=limit)
 		return sessionlist
 
@@ -336,25 +333,40 @@ class ManagerSetup(object):
 		self.createmethod.enable()
 		self.cancelcreatemethod.enable()
 
+	def onLogin(self):
+		self.usercontainer.delete()
+		self.uiUpdateSessionList()
+		self.uiSuggestSessionName()
+		self.sessionloader.enable()
+
 	def defineUserInterface(self):
-		self.container = uidata.ExternalContainer('Manager Setup')
+		self.usercontainer = uidata.ExternalContainer('Leginon II Login')
+		userselectcontainer = uidata.Container('Select User')
+		self.userselection = uidata.SingleSelectFromList('Name', [], 0,
+																						callback=self.uiUserSelectCallback)
+		self.userfullname = uidata.String('Full Name', '', 'r')
+		self.usergroup = uidata.String('Group Name', '', 'r')
+		userselectcontainer.addObjects((self.userselection, self.userfullname,
+																		self.usergroup))
+		self.loginmethod = uidata.Method('Login', self.onLogin)
+		self.usercontainer.addObjects((userselectcontainer, self.loginmethod))
+
+		self.container = uidata.ExternalContainer('Leginon II Session')
 
 		### limit on number of sessions to display
 		### see XXX above
 		self.session_limit = 30
 
 		## there are two main sections:
-		sessionloader = uidata.Container('Session Loader (last %s sessions)' % (self.session_limit,))
+		self.sessionloader = uidata.Container('Session Loader (last %s sessions)' % (self.session_limit,))
 		self.createsessioncontainer = uidata.ExternalContainer('Create Session')
 
 		## components of the loader section:
 		self.load_sessioncomment = uidata.String('Comment', '', 'r')
-		self.load_sessionuser = uidata.String('User', '', 'r')
 		self.load_sessioninstrument = uidata.String('Instrument', '', 'r')
 		self.load_sessionpath = uidata.String('Image Path', '', 'r')
 
 		self.sessionselector = uidata.SingleSelectFromList('Session', [], 0, 'rw', persist=False, callback=self.uiSessionSelectCallback)
-		self.uiUpdateSessionList()
 
 		self.skipinstrument = uidata.Boolean('Do Not Connect Instrument Launcher', False, 'rw', persist=True)
 
@@ -363,23 +375,20 @@ class ManagerSetup(object):
 		self.createsessionmethod = uidata.Method('Create Session',
 																							self.onNewSession)
 
-
 		sessionloaderobjects = (
 		  self.sessionselector,
 		  self.load_sessioncomment,
-		  self.load_sessionuser,
 		  self.load_sessioninstrument,
 		  self.load_sessionpath,
 		  self.skipinstrument,
 		  startmethod,
 			self.createsessionmethod,
 		)
-		sessionloader.addObjects(sessionloaderobjects)
+		self.sessionloader.addObjects(sessionloaderobjects)
 
 		## components of the builder section:
 		suggestnamemethod = uidata.Method('Suggest A Name', self.uiSuggestSessionName)
-		session_name = self.suggestSessionName()
-		self.build_session_name = uidata.String('Session Name', session_name, 'rw', persist=True)
+		self.build_session_name = uidata.String('Session Name', '', 'rw', persist=True)
 		self.build_session_comment = uidata.String('Session Comment', '', 'rw', persist=True)
 
 
@@ -391,15 +400,6 @@ class ManagerSetup(object):
 																				persist=True)
 						build_projectcontainer.addObject(self.projectselection)
 
-		build_usercontainer = uidata.Container('User')
-		self.userselection = uidata.SingleSelectFromList('Name', [], 0,
-																						callback=self.uiUserSelectCallback,
-																						persist=True)
-		self.build_userfullname = uidata.String('Full Name', '', 'r')
-		self.build_usergroup = uidata.String('Group Name', '', 'r')
-		build_usercontainer.addObjects((self.userselection,
-																		self.build_userfullname,
-																		self.build_usergroup))
 
 		build_instrumentcontainer = uidata.Container('Instrument')
 		self.instrumentselection = uidata.SingleSelectFromList('Name', [], 0,
@@ -422,7 +422,6 @@ class ManagerSetup(object):
 		  suggestnamemethod,
 		  self.build_session_name,
 		  self.build_session_comment,
-		  build_usercontainer,
 		  build_instrumentcontainer,
 		  self.createmethod,
 			self.cancelcreatemethod,
@@ -435,8 +434,10 @@ class ManagerSetup(object):
 		self.createsessioncontainer.addObjects(sessionbuilderobjects)
 
 		mainobjects = (
-		  sessionloader,
+		  self.sessionloader,
+			self.usercontainer
 		)
+		self.sessionloader.disable()
 		self.container.addObjects(mainobjects)
 
 	def getUserInterface(self):
