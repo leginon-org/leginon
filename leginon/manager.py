@@ -8,6 +8,7 @@ import event
 import launcher
 import copy
 import datahandler
+import time
 
 False=0
 True=1
@@ -27,7 +28,8 @@ class Manager(node.Node):
 		self.clients = {}
 
 		node.Node.__init__(self, id, nodelocations={}, dh=DataHandler, dhargs=(),
-															tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
+															tcpport=tcpport, xmlrpcport=xmlrpcport,
+															pdkargs = (time.ctime(),), **kwargs)
 
 		self.uiserver.server.register_function(self.uiGetNodeLocations,
 																						'getNodeLocations')

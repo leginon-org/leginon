@@ -4,6 +4,7 @@ import leginonobject
 import event
 import datatransport
 import datahandler
+import dbdatakeeper
 import interface
 import sys
 import copy
@@ -47,7 +48,8 @@ class Node(leginonobject.LeginonObject):
 	def __init__(self, id, nodelocations = {},
 											dh = DataHandler, dhargs = (),
 											tcpport=None, xmlrpcport=None,
-											clientclass = datatransport.Client, launchlock=None):
+											clientclass = datatransport.Client, launchlock=None,
+											pdkargs = ()):
 		leginonobject.LeginonObject.__init__(self, id)
 
 		self.nodelocations = nodelocations
@@ -57,6 +59,8 @@ class Node(leginonobject.LeginonObject):
 
 		self.datahandlers = {}
 		self.datahandlers['node'] = apply(dh, (self.ID(),) + dhargs)
+		self.datahandlers['pickle'] = apply(dbdatakeeper.PickleDataKeeper,
+																							(self.ID(),) + pdkargs)
 
 		self.server = datatransport.Server(self.ID(),
 																				self.datahandlers['node'], tcpport)
@@ -190,6 +194,7 @@ class Node(leginonobject.LeginonObject):
 			raise TypeError('PublishEvent subclass required')
 #		self.server.datahandler._insert(idata)
 		self.datahandlers['node'].insert(idata)
+		self.datahandlers['pickle'].insert(idata)
 		# this idata.id is content, I think
 		e = eventclass(self.ID(), idata.id, confirm)
 		self.outputEvent(e)
