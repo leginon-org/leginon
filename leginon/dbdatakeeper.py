@@ -10,11 +10,15 @@ import data
 import sqldict
 import threading
 import extendedlogging
+import _mysql_exceptions
 
 class DBDataKeeper(object):
 	def __init__(self, loggername=None):
 		self.logger = extendedlogging.getLogger(self.__class__.__name__, loggername)
-		self.dbd = sqldict.SQLDict()
+		try:
+			self.dbd = sqldict.SQLDict()
+		except _mysql_exceptions.OperationalError, e:
+			raise RuntimeError(e.args[1])
 		self.lock = threading.RLock()
 
 	def direct_query(self, dataclass, id):

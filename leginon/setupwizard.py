@@ -442,7 +442,7 @@ class SetupWizard(wx.wizard.Wizard):
 												'Fatal Error', wx.OK|wx.ICON_ERROR)
 			dlg.ShowModal()
 			dlg.Destroy()
-			raise RuntimeError('Databases with no users are not current supported')
+			raise RuntimeError('Databases with no users are not currently supported')
 
 		self.userpage = UserPage(self)
 

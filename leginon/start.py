@@ -36,5 +36,9 @@ stats.print_callers(30)
 #uiclient.UIApp(location['UI'], 'Leginon II')
 #m.exit()
 
-m = wxManager.ManagerApp(None)
-m.MainLoop()
+try:
+	m = wxManager.ManagerApp(None)
+except RuntimeError, e:
+	print 'Unable to start Leginon:', str(e)
+else:
+	m.MainLoop()

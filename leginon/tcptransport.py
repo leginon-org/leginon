@@ -34,7 +34,7 @@ class Server(socketstreamtransport.Server, SocketServer.ThreadingTCPServer):
 					break
 				except Exception, var:
 					# socket error, address already in use
-					if (var[0] == 98 or var[0] == 10048 or var[0] == 112):
+					if var[0] in [48, 98, 112, 10048]:
 						port += 1
 					else:
 						raise

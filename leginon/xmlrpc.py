@@ -38,7 +38,7 @@ class Server(object):
 																										logRequests=False)
 				break
 			except Exception, var:
-				if (var[0] == 98 or var[0] == 10048 or var[0] == 112):
+				if var[0] in [48, 98, 112, 10048]:
 					continue
 				else:
 					raise
