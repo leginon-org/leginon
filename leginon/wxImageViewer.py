@@ -430,10 +430,8 @@ class ImagePanel(wxPanel):
 
 		xextent, yextent, d, e = dc.GetFullTextExtent(string, wxNORMAL_FONT)
 		xcenter, ycenter = self.getClientCenter()
-		print 'center =', xcenter, ycenter
 
 		ix, iy = self.image2view((x, y))
-		print 'image2view =', ix, iy
 
 		if ix <= xcenter:
 			xoffset = 10
