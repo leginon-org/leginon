@@ -63,6 +63,8 @@ class DataManager(object):
 		## will connect to database before first query
 		self.db = None
 		self.server = None
+		## this should not be done yet, but until we fix the problem...
+		self.startServer()
 
 		## this lock should be used on access to everything below
 		self.lock = threading.RLock()
