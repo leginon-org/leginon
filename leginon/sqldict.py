@@ -1092,15 +1092,6 @@ def saveMRC(object, name, path, filename, thumb=False):
 	d[k] = filename
 	return d
 
-def dict2bin(in_dict):
-	"""
-	Convert a binary blob in a  python 
-	"""
-	object=None
-	for key, blob  in in_dict.items():
-		object=cPickle.loads(blob)
-	return object
-
 def sqltype(object,key=None):
 	"""
 	Convert a python type to an SQL type
