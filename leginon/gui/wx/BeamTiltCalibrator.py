@@ -2,13 +2,15 @@ import wx
 from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.Calibrator
 import gui.wx.Settings
+import gui.wx.ToolBar
 
 class Panel(gui.wx.Calibrator.Panel):
-	tools = gui.wx.Calibrator.Panel.tools + [
-		'measure',
-	]
 	def initialize(self):
 		gui.wx.Calibrator.Panel.initialize(self)
+
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE,
+													'ruler',
+													shortHelpString='Measure')
 
 		self.cparameter = wx.Choice(self, -1, choices=['Defocus', 'Stigmators'])
 		self.cparameter.SetSelection(0)
@@ -28,6 +30,8 @@ class Panel(gui.wx.Calibrator.Panel):
 
 	def onNodeInitialized(self):
 		gui.wx.Calibrator.Panel.onNodeInitialized(self)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool,
+											id=gui.wx.ToolBar.ID_MEASURE)
 		self.Bind(wx.EVT_BUTTON, self.onParameterSettingsButton, self.bpsettings)
 		self.Bind(wx.EVT_BUTTON, self.onEucToScope, self.beuctoscope)
 		self.Bind(wx.EVT_BUTTON, self.onEucFromScope, self.beucfromscope)

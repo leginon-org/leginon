@@ -91,10 +91,12 @@ class Corrector(node.Node):
 
 	def getPlan(self):
 		newcamstate = data.CorrectorCamstateData()
-		newcamstate['dimension'] = dict(self.settings['camera settings']['dimension'])
-		newcamstate['offset'] = dict(self.settings['camera settings']['offset'])
-		newcamstate['binning'] = dict(self.settings['camera settings']['binning'])
-		self.plan = self.retrievePlan(newcamstate)
+		if self.settings['camera settings'] is None:
+			self.plan = None
+		else:
+			for i in ['dimension', 'offset', 'binning']:
+				newcamstate[i] = dict(self.settings['camera settings'][i])
+			self.plan = self.retrievePlan(newcamstate)
 
 	def acquireDark(self):
 		try:

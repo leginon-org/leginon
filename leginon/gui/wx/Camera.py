@@ -279,7 +279,11 @@ class CameraPanel(wx.Panel):
 		self.setGeometry(value)
 
 	def getData(self):
-		return data.CameraSettingsData(initializer=self.getConfiguration())
+		config = self.getConfiguration()
+		if config is None:
+			return None
+		else:
+			return data.CameraSettingsData(initializer=config)
 
 	def setData(self, d):
 		if d is None:

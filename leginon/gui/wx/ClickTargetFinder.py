@@ -2,6 +2,7 @@ import wx
 import gui.wx.ImageViewer
 import gui.wx.Settings
 import gui.wx.TargetFinder
+import gui.wx.ToolBar
 
 AddTargetTypesEventType = wx.NewEventType()
 AddTargetsEventType = wx.NewEventType()
@@ -32,11 +33,12 @@ class SetTargetsEvent(wx.PyCommandEvent):
 		self.targets = targets
 
 class Panel(gui.wx.TargetFinder.Panel):
-	tools = gui.wx.TargetFinder.Panel.tools + [
-		'submit'
-	]
 	def initialize(self):
 		gui.wx.TargetFinder.Panel.initialize(self)
+
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT,
+													'play',
+													shortHelpString='Submit Targets')
 
 		self.targetcolors = {
 			'acquisition': wx.GREEN,
@@ -91,6 +93,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 	def onNodeInitialized(self):
 		gui.wx.TargetFinder.Panel.onNodeInitialized(self)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitTool,
+											id=gui.wx.ToolBar.ID_SUBMIT)
 
 	def onSubmitTool(self, evt):
 		self.node.submitTargets()

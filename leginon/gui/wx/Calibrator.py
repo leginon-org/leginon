@@ -4,6 +4,7 @@ import gui.wx.Camera
 import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ImageViewer
+import gui.wx.ToolBar
 
 AddTargetTypesEventType = wx.NewEventType()
 EVT_ADD_TARGET_TYPES = wx.PyEventBinder(AddTargetTypesEventType)
@@ -25,16 +26,22 @@ class ImageUpdatedEvent(wx.PyCommandEvent):
 
 class Panel(gui.wx.Node.Panel):
 	imageclass = gui.wx.ImageViewer.TargetImagePanel
-	tools = [
-		'settings',
-		'acquire',
-		'calibrate',
-		'abort',
-	]
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+													'settings',
+													shortHelpString='Settings')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_CALIBRATE,
+													'play',
+													shortHelpString='Calibrate')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT,
+													'stop',
+													shortHelpString='Abort')
+
 		self.initialize()
+
+		self.toolbar.Realize()
 
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
@@ -87,6 +94,12 @@ class Panel(gui.wx.Node.Panel):
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onNodeInitialized(self):
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+											id=gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onCalibrateTool,
+											id=gui.wx.ToolBar.ID_CALIBRATE)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onAbortTool,
+											id=gui.wx.ToolBar.ID_ABORT)
 		self.Bind(wx.EVT_CHOICE, self.onDisplayChoice, self.cdisplay)
 
 	def onAcquireTool(self, evt):

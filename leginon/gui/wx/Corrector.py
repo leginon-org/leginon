@@ -6,16 +6,28 @@ import gui.wx.Settings
 import threading
 import gui.wx.Stats
 import gui.wx.Events
+import gui.wx.ToolBar
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'corrector'
-	tools = [
-		'settings',
-		'acquisition type',
-		'acquire',
-	]
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
+
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+													'settings',
+													shortHelpString='Settings')
+		choices = [
+			'Dark reference',
+			'Bright reference',
+			'Raw image',
+			'Corrected image'
+		]
+		self.cacqtype = wx.Choice(self.toolbar, -1, choices=choices)
+		self.cacqtype.SetSelection(0)
+		self.toolbar.AddControl(self.cacqtype)
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_ACQUIRE,
+													'acquire',
+													shortHelpString='Acquire')
 
 		# statistics
 		self.statspanel = gui.wx.Stats.StatsPanel(self)
@@ -61,16 +73,10 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
-		choices = [
-			'Dark reference',
-			'Bright reference',
-			'Raw image',
-			'Corrected image'
-		]
-		selection = 0
-		self.toolbar.setChoices(self, 'acquisition type', choices)
-		self.toolbar.setSelection(self, 'acquisition type', selection)
-		self.acquisitiontype = choices[selection]
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+											id=gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool,
+											id=gui.wx.ToolBar.ID_ACQUIRE)
 
 		self.dialog = SettingsDialog(self)
 
@@ -91,24 +97,20 @@ class Panel(gui.wx.Node.Panel):
 
 	def _acquisitionEnable(self, enable):
 		self.beditplan.Enable(enable)
-		self.toolbar.enable(self, 'settings', enable)
-		self.toolbar.enable(self, 'acquisition type', enable)
-		self.toolbar.enable(self, 'acquire', enable)
+		self.toolbar.Enable(enable)
 
 	def onAcquireTool(self, evt):
 		self._acquisitionEnable(False)
-		if self.acquisitiontype == 'Dark reference':
+		acqtype = self.cacqtype.GetStringSelection()
+		if acqtype == 'Dark reference':
 			method = self.node.acquireDark
-		elif self.acquisitiontype == 'Bright reference':
+		elif acqtype == 'Bright reference':
 			method = self.node.acquireBright
-		elif self.acquisitiontype == 'Raw image':
+		elif acqtype == 'Raw image':
 			method = self.node.acquireRaw
-		elif self.acquisitiontype == 'Corrected image':
+		elif acqtype == 'Corrected image':
 			method = self.node.acquireCorrected
 		threading.Thread(target=method).start()	
-
-	def onAcqTypeChoice(self, evt):
-		self.acquisitiontype = evt.GetString()
 
 	def onAcquisitionDone(self, evt):
 		self._acquisitionEnable(True)
@@ -118,8 +120,12 @@ class Panel(gui.wx.Node.Panel):
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def setPlan(self, plan):
-		self.stbadrows.SetLabel(self.plan2str(plan['rows']))
-		self.stbadcolumns.SetLabel(self.plan2str(plan['columns']))
+		if plan is None:
+			self.stbadrows.SetLabel('')
+			self.stbadcolumns.SetLabel('')
+		else:
+			self.stbadrows.SetLabel(self.plan2str(plan['rows']))
+			self.stbadcolumns.SetLabel(self.plan2str(plan['columns']))
 		self.plan = plan
 
 	def onEditPlan(self, evt):

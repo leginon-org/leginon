@@ -1,6 +1,7 @@
 import wx
 import gui.wx.Node
 import gui.wx.Settings
+import gui.wx.ToolBar
 
 ImageUpdatedEventType = wx.NewEventType()
 EVT_IMAGE_UPDATED = wx.PyEventBinder(ImageUpdatedEventType)
@@ -13,16 +14,20 @@ class ImageUpdatedEvent(wx.PyCommandEvent):
 		self.targets = targets
 
 class Panel(gui.wx.Node.Panel):
-	tools = [
-		'settings',
-	]
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+													'settings',
+													shortHelpString='Settings')
 
 		self.initialize()
 
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
+
+	def onNodeInitialized(self):
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+											id=gui.wx.ToolBar.ID_SETTINGS)
 
 	def initialize(self):
 		pass

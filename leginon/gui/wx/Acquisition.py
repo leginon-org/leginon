@@ -44,7 +44,7 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPauseTool,
 											id=gui.wx.ToolBar.ID_PAUSE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
-											id=gui.wx.ToolBar.ID_STOP)
+											id=gui.wx.ToolBar.ID_ABORT)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
