@@ -945,15 +945,16 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 				'Null':'YES', 'Key':'INDEX'}
 				]
 		columns += defaults
+
+	# get a type map of in_dict into a dictionary
+	in_dict_types=dict(in_dict.typemap())
 	for key in in_dict:
 		column={}
 		value=in_dict[key]
 		sqlt = sqltype(value,key)
 		if value is None:
-			if key != "id":
-				for t in in_dict.typemap():
-					if t[0]==key:
-						newvalue=t[1]()
+			if isinstance(in_dict_types[key](), data.Data):
+				newvalue = in_dict_types[key]()
 				column['Field'] = sep.join(['REF',newvalue.__class__.__name__,key])
 				column['Type'] = 'INT(20)'
 				columns.append(column)
