@@ -272,10 +272,10 @@ class Node(leginonobject.LeginonObject):
 		return self.uiserver.registerMethod(func, name, argspec, returnspec)
 
 	def registerUIData(self, name, xmlrpctype, permissions=None,
-												choices=None, default=None):
+												choices=None, default=None, pyname=None, callback=None):
 		'''Register a data value with the UI server.'''
 		return self.uiserver.registerData(name, xmlrpctype, permissions,
-																				choices, default)
+																				choices, default, pyname, callback)
 
 	def registerUIContainer(self, name=None, content=()):
 		'''Register a container for data and methods with the UI server.'''
