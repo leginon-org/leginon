@@ -325,8 +325,8 @@ class StateImageMosaic(ImageMosaic):
 
 		statedata = {'image data ID': odata.id}
 		self.printerror('foo 4')
-		statedata[dataid] = {}
 		for dataid in self.imagemosaic:
+			statedata[dataid] = {}
 			statedata[dataid]['position'] = self.imagemosaic[dataid]['position']
 			statedata[dataid]['state'] = self.imagemosaic[dataid]['state']
 		self.printerror('foo 5')
