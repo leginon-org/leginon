@@ -142,7 +142,7 @@ class PresetsManager(node.Node):
 		emtarget = ievent['emtarget']
 		if emtarget is None:
 			print 'ToScope'
-			self.toScopeFollowPreset(pname)
+			self.toScopeFollowCycle(pname)
 		else:
 			print 'targetToScope'
 			self.targetToScope(pname, emtarget)
