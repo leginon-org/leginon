@@ -655,8 +655,8 @@ class EM(node.Node):
 				keys = request.value.keys()
 				for key, value in self.scope.parameterdependencies.items():
 					if key in keys:
-						requeset.append(value)
-				self.state = self.getEM(request.value.keys())
+						keys += value
+				self.state = self.getEM(keys)
 			elif isinstance(request, GetRequest):
 				self.state = self.getEM(request.value)
 			elif isinstance(request, SetInstrumentRequest):
