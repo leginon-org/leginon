@@ -94,7 +94,7 @@ class ManualAcquisition(node.Node):
 		if position not in ['up', 'down']:
 			raise ValueError
 		self.status.set('Moving main screen %s...' % position)
-		initializer = {'id': ('scope',), 'screen position': position}
+		initializer = {'id': ('scope',), 'main screen position': position}
 		scopedata = data.ScopeEMData(initializer=initializer)
 		self.publishRemote(scopedata)
 

@@ -74,18 +74,18 @@ class DoseCalibrator(calibrator.Calibrator):
 	def screenDown(self):
 		# check if screen is down
 		scope = data.ScopeEMData(id=('scope',))
-		scope['screen position'] = 'down'
+		scope['main screen position'] = 'down'
 		self.publishRemote(scope)
 
 	def screenUp(self):
 		# check if screen is down
 		scope = data.ScopeEMData(id=('scope',))
-		scope['screen position'] = 'up'
+		scope['main screen position'] = 'up'
 		self.publishRemote(scope)
 
 	def getCurrentAndMag(self):
 		scope = self.researchByDataID(('scope',))
-		if scope['screen position'] == 'down':
+		if scope['main screen position'] == 'down':
 			mag = scope['magnification']
 			current = scope['screen current']
 			scale = self.beamscale.get()
