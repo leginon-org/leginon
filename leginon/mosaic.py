@@ -109,6 +109,8 @@ class Mosaic(object):
 
 	def addTile(self, image, neighbors):
 		position = self.positionmethods[self.positionmethod](image, neighbors)
+		if image is None:
+			raise ValueError('invalid image for tile')
 		self.tiles.append(Tile(image, position))
 
 	def automaticPosition(self, image, neighbors):

@@ -322,7 +322,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			inst['scope'] = data.ScopeEMData()
 			inst['camera'] = data.CameraEMData()
 			inst['preset'] = data.PresetData()
-			self.setStatusMessage('Finding image %i of %i' % (i, n))
+			self.setStatusMessage('Finding image %i of %i' % (i + 1, n))
 			imagedatalist = self.research(datainstance=inst, fill=False)
 			try:
 				imagedata = imagedatalist[0]
@@ -330,9 +330,9 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				self.setStatusMessage('Cannot find image data referenced by mosaic')
 			else:
 				self.imagedata = imagedata
-				self.mosaic.addTile(imagedata)
-				nloaded += 1
-				self.setStatusMessage('Added image %i of %i' % (i, n))
+				if imagedata['image'] is not None:
+					self.mosaic.addTile(imagedata)
+					nloaded += 1
 		self.mosaicdata = mosaicdata
 		self.displayMosaic()
 		self.setStatusMessage('Mosaic loaded (%i of %i images loaded successfully)'
@@ -347,7 +347,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def displayMosaic(self):
 		if self.displayimage.get():
-			self.setStatusMessage('Diplaying mosaic image')
+			self.setStatusMessage('Displaying mosaic image')
 			self.clickimage.setImage(self.getMosaicImage())
 		else:
 			self.setStatusMessage('Not diplaying mosaic image')
