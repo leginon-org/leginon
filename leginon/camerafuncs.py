@@ -16,10 +16,10 @@ class CameraFuncs(object):
 	def __init__(self, node):
 		self.node = node
 
-	def acquireCameraImageData(self, camstate=None, correction=None):
+	def acquireCameraImageData(self, camdata=None, correction=None):
 		## configure camera
-		if camstate is not None:
-			self.state(camstate)
+		if camdata is not None:
+			self.currentCameraEMData(camdata)
 
 		if correction is None:
 			cor = self.config()['correct']
@@ -46,16 +46,15 @@ class CameraFuncs(object):
 			#print 'created imdata'
 		return imdata
 
-	def state(self, camstate=None):
+	def currentCameraEMData(self, camdata=None):
 		'''
 		Sets the camera state to camstate.
 		If called without camstate, return the current camera state
 		'''
 		t = Timer('camerafuncs state')
-		if camstate is not None:
+		if camdata is not None:
 			t2 = Timer('publish camera state')
 			try:
-				camdata = data.CameraEMData(('camera',), initializer=camstate)
 				self.node.publishRemote(camdata)
 			except Exception, detail:
 				print 'camerafuncs.state: unable to set camera state'
@@ -63,9 +62,9 @@ class CameraFuncs(object):
 			t2.stop()
 
 		try:
-			newcamstate = self.node.researchByDataID(('camera no image data',))
+			newcamdata = self.node.researchByDataID(('camera no image data',))
 			t.stop()
-			return newcamstate
+			return newcamdata
 		except:
 			return None
 
@@ -73,9 +72,10 @@ class CameraFuncs(object):
 		'''
 		recalculate the image offset from the dimensions
 		to get an image centered on the camera
+		camstate must be a dict with binning and dimmension
+		camstate['offset'] will be set to new value
 		'''
-
-		currentcamstate = self.state()
+		currentcamstate = self.currentCameraEMData()
 		if currentcamstate is None:
 			sizex = 4096
 			sizey = 4096
@@ -126,38 +126,29 @@ class CameraFuncs(object):
 			value['state'] = state
 			self.cameraconfigvalue = value
 
-		if hasattr(self, 'cameraconfigvalue'):
-			print 'self.cameraconfigvalue=', self.cameraconfigvalue
-
 		## set default values
 		if not hasattr(self, 'cameraconfigvalue'):
 			self.cameraconfigvalue = {}
 			self.cameraconfigvalue['correct'] = 1
 			self.cameraconfigvalue['auto square'] = 1
 			self.cameraconfigvalue['auto offset'] = 1
-			## attempt to get current camera state
-			initstate = self.state()
-			## if that failed, set default
-			if initstate is None:
-				print '%s unable to get camera state' % (self.node.id,)
-				initstate = {
-					'exposure time': 500,
-					'dimension':{'x':1024,'y':1024},
-					'binning':{'x':4, 'y':4},
-					'offset':{'x':0,'y':0}
-				}
+			## attempt to get current camera state or set default
+			camdata = self.currentCameraEMData()
+			initstate = {}
+			if camdata is None:
+				print 'using default camera config'
+				initstate['exposure time'] = 500
+				initstate['dimension'] = {'x':1024, 'y':1024}
+				initstate['binning'] = {'x':4, 'y':4}
+				initstate['offset'] = {'x':0, 'y':0}
 			else:
-				initstate = dict(initstate)
-				del initstate['id']
-				del initstate['session']
-				del initstate['image data']
-				del initstate['camera size']
-				del initstate['system time']
+				initstate['exposure time'] = camdata['exposure time']
+				initstate['dimension'] = camdata['dimension']
+				initstate['binning'] = camdata['binning']
+				initstate['offset'] = camdata['offset']
 
 			self.autoOffset(initstate)
 			self.cameraconfigvalue['state'] = initstate
-
-		print 'self.cameraconfigvalue 2 =', self.cameraconfigvalue
 
 		# return a copy of the current config value
 		return copy.deepcopy(self.cameraconfigvalue)
