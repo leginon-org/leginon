@@ -26,6 +26,7 @@ class ImageViewer(Frame):
 		zframe = Frame(self, bg=self['bg'])
 		self.cursorinfowid = self.canvas.cursorinfo_widget(zframe)
 		self.zoomer = self.canvas.zooming_widget(zframe)
+		self.cross = self.canvas.crosshairs_widget(zframe)
 
 		#tarframe = Toplevel(self)
 		#self.targets = self.canvas.targets_widget(tarframe)
@@ -33,6 +34,7 @@ class ImageViewer(Frame):
 
 		self.cursorinfowid.pack(side=LEFT)
 		self.zoomer.pack(side=LEFT)
+		self.cross.pack(side=LEFT)
 
 		self.scaler.pack(side=TOP)
 		zframe.pack(side=TOP)
