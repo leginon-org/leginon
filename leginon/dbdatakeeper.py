@@ -9,14 +9,13 @@ class DBDataKeeper(datahandler.DataHandler):
 		datahandler.DataHandler.__init__(self, id, session)
 		# leginon object id = id
 		# session id = session
-		# connect?
 		self.dbd = sqldict.SQLDict()
 
 	def query(self, idata, indices):
 		# idata: instance of a Data class 
 		# indices: {field:value, ... } for the WHERE clause
 		
-		table = data.__class__.__name__
+		table = idata.__class__.__name__
 		select = sqldict.sqlColumnsSelect(idata)
 		self.dbd.myTable = self.dbd.Table(table,select)
 		sqlindices = map(sqldict.sqlColumnsFormat, indices.keys())
@@ -36,10 +35,6 @@ class DBDataKeeper(datahandler.DataHandler):
 		# result = self.db.myTable.Index[indices.values()].fetchonedict()
 		# return sqldict.sql2data(result)
 	
-		# WHERE stuff
-		# return instance of the necessary Data class or optionally a list of
-		# matching instances
-
 		# images with be converted from an mrc file here, an instance of Data
 		# will have to be created here.
 
