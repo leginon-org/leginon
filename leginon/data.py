@@ -1760,6 +1760,17 @@ class CalibratorSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
+	def typemap(cls):
+		return CalibratorSettingsData.typemap() + (
+			('defocus beam tilt', float),
+			('first defocus', float),
+			('second defocus', float),
+			('stig beam tilt', float),
+			('stig delta', float),
+		)
+	typemap = classmethod(typemap)
+
 class MatrixCalibratorSettingsData(CalibratorSettingsData):
 	def typemap(cls):
 		parameters = ['image shift', 'beam shift', 'stage position']

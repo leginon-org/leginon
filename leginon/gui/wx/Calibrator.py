@@ -72,12 +72,12 @@ class Panel(gui.wx.Node.Panel):
 
 		# image
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
-		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (3, 1),
+		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (5, 1),
 																						wx.EXPAND|wx.ALL)
 		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
 		self.szimage.AddGrowableRow(0)
 		self.szimage.AddGrowableCol(0)
-		self.szmain.AddGrowableRow(3)
+		self.szmain.AddGrowableRow(5)
 
 		self.Bind(EVT_ADD_TARGET_TYPES, self.onAddTargetTypes)
 		self.Bind(EVT_IMAGE_UPDATED, self.onImageUpdated)
