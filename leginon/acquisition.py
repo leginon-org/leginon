@@ -213,12 +213,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		originalpreset = targetdata['preset']
 
-		# get relavent info from target data
+		# get relevant info from target data
 		targetdeltarow = targetdata['delta row']
 		targetdeltacolumn = targetdata['delta column']
-		## make new copy because will be modified
-		targetscope = copy.deepcopy(targetdata['scope'])
-		## camera is just read, not modified
+		targetscope = targetdata['scope']
 		targetcamera = targetdata['camera']
 
 		## ignore these fields:

@@ -64,7 +64,7 @@ class DriftManager(watcher.Watcher):
 		self.presetsclient.toScope(pname)
 
 		## set the original state of the image
-		emdata = copy.deepcopy(im['scope'])
+		emdata = im['scope']
 		newemdata = self.fixEM(emdata)
 		camdata = im['camera']
 		self.emclient.setScope(newemdata)
@@ -115,7 +115,8 @@ class DriftManager(watcher.Watcher):
 		t.start()
 
 	def fixEM(self, emdata):
-		emcopy = copy.deepcopy(emdata)
+		emcopy = data.ScopeEMData(initializer=emdata)
+		emcopy['stage position'] = copy.deepcopy(emdata['stage position'])
 		## only set stage x and y
 		for key in emcopy['stage position'].keys():
 			if key not in ('x','y'):
