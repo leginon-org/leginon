@@ -215,6 +215,7 @@ class SQLDict(object):
 	    self.execute()
 
 	def _cursor(self):
+	    self.db.ping()
 	    return self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
 
 	def execute(self):
@@ -401,6 +402,7 @@ class SQLDict(object):
 	    self.create()
 
 	def _cursor(self):
+	    self.db.ping()
 	    return self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
 
 	def create(self):
@@ -626,6 +628,7 @@ class SQLDict(object):
 	    object."""
 
 	    def __init__(self, db, load, columns):
+		db.ping()
 		self.cursor = db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
 		self.columns = columns
 		self.load = load
