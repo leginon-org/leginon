@@ -181,37 +181,23 @@ class Server(XMLRPCServer, uidata.Container):
 		import uiclient
 		addclient = uiclient.XMLRPCClient(hostname, port)
 		self.uiclients.append(addclient)
-		#for uiobject in self.uiobjectdict.values():
-		for uiobject in self.uiobjectlist:
-			self.addAllObjects(addclient, uiobject, (uiobject.name,))
+		self.addObjectsCallback(addclient)
 		return ''
 
-	def addAllObjects(self, client, uiobject, namelist):
-		if hasattr(uiobject, 'value'):
-			value = uiobject.value
-		else:
-			value = ''
-		if hasattr(uiobject, 'read'):
-			read = uiobject.read
-		else:
-			read = False
-		if hasattr(uiobject, 'write'):
-			write = uiobject.write
-		else:
-			write = False
-
-		if isinstance(uiobject, uidata.Container):
-			for childuiobject in uiobject.uiobjectlist:
-				self.addAllObjects(client, childuiobject, namelist+(childuiobject.name,))
-		client.execute('ADD', (namelist, uiobject.typelist, value, read, write))
-
-	def addObjectCallback(self, namelist, typelist, value, read, write):
-		for client in self.uiclients:
-			# delete if fail?
+	def addObjectCallback(self, dependencies, namelist, typelist, value, settings, client=None):
+		if client is not None:
 			try:
-				client.execute('ADD', (namelist, typelist, value, read, write))
+				client.execute('ADD', (dependencies, namelist, typelist, value, settings))
 			except xmlrpclib.ProtocolError, e:
 				print 'Error adding to client ' + str(client) + ': ' + str(e)
+		else:
+			for client in self.uiclients:
+				# delete if fail?
+				try:
+					client.execute('ADD',
+													(dependencies, namelist, typelist, value, settings))
+				except xmlrpclib.ProtocolError, e:
+					print 'Error adding to client ' + str(client) + ': ' + str(e)
 
 	def setObjectCallback(self, namelist, value):
 		for client in self.uiclients:
@@ -229,11 +215,11 @@ class Server(XMLRPCServer, uidata.Container):
 			except xmlrpclib.ProtocolError, e:
 				print 'Error deleting from client ' + str(client) + ': ' + str(e)
 
-	def enableObjectCallback(self, namelist, enabled):
+	def settingsObjectCallback(self, namelist, settings):
 		for client in self.uiclients:
 			# delete if fail?
 			try:
-				client.execute('ENABLE', (namelist, enabled))
+				client.execute('SETTINGS', (namelist, settings))
 			except xmlrpclib.ProtocolError, e:
-				print 'Error enabling client ' + str(client) + ': ' + str(e)
+				print 'Error setting settings client ' + str(client) + ': ' + str(e)
 

@@ -1,9 +1,8 @@
 import copy
 import xmlrpclib
 import Numeric
-import Image
-import cStringIO
 import Mrc
+import threading
 
 # Exceptions
 # maybe overdone
@@ -28,6 +27,7 @@ class Object(object):
 		else:
 			raise TypeError('name must be a string')
 		self.parent = None
+		self.enabled = True
 
 	def getName(self):
 		return self.name
@@ -54,8 +54,14 @@ class Object(object):
 		self._enable(True)
 
 	def _enable(self, enabled):
+		self.enabled = enabled
 		if self.parent is not None:
-			self.parent.enableObjectCallback((self.name,), enabled)
+			self.parent.settingsObjectCallback((self.name,), {'enabled': enabled})
+
+	def getSettings(self):
+		settings = {}
+		settings['enabled'] = self.enabled
+		return settings
 
 class Container(Object):
 	typelist = Object.typelist + ('container',)
@@ -75,16 +81,13 @@ class Container(Object):
 					value = uiobject.value
 				else:
 					value = ''
-				if hasattr(uiobject, 'read'):
-					read = uiobject.read
-				else:
-					read = False
-				if hasattr(uiobject, 'write'):
-					write = uiobject.write
-				else:
-					write = False
-				self.addObjectCallback((uiobject.name,), uiobject.typelist,
-																		value, read, write)
+				try:
+					dependencies = [self.uiobjectlist[-1].getName()]
+				except IndexError:
+					dependencies = []
+				self.addObjectCallback(dependencies, (uiobject.name,),
+																uiobject.typelist, value,
+																uiobject.getSettings())
 				if isinstance(uiobject, Container):
 					uiobject.addObjectsCallback()
 				self.uiobjectdict[uiobject.name] = uiobject
@@ -92,26 +95,21 @@ class Container(Object):
 			else:
 				raise TypeError('value must be a Object instance')
 		else:
-			print 'uiobject.name =', uiobject.name
-			raise ValueError('name already exists in Object mapping')
+			raise ValueError(uiobject.name + ' name already exists in Object mapping')
 
-	def addObjectsCallback(self):
-		#for uiobject in self.uiobjectdict.values():
-		for uiobject in self.uiobjectlist:
+	def addObjectsCallback(self, client=None):
+		for i, uiobject in enumerate(self.uiobjectlist):
 			if hasattr(uiobject, 'value'):
 				value = uiobject.value
 			else:
 				value = ''
-			if hasattr(uiobject, 'read'):
-				read = uiobject.read
+			if i == 0:
+				dependencies = []
 			else:
-				read = False
-			if hasattr(uiobject, 'write'):
-				write = uiobject.write
-			else:
-				write = False
-			self.addObjectCallback((uiobject.name,), uiobject.typelist,
-																	value, read, write)
+				dependencies = [self.uiobjectlist[i - 1].getName()]
+			self.addObjectCallback(dependencies, (uiobject.name,),
+															uiobject.typelist, value,
+															uiobject.getSettings(), client)
 			if isinstance(uiobject, Container):
 				uiobject.addObjectsCallback()
 
@@ -130,10 +128,10 @@ class Container(Object):
 		except KeyError:
 			raise ValueError('cannot delete Object, not in Object mapping')
 
-	def addObjectCallback(self, namelist, typelist, value, read, write):
+	def addObjectCallback(self, dependencies,  namelist, typelist, value, settings, client=None):
 		if self.parent is not None:
-			self.parent.addObjectCallback((self.name,) + namelist,
-																			typelist, value, read, write)
+			self.parent.addObjectCallback(dependencies, (self.name,) + namelist,
+																			typelist, value, settings, client)
 		else:
 			pass
 			#raise RuntimeError('cannot add object to container without parent')
@@ -146,9 +144,9 @@ class Container(Object):
 		if self.parent is not None:
 			self.parent.deleteObjectCallback((self.name,) + namelist)
 
-	def enableObjectCallback(self, namelist, enabled):
+	def settingsObjectCallback(self, namelist, settings):
 		if self.parent is not None:
-			self.parent.enableObjectCallback((self.name,) + namelist, enabled)
+			self.parent.settingsObjectCallback((self.name,) + namelist, settings)
 
 	def getObjectFromList(self, namelist):
 		if type(namelist) not in (list, tuple):
@@ -218,6 +216,12 @@ class Data(Object):
 		self.persist = persist
 
 		self.set(value)
+
+	def getSettings(self):
+		settings = Object.getSettings(self)
+		settings['read'] = self.read
+		settings['write'] = self.write
+		return settings
 
 	def setCallback(self, callback):
 		if callable(callback):

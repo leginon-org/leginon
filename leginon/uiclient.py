@@ -13,19 +13,19 @@ import wxMaster
 wxEVT_ADD_WIDGET = wxNewEventType()
 wxEVT_SET_WIDGET = wxNewEventType()
 wxEVT_REMOVE_WIDGET = wxNewEventType()
-wxEVT_ENABLE_WIDGET = wxNewEventType()
+wxEVT_SETTINGS_WIDGET = wxNewEventType()
 wxEVT_SET_SERVER = wxNewEventType()
 wxEVT_COMMAND_SERVER = wxNewEventType()
 
 class AddWidgetEvent(wxPyEvent):
-	def __init__(self, namelist, typelist, value, read, write):
+	def __init__(self, dependencies,  namelist, typelist, value, settings):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_ADD_WIDGET)
 		self.namelist = namelist
 		self.typelist = typelist
 		self.value = value
-		self.read = read
-		self.write = write
+		self.settings = settings
+		self.dependencies = dependencies
 
 class SetWidgetEvent(wxPyEvent):
 	def __init__(self, namelist, value):
@@ -40,12 +40,12 @@ class RemoveWidgetEvent(wxPyEvent):
 		self.SetEventType(wxEVT_REMOVE_WIDGET)
 		self.namelist = namelist
 
-class EnableWidgetEvent(wxPyEvent):
-	def __init__(self, namelist, enabled):
+class SettingsWidgetEvent(wxPyEvent):
+	def __init__(self, namelist, settings):
 		wxPyEvent.__init__(self)
-		self.SetEventType(wxEVT_ENABLE_WIDGET)
+		self.SetEventType(wxEVT_SETTINGS_WIDGET)
 		self.namelist = namelist
-		self.enabled = enabled
+		self.settings = settings
 
 class SetServerEvent(wxPyEvent):
 	def __init__(self, namelist, value, thread=True):
@@ -138,7 +138,7 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
 		self.server.register_function(self.addFromServer, 'ADD')
 		self.server.register_function(self.setFromServer, 'SET')
 		self.server.register_function(self.removeFromServer, 'DEL')
-		self.server.register_function(self.enableFromServer, 'ENABLE')
+		self.server.register_function(self.settingsFromServer, 'SETTINGS')
 
 	def addServer(self):
 		self.execute('ADDSERVER', (self.hostname, self.port))
@@ -158,7 +158,7 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
 		else:
 			self.execute('COMMAND', (namelist, args))
 
-	def addFromServer(self, namelist, typelist, value, read, write):
+	def addFromServer(self, dependencies, namelist, typelist, value, settings):
 		raise NotImplementedError
 
 	def setFromServer(self, namelist, value):
@@ -167,7 +167,7 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
 	def removeFromServer(self, namelist):
 		raise NotImplementedError
 
-	def enableFromServer(self, namelist, enabled):
+	def settingsFromServer(self, namelist, settings):
 		raise NotImplementedError
 
 class wxUIClient(UIClient):
@@ -177,14 +177,9 @@ class wxUIClient(UIClient):
 		UIClient.__init__(self, serverhostname, serverport, port)
 		threading.Thread(target=self.addServer, args=()).start()
 
-#	def start(self):
-#		self.addServer()
-
-	def addFromServer(self, namelist, typelist, value, read, write):
-		#print 'addFromServer', namelist
-		evt = AddWidgetEvent(namelist, typelist, value, read, write)
+	def addFromServer(self, dependencies, namelist, typelist, value, settings):
+		evt = AddWidgetEvent(dependencies, namelist, typelist, value, settings)
 		wxPostEvent(self.container.widgethandler, evt)
-#		print 'pending count =', self.container.getPendingCount()
 		return ''
 
 	def setFromServer(self, namelist, value):
@@ -198,8 +193,8 @@ class wxUIClient(UIClient):
 		wxPostEvent(self.container.widgethandler, evt)
 		return ''
 
-	def enableFromServer(self, namelist, enabled):
-		evt = EnableWidgetEvent(namelist, enabled)
+	def settingsFromServer(self, namelist, settings):
+		evt = SettingsWidgetEvent(namelist, settings)
 		wxPostEvent(self.container.widgethandler, evt)
 		return ''
 
@@ -237,10 +232,11 @@ class wxWidget(object):
 		self.widgethandler = wxEvtHandler()
 		self.sizer = None
 
-		self.widgethandler.Connect(-1, -1, wxEVT_ENABLE_WIDGET, self.onEnableWidget)
+		self.widgethandler.Connect(-1, -1, wxEVT_SETTINGS_WIDGET, self.onSettingsWidget)
 
-	def onEnableWidget(self, evt):
-		self.enable(evt.enabled)
+	def onSettingsWidget(self, evt):
+		if 'enabled' in evt.settings:
+			self.enable(evt.settings['enabled'])
 
 	def enable(self, enabled):
 		pass
@@ -269,12 +265,12 @@ class wxContainerWidget(wxWidget):
 		self.widgethandler.Connect(-1, -1, wxEVT_COMMAND_SERVER,
 																self.onCommandServer)
 
-	def _addWidget(self, name, typelist, value, read, write):
+	def _addWidget(self, name, typelist, value, settings):
 		childclass = WidgetClassFromTypeList(typelist)
 		if issubclass(childclass, wxClientContainerWidget):
 			child = childclass(name, self.childparent, self, value)
 		elif issubclass(childclass, wxDataWidget):
-			child = childclass(name, self.childparent, self, value, read, write)
+			child = childclass(name, self.childparent, self, value, settings)
 		else:
 			child = childclass(name, self.childparent, self)
 		self.children[name] = child
@@ -288,11 +284,7 @@ class wxContainerWidget(wxWidget):
 
 		# hmm...
 		for evt in list(self.pending):
-#			if name == evt.namelist[0]:
-#				print '***posting', evt.namelist, 'to child', name
 			self.pending.remove(evt)
-#				evt.namelist = evt.namelist[1:]
-#				wxPostEvent(child.widgethandler, evt)
 			wxPostEvent(self.widgethandler, evt)
 
 	def getPendingCount(self):
@@ -315,8 +307,16 @@ class wxContainerWidget(wxWidget):
 
 	def onAddWidget(self, evt):
 		if len(evt.namelist) == 1:
-			childname = evt.namelist[0]
-			self._addWidget(childname, evt.typelist, evt.value, evt.read, evt.write)
+			for name in self.children:
+				for i in evt.dependencies:
+					if i == name:
+						evt.dependencies.remove(i)
+			if evt.dependencies:
+				print 'too early', evt.namelist, evt.dependencies
+				self.pending.append(evt)
+			else:
+				childname = evt.namelist[0]
+				self._addWidget(childname, evt.typelist, evt.value, evt.settings)
 		else:
 			self._addWidgetToChild(evt)
 
@@ -347,9 +347,9 @@ class wxContainerWidget(wxWidget):
 		self.pending.append(evt)
 		#raise ValueError('No such child to remove widget')
 
-	def onEnableWidget(self, evt):
+	def onSettingsWidget(self, evt):
 		if len(evt.namelist) == 0:
-			self.enable(evt.enabled)
+			self.settings(evt.settings)
 		else:
 			for name, child in self.children.items():
 				if name == evt.namelist[0]:
@@ -359,10 +359,11 @@ class wxContainerWidget(wxWidget):
 			self.pending.append(evt)
 			#raise ValueError('No such child to enable widget')
 
-	def enable(self, enabled):
-		wxWidget.enable(self, enabled)
+	def settings(self, settings):
+		if 'enabled' in settings:
+			wxWidget.enable(self, settings['enabled'])
 		for name, child in self.children.items():
-			evt = EnableWidgetEvent([], enabled)
+			evt = SettingsWidgetEvent([], settings)
 			wxPostEvent(child.widgethandler, evt)
 
 	def onSetServer(self, evt):
@@ -414,8 +415,8 @@ class wxStaticBoxContainerWidget(wxContainerWidget):
 		wxContainerWidget.destroy(self)
 		self.staticbox.Destroy()
 
-	def _addWidget(self, namelist, typelist, value, read, write):
-		wxContainerWidget._addWidget(self, namelist, typelist, value, read, write)
+	def _addWidget(self, namelist, typelist, value, settings):
+		wxContainerWidget._addWidget(self, namelist, typelist, value, settings)
 		self.layout()
 
 class wxNotebookContainerWidget(wxContainerWidget):
@@ -437,8 +438,8 @@ class wxNotebookContainerWidget(wxContainerWidget):
 		self.container.notebooksizer.Fit(self.parentnotebook)
 		self.container.layout()
 
-	def _addWidget(self, namelist, typelist, value, read, write):
-		wxContainerWidget._addWidget(self, namelist, typelist, value, read, write)
+	def _addWidget(self, namelist, typelist, value, settings):
+		wxContainerWidget._addWidget(self, namelist, typelist, value, settings)
 		self.layout()
 
 	def destroy(self):
@@ -521,15 +522,23 @@ class wxButtonWidget(wxMethodWidget):
 		self.button.Enable(enabled)
 
 class wxDataWidget(wxWidget):
-	def __init__(self, name, parent, container, value, read, write):
-		if read:
-			self.read = True
-		else:
+	def __init__(self, name, parent, container, value, settings):
+		try:
+			if settings['read']:
+				self.read = True
+			else:
+				self.read = False
+		except KeyError:
 			self.read = False
-		if write:
-			self.write = True
-		else:
+
+		try:
+			if settings['write']:
+				self.write = True
+			else:
+				self.write = False
+		except KeyError:
 			self.write = False
+
 		wxWidget.__init__(self, name, parent, container)
 		self.widgethandler.Connect(-1, -1, wxEVT_SET_WIDGET, self.onSetWidget)
 
@@ -558,8 +567,8 @@ class wxDataWidget(wxWidget):
 		pass
 
 class wxProgressWidget(wxDataWidget):
-	def __init__(self, name, parent, container, value, read, write):
-		wxDataWidget.__init__(self, name, parent, container, value, read, write)
+	def __init__(self, name, parent, container, value, settings):
+		wxDataWidget.__init__(self, name, parent, container, value, settings)
 		self.sizer = wxBoxSizer(wxHORIZONTAL)
 		self.label = wxStaticText(self.parent, -1, self.name)
 		self.gauge = wxGauge(self.parent, -1, 100, style=wxGA_HORIZONTAL)
@@ -580,8 +589,8 @@ class wxProgressWidget(wxDataWidget):
 		self.gauge.Destroy()
 
 class wxEntryWidget(wxDataWidget):
-	def __init__(self, name, parent, container, value, read, write):
-		wxDataWidget.__init__(self, name, parent, container, value, read, write)
+	def __init__(self, name, parent, container, value, settings):
+		wxDataWidget.__init__(self, name, parent, container, value, settings)
 		self.sizer = wxBoxSizer(wxHORIZONTAL)
 		self.label = wxStaticText(self.parent, -1, self.name + ':')
 		if self.write:
@@ -669,8 +678,8 @@ class wxEntryWidget(wxDataWidget):
 				self.applybutton.Enable(False)
 
 class wxCheckBoxWidget(wxDataWidget):
-	def __init__(self, name, parent, container, value, read, write):
-		wxDataWidget.__init__(self, name, parent, container, value, read, write)
+	def __init__(self, name, parent, container, value, settings):
+		wxDataWidget.__init__(self, name, parent, container, value, settings)
 		self.sizer = wxBoxSizer(wxHORIZONTAL)
 		self.checkbox = wxCheckBox(self.parent, -1, self.name)
 		if not self.write:
@@ -698,8 +707,8 @@ class wxCheckBoxWidget(wxDataWidget):
 		self.checkbox.Destroy()
 
 class wxListBoxWidget(wxDataWidget):
-	def __init__(self, name, parent, container, value, read, write):
-		wxDataWidget.__init__(self, name, parent, container, value, read, write)
+	def __init__(self, name, parent, container, value, settings):
+		wxDataWidget.__init__(self, name, parent, container, value, settings)
 		self.sizer = wxBoxSizer(wxVERTICAL)
 		self.label = wxStaticText(self.parent, -1, self.name)
 		self.listbox = wxListBox(self.parent, -1)
@@ -727,8 +736,8 @@ class wxListBoxWidget(wxDataWidget):
 		self.listbox.Destroy()
 
 class wxTreeCtrlWidget(wxDataWidget):
-	def __init__(self, name, parent, container, value, read, write):
-		wxDataWidget.__init__(self, name, parent, container, value, read, write)
+	def __init__(self, name, parent, container, value, settings):
+		wxDataWidget.__init__(self, name, parent, container, value, settings)
 		self.sizer = wxBoxSizer(wxHORIZONTAL)
 		if self.write:
 			self.tree = wxDictTree.DictTreeCtrlPanel(self.parent, -1,
@@ -751,8 +760,8 @@ class wxTreeCtrlWidget(wxDataWidget):
 		self.tree.Destroy()
 
 class wxApplicationWidget(wxDataWidget):
-	def __init__(self, name, parent, container, value, read, write):
-		wxDataWidget.__init__(self, name, parent, container, value, read, write)
+	def __init__(self, name, parent, container, value, settings):
+		wxDataWidget.__init__(self, name, parent, container, value, settings)
 		self.sizer = wxBoxSizer(wxVERTICAL)
 		# maybe have callback
 		self.applicationeditor = wxMaster.ApplicationEditorCanvas(self.parent, -1)
@@ -779,8 +788,8 @@ class wxApplicationWidget(wxDataWidget):
 		self.applicationeditor.Destroy()
 
 class wxImageWidget(wxDataWidget):
-	def __init__(self, name, parent, container, value, read, write):
-		wxDataWidget.__init__(self, name, parent, container, value, read, write)
+	def __init__(self, name, parent, container, value, settings):
+		wxDataWidget.__init__(self, name, parent, container, value, settings)
 		self.sizer = wxBoxSizer(wxVERTICAL)
 		self.imageviewer = wxImageViewer.ImagePanel(self.parent, -1)
 		self.label = wxStaticText(self.parent, -1, self.name)
@@ -845,7 +854,9 @@ class wxMessageDialogWidget(wxContainerWidget):
 		self.dialog.sizer.Fit(self.dialog)
 		self.dialog.Show(true)
 
-	def _addWidget(self, name, typelist, value, read, write):
+	def onAddWidget(self, evt):
+		name = evt.namelist[0]
+		value = evt.value
 		if name == 'Message':
 			self.setMessage(value)
 			self.messageflag = True
@@ -853,9 +864,6 @@ class wxMessageDialogWidget(wxContainerWidget):
 			self.okflag = True
 		if self.messageflag and self.okflag:
 			self.show()
-
-	def _addWidgetToChild(self, evt):
-		pass
 
 	def onSetWidget(self, evt):
 		if evt.namelist == ['Message']:
@@ -911,14 +919,13 @@ class wxComboBoxWidget(wxContainerWidget):
 		if self.value['List']:
 			self.combobox.SetSelection(value)
 
-	def _addWidget(self, name, typelist, value, read, write):
+	def onAddWidget(self, evt):
+		name = evt.namelist[0]
+		value = evt.value
 		if name == 'List':
 			self.setList(value)
 		elif name == 'Selected':
 			self.setSelected(value)
-
-	def _addWidgetToChild(self, evt):
-		pass
 
 	def onSetWidget(self, evt):
 		if evt.namelist == ['List']:
@@ -960,14 +967,13 @@ class wxOrderedListBoxWidget(wxContainerWidget):
 		self.value['Selected'] = value
 		self.orderedlistbox.setSelected(value)
 
-	def _addWidget(self, name, typelist, value, read, write):
+	def onAddWidget(self, evt):
+		name = evt.namelist[0]
+		value = evt.value
 		if name == 'List':
 			self.setList(value)
 		elif name == 'Selected':
 			self.setSelected(value)
-
-	def _addWidgetToChild(self, evt):
-		pass
 
 	def onSetWidget(self, evt):
 		if evt.namelist == ['List']:
@@ -1013,14 +1019,13 @@ class wxTreeSelectWidget(wxContainerWidget):
 			self.tree.select(value[0])
 			self.tree.Enable(true)
 
-	def _addWidget(self, name, typelist, value, read, write):
+	def onAddWidget(self, evt):
+		name = evt.namelist[0]
+		value = evt.value
 		if name == 'Struct':
 			self.setStruct(value)
 		elif name == 'Selected':
 			self.setSelected(value)
-
-	def _addWidgetToChild(self, evt):
-		pass
 
 	def onSetWidget(self, evt):
 		if evt.namelist == ['Struct']:
@@ -1070,13 +1075,12 @@ class wxClickImageWidget(wxContainerWidget):
 		else:
 			self.clickimage.clearImage()
 
-	def _addWidget(self, name, typelist, value, read, write):
+	def onAddWidget(self, evt):
 		# should disable until all available
+		name = evt.namelist[0]
+		value = evt.value
 		if name == 'Image':
 			self.setImage(value)
-
-	def _addWidgetToChild(self, evt):
-		pass
 
 	def onSetWidget(self, evt):
 		if evt.namelist == ['Image']:
@@ -1123,15 +1127,14 @@ class wxTargetImageWidget(wxContainerWidget):
 	def setTargets(self, name, value):
 		self.targetimage.setTargetTypeValue(name, value)
 
-	def _addWidget(self, name, typelist, value, read, write):
+	def onAddWidget(self, evt):
 		# should disable until all available
+		name = evt.namelist[0]
+		value = evt.value
 		if name == 'Image':
 			self.setImage(value)
 		else:
 			self.setTargets(name, value)
-
-	def _addWidgetToChild(self, evt):
-		pass
 
 	def onSetWidget(self, evt):
 		if evt.namelist == ['Image']:
