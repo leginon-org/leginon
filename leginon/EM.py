@@ -1,4 +1,4 @@
-import dataservernode
+import node
 import datahandler
 import scopedict
 import cameradict
@@ -11,17 +11,17 @@ if sys.platform == 'win32':
 	import pythoncom
 
 class DataHandler(datahandler.DataBinder):
-	def __init__(self, scope, camera, lock):
+	def __init__(self, lock, scope, camera):
 		datahandler.DataBinder.__init__(self)
+		self.lock = lock
 		self.scope = scope
 		self.camera = camera
-		self.lock = lock
 
 	def query(self, id):
 		self.lock.acquire()
-		if(self.scope.has_key(id)):
+		if self.scope and self.scope.has_key(id):
 			result = self.scope[id]
-		elif(self.camera.has_key(id)):
+		elif self.camera and self.camera.has_key(id):
 		  result = self.camera[id]
 		else:
 			result = None
@@ -33,9 +33,9 @@ class DataHandler(datahandler.DataBinder):
 			datahandler.DataBinder.insert(self, idata)
 		else:
 			self.lock.acquire()
-			if(self.scope.has_key(newdata.id)):
+			if self.scope and self.scope.has_key(newdata.id):
 				self.scope[newdata.id] = newdata.content
-			elif(self.camera.has_key(newdata.id)):
+			elif self.camera and self.camera.has_key(newdata.id):
 				self.camera[newdata.id] = newdata.content
 			self.lock.release()
 
@@ -46,25 +46,24 @@ class DataHandler(datahandler.DataBinder):
 		else:
 			raise InvalidEventError('eventclass must be Event subclass')
 
-class DataServer(dataservernode.DataServerNode):
-	def __init__(self, nodeid, managerloc, scopeclass, cameraclass):
+class EM(node.Node):
+	def __init__(self, nodeid, managerloc, scopeclass = None, cameraclass = None):
 		self.lock = threading.Lock()
-		self.scope = scopedict.factory(scopeclass)()
-		self.camera = cameradict.factory(cameraclass)()
+		if scopeclass:
+			self.scope = scopedict.factory(scopeclass)()
+		else:
+			self.scope = None
+		if cameraclass:
+			self.camera = cameradict.factory(cameraclass)()
+		else:
+			self.camera = None
 
-		dataservernode.DataServerNode.__init__(self, nodeid, managerloc, DataHandler, (self.scope, self.camera, self.lock))
+		node.Node.__init__(self, nodeid, managerloc, DataHandler, (self.lock, self.scope, self.camera))
 
 if __name__ == '__main__':
-	import tecnai
-	import tietz
 	import time
 
-	manloc = {}
-	manloc['hostname'] = 'cronus1'
-	manloc['push port'] = 49152
-
-	foo = DataServer('em', manloc, tecnai.tecnai, tietz.tietz)
-
+	foo = EM('myEM', ('cronus1', 49152))
 	while(1):
-		time.sleep(0.001)
+		time.sleep(.01)
 

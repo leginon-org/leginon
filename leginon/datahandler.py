@@ -1,4 +1,3 @@
-
 import leginonobject
 import data
 import threading

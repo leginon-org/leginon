@@ -16,8 +16,9 @@ class Client(Base):
 	def __init__(self, hostname, port):
 		Base.__init__(self)
 		self.clients = {}
-		#self.clients[datalocal.PullClient] = datalocal.Client()
-		self.clients[tcptransport.Client] = tcptransport.Client(hostname, port)
+		self.transportmodules = [tcptransport]
+		for t in self.transportmodules:
+			self.clients[t] = apply(t.Client, (hostname, port))
 
 	def pull(self, id):
 		return self.clients[tcptransport.Client].pull(id)
