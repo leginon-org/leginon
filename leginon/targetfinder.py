@@ -39,6 +39,7 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		self.publishTargetList()
 
 	def publishTargetList(self):
+		self.targetsToDatabase()
 		if self.targetlist:
 			targetlistdata = data.ImageTargetListData(id=self.ID(), targets=self.targetlist)
 			## XXX this might not work for mosaic
@@ -47,8 +48,6 @@ class TargetFinder(imagewatcher.ImageWatcher):
 				targetdata['image'] = self.imagedata
 
 			self.publish(targetlistdata, pubevent=True)
-
-		self.targetsToDatabase()
 		self.targetlist = []
 
 	def targetsToDatabase(self):
