@@ -409,9 +409,10 @@ class WidgetGroup(Pmw.Group):
 		for setcommand in self.setcommands:
 			setcommand()
 
-class CustomWidget(Tkinter.Frame):
+class CustomWidget(Pmw.ScrolledFrame):
 	def __init__(self, parent):
-		Tkinter.Frame.__init__(self, parent)
+		Pmw.ScrolledFrame.__init__(self, parent)
+		self.component('borderframe')['relief'] = Tkinter.FLAT
 		self.groups = {}
 		self.widgets = {}
 
@@ -498,7 +499,7 @@ class CustomWidget(Tkinter.Frame):
 		widget.tree.edit_tree.configure(bd=1, relief=Tkinter.SUNKEN)
 
 	def addGroup(self, name):
-		group = WidgetGroup(self, name)
+		group = WidgetGroup(self.interior(), name)
 		self.groups[name] = group
 		group.grid(row = len(self.groups), column = 0, padx=10, pady=10)
 		# whatever
@@ -746,7 +747,7 @@ class WidgetWrapper(object):
 																		variable=self.menuvariable,
 																		command=self.menuCallback)
 		self.widget.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
-		self.notebook.setnaturalsize()
+#		self.notebook.setnaturalsize()
 		self.notebook.selectpage(self.name)
 
 		for node in self.nodeinfo:
@@ -815,7 +816,7 @@ class Debug(WidgetWrapper):
 																	nodelocations[node]['UI port'],
 																	None, True, True)
 			gui.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
-		self.widget.setnaturalsize()
+#		self.widget.setnaturalsize()
 
 	def addDebugTab(self, name, ui_info):
 		if self.widget is not None:
