@@ -294,7 +294,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## first three of user name
 		request['film user code'] = self.session['user']['name'][:3]
 		## like filename in regular acquisition (limit 96 chars)
-		request['film text'] = str(imdata['filename'])
+		request['film text'] = str(filmdata['filename'])
 		request['film data type'] = 'YY.MM.DD'
 
 		## do exposure
