@@ -178,7 +178,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				ret = self.acquire(p, target=targetdata, emtarget=emtarget)
 				# in these cases, return immediately
 				if ret in ('aborted', 'repeat'):
-					self.reportStatus('acquisition', 'Acquition state is "%s"' % ret)
+					self.reportStatus('acquisition', 'Acquisition state is "%s"' % ret)
 					return ret
 				self.reportStatus('acquisition', 'Image acquired')
 
