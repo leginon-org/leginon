@@ -148,8 +148,9 @@ class PresetsManager(node.Node):
 			diffsession = True
 
 		### get presets from database
-		session['image path'] = None
-		pdata = data.PresetData(session=session)
+		newsession = data.SessionData(initializer=session)
+		newsession['image path'] = None
+		pdata = data.PresetData(session=newsession)
 		presets = self.research(datainstance=pdata)
 
 		### only want most recent of each name
