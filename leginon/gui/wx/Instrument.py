@@ -1,17 +1,17 @@
+# -*- coding: iso-8859-1 -*-
 # The Leginon software is Copyright 2004
 # The Scripps Research Institute, La Jolla, CA
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.27 $
+# $Revision: 1.28 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-10-22 16:23:35 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
-# -*- coding: iso-8859-1 -*-
 import wx
 from gui.wx.Camera import CameraPanel, EVT_CONFIGURATION_CHANGED
 from gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY
