@@ -1594,10 +1594,9 @@ class wxTreePanel(wxPanel):
 
 		self.imagelist = wxImageList(width, height)
 		self.bitmaps = {}
+		self.bitmaps[None] = self.imagelist.AddWithColourMask(wxEmptyBitmap(width, height), wxBLACK)
 		for type in bitmaps:
 			self.bitmaps[type] = self.imagelist.Add(bitmaps[type])
-
-		self.bitmaps[None] = self.imagelist.AddWithColourMask(wxEmptyBitmap(width, height), wxBLACK)
 
 		self.tree = wxTreeCtrl(self.sashwindow, -1,
 														style=wxTR_HIDE_ROOT|wxTR_NO_BUTTONS)
