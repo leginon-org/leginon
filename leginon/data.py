@@ -84,6 +84,11 @@ class DataManager(object):
 		megs = 300
 		self.maxsize = megs * 1024 * 1024
 
+	def exit(self):
+		if self.server is not None:
+			self.server.exit()
+			self.server = None
+
 	def startServer(self):
 		self.server = tcptransport.Server(self)
 		self.server.start()

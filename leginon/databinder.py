@@ -13,9 +13,6 @@ import datatransport
 import data
 import remotecall
 
-class ExitException(Exception):
-	pass
-
 class DataBinder(object):
 	'''Bind data to a function. Used for mapping Events to handlers.'''
 	def __init__(self, node, logger, threaded=True, queueclass=Queue.Queue, tcpport=None):
@@ -32,18 +29,20 @@ class DataBinder(object):
 
 		## a queue to hold incoming data, and a thread
 		## to process data from the queue
+		self.exitedevent = threading.Event()
 		self.queue = queueclass()
 		t = threading.Thread(name='data binder queue thread',
 													target=self.handlerLoop)
-		t.setDaemon(1)
+		#t.setDaemon(1)
 		t.start()
 
 	def start(self):
 		self.server.start()
 
 	def exit(self):
-		self.queue.put(ExitException())
 		self.server.exit()
+		self.queue.put(datatransport.ExitException())
+		self.exitedevent.wait()
 
 	def handlerLoop(self):
 		'''
@@ -57,7 +56,7 @@ class DataBinder(object):
 		'''
 		while True:
 			item = self.queue.get(block=True)
-			if isinstance(item, ExitException):
+			if isinstance(item, datatransport.ExitException):
 				self.logger.info('Handler loop exited')
 				break
 			try:
@@ -73,10 +72,11 @@ class DataBinder(object):
 					self.logger.info('handled unthreaded')
 			except Exception, e:
 				self.logger.exception('handlerLoop exception')
+		self.exitedevent.set()
 
 	def handle(self, request):
-		if isinstance(request, ExitException):
-			return self.insert(request)
+		if isinstance(request, datatransport.Ping):
+			return None
 		elif isinstance(request, data.Data):
 			return self.insert(request)
 		elif isinstance(request, remotecall.Request):
@@ -93,8 +93,7 @@ class DataBinder(object):
 			estr = 'no remotecallobject %s for node %s' % (request.node, request.name)
 			return ValueError(estr)
 		try:
-			return remotecallobject._execute(request.attributename, request.type,
-																				request.args, request.kwargs)
+			return remotecallobject._handleRequest(request)
 		except Exception, e:
 			return e
 

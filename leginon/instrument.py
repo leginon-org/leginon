@@ -4,14 +4,12 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-18 18:50:17 $
+# $Date: 2005-02-22 23:47:19 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
-
-import remotecall
 
 class Proxy(object):
 	def __init__(self, objectservice):
@@ -22,7 +20,7 @@ class Proxy(object):
 		self.ccdcamera = None
 
 	def getTEMNames(self):
-		objects = self.objectservice.getObjectsByType(remotecall.TEM)
+		objects = self.objectservice.getObjectsByType('TEM')
 		for nodename, name in objects:
 			string = '%s (%s)' % (name, nodename)
 			proxy = self.objectservice.getObjectProxy(nodename, name)
@@ -30,7 +28,7 @@ class Proxy(object):
 		return self.tems.keys()
 
 	def getCCDCameraNames(self):
-		objects = self.objectservice.getObjectsByType(remotecall.CCDCamera)
+		objects = self.objectservice.getObjectsByType('CCDCamera')
 		for nodename, name in objects:
 			string = '%s (%s)' % (name, nodename)
 			proxy = self.objectservice.getObjectProxy(nodename, name)

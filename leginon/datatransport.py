@@ -9,8 +9,14 @@
 class TransportError(IOError):
 	pass
 
+class ExitException(Exception):
+	pass
+
 import localtransport
 import tcptransport
+
+class Ping(object):
+	pass
 
 class Base(object):
 	def __init__(self, logger):
@@ -19,8 +25,6 @@ class Base(object):
 		self.logger = logger
 
 class Client(Base):
-	# hostname/port -> location or whatever
-	# needs to be transport generalized like server
 	def __init__(self, serverlocation, logger):
 		Base.__init__(self, logger)
 
@@ -39,12 +43,15 @@ class Client(Base):
 		if len(self.clients) == 0:
 			raise TransportError('no client connections possible')
 
+	def __cmp__(self, other):
+		return self.serverlocation == other.serverlocation
+
 	# these aren't ordering right, dictionary iteration
 	def _send(self, request):
 		for client in self.clients:
 			try:
 				return client.send(request)
-			except TransportError:
+			except TransportError, e:
 				pass
 		raise TransportError('Error sending request')
 
@@ -53,6 +60,13 @@ class Client(Base):
 		if isinstance(result, Exception):
 			raise result
 		return result
+
+	def ping(self):
+		try:
+			self.send(Ping())
+		except TransportError:
+			return False
+		return True
 
 class Server(Base):
 	def __init__(self, dh, logger, tcpport=None):

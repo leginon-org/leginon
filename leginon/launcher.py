@@ -12,6 +12,7 @@ import data
 import event
 import node
 import nodeclassreg
+from wx import PyDeadObjectError
 import gui.wx.Launcher
 
 class Launcher(node.Node):
@@ -82,7 +83,10 @@ class Launcher(node.Node):
 
 	def onDestroyNode(self, n):
 		evt = gui.wx.Launcher.DestroyNodeEvent(n)
-		self.panel.GetEventHandler().AddPendingEvent(evt)
+		try:
+			self.panel.GetEventHandler().AddPendingEvent(evt)
+		except PyDeadObjectError:
+			pass
 
 		try:
 			self.nodes.remove(n)
@@ -114,4 +118,5 @@ if __name__ == '__main__':
 			args, kwargs = (launchername,), {}
 	l = gui.wx.Launcher.App(*args, **kwargs)
 	l.MainLoop()
+	data.datamanager.exit()
 

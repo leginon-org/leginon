@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Launcher.py,v $
-# $Revision: 1.30 $
+# $Revision: 1.31 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-12 17:47:05 $
+# $Date: 2005-02-22 23:47:20 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -122,7 +122,6 @@ class Frame(wx.Frame):
 		evt.Skip()
 
 	def onExit(self, evt):
-		self.launcher.exit()
 		self.Close()
 
 	def onMenuLogging(self, evt):

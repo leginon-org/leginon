@@ -12,10 +12,10 @@ import SocketServer
 import threading
 import datatransport
 
-class TransportError(datatransport.TransportError):
+class ExitException(Exception):
 	pass
 
-class ExitException(Exception):
+class TransportError(datatransport.TransportError):
 	pass
 
 class Handler(SocketServer.StreamRequestHandler):
@@ -33,16 +33,19 @@ class Handler(SocketServer.StreamRequestHandler):
 			except AttributeError:
 				pass
 			return
-		
-		try:
-			result = self.server.datahandler.handle(request)
-		except Exception, e:
-			estr = 'error handling request, %s' % e
+
+		if isinstance(request, ExitException):
+			result = None
+		else:
 			try:
-				self.server.datahandler.logger.exception(estr)
-			except AttributeError:
-				pass
-			result = e
+				result = self.server.datahandler.handle(request)
+			except Exception, e:
+				estr = 'error handling request, %s' % e
+				try:
+					self.server.datahandler.logger.exception(estr)
+				except AttributeError:
+					pass
+				result = e
 
 		try:
 			pickle.dump(result, self.wfile, pickle.HIGHEST_PROTOCOL)
@@ -58,29 +61,29 @@ class Handler(SocketServer.StreamRequestHandler):
 class Server(object):
 	def __init__(self, datahandler):
 		self.exitevent = threading.Event()
+		self.exitedevent = threading.Event()
 		self.datahandler = datahandler
 		self.hostname = socket.gethostname().lower()
 
 	def start(self):
 		self.thread = threading.Thread(name='socket server thread',
 																		target=self.serve_forever)
-		self.thread.setDaemon(1)
+		#self.thread.setDaemon(1)
 		self.thread.start()
 
 	def serve_forever(self):
 		while not self.exitevent.isSet():
 			self.handle_request()
-
-	def location(self):
-		return {}
+		self.exitedevent.set()
 
 	def exit(self):
 		self.exitevent.set()
 		client = self.clientclass(self.location())
-		try:
-			client.send(ExitException())
-		except TransportError:
-			pass
+		client.send(ExitException())
+		self.exitedevent.wait()
+
+	def location(self):
+		return {}
 
 class Client(object):
 	def __init__(self, location):

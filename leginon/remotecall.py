@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-18 18:50:17 $
+# $Date: 2005-02-22 23:47:20 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -14,6 +14,22 @@
 import inspect
 import datatransport
 import types
+import threading
+
+class LockingError(Exception):
+	pass
+
+class LockError(LockingError):
+	pass
+
+class UnlockError(LockingError):
+	pass
+
+class NotLockedError(LockingError):
+	pass
+
+class TimeoutError(LockingError):
+	pass
 
 class Request(object):
 	def __init__(self, origin, node, name, attributename, type,
@@ -25,6 +41,21 @@ class Request(object):
 		self.type = type
 		self.args = args
 		self.kwargs = kwargs
+
+class MultiRequest(Request):
+	def __init__(self, origin, node, name, attributenames, types,
+								args=None, kwargs=None):
+		n = len(attributenames)
+		if len(types) != n:
+			raise ValueError
+		if args is None:
+			args = [()]*len(attributenames)
+		if kwargs is None:
+			args = [{}]*len(attributenames)
+		if len(args) != n or len(kwargs) != n:
+			raise ValueError
+		Request.__init__(self, origin, node, name, attributenames, types,
+											args, kwargs)
 
 class Object(object):
 	def __init__(self):
@@ -57,11 +88,11 @@ class Object(object):
 		return interface
 
 	def _register(self):
-		self._types = inspect.getmro(self.__class__)
+		self._types = [c.__name__ for c in inspect.getmro(self.__class__)]
 		self._interface = self._query()
 		self._description = self._getDescription()
 
-	def _execute(self, name, type, args=(), kwargs={}):
+	def _execute(self, origin, name, type, args=(), kwargs={}):
 		try:
 			result = self._interface[name][type](*args, **kwargs)
 		except KeyError:
@@ -77,6 +108,67 @@ class Object(object):
 			for method in methods:
 				description[name][method] = True
 		return description
+
+	def _handleRequest(self, request):
+		if isinstance(request, MultiRequest):
+			results = []
+			for i, attributename in enumerate(request.attributename):
+				try:
+					results.append(self._execute(request.origin,
+																				attributename,
+																				request.type[i],
+																				request.args[i],
+																				request.kwargs[i]))
+				except Exception, e:
+					results.append(e)
+			return results
+		else:
+			return self._execute(request.origin,
+														request.attributename,
+														request.type,
+														request.args,
+														request.kwargs)
+
+class Locker(Object):
+	def __init__(self):
+		self.locknode = None
+		self.lock = threading.Condition()
+		Object.__init__(self)
+
+	def _execute(self, origin, name, type, args=(), kwargs={}):
+		# handle lock and unlock directly
+		self.lock.acquire()
+		if self.locknode != origin:
+			if self.locknode is not None:
+				self.lock.wait()
+			self.locknode = origin
+		if name in ['lock', 'unlock']:
+			result = None
+		else:
+			result = Object._execute(self, origin, name, type, args, kwargs)
+		if name != 'lock':
+			self.locknode = None
+			self.lock.notify()
+		self.lock.release()
+		return result
+
+	def lock(self, node):
+		self.lock.acquire()
+		if self.locknode != node:
+			if self.locknode is not None:
+				self.lock.wait()
+			self.locknode = node
+		self.lock.release()
+
+	def unlock(self, node):
+		self.lock.acquire()
+		if self.locknode != node:
+			self.lock.release()
+			raise UnlockError
+		else:
+			self.locknode = None
+		self.lock.notify()
+		self.lock.release()
 
 class ObjectCallProxy(object):
 	def __init__(self, call, args):
@@ -107,18 +199,22 @@ class ObjectProxy(object):
 		else:
 			raise TypeError('attribute %s is not readable' % name)
 
-class ObjectService(Object):
+#class ObjectService(Object):
+class ObjectService(Locker):
 	def __init__(self, node):
 		self.descriptions = {}
 		self.clients = {}
 		self.node = node
-		Object.__init__(self)
+		#Object.__init__(self)
+		Locker.__init__(self)
 		self._addObject('Object Service', self)
 
 	def addDescription(self, nodename, name, description, types, location):
-		if nodename not in self.clients:
+		if (nodename not in self.clients or
+				self.clients[nodename].serverlocation != location):
 			self.clients[nodename] = datatransport.Client(location,
 																										self.node.clientlogger)
+
 		if nodename not in self.descriptions:
 			self.descriptions[nodename] = {}
 		self.descriptions[nodename][name] = (description, types)
@@ -136,6 +232,16 @@ class ObjectService(Object):
 	def removeDescriptions(self, descriptions):
 		for description in descriptions:
 			self.removeDescription(*description)
+
+	def removeNode(self, nodename):
+		try:
+			del self.descriptions[nodename]
+		except KeyError:
+			pass
+		try:
+			del self.clients[nodename]
+		except KeyError:
+			pass
 
 	def _call(self, node, name, attributename, type, args=(), kwargs={}):
 		request = Request(self.node.name, node, name, attributename, type,
@@ -187,7 +293,10 @@ class NodeObjectService(ObjectService):
 
 	def _exit(self):
 		args = (self.node.name,)
-		self._call('Manager', 'Object Service', 'removeNode', 'method', args)
+		try:
+			self._call('Manager', 'Object Service', 'removeNode', 'method', args)
+		except datatransport.TransportError:
+			pass
 
 class ManagerObjectService(ObjectService):
 	def __init__(self, manager):
@@ -204,10 +313,10 @@ class ManagerObjectService(ObjectService):
 			location = self.node.nodelocations[nodename]['location']
 			for n in self.descriptions[nn]:
 				d, t = self.descriptions[nn][n]
-				if 'ObjectService' in t:
+				if 'ObjectService' in t and 'ObjectService' not in types:
 					self._call(nn, n, 'addDescription', 'method', args)
 				descriptions.append((nn, n, d, t, location['data binder']))
-		if descriptions and name == 'Object Service':
+		if descriptions and 'ObjectService' in types:
 			args = (descriptions,)
 			self._call(nodename, name, 'addDescriptions', 'method', args)
 
@@ -223,23 +332,14 @@ class ManagerObjectService(ObjectService):
 		ObjectService.removeDescription(self, nodename, name)
 
 	def removeNode(self, nodename):
-		names = self.descriptions[nodename].keys()
-		descriptions = zip([nodename]*len(names), names)
-		args = (descriptions,)
+		args = (nodename,)
 		for nn in self.descriptions:
 			if nn == nodename:
 				continue
 			for n in self.descriptions[nn]:
 				d, t = self.descriptions[nn][n]
 				if 'ObjectService' in t:
-					self._call(nn, n, 'removeDescriptions', 'method', args)
-
-class Locker(Object):
-	def lock(self):
-		pass
-
-	def unlock(self):
-		pass
+					self._call(nn, n, 'removeNode', 'method', args)
 
 class TEM(Locker):
 	pass

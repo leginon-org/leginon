@@ -8,6 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
+import data
 import gui.wx.Manager
 
 def start():
@@ -20,4 +21,5 @@ def start():
 
 if __name__ == '__main__':
 	start()
+	data.datamanager.exit()
 

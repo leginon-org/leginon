@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Manager.py,v $
-# $Revision: 1.21 $
+# $Revision: 1.22 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-22 00:28:25 $
+# $Date: 2005-02-22 23:47:20 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -254,7 +254,6 @@ class Frame(wx.Frame):
 		self.panel.setLauncher(evt.launcher)
 
 	def onExit(self, evt):
-		self.manager.exit()
 		self.Close()
 
 	def onMenuRunApplication(self, evt):

@@ -22,6 +22,7 @@ import logging
 import copy
 import newdict
 import socket
+from wx import PyDeadObjectError
 import gui.wx.SetupWizard
 import gui.wx.Manager
 import nodeclassreg
@@ -166,7 +167,17 @@ class Manager(node.Node):
 		pass
 
 	def exit(self):
-		pass
+		self.killNode(self.launcher.name, wait=True)
+		launchers = self.getLauncherNames()
+		nodes = self.getNodeNames()
+		for node in nodes:
+			if node not in launchers:
+				self.killNode(node, wait=True)
+		try:
+			self.objectservice._exit()
+		except (AttributeError, TypeError):
+			pass
+		self.databinder.exit()
 
 	# client methods
 
@@ -343,7 +354,10 @@ class Manager(node.Node):
 
 	def onRemoveLauncher(self, name):
 		evt = gui.wx.Manager.RemoveLauncherEvent(name)
-		self.frame.GetEventHandler().AddPendingEvent(evt)
+		try:
+			self.frame.GetEventHandler().AddPendingEvent(evt)
+		except PyDeadObjectError:
+			pass
 
 	def getLauncherCount(self):
 		return len(self.launcherdict)
@@ -482,7 +496,10 @@ class Manager(node.Node):
 
 	def onRemoveNode(self, name):
 		evt = gui.wx.Manager.RemoveNodeEvent(name)
-		self.frame.GetEventHandler().AddPendingEvent(evt)
+		try:
+			self.frame.GetEventHandler().AddPendingEvent(evt)
+		except PyDeadObjectError:
+			pass
 
 	def unregisterNode(self, evt):
 		'''Event handler Removes all information, event mappings and the client.'''
@@ -630,11 +647,11 @@ class Manager(node.Node):
 			except AttributeError:
 				pass
 
-	def killNode(self, nodename):
+	def killNode(self, nodename, **kwargs):
 		'''Attempt telling a node to die and unregister. Unregister if communication with the node fails.'''
 		ev = event.KillEvent()
 		try:
-			self.outputEvent(ev, nodename)
+			self.outputEvent(ev, nodename, **kwargs)
 		except:
 			self.logger.exception('cannot send KillEvent to ' + nodename
 														+ ', unregistering')
