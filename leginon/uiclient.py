@@ -547,6 +547,7 @@ class wxContainerWidget(wxWidget):
 		widget.destroy()
 		if self.sizer is not None and not isinstance(widget, self.nosizerclasses):
 			self.sizer.Remove(widget.sizer)
+		self.layout()
 
 	def removeChildren(self):
 		for name, child in self.children.items():

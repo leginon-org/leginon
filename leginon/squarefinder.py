@@ -25,6 +25,7 @@ class SquareFinder(targetfinder.TargetFinder):
 		self.thresholdimage = None
 		self.blobs = []
 		self.targets = []
+		self.squaredimension = None
 		self.defineUserInterface()
 		self.start()
 
@@ -78,6 +79,7 @@ class SquareFinder(targetfinder.TargetFinder):
 			self.messagelog.error('Load file "%s" failed' % filename)
 			return
 		self.ui_image.setImage(self.image)
+		self.updateMaxBlobs()
 		self.lpfmethod.enable()
 
 	def uiLowPassFilter(self):
@@ -94,6 +96,36 @@ class SquareFinder(targetfinder.TargetFinder):
 	def uiTarget(self):
 		self.target()
 		self.ui_image.setTargetType('Targets', self.targets)
+
+	def onSetSquareDimension(self, value):
+		if value is None:
+			return value
+		self.squaredimension = value
+		self.updateMaxBlobs()
+		self.uimaxblobsize.set((self.squaredimension*1.1)**2)
+		self.uitargetborder.set(self.squaredimension/2)
+		return value
+
+	def updateMaxBlobs(self):
+		if self.image is None or self.squaredimension is None:
+			return
+		blobs = (self.image.shape[0]/self.squaredimension,
+							self.image.shape[1]/self.squaredimension)
+		maxblobs = blobs[0]*blobs[1]
+		self.uimaxblobs.set(maxblobs)
+
+	def onShowAdvanced(self, value):
+		if value:
+			try:
+				self.settingscontainer.addObject(self.advancedcontainer)
+			except ValueError:
+				pass
+		else:
+			try:
+				self.settingscontainer.deleteObject('Advanced')
+			except ValueError:
+				pass
+		return value
 
 	def defineUserInterface(self):
 		targetfinder.TargetFinder.defineUserInterface(self)
@@ -113,15 +145,13 @@ class SquareFinder(targetfinder.TargetFinder):
 																		persist=True)
 		self.uilpfsigma = uidata.Number('Sigma', 1.4, 'rw',
 																		persist=True)
-		self.lpfmethod = uidata.Method('Smooth', self.uiLowPassFilter)
+		self.lpfmethod = uidata.Method('Low Pass Filter', self.uiLowPassFilter)
 		self.lpfmethod.disable()
 		lpfcontainer = uidata.Container('Low Pass Filter')
-		lpfcontainer.addObjects((self.uilpfsize, self.uilpfsigma, self.lpfmethod))
+		lpfcontainer.addObjects((self.uilpfsize, self.uilpfsigma))
 
 		self.thresholdmethod = uidata.Method('Threshold', self.uiThreshold)
 		self.thresholdmethod.disable()
-		thresholdcontainer = uidata.Container('Threshold')
-		thresholdcontainer.addObjects((self.thresholdmethod,))
 
 		self.ui_image.addTargetType('Targets')
 		self.uiborder = uidata.Number('Border', 0, 'rw', persist=True)
@@ -132,17 +162,33 @@ class SquareFinder(targetfinder.TargetFinder):
 		self.findblobsmethod.disable()
 		findblobscontainer = uidata.Container('Find Blobs')
 		findblobscontainer.addObjects((self.uiborder, self.uimaxblobs,
-																		self.uimaxblobsize, self.findblobsmethod))
+																		self.uimaxblobsize))
 
 		self.uitargetborder = uidata.Number('Border', 0, 'rw', persist=True)
 		self.targetmethod = uidata.Method('Target', self.uiTarget)
 		self.targetmethod.disable()
 		targetcontainer = uidata.Container('Targets')
-		targetcontainer.addObjects((self.uitargetborder, self.targetmethod))
+		targetcontainer.addObjects((self.uitargetborder,))
+
+		self.uisquaredimension = uidata.Number('Square Dimension', None, 'rw',
+															callback=self.onSetSquareDimension, persist=True)
+		self.settingscontainer = uidata.Container('Settings')
+		self.settingscontainer.addObjects((self.uisquaredimension,))
+
+		self.advancedcontainer = uidata.Container('Advanced')
+		self.advancedcontainer.addObjects((lpfcontainer, findblobscontainer,
+																	targetcontainer))
+		self.uishowadvanced = uidata.Boolean('Show advanced settings', False, 'rw', 																					callback=self.onShowAdvanced,
+																					persist=True)
+		self.settingscontainer.addObject(self.uishowadvanced)
+
+		controlcontainer = uidata.Container('Control')
+		controlcontainer.addObjects((self.lpfmethod, self.thresholdmethod,
+																	self.findblobsmethod, self.targetmethod))
 
 		container = uidata.LargeContainer('Square Finder')
-		container.addObjects((self.messagelog, testfilecontainer, lpfcontainer,
-													thresholdcontainer, findblobscontainer,
-													targetcontainer, self.ui_image,))
+		container.addObjects((self.messagelog, testfilecontainer,
+													self.settingscontainer, controlcontainer,
+													self.ui_image,))
 		self.uiserver.addObjects((container,))
 
