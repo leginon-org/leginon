@@ -27,11 +27,15 @@ class Gatan(ccdcamera.CCDCamera):
 		ccdcamera.CCDCamera.__init__(self)
 		self.unsupported = []
 
+		self.cameraid = 0
+
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 		try:
 			self.camera = win32com.client.dynamic.Dispatch('TecnaiCCD.GatanCamera.2')
 		except pywintypes.com_error, e:
 			raise RuntimeError('unable to initialize Gatan interface')
+
+		self.camerasize = self._getCameraSize()
 
 		self.binning = {'x': self.camera.Binning, 'y': self.camera.Binning}
 		self.offset = {'x': self.camera.CameraLeft, 'y': self.camera.CameraTop}
@@ -43,6 +47,8 @@ class Gatan(ccdcamera.CCDCamera):
 			'binning': {'get':'getBinning', 'set': 'setBinning'},
 			'dimension': {'get':'getDimension', 'set': 'setDimension'},
 			'offset': {'get':'getOffset', 'set': 'setOffset'},
+			'camera size': {'get': 'getCameraSize'},
+			'pixel size': {'get': 'getPixelSize'},
 			'exposure time': {'get':'getExposureTime', 'set': 'setExposureTime'},
 			'exposure type': {'get':'getExposureType', 'set': 'setExposureType'},
 			'speed': {'get': 'getSpeed', 'set': 'setSpeed'},
@@ -141,6 +147,13 @@ class Gatan(ccdcamera.CCDCamera):
 		except pywintypes.com_error, e:
 			raise ValueError('invalid image dimensions')
 
+	def getCameraSize(self):
+		return self.camerasize
+
+	def getPixelSize(self):
+		x, y = self.camera.GetCCDPixelSize(self.cameraid)
+		return {'x': x, 'y': y}
+
 	def getAcquiring(self):
 		if self.camera.IsAcquiring:
 			return True
@@ -173,4 +186,42 @@ class Gatan(ccdcamera.CCDCamera):
 			return True
 		else:
 			return False
+
+	def _getCameraSize(self):
+		binning = self.camera.Binning
+		left = self.camera.CameraLeft
+		right = self.camera.CameraRight
+		top = self.camera.CameraTop
+		bottom = self.camera.CameraBottom
+
+		self.camera.CameraLeft = 0
+		self.camera.CameraTop = 0
+
+		size = {}
+		for i in ['CameraRight', 'CameraBottom']:
+			for j in [4096, 2048, 1024]:
+				try:
+					setattr(self.camera, i, j)
+				except:
+					continue
+				try:
+					setattr(self.camera, i, j + 1)
+				except:
+					size[i] = j
+					break
+			if i not in size:
+				j = 0
+				while True:
+					try:
+						setattr(self.camera, i, j)
+						j += 1
+					except:
+						break
+				size[i] = j - 1
+		self.camera.Binning = binning
+		self.camera.CameraLeft = left
+		self.camera.CameraRight = right
+		self.camera.CameraTop = top
+		self.camera.CameraBottom = bottom
+		return {'x': size['CameraRight'], 'y': size['CameraBottom']}
 
