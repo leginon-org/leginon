@@ -240,12 +240,25 @@ class ImagePanel(wxPanel):
 		if self.image is None:
 			return
 		if self.valuebutton.GetToggle() or self.ruler is not None:
-			self.UpdateDrawing()
+			#self.UpdateDrawing()
 			dc = wxMemoryDC()
 			dc.SelectObject(self.motionbuffer)
 			dc.BeginDrawing()
-			dc.Clear()
-			#self.Draw(dc)
+
+			fromdc = wxMemoryDC()
+			fromdc.SelectObject(self.buffer)
+			self.Draw(dc)
+
+			xviewoffset, yviewoffset = self.panel.GetViewStart()
+			xscale, yscale = self.getScale()
+			xsize, ysize = self.panel.GetClientSize()
+
+			dc.SetUserScale(xscale, yscale)
+			dc.Blit(0, 0, xsize/xscale + 1, ysize/yscale + 1, fromdc,
+								xviewoffset/xscale, yviewoffset/yscale)
+			fromdc.SelectObject(wxNullBitmap)
+			dc.SetUserScale(1.0, 1.0)
+
 			string = ''
 			x, y = self.view2image((evt.m_x, evt.m_y))
 			if self.ruler is not None:
@@ -259,18 +272,27 @@ class ImagePanel(wxPanel):
 			if string:
 				self.drawLabel(dc, x, y, string)
 			dc.EndDrawing()
-			#self.paint(dc, wxClientDC(self.panel))
-			dc.SelectObject(wxNullBitmap)
 
-			self.motionbuffer.SetMask(wxMaskColour(self.motionbuffer, wxWHITE))
+#			dc.SelectObject(wxNullBitmap)
+#			self.motionbuffer.SetMask(wxMaskColour(self.motionbuffer, wxWHITE))
+#			dc.SelectObject(self.motionbuffer)
 
 			clientdc = wxClientDC(self.panel)
 			clientdc.BeginDrawing()
-			clientdc.DrawBitmap(self.motionbuffer, 0, 0, 1)
 			clientdc.EndDrawing()
+			dc.SelectObject(wxNullBitmap)
+			clientdc.DrawBitmap(self.motionbuffer, 0, 0)
+
+			#width, height = self.panel.GetClientSize()
+			#clientdc.Blit(0, 0, width, height, dc, 0, 0, wxCOPY, True)
+			#clientdc.Blit(0, 0, width, height, dc, 0, 0)
+			#clientdc.EndDrawing()
+			#dc.SelectObject(wxNullBitmap)
 
 	def drawRulerLine(self, origin, destination, dc):
 		dc.SetPen(wxPen(wxRED, 1))
+		origin = self.image2view(origin)
+		destination = self.image2view(destination)
 		dc.DrawLine(origin[0], origin[1], destination[0], destination[1])
 
 	def rulerString(self, x, y):
@@ -302,8 +324,8 @@ class ImagePanel(wxPanel):
 		else:
 			yoffset = -(10 + yextent + 4)
 
-		x = int(round((x + xoffset)))
-		y = int(round((y + yoffset)))
+		x = int(round((ix + xoffset)))
+		y = int(round((iy + yoffset)))
 
 		dc.DrawRectangle(x, y, xextent + 4, yextent + 4)
 
@@ -529,18 +551,27 @@ class TargetImagePanel(ImagePanel):
 		mem = wxMemoryDC()
 		bitmap = wxEmptyBitmap(length, length)
 		mem.SelectObject(bitmap)
+		mem.BeginDrawing()
+		mem.Clear()
 		mem.SetBrush(wxBrush(color, wxTRANSPARENT))
 		mem.SetPen(pen)
 		mem.DrawLine(length/2, 0, length/2, length)
 		mem.DrawLine(0, length/2, length, length/2)
+		mem.EndDrawing()
 		mem.SelectObject(wxNullBitmap)
-		bitmap.SetMask(wxMaskColour(bitmap, wxBLACK))
+		bitmap.SetMask(wxMaskColour(bitmap, wxWHITE))
 		return bitmap
 
 	def drawTarget(self, dc, target):
+		memorydc = wxMemoryDC()
 		bitmap = self.getTargetBitmap(target)
-		dc.DrawBitmap(bitmap, target[0] - bitmap.GetWidth()/2,
-													target[1] - bitmap.GetHeight()/2, 1)
+		memorydc.SelectObject(bitmap)
+		width = bitmap.GetWidth()
+		height = bitmap.GetHeight()
+		dc.Blit(target[0] - width/2, target[1] - height/2,
+									width, height, memorydc, 0, 0, wxCOPY, True)
+#		dc.DrawBitmap(bitmap, target[0] - bitmap.GetWidth()/2,
+#													target[1] - bitmap.GetHeight()/2, 1)
 
 	def OnRightDoubleClick(self, evt):
 		if self.closest_target is not None:
