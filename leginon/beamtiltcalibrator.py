@@ -54,7 +54,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.logger.info('Making matrix...')
 		matrix = Numeric.zeros((2,2), Numeric.Float32)
 		self.logger.info('Matrix type %s, matrix dict type %s'
-											% (matrix.typecode(), matdict['x'].typecode()))
+											% (matrix.type(), matdict['x'].type()))
 		matrix[:,0] = matdict['x']
 		matrix[:,1] = matdict['y']
 
@@ -79,7 +79,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.logger.info('Making matrix...')
 		matrix = Numeric.zeros((2,2), Numeric.Float32)
 		self.logger.info('Matrix type %s, matrix dict type %s'
-											% (matrix.typecode(), matdict['x'].typecode()))
+											% (matrix.type(), matdict['x'].type()))
 
 		m00 = float(matdict['x'][0])
 		m10 = float(matdict['x'][1])
@@ -92,7 +92,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		ht = self.getHighTension()
 		mag = self.getMagnification()
 		self.logger.info('Matrix %s, shape %s, type %s, flat %s'
-						% (matrix, matrix.shape, matrix.typecode(), Numeric.ravel(matrix)))
+						% (matrix, matrix.shape, matrix.type(), Numeric.ravel(matrix)))
 		self.calclient.storeMatrix(ht, mag, 'defocus', matrix)
 		self.logger.info('Calibration stored')
 		node.beep()

@@ -71,7 +71,7 @@ else:
 	for mod in fftw_mods:
 		mod.plans = {}
 		mod.iplans = {}
-	# mapping Numeric typecode to (fftwmodule, transformed type)
+	# mapping numarray type to (fftwmodule, transformed type)
 	type_module = {
 		Numeric.Float32: sfftw,
 		Numeric.Float64: fftw,
@@ -113,30 +113,30 @@ else:
 					print 'fftw plans done'
 
 		def _transform(self, im):
-			if im.typecode() not in complex_real.values():
+			if im.type() not in complex_real.values():
 				try:
-					im = im.astype(complex_real[im.typecode()])
+					im = im.astype(complex_real[im.type()])
 				except KeyError:
 					im = im.astype(Numeric.Float32)
 
 			fftshape = (im.shape[1], im.shape[0] / 2 + 1)
-			imfft = Numeric.zeros(fftshape, real_complex[im.typecode()])
-			mod = type_module[im.typecode()]
+			imfft = Numeric.zeros(fftshape, real_complex[im.type()])
+			mod = type_module[im.type()]
 			plan = self.timer(self.plan, (im.shape,mod))
 			mod.rfftwnd_one_real_to_complex(plan, im, imfft)
 			return imfft
 
 		def _itransform(self, fftim):
-			if fftim.typecode() not in real_complex.values():
+			if fftim.type() not in real_complex.values():
 				try:
-					fftim = fftim.astype(real_complex[fftim.typecode()])
+					fftim = fftim.astype(real_complex[fftim.type()])
 				except KeyError:
 					fftim = fftim.astype(Numeric.Complex32)
 
 			imshape = (2*(fftim.shape[1]-1), fftim.shape[0])
 
-			im = Numeric.zeros(imshape, complex_real[fftim.typecode()])
-			mod = type_module[fftim.typecode()]
+			im = Numeric.zeros(imshape, complex_real[fftim.type()])
+			mod = type_module[fftim.type()]
 			plan = self.timer(self.iplan, (imshape,mod))
 			### the input image will be destroyed, so make copy
 			fftimcopy = fftim.copy()
@@ -180,11 +180,11 @@ if __name__ == '__main__':
 
 	print 'reading'
 	im = Mrc.mrc_to_numeric('../test_images/spiketest.mrc')
-	print 'IM TYPE', im.typecode()
+	print 'IM TYPE', im.type()
 	stats(im)
 	ffteng = fftEngine()
 	fft = ffteng.transform(im)
-	print 'FFT TYPE', fft.typecode()
+	print 'FFT TYPE', fft.type()
 	ifft = ffteng.itransform(fft)
-	print 'IFFT TYPE', ifft.typecode()
+	print 'IFFT TYPE', ifft.type()
 	stats(ifft)

@@ -736,8 +736,8 @@ class Image(Binary):
 	typelist = Binary.typelist + ('image',)
 	def set(self, value):
 		if value is not None:
-			if value.typecode() in badtypes:
-				raise RuntimeError('Image type %s is illegal, try Float32 instead' % (value.typecode(),))
+			if value.type() in badtypes:
+				raise RuntimeError('Image type %s is illegal, try Float32 instead' % (value.type(),))
 		Binary.set(self, value)
 
 class ClickImage(Container):

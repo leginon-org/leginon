@@ -14,7 +14,7 @@ try:
 		else:
 			return inputarray
 		'''
-		if isinstance(inputarray.typecode(), Numeric.IntegralType):
+		if isinstance(inputarray.type(), Numeric.IntegralType):
 			return inputarray.astype(Numeric.Float32)
 		else:
 			return inputarray
@@ -29,7 +29,7 @@ except:
 		else:
 			return inputarray
 		'''
-		if inputarray.typecode() in numeric_integers:
+		if inputarray.type() in numeric_integers:
 			return inputarray.astype(Numeric.Float32)
 		else:
 			return inputarray
@@ -255,7 +255,7 @@ def center_mask(numericarray, mask_radius):
 	cs_shape = center_square.shape
 	cs_center = cs_shape[0]/2, cs_shape[1]/2
 	circ = filled_circle(cs_shape,mask_radius)
-	center_square[:] = center_square * circ.astype(center_square.typecode())
+	center_square[:] = center_square * circ.astype(center_square.type())
 
 def shuffle(narray):
 	'''
@@ -266,7 +266,7 @@ def shuffle(narray):
 	r,c = newshape = oldr, (oldc-1)*2
 
 	## create new full size array 
-	new = Numeric.zeros(newshape, narray.typecode())
+	new = Numeric.zeros(newshape, narray.type())
 
 	## fill in right half
 	new[r/2:,c/2:] = narray[:r/2,1:]
@@ -282,21 +282,21 @@ def shuffle(narray):
 
 def swap(numericarray):
 	rows,cols = numericarray.shape
-	newarray = Numeric.zeros(numericarray.shape, numericarray.typecode())
+	newarray = Numeric.zeros(numericarray.shape, numericarray.type())
 	newarray[:rows/2] = numericarray[rows/2:]
 	newarray[rows/2:] = numericarray[:rows/2]
 	return newarray
 
 def swap_row_halves(numericarray):
 	rows,cols = numericarray.shape
-	newarray = Numeric.zeros(numericarray.shape, numericarray.typecode())
+	newarray = Numeric.zeros(numericarray.shape, numericarray.type())
 	newarray[:rows/2] = numericarray[rows/2:]
 	newarray[rows/2:] = numericarray[:rows/2]
 	return newarray
 
 def swap_col_halves(numericarray):
 	rows,cols = numericarray.shape
-	newarray = Numeric.zeros(numericarray.shape, numericarray.typecode())
+	newarray = Numeric.zeros(numericarray.shape, numericarray.type())
 	newarray[:,:cols/2] = numericarray[:,cols/2:]
 	newarray[:,cols/2:] = numericarray[:,:cols/2]
 	return newarray

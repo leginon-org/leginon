@@ -599,7 +599,7 @@ class Data(newdict.TypedDict, leginonobject.LeginonObject):
 		if type(value) is Numeric.ArrayType:
 			shape = value.shape
 			if max(shape) > 2:
-				s = 'array(shape: %s, type: %s)' % (shape,value.typecode())
+				s = 'array(shape: %s, type: %s)' % (shape,value.type())
 				return s
 		return str(value)
 

@@ -183,9 +183,9 @@ def validateNumericArray(obj):
 	if isinstance(obj, FileReference):
 		return obj
 
-	### if it's a Numeric array, it should have the typecode() attribute
+	### if it's a Numeric array, it should have the type() attribute
 	try:
-		obj.typecode
+		obj.type
 	except AttributeError:
 		raise TypeError()
 	return obj

@@ -99,7 +99,7 @@ class Mosaic(object):
 #				scaleoffset[i] = int(Numeric.floor((maxdimension - imageshape[i])/2.0))
 
 		if self.tiles:
-			astype = self.tiles[0].image.typecode()
+			astype = self.tiles[0].image.type()
 		mosaicimage = Numeric.zeros(imageshape, astype)
 		for tile in self.tiles:
 			position = self.getTilePosition(tile)
@@ -442,12 +442,12 @@ class EMMosaic(object):
 		self.scale = scale
 
 		### create mosaic image
-		typecode = self.tiles[0].image.typecode()
-		mosaicimage = Numeric.zeros(mshape, typecode)
+		numtype = self.tiles[0].image.type()
+		mosaicimage = Numeric.zeros(mshape, numtype)
 
 		### scale and insert tiles
 		for tile in self.tiles:
-			scaled_tile = imagefun.scale(tile.image, (scale, scale)).astype(typecode)
+			scaled_tile = imagefun.scale(tile.image, (scale, scale)).astype(numtype)
 			scaled_shape = scaled_tile.shape
 			scaled_pos = self.scaled(tile.corner_pos)
 			rowslice = slice(scaled_pos[0],scaled_pos[0]+scaled_shape[0])

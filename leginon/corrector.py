@@ -149,7 +149,7 @@ class SimpleCorrector(node.Node):
 		correctedimage = self.correctImage(image, cameradata)
 		if correctedimage is None:
 			return None
-		correctedimage = correctedimage.astype(image.typecode())
+		correctedimage = correctedimage.astype(image.type())
 		newdata = data.CorrectedCameraImageData(initializer=imagedata, image=correctedimage)
 		return newdata
 
@@ -866,12 +866,12 @@ class Corrector(node.Node):
 			good = imagefun.despike(good, nsize, thresh)
 			self.logger.info('Despiked')
 
-		## this has been commented because original.typecode()
+		## this has been commented because original.type()
 		## might be unsigned and causes negative values to wrap
 		## around to very large positive values
 		## before doing this astype, we should maybe clip negative
 		## values
-		#return good.astype(original.typecode())
+		#return good.astype(original.type())
 
 		final = good.astype(Numeric.Float32)
 		return final

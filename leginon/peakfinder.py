@@ -160,9 +160,9 @@ def quadraticPeakFit(numarray):
 	rows, cols = numarray.shape
 
 	# create design matrix and vector
-	dm = Numeric.zeros(rows * cols * 5, numarray.typecode())
+	dm = Numeric.zeros(rows * cols * 5, numarray.type())
 	dm.shape = (rows * cols, 5)
-	v = Numeric.zeros((rows * cols,), numarray.typecode())
+	v = Numeric.zeros((rows * cols,), numarray.type())
 
 	i = 0
 	for row in range(rows):

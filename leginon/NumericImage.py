@@ -34,7 +34,7 @@ ntype_itype = {
 def Numeric2PILImage(numericarray, scale=False):
 	if scale:
 		numericarray = linearscale(numericarray, (None, None), (0, 255)).astype(Numeric.UInt8)
-	type = numericarray.typecode()
+	type = numericarray.type()
 	h, w = numericarray.shape
 	imsize = w, h
 	itemsize = numericarray.itemsize()
@@ -191,7 +191,7 @@ class NumericImage:
 
 		clip = self.transform['clip']
 		final = linearscale(self.orig_array, clip, (0,255), self.extrema)
-		type = final.typecode()
+		type = final.type()
 		h,w = final.shape
 		imsize = w,h
 		itemsize = final.itemsize()

@@ -19,13 +19,13 @@ import cStringIO
 import imagefun
 
 ## MRC supported types
-mrcmode_typecode = {
+mrcmode_type = {
 	0: (1, Numeric.UInt8),
 	1: (2, Numeric.Int16),
 	2: (4, Numeric.Float32),
 	3: (8, Numeric.Complex32),
 }
-typecode_mrcmode = {
+type_mrcmode = {
 	Numeric.UInt8: 0,
 	Numeric.Int16: 1,
 	Numeric.Float32: 2,
@@ -35,7 +35,7 @@ typecode_mrcmode = {
 ## MRC is lame because it only supports a few of the C types
 ## The following allows other C types to be converted to 
 ## MRC supported types by up/down casting.
-unsupported_typecodes = {
+unsupported_types = {
 	Numeric.Complex64: Numeric.Complex32, # precision loss
 	Numeric.Float64:   Numeric.Float32,   # precision loss
 	Numeric.Int32:     Numeric.Float32,   # precision loss
@@ -153,7 +153,7 @@ class MrcData:
 
 	def fromfile(self, fobj):
 		try:
-			elementsize = mrcmode_typecode[self.mode][0]
+			elementsize = mrcmode_type[self.mode][0]
 		except KeyError:
 			print 'Unknown MRC mode', self.mode
 			raise
@@ -164,8 +164,8 @@ class MrcData:
 		fobj.write(self.data)
 
 	def toNumeric(self):
-		typecode = mrcmode_typecode[self.mode][1]
-		narray = Numeric.fromstring(self.data, typecode)
+		numtype = mrcmode_type[self.mode][1]
+		narray = Numeric.fromstring(self.data, numtype)
 		## for now, using little endian as standard
 		if sys.byteorder != 'little':
 			narray = narray.byteswapped()
@@ -185,16 +185,16 @@ class MrcData:
 		if not isinstance(narray, Numeric.ArrayType):
 			raise TypeError('Value must be a Numeric array')
 
-		t = narray.typecode()
-		if t in typecode_mrcmode:
-			typecode = t
-		elif t in unsupported_typecodes:
-			typecode = unsupported_typecodes[t]
-			narray = narray.astype(typecode)
+		t = narray.type()
+		if t in type_mrcmode:
+			numtype = t
+		elif t in unsupported_types:
+			numtype = unsupported_types[t]
+			narray = narray.astype(numtype)
 		else:
-			raise TypeError('Invalid Numeric array type for MRC conversion')
+			raise TypeError('Invalid Numeric array type for MRC conversion: %s' % (t,))
 
-		self.mode = typecode_mrcmode[typecode]
+		self.mode = type_mrcmode[numtype]
 
 		## get my description from Numeric shape
 		shape = narray.shape
