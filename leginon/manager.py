@@ -455,23 +455,23 @@ class Manager(node.Node):
 		for dataid in self.datahandler.ids():
 			self.unpublishDataLocation(dataid, nodeid)
 
-	def launchNode(self, launcher, target, name, nodeargs=(), dependencies=[]):
+	def launchNode(self, launcher, target, name, dependencies=[]):
 		'''
 		Launch a node with a launcher node.
 		launcher = id of launcher node
 		target = name of a class in this launchers node class list
 		dependencies = node dependent on to launch
 		'''
-		args = (launcher, target, name, nodeargs, dependencies)
+		args = (launcher, target, name, dependencies)
 		t = threading.Thread(name='manager wait node thread',
 													target=self.waitNode, args=args)
 		t.start()
 		nodeid = self.id + (name,)
 		return nodeid
 
-	def waitNode(self, launcher, target, name, nodeargs, dependencies):
-		newid = self.id + (name,)
-		args = (newid, self.session, self.nodelocations) + nodeargs
+	def waitNode(self, launcher, target, name, dependencies):
+		nodeid = self.id + (name,)
+		args = (nodeid, self.session, self.nodelocations)
 		dependencyids = []
 		for dependency in dependencies:
 			dependencyids.append(('manager', dependency))
@@ -481,22 +481,13 @@ class Manager(node.Node):
 			dependencyids.append(launcher)
 
 		self.waitNodes(dependencyids)
-		ev = event.LaunchEvent(id=self.ID(), targetclass=target, args=args)
+		initializer = {'id': self.ID(),
+										'targetclass': target,
+										'node ID': nodeid,
+										'session': self.session,
+										'node locations':self.nodelocations}
+		ev = event.CreateNodeEvent(initializer=initializer)
 		self.outputEvent(ev, launcher, wait=True)
-
-		#attempts = 5
-		#for i in range(attempts):
-		#	try:
-		#		print 'OUTPUT LaunchEvent', target
-		#		self.outputEvent(ev, launcher, wait=True)
-		#		print 'DONE OUTPUT LaunchEvent', target
-		#	except:
-		#		self.printException()
-		#		time.sleep(1.0)
-		#		if i == attempts - 1:
-		#			raise
-		#	else:
-		#		break
 
 	def waitNodes(self, nodes):
 		self.initializednodescondition.acquire()
@@ -716,7 +707,7 @@ class Manager(node.Node):
 			self.messagelog.error('Invalid node name "%s"' % name)
 			return
 		args = ()
-		self.launchNode(launcherid, nodeclass, name, args)
+		self.launchNode(launcherid, nodeclass, name)
 
 	def uiKillNode(self):
 		'''UI helper calling killNode, using str node aliases. See killNode.'''

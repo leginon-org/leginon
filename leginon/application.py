@@ -113,14 +113,12 @@ class Application(object):
 			launcherid = self.getLauncherIDFromAlias(ns['launcher alias'])
 		except ValueError:
 			raise ValueError('Invalid node specification')
-		#nodename = self.getName() + ' ' + ns['alias']
 		nodename = ns['alias']
 		args = tuple(ns['args'])
 		dependencies = []
 		for dependency in ns['dependencies']:
 			dependencies.append(dependency)
-		return ns['alias'], (launcherid, ns['class string'], nodename, args,
-													dependencies)
+		return ns['alias'], (launcherid, ns['class string'], nodename, dependencies)
 
 	def bindingSpec2Args(self, bs):
 		# i know...

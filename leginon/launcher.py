@@ -33,7 +33,7 @@ class Launcher(node.Node):
 
 		self.defineUserInterface()
 		self.publishNodeClasses()
-		self.addEventInput(event.LaunchEvent, self.handleLaunch)
+		self.addEventInput(event.CreateNodeEvent, self.onCreateNode)
 		self.start()
 
 	def exit(self):
@@ -52,24 +52,21 @@ class Launcher(node.Node):
 		d = data.NodeClassesData(id=self.ID(), nodeclasses=nodeclassnames)
 		self.publish(d, pubevent=True)
 
-	def handleLaunch(self, launchevent):
-		targetclass = launchevent['targetclass']
-		args = launchevent['args']
-		kwargs = launchevent['kwargs']
-		if kwargs is None:
-			kwargs = {}
+	def onCreateNode(self, ievent):
+		targetclass = ievent['targetclass']
+		nodeclass = nodeclassreg.getNodeClass(targetclass)
+
+		nodeid = ievent['node ID']
+		session = ievent['session']
+		nodelocations = ievent['node locations']
+
+		kwargs = {}
 		kwargs['uicontainer'] = self.uicontainer
 		kwargs['launcher'] = self.id
 		kwargs['datahandler'] = self.datahandler
 
-		# get the requested class object
-		nodeclass = nodeclassreg.getNodeClass(targetclass)
-
-		id = args[0]
-		session = args[1]
-		nodelocations = args[2]
-		nodeclass(id, session, nodelocations, **kwargs)
-		self.confirmEvent(launchevent)
+		nodeclass(nodeid, session, nodelocations, **kwargs)
+		self.confirmEvent(ievent)
 
 if __name__ == '__main__':
 	import sys, socket

@@ -56,7 +56,7 @@ class EventLog(data.Data):
 ##			PauseEvent
 ##			ResumeEvent
 ##			NumericControlEvent
-##			LaunchEvent
+##			CreateNodeEvent
 ##			LockEvent
 ##			UnlockEvent
 
@@ -247,15 +247,15 @@ class KillEvent(ControlEvent):
 	'Event that signals a kill'
 	pass
 
-class LaunchEvent(ControlEvent):
+class CreateNodeEvent(ControlEvent):
 	'ControlEvent sent to a NodeLauncher specifying a node to launch'
 	def typemap(cls):
 		t = ControlEvent.typemap()
 		t += [
-			('newproc', int),
 			('targetclass', str),
-			('args', tuple),
-			('kwargs', dict)
+			('node ID', tuple),
+			('session', data.SessionData),
+			('node locations', dict)
 		]
 		return t
 	typemap = classmethod(typemap)
