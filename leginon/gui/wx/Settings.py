@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Settings.py,v $
-# $Revision: 1.17 $
+# $Revision: 1.18 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-11-02 23:32:57 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -52,7 +52,8 @@ class Dialog(wx.Dialog):
 
 		if title is None:
 			title = '%s Settings' % self.node.name
-		wx.Dialog.__init__(self, parent, -1, title) 
+		wx.Dialog.__init__(self, parent, -1, title,
+												style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 
 		self.widgets = {}
 
