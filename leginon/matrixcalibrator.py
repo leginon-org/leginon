@@ -111,7 +111,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 				## deviation from pixsize should be less than
 				## 12%
-				tol = 0.12
+				#tol = 0.12
+				tol = self.uitolerance.get()
 				err = abs(perpix - pixsize) / pixsize
 				if err > tol:
 					print 'FAILED PIXEL SIZE TOLERANCE'
@@ -151,6 +152,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 	def defineUserInterface(self):
 		calibrator.Calibrator.defineUserInterface(self)
 
+		self.uitolerance = uidata.Float('Tolerance', 0.12, 'rw')
 		parameters = self.parameters.keys()
 		parameters.sort()
 		self.uiparameter = uidata.SingleSelectFromList('Parameter', parameters, 0)
@@ -164,7 +166,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		#self.uivalidshift = uidata.Struct('Valid Shift', validshift, 'rw')
 
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((self.uiparameter, self.uinaverage, self.ui_interval, self.uicurbase, self.uibase))
+		settingscontainer.addObjects((self.uitolerance, self.uiparameter, self.uinaverage, self.ui_interval, self.uicurbase, self.uibase))
 
 		calibratemethod = uidata.Method('Calibrate', self.uiCalibrate)
 
