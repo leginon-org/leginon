@@ -349,7 +349,7 @@ class WidgetGroup(Pmw.Group):
 		if self.applybutton is None:
 			self.applybutton = Tkinter.Button(self.interior(), text='Apply',
 																													command=self.apply)
-			self.applybutton.grid(row = nwidgets+1, column = 0, padx = 10, pady = 5)
+			self.applybutton.grid(row = nwidgets+1, column = 0, padx = 10, pady = 5, sticky=Tkinter.E)
 		self.setcommands.append(setcommand)
 
 	def apply(self):

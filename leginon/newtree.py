@@ -53,7 +53,24 @@ class EntryTree(Tkinter.Frame):
 	def get(self):
 		return self.value
 
+	def expanded(self, node, expanded):
+		if node.expanded():
+			expanded.append(node.full_id())
+			for child in node.children():
+				self.expanded(child, expanded)
+
+	def expand(self, node, expanded):
+		full = node.full_id()
+		if full in expanded:
+			if node.expandable():
+				node.expand()
+				expanded.remove(full)
+				for child in node.children():
+					self.expand(child, expanded)
+
 	def set(self, value):
+		#expanded = []
+		#self.expanded(self.edit_tree.root, expanded)
 		self.editvariable.set('')
 		self.edit_tree.destroy()
 		self.value = value
@@ -65,6 +82,7 @@ class EntryTree(Tkinter.Frame):
 		self.edit_tree.configure(xscrollcommand=self.sb2.set)
 		self.sb2.configure(command=self.edit_tree.xview)
 		self.edit_tree.root.expand()
+		#self.expand(self.edit_tree.root, expanded)
 
 #	def set(self, value):
 #		self.editvariable.set('')

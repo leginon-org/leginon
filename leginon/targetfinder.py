@@ -71,15 +71,16 @@ class ClickTargetFinder(TargetFinder):
 		Then call publishTargetList in another function
 		'''
 		imagewatcher.ImageWatcher.processData(self, newdata)
+		self.clickimage.set(None)
 		
 	def defineUserInterface(self):
 		tfspec = TargetFinder.defineUserInterface(self)
 
-		clickimage = self.registerUIData('Clickable Image', 'binary', callback=self.uiImage, permissions='rw')
+		self.clickimage = self.registerUIData('Clickable Image', 'binary', callback=self.uiImage, permissions='rw')
 		# this is just a placeholder for the argspec.  The real value
 		# comes from clickimage which is the choices
 
-		myspec = self.registerUISpec('Click Target Finder', (clickimage,))
+		myspec = self.registerUISpec('Click Target Finder', (self.clickimage,))
 		myspec += tfspec
 		return myspec
 

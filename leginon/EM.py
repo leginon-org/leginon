@@ -253,9 +253,8 @@ class EM(node.Node):
 
 	def uiCallback(self, value=None):
 		if value is not None:
-			return self.setEM(value)
-		else:
-			return self.getEM(withoutkeys=['image data'])
+			self.setEM(value)
+		return self.getEM(withoutkeys=['image data'])
 
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)

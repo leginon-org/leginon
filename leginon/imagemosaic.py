@@ -185,6 +185,7 @@ class ImageMosaic(watcher.Watcher):
 				#imagemosaic.addTile(idata.id, tileimage, position)
 				imagemosaic.addTile(idata['id'], tileimage, position)
 #				print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
+		self.image.set(None)
 
 	def automaticPosition(self, idata, imagemosaic):
 		for positionmethod in self.automaticpriority:
@@ -398,7 +399,7 @@ class ImageMosaic(watcher.Watcher):
 										'Publish Image', ())
 		clearspec = self.registerUIMethod(self.uiClearMosaics, 'Clear', ())
 
-		getimagespec = self.registerUIData('Mosaic Image', 'binary',
+		self.image = self.registerUIData('Mosaic Image', 'binary',
 														permissions='rw', callback=self.uiImageCallback)
 
 		imagespec = self.registerUIContainer('Image', (publishspec, clearspec))
@@ -413,7 +414,7 @@ class ImageMosaic(watcher.Watcher):
 		scalecontainerspec = self.registerUIContainer('Scale',
 																									(scalespec, autoscalespec))
 		spec = self.registerUISpec('Image Mosaic',
-																(imagespec, getimagespec, scalecontainerspec))
+																(imagespec, self.image, scalecontainerspec))
 		spec += watcherspec
 		return spec
 
@@ -594,6 +595,7 @@ class StateImageMosaic(ImageMosaic):
 				imagemosaic.addTile(idata['id'], tileimage, position,
 																									tilescope, tilecamera)
 #				print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
+		self.image.set(None)
 
 	def positionByCalibration(self, idata, imagemosaic):
 		parameter = self.calibrationparameter.get()

@@ -108,7 +108,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print 'acquire'
 			self.acquire(presetdata)
 
-	def targetToEMData(self, targetdata, movetype):
+	def targetToEMData(self, targetdata):
 		'''
 		convert an ImageTargetData to an EMData object
 		using chosen move type.
