@@ -472,6 +472,7 @@ class ImageData(Data):
 
 	def buildWidget(self, parent):
 		self.iv = ImageViewer(parent)
+		self.iv.canvas.targetClickerOn()
 		return self.iv
 
 	def setWidget(self, value):
@@ -496,11 +497,27 @@ class ImageData(Data):
 #			print 'import numeric'
 			self.iv.import_numeric(numdata)
 #			print 'done'
-		
+
 
 	def getWidget(self):
-		print 'not implemented'
-		raise NotImplementedError()
+		'''
+		this is how we return targets to the rpc server
+		'''
+		targets = self.getTargets()
+		return targets
+
+	def getTargets(self):
+		'''
+		call ImageCanvas.getTargets()
+		then fix it up for xml-rpc
+		'''
+		targetlist = self.iv.canvas.getTargets()
+		## remove items that are None
+		for target in targetlist:
+			for key, value in target.items():
+				if value is None:
+					del target[key]
+		return targetlist
 
 
 class Method(SpecWidget):
