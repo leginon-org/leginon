@@ -51,12 +51,12 @@ class Leginon(Tkinter.Frame):
 		managerlocation = self.managerLocation()
 		self.uiclients['manager'] = interface.Client(managerlocation[0],
 																									managerlocation[1])
-		nodelocations = self.nodeLocations()
-		for node in nodelocations:
-			page = self.notebook.add(eval(node)[-1])
-			gui = nodegui.NodeGUI(page, nodelocations[node]['hostname'],
-																	nodelocations[node]['UI port'], None, True)
-			gui.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
+#		nodelocations = self.nodeLocations()
+#		for node in nodelocations:
+#			page = self.notebook.add(eval(node)[-1])
+#			gui = nodegui.NodeGUI(page, nodelocations[node]['hostname'],
+#																	nodelocations[node]['UI port'], None, True)
+#			gui.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
 		gridatlaspage = self.notebook.add('Grid Atlas')
 		gridatlaswidget = GridAtlasWidget(gridatlaspage,
 														self.nodeLocation('Grid Atlas Grid Preview'),
@@ -64,6 +64,7 @@ class Leginon(Tkinter.Frame):
 														self.nodeLocation('Grid Atlas Mosaic Navigator'),
 														self.nodeLocation('Grid Atlas Image Viewer'))
 		gridatlaswidget.pack()
+		self.notebook.setnaturalsize()
 
 	def nodeLocations(self):
 		try:
@@ -90,6 +91,7 @@ class CustomWidget(Tkinter.Frame):
 	def __init__(self, parent):
 		Tkinter.Frame.__init__(self, parent)
 		self.uiclients = {}
+		self.groups = {}
 
 	def uiClient(self, uiclientname, uiclientlocation):
 		self.uiclients[uiclientname] = interface.Client(
@@ -110,79 +112,59 @@ class CustomWidget(Tkinter.Frame):
 				else:
 					return self.widgetFrom(parent, uiclientname, subspec, name[1:])
 
+	def arrangeEntry(self, widget, width = 10):
+		widget.entry['width'] = width
+		widget.entry['justify'] = Tkinter.RIGHT
+		widget.entry.grid(row = 0, column = 1, padx = 5, pady = 5, columnspan = 1)
+		widget.getbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
+		widget.setbutton.grid(row = 0, column = 3, padx = 5, pady = 5)
+
+	# addGroup and addWidget might be able to be done purely with Pmw.Group
+	def addGroup(self, name):
+		group = Pmw.Group(self, tag_text = name)
+		group.grid(row = len(self.groups), column = 0, padx=10, pady=10)
+		# whatever
+		if name == 'Image':
+			group.grid(row = 0, column = 1, rowspan = len(self.groups))
+		self.groups[name] = {}
+		self.groups[name]['group'] = group
+		self.groups[name]['widgets'] = []
+
+	def addWidget(self, groupname, uiclient, name):
+		if groupname not in self.groups:
+			self.addGroup(groupname)
+		nwidgets = len(self.groups[groupname]['widgets'])
+		interior = self.groups[groupname]['group'].interior()
+		widget = self.widgetFromName(interior, uiclient, name)
+		widget.grid(row = nwidgets, column = 0, padx = 10, pady = 10,
+																		sticky=Tkinter.W+Tkinter.E)
+		self.groups[groupname]['widgets'].append(widget)
+		return widget
+
 # maybe the widgets themselves could launch the necessary nodes
 class GridAtlasWidget(CustomWidget):
 	def __init__(self, parent, gridpreview, stateimagemosaic, mosaicnavigator,
 																																	imageviewer):
 		CustomWidget.__init__(self, parent)
 
-		self.uiClient('GP', gridpreview)
-		self.uiClient('SIM', stateimagemosaic)
-		self.uiClient('MN', mosaicnavigator)
-		self.uiClient('IV', imageviewer)
+		self.uiClient('Grid Preview', gridpreview)
+		self.uiClient('State Image Mosaic', stateimagemosaic)
+#		self.uiClient('MN', mosaicnavigator)
+#		self.uiClient('IV', imageviewer)
 
-		# Grid Preview
-		frame = Pmw.LabeledWidget(self, labelpos = 'nw',
-															label_text = 'Grid Preview')
+		widget = self.addWidget('Settings', 'Grid Preview',
+														('Preferences', 'Magnification'))
+		self.arrangeEntry(widget, 9)
+		widget = self.addWidget('Settings', 'State Image Mosaic',
+																			('Scale', 'Auto Scale'))
+		self.arrangeEntry(widget, 4)
 
-		# settings
-		settingsframe = Pmw.LabeledWidget(frame.interior(), labelpos = 'nw',
-															label_text = 'Settings')
-		settingsframe.component('hull')['bd'] = 1
-		settingsframe.component('hull')['relief'] = Tkinter.SOLID
-		settingsframe.grid(row = 0, column = 0, padx = 10, pady = 10)
+		self.addWidget('Control', 'Grid Preview', ('Controls', 'Run'))
+		self.addWidget('Control', 'Grid Preview', ('Controls', 'Stop'))
+		self.addWidget('Control', 'Grid Preview', ('Controls', 'Reset'))
+#		self.addWidget('Control', 'State Image Mosaic', ('Image', 'Publish Image'))
 
-		# control
-		controlframe = Pmw.LabeledWidget(frame.interior(), labelpos = 'nw',
-															label_text = 'Control')
-		controlframe.component('hull')['bd'] = 1
-		controlframe.component('hull')['relief'] = Tkinter.SOLID
-		widget = self.widgetFromName(controlframe.interior(), 'GP', ('Controls', 'Run'))
-		widget.grid(row = 0, column = 0, padx = 5, pady = 5)
-		widget = self.widgetFromName(controlframe.interior(), 'GP', ('Controls', 'Stop'))
-		widget.grid(row = 0, column = 1, padx = 5, pady = 5)
-		widget = self.widgetFromName(controlframe.interior(), 'GP', ('Controls', 'Reset'))
-		widget.grid(row = 0, column = 2, padx = 5, pady = 5)
-		controlframe.grid(row = 1, column = 0, padx = 10, pady = 10)
-
-		frame.grid(row = 0, column = 0, padx = 10, pady = 10)
-
-		# State Mosaic Image
-		frame = Pmw.LabeledWidget(self, labelpos = 'nw',
-															label_text = 'State Image Mosaic')
-		# settings
-		settingsframe = Pmw.LabeledWidget(frame.interior(), labelpos = 'nw',
-															label_text = 'Settings')
-		settingsframe.component('hull')['bd'] = 1
-		settingsframe.component('hull')['relief'] = Tkinter.SOLID
-		widget = self.widgetFromName(settingsframe.interior(), 'SIM',
-																	('Scale', 'Auto Scale'))
-		widget.entry['width'] = 4
-		widget.entry['justify'] = Tkinter.RIGHT
-		widget.entry.grid(row = 0, column = 1, padx = 5, pady = 5, columnspan = 1)
-		widget.getbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
-		widget.setbutton.grid(row = 0, column = 3, padx = 5, pady = 5)
-		widget.grid(row = 0, column = 0, padx = 5, pady = 5)
-
-		settingsframe.grid(row = 0, column = 0, padx = 10, pady = 10)
-
-		# control
-		controlframe = Pmw.LabeledWidget(frame.interior(), labelpos = 'nw',
-															label_text = 'Control')
-		controlframe.component('hull')['bd'] = 1
-		controlframe.component('hull')['relief'] = Tkinter.SOLID
-		widget = self.widgetFromName(controlframe.interior(), 'SIM',
-																	('Image', 'Publish Image'))
-		widget.grid(row = 0, column = 0, padx = 5, pady = 5)
-		controlframe.grid(row = 1, column = 0, padx = 10, pady = 10)
-
-		frame.grid(row = 1, column = 0, padx = 10, pady = 10)
-
-		# data (Mosaic Image)
-		frame = Tkinter.Frame(self, bd=1, relief=Tkinter.SOLID)
-		widget = self.widgetFromName(frame, 'SIM', ['Mosaic Image'])
-		widget.pack()
-		frame.grid(row = 0, column = 1, rowspan = 2, padx = 10, pady = 10)
+		self.addWidget('Image', 'State Image Mosaic', ('Mosaic Image',))
 
 if __name__ == '__main__':
 

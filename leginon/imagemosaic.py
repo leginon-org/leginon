@@ -12,6 +12,7 @@ import ImageViewer
 import Mrc
 import math
 import calibrationclient
+import camerafuncs
 import xmlrpclib
 #import xmlrpclib2 as xmlbinlib
 xmlbinlib = xmlrpclib
@@ -183,15 +184,10 @@ class ImageMosaic(watcher.Watcher):
 		#self.positionmethod = self.positionmethods.keys()[0]
 		self.positionmethod = 'automatic'
 
-		### some things for the pop-up viewer
-		self.iv = None
-		self.viewer_ready = threading.Event()
-
 		self.defineUserInterface()
 		#self.start()
 
 	def die(self, ievent=None):
-		self.close_viewer()
 		watcher.Watcher.die(self)
 
 	def processData(self, idata):
@@ -409,50 +405,6 @@ class ImageMosaic(watcher.Watcher):
 			imageandscale = self.imagemosaics[-1].getMosaicImage(self.scale, False)
 		return imageandscale
 
-	def uiShow(self):
-		# show most recent for now
-		image = self.getMosaicImage()
-		if image is not None:
-			self.displayNumericArray(image)
-		return ''
-
-	def start_viewer_thread(self):
-		if self.iv is not None:
-			return
-		self.viewerthread = threading.Thread(name=`self.id`,
-																					target=self.open_viewer)
-		self.viewerthread.setDaemon(1)
-		self.viewerthread.start()
-
-	def open_viewer(self):
-		root = self.root = Toplevel()
-		root._root().withdraw()
-		root.wm_geometry('=450x400')
-
-		self.iv = ImageViewer.ImageViewer(root, bg='#488')
-		self.iv.pack()
-
-		self.viewer_ready.set()
-		root.mainloop()
-
-		##clean up if window destroyed
-		self.viewer_ready.clear()
-		self.iv = None
-
-	def close_viewer(self):
-		try:
-			self.root.destroy()
-		except:
-			### root may not exist or already destroyed
-			pass
-
-	def displayNumericArray(self, numarray):
-		self.start_viewer_thread()
-		self.viewer_ready.wait()
-		if numarray is not None:
-			self.iv.import_numeric(numarray)
-			self.iv.update()
-
 	def uiPublishMosaicImage(self):
 		image = self.getMosaicImage()
 		if image is not None:
@@ -466,16 +418,14 @@ class ImageMosaic(watcher.Watcher):
 
 	def defineUserInterface(self):
 		watcherspec = watcher.Watcher.defineUserInterface(self)
-		showspec = self.registerUIMethod(self.uiShow, 'Show Image', ())
 		publishspec = self.registerUIMethod(self.uiPublishMosaicImage,
 										'Publish Image', ())
 		clearspec = self.registerUIMethod(self.uiClearMosaics, 'Clear', ())
 
 		getimagespec = self.registerUIData('Mosaic Image', 'binary',
-														permissions='r', callback=self.uiGetImageCallback)
+														permissions='rw', callback=self.uiGetImageCallback)
 
-		imagespec = self.registerUIContainer('Image',
-																					(showspec, publishspec, clearspec))
+		imagespec = self.registerUIContainer('Image', (publishspec, clearspec))
 		scalespec = self.registerUIData('Scale', 'float', permissions='rw',
 															default=self.scale, callback=self.uiScaleCallback)
 		self.autoscale = 512
@@ -512,6 +462,8 @@ class StateImageMosaic(ImageMosaic):
 	def __init__(self, id, nodelocations, watchfor = event.TileImagePublishEvent, **kwargs):
 
 		ImageMosaic.__init__(self, id, nodelocations, watchfor, **kwargs)
+
+		self.cam = camerafuncs.CameraFuncs(self)
 
 		self.calibrationclients = {}
 		calibrationclasses = [calibrationclient.StageCalibrationClient,

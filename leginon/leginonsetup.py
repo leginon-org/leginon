@@ -57,7 +57,7 @@ class Wizard(Tkinter.Toplevel):
 			self.cancelbutton['state'] = Tkinter.DISABLED
 		self.cancelbutton['command'] = cancel
 
-		self.widget.grid(row=0, column=0)
+		self.widget.grid(row=0, column=0, padx=15, pady=15)
 
 	def unsetWidget(self):
 		self.backbutton['state'] = Tkinter.DISABLED

@@ -570,7 +570,7 @@ class Method(SpecWidget):
 																						bg=self.buttoncolor)
 		else:
 			but = Button(self, text=self.name, command=self.butcom)
-		but.pack()
+		but.pack(expand=YES, fill=X)
 
 		if self.returnspec is not None:
 			dataclass = whichDataClass(self.returnspec)
