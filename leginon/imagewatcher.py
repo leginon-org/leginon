@@ -57,5 +57,5 @@ class ImageWatcher(watcher.Watcher):
 			self.setStatus('idle')
 		else:
 			self.setStatus('idle')
-			raise TypeError('Data to be processed must be an ImageData instance')
+			raise TypeError('data to be processed must be an ImageData instance')
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #
 # COPYRIGHT:
 #       The Leginon software is Copyright 2003
@@ -8,12 +6,11 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
+class TransportError(IOError):
+	pass
+
 import localtransport
 import tcptransport
-import threading
-import logging
-import time
-import sys
 
 class Base(object):
 	def __init__(self, logger):
@@ -40,22 +37,19 @@ class Client(Base):
 		self.serverlocation = serverlocation
 		self.logger.info('server location set to to %s' % str(self.serverlocation))
 		if len(self.clients) == 0:
-			raise IOError('no client connections possible')
+			raise TransportError('no client connections possible')
 
 	# these aren't ordering right, dictionary iteration
 	def _send(self, request):
 		for client in self.clients:
 			try:
 				return client.send(request)
-			except IOError, e:
-				self.logger.warning('%s client send request failed' % str(client))
-		raise IOError('Unable to send request')
+			except TransportError:
+				pass
+		raise TransportError('Error sending request')
 
 	def send(self, request):
-		try:
-			result = self._send(request)
-		except Exception, e:
-			raise IOError
+		result = self._send(request)
 		if isinstance(result, Exception):
 			raise result
 		return result

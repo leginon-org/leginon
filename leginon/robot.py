@@ -202,7 +202,7 @@ class RobotControl(RobotNode):
 				self.communication = win32com.client.Dispatch(
 																								'RobotCommunications.Signal')
 			except pywintypes.com_error, e:
-				raise RuntimeError('Cannot initialized robot communications')
+				raise RuntimeError('cannot initialize robot communications')
 
 		while True:
 			request = self.queue.get()

@@ -198,7 +198,7 @@ class XMLApplicationImport:
 		try:
 			xmlapp = dom.parse(filename)
 		except ExpatError:
-			raise ValueError('Unable to parse XML file "%s"' % filename)
+			raise ValueError('unable to parse XML file "%s"' % filename)
 		definition = xmlapp.getElementsByTagName('definition')[0]
 		sdefinition = definition.getElementsByTagName('sqltable')
 		for d in sdefinition:

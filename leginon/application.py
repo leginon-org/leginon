@@ -96,7 +96,7 @@ class Application(object):
 		try:
 			launchername = self.launchernames[ns['launcher alias']]
 		except KeyError:
-			raise ValueError('Unmapped launcher alias')
+			raise ValueError('unmapped launcher alias')
 		dependencies = []
 		for dependency in ns['dependencies']:
 			dependencies.append(dependency)
@@ -111,7 +111,7 @@ class Application(object):
 			fromnode = bs['from node alias']
 			tonode = bs['to node alias']
 		except ValueError:
-			raise ValueError('Invalid binding specification')
+			raise ValueError('invalid binding specification')
 		return (eventclass, fromnode, tonode)
 
 	def getNodeNames(self):
@@ -121,7 +121,7 @@ class Application(object):
 
 	def launch(self):
 		if not hasattr(self.node, 'addEventDistmap'):
-			raise RuntimeError('Application node unable to launch')
+			raise RuntimeError('application node unable to launch')
 		threads = []
 		for bindingspec in self.bindingspecs:
 			args = self.bindingSpec2Args(bindingspec)

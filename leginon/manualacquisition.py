@@ -113,7 +113,7 @@ class ManualAcquisition(node.Node):
 		except node.PublishError:
 			self.logger.error('Cannot access EM node')
 			self.logger.info('Error setting instrument parameters')
-			raise RuntimeError('Unable to set instrument parameters')
+			raise RuntimeError('unable to set instrument parameters')
 
 	def getScope(self, key=None):
 		try:
@@ -121,7 +121,7 @@ class ManualAcquisition(node.Node):
 		except (node.ResearchError, EM.ScopeUnavailable):
 			self.logger.error('Cannot access EM node')
 			self.logger.info('Error getting instrument parameters')
-			raise RuntimeError('Unable to get instrument parameters')
+			raise RuntimeError('unable to get instrument parameters')
 		return value
 
 	def preExposure(self):

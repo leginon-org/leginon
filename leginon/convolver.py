@@ -90,7 +90,7 @@ class Convolver(object):
 
 	def convolve(self, image=None, kernel=None, last_image=False, border=None):
 		if image is not None and last_image:
-			raise ValueError('Cannot use both a new image and the last image')
+			raise ValueError('cannot use both a new image and the last image')
 		imfft = self.image_fft
 		if image is not None:
 			self.setImage(image)

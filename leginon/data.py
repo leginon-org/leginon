@@ -241,7 +241,7 @@ class DataManager(object):
 
 		## if sill None, then must not exist anymore
 		if referent is None:
-			raise DataAccessError('Referenced data can not be found: %s' % (datareference,))
+			raise DataAccessError('referenced data can not be found: %s' % (datareference,))
 
 		return referent
 

@@ -114,7 +114,7 @@ class Manager(node.Node):
 
 		# handle better
 		if setup.session is None:
-			raise RuntimeError('Setup cancelled')
+			raise RuntimeError('setup cancelled')
 
 		self.session = setup.session
 		self.frame.session = self.session
@@ -150,8 +150,8 @@ class Manager(node.Node):
 		try:
 			port = 55555
 			self.addLauncher(hostname, port)
-		except (IOError, TypeError, socket.error):
-			self.logger.warning('Cannot add instrument\'s launcher.')
+		except Exception, e:
+			self.logger.warning('Cannot add instrument\'s launcher: %s' % e)
 
 	def location(self):
 		location = {}
@@ -244,7 +244,7 @@ class Manager(node.Node):
 				eventcopy = copy.copy(ievent)
 				eventcopy['destination'] = to_node
 				self.clients[to_node].send(eventcopy)
-			except IOError:
+			except datatransport.TransportError:
 				### bad client, get rid of it
 				self.logger.error('Cannot send to node ' + str(to_node)
 													+ ', unregistering')
@@ -307,7 +307,7 @@ class Manager(node.Node):
 					eventcopy = copy.copy(ievent)
 					eventcopy['destination'] = to_node
 					self.clients[to_node].send(eventcopy)
-				except IOError:
+				except datatransport.TransportError:
 					### bad client, get rid of it
 					self.logger.error('Cannot send to node ' + str(to_node)
 														+ ', unregistering')
@@ -363,7 +363,7 @@ class Manager(node.Node):
 			try:
 				classes = list(self.launcherdict[name]['classes'])
 			except KeyError:
-				raise ValueError('Invalid launcher name')
+				raise ValueError('invalid launcher name')
 			if sorted:
 				classes.sort()
 		return classes
@@ -371,7 +371,7 @@ class Manager(node.Node):
 	def _addLauncher(self, name, location):
 		'''Add launcher to mapping, add UI client.'''
 		if name in self.getLauncherNames():
-			raise RuntimeError('Launcher name in use.')
+			raise RuntimeError('launcher name in use')
 		self.launcherdict[name] = {'location': location}
 		self.onAddLauncher(name)
 
@@ -433,14 +433,14 @@ class Manager(node.Node):
 			try:
 				self.clients[name] = self.clients[location['launcher']]
 			except KeyError:
-				raise RuntimeError('Launcher specified by node has no client')
+				raise RuntimeError('launcher specified by node has no client')
 			try:
 				nodelocationdata = self.nodelocations[launchername]
 			except KeyError:
-				raise RuntimeError('Launcher specified by node has no location data')
+				raise RuntimeError('launcher specified by node has no location data')
 			return nodelocationdata['location']
 		else:
-			raise RuntimeError('Unable to find client for node')
+			raise RuntimeError('unable to find client for node')
 		return location
 
 	def registerNode(self, evt):
@@ -615,7 +615,7 @@ class Manager(node.Node):
 		client = datatransport.Client(location, self.clientlogger)
 		try:
 			client.send(e)
-		except (IOError, EOFError):
+		except datatransport.TransportError:
 			try:
 				hostname = location['TCP transport']['hostname']
 			except KeyError:
@@ -753,7 +753,7 @@ class Manager(node.Node):
 			f = open(filename,'w')
 			f.write(dump)
 			f.close()
-		except IOError,e:
+		except IOError, e:
 			self.logger.exception('Unable to export application to "%s"' % filename)
 
 	def importApplication(self, filename):

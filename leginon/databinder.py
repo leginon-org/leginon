@@ -90,7 +90,7 @@ class DataBinder(object):
 		try:
 			remotecallobject = self.remotecallobjects[request.node][request.name]
 		except KeyError:
-			estr = 'No remotecallobject %s for node %s' % (request.node, request.name)
+			estr = 'no remotecallobject %s for node %s' % (request.node, request.name)
 			return ValueError(estr)
 		try:
 			return remotecallobject._execute(request.attributename, request.type,
@@ -107,7 +107,7 @@ class DataBinder(object):
 		try:
 			self.remotecallobjects[nodename][name] = remotecallobject
 		except:
-			raise ValueError('No remotecallobject %s for node %s' % (nodename, name))
+			raise ValueError('no remotecallobject %s for node %s' % (nodename, name))
 
 	def insert(self, newdata):
 		self.queue.put(newdata)

@@ -8,8 +8,12 @@
 import SocketServer
 import socket
 import socketstreamtransport
+import errno
 
 locationkey = 'TCP transport'
+
+class TransportError(socketstreamtransport.TransportError):
+	pass
 
 class Server(socketstreamtransport.Server, SocketServer.ThreadingTCPServer):
 	def __init__(self, dh, port=None):
@@ -17,25 +21,32 @@ class Server(socketstreamtransport.Server, SocketServer.ThreadingTCPServer):
 
 		# instantiater can choose a port or we'll choose one for them
 		if port is not None:
-			SocketServer.ThreadingTCPServer.__init__(self, ('', port),
-																								socketstreamtransport.Handler)
+			try:
+				SocketServer.ThreadingTCPServer.__init__(self, ('', port),
+																									socketstreamtransport.Handler)
+			except socket.error, e:
+				en, string = e
+				raise TransportError(string)
 		else:
+			exception = True
 			# range define by IANA as dynamic/private or so says Jim
-			portrange = (49152,65536)
-			# start from the bottom
+			portrange = (49152, 65536)
 			port = portrange[0]
-			# iterate to the top or until unused port is found
 			while port <= portrange[1]:
 				try:
 					SocketServer.ThreadingTCPServer.__init__(self, ('', port),
 																									socketstreamtransport.Handler)
+					exception = False
 					break
-				except Exception, var:
-					# socket error, address already in use
-					if var[0] in [48, 98, 112, 10048]:
+				except socket.error, e:
+					en, string = e
+					if en == errno.EADDRINUSE:
 						port += 1
 					else:
-						raise
+						raise TransportError(string)
+			if exception:
+				string = 'No ports in range %s available' % (portrange,)
+				raise TransportError(string)
 		self.request_queue_size = 15
 		self.port = port
 
@@ -59,14 +70,12 @@ class Client(socketstreamtransport.Client):
 			hostname = self.serverlocation['hostname']
 			port = self.serverlocation['port']
 		except KeyError:
-			raise IOError('cannot get location')
+			raise TransportErrorr('invalid location')
 		try:
 			s.connect((hostname, port))
-		except Exception, e:
-			if e[0] in [111, 10061]:
-				raise IOError('unable to connect to %s:%s' % (hostname, port))
-			else:
-				raise
+		except socket.error, e:
+			en, string = e
+			raise TransportError(string)
 		return s
 
 Server.clientclass = Client

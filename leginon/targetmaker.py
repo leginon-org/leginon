@@ -96,7 +96,7 @@ class MosaicTargetMaker(TargetMaker):
 		targetlist = self.newTargetList(mosaic=True, label=label)
 		targets = self.researchTargets(session=self.session, list=targetlist)
 		if targets:
-			raise AtlasError('Label "%s" is already used' % (label,))
+			raise AtlasError('label "%s" is already used' % (label,))
 
 	def validateSettings(self):
 		label = self.settings['label']

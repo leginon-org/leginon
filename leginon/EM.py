@@ -21,6 +21,7 @@ import time
 import unique
 import copy
 import gui.wx.Instrument
+import remotecall
 
 watch_set = (
 'magnification',
@@ -426,20 +427,33 @@ class EM(node.Node):
 			scopeclass = emregistry.getScopeClass(scopename)
 			if scopeclass is None:
 				raise RuntimeError
-			self.scope = methoddict.factory(scopeclass)()
+			class ScopeClass(scopeclass, remotecall.TEM):
+				def __init__(self):
+					scopeclass.__init__(self)
+					remotecall.Object.__init__(self)
+			self.scope = methoddict.factory(ScopeClass)()
 			self.typemap.update(self.scope.typemapping)
+			self.objectservice._addObject(scopename, self.scope)
 		except Exception, e:
-			self.logger.exception('Cannot set scope to type ' + str(scopename))
+			self.logger.exception('Initializing scope type %s failed: %s'
+															% (scopename, e))
 
 	def setCameraType(self, cameraname):
 		try:
 			cameraclass = emregistry.getCameraClass(cameraname)
 			if cameraclass is None:
 				raise RuntimeError
-			self.camera = methoddict.factory(cameraclass)()
+			class CameraClass(cameraclass, remotecall.CCDCamera):
+				def __init__(self):
+					cameraclass.__init__(self)
+					remotecall.Object.__init__(self)
+			self.camera = methoddict.factory(CameraClass)()
 			self.typemap.update(self.camera.typemapping)
+			self.objectservice._addObject(cameraname, self.camera)
 		except Exception, e:
-			self.logger.exception('Cannot set camera to type ' + str(cameraname))
+			raise
+			self.logger.exception('Initializing camera type %s failed: %s'
+															% (cameraname, e))
 
 	def main(self):
 		pass

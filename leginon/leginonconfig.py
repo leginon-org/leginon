@@ -57,7 +57,7 @@ defaultfilename = os.path.join(MODULE, 'config', 'default.cfg')
 try:
 	configparser.readfp(open(defaultfilename), defaultfilename)
 except IOError:
-	raise LeginonConfigError('Cannot find configuration file default.cfg')
+	raise LeginonConfigError('cannot find configuration file default.cfg')
 ## process configs in this order (later ones overwrite earlier ones)
 config_locations = [
 	'leginon.cfg',

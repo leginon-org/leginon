@@ -180,7 +180,7 @@ class PluginPipeline(object):
 
 	def process(self, input):
 		if not isinstance(input, self.inputclass):
-			raise TypeError('Wrong input class for pipeline process')
+			raise TypeError('wrong input class for pipeline process')
 		output = self._process(input)
 		for plugin in self.plugins:
 			output = plugin.process(output)

@@ -28,7 +28,7 @@ def registerNodeClass(modulename, classname, sortclass=None):
 	try:
 		modinfo = imp.find_module(modulename)
 	except ImportError, detail:
-		raise NotFoundError('Module \'%s\' not found' % modulename)
+		raise NotFoundError('module \'%s\' not found' % modulename)
 
 	### import the module
 	try:
@@ -40,7 +40,7 @@ def registerNodeClass(modulename, classname, sortclass=None):
 	try:
 		nodeclass = getattr(mod, classname)
 	except AttributeError, detail:
-		message = 'Class %s not found in module \'%s\'' % (classname, modulename)
+		message = 'class %s not found in module \'%s\'' % (classname, modulename)
 		raise NotFoundError(message)
 
 	### make sure class is Node

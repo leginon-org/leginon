@@ -7,10 +7,13 @@
 #
 
 import cPickle as pickle
-import data
 import socket
 import SocketServer
 import threading
+import datatransport
+
+class TransportError(datatransport.TransportError):
+	pass
 
 class ExitException(Exception):
 	pass
@@ -24,7 +27,7 @@ class Handler(SocketServer.StreamRequestHandler):
 		try:
 			request = pickle.load(self.rfile)
 		except Exception, e:
-			estr = 'Error reading request'
+			estr = 'error reading request, %s' % e
 			try:
 				self.server.datahandler.logger.exception(estr)
 			except AttributeError:
@@ -34,7 +37,7 @@ class Handler(SocketServer.StreamRequestHandler):
 		try:
 			result = self.server.datahandler.handle(request)
 		except Exception, e:
-			estr = 'Error handling request'
+			estr = 'error handling request, %s' % e
 			try:
 				self.server.datahandler.logger.exception(estr)
 			except AttributeError:
@@ -44,8 +47,8 @@ class Handler(SocketServer.StreamRequestHandler):
 		try:
 			pickle.dump(result, self.wfile, pickle.HIGHEST_PROTOCOL)
 			self.wfile.flush()
-		except:
-			estr = 'Error responsing to request'
+		except Exception, e:
+			estr = 'error responding to request, %s' % e
 			try:
 				self.server.datahandler.logger.exception(estr)
 			except AttributeError:
@@ -76,7 +79,7 @@ class Server(object):
 		client = self.clientclass(self.location())
 		try:
 			client.send(ExitException())
-		except (IOError, EOFError):
+		except TransportError:
 			pass
 
 class Client(object):
@@ -84,27 +87,31 @@ class Client(object):
 		self.serverlocation = location
 
 	def send(self, request):
+		s = self.connect()
 		try:
-			s = self.connect()
 			sfile = s.makefile('rwb')
-		except:
-			raise
-
+		except Exception, e:
+			raise TransportError('error creating socket file, %s' % e)
+			
 		try:
 			pickle.dump(request, sfile, pickle.HIGHEST_PROTOCOL)
+		except Exception, e:
+			raise TransportError('error pickling request, %s' % e)
+
+		try:
 			sfile.flush()
-		except:
-			raise
+		except Exception, e:
+			raise TransportError('error flushing socket file buffer, %s' % e)
 
 		try:
 			result = pickle.load(sfile)
-		except:
-			raise
+		except Exception, e:
+			raise TransportError('error unpickling response, %s' % e)
 
 		try:
 			sfile.close()
 		except:
-			raise
+			pass
 
 		return result
 

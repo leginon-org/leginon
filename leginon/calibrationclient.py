@@ -131,7 +131,7 @@ class CalibrationClient(object):
 			elif self.node.settings['correlation type'] == 'phase':
 				pcimage = self.correlator.phaseCorrelate()
 			else:
-				raise RuntimeError('Invalid correlation type')
+				raise RuntimeError('invalid correlation type')
 
 			self.node.logger.debug('Peak finding...')
 			self.peakfinder.setImage(pcimage)
@@ -183,7 +183,7 @@ class CalibrationClient(object):
 		elif self.node.settings['correlation type'] == 'phase':
 			pcimage = self.correlator.phaseCorrelate()
 		else:
-			raise RuntimeError('Invalid correlation type')
+			raise RuntimeError('invalid correlation type')
 
 		## peak finding
 		self.node.logger.debug('Peak finding...')
@@ -252,13 +252,13 @@ class DoseCalibrationClient(CalibrationClient):
 
 	def sensitivity(self, dose_rate, camera_mag, camera_pixel_size, exposure_time, counts):
 		if camera_mag == 0:
-			raise ValueError('Invalid camera magnification given')
+			raise ValueError('invalid camera magnification given')
 		camera_dose = float(dose_rate) / float((camera_mag**2))
 		self.node.logger.info('Camera dose %.4e' % camera_dose)
 		dose_per_pixel = camera_dose * (camera_pixel_size**2)
 		electrons_per_pixel = dose_per_pixel * exposure_time
 		if electrons_per_pixel == 0:
-			raise ValueError('Invalid electrons per pixel calculated')
+			raise ValueError('invalid electrons per pixel calculated')
 		self.node.logger.info('Calculated electrons/pixel %.4e'
 													% electrons_per_pixel)
 		counts_per_electron = float(counts) / electrons_per_pixel
@@ -946,13 +946,13 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		qdata['axis'] = axis
 		measurements = self.node.research(datainstance=qdata)
 		if not measurements:
-			raise RuntimeError('no measurements!')
+			raise RuntimeError('no measurements')
 		self.node.logger.info('len(measurements) %d' % len(measurements))
 		ht = measurements[0]['high tension']
 		datapoints = []
 		for measurement in measurements:
 			if measurement['high tension'] != ht:
-				raise RuntimeError('inconsistent high tension in measurements!')
+				raise RuntimeError('inconsistent high tension in measurements')
 			datapoint = []
 			datapoint.append(measurement['x'])
 			datapoint.append(measurement['y'])

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #
 # COPYRIGHT:
 #       The Leginon software is Copyright 2003
@@ -7,11 +5,12 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-
-#import socket
-#import threading
+import datatransport
 
 locationkey = 'local transport'
+
+class TransportError(datatransport.TransportError):
+	pass
 
 class Server(object):
 	def __init__(self, dh):
@@ -24,7 +23,13 @@ class Server(object):
 		pass
 
 	def handle(self, request):
-		return self.datahandler.handle(request)
+		try:
+			return self.datahandler.handle(request)
+		except AttributeError:
+			if self.datahandler is None:
+				raise TransportError('error handling request, no handler')
+			else:
+				raise
 
 	def location(self):
 		return {'instance': self}
@@ -44,10 +49,7 @@ class Client(object):
 		return self._send(request)
 
 	def _send(self, request):
-		try:
-			return self.serverobject.handle(request)
-		except Exception, e:
-			raise IOError('Local transport client send request')
+		return self.serverobject.handle(request)
 
 if __name__ == '__main__':
 	pass

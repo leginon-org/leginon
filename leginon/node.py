@@ -158,10 +158,14 @@ class Node(object):
 	def exit(self):
 		'''Cleans up the node before it dies.'''
 		try:
+			self.objectservice._exit()
+		except (AttributeError, TypeError):
+			pass
+		try:
 			self.outputEvent(event.NodeUninitializedEvent(), wait=True,
 																										timeout=3.0)
 			self.outputEvent(event.NodeUnavailableEvent())
-		except (ConfirmationTimeout, IOError):
+		except (ConfirmationTimeout, datatransport.TransportError):
 			pass
 		self.delEventInput()
 		if self.launcher is not None:
@@ -210,7 +214,7 @@ class Node(object):
 		try:
 			client.send(ievent)
 			#self.logEvent(ievent, status='%s eventToClient' % (self.name,))
-		except IOError:
+		except datatransport.TransportError:
 			# make sure we don't wait for an event that failed
 			if wait:
 				eventwait.set()
@@ -300,10 +304,10 @@ class Node(object):
 		if database:
 			try:
 				self.dbdatakeeper.insert(idata, force=dbforce)
-			except (OSError, IOError), e:
-				raise PublishError(str(e))
+			except (IOError, OSError), e:
+				raise PublishError(e)
 			except KeyError:
-				raise PublishError('No DBDataKeeper to publish data to.')
+				raise PublishError('no DBDataKeeper to publish data to.')
 			except Exception:
 				raise
 
@@ -335,14 +339,8 @@ class Node(object):
 		'''
 		try:
 			resultlist = self.dbdatakeeper.query(datainstance, results, readimages=readimages)
-		except Exception, e:
-			if isinstance(e, OSError):
-				message = str(e)
-			elif isinstance(e, IOError):
-				message = str(e)
-			else:
-				raise
-			raise ResearchError(message)
+		except (IOError, OSError), e:
+			raise ResearchError(e)
 		return resultlist
 
 	def researchDBID(self, dataclass, dbid, readimages=True):

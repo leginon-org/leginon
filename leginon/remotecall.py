@@ -4,15 +4,16 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-18 01:34:14 $
+# $Date: 2005-02-18 18:09:30 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
 import inspect
 import datatransport
+import types
 
 class Request(object):
 	def __init__(self, origin, node, name, attributename, type,
@@ -30,29 +31,29 @@ class Object(object):
 		self._register()
 
 	def _query(self):
-		members = inspect.getmembers(self, predicate=inspect.ismethod)
 		interface = {}
-		for name, method in members:
-			if name[:1] == '_':
-				pass
-			elif name[:3] == 'get':
-				key = name[3:]
-				if not key:
-					raise RuntimeError('Invalid attribute specification in interface')
-				if key not in interface:
-					interface[key] = {}
-				interface[key]['r'] = method
-			elif name[:3] == 'set':
-				key = name[3:]
-				if not key:
-					raise RuntimeError('Invalid attribute specification in interface')
-				if key not in interface:
-					interface[key] = {}
-				interface[key]['w'] = method
-			else:
-				if name not in interface:
-					interface[name] = {}
-				interface[name]['method'] = method
+		for key in dir(self):
+			try:
+				value = getattr(self, key)
+			except Exception, e:
+				continue
+			if isinstance(value, types.MethodType):
+				if key[:1] != '_':
+					if key[:3] == 'get':
+						name = key[3:]
+						if name:
+							if name not in interface:
+								interface[name] = {}
+							interface[name]['r'] = value
+					elif key[:3] == 'set':
+						name = key[3:]
+						if name:
+							if name not in interface:
+								interface[name] = {}
+							interface[name]['w'] = value
+					if key not in interface:
+						interface[key] = {}
+					interface[key]['method'] = value
 		return interface
 
 	def _register(self):
@@ -64,7 +65,7 @@ class Object(object):
 		try:
 			result = self._interface[name][type](*args, **kwargs)
 		except KeyError:
-			result = TypeError('Invalid execution name')
+			result = TypeError('invalid execution name')
 		except Exception, result:
 			pass
 		return result
@@ -72,10 +73,12 @@ class Object(object):
 	def _getDescription(self):
 		description = {}
 		for name, methods in self._interface.items():
-			description[name] = methods.keys()
+			description[name] = {}
+			for method in methods:
+				description[name][method] = True
 		return description
 
-class ObjectClientCall(object):
+class ObjectCallProxy(object):
 	def __init__(self, call, args):
 		self.call = call
 		self.args = args
@@ -84,7 +87,7 @@ class ObjectClientCall(object):
 		args = self.args + (args, kwargs)
 		self.call(*args)
 
-class ObjectClient(object):
+class ObjectProxy(object):
 	def __init__(self, objectservice, nodename, name):
 		self.__objectservice = objectservice
 		self.__nodename = nodename
@@ -95,14 +98,14 @@ class ObjectClient(object):
 		try:
 			description = d[name]
 		except KeyError:
-			raise ValueError('No method %s in object description' % name)
+			raise ValueError('no method %s in object description' % name)
 		if 'method' in description:
 			args = (self.__nodename, self.__name, name, 'method')
-			return ObjectClientCall(self.__objectservice._call, args)
+			return ObjectCallProxy(self.__objectservice._call, args)
 		elif 'r' in description:
 			return self.__objectservice._call(self.__nodename, self.__name, name, 'r')
 		else:
-			raise TypeError('Attribute %s is not readable' % name)
+			raise TypeError('attribute %s is not readable' % name)
 
 class ObjectService(Object):
 	def __init__(self, node):
@@ -120,9 +123,19 @@ class ObjectService(Object):
 			self.descriptions[nodename] = {}
 		self.descriptions[nodename][name] = (description, types)
 
+	def removeDescription(self, nodename, name):
+		try:
+			del self.descriptions[nodename][name]
+		except KeyError:
+			pass
+
 	def addDescriptions(self, descriptions):
 		for description in descriptions:
 			self.addDescription(*description)
+
+	def removeDescriptions(self, descriptions):
+		for description in descriptions:
+			self.removeDescription(*description)
 
 	def _call(self, node, name, attributename, type, args=(), kwargs={}):
 		request = Request(self.node.name, node, name, attributename, type,
@@ -130,16 +143,19 @@ class ObjectService(Object):
 		try:
 			return self.clients[node].send(request)
 		except KeyError:
-			raise ValueError('No client for node %s' % node)
+			raise ValueError('no client for node %s' % node)
 
 	def _addObject(self, name, interface):
 		self.node.databinder.addRemoteCallObject(self.node.name, name, interface)
 
 	def _removeObject(self, name):
-		self.node.databinder.addRemoteCallObject(self.node.name, name)
+		self.node.databinder.removeRemoteCallObject(self.node.name, name)
 
-	def getObjectClient(self, nodename, name):
-		return ObjectClient(self, nodename, name)
+	def getObjectProxy(self, nodename, name):
+		return ObjectProxy(self, nodename, name)
+
+	def _exit(self):
+		pass
 
 class NodeObjectService(ObjectService):
 	def __init__(self, node):
@@ -154,6 +170,15 @@ class NodeObjectService(ObjectService):
 		args = (self.node.name, name, interface._description,
 						interface._types, location)
 		self._call('Manager', 'Object Service', 'addDescription', 'method', args)
+
+	def _removeObject(self, name):
+		args = (self.node.name, name)
+		self._call('Manager', 'Object Service', 'removeDescription', 'method', args)
+		ObjectService._removeObject(self, name)
+
+	def _exit(self):
+		args = (self.node.name,)
+		self._call('Manager', 'Object Service', 'removeNode', 'method', args)
 
 class ManagerObjectService(ObjectService):
 	def __init__(self, manager):
@@ -177,6 +202,29 @@ class ManagerObjectService(ObjectService):
 			args = (descriptions,)
 			self._call(nodename, name, 'addDescriptions', 'method', args)
 
+	def removeDescription(self, nodename, name):
+		args = (nodename, name)
+		for nn in self.descriptions:
+			if nn == nodename:
+				continue
+			for n in self.descriptions[nn]:
+				d, t = self.descriptions[nn][n]
+				if 'ObjectService' in t:
+					self._call(nn, n, 'removeDescription', 'method', args)
+		ObjectService.removeDescription(self, nodename, name)
+
+	def removeNode(self, nodename):
+		names = self.descriptions[nodename].keys()
+		descriptions = zip([nodename]*len(names), names)
+		args = (descriptions,)
+		for nn in self.descriptions:
+			if nn == nodename:
+				continue
+			for n in self.descriptions[nn]:
+				d, t = self.descriptions[nn][n]
+				if 'ObjectService' in t:
+					self._call(nn, n, 'removeDescriptions', 'method', args)
+
 class Locker(Object):
 	def lock(self):
 		pass
@@ -185,12 +233,8 @@ class Locker(Object):
 		pass
 
 class TEM(Locker):
-	def resetDefocus(self):
-		pass
+	pass
 
-	def getMagnificationIndex(self):
-		pass
-
-	def setMagnificationIndex(self, index):
-		pass
+class CCDCamera(Locker):
+	pass
 
