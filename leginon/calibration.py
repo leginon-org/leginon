@@ -95,7 +95,15 @@ class Calibration(node.Node):
 
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
-		self.registerUISpec('Calibration', (nodespec))
+
+		argspec = (self.registerUIData('EM Node', 'string', default=''),)
+		spec = self.registerUIMethod(self.uiCalibrate, 'Calibrate', argspec)
+
+		self.registerUISpec('Calibration', (nodespec, spec))
+
+	def uiCalibrate(self, s):
+		self.calibrate(('manager', s))
+		return ''
 
 #			imageshift = (shiftrange[1] + shiftrange[0])/2
 #			shiftpair = ((shiftrange[1] + shiftrange[0])/4, \
