@@ -43,7 +43,7 @@ class TargetWatcher(watcher.Watcher):
 	def defineUserInterface(self):
 		watcher.Watcher.defineUserInterface(self)
 
-		self.messagelog = uidata.MessageLog('Messages')
+		self.targetwatcherlog = uidata.MessageLog('Messages')
 
 		pausemethod = uidata.Method('Pause', self.pauseTargetListLoop)
 		continuemethod = uidata.Method('Continue',
@@ -57,7 +57,7 @@ class TargetWatcher(watcher.Watcher):
 		controlcontainer.addObjects((targetcontainer,))
 
 		container = uidata.LargeContainer('Target Watcher')
-		container.addObjects((self.messagelog, controlcontainer,))
+		container.addObjects((self.targetwatcherlog, controlcontainer,))
 
 		self.uiserver.addObject(container)
 
@@ -177,7 +177,7 @@ class TargetWatcher(watcher.Watcher):
 				if self.pause.isSet():
 					messagestr = 'pausing'
 					print messagestr
-					message = self.messagelog.information(messagestr)
+					message = self.targetwatcherlog.information(messagestr)
 					self.cont.clear()
 					self.cont.wait()
 					self.pause.clear()
