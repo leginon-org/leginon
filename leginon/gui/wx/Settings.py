@@ -4,6 +4,7 @@ import gui.wx.Camera
 import gui.wx.Entry
 import gui.wx.Presets
 import wx.lib.filebrowsebutton as filebrowse
+import gui.wx.Rings
 
 class SettingsError(Exception):
 	pass
@@ -26,6 +27,7 @@ attributes = {
 		('getData', 'setData',
 			gui.wx.Camera.EVT_CONFIGURATION_CHANGED),
 	filebrowse.FileBrowseButton: ('GetValue', 'SetValue', None),
+	gui.wx.Rings.Panel: ('getRings', 'setRings', gui.wx.Rings.EVT_RINGS_UPDATED),
 }
 
 class Dialog(wx.Dialog):

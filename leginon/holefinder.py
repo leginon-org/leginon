@@ -78,11 +78,7 @@ class HoleFinder(targetfinder.TargetFinder):
 
 		self.originalimage = uidata.Image('Original', None, 'r')
 		self.edgeimage = uidata.Image('Edge Image', None, 'r')
-
-		### Correlate Template
 		self.corimage = uidata.Image('Correlation Image', None, 'r')
-		corcont = uidata.LargeContainer('Template Correlation')
-		corcont.addObjects((self.corimage,))
 
 		### threshold
 		self.threshvalue = uidata.Number('Threshold Value', 3.0, 'rw', persist=True)
@@ -147,7 +143,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		goodholescontainer.addObjects((self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.use_target_template, self.foc_target_template, foc_template_limit, self.acq_target_template, self.focus_one_hole, self.goodholesimage, ))
 
 		container = uidata.LargeContainer('Hole Finder')
-		container.addObjects((corcont,threshcont, blobcont, goodholescontainer))
+		container.addObjects((threshcont, blobcont, goodholescontainer))
 		self.uicontainer.addObject(container)
 
 	def readImage(self, filename):

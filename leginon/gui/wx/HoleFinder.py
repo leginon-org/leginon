@@ -3,6 +3,7 @@ import gui.wx.ImageViewer
 import gui.wx.Settings
 import gui.wx.TargetFinder
 import wx.lib.filebrowsebutton as filebrowse
+import gui.wx.Rings
 from gui.wx.Choice import Choice
 from gui.wx.Entry import Entry, IntEntry, FloatEntry
 
@@ -193,19 +194,21 @@ class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszlpf.Add(szlpf, 1, wx.EXPAND|wx.ALL, 5)
 
-		#self.widgets['template rings'] = Entry(self, -1)
+		self.widgets['template rings'] = gui.wx.Rings.Panel(self)
 		self.widgets['template type'] = Choice(self, -1, choices=self.node.cortypes)
 
-		sztemplate = wx.GridBagSizer(5, 5)
-		#sztemplate.Add(self.widgets['template rings'], (0, 0), (1, 3),
-		#						wx.ALIGN_CENTER_VERTICAL)
+		szcor = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Use')
-		sztemplate.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztemplate.Add(self.widgets['template type'], (1, 1), (1, 1),
+		szcor.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szcor.Add(self.widgets['template type'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'correlation')
-		sztemplate.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sztemplate.AddGrowableCol(2)
+		szcor.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		sztemplate = wx.GridBagSizer(5, 5)
+		sztemplate.Add(szcor, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztemplate.Add(self.widgets['template rings'], (1, 0), (1, 1),
+										wx.EXPAND)
 
 		sb = wx.StaticBox(self, -1, 'Template Correlation')
 		sbsztemplate = wx.StaticBoxSizer(sb, wx.VERTICAL)
