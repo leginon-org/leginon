@@ -1242,7 +1242,7 @@ def datatype(in_dict, qikey=None, qinfo=None):
 	for matrix in allarrays:
 		dm={}
 		for key,value in in_dict.items():
-			l = re.findall('ARRAY%s%s' %(sep,matrix,),key)
+			l = re.findall('^ARRAY\%s%s' %(sep,matrix,),key)
 			if l:
 				dm.update({key:value})
 		allarrays[matrix]=dict2matrix(dm)
