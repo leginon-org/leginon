@@ -237,7 +237,7 @@ class HoleFinder(object):
 
 		## some default configuration parameters
 		self.save_mrc = True
-		self.edges_config = {'filter': 'laplacian', 'size': 9, 'sigma': 1.4, 'abs': False}
+		self.edges_config = {'filter': 'laplacian', 'size': 9, 'sigma': 1.4, 'abs': False, 'lp':True, 'lpn':5, 'lpsig':1.0}
 		self.template_config = {'min_radius': 25, 'max_radius': 30}
 		self.correlation_config = {'cortype': 'cross correlation'}
 		self.threshold = 3.0
@@ -266,7 +266,7 @@ class HoleFinder(object):
 		## update this result
 		self.__results[key] = image
 
-	def configure_edges(self, filter=None, size=None, sigma=None, absvalue=None):
+	def configure_edges(self, filter=None, size=None, sigma=None, absvalue=None, lp=None, lpn=None, lpsig=None):
 		if filter is not None:
 			self.edges_config['filter'] = filter
 		if size is not None:
@@ -275,6 +275,12 @@ class HoleFinder(object):
 			self.edges_config['sigma'] = sigma
 		if absvalue is not None:
 			self.edges_config['abs'] = absvalue
+		if lp is not None:
+			self.edges_config['lp'] = lp
+		if lpn is not None:
+			self.edges_config['lpn'] = lpn
+		if lpsig is not None:
+			self.edges_config['lpsig'] = lpsig
 
 	def find_edges(self):
 		'''
@@ -283,29 +289,37 @@ class HoleFinder(object):
 		if self.__results['original'] is None:
 			raise RuntimeError('no original image to find edges on')
 
-		print 'creating edge filter'
 		sourceim = self.__results['original']
 		n = self.edges_config['size']
 		filt = self.edges_config['filter']
 		sigma = self.edges_config['sigma']
 		ab = self.edges_config['abs']
+		lp = self.edges_config['lp']
+		lpn = self.edges_config['lpn']
+		lpsig = self.edges_config['lpsig']
+
+		if lp:
+			print 'low pass filter'
+			kernel = convolver.gaussian_kernel(lpn, lpsig)
+			self.edgefinder.setKernel(kernel)
+			smooth = self.edgefinder.convolve(image=sourceim)
 
 		print 'finding edges'
 
 		if filt == 'laplacian3':
 			kernel = convolver.laplacian_kernel3
 			self.edgefinder.setKernel(kernel)
-			edges = self.edgefinder.convolve(image=sourceim)
+			edges = self.edgefinder.convolve(image=smooth)
 		elif filt == 'laplacian5':
 			kernel = convolver.laplacian_kernel5
 			self.edgefinder.setKernel(kernel)
-			edges = self.edgefinder.convolve(image=sourceim)
+			edges = self.edgefinder.convolve(image=smooth)
 		elif filt == 'laplacian-gaussian':
 			kernel = convolver.laplacian_of_gaussian_kernel(n,sigma)
 			self.edgefinder.setKernel(kernel)
-			edges = self.edgefinder.convolve(image=sourceim)
+			edges = self.edgefinder.convolve(image=smooth)
 		elif filt == 'sobel':
-			self.edgefinder.setImage(sourceim)
+			self.edgefinder.setImage(smooth)
 			kernel1 = convolver.sobel_row_kernel
 			kernel2 = convolver.sobel_col_kernel
 			edger = self.edgefinder.convolve(kernel=kernel1)

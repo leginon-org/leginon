@@ -26,6 +26,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		targetfinder.TargetFinder.defineUserInterface(self)
 		self.uidataqueueflag.set(False)
 
+		self.usercheckon = uidata.Boolean('User Check', False, 'rw', persist=True)
+
 		self.testfile = uidata.String('Filename', '', 'rw', persist=True)
 		readmeth = uidata.Method('Read Image', self.readImage)
 		cameraconfigure = self.cam.configUIData()
@@ -37,6 +39,9 @@ class HoleFinder(targetfinder.TargetFinder):
 
 		### edge detection
 		self.edgeson = uidata.Boolean('Find Edges On', True, 'rw', persist=True)
+		self.lowpasson = uidata.Boolean('Low Pass Filter On', True, 'rw', persist=True)
+		self.lowpasssize = uidata.Integer('Low Pass Filter Size', 5, 'rw', persist=True)
+		self.lowpasssigma = uidata.Float('Low Pass Filter Sigma', 1.0, 'rw', persist=True)
 		self.filtertype = uidata.SingleSelectFromList('Filter Type', ['laplacian3', 'laplacian5', 'laplacian-gaussian', 'sobel'], 0, persist=True)
 		self.glapsize = uidata.Integer('LoG Size', 9, 'rw', persist=True)
 		self.glapsigma = uidata.Float('LoG Sigma', 1.4, 'rw', persist=True)
@@ -44,7 +49,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		edgemeth = uidata.Method('Find Edges', self.findEdges)
 		self.edgeimage = uidata.Image('Edge Image', None, 'r')
 		edgecont = uidata.Container('Edge Finder')
-		edgecont.addObjects((self.edgeson, self.filtertype, self.glapsize, self.glapsigma, self.edgeabs, edgemeth, self.edgeimage,))
+		edgecont.addObjects((self.edgeson, self.lowpasson, self.lowpasssize, self.lowpasssigma, self.filtertype, self.glapsize, self.glapsigma, self.edgeabs, edgemeth, self.edgeimage,))
 
 
 		### Correlate Template
@@ -93,7 +98,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		blobcont.addObjects((self.blobborder, findblobmeth, self.allblobs, self.allblobsimage, self.latspacing, self.lattol, self.holestatsrad, self.icei0, fitlatmeth, self.latblobs, self.latblobsimage, self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.goodholesimage))
 
 		container = uidata.MediumContainer('Hole Finder')
-		container.addObjects((originalcont,edgecont,corcont,threshcont, blobcont))
+		container.addObjects((self.usercheckon, originalcont,edgecont,corcont,threshcont, blobcont))
 		self.uiserver.addObject(container)
 
 	def readImage(self):
@@ -114,7 +119,10 @@ class HoleFinder(targetfinder.TargetFinder):
 		sig = self.glapsigma.get()
 		ab = self.edgeabs.get()
 		filt = self.filtertype.getSelectedValue()
-		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab)
+		lowpasson = self.lowpasson.get()
+		lowpassn = self.lowpasssize.get()
+		lowpasssig = self.lowpasssigma.get()
+		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lp=lowpasson, lpn=lowpassn, lpsig=lowpasssig)
 		self.hf.find_edges()
 		self.edgeimage.set(self.hf['edges'])
 
@@ -214,6 +222,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.everything()
 		# prepare targets for publishing
 		self.buildTargetDataList()
+		if self.usercheckon.get():
+			self.userpause.clear()
 
 	def buildTargetDataList(self):
 		'''
