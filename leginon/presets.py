@@ -24,19 +24,36 @@ class PresetsClient(object):
 		send the named preset to the scope
 		optionally send a target to the scope as well
 		'''
+		print 'XXXXXXXXXXXX'
 		self.pchanged[presetname] = threading.Event()
+		print 'YYYYYYYYYYYYY'
 		evt = event.ChangePresetEvent()
+		print 'ZZZZZZZZZZZZ'
 		evt['name'] = presetname
+		print 'WWWWWWWWWWWWW'
 		evt['emtarget'] = emtarget
-		self.node.outputEvent(evt)
-		print 'waiting for preset %s to be set' % (presetname,)
-		self.pchanged[presetname].wait(10)
-		print 'ok'
+		print 'ouputEvent', evt
+		self.node.outputEvent(evt, wait=True, timeout=10)
+		print 'outputEvent done'
+		#print 'waiting for preset %s to be set' % (presetname,)
+		#self.pchanged[presetname].wait(10)
 
 	def presetchanged(self, ievent):
+		print 'IEVENT', ievent
 		name = ievent['name']
 		if name in self.pchanged:
 			self.pchanged[name].set()
+
+	def getPresets(self):
+		seqdata = self.node.researchByDataID(('presets',))
+		if seqdata is None:
+			return []
+		else:
+			return seqdata['sequence']
+
+	def getCurrentPreset(self):
+		pdata = self.node.researchByDataID(('current preset',))
+		return pdata
 
 
 class OLDPresetsClient(object):
@@ -119,15 +136,40 @@ class CircularIter(object):
 		return self
 
 
+class DataHandler(node.DataHandler):
+	def query(self, id):
+		print 'QUERY', id
+		if id == ('presets',):
+			self.lock.acquire()
+			result = data.PresetSequenceData()
+			result['sequence'] = self.node.presets
+			print 'RESULT', result
+			self.lock.release()
+		elif id == ('current preset',):
+			self.lock.acquire()
+			result = self.currentpreset
+			self.lock.release()
+		else:
+			result = node.DataHandler.query(self, id)
+		return result
+
+
 class PresetsManager(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
+		node.Node.__init__(self, id, session, nodelocations, datahandler=DataHandler, **kwargs)
 
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 		self.addEventOutput(event.PresetChangedEvent)
 
-		self.current = None
-		self.setPresets([])
+		ids = [('presets',)]
+		e = event.ListPublishEvent(idlist=ids)
+		self.outputEvent(e)
+
+		self.currentselection = None
+		self.currentpreset = None
+		self.presets = []
+		self.circle = CircularIter(self.presets)
+		self.getPresetsFromDB()
 
 		self.defineUserInterface()
 		self.start()
@@ -136,20 +178,14 @@ class PresetsManager(node.Node):
 		'''
 		callback for received PresetChangeEvent from client
 		'''
+		print 'IEVENT'
+		print ievent
 		pname = ievent['name']
 		emtarget = ievent['emtarget']
 		if emtarget is None:
 			self.toScope(pname)
 		else:
 			self.targetToScope(pname, emtarget)
-
-	def setPresets(self, presetlist):
-		'''
-		initializes my current list of presets, in proper order
-		also initializes my circular iterator
-		'''
-		self.presets = list(presetlist)
-		self.circle = CircularIter(self.presets)
 
 	def getPresetsFromDB(self, session=None):
 		'''
@@ -159,14 +195,8 @@ class PresetsManager(node.Node):
 		if session is None:
 			session = self.session
 		### get presets from database
-		print 'SESSION'
-		print session
 		pdata = data.PresetData(session=session)
-		print 'PDATA'
-		print pdata
 		presets = self.research(datainstance=pdata)
-		print 'PRESETS'
-		print presets
 
 		### only want most recent of each name
 		mostrecent = []
@@ -175,9 +205,7 @@ class PresetsManager(node.Node):
 			if preset['name'] not in names:
 				mostrecent.append(preset)
 				names.append(preset['name'])
-		print 'NAMES'
-		print names
-		self.setPresets(mostrecent)
+		self.presets[:] = mostrecent
 
 	def presetToDB(self, presetdata):
 		'''
@@ -185,8 +213,6 @@ class PresetsManager(node.Node):
 		'''
 		pdata = copy.copy(presetdata)
 		pdata['session'] = self.session
-		print 'PDATA'
-		print pdata
 		self.publish(pdata, database=True)
 
 	def presetByName(self, name):
@@ -249,7 +275,6 @@ class PresetsManager(node.Node):
 			print 'no such preset'
 			return
 
-
 		## should use AllEMData, but that is not working yet
 		scopedata = data.ScopeEMData()
 		cameradata = data.CameraEMData()
@@ -257,10 +282,16 @@ class PresetsManager(node.Node):
 		cameradata.friendly_update(presetdata)
 		scopedata['id'] = ('scope',)
 		cameradata['id'] = ('camera',)
-		self.publishRemote(scopedata)
-		self.publishRemote(cameradata)
-		name = presetdata['name']
-		self.outputEvent(event.PresetChangedEvent(name=name))
+		try:
+			self.publishRemote(scopedata)
+			self.publishRemote(cameradata)
+		except node.PublishError:
+			self.printException()
+			print '** Maybe EM is not running?'
+		else:
+			name = presetdata['name']
+			self.currentpreset = presetdata
+			self.outputEvent(event.PresetChangedEvent(name=name))
 
 	def fromScope(self, name):
 		'''
@@ -284,28 +315,14 @@ class PresetsManager(node.Node):
 				break
 		self.presets.append(newpreset)
 
-		print 'NEWPRESET'
-		print newpreset
 		self.presetToDB(newpreset)
-		print 'inDB'
 		pnames = self.presetNames()
-		print 'PNAMES'
-		print pnames
 		self.uiselectpreset.set(pnames,[0])
 		return newpreset
 
 	def presetNames(self):
-		print 'presetNames, presets'
-		print self.presets
 		names = [p['name'] for p in self.presets]
 		return names
-
-	def uiGetPresets(self):
-		self.getPresetsFromDB()
-		pnames = self.presetNames()
-		print 'uiGetP PNAMES'
-		print pnames
-		self.uiselectpreset.set(pnames, [0])
 
 	def uiToScope(self):
 		sel = self.uiselectpreset.getSelectedValue()
@@ -333,28 +350,35 @@ class PresetsManager(node.Node):
 			try:
 				index = value[0]
 			except IndexError:
-				self.current = None
+				self.currentselection = None
 			else:
-				self.current = self.presets[index]
-				d = self.current.toDict(noNone=True)
-				self.presetparams.set(d, callback=False)
+				try:
+					self.currentselection = self.presets[index]
+				except IndexError:
+					self.currentselection = None
+				else:
+					d = self.currentselection.toDict(noNone=True)
+					self.presetparams.set(d, callback=False)
 		return value
 
 	def uiParamsCallback(self, value):
 		for key in value:
-			self.current[key] = value[key]
-		if self.current is None:
+			self.currentselection[key] = value[key]
+		if self.currentselection is None:
 			return {}
 		else:
-			self.presetToDB(self.current)
-			return self.current.toDict(noNone=True)
+			self.presetToDB(self.currentselection)
+			d = self.currentselection.toDict(noNone=True)
+			del d['session']
+			return d
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
+		self.presetparams = uidata.UIStruct('Parameters', {}, 'rw', self.uiParamsCallback)
 		self.uiselectpreset = uidata.UISelectFromList('Preset', [], [], 'r', callback=self.uiSelectCallback)
-
-		getpresetsmethod = uidata.UIMethod('Get Presets', self.uiGetPresets)
+		pnames = self.presetNames()
+		self.uiselectpreset.set(pnames,[0])
 
 		toscopemethod = uidata.UIMethod('To Scope', self.uiToScope)
 		fromscopemethod = uidata.UIMethod('Selected From Scope', self.uiSelectedFromScope)
@@ -362,12 +386,8 @@ class PresetsManager(node.Node):
 		self.enteredname = uidata.UIString('New Name', '', 'rw')
 		newfromscopemethod = uidata.UIMethod('New From Scope', self.uiNewFromScope)
 
-		self.presetparams = uidata.UIStruct('Parameters', {}, 'rw', self.uiParamsCallback)
-		#self.presetparams.set(self.current, callback=False)
-
-
 		container = uidata.UIMediumContainer('Presets Manager')
-		container.addUIObjects((self.uiselectpreset, getpresetsmethod, toscopemethod, fromscopemethod, self.enteredname, newfromscopemethod, self.presetparams))
+		container.addUIObjects((self.uiselectpreset, toscopemethod, fromscopemethod, self.enteredname, newfromscopemethod, self.presetparams))
 		self.uiserver.addUIObject(container)
 
 		return
@@ -401,7 +421,13 @@ class PresetsManager(node.Node):
 		cameradata.friendly_update(presetdata)
 		cameradata['id'] = ('camera',)
 
-		self.publishRemote(newemdata)
-		self.publishRemote(cameradata)
-		name = presetdata['name']
-		self.outputEvent(event.PresetChangedEvent(name=name))
+		try:
+			self.publishRemote(newemdata)
+			self.publishRemote(cameradata)
+		except node.PublishError:
+			self.printException()
+			print '** Maybe EM is not running?'
+		else:
+			name = presetdata['name']
+			self.currentpreset = newpreset
+			self.outputEvent(event.PresetChangedEvent(name=name))
