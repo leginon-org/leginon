@@ -152,7 +152,12 @@ class XMLApplicationExport:
 	    </sqltable>
 		"""
 		data = "<!-- %s -->%s" % (table,self.crlf) 
-		q = 'SELECT * FROM `%s` WHERE `REF|ApplicationData|application`=%s ' % (table, applicationId)
+		if table == 'ApplicationData':
+			key = 'DEF_id'
+		else:
+			key = 'REF|ApplicationData|application'
+
+		q = 'SELECT * FROM `%s` WHERE `%s`=%s ' % (table, key, applicationId)
 		results = self.db.selectall(q)
 		for result in results:
 			data += '    <sqltable name="%s">%s' % (table,self.crlf)
@@ -347,7 +352,7 @@ class ImportExport:
 		version = result['version']
 		date = result['date']
 
-		ref_tables=[]
+		ref_tables=['ApplicationData',]
 		tables = self.db.selectall("SHOW TABLES")
 		for table in tables:
 			tablename=table['Tables_in_dbemdata']
@@ -359,7 +364,7 @@ class ImportExport:
 						ref_tables.index(tablename)
 					except:
 						ref_tables.append(tablename)
-
+		print ref_tables
 		xmlexp = XMLApplicationExport(self.db)
 		dump = xmlexp.getXMLheader(name,version,date)
 		dump += xmlexp.getXMLdump(ref_tables,applicationId)
