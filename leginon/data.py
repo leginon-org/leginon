@@ -307,7 +307,8 @@ class InstrumentData(Data):
 					('description', str),
 					('scope', str),
 					('camera', str),
-					('hostname', str)]
+					('hostname', str),
+					('camera size', int)]
 		return t
 	typemap = classmethod(typemap)
 
@@ -373,7 +374,6 @@ class CameraEMData(EMData):
 			('offset', dict),
 			('exposure time', float),
 			('image data', strictdict.NumericArrayType),
-			('camera size', dict),
 			('inserted', bool)
 		]
 		return t
@@ -412,7 +412,6 @@ class AllEMData(EMData):
 			('offset', dict),
 			('exposure time', float),
 			('image data', strictdict.NumericArrayType),
-			('camera size', dict),
 			('inserted', bool)
 		]
 		return t

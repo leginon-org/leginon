@@ -94,14 +94,8 @@ class CameraFuncs(object):
 		camconfig['offset'] will be set to new value
 		'''
 		if not self.camsize:
-			self.camsize = {}
-			currentcamdata = self.currentCameraEMData()
-			if currentcamdata is None:
-				self.camsize['x'] = 4096
-				self.camsize['y'] = 4096
-			else:
-				self.camsize['x'] = currentcamdata['camera size']['x']
-				self.camsize['y'] = currentcamdata['camera size']['y'] 
+			camsize = self.node.session['instrument']['camera size']
+			self.camsize = {'x':camsize, 'y':camsize}
 
 		sizex = self.camsize['x']
 		sizey = self.camsize['y']

@@ -47,11 +47,12 @@ class Administration(node.Node):
 		camera = self.addinstrumentcamera.getSelectedValue()
 		if camera == 'None':
 			camera = None
+		camsize = self.camsize.get()
 		hostname = self.addinstrumenthostname.get()
 		initializer = {'name': name,
 										'description': description,
 										'scope': scope,
-										'camera': camera,
+										'camera': camera, 'camera size': camsize,
 										'hostname': hostname}
 		instrumentdata = data.InstrumentData(initializer=initializer)
 		self.publish(instrumentdata, database=True)
@@ -80,13 +81,14 @@ class Administration(node.Node):
 																			['None'] + emregistry.getScopeNames(), 0)
 		self.addinstrumentcamera = uidata.SingleSelectFromList('Camera',
 																			['None'] + emregistry.getCameraNames(), 0)
+		self.camsize = uidata.Integer('Camera Size', 2048, 'rw')
 		self.addinstrumenthostname = uidata.String('Hostname', '', 'rw')
 		addinstrument = uidata.Method('Add', self.addInstrument)
 		instrumentcontainer = uidata.Container('Instruments')
 		instrumentcontainer.addObjects((self.addinstrumentname,
 																			self.addinstrumentdescription,
 																			self.addinstrumentscope,
-																			self.addinstrumentcamera,
+																			self.addinstrumentcamera, self.camsize,
 																			self.addinstrumenthostname,
 																			addinstrument))
 
