@@ -15,7 +15,7 @@ import wx
 import gui.wx.ImageViewer
 import wxDictTree
 import wxOrderedListBox
-import wxMaster
+import gui.wx.Master
 import wxGridTray
 import wxMessageLog
 import wxList
@@ -1104,7 +1104,7 @@ class TreeCtrlWidget(wxDictTree.DictTreeCtrlPanel, DataWidget):
 class ApplicationWidget(wx.BoxSizer, DataWidget):
 	def __init__(self, name, parent, container, value, configuration):
 		wx.BoxSizer.__init__(self, wx.VERTICAL)
-		self.applicationeditor = wxMaster.ApplicationEditorCanvas(parent, -1)
+		self.applicationeditor = gui.wx.Master.ApplicationEditorCanvas(parent, -1)
 		self.applybutton = wx.Button(parent, -1, 'Apply')
 		DataWidget.__init__(self, name, parent, container, value, configuration)
 

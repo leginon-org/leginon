@@ -124,26 +124,29 @@ class Frame(wx.Frame):
 
 		# application menu
 		self.applicationmenu = wx.Menu()
-		self.runappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Run')
+		self.runappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Run...')
 		self.killappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Kill')
-		self.importappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Import')
-		self.exportappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Export')
+		self.importappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Import...')
+		self.exportappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Export...')
+		self.editappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Edit...')
 		self.Bind(wx.EVT_MENU, self.onMenuRunApplication, self.runappmenuitem)
 		self.Bind(wx.EVT_MENU, self.onMenuKillApplication, self.killappmenuitem)
 		self.Bind(wx.EVT_MENU, self.onMenuImportApplication, self.importappmenuitem)
 		self.Bind(wx.EVT_MENU, self.onMenuExportApplication, self.exportappmenuitem)
+		self.Bind(wx.EVT_MENU, self.onMenuEditApplication, self.editappmenuitem)
 		self.applicationmenu.AppendItem(self.runappmenuitem)
 		self.applicationmenu.AppendItem(self.killappmenuitem)
 		self.applicationmenu.AppendSeparator()
 		self.applicationmenu.AppendItem(self.importappmenuitem)
 		self.applicationmenu.AppendItem(self.exportappmenuitem)
+		self.applicationmenu.AppendItem(self.editappmenuitem)
 		self.menubar.Append(self.applicationmenu, '&Application')
 		self.runappmenuitem.Enable(False)
 		self.killappmenuitem.Enable(False)
 
 		# launcher menu
 		self.launchermenu = wx.Menu()
-		addmenuitem = wx.MenuItem(self.launchermenu, -1, '&Add')
+		addmenuitem = wx.MenuItem(self.launchermenu, -1, '&Add...')
 		self.launcherkillmenu = wx.Menu()
 
 		self.Bind(wx.EVT_MENU, self.onMenuAdd, addmenuitem)
@@ -159,7 +162,7 @@ class Frame(wx.Frame):
 		# node menu
 		self.nodemenu = wx.Menu()
 
-		self.nodecreatemenuitem = wx.MenuItem(self.nodemenu, -1, '&Create')
+		self.nodecreatemenuitem = wx.MenuItem(self.nodemenu, -1, '&Create...')
 		self.nodekillmenu = wx.Menu()
 
 		self.Bind(wx.EVT_MENU, self.onMenuCreate, self.nodecreatemenuitem)
@@ -175,7 +178,7 @@ class Frame(wx.Frame):
 
 		# event menu
 		self.eventmenu = wx.Menu()
-		self.bindmenuitem = wx.MenuItem(self.eventmenu, -1, '&Bind')
+		self.bindmenuitem = wx.MenuItem(self.eventmenu, -1, '&Bind...')
 		self.Bind(wx.EVT_MENU, self.onMenuBind, self.bindmenuitem)
 		self.eventmenu.AppendItem(self.bindmenuitem)
 		self.bindmenuitem.Enable(False)
@@ -183,7 +186,7 @@ class Frame(wx.Frame):
 
 		# settings menu
 		self.settingsmenu = wx.Menu()
-		self.loggingmenuitem = wx.MenuItem(self.settingsmenu, -1, '&Logging')
+		self.loggingmenuitem = wx.MenuItem(self.settingsmenu, -1, '&Logging...')
 		self.Bind(wx.EVT_MENU, self.onMenuLogging, self.loggingmenuitem)
 		self.settingsmenu.AppendItem(self.loggingmenuitem)
 		self.menubar.Append(self.settingsmenu, '&Settings')
@@ -250,6 +253,9 @@ class Frame(wx.Frame):
 			values = dialog.getValues()
 			self.manager.exportApplication(*values)
 		dialog.Destroy()
+
+	def onMenuEditApplication(self, evt):
+		pass
 
 	def onMenuCreate(self, evt):
 		launchernames = self.manager.getLauncherNames()

@@ -48,6 +48,8 @@ class Launcher(node.Node):
 	def onCreateNode(self, ievent):
 		targetclass = ievent['targetclass']
 		nodeclass = nodeclassreg.getNodeClass(targetclass)
+		if nodeclass is None:
+			return
 
 		nodename = ievent['node']
 		session = ievent['session']

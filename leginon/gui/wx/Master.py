@@ -6,7 +6,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 from wxPython.wx import *
-import wxObjectCanvas
+import gui.wx.ObjectCanvas as wxObjectCanvas
 import event
 import nodeclassreg
 
