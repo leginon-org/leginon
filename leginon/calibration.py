@@ -132,7 +132,7 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 		#emdata = self.researchByDataID('corrected image data')
 		#self.publish(event.UnlockEvent(self.ID()))
 		#image = emdata.content['corrected image data']
-		image = self.cameraAcquireArray(camstate=None, correction=1)
+		image = self.cameraAcquireArray(camstate=None, correction=0)
 		print 'min', cameraimage.min(image)
 		print 'max', cameraimage.max(image)
 
@@ -162,27 +162,22 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 
 		self.correlator.insertImage(image1)
 
-		## could autocorrelation here help also?
-		autocorr = 0
-		if autocorr:
-			self.correlator.insertImage(image1)
-			acimage = self.correlator.phaseCorrelate()
-			self.peakfinder.setImage(acimage)
-			self.peakfinder.subpixelPeak()
-			peak = self.peakfinder.getResults()
-			acpeakvalue = peak['subpixel peak value']
-			acshift = correlator.wrap_coord(peak['subpixel peak'], acimage.shape)
-			shiftinfo.update({'ac shift':acshift,'ac peak value':acpeakvalue})
-			acimagedata = data.ImageData(self.ID(), acimage)
-			self.publish(acimagedata, event.PhaseCorrelationImagePublishEvent)
+		## autocorrelation
+		self.correlator.insertImage(image1)
+		acimage = self.correlator.phaseCorrelate()
+		acimagedata = data.ImageData(self.ID(), acimage)
+		self.publish(acimagedata, event.PhaseCorrelationImagePublishEvent)
 
 		## phase correlation
 		self.correlator.insertImage(image2)
 		print 'correlation'
 		pcimage = self.correlator.phaseCorrelate()
 
+		## subtract autocorrelation
+		pcimage -= acimage
+
 		pcimagedata = data.ImageData(self.ID(), pcimage)
-		#self.publish(pcimagedata, event.PhaseCorrelationImagePublishEvent)
+		self.publish(pcimagedata, event.PhaseCorrelationImagePublishEvent)
 
 		## peak finding
 		print 'peak finding'
