@@ -96,6 +96,7 @@ class ImageCanvas(Frame):
 	def use_numeric(self, ndata):
 		## use the old value of clip
 		oldclip = self.clip()
+		print 'oldclip', oldclip
 		self.numimage = NumericImage(ndata,clip=oldclip)
 		self.update_scaling_widgets()
 		self.update_canvas()
@@ -103,6 +104,10 @@ class ImageCanvas(Frame):
 	def update_scaling_widgets(self):
 		for sw in self.scalingwidget:
 			sw.set_from_imagecanvas()
+		## should make this condition of a scale lock
+		if not sw.scalelock.get():
+			newvalues = self.extrema()
+			sw.set_values(newvalues)
 
 	def clip(self, newclip=None):
 		if newclip:
@@ -241,11 +246,14 @@ class ScalingWidget(Frame):
 		self.maxscale = Scale(self, orient=HORIZONTAL, showvalue=NO, width=8, length=300)
 		self.minlab = Label(self, textvariable=self.rangemin)
 		self.maxlab = Label(self, textvariable=self.rangemax)
+		self.scalelock = BooleanVar()
+		lockbut = Checkbutton(self, text='Lock', variable=self.scalelock)
 
 		self.minscale.grid(column=0, row=0)
 		self.maxscale.grid(column=0, row=1)
 		self.minlab.grid(column=1, row=0)
 		self.maxlab.grid(column=1, row=1)
+		lockbut.grid(column=2, row=0, rowspan=2)
 
 	def set_from_imagecanvas(self):
 		"""
@@ -287,7 +295,8 @@ class ScalingWidget(Frame):
 		self.minscale['to'] = newmax
 		self.maxscale['to'] = newmax
 
-	def __set_values(self, newvalues):
+	def set_values(self, newvalues):
+		print 'setting values', newvalues
 		self.minscale.set(newvalues[0])
 		self.maxscale.set(newvalues[1])
 
@@ -300,6 +309,7 @@ class ScalingWidget(Frame):
 		self.maxscale['command'] = None
 
 	def _minscale_callback(self, newval=None):
+		print 'hello'
 		### turn off this callback while it is running
 		self.minscale['command'] = ''
 		if self.minscalevalue == newval:

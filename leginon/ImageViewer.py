@@ -55,20 +55,14 @@ class ImageViewer(Frame):
 
 if __name__ == '__main__':
 	import sys
-	filename = sys.argv[1]
-	root = Tk()
+	from mrc import Mrc
 
-	print 'create ImageViewer'
+	root = Tk()
 	jim = ImageViewer(root, bg='#488')
-	print 'pack ImageViewer'
 	jim.pack()
 
-	print 'read MRC'
-	from mrc import Mrc
-	data1 = Mrc.mrc_to_numeric(filename)
-
-	print 'data into ImageViewer'
-	while 1:
+	for filename in sys.argv[1:]:
+		data1 = Mrc.mrc_to_numeric(filename)
 		jim.import_numeric(data1)
 		raw_input('return to continue')
 	#print 'clip ImageViewer'
