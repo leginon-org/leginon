@@ -317,8 +317,6 @@ class PresetsManager(node.Node):
 		self.uiselectpreset.set(pnames, len(pnames)-1)
 		return newpreset
 
-
-
 	def presetNames(self):
 		names = [p['name'] for p in self.presets]
 		return names
@@ -332,6 +330,16 @@ class PresetsManager(node.Node):
 	def uiToScope(self):
 		sel = self.uiselectpreset.getSelectedValue()
 		self.toScope(sel)
+
+	def uiCycleToScope(self):
+		print 'Cycling Presets...'
+		for name in self.orderlist.get():
+			p = self.presetByName(name)
+			if p is None:
+				self.printerror('%s not in presets' % (name,))
+			else:
+				self.toScope(p)
+		print 'Cycle Done'
 
 	def uiSelectedFromScope(self):
 		sel = self.uiselectpreset.getSelectedValue()
@@ -380,24 +388,38 @@ class PresetsManager(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
+		## import
 		self.othersession = uidata.String('Session', '', 'rw')
 		fromdb = uidata.Method('Import', self.uiGetPresetsFromDB)
+		importcont = uidata.Container('Import')
+		importcont.addObjects((self.othersession, fromdb))
 
+		## create preset
+		self.enteredname = uidata.String('New Name', '', 'rw')
+		newfromscopemethod = uidata.Method('New From Scope', self.uiNewFromScope)
+		createcont = uidata.Container('Preset Creation')
+		createcont.addObjects((self.enteredname, newfromscopemethod))
+
+		## selection
 		self.autosquare = uidata.Boolean('Auto Square', True, 'rw')
 		self.presetparams = uidata.Struct('Parameters', {}, 'rw', self.uiParamsCallback)
 		self.uiselectpreset = uidata.SingleSelectFromList('Preset', [], 0, callback=self.uiSelectCallback)
+		toscopemethod = uidata.Method('To Scope', self.uiToScope)
+		cyclemethod = uidata.Method('Cycle To Scope', self.uiCycleToScope)
+		fromscopemethod = uidata.Method('From Scope', self.uiSelectedFromScope)
+		removemethod = uidata.Method('Remove', self.uiSelectedRemove)
+		self.orderlist = uidata.Array('Order', [], 'rw', persist=True)
+
+		selectcont = uidata.Container('Selection')
+		selectcont.addObjects((self.uiselectpreset,toscopemethod,cyclemethod,fromscopemethod,removemethod,self.orderlist,self.autosquare,self.presetparams))
+
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)
+		self.orderlist.set(pnames)
 
-		toscopemethod = uidata.Method('To Scope', self.uiToScope)
-		fromscopemethod = uidata.Method('Selected From Scope', self.uiSelectedFromScope)
-		removemethod = uidata.Method('Remove Selected', self.uiSelectedRemove)
-
-		self.enteredname = uidata.String('New Name', '', 'rw')
-		newfromscopemethod = uidata.Method('New From Scope', self.uiNewFromScope)
-
+		## main container
 		container = uidata.MediumContainer('Presets Manager')
-		container.addObjects((self.othersession, fromdb, self.uiselectpreset, toscopemethod, fromscopemethod, removemethod, self.enteredname, newfromscopemethod, self.autosquare, self.presetparams))
+		container.addObjects((importcont,createcont,selectcont))
 		self.uiserver.addObject(container)
 
 		return
