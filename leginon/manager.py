@@ -64,7 +64,8 @@ class Manager(node.Node):
 
 		self.launcherdict = {}
 		self.managersetup = ManagerSetup(self)
-		self.defineUserInterface()
+		self.uiserver.addObject(self.managersetup.getUserInterface())
+		#self.defineUserInterface()
 		#self.start()
 
 	# main/start methods
@@ -270,12 +271,16 @@ class Manager(node.Node):
 		else:
 			self.launcherdict[launchername]['classes'] = nodeclasses
 
-		## update the UI stuff
+		self.uiUpdateLauncherInfo()
+		self.confirmEvent(ievent)
+
+	def uiUpdateLauncherInfo(self):
 		launchers = self.launcherdict.keys()
 		launchers.sort()
-		self.uilauncherselect.set(launchers, 0)
-
-		self.confirmEvent(ievent)
+		try:
+			self.uilauncherselect.set(launchers, 0)
+		except AttributeError:
+			pass
 
 	# node related methods
 
@@ -560,11 +565,13 @@ class Manager(node.Node):
 		'''Updates nodes lists and info in UI.'''
 		nodes = self.clients.keys()
 		nodes = map(str, nodes)
-		self.uikillselect.set(nodes, 0)
-		self.uifromnodeselect.set(nodes, 0)
-		self.uitonodeselect.set(nodes, 0)
-
-		self.uinodeinfo.set(self.uiNodeDict())
+		try:
+			self.uikillselect.set(nodes, 0)
+			self.uifromnodeselect.set(nodes, 0)
+			self.uitonodeselect.set(nodes, 0)
+			self.uinodeinfo.set(self.uiNodeDict())
+		except AttributeError:
+			pass
 
 #	def uiNodeDict(self):
 #		nodes = self.clients.keys()
@@ -744,12 +751,18 @@ class Manager(node.Node):
 		diarycontainer = uidata.LargeContainer('Diary')
 		diarycontainer.addObjects((self.diarymessage, diarymethod))
 
-		uimanagersetup = self.managersetup.getUserInterface()
+#		uimanagersetup = self.managersetup.getUserInterface()
 
 		container = uidata.LargeContainer('Manager')
 
-		container.addObject(uimanagersetup)
-		container.addObjects((launchcontainer, nodemanagementcontainer, eventcontainer, self.applicationcontainer, diarycontainer))
+#		container.addObject(uimanagersetup)
+		container.addObjects((launchcontainer, nodemanagementcontainer,
+													eventcontainer, self.applicationcontainer,
+													diarycontainer))
+
+		self.uiUpdateNodeInfo()
+		self.uiUpdateLauncherInfo()
+
 		self.uiserver.addObject(container)
 
 class ManagerSetup(object):
@@ -781,6 +794,7 @@ class ManagerSetup(object):
 			messagestring = 'Session "%s" already exists.' % self.session_name.get()
 			message = uidata.MessageDialog('Error', messagestring)
 			self.container.addObject(message)
+		self.manager.defineUserInterface()
 
 	def uiGetSession(self):
 		session_name = self.session_name.get()
@@ -948,7 +962,6 @@ class ManagerSetup(object):
 		return index
 
 	def defineUserInterface(self):
-#		self.manager.uiserver.disable()
 		self.container = uidata.ExternalContainer('Manager Setup')
 
 		usercontainer = uidata.Container('User')
