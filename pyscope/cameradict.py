@@ -4,11 +4,12 @@ def factory(cameraclass):
 	class cameradict(cameraclass):
 		def __init__(self, dict=None):
 			cameraclass.__init__(self)
-			self.data = {"offset": {'x': 0, 'y': 0}, \
-										"dimension": {'x': 512, 'y': 512}, \
-										"binning": {'x': 1, 'y': 1}, \
-										"exposure time" : 500, \
-										"image data" : None}
+			self.data = {"offset": {'x': 0, 'y': 0},
+										"dimension": {'x': 512, 'y': 512},
+										"binning": {'x': 1, 'y': 1},
+										"exposure time" : 500,
+										"image data" : None,
+										"size": {'x': 2048, 'y': 2048}}
 			if dict is not None:
 				self.update(dict)
 
