@@ -498,6 +498,12 @@ class SQLDict:
 	def load(self, v):
 	    return v
 
+	def getall(self, where=1, orderBy=None):
+	    q = sqlexpr.Select(items=self.fields, table=self.table, where=where, orderBy=orderBy).sqlRepr()
+	    c = self.cursor()
+	    c.execute(q)
+	    return c.fetchall()
+
 	class _Index:
 
 	    """
@@ -512,6 +518,10 @@ class SQLDict:
 		else:
 			ind=None
 		self.fields = ind
+
+	    def __getattr__(self, attr):
+		c = self.table.select(where=1, **self.kwargs)
+		return getattr(c, attr)
 
 	    def __setitem__(self, i=(), v=None):
 		"""Update the item in the database matching i
@@ -538,7 +548,6 @@ class SQLDict:
 		elif type(i) != TupleType: i = (i,)
 		w = sqlexpr.AND_EQUAL(zip(self.fields,i))
 		return self.table.delete(i, WHERE=w)
-
 
 	def Index(self, indices=[], **kwargs):
 
