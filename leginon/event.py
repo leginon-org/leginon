@@ -75,6 +75,14 @@ class NodeUninitializedEvent(NotificationEvent):
 	'Event sent by a node to indicate that it is no longer operational'
 	pass
 
+class TargetDoneEvent(NotificationEvent):
+	'Event indicating target is done'
+	def typemap(cls):
+		t = NotificationEvent.typemap()
+		t += [ ('targetid', tuple), ]
+		return t
+	typemap = classmethod(typemap)
+
 ## could PublishEvent and UnpublishEvent be derived from a common class?
 class PublishEvent(NotificationEvent):
 	'Event indicating data was published'
