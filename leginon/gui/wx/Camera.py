@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Camera.py,v $
-# $Revision: 1.25 $
+# $Revision: 1.26 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 01:34:25 $
+# $Date: 2005-02-25 18:28:25 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -46,6 +46,10 @@ class CameraPanel(wx.Panel):
 		self.common = {}
 
 		# geometry
+		self.ccommon = wx.Choice(self, -1, choices = ['(None)'])
+		self.ccommon.SetSelection(0)
+		bcustom = wx.Button(self, -1, 'Custom...')
+
 		std = wx.StaticText(self, -1, 'Dimension:')
 		self.stdimension = wx.StaticText(self, -1, '')
 
@@ -55,20 +59,7 @@ class CameraPanel(wx.Panel):
 		stb = wx.StaticText(self, -1, 'Binning:')
 		self.stbinning = wx.StaticText(self, -1, '')
 
-		bcustom = wx.Button(self, -1, 'Custom...')
-
-		self.ccommon = wx.Choice(self, -1)
-
 		self.szmain = wx.GridBagSizer(3, 3)
-
-		self.szmain.Add(std, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szmain.Add(self.stdimension, (0, 1), (1, 1), wx.ALIGN_CENTER)
-
-		self.szmain.Add(sto, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szmain.Add(self.stoffset, (1, 1), (1, 1), wx.ALIGN_CENTER)
-
-		self.szmain.Add(stb, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szmain.Add(self.stbinning, (2, 1), (1, 1), wx.ALIGN_CENTER)
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.ccommon, (0, 0), (1, 1),
@@ -77,7 +68,16 @@ class CameraPanel(wx.Panel):
 		sz.AddGrowableRow(0)
 		sz.AddGrowableCol(0)
 		sz.AddGrowableCol(1)
-		self.szmain.Add(sz, (3, 0), (1, 2), wx.EXPAND)
+		self.szmain.Add(sz, (0, 0), (1, 2), wx.EXPAND)
+
+		self.szmain.Add(std, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szmain.Add(self.stdimension, (1, 1), (1, 1), wx.ALIGN_CENTER)
+
+		self.szmain.Add(sto, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szmain.Add(self.stoffset, (2, 1), (1, 1), wx.ALIGN_CENTER)
+
+		self.szmain.Add(stb, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szmain.Add(self.stbinning, (3, 1), (1, 1), wx.ALIGN_CENTER)
 
 		# exposure time
 		stet = wx.StaticText(self, -1, 'Exposure time:')
@@ -108,25 +108,35 @@ class CameraPanel(wx.Panel):
 
 	def setSize(self, size):
 		if size is None:
-			return
+			self.size = None
+			self.Freeze()
+			self.choices, self.common = None, None
+			self.ccommon.Clear()
+			self.ccommon.Append('(None)')
+			self.szmain.Layout()
+			self.Enable(False)
+			self.Thaw()
+		else:
+			self.size = dict(size)
+			self.Freeze()
+			self.choices, self.common = self.getCenteredGeometries()
+			self.ccommon.Clear()
+			self.ccommon.AppendItems(self.choices)
+			if self.geometry is None or not self.validateGeometry():
+				self.ccommon.SetSelection(len(self.choices) - 1)
+				self.setGeometry(self.common[self.ccommon.GetStringSelection()])
+			else:
+				self.setCommonChoice()
+			if self.feexposuretime.GetValue() is None:
+				self.feexposuretime.SetValue(self.defaultexptime)
+			self.Enable(True)
+			self.szmain.Layout()
+			self.Thaw()
 
-		self.size = {'x': size, 'y': size}
-
-		self.Freeze()
-		self.choices, self.common = self.getCenteredGeometries()
-		self.ccommon.Clear()
-		self.ccommon.AppendItems(self.choices)
-		self.ccommon.SetSelection(0)
-		self.setGeometry(self.common[self.ccommon.GetStringSelection()])
-		if self.feexposuretime.GetValue() is None:
-			self.feexposuretime.SetValue(self.defaultexptime)
-		self.Enable(True)
-		self.szmain.Layout()
-		self.Thaw()
-
+	'''
 	def clear(self):
 		self.Freeze()
-		self.ccommon.SetSelection(0)
+		self.ccommon.SetSelection(len(self.choices) - 1)
 		try:
 			self.setGeometry(self.common[self.ccommon.GetStringSelection()])
 		except KeyError:
@@ -134,6 +144,7 @@ class CameraPanel(wx.Panel):
 		self.feexposuretime.SetValue(self.defaultexptime)
 		self.Enable(False)
 		self.Thaw()
+	'''
 
 	def onConfigurationChanged(self):
 		evt = ConfigurationChangedEvent(self.getConfiguration(), self)
@@ -228,7 +239,9 @@ class CameraPanel(wx.Panel):
 					break
 		return keys, geometries
 
-	def validateGeometry(self, geometry):
+	def validateGeometry(self, geometry=None):
+		if geometry is None:
+			geometry = self.geometry
 		for a in ['x', 'y']:
 			if geometry['dimension'][a] < 1 or geometry['offset'][a] < 0:
 				return False
@@ -236,7 +249,7 @@ class CameraPanel(wx.Panel):
 				return False
 			size = geometry['dimension'][a] + geometry['offset'][a]
 			size *= geometry['binning'][a]
-			if self.size is None or size > self.size[a]:
+			if size > self.size[a]:
 				return False
 		return True
 
@@ -256,7 +269,7 @@ class CameraPanel(wx.Panel):
 		if self.cmpGeometry(geometry):
 			return False
 
-		if not self.validateGeometry(geometry):
+		if self.size is not None and not self.validateGeometry(geometry):
 			raise ValueError
 
 		self._setGeometry(geometry)
@@ -279,6 +292,7 @@ class CameraPanel(wx.Panel):
 			self.geometry = {}
 		else:
 			self.geometry = copy.deepcopy(self.geometry)
+		self.Freeze()
 		for g in ['dimension', 'offset', 'binning']:
 			if g not in self.geometry:
 				self.geometry[g] = {}
@@ -293,7 +307,6 @@ class CameraPanel(wx.Panel):
 				getattr(self, 'st' + g).SetLabel(label)
 			except KeyError:
 				pass
-		self.Freeze()
 		self.szmain.Layout()
 		self.Thaw()
 		return True
@@ -406,11 +419,10 @@ if __name__ == '__main__':
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Camera Test')
 			panel = CameraPanel(frame)
-			panel.setSize({'instrument': {'camera size': 1024}})
-			panel.setGeometry({'dimension': {'x': 128, 'y': 128},
-													'offset': {'x': 256, 'y': 256},
-													'binning': {'x': 2, 'y': 2}})
-			panel.getCenteredGeometries()
+			panel.setGeometry({'dimension': {'x': 1024, 'y': 1024},
+													'offset': {'x': 0, 'y': 0},
+													'binning': {'x': 1, 'y': 1}})
+			panel.setSize({'x': 512, 'y': 512})
 			frame.Fit()
 			self.SetTopWindow(frame)
 			frame.Show()
