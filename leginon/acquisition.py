@@ -319,8 +319,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imagedata is None:
 			return 'fail'
 
+
 		## convert CameraImageData to AcquisitionImageData
 		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=target)
+
+		if target is not None and 'grid' in target and target['grid'] is not None:
+			imagedata['grid'] = target['grid']
 
 		self.publishDisplayWait(imagedata)
 		self.imagelist.append(imagedata.reference())

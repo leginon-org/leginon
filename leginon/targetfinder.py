@@ -199,6 +199,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		targetdata['type'] = type
 		targetdata['delta row'] = drow
 		targetdata['delta column'] = dcol
+		if 'grid' in imagedata and imagedata['grid'] is not None:
+			targetdata['grid'] = imagedata['grid']
 		return targetdata
 
 	def defineUserInterface(self):
