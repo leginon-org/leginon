@@ -83,8 +83,7 @@ def mean(inputarray):
 	im = toFloat(inputarray)
 	f = Numeric.ravel(im)
 	inlen = len(f)
-	divisor = Numeric.array(inlen, Numeric.Float32)
-	m = Numeric.sum(f) / divisor
+	m = Numeric.sum(f) / float(inlen)
 	return float(m)
 
 def min(inputarray):
@@ -144,8 +143,7 @@ def averageSeries(series):
 	#sum = Numeric.sum(series)
 	sum = sumSeries(series)
 
-	divisor = Numeric.array(slen, Numeric.Float32)
-	avg = sum / divisor
+	avg = sum / slen
 	return avg
 
 def scaleToShape(array, scaledshape):
@@ -196,9 +194,12 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 			maxfrom = Numeric.ravel(input)[maxfrom]
 
 	## prepare for fast math
-	rangefrom = Numeric.array((maxfrom - minfrom)).astype('f')
-	rangeto = Numeric.array((maxto - minto)).astype('f')
-	minfrom = Numeric.array(minfrom).astype('f')
+	## with numarray, this is not necessary anymore
+	#rangefrom = Numeric.array((maxfrom - minfrom)).astype('f')
+	#rangeto = Numeric.array((maxto - minto)).astype('f')
+	#minfrom = Numeric.array(minfrom).astype('f')
+	rangefrom = maxfrom - minfrom
+	rangeto = maxto - minto
 
 	# this is a hack to prevent zero division
 	# is there a better way to do this with some sort of 
@@ -207,7 +208,7 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 		rangefrom = 1e-99
 
 	#output = (input - minfrom) * rangeto / rangefrom
-	scale = rangeto / rangefrom
+	scale = float(rangeto) / rangefrom
 	offset = minfrom * scale
 	output = input * scale - offset
 
