@@ -5,49 +5,6 @@ import scope
 import time
 
 class tecnai(scope.scope):
-    theScope = None
-    theLowDose = None
-    theFilm = None
-    magTable = [{'index': 1, 'up': 21, 'down': 18.5},
-                {'index': 2, 'up': 28, 'down': 25},
-                {'index': 3, 'up': 38, 'down': 34},
-                {'index': 4, 'up': 56, 'down': 50},
-                {'index': 5, 'up': 75, 'down': 66},
-                {'index': 6, 'up': 97, 'down': 86},
-                {'index': 7, 'up': 120, 'down': 105},
-                {'index': 8, 'up': 170, 'down': 150},
-                {'index': 9, 'up': 220, 'down': 195},
-                {'index': 10, 'up': 330, 'down': 290},
-                {'index': 11, 'up': 420, 'down': 370},
-                {'index': 12, 'up': 550, 'down': 490},
-                {'index': 13, 'up': 800, 'down': 710},
-                {'index': 14, 'up': 1100, 'down': 970},
-                {'index': 15, 'up': 1500, 'down': 1350},
-                {'index': 16, 'up': 2100, 'down': 1850},
-                {'index': 17, 'up': 1700, 'down': 1500},
-                {'index': 18, 'up': 2500, 'down': 2200},
-                {'index': 19, 'up': 3500, 'down': 3100},
-                {'index': 20, 'up': 5000, 'down': 4400},
-                {'index': 21, 'up': 6500, 'down': 5800},
-                {'index': 22, 'up': 7800, 'down': 6900},
-                {'index': 23, 'up': 9600, 'down': 8500},
-                {'index': 24, 'up': 11500, 'down': 10000},
-                {'index': 25, 'up': 14500, 'down': 13000},
-                {'index': 26, 'up': 19000, 'down': 17000},
-                {'index': 27, 'up': 25000, 'down': 22000},
-                {'index': 28, 'up': 29000, 'down': 25500},
-                {'index': 29, 'up': 50000, 'down': 44000},
-                {'index': 30, 'up': 62000, 'down': 55000},
-                {'index': 31, 'up': 80000, 'down': 71000},
-                {'index': 32, 'up': 100000, 'down': 89000},
-                {'index': 33, 'up': 150000, 'down': 135000},
-                {'index': 34, 'up': 200000, 'down': 175000},
-                {'index': 35, 'up': 240000, 'down': 210000},
-                {'index': 36, 'up': 280000, 'down': 250000},
-                {'index': 37, 'up': 390000, 'down': 350000},
-                {'index': 38, 'up': 490000, 'down': 430000},
-                {'index': 39, 'up': 700000, 'down': 620000}]
-
     def cmpmags(self, x, y):
         if self.theScope.Camera.MainScreen == win32com.client.constants.spUp:
             key = "up"
@@ -57,16 +14,56 @@ class tecnai(scope.scope):
             raise SystemError
         
         if x[key] < y[key]: 
-     		return -1
+	       		return -1
        	elif x[key] == y[key]: 
-     		return 0
-     	elif x[key] > y[key]: 
-     		return 1
+ 	      		return 0
+       	elif x[key] > y[key]: 
+         		return 1
         
     def __init__(self):
         self.theScope = win32com.client.Dispatch("Tecnai.Instrument.1")        
         self.theLowDose = win32com.client.Dispatch("LDServer.LdSrv")
         self.theFilm = win32com.client.Dispatch("adaExp.TAdaExp")
+        self.magTable = [{'index': 1, 'up': 21, 'down': 18.5},
+                         {'index': 2, 'up': 28, 'down': 25},
+                         {'index': 3, 'up': 38, 'down': 34},
+                         {'index': 4, 'up': 56, 'down': 50},
+                         {'index': 5, 'up': 75, 'down': 66},
+                         {'index': 6, 'up': 97, 'down': 86},
+                         {'index': 7, 'up': 120, 'down': 105},
+                         {'index': 8, 'up': 170, 'down': 150},
+                         {'index': 9, 'up': 220, 'down': 195},
+                         {'index': 10, 'up': 330, 'down': 290},
+                         {'index': 11, 'up': 420, 'down': 370},
+                         {'index': 12, 'up': 550, 'down': 490},
+                         {'index': 13, 'up': 800, 'down': 710},
+                         {'index': 14, 'up': 1100, 'down': 970},
+                         {'index': 15, 'up': 1500, 'down': 1350},
+                         {'index': 16, 'up': 2100, 'down': 1850},
+                         {'index': 17, 'up': 1700, 'down': 1500},
+                         {'index': 18, 'up': 2500, 'down': 2200},
+                         {'index': 19, 'up': 3500, 'down': 3100},
+                         {'index': 20, 'up': 5000, 'down': 4400},
+                         {'index': 21, 'up': 6500, 'down': 5800},
+                         {'index': 22, 'up': 7800, 'down': 6900},
+                         {'index': 23, 'up': 9600, 'down': 8500},
+                         {'index': 24, 'up': 11500, 'down': 10000},
+                         {'index': 25, 'up': 14500, 'down': 13000},
+                         {'index': 26, 'up': 19000, 'down': 17000},
+                         {'index': 27, 'up': 25000, 'down': 22000},
+                         {'index': 28, 'up': 29000, 'down': 25500},
+                         {'index': 29, 'up': 50000, 'down': 44000},
+                         {'index': 30, 'up': 62000, 'down': 55000},
+                         {'index': 31, 'up': 80000, 'down': 71000},
+                         {'index': 32, 'up': 100000, 'down': 89000},
+                         {'index': 33, 'up': 150000, 'down': 135000},
+                         {'index': 34, 'up': 200000, 'down': 175000},
+                         {'index': 35, 'up': 240000, 'down': 210000},
+                         {'index': 36, 'up': 280000, 'down': 250000},
+                         {'index': 37, 'up': 390000, 'down': 350000},
+                         {'index': 38, 'up': 490000, 'down': 430000},
+                         {'index': 39, 'up': 700000, 'down': 620000}]
+
 
     def normalizeLens(self, lens = "all"):
         if lens == "all":

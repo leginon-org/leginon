@@ -13,12 +13,12 @@ import client
 
 if __name__ == '__main__':
     pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
-    rpcscope = emserver.makeserver(scopedict.scopedict, tecnai.tecnai,
-                              socket.gethostname(), 8000)
-    rpccamera = emserver.makeserver(cameradict.cameradict, tietz.tietz,
-                              socket.gethostname(), 8001)
+    rpcscope = emserver.makeserver(scopedict.factory(tecnai.tecnai),
+                              socket.gethostname(), 8002)
+    rpccamera = emserver.makeserver(cameradict.factory(tietz.tietz),
+                              socket.gethostname(), 8003)
     scopethread = threading.Thread(None, rpcscope.serve_forever, None, (), {})
     camerathread = threading.Thread(None, rpccamera.serve_forever, None, (), {})
 
     scopethread.start()
-    #camerathread.start()
+    camerathread.start()
