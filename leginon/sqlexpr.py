@@ -628,12 +628,14 @@ def AND_OP(list_args, op):
     return AND(*new_args)
 
 def AND(*ops):
-    op1 = ops[0]
-    ops = ops[1:]
-    if ops:
-        return SQLOp("AND", op1, AND(*ops))
+    if len(ops) == 0:
+        return ''
+    elif len(ops) == 1:
+        return ops[0]
     else:
-        return op1
+        op1 = ops[0]
+        ops = ops[1:]
+        return SQLOp("AND", op1, AND(*ops))
 
 def OR(*ops):
     op1 = ops[0]
