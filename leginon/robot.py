@@ -400,12 +400,41 @@ if sys.platform == 'win32':
 			self.extract()
 
 		def gridQueueCallback(self, value):
-			self.uigridarray.set(value)
+			gridstring = str(value[0])
+			lastvalue = value[0]
+			c = False
+			for i in value[1:]:
+				if i - lastvalue == 1:
+					c = True
+				else:
+					if c:
+						gridstring += '-'
+						gridstring += str(lastvalue)
+						c = False
+					gridstring += ', '
+					gridstring += str(i)
+				lastvalue = i
+
+			if c:
+				gridstring += '-'
+				gridstring += str(lastvalue)
+
+			self.uigridstring.set(gridstring)
 
 		def uiAddGrid(self):
 			gridnumber = self.uigridnumber.get()
 			if validateGridNumber(gridnumber):
 				self.gridqueue.put(gridnumber)
+
+		def uiAddGridRange(self):
+			try:
+				gridrange = range(self.uigridrangestart.get(),
+													self.uigridrangestop.get() + 1)
+			except:
+				return
+			for gridnumber in gridrange:
+				if validateGridNumber(gridnumber):
+					self.gridqueue.put(gridnumber)
 
 		def uiDeleteGrid(self):
 			try:
@@ -428,15 +457,23 @@ if sys.platform == 'win32':
 		def defineUserInterface(self):
 			RobotNode.defineUserInterface(self)
 
-			self.uigridarray = uidata.Array('Grids', [])
-			self.uigridnumber = uidata.Integer('Grid Number', None, 'rw')
-			gridaddmethod = uidata.Method('Add', self.uiAddGrid)
+			self.uigridstring = uidata.String('Grids', [])
 			griddeletemethod = uidata.Method('Delete', self.uiDeleteGrid)
 			gridclearmethod = uidata.Method('Clear', self.uiClearGridQueue)
+
+			self.uigridnumber = uidata.Integer('Grid Number', None, 'rw')
+			gridaddmethod = uidata.Method('Add', self.uiAddGrid)
+
+			self.uigridrangestart = uidata.Integer('From Grid Number', None, 'rw')
+			self.uigridrangestop = uidata.Integer('To Grid Number', None, 'rw')
+			gridaddrangemethod = uidata.Method('Add Range', self.uiAddGridRange)
+
 			gridcontainer = uidata.Container('Grids')
-			gridcontainer.addObjects((self.uigridarray, griddeletemethod,
-																gridclearmethod, self.uigridnumber,
-																gridaddmethod))
+			gridcontainer.addObjects((self.uigridstring,
+																griddeletemethod, gridclearmethod,
+																self.uigridnumber, gridaddmethod,
+																self.uigridrangestart, self.uigridrangestop,
+																gridaddrangemethod))
 
 			self.uistatusmessage = uidata.String('Status', '', 'r')
 			self.uiscopestatusmessage = uidata.String('Microscope Status', '', 'r')
@@ -453,9 +490,6 @@ if sys.platform == 'win32':
 			controlcontainer = uidata.Container('Control')
 			controlcontainer.addObjects((self.insertmethod,))
 
-			extractmethod = uidata.Method('Extract', self.extract)
-			controlcontainer.addObject(extractmethod)
-	
 			rccontainer = uidata.LargeContainer('Robot Control')
 			rccontainer.addObjects((gridcontainer, statuscontainer, controlcontainer))
 			self.uiserver.addObject(rccontainer)
