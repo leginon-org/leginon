@@ -107,7 +107,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print 'pausing for %s sec.' % (delay,)
 			time.sleep(delay)
 			print 'acquire()'
-			ret = self.acquire(p, target=targetdata, trial=trial)
+			ret = self.acquire(p, target=targetdata, trial=trial, emtarget=emtarget)
 			# in these cases, return immediately
 			if ret in ('abort', 'repeat'):
 				return ret
@@ -159,7 +159,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		emdata = data.ScopeEMData(id=('scope',), initializer=newscope)
 		return emdata
 
-	def acquire(self, presetdata, target=None, trial=False):
+	def acquire(self, presetdata, target=None, trial=False, emtarget=None):
 		acqtype = self.uiacquiretype.getSelectedValue()
 		if acqtype == 'corrected':
 			cor = True
