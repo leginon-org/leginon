@@ -82,7 +82,7 @@ class Node(leginonobject.LeginonObject):
 
 		self.addEventInput(event.KillEvent, self.die)
 		self.addEventInput(event.ConfirmationEvent, self.handleConfirmedEvent)
-		self.addEventInput(event.ManagerAvailableEvent, self.handleAddManager)
+		self.addEventInput(event.NodeAvailableEvent, self.handleAddNode)
 
 		if 'manager' in self.nodelocations:
 			try:
@@ -242,9 +242,10 @@ class Node(leginonobject.LeginonObject):
 												self.__class__.__name__)
 		self.outputEvent(ievent=available_event, wait=True)
 
-	def handleAddManager(self, ievent):
+	def handleAddNode(self, ievent):
 		'''Event handler calling adddManager with event content. See addManager.'''
-		self.addManager(ievent.content)
+		if ievent.content['class'] == 'Manager':
+			self.addManager(ievent.content['location'])
 
 	# utility methods
 

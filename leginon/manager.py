@@ -160,6 +160,7 @@ class Manager(node.Node):
 	def addLauncher(self, nodeid, location):
 		'''Register a launcher with the UI, aliases the launcher to the node ID, location and launchable node classes.'''
 		name = nodeid[-1]
+		#print self.clients[nodeid]
 		self.uilauncherdict[name] = {'id':nodeid, 'location':location, 'node classes id':None}
 
 	def delLauncher(self, nodeid):
@@ -294,7 +295,7 @@ class Manager(node.Node):
 
 	def addNode(self, hostname, port):
 		'''Add a running node to the manager. Sends an event to the location.'''
-		e = event.ManagerAvailableEvent(self.id, self.location())
+		e = event.NodeAvailableEvent(self.id, self.location(), self.__class__.__name__)
 		client = self.clientclass(self.ID(),
 												{'hostname': hostname, 'TCP port': port})
 		client.push(e)
