@@ -28,6 +28,7 @@ class Application(leginonobject.LeginonObject):
 
 	def launch(self):
 		for args in self.launchspec:
+			print 'ARGS', args
 			apply(self.manager.launchNode, args)
 		for args in self.bindspec:
 			apply(self.manager.addEventDistmap, args)

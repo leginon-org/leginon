@@ -25,7 +25,7 @@ class DataSpec(SpecObject):
 	This describes a piece of data for an xml-rpc client
 	The client can use this description to define the data presentation
 	"""
-	def __init__(self, id, server, name, xmlrpctype, permissions=None, enum=None, default=None):
+	def __init__(self, id, server, name, xmlrpctype, permissions=None, enum=None, default=None, pyname=None):
 		SpecObject.__init__(self, id, 'data')
 
 		self.server = server
@@ -41,6 +41,7 @@ class DataSpec(SpecObject):
 		self.enum = enum
 		self.default = default
 		self.uidata = default
+		self.pyname = pyname
 
 	def get(self):
 		if callable(self.uidata):
@@ -67,6 +68,8 @@ class DataSpec(SpecObject):
 
 		if self.default is not None:
 			d['default'] = self.default
+		if self.pyname is not None:
+			d['python name'] = self.pyname
 		return d
 
 
@@ -141,6 +144,17 @@ class Server(xmlrpcserver.xmlrpcserver):
 	def registerMethod(self, func, name, argspec, returnspec=None):
 		id = self.ID()
 		self.server.register_function(func, str(id))
+		if inspect.isfunction(func):
+			funcargspec = inspect.getargspec(func)
+			argnames = funcargspec[0]
+		elif inspect.ismethod(func):
+			funcargspec = inspect.getargspec(func.im_func)
+			argnames = funcargspec[0][1:]
+		ind = 0
+		for arg in argspec:
+			arg.pyname = argnames[ind]
+			print 'ARG PYNAME', arg.pyname
+			ind += 1
 		m = MethodSpec(id, name, argspec, returnspec)
 		return m
 
@@ -167,8 +181,6 @@ class Client(object):
 	def __init__(self, hostname, port):
 		uri = 'http://%s:%s' % (hostname, port)
 		self.proxy = xmlrpclib.ServerProxy(uri)
-		#self.getMethods()
-		self.spec = self.getSpec()
 
 	def getSpec(self):
 		self.spec = self.proxy.spec()

@@ -26,9 +26,9 @@ class ImViewer(watcher.Watcher):
 	def start_viewer_thread(self):
 		if self.iv is not None:
 			return
-		self.thread = threading.Thread(target=self.open_viewer)
-		self.thread.setDaemon(1)
-		self.thread.start()
+		self.viewerthread = threading.Thread(target=self.open_viewer)
+		self.viewerthread.setDaemon(1)
+		self.viewerthread.start()
 		print 'thread started'
 
 	def open_viewer(self):

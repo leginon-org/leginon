@@ -19,77 +19,78 @@ class SpecWidget(Frame):
 		self.buttoncolor = '#7AA6C5'
 		self.entrycolor = '#FFF'
 
+	def refresh(self, spec):
+		self.spec = spec
+
 class Container(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
 		SpecWidget.__init__(self, parent, uiclient, spec)
+		self.label = Label(self, text=spec['name'], bg=self['bg'])
+		self.label.pack()
+		self.name = spec['name']
 		self.build()
 
 	def build(self):
-		self.name = self.spec['name']
-		self.label = Label(self, text = self.name, bg=self['bg'])
-		self.label.pack()
-		for spec in self.spec['content']:
-			spectype = spec['spectype']
-			istree = 0
-			if spectype == 'container':
-				widget = Container(self, self.uiclient, spec)
-			elif spectype == 'method':
-				widget = Method(self, self.uiclient, spec)
-			elif spectype == 'data':
-				dataclass = whichDataClass(spec)
-				widget = dataclass(self, self.uiclient, spec)
-				if dataclass == TreeData:
-					istree = 1
+		content = self.spec['content']
+		self.content = {}
+		for spec in content:
+			id = spec['id']
+			w = widgetFromSpec(self, self.uiclient, spec)
+			if w.__class__ is TreeData:
+				w.pack(side=TOP, expand=YES, fill=BOTH)
 			else:
-				raise RuntimeError('invalid spec type')
-			if istree:
-				widget.pack(side=TOP, expand=YES, fill=BOTH)
-			else:
-				widget.pack(side=TOP)
+				w.pack(side=TOP)
+			self.content[id] = w
 
-class NotebookContainer(SpecWidget):
+	def refresh(self, spec):
+		SpecWidget.refresh(self, spec)
+		for cspec in spec['content']:
+			id = cspec['id']
+			self.content[id].refresh(cspec)
+
+class NotebookContainer(Container):
 	def __init__(self, parent, uiclient, spec):
-		SpecWidget.__init__(self, parent, uiclient, spec)
-		self.build()
+		Container.__init__(self, parent, uiclient, spec)
 
 	def build(self):
-		self.name = self.spec['name']
-		self.label = Label(self, text = self.name, bg=self['bg'])
-		self.label.pack()
-
 		self.notebook = Pmw.NoteBook(self)
+		content = self.spec['content']
+		self.content = {}
 		total_tab_width = 0
-		for spec in self.spec['content']:
+		for spec in content:
 			name = spec['name']
-			spectype = spec['spectype']
+			id = spec['id']
 			newframe = self.notebook.add(name)
-			istree = 0
+			tabwidth = self.tabwidth(name)
+			total_tab_width += tabwidth
 
-			### add the width of this tab to total
-			tabname = name + '-tab'
-			w = self.notebook.component(tabname).winfo_reqwidth()
-			total_tab_width += w
-
-			if spectype == 'container':
-				widget = Container(newframe, self.uiclient, spec)
-			elif spectype == 'method':
-				widget = Method(newframe, self.uiclient, spec)
-			elif spectype == 'data':
-				dataclass = whichDataClass(spec)
-				widget = dataclass(newframe, self.uiclient, spec)
-				if dataclass == TreeData:
-					istree = 1
+			w = widgetFromSpec(newframe, self.uiclient, spec)
+			if w.__class__ is TreeData:
+				w.pack(expand=YES, fill=BOTH)
 			else:
-				raise RuntimeError('invalid spec type')
-			if istree:
-				widget.pack(side=TOP, expand=YES, fill=BOTH)
-			else:
-				widget.pack(side=TOP)
-
+				w.pack()
+			self.content[id] = w
 		self.notebook.pack(fill=BOTH, expand=YES)
 		self.notebook.setnaturalsize()
 		self.notebook.component('hull')['width'] = total_tab_width
 
+	def tabwidth(self, name):
+		tabname = name + '-tab'
+		w = self.notebook.component(tabname).winfo_reqwidth()
+		return w
+
+def widgetFromSpec(parent, uiclient, spec):
+	spectype = spec['spectype']
+	if spectype == 'container':
+		widget = Container(parent, uiclient, spec)
+	elif spectype == 'method':
+		widget = Method(parent, uiclient, spec)
+	elif spectype == 'data':
+		dataclass = whichDataClass(spec)
+		widget = dataclass(parent, uiclient, spec)
+	else:
+		raise RuntimeError('invalid spec type')
+	return widget
 
 def whichDataClass(dataspec):
 	'''this checks a data spec to figure out what Data class to use'''
@@ -115,23 +116,31 @@ class Data(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
 
 		SpecWidget.__init__(self, parent, uiclient, spec, bd=2, relief=SOLID)
-
-		self.name = self.spec['name']
-		self.type = self.spec['xmlrpctype']
-		if 'enum' in self.spec:
-			self.enum = self.spec['enum']
+		self.initInfo(spec)
+		self.build()
+	
+	def initInfo(self, spec):
+		self.name = spec['name']
+		self.type = spec['xmlrpctype']
+		if 'enum' in spec:
+			self.enum = spec['enum']
 		else:
 			self.enum = None
-		if 'permissions' in self.spec:
-			self.permissions = self.spec['permissions']
+		if 'permissions' in spec:
+			self.permissions = spec['permissions']
 		else:
 			self.permissions = None
+		if 'python name' in spec:
+			self.pyname = spec['python name']
+		else:
+			self.pyname = None
 
-		if 'default' in self.spec:
-			self.default = self.spec['default']
+		if 'default' in spec:
+			self.default = spec['default']
 		else:
 			self.default = None
 
+	def build(self):
 		headframe = Frame(self)
 
 		### label
@@ -152,6 +161,11 @@ class Data(SpecWidget):
 		if self.default is not None:
 			self.setWidget(self.default)
 		w.pack(side=TOP, expand=YES, fill=BOTH)
+
+	def refresh(self, spec):
+		SpecWidget.refresh(self, spec)
+		self.initInfo(spec)
+		self.setWidget(self.default)
 
 	def setServer(self):
 		value = self.getWidget()
@@ -182,7 +196,10 @@ class EntryData(Data):
 		return self.entry
 
 	def setWidget(self, value):
-		valuestr = str(value)
+		if value is None:
+			valuestr = ''
+		else:
+			valuestr = str(value)
 		self.entry.delete(0,END)
 		self.entry.insert(0,valuestr)
 
@@ -224,12 +241,20 @@ class ComboboxData(Data):
 		self.updateList()
 		return self.combo
 
+	def refresh(self, spec):
+		Data.refresh(self, spec)
+		self.updateList()
+
 	def updateList(self):
 		newlist = self.uiclient.execute('GET', (self.enum,))
 		self.combo.setlist(newlist)
 
 	def setWidget(self, value):
-		self.tkvar.set(value)
+		if value is None:
+			valuestr = ''
+		else:
+			valuestr = str(value)
+		self.tkvar.set(valuestr)
 
 	def getWidget(self):
 		valuestr = self.tkvar.get()
@@ -278,12 +303,15 @@ class Method(SpecWidget):
 		else:
 			self.returnspec = None
 
-		self.argwidgets = []
+		self.argwidgetsdict = {}
+		self.argwidgetslist = []
 		for arg in self.argspec:
+			id = arg['id']
 			dataclass = whichDataClass(arg)
 			newwidget = dataclass(self, self.uiclient, arg)
 			newwidget.pack(expand=YES, fill=X)
-			self.argwidgets.append(newwidget)
+			self.argwidgetsdict[id] = newwidget
+			self.argwidgetslist.append(newwidget)
 
 		but = Button(self, text=self.name, command=self.butcom, bg=self.buttoncolor)
 		but.pack()
@@ -296,12 +324,19 @@ class Method(SpecWidget):
 		else:
 			self.retwidget = None
 
+	def refresh(self, spec):
+		SpecWidget.refresh(self, spec)
+		for aspec in spec['argspec']:
+			id = aspec['id']
+			self.argwidgetsdict[id].refresh(aspec)
+
 	def butcom(self):
-		newargs = []
-		for argwidget in self.argwidgets:
+		args = []
+		for argwidget in self.argwidgetslist:
 			newvalue = argwidget.getWidget()
-			newargs.append(newvalue)
-		ret = self.uiclient.execute(self.id, newargs)
+			args.append(newvalue)
+		args = tuple(args)
+		ret = self.uiclient.execute(self.id, args)
 		self.process_return(ret)
 
 	def process_return(self, returnvalue):
@@ -344,15 +379,13 @@ class NodeGUI(Frame):
 		else:
 			raise RuntimeError('NodeGUI needs either node instance or hostname and port')
 
-
 		Frame.__init__(self, parent)
 		self.uiclient = interface.Client(hostname, port)
-
 		self.__build()
 
 	def __build(self):
 		f = Frame(self, bd=4, relief=SOLID)
-		b=Button(f, text='Refresh', command=self.__build_components)
+		b=Button(f, text='Refresh', command=self.__refresh_components)
 		b.pack(side=LEFT)
 
 		launchbut = Button(f, text='Launch GUI', command=self.launchgui)
@@ -370,12 +403,20 @@ class NodeGUI(Frame):
 		self.mainframe = None
 		self.__build_components()
 
+	def __refresh_components(self):
+		spec = self.getSpec()
+		self.mainframe.refresh(spec)
+
 	def __build_components(self):
 		if self.mainframe is not None:
 			self.mainframe.destroy()
-		self.mainframe = NotebookContainer(self, self.uiclient, self.uiclient.spec)
+		spec = self.getSpec()
+		self.mainframe = NotebookContainer(self, self.uiclient, spec)
 		self.name = self.mainframe.name
 		self.mainframe.pack(expand=YES, fill=BOTH)
+
+	def getSpec(self):
+		return self.uiclient.getSpec()
 
 	def launchgui(self):
 		host = self.launchhostent.get()
