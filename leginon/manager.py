@@ -33,9 +33,9 @@ class Manager(node.Node):
 	def main(self):
 		print self.location()
 
-#		guithread = threading.Thread(target=self.gui)
-#		guithread.setDaemon(1)
-#		guithread.start()
+		guithread = threading.Thread(target=self.gui)
+		guithread.setDaemon(1)
+		guithread.start()
 
 		self.interact()
 
