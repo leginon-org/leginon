@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from wxPython.wx import *
+wxInitAllImageHandlers()
 #from wxPython.wxc import wxPyAssertionError
 import cStringIO
 import Numeric
@@ -9,8 +10,6 @@ import math
 
 import Mrc
 from NumericImage import NumericImage
-
-USE_BUFFERED_DC = False
 
 class ImagePanel(wxPanel):
 	def __init__(self, parent, id):
@@ -21,7 +20,6 @@ class ImagePanel(wxPanel):
 		self.scale = (1.0, 1.0)
 
 		wxPanel.__init__(self, parent, id)
-		wxInitAllImageHandlers()
 
 		self.sizer = wxBoxSizer(wxVERTICAL)
 		self.SetAutoLayout(true)
@@ -130,9 +128,6 @@ class ImagePanel(wxPanel):
 				self.scale_entry[i].SetValue(str(scale[i]))
 		return scale
 
-	def getScale(self):
-		return self.scale
-
 	def setVirtualSize(self):
 		xscale, yscale = self.getScale()
 		if self.bitmap is not None:
@@ -140,6 +135,9 @@ class ImagePanel(wxPanel):
 																	(self.bitmap.GetHeight() - 1)*yscale))
 		else:
 			self.panel.SetVirtualSize((0, 0))
+
+	def getScale(self):
+		return self.scale
 
 	def setScale(self, scale, offset=None):
 		self.scale = tuple(scale)
@@ -263,7 +261,7 @@ class ImagePanel(wxPanel):
 		dc.SetBrush(wxBrush(wxWHITE))
 		dc.SetPen(wxPen(wxBLACK, 1))
 
-		string = '(%d, %d): %d' % (xy + (value,))
+		string = '(%d, %d): %s' % (xy + (str(value),))
 		#tooltip = wxToolTip(string)
 		#self.panel.SetToolTip(tooltip)
 
