@@ -376,7 +376,7 @@ class ManagerSetup(object):
 																							True, 'rw', persist=True,
 				tooltip='When the session is started, connect to the launcher on the '
 									+ 'machine where the instrument is located')
-		self.startsessionmethod = uidata.Method('Start Session',
+		self.startsessionmethod = uidata.Method('Begin Session',
 																						self.onStartSession,
 				tooltip='Begin the selected Leginon II session with the given settings')
 		self.createsessionmethod = uidata.Method('Create Session',
@@ -387,16 +387,27 @@ class ManagerSetup(object):
 		selectsessioncontainer.addObjects((self.sessionselector,
 																					  self.selectsessioncomment,
 																					  self.selectsessioninstrument,
-																					  self.selectsessionpath,
-																					  self.connectinstrument,
-																					  self.startsessionmethod,
-																						self.createsessionmethod))
+																					  self.selectsessionpath))
+		selectsessioncontainer.addObject(self.connectinstrument,
+																			position={'justify': ['center']})
 		title = 'Leginon II Session'
 		fullname = self.userfullname.get()
 		if fullname:
 			title += ' for %s' % fullname
 		self.selectsessioncontainer = uidata.ExternalContainer(title)
-		self.selectsessioncontainer.addObject(selectsessioncontainer)
+		self.selectsessioncontainer.addObjects((selectsessioncontainer,
+																						self.startsessionmethod,
+                                            self.createsessionmethod))
+		self.selectsessioncontainer.positionObject(selectsessioncontainer,
+																							{'position': (0, 0),
+																								'span': (1, 2),
+																								'justify': ['center']})
+		self.selectsessioncontainer.positionObject(self.startsessionmethod,
+																							{'position': (1, 0),
+																								'justify': ['top', 'bottom']})
+		self.selectsessioncontainer.positionObject(self.createsessionmethod,
+																				{'position': (1, 1),
+																				'justify': ['top', 'bottom', 'right']})
 		self.uiUpdateSessionList()
 		self.manager.uicontainer.addObject(self.selectsessioncontainer)
 

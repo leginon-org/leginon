@@ -85,13 +85,13 @@ class Server(xmlrpc.Server, uidata.Container):
 			
 		client = xmlrpc.Client(hostname, port)
 		self.xmlrpcclients.append(client)
-		for childobject in self.uiobjectlist:
+		for childobject in self.values():
 			self._addObject(childobject, client)
 		return ''
 
 	def addLocalClient(self, client):
 		self.localclients.append(client)
-		for childobject in self.uiobjectlist:
+		for childobject in self.values():
 			self._addObject(childobject, client)
 
 	def localExecute(self, commandstring, properties,
@@ -177,9 +177,10 @@ class Server(xmlrpc.Server, uidata.Container):
 		if thread:
 			block = False
 		properties['block'] = block
+		properties['position'] = uiobject.parent.positions[uiobject.name]
 		if isinstance(uiobject, uidata.Container):
 			properties['children'] = []
-			for childobject in uiobject.uiobjectlist:
+			for childobject in uiobject.values():
 				properties['children'].append(self.propertiesFromObject(childobject,
 																																block, thread))
 		return properties
@@ -232,7 +233,7 @@ class Server(xmlrpc.Server, uidata.Container):
 		if self.dbdatakeeper is None or self.session is None:
 			return False
 		if isinstance(uiobject, uidata.Container):
-			for childobject in uiobject.uiobjectlist:
+			for childobject in uiobject.values():
 				self.setObjectFromDatabase(childobject)
 		if not isinstance(uiobject, uidata.Data) or not uiobject.persist:
 			return False
@@ -265,7 +266,7 @@ class Server(xmlrpc.Server, uidata.Container):
 			print 'Cannot save UI values to database'
 			return
 		if isinstance(uiobject, uidata.Container):
-			for childobject in uiobject.uiobjectlist:
+			for childobject in uiobject.values():
 				self.setDatabaseFromObject(childobject)
 		if not isinstance(uiobject, uidata.Data):
 			return
@@ -280,7 +281,7 @@ class Server(xmlrpc.Server, uidata.Container):
 
 	def _setObjectFromFile(self, uiobject, d):
 		if isinstance(uiobject, uidata.Container):
-			for childobject in uiobject.uiobjectlist:
+			for childobject in uiobject.values():
 				self._setObjectFromFile(childobject, d)
 		if not isinstance(uiobject, uidata.Data) or not uiobject.persist:
 			return

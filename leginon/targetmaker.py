@@ -76,7 +76,7 @@ class SpiralTargetMaker(TargetMaker):
 		self.radius = uidata.Float('Radius (meters)', 1.0e-3, 'rw', persist=True)
 		self.overlap = uidata.Integer('Overlap (percent)', 0, 'rw', persist=True)
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((pselect, self.radius, self.overlap))
+		settingscontainer.addObjects((self.radius, self.overlap))
 
 		publishspiralmethod = uidata.Method('Publish Spiral',
 																				self.publishTargetList)

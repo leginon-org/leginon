@@ -31,7 +31,7 @@ EVT_REMOVE_MESSAGE = wx.NewEventType()
 
 class AddWidgetEvent(wx.PyEvent):
 	def __init__(self, dependencies, namelist, typelist, value,	
-								configuration, event, children):
+								configuration, event, children, position):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(EVT_ADD_WIDGET)
 		self.namelist = namelist
@@ -41,6 +41,7 @@ class AddWidgetEvent(wx.PyEvent):
 		self.dependencies = dependencies
 		self.event = event
 		self.children = children
+		self.position = position
 
 class SetWidgetEvent(wx.PyEvent):
 	def __init__(self, namelist, value, event):
@@ -240,6 +241,7 @@ class UIClient(object):
 		typelist = properties['typelist']
 		value = properties['value']
 		configuration = properties['configuration']
+		position = properties['position']
 
 		threadingevent = None
 		if 'block' in properties and properties['block']:
@@ -251,7 +253,7 @@ class UIClient(object):
 		else:
 			children = []
 		evt = AddWidgetEvent(dependencies, namelist, typelist, value,	
-													configuration, threadingevent, children)
+													configuration, threadingevent, children, position)
 		wx.PostEvent(self.container.widgethandler, evt)
 		if threadingevent is not None:
 			threadingevent.wait()
@@ -478,14 +480,33 @@ class ContainerWidget(Widget):
 			self.pending.remove(evt)
 			wx.PostEvent(self.widgethandler, evt)
 
-	def _addWidgetSizer(self, child, show=True):
+	def _addWidgetSizer(self, child, position, show=True):
 		if self.sizer is not None and not isinstance(child, self.nosizerclasses):
-			if isinstance(child, self.expandclasses):
+			if isinstance(self.sizer, wx.GridBagSizer):
+				flag = wx.ALL
+				# top and left are the default (= 0)
+				if 'bottom' in position['justify']:
+					if 'top' in position['justify']:
+						flag |= wx.ALIGN_CENTER_VERTICAL
+					else:
+						flag |= wx.ALIGN_BOTTOM
+				if 'right' in position['justify']:
+					if 'left' in position['justify']:
+						flag |= wx.ALIGN_CENTER_HORIZONTAL
+					else:
+						flag |= wx.ALIGN_RIGHT
+				if 'center' in position['justify']:
+					flag |= wx.ALIGN_CENTER
+				# pad for notebook, tree?
+				paddedposition = (position['position'][0] + 2, position['position'][1])
+				self.sizer.Add(child, paddedposition, position['span'], flag, 3)
+			elif isinstance(child, self.expandclasses):
 				self.sizer.Add(child, 0, wx.ALL|wx.EXPAND, 3)
 			else:
 				self.sizer.Add(child, 0, wx.ALL, 3)
 
-	def _addWidget(self, name, typelist, value, configuration, children):
+	def _addWidget(self, name, typelist, value, configuration, children,
+									position):
 		if self._shown:
 			show = True
 			self._show(False)
@@ -499,14 +520,15 @@ class ContainerWidget(Widget):
 			childtypelist = childproperties['typelist']
 			childvalue = childproperties['value']
 			childconfiguration = childproperties['configuration']
+			childposition = childproperties['position']
 			try:
 				childchildren = childproperties['children']
 			except KeyError:
 				childchildren = []
 			child._addWidget(childname, childtypelist, childvalue,
-												childconfiguration, childchildren)
+												childconfiguration, childchildren, childposition)
 
-		self._addWidgetSizer(child)
+		self._addWidgetSizer(child, position)
 		child.layout()
 
 		self.handlePendingEvents()
@@ -517,7 +539,7 @@ class ContainerWidget(Widget):
 		if len(evt.namelist) == 1:
 			if self.handleDependencies(evt):
 				self._addWidget(evt.namelist[0], evt.typelist, evt.value,
-												evt.configuration, evt.children)
+												evt.configuration, evt.children, evt.position)
 				if evt.event is not None:
 					evt.event.set()
 		else:
@@ -572,8 +594,9 @@ class ContainerWidget(Widget):
 			self.notebook = wx.Notebook(self.childparent, -1)
 			self.notebooksizer = wx.NotebookSizer(self.notebook)
 			if self.sizer is not None:
-				self.sizer.Add(self.notebooksizer, 0,
-												wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
+				self.sizer.Add(self.notebooksizer, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
+				self.sizer.AddGrowableRow(0)
+				self.sizer.AddGrowableCol(0)
 			self.layout()
 		return self.notebook
 
@@ -588,8 +611,9 @@ class ContainerWidget(Widget):
 		if self.treecontainer is None:
 			self.treecontainer = TreePanel(self.childparent)
 			if self.sizer is not None:
-				self.sizer.Add(self.treecontainer, 1,
-												wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
+				self.sizer.Add(self.treecontainer, (1, 0), (1, 1), wx.EXPAND|wx.ALL)
+				self.sizer.AddGrowableRow(1)
+				self.sizer.AddGrowableCol(0)
 			self.layout()
 		return self.treecontainer
 
@@ -610,9 +634,10 @@ class ContainerWidget(Widget):
 		self.removeChildren()
 		self.removeNotebook()
 
-class SimpleContainerWidget(wx.BoxSizer, ContainerWidget):
+class SimpleContainerWidget(wx.GridBagSizer, ContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
-		wx.BoxSizer.__init__(self, wx.VERTICAL)
+		wx.GridBagSizer.__init__(self, 1, 1)
+		self.SetEmptyCellSize((0, 0))
 		self.sizer = self
 		ContainerWidget.__init__(self, name, parent, container, value,
 																configuration)
@@ -620,16 +645,19 @@ class SimpleContainerWidget(wx.BoxSizer, ContainerWidget):
 	def destroy(self):
 		ContainerWidget.destroy(self)
 
-	def _addWidget(self, name, typelist, value, configuration, children):
+	def _addWidget(self, name, typelist, value, configuration, children,
+									position):
 		ContainerWidget._addWidget(self, name, typelist, value,
-																	configuration, children)
+																	configuration, children, position)
 		self.layout()
 
 class StaticBoxContainerWidget(wx.StaticBoxSizer, ContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
 		self.staticbox = wx.StaticBox(parent, -1, name)
 		wx.StaticBoxSizer.__init__(self, self.staticbox, wx.VERTICAL)
-		self.sizer = self
+		self.sizer = wx.GridBagSizer(1, 1)
+		self.sizer.SetEmptyCellSize((0, 0))
+		self.Add(self.sizer, 0, wx.ALL|wx.EXPAND, 3)
 		ContainerWidget.__init__(self, name, parent, container, value,
 																configuration)
 
@@ -641,17 +669,19 @@ class StaticBoxContainerWidget(wx.StaticBoxSizer, ContainerWidget):
 		self.staticbox.Destroy()
 		ContainerWidget.destroy(self)
 
-	def _addWidget(self, name, typelist, value, configuration, children):
+	def _addWidget(self, name, typelist, value, configuration, children,
+									position):
 		ContainerWidget._addWidget(self, name, typelist, value,
-																	configuration, children)
+																	configuration, children, position)
 		self.layout()
 
 class NotebookContainerWidget(wx.Panel, ContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
 		self.parentnotebook = container.getNotebook()
 		wx.Panel.__init__(self, self.parentnotebook, -1)
-		self.sizer = wx.BoxSizer(wx.VERTICAL)
-		self.SetSizer(self)
+		self.sizer = wx.GridBagSizer(1, 1)
+		self.sizer.SetEmptyCellSize((0, 0))
+		self.SetSizer(self.sizer)
 		self.Show(True)
 		ContainerWidget.__init__(self, name, parent, container, value,
 																configuration)
@@ -666,9 +696,10 @@ class NotebookContainerWidget(wx.Panel, ContainerWidget):
 		self.container.notebooksizer.Fit(self.parentnotebook)
 		self.container.layout()
 
-	def _addWidget(self, name, typelist, value, configuration, children):
+	def _addWidget(self, name, typelist, value, configuration, children,
+									position):
 		ContainerWidget._addWidget(self, name, typelist, value,
-																	configuration, children)
+																	configuration, children, position)
 		self.layout()
 
 	def destroy(self):
@@ -687,7 +718,8 @@ class DialogContainerWidget(wx.Dialog, ContainerWidget):
 							style=wx.CAPTION|wx.MINIMIZE_BOX|wx.MAXIMIZE_BOX|wx.RESIZE_BORDER)
 		self.panel = wx.ScrolledWindow(self, -1)
 		self.panel.SetScrollRate(1, 1)
-		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.sizer = wx.GridBagSizer(1, 1)
+		self.sizer.SetEmptyCellSize((0, 0))
 		self.panel.SetSizer(self.sizer)
 		ContainerWidget.__init__(self, name, parent, container, value,
 																configuration)
@@ -1166,11 +1198,12 @@ class DefinedContainerWidget(ContainerWidget):
 		else:
 			raise RuntimeError('%s maps to uncallable and non-None value' % name)
 
-	def _addWidget(self, name, typelist, value, configuration, children):
+	def _addWidget(self, name, typelist, value, configuration, children,
+									position):
 		self.setFromMapping(name, value)
 
 	def onAddWidget(self, evt):
-		self._addWidget(evt.namelist[0], None, evt.value, None, None)
+		self._addWidget(evt.namelist[0], None, evt.value, None, None, None)
 		if evt.event is not None:
 			evt.event.set()
 
@@ -1569,7 +1602,8 @@ class TreePanelContainerWidget(wx.Panel, ContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
 		self.treepanel = container.getTreeContainer()
 		wx.Panel.__init__(self, self.treepanel.childpanel, -1)
-		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.sizer = wx.GridBagSizer(1, 1)
+		self.sizer.SetEmptyCellSize((0, 0))
 		self.SetSizer(self.sizer)
 		self.message = None
 		self.messages = {}
@@ -1592,9 +1626,10 @@ class TreePanelContainerWidget(wx.Panel, ContainerWidget):
 																			TreePanelContainerWidget):
 			self._show(self.shown)
 
-	def _addWidget(self, namelist, typelist, value, configuration, children):
+	def _addWidget(self, namelist, typelist, value, configuration, children,
+									position):
 		ContainerWidget._addWidget(self, namelist, typelist, value,
-																	configuration, children)
+																	configuration, children, position)
 		self.layout()
 
 	def layout(self):
@@ -1663,7 +1698,8 @@ class FileDialogWidget(ContainerWidget):
 
 		ContainerWidget._show(self, show)
 
-	def _addWidget(self, name, typelist, value, configuration, children):
+	def _addWidget(self, name, typelist, value, configuration, children,
+									position):
 		if name == 'Cancel':
 			self.cancelflag = True
 		elif name == 'Filename':
@@ -1718,7 +1754,8 @@ class MessageWidget(wx.BoxSizer, ContainerWidget):
 		evt = AddMessageEvent(self.type, self.message)
 		wx.PostEvent(self.container.widgethandler, evt)
 
-	def _addWidget(self, name, typelist, value, configuration, children):
+	def _addWidget(self, name, typelist, value, configuration, children,
+									position):
 		if name == 'Type':
 			self.type = value
 		if name == 'Message':
@@ -1768,7 +1805,8 @@ class MessageLogWidget(wxMessageLog.wxMessageLog, ContainerWidget):
 		ContainerWidget.__init__(self, name, parent, container, value,
 																configuration)
 
-	def _addWidget(self, name, typelist, value, configuration, children):
+	def _addWidget(self, name, typelist, value, configuration, children,
+									position):
 		for child in children:
 			if child['namelist'][-1] == 'Type':
 				type = child['value']
@@ -1852,14 +1890,15 @@ class HistoryEntryWidget(wx.BoxSizer, DefinedContainerWidget):
 			self.setFromWidget()
 		evt.Skip()
 
-	def _addWidget(self, name, typelist, value, configuration, children):
+	def _addWidget(self, name, typelist, value, configuration, children,
+									position):
 		if name == 'Value':
 			try:
 				self.types = self.typemap[typelist[-1]]
 			except KeyError:
 				pass
 		DefinedContainerWidget._addWidget(self, name, typelist, value,
-																			configuration, children)
+																			configuration, children, position)
 
 	def destroy(self):
 		self.combobox.Destroy()

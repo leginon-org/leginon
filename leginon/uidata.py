@@ -8,6 +8,7 @@
 
 import threading
 import data
+import strictdict
 #from uiserver import Server
 
 # Exceptions
@@ -282,21 +283,21 @@ class Struct(Data):
 class Application(Struct):
 	typelist = Struct.typelist + ('application',)
 
-class Container(Object):
+class Container(Object, strictdict.OrderedDict):
 	typelist = Object.typelist + ('container',)
 	def __init__(self, name, tooltip=None):
 		Object.__init__(self, name, tooltip)
-		self.uiobjectdict = {}
-		self.uiobjectlist = []
+		strictdict.OrderedDict.__init__(self)
+		self.positions = {}
 
 	def _setServer(self, server):
 		Object._setServer(self, server)
-		for uiobject in self.uiobjectlist:
+		for uiobject in self.values():
 			uiobject._setServer(server)
 
-	def addObject(self, uiobject, block=True, thread=False):
+	def addObject(self, uiobject, block=True, thread=False, position={}):
 		self.lock.acquire()
-		if uiobject.name in self.uiobjectdict:
+		if uiobject.name in self:
 			self.lock.release()
 			raise ValueError(uiobject.name + ' name already exists in Object mapping')
 
@@ -307,12 +308,68 @@ class Container(Object):
 		uiobject.lock.acquire()
 		uiobject.parent = self
 		uiobject._setServer(self.server)
-		self.uiobjectdict[uiobject.name] = uiobject
-		self.uiobjectlist.append(uiobject)
+		self[uiobject.name] = uiobject
+		self._position(uiobject, position)
 
 		if self.server is not None:
 			self.server._addObject(uiobject, None, block, thread)
 		uiobject.lock.release()
+		self.lock.release()
+
+	def _position(self, uiobject, position):
+		position = dict(position)
+		if 'span' not in position:
+			position['span'] = (1, 1)
+		rows = position['span'][0]
+		columns = position['span'][1]
+
+		if 'position' in position:
+			row = position['position'][0]
+			column = position['position'][1]
+
+			for n, p in self.positions.items():
+				if n == uiobject.name:
+					continue
+				r1 = max(row, p['position'][0])
+				c1 = max(column, p['position'][1])
+				r2 = min(row + rows, p['position'][0] + p['span'][0])
+				c2 = min(column + columns,
+									p['position'][1] + p['span'][1])
+ 		   	if not (r2 <= r1 or c2 <= c1):
+					raise ValueError('Position overlaps with existing object')
+		else:
+			values = map(lambda p: p['position'][0] + p['span'][0],
+										self.positions.values())
+			if values:
+				row = max(values)
+			else:
+				row = 0
+			column = 0
+			position['position'] = (row, column)
+
+		if 'justify' not in position:
+			position['justify'] = ['top', 'left']
+
+		self.positions[uiobject.name] = position
+		return position
+
+	def positionObject(self, parameter, position, block=True, thread=False):
+		self.lock.acquire()
+		try:
+			if isinstance(parameter, str):
+				name = parameter
+				uiobject = self[name]
+			else:
+				uiobject = parameter
+				name = uiobject.name
+			uiobject.lock.acquire()
+			position = self._position(uiobject, position)
+			if self.server is not None:
+				self.server._positionObject(uiobject, positions, block, thread)
+			uiobject.lock.release()
+		except KeyError:
+			self.lock.release()
+			raise ValueError('cannot position Object, not in Object mapping')
 		self.lock.release()
 
 	def addObjects(self, uiobjects, block=True, thread=False):
@@ -326,13 +383,13 @@ class Container(Object):
 		try:
 			if isinstance(parameter, str):
 				name = parameter
-				uiobject = self.uiobjectdict[name]
+				uiobject = self[name]
 			else:
 				uiobject = parameter
 				name = uiobject.name
 			uiobject.lock.acquire()
-			del self.uiobjectdict[name]
-			self.uiobjectlist.remove(uiobject)
+			del self.positions[name]
+			del self[name]
 			if self.server is not None:
 				self.server._deleteObject(uiobject, client, block, thread)
 			uiobject.server = None
@@ -347,7 +404,7 @@ class Container(Object):
 		exceptions = []
 		self.lock.acquire()
 		if uiobjects is None:
-			uiobjects = list(self.uiobjectlist)
+			uiobjects = self.values()
 		for uiobject in uiobjects:
 			try:
 				self.deleteObject(uiobject, block, thread)
@@ -370,7 +427,7 @@ class Container(Object):
 		if len(namelist) == 1:
 			return self
 		else:
-			for uiobject in self.uiobjectlist:
+			for uiobject in self.values():
 				try:
 					obj = uiobject._getObjectFromList(namelist[1:])
 					return obj

@@ -608,7 +608,7 @@ class Manager(node.Node):
 		'''Calls application.Application.launch.'''
 		if not self.have_selectors:
 			return
-		for alias in self.uilauncherselectors.uiobjectlist:
+		for alias in self.uilauncherselectors.values():
 			aliasvalue = alias.getSelectedValue()
 			self.application.setLauncherAlias(alias.name, (aliasvalue,))
 		self.application.launch()
@@ -843,11 +843,16 @@ class Manager(node.Node):
 		addobjects = (self.uiaddnodehostname, self.uiaddnodeport, self.addmethod)
 		addcontainer = uidata.Container('Add Existing Node')
 		addcontainer.addObjects(addobjects)
+
 		self.uikillselect = uidata.SingleSelectFromList('Node', [], 0)
 		killmethod = uidata.Method('Kill', self.uiKillNode)
 		killobjects = (self.uikillselect, killmethod)
 		self.killcontainer = uidata.Container('Kill Node')
 		self.killcontainer.addObjects(killobjects)
+
+		self.killcontainer.positionObject(self.uikillselect, {'position': (0, 0)})
+		self.killcontainer.positionObject(killmethod, {'position': (0, 1)})
+
 		nodemanagementcontainer = uidata.LargeContainer('Nodes')
 		nodemanagementcontainer.addObjects((self.uinodeinfo, self.launchcontainer,
 																				addcontainer, self.killcontainer))
@@ -904,6 +909,19 @@ class Manager(node.Node):
 										self.uitonodeselect, bindmethod, unbindmethod)
 		self.bindeventcontainer = uidata.Container('Bind Events')
 		self.bindeventcontainer.addObjects(eventobjects)
+		self.bindeventcontainer.positionObject(self.uifromnodeselect,
+																					{'position': (0, 0), 'span': (1, 2)})
+		self.bindeventcontainer.positionObject(self.uieventselect,
+																					{'position': (1, 0), 'span': (1, 2)})
+		self.bindeventcontainer.positionObject(self.uitonodeselect,
+																					{'position': (2, 0), 'span': (1, 2)})
+		self.bindeventcontainer.positionObject(bindmethod,
+																					{'position': (3, 0),
+																						'justify': ['center', 'right']})
+		self.bindeventcontainer.positionObject(unbindmethod,
+																					{'position': (3, 1),
+																						'justify': ['center', 'left']})
+
 		eventcontainer = uidata.LargeContainer('Events')
 		eventcontainer.addObjects((self.bindeventcontainer,))
 
