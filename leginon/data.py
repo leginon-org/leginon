@@ -400,6 +400,7 @@ class PresetData(Data):
 			('binning', dict),
 			('offset', dict),
 			('exposure time', int),
+			('removed', int),
 		]
 		return t
 	typemap = classmethod(typemap)
