@@ -228,8 +228,7 @@ class Manager(node.Node):
 
 		## if nothing to do, report a warning and return now
 		if not do:
-#			self.logger.info('%s event from node %s is not bound to any nodes'
-#												% (eventclass.__name__, from_node))
+			self.logger.debug('%s event from %s is not bound to any nodes' % (eventclass.__name__, from_node))
 			return
 
 		### set up confirmation event waiting
