@@ -277,6 +277,11 @@ class EM(node.Node):
 			self.logger.warning('no camera is associated with this session')
 			cameraname = None
 
+		try:
+			description = self.session['instrument']['description']
+		except (TypeError, KeyError):
+			description = 'Unknown instrument'
+
 		# add event inputs for locking and unlocking EM from a node
 		self.addEventInput(event.LockEvent, self.doLock)
 		self.addEventInput(event.UnlockEvent, self.doUnlock)
@@ -288,9 +293,10 @@ class EM(node.Node):
 		# the handler thread waits for queue requests and processes them
 		# scope and camera are typically COM objects and need to be initialized
 		# in this thread
+		args = (scopename, cameraname, description)
 		self.handlerthread = threading.Thread(name='EM handler thread',
 																					target=self.handler,
-																					args=(scopename, cameraname))
+																					args=args)
 		self.handlerthread.setDaemon(1)
 		self.handlerthread.start()
 
@@ -386,14 +392,14 @@ class EM(node.Node):
 										broadcast=True)
 
 
-	def handler(self, scopename, cameraname):
+	def handler(self, scopename, cameraname, description):
 		self.scope = None
 		self.camera = None
 
 		if scopename is not None:
-			self.setScopeType(scopename)
+			self.setScopeType(scopename, description)
 		if cameraname is not None:
-			self.setCameraType(cameraname)
+			self.setCameraType(cameraname, description)
 
 		for key, permissions in self.permissions.items():
 			try:
@@ -422,7 +428,7 @@ class EM(node.Node):
 		self.publishData()
 		self.queueHandler()
 
-	def setScopeType(self, scopename):
+	def setScopeType(self, scopename, description):
 		try:
 			scopeclass = emregistry.getScopeClass(scopename)
 			if scopeclass is None:
@@ -433,12 +439,13 @@ class EM(node.Node):
 					remotecall.Object.__init__(self)
 			self.scope = methoddict.factory(ScopeClass)()
 			self.typemap.update(self.scope.typemapping)
-			self.objectservice._addObject(scopename, self.scope)
+			name = '%s on %s' % (scopename, description)
+			self.objectservice._addObject(name, self.scope)
 		except Exception, e:
 			self.logger.exception('Initializing scope type %s failed: %s'
 															% (scopename, e))
 
-	def setCameraType(self, cameraname):
+	def setCameraType(self, cameraname, description):
 		try:
 			cameraclass = emregistry.getCameraClass(cameraname)
 			if cameraclass is None:
@@ -449,9 +456,9 @@ class EM(node.Node):
 					remotecall.Object.__init__(self)
 			self.camera = methoddict.factory(CameraClass)()
 			self.typemap.update(self.camera.typemapping)
-			self.objectservice._addObject(cameraname, self.camera)
+			name = '%s on %s' % (cameraname, description)
+			self.objectservice._addObject(name, self.camera)
 		except Exception, e:
-			raise
 			self.logger.exception('Initializing camera type %s failed: %s'
 															% (cameraname, e))
 

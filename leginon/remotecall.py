@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-18 18:09:30 $
+# $Date: 2005-02-18 18:50:17 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -57,7 +57,7 @@ class Object(object):
 		return interface
 
 	def _register(self):
-		self._types = [c.__name__ for c in inspect.getmro(self.__class__)]
+		self._types = inspect.getmro(self.__class__)
 		self._interface = self._query()
 		self._description = self._getDescription()
 
@@ -153,6 +153,15 @@ class ObjectService(Object):
 
 	def getObjectProxy(self, nodename, name):
 		return ObjectProxy(self, nodename, name)
+
+	def getObjectsByType(self, type):
+		objects = []
+		for nodename in self.descriptions:
+			for name in self.descriptions[nodename]:
+				description, types = self.descriptions[nodename][name]
+				if type in types:
+					objects.append((nodename, name))
+		return objects
 
 	def _exit(self):
 		pass
