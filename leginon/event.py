@@ -42,7 +42,7 @@ class MyEvent(Event):
 		Event.__init__(self)
 
 	def xmlrpc_repr(self):
-		repr = event.Event.xmlrpc_repr(self)
+		repr = Event.xmlrpc_repr(self)
 		repr['newstuff'] = 'stuff for MyEvent'
 		return repr
 
@@ -52,7 +52,7 @@ class YourEvent(Event):
 		Event.__init__(self)
 
 	def xmlrpc_repr(self):
-		repr = event.Event.xmlrpc_repr(self)
+		repr = Event.xmlrpc_repr(self)
 		repr['somestuff'] = 'stuff for YourEvent'
 		return repr
 
