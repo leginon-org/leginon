@@ -225,6 +225,9 @@ class ConnectionManager(Line):
 		return line
 
 	def addConnection(self, origin, destination, text):
+		# could send events to self, not bothering for now
+		if origin == destination:
+			return
 		key = (origin, destination)
 		if key in self.lines:
 			self.lines[key]['line'].append(text)
