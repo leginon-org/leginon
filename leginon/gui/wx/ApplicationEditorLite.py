@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ApplicationEditorLite.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-01 20:11:35 $
+# $Date: 2005-02-01 22:29:20 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -47,6 +47,7 @@ class LauncherMenu(wx.Menu):
 		dialog = NodePropertiesDialog(self.editor, name)
 		if dialog.ShowModal() == wx.ID_OK:
 			classname, name = dialog.getValues()
+			self.editor.nodes[name]['class name'] = classname
 			self.editor.SetItemText(item, name)
 		else:
 			item = self.editor.removeNode(name)
@@ -71,11 +72,12 @@ class NodeMenu(wx.Menu):
 		self.Append(self.removeid, 'Remove')
 
 	def onProperties(self, evt):
-		dialog = NodePropertiesDialog(self.editor, self.name)
+		classname = self.editor.nodes[self.name]['class name']
+		dialog = NodePropertiesDialog(self.editor, self.name, classname)
 		if dialog.ShowModal() == wx.ID_OK:
 			classname, name = dialog.getValues()
-			item = self.editor.getNodeItem(self.name)
-			self.editor.SetItemText(item, name)
+			self.editor.setNode(self.name, classname, name)
+
 		dialog.Destroy()
 
 	def onBindEvent(self, evt):
@@ -83,11 +85,25 @@ class NodeMenu(wx.Menu):
 		dialog = EventBindingDialog(self.editor, item)
 		if dialog.ShowModal() == wx.ID_OK:
 			eventname, tonodename = dialog.getValues()
-			self.editor.addEventBinding(eventname, self.name, tonodename)
+			item = self.editor.addEventBinding(eventname, self.name, tonodename)
+			self.editor.EnsureVisible(item)
 		dialog.Destroy()
 
 	def onRemove(self, evt):
 		self.editor.removeNode(self.name)
+
+class EventBindingMenu(wx.Menu):
+	def __init__(self, editor, fromnodeitem, string):
+		self.editor = editor
+		self.fromnodeitem = fromnodeitem
+		self.string = string
+		wx.Menu.__init__(self)
+		self.removeid = wx.NewId()
+		self.Bind(wx.EVT_MENU, self.onRemove, id=self.removeid)
+		self.Append(self.removeid, 'Remove')
+
+	def onRemove(self, evt):
+		self.editor.removeEventBinding(self.fromnodeitem, self.string)
 
 class NodePropertiesDialog(wx.Dialog):
 	def __init__(self, parent, name, classname=None):
@@ -162,7 +178,8 @@ class EventBindingDialog(wx.Dialog):
 
 		label = wx.StaticText(self, -1, 'Event:')
 		self.sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		choices = event.eventClasses().keys()
+		fromnodename = parent.GetItemText(fromnodeitem)
+		choices = parent.getEventOutputs(fromnodename)
 		choices.sort()
 		self.cevents = wx.Choice(self, -1, choices=choices)
 		self.cevents.SetSelection(0)
@@ -218,6 +235,7 @@ class EventBindingDialog(wx.Dialog):
 
 class ApplicationEditorLite(wx.TreeCtrl):
 	def __init__(self, parent):
+		self.nodes = {}
 		style = wx.TR_EDIT_LABELS|wx.TR_DEFAULT_STYLE
 		wx.TreeCtrl.__init__(self, parent, -1, style=style)
 
@@ -245,6 +263,7 @@ class ApplicationEditorLite(wx.TreeCtrl):
 			self.onApplicationRightClick,
 			self.onLauncherRightClick,
 			self.onNodeRightClick,
+			self.onEventBindingRightClick,
 		]
 		self.eventItemMethod(evt, methods)
 
@@ -277,6 +296,13 @@ class ApplicationEditorLite(wx.TreeCtrl):
 		nodemenu = NodeMenu(self, self.GetItemText(evt.GetItem()))
 		self.PopupMenu(nodemenu, evt.GetPoint())
 
+	def onEventBindingRightClick(self, evt):
+		item = evt.GetItem()
+		fromnodeitem = self.GetItemParent(item)
+		string = self.GetItemText(item)
+		eventbindingmenu = EventBindingMenu(self, fromnodeitem, string)
+		self.PopupMenu(eventbindingmenu, evt.GetPoint())
+
 	def onApplicationBeginLabelEdit(self, evt):
 		pass
 
@@ -302,6 +328,8 @@ class ApplicationEditorLite(wx.TreeCtrl):
 		name = evt.GetLabel()
 		if not name or self.getNodeItem(name) is not None:
 			evt.Veto()
+		else:
+			self.setNode(self.GetItemText(evt.GetItem()), newname=name)
 
 	def getName(self):
 		return self.GetItemText(self.root)
@@ -324,7 +352,11 @@ class ApplicationEditorLite(wx.TreeCtrl):
 		item = self.getLauncherItem(name)
 		if item is None:
 			raise ValueError('Invalid launcher name \'%s\'' % name)
+		nodenames = self.getNodeNames(name)
+		for nodename in nodenames:
+			del self.nodes[nodename]
 		self.Delete(item)
+		self.removeEventBindings(nodenames)
 
 	def getLauncherItem(self, name):
 		item, cookie = self.GetFirstChild(self.root)
@@ -346,6 +378,10 @@ class ApplicationEditorLite(wx.TreeCtrl):
 				i += 1
 		elif self.getNodeItem(name) is not None:
 			raise ValueError('Node named \'%s\' already exists' % name)
+		self.nodes[name] = {}
+		self.nodes[name]['class name'] = classname
+		self.nodes[name]['dependencies'] = dependencies
+		self.nodes[name]['events'] = []
 		return self.AppendItem(launcheritem, name)
 
 	def removeNode(self, name):
@@ -353,6 +389,8 @@ class ApplicationEditorLite(wx.TreeCtrl):
 		if item is None:
 			raise ValueError('Invalid node name \'%s\'' % name)
 		self.Delete(item)
+		del self.nodes[name]
+		self.removeEventBindings([name])
 
 	def getNodeItem(self, name):
 		launcheritem, launchercookie = self.GetFirstChild(self.root)
@@ -367,17 +405,25 @@ class ApplicationEditorLite(wx.TreeCtrl):
 			launcheritem, launchercookie = nextlauncher
 		return None
 
-	def getNodeNames(self):
+	def getNodeNames(self, launchername=None):
 		names = []
-		launcheritem, launchercookie = self.GetFirstChild(self.root)
-		while launcheritem.IsOk():
+		if launchername is None:
+			launcheritem, launchercookie = self.GetFirstChild(self.root)
+			while launcheritem.IsOk():
+				nodeitem, nodecookie = self.GetFirstChild(launcheritem)
+				while nodeitem.IsOk():
+					names.append(self.GetItemText(nodeitem))
+					nextnode = self.GetNextChild(launcheritem, nodecookie)
+					nodeitem, nodecookie = nextnode
+				nextlauncher = self.GetNextChild(self.root, launchercookie)
+				launcheritem, launchercookie = nextlauncher
+		else:
+			launcheritem = self.getLauncherItem(launchername)
 			nodeitem, nodecookie = self.GetFirstChild(launcheritem)
 			while nodeitem.IsOk():
 				names.append(self.GetItemText(nodeitem))
 				nextnode = self.GetNextChild(launcheritem, nodecookie)
 				nodeitem, nodecookie = nextnode
-			nextlauncher = self.GetNextChild(self.root, launchercookie)
-			launcheritem, launchercookie = nextlauncher
 		return names
 
 	def addEventBinding(self, eventname, fromnodename, tonodename):
@@ -390,16 +436,27 @@ class ApplicationEditorLite(wx.TreeCtrl):
 		if self.getEventBindingItem(fromnodeitem, string) is not None:
 			errorstring = '%s from %s to %s already bound'
 			raise ValueError(errorstring % (eventname, fromnodename, tonodename))
+		self.nodes[fromnodename]['events'].append((eventname, tonodename))
 		return self.AppendItem(fromnodeitem, string)
 
 	def removeEventBinding(self, fromnodeitem, string):
 		item = self.getEventBindingItem(fromnodeitem, string)
 		if item is None:
 			raise ValueError('Invalid event binding')
+		fromnodename = self.GetItemText(fromnodeitem)
+		eventname, tonodename = self.eventBinding(string)
 		self.Delete(item)
+		self.nodes[fromnodename]['events'].remove((eventname, tonodename))
 
 	def eventBindingString(self, eventname, tonodename):
 		return '%s to node %s' % (eventname, tonodename)
+
+	def eventBinding(self, string):
+		# ...
+		tokens = string.split(' to node ')
+		eventname = tokens[0]
+		tonodename = tokens[-1]
+		return eventname, tonodename
 
 	def getEventBindingItem(self, fromnodeitem, string):
 		item, cookie = self.GetFirstChild(fromnodeitem)
@@ -409,6 +466,64 @@ class ApplicationEditorLite(wx.TreeCtrl):
 			item, cookie = self.GetNextChild(fromnodeitem, cookie)
 		return None
 
+	def getEventOutputs(self, nodename):
+		classname = self.nodes[nodename]['class name']
+		nodeclass = nodeclassreg.getNodeClass(classname)
+		eventoutputs = nodeclass.eventoutputs
+		return [eventoutput.__name__ for eventoutput in eventoutputs]
+
+	def getEventBindings(self, fromnodename):
+		eventbindings = []
+		fromnodeitem = self.getNodeItem(fromnodename)
+		item, cookie = self.GetFirstChild(fromnodeitem)
+		while item.IsOk():
+			string = self.GetItemText(item)
+			eventname, tonodename = self.eventBinding(string)
+			eventbindings.append((string, eventname, tonodename))
+			item, cookie = self.GetNextChild(fromnodeitem, cookie)
+		return eventbindings
+
+	def setEventBinding(self, fromnodename, string,
+											eventname=None, tonodename=None):
+		fromnodeitem = self.getNodeItem(fromnodename)
+		item = self.getEventBindingItem(fromnodeitem, string)
+		eventbinding = self.eventBinding(self.GetItemText(item))
+		if eventname is None:
+			eventname = eventbinding[0]
+		if tonodename is None:
+			tonodename = eventbinding[1]
+		string = self.eventBindingString(eventname, tonodename)
+		self.SetItemText(item, string)
+		index = self.nodes[fromnodename]['events'].index(eventbinding)
+		self.nodes[fromnodename]['events'][index] = (eventname, tonodename)
+
+	def setNode(self, name, classname=None, newname=None):
+		if classname is not None:
+			self.nodes[name]['class name'] = classname
+			eventoutputs = self.getEventOutputs(name)
+			for eventbinding in self.getEventBindings(name):
+				string, eventname, tonodename = eventbinding
+				if eventname not in eventoutputs:
+					self.removeEventBinding(item, string)
+		if newname is not None:
+			for nodename in self.getNodeNames():
+				for eventbinding in self.getEventBindings(nodename):
+					string, eventname, tonodename = eventbinding
+					if tonodename == name:
+						self.setEventBinding(nodename, string, tonodename=newname)
+			item = self.getNodeItem(name)
+			self.SetItemText(item, newname)
+			self.nodes[newname] = self.nodes[name]
+			del self.nodes[name]
+
+	def removeEventBindings(self, tonodenames):
+		for fromnodename in self.getNodeNames():
+			for eventbinding in self.getEventBindings(fromnodename):
+				string, eventname, tonodename = eventbinding
+				if tonodename in tonodenames:
+					fromnodeitem = self.getNodeItem(fromnodename)
+					self.removeEventBinding(fromnodeitem, string)
+
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
@@ -416,8 +531,9 @@ if __name__ == '__main__':
 			editor = ApplicationEditorLite(frame)
 			self.SetTopWindow(frame)
 			frame.Show()
-			editor.addLauncher('Instrument')
-			editor.addNode(None, 'EM', 'Instrument', None)
+			editor.addLauncher('Tecnai')
+			editor.addNode('EM', 'Instrument', 'Tecnai', [])
+			editor.addEventBinding('PublishEvent', 'Instrument', 'Instrument')
 			return True
 
 	app = App(0)
