@@ -1,5 +1,6 @@
 
 import leginonobject
+import array
 
 class Data(leginonobject.LeginonObject):
 	'''baseclass for leginon data.  subclasses should implement content'''

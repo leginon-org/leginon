@@ -2,6 +2,8 @@
 
 import timedloop
 import time
+#import Numeric
+import base64
 import array
 
 class AcquireLoop(timedloop.TimedLoop):
@@ -24,13 +26,16 @@ class AcquireLoop(timedloop.TimedLoop):
 
 		# this is rough, ImageData type, etc. to come soon
 		imagedata = self.researchByDataID('image data')
-		image = imagedata.content['image data']
+		image = base64.decodestring(imagedata.content['image data'])
 
 		imagedatatype = self.researchByDataID('datatype code')
 		datatype = imagedatatype.content['datatype code']
 
 		imagearray = array.array(datatype, image)
 		print 'image 1...10', imagearray[:10]
+
+		#imagedata = self.researchByDataID('image data')
+		#print 'image 1...10', imagedata.content['image data'][:10]
 
 		## acquire image
 		print 'acquiring image %s' % time.asctime()
