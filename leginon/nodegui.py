@@ -274,10 +274,11 @@ class Method(SpecWidget):
 
 		if self.returnspec is not None:
 			dataclass = whichDataClass(self.returnspec)
-			retwidget = dataclass(self, self.uiclient, self.returnspec)
-			self.retwidget = retwidget.datawidget
-			if retwidget is not None:
-				retwidget.pack()
+			self.retwidget = dataclass(self, self.uiclient, self.returnspec)
+			if self.retwidget is not None:
+				self.retwidget.pack()
+		else:
+			self.retwidget = None
 
 	def butcom(self):
 		newargs = []
@@ -288,27 +289,8 @@ class Method(SpecWidget):
 		self.process_return(ret)
 
 	def process_return(self, returnvalue):
-		if self.returnspec is None:
-			return
-		ret = self.returnspec['xmlrpctype']
-		if ret in ('array','string'):
-			self.retwidget['state'] = NORMAL
-			self.retwidget.delete(0,END)
-			self.retwidget.insert(0, `returnvalue`)
-			self.retwidget['state'] = DISABLED
-		elif ret == 'struct':
-			item = StructTreeItem(None, 'Result', returnvalue)
-			node = TreeWidget.TreeNode(self.retwidget.canvas, None, item)
-			node.expand()
-#			self.retwidget['state'] = NORMAL
-#			self.retwidget['height'] = len(returnvalue)
-#			self.retwidget.delete(1.0,END)
-#			for key,value in returnvalue.items():
-#				rowstr = key + ': ' + `value` + '\n'
-#				self.retwidget.insert(END, rowstr)
-#			self.retwidget['state'] = DISABLED
-		else:
-			pass
+		if self.retwidget is not None:
+			self.retwidget.setWidget(returnvalue)
 
 	def init_return(self, returntype):
 		'''
