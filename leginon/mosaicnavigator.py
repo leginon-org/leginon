@@ -35,6 +35,7 @@ class MosaicNavigator(navigator.Navigator):
 		print 'clicked =', (row, column)
 
 		# certainly not optimal
+		print 'maxmagnitude =", maxmagnitude
 		maxmagnitude = math.sqrt(shape[0]**2 + shape[1]**2)
 		nearestdelta = (0,0)
 		nearesttile = None
