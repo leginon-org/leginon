@@ -26,7 +26,7 @@ class Calibration(node.Node):
 		self.peakfinder = peakfinder.PeakFinder()
 
 		#### parameters for user to set
-		self.emnode = 'em'
+		self.emnode = ''
 		self.attempts = 5
 		self.range = [0.0000001, 0.00001]
 		####
@@ -61,6 +61,10 @@ class Calibration(node.Node):
 		self.axislist = ['x', 'y']
 
 		node.Node.__init__(self, id, nodelocations)
+		try:
+			self.emnode = self.nodelocations['EM']
+		except KeyError:
+			pass
 		self.clearStateImages()
 		self.start()
 

@@ -184,6 +184,12 @@ class Node(leginonobject.LeginonObject):
 		available_event = event.NodeAvailableEvent(newid, myloc)
 		self.outputEvent(ievent=available_event, wait=True)
 
+	def makeKnown(self, knownid):
+		self.outputEvent(event.NodeKnownEvent(self.ID(), knownid))
+
+	def makeUnknown(self, knownid):
+		self.outputEvent(event.NodeUnknownEvent(self.ID(), knownid))
+
 	def main(self):
 		raise NotImplementedError()
 

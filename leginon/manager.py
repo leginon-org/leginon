@@ -28,6 +28,9 @@ class Manager(node.Node):
 		self.addEventInput(event.NodeUnavailableEvent, self.unregisterNode)
 		self.addEventInput(event.NodeClassesPublishEvent, self.handleNodeClassesPublish)
 
+		self.addEventInput(event.NodeKnownEvent, self.addKnownNode)
+		self.addEventInput(event.NodeUnknownEvent, self.delKnownNode)
+
 		self.addEventInput(event.PublishEvent, self.registerData)
 		self.addEventInput(event.UnpublishEvent, self.unregisterData)
 		self.addEventInput(event.ListPublishEvent, self.registerData)
@@ -142,6 +145,13 @@ class Manager(node.Node):
 
 		self.confirmEvent(readyevent)
 
+	def addKnownNode(self, ievent):
+		self.nodelocations[ievent.content] = ievent.id[:-1]
+
+	def delKnownNode(self, ievent):
+		if self.nodelocations[ievent.content] == ievent.id[:-1]:
+			del self.nodelocations[ievent.content]
+
 	def unregisterNode(self, unavailable_event):
 		nodeid = unavailable_event.id[:-1]
 		self.removeNode(nodeid)
@@ -154,6 +164,7 @@ class Manager(node.Node):
 	def removeNode(self, nodeid):
 		nodelocationdata = self.server.datahandler.query(nodeid)
 		if nodelocationdata is not None:
+			self.removeKnownNode(nodeid)
 			self.removeNodeData(nodeid)
 			self.removeNodeDistmaps(nodeid)
 			self.server.datahandler.remove(nodeid)
@@ -161,6 +172,11 @@ class Manager(node.Node):
 			print 'node', nodeid, 'unregistered'
 		else:
 			print 'node', nodeid, 'does not exist'
+
+	def removeKnownNode(self, nodeid):
+		for knownid in self.nodelocations:
+			if self.nodelocations[knownid] == nodeid:
+				del self.nodelocations[knownid]
 
 	def removeNodeDistmaps(self, nodeid):
 		# needs to completely cleanup the distmap

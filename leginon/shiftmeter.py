@@ -118,7 +118,7 @@ if __name__ == '__main__':
 	from Tkinter import *
 	import nodegui
 
-	s = ShiftMeter(('none',), None)
+	s = ShiftMeter(('none',), {})
 
 	host = s.location()['hostname']
 	uiport = s.location()['UI port']
