@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.32 $
- *	@version $Id: leginon.inc,v 1.32 2004-11-02 22:38:42 dfellman Exp $
+ *	@version $Revision: 1.33 $
+ *	@version $Id: leginon.inc,v 1.33 2004-11-11 18:33:36 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -393,36 +393,104 @@ class leginondata {
 	}
 
 	function getFilenameFromId($id) {
-			list($filename) = $this->getFilename($id);
-			return $filename['filename'];
+		list($filename) = $this->getFilename($id);
+		return $filename['filename'];
 	}
 
-
-	function getCalibrations($calibration, $instrumentId=False, $limit='', $type='') {
-		if (!in_array($calibration, $this->calibrationtables))
-			return False;
-		if (is_numeric($instrumentId))
-			$where[]="i.`DEF_id`=$instrumentId";
+	function getCalibrationIds($calibration, $instrumentId=False, $limit='', $type='') {
 		$calibration_fields = $this->mysql->getFields($calibration); 
 		if (in_array('type', $calibration_fields) && $type) {
 			$where[] = "cal.`type`='$type'";
 		}
+
 		if ($where)
 			$sql_where = "where ".implode(' AND ', $where)." ";
-
 		if ($limit)
 			$sql_limit = " limit $limit ";
 
+		$select = "cal.`DEF_id` as id ";
+		$order  = "order by cal.`DEF_id` DESC ";
+
+		if (in_array('axis', $calibration_fields)) {
+			$q = "select distinct axis from `$calibration` cal $sql_where";
+			$axis = $this->mysql->getSQLResult($q);
+			if ($axis)
+				foreach ($axis as $a) {
+					$where_axis[] = "cal.`axis`= '".$a['axis']."'";
+				}
+			if ($where_axis)
+				$where[] = '('.implode(' OR ', $where_axis).')';
+
+			$select = "max(cal.`DEF_id`) as id ";
+			$group[] = 'cal.`axis`';
+			$sql_limit = " ";
+		}
+
+		if (in_array('magnification', $calibration_fields)) {
+			$q = "select distinct magnification from `$calibration` cal $sql_where";
+			$mags = $this->mysql->getSQLResult($q);
+			if ($mags)
+				foreach ($mags as $mag) {
+					$where_mags[] = "cal.magnification = '".$mag['magnification']."'";
+				}
+			if ($where_mags)
+				$where_mag = implode(' OR ', $where_mags);
+			$where[] = ' ('.$where_mag.') ';
+			$group[] = 'cal.`magnification`';
+			$select = "max(cal.`DEF_id`) as id, cal.`magnification` ";
+			$order = "order by cal.`magnification` DESC ";
+			$sql_limit = " ";
+		}
+
+
+		if (is_numeric($instrumentId))
+			$where[]="i.`DEF_id`=$instrumentId";
+
+		if ($where)
+			$sql_where = "where ".implode(' AND ', $where)." ";
+
+		if ($group)
+			$sql_group = "group by ".implode(', ', $group)." ";
+
 		$q = "select "
-			."cal.* "
+			.$select
 			."from ".$calibration." cal "
 			."left join SessionData s on (s.`DEF_id`=cal.`REF|SessionData|session`) "
 			."left join InstrumentData i on (i.`DEF_id`=s.`REF|InstrumentData|instrument`) "
 			.$sql_where
-			."order by cal.`DEF_id` DESC "
+			.$sql_group
+			.$order
 			.$sql_limit;
 
+
 		return $this->mysql->getSQLResult($q);
+	}
+
+	function getCalibrations($calibration, $instrumentId=False, $limit='', $type='') {
+		$Ids = $this->getCalibrationIds($calibration, $instrumentId, $limit, $type);
+		if ($Ids) {
+			foreach ($Ids as $id) 
+				if ($id=$id['id'])
+					$where_ids[] = "cal.`DEF_id` = '".$id."'";
+			if ($where_ids)
+				$sql_where = "where ".implode(' OR ', $where_ids)." ";
+		}
+		$calibration_fields = $this->mysql->getFields($calibration); 
+		if (in_array('magnification', $calibration_fields)) {
+			$order = " order by cal.`magnification` DESC ";
+		} else {
+			$order = " order by cal.`DEF_id` DESC ";
+		}
+
+		$q = "select "
+			."cal.* "
+			."from ".$calibration." cal "
+			.$sql_where
+			.$order;
+		if ($sql_where)
+			return $this->mysql->getSQLResult($q);
+		else
+			return array();
 	}
 
 	function getImageMatrixCalibration($imgId, $type='image shift') {
@@ -1023,16 +1091,23 @@ class leginondata {
 		foreach($tables as $table) {
 			if (!$this->mysql->SQLTableExists($table))
 				continue;
-			$definition .= $this->getSQLTableDefinitionXML($table);
-			$dump .=  '-	'.$table. $crlf;
-			if(is_array($types))
-			foreach ($types as $type) {
-				$r = $this->getCalibrations($table, $instrumentId, $limit, $type);
-				if (!$r[0]['type'])
-					continue;
-				$dump .=  '-		'.$type. $crlf;
+			$table_fields = $this->mysql->getFields($table); 
+			if (in_array('type', $table_fields) && $types) {
+				$rall = array();
+				foreach ($types as $type) {
+					$r = $this->getCalibrations($table, $instrumentId, $limit, $type);
+					if (!$r[0]['type'])
+						continue;
+					$rall = array_merge($rall, $r);
+					$dump .=  '-		'.$type. $crlf;
+				}
+				$content .= $this->array2XML($rall, $table);
+			} else {
+				$r = $this->getCalibrations($table, $instrumentId, $limit);
 				$content .= $this->array2XML($r, $table);
 			}
+			$definition .= $this->getSQLTableDefinitionXML($table);
+			$dump .=  '-	'.$table. $crlf;
 		}
 		$dump .=   '-' . $crlf
 			.  '-->' . $crlf . $crlf

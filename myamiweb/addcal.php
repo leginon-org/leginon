@@ -107,7 +107,7 @@ Instrument:
   <td>
 	<select multiple name="calibrations[]" size="6" >
 	<? foreach ($leginondata->calibrationtables as $table) {
-		$s = (is_array($_POST['calibrations']) && in_array($table, $_POST['calibrations'])) ? 'selected' : '';
+		$s = (is_array($_POST['calibrations'])) ? ((in_array($table, $_POST['calibrations'])) ? 'selected' : '') : 'selected';
 		echo "<option value='$table' $s >$table</option>\n";
 	}
 	?>
@@ -250,7 +250,7 @@ if ($_POST[bt_export]) {
 				echo "</div>";
 			}
 		} else {
-			$r = $leginondata->getCalibrations($calibration, $instrumentId, $limit, $type);
+			$r = $leginondata->getCalibrations($calibration, $instrumentId, $limit);
 			display($r, True);
 		}
 		echo "<br>";

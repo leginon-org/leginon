@@ -16,7 +16,7 @@ $exfromhostId = ($_POST[exportfromhostId]) ? $_POST[exportfromhostId] : current(
 $extohostId = ($_POST[exporttohostId]) ? $_POST[exporttohostId] : current($hostkeys);
 $im_hostId = ($_POST[import_hostId]) ? $_POST[import_hostId] : current($hostkeys);
 
-$leginondata->mysql->setSQLHost($SQL_HOSTS[$ex_hostId]);
+$leginondata->mysql->setSQLHost($SQL_HOSTS[$exfromhostId]);
 $applications = $leginondata->getApplications();
 $check_str = 'checked="checked"';
 
@@ -64,7 +64,7 @@ From Host:
 	<select name="exportfromhostId" onChange="javascript:document.data.submit();">
 		<?
 		foreach($hostkeys as $host) {
-			$selected = ($host==$ex_hostId) ? "selected" : "";
+			$selected = ($host==$exfromhostId) ? "selected" : "";
 			echo "<option value='$host' $selected >$host\n";
 		}
 		?>
