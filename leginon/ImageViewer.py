@@ -14,6 +14,7 @@ class ImageViewer(Frame):
 
 	def __init__(self, parent, **kwargs):
 		Frame.__init__(self, parent, **kwargs)
+		self.imagearray = None
 		self._build()
 
 	## put together component widgets

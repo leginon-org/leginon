@@ -6,7 +6,9 @@ import threading
 import Numeric
 import signal, time
 
-from ImageViewer import ImageViewer
+import ImageViewer
+reload(ImageViewer)
+
 import watcher
 reload(watcher)
 import node, event, data
@@ -61,7 +63,7 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		#root.wm_sizefrom('program')
 		root.wm_geometry('=450x400')
 
-		self.iv = ImageViewer(root, bg='#488')
+		self.iv = ImageViewer.ImageViewer(root, bg='#488')
 		self.iv.bindCanvas('<Double-1>', self.clickEvent)
 		self.iv.pack()
 
