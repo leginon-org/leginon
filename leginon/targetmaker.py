@@ -23,16 +23,15 @@ class TargetMaker(node.Node):
 		if self.targetlist:
 			targetlistdata = data.ImageTargetListData(id=self.ID(),
 																								targets=self.targetlist)
-#			print 'publishing ', targetlistdata['id']
 			self.publish(targetlistdata, pubevent=True)
 
-	def defineUserInterface(self):
-		node.Node.defineUserInterface(self)
-		publishtargetsmethod = uidata.Method('Publish Targets',
-																						self.publishTargetList)
-		container = uidata.LargeContainer('Target Maker')
-		container.addObjects((publishtargetsmethod,))
-		self.uiserver.addObject(container)
+#	def defineUserInterface(self):
+#		node.Node.defineUserInterface(self)
+#		publishtargetsmethod = uidata.Method('Publish Targets',
+#																						self.publishTargetList)
+#		container = uidata.LargeContainer('Target Maker')
+#		container.addObjects((publishtargetsmethod,))
+#		self.uiserver.addObject(container)
 
 class SpiralTargetMaker(TargetMaker):
 	eventinputs = TargetMaker.eventinputs + [event.PublishSpiralEvent]
@@ -49,34 +48,33 @@ class SpiralTargetMaker(TargetMaker):
 		TargetMaker.defineUserInterface(self)
 
 #		self.maxtargets = uidata.Integer('Maximum Targets', 2, 'rw', persist=True)
-#		self.overlap = uidata.Integer('Percent Overlap', 50, 'rw', persist=True)
 #		self.center = uidata.Struct('Spiral Center', {'x': 0.0, 'y': 0.0}, 'rw')
 #		settingscontainer.addObjects((pselect, self.radius, self.maxtargets, self.overlap, self.center))
 
+		self.statusmessage = uidata.String('Current status', '', 'r')
+		statuscontainer = uidata.Container('Status')
+		statuscontainer.addObjects((self.statusmessage,))
+
 		pselect = self.presetsclient.uiPresetSelector()
 		self.radius = uidata.Float('Radius (meters)', 1.0e-3, 'rw', persist=True)
-
+		self.overlap = uidata.Integer('Overlap (percent)', 0, 'rw', persist=True)
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((pselect, self.radius))
+		settingscontainer.addObjects((pselect, self.radius, self.overlap))
 
 		publishspiralmethod = uidata.Method('Publish Spiral',
 																				self.publishTargetList)
 		controlcontainer = uidata.Container('Control')
 		controlcontainer.addObjects((publishspiralmethod,))
 
-		self.statusmessage = uidata.String('Current status', '', 'r')
-		statuscontainer = uidata.Container('Status')
-		statuscontainer.addObjects((self.statusmessage,))
-
 		container = uidata.LargeContainer('Spiral Target Maker')
-		container.addObjects((settingscontainer, controlcontainer, statuscontainer))
+		container.addObjects((statuscontainer, settingscontainer, controlcontainer))
 		self.uiserver.addObject(container)
 
 	def setStatusMessage(self, message):
 		self.statusmessage.set(message)
 
 	def publishTargetList(self, ievent=None):
-		### do targets referenced from current state and prefered preset
+		# make targets using current instrument state and selected preset
 		self.setStatusMessage('Publishing target list')
 		try:
 			scope = self.researchByDataID(('scope',))
@@ -106,20 +104,22 @@ class SpiralTargetMaker(TargetMaker):
 
 		center = {'x': 0.0, 'y': 0.0}
 		for key in center:
-			# stage position for now
+			# stage position
 			scope['stage position'][key] = center[key]
 
-#		maxtargets = self.maxtargets.get()
-#		overlap = self.overlap.get()
-		#for delta in self.makeSpiral(maxtargets, overlap, size):
-
 		radius = self.radius.get()
+		overlap = self.overlap.get()/100.0
+		if overlap < 0.0 or overlap >= 100.0:
+			self.setStatusMessage('Invalid overlap specified')
+			return
 		magnification = scope['magnification']
 		pixelsize = self.pixelsizecalclient.retrievePixelSize(magnification, False)
 		binning = camera['binning']['x']
 		imagesize = camera['dimension']['x']
 
-		for delta in self.makeCircle(radius, pixelsize, binning, imagesize):
+		self.setStatusMessage('Creating target list')
+		for delta in self.makeCircle(radius, pixelsize, binning, imagesize,
+																	overlap):
 			initializer = {'id': self.ID(),
 											'session': self.session,
 											'delta row': delta[0],
@@ -127,13 +127,18 @@ class SpiralTargetMaker(TargetMaker):
 											'scope': scope,
 											'camera': camera,
 											'preset': preset}
-			targetdata = data.AcquisitionImageTargetData(initializer=initializer, type='acquisition')
+			targetdata = data.AcquisitionImageTargetData(initializer=initializer,
+																										type='acquisition')
 			self.targetlist.append(targetdata)
+		self.setStatusMessage('Publishing target list')
 		TargetMaker.publishTargetList(self)
 		self.targetlist = []
 		self.setStatusMessage('Target list published')
 
-	def makeCircle(self, radius, pixelsize, binning, imagesize):
+	def makeCircle(self, radius, pixelsize, binning, imagesize, overlap=0.0):
+		imagesize = int(round(imagesize*(1.0 - overlap)))
+		if imagesize <= 0:
+			raise ValueError('Invalid overlap value')
 		pixelradius = radius/(pixelsize*binning)
 		lines = [imagesize/2]
 		while lines[-1] < pixelradius - imagesize:
