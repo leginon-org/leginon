@@ -86,16 +86,16 @@ class Server(XMLRPCServer, uidata.Container):
 		location['instance'] = self
 		return location
 
-	def getNameList(self):
+	def _getNameList(self):
 		return []
 
-	def getObjectFromList(self, namelist):
+	def _getObjectFromList(self, namelist):
 		namelist[0] = self.name
-		return uidata.Container.getObjectFromList(self, namelist)
+		return uidata.Container._getObjectFromList(self, namelist)
 
 	def setFromClient(self, namelist, value):
 		'''this is how a UI client sets a data value'''
-		uidataobject = self.getObjectFromList(namelist)
+		uidataobject = self._getObjectFromList(namelist)
 		if not isinstance(uidataobject, uidata.Data):
 			raise TypeError('name list does not resolve to Data instance')
 		# except from this client?
@@ -108,7 +108,7 @@ class Server(XMLRPCServer, uidata.Container):
 		return ''
 
 	def commandFromClient(self, namelist, args):
-		uimethodobject = self.getObjectFromList(namelist)
+		uimethodobject = self._getObjectFromList(namelist)
 		if not isinstance(uimethodobject, uidata.Method):
 			raise TypeError('name list does not resolve to Method instance')
 		apply(uimethodobject.method, args)
@@ -139,7 +139,8 @@ class Server(XMLRPCServer, uidata.Container):
 			target = getattr(localclient, commandstring)
 			args = (properties,)
 			if thread:
-				localthread = threading.Thread(target=target, args=args)
+				localthread = threading.Thread(name='UI local execute thread',
+																				target=target, args=args)
 				localthread.start()
 			else:
 				apply(target, args)
@@ -162,7 +163,8 @@ class Server(XMLRPCServer, uidata.Container):
 		# marshalling XML-RPC data for each client inefficient
 		for client in xmlrpcclients:
 			if thread:
-				xmlrpcthread = threading.Thread(target=self.XMLRPCClientExecute,
+				xmlrpcthread = threading.Thread(name='UI XML-RPC execute thread',
+																				target=self.XMLRPCClientExecute,
 																				args=(commandstring, properties, client,
 																							removeclients, removeclientslock))
 				xmlrpcthread.start()
@@ -200,13 +202,13 @@ class Server(XMLRPCServer, uidata.Container):
 	def propertiesFromObject(self, uiobject, block, thread):
 		properties = {}
 		properties['dependencies'] = []
-		properties['namelist'] = uiobject.getNameList()
+		properties['namelist'] = uiobject._getNameList()
 		properties['typelist'] = uiobject.typelist
 		try:
 			properties['value'] = uiobject.value
 		except AttributeError:
 			properties['value'] = None
-		properties['configuration'] = uiobject.getConfiguration()
+		properties['configuration'] = uiobject.configuration
 		if thread:
 			block = False
 		properties['block'] = block
@@ -224,7 +226,7 @@ class Server(XMLRPCServer, uidata.Container):
 
 	def _setObject(self, uiobject, client=None, block=True, thread=False):
 		properties = {}
-		properties['namelist'] = uiobject.getNameList()
+		properties['namelist'] = uiobject._getNameList()
 		properties['value'] = uiobject.value
 
 		if thread:
@@ -236,7 +238,7 @@ class Server(XMLRPCServer, uidata.Container):
 
 	def _deleteObject(self, uiobject, client=None, block=True, thread=False):
 		properties = {}
-		properties['namelist'] = uiobject.getNameList()
+		properties['namelist'] = uiobject._getNameList()
 
 		if thread:
 			block = False
@@ -247,8 +249,8 @@ class Server(XMLRPCServer, uidata.Container):
 
 	def _configureObject(self, uiobject, client=None, block=True, thread=False):
 		properties = {}
-		properties['namelist'] = uiobject.getNameList()
-		properties['configuration'] = uiobject.getConfiguration()
+		properties['namelist'] = uiobject._getNameList()
+		properties['configuration'] = uiobject.configuration
 
 		if thread:
 			block = False
@@ -263,7 +265,7 @@ class Server(XMLRPCServer, uidata.Container):
 		'''
 		same as setFromClient, except this does not updatePickle
 		'''
-		uidataobject = self.getObjectFromList(namelist)
+		uidataobject = self._getObjectFromList(namelist)
 		if not isinstance(uidataobject, uidata.Data):
 			raise TypeError('name list does not resolve to Data instance')
 		# except from this client?

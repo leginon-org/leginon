@@ -101,9 +101,10 @@ def WidgetClassFromTypeList(typelist):
 			if len(typelist) > 1:
 				if typelist[1] == 'container':
 					if len(typelist) > 2:
-						if typelist[2] == 'single select from list':
-							return wxComboBoxWidget
-						elif typelist[2] == 'select from list':
+						if typelist[2] == 'select from list':
+							if len(typelist) > 3:
+								if typelist[3] == 'single':
+									return wxComboBoxWidget
 							return wxOrderedListBoxWidget
 						elif typelist[2] == 'select from struct':
 							return wxTreeSelectWidget
@@ -196,14 +197,16 @@ class LocalUIClient(object):
 
 	def setServer(self, namelist, value, thread=False):
 		if thread:
-			threading.Thread(target=self.uiserver.setFromClient,
+			threading.Thread(name='local UI client set server thread',
+												target=self.uiserver.setFromClient,
 												args=(namelist, value)).start()
 		else:
 			self.uiserver.setFromClient(namelist, value)
 
 	def commandServer(self, namelist, args, thread=False):
 		if thread:
-			threading.Thread(target=self.uiserver.commandFromClient,
+			threading.Thread(name='local UI client command server thread',
+												target=self.uiserver.commandFromClient,
 												args=(namelist, args)).start()
 		else:
 			self.uiserver.commandFromClient(namelist, args)
@@ -222,14 +225,16 @@ class XMLRPCUIClient(XMLRPCClient, uiserver.XMLRPCServer):
 
 	def setServer(self, namelist, value, thread=False):
 		if thread:
-			threading.Thread(target=self.execute,
+			threading.Thread(name='XML-RPC UI client set server thread',
+												target=self.execute,
 												args=('set', (namelist, value))).start()
 		else:
 			self.execute('set', (namelist, value))
 
 	def commandServer(self, namelist, args, thread=False):
 		if thread:
-			threading.Thread(target=self.execute,
+			threading.Thread(name='XML-RPC UI client command server thread',
+												target=self.execute,
 												args=('command', (namelist, args))).start()
 		else:
 			self.execute('command', (namelist, args))
@@ -312,7 +317,8 @@ class wxXMLRPCClient(XMLRPCUIClient, wxUIClient):
 	def __init__(self, serverhostname, serverport, container, port=None):
 		XMLRPCUIClient.__init__(self, serverhostname, serverport, port)
 		wxUIClient.__init__(self, container)
-		threading.Thread(target=self.addServer, args=()).start()
+		threading.Thread(name='XML-RPC UI client add server thread',
+											target=self.addServer, args=()).start()
 
 class UIStatusBar(wxStatusBar):
 	def __init__(self, parent):

@@ -17,7 +17,6 @@ import time
 import threading
 import sys
 
-
 class Launcher(node.Node):
 	def __init__(self, id, nodelocations = {}, port = None, **kwargs):
 		initializer = {'name': 'launcher session'}

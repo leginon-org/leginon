@@ -227,7 +227,8 @@ class DataBinder(DataHandler):
 		## a queue to hold incoming data, and a thread
 		## to process data from the queue
 		self.queue = queueclass()
-		t = threading.Thread(target=self.handlerLoop)
+		t = threading.Thread(name='data binder queue thread',
+													target=self.handlerLoop)
 		t.setDaemon(1)
 		t.start()
 
@@ -245,7 +246,8 @@ class DataBinder(DataHandler):
 			item = self.queue.get(block=True)
 			try:
 				if self.threaded:
-					t = threading.Thread(target=self.handleData, args=(item,))
+					t = threading.Thread(name='data binder handler thread',
+																target=self.handleData, args=(item,))
 					t.setDaemon(1)
 					t.start()
 				else:

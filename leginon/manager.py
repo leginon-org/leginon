@@ -1036,13 +1036,15 @@ class ManagerSetup(object):
 
 		projectcontainer = uidata.Container('Project')
 		self.projectselection = uidata.SingleSelectFromList('Project', [], 0,
-																		self.uiProjectSelectCallback, persist=True)
+																				callback=self.uiProjectSelectCallback,
+																				persist=True)
 		projectcontainer.addObject(self.projectselection)
 		self.container.addObject(projectcontainer)
 
 		usercontainer = uidata.Container('User')
 		self.userselection = uidata.SingleSelectFromList('Name', [], 0,
-																			self.uiUserSelectCallback, persist=True)
+																						callback=self.uiUserSelectCallback,
+																						persist=True)
 		self.userfullname = uidata.String('Full Name', '', 'r')
 		self.usergroup = uidata.String('Group Name', '', 'r')
 		usercontainer.addObjects((self.userselection,
@@ -1052,7 +1054,8 @@ class ManagerSetup(object):
 
 		instrumentcontainer = uidata.Container('Instrument')
 		self.instrumentselection = uidata.SingleSelectFromList('Name', [], 0,
-																	self.uiInstrumentSelectCallback, persist=True)
+																			callback=self.uiInstrumentSelectCallback,
+																			persist=True)
 		self.instrumentdescription = uidata.String('Description', '', 'r')
 		self.instrumenthostname = uidata.String('Hostname', '', 'r')
 

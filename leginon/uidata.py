@@ -6,15 +6,11 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import copy
-import Numeric
-import Mrc
 import threading
-import cStringIO
 import data
+import uiserver
 
 # Exceptions
-# maybe overdone
 class Error(Exception):
 	pass
 
@@ -27,53 +23,223 @@ class DataError(ObjectError):
 class PermissionsError(DataError):
 	pass
 
+class PrintRLock(object):
+	def __init__(self, name):
+		self.name = name
+		self.rlock = threading.RLock()
+		self.lock = threading.Lock()
+		self.acquired = 0
+
+	def acquire(self):
+		self.lock.acquire()
+		thread = threading.currentThread()
+		print self.acquired, self.name, 'acquiring for', thread.getName()
+		self.rlock.acquire()
+		print self.acquired, self.name, 'acquired for', thread.getName()
+		self.acquired += 1
+		self.lock.release()
+
+	def release(self):
+		self.lock.acquire()
+		thread = threading.currentThread()
+		self.rlock.release()
+		self.acquired -= 1
+		print self.acquired, self.name, 'released for', thread.getName()
+		self.lock.release()
+
 # UI Objects
 class Object(object):
 	typelist = ('object',)
 	def __init__(self, name):
-		if type(name) is str:
-			self.name = name
-		else:
+		if type(name) is not str:
 			raise TypeError('name must be a string')
+		self.name = name
 		self.parent = None
 		self.server = None
-		self.enabled = True
+		self.configuration = {}
+		self.configuration['enabled'] = True
+		#self.lock = PrintRLock(self.name)
 		self.lock = threading.RLock()
 
-	def setServer(self, server):
-		self.server = server
-
-	def getNameList(self):
-		# not thread safe
+	def _getNameList(self):
 		namelist = [self.name,]
 		if self.parent is not None:
-			namelist = self.parent.getNameList() + namelist
+			namelist = self.parent._getNameList() + namelist
 		return namelist
 
-	def getObjectFromList(self, namelist):
-		# not thread safe
+	def _getObjectFromList(self, namelist):
 		if len(namelist) != 1 or namelist[0] != self.name:
 			raise ValueError('connect get Object from list, no such Object')
 		return self
 
-	def disable(self):
-		self._enable(False)
+	def _setServer(self, server):
+		if not isinstance(server, uiserver.Server) and server is not None:
+			raise TypeError('Invalid server for Object')
+		self.server = server
 
-	def enable(self):
-		self._enable(True)
-
-	def _enable(self, enabled, block=True, thread=False):
-		self.lock.acquire()
-		self.enabled = enabled
+	def _enable(self, enabled, block, thread):
+		self.configuration['enabled'] = enabled
 		if self.server is not None:
 			self.server._configureObject(self, None, block, thread)
+
+	def disable(self, block=True, thread=False):
+		self.lock.acquire()
+		self._enable(False, block, thread)
 		self.lock.release()
 
-	def getConfiguration(self):
-		# not thread safe
-		configuration = {}
-		configuration['enabled'] = self.enabled
-		return configuration
+	def enable(self, block=True, thread=False):
+		self.lock.acquire()
+		self._enable(True, block, thread)
+		self.lock.release()
+
+class Method(Object):
+	typelist = Object.typelist + ('method',)
+	def __init__(self, name, method):
+		Object.__init__(self, name)
+		if not callable(method):
+			raise TypeError('method must be callable')
+		self.method = method
+
+class Data(Object):
+	permissionsvalues = ('r', 'w', 'rw', 'wr')
+	typelist = Object.typelist + ('data',)
+	def __init__(self, name, value, permissions='r', callback=None,
+								persist=False):
+		Object.__init__(self, name)
+		if permissions in self.permissionsvalues:
+			if 'r' in permissions:
+				self.configuration['read'] = True
+			else:
+				self.configuration['read'] = False
+			if 'w' in permissions:
+				self.configuration['write'] = True
+			else:
+				self.configuration['write'] = False
+		else:
+			raise ValueError('invalid permissions value')
+
+		self.setCallback(callback)
+
+		self.persist = persist
+
+		# no callback?
+		self.set(value)
+
+	def setCallback(self, callback):
+		if not callable(callback) and callback is not None:
+			raise TypeError('callback must be callable or None')
+		self.lock.acquire()
+		self.callback = callback
+		self.lock.release()
+
+	def _set(self, value):
+		self.lock.acquire()
+		if self.configuration['write']:
+			self.set(value)
+		else:
+			self.lock.release()
+			raise PermissionsError('cannot set, permission denied')
+		self.lock.release()
+
+	def set(self, value, callback=True, block=True, thread=False):
+		self.lock.acquire()
+		if callback and self.callback is not None:
+			value = self.callback(value)
+		if self.validate(value):
+			self.value = value
+		else:
+			self.lock.release()
+			raise TypeError('invalid data value for type')
+		if self.server is not None:
+			self.server._setObject(self, None, block, thread)
+		self.lock.release()
+
+	def _get(self):
+		self.lock.acquire()
+		if self.configuration['read']:
+			value = self.get()
+		else:
+			self.lock.release()
+			raise PermissionsError('cannot get, permission denied')
+		self.lock.release()
+		return value
+
+	def get(self):
+		self.lock.acquire()
+		value = self.value
+		self.lock.release()
+		return value
+
+	def validate(self, value):
+		#return False
+		return True
+
+class Boolean(Data):
+	typelist = Data.typelist + ('boolean',)
+	def validate(self, value):
+		return True
+		if type(value) is bool:
+			return True
+		else:
+			return False
+
+class Number(Data):
+	typelist = Data.typelist + ('number',)
+	def validate(self, value):
+		return True
+		if type(value) in (int, float) or value is None:
+			return True
+		else:
+			return False
+
+class Integer(Data):
+	typelist = Data.typelist + ('integer',)
+	def validate(self, value):
+		return True
+		if type(value) is int or value is None:
+			return True
+		else:
+			return False
+
+class Progress(Integer):
+	typelist = Integer.typelist + ('progress',)
+
+class Float(Data):
+	typelist = Data.typelist + ('float',)
+	def validate(self, value):
+		return True
+		if type(value) is float or value is None:
+			return True
+		else:
+			return False
+
+class String(Data):
+	typelist = Data.typelist + ('string',)
+	def validate(self, value):
+		return True
+		if type(value) is str or value is None:
+			return True
+		else:
+			return False
+
+class Array(Data):
+	typelist = Data.typelist + ('array',)
+	def validate(self, value):
+		return True
+
+class Sequence(Array):
+	typelist = Array.typelist + ('sequence',)
+	def __init__(self, name, value):
+		Array.__init__(self, name, value)
+
+class GridTray(Array):
+	typelist = Array.typelist + ('grid tray',)
+
+class Struct(Data):
+	typelist = Data.typelist + ('struct',)
+
+class Application(Struct):
+	typelist = Struct.typelist + ('application',)
 
 class Container(Object):
 	typelist = Object.typelist + ('container',)
@@ -81,6 +247,11 @@ class Container(Object):
 		Object.__init__(self, name)
 		self.uiobjectdict = {}
 		self.uiobjectlist = []
+
+	def _setServer(self, server):
+		Object._setServer(self, server)
+		for uiobject in self.uiobjectlist:
+			uiobject._setServer(server)
 
 	def addObject(self, uiobject, block=True, thread=False):
 		self.lock.acquire()
@@ -92,47 +263,41 @@ class Container(Object):
 			self.lock.release()
 			raise TypeError('value must be a Object instance')
 
+		uiobject.lock.acquire()
 		uiobject.parent = self
-		uiobject.setServer(self.server)
+		uiobject._setServer(self.server)
 		self.uiobjectdict[uiobject.name] = uiobject
 		self.uiobjectlist.append(uiobject)
 
 		if self.server is not None:
 			self.server._addObject(uiobject, None, block, thread)
-
+		uiobject.lock.release()
 		self.lock.release()
-
-	def setServer(self, server):
-		Object.setServer(self, server)
-		for uiobject in self.uiobjectlist:
-			uiobject.setServer(server)
 
 	def addObjects(self, uiobjects, block=True, thread=False):
 		self.lock.acquire()
-		try:
-			for uiobject in uiobjects:
-				self.addObject(uiobject, block, thread)
-		except TypeError, e:
-			print e
+		for uiobject in uiobjects:
+			self.addObject(uiobject, block, thread)
 		self.lock.release()
 
 	def deleteObject(self, name, client=None, block=True, thread=False):
 		self.lock.acquire()
-		try:
+		if name in self.uiobjectdict:
 			uiobject = self.uiobjectdict[name]
+			uiobject.lock.acquire()
 			del self.uiobjectdict[name]
 			self.uiobjectlist.remove(uiobject)
 			if self.server is not None:
 				self.server._deleteObject(uiobject, client, block, thread)
 			uiobject.server = None
 			uiobject.parent = None
-		except KeyError:
+			uiobject.lock.release()
+		else:
 			self.lock.release()
 			raise ValueError('cannot delete Object, not in Object mapping')
 		self.lock.release()
 
-	def getObjectFromList(self, namelist):
-		# not thread safe
+	def _getObjectFromList(self, namelist):
 		if type(namelist) not in (list, tuple):
 			raise TypeError('name hierarchy must be a list')
 
@@ -147,7 +312,7 @@ class Container(Object):
 		else:
 			for uiobject in self.uiobjectlist:
 				try:
-					obj = uiobject.getObjectFromList(namelist[1:])
+					obj = uiobject._getObjectFromList(namelist[1:])
 					return obj
 				except ValueError:
 					pass
@@ -177,215 +342,15 @@ SmallClientContainer = clientContainerFactory(SmallContainer)
 MediumClientContainer = clientContainerFactory(MediumContainer)
 LargeClientContainer = clientContainerFactory(LargeContainer)
 
-class Method(Object):
-	typelist = Object.typelist + ('method',)
-	def __init__(self, name, method):
-		Object.__init__(self, name)
-		if not callable(method):
-			raise TypeError('method must be callable')
-		self.method = method
-
-class Data(Object):
-	permissionsvalues = ('r', 'w', 'rw', 'wr')
-	typelist = Object.typelist + ('data',)
-	def __init__(self, name, value, permissions='r', callback=None,
-								persist=False):
-		Object.__init__(self, name)
-		if permissions in self.permissionsvalues:
-			if 'r' in permissions:
-				self.read = True
-			else:
-				self.read = False
-			if 'w' in permissions:
-				self.write = True
-			else:
-				self.write = False
-		else:
-			raise ValueError('invalid permissions value')
-
-		self.setCallback(callback)
-		self.persist = persist
-
-		self.set(value)
-
-	def getConfiguration(self):
-		configuration = Object.getConfiguration(self)
-		configuration['read'] = self.read
-		configuration['write'] = self.write
-		return configuration
-
-	def setCallback(self, callback):
-		if callable(callback):
-			self.callback = callback
-		elif callback is None:
-			self.callback = None
-		else:
-			raise TypeError('callback must be callable or None')
-
-	def _set(self, value):
-		if self.write:
-			self.set(value)
-		else:
-			raise PermissionsError('cannot set, permission denied')
-
-	def set(self, value, callback=True, block=True, thread=False):
-		#try:
-		#	value = copy.deepcopy(value)
-		#except copy.Error:
-		#	return
-		if self.validate(value):
-			if callback and self.callback is not None:
-				callbackvalue = self.callback(value)
-				if self.validate(callbackvalue):
-					self.value = callbackvalue
-				else:
-					self.value = value
-			else:
-				self.value = value
-		else:
-			raise TypeError('invalid data value for type')
-		if self.server is not None:
-			self.server._setObject(self, None, block, thread)
-
-	# needs reversal of _get/get like set
-	def get(self):
-		if self.read:
-			return self._get()
-		else:
-			raise PermissionsError('cannot get, permission denied')
-
-	def _get(self):
-		return self.value
-
-	def validate(self, value):
-		#return False
-		return True
-
-class Boolean(Data):
-	typelist = Data.typelist + ('boolean',)
-
-	def validate(self, value):
-		return True
-		if type(value) is bool or value is 0 or value is 1:
-			return True
-		else:
-			return False
-
-class Number(Data):
-	typelist = Data.typelist + ('number',)
-
-	def validate(self, value):
-		return True
-		if type(value) in (int, float) or value is None:
-			return True
-		else:
-			return False
-
-class Integer(Data):
-	typelist = Data.typelist + ('integer',)
-
-	def validate(self, value):
-		return True
-		if type(value) is int or value is None:
-			return True
-		else:
-			return False
-
-class Float(Data):
-	typelist = Data.typelist + ('float',)
-
-	def validate(self, value):
-		return True
-		if type(value) is float or value is None:
-			return True
-		else:
-			return False
-
-class String(Data):
-	typelist = Data.typelist + ('string',)
-
-	def validate(self, value):
-		return True
-		if type(value) is str or value is None:
-			return True
-		else:
-			return False
-
-class Array(Data):
-	typelist = Data.typelist + ('array',)
-
-	def validate(self, value):
-		return True
-		return True
-
-class GridTray(Array):
-	typelist = Array.typelist + ('grid tray',)
-
-class Struct(Data):
-	typelist = Data.typelist + ('struct',)
-
-class Date(Data):
-	typelist = Data.typelist + ('date',)
-
-class Progress(Integer):
-	typelist = Integer.typelist + ('progress',)
-
-class Application(Struct):
-	typelist = Struct.typelist + ('application',)
-
-class Sequence(Array):
-	typelist = Array.typelist + ('sequence',)
-	def __init__(self, name, value):
-		Array.__init__(self, name, value)
-
-class SingleSelectFromList(Container):
-	typelist = Container.typelist + ('single select from list',)
-	def __init__(self, name, listvalue, selectedindex, callback=None,
-																											persist=False):
-		Container.__init__(self, name)
-		self.list = Array('List', listvalue, 'r', persist=persist)
-		self.selected = Integer('Selected', selectedindex, 'rw', callback,
-															persist=persist)
-		self.persist = persist
-		self.addObject(self.list)
-		self.addObject(self.selected)
-
-	def setCallback(self, callback):
-		self.selected.setCallback(callback)
-
-	def set(self, listvalue, selectedindex):
-		self.setList(listvalue)
-		self.setSelected(selectedindex)
-
-	def getList(self):
-		return self.list.get()
-
-	def setList(self, listvalue):
-		self.list.set(listvalue)
-
-	def getSelected(self):
-		return self.selected.get()
-
-	def setSelected(self, selectedvalue):
-		self.selected.set(selectedvalue)
-
-	def getSelectedValue(self, selected=None):
-		valuelist = self.getList()
-		if selected is None:
-			selected = self.getSelected()
-		try:
-			return valuelist[selected]
-		except IndexError:
-			return None
-
 class SelectFromList(Container):
 	typelist = Container.typelist + ('select from list',)
-	def __init__(self, name, listvalue, selectedvalues, permissions='r',
+	selectclass = Array
+	def __init__(self, name, listvalue, selected, permissions='r',
 								callback=None, persist=False):
 		Container.__init__(self, name)
 		self.list = Array('List', listvalue, permissions, persist=persist)
-		self.selected = Array('Selected', selectedvalues, 'rw', callback,
-													persist=persist)
+		self.selected = self.selectclass('Selected', selected, 'rw', callback,
+																			persist=persist)
 		self.persist = persist
 		self.addObject(self.list)
 		self.addObject(self.selected)
@@ -393,9 +358,9 @@ class SelectFromList(Container):
 	def setCallback(self, callback):
 		self.selected.setCallback(callback)
 
-	def set(self, listvalue, selectedvalues):
+	def set(self, listvalue, selected):
 		self.setList(listvalue)
-		self.setSelected(selectedvalues)
+		self.setSelected(selected)
 
 	def getList(self):
 		return self.list.get()
@@ -406,17 +371,37 @@ class SelectFromList(Container):
 	def getSelected(self):
 		return self.selected.get()
 
-	def setSelected(self, selectedvalues):
-		self.selected.set(selectedvalues)
+	def setSelected(self, selected):
+		self.selected.set(selected)
 
 	def getSelectedValues(self, selected=None):
-		value = []
+		values = []
 		valuelist = self.getList()
 		if selected is None:
 			selected = self.getSelected()
 		for i in selected:
-			value.append(valuelist[i])
-		return value
+			try:
+				values.append(valuelist[i])
+			except IndexError:
+				raise RuntimeError('selected index out of range')
+		return values
+
+class SingleSelectFromList(SelectFromList):
+	typelist = SelectFromList.typelist + ('single',)
+	selectclass = Integer
+	def __init__(self, name, listvalue, selected, permissions='r',
+								callback=None, persist=False):
+		SelectFromList.__init__(self, name, listvalue, selected, permissions,
+														callback, persist)
+
+	def getSelectedValue(self, selected=None):
+		if selected is None:
+			selected = self.getSelected()
+		values = self.getSelectedValues([selected])
+		try:
+			return values[0]
+		except IndexError:
+			return None
 
 class SelectFromStruct(Container):
 	typelist = Container.typelist + ('select from struct',)
@@ -445,20 +430,6 @@ class SelectFromStruct(Container):
 
 	def setSelected(self, selectedvalue):
 		self.selected.set(selectedvalue)
-
-class Binary(Data):
-	typelist = Data.typelist + ('binary',)
-
-class Dialog(Container):
-	typelist = Container.typelist + ('dialog',)
-	def __init__(self, name):
-		Container.__init__(self, name)
-
-	def destroy(self):
-		try:
-			self.parent.deleteObject(self.name)
-		except ValueError:
-			pass
 
 class Message(Container):
 	typelist = Container.typelist + ('message',)
@@ -501,6 +472,17 @@ class MessageLog(Container):
 	def error(self, message):
 		self.message('error', message)
 
+class Dialog(ExternalContainer):
+	typelist = ExternalContainer.typelist + ('dialog',)
+	def __init__(self, name):
+		ExternalContainer.__init__(self, name)
+
+	def destroy(self):
+		try:
+			self.parent.deleteObject(self.name)
+		except ValueError:
+			pass
+
 class MessageDialog(Dialog):
 	typelist = Dialog.typelist + ('message',)
 	def __init__(self, name, label):
@@ -537,28 +519,8 @@ class LoadFileDialog(FileDialog):
 	typelist = FileDialog.typelist + ('load',)
 	oklabel = 'Load'
 
-class PILImage(Binary):
-	typelist = Binary.typelist + ('PIL image',)
-
-class Image(Binary):
-	typelist = Binary.typelist + ('image',)
-
-class ClickImage(Container):
-	typelist = Container.typelist + ('click image',)
-	def __init__(self, name, clickcallback, image, permissions='r',
-								persist=False):
-		self.clickcallback = clickcallback
-		Container.__init__(self, name)
-		self.image = Image('Image', image, 'r', persist=persist)
-		self.coordinates = Array('Coordinates', [], 'rw', persist=persist)
-		self.method = Method('Click', self.doClickCallback)
-		self.persist = persist
-		self.addObject(self.coordinates)
-		self.addObject(self.method)
-		self.addObject(self.image)
-
-	def setImage(self, value):
-		self.image.set(value)
+class Binary(Data):
+	typelist = Data.typelist + ('binary',)
 
 class PILImage(Binary):
 	typelist = Binary.typelist + ('PIL image',)
