@@ -98,6 +98,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		to be "done" if specified.
 		'''
 
+		self.unNotifyUserSubmit()
+
 		## map image id to max target number in DB
 		## so we don't have to query DB every iteration of the loop
 		targetnumbers = {}
@@ -166,8 +168,14 @@ class TargetFinder(imagewatcher.ImageWatcher):
 	def notifyUserSubmit(self):
 		myname = self.id[-1]
 		message = 'waiting for you to submit targets'
-		self.messagelog.information(message)
+		self.usersubmitmessage = self.messagelog.information(message)
 		node.beep()
+
+	def unNotifyUserSubmit(self):
+		try:
+			self.usersubmitmessage.clear()
+		except:
+			pass
 
 	def handleTargetListDone(self, targetlistdoneevent):
 		'''
