@@ -244,6 +244,21 @@ class ImageClickEvent(Event):
 class ImageAcquireEvent(Event):
 	pass
 
+class ChangePresetEvent(Event):
+	def typemap(cls):
+		t = Event.typemap()
+		t += [ ('name', str), ('emtarget', data.EMTargetData)]
+		return t
+	typemap = classmethod(typemap)
+
+class PresetChangedEvent(Event):
+	def typemap(cls):
+		t = Event.typemap()
+		t += [
+			('name', str),
+		]
+	typemap = classmethod(typemap)
+
 ##############################################################
 ## generate the mapping of data class to publish event class
 publish_events = {}
