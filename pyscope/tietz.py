@@ -11,6 +11,7 @@ else:
 	import mmapfile
 	import base64
 	import array
+	#import Numeric
 	
 	class tietz(camera.camera):
 		hCam = None
@@ -25,6 +26,8 @@ else:
 			#self.camType = win32com.client.constants.ctFastScan
 	
 			self.hCam = self.theCamera.Initialize(self.camType, 0)
+			self.arraytypecode = 'H'
+			#self.Numerictypecode = Numeric.Int16
 		
 		def __del__(self):
 			self.theCamera.Uninitialize(self.hCam)
@@ -44,8 +47,8 @@ else:
 			map = mmapfile.mmapfile(mmname, size)
 			result = map.read(size)
 			map.close()
-			#return base64.encodestring(result)
-			return result
+			return base64.encodestring(result)
+			#return Numeric.array(array.array(self.arraytypecode, result), self.Numerictypecode)
 	
 		def getImage(self, xOff, yOff, xDim, yDim, xBin, yBin, expTime, type):	
 			# 0 uses internal flash signal

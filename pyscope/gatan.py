@@ -14,6 +14,7 @@ else:
 	class gatan(camera.camera):
 		def __init__(self):
 			self.theCamera = win32com.client.Dispatch("TecnaiCCD.GatanCamera")        
+			self.arraytypecode = 'H'
 	    
 		def __del__(self):
 			pass
@@ -41,8 +42,8 @@ else:
 			for row in imagetuple:
 				for value in row:
 					imagelist.append(value)
-			image = array.array('H', imagelist)
-			#return base64.encodestring(image.tostring())
-			return image.tostring()
-	        
+			#image = array.array(self.arraytypecode, imagelist)
+			#return image.tostring()
+			#return array.array(self.arraytypecode, imagelist)
+			return base64.encodestring(image.tostring())
 	    

@@ -9,7 +9,7 @@ def factory(cameraclass):
                        "x binning" : 1, "y binning" : 1,
                        "exposure time" : 500,
                        "exposure type" : "illuminated",
-                       "datatype code" : "H",
+                       "datatype code" : self.arraytypecode,
                        "image data" : None}
   
           if dict is not None:
