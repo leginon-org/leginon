@@ -88,6 +88,7 @@ class Tecnai(object):
 			'beam tilt': {'get': 'getBeamTilt', 'set': 'setBeamTilt'},
 			'beam shift': {'get': 'getBeamShift', 'set': 'setBeamShift'},
 			'image shift': {'get': 'getImageShift', 'set': 'setImageShift'},
+			'raw image shift': {'get': getRawImageShift', 'set': setRawImageShift'},
 			'defocus': {'get': 'getDefocus', 'set': 'setDefocus'},
 			'magnification': {'get': 'getMagnification', 'set': 'setMagnification'},
 			'stage position': {'get': 'getStagePosition', 'set': 'setStagePosition'},
@@ -152,6 +153,8 @@ class Tecnai(object):
 			'beam shift': {'type': dict, 'values':
 																	{'x': {'type': float}, 'y': {'type': float}}},
 			'image shift': {'type': dict, 'values':
+																	{'x': {'type': float}, 'y': {'type': float}}},
+			'raw image shift': {'type': dict, 'values':
 																	{'x': {'type': float}, 'y': {'type': float}}},
 			'defocus': {'type': float},
 			'magnification': {'type': float},
@@ -534,6 +537,38 @@ class Tecnai(object):
 		except KeyError:
 			pass
 		self.theScope.Projection.ImageBeamShift = vec
+	
+	def getRawImageShift(self):
+		value = {'x': None, 'y': None}
+		value['x'] = float(self.theScope.Projection.ImageShift.X)
+		value['y'] = float(self.theScope.Projection.ImageShift.Y)
+		return value
+	
+	def setRawImageShift(self, vector, relative = 'absolute'):
+		if relative == 'relative':
+			try:
+				vector['x'] += self.theScope.Projection.ImageShift.X
+			except KeyError:
+				pass
+			try:
+				vector['y'] += self.theScope.Projection.ImageShift.Y
+			except KeyError:
+				pass
+		elif relative == 'absolute':
+			pass
+		else:
+			raise ValueError
+		
+		vec = self.theScope.Projection.ImageShift
+		try:
+			vec.X = vector['x']
+		except KeyError:
+			pass
+		try:
+			vec.Y = vector['y']
+		except KeyError:
+			pass
+		self.theScope.Projection.ImageShift = vec
 	
 	def getDefocus(self):
 		return float(self.theScope.Projection.Defocus)
