@@ -55,8 +55,8 @@ def factory(scopeclass):
 				self.setGunTilt(val, 'absolute')
 			elif key == 'gun shift':
 				self.setGunShift(val, 'absolute')
-			elif key == 'high tension':
-				self.setHighTension(val)
+#			elif key == 'high tension':
+#				self.setHighTension(val)
 			elif key == 'intensity':
 				self.setIntensity(val, 'absolute')
 			elif key == 'dark field mode':
