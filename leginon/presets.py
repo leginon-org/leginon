@@ -797,9 +797,13 @@ class PresetsManager(node.Node):
 
 		try:
 			self.instrument.setData(camdata1)
-			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		except:
 			self.logger.error(errstr % 'unable to set camera parameters')
+			return
+		try:
+			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+		except:
+			self.logger.error(errstr % 'unable to acquire corrected image data')
 			return
 		try:
 			self.instrument.setData(camdata0)

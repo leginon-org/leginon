@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.35 $
+# $Revision: 1.36 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-28 22:17:52 $
+# $Date: 2005-03-10 01:50:30 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -64,6 +64,8 @@ def str2plan(string):
 	strings = string.split(',')
 	plan = []
 	for s in strings:
+		if not s:
+			continue
 		try:
 			toks = map(lambda s: int(s.strip()), s.split('-'))
 			if len(toks) > 2:
@@ -188,7 +190,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		if dialog.ShowModal() == wx.ID_OK:
 			self.setPlan(dialog.plan)
 			self.node.plan = self.plan
-			self.node.setPlan()
+			# ...
+			threading.Thread(target=self.node.setPlan).start()
 		dialog.Destroy()
 
 class SettingsDialog(gui.wx.Settings.Dialog):
