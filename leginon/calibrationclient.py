@@ -20,6 +20,9 @@ class Abort(Exception):
 class NoPixelSizeError(Exception):
 	pass
 
+class NoMatrixCalibrationError(Exception):
+	pass
+
 class CalibrationClient(object):
 	'''
 	this is a component of a node that needs to use calibrations
@@ -237,12 +240,12 @@ class MatrixCalibrationClient(CalibrationClient):
 		queryinstance = data.MatrixCalibrationData(magnification=mag, type=caltype)
 		queryinstance['session'] = data.SessionData()
 		queryinstance['session']['instrument'] = self.node.session['instrument']
-		caldatalist = self.node.research(datainstance=quertinstance, results=1)
+		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
 		else:
-			return None
+			raise NoMatrixCalibrationError
 		matrix = caldata['matrix']
 		return matrix
 

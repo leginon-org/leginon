@@ -60,6 +60,10 @@ class SpiralTargetMaker(TargetMaker):
 		pname = self.presetsclient.uiGetSelectedName()
 		preset = self.presetsclient.getPresetByName(pname)
 
+		if preset is None:
+			self.outputError('Invalid or non-existant preset to use in target list')
+			return
+
 		scope.friendly_update(preset)
 		camera.friendly_update(preset)
 		size = camera['dimension']['x']

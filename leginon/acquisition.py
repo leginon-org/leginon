@@ -41,50 +41,47 @@ class Acquisition(targetwatcher.TargetWatcher):
 		If called with targetdata=None, this simulates what occurs at
 		a target (going to presets, acquiring images, etc.)
 		'''
-		## wait for focus target list to complete
-		for tid,teventinfo in self.targetlistevents.items():
+
+		# wait for focus target list to complete
+		for tid, teventinfo in self.targetlistevents.items():
 			print 'waiting for target list %s to complete' % (tid,)
 			teventinfo['received'].wait()
 
-		## check status of all done focus targets
+		# check status of all done focus targets
 		abort = True
 		if not self.targetlistevents:
 			abort = False
-		for tid,teventinfo in self.targetlistevents.items():
+		for tid, teventinfo in self.targetlistevents.items():
 			if teventinfo['status'] == 'success':
 				abort = False
 
 		self.targetlistevents.clear()
 		
 		if abort:
-			print 'Aborting this target because focus failed'
-			return 'failure'
+			self.outputError('Aborting target because focus failed')
+			return False
 
 		if targetdata is None:
 			emtarget = None
 		else:
-			if targetdata['preset'] is None:
-				print '   preset image shift, no preset in target'
-			else:
-				print '   preset image shift', targetdata['preset']
+#			if targetdata['preset'] is None:
+#				print 'preset image shift, no preset in target'
+#			else:
+#				print 'preset image shift', targetdata['preset']
 
-			#### this creates ScopeEMData from the ImageTargetData
+			# this creates ScopeEMData from the ImageTargetData
 			oldtargetemdata = self.targetToEMData(targetdata)
+			if oldtargetemdata is None:
+				return False
 			oldpreset = targetdata['preset']
-			#### now make EMTargetData to hold all this
-			emtarget = data.EMTargetData(scope=oldtargetemdata,preset=oldpreset)
 
-		### do each preset for this acquisition
-#		try:
-#			presetnames = self.uipresetnames.get()
-#		except:
-#			self.printException()
-#			return
+			# now make EMTargetData to hold all this
+			emtarget = data.EMTargetData(scope=oldtargetemdata, preset=oldpreset)
 
 		presetnames = self.uipresetnames.getSelectedValues()
 
 		if not presetnames:
-			print 'NO PRESETS SPECIFIED'
+			self.outputWarning('No presets specified for target acquisition')
 
 		for newpresetname in presetnames:
 			self.presetsclient.toScope(newpresetname, emtarget)
@@ -98,9 +95,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print 'acquire()'
 			ret = self.acquire(p, target=targetdata, trial=False)
 			if ret:
-				return 'failure'
+				return False
 			print 'done'
-		return 'success'
+		return True
 
 	def targetToEMData(self, targetdata):
 		'''
@@ -111,24 +108,15 @@ class Acquisition(targetwatcher.TargetWatcher):
 		desired preset.  It is shifted from the preset of the 
 		original targetdata.
 		'''
-		#targetinfo = copy.deepcopy(targetdata.content)
 		targetinfo = copy.deepcopy(targetdata)
-		## get relavent info from target event
-#		targetrow = targetinfo['array row']
-#		targetcol = targetinfo['array column']
-#		targetshape = targetinfo['array shape']
+
+		# get relavent info from target event
 		targetdeltarow = targetinfo['delta row']
 		targetdeltacolumn = targetinfo['delta column']
 		targetscope = targetinfo['scope']
 		targetcamera = targetinfo['camera']
 
-#		## calculate delta from image center
-#		deltarow = targetrow - targetshape[0] / 2
-#		deltacol = targetcol - targetshape[1] / 2
-
 		## to shift targeted point to center...
-#		deltarow = -deltarow
-#		deltacol = -deltacol
 		deltarow = -targetdeltarow
 		deltacol = -targetdeltacolumn
 
@@ -137,10 +125,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## figure out scope state that gets to the target
 		movetype = self.uimovetype.getSelectedValue()
 		calclient = self.calclients[movetype]
-		print 'ORIGINAL', targetscope['image shift']
-		newscope = calclient.transform(pixelshift, targetscope, targetcamera)
-		print 'WITH TARGET', newscope['image shift']
-		## create new EMData object to hole this
+		#print 'ORIGINAL', targetscope['image shift']
+		try:
+			newscope = calclient.transform(pixelshift, targetscope, targetcamera)
+		except calibrationclient.NoMatrixCalibrationError:
+			self.outputWarning('No calibration for acquisition move to target')
+			return None
+		#print 'WITH TARGET', newscope['image shift']
+		# create new EMData object to hole this
 		emdata = data.ScopeEMData(id=('scope',), initializer=newscope)
 		return emdata
 

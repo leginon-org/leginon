@@ -156,7 +156,7 @@ class Watcher(node.Node):
 			self.getData(newevent)
 			return True
 		except Queue.Empty:
-			print 'Queue is empty, no event processed'
+			self.outputWarning('Queue is empty, no event processed')
 			return False
 
 	def processDataFromQueue(self, blocking=0):
@@ -167,7 +167,7 @@ class Watcher(node.Node):
 			self.processData(newdata)
 			return 1
 		except Queue.Empty:
-			print 'Queue is empty, no data processed'
+			self.outputWarning('Queue is empty, no data processed')
 			return 0
 
 	## maybe this should start a new thread?

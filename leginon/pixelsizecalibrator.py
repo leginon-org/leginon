@@ -2,6 +2,7 @@ import calibrator
 import calibrationclient
 import event, data
 import uidata
+import node
 
 class PixelSizeCalibrator(calibrator.Calibrator):
 	'''
@@ -18,13 +19,27 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		node.Node.defineUserInterface(self)
 #		calibrator.Calibrator.defineUserInterface(self)
 
+		self.uilisting = uidata.Sequence('Pixel Size Calibrations', [])
+		testmethod = uidata.Method('Test', self.uiGetCalibrations)
+
 		self.uimag = uidata.Integer('Magnification', 62000, 'rw')
 		self.uipixsize = uidata.Float('Meters/Pixel', 1e-9, 'rw')
 		self.comment = uidata.String('Comment', '', 'rw')
 		storemethod = uidata.Method('Store', self.uiStore)
 		mycontainer = uidata.MediumContainer('Pixel Size Calibrator')
-		mycontainer.addObjects((self.uimag, self.uipixsize, self.comment, storemethod))
+
+		mycontainer.addObjects((self.uilisting, testmethod))
+
+		mycontainer.addObjects((self.uimag, self.uipixsize,
+														self.comment, storemethod))
 		self.uiserver.addObject(mycontainer)
+
+	def uiGetCalibrations(self):
+		calibrations = self.research(dataclass=data.PixelSizeCalibrationData)
+		calibrationstrings = []
+		for calibration in calibrations:
+			calibrationstrings.append('Magnification: %.1f Pixel size: %f Comment: %s, Session: %s Instrument: %s' %(calibration['magnification'], calibration['pixelsize'], calibration['comment'], calibration['session']['name'], calibration['session']['instrument']['name']))
+		self.uilisting.set(calibrationstrings)
 
 	def uiStore(self):
 		self.store()

@@ -636,10 +636,22 @@ class Manager(node.Node):
 		nodelocations[str(self.id)] = self.location()
 		return nodelocations
 
+	def uiUpdateApplications(self):
+		applicationdatalist = self.research(dataclass=data.ApplicationData)
+		applicationnamelist = []
+		for applicationdata in applicationdatalist:
+			name = applicationdata['name']
+			if name not in applicationnamelist:
+				applicationnamelist.append(name)
+		self.uiapplicationlist.set(applicationnamelist, 0)
+
 	def uiLoadApp(self):
 		'''UI helper for loadApp. See loadApp.'''
-		name = self.uiapplicationname.get()
-		self.loadApp(name)
+		name = self.uiapplicationlist.getSelectedValue()
+		if name is not None:
+			self.loadApp(name)
+		else:
+			self.outputError('No application selected')
 
 	def uiLaunchApp(self):
 		'''UI helper for launchApp. See launchApp.'''
@@ -687,12 +699,16 @@ class Manager(node.Node):
 		nodemanagementcontainer = uidata.MediumContainer('Node Management')
 		nodemanagementcontainer.addObjects(infoobjects + addobjects + killobjects)
 
-		self.uiapplicationname = uidata.String('Name', '', 'rw')
+		self.uiapplicationlist = uidata.SingleSelectFromList('Application', [], 0)
+		self.uiUpdateApplications()
+		applicationrefreshmethod = uidata.Method('Refresh',
+																							self.uiUpdateApplications)
 		applicationloadmethod = uidata.Method('Load', self.uiLoadApp)
 		applicationlaunchmethod = uidata.Method('Launch', self.uiLaunchApp)
 		applicationkillmethod = uidata.Method('Kill', self.uiKillApp)
-		applicationobjects = (self.uiapplicationname, applicationloadmethod,
-													applicationlaunchmethod, applicationkillmethod)
+		applicationobjects = (self.uiapplicationlist, applicationrefreshmethod,
+													applicationloadmethod, applicationlaunchmethod,
+													applicationkillmethod)
 		self.uilauncheraliascontainer = None
 		self.applicationcontainer = uidata.MediumContainer('Application')
 		self.applicationcontainer.addObjects(applicationobjects)

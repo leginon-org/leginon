@@ -683,7 +683,9 @@ class wxListBoxWidget(wxDataWidget):
 		self.layout()
 
 	def OnListBox(self, evt):
-		self.listbox.Deselect(evt.GetSelection())
+		selection = evt.GetSelection()
+		if selection >= 0:
+			self.listbox.Deselect(selection)
 
 	def setWidget(self, value):
 		self.listbox.Clear()
