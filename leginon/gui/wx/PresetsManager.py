@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.32 $
+# $Revision: 1.33 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-10 01:29:27 $
+# $Date: 2005-03-11 19:36:33 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -140,11 +140,10 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 				self.ctem.SetStringSelection(self.nonestring)
 			else:
 				self.ctem.SetStringSelection(tem['name'])
-		mag = str(int(parameters['magnification']))
-		if self.cmag.FindString(mag) == wx.NOT_FOUND:
-			self.cmag.Enable(False)
-		else:
-			self.cmag.SetStringSelection(mag)
+		if parameters['magnification'] is not None:
+			mag = str(int(parameters['magnification']))
+			if self.cmag.FindString(mag) != wx.NOT_FOUND:
+				self.cmag.SetStringSelection(mag)
 		self.fedefocus.SetValue(parameters['defocus'])
 		self.fespotsize.SetValue(parameters['spot size'])
 		self.feintensity.SetValue(parameters['intensity'])
