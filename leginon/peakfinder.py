@@ -31,8 +31,8 @@ class PeakFinder(object):
 			peak = Numeric.argmax(flatimage)
 			peakvalue = flatimage[peak]
 			rows,cols = self.shape
-			peakrow = peak / rows
-			peakcol = peak % rows
+			peakrow = peak / cols
+			peakcol = peak % cols
 			pixelpeak = (peakrow, peakcol)
 			self.results['pixel peak'] = pixelpeak
 			self.results['pixel peak value'] = peakvalue
