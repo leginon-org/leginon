@@ -428,19 +428,25 @@ class ImageData(Data):
 		return self.iv
 
 	def setWidget(self, value):
+		print 'setWidget'
 		# value must be binary data from xmlrpc
 		if not isinstance(value, xmlrpclib.Binary):
 			raise RuntimeError('value must be instance of xmlrpclib.Binary')
 		mrcstr = value.data
-		print 'length', len(mrcstr)
-		f = open('junkdata', 'w')
-		value.encode(f)
-		f.close()
+
+		#print 'length', len(mrcstr)
+		#f = open('junkdata', 'w')
+		#value.encode(f)
+		#f.close()
+
 		if mrcstr == '':
 			self.iv.displayMessage('NO IMAGE DATA')
 		else:
+			print 'converting mrcstr to numeric'
 			numdata = Mrc.mrcstr_to_numeric(mrcstr)
+			print 'import numeric'
 			self.iv.import_numeric(numdata)
+			print 'done'
 		
 
 	def getWidget(self):
