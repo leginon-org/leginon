@@ -420,7 +420,16 @@ class Node(leginonobject.LeginonObject):
 				except RuntimeError:
 					self.printerror('RuntimeError, probably exceded recursion limit in addEmptyInsance1.  You should probably set fill=False when calling Node.research(), and instead, construct your own filled instance.')
 					return []
-			newresults = self.datahandler.dbQuery(datainstance, results, readimages=readimages)
+			try:
+				newresults = self.datahandler.dbQuery(datainstance, results, readimages=readimages)
+			except Exception, e:
+				if isinstance(e, OSError):
+					message = str(e)
+				elif isinstance(e, IOError):
+					message = str(e)
+				else:
+					raise
+				raise ResearchError(message)
 			resultlist += newresults
 
 		return resultlist

@@ -63,7 +63,7 @@ class FileReference(object):
 		self.pathkey = pathkey
 
 	def read(self, path):
-		print 'reading image', self.filename
+		#print 'reading image', self.filename
 		fullname = os.path.join(path, self.filename)
 		return self.loader(fullname)
 
