@@ -55,7 +55,7 @@ class ImageMosaicInfo(object):
 	def getTileShape(self, dataid):
 		return self.getTileImage(dataid).shape
 
-	def getMosaicImage(self, astype=Numeric.UnsignedInt16):
+	def getMosaicImage(self, astype=Numeric.Int16):
 		# could be Inf
 		imagemin = [0, 0]
 		imagemax = [0, 0]
