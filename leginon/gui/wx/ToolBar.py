@@ -11,6 +11,9 @@ ID_MEASURE = 1007
 ID_ABORT = 1008
 ID_SUBMIT = 1009
 ID_ACQUISITION_TYPE = 1010
+ID_MEASURE_DRIFT = 1011
+ID_DECLARE_DRIFT = 1012
+ID_CHECK_DRIFT = 1013
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):
@@ -31,6 +34,12 @@ class ToolBar(wx.ToolBar):
 			('play', ID_PLAY, 'play.png', 'Play', 'onPlayTool',),
 			('pause', ID_PAUSE, 'pause.png', 'Pause', 'onPauseTool',),
 			('stop', ID_STOP, 'stop.png', 'Stop', 'onStopTool',),
+			('check drift', ID_CHECK_DRIFT, 'check.png',
+				'Check drift', 'onCheckDriftTool', self.AddCheckTool),
+			('measure drift', ID_MEASURE_DRIFT, 'ruler.png', 'Measure drift',
+				'onMeasureDriftTool',),
+			('declare drift', ID_DECLARE_DRIFT, 'declare.png', 'Declare drift',
+				'onDeclareDriftTool',),
 			('measure', ID_MEASURE, 'ruler.png', 'Measure', 'onMeasureTool',),
 			('submit', ID_SUBMIT, 'play.png', 'Submit', 'onSubmitTool',),
 		]
@@ -56,7 +65,10 @@ class ToolBar(wx.ToolBar):
 					bitmap = wx.BitmapFromImage(wx.Image(icons.getPath(tool[2])))
 				else:
 					bitmap = wx.EmptyBitmap(16, 16)
-				self.tools[tool[0]] = self.AddSimpleTool(tool[1], bitmap, tooltip)
+				try:
+					self.tools[tool[0]] = tool[5](tool[1], bitmap, shortHelp=tooltip)
+				except IndexError:
+					self.tools[tool[0]] = self.AddSimpleTool(tool[1], bitmap, tooltip)
 
 		self.Realize()
 
@@ -107,11 +119,14 @@ class ToolBar(wx.ToolBar):
 		if self.panel is None:
 			return
 
+
+		try:
+			name = self.names[evt.GetId()]
+		except KeyError:
+			raise RuntimeError
+		if hasattr(evt, 'IsChecked'):
+			self.settings[self.panel][name]['toggled'] = evt.IsChecked()
 		if isinstance(evt.GetEventObject(), wx.Choice):
-			try:
-				name = self.names[evt.GetId()]
-			except KeyError:
-				raise RuntimeError
 			self.settings[self.panel][name]['selection'] = evt.GetInt()
 
 		try:
@@ -154,6 +169,10 @@ class ToolBar(wx.ToolBar):
 				selection = self.settings[panel][tool]['selection']
 				if choices and selection >= 0:
 					self.tools[tool].SetSelection(selection)
+
+	def getState(self, panel, tool):
+		self._initializeStates(panel)
+		return self.settings[panel][tool]
 
 	def toggle(self, panel, tool, value):
 		self._initializeStates(panel)

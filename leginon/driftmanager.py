@@ -194,13 +194,16 @@ class DriftManager(watcher.Watcher):
 
 	def acquireImage(self):
 		imagedata = self.cam.acquireCameraImageData()
-		self.setImage(imagedata['image'])
+		if imagedata is not None:
+			self.setImage(imagedata['image'])
 		return imagedata
 
 	def acquireLoop(self, target=None):
 
 		## acquire first image
 		imagedata = self.acquireImage()
+		if imagedata is None:
+			return 'aborted'
 		numdata = imagedata['image']
 		t0 = imagedata['scope']['system time']
 		self.correlator.insertImage(numdata)

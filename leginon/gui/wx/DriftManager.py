@@ -7,20 +7,20 @@ import gui.wx.Settings
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'driftmanager'
+	tools = [
+		'settings',
+		'check drift',
+		'measure drift',
+		'declare drift',
+	]
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 		# settings
 
-		self.bsettings = wx.Button(self, -1, 'Settings...')
-		self.bmeasure = wx.Button(self, -1, 'Measure Drift')
-		self.bdeclare = wx.Button(self, -1, 'Declare Drift')
 		self.cbcheckdrift = wx.CheckBox(self, -1, 'Check drift')
 
 		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.bsettings, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(self.bmeasure, (1, 0), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(self.bdeclare, (2, 0), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(self.cbcheckdrift, (3, 0), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.cbcheckdrift, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		self.szmain.Add(sz, (1, 0), (1, 1), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP)
 
 		# image
@@ -36,21 +36,16 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
-		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
-		self.Bind(wx.EVT_BUTTON, self.onMeasure, self.bmeasure)
-		self.Bind(wx.EVT_BUTTON, self.onDeclare, self.bdeclare)
-		self.Bind(wx.EVT_CHECKBOX, self.onCheckDriftCheck, self.cbcheckdrift)
+		self.onCheckDriftTool()
 
-		self.onCheckDriftCheck()
-
-	def onSettingsButton(self, evt):
+	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onCheckDriftCheck(self, evt=None):
+	def onCheckDriftTool(self, evt=None):
 		if evt is None:
-			check = self.cbcheckdrift.GetValue()
+			check = self.toolbar.getState(self, 'check drift')['toggled']
 		else:
 			check = evt.IsChecked()
 		# this doesn't really work
@@ -59,10 +54,10 @@ class Panel(gui.wx.Node.Panel):
 		else:
 			self.node.abort()
 
-	def onMeasure(self, evt):
+	def onMeasureDriftTool(self, evt):
 		self.node.measureDrift()
 
-	def onDeclare(self, evt):
+	def onDeclareDriftTool(self, evt):
 		self.node.declareDrift()
 
 class SettingsDialog(gui.wx.Settings.Dialog):
