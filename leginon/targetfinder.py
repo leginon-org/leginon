@@ -182,6 +182,7 @@ class ClickTargetFinder(TargetFinder):
 
 # perhaps this should be a 'mixin' class so it can work with any target finder
 class MosaicClickTargetFinder(ClickTargetFinder):
+	eventoutputs = ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
 		ClickTargetFinder.__init__(self, id, session, nodelocations, **kwargs)
 		self.cam = camerafuncs.CameraFuncs(self)
@@ -198,11 +199,22 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.defineUserInterface()
 			self.start()
 
+	# not complete
+	def handleTargetListDone(self, targetlistdoneevent):
+		print 'mosaic to database'
+		self.mosaicToDatabase()
+		print 'mosaic clear'
+		self.mosaicClear()
+		print 'output event'
+		self.outputEvent(event.MosaicDoneEvent())
+		print 'output event done'
+
 	def submitTargets(self):
 		self.getTargetDataList('Imaging Target', data.AcquisitionImageTargetData)
 		self.publishTargetList()
 
 	def processImageData(self, imagedata):
+		#ClickTargetFinder.processImageData(self, imagedata)
 		'''
 		different from ClickTargetFinder because findTargets is
 		not per image, instead we have submitTargets.

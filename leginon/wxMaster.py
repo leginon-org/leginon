@@ -3,6 +3,16 @@ import wxObjectCanvas
 import event
 import nodeclassreg
 
+class LabelObject(wxObjectCanvas.wxTextObject):
+	def __init__(self, text, color=wxBLACK):
+		wxObjectCanvas.wxTextObject.__init__(self, text, color)
+
+	def OnLeftDragStart(self, evt):
+		pass
+
+	def OnMotion(self, evt):
+		pass
+
 class RenameDialog(wxDialog):
 	def __init__(self, parent, id, title='Rename', pos=wxDefaultPosition,
 								size=wxDefaultSize, style=wxDEFAULT_DIALOG_STYLE):
@@ -122,8 +132,10 @@ class Node(wxObjectCanvas.wxRectangleObject):
 			output = BindingOutput(outputclass)
 			self.addOutputConnectionPoint(output)
 
-		self.addText(self.alias)
-		self.addText(self.nodeclass, 0, 12)
+		self.aliaslabel = LabelObject(self.alias)
+		self.classlabel = LabelObject(self.nodeclass)
+		self.addShapeObject(self.aliaslabel, 2, 2)
+		self.addShapeObject(self.classlabel, 2, 14)
 
 		self.popupmenu.Append(101, 'Rename...')
 		self.popupmenu.Append(103, 'Delete')
@@ -134,9 +146,10 @@ class Node(wxObjectCanvas.wxRectangleObject):
 		return self.alias
 
 	def setAlias(self, alias):
-		self.removeText(self.alias)
 		self.alias = alias 
-		self.addText(self.alias)
+		self.removeShapeObject(self.aliaslabel)
+		self.aliaslabel = LabelObject(self.alias)
+		self.addShapeObject(self.aliaslabel, 2, 2)
 
 	def getClass(self):
 		return self.nodeclass
@@ -158,6 +171,8 @@ class Node(wxObjectCanvas.wxRectangleObject):
 
 	def addShapeObject(self, so, x=0, y=0):
 		if isinstance(so, BindingConnectionPoint):
+			wxObjectCanvas.wxRectangleObject.addShapeObject(self, so, x, y)
+		elif isinstance(so, LabelObject):
 			wxObjectCanvas.wxRectangleObject.addShapeObject(self, so, x, y)
 		else:
 			raise TypeError('Invalid object type to add')
@@ -201,7 +216,8 @@ class Node(wxObjectCanvas.wxRectangleObject):
 class BindingLabel(wxObjectCanvas.wxRectangleObject):
 	def __init__(self, text, color=wxBLACK):
 		wxObjectCanvas.wxRectangleObject.__init__(self, 0, 0)
-		self.addText(text)
+		label = LabelObject(text)
+		self.addShapeObject(label, 2, 2)
 
 		self.popupmenu.Append(103, 'Delete')
 		EVT_MENU(self.popupmenu, 103, self.menuDelete)
@@ -218,13 +234,14 @@ class BindingLabel(wxObjectCanvas.wxRectangleObject):
 
 	def Draw(self, dc):
 		width, height = 0, 0
-		for text in self.text:
-			x, y = self.text[text]
-			w, h = dc.GetTextExtent(text)
-			if w + x > width:
-				width = w + x
-			if h + y > height:
-				height = h + y
+		for so in self.shapeobjects:
+			if isinstance(so, LabelObject):
+				x, y = so.getPosition()
+				w, h = so.getSize()
+				if w + x > width:
+					width = w + x
+				if h + y > height:
+					height = h + y
 		self.width = width + 3
 		self.height = height + 3
 		wxObjectCanvas.wxRectangleObject.Draw(self, dc)
@@ -375,7 +392,9 @@ class Launcher(wxObjectCanvas.wxRoundedRectangleObject):
 		self.alias = alias
 		wxObjectCanvas.wxRoundedRectangleObject.__init__(self, 400, 400,
 																											wxColor(0,128,0))
-		self.addText(self.alias, 5, 5)
+
+		self.aliaslabel = LabelObject(self.alias)
+		self.addShapeObject(self.aliaslabel, 5, 5)
 
 		self.popupmenu.Append(101, 'Rename...')
 		self.popupmenu.Append(102, 'Add Node...')
@@ -388,9 +407,10 @@ class Launcher(wxObjectCanvas.wxRoundedRectangleObject):
 		return self.alias
 
 	def setAlias(self, alias):
-		self.removeText(self.alias)
 		self.alias = alias
-		self.addText(self.alias, 5, 5)
+		self.removeShapeObject(self.aliaslabel)
+		self.aliaslabel = LabelObject(self.alias)
+		self.addShapeObject(self.aliaslabel, 5, 5)
 
 	def menuRename(self, evt):
 		dialog = RenameDialog(None, -1)
@@ -417,6 +437,8 @@ class Launcher(wxObjectCanvas.wxRoundedRectangleObject):
 			for node in self.getNodes():
 				if node.getAlias() == so.getAlias():
 					raise ValueError('Node with same alias already exists')
+			wxObjectCanvas.wxRectangleObject.addShapeObject(self, so, x, y)
+		elif isinstance(so, LabelObject):
 			wxObjectCanvas.wxRectangleObject.addShapeObject(self, so, x, y)
 		else:
 			raise TypeError('Invalid object type to add')
@@ -473,7 +495,8 @@ class Application(wxObjectCanvas.wxRectangleObject):
 	def __init__(self, name):
 		self.name = name
 		wxObjectCanvas.wxRectangleObject.__init__(self, 700, 700, wxColor(128,0,0))
-		self.addText(self.name)
+		self.namelabel = LabelObject(self.name)
+		self.addShapeObject(self.namelabel, 5, 5)
 
 		self.startedbinding = None
 
@@ -488,9 +511,10 @@ class Application(wxObjectCanvas.wxRectangleObject):
 		return self.name
 
 	def setName(self, name):
-		self.removeText(self.name)
 		self.name = name
-		self.addText(self.name)
+		self.removeShapeObject(self.namelabel)
+		self.namelabel = LabelObject(self.name)
+		self.addShapeObject(self.namelabel, 5, 5)
 
 	def menuRename(self, evt):
 		dialog = RenameDialog(None, -1)
@@ -542,6 +566,8 @@ class Application(wxObjectCanvas.wxRectangleObject):
 		elif isinstance(so, BindingLabel):
 			wxObjectCanvas.wxRectangleObject.addShapeObject(self, so, x, y)
 		elif isinstance(so, Binding):
+			wxObjectCanvas.wxRectangleObject.addShapeObject(self, so, x, y)
+		elif isinstance(so, LabelObject):
 			wxObjectCanvas.wxRectangleObject.addShapeObject(self, so, x, y)
 		else:
 			raise TypeError('Invalid object type to add')
@@ -662,7 +688,8 @@ class Application(wxObjectCanvas.wxRectangleObject):
 class Master(wxObjectCanvas.wxRectangleObject):
 	def __init__(self):
 		wxObjectCanvas.wxRectangleObject.__init__(self, 800, 800)
-		self.addText('Master')
+		label = LabelObject('Master')
+		self.addShapeObject(label, 0, 0)
 
 class ApplicationEditorCanvas(wxObjectCanvas.wxObjectCanvas):
 	def __init__(self, parent, id):

@@ -320,7 +320,7 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 		self.style = style
 		self.parent = None
 
-		self.text = {}
+		#self.text = {}
 
 		self.shapeobjects = []
 		self.positions = {}
@@ -536,18 +536,18 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 				self.shapeobjects.insert(index + 1, shapeobject)
 			self.UpdateDrawing()
 
-	def DrawText(self, dc):
-		dc.SetFont(wxSWISS_FONT)
-		for text in self.text:
-			x, y = self.getCanvasPosition()
-			tx, ty = self.text[text]
-			dc.DrawText(text, x + tx + 1, y + ty + 1)
+#	def DrawText(self, dc):
+#		dc.SetFont(wxSWISS_FONT)
+#		for text in self.text:
+#			x, y = self.getCanvasPosition()
+#			tx, ty = self.text[text]
+#			dc.DrawText(text, x + tx + 1, y + ty + 1)
 
 	def Draw(self, dc):
 		pen = dc.GetPen()
 		dc.SetPen(wxPen(self.color, 1, self.style))
 
-		self.DrawText(dc)
+		#self.DrawText(dc)
 
 		for i in range(len(self.shapeobjects) - 1, -1, -1):
 			so = self.shapeobjects[i]
@@ -629,11 +629,11 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 				# IV quadrant
 				return 4
 
-	def addText(self, text, x=0, y=0):
-		self.text[text] = (x, y)
-
-	def removeText(self, text):
-		del self.text[text]
+#	def addText(self, text, x=0, y=0):
+#		self.text[text] = (x, y)
+#
+#	def removeText(self, text):
+#		del self.text[text]
 
 	def setCursor(self, evtx, evty):
 		thresh = 5
@@ -1044,6 +1044,23 @@ class wxConnectionObject(wxShapeObject):
 				self._crookedLine(dc, self.fromso, x, y)
 			elif self.toso is not None:
 				self.crookedLine(dc, self.fromso, self.toso)
+		dc.SetPen(pen)
+		wxShapeObject.Draw(self, dc)
+
+class wxTextObject(wxShapeObject):
+	def __init__(self, text, color=wxBLACK):
+		self.text = text
+		width = -1
+		height = -1
+		wxShapeObject.__init__(self, width, height, color)
+		self.draginfo = None
+
+	def Draw(self, dc):
+		self.width, self.height = dc.GetTextExtent(self.text)
+		pen = dc.GetPen()
+		dc.SetPen(wxPen(self.color, 1, self.style))
+		x, y = self.getCanvasPosition()
+		dc.DrawText(self.text, x, y)
 		dc.SetPen(pen)
 		wxShapeObject.Draw(self, dc)
 

@@ -25,8 +25,10 @@ class TargetMaker(node.Node):
 		self.uiserver.addObject(container)
 
 class SpiralTargetMaker(TargetMaker):
+	eventinputs = TargetMaker.eventinputs + [event.PublishSpiralEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
 		TargetMaker.__init__(self, id, session, nodelocations, **kwargs)
+		self.addEventInput(event.PublishSpiralEvent, self.publishTargetList)
 		self.presetsclient = presets.PresetsClient(self)
 		self.defineUserInterface()
 		self.start()
@@ -50,7 +52,7 @@ class SpiralTargetMaker(TargetMaker):
 		container.addObjects((settingscontainer, controlcontainer))
 		self.uiserver.addObject(container)
 
-	def publishTargetList(self):
+	def publishTargetList(self, ievent=None):
 		self.progress.set(0)
 
 		### do targets referenced from current state and prefered preset

@@ -115,6 +115,18 @@ class GridInsertedEvent(NotificationEvent):
 		return t
 	typemap = classmethod(typemap)
 
+class GridExtractedEvent(NotificationEvent):
+	'Event indicating a grid has been extracted'
+	def typemap(cls):
+		t = NotificationEvent.typemap()
+		t += [('grid number', int)]
+		return t
+	typemap = classmethod(typemap)
+
+class MosaicDoneEvent(NotificationEvent):
+	'Event indicating mosaic is done'
+	pass
+
 ## could PublishEvent and UnpublishEvent be derived from a common class?
 class PublishEvent(NotificationEvent):
 	'Event indicating data was published'
@@ -247,8 +259,20 @@ class UnlockEvent(ControlEvent):
 	'Event that signals an unlock'
 	pass
 
-class GridExtractEvent(ControlEvent):
+class InsertGridEvent(ControlEvent):
+	'Event that signals a grid to be inserted'
+	def typemap(cls):
+		t = NotificationEvent.typemap()
+		t += [('grid number', int)]
+		return t
+	typemap = classmethod(typemap)
+
+class ExtractGridEvent(ControlEvent):
 	'Event that signals a grid to be extracted'
+	pass
+
+class PublishSpiralEvent(ControlEvent):
+	'Event telling sprial target maker to publish a spiral '
 	pass
 
 ## this is basically the same as data.ImageTargetData

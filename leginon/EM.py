@@ -36,6 +36,8 @@ prunekeys = (
 	'vacuum status',
 	'column valves',
 	'turbo pump',
+	'column pressure',
+	'inserted',
 #	'screen position'
 )
 

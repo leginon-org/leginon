@@ -358,6 +358,7 @@ class ScopeEMData(EMData):
 			('stage status', str),
 			('vacuum status', str),
 			('column valves', str),
+			('column pressure', float),
 			('turbo pump', str),
 		]
 		return t
@@ -373,6 +374,7 @@ class CameraEMData(EMData):
 			('exposure time', float),
 			('image data', strictdict.NumericArrayType),
 			('camera size', dict),
+			('inserted', bool)
 		]
 		return t
 	typemap = classmethod(typemap)
@@ -397,6 +399,13 @@ class AllEMData(EMData):
 			('beam tilt', dict),
 			('corrected stage position', int),
 			('stage position', dict),
+			('holder type', str),
+			('holder status', str),
+			('stage status', str),
+			('vacuum status', str),
+			('column valves', str),
+			('column pressure', float),
+			('turbo pump', str),
 
 			('dimension', dict),
 			('binning', dict),
@@ -404,6 +413,7 @@ class AllEMData(EMData):
 			('exposure time', float),
 			('image data', strictdict.NumericArrayType),
 			('camera size', dict),
+			('inserted', bool)
 		]
 		return t
 	typemap = classmethod(typemap)

@@ -140,6 +140,11 @@ class Node(leginonobject.LeginonObject):
 		return newid
 
 	def IDCounter(self):
+		if not hasattr(self, 'idcount'):
+			self.idcount = 0
+		self.idcount += 1
+		return self.idcount - 1
+
 		# read current ID count value
 		fname = ''
 		if self.session is not None:
@@ -231,6 +236,7 @@ class Node(leginonobject.LeginonObject):
 			self.eventswaiting[eventid] = threading.Event()
 			eventwait = self.eventswaiting[eventid]
 			self.ewlock.release()
+
 
 		### send event and cross your fingers
 		try:
@@ -327,6 +333,7 @@ class Node(leginonobject.LeginonObject):
 			pubeventclass = kwargs['pubeventclass']
 		else:
 			pubeventclass = None
+
 
 		### publish event
 		if 'pubevent' in kwargs and kwargs['pubevent']:
