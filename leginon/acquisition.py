@@ -47,9 +47,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.ImageListPublishEvent] \
 									+ EM.EMClient.eventoutputs
 
-	def __init__(self, id, session, managerlocation, target_type='acquisition', **kwargs):
+	def __init__(self, id, session, managerlocation, target_types=('acquisition',), **kwargs):
 
-		targetwatcher.TargetWatcher.__init__(self, id, session, managerlocation, target_type, **kwargs)
+		targetwatcher.TargetWatcher.__init__(self, id, session, managerlocation, target_types, **kwargs)
 		self.addEventInput(event.DriftDoneEvent, self.handleDriftDone)
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)
 		self.driftdone = threading.Event()

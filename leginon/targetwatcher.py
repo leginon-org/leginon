@@ -28,7 +28,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 																							event.ImageTargetListPublishEvent,
 																							event.NeedTargetShiftEvent]
 
-	def __init__(self, id, session, managerlocation, target_type='acquisition',
+	def __init__(self, id, session, managerlocation, target_types=('acquisition',),
 								**kwargs):
 		watchfor = [event.ImageTargetListPublishEvent]
 		watcher.Watcher.__init__(self, id, session, managerlocation, watchfor,
@@ -42,7 +42,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.pause = threading.Event()
 		self.cont = threading.Event()
 		self.newtargetshift = threading.Event()
-		self.target_type = target_type
+		self.target_types = target_types
 		self.targetlistevents = {}
 		self.driftedimages = {}
 
@@ -126,7 +126,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				imageid = None
 			self.logger.debug('IMAGEID ' + str(imageid))
 			self.uitargetlistid.set(str(imageid))
-			if target['type'] == self.target_type:
+			if target['type'] in self.target_types:
 				goodtargets.append(target)
 			else:
 				rejects.append(target)

@@ -30,7 +30,7 @@ class Focuser(acquisition.Acquisition):
 		self.manual_check_done = threading.Event()
 		self.manual_pause = threading.Event()
 		self.manual_continue = threading.Event()
-		acquisition.Acquisition.__init__(self, id, sesison, managerlocation, target_type='focus', **kwargs)
+		acquisition.Acquisition.__init__(self, id, sesison, managerlocation, target_types=('focus',), **kwargs)
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 
 	def autoFocus(self, emtarget, resultdata):
