@@ -3,6 +3,8 @@ import cPickle
 import threading
 import datahandler
 import sqldict
+import data
+import Mrc
 
 class DBDataKeeper(datahandler.DataHandler):
 	def __init__(self, id, session):
@@ -23,8 +25,9 @@ class DBDataKeeper(datahandler.DataHandler):
 					orderBy = {'fields':('DEF_timestamp',),'sort':'DESC'})
 
 		# return a list of dictionnaries for all matching rows
-		result =  self.dbd.myTable.Index[indices.values()].fetchalldict()
-		return map(sqldict.sql2data, result)
+		result = self.dbd.myTable.Index[indices.values()].fetchalldict()
+		result = map(sqldict.sql2data, result)
+		return map(self.image2file, result)
 
 		# return an instance
 		# result =  self.dbd.myTable.Index[indices.values()].fetchonedict()
@@ -39,10 +42,11 @@ class DBDataKeeper(datahandler.DataHandler):
 		# will have to be created here.
 
 	def insert(self, newdata):
-		data = copy.deepcopy(newdata)
-		table = data.__class__.__name__
-		definition = sqldict.sqlColumnsDefinition(data)
-		formatedData = sqldict.sqlColumnsFormat(data)
+		newdatacopy = copy.deepcopy(newdata)
+		self.image2file(newdatacopy)
+		table = newdatacopy.__class__.__name__
+		definition = sqldict.sqlColumnsDefinition(newdatacopy)
+		formatedData = sqldict.sqlColumnsFormat(newdatacopy)
 		self.db.createSQLTable(table,definition)
 		self.db.myTable = self.db.Table(table)
 		
@@ -61,6 +65,34 @@ class DBDataKeeper(datahandler.DataHandler):
 		pass
 	def ids(self):
 		pass
+
+	def image2file(self, idata):
+		if isinstance(idata, data.ImageData):
+			# filename = ???
+			filename = './images/%s-%s.mrc' % (self.session, idata['id'])
+			Mrc.numeric_to_mrc(idata['image'], filename)
+			idata['filename'] = filename
+			idata['image'] = None
+
+		types = idata.types()
+		for key in types:
+			if issubclass(types[key], data.ImageData):
+				# filename = ???
+				filename = './images/%s-%s-%s.mrc' % (self.session, idata['id'], key)
+				Mrc.numeric_to_mrc(idata[key]['image'], filename)
+				idata[key]['filename'] = filename
+				idata[key]['image'] = None
+
+	def file2image(self, idata):
+		if isinstance(idata, data.ImageData):
+			idata['image'] = Mrc.mrc_to_numeric(idata['filename'])
+			idata['filename'] = None
+
+		types = idata.types()
+		for key in types:
+			if issubclass(types[key], data.ImageData):
+				idata[key]['image'] = Mrc.mrc_to_numeric(idata[key]['filename'])
+				idata[key]['filename'] = None
 
 # Ignore for now
 

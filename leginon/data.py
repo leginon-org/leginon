@@ -168,6 +168,8 @@ class ImageData(Data):
 	def typemap(cls):
 		t = Data.typemap()
 		t += [ ('image', Numeric.ArrayType), ]
+		# for DB
+		t += [ ('filename', str), ]
 		return t
 	typemap = classmethod(typemap)
 
