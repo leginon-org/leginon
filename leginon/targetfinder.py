@@ -590,10 +590,13 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 		refreshmethod = uidata.Method('Refresh', self.updateMosaicSelection)
 		loadmethod = uidata.Method('Load', self.mosaicTilesFromDatabase)
-		loadcontainer.addObjects((refreshmethod, self.mosaicselection, loadmethod))
+		loadcontainer.addObject(refreshmethod, position={'position':(0,0)})
+		loadcontainer.addObject(self.mosaicselection, position={'position':(0,1)})
+		loadcontainer.addObject(loadmethod, position={'position':(0,2)})
 
-		tilescontainer.addObjects((clearmethod, publishtilelist, loadcontainer))
-
+		tilescontainer.addObject(clearmethod, position={'position':(0,0)})
+		tilescontainer.addObject(publishtilelist, position={'position':(0,1)})
+		tilescontainer.addObject(loadcontainer, position={'position':(1,0), 'span':(1,2)})
 
 		### Mosaic Image Management
 		mosaicimagecont = uidata.Container('Mosaic Image')
@@ -615,9 +618,12 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.autocreate = uidata.Boolean(
 									'Create mosaic image whenever tile list changes', True, 'rw')
 
-		mosaicimagecont.addObjects((self.uicalibrationparameter, self.scaleimage,
-																self.maxdimension, createmethod,
-																self.autocreate, pubmethod))
+		mosaicimagecont.addObject(self.uicalibrationparameter, position={'position':(0,0), 'span':(1,2)})
+		mosaicimagecont.addObject(self.scaleimage, position={'position':(1,0)})
+		mosaicimagecont.addObject(self.maxdimension, position={'position':(1,1)})
+		mosaicimagecont.addObject(createmethod, position={'position':(2,0), 'span':(1,2)})
+		mosaicimagecont.addObject(self.autocreate, position={'position':(3,0), 'span':(1,2)})
+		mosaicimagecont.addObject(pubmethod, position={'position':(4,0), 'span':(1,2)})
 
 		### Targets
 		targetcont = uidata.Container('Targeting')
@@ -625,7 +631,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 																		self.displayDatabaseTargets)
 		refreshposition = uidata.Method('Refresh Current Position',
 																		self.uiRefreshCurrentPosition)
-		targetcont.addObjects((refreshtargets, refreshposition))
+		targetcont.addObject(refreshtargets, position={'position':(0,0)})
+		targetcont.addObject(refreshposition, position={'position':(0,1)})
 
 		container = uidata.LargeContainer('Mosaic Click Target Finder')
 		container.addObjects((statuscontainer, tilescontainer, mosaicimagecont, targetcont))
