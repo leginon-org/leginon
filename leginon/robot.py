@@ -5,6 +5,7 @@ import data
 import uidata
 import event
 import threading
+import Queue
 
 #class TestCommunications(object):
 #	def __init__(self):
@@ -16,6 +17,46 @@ import threading
 #		self.Signal5 = 1
 #		self.Signal6 = 1
 #		self.Signal7 = 1
+
+def validateGridNumber(gridnumber):
+	if gridnumber >= 1 and gridnumber <= 96:
+		return True
+	else:
+		return False
+
+class GridQueue(Queue.Queue):
+  def __init__(self, callback, maxsize=0):
+    self.callback = callback
+    Queue.Queue.__init__(self, maxsize)
+
+  def _put(self, item):
+    Queue.Queue._put(self, item)
+    if callable(self.callback):
+      self.callback(self.queue)
+
+  def _get(self):
+    item = Queue.Queue._get(self)
+    if callable(self.callback):
+      self.callback(self.queue)
+    return item
+
+  def pause(self):
+    self.mutex.acquire()
+
+  def resume(self):
+    self.mutex.release()
+
+  def clear(self):
+    if not self.esema.acquire(0):
+      return
+    self.mutex.acquire()
+    was_full = self._full()
+    self.queue = []
+    if callable(self.callback):
+      self.callback(self.queue)
+    if was_full:
+      self.fsema.release()
+    self.mutex.release()
 
 class RobotNode(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -77,6 +118,7 @@ if sys.platform == 'win32':
 																							event.GridExtractedEvent]
 		def __init__(self, id, session, nodelocations, **kwargs):
 			RobotNode.__init__(self, id, session, nodelocations, **kwargs)
+			self.gridqueue = GridQueue(self.gridQueueCallback)
 	
 			#self.communication = TestCommunications()
 
@@ -100,6 +142,21 @@ if sys.platform == 'win32':
 		def insertStage(self):
 			self.insertmethod.disable()
 			self.extractmethod.disable()
+
+			gridnumber = -1
+
+			while not validateGridNumber(gridnumber):
+				try:
+					gridnumber = self.gridqueue.get()
+					print gridnumber
+				except Queue.Empty:
+					print 'foo'
+					self.insertmethod.enable()
+					self.extractmethod.enable()
+					return
+
+			self.communication.gridNumber = gridnumber
+
 			self.setStatus('Verifying robot is ready for insertion')
 			while not self.communication.Signal0:
 				time.sleep(0.5)
@@ -163,7 +220,7 @@ if sys.platform == 'win32':
 			self.extractmethod.enable()
 			self.setStatus('Outputting inserted event')
 			evt = event.GridInsertedEvent()
-			evt['grid number'] = -1
+			evt['grid number'] = gridnumber
 			self.outputEvent(evt)
 			self.setStatus('Robot has completed insertion')
 
@@ -233,9 +290,36 @@ if sys.platform == 'win32':
 				self.extractStage()
 			except RuntimeError:
 				self.setStatus('Error extracting stage')
+
+		def gridQueueCallback(self, value):
+			self.uigridarray.set(value)
+
+		def uiAddGrid(self):
+			gridnumber = self.uigridnumber.get()
+			if validateGridNumber(gridnumber):
+				self.gridqueue.put(gridnumber)
+
+		def uiDeleteGrid(self):
+			try:
+				self.gridqueue.get()
+			except Queue.Empty:
+				pass
+
+		def uiClearGridQueue(self):
+			self.gridqueue.clear()
 		
 		def defineUserInterface(self):
 			RobotNode.defineUserInterface(self)
+
+			self.uigridarray = uidata.Array('Grids', [])
+			self.uigridnumber = uidata.Integer('Grid Number', None, 'rw')
+			gridaddmethod = uidata.Method('Add', self.uiAddGrid)
+			griddeletemethod = uidata.Method('Delete', self.uiDeleteGrid)
+			gridclearmethod = uidata.Method('Clear', self.uiClearGridQueue)
+			gridcontainer = uidata.Container('Grids')
+			gridcontainer.addObjects((self.uigridarray, griddeletemethod,
+																gridclearmethod, self.uigridnumber,
+																gridaddmethod))
 
 			self.statuslabel = uidata.String('Current Operation', '', 'r')
 			statuscontainer = uidata.Container('Status')
@@ -247,7 +331,7 @@ if sys.platform == 'win32':
 			controlcontainer.addObjects((self.insertmethod, self.extractmethod))
 	
 			rccontainer = uidata.LargeContainer('Robot Control')
-			rccontainer.addObjects((statuscontainer, controlcontainer))
+			rccontainer.addObjects((gridcontainer, statuscontainer, controlcontainer))
 			self.uiserver.addObject(rccontainer)
 
 class RobotNotification(RobotNode):
@@ -323,22 +407,20 @@ class RobotNotification(RobotNode):
 
 	def handleGridExtracted(self, ievent):
 		self.setStatus('Outputting grid insert event')
-		if self.insertonextract.get():
-			evt = event.InsertGridEvent()
-			evt['grid number'] = -1
-			self.outputEvent(evt)
-			self.setStatus('Grid insert event outputted')
+		evt = event.InsertGridEvent()
+		evt['grid number'] = -1
+		self.outputEvent(evt)
+		self.setStatus('Grid insert event outputted')
 
 	def defineUserInterface(self):
 		RobotNode.defineUserInterface(self)
 
 		self.statuslabel = uidata.String('Current Operation', '', 'r')
-		self.insertonextract = uidata.Boolean('Insert on extract', 1, 'rw')
 		statuscontainer = uidata.Container('Status')
 		statuscontainer.addObjects((self.statuslabel,))
 
 		container = uidata.LargeContainer('Robot Notification')
-		container.addObjects((statuscontainer, self.insertonextract))
+		container.addObjects((statuscontainer,))
 		self.uiserver.addObject(container)
 
 class RobotTest(node.Node):
