@@ -1,5 +1,6 @@
 
 import leginonobject
+import array
 import Numeric
 
 class Data(leginonobject.LeginonObject):
@@ -23,6 +24,16 @@ class StringData(Data):
 class EMData(Data):
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
+
+# we're going to play with the image being a Numeric array, and hopefully
+# type and dimenion can be extracted from only that
+class ImageData(Data):
+	def __init__(self, id, content):
+		Data.__init__(self, id, content)
+
+class CorrelationData(ImageData):
+	def __init__(self, id, content):
+		Data.__init__(self, id, content)
 
 # this is for the manager, it masquerades (sp?) as the data with the same id,
 # but it contains the location of the data instead.

@@ -10,7 +10,10 @@ from mynode import MyNode
 from intgen import IntGen
 from EM import EM
 from emtest import EMTest
-from imviewer2 import ImViewer
+try:
+	from imviewer2 import ImViewer
+except ImportError:
+	pass
 from getdata import GetData
 
 def nodeClasses():

@@ -195,14 +195,9 @@ class Node(leginonobject.LeginonObject):
 		#print "data ID =", dataid
 		return client.pull(dataid)
 
-	def researchByDataID(self, dataid, timeout = 0.5, retries = 10):
+	def researchByDataID(self, dataid):
 		# will change soon
-#		for i in xrange(0, retries):
 		nodeiddata = self.researchByLocation(self.managerloc, dataid)
-#			if nodeiddata == None:
-#				time.sleep(timeout)
-#			else:
-#				break
 
 		if nodeiddata == None:
 			print "node, researchByDataID: no such data ID"
