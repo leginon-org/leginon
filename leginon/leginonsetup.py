@@ -13,6 +13,7 @@ defaultlauncherport = 55555
 class Wizard(Tkinter.Toplevel):
 	def __init__(self, parent, title=None):
 		Tkinter.Toplevel.__init__(self, parent)
+		self.wm_resizable(0, 0)
 		self.transient(parent)
 		if title is not None:
 			self.title(title)
