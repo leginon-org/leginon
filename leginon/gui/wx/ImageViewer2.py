@@ -250,9 +250,9 @@ if __name__ == '__main__':
 	import Mrc
 	import numarray
 
-	def wxBitmapFromMRC(filename):
+	def wxBitmapFromMRC(filename, min=None, max=None, color=False):
 		n = Mrc.mrcstr_to_numeric(open(filename, 'rb').read())
-		return wxBitmapFromNumarray(n) #, color=True)
+		return wxBitmapFromNumarray(n, min, max, color)
 
 	try:
 		filename = sys.argv[1]
@@ -290,6 +290,6 @@ if __name__ == '__main__':
 				n[i, j] = (i + j) * ((i + j) % 2)
 		app.panel.setBitmap(wxBitmapFromNumarray(n))
 	else:
-		app.panel.setBitmap(wxBitmapFromMRC(filename))
+		app.panel.setBitmap(wxBitmapFromMRC(filename, color=True))
 	app.MainLoop()
 
