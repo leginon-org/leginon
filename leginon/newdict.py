@@ -42,6 +42,16 @@ class OrderedDict(dict):
 		self.__keys = [i[0] for i in items]
 		dict.__init__(self, initializer)
 
+	## definining __reduce__ allows unpickler to call __init__ 	 
+	def __reduce__(self): 	 
+		state = dict(self.__dict__) 	 
+		## giving the new object an initializer has a lot of 	 
+		## duplicate information to what is given in the 	 
+		## state dict, but it is necessary to get the dict 	 
+		## base class to have its items set 	 
+		initializer = dict(self.items()) 	 
+		return (self.__class__, (initializer,), state)
+
 	def __setitem__(self, key, value):
 		if not dict.__contains__(self, key):
 			self.__keys.append(key)

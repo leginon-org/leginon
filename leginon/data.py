@@ -439,6 +439,8 @@ class Data(newdict.TypedDict, leginonobject.LeginonObject):
 
 	## definining __reduce__ allows unpickler to call __init__ 	 
 	## which is necessary to register data with datamanager 	 
+	## This overrides OrderedDict.__reduce__ with the only difference
+	## being that we don't wan to dereference the items
 	def __reduce__(self): 	 
 		state = dict(self.__dict__) 	 
 		## giving the new object an initializer has a lot of 	 
