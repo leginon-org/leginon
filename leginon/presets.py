@@ -553,9 +553,7 @@ class PresetsManager(node.Node):
 			except KeyError:
 				pass
 			self.presetparams.set(d, callback=False)
-			print 'displaying calibration info is currently commented out until we fix the problem'
 			self.displayCalibrations(self.currentselection)
-			print 'done disp'
 			self.setStatus(self.currentselection)
 		return index
 
@@ -577,12 +575,18 @@ class PresetsManager(node.Node):
 		stagetime = self.calclients['stage'].time(ht, mag, 'stage position')
 		self.cal_stage.set(str(stagetime))
 
-		#imagetime = self.calclients['image'].time(ht, mag, 'image shift')
-		#self.cal_imageshift.set(str(imagetime))
-		#beamtime = self.calclients['beam'].time(ht, mag, 'beam shift')
-		#self.cal_beam.set(str(beamtime))
-		modstagetime = None
-		self.cal_modeledstage.set(str(modstagetime))
+		imagetime = self.calclients['image'].time(ht, mag, 'image shift')
+		self.cal_imageshift.set(str(imagetime))
+		beamtime = self.calclients['beam'].time(ht, mag, 'beam shift')
+		self.cal_beam.set(str(beamtime))
+		modstagemodtimex = self.calclients['modeled stage'].timeModelCalibration('x')
+		modstagemodtimey = self.calclients['modeled stage'].timeModelCalibration('y')
+		tmpstr = 'x: %s, y: %s' % (modstagemodtimex,modstagemodtimey)
+		self.cal_modeledstagemod.set(tmpstr)
+		modstagemagtimex = self.calclients['modeled stage'].timeMagCalibration(ht, mag, 'x')
+		modstagemagtimey = self.calclients['modeled stage'].timeMagCalibration(ht, mag, 'y')
+		tmpstr = 'x: %s, y: %s' % (modstagemagtimex,modstagemagtimey)
+		self.cal_modeledstagemag.set(tmpstr)
 
 	def uiParamsCallback(self, value):
 		if (self.currentselection is None) or (not value):
@@ -645,8 +649,9 @@ class PresetsManager(node.Node):
 		self.cal_imageshift = uidata.String('Image Shift Matrix', '', 'r')
 		self.cal_stage = uidata.String('Stage Shift Matrix', '', 'r')
 		self.cal_beam = uidata.String('Beam Shift Matrix', '', 'r')
-		self.cal_modeledstage = uidata.String('Modeled Stage', '', 'r')
-		calcont.addObjects((self.cal_pixelsize, self.cal_imageshift, self.cal_stage, self.cal_beam, self.cal_modeledstage))
+		self.cal_modeledstagemod = uidata.String('Modeled Stage', '', 'r')
+		self.cal_modeledstagemag = uidata.String('Modeled Stage Mag Only', '', 'r')
+		calcont.addObjects((self.cal_pixelsize, self.cal_imageshift, self.cal_stage, self.cal_beam, self.cal_modeledstagemod, self.cal_modeledstagemag))
 
 		## selection
 		self.autosquare = uidata.Boolean('Auto Square', True, 'rw')
