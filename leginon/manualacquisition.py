@@ -39,6 +39,7 @@ class ManualAcquisition(node.Node):
 			acquiremessage = 'Acquiring uncorrected image...'
 		self.status.set(acquiremessage)
 		try:
+			self.camerafuncs.uiApplyAsNeeded()
 			imagedata = self.camerafuncs.acquireCameraImageData(correction=correct)
 		except Exception, e:
 			if isinstance(e, ResearchError):

@@ -698,17 +698,18 @@ class PresetsManager(node.Node):
 													self.cyclemagonly, self.orderlist))
 
 		fromscopemethod = uidata.Method('From Scope', self.uiSelectedFromScope)
-		eucfromscopemethod = uidata.Method('Eucentric Focus From Scope',
-																				self.uiSelectedEucFromScope)
-		euctoscopemethod = uidata.Method('Eucentric Focus To Scope',
+		euctoscopemethod = uidata.Method('To Scope',
 																			self.uiSelectedEucToScope)
+		eucfromscopemethod = uidata.Method('From Scope',
+																				self.uiSelectedEucFromScope)
+		euccontainer = uidata.Container('Eucentric Focus')
+		euccontainer.addObjects((euctoscopemethod, eucfromscopemethod))
 		removemethod = uidata.Method('Remove', self.uiSelectedRemove)
-
 
 		selectcont = uidata.Container('Selection')
 		selectcont.addObjects((self.uiselectpreset, toscopemethod, fromscopemethod,
-														eucfromscopemethod, euctoscopemethod, removemethod,
-														self.changepause, self.presetparams, commitmethod, self.autosquare,
+														euccontainer, removemethod, self.changepause,
+														self.presetparams, commitmethod, self.autosquare,
 														statuscont, calcont, cyclecont))
 
 		pnames = self.presetNames()

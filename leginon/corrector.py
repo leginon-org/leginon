@@ -23,9 +23,6 @@ import os
 import copy
 import uidata
 
-False = 0
-True = 1
-
 class DataHandler(node.DataHandler):
 	def query(self, id):
 		self.lock.acquire()
@@ -72,39 +69,51 @@ class Corrector(node.Node):
 		statuscontainer = uidata.Container('Status')
 		statuscontainer.addObjects((self.uistatus,))
 
-		darkmethod = uidata.Method('Acquire Dark', self.uiAcquireDark)
-		brightmethod = uidata.Method('Acquire Bright', self.uiAcquireBright)
-		rawmethod = uidata.Method('Acquire Raw', self.uiAcquireRaw)
-		correctedmethod = uidata.Method('Acquire Corrected',
-																			self.uiAcquireCorrected)
+		darkmethod = uidata.Method('Dark', self.uiAcquireDark)
+		brightmethod = uidata.Method('Bright', self.uiAcquireBright)
+		referencescontainer = uidata.Container('References')
+		referencescontainer.addObjects((darkmethod, brightmethod))
+
+		rawmethod = uidata.Method('Raw', self.uiAcquireRaw)
+		correctedmethod = uidata.Method('Corrected', self.uiAcquireCorrected)
+		acquirecontainer = uidata.Container('Acquire')
+		acquirecontainer.addObjects((rawmethod, correctedmethod))
 
 		self.autobinning = uidata.Integer('Binning', 1, 'rw', persist=True)
 		self.autoexptime = uidata.Integer('Exposure Time', 500, 'rw', persist=True)
 		self.autotarget = uidata.Integer('Target Mean', 2000, 'rw', persist=True)
 		automethod = uidata.Method('Auto References', self.uiAutoAcquireReferences)
-
-		referencescontainer = uidata.Container('References')
-		referencescontainer.addObjects((darkmethod, brightmethod))
-
 		autocontainer = uidata.Container('Auto References')
 		autocontainer.addObjects((self.autobinning, self.autotarget,
 															self.autoexptime, automethod))
 
-		testcontainer = uidata.Container('Test')
-		testcontainer.addObjects((rawmethod, correctedmethod))
 		controlcontainer = uidata.Container('Control')
+		controlcontainer.addObjects((referencescontainer, acquirecontainer))
+
+		self.displayflag = uidata.Boolean('Display image', True, 'rw', persist=True)
+
+		camsetup = self.cam.uiSetupContainer()
+
+		self.uiframestoaverage = uidata.Integer('Frames to Average', 3, 'rw')
+
+		self.badrows = uidata.Sequence('Bad Rows', (), 'rw')
+		self.badcols = uidata.Sequence('Bad Cols', (), 'rw')
+		setplan = uidata.Method('Set Plan', self.uiSetPlanParams)
+		getplan = uidata.Method('Get Plan', self.uiGetPlanParams)
 
 		self.despikeon = uidata.Boolean('Despike', True, 'rw', persist=True)
 		self.despikevalue = uidata.Float('Despike Threshold', 3.5, 'rw',
 																			persist=True)
 		self.despikesize = uidata.Integer('Neighborhood Size', 11, 'rw',
 																			persist=True)
+		despikecontainer = uidata.Container('Despike')
+		despikecontainer.addObjects((self.despikeon, self.despikesize,
+																	self.despikevalue))
 
-		controlcontainer.addObjects((self.despikeon, self.despikesize,
-																	self.despikevalue, referencescontainer,
-																	autocontainer, testcontainer))
-		self.display_flag = uidata.Boolean('Display image', True, 'rw',
-																				persist=True)
+		settingscontainer = uidata.Container('Settings')
+		settingscontainer.addObjects((self.displayflag, self.uiframestoaverage,
+																	camsetup, self.badrows, self.badcols,
+																	setplan, getplan, despikecontainer))
 
 		statscontainer = uidata.Container('Statistics')
 		self.statsmean = uidata.Float('Mean', None, 'r')
@@ -116,21 +125,9 @@ class Corrector(node.Node):
 
 		self.ui_image = uidata.Image('Image', None, 'rw')
 
-		self.uiframestoaverage = uidata.Integer('Frames to Average', 3, 'rw')
-		self.cliplimits = uidata.Sequence('Clip Limits', (), 'rw')
-		self.badrows = uidata.Sequence('Bad Rows', (), 'rw')
-		self.badcols = uidata.Sequence('Bad Cols', (), 'rw')
-		setplan = uidata.Method('Set Plan', self.uiSetPlanParams)
-		getplan = uidata.Method('Get Plan', self.uiGetPlanParams)
-		camsetup = self.cam.uiSetupContainer()
-
-		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((self.uiframestoaverage,
-																	camsetup, self.cliplimits,
-																	self.badrows, self.badcols, setplan, getplan))
 		container = uidata.LargeContainer('Corrector')
 		container.addObjects((statuscontainer, settingscontainer, controlcontainer,
-													self.display_flag, statscontainer, self.ui_image))
+													statscontainer, self.ui_image))
 		self.uiserver.addObject(container)
 
 	def uiSetPlanParams(self):
@@ -141,7 +138,6 @@ class Corrector(node.Node):
 		newcamstate['binning'] = camconfig['binning']
 		plandata = data.CorrectorPlanData()
 		plandata['camstate'] = newcamstate
-		plandata['clip_limits'] = self.cliplimits.get()
 		plandata['bad_rows'] = self.badrows.get()
 		plandata['bad_cols'] = self.badcols.get()
 		self.storePlan(plandata)
@@ -154,11 +150,9 @@ class Corrector(node.Node):
 		newcamstate['binning'] = camconfig['binning']
 		plandata = self.retrievePlan(newcamstate)
 		if plandata is None:
-			self.cliplimits.set([])
 			self.badrows.set([])
 			self.badcols.set([])
 		else:
-			self.cliplimits.set(plandata['clip_limits'])
 			self.badrows.set(plandata['bad_rows'])
 			self.badcols.set(plandata['bad_cols'])
 
@@ -200,7 +194,7 @@ class Corrector(node.Node):
 			self.displayImage(imagedata)
 
 	def displayImage(self, imagedata):
-		if self.display_flag.get():
+		if self.displayflag.get():
 			self.ui_image.set(imagedata)
 			self.displayStats(imagedata)
 
@@ -416,7 +410,6 @@ class Corrector(node.Node):
 		plandata = self.retrievePlan(camstate)
 		if plandata is not None:
 			touchedup = self.removeBadPixels(normalized, plandata)
-			#clipped = self.clip(touchedup, plandata)
 			good = touchedup
 		else:
 			good = normalized
@@ -449,13 +442,6 @@ class Corrector(node.Node):
 		imagefun.fakeCols(image, badcols, goodcol)
 
 		return image
-
-	def clip(self, image, plandata):
-		cliplimits = plandata['clip_limits']
-		if len(cliplimits) == 0:
-			return image
-		minclip,maxclip = cliplimits
-		return Numeric.clip(image, minclip, maxclip)
 
 	def normalize(self, raw, camstate):
 		dark = self.retrieveRef(camstate, 'dark')
