@@ -27,6 +27,14 @@ class Event(data.Data):
 		return t
 	typemap = classmethod(typemap)
 
+class EventLog(data.Data):
+	def typemap(cls):
+		t = data.Data.typemap()
+		t += [ ('eventclass', str), ('status', str), ]
+		return t
+	typemap = classmethod(typemap)
+
+
 ## Standard Event Types:
 ##
 ##	Event
@@ -59,7 +67,7 @@ class NodeAvailableEvent(NotificationEvent):
 	'Event sent by a node to the manager to indicate that it is accessible'
 	def typemap(cls):
 		t = NotificationEvent.typemap()
-		t += [ ('location', dict), ('nodeclass', object)]
+		t += [ ('location', dict), ('nodeclass', str), ]
 		return t
 	typemap = classmethod(typemap)
 
@@ -86,12 +94,13 @@ class TargetDoneEvent(NotificationEvent):
 ## could PublishEvent and UnpublishEvent be derived from a common class?
 class PublishEvent(NotificationEvent):
 	'Event indicating data was published'
+	dataclass = data.Data
 	def typemap(cls):
 		t = NotificationEvent.typemap()
 		t += [ ('dataid', tuple), ]
 		return t
 	typemap = classmethod(typemap)
-
+	
 class UnpublishEvent(NotificationEvent):
 	'Event indicating data was unpublished (deleted)'
 	def typemap(cls):
@@ -120,61 +129,61 @@ class ListPublishEvent(Event):
 
 class NodeClassesPublishEvent(PublishEvent):
 	'Event indicating launcher published new list of node classes'
-	pass
+	dataclass = data.NodeClassesData
 
 class ImagePublishEvent(PublishEvent):
 	'Event indicating image was published'
-	pass
+	dataclass = data.ImageData
 
 class CameraImagePublishEvent(ImagePublishEvent):
 	'Event indicating camera image was published'
-	pass
+	dataclass = data.CameraImageData
 
 class PresetImagePublishEvent(CameraImagePublishEvent):
 	'Event indicating preset camera image was published'
-	pass
+	dataclass = data.PresetImageData
 
 class AcquisitionImagePublishEvent(PresetImagePublishEvent):
-	pass
+	dataclass = data.AcquisitionImageData
 
 class TrialImagePublishEvent(PresetImagePublishEvent):
-	pass
+	dataclass = data.TrialImageData
 
 class CorrectionImagePublishEvent(CameraImagePublishEvent):
-	pass
+	dataclass = data.CorrectionImageData
 
 class TileImagePublishEvent(CameraImagePublishEvent):
 	'Event indicating image tile was published'
-	pass
+	dataclass = data.TileImageData
 
 class MosaicImagePublishEvent(CameraImagePublishEvent):
 	'Event indicating mosaic image was published'
-	pass
+	dataclass = data.MosaicImageData
 
 class DarkImagePublishEvent(CorrectionImagePublishEvent):
-	pass
+	dataclass = data.DarkImageData
 
 class BrightImagePublishEvent(CorrectionImagePublishEvent):
-	pass
+	dataclass = data.BrightImageData
 
 class NormImagePublishEvent(CorrectionImagePublishEvent):
-	pass
+	dataclass = data.NormImageData
 
 class CorrelationImagePublishEvent(ImagePublishEvent):
-	pass
+	dataclass = data.NormImageData
 
 class CrossCorrelationImagePublishEvent(CorrelationImagePublishEvent):
-	pass
+	dataclass = data.CrossCorrelationImageData
 
 class PhaseCorrelationImagePublishEvent(CorrelationImagePublishEvent):
-	pass
+	dataclass = data.PhaseCorrelationImageData
 
 class StateMosaicPublishEvent(PublishEvent):
 	'Event indicating state mosaic data was published'
-	pass
+	dataclass = data.StateMosaicData
 
 class ImageTargetListPublishEvent(PublishEvent):
-	pass
+	dataclass = data.ImageTargetListData
 
 class ControlEvent(Event):
 	'Event that passes a value with it'
@@ -191,7 +200,7 @@ class LaunchEvent(ControlEvent):
 		t = ControlEvent.typemap()
 		t += [
 			('newproc', int),
-			('targetclass', object),
+			('targetclass', str),
 			('args', tuple),
 			('kwargs', dict)
 		]
@@ -231,7 +240,17 @@ class ImageClickEvent(Event):
 
 class ImageAcquireEvent(Event):
 	pass
-	
+
+##############################################################
+## generate the mapping of data class to publish event class
+publish_events = {}
+event_classes = eventClasses()
+for eventclass in event_classes.values():
+	if issubclass(eventclass, PublishEvent):
+		if hasattr(eventclass, 'dataclass'):
+			publish_events[eventclass.dataclass] = eventclass
+
+
 ###########################################################
 ###########################################################
 ## event related exceptions

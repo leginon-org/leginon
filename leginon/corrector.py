@@ -228,17 +228,14 @@ class Corrector(node.Node):
 		del newcamstate['exposure time']
 		if type == 'dark':
 			imageclass = data.DarkImageData
-			eventclass = event.DarkImagePublishEvent
 		elif type == 'bright':
 			imageclass = data.BrightImageData
-			eventclass = event.BrightImagePublishEvent
 		elif type == 'norm':
 			imageclass = data.NormImageData
-			eventclass = event.NormImagePublishEvent
 		
 		imagedata = imageclass(self.ID(), image=numdata, camstate=newcamstate)
 		print 'publishing'
-		self.publish(imagedata, eventclass=eventclass, database=True)
+		self.publish(imagedata, pubevent=True, database=True)
 
 	def calc_norm(self, camstate):
 		dark = self.retrieveRef(camstate, 'dark')

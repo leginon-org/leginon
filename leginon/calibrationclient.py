@@ -41,7 +41,7 @@ class CalibrationClient(object):
 		actual_state = imagedata['scope']
 
 		if publish_image:
-			self.node.publish(imagedata, eventclass=event.CameraImagePublishEvent)
+			self.node.publish(imagedata, pubevent=True)
 
 		## should find image stats to help determine validity of image
 		## in correlations
@@ -91,7 +91,7 @@ class CalibrationClient(object):
 		#pcimagedata = data.PhaseCorrelationImageData(self.node.ID(), pcimage, imagedata1.id, imagedata2.id)
 		pcimagedata = data.PhaseCorrelationImageData(self.node.ID(), image=pcimage, subject1=imagedata1['id'], subject2=imagedata2['id'])
 
-		#self.publish(pcimagedata, event.PhaseCorrelationImagePublishEvent)
+		#self.publish(pcimagedata, pubevent=True)
 
 		## peak finding
 		print 'peak finding'

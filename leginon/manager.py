@@ -178,6 +178,7 @@ class Manager(node.Node):
 		if ievent['confirm']:
 			self.confirmmap[ievent['id']] = do
 		for to_node in do:
+			self.logEvent(ievent, 'distributing to %s' % (to_node,))
 			try:
 				self.clients[to_node].push(ievent)
 			except IOError:
@@ -505,10 +506,8 @@ class Manager(node.Node):
 
 	def uiAddNode(self, hostname, port):
 		'''UI helper calling addNode. See addNode.'''
-		try:
-			self.addNode(hostname, port)
-		except:
-			self.printerror('cannot connect to specified node')
+		self.addNode(hostname, port)
+		#self.printerror('cannot connect to specified node')
 		return ''
 
 	def uiLaunchNode(self, name, launchclass, args, newproc=0):

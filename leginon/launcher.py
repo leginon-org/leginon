@@ -47,7 +47,7 @@ class Launcher(node.Node):
 		#reload(nodeclassreg)
 		nodeclassnames = nodeclassreg.getNodeClassNames()
 		d = data.NodeClassesData(self.ID(), nodeclasses=nodeclassnames)
-		self.publish(d, eventclass=event.NodeClassesPublishEvent)
+		self.publish(d, pubevent=True)
 
 	def handleLaunch(self, launchevent):
 		# unpack event

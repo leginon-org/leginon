@@ -218,11 +218,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if trial:
 			trialimage = data.TrialImageData(dataid, initializer=imagedata, preset=presetdata)
 			print 'publishing trial image'
-			self.publish(trialimage, eventclass=event.TrialImagePublishEvent, database=False)
+			self.publish(trialimage, pubevent=True, database=False)
 		else:
 			pimagedata = data.AcquisitionImageData(dataid, initializer=imagedata, preset=presetdata)
 #			print 'publishing image'
-			self.publish(pimagedata, eventclass=event.AcquisitionImagePublishEvent, database=True)
+			self.publish(pimagedata, pubevent=True, database=True)
 			print 'PIMAGEDATA'
 			print '   scope image shift', pimagedata['scope']['image shift']
 			print '   preset image shift', pimagedata['preset']['image shift']

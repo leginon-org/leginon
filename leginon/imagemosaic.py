@@ -390,7 +390,7 @@ class ImageMosaic(watcher.Watcher):
 		if image is not None:
 			odata = data.MosaicImageData(self.ID(), image=image,
 																		scope=None, camera=None)
-			self.publish(odata, eventclass=event.MosaicImagePublishEvent)
+			self.publish(odata, pubevent=True)
 		return ''
 
 	def uiClearMosaics(self):
@@ -508,7 +508,7 @@ class ImageMosaic(watcher.Watcher):
 			#targetlistdata = data.ImageTargetListData(self.ID(), self.targetlist)
 			targetlistdata = data.ImageTargetListData(self.ID(),
 																								targets=self.targetlist)
-			self.publish(targetlistdata, eventclass=event.ImageTargetListPublishEvent)
+			self.publish(targetlistdata, pubevent=True)
 			print 'published targetlistdata', targetlistdata
 			print 'targets'
 			print targetlistdata['targets']

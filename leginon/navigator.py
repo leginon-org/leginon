@@ -86,7 +86,7 @@ class Navigator(node.Node):
 		if imagedata is None:
 			return
 		print 'publishing image'
-		self.publish(imagedata, eventclass=event.CameraImagePublishEvent)
+		self.publish(imagedata, pubevent=True)
 		print 'image published'
 
 	def defineUserInterface(self):

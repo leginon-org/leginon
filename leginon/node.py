@@ -89,6 +89,7 @@ class Node(leginonobject.LeginonObject):
 		self.addEventOutput(event.NodeInitializedEvent)
 		self.addEventOutput(event.NodeUninitializedEvent)
 
+		self.addEventInput(event.Event, self.logEventReceived)
 		self.addEventInput(event.KillEvent, self.die)
 		self.addEventInput(event.ConfirmationEvent, self.handleConfirmedEvent)
 		self.addEventInput(event.NodeAvailableEvent, self.handleAddNode)
@@ -151,6 +152,8 @@ class Node(leginonobject.LeginonObject):
 
 	def outputEvent(self, ievent, wait=0):
 		'''Send the event to the manager to be routed where necessary.'''
+		eventstatus = '%s to manager' % (self.id,)
+		self.logEvent(ievent, status=eventstatus)
 		try:
 			ievent['confirm'] = True
 			self.managerclient.push(ievent)
@@ -159,6 +162,15 @@ class Node(leginonobject.LeginonObject):
 			return
 		if wait:
 			self.waitEvent(ievent)
+
+	def logEvent(self, ievent, status):
+		eventlog = event.EventLog(self.ID(), eventclass=ievent.__class__.__name__, status=status)
+		## pubevent is False by default, but just in case that changes
+		## we don't want infinite recursion here
+		self.publish(eventlog, database=True, pubevent=False)
+
+	def logEventReceived(self, ievent):
+		self.logEvent(ievent, 'received by %s' % (self.id,))
 
 	def addEventInput(self, eventclass, func):
 		'''Map a function (event handler) to be called when the specified event is received.'''
@@ -233,12 +245,13 @@ class Node(leginonobject.LeginonObject):
 			except KeyError:
 				self.printerror('no DBDataKeeper to publish: %s' % str(idata['id']))
 
-		if 'eventclass' in kwargs:
-			eventclass = kwargs['eventclass']
-			if not issubclass(eventclass, event.PublishEvent):
-				raise TypeError('PublishEvent subclass required')
+		if 'pubevent' in kwargs:
+			if kwargs['pubevent']:
+				eventclass = event.publish_events[idata.__class__]
+			else:
+				eventclass = None
 		else:
-			eventclass = event.PublishEvent
+			eventclass = None
 
 		if 'confirm' in kwargs:
 			confirm = kwargs['confirm']
@@ -247,8 +260,10 @@ class Node(leginonobject.LeginonObject):
 
 #		if 'node' in kwargs and kwargs['node']:
 		self.datahandlers[self.datahandler]._insert(idata)
-		e = eventclass(self.ID(), dataid=idata['id'], confirm=confirm)
-		self.outputEvent(e)
+
+		if eventclass is not None:
+			e = eventclass(self.ID(), dataid=idata['id'], confirm=confirm)
+			self.outputEvent(e)
 
 	def research(self, **kwargs):
 		'''

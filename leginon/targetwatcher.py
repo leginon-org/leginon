@@ -58,7 +58,7 @@ class TargetWatcher(watcher.Watcher):
 			## maybe should check if already waiting on this target?
 			self.targetevents[targetid] = threading.Event()
 			print 'publishing focustargetdata', targetid
-			self.publish(targetlistdata, eventclass=event.ImageTargetListPublishEvent)
+			self.publish(targetlistdata, pubevent=True)
 
 	def handleTargetDone(self, targetdoneevent):
 		targetid = targetdoneevent['targetid']

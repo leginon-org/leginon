@@ -142,7 +142,9 @@ class Data(DataDict, leginonobject.LeginonObject):
 	def factories(self, valuetype):
 		if issubclass(valuetype, Data):
 			def f(value):
-				if type(value) in (valuetype, DataReference):
+				if isinstance(value, DataReference):
+					return value
+				elif isinstance(value, valuetype):
 					return value
 				else:
 					raise ValueError('must be type %s' % (valuetype,))
@@ -344,7 +346,7 @@ class PresetImageData(CameraImageData):
 	'''
 	def typemap(cls):
 		t = CameraImageData.typemap()
-		t += [ ('preset', dict), ]
+		t += [ ('preset', PresetData), ]
 		return t
 	typemap = classmethod(typemap)
 
@@ -423,3 +425,5 @@ class ImageTargetListData(Data):
 		t += [ ('targets', list), ]
 		return t
 	typemap = classmethod(typemap)
+
+

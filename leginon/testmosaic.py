@@ -47,7 +47,7 @@ class TestMosaic(node.Node):
 																scope={'stage position': {'x': x, 'y': y}},
 																camera={'image data': tile},
 																neighbor_tiles=neighbors),
-										eventclass=event.TileImagePublishEvent)
+										pubevent=True)
 			neighbors = [newid]
 
 #	def defineUserInterface(self):

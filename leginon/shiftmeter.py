@@ -55,12 +55,12 @@ class ShiftMeter(watcher.Watcher):
 		pcid = self.ID()
 		# no subject1, subject2
 		pcdata = data.PhaseCorrelationImageData(pcid, image=pcim)
-		self.publish(pcdata, eventclass=event.PhaseCorrelationImagePublishEvent)
+		self.publish(pcdata, pubevent=True)
 #		corrinfo = {}
 #		corrinfo['phase correlation image'] = pcid
 #		corrinfo['phase correlation shift'] = shift
 #		corrdata = data.CorrelationData(self.ID(), corrinfo)
-#		#self.publish(corrdata, eventclass=event.CorrelationPublishEvent)
+#		#self.publish(corrdata, pubevent=True)
 
 #	def process_numeric(self, numarray, filename):
 #		'''mainly for debugging'''

@@ -135,7 +135,7 @@ class GridPreview(node.Node):
 			imdata = data.TileImageData(thisid, initializer=imagedata, preset=pdata, neighbor_tiles=neighbortiles)
 #			print 'publishing tile'
 			print 'PUBLISHING'
-			self.publish(imdata, eventclass=event.TileImagePublishEvent)
+			self.publish(imdata, pubevent=True)
 
 			print 'BBBBBBBBBBBBBBBBBBBBB'
 			self.lastid = thisid
