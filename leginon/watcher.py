@@ -33,6 +33,7 @@ class Watcher(node.Node):
 		self.watchtoggle = self.registerUIData('Watcher On', 'boolean', permissions = 'rw', default=1)
 		self.dataqueuetoggle = self.registerUIData('Data Queue On', 'boolean', permissions='rw', default=0)
 		procdata = self.registerUIMethod(self.uiProcessData, 'Process Data From Queue', ())
+		cleardata = self.registerUIMethod(self.uiClearQueue, 'Clear Data Queue', ())
 
 		myspec = self.registerUISpec('Watcher', (self.watchtoggle,self.dataqueuetoggle, procdata))
 		myspec += nui
@@ -98,6 +99,13 @@ class Watcher(node.Node):
 	def uiProcessData(self):
 		self.processDataFromQueue(blocking=0)
 		return ''
+
+	def uiClearQueue(self):
+		while 1:
+			try:
+				self.dataqueue.get(0)
+			except Queue.Empty:
+				return ''
 
 ## an example of subclassing Watcher
 
