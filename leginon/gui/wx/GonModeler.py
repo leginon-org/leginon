@@ -4,17 +4,17 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/GonModeler.py,v $
-# $Revision: 1.9 $
+# $Revision: 1.10 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
-# $Author: suloway $
+# $Date: 2004-11-02 21:17:22 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
 import threading
 import wx
 from gui.wx.Choice import Choice
-from gui.wx.Entry import IntEntry, FloatEntry
+from gui.wx.Entry import Entry, IntEntry, FloatEntry
 import gui.wx.Calibrator
 import gui.wx.ToolBar
 
@@ -26,6 +26,8 @@ class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 		self.widgets['measure points'] = IntEntry(self, -1, min=2, chars=5)
 		self.widgets['measure tolerance'] = FloatEntry(self, -1, min=0.0, chars=5)
 		self.widgets['measure interval'] = FloatEntry(self, -1, chars=9)
+		self.widgets['measure label'] = Entry(self, -1, chars=12)
+		self.widgets['model label'] = Entry(self, -1, chars=12)
 
 		self.widgets['model axis'] = Choice(self, -1, choices=self.node.axes)
 		self.widgets['model magnification'] = FloatEntry(self, -1, chars=9)
@@ -52,6 +54,10 @@ class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 		szmeasure.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szmeasure.Add(self.widgets['measure interval'], (3, 1), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Label')
+		szmeasure.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szmeasure.Add(self.widgets['measure label'], (4, 1), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		szmeasure.AddGrowableCol(1)
 
 		sb = wx.StaticBox(self, -1, 'Measurement')
@@ -59,19 +65,23 @@ class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 		sbszmeasure.Add(szmeasure, 1, wx.EXPAND|wx.ALL, 5)
 
 		szmodel = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Axis:')
+		label = wx.StaticText(self, -1, 'Label:')
 		szmodel.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szmodel.Add(self.widgets['model axis'], (0, 1), (1, 1),
+		szmodel.Add(self.widgets['model label'], (0, 1), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Axis:')
+		szmodel.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szmodel.Add(self.widgets['model axis'], (1, 1), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Magnification:')
-		szmodel.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szmodel.Add(self.widgets['model magnification'], (1, 1), (1, 1),
+		szmodel.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szmodel.Add(self.widgets['model magnification'], (2, 1), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'Terms:')
-		szmodel.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szmodel.Add(self.widgets['model terms'], (2, 1), (1, 1),
+		szmodel.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szmodel.Add(self.widgets['model terms'], (3, 1), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
-		szmodel.Add(self.widgets['model mag only'], (3, 0), (1, 2), wx.ALIGN_CENTER)
+		szmodel.Add(self.widgets['model mag only'], (4, 0), (1, 2), wx.ALIGN_CENTER)
 		szmodel.AddGrowableCol(1)
 
 		sb = wx.StaticBox(self, -1, 'Modeling')

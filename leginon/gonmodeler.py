@@ -37,10 +37,12 @@ class GonModeler(calibrator.Calibrator):
 		'measure points': 200,
 		'measure interval': 5e-6,
 		'measure tolerance': 25.0,
+		'measure label': '',
 		'model axis': 'x',
 		'model magnification': None,
 		'model terms': 5,
 		'model mag only': False,
+		'model label': '',
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.correlator = correlator.Correlator()
@@ -53,8 +55,6 @@ class GonModeler(calibrator.Calibrator):
 		self.pcal = calibrationclient.PixelSizeCalibrationClient(self)
 
 		self.axes = ['x', 'y']
-		self.measurelabel = ''
-		self.modellabel = ''
 
 		self.start()
 
@@ -105,7 +105,7 @@ class GonModeler(calibrator.Calibrator):
 			self.logger.info('Measured pixel size %s' % (measuredpixsize,))
 			error = abs(measuredpixsize - known_pixelsize) / known_pixelsize
 			self.logger.info('Error %s' % (error,))
-			if error > self.settings['tolerance']/100.0:
+			if error > self.settings['measure tolerance']/100.0:
 				self.logger.info('Rejected...')
 			else:
 				self.logger.info('Saving to database...')
@@ -137,7 +137,7 @@ class GonModeler(calibrator.Calibrator):
 		if self.oldimagedata is not None:
 			## cross correlation
 			crosscorr = self.correlator.phaseCorrelate()
-			self.node.setImage(crosscorr.astype(Numeric.Float32), 'Correlation')
+			self.setImage(crosscorr.astype(Numeric.Float32), 'Correlation')
 			
 			## subtract auto correlation
 			#crosscorr -= self.autocorr
@@ -145,10 +145,10 @@ class GonModeler(calibrator.Calibrator):
 			## peak finding
 			self.peakfinder.setImage(crosscorr)
 			self.peakfinder.subpixelPeak()
-			peak = self.peakfinder.getResults()
-			peakvalue = peak['subpixel peak value']
-			self.node.setTargets([peakvalue], 'Peak')
-			shift = correlator.wrap_coord(peak['subpixel peak'], crosscorr.shape)
+			peakresults = self.peakfinder.getResults()
+			peak = peakresults['subpixel peak']
+			self.setTargets([peak], 'Peak')
+			shift = correlator.wrap_coord(peak, crosscorr.shape)
 			binx = newimagedata['camera']['binning']['x']
 			biny = newimagedata['camera']['binning']['y']
 			pixelsyx = biny * shift[0], binx * shift[1]
@@ -201,7 +201,7 @@ class GonModeler(calibrator.Calibrator):
 	def uiFit(self):
 		# label, mag, axis, terms,...
 		try:
-			self.calclient.fit(self.modellabel,
+			self.calclient.fit(self.settings['model label'],
 													self.settings['model magnification'],
 													self.settings['model axis'],
 													self.settings['model terms'],
@@ -214,7 +214,7 @@ class GonModeler(calibrator.Calibrator):
 		if not self.threadlock.acquire(0):
 			self.panel.measurementDone()
 			return
-		label = self.measurelabel
+		label = self.settings['measure label']
 		axis = self.settings['measure axis']
 		points = self.settings['measure points']
 		interval = self.settings['measure interval']
