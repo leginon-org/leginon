@@ -1085,19 +1085,39 @@ class wxRectangleObject(wxShapeObject):
 	def positionConnectionInputs(self):
 		# need to account for running out of room
 		nconnectionpoints = len(self.inputconnectionpoints)
-		spacings = range(0, self.width, self.width/(nconnectionpoints + 1))
+		#spacings = range(0, self.width, self.width/(nconnectionpoints + 1))
+		spacings = range(0, self.height, self.height/(nconnectionpoints + 1))
 		for i in range(nconnectionpoints):
 			ci = self.inputconnectionpoints[i]
-			self.setChildPosition(ci, spacings[i + 1] - ci.width/2, -ci.height/2)
+			#self.setChildPosition(ci, spacings[i + 1] - ci.width/2, -ci.height/2)
+			self.setChildPosition(ci, -ci.width/2, spacings[i + 1] - ci.height/2)
 
 	def positionConnectionOutputs(self):
 		# need to account for running out of room
 		nconnectionpoints = len(self.outputconnectionpoints)
-		spacings = range(0, self.width, self.width/(nconnectionpoints + 1))
+		#spacings = range(0, self.width, self.width/(nconnectionpoints + 1))
+		spacings = range(0, self.height, self.height/(nconnectionpoints + 1))
 		for i in range(nconnectionpoints):
 			co = self.outputconnectionpoints[i]
-			self.setChildPosition(co, spacings[i + 1] - co.width/2,
-														-co.height/2 + self.height - 1)
+			#self.setChildPosition(co, spacings[i + 1] - co.width/2,
+			#											-co.height/2 + self.height - 1)
+			self.setChildPosition(co,
+														-co.width/2 + self.width - 1,
+														spacings[i + 1] - co.height/2)
+
+class wxRoundedRectangleObject(wxRectangleObject):
+	def __init__(self, width, height, color=wxBLACK):
+		wxRectangleObject.__init__(self, width, height, color)
+
+		self.edgeradius = 5
+
+	def Draw(self, dc):
+		pen = dc.GetPen()
+		dc.SetPen(wxPen(self.color, 1, self.style))
+		x, y = self.getCanvasPosition()
+		dc.DrawRoundedRectangle(x, y, self.width, self.height, self.edgeradius)
+		dc.SetPen(pen)
+		wxShapeObject.Draw(self, dc)
 
 class wxConnectionPointObject(wxRectangleObject):
 	def __init__(self, color=wxBLACK):

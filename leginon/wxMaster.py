@@ -81,8 +81,10 @@ class BindingInput(BindingConnectionPoint):
 		BindingConnectionPoint.Draw(self, dc)
 		if self.getDrawText():
 			x, y = self.getCanvasPosition()
-			#y = y - self.height
-			dc.DrawRotatedText(self.eventclass.__name__, x, y, 90)
+			x = x - dc.GetTextExtent(self.eventclass.__name__)[0] - 2
+			y = y - self.height/2
+			#dc.DrawRotatedText(self.eventclass.__name__, x, y, 90)
+			dc.DrawText(self.eventclass.__name__, x, y)
 
 class BindingOutput(BindingConnectionPoint):
 	def __init__(self, eventclass):
@@ -100,9 +102,10 @@ class BindingOutput(BindingConnectionPoint):
 		BindingConnectionPoint.Draw(self, dc)
 		if self.getDrawText():
 			x, y = self.getCanvasPosition()
-			x = x + self.width
-			y = y + self.height
-			dc.DrawRotatedText(self.eventclass.__name__, x, y, -90)
+			x = x + self.width + 2
+			y = y - self.height/2
+#			dc.DrawRotatedText(self.eventclass.__name__, x, y, -90)
+			dc.DrawText(self.eventclass.__name__, x, y)
 
 class Node(wxObjectCanvas.wxRectangleObject):
 	def __init__(self, alias, nodeclass, dependencies):
@@ -367,11 +370,12 @@ class AddNodeDialog(wxDialog):
 		self.dependenciesentry.SetValue(str(dependencies))
 		#self.classentry.SetValue(nodeclass)
 
-class Launcher(wxObjectCanvas.wxRectangleObject):
+class Launcher(wxObjectCanvas.wxRoundedRectangleObject):
 	def __init__(self, alias):
 		self.alias = alias
-		wxObjectCanvas.wxRectangleObject.__init__(self, 400, 400, wxColor(0,128,0))
-		self.addText(self.alias)
+		wxObjectCanvas.wxRoundedRectangleObject.__init__(self, 400, 400,
+																											wxColor(0,128,0))
+		self.addText(self.alias, 5, 5)
 
 		self.popupmenu.Append(101, 'Rename...')
 		self.popupmenu.Append(102, 'Add Node...')
@@ -386,7 +390,7 @@ class Launcher(wxObjectCanvas.wxRectangleObject):
 	def setAlias(self, alias):
 		self.removeText(self.alias)
 		self.alias = alias
-		self.addText(self.alias)
+		self.addText(self.alias, 5, 5)
 
 	def menuRename(self, evt):
 		dialog = RenameDialog(None, -1)
