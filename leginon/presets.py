@@ -430,9 +430,9 @@ class PresetsManager(node.Node):
 			reversecycle = self.createCycleList(currentname, presetname, magshortcut, reverse=True)
 			if len(reversecycle) == 1:
 				p = self.presetByName(reversecycle[0])
-				if p['magnificaiton'] == self.currentpreset['magnification']
-				thiscycle = reversecycle
-				print 'magnification adjacency detected, going directly to final preset'
+				if p['magnificaiton'] == self.currentpreset['magnification']:
+					thiscycle = reversecycle
+					print 'magnification adjacency detected, going directly to final preset'
 
 		## go to every preset in thiscycle except the last
 		for pname in thiscycle[:-1]:
