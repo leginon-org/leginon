@@ -403,7 +403,7 @@ class ManualFocusDialog(wx.MiniFrame):
 		self.node.manualplayer.stop()
 
 	def onSetImage(self, evt):
-		self.imagepanel.setImageType(evt.typename, evt.image)
+		self.imagepanel.setImage(evt.image)
 
 if __name__ == '__main__':
 	class App(wx.App):
