@@ -19,10 +19,6 @@ False = 0
 True = 1
 
 class DataHandler(node.DataHandler):
-	def __init__(self, id, session, inode):
-		self.node = inode
-		node.DataHandler.__init__(self, id, session)
-	# acq/rel twice on normal data
 	def query(self, id):
 		self.lock.acquire()
 		if id == ('corrected image data',):
@@ -49,9 +45,7 @@ class Corrector(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
 
-		node.Node.__init__(self, id, session, nodelocations,
-												[(DataHandler, (self,)),
-													(dbdatakeeper.DBDataKeeper, ())], **kwargs)
+		node.Node.__init__(self, id, session, nodelocations, datahandler=DataHandler, **kwargs)
 		self.addEventOutput(event.DarkImagePublishEvent)
 		self.addEventOutput(event.BrightImagePublishEvent)
 		self.addEventOutput(event.ListPublishEvent)

@@ -11,34 +11,26 @@ import cPickle
 import dbdatakeeper
 import strictdict
 import copy
+import time
 
 if sys.platform == 'win32':
 	import pythoncom
 
-class DataHandler(datahandler.DataBinder):
-	def __init__(self, id, session, EMnode):
-		datahandler.DataBinder.__init__(self, id, session)
-		self.EMnode = EMnode
-
+#class DataHandler(datahandler.DataBinder):
+class DataHandler(node.DataHandler):
 	def query(self, id):
-		stuff = self.EMnode.getEM([id[0]])
+		stuff = self.node.getEM([id[0]])
 		result = data.EMData(self.ID(), em=stuff)
 		return result
 
 	def insert(self, idata):
-		if isinstance(idata, event.Event):
-			datahandler.DataBinder.insert(self, idata)
-		else:
+		if isinstance(idata, data.EMData):
 			print idata['id'][:-1], 'attempting to set EM'
-			self.EMnode.setEM(idata['em'])
+			self.node.setEM(idata['em'])
 			print idata['id'][:-1], 'EM set'
-
-	# borrowed from NodeDataHandler
-	def setBinding(self, eventclass, func):
-		if issubclass(eventclass, event.Event):
-			datahandler.DataBinder.setBinding(self, eventclass, func)
 		else:
-			raise event.InvalidEventError('eventclass must be Event subclass')
+			node.DataHandler.insert(self, idata)
+			
 
 class EM(node.Node):
 	def __init__(self, id, session, nodelocations,
@@ -56,9 +48,7 @@ class EM(node.Node):
 			camera = ('gatan', 'gatan')
 		self.setEMclasses(scope, camera)
 
-		node.Node.__init__(self, id, session, nodelocations,
-												[(DataHandler, (self,)),
-													(dbdatakeeper.DBDataKeeper, ())], **kwargs)
+		node.Node.__init__(self, id, session, nodelocations, datahandler=DataHandler, **kwargs)
 
 		self.addEventInput(event.LockEvent, self.doLock)
 		self.addEventInput(event.UnlockEvent, self.doUnlock)
@@ -179,6 +169,7 @@ class EM(node.Node):
 
 		self.lock.release()
 		self.pruneEMdict(result)
+		result['system time'] = time.time()
 		return result
 
 	def sortEMdict(self, emdict):
