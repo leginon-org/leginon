@@ -42,6 +42,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftDoneEvent,
 										event.ImageProcessDoneEvent] \
+								+ presets.PresetsClient.eventinputs \
 								+ EM.EMClient.eventinputs
 	eventoutputs = targetwatcher.TargetWatcher.eventoutputs \
 									+ [event.LockEvent,
