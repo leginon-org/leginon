@@ -330,6 +330,7 @@ class ImagePanel(wx.Panel):
 
 	def addTool(self, tool):
 		self.tools.append(tool)
+		return tool
 
 	# image set functions
 
@@ -754,7 +755,7 @@ class ClickTool(ImageTool):
 class ClickImagePanel(ImagePanel):
 	def __init__(self, parent, id, callback=None):
 		ImagePanel.__init__(self, parent, id)
-		self.addTool(ClickTool(self, self.toolsizer, callback))
+		self.clicktool = self.addTool(ClickTool(self, self.toolsizer, callback))
 		self.sizer.Layout()
 		self.Fit()
 

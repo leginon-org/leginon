@@ -24,7 +24,7 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.szeuc.Add(self.beucfromscope, (1, 0), (1, 1), wx.EXPAND)
 
 		self.bmeasure = wx.Button(self, -1, 'Measure...')
-		self.szbuttons.Add(self.bmeasure, (3, 0), (1, 1), wx.EXPAND)
+		self.szbuttons.Add(self.bmeasure, (4, 0), (1, 1), wx.EXPAND)
 
 	def onNodeInitialized(self):
 		gui.wx.Calibrator.Panel.onNodeInitialized(self)

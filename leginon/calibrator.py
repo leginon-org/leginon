@@ -62,3 +62,18 @@ class Calibrator(node.Node):
 		dat = self.emclient.getScope()
 		return dat
 
+	def acquireImage(self):
+		self.cam.setCameraDict(self.settings['camera settings'])
+		try:
+			imagedata = self.cam.acquireCameraImageData()
+		except camerafuncs.NoCorrectorError:
+			self.messagelog.error('No Corrector node, acquisition failed')
+			return
+
+		if imagedata is None:
+			self.messagelog.error('acquisition failed')
+			return
+
+		self.updateImage('Image', newimage)
+		return imagedata
+

@@ -24,6 +24,7 @@ class ImageUpdatedEvent(wx.PyCommandEvent):
 		self.targets = targets
 
 class Panel(gui.wx.Node.Panel):
+	imageclass = gui.wx.ImageViewer.TargetImagePanel
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
@@ -46,11 +47,13 @@ class Panel(gui.wx.Node.Panel):
 		self.bsettings = wx.Button(self, -1, 'Settings...')
 		self.bcalibrate = wx.Button(self, -1, 'Calibrate')
 		self.babort = wx.Button(self, -1, 'Abort')
+		self.bacquire = wx.Button(self, -1, 'Acquire')
 
 		self.szbuttons = wx.GridBagSizer(5, 5)
 		self.szbuttons.Add(self.bsettings, (0, 0), (1, 1), wx.EXPAND)
 		self.szbuttons.Add(self.bcalibrate, (1, 0), (1, 1), wx.EXPAND)
 		self.szbuttons.Add(self.babort, (2, 0), (1, 1), wx.EXPAND)
+		self.szbuttons.Add(self.bacquire, (3, 0), (1, 1), wx.EXPAND)
 		self.szmain.Add(self.szbuttons, (1, 0), (1, 1), wx.ALIGN_CENTER)
 		self.szmain.AddGrowableCol(1)
 
@@ -71,7 +74,7 @@ class Panel(gui.wx.Node.Panel):
 		self.szdisplay.Add(self.cdisplay, (0, 0), (1, 1), wx.ALIGN_CENTER)
 
 		# image
-		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
+		self.imagepanel = self.imageclass(self, -1)
 		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (5, 1),
 																						wx.EXPAND|wx.ALL)
 		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
@@ -88,7 +91,9 @@ class Panel(gui.wx.Node.Panel):
 				color = self.targetcolors[typename]
 			except KeyError:
 				color = None
-			self.imagepanel.addTargetType(typename, color)
+			# calibrator inheritance broken
+			if hasattr(self.imagepanel, 'addTargetType'):
+				self.imagepanel.addTargetType(typename, color)
 
 	def addTargetTypes(self, typenames):
 		evt = AddTargetTypesEvent(self, typenames)
@@ -98,7 +103,11 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
 		self.Bind(wx.EVT_BUTTON, self.onCalibrateButton, self.bcalibrate)
 		self.Bind(wx.EVT_BUTTON, self.onAbortButton, self.babort)
+		self.Bind(wx.EVT_BUTTON, self.onAcquireButton, self.bacquire)
 		self.Bind(wx.EVT_CHOICE, self.onDisplayChoice, self.cdisplay)
+
+	def onAcquireButton(self, evt):
+		self.node.acquireImage()
 
 	def onImageUpdated(self, evt):
 		if self.cdisplay.GetStringSelection() == evt.name:
