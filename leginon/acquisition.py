@@ -202,7 +202,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		cor = self.uicorrectimage.get()
 
 		## acquire image
-		imagedata = self.cam.acquireCameraImageData(correction=cor)
+		try:
+			imagedata = self.cam.acquireCameraImageData(correction=cor)
+		except camerafuncs.NoCorrectorError:
+			self.acquisitionlog.error('No corrector running to correct image')
 		if imagedata is None:
 			return 'fail'
 

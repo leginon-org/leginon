@@ -447,11 +447,11 @@ class EM(node.Node):
 		if 'focus' in orderedkeys and 'defocus' in orderedkeys:
 			self.messagelog.warning('Focus and defocus changed at the same time defocus ' + str(state['focus']) +  ' focus ' + str(state['defocus']))
 
-		print 'setEM'
+		#print 'setEM'
 		for key in orderedkeys:
 			value = state[key]
-			if key in watch_set:
-				print '%s\t\t%s' % (key, value)
+			#if key in watch_set:
+			#	print '%s\t\t%s' % (key, value)
 			if value is not None:
 				if key in scopekeys:
 					try:

@@ -148,7 +148,7 @@ class TargetWatcher(watcher.Watcher):
 			self.uicontrolstatus.set('Normal')
 			# abort
 			self.uitargetid.set(str(target['id']))
-			self.uitargetnumber.set('%d of %d' % (i, len(goodtargets)))
+			self.uitargetnumber.set('%d of %d' % (i + 1, len(goodtargets)))
 			if self.abort.isSet():
 				self.uistatus.set('Aborting current target list')
 				self.uicontrolstatus.set('Aborted')
