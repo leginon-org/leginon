@@ -7,7 +7,12 @@ import socket
 import os
 import sys
 
-manager = manager.Manager(('manager',), time.strftime('%Y-%m-%d-%H-%M'))
+try:
+	session = sys.argv[1]
+except IndexError:
+	session = time.strftime('%Y-%m-%d-%H-%M')
+
+manager = manager.Manager(('manager',), session)
 managerlocation = manager.location()
 launcher = launcher.Launcher((socket.gethostname(),),
 															{'manager': managerlocation})
