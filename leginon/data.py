@@ -1085,6 +1085,7 @@ class ImageData(InSessionData):
 			('image', strictdict.NumericArrayType),
 			('label', str),
 			('filename', str),
+			('list', ImageListData),
 		]
 		return t
 	typemap = classmethod(typemap)
@@ -1104,11 +1105,13 @@ class ImageData(InSessionData):
 			raise RuntimeError('"filename" not set for this image')
 		return self['filename'] + '.mrc'
 
+## this is not so important now that mosaics are created dynamically in
+## DB viewer
 class MosaicImageData(ImageData):
 	'''Image of a mosaic'''
 	def typemap(cls):
 		t = ImageData.typemap()
-		t += [ ('mosaic', MosaicData), ]
+		t += [ ('images', ImageListData), ]
 		t += [ ('scale', float), ]
 		return t
 	typemap = classmethod(typemap)
@@ -1142,7 +1145,8 @@ class BrightImageData(CorrectorImageData):
 class NormImageData(CorrectorImageData):
 	pass
 
-class MosaicData(InSessionData):
+### instead, use ImageListData, or ImageTargetListData
+class XXXMosaicData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
 		t += [
@@ -1229,12 +1233,9 @@ class ScaledAcquisitionImageData(ImageData):
 class ImageListData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
-		t += [ ('images', list), ]
+		t += [ ('targets', ImageTargetListData), ]
 		return t
 	typemap = classmethod(typemap)
-
-class AcquisitionImageListData(ImageListData):
-	pass
 
 class CorrectorPlanData(InSessionData):
 	'''

@@ -44,7 +44,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 										
 	event.ChangePresetEvent,
 											event.DriftDetectedEvent,
-											event.AcquisitionImageListPublishEvent] \
+											event.ImageListPublishEvent] \
 									+ EM.EMClient.eventoutputs
 
 	def __init__(self, id, session, managerlocation, target_type='acquisition', **kwargs):
@@ -63,7 +63,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		}
 		self.presetsclient = presets.PresetsClient(self)
 		self.doneevents = {}
-		self.imagelist = []
+		self.imagelistdata = None
 
 		self.defineUserInterface()
 		self.presetsclient.uistatus = self.uiacquisitionstatus
@@ -82,16 +82,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.doneevents[imageid]['received'].set()
 
 	def processData(self, newdata):
-		self.imagelist = []
+		self.imagelistdata = data.ImageListData(targets=newdata)
+		self.publish(imagelistdata, database=True)
 		targetwatcher.TargetWatcher.processData(self, newdata)
-		print 'IMAGE LIST SHOULD NOT ACTUALLY CONTAIN A LIST'
-		print 'INSTEAD, IMAGEDATA SHOULD LINK TO IMAGELISTDATA'
-		print 'for now we will make it a list of references'
-		imagelistdata = data.AcquisitionImageListData(images=self.imagelist)
-		print 'cannot publish to database for now because how do data references go in there'
-		print 'this is another reason this should be done differently'
 		self.publish(imagelistdata, pubevent=True)
-		self.imagelist = []
 
 	def validateStagePosition(self, stageposition):
 		## check for out of stage range target
@@ -325,13 +319,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 			return 'fail'
 
 		## convert CameraImageData to AcquisitionImageData
-		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=target)
+		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=target, list=self.imagelist)
 
 		if target is not None and 'grid' in target and target['grid'] is not None:
 			imagedata['grid'] = target['grid']
 
 		self.publishDisplayWait(imagedata)
-		self.imagelist.append(imagedata.reference())
 
 	def retrieveImagesFromDB(self):
 		imagequery = data.AcquisitionImageData()
