@@ -186,9 +186,7 @@ class Node(leginonobject.LeginonObject):
 		'''Call to make the node active and react to a call to exit. Calls main.'''
 		#interact_thread = self.interact()
 
-		print 'START', self.id
 		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
-		print 'NODEINIT', self.id
 		self.main()
 
 		# wait until the interact thread terminates
