@@ -98,20 +98,27 @@ class Corrector(node.Node):
 
 #	def uiSetPlanParams(self, cliplimits, badrows, badcols):
 	def uiSetPlanParams(self):
-		camconfig = self.cam.configCameraEMData()
-		state = camconfig['state']
-		plandata = self.newPlan(state)
+		camconfig = self.cam.cameraConfig()
+		newcamstate = data.CorrectorCamstateData()
+		newcamstate.friendly_update(camconfig)
+		newcamstate['id'] = None
+		plandata['camstate'] = newcamstate
 		plandata['clip_limits'] = self.cliplimits.get()
 		plandata['bad_rows'] = self.badrows.get()
 		plandata['bad_cols'] = self.badcols.get()
 		self.storePlan(plandata)
 
 	def uiGetPlanParams(self):
-		camconfig = self.cam.configCameraEMData()
-		camstate = camconfig['state']
-		plandata = self.retrievePlan(camstate)
+		camconfig = self.cam.cameraConfig()
+		newcamstate = data.CorrectorCamstateData()
+		newcamstate.friendly_update(camconfig)
+		newcamstate['id'] = None
+		plandata = self.retrievePlan(newcamstate)
 		print 'plandata', plandata
-		return dict(plandata)
+		d = dict(plandata)
+		del d['id']
+		del d['session']
+		return d
 
 	def uiAcquireDark(self):
 		imagedata = self.acquireReference(dark=True)
@@ -141,14 +148,12 @@ class Corrector(node.Node):
 		camstate.friendly_update(camdatacopy)
 		return camstate
 
-	def newPlan(self, camdata):
-		camstate = self.newCamstate(camdata)
-		plan = data.CorrectorPlanData(id=self.ID(), camstate=camstate)
-		return plan
-
-	def retrievePlan(self, camstate):
-		newcamstate = self.newCamstate(camstate)
-		plandatalist = self.research(dataclass=data.CorrectorPlanData, camstate=newcamstate)
+	def retrievePlan(self, corstate):
+		corstate['id'] = None
+		qplan = data.CorrectorPlanData()
+		qplan['camstate'] = corstate
+		qplan['id'] = None
+		plandatalist = self.research(datainstance=qplan)
 		if not plandatalist:
 			self.printerror('cannot find plan data for camera state')
 			return None
@@ -163,7 +168,7 @@ class Corrector(node.Node):
 		series = []
 		for i in range(n):
 			print 'acquiring %s of %s' % (i+1, n)
-			imagedata = self.cam.acquireCameraImageData(camdata=camdata, correction=False)
+			imagedata = self.cam.acquireCameraImageData(correction=False)
 			numimage = imagedata['image']
 			camdata = imagedata['camera']
 			scopedata = imagedata['scope']
@@ -171,9 +176,8 @@ class Corrector(node.Node):
 		return {'image series': series, 'scope': scopedata, 'camera':camdata}
 
 	def acquireReference(self, dark=False):
-		camconfig = self.cam.config()
-		camstate = camconfig['state']
-		camdata = data.CameraEMData(id=('camera',), initializer=camstate)
+		camconfig = self.cam.cameraConfig()
+		camdata = self.cam.configToEMData(camconfig)
 		if dark:
 			camdata['exposure time'] = 0
 			typekey = 'dark'
@@ -193,14 +197,18 @@ class Corrector(node.Node):
 
 		print 'averaging series'
 		ref = cameraimage.averageSeries(series)
-		self.storeRef(typekey, ref, camdata)
+		corstate = data.CorrectorCamstateData()
+		corstate.friendly_update(seriescam)
+
+		refimagedata = self.storeRef(typekey, ref, corstate)
 
 		print 'got ref, calcnorm'
-		self.calc_norm(camdata)
+		self.calc_norm(refimagedata)
 		print 'returning ref'
 		return ref
 
 	def retrieveRef(self, camstate, type):
+		camstate['id'] = None
 		print 'TYPE', type
 		if type == 'dark':
 			imagetemp = data.DarkImageData()
@@ -223,10 +231,6 @@ class Corrector(node.Node):
 		return image
 
 	def storeRef(self, type, numdata, camstate):
-		newcamstate = copy.deepcopy(camstate)
-
-		camdata = self.camstateToCamdata(camstate)
-
 		if type == 'dark':
 			imagetemp = data.DarkImageData()
 		elif type == 'bright':
@@ -237,19 +241,25 @@ class Corrector(node.Node):
 		imagetemp['camstate'] = camstate
 		print 'publishing'
 		self.publish(imagetemp, pubevent=True, database=True)
+		return imagetemp
 
-	def calc_norm(self, camstate):
-		dark = self.retrieveRef(camstate, 'dark')
-		bright = self.retrieveRef(camstate, 'bright')
-		if bright is None:
-			print 'NO BRIGHT'
-			return
-		if dark is None:
-			print 'NO DARK'
-			return
+	def calc_norm(self, corimagedata):
+		corstate = corimagedata['camstate']
+		corstate['id'] = None
+		if isinstance(corimagedata, data.DarkImageData):
+			dark = corimagedata
+			bright = self.retrieveRef(corstate, 'bright')
+			if bright is None:
+				print 'NO BRIGHT'
+				return
+		if isinstance(corimagedata, data.BrightImageData):
+			bright = corimagedata
+			dark = self.retrieveRef(corstate, 'dark')
+			if dark is None:
+				print 'NO DARK'
+				return
 
 		print 'norm 1'
-
 		norm = bright - dark
 
 		## there may be a better normavg than this
@@ -263,7 +273,7 @@ class Corrector(node.Node):
 		print 'norm 3'
 		norm = normavg / norm
 		print 'saving'
-		self.storeRef('norm', norm, camstate)
+		self.storeRef('norm', norm, corstate)
 
 	def acquireCorrectedArray(self):
 		imagedata = self.acquireCorrectedImageData()
@@ -271,7 +281,7 @@ class Corrector(node.Node):
 
 	def acquireCorrectedImageData(self):
 		if self.uifakeflag.get():
-			camconfig = self.cam.config()
+			camconfig = self.cam.cameraConfig()
 			camstate = camconfig['state']
 			numimage = Mrc.mrc_to_numeric('fake.mrc')
 			corrected = self.correct(numimage, camstate)
@@ -279,8 +289,10 @@ class Corrector(node.Node):
 		else:
 			imagedata = self.cam.acquireCameraImageData(correction=0)
 			numimage = imagedata['image']
-			camstate = imagedata['camera']
-			corrected = self.correct(numimage, camstate)
+			camdata = imagedata['camera']
+			corstate = data.CorrectorCamstateData()
+			corstate.friendly_update(camdata)
+			corrected = self.correct(numimage, corstate)
 			imagedata['image'] = corrected
 			return imagedata
 
