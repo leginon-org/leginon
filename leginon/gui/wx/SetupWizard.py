@@ -217,16 +217,22 @@ class SessionSelectPage(WizardPage):
 
 	def updateText(self, selection):
 		parent = self.GetParent()
-		session = parent.userpage.sessions[selection]
-		self.descriptiontext.SetLabel(session['comment'])
-		try:
-			self.instrumenttext.SetLabel(session['instrument']['name'])
-			self.connectcheckbox.Enable(True)
-		except (AttributeError, KeyError, TypeError):
-			self.instrumenttext.SetLabel('(No instrument)')
+		if not selection:
+			self.descriptiontext.SetLabel('')
+			self.instrumenttext.SetLabel('')
 			self.connectcheckbox.Enable(False)
-		directory = leginonconfig.mapPath(session['image path'])
-		self.imagedirectorytext.SetLabel(directory)
+			self.imagedirectorytext.SetLabel('')
+		else:
+			session = parent.userpage.sessions[selection]
+			self.descriptiontext.SetLabel(session['comment'])
+			try:
+				self.instrumenttext.SetLabel(session['instrument']['name'])
+				self.connectcheckbox.Enable(True)
+			except (AttributeError, KeyError, TypeError):
+				self.instrumenttext.SetLabel('(No instrument)')
+				self.connectcheckbox.Enable(False)
+			directory = leginonconfig.mapPath(session['image path'])
+			self.imagedirectorytext.SetLabel(directory)
 		# autoresize on static text gets reset by sizer during layout
 		for i in [self.descriptiontext, self.instrumenttext,
 							self.imagedirectorytext]:
