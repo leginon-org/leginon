@@ -330,6 +330,11 @@ class ImageCanvas(Frame):
 		self.zoomingwidget = wid
 		return wid
 
+	def crosshairs_widget(self, parent, *args, **kwargs):
+		wid = CrosshairsWidget(parent, self, bg=self['bg'], *args, **kwargs)
+		self.crosshairswidget = wid
+		return wid
+
 	def targets_widget(self, parent, *args, **kwargs):
 		wid = TargetsWidget(parent, self, bg=self['bg'], *args, **kwargs)
 		self.targetswidget = wid
@@ -429,6 +434,39 @@ class ZoomingWidget(Frame):
 
 	def get(self):
 		return self.factor
+
+class CrosshairsWidget(Frame):
+	def __init__(self, parent, imagecanvas, *args, **kargs):
+		Frame.__init__(self, parent, *args, **kargs)
+		self.imagecanvas = imagecanvas
+		self.value = BooleanVar()
+		self.button = Checkbutton(self, text='Crosshairs', command=self.toggle, variable=self.value, bg=self['bg'])
+		self.button.pack()
+
+	def toggle(self):
+		if self.value.get():
+			self.drawCrosshairs()
+		else:
+			self.delCrosshairs()
+		
+	def drawCrosshairs(self):
+		## get coords of center of canvas
+		w = int(self.imagecanvas.canvas['width'])
+		h = int(self.imagecanvas.canvas['height'])
+		centerx = w/2
+		centery = h/2
+		
+		## draw lines
+		size = 20
+		x1 = centerx - size
+		x2 = centerx + size
+		y1 = centery - size
+		y2 = centery + size
+		self.imagecanvas.canvas.create_line(x1,centery,x2,centery, fill='blue', tags='crosshairs')
+		self.imagecanvas.canvas.create_line(centerx,y1,centerx,y2, fill='blue', tags='crosshairs')
+
+	def delCrosshairs(self):
+		self.imagecanvas.canvas.delete('crosshairs')
 
 class ScalingWidget(Frame):
 	def __init__(self, parent, imagecanvas, *args, **kargs):
