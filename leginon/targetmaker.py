@@ -194,7 +194,15 @@ class SpiralTargetMaker(TargetMaker):
 			lastnumber = self.lastGridTargetNumber()
 		else:
 			## get last target number for this grid
-			lastnumber = self.getLastTargetNumber(ievent['grid'])
+			#lastnumber = self.getLastTargetNumber(ievent['grid'])
+
+			# actually, for now ignore grid, because it needs to
+			# be in the filename somehow
+			# not specifying grid here will generate
+			# target numbers that are unique for this session
+			# rather than for this grid
+			lastnumber = self.lastGridTargetNumber()
+
 		number = lastnumber + 1
 		for delta in self.makeCircle(radius, pixelsize, binning, imagesize,
 																	overlap):
