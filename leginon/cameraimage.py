@@ -6,13 +6,6 @@ import Numeric
 ## Here is my infinity contant
 inf = 1.0 / Numeric.array(0.0, Numeric.Float32)
 
-def centerOffset(camerasize, imagesize):
-	'''
-	determine offset to use image from camera center
-	useful for the 'offset' parameter in camera state
-	'''
-	r = (camerasize[0]/2 - imagesize[0]/2, camerasize[1]/2 - imagesize[1]/2)
-	return r
 
 def stdev(inputarray):
 	f = inputarray.flat
