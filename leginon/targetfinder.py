@@ -172,23 +172,6 @@ class ClickTargetFinder(TargetFinder):
 		container.addObjects((submitmethod, self.clickimage))
 		self.uiserver.addObject(container)
 
-	def OLDadvanceImage(self):
-		if self.processDataFromQueue():
-			self.currentimage = self.numarray
-		else:
-			self.currentimage = None
-		self.clickimage.setImage(self.currentimage)
-		self.clickimage.setTargets([])
-
-	def OLDsubmitTargets(self):
-		self.processTargets()
-		self.clickimage.setTargets([])
-
-	def OLDprocessTargets(self):
-		self.getTargetDataList('focus')
-		self.getTargetDataList('acquisition')
-		self.publishTargetList()
-
 	def getTargetDataList(self, typename):
 		for imagetarget in self.clickimage.getTargetType(typename):
 			column, row = imagetarget
