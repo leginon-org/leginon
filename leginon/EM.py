@@ -75,12 +75,14 @@ class EMClient(object):
 	def setScope(self, value):
 		## how to we prevent waiting forever when no scope
 		## Maybe manager should return some kind of exception
-		self.node.publish(value, pubevent=True, pubeventclass=event.SetScopeEvent, broadcast=True)
+		setevent = event.SetScopeEvent(data=value)
+		self.node.outputEvent(setevent, wait=True)
 
 	def setCamera(self, value):
 		## how to we prevent waiting forever when no camera
 		## Maybe manager should return some kind of exception
-		self.node.publish(value, pubevent=True, pubeventclass=event.SetCameraEvent, broadcast=True)
+		setevent = event.SetCameraEvent(data=value)
+		self.node.outputEvent(setevent, wait=True)
 
 
 class Request(object):
