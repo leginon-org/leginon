@@ -68,7 +68,7 @@ if __name__ == '__main__':
 	manloc = {}
 	manloc['hostname'] = sys.argv[1]
 	manloc['TCP port'] = int(sys.argv[2])
-	manloc['UNIX pipe filename'] = str(sys.argv[3])
+#	manloc['UNIX pipe filename'] = str(sys.argv[3])
 
 	myhost = socket.gethostname()
 	myid = (myhost,)

@@ -3,8 +3,8 @@
 import leginonobject
 import localtransport
 import sys
-if sys.platform != 'win32':
-	import unixtransport
+#if sys.platform != 'win32':
+#	import unixtransport
 import tcptransport
 import datahandler
 import sys
@@ -13,10 +13,11 @@ class Base(leginonobject.LeginonObject):
 	def __init__(self, id):
 		leginonobject.LeginonObject.__init__(self, id)
 		# order matters
-		if sys.platform != 'win32':
-			self.transportmodules = [localtransport, unixtransport, tcptransport]
-		else:
-			self.transportmodules = [localtransport, tcptransport]
+#		if sys.platform != 'win32':
+#			self.transportmodules = [localtransport, unixtransport, tcptransport]
+#		else:
+#			self.transportmodules = [localtransport, tcptransport]
+		self.transportmodules = [localtransport, tcptransport]
 
 class Client(Base):
 	# hostname/port -> location or whatever
