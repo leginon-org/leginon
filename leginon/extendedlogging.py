@@ -8,9 +8,12 @@ import uidata
 class Logger(logging.Logger):
 	def __init__(self, name):
 		logging.Logger.__init__(self, name)
-		self.formatter = logging.Formatter(
-				'%(asctime)s %(name)s %(module)s:%(lineno)d %(levelname)s %(message)s',
-				'%H:%M:%S')
+		self.formatter = logging.Formatter('%(asctime)s'\
+																				' %(name)s'\
+																				' %(module)s:%(lineno)d'\
+																				' %(levelname)s'\
+																				' %(message)s',
+																				'%H:%M:%S')
 		self.formatter.converter = time.localtime
 
 		self.printhandler = None

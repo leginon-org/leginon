@@ -1,4 +1,5 @@
 import event
+import logging
 import manager
 import os
 import threading
@@ -168,6 +169,13 @@ class ManagerFrame(wx.Frame):
 		self.bindmenuitem.Enable(False)
 		self.menubar.Append(self.eventmenu, '&Events')
 
+		# settings menu
+		self.settingsmenu = wx.Menu()
+		self.loggingmenuitem = wx.MenuItem(self.settingsmenu, -1, '&Logging')
+		self.Bind(wx.EVT_MENU, self.onMenuLogging, self.loggingmenuitem)
+		self.settingsmenu.AppendItem(self.loggingmenuitem)
+		self.menubar.Append(self.settingsmenu, '&Settings')
+
 		self.SetMenuBar(self.menubar)
 
 		# status bar
@@ -259,8 +267,13 @@ class ManagerFrame(wx.Frame):
 		eventclasses = event.eventClasses()
 		distmap = self.manager.distmap
 		dialog = BindEventDialog(self, nodenames, eventio, eventclasses, distmap)
-		if dialog.ShowModal() == wx.ID_OK:
-			print 'ok!'
+		dialog.ShowModal()
+		dialog.Destroy()
+
+	def onMenuLogging(self, evt):
+		logger = self.manager.logger
+		dialog = LoggingConfigurationDialog(self, logger)
+		dialog.ShowModal()
 		dialog.Destroy()
 
 	def onAddNode(self, evt):
@@ -524,6 +537,14 @@ class BindEventDialog(wx.Dialog):
 		self.Bind(wx.EVT_LISTBOX_DCLICK, self.onBoundDoubleClicked,
 							self.boundeventlistbox)
 
+		buttonsizer = wx.GridBagSizer(0, 3)
+		donebutton = wx.Button(self, wx.ID_OK, 'Done')
+		donebutton.SetDefault()
+		buttonsizer.Add(donebutton, (0, 0), (1, 1),
+										wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+		buttonsizer.AddGrowableCol(0)
+		sizer.Add(buttonsizer, (6, 0), (1, 3), wx.EXPAND)
+
 		self.dialogsizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 10)
 		self.SetSizerAndFit(self.dialogsizer)
 
@@ -719,9 +740,9 @@ class ExportApplicationDialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onBrowse, browsebutton)
 
 		buttonsizer = wx.GridBagSizer(0, 3)
-		runbutton = wx.Button(self, wx.ID_OK, 'Export')
-		runbutton.SetDefault()
-		buttonsizer.Add(runbutton, (0, 0), (1, 1),
+		exportbutton = wx.Button(self, wx.ID_OK, 'Export')
+		exportbutton.SetDefault()
+		buttonsizer.Add(exportbutton, (0, 0), (1, 1),
 										wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
 
 		cancelbutton = wx.Button(self, wx.ID_CANCEL, 'Cancel')
@@ -746,4 +767,50 @@ class ExportApplicationDialog(wx.Dialog):
 
 	def getValues(self):
 		return self.filenametextctrl.GetValue(), self.appchoice.GetStringSelection()
+
+class LoggingConfigurationDialog(wx.Dialog):
+	def __init__(self, parent, logger):
+		self.logger = logger
+		wx.Dialog.__init__(self, parent, -1, 'Logging Configuration')
+
+		self.dialogsizer = wx.GridBagSizer()
+		sizer = wx.GridBagSizer(5, 5)
+
+		self.cbpropagate = wx.CheckBox(self, -1, 'Propagate')
+		self.cbpropagate.SetValue(self.logger.propagate)
+		self.Bind(wx.EVT_CHECKBOX, self.onPropagateCheckbox, self.cbpropagate)
+		sizer.Add(self.cbpropagate, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+
+		sizer.Add(wx.StaticText(self, -1, 'Level:'), (1, 0), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+		self.clevel = wx.Choice(self, -1, choices=self._getLevelNames())
+		self.clevel.SetSelection(0)
+		self.Bind(wx.EVT_CHOICE, self.onLevelChoice, self.clevel)
+		sizer.Add(self.clevel, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		buttonsizer = wx.GridBagSizer(0, 3)
+		donebutton = wx.Button(self, wx.ID_OK, 'Done')
+		donebutton.SetDefault()
+		buttonsizer.Add(donebutton, (0, 0), (1, 1),
+										wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+		buttonsizer.AddGrowableCol(0)
+		sizer.Add(buttonsizer, (2, 0), (1, 2), wx.EXPAND)
+
+		self.dialogsizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 10)
+		self.SetSizerAndFit(self.dialogsizer)
+
+	def onPropagateCheckbox(self, evt):
+		self.logger.propagate = evt.IsChecked()
+
+	def onLevelChoice(self, evt):
+		self.logger.setLevel(evt.GetString())
+
+	def _getLevelNames(self):
+		levelnames = []
+		for i in logging._levelNames:
+			if type(i) is int:
+				levelnames.append(i)
+		levelnames.sort()
+		levelnames = map(lambda n: logging._levelNames[n], levelnames)
+		return levelnames
 
