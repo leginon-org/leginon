@@ -134,17 +134,17 @@ class TargetFinder(imagewatcher.ImageWatcher):
 			print 'TARGET publishing %s' % (target['id'],)
 			self.publish(target, database=True)
 
-		if self.targetlist:
-			targetlistdata = data.ImageTargetListData(id=self.ID(),
-																								targets=self.targetlist)
+#		if self.targetlist:
+		targetlistdata = data.ImageTargetListData(id=self.ID(),
+																							targets=self.targetlist)
 
-			self.makeTargetListEvent(targetlistdata)
+		self.makeTargetListEvent(targetlistdata)
 
-			self.publish(targetlistdata, pubevent=True)
+		self.publish(targetlistdata, pubevent=True)
 
-			# wait for target list to be processed by other node
-			if self.wait_for_done.get():
-				self.waitForTargetListDone()
+		# wait for target list to be processed by other node
+		if self.wait_for_done.get():
+			self.waitForTargetListDone()
 
 		self.targetlist = []
 
