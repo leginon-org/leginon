@@ -16,7 +16,7 @@ class Focuser(acquisition.Acquisition):
 
 		acquisition.Acquisition.__init__(self, id, sesison, nodelocations, **kwargs)
 
-	def acquire(self, preset):
+	def acquire(self, preset, trial=False):
 		'''
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we do autofocus
@@ -49,8 +49,10 @@ class Focuser(acquisition.Acquisition):
 
 		### validate stig correction
 		# stig is only valid for large defocus
-		if validdefocus and (abs(defoc) > 1e-6):
-			validstig = 1
+		if validdefocus and (abs(defoc) > 2e-6):
+			validstig = True
+		else:
+			validstig = False
 		
 		if validstig and self.stigcorrection.get():
 			print 'Stig correction'
@@ -77,6 +79,7 @@ class Focuser(acquisition.Acquisition):
 	def correctDefocus(self, delta):
 		defocus = self.researchByDataID(('defocus',))
 		defocus['em']['defocus'] += delta
+		defocus['em']['reset defocus'] = 1
 		emdata = data.EMData(('scope',), defocus)
 		print 'correcting defocus by %s' % (delta,)
 		self.publishRemote(emdata)
@@ -85,6 +88,7 @@ class Focuser(acquisition.Acquisition):
 		stage = self.researchByDataID(('stage position',))
 		newz = stage['em']['stage position']['z'] + delta
 		newstage = {'stage position': {'z': newz }}
+		newstage['reset defocus'] = 1
 		emdata = data.EMData(('scope',), em=newstage)
 		print 'correcting stage Z by %s' % (delta,)
 		self.publishRemote(emdata)
@@ -103,7 +107,7 @@ class Focuser(acquisition.Acquisition):
 		focustypes = self.registerUIData('focustypes', 'array', default=self.focus_methods.keys())
 		self.focustype = self.registerUIData('Focus Correction Type', 'string', choices=focustypes, permissions='rw', default='None')
 		self.stigcorrection = self.registerUIData('Stigmator Correction', 'boolean', permissions='rw')
-		self.publishimages = self.registerUIData('Publish Images', 'boolean', default=1)
+		self.publishimages = self.registerUIData('Publish Images', 'boolean', default=1, permissions='rw')
 
 		test = self.registerUIMethod(self.uiTest, 'Test Autofocus', ())
 
