@@ -42,7 +42,8 @@ class Panel(gui.wx.Acquisition.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_AUTOFOCUS,
 													'autofocus',
 													isToggle=True,
-													shortHelpString='Autofocus')
+													shortHelpString='Toggle Autofocus')
+		self.toolbar.ToggleTool(gui.wx.ToolBar.ID_AUTOFOCUS, True)
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_MANUAL_FOCUS,
 													'manualfocus',
 													shortHelpString='Manual Focus')
@@ -77,12 +78,12 @@ class Panel(gui.wx.Acquisition.Panel):
 		self.node.manualNow()
 
 	def onManualCheck(self, evt):
-		self.manualdialog.MakeModal(True)
+		#self.manualdialog.MakeModal(True)
 		self.manualdialog.Show()
 
 	def onManualCheckDone(self, evt):
 		self.manualdialog.Show(False)
-		self.manualdialog.MakeModal(False)
+		#self.manualdialog.MakeModal(False)
 
 	def setManualImage(self, image, typename, stats={}):
 		evt = gui.wx.Events.SetImageEvent(image, typename, stats)
@@ -352,11 +353,11 @@ class ManualFocusDialog(wx.MiniFrame):
 	def onSettingsTool(self, evt):
 		self.settingsdialog.maskradius.SetValue(self.node.maskradius)
 		self.settingsdialog.increment.SetValue(self.node.increment)
-		self.MakeModal(False)
+		#self.MakeModal(False)
 		if self.settingsdialog.ShowModal() == wx.ID_OK:
 			self.node.maskradius = self.settingsdialog.maskradius.GetValue()
 			self.node.increment = self.settingsdialog.increment.GetValue()
-		self.MakeModal(True)
+		#self.MakeModal(True)
 
 	def onPlayTool(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
