@@ -16,6 +16,9 @@ import camerafuncs
 import calibrationclient
 import copy
 import uidata
+import correlator
+import peakfinder
+import math
 
 class Navigator(node.Node):
 
@@ -32,12 +35,34 @@ class Navigator(node.Node):
 			'stage position': calibrationclient.StageCalibrationClient(self),
 			'modeled stage position': calibrationclient.ModeledStageCalibrationClient(self)
 		}
+		self.pcal = calibrationclient.PixelSizeCalibrationClient(self)
 		self.currentselection = None
 		self.stagelocations = []
 		self.getLocationsFromDB()
 
+		self.correlator = correlator.Correlator()
+		self.peakfinder = peakfinder.PeakFinder()
+		self.newshape = None
+		self.oldshape = None
+
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
 		self.addEventInput(event.ImageAcquireEvent, self.handleImageAcquire)
+
+	def newImage(self, newimage):
+		self.oldshape = self.newshape
+		self.newshape = newimage.shape
+		self.correlator.insertImage(newimage)
+
+	def newShift(self):
+		if self.oldshape is None or self.newshape is None:
+			return None
+		if self.oldshape != self.newshape:
+			return None
+		pc = self.correlator.phaseCorrelate()
+		self.peakfinder.setImage(pc)
+		peak = self.peakfinder.subpixelPeak()
+		delta = correlator.wrap_coord(peak, pc.shape)
+		return delta
 
 	def handleImageClick(self, clickevent):
 		print 'handling image click'
@@ -78,6 +103,27 @@ class Navigator(node.Node):
 		## acquire image
 		self.acquireImage()
 
+		## calibration error checking
+		if self.calerror.get():
+			newshift = self.newShift()
+			if newshift is None:
+				print 'Error not calculated'
+			else:
+				print 'REQUEST', pixelshift
+				print 'NEWSHIFT', newshift
+				r_error = pixelshift['row'] - newshift[0]
+				c_error = pixelshift['col'] - newshift[1]
+				error = r_error, c_error
+				print 'ERROR', error
+				errordist = math.hypot(error[0], error[1])
+				print 'ERROR DIST', errordist
+
+				pixsize = self.pcal.retrievePixelSize(mag)
+				binning = clickcamera['binning']['x']
+				dist = errordist * pixsize * binning
+				print 'DISTANCE (m)', dist
+
+
 		## just in case this is a fake click event
 		## (which it is now when it comes from navigator's own image
 		if isinstance(clickevent, event.ImageClickEvent):
@@ -111,8 +157,10 @@ class Navigator(node.Node):
 
 		self.scope = imagedata['scope']
 		self.camera = imagedata['camera']
-		self.shape = imagedata['image'].shape
-		self.image.setImage(imagedata['image'])
+		newimage = imagedata['image']
+		self.shape = newimage.shape
+		self.newImage(newimage)
+		self.image.setImage(newimage)
 
 		#print 'publishing image'
 		#self.publish(imagedata, pubevent=True)
@@ -318,6 +366,9 @@ class Navigator(node.Node):
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
+
+		self.calerror = uidata.Boolean('Calibration Error Checking', False, 'rw', persist=True)
+
 		movetypes = self.calclients.keys()
 		self.movetype = uidata.SingleSelectFromList('TEM Parameter', movetypes, 0)
 		self.delaydata = uidata.Float('Delay (sec)', 2.5, 'rw')
@@ -332,7 +383,7 @@ class Navigator(node.Node):
 		acqmeth = uidata.Method('Acquire', self.acquireImage)
 		self.image = uidata.ClickImage('Navigation', self.handleImageClick2, None)
 		controlcontainer = uidata.Container('Control')
-		controlcontainer.addObjects((acqmeth, self.image))
+		controlcontainer.addObjects((self.calerror, acqmeth, self.image))
 
 
 		## Location Presets
