@@ -1116,6 +1116,13 @@ class ImageData(InSessionData):
 		return impath
 
 	def filename(self):
+		if not self['filename']:
+			raise RuntimeError('"filename" not set for this image')
+		return self['filename'] + '.mrc'
+
+	### now you just have to set 'filename' to use the new filename()
+	### method, or just implement a new filename() function.
+	def OLDfilename(self):
 		'''
 		create a unique filename for this image
 		filename format:  [session]_[label]_[nodename]_[integer].mrc
@@ -1225,11 +1232,6 @@ class AcquisitionImageData(PresetImageData):
 		return t
 	typemap = classmethod(typemap)
 
-	def filename(self):
-		if not self['filename']:
-			raise RuntimeError('no filename set for this image')
-		return self['filename'] + '.mrc'
-
 ## actually, this has only some things in common with AcquisitionImageData
 ## but enough that it is easiest to inherit it
 class FilmData(AcquisitionImageData):
@@ -1242,11 +1244,6 @@ class ProcessedAcquisitionImageData(ImageData):
 		t += [ ('source', AcquisitionImageData), ]
 		return t
 	typemap = classmethod(typemap)
-
-	def filename(self):
-		if not self['filename']:
-			raise RuntimeError('no filename set for this image')
-		return self['filename'] + '.mrc'
 
 class AcquisitionFFTData(ProcessedAcquisitionImageData):
 	'''Power Spectrum of AcquisitionImageData'''
