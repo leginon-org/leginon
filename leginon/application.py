@@ -8,7 +8,7 @@ class Application(leginonobject.LeginonObject):
 	def __init__(self, id, node, name=None):
 		leginonobject.LeginonObject.__init__(self, id)
 		self.node = node
-		self.data = data.Application2Data(id=self.ID())
+		self.data = data.ApplicationData(id=self.ID())
 		if name is not None:
 			self.data['name'] = name
 		self.nodespecs = []
@@ -19,7 +19,7 @@ class Application(leginonobject.LeginonObject):
 
 	def clear(self):
 		name = self.getName()
-		self.data = data.Application2Data(id=self.ID())
+		self.data = data.ApplicationData(id=self.ID())
 		if name is not None:
 			self.data['name'] = name
 		self.nodespecs = []
@@ -40,7 +40,7 @@ class Application(leginonobject.LeginonObject):
 			if alias == spec['alias']:
 				self.nodespecs.remove(spec)
 				break
-		nodespecdata = data.NodeSpec2Data()
+		nodespecdata = data.NodeSpecData()
 		nodespecdata['class string'] = class_string
 		nodespecdata['alias'] = alias
 		nodespecdata['launcher alias'] = launcheralias
@@ -66,7 +66,7 @@ class Application(leginonobject.LeginonObject):
 				self.nodespecs.remove(nodespec)
 
 	def addBindingSpec(self, eventclass_string, fromnodealias, tonodealias):
-		bindingspecdata = data.BindingSpec2Data()
+		bindingspecdata = data.BindingSpecData()
 		bindingspecdata['event class string'] = eventclass_string
 		bindingspecdata['from node alias'] = fromnodealias
 		bindingspecdata['to node alias'] = tonodealias
@@ -81,7 +81,7 @@ class Application(leginonobject.LeginonObject):
 		self.bindingspecs.append(bindingspecdata)
 
 	def delBindingSpec(self, eventclass_string, fromnodealias, tonodealias):
-		bindingspecdata = data.BindingSpec2Data()
+		bindingspecdata = data.BindingSpecData()
 		bindingspecdata['event class string'] = eventclass_string
 		bindingspecdata['from node alias'] = fromnodealias
 		bindingspecdata['to node alias'] = tonodealias
@@ -171,7 +171,7 @@ class Application(leginonobject.LeginonObject):
 			self.node.publish(bindingspecdata, database=True)
 
 	def load(self, name):
-		instance = data.Application2Data(name=name)
+		instance = data.ApplicationData(name=name)
 		applicationdatalist = self.node.research(datainstance=instance)
 		try:
 			self.data = applicationdatalist[0]
@@ -179,8 +179,8 @@ class Application(leginonobject.LeginonObject):
 			raise ValueError('no such application')
 		instance['session'] = self.data['session']
 		instance['id'] = self.data['id']
-		nodeinstance = data.NodeSpec2Data(application=instance)
+		nodeinstance = data.NodeSpecData(application=instance)
 		self.nodespecs = self.node.research(datainstance=nodeinstance)
-		bindinginstance = data.BindingSpec2Data(application=instance)
+		bindinginstance = data.BindingSpecData(application=instance)
 		self.bindingspecs = self.node.research(datainstance=bindinginstance)
 
