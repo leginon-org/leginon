@@ -139,7 +139,7 @@ class Data(Object):
 		self.persist = persist
 
 		# no callback?
-		self.set(value)
+		self.set(value, postcallback=False)
 
 	def setCallback(self, callback):
 		if not callable(callback) and callback is not None:

@@ -252,7 +252,7 @@ class Server(xmlrpc.Server, uidata.Container):
 					except:
 						print 'Error unpickling UI value'
 						return False
-					uiobject.set(value, server=False)
+					uiobject.set(value, server=False, postcallback=False)
 					return True
 				except KeyError:
 					return False
