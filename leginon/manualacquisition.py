@@ -64,9 +64,9 @@ class ManualAcquisition(node.Node):
 		else:
 			prefix = 'un'
 		self.logger.info('Acquiring %scorrected image...' % prefix)
+		self.instrument.ccdcamera.Settings = self.settings['camera settings']
 		if self.settings['save image']:
 			try:
-				self.instrument.ccdcamera.Settings = self.settings['camera settings']
 				if correct:
 					dataclass = data.CorrectedCameraImageData
 				else:
