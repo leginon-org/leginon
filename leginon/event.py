@@ -152,13 +152,13 @@ class TrialImagePublishEvent(PresetImagePublishEvent):
 class CorrectorImagePublishEvent(CameraImagePublishEvent):
 	dataclass = data.CorrectorImageData
 
-class TileImagePublishEvent(CameraImagePublishEvent):
-	'Event indicating image tile was published'
-	dataclass = data.TileImageData
+#class TileImagePublishEvent(CameraImagePublishEvent):
+#	'Event indicating image tile was published'
+#	dataclass = data.TileImageData
 
-class MosaicImagePublishEvent(CameraImagePublishEvent):
-	'Event indicating mosaic image was published'
-	dataclass = data.MosaicImageData
+#class MosaicImagePublishEvent(CameraImagePublishEvent):
+#	'Event indicating mosaic image was published'
+#	dataclass = data.MosaicImageData
 
 class DarkImagePublishEvent(CorrectorImagePublishEvent):
 	dataclass = data.DarkImageData
@@ -178,9 +178,9 @@ class CrossCorrelationImagePublishEvent(CorrelationImagePublishEvent):
 class PhaseCorrelationImagePublishEvent(CorrelationImagePublishEvent):
 	dataclass = data.PhaseCorrelationImageData
 
-class StateMosaicPublishEvent(PublishEvent):
-	'Event indicating state mosaic data was published'
-	dataclass = data.StateMosaicData
+#class StateMosaicPublishEvent(PublishEvent):
+#	'Event indicating state mosaic data was published'
+#	dataclass = data.StateMosaicData
 
 class ImageTargetListPublishEvent(PublishEvent):
 	dataclass = data.ImageTargetListData

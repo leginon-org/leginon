@@ -289,14 +289,25 @@ class EMTile(Tile):
 class EMMosaic(Mosaic):
 	def __init__(self, calibrationclients):
 		self.calibrationclients = calibrationclients
-		#self.calibration = self.calibrationclients.keys()[0]
-		self.calibration = 'stage position'
+		self.setCalibrationParameter('stage position')
 
 		Mosaic.__init__(self)
 
 		self.positionmethods['calibration'] = self.positionByCalibration
 		self.automaticpriority = ['calibration', 'correlation']
 		self.positionmethod = 'calibration'
+
+	def getCalibrationParameters(self):
+		return self.calibrationclients.keys()
+
+	def getCalibrationParameter(self):
+		return self.calibration
+
+	def setCalibrationParameter(self, parameter):
+		if parameter in self.getCalibrationParameters():
+			self.calibration = parameter
+		else:
+			raise ValueError('invalid calibration parameter')
 
 	def addTile(self, imagedata):
 		image = imagedata['image']

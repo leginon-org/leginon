@@ -60,8 +60,8 @@ class ClickTargetFinder(TargetFinder):
 		self.processlock = threading.Lock()
 		self.currentimage = None
 
-		self.defineUserInterface()
 		if self.__class__ == ClickTargetFinder:
+			self.defineUserInterface()
 			self.start()
 
 	def processData(self, newdata):
@@ -129,6 +129,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		}
 		self.mosaic = mosaic.EMMosaic(self.calclients)
 		if self.__class__ == MosaicClickTargetFinder:
+			self.defineUserInterface()
 			self.start()
 
 	def processData(self, newdata):
@@ -157,10 +158,25 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.mosaic.clear()
 		self.clickimage.setImage(None)
 
+	def uiSetCalibrationParameter(self, value):
+		if not hasattr(self, 'uicalibrationparameter'):
+			return value
+		parameter = self.uicalibrationparameter.getSelectedValue(value)
+		try:
+			self.mosaic.setCalibrationParameter(parameter)
+		except ValueError:
+			self.printerror('invalid calibration parameter specified')
+		return value
+
 	def defineUserInterface(self):
 		ClickTargetFinder.defineUserInterface(self)
+		parameters = self.mosaic.getCalibrationParameters()
+		parameter = parameters.index(self.mosaic.getCalibrationParameter())
+		self.uicalibrationparameter = uidata.SingleSelectFromList(
+																'Calibration Parameter', parameters, parameter,
+																callback=self.uiSetCalibrationParameter)
 		clearmethod = uidata.Method('Reset Mosaic', self.mosaicClear)
 		container = uidata.MediumContainer('Mosaic Click Target Finder')
-		container.addObjects((clearmethod,))
+		container.addObjects((clearmethod, self.uicalibrationparameter))
 		self.uiserver.addObject(container)
 
