@@ -28,6 +28,32 @@ class DataAccessError(DataError):
 class DataDuplicateError(DataError):
 	pass
 
+'''
+How DataManager manages references between Data
+-----------------------------------------------
+Take the case of one Data instance referencing another Data instance:
+     iii = ImageData()
+     sss = SessionData()
+     iii['session'] = sss
+In this example, there is no direct reference between sss and iii.
+Instead, iii['session'] actually contains a DataReference object.
+If we try to access iii['session'], the DataManager will use the
+DataReference to find the actual data (sss).  This dereferencing
+operation happens automatically, for example:
+     mysession = iii['session']
+Now mysession is sss.
+
+If dereferencing is not desired, Data objects have a special method:
+     myref = iii.special_getitem('session', dereference=False)
+will return a reference to sss instead of sss.
+
+pickling and deepcopying are optimized because they do not dereference.
+If iii is pickled or deepcopied, sss is not.
+If iii is stored in the database
+Instead, iii['session']
+contains a DataReference object.
+'''
+
 ## manages weak references between data instances
 ## DataManager holds strong references to every Data instance that
 ## is created.  The memory size is restricted such that the first instances
@@ -385,6 +411,16 @@ class Data(DataDict, leginonobject.LeginonObject):
 	initializer and kwargs, the kwargs value is used.
 	'''
 	def __init__(self, initializer=None, hold=False, **kwargs):
+		####################################################
+		# remember:  pickle and copy do not call __init__
+		# when they regenerate an instance
+		#  Below we have defined a special __deepcopy__
+		#  so that the new copy gets a new dmid.
+		#  I would still suggest not using deepcopy.
+		#  Pickle is left alone because dmid should stay 
+		#  the same.  However, DataManager should do some
+		#  dmid tracking when getting remote data (via pickle)
+		####################################################
 		DataDict.__init__(self)
 
 		## Database ID (primary key)
@@ -413,20 +449,6 @@ class Data(DataDict, leginonobject.LeginonObject):
 		self.update(kwargs)
 
 		leginonobject.LeginonObject.__init__(self)
-
-	## definining __reduce__ allows unpickler to call __init__
-	## which is necessary to register data with datamanager
-	## After calling __init__, __dict__ will be updated, so we
-	## have to remove dmid since that has already been set in __init__
-	def XXX__reduce__(self):
-		state = dict(self.__dict__)
-		del state['dmid']
-		## giving the new object an initializer has a lot of
-		## duplicate information to what is given in the
-		## state dict, but it is necessary to get the dict
-		## base class to have its items set
-		initializer = dict(self.items(dereference=False))
-		return (self.__class__, (initializer,), state)
 
 	def __deepcopy__(self, memo={}):
 		raise RuntimeError('who is using this???')
@@ -626,8 +648,8 @@ class DataHandler(object):
 	'''
 	def __init__(self, dataclass, getdata=None, setdata=None):
 		self.dataclass = dataclass
-		self.getData = getdata
-		self.setData = setdata
+		self._getData = getdata
+		self._setData = setdata
 
 		## should always be None for DataHandler
 		self.dbid = None
@@ -638,6 +660,12 @@ class DataHandler(object):
 		self.dmid = None
 
 		datamanager.insert(self)
+
+	def getData(self):
+		return self._getData()
+
+	def setData(self, value):
+		self._setData(value)
 
 	def reference(self):
 		dr = DataReference(datahandler=self)
