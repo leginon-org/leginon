@@ -96,7 +96,6 @@ class Corrector(node.Node):
 		newcamstate.friendly_update(camconfig)
 		newcamstate['id'] = None
 		current = self.cam.currentCameraEMData()
-		newcamstate['em host'] = current['em host']
 		plandata = data.CorrectorPlanData()
 		plandata['camstate'] = newcamstate
 		plandata['clip_limits'] = self.cliplimits.get()
@@ -117,31 +116,44 @@ class Corrector(node.Node):
 		return d
 
 	def uiAcquireDark(self):
-		imagedata = self.acquireReference(dark=True)
-		print 'Dark Stats: %s' % (self.stats(imagedata),)
-		self.ui_image.set(imagedata)
-		return ''
+		try:
+			imagedata = self.acquireReference(dark=True)
+		except node.PublishError:
+			self.outputError('Cannot set EM parameter, EM may not be running')
+		else:
+			print 'Dark Stats: %s' % (self.stats(imagedata),)
+			self.ui_image.set(imagedata)
 
 	def uiAcquireBright(self):
-		imagedata = self.acquireReference(dark=False)
-		print 'Bright Stats: %s' % (self.stats(imagedata),)
-		self.ui_image.set(imagedata)
-		return ''
+		try:
+			imagedata = self.acquireReference(dark=False)
+		except node.PublishError:
+			self.outputError('Cannot set EM parameter, EM may not be running')
+		else:
+			print 'Bright Stats: %s' % (self.stats(imagedata),)
+			self.ui_image.set(imagedata)
 
 	def uiAcquireRaw(self):
 		camconfig = self.cam.cameraConfig()
-		imagedata = self.cam.acquireCameraImageData(camconfig=camconfig, correction=0)
-		imagearray = imagedata['image']
-		print 'Corrected Stats: %s' % (self.stats(imagearray),)
-		self.ui_image.set(imagearray)
-		return ''
+		try:
+			imagedata = self.cam.acquireCameraImageData(camconfig=camconfig,
+																									correction=0)
+		except node.PublishError:
+			self.outputError('Cannot set EM parameter, EM may not be running')
+		else:
+			imagearray = imagedata['image']
+			print 'Corrected Stats: %s' % (self.stats(imagearray),)
+			self.ui_image.set(imagearray)
 
 	def uiAcquireCorrected(self):
 		camconfig = self.cam.cameraConfig()
-		imagedata = self.acquireCorrectedArray(camconfig)
-		print 'Corrected Stats: %s' % (self.stats(imagedata),)
-		self.ui_image.set(imagedata)
-		return ''
+		try:
+			imagedata = self.acquireCorrectedArray(camconfig)
+		except node.PublishError:
+			self.outputError('Cannot set EM parameter, EM may not be running')
+		else:
+			print 'Corrected Stats: %s' % (self.stats(imagedata),)
+			self.ui_image.set(imagedata)
 
 	def newCamstate(self, camdata):
 		camdatacopy = copy.deepcopy(camdata)
