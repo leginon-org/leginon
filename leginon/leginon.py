@@ -21,13 +21,12 @@ class Leginon(Tkinter.Frame):
 		setupwizard = leginonsetup.SetupWizard(self)
 		self.manager = setupwizard.manager
 		self.remotelauncher = setupwizard.remotelauncher
+		if self.manager is None:
+			return
 		self.startApplication()
 		self.startGUI()
 
 	def startApplication(self):
-		if self.manager is None:
-			return
-
 		self.manager.app.load(applicationfilename)
 
 		locallauncherid = self.localLauncherID()
