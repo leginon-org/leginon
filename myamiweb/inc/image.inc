@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.16 $
- *	@version $Id: image.inc,v 1.16 2005-01-24 22:55:19 dfellman Exp $
+ *	@version $Revision: 1.17 $
+ *	@version $Id: image.inc,v 1.17 2005-01-27 00:13:51 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -49,7 +49,8 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		$p[displaytargets]=false;
 		$p[scalebar]=false;
 		$fft = $leginondata->getImageFFT($imageId);
-		$filename = $fft[fftimage];
+		if (!$filename = $fft[fftimage]);
+			$filename = $leginondata->getFilenameFromId($imageId);
 	} else {
 		$filename = $leginondata->getFilenameFromId($imageId);
 	}
@@ -65,8 +66,12 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		if ($binning=='auto')
 			$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
 //		$img = imagecreatefrommrc($pic, $p[minpix], $p[maxpix], $p[colormap], $binning);
-		if (function_exists($p[filter]))
+		if ($p[fft])
+			$img = imageCreateFFTFromMRC($pic, 10, $p[minpix], $p[maxpix], $p[colormap]);
+
+		else if (function_exists($p[filter]))
 			$img = $p[filter]($pic, $p[minpix], $p[maxpix], $p[colormap], $binning);
+
 		else
 			$img = getdefault($pic, $p[minpix], $p[maxpix], $p[colormap], $binning);
 
