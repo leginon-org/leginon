@@ -21,6 +21,22 @@ class WatcherQueue(Queue.Queue):
 			self.callback(self.queue)
 		return item
 
+	def pause(self):
+		self.mutex.acquire()
+
+	def resume(self):
+		self.mutex.release()
+
+	def clear(self):
+		if not self.esema.acquire(0):
+			return
+		self.mutex.acquire()
+		was_full = self._full()
+		self.queue = []
+		if was_full:
+			self.fsema.release()
+		self.mutex.release()
+
 class Watcher(node.Node):
 	'''
 	Base class for a node that watches for data to be published
@@ -122,11 +138,12 @@ class Watcher(node.Node):
 		self.processDataFromQueue(blocking=0)
 
 	def uiClearQueue(self):
-		while 1:
-			try:
-				self.dataqueue.get(0)
-			except Queue.Empty:
-				pass
+		self.dataqueue.clear()
+#		while 1:
+#			try:
+#				self.dataqueue.get(0)
+#			except Queue.Empty:
+#				pass
 
 ## an example of subclassing Watcher
 
