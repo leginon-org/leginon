@@ -74,13 +74,13 @@ class EM(node.Node):
 
 		ids = []
 		if self.scope:
-			ids += 'scope'
+			ids.append('scope')
 			ids += self.scope.keys()
 		if self.camera:
-			ids += 'camera'
+			ids.append('camera')
 			ids += self.camera.keys()
 		if self.scope and self.camera:
-			ids += 'all'
+			ids.append('all')
 
 		e = event.ListPublishEvent(ids)
 		self.announce(e)
