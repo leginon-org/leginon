@@ -38,9 +38,11 @@ class Launcher(node.Node):
 		self.publishNodeClasses()
 		self.outputEvent(event.NodeInitializedEvent(node=self.name))
 
+	'''
 	def exit(self):
 		self.exitNodes()
 		node.Node.exit(self)
+	'''
 
 	def publishNodeClasses(self):
 		#reload(nodeclassreg)

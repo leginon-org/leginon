@@ -147,7 +147,14 @@ class Navigator(node.Node):
 				newmovetype = movetype
 				newstate = {newmovetype: newstate[newmovetype]}
 		emdat = data.ScopeEMData(initializer=newstate)
-		self.emclient.setScope(emdat)
+		try:
+			self.emclient.setScope(emdat)
+		except node.PublishError:
+			self.logger.exception(errstr % 'unable to set instrument')
+			return
+		except node.ConfirmationNoBinding:
+			self.logger.exception(errstr % 'unable to set instrument (not bound)')
+			return
 
 		# wait for a while
 		time.sleep(self.settings['pause time'])
@@ -332,6 +339,7 @@ class Navigator(node.Node):
 		'''
 		loc is either index, location, or name
 		'''
+		errstr = 'Set instrument failed: %s'
 		locdata = None
 		if type(loc) is int:
 			locdata = self.stagelocations[p]
@@ -343,11 +351,11 @@ class Navigator(node.Node):
 		elif isinstance(loc, data.StageLocationData):
 			locdata = loc
 		else:
-			self.logger.error('Bad argument for toScope')
+			self.logger.error(errstr % 'bad argument')
 			return
 
 		if locdata is None:
-			self.logger.error('No such location')
+			self.logger.error(errstr % 'no such location')
 			return
 
 		name = locdata['name']
@@ -365,7 +373,9 @@ class Navigator(node.Node):
 		try:
 			self.emclient.setScope(scopedata)
 		except node.PublishError:
-			self.logger.exception('Maybe EM is not running')
+			self.logger.exception(errstr % 'unable to set instrument')
+		except node.ConfirmationNoBinding:
+			self.logger.exception(errstr % 'unable to set instrument (not bound)')
 		else:
 			self.currentlocation = locdata
 			self.logger.info('Moved to location %s' % (name,))
