@@ -250,7 +250,8 @@ class InstrumentData(Data):
 					('scope', str),
 					('camera', str),
 					('hostname', str),
-					('camera size', int)]
+					('camera size', int),
+					('camera pixel size', float)]
 		return t
 	typemap = classmethod(typemap)
 
@@ -302,6 +303,7 @@ scope_params = [
 	('column pressure', float),
 	('turbo pump', str),
 	('high tension', int),
+	('screen position', str),
 ]
 camera_params = [
 	('dimension', dict),
@@ -387,6 +389,16 @@ class DriftData(InSessionData):
 
 class CalibrationData(InSessionData):
 	pass
+
+class CameraSensitivityCalibrationData(CalibrationData):
+	def typemap(cls):
+		t = CalibrationData.typemap()
+		t += [
+			('high tension', int),
+			('sensititivy', int),
+		]
+		return t
+	typemap = classmethod(typemap)
 
 class MagDependentCalibrationData(CalibrationData):
 	def typemap(cls):
