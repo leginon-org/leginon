@@ -198,6 +198,18 @@ class ImageAcquireEvent(Event):
 	def __init__(self, id):
 		Event.__init__(self, id)
 	
+class PixelShiftEvent(Event):
+	def __init__(self, id, content, confirm=False):
+		Event.__init__(self, id, dict(content), confirm)
+
+class StagePixelShiftEvent(PixelShiftEvent):
+	def __init__(self, id, content, confirm=False):
+		Event.__init__(self, id, dict(content), confirm)
+
+class ImageShiftPixelShiftEvent(PixelShiftEvent):
+	def __init__(self, id, content, confirm=False):
+		Event.__init__(self, id, dict(content), confirm)
+
 ###########################################################
 ###########################################################
 ## event related exceptions

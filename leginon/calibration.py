@@ -58,6 +58,7 @@ class Calibration(node.Node):
 		self.correlationthreshold = 0.05
 		# asdf
 		self.axislist = ['x', 'y']
+		self.calibration = {}
 
 		node.Node.__init__(self, id, nodelocations)
 		self.clearStateImages()
@@ -121,7 +122,6 @@ class Calibration(node.Node):
 
 		print 'hello again from calibrate'
 
-		cal = {}
 		# might reuse value from previous axis
 		for axis in self.axislist:
 			for i in range(self.attempts):
@@ -138,7 +138,7 @@ class Calibration(node.Node):
 				if verdict == 'good':
 					print "good"
 					self.publishRemote(data.EMData('scope', self.state(0.0, axis)))
-					cal.update({axis + " pixel shift": {'x': shiftinfo['shift']['x'], 'y': cdata['shift']['y'], 'value': value}})
+					self.calibration.update({axis + " pixel shift": {'x': shiftinfo['shift']['x'], 'y': cdata['shift']['y'], 'value': value}})
 				elif verdict == 'small shift':
 					print "too small"
 					adjustedrange[0] = value
@@ -149,7 +149,6 @@ class Calibration(node.Node):
 					raise RuntimeError('hung jury')
 
 		self.publishRemote(data.EMData('scope', self.state(0.0, axis)))
-		return cal
 
 	def clearStateImages(self):
 		self.images = []
@@ -354,9 +353,13 @@ class StageCalibration(Calibration):
 class ImageShiftCalibration(Calibration):
 	def __init__(self, id, nodelocations):
 		Calibration.__init__(self, id, nodelocations)
+		self.addEventInput(event.ImageShiftPixelShiftEvent, self.pixelShift)
 
 	def state(self, value, axis):
 		return {'image shift': {axis: value}}
+
+	def pixelShift(self, ievent):
+		
 
 
 class AutoFocusCalibration(Calibration):
