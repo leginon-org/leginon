@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-12-08 01:47:30 $
+# $Date: 2004-12-08 02:07:17 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -49,6 +49,14 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 	def getTargetPositions(self, typename):
 		return self.imagepanel.getTargetPositions(typename)
+
+	def submitTargets(self):
+		evt = gui.wx.Events.SubmitTargetsEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def targetsSubmitted(self):
+		evt = gui.wx.Events.TargetsSubmittedEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onNodeInitialized(self):
 		gui.wx.TargetFinder.Panel.onNodeInitialized(self)
