@@ -41,6 +41,14 @@ try:
 except ImportError:
 	pass
 
+# if a stage position movement is less than the following, then ignore it
+minimum_stage = {
+	'x': 5e-8,
+	'y': 5e-8,
+	'z': 5e-8,
+	'a': 6e-5,
+}
+
 class Tecnai(tem.TEM):
 	name = 'Tecnai'
 	magtable = [
@@ -87,7 +95,7 @@ class Tecnai(tem.TEM):
 			'beam blank': {'get': 'getBeamBlank', 'set': 'setBeamBlank'},
 			'gun tilt': {'get': 'getGunTilt', 'set': 'setGunTilt'},
 			'gun shift': {'get': 'getGunShift', 'set': 'setGunShift'},
-			'high tension': {'get': 'getHighTension', 'set': 'setHighTension'},
+			'high tension': {'get': 'getHighTension'}, #'set': 'setHighTension'},
 			'intensity': {'get': 'getIntensity', 'set': 'setIntensity'},
 			'dark field mode': {'get': 'getDarkFieldMode', 'set': 'setDarkFieldMode'},
 			'stigmator': {'get': 'getStigmator', 'set': 'setStigmator'},
@@ -226,8 +234,19 @@ class Tecnai(tem.TEM):
 	def getCorrectedStagePosition(self):
 		return self.correctedstage
 
+	def checkStagePosition(self, position):
+		current = self.getStagePosition()
+		bigenough = {}
+		for axis in ('x', 'y', 'z', 'a'):
+			if axis in position:
+				delta = abs(position[axis] - current[axis])
+				if delta > minimum_stage[axis]:
+					bigenough[axis] = position[axis]
+		return bigenough
+
 	def setStagePosition(self, value):
 		# pre-position x and y (maybe others later)
+		value = self.checkStagePosition(value)
 		if self.correctedstage:
 			delta = 2e-6
 			stagenow = self.getStagePosition()
@@ -336,8 +355,10 @@ class Tecnai(tem.TEM):
 	def getHighTension(self):
 		return int(self.tecnai.Gun.HTValue)
 	
+	'''
 	def setHighTension(self, ht):
 		self.tecnai.Gun.HTValue = ht
+	'''
 	
 	def getIntensity(self):
 		return float(self.tecnai.Illumination.Intensity)
