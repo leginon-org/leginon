@@ -438,7 +438,7 @@ class Blob(object):
 		
 		## need to calculate value list here
 		# this is fake:
-		self.value_list = [2]
+		#self.value_list = [2]
 
 		value_array = Numeric.array(self.value_list, Numeric.Float32)
 		valuesum = Numeric.sum(value_array)

@@ -196,6 +196,8 @@ class BlobFinderPlugin(Plugin):
 		minblobsize = self.minblobsize.get()
 		maxblobsize = self.maxblobsize.get()
 		scale = self.scale.getSelectedValue()
+		meanthreshold = self.meanthreshold.get()
+		stddevthreshold = self.stddevthreshold.get()
 		if scale is None:
 			scale = 1
 		else:
@@ -207,6 +209,12 @@ class BlobFinderPlugin(Plugin):
 																	maxblobsize/scale, minblobsize/scale)
 		except (ValueError, imagefun.TooManyBlobs):
 			blobs = []
+
+		for blob in list(blobs):
+			stats = blob.stats
+			if stats['mean'] > meanthreshold or stats['stddev'] > stddevthreshold:
+				blobs.remove(blob)
+
 		targets = map(lambda b: (scale*b.stats['center'][1],
 															scale*b.stats['center'][0]),
 									blobs)
@@ -226,10 +234,21 @@ class BlobFinderPlugin(Plugin):
 																			position={'position': (0, 0)})
 		self.blobsizecontainer.addObject(self.maxblobsize,
 																			position={'position': (0, 1)})
+
 		scales = ['1', '1/2', '1/4', '1/8', '1/16']
 		self.scale = uidata.SingleSelectFromList('Scale', scales, 0, persist=True)
+
+		self.meanthreshold = uidata.Number('Mean', 0, 'rw', persist=True,
+																				size=(5,1))
+		self.stddevthreshold = uidata.Number('Standard Deviation', 0, 'rw',
+																					persist=True, size=(5,1))
+		thresholdcontainer = uidata.Container('Threshold')
+		thresholdcontainer.addObject(self.meanthreshold)
+		thresholdcontainer.addObject(self.stddevthreshold)
+
 		self.uicontainer.addObjects((self.blobsizecontainer, self.border,
-																	self.maxblobs, self.scale))
+																	self.maxblobs, self.scale,
+																	thresholdcontainer))
 
 class SquareBlobFinderPlugin(BlobFinderPlugin):
 	name = 'Square Blob Finder'
@@ -258,6 +277,7 @@ class SquareBlobFinderPlugin(BlobFinderPlugin):
 																	position={'position': (0, 0)})
 		tolerancecontainer.addObject(self.maxblobsizetolerance,
 																	position={'position': (0, 1)})
+
 		self.uicontainer.deleteObject(self.blobsizecontainer)
 		blobsizecontainer = uidata.Container('Square Blob Size')
 		blobsizecontainer.addObject(self.squaredimension)
