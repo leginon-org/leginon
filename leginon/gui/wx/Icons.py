@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Icons.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-29 22:38:52 $
+# $Date: 2004-11-02 19:46:28 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -17,6 +17,17 @@ import wx
 wx.InitAllImageHandlers()
 
 bitmaps = {}
+
+def empty():
+	bitmap = wx.EmptyBitmap(16, 16)
+	dc = wx.MemoryDC()
+	dc.SelectObject(bitmap)
+	dc.BeginDrawing()
+	dc.Clear()
+	dc.EndDrawing()
+	dc.SelectObject(wx.NullBitmap)
+	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
+	return bitmap
 
 def icon(name):
 	if name is None:
@@ -34,7 +45,7 @@ def _icon(name):
 	image = wx.Image(path)
 	if not image.Ok():
 		return None
-	image.ConvertAlphaToMask(64)
+	#image.ConvertAlphaToMask(64)
 	bitmap = wx.BitmapFromImage(image)
 	return bitmap
 
