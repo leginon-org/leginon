@@ -85,11 +85,14 @@ class ImagePanel(wxPanel):
 				scale[i] = float(self.scale_entry[i].GetValue())
 			except:
 				self.scale_entry[i].SetValue(str(self.scale[i]))
+		viewoffset = self.panel.GetViewStart()
+		viewoffset = (viewoffset[0]/self.scale[0], viewoffset[1]/self.scale[1])
 		self.scale = tuple(scale)
 		if self.bitmap is not None:
 			self.panel.SetVirtualSize((self.bitmap.GetWidth()*self.scale[0],
 																	self.bitmap.GetHeight()*self.scale[1]))
 		self.UpdateDrawing()
+		self.panel.Scroll(viewoffset[0]*self.scale[0], viewoffset[1]*self.scale[1])
 		#self.panel.Refresh(0)
 
 	def PILsetImageFromMrcString(self, imagestring):
