@@ -718,19 +718,20 @@ class EventDialog(mySimpleDialog):
 	def body(self, master):
 		Tkinter.Label(master, text='Event:').grid(row=0)
 
-		scrollbar = Tkinter.Scrollbar(master, orient=Tkinter.VERTICAL)
-		self.eventslistbox = Tkinter.Listbox(master, yscrollcommand=scrollbar.set)
-		scrollbar.config(command=self.eventslistbox.yview)
+		self.eventslistbox = Tkinter.Listbox(master)
+		self.eventslistbox.grid(row=0, column=1, sticky=Tkinter.N+Tkinter.S)
+
+		scrollbar = Tkinter.Scrollbar(master, orient=Tkinter.VERTICAL,
+																					command=self.eventslistbox.yview)
+		scrollbar.grid(row=0, column=2, sticky=Tkinter.N+Tkinter.S)
+		self.eventslistbox.configure(yscrollcommand=scrollbar.set)
 
 		for item in self.eventclasses:
 			self.eventslistbox.insert(Tkinter.END, item)
-		self.eventslistbox.select_set(0)
 
-		scrollbar.grid(row=0, column=2, sticky=Tkinter.N+Tkinter.S)
-		self.eventslistbox.grid(row=0, column=1)
-
-		if self.args is not None:
-			self.eventslistbox.select_clear(0, Tkinter.END)
+		if self.args is None:
+			self.eventslistbox.select_set(0)
+		else:
 			self.eventslistbox.select_set(self.eventclasses.values().index(self.args))
 
 	def apply(self):
@@ -755,12 +756,28 @@ class NodeDialog(mySimpleDialog):
 
 		self.nameentry = Tkinter.Entry(master)
 
-		scrollbar = Tkinter.Scrollbar(master, orient=Tkinter.VERTICAL)
 		self.classlistbox = Tkinter.Listbox(master)
-		scrollbar.config(command=self.classlistbox.yview)
+		self.classlistbox.grid(row=1, column=1, sticky=Tkinter.N+Tkinter.S)
+
+		scrollbar = Tkinter.Scrollbar(master, orient=Tkinter.VERTICAL,
+																					command=self.classlistbox.yview)
+		scrollbar.grid(row=1, column=2, sticky=Tkinter.N+Tkinter.S)
+		self.classlistbox.configure(yscrollcommand=scrollbar.set)
+
 		for item in self.nodeclasses:
 			self.classlistbox.insert(Tkinter.END, item)
-		self.classlistbox.select_set(0)
+
+		if self.args is None:
+			self.classlistbox.select_set(0)
+		else:
+			self.classlistbox.select_set(self.nodeclasses.index(self.args[2]))
+
+#		scrollbar = Tkinter.Scrollbar(master, orient=Tkinter.VERTICAL)
+#		self.classlistbox = Tkinter.Listbox(master)
+#		scrollbar.config(command=self.classlistbox.yview)
+#		for item in self.nodeclasses:
+#			self.classlistbox.insert(Tkinter.END, item)
+#		self.classlistbox.select_set(0)
 
 		self.launcherentry = Tkinter.Entry(master)
 		self.launcherentry.insert(Tkinter.END, '(\'\',)')
@@ -772,8 +789,8 @@ class NodeDialog(mySimpleDialog):
 		self.argumentsentry.insert(Tkinter.END, '()')
 
 		self.nameentry.grid(row=0, column=1)
-		scrollbar.grid(row=1, column=2, sticky=Tkinter.N+Tkinter.S)
-		self.classlistbox.grid(row=1, column=1)
+#		scrollbar.grid(row=1, column=2, sticky=Tkinter.N+Tkinter.S)
+#		self.classlistbox.grid(row=1, column=1)
 		self.launcherentry.grid(row=2, column=1)
 		self.processcheckbutton.grid(row=3, column=1)
 		self.argumentsentry.grid(row=4, column=1)
@@ -782,8 +799,8 @@ class NodeDialog(mySimpleDialog):
 			self.nameentry.delete(0, Tkinter.END)
 			self.nameentry.insert(Tkinter.END, self.args[3])
 
-			self.classlistbox.select_clear(0, Tkinter.END)
-			self.classlistbox.select_set(self.nodeclasses.index(self.args[2]))
+#			self.classlistbox.select_clear(0, Tkinter.END)
+#			self.classlistbox.select_set(self.nodeclasses.index(self.args[2]))
 
 			self.launcherentry.delete(0, Tkinter.END)
 			self.launcherentry.insert(Tkinter.END, str(self.args[0]))
