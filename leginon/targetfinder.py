@@ -377,17 +377,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def updateMosaicSelection(self):
 		self.setStatusMessage('Updating mosaic selection')
-		try:
-			sessioninitializer = {'user': self.session['user'],
-														'instrument': self.session['instrument']}
-		except TypeError:
-			self.mosaicselection.set([], 0)
-			self.setStatusMessage(
-												'No session availible to determine user and instrument')
-			return
-		session = data.SessionData(initializer=sessioninitializer)
-		initializer = {'session': session}
-		instance = data.MosaicData(initializer=initializer)
+		instance = data.MosaicData(session=self.session)
 		self.setStatusMessage('Finding mosaics')
 		mosaics = self.research(datainstance=instance)
 		self.mosaicselectionmapping = {}
