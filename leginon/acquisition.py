@@ -44,7 +44,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 										
 	event.ChangePresetEvent,
 											event.DriftDetectedEvent,
-											event.ImageListPublishEvent] \
+											event.ImageListPublishEvent, event.DriftWatchEvent] \
 									+ EM.EMClient.eventoutputs
 
 	def __init__(self, id, session, managerlocation, target_types=('acquisition',), **kwargs):
@@ -144,8 +144,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 				return 'repeat'
 
 		for newpresetname in presetnames:
+			presettarget = data.PresetTargetData(emtarget=emtarget, preset=newpresetname)
 			if force == False:
-				if self.alreadyAcquired(targetdata, newpresetname):
+				if self.alreadyAcquired(targetdata, presettarget):
 					continue
 
 			self.presetsclient.toScope(newpresetname, emtarget)
@@ -169,7 +170,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 					self.logger.exception('film acquisition')
 			else:
 				self.reportStatus('acquisition', 'Acquiring image...')
-				ret = self.acquire(p, target=targetdata, emtarget=emtarget)
+				ret = self.acquire(p, target=targetdata, presettarget=presettarget)
 				# in these cases, return immediately
 				if ret in ('aborted', 'repeat'):
 					self.reportStatus('acquisition', 'Acquisition state is "%s"' % ret)
@@ -181,7 +182,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		return 'ok'
 
-	def alreadyAcquired(self, targetdata, presetname):
+	def alreadyAcquired(self, targetdata, presettarget):
 		'''
 		determines if image already acquired using targetdata and presetname
 		'''
@@ -191,7 +192,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		# seems to have trouple with using original targetdata as
 		# a query, so use a copy with only some of the fields
-		presetquery = data.PresetData(name=presetname)
+		presetquery = data.PresetData(name=presettarget['preset'])
 		imagequery = data.AcquisitionImageData(target=targetdata, preset=presetquery)
 		## other things to fill in
 		imagequery['scope'] = data.ScopeEMData()
@@ -203,7 +204,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			## no need to acquire again, but need to republish
 			self.reportStatus('output', 'Image was acquired previously, republishing')
 			imagedata = datalist[0]
-			self.publishDisplayWait(imagedata)
+			self.publishDisplayWait(imagedata, presettarget)
 			return True
 		else:
 			return False
@@ -230,6 +231,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		targetscope = data.ScopeEMData()
 		targetscope['stage position'] = copy.deepcopy(origscope['stage position'])
 		targetscope['image shift'] = copy.deepcopy(origscope['image shift'])
+		targetscope['magnification'] = copy.deepcopy(origscope['magnification'])
+		targetscope['high tension'] = copy.deepcopy(origscope['high tension'])
 		targetcamera = targetdata['camera']
 
 		## to shift targeted point to center...
@@ -297,7 +300,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## record in database
 		self.publish(filmdata, pubevent=True, database=self.databaseflag.get())
 
-	def acquire(self, presetdata, target=None, emtarget=None):
+	def acquire(self, presetdata, target=None, presettarget=None):
 		### corrected or not??
 		cor = self.uicorrectimage.get()
 
@@ -319,7 +322,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if target is not None and 'grid' in target and target['grid'] is not None:
 			imagedata['grid'] = target['grid']
 
-		self.publishDisplayWait(imagedata)
+		self.publishDisplayWait(imagedata, presettarget)
 
 	def retrieveImagesFromDB(self):
 		imagequery = data.AcquisitionImageData()
@@ -345,7 +348,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imagedata = self.researchDBID(data.AcquisitionImageData, dbid)
 		## should be one result only
 		if imagedata is not None:
-			self.publishDisplayWait(imagedata)
+			print 'HOW TO GET PRESETTARGET?????'
+			presettarget = None
+			self.publishDisplayWait(imagedata, presettarget)
 
 	def uiAcquireTargetAgain(self):
 		dbid = self.dbimages.getSelectedValue()
@@ -355,7 +360,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			targetdata = imagedata['target']
 			self.processTargetData(targetdata, force=True)
 
-	def publishDisplayWait(self, imagedata):
+	def publishDisplayWait(self, imagedata, presettarget=None):
 		'''
 		publish image data, display it, then wait for something to 
 		process it
@@ -365,6 +370,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		self.reportStatus('output', 'Publishing image...')
 		self.publish(imagedata, pubevent=True, database=self.databaseflag.get())
+
+		ev = event.DriftWatchEvent(image=imagedata, presettarget=presettarget)
+		self.outputEvent(ev)
 		## set up to handle done events
 		dataid = imagedata.dbid
 		self.doneevents[dataid] = {}
@@ -507,14 +515,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		pnamestr = '  '.join(pnames)
 		self.uiavailablepresetnames.set(pnamestr)
 
-	def driftDetected(self):
+	def driftDetected(self, presettarget):
 		'''
 		notify DriftManager of drifting
 		'''
-		scope = self.emclient.getScope()
-		camera = self.emclient.getCamera()
-		driftdetecteddata = data.DriftDetectedData(scope=scope, camera=camera)
-		self.reportStatus('acquisition', 'Passing beam tilt %s' % str(scope['beam tilt']))
+		driftdetecteddata = data.DriftDetectedData(initializer=presettarget)
 		self.driftdone.clear()
 		self.publish(driftdetecteddata, pubevent=True)
 		self.reportStatus('acquisition', 'Waiting for DriftManager...')
@@ -581,7 +586,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.databaseflag = uidata.Boolean('Save images in database', True, 'rw')
 		self.dbimages = uidata.SingleSelectFromList('Image', [], 0)
 		updatedbimages = uidata.Method('Refresh', self.uiUpdateDBImages)
-		self.pretendfromdb = uidata.Method('Simulate',
+		self.pretendfromdb = uidata.Method('Simulate Acquistion from DB (broken for now)',
 																				self.uiPretendAcquire,
 					tooltip='Pretend image selected from the database was just acquired')
 		self.reacquirefromdb = uidata.Method('Reacquire',

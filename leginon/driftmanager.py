@@ -23,11 +23,18 @@ import copy
 import EM
 
 class DriftManager(watcher.Watcher):
-	eventinputs = watcher.Watcher.eventinputs + [event.DriftDetectedEvent, event.AcquisitionImagePublishEvent, event.NeedTargetShiftEvent] + EM.EMClient.eventinputs
+	eventinputs = watcher.Watcher.eventinputs + [event.DriftDetectedEvent, event.NeedTargetShiftEvent, event.DriftWatchEvent] + EM.EMClient.eventinputs
 	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftDoneEvent, event.ImageTargetShiftPublishEvent, event.ChangePresetEvent] + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
-		watchfor = [event.DriftDetectedEvent, event.AcquisitionImagePublishEvent]
+		watchfor = [event.DriftDetectedEvent]
 		watcher.Watcher.__init__(self, id, session, managerlocation, watchfor, **kwargs)
+		## the future:
+		##  DriftManager is Acquisition node,  it handles two types
+		## of events:  DriftWatch and DriftDetected
+		## remove watchfor and watcher stuff,
+		## then add:
+		#acquisition.Acquisition.__init__(self, id, sesison, managerlocation, target_types=('focus',), **kwargs)
+		self.addEventInput(event.DriftWatchEvent, self.handleDriftWatchEvent)
 
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
@@ -49,25 +56,20 @@ class DriftManager(watcher.Watcher):
 			imid = value['imageid']
 			if imid == imageid:
 				im = value['image']
-				shift = self.calcShift(im)
+				presettarget = value['presettarget']
+				shift = self.calcShift(im, presettarget)
 				self.references[key]['shift'] = shift
 				self.publishImageShifts(requested=True)
 				break
 		self.confirmEvent(ev)
 
-	def calcShift(self, im):
+	def calcShift(self, im, presettarget):
 		## go through preset manager to ensure we follow the right
 		## cycle
-		pname = im['preset']['name']
+		pname = presettarget['preset']
+		emtarget = presettarget['emtarget']
 		self.logger.info('Preset name %s' % pname)
-		self.presetsclient.toScope(pname)
-
-		## set the original state of the image
-		emdata = im['scope']
-		newemdata = self.fixEM(emdata)
-		camdata = im['camera']
-		self.emclient.setScope(newemdata)
-		self.emclient.setCamera(camdata)
+		self.presetsclient.toScope(pname, emtarget)
 
 		## acquire new image
 		newim = self.acquireImage()
@@ -88,23 +90,22 @@ class DriftManager(watcher.Watcher):
 
 	def processData(self, newdata):
 		self.logger.debug('processData')
-		if isinstance(newdata, data.AcquisitionImageData):
-			self.logger.debug('AcquisitionImageData')
-			self.processImageData(newdata)
 		if isinstance(newdata, data.DriftDetectedData):
 			self.logger.debug('DriftDetectedData')
 			self.monitorDrift(newdata)
 
-	def processImageData(self, imagedata):
+	def handleDriftWatchEvent(self, driftwatchevent):
 		'''
 		This should update a dictionary of most recent acquisitions
 		For now, this is keyed on the node id from where the image
 		came.  So we are keeping track of the lastest acquisition
 		from each node.
 		'''
+		imagedata = driftwatchevent['image']
 		label = imagedata['label']
 		imageid = imagedata.dbid
-		self.references[label] = {'imageid': imageid, 'image': imagedata, 'shift': {}}
+		self.logger.debug('handling drift watch event for image %s' % (imageid,))
+		self.references[label] = {'imageid': imageid, 'image': imagedata, 'shift': {}, 'presettarget': driftwatchevent['presettarget']}
 
 	def uiMonitorDrift(self):
 		self.cam.uiApplyAsNeeded()
@@ -113,35 +114,17 @@ class DriftManager(watcher.Watcher):
 		t.setDaemon(1)
 		t.start()
 
-	def fixEM(self, emdata):
-		'''
-		setting scope not necessary because we don't expect to
-		have moved anywhere.
-		'''
-		emcopy = data.ScopeEMData(initializer=emdata)
-		## do not set stage
-		emcopy['stage position'] = None
-		## do not set focus
-		emcopy['focus'] = None
-		return emcopy
-
 	def monitorDrift(self, driftdata=None):
 		self.logger.info('DriftManager monitoring drift...')
 		if driftdata is not None:
 			## use driftdata to set up scope and camera
-			scopedata = driftdata['scope']
-			scopedata = self.fixEM(scopedata)
-			cameradata = driftdata['camera']
-			self.emclient.setScope(scopedata)
-			self.emclient.setCamera(cameradata)
-			mag = scopedata['magnification']
-		else:
-			## use current state
-			mag = self.emclient.getScope()['magnification']
+			pname = driftdata['preset']
+			emtarget = driftdata['emtarget']
+			self.presetsclient.toScope(pname, emtarget)
 
 		## acquire images, measure drift
 		self.abortevent.clear()
-		self.acquireLoop(mag)
+		self.acquireLoop()
 
 		## publish ImageTargetShiftData
 		self.logger.info('DriftManager publishing image shifts...')
@@ -175,13 +158,14 @@ class DriftManager(watcher.Watcher):
 		self.im.set(imagedata['image'])
 		return imagedata
 
-	def acquireLoop(self, mag):
+	def acquireLoop(self):
 
 		## acquire first image
 		imagedata = self.acquireImage()
 		numdata = imagedata['image']
 		t0 = imagedata['scope']['system time']
 		self.correlator.insertImage(numdata)
+		mag = imagedata['scope']['magnification']
 		pixsize = self.pixsizeclient.retrievePixelSize(mag)
 		self.logger.info('Pixel size at %sx is %s' % (mag, pixsize))
 

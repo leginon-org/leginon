@@ -329,6 +329,8 @@ class MatrixCalibrationClient(CalibrationClient):
 		CalibrationClient.__init__(self, node)
 
 	def researchMatrix(self, ht, mag, caltype):
+		if None in (ht, mag, caltype):
+			raise RuntimeError('need ht, mag, and caltype')
 		queryinstance = data.MatrixCalibrationData(magnification=mag, type=caltype)
 		queryinstance['high tension'] = ht
 		queryinstance['session'] = data.SessionData()
@@ -661,6 +663,12 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		new[par] = dict(scope[par])
 		new[par]['x'] += changex
 		new[par]['y'] += changey
+		print '************ PIXEL SHIFT ', pixelshift
+		print '************ PAR', par
+		print '************ BIN', camera['binning']
+		print '************ MAG', scope['magnification']
+		print '************ OLD', scope[par]
+		print '************ NEW', new[par]
 
 		return new
 
@@ -890,6 +898,13 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		newscope['stage position'] = dict(scope['stage position'])
 		newscope['stage position']['x'] += delta['x']
 		newscope['stage position']['y'] += delta['y']
+
+		print '************ PIXEL SHIFT ', pixelshift
+		print '************ PAR stage position'
+		print '************ BIN', camera['binning']
+		print '************ MAG', scope['magnification']
+		print '************ OLD', scope['stage position']
+		print '************ NEW', newscope['stage position']
 		return newscope
 
 	def pixtix(self, xmod, ymod, xmagcal, ymagcal, gonx, gony, pixx, pixy):

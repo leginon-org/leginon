@@ -16,8 +16,8 @@ import time
 import imagefun
 
 class Focuser(acquisition.Acquisition):
-	eventinputs = acquisition.Acquisition.eventinputs+[event.DriftDoneEvent]
-	eventoutputs = acquisition.Acquisition.eventoutputs+[event.DriftDetectedEvent]
+	eventinputs = acquisition.Acquisition.eventinputs
+	eventoutputs = acquisition.Acquisition.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.focus_methods = {
 			'None': self.correctNone,
@@ -33,7 +33,7 @@ class Focuser(acquisition.Acquisition):
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, target_types=('focus',), **kwargs)
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 
-	def autoFocus(self, emtarget, resultdata):
+	def autoFocus(self, resultdata, presettarget):
 		## need btilt, pub, driftthresh
 		btilt = self.btilt.get()
 		pub = False
@@ -43,8 +43,8 @@ class Focuser(acquisition.Acquisition):
 			driftthresh = None
 
 		## send the autofocus preset to the scope
-		autofocuspreset = self.autofocuspreset.get()
-		self.presetsclient.toScope(autofocuspreset, emtarget)
+		autofocuspreset = presettarget['preset']
+		self.presetsclient.toScope(autofocuspreset, presettarget['emtarget'])
 		delay = self.uidelay.get()
 		self.logger.info('Pausing for %s seconds' % (delay,))
 		time.sleep(delay)
@@ -66,7 +66,7 @@ class Focuser(acquisition.Acquisition):
 			self.logger.info('measureDefocusStig was aborted')
 			return 'aborted'
 		except calibrationclient.Drifting:
-			self.driftDetected()
+			self.driftDetected(presettarget)
 			return 'repeat'
 
 		self.logger.info('Measured defocus and stig %s' % correction)
@@ -116,7 +116,7 @@ class Focuser(acquisition.Acquisition):
 
 		return status
 
-	def acquire(self, presetdata, target=None, emtarget=None):
+	def acquire(self, presetdata, target=None, presettarget=None):
 		'''
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we do autofocus
@@ -149,14 +149,16 @@ class Focuser(acquisition.Acquisition):
 
 		## pre manual check
 		if self.pre_manual_check.get():
-			self.manualCheckLoop(presetdata['name'], emtarget)
+			self.manualCheckLoop(presettarget)
 			resultdata['pre manual check'] = True
 		else:
 			resultdata['pre manual check'] = False
 
 		## autofocus
 		if self.auto_on.get():
-			status = self.autoFocus(emtarget, resultdata)
+			autofocuspreset = self.autofocuspreset.get()
+			autopresettarget = data.PresetTargetData(emtarget=presettarget['emtarget'], preset=autofocuspreset)
+			status = self.autoFocus(resultdata, autopresettarget)
 			resultdata['auto status'] = status
 			if status != 'ok':
 				self.publish(resultdata, database=True, dbforce=True)
@@ -166,7 +168,7 @@ class Focuser(acquisition.Acquisition):
 
 		## post manual check
 		if self.post_manual_check.get():
-			self.manualCheckLoop(presetdata['name'], emtarget)
+			self.manualCheckLoop(presettarget)
 			resultdata['post manual check'] = True
 		else:
 			resultdata['post manual check'] = False
@@ -174,20 +176,20 @@ class Focuser(acquisition.Acquisition):
 		## aquire and save the focus image
 		if self.acquirefinal.get():
 			## go back to focus preset and target
-			self.presetsclient.toScope(presetdata['name'], emtarget)
+			self.presetsclient.toScope(presetdata['name'], presettarget['emtarget'])
 			delay = self.uidelay.get()
 			self.logger.info('Pausing for %s seconds' % (delay,))
 			time.sleep(delay)
 
 			## acquire and publish image, like superclass does
-			acquisition.Acquisition.acquire(self, presetdata, target, emtarget)
+			acquisition.Acquisition.acquire(self, presetdata, target, presettarget)
 
 		## publish results
 		self.publish(resultdata, database=True, dbforce=True)
 
 		return 'ok'
 
-	def alreadyAcquired(self, targetdata, presetname):
+	def alreadyAcquired(self, targetdata, presettarget):
 		## for now, always do acquire
 		return False
 
@@ -203,13 +205,13 @@ class Focuser(acquisition.Acquisition):
 		self.logger.info('using preset %s for manual check' % (presetname,))
 		### Warning:  no target is being used, you are exposing
 		### whatever happens to be under the beam
-		t = threading.Thread(target=self.manualCheckLoop, args=(presetname,))
+		t = threading.Thread(target=self.manualCheckLoop, args=(presettarget,))
 		t.setDaemon(1)
 		t.start()
 
-	def manualCheckLoop(self, presetname, emtarget=None):
+	def manualCheckLoop(self, presettarget=None):
 		## go to preset and target
-		self.presetsclient.toScope(presetname, emtarget)
+		self.presetsclient.toScope(presettarget['preset'], presettarget['emtarget'])
 		delay = self.uidelay.get()
 		self.logger.info('Pausing for %s seconds' % (delay,))
 		time.sleep(delay)
@@ -223,7 +225,8 @@ class Focuser(acquisition.Acquisition):
 			if self.manual_pause.isSet():
 				self.waitForContinue()
 				self.logger.info('reseting preset and target after pause')
-				self.presetsclient.toScope(presetname, emtarget)
+				self.logger.debug('preset %s' % (presettarget['preset'],))
+				self.presetsclient.toScope(presettarget['preset'], presettarget['emtarget'])
 			# acquire image, show image and power spectrum
 			# allow user to adjust defocus and stig
 			cor = self.uicorrectimage.get()

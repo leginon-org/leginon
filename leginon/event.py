@@ -159,6 +159,14 @@ class NeedTargetShiftEvent(NotificationEvent):
 		return t
 	typemap = classmethod(typemap)
 
+class DriftWatchEvent(Event):
+	def typemap(cls):
+		t = Event.typemap()
+		t += [ ('presettarget', data.PresetTargetData), ]
+		t += [ ('image', data.AcquisitionImageData), ]
+		return t
+	typemap = classmethod(typemap)
+
 ## this is a PublishEvent because we want to publish the EM state
 ## that was used to detect the drift, so that we can continue to monitor
 ## drift at this state.

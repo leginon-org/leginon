@@ -866,14 +866,16 @@ class CameraEMData(EMData):
 		return t
 	typemap = classmethod(typemap)
 
-### this was AllEMData
-class DriftDetectedData(Data):
+class PresetTargetData(Data):
 	def typemap(cls):
 		t = Data.typemap()
-		t += [('scope', ScopeEMData),
-		      ('camera', CameraEMData)]
+		t += [('emtarget', EMTargetData),
+		      ('preset', str)]
 		return t
 	typemap = classmethod(typemap)
+
+class DriftDetectedData(PresetTargetData):
+	pass
 
 class CameraConfigData(InSessionData):
 	def typemap(cls):
