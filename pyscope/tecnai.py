@@ -755,8 +755,8 @@ class Tecnai(object):
 
 		if self.theAda.UnloadPlate != 0:
 			raise RuntimeError('Unload plate failed')
-		if self.theAda.UpdateExposureNumber != 0:
-			raise RuntimeError('Update exposure number failed')
+#		if self.theAda.UpdateExposureNumber != 0:
+#			raise RuntimeError('Update exposure number failed')
 
 	def filmExposure(self, value):
 		if not value:
