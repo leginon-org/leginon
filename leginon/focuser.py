@@ -67,25 +67,25 @@ class Focuser(acquisition.Acquisition):
 				focusmethod(defoc)
 
 	def correctStig(self, deltax, deltay):
-		stig = self.researchByDataID('stigmator')
+		stig = self.researchByDataID(('stigmator',))
 		stig['em']['stigmator']['objective']['x'] += deltax
 		stig['em']['stigmator']['objective']['y'] += deltay
-		emdata = data.EMData('scope', stig)
+		emdata = data.EMData(('scope',), stig)
 		print 'correcting stig by %s,%s' % (deltax,deltay)
 		self.publishRemote(emdata)
 
 	def correctDefocus(self, delta):
-		defocus = self.researchByDataID('defocus')
+		defocus = self.researchByDataID(('defocus',))
 		defocus['em']['defocus'] += delta
-		emdata = data.EMData('scope', defocus)
+		emdata = data.EMData(('scope',), defocus)
 		print 'correcting defocus by %s' % (delta,)
 		self.publishRemote(emdata)
 
 	def correctZ(self, delta):
-		stage = self.researchByDataID('stage position')
+		stage = self.researchByDataID(('stage position',))
 		newz = stage['em']['stage position']['z'] + delta
 		newstage = {'stage position': {'z': newz }}
-		emdata = data.EMData('scope', em=newstage)
+		emdata = data.EMData(('scope',), em=newstage)
 		print 'correcting stage Z by %s' % (delta,)
 		self.publishRemote(emdata)
 

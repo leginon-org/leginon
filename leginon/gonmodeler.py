@@ -58,8 +58,7 @@ class GonModeler(node.Node):
 	def acquireNextPosition(self, axis, state=None):
 		## go to state
 		if state is not None:
-			#newemdata = data.EMData('scope', state)
-			newemdata = data.EMData('scope', em=state)
+			newemdata = data.EMData(('scope',), em=state)
 			self.publishRemote(newemdata)
 			time.sleep(self.settle)
 
@@ -175,11 +174,11 @@ class GonModeler(node.Node):
 		self.calclient.setModel(axis, mod_dict)
 
 	def getStagePosition(self):
-		dat = self.researchByDataID('stage position')
+		dat = self.researchByDataID(('stage position',))
 		return dat['em']
 
 	def getMagnification(self):
-		dat = self.researchByDataID('magnification')
+		dat = self.researchByDataID(('magnification',))
 		return dat['em']['magnification']
 
 	def defineUserInterface(self):

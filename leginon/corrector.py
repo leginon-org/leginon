@@ -24,7 +24,7 @@ class DataHandler(node.DataHandler):
 	# acq/rel twice on normal data
 	def query(self, id):
 		self.lock.acquire()
-		if id == 'corrected image data':
+		if id == ('corrected image data',):
 			result = self.node.acquireCorrectedImageData()
 			self.lock.release()
 			return result
@@ -56,7 +56,7 @@ class Corrector(node.Node):
 		self.addEventOutput(event.BrightImagePublishEvent)
 		self.addEventOutput(event.ListPublishEvent)
 
-		ids = ['corrected image data',]
+		ids = [('corrected image data'),]
 		e = event.ListPublishEvent(self.ID(), idlist=ids)
 		self.outputEvent(e)
 

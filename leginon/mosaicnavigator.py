@@ -53,8 +53,7 @@ class MosaicNavigator(navigator.Navigator):
 												'col': nearestdelta[1]*mosaicdata['scale']},
 															mosaicdata['tile states'][nearesttile]['scope'],
 															mosaicdata['tile states'][nearesttile]['camera'])
-		#emdata = data.EMData('scope', newstate)
-		emdata = data.EMData('scope', em=newstate)
+		emdata = data.EMData(('scope',), em=newstate)
 		self.publishRemote(emdata)
 
 		time.sleep(self.delaydata.get())

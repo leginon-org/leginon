@@ -30,7 +30,7 @@ class CameraFuncs(object):
 
 		if cor:
 			### get image data from corrector node
-			imdata = self.node.researchByDataID('corrected image data')
+			imdata = self.node.researchByDataID(('corrected image data',))
 		else:
 			### create my own data from acquisition
 			scopedata = self.node.researchByDataID(('scope',))
@@ -61,7 +61,7 @@ class CameraFuncs(object):
 			t2.stop()
 
 		try:
-			newcamstate = self.node.researchByDataID('camera no image data')
+			newcamstate = self.node.researchByDataID(('camera no image data',))
 			t.stop()
 			return newcamstate['em']
 		except:

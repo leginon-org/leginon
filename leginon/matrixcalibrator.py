@@ -56,7 +56,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		}
 		self.cam.autoOffset(camstate)
 
-		camdata = data.EMData('camera', camstate)
+		camdata = data.EMData(('camera',), camstate)
 
 		self.publish(event.LockEvent(self.ID()))
 		self.publishRemote(camdata)

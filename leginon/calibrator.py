@@ -15,9 +15,9 @@ class Calibrator(node.Node):
 		self.cam = camerafuncs.CameraFuncs(self)
 
 	def getMagnification(self):
-		magdata = self.researchByDataID('magnification')
+		magdata = self.researchByDataID(('magnification',))
 		return magdata.content['magnification']
 
 	def currentState(self):
-		dat = self.researchByDataID('scope')
+		dat = self.researchByDataID(('scope',))
 		return dat['em']

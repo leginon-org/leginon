@@ -13,7 +13,7 @@ class PresetsClient(object):
 	def getPreset(self, key):
 		try:
 			# needs to research new style
-			presetdata = self.node.researchByDataID('presets')
+			presetdata = self.node.researchByDataID(('presets',))
 		except:
 			print 'PresetClient unable to use presets.  Is a PresetsManager node running?'
 			raise
@@ -31,13 +31,13 @@ class PresetsClient(object):
 		dictcopy = copy.deepcopy(dict(presetdict))
 		newdict = {key: dictcopy}
 		# should work
-		dat = data.PresetData('presets', newdict)
+		dat = data.PresetData(('presets',), newdict)
 		self.node.publishRemote(dat)
 
 	def toScope(self, presetdict):
 		d = dict(presetdict)
 		### this seems to work even if the preset contains camera keys
-		emdata = data.EMData('scope', em=d)
+		emdata = data.EMData(('scope',), em=d)
 		self.node.publishRemote(emdata)
 
 	def fromScope(self):
@@ -45,8 +45,8 @@ class PresetsClient(object):
 		return a new preset 
 		'''
 		p = PresetData(self.ID())
-		scope = self.node.researchByDataID('scope')
-		camera = self.node.researchByDataID('camera no image data')
+		scope = self.node.researchByDataID(('scope',))
+		camera = self.node.researchByDataID(('camera no image data',))
 		#p.update(scope)
 		#p.update(camera)
 		for key in p:
@@ -92,7 +92,7 @@ class PresetsManager(node.Node):
 												[(DataHandler, (self,)),
 													(dbdatakeeper.DBDataKeeper, ())], **kwargs)
 
-		ids = ['presets',]
+		ids = [('presets',),]
 		e = event.ListPublishEvent(self.ID(), idlist=ids)
 		self.outputEvent(e)
 		

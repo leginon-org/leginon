@@ -148,8 +148,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print 'NEWTARGET', newtarget
 
 			## set the scope/camera state
-			#emdata = data.EMData('scope', newtarget)
-			emdata = data.EMData('scope', em=newtarget)
+			emdata = data.EMData(('scope',), em=newtarget)
 			self.publishRemote(emdata)
 
 			print 'sleeping 2 sec'

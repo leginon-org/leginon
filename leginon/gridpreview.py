@@ -95,7 +95,7 @@ class GridPreview(node.Node):
 		return self.magnification
 
 	def getScope(self):
-		return self.researchByDataID('scope')['em']
+		return self.researchByDataID(('scope',))['em']
 
 	def acquireTarget(self, target):
 #		print 'TARGET', target
@@ -108,7 +108,7 @@ class GridPreview(node.Node):
 				# move to center
 				center = self.prefs['center']
 				gonpos = {'stage position': {'x':center['x'], 'y':center['y']}}
-				emdata = data.EMData('scope', em=gonpos)
+				emdata = data.EMData(('scope',), em=gonpos)
 #				print 'moving to center', center
 				self.publishRemote(emdata)
 			else:
@@ -122,14 +122,14 @@ class GridPreview(node.Node):
 #				print 'targetrow', targetrow
 				pixelshift = {'row':targetrow, 'col':targetcol}
 				newstate = self.calclient.transform(pixelshift, scopestate, camstate)
-				emdat = data.EMData('scope', em=newstate)
+				emdat = data.EMData(('scope',), em=newstate)
 #				print 'moving to next position'
 				self.publishRemote(emdat)
 
 			## this should be calibrated
 			time.sleep(2)
 
-			stagepos = self.researchByDataID('stage position')
+			stagepos = self.researchByDataID(('stage position',))
 			stagepos = stagepos['em']
 #			print 'gridpreview stagepos', stagepos
 
@@ -219,8 +219,7 @@ class GridPreview(node.Node):
 		self.running.set()
 
 		# will be in presets or something
-		#emdata = data.EMData('scope', {'magnification': self.magnification})
-		emdata = data.EMData('scope', em={'magnification': self.magnification})
+		emdata = data.EMData(('scope',), em={'magnification': self.magnification})
 		self.publishRemote(emdata)
 
 		self.cam.state(self.cam.config()['state'])

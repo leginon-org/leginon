@@ -39,8 +39,7 @@ class CalibrationClient(object):
 
 	def acquireStateImage(self, state, publish_image=0, settle=0.0):
 		## acquire image at this state
-		#newemdata = data.EMData('scope', state)
-		newemdata = data.EMData('scope', em=state)
+		newemdata = data.EMData(('scope',), em=state)
 		self.node.publish(event.LockEvent(self.node.ID()))
 		self.node.publishRemote(newemdata)
 		print 'state settling time %s' % (settle,)
@@ -175,13 +174,13 @@ class BeamTiltCalibrationClient(CalibrationClient):
 		self.db.beamtilt.insert([mydict,])
 
 	def getBeamTilt(self):
-		emdata = self.node.researchByDataID('beam tilt')
+		emdata = self.node.researchByDataID(('beam tilt',))
 		#beamtilt = emdata.content
 		beamtilt = emdata
 		return beamtilt
 
 	def measureDefocusStig(self, tilt_value, publish_images=0):
-		emdata = self.node.researchByDataID('magnification')
+		emdata = self.node.researchByDataID(('magnification',))
 		#mag = emdata.content['magnification']
 		mag = emdata['magnification']
 		fmatrix = self.getMatrix(mag, 'defocus')
@@ -209,8 +208,7 @@ class BeamTiltCalibrationClient(CalibrationClient):
 				tilts[tiltaxis] = (0, tilt_value)
 
 		## return to original beam tilt
-		#emdata = data.EMData('scope', tiltcenter)
-		emdata = data.EMData('scope', em=tiltcenter)
+		emdata = data.EMData(('scope',), em=tiltcenter)
 		self.node.publishRemote(emdata)
 
 		print 'TILTS'
@@ -321,8 +319,7 @@ class BeamTiltCalibrationClient(CalibrationClient):
 			print 'PIXELSHIFT2', pixelshift2
 		finally:
 			## return to original beam tilt
-			#emdata = data.EMData('scope', beamtilt)
-			emdata = data.EMData('scope', em=beamtilt)
+			emdata = data.EMData(('scope',), em=beamtilt)
 			self.node.publishRemote(emdata)
 
 		return (pixelshift1, pixelshift2)
@@ -540,6 +537,5 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		current['stage position']['y'] += deltagon['y']
 		print 'current after delta', current
 
-		#stagedata = data.EMData('scope', current)
-		stagedata = data.EMData('scope', em=current)
+		stagedata = data.EMData(('scope',), em=current)
 		self.publishRemote(stagedata)
