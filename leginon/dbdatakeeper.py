@@ -43,7 +43,11 @@ class DBDataKeeper(datahandler.DataHandler):
 			except KeyError, e:
 				self.printerror('cannot convert database result to data instance')
 				del result[i]
-		map(self.file2image, result)
+
+			### load things from files
+			if hasattr(result[i], load):
+				result[i].load()
+
 		return result
 
 		# return an instance
@@ -94,7 +98,10 @@ class DBDataKeeper(datahandler.DataHandler):
 			except KeyError, e:
 				self.printerror('cannot convert database result to data instance')
 				del result[i]
-		map(self.file2image, result)
+			### load things from files
+			if hasattr(result[i], load):
+				result[i].load()
+
 		return result
 
 		# return an instance
@@ -190,6 +197,7 @@ class DBDataKeeper(datahandler.DataHandler):
 		are references to other data.  Returns a reference to
 		this newly inserted data object.
 		'''
+
 		## make certain replacements
 		mycopy = self.replacements(newdata)
 
@@ -235,25 +243,6 @@ class DBDataKeeper(datahandler.DataHandler):
 	def ids(self):
 		pass
 
-	def file2image(self, idata):
-		if isinstance(idata, data.ImageData):
-			if idata['database filename'] is not None:
-				try:
-					idata['image'] = Mrc.mrc_to_numeric(idata['database filename'])
-				except:
-					self.printerror('error converting image from file')
-				idata['database filename'] = None
-
-		types = idata.types()
-		for key in types:
-			if issubclass(types[key], data.ImageData):
-				if idata[key]['database filename'] is not None:
-					try:
-						idata[key]['image'] = Mrc.mrc_to_numeric(
-																					idata[key]['database filename'])
-					except:
-						self.printerror('error converting image from file')
-					idata[key]['database filename'] = None
 
 # Ignore for now
 
