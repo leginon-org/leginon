@@ -1872,6 +1872,7 @@ class ManualAcquisitionSettingsData(SettingsData):
 			('correct image', bool),
 			('save image', bool),
 			('loop pause time', float),
+			('image label', str),
 			('low dose', bool),
 			('low dose pause time', float),
 		)

@@ -28,6 +28,7 @@ class ManualAcquisition(node.Node):
 		'screen down': False,
 		'correct image': False,
 		'save image': False,
+		'image label': '',
 		'loop pause time': 0.0,
 		'low dose': False,
 		'low dose pause time': 0.0,
@@ -202,6 +203,8 @@ class ManualAcquisition(node.Node):
 			griddata = data.GridData()
 			griddata['grid ID'] = gridinfo['gridId']
 			acquisitionimagedata['grid'] = griddata
+
+		acquisitionimagedata['label'] = self.settings['image label']
 
 		self.setImageFilename(acquisitionimagedata)
 		#acquisitionimagedata['filename'] = \

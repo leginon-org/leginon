@@ -4,16 +4,16 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.15 $
+# $Revision: 1.16 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
-# $Author: suloway $
+# $Date: 2004-11-02 23:20:40 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
 import threading
 import gui.wx.Camera
-from gui.wx.Entry import FloatEntry
+from gui.wx.Entry import Entry, FloatEntry
 import gui.wx.Events
 import gui.wx.ImageViewer
 import gui.wx.Node
@@ -233,6 +233,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['correct image'] = wx.CheckBox(self, -1, 'Correct image')
 		self.widgets['save image'] = wx.CheckBox(self, -1,
 																							'Save image to the database')
+		self.widgets['image label'] = Entry(self, -1, chars=12)
 		self.widgets['loop pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
 		self.widgets['low dose'] = wx.CheckBox(self, -1, 'Use low dose')
 		self.widgets['low dose pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
@@ -274,6 +275,10 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'seconds')
 		sz.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Label')
+		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['image label'], (4, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		sz.AddGrowableCol(1)
 
 		sb = wx.StaticBox(self, -1, 'Acquisition')
