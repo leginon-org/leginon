@@ -109,8 +109,11 @@ class Container(Object):
 
 	def addObjects(self, uiobjects, block=True, thread=False):
 		self.lock.acquire()
-		for uiobject in uiobjects:
-			self.addObject(uiobject, block, thread)
+		try:
+			for uiobject in uiobjects:
+				self.addObject(uiobject, block, thread)
+		except TypeError:
+			print e
 		self.lock.release()
 
 	def deleteObject(self, name, client=None, block=True, thread=False):
@@ -441,7 +444,7 @@ class Binary(Data):
 	typelist = Data.typelist + ('binary',)
 
 class Dialog(Container):
-	typelist = Container.typelist + ('message dialog',)
+	typelist = Container.typelist + ('dialog',)
 	def __init__(self, name):
 		Container.__init__(self, name)
 
@@ -460,6 +463,55 @@ class MessageDialog(Dialog):
 
 	def ok(self):
 		self.destroy()
+
+class FileDialog(Dialog):
+	typelist = Dialog.typelist + ('file',)
+	oklabel = 'OK'
+	def __init__(self, name, callback):
+		Dialog.__init__(self, name)
+		self.callback = callback
+		self.filename = String('Filename', '', 'rw')
+		self.addObjects((self.filename, Method(self.oklabel, self.ok),
+																		Method('Cancel', self.cancel)))
+
+	def ok(self):
+		self.callback(self.filename.get())
+		self.destroy()
+
+	def cancel(self):
+		self.callback(None)
+		self.destroy()
+
+class SaveFileDialog(FileDialog):
+	typelist = FileDialog.typelist + ('save',)
+	oklabel = 'Save'
+
+class LoadFileDialog(FileDialog):
+	typelist = FileDialog.typelist + ('load',)
+	oklabel = 'Load'
+
+class PILImage(Binary):
+	typelist = Binary.typelist + ('PIL image',)
+
+class Image(Binary):
+	typelist = Binary.typelist + ('image',)
+
+class ClickImage(Container):
+	typelist = Container.typelist + ('click image',)
+	def __init__(self, name, clickcallback, image, permissions='r',
+								persist=False):
+		self.clickcallback = clickcallback
+		Container.__init__(self, name)
+		self.image = Image('Image', image, 'r', persist=persist)
+		self.coordinates = Array('Coordinates', [], 'rw', persist=persist)
+		self.method = Method('Click', self.doClickCallback)
+		self.persist = persist
+		self.addObject(self.coordinates)
+		self.addObject(self.method)
+		self.addObject(self.image)
+
+	def setImage(self, value):
+		self.image.set(value)
 
 class PILImage(Binary):
 	typelist = Binary.typelist + ('PIL image',)

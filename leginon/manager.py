@@ -559,9 +559,9 @@ class Manager(node.Node):
 		self.uilauncheraliascontainer = None
 		self.application.kill()
 
-	# UI methods
-	def uiExportApp(self):
-		filename = self.importexportfilename.get()
+	def exportApplication(self, filename):
+		if filename is None:
+			return
 		appname = self.uiapplicationlist.getSelectedValue()
 		app = importexport.ImportExport()
 		dump = app.exportApplication(appname)
@@ -570,15 +570,34 @@ class Manager(node.Node):
 			f.write(dump)
 			f.close()
 		except IOError,e:
-			print e
+			self.printerror('Unable to export application to "%s"' % filename)
+
+	def importApplication(self, filename):
+		if filename is None:
 			return
-		print dump
+		try:
+			appname = self.uiapplicationlist.getSelectedValue()
+			app = importexport.ImportExport()
+			app.importApplication(filename)
+		except ValueError:
+			self.printerror('Unable to import application from "%s"' % filename)
+
+	# UI methods
+	def uiExportApp(self):
+		try:
+			filedialog = uidata.SaveFileDialog('Export Application',
+																					self.exportApplication)
+			self.importexportcontainer.addObject(filedialog)
+		except ValueError:
+			pass
 
 	def uiImportApp(self):
-		filename = self.importexportfilename.get()
-		appname = self.uiapplicationlist.getSelectedValue()
-		app = importexport.ImportExport()
-		app.importApplication(filename)
+		try:
+			filedialog = uidata.LoadFileDialog('Import Application',
+																					self.importApplication)
+			self.importexportcontainer.addObject(filedialog)
+		except ValueError:
+			pass
 
 	def uiUpdateNodeInfo(self):
 		'''Updates nodes lists and info in UI.'''
@@ -591,18 +610,6 @@ class Manager(node.Node):
 			self.uinodeinfo.set(self.uiNodeDict())
 		except AttributeError:
 			pass
-
-#	def uiNodeDict(self):
-#		nodes = self.clients.keys()
-#		nodeinfo = {}
-#		nodelist = self.uiNodeList()
-#		for nodeidstr in nodelist:
-#			nodeid = eval(nodeidstr)
-#			nodelocationdata = self.datahandler.query(nodeid)
-#			if nodelocationdata is not None:
-#				nodelocation = nodelocationdata['location']
-#				nodeinfo[str(nodeid)] = nodelocation
-#		return nodeinfo
 
 	def uiNodeDict(self):
 		nodes = self.clients.keys()
@@ -749,18 +756,18 @@ class Manager(node.Node):
 		applicationlaunchmethod = uidata.Method('Launch', self.uiLaunchApp)
 		applicationkillmethod = uidata.Method('Kill', self.uiKillApp)
 
-		importexportcontainer = uidata.Container('Import / Export')
-		self.importexportfilename = uidata.String('Filename', '', 'rw')
+		self.importexportcontainer = uidata.Container('Import / Export')
+#		self.importexportfilename = uidata.String('Filename', '', 'rw')
 		applicationexportmethod = uidata.Method('Export', self.uiExportApp)
 		applicationimportmethod = uidata.Method('Import', self.uiImportApp)
-		importexportobjects = (self.importexportfilename, applicationexportmethod, applicationimportmethod)
-
-		
-		importexportcontainer.addObjects(importexportobjects)
+#		importexportobjects = (self.importexportfilename,
+#														applicationexportmethod, applicationimportmethod)
+		importexportobjects = (applicationexportmethod, applicationimportmethod)
+		self.importexportcontainer.addObjects(importexportobjects)
 
 		applicationobjects = (self.uiapplicationlist, applicationrefreshmethod,
 				applicationloadmethod, applicationlaunchmethod,
-				applicationkillmethod, importexportcontainer)
+				applicationkillmethod, self.importexportcontainer)
 		self.uilauncheraliascontainer = None
 		self.applicationcontainer = uidata.LargeContainer('Application')
 		self.applicationcontainer.addObjects(applicationobjects)

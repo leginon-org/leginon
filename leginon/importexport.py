@@ -9,6 +9,7 @@
 """
 importexport: this Module allows to Import/Export Leginon II applications
 """
+from xml.parsers.expat import ExpatError
 import xml.dom.minidom as dom
 import sqldb
 import re
@@ -194,7 +195,10 @@ class XMLApplicationImport:
 		self.fieldvalues={}
 		self.insertqueries=[]
 		self.tablequeries=[]
-		xmlapp = dom.parse(filename)
+		try:
+			xmlapp = dom.parse(filename)
+		except ExpatError:
+			raise ValueError('Unable to parse XML file "%s"' % filename)
 		definition = xmlapp.getElementsByTagName('definition')[0]
 		sdefinition = definition.getElementsByTagName('sqltable')
 		for d in sdefinition:

@@ -94,8 +94,13 @@ def WidgetClassFromTypeList(typelist):
 							return wxClickImageWidget
 						elif typelist[2] == 'target image':
 							return wxTargetImageWidget
-						elif typelist[2] == 'message dialog':
-							return wxMessageDialogWidget
+						elif typelist[2] == 'dialog':
+							if len(typelist) > 3:
+								if typelist[3] == 'message':
+									return wxMessageDialogWidget
+								elif typelist[3] == 'file':
+									return wxFileDialogWidget
+							return wxDialogContainerWidget
 						elif typelist[2] == 'external':
 							return wxDialogContainerWidget
 						elif typelist[2] == 'medium':
@@ -375,6 +380,10 @@ class wxContainerWidget(wxWidget):
 		self.pending = []
 		self.notebook = None
 		self.treecontainer = None
+
+		self.nosizerclasses = (wxNotebookContainerWidget, wxDialogContainerWidget,
+														wxTreePanelContainerWidget, wxMessageDialogWidget,
+														wxFileDialogWidget)
 		wxWidget.__init__(self, name, parent, container, value, configuration)
 		self.childparent = self.parent
 
@@ -400,9 +409,7 @@ class wxContainerWidget(wxWidget):
 			child.enable(child.enabled)
 
 	def _showWidget(self, child, show):
-		nosizerclasses = (wxNotebookContainerWidget, wxDialogContainerWidget,
-											wxTreePanelContainerWidget)
-		if self.sizer is not None and not isinstance(child, nosizerclasses):
+		if self.sizer is not None and not isinstance(child, self.nosizerclasses):
 			self.sizer.Show(child.sizer, show)
 
 	def _show(self, show):
@@ -434,9 +441,7 @@ class wxContainerWidget(wxWidget):
 			wxPostEvent(self.widgethandler, evt)
 
 	def _addWidgetSizer(self, child, show=True):
-		nosizerclasses = (wxNotebookContainerWidget, wxDialogContainerWidget,
-											wxTreePanelContainerWidget)
-		if self.sizer is not None and not isinstance(child, nosizerclasses):
+		if self.sizer is not None and not isinstance(child, self.nosizerclasses):
 			self.sizer.Add(child.sizer, 0, wxALL, 3)
 
 	def _addWidget(self, name, typelist, value, configuration, children):
@@ -483,9 +488,7 @@ class wxContainerWidget(wxWidget):
 	def _removeWidget(self, name, widget):
 		del self.children[name]
 		widget.destroy()
-		nosizerclasses = (wxNotebookContainerWidget, wxDialogContainerWidget,
-											wxTreePanelContainerWidget)
-		if self.sizer is not None and not isinstance(widget, nosizerclasses):
+		if self.sizer is not None and not isinstance(widget, self.nosizerclasses):
 			self.sizer.Remove(widget.sizer)
 
 	def removeChildren(self):
@@ -1610,6 +1613,72 @@ class wxTreePanelContainerWidget(wxContainerWidget):
 	def destroy(self):
 		wxContainerWidget.destroy(self)
 		self.treepanel.deleteContainer(self)
+
+class wxFileDialogWidget(wxContainerWidget):
+	def __init__(self, name, parent, container, value, configuration):
+		self.cancelflag = False
+		self.filenameflag = False
+		self.labelname = None
+		self.dialog = None
+		wxContainerWidget.__init__(self, name, parent, container, value,
+																configuration)
+
+	def _enable(self, enable):
+		if self.dialog is not None:
+			self.dialog.Enable(enable)
+		wxContainerWidget._enable(self, enable)
+
+	def _show(self, show):
+		if self.dialog is not None:
+			if self.dialog.ShowModal() == wxID_OK:
+				setvalue = self.dialog.GetPath()
+				commandnamelist = [self.name, self.labelname]
+			else:
+				setvalue = None
+				commandnamelist = [self.name, 'Cancel']
+			setevent = SetServerEvent([self.name, 'Filename'], setvalue, thread=False)
+			wxPostEvent(self.container.widgethandler, setevent)
+			commandevent = CommandServerEvent(commandnamelist, ())
+			wxPostEvent(self.container.widgethandler, commandevent)
+
+		wxContainerWidget._show(self, show)
+
+	def _addWidget(self, name, typelist, value, configuration, children):
+		if name == 'Cancel':
+			self.cancelflag = True
+		elif name == 'Filename':
+			self.filenameflag = True
+		else:
+			self.labelname = name
+		if self.cancelflag and self.filenameflag and self.labelname is not None:
+			if self.labelname == 'Save':
+				style = wxSAVE
+			else:
+				style = wxOPEN
+			self.dialog = wxFileDialog(self.parent, self.name, style=style)
+
+	def onAddWidget(self, evt):
+		self._addWidget(evt.namelist[0], None, evt.value, None, None)
+		if evt.event is not None:
+			evt.event.set()
+
+	def onSetWidget(self, evt):
+		if evt.event is not None:
+			evt.event.set()
+
+	def onRemoveWidget(self, evt):
+		if evt.event is not None:
+			evt.event.set()
+
+	def dialogCallback(self):
+		evt = CommandServerEvent([self.name, self.labelname], ())
+		wxPostEvent(self.container.widgethandler, evt)
+
+	def layout(self):
+		pass
+
+	def destroy(self):
+		self.dialog.Destroy()
 
 if __name__ == '__main__':
 	import sys
