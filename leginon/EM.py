@@ -11,11 +11,12 @@ if sys.platform == 'win32':
 	import pythoncom
 
 class DataHandler(datahandler.DataBinder):
-	def __init__(self, lock, scope, camera):
+	def __init__(self, lock, scope, camera, EMnode):
 		datahandler.DataBinder.__init__(self)
 		self.lock = lock
 		self.scope = scope
 		self.camera = camera
+		self.EMnode = EMnode
 
 	def query(self, id):
 		self.lock.acquire()
@@ -35,6 +36,8 @@ class DataHandler(datahandler.DataBinder):
 				result.content.update(self.camera)
 		else:
 			result = None
+		if result:
+			result.origin['location'] = self.EMnode.location()
 		self.lock.release()
 		return result
 
@@ -70,7 +73,7 @@ class EM(node.Node):
 		else:
 			self.camera = None
 
-		node.Node.__init__(self, nodeid, managerloc, DataHandler, (self.lock, self.scope, self.camera))
+		node.Node.__init__(self, nodeid, managerloc, DataHandler, (self.lock, self.scope, self.camera, self))
 
 		self.addEventOutput(event.ListPublishEvent)
 
