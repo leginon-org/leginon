@@ -4,6 +4,7 @@ import SocketServer
 import cPickle
 import socket
 import leginonobject
+import data
 
 class PullHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject):
 	def __init__(self, request, server_address, server):
@@ -30,6 +31,23 @@ class PushHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject
 		# data_id needs to be send with a newline
 		newdata = cPickle.load(self.rfile)
 		self.server.datahandler.insert(newdata)
+
+class PushPullHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject):
+	def __init__(self, request, server_address, server):
+		# not sure it needs to be a LeginonObject
+		leginonobject.LeginonObject.__init__(self)
+		SocketServer.StreamRequestHandler.__init__(self, request, server_address, server)
+
+	def handle(self):
+		# needs error checking
+		idata = cPickle.load(self.rfile)
+		if isinstance(idata, data.Data):
+			# data_id needs to be send with a newline
+			self.server.datahandler.insert(idata)
+		else: # 'tis an id and nothing more or at least until there is an id class
+			# pickle the data from data_id (w/o the trailing newline char)
+			wdata = self.server.datahandler.query(idata)
+			cPickle.dump(wdata, self.wfile)
 
 class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
 	def __init__(self, dh, handler, port=None):
@@ -68,6 +86,10 @@ class PullServer(Server):
 class PushServer(Server):
 	def __init__(self, server, port=None):
 		Server.__init__(self, server, PushHandler, port)
+
+class PushPullServer(Server):
+	def __init__(self, server, port=None):
+		Server.__init__(self, server, PushPullHandler, port)
 
 class Client(leginonobject.LeginonObject):
 	def __init__(self, hostname, port, buffer_size = 1024):

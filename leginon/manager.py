@@ -33,7 +33,7 @@ class Manager(node.Node):
 		newid = readyevent.origin['id']
 		loc = readyevent.origin['location']
 		hostname = loc['hostname']
-		eventport = loc['push port']
+		eventport = loc['port']
 		print 'registering node', newid, hostname, eventport
 		self.addEventClient(newid, hostname, eventport)
 		print self.clients

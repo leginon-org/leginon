@@ -4,6 +4,7 @@ import leginonobject
 import event
 import clientpull
 import clientpush
+import pushpull
 import datahandler
 
 class NodePushClient(clientpush.Client):
@@ -51,8 +52,9 @@ class Node(leginonobject.LeginonObject):
 		self.distmap = {}
 		self.registry = {'outputs':[], 'inputs':[]}
 
-		self.pushserver = clientpush.Server(dh, dhargs)
-		self.pullserver = clientpull.Server(dh, dhargs)
+#		self.pushserver = clientpush.Server(dh, dhargs)
+#		self.pullserver = clientpull.Server(dh, dhargs)
+		self.pushpullserver = pushpull.Server(dh, dhargs)
 		self.pushclientclass = pushclientclass
 		self.pullclientclass = pullclientclass
 
@@ -63,7 +65,7 @@ class Node(leginonobject.LeginonObject):
 
 	def addManager(self):
 		managerhost = self.managerloc['hostname']
-		managerport = self.managerloc['push port']
+		managerport = self.managerloc['port']
 		self.addEventClient('manager', managerhost, managerport)
 		self.announce(event.NodeReadyEvent())
 
@@ -79,7 +81,7 @@ class Node(leginonobject.LeginonObject):
 		self.mark_data(idata)
 		if not issubclass(eventclass, event.PublishEvent):
 			raise TypeError('PublishEvent subclass required')
-		self.pullserver.datahandler.insert(idata)
+		self.pushpullserver.datahandler.insert(idata)
 		self.announce(eventclass(idata.id))
 
 	def mark_data(self, data):
@@ -93,8 +95,7 @@ class Node(leginonobject.LeginonObject):
 
 	def location(self):
 		loc = leginonobject.LeginonObject.location(self)
-		loc['push port'] = self.pushserver.location()['datatcp port']
-		loc['pull port'] = self.pullserver.location()['datatcp port']
+		loc['port'] = self.pushpullserver.location()['datatcp port']
 		return loc
 
 	def interact(self):
@@ -112,12 +113,12 @@ class Node(leginonobject.LeginonObject):
 			del self.clients[newid]
 
 	def addEventInput(self, eventclass, func):
-		self.pushserver.datahandler.setBinding(eventclass, func)
+		self.pushpullserver.datahandler.setBinding(eventclass, func)
 		if eventclass not in self.registry['inputs']:
 			self.registry['inputs'].append(eventclass)
 
 	def delEventInput(self, eventclass):
-		self.pushserver.datahandler.setBinding(eventclass, None)
+		self.pushpullserver.datahandler.setBinding(eventclass, None)
 		if eventclass in self.registry['inputs']:
 			self.registry['inputs'].remove(eventclass)
 
