@@ -58,7 +58,8 @@ class DoseCalibrationDialog(gui.wx.Settings.Dialog):
 		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stdoserate, (2, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'e/m²/s')
+		#label = wx.StaticText(self, -1, 'e/m²/s')
+		label = wx.StaticText(self, -1, 'e/m^2/s')
 		sz.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Beam diameter:')

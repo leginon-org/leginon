@@ -452,7 +452,8 @@ class CamInfoSizer(wx.StaticBoxSizer):
 		st = wx.StaticText(self.parent, -1, 'Size:')
 		self.parameters['Size'] = {}
 		self.parameters['Size']['x'] = wx.StaticText(self.parent, -1, '?')
-		stx = wx.StaticText(self.parent, -1, ' × ')
+		#stx = wx.StaticText(self.parent, -1, ' × ')
+		stx = wx.StaticText(self.parent, -1, ' x ')
 		self.parameters['Size']['y'] = wx.StaticText(self.parent, -1, '?')
 		szsize.Add(st, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szsize.Add(self.parameters['Size']['x'], (0, 1), (1, 1),
@@ -466,7 +467,8 @@ class CamInfoSizer(wx.StaticBoxSizer):
 		st = wx.StaticText(self.parent, -1, 'Pixel size:')
 		self.parameters['Pixel size'] = {}
 		self.parameters['Pixel size']['x'] = wx.StaticText(self.parent, -1, '?')
-		stx = wx.StaticText(self.parent, -1, ' × ')
+		#stx = wx.StaticText(self.parent, -1, ' × ')
+		stx = wx.StaticText(self.parent, -1, ' x ')
 		self.parameters['Pixel size']['y'] = wx.StaticText(self.parent, -1, '?')
 		szpsize.Add(st, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szpsize.Add(self.parameters['Pixel size']['x'], (0, 1), (1, 1),

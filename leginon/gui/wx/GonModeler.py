@@ -1,4 +1,3 @@
-# -*- coding: iso-8859-1 -*-
 import threading
 import wx
 from gui.wx.Choice import Choice

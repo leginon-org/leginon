@@ -1,4 +1,3 @@
-# -*- coding: iso-8859-1 -*-
 import wx
 from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.Calibrator
