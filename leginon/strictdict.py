@@ -7,10 +7,11 @@ import Numeric
 from types import NoneType
 import copy
 
-class NumericArrayType:
+class _NumericArrayType:
 	'''
 	This represents Numeric.ArrayType, since pickle won't accept it
 	'''
+NumericArrayType = _NumericArrayType()
 
 def validateNumericArray(obj):
 	try:
@@ -63,6 +64,16 @@ class OrderedDict(dict):
 				self.__ordered_items = list(map_or_seq)
 			self.__ordered_keys = [item[0] for item in self.__ordered_items]
 			self.__ordered_values = [item[1] for item in self.__ordered_items]
+
+	def iterkeys(self):
+		return iter(self.keys())
+	__iter__ = iterkeys
+
+	def itervalues(self):
+		return iter(self.values())
+
+	def iteritems(self):
+		return iter(self.items())
 
 	def keys(self):
 		return list(self.__ordered_keys)

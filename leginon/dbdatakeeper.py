@@ -122,7 +122,6 @@ class DBDataKeeper(datahandler.DataHandler):
 		are references to other data.  Returns a reference to
 		this newly inserted data object.
 		'''
-
 		## make certain replacements
 		mycopy = self.replacements(newdata)
 

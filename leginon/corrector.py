@@ -139,9 +139,11 @@ class Corrector(node.Node):
 		return ''
 
 	def newPlan(self, camstate):
-		newcamstate = copy.deepcopy(camstate)
-		del newcamstate['exposure time']
-		plan = data.CorrectorPlanData(self.ID(), camstate=newcamstate)
+		camdata = data.CameraEMData(('camera',), initializer=camstate)
+		print 'CAMDATA'
+		print camdata
+		camdata['exposure time'] = None
+		plan = data.CorrectorPlanData(self.ID(), camstate=camdata)
 		return plan
 
 	def retrievePlan(self, camstate):

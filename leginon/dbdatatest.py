@@ -4,8 +4,6 @@ import data
 import dbdatakeeper
 import sys
 
-print 'ORIGINAL'
-
 def printdata(idata):
 	for key,value in idata.items():
 		if isinstance(value, data.Data):
@@ -26,8 +24,9 @@ def printcompare(idata1, idata2):
 
 ###### create two instances of PresetImageData to insert ###########
 
-scopedict = {'magnification': 1501, 'beam tilt': {'x':1.1,'y':2.2}}
-cameradict = {'exposure time': 510, 'binning': {'x': 1, 'y':1}}
+scopedata = data.ScopeEMData(('scopeasdf',), initializer={'magnification': 1501, 'beam tilt': {'x':1.1,'y':2.2}})
+cameradata = data.CameraEMData(('camasdf',), initializer={'exposure time': 510, 'binning': {'x': 1, 'y':1}})
+
 ## PresetData
 pdata = data.NewPresetData(('pdata',1))
 pdata['name'] = 'hole3'
@@ -39,11 +38,11 @@ pdata['binning'] = {'x': 8, 'y': 8}
 ## PresetImageData: contains PresetData
 mydata = data.NewPresetImageData(('pidata', 1))
 mydata['preset'] = pdata
-mydata['scope'] = scopedict
-mydata['camera'] = cameradict
+mydata['scope'] = scopedata
+mydata['camera'] = cameradata
 
-scopedict2 = {'magnification': 1801, 'beam tilt': {'x':5.1,'y':7.2}}
-cameradict2 = {'exposure time': 810, 'binning': {'x': 1, 'y':1}}
+scopedata2 = data.ScopeEMData(('scopeasdf2',), initializer={'magnification': 1801, 'beam tilt': {'x':5.1,'y':7.2}})
+cameradata2 = data.CameraEMData(('camasdf2',), initializer={'exposure time': 810, 'binning': {'x': 1, 'y':1}})
 ## PresetData
 pdata2 = data.NewPresetData(('pdata',2))
 pdata2['name'] = 'square1'
@@ -55,19 +54,18 @@ pdata2['binning'] = {'x': 22, 'y': 22}
 ## PresetImageData: contains PresetData
 mydata2 = data.NewPresetImageData(('pidata', 2))
 mydata2['preset'] = pdata2
-mydata2['scope'] = scopedict2
-mydata2['camera'] = cameradict2
+mydata2['scope'] = scopedata2
+mydata2['camera'] = cameradata2
 
 dbdk = dbdatakeeper.DBDataKeeper(('dbdk',1), 'testsession')
 
-if 0:
+if 1:
 	dbdk.insert(mydata)
 	dbdk.insert(mydata2)
-	print 'INSERTED:'
-printdata(mydata)
-printdata(mydata2)
+#printdata(mydata)
+#printdata(mydata2)
 
-# sys.exit()
+sys.exit()
 
 ##### create another instance of PresetImageData for the query  #####
 

@@ -42,11 +42,11 @@ class DataDict(strictdict.TypedDict):
 		return []
 	typemap = classmethod(typemap)
 
-	def factories(self, valuetype):
+	def getFactory(self, valuetype):
 		if valuetype is DataDict:
-			f = DataDict
+			f = valuetype
 		else:
-			f = strictdict.TypedDict.factories(self, valuetype)
+			f = strictdict.TypedDict.getFactory(self, valuetype)
 		return f
 
 def replaceData(originaldata, func, memo=None):
@@ -175,8 +175,13 @@ class Data(DataDict, leginonobject.LeginonObject):
 		self.split_list.append(datainstance)
 		return datainstance.reference()
 
-	def factories(self, valuetype):
-		if issubclass(valuetype, Data):
+	def getFactory(self, valuetype):
+		try:
+			mine = issubclass(valuetype, Data)
+		except TypeError:
+			mine = False
+
+		if mine:
 			def f(value):
 				if isinstance(value, DataReference):
 					return value
@@ -186,7 +191,7 @@ class Data(DataDict, leginonobject.LeginonObject):
 					raise ValueError('must be type %s' % (valuetype,))
 				
 		else:
-			f = DataDict.factories(self, valuetype)
+			f = DataDict.getFactory(self, valuetype)
 		return f
 
 	def reference(self):
@@ -240,8 +245,8 @@ class EMData(Data):
 ### maybe split this up into scope and camera?
 class ScopeEMData(EMData):
 	def typemap(cls):
-		t = Data.typemap()
-		t += [ 
+		t = EMData.typemap()
+		t += [
 			('magnification', int),
 			('spot size', int),
 			('image shift', dict),
@@ -253,7 +258,6 @@ class ScopeEMData(EMData):
 			('intensity', float),
 			('stigmator', dict),
 			('beam tilt', dict),
-			('magnification', int),
 			('stage position', dict),
 		]
 		return t
@@ -261,7 +265,7 @@ class ScopeEMData(EMData):
 
 class CameraEMData(EMData):
 	def typemap(cls):
-		t = Data.typemap()
+		t = EMData.typemap()
 		t += [ ('offset', dict),
 			('dimension', dict),
 			('binning', dict),
@@ -273,7 +277,7 @@ class CameraEMData(EMData):
 
 class AllEMData(EMData):
 	def typemap(cls):
-		t = Data.typemap()
+		t = EMData.typemap()
 		t += [ ('scope', ScopeEMData),
 			('camera', CameraEMData),
 		]
