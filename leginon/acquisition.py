@@ -218,12 +218,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.waitingforimages.setList(imageidstrs)
 		# wait for image processing nodes to complete
 		for id, eventinfo in self.doneevents.items():
-			print 'waiting for image %s to complete' % (id,)
+			print '%s WAITING for %s' % (self.id, id,)
 			eventinfo['received'].wait()
 			idstr = str(id)
 			imageidstrs.remove(idstr)
 			self.waitingforimages.setList(imageidstrs)
+			print '%s DONE WAITING for %s' % (self.id, id,)
 		self.doneevents.clear()
+		print '%s DONE WAITING' % (self.id)
 
 	def stopWaitingForImage(self):
 		imageidstr = self.waitingforimages.getSelectedValue()
