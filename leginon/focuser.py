@@ -196,6 +196,7 @@ class Focuser(acquisition.Acquisition):
 			# acquire image, show image and power spectrum
 			# allow user to adjust defocus and stig
 			cor = self.uicorrectimage.get()
+			print 'COR', cor
 			self.manualchecklock.acquire()
 			try:
 				imagedata = self.cam.acquireCameraImageData(correction=cor)
@@ -205,7 +206,10 @@ class Focuser(acquisition.Acquisition):
 			pow = imagefun.power(imarray)
 			self.man_image.set(imarray)
 			self.man_power.set(pow)
-		message.clear()
+		try:
+			message.clear()
+		except:
+			pass
 		print 'manual focus loop done'
 
 	def waitForContinue(self):
