@@ -114,15 +114,18 @@ class ImViewer(imagewatcher.ImageWatcher):
 		self.outputEvent(e)
 
 	def loadImage(self, filename):
+		print filename
 		if filename is None:
 			return
 		try:
 			self.numarray = Mrc.mrc_to_numeric(filename)
+			print self.numarray.shape
 			self.ui_image.set(self.numarray)
+			print 'doPow'
 			self.doPow()
+			print 'done...'
 		except (TypeError, IOError):
 			self.printerror('Unable to load image "%s"' % filename)
-			
 
 	def uiLoadImage(self):
 		try:
