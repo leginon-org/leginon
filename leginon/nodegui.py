@@ -81,7 +81,6 @@ class Data(SpecWidget):
 
 	def getServer(self):
 		r = self.uiclient.execute('GET', (self.name,))
-		print 'GET RETURNS', r
 		self.set(r)
 
 # types:
@@ -163,6 +162,34 @@ class Data(SpecWidget):
 		raise NotImplementedError
 
 
+class newData(SpecWidget):
+	def __init__(self, parent, uiclient, spec):
+		self.bgcolor = 'cyan'
+		SpecWidget.__init__(self, parent, uiclient, spec, bd=2, relief=SUNKEN, bg=self.bgcolor)
+
+	def buildSpec(self):
+		name = self.name = self.spec['name']
+		self.type = self.spec['xmlrpctype']
+		if 'enum' in self.spec:
+			self.enum = self.spec['enum']
+		else:
+			self.enum = None
+		if 'permissions' in self.spec:
+			self.permissions = self.spec['permissions']
+		else:
+			self.permissions = None
+
+		if 'default' in self.spec:
+			self.default = self.spec['default']
+		else:
+			self.default = None
+
+
+class EntryData(Data):
+	def __init__(self, parent, uiclient, spec):
+		Data.__init__(self, parent, uiclient, spec)
+
+
 class Container(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
 		SpecWidget.__init__(self, parent, uiclient, spec, bg='green')
@@ -220,13 +247,15 @@ class Method(SpecWidget):
 		self.process_return(ret)
 
 	def process_return(self, returnvalue):
+		if self.returnspec is None:
+			return
 		ret = self.returnspec['xmlrpctype']
 		if ret in ('array','string'):
 			self.retwidget['state'] = NORMAL
 			self.retwidget.delete(0,END)
 			self.retwidget.insert(0, `returnvalue`)
 			self.retwidget['state'] = DISABLED
-		if ret == 'struct':
+		elif ret == 'struct':
 			item = StructTreeItem(None, 'Result', returnvalue)
 			node = TreeWidget.TreeNode(self.retwidget.canvas, None, item)
 			node.expand()
