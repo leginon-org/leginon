@@ -356,7 +356,7 @@ class Node(leginonobject.LeginonObject):
 			if isinstance(datainstance[key], data.Data):
 				self.addSession(datainstance[key])
 
-	def research(self, dataclass=None, datainstance=None, results=None):
+	def research(self, dataclass=None, datainstance=None, results=None, fill=True):
 		'''
 		How a node finds some data in the leginon system:
 			1) Using a data class and keyword args:
@@ -388,13 +388,23 @@ class Node(leginonobject.LeginonObject):
 
 		### use DBDataKeeper query if not results yet
 		if not resultlist and datainstance is not None:
-			self.addEmptyInstances(datainstance)
+			if fill:
+				try:
+					self.addEmptyInstances1(datainstance)
+				except RuntimeError:
+					self.printerror('RuntimeError, probably exceded recursion limit in addEmptyInsance1.  You should probably set fill=False when calling Node.research(), and instead, construct your own filled instance.')
+					return []
 			newresults = self.datahandler.dbQuery(datainstance, results)
 			resultlist += newresults
 
 		return resultlist
 
-	def addEmptyInstances(self, datainstance):
+	def addEmptyInstances1(self, datainstance):
+		'''
+		this recursively fills in values of a Data instance with
+		new empty Data instances, but only if they have not already
+		been set to something.
+		'''
 		for key, datatype in datainstance.types().items():
 			try:
 				if issubclass(datatype, data.Data):
@@ -403,9 +413,29 @@ class Node(leginonobject.LeginonObject):
 							datainstance[key] = datatype()
 					else:
 						datainstance[key] = datatype()
-					self.addEmptyInstances(datainstance[key])
+					self.addEmptyInstances1(datainstance[key])
 			except TypeError:
 				pass
+
+	def addEmptyInstances2(self, datainstance, memo={}):
+		'''
+		this is like addEmptyInstances1, but it will not result in
+		infinite recursion, because it keeps a memo of classes
+		that it has already done.
+		'''
+		memo[datainstance.__class__] = None
+		for key, datatype in datainstance.types().items():
+			try:
+				issub = issubclass(datatype, data.Data)
+			except TypeError:
+				## datatype is not a class, so obviously not
+				## a subclass of Data
+				issub = False
+			if issub:
+				if datainstance[key] is None:
+					datainstance[key] = datatype()
+				if datatype not in memo:
+					self.addEmptyInstances2(datainstance[key], memo)
 
 	def unpublish(self, dataid, eventclass=event.UnpublishEvent):
 		'''Make a piece of data unavailable to other nodes.'''

@@ -1240,6 +1240,7 @@ def datatype(in_dict, qikey=None, qinfo=None):
 			try:
 				content[a[1]] = eval(value)
 			except SyntaxError:
+				print 'Invalid Sequence String: ', value
 				content[a[1]] = None
 		elif a[0] == 'BIN':
 			content[a[1]] = dict2bin({key:value})
@@ -1248,10 +1249,16 @@ def datatype(in_dict, qikey=None, qinfo=None):
 			## when we know the full path
 			content[a[1]] = strictdict.FileReference(value, 'image path', Mrc.mrc_to_numeric)
 		elif a[0] == 'REF':
-			jqikey = qinfo[qikey]['join'][a[2]]
-			dr = data.DataReference()
-			dr.qikey = jqikey
-			content[a[2]] = dr
+			try:
+				jqikey = qinfo[qikey]['join'][a[2]]
+			except KeyError:
+				# if qinfo does not have it, then the query
+				# did not request it.  Just set it to None
+				content[a[2]] = None
+			else:
+				dr = data.DataReference()
+				dr.qikey = jqikey
+				content[a[2]] = dr
 		elif not a[0] in ['SUBD', ]:
 			content[key]=value
 
