@@ -22,6 +22,7 @@ except:
 import threading
 import uidata
 import EM
+import gui.wx.Corrector
 
 class CameraError(Exception):
 	pass
@@ -480,6 +481,7 @@ class Corrector(node.Node):
 	  a dark and bright image for this plan.  These are stored as MRC
 	  in the corrections directory.
 	'''
+	panelclass = gui.wx.Corrector.Panel
 	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
 	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent] + EM.EMClient.eventoutputs
 	def __init__(self, name, session, managerlocation, **kwargs):
@@ -492,89 +494,21 @@ class Corrector(node.Node):
 
 		self.ref_cache = {}
 
-		self.imagedata = data.DataHandler(data.CorrectedCameraImageData, getdata=self.acquireCorrectedImageData)
+		self.imagedata = data.DataHandler(data.CorrectedCameraImageData,
+																			getdata=self.acquireCorrectedImageData)
 		self.publish(self.imagedata, pubevent=True, broadcast=True)
 
-		self.defineUserInterface()
+		self.naverage = None
+		self.camconfig = None
+		self.plan = None
+		self.despike = None
+		self.nsize = None
+		self.threshold = None
+
 		self.start()
 
-#	def exit(self):
-#		node.Node.exit(self)
-#		self.server.exit()
-
-	def defineUserInterface(self):
-		node.Node.defineUserInterface(self)
-
-		self.messagelog = uidata.MessageLog('Messages')
-		self.uistatus = uidata.String('Status', '', 'r')
-		statuscontainer = uidata.Container('Status')
-		statuscontainer.addObjects((self.uistatus,))
-
-		darkmethod = uidata.Method('Dark', self.uiAcquireDark)
-		brightmethod = uidata.Method('Bright', self.uiAcquireBright)
-		referencescontainer = uidata.Container('References')
-		referencescontainer.addObjects((darkmethod, brightmethod))
-
-		rawmethod = uidata.Method('Raw', self.uiAcquireRaw)
-		correctedmethod = uidata.Method('Corrected', self.uiAcquireCorrected)
-		acquirecontainer = uidata.Container('Acquire')
-		acquirecontainer.addObjects((rawmethod, correctedmethod))
-
-		self.autobinning = uidata.Integer('Binning', 1, 'rw', persist=True)
-		self.autoexptime = uidata.Integer('Exposure Time', 500, 'rw', persist=True)
-		self.autotarget = uidata.Integer('Target Mean', 2000, 'rw', persist=True)
-		automethod = uidata.Method('Auto References', self.uiAutoAcquireReferences)
-		autocontainer = uidata.Container('Auto References')
-		autocontainer.addObjects((self.autobinning, self.autotarget,
-															self.autoexptime, automethod))
-
-		controlcontainer = uidata.Container('Control')
-		controlcontainer.addObjects((referencescontainer, acquirecontainer))
-
-		self.displayflag = uidata.Boolean('Display image', True, 'rw', persist=True)
-
-		camsetup = self.cam.uiSetupContainer()
-
-		self.uiframestoaverage = uidata.Integer('Frames to Average', 3, 'rw')
-
-		self.badrows = uidata.Sequence('Bad Rows', (), 'rw')
-		self.badcols = uidata.Sequence('Bad Cols', (), 'rw')
-		setplan = uidata.Method('Set Plan', self.uiSetPlanParams)
-		getplan = uidata.Method('Get Plan', self.uiGetPlanParams)
-
-		self.despikeon = uidata.Boolean('Despike', True, 'rw', persist=True)
-		self.despikevalue = uidata.Float('Despike Threshold', 3.5, 'rw',
-																			persist=True)
-		self.despikesize = uidata.Integer('Neighborhood Size', 11, 'rw',
-																			persist=True)
-		despikecontainer = uidata.Container('Despike')
-		despikecontainer.addObjects((self.despikeon, self.despikesize,
-																	self.despikevalue))
-
-		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((self.displayflag, self.uiframestoaverage,
-																	camsetup, self.badrows, self.badcols,
-																	setplan, getplan, despikecontainer))
-
-		statscontainer = uidata.Container('Statistics')
-		self.statsmean = uidata.Float('Mean', None, 'r')
-		self.statsmin = uidata.Float('Min', None, 'r')
-		self.statsmax = uidata.Float('Max', None, 'r')
-		self.statsstd = uidata.Float('Std. Dev.', None, 'r')
-		statscontainer.addObjects((self.statsmean, self.statsmin, self.statsmax,
-																self.statsstd))
-
-		self.ui_image = uidata.Image('Image', None, 'rw')
-
-		container = uidata.LargeContainer('Corrector')
-		container.addObject(self.messagelog, position={'expand': 'all'})
-		container.addObjects((statuscontainer, settingscontainer, controlcontainer,
-													statscontainer, self.ui_image))
-		self.uicontainer.addObject(container)
-
-	def uiSetPlanParams(self):
-		### if apply as needed, use local config
-		self.cam.uiApplyAsNeeded()
+	def setPlan(self):
+		self.cam.setCameraDict(self.camconfig)
 		camconfig = self.cam.getCameraEMData()
 
 		newcamstate = data.CorrectorCamstateData()
@@ -585,25 +519,18 @@ class Corrector(node.Node):
 		plandata = data.CorrectorPlanData()
 		plandata['session'] = self.session
 		plandata['camstate'] = newcamstate
-		plandata['bad_rows'] = self.badrows.get()
-		plandata['bad_cols'] = self.badcols.get()
+		plandata['bad_rows'] = self.plan['rows']
+		plandata['bad_cols'] = self.plan['columns']
 		self.storePlan(plandata)
 
-	def uiGetPlanParams(self):
-		camconfig = self.cam.uiGetParams()
+	def getPlan(self):
 		newcamstate = data.CorrectorCamstateData()
-		newcamstate['dimension'] = camconfig['dimension']
-		newcamstate['offset'] = camconfig['offset']
-		newcamstate['binning'] = camconfig['binning']
-		plandata = self.retrievePlan(newcamstate)
-		if plandata is None:
-			self.badrows.set([])
-			self.badcols.set([])
-		else:
-			self.badrows.set(plandata['bad_rows'])
-			self.badcols.set(plandata['bad_cols'])
+		newcamstate['dimension'] = self.camconfig['dimension']
+		newcamstate['offset'] = self.camconfig['offset']
+		newcamstate['binning'] = self.camconfig['binning']
+		self.plan = self.retrievePlan(newcamstate)
 
-	def uiAcquireDark(self):
+	def acquireDark(self):
 		try:
 			imagedata = self.acquireReference(dark=True)
 		except node.PublishError:
@@ -612,7 +539,7 @@ class Corrector(node.Node):
 			self.displayImage(imagedata)
 			node.beep()
 
-	def uiAcquireBright(self):
+	def acquireBright(self):
 		try:
 			imagedata = self.acquireReference(dark=False)
 		except node.PublishError:
@@ -621,9 +548,9 @@ class Corrector(node.Node):
 			self.displayImage(imagedata)
 			node.beep()
 
-	def uiAcquireRaw(self):
+	def acquireRaw(self):
 		try:
-			self.cam.uiApplyAsNeeded()
+			self.cam.setCameraDict(self.camconfig)
 			imagedata = self.cam.acquireCameraImageData(correction=False)
 		except node.PublishError:
 			self.logger.exception('Cannot set EM parameter, EM may not be running')
@@ -631,9 +558,9 @@ class Corrector(node.Node):
 			imagearray = imagedata['image']
 			self.displayImage(imagearray)
 
-	def uiAcquireCorrected(self):
+	def acquireCorrected(self):
 		try:
-			self.cam.uiApplyAsNeeded()
+			self.cam.setCameraDict(self.camconfig)
 			imagedata = self.acquireCorrectedArray()
 		except node.PublishError:
 			self.logger.exception('Cannot set EM parameter, EM may not be running')
@@ -641,16 +568,8 @@ class Corrector(node.Node):
 			self.displayImage(imagedata)
 
 	def displayImage(self, imagedata):
-		if self.displayflag.get():
-			self.ui_image.set(imagedata.astype(Numeric.Float32))
-			self.displayStats(imagedata)
-
-	def displayStats(self, imagedata):
-		stats = self.stats(imagedata)
-		self.statsmean.set(stats['mean'])
-		self.statsmin.set(stats['min'])
-		self.statsmax.set(stats['max'])
-		self.statsstd.set(stats['stdev'])
+		self.setImage(imagedata.astype(Numeric.Float32), self.stats(imagedata))
+		self.displayStats(imagedata)
 
 	def retrievePlan(self, corstate):
 		qplan = data.CorrectorPlanData()
@@ -659,9 +578,11 @@ class Corrector(node.Node):
 		qplan['session']['instrument'] = self.session['instrument']
 		plandatalist = self.research(datainstance=qplan)
 		if plandatalist:
-			return plandatalist[0]
+			plandata = plandatalist[0]
+			return {'rows': list(plandata['bad_rows']),
+							'columns': list(plandata['bad_cols'])}
 		else:
-			return None
+			return {'rows': [], 'columns': []}
 
 	def storePlan(self, plandata):
 		self.publish(plandata, database=True, dbforce=True)
@@ -669,7 +590,7 @@ class Corrector(node.Node):
 	def acquireSeries(self, n, camdata):
 		series = []
 		for i in range(n):
-			self.uistatus.set('Acquiring %s of %s' % (i+1, n))
+			self.setStatus('Acquiring %s of %s' % (i+1, n))
 			imagedata = self.cam.acquireCameraImageData(correction=False)
 			numimage = imagedata['image']
 			camdata = imagedata['camera']
@@ -678,27 +599,25 @@ class Corrector(node.Node):
 		return {'image series': series, 'scope': scopedata, 'camera':camdata}
 
 	def acquireReference(self, dark=False):
-		self.cam.uiApplyAsNeeded()
+		self.cam.setCameraDict(self.camconfig)
 		originalcamdata = self.cam.getCameraEMData()
 		tempcamdata = data.CameraEMData(initializer=originalcamdata)
 		if dark:
 			tempcamdata['exposure type'] = 'dark'
 			typekey = 'dark'
-			self.uistatus.set('Acquiring dark')
+			self.setStatus('Acquiring dark')
 		else:
 			tempcamdata['exposure type'] = 'normal'
 			typekey = 'bright'
-			self.uistatus.set('Acquiring bright')
+			self.setStatus('Acquiring bright')
 		self.cam.setCameraEMData(tempcamdata)
 
-		navg = self.uiframestoaverage.get()
-
-		seriesinfo = self.acquireSeries(navg, camdata=tempcamdata)
+		seriesinfo = self.acquireSeries(self.naverage, camdata=tempcamdata)
 		series = seriesinfo['image series']
 		seriescam = seriesinfo['camera']
 		seriesscope = seriesinfo['scope']
 
-		self.uistatus.set('Averaging series')
+		self.setStatus('Averaging series')
 		ref = imagefun.averageSeries(series)
 
 		corstate = data.CorrectorCamstateData()
@@ -708,11 +627,11 @@ class Corrector(node.Node):
 
 		refimagedata = self.storeRef(typekey, ref, corstate)
 
-		self.uistatus.set('Got reference image, calculating normalization')
+		self.setStatus('Got reference image, calculating normalization')
 		self.calc_norm(refimagedata)
 
 		if tempcamdata['exposure type'] == 'dark':
-			self.uistatus.set('Reseting camera exposure type to normal from dark')
+			self.setStatus('Reseting camera exposure type to normal from dark')
 			self.cam.setCameraEMData(originalcamdata)
 		return ref
 
@@ -729,9 +648,9 @@ class Corrector(node.Node):
 		imagetemp['camstate'] = camstate
 		imagetemp['session'] = data.SessionData()
 		imagetemp['session']['instrument'] = self.session['instrument']
-		self.uistatus.set('Researching reference image')
+		self.setStatus('Researching reference image')
 		refs = self.research(datainstance=imagetemp, results=1)
-		self.uistatus.set('Reference image researched')
+		self.setStatus('Reference image researched')
 		if refs:
 			ref = refs[0]
 		else:
@@ -759,7 +678,7 @@ class Corrector(node.Node):
 		try:
 			return self.ref_cache[key]
 		except KeyError:
-			self.uistatus.set('Loading reference image "%s"' % str(key))
+			self.setStatus('Loading reference image "%s"' % str(key))
 
 		## use reference image from database
 		ref = self.researchRef(camstate, type)
@@ -767,7 +686,7 @@ class Corrector(node.Node):
 			image = ref['image']
 			self.ref_cache[key] = image
 		else:
-			self.uistatus.set('No reference image found')
+			self.setStatus('No reference image found')
 			image = None
 		return image
 
@@ -790,9 +709,9 @@ class Corrector(node.Node):
 		imagetemp['camstate'] = camstate
 		imagetemp['filename'] = self.filename(type, imagetemp.dmid[-1])
 		imagetemp['session'] = self.session
-		self.uistatus.set('Publishing reference image...')
+		self.setStatus('Publishing reference image...')
 		self.publish(imagetemp, pubevent=True, database=True)
-		self.uistatus.set('Reference image published')
+		self.setStatus('Reference image published')
 		return imagetemp
 
 	def filename(self, reftype, imid):
@@ -805,13 +724,13 @@ class Corrector(node.Node):
 			dark = corimagedata['image']
 			bright = self.retrieveRef(corstate, 'bright')
 			if bright is None:
-				self.uistatus.set('No bright reference image')
+				self.setStatus('No bright reference image')
 				return
 		if isinstance(corimagedata, data.BrightImageData):
 			bright = corimagedata['image']
 			dark = self.retrieveRef(corstate, 'dark')
 			if dark is None:
-				self.uistatus.set('No dark reference image')
+				self.setStatus('No dark reference image')
 				return
 
 		norm = bright - dark
@@ -833,7 +752,7 @@ class Corrector(node.Node):
 		try:
 			imagedata = self.cam.acquireCameraImageData(correction=0)
 		except camerafuncs.NoEMError:
-			self.messagelog.error('EM not running')
+			self.logger.error('EM not running')
 			return None
 		numimage = imagedata['image']
 		camdata = imagedata['camera']
@@ -850,18 +769,12 @@ class Corrector(node.Node):
 		this puts an image through a pipeline of corrections
 		'''
 		normalized = self.normalize(original, camstate)
-		plandata = self.retrievePlan(camstate)
-		if plandata is not None:
-			touchedup = self.removeBadPixels(normalized, plandata)
-			good = touchedup
-		else:
-			good = normalized
+		plan = self.retrievePlan(camstate)
+		good = self.removeBadPixels(normalized, plan)
 
-		if self.despikeon.get():
+		if self.despike:
 			self.logger.info('Despiking...')
-			thresh = self.despikevalue.get()
-			nsize = self.despikesize.get()
-			good = imagefun.despike(good, nsize, thresh)
+			good = imagefun.despike(good, self.nsize, self.threshold)
 			self.logger.info('Despiked')
 
 		## this has been commented because original.type()
@@ -875,8 +788,8 @@ class Corrector(node.Node):
 		return final
 
 	def removeBadPixels(self, image, plandata):
-		badrows = plandata['bad_rows']
-		badcols = plandata['bad_cols']
+		badrows = plan['rows']
+		badcols = plan['columns']
 
 		shape = image.shape
 
@@ -938,7 +851,7 @@ class Corrector(node.Node):
 		im = imagedata['image']
 		mean = darkmean = imagefun.mean(im)
 		self.displayImage(im)
-		self.uistatus.set('Dark reference mean: %s' % str(darkmean))
+		self.setStatus('Dark reference mean: %s' % str(darkmean))
 
 		target_exp = 0
 		trial_exp = initial_exp
@@ -954,7 +867,7 @@ class Corrector(node.Node):
 			im = imagedata['image']
 			mean = imagefun.mean(im)
 			self.displayImage(im)
-			self.uistatus.set('Image mean: %s' % str(mean))
+			self.setStatus('Image mean: %s' % str(mean))
 
 			if minmean <= mean <= maxmean:
 				i = -1
@@ -964,5 +877,5 @@ class Corrector(node.Node):
 				trial_exp = (targetmean - darkmean) / slope
 
 		if i == tries-1:
-			self.uistatus.set('Failed to find target mean after %s tries' % (tries,))
+			self.setStatus('Failed to find target mean after %s tries' % (tries,))
 

@@ -89,14 +89,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		self.start()
 
-	def setStatus(self, status):
-		evt = gui.wx.Node.SetStatusEvent(status)
-		self.panel.GetEventHandler().AddPendingEvent(evt)
-
-	def displayImage(self, image):
-		evt = gui.wx.Node.SetImageEvent(image)
-		self.panel.GetEventHandler().AddPendingEvent(evt)
-
 	def onPresetPublished(self, evt):
 		evt = gui.wx.Presets.NewPresetEvent()
 		self.panel.GetEventHandler().AddPendingEvent(evt)
@@ -404,7 +396,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.doneevents[dataid]['status'] = 'waiting'
 		if self.display:
 			self.reportStatus('output', 'Displaying image...')
-			self.displayImage(imagedata['image'].astype(Numeric.Float32))
+			self.setImage(imagedata['image'].astype(Numeric.Float32))
 			self.reportStatus('output', 'Image displayed')
 
 		if self.wait:

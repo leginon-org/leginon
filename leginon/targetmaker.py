@@ -59,10 +59,6 @@ class MosaicTargetMaker(TargetMaker):
 		self.defineUserInterface()
 		self.start()
 
-	def setStatus(self, status):
-		evt = gui.wx.Node.SetStatusEvent(status)
-		self.panel.GetEventHandler().AddPendingEvent(evt)
-
 	def makeMosaicTargetList(self, ievent=None):
 		# make targets using current instrument state and selected preset
 		self.setStatus('Getting current EM state...')

@@ -18,8 +18,35 @@ class Panel(gui.wx.Node.Panel):
 		self.ststatus = wx.StaticText(self, -1, '')
 		self.szstatus.Add(self.ststatus, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+		# statistics
+		self.szstats = self._getStaticBoxSizer('Statistics', (1, 0), (1, 1),
+																						wx.EXPAND|wx.ALL)
+		stlmean = wx.StaticText(self, -1, 'Mean:')
+		stlmin = wx.StaticText(self, -1, 'Minimum:')
+		stlmax = wx.StaticText(self, -1, 'Maximum:')
+		stlsigma = wx.StaticText(self, -1, 'Std. Dev.:')
+
+		stvmean = wx.StaticText(self, -1, '')
+		stvmin = wx.StaticText(self, -1, '')
+		stvmax = wx.StaticText(self, -1, '')
+		stvsigma = wx.StaticText(self, -1, '')
+
+		self.szstats.Add(stlmean, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szstats.Add(stvmean, (0, 1), (1, 1),
+											wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.szstats.Add(stlmin, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szstats.Add(stvmin, (1, 1), (1, 1),
+											wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.szstats.Add(stlmax, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szstats.Add(stvmax, (2, 1), (1, 1),
+											wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.szstats.Add(stlsigma, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szstats.Add(stvsigma, (3, 1), (1, 1),
+											wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.szstats.AddGrowableCol(1)
+
 		# settings
-		self.szsettings = self._getStaticBoxSizer('Settings', (1, 0), (1, 1),
+		self.szsettings = self._getStaticBoxSizer('Settings', (2, 0), (1, 1),
 																							wx.EXPAND|wx.ALL)
 
 		label = wx.StaticText(self, -1, 'Frames to average:')
@@ -87,7 +114,7 @@ class Panel(gui.wx.Node.Panel):
 												wx.ALIGN_CENTER|wx.EXPAND|wx.ALL)
 		
 		# controls
-		self.szcontrols = self._getStaticBoxSizer('Controls', (2, 0), (1, 1),
+		self.szcontrols = self._getStaticBoxSizer('Controls', (3, 0), (1, 1),
 																wx.EXPAND|wx.ALL)
 		szrb = wx.GridBagSizer(0, 0)
 		self.rbdark = wx.RadioButton(self, -1, 'Dark reference', style=wx.RB_GROUP)
@@ -107,12 +134,12 @@ class Panel(gui.wx.Node.Panel):
 		self.szcontrols.AddGrowableCol(0)
 
 		# image
-		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (3, 1),
+		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (4, 1),
 																						wx.EXPAND|wx.ALL)
 		self.imagepanel = wxImageViewer.ImagePanel(self, -1)
 		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
 
-		self.szmain.AddGrowableRow(3)
+		self.szmain.AddGrowableRow(4)
 		self.szmain.AddGrowableCol(1)
 
 		self.SetSizerAndFit(self.szmain)
@@ -120,6 +147,7 @@ class Panel(gui.wx.Node.Panel):
 
 		self.Bind(wx.EVT_BUTTON, self.onEditPlan, beditplan)
 		self.Bind(wx.EVT_BUTTON, self.onAcquire, self.bacquire)
+		self.Bind(gui.wx.Node.EVT_SET_IMAGE, self.onSetImage)
 
 	def initializeValues(self):
 		gui.wx.Data.setWindowFromDB(self.icnaverage)
@@ -129,7 +157,7 @@ class Panel(gui.wx.Node.Panel):
 		gui.wx.Data.setWindowFromDB(self.ncthreshold)
 
 		self.node.naverage = self.icnaverage.GetValue()
-		self.node.camconfig = self.icnaverage.getConfiguration()
+		self.node.camconfig = self.cpcamconfig.getConfiguration()
 		self.node.getPlan()
 		self.setPlan(self.node.plan)
 		self.node.despike = self.cbdespike.GetValue()
@@ -149,11 +177,23 @@ class Panel(gui.wx.Node.Panel):
 		gui.wx.Data.bindWindowToDB(self.ncnsize)
 		gui.wx.Data.bindWindowToDB(self.ncthreshold)
 
+	def onSetImage(self, evt):
+		self.imagepanel.setNumericImage(evt.image)
+		if 'mean' in evt.statistics:
+			self.stvmean.SetLabel(str(evt.statistics['mean']))
+		if 'min' in evt.statistics:
+			self.stvmin.SetLabel(str(evt.statistics['min']))
+		if 'max' in evt.statistics:
+			self.stvmax.SetLabel(str(evt.statistics['max']))
+		if 'stdev' in evt.statistics:
+			self.stvsigma.SetLabel(str(evt.statistics['stdev']))
+		self.szstats.Layout()
+
 	def onNAverageInt(self, evt):
 		self.node.naverage = evt.GetValue()
 
 	def onCamConfigChanged(self, evt):
-		self.node.camconfig = self.icnaverage.getConfiguration()
+		self.node.camconfig = self.cpcamconfig.getConfiguration()
 		self.node.getPlan()
 		self.setPlan(self.node.plan)
 
@@ -167,13 +207,13 @@ class Panel(gui.wx.Node.Panel):
 		self.node.threshold = evt.GetValue()
 
 	def onAcquire(self, evt):
-		if dark:
+		if self.rbdark.GetValue():
 			self.node.acquireDark()
-		elif bright:
+		elif self.rbbright.GetValue():
 			self.node.acquireBright()
-		elif raw:
+		elif self.rbraw.GetValue():
 			self.node.acquireRaw()
-		elif corrected:
+		elif self.rbcorrected.GetValue():
 			self.node.acquireCorrected()
 
 	def setPlan(self, plan):

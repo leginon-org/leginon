@@ -130,6 +130,14 @@ class Node(leginonobject.LeginonObject):
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 		evt.event.wait()
 
+	def setStatus(self, status):
+		evt = gui.wx.Node.SetStatusEvent(status)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
+
+	def setImage(self, image, statistics={}):
+		evt = gui.wx.Node.SetImageEvent(image, statistics)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
+
 	def exit(self):
 		'''Cleans up the node before it dies.'''
 		if self.uicontainer is not None:

@@ -258,12 +258,12 @@ class CustomDialog(wx.Dialog):
 		sz.Add(szbutton, (1, 0), (1, 1), wx.ALIGN_RIGHT|wx.ALL, border=5)
 
 		if geometry is not None:
-			self.icxdimension.SetValue(geometry['dimension']['x'])
-			self.icydimension.SetValue(geometry['dimension']['y'])
+			self.icxdimension.SetValue(int(geometry['dimension']['x']))
+			self.icydimension.SetValue(int(geometry['dimension']['y']))
 			self.cxbinning.SetStringSelection(str(geometry['binning']['x']))
 			self.cybinning.SetStringSelection(str(geometry['binning']['y']))
-			self.icxoffset.SetValue(geometry['offset']['x'])
-			self.icyoffset.SetValue(geometry['offset']['y'])
+			self.icxoffset.SetValue(int(geometry['offset']['x']))
+			self.icyoffset.SetValue(int(geometry['offset']['y']))
 
 		self.SetSizerAndFit(sz)
 

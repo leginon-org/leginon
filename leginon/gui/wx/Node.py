@@ -23,10 +23,11 @@ class SetStatusEvent(wx.PyEvent):
 		self.status = status
 
 class SetImageEvent(wx.PyEvent):
-	def __init__(self, image):
+	def __init__(self, image, statistics={}):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(SetImageEventType)
 		self.image = image
+		self.statistics = statistics
 
 class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, *args, **kwargs):
