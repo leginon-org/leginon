@@ -148,6 +148,7 @@ import Numeric
 import MySQLdb.cursors
 import cPickle
 from types import *
+import data
 
 class SQLDict:
 
@@ -665,6 +666,14 @@ def sqltype(object,key=None):
 	else:
 		return None
 
+def ref2field(key, datareference):
+	'''
+	figure out the column name for a data.DataReference
+	'''
+	reftable = datareference['target'].__class__.__name__
+	colname = sep.join(['REF',reftable,key])
+	return colname
+
 def sqlColumnsDefinition(in_dict, noDefault=None):
 	"""
 	Format a table definition for any Data Class:
@@ -695,6 +704,10 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 			column['Field']=key
 			column['Type']=sqlt
 			columns.append(column)
+		elif isinstance(value, data.DataReference):
+			column['Field'] = ref2field(key,value)
+			column['Type'] = 'INT(20)'
+			columns.append(column)
 		elif type(value) is Numeric.ArrayType:
 			if len(Numeric.ravel(value)) < 10:
 				arraydict = matrix2dict(value,key)
@@ -705,7 +718,7 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 				nd = sqlColumnsDefinition(bindict, noDefault=[])
 			columns += nd
 			# Think about store the filename
-				
+
 		elif type(value) is dict:
 			flatdict = flatDict({key:value})
 			nd = sqlColumnsDefinition(flatdict, noDefault=[])
@@ -716,6 +729,7 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 			nd = sqlColumnsDefinition({seq2sqlColumn(key):repr(value)}, noDefault=[])
 			columns += nd
 			
+	print 'COLUMNS', columns
 	return columns
 
 
@@ -780,6 +794,8 @@ def sqlColumnsFormat(in_dict):
 			flatdict = flatDict({key:value})
 			nf = sqlColumnsFormat(flatdict)
 			columns.update(nf)
+		elif isinstance(value, data.DataReference):
+			columns[ref2field(key,value)] = value['id']
 		elif type(value) in [tuple, list]:
 			columns[seq2sqlColumn(key)] = repr(value)
 	return columns
@@ -842,6 +858,12 @@ def datatype(in_dict):
 			content[a[1]] = eval(value)
 		elif a[0] == 'BIN':
 			content[a[1]] = dict2bin({key:value})
+		elif a[0] == 'REF':
+			dr = data.DataReference()
+			dr['id'] = value
+			dr['classname'] = a[1]
+			dr['target'] = None
+			content[a[2]] = dr
 		elif not a[0] in ['SUBD', ]:
 			content[key]=value
 	for matrix in allarrays:
