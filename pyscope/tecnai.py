@@ -75,14 +75,15 @@ class Tecnai(tem.TEM):
 		except pythoncom.com_error, (hr, msg, exc, arg):
 			raise RuntimeError('unable to initialize exposure adapter, %s' % msg)
 
-		self.magnifications = None
+		self.magnifications = []
 		# from simulator
 		self.mainscreenscale = 26.0/30.0
 
 	def getMagnificationsInitialized(self):
-		if self.magnifications is None:
+		if self.magnifications:
+			return True
+		else:
 			return False
-		return True
 
 	def setCorrectedStagePosition(self, value):
 		self.correctedstage = value
