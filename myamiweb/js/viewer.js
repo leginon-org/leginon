@@ -5,6 +5,34 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
+
+function setevents()
+{
+	if (obj=document.viewerform.imageId) {
+	     obj.onkeyup   = checkevents;
+	     obj.onkeydown = checkevents;
+	     obj.onchange  = checkevents;
+	}
+} 
+
+function checkevents(e)
+{
+	var code;
+	if (!e) var e = window.event;
+	if (e.keyCode) code = e.keyCode;
+	else if (e.which) code = e.which;
+	if (code == key_down_unicode || code == key_up_unicode)  {
+		if (e.type == eventdown) {
+			keydown=true;
+		} else if (e.type == eventup) {
+			updateviews();
+			keydown=false;
+		}
+	} else if (e.type == eventchange && !keydown) {
+			updateviews();
+	}
+}
+
 function setimgId() {
 	if (obj=document.viewerform.imageId) {
 	jsindex = obj.selectedIndex; 

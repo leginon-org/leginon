@@ -138,8 +138,7 @@ class viewer {
 
 	function addFileSelector($filenames=array(), $size=40) {
 		if ($size) $htmlsize = "size=$size";
-		$selector = '<select name="imageId" '.$htmlsize
-				.' onchange="setimgId();updateviews()">'.$this->crlf;
+		$selector = '<select name="imageId" '.$htmlsize .' >'.$this->crlf;
 		$default = ($this->imageId) ? $this->imageId : $filenames[0][id];
 		foreach ($filenames as $filename) {
 			$filestr = ereg_replace('[[:alnum:]]+_(.*)', '\1', $filename[name]);
@@ -159,6 +158,13 @@ class viewer {
 			$str .= 'var jsSessionId = '.$this->sessionId.";".$this->crlf;
 		$jsimgId = ($this->imageId) ? ' = '.$this->imageId.';' : ';';
 		$str .= 'var jsimgId'.$jsimgId.$this->crlf;
+		$str .= 'var key_up_unicode = 38;'.$this->crlf;
+		$str .= 'var key_down_unicode = 40;'.$this->crlf;
+		$str .= 'var eventdown = "keydown";'.$this->crlf;
+		$str .= 'var eventup = "keyup";'.$this->crlf;
+		$str .= 'var eventchange  = "change";'.$this->crlf;
+		$str .= 'var keydown = false;'.$this->crlf;
+
 		$str .= ''.$this->crlf;
 		if ($this->addloijavascript)
 			$str .= $this->addloijavascript;
@@ -180,7 +186,7 @@ class viewer {
 			$nv++;
 		}
 		$init .= 'function updateviews() { '.$this->crlf;
-		$init .= ''.$this->crlf;
+		$init .= 'setimgId();'.$this->crlf;
 		foreach ($this->views as $v) {
 			$name = $v->getName();
 			$init .= '	newfile("'.$name.'");'.$this->crlf;
@@ -192,7 +198,7 @@ class viewer {
 		$init .= 'function initviewer() { '.$this->crlf;
 		if (!empty($initbuttons))
 			$init .= $initbuttons.$this->crlf;
-		$init .= 'setimgId();'.$this->crlf;
+		$init .= 'setevents();'.$this->crlf;
 		$init .= 'updateviews();'.$this->crlf;
 		if ($this->addloijavascript)
 			$init .= '	start();'.$this->crlf;
