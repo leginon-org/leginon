@@ -15,6 +15,7 @@ wxEVT_RIGHT_DRAG_END = wxNewEventType()
 wxEVT_RAISE = wxNewEventType()
 wxEVT_LOWER = wxNewEventType()
 wxEVT_LEAVE = wxNewEventType()
+wxEVT_SET_CURSOR = wxNewEventType()
 
 class UpdateDrawingEvent(wxPyEvent):
 	def __init__(self):
@@ -82,6 +83,12 @@ class LeaveEvent(wxPyEvent):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_LEAVE)
 
+class SetCursorEvent(wxPyEvent):
+	def __init__(self, cursor):
+		wxPyEvent.__init__(self)
+		self.SetEventType(wxEVT_SET_CURSOR)
+		self.cursor = cursor
+
 def EVT_UPDATE_DRAWING(window, function):
 	window.Connect(-1, -1, wxEVT_UPDATE_DRAWING, function)
 
@@ -111,6 +118,9 @@ def EVT_LOWER(window, function):
 
 def EVT_LEAVE(window, function):
 	window.Connect(-1, -1, wxEVT_LEAVE, function)
+
+def EVT_SET_CURSOR(window, function):
+	window.Connect(-1, -1, wxEVT_SET_CURSOR, function)
 
 def inside(x1, y1, w1, h1, x2, y2, w2=None, h2=None):
 	if x2 < x1 or y2 < y1:
@@ -143,6 +153,7 @@ class wxShapeObjectEvtHandler(wxEvtHandler):
 		EVT_LOWER(self, self.OnLower)
 		EVT_MOTION(self, self.OnMotion)
 		EVT_LEAVE(self, self.OnLeave)
+		EVT_SET_CURSOR(self, self.OnSetCursor)
 
 	def ProcessEvent(self, evt):
 		wxEvtHandler.ProcessEvent(self, evt)
@@ -182,6 +193,9 @@ class wxShapeObjectEvtHandler(wxEvtHandler):
 		evt.Skip()
 
 	def OnLeave(self, evt):
+		evt.Skip()
+
+	def OnSetCursor(self, evt):
 		evt.Skip()
 
 class wxConnectionObject(object):
@@ -516,6 +530,33 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 		if self.parent is not None:
 			self.parent.setChildPosition(self, x, y)
 
+	def getSize(self):
+		return self.width, self.height
+
+	def setSize(self, width=None, height=None):
+		if width is None or width < 0:
+			setwidth = False
+		else:
+			setwidth = True
+		if height is None or height < 0:
+			setheight = False
+		else:
+			setheight = True
+
+		for so in self.shapeobjects:
+			if not isinstance(so, wxConnectionPointObject):
+				x, y = self.getChildPosition(so)
+				w, h = so.getSize()
+				if x + w > width:
+					setwidth = False
+				if y + h > height:
+					setheight = False
+
+		if setwidth:
+			self.width = width
+		if setheight:
+			self.height = height
+
 	def getCanvasPosition(self):
 		if self.parent is not None:
 			return self.parent.getChildCanvasPosition(self)
@@ -549,6 +590,9 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 
 	def UpdateDrawing(self):
 		self.ProcessEvent(UpdateDrawingEvent())
+
+	def SetCursor(self, cursor):
+		self.ProcessEvent(SetCursorEvent(cursor))
 
 	def addShapeObject(self, so, x=0, y=0):
 		if so not in self.shapeobjects:
@@ -618,21 +662,34 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 
 	def getShapeObjectFromXY(self, x, y):
 		for shapeobject in self.shapeobjects:
-			ccx, ccy = self.getChildCanvasPosition(shapeobject)
-			if inside(ccx, ccy, shapeobject.width, shapeobject.height, x, y):
-				return shapeobject.getShapeObjectFromXY(x, y)
-		return self
+			xyobject = shapeobject.getShapeObjectFromXY(x, y)
+			if xyobject is not None:
+				return xyobject
 
-	def getContainingShapeObject(self, shapeobject):
+		cpx, cpy = self.getCanvasPosition()
+		if inside(cpx, cpy, self.width, self.height, x, y):
+			return self
+		else:
+			return None
+
+	def getContainingShapeObject(self, shapeobject=None):
+		if shapeobject is None:
+			if self.parent is None:
+				return None
+			else:
+				return self.parent.getContainingShapeObject(self)
+
 		x, y = shapeobject.getCanvasPosition()
 		w = shapeobject.width
 		h = shapeobject.height
-		for so in self.shapeobjects:
-			ccx, ccy = self.getChildCanvasPosition(so)
-			if inside(ccx, ccy, so.width, so.height, x, y, w, h):
-				if so != shapeobject:
-					return so.getContainingShapeObject(shapeobject)
-		return self
+		cpx, cpy = self.getCanvasPosition()
+		if inside(cpx, cpy, self.width, self.height, x, y, w, h):
+			return self
+		else:
+			if self.parent is None:
+				return None
+			else:
+				return self.parent.getContainingShapeObject(shapeobject)
 
 	def raiseShapeObject(self, shapeobject, top=False):
 		index = self.shapeobjects.index(shapeobject)
@@ -745,10 +802,6 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 	def removeText(self, text):
 		del self.text[text]
 
-	def OnLeftClick(self, evt):
-		self.ProcessEvent(RaiseEvent(self, True))
-		evt.Skip()
-
 #	def OnRightClick(self, evt):
 #		self.ProcessEvent(LowerEvent(self, False))
 #		evt.Skip()
@@ -769,14 +822,147 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 		else:
 			evt.Skip()
 
+	def setCursor(self, evtx, evty):
+		thresh = 5
+		x, y = self.getCanvasPosition()
+		x = evtx - x
+		y = evty - y
+		if inside(0, 0, thresh, thresh, x, y):
+			self.SetCursor(wxStockCursor(wxCURSOR_SIZENWSE))
+		elif inside(self.width - thresh, 0, thresh, thresh, x, y):
+			self.SetCursor(wxStockCursor(wxCURSOR_SIZENESW))
+		elif inside(self.width - thresh, self.height - thresh,
+								thresh, thresh, x, y):
+			self.SetCursor(wxStockCursor(wxCURSOR_SIZENWSE))
+		elif inside(0, self.height - thresh, thresh, thresh, x, y):
+			self.SetCursor(wxStockCursor(wxCURSOR_SIZENESW))
+		elif inside(0, 0, self.width, thresh, x, y):
+			self.SetCursor(wxStockCursor(wxCURSOR_SIZENS))
+		elif inside(self.width - thresh, 0, thresh, self.height, x, y):
+			self.SetCursor(wxStockCursor(wxCURSOR_SIZEWE))
+		elif inside(0, self.height - thresh, self.width, thresh, x, y):
+			self.SetCursor(wxStockCursor(wxCURSOR_SIZENS))
+		elif inside(0, 0, thresh, self.height, x, y):
+			self.SetCursor(wxStockCursor(wxCURSOR_SIZEWE))
+		else:
+			self.SetCursor(wxSTANDARD_CURSOR)
+
+	def setDragInfo(self, evtx, evty):
+		self.ProcessEvent(RaiseEvent(self, True))
+		self.draginfo = {}
+		self.draginfo['start'] = self.getPosition()
+		self.draginfo['last'] = (evtx, evty)
+		thresh = 5
+		x, y = self.getCanvasPosition()
+		x = evtx - x
+		y = evty - y
+		w, h = self.getSize()
+		if inside(0, 0, thresh, thresh, x, y):
+			self.draginfo['type'] = 'nw'
+			self.SetCursor(wxStockCursor(wxCURSOR_SIZENWSE))
+		elif inside(w - thresh, 0, thresh, thresh, x, y):
+			self.draginfo['type'] = 'ne'
+			self.SetCursor(wxStockCursor(wxCURSOR_SIZENESW))
+		elif inside(w - thresh, h - thresh,
+								thresh, thresh, x, y):
+			self.draginfo['type'] = 'se'
+			self.SetCursor(wxStockCursor(wxCURSOR_SIZENWSE))
+		elif inside(0, h - thresh, thresh, thresh, x, y):
+			self.draginfo['type'] = 'sw'
+			self.SetCursor(wxStockCursor(wxCURSOR_SIZENESW))
+		elif inside(0, 0, w, thresh, x, y):
+			self.draginfo['type'] = 'n'
+			self.SetCursor(wxStockCursor(wxCURSOR_SIZENS))
+		elif inside(w - thresh, 0, thresh, h, x, y):
+			self.draginfo['type'] = 'e'
+			self.SetCursor(wxStockCursor(wxCURSOR_SIZEWE))
+		elif inside(0, h - thresh, w, thresh, x, y):
+			self.draginfo['type'] = 's'
+			self.SetCursor(wxStockCursor(wxCURSOR_SIZENS))
+		elif inside(0, 0, thresh, h, x, y):
+			self.draginfo['type'] = 'w'
+			self.SetCursor(wxStockCursor(wxCURSOR_SIZEWE))
+		else:
+			self.draginfo['type'] = 'move'
+			self.SetCursor(wxStockCursor(wxCURSOR_SIZING))
+
+	def drag(self, evtx, evty):
+		px, py = self.getPosition()
+		lastx, lasty = self.draginfo['last']
+		self.draginfo['last'] = (evtx, evty)
+
+		w, h = self.getSize()
+		dt = self.draginfo['type']
+		if dt == 'nw':
+			self.setPosition(px + (evtx - lastx), py + (evty - lasty))
+			self.setSize(w - evtx + lastx, h - evty + lasty)
+		elif dt == 'ne':
+			self.setPosition(px, py + (evty - lasty))
+			self.setSize(w + evtx - lastx, h - evty + lasty)
+		elif dt == 'se':
+			self.setSize(w + evtx - lastx, h + evty - lasty)
+		elif dt == 'sw':
+			self.setPosition(px + (evtx - lastx), py)
+			self.setSize(w - evtx + lastx, h + evty - lasty)
+		elif dt == 'n':
+			self.setPosition(px, py + (evty - lasty))
+			self.setSize(None, h - evty + lasty)
+		elif dt == 'e':
+			self.setSize(w + evtx - lastx, None)
+		elif dt == 's':
+			self.setSize(None, h + evty - lasty)
+		elif dt == 'w':
+			self.setPosition(px + (evtx - lastx), py)
+			self.setSize(w - evtx + lastx, None)
+		elif dt == 'move':
+			self.setPosition(evtx - lastx + px, evty - lasty + py)
+
+	def OnMotion(self, evt):
+		if evt.LeftIsDown():
+			if self.draginfo is None:
+				self.setDragInfo(evt.m_x, evt.m_y)
+			else:
+				self.drag(evt.m_x, evt.m_y)
+		else:
+			self.setCursor(evt.m_x, evt.m_y)
+			evt.Skip()
+
+	def OnLeave(self, evt):
+		self.SetCursor(wxSTANDARD_CURSOR)
+		if self.draginfo is not None:
+			self.draginfo = None
+
+	def OnLeftClick(self, evt):
+		if self.draginfo is not None:
+			containingobject = self.getContainingShapeObject()
+			if containingobject is None:
+				x, y = self.draginfo['start']
+				self.setPosition(x, y)
+			elif containingobject != self.parent:
+				try:
+					containingobject.addShapeObject(self, 0, 0)
+				except:
+					x, y = self.draginfo['start']
+					self.setPosition(x, y)
+			self.draginfo = None
+			self.SetCursor(wxSTANDARD_CURSOR)
+		self.UpdateDrawing()
+
 class wxRectangleObject(wxShapeObject):
 	def __init__(self, width, height):
 		wxShapeObject.__init__(self, width, height)
+
+		self.draginfo = None
 
 	def Draw(self, dc):
 		x, y = self.getCanvasPosition()
 		dc.DrawRectangle(x, y, self.width, self.height)
 		wxShapeObject.Draw(self, dc)
+
+	def setSize(self, width=None, height=None):
+		wxShapeObject.setSize(self, width, height)
+		self.positionConnectionInputs()
+		self.positionConnectionOutputs()
 
 	def addConnectionInput(self, cpo):
 		wxShapeObject.addConnectionInput(self, cpo)
@@ -795,39 +981,32 @@ class wxRectangleObject(wxShapeObject):
 		self.positionConnectionOutputs()
 
 	def positionConnectionInputs(self):
-		x, y = self.getCanvasPosition()
 		nconnectionpoints = len(self.connectioninputs)
-		spacings = range(x, x + self.width, self.width/(nconnectionpoints + 1))
+		spacings = range(0, self.width, self.width/(nconnectionpoints + 1))
 		for i in range(nconnectionpoints):
 			ci = self.connectioninputs[i]
-			self.setChildPosition(ci, spacings[i + 1] - ci.width/2, y - ci.height/2)
+			self.setChildPosition(ci, spacings[i + 1] - ci.width/2, -ci.height/2)
 
 	def positionConnectionOutputs(self):
-		x, y = self.getCanvasPosition()
 		nconnectionpoints = len(self.connectionoutputs)
-		spacings = range(x, x + self.width, self.width/(nconnectionpoints + 1))
+		spacings = range(0, self.width, self.width/(nconnectionpoints + 1))
 		for i in range(nconnectionpoints):
 			co = self.connectionoutputs[i]
 			self.setChildPosition(co, spacings[i + 1] - co.width/2,
-														y - co.height/2 + self.height - 1)
+														-co.height/2 + self.height - 1)
 
 class wxConnectionPointObject(wxRectangleObject):
 	def __init__(self):
 		wxRectangleObject.__init__(self, 7, 7)
 
-class DragInfo(object):
-	def __init__(self, shapeobject, xoffset, yoffset, startx, starty):
-		self.shapeobject = shapeobject
-		self.xoffset = xoffset
-		self.yoffset = yoffset
-		self.startx = startx
-		self.starty = starty
+	def OnMotion(self, evt):
+		pass
 
-	def setPosition(self, x, y):
-		xoffset, yoffset = self.shapeobject.getCanvasOffset()
-		x = x - xoffset - self.xoffset
-		y = y - yoffset - self.yoffset
-		self.shapeobject.setPosition(x, y)
+	def OnLeave(self, evt):
+		pass
+
+	def OnLeftClick(self, evt):
+		pass
 
 class wxObjectCanvas(wxScrolledWindow):
 	def __init__(self, parent, id, master):
@@ -848,6 +1027,7 @@ class wxObjectCanvas(wxScrolledWindow):
 		EVT_MOTION(self, self.OnMotion)
 
 		EVT_UPDATE_DRAWING(self, self.OnUpdateDrawing)
+		EVT_SET_CURSOR(self, self.OnSetCursor)
 
 		self.OnSize(None)
 
@@ -873,64 +1053,38 @@ class wxObjectCanvas(wxScrolledWindow):
 	def OnUpdateDrawing(self, evt):
 		self.UpdateDrawing()
 
-	def updateParent(self, shapeobject):
-		cx, cy = shapeobject.getCanvasPosition()
-		w = shapeobject.width
-		h = shapeobject.height
-		oldparent = shapeobject.getParent()
-		newparent = self.master.getContainingShapeObject(shapeobject)
-		if oldparent is not None and oldparent != newparent:
-			try:
-				x, y = newparent.getCanvasPosition()
-				newparent.addShapeObject(shapeobject, cx - x, cy - y)
-			except TypeError:
-				shapeobject.setPosition(self.draginfo.startx, self.draginfo.starty)
+	def OnSetCursor(self, evt):
+		self.SetCursor(evt.cursor)
 
 	def OnLeftUp(self, evt):
-		if self.draginfo is not None:
-			newevent = LeftDragEndEvent(self.draginfo.shapeobject, evt.m_x, evt.m_y)
-#			self.draginfo.setPosition(evt.m_x, evt.m_y)
-			self.updateParent(self.draginfo.shapeobject)
-			self.draginfo.shapeobject.ProcessEvent(newevent)
-			self.draginfo = None
-			self.UpdateDrawing()
-		else:
-			shapeobject = self.master.getShapeObjectFromXY(evt.m_x, evt.m_y)
+		shapeobject = self.master.getShapeObjectFromXY(evt.m_x, evt.m_y)
+		if shapeobject is not None:
 			shapeobject.ProcessEvent(LeftClickEvent(shapeobject, evt.m_x, evt.m_y))
 
 	def OnRightUp(self, evt):
 		shapeobject = self.master.getShapeObjectFromXY(evt.m_x, evt.m_y)
-		shapeobject.ProcessEvent(RightClickEvent(shapeobject, evt.m_x, evt.m_y))
-		self.popupMenu(evt.m_x, evt.m_y)
+		if shapeobject is not None:
+			shapeobject.ProcessEvent(RightClickEvent(shapeobject, evt.m_x, evt.m_y))
+			self.popupMenu(shapeobject, evt.m_x, evt.m_y)
 
 	def OnMotion(self, evt):
 		shapeobject = self.master.getShapeObjectFromXY(evt.m_x, evt.m_y)
 
 		if self.lastshapeobject is not None and shapeobject != self.lastshapeobject:
-			self.lastshapeobject.ProcessEvent(LeaveEvent())
+			if self.lastshapeobject.draginfo is not None:
+				shapeobject = self.lastshapeobject
+			else:
+				self.lastshapeobject.ProcessEvent(LeaveEvent())
 
-		if evt.LeftIsDown():
-			if self.draginfo is None:
-				xoffset, yoffset = shapeobject.getCanvasPosition()
-				startx, starty = shapeobject.getPosition()
-				self.draginfo = DragInfo(shapeobject,
-																	evt.m_x - xoffset, evt.m_y - yoffset,
-																	startx, starty)
-				shapeobject.ProcessEvent(LeftDragStartEvent(shapeobject,
-																										evt.m_x, evt.m_y))
-			else:	
-				self.draginfo.setPosition(evt.m_x, evt.m_y)
-				self.UpdateDrawing()
-
-		shapeobject.ProcessEvent(evt)
+		if shapeobject is not None:
+			shapeobject.ProcessEvent(evt)
 
 		self.UpdateDrawing()
 
 		self.lastshapeobject = shapeobject
 
-	def popupMenu(self, x, y):
-		shapeobject = self.master.getShapeObjectFromXY(x, y)
-		if shapeobject.popupmenu is not None:
+	def popupMenu(self, shapeobject, x, y):
+		if shapeobject is not None and shapeobject.popupmenu is not None:
 			self.PopupMenu(shapeobject.popupmenu, (x, y))
 
 if __name__ == '__main__':

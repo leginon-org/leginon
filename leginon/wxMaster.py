@@ -131,14 +131,16 @@ class Node(wxObjectCanvas.wxRectangleObject):
 			self.parent.startAddBinding(eventclass, fromnode)
 
 	def OnMotion(self, evt):
+		wxObjectCanvas.wxRectangleObject.OnMotion(self, evt)
 		for i in self.connectioninputs + self.connectionoutputs:
 			i.setDrawText(True)
-		evt.Skip()
+		#evt.Skip()
 
 	def OnLeave(self, evt):
+		wxObjectCanvas.wxRectangleObject.OnLeave(self, evt)
 		for i in self.connectioninputs + self.connectionoutputs:
 			i.setDrawText(False)
-		evt.Skip()
+		#evt.Skip()
 
 	def removeBindings(self):
 		for so in self.shapeobjects:
