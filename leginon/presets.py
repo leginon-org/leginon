@@ -51,6 +51,7 @@ class PresetsClient(object):
 		if session is None:
 			session = self.node.session
 
+		print 'GETPRESETFROMDB', id(session)
 		## find presets that belong to this session
 		pquery = data.PresetData(session=session)
 		plist = self.node.research(datainstance=pquery)
@@ -75,6 +76,7 @@ class PresetsClient(object):
 				pdict[pname] = p
 			else:
 				pdict[pnumber] = p
+			print 'PSESSION', pname, id(p['session'])
 
 		## sort by number (maybe name if old, non-numbered data)
 		keys = pdict.keys()
@@ -205,10 +207,6 @@ class PresetsManager(node.Node):
 		## should we confirm if failure?
 		self.confirmEvent(ievent)
 
-	def sortPresets(self):
-		### check order
-		self.presets
-
 	def getPresetsFromDB(self, session=None):
 		'''
 		get list of presets for this session from DB
@@ -217,28 +215,30 @@ class PresetsManager(node.Node):
 		pdict = self.presetsclient.getPresetsFromDB(session)
 
 		if session is None:
-				self.presets = pdict
+			self.presets = pdict
+			print 'ASDFASDF'
+			for p in self.presets.values():
+				'PM P SES', id(p['session'])
 		else:
+			print 'PM SESSION', id(self.session)
 			## make new presets with this session
 			self.presets = strictdict.OrderedDict()
 			for name, preset in pdict.items():
 				newp = data.PresetData(initializer=preset, session=self.session)
 				self.presetToDB(newp)
 				self.presets[name] = newp
+				print 'PM P SES', id(newp['session'])
 		# this will fill in numbers that might be missing
 		self.setOrder()
 
-	def presetToDB(self, presetdata=None):
+	def presetToDB(self, presetdata):
 		'''
 		stores a preset in the DB under the current session name
 		if no preset is specified, store all self.presets
 		'''
-		if presetdata is None:
-			tostore = self.presets.values()
-		else:
-			tostore = [presetdata]
-		for p in tostore:
-			self.publish(p, database=True, dbforce=True)
+		self.publish(presetdata, database=True, dbforce=True)
+		## immediately replace it with a copy so we can do updates
+		#pname = presetdata['name']
 
 	def presetByName(self, name):
 		if name in self.presets.keys():
@@ -259,12 +259,14 @@ class PresetsManager(node.Node):
 		number = 0
 		for name in names:
 			p = self.presets[name]
+			print 'OR', id(p['session'])
 			if p['number'] != number:
 				newp = data.PresetData(initializer=p, number=number)
 				self.presetToDB(newp)
 			else:
 				newp = p
 			newdict[name] = newp
+			print 'ORNEW', id(newp['session'])
 			number += 1
 		self.presets = newdict
 		## only set the UI if this was not from a callback
@@ -541,6 +543,7 @@ class PresetsManager(node.Node):
 		try:
 			pname = self.presetNames()[index]
 			self.currentselection = self.presetByName(pname)
+			print 'SELECT', id(self.currentselection['session'])
 		except IndexError:
 			self.currentselection = None
 		else:
@@ -584,22 +587,25 @@ class PresetsManager(node.Node):
 		self.cal_beam.set(str(beamtime))
 		self.cal_modeledstagemag.set(modmagstr)
 
+	def renewPreset(self, p):
+		### this makes a copy of an existing preset
+		### so that dbid is not set and we can 
+		### edit the values
+		print 'OLD', id(p['session'])
+		newpreset = data.PresetData(initializer=p)
+		self.presets[newpreset['name']] = newpreset
+		if self.currentpreset is p:
+			self.currentpreset = newpreset
+		if self.currentselection is p:
+			self.currentselection = newpreset
+		print 'NEW', id(newpreset['session'])
+		return newpreset
+
 	def uiCommitParams(self, value):
-		oldpreset = self.currentselection
-		newpreset = data.PresetData(initializer=oldpreset)
+		newpreset = self.renewPreset(self.currentselection)
 		presetdict = self.presetparams.get()
 		newpreset.update(presetdict)
-
-		### make sure other pointers go to this new preset
-		self.presets[newpreset['name']] = newpreset
-		if self.currentpreset is oldpreset:
-			self.currentpreset = newpreset
-		self.currentselection = newpreset
-
 		self.presetToDB(newpreset)
-
-	def square(self, xydict):
-		xydict['y'] = xydict['x']
 
 	def getSessionNameList(self):
 		'''
@@ -609,7 +615,7 @@ class PresetsManager(node.Node):
 		querysession = data.SessionData()
 		queryinst = data.InstrumentData()
 		queryinst['name'] = myinstname
-		querysession['instrument'] = queryinst
+		querysession['instrument'] = self.session['instrument']
 		sessionlist = self.research(datainstance=querysession)
 		sessionnamelist = [x['name'] for x in sessionlist]
 		return sessionnamelist
@@ -692,7 +698,6 @@ class PresetsManager(node.Node):
 		cyclecont.addObject(self.orderlist, position={'position':(1,0), 'span':(1,3)})
 
 		selectcont.addObjects((controls, self.presetparams, calcont, cyclecont))
-
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)
 		self.orderlist.set(pnames)
@@ -707,11 +712,6 @@ class PresetsManager(node.Node):
 		## not useful at the moment
 		#acqrefmeth = uidata.Method('Acquire Preset Reference Image', self.uiAcquireRef)
 
-		#self.statrows = uidata.Sequence('Stats Row Range', [], 'rw', persist=True)
-		#self.statcols = uidata.Sequence('Stats Column Range', [], 'rw',
-		#																	persist=True)
-		#statsmeth = uidata.Method('Get Stats', self.uiGetStats)
-
 		self.ui_image = uidata.Image('Image', None, 'r')
 
 		imagecont = uidata.Container('Acquisition')
@@ -723,7 +723,9 @@ class PresetsManager(node.Node):
 		container = uidata.LargeContainer('Presets Manager')
 		container.addObject(self.messagelog, position={'expand': 'all'})
 		container.addObjects((statuscontainer, changecont, importcont, newfromscopecont, selectcont, imagecont))
+		print 'THIS IS SLOW'
 		self.uicontainer.addObject(container)
+		print 'SEE HOW SLOW IT WAS'
 
 		return
 
@@ -884,8 +886,9 @@ class PresetParameters(uidata.Container):
 		uidata.Container.__init__(self, 'Preset Parameters')
 		self.node = node
 		self.usercallback = usercallback
-		self.singles = ('magnification', 'spot size', 'defocus', 'intensity', 'dose')
+		self.singles = ('magnification', 'spot size', 'defocus', 'intensity')
 		self.doubles = ('image shift', 'beam shift')
+		self.others = ('dose', 'film')
 
 		self.build()
 
@@ -894,12 +897,19 @@ class PresetParameters(uidata.Container):
 		row = 0
 		col = 0
 		for single in self.singles:
+			if col > 1:
+				col = 0
+				row += 1
 			o = self.singlesdict[single] = uidata.Number(single, 0, 'rw', usercallback=self.usercallback)
 			self.addObject(o, position={'position':(row,col)})
 			col += 1
-			if col > 2:
-				col = 0
-				row += 1
+		row += 1
+		self.othersdict = {}
+		o = self.othersdict['dose'] = uidata.Number('dose', 0, 'r', usercallback=self.usercallback)
+		self.addObject(o, position={'position':(row,0)})
+		o = self.othersdict['film'] = uidata.Boolean('film', False, 'rw', usercallback=self.usercallback)
+		self.addObject(o, position={'position':(row,1)})
+		
 		self.doublesdict = {}
 		for double in self.doubles:
 			row += 1
@@ -920,6 +930,8 @@ class PresetParameters(uidata.Container):
 		for double in self.doubles:
 			for axis in ('x','y'):
 				self.doublesdict[double][axis].set(presetdict[double][axis], usercallback=False)
+		for other in self.others:
+			self.othersdict[other].set(presetdict[other], usercallback=False)
 
 	def get(self):
 		presetdict = {}
@@ -933,6 +945,8 @@ class PresetParameters(uidata.Container):
 			presetdict[double] = {}
 			for axis in ('x','y'):
 				presetdict[double][axis] = self.doublesdict[double][axis].get()
+		for other in self.others:
+			presetdict[other] = self.othersdict[other].get()
 
 		return presetdict
 

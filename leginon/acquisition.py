@@ -151,18 +151,31 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.presetsclient.toScope(newpresetname, emtarget)
 			self.reportStatus('processing', 'Determining current preset')
 			p = self.presetsclient.getCurrentPreset()
+			if p['name'] != newpresetname:
+				self.logger.error('failed to set preset %s' % (newpresetname,))
+				continue
 			if p is not None:
 				self.reportStatus('processing', 'Current preset is "%s"' % p['name'])
 			delay = self.uidelay.get()
 			self.reportStatus('processing', 'Pausing for %s seconds before acquiring' % (delay,))
 			time.sleep(delay)
-			self.reportStatus('acquisition', 'Acquiring image...')
-			ret = self.acquire(p, target=targetdata, emtarget=emtarget)
-			# in these cases, return immediately
-			if ret in ('aborted', 'repeat'):
-				self.reportStatus('acquisition', 'Acquition state is "%s"' % ret)
-				return ret
-			self.reportStatus('acquisition', 'Image acquired')
+
+			if p['film']:
+				self.reportStatus('acquisition', 'Acquiring film...')
+				try:
+					self.acquireFilm(p, target=targetdata, emtarget=emtarget)
+					self.reportStatus('acquisition', 'film acquired')
+				except:
+					self.logger.exception('film acquisition')
+			else:
+				self.reportStatus('acquisition', 'Acquiring image...')
+				ret = self.acquire(p, target=targetdata, emtarget=emtarget)
+				# in these cases, return immediately
+				if ret in ('aborted', 'repeat'):
+					self.reportStatus('acquisition', 'Acquition state is "%s"' % ret)
+					return ret
+				self.reportStatus('acquisition', 'Image acquired')
+
 
 		self.reportStatus('processing', 'Processing complete')
 
@@ -255,6 +268,38 @@ class Acquisition(targetwatcher.TargetWatcher):
 		# now make EMTargetData to hold all this
 		emtargetdata = data.EMTargetData(scope=emdata, preset=oldpreset)
 		return emtargetdata
+
+	def acquireFilm(self, presetdata, target=None, emtarget=None):
+		## get current film parameters
+		scopebefore = self.emclient.getScope()
+		stock = scopebefore['film stock']
+		if stock < 1:
+			self.logger.error('Film stock = %s. Film exposure failed' % (stock,))
+			return
+
+		## create FilmData(AcquisitionImageData) which 
+		## will be used to store info about this exposure
+		filmdata = data.FilmData(scope=scopebefore, preset=presetdata, label=self.name, target=target)
+		## no image to store in file, but this provides 'filename' for 
+		## film text
+		self.setImageFilename(filmdata)
+
+		## create a film exposure request
+		request = data.ScopeEMData()
+		request['film exposure'] = True
+		request['film exposure type'] = 'manual'
+		request['film manual exposure time'] = presetdata['exposure time']
+		## first three of user name
+		request['film user code'] = self.session['user']['name'][:3]
+		## like filename in regular acquisition (limit 96 chars)
+		request['film text'] = str(imdata['filename'])
+		request['film data type'] = 'YY.MM.DD'
+
+		## do exposure
+		self.emclient.setScope(request)
+
+		## record in database
+		self.publish(filmdata, pubevent=True, database=self.databaseflag.get())
 
 	def acquire(self, presetdata, target=None, emtarget=None):
 		### corrected or not??

@@ -1059,6 +1059,7 @@ class PresetData(InSessionData):
 			('removed', int),
 			('hasref', bool),
 			('dose', float),
+			('film', bool),
 		]
 		return t
 	typemap = classmethod(typemap)
@@ -1220,6 +1221,11 @@ class AcquisitionImageData(PresetImageData):
 		if not self['filename']:
 			raise RuntimeError('no filename set for this image')
 		return self['filename'] + '.mrc'
+
+## actually, this has only some things in common with AcquisitionImageData
+## but enough that it is easiest to inherit it
+class FilmData(AcquisitionImageData):
+	pass
 
 class ProcessedAcquisitionImageData(ImageData):
 	'''image that results from processing an AcquisitionImageData'''
