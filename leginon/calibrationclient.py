@@ -43,7 +43,16 @@ class MatrixCalibrationClient(CalibrationClient):
 		'''
 		raise NotImplementedError()
 
+	def setCalibration(self, key, matrix, angle, pixelsize):
+		calibration = {}
+		CalibrationClient.setCalibration(self, key, calibration)
+
 	def transform(self, pixelshift, scope, camera):
+		'''
+		Calculate a new scope state from the given pixelshift
+		The input scope and camera state should refer to the image
+		from which the pixelshift originates
+		'''
 		mag = scope['magnification']
 		binx = camera['binning']['x']
 		biny = camera['binning']['y']
@@ -66,17 +75,25 @@ class MatrixCalibrationClient(CalibrationClient):
 
 		return new
 
-	def OLDcalculate(self, pixrow, pixcol, matrix):
-		determinant = LinearAlgebra.determinant(matrix)
-		deltax = (matrix[0,0] * pixrow - matrix[0,1] * pixcol) / determinant
-		deltay = (matrix[1,1] * pixcol - matrix[1,0] * pixrow) / determinant
-		return {'x':deltax, 'y':deltay}
+	def itransform(self, shift, scope, camera):
+		'''
+		Calculate a pixel vector from an image center which 
+		represents the given parameter shift.
+		'''
+		mag = scope['magnification']
+		binx = camera['binning']['x']
+		biny = camera['binning']['y']
+		par = self.parameter()
 
-	def calculate(self, pixrow, pixcol, matrix):
-		determinant = LinearAlgebra.determinant(matrix)
-		deltax = (matrix[0,0] * pixrow - matrix[0,1] * pixcol) / determinant
-		deltay = (matrix[1,1] * pixcol - matrix[1,0] * pixrow) / determinant
-		return {'x':deltax, 'y':deltay}
+		vect = (shift['x'], shift['y'])
+
+		key = self.magCalibrationKey(mag, par)
+		matrix = self.getCalibration(key)
+		matrix = LinearAlgebra.inverse(matrix)
+
+		pixvect = Numeric.matrixmultiply(matrix, vect)
+		pixvect *= (biny, binx)
+		return {'row':pixvect[0], 'col':pixvect[1]}
 
 
 class ImageShiftCalibrationClient(MatrixCalibrationClient):
