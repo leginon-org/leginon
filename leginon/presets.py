@@ -422,7 +422,7 @@ class PresetsManager(node.Node):
 		magonly = True:  all presets in cycle (except for final) 
 		   will only send magnification to TEM
 		'''
-		if not self.settings['cycle on']:
+		if not self.settings['cycle']:
 			if dofinal:
 				self.toScope(presetname)
 			self.beep()
