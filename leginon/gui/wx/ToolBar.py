@@ -32,11 +32,13 @@ ID_SET_INSTRUMENT = 10028
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):
-		pre = wx.PreToolBar()
-		pre.Show(False)
-		pre.Create(parent, -1, style=wx.TB_HORIZONTAL|wx.NO_BORDER)
-		self.this = pre.this
-		self._setOORInfo(self)
+#		pre = wx.PreToolBar()
+#		pre.Show(False)
+#		pre.Create(parent, -1, style=wx.TB_HORIZONTAL|wx.NO_BORDER)
+#		self.this = pre.this
+#		self._setOORInfo(self)
+
+		wx.ToolBar.__init__(self, parent, -1, style=wx.TB_HORIZONTAL|wx.NO_BORDER)
 		self.spacer = wx.StaticText(self, -1, '')
 		self.AddControl(self.spacer)
 

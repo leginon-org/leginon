@@ -38,7 +38,7 @@ class Panel(gui.wx.Node.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onAtlasCreated(self, evt):
+	def onAtlasCreated(self):
 		self.toolbar.Enable(True)
 
 	def onCreateAtlas(self, evt):
