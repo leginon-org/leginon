@@ -37,37 +37,37 @@ class DictDataKeeper(DataHandler):
 	def __init__(self, id, session):
 		DataHandler.__init__(self, id, session)
 		self.datadict = {}
-		self.datadictlock = threading.Lock()
+		self.lock = threading.Lock()
 
 	def query(self, id):
-		self.datadictlock.acquire()
+		self.lock.acquire()
 		try:
 			result = self.datadict[id]
 		except KeyError:
 			result = None
-		self.datadictlock.release()
+		self.lock.release()
 		return result
 
 	def insert(self, newdata):
 		if not issubclass(newdata.__class__, data.Data):
 			raise TypeError
-		self.datadictlock.acquire()
+		self.lock.acquire()
 		#self.datadict[newdata.id] = newdata
 		self.datadict[newdata['id']] = newdata
-		self.datadictlock.release()
+		self.lock.release()
 
 	def remove(self, id):
-		self.datadictlock.acquire()
+		self.lock.acquire()
 		try:
 			del self.datadict[id]
 		except KeyError:
 			pass
-		self.datadictlock.release()
+		self.lock.release()
 
 	def ids(self):
-		self.datadictlock.acquire()
+		self.lock.acquire()
 		result = self.datadict.keys()
-		self.datadictlock.release()
+		self.lock.release()
 		return result
 
 class ShelveDataKeeper(DataHandler):
