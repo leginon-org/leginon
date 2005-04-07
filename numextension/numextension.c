@@ -948,19 +948,19 @@ float nearestneighbor(float *array, int m, int n, float x, float y) {
 }
 
 static PyObject *logpolar(PyObject *self, PyObject *args) {
-	int phis, logrhos;
 	PyObject *input;
+	int phis, logrhos;
+	double center[2];
+	double maxr;
+	double mintheta, maxtheta;
+	double base, phiscale;
 	PyArrayObject *iarray, *oarray;
 	int i, j, logrho, phi;
-	float angles[2];
-	float maxr, base, phiscale;
-	float r, logr, theta, x, y;
-	float center[2];
+	double r, logr, theta, x, y;
 	float *a, *c;
 	int size, index;
-	float mintheta, maxtheta;
 
-	if(!PyArg_ParseTuple(args, "Oiifffff", &input, &phis, &logrhos,
+	if(!PyArg_ParseTuple(args, "Oiiddddd", &input, &phis, &logrhos,
 																	&(center[0]), &(center[1]),
 																	&maxr, &mintheta, &maxtheta))
 		return NULL;
@@ -968,18 +968,18 @@ static PyObject *logpolar(PyObject *self, PyObject *args) {
 	iarray = NA_InputArray(input, tFloat32, NUM_C_ARRAY);
 
 	/*
-	center[0] = (float)iarray->dimensions[0]/2.0;
-	center[1] = (float)iarray->dimensions[1]/2.0;
+	center[0] = (double)iarray->dimensions[0]/2.0;
+	center[1] = (double)iarray->dimensions[1]/2.0;
 	
 	if(iarray->dimensions[0]/2 < iarray->dimensions[1])
-		maxr = (float)iarray->dimensions[0]/2.0;
+		maxr = (double)iarray->dimensions[0]/2.0;
 	else
-		maxr = (float)iarray->dimensions[1]/2.0;
+		maxr = (double)iarray->dimensions[1]/2.0;
 	*/
 
 	base = pow(maxr + 1.0, 1.0/logrhos);
 
-	phiscale = (float)phis/(maxtheta - mintheta);
+	phiscale = (double)phis/(maxtheta - mintheta);
 
 	a = (float *)malloc(logrhos*phis*sizeof(float));
 	c = (float *)malloc(logrhos*phis*sizeof(float));
@@ -1008,13 +1008,13 @@ static PyObject *logpolar(PyObject *self, PyObject *args) {
 
 	for(logrho = 0; logrho < logrhos; logrho++) {
 		for(phi = 0; phi < phis; phi++) {
-			if(c[logrho, phi] > 0) {
+			if(c[logrho*phis + phi] > 0) {
 				((float *)oarray->data)[logrho*oarray->dimensions[1] + phi] =
 															a[logrho*phis + phi]/(float)c[logrho*phis + phi];
 			} else {
-				logr = (float)logrho + 0.5;
+				logr = (double)logrho + 0.5;
 				r = pow(base, logr - 1.0);
-				theta = ((float)phi + 0.5)/phiscale + mintheta;
+				theta = ((double)phi + 0.5)/phiscale + mintheta;
 				x = r*cos(theta);
 				y = r*sin(theta);
 				i = (int)(y - 0.5 + center[0] + 0.5);
