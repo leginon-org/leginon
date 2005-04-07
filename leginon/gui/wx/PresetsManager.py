@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.34 $
+# $Revision: 1.35 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-22 23:32:13 $
-# $Author: suloway $
+# $Date: 2005-04-07 23:04:45 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -24,6 +24,7 @@ import gui.wx.Presets
 import gui.wx.Settings
 import gui.wx.ToolBar
 import gui.wx.Dialog
+import gui.wx.Instrument
 
 PresetsEventType = wx.NewEventType()
 SetParametersEventType = wx.NewEventType()
@@ -413,10 +414,11 @@ class DoseDialog(gui.wx.Dialog.Dialog):
 		dosestr = 'Use the measured dose %s e/A^2 for this preset?' % dosestr
 		self.doselabel.SetLabel(dosestr)
 
-class Panel(gui.wx.Node.Panel):
+class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	icon = 'presets'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
+		gui.wx.Instrument.SelectionMixin.__init__(self)
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
@@ -445,6 +447,7 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(EVT_EDIT_PRESET, self.onEditPreset)
 
 	def onNodeInitialized(self):
+		gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)
 
@@ -679,17 +682,21 @@ class ImportDialog(wx.Dialog):
 		self.node = node
 		self.presets = None
 
+		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self)
+		self.GetParent().setInstrumentSelection(self.instrumentselection)
+
 		sessionnames = self.node.getSessions()
 		self.csession = wx.Choice(self, -1, choices=sessionnames)
 		self.lbpresets = wx.ListBox(self, -1, style=wx.LB_EXTENDED)
 
 		sz = wx.GridBagSizer(5, 5)
+		sz.Add(self.instrumentselection, (0, 0), (1, 2), wx.EXPAND)
 		label = wx.StaticText(self, -1, 'Session:')
-		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.csession, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.csession, (1, 1), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'Presets:')
-		sz.Add(label, (1, 0), (1, 1))
-		sz.Add(self.lbpresets, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sz.Add(label, (2, 0), (1, 1))
+		sz.Add(self.lbpresets, (2, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		self.bimport = wx.Button(self, -1, 'Import')
 		self.bimport.Enable(False)
