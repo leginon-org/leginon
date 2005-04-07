@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.35 $
+# $Revision: 1.36 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-07 23:04:45 $
+# $Date: 2005-04-07 23:55:11 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -685,18 +685,21 @@ class ImportDialog(wx.Dialog):
 		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self)
 		self.GetParent().setInstrumentSelection(self.instrumentselection)
 
-		sessionnames = self.node.getSessions()
-		self.csession = wx.Choice(self, -1, choices=sessionnames)
+		self.csession = wx.Choice(self, -1)
 		self.lbpresets = wx.ListBox(self, -1, style=wx.LB_EXTENDED)
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.instrumentselection, (0, 0), (1, 2), wx.EXPAND)
+		self.findpresets = wx.Button(self, -1, 'Find Presets')
+		self.Bind(wx.EVT_BUTTON, self.onFindPresets, self.findpresets)
+		sz.Add(self.findpresets, (1, 1), (1, 1), wx.EXPAND)
+
 		label = wx.StaticText(self, -1, 'Session:')
-		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.csession, (1, 1), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.csession, (3, 1), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'Presets:')
-		sz.Add(label, (2, 0), (1, 1))
-		sz.Add(self.lbpresets, (2, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sz.Add(label, (4, 0), (1, 1))
+		sz.Add(self.lbpresets, (4, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		self.bimport = wx.Button(self, -1, 'Import')
 		self.bimport.Enable(False)
@@ -716,6 +719,21 @@ class ImportDialog(wx.Dialog):
 		self.Bind(wx.EVT_CHOICE, self.onSessionChoice, self.csession)
 		self.Bind(wx.EVT_LISTBOX, self.onPresetsListBox, self.lbpresets)
 		self.Bind(wx.EVT_BUTTON, self.onImport, self.bimport)
+
+	def onFindPresets(self, evt=None):
+		tem = self.node.instrument.getTEMData()
+		ccd = self.node.instrument.getCCDCameraData()
+		pquery = data.PresetData(tem=tem, ccdcamera=ccd)
+		presets = self.node.research(pquery)
+		sessions = newdict.OrderedDict()
+		for p in presets:
+			sessions[p['session']['name']] = None
+		if sessions:
+			print '00000000000', sessions.keys()[0], type(sessions.keys()[0])
+			print '11111111111', sessions.keys()[1], type(sessions.keys()[1])
+		self.csession.Clear()
+		for sesname in sessions.keys():
+			self.csession.Append(sesname)
 
 	def onSessionChoice(self, evt=None):
 		if evt is None:
