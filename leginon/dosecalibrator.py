@@ -14,6 +14,7 @@ try:
 except:
 	import Numeric
 import gui.wx.DoseCalibrator
+import time
 
 class DoseCalibrator(calibrator.Calibrator):
 	'''
@@ -35,8 +36,17 @@ class DoseCalibrator(calibrator.Calibrator):
 		self.sens = None
 		self.start()
 
+	def screenDown(self):
+		self.instrument.tem.MainScreenPosition = 'down'
+		time.sleep(2)
+
+	def screenUp(self):
+		self.instrument.tem.MainScreenPosition = 'up'
+		time.sleep(2)
+
 	def uiMeasureDoseRate(self):
-		# self.instrument.tem.MainScreenPosition = 'down'
+		self.instrument.tem.MainScreenPosition = 'down'
+		time.sleep(2)
 		status = self.getCurrentAndMag()
 		if status == 'ok':
 			pass
@@ -69,7 +79,8 @@ class DoseCalibrator(calibrator.Calibrator):
 			return 'screen'
 
 	def acquireImage(self):
-		# self.instrument.tem.MainScreenPosition = 'up'
+		self.instrument.tem.MainScreenPosition = 'up'
+		time.sleep(2)
 		return calibrator.Calibrator.acquireImage(self)
 
 	def uiCalibrateCamera(self):
