@@ -183,7 +183,7 @@ class CalibrationClient(object):
 			pixelsize = self.getPixelSize(mag)
 			meters = pixelsize * pixels
 			drift = meters / seconds
-			self.node.logger.info('Seconds %f, pixels %f, meters %f, meters/second %.4e'
+			self.node.logger.info('Seconds %f, pixels %f, meters %.4e, meters/second %.4e'
 							% (seconds, pixels, meters, float(meters)/seconds))
 			if drift > drift_threshold:
 				## declare drift above threshold
