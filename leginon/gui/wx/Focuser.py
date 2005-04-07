@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.26 $
+# $Revision: 1.27 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-02 23:08:51 $
-# $Author: suloway $
+# $Date: 2005-04-07 17:46:51 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -140,7 +140,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 								wx.ALIGN_CENTER_VERTICAL)
 		szdrift.Add(self.widgets['drift threshold'], (0, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szdrift.Add(wx.StaticText(self, -1, 'pixels'), (0, 2), (1, 1),
+		szdrift.Add(wx.StaticText(self, -1, 'm/s'), (0, 2), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL)
 
 		self.widgets['correlation type'] = Choice(self, -1,
