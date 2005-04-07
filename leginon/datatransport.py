@@ -52,7 +52,7 @@ class Client(Base):
 			try:
 				return client.send(request)
 			except TransportError, e:
-				pass
+				print 'TransportError, %s' % (e,)
 		raise TransportError('Error sending request')
 
 	def send(self, request):

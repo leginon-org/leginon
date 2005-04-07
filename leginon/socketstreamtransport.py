@@ -109,6 +109,7 @@ class Client(object):
 		try:
 			result = pickle.load(sfile)
 		except Exception, e:
+			raise
 			raise TransportError('error unpickling response, %s' % e)
 
 		try:
