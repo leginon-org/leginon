@@ -107,7 +107,9 @@ class Client(object):
 			raise TransportError('error flushing socket file buffer, %s' % e)
 
 		try:
-			result = pickle.load(sfile)
+			p = sfile.read()
+			print 'PLEN', len(p)
+			result = pickle.load(p)
 		except Exception, e:
 			raise
 			raise TransportError('error unpickling response, %s' % e)
