@@ -569,7 +569,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		self.checkAbort()
 
-		self.node.logger.info('Tilts %s, shifts %s' % (tilts, shifts))
+		#self.node.logger.info('Tilts %s, shifts %s' % (tilts, shifts))
 
 		d1 = shifts['x']
 		t1 = tilts['x']
