@@ -245,7 +245,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def uiResetDefocus(self):
 		try:
-			self.instrument.tem.resetDefocus()
+			self.instrument.tem.resetDefocus(True)
 		except:
 			self.logger.error('Reset defocus failed: unable to set instrument')
 		self.panel.setInstrumentDone()

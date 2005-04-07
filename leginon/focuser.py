@@ -390,7 +390,7 @@ class Focuser(acquisition.Acquisition):
 	def resetDefocus(self):
 		errstr = 'Reset defocus failed: %s'
 		try:
-			self.instrument.tem.resetDefocus()
+			self.instrument.tem.resetDefocus(True)
 		except:
 			self.logger.error(errstr % 'unable to access instrument')
 
@@ -460,7 +460,7 @@ class Focuser(acquisition.Acquisition):
 		defocus += delta
 		self.logger.info('Correcting defocus by %s' % (delta,))
 		self.instrument.tem.Defocus = defocus
-		self.instrument.tem.resetDefocus()
+		self.instrument.tem.resetDefocus(True)
 
 	def correctZ(self, delta):
 		if not self.eucset:
