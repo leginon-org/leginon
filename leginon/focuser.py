@@ -84,10 +84,11 @@ class Focuser(acquisition.Acquisition):
 		except:
 			self.logger.error(errstr % 'unable to access instrument')
 			return
-		eufoc = self.euclient.researchEucentricFocus(ht, mag)
-		if eufoc is None:
+		eufocdata = self.euclient.researchEucentricFocus(ht, mag)
+		if eufocdata is None:
 			self.logger.error('No eucentric focus found for HT: %s and Mag.: %s' % (ht, mag))
 		else:
+			eufoc = eufocdata['focus']
 			self.instrument.tem.Focus = eufoc
 
 	def eucentricFocusFromScope(self):
