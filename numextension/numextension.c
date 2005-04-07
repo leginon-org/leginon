@@ -948,46 +948,92 @@ float nearestneighbor(float *array, int m, int n, float x, float y) {
 }
 
 static PyObject *logpolar(PyObject *self, PyObject *args) {
-	int m, n;
+	int phis, logrhos;
 	PyObject *input;
-	PyArrayObject *inputarray, *outputarray;
-	int i, j;
-	float r, theta, costheta, sintheta, x, y;
-	int inputsize;
-	float base;
+	PyArrayObject *iarray, *oarray;
+	int i, j, logrho, phi;
+	float angles[2];
+	float maxr, base, phiscale;
+	float r, logr, theta, x, y;
+	float center[2];
+	float *a, *c;
+	int size, index;
+	float mintheta, maxtheta;
 
-	if(!PyArg_ParseTuple(args, "Oii", &input, &m, &n))
+	if(!PyArg_ParseTuple(args, "Oiifffff", &input, &phis, &logrhos,
+																	&(center[0]), &(center[1]),
+																	&maxr, &mintheta, &maxtheta))
 		return NULL;
 
-	if(!(outputarray = NA_NewArray(NULL, tFloat32, 2, m, n)))
-		return NULL;
+	iarray = NA_InputArray(input, tFloat32, NUM_C_ARRAY);
 
-	inputarray = NA_InputArray(input, tFloat32, NUM_C_ARRAY);
-
-	if(inputarray->dimensions[0]/2 < inputarray->dimensions[1])
-		inputsize = inputarray->dimensions[0]/2;
+	/*
+	center[0] = (float)iarray->dimensions[0]/2.0;
+	center[1] = (float)iarray->dimensions[1]/2.0;
+	
+	if(iarray->dimensions[0]/2 < iarray->dimensions[1])
+		maxr = (float)iarray->dimensions[0]/2.0;
 	else
-		inputsize = inputarray->dimensions[1];
-	base = pow(inputsize, 1.0/n);
+		maxr = (float)iarray->dimensions[1]/2.0;
+	*/
 
-	for(i = 0; i < m; i++) {
-		theta = M_PI*(((float)i)/((float)m - 1) - 0.5);
-		costheta = cos(theta);
-		sintheta = sin(theta);
-		for(j = 0; j < n; j++) {
-			r = pow(base, j) - 1;
-			x = r*costheta;
-			y = (r*sintheta) + ((float)inputarray->dimensions[0])/2.0;
-			((float *)outputarray->data)[i*n + j] =
-									//bilinear(inputarray->data, inputarray->dimensions[0],
-									nearestneighbor(inputarray->data, inputarray->dimensions[0],
-																							inputarray->dimensions[1], x, y);
+	base = pow(maxr + 1.0, 1.0/logrhos);
+
+	phiscale = (float)phis/(maxtheta - mintheta);
+
+	a = (float *)malloc(logrhos*phis*sizeof(float));
+	c = (float *)malloc(logrhos*phis*sizeof(float));
+	memset((void *)a, 0, logrhos*phis*sizeof(float));
+	memset((void *)c, 0, logrhos*phis*sizeof(float));
+
+	size = logrhos*phis;
+	for(i = 0; i < iarray->dimensions[0]; i++) {
+		for(j = 0; j < iarray->dimensions[1]; j++) {
+			x = j + 0.5 - center[1];
+			y = i + 0.5 - center[0];
+			logr = log(sqrt(x*x + y*y) + 1.0)/log(base);
+			theta = atan2(y, x);
+			logrho = (int)(logr + 0.5);
+			phi = (int)((theta - mintheta)*phiscale + 0.5);
+			index = logrho*phis + phi;
+			if((index >= 0) && (index < size)) {
+				a[index] += ((float *)iarray->data)[i*iarray->dimensions[1] + j];
+				c[index] += 1;
+			}
 		}
 	}
 
-	Py_XDECREF(inputarray);
+	if(!(oarray = NA_NewArray(NULL, tFloat32, 2, logrhos, phis)))
+		return NULL;
 
-	return NA_OutputArray(outputarray, tFloat32, 0);
+	for(logrho = 0; logrho < logrhos; logrho++) {
+		for(phi = 0; phi < phis; phi++) {
+			if(c[logrho, phi] > 0) {
+				((float *)oarray->data)[logrho*oarray->dimensions[1] + phi] =
+															a[logrho*phis + phi]/(float)c[logrho*phis + phi];
+			} else {
+				logr = (float)logrho + 0.5;
+				r = pow(base, logr - 1.0);
+				theta = ((float)phi + 0.5)/phiscale + mintheta;
+				x = r*cos(theta);
+				y = r*sin(theta);
+				i = (int)(y - 0.5 + center[0] + 0.5);
+				j = (int)(x - 0.5 + center[1] + 0.5);
+				if((i >= 0) && (i < iarray->dimensions[0])
+						&& (j >= 0) && (j < iarray->dimensions[1])) {
+					((float *)oarray->data)[logrho*oarray->dimensions[1] + phi] =
+													((float *)iarray->data)[i*iarray->dimensions[1] + j];
+				}
+			}
+		}
+	}
+
+	free(c);
+	free(a);
+
+	Py_XDECREF(iarray);
+
+	return Py_BuildValue("(Off)", NA_OutputArray(oarray, tFloat32, 0), base, phiscale);
 }
 
 static struct PyMethodDef numeric_methods[] = {
