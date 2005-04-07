@@ -255,7 +255,7 @@ class Corrector(node.Node):
 			self.logger.error('Loading reference image failed: %s' % e)
 			ref = None
 		else:
-			self.logger.info('Reference image loaded')
+			self.logger.info('Reference image loaded: %s' % (ref['filename'],))
 		return ref
 
 	def formatKey(self, key):
