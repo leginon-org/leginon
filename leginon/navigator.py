@@ -366,8 +366,10 @@ class Navigator(node.Node):
 			stagedict['z'] = locdata['z']
 			stagedict['a'] = locdata['a']
 		try:
+			print 'SETTING INSTRUMENT, RAISING IF FAILURE'
 			self.instrument.tem.StagePosition = stagedict
 		except:
+			raise
 			self.logger.exception(errstr % 'unable to set instrument')
 		else:
 			self.currentlocation = locdata
