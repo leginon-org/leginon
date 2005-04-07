@@ -358,6 +358,7 @@ class Corrector(node.Node):
 				return
 
 		norm = bright - dark
+		norm = norm.astype(Numeric.Float32)
 
 		## there may be a better normavg than this
 		normavg = imagefun.mean(norm)
