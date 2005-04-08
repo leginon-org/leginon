@@ -1033,9 +1033,9 @@ class StageModelMagCalibrationData(MagDependentCalibrationData):
 		)
 	typemap = classmethod(typemap)
 
-class StageMeasurementData(InSessionData):
+class StageMeasurementData(CalibrationData):
 	def typemap(cls):
-		return InSessionData.typemap() + (
+		return CalibrationData.typemap() + (
 			('label', str),
 			('high tension', int),
 			('magnification', int),
