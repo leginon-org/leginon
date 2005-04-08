@@ -643,7 +643,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			originaltargetquery['delta row'] = None
 			originaltargetquery['delta column'] = None
 			results = self.research(datainstance=originaltargetquery, results=1)
-			orininaltarget = results[0]
+			originaltarget = results[0]
 
 			newtarget = data.AcquisitionImageTargetData(initializer=oldtarget)
 			newtarget['version'] += 1
