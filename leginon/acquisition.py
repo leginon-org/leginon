@@ -64,6 +64,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 									+ [event.LockEvent,
 											event.UnlockEvent,
 											event.AcquisitionImagePublishEvent,
+											event.NeedTargetShiftEvent,
 										
 	event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent,
 											event.DriftDetectedEvent, 
@@ -75,6 +76,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		self.addEventInput(event.DriftDoneEvent, self.handleDriftDone)
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)
+		self.addEventInput(event.AcquisitionImageDriftPublishEvent,
+												self.handleImageDrift)
 		self.driftdone = threading.Event()
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
 
@@ -88,6 +91,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.doneevents = {}
 		self.imagelistdata = None
 		self.simloopstop = threading.Event()
+		self.received_image_drift = threading.Event()
+		self.requested_drift = None
 
 		self.duplicatetypes = ['acquisition', 'focus']
 		self.presetlocktypes = ['acquisition', 'target', 'target list']
@@ -181,6 +186,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		for newpresetname in presetnames:
 			if self.alreadyAcquired(targetdata, newpresetname):
 				continue
+
+			if self.settings['adjust for drift']:
+				targetdata = self.adjustTargetForDrift(targetdata)
 
 			self.presetsclient.toScope(newpresetname, emtarget)
 			self.reportStatus('processing', 'Determining current preset')
@@ -590,3 +598,80 @@ class Acquisition(targetwatcher.TargetWatcher):
 			else:
 				imagedata.__setitem__('image', num, force=True)
 			self.setImage(imagedata['image'].astype(Numeric.Float32), 'Image')
+
+	def adjustTargetForDrift(self, oldtarget):
+		if oldtarget['image'] is None:
+			return oldtarget
+		## check if drift has occurred since target's parent image was acquired
+		# hack to be sure image data is not read, since it's not needed
+		imageref = oldtarget.special_getitem('image', dereference=False)
+		imageid = imageref.dbid
+		self.logger.debug('ADJUSTTARGET, imageid: %s' % (imageid,))
+		imagedata = self.researchDBID(data.AcquisitionImageData, imageid, readimages=False)
+		# image time
+		imagetime = imagedata['scope']['system time']
+		self.logger.debug('ADJUSTTARGET, imagetime: %s' % (imagetime,))
+		# last declared drift
+		lastdeclared = self.research(data.DriftDeclaredData(), results=1)
+		self.logger.debug('ADJUSTTARGET, lastdeclared: %s' % (lastdeclared,))
+		if not lastdeclared:
+			## no drift declared, no adjustment needed
+			return oldtarget
+		# last declared drift time
+		lastdeclared = lastdeclared[0]
+		lastdeclaredtime = lastdeclared['system time']
+		# has drift occurred?
+		if imagetime < lastdeclaredtime:
+			# yes, now we need a recent image drift for this image
+			query = data.AcquisitionImageDriftData()
+			query['image'] = imagedata
+			imagedrift = self.research(query, results=1)
+			# was image drift already measured for this image?
+			if not imagedrift:
+				# no, request measurement now
+				imagedrift = self.requestImageDrift(imagedata)
+			else:
+				# yes, but was it measured after declared drift?
+				imagedrift = imagedrift[0]
+				if imagedrift['system time'] < lastdeclaredtime:
+					# too old, need to measure it again
+					imagedrift = self.requestImageDrift(imagedata)
+
+			## create new adjusted target from old adjusted target and original target
+			originaltargetquery = data.AcquisitionImageTargetData(initializer=oldtarget)
+			originaltargetquery['version'] = 0
+			originaltargetquery['delta row'] = None
+			originaltargetquery['delta column'] = None
+			results = self.research(datainstance=originaltargetquery, results=1)
+			orininaltarget = results[0]
+
+			newtarget = data.AcquisitionImageTargetData(initializer=oldtarget)
+			newtarget['version'] += 1
+			newtarget['delta row'] = originaltarget['delta row'] + imagedrift['rows']
+			newtarget['delta column'] = originaltarget['delta column'] + imagedrift['columns']
+			self.publish(newtarget, database=True, dbforce=True)
+		return newtarget
+
+	def requestImageDrift(self, imagedata):
+		# need to have drift manager do it
+		self.received_image_drift.clear()
+		ev = event.NeedTargetShiftEvent(image=imagedata)
+		imageid = imagedata.dbid
+		## set requested_drift to the reply can be recognized
+		self.requested_drift = imageid
+		self.logger.debug('Sending NeedTargetShiftEvent and waiting, imageid = %s' % (imageid,))
+		self.outputEvent(ev)
+		self.setStatus('waiting')
+		self.received_image_drift.wait()
+		self.setStatus('processing')
+		self.logger.debug('Done waiting for NeedTargetShiftEvent')
+		return self.requested_drift
+
+	def handleImageDrift(self, ev):
+		self.logger.debug('HANDLING IMAGE DRIFT')
+		driftdata = ev['data']
+		imageid = driftdata.special_getitem('image', dereference=False).dbid
+		## only continue if this was one that I requested
+		if imageid == self.requested_drift:
+			self.requested_drift = driftdata
+			self.received_image_drift.set()
