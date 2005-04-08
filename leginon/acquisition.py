@@ -647,8 +647,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			originaltargetquery['delta column'] = None
 			results = self.research(datainstance=originaltargetquery, results=1)
 			originaltarget = results[0]
-			dr = originaltargetquery['delta row']
-			dc = originaltargetquery['delta column']
+			dr = originaltarget['delta row']
+			dc = originaltarget['delta column']
 			self.logger.info('original target:  %s, %s' % (dr, dc))
 
 			newtarget = data.AcquisitionImageTargetData(initializer=oldtarget)
