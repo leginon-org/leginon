@@ -232,7 +232,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		# seems to have trouple with using original targetdata as
 		# a query, so use a copy with only some of the fields
 		presetquery = data.PresetData(name=presetname)
-		imagequery = data.AcquisitionImageData(target=targetdata, preset=presetquery)
+		## don't care if drift correction was done on target after image was
+		## acquired, so ignore version, delta row/col
+		targetquery = data.AcquisitionImageTargetData(initializer=targetdata)
+		targetquery['version'] = None
+		targetquery['delta row'] = None
+		targetquery['delta column'] = None
+		imagequery = data.AcquisitionImageData(target=targetquery, preset=presetquery)
 		## other things to fill in
 		imagequery['scope'] = data.ScopeEMData()
 		imagequery['camera'] = data.CameraEMData()
