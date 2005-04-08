@@ -172,7 +172,7 @@ class DriftManager(watcher.Watcher):
 		self.correlator.insertImage(numdata)
 		mag = imagedata['scope']['magnification']
 		tem = imagedata['scope']['tem']
-		ccd = imagedata['scope']['ccdcamera']
+		ccd = imagedata['camera']['ccdcamera']
 		pixsize = self.pixsizeclient.retrievePixelSize(mag, tem, ccd)
 		self.logger.info('Pixel size at %sx is %s' % (mag, pixsize))
 
@@ -208,9 +208,9 @@ class DriftManager(watcher.Watcher):
 
 			## publish scope and camera to be used with drift data
 			scope = imagedata['scope']
-			self.node.publish(scope, database=True, dbforce=True)
+			self.publish(scope, database=True, dbforce=True)
 			camera = imagedata['camera']
-			self.node.publish(camera, database=True, dbforce=True)
+			self.publish(camera, database=True, dbforce=True)
 
 			d = data.DriftData(session=self.session, rows=rows, cols=cols, interval=seconds, rowmeters=rowmeters, colmeters=colmeters, target=target, scope=scope, camera=camera)
 			self.publish(d, database=True, dbforce=True)
