@@ -73,8 +73,7 @@ class Tecnai(tem.TEM):
 			raise RuntimeError('unable to initialize exposure adapter, %s' % msg)
 
 		self.magnifications = []
-		# from simulator
-		self.mainscreenscale = 26.0/30.0
+		self.mainscreenscale = 44000.0 / 50000.0
 
 	def getMagnificationsInitialized(self):
 		if self.magnifications:
