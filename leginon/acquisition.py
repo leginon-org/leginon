@@ -650,7 +650,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			newtarget['delta row'] = originaltarget['delta row'] + imagedrift['rows']
 			newtarget['delta column'] = originaltarget['delta column'] + imagedrift['columns']
 			self.publish(newtarget, database=True, dbforce=True)
-		return newtarget
+			return newtarget
+		else:
+			return oldtarget
 
 	def requestImageDrift(self, imagedata):
 		# need to have drift manager do it
