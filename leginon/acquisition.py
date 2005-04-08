@@ -146,7 +146,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				raise InvalidPresetsSequence()
 		return list(presetorder)
 
-	def processTargetData(self, targetdata, force=False, attempt=None):
+	def processTargetData(self, targetdata, attempt=None):
 		'''
 		This is called by TargetWatcher.processData when targets available
 		If called with targetdata=None, this simulates what occurs at
@@ -179,9 +179,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		ret = 'ok'
 		for newpresetname in presetnames:
-			if force == False:
-				if self.alreadyAcquired(targetdata, newpresetname):
-					continue
+			if self.alreadyAcquired(targetdata, newpresetname):
+				continue
 
 			self.presetsclient.toScope(newpresetname, emtarget)
 			self.reportStatus('processing', 'Determining current preset')
