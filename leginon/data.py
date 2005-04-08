@@ -831,6 +831,7 @@ scope_params = (
 	('turbo pump', str),
 	('high tension', int),
 	('main screen position', str),
+	('main screen magnification', int),
 	('small screen position', str),
 	('low dose', str),
 	('low dose mode', str),

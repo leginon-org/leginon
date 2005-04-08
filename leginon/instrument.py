@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.27 $
+# $Revision: 1.28 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-04 23:17:27 $
+# $Date: 2005-04-08 00:28:53 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -286,6 +286,7 @@ parametermapping = (
 	('column pressure', 'ColumnPressure'),
 	('high tension', 'HighTension'),
 	('main screen position', 'MainScreenPosition'),
+	('main screen magnification', 'MainScreenMagnification'),
 	('small screen position', 'SmallScreenPosition'),
 	('film stock', 'FilmStock'),
 	('film exposure number', 'FilmExposureNumber'),

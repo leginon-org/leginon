@@ -332,7 +332,6 @@ class DoseCalibrationClient(CalibrationClient):
 		exp_time = imagedata['camera']['exposure time'] / 1000.0
 		numdata = imagedata['image']
 		sensitivity = self.retrieveSensitivity(ht, tem, ccdcamera)
-		raise No
 		self.node.logger.info('Sensitivity %.2f' % sensitivity)
 		mean_counts = imagefun.mean(numdata) / (binning**2)
 		self.node.logger.info('Mean counts %.1f' % mean_counts)
