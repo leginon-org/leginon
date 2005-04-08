@@ -302,7 +302,7 @@ class DoseCalibrationClient(CalibrationClient):
 		specimen_pixel_size = self.psizecal.retrievePixelSize(mag, tem=tem,
 																													ccdcamera=ccdcamera)
 		self.node.logger.info('Specimen pixel size %.4e' % specimen_pixel_size)
-		camera_pixel_size = inst['camera pixel size']
+		camera_pixel_size = imagedata['camera']['pixel size']['x']
 		self.node.logger.info('Camera pixel size %.4e' % camera_pixel_size)
 		camera_mag = camera_pixel_size / specimen_pixel_size
 		self.node.logger.info('CCD Camera magnification %.1f' % camera_mag)
