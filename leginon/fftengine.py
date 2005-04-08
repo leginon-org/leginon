@@ -48,11 +48,12 @@ try:
 	import fftw.double
 	fftw_mods.append(fftw.double)
 except ImportError:
-	print 'could not import fftw modules'
+	pass
+	#print 'could not import fftw modules'
 
 if len(fftw_mods) != 2:
-	print 'Warning:  you are using Numeric for FFTs.'
-	print 'Compile the fftw modules for faster FFTs.'
+	#print 'Warning:  you are using Numeric for FFTs.'
+	#print 'Compile the fftw modules for faster FFTs.'
 	### use Numeric if fftw not available
 	class fftEngine(_fftEngine):
 		'''subclass of fftEngine which uses FFT from Numeric module'''
