@@ -158,16 +158,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		a target (going to presets, acquiring images, etc.)
 		'''
 		try:
-			emtarget = self.targetToEMTargetData(targetdata)
-		except InvalidStagePosition:
-			return 'invalid'
-		except NoMoveCalibration:
-			self.player.pause()
-			self.logger.error('Calibrate this move type, then continue')
-			self.beep()
-			return 'repeat'
-
-		try:
 			presetnames = self.validatePresets()
 		except InvalidPresetsSequence:
 			estr = 'Presets sequence is invalid, please correct it'
@@ -189,6 +179,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 			if self.settings['adjust for drift']:
 				targetdata = self.adjustTargetForDrift(targetdata)
+
+			try:
+				emtarget = self.targetToEMTargetData(targetdata)
+			except InvalidStagePosition:
+				return 'invalid'
+			except NoMoveCalibration:
+				self.player.pause()
+				self.logger.error('Calibrate this move type, then continue')
+				self.beep()
+				return 'repeat'
 
 			self.presetsclient.toScope(newpresetname, emtarget)
 			self.reportStatus('processing', 'Determining current preset')
