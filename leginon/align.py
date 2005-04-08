@@ -34,58 +34,11 @@ def findMax(image):
 
 def findPeak(image):
 	i, j, value = findMax(image)
-
-	array = numarray.zeros((5,), image.type())
-
-	offset = i - 2
-	for k in range(5):
-		if k + offset >= image.shape[0]:
-			array[k] = image[k + offset - image.shape[0], j]
-		else:
-			array[k] = image[k + offset, j]
-	isubpixel = leastSquaresFindPeak(array)
-
-	offset = j - 2
-	for k in range(5):
-		if k + offset >= image.shape[1]:
-			array[k] = image[i, k + offset - image.shape[1]]
-		else:
-			array[k] = image[i, k + offset]
-	jsubpixel = leastSquaresFindPeak(array)
-
 	if i > image.shape[0]/2.0:
 		i -= image.shape[0]
-		i -= isubpixel
-	else:
-		i += isubpixel
-
 	if j > image.shape[1]/2.0:
 		j -= image.shape[1]
-		j -= jsubpixel
-	else:
-		j += jsubpixel
-
 	return (i, j), value
-
-def leastSquaresFindPeak(array):
-	dm = numarray.zeros((array.shape[0], 3), numarray.Float)
-	for i in range(dm.shape[0]):
-		dm[i] = (i**2, i, 1)
-
-	fit = numarray.linear_algebra.linear_least_squares(dm, array)
-	coeffs = fit[0]
-	residuals = fit[1][0]
-
-	try:
-		peak = -coeffs[1] / 2.0 / coeffs[0]
-	except ZeroDivisionError:
-		raise RuntimeError('least squares fit has zero coefficient')
-
-	peak -= array.shape[0]/2.0
-
-	value = coeffs[0]*peak**2 + coeffs[1]*peak + coeffs[2]
-
-	return peak
 
 def findRotationScale(image1, image2, window=None, highpass=None):
 	if image1.shape != image2.shape:
@@ -97,8 +50,9 @@ def findRotationScale(image1, image2, window=None, highpass=None):
 	image1 = image1 * window
 	image2 = image2 * window
 
-	image1 = swapQuadrants(numarray.fft.real_fft2d(image1))
-	image2 = swapQuadrants(numarray.fft.real_fft2d(image2))
+	s = None
+	image1 = swapQuadrants(numarray.fft.real_fft2d(image1, s=s))
+	image2 = swapQuadrants(numarray.fft.real_fft2d(image2, s=s))
 	shape = image1.shape
 
 	image1 = numarray.absolute(image1)
@@ -149,10 +103,8 @@ def findRotationScaleTranslation(image1, image2, window=None, highpass=None):
 	pc = phaseCorrelate(fft1, fft2, fft=True)
 	peak, value = findPeak(pc)
 
-	images = i - numarray.nd_image.shift(r, peak)
-
-	r = numarray.mlab.rot90(numarray.mlab.rot90(r))
-	fft2 = numarray.fft.real_fft2d(r)
+	r180 = numarray.mlab.rot90(numarray.mlab.rot90(r))
+	fft2 = numarray.fft.real_fft2d(r180)
 	pc = phaseCorrelate(fft1, fft2, fft=True)
 	peak180, value180 = findPeak(pc)
 
@@ -160,6 +112,9 @@ def findRotationScaleTranslation(image1, image2, window=None, highpass=None):
 		peak = peak180
 		value = value180
 		rotation = (rotation + 180.0) % 360.0
+		r = r180
+
+	images = i - numarray.nd_image.shift(r, peak)
 
 	return rotation, scale, peak, value, images
 
@@ -222,10 +177,17 @@ if __name__ == '__main__':
 			image2 = Mrc.mrc_to_numeric(f2)
 			#image2 = rotateScaleOffset(image1, 0.0, 1.0, (0.0, 0.0))
 
+			'''
 			result = findRotationScaleTranslation(image1, image2, window, highpass)
 			#rotation, scale, shift, value = result
 			rotation, scale, shift, value, image = result
 			Mrc.numeric_to_mrc(image, '%d_%d.mrc' % (749 + i, j + 1))
 			string = 'rotation: %g, scale: %g, shift: (%g, %g), value: %g'
 			print string % ((rotation, scale) + shift + (value,))
+			'''
+
+			result = findRotationScale(image1, image2)
+			rotation, scale, value = result
+			string = 'rotation: %g, scale: %g, value: %g'
+			print string % (rotation, scale, value)
 
