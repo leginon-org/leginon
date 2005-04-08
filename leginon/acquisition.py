@@ -622,18 +622,21 @@ class Acquisition(targetwatcher.TargetWatcher):
 		lastdeclaredtime = lastdeclared['system time']
 		# has drift occurred?
 		if imagetime < lastdeclaredtime:
+			self.logger.info('target needs shift')
 			# yes, now we need a recent image drift for this image
 			query = data.AcquisitionImageDriftData()
 			query['image'] = imagedata
 			imagedrift = self.research(query, results=1)
 			# was image drift already measured for this image?
 			if not imagedrift:
+				self.logger.info('need to request image drift')
 				# no, request measurement now
 				imagedrift = self.requestImageDrift(imagedata)
 			else:
 				# yes, but was it measured after declared drift?
 				imagedrift = imagedrift[0]
 				if imagedrift['system time'] < lastdeclaredtime:
+					self.logger.info('existing image drift, but too old, requesting new one')
 					# too old, need to measure it again
 					imagedrift = self.requestImageDrift(imagedata)
 
@@ -644,14 +647,21 @@ class Acquisition(targetwatcher.TargetWatcher):
 			originaltargetquery['delta column'] = None
 			results = self.research(datainstance=originaltargetquery, results=1)
 			originaltarget = results[0]
+			dr = originaltargetquery['delta row']
+			dc = originaltargetquery['delta column']
+			self.logger.info('original target:  %s, %s' % (dr, dc))
 
 			newtarget = data.AcquisitionImageTargetData(initializer=oldtarget)
 			newtarget['version'] += 1
 			newtarget['delta row'] = originaltarget['delta row'] + imagedrift['rows']
 			newtarget['delta column'] = originaltarget['delta column'] + imagedrift['columns']
+			dr = newtarget['delta row']
+			dc = newtarget['delta column']
+			self.logger.info('new target:  %s, %s' % (dr, dc))
 			self.publish(newtarget, database=True, dbforce=True)
 			return newtarget
 		else:
+			self.logger.info('target does not need shift')
 			return oldtarget
 
 	def requestImageDrift(self, imagedata):
