@@ -850,15 +850,20 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 
 	def getInverseMatrix(self, magnification, hightension):
 		matrix = self.getMatrix(magnification, hightension)
+		if matrix is None:
+			return None
 		imatrix = LinearAlgebra.inverse(matrix)
 		return imatrix
 
 	def getMatrix(self, magnification, hightension):
-		pararameter = self.parameter()
+		parameter = self.parameter()
 		matrix = self.retrieveMatrix(parameter, hightension, magnification)
+		return matrix
 
 	def getMatrices(self, magnification, hightension):
 		matrix = self.getMatrix(magnification, hightension)
+		if matrix is None:
+			return None, None
 		imatrix = LinearAlgebra.inverse(matrix)
 		return matrix, imatrix
 

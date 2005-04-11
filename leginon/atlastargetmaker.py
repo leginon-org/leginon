@@ -38,34 +38,58 @@ def cover(rectangle, shape):
 
 	targets = []
 
-	targets.append(minrow)
-
-	for i in range(1, nrows - 1):
+	for i in range(nrows):
 		row = i*rowstep + minrow[0]
-		if row < mincolumn[0]:
+		if minrow[1] == mincolumn[1]:
+			column1 = minrow[1]
+		elif row < mincolumn[0]:
 			angle = math.atan2(minrow[1] - mincolumn[1], mincolumn[0] - minrow[0])
 			column1 = minrow[1] - (row - minrow[0])*math.cos(angle)
 		else:
 			angle = math.atan2(mincolumn[1] - maxrow[1], maxrow[0] - mincolumn[0])
 			column1 = mincolumn[1] + (row - mincolumn[0])*math.cos(angle)
 
-		if row < maxcolumn[0]:
+		if maxcolumn[1] == maxrow[1]:
+			column2 = maxcolumn[1]
+		elif row < maxcolumn[0]:
 			angle = math.atan2(maxcolumn[1] - minrow[1], maxcolumn[0] - minrow[0])
 			column2 = minrow[1] + (row - minrow[0])*math.cos(angle)
 		else:
 			angle = math.atan2(maxrow[1] - maxcolumn[1], maxrow[0] - maxcolumn[0])
 			column2 = maxcolumn[1] - (row - maxcolumn[0])*math.cos(angle)
 
-		ncolumns = int(math.ceil(float(column2 - column1)/shape[1]))
-		columnstep = float(column2 - column1)/ncolumns
+		deltacolumn = float(column2 - column1)
+		ncolumns = int(math.ceil(deltacolumn/shape[1]))
+		try:
+			columnstep = deltacolumn/ncolumns
+		except ZeroDivisionError:
+			columnstep = 0.0
 		ncolumns += 1
 
 		for j in range(ncolumns):
 			targets.append((row, column1 + j*columnstep))
 
-	targets.append(maxrow)
-
 	return targets
+
+def optimizeTargets(start, targets, matrix):
+	mtargets = [numarray.matrixmultiply(matrix, target) for target in targets]
+	targetindicies = []
+	while len(targetindicies) < len(mtargets):
+		minmagnitude = None
+		for i, target in enumerate(mtargets):
+			if i in targetindicies:
+				continue
+			magnitude = math.hypot(start[0] - target[0], start[1] - target[1])
+			if magnitude < minmagnitude or minmagnitude is None:
+				minindex = i
+				mintarget = target
+				minmagnitude = magnitude
+		targetindicies.append(minindex)
+		start = mintarget
+	ntargets = []
+	for i in targetindicies:
+		ntargets.append(targets[i])
+	return ntargets
 
 class AtlasTargetMaker(node.Node, targethandler.TargetHandler):
 	panelclass = gui.wx.AtlasTargetMaker.Panel
@@ -193,9 +217,10 @@ class AtlasTargetMaker(node.Node, targethandler.TargetHandler):
 			raise AtlasError(e)
 		scope, camera = self.getState()
 		center = {'x': 0.0, 'y': 0.0}
-		size = {'x': 2.0, 'y': 2.0}
+		size = {'x': 2.0e-3, 'y': 2.0e-3}
 		scope[movetype].update(center)
-		targets = self.cover(movetype, center, size, preset)
+		targets = self.cover(movetype, center, size, scope['high tension'], preset)
+		self.logger.info('Atlas created using %d target(s).' % len(targets))
 		return targets, scope, camera, preset
 
 	def _publishAtlas(self, targets, scope, camera, preset, evt=None):
@@ -220,32 +245,47 @@ class AtlasTargetMaker(node.Node, targethandler.TargetHandler):
 		self.publish(targetlist, pubevent=True)
 		self.logger.info('Atlas targets published')
 
-	def cover(self, movetype, center, size, preset):
-		return self._cover(movetype,
-												(center['x'], center['y']),
-												(size['x'], size['y']),
-												(preset['dimension']['x'], preset['dimension']['y']),
-												(preset['binning']['x'], preset['binning']['y']),
-												preset['magnification'],
-												preset['hightension'])
-
-	def _cover(self, movetype, center, size, dimension, binning, magnification, hightension):
-		magnificaion, hightension = parameters
+	def cover(self, movetype, center, size, hightension, preset):
+		center = (center['x'], center['y'])
+		size = (size['x'], size['y'])
+		shape = (preset['dimension']['y']*preset['binning']['y'],
+							preset['dimension']['x']*preset['binning']['x'])
 		calibrationclient = self.calibrationclients[movetype]
+		magnification = preset['magnification']
+		matrix, imatrix = calibrationclient.getMatrices(magnification, hightension)
+		if matrix is None or imatrix is None:
+			raise AtlasError('no calibration available')
+		targets = self._cover(center, size, shape, imatrix)
+		targets = optimizeTargets(center, targets, matrix)
+		return targets
+
+	def _cover(self, center, size, shape, matrix):
 		rectangle = (
 			(center[0] - size[0]/2, center[1] - size[1]/2),
 			(center[0] + size[0]/2, center[1] - size[1]/2),
 			(center[0] - size[0]/2, center[1] + size[1]/2),
 			(center[0] + size[0]/2, center[1] + size[1]/2),
 		)
-		pixelheight, pixelwidth = dimension[1]*binning[1], dimension[0]*binning[0]
-		matrix, imatrix = calibrationclient.getMatrices(magnification, hightension)
-		pixelrectangle = [numarray.matrixmultiply(imatrix, c) for c in rectangle]
-		targets = cover(pixelrectangle, (pixelheight, pixelwidth))
+		rectangle = [numarray.matrixmultiply(matrix, c) for c in rectangle]
+		targets = cover(rectangle, shape)
 		return targets
 
 if __name__ == '__main__':
-	rectangle = [(-1.0, 0.0), (0.0, 1.0), (1.0, 0.0), (0.0, -1.0)]
-	shape = (0.25, 0.25)
+	'''
+	matrix = numarray.identity(2, numarray.Float)
+	start = (0.0, 0.0)
+	targets = [(1.0, 1.0), (2.0, 2.0), (5.0, 5.0), (1.4, 1.2)]
+	print optimizeTargets(start, targets, matrix)
+	'''
+	matrix = numarray.identity(2, numarray.Float)
+	angle = math.pi/4
+	matrix[0, 0] = math.cos(angle)
+	matrix[1, 0] = math.sin(angle)
+	matrix[0, 1] = -math.sin(angle)
+	matrix[1, 1] = math.cos(angle)
+	rectangle = [(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0)]
+	rectangle = [numarray.matrixmultiply(matrix, c) for c in rectangle]
+	print rectangle
+	shape = (0.5, 0.5)
 	print cover(rectangle, shape)
 
