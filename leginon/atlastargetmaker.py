@@ -49,7 +49,7 @@ def cover(rectangle, shape):
 			angle = math.atan2(mincolumn[1] - maxrow[1], maxrow[0] - mincolumn[0])
 			column1 = mincolumn[1] + (row - mincolumn[0])*math.cos(angle)
 
-		if maxcolumn[1] == maxrow[1]:
+		if minrow[0] == maxcolumn[0]:
 			column2 = maxcolumn[1]
 		elif row < maxcolumn[0]:
 			angle = math.atan2(maxcolumn[1] - minrow[1], maxcolumn[0] - minrow[0])
@@ -97,7 +97,9 @@ class AtlasTargetMaker(node.Node, targethandler.TargetHandler):
 	settingsclass = data.AtlasTargetMakerSettingsData
 	defaultsettings = {
 		'preset': None,
-		'overlap': 10.0,
+		'label': None,
+		'center': {'x': 0.0, 'y': 0.0},
+		'size': {'x': 1.99e-3, 'y': 1.99e-3},
 	}
 
 	eventinputs = (
@@ -151,15 +153,6 @@ class AtlasTargetMaker(node.Node, targethandler.TargetHandler):
 			self.logger.exception('Atlas creation failed: %s' % e)
 		self.panel.atlasPublished()
 
-	def validateSettings(self):
-		radius = self.settings['radius']
-		if radius <= 0.0:
-			raise AtlasError('invalid radius specified')
-		overlap = self.settings['overlap']/100.0
-		if overlap < 0.0 or overlap >= 100.0:
-			raise AtlasError('invalid overlap specified')
-		return radius, overlap
-
 	def getState(self):
 		# tem/camera from preset?
 		self.logger.debug('Getting current instrument state...')
@@ -207,7 +200,6 @@ class AtlasTargetMaker(node.Node, targethandler.TargetHandler):
 
 	def _calculateAtlas(self):
 		self.logger.info('Creating atlas targets...')
-		#radius, overlap = self.validateSettings()
 		movetype = 'stage position'
 		preset = self.getPreset()
 		try:
@@ -216,9 +208,11 @@ class AtlasTargetMaker(node.Node, targethandler.TargetHandler):
 		except ValueError, e:
 			raise AtlasError(e)
 		scope, camera = self.getState()
-		center = {'x': 0.0, 'y': 0.0}
-		size = {'x': 2.0e-3, 'y': 2.0e-3}
-		scope[movetype].update(center)
+		for a, value in self.settings['center'].items():
+			if value is not None:
+				scope[movetype][a] = value
+		center = dict(scope[movetype])
+		size = self.settings['size']
 		targets = self.cover(movetype, center, size, scope['high tension'], preset)
 		self.logger.info('Atlas created using %d target(s).' % len(targets))
 		return targets, scope, camera, preset
@@ -267,6 +261,8 @@ class AtlasTargetMaker(node.Node, targethandler.TargetHandler):
 			(center[0] + size[0]/2, center[1] + size[1]/2),
 		)
 		rectangle = [numarray.matrixmultiply(matrix, c) for c in rectangle]
+		for c in rectangle:
+			c[0], c[1] = c[1], c[0]
 		targets = cover(rectangle, shape)
 		return targets
 
@@ -277,15 +273,15 @@ if __name__ == '__main__':
 	targets = [(1.0, 1.0), (2.0, 2.0), (5.0, 5.0), (1.4, 1.2)]
 	print optimizeTargets(start, targets, matrix)
 	'''
+
 	matrix = numarray.identity(2, numarray.Float)
 	angle = math.pi/4
 	matrix[0, 0] = math.cos(angle)
 	matrix[1, 0] = math.sin(angle)
 	matrix[0, 1] = -math.sin(angle)
 	matrix[1, 1] = math.cos(angle)
-	rectangle = [(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0)]
+	rectangle = [(0.0, 0.0), (0.0, 1.0), (1.0, 0.0), (1.0, 1.0)]
 	rectangle = [numarray.matrixmultiply(matrix, c) for c in rectangle]
-	print rectangle
 	shape = (0.5, 0.5)
 	print cover(rectangle, shape)
 

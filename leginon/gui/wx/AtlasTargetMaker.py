@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/AtlasTargetMaker.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-11 19:25:46 $
+# $Date: 2005-04-11 23:20:10 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -93,13 +93,32 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		presets = self.node.presetsclient.getPresetNames()
 		self.widgets['preset'] = PresetChoice(self, -1)
 		self.widgets['preset'].setChoices(presets)
-		self.widgets['overlap'] = FloatEntry(self, -1, min=0.0, chars=6)
+		#self.widgets['label'] = Entry(self, -1)
+		self.widgets['center'] = {}
+		self.widgets['center']['x'] = FloatEntry(self, -1, chars=6)
+		self.widgets['center']['y'] = FloatEntry(self, -1, chars=6)
+		self.widgets['size'] = {}
+		self.widgets['size']['x'] = FloatEntry(self, -1, chars=6)
+		self.widgets['size']['y'] = FloatEntry(self, -1, chars=6)
 
-		szoverlap = wx.GridBagSizer(5, 5)
-		szoverlap.Add(self.widgets['overlap'], (0, 0), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, '%')
-		szoverlap.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		gsz = wx.GridBagSizer(5, 10)
+		label = wx.StaticText(self, -1, 'x')
+		gsz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		label = wx.StaticText(self, -1, 'y')
+		gsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER)
+		label = wx.StaticText(self, -1, 'Center:')
+		gsz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		gsz.Add(self.widgets['center']['x'], (1, 1), (1, 1), wx.ALIGN_CENTER)
+		gsz.Add(self.widgets['center']['y'], (1, 2), (1, 1), wx.ALIGN_CENTER)
+		label = wx.StaticText(self, -1, 'm')
+		gsz.Add(label, (1, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Size:')
+		gsz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		gsz.Add(self.widgets['size']['x'], (2, 1), (1, 1), wx.ALIGN_CENTER)
+		gsz.Add(self.widgets['size']['y'], (2, 2), (1, 1), wx.ALIGN_CENTER)
+		label = wx.StaticText(self, -1, 'm')
+		gsz.Add(label, (2, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		gsz.AddGrowableCol(0)
 
 		sz = wx.GridBagSizer(5, 10)
 
@@ -108,9 +127,13 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['preset'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 
-		label = wx.StaticText(self, -1, 'Overlap:')
-		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szoverlap, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		#label = wx.StaticText(self, -1, 'Label:')
+		#sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		#sz.Add(self.widgets['label'], (1, 1), (1, 1),
+		#				wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+
+		#sz.Add(gsz, (2, 0), (1, 3), wx.ALIGN_CENTER|wx.EXPAND)
+		sz.Add(gsz, (1, 0), (1, 3), wx.ALIGN_CENTER|wx.EXPAND)
 
 		sz.AddGrowableCol(1)
 

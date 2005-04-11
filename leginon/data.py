@@ -1666,7 +1666,9 @@ class AtlasTargetMakerSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
 			('preset', str),
-			('overlap', float),
+			('label', str),
+			('center', dict),
+			('size', dict),
 		)
 	typemap = classmethod(typemap)
 
