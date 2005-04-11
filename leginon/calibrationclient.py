@@ -791,8 +791,13 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 	def matrixAnglePixsize(self, scope, camera):
 		mag = scope['magnification']
 		ht = scope['high tension']
-		binx = camera['binning']['x']
-		biny = camera['binning']['y']
+		xangle, xpixsize, yangle, ypixsize = self.getRotationAndPixelSize(mag, ht)
+		ret = {}
+		ret['x'] = {'angle': xangle,'pixel size': xpixsize}
+		ret['y'] = {'angle': yangle,'pixel size': ypixsize}
+		return ret
+
+	def getRotationAndPixelSize(self, mag, ht):
 		par = self.parameter()
 
 		matrix = self.retrieveMatrix(par, ht, mag)
@@ -804,10 +809,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		xpixsize = math.hypot(xvect[0], xvect[1])
 		yangle = math.atan2(yvect[0], yvect[1])
 		ypixsize = math.hypot(yvect[0], yvect[1])
-		ret = {}
-		ret['x'] = {'angle': xangle,'pixel size': xpixsize}
-		ret['y'] = {'angle': yangle,'pixel size': ypixsize}
-		return ret
+		return xangle, xpixsize, yangle, ypixsize
 
 	def transform(self, pixelshift, scope, camera):
 		'''
@@ -845,6 +847,20 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		new[par]['x'] += changex
 		new[par]['y'] += changey
 		return new
+
+	def getInverseMatrix(self, magnification, hightension):
+		matrix = self.getMatrix(magnification, hightension)
+		imatrix = LinearAlgebra.inverse(matrix)
+		return imatrix
+
+	def getMatrix(self, magnification, hightension):
+		pararameter = self.parameter()
+		matrix = self.retrieveMatrix(parameter, hightension, magnification)
+
+	def getMatrices(self, magnification, hightension):
+		matrix = self.getMatrix(magnification, hightension)
+		imatrix = LinearAlgebra.inverse(matrix)
+		return matrix, imatrix
 
 	def itransform(self, shift, scope, camera):
 		'''

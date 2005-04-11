@@ -1662,6 +1662,14 @@ class MosaicTargetMakerSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class AtlasTargetMakerSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('preset', str),
+			('overlap', float),
+		)
+	typemap = classmethod(typemap)
+
 class PresetsManagerSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (

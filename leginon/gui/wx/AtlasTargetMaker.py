@@ -1,0 +1,135 @@
+# The Leginon software is Copyright 2004
+# The Scripps Research Institute, La Jolla, CA
+# For terms of the license agreement
+# see http://ami.scripps.edu/software/leginon-license
+#
+# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/AtlasTargetMaker.py,v $
+# $Revision: 1.1 $
+# $Name: not supported by cvs2svn $
+# $Date: 2005-04-11 19:25:46 $
+# $Author: suloway $
+# $State: Exp $
+# $Locker:  $
+
+import threading
+import wx
+from gui.wx.Entry import Entry, FloatEntry
+import gui.wx.Node
+from gui.wx.Presets import PresetChoice
+from gui.wx.Choice import Choice
+import gui.wx.Settings
+import gui.wx.ToolBar
+import gui.wx.Events
+
+class Panel(gui.wx.Node.Panel):
+	icon = 'atlasmaker'
+	def __init__(self, parent, name):
+		gui.wx.Node.Panel.__init__(self, parent, -1)
+
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+													'settings',
+													shortHelpString='Settings')
+		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_CALCULATE,
+													'calculate',
+													shortHelpString='Calculate Atlas')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
+													'play',
+													shortHelpString='Publish Atlas')
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+
+		self.szmain.AddGrowableCol(0)
+
+		self.SetSizer(self.szmain)
+		self.SetAutoLayout(True)
+		self.SetupScrolling()
+
+		self.Bind(gui.wx.Events.EVT_ATLAS_CALCULATED, self.onAtlasCalculated)
+		self.Bind(gui.wx.Events.EVT_ATLAS_PUBLISHED, self.onAtlasPublished)
+
+	def onNodeInitialized(self):
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+											id=gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onCalculateAtlasTool,
+											id=gui.wx.ToolBar.ID_CALCULATE)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPublishAtlasTool,
+											id=gui.wx.ToolBar.ID_PLAY)
+
+	def onSettingsTool(self, evt):
+		dialog = SettingsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
+
+	def onAtlasCalculated(self, evt):
+		self.toolbar.Enable(True)
+		if self.node.publishargs:
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+		else:
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+
+	def onAtlasPublished(self, evt):
+		self.toolbar.Enable(True)
+
+	def onCalculateAtlasTool(self, evt):
+		self.toolbar.Enable(False)
+		threading.Thread(target=self.node.calculateAtlas).start()
+
+	def onPublishAtlasTool(self, evt):
+		self.toolbar.Enable(False)
+		threading.Thread(target=self.node.publishAtlas).start()
+
+	def atlasCalculated(self):
+		evt = gui.wx.Events.AtlasCalculatedEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def atlasPublished(self):
+		evt = gui.wx.Events.AtlasPublishedEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
+
+class SettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+
+		presets = self.node.presetsclient.getPresetNames()
+		self.widgets['preset'] = PresetChoice(self, -1)
+		self.widgets['preset'].setChoices(presets)
+		self.widgets['overlap'] = FloatEntry(self, -1, min=0.0, chars=6)
+
+		szoverlap = wx.GridBagSizer(5, 5)
+		szoverlap.Add(self.widgets['overlap'], (0, 0), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, '%')
+		szoverlap.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		sz = wx.GridBagSizer(5, 10)
+
+		label = wx.StaticText(self, -1, 'Preset:')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['preset'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+
+		label = wx.StaticText(self, -1, 'Overlap:')
+		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szoverlap, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+
+		sz.AddGrowableCol(1)
+
+		sb = wx.StaticBox(self, -1, 'Atlas')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
+
+		return [sbsz]
+
+if __name__ == '__main__':
+	class App(wx.App):
+		def OnInit(self):
+			frame = wx.Frame(None, -1, 'Mosaic Target Maker Test')
+			panel = Panel(frame, 'Test')
+			frame.Fit()
+			self.SetTopWindow(frame)
+			frame.Show()
+			return True
+
+	app = App(0)
+	app.MainLoop()
+

@@ -87,6 +87,7 @@ registerNodeClass('beamtiltcalibrator', 'BeamTiltCalibrator', 'Calibrations')
 registerNodeClass('gonmodeler', 'GonModeler', 'Calibrations')
 
 registerNodeClass('robot', 'Robot', 'Pipeline')
+registerNodeClass('atlastargetmaker', 'AtlasTargetMaker', 'Pipeline')
 registerNodeClass('targetmaker', 'MosaicTargetMaker', 'Pipeline')
 registerNodeClass('acquisition', 'Acquisition', 'Pipeline')
 registerNodeClass('targetfinder', 'MosaicClickTargetFinder', 'Pipeline')

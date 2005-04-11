@@ -196,13 +196,6 @@ class MatrixCalibrator(calibrator.Calibrator):
 		calclient.storeMatrix(ht, mag, self.parameter, matrix)
 		self.beep()
 
-	def fakeCalibration(self):
-		ht = self.getHighTension()
-		mag, mags = self.getMagnification()
-		matrix = Numeric.zeros((2,2))
-		calclient = self.parameters[self.parameter]
-		calclient.storeMatrix(ht, mag, self.parameter, matrix)
-
 	def uiCalibrate(self):
 		try:
 			self.getParameter()
