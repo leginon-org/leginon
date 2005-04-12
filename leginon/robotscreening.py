@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotscreening.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-07 20:48:52 $
+# $Date: 2005-04-12 21:28:20 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -286,6 +286,14 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				insertion.addImage(Image(imagedata))
 			grid.addInsertion(insertion)
 
+	def targetInImage(self, target, image):
+		if image.location is None:
+			raise ValueError('no location for image')
+		r, c = target
+		inrow = r >= image.location[0][0] and r <= image.location[0][1]
+		incolumn = c >= image.location[1][0] and c <= image.location[1][1]
+		return inrow and incolumn
+
 	def updateAtlasTargets(self):
 		targets = self.panel.getTargetPositions('Acquisition')
 		if self.insertion is not None:
@@ -293,12 +301,10 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			for image in self.insertion.images:
 				image.clearTargets()
 				for target in list(targets):
-					l = image.location
 					column, row = target
-					if (row >= l[0][0] and row <= l[0][1] and
-							column >= l[1][0] and column <= l[1][1]):
+					if self.targetInImage((row, column), image):
 						targets.remove(target)
-						target = (row - l[0][0], column - l[1][0])
+						target = (row - image.location[0][0], column - image.location[1][0])
 						image.addTarget(target)
 			self.insertion.images.reverse()
 
@@ -338,6 +344,17 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				maxcolumn = image.column + image.halfwidth
 		return ((minrow, maxrow), (mincolumn, maxcolumn))
 
+	def getImageAtlasLocation(self, image, extrema):
+		rows = (
+			image.row - image.halfheight - extrema[0][0],
+			image.row + image.halfheight - extrema[0][0]
+		)
+		columns = (
+			image.column - image.halfwidth - extrema[1][0],
+			image.column + image.halfwidth - extrema[1][0]
+		)
+		return rows, columns
+
 	def updateAtlasImage(self):
 		if self.insertion is None:
 			self.setImage(None, 'Image')
@@ -350,10 +367,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		targets = []
 		for image in self.insertion.images:
 			i = image.data['image']
-			l = ((image.row - image.halfheight - extrema[0][0],
-						image.row + image.halfheight - extrema[0][0]),
-					(image.column - image.halfwidth - extrema[1][0],
-						image.column + image.halfwidth - extrema[1][0]))
+			l = self.getImageAtlasLocation(image, extrema)
 			atlasimage[l[0][0]:l[0][1], l[1][0]:l[1][1]] = i
 			image.location = l
 			for target in image.targets:
@@ -405,61 +419,95 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		self.queueGrids(grids)
 		self.panel.targetsSubmitted()
 
+	def getCenterImage(self, insertion):
+		extrema = self.getAtlasExtrema(insertion.images)
+		center = ((extrema[0][1] - extrema[0][0])/2.0,
+							(extrema[1][1] - extrema[1][0])/2.0)
+		centerimage = None
+		for image in insertion.images:
+			if self.targetInImage(center, image):
+				centerimage = image
+				break
+		if centerimage is None:
+			raise ValueError('no center image to calculate affine transform')
+		return centerimage
+
+	def getImageCenter(self, image):
+		shape = image.data['image'].shape
+		row, column = shape[0]/2.0, shape[1]/2.0
+		center = (row + image.location[0][0], column + image.location[1][0])
+		return center
+
+	def getInsertionTransform(self, insertion, griddata):
+		image1 = self.getCenterImage(insertion)
+
+		# acquire image and align
+		imagedata2 = self.reacquireImage(image1.data, griddata=griddata)
+		if imagedata2 is None:
+			raise RuntimeError('image reacquisition failed')
+
+		i1 = image1.data['image']
+		i2 = imagedata2['image']
+		result = align.findRotationScaleTranslation(i1, i2)
+		rotation, scale, shift, value = result
+
+		return image1, imagedata2, rotation, scale, shift, value
+
+	def getTargetPairs(self, image, center, centermatrix, shift, centerimagedata, griddata):
+		targets = []
+		for target1 in image.targets:
+			# target relative to the center of the center image of the atlas
+			target2 = (target1[0] + image.location[0][0] - center[0],
+									target1[1] + image.location[1][0] - center[1])
+
+			# transform target to where it should be for the current position
+			# based on the transform of the center image
+			target2 = numarray.matrixmultiply(centermatrix, target2) + shift
+
+			# acquire where the target should be centered
+			imagedata = self.reacquireImage(centerimagedata,
+																			target=target2,
+																			griddata=griddata)
+
+			# find the error
+			image1 = image.data['image']
+			image2 = imagedata['image']
+			result = align.findRotationScaleTranslation(image1, image2)
+			rotation, scale, shift, value = result
+
+			matrix, imatrix = align.getMatrices(rotation, scale)
+			target = numarray.matrixmultiply(imatrix, target1) + shift
+			targets.append((target, imagedata))
+		return targets
+
 	def processGridData(self, griddata):
 		self.updateAtlasTargets()
 		grid = self.grids.getGridByID(griddata['grid ID'])
 		for insertion in grid.insertions:
 			if insertion == self.insertion:
 				self.setTargets([], 'Acquisition')
+
+			result = self.getInsertionTransform(insertion, griddata)
+			centerimage1, centerimagedata2, rotation, scale, shift, value = result
+			center = self.getImageCenter(centerimage1)
+			m = 'Rotation: %g, scale: %g, shift: (%g, %g), peak value: %g'
+			self.logger.info(m % ((rotation, scale) + shift + (value,)))
+			matrix, imatrix = align.getMatrices(rotation, scale)
+
 			for image in insertion.images:
-				if not image.targets:
-					continue
-				# acquire image and align
-				image1 = image.data['image']
-				imagedata = self.reacquireImage(image.data)
-				if imagedata is None:
-					continue
-				imagedata['grid'] = griddata
-				self.setImageFilename(imagedata)
-				self.publish(imagedata, pubevent=True, database=True)
-				image2 = imagedata['image']
-				rotation, scale, shift, value = \
-					align.findRotationScaleTranslation(image1, image2)
-				infostring = 'Rotation: (%g, %g), scale: (%g, %g), shift: (%g, %g), peak value: %g' % ((rotation, scale) + shift + (value,))
-				self.logger.info(infostring)
+				targets = self.getTargetPairs(image, center,
+																			imatrix, shift,
+																			centerimagedata2, griddata)
+				# remove targets for this image
+				image.targets = []
 
 				targetlist = self.newTargetList()
-
-				try:
-					scope = self.instrument.getData(data.ScopeEMData)
-				except:
-					self.logger.warning('Failed to access microscope, continuing')
-					continue
-				try:
-					camera = self.instrument.getData(data.CameraEMData, image=False)
-				except:
-					self.logger.warning('Failed to access camera, continuing')
-					continue
-
-				presetdata = image.data['preset']
-
-				# align targets
-				shape1 = image1.shape
-				shape2 = image2.shape
-				m, im = align.getMatrices(rotation, scale)
-				for target in image.targets:
-					target = (target[0] - shape1[0]/2, target[1] - shape1[1]/2)
-					target = numarray.matrixmultiply(im, target)
-					target = target + shift
+				for target, imagedata in targets:
 					row, column = target
 					targetdata = self.newTargetForImage(imagedata, row, column,
 																							type='acquisition',
 																							list=targetlist)
 					self.publish(targetdata, database=True)
-
-				# remove targets for this image
-				image.targets = []
-
 				self.makeTargetListEvent(targetlist)
 				self.publish(targetlist, database=True, dbforce=True, pubevent=True)
 
@@ -480,9 +528,10 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				maxinsertion = gd['insertion']
 		return griddata
 
-	def reacquireImage(self, imagedata, test=False):
-		presetdata = imagedata['preset']
-		targetdata = imagedata['target']
+	def reacquireImage(self, imagedata, test=False, target=None, griddata=None):
+		presetname = imagedata['preset']['name']
+		self.presetsclient.toScope(presetname)
+		presetdata = self.presetsclient.getCurrentPreset()
 
 		try:
 			t = 'TEM'
@@ -496,16 +545,20 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			else:
 				return None
 
-		# TODO: user select? should be in data
-		movetype = 'stage position'
+		targetdata = data.AcquisitionImageTargetData(initializer=imagedata['target'])
+		emtargetdata = data.EMTargetData(initializer=imagedata['emtarget'])
 
+		movetype = emtargetdata['movetype']
 		calclient = self.calibrationclients[movetype]
-		target = {'row': -targetdata['delta row'],
-							'col': -targetdata['delta column']}
-
+		row = -targetdata['delta row']
+		column = -targetdata['delta column']
+		if target is not None:
+			row -= target[0]
+			column -= target[1]
+		target = {'row': row, 'col': column}
+		scope, camera = targetdata['scope'], targetdata['camera']
 		try:
-			scopedata = calclient.transform(target,
-																			targetdata['scope'], targetdata['camera'])
+			scopedata = calclient.transform(target, scope, camera)
 		except calibrationclient.NoMatrixCalibrationError, e:
 			self.logger.error('No calibration for reacquisition: %s' % e)
 			if test:
@@ -517,33 +570,39 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			return True
 
 		# check stage position
-
-		emtargetdata = data.EMTargetData()
-		emtargetdata['preset'] = presetdata
-		emtargetdata['movetype'] = movetype
-		for i in ['image shift', 'beam shift', 'stage position']:
-			emtargetdata[i] = dict(scopedata[i])
+		emtargetdata[movetype] = dict(scopedata[movetype])
 		emtargetdata['target'] = targetdata
+		emtargetdata['preset'] = presetdata
 
-		presetname = presetdata['name']
+		targetdata['preset'] = presetdata
+		targetdata['grid'] = griddata
+		#targetdata['version'] = ?
+		#targetdata['number'] = ?
+		#targetdata['status'] = ?
+		#targetdata['list'] = ?
+		#targetdata['image'] = ?
+
 		self.presetsclient.toScope(presetname, emtargetdata)
 
 		errorstring = 'Image acqisition failed: %s'
 		try:
-			imagedata = self.instrument.getData(data.CameraImageData)
+			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		except:
 			self.logger.error(errorstring % 'cannot acquire image')
 		if imagedata is None:
 			return None
-
 		# Jim says: store to DB to prevent referencing errors
 		self.publish(imagedata['scope'], database=True)
 		self.publish(imagedata['camera'], database=True)
+		imagedata = data.AcquisitionImageData(initializer=imagedata)
+		imagedata['target'] = targetdata
+		imagedata['emtarget'] = emtargetdata
+		imagedata['preset'] = presetdata
+		imagedata['label'] = self.name
+		imagedata['grid'] = griddata
+		self.setImageFilename(imagedata)
 
-		# TODO: targetdata
-		imagedata = data.AcquisitionImageData(initializer=imagedata,
-																					preset=presetdata,
-																					label=self.name)
+		self.publish(imagedata, pubevent=True, database=True)
 
 		return imagedata
 

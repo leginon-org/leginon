@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/AtlasViewer.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-23 19:18:40 $
+# $Date: 2005-04-12 21:28:20 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -95,8 +95,9 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
 		self.listbox.Enable(True)
 		self.Bind(wx.EVT_LISTBOX, self.onAtlasListBox)
+		self.onGetAtlases()
 
-	def onGetAtlases(self, evt):
+	def onGetAtlases(self, evt=None):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_REFRESH, False)
 		self.listbox.Enable(False)
 		threading.Thread(target=self.node.getAtlases).start()

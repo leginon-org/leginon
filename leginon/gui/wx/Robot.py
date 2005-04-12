@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Robot.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-11 02:30:09 $
+# $Date: 2005-04-12 21:28:20 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -69,6 +69,9 @@ class Panel(gui.wx.Node.Panel):
 			traylabel = self.ctray.GetStringSelection()
 		else:
 			traylabel = evt.GetString()
+			settings = self.node.getSettings()
+			settings['grid tray'] = traylabel
+			self.node.setSettings(settings)
 		self.tray.setGrids(self.node.getGridLocations(traylabel))
 		self.node.setTray(traylabel)
 
@@ -88,7 +91,14 @@ class Panel(gui.wx.Node.Panel):
 		choices = self.node.getTrayLabels()
 		if choices:
 			self.ctray.AppendItems(choices)
-			self.ctray.SetSelection(0)
+			if self.node.settings['grid tray']:
+				n = self.ctray.FindString(self.node.settings['grid tray'])
+			else:
+				n = wx.NOT_FOUND
+			if n == wx.NOT_FOUND:
+				self.ctray.SetSelection(0)
+			else:
+				self.ctray.SetSelection(n)
 			self.ctray.Enable(True)
 			self.onTrayChoice()
 

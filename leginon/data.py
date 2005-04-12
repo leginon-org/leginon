@@ -1981,6 +1981,7 @@ class RobotSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
 			('column pressure threshold', float),
+			('grid tray', str),
 		)
 	typemap = classmethod(typemap)
 
