@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.36 $
+# $Revision: 1.37 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-07 23:55:11 $
+# $Date: 2005-04-12 21:44:28 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -728,9 +728,6 @@ class ImportDialog(wx.Dialog):
 		sessions = newdict.OrderedDict()
 		for p in presets:
 			sessions[p['session']['name']] = None
-		if sessions:
-			print '00000000000', sessions.keys()[0], type(sessions.keys()[0])
-			print '11111111111', sessions.keys()[1], type(sessions.keys()[1])
 		self.csession.Clear()
 		for sesname in sessions.keys():
 			self.csession.Append(sesname)
