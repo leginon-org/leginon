@@ -51,6 +51,14 @@ class PresetsClient(object):
 		self.currentpreset = None
 		self.havelock = False
 
+	def getPresetFromDB(self, name):
+		session = self.node.session
+		query = data.PresetData(session=session, name=name)
+		try:
+			return self.node.research(datainstance=query, results=1)[0]
+		except IndexError:
+			raise ValueError('no preset \'%s\' in the database' % name)
+
 	def getPresetsFromDB(self, session=None):
 		'''
 		get ordered list of presets for this session from DB

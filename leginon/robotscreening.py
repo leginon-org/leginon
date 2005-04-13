@@ -4,15 +4,16 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotscreening.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-13 00:41:17 $
+# $Date: 2005-04-13 02:16:07 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
 import math
 import numarray
+import numarray.nd_image
 import threading
 import align
 import data
@@ -448,12 +449,15 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 		i1 = image1.data['image']
 		i2 = imagedata2['image']
+		self.logger.info('Calculating main transform...')
 		result = align.findRotationScaleTranslation(i1, i2)
 		rotation, scale, shift, value = result
+		m = 'Rotation: %g, scale: %g, shift: (%g, %g), peak value: %g'
+		self.logger.info(m % ((rotation, scale) + shift + (value,)))
 
 		return image1, imagedata2, rotation, scale, shift, value
 
-	def getTargetPairs(self, image, center, centermatrix, shift, centerimagedata, griddata):
+	def getTargetPairs(self, image, center, matrix, shift, centerimagedata, griddata, rotation, scale):
 		targets = []
 		for target1 in image.targets:
 			# target relative to the center of the center image of the atlas
@@ -462,24 +466,38 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 			# transform target to where it should be for the current position
 			# based on the transform of the center image
-			target2 = numarray.matrixmultiply(centermatrix, target2) + shift
+			target2 = numarray.matrixmultiply(matrix, target2) + shift
 
 			# acquire where the target should be centered
 			imagedata = self.reacquireImage(centerimagedata,
 																			target=target2,
 																			griddata=griddata)
 
-			# find the error
 			image1 = image.data['image']
-			image2 = imagedata['image']
-			result = align.findRotationScaleTranslation(image1, image2)
-			rotation, scale, shift, value = result
-			matrix, imatrix = align.getMatrices(rotation, scale)
+			shape = image1.shape
+			shift = -(target1[0] - shape[0]/2.0), -(target1[1] - shape[1]/2.0)
+			image1 = numarray.nd_image.shift(image1, shift)
+			image1 = align.rotateScaleOffset(image1, rotation, scale, (0.0, 0.0),
+																				shape=(shape[0]/2.0, shape[1]/2.0))
 
-			shape = image.data['image'].shape
-			target1 = target1[0] - shape[0]/2.0, target1[1] - shape[1]/2.0
-			target = target1[0] - shift[0], target1[1] - shift[1]
-			target = numarray.matrixmultiply(imatrix, target)
+			i = numarray.zeros(shape, image1.type())
+			o = int(round(shape[0]/4.0)), int(round(shape[1]/4.0))
+			i[o[0]:o[0]+image1.shape[0], o[1]:o[1]+image1.shape[1]] = image1
+			image1 = i
+
+			image2 = imagedata['image']
+			shape = image2.shape
+			i = numarray.zeros(image2.shape, image2.type())
+			o = int(round(shape[0]/4.0)), int(round(shape[1]/4.0))
+			i[o[0]:-o[0], o[1]:-o[1]] = image2[o[0]:-o[0], o[1]:-o[1]]
+			image2 = i
+
+			self.logger.info('Calculating target error transform...')
+			shift, value = align.findTranslation(image1, image2)
+			m = 'Shift: (%g, %g), peak value: %g'
+			self.logger.info(m % (shift + (value,)))
+			target = -shift[0], -shift[1]
+			#target = numarray.matrixmultiply(matrix, target)
 			targets.append((target, imagedata))
 		return targets
 
@@ -493,15 +511,14 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			result = self.getInsertionTransform(insertion, griddata)
 			centerimage1, centerimagedata2, rotation, scale, shift, value = result
 			center = self.getImageCenter(centerimage1)
-			m = 'Rotation: %g, scale: %g, shift: (%g, %g), peak value: %g'
-			self.logger.info(m % ((rotation, scale) + shift + (value,)))
 			matrix, imatrix = align.getMatrices(rotation, scale)
 
 			targetlist = self.newTargetList()
 			for image in insertion.images:
 				targets = self.getTargetPairs(image, center,
 																			imatrix, shift,
-																			centerimagedata2, griddata)
+																			centerimagedata2, griddata,
+																			rotation, scale)
 				# remove targets for this image
 				image.targets = []
 
@@ -532,8 +549,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 	def reacquireImage(self, imagedata, test=False, target=None, griddata=None):
 		presetname = imagedata['preset']['name']
-		self.presetsclient.toScope(presetname)
-		presetdata = self.presetsclient.getCurrentPreset()
+		presetdata = self.presetsclient.getPresetFromDB(presetname)
 
 		try:
 			t = 'TEM'

@@ -159,6 +159,10 @@ def rotateScaleOffset(image, rotation, scale, offset, shape=None):
 
 	return numarray.nd_image.affine_transform(image, m, o, shape)
 
+def findTranslation(image1, image2):
+	pc = phaseCorrelate(image1, image2)
+	return findPeak(pc)
+
 if __name__ == '__main__':
 	import Mrc
 	import sys
