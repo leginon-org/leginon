@@ -122,12 +122,12 @@ class PresetsClient(object):
 		evt = event.ChangePresetEvent()
 		evt['name'] = presetname
 		evt['emtarget'] = emtarget
-		self.node.logger.info('Requesting preset change to %s' % (presetname,))
+		self.node.logger.info('Requesting preset change to \'%s\'...' % presetname)
 		self.pchanged[presetname] = threading.Event()
 		self.node.outputEvent(evt)
 		self.pchanged[presetname].wait()
 
-		self.node.logger.info('Preset change to %s completed' % (presetname,))
+		self.node.logger.info('Preset change to \'%s\' completed.' % presetname)
 
 	def presetchanged(self, ievent):
 		self.currentpreset = ievent['preset']

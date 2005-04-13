@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotscreening.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-12 21:28:20 $
+# $Date: 2005-04-13 00:41:17 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -474,9 +474,12 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			image2 = imagedata['image']
 			result = align.findRotationScaleTranslation(image1, image2)
 			rotation, scale, shift, value = result
-
 			matrix, imatrix = align.getMatrices(rotation, scale)
-			target = numarray.matrixmultiply(imatrix, target1) + shift
+
+			shape = image.data['image'].shape
+			target1 = target1[0] - shape[0]/2.0, target1[1] - shape[1]/2.0
+			target = target1[0] - shift[0], target1[1] - shift[1]
+			target = numarray.matrixmultiply(imatrix, target)
 			targets.append((target, imagedata))
 		return targets
 
@@ -494,6 +497,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			self.logger.info(m % ((rotation, scale) + shift + (value,)))
 			matrix, imatrix = align.getMatrices(rotation, scale)
 
+			targetlist = self.newTargetList()
 			for image in insertion.images:
 				targets = self.getTargetPairs(image, center,
 																			imatrix, shift,
@@ -501,17 +505,15 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				# remove targets for this image
 				image.targets = []
 
-				targetlist = self.newTargetList()
-				for target, imagedata in targets:
-					row, column = target
+				for (row, column), imagedata in targets:
 					targetdata = self.newTargetForImage(imagedata, row, column,
 																							type='acquisition',
 																							list=targetlist)
 					self.publish(targetdata, database=True)
-				self.makeTargetListEvent(targetlist)
-				self.publish(targetlist, database=True, dbforce=True, pubevent=True)
 
-				self.waitForTargetListDone()
+			self.makeTargetListEvent(targetlist)
+			self.publish(targetlist, database=True, dbforce=True, pubevent=True)
+			self.waitForTargetListDone()
 
 		self.unloadGrid(grid)
 
@@ -574,13 +576,23 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		emtargetdata['target'] = targetdata
 		emtargetdata['preset'] = presetdata
 
+		query = data.AcquisitionImageTargetData()
+		query['preset'] = data.PresetData()
+		query['preset']['name'] = presetname
+		query['grid'] = griddata
+		numbers = [result['number'] for result in self.research(query)]
+		numbers.sort()
+		if numbers:
+			targetdata['number'] = numbers[-1] + 1
+		else:
+			targetdata['number'] = 0
+
 		targetdata['preset'] = presetdata
 		targetdata['grid'] = griddata
-		#targetdata['version'] = ?
-		#targetdata['number'] = ?
-		#targetdata['status'] = ?
-		#targetdata['list'] = ?
-		#targetdata['image'] = ?
+		targetdata['version'] = 0
+		targetdata['status'] = 'done'
+		targetdata['list'] = None
+		targetdata['image'] = None
 
 		self.presetsclient.toScope(presetname, emtargetdata)
 
@@ -607,62 +619,13 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		return imagedata
 
 	def setImageFilename(self, imagedata):
-		if imagedata['filename']:
-			return
-		parts = []
-		rootname = self.getRootName(imagedata)
-		parts.append(rootname)
-
-		if 'grid' in imagedata and imagedata['grid'] is not None:
-			if imagedata['grid']['grid ID'] is not None:
-				grididstr = '%05d' % (imagedata['grid']['grid ID'],)
-				parts.append(grididstr)
-
-		listlabel = ''
-		# use either dmid id or target number
-		if imagedata['target'] is None or imagedata['target']['number'] is None:
-			numberstr = '%05d' % (imagedata.dmid[-1],)
-		else:
-			numberstr = '%05d' % (imagedata['target']['number'],)
-			if imagedata['target']['list'] is not None:
-				listlabel = imagedata['target']['list']['label']
-		if imagedata['preset'] is None:
-			presetstr = ''
-		else:
-			presetstr = imagedata['preset']['name']
-		mystr = numberstr + presetstr
+		sessionstr = self.session['name']
+		grididstr = 'GridID%05d' % (imagedata['grid']['grid ID'],)
+		insertionstr = 'Insertion%03d' % (imagedata['grid']['insertion'],)
+		targetstr = '%05d%s' % (imagedata['target']['number'],
+														imagedata['preset']['name'])
+		parts = (sessionstr, grididstr, insertionstr, targetstr)
 		sep = '_'
-
-		if listlabel:
-			parts.append(listlabel)
-		parts.append(mystr)
-
 		filename = sep.join(parts)
 		imagedata['filename'] = filename
-
-	def getRootName(self, imagedata):
-		'''
-		get the root name of an image from its parent
-		'''
-		parent_target = imagedata['target']
-		if parent_target is None:
-			## there is no parent target
-			## create my own root name
-			return self.newRootName()
-
-		parent_image = parent_target['image']
-		if parent_image is None:
-			## there is no parent image
-			return self.newRootName()
-
-		## use root name from parent image
-		parent_root = parent_image['filename']
-		if parent_root:
-			return parent_root
-		else:
-			return self.newRootName()
-
-	def newRootName(self):
-		name = self.session['name']
-		return name
 
