@@ -50,7 +50,7 @@ class DriftManager(watcher.Watcher):
 				}
 			),
 	}
-	eventinputs = watcher.Watcher.eventinputs + [event.DriftDetectedEvent, event.NeedTargetShiftEvent]
+	eventinputs = watcher.Watcher.eventinputs + [event.DriftDetectedEvent, event.NeedTargetShiftEvent, event.PresetChangedEvent]
 	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftDoneEvent, event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.AcquisitionImageDriftPublishEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
 		watchfor = [event.DriftDetectedEvent]
