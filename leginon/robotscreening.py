@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotscreening.py,v $
-# $Revision: 1.8 $
+# $Revision: 1.9 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-13 02:16:07 $
+# $Date: 2005-04-14 00:39:32 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -439,25 +439,24 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		center = (row + image.location[0][0], column + image.location[1][0])
 		return center
 
-	def getInsertionTransform(self, insertion, griddata):
-		image1 = self.getCenterImage(insertion)
-
+	def getInsertionTransform(self, centerimage, griddata):
 		# acquire image and align
-		imagedata2 = self.reacquireImage(image1.data, griddata=griddata)
-		if imagedata2 is None:
+		imagedata = self.reacquireImage(centerimage.data, griddata=griddata)
+		if imagedata is None:
 			raise RuntimeError('image reacquisition failed')
 
-		i1 = image1.data['image']
-		i2 = imagedata2['image']
+		image1 = centerimage.data['image']
+		image2 = imagedata['image']
 		self.logger.info('Calculating main transform...')
-		result = align.findRotationScaleTranslation(i1, i2)
+		result = align.findRotationScaleTranslation(image1, image2)
 		rotation, scale, shift, value = result
 		m = 'Rotation: %g, scale: %g, shift: (%g, %g), peak value: %g'
 		self.logger.info(m % ((rotation, scale) + shift + (value,)))
 
-		return image1, imagedata2, rotation, scale, shift, value
+		return result, imagedata
 
-	def getTargetPairs(self, image, center, matrix, shift, centerimagedata, griddata, rotation, scale):
+	def getTargets(self, image, center,
+									matrix, rotation, scale, shift, centerimagedata, griddata):
 		targets = []
 		for target1 in image.targets:
 			# target relative to the center of the center image of the atlas
@@ -498,7 +497,11 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			self.logger.info(m % (shift + (value,)))
 			target = -shift[0], -shift[1]
 			#target = numarray.matrixmultiply(matrix, target)
-			targets.append((target, imagedata))
+
+			shape = image.data['image'].shape
+			target1 = target1[0] - shape[0]/2.0, target1[1] - shape[1]/2.0
+
+			targets.append((target1, target, imagedata))
 		return targets
 
 	def processGridData(self, griddata):
@@ -508,29 +511,54 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			if insertion == self.insertion:
 				self.setTargets([], 'Acquisition')
 
-			result = self.getInsertionTransform(insertion, griddata)
-			centerimage1, centerimagedata2, rotation, scale, shift, value = result
-			center = self.getImageCenter(centerimage1)
+			# get a rough estimate of the grid transform
+			centerimage = self.getCenterImage(insertion)
+			center = self.getImageCenter(centerimage)
+			result = self.getInsertionTransform(centerimage, griddata)
+			transform, newcenterimagedata = result
+			rotation, scale, shift, value = transform
 			matrix, imatrix = align.getMatrices(rotation, scale)
 
-			targetlist = self.newTargetList()
 			for image in insertion.images:
-				targets = self.getTargetPairs(image, center,
-																			imatrix, shift,
-																			centerimagedata2, griddata,
-																			rotation, scale)
+				# get the targets adjusted for error in the initial transform
+				targets = self.getTargets(image, center,
+																		imatrix, rotation, scale, shift,
+																		newcenterimagedata, griddata)
 				# remove targets for this image
 				image.targets = []
 
-				for (row, column), imagedata in targets:
+				targetlist = self.newTargetList()
+				targetdatalist = []
+				for originaltarget, target, imagedata in targets:
+					row, column = target
 					targetdata = self.newTargetForImage(imagedata, row, column,
 																							type='acquisition',
 																							list=targetlist)
 					self.publish(targetdata, database=True)
+					targetdatalist.append((originaltarget, targetdata))
 
-			self.makeTargetListEvent(targetlist)
-			self.publish(targetlist, database=True, dbforce=True, pubevent=True)
-			self.waitForTargetListDone()
+				self.makeTargetListEvent(targetlist)
+				self.publish(targetlist, database=True, dbforce=True, pubevent=True)
+				self.waitForTargetListDone()
+
+				'''
+				targetlist = self.newTargetList()
+				# revise the target based on the target picked on the original mosaic
+				# images displayed for clarity in the database and web viewer
+				for (row, column), targetdata in targetdatalist:
+					originaltargetdata = \
+						data.AcquisitionImageTargetData(initializer=targetdata)
+					originaltargetdata['delta row'] = row
+					originaltargetdata['delta column'] = column
+					originaltargetdata['image'] = image.data
+					originaltargetdata['scope'] = image.data['scope']
+					originaltargetdata['camera'] = image.data['camera']
+					originaltargetdata['version'] += 1
+					originaltargetdata['list'] = targetlist
+					originaltargetdata['status'] = 'done'
+					self.publish(originaltargetdata, database=True)
+				self.publish(targetlist, database=True, dbforce=True)
+				'''
 
 		self.unloadGrid(grid)
 
@@ -596,11 +624,9 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		query['preset'] = data.PresetData()
 		query['preset']['name'] = presetname
 		query['grid'] = griddata
-		numbers = [result['number'] for result in self.research(query)]
-		numbers.sort()
-		if numbers:
-			targetdata['number'] = numbers[-1] + 1
-		else:
+		try:
+			targetdata['number'] = max([r['number'] for r in self.research(query)])+1
+		except ValueError:
 			targetdata['number'] = 0
 
 		targetdata['preset'] = presetdata
