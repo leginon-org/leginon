@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.12 $
+# $Revision: 1.13 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-15 00:20:52 $
+# $Date: 2005-04-15 00:23:10 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -260,7 +260,7 @@ class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['user check'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['queue'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['queue'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sb = wx.StaticBox(self, -1, 'Raster Points')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
