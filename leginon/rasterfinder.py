@@ -27,6 +27,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		'wait for done': True,
 		'ignore images': False,
 		'user check': False,
+		'queue': False,
 		'image filename': '',
 		'raster spacing': 100,
 		'raster limit': 5,

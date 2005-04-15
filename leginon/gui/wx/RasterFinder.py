@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-12-08 02:07:17 $
+# $Date: 2005-04-15 00:20:52 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -31,6 +31,9 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT,
 													'play',
 													shortHelpString='Submit Targets')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE,
+													'send_queue_out',
+													shortHelpString='Submit Queued Targets')
 
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
@@ -64,11 +67,16 @@ class Panel(gui.wx.TargetFinder.Panel):
 											id=gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitTool,
 											id=gui.wx.ToolBar.ID_SUBMIT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitQueueTool,
+											id=gui.wx.ToolBar.ID_SUBMIT_QUEUE)
 
 		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings)
 
 	def onSubmitTool(self, evt):
 		self.node.submit()
+
+	def onSubmitQueueTool(self, evt):
+		self.node.publishQueue()
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -247,9 +255,12 @@ class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 
 		self.widgets['user check'] = wx.CheckBox(self, -1,
 																'Allow for user verification of raster points')
+		self.widgets['queue'] = wx.CheckBox(self, -1,
+																'Queue up targets')
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['user check'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['queue'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sb = wx.StaticBox(self, -1, 'Raster Points')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
