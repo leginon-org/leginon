@@ -3,10 +3,10 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/AtlasViewer.py,v $
-# $Revision: 1.6 $
+# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RobotAtlasTargetFinder.py,v $
+# $Revision: 1.1 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-19 16:29:27 $
+# $Date: 2005-04-19 18:09:52 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $

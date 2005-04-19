@@ -3,10 +3,10 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/robotscreening.py,v $
-# $Revision: 1.10 $
+# $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
+# $Revision: 1.1 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-19 16:29:27 $
+# $Date: 2005-04-19 18:09:52 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -24,7 +24,7 @@ import presets
 import project
 import calibrationclient
 import targethandler
-import gui.wx.AtlasViewer
+import gui.wx.RobotAtlasTargetFinder
 
 class TargetError(Exception):
 	pass
@@ -163,7 +163,7 @@ class Image(object):
 		self.targets = []
 
 class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
-	panelclass = gui.wx.AtlasViewer.Panel
+	panelclass = gui.wx.RobotAtlasTargetFinder.Panel
 	eventinputs = (
 		node.Node.eventinputs +
 		targethandler.TargetWaitHandler.eventinputs +
@@ -311,23 +311,25 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 	def updateAtlasTargets(self):
 		targets = self.panel.getTargetPositions('Acquisition')
-		if self.insertion is not None:
-			self.insertion.images.reverse()
-			for image in self.insertion.images:
-				image.clearTargets()
-				for target in list(targets):
-					column, row = target
-					try:
-						if self.targetInImage((row, column), image):
-							targets.remove(target)
-							target = (row - image.location[0][0], column - image.location[1][0])
-							image.addTarget(target)
-					except ValueError:
-						if image.data is None:
-							self.logger.warning('No location for image')
-						else:
-							self.logger.warning('No location for image ID %d' % image.data.dbid)
-			self.insertion.images.reverse()
+		if self.insertion is None:
+			return
+		self.insertion.images.reverse()
+		for image in self.insertion.images:
+			print self.researchTargets(image=image.data)
+			image.clearTargets()
+			for target in list(targets):
+				column, row = target
+				try:
+					if self.targetInImage((row, column), image):
+						targets.remove(target)
+						target = (row - image.location[0][0], column - image.location[1][0])
+						image.addTarget(target)
+				except ValueError:
+					if image.data is None:
+						self.logger.warning('No location for image')
+					else:
+						self.logger.warning('No location for image ID %d' % image.data.dbid)
+		self.insertion.images.reverse()
 
 	def setAtlas(self, gridid, number):
 		self.updateAtlasTargets()
