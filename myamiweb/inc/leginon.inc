@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.43 $
- *	@version $Id: leginon.inc,v 1.43 2005-04-19 21:25:54 dfellman Exp $
+ *	@version $Revision: 1.44 $
+ *	@version $Id: leginon.inc,v 1.44 2005-04-19 23:33:43 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -893,7 +893,7 @@ class leginondata {
 			."where "
 			."t.`type`='acquisition' and "
 			."a.`DEF_id`='".$imgId."' "
-			."order by t.`tnumber` ";
+			."order by `tnumber` ";
 
 		return $this->mysql->getSQLResult($q);
 	}
