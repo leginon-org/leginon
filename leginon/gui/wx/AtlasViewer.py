@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/AtlasViewer.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-12 21:28:20 $
+# $Date: 2005-04-19 16:29:27 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -71,10 +71,10 @@ class Panel(gui.wx.Node.Panel):
 		self.listbox.Clear()
 		labels = []
 		self.atlaslistboxmap = {}
-		for gridid, insertion in self.node.grids.getGridInsertions():
-			label = 'Grid ID %d, insertion #%d' % (gridid, insertion)
+		for gridname, gridid, insertion in self.node.grids.getGridInsertions():
+			label = '%s (%d)' % (gridname, insertion)
 			labels.append(label)
-			self.atlaslistboxmap[label] = (gridid, insertion)
+			self.atlaslistboxmap[label] = (gridname, gridid, insertion)
 		self.listbox.AppendItems(labels)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_REFRESH, True)
 		self.listbox.Enable(True)
@@ -107,7 +107,8 @@ class Panel(gui.wx.Node.Panel):
 		self.listbox.Enable(False)
 		s = evt.GetString()
 		try:
-			args = self.atlaslistboxmap[s]
+			gridname, gridid, insertion = self.atlaslistboxmap[s]
+			args = (gridid, insertion)
 			threading.Thread(target=self.node.setAtlas, args=args).start()
 		except KeyError:
 			pass

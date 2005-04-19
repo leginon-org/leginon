@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotscreening.py,v $
-# $Revision: 1.9 $
+# $Revision: 1.10 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-14 00:39:32 $
+# $Date: 2005-04-19 16:29:27 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -21,6 +21,7 @@ import event
 import instrument
 import node
 import presets
+import project
 import calibrationclient
 import targethandler
 import gui.wx.AtlasViewer
@@ -62,13 +63,26 @@ class Grids(object):
 		for grid in self.grids:
 			gridids.append(grid.gridid)
 		gridids.sort()
+
+		projectdata = None
+		try:
+			projectdata = project.ProjectData()
+		except project.NotConnectedError, e:
+			self.logger.warning('Failed to connect to the project database: %s' % e)
+
 		for gridid in gridids:
+			if projectdata is not None:
+				label = projectdata.getGridLabel(gridid)
+			else:
+				label = None
+			if label is None:
+				label = 'Grid ID %d' % gridid
 			numbers = []
 			for insertion in grid.insertions:
 				numbers.append(insertion.number)
 			numbers.sort()
 			for number in numbers:
-				labels.append((gridid, number))
+				labels.append((label, gridid, number))
 		return labels
 
 class Grid(object):
@@ -303,10 +317,16 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				image.clearTargets()
 				for target in list(targets):
 					column, row = target
-					if self.targetInImage((row, column), image):
-						targets.remove(target)
-						target = (row - image.location[0][0], column - image.location[1][0])
-						image.addTarget(target)
+					try:
+						if self.targetInImage((row, column), image):
+							targets.remove(target)
+							target = (row - image.location[0][0], column - image.location[1][0])
+							image.addTarget(target)
+					except ValueError:
+						if image.data is None:
+							self.logger.warning('No location for image')
+						else:
+							self.logger.warning('No location for image ID %d' % image.data.dbid)
 			self.insertion.images.reverse()
 
 	def setAtlas(self, gridid, number):
@@ -321,6 +341,9 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			self.updateImage(image)
 
 	def updateImage(self, image):
+		if image.data is None:
+			self.logger.warning('No data for this image')
+			return
 		image.width = image.data['preset']['dimension']['x']
 		image.height = image.data['preset']['dimension']['y']
 		targetdata = image.data['target']

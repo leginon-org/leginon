@@ -77,6 +77,16 @@ class ProjectData:
 	def getGridLocations(self):
 		return self.gridlocations
 
+	def getGridLabel(self, gridid):
+		gridsindex = self.grids.Index(['gridId'])
+		grid = gridsindex[gridid].fetchone()
+		if grid is None:
+			return None
+		try:
+			return grid['label']
+		except KeyError:
+			return None
+
 ########################################
 ## Testing
 ########################################
@@ -87,6 +97,8 @@ if __name__ == "__main__":
 	#allprojects = projects.getall()
 	projectdata = ProjectData()
 
+	print projectdata.getGridName(111)
+	"""
 	gridid = 751
 	grids = projectdata.getGrids()
 	gridsindex = grids.Index(['gridId'])
@@ -107,7 +119,6 @@ if __name__ == "__main__":
 	print gridlocation
 	#return int(gridlocation['location'])
 
-	"""
 	for i in range(1, 97):
 		projectdata.newGrid('Robot Grids 2, #%d' % i, 113, i, 12, i)
 
