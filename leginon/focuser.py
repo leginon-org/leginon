@@ -228,7 +228,7 @@ class Focuser(acquisition.Acquisition):
 			## make small image
 			camsize = self.instrument.ccdcamera.CameraSize
 			bin = 8
-			dim = camsize / bin
+			dim = camsize['x'] / bin
 			camstate1['dimension'] = {'x':dim,'y':dim}
 			camstate1['binning'] = {'x':bin,'y':bin}
 			camstate1['offset'] = {'x':0,'y':0}

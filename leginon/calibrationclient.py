@@ -1005,8 +1005,8 @@ class ModeledStageCalibrationClient(CalibrationClient):
 			caldata = None
 		return caldata
 
-	def retrieveModelCalibration(self, axis):
-		caldata = self.researchModelCalibration(axis)
+	def retrieveModelCalibration(self, axis, tem, ccd):
+		caldata = self.researchModelCalibration(axis, tem, ccd)
 		if caldata is None:
 			raise RuntimeError('no model calibration')
 		else:
@@ -1089,10 +1089,12 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		biny = camera['binning']['y']
 		pixrow = pixelshift['row'] * biny
 		pixcol = pixelshift['col'] * binx
+		tem = scope['tem']
+		ccd = camera['ccdcamera']
 
 		## do modifications to newstage here
-		xmodcal = self.retrieveModelCalibration('x')
-		ymodcal = self.retrieveModelCalibration('y')
+		xmodcal = self.retrieveModelCalibration('x', tem, ccd)
+		ymodcal = self.retrieveModelCalibration('y', tem, ccd)
 		self.node.logger.debug('x model a %s' % xmodcal['a'])
 		self.node.logger.debug('x model b %s' % xmodcal['b'])
 		self.node.logger.debug('y model a shape %s' % ymodcal['a'].shape)
