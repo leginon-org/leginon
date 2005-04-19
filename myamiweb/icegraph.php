@@ -13,7 +13,7 @@ include ("inc/jpgraph_scatter.php");
 include ("inc/jpgraph_bar.php");
 include ("inc/histogram.inc");
 include ("inc/image.inc");
-require ("inc/leginon.inc");
+require_once ("inc/leginon.inc");
 
 $defaultId= 1445;
 $defaultpreset='hl';

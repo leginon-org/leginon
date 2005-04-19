@@ -7,17 +7,63 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
+function imagecolorallocatehex($img, $c) {
+	/* return a color from hex string: 
+		FFFFF
+		ABC
+		#FFFFF
+		#ABC
+	*/
+        $c= ereg_replace('^\#','',$c);
+        switch (strlen($c)) {
+                case 3:
+                        $s = preg_split('//', $c, -1, PREG_SPLIT_NO_EMPTY);
+                        $r = hexdec($s[0].=$s[0]);
+                        $g = hexdec($s[1].=$s[1]);
+                        $b = hexdec($s[2].=$s[2]);
+                        break;
+                case 6:
+                        $r = hexdec(substr($c, 0, 2));
+                        $g = hexdec(substr($c, 2, 2));
+                        $b = hexdec(substr($c, 4, 2));
+                        break;
+                default:
+                        $r = 0;
+                        $g = 0;
+                        $b = 0;
+                        break;
+        }
+        return imagecolorallocate($img, $r, $g, $b);
+}
 
-function drawcross ($img, $cx, $cy, $size, $col) {
-	imagearc($img, $cx, $cy, $size, $size, 0, 360, $col);
-	imageline($img, $cx-$size, $cy, $cx+$size, $cy, $col);
-	imageline($img, $cx, $cy-$size, $cx, $cy+$size, $col);
+function drawcross ($img, $cx, $cy, $size, $col, $arc=true, $angle=0, $shadow=false) {
+
+	$angle = ($angle*2/360+1/4)*PI();
+	$square = new square($cx, $cy, $size);
+	$sp = $square->getRotatedPointCoords($angle);
+	$npoints=count($sp)/2;
+	if ($shadow) {
+		imageline($img, $sp[0]+1, $sp[1], $sp[4]+1, $sp[5], 0);
+		imageline($img, $sp[2]+1, $sp[3], $sp[6]+1, $sp[7], 0);
+		if ($arc)
+			imagearc($img, $cx+1, $cy, $size, $size, 315, 135, 0);
+	}
+	if ($arc)
+		imagearc($img, $cx, $cy, $size, $size, 0, 360, $col);
+	imageline($img, $sp[0], $sp[1], $sp[4], $sp[5], $col);
+	imageline($img, $sp[2], $sp[3], $sp[6], $sp[7], $col);
 }
 
 function drawsquare($img, $squarepoints, $col) {
 	$npoints=count($squarepoints)/2;
 	imagepolygon($img, $squarepoints, $npoints, $col);
 	return true;
+}
+
+function drawcircle($img, $cx, $cy, $size, $col, $shadow=false) {
+	if ($shadow)
+		imagearc($img, $cx+1, $cy+1, $size, $size, 315, 135, 0);
+	imagearc($img, $cx, $cy, $size, $size, 0, 360, $col);
 }
 
 function getsquarepoints($cx, $cy, $angle, $size) {

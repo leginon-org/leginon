@@ -135,11 +135,12 @@ function newfile(view){
 	if (cbinning = eval("jsbinning"+view)) binning="&binning="+cbinning; else binning="";
 	if (cquality = eval("jsquality"+view)) quality="&t="+cquality; else quality="";
 	if (ccolormap= eval("jscolormap"+view)) colormap="&colormap="+ccolormap; else colormap="";
+	if (cptclsel = eval("jsptclsel"+view)) ptclsel="&psel="+escape(cptclsel); else ptclsel="";
 
 	options = "preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap;
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+ptclsel;
 
 	if (options == lastoptions[vid])
 		return;
@@ -211,7 +212,8 @@ function setImageHistogram(viewname) {
 			"&s="+jssize+quality+np+xp+flt+binning+colormap+fft;
 
 		if (!w.closed) {
-			w.document.imghisto.src="imagehistogram.php?tf=1&"+options;
+			if (histo = w.document.imghisto)
+				histo.src="imagehistogram.php?tf=1&"+options;
 		}
 	}
 }
@@ -238,6 +240,13 @@ function setquality(viewname, quality) {
 	eval('jsquality'+viewname+'="'+quality+'"');
 	if (q = eval("document.viewerform."+viewname+"q")) {
 		q.value=quality;
+	}
+}
+
+function setParticleSelection(viewname, selection) {
+	eval('jsptclsel'+viewname+'="'+selection+'"');
+	if (q = eval("document.viewerform."+viewname+"psel")) {
+		q.value=selection;
 	}
 }
 
@@ -283,3 +292,12 @@ function popUpAdjust(URL, view, param){
 	param = (param) ? param : "left=0,top=0,height=170,width=370";
 	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+binning+quality+colormap+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');");
 }
+
+function popUpPtcl(URL, view, param) {
+	psel = eval('jsptclsel'+view);
+	psel = (psel) ? "&psel="+psel : "";
+	s = "&session="+jsSessionId;
+	param = (param) ? param : "left=0,top=0,height=170,width=370";
+	eval (view+"adjw"+" = window.open('"+URL+s+psel+"', '"+view+"ptcl', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');");
+}
+

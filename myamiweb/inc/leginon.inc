@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.42 $
- *	@version $Id: leginon.inc,v 1.42 2005-03-04 18:11:53 dfellman Exp $
+ *	@version $Revision: 1.43 $
+ *	@version $Id: leginon.inc,v 1.43 2005-04-19 21:25:54 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -72,6 +72,10 @@ class leginondata {
 
 	function query($q) {
 		return $this->mysql->SQLQuery($q);
+	}
+
+	function getSQLResult($q) {
+		return $this->mysql->getSQLResult($q);
 	}
 	
 	function getLastSessionId() {
@@ -286,8 +290,26 @@ class leginondata {
 		return mysql_fetch_array($Rpreset, MYSQL_ASSOC);
 	}
 
+	function getPresetFromImageId($imageId) {
+		$q	="SELECT "
+			."`p`.`DEF_id`, `p`.`DEF_timestamp`, `p`.`REF|SessionData|session`, "
+			."`p`.`name`, `p`.`magnification`, `p`.`spot size`, `p`.`intensity`, "
+			."`p`.`SUBD|image shift|x`, `p`.`SUBD|image shift|y`, `p`.`SUBD|beam shift|x`, "
+			."`p`.`SUBD|beam shift|y`, `p`.`defocus`, `p`.`SUBD|dimension|x`, "
+			."`p`.`SUBD|dimension|y`, `p`.`SUBD|binning|x`, `p`.`SUBD|binning|y`, "
+			."`p`.`SUBD|offset|x`, `p`.`SUBD|offset|y`, `p`.`exposure time`, "
+			."`p`.`removed`, `p`.`hasref`, `p`.`eucentric focus`, `p`.`dose`, `p`.`number`, "
+			."`p`.`film`, `p`.`REF|InstrumentData|tem`, `p`.`REF|InstrumentData|ccdcamera` "
+			."FROM "
+			."`AcquisitionImageData` AS `a` "
+			."LEFT JOIN `PresetData` AS `p` ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
+			."WHERE `a`.`DEF_id` = '$imageId' ";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function formatPath($path) {
-		# temporary here
+	# temporary here
 		$npath = eregi_replace('^.*colossus.amishare','/ami/amishare',$path);
 		$npath = eregi_replace('^Z:','/ami/amishare',$path);
 		$npath = ereg_replace('[\\]','/',$npath);
@@ -470,7 +492,6 @@ class leginondata {
 			.$sql_group
 			.$order
 			.$sql_limit;
-
 
 		return $this->mysql->getSQLResult($q);
 	}

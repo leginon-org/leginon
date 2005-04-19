@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.18 $
- *	@version $Id: image.inc,v 1.18 2005-02-04 17:24:29 dfellman Exp $
+ *	@version $Revision: 1.19 $
+ *	@version $Id: image.inc,v 1.19 2005-04-19 21:25:54 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -13,6 +13,7 @@ require_once("inc/util.inc");
 require_once('inc/filter.inc');
 require_once('inc/graphutil.inc');
 require_once('inc/scalebar.inc');
+require_once('inc/ptcl.inc');
 
 function getImage($sessionId, $imageId, $preset, $params = array()) {
 
@@ -26,7 +27,8 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		'binning' => 'auto',
 		'scalebar' => true,
 		'displaytargets' => true,
-		'loadtime' => false
+		'loadtime' => false,
+		'ptlc' => false
 	);
 	if (is_array($params))
 		foreach ($params as $k=>$v)
@@ -75,6 +77,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		else
 			$img = getdefault($pic, $p[minpix], $p[maxpix], $p[colormap], $binning);
 
+		$scalefactor=1;
 		if ($size) {
 			$scalefactor = (imagesx($img)) ? $size/imagesx($img) : 1;
 			imagescale($img, $scalefactor);
@@ -187,15 +190,6 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				}
 
 
-	//		$t[] = $targets[0];
-	//		$t[] = $targets[count($targets)-1];
-
-		/*
-			$x1 = $t[0][x]+10;
-			$y1 = $t[0][y]+10;
-			$x2 = $t[1][x]-10;
-			$y2 = $t[1][y]-10;
-		*/
 
 			}
 		}
@@ -215,6 +209,33 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			$scalebar = new ScaleBar($img, $size, $value);
 			$scalebar->display();
 		    }
+		}
+		/* display particles */
+		if ($p[ptcl]) {
+			$selectioninfo = string2selections($p[ptcl]);
+			foreach ($selectioninfo as $sel) {
+				$selectionId = $sel[0];
+				if (!$selectionId)
+					continue;
+				$selcolor = $sel[1];
+				$seltarget = $sel[2];
+				$col = imagecolorallocatehex($img,$selcolor);
+				$dbp = new particledata();
+				$particles = $dbp->getParticlesFromSelectionId($selectionId, $filename);
+				foreach ($particles as $particle) {
+					$cx = $particle['Xcoord']/$binning*$scalefactor;
+					$cy = $particle['Ycoord']/$binning*$scalefactor;
+					$tsize = 100*$scalefactor/$binning;
+					if ($seltarget=='cir1')
+						drawcircle($img, $cx, $cy, $tsize, $col, true);
+					if ($seltarget=='cross1')
+						drawcross ($img, $cx, $cy, $tsize, $col, false, 45, true);
+					if ($seltarget=='cross2')
+						drawcross ($img, $cx, $cy, $tsize, $col, false, 0, true);
+
+				}
+			}
+		
 		}
 	} else {
 		$img = blankimage();
@@ -386,14 +407,7 @@ class Mosaic {
 			$squarepoints = getsquarepoints($cx, $cy, $angle, $squaresize);
 			$dst_x = $squarepoints[0];
 			$dst_y = $squarepoints[1];
-//			if ($k <3 ) {
 			$gimg = getImage($sessionId, $r[imageId], $preset, $this->params);
-//			} else if ($k>15){
-//				$gimg = imagecreatefrommrc($myfile, 0, 255, 0, 4);
-			//	$gimg = getImage($sessionId, $r[imageId], $preset, $this->params);
-//			} else {
-//				$gimg = imagecreatetruecolor(50,50);
-//			}
 			$src_w = imagesx($gimg);
 			$src_h = imagesy($gimg);
 			imagecopy($img, $gimg, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h);
@@ -417,14 +431,6 @@ class Mosaic {
 			imagestringshadow($img, 4, $cdx, $cdy, $cnb, $blue);
 		}
 
-		/*
-		if ($this->displayscalebar) {
-			$size = $squaresize;
-			$value = $imageinfo[0][pixelsize]*$imageinfo[0][binning]*$ratio;
-			$scalebar = new ScaleBar($img, $size, $value);
-			$scalebar->display($img_h-20);
-		}
-		*/
 		if ($this->displayscalebar) {
 			$size = ($max_row - $min_row)/$ratio;
 			$value = $imageinfo[0][pixelsize]*$imageinfo[0][binning]*$ratio;

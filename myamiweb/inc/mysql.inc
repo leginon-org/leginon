@@ -336,6 +336,19 @@ class mysql {
 			return $changes;
 		return False;
 	}
+
+	function getPriKey($table) {
+		$prikey=false;
+		if ($table && $this->SQLTableExists($table)) {
+			$R = $this->SQLQuery("SHOW FIELDS FROM `$table`");
+			while ($r = mysql_fetch_array($R))
+				if ($r['Key']=='PRI') {
+					$prikey = $r[Field];
+					break;
+				}
+		}
+		return $prikey;
+	}
 	
 	function getFields($table) {
 		$fields = array();

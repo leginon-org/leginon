@@ -7,6 +7,7 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
+
 require('inc/leginon.inc');
 require('inc/image.inc');
 require('inc/cachedb.inc');
@@ -37,6 +38,7 @@ if ($t=='png') {
 	$ext = "jpg";
 }
 
+
 if ($cache) {
 	$begin=getmicrotime();
 	$uri = "http://".$_SERVER[SERVER_NAME].$REQUEST_URI;
@@ -56,6 +58,8 @@ if ($cache) {
 	}
 }
 
+if (!$displayparticle = $_GET['psel']) 
+	$displayparticle = false;
 $colormap = ($_GET['colormap']==1) ? "1" : "0";
 $minpix = ($_GET['np']) ? $_GET['np'] : 0;
 $maxpix = ($_GET['xp']) ? $_GET['xp'] : (($colormap) ? 1274 : 255);
@@ -71,6 +75,7 @@ if (!$binning=$_GET['binning'])
 $displayloadingtime = false;
 
 if ($g) {
+
 	$params = array (
 		'size'=> $size,
 		'minpix' => $minpix,
@@ -81,7 +86,8 @@ if ($g) {
 		'binning' => $binning,
 		'scalebar' => $displayscalebar,
 		'displaytargets' => $displaytarget,
-		'loadtime' => $displayloadingtime
+		'loadtime' => $displayloadingtime,
+		'ptcl' => urldecode($displayparticle)
 	);
 
 	if ($preset=='atlas') {
@@ -147,4 +153,5 @@ if ($cache) {
 	$blkimg = blankimage();
 	imagedestroy($blkimg);
 }
+
 ?>

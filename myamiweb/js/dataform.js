@@ -15,10 +15,16 @@ function check_name() {
 	document.data.submit();
 }
 
+function confirm_add() {
+	document.data.bt_action.value="add";
+	document.data.submit();
+}
+
 function confirm_update() {
 	document.data.bt_action.value="save";
 	document.data.submit();
 }
+
 function confirm_delete() {
 	document.data.bt_action.value="remove";
 	document.data.submit();

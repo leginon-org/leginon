@@ -325,6 +325,9 @@ function displayMatrix($matrix) {
 function format_sci_number($data) {
 
 	$decimal = @func_get_arg(1);
+	$nohtmlsup = @func_get_arg(2);
+	$sup1 = ($nohtmlsup) ? 'E' : 'x10<sup>';
+	$sup2 = ($nohtmlsup) ? '' : '</sup>';
 	if (!$data) return $data;
 	$data_org = $data;
 	$neg = ($data<0) ? true : false;
@@ -336,14 +339,14 @@ function format_sci_number($data) {
 			$data *= 10;
 			$power++;
 		}
-		$data = sprintf("%0.".$decimal."fx10<sup>-".$power."</sup>", $data);
+		$data = sprintf("%0.".$decimal."f".$sup1."-".$power.$sup2, $data);
 
 	} elseif ($data > 10) {
 		while ($data > 10) {
 			$data /= 10;
 			$power++;
 		}
-		$data = sprintf("%0.".$decimal."fx10<sup>".$power."</sup>", $data);
+		$data = sprintf("%0.".$decimal."f".$sup1.$power.$sup2, $data);
 	}
 	if ($power==1)
 		$data = sprintf("%0.".$decimal."f", abs($data_org));

@@ -200,6 +200,43 @@ if (!empty($comments)) {
 ?>
 </td>
 </tr>
+<tr>
+<td colspan="2">
+<?
+echo divtitle("CTF");
+	echo "<table>";
+	echo "<tr>";
+		echo "<td>";
+		echo "<a href='ctfreport.php?Id=$expId'>report &raquo;</a>";
+		echo "</td>";
+	echo "</tr>";
+	echo "</table>";
+require('inc/ctf.inc');
+$fields = array('defocus1', 'defocus2', 'snr');
+$sessionId=$expId;
+$ctf = new ctfdata();
+$runId = $ctf->getLastCtfRun($sessionId);
+$stats = $ctf->getStats($fields, $sessionId, $runId);
+
+foreach($stats as  $field=>$data) {
+		foreach($data as $k=>$v) {
+			$imageId = $stats[$field][$k]['id'];
+			$p = $leginondata->getPresetFromImageId($imageId);
+			$stats[$field][$k]['preset'] = $p['name'];
+			$cdf = '<a href="ctfgraph.php?hg=1&Id='.$sessionId
+				.'&f='.$field.'&df='.$data[$k]['defocus_nominal'].'">'
+				.'<img border="0" src="ctfgraph.php?w=150&hg=1&Id='.$sessionId
+				.'&f='.$field.'&df='.$data[$k]['defocus_nominal'].'"></a>';
+			$stats[$field][$k]['img'] = $cdf;
+		}
+}
+$display_keys = array ('defocus_nominal', 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
+
+echo display_stats($stats, $display_keys);
+
+?>
+</td>
+</tr>
 </table>
 </body>
 </html>

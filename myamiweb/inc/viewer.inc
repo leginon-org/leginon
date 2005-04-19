@@ -339,11 +339,19 @@ class view {
 		$this->displayscaleicon = true;
 		$this->btinfo = new button('info'.$this->name, 'info');
 		$this->btinfo->setLink('imgreport.php','imginfo');
+
+		$param = "left=0,top=".($this->viewnb*180+20).",height=170,width=370";
+		$url = "ptclsel.php?name=$name&displayname=$this->title";
+		$pli =	"javascript:popUpPtcl('".$url."','".$name."','".$param."');";
+		$this->btparticle = new button('ptcl'.$this->name, 'ptcl');
+		$this->btparticle->setLink($pli);
+		$this->displayscaleicon = true;
 		$this->displayscaleicon = true;
 		$this->displaytargeticon = true;
 		$this->displayffticon = true;
 		$this->displayfiltericon = true;
 		$this->displayinfoicon = true;
+		$this->displayparticleicon = true;
 		$this->displaydownloadicon = true;
 		$this->displaycloseicon = true;
 		$this->displayadjustlink = true;
@@ -357,6 +365,8 @@ class view {
 		$this->filter= "default";
 		$this->binning= "auto";
 		$this->colormap = "0";
+		$this->ptclsel = "0";
+		$this->ptclselmemo = $this->name.'psel';
 		$this->qualitymemo = $this->name.'q';
 		$this->binningmemo = $this->name.'b';
 		$this->filtermemo = $this->name.'f';
@@ -367,6 +377,8 @@ class view {
 		$this->btfftmemo = $this->name.'fft_bt_st';
 		$this->bttargetmemo = $this->name.'target_bt_st';
 		$this->btscalememo = $this->name.'scale_bt_st';
+		if ($ptcl=$_REQUEST[$this->ptclselmemo])
+			$this->ptclsel = $ptcl;
 		if ($quality=$_REQUEST[$this->qualitymemo])
 			$this->quality = $quality;
 		if ($binning=$_REQUEST[$this->binningmemo])
@@ -443,6 +455,10 @@ class view {
 		$this->displayinfoicon = $state;
 	}
 
+	function displayParticleIcon($state) {
+		$this->displayparticleicon = $state;
+	}
+
 	function displayFilterIcon($state) {
 		$this->displayfiltericon = $state;
 	}
@@ -499,6 +515,7 @@ class view {
 			.'var jspreset'.$this->name.'="'.$this->preset.'";'.$this->crlf
 			.'var jsquality'.$this->name.'="'.$this->quality.'";'.$this->crlf
 			.'var jscolormap'.$this->name.'="'.$this->colormap.'";'.$this->crlf
+			.'var jsptclsel'.$this->name.'="'.$this->ptclsel.'";'.$this->crlf
 			.'var '.$this->name.'adjw=false;'.$this->crlf
 			.$this->crlf;
 		return $javascript;
@@ -506,6 +523,7 @@ class view {
 
 	function getJavascriptButton() {
 		$javascript = ''.$this->crlf
+			.$this->btparticle->getJavascript()
 			.$this->btinfo->getJavascript()
 			.$this->btdownload->getJavascript()
 			.$this->crlf;
@@ -581,7 +599,8 @@ class view {
 		<input type="hidden" name="'.$this->btfiltermemo.'" value="'.$this->btfilterstate.'"> 
 		<input type="hidden" name="'.$this->btfftmemo.'" value="'.$this->btfftstate.'"> 
 		<input type="hidden" name="'.$this->bttargetmemo.'" value="'.$this->bttargetstate.'"> 
-		<input type="hidden" name="'.$this->btscalememo.'" value="'.$this->btscalestate.'"> ';
+		<input type="hidden" name="'.$this->btscalememo.'" value="'.$this->btscalestate.'"> 
+		<input type="hidden" name="'.$this->ptclselmemo.'" value="0"> ';
 		if ($this->ismaster)
 			$htmlframe .= '
 		<input type="hidden" name="controlpre" value="'.$prename.'"> 
@@ -613,6 +632,13 @@ class view {
 			.$this->btdownload->display().$this->crlf
 			.'
 			</td>
+		';
+		if ($this->displayparticleicon)
+		$htmlframe .= '
+			<td width="15">'
+			.$this->btparticle->display().$this->crlf
+			.'
+	</td>
 		';
 		if ($this->displayinfoicon)
 		$htmlframe .= '
