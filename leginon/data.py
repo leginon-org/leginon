@@ -757,6 +757,7 @@ class InstrumentData(Data):
 		return Data.typemap() + (
 			('name', str),
 			('hostname', str),
+			#('type', str),
 		)
 	typemap = classmethod(typemap)
 

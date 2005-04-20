@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.28 $
+# $Revision: 1.29 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-08 00:28:53 $
-# $Author: pulokas $
+# $Date: 2005-04-20 19:08:23 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -98,11 +98,14 @@ class Proxy(object):
 				return None
 			else:
 				name = self.tem._name
+				#dbtype = self.tem.DatabaseType
 		else:
 			if name not in self.tems:
 				raise RuntimeError('no TEM \'%s\' available' % name)
 		instrumentdata = data.InstrumentData()
 		instrumentdata['name'] = name
+		#instrumentdata['type'] = dbtype
+		#print dbtype
 		try:
 			instrumentdata['hostname'] = self.tems[name].Hostname
 		except:
@@ -125,11 +128,14 @@ class Proxy(object):
 				return None
 			else:
 				name = self.ccdcamera._name
+				#dbtype = self.ccdcamera.DatabaseType
 		else:
 			if name not in self.ccdcameras:
 				raise RuntimeError('no CCD camera \'%s\' available' % name)
 		instrumentdata = data.InstrumentData()
 		instrumentdata['name'] = name
+		#instrumentdata['type'] = dbtype
+		#print dbtype
 		try:
 			instrumentdata['hostname'] = self.ccdcameras[name].Hostname
 		except:
@@ -259,10 +265,12 @@ class Proxy(object):
 		proxy.multiCall(attributes, types, args)
 
 class TEM(remotecall.Locker):
-	pass
+	def getDatabaseType(self):
+		return 'TEM'
 
 class CCDCamera(remotecall.Locker):
-	pass
+	def getDatabaseType(self):
+		return 'CCDCamera'
 
 class FastCCDCamera(CCDCamera):
 	pass

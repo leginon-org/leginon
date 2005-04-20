@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-20 00:25:54 $
+# $Date: 2005-04-20 19:08:23 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -64,19 +64,8 @@ class Grids(object):
 			gridids.append(grid.gridid)
 		gridids.sort()
 
-		projectdata = None
-		try:
-			projectdata = project.ProjectData()
-		except project.NotConnectedError, e:
-			self.logger.warning('Failed to connect to the project database: %s' % e)
-
 		for gridid in gridids:
-			if projectdata is not None:
-				label = projectdata.getGridLabel(gridid)
-			else:
-				label = None
-			if label is None:
-				label = 'Grid ID %d' % gridid
+			label = self.getGridLabel(gridid)
 			numbers = []
 			for insertion in grid.insertions:
 				numbers.append(insertion.number)
@@ -176,7 +165,8 @@ class Image(object):
 		self.column = targetdata['delta column']
 		self.halfwidth = int(math.ceil(self.width/2.0))
 		self.halfheight = int(math.ceil(self.height/2.0))
-		self.targetdatalist = self.node.researchTargets(image=self.data)
+		self.targetdatalist = self.node.researchTargets(session=self.node.session,
+																										image=self.data)
 
 	def addTarget(self, target):
 		row, column = target
@@ -259,9 +249,21 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		for i, clientclass in calibrationclients.items():
 			self.calibrationclients[i] = clientclass(self)
 
+		self.projectdata = None
+		try:
+			self.projectdata = project.ProjectData()
+		except project.NotConnectedError, e:
+			self.logger.warning('Failed to connect to the project database: %s' % e)
 		self.addEventInput(event.GridLoadedEvent, self.onGridLoaded)
 
 		self.start()
+
+	def getGridLabel(self, gridid):
+		if self.projectdata is not None:
+			label = self.projectdata.getGridLabel(gridid)
+		else:
+			label = 'ID %d' % gridid
+		return label
 
 	def onGridLoaded(self, evt):
 		# ...
@@ -273,16 +275,18 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			return
 		gridid = evt['grid']['grid ID']
 
+		label = self.getGridLabel(gridid)
+
 		status = evt['status']
 		if status == 'ok':
-			self.logger.info('Robot loaded grid ID %d' % gridid)
+			self.logger.info('Robot loaded grid %s' % label)
 			self.processGridData(evt['grid'])
 		elif status == 'invalid':
-			self.logger.warning('Grid ID %d not in current tray' % gridid)
+			self.logger.warning('Grid %s not in current tray' % label)
 		elif status == 'failed':
-			self.logger.warning('Robot failed to load grid ID %d' % gridid)
+			self.logger.warning('Robot failed to load grid %s' % label)
 		else:
-			self.logger.warning('Unknown status for grid ID %d' % gridid)
+			self.logger.warning('Unknown status for grid %s' % label)
 
 	def getAtlases(self):
 		self.insertion = None
@@ -458,7 +462,8 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		evt = event.UnloadGridEvent()
 		evt['grid ID'] = grid.gridid
 		self.outputEvent(evt)
-		self.logger.info('Robot notified to unload grid ID %d' % grid.gridid)
+		label = self.getGridLabel(grid.gridid)
+		self.logger.info('Robot notified to unload grid %s' % label)
 
 	def submitTargets(self):
 		try:
@@ -606,7 +611,8 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				for originaltargetdata, targetdata in targetdatalist:
 					targetquery = targetdata.__class__(initializer=targetdata)
 					targetquery['status'] = None
-					query = data.AcquisitionImageData(target=targetquery)
+					query = data.AcquisitionImageData(session=self.session,
+																						target=targetquery)
 					imagedatalist = self.research(query, readimages=False)
 					for imagedata in imagedatalist:
 						imagedata = data.AcquisitionImageData(initializer=imagedata)
@@ -677,6 +683,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		emtargetdata['preset'] = presetdata
 
 		query = data.AcquisitionImageTargetData()
+		query['session'] = self.session
 		query['preset'] = data.PresetData()
 		query['preset']['name'] = presetname
 		query['grid'] = griddata
