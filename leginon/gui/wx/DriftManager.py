@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/DriftManager.py,v $
-# $Revision: 1.20 $
+# $Revision: 1.21 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-28 22:17:52 $
-# $Author: suloway $
+# $Date: 2005-04-20 20:56:21 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -91,7 +91,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		self.widgets['threshold'] = FloatEntry(self, -1, min=0.0, chars=9)
 		self.widgets['pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
-		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self)
+		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self, passive=True)
 		self.GetParent().setInstrumentSelection(self.instrumentselection)
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)

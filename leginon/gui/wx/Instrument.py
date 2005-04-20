@@ -5,10 +5,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.41 $
+# $Revision: 1.42 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-09 23:17:40 $
-# $Author: suloway $
+# $Date: 2005-04-20 20:56:21 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -1127,7 +1127,14 @@ class Panel(gui.wx.Node.Panel):
 		self.GetEventHandler().AddPendingEvent(evt)
 
 class SelectionPanel(wx.Panel):
-	def __init__(self, parent):
+	def __init__(self, parent, passive=False):
+		'''
+		passive means that selecting an instrument does not actually set the 
+		parent node's instrument.  You still must get the selection and set
+		your instrument yourself.  Also, if the node's instrument changes,
+		this gui will not reflect that change.  Useful if you want an 
+		instrument selection that is used conditionally.
+		'''
 		wx.Panel.__init__(self, parent, -1)
 
 		self.nonestring = 'None'
@@ -1151,13 +1158,13 @@ class SelectionPanel(wx.Panel):
 
 		self.SetSizerAndFit(self.sbsz)
 
-		self.Bind(wx.EVT_CHOICE, self.onTEMChoice, self.ctem)
-		self.Bind(wx.EVT_CHOICE, self.onCCDCameraChoice, self.cccdcamera)
-
-		self.Bind(gui.wx.Events.EVT_SET_TEM, self.onSetTEM)
 		self.Bind(gui.wx.Events.EVT_SET_TEMS, self.onSetTEMs)
-		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERA, self.onSetCCDCamera)
 		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERAS, self.onSetCCDCameras)
+		if not passive:
+			self.Bind(wx.EVT_CHOICE, self.onTEMChoice, self.ctem)
+			self.Bind(wx.EVT_CHOICE, self.onCCDCameraChoice, self.cccdcamera)
+			self.Bind(gui.wx.Events.EVT_SET_TEM, self.onSetTEM)
+			self.Bind(gui.wx.Events.EVT_SET_CCDCAMERA, self.onSetCCDCamera)
 
 	def setProxy(self, proxy):
 		self.proxy = proxy

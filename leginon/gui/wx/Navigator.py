@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Navigator.py,v $
-# $Revision: 1.32 $
+# $Revision: 1.33 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-20 20:37:55 $
+# $Date: 2005-04-20 20:56:21 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -296,7 +296,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 																										'Check calibration error')
 #		self.widgets['complete state'] = wx.CheckBox(self, -1,
 #																								'Set complete instrument state')
-		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self)
+		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self, passive=True)
 		self.GetParent().setInstrumentSelection(self.instrumentselection)
 		self.widgets['override preset'] = wx.CheckBox(self, -1,
 																								'Override Preset')
