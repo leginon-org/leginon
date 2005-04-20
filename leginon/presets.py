@@ -134,15 +134,20 @@ class PresetsClient(object):
 		self.pchanged[presetname] = threading.Event()
 		self.node.outputEvent(evt)
 		self.pchanged[presetname].wait()
-
 		self.node.logger.info('Preset change to \'%s\' completed.' % presetname)
 
 	def presetchanged(self, ievent):
 		self.currentpreset = ievent['preset']
 		name = self.currentpreset['name']
+
 		# if waiting for this event, then set the threading event
 		if name in self.pchanged:
 			self.pchanged[name].set()
+
+		# update node's instruments to match new preset
+		self.node.instrument.setTEM(self.currentpreset['tem']['name'])
+		self.node.instrument.setCCDCamera(self.currentpreset['ccdcamera']['name'])
+
 		self.node.confirmEvent(ievent)
 
 	def onPresetPublished(self, evt):
