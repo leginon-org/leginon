@@ -943,11 +943,17 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		caldata['mean'] = mean
 		self.node.publish(caldata, database=True, dbforce=True)
 
-	def researchMagCalibration(self, ht, mag, axis):
+	def researchMagCalibration(self, ht, mag, axis, tem, cam):
 		qinst = data.StageModelMagCalibrationData(magnification=mag, axis=axis)
 		qinst['high tension'] = ht
-		qinst['tem'] = self.instrument.getTEMData()
-		qinst['ccdcamera'] = self.instrument.getCCDCameraData()
+		if cam is None:
+			qinst['tem'] = self.instrument.getTEMData()
+		else:
+			qinst['tem'] = tem
+		if tem is None:
+			qinst['ccdcamera'] = self.instrument.getCCDCameraData()
+		else:
+			qinst['ccdcamera'] = cam
 
 		caldatalist = self.node.research(datainstance=qinst, results=1)
 		if len(caldatalist) > 0:
@@ -956,8 +962,8 @@ class ModeledStageCalibrationClient(CalibrationClient):
 			caldata = None
 		return caldata
 
-	def retrieveMagCalibration(self, ht, mag, axis):
-		caldata = self.researchMagCalibration(ht, mag, axis)
+	def retrieveMagCalibration(self, ht, mag, axis, tem=None, cam=None):
+		caldata = self.researchMagCalibration(ht, mag, axis, tem, cam)
 		if caldata is None:
 			raise RuntimeError('no model mag calibration')
 		else:
@@ -1104,8 +1110,8 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		ymod = gonmodel.GonModel()
 		ymod.fromDict(ymodcal)
 
-		xmagcal = self.retrieveMagCalibration(scope['high tension'], scope['magnification'], 'x')
-		ymagcal = self.retrieveMagCalibration(scope['high tension'], scope['magnification'], 'y')
+		xmagcal = self.retrieveMagCalibration(scope['high tension'], scope['magnification'], 'x', tem=tem, cam=ccd)
+		ymagcal = self.retrieveMagCalibration(scope['high tension'], scope['magnification'], 'y', tem=tem, cam=ccd)
 		self.node.logger.debug('x mag cal %s' % (xmagcal,))
 		self.node.logger.debug('y mag cal %s' % (ymagcal,))
 
