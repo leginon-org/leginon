@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-19 18:09:52 $
+# $Date: 2005-04-20 00:25:54 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -123,44 +123,101 @@ class Grid(object):
 
 class Insertion(object):
 	def __init__(self, number=None):
+		self.extrema = None
+		self.shape = None
 		self.number = number
 		self.images = []
 
 	def addImage(self, image):
 		self.images.append(image)
 
-	def addImages(self, images):
-		self.images += images
+	def finalize(self):
+		self.setExtrema()
+		self.setShape()
+		for image in self.images:
+			self.setImageLocation(image)
 
-	def setImages(self, images):
-		self.images = images
+	def setImageLocation(self, image):
+		rows = (image.row - image.halfheight - self.extrema[0][0],
+						image.row + image.halfheight - self.extrema[0][0])
+		columns = (image.column - image.halfwidth - self.extrema[1][0],
+								image.column + image.halfwidth - self.extrema[1][0])
+		image.location = rows, columns
 
-	def clearImage(self):
-		self.images = []
+	def setExtrema(self):
+		minrow = None
+		mincolumn = None
+		maxrow = None
+		maxcolumn = None
+		for image in self.images:
+			if minrow is None or (image.row - image.halfheight) < minrow:
+				minrow = image.row - image.halfheight
+			if mincolumn is None or (image.column - image.halfwidth) < mincolumn:
+				mincolumn = image.column - image.halfwidth
+			if maxrow is None or (image.row + image.halfheight) > maxrow:
+				maxrow = image.row + image.halfheight
+			if maxcolumn is None or (image.column + image.halfwidth) > maxcolumn:
+				maxcolumn = image.column + image.halfwidth
+		self.extrema = ((minrow, maxrow), (mincolumn, maxcolumn))
+
+	def setShape(self):
+		self.shape = (self.extrema[0][1] - self.extrema[0][0],
+									self.extrema[1][1] - self.extrema[1][0])
 
 class Image(object):
-	def __init__(self, data=None, location=None):
+	def __init__(self, data, node, location=None):
 		self.data = data
+		self.node = node
 		self.location = location
-		self.targets = []
-		self.row = None
-		self.column = None
-		self.width = None
-		self.height = None
-		self.halfwidth = None
-		self.halfheight = None
+		self.width = data['preset']['dimension']['x']
+		self.height = data['preset']['dimension']['y']
+		targetdata = data['target']
+		self.row = targetdata['delta row']
+		self.column = targetdata['delta column']
+		self.halfwidth = int(math.ceil(self.width/2.0))
+		self.halfheight = int(math.ceil(self.height/2.0))
+		self.targetdatalist = self.node.researchTargets(image=self.data)
 
 	def addTarget(self, target):
-		self.targets.append(target)
+		row, column = target
+		targetdata = self.node.newTargetForImage(self.data, row, column,
+																							type='acquisition', status='new')
+																							#list=targetlist)
+		self.node.publish(targetdata, database=True)
+		self.targetdatalist.insert(0, targetdata)
 
-	def addTargets(self, targets):
-		self.targets += targets
+	def removeTarget(self, target):
+		for targetdata in self.targetdatalist:
+			t = targetdata['delta row'], targetdata['delta column']
+			if t == target and targetdata['status'] == 'new':
+				self.updateTargetStatus(targetdata, 'aborted')
+				return
+		raise ValueError
 
-	def setTargets(self, targets):
-		self.targets = targets
+	def updateTargetStatus(self, targetdata, status):
+		i = self.targetdatalist.index(targetdata)
+		targetdata = targetdata.__class__(initializer=targetdata)
+		targetdata['status'] = status
+		self.node.publish(targetdata, database=True)
+		self.targetdatalist[i] = targetdata
+		return targetdata
 
-	def clearTargets(self):
-		self.targets = []
+	def getNewTargets(self):
+		targetdatalist = self.getNewTargetDataList()
+		return [(d['delta row'], d['delta column']) for d in targetdatalist]
+
+	def getNewTargetDataList(self):
+		targetdatalist = []
+		for targetdata in self.targetdatalist:
+			if targetdata['status'] == 'new':
+				targetdatalist.append(targetdata)
+		return targetdatalist
+
+	def hasTargets(self):
+		for targetdata in self.targetdatalist:
+			if targetdata['status'] in ['new', 'processing']:
+				return True
+		return False
 
 class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 	panelclass = gui.wx.RobotAtlasTargetFinder.Panel
@@ -230,7 +287,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 	def getAtlases(self):
 		self.insertion = None
 		self.setImage(None, 'Image')
-		self.setTargets([], 'Acquisition')
+		self.setTargets([], 'New')
 		self.updateGrids()
 		self.panel.getAtlasesDone()
 
@@ -298,113 +355,87 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				continue
 			insertion = Insertion(number)
 			for imagedata in imagedatalist:
-				insertion.addImage(Image(imagedata))
+				insertion.addImage(Image(imagedata, self))
+			insertion.finalize()
 			grid.addInsertion(insertion)
 
 	def targetInImage(self, target, image):
-		if image.location is None:
-			raise ValueError('no location for image')
 		r, c = target
 		inrow = r >= image.location[0][0] and r <= image.location[0][1]
 		incolumn = c >= image.location[1][0] and c <= image.location[1][1]
 		return inrow and incolumn
 
 	def updateAtlasTargets(self):
-		targets = self.panel.getTargetPositions('Acquisition')
 		if self.insertion is None:
 			return
-		self.insertion.images.reverse()
+
+		targets = list(self.panel.getTargetPositions('New'))
+
 		for image in self.insertion.images:
-			print self.researchTargets(image=image.data)
-			image.clearTargets()
+
+			existingtargets = image.getNewTargets()
+
 			for target in list(targets):
 				column, row = target
-				try:
-					if self.targetInImage((row, column), image):
-						targets.remove(target)
-						target = (row - image.location[0][0], column - image.location[1][0])
-						image.addTarget(target)
-				except ValueError:
-					if image.data is None:
-						self.logger.warning('No location for image')
+				if self.targetInImage((row, column), image):
+					targets.remove(target)
+					target = (row - image.halfheight - image.location[0][0], column - image.halfwidth - image.location[1][0])
+					if target in existingtargets:
+						existingtargets.remove(target)
 					else:
-						self.logger.warning('No location for image ID %d' % image.data.dbid)
-		self.insertion.images.reverse()
+						image.addTarget(target)
+
+			for target in existingtargets:
+				image.removeTarget(target)
 
 	def setAtlas(self, gridid, number):
 		self.updateAtlasTargets()
 		grid = self.grids.getGridByID(gridid)
 		self.insertion = grid.getInsertionByNumber(number)
-		self.updateAtlasImage()
+		self.updateAtlasView()
 		self.panel.setAtlasDone()
 
-	def updateImages(self, images):
-		for image in images:
-			self.updateImage(image)
+	def updateAtlasView(self):
+		self.updateAtlasViewImage()
+		self.updateAtlasViewTargets()
 
-	def updateImage(self, image):
-		if image.data is None:
-			self.logger.warning('No data for this image')
-			return
-		image.width = image.data['preset']['dimension']['x']
-		image.height = image.data['preset']['dimension']['y']
-		targetdata = image.data['target']
-		image.row = targetdata['delta row']
-		image.column = targetdata['delta column']
-		image.halfwidth = int(math.ceil(image.width/2.0))
-		image.halfheight = int(math.ceil(image.height/2.0))
-
-	def getAtlasExtrema(self, images):
-		minrow = None
-		mincolumn = None
-		maxrow = None
-		maxcolumn = None
-		for image in images:
-			if minrow is None or (image.row - image.halfheight) < minrow:
-				minrow = image.row - image.halfheight
-			if mincolumn is None or (image.column - image.halfwidth) < mincolumn:
-				mincolumn = image.column - image.halfwidth
-			if maxrow is None or (image.row + image.halfheight) > maxrow:
-				maxrow = image.row + image.halfheight
-			if maxcolumn is None or (image.column + image.halfwidth) > maxcolumn:
-				maxcolumn = image.column + image.halfwidth
-		return ((minrow, maxrow), (mincolumn, maxcolumn))
-
-	def getImageAtlasLocation(self, image, extrema):
-		rows = (
-			image.row - image.halfheight - extrema[0][0],
-			image.row + image.halfheight - extrema[0][0]
-		)
-		columns = (
-			image.column - image.halfwidth - extrema[1][0],
-			image.column + image.halfwidth - extrema[1][0]
-		)
-		return rows, columns
-
-	def updateAtlasImage(self):
+	def updateAtlasViewImage(self):
 		if self.insertion is None:
 			self.setImage(None, 'Image')
-			self.setTargets([], 'Acquisition')
 			return
-		self.updateImages(self.insertion.images)
-		extrema = self.getAtlasExtrema(self.insertion.images)
-		shape = (extrema[0][1] - extrema[0][0], extrema[1][1] - extrema[1][0])
-		atlasimage = numarray.zeros(shape, numarray.Float32)
-		targets = []
+		atlasimage = numarray.zeros(self.insertion.shape, numarray.Float32)
 		for image in self.insertion.images:
-			i = image.data['image']
-			l = self.getImageAtlasLocation(image, extrema)
-			atlasimage[l[0][0]:l[0][1], l[1][0]:l[1][1]] = i
-			image.location = l
-			for target in image.targets:
-				targets.append((target[1] + l[1][0], target[0] + l[0][0]))
+			atlasimage[image.location[0][0]:image.location[0][1],
+								image.location[1][0]:image.location[1][1]] = image.data['image']
 		self.setImage(atlasimage, 'Image')
-		self.setTargets(targets, 'Acquisition')
+
+	def updateAtlasViewTargets(self):
+		if self.insertion is None:
+			self.setTargets([], 'New')
+			self.setTargets([], 'Submitted')
+			self.setTargets([], 'Processed')
+			return
+		newtargets = []
+		submittedtargets = []
+		processedtargets = []
+		for image in self.insertion.images:
+			for targetdata in image.targetdatalist:
+				target = (targetdata['delta column'] + image.halfwidth + image.location[1][0],
+									targetdata['delta row'] + image.halfheight + image.location[0][0])
+				if targetdata['status'] == 'new':
+					newtargets.append(target)
+				elif targetdata['status'] == 'processing':
+					submittedtargets.append(target)
+				elif targetdata['status'] == 'done':
+					processedtargets.append(target)
+		self.setTargets(newtargets, 'New')
+		self.setTargets(submittedtargets, 'Submitted')
+		self.setTargets(processedtargets, 'Processed')
 
 	def hasTargets(self, grid):
 		for insertion in grid.insertions:
 			for image in insertion.images:
-				if image.targets:
+				if image.hasTargets():
 					if not self.reacquireImage(image.data, test=True):
 						raise TargetError('will not be able to acquire image')
 					return True
@@ -446,9 +477,8 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		self.panel.targetsSubmitted()
 
 	def getCenterImage(self, insertion):
-		extrema = self.getAtlasExtrema(insertion.images)
-		center = ((extrema[0][1] - extrema[0][0])/2.0,
-							(extrema[1][1] - extrema[1][0])/2.0)
+		center = ((insertion.extrema[0][1] - insertion.extrema[0][0])/2.0,
+							(insertion.extrema[1][1] - insertion.extrema[1][0])/2.0)
 		centerimage = None
 		for image in insertion.images:
 			if self.targetInImage(center, image):
@@ -483,10 +513,19 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 	def getTargets(self, image, center,
 									matrix, rotation, scale, shift, centerimagedata, griddata):
 		targets = []
-		for target1 in image.targets:
+		targetdatalist = list(image.targetdatalist)
+		for targetdata in targetdatalist:
+			if targetdata['status'] == 'new':
+				targetdata = image.updateTargetStatus(targetdata, 'processing')
+			elif targetdata['status'] == 'processing':
+				pass
+			else:
+				continue
+			target1 = targetdata['delta row'], targetdata['delta column']
+
 			# target relative to the center of the center image of the atlas
-			target2 = (target1[0] + image.location[0][0] - center[0],
-									target1[1] + image.location[1][0] - center[1])
+			target2 = (target1[0] + image.halfheight + image.location[0][0] - center[0],
+									target1[1] + image.halfwidth + image.location[1][0] - center[1])
 
 			# transform target to where it should be for the current position
 			# based on the transform of the center image
@@ -498,9 +537,9 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 																			griddata=griddata)
 
 			image1 = image.data['image']
-			shape = image1.shape
-			shift = -(target1[0] - shape[0]/2.0), -(target1[1] - shape[1]/2.0)
+			shift = -target1[0], -target1[1]
 			image1 = numarray.nd_image.shift(image1, shift)
+			shape = image1.shape
 			image1 = align.rotateScaleOffset(image1, rotation, scale, (0.0, 0.0),
 																				shape=(shape[0]/2.0, shape[1]/2.0))
 
@@ -523,18 +562,14 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			target = -shift[0], -shift[1]
 			#target = numarray.matrixmultiply(matrix, target)
 
-			shape = image.data['image'].shape
-			target1 = target1[0] - shape[0]/2.0, target1[1] - shape[1]/2.0
+			targets.append((targetdata, target, imagedata))
 
-			targets.append((target1, target, imagedata))
 		return targets
 
 	def processGridData(self, griddata):
 		self.updateAtlasTargets()
 		grid = self.grids.getGridByID(griddata['grid ID'])
 		for insertion in grid.insertions:
-			if insertion == self.insertion:
-				self.setTargets([], 'Acquisition')
 
 			# get a rough estimate of the grid transform
 			centerimage = self.getCenterImage(insertion)
@@ -549,41 +584,37 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				targets = self.getTargets(image, center,
 																		imatrix, rotation, scale, shift,
 																		newcenterimagedata, griddata)
+				if insertion == self.insertion:
+					self.updateAtlasViewTargets()
 				# remove targets for this image
-				image.targets = []
+				#image.targets = []
 
 				targetlist = self.newTargetList()
 				targetdatalist = []
-				for originaltarget, target, imagedata in targets:
+				for originaltargetdata, target, imagedata in targets:
 					row, column = target
 					targetdata = self.newTargetForImage(imagedata, row, column,
 																							type='acquisition',
 																							list=targetlist)
 					self.publish(targetdata, database=True)
-					targetdatalist.append((originaltarget, targetdata))
+					targetdatalist.append((originaltargetdata, targetdata))
 
 				self.makeTargetListEvent(targetlist)
 				self.publish(targetlist, database=True, dbforce=True, pubevent=True)
 				self.waitForTargetListDone()
 
-				'''
-				targetlist = self.newTargetList()
-				# revise the target based on the target picked on the original mosaic
-				# images displayed for clarity in the database and web viewer
-				for (row, column), targetdata in targetdatalist:
-					originaltargetdata = \
-						data.AcquisitionImageTargetData(initializer=targetdata)
-					originaltargetdata['delta row'] = row
-					originaltargetdata['delta column'] = column
-					originaltargetdata['image'] = image.data
-					originaltargetdata['scope'] = image.data['scope']
-					originaltargetdata['camera'] = image.data['camera']
-					originaltargetdata['version'] += 1
-					originaltargetdata['list'] = targetlist
-					originaltargetdata['status'] = 'done'
-					self.publish(originaltargetdata, database=True)
-				self.publish(targetlist, database=True, dbforce=True)
-				'''
+				for originaltargetdata, targetdata in targetdatalist:
+					targetquery = targetdata.__class__(initializer=targetdata)
+					targetquery['status'] = None
+					query = data.AcquisitionImageData(target=targetquery)
+					imagedatalist = self.research(query, readimages=False)
+					for imagedata in imagedatalist:
+						imagedata = data.AcquisitionImageData(initializer=imagedata)
+						imagedata['target'] = originaltargetdata
+						self.publish(imagedata, database=True)
+					image.updateTargetStatus(originaltargetdata, 'done')
+				if insertion == self.insertion:
+					self.updateAtlasViewTargets()
 
 		self.unloadGrid(grid)
 

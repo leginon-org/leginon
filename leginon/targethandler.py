@@ -114,7 +114,7 @@ class TargetHandler(object):
 			lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 			kwargs['number'] = lastnumber + 1
 
-		targetdata = self.newTarget(image=imagedata, scope=imagedata['scope'], camera=imagedata['camera'], preset=imagedata['preset'], drow=drow, dcol=dcol, session=self.session, **kwargs)
+		targetdata = self.newTarget(image=imagedata, scope=imagedata['scope'], camera=imagedata['camera'], preset=imagedata['preset'], drow=drow, dcol=dcol, session=self.session, grid=grid, **kwargs)
 		return targetdata
 
 	def newTargetForGrid(self, grid, drow, dcol, **kwargs):

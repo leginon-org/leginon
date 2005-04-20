@@ -1659,6 +1659,7 @@ class MosaicTargetMakerSettingsData(SettingsData):
 			('overlap', float),
 			('max targets', int),
 			('max size', int),
+			('mosaic center', str),
 		)
 	typemap = classmethod(typemap)
 
