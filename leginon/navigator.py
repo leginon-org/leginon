@@ -29,7 +29,7 @@ class Navigator(node.Node):
 		'move type': 'image shift',
 		'check calibration': True,
 		'complete state': True,
-		'use camera settings': False,
+		'override preset': False,
 		'camera settings':
 			data.CameraSettingsData(
 				initializer={
@@ -194,7 +194,7 @@ class Navigator(node.Node):
 
 	def _acquireImage(self):
 		errstr = 'Acquire image failed: %s'
-		if self.settings['use camera settings']:
+		if self.settings['override preset']:
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			except Exception, e:

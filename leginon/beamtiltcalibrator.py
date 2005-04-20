@@ -26,7 +26,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	panelclass = gui.wx.BeamTiltCalibrator.Panel
 	settingsclass = data.BeamTiltCalibratorSettingsData
 	defaultsettings = {
-		'use camera settings': False,
+		'override preset': False,
 		'camera settings': None,
 		'correlation type': 'phase',
 		'defocus beam tilt': 0.01,
@@ -48,7 +48,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.start()
 
 	def calibrateAlignment(self, tilt_value):
-		if self.settings['use camera settings']:
+		if self.settings['override preset']:
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			except Exception, e:
@@ -85,7 +85,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		return ''
 
 	def calibrateDefocus(self, tilt_value, defocus1, defocus2):
-		if self.settings['use camera settings']:
+		if self.settings['override preset']:
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			except Exception, e:
@@ -126,7 +126,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		return ''
 
 	def calibrateStigmators(self, tilt_value, delta):
-		if self.settings['use camera settings']:
+		if self.settings['override preset']:
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			except Exception, e:
@@ -181,7 +181,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		return ''
 
 	def measureDefocusStig(self, btilt, stig=True):
-		if self.settings['use camera settings']:
+		if self.settings['override preset']:
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			except Exception, e:

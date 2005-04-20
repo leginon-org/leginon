@@ -1704,7 +1704,7 @@ class NavigatorSettingsData(SettingsData):
 			('move type', str),
 			('check calibration', bool),
 			('complete state', bool),
-			('use camera settings', bool),
+			('override preset', bool),
 			('camera settings', CameraSettingsData),
 		)
 	typemap = classmethod(typemap)
@@ -1902,7 +1902,7 @@ class FocuserSettingsData(AcquisitionSettingsData):
 class CalibratorSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
-			('use camera settings', bool),
+			('override preset', bool),
 			('camera settings', CameraSettingsData),
 			('correlation type', str),
 		)

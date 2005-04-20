@@ -23,7 +23,7 @@ class DoseCalibrator(calibrator.Calibrator):
 	panelclass = gui.wx.DoseCalibrator.Panel
 	settingsclass = data.DoseCalibratorSettingsData
 	defaultsettings = {
-		'use camera settings': False,
+		'override preset': False,
 		'camera settings': None,
 		'correlation type': 'cross',
 		'beam diameter': 0.16,

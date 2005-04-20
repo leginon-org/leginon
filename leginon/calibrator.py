@@ -21,7 +21,7 @@ class Calibrator(node.Node):
 	panelclass = gui.wx.Calibrator.Panel
 	settingsclass = data.CalibratorSettingsData
 	defaultsettings = {
-		'use camera settings': False,
+		'override preset': False,
 		'camera settings': None,
 		'correlation type': 'cross',
 	}
@@ -58,7 +58,7 @@ class Calibrator(node.Node):
 
 	def acquireImage(self):
 		try:
-			if self.settings['use camera settings']:
+			if self.settings['override preset']:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		except Exception, e:

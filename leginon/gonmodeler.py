@@ -28,7 +28,7 @@ class GonModeler(calibrator.Calibrator):
 	panelclass = gui.wx.GonModeler.Panel
 	settingsclass = data.GonModelerSettingsData
 	defaultsettings = {
-		'use camera settings': False,
+		'override preset': False,
 		'camera settings': None,
 		'correlation type': 'cross',
 		'measure axis': 'x',
@@ -70,7 +70,7 @@ class GonModeler(calibrator.Calibrator):
 	# calibrate needs to take a specific value
 	def loop(self, label, axis, points, interval):
 		## set camera state
-		if self.settings['use camera settings']:
+		if self.settings['override preset']:
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			except Exception, e:
