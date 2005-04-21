@@ -159,8 +159,8 @@ class RasterFinder(targetfinder.TargetFinder):
 		const_acq = self.settings['acquisition constant template']
 		acq_points.extend(const_acq)
 
-		self.setTargets(acq_points, 'acquisition')
-		self.setTargets(focus_points, 'focus')
+		self.setTargets(acq_points, 'acquisition', block=True)
+		self.setTargets(focus_points, 'focus', block=True)
 
 	def applyTargetTemplate(self, centers, type):
 		if type == 'focus':

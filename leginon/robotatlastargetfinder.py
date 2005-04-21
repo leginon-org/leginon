@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-20 19:08:23 $
+# $Date: 2005-04-21 00:39:19 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -30,8 +30,9 @@ class TargetError(Exception):
 	pass
 
 class Grids(object):
-	def __init__(self):
+	def __init__(self, node):
 		self.grids = []
+		self.node = node
 
 	def addGrid(self, grid):
 		self.grids.append(grid)
@@ -65,7 +66,7 @@ class Grids(object):
 		gridids.sort()
 
 		for gridid in gridids:
-			label = self.getGridLabel(gridid)
+			label = self.node.getGridLabel(gridid)
 			numbers = []
 			for insertion in grid.insertions:
 				numbers.append(insertion.number)
@@ -229,7 +230,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		]
 	)
 	def __init__(self, id, session, managerlocation, **kwargs):
-		self.grids = Grids()
+		self.grids = Grids(self)
 		self.insertion = None
 
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
@@ -576,6 +577,13 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		grid = self.grids.getGridByID(griddata['grid ID'])
 		for insertion in grid.insertions:
 
+			targetimages = []
+			for image in insertion.images:
+				if image.hasTargets():
+					targetimages.append(image)
+			if not targetimages:
+				continue
+
 			# get a rough estimate of the grid transform
 			centerimage = self.getCenterImage(insertion)
 			center = self.getImageCenter(centerimage)
@@ -584,15 +592,13 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			rotation, scale, shift, value = transform
 			matrix, imatrix = align.getMatrices(rotation, scale)
 
-			for image in insertion.images:
+			for image in targetimages:
 				# get the targets adjusted for error in the initial transform
 				targets = self.getTargets(image, center,
 																		imatrix, rotation, scale, shift,
 																		newcenterimagedata, griddata)
 				if insertion == self.insertion:
 					self.updateAtlasViewTargets()
-				# remove targets for this image
-				#image.targets = []
 
 				targetlist = self.newTargetList()
 				targetdatalist = []

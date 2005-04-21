@@ -151,9 +151,13 @@ class Node(object):
 		evt = gui.wx.Events.SetImageEvent(image, typename, stats)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
-	def setTargets(self, targets, typename):
+	def setTargets(self, targets, typename, block=False):
 		evt = gui.wx.Events.SetTargetsEvent(targets, typename)
+		if block:
+			evt.event = threading.Event()
 		self.panel.GetEventHandler().AddPendingEvent(evt)
+		if block:
+			evt.event.wait()
 
 	def exit(self):
 		'''Cleans up the node before it dies.'''

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Node.py,v $
-# $Revision: 1.29 $
+# $Revision: 1.30 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 22:51:04 $
+# $Date: 2005-04-21 00:39:19 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -71,6 +71,8 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 
 	def onSetTargets(self, evt):
 		self.imagepanel.setTargets(evt.typename, evt.targets)
+		if hasattr(evt, 'event'):
+			evt.event.set()
 
 	def _getStaticBoxSizer(self, label, *args):
 		sbs = wx.StaticBoxSizer(wx.StaticBox(self, -1, label), wx.VERTICAL)
