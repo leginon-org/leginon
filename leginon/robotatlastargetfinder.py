@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-21 02:58:05 $
+# $Date: 2005-04-21 02:58:34 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -539,7 +539,6 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			# ???
 			target2 = numarray.matrixmultiply(matrix, target2) - shift
 
-			print target2, math.hypot(target2[0], target2[1])
 			# acquire where the target should be centered
 			imagedata = self.reacquireImage(centerimagedata,
 																			target=target2,
