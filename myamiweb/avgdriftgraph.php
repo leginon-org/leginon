@@ -28,7 +28,7 @@ foreach ($driftdata as $drift) {
 }
 
 if ($viewdata) {
-	$keys = array("timestamp", "imageId", "targetId", "driftx",
+	$keys = array("timestamp", "filename", "imageId", "targetId", "driftx",
 		"drifty", "driftvalue", "interval", "rate");
 	echo dumpData($data, $keys);
 	exit;
@@ -73,7 +73,7 @@ if (!$datax && !$datay) {
 
 		$graph->title->Set('Date: '.Date('Y-m-d',$datax[0]));
 		$graph->SetAlphaBlending();
-		$graph->SetScale("intlin",0,'auto'); //,$datax[0],$datax[$n-1]);
+		$graph->SetScale("intlin",0,'auto'); 
 		$graph->xaxis->SetLabelFormatCallback('TimeCallback');
 		$graph->xaxis->SetLabelAngle(90);
 		$graph->xaxis->SetTitlemargin(30);

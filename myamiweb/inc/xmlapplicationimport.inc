@@ -124,9 +124,17 @@ class XMLCalibrationImport extends XMLImport {
 				case "DEF_timestamp": 
 					$fvalue = "NOW()";
 				break;
-				//--- Update the reference Id with $applicationId
+				//--- Update the reference Id with $sessionId
 				case "REF|SessionData|session": 
 					$fvalue = '$sessionId';
+				break;
+				//--- Update the reference Id with $scopeId
+				case "REF|InstrumentData|tem": 
+					$fvalue = '$scopeId';
+				break;
+				//--- Update the reference Id with $cameraId
+				case "REF|InstrumentData|ccdcamera": 
+					$fvalue = '$cameraId';
 				break;
 				default:
 					$fvalue = '"'.$d[value].'"';

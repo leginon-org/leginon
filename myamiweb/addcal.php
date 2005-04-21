@@ -18,21 +18,33 @@ $hostkeys = array_keys($SQL_HOSTS);
 $importfilehostId = ($_POST[importfilehostId]) ? $_POST[importfilehostId] : current($hostkeys);
 $importhostId = ($_POST[importhostId]) ? $_POST[importhostId] : current($hostkeys);
 $leginondata->mysql->setSQLHost($SQL_HOSTS[$importhostId]);
-$importinstruments = $leginondata->getInstrumentDescriptions();
-$importinstrumentId = $_POST['importinstrument'];
+$importinstrumenthost = $_POST['importinstrumenthost'];
+$importscopeId = $_POST['importscopeId'];
+$importcameraId = $_POST['importcameraId'];
+$importscopes  = $leginondata->getScopes($importinstrumenthost);
+$importcameras = $leginondata->getCameras($importinstrumenthost);
 
 // --- set export hosts / instrumenits
+$instrumenthosts = $leginondata->getInstrumentHosts();
+$instrumenthost = ($_POST[instrumenthost]) ? $_POST[instrumenthost] : $instrumenthosts[0];
+
+$scopes  = $leginondata->getScopes($instrumenthost);
+$cameras = $leginondata->getCameras($instrumenthost);
+
 $hostId = ($_POST[hostId]) ? $_POST[hostId] : current($hostkeys);
 $leginondata->mysql->setSQLHost($SQL_HOSTS[$hostId]);
-$instruments = $leginondata->getInstrumentDescriptions();
 
 $calibrationtypes = $leginondata->getMatrixCalibrationTypes();
-$instrumentId = $_POST['instrument'];
-list($instrumentinfo) = $leginondata->getInstrumentInfo($instrumentId);
+$scopeId = $_POST['scopeId'];
+$cameraId = $_POST['cameraId'];
+
+list($scopeinfo) = $leginondata->getInstrumentInfo($scopeId);
+list($camerainfo) = $leginondata->getInstrumentInfo($cameraId);
+$instrumentname = $scopeinfo['name'].'-'.$camerainfo['name'];
+$instrumentname = ereg_replace(' ','_',$instrumentname);
 $calibrations = is_array($_POST['calibrations']) ? $_POST['calibrations'] : array($_POST['calibrations']);
 $types = $_POST['types'];
 
-// print_r($_POST);
 
 if ($_POST[format]) {
 	$xmlradiochecked = ($_POST[format]=="xml") ? $check_str : '';
@@ -42,12 +54,11 @@ if ($_POST[format]) {
 } else {
 	$xmlradiochecked = $check_str;
 }
-
 if ($_POST[bt_export]) {
 	if(!empty($_POST['calibrations'])) {
-		$xmlcalibrations = $leginondata->dumpcalibrations($calibrations, $instrumentId, $limit, $types);
+		$xmlcalibrations = $leginondata->dumpcalibrations($calibrations, $scopeId, $cameraId, $limit, $types);
 		if ($_POST[format]=='xml' && $_POST[saveasfile]) {
-			$filename = $instrumentinfo['name'].'-'.date('Ymd').'.xml';
+			$filename = $instrumentname.'-'.date('Ymd').'.xml';
 			$leginondata->download($filename, $xmlcalibrations);
 			exit;
 		}
@@ -76,7 +87,7 @@ admin_header();
 <table border="0">
  <tr>
   <td>
-From Host:
+From database Host:
 	<select name="hostId" onChange="javascript:document.data.submit();">
 		<?
 		foreach($hostkeys as $host) {
@@ -89,15 +100,34 @@ From Host:
 </tr>
 <tr valign="top" >
 <td nowrap >
-Instrument:
-	<select name="instrument">
-	<? foreach ($instruments as $instrument) {
-		$s = ($_POST['instrument']==$instrument['id']) ? 'selected' : '';
-		echo "<option value='".$instrument['id']
-			."' $s >".$instrument['fullname']."</option>\n";
-	}
-	?>
-	</select>
+Instrument host:
+	<select name="instrumenthost" onChange="javascript:document.data.submit();">
+<?
+foreach($instrumenthosts as $h) {
+	$selected = ($h==$instrumenthost) ? "selected" : "";
+	echo "<option $selected >".$h."</option>";
+}
+?>
+</select>
+</td>
+<tr>
+<td>
+Scope
+<select name='scopeId' >
+<?
+foreach($scopes as $s) {
+	echo "<option value='".$s['id']."' >".$s['name']."</option>";
+}
+?>
+</select>
+Camera
+<select name='cameraId' >
+<?
+foreach($cameras  as $c) {
+	echo "<option value='".$c['id']."' >".$c['name']."</option>";
+}
+?>
+</select>
 </td>
 </tr>
 </table>
@@ -143,7 +173,7 @@ Instrument:
 	<input type="radio" name="format" value="host" <? echo $hostradiochecked ?> >
 		</td>
 		<td>
-To Host:
+To dbemdata Host:
 
 	<select name="importhostId" onChange="javascript:document.data.submit();">
 		<?
@@ -153,16 +183,32 @@ To Host:
 		}
 		?>
 	</select>
-Instrument:
+Instrument host:
+	<select name="importinstrumenthost" onChange="javascript:document.data.submit();">
+<?
+foreach($instrumenthosts as $h) {
+	$selected = ($h==$importinstrumenthost) ? "selected" : "";
+	echo "<option $selected >".$h."</option>";
+}
+?>
+</select>
 	<br>
-	<select name="importinstrument">
-	<? foreach ($importinstruments as $instrument) {
-		$s = ($_POST['importinstrument']==$instrument['id']) ? 'selected' : '';
-		echo "<option value='".$instrument['id']
-			."' $s >".$instrument['fullname']."</option>\n";
-	}
-	?>
-	</select>
+Scope
+<select name='importscopeId' >
+<?
+foreach($importscopes as $s) {
+	echo "<option value='".$s['id']."' >".$s['name']."</option>";
+}
+?>
+</select>
+Camera
+<select name='importcameraId' >
+<?
+foreach($importcameras  as $c) {
+	echo "<option value='".$c['id']."' >".$c['name']."</option>";
+}
+?>
+</select>
 		</td>
 		</tr>
 	<tr>
@@ -203,7 +249,7 @@ Instrument:
     </tr>
     <tr>
      <td>
-To Host:
+To database Host:
      </td>
      <td>
 
@@ -245,12 +291,12 @@ if ($_POST[bt_export]) {
 		if (in_array('type', $calibration_fields) && $types) {
 			foreach ($types as $type) {
 				echo "<div style='margin-left: 2em; margin-top: 1em;'>- ".$type;
-				$r = $leginondata->getCalibrations($calibration, $instrumentId, $limit, $type);
+				$r = $leginondata->getCalibrations($calibration, $scopeId, $cameraId, $limit, $type);
 				display($r, True);
 				echo "</div>";
 			}
 		} else {
-			$r = $leginondata->getCalibrations($calibration, $instrumentId, $limit);
+			$r = $leginondata->getCalibrations($calibration, $scopeId, $cameraId, $limit);
 			display($r, True);
 		}
 		echo "<br>";
@@ -263,7 +309,7 @@ if ($xmldata) {
 	$leginondata->mysql->setSQLHost($SQL_HOSTS[$importhostId]);
 	if ($_POST[bt_import])
 		$leginondata->mysql->setSQLHost($SQL_HOSTS[$importfilehostId]);
-	if(!$leginondata->importCalibrations($xmldata, $importinstrumentId))
+	if(!$leginondata->importCalibrations($xmldata, $importscopeId, $importcameraId))
 		echo "data not imported";
 	else
 		echo "data imported";

@@ -4,7 +4,14 @@ require('inc/admin.inc');
 $hostkeys = array_keys($SQL_HOSTS);
 $hostId = ($_POST[hostId]) ? $_POST[hostId] : current($hostkeys);
 $leginondata->mysql->setSQLHost($SQL_HOSTS[$hostId]);
-$importinstruments = $leginondata->getInstrumentDescriptions();
+
+$importinstrumenthosts = $leginondata->getInstrumentHosts();
+$importinstrumenthost = ($_POST[importinstrumenthost]) ? $_POST[importinstrumenthost] : $importinstrumenthosts[0];
+$importscopeId = $_POST['importscopeId'];
+$importcameraId = $_POST['importcameraId'];
+$importscopes  = $leginondata->getScopes($importinstrumenthost);
+$importcameras = $leginondata->getCameras($importinstrumenthost);
+
 $leginondata->mysql->setSQLHost("default");
 if ($_POST['import']) {
 	$leginondata->mysql->setSQLHost($SQL_HOSTS[$hostId]);
@@ -20,13 +27,10 @@ $f_sel_name=$_POST['f_sel_name'];
 $f_name=$_POST['f_name'];
 $f_description=$_POST['f_description'];
 $f_hostname=$_POST['f_hostname'];
-$f_scope=$_POST['f_scope'];
-$f_camera=$_POST['f_camera'];
-$f_camera_size=$_POST['f_camera_size'];
-$f_camera_pixel_size=$_POST['f_camera_pixel_size'];
+$f_type=$_POST['f_type'];
 
 $maintable = "InstrumentData";
-$id = $leginondata->getId( array('name' => $f_name), $maintable);
+$id = $leginondata->getId( array('DEF_id' => $f_sel_name), $maintable);
 $id = (is_array($id)) ? $id[0] : $id;
 switch ($_POST['bt_action']) {
 
@@ -40,13 +44,9 @@ switch ($_POST['bt_action']) {
 				break;
 			}
 			$data['name'] = $f_name;
-			$data['description'] = $f_description;
-			$data['name'] = $f_name;
 			$data['hostname'] = $f_hostname;
-			$data['scope'] = $f_scope;
-			$data['camera'] = $f_camera;
-			$data['camera size'] = $f_camera_size;
-			$data['camera pixel size'] = $f_camera_pixel_size;
+			$data['type'] = $f_type;
+			$data['description'] = $f_description;
 			
 			if ($id) {
 				$where['DEF_id'] = $id;
@@ -67,19 +67,13 @@ $info = $leginondata->getDataInfo($maintable, $id);
 $info = $info[0];
 if ($info) {
 	$f_name=$info['name'];
-	$f_description=$info['description'];
 	$f_hostname = $info['hostname'];
-	$f_scope = $info['scope'];
-	$f_camera = $info['camera'];
-	$f_camera_size = $info['camera size'];
-	$f_camera_pixel_size = $info['camera pixel size'];
+	$f_type= $info['type'];
+	$f_description=$info['description'];
 } else {
 	$f_description="";
 	$f_hostname = "";
-	$f_scope = "";
-	$f_camera = "";
-	$f_camera_size = "";
-	$f_camera_pixel_size = "";
+	$f_type= "";
 }
 
 $instruments = $leginondata->getInstruments();
@@ -90,20 +84,11 @@ admin_header('onload="init()"');
 var jsid = "<?=$id?>";
 
 function init() {
-	var index=-1;
-	for (var i = 0; i < document.data.f_sel_name.length; i++) {
-		if (document.data.f_sel_name.options[i].value == jsid) {
-			index=i;  
-		} 
-	}
-	if (index >=0) {
-		document.data.f_sel_name.options[index].selected = true;
 		document.data.f_sel_name.focus();
 <? if ($_POST['f_name']) { ?>
-	} else {
-		document.data.f_description.focus();
-	}
-<? } else { echo "}"; } ?>
+		if (f_d=document.data.f_description)
+			f_d.focus();
+<? } ?>
 }
 </script>
 <h3>Table: <?=$maintable?></h3>
@@ -122,15 +107,31 @@ From Host:
 	</select>
 </td>
 <td>
-Instrument:
-	<select name="importinstrument">
-	<? foreach ($importinstruments as $instrument) {
-		$s = ($_POST['importinstrument']==$instrument['id']) ? 'selected' : '';
-		echo "<option value='".$instrument['id']
-			."' $s >".$instrument['fullname']."</option>\n";
-	}
-	?>
-	</select>
+Instrument host:
+	<select name="importinstrumenthost" onChange="javascript:document.dataimport.submit();">
+<?
+foreach($importinstrumenthosts as $h) {
+	$selected = ($h==$importinstrumenthost) ? "selected" : "";
+	echo "<option $selected >".$h."</option>";
+}
+?>
+</select>
+Scope
+<select name='importscopeId' >
+<?
+foreach($importscopes as $s) {
+	echo "<option value='".$s['id']."' >".$s['name']."</option>";
+}
+?>
+</select>
+Camera
+<select name='importcameraId' >
+<?
+foreach($importcameras as $c) {
+	echo "<option value='".$c['id']."' >".$c['name']."</option>";
+}
+?>
+</select>
 </td>
 </tr>
 <tr>
@@ -148,7 +149,8 @@ Instrument:
 <select name="f_sel_name"  SIZE=20 onClick="update_data();" onchange="update_data();">
 <?
 foreach ($instruments as $instrument) {
-	echo "<option value='".$instrument['DEF_id']."' $s>".stripslashes($instrument['name'])."</option>\n"; 
+	$selected = ($instrument['DEF_id']==$f_sel_name) ? "selected" : "";
+	echo "<option value='".$instrument['DEF_id']."' $selected >".stripslashes($instrument['name'])."</option>\n"; 
 } 
 
 ?>
@@ -175,6 +177,7 @@ name:<font color="red">*</font>
 <div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?=$error?></div></td>
 <? } ?>
 </tr>
+<? /*
 <tr>
 <td class="dt2" height="40">
 description:
@@ -183,6 +186,7 @@ description:
   <textarea class="textarea" name="f_description" cols="15" rows="2" nowrap><?=htmlentities(stripslashes($f_description)); ?></textarea>
 </td>
 </tr>
+*/ ?>
 
 <tr>
 
@@ -196,40 +200,20 @@ hostname:
 
 <tr>
 <td class="dt2" height="40">
-scope:
+type:
 </td>
 <td class="dt2"> 
-<input class="field" type="text" name="f_scope" maxlength="20" size="17" value ="<?=$f_scope?>" >
+<select name="f_type">
+<?
+$intrument_types = array('', 'CCDCamera', 'TEM');
+foreach ($intrument_types as $intrument_type) {
+	$selected = ($intrument_type==$f_type) ? "selected" : "";
+	echo "<option value='$intrument_type' $selected >$intrument_type</option>\n";
+}
+?>
+</select>
 </td>
 </tr>
-
-<tr>
-<td class="dt1" height="40">
-camera:
-</td>
-<td class="dt1"> 
-<input class="field" type="text" name="f_camera" maxlength="20" size="17" value ="<?=$f_camera?>" >
-</td>
-</tr>
-
-<tr>
-<td class="dt2" height="40">
-camera size:
-</td>
-<td class="dt2"> 
-<input class="field" type="text" name="f_camera_size" maxlength="20" size="17" value ="<?=$f_camera_size?>" >
-</td>
-</tr>
-
-<tr>
-<td class="dt1" height="40">
-camera pixel size:
-</td>
-<td class="dt1"> 
-<input class="field" type="text" name="f_camera_pixel_size" maxlength="20" size="17" value ="<?=$f_camera_pixel_size?>" >
-</td>
-</tr>
-
 
 <tr>
 <td>

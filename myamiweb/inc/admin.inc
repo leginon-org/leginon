@@ -25,6 +25,7 @@ $link->addlink('addinstrument.php','Instruments','', 'tem_tecnai_icon', '');
 $link->addlink('addcal.php','Calibrations','', 'calibration', '');
 $link->addlink('addapp.php','Applications','', 'application', '');
 $link->addlink('goniometer.php','Goniometer','', 'goniometer', '');
+$link->addlink('delsession.php','Sessions','', '', '');
 
 
 ?>

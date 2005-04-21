@@ -4,7 +4,8 @@ require('inc/util.inc');
 require('inc/leginon.inc');
 $ctf = new ctfdata();
 
-$sessionId = 1766;
+$defaultId= 1766;
+$sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
 $runId = $ctf->getLastCtfRun($sessionId);
 $r = $ctf->getCtfInfo($sessionId, $runId);
 foreach ($r as $row) {

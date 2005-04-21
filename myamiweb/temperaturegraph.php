@@ -46,6 +46,7 @@ $db =  new mysql ($TEMP_DB_HOST, $TEMP_DB_USER, $TEMP_DB_PASS, $TEMP_DB);
 $sessionInfo = $leginondata->getSessionInfo($sessionId);
 $begintime = $sessionInfo['Begin Time'];
 $endtime = $sessionInfo['End Time'];
+$endtime = ($endtime<$begintime) ? 0 : $endtime;
 $begints = $sessionInfo['Begin unixTimestamp'];
 $endts = $sessionInfo['End unixTimestamp'];
 if (!$endtime) {
@@ -165,6 +166,7 @@ if ($viewsql || $viewdata) {
 
 // Setup the basic graph
 $Ymax = (empty($datay)) ? 25 : 'auto';
+$Ymax = "100";
 
 
 	if ($histogram) {

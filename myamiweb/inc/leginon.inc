@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.44 $
- *	@version $Id: leginon.inc,v 1.44 2005-04-19 23:33:43 dfellman Exp $
+ *	@version $Revision: 1.45 $
+ *	@version $Id: leginon.inc,v 1.45 2005-04-21 01:06:48 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -31,7 +31,6 @@ class leginondata {
 	var $manualtype = 'manual';
 	var $calibrationtables = array (
 		'CameraSensitivityCalibrationData',
-		'GoodTiltCalibrationData',
 		'MatrixCalibrationData',
 		'PixelSizeCalibrationData',
 		'StageModelCalibrationData',
@@ -137,13 +136,16 @@ class leginondata {
 		."sec_to_time((Dayofyear(a.`DEF_timestamp`)-Dayofyear(s.`DEF_timestamp`))*86400-"
 		."time_to_sec(s.`DEF_timestamp`)+time_to_sec(a.`DEF_timestamp`)) as `Total Duration`, "
 		."s.`Image path`, "
-		."i.name as Instrument, "
-		."i.description as `Instrument description`, "
+		."concat(i.name,' - ',ic.name) as Instrument, "
+		."sc.`REF|InstrumentData|tem`  as `Instrument description`, "
 		."u.`full name` as User "
 		."from `SessionData` s "
 		."left join UserData u on (u.`DEF_id`=s.`REF|UserData|user`) "
-		."left join InstrumentData i on (i.`DEF_id`=s.`REF|InstrumentData|instrument`) "
 		."left join AcquisitionImageData a on (a.`REF|SessionData|session`=s.`DEF_id`) "
+		."left join ScopeEMData sc on (sc.`DEF_id`=a.`REF|ScopeEMData|scope`)"
+		."left join CameraEMData c on (c.`DEF_id`=a.`REF|CameraEMData|camera`)"
+		."left join InstrumentData i on (i.`DEF_id`=sc.`REF|InstrumentData|tem`)"
+		."left join InstrumentData ic on (ic.`DEF_id`=c.`REF|InstrumentData|ccdcamera`)"
 		.$sqlwhere 
 		."order by a.`DEF_timestamp` DESC limit 1";
 		$sessioninfo = $this->mysql->getSQLResult($q);
@@ -158,13 +160,25 @@ class leginondata {
 		return $this->getAll('InstrumentData');
 	}
 
-	function getInstrumentDescriptions() {
-		$q="select "
-		."`DEF_id` as id, "
-		."`name`, "
-		."`description`, "
-		."IF (length(description), concat(name,' - ',description), name) as fullname "
-		."from InstrumentData ";
+	function getInstrumentHosts() {
+		$hosts = array();
+		$instruments = $this->getInstruments();
+		if ($instruments)
+		foreach ($instruments as $instrument) {
+			$hosts[] = $instrument['hostname'];
+		}
+		return array_unique($hosts);
+	}
+
+	function getCameras($hostname) {
+		$q="select `DEF_id` as id, name from `InstrumentData` "
+			." where type='CCDCamera' and hostname='$hostname'";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getScopes($hostname) {
+		$q="select `DEF_id` as id, name from `InstrumentData` "
+			." where type='TEM' and hostname='$hostname'";
 		return $this->mysql->getSQLResult($q);
 	}
 
@@ -277,11 +291,9 @@ class leginondata {
 		select '.$sqlselectstr.'
 		from AcquisitionImageData a , PixelSizeCalibrationData pi 
 			left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) 
-			left join SessionData s1 on (s1.`DEF_id`=a.`REF|SessionData|session`) 
-			left join SessionData s2 on (s2.`DEF_id`=pi.`REF|SessionData|session`) 
 		'
 		.' left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) '
-		.' where s1.`REF|InstrumentData|instrument`=s2.`REF|InstrumentData|instrument`
+		.' where scope.`REF|InstrumentData|tem`=pi.`REF|InstrumentData|tem`
 				and scope.magnification = pi.magnification 
 				and a.`DEF_id` = '.$fileId.'
 		order by pi.`DEF_timestamp` desc limit 1
@@ -428,7 +440,7 @@ class leginondata {
 			return $filename['filename'];
 	}
 
-	function getCalibrationIds($calibration, $instrumentId=False, $limit='', $type='') {
+	function getCalibrationIds($calibration, $scopeId=False, $cameraId=False, $limit='', $type='') {
 		$calibration_fields = $this->mysql->getFields($calibration); 
 		if (in_array('type', $calibration_fields) && $type) {
 			$where[] = "cal.`type`='$type'";
@@ -474,8 +486,11 @@ class leginondata {
 		}
 
 
-		if (is_numeric($instrumentId))
-			$where[]="i.`DEF_id`=$instrumentId";
+		if (in_array('REF|InstrumentData|tem', $calibration_fields) && is_numeric($scopeId))
+			$where[]="cal.`REF|InstrumentData|tem`=$scopeId";
+
+		if (in_array('REF|InstrumentData|ccdcamera', $calibration_fields) && is_numeric($cameraId))
+			$where[]="cal.`REF|InstrumentData|ccdcamera`=$cameraId";
 
 		if ($where)
 			$sql_where = "where ".implode(' AND ', $where)." ";
@@ -486,8 +501,6 @@ class leginondata {
 		$q = "select "
 			.$select
 			."from ".$calibration." cal "
-			."left join SessionData s on (s.`DEF_id`=cal.`REF|SessionData|session`) "
-			."left join InstrumentData i on (i.`DEF_id`=s.`REF|InstrumentData|instrument`) "
 			.$sql_where
 			.$sql_group
 			.$order
@@ -496,8 +509,8 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getCalibrations($calibration, $instrumentId=False, $limit='', $type='') {
-		$Ids = $this->getCalibrationIds($calibration, $instrumentId, $limit, $type);
+	function getCalibrations($calibration, $scopeId=False, $cameraId=False, $limit='', $type='') {
+		$Ids = $this->getCalibrationIds($calibration, $scopeId, $cameraId, $limit, $type);
 		if ($Ids) {
 			foreach ($Ids as $id) 
 				if ($id=$id['id'])
@@ -533,10 +546,8 @@ class leginondata {
 			."atan2(mcal.`ARRAY|matrix|1_1`, mcal.`ARRAY|matrix|2_1`) as angle "
 			."from AcquisitionImageData a, MatrixCalibrationData mcal "
 			."left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) "
-			."left join SessionData s1 on (s1.`DEF_id`=a.`REF|SessionData|session`) "
-			."left join SessionData s2 on (s2.`DEF_id`=mcal.`REF|SessionData|session`) "
 			."where "
-			."s1.`REF|InstrumentData|instrument`=s2.`REF|InstrumentData|instrument` "
+			."scope.`REF|InstrumentData|tem`=mcal.`REF|InstrumentData|tem` "
 			."and "
 			."scope.magnification = mcal.magnification "
 			."and "
@@ -700,8 +711,10 @@ class leginondata {
 			."left join SessionData ps1 on (ps1.`DEF_id`=parent.`REF|SessionData|session`) "
 			."left join SessionData ps2 on (ps2.`DEF_id`=ppi.`REF|SessionData|session`) "
 			."cross join PixelSizeCalibrationData ppi on "
-			."(ps1.`REF|InstrumentData|instrument`=ps2.`REF|InstrumentData|instrument` and "
-			."pscope.magnification = ppi.magnification) ";
+			."(pscope.`REF|InstrumentData|tem`= ppi.`REF|InstrumentData|tem` and "
+			."pscope.magnification = ppi.magnification and "
+			."cp.`REF|InstrumentData|ccdcamera` = ppi.`REF|InstrumentData|ccdcamera` "
+			."and ppi.`DEF_timestamp`  < parent.`DEF_timestamp` ) ";
 		}
 		$q = "select "
 			.$gridselect
@@ -722,19 +735,19 @@ class leginondata {
 			."scope.`high tension` "
 			."from AcquisitionImageData a "
 			."left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) "
-			."left join SessionData s1 on (s1.`DEF_id`=a.`REF|SessionData|session`) "
-			."left join SessionData s2 on (s2.`DEF_id`=pi.`REF|SessionData|session`) "
 			."left join CameraEMData c on (a.`REF|CameraEMData|camera`=c.`DEF_id`) "
 			."left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
-
 			.$parenttargetjoin
 			.$gridjoin
 			."cross join PixelSizeCalibrationData pi on "
-			."(s1.`REF|InstrumentData|instrument`=s2.`REF|InstrumentData|instrument` and "
-			."scope.magnification = pi.magnification) "
+			."(scope.`REF|InstrumentData|tem`= pi.`REF|InstrumentData|tem` and "
+			."scope.magnification = pi.magnification and "
+			."c.`REF|InstrumentData|ccdcamera`=pi.`REF|InstrumentData|ccdcamera` "
+			."and pi.`DEF_timestamp`  < a.`DEF_timestamp` ) "
 			.$parentjoin
 			."where "
-			."a.`DEF_id` ='".$imgId."' "; 
+			."a.`DEF_id` ='".$imgId."' "
+			."order by pi.`DEF_id` desc"; 
 		$Rimageinfo = $this->mysql->SQLQuery($q);
 		$imageinfo = mysql_fetch_array($Rimageinfo, MYSQL_ASSOC);
 		return $imageinfo;
@@ -1119,16 +1132,17 @@ class leginondata {
 		return $dump;
 	}
 
-	function dumpCalibrations($tables, $instrumentId, $limit, $types=array()) {
+	function dumpCalibrations($tables, $scopeId, $cameraId, $limit, $types=array()) {
 		$crlf = $this->crlf;
-		list($info) = $this->getInstrumentInfo($instrumentId);
+		list($scopeinfo) = $this->getInstrumentInfo($scopeId);
+		list($camerainfo) = $this->getInstrumentInfo($cameraId);
 		$dump =  '<!--' . $crlf
 			.  '-' . $crlf
 			.  '- Calibrations XML-Dump' . $crlf
 			.  '- http://ami.scripps.edu/ ' . $crlf
 			.  '-' . $crlf
-			.  '- Instrument:' . $info['name']." ".$info['description']. $crlf
-			.  '- Camera:' . $info['camera']. $crlf
+			.  '- Scope:' . $scopeinfo['name'].$crlf
+			.  '- Camera:' . $camerainfo['name']. $crlf
 			.  '- Date : ' . date("F j, Y, g:i a").$crlf
 			.  '-' . $crlf
 			.  '- Calibrations: ' . $crlf;
@@ -1140,7 +1154,7 @@ class leginondata {
 			if (in_array('type', $table_fields) && $types) {
 				$rall = array();
 				foreach ($types as $type) {
-					$r = $this->getCalibrations($table, $instrumentId, $limit, $type);
+					$r = $this->getCalibrations($table, $scopeId, $cameraId, $limit, $type);
 					if (!$r[0]['type'])
 						continue;
 					$rall = array_merge($rall, $r);
@@ -1148,7 +1162,7 @@ class leginondata {
 				}
 				$content .= $this->array2XML($rall, $table);
 			} else {
-				$r = $this->getCalibrations($table, $instrumentId, $limit);
+				$r = $this->getCalibrations($table, $scopeId, $cameraId, $limit);
 				$content .= $this->array2XML($r, $table);
 			}
 			$definition .= $this->getSQLTableDefinitionXML($table);
@@ -1273,7 +1287,7 @@ class leginondata {
 		$this->mysql->SQLAlterTables($sqldef, $fieldtypes);
 	}
 
-	function importCalibrations($xmldata, $instrumentId) {
+	function importCalibrations($xmldata, $scopeId, $cameraId) {
 		if (!$instrumentId)
 			return false;
 		$app = new XMLCalibrationImport($xmldata);
@@ -1285,9 +1299,9 @@ class leginondata {
 			echo "<br>".$changes;
 
 		//--- insert a SessionData to link InstrumentData w/ Calibrations
-		$q = "insert into `SessionData` (`name`, `REF|InstrumentData|instrument`) "
+		$q = "insert into `SessionData` (`name` ) "
 			. " VALUES "
-			. " (concat('importcal', DATE_FORMAT(now(), '%Y%m%d%H%i%s')), $instrumentId ) ";
+			. " ( concat('importcal', DATE_FORMAT(now(), '%Y%m%d%H%i%s')) ) ";
 
 		$sessionId = $this->mysql->SQLQuery($q, True);
 		if (!$sessionId)
@@ -1304,7 +1318,6 @@ class leginondata {
 		return true;
 	}
 		
-
 	function importApplication($data) {
 		$app = new XMLApplicationImport($data);
 		$sqldef = $app->getSQLDefinitionQueries();

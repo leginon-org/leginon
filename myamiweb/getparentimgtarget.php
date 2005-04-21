@@ -10,11 +10,6 @@
 
 require('inc/leginon.inc');
 require('inc/image.inc');
-require('inc/cachedb.inc');
-$cachehost = 'cronus1';
-// $cachehost = 'stratocaster';
-// $cache=True;
-$cache=False;
 
 $g=true;
 if (!$sessionId=stripslashes($_GET[session])) {
@@ -38,7 +33,6 @@ if ($t=='png') {
 	$ext = "jpg";
 }
 
-
 if ($cache) {
 	$begin=getmicrotime();
 	$uri = "http://".$_SERVER[SERVER_NAME].$REQUEST_URI;
@@ -60,6 +54,7 @@ if ($cache) {
 
 if (!$displayparticle = $_GET['psel']) 
 	$displayparticle = false;
+
 $colormap = ($_GET['colormap']==1) ? "1" : "0";
 $minpix = ($_GET['np']) ? $_GET['np'] : 0;
 $maxpix = ($_GET['xp']) ? $_GET['xp'] : (($colormap) ? 1274 : 255);
@@ -124,19 +119,7 @@ if ($g) {
 	} else {
 		$img = getImage($sessionId, $id, $preset, $params);
 	}
-if ($cache) {
-	ob_start();
-	Header( "Content-type: $type ");
-	if ($t=='png')
-		imagepng($img);
-	else
-		imagejpeg($img,'',$quality);
-	$stringimage = ob_get_contents();
-	imagedestroy($img);
-	ob_clean();
-	$re = $cachedb->put($uri, $stringimage);
-	echo $stringimage;
-} else {
+
 	$nimgId = $leginondata->findImage($id, $preset);
 	list($res) = $leginondata->getFilename($nimgId['id']);
 	$filename = ereg_replace('mrc$', $ext, $res['filename']);
@@ -147,7 +130,6 @@ if ($cache) {
         else
                 imagejpeg($img,'',$quality);
 	imagedestroy($img);
-}
 } else {
 	Header("Content-type: image/x-png");
 	$blkimg = blankimage();

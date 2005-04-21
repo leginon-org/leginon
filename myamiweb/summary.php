@@ -9,7 +9,6 @@
 
 require('inc/leginon.inc');
 
-
 // --- Set  experimentId
 $lastId = $leginondata->getLastSessionId();
 $expId = (empty($_GET[expId])) ? $lastId : $_GET[expId];
@@ -128,36 +127,40 @@ $presets = $leginondata->getDatatypes($expId);
 	echo "<tr>";
 	echo "<td colspan='2'>";
 	echo divtitle("Image Stats");
+	$r = $leginondata->getImageStats($expId);
+if ($r) {
 	echo "<a href='imagestatsreport.php?Id=$expId'>report &raquo;</a>";
 	echo "<table border='0'>\n";
-$n=0;
-echo "<tr>";
-foreach ($presets as $preset) {
-	$sessionId=$expId;
-	
-	if ($n%3==0) {
-		echo "</tr>";
-		echo "<tr>";
-	}
-	$n++;
+	$n=0;
+	echo "<tr>";
+	foreach ($presets as $preset) {
+		$sessionId=$expId;
+		
+		if ($n%3==0) {
+			echo "</tr>";
+			echo "<tr>";
+		}
+		$n++;
 ?>
-<td>
-Preset: <?=$preset?>
-<a href="imagestatsgraph.php?hg=1&vdata=1&Id=<?=$sessionId?>&preset=<?=$preset?>">[data]</a>
-<a href="imagestatsgraph.php?hg=1&vs=1&Id=<?=$sessionId?>&preset=<?=$preset?>">[sql]</a><br>
-<a href="imagestatsgraph.php?hg=1&Id=<?=$sessionId?>&preset=<?=$preset?>"><img
- border="0"  src="imagestatsgraph.php?hg=1&w=210&Id=<?=$sessionId?>&preset=<?=$preset?>"></a>
-</td>
+	<td>
+	Preset: <?=$preset?>
+	<a href="imagestatsgraph.php?hg=1&vdata=1&Id=<?=$sessionId?>&preset=<?=$preset?>">[data]</a>
+	<a href="imagestatsgraph.php?hg=1&vs=1&Id=<?=$sessionId?>&preset=<?=$preset?>">[sql]</a><br>
+	<a href="imagestatsgraph.php?hg=1&Id=<?=$sessionId?>&preset=<?=$preset?>"><img
+	 border="0"  src="imagestatsgraph.php?hg=1&w=210&Id=<?=$sessionId?>&preset=<?=$preset?>"></a>
+	</td>
 <?
-}
+	}
 echo "</tr>";
 echo "</table>";
+} else echo "no Image Stats information available";
+echo "</td>";
 echo "</tr>";
 $icethicknesspresets = $leginondata->getIceThicknessPresets($expId);
-if (!empty($icethicknesspresets)) {
 	echo "<tr>";
 	echo "<td colspan='2'>";
 	echo divtitle("Ice Thickness");
+	if (!empty($icethicknesspresets)) {
 	echo "<table border='0'>\n";
 	echo "<tr>";
 		echo "<td>";
@@ -176,9 +179,9 @@ if (!empty($icethicknesspresets)) {
 	}
 	echo "</tr>\n";
 	echo "</table>\n";
+} else echo "no Ice Thickness information available";
 	echo "</td>";
 	
-}
 ?>
 </tr>
 <tr>
@@ -204,13 +207,6 @@ if (!empty($comments)) {
 <td colspan="2">
 <?
 echo divtitle("CTF");
-	echo "<table>";
-	echo "<tr>";
-		echo "<td>";
-		echo "<a href='ctfreport.php?Id=$expId'>report &raquo;</a>";
-		echo "</td>";
-	echo "</tr>";
-	echo "</table>";
 require('inc/ctf.inc');
 $fields = array('defocus1', 'defocus2', 'snr');
 $sessionId=$expId;
@@ -218,8 +214,10 @@ $ctf = new ctfdata();
 $runId = $ctf->getLastCtfRun($sessionId);
 $stats = $ctf->getStats($fields, $sessionId, $runId);
 
+$display_ctf=false;
 foreach($stats as  $field=>$data) {
 		foreach($data as $k=>$v) {
+			$display_ctf=true;
 			$imageId = $stats[$field][$k]['id'];
 			$p = $leginondata->getPresetFromImageId($imageId);
 			$stats[$field][$k]['preset'] = $p['name'];
@@ -231,8 +229,16 @@ foreach($stats as  $field=>$data) {
 		}
 }
 $display_keys = array ('defocus_nominal', 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
-
-echo display_stats($stats, $display_keys);
+if ($display_ctf) {
+	echo "<table>";
+	echo "<tr>";
+		echo "<td>";
+		echo "<a href='ctfreport.php?Id=$expId'>report &raquo;</a>";
+		echo "</td>";
+	echo "</tr>";
+	echo "</table>";
+	echo display_stats($stats, $display_keys);
+} else echo "no CTF information available"
 
 ?>
 </td>

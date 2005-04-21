@@ -360,6 +360,14 @@ class mysql {
 		return $fields;
 	}
 
+	function getTableDescription($table) {
+		$fields = array();
+		if ($table && $this->SQLTableExists($table)) {
+			return $this->getSQLResult("DESCRIBE `$table`");
+		}
+		return $fields;
+	}
+
 	function getFieldTypes($table) {
 		$fields = array();
 		if ($table) {
