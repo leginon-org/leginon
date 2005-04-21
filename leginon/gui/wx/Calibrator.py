@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Calibrator.py,v $
-# $Revision: 1.28 $
+# $Revision: 1.29 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-20 20:56:21 $
+# $Date: 2005-04-21 00:11:31 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -47,7 +47,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(szcor, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.instrumentselection, (1, 0), (1, 1), wx.EXPAND)
-		sz.Add(self.widgets['use camera settings'], (2, 0), (1, 1),
+		sz.Add(self.widgets['override preset'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['camera settings'], (3, 0), (1, 1),
 						wx.EXPAND)
