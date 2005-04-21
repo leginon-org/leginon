@@ -448,13 +448,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imagedata['filename']:
 			return
 		parts = []
-		rootname = self.getRootName(imagedata)
-		parts.append(rootname)
-
-		if 'grid' in imagedata and imagedata['grid'] is not None:
-			if imagedata['grid']['grid ID'] is not None:
-				grididstr = '%05d' % (imagedata['grid']['grid ID'],)
-				parts.append(grididstr)
 
 		listlabel = ''
 		## use either data id or target number
@@ -472,6 +465,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		mystr = numberstr + presetstr
 		sep = '_'
 
+		rootname = self.getRootName(imagedata, listlabel)
+		parts.append(rootname)
 		if listlabel:
 			parts.append(listlabel)
 		parts.append(mystr)
@@ -480,30 +475,43 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reportStatus('output', 'Using filename "%s"' % filename)
 		imagedata['filename'] = filename
 
-	def getRootName(self, imagedata):
+	def getRootName(self, imagedata, listlabel=False):
 		'''
 		get the root name of an image from its parent
 		'''
 		parent_target = imagedata['target']
+		gridlabel = not listlabel
 		if parent_target is None:
 			## there is no parent target
 			## create my own root name
-			return self.newRootName()
+			return self.newRootName(imagedata, gridlabel)
 
 		parent_image = parent_target['image']
 		if parent_image is None:
 			## there is no parent image
-			return self.newRootName()
+			return self.newRootName(imagedata, gridlabel)
 
 		## use root name from parent image
 		parent_root = parent_image['filename']
 		if parent_root:
 			return parent_root
 		else:
-			return self.newRootName()
+			return self.newRootName(imagedata, gridlabel)
 
-	def newRootName(self):
-		name = self.session['name']
+	def newRootName(self, imagedata, gridlabel):
+		parts = []
+		sessionstr = self.session['name']
+		parts.append(sessionstr)
+		if gridlabel:
+			if 'grid' in imagedata and imagedata['grid'] is not None:
+				if 'grid ID' in imagedata['grid'] and imagedata['grid']['grid ID'] is not None:
+					grididstr = 'GridID%05d' % (imagedata['grid']['grid ID'],)
+					parts.append(grididstr)
+				if 'insertion' in imagedata['grid'] and imagedata['grid']['insertion'] is not None:
+					insertionstr = 'Insertion%03d' % (imagedata['grid']['insertion'],)
+					parts.append(insertionstr)
+		sep = '_'
+		name = sep.join(parts)
 		return name
 
 	def waitForImageProcessDone(self):

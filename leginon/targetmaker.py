@@ -175,15 +175,22 @@ class MosaicTargetMaker(TargetMaker):
 
 	def getTargetList(self, evt):
 		self.logger.debug('Creating target list...')
-		if evt is None: 
+		if evt is None:
 			# generated from user invoked method
 			targetlist = self.newTargetList(mosaic=True, label=self.settings['label'])
 			grid = None
 		else:
-			### generated from external event
+			# generated from external event
 			grid = evt['grid']
-			gridid = grid['grid ID']
-			label = '%06d' % (gridid,)
+			parts = []
+			if 'grid ID' in grid and grid['grid ID'] is not None:
+				grididstr = 'GridID%05d' % (grid['grid ID'],)
+				parts.append(grididstr)
+			if 'insertion' in grid and grid['insertion'] is not None:
+				insertionstr = 'Insertion%03d' % (grid['insertion'],)
+				parts.append(insertionstr)
+			sep = '_'
+			label = sep.join(parts)
 			targetlist = self.newTargetList(mosaic=True, label=label)
 		self.logger.debug('Target list created')
 		return targetlist, grid
