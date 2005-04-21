@@ -479,6 +479,20 @@ class AlterTable(SQLExpression):
 	    alter = "ALTER TABLE %s ADD %s %s NOT NULL " % (backquote(self.table), backquote(self.column['Field']), self.column['Type'])
 	return alter
 
+
+class AlterTableIndex(SQLExpression):
+    def __init__(self, table, column):
+        self.table = table
+        self.column = column
+
+    def sqlRepr(self):
+        if not self.column:
+            return ''
+	else:
+	    alter = "ALTER TABLE %s ADD INDEX (%s) " % (backquote(self.table), backquote(self.column['Field']))
+	return alter
+
+
 class CreateTable(SQLExpression):
     def __init__(self, table, columns, type=None):
         self.table = table
@@ -698,7 +712,13 @@ def whereFormat(in_dict):
 			key = sqldict.object2sqlColumn(key)
 			value = cPickle.dumps(value.o, cPickle.HIGHEST_PROTOCOL)
 		evalue = str(value)
-		wherelist.append(''' %s.%s="%s" ''' % (backquote(alias), backquote(key), evalue))
+		if key=="DEF_timelimit":
+		#	For MySQL 4.1.1 or greater
+		#	sqlwhere = ''' %s.%s >= ADDTIME(NOW(), '%s') ''' % (backquote(alias), backquote('DEF_timestamp'), evalue)
+			sqlwhere = ''' %s.%s >= DATE_ADD(now(), INTERVAL '%s' DAY_SECOND) ''' % (backquote(alias), backquote('DEF_timestamp'), evalue)
+		else:
+			sqlwhere = ''' %s.%s="%s" ''' % (backquote(alias), backquote(key), evalue)
+		wherelist.append(sqlwhere)
 	wherestr = ' AND '.join(wherelist)
         return wherestr
 

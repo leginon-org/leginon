@@ -48,23 +48,23 @@ class DBDataKeeper(object):
 		else:
 			raise RuntimeError('direct_query should only return a single result')
 
-	def query(self, idata, results=None, readimages=True):
+	def query(self, idata, results=None, readimages=True, timelimit=None):
 		if self.logger is not None:
 			self.logger.info('query %s' % idata)
 		self.lock.acquire()
 		try:
-			ret = self._query(idata, results, readimages=readimages)
+			ret = self._query(idata, results, readimages=readimages, timelimit=timelimit)
 		finally:
 			self.lock.release()
 		return ret
 
-	def _query(self, idata, results=None, readimages=True):
+	def _query(self, idata, results=None, readimages=True, timelimit=None):
 		'''
 		query using a partial Data instance
 		'''
 		# idata: instance of a Data class 
 		# results: number of rows wanted
-		queryinfo = self.queryInfo(idata)
+		queryinfo = self.queryInfo(idata, timelimit=timelimit)
 		try:
 			result  = self.dbd.multipleQueries(queryinfo, readimages=readimages)
 		except _mysql_exceptions.OperationalError, e:
@@ -110,7 +110,7 @@ class DBDataKeeper(object):
 			raise RuntimeError('need Data or DataReference')
 		return {'id': myid, 'class name': myclassname, 'data': mydata}
 
-	def datainfo(self, mydata, dbid=None):
+	def datainfo(self, mydata, dbid=None, timelimit=None):
 		'''
 		function that should be called in data.accumulateData
 		'''
@@ -155,6 +155,8 @@ class DBDataKeeper(object):
 
 		isroot=0
 		if hasattr(mydata, 'isRoot'):
+			if timelimit is not None:
+				info['where']['DEF_timelimit'] = timelimit
 			isroot = 1
 			del mydata.isRoot
 
@@ -163,7 +165,7 @@ class DBDataKeeper(object):
 		finalinfo = {myid: info}
 		return [finalinfo]
 
-	def accumulateData(self, originaldata, memo=None):
+	def accumulateData(self, originaldata, memo=None, timelimit=None):
 		d = id(originaldata)
 
 		if memo is None:
@@ -180,21 +182,21 @@ class DBDataKeeper(object):
 						value = value.getData()
 						if isinstance(value, data.DataReference):
 							value = value.getData()
-					childresult = self.accumulateData(value, memo)
+					childresult = self.accumulateData(value, memo=memo, timelimit=timelimit)
 					if childresult is not None:
 						myresult += childresult
 
-		myresult = self.datainfo(originaldata) + myresult
+		myresult = self.datainfo(originaldata, timelimit=timelimit) + myresult
 
 		memo[d] = myresult
 		return myresult
 
-	def queryInfo(self, idata):
+	def queryInfo(self, idata, timelimit=None):
 		'''
 		Items of idata that are None, should be ignored.
 		'''
 		idata.isRoot=1
-		mylist = self.accumulateData(idata)
+		mylist = self.accumulateData(idata, timelimit=timelimit)
 		finaldict = {}
 		for d in mylist:
 			finaldict.update(d)

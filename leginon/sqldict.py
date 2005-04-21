@@ -212,6 +212,7 @@ class SQLDict(object):
 	    self.db = db
 	    self.queryinfo = queryinfo
 	    self.readimages = readimages
+	
 	    #print 'querinfo ', self.queryinfo
 	    self.queries = setQueries(queryinfo)
 	    #print 'queries ', self.queries
@@ -231,7 +232,7 @@ class SQLDict(object):
 			continue
 	    	c = self._cursor()
 		try:
-			# print '-----------------------------------------------'
+			#print '-----------------------------------------------'
 			#print 'query =', query
 			c.execute(query)
 		except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
@@ -442,8 +443,9 @@ class SQLDict(object):
 		newdict['Field'] = description['Field']
 		typestr = description['Type'].upper()
 		try:
-			ind = typestr.index('(')
-			typestr = typestr[:ind]
+			if re.findall('^TIMESTAMP', typestr):
+				ind = typestr.index('(')
+				typestr = typestr[:ind]
 		except ValueError:
 			pass
 		newdict['Type'] = typestr
@@ -470,9 +472,16 @@ class SQLDict(object):
 	    addcolumns = [col for col in definition if col not in describe]
 
 	    for column in addcolumns:
+		queries = []
 		q = sqlexpr.AlterTable(self.table, column).sqlRepr()
+		queries.append(q)
+		l = re.findall('^REF\%s' %(sep,),column['Field'])
+		if l:
+			q = sqlexpr.AlterTableIndex(self.table, column).sqlRepr()
+			queries.append(q)
 		try:
-			c.execute(q)
+			for q in queries:
+				c.execute(q)
 		except MySQLdb.OperationalError, e:
 			pass
 	    c.close()
