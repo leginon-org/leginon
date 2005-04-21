@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-21 00:39:19 $
+# $Date: 2005-04-21 01:24:34 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -530,8 +530,8 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			target1 = targetdata['delta row'], targetdata['delta column']
 
 			# target relative to the center of the center image of the atlas
-			target2 = (target1[0] + image.halfheight + image.location[0][0] - center[0],
-									target1[1] + image.halfwidth + image.location[1][0] - center[1])
+			target2 = (target1[0] + image.location[0][0] - center[0],
+									target1[1] + image.location[1][0] - center[1])
 
 			# transform target to where it should be for the current position
 			# based on the transform of the center image
