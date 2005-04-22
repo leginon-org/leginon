@@ -16,6 +16,7 @@
 <font face="Arial, Helvetica, sans-serif" size="2">
 <?
 require('inc/leginon.inc');
+require('inc/project.inc');
 $p[]='gridId';
 $p[]='mag';
 $p[]='defocus';
@@ -29,7 +30,13 @@ if ($id) {
 	$newimage = $leginondata->findImage($id, $preset);
 	$id = $newimage[id];
 			$gridId	= $leginondata->getGridId($id);
-			$filename = $leginondata->getFilenameFromId($id);
+			$projectdata = new project();
+			if($projectdata->checkDBConnection()) {
+				$gridinfo = $projectdata->getGridInfo($gridId);
+				if ($gridId)
+					echo '<a class="header" target="gridinfo" href="'.$PROJECT_URL.'getgrid.php?gridId='.$gridId.'">grid# '.$gridinfo[number].' info&raquo;</a>';
+			}
+			list($filename) = $leginondata->getFilename($id);
 			$presets = $leginondata->getPresets($id, $p);
 			if (is_array($presets))
 			foreach($presets as $k=>$v)
@@ -44,7 +51,7 @@ if ($id) {
 				else
 					echo " <b>$k:</b> $v";
 	if ($viewfilename)
-		echo " <br>".$filename."</font>";
+		echo " <br>".$filename['filename']."</font>";
 
 }
 ?>
