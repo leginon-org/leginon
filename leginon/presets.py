@@ -702,11 +702,13 @@ class PresetsManager(node.Node):
 	def displayCalibrations(self, preset):
 		mag = preset['magnification']
 		ht = self.getHighTension()
+		tem = preset['tem']
+		cam = preset['ccdcamera']
 
 		## not dependent on HT
 		ptime = str(self.calclients['pixel size'].time(mag))
-		modtimex = self.calclients['modeled stage'].timeModelCalibration('x')
-		modtimey = self.calclients['modeled stage'].timeModelCalibration('y')
+		modtimex = self.calclients['modeled stage'].timeModelCalibration(tem, cam, 'x')
+		modtimey = self.calclients['modeled stage'].timeModelCalibration(tem, cam, 'y')
 		modtime = 'x: %s, y: %s' % (modtimex, modtimey)
 
 		# dependent on HT
@@ -717,9 +719,9 @@ class PresetsManager(node.Node):
 			stagetime = self.calclients['stage'].time(ht, mag, 'stage position')
 			imagetime = self.calclients['image'].time(ht, mag, 'image shift')
 			beamtime = self.calclients['beam'].time(ht, mag, 'beam shift')
-			modmagtimex = self.calclients['modeled stage'].timeMagCalibration(ht,
+			modmagtimex = self.calclients['modeled stage'].timeMagCalibration(tem, cam, ht,
 																																			mag, 'x')
-			modmagtimey = self.calclients['modeled stage'].timeMagCalibration(ht,
+			modmagtimey = self.calclients['modeled stage'].timeMagCalibration(tem, cam, ht,
 																																			mag, 'y')
 			modmagtime = 'x: %s, y: %s' % (modmagtimex, modmagtimey)
 

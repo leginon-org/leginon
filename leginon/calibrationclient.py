@@ -970,8 +970,8 @@ class ModeledStageCalibrationClient(CalibrationClient):
 			caldata2 = dict(caldata)
 			return caldata2
 
-	def timeMagCalibration(self, ht, mag, axis):
-		caldata = self.researchMagCalibration(ht, mag, axis)
+	def timeMagCalibration(self, tem, cam, ht, mag, axis):
+		caldata = self.researchMagCalibration(tem, cam, ht, mag, axis)
 		if caldata is None:
 			timeinfo = None
 		else:
@@ -994,7 +994,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 
 		self.node.publish(caldata, database=True, dbforce=True)
 
-	def researchModelCalibration(self, axis, tem=None, ccdcamera=None):
+	def researchModelCalibration(self, tem, ccdcamera, axis):
 		qinst = data.StageModelCalibrationData(axis=axis)
 		if tem is None:
 			qinst['tem'] = self.instrument.getTEMData()
@@ -1011,8 +1011,8 @@ class ModeledStageCalibrationClient(CalibrationClient):
 			caldata = None
 		return caldata
 
-	def retrieveModelCalibration(self, axis, tem, ccd):
-		caldata = self.researchModelCalibration(axis, tem, ccd)
+	def retrieveModelCalibration(self, tem, ccd, axis):
+		caldata = self.researchModelCalibration(tem, ccd, axis)
 		if caldata is None:
 			raise RuntimeError('no model calibration')
 		else:
@@ -1027,8 +1027,8 @@ class ModeledStageCalibrationClient(CalibrationClient):
 			caldata2['b'] = Numeric.ravel(caldata['b']).copy()
 			return caldata2
 
-	def timeModelCalibration(self, axis):
-		caldata = self.researchModelCalibration(axis)
+	def timeModelCalibration(self, tem, cam, axis):
+		caldata = self.researchModelCalibration(tem, cam, axis)
 		if caldata is None:
 			timeinfo = None
 		else:
@@ -1099,8 +1099,8 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		ccd = camera['ccdcamera']
 
 		## do modifications to newstage here
-		xmodcal = self.retrieveModelCalibration('x', tem, ccd)
-		ymodcal = self.retrieveModelCalibration('y', tem, ccd)
+		xmodcal = self.retrieveModelCalibration(tem, ccd, 'x')
+		ymodcal = self.retrieveModelCalibration(tem, ccd, 'y')
 		self.node.logger.debug('x model a %s' % xmodcal['a'])
 		self.node.logger.debug('x model b %s' % xmodcal['b'])
 		self.node.logger.debug('y model a shape %s' % ymodcal['a'].shape)
