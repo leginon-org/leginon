@@ -943,7 +943,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		caldata['mean'] = mean
 		self.node.publish(caldata, database=True, dbforce=True)
 
-	def researchMagCalibration(self, ht, mag, axis, tem, cam):
+	def researchMagCalibration(self, tem, cam, ht, mag, axis):
 		qinst = data.StageModelMagCalibrationData(magnification=mag, axis=axis)
 		qinst['high tension'] = ht
 		if cam is None:
@@ -962,8 +962,8 @@ class ModeledStageCalibrationClient(CalibrationClient):
 			caldata = None
 		return caldata
 
-	def retrieveMagCalibration(self, ht, mag, axis, tem=None, cam=None):
-		caldata = self.researchMagCalibration(ht, mag, axis, tem, cam)
+	def retrieveMagCalibration(self, tem, cam, ht, mag, axis):
+		caldata = self.researchMagCalibration(tem, cam, ht, mag, axis)
 		if caldata is None:
 			raise RuntimeError('no model mag calibration')
 		else:
