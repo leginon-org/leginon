@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-21 02:58:34 $
+# $Date: 2005-04-22 00:56:36 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -60,19 +60,12 @@ class Grids(object):
 
 	def getGridInsertions(self):
 		labels = []
-		gridids = []
 		for grid in self.grids:
-			gridids.append(grid.gridid)
-		gridids.sort()
-
-		for gridid in gridids:
-			label = self.node.getGridLabel(gridid)
-			numbers = []
-			for insertion in grid.insertions:
-				numbers.append(insertion.number)
+			label = self.node.getGridLabel(grid.gridid)
+			numbers = [insertion.number for insertion in grid.insertions]
 			numbers.sort()
 			for number in numbers:
-				labels.append((label, gridid, number))
+				labels.append((label, grid.gridid, number))
 		return labels
 
 class Grid(object):
@@ -112,9 +105,10 @@ class Grid(object):
 		return numbers
 
 class Insertion(object):
-	def __init__(self, number=None):
+	def __init__(self, grid, number):
 		self.extrema = None
 		self.shape = None
+		self.grid = grid
 		self.number = number
 		self.images = []
 
@@ -155,13 +149,14 @@ class Insertion(object):
 									self.extrema[1][1] - self.extrema[1][0])
 
 class Image(object):
-	def __init__(self, data, node, location=None):
-		self.data = data
+	def __init__(self, insertion, imagedata, node):
+		self.insertion = insertion
+		self.data = imagedata
 		self.node = node
-		self.location = location
-		self.width = data['preset']['dimension']['x']
-		self.height = data['preset']['dimension']['y']
-		targetdata = data['target']
+		self.location = None
+		self.width = imagedata['preset']['dimension']['x']
+		self.height = imagedata['preset']['dimension']['y']
+		targetdata = imagedata['target']
 		self.row = targetdata['delta row']
 		self.column = targetdata['delta column']
 		self.halfwidth = int(math.ceil(self.width/2.0))
@@ -358,9 +353,9 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			if grid.hasInsertionNumber(number):
 				self.logger.warning('Duplicate insertion, ignoring images')
 				continue
-			insertion = Insertion(number)
+			insertion = Insertion(grid, number)
 			for imagedata in imagedatalist:
-				insertion.addImage(Image(imagedata, self))
+				insertion.addImage(Image(insertion, imagedata, self))
 			insertion.finalize()
 			grid.addInsertion(insertion)
 
@@ -500,21 +495,53 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		center = (row + image.location[0][0], column + image.location[1][0])
 		return center
 
-	def getInsertionTransform(self, centerimage, griddata):
-		# acquire image and align
-		imagedata = self.reacquireImage(centerimage.data, griddata=griddata)
-		if imagedata is None:
-			raise RuntimeError('image reacquisition failed')
+	def getTransform(self, centerimagedata1, griddata2):
+		griddata1 = centerimagedata1['grid']
+		result = self.loadTransform(griddata1, griddata2)
+		if result is None:
+			centerimagedata2 = self.reacquireImage(centerimagedata1,
+																							griddata=griddata2)
+			image1 = centerimagedata1['image']
+			image2 = centerimagedata2['image']
+			self.logger.info('Calculating main transform...')
+			result = align.findRotationScaleTranslation(image1, image2)
+			self.saveTransform(result, griddata1, griddata2)
+		else:
+			self.logger.info('Loading main transform...')
+		rotation, scale, shift, rsvalue, value = result
+		rsm = 'Rotation: %g, scale: %g, peak value: %g' % (rotation, scale, rsvalue)
+		tm = 'shift: (%g, %g), peak value: %g' % (shift + (value,))
+		self.logger.info(rsm + ', ' + tm)
 
-		image1 = centerimage.data['image']
-		image2 = imagedata['image']
-		self.logger.info('Calculating main transform...')
-		result = align.findRotationScaleTranslation(image1, image2)
-		rotation, scale, shift, value = result
-		m = 'Rotation: %g, scale: %g, shift: (%g, %g), peak value: %g'
-		self.logger.info(m % ((rotation, scale) + shift + (value,)))
+		return result, centerimagedata2
 
-		return result, imagedata
+	def saveTransform(self, result, griddata1, griddata2):
+		rotation, scale, shift, rsvalue, value = result
+		transformdata = data.LogPolarGridTransformData()
+		transformdata['rotation'] = rotation
+		transformdata['scale'] = scale
+		transformdata['translation'] = {'x': shift[1], 'y': shift[0]}
+		transformdata['RS peak value'] = rsvalue
+		transformdata['T peak value'] = value
+		transformdata['grid 1'] = griddata1
+		transformdata['grid 2'] = griddata2
+		self.publish(transformdata, database=True)
+
+	def loadTransform(self, griddata1, griddata2):
+		querydata = data.LogPolarGridTransformData()
+		querydata['grid 1'] = griddata1
+		querydata['grid 2'] = griddata2
+		resultdatalist = self.research(querydata, results=1)
+		if not resultdatalist:
+			return None
+		transformdata = resultsdatalist[0]
+		rotation = transformdata['rotation'] = rotation
+		scale = transformdata['scale'] = scale
+		translation = transformdata['translation']
+		shift = (translation['y'], translation['x'])
+		rsvalue = transformdata['RS peak value']
+		value = transformdata['T peak value']
+		return rotation, scale, shift, rsvalue, value
 
 	def getTargets(self, image, center,
 									matrix, rotation, scale, shift, centerimagedata, griddata):
@@ -589,9 +616,9 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			# get a rough estimate of the grid transform
 			centerimage = self.getCenterImage(insertion)
 			center = self.getImageCenter(centerimage)
-			result = self.getInsertionTransform(centerimage, griddata)
+			result = self.getTransform(centerimage.data, griddata)
 			transform, newcenterimagedata = result
-			rotation, scale, shift, value = transform
+			rotation, scale, shift, rsvalue, value = transform
 			matrix, imatrix = align.getMatrices(rotation, scale)
 
 			for image in targetimages:

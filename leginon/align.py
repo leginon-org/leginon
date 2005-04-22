@@ -88,7 +88,7 @@ def findRotationScaleTranslation(image1, image2, window=None, highpass=None):
 	image1 = normalize(image1)
 	image2 = normalize(image2)
 
-	rotation, scale, value = findRotationScale(image1, image2, window, highpass)
+	rotation, scale, rsvalue = findRotationScale(image1, image2, window, highpass)
 
 	shape = image2.shape[0]*2, image2.shape[1]*2
 
@@ -116,7 +116,7 @@ def findRotationScaleTranslation(image1, image2, window=None, highpass=None):
 
 	#images = i - numarray.nd_image.shift(r, peak)
 
-	return rotation, scale, peak, value#, images
+	return rotation, scale, peak, rsvalue, value#, images
 
 def getMatrices(rotation, scale):
 	mrotation = numarray.identity(2, numarray.Float)

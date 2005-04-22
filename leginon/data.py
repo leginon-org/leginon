@@ -937,6 +937,31 @@ class DriftDeclaredData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class TransformData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('rotation', float),
+			('scale', float),
+			('translation', dict),
+		)
+	typemap = classmethod(typemap)
+
+class LogPolarTransformData(TransformData):
+	def typemap(cls):
+		return TransformData.typemap() + (
+			('RS peak value', float),
+			('T peak value', float),
+		)
+	typemap = classmethod(typemap)
+
+class LogPolarGridTransformData(LogPolarTransformData):
+	def typemap(cls):
+		return LogPolarTransformData.typemap() + (
+			('grid 1', GridData),
+			('grid 2', GridData),
+		)
+	typemap = classmethod(typemap)
+
 class CalibrationData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
