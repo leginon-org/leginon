@@ -8,7 +8,8 @@
  */
 
 require('inc/leginon.inc');
-require ('inc/viewer.inc');
+require('inc/viewer.inc');
+require('inc/ctf.inc');
 
 // display data tree ?
 $displaytreevalue  = ($_POST) ? (($_POST[datatree]=='on') ? "off" : "on") : "off";
@@ -63,17 +64,9 @@ if ($displaytree)
 $types = $leginondata->getMatrixCalibrationTypes();
 
 // --- getCTF Info, if any
-$user = "usr_object";
-$host = "cronus1";
-$db = "processing";
-$dbc = new mysql($host, $user, "", $db);
-$ctfres = $dbc->SQLQuery('SHOW FIELDS FROM ctf');
-while ($row = mysql_fetch_array($ctfres, MYSQL_ASSOC)) 
-	$ctffields[$row['Field']] = $row;
-$q = 'select `ctf`.*, i.* FROM `ctf` AS `ctf` '
-	.' LEFT JOIN image as `i` on (`i`.imageId = `ctf`.imageId) '
-	.' where i.`DEF_id` = "'.$imgId.'"';
-$ctfdata = $dbc->getSQLResult($q);
+$ctf = new ctfdata;
+$runId = $ctf->getLastCtfRun($sessionId);
+$ctfdata  = $ctf->getCtfInfoFromImageId($imgId);
 
 $ctf_display_fields = array (
 	'defocus1',
@@ -334,19 +327,12 @@ if (!empty($ctfdata)) {
 	foreach($ctfdata as $r) {
 	$f++;
 	$blobs = array();
+	$ctfIds[]=$r['ctfId'];
 	foreach($r as $k=>$v) {
 		if (!in_array($k, $ctf_display_fields))
 			continue;	
-		$type = $ctffields[$k]['Type'];
 		if (eregi('defocus', $k))
 			$display = format_micro_number($v);
-		else if (eregi("blob", $type)) {
-			$blobs[] = "<a href=blob2img.php?id=".$r['ctfId']."&f=".$k.">"
-				."<img border=0 src=blob2img.php?w=280&id=".$r['ctfId']."&f=".$k.">"
-				."</a>";
-			$k="";
-			continue;
-		}
 		else if ($v-floor($v)) 
 			$display = format_sci_number($v,4,2);
 		else
@@ -354,9 +340,14 @@ if (!empty($ctfdata)) {
 		echo formatHtmlRow($k,$display);
 	}
 		echo "<tr>";
+	$blobs = $ctf->getBlobFields();
 	foreach ($blobs as $blob) {
 		echo "<td>";
-		echo $blob;
+		foreach ($ctfIds as $ctfId) {
+				echo "<a href=blob2img.php?id=".$ctfId."&f=".$blob.">"
+				."<img border=0 src=blob2img.php?w=280&id=".$ctfId."&f=".$blob.">"
+				."</a>";
+		}
 		echo "</td>";
 	}
 		echo "</tr>";

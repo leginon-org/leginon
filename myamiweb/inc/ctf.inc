@@ -65,6 +65,54 @@ class ctfdata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function getCtfInfoFromImageId($imageId) {
+		$q =	"select "
+			."c.`ctfId`, "
+			."i.`DEF_id`, "
+			."i.`defocus_nominal`, "
+			."c.`defocus1`, "
+			."c.`defocus2`, "
+			."c.`defocusinit`, "
+			."c.`amplitude_constrast`, "
+			."c.`angle_astigmatism`, "
+			."c.`noise1`, "
+			."c.`noise2`, "
+			."c.`noise3`, "
+			."c.`noise4`, "
+			."c.`envelope1`, "
+			."c.`envelope2`, "
+			."c.`envelope3`, "
+			."c.`envelope4`, "
+			."c.`lowercutoff`, "
+			."c.`uppercutoff`, "
+			."c.`snr` "
+			."from image i left join ctf c "
+			."on (c.imageId=i.imageId) "
+			."where i.DEF_id='$imageId' ";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getCTFBlobs($blobfield, $id) {
+		if (!$blobfield || !$id)
+			return false;
+		$q =	"select "
+			."`$blobfield`"
+			."FROM ctfblob WHERE ctfblobId=$id";
+		$blobres = $this->mysql->SQLQuery($q);
+		list($blob) = mysql_fetch_row($blobres);
+		return $blob;
+	}
+
+	function getBlobFields() {
+		$blobfield = array();
+		$fields = $this->mysql->getFieldTypes('ctfblob');
+		foreach ($fields as $field=>$type)
+			if (eregi('blob', $type))
+				$blobfield[] = $field;
+		return $blobfield;
+	}
+
+
 	function getStats($fields, $sessionId, $runId) {
 		if (!is_array($fields))
 			return False;
