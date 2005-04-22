@@ -687,17 +687,10 @@ class PresetsManager(node.Node):
 
 	def selectPreset(self, pname):
 		self.currentselection = self.presetByName(pname)
-		try:
-			self.instrument.setTEM(presetdata['tem']['name'])
-		except:
-			self.instrument.setTEM(None)
-		try:
-			self.instrument.setCCDCamera(presetdata['ccdcamera']['name'])
-		except:
-			self.instrument.setCCDCamera(None)
+		self.instrument.setTEM(self.currentselection['tem']['name'])
+		self.instrument.setCCDCamera(self.currentselection['ccdcamera']['name'])
 		self.panel.setParameters(self.currentselection)
 		self.displayCalibrations(self.currentselection)
-		#self.displayDose(self.currentselection)
 
 	def getHighTension(self):
 		try:
@@ -966,6 +959,16 @@ class PresetsManager(node.Node):
 		cameradata = data.CameraEMData()
 		cameradata.friendly_update(newpreset)
 
+		## set up instruments for this preset
+		try:
+			self.instrument.setTEM(newpreset['tem']['name'])
+			self.instrument.setCCDCamera(newpreset['tem']['name'])
+		except Exception, e:
+			msg = 'Preset change/target Move failed: %s' % (e,)
+			self.logger.error(msg)
+			raise PresetChangeError(msg)
+
+		## send data to instruments
 		try:
 			self.instrument.setData(scopedata)
 			self.instrument.setData(cameradata)
