@@ -171,7 +171,7 @@ class Navigator(node.Node):
 				error = r_error, c_error
 				errordist = math.hypot(error[0], error[1])
 
-				pixsize = self.pcal.retrievePixelSize(mag)
+				pixsize = self.pcal.retrievePixelSize(None, None, mag)
 				binning = clickcamera['binning']['x']
 				dist = errordist * pixsize * binning
 				umdist = dist * 1000000.0

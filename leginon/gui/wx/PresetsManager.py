@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.38 $
+# $Revision: 1.39 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-19 17:55:27 $
+# $Date: 2005-04-23 23:44:44 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -15,7 +15,7 @@ import data
 import newdict
 import threading
 import wx
-from gui.wx.Entry import FloatEntry, EVT_ENTRY
+from gui.wx.Entry import IntEntry, FloatEntry, EVT_ENTRY
 import gui.wx.Camera
 import gui.wx.Dialog
 import gui.wx.ImageViewer
@@ -95,7 +95,7 @@ class Calibrations(wx.StaticBoxSizer):
 		for name, label in self.order:
 			try:
 				self.sts[name].SetLabel(times[name])
-			except (TypeError, KeyError):
+			except (TypeError, KeyError), e:
 				self.sts[name].SetLabel('None')
 		self.Layout()
 
@@ -684,22 +684,29 @@ class ImportDialog(wx.Dialog):
 
 		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self)
 		self.GetParent().setInstrumentSelection(self.instrumentselection)
+		agelab1 = wx.StaticText(self, -1, 'Presets less than')
+		self.ageentry = IntEntry(self, -1, chars=4)
+		self.ageentry.SetValue(20)
+		agelab2 = wx.StaticText(self, -1, 'days old')
+		self.findpresets = wx.Button(self, -1, 'Find Presets')
+		self.Bind(wx.EVT_BUTTON, self.onFindPresets, self.findpresets)
 
 		self.csession = wx.Choice(self, -1)
 		self.lbpresets = wx.ListBox(self, -1, style=wx.LB_EXTENDED)
 
 		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.instrumentselection, (0, 0), (1, 2), wx.EXPAND)
-		self.findpresets = wx.Button(self, -1, 'Find Presets')
-		self.Bind(wx.EVT_BUTTON, self.onFindPresets, self.findpresets)
-		sz.Add(self.findpresets, (1, 1), (1, 1), wx.EXPAND)
+		sz.Add(self.instrumentselection, (0, 0), (1, 3), wx.EXPAND)
+		sz.Add(agelab1, (1, 0), (1, 1))
+		sz.Add(self.ageentry, (1, 1), (1, 1), wx.EXPAND)
+		sz.Add(agelab2, (1, 2), (1, 1))
+		sz.Add(self.findpresets, (2, 1), (1, 3), wx.EXPAND)
 
 		label = wx.StaticText(self, -1, 'Session:')
-		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.csession, (3, 1), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.csession, (4, 1), (1, 2), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'Presets:')
-		sz.Add(label, (4, 0), (1, 1))
-		sz.Add(self.lbpresets, (4, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sz.Add(label, (5, 0), (1, 1))
+		sz.Add(self.lbpresets, (5, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		self.bimport = wx.Button(self, -1, 'Import')
 		self.bimport.Enable(False)
@@ -723,16 +730,22 @@ class ImportDialog(wx.Dialog):
 	def onFindPresets(self, evt=None):
 		tem = self.node.instrument.getTEMData()
 		ccd = self.node.instrument.getCCDCameraData()
+		days = self.ageentry.GetValue()
+		agestr = '-%d 0:0:0' % (days,)
 		pquery = data.PresetData(tem=tem, ccdcamera=ccd)
-		presets = self.node.research(pquery)
+		presets = self.node.research(pquery, timelimit=agestr)
 		sessions = newdict.OrderedDict()
 		for p in presets:
 			sname = p['session']['name']
 			if sname:
 				sessions[sname] = None
 		self.csession.Clear()
-		for sname in sessions.keys():
+		snames = sessions.keys()
+		for sname in snames:
 			self.csession.Append(sname)
+		if snames:
+			self.csession.SetSelection(0)
+			self.onSessionChoice()
 
 	def onSessionChoice(self, evt=None):
 		if evt is None:

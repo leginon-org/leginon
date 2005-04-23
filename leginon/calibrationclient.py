@@ -299,8 +299,8 @@ class DoseCalibrationClient(CalibrationClient):
 		ccdcamera = imagedata['camera']['ccdcamera']
 		mag = imagedata['scope']['magnification']
 		self.node.logger.info('Magnification %.1f' % mag)
-		specimen_pixel_size = self.psizecal.retrievePixelSize(mag, tem=tem,
-																													ccdcamera=ccdcamera)
+		specimen_pixel_size = self.psizecal.retrievePixelSize(tem,
+																													ccdcamera, mag)
 		self.node.logger.info('Specimen pixel size %.4e' % specimen_pixel_size)
 		camera_pixel_size = imagedata['camera']['pixel size']['x']
 		self.node.logger.info('Camera pixel size %.4e' % camera_pixel_size)
@@ -326,8 +326,7 @@ class DoseCalibrationClient(CalibrationClient):
 		ht = imagedata['scope']['high tension']
 		binning = imagedata['camera']['binning']['x']
 		mag = imagedata['scope']['magnification']
-		specimen_pixel_size = self.psizecal.retrievePixelSize(mag, tem=tem,
-																													ccdcamera=ccdcamera)
+		specimen_pixel_size = self.psizecal.retrievePixelSize(tem, ccdcamera, mag)
 		self.node.logger.info('Specimen pixel size %.4e' % specimen_pixel_size)
 		exp_time = imagedata['camera']['exposure time'] / 1000.0
 		numdata = imagedata['image']
@@ -347,7 +346,7 @@ class PixelSizeCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def researchPixelSizeData(self, mag, tem=None, ccdcamera=None):
+	def researchPixelSizeData(self, tem, ccdcamera, mag):
 		queryinstance = data.PixelSizeCalibrationData()
 		queryinstance['magnification'] = mag
 		if tem is None:
@@ -364,18 +363,18 @@ class PixelSizeCalibrationClient(CalibrationClient):
 		else:
 			return None
 
-	def retrievePixelSize(self, mag, tem=None, ccdcamera=None):
+	def retrievePixelSize(self, tem, ccdcamera, mag):
 		'''
 		finds the requested pixel size using magnification
 		'''
-		caldata = self.researchPixelSizeData(mag, tem, ccdcamera)
+		caldata = self.researchPixelSizeData(tem, ccdcamera, mag)
 		if caldata is None:
 			raise NoPixelSizeError()
 		pixelsize = caldata['pixelsize']
 		return pixelsize
 
-	def time(self, mag, tem=None, ccdcamera=None):
-		pdata = self.researchPixelSizeData(mag, tem, ccdcamera)
+	def time(self, tem, ccdcamera, mag):
+		pdata = self.researchPixelSizeData(tem, ccdcamera, mag)
 		if pdata is None:
 			timeinfo = None
 		else:
@@ -414,8 +413,7 @@ class MatrixCalibrationClient(CalibrationClient):
 	def parameter(self):
 		raise NotImplementedError
 
-	def researchMatrix(self, caltype=None, ht=None, mag=None,
-											tem=None, ccdcamera=None):
+	def researchMatrix(self, tem, ccdcamera, caltype=None, ht=None, mag=None):
 		if caltype is None:
 			caltype = self.parameter()
 
@@ -450,32 +448,36 @@ class MatrixCalibrationClient(CalibrationClient):
 		queryinstance['high tension'] = ht
 		queryinstance['tem'] = tem
 		queryinstance['ccdcamera'] = ccdcamera
+		print 'QUERY', queryinstance
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
 			return caldata
 		else:
 			excstr = '%s, HT %s, %sX' % (caltype, ht, mag)
+			print 'AAAAAAAAAAAAAAAAA'
 			raise NoMatrixCalibrationError(excstr, state=queryinstance)
 
-	def retrieveMatrix(self, caltype=None, ht=None, mag=None,
-											tem=None, ccdcamera=None):
+	def retrieveMatrix(self, tem, ccdcamera, caltype=None, ht=None, mag=None):
 		'''
 		finds the requested matrix using magnification and type
 		'''
-		caldata = self.researchMatrix(caltype, ht, mag, tem, ccdcamera)
+		caldata = self.researchMatrix(tem, ccdcamera, caltype, ht, mag)
 		matrix = caldata['matrix'].copy()
 		return matrix
 
-	def time(self, ht, mag, caltype):
+	def time(self, tem, ccdcamera, ht, mag, caltype):
 		try:
-			caldata = self.researchMatrix(caltype, ht, mag)
+			caldata = self.researchMatrix(tem, ccdcamera, caltype, ht, mag)
 		except:
+			raise
 			caldata = None
 		if caldata is None:
+			print 'CALDATA NONE'
 			timestamp = None
 		else:
 			timestamp = caldata.timestamp
+			print 'TIMESTAMP', timestamp
 		return timestamp
 
 	def storeMatrix(self, ht, mag, type, matrix, tem=None, ccdcamera=None):
@@ -797,10 +799,10 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		ret['y'] = {'angle': yangle,'pixel size': ypixsize}
 		return ret
 
-	def getRotationAndPixelSize(self, mag, ht):
+	def getRotationAndPixelSize(self, tem, cam, mag, ht):
 		par = self.parameter()
 
-		matrix = self.retrieveMatrix(par, ht, mag)
+		matrix = self.retrieveMatrix(tem, cam, par, ht, mag)
 
 		xvect = matrix[:,0]
 		yvect = matrix[:,1]
@@ -829,7 +831,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		pixcol = pixelshift['col'] * binx
 		pixvect = (pixrow, pixcol)
 
-		matrix = self.retrieveMatrix(par, ht, mag, tem, ccdcamera)
+		matrix = self.retrieveMatrix(tem, ccdcamera, par, ht, mag)
 
 		change = Numeric.matrixmultiply(matrix, pixvect)
 		changex = change[0]
@@ -847,25 +849,6 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		new[par]['x'] += changex
 		new[par]['y'] += changey
 		return new
-
-	def getInverseMatrix(self, magnification, hightension):
-		matrix = self.getMatrix(magnification, hightension)
-		if matrix is None:
-			return None
-		imatrix = LinearAlgebra.inverse(matrix)
-		return imatrix
-
-	def getMatrix(self, magnification, hightension):
-		parameter = self.parameter()
-		matrix = self.retrieveMatrix(parameter, hightension, magnification)
-		return matrix
-
-	def getMatrices(self, magnification, hightension):
-		matrix = self.getMatrix(magnification, hightension)
-		if matrix is None:
-			return None, None
-		imatrix = LinearAlgebra.inverse(matrix)
-		return matrix, imatrix
 
 	def itransform(self, shift, scope, camera):
 		'''

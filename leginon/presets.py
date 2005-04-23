@@ -694,7 +694,6 @@ class PresetsManager(node.Node):
 
 	def getHighTension(self):
 		try:
-			# ...
 			return self.instrument.tem.HighTension
 		except:
 			return None
@@ -706,7 +705,7 @@ class PresetsManager(node.Node):
 		cam = preset['ccdcamera']
 
 		## not dependent on HT
-		ptime = str(self.calclients['pixel size'].time(mag))
+		ptime = str(self.calclients['pixel size'].time(tem, cam, mag))
 		modtimex = self.calclients['modeled stage'].timeModelCalibration(tem, cam, 'x')
 		modtimey = self.calclients['modeled stage'].timeModelCalibration(tem, cam, 'y')
 		modtime = 'x: %s, y: %s' % (modtimex, modtimey)
@@ -716,9 +715,9 @@ class PresetsManager(node.Node):
 			message = 'Unknown (cannot get current high tension)'
 			modmagtime = beamtime = imagetime = stagetime = message
 		else:
-			stagetime = self.calclients['stage'].time(ht, mag, 'stage position')
-			imagetime = self.calclients['image'].time(ht, mag, 'image shift')
-			beamtime = self.calclients['beam'].time(ht, mag, 'beam shift')
+			stagetime = self.calclients['stage'].time(tem, cam, ht, mag, 'stage position')
+			imagetime = self.calclients['image'].time(tem, cam, ht, mag, 'image shift')
+			beamtime = self.calclients['beam'].time(tem, cam, ht, mag, 'beam shift')
 			modmagtimex = self.calclients['modeled stage'].timeMagCalibration(tem, cam, ht,
 																																			mag, 'x')
 			modmagtimey = self.calclients['modeled stage'].timeMagCalibration(tem, cam, ht,
@@ -726,12 +725,12 @@ class PresetsManager(node.Node):
 			modmagtime = 'x: %s, y: %s' % (modmagtimex, modmagtimey)
 
 		times = {
-			'pixel size': ptime,
-			'image shift': imagetime,
-			'stage': stagetime,
-			'beam': beamtime,
-			'modeled stage': modtime,
-			'modeled stage mag only': modmagtime,
+			'pixel size': str(ptime),
+			'image shift': str(imagetime),
+			'stage': str(stagetime),
+			'beam': str(beamtime),
+			'modeled stage': str(modtime),
+			'modeled stage mag only': str(modmagtime),
 		}
 
 		self.panel.setCalibrations(times)

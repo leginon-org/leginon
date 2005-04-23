@@ -163,7 +163,7 @@ class MosaicTargetMaker(TargetMaker):
 		except KeyError:
 			raise AtlasError('unable to get magnification')
 		try:
-			return self.pixelsizecalclient.retrievePixelSize(magnification)
+			return self.pixelsizecalclient.retrievePixelSize(None, None, magnification)
 		except calibrationclient.NoPixelSizeError:
 			raise AtlasError('unable to get pixel size')
 

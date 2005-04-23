@@ -85,7 +85,7 @@ class GonModeler(calibrator.Calibrator):
 			self.logger.error('Modeled stage measurement failed: %s' % e)
 			self.panel.measurementDone()
 			return
-		known_pixelsize = self.pcal.retrievePixelSize(mag)
+		known_pixelsize = self.pcal.retrievePixelSize(None, None, mag)
 
 		self.oldimagedata = None
 		self.acquireNextPosition(axis)

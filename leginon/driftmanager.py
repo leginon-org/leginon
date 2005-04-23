@@ -173,7 +173,7 @@ class DriftManager(watcher.Watcher):
 		mag = imagedata['scope']['magnification']
 		tem = imagedata['scope']['tem']
 		ccd = imagedata['camera']['ccdcamera']
-		pixsize = self.pixsizeclient.retrievePixelSize(mag, tem, ccd)
+		pixsize = self.pixsizeclient.retrievePixelSize(tem, ccd, mag)
 		self.logger.info('Pixel size at %sx is %s' % (mag, pixsize))
 
 		## ensure that loop executes once
@@ -242,7 +242,7 @@ class DriftManager(watcher.Watcher):
 		mag = self.instrument.tem.Magnification
 		tem = self.instrument.tem
 		cam = self.instrument.ccdcamera
-		pixsize = self.pixsizeclient.retrievePixelSize(mag, tem, cam)
+		pixsize = self.pixsizeclient.retrievePixelSize(tem, cam, mag)
 		self.logger.info('Pixel size %s' % (pixsize,))
 
 		## acquire first image

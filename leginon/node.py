@@ -336,13 +336,13 @@ class Node(object):
 				e['destination'] = ''
 			return self.outputEvent(e)
 
-	def research(self, datainstance, results=None, readimages=True):
+	def research(self, datainstance, results=None, readimages=True, timelimit=None):
 		'''
 		find instances in the database that match the 
 		given datainstance
 		'''
 		try:
-			resultlist = self.dbdatakeeper.query(datainstance, results, readimages=readimages)
+			resultlist = self.dbdatakeeper.query(datainstance, results, readimages=readimages, timelimit=timelimit)
 		except (IOError, OSError), e:
 			raise ResearchError(e)
 		return resultlist

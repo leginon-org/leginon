@@ -112,7 +112,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		## use 1/4 image width to calculate delta
 		## delta = dimension['x'] * binning['x'] * pixsize / 4
 		mag, mags = self.getMagnification()
-		pixsize = self.pixsizeclient.retrievePixelSize(mag)
+		pixsize = self.pixsizeclient.retrievePixelSize(None, None, mag)
 
 		percent = self.settings['%s shift fraction' % self.parameter]/100.0
 		delta = percent * self.instrument.ccdcamera.Dimension['x']*self.instrument.ccdcamera.Binning['x']*pixsize
