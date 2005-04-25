@@ -177,7 +177,7 @@ class PresetsManager(node.Node):
 	defaultsettings = {
 		'pause time': 1.0,
 		'xy only': True,
-		'stage always': False,
+		'stage always': True,
 		'cycle': True,
 		'optimize cycle': True,
 		'mag only': True,
@@ -903,11 +903,16 @@ class PresetsManager(node.Node):
 		myimage = dict(emtargetdata['image shift'])
 		mybeam = dict(emtargetdata['beam shift'])
 
+## This should be unnecessary if we have a check for minimum stage movement
+## (currently in pyScope).  It was a way to prevent moving the stage between
+## targets which only require an image shift, but with queuing, we have to 
+## assume that stage should always be moved.  If stage truly does not need to
+## move, then the minimum stage movement threshold should take effect.
 		## decide if moving stage or not, and which axes to move
-		movetype = emtargetdata['movetype']
-		if movetype in ('image shift', 'image beam shift'):
-			if not self.settings['stage always']:
-				mystage = None
+#		movetype = emtargetdata['movetype']
+#		if movetype in ('image shift', 'image beam shift'):
+#			if not self.settings['stage always']:
+#				mystage = None
 
 		if mystage and self.settings['xy only']:
 			## only set stage x and y
