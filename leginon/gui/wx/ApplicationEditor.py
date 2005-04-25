@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ApplicationEditor.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-01 23:18:27 $
-# $Author: suloway $
+# $Date: 2005-04-25 23:36:24 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -63,6 +63,7 @@ class Frame(wx.Frame):
 		self.SetSizerAndFit(sz)
 
 	def load(self, app):
+		app.load()
 		appdata = {'name': app.data['name'], 'nodes': [], 'bindings': []}
 		for ns in app.nodespecs:
 			appdata['nodes'].append((ns['class string'], ns['alias'],

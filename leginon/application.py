@@ -172,7 +172,9 @@ class Application(object):
 			return 0
 		return applicationdata['version'] + 1
 
-	def load(self, name):
+	def load(self, name=None):
+		if name is None:
+			name = self.getName()
 		instance = data.ApplicationData(name=name)
 		applicationdatalist = self.node.research(datainstance=instance)
 		try:
