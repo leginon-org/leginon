@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Manager.py,v $
-# $Revision: 1.22 $
+# $Revision: 1.23 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-22 23:47:20 $
-# $Author: suloway $
+# $Date: 2005-04-25 23:02:04 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -757,6 +757,7 @@ class RunApplicationDialog(wx.Dialog):
 		else:
 			name = evt.GetString()
 		self.app = self.apps[name]
+		self.app.load(name)
 		launcheraliases = self.app.getLauncherAliases()
 
 		lastlaunchers = {}

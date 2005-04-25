@@ -664,7 +664,6 @@ class Manager(node.Node):
 		for appdata in appdatalist:
 			if appdata['name'] not in apps:
 				app = application.Application(self)
-				app.load(appdata['name'])
 				apps[appdata['name']] = app
 		return apps
 
@@ -672,7 +671,7 @@ class Manager(node.Node):
 		initializer = {'session': data.SessionData(user=self.session['user']),
 										'application': data.ApplicationData()}
 		appdata = data.LaunchedApplicationData(initializer=initializer)
-		appdatalist = self.research(appdata)
+		appdatalist = self.research(appdata, timelimit='-15 0:0:0')
 		history = []
 		map = {}
 		for a in appdatalist:
