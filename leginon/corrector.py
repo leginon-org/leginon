@@ -103,18 +103,19 @@ class Corrector(node.Node):
 		plandata['camstate'] = newcamstate
 		plandata['bad_rows'] = self.plan['rows']
 		plandata['bad_cols'] = self.plan['columns']
-		plandata['tem'] = self.instrument.getTEMData()
 		plandata['ccdcamera'] = self.instrument.getCCDCameraData()
 		self.storePlan(plandata)
 
 	def getPlan(self):
+		ccdcamera = self.instrument.getCCDCameraData()
+
 		newcamstate = data.CorrectorCamstateData()
 		if self.settings['camera settings'] is None:
 			self.plan = None
 		else:
 			for i in ['dimension', 'offset', 'binning']:
 				newcamstate[i] = dict(self.settings['camera settings'][i])
-			self.plan = self.retrievePlan(newcamstate)
+			self.plan = self.retrievePlan(ccdcamera, newcamstate)
 
 	def acquireDark(self):
 		try:
@@ -163,11 +164,10 @@ class Corrector(node.Node):
 		else:
 			self.setImage(image.astype(Numeric.Float32), stats=self.stats(image))
 
-	def retrievePlan(self, corstate):
+	def retrievePlan(self, ccdcamera, corstate):
 		qplan = data.CorrectorPlanData()
 		qplan['camstate'] = corstate
-		qplan['tem'] = self.instrument.getTEMData()
-		qplan['ccdcamera'] = self.instrument.getCCDCameraData()
+		qplan['ccdcamera'] = ccdcamera
 		plandatalist = self.research(datainstance=qplan)
 		if plandatalist:
 			plandata = plandatalist[0]
@@ -373,11 +373,12 @@ class Corrector(node.Node):
 		try:
 			image = self.instrument.ccdcamera.Image
 			geometry = self.instrument.ccdcamera.Geometry
+			cam = self.instrument.getCCDCameraData()
 		except:
 			self.logger.exception('Unable to acquire image')
 			return None
 		try:
-			image = self.correct(image, geometry)
+			image = self.correct(cam, image, geometry)
 		except Exception, e:
 			self.logger.warning('Unable to correct acquired image: %s' % e)
 			return None
@@ -394,24 +395,26 @@ class Corrector(node.Node):
 			return None
 		numimage = imagedata['image']
 		camdata = imagedata['camera']
+		scopedata = imagedata['camera']
+		ccdcamera = camdata['ccdcamera']
 		corstate = data.CorrectorCamstateData()
 		corstate['dimension'] = camdata['dimension']
 		corstate['offset'] = camdata['offset']
 		corstate['binning'] = camdata['binning']
-		corrected = self.correct(numimage, corstate)
+		corrected = self.correct(ccdcamera, numimage, corstate)
 		newdata = data.CorrectedCameraImageData(initializer=imagedata,
 																						image=corrected)
 		self.setStatus('idle')
 		return newdata
 
-	def correct(self, original, camstate):
+	def correct(self, ccdcamera, original, camstate):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
 		if type(camstate) is dict:
 			camstate = data.CorrectorCamstateData(initializer=camstate)
 		normalized = self.normalize(original, camstate)
-		plan = self.retrievePlan(camstate)
+		plan = self.retrievePlan(ccdcamera, camstate)
 		if plan is not None:
 			good = self.removeBadPixels(normalized, plan)
 
