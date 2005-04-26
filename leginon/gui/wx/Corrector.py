@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.37 $
+# $Revision: 1.38 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-20 20:56:21 $
+# $Date: 2005-04-26 01:55:22 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -198,7 +198,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
 
-		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self, passive=True)
+		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self)
 		self.GetParent().setInstrumentSelection(self.instrumentselection)
 
 		self.widgets['n average'] = IntEntry(self, -1, min=1, max=99, chars=2)
