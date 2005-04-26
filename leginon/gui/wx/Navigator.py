@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Navigator.py,v $
-# $Revision: 1.33 $
+# $Revision: 1.34 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-20 20:56:21 $
+# $Date: 2005-04-26 01:51:25 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -294,29 +294,29 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		# misc. checkboxes
 		self.widgets['check calibration'] = wx.CheckBox(self, -1,
 																										'Check calibration error')
-#		self.widgets['complete state'] = wx.CheckBox(self, -1,
-#																								'Set complete instrument state')
-		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self, passive=True)
-		self.GetParent().setInstrumentSelection(self.instrumentselection)
 		self.widgets['override preset'] = wx.CheckBox(self, -1,
 																								'Override Preset')
+		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self, passive=True)
+		self.GetParent().setInstrumentSelection(self.widgets['instruments'])
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 
+		sz = wx.GridBagSizer(5, 10)
+		sz.Add(self.widgets['override preset'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['instruments'], (1, 0), (1, 1), wx.EXPAND)
+		sz.Add(self.widgets['camera settings'], (0, 1), (2, 1),
+						wx.EXPAND)
+		overridebox = wx.StaticBox(self, -1, "Override Preset")
+		overridesz = wx.StaticBoxSizer(overridebox, wx.VERTICAL)
+		overridesz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+
 		# settings sizer
 		sz = wx.GridBagSizer(5, 10)
-		sz.Add(self.instrumentselection, (0, 0), (2, 1), wx.EXPAND)
-#		sz.Add(szmovetype, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szpausetime, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['check calibration'], (3, 0), (1, 1),
+		sz.Add(szpausetime, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['check calibration'], (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-#		sz.Add(self.widgets['complete state'], (3, 0), (1, 1),
-#						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['use camera settings'], (0, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['camera settings'], (1, 1), (3, 1),
-						wx.EXPAND)
-		sz.AddGrowableRow(4)
+		sz.Add(overridesz, (0,1), (8,1))
 
 		sb = wx.StaticBox(self, -1, 'Navigation')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
