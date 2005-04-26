@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Settings.py,v $
-# $Revision: 1.19 $
+# $Revision: 1.20 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-09 22:45:37 $
-# $Author: suloway $
+# $Date: 2005-04-26 01:50:55 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -44,6 +44,7 @@ attributes = {
 	gui.wx.Rings.Panel: ('getRings', 'setRings', gui.wx.Rings.EVT_RINGS_UPDATED),
 	gui.wx.TargetTemplate.Panel: ('getTemplate', 'setTemplate',
 																gui.wx.TargetTemplate.EVT_TEMPLATE_UPDATED),
+	gui.wx.Instrument.SelectionPanel: ('GetValue', 'SetValue', None),
 }
 
 class Dialog(wx.Dialog):
