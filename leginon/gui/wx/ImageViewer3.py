@@ -1,168 +1,156 @@
 import wx
 import numarrayimage
+import numextension
 
 class	Panel(wx.Window):
 	def __init__(self, parent, id):
 		wx.Window.__init__(self, parent, id)
 
-		self.updatedrawing = False
+		clientwidth, clientheight = self.GetClientSizeTuple()
+		self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
 
-		width, height = self.GetClientSizeTuple() 
-		self.clientwidth = width
-		self.clientheight = height
-
-		self.buffer = wx.EmptyBitmap(width, height)
-		self.bufferwidth = width
-		self.bufferheight = height
-
-		self.sizetimer = wx.Timer(self)
+		self.bitmapregion = None
 
 		self.source = None
-		self.sourcewidth = 0
-		self.sourceheight = 0
-
-		self.blitxdest = 0
-		self.blitydest = 0
-		self.blitwidth = 0
-		self.blitheight = 0
-		self.blitxsrc = 0
-		self.blitysrc = 0
+		self.extrema = None
 
 		self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
 		self.Bind(wx.EVT_PAINT, self.onPaint)
-		self.Bind(wx.EVT_TIMER, self.onSizeTimer, self.sizetimer)
 		self.Bind(wx.EVT_SIZE, self.onSize)
-
-	def updateSourceGeometry(self):
-		updated = False
-		if self.source is None:
-			sourcewidth = 0
-			sourceheight = 0
-		else:
-			sourcewidth = self.source.shape[1]
-			sourceheight = self.source.shape[0]
-		if sourcewidth != self.sourcewidth:
-			self.sourcewidth = sourcewidth
-			updated = True
-		if sourceheight != self.sourceheight:
-			self.sourceheight = sourceheight
-			updated = True
-		updated = updated or self.updateBlitGeometry()
-		return updated
-
-	def updateClientGeometry(self):
-		updated = False
-		clientwidth, clientheight = self.GetClientSizeTuple() 
-		if clientwidth != self.clientwidth:
-			self.clientwidth = clientwidth
-		if clientheight != self.clientheight:
-			self.clientheight = clientheight
-		updated = updated or self.updateBlitGeometry()
-		return updated
-
-	def updateBufferGeometry(self):
-		updated = False
-		bufferwidth = self.buffer.GetWidth()
-		bufferheight = self.buffer.GetHeight()
-		if bufferwidth != self.bufferwidth:
-			self.bufferwidth = bufferwidth
-			updated = True
-		if bufferheight != self.bufferheight:
-			self.bufferheight = bufferheight
-			updated = True
-		updated = updated or self.updateBlitGeometry()
-		return updated
-
-	def updateBlitGeometry(self):
-		updated = False
-		offsetx = int(round((self.clientwidth - self.sourcewidth)/2.0))
-		offsety = int(round((self.clientheight - self.sourceheight)/2.0))
-		blitxdest = max(0, offsetx)
-		blitydest = max(0, offsety)
-		if blitxdest != self.blitxdest:
-			self.blitxdest = blitxdest
-			updated = True
-		if blitydest != self.blitydest:
-			self.blitydest = blitydest
-			updated = True
-		blitwidth = min(self.bufferwidth, self.sourcewidth)
-		blitheight = min(self.bufferheight, self.sourceheight)
-		if blitwidth != self.blitwidth:
-			self.blitwidth = blitwidth
-			updated = True
-		if blitheight != self.blitheight:
-			self.blitheight = blitheight
-			updated = True
-		return updated
 
 	def setNumarray(self, array):
 		self.source = array
-		self.updateSourceGeometry()
-		self.updateDrawing()
+		if self.source is None:
+			self.extrema = None
+		else:
+			self.extrema = numextension.minmax(self.source)
+
+		dc = wx.MemoryDC()
+		dc.SelectObject(self.buffer)
+		dc.Clear()
+
+		if self.source is None:
+			dc.SelectObject(wx.NullBitmap)
+			self.Refresh()
+			return
+
+		bufferwidth = self.buffer.GetWidth()
+		bufferheight = self.buffer.GetHeight()
+		bufferregion = wx.Region(0, 0, bufferwidth, bufferheight)
+
+		bitmapwidth, bitmapheight = self.source.shape[1], self.source.shape[0]
+		bitmapx = max(0, int(round((bufferwidth - bitmapwidth)/2.0)))
+		bitmapy = max(0, int(round((bufferheight - bitmapheight)/2.0)))
+		bitmapregion = wx.Region(bitmapx, bitmapy, bitmapwidth, bitmapheight)
+
+		sourceregion = wx.Region(*bitmapregion.GetBox())
+		sourceregion.IntersectRegion(bufferregion)
+
+		regioniterator = wx.RegionIterator(sourceregion)
+		while(regioniterator):
+			r = regioniterator.GetRect()
+			x = r.x - bitmapx
+			y = r.y - bitmapy
+			array = self.source[y:y + r.height, x:x + r.width]
+			bitmap = numarrayimage.numarray2wxBitmap(array, self.extrema)
+			sourcedc = wx.MemoryDC()
+			sourcedc.SelectObject(bitmap)
+			dc.Blit(r.x, r.y, r.width, r.height, sourcedc, 0, 0)
+			sourcedc.SelectObject(wx.NullBitmap)
+			regioniterator.Next()
+
+		self.bitmapregion = sourceregion
+
+		dc.SelectObject(wx.NullBitmap)
+
 		self.Refresh()
 
 	def onEraseBackground(self, evt):
 		pass
 
-	def updateDrawing(self):
-		dc = wx.MemoryDC()
-		dc.SelectObject(self.buffer)
-
-		dc.Clear()
-
-		if self.source is None:
-			return
-
-		if self.blitheight < 1 or self.blitwidth < 1:
-			bitmap = wx.EmptyBitmap(self.blitwidth, self.blitheight)
-		else:
-			bitmap = numarrayimage.numarray2wxBitmap(
-																self.source[:self.blitheight, :self.blitwidth])
-		bitmapdc = wx.MemoryDC()
-		bitmapdc.SelectObject(bitmap)
-
-		dc.Blit(self.blitxdest, self.blitydest, self.blitwidth, self.blitheight,
-						bitmapdc,
-						0, 0)
-
-		bitmapdc.SelectObject(wx.NullBitmap)
-
-		dc.SelectObject(wx.NullBitmap)
-
 	def onPaint(self, dc):
-		if self.updatedrawing:
-			self.updateDrawing()
-			self.updatedrawing = False
 		dc = wx.PaintDC(self) 
 		memorydc = wx.MemoryDC()
 		memorydc.SelectObject(self.buffer)
 		regioniterator = wx.RegionIterator(self.GetUpdateRegion())
 		while(regioniterator):
-			rect = regioniterator.GetRect()
-			dc.Blit(rect.x, rect.y, rect.width, rect.height, memorydc, rect.x, rect.y)
+			r = regioniterator.GetRect()
+			dc.Blit(r.x, r.y, r.width, r.height, memorydc, r.x, r.y)
 			regioniterator.Next()
 		memorydc.SelectObject(wx.NullBitmap)
 
-	def onSizeTimer(self, evt):
-		width, height = self.GetClientSizeTuple() 
-		self.buffer = wx.EmptyBitmap(width, height)
-		self.updateClientGeometry()
-		self.updateBufferGeometry()
-		self.updatedrawing = True
-		self.Refresh()
-
 	def onSize(self, evt):
-		width, height = self.GetClientSizeTuple() 
-		self.buffer = wx.EmptyBitmap(width, height)
+		clientwidth, clientheight = evt.GetSize()
+		clientregion = wx.Region(0, 0, clientwidth, clientheight)
+		if clientregion.IsEmpty():
+			self.buffer = wx.EmptyBitmap(0, 0)
+			return
+		buffer = wx.EmptyBitmap(clientwidth, clientheight)
+
+		if self.source is None:
+			self.buffer = buffer
+			return
+
+		bufferwidth = self.buffer.GetWidth()
+		bufferheight = self.buffer.GetHeight()
+		bufferregion = wx.Region(0, 0, bufferwidth, bufferheight)
+
+		if clientregion == bufferregion:
+			return
+
+		bitmapwidth, bitmapheight = self.source.shape[1], self.source.shape[0]
+		bitmapx = max(0, int(round((clientwidth - bitmapwidth)/2.0)))
+		bitmapy = max(0, int(round((clientheight - bitmapheight)/2.0)))
+		bitmapregion = wx.Region(bitmapx, bitmapy, bitmapwidth, bitmapheight)
+
+		copyregion = wx.Region(*self.bitmapregion.GetBox())
+		x1, y1, width1, height1 = self.bitmapregion.GetBox()
+		x2, y2, width2, height2 = bitmapregion.GetBox()
+		xoffset = x2 - x1
+		yoffset = y2 - y1
+		copyregion.Offset(xoffset, yoffset)
+		copyregion.IntersectRegion(clientregion)
 
 		dc = wx.MemoryDC()
-		dc.SelectObject(self.buffer)
+		dc.SelectObject(buffer)
 		dc.Clear()
+
+		regioniterator = wx.RegionIterator(copyregion)
+		copydc = wx.MemoryDC()
+		copydc.SelectObject(self.buffer)
+		while(regioniterator):
+			r = regioniterator.GetRect()
+			dc.Blit(r.x, r.y, r.width, r.height, copydc, r.x - xoffset, r.y - yoffset)
+			regioniterator.Next()
+		copydc.SelectObject(wx.NullBitmap)
+
+		sourceregion = wx.Region(*bitmapregion.GetBox())
+		sourceregion.IntersectRegion(clientregion)
+		sourceregion.SubtractRegion(copyregion)
+
+		regioniterator = wx.RegionIterator(sourceregion)
+		while(regioniterator):
+			r = regioniterator.GetRect()
+			x = r.x - bitmapx
+			y = r.y - bitmapy
+			array = self.source[y:y + r.height, x:x + r.width]
+			bitmap = numarrayimage.numarray2wxBitmap(array, self.extrema)
+			sourcedc = wx.MemoryDC()
+			sourcedc.SelectObject(bitmap)
+			dc.Blit(r.x, r.y, r.width, r.height, sourcedc, 0, 0)
+			sourcedc.SelectObject(wx.NullBitmap)
+			regioniterator.Next()
+
 		dc.SelectObject(wx.NullBitmap)
 
-		self.updateBufferGeometry()
-		self.updateClientGeometry()
-		self.sizetimer.Start(100, True)
+		self.buffer = buffer
+
+		self.bitmapregion = copyregion
+		self.bitmapregion.UnionRegion(sourceregion)
+
+		if xoffset != 0 or yoffset != 0:
+			self.Refresh()
+
 		evt.Skip()
 
 if __name__ == '__main__':
@@ -186,6 +174,7 @@ if __name__ == '__main__':
 			return True
 
 	app = MyApp(0)
+
 	array = Mrc.mrcstr_to_numeric(open(filename, 'rb').read())
 	app.panel.setNumarray(array)
 	app.MainLoop()

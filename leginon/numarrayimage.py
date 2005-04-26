@@ -14,22 +14,28 @@ import wx
 
 typemap = {
 	numarray.UInt8: ('L', 'L'),
-	numarray.UInt16: ('I', 'I;16NS'),
-	numarray.UInt32: ('I', 'I;32NS'),
-	numarray.UInt64: ('I', 'I;64NS'),
-	numarray.Int16: ('I', 'I;16S'),
-	numarray.Int32: ('I', 'I;32S'),
-	numarray.Int64: ('I', 'I;64S'),
+	numarray.UInt16: ('I', 'I;16N'),
+	numarray.UInt32: ('I', 'I;32N'),
+	numarray.Int16: ('I', 'I;16NS'),
+	numarray.Int32: ('I', 'I;32NS'),
 	numarray.Float32: ('F', 'F;32NF'),
 	numarray.Float64: ('F', 'F;64NF')
 }
 
 def numarray2Image(array):
 	arraytype = array.type()
-	imagemode, rawmode = typemap[arraytype]
+	try:
+		mode, rawmode = typemap[arraytype]
+	except KeyError:
+		raise TypeError
 	height, width = array.shape
-	imagesize = width, height
-	return Image.frombuffer(imagemode, imagesize, array.tostring(), 'raw', rawmode, 0, 1)
+	size = width, height
+	if 0 in size:
+		raise ValueError
+	stride = 0
+	orientation = 1
+	args = (mode, size, array.tostring(), 'raw', rawmode, stride, orientation)
+	return Image.frombuffer(*args)
 
 def scaleImage(image, fromrange, torange):
 	scale = float(torange[1] - torange[0])/float(fromrange[1] - fromrange[0])
@@ -55,7 +61,16 @@ def numarray2wxBitmap(array, fromrange=None):
 if __name__ == '__main__':
 	import Mrc
 	import sys
+	import time
+
+	app = wx.App(0)
 
 	array = Mrc.mrc_to_numeric(sys.argv[1])
-	print numarray2wxImage(array)
+	times = []
+	for i in range(8):
+		t = time.time()
+		b = numarray2wxBitmap(array)
+		times.append(time.time() - t)
+	print times
+	print sum(times)/len(times)
 
