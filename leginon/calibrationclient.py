@@ -413,52 +413,22 @@ class MatrixCalibrationClient(CalibrationClient):
 	def parameter(self):
 		raise NotImplementedError
 
-	def researchMatrix(self, tem, ccdcamera, caltype=None, ht=None, mag=None):
-		if caltype is None:
-			caltype = self.parameter()
-
-		if ht is None:
-			try:
-				ht = self.instrument.tem.HighTension
-			except AttributeError:
-				raise NoMatrixCalibrationError('no TEM selected for high tension')
-			except Exception, e:
-				raise NoMatrixCalibrationError(e)
-		if mag is None:
-			try:
-				mag = self.instrument.tem.Magnification
-			except AttributeError:
-				raise NoMatrixCalibrationError('no TEM selected for magnification')
-			except Exception, e:
-				raise NoMatrixCalibrationError(e)
-		if tem is None:
-			try:
-				tem = self.instrument.getTEMData()
-			except Exception, e:
-				raise NoMatrixCalibrationError(e)
-		if ccdcamera is None:
-			try:
-				ccdcamera = self.instrument.getCCDCameraData()
-			except Exception, e:
-				raise NoMatrixCalibrationError(e)
-
+	def researchMatrix(self, tem, ccdcamera, caltype, ht, mag):
 		queryinstance = data.MatrixCalibrationData()
+		queryinstance['tem'] = tem
+		queryinstance['ccdcamera'] = ccdcamera
 		queryinstance['type'] = caltype
 		queryinstance['magnification'] = mag
 		queryinstance['high tension'] = ht
-		queryinstance['tem'] = tem
-		queryinstance['ccdcamera'] = ccdcamera
-		print 'QUERY', queryinstance
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
-		if len(caldatalist) > 0:
+		if caldatalist:
 			caldata = caldatalist[0]
 			return caldata
 		else:
-			excstr = '%s, HT %s, %sX' % (caltype, ht, mag)
-			print 'AAAAAAAAAAAAAAAAA'
+			excstr = 'No query results for %s, %s, %s, %seV, %sx' % (tem, ccdcamera, caltype, ht, mag)
 			raise NoMatrixCalibrationError(excstr, state=queryinstance)
 
-	def retrieveMatrix(self, tem, ccdcamera, caltype=None, ht=None, mag=None):
+	def retrieveMatrix(self, tem, ccdcamera, caltype, ht, mag):
 		'''
 		finds the requested matrix using magnification and type
 		'''
@@ -470,14 +440,11 @@ class MatrixCalibrationClient(CalibrationClient):
 		try:
 			caldata = self.researchMatrix(tem, ccdcamera, caltype, ht, mag)
 		except:
-			raise
 			caldata = None
 		if caldata is None:
-			print 'CALDATA NONE'
 			timestamp = None
 		else:
 			timestamp = caldata.timestamp
-			print 'TIMESTAMP', timestamp
 		return timestamp
 
 	def storeMatrix(self, ht, mag, type, matrix, tem=None, ccdcamera=None):
@@ -506,12 +473,16 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 	def measureDefocusStig(self, tilt_value, publish_images=0, drift_threshold=None, image_callback=None, stig=True, target=None):
 		self.abortevent.clear()
-		fmatrix = self.retrieveMatrix('defocus')
+		tem = self.instrument.getTEMData()
+		cam = self.instrument.getCCDCameraData()
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
 		if fmatrix is None:
 				raise RuntimeError('missing calibration matrix')
 		if stig:
-			amatrix = self.retrieveMatrix('stigx')
-			bmatrix = self.retrieveMatrix('stigy')
+			amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag)
+			bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag)
 			if None in (amatrix, bmatrix):
 				raise RuntimeError('missing calibration matrix')
 
@@ -790,29 +761,6 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		matrix = LinearAlgebra.inverse(matrix)
 		return matrix
 
-	def matrixAnglePixsize(self, scope, camera):
-		mag = scope['magnification']
-		ht = scope['high tension']
-		xangle, xpixsize, yangle, ypixsize = self.getRotationAndPixelSize(mag, ht)
-		ret = {}
-		ret['x'] = {'angle': xangle,'pixel size': xpixsize}
-		ret['y'] = {'angle': yangle,'pixel size': ypixsize}
-		return ret
-
-	def getRotationAndPixelSize(self, tem, cam, mag, ht):
-		par = self.parameter()
-
-		matrix = self.retrieveMatrix(tem, cam, par, ht, mag)
-
-		xvect = matrix[:,0]
-		yvect = matrix[:,1]
-
-		xangle = math.atan2(xvect[0], xvect[1])
-		xpixsize = math.hypot(xvect[0], xvect[1])
-		yangle = math.atan2(yvect[0], yvect[1])
-		ypixsize = math.hypot(yvect[0], yvect[1])
-		return xangle, xpixsize, yangle, ypixsize
-
 	def transform(self, pixelshift, scope, camera):
 		'''
 		Calculate a new scope state from the given pixelshift
@@ -860,6 +808,8 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		binx = camera['binning']['x']
 		biny = camera['binning']['y']
 		par = self.parameter()
+		tem = scope['tem']
+		cam = camera['ccdcamera']
 		newshift = dict(shift)
 
 		### take into account effect of alpha tilt on Y stage pos
@@ -868,7 +818,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 			newshift['y'] = newshift['y'] * Numeric.cos(alpha)
 		vect = (newshift['x'], newshift['y'])
 
-		matrix = self.retrieveMatrix(par, ht, mag)
+		matrix = self.retrieveMatrix(tem, cam, par, ht, mag)
 		matrix = LinearAlgebra.inverse(matrix)
 
 		pixvect = Numeric.matrixmultiply(matrix, vect)

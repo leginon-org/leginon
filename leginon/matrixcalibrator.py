@@ -254,7 +254,12 @@ class MatrixCalibrator(calibrator.Calibrator):
 			calclient = self.parameters[self.parameter]
 		except KeyError:
 			raise RuntimeError('no parameter selected')
-		return calclient.researchMatrix()
+		tem = self.instrument.getTEMData()
+		cam = self.instrument.getCCDCameraData()
+		par = self.parameter
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		return calclient.researchMatrix(tem, cam, par, ht, mag)
 
 	def editCurrentCalibration(self):
 		try:
