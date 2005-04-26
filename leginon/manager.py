@@ -662,9 +662,10 @@ class Manager(node.Node):
 		apps = {}
 		appdatalist = self.research(data.ApplicationData())
 		for appdata in appdatalist:
-			if appdata['name'] not in apps:
-				app = application.Application(self)
-				apps[appdata['name']] = app
+			appname = appdata['name']
+			if appname not in apps:
+				app = application.Application(self, name=appname)
+				apps[appname] = app
 		return apps
 
 	def getApplicationHistory(self):
