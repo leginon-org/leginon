@@ -74,9 +74,9 @@ def sqlRepr(obj):
     t = type(obj)
     if isinstance(obj, SQLExpression):
         return obj.sqlRepr()
-    elif t is type(""):
+    elif isinstance(obj, basestring):
         for orig, repl in sqlStringReplace:
-            obj = obj.replace(orig, repl)
+            obj = str(obj.replace(orig, repl))
         return "'%s'" % obj
     elif t is bool:
     	return repr(int(obj))
