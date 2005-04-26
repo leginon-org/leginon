@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SetupWizard.py,v $
-# $Revision: 1.12 $
+# $Revision: 1.13 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-18 00:07:39 $
+# $Date: 2005-04-26 22:16:52 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -665,7 +665,7 @@ class SetupWizard(wx.wizard.Wizard):
 			'session type':
 				self.sessiontypepage.sessiontyperadiobox.GetStringSelection(),
 			'selected session':
-				self.sessionselectpage.sessionchoice.GetStringSelection(),
+				self.session['name'],
 			'limit':
 				self.sessionselectpage.limitcheckbox.GetValue(),
 			'n limit':
