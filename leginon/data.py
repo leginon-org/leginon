@@ -1302,7 +1302,6 @@ class CorrectorPlanData(InSessionData):
 			('bad_rows', tuple),
 			('bad_cols', tuple),
 			('clip_limits', tuple),
-			('tem', InstrumentData),
 			('ccdcamera', InstrumentData),
 		)
 	typemap = classmethod(typemap)
@@ -1731,6 +1730,7 @@ class NavigatorSettingsData(SettingsData):
 			('complete state', bool),
 			('override preset', bool),
 			('camera settings', CameraSettingsData),
+			('instruments', dict),
 		)
 	typemap = classmethod(typemap)
 
