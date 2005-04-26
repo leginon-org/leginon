@@ -20,11 +20,13 @@ import math
 import gui.wx.Navigator
 import newdict
 import instrument
+import presets
 
 class Navigator(node.Node):
 	panelclass = gui.wx.Navigator.Panel
 	settingsclass = data.NavigatorSettingsData
 	defaultsettings = {
+		'instruments': {'tem':None, 'ccdcamera':None},
 		'pause time': 2.5,
 		'move type': 'image shift',
 		'check calibration': True,
@@ -49,7 +51,7 @@ class Navigator(node.Node):
 				}
 			),
 	}
-	eventinputs = node.Node.eventinputs
+	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs
 	eventoutputs = node.Node.eventoutputs + [event.CameraImagePublishEvent]
 
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -64,6 +66,7 @@ class Navigator(node.Node):
 		self.calclients['image beam shift'] = calibrationclient.ImageBeamShiftCalibrationClient(self)
 
 		self.pcal = calibrationclient.PixelSizeCalibrationClient(self)
+		self.presetsclient = presets.PresetsClient(self)
 		self.stagelocations = []
 		self.getLocationsFromDB()
 
@@ -195,11 +198,23 @@ class Navigator(node.Node):
 	def _acquireImage(self):
 		errstr = 'Acquire image failed: %s'
 		if self.settings['override preset']:
+			instruments = self.settings['instruments']
+			try:
+				self.instrument.setTEM(instruments['tem'])
+				self.instrument.setCCDCamera(instruments['ccdcamera'])
+			except ValueError, e:
+				self.logger.error('Cannot set instruments: %s' % (e,))
+				return
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			except Exception, e:
 				self.logger.error(errstr % e)
 				return
+		else:
+			if self.presetsclient.getCurrentPreset() is None:
+				self.logger.error('Preset is unknown and preset override is off')
+				return
+
 		try:
 			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		except:
