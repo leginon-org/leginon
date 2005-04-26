@@ -1043,8 +1043,8 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		ymod = gonmodel.GonModel()
 		ymod.fromDict(ymodcal)
 
-		xmagcal = self.retrieveMagCalibration(scope['high tension'], scope['magnification'], 'x', tem=tem, cam=ccd)
-		ymagcal = self.retrieveMagCalibration(scope['high tension'], scope['magnification'], 'y', tem=tem, cam=ccd)
+		xmagcal = self.retrieveMagCalibration(tem, ccd, scope['high tension'], scope['magnification'], 'x')
+		ymagcal = self.retrieveMagCalibration(tem, ccd, scope['high tension'], scope['magnification'], 'y')
 		self.node.logger.debug('x mag cal %s' % (xmagcal,))
 		self.node.logger.debug('y mag cal %s' % (ymagcal,))
 

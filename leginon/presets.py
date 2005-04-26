@@ -968,7 +968,7 @@ class PresetsManager(node.Node):
 		## set up instruments for this preset
 		try:
 			self.instrument.setTEM(newpreset['tem']['name'])
-			self.instrument.setCCDCamera(newpreset['tem']['name'])
+			self.instrument.setCCDCamera(newpreset['ccdcamera']['name'])
 		except Exception, e:
 			msg = 'Preset change/target Move failed: %s' % (e,)
 			self.logger.error(msg)
