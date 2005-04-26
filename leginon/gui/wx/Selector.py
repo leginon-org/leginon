@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Selector.py,v $
-# $Revision: 1.9 $
+# $Revision: 1.10 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-01 21:02:19 $
-# $Author: suloway $
+# $Date: 2005-04-26 01:12:39 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -20,7 +20,7 @@ bitmaps = {}
 
 def getBitmap(name):
 	if name is None:
-		return wx.NullBitmap
+		return gui.wx.Icons.icon('null')
 	if name not in bitmaps:
 		bitmaps[name] = gui.wx.Icons.icon(name)
 	bitmap = bitmaps[name]
