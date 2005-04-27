@@ -43,9 +43,11 @@ class	Panel(wx.Window):
 		regioniterator = wx.RegionIterator(region)
 		while(regioniterator):
 			r = regioniterator.GetRect()
-			array = self.source[r.y + yoffset:r.y + yoffset + r.height,
-													r.x + xoffset:r.x + xoffset + r.width]
-			bitmap = numarrayimage.numarray2wxBitmap(array, self.extrema)
+			bitmap = numarrayimage.numarray2wxBitmap(array,
+																								r.x + xoffset, r.y + yoffset,
+																								r.width, r.height,
+																								1.0, 1.0,
+																								self.extrema)
 			sourcedc = wx.MemoryDC()
 			sourcedc.SelectObject(bitmap)
 			dc.Blit(r.x, r.y, r.width, r.height, sourcedc, 0, 0)
