@@ -36,19 +36,25 @@ if($ch6 = $_GET['ch6'])
 if($ch7 = $_GET['ch7'])
 	$channels[] = '7';
 
-$TEMP_DB_HOST = 'cronus1';
-$TEMP_DB_USER = 'usr_object';
-$TEMP_DB_PASS = '';
-$TEMP_DB = 'temperature';
+$TEMPERATURE_DB_HOST = 'cronus1';
+$TEMPERATURE_DB_USER = 'usr_object';
+$TEMPERATURE_DB_PASS = '';
+$TEMPERATURE_DB = 'temperature';
 
-$db =  new mysql ($TEMP_DB_HOST, $TEMP_DB_USER, $TEMP_DB_PASS, $TEMP_DB);
+$db =  new mysql ($TEMPERATURE_DB_HOST, $TEMPERATURE_DB_USER, $TEMPERATURE_DB_PASS, $TEMPERATURE_DB);
 
 $sessionInfo = $leginondata->getSessionInfo($sessionId);
+$instrumentId = $sessionInfo['InstrumentId'];
 $begintime = $sessionInfo['Begin Time'];
 $endtime = $sessionInfo['End Time'];
 $endtime = ($endtime<$begintime) ? 0 : $endtime;
 $begints = $sessionInfo['Begin unixTimestamp'];
 $endts = $sessionInfo['End unixTimestamp'];
+
+$q = "select id, name, instruments from rooms where instruments like '%$instrumentId%' order by id desc";
+list($roominfo) = $db->getSQLResult($q);
+$roomid = $roominfo['id'];
+
 if (!$endtime) {
 	$q = "select @nr:=adddate(from_unixtime('$begints'), interval 1 day) as `nt`, unix_timestamp(@nr) as nts, date_format(@nr, '%Y-%d-%m %T') as fnt ";
 	list($r) = $db->getSQLResult($q);
@@ -56,8 +62,9 @@ if (!$endtime) {
 	$endts= $r['nts'];
 }
 
-$q = 'SELECT `name` , `description`, `color` '
+$q = 'SELECT `name` , `channel_nb`, `description`, `color` '
         . ' FROM `channelinfo` '
+        . ' WHERE `roomid` ='.$roomid.' '
         . ' ORDER BY name ASC '
         . ' LIMIT 8 ';
 $channelinfo = $db->getSQLResult($q);
@@ -89,15 +96,16 @@ function reducearray($data,$delta) {
 	return $newdata;
 }
 
-function gettemp($channel,$sdate,$edate,$delta=1,$optimize=false) {
+function gettemp($roomid, $channel,$sdate,$edate,$delta=1,$optimize=false) {
 	global $db;
 	$tdata = array();
 	if ($channel>=0) {
-		$q="SELECT distinct UNIX_TIMESTAMP(time) as timestamp, temperature  
-		from temperature 
-		where channel = '$channel'
-		and time between from_unixtime('".$sdate."') and from_unixtime('".$edate."') 
-		order by time ASC"; 
+		$q="SELECT distinct UNIX_TIMESTAMP(time) as timestamp, temperature  "
+			."from temperature "
+			."where channel = '$channel' "
+			."and roomId = '$roomid' "
+			."and time between from_unixtime('".$sdate."') and from_unixtime('".$edate."') "
+			."order by time ASC"; 
 	}
 	$tdata = $db->getSQLResult($q);
 	if ($optimize) {
@@ -139,7 +147,7 @@ function TimeCallback($unixtimestamp) {
 
 if($channels)
 foreach ($channels as $k=>$channel) {
-	$tdata = gettemp($channel,$begints,$endts,$delta, $optimizedpoint);
+	$tdata = gettemp($roomid, $channel,$begints,$endts,$delta, $optimizedpoint);
 	if ($viewdata && $tdata) {
 		echo "--- Channel: ".$labels[$channel]." --- <BR>";
 		echo dumpData($tdata);
@@ -166,7 +174,6 @@ if ($viewsql || $viewdata) {
 
 // Setup the basic graph
 $Ymax = (empty($datay)) ? 25 : 'auto';
-$Ymax = "100";
 
 
 	if ($histogram) {
