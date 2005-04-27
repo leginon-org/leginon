@@ -111,18 +111,31 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		if self.settings['ignore images']:
 			return
-		targetlist = self.newTargetList(image=imagedata)
-		self.findTargets(imagedata, targetlist)
-		self.makeTargetListEvent(targetlist)
-		self.logger.debug('Publishing targetlist...')
+
+		# check if there is already a target list for this image
+		previouslists = self.researchTargetLists(image=imagedata)
+		if previouslists:
+			# I hope you can only have one target list on an image, right?
+			targetlist = previouslists[0]
+			db = False
+			self.logger.info('Already processed this image... republishing')
+		else:
+			# no previous list, so create one and fill it with targets
+			targetlist = self.newTargetList(image=imagedata)
+			self.findTargets(imagedata, targetlist)
+			self.logger.debug('Publishing targetlist...')
+			db = True
+
+		## if queue is turned on, do not notify other nodes of each target list publish
 		if self.settings['queue']:
 			pubevent = False
 		else:
 			pubevent = True
-		self.publish(targetlist, database=True, pubevent=pubevent)
+		self.publish(targetlist, database=db, pubevent=pubevent)
 		self.logger.debug('Published targetlist %s' % (targetlist.dbid,))
 
 		if self.settings['wait for done']:
+			self.makeTargetListEvent(targetlist)
 			self.setStatus('waiting')
 			self.waitForTargetListDone()
 			self.setStatus('processing')
@@ -154,17 +167,6 @@ class ClickTargetFinder(TargetFinder):
 			self.start()
 
 	def findTargets(self, imdata, targetlist):
-		## check if targets already found on this image
-		previous = self.researchTargets(image=imdata)
-		if previous:
-			self.logger.warning('There are %s existing targets for this image'
-													% (len(previous),))
-#			if self.settings['no resubmit']:
-#				self.logger.error('You are not allowed to submit targets again')
-#				return
-
-		# XXX would be nice to display existing targets too
-
 		# display image
 		map(self.setTargets, zip([[]]*len(self.typenames), self.typenames))
 		self.setImage(imdata['image'], 'Image')

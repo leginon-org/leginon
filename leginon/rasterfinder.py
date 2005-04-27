@@ -180,11 +180,6 @@ class RasterFinder(targetfinder.TargetFinder):
 		self.ice()
 
 	def findTargets(self, imdata, targetlist):
-		## check if targets already found on this image
-		previous = self.researchTargets(image=imdata)
-		if previous:
-			return
-
 		## display image
 		self.setImage(imdata['image'], 'Original')
 

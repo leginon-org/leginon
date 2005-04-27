@@ -47,6 +47,11 @@ class TargetHandler(object):
 			self.logger.debug('Found %s targets' % (len(havelist),))
 		return havelist
 
+	def researchTargetLists(self, **kwargs):
+		targetlist = data.ImageTargetListData(session=self.session, **kwargs)
+		targetlists = self.research(datainstance=targetlist)
+		return targetlists
+
 	def lastTargetNumber(self, **kwargs):
 		'''
 		Returns the number of the last target given the constraints

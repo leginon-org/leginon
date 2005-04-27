@@ -444,11 +444,6 @@ class HoleFinder(targetfinder.TargetFinder):
 		return hfprefs
 
 	def findTargets(self, imdata, targetlist):
-		## check if targets already found on this image
-		previous = self.researchTargets(image=imdata)
-		if previous:
-			return
-
 		self.setStatus('processing')
 
 		## auto or not?
