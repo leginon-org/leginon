@@ -66,7 +66,6 @@ class Focuser(acquisition.Acquisition):
 
 		self.cortypes = ['cross', 'phase']
 		self.manualchecklock = threading.Lock()
-		self.parameter = 'Defocus'
 		self.maskradius = 1.0
 		self.increment = 5e-7
 		self.man_power = None
@@ -369,12 +368,12 @@ class Focuser(acquisition.Acquisition):
 		self.onManualCheckDone()
 		self.logger.info('Manual focus check completed')
 
-	def uiFocusUp(self):
-		self.changeFocus('up')
+	def uiFocusUp(self, parameter):
+		self.changeFocus(parameter, 'up')
 		self.panel.manualUpdated()
 
-	def uiFocusDown(self):
-		self.changeFocus('down')
+	def uiFocusDown(self, parameter):
+		self.changeFocus(parameter, 'down')
 		self.panel.manualUpdated()
 
 	def uiResetDefocus(self):
@@ -408,35 +407,31 @@ class Focuser(acquisition.Acquisition):
 		self.panel.manualUpdated()
 
 	def setFocus(self, value):
-		errstr = 'Set focus failed: %s'
 		self.manualchecklock.acquire()
-		self.logger.info('Changing to zero defocus')
+		self.logger.info('Setting defocus to %s' % (value,))
 		try:
-			if self.parameter == 'Stage Z':
-				self.instrument.tem.StagePosition = {'z': value}
-			elif self.parameter == 'Defocus':
-				self.instrument.tem.Defocus = value
+			self.instrument.tem.Defocus = value
 		finally:
 			self.manualchecklock.release()
 			self.panel.manualUpdated()
 
-	def changeFocus(self, direction):
+	def changeFocus(self, parameter, direction):
 		delta = self.increment
 		self.manualchecklock.acquire()
-		self.logger.info('Changing %s %s %s' % (self.parameter, direction, delta))
+		self.logger.info('Changing %s %s %s' % (parameter, direction, delta))
 		try:
-			if self.parameter == 'Stage Z':
+			if parameter == 'Stage Z':
 				value = self.instrument.tem.StagePosition['z']
-			elif self.parameter == 'Defocus':
+			elif parameter == 'Defocus':
 				value = self.instrument.tem.Defocus
 			if direction == 'up':
 				value += delta
 			elif direction == 'down':
 				value -= delta
 			
-			if self.parameter == 'Stage Z':
+			if parameter == 'Stage Z':
 				self.instrument.tem.StagePosition = {'z': value}
-			elif self.parameter == 'Defocus':
+			elif parameter == 'Defocus':
 				self.instrument.tem.Defocus = value
 		except Exception, e:
 			self.logger.exception('Change focus failed: %s' % e)
@@ -445,7 +440,7 @@ class Focuser(acquisition.Acquisition):
 
 		self.manualchecklock.release()
 
-		self.logger.info('Changed %s %s %s' % (self.parameter, direction, delta,))
+		self.logger.info('Changed %s %s %s' % (parameter, direction, delta,))
 
 	def correctStig(self, deltax, deltay):
 		stig = self.instrument.tem.Stigmator

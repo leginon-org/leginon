@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.27 $
+# $Revision: 1.28 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-07 17:46:51 $
+# $Date: 2005-04-27 21:31:52 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -336,11 +336,6 @@ class ManualFocusDialog(wx.MiniFrame):
 																										'Manual Focus Settings',
 																										'Settings')
 
-		n = self.parameter.FindString(self.node.parameter)
-		if n == wx.NOT_FOUND:
-			raise RuntimeError
-		self.parameter.SetSelection(n)
-
 		self.Bind(gui.wx.Events.EVT_PLAYER, self.onPlayer)
 		self.Bind(wx.EVT_TOOL, self.onSettingsTool, id=gui.wx.ToolBar.ID_SETTINGS)
 		self.Bind(wx.EVT_TOOL, self.onPlayTool, id=gui.wx.ToolBar.ID_PLAY)
@@ -411,11 +406,13 @@ class ManualFocusDialog(wx.MiniFrame):
 
 	def onPlusTool(self, evt):
 		self._manualEnable(False)
-		threading.Thread(target=self.node.uiFocusUp).start()
+		par = self.parameter.GetSelectedValue()
+		threading.Thread(target=self.node.uiFocusUp, args=(par,)).start()
 
 	def onMinusTool(self, evt):
 		self._manualEnable(False)
-		threading.Thread(target=self.node.uiFocusDown).start()
+		par = self.parameter.GetSelectedValue()
+		threading.Thread(target=self.node.uiFocusDown, args=(par,)).start()
 
 	def onValueTool(self, evt):
 		self._manualEnable(False)
