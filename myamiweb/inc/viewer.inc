@@ -404,6 +404,26 @@ class view {
 		
 	}
 
+	function setMinpix($n) {
+		if (is_numeric($n))
+			$this->minpix = $n;
+	}
+
+	function setMaxpix($n) {
+		if (is_numeric($n))
+			$this->maxpix = $n;
+	}
+
+	function setFFT($state) {
+		if ($state)
+			$this->btfftstate = "on";
+	}
+
+	function setColorMap($state) {
+		if ($state)
+			$this->colormap= "1";
+	}
+
 	function setSize($size) {
 		$this->size = $size;
 	}

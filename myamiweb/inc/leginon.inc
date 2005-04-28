@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.45 $
- *	@version $Id: leginon.inc,v 1.45 2005-04-21 01:06:48 dfellman Exp $
+ *	@version $Revision: 1.46 $
+ *	@version $Id: leginon.inc,v 1.46 2005-04-28 18:45:56 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -103,18 +103,32 @@ class leginondata {
 		$selectcomment = ($comment) ? 
 				"if (length(s.comment)>0, concat(s.name,' - ',s.comment), s.name)" : "s.name";
 		if (is_numeric($projectId)) {
-			$projectjoin = (is_numeric($projectId)) ? 
-				"left join project.projectexperiments p on (p.name = s.name) " : "";
-			$projectwhere = (is_numeric($projectId)) ? 
-				" and p.projectId='$projectId' " : "";
+			// --- project database information
+			$project = &new project;
+			$db  = &$project->mysql;
+			$q = "select p.name from project.projectexperiments p where p.projectId='$projectId'";
+			$psessions = $db->getSQLResult($q);
+			foreach ($psessions as $psession) {
+				$ps[$psession['name']] = $psession['name'];
+			}
+			$sessions = $this->getSessions($comment, false, $like);
+			foreach ($sessions as $session) {
+				$s[$session['name_org']] = $session;
+			}
+			// --- get common sessions 
+			$i = array_intersect(array_keys($s), array_keys($ps));
+			$ps = array();
+			foreach ($i as $d) {
+				$ps[] = $s[$d]; 
+			}
+			return $ps;
+
 		}
 
-		$q="select distinct(s.DEF_id) as `id`, ".$selectcomment." as `name` "
+		$q="select distinct(s.DEF_id) as `id`, ".$selectcomment." as `name`, s.Name as `name_org` "
 		."from SessionData s "
 		."left join AcquisitionImageData a on (s.`DEF_id` = a.`REF|SessionData|Session`) "
-		.$projectjoin
 		."where a.`REF|SessionData|Session` <> 'NULL' "
-		.$projectwhere
 		.$wherelike
 		."order by s.DEF_timestamp DESC ";
 
@@ -137,7 +151,7 @@ class leginondata {
 		."time_to_sec(s.`DEF_timestamp`)+time_to_sec(a.`DEF_timestamp`)) as `Total Duration`, "
 		."s.`Image path`, "
 		."concat(i.name,' - ',ic.name) as Instrument, "
-		."sc.`REF|InstrumentData|tem`  as `Instrument description`, "
+		."sc.`REF|InstrumentData|tem`  as `InstrumentId`, "
 		."u.`full name` as User "
 		."from `SessionData` s "
 		."left join UserData u on (u.`DEF_id`=s.`REF|UserData|user`) "
@@ -1085,7 +1099,7 @@ class leginondata {
 	    while($row = mysql_fetch_row($result))
 		$tables[] = $row[0];
 	    // --- Get Reference Ids
-	    $where = " `DEF_Id` = $sessionId ";
+	    $where = " `DEF_id` = $sessionId ";
 	    $Rinfo = $this->mysql->SQLQuery("SELECT date_format(DEF_timestamp,'%m/%d/%Y') as date, `name` from SessionData where $where");
 	    $result = mysql_fetch_array($Rinfo);
 	    $name = $result['name'];
@@ -1103,9 +1117,20 @@ class leginondata {
 
 	    $queries = array();
 	    foreach($ref_tables as $table) {
-		$queries[] = "delete from `$table` where $where ";
+		$w = ($table=="SessionData") ? $where : " `REF|SessionData|session` = $sessionId ";
+		$q = "select count(DEF_id) as nb from `$table` where $w ";
+		list($r) = $this->mysql->getSQLResult($q);
+		$nb = $r['nb'];
+		if ($nb) {
+			// $q = "delete from `$table` where $w ";
+			$q = "$nb from $table ";
+			echo $q;
+			echo "<br>";
+			$queries[] = $q;
+		}
 	    }
-	    $this->mysql->SQLQueries($queries);
+
+	    // $this->mysql->SQLQueries($queries);
 	}
 
 	function dumpDefaultTables($tables) {

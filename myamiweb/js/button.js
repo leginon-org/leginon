@@ -52,12 +52,14 @@ filter_bt_over_on=new Image();
 filter_bt_over_on.src=path+"filter_bt_over_on.gif";
 
 function imageon(imagename, name, type) {
-	document.images[eval("\"" + imagename + "\"")].src = eval(name+type+"_on.src");
+	if (cimg=document.images[eval("\"" + imagename + "\"")])
+		cimg.src = eval(name+type+"_on.src");
 	eval(imagename+"_st=true");
 }
 
 function imageoff(imagename, name, type) {
-	document.images[eval("\"" + imagename + "\"")].src = eval(name+type+"_off.src");
+	if (cimg=document.images[eval("\"" + imagename + "\"")])
+		cimg.src = eval(name+type+"_off.src");
 	eval(imagename+"_st=false");
 }
 
