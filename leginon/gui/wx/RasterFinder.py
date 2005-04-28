@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-15 00:23:10 $
+# $Date: 2005-04-28 21:00:48 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -247,7 +247,7 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 
 	def onAnalyzeIceButton(self, evt):
 		self.setNodeSettings()
-		self.node.ice()
+		threading.Thread(target=self.node.ice).start()
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
