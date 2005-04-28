@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.14 $
+# $Revision: 1.15 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-28 21:00:48 $
+# $Date: 2005-04-28 21:10:11 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -19,6 +19,7 @@ import wx.lib.filebrowsebutton as filebrowse
 from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.TargetTemplate
 import gui.wx.ToolBar
+import threading
 
 class Panel(gui.wx.TargetFinder.Panel):
 	def initialize(self):
