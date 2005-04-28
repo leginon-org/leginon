@@ -68,8 +68,8 @@ $q = 'SELECT `name` , `channel_nb`, `description`, `color` '
         . ' ORDER BY name ASC '
         . ' LIMIT 8 ';
 $channelinfo = $db->getSQLResult($q);
-foreach ($channelinfo as $k=>$a) {
-	$channel = $k; 
+foreach ($channelinfo as $a) {
+	$channel = $a[channel_nb]; 
 	$labels[$channel] = (empty($a[description])) ? $channel : $a[description];
 	$colors[$channel] = $a['color'];
 }
