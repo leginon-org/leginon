@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.28 $
+# $Revision: 1.29 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-27 21:31:52 $
+# $Date: 2005-04-28 21:22:24 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -406,12 +406,12 @@ class ManualFocusDialog(wx.MiniFrame):
 
 	def onPlusTool(self, evt):
 		self._manualEnable(False)
-		par = self.parameter.GetSelectedValue()
+		par = self.parameter.GetStringSelection()
 		threading.Thread(target=self.node.uiFocusUp, args=(par,)).start()
 
 	def onMinusTool(self, evt):
 		self._manualEnable(False)
-		par = self.parameter.GetSelectedValue()
+		par = self.parameter.GetStringSelection()
 		threading.Thread(target=self.node.uiFocusDown, args=(par,)).start()
 
 	def onValueTool(self, evt):
