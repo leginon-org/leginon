@@ -169,6 +169,11 @@ class	Panel(wx.Window):
 
 		if self.source is None:
 			self.extrema = None
+			self.scaledwidth, self.scaledheight = None, None
+			self.ignoresize = True
+			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
+			self.SetScrollbar(wx.VERTICAL, 0, 0, 0)
+			self.ignoresize = False
 			dc = wx.MemoryDC()
 			dc.SelectObject(self.buffer)
 			dc.Clear()
@@ -180,6 +185,15 @@ class	Panel(wx.Window):
 
 		clientwidth, clientheight = self.GetClientSize()
 		clientregion = wx.Region(0, 0, clientwidth, clientheight)
+
+		if self.scaledwidth is not None:
+			scrollx = float(self.GetScrollPos(wx.HORIZONTAL))/self.scaledwidth
+		else:
+			scrollx = 0
+		if self.scaledheight is not None:
+			scrolly = float(self.GetScrollPos(wx.VERTICAL))/self.scaledheight
+		else:
+			scrolly = 0
 
 		self.scaledwidth = self.source.shape[1]
 		self.scaledheight = self.source.shape[0]
@@ -196,8 +210,8 @@ class	Panel(wx.Window):
 		clientwidth, clientheight = self.GetClientSize()
 
 		if self.scaledheight > clientheight:
-			bitmapy = 0
-			self.SetScrollbar(wx.VERTICAL, 0, clientheight, self.scaledheight)
+			bitmapy = -int(round(self.scaledheight*scrolly))
+			self.SetScrollbar(wx.VERTICAL, -bitmapy, clientheight, self.scaledheight)
 		else:
 			bitmapy = int(round((clientheight - self.scaledheight)/2.0))
 			self.SetScrollbar(wx.VERTICAL, 0, 0, 0)
@@ -205,8 +219,8 @@ class	Panel(wx.Window):
 		clientwidth, clientheight = self.GetClientSize()
 
 		if self.scaledwidth > clientwidth:
-			bitmapx = 0
-			self.SetScrollbar(wx.HORIZONTAL, 0, clientwidth, self.scaledwidth)
+			bitmapx = -int(round(self.scaledwidth*scrollx))
+			self.SetScrollbar(wx.HORIZONTAL, -bitmapx, clientwidth, self.scaledwidth)
 		else:
 			bitmapx = int(round((clientwidth - self.scaledwidth)/2.0))
 			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
