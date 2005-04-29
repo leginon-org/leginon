@@ -183,8 +183,39 @@ class	Panel(wx.Window):
 
 		self.scaledwidth = self.source.shape[1]
 		self.scaledheight = self.source.shape[0]
-		bitmapx = max(0, int(round((clientwidth - self.scaledwidth)/2.0)))
-		bitmapy = max(0, int(round((clientheight - self.scaledheight)/2.0)))
+
+		width, height = self.GetSize()
+
+		self.ignoresize = True
+
+		if self.scaledwidth > width:
+			self.SetScrollbar(wx.HORIZONTAL, 0, width, self.scaledwidth, False)
+		else:
+			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
+
+		clientwidth, clientheight = self.GetClientSize()
+
+		if self.scaledheight > clientheight:
+			bitmapy = 0
+			self.SetScrollbar(wx.VERTICAL, 0, clientheight, self.scaledheight)
+		else:
+			bitmapy = int(round((clientheight - self.scaledheight)/2.0))
+			self.SetScrollbar(wx.VERTICAL, 0, 0, 0)
+
+		clientwidth, clientheight = self.GetClientSize()
+
+		if self.scaledwidth > clientwidth:
+			bitmapx = 0
+			self.SetScrollbar(wx.HORIZONTAL, 0, clientwidth, self.scaledwidth)
+		else:
+			bitmapx = int(round((clientwidth - self.scaledwidth)/2.0))
+			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
+
+		self.ignoresize = False
+
+		#bitmapx = max(0, int(round((clientwidth - self.scaledwidth)/2.0)))
+		#bitmapy = max(0, int(round((clientheight - self.scaledheight)/2.0)))
+
 		bitmapregion = wx.Region(bitmapx, bitmapy,
 															self.scaledwidth, self.scaledheight)
 
@@ -234,8 +265,6 @@ class	Panel(wx.Window):
 			dc.Clear()
 			dc.SelectObject(wx.NullBitmap)
 			return
-
-		# region of the bitmap relative to the client
 
 		self.ignoresize = True
 
