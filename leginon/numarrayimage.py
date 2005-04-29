@@ -43,16 +43,24 @@ def scaleImage(image, fromrange, torange):
 	offset = scale*(torange[0] - fromrange[0])
 	return image.point(lambda i: i * scale + offset)
 
-def numarray2RGBImage(array, x=0, y=0, width=None, height=None, xscale=1.0, yscale=1.0, fromrange=None, filter=Image.BICUBIC):
-	if width is None:
-		width = int(round(array.shape[1]*xscale))
-	if height is None:
-		height = int(round(array.shape[0]*yscale))
+def numarray2RGBImage(array, x=0, y=0, width=None, height=None, imagewidth=None, imageheight=None, fromrange=None, filter=Image.BICUBIC):
+	if imagewidth is None:
+		imagewidth = array.shape[1]
+	if imageheight is None:
+		imageheight = array.shape[0]
 
-	sx = x/xscale
-	sy = y/yscale
-	swidth = width/xscale
-	sheight = height/yscale
+	if width is None:
+		width = imagewidth - x
+	if height is None:
+		height = imageheight - y
+
+	if fromrange is None:
+		fromrange = image.getextrema()
+
+	if imagewidth == array.shape[1] and imageheight == array.shape[0]:
+		image = numarray2Image(array[y:y + height, x:x + width])
+		image = scaleImage(image, fromrange, (0, 255))
+		return image.convert('RGB')
 
 	if filter == Image.NEAREST:
 		pad = 1
@@ -62,25 +70,30 @@ def numarray2RGBImage(array, x=0, y=0, width=None, height=None, xscale=1.0, ysca
 		pad = 2
 	else:
 		pad = 0
-	row1 = max(0, int(math.floor(sy)) - pad)
-	row2 = min(array.shape[0], int(math.ceil(sy + sheight)) + pad)
-	column1 = max(0, int(math.floor(sx)) - pad)
-	column2 = min(array.shape[1], int(math.ceil(sx + swidth)) + pad)
 
-	image = numarray2Image(array[row1:row2, column1:column2])
+	scalex = (float(imagewidth)/array.shape[1])
+	scaley = (float(imageheight)/array.shape[0])
 
-	if fromrange is None:
-		fromrange = image.getextrema()
+	scaledx = x/scalex
+	scaledy = y/scaley
+	scaledwidth = width/scalex
+	scaledheight = height/scaley
+
+	sourcex0 = max(0, int(math.floor(scaledx - pad)))
+	sourcey0 = max(0, int(math.floor(scaledy - pad)))
+	sourcex1 = min(array.shape[1], int(math.ceil(scaledx + scaledwidth + pad)))
+	sourcey1 = min(array.shape[0], int(math.ceil(scaledy + scaledheight + pad)))
+
+	image = numarray2Image(array[sourcey0:sourcey1, sourcex0:sourcex1])
 
 	image = scaleImage(image, fromrange, (0, 255))
 
-	size = int(round(image.size[0]*xscale)), int(round(image.size[1]*yscale))
-	image = image.resize(size, filter)
-	left = int(round((sx - column1)*xscale))
-	upper = int(round((sy - row1)*yscale))
-	right = left + width
-	bottom = upper + height
-	image = image.crop((left, upper, right, bottom))
+	left = scaledx - sourcex0
+	upper = scaledy - sourcey0
+	right = left + scaledwidth
+	bottom = upper + scaledheight
+	image = image.transform((width, height), Image.EXTENT,
+													(left, upper, right, bottom), filter)
 
 	return image.convert('RGB')
 

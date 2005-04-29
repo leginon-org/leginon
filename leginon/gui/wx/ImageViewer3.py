@@ -46,7 +46,7 @@ class	Panel(wx.Window):
 			bitmap = numarrayimage.numarray2wxBitmap(array,
 																								r.x + xoffset, r.y + yoffset,
 																								r.width, r.height,
-																								1.0, 1.0,
+																								None, None,
 																								self.extrema)
 			sourcedc = wx.MemoryDC()
 			sourcedc.SelectObject(bitmap)
