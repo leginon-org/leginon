@@ -77,13 +77,18 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			for dbid, targetlist in active.items():
 				if dbid in done:
 					continue
-				self.processTargetList(targetlist)
+				state = self.player.wait()
+				if state != 'stopqueue':
+					self.processTargetList(targetlist)
+					self.player.play()
 				donetargetlist = data.DequeuedImageTargetListData(list=targetlist, queue=self.targetlistqueue)
 				self.publish(donetargetlist, database=True)
+			self.player.play()
 
 	def processData(self, newdata):
 		if isinstance(newdata, data.ImageTargetListData):
 			self.processTargetList(newdata)
+			self.player.play()
 		if isinstance(newdata, data.QueueData):
 			self.processTargetListQueue(newdata)
 
@@ -143,7 +148,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			state = self.player.wait()
 			self.setStatus('processing')
 			# abort
-			if state == 'stop':
+			if state in ('stop', 'stopqueue'):
 				self.logger.info('Aborting current target list')
 				targetliststatus = 'aborted'
 				donetarget = data.AcquisitionImageTargetData(initializer=target, status='aborted')
@@ -194,7 +199,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					self.setStatus('user input')
 				state = self.player.wait()
 				self.setStatus('processing')
-				if state == 'stop':
+				if state in ('stop', 'stopqueue'):
 					self.logger.info('Aborted')
 					break
 
@@ -209,7 +214,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.publish(donetarget, database=True)
 			self.logger.debug('Done target published')
 
-		self.player.play()
 		self.reportTargetListDone(newdata.dmid, targetliststatus)
 		self.setStatus('idle')
 

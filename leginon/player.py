@@ -42,6 +42,16 @@ class _Player(threading._Verbose):
 		finally:
 			self.__cond.release()
 
+	def stopqueue(self):
+		self.__cond.acquire()
+		try:
+			self.__flag = 'stopqueue'
+			self.__cond.notifyAll()
+			if callable(self.__callback):
+				self.__callback(self.__flag)
+		finally:
+			self.__cond.release()
+
 	def wait(self, timeout=None):
 		self.__cond.acquire()
 		try:

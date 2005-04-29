@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.33 $
+# $Revision: 1.34 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-01 22:35:55 $
+# $Date: 2005-04-29 23:03:57 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -42,6 +42,9 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT,
 													'stop',
 													shortHelpString='Abort')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT_QUEUE,
+													'stop_queue',
+													shortHelpString='Abort Queue')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET,
 													'simulatetarget',
 													shortHelpString='Simulate Target')
@@ -58,6 +61,7 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 		self.toolbar.Realize()
 
 		# image
@@ -84,6 +88,8 @@ class Panel(gui.wx.Node.Panel):
 											id=gui.wx.ToolBar.ID_PAUSE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
 											id=gui.wx.ToolBar.ID_ABORT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onStopQueueTool,
+											id=gui.wx.ToolBar.ID_ABORT_QUEUE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSimulateTargetTool,
 											id=gui.wx.ToolBar.ID_SIMULATE_TARGET)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSimulateTargetLoopTool,
@@ -111,33 +117,51 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 		self.node.player.play()
 
 	def onPauseTool(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 		self.node.player.pause()
 
 	def onStopTool(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 		self.node.player.stop()
+
+	def onStopQueueTool(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.node.player.stopqueue()
 
 	def onPlayer(self, evt):
 		if evt.state == 'play':
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True)
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, True)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, True)
 		elif evt.state == 'pause':
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False) 
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, True)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, True)
 		elif evt.state == 'stop':
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True) 
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, True)
+		elif evt.state == 'stopqueue':
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True) 
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, True)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 
 	def onBrowseImagesTool(self, evt):
 		frame = wx.Frame(None, -1, 'Image Browser Test')
