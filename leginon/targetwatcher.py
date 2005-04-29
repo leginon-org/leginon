@@ -82,7 +82,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					self.logger.info('Queue aborted, skipping target list')
 				else:
 					self.processTargetList(targetlist)
-					self.player.play()
+					state = self.player.wait()
+					if state == 'stopqueue':
+						continue
+					else:
+						self.player.play()
 				donetargetlist = data.DequeuedImageTargetListData(list=targetlist, queue=self.targetlistqueue)
 				self.publish(donetargetlist, database=True)
 			self.player.play()
