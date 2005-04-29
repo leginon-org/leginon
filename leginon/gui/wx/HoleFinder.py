@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleFinder.py,v $
-# $Revision: 1.34 $
+# $Revision: 1.35 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-01 23:06:11 $
+# $Date: 2005-04-29 23:41:47 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -498,6 +498,7 @@ class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 																							'Skip auto picking of holes')
 		self.widgets['queue'] = wx.CheckBox(self, -1,
 																							'Queue up targets')
+		self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['user check'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['skip'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -508,6 +509,11 @@ class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		return tfsbsz + [sbsz]
+
+	def onQueueCheckbox(self, evt):
+		state = evt.GetValue()
+		print 'CHECK STATE', state
+		evt.Skip()
 
 if __name__ == '__main__':
 	class App(wx.App):
