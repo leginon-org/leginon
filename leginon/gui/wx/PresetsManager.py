@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.40 $
+# $Revision: 1.41 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-25 22:41:05 $
+# $Date: 2005-05-02 22:13:15 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -643,12 +643,15 @@ class NewDialog(wx.Dialog):
 		wx.Dialog.__init__(self, parent, -1, 'Create New Preset')
 		self.node = node
 
+		instrumentselection = gui.wx.Instrument.SelectionPanel(self)
+		self.GetParent().setInstrumentSelection(instrumentselection)
 		stname = wx.StaticText(self, -1, 'Preset name:')
 		self.tcname = wx.TextCtrl(self, -1, '')
 
 		sz = wx.GridBagSizer(5, 5)
-		sz.Add(stname, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.tcname, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(instrumentselection, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(stname, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.tcname, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		bcreate = wx.Button(self, wx.ID_OK, 'Create')
 		bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
