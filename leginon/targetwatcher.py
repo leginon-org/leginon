@@ -81,6 +81,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				if state == 'stopqueue':
 					self.logger.info('Queue aborted, skipping target list')
 				else:
+					self.revertTargetListZ(targetlist)
 					self.processTargetList(targetlist)
 					state = self.player.wait()
 					if state == 'stopqueue':
@@ -101,6 +102,16 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	def processTargetListQueue(self, newdata):
 		self.targetlistqueue = newdata
 		self.queueupdate.set()
+
+	def revertTargetListZ(self, targetlistdata):
+		'''use the z position of the target list parent image'''
+		imageref = targetlistdata.special_getitem('image', dereference=False)
+		imageid = imageref.dbid
+		imagedata = self.researchDBID(data.AcquisitionImageData, imageid, readimages=False)
+		z = imagedata['scope']['stage position']['z']
+		filename = imagedata['filename']
+		self.logger.info('returning to z=%.4e of parent image %s' % (z, filename,))
+		self.instrument.tem.StagePosition = {'z': z}
 
 	def processTargetList(self, newdata):
 		self.setStatus('processing')
