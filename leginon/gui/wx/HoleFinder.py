@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleFinder.py,v $
-# $Revision: 1.35 $
+# $Revision: 1.36 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-29 23:41:47 $
+# $Date: 2005-05-02 21:53:05 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -511,8 +511,9 @@ class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 		return tfsbsz + [sbsz]
 
 	def onQueueCheckbox(self, evt):
-		state = evt.GetValue()
-		print 'CHECK STATE', state
+		state = evt.IsChecked()
+		parent = self.GetParent()
+		parent.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE, state)
 		evt.Skip()
 
 if __name__ == '__main__':
