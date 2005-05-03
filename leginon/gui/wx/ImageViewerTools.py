@@ -9,6 +9,7 @@ class SizeScaler(wx.Choice):
 		self.height = None
 		self.percentages = [10, 25, 50, 75, 100, 125, 150, 200, 400, 800, 1600]
 		choices = [('%d' % percentage) + '%' for percentage in self.percentages]
+		choices.append('Fit to page')
 		wx.Choice.__init__(self, parent, id, choices=choices)
 		self.SetSelection(self.percentages.index(100))
 		self.Bind(wx.EVT_CHOICE, self.onChoice)
@@ -23,12 +24,16 @@ class SizeScaler(wx.Choice):
 		if self.width is None or self.height is None:
 			return
 
-		i = evt.GetSelection()
-		percentage = self.percentages[i]/100.0
-		width = int(round(percentage*self.width))
-		height = int(round(percentage*self.height))
+		string = evt.GetString()
+		if string == 'Fit to page':
+			evt = Events.FitToPageEvent(self)
+		else:
+			i = evt.GetSelection()
+			percentage = self.percentages[i]/100.0
+			width = int(round(percentage*self.width))
+			height = int(round(percentage*self.height))
 
-		evt = Events.ScaleSizeEvent(self, width, height)
+			evt = Events.ScaleSizeEvent(self, width, height)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 def getValueScaleBitmap(extrema, fromrange, width, height):

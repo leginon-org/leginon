@@ -3,10 +3,12 @@ import wx
 SetNumarrayEventType = wx.NewEventType()
 ScaleSizeEventType = wx.NewEventType()
 ScaleValuesEventType = wx.NewEventType()
+FitToPageEventType = wx.NewEventType()
 
 EVT_SET_NUMARRAY = wx.PyEventBinder(SetNumarrayEventType)
 EVT_SCALE_SIZE = wx.PyEventBinder(ScaleSizeEventType)
 EVT_SCALE_VALUES = wx.PyEventBinder(ScaleValuesEventType)
+EVT_FIT_TO_PAGE = wx.PyEventBinder(FitToPageEventType)
 
 class SetNumarrayEvent(wx.PyCommandEvent):
 	def __init__(self, source, array):
@@ -39,3 +41,7 @@ class ScaleValuesEvent(wx.PyCommandEvent):
 	def GetValueRange(self):
 		return self.valuerange
 
+class FitToPageEvent(wx.PyCommandEvent):
+	def __init__(self, source):
+		wx.PyCommandEvent.__init__(self, FitToPageEventType, source.GetId())
+		self.SetEventObject(source)

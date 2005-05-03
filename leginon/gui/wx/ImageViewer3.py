@@ -10,6 +10,8 @@ class	Window(wx.Window):
 
 		self.ignoresize = False
 
+		self.fit_to_page = False
+
 		clientwidth, clientheight = self.GetClientSize()
 		self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
 
@@ -207,8 +209,9 @@ class	Window(wx.Window):
 		self.extrema = numextension.minmax(self.source)
 		self.scaledvaluerange = self.extrema
 
-		clientwidth, clientheight = self.GetClientSize()
-		clientregion = wx.Region(0, 0, clientwidth, clientheight)
+		if self.fit_to_page:
+			self.fitToPage()
+			return
 
 		if self.scaledwidth is not None:
 			scrollx = float(self.GetScrollPos(wx.HORIZONTAL))/self.scaledwidth
@@ -252,6 +255,9 @@ class	Window(wx.Window):
 			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
 
 		self.ignoresize = False
+
+		clientwidth, clientheight = self.GetClientSize()
+		clientregion = wx.Region(0, 0, clientwidth, clientheight)
 
 		if bufferwidth != clientwidth or bufferheight != clientheight:
 			self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
@@ -305,6 +311,10 @@ class	Window(wx.Window):
 			dc.SelectObject(self.buffer)
 			dc.Clear()
 			dc.SelectObject(wx.NullBitmap)
+			return
+
+		if self.fit_to_page:
+			self.fitToPage()
 			return
 
 		self.ignoresize = True
@@ -388,11 +398,9 @@ class	Window(wx.Window):
 			self.Refresh()
 
 	def scaleSize(self, width, height):
+		self.fit_to_page = False
 		if self.source is None:
 			return
-
-		clientwidth, clientheight = self.GetClientSize()
-		clientregion = wx.Region(0, 0, clientwidth, clientheight)
 
 		if self.scaledwidth:
 			scrollx = float(self.GetScrollPos(wx.HORIZONTAL))/self.scaledwidth
@@ -436,6 +444,9 @@ class	Window(wx.Window):
 			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
 
 		self.ignoresize = False
+
+		clientwidth, clientheight = self.GetClientSize()
+		clientregion = wx.Region(0, 0, clientwidth, clientheight)
 
 		bufferwidth = self.buffer.GetWidth()
 		bufferheight = self.buffer.GetHeight()
@@ -508,6 +519,57 @@ class	Window(wx.Window):
 	def getSourceSize(self):
 		return self.source.shape[1], self.source.shape[0]
 
+	def fitToPage(self):
+		self.fit_to_page = True
+		if self.source is None:
+			return
+
+		self.ignoresize = True
+		self.SetScrollbar(wx.VERTICAL, 0, 0, 0)
+		self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
+		self.ignoresize = False
+
+		clientwidth, clientheight = self.GetClientSize()
+		clientregion = wx.Region(0, 0, clientwidth, clientheight)
+
+		bufferwidth = self.buffer.GetWidth()
+		bufferheight = self.buffer.GetHeight()
+		if bufferwidth != clientwidth or bufferheight != clientheight:
+			self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
+
+		sourcewidth = self.source.shape[1]
+		sourceheight = self.source.shape[0]
+		widthscale = float(clientwidth)/sourcewidth
+		heightscale = float(clientheight)/sourceheight
+		if widthscale < heightscale:
+			self.scaledwidth = clientwidth
+			self.scaledheight = int(round(sourceheight*widthscale))
+		elif heightscale < widthscale:
+			self.scaledheight = clientheight
+			self.scaledwidth = int(round(sourcewidth*heightscale))
+		else:
+			self.scaledwidth = clientwidth
+			self.scaledheight = clientheight
+
+		bitmapx = int(round((clientwidth - self.scaledwidth)/2.0))
+		bitmapy = int(round((clientheight - self.scaledheight)/2.0))
+		bitmapregion = wx.Region(bitmapx, bitmapy,
+															self.scaledwidth, self.scaledheight)
+
+		sourceregion = wx.Region()
+		sourceregion.UnionRegion(clientregion)
+		sourceregion.IntersectRegion(bitmapregion)
+
+		dc = wx.MemoryDC()
+		dc.SelectObject(self.buffer)
+		dc.Clear()
+		self.sourceBuffer(dc, sourceregion, (-bitmapx, -bitmapy))
+		dc.SelectObject(wx.NullBitmap)
+
+		self.validregion = sourceregion
+
+		self.Refresh()
+
 class Viewer(wx.Panel):
 	def __init__(self, *args, **kwargs):
 		wx.Panel.__init__(self, *args, **kwargs)
@@ -539,6 +601,7 @@ class Viewer(wx.Panel):
 		self.Bind(Events.EVT_SET_NUMARRAY, self.onSetNumarray)
 		self.Bind(Events.EVT_SCALE_VALUES, self.onScaleValues)
 		self.Bind(Events.EVT_SCALE_SIZE, self.onScaleSize)
+		self.Bind(Events.EVT_FIT_TO_PAGE, self.onFitToPage)
 
 		self.scalevaluesbitmap.Bind(wx.EVT_LEFT_UP, self.onScaleValuesBitmap)
 
@@ -564,6 +627,9 @@ class Viewer(wx.Panel):
 
 	def onScaleSize(self, evt):
 		self.imagewindow.scaleSize(evt.GetWidth(), evt.GetHeight())
+
+	def onFitToPage(self, evt):
+		self.imagewindow.fitToPage()
 
 if __name__ == '__main__':
 	import sys
