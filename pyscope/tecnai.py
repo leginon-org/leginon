@@ -101,6 +101,8 @@ class Tecnai(tem.TEM):
 	def setStagePosition(self, value):
 		# pre-position x and y (maybe others later)
 		value = self.checkStagePosition(value)
+		if not value:
+			return
 		if self.correctedstage:
 			delta = 2e-6
 			stagenow = self.getStagePosition()
