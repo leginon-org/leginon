@@ -32,7 +32,6 @@ class	Window(wx.Window):
 		self.Bind(wx.EVT_SCROLLWIN_PAGEUP, self.onScrollWinPageUp)
 		self.Bind(wx.EVT_SCROLLWIN_PAGEDOWN, self.onScrollWinPageDown)
 		self.Bind(wx.EVT_SCROLLWIN_THUMBTRACK, self.onScrollWinThumbTrack)
-		self.Bind(Events.EVT_SCALE_SIZE, self.onScaleSize)
 
 	def copyBuffer(self, dc, region, offset):
 		xoffset, yoffset = offset
@@ -184,6 +183,9 @@ class	Window(wx.Window):
 
 		self.source = array
 
+		bufferwidth = self.buffer.GetWidth()
+		bufferheight = self.buffer.GetHeight()
+
 		if self.source is None:
 			self.extrema = None
 			self.scaledvaluerange = None
@@ -192,6 +194,9 @@ class	Window(wx.Window):
 			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
 			self.SetScrollbar(wx.VERTICAL, 0, 0, 0)
 			self.ignoresize = False
+			clientwidth, clientheight = self.GetClientSize()
+			if bufferwidth != clientwidth or bufferheight != clientheight:
+				self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
 			dc = wx.MemoryDC()
 			dc.SelectObject(self.buffer)
 			dc.Clear()
@@ -230,6 +235,7 @@ class	Window(wx.Window):
 
 		if self.scaledheight > clientheight:
 			bitmapy = -int(round(self.scaledheight*scrolly))
+			bitmapy = max(bitmapy, clientheight - self.scaledheight)
 			self.SetScrollbar(wx.VERTICAL, -bitmapy, clientheight, self.scaledheight)
 		else:
 			bitmapy = int(round((clientheight - self.scaledheight)/2.0))
@@ -239,6 +245,7 @@ class	Window(wx.Window):
 
 		if self.scaledwidth > clientwidth:
 			bitmapx = -int(round(self.scaledwidth*scrollx))
+			bitmapx = max(bitmapx, clientwidth - self.scaledwidth)
 			self.SetScrollbar(wx.HORIZONTAL, -bitmapx, clientwidth, self.scaledwidth)
 		else:
 			bitmapx = int(round((clientwidth - self.scaledwidth)/2.0))
@@ -246,8 +253,8 @@ class	Window(wx.Window):
 
 		self.ignoresize = False
 
-		#bitmapx = max(0, int(round((clientwidth - self.scaledwidth)/2.0)))
-		#bitmapy = max(0, int(round((clientheight - self.scaledheight)/2.0)))
+		if bufferwidth != clientwidth or bufferheight != clientheight:
+			self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
 
 		bitmapregion = wx.Region(bitmapx, bitmapy,
 															self.scaledwidth, self.scaledheight)
@@ -281,8 +288,9 @@ class	Window(wx.Window):
 		memorydc.SelectObject(wx.NullBitmap)
 
 	def onSize(self, evt):
+		evt.Skip()
+
 		if self.ignoresize:
-			evt.Skip()
 			return
 
 		width, height = self.GetSize()
@@ -379,11 +387,6 @@ class	Window(wx.Window):
 		if dx != 0 or dy != 0:
 			self.Refresh()
 
-		evt.Skip()
-
-	def onScaleSize(self, evt):
-		self.scaleSize(evt.GetWidth(), evt.GetHeight())
-
 	def scaleSize(self, width, height):
 		if self.source is None:
 			return
@@ -416,6 +419,7 @@ class	Window(wx.Window):
 
 		if self.scaledheight > clientheight:
 			bitmapy = -int(round(self.scaledheight*scrolly))
+			bitmapy = max(bitmapy, clientheight - self.scaledheight)
 			self.SetScrollbar(wx.VERTICAL, -bitmapy, clientheight, self.scaledheight)
 		else:
 			bitmapy = int(round((clientheight - self.scaledheight)/2.0))
@@ -425,12 +429,18 @@ class	Window(wx.Window):
 
 		if self.scaledwidth > clientwidth:
 			bitmapx = -int(round(self.scaledwidth*scrollx))
+			bitmapx = max(bitmapx, clientwidth - self.scaledwidth)
 			self.SetScrollbar(wx.HORIZONTAL, -bitmapx, clientwidth, self.scaledwidth)
 		else:
 			bitmapx = int(round((clientwidth - self.scaledwidth)/2.0))
 			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
 
 		self.ignoresize = False
+
+		bufferwidth = self.buffer.GetWidth()
+		bufferheight = self.buffer.GetHeight()
+		if bufferwidth != clientwidth or bufferheight != clientheight:
+			self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
 
 		bitmapregion = wx.Region(bitmapx, bitmapy,
 															self.scaledwidth, self.scaledheight)
@@ -492,24 +502,33 @@ class	Window(wx.Window):
 
 		self.Refresh()
 
+	def getValueRange(self):
+		return self.extrema, self.scaledvaluerange
+
+	def getSourceSize(self):
+		return self.source.shape[1], self.source.shape[0]
+
 class Viewer(wx.Panel):
 	def __init__(self, *args, **kwargs):
 		wx.Panel.__init__(self, *args, **kwargs)
 
 		self.imagewindow = Window(self, -1)
 
+		self.scalesizetool = Tools.SizeScaler(self, -1)
 		self.scalevaluesbutton = wx.Button(self, -1, 'Scale Values')
 		self.scalevaluestool = Tools.ValueScaler(self, -1)
 		self.scalevaluestool.Show(False)
 
 		self.sizer = wx.GridBagSizer(0, 0)
 
-		self.sizer.Add(self.scalevaluesbutton, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		self.sizer.Add(self.scalevaluestool, (1, 0), (1, 1), wx.EXPAND)
-		self.sizer.Add(self.imagewindow, (2, 0), (1, 1), wx.EXPAND|wx.FIXED_MINSIZE)
+		self.sizer.Add(self.scalesizetool, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		self.sizer.Add(self.scalevaluesbutton, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		self.sizer.Add(self.scalevaluestool, (1, 0), (1, 2), wx.EXPAND)
+		self.sizer.Add(self.imagewindow, (2, 0), (1, 2), wx.EXPAND|wx.FIXED_MINSIZE)
 
 		self.sizer.AddGrowableRow(2)
 		self.sizer.AddGrowableCol(0)
+		self.sizer.AddGrowableCol(1)
 
 		self.sizer.SetEmptyCellSize((0, 0))
 
@@ -518,6 +537,7 @@ class Viewer(wx.Panel):
 
 		self.Bind(Events.EVT_SET_NUMARRAY, self.onSetNumarray)
 		self.Bind(Events.EVT_SCALE_VALUES, self.onScaleValues)
+		self.Bind(Events.EVT_SCALE_SIZE, self.onScaleSize)
 
 		self.Bind(wx.EVT_BUTTON, self.onScaleValuesButton, self.scalevaluesbutton)
 
@@ -530,11 +550,14 @@ class Viewer(wx.Panel):
 
 	def setNumarray(self, array):
 		self.imagewindow.setNumarray(array)
-		self.scalevaluestool.setValueRange(self.imagewindow.extrema,
-																				self.imagewindow.scaledvaluerange)
+		self.scalevaluestool.setValueRange(*self.imagewindow.getValueRange())
+		self.scalesizetool.setSize(*self.imagewindow.getSourceSize())
 
 	def onScaleValues(self, evt):
 		self.imagewindow.scaleValues(evt.GetValueRange())
+
+	def onScaleSize(self, evt):
+		self.imagewindow.scaleSize(evt.GetWidth(), evt.GetHeight())
 
 if __name__ == '__main__':
 	import sys

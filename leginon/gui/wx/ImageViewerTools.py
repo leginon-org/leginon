@@ -1,6 +1,34 @@
 import wx
 import gui.wx.ImageViewerEvents as Events
 
+class SizeScaler(wx.Choice):
+	def __init__(self, parent, id):
+		self.width = None
+		self.height = None
+		self.percentages = [10, 25, 50, 75, 100, 125, 150, 200, 400, 800, 1600]
+		choices = [('%d' % percentage) + '%' for percentage in self.percentages]
+		wx.Choice.__init__(self, parent, id, choices=choices)
+		self.SetSelection(self.percentages.index(100))
+		self.Bind(wx.EVT_CHOICE, self.onChoice)
+
+	def setSize(self, width, height):
+		self.width = width
+		self.height = height
+
+	def onChoice(self, evt):
+		evt.Skip()
+
+		if self.width is None or self.height is None:
+			return
+
+		i = evt.GetSelection()
+		percentage = self.percentages[i]/100.0
+		width = int(round(percentage*self.width))
+		height = int(round(percentage*self.height))
+
+		evt = Events.ScaleSizeEvent(self, width, height)
+		self.GetEventHandler().AddPendingEvent(evt)
+
 class ValueScaler(wx.Panel):
 	def __init__(self, *args, **kwargs):
 		wx.Panel.__init__(self, *args, **kwargs)
@@ -183,7 +211,8 @@ if __name__ == '__main__':
 			frame = wx.Frame(None, -1, 'Image Viewer')
 			self.sizer = wx.BoxSizer(wx.VERTICAL)
 
-			self.panel = ValueScaler(frame, -1)
+			#self.panel = ValueScaler(frame, -1)
+			self.panel = SizeScaler(frame, -1)
 
 			self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)
 			frame.SetSizerAndFit(self.sizer)
@@ -193,6 +222,5 @@ if __name__ == '__main__':
 			return True
 
 	app = MyApp(0)
-	app.panel.setValueRange((0, 1000))
 	app.MainLoop()
 
