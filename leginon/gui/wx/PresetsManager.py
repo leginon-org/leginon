@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.41 $
+# $Revision: 1.42 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-02 22:13:15 $
+# $Date: 2005-05-03 17:13:42 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -217,14 +217,22 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		self.Bind(wx.EVT_CHOICE, self.onCCDCameraChoice, self.cccdcamera)
 
 	def onTEMChoice(self, evt):
+		print 'ONTEMCHOICE'
 		mag = self.cmag.GetStringSelection()
+		print 'MAG', mag
 		tem = evt.GetString()
+		print 'TEM', tem
+		print '---------------------------------------------------------'
+		print 'MAGS'
+		print self.magnifications
+		print '---------------------------------------------------------'
 		if tem == self.nonestring:
 			choices = []
 		else:
 			try:
 				choices = [str(int(m)) for m in self.magnifications[tem]]
 			except KeyError:
+				print 'KEYERROR'
 				choices = []
 		self.cmag.Freeze()
 		self.cmag.Clear()
@@ -523,7 +531,9 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		threading.Thread(target=target, args=args).start()
 
 	def onImport(self, evt):
+		self.setInstrumentSelection(self.importdialog.instrumentselection)
 		self.importdialog.ShowModal()
+		self.setInstrumentSelection(None)
 
 	def onFromScope(self, evt):
 		name = self.presets.getSelectedPreset()
@@ -540,6 +550,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 			args = (dialog.name,)
 			threading.Thread(target=target, args=args).start()
 		dialog.Destroy()
+		self.setInstrumentSelection(None)
 
 	#def onUpdateParameters(self, evt=None):
 	#	self.node.updateParams(self.parameters.get())
@@ -686,7 +697,7 @@ class ImportDialog(wx.Dialog):
 		self.presets = None
 
 		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self)
-		self.GetParent().setInstrumentSelection(self.instrumentselection)
+		#self.GetParent().setInstrumentSelection(self.instrumentselection)
 		agelab1 = wx.StaticText(self, -1, 'Presets less than')
 		self.ageentry = IntEntry(self, -1, chars=4)
 		self.ageentry.SetValue(20)

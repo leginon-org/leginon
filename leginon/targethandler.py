@@ -65,14 +65,17 @@ class TargetHandler(object):
 
 	########## TARGET CREATION #############
 
-	def newTargetList(self, label='', mosaic=False, image=None):
+	def newTargetList(self, label='', mosaic=False, image=None, queue=False):
 		'''
 		label will be included in filenames
 		mosaic is boolean to indicate list of targets will
 		generate a mosaic
 		'''
-		queue = self.getQueue()
-		listdata = data.ImageTargetListData(session=self.session, label=label, mosaic=mosaic, image=image, queue=queue)
+		if queue:
+			queuedata = self.getQueue()
+		else:
+			queuedata = None
+		listdata = data.ImageTargetListData(session=self.session, label=label, mosaic=mosaic, image=image, queue=queuedata)
 		return listdata
 
 	def getQueue(self, label=None):

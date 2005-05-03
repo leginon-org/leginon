@@ -108,10 +108,14 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		imageref = targetlistdata.special_getitem('image', dereference=False)
 		imageid = imageref.dbid
 		imagedata = self.researchDBID(data.AcquisitionImageData, imageid, readimages=False)
-		z = imagedata['scope']['stage position']['z']
+		scope = imagedata['scope']
+		z = scope['stage position']['z']
+		tem = scope['tem']
 		filename = imagedata['filename']
-		self.logger.info('returning to z=%.4e of parent image %s' % (z, filename,))
+		self.logger.info('returning %s to z=%.4e of parent image %s' % (tem['name'], z, filename,))
+		self.instrument.setTEM(tem['name'])
 		self.instrument.tem.StagePosition = {'z': z}
+		self.logger.info('z change done')
 
 	def processTargetList(self, newdata):
 		self.setStatus('processing')
@@ -257,7 +261,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 	def rejectTargets(self, targets):
 		self.logger.info('Publishing reject targets')
-		rejectlist = self.newTargetList()
+		if targets:
+			parentimage = targets[0]['image']
+		else:
+			parentimage = None
+		rejectlist = self.newTargetList(image=parentimage)
 		self.publish(rejectlist, database=True, dbforce=True)
 		for target in targets:
 			reject = data.AcquisitionImageTargetData(initializer=target)

@@ -54,7 +54,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		querydata = data.AcquistiionImageData(list=imagelistdata)
 		## research, but don't read images until later
 		images = self.research(querydata, readimages=False)
-		targetlist = self.newTargetList()
+		targetlist = self.newTargetList(queue=self.settings['queue'])
 		for imagedata in images:
 			self.findTargets(imagedata, targetlist)
 		self.makeTargetListEvent(targetlist)
@@ -121,7 +121,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.logger.info('Already processed this image... republishing')
 		else:
 			# no previous list, so create one and fill it with targets
-			targetlist = self.newTargetList(image=imagedata)
+			targetlist = self.newTargetList(image=imagedata, queue=self.settings['queue'])
 			self.findTargets(imagedata, targetlist)
 			self.logger.debug('Publishing targetlist...')
 			db = True
