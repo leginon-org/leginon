@@ -515,14 +515,15 @@ class Viewer(wx.Panel):
 		self.imagewindow = Window(self, -1)
 
 		self.scalesizetool = Tools.SizeScaler(self, -1)
-		self.scalevaluesbutton = wx.Button(self, -1, 'Scale Values')
+		bitmap = Tools.getValueScaleBitmap((0, 255), (0, 255), 256, 16)
+		self.scalevaluesbitmap = wx.StaticBitmap(self, -1, bitmap=bitmap)
 		self.scalevaluestool = Tools.ValueScaler(self, -1)
 		self.scalevaluestool.Show(False)
 
 		self.sizer = wx.GridBagSizer(0, 0)
 
 		self.sizer.Add(self.scalesizetool, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		self.sizer.Add(self.scalevaluesbutton, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		self.sizer.Add(self.scalevaluesbitmap, (0, 1), (1, 1), wx.ALIGN_CENTER)
 		self.sizer.Add(self.scalevaluestool, (1, 0), (1, 2), wx.EXPAND)
 		self.sizer.Add(self.imagewindow, (2, 0), (1, 2), wx.EXPAND|wx.FIXED_MINSIZE)
 
@@ -539,11 +540,12 @@ class Viewer(wx.Panel):
 		self.Bind(Events.EVT_SCALE_VALUES, self.onScaleValues)
 		self.Bind(Events.EVT_SCALE_SIZE, self.onScaleSize)
 
-		self.Bind(wx.EVT_BUTTON, self.onScaleValuesButton, self.scalevaluesbutton)
+		self.scalevaluesbitmap.Bind(wx.EVT_LEFT_UP, self.onScaleValuesBitmap)
 
-	def onScaleValuesButton(self, evt):
+	def onScaleValuesBitmap(self, evt):
 		self.scalevaluestool.Show(not self.scalevaluestool.IsShown())
 		self.sizer.Layout()
+		evt.Skip()
 
 	def onSetNumarray(self, evt):
 		self.setNumarray(evt.GetNumarray())
@@ -554,7 +556,11 @@ class Viewer(wx.Panel):
 		self.scalesizetool.setSize(*self.imagewindow.getSourceSize())
 
 	def onScaleValues(self, evt):
-		self.imagewindow.scaleValues(evt.GetValueRange())
+		valuerange = evt.GetValueRange()
+		self.imagewindow.scaleValues(valuerange)
+		extrema = self.imagewindow.extrema
+		bitmap = Tools.getValueScaleBitmap(extrema, valuerange, 256, 16)
+		self.scalevaluesbitmap.SetBitmap(bitmap)
 
 	def onScaleSize(self, evt):
 		self.imagewindow.scaleSize(evt.GetWidth(), evt.GetHeight())

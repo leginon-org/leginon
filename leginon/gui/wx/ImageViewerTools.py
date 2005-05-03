@@ -1,4 +1,6 @@
+import numarray
 import wx
+import numarrayimage
 import gui.wx.ImageViewerEvents as Events
 
 class SizeScaler(wx.Choice):
@@ -28,6 +30,23 @@ class SizeScaler(wx.Choice):
 
 		evt = Events.ScaleSizeEvent(self, width, height)
 		self.GetEventHandler().AddPendingEvent(evt)
+
+def getValueScaleBitmap(extrema, fromrange, width, height):
+	types = [type(i) for i in fromrange]
+	if float in types:
+		arraytype = numarray.Float
+	elif int in types:
+		arraytype = numarray.Int
+	else:
+		raise TypeError
+
+	array = numarray.arange(width, type=numarray.Float, shape=(1, width))
+	array *= float(extrema[1] - extrema[0])/(width - 1)
+	array += extrema[0]
+	array = array.astype(arraytype)
+	array = array.repeat(height)
+
+	return numarrayimage.numarray2wxBitmap(array, fromrange=fromrange)
 
 class ValueScaler(wx.Panel):
 	def __init__(self, *args, **kwargs):
@@ -222,5 +241,6 @@ if __name__ == '__main__':
 			return True
 
 	app = MyApp(0)
+	foo = getValueScaleBitmap((10, 1000.0), 256, 32)
 	app.MainLoop()
 

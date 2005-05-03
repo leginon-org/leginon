@@ -57,11 +57,10 @@ def numarray2RGBImage(array, x=0, y=0, width=None, height=None, imagewidth=None,
 	if height is None:
 		height = imageheight - y
 
-	if fromrange is None:
-		fromrange = image.getextrema()
-
 	if imagewidth == array.shape[1] and imageheight == array.shape[0]:
 		image = numarray2Image(array[y:y + height, x:x + width])
+		if fromrange is None:
+			fromrange = image.getextrema()
 		image = scaleImage(image, fromrange, (0, 255))
 		return image.convert('RGB')
 
@@ -89,14 +88,18 @@ def numarray2RGBImage(array, x=0, y=0, width=None, height=None, imagewidth=None,
 
 	image = numarray2Image(array[sourcey0:sourcey1, sourcex0:sourcex1])
 
-	image = scaleImage(image, fromrange, (0, 255))
-
 	left = scaledx - sourcex0
 	upper = scaledy - sourcey0
 	right = left + scaledwidth
 	bottom = upper + scaledheight
 	image = image.transform((width, height), Image.EXTENT,
 													(left, upper, right, bottom), filter)
+
+	if fromrange is None:
+		fromrange = image.getextrema()
+
+	# ?
+	image = scaleImage(image, fromrange, (0, 255))
 
 	return image.convert('RGB')
 
