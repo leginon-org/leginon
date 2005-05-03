@@ -1,47 +1,10 @@
 import wx
 import numarrayimage
 import numextension
+import gui.wx.ImageViewerEvents as Events
+import gui.wx.ImageViewerTools as Tools
 
-SetNumarrayEventType = wx.NewEventType()
-ScaleSizeEventType = wx.NewEventType()
-ScaleValuesEventType = wx.NewEventType()
-
-EVT_SET_NUMARRAY = wx.PyEventBinder(SetNumarrayEventType)
-EVT_SCALE_SIZE = wx.PyEventBinder(ScaleSizeEventType)
-EVT_SCALE_VALUES = wx.PyEventBinder(ScaleValuesEventType)
-
-class SetNumarrayEvent(wx.PyCommandEvent):
-	def __init__(self, source, array):
-		wx.PyCommandEvent.__init__(self, SetNumarrayEventType, source.GetId())
-		self.SetEventObject(source)
-		self.array = array
-
-	def GetNumarray(self):
-		return self.array
-
-class ScaleSizeEvent(wx.PyCommandEvent):
-	def __init__(self, source, width, height):
-		wx.PyCommandEvent.__init__(self, ScaleSizeEventType, source.GetId())
-		self.SetEventObject(source)
-		self.width = width
-		self.height = height
-
-	def GetWidth(self):
-		return self.width
-
-	def GetHeight(self):
-		return self.height
-
-class ScaleValuesEvent(wx.PyCommandEvent):
-	def __init__(self, source, valuerange):
-		wx.PyCommandEvent.__init__(self, ScaleValuesEventType, source.GetId())
-		self.SetEventObject(source)
-		self.valuerange = valuerange
-
-	def GetValueRange(self):
-		return self.valuerange
-
-class	Panel(wx.Window):
+class	Window(wx.Window):
 	def __init__(self, parent, id):
 		wx.Window.__init__(self, parent, id)
 
@@ -69,9 +32,7 @@ class	Panel(wx.Window):
 		self.Bind(wx.EVT_SCROLLWIN_PAGEUP, self.onScrollWinPageUp)
 		self.Bind(wx.EVT_SCROLLWIN_PAGEDOWN, self.onScrollWinPageDown)
 		self.Bind(wx.EVT_SCROLLWIN_THUMBTRACK, self.onScrollWinThumbTrack)
-		self.Bind(EVT_SET_NUMARRAY, self.onSetNumarray)
-		self.Bind(EVT_SCALE_SIZE, self.onScaleSize)
-		self.Bind(EVT_SCALE_VALUES, self.onScaleValues)
+		self.Bind(Events.EVT_SCALE_SIZE, self.onScaleSize)
 
 	def copyBuffer(self, dc, region, offset):
 		xoffset, yoffset = offset
@@ -206,9 +167,6 @@ class	Panel(wx.Window):
 		orientation = evt.GetOrientation()
 		position = evt.GetPosition()
 		self.onScrollWin(orientation, position)
-
-	def onSetNumarray(self, evt):
-		self.setNumarray(evt.GetNumarray())
 
 	def setNumarray(self, array):
 		if self.source is None:
@@ -491,9 +449,6 @@ class	Panel(wx.Window):
 
 		self.Refresh()
 
-	def onScaleValues(self, evt):
-		self.scalevalues(evt.GetValueRange())
-
 	def scaleValues(self, valuerange):
 		if self.source is None:
 			return
@@ -508,8 +463,18 @@ class	Panel(wx.Window):
 		clientwidth, clientheight = self.GetClientSize()
 		clientregion = wx.Region(0, 0, clientwidth, clientheight)
 
-		bitmapx = -self.GetScrollPos(wx.HORIZONTAL)
-		bitmapy = -self.GetScrollPos(wx.VERTICAL)
+		bufferwidth = self.buffer.GetWidth()
+		if self.scaledwidth < bufferwidth:
+			bitmapx = int(round((bufferwidth - self.scaledwidth)/2.0))
+		else:
+			bitmapx = -self.GetScrollPos(wx.HORIZONTAL)
+
+		bufferheight = self.buffer.GetHeight()
+		if self.scaledheight < bufferheight:
+			bitmapy = int(round((bufferheight - self.scaledheight)/2.0))
+		else:
+			bitmapy = -self.GetScrollPos(wx.VERTICAL)
+
 		bitmapregion = wx.Region(bitmapx, bitmapy,
 															self.scaledwidth, self.scaledheight)
 
@@ -527,6 +492,50 @@ class	Panel(wx.Window):
 
 		self.Refresh()
 
+class Viewer(wx.Panel):
+	def __init__(self, *args, **kwargs):
+		wx.Panel.__init__(self, *args, **kwargs)
+
+		self.imagewindow = Window(self, -1)
+
+		self.scalevaluesbutton = wx.Button(self, -1, 'Scale Values')
+		self.scalevaluestool = Tools.ValueScaler(self, -1)
+		self.scalevaluestool.Show(False)
+
+		self.sizer = wx.GridBagSizer(0, 0)
+
+		self.sizer.Add(self.scalevaluesbutton, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		self.sizer.Add(self.scalevaluestool, (1, 0), (1, 1), wx.EXPAND)
+		self.sizer.Add(self.imagewindow, (2, 0), (1, 1), wx.EXPAND|wx.FIXED_MINSIZE)
+
+		self.sizer.AddGrowableRow(2)
+		self.sizer.AddGrowableCol(0)
+
+		self.sizer.SetEmptyCellSize((0, 0))
+
+		self.SetSizer(self.sizer)
+		self.SetAutoLayout(True)
+
+		self.Bind(Events.EVT_SET_NUMARRAY, self.onSetNumarray)
+		self.Bind(Events.EVT_SCALE_VALUES, self.onScaleValues)
+
+		self.Bind(wx.EVT_BUTTON, self.onScaleValuesButton, self.scalevaluesbutton)
+
+	def onScaleValuesButton(self, evt):
+		self.scalevaluestool.Show(not self.scalevaluestool.IsShown())
+		self.sizer.Layout()
+
+	def onSetNumarray(self, evt):
+		self.setNumarray(evt.GetNumarray())
+
+	def setNumarray(self, array):
+		self.imagewindow.setNumarray(array)
+		self.scalevaluestool.setValueRange(self.imagewindow.extrema,
+																				self.imagewindow.scaledvaluerange)
+
+	def onScaleValues(self, evt):
+		self.imagewindow.scaleValues(evt.GetValueRange())
+
 if __name__ == '__main__':
 	import sys
 	import Mrc
@@ -536,12 +545,7 @@ if __name__ == '__main__':
 	class MyApp(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Image Viewer')
-			self.sizer = wx.BoxSizer(wx.VERTICAL)
-
-			self.panel = Panel(frame, -1)
-
-			self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)
-			frame.SetSizerAndFit(self.sizer)
+			self.panel = Viewer(frame, -1)
 			self.SetTopWindow(frame)
 			frame.SetSize((750, 750))
 			frame.Show(True)

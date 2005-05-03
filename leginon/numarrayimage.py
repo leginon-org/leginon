@@ -39,7 +39,10 @@ def numarray2Image(array):
 	return Image.frombuffer(*args)
 
 def scaleImage(image, fromrange, torange):
-	scale = float(torange[1] - torange[0])/float(fromrange[1] - fromrange[0])
+	try:
+		scale = float(torange[1] - torange[0])/float(fromrange[1] - fromrange[0])
+	except ZeroDivisionError:
+		scale = 0.0
 	offset = scale*(torange[0] - fromrange[0])
 	return image.point(lambda i: i * scale + offset)
 

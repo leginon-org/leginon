@@ -1,7 +1,7 @@
 import wx
-import ImageViewer3
+import gui.wx.ImageViewerEvents as Events
 
-class ValueScale(wx.Panel):
+class ValueScaler(wx.Panel):
 	def __init__(self, *args, **kwargs):
 		wx.Panel.__init__(self, *args, **kwargs)
 
@@ -118,7 +118,7 @@ class ValueScale(wx.Panel):
 			self.maxslider.SetValue(
 				int(round((value - self.extrema[0])*sliderscale + slidermin)))
 
-		evt = ImageViewer3.ScaleValuesEvent(self, self.valuerange)
+		evt = Events.ScaleValuesEvent(self, self.valuerange)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onKillFocus(self, evt):
@@ -172,10 +172,10 @@ class ValueScale(wx.Panel):
 			self.maxentry.SetValue('%g' % value)
 			self.valuerange = (self.valuerange[0], value)
 
-		evt = ImageViewer3.ScaleValuesEvent(self, self.valuerange)
-		self.GetEventHandler().AddPendingEvent(evt)
-
 		evt.Skip()
+
+		evt = Events.ScaleValuesEvent(self, self.valuerange)
+		self.GetEventHandler().AddPendingEvent(evt)
 
 if __name__ == '__main__':
 	class MyApp(wx.App):
@@ -183,7 +183,7 @@ if __name__ == '__main__':
 			frame = wx.Frame(None, -1, 'Image Viewer')
 			self.sizer = wx.BoxSizer(wx.VERTICAL)
 
-			self.panel = ValueScale(frame, -1)
+			self.panel = ValueScaler(frame, -1)
 
 			self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)
 			frame.SetSizerAndFit(self.sizer)
