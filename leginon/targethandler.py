@@ -187,7 +187,7 @@ class TargetWaitHandler(TargetHandler):
 		except AttributeError, KeyError:
 			pass
 		for tid, teventinfo in self.targetlistevents.items():
-			self.logger.info('Waiting for target ID %s...' % (tid[1],))
+			self.logger.info('Waiting for target list ID %s...' % (tid[1],))
 			teventinfo['received'].wait()
 			self.logger.info('Target ID %s has been processed.' % (tid[1],))
 		self.targetlistevents.clear()
