@@ -3,6 +3,29 @@ import wx
 import numarrayimage
 import gui.wx.ImageViewerEvents as Events
 
+class Display(wx.Panel):
+	def __init__(self, *args, **kwargs):
+		self.crosshairs = False
+
+		wx.Panel.__init__(self, *args, **kwargs)
+
+		self.sizer = wx.GridBagSizer(0, 0)
+
+		self.crosshairsbutton = wx.Button(self, -1, 'Crosshairs')
+		self.sizer.Add(self.crosshairsbutton, (0, 0), (1, 1), wx.ALIGN_CENTER)
+
+		self.sizer.AddGrowableCol(0)
+
+		self.SetSizer(self.sizer)
+		self.sizer.Layout()
+
+		self.Bind(wx.EVT_BUTTON, self.onCrosshairsButton, self.crosshairsbutton)
+
+	def onCrosshairsButton(self, evt):
+		self.crosshairs = not self.crosshairs
+		evt = Events.DisplayCrosshairsEvent(self, self.crosshairs)
+		self.GetEventHandler().AddPendingEvent(evt)
+
 class Information(wx.Panel):
 	def __init__(self, *args, **kwargs):
 		wx.Panel.__init__(self, *args, **kwargs)

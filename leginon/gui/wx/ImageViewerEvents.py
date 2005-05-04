@@ -4,11 +4,13 @@ SetNumarrayEventType = wx.NewEventType()
 ScaleSizeEventType = wx.NewEventType()
 ScaleValuesEventType = wx.NewEventType()
 FitToPageEventType = wx.NewEventType()
+DisplayCrosshairsEventType = wx.NewEventType()
 
 EVT_SET_NUMARRAY = wx.PyEventBinder(SetNumarrayEventType)
 EVT_SCALE_SIZE = wx.PyEventBinder(ScaleSizeEventType)
 EVT_SCALE_VALUES = wx.PyEventBinder(ScaleValuesEventType)
 EVT_FIT_TO_PAGE = wx.PyEventBinder(FitToPageEventType)
+EVT_DISPLAY_CROSSHAIRS = wx.PyEventBinder(DisplayCrosshairsEventType)
 
 class SetNumarrayEvent(wx.PyCommandEvent):
 	def __init__(self, source, array):
@@ -45,3 +47,10 @@ class FitToPageEvent(wx.PyCommandEvent):
 	def __init__(self, source):
 		wx.PyCommandEvent.__init__(self, FitToPageEventType, source.GetId())
 		self.SetEventObject(source)
+
+class DisplayCrosshairsEvent(wx.PyCommandEvent):
+	def __init__(self, source, display):
+		wx.PyCommandEvent.__init__(self, DisplayCrosshairsEventType, source.GetId())
+		self.SetEventObject(source)
+		self.display = display
+

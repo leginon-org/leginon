@@ -11,6 +11,7 @@ class	Window(wx.Window):
 		self.ignoresize = False
 
 		self.fit_to_page = False
+		self.crosshairs = False
 
 		clientwidth, clientheight = self.GetClientSize()
 		self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
@@ -54,8 +55,9 @@ class	Window(wx.Window):
 
 		self.sourceBitmap(dc, sourceregion, bitmapregion)
 
-		region = self.getCrosshairsRegion(dc, sourceregion, bitmapregion)
-		self.drawCrosshairs(dc, region)
+		if self.crosshairs:
+			region = self.getCrosshairsRegion(dc, sourceregion, bitmapregion)
+			self.sourceCrosshairs(dc, region)
 
 	def sourceClear(self, dc, region):
 		dc.SetPen(wx.TRANSPARENT_PEN)
@@ -65,6 +67,26 @@ class	Window(wx.Window):
 			dc.DrawRectangle(r.x, r.y, r.width, r.height)
 			regioniterator.Next()
 		dc.SetPen(wx.NullPen)
+
+	def displayCrosshairs(self, display):
+		if self.crosshairs == display:
+			return
+
+		self.crosshairs = display
+
+		clientwidth, clientheight = self.GetClientSize()
+		sourceregion = wx.Region(0, 0, clientwidth, clientheight)
+		bitmapx = int(round((clientwidth - self.scaledwidth)/2.0))
+		bitmapy = int(round((clientheight - self.scaledheight)/2.0))
+		bitmapregion = wx.Region(bitmapx, bitmapy,
+															self.scaledwidth, self.scaledheight)
+		dc = wx.MemoryDC()
+		dc.SelectObject(self.buffer)
+		region = self.getCrosshairsRegion(dc, sourceregion, bitmapregion)
+		self.sourceBuffer(dc, region, bitmapregion)
+		dc.SelectObject(wx.NullBitmap)
+
+		self.Refresh()
 
 	def getCrosshairsRegion(self, dc, sourceregion, bitmapregion):
 		sourcex, sourcey, sourcewidth, sourceheight = sourceregion.GetBox()
@@ -81,7 +103,7 @@ class	Window(wx.Window):
 
 		return region
 
-	def drawCrosshairs(self, dc, region):
+	def sourceCrosshairs(self, dc, region):
 		dc.SetPen(wx.TRANSPARENT_PEN)
 		dc.SetBrush(wx.TheBrushList.FindOrCreateBrush(wx.BLUE, wx.SOLID))
 
@@ -648,6 +670,7 @@ class Viewer(wx.Panel):
 		self.imagewindow = Window(self, -1)
 
 		self.informationbutton = wx.Button(self, -1, 'Information')
+		self.displaybutton = wx.Button(self, -1, 'Display')
 
 		self.scalesizetool = Tools.SizeScaler(self, -1)
 
@@ -657,22 +680,29 @@ class Viewer(wx.Panel):
 		self.informationtool = Tools.Information(self, -1)
 		self.informationtool.Show(False)
 
+		self.displaytool = Tools.Display(self, -1)
+		self.displaytool.Show(False)
+
+		self.scalevaluestool = Tools.ValueScaler(self, -1)
 		self.scalevaluestool = Tools.ValueScaler(self, -1)
 		self.scalevaluestool.Show(False)
 
 		self.sizer = wx.GridBagSizer(0, 0)
 
 		self.sizer.Add(self.informationbutton, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		self.sizer.Add(self.scalesizetool, (0, 1), (1, 1), wx.ALIGN_CENTER)
-		self.sizer.Add(self.scalevaluesbitmap, (0, 2), (1, 1), wx.ALIGN_CENTER)
-		self.sizer.Add(self.informationtool, (1, 0), (1, 3), wx.EXPAND)
-		self.sizer.Add(self.scalevaluestool, (2, 0), (1, 3), wx.EXPAND)
-		self.sizer.Add(self.imagewindow, (3, 0), (1, 3), wx.EXPAND|wx.FIXED_MINSIZE)
+		self.sizer.Add(self.displaybutton, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		self.sizer.Add(self.scalesizetool, (0, 2), (1, 1), wx.ALIGN_CENTER)
+		self.sizer.Add(self.scalevaluesbitmap, (0, 3), (1, 1), wx.ALIGN_CENTER)
+		self.sizer.Add(self.informationtool, (1, 0), (1, 4), wx.EXPAND)
+		self.sizer.Add(self.displaytool, (2, 0), (1, 4), wx.EXPAND)
+		self.sizer.Add(self.scalevaluestool, (3, 0), (1, 4), wx.EXPAND)
+		self.sizer.Add(self.imagewindow, (4, 0), (1, 4), wx.EXPAND|wx.FIXED_MINSIZE)
 
-		self.sizer.AddGrowableRow(3)
+		self.sizer.AddGrowableRow(4)
 		self.sizer.AddGrowableCol(0)
 		self.sizer.AddGrowableCol(1)
 		self.sizer.AddGrowableCol(2)
+		self.sizer.AddGrowableCol(3)
 
 		self.sizer.SetEmptyCellSize((0, 0))
 
@@ -683,8 +713,10 @@ class Viewer(wx.Panel):
 		self.Bind(Events.EVT_SCALE_VALUES, self.onScaleValues)
 		self.Bind(Events.EVT_SCALE_SIZE, self.onScaleSize)
 		self.Bind(Events.EVT_FIT_TO_PAGE, self.onFitToPage)
+		self.Bind(Events.EVT_DISPLAY_CROSSHAIRS, self.onDisplayCrosshairs)
 
 		self.informationbutton.Bind(wx.EVT_BUTTON, self.onInformationButton)
+		self.displaybutton.Bind(wx.EVT_BUTTON, self.onDisplayButton)
 		self.scalevaluesbitmap.Bind(wx.EVT_LEFT_UP, self.onScaleValuesBitmap)
 
 	def onImageWindowMotion(self, evt):
@@ -700,6 +732,11 @@ class Viewer(wx.Panel):
 		else:
 			self.imagewindow.Unbind(wx.EVT_MOTION)
 		self.sizer.Layout()
+
+	def onDisplayButton(self, evt):
+		self.displaytool.Show(not self.displaytool.IsShown())
+		self.sizer.Layout()
+		evt.Skip()
 
 	def onScaleValuesBitmap(self, evt):
 		self.scalevaluestool.Show(not self.scalevaluestool.IsShown())
@@ -727,6 +764,9 @@ class Viewer(wx.Panel):
 
 	def onFitToPage(self, evt):
 		self.imagewindow.fitToPage()
+
+	def onDisplayCrosshairs(self, evt):
+		self.imagewindow.displayCrosshairs(evt.display)
 
 if __name__ == '__main__':
 	import sys
