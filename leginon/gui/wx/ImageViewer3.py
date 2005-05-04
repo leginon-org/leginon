@@ -15,14 +15,14 @@ class	Window(wx.Window):
 		clientwidth, clientheight = self.GetClientSize()
 		self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
 
-		self.validregion = None
+		self.validregion = wx.Region()
 
 		self.source = None
 		self.extrema = None
 		self.scaledvaluerange = None
 
-		self.scaledwidth = None
-		self.scaledheight = None
+		self.scaledwidth = 0
+		self.scaledheight = 0
 
 		self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
 		self.Bind(wx.EVT_PAINT, self.onPaint)
@@ -47,11 +47,24 @@ class	Window(wx.Window):
 		copydc.SelectObject(wx.NullBitmap)
 
 	def sourceBuffer(self, dc, sourceregion, bitmapregion):
+		region = wx.Region()
+		region.UnionRegion(sourceregion)
+		region.SubtractRegion(bitmapregion)
+		self.sourceClear(dc, region)
+
 		self.sourceBitmap(dc, sourceregion, bitmapregion)
 
-	'''
 		region = self.getCrosshairsRegion(dc, sourceregion, bitmapregion)
 		self.drawCrosshairs(dc, region)
+
+	def sourceClear(self, dc, region):
+		dc.SetPen(wx.TRANSPARENT_PEN)
+		regioniterator = wx.RegionIterator(region)
+		while(regioniterator):
+			r = regioniterator.GetRect()
+			dc.DrawRectangle(r.x, r.y, r.width, r.height)
+			regioniterator.Next()
+		dc.SetPen(wx.NullPen)
 
 	def getCrosshairsRegion(self, dc, sourceregion, bitmapregion):
 		sourcex, sourcey, sourcewidth, sourceheight = sourceregion.GetBox()
@@ -60,16 +73,10 @@ class	Window(wx.Window):
 		crosshairsize = 1
 
 		region = wx.Region()
-		x = sourcex
 		y = bitmapy + (bitmapheight - crosshairsize)/2
-		w = sourcewidth
-		h = crosshairsize
-		region.Union(x, y, w, h)
+		region.Union(sourcex, y, sourcewidth, crosshairsize)
 		x = bitmapx + (bitmapwidth - crosshairsize)/2
-		y = sourcey
-		w = crosshairsize
-		h = sourceheight
-		region.Union(x, y, w, h)
+		region.Union(x, sourcey, crosshairsize, sourceheight)
 		region.IntersectRegion(sourceregion)
 
 		return region
@@ -86,7 +93,6 @@ class	Window(wx.Window):
 
 		dc.SetBrush(wx.NullBrush)
 		dc.SetPen(wx.NullPen)
-	'''
 
 	def sourceBitmap(self, dc, sourceregion, bitmapregion):
 		x, y, width, height = bitmapregion.GetBox()
@@ -146,7 +152,6 @@ class	Window(wx.Window):
 
 		dc = wx.MemoryDC()
 		dc.SelectObject(buffer)
-		dc.Clear()
 		self.copyBuffer(dc, copyregion, (dx, dy))
 		self.sourceBuffer(dc, sourceregion, bitmapregion)
 		dc.SelectObject(wx.NullBitmap)
@@ -240,17 +245,27 @@ class	Window(wx.Window):
 			self.extrema = None
 			self.scaledvaluerange = None
 			self.scaledwidth, self.scaledheight = None, None
+
 			self.ignoresize = True
 			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
 			self.SetScrollbar(wx.VERTICAL, 0, 0, 0)
 			self.ignoresize = False
+
 			clientwidth, clientheight = self.GetClientSize()
 			if bufferwidth != clientwidth or bufferheight != clientheight:
 				self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
+
+			sourceregion = wx.Region(0, 0, clientwidth, clientheight)
+			bitmapx = int(round((clientwidth - self.scaledwidth)/2.0))
+			bitmapy = int(round((clientheight - self.scaledheight)/2.0))
+			bitmapregion = wx.Region(bitmapx, bitmapy,
+																self.scaledwidth, self.scaledheight)
+
 			dc = wx.MemoryDC()
 			dc.SelectObject(self.buffer)
-			dc.Clear()
+			self.sourceBuffer(dc, sourceregion, bitmapregion)
 			dc.SelectObject(wx.NullBitmap)
+
 			self.Refresh()
 			return
 
@@ -261,11 +276,11 @@ class	Window(wx.Window):
 			self.fitToPage()
 			return
 
-		if self.scaledwidth is not None:
+		if self.scaledwidth:
 			scrollx = float(self.GetScrollPos(wx.HORIZONTAL))/self.scaledwidth
 		else:
 			scrollx = 0
-		if self.scaledheight is not None:
+		if self.scaledheight:
 			scrolly = float(self.GetScrollPos(wx.VERTICAL))/self.scaledheight
 		else:
 			scrolly = 0
@@ -305,20 +320,16 @@ class	Window(wx.Window):
 		self.ignoresize = False
 
 		clientwidth, clientheight = self.GetClientSize()
-		clientregion = wx.Region(0, 0, clientwidth, clientheight)
 
 		if bufferwidth != clientwidth or bufferheight != clientheight:
 			self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
 
+		sourceregion = wx.Region(0, 0, clientwidth, clientheight)
 		bitmapregion = wx.Region(bitmapx, bitmapy,
 															self.scaledwidth, self.scaledheight)
 
-		sourceregion = wx.Region()
-		sourceregion.UnionRegion(clientregion)
-
 		dc = wx.MemoryDC()
 		dc.SelectObject(self.buffer)
-		dc.Clear()
 		self.sourceBuffer(dc, sourceregion, bitmapregion)
 		dc.SelectObject(wx.NullBitmap)
 
@@ -347,18 +358,6 @@ class	Window(wx.Window):
 			return
 
 		width, height = self.GetSize()
-
-		if self.source is None or width < 1 or height < 1:
-			self.ignoresize = True
-			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
-			self.SetScrollbar(wx.VERTICAL, 0, 0, 0)
-			self.ignoresize = False
-			self.buffer = wx.EmptyBitmap(width, height)
-			dc = wx.MemoryDC()
-			dc.SelectObject(self.buffer)
-			dc.Clear()
-			dc.SelectObject(wx.NullBitmap)
-			return
 
 		if self.fit_to_page:
 			self.fitToPage()
@@ -428,7 +427,6 @@ class	Window(wx.Window):
 
 		dc = wx.MemoryDC()
 		dc.SelectObject(buffer)
-		dc.Clear()
 		self.copyBuffer(dc, copyregion, (dx, dy))
 		self.sourceBuffer(dc, sourceregion, bitmapregion)
 		dc.SelectObject(wx.NullBitmap)
@@ -492,22 +490,18 @@ class	Window(wx.Window):
 		self.ignoresize = False
 
 		clientwidth, clientheight = self.GetClientSize()
-		clientregion = wx.Region(0, 0, clientwidth, clientheight)
 
 		bufferwidth = self.buffer.GetWidth()
 		bufferheight = self.buffer.GetHeight()
 		if bufferwidth != clientwidth or bufferheight != clientheight:
 			self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
 
+		sourceregion = wx.Region(0, 0, clientwidth, clientheight)
 		bitmapregion = wx.Region(bitmapx, bitmapy,
 															self.scaledwidth, self.scaledheight)
 
-		sourceregion = wx.Region()
-		sourceregion.UnionRegion(clientregion)
-
 		dc = wx.MemoryDC()
 		dc.SelectObject(self.buffer)
-		dc.Clear()
 		self.sourceBuffer(dc, sourceregion, bitmapregion)
 		dc.SelectObject(wx.NullBitmap)
 
@@ -527,7 +521,6 @@ class	Window(wx.Window):
 		self.scaledvaluerange = (minvalue, maxvalue)
 
 		clientwidth, clientheight = self.GetClientSize()
-		clientregion = wx.Region(0, 0, clientwidth, clientheight)
 
 		bufferwidth = self.buffer.GetWidth()
 		if self.scaledwidth < bufferwidth:
@@ -541,15 +534,12 @@ class	Window(wx.Window):
 		else:
 			bitmapy = -self.GetScrollPos(wx.VERTICAL)
 
+		sourceregion = wx.Region(0, 0, clientwidth, clientheight)
 		bitmapregion = wx.Region(bitmapx, bitmapy,
 															self.scaledwidth, self.scaledheight)
 
-		sourceregion = wx.Region()
-		sourceregion.UnionRegion(clientregion)
-
 		dc = wx.MemoryDC()
 		dc.SelectObject(self.buffer)
-		dc.Clear()
 		self.sourceBuffer(dc, sourceregion, bitmapregion)
 		dc.SelectObject(wx.NullBitmap)
 
@@ -574,7 +564,6 @@ class	Window(wx.Window):
 		self.ignoresize = False
 
 		clientwidth, clientheight = self.GetClientSize()
-		clientregion = wx.Region(0, 0, clientwidth, clientheight)
 
 		bufferwidth = self.buffer.GetWidth()
 		bufferheight = self.buffer.GetHeight()
@@ -595,17 +584,15 @@ class	Window(wx.Window):
 			self.scaledwidth = clientwidth
 			self.scaledheight = clientheight
 
+		sourceregion = wx.Region(0, 0, clientwidth, clientheight)
+
 		bitmapx = int(round((clientwidth - self.scaledwidth)/2.0))
 		bitmapy = int(round((clientheight - self.scaledheight)/2.0))
 		bitmapregion = wx.Region(bitmapx, bitmapy,
 															self.scaledwidth, self.scaledheight)
 
-		sourceregion = wx.Region()
-		sourceregion.UnionRegion(clientregion)
-
 		dc = wx.MemoryDC()
 		dc.SelectObject(self.buffer)
-		dc.Clear()
 		self.sourceBuffer(dc, sourceregion, bitmapregion)
 		dc.SelectObject(wx.NullBitmap)
 
@@ -630,8 +617,14 @@ class	Window(wx.Window):
 		y += yoffset
 
 		sourcewidth, sourceheight = self.source.shape[1], self.source.shape[0]
-		xscale = float(sourcewidth)/self.scaledwidth
-		yscale = float(sourceheight)/self.scaledheight
+		if scaledwidth:
+			xscale = float(sourcewidth)/self.scaledwidth
+		else:
+			xscale = 1.0
+		if scaledheight:
+			yscale = float(sourceheight)/self.scaledheight
+		else:
+			yscale = 1.0
 
 		x *= xscale
 		y *= yscale
@@ -639,12 +632,12 @@ class	Window(wx.Window):
 		x = int(round(x))
 		y = int(round(y))
 
-		inx = x >= 0 and x < self.source.shape[1]
-		iny = y >= 0 and y < self.source.shape[0]
-		if inx and iny:
-			value = self.source[y, x]
-		else:
-			value = None
+		value = None
+		if self.source is not None:
+			inx = x >= 0 and x < self.source.shape[1]
+			iny = y >= 0 and y < self.source.shape[0]
+			if inx and iny:
+				value = self.source[y, x]
 
 		return x, y, value
 
