@@ -639,11 +639,11 @@ class	Window(wx.Window):
 		y += yoffset
 
 		sourcewidth, sourceheight = self.source.shape[1], self.source.shape[0]
-		if scaledwidth:
+		if self.scaledwidth:
 			xscale = float(sourcewidth)/self.scaledwidth
 		else:
 			xscale = 1.0
-		if scaledheight:
+		if self.scaledheight:
 			yscale = float(sourceheight)/self.scaledheight
 		else:
 			yscale = 1.0
