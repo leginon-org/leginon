@@ -3,6 +3,169 @@ import wx
 import numarrayimage
 import gui.wx.ImageViewerEvents as Events
 
+class Information(wx.Panel):
+	def __init__(self, *args, **kwargs):
+		wx.Panel.__init__(self, *args, **kwargs)
+
+		self.sizer = wx.GridBagSizer(0, 0)
+
+		self.valuepanel = Value(self, -1)
+		self.statspanel = Statistics(self, -1)
+
+		self.sizer.Add(self.statspanel, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		self.sizer.Add(self.valuepanel, (0, 1), (1, 1), wx.ALIGN_CENTER)
+
+		self.sizer.AddGrowableCol(0)
+		self.sizer.AddGrowableCol(1)
+
+		self.SetSizer(self.sizer)
+		self.sizer.Layout()
+
+	def setValue(self, *args, **kwargs):
+		self.valuepanel.setValue(*args, **kwargs)
+		self.sizer.Layout()
+
+	def setStatistics(self, *args, **kwargs):
+		self.statspanel.setStatistics(*args, **kwargs)
+		self.sizer.Layout()
+
+class Value(wx.Panel):
+	def __init__(self, *args, **kwargs):
+		wx.Panel.__init__(self, *args, **kwargs)
+
+		self.sizer = wx.GridBagSizer(0, 3)
+
+		self.xlabel = wx.StaticText(self, -1)
+		self.ylabel = wx.StaticText(self, -1)
+		self.valuelabel = wx.StaticText(self, -1)
+
+		label = wx.StaticText(self, -1, 'x:')
+		self.sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sizer.Add(self.xlabel, (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'y:')
+		self.sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sizer.Add(self.ylabel, (1, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Value:')
+		self.sizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sizer.Add(self.valuelabel, (2, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+
+		self.sizer.AddGrowableCol(1)
+
+		self.SetSizer(self.sizer)
+		self.sizer.Layout()
+
+	def setValue(self, x=None, y=None, value=None):
+		if x is None:
+			xstr = ''
+		else:
+			xstr = '%g' % x
+
+		if y is None:
+			ystr = ''
+		else:
+			ystr = '%g' % y
+
+		if value is None:
+			valuestr = ''
+		else:
+			valuestr = '%g' % value
+
+		self.xlabel.SetLabel(xstr)
+		self.ylabel.SetLabel(ystr)
+		self.valuelabel.SetLabel(valuestr)
+
+		self.sizer.Layout()
+
+class Statistics(wx.Panel):
+	def __init__(self, *args, **kwargs):
+		wx.Panel.__init__(self, *args, **kwargs)
+
+		self.sizer = wx.GridBagSizer(0, 3)
+
+		self.meanlabel = wx.StaticText(self, -1)
+		self.minlabel = wx.StaticText(self, -1)
+		self.maxlabel = wx.StaticText(self, -1)
+		self.sdlabel = wx.StaticText(self, -1)
+
+		label = wx.StaticText(self, -1, 'Mean:')
+		self.sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sizer.Add(self.meanlabel, (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Min.:')
+		self.sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sizer.Add(self.minlabel, (1, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Max.:')
+		self.sizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sizer.Add(self.maxlabel, (2, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Std. Dev.:')
+		self.sizer.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sizer.Add(self.sdlabel, (3, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+
+		self.sizer.AddGrowableCol(1)
+
+		self.SetSizer(self.sizer)
+		self.sizer.Layout()
+
+	def setStatistics(self, array=None, statistics={}):
+		try:
+			mean = statistics['mean']
+		except KeyError:
+			if array is None:
+				mean = None
+			else:
+				mean = array.mean()
+		try:
+			min = statistics['min']
+		except KeyError:
+			if array is None:
+				min = None
+			else:
+				min = array.min()
+		try:
+			max = statistics['max']
+		except KeyError:
+			if array is None:
+				max = None
+			else:
+				max = array.max()
+		try:
+			sd = statistics['stdev']
+		except KeyError:
+			if array is None:
+				sd = None
+			else:
+				sd = array.stddev()
+
+		if mean is None:
+			meanstr = ''
+		else:
+			meanstr = '%g' % mean
+		if min is None:
+			minstr = ''
+		else:
+			minstr = '%g' % min
+		if max is None:
+			maxstr = ''
+		else:
+			maxstr = '%g' % max 
+		if sd is None:
+			sd = ''
+		else:
+			sdstr = '%g' % sd
+
+		self.meanlabel.SetLabel(meanstr)
+		self.minlabel.SetLabel(minstr)
+		self.maxlabel.SetLabel(maxstr)
+		self.sdlabel.SetLabel(sdstr)
+
+		self.sizer.Layout()
+
 class SizeScaler(wx.Choice):
 	def __init__(self, parent, id):
 		self.width = None
@@ -236,7 +399,8 @@ if __name__ == '__main__':
 			self.sizer = wx.BoxSizer(wx.VERTICAL)
 
 			#self.panel = ValueScaler(frame, -1)
-			self.panel = SizeScaler(frame, -1)
+			#self.panel = SizeScaler(frame, -1)
+			self.panel = Statistics(frame, -1)
 
 			self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)
 			frame.SetSizerAndFit(self.sizer)
@@ -246,6 +410,5 @@ if __name__ == '__main__':
 			return True
 
 	app = MyApp(0)
-	foo = getValueScaleBitmap((10, 1000.0), 256, 32)
 	app.MainLoop()
 

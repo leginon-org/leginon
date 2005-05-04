@@ -570,28 +570,73 @@ class	Window(wx.Window):
 
 		self.Refresh()
 
+	def getXYValue(self, x, y):
+		clientwidth, clientheight = self.GetClientSize()
+
+		if self.scaledwidth < clientwidth:
+			xoffset = -int(round((clientwidth - self.scaledwidth)/2.0))
+		else:
+			xoffset = self.GetScrollPos(wx.HORIZONTAL)
+
+		if self.scaledheight < clientheight:
+			yoffset = -int(round((clientheight - self.scaledheight)/2.0))
+		else:
+			yoffset = self.GetScrollPos(wx.VERTICAL)
+
+		x += xoffset
+		y += yoffset
+
+		sourcewidth, sourceheight = self.source.shape[1], self.source.shape[0]
+		xscale = float(sourcewidth)/self.scaledwidth
+		yscale = float(sourceheight)/self.scaledheight
+
+		x *= xscale
+		y *= yscale
+
+		x = int(round(x))
+		y = int(round(y))
+
+		inx = x >= 0 and x < self.source.shape[1]
+		iny = y >= 0 and y < self.source.shape[0]
+		if inx and iny:
+			value = self.source[y, x]
+		else:
+			value = None
+
+		return x, y, value
+
 class Viewer(wx.Panel):
 	def __init__(self, *args, **kwargs):
 		wx.Panel.__init__(self, *args, **kwargs)
 
 		self.imagewindow = Window(self, -1)
 
+		self.informationbutton = wx.Button(self, -1, 'Information')
+
 		self.scalesizetool = Tools.SizeScaler(self, -1)
+
 		bitmap = Tools.getValueScaleBitmap((0, 255), (0, 255), 256, 16)
 		self.scalevaluesbitmap = wx.StaticBitmap(self, -1, bitmap=bitmap)
+
+		self.informationtool = Tools.Information(self, -1)
+		self.informationtool.Show(False)
+
 		self.scalevaluestool = Tools.ValueScaler(self, -1)
 		self.scalevaluestool.Show(False)
 
 		self.sizer = wx.GridBagSizer(0, 0)
 
-		self.sizer.Add(self.scalesizetool, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		self.sizer.Add(self.scalevaluesbitmap, (0, 1), (1, 1), wx.ALIGN_CENTER)
-		self.sizer.Add(self.scalevaluestool, (1, 0), (1, 2), wx.EXPAND)
-		self.sizer.Add(self.imagewindow, (2, 0), (1, 2), wx.EXPAND|wx.FIXED_MINSIZE)
+		self.sizer.Add(self.informationbutton, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		self.sizer.Add(self.scalesizetool, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		self.sizer.Add(self.scalevaluesbitmap, (0, 2), (1, 1), wx.ALIGN_CENTER)
+		self.sizer.Add(self.informationtool, (1, 0), (1, 3), wx.EXPAND)
+		self.sizer.Add(self.scalevaluestool, (2, 0), (1, 3), wx.EXPAND)
+		self.sizer.Add(self.imagewindow, (3, 0), (1, 3), wx.EXPAND|wx.FIXED_MINSIZE)
 
-		self.sizer.AddGrowableRow(2)
+		self.sizer.AddGrowableRow(3)
 		self.sizer.AddGrowableCol(0)
 		self.sizer.AddGrowableCol(1)
+		self.sizer.AddGrowableCol(2)
 
 		self.sizer.SetEmptyCellSize((0, 0))
 
@@ -603,7 +648,22 @@ class Viewer(wx.Panel):
 		self.Bind(Events.EVT_SCALE_SIZE, self.onScaleSize)
 		self.Bind(Events.EVT_FIT_TO_PAGE, self.onFitToPage)
 
+		self.informationbutton.Bind(wx.EVT_BUTTON, self.onInformationButton)
 		self.scalevaluesbitmap.Bind(wx.EVT_LEFT_UP, self.onScaleValuesBitmap)
+
+	def onImageWindowMotion(self, evt):
+		x, y = evt.m_x, evt.m_y
+		self.informationtool.setValue(*self.imagewindow.getXYValue(x, y))
+		#self.sizer.Layout()
+		evt.Skip()
+
+	def onInformationButton(self, evt):
+		self.informationtool.Show(not self.informationtool.IsShown())
+		if self.informationtool.IsShown():
+			self.imagewindow.Bind(wx.EVT_MOTION, self.onImageWindowMotion)
+		else:
+			self.imagewindow.Unbind(wx.EVT_MOTION)
+		self.sizer.Layout()
 
 	def onScaleValuesBitmap(self, evt):
 		self.scalevaluestool.Show(not self.scalevaluestool.IsShown())
@@ -615,6 +675,7 @@ class Viewer(wx.Panel):
 
 	def setNumarray(self, array):
 		self.imagewindow.setNumarray(array)
+		self.informationtool.setStatistics(array)
 		self.scalevaluestool.setValueRange(*self.imagewindow.getValueRange())
 		self.scalesizetool.setSize(*self.imagewindow.getSourceSize())
 
