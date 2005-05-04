@@ -46,8 +46,57 @@ class	Window(wx.Window):
 			regioniterator.Next()
 		copydc.SelectObject(wx.NullBitmap)
 
-	def sourceBuffer(self, dc, region, offset):
-		xoffset, yoffset = offset
+	def sourceBuffer(self, dc, sourceregion, bitmapregion):
+		self.sourceBitmap(dc, sourceregion, bitmapregion)
+
+	'''
+		region = self.getCrosshairsRegion(dc, sourceregion, bitmapregion)
+		self.drawCrosshairs(dc, region)
+
+	def getCrosshairsRegion(self, dc, sourceregion, bitmapregion):
+		sourcex, sourcey, sourcewidth, sourceheight = sourceregion.GetBox()
+		bitmapx, bitmapy, bitmapwidth, bitmapheight = bitmapregion.GetBox()
+
+		crosshairsize = 1
+
+		region = wx.Region()
+		x = sourcex
+		y = bitmapy + (bitmapheight - crosshairsize)/2
+		w = sourcewidth
+		h = crosshairsize
+		region.Union(x, y, w, h)
+		x = bitmapx + (bitmapwidth - crosshairsize)/2
+		y = sourcey
+		w = crosshairsize
+		h = sourceheight
+		region.Union(x, y, w, h)
+		region.IntersectRegion(sourceregion)
+
+		return region
+
+	def drawCrosshairs(self, dc, region):
+		dc.SetPen(wx.TRANSPARENT_PEN)
+		dc.SetBrush(wx.TheBrushList.FindOrCreateBrush(wx.BLUE, wx.SOLID))
+
+		regioniterator = wx.RegionIterator(region)
+		while(regioniterator):
+			r = regioniterator.GetRect()
+			dc.DrawRectangle(r.x, r.y, r.width, r.height)
+			regioniterator.Next()
+
+		dc.SetBrush(wx.NullBrush)
+		dc.SetPen(wx.NullPen)
+	'''
+
+	def sourceBitmap(self, dc, sourceregion, bitmapregion):
+		x, y, width, height = bitmapregion.GetBox()
+		xoffset = -x
+		yoffset = -y
+
+		region = wx.Region()
+		region.UnionRegion(sourceregion)
+		region.IntersectRegion(bitmapregion)
+
 		regioniterator = wx.RegionIterator(region)
 		while(regioniterator):
 			r = regioniterator.GetRect()
@@ -91,7 +140,6 @@ class	Window(wx.Window):
 
 		sourceregion = wx.Region()
 		sourceregion.UnionRegion(clientregion)
-		sourceregion.IntersectRegion(bitmapregion)
 		sourceregion.SubtractRegion(copyregion)
 
 		buffer = wx.EmptyBitmap(clientwidth, clientheight)
@@ -100,7 +148,7 @@ class	Window(wx.Window):
 		dc.SelectObject(buffer)
 		dc.Clear()
 		self.copyBuffer(dc, copyregion, (dx, dy))
-		self.sourceBuffer(dc, sourceregion, (-bitmapx, -bitmapy))
+		self.sourceBuffer(dc, sourceregion, bitmapregion)
 		dc.SelectObject(wx.NullBitmap)
 
 		self.validregion = wx.Region()
@@ -267,12 +315,11 @@ class	Window(wx.Window):
 
 		sourceregion = wx.Region()
 		sourceregion.UnionRegion(clientregion)
-		sourceregion.IntersectRegion(bitmapregion)
 
 		dc = wx.MemoryDC()
 		dc.SelectObject(self.buffer)
 		dc.Clear()
-		self.sourceBuffer(dc, sourceregion, (-bitmapx, -bitmapy))
+		self.sourceBuffer(dc, sourceregion, bitmapregion)
 		dc.SelectObject(wx.NullBitmap)
 
 		self.validregion = sourceregion
@@ -375,7 +422,6 @@ class	Window(wx.Window):
 
 		sourceregion = wx.Region()
 		sourceregion.UnionRegion(clientregion)
-		sourceregion.IntersectRegion(bitmapregion)
 		sourceregion.SubtractRegion(copyregion)
 
 		buffer = wx.EmptyBitmap(clientwidth, clientheight)
@@ -384,7 +430,7 @@ class	Window(wx.Window):
 		dc.SelectObject(buffer)
 		dc.Clear()
 		self.copyBuffer(dc, copyregion, (dx, dy))
-		self.sourceBuffer(dc, sourceregion, (-bitmapx, -bitmapy))
+		self.sourceBuffer(dc, sourceregion, bitmapregion)
 		dc.SelectObject(wx.NullBitmap)
 
 		self.validregion = wx.Region()
@@ -458,12 +504,11 @@ class	Window(wx.Window):
 
 		sourceregion = wx.Region()
 		sourceregion.UnionRegion(clientregion)
-		sourceregion.IntersectRegion(bitmapregion)
 
 		dc = wx.MemoryDC()
 		dc.SelectObject(self.buffer)
 		dc.Clear()
-		self.sourceBuffer(dc, sourceregion, (-bitmapx, -bitmapy))
+		self.sourceBuffer(dc, sourceregion, bitmapregion)
 		dc.SelectObject(wx.NullBitmap)
 
 		self.validregion = sourceregion
@@ -501,12 +546,11 @@ class	Window(wx.Window):
 
 		sourceregion = wx.Region()
 		sourceregion.UnionRegion(clientregion)
-		sourceregion.IntersectRegion(bitmapregion)
 
 		dc = wx.MemoryDC()
 		dc.SelectObject(self.buffer)
 		dc.Clear()
-		self.sourceBuffer(dc, sourceregion, (-bitmapx, -bitmapy))
+		self.sourceBuffer(dc, sourceregion, bitmapregion)
 		dc.SelectObject(wx.NullBitmap)
 
 		self.validregion = sourceregion
@@ -558,12 +602,11 @@ class	Window(wx.Window):
 
 		sourceregion = wx.Region()
 		sourceregion.UnionRegion(clientregion)
-		sourceregion.IntersectRegion(bitmapregion)
 
 		dc = wx.MemoryDC()
 		dc.SelectObject(self.buffer)
 		dc.Clear()
-		self.sourceBuffer(dc, sourceregion, (-bitmapx, -bitmapy))
+		self.sourceBuffer(dc, sourceregion, bitmapregion)
 		dc.SelectObject(wx.NullBitmap)
 
 		self.validregion = sourceregion
