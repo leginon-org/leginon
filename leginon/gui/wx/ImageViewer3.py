@@ -4,14 +4,59 @@ import numextension
 import gui.wx.ImageViewerEvents as Events
 import gui.wx.ImageViewerTools as Tools
 
+class DrawingPlugin(object):
+	def __init__(self, enabled=False):
+		self.enabled = enabled
+
+	def getRegion(self, sourceregion, bitmapregion):
+		raise NotImplementedError
+
+	def draw(self, dc, sourceregion, bitmapregion):
+		raise NotImplementedError
+
+class CrosshairsPlugin(DrawingPlugin):
+	def __init__(self, enabled=False):
+		DrawingPlugin.__init__(self, enabled=enabled)
+		self.crosshairsize = 1
+
+	def getRegion(self, sourceregion, bitmapregion):
+		sourcex, sourcey, sourcewidth, sourceheight = sourceregion.GetBox()
+		bitmapx, bitmapy, bitmapwidth, bitmapheight = bitmapregion.GetBox()
+
+		region = wx.Region()
+		y = bitmapy + (bitmapheight - self.crosshairsize)/2
+		region.Union(sourcex, y, sourcewidth, self.crosshairsize)
+		x = bitmapx + (bitmapwidth - self.crosshairsize)/2
+		region.Union(x, sourcey, self.crosshairsize, sourceheight)
+		region.IntersectRegion(sourceregion)
+
+		return region
+
+	def draw(self, dc, sourceregion, bitmapregion, region=None):
+		if region is None:
+			region = self.getRegion(sourceregion, bitmapregion)
+
+		dc.SetPen(wx.TRANSPARENT_PEN)
+		dc.SetBrush(wx.TheBrushList.FindOrCreateBrush(wx.BLUE, wx.SOLID))
+
+		regioniterator = wx.RegionIterator(region)
+		while(regioniterator):
+			r = regioniterator.GetRect()
+			dc.DrawRectangle(r.x, r.y, r.width, r.height)
+			regioniterator.Next()
+
+		dc.SetBrush(wx.NullBrush)
+		dc.SetPen(wx.NullPen)
+
 class	Window(wx.Window):
 	def __init__(self, parent, id):
 		wx.Window.__init__(self, parent, id)
 
 		self.ignoresize = False
 
+		self.plugins = []
+
 		self.fit_to_page = False
-		self.crosshairs = False
 
 		clientwidth, clientheight = self.GetClientSize()
 		self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
@@ -36,6 +81,34 @@ class	Window(wx.Window):
 		self.Bind(wx.EVT_SCROLLWIN_PAGEDOWN, self.onScrollWinPageDown)
 		self.Bind(wx.EVT_SCROLLWIN_THUMBTRACK, self.onScrollWinThumbTrack)
 
+	def enablePlugin(self, plugin, enable):
+		if plugin.enabled == enable:
+			return
+
+		plugin.enabled = enable
+
+		clientwidth, clientheight = self.GetClientSize()
+		if self.scaledwidth < clientwidth:
+			bitmapx = int(round((clientwidth - self.scaledwidth)/2.0))
+		else:
+			bitmapx = -self.GetScrollPos(wx.HORIZONTAL)
+		if self.scaledheight < clientheight:
+			bitmapy = int(round((clientheight - self.scaledheight)/2.0))
+		else:
+			bitmapy = -self.GetScrollPos(wx.VERTICAL)
+
+		sourceregion = wx.Region(0, 0, clientwidth, clientheight)
+		bitmapregion = wx.Region(bitmapx, bitmapy,
+															self.scaledwidth, self.scaledheight)
+
+		dc = wx.MemoryDC()
+		dc.SelectObject(self.buffer)
+		region = plugin.getRegion(sourceregion, bitmapregion)
+		self.sourceBuffer(dc, region, bitmapregion)
+		dc.SelectObject(wx.NullBitmap)
+
+		self.Refresh()
+
 	def copyBuffer(self, dc, region, offset):
 		xoffset, yoffset = offset
 		regioniterator = wx.RegionIterator(region)
@@ -51,15 +124,15 @@ class	Window(wx.Window):
 		region = wx.Region()
 		region.UnionRegion(sourceregion)
 		region.SubtractRegion(bitmapregion)
-		self.sourceClear(dc, region)
+		self.clearRegion(dc, region)
 
-		self.sourceBitmap(dc, sourceregion, bitmapregion)
+		self.drawBitmap(dc, sourceregion, bitmapregion)
 
-		if self.crosshairs:
-			region = self.getCrosshairsRegion(dc, sourceregion, bitmapregion)
-			self.sourceCrosshairs(dc, region)
+		for plugin in self.plugins:
+			if plugin.enabled:
+				plugin.draw(dc, sourceregion, bitmapregion)
 
-	def sourceClear(self, dc, region):
+	def clearRegion(self, dc, region):
 		dc.SetPen(wx.TRANSPARENT_PEN)
 		regioniterator = wx.RegionIterator(region)
 		while(regioniterator):
@@ -68,55 +141,7 @@ class	Window(wx.Window):
 			regioniterator.Next()
 		dc.SetPen(wx.NullPen)
 
-	def displayCrosshairs(self, display):
-		if self.crosshairs == display:
-			return
-
-		self.crosshairs = display
-
-		clientwidth, clientheight = self.GetClientSize()
-		sourceregion = wx.Region(0, 0, clientwidth, clientheight)
-		bitmapx = int(round((clientwidth - self.scaledwidth)/2.0))
-		bitmapy = int(round((clientheight - self.scaledheight)/2.0))
-		bitmapregion = wx.Region(bitmapx, bitmapy,
-															self.scaledwidth, self.scaledheight)
-		dc = wx.MemoryDC()
-		dc.SelectObject(self.buffer)
-		region = self.getCrosshairsRegion(dc, sourceregion, bitmapregion)
-		self.sourceBuffer(dc, region, bitmapregion)
-		dc.SelectObject(wx.NullBitmap)
-
-		self.Refresh()
-
-	def getCrosshairsRegion(self, dc, sourceregion, bitmapregion):
-		sourcex, sourcey, sourcewidth, sourceheight = sourceregion.GetBox()
-		bitmapx, bitmapy, bitmapwidth, bitmapheight = bitmapregion.GetBox()
-
-		crosshairsize = 1
-
-		region = wx.Region()
-		y = bitmapy + (bitmapheight - crosshairsize)/2
-		region.Union(sourcex, y, sourcewidth, crosshairsize)
-		x = bitmapx + (bitmapwidth - crosshairsize)/2
-		region.Union(x, sourcey, crosshairsize, sourceheight)
-		region.IntersectRegion(sourceregion)
-
-		return region
-
-	def sourceCrosshairs(self, dc, region):
-		dc.SetPen(wx.TRANSPARENT_PEN)
-		dc.SetBrush(wx.TheBrushList.FindOrCreateBrush(wx.BLUE, wx.SOLID))
-
-		regioniterator = wx.RegionIterator(region)
-		while(regioniterator):
-			r = regioniterator.GetRect()
-			dc.DrawRectangle(r.x, r.y, r.width, r.height)
-			regioniterator.Next()
-
-		dc.SetBrush(wx.NullBrush)
-		dc.SetPen(wx.NullPen)
-
-	def sourceBitmap(self, dc, sourceregion, bitmapregion):
+	def drawBitmap(self, dc, sourceregion, bitmapregion):
 		x, y, width, height = bitmapregion.GetBox()
 		xoffset = -x
 		yoffset = -y
@@ -667,7 +692,9 @@ class Viewer(wx.Panel):
 	def __init__(self, *args, **kwargs):
 		wx.Panel.__init__(self, *args, **kwargs)
 
+		self.crosshairsplugin = CrosshairsPlugin()
 		self.imagewindow = Window(self, -1)
+		self.imagewindow.plugins.append(self.crosshairsplugin)
 
 		self.informationbutton = wx.Button(self, -1, 'Information')
 		self.displaybutton = wx.Button(self, -1, 'Display')
@@ -766,7 +793,7 @@ class Viewer(wx.Panel):
 		self.imagewindow.fitToPage()
 
 	def onDisplayCrosshairs(self, evt):
-		self.imagewindow.displayCrosshairs(evt.display)
+		self.imagewindow.enablePlugin(self.crosshairsplugin, evt.display)
 
 if __name__ == '__main__':
 	import sys
