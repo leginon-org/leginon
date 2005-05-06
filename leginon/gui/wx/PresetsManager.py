@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.42 $
+# $Revision: 1.43 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-03 17:13:42 $
+# $Date: 2005-05-06 22:47:37 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -217,12 +217,10 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		self.Bind(wx.EVT_CHOICE, self.onCCDCameraChoice, self.cccdcamera)
 
 	def onTEMChoice(self, evt):
-		print 'ONTEMCHOICE'
 		mag = self.cmag.GetStringSelection()
-		print 'MAG', mag
 		tem = evt.GetString()
+		print '--- DEBUGGING ----------------------------------------------------'
 		print 'TEM', tem
-		print '---------------------------------------------------------'
 		print 'MAGS'
 		print self.magnifications
 		print '---------------------------------------------------------'
@@ -232,7 +230,6 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 			try:
 				choices = [str(int(m)) for m in self.magnifications[tem]]
 			except KeyError:
-				print 'KEYERROR'
 				choices = []
 		self.cmag.Freeze()
 		self.cmag.Clear()
@@ -531,9 +528,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		threading.Thread(target=target, args=args).start()
 
 	def onImport(self, evt):
-		self.setInstrumentSelection(self.importdialog.instrumentselection)
 		self.importdialog.ShowModal()
-		self.setInstrumentSelection(None)
 
 	def onFromScope(self, evt):
 		name = self.presets.getSelectedPreset()
@@ -547,10 +542,9 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		if dialog.ShowModal() == wx.ID_OK:
 			self._presetsEnable(False)
 			target = self.node.fromScope
-			args = (dialog.name,)
+			args = (dialog.name, dialog.temname, dialog.camname)
 			threading.Thread(target=target, args=args).start()
 		dialog.Destroy()
-		self.setInstrumentSelection(None)
 
 	#def onUpdateParameters(self, evt=None):
 	#	self.node.updateParams(self.parameters.get())
@@ -654,13 +648,13 @@ class NewDialog(wx.Dialog):
 		wx.Dialog.__init__(self, parent, -1, 'Create New Preset')
 		self.node = node
 
-		instrumentselection = gui.wx.Instrument.SelectionPanel(self)
-		self.GetParent().setInstrumentSelection(instrumentselection)
+		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self, passive=True)
+		self.GetParent().initInstrumentSelection(self.instrumentselection)
 		stname = wx.StaticText(self, -1, 'Preset name:')
 		self.tcname = wx.TextCtrl(self, -1, '')
 
 		sz = wx.GridBagSizer(5, 5)
-		sz.Add(instrumentselection, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.instrumentselection, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		sz.Add(stname, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		sz.Add(self.tcname, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
@@ -681,6 +675,8 @@ class NewDialog(wx.Dialog):
 
 	def onCreate(self, evt):
 		name = self.tcname.GetValue()
+		temname = self.instrumentselection.getTEM()
+		camname = self.instrumentselection.getCCDCamera()
 		if not name or name in self.node.presets:
 			dialog = wx.MessageDialog(self, 'Invalid preset name', 'Error',
 																wx.OK|wx.ICON_ERROR)
@@ -688,6 +684,8 @@ class NewDialog(wx.Dialog):
 			dialog.Destroy()
 		else:
 			self.name = name
+			self.temname = temname
+			self.camname = camname
 			evt.Skip()
 
 class ImportDialog(wx.Dialog):
@@ -696,8 +694,8 @@ class ImportDialog(wx.Dialog):
 		self.node = node
 		self.presets = None
 
-		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self)
-		#self.GetParent().setInstrumentSelection(self.instrumentselection)
+		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self, passive=True)
+		self.GetParent().initInstrumentSelection(self.instrumentselection)
 		agelab1 = wx.StaticText(self, -1, 'Presets less than')
 		self.ageentry = IntEntry(self, -1, chars=4)
 		self.ageentry.SetValue(20)
@@ -742,8 +740,10 @@ class ImportDialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onImport, self.bimport)
 
 	def onFindPresets(self, evt=None):
-		tem = self.node.instrument.getTEMData()
-		ccd = self.node.instrument.getCCDCameraData()
+		temname = self.instrumentselection.getTEM()
+		camname = self.instrumentselection.getCCDCamera()
+		tem = self.node.instrument.getTEMData(temname)
+		ccd = self.node.instrument.getCCDCameraData(camname)
 		days = self.ageentry.GetValue()
 		agestr = '-%d 0:0:0' % (days,)
 		pquery = data.PresetData(tem=tem, ccdcamera=ccd)

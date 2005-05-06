@@ -191,6 +191,10 @@ class PresetsManager(node.Node):
 		self.instrument = instrument.Proxy(self.objectservice,
 																				self.session,
 																				self.panel)
+		print '--------- DEBUGGING -----------------'
+		print 'PM init mags:'
+		print self.instrument.magnifications
+		print '--------------------------------------'
 		self.calclients = {
 			'pixel size':calibrationclient.PixelSizeCalibrationClient(self),
 			'image':calibrationclient.ImageShiftCalibrationClient(self),
@@ -468,7 +472,7 @@ class PresetsManager(node.Node):
 		if outputevent:
 			self.outputEvent(event.PresetChangedEvent(name=name, preset=presetdata))
 
-	def _fromScope(self, name):
+	def _fromScope(self, name, temname=None, camname=None):
 		'''
 		create a new preset with name
 		if a preset by this name already exists in my 
@@ -480,28 +484,37 @@ class PresetsManager(node.Node):
 			self.logger.error('Invalid preset name')
 			return
 
-		if name in self.presets:
+		## figure out tem and ccdcamera
+
+		if temname is None and name in self.presets:
 			tem = self.presets[name]['tem']
 			if tem is not None and 'name' in tem:
-				try:
-					self.instrument.setTEM(tem['name'])
-				except ValueError:
-					self.logger.error('Cannot access TEM selected for this preset')
-					return
-			ccdcamera = self.presets[name]['ccdcamera']
-			if ccdcamera is not None and 'name' in ccdcamera:
-				try:
-					self.instrument.setCCDCamera(ccdcamera['name'])
-				except ValueError:
-					self.logger.error('Cannot access CCD camera selected for this preset')
-					return
+				temname = tem['name']
 
-		if self.instrument.getTEMName() is None:
+		if camname is None and name in self.presets:
+			cam = self.presets[name]['ccdcamera']
+			if cam is not None and 'name' in cam:
+				camname = cam['name']
+
+		try:
+			self.instrument.setCCDCamera(camname)
+		except ValueError:
+			self.logger.error('Cannot access CCD camera selected for this preset')
+			return
+		try:
+			self.instrument.setTEM(temname)
+		except ValueError:
+			self.logger.error('Cannot access TEM selected for this preset')
+			return
+
+		if temname is None:
 			self.logger.error('No TEM selected for this preset')
 			return
-		if self.instrument.getCCDCameraName() is None:
+		if camname is None:
 			self.logger.error('No CCD camera selected for this preset')
 			return
+
+		self.logger.info('Preset from %s, %s' % (temname, camname))
 		try:
 			scopedata = self.instrument.getData(data.ScopeEMData)
 			cameradata = self.instrument.getData(data.CameraEMData, image=False)
@@ -675,8 +688,8 @@ class PresetsManager(node.Node):
 		previndex = index - 1
 		return order[previndex]
 
-	def fromScope(self, newname):
-		newpreset = self._fromScope(newname)
+	def fromScope(self, newname, temname=None, camname=None):
+		newpreset = self._fromScope(newname, temname, camname)
 		if newpreset is None:
 			self.panel.presetsEvent()
 			return
@@ -687,8 +700,6 @@ class PresetsManager(node.Node):
 
 	def selectPreset(self, pname):
 		self.currentselection = self.presetByName(pname)
-		self.instrument.setTEM(self.currentselection['tem']['name'])
-		self.instrument.setCCDCamera(self.currentselection['ccdcamera']['name'])
 		self.panel.setParameters(self.currentselection)
 		self.displayCalibrations(self.currentselection)
 
