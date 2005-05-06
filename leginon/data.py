@@ -1713,6 +1713,7 @@ class PresetsManagerSettingsData(SettingsData):
 class CorrectorSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
+			('instruments', dict),
 			('n average', int),
 			('despike', bool),
 			('despike size', int),

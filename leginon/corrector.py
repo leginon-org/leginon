@@ -63,6 +63,7 @@ class Corrector(node.Node):
 	panelclass = gui.wx.Corrector.Panel
 	settingsclass = data.CorrectorSettingsData
 	defaultsettings = {
+		'instruments': {'tem':None, 'ccdcamera':None},
 		'n average': 3,
 		'despike': True,
 		'despike size': 11,

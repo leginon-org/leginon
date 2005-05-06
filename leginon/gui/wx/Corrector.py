@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.38 $
+# $Revision: 1.39 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-26 01:55:22 $
+# $Date: 2005-05-06 22:28:16 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -198,8 +198,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
 
-		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self)
-		self.GetParent().setInstrumentSelection(self.instrumentselection)
+		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self)
+		self.GetParent().setInstrumentSelection(self.widgets['instruments'])
 
 		self.widgets['n average'] = IntEntry(self, -1, min=1, max=99, chars=2)
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
@@ -225,7 +225,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		sz = wx.GridBagSizer(5, 10)
 		label = wx.StaticText(self, -1, 'Images to average:')
-		sz.Add(self.instrumentselection, (0, 0), (1, 1), wx.EXPAND)
+		sz.Add(self.widgets['instruments'], (0, 0), (1, 1), wx.EXPAND)
 		sz.Add(self.widgets['camera settings'], (1, 0), (1, 1), wx.EXPAND)
 		sz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['n average'], (0, 2), (1, 1),
