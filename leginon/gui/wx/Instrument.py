@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.43 $
+# $Revision: 1.44 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-26 01:50:17 $
+# $Date: 2005-05-06 22:44:22 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -1280,8 +1280,8 @@ class SelectionPanel(wx.Panel):
 			ccdcamera = None
 		else:
 			ccdcamera = string
-		evt = gui.wx.Events.CCDCameraChangeEvent(self, name=ccdcamera)
 		if not self.passive:
+			evt = gui.wx.Events.CCDCameraChangeEvent(self, name=ccdcamera)
 			self.GetEventHandler().AddPendingEvent(evt)
 
 class SelectionMixin(object):
@@ -1295,23 +1295,31 @@ class SelectionMixin(object):
 		self.Bind(gui.wx.Events.EVT_TEM_CHANGE, self.onTEMChange)
 		self.Bind(gui.wx.Events.EVT_CCDCAMERA_CHANGE, self.onCCDCameraChange)
 
-	def setInstrumentSelection(self, instrumentselection):
-		self.instrumentselection = instrumentselection
-		if self.instrumentselection is None:
-			return
-
-		if not instrumentselection.passive:
-			self.Bind(gui.wx.Events.EVT_SET_TEM, self.onSetTEM)
-			self.Bind(gui.wx.Events.EVT_SET_CCDCAMERA, self.onSetCCDCamera)
-
+	def initInstrumentSelection(self, instrumentselection):
 		tem = self.proxy.getTEMName()
 		tems = self.proxy.getTEMNames()
 		ccdcamera = self.proxy.getCCDCameraName()
 		ccdcameras = self.proxy.getCCDCameraNames()
-		self.instrumentselection.setTEMs(tems)
-		self.instrumentselection.setTEM(tem)
-		self.instrumentselection.setCCDCameras(ccdcameras)
-		self.instrumentselection.setCCDCamera(ccdcamera)
+		instrumentselection.setTEMs(tems)
+		instrumentselection.setTEM(tem)
+		instrumentselection.setCCDCameras(ccdcameras)
+		instrumentselection.setCCDCamera(ccdcamera)
+
+	def setInstrumentSelection(self, instrumentselection):
+		if instrumentselection is None:
+			self.instrumentselection = None
+			return
+
+		self.initInstrumentSelection(instrumentselection)
+
+		if instrumentselection.passive:
+			return
+
+		if self.instrumentselection is not None:
+			raise RuntimeError('setInstrumentSelection when already set')
+		self.instrumentselection = instrumentselection
+		self.Bind(gui.wx.Events.EVT_SET_TEM, self.onSetTEM)
+		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERA, self.onSetCCDCamera)
 
 	def onTEMChange(self, evt):
 		threading.Thread(target=self.proxy.setTEM, args=(evt.name,)).start()
@@ -1320,7 +1328,7 @@ class SelectionMixin(object):
 		threading.Thread(target=self.proxy.setCCDCamera, args=(evt.name,)).start()
 
 	def instrumentSelectionEvent(self, evt):
-		if self.instrumentselection is None:
+		if self.instrumentselection is None or self.instrumentselection.passive:
 			return
 		evthandler = self.instrumentselection.GetEventHandler()
 		evthandler.AddPendingEvent(evt)
