@@ -12,12 +12,14 @@ import peakfinder
 import time
 import gui.wx.Calibrator
 import instrument
+import presets
 
 class Calibrator(node.Node):
 	'''
 	Calibrator base class
 	Contains basic functions useful for doing calibrations
 	'''
+	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs
 	panelclass = gui.wx.Calibrator.Panel
 	settingsclass = data.CalibratorSettingsData
 	defaultsettings = {
@@ -30,6 +32,7 @@ class Calibrator(node.Node):
 		self.cortypes = ['cross', 'phase']
 		self.instrument = instrument.Proxy(self.objectservice, self.session,
 																				self.panel)
+		self.presetsclient = presets.PresetsClient(self)
 
 	def getMagnification(self):
 		try:
