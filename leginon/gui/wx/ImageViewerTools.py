@@ -191,8 +191,6 @@ class Statistics(wx.Panel):
 
 class SizeScaler(wx.Choice):
 	def __init__(self, parent, id):
-		self.width = None
-		self.height = None
 		self.percentages = [10, 25, 50, 75, 100, 125, 150, 200, 400, 800, 1600]
 		choices = [('%d' % percentage) + '%' for percentage in self.percentages]
 		choices.append('Fit to page')
@@ -200,44 +198,53 @@ class SizeScaler(wx.Choice):
 		self.SetSelection(self.percentages.index(100))
 		self.Bind(wx.EVT_CHOICE, self.onChoice)
 
-	def setSize(self, width, height):
-		self.width = width
-		self.height = height
+	def getScale(self):
+		i = self.GetSelection()
+		return self.percentages[i]/100.0
 
 	def onChoice(self, evt):
 		evt.Skip()
-
-		if self.width is None or self.height is None:
-			return
 
 		string = evt.GetString()
 		if string == 'Fit to page':
 			evt = Events.FitToPageEvent(self)
 		else:
 			i = evt.GetSelection()
-			percentage = self.percentages[i]/100.0
-			width = int(round(percentage*self.width))
-			height = int(round(percentage*self.height))
-
-			evt = Events.ScaleSizeEvent(self, width, height)
+			scale = self.percentages[i]/100.0
+			evt = Events.ScaleSizeEvent(self, scale)
 		self.GetEventHandler().AddPendingEvent(evt)
 
-def getValueScaleBitmap(extrema, fromrange, width, height):
-	types = [type(i) for i in fromrange]
-	if float in types:
-		arraytype = numarray.Float
-	elif int in types:
-		arraytype = numarray.Int
-	else:
-		raise TypeError
+class ValueScaleBitmap(wx.StaticBitmap):
+	def __init__(self, parent, id,
+								extrema=(0, 255), fromrange=(0, 255), size=(256, 16)):
+		wx.StaticBitmap.__init__(self, parent, id, size=size)
+		self.updateParameters(extrema, fromrange)
 
-	array = numarray.arange(width, type=numarray.Float, shape=(1, width))
-	array *= float(extrema[1] - extrema[0])/(width - 1)
-	array += extrema[0]
-	array = array.astype(arraytype)
-	array = array.repeat(height)
+	def updateParameters(self, extrema=None, fromrange=None):
+		if extrema is not None:
+			self.extrema = extrema
+		if fromrange is not None:
+			self.fromrange = fromrange
+		self.updateBitmap()
 
-	return numarrayimage.numarray2wxBitmap(array, fromrange=fromrange)
+	def updateBitmap(self):
+		width, height = self.GetSize()
+		types = [type(i) for i in self.fromrange]
+		if float in types:
+			arraytype = numarray.Float
+		elif int in types:
+			arraytype = numarray.Int
+		else:
+			raise TypeError
+
+		array = numarray.arange(width, type=numarray.Float, shape=(1, width))
+		array *= float(self.extrema[1] - self.extrema[0])/(width - 1)
+		array += self.extrema[0]
+		array = array.astype(arraytype)
+		array = array.repeat(height)
+
+		bitmap = numarrayimage.numarray2wxBitmap(array, fromrange=self.fromrange)
+		self.SetBitmap(bitmap)
 
 class ValueScaler(wx.Panel):
 	def __init__(self, *args, **kwargs):

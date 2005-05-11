@@ -1,50 +1,185 @@
 import wx
 import numarrayimage
-import numextension
 import gui.wx.ImageViewerEvents as Events
 import gui.wx.ImageViewerTools as Tools
 
-class DrawingPlugin(object):
-	def __init__(self, enabled=False):
-		self.enabled = enabled
+class Plugin(wx.EvtHandler):
+	def __init__(self, hasalpha=False):
+		wx.EvtHandler.__init__(self)
+		self.hasalpha = hasalpha
 
-	def getRegion(self, sourceregion, bitmapregion):
+	def GetId(self):
+		return -1
+
+	def getRegion(self):
 		raise NotImplementedError
 
-	def draw(self, dc, sourceregion, bitmapregion):
+	def draw(self, dc, region, offset):
 		raise NotImplementedError
 
-class CrosshairsPlugin(DrawingPlugin):
-	def __init__(self, enabled=False):
-		DrawingPlugin.__init__(self, enabled=enabled)
-		self.crosshairsize = 1
+class ClearPlugin(Plugin):
+	def __init__(self):
+		self.color = wx.WHITE
+		self.brush = wx.TheBrushList.FindOrCreateBrush(self.color, wx.SOLID)
+		Plugin.__init__(self)
 
-	def getRegion(self, sourceregion, bitmapregion):
-		sourcex, sourcey, sourcewidth, sourceheight = sourceregion.GetBox()
-		bitmapx, bitmapy, bitmapwidth, bitmapheight = bitmapregion.GetBox()
+	def getRegion(self):
+		return None
 
-		region = wx.Region()
-		y = bitmapy + (bitmapheight - self.crosshairsize)/2
-		region.Union(sourcex, y, sourcewidth, self.crosshairsize)
-		x = bitmapx + (bitmapwidth - self.crosshairsize)/2
-		region.Union(x, sourcey, self.crosshairsize, sourceheight)
-		region.IntersectRegion(sourceregion)
-
-		return region
-
-	def draw(self, dc, sourceregion, bitmapregion, region=None):
-		if region is None:
-			region = self.getRegion(sourceregion, bitmapregion)
-
+	def draw(self, dc, region, offset):
 		dc.SetPen(wx.TRANSPARENT_PEN)
-		dc.SetBrush(wx.TheBrushList.FindOrCreateBrush(wx.BLUE, wx.SOLID))
-
+		dc.SetBrush(self.brush)
 		regioniterator = wx.RegionIterator(region)
 		while(regioniterator):
 			r = regioniterator.GetRect()
 			dc.DrawRectangle(r.x, r.y, r.width, r.height)
 			regioniterator.Next()
+		dc.SetBrush(wx.NullBrush)
+		dc.SetPen(wx.NullPen)
 
+class NumarrayPlugin(Plugin):
+	def __init__(self):
+		Plugin.__init__(self)
+		self.array = None
+		self.size = wx.Size()
+		self.extrema = None
+		self.valuerange = None
+		self.scale = 1.0
+		self.fitpage = False
+
+		self.Bind(wx.EVT_SIZE, self.onSize)
+
+	def _fitToPage(self, width, height):
+		widthscale = float(width)/self.array.shape[1]
+		heightscale = float(height)/self.array.shape[0]
+		if widthscale < heightscale:
+			self.size.width = width
+			self.size.height = int(round(float(self.array.shape[0])*widthscale))
+		elif heightscale < widthscale:
+			self.size.width = int(round(float(self.array.shape[1])*heightscale))
+			self.size.height = height
+		else:
+			self.size.width = width
+			self.size.height = height
+
+	def fitToPage(self, width, height):
+		self.fitpage = True
+		region = self.getRegion()
+
+		self._fitToPage(width, height)
+
+		region.UnionRegion(self.getRegion())
+		evt = Events.UpdatePluginRegionEvent(self, region)
+		self.AddPendingEvent(evt)
+
+	def onSize(self, evt):
+		if self.array is not None and self.fitpage:
+			width, height = evt.GetSize()
+			self._fitToPage(width, height)
+		evt.Skip()
+
+	def setScale(self, scale):
+		self.fitpage = False
+		region = self.getRegion()
+		self.scale = scale
+		self.size.width = int(round(self.scale*self.array.shape[1]))
+		self.size.height = int(round(self.scale*self.array.shape[0]))
+		region.UnionRegion(self.getRegion())
+		evt = Events.UpdatePluginRegionEvent(self, region)
+		self.AddPendingEvent(evt)
+
+	def setNumarray(self, array):
+		region = self.getRegion()
+
+		if array is None:
+			self.size.width = 0
+			self.size.height = 0
+			self.extrema = None
+			self.valuerange = None
+		else:
+			self.size.width = int(round(self.scale*array.shape[1]))
+			self.size.height = int(round(self.scale*array.shape[0]))
+			self.extrema = (array.min(), array.max())
+			self.valuerange = self.extrema
+
+		self.array = array
+
+		region.UnionRegion(self.getRegion())
+		evt = Events.UpdatePluginRegionEvent(self, region)
+		self.AddPendingEvent(evt)
+
+	def setValueRange(self, valuerange):
+		self.valuerange = valuerange
+		region = self.getRegion()
+		evt = Events.UpdatePluginRegionEvent(self, region)
+		self.AddPendingEvent(evt)
+
+	def getXYValue(self, x, y):
+		if self.array is None:
+			return None
+
+		x = int(round(x/self.scale))
+		y = int(round(y/self.scale))
+
+		if x < 0 or x >= self.array.shape[1] or y < 0 or y >= self.array.shape[0]:
+			value = None
+		else:
+			value = self.array[y, x]
+
+		return x, y, value
+
+	def getRegion(self):
+		if self.array is None:
+			return wx.Region()
+		else:
+			return wx.Region(0, 0, self.size.width, self.size.height)
+
+	def draw(self, dc, region, offset):
+		regioniterator = wx.RegionIterator(region)
+		while(regioniterator):
+			r = regioniterator.GetRect()
+			bitmap = numarrayimage.numarray2wxBitmap(
+								array,
+								r.x + offset.x, r.y + offset.y,
+								r.width, r.height,
+								self.size.width, self.size.height,
+								self.valuerange)
+			sourcedc = wx.MemoryDC()
+			sourcedc.SelectObject(bitmap)
+			dc.Blit(r.x, r.y, r.width, r.height, sourcedc, 0, 0)
+			sourcedc.SelectObject(wx.NullBitmap)
+			regioniterator.Next()
+
+class CrosshairsPlugin(Plugin):
+	def __init__(self, plugin):
+		self.size = 1
+		self.color = wx.BLUE
+		self.brush = wx.TheBrushList.FindOrCreateBrush(self.color, wx.SOLID)
+		self.plugin = plugin
+		Plugin.__init__(self, hasalpha=True)
+
+	def getRegion(self):
+		return None
+
+	def draw(self, dc, region, offset):
+		pluginregion = self.plugin.getRegion()
+		x, y, width, height = region.GetBox()
+		pluginx, pluginy, pluginwidth, pluginheight = pluginregion.GetBox()
+
+		crosshairsregion = wx.Region()
+		y = pluginy + (pluginheight - self.size)/2
+		crosshairsregion.Union(x, y, width, self.size)
+		x = pluginx + (pluginwidth - self.size)/2
+		crosshairsregion.Union(x, y, self.size, height)
+		crosshairsregion.IntersectRegion(region)
+
+		dc.SetPen(wx.TRANSPARENT_PEN)
+		dc.SetBrush(self.brush)
+		regioniterator = wx.RegionIterator(crosshairsregion)
+		while(regioniterator):
+			r = regioniterator.GetRect()
+			dc.DrawRectangle(r.x, r.y, r.width, r.height)
+			regioniterator.Next()
 		dc.SetBrush(wx.NullBrush)
 		dc.SetPen(wx.NullPen)
 
@@ -56,19 +191,11 @@ class	Window(wx.Window):
 
 		self.plugins = []
 
-		self.fit_to_page = False
+		self.offset = wx.Point(0, 0)
+		self.pluginregion = wx.Region()
 
-		clientwidth, clientheight = self.GetClientSize()
-		self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
-
-		self.validregion = wx.Region()
-
-		self.source = None
-		self.extrema = None
-		self.scaledvaluerange = None
-
-		self.scaledwidth = 0
-		self.scaledheight = 0
+		self.size = self.GetClientSize()
+		self.buffer = wx.EmptyBitmap(self.size.width, self.size.height)
 
 		self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
 		self.Bind(wx.EVT_PAINT, self.onPaint)
@@ -81,138 +208,78 @@ class	Window(wx.Window):
 		self.Bind(wx.EVT_SCROLLWIN_PAGEDOWN, self.onScrollWinPageDown)
 		self.Bind(wx.EVT_SCROLLWIN_THUMBTRACK, self.onScrollWinThumbTrack)
 
-	def enablePlugin(self, plugin, enable):
-		if plugin.enabled == enable:
-			return
+		self.Bind(Events.EVT_UPDATE_PLUGIN_REGION, self.onUpdatePluginRegion)
 
-		plugin.enabled = enable
-
-		clientwidth, clientheight = self.GetClientSize()
-		if self.scaledwidth < clientwidth:
-			bitmapx = int(round((clientwidth - self.scaledwidth)/2.0))
-		else:
-			bitmapx = -self.GetScrollPos(wx.HORIZONTAL)
-		if self.scaledheight < clientheight:
-			bitmapy = int(round((clientheight - self.scaledheight)/2.0))
-		else:
-			bitmapy = -self.GetScrollPos(wx.VERTICAL)
-
-		sourceregion = wx.Region(0, 0, clientwidth, clientheight)
-		bitmapregion = wx.Region(bitmapx, bitmapy,
-															self.scaledwidth, self.scaledheight)
-
-		dc = wx.MemoryDC()
-		dc.SelectObject(self.buffer)
-		region = plugin.getRegion(sourceregion, bitmapregion)
-		self.sourceBuffer(dc, region, bitmapregion)
-		dc.SelectObject(wx.NullBitmap)
-
-		self.Refresh()
-
-	def copyBuffer(self, dc, region, offset):
-		xoffset, yoffset = offset
+	def copyBuffer(self, dc, region, offset=(0, 0)):
+		x, y = offset
 		regioniterator = wx.RegionIterator(region)
 		copydc = wx.MemoryDC()
 		copydc.SelectObject(self.buffer)
 		while(regioniterator):
 			r = regioniterator.GetRect()
-			dc.Blit(r.x, r.y, r.width, r.height, copydc, r.x + xoffset, r.y + yoffset)
+			dc.Blit(r.x, r.y, r.width, r.height, copydc, r.x + x, r.y + y)
 			regioniterator.Next()
 		copydc.SelectObject(wx.NullBitmap)
 
-	def sourceBuffer(self, dc, sourceregion, bitmapregion):
-		region = wx.Region()
-		region.UnionRegion(sourceregion)
-		region.SubtractRegion(bitmapregion)
-		self.clearRegion(dc, region)
+	def sourceBuffer(self, dc, sourceregion):
+		backgroundregion = wx.Region()
+		backgroundregion.UnionRegion(sourceregion)
 
-		self.drawBitmap(dc, sourceregion, bitmapregion)
-
+		self.plugins.reverse()
+		plugins = []
 		for plugin in self.plugins:
-			if plugin.enabled:
-				plugin.draw(dc, sourceregion, bitmapregion)
+			region = wx.Region()
+			region.UnionRegion(backgroundregion)
+			pluginregion = plugin.getRegion()
+			if pluginregion is not None:
+				pluginregion.Offset(-self.offset.x, -self.offset.y)
+				region.IntersectRegion(pluginregion)
+			plugins.append((plugin, region))
+			if not plugin.hasalpha:
+				backgroundregion.SubtractRegion(region)
+		self.plugins.reverse()
 
-	def clearRegion(self, dc, region):
-		dc.SetPen(wx.TRANSPARENT_PEN)
-		regioniterator = wx.RegionIterator(region)
-		while(regioniterator):
-			r = regioniterator.GetRect()
-			dc.DrawRectangle(r.x, r.y, r.width, r.height)
-			regioniterator.Next()
-		dc.SetPen(wx.NullPen)
+		for plugin, region in plugins:
+			plugin.draw(dc, region, self.offset)
 
-	def drawBitmap(self, dc, sourceregion, bitmapregion):
-		x, y, width, height = bitmapregion.GetBox()
-		xoffset = -x
-		yoffset = -y
-
-		region = wx.Region()
-		region.UnionRegion(sourceregion)
-		region.IntersectRegion(bitmapregion)
-
-		regioniterator = wx.RegionIterator(region)
-		while(regioniterator):
-			r = regioniterator.GetRect()
-			bitmap = numarrayimage.numarray2wxBitmap(array,
-																					r.x + xoffset, r.y + yoffset,
-																					r.width, r.height,
-																					self.scaledwidth, self.scaledheight,
-																					self.scaledvaluerange)
-			sourcedc = wx.MemoryDC()
-			sourcedc.SelectObject(bitmap)
-			dc.Blit(r.x, r.y, r.width, r.height, sourcedc, 0, 0)
-			sourcedc.SelectObject(wx.NullBitmap)
-			regioniterator.Next()
-
-	def onScroll(self, x, y):
-		clientwidth, clientheight = self.GetClientSize()
-		clientregion = wx.Region(0, 0, clientwidth, clientheight)
-
-		if self.scaledwidth > clientwidth:
-			dx = x - self.GetScrollPos(wx.HORIZONTAL)
-			bitmapx = -x
-		else:
+	def offsetClientRegion(self, x=None, y=None):
+		if x is None:
 			dx = 0
-			bitmapx = int(round((clientwidth - self.scaledwidth)/2.0))
-
-		if self.scaledheight > clientheight:
-			dy = y - self.GetScrollPos(wx.VERTICAL)
-			bitmapy = -y
 		else:
+			dx = x - self.offset.x
+		if y is None:
 			dy = 0
-			bitmapy = int(round((clientheight - self.scaledheight)/2.0))
+		else:
+			dy = y - self.offset.y
 
-		bitmapregion = wx.Region(bitmapx, bitmapy,
-															self.scaledwidth, self.scaledheight)
+		copyregion = wx.Region(-dx, -dy, self.size.width, self.size.height)
+		copyregion.Intersect(0, 0, self.size.width, self.size.height)
 
-		self.validregion.Offset(-dx, -dy)
-
-		copyregion = wx.Region()
-		copyregion.UnionRegion(clientregion)
-		copyregion.IntersectRegion(self.validregion)
-
-		sourceregion = wx.Region()
-		sourceregion.UnionRegion(clientregion)
+		sourceregion = wx.Region(0, 0, self.size.width, self.size.height)
 		sourceregion.SubtractRegion(copyregion)
 
-		buffer = wx.EmptyBitmap(clientwidth, clientheight)
+		self.offset.x += dx
+		self.offset.y += dy
+
+		buffer = wx.EmptyBitmap(self.size.width, self.size.height)
 
 		dc = wx.MemoryDC()
 		dc.SelectObject(buffer)
-		self.copyBuffer(dc, copyregion, (dx, dy))
-		self.sourceBuffer(dc, sourceregion, bitmapregion)
+		self.copyBuffer(dc, copyregion, offset=(dx, dy))
+		self.sourceBuffer(dc, sourceregion)
 		dc.SelectObject(wx.NullBitmap)
-
-		self.validregion = wx.Region()
-		self.validregion.UnionRegion(copyregion)
-		self.validregion.UnionRegion(sourceregion)
 
 		self.buffer = buffer
 
-		self.SetScrollPos(wx.HORIZONTAL, x)
-		self.SetScrollPos(wx.VERTICAL, y)
-
 		self.Refresh()
+
+	def onScroll(self, x=None, y=None):
+		if x is not None:
+			self.SetScrollPos(wx.HORIZONTAL, x)
+		if y is not None:
+			self.SetScrollPos(wx.VERTICAL, y)
+
+		self.offsetClientRegion(x, y)
 
 	def onScrollWin(self, orientation, position):
 		if orientation == wx.HORIZONTAL:
@@ -220,9 +287,9 @@ class	Window(wx.Window):
 			x = max(0, x)
 			x = min(x, self.GetScrollRange(orientation)
 									- self.GetScrollThumb(orientation))
-			y = self.GetScrollPos(wx.VERTICAL)
+			y = None
 		elif orientation == wx.VERTICAL:
-			x = self.GetScrollPos(wx.HORIZONTAL)
+			x = None
 			y = position
 			y = max(0, y)
 			y = min(y, self.GetScrollRange(orientation)
@@ -269,121 +336,6 @@ class	Window(wx.Window):
 		position = evt.GetPosition()
 		self.onScrollWin(orientation, position)
 
-	def setNumarray(self, array):
-		if self.source is None:
-			widthscale = 1.0
-			heightscale = 1.0
-		else:
-			if self.scaledwidth is None:
-				widthscale = 1.0
-			else:
-				widthscale = self.scaledwidth/self.source.shape[1]
-			if self.scaledheight is None:
-				heightscale = 1.0
-			else:
-				heightscale = self.scaledheight/self.source.shape[0]
-
-		self.source = array
-
-		bufferwidth = self.buffer.GetWidth()
-		bufferheight = self.buffer.GetHeight()
-
-		if self.source is None:
-			self.extrema = None
-			self.scaledvaluerange = None
-			self.scaledwidth, self.scaledheight = None, None
-
-			self.ignoresize = True
-			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
-			self.SetScrollbar(wx.VERTICAL, 0, 0, 0)
-			self.ignoresize = False
-
-			clientwidth, clientheight = self.GetClientSize()
-			if bufferwidth != clientwidth or bufferheight != clientheight:
-				self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
-
-			sourceregion = wx.Region(0, 0, clientwidth, clientheight)
-			bitmapx = int(round((clientwidth - self.scaledwidth)/2.0))
-			bitmapy = int(round((clientheight - self.scaledheight)/2.0))
-			bitmapregion = wx.Region(bitmapx, bitmapy,
-																self.scaledwidth, self.scaledheight)
-
-			dc = wx.MemoryDC()
-			dc.SelectObject(self.buffer)
-			self.sourceBuffer(dc, sourceregion, bitmapregion)
-			dc.SelectObject(wx.NullBitmap)
-
-			self.Refresh()
-			return
-
-		self.extrema = numextension.minmax(self.source)
-		self.scaledvaluerange = self.extrema
-
-		if self.fit_to_page:
-			self.fitToPage()
-			return
-
-		if self.scaledwidth:
-			scrollx = float(self.GetScrollPos(wx.HORIZONTAL))/self.scaledwidth
-		else:
-			scrollx = 0
-		if self.scaledheight:
-			scrolly = float(self.GetScrollPos(wx.VERTICAL))/self.scaledheight
-		else:
-			scrolly = 0
-
-		self.scaledwidth = int(round(self.source.shape[1]*widthscale))
-		self.scaledheight = int(round(self.source.shape[0]*heightscale))
-
-		width, height = self.GetSize()
-
-		self.ignoresize = True
-
-		if self.scaledwidth > width:
-			self.SetScrollbar(wx.HORIZONTAL, 0, width, self.scaledwidth, False)
-		else:
-			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
-
-		clientwidth, clientheight = self.GetClientSize()
-
-		if self.scaledheight > clientheight:
-			bitmapy = -int(round(self.scaledheight*scrolly))
-			bitmapy = max(bitmapy, clientheight - self.scaledheight)
-			self.SetScrollbar(wx.VERTICAL, -bitmapy, clientheight, self.scaledheight)
-		else:
-			bitmapy = int(round((clientheight - self.scaledheight)/2.0))
-			self.SetScrollbar(wx.VERTICAL, 0, 0, 0)
-
-		clientwidth, clientheight = self.GetClientSize()
-
-		if self.scaledwidth > clientwidth:
-			bitmapx = -int(round(self.scaledwidth*scrollx))
-			bitmapx = max(bitmapx, clientwidth - self.scaledwidth)
-			self.SetScrollbar(wx.HORIZONTAL, -bitmapx, clientwidth, self.scaledwidth)
-		else:
-			bitmapx = int(round((clientwidth - self.scaledwidth)/2.0))
-			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
-
-		self.ignoresize = False
-
-		clientwidth, clientheight = self.GetClientSize()
-
-		if bufferwidth != clientwidth or bufferheight != clientheight:
-			self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
-
-		sourceregion = wx.Region(0, 0, clientwidth, clientheight)
-		bitmapregion = wx.Region(bitmapx, bitmapy,
-															self.scaledwidth, self.scaledheight)
-
-		dc = wx.MemoryDC()
-		dc.SelectObject(self.buffer)
-		self.sourceBuffer(dc, sourceregion, bitmapregion)
-		dc.SelectObject(wx.NullBitmap)
-
-		self.validregion = sourceregion
-
-		self.Refresh()
-
 	def onEraseBackground(self, evt):
 		pass
 
@@ -398,319 +350,185 @@ class	Window(wx.Window):
 			regioniterator.Next()
 		memorydc.SelectObject(wx.NullBitmap)
 
-	def onSize(self, evt):
-		evt.Skip()
+	def getPluginRegion(self):
+		region = wx.Region()
+		for plugin in self.plugins:
+			pluginregion = plugin.getRegion()
+			if pluginregion is not None:
+				region.UnionRegion(pluginregion)
+		return region
 
-		if self.ignoresize:
+	def onUpdatePluginRegion(self, evt):
+		x0, y0, width0, height0 = self.pluginregion.GetBox()
+		self.pluginregion = self.getPluginRegion()
+		x, y, width, height = self.pluginregion.GetBox()
+
+		if width0 == width and height0 == height:
+			region = evt.GetRegion()
+			sourceregion = wx.Region(0, 0, self.size.width, self.size.height)
+			region.Offset(-self.offset.x, -self.offset.y)
+			sourceregion.IntersectRegion(region)
+			region.Offset(self.offset.x, self.offset.y)
+			dc = wx.MemoryDC()
+			dc.SelectObject(self.buffer)
+			self.sourceBuffer(dc, sourceregion)
+			dc.SelectObject(wx.NullBitmap)
+			self.Refresh()
 			return
 
-		width, height = self.GetSize()
+		clientwidth, clientheight = self.GetSize()
 
-		if self.fit_to_page:
-			self.fitToPage()
-			return
+		if width0:
+			xscale = float(width)/width0
+			scrollx = int(round(self.GetScrollPos(wx.HORIZONTAL)*xscale))
+		else:
+			scrollx = 0
+		if height0:
+			yscale = float(height)/height0
+			scrolly = int(round(self.GetScrollPos(wx.VERTICAL)*yscale))
+		else:
+			scrolly = 0
 
 		self.ignoresize = True
 
-		bufferwidth = self.buffer.GetWidth()
-		if self.scaledwidth < bufferwidth:
-			x = int(round((bufferwidth - self.scaledwidth)/2.0))
+		if width > clientwidth:
+			self.SetScrollbar(wx.HORIZONTAL, 0, clientwidth, width, False)
 		else:
-			x = -self.GetScrollPos(wx.HORIZONTAL)
-
-		bufferheight = self.buffer.GetHeight()
-		if self.scaledheight < bufferheight:
-			y = int(round((bufferheight - self.scaledheight)/2.0))
-		else:
-			y = -self.GetScrollPos(wx.VERTICAL)
-
-		if self.scaledwidth > width:
-			scrollx = self.GetScrollPos(wx.HORIZONTAL)
-			self.SetScrollbar(wx.HORIZONTAL, scrollx, width, self.scaledwidth, False)
-		else:
-			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
+			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0, False)
 
 		clientwidth, clientheight = self.GetClientSize()
 
-		if self.scaledheight > clientheight:
-			scrolly = max(0, -y)
-			scrolly = min(scrolly, self.scaledheight - clientheight)
-			bitmapy = -scrolly
-			self.SetScrollbar(wx.VERTICAL, scrolly, clientheight, self.scaledheight)
+		if height > clientheight:
+			y = max(0, scrolly)
+			y = min(scrolly, height - clientheight)
+			self.SetScrollbar(wx.VERTICAL, y, clientheight, height)
 		else:
-			bitmapy = int(round((clientheight - self.scaledheight)/2.0))
 			self.SetScrollbar(wx.VERTICAL, 0, 0, 0)
-		dy = y - bitmapy
+			y = int(round((height - clientheight)/2.0))
 
 		clientwidth, clientheight = self.GetClientSize()
 
-		if self.scaledwidth > clientwidth:
-			scrollx = max(0, -x)
-			scrollx = min(scrollx, self.scaledwidth - clientwidth)
-			bitmapx = -scrollx
-			self.SetScrollbar(wx.HORIZONTAL, scrollx, clientwidth, self.scaledwidth)
+		if width > clientwidth:
+			x = max(0, scrollx)
+			x = min(scrollx, width - clientwidth)
+			self.SetScrollbar(wx.HORIZONTAL, x, clientwidth, width)
 		else:
-			bitmapx = int(round((clientwidth - self.scaledwidth)/2.0))
 			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
-		dx = x - bitmapx
+			x = int(round((width - clientwidth)/2.0))
 
 		self.ignoresize = False
 
-		self.validregion.Offset(-dx, -dy)
+		self.offset.x = x
+		self.offset.y = y
 
-		clientregion = wx.Region(0, 0, clientwidth, clientheight)
-		bitmapregion = wx.Region(bitmapx, bitmapy,
-															self.scaledwidth, self.scaledheight)
+		clientregion = wx.Region(0, 0, self.size.width, self.size.height)
 
-		copyregion = wx.Region()
-		copyregion.UnionRegion(clientregion)
-		copyregion.IntersectRegion(self.validregion)
+		dc = wx.MemoryDC()
+		dc.SelectObject(self.buffer)
+		self.sourceBuffer(dc, clientregion)
+		dc.SelectObject(wx.NullBitmap)
 
-		sourceregion = wx.Region()
-		sourceregion.UnionRegion(clientregion)
+		self.Refresh()
+
+	def resizeClientRegion(self):
+		x, y, width, height = self.pluginregion.GetBox()
+
+		clientwidth, clientheight = self.GetSize()
+
+		self.ignoresize = True
+
+		if width > clientwidth:
+			scrollx = self.GetScrollPos(wx.HORIZONTAL)
+			self.SetScrollbar(wx.HORIZONTAL, scrollx, clientwidth, width, False)
+		else:
+			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0, False)
+
+		clientwidth, clientheight = self.GetClientSize()
+
+		if height > clientheight:
+			scrolly = max(0, self.offset.y)
+			scrolly = min(scrolly, height - clientheight)
+			self.SetScrollbar(wx.VERTICAL, scrolly, clientheight, height)
+			dy = scrolly - self.offset.y
+		else:
+			self.SetScrollbar(wx.VERTICAL, 0, 0, 0)
+			dy = int(round((height - clientheight)/2.0)) - self.offset.y
+
+		clientwidth, clientheight = self.GetClientSize()
+
+		if width > clientwidth:
+			scrollx = max(0, self.offset.x)
+			scrollx = min(scrollx, width - clientwidth)
+			self.SetScrollbar(wx.HORIZONTAL, scrollx, clientwidth, width)
+			dx = scrollx - self.offset.x
+		else:
+			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
+			dx = int(round((width - clientwidth)/2.0)) - self.offset.x
+
+		self.ignoresize = False
+
+		self.offset.x += dx
+		self.offset.y += dy
+
+		copyregion = wx.Region(-dx, -dy, self.size.width, self.size.height)
+		self.size = self.GetClientSize()
+		copyregion.Intersect(0, 0, self.size.width, self.size.height)
+
+		sourceregion = wx.Region(0, 0, self.size.width, self.size.height)
 		sourceregion.SubtractRegion(copyregion)
 
 		buffer = wx.EmptyBitmap(clientwidth, clientheight)
 
 		dc = wx.MemoryDC()
 		dc.SelectObject(buffer)
-		self.copyBuffer(dc, copyregion, (dx, dy))
-		self.sourceBuffer(dc, sourceregion, bitmapregion)
+		self.copyBuffer(dc, copyregion, offset=(dx, dy))
+		self.sourceBuffer(dc, sourceregion)
 		dc.SelectObject(wx.NullBitmap)
-
-		self.validregion = wx.Region()
-		self.validregion.UnionRegion(copyregion)
-		self.validregion.UnionRegion(sourceregion)
 
 		self.buffer = buffer
 
-		# if the offset has changed paint the entire panel
 		if dx != 0 or dy != 0:
 			self.Refresh()
 
-	def scaleSize(self, width, height):
-		self.fit_to_page = False
-		if self.source is None:
+	def onSize(self, evt):
+		evt.Skip()
+
+		if self.ignoresize:
 			return
 
-		if self.scaledwidth:
-			scrollx = float(self.GetScrollPos(wx.HORIZONTAL))/self.scaledwidth
-		else:
-			scrollx = 0
-		if self.scaledheight:
-			scrolly = float(self.GetScrollPos(wx.VERTICAL))/self.scaledheight
-		else:
-			scrolly = 0
-
-		self.scaledwidth = width
-		self.scaledheight = height
-
-		width, height = self.GetSize()
-
-		self.ignoresize = True
-
-		if self.scaledwidth > width:
-			self.SetScrollbar(wx.HORIZONTAL, 0, width, self.scaledwidth, False)
-		else:
-			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
-
-		clientwidth, clientheight = self.GetClientSize()
-
-		if self.scaledheight > clientheight:
-			bitmapy = -int(round(self.scaledheight*scrolly))
-			bitmapy = max(bitmapy, clientheight - self.scaledheight)
-			self.SetScrollbar(wx.VERTICAL, -bitmapy, clientheight, self.scaledheight)
-		else:
-			bitmapy = int(round((clientheight - self.scaledheight)/2.0))
-			self.SetScrollbar(wx.VERTICAL, 0, 0, 0)
-
-		clientwidth, clientheight = self.GetClientSize()
-
-		if self.scaledwidth > clientwidth:
-			bitmapx = -int(round(self.scaledwidth*scrollx))
-			bitmapx = max(bitmapx, clientwidth - self.scaledwidth)
-			self.SetScrollbar(wx.HORIZONTAL, -bitmapx, clientwidth, self.scaledwidth)
-		else:
-			bitmapx = int(round((clientwidth - self.scaledwidth)/2.0))
-			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
-
-		self.ignoresize = False
-
-		clientwidth, clientheight = self.GetClientSize()
-
-		bufferwidth = self.buffer.GetWidth()
-		bufferheight = self.buffer.GetHeight()
-		if bufferwidth != clientwidth or bufferheight != clientheight:
-			self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
-
-		sourceregion = wx.Region(0, 0, clientwidth, clientheight)
-		bitmapregion = wx.Region(bitmapx, bitmapy,
-															self.scaledwidth, self.scaledheight)
-
-		dc = wx.MemoryDC()
-		dc.SelectObject(self.buffer)
-		self.sourceBuffer(dc, sourceregion, bitmapregion)
-		dc.SelectObject(wx.NullBitmap)
-
-		self.validregion = sourceregion
-
-		self.Refresh()
-
-	def scaleValues(self, valuerange):
-		if self.source is None:
-			return
-
-		minvalue, maxvalue = valuerange
-		if minvalue < self.extrema[0]:
-			minvalue = self.extrema[0]
-		if maxvalue > self.extrema[1]:
-			maxvalue = self.extrema[1]
-		self.scaledvaluerange = (minvalue, maxvalue)
-
-		clientwidth, clientheight = self.GetClientSize()
-
-		bufferwidth = self.buffer.GetWidth()
-		if self.scaledwidth < bufferwidth:
-			bitmapx = int(round((bufferwidth - self.scaledwidth)/2.0))
-		else:
-			bitmapx = -self.GetScrollPos(wx.HORIZONTAL)
-
-		bufferheight = self.buffer.GetHeight()
-		if self.scaledheight < bufferheight:
-			bitmapy = int(round((bufferheight - self.scaledheight)/2.0))
-		else:
-			bitmapy = -self.GetScrollPos(wx.VERTICAL)
-
-		sourceregion = wx.Region(0, 0, clientwidth, clientheight)
-		bitmapregion = wx.Region(bitmapx, bitmapy,
-															self.scaledwidth, self.scaledheight)
-
-		dc = wx.MemoryDC()
-		dc.SelectObject(self.buffer)
-		self.sourceBuffer(dc, sourceregion, bitmapregion)
-		dc.SelectObject(wx.NullBitmap)
-
-		self.validregion = sourceregion
-
-		self.Refresh()
-
-	def getValueRange(self):
-		return self.extrema, self.scaledvaluerange
-
-	def getSourceSize(self):
-		return self.source.shape[1], self.source.shape[0]
-
-	def fitToPage(self):
-		self.fit_to_page = True
-		if self.source is None:
-			return
-
-		self.ignoresize = True
-		self.SetScrollbar(wx.VERTICAL, 0, 0, 0)
-		self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
-		self.ignoresize = False
-
-		clientwidth, clientheight = self.GetClientSize()
-
-		bufferwidth = self.buffer.GetWidth()
-		bufferheight = self.buffer.GetHeight()
-		if bufferwidth != clientwidth or bufferheight != clientheight:
-			self.buffer = wx.EmptyBitmap(clientwidth, clientheight)
-
-		sourcewidth = self.source.shape[1]
-		sourceheight = self.source.shape[0]
-		widthscale = float(clientwidth)/sourcewidth
-		heightscale = float(clientheight)/sourceheight
-		if widthscale < heightscale:
-			self.scaledwidth = clientwidth
-			self.scaledheight = int(round(sourceheight*widthscale))
-		elif heightscale < widthscale:
-			self.scaledheight = clientheight
-			self.scaledwidth = int(round(sourcewidth*heightscale))
-		else:
-			self.scaledwidth = clientwidth
-			self.scaledheight = clientheight
-
-		sourceregion = wx.Region(0, 0, clientwidth, clientheight)
-
-		bitmapx = int(round((clientwidth - self.scaledwidth)/2.0))
-		bitmapy = int(round((clientheight - self.scaledheight)/2.0))
-		bitmapregion = wx.Region(bitmapx, bitmapy,
-															self.scaledwidth, self.scaledheight)
-
-		dc = wx.MemoryDC()
-		dc.SelectObject(self.buffer)
-		self.sourceBuffer(dc, sourceregion, bitmapregion)
-		dc.SelectObject(wx.NullBitmap)
-
-		self.validregion = sourceregion
-
-		self.Refresh()
-
-	def getXYValue(self, x, y):
-		clientwidth, clientheight = self.GetClientSize()
-
-		if self.scaledwidth < clientwidth:
-			xoffset = -int(round((clientwidth - self.scaledwidth)/2.0))
-		else:
-			xoffset = self.GetScrollPos(wx.HORIZONTAL)
-
-		if self.scaledheight < clientheight:
-			yoffset = -int(round((clientheight - self.scaledheight)/2.0))
-		else:
-			yoffset = self.GetScrollPos(wx.VERTICAL)
-
-		x += xoffset
-		y += yoffset
-
-		sourcewidth, sourceheight = self.source.shape[1], self.source.shape[0]
-		if self.scaledwidth:
-			xscale = float(sourcewidth)/self.scaledwidth
-		else:
-			xscale = 1.0
-		if self.scaledheight:
-			yscale = float(sourceheight)/self.scaledheight
-		else:
-			yscale = 1.0
-
-		x *= xscale
-		y *= yscale
-
-		x = int(round(x))
-		y = int(round(y))
-
-		value = None
-		if self.source is not None:
-			inx = x >= 0 and x < self.source.shape[1]
-			iny = y >= 0 and y < self.source.shape[0]
-			if inx and iny:
-				value = self.source[y, x]
-
-		return x, y, value
+		self.resizeClientRegion()
 
 class Viewer(wx.Panel):
 	def __init__(self, *args, **kwargs):
 		wx.Panel.__init__(self, *args, **kwargs)
 
-		self.crosshairsplugin = CrosshairsPlugin()
 		self.imagewindow = Window(self, -1)
-		self.imagewindow.plugins.append(self.crosshairsplugin)
+
+		clearplugin = ClearPlugin()
+		clearplugin.SetNextHandler(self.imagewindow)
+		clearplugin.SetNextHandler(self.imagewindow)
+		self.imagewindow.PushEventHandler(clearplugin)
+		self.imagewindow.plugins.append(clearplugin)
+
+		self.numarrayplugin = NumarrayPlugin()
+		self.numarrayplugin.SetNextHandler(self.imagewindow)
+		self.imagewindow.PushEventHandler(self.numarrayplugin)
+		self.imagewindow.plugins.append(self.numarrayplugin)
+
+		crosshairsplugin = CrosshairsPlugin(self.numarrayplugin)
+		crosshairsplugin.SetNextHandler(self.imagewindow)
+		self.imagewindow.PushEventHandler(crosshairsplugin)
+		self.imagewindow.plugins.append(crosshairsplugin)
 
 		self.informationbutton = wx.Button(self, -1, 'Information')
 		self.displaybutton = wx.Button(self, -1, 'Display')
-
 		self.scalesizetool = Tools.SizeScaler(self, -1)
-
-		bitmap = Tools.getValueScaleBitmap((0, 255), (0, 255), 256, 16)
-		self.scalevaluesbitmap = wx.StaticBitmap(self, -1, bitmap=bitmap)
+		self.scalevaluesbitmap = Tools.ValueScaleBitmap(self, -1)
 
 		self.informationtool = Tools.Information(self, -1)
 		self.informationtool.Show(False)
-
 		self.displaytool = Tools.Display(self, -1)
 		self.displaytool.Show(False)
-
-		self.scalevaluestool = Tools.ValueScaler(self, -1)
 		self.scalevaluestool = Tools.ValueScaler(self, -1)
 		self.scalevaluestool.Show(False)
 
@@ -736,20 +554,21 @@ class Viewer(wx.Panel):
 		self.SetSizer(self.sizer)
 		self.SetAutoLayout(True)
 
-		self.Bind(Events.EVT_SET_NUMARRAY, self.onSetNumarray)
+		self.informationbutton.Bind(wx.EVT_BUTTON, self.onInformationButton)
+		self.displaybutton.Bind(wx.EVT_BUTTON, self.onDisplayButton)
+		self.scalevaluesbitmap.Bind(wx.EVT_LEFT_UP, self.onScaleValuesBitmap)
+
 		self.Bind(Events.EVT_SCALE_VALUES, self.onScaleValues)
 		self.Bind(Events.EVT_SCALE_SIZE, self.onScaleSize)
 		self.Bind(Events.EVT_FIT_TO_PAGE, self.onFitToPage)
 		self.Bind(Events.EVT_DISPLAY_CROSSHAIRS, self.onDisplayCrosshairs)
 
-		self.informationbutton.Bind(wx.EVT_BUTTON, self.onInformationButton)
-		self.displaybutton.Bind(wx.EVT_BUTTON, self.onDisplayButton)
-		self.scalevaluesbitmap.Bind(wx.EVT_LEFT_UP, self.onScaleValuesBitmap)
-
 	def onImageWindowMotion(self, evt):
 		x, y = evt.m_x, evt.m_y
-		self.informationtool.setValue(*self.imagewindow.getXYValue(x, y))
-		#self.sizer.Layout()
+		x += self.imagewindow.offset.x
+		y += self.imagewindow.offset.y
+		x, y, value = self.numarrayplugin.getXYValue(x, y)
+		self.informationtool.setValue(x, y, value)
 		evt.Skip()
 
 	def onInformationButton(self, evt):
@@ -770,27 +589,26 @@ class Viewer(wx.Panel):
 		self.sizer.Layout()
 		evt.Skip()
 
-	def onSetNumarray(self, evt):
-		self.setNumarray(evt.GetNumarray())
-
 	def setNumarray(self, array):
-		self.imagewindow.setNumarray(array)
+		self.numarrayplugin.setNumarray(array)
 		self.informationtool.setStatistics(array)
-		self.scalevaluestool.setValueRange(*self.imagewindow.getValueRange())
-		self.scalesizetool.setSize(*self.imagewindow.getSourceSize())
+		self.scalevaluestool.setValueRange(self.numarrayplugin.extrema,
+																				self.numarrayplugin.valuerange)
+		self.scalevaluesbitmap.updateParameters(self.numarrayplugin.extrema,
+																						self.numarrayplugin.valuerange)
 
 	def onScaleValues(self, evt):
 		valuerange = evt.GetValueRange()
-		self.imagewindow.scaleValues(valuerange)
-		extrema = self.imagewindow.extrema
-		bitmap = Tools.getValueScaleBitmap(extrema, valuerange, 256, 16)
-		self.scalevaluesbitmap.SetBitmap(bitmap)
+		self.numarrayplugin.setValueRange(valuerange)
+		self.scalevaluesbitmap.updateParameters(self.numarrayplugin.extrema,
+																						self.numarrayplugin.valuerange)
 
 	def onScaleSize(self, evt):
-		self.imagewindow.scaleSize(evt.GetWidth(), evt.GetHeight())
+		self.numarrayplugin.setScale(evt.GetScale())
 
 	def onFitToPage(self, evt):
-		self.imagewindow.fitToPage()
+		width, height = self.imagewindow.GetClientSize()
+		self.numarrayplugin.fitToPage(width, height)
 
 	def onDisplayCrosshairs(self, evt):
 		self.imagewindow.enablePlugin(self.crosshairsplugin, evt.display)

@@ -1,16 +1,28 @@
 import wx
 
+UpdatePluginRegionEventType = wx.NewEventType()
 SetNumarrayEventType = wx.NewEventType()
 ScaleSizeEventType = wx.NewEventType()
 ScaleValuesEventType = wx.NewEventType()
 FitToPageEventType = wx.NewEventType()
 DisplayCrosshairsEventType = wx.NewEventType()
 
+EVT_UPDATE_PLUGIN_REGION = wx.PyEventBinder(UpdatePluginRegionEventType)
 EVT_SET_NUMARRAY = wx.PyEventBinder(SetNumarrayEventType)
 EVT_SCALE_SIZE = wx.PyEventBinder(ScaleSizeEventType)
 EVT_SCALE_VALUES = wx.PyEventBinder(ScaleValuesEventType)
 EVT_FIT_TO_PAGE = wx.PyEventBinder(FitToPageEventType)
 EVT_DISPLAY_CROSSHAIRS = wx.PyEventBinder(DisplayCrosshairsEventType)
+
+class UpdatePluginRegionEvent(wx.PyCommandEvent):
+	def __init__(self, source, region):
+		sourceid = source.GetId()
+		wx.PyCommandEvent.__init__(self, UpdatePluginRegionEventType, sourceid)
+		self.SetEventObject(source)
+		self.region = region
+
+	def GetRegion(self):
+		return self.region
 
 class SetNumarrayEvent(wx.PyCommandEvent):
 	def __init__(self, source, array):
@@ -22,17 +34,13 @@ class SetNumarrayEvent(wx.PyCommandEvent):
 		return self.array
 
 class ScaleSizeEvent(wx.PyCommandEvent):
-	def __init__(self, source, width, height):
+	def __init__(self, source, scale):
 		wx.PyCommandEvent.__init__(self, ScaleSizeEventType, source.GetId())
 		self.SetEventObject(source)
-		self.width = width
-		self.height = height
+		self.scale = scale
 
-	def GetWidth(self):
-		return self.width
-
-	def GetHeight(self):
-		return self.height
+	def GetScale(self):
+		return self.scale
 
 class ScaleValuesEvent(wx.PyCommandEvent):
 	def __init__(self, source, valuerange):
