@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.43 $
+# $Revision: 1.44 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-06 22:47:37 $
+# $Date: 2005-05-11 00:22:25 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -597,7 +597,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 			preset = preset.toDict(dereference=True)
 		tems = self.node.instrument.getTEMNames()
 		ccdcameras = self.node.instrument.getCCDCameraNames()
-		magnifications = dict(self.node.instrument.magnifications)
+		magnifications = dict(self.node.instrument.getMagnifications())
 		camerasizes = dict(self.node.instrument.camerasizes)
 		dialog = EditPresetDialog(self, preset, tems, ccdcameras,
 															magnifications, camerasizes)

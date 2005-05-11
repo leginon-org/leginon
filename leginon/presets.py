@@ -193,7 +193,7 @@ class PresetsManager(node.Node):
 																				self.panel)
 		print '--------- DEBUGGING -----------------'
 		print 'PM init mags:'
-		print self.instrument.magnifications
+		print self.instrument.getMagnifications()
 		print '--------------------------------------'
 		self.calclients = {
 			'pixel size':calibrationclient.PixelSizeCalibrationClient(self),

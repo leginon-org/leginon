@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.29 $
+# $Revision: 1.30 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-20 19:08:23 $
-# $Author: suloway $
+# $Date: 2005-05-11 00:22:24 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -23,7 +23,6 @@ class Proxy(object):
 		self.tem = None
 		self.ccdcamera = None
 		self.camerasize = None
-		self.magnifications = {}
 		self.camerasizes = {}
 		self.imagecorrection = None
 		self.session = session
@@ -36,7 +35,6 @@ class Proxy(object):
 		if 'TEM' in types:
 			proxy = self.objectservice.getObjectProxy(nodename, name)
 			self.tems[name] = proxy
-			self.magnifications[name] = proxy.Magnifications
 			if self.wxeventhandler is not None:
 				names = self.getTEMNames()
 				evt = gui.wx.Events.SetTEMsEvent(self.wxeventhandler, names=names)
@@ -65,10 +63,6 @@ class Proxy(object):
 		if name in self.tems and self.tem is self.tems[name]:
 			self.setTEM(None)
 			del self.tems[name]
-		try:
-			del self.magnifications[name]
-		except KeyError:
-			pass
 
 		if name in self.ccdcameras and self.ccdcamera is self.ccdcameras[name]:
 			self.setCCDCamera(None)
@@ -111,6 +105,18 @@ class Proxy(object):
 		except:
 			raise RuntimeError('unable to get TEM hostname')
 		return instrumentdata
+
+	def getMagnifications(self, name=None):
+		if name is None:
+			if self.tem is None:
+				return []
+			else:
+				name = self.tem._name
+		else:
+			if name not in self.tems:
+				raise RuntimeError('no TEM \'%s\' available' % name)
+		mags = self.tems[name].Magnifications
+		return mags
 
 	def getCCDCameraName(self):
 		if self.ccdcamera is None:
