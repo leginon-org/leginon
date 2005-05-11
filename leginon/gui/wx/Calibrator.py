@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Calibrator.py,v $
-# $Revision: 1.29 $
+# $Revision: 1.30 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-21 00:11:31 $
+# $Date: 2005-05-11 23:49:03 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -26,13 +26,24 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
 
-		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self, passive=True)
-		self.GetParent().setInstrumentSelection(self.instrumentselection)
+		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self, passive=True)
+		self.GetParent().setInstrumentSelection(self.widgets['instruments'])
 
 		self.widgets['override preset'] = wx.CheckBox(self, -1,
 																								'Override Preset')
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
+
+		sz = wx.GridBagSizer(5, 10)
+		sz.Add(self.widgets['override preset'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['instruments'], (1, 0), (1, 1), wx.EXPAND)
+		sz.Add(self.widgets['camera settings'], (0, 1), (2, 1),
+						wx.EXPAND)
+		overridebox = wx.StaticBox(self, -1, "Override Preset")
+		overridesz = wx.StaticBoxSizer(overridebox, wx.VERTICAL)
+		overridesz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+
 		self.widgets['correlation type'] = Choice(self, -1,
 																							choices=self.node.cortypes)
 
@@ -46,11 +57,15 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(szcor, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.instrumentselection, (1, 0), (1, 1), wx.EXPAND)
+
+		'''
+		sz.Add(self.widgets['instruments'], (1, 0), (1, 1), wx.EXPAND)
 		sz.Add(self.widgets['override preset'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['camera settings'], (3, 0), (1, 1),
 						wx.EXPAND)
+		'''
+		sz.Add(overridesz, (1, 0), (8, 1))
 
 		sb = wx.StaticBox(self, -1, 'Calibration')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
