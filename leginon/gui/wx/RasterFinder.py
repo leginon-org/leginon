@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.15 $
+# $Revision: 1.16 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-28 21:10:11 $
+# $Date: 2005-05-11 23:49:32 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -24,17 +24,7 @@ import threading
 class Panel(gui.wx.TargetFinder.Panel):
 	def initialize(self):
 		gui.wx.TargetFinder.Panel.initialize(self)
-
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
-													'settings',
-													shortHelpString='Settings')
-		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT,
-													'play',
-													shortHelpString='Submit Targets')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE,
-													'send_queue_out',
-													shortHelpString='Submit Queued Targets')
+		self.SettingsDialog = gui.wx.TargetFinder.SettingsDialog
 
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
@@ -50,39 +40,6 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableCol(0)
 		self.szmain.AddGrowableRow(1)
-
-	def getTargetPositions(self, typename):
-		return self.imagepanel.getTargetPositions(typename)
-
-	def submitTargets(self):
-		evt = gui.wx.Events.SubmitTargetsEvent()
-		self.GetEventHandler().AddPendingEvent(evt)
-
-	def targetsSubmitted(self):
-		evt = gui.wx.Events.TargetsSubmittedEvent()
-		self.GetEventHandler().AddPendingEvent(evt)
-
-	def onNodeInitialized(self):
-		gui.wx.TargetFinder.Panel.onNodeInitialized(self)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitTool,
-											id=gui.wx.ToolBar.ID_SUBMIT)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitQueueTool,
-											id=gui.wx.ToolBar.ID_SUBMIT_QUEUE)
-
-		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings)
-
-	def onSubmitTool(self, evt):
-		self.node.submit()
-
-	def onSubmitQueueTool(self, evt):
-		self.node.publishQueue()
-
-	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self)
-		dialog.ShowModal()
-		dialog.Destroy()
 
 	def onImageSettings(self, evt):
 		if evt.name == 'Original':
@@ -250,24 +207,6 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		self.setNodeSettings()
 		threading.Thread(target=self.node.ice).start()
 
-class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
-	def initialize(self):
-		tfsbsz = gui.wx.TargetFinder.SettingsDialog.initialize(self)
-
-		self.widgets['user check'] = wx.CheckBox(self, -1,
-																'Allow for user verification of raster points')
-		self.widgets['queue'] = wx.CheckBox(self, -1,
-																'Queue up targets')
-
-		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.widgets['user check'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['queue'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		sb = wx.StaticBox(self, -1, 'Raster Points')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
-
-		return tfsbsz + [sbsz]
 
 if __name__ == '__main__':
 	class App(wx.App):

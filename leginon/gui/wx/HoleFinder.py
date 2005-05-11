@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleFinder.py,v $
-# $Revision: 1.36 $
+# $Revision: 1.37 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-02 21:53:05 $
+# $Date: 2005-05-11 23:49:31 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -26,18 +26,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 	icon = 'holefinder'
 	def initialize(self):
 		gui.wx.TargetFinder.Panel.initialize(self)
-
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
-													'settings',
-													shortHelpString='Settings')
-		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT,
-													'play',
-													shortHelpString='Submit Targets')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE,
-													'send_queue_out',
-													shortHelpString='Submit Queued Targets')
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
+		self.SettingsDialog = SettingsDialog
 
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
@@ -59,48 +48,6 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(0)
-
-		self.Bind(gui.wx.Events.EVT_SUBMIT_TARGETS, self.onSubmitTargets)
-		self.Bind(gui.wx.Events.EVT_TARGETS_SUBMITTED, self.onTargetsSubmitted)
-
-	def onSubmitTargets(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
-
-	def onTargetsSubmitted(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
-
-	def submitTargets(self):
-		evt = gui.wx.Events.SubmitTargetsEvent()
-		self.GetEventHandler().AddPendingEvent(evt)
-
-	def targetsSubmitted(self):
-		evt = gui.wx.Events.TargetsSubmittedEvent()
-		self.GetEventHandler().AddPendingEvent(evt)
-
-	def getTargetPositions(self, typename):
-		return self.imagepanel.getTargetPositions(typename)
-
-	def onNodeInitialized(self):
-		gui.wx.TargetFinder.Panel.onNodeInitialized(self)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
-		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitTool,
-											id=gui.wx.ToolBar.ID_SUBMIT)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitQueueTool,
-											id=gui.wx.ToolBar.ID_SUBMIT_QUEUE)
-
-	def onSubmitTool(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
-		self.node.submit()
-
-	def onSubmitQueueTool(self, evt):
-		self.node.publishQueue()
-
-	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self)
-		dialog.ShowModal()
-		dialog.Destroy()
 
 	def onImageSettings(self, evt):
 		if evt.name == 'Original':
@@ -490,31 +437,20 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
-		tfsbsz = gui.wx.TargetFinder.SettingsDialog.initialize(self)
+		tfsd = gui.wx.TargetFinder.SettingsDialog.initialize(self)
 
-		self.widgets['user check'] = wx.CheckBox(self, -1,
-																	'Allow for user verification of picked holes')
 		self.widgets['skip'] = wx.CheckBox(self, -1,
-																							'Skip auto picking of holes')
-		self.widgets['queue'] = wx.CheckBox(self, -1,
-																							'Queue up targets')
-		self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
+																	'Skip automated hole finder')
 		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.widgets['user check'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['skip'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['queue'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['skip'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
 
-		sb = wx.StaticBox(self, -1, 'Hole finding')
+		sb = wx.StaticBox(self, -1, 'Hole Finder Settings')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
-		return tfsbsz + [sbsz]
+		return tfsd + [sbsz]
 
-	def onQueueCheckbox(self, evt):
-		state = evt.IsChecked()
-		parent = self.GetParent()
-		parent.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE, state)
-		evt.Skip()
 
 if __name__ == '__main__':
 	class App(wx.App):

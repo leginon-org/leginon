@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.44 $
+# $Revision: 1.45 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-11 00:22:25 $
+# $Date: 2005-05-11 23:49:32 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -100,13 +100,13 @@ class Calibrations(wx.StaticBoxSizer):
 		self.Layout()
 
 class EditPresetDialog(gui.wx.Dialog.Dialog):
-	def __init__(self, parent, parameters, tems, ccdcameras,
-								magnifications, camerasizes):
+	def __init__(self, parent, instrument, parameters):
 		self.parameters = parameters
-		self.tems = tems
-		self.ccdcameras = ccdcameras
-		self.magnifications = magnifications
-		self.camerasizes = camerasizes
+		self.instrument = instrument
+		self.tems = self.instrument.getTEMNames()
+		self.ccdcameras = self.instrument.getCCDCameraNames()
+		self.camerasizes = dict(self.instrument.camerasizes)
+
 		gui.wx.Dialog.Dialog.__init__(self, parent,
 																	'Edit Preset %s' % parameters['name'],
 																	'Preset Parameters')
@@ -117,7 +117,8 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 
 		self.ctem = wx.Choice(self, -1, choices=[self.nonestring] + self.tems)
 		try:
-			magchoices = [str(int(m)) for m in self.magnifications[parameters['tem']['name']]]
+			mags = self.instrument.getMagnifications(parameters['tem']['name'])
+			magchoices = [str(int(m)) for m in mags]
 		except (AttributeError, KeyError, TypeError):
 			magchoices = []
 		self.cmag = wx.Choice(self, -1, choices=magchoices)
@@ -219,16 +220,16 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 	def onTEMChoice(self, evt):
 		mag = self.cmag.GetStringSelection()
 		tem = evt.GetString()
-		print '--- DEBUGGING ----------------------------------------------------'
-		print 'TEM', tem
-		print 'MAGS'
-		print self.magnifications
-		print '---------------------------------------------------------'
 		if tem == self.nonestring:
 			choices = []
 		else:
 			try:
-				choices = [str(int(m)) for m in self.magnifications[tem]]
+				mags = self.instrument.getMagnifications(tem)
+				print '--- DEBUGGING ----------------------------------'
+				print 'TEM', tem
+				print 'MAGS', mags
+				print '------------------------------------------------'
+				choices = [str(int(m)) for m in mags]
 			except KeyError:
 				choices = []
 		self.cmag.Freeze()
@@ -574,7 +575,10 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		else:
 			self.calibrations.set({})
 			self.parameters.set(None)
-			self.parameters.Enable(False)
+			try:
+				self.parameters.Enable(False)
+			except AttributeError:
+				pass
 
 	def onToScope(self, evt):
 		self._presetsEnable(False)
@@ -595,12 +599,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 			return
 		if isinstance(preset, data.Data):
 			preset = preset.toDict(dereference=True)
-		tems = self.node.instrument.getTEMNames()
-		ccdcameras = self.node.instrument.getCCDCameraNames()
-		magnifications = dict(self.node.instrument.getMagnifications())
-		camerasizes = dict(self.node.instrument.camerasizes)
-		dialog = EditPresetDialog(self, preset, tems, ccdcameras,
-															magnifications, camerasizes)
+		dialog = EditPresetDialog(self, self.node.instrument, preset)
 		if dialog.ShowModal() == wx.ID_OK:
 			self.node.updatePreset(evt.presetname, dialog.getParameters())
 		dialog.Destroy()

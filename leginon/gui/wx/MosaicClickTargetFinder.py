@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-12-16 00:49:24 $
-# $Author: suloway $
+# $Date: 2005-05-11 23:49:32 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -24,23 +24,27 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 	def initialize(self):
 		gui.wx.ClickTargetFinder.Panel.initialize(self, focus=False)
 
-		self.toolbar.InsertTool(1, gui.wx.ToolBar.ID_TILES,
+		self.toolbar.InsertSeparator(4)
+
+		self.toolbar.InsertTool(5, gui.wx.ToolBar.ID_TILES,
 													'tiles',
 													shortHelpString='Tiles')
-		self.toolbar.InsertTool(2, gui.wx.ToolBar.ID_MOSAIC,
+		self.toolbar.InsertTool(6, gui.wx.ToolBar.ID_MOSAIC,
 													'atlasmaker',
 													shortHelpString='Mosaic')
-		self.toolbar.InsertSeparator(3)
-		self.toolbar.InsertTool(4, gui.wx.ToolBar.ID_REFRESH,
+		self.toolbar.InsertSeparator(7)
+		self.toolbar.InsertTool(8, gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
 													shortHelpString='Refresh')
-		self.toolbar.InsertTool(5, gui.wx.ToolBar.ID_CURRENT_POSITION,
+		self.toolbar.InsertTool(9, gui.wx.ToolBar.ID_CURRENT_POSITION,
 													'currentposition',
 													shortHelpString='Show Position')
-		self.toolbar.InsertSeparator(6)
-		self.toolbar.InsertTool(7, gui.wx.ToolBar.ID_FIND_SQUARES,
+		self.toolbar.InsertSeparator(10)
+		self.toolbar.InsertTool(11, gui.wx.ToolBar.ID_FIND_SQUARES,
 													'squarefinder',
 													shortHelpString='Find Squares')
+
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
 
 		self.imagepanel.addTypeTool('Filtered', display=True, settings=True)
 		self.imagepanel.addTypeTool('Thresholded', display=True, settings=True)
@@ -59,6 +63,11 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 											id=gui.wx.ToolBar.ID_FIND_SQUARES)
 
 		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings)
+
+	def onSubmitTool(self, evt):
+		'''overriding so that submit button stays enabled'''
+		gui.wx.ClickTargetFinder.Panel.onSubmitTool(self, evt)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
 
 	def onTilesButton(self, evt):
 		choices = self.node.getMosaicNames()
