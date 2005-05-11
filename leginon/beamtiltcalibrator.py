@@ -26,6 +26,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	panelclass = gui.wx.BeamTiltCalibrator.Panel
 	settingsclass = data.BeamTiltCalibratorSettingsData
 	defaultsettings = {
+		'instruments': {'tem': None, 'ccdcamera': None},
 		'override preset': False,
 		'camera settings': None,
 		'correlation type': 'phase',
@@ -48,12 +49,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.start()
 
 	def calibrateAlignment(self, tilt_value):
-		if self.settings['override preset']:
-			try:
-				self.instrument.ccdcamera.Settings = self.settings['camera settings']
-			except Exception, e:
-				self.logger.error('Calibration failed: %s' % e)
-				return
+		self.initInstruments()
 
 		state1 = {'beam tilt': tilt_value}
 		state2 = {'beam tilt': -tilt_value}
@@ -85,12 +81,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		return ''
 
 	def calibrateDefocus(self, tilt_value, defocus1, defocus2):
-		if self.settings['override preset']:
-			try:
-				self.instrument.ccdcamera.Settings = self.settings['camera settings']
-			except Exception, e:
-				self.logger.error('Defocus calibration failed: %s' % e)
-				return
+		self.initInstruments()
 		state1 = {'defocus': defocus1}
 		state2 = {'defocus': defocus2}
 		matdict = {}
@@ -126,12 +117,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		return ''
 
 	def calibrateStigmators(self, tilt_value, delta):
-		if self.settings['override preset']:
-			try:
-				self.instrument.ccdcamera.Settings = self.settings['camera settings']
-			except Exception, e:
-				self.logger.error('Stigmator calibration failed: %s' % e)
-				return
+		self.initInstruments()
 
 		currentstig = self.getObjectiveStigmator()
 		## set up the stig states
@@ -181,12 +167,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		return ''
 
 	def measureDefocusStig(self, btilt, stig=True):
-		if self.settings['override preset']:
-			try:
-				self.instrument.ccdcamera.Settings = self.settings['camera settings']
-			except Exception, e:
-				self.logger.error('Measure defocus failed: %s' % e)
-				return
+		self.initInstruments()
 		try:
 			ret = self.calclient.measureDefocusStig(btilt, stig=stig)
 		except Exception, e:

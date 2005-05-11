@@ -69,14 +69,12 @@ class GonModeler(calibrator.Calibrator):
 
 	# calibrate needs to take a specific value
 	def loop(self, label, axis, points, interval):
-		## set camera state
-		if self.settings['override preset']:
-			try:
-				self.instrument.ccdcamera.Settings = self.settings['camera settings']
-			except Exception, e:
-				self.logger.error('Modeled stage measurement failed: %s' % e)
-				self.panel.measurementDone()
-				return
+		try:
+			self.initInstruments()
+		except Exception, e:
+			self.logger.error('Modeled stage measurement failed: %s' % e)
+			self.panel.measurementDone()
+			return
 
 		mag, mags = self.getMagnification()
 		ht = self.getHighTension()
