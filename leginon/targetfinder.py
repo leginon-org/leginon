@@ -27,8 +27,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	panelclass = gui.wx.TargetFinder.Panel
 	settingsclass = data.TargetFinderSettingsData
 	defaultsettings = {
+		'queue': False,
 		'wait for done': True,
 		'ignore images': False,
+		'user check': False,
 	}
 	eventinputs = imagewatcher.ImageWatcher.eventinputs \
 									+ [event.AcquisitionImagePublishEvent] \
@@ -149,15 +151,13 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.logger.info(message)
 		self.beep()
 
+	def submitTargets(self):
+		self.userpause.set()
+
 class ClickTargetFinder(TargetFinder):
 	targetnames = ['focus', 'acquisition']
 	panelclass = gui.wx.ClickTargetFinder.Panel
 	settingsclass = data.ClickTargetFinderSettingsData
-	defaultsettings = {
-		'wait for done': True,
-		'ignore images': False,
-		#'no resubmit': True,
-	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 
@@ -182,16 +182,15 @@ class ClickTargetFinder(TargetFinder):
 		for i in self.targetnames:
 			self.publishTargets(imdata, i, targetlist)
 
-	def submitTargets(self):
-		self.userpause.set()
 
 class MosaicClickTargetFinder(ClickTargetFinder):
 	targetnames = ['acquisition']
 	panelclass = gui.wx.MosaicClickTargetFinder.Panel
 	settingsclass = data.MosaicClickTargetFinderSettingsData
-	defaultsettings = {
+	defaultsettings = dict(ClickTargetFinder.defaultsettings)
+	defaultsettings.update({
+		# unlike other targetfinders, no wait is default
 		'wait for done': False,
-		'ignore images': False,
 		#'no resubmit': True,
 		# maybe not
 		'calibration parameter': 'stage position',
@@ -215,7 +214,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			'min stdev': 10,
 			'max stdev': 500,
 		},
-	}
+	})
 
 	eventoutputs = ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):

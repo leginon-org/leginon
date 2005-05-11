@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/matlabtargetfinder.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-11 01:00:19 $
-# $Author: suloway $
+# $Date: 2005-05-11 23:50:31 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -26,13 +26,11 @@ except:
 class MatlabTargetFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.MatlabTargetFinder.Panel
 	settingsclass = data.MatlabTargetFinderSettingsData
-	defaultsettings = {
-		'wait for done': True,
-		'ignore images': False,
+	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
+	defaultsettings.update({
 		'module': '',
-		'user check': True,
 		'test image': '',
-	}
+	})
 	def __init__(self, *args, **kwargs):
 		self.userpause = threading.Event()
 		targetfinder.TargetFinder.__init__(self, *args, **kwargs)
@@ -93,9 +91,6 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 		self.publishTargets(imdata, 'acquisition', targetlist)
 
 		self.logger.info('Targets have been submitted')
-
-	def submitTargets(self):
-		self.userpause.set()
 
 	def targetTestImage(self):
 		usercheck = self.settings['user check']

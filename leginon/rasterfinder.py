@@ -23,11 +23,8 @@ import gui.wx.RasterFinder
 class RasterFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.RasterFinder.Panel
 	settingsclass = data.RasterFinderSettingsData
-	defaultsettings = {
-		'wait for done': True,
-		'ignore images': False,
-		'user check': False,
-		'queue': False,
+	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
+	defaultsettings.update({
 		'image filename': '',
 		'raster spacing': 100,
 		'raster limit': 5,
@@ -42,7 +39,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		'acquisition convolve': False,
 		'acquisition convolve template': [],
 		'acquisition constant template': [],
-	}
+	})
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.icecalc = ice.IceCalculator()
@@ -201,6 +198,3 @@ class RasterFinder(targetfinder.TargetFinder):
 		self.logger.info('Publishing targets...')
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)
-
-	def submit(self):
-		self.userpause.set()

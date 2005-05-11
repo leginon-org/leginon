@@ -25,12 +25,9 @@ import gui.wx.HoleFinder
 class HoleFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.HoleFinder.Panel
 	settingsclass = data.HoleFinderSettingsData
-	defaultsettings = {
-		'wait for done': True,
-		'ignore images': False,
-		'user check': False,
+	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
+	defaultsettings.update({
 		'skip': False,
-		'queue': False,
 		'image filename': '',
 		'edge lpf': {
 			'sigma': 1.0,
@@ -66,7 +63,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		'focus min mean thickness': 0.05,
 		'focus max mean thickness': 0.5,
 		'focus max stdev thickness': 0.5,
-	}
+	})
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.hf = holefinderback.HoleFinder()
@@ -470,7 +467,4 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)
 		self.setStatus('idle')
-
-	def submit(self):
-		self.userpause.set()
 

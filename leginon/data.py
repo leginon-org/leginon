@@ -1759,6 +1759,7 @@ class TargetFinderSettingsData(SettingsData):
 			('wait for done', bool),
 			('ignore images', bool),
 			('queue', bool),
+			('user check', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1773,7 +1774,6 @@ class MatlabTargetFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
 		return TargetFinderSettingsData.typemap() + (
 			('module path', str),
-			('user check', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1789,7 +1789,6 @@ class LowPassFilterSettingsData(Data):
 class HoleFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
 		return TargetFinderSettingsData.typemap() + (
-			('user check', bool),
 			('skip', bool),
 			('image filename', str),
 			('edge lpf', LowPassFilterSettingsData),
@@ -1828,7 +1827,6 @@ class HoleFinderSettingsData(TargetFinderSettingsData):
 class RasterFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
 		return TargetFinderSettingsData.typemap() + (
-			('user check', bool),
 			('image filename', str),
 			('raster spacing', int),
 			('raster limit', int),
