@@ -54,9 +54,10 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		return pixelsizes
 
 	def getCalibrations(self):
-		self.initInstruments()
-		calibrations = self.calclient.retrieveLastPixelSizes(None, None)
 		pixelsizes = []
+		if self.initInstruments():
+			return pixelsizes
+		calibrations = self.calclient.retrieveLastPixelSizes(None, None)
 		mag, mags = self.getMagnification()
 		for calibration in calibrations:
 			if mags is None or calibration['magnification'] in mags:
