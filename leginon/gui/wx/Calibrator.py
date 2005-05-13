@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Calibrator.py,v $
-# $Revision: 1.30 $
+# $Revision: 1.31 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-11 23:49:03 $
+# $Date: 2005-05-13 01:04:57 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -26,7 +26,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
 
-		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self, passive=True)
+		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self)
 		self.GetParent().setInstrumentSelection(self.widgets['instruments'])
 
 		self.widgets['override preset'] = wx.CheckBox(self, -1,

@@ -381,19 +381,8 @@ class PixelSizeCalibrationClient(CalibrationClient):
 			timeinfo = pdata.timestamp
 		return timeinfo
 
-	def retrieveAllPixelSizes(self):
-		'''
-		finds the requested pixel size using magnification
-		'''
-		queryinstance = data.PixelSizeCalibrationData()
-		queryinstance['tem'] = self.instrument.getTEMData()
-		queryinstance['ccdcamera'] = self.instrument.getCCDCameraData()
-		caldatalist = self.node.research(datainstance=queryinstance)
-
-		return caldatalist
-
-	def retrieveLastPixelSizes(self):
-		caldatalist = self.retrieveAllPixelSizes()
+	def retrieveLastPixelSizes(self, tem, camera):
+		caldatalist = self.researchPixelSizeData(tem, camera, None)
 		last = {}
 		for caldata in caldatalist:
 			mag = caldata['magnification']

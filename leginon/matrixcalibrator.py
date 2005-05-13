@@ -90,13 +90,11 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 	# calibrate needs to take a specific value
 	def calibrate(self):
+		if self.initInstruments():
+			return
 		self.aborted.clear()
 
 		calclient = self.parameters[self.parameter]
-
-		## set cam state
-		if self.settings['override preset']:
-			self.instrument.ccdcamera.Settings = self.settings['camera settings']
 
 		basebase = self.getBase()
 		baselist = []

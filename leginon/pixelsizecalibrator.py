@@ -54,7 +54,10 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		return pixelsizes
 
 	def getCalibrations(self):
-		calibrations = self.calclient.retrieveLastPixelSizes()
+		instruments = self.settings['instruments']
+		tem = instruments['tem']
+		camera = instruments['ccdcamera']
+		calibrations = self.calclient.retrieveLastPixelSizes(tem, camera)
 		pixelsizes = []
 		mag, mags = self.getMagnification()
 		for calibration in calibrations:
@@ -81,7 +84,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		caldata['pixelsize'] = psize
 		caldata['comment'] = comment
 		caldata['session'] = self.session
-		caldata['tem'] = self.instrument.getTEMData()
-		caldata['ccdcamera'] = self.instrument.getCCDCameraData()
+		caldata['tem'] = self.settings['instruments']['tem']
+		caldata['ccdcamera'] = self.settings['instruments']['ccdcamera']
 		self.publish(caldata, database=True)
 

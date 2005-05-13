@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.45 $
+# $Revision: 1.46 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-12 22:59:25 $
+# $Date: 2005-05-13 01:04:58 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -1336,8 +1336,6 @@ class SelectionMixin(object):
 			pass
 
 	def onSetTEM(self, evt):
-		if self.instrumentselection.passive:
-			return
 		self.instrumentSelectionEvent(evt, passive=False)
 
 	def onSetTEMs(self, evt):

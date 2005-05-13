@@ -67,19 +67,23 @@ class Calibrator(node.Node):
 				self.instrument.setCCDCamera(instruments['ccdcamera'])
 			except ValueError, e:
 				self.logger.error('Cannot set instruments: %s' % (e,))
-				return
+				return 1
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			except Exception, e:
 				self.logger.error(errstr % e)
-				return
+				return 1
 		else:
 			if self.presetsclient.getCurrentPreset() is None:
 				self.logger.error('Preset is unknown and preset override is off')
-				return
+				return 1
+		return 0
 
 	def acquireImage(self):
-		self.initInstruments()
+		status = self.initInstruments()
+		if status:
+			self.panel.acquisitionDone()
+			return
 		try:
 			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		except Exception, e:

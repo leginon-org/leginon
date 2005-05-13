@@ -5,10 +5,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Camera.py,v $
-# $Revision: 1.28 $
+# $Revision: 1.29 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-28 22:17:52 $
-# $Author: suloway $
+# $Date: 2005-05-13 01:04:58 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -104,7 +104,7 @@ class CameraPanel(wx.Panel):
 		self.Bind(EVT_ENTRY, self.onExposureTime, self.feexposuretime)
 		self.Bind(EVT_SET_CONFIGURATION, self.onSetConfiguration)
 
-		self.Enable(False)
+		#self.Enable(False)
 
 	def setSize(self, size):
 		if size is None:
@@ -114,7 +114,7 @@ class CameraPanel(wx.Panel):
 			self.ccommon.Clear()
 			self.ccommon.Append('(None)')
 			self.szmain.Layout()
-			self.Enable(False)
+			#self.Enable(False)
 			self.Thaw()
 		else:
 			self.size = dict(size)
@@ -129,7 +129,7 @@ class CameraPanel(wx.Panel):
 				self.setCommonChoice()
 			if self.feexposuretime.GetValue() is None:
 				self.feexposuretime.SetValue(self.defaultexptime)
-			self.Enable(True)
+			#self.Enable(True)
 			self.szmain.Layout()
 			self.Thaw()
 
@@ -140,7 +140,7 @@ class CameraPanel(wx.Panel):
 		self.ccommon.SetSelection(len(self.choices) - 1)
 		self.setGeometry(self.common[self.ccommon.GetStringSelection()])
 		self.feexposuretime.SetValue(self.defaultexptime)
-		self.Enable(False)
+		#self.Enable(False)
 		self.Thaw()
 
 	def onConfigurationChanged(self):

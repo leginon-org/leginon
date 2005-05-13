@@ -70,7 +70,8 @@ class GonModeler(calibrator.Calibrator):
 	# calibrate needs to take a specific value
 	def loop(self, label, axis, points, interval):
 		try:
-			self.initInstruments()
+			if self.initInstruments():
+				return
 		except Exception, e:
 			self.logger.error('Modeled stage measurement failed: %s' % e)
 			self.panel.measurementDone()
