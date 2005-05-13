@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.46 $
+# $Revision: 1.47 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-13 21:47:56 $
+# $Date: 2005-05-13 21:57:31 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -69,7 +69,7 @@ class EditPresetEvent(wx.PyCommandEvent):
 
 class Calibrations(wx.StaticBoxSizer):
 	def __init__(self, parent):
-		sb = wx.StaticBox(parent, -1, 'Calibrations')
+		sb = wx.StaticBox(parent, -1, 'Most Recent Calibrations')
 		wx.StaticBoxSizer.__init__(self, sb, wx.VERTICAL)
 
 		self.order = [
