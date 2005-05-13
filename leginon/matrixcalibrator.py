@@ -44,10 +44,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 	'''
 	panelclass = gui.wx.MatrixCalibrator.Panel
 	settingsclass = data.MatrixCalibratorSettingsData
-	defaultsettings = {
-		'override preset': False,
-		'camera settings': None,
-		'correlation type': 'cross',
+	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings.update({
 		'image shift tolerance': 12.0,
 		'image shift shift fraction': 25.0,
 		'image shift n average': 1,
@@ -66,7 +64,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		'stage position interval': 2e-6,
 		'stage position current as base': True,
 		'stage position base': {'x': 0.0, 'y': 0.0},
-	}
+	})
 	def __init__(self, id, session, managerlocation, **kwargs):
 		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
 

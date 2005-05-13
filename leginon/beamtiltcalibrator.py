@@ -25,17 +25,14 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	'''
 	panelclass = gui.wx.BeamTiltCalibrator.Panel
 	settingsclass = data.BeamTiltCalibratorSettingsData
-	defaultsettings = {
-		'instruments': {'tem': None, 'ccdcamera': None},
-		'override preset': False,
-		'camera settings': None,
-		'correlation type': 'phase',
+	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings.update({
 		'defocus beam tilt': 0.01,
 		'first defocus': -2e-6,
 		'second defocus': -4e-6,
 		'stig beam tilt': 0.01,
 		'stig delta': 0.2,
-	}
+	})
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)

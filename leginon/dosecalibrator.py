@@ -22,13 +22,11 @@ class DoseCalibrator(calibrator.Calibrator):
 	'''
 	panelclass = gui.wx.DoseCalibrator.Panel
 	settingsclass = data.DoseCalibratorSettingsData
-	defaultsettings = {
-		'override preset': False,
-		'camera settings': None,
-		'correlation type': 'cross',
+	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings.update({
 		'beam diameter': 0.16,
 		'scale factor': 0.88,
-	}
+	})
 	def __init__(self, id, session, managerlocation, **kwargs):
 		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
 		self.calclient = calibrationclient.DoseCalibrationClient(self)
@@ -37,14 +35,20 @@ class DoseCalibrator(calibrator.Calibrator):
 		self.start()
 
 	def screenDown(self):
+		if self.initInstruments():
+			return
 		self.instrument.tem.MainScreenPosition = 'down'
 		time.sleep(2)
 
 	def screenUp(self):
+		if self.initInstruments():
+			return
 		self.instrument.tem.MainScreenPosition = 'up'
 		time.sleep(2)
 
 	def uiMeasureDoseRate(self):
+		if self.initInstruments():
+			return
 		self.instrument.tem.MainScreenPosition = 'down'
 		time.sleep(2)
 		status = self.getCurrentAndMag()
@@ -64,6 +68,8 @@ class DoseCalibrator(calibrator.Calibrator):
 		self.results['dose rate'] = doserate
 
 	def getCurrentAndMag(self):
+		if self.initInstruments():
+			return
 		try:
 			scope = self.instrument.getData(data.ScopeEMData)
 		except:
@@ -79,6 +85,8 @@ class DoseCalibrator(calibrator.Calibrator):
 			return 'screen'
 
 	def acquireImage(self):
+		if self.initInstruments():
+			return
 		self.instrument.tem.MainScreenPosition = 'up'
 		time.sleep(2)
 		return calibrator.Calibrator.acquireImage(self)

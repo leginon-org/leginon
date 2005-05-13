@@ -27,10 +27,8 @@ import gui.wx.GonModeler
 class GonModeler(calibrator.Calibrator):
 	panelclass = gui.wx.GonModeler.Panel
 	settingsclass = data.GonModelerSettingsData
-	defaultsettings = {
-		'override preset': False,
-		'camera settings': None,
-		'correlation type': 'cross',
+	defaultsettings = calibrator.Calibrator.defaultsettings
+	defaultsettings.update({
 		'measure axis': 'x',
 		'measure points': 200,
 		'measure interval': 5e-6,
@@ -42,7 +40,7 @@ class GonModeler(calibrator.Calibrator):
 		'model mag only': False,
 		'model label': '',
 		'model tolerance': 25.0,
-	}
+	})
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
@@ -71,6 +69,7 @@ class GonModeler(calibrator.Calibrator):
 	def loop(self, label, axis, points, interval):
 		try:
 			if self.initInstruments():
+				self.panel.measurementDone()
 				return
 		except Exception, e:
 			self.logger.error('Modeled stage measurement failed: %s' % e)
