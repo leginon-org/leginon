@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.45 $
+# $Revision: 1.46 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-11 23:49:32 $
+# $Date: 2005-05-13 21:47:56 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -225,10 +225,6 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		else:
 			try:
 				mags = self.instrument.getMagnifications(tem)
-				print '--- DEBUGGING ----------------------------------'
-				print 'TEM', tem
-				print 'MAGS', mags
-				print '------------------------------------------------'
 				choices = [str(int(m)) for m in mags]
 			except KeyError:
 				choices = []

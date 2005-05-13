@@ -191,10 +191,6 @@ class PresetsManager(node.Node):
 		self.instrument = instrument.Proxy(self.objectservice,
 																				self.session,
 																				self.panel)
-		print '--------- DEBUGGING -----------------'
-		print 'PM init mags:'
-		print self.instrument.getMagnifications()
-		print '--------------------------------------'
 		self.calclients = {
 			'pixel size':calibrationclient.PixelSizeCalibrationClient(self),
 			'image':calibrationclient.ImageShiftCalibrationClient(self),
