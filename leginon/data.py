@@ -1926,6 +1926,7 @@ class FocuserSettingsData(AcquisitionSettingsData):
 class CalibratorSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
+			('instruments', dict),
 			('override preset', bool),
 			('camera settings', CameraSettingsData),
 			('correlation type', str),

@@ -23,6 +23,7 @@ class Calibrator(node.Node):
 	panelclass = gui.wx.Calibrator.Panel
 	settingsclass = data.CalibratorSettingsData
 	defaultsettings = {
+		'instruments': {'tem': None, 'ccdcamera': None},
 		'override preset': False,
 		'camera settings': None,
 		'correlation type': 'cross',
