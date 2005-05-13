@@ -54,10 +54,8 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		return pixelsizes
 
 	def getCalibrations(self):
-		instruments = self.settings['instruments']
-		tem = instruments['tem']
-		camera = instruments['ccdcamera']
-		calibrations = self.calclient.retrieveLastPixelSizes(tem, camera)
+		self.initInstruments()
+		calibrations = self.calclient.retrieveLastPixelSizes(None, None)
 		pixelsizes = []
 		mag, mags = self.getMagnification()
 		for calibration in calibrations:
