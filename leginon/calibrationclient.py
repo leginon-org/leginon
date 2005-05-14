@@ -357,35 +357,37 @@ class PixelSizeCalibrationClient(CalibrationClient):
 			queryinstance['ccdcamera'] = self.instrument.getCCDCameraData()
 		else:
 			queryinstance['ccdcamera'] = ccdcamera
-		caldatalist = self.node.research(datainstance=queryinstance, results=1)
-		if len(caldatalist) > 0:
-			return caldatalist[0]
-		else:
-			return None
+		caldatalist = self.node.research(datainstance=queryinstance)
+		return caldatalist
 
 	def retrievePixelSize(self, tem, ccdcamera, mag):
 		'''
 		finds the requested pixel size using magnification
 		'''
-		caldata = self.researchPixelSizeData(tem, ccdcamera, mag)
-		if caldata is None:
+		caldatalist = self.researchPixelSizeData(tem, ccdcamera, mag)
+		if len(caldatalist) < 1:
 			raise NoPixelSizeError()
+		caldata = caldatalist[0]
 		pixelsize = caldata['pixelsize']
 		return pixelsize
 
 	def time(self, tem, ccdcamera, mag):
 		pdata = self.researchPixelSizeData(tem, ccdcamera, mag)
-		if pdata is None:
+		if len(pdata) < 1:
 			timeinfo = None
 		else:
-			timeinfo = pdata.timestamp
+			timeinfo = pdata[0].timestamp
 		return timeinfo
 
 	def retrieveLastPixelSizes(self, tem, camera):
 		caldatalist = self.researchPixelSizeData(tem, camera, None)
 		last = {}
 		for caldata in caldatalist:
-			mag = caldata['magnification']
+			try:
+				mag = caldata['magnification']
+			except:
+				print 'CALDATA', caldata
+				raise
 			if mag not in last:
 				last[mag] = caldata
 		return last.values()
@@ -852,11 +854,11 @@ class ModeledStageCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def storeMagCalibration(self, label, ht, mag, axis, angle, mean):
+	def storeMagCalibration(self, tem, cam, label, ht, mag, axis, angle, mean):
 		caldata = data.StageModelMagCalibrationData()
 		caldata['session'] = self.node.session
-		caldata['tem'] = self.instrument.getTEMData()
-		caldata['ccdcamera'] = self.instrument.getCCDCameraData()
+		caldata['tem'] = tem
+		caldata['ccdcamera'] = cam
 		caldata['label'] = label
 		caldata['high tension'] = ht
 		caldata['magnification'] = mag
@@ -900,8 +902,10 @@ class ModeledStageCalibrationClient(CalibrationClient):
 			timeinfo = caldata.timestamp
 		return timeinfo
 
-	def storeModelCalibration(self, label, axis, period, a, b):
+	def storeModelCalibration(self, tem, cam, label, axis, period, a, b):
 		caldata = data.StageModelCalibrationData()
+		caldata['tem'] = tem
+		caldata['ccdcamera'] = cam
 		caldata['session'] = self.node.session
 		caldata['tem'] = self.instrument.getTEMData()
 		caldata['ccdcamera'] = self.instrument.getCCDCameraData()
@@ -957,8 +961,10 @@ class ModeledStageCalibrationClient(CalibrationClient):
 			timeinfo = caldata.timestamp
 		return timeinfo
 
-	def getLabeledData(self, label, mag, axis):
+	def getLabeledData(self, tem, cam, label, mag, axis):
 		qdata = data.StageMeasurementData()
+		qdata['tem'] = tem
+		qdata['ccdcamera'] = cam
 		qdata['label'] = label
 		qdata['magnification'] = mag
 		qdata['axis'] = axis
@@ -980,9 +986,13 @@ class ModeledStageCalibrationClient(CalibrationClient):
 			datapoints.append(datapoint)
 		return {'datapoints':datapoints, 'ht': ht}
 
-	def fit(self, label, mag, axis, terms, magonly=1):
+	def fit(self, tem, cam, label, mag, axis, terms, magonly=1):
+		if tem is None:
+			tem = self.node.instrument.getTEMData()
+		if cam is None:
+			cam = self.node.instrument.getCCDCameraData()
 		# get data from DB
-		info = self.getLabeledData(label, mag, axis)
+		info = self.getLabeledData(tem, cam, label, mag, axis)
 		datapoints = info['datapoints']
 		ht = info['ht']
 		dat = gonmodel.GonData()
@@ -1005,10 +1015,10 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		a = mod.a
 		b = mod.b
 		
-		self.storeMagCalibration(label, ht, mag, axis, angle, mean)
+		self.storeMagCalibration(tem, cam, label, ht, mag, axis, angle, mean)
 		if magonly:
 			return
-		self.storeModelCalibration(label, axis, period, a, b)
+		self.storeModelCalibration(tem, cam, label, axis, period, a, b)
 
 	def transform(self, pixelshift, scope, camera):
 		curstage = scope['stage position']

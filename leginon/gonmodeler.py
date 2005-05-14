@@ -201,12 +201,16 @@ class GonModeler(calibrator.Calibrator):
 		stagedata['delta'] = delta
 		stagedata['imagex'] = imx
 		stagedata['imagey'] = imy
+		stagedata['tem'] = self.instrument.getTEMData()
+		stagedata['ccdcamera'] = self.instrument.getCCDCameraData()
 		self.publish(stagedata, database=True, dbforce=True)
 
 	def uiFit(self):
 		# label, mag, axis, terms,...
+		self.initInstruments()
 		try:
-			self.calclient.fit(self.settings['model label'],
+			self.calclient.fit(None, None,
+													self.settings['model label'],
 													self.settings['model magnification'],
 													self.settings['model axis'],
 													self.settings['model terms'],

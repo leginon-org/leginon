@@ -86,6 +86,7 @@ class DoseCalibrator(calibrator.Calibrator):
 
 	def acquireImage(self):
 		if self.initInstruments():
+			self.panel.acquisitionDone()
 			return
 		self.instrument.tem.MainScreenPosition = 'up'
 		time.sleep(2)
