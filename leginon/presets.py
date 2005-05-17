@@ -518,28 +518,16 @@ class PresetsManager(node.Node):
 			self.logger.error('Preset from instrument failed: unable to get instrument parameters')
 			return
 
-		newpreset = data.PresetData()
-		newpreset.friendly_update(scopedata)
-		newpreset.friendly_update(cameradata)
-		newpreset['session'] = self.session
-		newpreset['name'] = name
+		newparams = {}
+		newparams.update(scopedata)
+		newparams.update(cameradata)
 
-		# existing preset keeps same number
-		# new preset is put at the end
+		# update old preset or create new one
 		if name in self.presets.keys():
-			number = self.presets[name]['number']
+			self.updatePreset(name, newparams)
 		else:
-			## this is len before new one is added
-			number = len(self.presets)
+			self.newPreset(name, newparams)
 
-		newpreset['number'] = number
-		self.presets[name] = newpreset
-		self.presetToDB(newpreset)
-		self.currentpreset = newpreset
-
-		## update UI
-		# ???
-		self.panel.setOrder(self.presets.keys())
 		self.logger.info('Set preset "%s" values from instrument' % name)
 		self.beep()
 		return newpreset
@@ -757,14 +745,27 @@ class PresetsManager(node.Node):
 			self.currentselection = newpreset
 		return newpreset
 
-	def updatePreset(self, presetname, newparams):
+	def newPreset(self, presetname, newparams):
+			newpreset = data.PresetData()
+			newpreset['session'] = self.session
+			newpreset['name'] = presetname
+			newpreset['number'] = len(self.presets)
+			newpreset['removed'] = False
+			newpreset['film'] = False
+			newpreset['hasref'] = False
+			newpreset.friendly_update(newparams)
+			self.presets[name] = newpreset
+			self.presetToDB(newpreset)
+			self.currentpreset = newpreset
+			self.currentselection = newpreset
+			self.panel.setOrder(self.presets.keys())
+			self.panel.setParameters(newpreset)
+			return newpreset
+
+	def updatePreset(self, presetname, newparams, updatedose=True):
 		'''
 		called to change some parameters of an existing preset
 		'''
-		update = False
-		if self.currentselection is not None:
-			if self.currentselection['name'] == presetname:
-				update = True
 		oldpreset = self.presetByName(presetname)
 		newpreset = self.renewPreset(oldpreset)
 		if 'tem' in newparams:
@@ -776,11 +777,13 @@ class PresetsManager(node.Node):
 		newpreset.friendly_update(newparams)
 
 		### change dose if neccessary
-		self.updateDose(oldpreset, newpreset)
+		if updatedose:
+			self.updateDose(oldpreset, newpreset)
 
-		if update:
+		if self.currentselection is newpreset:
 			self.panel.setParameters(newpreset)
 		self.presetToDB(newpreset)
+		return newpreset
 
 	def getSessionList(self):
 		'''
@@ -885,7 +888,7 @@ class PresetsManager(node.Node):
 	def updateDose(self, oldpreset, newpreset):
 		'''
 		call this when preset params changed so that dose can 
-		be scaled, mirrored, or reset if neccessary
+		be scaled, mirrored, or reset as neccessary
 		This means:
 			If no existing dose:
 				do nothing
@@ -909,6 +912,28 @@ class PresetsManager(node.Node):
 				scale = float(newpreset['exposure time']) / float(oldpreset['exposure time'])
 				newpreset['dose'] = scale * oldpreset['dose']
 				self.logger.info('Scaling dose of %s by %.3f due to change in exposure time' % (newpreset['name'], scale,))
+
+		## create list of similar presets
+		similarpresets = []
+		for pname, p in self.presets.items():
+			if pname == newpreset['name']:
+				continue
+			similar = True
+			for param in ('magnification', 'spot size', 'intensity'):
+				if p[param] != newpreset[param]:
+					similar = False
+			if similar:
+				similarpresets.append(p)
+
+		if similarpresets:
+			if newpreset['dose'] is None:
+				## set my dose from a similar preset
+				newpreset['dose'] = similarpresets[0]['dose']
+			elif oldpreset['dose'] != newpreset['dose']:
+				## my dose changed, now see if I can update other similar presets
+				for p in similarpresets:
+					## need to prevent too much recursion here
+					self.updatePreset(p['name'], {'dose': newpreset['dose']}, updatedose=False)
 
 	def updateSimilarDoses(self, changedpreset):
 		'''

@@ -1089,7 +1089,7 @@ class PresetData(InSessionData):
 			('binning', dict),
 			('offset', dict),
 			('exposure time', int),
-			('removed', int),
+			('removed', bool),
 			('hasref', bool),
 			('dose', float),
 			('film', bool),
