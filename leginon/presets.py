@@ -517,6 +517,7 @@ class PresetsManager(node.Node):
 		except:
 			self.logger.error('Preset from instrument failed: unable to get instrument parameters')
 			return
+
 		newpreset = data.PresetData()
 		newpreset.friendly_update(scopedata)
 		newpreset.friendly_update(cameradata)
@@ -756,20 +757,27 @@ class PresetsManager(node.Node):
 			self.currentselection = newpreset
 		return newpreset
 
-	def updatePreset(self, presetname, parameters):
+	def updatePreset(self, presetname, newparams):
+		'''
+		called to change some parameters of an existing preset
+		'''
 		update = False
 		if self.currentselection is not None:
 			if self.currentselection['name'] == presetname:
 				update = True
-		preset = self.presetByName(presetname)
-		newpreset = self.renewPreset(preset)
-		if 'tem' in parameters:
-			if isinstance(parameters['tem'], basestring):
-				parameters['tem'] = self.instrument.getTEMData(parameters['tem'])
-		if 'ccdcamera' in parameters:
-			if isinstance(parameters['ccdcamera'], basestring):
-				parameters['ccdcamera'] = self.instrument.getCCDCameraData(parameters['ccdcamera'])
-		newpreset.friendly_update(parameters)
+		oldpreset = self.presetByName(presetname)
+		newpreset = self.renewPreset(oldpreset)
+		if 'tem' in newparams:
+			if isinstance(newparams['tem'], basestring):
+				newparams['tem'] = self.instrument.getTEMData(newparams['tem'])
+		if 'ccdcamera' in newparams:
+			if isinstance(newparams['ccdcamera'], basestring):
+				newparams['ccdcamera'] = self.instrument.getCCDCameraData(newparams['ccdcamera'])
+		newpreset.friendly_update(newparams)
+
+		### change dose if neccessary
+		self.updateDose(oldpreset, newpreset)
+
 		if update:
 			self.panel.setParameters(newpreset)
 		self.presetToDB(newpreset)
@@ -871,18 +879,52 @@ class PresetsManager(node.Node):
 
 	def saveDose(self, dose, presetname):
 		## store the dose in the current preset
-		preset = self.renewPreset(self.presets[presetname])
-		preset['dose'] = dose
-		self.presetToDB(preset)
-		if self.currentpreset is not None:
-			if self.currentpreset['name'] == presetname:
-				self.currentpreset = preset
-				self.panel.setParameters(self.currentpreset)
-	'''
-	def displayDose(self, preset):
-		dose = preset['dose']
-		self.panel.setDoseValue(dose)
-	'''
+		params = {'dose': dose}
+		self.updatePreset(presetname, params)
+
+	def updateDose(self, oldpreset, newpreset):
+		'''
+		call this when preset params changed so that dose can 
+		be scaled, mirrored, or reset if neccessary
+		This means:
+			If no existing dose:
+				do nothing
+			If mag, spot size, or intensity changed:
+				reset dose = None
+			If exposure time changed:
+				scale dose based on new exposure time
+		'''
+		## update dose when certain things change
+		if oldpreset['dose']:
+			dosekillers = []
+			for param in ('magnification', 'spot size', 'intensity'):
+				if oldpreset[param] != newpreset[param]:
+					dosekillers.append(param)
+			if dosekillers:
+				newpreset['dose'] = None
+				paramstr = ', '.join(dosekillers)
+				s = 'Dose of %s reset due to change in %s' % (newpreset['name'], paramstr)
+				self.logger.info(s)
+			elif newpreset['exposure time'] != oldpreset['exposure time']:
+				scale = float(newpreset['exposure time']) / float(oldpreset['exposure time'])
+				newpreset['dose'] = scale * oldpreset['dose']
+				self.logger.info('Scaling dose of %s by %.3f due to change in exposure time' % (newpreset['name'], scale,))
+
+	def updateSimilarDoses(self, changedpreset):
+		'''
+		when dose of a preset is changed, call this to also change dose of similar
+		presets
+		'''
+		for pname, p in self.presets.items():
+			if pname == changedpreset['name']:
+				continue
+			ismatch = True
+			for param in ('magnification', 'spot size', 'intensity'):
+				if p[param] != changedpreset[param]:
+					ismatch = False
+					break
+			if ismatch:
+				
 
 	def targetToScope(self, newpresetname, emtargetdata):
 		'''
