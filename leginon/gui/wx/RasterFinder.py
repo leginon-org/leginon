@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-11 23:49:32 $
-# $Author: pulokas $
+# $Date: 2005-05-18 20:10:18 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -40,6 +40,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableCol(0)
 		self.szmain.AddGrowableRow(1)
+
+		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings)
 
 	def onImageSettings(self, evt):
 		if evt.name == 'Original':
