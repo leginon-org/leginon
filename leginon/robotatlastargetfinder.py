@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-18 23:00:48 $
+# $Date: 2005-05-18 23:43:40 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -629,7 +629,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				if insertion == self.insertion:
 					self.updateAtlasViewTargets()
 
-				targetlist = self.newTargetList(image=image)
+				targetlist = self.newTargetList(image=image.data)
 				targetdatalist = []
 				for originaltargetdata, target, imagedata in targets:
 					row, column = target
