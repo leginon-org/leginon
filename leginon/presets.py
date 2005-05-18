@@ -949,7 +949,8 @@ class PresetsManager(node.Node):
 					ismatch = False
 					break
 			if ismatch:
-				
+				# sorry jim
+				pass
 
 	def targetToScope(self, newpresetname, emtargetdata):
 		'''
