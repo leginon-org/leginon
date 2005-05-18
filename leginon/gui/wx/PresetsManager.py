@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.47 $
+# $Revision: 1.48 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-13 21:57:31 $
+# $Date: 2005-05-18 23:36:34 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -739,6 +739,8 @@ class ImportDialog(wx.Dialog):
 		camname = self.instrumentselection.getCCDCamera()
 		tem = self.node.instrument.getTEMData(temname)
 		ccd = self.node.instrument.getCCDCameraData(camname)
+		if None in (tem,ccd):
+			self.node.logger.error('Need to select a TEM and camera')
 		days = self.ageentry.GetValue()
 		agestr = '-%d 0:0:0' % (days,)
 		pquery = data.PresetData(tem=tem, ccdcamera=ccd)
