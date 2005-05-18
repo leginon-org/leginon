@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.8 $
+# $Revision: 1.9 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-22 00:56:36 $
+# $Date: 2005-05-18 19:54:54 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -715,7 +715,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		# check stage position
 		emtargetdata[movetype] = dict(scopedata[movetype])
 		emtargetdata['target'] = targetdata
-		emtargetdata['preset'] = presetdata
+		#emtargetdata['preset'] = presetdata
 
 		query = data.AcquisitionImageTargetData()
 		query['session'] = self.session
