@@ -930,27 +930,9 @@ class PresetsManager(node.Node):
 				## set my dose from a similar preset
 				newpreset['dose'] = similarpresets[0]['dose']
 			elif oldpreset['dose'] != newpreset['dose']:
-				## my dose changed, now see if I can update other similar presets
+				## my dose changed, now update dose in other similar presets
 				for p in similarpresets:
-					## need to prevent too much recursion here
 					self.updatePreset(p['name'], {'dose': newpreset['dose']}, updatedose=False)
-
-	def updateSimilarDoses(self, changedpreset):
-		'''
-		when dose of a preset is changed, call this to also change dose of similar
-		presets
-		'''
-		for pname, p in self.presets.items():
-			if pname == changedpreset['name']:
-				continue
-			ismatch = True
-			for param in ('magnification', 'spot size', 'intensity'):
-				if p[param] != changedpreset[param]:
-					ismatch = False
-					break
-			if ismatch:
-				# sorry jim
-				pass
 
 	def targetToScope(self, newpresetname, emtargetdata):
 		'''
