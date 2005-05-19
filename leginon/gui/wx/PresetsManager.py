@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.55 $
+# $Revision: 1.56 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-19 20:52:59 $
-# $Author: pulokas $
+# $Date: 2005-05-19 23:00:00 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -863,9 +863,25 @@ class ImportDialog(wx.Dialog):
 		threading.Thread(target=target, args=args).start()
 
 class Parameters(wx.StaticBoxSizer):
+	labelclass = wx.StaticText
 	def __init__(self, parent):
 		sb = wx.StaticBox(parent, -1, 'Preset Parameters')
 		wx.StaticBoxSizer.__init__(self, sb, wx.VERTICAL)
+
+		self.lbltem = wx.StaticText(parent, -1, 'TEM:')
+		self.lblccdcamera = wx.StaticText(parent, -1, 'CCD Camera:')
+		self.lblmag = self.labelclass(parent, -1, 'Magnification:')
+		self.lbldefocus = self.labelclass(parent, -1, 'Defocus:')
+		self.lblspotsize = self.labelclass(parent, -1, 'Spot size:')
+		self.lblintensity = self.labelclass(parent, -1, 'Intensity:')
+		self.lblimageshift = self.labelclass(parent, -1, 'Image shift:')
+		self.lblbeamshift = self.labelclass(parent, -1, 'Beam shift:')
+		self.lblfilm = self.labelclass(parent, -1, 'Use film:')
+		self.lbldimension = self.labelclass(parent, -1, 'Dimension:')
+		self.lbloffset = self.labelclass(parent, -1, 'Offset:')
+		self.lblbinning = self.labelclass(parent, -1, 'Binning:')
+		self.lblexposuretime = self.labelclass(parent, -1, 'Exposure time:')
+		self.lbldose = self.labelclass(parent, -1, 'Dose (e/A^2):')
 
 		self.sttem = wx.StaticText(parent, -1, '')
 		self.stmag = wx.StaticText(parent, -1, '')
@@ -883,58 +899,44 @@ class Parameters(wx.StaticBoxSizer):
 		self.stdose = wx.StaticText(parent, -1, '')
 
 		sz = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(parent, -1, 'TEM:')
-		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.lbltem, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.sttem, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(parent, -1, 'Magnification:')
-		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.lblmag, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stmag, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(parent, -1, 'Defocus:')
-		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.lbldefocus, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stdefocus, (2, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(parent, -1, 'Spot size:')
-		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.lblspotsize, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stspotsize, (3, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(parent, -1, 'Intensity:')
-		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.lblintensity, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stintensity, (4, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(parent, -1, 'Image shift:')
-		sz.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.lblimageshift, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stimageshift, (5, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(parent, -1, 'Beam shift:')
-		sz.Add(label, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.lblbeamshift, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stbeamshift, (6, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
-		label = wx.StaticText(parent, -1, 'CCD Camera:')
-		sz.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.lblccdcamera, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stccdcamera, (0, 5), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(parent, -1, 'Use film:')
-		sz.Add(label, (1, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.lblfilm, (1, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stfilm, (1, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(parent, -1, 'Dimension:')
-		sz.Add(label, (2, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.lbldimension, (2, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stdimension, (2, 5), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(parent, -1, 'Offset:')
-		sz.Add(label, (3, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.lbloffset, (3, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stoffset, (3, 5), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(parent, -1, 'Binning:')
-		sz.Add(label, (4, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.lblbinning, (4, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stbinning, (4, 5), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(parent, -1, 'Exposure time:')
-		sz.Add(label, (5, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.lblexposuretime, (5, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stexposuretime, (5, 5), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(parent, -1, 'Dose (e/A^2):')
-		sz.Add(label, (6, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.lbldose, (6, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stdose, (6, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		sz.AddGrowableCol(1)
@@ -996,6 +998,89 @@ class Parameters(wx.StaticBoxSizer):
 			self.stexposuretime.SetLabel(str(parameters['exposure time']))
 			self.stdose.SetLabel(str(parameters['dose']))
 			self.Layout()
+
+class SelectParameters(Parameters):
+	labelclass = wx.CheckBox
+	def __init__(self, parent):
+		Parameters.__init__(self, parent)
+		self.setSelected()
+
+	def getSelected(self):
+		selected = {}
+		selected['magnification'] = self.lblmag.GetValue()
+		selected['defocus'] = self.lbldefocus.GetValue()
+		selected['spot size'] = self.lblspotsize.GetValue()
+		selected['intesity'] = self.lblintensity.GetValue()
+		selected['image shift'] = self.lblimageshift.GetValue()
+		selected['beam shift'] = self.lblbeamshift.GetValue()
+		selected['use film'] = self.lblfilm.GetValue()
+		selected['dimension'] = self.lbldimension.GetValue()
+		selected['offset'] = self.lbloffset.GetValue()
+		selected['binning'] = self.lblbinning.GetValue()
+		selected['exposure time'] = self.lblexposuretime.GetValue()
+		selected['dose'] = self.lbldose.GetValue()
+		return selected
+
+	def setSelected(self, parameters=None):
+		self.lblmag.SetValue(parameters is None or 'magnification' in parameters)
+		self.lbldefocus.SetValue(parameters is None or 'defocus' in parameters)
+		self.lblspotsize.SetValue(parameters is None or 'spot size' in parameters)
+		self.lblintensity.SetValue(parameters is None or 'intensity' in parameters)
+		self.lblimageshift.SetValue(
+															parameters is None or 'image shift' in parameters)
+		self.lblbeamshift.SetValue(parameters is None or 'beam shift' in parameters)
+		self.lblfilm.SetValue(parameters is None or 'use film' in parameters)
+		self.lbldimension.SetValue(parameters is None or 'dimension' in parameters)
+		self.lbloffset.SetValue(parameters is None or 'offset' in parameters)
+		self.lblbinning.SetValue(parameters is None or 'binning' in parameters)
+		self.lblexposuretime.SetValue(
+														parameters is None or 'exposure time' in parameters)
+		self.lbldose.SetValue(parameters is None or 'dose' in parameters)
+
+class FromScopeDialog(wx.Dialog):
+	def __init__(self, parent):
+		self.preset = {}
+		wx.Dialog.__init__(self, parent, -1, 'Overwrite Preset',
+												style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+		self.parameters = SelectParameters(self)
+
+		self.bsave = wx.Button(self, wx.ID_OK, 'Save')
+		self.bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
+		self.bcancel.SetDefault()
+
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.bsave, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		szbutton.Add(self.bcancel, (0, 1), (1, 1), wx.ALIGN_CENTER)
+
+		self.sz = wx.GridBagSizer(5, 5)
+		self.sz.Add(self.parameters, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		self.sz.Add(szbutton, (1, 0), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
+
+		self.sz.AddGrowableRow(0)
+		self.sz.AddGrowableCol(0)
+
+		self.SetSizerAndFit(self.sz)
+		self.SetAutoLayout(True)
+
+		self.bsave.Enable(False)
+		self.bcancel.Enable(False)
+
+	def setPreset(self, preset):
+		self.preset = preset
+		self.parameters.set(preset)
+		self.sz.Layout()
+		# ...
+		self.bsave.Enable(True)
+		self.bcancel.Enable(True)
+
+	def getPreset(self):
+		# ...
+		selected = self.parameters.getSelected()
+		for key in self.preset:
+			if key in selected and not selected[key]:
+				self.preset[key] = None
+		return self.preset
 
 if __name__ == '__main__':
 	class App(wx.App):
