@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.50 $
+# $Revision: 1.51 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-19 18:24:00 $
+# $Date: 2005-05-19 18:45:21 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -129,6 +129,7 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		self.feimageshifty = FloatEntry(self, -1, chars=9)
 		self.febeamshiftx = FloatEntry(self, -1, chars=9)
 		self.febeamshifty = FloatEntry(self, -1, chars=9)
+		self.fedose = FloatEntry(self, -1, chars=9)
 		self.cccdcamera = wx.Choice(self, -1,
 																choices=[self.nonestring] + self.ccdcameras)
 		self.cbfilm = wx.CheckBox(self, -1, 'Use film')
@@ -153,6 +154,7 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		self.feimageshifty.SetValue(parameters['image shift']['y'])
 		self.febeamshiftx.SetValue(parameters['beam shift']['x'])
 		self.febeamshifty.SetValue(parameters['beam shift']['y'])
+		self.fedose.SetValue(parameters['dose'])
 
 		if parameters['ccdcamera'] is None:
 			self.cccdcamera.SetStringSelection(self.nonestring)
@@ -206,6 +208,9 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		sz.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.cccdcamera, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 		sz.Add(self.cbfilm, (1, 3), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Dose')
+		sz.Add(label, (2, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.fedose, (2, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 		sz.Add(self.cpcamconfig, (3, 3), (5, 2), wx.EXPAND)
 
 		self.sz.Add(sz, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
@@ -272,6 +277,7 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		parameters['beam shift'] = {}
 		parameters['beam shift']['x'] = float(self.febeamshiftx.GetValue())
 		parameters['beam shift']['y'] = float(self.febeamshifty.GetValue())
+		parameters['dose'] = float(self.fedose.GetValue())
 		ccdcamera = self.cccdcamera.GetStringSelection()
 		if ccdcamera == self.nonestring:
 			ccdcamera = None

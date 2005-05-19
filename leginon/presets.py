@@ -912,12 +912,12 @@ class PresetsManager(node.Node):
 			if dosekillers:
 				newpreset['dose'] = None
 				paramstr = ', '.join(dosekillers)
-				s = 'Dose of %s reset due to change in %s' % (newpreset['name'], paramstr)
+				s = 'Dose of preset "%s" reset due to change in %s' % (newpreset['name'], paramstr)
 				self.logger.info(s)
 			elif newpreset['exposure time'] != oldpreset['exposure time']:
 				scale = float(newpreset['exposure time']) / float(oldpreset['exposure time'])
 				newpreset['dose'] = scale * oldpreset['dose']
-				self.logger.info('Scaling dose of %s by %.3f due to change in exposure time' % (newpreset['name'], scale,))
+				self.logger.info('Scaling dose of preset "%s" x%.3f due to change in exposure time' % (newpreset['name'], scale,))
 
 		## create list of similar presets
 		similarpresets = []
@@ -938,6 +938,7 @@ class PresetsManager(node.Node):
 			elif oldpreset['dose'] != newpreset['dose']:
 				## my dose changed, now update dose in other similar presets
 				for p in similarpresets:
+					self.logger.info('Copying dose from preset "%s" to similar preset "%s"' % (newpreset['name'], p['name']))
 					self.updatePreset(p['name'], {'dose': newpreset['dose']}, updatedose=False)
 
 	def targetToScope(self, newpresetname, emtargetdata):
