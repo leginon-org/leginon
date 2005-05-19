@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.51 $
+# $Revision: 1.52 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-19 18:45:21 $
+# $Date: 2005-05-19 18:49:09 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -742,8 +742,8 @@ class ImportDialog(wx.Dialog):
 	def onFindPresets(self, evt=None):
 		temname = self.instrumentselection.getTEM()
 		camname = self.instrumentselection.getCCDCamera()
-		if 'None' in (temname,camname):
-			self.node.logger.error('Need to select a TEM and camera')
+		if None in (temname,camname):
+			self.node.logger.error('Need to select both a TEM and camera for import')
 			return
 		tem = self.node.instrument.getTEMData(temname)
 		ccd = self.node.instrument.getCCDCameraData(camname)
