@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.54 $
+# $Revision: 1.55 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-19 20:17:50 $
-# $Author: suloway $
+# $Date: 2005-05-19 20:52:59 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -210,9 +210,9 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		sz.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.cccdcamera, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 		sz.Add(self.cbfilm, (1, 3), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Dose')
-		sz.Add(label, (2, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.fedose, (2, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		#label = wx.StaticText(self, -1, 'Dose')
+		#sz.Add(label, (2, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		#sz.Add(self.fedose, (2, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 		sz.Add(self.cpcamconfig, (3, 3), (5, 2), wx.EXPAND)
 
 		self.sz.Add(sz, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
