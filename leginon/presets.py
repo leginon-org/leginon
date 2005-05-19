@@ -524,9 +524,9 @@ class PresetsManager(node.Node):
 
 		# update old preset or create new one
 		if name in self.presets.keys():
-			self.updatePreset(name, newparams)
+			newpreset = self.updatePreset(name, newparams)
 		else:
-			self.newPreset(name, newparams)
+			newpreset = self.newPreset(name, newparams)
 
 		self.logger.info('Set preset "%s" values from instrument' % name)
 		self.beep()
