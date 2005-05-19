@@ -30,8 +30,11 @@ $f_hostname=$_POST['f_hostname'];
 $f_type=$_POST['f_type'];
 
 $maintable = "InstrumentData";
-$id = $leginondata->getId( array('DEF_id' => $f_sel_name), $maintable);
-$id = (is_array($id)) ? $id[0] : $id;
+$id = $leginondata->getId( array('name' => $f_name), $maintable);
+if ($id) {
+	$id = (is_array($id)) ? $id[0] : $id;
+	$id = $leginondata->getId( array('DEF_id' => $id), $maintable);
+}
 switch ($_POST['bt_action']) {
 
 
@@ -62,7 +65,6 @@ switch ($_POST['bt_action']) {
 			break;
 }
 
-
 $info = $leginondata->getDataInfo($maintable, $id);
 $info = $info[0];
 if ($info) {
@@ -84,11 +86,22 @@ admin_header('onload="init()"');
 var jsid = "<?=$id?>";
 
 function init() {
+	var index=-1;
+	for (var i = 0; i < document.data.f_sel_name.length; i++) {
+		if (document.data.f_sel_name.options[i].value == jsid) {
+			index=i;  
+		} 
+	}
+	if (index >=0) {
+		document.data.f_sel_name.options[index].selected = true;
 		document.data.f_sel_name.focus();
 <? if ($_POST['f_name']) { ?>
-		if (f_d=document.data.f_description)
+	} else {
+		if (f_d=document.data.f_hostname)
 			f_d.focus();
-<? } ?>
+		document.data.f_sel_name.focus();
+	}
+<? } else { echo "}"; } ?>
 }
 </script>
 <h3>Table: <?=$maintable?></h3>
@@ -149,7 +162,7 @@ foreach($importcameras as $c) {
 <select name="f_sel_name"  SIZE=20 onClick="update_data();" onchange="update_data();">
 <?
 foreach ($instruments as $instrument) {
-	$selected = ($instrument['DEF_id']==$f_sel_name) ? "selected" : "";
+//	$selected = ($instrument['DEF_id']==$f_sel_name) ? "selected" : "";
 	echo "<option value='".$instrument['DEF_id']."' $selected >".stripslashes($instrument['name'])."</option>\n"; 
 } 
 
@@ -170,7 +183,7 @@ Choose a Name in the list or type one, then &lt;Tab&gt;
 name:<font color="red">*</font>
 </td>
 <td class="dt1"> 
-<input class="field" type="text" name="f_name" maxlength="20" size="17" value ="<?=$f_name?>" onBlur="check_name();" onchange="check_name();"  >
+<input class="field" type="text" name="f_name" maxlength="30" size="17" value ="<?=$f_name?>" onBlur="check_name();" onchange="check_name();"  >
 </td>
 <? if ($error) { ?>
 <td valign="top">
@@ -194,7 +207,7 @@ description:
 hostname:
 </td>
 <td class="dt1"> 
-<input class="field" type="text" name="f_hostname" maxlength="20" size="17" value ="<?=$f_hostname?>" >
+<input class="field" type="text" name="f_hostname" maxlength="30" size="17" value ="<?=$f_hostname?>" >
 </td>
 </tr>
 
