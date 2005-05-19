@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/matlabtargetfinder.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-11 23:50:31 $
-# $Author: pulokas $
+# $Date: 2005-05-19 19:51:24 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -39,6 +39,10 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 			return
 		self.handle = None
 		self.start()
+
+	def readImage(self, filename):
+		image = Mrc.mrc_to_numeric(filename)
+		self.setImage(image, 'Image')
 
 	def matlabFindTargets(self):
 		pymat.put(self.handle, 'focus', [])
@@ -102,7 +106,6 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 			self.logger.error('Failed to load test image')
 			raise
 			return
-
 		self.setImage(image, 'Image')
 
 		if self.handle is None:
