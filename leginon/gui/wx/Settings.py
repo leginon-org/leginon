@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Settings.py,v $
-# $Revision: 1.20 $
+# $Revision: 1.21 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-26 01:50:55 $
-# $Author: pulokas $
+# $Date: 2005-05-19 18:18:30 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -19,6 +19,7 @@ import gui.wx.Presets
 import wx.lib.filebrowsebutton as filebrowse
 import gui.wx.Rings
 import gui.wx.TargetTemplate
+import gui.wx.Instrument
 
 class SettingsError(Exception):
 	pass
