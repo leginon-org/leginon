@@ -240,8 +240,8 @@ class DriftManager(watcher.Watcher):
 		## configure camera
 		self.instrument.ccdcamera.Settings = self.settings['camera settings']
 		mag = self.instrument.tem.Magnification
-		tem = self.instrument.tem
-		cam = self.instrument.ccdcamera
+		tem = self.instrument.getTEMData()
+		cam = self.instrument.getCCDCameraData()
 		pixsize = self.pixsizeclient.retrievePixelSize(tem, cam, mag)
 		self.logger.info('Pixel size %s' % (pixsize,))
 
