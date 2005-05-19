@@ -932,9 +932,10 @@ class PresetsManager(node.Node):
 				similarpresets.append(p)
 
 		if similarpresets:
-			if newpreset['dose'] is None:
+			if not newpreset['dose']:
 				## set my dose from a similar preset
 				newpreset['dose'] = similarpresets[0]['dose']
+				self.logger.info('Copying dose from similar preset "%s" to preset "%s"' % (similarpresets[0]['name'], newpreset['name']))
 			elif oldpreset['dose'] != newpreset['dose']:
 				## my dose changed, now update dose in other similar presets
 				for p in similarpresets:
