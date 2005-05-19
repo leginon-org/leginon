@@ -925,7 +925,7 @@ class PresetsManager(node.Node):
 			if pname == newpreset['name']:
 				continue
 			similar = True
-			for param in ('magnification', 'spot size', 'intensity'):
+			for param in ('exposure time', 'magnification', 'spot size', 'intensity'):
 				if p[param] != newpreset[param]:
 					similar = False
 			if similar:
