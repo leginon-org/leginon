@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.49 $
+# $Revision: 1.50 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-18 23:39:18 $
+# $Date: 2005-05-19 18:24:00 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -118,9 +118,9 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		self.ctem = wx.Choice(self, -1, choices=[self.nonestring] + self.tems)
 		try:
 			mags = self.instrument.getMagnifications(parameters['tem']['name'])
-			magchoices = [str(int(m)) for m in mags]
-		except (AttributeError, KeyError, TypeError):
-			magchoices = []
+		except:
+			mags = []
+		magchoices = [str(int(m)) for m in mags]
 		self.cmag = wx.Choice(self, -1, choices=magchoices)
 		self.fedefocus = FloatEntry(self, -1, chars=9)
 		self.fespotsize = FloatEntry(self, -1, chars=2)
@@ -139,13 +139,13 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		else:
 			tem = parameters['tem']
 			if self.ctem.FindString(tem['name']) == wx.NOT_FOUND:
-				self.ctem.SetStringSelection(self.nonestring)
-			else:
-				self.ctem.SetStringSelection(tem['name'])
+				self.ctem.Append(tem['name'])
+			self.ctem.SetStringSelection(tem['name'])
 		if parameters['magnification'] is not None:
 			mag = str(int(parameters['magnification']))
-			if self.cmag.FindString(mag) != wx.NOT_FOUND:
-				self.cmag.SetStringSelection(mag)
+			if self.cmag.FindString(mag) == wx.NOT_FOUND:
+				self.cmag.Append(mag)
+			self.cmag.SetStringSelection(mag)
 		self.fedefocus.SetValue(parameters['defocus'])
 		self.fespotsize.SetValue(parameters['spot size'])
 		self.feintensity.SetValue(parameters['intensity'])
@@ -159,9 +159,8 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		else:
 			ccdcamera = parameters['ccdcamera']
 			if self.cccdcamera.FindString(ccdcamera['name']) == wx.NOT_FOUND:
-				self.cccdcamera.SetStringSelection(self.nonestring)
-			else:
-				self.cccdcamera.SetStringSelection(ccdcamera['name'])
+				self.cccdcamera.Append(ccdcamera['name'])
+			self.cccdcamera.SetStringSelection(ccdcamera['name'])
 		self.cbfilm.SetValue(bool(parameters['film']))
 
 		try:
