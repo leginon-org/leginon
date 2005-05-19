@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetFinder.py,v $
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-11 23:49:32 $
+# $Date: 2005-05-19 20:48:44 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -51,8 +51,12 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitQueueTool,
 											id=gui.wx.ToolBar.ID_SUBMIT_QUEUE)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, True)
+		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings)
 		queue = self.node.settings['queue']
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE, queue)
+
+	def onImageSettings(self, evt):
+		pass
 
 	def targetsSubmitted(self):
 		evt = gui.wx.Events.TargetsSubmittedEvent()
