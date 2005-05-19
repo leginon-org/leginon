@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.52 $
+# $Revision: 1.53 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-19 18:49:09 $
+# $Date: 2005-05-19 19:08:20 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -154,7 +154,8 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		self.feimageshifty.SetValue(parameters['image shift']['y'])
 		self.febeamshiftx.SetValue(parameters['beam shift']['x'])
 		self.febeamshifty.SetValue(parameters['beam shift']['y'])
-		self.fedose.SetValue(parameters['dose'])
+		if not parameters['dose']:
+			self.fedose.SetValue(0.0)
 
 		if parameters['ccdcamera'] is None:
 			self.cccdcamera.SetStringSelection(self.nonestring)
@@ -277,7 +278,11 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		parameters['beam shift'] = {}
 		parameters['beam shift']['x'] = float(self.febeamshiftx.GetValue())
 		parameters['beam shift']['y'] = float(self.febeamshifty.GetValue())
-		parameters['dose'] = float(self.fedose.GetValue())
+		dose = self.fedose.GetValue()
+		if dose:
+			parameters['dose'] = float(dose)
+		else:
+			parameters['dose'] = 0.0
 		ccdcamera = self.cccdcamera.GetStringSelection()
 		if ccdcamera == self.nonestring:
 			ccdcamera = None
