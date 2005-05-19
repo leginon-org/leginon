@@ -69,6 +69,7 @@ class DriftManager(watcher.Watcher):
 		self.start()
 
 	def handleNeedShift(self, ev):
+		self.setStatus('processing')
 		## reaquire the image from which the target originated
 		im = ev['image']
 		## go through preset manager to ensure we follow the right
@@ -102,6 +103,7 @@ class DriftManager(watcher.Watcher):
 		imagedrift['system time'] = newim['scope']['system time']
 		self.publish(imagedrift, database=True, dbforce=True, pubevent=True)
 
+		self.setStatus('idle')
 		self.confirmEvent(ev)
 
 	def declareDrift(self):
