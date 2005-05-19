@@ -190,7 +190,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.beep()
 				return 'repeat'
 
+			self.setStatus('waiting')
 			self.presetsclient.toScope(newpresetname, emtarget)
+			self.setStatus('processing')
 			self.reportStatus('processing', 'Determining current preset')
 			p = self.presetsclient.getCurrentPreset()
 			if p['name'] != newpresetname:
@@ -562,6 +564,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.logger.info('%s: %s' % (type, message))
 
 	def simulateTarget(self):
+		self.setStatus('processing')
 		currentpreset = self.presetsclient.getCurrentPreset()
 		if currentpreset is None:
 			self.logger.warning('No preset currently on instrument. Targeting may fail.')
@@ -571,20 +574,26 @@ class Acquisition(targetwatcher.TargetWatcher):
 		proctargetdata = data.AcquisitionImageTargetData(initializer=targetdata, status='processing')
 		ret = self.processTargetData(targetdata=proctargetdata, attempt=1)
 		self.logger.info('Done with simulated target, status: %s (repeat will not be honored)' % (ret,))
+		self.setStatus('idle')
 
 	def simulateTargetLoop(self):
+		self.setStatus('processing')
 		iterations = self.settings['iterations']
 		self.logger.info('begin simulated target loop of %s iterations' % (iterations,))
 		self.simloopstop.clear()
 		for i in range(iterations):
 			self.logger.info('iteration %s of %s' % (i+1, iterations,))
 			self.simulateTarget()
+			self.setStatus('processing')
 			if self.simloopstop.isSet():
 				self.logger.info('User stopped loop')
 				break
 			waittime = self.settings['wait time']
+			self.setStatus('waiting')
 			time.sleep(waittime)
+			self.setStatus('processing')
 		self.logger.info('Simulated Target Loop Done')
+		self.setStatus('idle')
 	
 
 	def simulateTargetLoopStop(self):
