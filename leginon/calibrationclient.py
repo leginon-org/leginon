@@ -114,6 +114,7 @@ class CalibrationClient(object):
 
 		self.node.logger.info('Acquiring image (1 of 2)')
 		info1 = self.acquireStateImage(state1, publish_images, settle)
+		binning = info1['imagedata']['binning']['x']
 		imagedata1 = info1['imagedata']
 		imagecontent1 = imagedata1
 		stats1 = info1['image stats']
@@ -177,7 +178,7 @@ class CalibrationClient(object):
 			driftdata = data.DriftData(session=self.node.session, rows=shiftrows, cols=shiftcols, interval=seconds, target=target, scope=scope, camera=camera)
 			self.node.publish(driftdata, database=True, dbforce=True)
 
-			pixels = abs(shift[0] + 1j * shift[1])
+			pixels = binning * abs(shift[0] + 1j * shift[1])
 			# convert to meters
 			mag = actual1['magnification']
 			pixelsize = self.getPixelSize(mag)
