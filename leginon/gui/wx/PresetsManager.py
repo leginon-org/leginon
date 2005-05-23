@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.57 $
+# $Revision: 1.58 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-23 23:23:20 $
+# $Date: 2005-05-23 23:35:29 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -423,7 +423,7 @@ class DoseDialog(gui.wx.Dialog.Dialog):
 		if dose is None:
 			dosestr = 'N/A'
 		else:
-			dosestr = '%e' % (dose/1e20)
+			dosestr = '%.2f' % (dose/1e20)
 		dosestr = 'Use the measured dose %s e/A^2 for this preset?' % dosestr
 		self.doselabel.SetLabel(dosestr)
 
@@ -996,7 +996,8 @@ class Parameters(wx.StaticBoxSizer):
 												parameters['binning']['y'])
 			self.stbinning.SetLabel(s)
 			self.stexposuretime.SetLabel(str(parameters['exposure time']))
-			self.stdose.SetLabel(str(parameters['dose']/1e20))
+			dosestr = '%.2f' % (parameters['dose']/1e20,)
+			self.stdose.SetLabel(dosestr)
 			self.Layout()
 
 class SelectParameters(Parameters):
