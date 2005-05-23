@@ -427,7 +427,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.reportStatus('output', 'Image displayed')
 
 		if self.settings['wait for process']:
+			self.setStatus('waiting')
 			self.waitForImageProcessDone()
+			self.setStatus('processing')
 		return 'ok'
 
 	def publishStats(self, imagedata):

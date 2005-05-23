@@ -53,7 +53,9 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		'''
 		while 1:
 			# wait for a queue update
+			self.setStatus('idle')
 			self.queueupdate.wait()
+			self.setStatus('processing')
 			self.queueupdate.clear()
 			self.logger.info('received queue update')
 
@@ -94,8 +96,10 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 	def processData(self, newdata):
 		if isinstance(newdata, data.ImageTargetListData):
+			self.setStatus('processing')
 			self.processTargetList(newdata)
 			self.player.play()
+			self.setStatus('idle')
 		if isinstance(newdata, data.QueueData):
 			self.processTargetListQueue(newdata)
 
