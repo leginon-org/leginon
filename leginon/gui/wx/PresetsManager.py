@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.56 $
+# $Revision: 1.57 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-19 23:00:00 $
-# $Author: suloway $
+# $Date: 2005-05-23 23:23:20 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -996,7 +996,7 @@ class Parameters(wx.StaticBoxSizer):
 												parameters['binning']['y'])
 			self.stbinning.SetLabel(s)
 			self.stexposuretime.SetLabel(str(parameters['exposure time']))
-			self.stdose.SetLabel(str(parameters['dose']))
+			self.stdose.SetLabel(str(parameters['dose']/1e20))
 			self.Layout()
 
 class SelectParameters(Parameters):
