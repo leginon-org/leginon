@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Icons.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-02 19:46:28 $
-# $Author: suloway $
+# $Date: 2005-05-23 23:05:10 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -28,6 +28,9 @@ def empty():
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
+
+def null():
+	return icon('null')
 
 def icon(name):
 	if name is None:

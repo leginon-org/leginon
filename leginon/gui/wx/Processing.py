@@ -5,7 +5,7 @@ import gui.wx.Icons
 
 class Throbber(wx.lib.throbber.Throbber):
 	def __init__(self, parent):
-		emptybitmap = gui.wx.Icons.empty()
+		emptybitmap = gui.wx.Icons.null()
 		images = [emptybitmap]
 		for i in range(1, 9):
 			path = os.path.join('processing', 'green%d' % i)
