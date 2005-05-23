@@ -754,7 +754,7 @@ class PresetsManager(node.Node):
 			newpreset['film'] = False
 			newpreset['hasref'] = False
 			newpreset.friendly_update(newparams)
-			self.presets[name] = newpreset
+			self.presets[presetname] = newpreset
 			self.presetToDB(newpreset)
 			self.currentpreset = newpreset
 			self.currentselection = newpreset
