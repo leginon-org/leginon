@@ -30,22 +30,20 @@ $f_hostname=$_POST['f_hostname'];
 $f_type=$_POST['f_type'];
 
 $maintable = "InstrumentData";
-$id = $leginondata->getId( array('name' => $f_name), $maintable);
-if ($id) {
-	$id = (is_array($id)) ? $id[0] : $id;
-	$id = $leginondata->getId( array('DEF_id' => $id), $maintable);
-}
+$id = $f_sel_name;
+
 switch ($_POST['bt_action']) {
 
 
 	case "get":
-			$id = $leginondata->getId( array('DEF_id' => $f_sel_name), $maintable);
+			/* no need to do something yet */
 			break;
 	case "save":
 			if (!$f_name) {
 				$error = "Enter a Name";
 				break;
 			}
+
 			$data['name'] = $f_name;
 			$data['hostname'] = $f_hostname;
 			$data['type'] = $f_type;
@@ -54,9 +52,15 @@ switch ($_POST['bt_action']) {
 			if ($id) {
 				$where['DEF_id'] = $id;
 				$leginondata->mysql->SQLUpdate($maintable, $data, $where);
-			} else {
-				$id = $leginondata->mysql->SQLInsert($maintable, $data);
 			}
+			break;
+	case "add":
+			$data['name'] = $f_name;
+			$data['hostname'] = $f_hostname;
+			$data['type'] = $f_type;
+			$data['description'] = $f_description;
+			
+			$id = $leginondata->mysql->SQLInsert($maintable, $data);
 			break;
 	case "remove":
 			$where['DEF_id']=$id;
@@ -86,22 +90,7 @@ admin_header('onload="init()"');
 var jsid = "<?=$id?>";
 
 function init() {
-	var index=-1;
-	for (var i = 0; i < document.data.f_sel_name.length; i++) {
-		if (document.data.f_sel_name.options[i].value == jsid) {
-			index=i;  
-		} 
-	}
-	if (index >=0) {
-		document.data.f_sel_name.options[index].selected = true;
-		document.data.f_sel_name.focus();
-<? if ($_POST['f_name']) { ?>
-	} else {
-		if (f_d=document.data.f_hostname)
-			f_d.focus();
-		document.data.f_sel_name.focus();
-	}
-<? } else { echo "}"; } ?>
+	document.data.f_sel_name.focus();
 }
 </script>
 <h3>Table: <?=$maintable?></h3>
@@ -162,7 +151,7 @@ foreach($importcameras as $c) {
 <select name="f_sel_name"  SIZE=20 onClick="update_data();" onchange="update_data();">
 <?
 foreach ($instruments as $instrument) {
-//	$selected = ($instrument['DEF_id']==$f_sel_name) ? "selected" : "";
+	$selected = ($instrument['DEF_id']==$f_sel_name) ? "selected" : "";
 	echo "<option value='".$instrument['DEF_id']."' $selected >".stripslashes($instrument['name'])."</option>\n"; 
 } 
 
@@ -173,7 +162,7 @@ foreach ($instruments as $instrument) {
 <table>
 <tr valign="top">
 <td colspan=2>
-Choose a Name in the list or type one, then &lt;Tab&gt;
+Choose a Name in the list
 <br>
 <font color="red">*: required fields</font>
 </td>
@@ -183,7 +172,10 @@ Choose a Name in the list or type one, then &lt;Tab&gt;
 name:<font color="red">*</font>
 </td>
 <td class="dt1"> 
-<input class="field" type="text" name="f_name" maxlength="30" size="17" value ="<?=$f_name?>" onBlur="check_name();" onchange="check_name();"  >
+<input class="field" type="text" name="f_name" maxlength="30" size="17" value ="<?=$f_name?>" >
+<?
+//  onBlur="check_name();" onchange="check_name();"  >
+?>
 </td>
 <? if ($error) { ?>
 <td valign="top">
@@ -229,11 +221,10 @@ foreach ($intrument_types as $intrument_type) {
 </tr>
 
 <tr>
-<td>
+<td colspan="2">
 	<input type="hidden" name="bt_action" value = "" >
+	<input type="button" name="save" value = "Add" onClick="confirm_add();" >
 	<input type="button" name="save" value = "Save" onClick="confirm_update();" >
-</td>
-<td>
 	<input type="button" name="save" value = "Remove" onClick="confirm_delete();" >
 </td>
 </tr>
