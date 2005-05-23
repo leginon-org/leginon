@@ -114,7 +114,7 @@ class CalibrationClient(object):
 
 		self.node.logger.info('Acquiring image (1 of 2)')
 		info1 = self.acquireStateImage(state1, publish_images, settle)
-		binning = info1['imagedata']['binning']['x']
+		binning = info1['imagedata']['camera']['binning']['x']
 		imagedata1 = info1['imagedata']
 		imagecontent1 = imagedata1
 		stats1 = info1['image stats']
