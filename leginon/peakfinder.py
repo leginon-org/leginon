@@ -21,6 +21,9 @@ class FindPeakError(Exception):
 class PeakFinder(object):
 	def __init__(self):
 		self.initResults()
+		self.lpf = True
+		gauss = convolver.gaussian_kernel(1.5)
+		self.filter = convolver.Convolver(kernel=gauss)
 
 	def initResults(self):
 		self.results = {
@@ -29,7 +32,10 @@ class PeakFinder(object):
 			}
 
 	def setImage(self, newimage):
-		self.image = newimage
+		if self.lpf:
+			self.image = self.filter.convolve(image=newimage)
+		else:
+			self.image = newimage
 		self.shape = newimage.shape
 		self.initResults()
 
