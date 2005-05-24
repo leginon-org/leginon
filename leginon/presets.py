@@ -925,7 +925,7 @@ class PresetsManager(node.Node):
 			if pname == newpreset['name']:
 				continue
 			similar = True
-			for param in ('exposure time', 'magnification', 'spot size', 'intensity'):
+			for param in ('magnification', 'spot size', 'intensity'):
 				if p[param] != newpreset[param]:
 					similar = False
 			if similar:
@@ -934,13 +934,17 @@ class PresetsManager(node.Node):
 		if similarpresets:
 			if not newpreset['dose']:
 				## set my dose from a similar preset
-				newpreset['dose'] = similarpresets[0]['dose']
-				self.logger.info('Copying dose from similar preset "%s" to preset "%s"' % (similarpresets[0]['name'], newpreset['name']))
+				sim = similarpresets[0]
+				scale = float(newpreset['exposure time']) / float(sim['exposure time'])
+				newpreset['dose'] = scale * sim['dose']
+				self.logger.info('Copying dose from similar preset "%s" to preset "%s"' % (sim['name'], newpreset['name']))
 			elif oldpreset['dose'] != newpreset['dose']:
 				## my dose changed, now update dose in other similar presets
-				for p in similarpresets:
-					self.logger.info('Copying dose from preset "%s" to similar preset "%s"' % (newpreset['name'], p['name']))
-					self.updatePreset(p['name'], {'dose': newpreset['dose']}, updatedose=False)
+				for sim in similarpresets:
+					self.logger.info('Copying dose from preset "%s" to similar preset "%s"' % (newpreset['name'], sim['name']))
+					scale = float(sim['exposure time']) / float(newpreset['exposure time'])
+					simdose = scale * newpreset['dose']
+					self.updatePreset(sim['name'], {'dose': simdose}, updatedose=False)
 
 	def targetToScope(self, newpresetname, emtargetdata):
 		'''
