@@ -132,6 +132,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		# separate the good targets from the rejects
 		goodtargets = []
 		rejects = []
+		ignored = []
 
 		for target in targetlist:
 			im = target['image']
@@ -142,10 +143,13 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.logger.debug('IMAGEID ' + str(imageid))
 			if target['type'] in self.target_types:
 				goodtargets.append(target)
-			else:
+			elif not rejects:
+				## this only allows one reject
 				rejects.append(target)
+			else:
+				ignored.append(target)
 
-		self.logger.debug('%d process, %d pass, %d total' % (len(goodtargets), len(rejects), len(targetlist)))
+		self.logger.debug('%d process, %d pass, %d ignored, %d total' % (len(goodtargets), len(rejects), len(ignored), len(targetlist)))
 
 		# republish the rejects and wait for them to complete
 		waitrejects = rejects and self.settings['wait for rejects']
