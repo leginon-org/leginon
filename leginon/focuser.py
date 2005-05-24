@@ -150,7 +150,7 @@ class Focuser(acquisition.Acquisition):
 			self.logger.info('Measurement of defocus and stig. has been aborted')
 			return 'aborted'
 		except calibrationclient.Drifting:
-			self.driftDetected(presetname, emtarget)
+			self.driftDetected(presetname, emtarget, driftthresh)
 			self.logger.info('Drift detected (will try again when drift is done)')
 			return 'repeat'
 

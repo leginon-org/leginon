@@ -133,6 +133,7 @@ class DriftManager(watcher.Watcher):
 			## use driftdata to set up scope and camera
 			pname = driftdata['presetname']
 			emtarget = driftdata['emtarget']
+			threshold = driftdata['threshold']
 			target = emtarget['target']
 			self.presetsclient.toScope(pname, emtarget)
 		else:
@@ -140,7 +141,7 @@ class DriftManager(watcher.Watcher):
 
 		## acquire images, measure drift
 		self.abortevent.clear()
-		self.acquireLoop(target)
+		self.acquireLoop(target, threshold=threshold)
 
 		## declare drift above threshold
 		declared = data.DriftDeclaredData()
@@ -163,7 +164,7 @@ class DriftManager(watcher.Watcher):
 			self.setImage(imagedata['image'])
 		return imagedata
 
-	def acquireLoop(self, target=None):
+	def acquireLoop(self, target=None, threshold=None):
 
 		## acquire first image
 		imagedata = self.acquireImage()
@@ -178,10 +179,16 @@ class DriftManager(watcher.Watcher):
 		pixsize = self.pixsizeclient.retrievePixelSize(tem, ccd, mag)
 		self.logger.info('Pixel size at %sx is %s' % (mag, pixsize))
 
+		if threshold is None:
+			requested = False
+			threshold = self.settings['threshold']
+			self.logger.info('using threshold setting: %.2e' % (threshold,))
+		else:
+			self.logger.info('using requested threshold: %.2e' % (threshold,))
+			requested = True
 		## ensure that loop executes once
-		threshold = self.settings['threshold']
 		current_drift = threshold + 1.0
-		while current_drift > self.settings['threshold']:
+		while current_drift > threshold:
 			## wait for interval
 			time.sleep(self.settings['pause time'])
 
@@ -189,6 +196,8 @@ class DriftManager(watcher.Watcher):
 			imagedata = self.acquireImage()
 			numdata = imagedata['image']
 			binning = imagedata['camera']['binning']['x']
+			self.logger.info('binning: %s' % (binning,))
+			self.logger
 			t1 = imagedata['scope']['system time']
 			self.correlator.insertImage(numdata)
 
@@ -197,16 +206,19 @@ class DriftManager(watcher.Watcher):
 			peak = self.peakfinder.subpixelPeak(newimage=pc)
 			rows,cols = self.peak2shift(peak, pc.shape)
 			dist = Numeric.hypot(rows,cols)
-			self.logger.info('Pixels drifted %s' % dist)
+			self.logger.info('Pixels drifted %.2f' % dist)
+			self.logger.info('Pixels X binning %.2f' % (dist*binning,))
 
 			## calculate drift 
 			meters = dist * binning * pixsize
+			self.logger.info('meters: %.2e' % (meters,))
 			rowmeters = rows * binning * pixsize
 			colmeters = cols * binning * pixsize
 			# rely on system time of EM node
 			seconds = t1 - t0
+			self.logger.info('seconds: %s' % (seconds,))
 			current_drift = meters / seconds
-			self.logger.info('Drift rate: %.4e' % (current_drift,))
+			self.logger.info('Drift rate: %.2e' % (current_drift,))
 
 			## publish scope and camera to be used with drift data
 			scope = imagedata['scope']
@@ -270,12 +282,12 @@ class DriftManager(watcher.Watcher):
 
 		## calculate drift 
 		meters = dist * pixsize
-		self.logger.info('Pixel distance %s, (%s meters)' % (dist, meters))
+		self.logger.info('Pixel distance %s, (%.2e meters)' % (dist, meters))
 		# rely on system time of EM node
 		seconds = t1 - t0
 		self.logger.info('Seconds %s' % seconds)
 		current_drift = meters / seconds
-		self.logger.info('Drift rate: %.4f' % (current_drift,))
+		self.logger.info('Drift rate: %.2e' % (current_drift,))
 
 	def targetsToDatabase(self):
 		for target in self.targetlist:
