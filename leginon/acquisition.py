@@ -552,13 +552,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		declared['type'] = type
 		self.publish(declared, database=True, dbforce=True)
 
-	def driftDetected(self, presetname, emtarget):
+	def driftDetected(self, presetname, emtarget, threshold):
 		'''
 		notify DriftManager of drifting
 		'''
-		driftdetecteddata = data.DriftDetectedData(presetname=presetname, emtarget=emtarget)
+		driftdetecteddata = data.DriftDetectedData(presetname=presetname, emtarget=emtarget, threshold=threshold)
 		self.driftdone.clear()
-		self.publish(driftdetecteddata, pubevent=True)
+		self.publish(driftdetecteddata, pubevent=True, database=True, dbforce=True)
 		self.reportStatus('acquisition', 'Waiting for DriftManager...')
 		self.driftdone.wait()
 

@@ -880,6 +880,7 @@ class DriftDetectedData(Data):
 		return Data.typemap() + (
 			('emtarget', EMTargetData),
 			('presetname', str),
+			('threshold', float),
 		)
 	typemap = classmethod(typemap)
 
