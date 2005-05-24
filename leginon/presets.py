@@ -937,12 +937,12 @@ class PresetsManager(node.Node):
 				sim = similarpresets[0]
 				scale = float(newpreset['exposure time']) / float(sim['exposure time'])
 				newpreset['dose'] = scale * sim['dose']
-				self.logger.info('Copying dose from similar preset "%s" to preset "%s"' % (sim['name'], newpreset['name']))
+				self.logger.info('Copying and scaling dose from similar preset "%s" to preset "%s"' % (sim['name'], newpreset['name']))
 			elif oldpreset['dose'] != newpreset['dose']:
 				## my dose changed, now update dose in other similar presets
 				for sim in similarpresets:
-					self.logger.info('Copying dose from preset "%s" to similar preset "%s"' % (newpreset['name'], sim['name']))
 					scale = float(sim['exposure time']) / float(newpreset['exposure time'])
+					self.logger.info('Copying and scaling dose from preset "%s" to similar preset "%s"' % (newpreset['name'], sim['name']))
 					simdose = scale * newpreset['dose']
 					self.updatePreset(sim['name'], {'dose': simdose}, updatedose=False)
 
