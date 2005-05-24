@@ -115,6 +115,7 @@ class CalibrationClient(object):
 		self.node.logger.info('Acquiring image (1 of 2)')
 		info1 = self.acquireStateImage(state1, publish_images, settle)
 		binning = info1['imagedata']['camera']['binning']['x']
+		self.node.logger.info('binning: %s' % (binning,))
 		imagedata1 = info1['imagedata']
 		imagecontent1 = imagedata1
 		stats1 = info1['image stats']
@@ -182,10 +183,11 @@ class CalibrationClient(object):
 			# convert to meters
 			mag = actual1['magnification']
 			pixelsize = self.getPixelSize(mag)
+			self.node.logger.info('pixelsize: %s' % (pixelsize,))
 			meters = pixelsize * pixels
 			drift = meters / seconds
 			self.node.logger.info('Seconds %f, pixels %f, meters %.4e, meters/second %.4e'
-							% (seconds, pixels, meters, float(meters)/seconds))
+							% (seconds, pixels, meters, drift)
 			if drift > drift_threshold:
 				## declare drift above threshold
 				declared = data.DriftDeclaredData()
