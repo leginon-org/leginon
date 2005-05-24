@@ -8,6 +8,8 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
+import convolver
+
 try:
 	import numarray as Numeric
 	from numarray.linear_algebra import linear_least_squares
