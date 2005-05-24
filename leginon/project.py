@@ -87,6 +87,16 @@ class ProjectData:
 		except KeyError:
 			return None
 
+	def getGridNumber(self, gridid):
+		gridsindex = self.grids.Index(['gridId'])
+		grid = gridsindex[gridid].fetchone()
+		if grid is None:
+			return None
+		try:
+			return int(grid['number'])
+		except KeyError:
+			return None
+
 ########################################
 ## Testing
 ########################################

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RobotAtlasTargetFinder.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-20 00:25:54 $
+# $Date: 2005-05-24 17:19:39 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -75,8 +75,14 @@ class Panel(gui.wx.Node.Panel):
 		self.listbox.Clear()
 		labels = []
 		self.atlaslistboxmap = {}
-		for gridname, gridid, insertion in self.node.grids.getGridInsertions():
-			label = '%s (%d)' % (gridname, insertion)
+		for gridinsertion in self.node.grids.getGridInsertions():
+			print gridinsertion
+			print [type(i) for i in gridinsertion]
+			gridname, gridid, number, insertion = gridinsertion
+			if number is None:
+				label = '%s <x%d>' % (gridname, insertion)
+			else:
+				label = '%s <P%d x%d>' % (gridname, number, insertion)
 			labels.append(label)
 			self.atlaslistboxmap[label] = (gridname, gridid, insertion)
 		self.listbox.AppendItems(labels)

@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-18 23:43:40 $
-# $Author: pulokas $
+# $Date: 2005-05-24 17:19:39 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -62,10 +62,11 @@ class Grids(object):
 		labels = []
 		for grid in self.grids:
 			label = self.node.getGridLabel(grid.gridid)
-			numbers = [insertion.number for insertion in grid.insertions]
-			numbers.sort()
-			for number in numbers:
-				labels.append((label, grid.gridid, number))
+			number = self.node.getGridNumber(grid.gridid)
+			inumbers = [insertion.number for insertion in grid.insertions]
+			inumbers.sort()
+			for inumber in inumbers:
+				labels.append((label, grid.gridid, number, inumber))
 		return labels
 
 class Grid(object):
@@ -260,6 +261,12 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		else:
 			label = 'ID %d' % gridid
 		return label
+
+	def getGridNumber(self, gridid):
+		if self.projectdata is not None:
+			return self.projectdata.getGridNumber(gridid)
+		else:
+			return None
 
 	def onGridLoaded(self, evt):
 		# ...
