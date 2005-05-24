@@ -1,4 +1,4 @@
-dnl $Id: config.m4,v 1.3 2005-02-23 02:03:28 dfellman Exp $
+dnl $Id: config.m4,v 1.4 2005-05-24 19:48:40 dfellman Exp $
 dnl config.m4 for extension mrcmod
 
 dnl Comments in this file start with the string 'dnl'.
@@ -35,9 +35,18 @@ if test "$PHP_MRC" = "yes"; then
 			fft_source="fft.c"
 		fi
 	fi
+	for i in /usr/include/php/ext/gd/libgd; do
+		test -f "$i/gd.h" && GD_DIR=$i && break
+	done
+	if test -z "$GD_DIR"; then
+		AC_MSG_ERROR([gd.h not found.])
+	else
+		AC_MSG_RESULT(GD_DIR  found)
+	fi
 	PHP_ADD_LIBRARY_WITH_PATH(sfftw, $FFTW_LIB_DIR, MRC_SHARED_LIBADD)
 	PHP_ADD_LIBRARY_WITH_PATH(srfftw, $FFTW_LIB_DIR, MRC_SHARED_LIBADD)
 	PHP_ADD_INCLUDE($FFTW_DIR/include)
+	PHP_ADD_INCLUDE($GD_DIR)
 	PHP_SUBST(MRC_SHARED_LIBADD)
 	PHP_NEW_EXTENSION(mrc, php_mrc.c mrc.c gd_mrc.c filter.c $fft_source, $ext_shared)
 fi
