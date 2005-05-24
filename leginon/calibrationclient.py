@@ -187,7 +187,7 @@ class CalibrationClient(object):
 			meters = pixelsize * pixels
 			drift = meters / seconds
 			self.node.logger.info('Seconds %f, pixels %f, meters %.4e, meters/second %.4e'
-							% (seconds, pixels, meters, drift)
+							% (seconds, pixels, meters, drift))
 			if drift > drift_threshold:
 				## declare drift above threshold
 				declared = data.DriftDeclaredData()
