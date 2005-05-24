@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.30 $
+# $Revision: 1.31 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-11 00:22:24 $
-# $Author: pulokas $
+# $Date: 2005-05-24 17:56:05 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -76,6 +76,12 @@ class Proxy(object):
 			if self.imagecorrection is self.imagecorrections[name]:
 				self.setImageCorrection(None)
 
+	def getTEM(self, temname):
+		try:
+			return self.tems[temname]
+		except KeyError:
+			raise ValueError('TEM \'%s\' not available' % temname)
+
 	def getTEMName(self):
 		if self.tem is None:
 			return None
@@ -117,6 +123,12 @@ class Proxy(object):
 				raise RuntimeError('no TEM \'%s\' available' % name)
 		mags = self.tems[name].Magnifications
 		return mags
+
+	def getCCDCamera(self, ccdcameraname):
+		try:
+			return self.ccdcameras[ccdcameraname]
+		except KeyError:
+			raise ValueError('CCD Camera \'%s\' not available' % ccdcameraname)
 
 	def getCCDCameraName(self):
 		if self.ccdcamera is None:
@@ -190,19 +202,32 @@ class Proxy(object):
 		else:
 			self.imagecorrection = self.imagecorrections[name]
 
-	def getData(self, dataclass, image=True):
+	def getData(self, dataclass, image=True, temname=None, ccdcameraname=None):
 		if issubclass(dataclass, data.ScopeEMData):
-			proxy = self.tem
+			if temname is None:
+				proxy = self.tem
+			else:
+				try:
+					proxy = self.tems[temname]
+				except KeyError:
+					raise ValueError('TEM \'%s\' not available' % temname)
 		elif issubclass(dataclass, data.CameraEMData):
-			proxy = self.ccdcamera
+			if ccdcameraname is None:
+				proxy = self.ccdcamera
+			else:
+				try:
+					proxy = self.ccdcameras[ccdcameraname]
+				except KeyError:
+					raise ValueError('CCD Camera \'%s\' not available' % ccdcameraname)
 		elif issubclass(dataclass, data.CorrectedCameraImageData):
 			if self.imagecorrection is None:
 				raise RuntimeError('no image correction set')
 			return self.imagecorrection.getImageData(self.getCCDCameraName())
 		elif issubclass(dataclass, data.CameraImageData):
 			instance = dataclass()
-			instance['scope'] = self.getData(data.ScopeEMData)
-			instance['camera'] = self.getData(data.CameraEMData, image=image)
+			instance['scope'] = self.getData(data.ScopeEMData, temname=temname)
+			instance['camera'] = self.getData(data.CameraEMData, image=image,
+																					ccdcameraname=ccdcameraname)
 			if image:
 				instance['image'] = instance['camera']['image data']
 				instance['camera']['image data'] = None
@@ -232,20 +257,32 @@ class Proxy(object):
 		if 'session' in instance:
 			instance['session'] = self.session
 		if 'tem' in instance:
-			instance['tem'] = self.getTEMData()
+			instance['tem'] = self.getTEMData(name=temname)
 		if 'ccdcamera' in instance:
-			instance['ccdcamera'] = self.getCCDCameraData()
+			instance['ccdcamera'] = self.getCCDCameraData(name=ccdcameraname)
 		return instance
 
-	def setData(self, instance):
+	def setData(self, instance, temname=None, ccdcameraname=None):
 		if isinstance(instance, data.ScopeEMData):
-			proxy = self.tem
+			if temname is None:
+				proxy = self.tem
+			else:
+				try:
+					proxy = self.tems[temname]
+				except KeyError:
+					raise ValueError('TEM \'%s\' not available' % temname)
 		elif isinstance(instance, data.CameraEMData):
-			proxy = self.ccdcamera
+			if ccdcameraname is None:
+				proxy = self.ccdcamera
+			else:
+				try:
+					proxy = self.ccdcameras[ccdcameraname]
+				except KeyError:
+					raise ValueError('CCD Camera \'%s\' not available' % ccdcameraname)
 		elif isinstance(instance, data.CameraImageData):
 			instance = dataclass()
-			self.setData(instance['scope'])
-			self.setData(instance['camera'])
+			self.setData(instance['scope'], temname=temname)
+			self.setData(instance['camera'], ccdcameraname=ccdcameraname)
 			return
 		if proxy is None:
 			raise ValueError('no proxy selected for this data instance')
