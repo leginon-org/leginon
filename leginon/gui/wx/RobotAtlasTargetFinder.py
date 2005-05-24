@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RobotAtlasTargetFinder.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-24 17:21:54 $
+# $Date: 2005-05-24 18:23:34 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -31,7 +31,7 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
 		self.toolbar.Realize()
 
-		self.atlaslistboxmap = {}
+		self.atlaslist = []
 		self.listbox = wx.ListBox(self, -1)
 		self.listbox.Enable(False)
 
@@ -74,7 +74,7 @@ class Panel(gui.wx.Node.Panel):
 	def onGetAtlasesDone(self, evt):
 		self.listbox.Clear()
 		labels = []
-		self.atlaslistboxmap = {}
+		self.atlaslist = []
 		for gridinsertion in self.node.grids.getGridInsertions():
 			gridname, gridid, number, insertion = gridinsertion
 			if number is None:
@@ -82,7 +82,7 @@ class Panel(gui.wx.Node.Panel):
 			else:
 				label = '%s <P%d x%d>' % (gridname, number, insertion)
 			labels.append(label)
-			self.atlaslistboxmap[label] = (gridname, gridid, insertion)
+			self.atlaslist.append((gridname, gridid, insertion))
 		self.listbox.AppendItems(labels)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_REFRESH, True)
 		self.listbox.Enable(True)
@@ -113,9 +113,9 @@ class Panel(gui.wx.Node.Panel):
 	def onAtlasListBox(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_REFRESH, False)
 		self.listbox.Enable(False)
-		s = evt.GetString()
+		i = evt.GetSelection()
 		try:
-			gridname, gridid, insertion = self.atlaslistboxmap[s]
+			gridname, gridid, insertion = self.atlaslist[i]
 			args = (gridid, insertion)
 			threading.Thread(target=self.node.setAtlas, args=args).start()
 		except KeyError:
