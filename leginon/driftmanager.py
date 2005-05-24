@@ -138,6 +138,7 @@ class DriftManager(watcher.Watcher):
 			self.presetsclient.toScope(pname, emtarget)
 		else:
 			target = None
+			threshold = None
 
 		## acquire images, measure drift
 		self.abortevent.clear()
