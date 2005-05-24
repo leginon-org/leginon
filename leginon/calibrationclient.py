@@ -145,8 +145,7 @@ class CalibrationClient(object):
 				apply(image_callback, (self.numimage1, 'Correlation'))
 			self.correlator.insertImage(self.numimage1)
 
-			self.node.logger.info('Calculating shift between the images...')
-			self.node.logger.debug('Correlating...')
+			self.node.logger.info('Correlating...')
 			if self.node.settings['correlation type'] == 'cross':
 				pcimage = self.correlator.crossCorrelate()
 			elif self.node.settings['correlation type'] == 'phase':
@@ -183,7 +182,7 @@ class CalibrationClient(object):
 			# convert to meters
 			mag = actual1['magnification']
 			pixelsize = self.getPixelSize(mag)
-			self.node.logger.info('pixelsize: %s' % (pixelsize,))
+			self.node.logger.info('pixelsize: %s, binning: %s' % (pixelsize, binning))
 			meters = pixelsize * pixels
 			drift = meters / seconds
 			self.node.logger.info('Seconds %f, pixels %f, meters %.4e, meters/second %.4e'

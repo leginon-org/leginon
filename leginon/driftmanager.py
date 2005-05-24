@@ -197,8 +197,6 @@ class DriftManager(watcher.Watcher):
 			imagedata = self.acquireImage()
 			numdata = imagedata['image']
 			binning = imagedata['camera']['binning']['x']
-			self.logger.info('binning: %s' % (binning,))
-			self.logger
 			t1 = imagedata['scope']['system time']
 			self.correlator.insertImage(numdata)
 
@@ -207,17 +205,13 @@ class DriftManager(watcher.Watcher):
 			peak = self.peakfinder.subpixelPeak(newimage=pc)
 			rows,cols = self.peak2shift(peak, pc.shape)
 			dist = Numeric.hypot(rows,cols)
-			self.logger.info('Pixels drifted %.2f' % dist)
-			self.logger.info('Pixels X binning %.2f' % (dist*binning,))
 
 			## calculate drift 
 			meters = dist * binning * pixsize
-			self.logger.info('meters: %.2e' % (meters,))
 			rowmeters = rows * binning * pixsize
 			colmeters = cols * binning * pixsize
 			# rely on system time of EM node
 			seconds = t1 - t0
-			self.logger.info('seconds: %s' % (seconds,))
 			current_drift = meters / seconds
 			self.logger.info('Drift rate: %.2e' % (current_drift,))
 
