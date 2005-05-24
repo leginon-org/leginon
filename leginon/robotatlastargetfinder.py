@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.12 $
+# $Revision: 1.13 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-24 17:19:39 $
-# $Author: suloway $
+# $Date: 2005-05-24 18:22:11 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -745,25 +745,26 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 		errorstring = 'Image acqisition failed: %s'
 		try:
-			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+			imagedata2 = self.instrument.getData(data.CorrectedCameraImageData)
 		except:
+			imagedata2 = None
 			self.logger.error(errorstring % 'cannot acquire image')
-		if imagedata is None:
+		if imagedata2 is None:
 			return None
 		# Jim says: store to DB to prevent referencing errors
-		self.publish(imagedata['scope'], database=True)
-		self.publish(imagedata['camera'], database=True)
-		imagedata = data.AcquisitionImageData(initializer=imagedata)
-		imagedata['target'] = targetdata
-		imagedata['emtarget'] = emtargetdata
-		imagedata['preset'] = presetdata
-		imagedata['label'] = self.name
-		imagedata['grid'] = griddata
-		self.setImageFilename(imagedata)
+		self.publish(imagedata2['scope'], database=True)
+		self.publish(imagedata2['camera'], database=True)
+		imagedata2 = data.AcquisitionImageData(initializer=imagedata2)
+		imagedata2['target'] = targetdata
+		imagedata2['emtarget'] = emtargetdata
+		imagedata2['preset'] = presetdata
+		imagedata2['label'] = self.name
+		imagedata2['grid'] = griddata
+		self.setImageFilename(imagedata2)
 
-		self.publish(imagedata, pubevent=True, database=True)
+		self.publish(imagedata2, pubevent=True, database=True)
 
-		return imagedata
+		return imagedata2
 
 	def setImageFilename(self, imagedata):
 		sessionstr = self.session['name']
