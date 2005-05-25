@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/GonModeler.py,v $
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-04 22:42:29 $
-# $Author: pulokas $
+# $Date: 2005-05-25 03:05:40 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -100,7 +100,7 @@ class Panel(gui.wx.Calibrator.Panel):
 		atb = self.toolbar.RemoveTool(gui.wx.ToolBar.ID_ABORT)
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE,
-													'ruler',
+													'cam_ruler',
 													shortHelpString='Measure')
 		self.toolbar.AddToolItem(atb)
 		self.toolbar.AddSeparator()
