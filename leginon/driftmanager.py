@@ -106,12 +106,8 @@ class DriftManager(watcher.Watcher):
 		self.setStatus('idle')
 		self.confirmEvent(ev)
 
-	def declareDrift(self):
-		## declare drift manually
-		declared = data.DriftDeclaredData()
-		declared['system time'] = self.instrument.tem.SystemTime
-		declared['type'] = 'manual'
-		self.publish(declared, database=True, dbforce=True)
+	def uiDeclareDrift(self):
+		self.declareDrift('manual')
 
 	def processData(self, newdata):
 		self.logger.debug('processData')

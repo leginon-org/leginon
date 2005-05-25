@@ -1761,6 +1761,7 @@ class TargetFinderSettingsData(SettingsData):
 			('ignore images', bool),
 			('queue', bool),
 			('user check', bool),
+			('queue drift', bool),
 		)
 	typemap = classmethod(typemap)
 

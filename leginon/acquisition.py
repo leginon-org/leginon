@@ -545,13 +545,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		presetnames = self.presetsclient.getPresetNames()
 		return presetnames
 
-	def declareDrift(self, type):
-		## declare drift manually
-		declared = data.DriftDeclaredData()
-		declared['system time'] = self.instrument.tem.SystemTime
-		declared['type'] = type
-		self.publish(declared, database=True, dbforce=True)
-
 	def driftDetected(self, presetname, emtarget, threshold):
 		'''
 		notify DriftManager of drifting

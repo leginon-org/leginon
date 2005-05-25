@@ -31,6 +31,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'wait for done': True,
 		'ignore images': False,
 		'user check': False,
+		'queue drift': False,
 	}
 	eventinputs = imagewatcher.ImageWatcher.eventinputs \
 									+ [event.AcquisitionImagePublishEvent] \
@@ -143,6 +144,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.setStatus('processing')
 
 	def publishQueue(self):
+		if self.settings['queue drift']:
+			self.declareDrift('submit queue')
 		queue = self.getQueue()
 		self.publish(queue, pubevent=True)
 

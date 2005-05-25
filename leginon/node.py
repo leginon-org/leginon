@@ -387,3 +387,9 @@ class Node(object):
 	def setStatus(self, status):
 		self.panel.setStatus(status)
 
+	def declareDrift(self, type):
+		## declare drift manually
+		declared = data.DriftDeclaredData()
+		declared['system time'] = self.instrument.tem.SystemTime
+		declared['type'] = type
+		self.publish(declared, database=True, dbforce=True)
