@@ -290,11 +290,6 @@ class Focuser(acquisition.Acquisition):
 		## publish results
 		self.publish(resultdata, database=True, dbforce=True)
 
-		## this makes sure that only one focus target is done, 
-		## in the future we will have different options for handling
-		## multiple targets
-		self.player.stop()
-
 		return status
 
 	def alreadyAcquired(self, targetdata, presetname):
