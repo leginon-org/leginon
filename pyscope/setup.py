@@ -20,7 +20,7 @@ else:
 
 setup(
 	name='pyScope',
-	version='1.0.3',
+	version='1.0.4',
 	description='Interface to Electron Microscopes and CCD Cameras',
 	packages=['pyScope'],
 	package_dir={'pyScope': ''},
