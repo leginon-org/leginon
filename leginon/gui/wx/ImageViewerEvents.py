@@ -15,14 +15,13 @@ EVT_FIT_TO_PAGE = wx.PyEventBinder(FitToPageEventType)
 EVT_DISPLAY_CROSSHAIRS = wx.PyEventBinder(DisplayCrosshairsEventType)
 
 class UpdatePluginRegionEvent(wx.PyCommandEvent):
-	def __init__(self, source, region):
+	def __init__(self, source, oldregion, copyregion=None):
 		sourceid = source.GetId()
 		wx.PyCommandEvent.__init__(self, UpdatePluginRegionEventType, sourceid)
 		self.SetEventObject(source)
-		self.region = region
-
-	def GetRegion(self):
-		return self.region
+		self.plugin = source
+		self.oldregion = oldregion
+		self.copyregion = copyregion
 
 class SetNumarrayEvent(wx.PyCommandEvent):
 	def __init__(self, source, array):
