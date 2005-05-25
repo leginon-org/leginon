@@ -29,7 +29,7 @@ class DriftManager(watcher.Watcher):
 	panelclass = gui.wx.DriftManager.Panel
 	settingsclass = data.DriftManagerSettingsData
 	defaultsettings = {
-		'threshold': 2e-10,
+		'threshold': 3e-10,
 		'pause time': 2.5,
 		'camera settings':
 			data.CameraSettingsData(

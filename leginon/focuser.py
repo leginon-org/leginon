@@ -40,7 +40,7 @@ class Focuser(acquisition.Acquisition):
 		'preset': '',
 		'melt time': 0.0,
 		'beam tilt': 0.01,
-		'drift threshold': 2.0,
+		'drift threshold': 3e-10,
 		'fit limit': 1000,
 		'check drift': True,
 		'check before': False,
