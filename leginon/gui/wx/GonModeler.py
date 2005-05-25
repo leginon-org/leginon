@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/GonModeler.py,v $
-# $Revision: 1.12 $
+# $Revision: 1.13 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-25 03:05:40 $
-# $Author: acheng $
+# $Date: 2005-05-25 18:07:44 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -114,14 +114,16 @@ class Panel(gui.wx.Calibrator.Panel):
 											id=gui.wx.ToolBar.ID_MEASURE)
 
 	def onMeasurementDone(self, evt):
-		self._calibrationEnable(True)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_MEASURE, True)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_MEASURE, False)
 
 	def measurementDone(self):
 		evt = gui.wx.Events.MeasurementDoneEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onMeasureTool(self, evt):
-		self._calibrationEnable(False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, True)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_MEASURE, False)
 		threading.Thread(target=self.node.uiStartLoop).start()
 
 	def onAbortTool(self, evt):
@@ -129,8 +131,6 @@ class Panel(gui.wx.Calibrator.Panel):
 		threading.Thread(target=self.node.uiStopLoop).start()
 
 	def onCalibrateTool(self, evt):
-		self._calibrationEnable(False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, True)
 		threading.Thread(target=self.node.uiFit).start()
 
 if __name__ == '__main__':
