@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.59 $
+# $Revision: 1.60 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-24 00:10:21 $
+# $Date: 2005-05-25 20:41:55 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -296,13 +296,13 @@ class EditPresets(gui.wx.Presets.PresetOrder):
 	def _widgets(self):
 		gui.wx.Presets.PresetOrder._widgets(self, 'Presets (Cycle Order)')
 		self.btoscope = self._bitmapButton('instrumentset',
-																				'Go to the selected preset')
+																				'To Scope')
 		self.bedit = self._bitmapButton('edit',
 																		'Edit the selected preset parameters')
 		self.bacquire = self._bitmapButton('acquire',
 																	'Acquire dose image for the selected preset')
 		self.bfromscope = self._bitmapButton('instrumentget',
-							'Overwrite the selected preset with the current instrument state')
+							'From Scope')
 		self.bremove = self._bitmapButton('minus', 'Remove the selected preset')
 
 		self.bnewfromscope = self._bitmapButton('instrumentgetnew',
