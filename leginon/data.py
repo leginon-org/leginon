@@ -389,10 +389,8 @@ def dict2data(d, datatype):
 				instance[key] = dict2data(d[key], subtype)
 			else:
 				instance[key] = d[key]
-		except KeyError:
+		except (KeyError, TypeError):
 			pass
-		except TypeError:
-			print type(d), d
 	return instance
 
 class Data(newdict.TypedDict):
