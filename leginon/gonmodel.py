@@ -253,6 +253,7 @@ class GonModel:
 		# Make sure incp is initially > precision, so loop goes at least once.
 		incp = precision + 1
 		best_resids = 1e999
+		best_period = minp
 		while incp > precision:
 			incp = (maxp - minp) / search_periods
 			print 'current precision:', incp
