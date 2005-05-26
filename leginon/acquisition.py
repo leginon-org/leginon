@@ -211,6 +211,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 					self.acquireFilm(p, target=targetdata, emtarget=emtarget)
 					self.reportStatus('acquisition', 'film acquired')
 				except:
+					raise
 					self.logger.exception('film acquisition')
 			else:
 				ret = self.acquire(p, target=targetdata, emtarget=emtarget, attempt=attempt)
@@ -325,6 +326,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(emtargetdata, database=True)
 		return emtargetdata
 
+	def lastFilmAcquisition(self):
+		filmdata = self.research(datainstance=data.FilmData(), results=1)
+		if filmdata:
+			filmdata = filmdata[0]
+		else:
+			filmdata = None
+		return filmdata
+
 	def acquireFilm(self, presetdata, target=None, emtarget=None):
 		## get current film parameters
 		stock = self.instrument.tem.FilmStock
@@ -335,14 +344,20 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## create FilmData(AcquisitionImageData) which 
 		## will be used to store info about this exposure
 		filmdata = data.FilmData(session=self.session, preset=presetdata, label=self.name, target=target, emtarget=emtarget)
-		## no image to store in file, but this provides 'filename' for 
-		## film text
+		## no image to store in file, but this provides 'filename' for
+		## the case that we later scan the film
 		self.setImageFilename(filmdata)
 
 		## first three of user name
 		self.instrument.tem.FilmUserCode = self.session['user']['name'][:3]
-		## like filename in regular acquisition (limit 96 chars)
-		self.instrument.tem.FilmText = str(filmdata['filename'])
+		## use next dbid for film text
+		last_film = self.lastFilmAcquisition()
+		if last_film is None:
+			last_dbid = 0
+		else:
+			last_dbid = last_film.dbid
+		next_dbid = last_dbid + 1
+		self.instrument.tem.FilmText = 'DB key = %d' % (next_dbid,)
 		self.instrument.tem.FilmDateType = 'YY.MM.DD'
 
 		## get scope for database
