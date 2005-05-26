@@ -36,11 +36,6 @@ class sqlDB(object):
 	def __init__(self, **kwargs):
 		self.dbConnection = connect(**kwargs)
 		self.c = self.dbConnection.cursor(cursorclass=MySQLdb.cursors.DictCursor)
-		print 'DEBUGXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-		print 'INIT'
-		print 'VERSION', MySQLdb.__version__
-		print 'DIR CUR', dir(self.c)
-		print 'DEBUGXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
 		
 	def selectone(self, strSQL, param=None):
 		'Execute a query and return the first row.'
@@ -59,15 +54,9 @@ class sqlDB(object):
 		self.c.execute(strSQL, param)
 		## try the new lastrowid attribute first,
 		## then try the old insert_id() method
-		print 'DEBUGXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-		print 'INSERT'
-		print 'VERSION', MySQLdb.__version__
-		print 'DIR CUR', dir(self.c)
-		print 'DEBUGXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
 		try:
-			insert_id = self.lastrowid
+			insert_id = self.c.lastrowid
 		except Exception, e:
-			print 'EEEE', e
 			insert_id = self.c.insert_id()
 		return insert_id
 
