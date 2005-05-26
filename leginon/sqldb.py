@@ -35,7 +35,7 @@ class sqlDB(object):
 	"""
 	def __init__(self, **kwargs):
 		self.dbConnection = connect(**kwargs)
-	  self.c = self.dbConnection.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+		self.c = self.dbConnection.cursor(cursorclass=MySQLdb.cursors.DictCursor)
 		print 'DEBUGXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
 		print 'INIT'
 		print 'VERSION', MySQLdb.__version__
