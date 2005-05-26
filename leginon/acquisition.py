@@ -365,13 +365,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		filmdata['scope'] = scopebefore
 
 		## insert film
-		self.instrument.tem.preFilmExposure()
+		self.instrument.tem.preFilmExposure(True)
 
 		# expose film
 		self.instrument.ccdcamera.getImage()
 
 		## take out film
-		self.instrument.tem.postFilmExposure()
+		self.instrument.tem.postFilmExposure(True)
 
 		## record in database
 		self.publish(filmdata, pubevent=True, database=self.settings['save image'])
