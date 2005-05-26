@@ -66,7 +66,8 @@ class sqlDB(object):
 		print 'DEBUGXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
 		try:
 			insert_id = self.lastrowid
-		except:
+		except Exception, e:
+			print 'EEEE', e
 			insert_id = self.c.insert_id()
 		return insert_id
 
