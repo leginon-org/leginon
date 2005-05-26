@@ -271,6 +271,9 @@ class Robot(node.Node):
 
 				self.setStatus('idle')
 
+				if griddata is None:
+					break
+
 				if hasattr(request, 'loaded'):
 					request.loaded = True
 				if hasattr(request, 'griddata'):
@@ -683,6 +686,7 @@ class Robot(node.Node):
 		except Exception, e:
 			self.logger.error('Failed to get scope ready for imaging: %s' % e)
 			self.unlockScope()
+			return
 
 		self.unlockScope()
 		return griddata
