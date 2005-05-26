@@ -211,7 +211,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 					self.acquireFilm(p, target=targetdata, emtarget=emtarget)
 					self.reportStatus('acquisition', 'film acquired')
 				except:
-					raise
 					self.logger.exception('film acquisition')
 			else:
 				ret = self.acquire(p, target=targetdata, emtarget=emtarget, attempt=attempt)
