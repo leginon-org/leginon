@@ -397,9 +397,12 @@ class Corrector(node.Node):
 			imagedata = self.instrument.getData(data.CameraImageData,
 																					ccdcameraname=ccdcameraname)
 		except Exception, e:
+			print e
 			self.logger.exception(errstr % 'unable to access instrument')
 			self.setStatus('idle')
-			return None
+			self.logger.warning('Retrying...')
+			# ...
+			return self.acquireCorrectedImageData(ccdcameraname=ccdcameraname)
 		numimage = imagedata['image']
 		camdata = imagedata['camera']
 		scopedata = imagedata['camera']
