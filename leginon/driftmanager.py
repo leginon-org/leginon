@@ -141,10 +141,7 @@ class DriftManager(watcher.Watcher):
 		self.acquireLoop(target, threshold=threshold)
 
 		## declare drift above threshold
-		declared = data.DriftDeclaredData()
-		declared['system time'] = self.instrument.tem.SystemTime
-		declared['type'] = 'threshold'
-		self.publish(declared, database=True, dbforce=True)
+		self.declareDrift('threshold')
 
 		## DriftDoneEvent
 		## only output if this was called from another node
