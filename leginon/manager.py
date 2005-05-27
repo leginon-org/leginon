@@ -672,7 +672,7 @@ class Manager(node.Node):
 		initializer = {'session': data.SessionData(user=self.session['user']),
 										'application': data.ApplicationData()}
 		appdata = data.LaunchedApplicationData(initializer=initializer)
-		appdatalist = self.research(appdata, timelimit='-15 0:0:0')
+		appdatalist = self.research(appdata, timelimit='-90 0:0:0')
 		history = []
 		map = {}
 		for a in appdatalist:

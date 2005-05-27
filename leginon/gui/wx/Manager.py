@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Manager.py,v $
-# $Revision: 1.23 $
+# $Revision: 1.24 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-25 23:02:04 $
+# $Date: 2005-05-27 00:11:42 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -265,7 +265,7 @@ class Frame(wx.Frame):
 			return
 		launchernames = self.manager.getLauncherNames()
 		history, launchers = self.manager.getApplicationHistory()
-		dialog = RunApplicationDialog(self, apps, launchernames, history, launchers)
+		dialog = RunApplicationDialog(self, apps, history, launchernames, launchers)
 		if dialog.ShowModal() == wx.ID_OK:
 			app = dialog.getValues()
 			threading.Thread(name='wx.manager runApplication',
@@ -695,18 +695,10 @@ class BindEventDialog(wx.Dialog):
 		self.unboundeventlistbox.AppendItems(unbound)
 
 class RunApplicationDialog(wx.Dialog):
-	def __init__(self, parent, apps, launchernames, history, launchers):
+	def __init__(self, parent, apps, recentapps, launchernames, launchers):
 		self.apps = apps
+		self.recent = recentapps
 		self.launchernames = launchernames
-
-		history.reverse()
-		names = apps.keys()
-		for n in history:
-			if n in names:
-				names.remove(n)
-				names.insert(0, n)
-		self.history = names
-
 		self.launchers = launchers
 
 		wx.Dialog.__init__(self, parent, -1, 'Run Application')
@@ -714,26 +706,20 @@ class RunApplicationDialog(wx.Dialog):
 		self.dialogsizer = wx.GridBagSizer()
 		self.sizer = wx.GridBagSizer(5, 5)
 
-		self.sizer.Add(wx.StaticText(self, -1, 'Application:'), (0, 0), (1, 1),
+		self.sizer.Add(wx.StaticText(self, -1, 'Application:'), (1, 0), (1, 1),
 							wx.ALIGN_CENTER_VERTICAL)
 
-		self.sortbycheckbox = wx.CheckBox(self, -1, 'Sort by last used')
-		self.sortbycheckbox.SetValue(True)
-		if self.sortbycheckbox.GetValue():
-			names = self.history
-		else:
-			names = apps.keys()
-			names.sort()
-		self.appchoice = wx.Choice(self, -1, choices=names)
-		self.sizer.Add(self.appchoice, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.sizer.Add(self.sortbycheckbox, (1, 0), (1, 2), wx.ALIGN_CENTER)
+		self.appchoice = wx.Choice(self, -1, choices=recentapps)
+		self.sizer.Add(self.appchoice, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.launchersizer = None
 		self.launcherlabels = []
 		self.launcherchoices = {}
 		self.appchoice.SetSelection(0)
 		self.onChoice()
 		self.Bind(wx.EVT_CHOICE, self.onChoice, self.appchoice)
-		self.Bind(wx.EVT_CHECKBOX, self.onCheckBox, self.sortbycheckbox)
+		showall = wx.Button(self, -1, 'Show All')
+		self.Bind(wx.EVT_BUTTON, self.onShowAll, showall)
+		self.sizer.Add(showall, (0, 1), (1, 1))
 
 		buttonsizer = wx.GridBagSizer(0, 3)
 		runbutton = wx.Button(self, wx.ID_OK, 'Run')
@@ -750,6 +736,19 @@ class RunApplicationDialog(wx.Dialog):
 
 		self.dialogsizer.Add(self.sizer, (0, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 10)
 		self.SetSizerAndFit(self.dialogsizer)
+
+	def onShowAll(self, evt):
+		tmp = list(self.recent)
+		tmp.reverse()
+		names = self.apps.keys()
+		for n in tmp:
+			if n in names:
+				names.remove(n)
+				names.insert(0, n)
+		selection = self.appchoice.GetStringSelection()
+		self.appchoice.Clear()
+		self.appchoice.AppendItems(names)
+		self.appchoice.SetStringSelection(selection)
 
 	def onChoice(self, evt=None):
 		if evt is None:
@@ -795,17 +794,6 @@ class RunApplicationDialog(wx.Dialog):
 		self.sizer.Add(self.launchersizer, (2, 0), (1, 2), wx.ALIGN_CENTER)
 		self.dialogsizer.Layout()
 		self.Fit()
-
-	def onCheckBox(self, evt):
-		selection = self.appchoice.GetStringSelection()
-		self.appchoice.Clear()
-		if evt.IsChecked():
-			names = self.history
-		else:
-			names = self.apps.keys()
-			names.sort()
-		self.appchoice.AppendItems(names)
-		self.appchoice.SetStringSelection(selection)
 
 	def getValues(self):
 		for alias, choice in self.launcherchoices.items():
