@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Selector.py,v $
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-26 01:12:39 $
+# $Date: 2005-06-01 20:40:11 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -127,7 +127,7 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 
 		self.SetSizer(self.sz)
 		self.SetAutoLayout(True)
-		self.SetupScrolling()
+		self.SetupScrolling(scroll_x=False, scroll_y=True)
 
 		self.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)
 
