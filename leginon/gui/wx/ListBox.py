@@ -137,9 +137,13 @@ class OrderListBox(wx.Panel):
 			self.downbutton.Enable(False)
 
 class EditListBox(OrderListBox):
+	def __init__(self, parent, id, label, choices, **kwargs):
+		self.choices = choices
+		OrderListBox.__init__(self, parent, id, label, **kwargs)
+
 	def _widgets(self, label):
 		OrderListBox._widgets(self, label)
-		self.textentry = wx.TextCtrl(self, -1, '')
+		self.textentry = wx.ComboBox(self, -1, '', choices=self.choices)
 		self.insertbutton = self._bitmapButton('plus', 'Insert item into list')
 		self.deletebutton = self._bitmapButton('minus', 'Remove item from list')
 
@@ -202,6 +206,7 @@ class EditListBox(OrderListBox):
 	def onSelect(self, evt):
 		OrderListBox.onSelect(self, evt)
 		self.deletebutton.Enable(True)
+
 
 if __name__ == '__main__':
 	class App(wx.App):

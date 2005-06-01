@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SetupWizard.py,v $
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-26 22:16:52 $
+# $Date: 2005-06-01 23:27:20 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -207,7 +207,7 @@ class SessionSelectPage(WizardPage):
 
 		clientssizer = wx.GridBagSizer(5, 5)
 		self.clientslabel = wx.StaticText(self, -1, '')
-		self.setClients([])
+		self.setClients([], [])
 		clientssizer.Add(self.clientslabel, (0, 0), (1, 1),
 											wx.ALIGN_CENTER_VERTICAL)
 		editclientsbutton = wx.Button(self, -1, 'Edit...')
@@ -228,8 +228,11 @@ class SessionSelectPage(WizardPage):
 
 		self.Bind(wx.EVT_BUTTON, self.onEditClientsButton, editclientsbutton)
 
-	def setClients(self, clients):
+	def setClients(self, clients, history=None):
 		self.clients = clients
+		if history is not None:
+			self.history = history
+			print 'HISTORY', history
 		label = 'Connect to clients: '
 		if clients:
 			for i in clients:
@@ -241,7 +244,7 @@ class SessionSelectPage(WizardPage):
 		self.clientslabel.SetLabel(label)
 
 	def onEditClientsButton(self, evt):
-		dialog = EditClientsDialog(self, self.clients)
+		dialog = EditClientsDialog(self, self.clients, self.history)
 		if dialog.ShowModal() == wx.ID_OK:
 			self.setClients(dialog.listbox.getValues())
 		dialog.Destroy()
@@ -270,7 +273,7 @@ class SessionSelectPage(WizardPage):
 			# if label is too big for wizard (presized) need to resize or truncate
 			self.sizer.SetItemMinSize(i, i.GetSize())
 		self.pagesizer.Layout()
-		self.setClients(parent.setup.getClients(selection))
+		self.setClients(parent.setup.getClients(selection), parent.setup.getRecentClients())
 
 	def setSessionNames(self, names):
 		selection = self.sessionchoice.GetStringSelection()
@@ -498,7 +501,7 @@ class SessionCreatePage(WizardPage):
 
 		clientssizer = wx.GridBagSizer(5, 5)
 		self.clientslabel = wx.StaticText(self, -1, '')
-		self.setClients([])
+		self.setClients([], [])
 		clientssizer.Add(self.clientslabel, (0, 0), (1, 1),
 											wx.ALIGN_CENTER_VERTICAL)
 		editclientsbutton = wx.Button(self, -1, 'Edit...')
@@ -520,8 +523,10 @@ class SessionCreatePage(WizardPage):
 
 		self.Bind(wx.EVT_BUTTON, self.onEditClientsButton, editclientsbutton)
 
-	def setClients(self, clients):
+	def setClients(self, clients, history=None):
 		self.clients = clients
+		if history is not None:
+			self.history = history
 		label = 'Connect to clients: '
 		if clients:
 			for i in clients:
@@ -533,7 +538,7 @@ class SessionCreatePage(WizardPage):
 		self.clientslabel.SetLabel(label)
 
 	def onEditClientsButton(self, evt):
-		dialog = EditClientsDialog(self, self.clients)
+		dialog = EditClientsDialog(self, self.clients, self.history)
 		if dialog.ShowModal() == wx.ID_OK:
 			self.setClients(dialog.listbox.getValues())
 		dialog.Destroy()
@@ -607,6 +612,7 @@ class SetupWizard(wx.wizard.Wizard):
 		elif page is self.sessionselectpage:
 			self.session = self.sessionselectpage.getSelectedSession()
 			self.clients = self.sessionselectpage.clients
+			self.history = self.sessionselectpage.history
 			self.setup.saveClients(self.session, self.clients)
 		elif page is self.sessioncreatepage:
 			user = self.userpage.getSelectedUser()
@@ -620,6 +626,7 @@ class SetupWizard(wx.wizard.Wizard):
 				projectid = self.projectpage.getSelectedProjectId()
 				self.setup.linkSessionProject(self.session, projectid)
 			self.clients = self.sessioncreatepage.clients
+			self.history = self.sessioncreatepage.history
 			self.setup.saveClients(self.session, self.clients)
 
 	def onPageChanged(self, evt):
@@ -725,6 +732,19 @@ class Setup(object):
 		except IndexError:
 			return []
 
+	def getRecentClients(self):
+		try:
+			results = self.research(data.ConnectToClientsData(), results=100)
+		except IndexError:
+			results = []
+		clients = {}
+		for result in results:
+			for client in result['clients']:
+				clients[str(client)] = None
+		clients = clients.keys()
+		clients.sort()
+		return clients
+
 	def saveClients(self, session, clients):
 		initializer = {'session': session, 'clients': clients}
 		clientsdata = data.ConnectToClientsData(initializer=initializer)
@@ -784,12 +804,13 @@ class Setup(object):
 		experiments.insert([projectsession.dumpdict()])
 
 class EditClientsDialog(gui.wx.Dialog.Dialog):
-	def __init__(self, parent, clients):
+	def __init__(self, parent, clients, history):
 		self.clients = clients
+		self.history = history
 		gui.wx.Dialog.Dialog.__init__(self, parent, 'Edit Clients')
 
 	def onInitialize(self):
-		self.listbox = gui.wx.ListBox.EditListBox(self, -1, 'Clients')
+		self.listbox = gui.wx.ListBox.EditListBox(self, -1, 'Clients', choices=self.history)
 		self.listbox.setValues(self.clients)
 		self.sz.Add(self.listbox, (0, 0), (1, 1), wx.EXPAND)
 		self.sz.AddGrowableRow(0)
