@@ -381,7 +381,8 @@ class Node(object):
 		try:
 			winsound.PlaySound('SystemExclamation', winsound.SND_ALIAS)
 		except:
-			print '\a'
+			sys.stdout.write('\a')
+			sys.stdout.flush()
 		self.logger.info('[beep]')
 
 	def setStatus(self, status):
