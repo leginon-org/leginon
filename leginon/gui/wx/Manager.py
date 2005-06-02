@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Manager.py,v $
-# $Revision: 1.24 $
+# $Revision: 1.25 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-27 00:11:42 $
+# $Date: 2005-06-02 21:07:24 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -708,8 +708,10 @@ class RunApplicationDialog(wx.Dialog):
 
 		self.sizer.Add(wx.StaticText(self, -1, 'Application:'), (1, 0), (1, 1),
 							wx.ALIGN_CENTER_VERTICAL)
-
-		self.appchoice = wx.Choice(self, -1, choices=recentapps)
+		if recentapps:
+			self.appchoice = wx.Choice(self, -1, choices=recentapps)
+		else:
+			self.appchoice = wx.Choice(self, -1, choices=apps.keys())
 		self.sizer.Add(self.appchoice, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.launchersizer = None
 		self.launcherlabels = []
@@ -755,6 +757,8 @@ class RunApplicationDialog(wx.Dialog):
 			name = self.appchoice.GetStringSelection()
 		else:
 			name = evt.GetString()
+		if not name:
+			return
 		self.app = self.apps[name]
 		self.app.load(name)
 		launcheraliases = self.app.getLauncherAliases()
