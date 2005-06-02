@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SetupWizard.py,v $
-# $Revision: 1.15 $
+# $Revision: 1.16 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-06-02 20:00:44 $
+# $Date: 2005-06-02 20:23:17 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -275,12 +275,14 @@ class SessionSelectPage(WizardPage):
 		self.setClients(parent.setup.getClients(selection), parent.setup.getRecentClients())
 
 	def setSessionNames(self, names):
+		if self.limitcheckbox.IsChecked():
+			limit = self.limitintctrl.GetValue()
+			if not limit:
+				return
+			names = names[:limit]
 		selection = self.sessionchoice.GetStringSelection()
 		self.sessionchoice.Clear()
-		if self.limitcheckbox.IsChecked():
-			self.sessionchoice.AppendItems(names[:self.limitintctrl.GetValue()])
-		else:
-			self.sessionchoice.AppendItems(names)
+		self.sessionchoice.AppendItems(names)
 		size = self.sessionchoice.GetBestSize()
 		self.sizer.SetItemMinSize(self.sessionchoice, size.width, size.height)
 		self.pagesizer.Layout()
