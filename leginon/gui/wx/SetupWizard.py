@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SetupWizard.py,v $
-# $Revision: 1.14 $
+# $Revision: 1.15 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-06-01 23:27:20 $
+# $Date: 2005-06-02 20:00:44 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -232,7 +232,6 @@ class SessionSelectPage(WizardPage):
 		self.clients = clients
 		if history is not None:
 			self.history = history
-			print 'HISTORY', history
 		label = 'Connect to clients: '
 		if clients:
 			for i in clients:
