@@ -8,6 +8,90 @@
 #include "gd_mrc.h"
 #include "filter.h"
 
+void mrc_to_float(MRC *mrc, float *pdata_array) {
+        float   fmin=mrc->header.amin,
+                fmax=mrc->header.amax;
+
+        int     h=mrc->header.nx, w=mrc->header.ny,
+                mode=mrc->header.mode,
+                n=w*h,
+                i;
+
+        switch (mode) {
+         case MRC_MODE_BYTE:
+         {
+                char *data_array_char = (char *)mrc->pbyData;
+                for (i = 0; i < n; ++i) {
+                        pdata_array[i] = (float)data_array_char[i];
+                }
+
+         }
+         break;
+         case MRC_MODE_SHORT:
+         {
+                short *data_array_short = (short *)mrc->pbyData;
+                for (i = 0; i < n; ++i) {
+                        pdata_array[i] = (float)data_array_short[i];
+                }
+
+
+         }
+         break;
+         case MRC_MODE_FLOAT:
+         {
+                memcpy(pdata_array, (float *)mrc->pbyData, sizeof(float)*n);
+
+         }
+         break;
+         case MRC_MODE_UNSIGNED_SHORT:
+         {
+                unsigned short *data_array_ushort = (unsigned short *)mrc->pbyData;
+                for (i = 0; i < n; ++i) {
+                        pdata_array[i] = (float)data_array_ushort[i];
+                }
+         }
+         break;
+        }
+}
+
+void mrc_to_histogram(MRC *mrc, int *frequency, float *classes, int nb_bars) {
+        float   fmin=mrc->header.amin,
+                fmax=mrc->header.amax,
+                interval;
+        float *data_array;
+
+        int     h=mrc->header.nx, w=mrc->header.ny,
+                n=w*h;
+        int i, i1, i2, j, d;
+        int mode=mrc->header.mode;
+        int nb=0;
+
+        interval=(fmax-fmin)/nb_bars;
+
+        data_array = malloc(sizeof(float[n]));
+        mrc_to_float(mrc, data_array);
+
+        if(interval <= 0) {
+                fmax = fmin = (float)data_array[0];
+                for (i = 0; i<n ; i++) {
+                        fmax = MAX(fmax, data_array[i]);
+                        fmin = MIN(fmin, data_array[i]);
+                }
+                interval=(fmax-fmin)/nb_bars;
+        }
+        for (i=0; i<nb_bars; i++) {
+                nb=0;
+                for (d=0; d<n; d++) {
+                        i1 = fmin+(i-1)*interval;
+                        i2 = fmin+i*interval;
+                        if (data_array[d] > i1 && data_array[d] <=i2)
+                                nb++;
+                }
+                classes[i] = fmin + i*interval;
+                frequency[i] = nb;
+        }
+        free(data_array);
+}
 /*
 convert mrc data into an image resource pixels array.
 The following parameters can be set:
@@ -16,252 +100,100 @@ The following parameters can be set:
 	- gaussian filter (kernel size, sigma)
 */
 void mrc_to_image(MRC *mrc, int ** tpixels,
-			int pmin, int pmax,
-			int binning, int skip,
-			int kernel, float sigma, int colormap)
+                        int pmin, int pmax,
+                        int binning, int skip,
+                        int kernel, float sigma, int colormap)
 {
 
-	float	fmin=mrc->header.amin,
-		fmax=mrc->header.amax,
-		scale = fmax - fmin,
-		min, max,
-		f_val;
+        float   fmin=mrc->header.amin,
+                fmax=mrc->header.amax,
+                scale = fmax - fmin,
+                min, max,
+                f_val;
 
-	int	h=mrc->header.nx, w=mrc->header.ny,
-		n=w*h,
-		mode=mrc->header.mode,
-		i,j,t,
-		index,
-		binningsize = binning*binning,
-		indexes[binningsize],
-		n_w = w/binning,
-		n_h = w/binning,
-		off_w = w - n_w * binning;
+        int     h=mrc->header.nx, w=mrc->header.ny,
+                n=w*h,
+                mode=mrc->header.mode,
+                i,j,ij,t,
+                index,
+                binningsize = binning*binning,
+                indexes[binningsize],
+                n_w = w/binning,
+                n_h = w/binning,
+                off_w = w - n_w * binning;
 
-	int	filter = 0,
-		maskindex=0,
-		masksize = kernel*kernel,
-		maskindexes[masksize],
-		x=0,
-		y=0;
+        int     filter = 0,
+                maskindex=0,
+                masksize = kernel*kernel,
+                maskindexes[masksize],
+                x=0,
+                y=0;
 
-	double	maskData[masksize];
+        double  maskData[masksize];
 
-	float	density,
-		ndensity;
+        float   density,
+                ndensity;
 
-	int densitymax = (colormap) ? densityColorMAX : densityMAX;
-	int gray = (colormap) ? 0 : 1;
+        float *data_array;
+        float data_array_float[n];
 
-	if (sigma !=0 && kernel % 2 == 1) {
-		gaussianfiltermask(maskData, kernel, sigma);
-		filter=1;
-	}
+        int densitymax = (colormap) ? densityColorMAX : densityMAX;
+        int gray = (colormap) ? 0 : 1;
 
-	switch (mode) {
-	 case MRC_MODE_BYTE:
-         {
-		char *data_array = (char *)mrc->pbyData;
+        if (sigma !=0 && kernel % 2 == 1) {
+                gaussianfiltermask(maskData, kernel, sigma);
+                filter=1;
+        }
 
-		if(scale <= 0) {
-			fmax = fmin = (float)data_array[0];
-			for (i = 0; i<n ; i++) {
-				fmax = MAX(fmax, data_array[i]);
-				fmin = MIN(fmin, data_array[i]);
-			}
-		}
-		min = fmin + pmin * scale / densitymax;
-		max = fmin + pmax * scale / densitymax;
-		scale = max - min;
-		
-		if (scale != 0)
-		for (i=-1,j=0,t=0; t<n; t+=binning,j++) {
-			if (j % n_w == 0) { 
-				j=0; i++;
-				if (i>0)
-					t += off_w+w*(binning-1);
-			}
-			if (filter)
-			{
-				getMaskDataIndexes(maskindexes, kernel, t, w);
-				for (f_val=0, index = 0; index < masksize; index++)
-					if (maskindexes[index] != -1)
-						f_val += data_array[maskindexes[index]] * maskData[index];
-			}
-			if (binning>1) 
-				if (skip)
-					f_val = data_array[t];
-				else {
-					getIndexes(indexes, binning, t, w) ;
-					for (f_val=0,index=0; index<binningsize; index++)
-						f_val += data_array[indexes[index]];
-					f_val /= binningsize;
-				}
-			else
-				f_val = data_array[t];
+        data_array = malloc(sizeof(float[n]));
+        mrc_to_float(mrc, data_array);
 
-			f_val = (f_val-min)*densitymax/scale;
-			tpixels[i][j] = setColorDensity(f_val, gray);
+        if(scale <= 0) {
+                fmax = fmin = data_array[0];
+                for (i = 0; i < n; i++) {
+                        fmax = MAX(fmax, data_array[i]);
+                        fmin = MIN(fmin, data_array[i]);
+                }
+                scale = fmax - fmin;
+        }
 
-			if (binning>1)
-				if (i>=(n_h-1) && j>=(n_w-1))
-					break;
-		}
-         }
-         break;
-	 case MRC_MODE_SHORT:
-         {
-		short *data_array = (short *)mrc->pbyData;
-		
-		if(scale <= 0) {
-			fmax = fmin = (float)data_array[0];
-			for (i = 0; i < n; i++) {
-				fmax = MAX(fmax, data_array[i]);
-				fmin = MIN(fmin, data_array[i]);
-			}
-		}
-		min = fmin + pmin * scale / densitymax;
-		max = fmin + pmax * scale / densitymax;
-		scale = max - min;
-		
-		if (scale != 0)
-		for (i=-1,j=0,t=0; t<n; t+=binning,j++) {
-			if (j % n_w == 0) { 
-				j=0; i++;
-				if (i>0)
-					t += off_w+w*(binning-1);
-			}
-			if (filter)
-			{
-				getMaskDataIndexes(maskindexes, kernel, t, w);
-				for (f_val=0, index = 0; index < masksize; index++)
-					if (maskindexes[index] != -1)
-						f_val += data_array[maskindexes[index]] * maskData[index];
-			}
-			if (binning>1) 
-				if (skip)
-					f_val = data_array[t];
-				else {
-					getIndexes(indexes, binning, t, w) ;
-					for (f_val=0,index=0; index<binningsize; index++)
-						f_val += data_array[indexes[index]];
-					f_val /= binningsize;
-				}
-			else
-				f_val = data_array[t];
+        min = fmin + pmin * scale / densitymax;
+        max = fmin + pmax * scale / densitymax;
+        scale = max - min;
 
-			f_val = (f_val-min)*densitymax/scale;
-			tpixels[i][j] = setColorDensity(f_val, gray);
+        if (scale != 0)
+                for (i=-1,j=0,t=0; t<n; t+=binning,j++) {
+                        if (j % n_w == 0) {
+                                j=0; i++;
+                                if (i>0)
+                                        t += off_w+w*(binning-1);
+                        }
+                        if (filter) {
+                                getMaskDataIndexes(maskindexes, kernel, t, w);
+                                for (f_val=0, index = 0; index < masksize; index++)
+                                        if (maskindexes[index] != -1)
+                                                f_val += data_array[maskindexes[index]] * maskData[index];
+                        } else if (binning>1) {
+                                if (skip) {
+                                        f_val = data_array[t];
+                                } else {
+                                        getIndexes(indexes, binning, t, w) ;
+                                        for (f_val=0, index=0; index<binningsize; index++)
+                                                f_val += data_array[indexes[index]];
+                                        f_val /= binningsize;
+                                }
+                        } else {
+                                f_val = data_array[t];
+                        }
 
-			if (binning>1)
-				if (i>=(n_h-1) && j>=(n_w-1))
-					break;
-		}
-         }
-         break;
-	 case MRC_MODE_FLOAT:
-         {
-		float *data_array = (float *)mrc->pbyData;
+                        f_val = (f_val-min)*densitymax/scale;
+                        tpixels[i][j] = setColorDensity(f_val, gray);
 
-		if(scale <= 0) {
-			fmax = fmin = data_array[0];
-			for (i = 0; i < n; i++) {
-				fmax = MAX(fmax, data_array[i]);
-				fmin = MIN(fmin, data_array[i]);
-			}
-		}
-
-		min = fmin + pmin * scale / densitymax;
-		max = fmin + pmax * scale / densitymax;
-		scale = max - min;
-		
-		if (scale != 0)
-		for (i=-1,j=0,t=0; t<n; t+=binning,j++) {
-			if (j % n_w == 0) { 
-				j=0; i++;
-				if (i>0)
-					t += off_w+w*(binning-1);
-			}
-			if (filter)
-			{
-				getMaskDataIndexes(maskindexes, kernel, t, w);
-				for (f_val=0, index = 0; index < masksize; index++)
-					if (maskindexes[index] != -1)
-						f_val += data_array[maskindexes[index]] * maskData[index];
-			}
-			else if (binning>1) 
-				if (skip)
-					f_val = data_array[t];
-				else {
-					getIndexes(indexes, binning, t, w) ;
-					for (f_val=0, index=0; index<binningsize; index++)
-						f_val += data_array[indexes[index]];
-					f_val /= binningsize;
-				}
-			else
-				f_val = data_array[t];
-
-			f_val = (f_val-min)*densitymax/scale;
-			tpixels[i][j] = setColorDensity(f_val, gray);
-
-			if (binning>1)
-				if (i>=(n_h-1) && j>=(n_w-1))
-					break;
-		}
-         }
-         break;
-	 case MRC_MODE_UNSIGNED_SHORT:
-         {
-		unsigned short *data_array = (unsigned short *)mrc->pbyData;
-
-		if(scale <= 0) {
-			fmax = fmin = data_array[0];
-			for (i = 0; i < n; i++) {
-				fmax = MAX(fmax, data_array[i]);
-				fmin = MIN(fmin, data_array[i]);
-			}
-		}
-
-		min = fmin + pmin * scale / densitymax;
-		max = fmin + pmax * scale / densitymax;
-		scale = max - min;
-
-		if (scale != 0)
-		for (i=-1,j=0,t=0; t<n; t+=binning,j++) {
-			if (j % n_w == 0) { 
-				j=0; i++;
-				if (i>0)
-					t += off_w+w*(binning-1);
-			}
-			if (filter)
-			{
-				getMaskDataIndexes(maskindexes, kernel, t, w);
-				for (f_val=0, index = 0; index < masksize; index++)
-					if (maskindexes[index] != -1)
-						f_val += data_array[maskindexes[index]] * maskData[index];
-			}
-			if (binning>1) 
-				if (skip)
-					f_val = data_array[t];
-				else {
-					getIndexes(indexes, binning, t, w) ;
-					for (f_val=0,index=0; index<binningsize; index++)
-						f_val += data_array[indexes[index]];
-					f_val /= binningsize;
-				}
-			else
-				f_val = data_array[t];
-
-			f_val = (f_val-min)*densitymax/scale;
-			tpixels[i][j] = setColorDensity(f_val, gray);
-
-			if (binning>1)
-				if (i>=(n_h-1) && j>=(n_w-1))
-					break;
-		}
-         }
-         break;
-	}
+                        if (binning>1)
+                                if (i>=(n_h-1) && j>=(n_w-1))
+                                        break;
+                }
+        free(data_array);
 }
 
 /* get pixel indexes from a  binning factor applied to a pixel index */

@@ -15,7 +15,7 @@
   | Author:                                                              |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.h,v 1.2 2005-02-23 02:03:28 dfellman Exp $ 
+  $Id: php_mrc.h,v 1.3 2005-06-07 20:36:09 dfellman Exp $ 
 */
 
 #ifndef PHP_MRC_H
@@ -51,6 +51,8 @@ ZEND_FUNCTION(logscale);
 ZEND_FUNCTION(getfft);
 ZEND_FUNCTION(imagecreatefftfrommrc);
 #endif
+ZEND_FUNCTION(imagehistogramfrommrc);
+ZEND_FUNCTION(imagehistogram);
 
 /* 
   	Declare any global variables you may need between the BEGIN

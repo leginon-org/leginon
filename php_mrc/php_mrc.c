@@ -15,7 +15,7 @@
   | Author:                                                              |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.2 2005-02-23 02:03:28 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.3 2005-06-07 20:36:09 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -58,6 +58,8 @@ function_entry mrc_functions[] = {
         ZEND_FE(getfft, NULL)
         ZEND_FE(imagecreatefftfrommrc, NULL)
 #endif
+	    ZEND_FE(imagehistogramfrommrc, NULL)
+        ZEND_FE(imagehistogram, NULL)
 	{NULL, NULL, NULL}	/* Must be the last line in mrc_functions[] */
 };
 /* }}} */
@@ -734,3 +736,122 @@ ZEND_FUNCTION(getfft)
 }
 /* }}} */
 #endif
+
+ZEND_FUNCTION(imagehistogram)
+{
+        zval **imgind, **NBBARS;
+        gdImagePtr im_src;
+        int argc = ZEND_NUM_ARGS();
+        int i, i1, i2, j, ij, M, N, pixel, interval, nb, nb_bars=50;
+        unsigned char *data_array;
+        unsigned char data, fmin=0, fmax=0;
+
+        if (argc > 2 )
+        {
+                WRONG_PARAM_COUNT;
+        }
+        zend_get_parameters_ex(argc, &imgind, &NBBARS);
+
+        if (argc == 2)
+        {
+                convert_to_long_ex(NBBARS);
+                if (Z_LVAL_PP(NBBARS))
+                        nb_bars = Z_LVAL_PP(NBBARS);
+        }
+
+        ZEND_FETCH_RESOURCE(im_src, gdImagePtr, imgind, -1, "Image", le_gd);
+
+        if (im_src) {
+                array_init(return_value);
+                M = im_src->sx;
+                N = im_src->sy;
+                data_array = malloc(sizeof(unsigned char[M*N]));
+                for (i = 0; i < M; i++) {
+                        for (j = 0; j < N; j++) {
+                                ij = i*N + j;
+                                pixel = gdImageGetPixel(im_src,i,j);
+                                // Y = 0.3RED + 0.59GREEN +0.11Blue
+                                data = (unsigned char)(.3*(pixel & 0xff) + .59*((pixel >> 8) & 0xff) + .11*((pixel >> 16) & 0xff));
+                                data_array[ij] = data;
+                                fmax = MAX(fmax, data_array[ij]);
+                                fmin = MIN(fmin, data_array[ij]);
+                        }
+                }
+                interval=(fmax-fmin)/nb_bars;
+
+                for (i=0; i<nb_bars; i++) {
+                        nb=0;
+                        for (j=0; j<M*N; j++) {
+                                i1 = fmin+(i-1)*interval;
+                                i2 = fmin+i*interval;
+                                if (data_array[j] > i1 && data_array[j] <=i2)
+                                        nb++;
+                        }
+                        add_index_long(return_value, (fmin + i*interval), nb);
+                }
+                free(data_array);
+        } else {
+                RETURN_FALSE;
+        }
+}
+
+ZEND_FUNCTION(imagehistogramfrommrc)
+{
+        zval **data, **NBBARS;
+        gdIOCtx *io_ctx;
+        MRC mrc;
+        int argc = ZEND_NUM_ARGS();
+        char *ptfile;
+        int **thistogram;
+        int nb_bars=50;
+        int j;
+
+        int *frequency;
+        float *classes;
+
+
+        if (argc > 2) {
+                ZEND_WRONG_PARAM_COUNT();
+        }
+
+        zend_get_parameters_ex(argc , &data, &NBBARS);
+        convert_to_string_ex(data);
+
+        if (argc == 2)
+        {
+                convert_to_long_ex(NBBARS);
+                nb_bars = Z_LVAL_PP(NBBARS);
+        }
+        io_ctx = gdNewDynamicCtx (Z_STRLEN_PP(data), Z_STRVAL_PP(data));
+        if (!io_ctx) {
+                RETURN_FALSE;
+        }
+        if(gdreadMRCHeader(io_ctx, &(mrc.header))==-1) {
+
+                /* not a mrc string header */
+                ptfile = (char *)((*data)->value.str.val);
+                if(loadMRC(ptfile, &mrc)==-1) {
+                        zend_error(E_ERROR, "%s(): %s : No such file or directory ",
+                                         get_active_function_name(TSRMLS_C),ptfile);
+                }
+
+        } else if(gdreadMRCData(io_ctx, &mrc)==-1) {
+                zend_error(E_ERROR, "%s(): Input is not a MRC string ",
+                                 get_active_function_name(TSRMLS_C));
+        }
+
+        frequency = malloc(sizeof(int[nb_bars]));
+        classes = malloc(sizeof(float[nb_bars]));
+
+        mrc_to_histogram(&mrc, frequency, classes, nb_bars);
+
+        array_init(return_value);
+        for (j = 0; j < nb_bars; j++) {
+                add_index_long(return_value, classes[j], frequency[j]);
+        }
+
+        free(frequency);
+        free(classes);
+        free(mrc.pbyData);
+        free(io_ctx);
+}
