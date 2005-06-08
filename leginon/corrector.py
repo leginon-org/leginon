@@ -206,6 +206,7 @@ class Corrector(node.Node):
 			series = self.acquireSeries(self.settings['n average'])
 		except Exception, e:
 			self.logger.error('Reference acquisition failed: %s' % e)
+			return None
 
 		self.logger.info('Averaging reference series...')
 		ref = imagefun.averageSeries(series)
