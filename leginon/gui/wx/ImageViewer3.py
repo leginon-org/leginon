@@ -33,7 +33,7 @@ class Plugin(wx.EvtHandler):
 		pass
 
 	def onUpdateClientRegion(self, clientregion):
-		return False
+		return wx.Point(0, 0)
 
 class ClearPlugin(Plugin):
 	def __init__(self, imagewindow, color=wx.WHITE, style=wx.SOLID):
@@ -192,7 +192,7 @@ class	Window(wx.Window):
 	def copyBuffer(self, dc, regions):
 		copydc = wx.MemoryDC()
 		copydc.SelectObject(self.buffer)
-		for region, offset in regions:
+		for offset, region in regions.items():
 			x, y = offset
 			regioniterator = wx.RegionIterator(region)
 			while(regioniterator):
@@ -265,13 +265,70 @@ class	Window(wx.Window):
 
 		dc = wx.MemoryDC()
 		dc.SelectObject(buffer)
-		self.copyBuffer(dc, [(copyregion, wx.Point(0, 0))])
+		self.copyBuffer(dc, {wx.Point(0, 0): copyregion})
 		self.sourceBuffer(dc, sourceregion)
 		dc.SelectObject(wx.NullBitmap)
 
 		self.buffer = buffer
 
 		self.Refresh()
+
+	def updateScrollbars(self, offset=None, size=None):
+		if offset is None:
+			offset = self.offset
+		if size is None:
+			size = self.GetSize()
+
+		x, y = offset
+		width, height = size
+		clientregion = wx.Region(x, y, width, height)
+		initialclientregion = clientregion
+		self.updatePluginRegions(clientregion=clientregion)
+		[p.onUpdateClientRegion(clientregion) for p in self.plugins]
+		x, y, w, h = self.pluginsregion.GetBox()
+
+		self.ignoresize = True
+
+		if x < offset.x or w - x > offset.x + size.width:
+			self.SetScrollbar(wx.HORIZONTAL, offset.x, size.width, w - x, False)
+		else:
+			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0, False)
+
+		size = self.GetClientSize()
+
+		x, y = offset
+		width, height = size
+		clientregion = wx.Region(x, y, width, height)
+		self.updatePluginRegions(clientregion=clientregion)
+		[p.onUpdateClientRegion(clientregion) for p in self.plugins]
+		x, y, w, h = self.pluginsregion.GetBox()
+
+		if y < offset.y or h - y > offset.x + size.height:
+			self.SetScrollbar(wx.VERTICAL, offset.y, size.height, h - y)
+		else:
+			self.SetScrollbar(wx.VERTICAL, 0, 0, 0)
+
+		size = self.GetClientSize()
+
+		x, y = offset
+		width, height = size
+		clientregion = wx.Region(x, y, width, height)
+		self.updatePluginRegions(clientregion=clientregion)
+		[p.onUpdateClientRegion(clientregion) for p in self.plugins]
+		x, y, w, h = self.pluginsregion.GetBox()
+
+		if x < offset.x or w - x > offset.x + size.width:
+			self.SetScrollbar(wx.HORIZONTAL, offset.x, size.width, w - x)
+		else:
+			self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
+
+		size = self.GetClientSize()
+
+		self.updatePluginRegions(clientregion=initialclientregion)
+
+		self.ignoresize = False
+
+		return size
 
 	def updateClientRegion(self, offset=None, size=None):
 		if offset is None:
@@ -285,6 +342,11 @@ class	Window(wx.Window):
 
 		regions1 = [plugin.buffered for plugin in self.plugins]
 
+		size = self.updateScrollbars(offset=offset, size=size)
+
+		width, height = size
+		clientregion = wx.Region(x, y, width, height)
+
 		updates = [p.onUpdateClientRegion(clientregion) for p in self.plugins]
 
 		self.updatePluginRegions(clientregion=clientregion)
@@ -293,31 +355,27 @@ class	Window(wx.Window):
 
 		diff = [diffRegion(r1, r2) for r1, r2 in zip(regions1, regions2)]
 
-		copyregions = []
-		copyregion = wx.Region()
+		copyregions = {}
 		sourceregion = wx.Region()
 		for i, (minus, equal, plus) in enumerate(diff):
 			if isinstance(updates[i], wx.Point):
-				x, y = updates[i]
-				cr = wx.Region()
-				cr.UnionRegion(regions2[i])
-				cr.Offset(-x, -y)
-				cr.IntersectRegion(regions1[i])
-				copyregions.append((cr, updates[i]))
-				sr = wx.Region()
-				sr.UnionRegion(regions2[i])
-				cr.Offset(x, y)
-				sr.SubtractRegion(cr)
-				cr.Offset(-x, -y)
-				sourceregion.UnionRegion(sr)
+				if updates[i] not in copyregions:
+					copyregions[updates[i]] = wx.Region()
+				if updates[i] != wx.Point(0, 0):
+					x, y = updates[i]
+					equal = wx.Region()
+					equal.UnionRegion(regions2[i])
+					equal.Offset(-x, -y)
+					equal.IntersectRegion(regions1[i])
+					plus = wx.Region()
+					plus.UnionRegion(regions2[i])
+					equal.Offset(x, y)
+					plus.SubtractRegion(equal)
+					equal.Offset(-x, -y)
+				copyregions[updates[i]].UnionRegion(equal)
 			else:
-				if updates[i]:
-					sourceregion.UnionRegion(equal)
-				else:
-					copyregion.UnionRegion(equal)
-				sourceregion.UnionRegion(plus)
-
-		copyregions.insert(0, (copyregion, wx.Point(0, 0)))
+				sourceregion.UnionRegion(equal)
+			sourceregion.UnionRegion(plus)
 
 		buffer = wx.EmptyBitmap(size.width, size.height)
 
