@@ -117,7 +117,7 @@ void mrc_to_image(MRC *mrc, int ** tpixels,
                 i,j,ij,t,
                 index,
                 binningsize = binning*binning,
-                indexes[binningsize],
+               // indexes[binningsize],
                 n_w = w/binning,
                 n_h = w/binning,
                 off_w = w - n_w * binning;
@@ -125,11 +125,14 @@ void mrc_to_image(MRC *mrc, int ** tpixels,
         int     filter = 0,
                 maskindex=0,
                 masksize = kernel*kernel,
-                maskindexes[masksize],
+              //  maskindexes[masksize],
                 x=0,
                 y=0;
 
-        double  maskData[masksize];
+	int	*indexes,
+		*maskindexes;
+        // double  maskData[masksize];
+        double  *maskData;
 
         float   density,
                 ndensity;
@@ -140,12 +143,17 @@ void mrc_to_image(MRC *mrc, int ** tpixels,
         int densitymax = (colormap) ? densityColorMAX : densityMAX;
         int gray = (colormap) ? 0 : 1;
 
+        data_array = malloc(sizeof(float)*n);
+        maskData = malloc(sizeof(double[masksize]));
+        maskindexes = malloc(sizeof(int[masksize]));
+        indexes = malloc(sizeof(int[binningsize]));
+
         if (sigma !=0 && kernel % 2 == 1) {
                 gaussianfiltermask(maskData, kernel, sigma);
                 filter=1;
         }
 
-        data_array = malloc(sizeof(float[n]));
+
         mrc_to_float(mrc, data_array);
 
         if(scale <= 0) {
@@ -193,11 +201,15 @@ void mrc_to_image(MRC *mrc, int ** tpixels,
                                 if (i>=(n_h-1) && j>=(n_w-1))
                                         break;
                 }
+
         free(data_array);
+        free(maskData);
+        free(maskindexes);
+        free(indexes);
 }
 
 /* get pixel indexes from a  binning factor applied to a pixel index */
-int getIndexes(int indexes[], int binning, int index, int imagewidth) {
+int getIndexes(int *indexes, int binning, int index, int imagewidth) {
 	int	i=0,
 		b_w=0,
 		b_h=0;
@@ -208,7 +220,7 @@ int getIndexes(int indexes[], int binning, int index, int imagewidth) {
 }
 
 /* get pixel indexes from a mask (kernelxkernel) applied to a pixel index */
-int getMaskDataIndexes(int indexes[], int kernel, int index, int imagewidth) {
+int getMaskDataIndexes(int *indexes, int kernel, int index, int imagewidth) {
 	int	i=0,
 		m_w=0,
 		m_h=0,

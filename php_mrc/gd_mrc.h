@@ -17,8 +17,8 @@ void mrc_to_histogram(MRC *mrc, int *frequency, float *classes, int nb_bars);
 void mrc_to_float(MRC *mrc, float *pdata_array);
 
 /* return pixel indexes to average for binning */
-int getIndexes(int indexes[], int binning, int index, int imagewidth);
-int getMaskDataIndexes(int indexes[], int kernel, int index, int imagewidth); 
+int getIndexes(int *indexes, int binning, int index, int imagewidth);
+int getMaskDataIndexes(int *indexes, int kernel, int index, int imagewidth); 
 
 int gdloadMRC(gdIOCtx *io_ctx, MRC *pMRC);
 int gdreadMRCData(gdIOCtx *io_ctx, MRC *pMRC);
