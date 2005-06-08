@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SetupWizard.py,v $
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-06-02 20:23:17 $
+# $Date: 2005-06-08 18:27:09 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -207,7 +207,7 @@ class SessionSelectPage(WizardPage):
 
 		clientssizer = wx.GridBagSizer(5, 5)
 		self.clientslabel = wx.StaticText(self, -1, '')
-		self.setClients([], [])
+		self.setClients([])
 		clientssizer.Add(self.clientslabel, (0, 0), (1, 1),
 											wx.ALIGN_CENTER_VERTICAL)
 		editclientsbutton = wx.Button(self, -1, 'Edit...')
@@ -228,10 +228,9 @@ class SessionSelectPage(WizardPage):
 
 		self.Bind(wx.EVT_BUTTON, self.onEditClientsButton, editclientsbutton)
 
-	def setClients(self, clients, history=None):
+	def setClients(self, clients):
 		self.clients = clients
-		if history is not None:
-			self.history = history
+		self.history = self.GetParent().setup.getRecentClients()
 		label = 'Connect to clients: '
 		if clients:
 			for i in clients:
@@ -272,7 +271,7 @@ class SessionSelectPage(WizardPage):
 			# if label is too big for wizard (presized) need to resize or truncate
 			self.sizer.SetItemMinSize(i, i.GetSize())
 		self.pagesizer.Layout()
-		self.setClients(parent.setup.getClients(selection), parent.setup.getRecentClients())
+		self.setClients(parent.setup.getClients(selection))
 
 	def setSessionNames(self, names):
 		if self.limitcheckbox.IsChecked():
@@ -502,7 +501,7 @@ class SessionCreatePage(WizardPage):
 
 		clientssizer = wx.GridBagSizer(5, 5)
 		self.clientslabel = wx.StaticText(self, -1, '')
-		self.setClients([], [])
+		self.setClients([])
 		clientssizer.Add(self.clientslabel, (0, 0), (1, 1),
 											wx.ALIGN_CENTER_VERTICAL)
 		editclientsbutton = wx.Button(self, -1, 'Edit...')
@@ -524,10 +523,9 @@ class SessionCreatePage(WizardPage):
 
 		self.Bind(wx.EVT_BUTTON, self.onEditClientsButton, editclientsbutton)
 
-	def setClients(self, clients, history=None):
+	def setClients(self, clients):
 		self.clients = clients
-		if history is not None:
-			self.history = history
+		self.history = self.GetParent().setup.getRecentClients()
 		label = 'Connect to clients: '
 		if clients:
 			for i in clients:
