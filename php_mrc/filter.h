@@ -19,5 +19,5 @@ gdImagePtr resize(gdImagePtr im, int w, int h, int n_w, int n_h );
 void filtergaussian(gdImagePtr im, int masksize, float factor);
 void gdImageFastCopyResized (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int dstW, int dstH, int srcW, int srcH);
 void copytpixels(gdImagePtr im_dst, gdImagePtr im_src);
-void gaussianfiltermask(double maskData[], int kernel, float sigma);
+void gaussianfiltermask(double *maskData, int kernel, float sigma);
 void gdLogScale(gdImagePtr im_src);

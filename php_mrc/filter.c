@@ -125,7 +125,8 @@ void filtergaussian(gdImagePtr im, int kernel, float factor) {
 		index = 0;
 	int c;
 
-	double	maskData[maskWidth*maskHeight];
+	double	*maskData;
+	//double	maskData[maskWidth*maskHeight];
 
 	float	density,
 		ndensity,
@@ -140,6 +141,8 @@ void filtergaussian(gdImagePtr im, int kernel, float factor) {
 
 	if (factor==0 || kernel % 2 != 1)
 		return;
+
+        maskData = malloc(sizeof(double)*maskWidth*maskHeight);
 
 	gaussianfiltermask(maskData, kernel, factor);
 
@@ -172,9 +175,11 @@ void filtergaussian(gdImagePtr im, int kernel, float factor) {
 		}
 	}
 
+	free(maskData);
+
 }
 
-void gaussianfiltermask(double maskData[], int kernel, float sigma) {
+void gaussianfiltermask(double *maskData, int kernel, float sigma) {
 
 	int	x,
 		y;

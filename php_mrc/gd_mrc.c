@@ -68,7 +68,7 @@ void mrc_to_histogram(MRC *mrc, int *frequency, float *classes, int nb_bars) {
 
         interval=(fmax-fmin)/nb_bars;
 
-        data_array = malloc(sizeof(float[n]));
+        data_array = malloc(sizeof(float)*n);
         mrc_to_float(mrc, data_array);
 
         if(interval <= 0) {
@@ -138,15 +138,14 @@ void mrc_to_image(MRC *mrc, int ** tpixels,
                 ndensity;
 
         float *data_array;
-        float data_array_float[n];
 
         int densitymax = (colormap) ? densityColorMAX : densityMAX;
         int gray = (colormap) ? 0 : 1;
 
         data_array = malloc(sizeof(float)*n);
-        maskData = malloc(sizeof(double[masksize]));
-        maskindexes = malloc(sizeof(int[masksize]));
-        indexes = malloc(sizeof(int[binningsize]));
+        maskData = malloc(sizeof(double)*masksize);
+        maskindexes = malloc(sizeof(int)*masksize);
+        indexes = malloc(sizeof(int)*binningsize);
 
         if (sigma !=0 && kernel % 2 == 1) {
                 gaussianfiltermask(maskData, kernel, sigma);

@@ -15,7 +15,7 @@
   | Author:                                                              |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.3 2005-06-07 20:36:09 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.4 2005-06-09 17:30:12 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -840,8 +840,8 @@ ZEND_FUNCTION(imagehistogramfrommrc)
                                  get_active_function_name(TSRMLS_C));
         }
 
-        frequency = malloc(sizeof(int[nb_bars]));
-        classes = malloc(sizeof(float[nb_bars]));
+        frequency = malloc(sizeof(int)*nb_bars);
+        classes = malloc(sizeof(float)*nb_bars);
 
         mrc_to_histogram(&mrc, frequency, classes, nb_bars);
 
