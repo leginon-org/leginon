@@ -437,9 +437,9 @@ class Window(wx.Window):
         deltaoffset = self.offset - offset
         if deltaoffset.x != 0 or deltaoffset.y != 0:
             offsetcopyregions = {}
-            for offset, region in copyregions.items():
-                offset += deltaoffset
-                offsetcopyregions[offset] = region
+            for point, region in copyregions.items():
+                point += deltaoffset
+                offsetcopyregions[point] = region
             copyregions = offsetcopyregions
         buffer = wx.EmptyBitmap(size.width, size.height)
 
