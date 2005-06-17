@@ -63,6 +63,7 @@ class NumarrayPlugin(Plugin):
         self.offset = self.getOffset()
         self.extrema = None
         self.valuerange = None
+        self.fitclient = False
 
     def getOffset(self, clientregion=None):
         if self.array is None:
@@ -82,22 +83,35 @@ class NumarrayPlugin(Plugin):
 
         return offset
 
-    def setNumarray(self, array):
-        if array is None:
-            self.size = wx.Size()
+    def getSize(self, clientregion=None):
+        if self.array is None:
+            return wx.Size()
 
-            self.extrema = None
-            self.valuerange = None
+        if self.fitclient:
+            if clientregion is None:
+                width, height = self.imagewindow.size
+            else:
+                x, y, width, height = clientregion.GetBox()
+            scale = min(float(width)/array.shape[1],
+                        float(height)/array.shape[0])
+            width = int(round(scale*array.shape[1]))
+            height = int(round(scale*array.shape[0]))
         else:
             width = int(round(self.scale*array.shape[1]))
             height = int(round(self.scale*array.shape[0]))
-            self.size = wx.Size(width, height)
+        return wx.Size(width, height)
 
+    def setNumarray(self, array):
+        if array is None:
+            self.extrema = None
+            self.valuerange = None
+        else:
             self.extrema = (array.min(), array.max())
             self.valuerange = self.extrema
 
         self.array = array
 
+        width, height = self.getSize()
         x, y = self.getOffset()
         self.offset = wx.Point(x, y)
         self.region = wx.Region(x, y, width, height)
@@ -124,11 +138,13 @@ class NumarrayPlugin(Plugin):
         if self.array is None:
             return False
 
+        size = self.getSize(clientregion)
+        copy = self.size == size
+        self.size = size
         self.offset = self.getOffset(clientregion)
-        x, y = self.offset
-        width, height = self.size
+        (x, y), (width, height) = self.offset, self.size
         self.region = wx.Region(x, y, width, height)
-        return True
+        return copy
 
 class Window(wx.Window):
     def __init__(self, parent, id):
@@ -262,6 +278,8 @@ class Window(wx.Window):
         x, y = offset
         width, height = size
         clientregion = wx.Region(x, y, width, height)
+        [p.onUpdateClientRegion(clientregion) for p in self.plugins]
+        self.updatePluginRegions(clientregion=clientregion)
         x, y, w, h = self.pluginsregion.GetBox()
 
         self.ignoresize = True
@@ -280,7 +298,7 @@ class Window(wx.Window):
         self.updatePluginRegions(clientregion=clientregion)
         x, y, w, h = self.pluginsregion.GetBox()
 
-        if y < offset.y or h - y > offset.x + size.height:
+        if y < offset.y or h - y > offset.y + size.height:
             self.SetScrollbar(wx.VERTICAL, offset.y, size.height, h - y)
         else:
             self.SetScrollbar(wx.VERTICAL, 0, 0, 0)
@@ -306,12 +324,17 @@ class Window(wx.Window):
 
         self.ignoresize = False
 
-        return size
+        x = self.GetScrollPos(wx.HORIZONTAL)
+        y = self.GetScrollPos(wx.VERTICAL)
+        offset = wx.Point(x, y)
+        return offset, size
 
     def onUpdatePluginRegion(self, plugin):
+        # ...
         self.updateClientRegion()
 
     def updateClientRegion(self, offset=None, size=None):
+        # TODO: alpha updates
         if offset is None:
             offset = self.offset
         if size is None:
@@ -320,7 +343,7 @@ class Window(wx.Window):
         regions = [plugin.region for plugin in self.plugins]
         bufferedregions = [plugin.buffered for plugin in self.plugins]
 
-        size = self.updateScrollbars(offset=offset, size=size)
+        offset, size = self.updateScrollbars(offset=offset, size=size)
 
         x, y = offset
         width, height = size
