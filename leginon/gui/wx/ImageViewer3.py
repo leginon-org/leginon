@@ -25,14 +25,14 @@ class Plugin(wx.EvtHandler):
     def GetId(self):
         return -1
 
-    def draw(self, dc, region, offset):
+    def draw(self, dc, region):
         raise NotImplementedError
 
     def clientRegionUpdated(self, clientregion):
         pass
 
     def onUpdateClientRegion(self, clientregion):
-        return wx.Point(0, 0)
+        return False
 
 class ClearPlugin(Plugin):
     def __init__(self, imagewindow, color=wx.WHITE, style=wx.SOLID):
@@ -49,6 +49,9 @@ class ClearPlugin(Plugin):
             regioniterator.Next()
         dc.SetBrush(wx.NullBrush)
         dc.SetPen(wx.NullPen)
+
+    def onUpdateClientRegion(self, clientregion):
+        return True
 
 class NumarrayPlugin(Plugin):
     def __init__(self, imagewindow):
@@ -121,16 +124,11 @@ class NumarrayPlugin(Plugin):
         if self.array is None:
             return False
 
-        offset = self.offset
         self.offset = self.getOffset(clientregion)
-
-        if offset != self.offset:
-            x, y = self.offset
-            width, height = self.size
-            self.region = wx.Region(x, y, width, height)
-            return self.offset - offset
-        else:
-            return wx.Point(0, 0)
+        x, y = self.offset
+        width, height = self.size
+        self.region = wx.Region(x, y, width, height)
+        return True
 
 class Window(wx.Window):
     def __init__(self, parent, id):
@@ -152,6 +150,11 @@ class Window(wx.Window):
 
         self.Bind(wx.EVT_SCROLLWIN_LINEUP, self.onScrollWinLineUp)
         self.Bind(wx.EVT_SCROLLWIN_LINEDOWN, self.onScrollWinLineDown)
+        self.Bind(wx.EVT_SCROLLWIN_PAGEUP, self.onScrollWinPageUp)
+        self.Bind(wx.EVT_SCROLLWIN_PAGEDOWN, self.onScrollWinPageDown)
+        self.Bind(wx.EVT_SCROLLWIN_TOP, self.onScrollWinTop)
+        self.Bind(wx.EVT_SCROLLWIN_BOTTOM, self.onScrollWinBottom)
+        self.Bind(wx.EVT_SCROLLWIN_THUMBTRACK, self.onScrollWinThumbTrack)
 
     def updatePluginRegions(self, clientregion=None):
         if clientregion is None:
@@ -191,12 +194,13 @@ class Window(wx.Window):
     def copyBuffer(self, dc, regions):
         copydc = wx.MemoryDC()
         copydc.SelectObject(self.buffer)
+        copydc.SetDeviceOrigin(-self.offset.x, -self.offset.y)
         for offset, region in regions.items():
-            x, y = offset
             regioniterator = wx.RegionIterator(region)
             while(regioniterator):
                 r = regioniterator.GetRect()
-                dc.Blit(r.x + x, r.y + y, r.width, r.height, copydc, r.x, r.y)
+                dc.Blit(r.x + offset.x, r.y + offset.y, r.width, r.height,
+                        copydc, r.x, r.y)
                 regioniterator.Next()
             '''
             dc.SetPen(wx.TRANSPARENT_PEN)
@@ -244,93 +248,6 @@ class Window(wx.Window):
             dc.Blit(r.x, r.y, r.width, r.height, memorydc, r.x, r.y)
             regioniterator.Next()
         memorydc.SelectObject(wx.NullBitmap)
-
-    def onUpdatePluginRegion(self, plugin):
-        offset = self.offset
-        size = self.size
-
-        regions1 = [plugin.buffered for plugin in self.plugins]
-
-        size = self.updateScrollbars(offset=offset, size=size)
-
-        x, y = offset
-        width, height = size
-        clientregion = wx.Region(x, y, width, height)
-
-        updates = [p.onUpdateClientRegion(clientregion) for p in self.plugins]
-        self.updatePluginRegions(clientregion=clientregion)
-
-        regions2 = [plugin.buffered for plugin in self.plugins]
-
-        diff = [diffRegion(r1, r2) for r1, r2 in zip(regions1, regions2)]
-
-        copyregions = {}
-        sourceregion = wx.Region()
-        for i, (minus, equal, plus) in enumerate(diff):
-            if isinstance(updates[i], wx.Point):
-                if updates[i] not in copyregions:
-                    copyregions[updates[i]] = wx.Region()
-                if updates[i] != wx.Point(0, 0):
-                    x, y = updates[i]
-                    equal = wx.Region()
-                    equal.UnionRegion(regions2[i])
-                    equal.Offset(-x, -y)
-                    equal.IntersectRegion(regions1[i])
-                    plus = wx.Region()
-                    plus.UnionRegion(regions2[i])
-                    equal.Offset(x, y)
-                    plus.SubtractRegion(equal)
-                    equal.Offset(-x, -y)
-                copyregions[updates[i]].UnionRegion(equal)
-            else:
-                sourceregion.UnionRegion(equal)
-            sourceregion.UnionRegion(plus)
-
-        buffer = wx.EmptyBitmap(size.width, size.height)
-
-        dc = wx.MemoryDC()
-        dc.SelectObject(buffer)
-        self.copyBuffer(dc, copyregions)
-        self.sourceBuffer(dc, sourceregion)
-        dc.SelectObject(wx.NullBitmap)
-
-        self.offset = offset
-        self.size = size
-        self.buffer = buffer
-
-        self.Refresh()
-
-        '''
-        regions1 = [plugin.buffered for plugin in self.plugins]
-
-        self.updatePluginRegions()
-
-        regions2 = [plugin.buffered for plugin in self.plugins]
-
-        diff = [diffRegion(r1, r2) for r1, r2 in zip(regions1, regions2)]
-
-        copyregion = wx.Region()
-        sourceregion = wx.Region()
-        for i, (minus, equal, plus) in enumerate(diff):
-            sourceregion.UnionRegion(minus)
-            if plugin is self.plugins[i]:
-                sourceregion.UnionRegion(equal)
-            else:
-                copyregion.UnionRegion(equal)
-            sourceregion.UnionRegion(plus)
-
-        buffer = wx.EmptyBitmap(self.size.width, self.size.height)
-
-        dc = wx.MemoryDC()
-        dc.SelectObject(buffer)
-        self.copyBuffer(dc, {wx.Point(0, 0): copyregion})
-        self.sourceBuffer(dc, sourceregion)
-        dc.SelectObject(wx.NullBitmap)
-
-        self.buffer = buffer
-
-        self.Refresh()
-        '''
 
     def updateScrollbars(self, offset=None, size=None):
         if offset is None:
@@ -391,13 +308,17 @@ class Window(wx.Window):
 
         return size
 
+    def onUpdatePluginRegion(self, plugin):
+        self.updateClientRegion()
+
     def updateClientRegion(self, offset=None, size=None):
         if offset is None:
             offset = self.offset
         if size is None:
             size = self.size
 
-        regions1 = [plugin.buffered for plugin in self.plugins]
+        regions = [plugin.region for plugin in self.plugins]
+        bufferedregions = [plugin.buffered for plugin in self.plugins]
 
         size = self.updateScrollbars(offset=offset, size=size)
 
@@ -408,43 +329,31 @@ class Window(wx.Window):
         updates = [p.onUpdateClientRegion(clientregion) for p in self.plugins]
         self.updatePluginRegions(clientregion=clientregion)
 
-        regions2 = [plugin.buffered for plugin in self.plugins]
-
-        diff = [diffRegion(r1, r2) for r1, r2 in zip(regions1, regions2)]
-
         copyregions = {}
         sourceregion = wx.Region()
-        for i, (minus, equal, plus) in enumerate(diff):
-            if isinstance(updates[i], wx.Point):
-                if updates[i] not in copyregions:
-                    copyregions[updates[i]] = wx.Region()
-                if updates[i] != wx.Point(0, 0):
-                    x, y = updates[i]
-                    equal = wx.Region()
-                    equal.UnionRegion(regions2[i])
-                    equal.Offset(-x, -y)
-                    equal.IntersectRegion(regions1[i])
-                    plus = wx.Region()
-                    plus.UnionRegion(regions2[i])
-                    equal.Offset(x, y)
-                    plus.SubtractRegion(equal)
-                    equal.Offset(-x, -y)
-                copyregions[updates[i]].UnionRegion(equal)
+        for i, plugin in enumerate(self.plugins):
+            x1, y1, w1, h1 = regions[i].GetBox()
+            x2, y2, w2, h2 = plugin.region.GetBox()
+            doffset = wx.Point(x2 - x1, y2 - y1)
+            if updates[i]:
+                copyregion = wx.Region()
+                copyregion.UnionRegion(bufferedregions[i])
+                copyregion.Offset(doffset.x, doffset.y)
+                copyregion.IntersectRegion(plugin.buffered)
+                if doffset not in copyregions:
+                    copyregions[doffset] = wx.Region()
+                sourceregion.UnionRegion(plugin.buffered)
+                sourceregion.SubtractRegion(copyregion)
+                copyregion.Offset(-doffset.x, -doffset.y)
+                copyregions[doffset].UnionRegion(copyregion)
             else:
-                sourceregion.UnionRegion(equal)
-            sourceregion.UnionRegion(plus)
+                sourceregion.UnionRegion(plugin.buffered)
 
-        deltaoffset = self.offset - offset
-        if deltaoffset.x != 0 or deltaoffset.y != 0:
-            offsetcopyregions = {}
-            for point, region in copyregions.items():
-                point += deltaoffset
-                offsetcopyregions[point] = region
-            copyregions = offsetcopyregions
         buffer = wx.EmptyBitmap(size.width, size.height)
 
         dc = wx.MemoryDC()
         dc.SelectObject(buffer)
+        dc.SetDeviceOrigin(-offset.x, -offset.y)
         self.copyBuffer(dc, copyregions)
         self.sourceBuffer(dc, sourceregion)
         dc.SelectObject(wx.NullBitmap)
@@ -470,11 +379,17 @@ class Window(wx.Window):
                 x += position
             else:
                 x = position
+            x = max(0, x)
+            x = min(x, self.GetScrollRange(orientation)
+                        - self.GetScrollThumb(orientation))
         elif orientation == wx.VERTICAL:
             if relative:
                 y += position
             else:
                 y = position
+            y = max(0, y)
+            y = min(y, self.GetScrollRange(orientation)
+                        - self.GetScrollThumb(orientation))
         self.updateClientRegion(offset=wx.Point(x, y))
 
     def onScrollWinLineUp(self, evt):
@@ -486,6 +401,31 @@ class Window(wx.Window):
         orientation = evt.GetOrientation()
         position = 1
         self.onScrollWin(orientation, position, relative=True)
+
+    def onScrollWinPageUp(self, evt):
+        orientation = evt.GetOrientation()
+        position = -self.GetScrollThumb(orientation)
+        self.onScrollWin(orientation, position, relative=True)
+
+    def onScrollWinPageDown(self, evt):
+        orientation = evt.GetOrientation()
+        position = self.GetScrollThumb(orientation)
+        self.onScrollWin(orientation, position, relative=True)
+
+    def onScrollWinTop(self, evt):
+        orientation = evt.GetOrientation()
+        position = 0
+        self.onScrollWin(orientation, position)
+
+    def onScrollWinBottom(self, evt):
+        orientation = evt.GetOrientation()
+        position = self.GetScrollRange(orientation)
+        self.onScrollWin(orientation, position)
+
+    def onScrollWinThumbTrack(self, evt):
+        orientation = evt.GetOrientation()
+        position = evt.GetPosition()
+        self.onScrollWin(orientation, position)
 
 class Viewer(wx.Panel):
     def __init__(self, *args, **kwargs):
