@@ -146,6 +146,75 @@ class NumarrayPlugin(Plugin):
         self.region = wx.Region(x, y, width, height)
         return copy
 
+class GridPlugin(Plugin):
+    def __init__(self, imagewindow, color=wx.WHITE, style=wx.SOLID):
+        self.spacing = 32
+        self.pen = wx.ThePenList.FindOrCreatePen(wx.RED, 1, wx.SOLID)
+        self.brush = wx.TheBrushList.FindOrCreateBrush(color, style)
+        Plugin.__init__(self, imagewindow, hasalpha=True, background=True)
+
+    def draw(self, dc, region):
+        regioniterator = wx.RegionIterator(region)
+        while(regioniterator):
+            r = regioniterator.GetRect()
+ 
+            dc.SetPen(self.pen)
+            start = (r.x - 1) + self.spacing - (r.x - 1) % self.spacing
+            stop = r.x + r.width
+            for i in range(start, stop, self.spacing):
+                dc.DrawLine(i, r.y, i, r.y + r.height)
+            start = (r.y - 1) + self.spacing - (r.y - 1) % self.spacing
+            stop = r.y + r.height
+            for i in range(start, stop, self.spacing):
+                dc.DrawLine(r.x, i, r.x + r.width, i)
+            dc.SetPen(wx.NullPen)
+
+            regioniterator.Next()
+
+    def onUpdateClientRegion(self, clientregion):
+        #return True
+        return False
+
+class CrosshairsPlugin(Plugin):
+    def __init__(self, imagewindow, plugin,
+                    width=1, color=wx.BLUE, style=wx.SOLID):
+        self.brush = wx.TheBrushList.FindOrCreateBrush(color, style)
+        self.plugin = plugin
+        self.width = width
+        Plugin.__init__(self, imagewindow)
+        self.region = self.getRegion()
+
+    def getRegion(self, clientregion=None):
+        if self.plugin.region.IsEmpty():
+            return wx.Region()
+        x, y, width, height = self.plugin.region.GetBox()
+        center = (int(round(width/2.0 + x - self.width/2.0)),
+                  int(round(height/2.0 + y - self.width/2.0)))
+        if clientregion is None:
+            x, y = self.imagewindow.offset
+            width, height = self.imagewindow.size
+        else:
+            x, y, width, height = clientregion.GetBox()
+        region = wx.Region()
+        region.Union(center[0], y, self.width, height)
+        region.Union(x, center[1], width, self.width)
+        return region
+
+    def draw(self, dc, region):
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        dc.SetBrush(self.brush)
+        regioniterator = wx.RegionIterator(region)
+        while(regioniterator):
+            r = regioniterator.GetRect()
+            dc.DrawRectangle(r.x, r.y, r.width, r.height)
+            regioniterator.Next()
+        dc.SetBrush(wx.NullBrush)
+        dc.SetPen(wx.NullPen)
+
+    def onUpdateClientRegion(self, clientregion):
+        self.region = self.getRegion(clientregion)
+        return True
+
 class Window(wx.Window):
     def __init__(self, parent, id):
         wx.Window.__init__(self, parent, id)
@@ -285,9 +354,9 @@ class Window(wx.Window):
         self.ignoresize = True
 
         if x < offset.x or w - x > offset.x + size.width:
-            self.SetScrollbar(wx.HORIZONTAL, offset.x, size.width, w - x, False)
+            self.SetScrollbar(wx.HORIZONTAL, offset.x, size.width, w - x)
         else:
-            self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0, False)
+            self.SetScrollbar(wx.HORIZONTAL, 0, 0, 0)
 
         size = self.GetClientSize()
 
@@ -461,6 +530,13 @@ class Viewer(wx.Panel):
 
         self.numarrayplugin = NumarrayPlugin(self.imagewindow)
         self.imagewindow.addPlugin(self.numarrayplugin)
+
+        self.gridplugin = GridPlugin(self.imagewindow)
+        self.imagewindow.addPlugin(self.gridplugin)
+
+        self.crosshairsplugin = CrosshairsPlugin(self.imagewindow,
+                                                 self.numarrayplugin)
+        self.imagewindow.addPlugin(self.crosshairsplugin)
 
         self.sizer = wx.GridBagSizer(0, 0)
 
