@@ -9,6 +9,9 @@
 import node
 import imp
 import sys
+import os
+import os.path
+import ConfigParser
 
 reg_dict = {}
 reg_list = []
@@ -70,6 +73,32 @@ def getSortClass(clsname):
 			return value.index(clsname), key
 	return None, None
 
+def registerNodeClasses():
+    registrydir = os.path.join(os.path.dirname(__file__), 'noderegistry')
+    configfiles = []
+    for filename in os.listdir(registrydir):
+        root, ext = os.path.splitext(filename)
+        if ext == '.ncr':
+            if root == 'default':
+                configfiles.insert(0, os.path.join(registrydir, filename))
+            else:
+                configfiles.append(os.path.join(registrydir, filename))
+    configparser = ConfigParser.SafeConfigParser()
+    configparser.read(configfiles)
+    for classname in configparser.sections():
+        try:
+            modulename = configparser.get(classname, 'module')
+        except ConfigParser.NoOptionError:
+            continue
+        try:
+            sortclass = configparser.get(classname, 'type')
+        except ConfigParser.NoOptionError:
+            sortclass = None
+        registerNodeClass(modulename, classname, sortclass)
+
+registerNodeClasses()
+
+'''
 ### register Node classes in the order you want them listed publicly
 registerNodeClass('EM', 'EM', 'Utility')
 registerNodeClass('corrector', 'Corrector', 'Utility')
@@ -106,4 +135,5 @@ registerNodeClass('fftmaker', 'FFTMaker', 'Pipeline')
 # not fully implemented
 #registerNodeClass('intensitycalibrator', 'IntensityCalibrator', 'Calibrations')
 #registerNodeClass('webcam', 'Webcam', 'Utility')
+'''
 

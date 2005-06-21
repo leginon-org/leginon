@@ -22,6 +22,7 @@ setup(
 	package_dir={'Leginon': ''},
 	data_files=[
 		('Leginon/config', ['config/default.cfg']),
+		('Leginon/noderegistry', ['noderegistry/default.ncr']),
 		('Leginon/icons', glob.glob('icons/*.png')),
 		('Leginon/icons/processing', glob.glob('icons/processing/*.png')),
 		('', ['Leginon.pth']),

@@ -1,0 +1,96 @@
+[EM]
+module: EM
+type: Utility
+
+[Corrector]
+module: corrector
+type: Utility
+
+[PresetsManager]
+#module: presets
+type: Utility
+
+[DriftManager]
+module: driftmanager
+type: Utility
+
+[Navigator]
+module: navigator
+type: Utility
+
+[ManualAcquisition]
+module: manualacquisition
+type: Utility
+
+[RobotAtlasTargetFinder]
+module: robotatlastargetfinder
+type: Utility
+
+[IntensityMonitor]
+module: intensitymonitor
+type: Utility
+
+[PixelSizeCalibrator]
+module: pixelsizecalibrator
+type: Calibrations
+
+[DoseCalibrator]
+module: dosecalibrator
+type: Calibrations
+
+[MatrixCalibrator]
+module: matrixcalibrator
+type: Calibrations
+
+[BeamTiltCalibrator]
+module: beamtiltcalibrator
+type: Calibrations
+
+[GonModeler]
+module: gonmodeler
+type: Calibrations
+
+[Robot]
+module: robot
+type: Pipeline
+
+[AtlasTargetMaker]
+module: atlastargetmaker
+type: Pipeline
+
+[MosaicTargetMaker]
+module: targetmaker
+type: Pipeline
+
+[Acquisition]
+module: acquisition
+type: Pipeline
+
+[MosaicClickTargetFinder]
+module: targetfinder
+type: Pipeline
+
+[Focuser]
+module: focuser
+type: Pipeline
+
+[ClickTargetFinder]
+module: targetfinder
+type: Pipeline
+
+[HoleFinder]
+module: holefinder
+type: Pipeline
+
+[RasterFinder]
+module: rasterfinder
+type: Pipeline
+
+[MatlabTargetFinder]
+module: matlabtargetfinder
+type: Pipeline
+
+[FFTMaker]
+module: fftmaker
+type: Pipeline
+

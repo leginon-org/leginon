@@ -531,9 +531,6 @@ class Viewer(wx.Panel):
         self.numarrayplugin = NumarrayPlugin(self.imagewindow)
         self.imagewindow.addPlugin(self.numarrayplugin)
 
-        self.gridplugin = GridPlugin(self.imagewindow)
-        self.imagewindow.addPlugin(self.gridplugin)
-
         self.crosshairsplugin = CrosshairsPlugin(self.imagewindow,
                                                  self.numarrayplugin)
         self.imagewindow.addPlugin(self.crosshairsplugin)
