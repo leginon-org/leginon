@@ -4,14 +4,14 @@ import sys
 
 if sys.platform == 'win32':
 	pl = get_python_lib(True)
-	module = Extension(
-		'TecnaiCCDWrapper',
+	numsafearray = Extension(
+		'NumSafeArray',
 		include_dirs=['%s/win32/include' % pl, '%s/win32com/include' % pl],
 		library_dirs=['%s/win32/libs' % pl, '%s/win32com/libs' % pl],
-		sources=['TecnaiCCDWrapper/TecnaiCCDWrapper.cpp']
+		sources=['NumSafeArray/NumSafeArray.cpp']
 	)
 	ext_package = 'pyScope'
-	ext_modules = [module]
+	ext_modules = [numsafearray]
 	scripts = ['install-pyscope.py']
 else:
 	ext_package = None

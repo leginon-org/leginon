@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#	   The Leginon software is Copyright 2003
+#	   The Scripps Research Institute, La Jolla, CA
+#	   For terms of the license agreement
+#	   see  http://ami.scripps.edu/software/leginon-license
 #
 
 import ccdcamera
@@ -15,9 +15,9 @@ try:
 	import pywintypes
 	import win32com.client
 	try:
-		import TecnaiCCDWrapper
+		import NumSafeArray
 	except ImportError:
-		from pyScope import TecnaiCCDWrapper
+		from pyScope import NumSafeArray
 except ImportError:
 	pass
 
@@ -136,17 +136,17 @@ class Gatan(ccdcamera.CCDCamera):
 			#if self.getRetractable():
 				if self.getInserted():
 					self.setInserted(False)
-					image = TecnaiCCDWrapper.acquire(self.camera._oleobj_)
+					image = NumSafeArray.call(self.camera, 'AcquireRawImage')
 					self.setInserted(True)
 					return image
 			else:
 				exposuretime = self.getExposureTime()
 				self.setExposureTime(0)
-				image = TecnaiCCDWrapper.acquire(self.camera._oleobj_)
+				image = NumSafeArray.call(self.camera, 'AcquireRawImage')
 				self.setExposureTime(exposuretime)
 				return image
 		try:
-			return TecnaiCCDWrapper.acquire(self.camera._oleobj_)
+			return NumSafeArray.call(self.camera, 'AcquireRawImage')
 		except pywintypes.com_error, e:
 			raise ValueError('invalid image dimensions')
 

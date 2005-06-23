@@ -5,8 +5,9 @@
 #define _WIN32_DCOM
 #include <atlbase.h>
 
-static PyObject *acquire(PyObject *self, PyObject *args) {
-	PyObject *pPyObject;
+static PyObject *call(PyObject *self, PyObject *args) {
+	PyObject *o, *pPyObject;
+    const char *s;
 	PyIDispatch *pPyIDispatch;
 	IDispatch *pIDispatch;
 	REFIID riid = IID_NULL;
@@ -20,13 +21,23 @@ static PyObject *acquire(PyObject *self, PyObject *args) {
 	unsigned int uArgErr;
 	HRESULT hr;
 
-	rgszNames[0] = L"AcquireRawImage";
-
-	if (!PyArg_ParseTuple(args, "O", &pPyObject))
+	if (!PyArg_ParseTuple(args, "Os", &o, &s))
 		return NULL;
+
+    pPyObject = PyObject_GetAttrString(o, "_oleobj_");
+	if (pPyObject == NULL) {
+		PyErr_SetString(PyExc_AttributeError,
+                         "no attribute _oleobj_ for dispatch");
+		return NULL;
+	}
+
+    USES_CONVERSION;
+	rgszNames[0] = A2OLE(s);
 
 	pPyIDispatch = (PyIDispatch *)pPyObject;
 	pIDispatch = pPyIDispatch->GetI(pPyIDispatch);
+
+    Py_DECREF(pPyObject);
 
 	PY_INTERFACE_PRECALL;
 
@@ -100,12 +111,12 @@ static PyObject *acquire(PyObject *self, PyObject *args) {
 }
 
 static struct PyMethodDef methods[] = {
-	{"acquire", acquire, METH_VARARGS},
+	{"call", call, METH_VARARGS},
 	{NULL, NULL}
 };
 
-void initTecnaiCCDWrapper() {
-	Py_InitModule("TecnaiCCDWrapper", methods);
+void initNumSafeArray() {
+	Py_InitModule("NumSafeArray", methods);
 	import_libnumarray()
 }
 
