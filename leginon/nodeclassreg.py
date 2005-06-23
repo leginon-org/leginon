@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#		The Leginon software is Copyright 2003
+#		The Scripps Research Institute, La Jolla, CA
+#		For terms of the license agreement
+#		see  http://ami.scripps.edu/software/leginon-license
 #
 ### this module is used as a container for all node classes
 import node
@@ -26,16 +26,31 @@ class NotFoundError(NodeRegistryError):
 class InvalidNodeError(NodeRegistryError):
 	pass
 
-def registerNodeClass(modulename, classname, sortclass=None):
+def registerNodeClass(modulename, classname, sortclass=None, package=None):
+	# ...
+	if package is None:
+		path = None
+	else:
+		try:
+			file, path, desc = imp.find_module(package)
+		except ImportError, detail:
+			raise NotFoundError('package \'%s\' not found' % package)
+		try:
+			path = imp.load_module(package, file, path, desc).__path__
+		except Exception, detail:
+			raise
 	### find the module
 	try:
-		modinfo = imp.find_module(modulename)
+		modinfo = imp.find_module(modulename, path)
 	except ImportError, detail:
 		raise NotFoundError('module \'%s\' not found' % modulename)
 
 	### import the module
 	try:
-		mod = imp.load_module(modulename, *modinfo)
+		if package is None:
+			mod = imp.load_module(modulename, *modinfo)
+		else:
+			mod = imp.load_module(package + '.' + modulename, *modinfo)
 	except Exception, detail:
 		raise
 
@@ -74,27 +89,31 @@ def getSortClass(clsname):
 	return None, None
 
 def registerNodeClasses():
-    registrydir = os.path.join(os.path.dirname(__file__), 'noderegistry')
-    configfiles = []
-    for filename in os.listdir(registrydir):
-        root, ext = os.path.splitext(filename)
-        if ext == '.ncr':
-            if root == 'default':
-                configfiles.insert(0, os.path.join(registrydir, filename))
-            else:
-                configfiles.append(os.path.join(registrydir, filename))
-    configparser = ConfigParser.SafeConfigParser()
-    configparser.read(configfiles)
-    for classname in configparser.sections():
-        try:
-            modulename = configparser.get(classname, 'module')
-        except ConfigParser.NoOptionError:
-            continue
-        try:
-            sortclass = configparser.get(classname, 'type')
-        except ConfigParser.NoOptionError:
-            sortclass = None
-        registerNodeClass(modulename, classname, sortclass)
+	registrydir = os.path.join(os.path.dirname(__file__), 'noderegistry')
+	configfiles = []
+	for filename in os.listdir(registrydir):
+		root, ext = os.path.splitext(filename)
+		if ext == '.ncr':
+			if root == 'default':
+				configfiles.insert(0, os.path.join(registrydir, filename))
+			else:
+				configfiles.append(os.path.join(registrydir, filename))
+	configparser = ConfigParser.SafeConfigParser()
+	configparser.read(configfiles)
+	for classname in configparser.sections():
+		try:
+			modulename = configparser.get(classname, 'module')
+		except ConfigParser.NoOptionError:
+			continue
+		try:
+			sortclass = configparser.get(classname, 'type')
+		except ConfigParser.NoOptionError:
+			sortclass = None
+		try:
+			package = configparser.get(classname, 'package')
+		except ConfigParser.NoOptionError:
+			package = None
+		registerNodeClass(modulename, classname, sortclass, package)
 
 registerNodeClasses()
 
