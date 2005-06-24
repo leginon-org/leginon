@@ -72,10 +72,10 @@ class UCSFGatan(ccdcamera.CCDCamera):
     def setBinning(self, value):
         self.binning = dict(value)
 
-    def getExposure(self):
+    def getExposureTime(self):
         return int(self.camera.Exposure*1000)
 
-    def setExposure(self, value):
+    def setExposureTime(self, value):
         self.camera.Exposure = float(value)/1000.0
 
     def getExposureTypes(self):
