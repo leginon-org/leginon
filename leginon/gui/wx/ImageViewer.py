@@ -5,10 +5,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.44 $
+# $Revision: 1.45 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-17 19:00:39 $
-# $Author: suloway $
+# $Date: 2005-07-05 22:36:39 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -755,7 +755,7 @@ class ImagePanel(wx.Panel):
 		if vwidth == 0:
 			x = 0
 		else:
-			(x + width/2.0)/vwidth
+			x = (x + width/2.0)/vwidth
 		if vheight == 0:
 			y = 0
 		else:
