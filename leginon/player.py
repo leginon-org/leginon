@@ -6,7 +6,7 @@ def Player(*args, **kwargs):
 class _Player(threading._Verbose):
 	def __init__(self, callback=None, verbose=None):
 		threading._Verbose.__init__(self, verbose)
-		self.__cond = threading.Condition(threading.Lock())
+		self.__cond = threading.Condition(threading.RLock())
 		self.__flag = 'play'
 		self.__callback = callback
 

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Entry.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2005-07-07 23:13:43 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -32,7 +32,8 @@ class EntryEvent(wx.PyCommandEvent):
 class Entry(wx.TextCtrl):
 	def __init__(self, parent, id, chars=None, **kwargs):
 		try:
-			kwargs['style'] |= wx.TE_PROCESS_ENTER
+			if not kwargs['style'] & wx.TE_MULTILINE:
+				kwargs['style'] |= wx.TE_PROCESS_ENTER
 		except KeyError:
 			kwargs['style'] = wx.TE_PROCESS_ENTER
 
