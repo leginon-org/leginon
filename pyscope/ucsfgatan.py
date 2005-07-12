@@ -114,7 +114,8 @@ class UCSFGatan(ccdcamera.CCDCamera):
             raise NotImplementedError
 
     def getPixelSize(self):
-        return {'x': None, 'y': None}
+        #return {'x': None, 'y': None}
+        return None
 
     def _getCameraSize(self):
         binningx = self.camera.BinningX
