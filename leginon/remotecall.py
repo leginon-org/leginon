@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.21 $
+# $Revision: 1.22 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-04 23:17:27 $
-# $Author: pulokas $
+# $Date: 2005-07-12 21:48:27 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -93,15 +93,18 @@ class Object(object):
 		self._description = self._getDescription()
 
 	def _execute(self, origin, name, type, args=(), kwargs={}):
-		try:
-			result = self._interface[name][type](*args, **kwargs)
-		except KeyError, e:
-			result = TypeError('invalid execution name \'%s\' (%s)' % (name, type))
-		except Exception, result:
-			#import sys
-			#excinfo = sys.exc_info()
-			#sys.excepthook(*excinfo)
-			pass
+		if name not in self._interface:
+			result = TypeError('invalid execution name \'%s\'' % (name,))
+		elif type not in self._interface[name]:
+			result = TypeError('invalid execution type for name \'%s\' (%s)' % (name, type))
+		else:
+			try:
+				result = self._interface[name][type](*args, **kwargs)
+			except Exception, result:
+				#import sys
+				#excinfo = sys.exc_info()
+				#sys.excepthook(*excinfo)
+				pass
 		return result
 
 	def _getDescription(self):
@@ -332,10 +335,9 @@ class ObjectService(Locker):
 	def _call(self, node, name, attributename, type, args=(), kwargs={}):
 		request = Request(self.node.name, node, name, attributename, type,
 											args, kwargs)
-		try:
-			return self.clients[node].send(request)
-		except KeyError:
+		if node not in self.clients:
 			raise ValueError('no client for node %s' % node)
+		return self.clients[node].send(request)
 
 	def _multiCall(self, node, name, attributenames, types,
 									args=None, kwargs=None):
