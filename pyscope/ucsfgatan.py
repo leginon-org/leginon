@@ -33,6 +33,9 @@ class UCSFGatan(ccdcamera.CCDCamera):
         except pywintypes.com_error, e:
             raise RuntimeError('unable to initialize UCSF Gatan interface')
 
+        self.cameratypes = ('CCD', 'GIF')
+        self.cameratype = self.cameratypes[0]
+
         try:
             self.loadConfigFile()
         except IOError:
@@ -53,6 +56,23 @@ class UCSFGatan(ccdcamera.CCDCamera):
                 camerasize[axis] = options[key]
         if 'x' in camerasize and 'y' in camerasize:
             self.camerasize = camerasize
+
+        self.pixelsizes = {}
+        for camera in ('CCD', 'GIF'):
+            try:
+                mag = options[camera + 'PixelMag']
+                pixelsize = options[camera + 'PixelSize']
+                self.pixelsizes[camera] = float(mag)*float(pixelsize)*1e-10
+            except KeyError:
+                pass
+
+    def getCameraType(self):
+        return self.cameratype
+
+    def setCameraType(self, cameratype):
+        if cameratype not in self.cameratypes:
+            raise ValueError('invalid camera \'%s\'' % cameratype)
+        self.cameratype = cameratype
 
     def getOffset(self):
         return dict(self.offset)
@@ -114,8 +134,11 @@ class UCSFGatan(ccdcamera.CCDCamera):
             raise NotImplementedError
 
     def getPixelSize(self):
-        #return {'x': None, 'y': None}
-        return None
+        try:
+            pixelsize = self.pixelsizes[self.cameratype]
+        except KeyError:
+            raise ValueError('no pixel size for camera type')
+        return {'x': pixelsize, 'y': pixelsize}
 
     def _getCameraSize(self):
         binningx = self.camera.BinningX
