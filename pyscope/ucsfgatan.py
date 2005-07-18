@@ -182,6 +182,12 @@ class UCSFGatan(ccdcamera.CCDCamera):
         self.camera.ImageBottom = bottom
         return {'x': size['ImageRight'], 'y': size['ImageBottom']}
 
+    def getSlitWidth(self):
+        return self.camera.SlitWidth
+
+    def setSlitWidth(self, width):
+        self.camera.SlitWidth = width
+
 def parseConfigTomo(filename):
     fp = open(filename)
 
