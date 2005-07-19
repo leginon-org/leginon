@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.31 $
+# $Revision: 1.32 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-24 17:56:05 $
+# $Date: 2005-07-19 16:51:31 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -14,6 +14,12 @@
 import data
 import remotecall
 import gui.wx.Events
+
+class InstrumentError(Exception):
+    pass
+
+class NotAvailableError(InstrumentError):
+    pass
 
 class Proxy(object):
 	def __init__(self, objectservice, session=None, wxeventhandler=None):
@@ -80,7 +86,7 @@ class Proxy(object):
 		try:
 			return self.tems[temname]
 		except KeyError:
-			raise ValueError('TEM \'%s\' not available' % temname)
+			raise NotAvailableError('TEM \'%s\' not available' % temname)
 
 	def getTEMName(self):
 		if self.tem is None:
@@ -128,7 +134,7 @@ class Proxy(object):
 		try:
 			return self.ccdcameras[ccdcameraname]
 		except KeyError:
-			raise ValueError('CCD Camera \'%s\' not available' % ccdcameraname)
+			raise NotAvailableError('CCD Camera \'%s\' not available' % ccdcameraname)
 
 	def getCCDCameraName(self):
 		if self.ccdcamera is None:
@@ -177,7 +183,7 @@ class Proxy(object):
 			try:
 				self.tem = self.tems[name]
 			except KeyError:
-				raise ValueError('TEM \'%s\' not available' % name)
+				raise NotAvailableError('TEM \'%s\' not available' % name)
 		if self.wxeventhandler is not None:
 			evt = gui.wx.Events.SetTEMEvent(self.wxeventhandler, name=name)
 			self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)
@@ -191,7 +197,7 @@ class Proxy(object):
 				self.ccdcamera = self.ccdcameras[name]
 				self.camerasize = self.camerasizes[name]
 			except KeyError:
-				raise ValueError('CCD camera \'%s\' not available' % name)
+				raise NotAvailableError('CCD camera \'%s\' not available' % name)
 		if self.wxeventhandler is not None:
 			evt = gui.wx.Events.SetCCDCameraEvent(self.wxeventhandler, name=name)
 			self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)
@@ -210,7 +216,7 @@ class Proxy(object):
 				try:
 					proxy = self.tems[temname]
 				except KeyError:
-					raise ValueError('TEM \'%s\' not available' % temname)
+					raise NotAvailableError('TEM \'%s\' not available' % temname)
 		elif issubclass(dataclass, data.CameraEMData):
 			if ccdcameraname is None:
 				proxy = self.ccdcamera
@@ -218,7 +224,7 @@ class Proxy(object):
 				try:
 					proxy = self.ccdcameras[ccdcameraname]
 				except KeyError:
-					raise ValueError('CCD Camera \'%s\' not available' % ccdcameraname)
+					raise NotAvailableError('CCD Camera \'%s\' not available' % ccdcameraname)
 		elif issubclass(dataclass, data.CorrectedCameraImageData):
 			if self.imagecorrection is None:
 				raise RuntimeError('no image correction set')
@@ -270,7 +276,7 @@ class Proxy(object):
 				try:
 					proxy = self.tems[temname]
 				except KeyError:
-					raise ValueError('TEM \'%s\' not available' % temname)
+					raise NotAvailableError('TEM \'%s\' not available' % temname)
 		elif isinstance(instance, data.CameraEMData):
 			if ccdcameraname is None:
 				proxy = self.ccdcamera
@@ -278,7 +284,7 @@ class Proxy(object):
 				try:
 					proxy = self.ccdcameras[ccdcameraname]
 				except KeyError:
-					raise ValueError('CCD Camera \'%s\' not available' % ccdcameraname)
+					raise NotAvailableError('CCD Camera \'%s\' not available' % ccdcameraname)
 		elif isinstance(instance, data.CameraImageData):
 			instance = dataclass()
 			self.setData(instance['scope'], temname=temname)
