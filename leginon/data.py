@@ -1643,6 +1643,7 @@ class SettingsData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('name', str),
+			('isdefault', bool),
 		)
 	typemap = classmethod(typemap)
 

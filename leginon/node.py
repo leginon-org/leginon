@@ -104,25 +104,38 @@ class Node(object):
 
 	# settings
 
-	def initializeSettings(self):
+	def initializeSettings(self, user=None):
 		if not hasattr(self, 'settingsclass'):
 			return
-		qsession = data.SessionData(initializer={'user': self.session['user']})
+
+		# load the requested user settings
+		if user is None:
+			user = self.session['user']
+		qsession = data.SessionData(initializer={'user': user})
 		qdata = self.settingsclass(initializer={'session': qsession,
 																						'name': self.name})
-		try:
-			settings = self.research(qdata, results=1)[0]
+		settings = self.research(qdata, results=1)
+		# if that failed, try to load default settings from DB
+		if not settings:
+			qdata = self.settingsclass(initializer={'isdefault': True, 'name': self.name})
+			settings = self.research(qdata, results=1)
+
+		# if that failed, use hard coded defaults
+		if not settings:
+			self.settings = copy.deepcopy(self.defaultsettings)
+		else:
+			# get query result into usable form
+			settings = settings[0]
 			self.settings = settings.toDict(dereference=True)
 			del self.settings['session']
 			del self.settings['name']
-		except IndexError:
-			self.settings = copy.deepcopy(self.defaultsettings)
 
-	def setSettings(self, d):
+	def setSettings(self, d, isdefault=False):
 		self.settings = d
 		sd = self.settingsclass.fromDict(d)
 		sd['session'] = self.session
 		sd['name'] = self.name
+		sd['isdefault'] = isdefault
 		self.publish(sd, database=True, dbforce=True)
 
 	def getSettings(self):
