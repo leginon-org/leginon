@@ -45,14 +45,18 @@ def registerNodeClass(modulename, classname, sortclass=None, package=None):
 	except ImportError, detail:
 		raise NotFoundError('module \'%s\' not found' % modulename)
 
-	### import the module
-	try:
-		if package is None:
-			mod = imp.load_module(modulename, *modinfo)
-		else:
-			mod = imp.load_module(package + '.' + modulename, *modinfo)
-	except Exception, detail:
-		raise
+	### import the module (if not already imported)
+	if package is None:
+		impname = modulename
+	else:
+		impname = package + '.' + modulename
+	if impname in sys.modules:
+		mod = sys.modules[impname]
+	else:
+		try:
+				mod = imp.load_module(impname, *modinfo)
+		except Exception, detail:
+			raise
 
 	### get the class from the module
 	try:
