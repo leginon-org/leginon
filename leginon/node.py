@@ -135,7 +135,10 @@ class Node(object):
 		sd = self.settingsclass.fromDict(d)
 		sd['session'] = self.session
 		sd['name'] = self.name
-		sd['isdefault'] = isdefault
+		if self.session['user']['name'] == 'administrator':
+			sd['isdefault'] = True
+		else:
+			sd['isdefault'] = isdefault
 		self.publish(sd, database=True, dbforce=True)
 
 	def getSettings(self):
