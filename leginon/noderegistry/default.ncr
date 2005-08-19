@@ -7,7 +7,7 @@ module: corrector
 type: Utility
 
 [PresetsManager]
-#module: presets
+module: presets
 type: Utility
 
 [DriftManager]
