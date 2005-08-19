@@ -1181,6 +1181,7 @@ class CorrectorImageData(ImageData):
 			('camstate', CorrectorCamstateData),
 			('tem', InstrumentData),
 			('ccdcamera', InstrumentData),
+			('scope', ScopeEMData),
 		)
 	typemap = classmethod(typemap)
 
