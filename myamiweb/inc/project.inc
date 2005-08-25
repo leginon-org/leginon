@@ -48,7 +48,7 @@ class project {
 		if ($type=="all")  
 			$projects[] = array(	0 => DEFAULT_PROJECT, 'id' => DEFAULT_PROJECT,
 						1 => DEFAULT_PROJECT, 'name' => DEFAULT_PROJECT);
-                $q='select projectId, name  from projects';
+                $q='select projectId, name  from projects order by name';
                 $RprojectInfo = $this->mysql->SQLQuery($q);
                 while ($row = mysql_fetch_array($RprojectInfo))
                         $projects[]=array(0 => $row[projectId], 'id' => $row[projectId],
