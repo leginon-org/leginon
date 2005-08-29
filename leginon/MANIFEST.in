@@ -1,4 +1,5 @@
 include config/default.cfg
+include noderegistry/default.ncr
 include icons/*.png
 include icons/processing/*.png
 include Leginon.pth
