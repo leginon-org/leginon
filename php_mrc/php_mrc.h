@@ -15,7 +15,7 @@
   | Author:                                                              |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.h,v 1.3 2005-06-07 20:36:09 dfellman Exp $ 
+  $Id: php_mrc.h,v 1.4 2005-08-29 23:07:14 dfellman Exp $ 
 */
 
 #ifndef PHP_MRC_H
@@ -41,6 +41,7 @@ PHP_RSHUTDOWN_FUNCTION(mrc);
 PHP_MINFO_FUNCTION(mrc);
 
 ZEND_FUNCTION(imagecreatefrommrc);
+ZEND_FUNCTION(imagecopyfrommrc);
 ZEND_FUNCTION(imagefilteredcreatefrommrc);
 ZEND_FUNCTION(imagemrcinfo);
 ZEND_FUNCTION(imagefiltergaussian);

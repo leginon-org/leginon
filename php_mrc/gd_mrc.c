@@ -54,6 +54,57 @@ void mrc_to_float(MRC *mrc, float *pdata_array) {
         }
 }
 
+void mrc_copy(MRC *mrc_src, MRC *mrc_dst, int x1, int y1, int x2, int y2) {
+
+        float	*data_array, *data_array_dst;
+
+        int     w_src=mrc_src->header.nx, h_src=mrc_src->header.ny,
+                n_src=w_src*h_src,
+		w_dst, h_dst, n_dst,
+		x_min=x1, x_max=x2,
+		y_min=y1, y_max=y2,
+                i,j,ij,t;
+
+	if (x1>x2) {
+		x_min=x2;
+		x_max=x1;
+	}
+	if (y1>y2) {
+		y_min=y2;
+		y_max=y1;
+	}
+	if (x_max > w_src)
+		x_max = w_src;
+	if (y_max > h_src)
+		y_max = h_src;
+
+	w_dst = x_max-x_min;
+	h_dst = y_max-y_min;
+	n_dst=w_dst*h_dst;
+
+	memcpy(&mrc_dst->header, &mrc_src->header, MRC_HEADER_SIZE);
+
+	mrc_dst->header.nx = w_dst;
+	mrc_dst->header.ny = h_dst;
+	mrc_dst->header.mode = MRC_MODE_FLOAT;
+
+        mrc_dst->pbyData = malloc(sizeof(float)*n_dst);
+	data_array_dst = (float *)mrc_dst->pbyData;
+	
+	data_array = malloc(sizeof(float)*n_src);
+	mrc_to_float(mrc_src, data_array);
+
+	for (t=0, j=y_min; j<y_max; j++) {
+		for (i=x_min; i<x_max; i++) {
+			ij = i + j*w_src;
+			// ij = i*N + j;
+			data_array_dst[t] = data_array[ij];
+			t++;
+		}
+	}
+	free(data_array);
+}
+
 void mrc_to_histogram(MRC *mrc, int *frequency, float *classes, int nb_bars) {
         float   fmin=mrc->header.amin,
                 fmax=mrc->header.amax,
@@ -105,33 +156,36 @@ void mrc_to_image(MRC *mrc, int ** tpixels,
                         int kernel, float sigma, int colormap)
 {
 
+
         float   fmin=mrc->header.amin,
                 fmax=mrc->header.amax,
+                fmean=mrc->header.amean,
+                stddev=mrc->header.rms,
                 scale = fmax - fmin,
                 min, max,
                 f_val;
 
-        int     h=mrc->header.nx, w=mrc->header.ny,
-                n=w*h,
+        int     w=mrc->header.nx, h=mrc->header.ny,
+		n=w*h,
                 mode=mrc->header.mode,
-                i,j,ij,t,
+                i,j,t,
                 index,
                 binningsize = binning*binning,
-               // indexes[binningsize],
                 n_w = w/binning,
-                n_h = w/binning,
+                n_h = h/binning,
                 off_w = w - n_w * binning;
 
         int     filter = 0,
                 maskindex=0,
                 masksize = kernel*kernel,
-              //  maskindexes[masksize],
                 x=0,
                 y=0;
 
+	double	somme=0, somme2=0; 
+
 	int	*indexes,
 		*maskindexes;
-        // double  maskData[masksize];
+
         double  *maskData;
 
         float   density,
@@ -155,18 +209,25 @@ void mrc_to_image(MRC *mrc, int ** tpixels,
 
         mrc_to_float(mrc, data_array);
 
-        if(scale <= 0) {
-                fmax = fmin = data_array[0];
+	if(scale <= 0 || stddev<=0) {
+		fmax = fmin = data_array[0];
                 for (i = 0; i < n; i++) {
-                        fmax = MAX(fmax, data_array[i]);
-                        fmin = MIN(fmin, data_array[i]);
-                }
-                scale = fmax - fmin;
-        }
+			f_val = data_array[i];
+                        fmax = MAX(fmax, f_val);
+                        fmin = MIN(fmin, f_val);
+			somme  += f_val;
+			somme2 += f_val*f_val;
+		}
+		if (n>0) {
+			fmean = somme/n;
+			stddev = sqrt((somme2 * n - somme * somme) / (double)(n*n));
+		}
+	}
 
-        min = fmin + pmin * scale / densitymax;
-        max = fmin + pmax * scale / densitymax;
-        scale = max - min;
+	fmax = fmean + 3 * stddev ; 
+	fmin = fmean - 3 * stddev; 
+	scale = fmax - fmin;
+
 
         if (scale != 0)
                 for (i=-1,j=0,t=0; t<n; t+=binning,j++) {
@@ -193,7 +254,7 @@ void mrc_to_image(MRC *mrc, int ** tpixels,
                                 f_val = data_array[t];
                         }
 
-                        f_val = (f_val-min)*densitymax/scale;
+                        f_val = (f_val-fmin)*densitymax/scale;
                         tpixels[i][j] = setColorDensity(f_val, gray);
 
                         if (binning>1)

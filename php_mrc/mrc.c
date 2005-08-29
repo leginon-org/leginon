@@ -85,6 +85,10 @@ int readMRCHeader(FILE *pFMRC, MRCHeader *pMRCHeader) {
     byteswapread(pFMRC, &pMRCHeader->extra, 4*MRC_USER, 1, fuByteOrder);
     byteswapread(pFMRC, &pMRCHeader->xorigin, 1, 4, fuByteOrder);
     byteswapread(pFMRC, &pMRCHeader->yorigin, 1, 4, fuByteOrder);
+    byteswapread(pFMRC, &pMRCHeader->zorigin, 1, 4, fuByteOrder);
+    byteswapread(pFMRC, &pMRCHeader->map, 1, 4, fuByteOrder);
+    byteswapread(pFMRC, &pMRCHeader->machstamp, 1, 4, fuByteOrder);
+    byteswapread(pFMRC, &pMRCHeader->rms, 1, 4, fuByteOrder);
     byteswapread(pFMRC, &pMRCHeader->nlabl, 1, 4, fuByteOrder);
     byteswapread(pFMRC, &pMRCHeader->label, MRC_LABEL_SIZE*MRC_NUM_LABELS, 1, fuByteOrder);
 	

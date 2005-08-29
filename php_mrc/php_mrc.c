@@ -15,7 +15,7 @@
   | Author:                                                              |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.4 2005-06-09 17:30:12 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.5 2005-08-29 23:07:14 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -48,6 +48,7 @@ static int le_mrc;
  */
 function_entry mrc_functions[] = {
 	ZEND_FE(imagecreatefrommrc, NULL)
+	ZEND_FE(imagecopyfrommrc, NULL)
         ZEND_FE(imagefilteredcreatefrommrc, NULL)
         ZEND_FE(imagemrcinfo, NULL)
         ZEND_FE(imagefiltergaussian, NULL)
@@ -263,6 +264,117 @@ ZEND_FUNCTION(imagecreatefrommrc)
 }
 /* }}} */
 
+
+/* 
+{{{ imagecopyfrommrc -- Copy data from (x1,y1) (x2,y2) from a MRC file, URL or a String, with rescaling options.
+Description:
+	resource imagecopyfrommrc ( string data, int x1, int y1, int x2, int y2 [, int pmin [, int pmax [, int binning [, boolean skip]]]])
+	(image resource compatible with gd library)
+*/
+ZEND_FUNCTION(imagecopyfrommrc)
+{
+	zval **data, **X1, **Y1, **X2, **Y2, **PMIN, **PMAX, **BINNING, **SKIP_AVRG, **COLOR_MAP;
+	gdIOCtx *io_ctx;
+	MRC mrc_src, mrc_dst;
+	gdImagePtr im;
+	char *ptfile;
+	int argc = ZEND_NUM_ARGS();
+	int nWidth = 0;
+        int nHeight = 0;
+	int x1=0, y1=0, x2=0, y2=0;
+	int minPix=densityMIN, maxPix = -1;
+	int binning = 1;
+	int skip_avrg = 0;
+	int colormap = 0;
+
+	if (argc < 5 || argc > 10) 
+	{
+		WRONG_PARAM_COUNT;
+	} 
+
+	zend_get_parameters_ex(argc, &data, &X1, &Y1, &X2, &Y2, &PMIN, &PMAX, &COLOR_MAP, &BINNING, &SKIP_AVRG);
+
+	if (argc>1) {
+		convert_to_long_ex(X1);
+		x1 = Z_LVAL_PP(X1);
+	}
+	if (argc>2) {
+		convert_to_long_ex(Y1);
+		y1 = Z_LVAL_PP(Y1);
+	}
+	if (argc>3) {
+		convert_to_long_ex(X2);
+		x2 = Z_LVAL_PP(X2);
+	}
+	if (argc>4) {
+		convert_to_long_ex(Y2);
+		y2 = Z_LVAL_PP(Y2);
+	}
+	if (argc>5) {
+		convert_to_long_ex(PMIN);
+		minPix = Z_LVAL_PP(PMIN);
+	}
+	if (argc>6) {
+		convert_to_long_ex(PMAX);
+		maxPix = Z_LVAL_PP(PMAX);
+	}
+	if (argc>7) {
+		convert_to_long_ex(COLOR_MAP);
+		colormap = Z_LVAL_PP(COLOR_MAP);
+	}
+	if (argc>8) {
+		convert_to_long_ex(BINNING);
+		binning = Z_LVAL_PP(BINNING);
+	}
+	if (argc>9) {
+		convert_to_boolean_ex(SKIP_AVRG);
+		skip_avrg = Z_LVAL_PP(SKIP_AVRG);
+	}
+
+	if (binning <= 0) 
+		zend_error(E_ERROR, "%s(): binning must be greater than 0", get_active_function_name(TSRMLS_C));
+	if (x1==x2 && y1==y2) 
+		zend_error(E_ERROR, "%s(): (x1,y1) should be different than (x2,y2)", get_active_function_name(TSRMLS_C));
+	if (x1<0 || x2<0 || y1<0 || y2<0)
+		zend_error(E_ERROR, "%s(): x1,y1,x2,y2 must be strictly positive numbers", get_active_function_name(TSRMLS_C));
+
+	convert_to_string_ex(data);
+	io_ctx = gdNewDynamicCtx (Z_STRLEN_PP(data), Z_STRVAL_PP(data));
+	if (!io_ctx) {
+		RETURN_FALSE;
+	}
+
+	if(gdreadMRCHeader(io_ctx, &(mrc_src.header))==-1) {
+
+		/* not a mrc string header */
+		ptfile = (char *)((*data)->value.str.val);
+		if(loadMRC(ptfile, &mrc_src)==-1) {
+			zend_error(E_ERROR, "%s(): %s : No such file or directory ",
+					 get_active_function_name(TSRMLS_C),ptfile);
+		}
+
+	} else if(gdreadMRCData(io_ctx, &mrc_src)==-1) {
+		zend_error(E_ERROR, "%s(): Input is not a MRC string ",
+				 get_active_function_name(TSRMLS_C));
+	}
+
+	mrc_copy(&mrc_src, &mrc_dst, x1, y1, x2, y2);
+
+	maxPix = (maxPix<0) ?  ((colormap) ? densityColorMAX : densityMAX) : maxPix;
+        nWidth = mrc_dst.header.nx/binning;
+        nHeight = mrc_dst.header.ny/binning;
+	
+	im = gdImageCreateTrueColor(nWidth, nHeight);
+
+	mrc_to_image(&mrc_dst, im->tpixels, minPix , maxPix, binning, skip_avrg, 0, 0, colormap);
+	free(mrc_src.pbyData);
+	free(mrc_dst.pbyData);
+	free(io_ctx);
+	ZEND_REGISTER_RESOURCE(return_value, im, le_gd);
+
+}
+/* }}} */
+
 #ifdef HAVE_FFTW
 /* 
 {{{ imagecreatefftfrommrc -- Generate FFT image from MRC file, URL or a String, with rescaling options.
@@ -336,20 +448,6 @@ ZEND_FUNCTION(imagecreatefftfrommrc)
 	
 	
 	im = gdImageCreateTrueColor(nWidth, nHeight);
-
-	if (0) {
-	Info pInfo;
-	fftw_info(&mrc, &pInfo, mask_radius); 
-	zend_printf("info minval %f <br>", pInfo.minval);
-	zend_printf("info maxval  %f <br>", pInfo.maxval);
-	zend_printf("info nminval %f <br>", pInfo.nminval);
-	zend_printf("info nmaxval  %f <br>", pInfo.nmaxval);
-	zend_printf("info stddev  %f <br>", pInfo.stddev);
-	zend_printf("info avg  %f <br>", pInfo.avg);
-	zend_printf("info scale %f <br>", pInfo.scale);
-	zend_printf("info n %d <br>", pInfo.n);
-	return;
-	}
 
 	mrc_to_fftw_image(&mrc, im->tpixels, mask_radius, minPix, maxPix, colormap); 
 	free(mrc.pbyData);
@@ -460,6 +558,7 @@ ZEND_FUNCTION(imagefilteredcreatefrommrc)
 }
 /* }}} */
 
+
 /*
 {{{ imagemrcinfo -- retrieve MRC header information MRC file, URL or a String,
 	as a PHP associative array.
@@ -541,19 +640,23 @@ ZEND_FUNCTION(imagemrcinfo)
 	add_assoc_long(return_value, key, mrch.ispg);
 	key = "nsymbt";
 	add_assoc_long(return_value, key, mrch.nsymbt);
-	key = "extra[MRC_USER]";
-	add_assoc_long(return_value, key, mrch.extra[MRC_USER]);
 	key = "xorigin";
 	add_assoc_double(return_value, key, mrch.xorigin);
 	key = "yorigin";
 	add_assoc_double(return_value, key, mrch.yorigin);
+	key = "zorigin";
+	add_assoc_double(return_value, key, mrch.zorigin);
+	key = "map";
+	add_assoc_string(return_value, key, mrch.map, 1);
+	key = "mapstamp";
+	add_assoc_string(return_value, key, mrch.machstamp, 1);
+	key = "rms";
+	add_assoc_double(return_value, key, mrch.rms);
 	key = "nlabl";
 	add_assoc_long(return_value, key, mrch.nlabl);
 
-
 }
 /* }}} */
-
 
 /*
 {{{ imagefastcopyresized -- Copy and resize part of an image

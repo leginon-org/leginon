@@ -27,40 +27,44 @@ extern "C" {
 #define MRC_MODE_FLOAT_COMPLEX  4
 #define MRC_MODE_UNSIGNED_SHORT 3
 
-#define MRC_USER            29
+#define MRC_USER            25
 #define MRC_LABEL_SIZE      80
 #define MRC_NUM_LABELS      10
 
 
 typedef struct MRCHeaderStruct {
-	int				nx;					/* Number of columns */
-	int				ny;					/* Number of rows */
-	int				nz;					/* Number of sections */
-	int				mode;				/* See modes above. */
-	int				nxstart;			/* No. of first column in map   default 0.*/
-	int				nystart;			/* No. of first row in map  default 0.*/
-	int				nzstart;			/* No. of first section in map  default 0.*/
-	int				mx;					/* Number of intervals along X. */
-	int				my;					/* Number of intervals along Y. */
-	int				mz;					/* Number of intervals along Z. */
-	float			x_length;			/* Cell dimensions (Angstroms). */
-	float			y_length;			/* Cell dimensions (Angstroms). */
-	float			z_length;			/* Cell dimensions (Angstroms). */
-	float			alpha;				/* Cell angles (Degrees). */
-	float			beta;				/* Cell angles (Degrees). */
-	float			gamma;				/* Cell angles (Degrees). */
-	int				mapc;				/* Which axis corresponds to Columns.  */
-	int				mapr;				/* Which axis corresponds to Rows. */
-	int				maps;				/* Which axis corresponds to Sections. */
-	float			amin;				/* Minimum density value. */
-	float			amax;				/* Maximum density value. */
-	float			amean;				/* Mean density value.*/
-	int				ispg;				/* Space group number (0 for images) */
-	int				nsymbt;				/* Number of bytes used for storing symmetry operators */
+	int			nx;		/* Number of columns */
+	int			ny;		/* Number of rows */
+	int			nz;		/* Number of sections */
+	int			mode;		/* See modes above. */
+	int			nxstart;	/* No. of first column in map   default 0.*/
+	int			nystart;	/* No. of first row in map  default 0.*/
+	int			nzstart;	/* No. of first section in map  default 0.*/
+	int			mx;		/* Number of intervals along X. */
+	int			my;		/* Number of intervals along Y. */
+	int			mz;		/* Number of intervals along Z. */
+	float			x_length;	/* Cell dimensions (Angstroms). */
+	float			y_length;	/* Cell dimensions (Angstroms). */
+	float			z_length;	/* Cell dimensions (Angstroms). */
+	float			alpha;		/* Cell angles (Degrees). */
+	float			beta;		/* Cell angles (Degrees). */
+	float			gamma;		/* Cell angles (Degrees). */
+	int			mapc;		/* Which axis corresponds to Columns.  */
+	int			mapr;		/* Which axis corresponds to Rows. */
+	int			maps;		/* Which axis corresponds to Sections. */
+	float			amin;		/* Minimum density value. */
+	float			amax;		/* Maximum density value. */
+	float			amean;		/* Mean density value.*/
+	int			ispg;		/* Space group number (0 for images) */
+	int			nsymbt;		/* Number of bytes used for storing symmetry operators */
 	unsigned long	extra[MRC_USER];	/* For user, all set to zero by default */
-	float			xorigin;			/* X origin */
-	float			yorigin;			/* Y origin */
-	int				nlabl;				/* Number of labels being used. */
+	float			xorigin;	/* X origin */
+	float			yorigin;	/* Y origin */
+	float			zorigin;	/* Z origin */
+	char			map[4];		/* character string 'MAP ' to identify file type */
+	char			machstamp[4];	/* machine stamp */
+	float			rms;		/* rms deviation of map from mean density*/
+	int			nlabl;		/* Number of labels being used. */
 	/* 10 text labels of 80 characters each. */
 	char			label[MRC_NUM_LABELS][MRC_LABEL_SIZE + 1];
 } MRCHeader;

@@ -24,3 +24,4 @@ int gdloadMRC(gdIOCtx *io_ctx, MRC *pMRC);
 int gdreadMRCData(gdIOCtx *io_ctx, MRC *pMRC);
 int gdloadMRC(gdIOCtx *io_ctx, MRC *pMRC);
 
+void mrc_copy(MRC *mrc_src, MRC *mrc_dst, int x1, int y1, int x2, int y2);
