@@ -34,17 +34,17 @@ foreach($stats as  $field=>$data) {
 			$p = $leginondata->getPresetFromImageId($imageId);
 			$stats[$field][$k]['preset'] = $p['name'];
 			$cdf = '<br><a href="ctfgraph.php?hg=1&Id='.$sessionId
-				.'&f='.$field.'&df='.$data[$k]['defocus_nominal'].'">'
+				.'&preset='.$p['name'].'&f='.$field.'&df='.$data[$k]['defocus_nominal'].'">'
 				.'<img border="0" src="ctfgraph.php?w=400&hg=1&Id='.$sessionId
-				.'&f='.$field.'&df='.$data[$k]['defocus_nominal'].'"></a>';
+				.'&preset='.$p['name'].'&f='.$field.'&df='.$data[$k]['defocus_nominal'].'"></a>';
 			$stats[$field][$k]['histogram'] = $cdf;
 			$cdf = '<a href="ctfgraph.php?vd=1&Id='.$sessionId
-				.'&f='.$field.'&df='.$data[$k]['defocus_nominal'].'">'
+				.'&preset='.$p['name'].'&f='.$field.'&df='.$data[$k]['defocus_nominal'].'">'
 				.'[data]</a><br>';
 			$cdf .= '<a href="ctfgraph.php?Id='.$sessionId
-				.'&f='.$field.'&df='.$data[$k]['defocus_nominal'].'">'
+				.'&preset='.$p['name'].'&f='.$field.'&df='.$data[$k]['defocus_nominal'].'">'
 				.'<img border="0" src="ctfgraph.php?w=400&Id='.$sessionId
-				.'&f='.$field.'&df='.$data[$k]['defocus_nominal'].'"></a>';
+				.'&preset='.$p['name'].'&f='.$field.'&df='.$data[$k]['defocus_nominal'].'"></a>';
 			$stats[$field][$k]['graph'] = $cdf;
 		}
 }

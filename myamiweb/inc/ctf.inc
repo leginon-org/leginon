@@ -39,7 +39,14 @@ class ctfdata {
 		return $r['runId'];
 	}
 
-	function getCtfInfo($sessionId, $runId) {
+	function getCtfRunIds($sessionId) {
+		$q = "select runId "
+			."from `run` where `sessionId`='$sessionId'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getCtfInfo($sessionId, $runId=false) {
 		$q =	"select "
 			."i.`DEF_id`, "
 			."i.`defocus_nominal`, "
@@ -61,7 +68,11 @@ class ctfdata {
 			."c.`snr` "
 			."from image i left join ctf c "
 			."on (c.imageId=i.imageId) "
-			."where i.sessionId='$sessionId' and c.runId='$runId' ";
+			."where i.sessionId='$sessionId' ";
+			if ($runId)
+				$q .= "and c.runId='$runId' ";
+			else
+				$q .= "and c.ctfId=(select max(c2.ctfId) from ctf c2 where c2.imageId = c.imageId)";
 		return $this->mysql->getSQLResult($q);
 	}
 
@@ -113,7 +124,7 @@ class ctfdata {
 	}
 
 
-	function getStats($fields, $sessionId, $runId) {
+	function getStats($fields, $sessionId, $runId=false) {
 		if (!is_array($fields))
 			return False;
 		foreach ($fields as $field) {
@@ -131,8 +142,37 @@ class ctfdata {
 			$q =	"select ".$select." "
 			."from image i left join ctf c "
 			."on (c.imageId=i.imageId) "
-			."where i.sessionId='$sessionId' and c.runId='$runId' "
-			."group by i.defocus_nominal ";
+			."where i.sessionId='$sessionId' ";
+			if ($runId)
+				$q .= "and c.runId='$runId' ";
+			else
+				$q .= "and c.ctfId=(select max(c2.ctfId) from ctf c2 where c2.imageId = c.imageId)";
+			$q .= "group by i.defocus_nominal";
+			$r = $this->mysql->getSQLResult($q);
+			$stats[$k] = $r;
+		}
+		return $stats;
+	}
+
+	function getData($fields, $sessionId, $runId=false) {
+		if (!is_array($fields))
+			return False;
+		foreach ($fields as $field) {
+			$selects[$field] = "i.DEF_id as id, i.defocus_nominal, "
+					. "`$field`";
+		}
+		if (!is_array($selects))
+			return False;
+		$stats = array();
+		foreach ($selects as $k=>$select) {
+			$q =	"select ".$select." "
+			."from image i left join ctf c "
+			."on (c.imageId=i.imageId) "
+			."where i.sessionId='$sessionId' ";
+			if ($runId)
+				$q .= "and c.runId='$runId' ";
+			else
+				$q .= "and c.ctfId=(select max(c2.ctfId) from ctf c2 where c2.imageId = c.imageId)";
 			$r = $this->mysql->getSQLResult($q);
 			$stats[$k] = $r;
 		}

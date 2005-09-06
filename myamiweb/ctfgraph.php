@@ -22,6 +22,7 @@ $viewdata = ($_GET['vd']==1) ? true : false;
 $histogram = ($_GET[hg]==1) ? true : false;
 $f = $_GET[f];
 $defocus_nom = $_GET[df];
+$preset=$_GET['preset'];
 
 $ctf = new ctfdata();
 $runId = $ctf->getLastCtfRun($sessionId);
@@ -35,31 +36,33 @@ function TimeCallback($aVal) {
     return Date('H:i',$aVal);
 }
 
+
 foreach($ctfinfo as $t) {
-	if ($t['defocus_nominal']!=$df)
+	if ($t['defocus_nominal']!=$defocus_nom)
 		continue;
 	$id = $t['DEF_id'];
+	$p = $leginondata->getPresetFromImageId($id);
+	if ($p['name']!=$preset)
+		continue;
 	$data[$id] = $t[$f];
 	$where[] = "DEF_id=".$id;
 }
 
-$p = $leginondata->getPresetFromImageId($id);
-$preset = $p['name'];
-$defocus_nominal = $df;
 
-
-$sqlwhere = "WHERE (".join(' OR ',$where).") and `REF|SessionData|session`=".$sessionId;
+$sqlwhere = "WHERE (".join(' OR ',$where).") and a.`REF|SessionData|session`=".$sessionId ;
 $q = 	"select DEF_id, unix_timestamp(DEF_timestamp) as unix_timestamp, "
-	." DEF_timestamp as timestamp from AcquisitionImageData ".$sqlwhere;
+	." DEF_timestamp as timestamp from AcquisitionImageData a "
+	.$sqlwhere;
 	$r = $leginondata->getSQLResult($q);
 	foreach($r as $row) {
+		$e = $leginondata->getPresetFromImageId($row['DEF_id']);
 		$ndata[]=array("timestamp" => $row['timestamp'], "$f"=>$data[$row['DEF_id']]);
 		$datax[]=$row['unix_timestamp'];
 		$datay[]=$data[$row['DEF_id']];
 	}
 
 if ($viewdata) {
-	$keys = array("timestamp", "$f");
+	$keys = array("timestamp", "$f" );
 	echo dumpData($ndata, $keys);
 	exit;
 }
@@ -85,7 +88,7 @@ if (!$data) {
 		$bplot = new BarPlot($rdatay, $rdatax);
 		$graph->Add($bplot);
 
-		$graph->title->Set("Histogram $f : $defocus_nominal : $preset ");
+		$graph->title->Set("Histogram $f : $defocus_nom: $preset ");
 		$graph->xaxis->title->Set("$f");
 		$graph->xaxis->SetTextLabelInterval(3);
 		$graph->xaxis->SetLabelFormatCallback('scicallback');
@@ -101,7 +104,7 @@ if (!$data) {
 		$graph->xaxis->title->Set("time");
 		$graph->yaxis->SetTitlemargin(35);
 		$graph->yaxis->SetLabelFormatCallback('scicallback');
-		$graph->title->Set("$f : $defocus_nominal : $preset ");
+		$graph->title->Set("$f : $defocus_nom: $preset ");
 
 		$sp1 = new ScatterPlot($datay,$datax);
 		$sp1->mark->SetType(MARK_CIRCLE);
