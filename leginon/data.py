@@ -1301,6 +1301,7 @@ class CorrectorPlanData(InSessionData):
 			('camstate', CorrectorCamstateData),
 			('bad_rows', tuple),
 			('bad_cols', tuple),
+			('bad_pixels', tuple),
 			('clip_limits', tuple),
 			('ccdcamera', InstrumentData),
 		)

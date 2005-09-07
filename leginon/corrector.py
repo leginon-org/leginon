@@ -89,6 +89,9 @@ class Corrector(node.Node):
 	def setPlan(self):
 		newcamstate = data.CorrectorCamstateData()
 		newcamstate['session'] = self.session
+		if self.instrument is None or self.instrument.ccdcamera is None:
+			self.logger.error('Plan not saved: no camera to associate it with')
+			return
 		try:
 			self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			newcamstate.friendly_update(self.instrument.ccdcamera.Geometry)
@@ -100,6 +103,7 @@ class Corrector(node.Node):
 		plandata['camstate'] = newcamstate
 		plandata['bad_rows'] = self.plan['rows']
 		plandata['bad_cols'] = self.plan['columns']
+		plandata['bad_pixels'] = self.plan['pixels']
 		plandata['ccdcamera'] = self.instrument.getCCDCameraData()
 		self.storePlan(plandata)
 
@@ -168,10 +172,16 @@ class Corrector(node.Node):
 		plandatalist = self.research(datainstance=qplan)
 		if plandatalist:
 			plandata = plandatalist[0]
-			return {'rows': list(plandata['bad_rows']),
-							'columns': list(plandata['bad_cols'])}
+			result = {}
+			result['rows'] = list(plandata['bad_rows'])
+			result['columns'] = list(plandata['bad_cols'])
+			if plandata['bad_pixels'] is None:
+				result['pixels'] = []
+			else:
+				result['pixels'] = list(plandata['bad_pixels'])
+			return result
 		else:
-			return {'rows': [], 'columns': []}
+			return {'rows': [], 'columns': [], 'pixels': []}
 
 	def storePlan(self, plandata):
 		self.publish(plandata, database=True, dbforce=True)
@@ -434,7 +444,7 @@ class Corrector(node.Node):
 		normalized = self.normalize(original, camstate, ccdcamera['name'], scopedata)
 		plan = self.retrievePlan(ccdcamera, camstate)
 		if plan is not None:
-			good = self.removeBadPixels(normalized, plan)
+			good = self.fixBadPixels(normalized, plan)
 
 		if self.settings['despike']:
 			self.logger.debug('Despiking...')
@@ -453,13 +463,62 @@ class Corrector(node.Node):
 		final = normalized.astype(Numeric.Float32)
 		return final
 
-	def removeBadPixels(self, image, plan):
+	def fixPixel
+
+	def fixBadPixels(self, image, plan):
 		badrows = plan['rows']
 		badcols = plan['columns']
 		badrowscols = [badrows,badcols]
+		badpixels = plan['pixels']
 
 		shape = image.shape
 
+		## fix individual pixels (pixels are in x,y format)
+		## replace each with median of 8 neighbors, however, some neighbors
+		## are also labeled as bad, so we will not use those in the calculation
+		for badpixel in badpixels:
+			badcol,badrow = badpixel
+			if badcol in badcols or badrow in badrows:
+				## pixel will be fixed along with entire row/column later
+				continue
+			neighbors = []
+
+			## d is how far we will go to find good pixels for this calculation
+			## this is extra paranoia for the case where there is a whole cluster of
+			## bad pixels. Usually it will only interate once (d=1)
+			for d in range(1,20):
+				for r in range(badrow-d, badrow+d+1):
+					# check for out of bounds or bad neighbor
+					if r<0 or r>=shape[0] or r in badrows:
+						continue
+					for c in range(badcol-d, badcol+d+1):
+						# check for out of bounds or bad neighbor
+						if c<0 or c>=shape[1] or c in badcols or (c,r) in badpixels:
+							continue
+						neighbors.append(image[r,c])
+				if neighbors:
+					break
+
+			print 'NEIGHBORS', neighbors
+
+			if not neighbors:
+				return
+
+			# median
+			neighbors.sort()
+			nlen = len(neighbors)
+			if nlen % 2:
+				# odd
+				i = nlen // 2
+				med = neighbors[i]
+			else:
+				i1 = nlen / 2
+				i2 = i1 - 1
+				med = (neighbors[i1]+neighbors[i2]) / 2
+			print 'MEDIAN', med
+			image[badrow,badcol] = med
+
+		## fix whole rows and columns
 		for axis in (0,1):
 			for bad in badrowscols[axis]:
 				## find a near by good one

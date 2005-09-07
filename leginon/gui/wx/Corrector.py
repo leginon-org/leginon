@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.39 $
+# $Revision: 1.40 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-06 22:28:16 $
+# $Date: 2005-09-07 21:50:58 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -80,6 +80,38 @@ def str2plan(string):
 	plan.sort()
 	return plan
 
+def iscoord(x):
+	if not isinstance(x, tuple):
+		return False
+	if len(x) != 2:
+		return False
+	for i in x:
+		if type(i) is not int:
+			return False
+	return True
+
+def str2pixels(string):
+	pixels = []
+	try:
+		p = eval(string)
+	except:
+		return pixels
+
+	# if only one pixel...
+	if len(p) == 2 and type(p[0]) is int:
+		pixels.append(p)
+	else:
+		for a in p:
+			if iscoord(a):
+				pixels.append(a)
+	pixels.sort()
+	return pixels
+
+def pixels2str(pixels):
+	pixels = map(str, pixels)
+	s = ', '.join(pixels)
+	return s
+
 class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	icon = 'corrector'
 	def __init__(self, parent, name):
@@ -109,6 +141,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 		self.stbadrows = wx.StaticText(self, -1)
 		self.stbadcolumns = wx.StaticText(self, -1)
+		self.stbadpixels = wx.StaticText(self, -1)
 		self.beditplan = wx.Button(self, -1, 'Edit...')
 
 		label = wx.StaticText(self, -1, 'Bad rows:')
@@ -119,8 +152,12 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.szplan.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szplan.Add(self.stbadcolumns, (1, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		label = wx.StaticText(self, -1, 'Bad Pixels (x,y):')
+		self.szplan.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szplan.Add(self.stbadpixels, (2, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 		self.szplan.AddGrowableCol(1)
-		self.szplan.Add(self.beditplan, (2, 1), (1, 2),
+		self.szplan.Add(self.beditplan, (3, 1), (1, 2),
 												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		# image
@@ -180,9 +217,11 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		if plan is None:
 			self.stbadrows.SetLabel('')
 			self.stbadcolumns.SetLabel('')
+			self.stbadpixels.SetLabel('')
 		else:
 			self.stbadrows.SetLabel(plan2str(plan['rows']))
 			self.stbadcolumns.SetLabel(plan2str(plan['columns']))
+			self.stbadpixels.SetLabel(pixels2str(plan['pixels']))
 		self.plan = plan
 
 	def onEditPlan(self, evt):
@@ -245,8 +284,10 @@ class EditPlanDialog(wx.Dialog):
 
 		strows = wx.StaticText(self, -1, 'Bad rows:')
 		stcolumns = wx.StaticText(self, -1, 'Bad columns:')
+		stpixels = wx.StaticText(self, -1, 'Bad Pixels (x,y):')
 		self.tcrows = wx.TextCtrl(self, -1, parent.stbadrows.GetLabel())
 		self.tccolumns = wx.TextCtrl(self, -1, parent.stbadcolumns.GetLabel())
+		self.tcpixels = wx.TextCtrl(self, -1, parent.stbadpixels.GetLabel())
 
 		bsave = wx.Button(self, wx.ID_OK, 'Save')
 		bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
@@ -259,6 +300,8 @@ class EditPlanDialog(wx.Dialog):
 		szplan.Add(self.tcrows, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szplan.Add(stcolumns, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szplan.Add(self.tccolumns, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szplan.Add(stpixels, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szplan.Add(self.tcpixels, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(szplan, (0, 0), (1, 1), wx.ALIGN_RIGHT|wx.ALL, border=5)
@@ -272,13 +315,14 @@ class EditPlanDialog(wx.Dialog):
 		try:
 			rows = str2plan(self.tcrows.GetValue())
 			columns = str2plan(self.tccolumns.GetValue())
+			pixels = str2pixels(self.tcpixels.GetValue())
 		except ValueError:
 			dialog = wx.MessageDialog(self, 'Invalid plan', 'Error',
 																wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 		else:
-			self.plan = {'rows': rows, 'columns': columns}
+			self.plan = {'rows': rows, 'columns': columns, 'pixels': pixels}
 			evt.Skip()
 
 if __name__ == '__main__':
