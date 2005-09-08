@@ -463,8 +463,6 @@ class Corrector(node.Node):
 		final = normalized.astype(Numeric.Float32)
 		return final
 
-	#def fixPixel
-
 	def fixBadPixels(self, image, plan):
 		badrows = plan['rows']
 		badcols = plan['columns']
