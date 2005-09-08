@@ -47,11 +47,13 @@ class EM(node.Node):
 
 	def exit(self):
 		node.Node.exit(self)
+		''' 
 		for i in self.instruments:
 			try:
 				i.exit()
 			except:
 				pass
+		''' 
 		self.instruments = {}
 		self.exitevent.set()
 
