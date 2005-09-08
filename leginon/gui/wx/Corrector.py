@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.40 $
+# $Revision: 1.41 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-09-07 21:50:58 $
+# $Date: 2005-09-08 22:32:27 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -108,9 +108,21 @@ def str2pixels(string):
 	return pixels
 
 def pixels2str(pixels):
+	n = 3
 	pixels = map(str, pixels)
-	s = ', '.join(pixels)
-	return s
+	groups = []
+	group = -1
+	for i,p in enumerate(pixels):
+		if not i%n:
+			groups.append([])
+			group += 1
+		groups[group].append(p)
+	groupstr = []
+	for group in groups:
+		s = ', '.join(group)
+		groupstr.append(s)
+	bigstr = '\n'.join(groupstr)
+	return bigstr
 
 class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	icon = 'corrector'
@@ -281,13 +293,17 @@ class EditPlanDialog(wx.Dialog):
 	def __init__(self, parent):
 		wx.Dialog.__init__(self, parent.GetParent(), -1, 'Edit Plan')
 		self.parent = parent
+		self.plan = parent.plan
 
 		strows = wx.StaticText(self, -1, 'Bad rows:')
 		stcolumns = wx.StaticText(self, -1, 'Bad columns:')
 		stpixels = wx.StaticText(self, -1, 'Bad Pixels (x,y):')
+
+		pixels = ', '.join(map(str,self.plan['pixels']))
+
 		self.tcrows = wx.TextCtrl(self, -1, parent.stbadrows.GetLabel())
 		self.tccolumns = wx.TextCtrl(self, -1, parent.stbadcolumns.GetLabel())
-		self.tcpixels = wx.TextCtrl(self, -1, parent.stbadpixels.GetLabel())
+		self.tcpixels = wx.TextCtrl(self, -1, pixels)
 
 		bsave = wx.Button(self, wx.ID_OK, 'Save')
 		bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
