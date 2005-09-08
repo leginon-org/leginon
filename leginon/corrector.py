@@ -497,8 +497,6 @@ class Corrector(node.Node):
 				if neighbors:
 					break
 
-			print 'NEIGHBORS', neighbors
-
 			if not neighbors:
 				return
 
@@ -513,7 +511,6 @@ class Corrector(node.Node):
 				i1 = nlen / 2
 				i2 = i1 - 1
 				med = (neighbors[i1]+neighbors[i2]) / 2
-			print 'MEDIAN', med
 			image[badrow,badcol] = med
 
 		## fix whole rows and columns
