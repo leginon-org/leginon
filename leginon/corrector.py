@@ -423,13 +423,13 @@ class Corrector(node.Node):
 			return self.acquireCorrectedImageData(ccdcameraname=ccdcameraname)
 		numimage = imagedata['image']
 		camdata = imagedata['camera']
-		scopedata = imagedata['camera']
+		scopedata = imagedata['scope']
 		ccdcamera = camdata['ccdcamera']
 		corstate = data.CorrectorCamstateData()
 		corstate['dimension'] = camdata['dimension']
 		corstate['offset'] = camdata['offset']
 		corstate['binning'] = camdata['binning']
-		corrected = self.correct(ccdcamera, numimage, corstate)
+		corrected = self.correct(ccdcamera, numimage, corstate, scopedata)
 		newdata = data.CorrectedCameraImageData(initializer=imagedata,
 																						image=corrected)
 		self.setStatus('idle')
