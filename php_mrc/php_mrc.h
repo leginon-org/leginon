@@ -15,7 +15,7 @@
   | Author:                                                              |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.h,v 1.4 2005-08-29 23:07:14 dfellman Exp $ 
+  $Id: php_mrc.h,v 1.5 2005-09-15 23:48:20 dfellman Exp $ 
 */
 
 #ifndef PHP_MRC_H
@@ -45,15 +45,28 @@ ZEND_FUNCTION(imagecopyfrommrc);
 ZEND_FUNCTION(imagefilteredcreatefrommrc);
 ZEND_FUNCTION(imagemrcinfo);
 ZEND_FUNCTION(imagefiltergaussian);
-ZEND_FUNCTION(imagefastcopyresized);
 ZEND_FUNCTION(imagescale);
 ZEND_FUNCTION(logscale);
 #ifdef HAVE_FFTW
 ZEND_FUNCTION(getfft);
 ZEND_FUNCTION(imagecreatefftfrommrc);
+ZEND_FUNCTION(mrcfftw);
 #endif
 ZEND_FUNCTION(imagehistogramfrommrc);
 ZEND_FUNCTION(imagehistogram);
+ZEND_FUNCTION(mrcread);
+ZEND_FUNCTION(mrcwrite);
+ZEND_FUNCTION(mrctoimage);
+ZEND_FUNCTION(mrccopy);
+ZEND_FUNCTION(mrcgetdata);
+ZEND_FUNCTION(mrcputdata);
+ZEND_FUNCTION(mrccreate);
+ZEND_FUNCTION(mrcgaussianfilter);
+ZEND_FUNCTION(mrcupdateheader);
+ZEND_FUNCTION(mrcgetinfo);
+ZEND_FUNCTION(mrcdestroy);
+
+static void _mrc_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRC *pMRC);
 
 /* 
   	Declare any global variables you may need between the BEGIN

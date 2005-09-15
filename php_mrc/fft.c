@@ -17,10 +17,20 @@
 
 
 
+/* {{{ double square(fftw_complex C) */
 double square(fftw_complex C) {
 		return log(sqrt(C.re * C.re + C.im * C.im));
 }
+/* }}} */
 
+/* {{{ void setfftval(fftw_real *data_array, int i, int j, int N, double val) */
+void setfftval(fftw_real *data_array, int i, int j, int N, double val) {
+		int ij = i*N +j;
+		data_array[ij] = val;
+}
+/* }}} */
+
+/* {{{ void getfft(gdImagePtr im_src) */
 void getfft(gdImagePtr im_src) {
   int i,j;
   if (im_src->tpixels)
@@ -29,7 +39,9 @@ void getfft(gdImagePtr im_src) {
           		im_src->tpixels[i][j] = im_src->tpixels[i][j];
 	getFFT(im_src->sx, im_src->sy, im_src->tpixels);
 }
+/* }}} */
 
+/* {{{ int mrc_to_fftw_image(MRC *pMRC, int ** tpixels, int mask_radius, int minpix, int maxpix, int colormap) */
 int mrc_to_fftw_image(MRC *pMRC, int ** tpixels, int mask_radius, int minpix, int maxpix, int colormap) {
 
 	int i,j,ij;
@@ -137,7 +149,90 @@ int mrc_to_fftw_image(MRC *pMRC, int ** tpixels, int mask_radius, int minpix, in
           }
 	}
 }
+/* }}} */
 
+/* {{{ int mrc_fftw(MRC *pMRC, int mask_radius) */
+int mrc_fftw(MRC *pMRC, int mask_radius) {
+
+	int i,j,ij;
+	int I,J;
+
+	int M = pMRC->header.nx;
+	int N = pMRC->header.ny;
+	int mode=pMRC->header.mode;
+
+	double	val;
+
+	rfftwnd_plan plan;
+	fftw_real a[M][2*(N/2+1)], b[M][2*(N/2+1)];
+	fftw_complex *A;
+	fftw_real *data_array;
+
+	A = (fftw_complex*) &a[0][0];
+
+	switch (mode) {
+	 case MRC_MODE_BYTE:
+         {
+		data_array = (fftw_real *)((char *)pMRC->pbyData);
+		break;
+	 }
+	 case MRC_MODE_SHORT:
+         {
+		data_array = (fftw_real *)((short *)pMRC->pbyData);
+		break;
+	 }
+	 case MRC_MODE_FLOAT:
+         {
+		data_array = (fftw_real *)((float *)pMRC->pbyData);
+		break;
+         }
+	}
+	for (i = 0; i < M; ++i) {
+		for (j = 0; j < N; ++j) {
+			ij = i*N + j;
+			a[i][j] = (fftw_real)(data_array[ij]);
+		}
+	}
+
+	plan = rfftw2d_create_plan(M, N, FFTW_REAL_TO_COMPLEX, FFTW_ESTIMATE | FFTW_IN_PLACE);
+	rfftwnd_one_real_to_complex(plan, &a[0][0], NULL);
+	rfftwnd_destroy_plan(plan);
+
+	for (i = 0; i < M; ++i) {
+		for (j = 0; j < N/2+1; ++j) {
+			ij = i*(N/2+1) + j;
+			val = square(A[ij]);
+			if (mask_radius > 0 && (
+				(sqrt(i*i + j*j) < mask_radius) || 
+				(sqrt((N-i)*(N-i) + j*j) < mask_radius) )) {
+				 val = 0;
+			}
+			if (i <= M/2 && j <= N/2) {
+				// 1st quadrant
+				I = i+M/2-1;
+				J = j+N/2-1;
+				setfftval(data_array, I, J, N, val);
+				// 2nd quadrant
+				I = M/2-i;
+				J = N/2-j;
+				setfftval(data_array, I, J, N, val);
+			}
+			if ( i >= M/2 && j <= N/2) {
+				// 3rd quadrant
+				I = i-M/2-1;
+				J = j+N/2-1;
+				setfftval(data_array, I, J, N, val);
+				// 4th quadrant
+				I = M+M/2-i-1;
+				J = N/2-j;
+				setfftval(data_array, I, J, N, val);
+			}
+		}
+	}
+}
+/* }}} */
+
+/* {{{ void getFFT(int M, int N, int ** tpixels ) */
 void getFFT(int M, int N, int ** tpixels ) {
 	double f_val,
 		scale,
@@ -196,4 +291,12 @@ void getFFT(int M, int N, int ** tpixels ) {
           }
 	}
 }
+/* }}} */
 
+/* {{{	vim options
+ * Local variables:
+ * c-basic-offset: 4
+ * End:
+ * vim600: noet sw=4 ts=4 fdm=marker
+ * vim<600: noet sw=4 ts=4
+}}} */

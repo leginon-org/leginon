@@ -74,6 +74,8 @@ typedef struct MRCStruct {
 	char *pbyData;
 } MRC;
 
+typedef MRC * MRCPtr;
+
 int loadMRC(char *pszFilename, MRC *pMRC);
 int loadMRCHeader(char *pszFilename, MRCHeader *pMRCHeader);
 //int loadMRCHeader(char *pszFilename, MRC *pMRC);

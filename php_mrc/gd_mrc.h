@@ -9,10 +9,6 @@
 /* gd image resource */
 static int le_gd; 
 
-/* insert mrc data into an image resource pixel array */
-void mrc_to_image(MRC *mrc, int ** tpixels, int pmin, int pmax, int binning, int skip, int kernel, float sigma, int colormap);
-
-void mrc_to_image(MRC *mrc, int ** tpixels, int pmin, int pmax, int binning, int skip, int kernel, float sigma, int colormap);
 void mrc_to_histogram(MRC *mrc, int *frequency, float *classes, int nb_bars);
 void mrc_to_float(MRC *mrc, float *pdata_array);
 
@@ -25,3 +21,7 @@ int gdreadMRCData(gdIOCtx *io_ctx, MRC *pMRC);
 int gdloadMRC(gdIOCtx *io_ctx, MRC *pMRC);
 
 void mrc_copy(MRC *mrc_src, MRC *mrc_dst, int x1, int y1, int x2, int y2);
+void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX, int srcY, int w, int h);
+MRCPtr mrc_create(int x_size, int y_size);
+void mrc_destroy(MRCPtr pmrc);
+void mrc_to_gd(MRC *mrc, int ** tpixels, int pmin, int pmax, int colormap);

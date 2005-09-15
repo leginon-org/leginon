@@ -46,10 +46,6 @@ int setColorDensity(float value, int bw) {
 	} else if (value < 0 ) {
 		value = 0;
 	}
-//	unsigned char pixva = (unsigned char)value;
-//	density = ((pixva << 16) + (pixva << 8) + pixva);
-//	return density;
-	// int pixval = (int)(value/255);
 	
 	unsigned char pixval = value;
 	pixval = (unsigned char)((int)value % 255);
