@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.41 $
+# $Revision: 1.42 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-09-08 22:32:27 $
+# $Date: 2005-09-16 23:18:06 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -108,6 +108,9 @@ def str2pixels(string):
 	return pixels
 
 def pixels2str(pixels):
+	return 'There are %d bad pixels' % len(pixels)
+
+def pixels2strOLD(pixels):
 	n = 3
 	pixels = map(str, pixels)
 	groups = []
@@ -155,6 +158,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.stbadcolumns = wx.StaticText(self, -1)
 		self.stbadpixels = wx.StaticText(self, -1)
 		self.beditplan = wx.Button(self, -1, 'Edit...')
+		self.bgrabpixels = wx.Button(self, -1, 'Grab From Image')
+		self.bclearpixels = wx.Button(self, -1, 'Clear All')
 
 		label = wx.StaticText(self, -1, 'Bad rows:')
 		self.szplan.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -164,16 +169,23 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.szplan.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szplan.Add(self.stbadcolumns, (1, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		label = wx.StaticText(self, -1, 'Bad Pixels (x,y):')
-		self.szplan.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szplan.Add(self.stbadpixels, (2, 1), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 		self.szplan.AddGrowableCol(1)
-		self.szplan.Add(self.beditplan, (3, 1), (1, 2),
+		self.szplan.Add(self.beditplan, (2, 1), (1, 2),
+												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Bad Pixels (x,y):')
+		self.szplan.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szplan.Add(self.stbadpixels, (3, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		self.szplan.Add(self.bclearpixels, (4, 0), (1, 1),
+												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.szplan.Add(self.bgrabpixels, (4, 1), (1, 2),
 												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		# image
-		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
+		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
+		self.imagepanel.addTargetTool('Bad Pixels', wx.Color(255, 0, 0), target=True, shape='.')
+		self.imagepanel.selectiontool.setDisplayed('Bad Pixels', True)
+		self.imagepanel.setTargets('Bad Pixels', [])
 		self.szmain.Add(self.imagepanel, (0, 1), (2, 1), wx.EXPAND)
 
 		self.szmain.AddGrowableRow(1)
@@ -196,6 +208,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.setPlan(self.node.plan)
 
 		self.Bind(wx.EVT_BUTTON, self.onEditPlan, self.beditplan)
+		self.Bind(wx.EVT_BUTTON, self.onGrabPixels, self.bgrabpixels)
+		self.Bind(wx.EVT_BUTTON, self.onClearPixels, self.bclearpixels)
 
 	def onSetImage(self, evt):
 		gui.wx.Node.Panel.onSetImage(self, evt)
@@ -226,15 +240,19 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self._acquisitionEnable(True)
 
 	def setPlan(self, plan):
-		if plan is None:
+		if not hasattr(self, 'plan'):
+			self.plan = {}
+		if plan is None or plan is {}:
 			self.stbadrows.SetLabel('')
 			self.stbadcolumns.SetLabel('')
 			self.stbadpixels.SetLabel('')
+			self.imagepanel.setTargets('Bad Pixels', [])
 		else:
-			self.stbadrows.SetLabel(plan2str(plan['rows']))
-			self.stbadcolumns.SetLabel(plan2str(plan['columns']))
-			self.stbadpixels.SetLabel(pixels2str(plan['pixels']))
-		self.plan = plan
+			self.plan.update(plan)
+			self.stbadrows.SetLabel(plan2str(self.plan['rows']))
+			self.stbadcolumns.SetLabel(plan2str(self.plan['columns']))
+			self.stbadpixels.SetLabel(pixels2str(self.plan['pixels']))
+			self.imagepanel.setTargets('Bad Pixels', self.plan['pixels'])
 
 	def onEditPlan(self, evt):
 		dialog = EditPlanDialog(self)
@@ -244,6 +262,17 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 			# ...
 			threading.Thread(target=self.node.setPlan).start()
 		dialog.Destroy()
+
+	def onGrabPixels(self, evt):
+		pixels = self.imagepanel.getTargetPositions('Bad Pixels')
+		self.setPlan({'pixels':pixels})
+		self.node.plan = self.plan
+		threading.Thread(target=self.node.setPlan).start()
+
+	def onClearPixels(self, evt):
+		self.setPlan({'pixels':[]})
+		self.node.plan = self.plan
+		threading.Thread(target=self.node.setPlan).start()
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -297,7 +326,7 @@ class EditPlanDialog(wx.Dialog):
 
 		strows = wx.StaticText(self, -1, 'Bad rows:')
 		stcolumns = wx.StaticText(self, -1, 'Bad columns:')
-		stpixels = wx.StaticText(self, -1, 'Bad Pixels (x,y):')
+		stpixels = wx.StaticText(self, -1, 'Bad Pixels:')
 
 		pixels = ', '.join(map(str,self.plan['pixels']))
 

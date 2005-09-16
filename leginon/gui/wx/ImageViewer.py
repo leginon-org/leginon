@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.45 $
+# $Revision: 1.46 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-07-05 22:36:39 $
+# $Date: 2005-09-16 23:18:06 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -110,10 +110,35 @@ def getBitmap(filename):
 
 targeticonbitmaps = {}
 
-def getTargetIconBitmap(color):
+def getTargetIconBitmap(color, shape='+'):
 	try:
-		return targeticonbitmaps[color]
+		return targeticonbitmaps[color,shape]
 	except KeyError:
+		if shape == '+':
+			bitmap = targetIcon_plus(color)
+		elif shape == '.':
+			bitmap = targetIcon_point(color)
+		else:
+			raise RuntimeError('invalid target shape')
+
+		targeticonbitmaps[color,shape] = bitmap
+		return bitmap
+
+def targetIcon_point(color):
+		bitmap = wx.EmptyBitmap(3,3)
+		dc = wx.MemoryDC()
+		dc.SelectObject(bitmap)
+		dc.BeginDrawing()
+		dc.Clear()
+		dc.SetPen(wx.Pen(color, 2))
+		for point in ((0,1),(1,0),(1,1),(1,2),(2,1)):
+			dc.DrawPoint(*point)
+		dc.EndDrawing()
+		dc.SelectObject(wx.NullBitmap)
+		bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
+		return bitmap
+
+def targetIcon_plus(color):
 		bitmap = wx.EmptyBitmap(16, 16)
 		dc = wx.MemoryDC()
 		dc.SelectObject(bitmap)
@@ -126,34 +151,57 @@ def getTargetIconBitmap(color):
 		dc.EndDrawing()
 		dc.SelectObject(wx.NullBitmap)
 		bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
-		targeticonbitmaps[color] = bitmap
 		return bitmap
 
 targetbitmaps = {}
 
-def getTargetBitmap(color):
+def getTargetBitmap(color, shape='+'):
 	try:
-		return targetbitmaps[color]
+		return targetbitmaps[color,shape]
 	except KeyError:
-		penwidth = 1
-		length = 15
-		bitmap = wx.EmptyBitmap(length, length)
-		dc = wx.MemoryDC()
-		dc.SelectObject(bitmap)
-		dc.BeginDrawing()
-		dc.Clear()
-		dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
-		dc.SetPen(wx.Pen(color, penwidth))
-		dc.DrawLine(length/2, 0, length/2, length)
-		dc.DrawLine(0, length/2, length, length/2)
-		dc.EndDrawing()
-		dc.SelectObject(wx.NullBitmap)
-		bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
-		return bitmap
+		if shape == '+':
+			bitmap = targetBitmap_plus(color)
+		elif shape == '.':
+			bitmap = targetBitmap_point(color)
+		else:
+			raise RuntimeError('invalid target shape')
+		targetbitmaps[color,shape] = bitmap
+	return bitmap
 
-def getTargetBitmaps(color):
+def targetBitmap_point(color):
+	bitmap = wx.EmptyBitmap(1, 1)
+	dc = wx.MemoryDC()
+	dc.SelectObject(bitmap)
+	dc.BeginDrawing()
+	dc.Clear()
+	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
+	dc.SetPen(wx.Pen(color, 1))
+	dc.DrawPoint(0,0)
+	dc.EndDrawing()
+	dc.SelectObject(wx.NullBitmap)
+	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
+	return bitmap
+
+def targetBitmap_plus(color):
+	penwidth = 1
+	length = 15
+	bitmap = wx.EmptyBitmap(length, length)
+	dc = wx.MemoryDC()
+	dc.SelectObject(bitmap)
+	dc.BeginDrawing()
+	dc.Clear()
+	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
+	dc.SetPen(wx.Pen(color, penwidth))
+	dc.DrawLine(length/2, 0, length/2, length)
+	dc.DrawLine(0, length/2, length, length/2)
+	dc.EndDrawing()
+	dc.SelectObject(wx.NullBitmap)
+	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
+	return bitmap
+
+def getTargetBitmaps(color, shape='+'):
 	selectedcolor = wx.Color(color.Red()/2, color.Green()/2, color.Blue()/2)
-	return getTargetBitmap(color), getTargetBitmap(selectedcolor)
+	return getTargetBitmap(color, shape), getTargetBitmap(selectedcolor, shape)
 
 # needs to adjust buffer/wximage instead of reseting from numeric image
 class ContrastTool(object):
@@ -380,7 +428,7 @@ class ValueTool(ImageTool):
 
 class CrosshairTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
-		bitmap = getTargetIconBitmap(wx.BLUE)
+		bitmap = getTargetIconBitmap(wx.BLUE, shape='+')
 		tooltip = 'Toggle Center Crosshair'
 		cursor = None
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, False)
@@ -1214,11 +1262,12 @@ class TypeTool(object):
 		self.togglebuttons['settings'].GetEventHandler().AddPendingEvent(evt)
 
 class TargetTypeTool(TypeTool):
-	def __init__(self, parent, name, display=None, settings=None, target=None):
+	def __init__(self, parent, name, display=None, settings=None, target=None, shape='+'):
 		self.color = display
+		self.shape = shape 
 		TypeTool.__init__(self, parent, name, display=display, settings=settings)
 
-		self.targettype = TargetType(self.name, self.color)
+		self.targettype = TargetType(self.name, self.color, self.shape)
 
 		self.togglebuttons['display'].SetBitmapDisabled(self.bitmaps['display'])
 
@@ -1229,7 +1278,7 @@ class TargetTypeTool(TypeTool):
 
 	def getBitmaps(self):
 		bitmaps = TypeTool.getBitmaps(self)
-		bitmaps['display'] = getTargetIconBitmap(self.color)
+		bitmaps['display'] = getTargetIconBitmap(self.color, self.shape)
 		bitmaps['target'] = getBitmap('arrow.png')
 		return bitmaps
 
@@ -1458,10 +1507,10 @@ class StatsTarget(Target):
 		self.stats = stats
 
 class TargetType(object):
-	def __init__(self, name, color):
+	def __init__(self, name, color, shape='+'):
 		self.name = name
 		self.bitmaps = {}
-		self.bitmaps['default'], self.bitmaps['selected'] = getTargetBitmaps(color)
+		self.bitmaps['default'], self.bitmaps['selected'] = getTargetBitmaps(color, shape)
 		self.targets = None
 
 	def getTargets(self):
