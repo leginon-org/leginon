@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.42 $
+# $Revision: 1.43 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-09-16 23:18:06 $
+# $Date: 2005-09-19 23:29:49 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -282,6 +282,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.GetParent().setInstrumentSelection(self.widgets['instruments'])
 
 		self.widgets['n average'] = IntEntry(self, -1, min=1, max=99, chars=2)
+		self.widgets['combine'] = wx.Choice(self, -1, choices=['median', 'average'])
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 		self.widgets['despike'] = wx.CheckBox(self, -1, 'Despike images')
@@ -304,13 +305,19 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sbszdespike.Add(szdespike, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
 
 		sz = wx.GridBagSizer(5, 10)
-		label = wx.StaticText(self, -1, 'Images to average:')
-		sz.Add(self.widgets['instruments'], (0, 0), (1, 1), wx.EXPAND)
-		sz.Add(self.widgets['camera settings'], (1, 0), (1, 1), wx.EXPAND)
+		sz.Add(self.widgets['instruments'], (0, 0), (2, 1), wx.EXPAND)
+		sz.Add(self.widgets['camera settings'], (2, 0), (1, 1), wx.EXPAND)
+
+		label = wx.StaticText(self, -1, 'Images to combine:')
 		sz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['n average'], (0, 2), (1, 1),
 						wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sz.Add(sbszdespike, (1, 1), (1, 2), wx.ALIGN_CENTER|wx.ALL)
+
+		label = wx.StaticText(self, -1, 'Combine method:')
+		sz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['combine'], (1, 2), (1, 1))
+
+		sz.Add(sbszdespike, (2, 1), (1, 2), wx.ALIGN_CENTER|wx.ALL)
 
 		sb = wx.StaticBox(self, -1, 'Image Correction')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)

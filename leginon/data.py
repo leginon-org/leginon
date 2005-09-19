@@ -1721,6 +1721,7 @@ class CorrectorSettingsData(SettingsData):
 			('despike size', int),
 			('despike threshold', float),
 			('camera settings', CameraSettingsData),
+			('combine', str),
 		)
 	typemap = classmethod(typemap)
 

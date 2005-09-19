@@ -65,6 +65,7 @@ class Corrector(node.Node):
 		'despike size': 11,
 		'despike threshold': 3.5,
 		'camera settings': None,
+		'combine': 'median',
 	}
 	eventinputs = node.Node.eventinputs
 	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent]
@@ -218,8 +219,12 @@ class Corrector(node.Node):
 			self.logger.error('Reference acquisition failed: %s' % e)
 			return None
 
-		self.logger.info('Averaging reference series...')
-		ref = imagefun.averageSeries(series)
+		combine = self.settings['combine']
+		self.logger.info('taking %s of image series' % (combine,))
+		if combine == 'average':
+			ref = imagefun.averageSeries(series)
+		elif combine == 'median':
+			ref = imagefun.medianSeries(series)
 
 		corstate = data.CorrectorCamstateData()
 		geometry = self.instrument.ccdcamera.Geometry
