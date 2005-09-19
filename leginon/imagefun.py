@@ -7,6 +7,7 @@
 #
 try:
 	import numarray as Numeric
+	import numarray.image
 	def toFloat(inputarray):
 		'''
 		if inputarray is an integer type:
@@ -116,34 +117,10 @@ if numextension is not None:
 
 
 def medianSeries(series):
-	index = int((len(series) - 0.5)/2.0)
-	return Numeric.sort(Numeric.array(series), 0)[index]
-
-def sumSeries(series):
-	if len(series) == 0:
-		return None
-	if len(series) == 1:
-		return series[0]
-	first = series[0]
-	others = series[1:]
-	sum = first.astype(Numeric.Float64)
-	for other in others:
-		sum += other
-	return sum
+	return numarray.image.median(series)
 
 def averageSeries(series):
-	slen = len(series)
-	if slen == 0:
-		return None
-	if slen == 1:
-		return series[0]
-
-	## this didn't work if a sum was too big for the type
-	#sum = Numeric.sum(series)
-	sum = sumSeries(series)
-
-	avg = sum / slen
-	return avg
+	return numarray.image.average(series)
 
 def scaleToShape(array, scaledshape):
 	scale = (float(scaledshape[0])/float(array.shape[0]),
