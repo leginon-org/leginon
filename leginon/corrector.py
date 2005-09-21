@@ -225,6 +225,8 @@ class Corrector(node.Node):
 			ref = imagefun.averageSeries(series)
 		elif combine == 'median':
 			ref = imagefun.medianSeries(series)
+		else:
+			raise RuntimeError('invalid setting "%s" for combine method' % (combine,))
 
 		corstate = data.CorrectorCamstateData()
 		geometry = self.instrument.ccdcamera.Geometry

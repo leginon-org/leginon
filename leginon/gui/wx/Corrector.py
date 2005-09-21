@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.43 $
+# $Revision: 1.44 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-09-19 23:29:49 $
+# $Date: 2005-09-21 00:28:01 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -21,6 +21,7 @@ import gui.wx.Stats
 import gui.wx.Events
 import gui.wx.ToolBar
 import gui.wx.Instrument
+from gui.wx.Choice import Choice
 
 def plan2str(plan):
 	if not plan:
@@ -282,7 +283,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.GetParent().setInstrumentSelection(self.widgets['instruments'])
 
 		self.widgets['n average'] = IntEntry(self, -1, min=1, max=99, chars=2)
-		self.widgets['combine'] = wx.Choice(self, -1, choices=['median', 'average'])
+		self.widgets['combine'] = Choice(self, -1, choices=['median', 'average'])
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 		self.widgets['despike'] = wx.CheckBox(self, -1, 'Despike images')
