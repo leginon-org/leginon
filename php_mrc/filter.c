@@ -70,8 +70,6 @@ unsigned char getDensity(int pixelvalue) {
 int getLog(int pixelvalue) {
 	unsigned char density;
 	float logvalue;
-//	density = densityMAX - getDensity(pixelvalue);
-//	logvalue = densityMAX - log(density) * densityMAX / log(densityMAX);
 	density = getDensity(pixelvalue);
 	if (density == 0)
 		density = 1;
@@ -79,20 +77,6 @@ int getLog(int pixelvalue) {
 	return setDensity(logvalue);
 }
 
-
-/*
-function RelTranslate($a) {
-if( $a==0 ) $a=1;
-$a=(log($a));
-
-$ml = log(255);
-
-$a = $a*255/$ml;
-
-return $a;
-}
-
-*/
 
 /* resize a gd image */
 gdImagePtr resize(gdImagePtr im, int w, int h, int n_w, int n_h ) {
@@ -122,7 +106,6 @@ void filtergaussian(gdImagePtr im, int kernel, float factor) {
 	int c;
 
 	double	*maskData;
-	//double	maskData[maskWidth*maskHeight];
 
 	float	density,
 		ndensity,
@@ -156,17 +139,12 @@ void filtergaussian(gdImagePtr im, int kernel, float factor) {
 					densityG = gdTrueColorGetGreen(c);
 					densityB = gdTrueColorGetBlue(c);
 
-			//		density = getDensity(
-			//				gdImageGetPixel(im, (w+x-maskWidth/2), (h+y-maskHeight/2) )
-			//			);
 					index = x + y * maskWidth;
-					// ndensity += density * maskData[index];
 					ndensityR += densityR * maskData[index];
 					ndensityG += densityG * maskData[index];
 					ndensityB += densityB * maskData[index];
 				}
 			}
-	//		im->tpixels[h][w]=setDensity(ndensity);
 			im->tpixels[h][w]=setRGBDensity(ndensityR, ndensityG, ndensityB);
 		}
 	}
@@ -187,6 +165,7 @@ void gaussianfiltermask(double *maskData, int kernel, float sigma) {
 
 	if (sigma==0 || kernel % 2 != 1)
 		return;
+
 
 	for(y = 0; y < kernel; y++) {
                 for(x = 0; x < kernel; x++) {

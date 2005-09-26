@@ -78,7 +78,6 @@ typedef MRC * MRCPtr;
 
 int loadMRC(char *pszFilename, MRC *pMRC);
 int loadMRCHeader(char *pszFilename, MRCHeader *pMRCHeader);
-//int loadMRCHeader(char *pszFilename, MRC *pMRC);
 int readMRCHeader(FILE *pFMRC, MRCHeader *pMRCHeader);
 
 #define SIZEOF_I5_HEADER_ENTRY 4

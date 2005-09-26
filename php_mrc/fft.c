@@ -19,154 +19,33 @@
 
 /* {{{ double square(fftw_complex C) */
 double square(fftw_complex C) {
-		return log(sqrt(C.re * C.re + C.im * C.im));
-}
-/* }}} */
-
-/* {{{ void setfftval(fftw_real *data_array, int i, int j, int N, double val) */
-void setfftval(fftw_real *data_array, int i, int j, int N, double val) {
-		int ij = i*N +j;
-		data_array[ij] = val;
-}
-/* }}} */
-
-/* {{{ void getfft(gdImagePtr im_src) */
-void getfft(gdImagePtr im_src) {
-  int i,j;
-  if (im_src->tpixels)
-      for (i = 0; (i < im_src->sy); i++)
-	      for (j = 0; (j < im_src->sx); j++)
-          		im_src->tpixels[i][j] = im_src->tpixels[i][j];
-	getFFT(im_src->sx, im_src->sy, im_src->tpixels);
-}
-/* }}} */
-
-/* {{{ int mrc_to_fftw_image(MRC *pMRC, int ** tpixels, int mask_radius, int minpix, int maxpix, int colormap) */
-int mrc_to_fftw_image(MRC *pMRC, int ** tpixels, int mask_radius, int minpix, int maxpix, int colormap) {
-
-	int i,j,ij;
-
-	int M = pMRC->header.nx;
-	int N = pMRC->header.ny;
-	int mode=pMRC->header.mode;
-	int densitymax = (colormap) ? densityColorMAX : densityMAX;
-	int gray = (colormap) ? 0 : 1;
-
-	double	minval = pMRC->header.amin,
-		maxval = pMRC->header.amax,
-		scale = maxval - minval,
-		val,
-		nminval, nmaxval;
-
-	double somme=0, avg=0, somme2=0, n=0, stddev;
-
-	rfftwnd_plan plan;
-	fftw_real a[M][2*(N/2+1)], b[M][2*(N/2+1)];
-	fftw_complex *A;
-	fftw_real *data_array;
-
-	A = (fftw_complex*) &a[0][0];
-
-	switch (mode) {
-	 case MRC_MODE_BYTE:
-         {
-		data_array = (fftw_real *)((char *)pMRC->pbyData);
-		break;
-	 }
-	 case MRC_MODE_SHORT:
-         {
-		data_array = (fftw_real *)((short *)pMRC->pbyData);
-		break;
-	 }
-	 case MRC_MODE_FLOAT:
-         {
-		data_array = (fftw_real *)((float *)pMRC->pbyData);
-		break;
-         }
-	}
-	for (i = 0; i < M; ++i) {
-		for (j = 0; j < N; ++j) {
-			ij = i*N + j;
-			a[i][j] = (fftw_real)(data_array[ij]);
-		}
-	}
-
-	plan = rfftw2d_create_plan(M, N, FFTW_REAL_TO_COMPLEX, FFTW_ESTIMATE | FFTW_IN_PLACE);
-	rfftwnd_one_real_to_complex(plan, &a[0][0], NULL);
-	rfftwnd_destroy_plan(plan);
-
-	minval = maxval = square(A[0]);
-	for (i = 0; i < M; ++i) {
-          for (j = 0; j < N/2+1; ++j) {
-		ij = i*(N/2+1) + j;
-
-		// --- mask DC component of FFT with a given radius
-		if (mask_radius > 0 && (
-					(sqrt(i*i + j*j) < mask_radius) || 
-					(sqrt((N-i)*(N-i) + j*j) < mask_radius) )) {
-			data_array[ij] = 0;
-			continue;
-		}
-		val = square(A[ij]);
-			
-		if (val>0) {
-			somme += val;
-			somme2 += val*val;
-			n++;
-			data_array[ij] = val;
-		}
-	  }
-	}
-
-	if (n>0) {
-		avg = somme/n;
-		stddev = sqrt((somme2 * n - somme * somme) / (n*n));
-	}
-
-	nmaxval = avg + 3 * stddev ; 
-	nminval = avg - 3 * stddev; 
-	scale = nmaxval - nminval;
-
-	nminval = minpix*scale/densitymax + nminval;
-	nmaxval = maxpix*scale/densitymax + nminval;
-	if (minpix > maxpix)
-		scale *= -1;
-
-	for (i = 0; i < M; ++i) {
-          for (j = 0; j < N/2+1; ++j) {
-		ij = i*(N/2+1) + j;
-		val = data_array[ij];
-		val = val*densitymax/scale - nminval*densitymax/scale; 
-		if (i <= M/2 && j <= N/2) {
-			tpixels[i+M/2-1][j+N/2-1] = setColorDensity(val, gray);
-			tpixels[M/2-i][N/2-j] = setColorDensity(val, gray);
-		}
-
-		if ( i >= M/2 && j <= N/2) {
-			tpixels[i-M/2][j+N/2-1] = setColorDensity(val, gray);
-			tpixels[M+M/2-i-1][N/2-j] = tpixels[i-M/2][j+N/2-1];
-		} 
-          }
-	}
+		return sqrt(C.re * C.re + C.im * C.im);
 }
 /* }}} */
 
 /* {{{ int mrc_fftw(MRC *pMRC, int mask_radius) */
 int mrc_fftw(MRC *pMRC, int mask_radius) {
 
-	int i,j,ij;
-	int I,J;
+	int i,j,ij=0;
+	int IJ;
 
 	int M = pMRC->header.nx;
 	int N = pMRC->header.ny;
 	int mode=pMRC->header.mode;
-
-	double	val;
+	int nrows = M ;
+	int ncolumns = 2*(N/2+1) ;
+	int offset = (1+M)*N/2;
+	
+	float val, fmin, fmax, fmean, stddev;
+	double somme, somme2, n;
 
 	rfftwnd_plan plan;
-	fftw_real a[M][2*(N/2+1)], b[M][2*(N/2+1)];
 	fftw_complex *A;
+	fftw2d_real_ptr a;
 	fftw_real *data_array;
+
+
+	a = fftw2d_alloc(M,N);
 
 	A = (fftw_complex*) &a[0][0];
 
@@ -187,109 +66,169 @@ int mrc_fftw(MRC *pMRC, int mask_radius) {
 		break;
          }
 	}
-	for (i = 0; i < M; ++i) {
-		for (j = 0; j < N; ++j) {
+
+	for (i = 0; i < M; i++) {
+		for (j = 0; j < N; j++) {
 			ij = i*N + j;
-			a[i][j] = (fftw_real)(data_array[ij]);
+				a[i][j] = (fftw_real)(data_array[ij]);
 		}
 	}
 
-	plan = rfftw2d_create_plan(M, N, FFTW_REAL_TO_COMPLEX, FFTW_ESTIMATE | FFTW_IN_PLACE);
-	rfftwnd_one_real_to_complex(plan, &a[0][0], NULL);
-	rfftwnd_destroy_plan(plan);
-
+	fftw2d(a, A, M, N);
 	for (i = 0; i < M; ++i) {
 		for (j = 0; j < N/2+1; ++j) {
 			ij = i*(N/2+1) + j;
+			IJ = i*N +j;
+			val = square(A[ij]); 
+			if (mask_radius > 0 && (
+				(sqrt(i*i + j*j) < mask_radius) || 
+				(sqrt((N-i)*(N-i) + j*j) < mask_radius) )) {
+					continue;
+			}
+			fmin = MIN(fmin, val);
+			fmax = MAX(fmax, val);
+			somme  += val;
+			somme2 += val*val;
+			n++;
+
+			
+			if (i < M/2 && j < N/2) {
+				// 1st quadrant
+				data_array[offset - IJ -1] = val;
+				// 4th quadrant
+				data_array[offset + IJ] = val;
+			}
+			if ( i > M/2 && j < N/2) {
+				// 2nd quadrant
+				data_array[offset - IJ -1 + M*N] = val;
+				// 3rd quadrant
+				data_array[offset + IJ - M*N] = val;
+			}
+		}
+	}
+	if (n>0) {
+		fmean = somme/n;
+		stddev = sqrt((somme2 * n - somme * somme) / (n*n));
+	}
+
+	
+	pMRC->header.amin = fmin;
+	pMRC->header.amax = fmax;
+	pMRC->header.amean = fmean;
+	pMRC->header.rms = stddev;
+
+
+	fftw2d_free(a);
+}
+/* }}} */
+
+/* {{{ void fftalloc(fftw_real **in, int M, int N) */
+// void fftalloc(fftw_real **in, int M, int N) {
+fftw2d_real_ptr fftw2d_alloc(int M, int N) {
+	int	i=0,
+		nrows = M,
+		ncolumns = 2*(N/2+1) ;
+	fftw_real **in = (fftw_real **)malloc(nrows * sizeof(fftw_real *));
+	in[0] = (fftw_real *)malloc(nrows * ncolumns * sizeof(fftw_real));
+	for(i = 1; i < nrows; i++)
+		in[i] = in[0] + i * ncolumns;
+	return in;
+}
+/* }}} */
+
+/* {{{ void fftw2d(fftw_real **in, fftw_complex *out, int M, int N) */
+void fftw2d(fftw_real **in, fftw_complex *out, int M, int N) {
+	rfftwnd_plan plan;
+	plan = rfftw2d_create_plan(M, N, FFTW_REAL_TO_COMPLEX, FFTW_ESTIMATE | FFTW_IN_PLACE);
+	rfftwnd_one_real_to_complex(plan, &in[0][0], NULL);
+	rfftwnd_destroy_plan(plan);
+}
+/* }}} */
+
+/* {{{ void fftw2d_free(fftw_real **in) */
+void fftw2d_free(fftw_real **in) {
+	int i;
+	if (in) {
+		free(in[0]);
+		free(in);
+    }
+}
+/* }}} */
+
+/* {{{ void gd_fftw(gdImagePtr im_src, int mask_radius) */
+void gd_fftw(gdImagePtr im_src, int mask_radius) {
+	float val,
+		scale,
+		stddev;
+	int densitymax = densityMAX;
+	int i, j, ij;
+	int M, N;
+	int ** tpixels;
+	double somme, somme2, n;
+
+	rfftwnd_plan plan;
+	fftw2d_real_ptr a;
+	fftw_complex *A;
+
+	tpixels = im_src->tpixels;
+
+	M = im_src->sx;
+	N = im_src->sy;
+
+	a = fftw2d_alloc(M,N);
+	A = (fftw_complex*) &a[0][0];
+
+	for (i = 0; i < M; ++i)
+          for (j = 0; j < N; ++j) {
+             a[i][j] = (fftw_real)getDensity(tpixels[j][i]);
+          }
+
+	fftw2d(a, A, M, N);
+
+	for (i = 0; i < M; ++i) {
+          for (j = 0; j < N/2+1; ++j) {
+			ij = i*(N/2+1) + j;
 			val = square(A[ij]);
+			if (mask_radius > 0 && (
+				(sqrt(i*i + j*j) < mask_radius) || 
+				(sqrt((N-i)*(N-i) + j*j) < mask_radius) )) {
+					continue;
+			}
+			somme  += val;
+			somme2 += val*val;
+			n++;
+		}
+	}
+
+	if (n>0) {
+		stddev = sqrt((somme2 * n - somme * somme) / (n*n));
+	}
+
+	scale = 6*stddev;
+
+	for (i = 0; i < M; ++i) {
+          for (j = 0; j < N/2+1; ++j) {
+			ij = i*(N/2+1) + j;
+			val = square(A[ij]); 
+			val = val/scale*densitymax;
+
 			if (mask_radius > 0 && (
 				(sqrt(i*i + j*j) < mask_radius) || 
 				(sqrt((N-i)*(N-i) + j*j) < mask_radius) )) {
 				 val = 0;
 			}
 			if (i <= M/2 && j <= N/2) {
-				// 1st quadrant
-				I = i+M/2-1;
-				J = j+N/2-1;
-				setfftval(data_array, I, J, N, val);
-				// 2nd quadrant
-				I = M/2-i;
-				J = N/2-j;
-				setfftval(data_array, I, J, N, val);
+				tpixels[j+N/2-1][i+M/2-1] = setColorDensity(val, 1);
+				tpixels[N/2-j][M/2-i] = setColorDensity(val, 1);
 			}
 			if ( i >= M/2 && j <= N/2) {
-				// 3rd quadrant
-				I = i-M/2-1;
-				J = j+N/2-1;
-				setfftval(data_array, I, J, N, val);
-				// 4th quadrant
-				I = M+M/2-i-1;
-				J = N/2-j;
-				setfftval(data_array, I, J, N, val);
-			}
-		}
-	}
-}
-/* }}} */
-
-/* {{{ void getFFT(int M, int N, int ** tpixels ) */
-void getFFT(int M, int N, int ** tpixels ) {
-	double f_val,
-		scale,
-		min, max,
-		fmin, fmax;
-	int densitymax = densityMAX;
-	int gray =  1;
-	int i, j;
-
-	rfftwnd_plan plan;
-	fftw_real a[M][2*(N/2+1)];
-	fftw_complex *A;
-
-	A = (fftw_complex*) &a[0][0];
-
-	for (i = 0; i < M; ++i)
-          for (j = 0; j < N; ++j) {
-             a[i][j] = (fftw_real)getDensity(tpixels[i][j]);
-          }
-
-	plan = rfftw2d_create_plan(M, N, FFTW_REAL_TO_COMPLEX, FFTW_ESTIMATE | FFTW_IN_PLACE);
-	rfftwnd_one_real_to_complex(plan, &a[0][0], NULL);
-	rfftwnd_destroy_plan(plan);
-
-	fmax = fmin = 0;
-	for (i = 0; i < M; ++i) {
-          for (j = 0; j < N/2+1; ++j) {
-		int ij = i*(N/2+1) + j;
-		f_val = sqrt(((A[ij].re * A[ij].re + A[ij].im * A[ij].im)));
-		if (f_val>0) {
-			f_val = log(f_val);
-			fmax = MAX(fmax, f_val);
-			fmin = MIN(fmin, f_val);
-		}
-	  }
-	}
-	scale = fmax - fmin;
-		
-
-	for (i = 0; i < M; ++i) {
-          for (j = 0; j < N/2+1; ++j) {
-		int ij = i*(N/2+1) + j;
-		f_val = (((A[ij].re * A[ij].re + A[ij].im * A[ij].im)));
-		if (f_val>0) {
-			f_val = log(f_val);
-			f_val = f_val/scale*densitymax;
-			if (i <= M/2 && j <= N/2) {
-				tpixels[i+M/2-1][j+N/2-1] = setColorDensity(f_val, 1);
-				tpixels[M/2-i][N/2-j] = setColorDensity(f_val, 1);
-			}
-			if ( i >= M/2 && j <= N/2) {
-				tpixels[i-M/2][j+N/2-1] = setColorDensity(f_val, 1);
-				tpixels[M+M/2-i-1][N/2-j] = tpixels[i-M/2][j+N/2-1];
+				tpixels[j+N/2-1][i-M/2] = setColorDensity(val, 1);
+				tpixels[N/2-j][M+M/2-i-1] = setColorDensity(val, 1);
 			} 
-		}
           }
 	}
+	
+	fftw2d_free(a);
 }
 /* }}} */
 

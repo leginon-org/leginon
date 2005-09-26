@@ -194,9 +194,6 @@ int writeMRC(FILE *pFMRC, MRC *pMRC) {
 
 
 
-
-
-//int loadMRCHeader(char *pszFilename, MRC *pMRC) {
 int loadMRCHeader(char *pszFilename, MRCHeader *pMRCHeader) {
 	FILE *pFMRC;
 
@@ -397,3 +394,11 @@ int loadImagic5(char *pszName, Imagic5 *pImagic5) {
     
     return 1;
 }
+/* {{{ vim command
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: noet sw=4 ts=4 fdm=marker
+ * vim<600: noet sw=4 ts=4
+ }}} */
