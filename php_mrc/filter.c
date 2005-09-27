@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | image filtering tools for GD image resource				 |
+  | image filtering tools for GD image resource                          |
   +----------------------------------------------------------------------+
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
@@ -10,6 +10,7 @@
 #include "gd.h"
 #include "filter.h"
 
+/* {{{ int setDensity(float value) { */
 int setDensity(float value) {
 	int density;
 	if (value > densityMAX) {
@@ -21,7 +22,9 @@ int setDensity(float value) {
 	density = ((pixval << 16) + (pixval << 8) + pixval);
 	return density;
 }
+/* }}} */
 
+/* {{{ int setRGBDensity(float R, float G, float B) { */
 int setRGBDensity(float R, float G, float B) {
 	int color;
 	R = (R > densityMAX) ? densityMAX : ((R < densityMIN) ? densityMIN : R );
@@ -35,7 +38,9 @@ int setRGBDensity(float R, float G, float B) {
 	color = ((pixR << 16) + (pixG << 8) + pixB);
 	return color;
 }
+/* }}} */
 
+/* {{{ int setColorDensity(float value, int bw) { */
 int setColorDensity(float value, int bw) {
 	int density;
 	if (bw) {
@@ -62,11 +67,15 @@ int setColorDensity(float value, int bw) {
         }
 	return density;
 }
+/* }}} */
 
+/* {{{ unsigned char getDensity(int pixelvalue) { */
 unsigned char getDensity(int pixelvalue) {
 	return ((pixelvalue) & 0x0000FF);
 }
+/* }}} */
 
+/* {{{ int getLog(int pixelvalue) { */
 int getLog(int pixelvalue) {
 	unsigned char density;
 	float logvalue;
@@ -76,9 +85,11 @@ int getLog(int pixelvalue) {
 	logvalue = log(density) * densityMAX / log(densityMAX);
 	return setDensity(logvalue);
 }
+/* }}} */
 
 
 /* resize a gd image */
+/* {{{ gdImagePtr resize(gdImagePtr im, int w, int h, int n_w, int n_h ) { */
 gdImagePtr resize(gdImagePtr im, int w, int h, int n_w, int n_h ) {
 	if (n_w > 0 && n_h > 0 ) {
 		gdImagePtr im_tmp;
@@ -90,8 +101,10 @@ gdImagePtr resize(gdImagePtr im, int w, int h, int n_w, int n_h ) {
 		return im;
 	}
 }
+/* }}} */
 
 /* filter a gd image using gaussian smoothing */
+/* {{{ void filtergaussian(gdImagePtr im, int kernel, float factor) { */
 void filtergaussian(gdImagePtr im, int kernel, float factor) {
 
 	int	maskWidth=kernel,
@@ -152,7 +165,9 @@ void filtergaussian(gdImagePtr im, int kernel, float factor) {
 	free(maskData);
 
 }
+/* }}} */
 
+/* {{{ void gaussianfiltermask(double *maskData, int kernel, float sigma) { */
 void gaussianfiltermask(double *maskData, int kernel, float sigma) {
 
 	int	x,
@@ -188,9 +203,10 @@ void gaussianfiltermask(double *maskData, int kernel, float sigma) {
         }
 	
 }
+/* }}} */
 
-void
-gdImageFastCopyResized (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int dstW, int dstH, int srcW, int srcH)
+/* {{{ void gdImageFastCopyResized (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int dstW, int dstH, int srcW, int srcH) */
+void gdImageFastCopyResized (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int dstW, int dstH, int srcW, int srcH)
 {
   int x, y;
   int tox, toy;
@@ -251,8 +267,10 @@ gdImageFastCopyResized (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int 
   free (stx);
   free (sty);
 }
+/* }}} */
 
 /* copy pixels from img_src -> ima_dst */
+/* {{{ void copytpixels(gdImagePtr im_dst, gdImagePtr im_src) */
 void copytpixels(gdImagePtr im_dst, gdImagePtr im_src)
 {
   int i,j;
@@ -261,8 +279,10 @@ void copytpixels(gdImagePtr im_dst, gdImagePtr im_src)
 	      for (j = 0; (j < im_src->sx); j++)
           		im_dst->tpixels[i][j] = im_src->tpixels[i][j];
 }
+/* }}} */
 
 /* log scale */
+/* {{{ void gdLogScale(gdImagePtr im_src) { */
 void gdLogScale(gdImagePtr im_src) {
   int i,j;
   if (im_src->tpixels)
@@ -270,3 +290,13 @@ void gdLogScale(gdImagePtr im_src) {
 	      for (j = 0; (j < im_src->sx); j++)
           		im_src->tpixels[i][j] = getLog(im_src->tpixels[i][j]);
 }
+/* }}} */
+
+/* {{{	vim options
+ * Local variables:
+ * c-basic-offset: 4
+ * End:
+ * vim600: noet sw=4 ts=4 fdm=marker
+ * vim<600: noet sw=4 ts=4
+}}} */
+

@@ -15,7 +15,7 @@
   | Author:                                                              |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.7 2005-09-26 15:55:21 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.8 2005-09-27 05:15:14 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -257,6 +257,7 @@ ZEND_FUNCTION(imagecreatefrommrc)
 	nHeight = pmrc->header.ny/binning;
 	
 	im = gdImageCreateTrueColor(nWidth, nHeight);
+	gdImageColorAllocate(im, 0, 0, 0);
 
 	mrc_binning(pmrc, binning, skip_avrg);
 	mrc_to_gd(pmrc, im->tpixels, minPix, maxPix, colormap);
@@ -346,6 +347,7 @@ ZEND_FUNCTION(imagecopyfrommrc)
 	nHeight = mrc_dst.header.ny/binning;
 	
 	im = gdImageCreateTrueColor(nWidth, nHeight);
+	gdImageColorAllocate(im, 0, 0, 0);
 
 	mrc_to_image(&mrc_dst, im->tpixels, minPix , maxPix, binning, skip_avrg, 0, 0, colormap);
 	free(mrc_src.pbyData);
@@ -427,6 +429,7 @@ ZEND_FUNCTION(imagefilteredcreatefrommrc)
 	nHeight = pmrc->header.ny/binning;
 	
 	im = gdImageCreateTrueColor(nWidth, nHeight);
+	gdImageColorAllocate(im, 0, 0, 0);
 
 	mrc_filter(pmrc, binning, kernel, sigma);
 	mrc_to_gd(pmrc, im->tpixels, minPix, maxPix, colormap);
@@ -675,7 +678,7 @@ ZEND_FUNCTION(mrcfftw)
 }
 /* }}} */
 
-	#endif
+#endif
 
 	/* {{{ array mrcinfo -- retrieve MRC header information MRC file, URL or a String,
 		as a PHP associative array.
@@ -824,59 +827,60 @@ ZEND_FUNCTION(mrcfftw)
 	}
 	/* }}} */
 
-	/* {{{ resource mrctoimage(resource src_mrc)
-	   */ 
-	PHP_FUNCTION(mrctoimage)
+/* {{{ resource mrctoimage(resource src_mrc)
+*/ 
+PHP_FUNCTION(mrctoimage)
+{
+	char	*key;
+	zval	**MRCD, **PMIN, **PMAX, **COLOR_MAP;
+	MRCPtr	pmrc;
+	gdImagePtr im;
+	float	*data_array;
+	int	minPix = densityMIN,
+		maxPix = -1,
+		argc = ZEND_NUM_ARGS();
+
+
+	int nWidth = 0;
+	int nHeight = 0;
+	int colormap = 0;
+
+	if (argc < 1 || argc > 4) 
 	{
-		char	*key;
-		zval	**MRCD, **PMIN, **PMAX, **COLOR_MAP;
-		MRCPtr	pmrc;
-		gdImagePtr im;
-		float	*data_array;
-		int	minPix = densityMIN,
-			maxPix = -1,
-			argc = ZEND_NUM_ARGS();
+		WRONG_PARAM_COUNT;
+	} 
 
+	zend_get_parameters_ex(argc, &MRCD, &PMIN, &PMAX, &COLOR_MAP);
 
-		int nWidth = 0;
-		int nHeight = 0;
-		int colormap = 0;
-
-		if (argc < 1 || argc > 4) 
-		{
-			WRONG_PARAM_COUNT;
-		} 
-
-		zend_get_parameters_ex(argc, &MRCD, &PMIN, &PMAX, &COLOR_MAP);
-
-		if (argc>1) {
-			convert_to_long_ex(PMIN);
-			minPix = Z_LVAL_PP(PMIN);
-		}
-		if (argc>2) {
-			convert_to_long_ex(PMAX);
-			maxPix = Z_LVAL_PP(PMAX);
-		}
-		if (argc>3) {
-			convert_to_long_ex(COLOR_MAP);
-			colormap = Z_LVAL_PP(COLOR_MAP);
-		}
-
-		ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
-		if (minPix<0)
-			minPix = densityMIN;
-
-		maxPix = (maxPix<0) ?  ((colormap) ? densityColorMAX : densityMAX) : maxPix;
-		nWidth = pmrc->header.nx;
-		nHeight = pmrc->header.ny;
-		
-		im = gdImageCreateTrueColor(nWidth, nHeight);
-
-		mrc_to_gd(pmrc, im->tpixels, minPix, maxPix, colormap);
-		ZEND_REGISTER_RESOURCE(return_value, im, le_gd);
-
+	if (argc>1) {
+		convert_to_long_ex(PMIN);
+		minPix = Z_LVAL_PP(PMIN);
 	}
-	/* }}} */
+	if (argc>2) {
+		convert_to_long_ex(PMAX);
+		maxPix = Z_LVAL_PP(PMAX);
+	}
+	if (argc>3) {
+		convert_to_long_ex(COLOR_MAP);
+		colormap = Z_LVAL_PP(COLOR_MAP);
+	}
+
+	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
+	if (minPix<0)
+		minPix = densityMIN;
+
+	maxPix = (maxPix<0) ?  ((colormap) ? densityColorMAX : densityMAX) : maxPix;
+	nWidth = pmrc->header.nx;
+	nHeight = pmrc->header.ny;
+		
+	im = gdImageCreateTrueColor(nWidth, nHeight);
+	gdImageColorAllocate(im, 0, 0, 0);
+
+	mrc_to_gd(pmrc, im->tpixels, minPix, maxPix, colormap);
+	ZEND_REGISTER_RESOURCE(return_value, im, le_gd);
+
+}
+/* }}} */
 
 	/* {{{ mrccopy(int dst_mrc, int src_mrc, int dst_x, int dst_y, int src_x, int src_y, int src_w, int src_h)
 	   Copy part of an mrc */ 
@@ -1039,9 +1043,9 @@ ZEND_FUNCTION(mrcfftw)
 	}
 	/* }}} */
 
-	/* {{{ array mrcgetscale(resource src_mrc)*/ 
-	PHP_FUNCTION(mrcgetscale)
-	{
+/* {{{ array mrcgetscale(resource src_mrc)*/ 
+PHP_FUNCTION(mrcgetscale)
+{
 		char	*key;
 		zval	**MRCD, **DENSITY_MAX;
 		MRCPtr	pmrc;
@@ -1052,9 +1056,6 @@ ZEND_FUNCTION(mrcfftw)
 		int densitymax;
 		
 		float smin, smax;
-
-
-
 
 
 		if (argc != 2 || zend_get_parameters_ex(argc, &MRCD, &DENSITY_MAX) == FAILURE) {
@@ -1091,8 +1092,8 @@ ZEND_FUNCTION(mrcfftw)
 		key = "smax";
 		add_assoc_double(return_value, key, smax);
 
-	}
-	/* }}} */
+}
+/* }}} */
 
 	/* {{{ mrcputdata(resource src_mrc, array data) */ 
 	PHP_FUNCTION(mrcputdata)
