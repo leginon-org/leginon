@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Settings.py,v $
-# $Revision: 1.23 $
+# $Revision: 1.24 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-09-21 21:38:41 $
+# $Date: 2005-09-27 23:35:02 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -179,7 +179,7 @@ class Dialog(wx.Dialog):
 		nodesettings = node.getSettings()
 		self.setSettings(self.widgets, nodesettings)
 		self.settings = self.getSettings(self.widgets)
-		## check if settings the widgets caused values to change during validation
+		## check if setting the widgets caused values to change during validation
 		## if values changed, send them back to node.settings
 		if self.settings != nodesettings:
 			nodesettings.update(self.settings)
