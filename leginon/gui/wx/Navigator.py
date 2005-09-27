@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Navigator.py,v $
-# $Revision: 1.34 $
+# $Revision: 1.35 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-26 01:51:25 $
+# $Date: 2005-09-27 23:35:48 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -70,6 +70,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		movetypes = self.node.calclients.keys()
 		self.cmovetype = Choice(self.toolbar, -1, choices=movetypes)
 		self.cmovetype.SetStringSelection(self.node.settings['move type'])
+		## make sure node setting is a value that is in the choice list
+		self.node.settings['move type'] = self.cmovetype.GetStringSelection()
 		self.cmovetype.SetToolTip(wx.ToolTip('Navigion Parameter'))
 		self.toolbar.InsertControl(2, self.cmovetype)
 		self.toolbar.Realize()
