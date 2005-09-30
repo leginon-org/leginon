@@ -724,13 +724,14 @@ class view {
 		<table '.$this->framecolor.' border="0" cellspacing="0" cellpadding="1">
 		 <tr '.$this->menucolor.'> 
 		';
-		if ($this->displaycloseicon)
+		if ($this->displaycloseicon) {
 		$htmlframe .= '
 			<td width="15">';
 		$htmlframe .= $this->btclose->display();
 		$htmlframe .= '
 			</td>
 		';
+		}
 		$htmlframe .= '
 			<td nowrap="nowrap" >'.$this->title.'</td>
 			<td align="right">
@@ -751,20 +752,20 @@ class view {
 			.'
 	</td>
 		';
-		if ($this->displayinfoicon)
+		if ($this->displayinfoicon) {
 		$htmlframe .= '
 			<td width="15">'
 			.$this->btinfo->display().$this->crlf
-			.'
-	</td>
-		';
-		if ($this->displayffticon)
+			.'</td> ';
+		}
+		if ($this->displayffticon) {
 		$htmlframe .= '
 			<td width="15">';
 		$htmlframe .= $this->btfft->display();
 		$htmlframe .= '
 			</td>
 		';
+		}
 		if ($this->displaytargeticon) {
 			$htmlframe .= '
 				<td width="15">';
