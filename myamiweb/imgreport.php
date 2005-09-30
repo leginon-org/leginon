@@ -32,7 +32,7 @@ $sessionId = $imageinfo[sessionId];
 $path = $leginondata->getImagePath($sessionId);
 $filename = $leginondata->getFilenameFromId($imgId);
 $filesize = getFileSize($path.$filename, 2 );
-$fileinfo = imagemrcinfo($path.$filename);
+$fileinfo = mrcinfo($path.$filename);
 $sessioninfo = $leginondata->getSessionInfo($sessionId);
 $presets = $leginondata->getPresets($imgId);
 
@@ -44,7 +44,6 @@ $javascript = $viewer->getJavascript();
 $view1 = new view('<b>Thumbnail</b>', 'thumb');
 $view1->displayCloseIcon(false);
 $view1->displayInfoIcon(false);
-$view1->displayFilterIcon(false);
 $view1->displayFFTIcon(true);
 $view1->displayScaleIcon(true);
 $view1->displayTargetIcon(true);
@@ -117,24 +116,12 @@ if ($displaytree)
 <?
 //--- define information to display
 $fileinfokeys = array (	'nx','ny',
-	//	'nz',
 		'mode',
-	//	'nxstart',
-	//	'nystart',
-	//	'nzstart',
-	//	'mx','my',
-	//	'mz',
-	//	'x_length',
-	//	'y_length',
-	//	'z_length',
 		'alpha',
 		'beta',
 		'gamma',
-	//	'mapc','mapr','maps',
-		'amin','amax','amean',
-	//	'ispg','nsymbt','extra[MRC_USER]',
-		'xorigin','yorigin',
-	//	'nlabl'
+		'amin','amax','amean','rms',
+		'xorigin','yorigin'
 	);
 
 $imageinfokeys = array (	

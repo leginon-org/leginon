@@ -13,6 +13,8 @@ if (!$imgwidth=$_GET['w'])
 	$imgwidth=255;
 if (!$imgheight=$_GET['h'])
 	$imgheight=1;
+if (!$displaymark=$_GET['dm'])
+	$displaymark=0;
 $gradientsize = ($colormap) ? 1275 : 256; 
 $step = $gradientsize/$imgwidth; 
 $cLeft=0;
@@ -28,15 +30,30 @@ $gmax = (is_numeric($_GET['gmax'])) ? $_GET['gmax'] : $gradientsize-1;
  
 $pic=ImageCreateTrueColor($imgwidth,$imgheight);
 $gradfunc = ($colormap) ? 'getColorMap' : 'getGrayColor';
+$black = imagecolorallocate($pic, 0, 0, 0);
+$green = imagecolorallocate($pic, 0, 255, 0);
+$red = imagecolorallocate($pic, 255, 0, 0);
+
+$ratio = ($max-$min<>0) ? $gradientsize/($max-$min):0;
 
 for($gradientval=0;$gradientval<$gradientsize;$gradientval+=$step) {
-	$col = ($max-$min<>0) ? ($gradientval-$min)*$gradientsize/($max-$min):0;
+	$col = ($gradientval-$min)*$ratio;
 	$col = ($col>$gmax) ? $gmax : $col;
 	$col = ($col<$gmin) ? $gmin : $col;
 	$col = $gradfunc($col);
 	ImageFilledRectangle($pic, $cLeft, 0, $cLeft+$step, $cTop+$imgheight, $col);
 	$cLeft+=1;
 }
+
+if ($displaymark) {
+	$col = $imgwidth-1;
+	imageline ($pic , $col , 0, $col, $cTop+$imgheight, $black);
+	$col = $max/$step;
+	imageline ($pic , $col, 0, $col, $cTop+$imgheight, $red);
+	$col = $min/$step;
+	imageline ($pic , $col, 0, $col, $cTop+$imgheight, $green);
+}
+
 
 function getGrayColor($v) {
 	$col = ($v << 16) + ($v << 8) + $v;

@@ -16,7 +16,7 @@ $psel = ($_GET['psel']) ? '&psel='.urlencode($_GET['psel']) : '';
 $options = $tg.$sb.$minpix.$maxpix.$fft.$filter.$binning.$colormap.$psel;
 
 $filename = $leginondata->getFilenameFromId($Id);
-$imgsrc = "getparentimgtarget.php?preset=".$preset."&session=".$session."&id=".$id."&t=80&s=256".$options;
+$imgsrc = "getparentimgtarget.php?preset=".$preset."&session=".$session."&id=".$id."&t=80&s=256&binning=auto".$tg.$sb.$minpix.$maxpix.$fft.$filter.$colormap.$psel;
 ?>
 <html>
 <head>

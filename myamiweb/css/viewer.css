@@ -114,7 +114,17 @@ TD.viewdt2 {
 }
 
 .bgcolor1 {
-	background-color:	#3B8AC6;
+	background-color:	#3B8AC6; 
+}
+
+.bgimg1{
+	margin-left: 0pt;
+	margin-top: 0pt;
+	margin-bottom: 0pt;
+	
+	background-image:url('/dbem/img/banner2.gif');
+	background-repeat:repeat;
+		overflow:hidden;
 }
 
 .bgcolor2 {
@@ -180,6 +190,17 @@ INPUT.button {
  font-size: 0px;
  padding: 1px 0px ;
 }
+
+.setting{
+	vertical-align:bottom;
+	background: #dcdad5;
+	border: 1px solid #bdcebb;
+	padding: 0px 1px ;
+}
+
+.datafield0
+{
+        color:                  #777777;
 
 .datafield0
 {

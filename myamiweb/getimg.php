@@ -15,9 +15,6 @@ $g=true;
 if (!$sessionId=stripslashes($_GET[session])) {
 	$g=false;
 }
-if (!$table=stripslashes($_GET[table])) {
-	$table="AcquisitionImageData";
-}
 if (!$id=stripslashes($_GET[id])) {
 	$g=false;
 }
@@ -31,25 +28,6 @@ if ($t=='png') {
         $type = "image/jpeg";
 	$quality=$t;
 	$ext = "jpg";
-}
-
-if ($cache) {
-	$begin=getmicrotime();
-	$uri = "http://".$_SERVER[SERVER_NAME].$REQUEST_URI;
-	$cachedb = new cachedb($cachehost, 'usr_object', '', 'cache');
-	if ($image = $cachedb->get($uri)) {
-		Header( "Content-type: $type ");
-		$img = imagecreatefromstring($image);
-		$blue = imagecolorallocate($img, 0, 255, 255);
-		$end=getmicrotime();
-		imagestringshadow($img, 4, 10, 30, "cache time: ".($end-$begin), $blue);
-		if ($t=='png')
-			imagepng($img);
-		else
-			imagejpeg($img,'',$quality);
-		imagedestroy($img);
-		exit;
-	}
 }
 
 if (!$displayparticle = $_GET['psel']) 
@@ -83,6 +61,7 @@ if ($g) {
 		'scalebar' => $displayscalebar,
 		'displaytargets' => $displaytarget,
 		'loadtime' => $displayloadingtime,
+		'autoscale' => $autoscale,
 		'ptcl' => urldecode($displayparticle)
 	);
 
@@ -104,6 +83,7 @@ if ($g) {
 				'maxpix' => $maxpix,
 				'binning' => $binning,
 				'colormap' => $colormap,
+				'autoscale' => $autoscale,
 				'scalebar'=>false
 			);
 		

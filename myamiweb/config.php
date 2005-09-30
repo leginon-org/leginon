@@ -7,9 +7,9 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  *
  * $Source: /ami/sw/cvsroot/dbem/config.php,v $
- * $Revision: 1.16 $
+ * $Revision: 1.17 $
  * $Name: not supported by cvs2svn $
- * $Date: 2005-04-19 21:25:53 $
+ * $Date: 2005-09-30 23:21:42 $
  * $Author: dfellman $
  * $State: Exp $
  * $Locker:  $
@@ -27,20 +27,20 @@ $DB		= "dbemdata";
 
 // --- Project database URL
 
-$PROJECT_URL = "http://cronus1.scripps.edu/leginon/project/";
-$PROJECT_DB_HOST = "cronus1";
+$PROJECT_URL = "http://cronus3.scripps.edu/projectdb/";
+$PROJECT_DB_HOST = "cronus4";
 $PROJECT_DB_USER = "usr_object";
 $PROJECT_DB_PASS = "";
 $PROJECT_DB = "project";
 
 // --- Particle database
 
-$PARTICLE_DB_HOST = "cronus1";
+$PARTICLE_DB_HOST = "cronus4";
 $PARTICLE_DB_USER = "usr_object";
 $PARTICLE_DB_PASS = "";
 $PARTICLE_DB = "particledb";
 
-$PROCESSING_DB_HOST = "cronus1";
+$PROCESSING_DB_HOST = "cronus4";
 $PROCESSING_DB_USER = "usr_object";
 $PROCESSING_DB_PASS = "";
 $PROCESSING_DB = "processing";

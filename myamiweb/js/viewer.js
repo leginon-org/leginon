@@ -5,6 +5,18 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
+var autoscale=false;
+var pl_interval = false;
+var lastoptions = new Array();
+//var n_img;
+
+if (window.XMLHttpRequest) {
+        xmlhttp = new XMLHttpRequest();
+        xmlhttp.overrideMimeType('text/xml');
+} else if (window.ActiveXObject) {
+        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+}
+
 
 function setevents()
 {
@@ -34,6 +46,25 @@ function checkevents(e)
 	}
 }
 
+function getImageAutoScale(view) {
+	var url = 'getimagestat.php?id='+jsimgId;
+	alert(url);
+	xmlhttp.open('GET', url, true);
+	xmlhttp.onreadystatechange = function() {
+		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+		var xmlDocument = xmlhttp.responseXML;
+		var minval = parseFloat(xmlDocument.getElementsByTagName('min').item(0).firstChild.data);
+		var maxval = parseFloat(xmlDocument.getElementsByTagName('max').item(0).firstChild.data);
+		var meanval = parseFloat(xmlDocument.getElementsByTagName('mean').item(0).firstChild.data);
+		var stdevval = parseFloat(xmlDocument.getElementsByTagName('stdev').item(0).firstChild.data);
+		var minval = ((meanval - 3*stdevval)-minval)*255/(maxval-minval);
+		var maxval = ((meanval + 3*stdevval)-minval)*255/(maxval-minval);
+		setminmax(view, minval, maxval);
+		}
+	};
+	xmlhttp.send(null);
+}
+
 function startInterval()
 {
 	begin = new Date();
@@ -60,6 +91,47 @@ function trigger()
 	
 }
 
+function startPlayback(refreshtime) {
+	if (refreshtime)
+		pl_interval = window.setInterval("playback()", refreshtime);
+}
+
+function stopPlayback() {
+	window.clearInterval (pl_interval);
+	pl_interval = "";;
+}
+
+function playback() {
+	if (isImageLoaded('v1')) {
+		incIndex();
+		updateviews();
+	}
+}
+
+function loadImage(view) {
+	textd="";
+	loadingdiv = true;
+	if (loadingdivstyle = document.getElementById("loadingdiv"+view).style) {
+		loadingdiv = true;
+	}
+	if (img = document.images[eval("\"" +view+ "img\"")]) {
+		n_img_interval = eval("n_img_interval"+view);
+		n_img = eval("n_img_"+view);
+		if (isImageLoaded(view)) {
+			window.clearInterval(n_img_interval)
+			n_img_interval = "";
+			img.src=n_img.src;	
+			if (loadingdiv) {
+				loadingdivstyle.visibility = 'hidden';
+			}
+		} else {
+			if (loadingdiv) {
+				loadingdivstyle.visibility = 'visible';
+			}
+		}
+	}
+}
+
 function setimgId() {
 	if (obj=document.viewerform.imageId) {
 	jsindex = obj.selectedIndex; 
@@ -69,14 +141,6 @@ function setimgId() {
 	} 
 	jsimgId = obj.options[jsindex].value; 
 	}
-}
-
-function setview(view, state) {
-	if (state=="on") 
-		state="off"; 
-	else 
-		state="on"; 
-	eval("window.document.viewerform."+view+".value=state");
 }
 
 function newexp() {
@@ -108,7 +172,6 @@ function addComment() {
 	}
 }
 
-var lastoptions = new Array();
 function newfile(view){
 	jssize = eval(view+"size");
 	jsvfile = eval("jsvfile"+view);
@@ -125,22 +188,28 @@ function newfile(view){
 		if (list)
 			prem.value = selpreset;
 
+	// -- Autoscale --
+	if (autoscale==true) {
+//		getImageAutoScale(view);
+	}
+	setImageStatus(view);
+
 	if (eval(view+"fft_bt_st")) fft="&fft=1"; else fft="";
 	if (eval(view+"scale_bt_st")) sb="&sb=1"; else sb="";
 	if (eval(view+"target_bt_st")) tg="&tg=1"; else tg="";
 	if (cmin = eval("jsmin"+view)) np="&np="+cmin; else np="";
 	if (cmax = eval("jsmax"+view)) xp="&xp="+cmax; else xp="";
-	filter_st = eval(view+"filter_bt_st");
-	if ((cfilter = eval("jsfilter"+view)) && (filter_st==true || filter_st=="on")) flt="&flt="+cfilter; else flt="";
+	if (cfilter = eval("jsfilter"+view)) flt="&flt="+cfilter; else flt="";
 	if (cbinning = eval("jsbinning"+view)) binning="&binning="+cbinning; else binning="";
 	if (cquality = eval("jsquality"+view)) quality="&t="+cquality; else quality="";
 	if (ccolormap= eval("jscolormap"+view)) colormap="&colormap="+ccolormap; else colormap="";
+	if (cautoscale= eval("jsautoscale"+view)) autoscale="&autoscale="+cautoscale; else autoscale="";
 	if (cptclsel = eval("jsptclsel"+view)) ptclsel="&psel="+escape(cptclsel); else ptclsel="";
 
 	options = "preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+ptclsel;
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+autoscale+ptclsel;
 
 	if (options == lastoptions[vid])
 		return;
@@ -151,8 +220,13 @@ function newfile(view){
 	ninfolink = "imgreport.php?id="+jsimgId+"&preset="+selpreset;
 	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft;
 
-	if (img = document.images[eval("\"" +view+ "img\"")]) 
-		img.src = ni;
+	if (img = document.images[eval("\"" +view+ "img\"")]) {
+		n = img.name;
+		n_img = eval("n_img_"+view);
+		n_img.name="n"+n;
+		n_img.src = ni;
+		eval("n_img_interval"+view+" = window.setInterval(\"loadImage('"+view+"')\", 500)");
+	}
 	if (link = document.getElementById(view+"href"))
 		link.href = nlink;
 	if (infolink = document.getElementById("info"+view+"_bthref"))
@@ -176,13 +250,30 @@ function toggleButton(imagename, name) {
 	return state;
 }
 
+function setform(input, value) {
+	if (m = eval("document.viewerform."+input)) {
+		m.value=value;
+		return true;
+	}
+	return false;
+}
+
+function isImageLoaded(view) {
+	if (img = document.images[eval("\"" +view+ "img\"")]) {
+		if (n_img.complete){
+			return true;
+		}
+	}
+	return false;
+}
+
 function setImageStatus(viewname) {
 	if (ccolormap= eval("jscolormap"+viewname)) colormap="&colormap="+ccolormap; else colormap="";
 	if (cmin = eval("jsmin"+viewname)) np="&min="+cmin; else np="";
 	if (cmax = eval("jsmax"+viewname)) xp="&max="+cmax; else xp="";
 	options = np+xp+colormap;
 	if (img = document.images[eval("\"" +viewname+ "imgstatgrad\"")]) 
-		img.src = 'img/dfe/grad.php?h=10&w=40'+options;
+		img.src = 'img/dfe/grad.php?h=10&w=100&dm=1'+options;
 	filter = eval("jsfilter"+viewname);
 	binning = eval("jsbinning"+viewname);
 	quality = eval("jsquality"+viewname);
@@ -200,8 +291,7 @@ function setImageHistogram(viewname) {
 		if (list = eval("document.viewerform."+viewname+"pre"))
 			selpreset=list.options[list.selectedIndex].value;
 		if (eval(viewname+"fft_bt_st")) fft="&fft=1"; else fft="";
-		filter_st = eval(viewname+"filter_bt_st");
-		if ((cfilter = eval("jsfilter"+viewname)) && (filter_st==true || filter_st=="on")) flt="&flt="+cfilter; else flt="";
+		if (cfilter = eval("jsfilter"+viewname)) flt="&flt="+cfilter; else flt="";
 		if (ccolormap= eval("jscolormap"+viewname)) colormap="&colormap="+ccolormap; else colormap="";
 		if (cmin = eval("jsmin"+viewname)) np="&np="+cmin; else np="";
 		if (cmax = eval("jsmax"+viewname)) xp="&xp="+cmax; else xp="";
@@ -229,6 +319,16 @@ function setminmax(viewname, min,max) {
 	}
 }
 
+function getminmax(viewname, min,max) {
+	if (m = eval("document.viewerform."+viewname+"minpix")) {
+		min=m.value;
+	}
+	if (x = eval("document.viewerform."+viewname+"maxpix")) {
+		max=x.value;
+	}
+	return Array(min,max);
+}
+
 function setcolormap(viewname, colormap) {
 	eval("jscolormap"+viewname+"="+colormap);
 	if (cm = eval("document.viewerform."+viewname+"cm")) {
@@ -250,13 +350,6 @@ function setParticleSelection(viewname, selection) {
 	}
 }
 
-function displaydebug(string) {
-	cur = document.viewerform.debug.value;
-	document.viewerform.debug.value= cur+"\n"+string;
-}
-
-
-
 function setfilter(viewname, filter) {
 	eval("jsfilter"+viewname+"='"+filter+"'");
 	if (f = eval("document.viewerform."+viewname+"f")) {
@@ -268,6 +361,13 @@ function setbinning(viewname, binning) {
 	eval("jsbinning"+viewname+"='"+binning+"'");
 	if (b = eval("document.viewerform."+viewname+"b")) {
 		b.value=binning;
+	}
+}
+
+function setautoscale(viewname, state) {
+	eval("jsautoscale"+viewname+"='"+state+"'");
+	if (b = eval("document.viewerform."+viewname+"autos")) {
+		b.value=state;
 	}
 }
 
@@ -283,14 +383,16 @@ function popUpAdjust(URL, view, param){
 	binning = eval("jsbinning"+view);
 	quality = eval("jsquality"+view);
 	colormap = eval("jscolormap"+view);
+	autoscale = eval("jsautoscale"+view);
 	min = (min) ? "&pmin="+min : "";
 	max = (max) ? "&pmax="+max : "";
 	filter = (filter) ? "&filter="+filter : "";
 	binning = (binning) ? "&binning="+binning : "";
 	quality = (quality) ? "&t="+quality : "";
 	colormap= (colormap) ? "&colormap="+colormap : "";
+	autoscale= (autoscale) ? "&autoscale="+autoscale : "";
 	param = (param) ? param : "left=0,top=0,height=170,width=370";
-	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+binning+quality+colormap+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');");
+	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+binning+quality+colormap+autoscale+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');");
 }
 
 function popUpPtcl(URL, view, param) {
@@ -299,5 +401,52 @@ function popUpPtcl(URL, view, param) {
 	s = "&session="+jsSessionId;
 	param = (param) ? param : "left=0,top=0,height=170,width=370";
 	eval (view+"adjw"+" = window.open('"+URL+s+psel+"', '"+view+"ptcl', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');");
+}
+
+function incIndex(){
+ if (document.viewerform.imageId.length !=0) {
+     for (var i = 0; i < document.viewerform.imageId.length; i++) {
+      if (document.viewerform.imageId.options[i].selected == true) {
+       index=i  
+      } 
+     }
+     if (index == document.viewerform.imageId.length - 1) {
+ 	index = index-1
+     }	
+     document.viewerform.imageId.options[index+1].selected=true;
+ }
+}
+
+function decIndex(){
+ if (document.viewerform.imageId.length !=0) {
+     for (var i = 0; i < document.listform.allfile.length; i++) {
+      if (document.viewerform.imageId.options[i].selected == true) {
+       index=i  
+      } 
+     }
+     if (index == 0) {
+ 	index = index+1
+     }	
+     document.viewerform.imageId.options[(index-1)].selected=true;
+ }
+}
+
+function displaydebug(string) {
+	cur = document.viewerform.debug.value;
+	document.viewerform.debug.value= cur+"\n"+string;
+}
+
+function bsSliderChange1(sliderObj, val, newPos){ 
+  jsminpix = val;
+  updateGradient();
+}
+
+function bsSliderChange2(sliderObj, val, newPos){ 
+  jsmaxpix = val;
+  updateGradient();
+}
+
+function updateGradient() {
+	document.getElementById('gradientDiv').style.background = 'url('+jsbaseurl+gradient+'?colormap='+jscolormap+'&min='+jsminpix+'&max='+jsmaxpix+'&gmin='+jsmingradpix+'&gmax='+jsmaxgradpix+')'; 
 }
 

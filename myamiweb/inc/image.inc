@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.19 $
- *	@version $Id: image.inc,v 1.19 2005-04-19 21:25:54 dfellman Exp $
+ *	@version $Revision: 1.20 $
+ *	@version $Id: image.inc,v 1.20 2005-09-30 23:21:44 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -14,6 +14,8 @@ require_once('inc/filter.inc');
 require_once('inc/graphutil.inc');
 require_once('inc/scalebar.inc');
 require_once('inc/ptcl.inc');
+
+
 
 function getImage($sessionId, $imageId, $preset, $params = array()) {
 
@@ -28,7 +30,9 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		'scalebar' => true,
 		'displaytargets' => true,
 		'loadtime' => false,
-		'ptlc' => false
+		'ptlc' => false,
+		'autoscale' => false,
+		'mrc' => false
 	);
 	if (is_array($params))
 		foreach ($params as $k=>$v)
@@ -61,15 +65,35 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 	if (@is_file($pic)) {
 		$imginfo = $leginondata->getImageInfo($imageId);
 		$dimx = $imginfo[dimx];
-
+		if ($p[autoscale]) {
+			$densitymax = ($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL;
+			list($info) = $leginondata->getImageStat($id);
+			if ($info) {
+				$minval = $info['min'];
+				$maxval = $info['max'];
+				$meanval = $info['mean'];
+				$stdev = $info['stdev'];
+			} else {
+				$info = mrcinfo($pic);
+				$minval = $info['amin'];
+				$maxval = $info['amax'];
+				$meanval = $info['amean'];
+				$stdev = $info['rms'];
+			}
+			if ($meanval && $stdev) {
+				$p[minpix] = (($meanval - 3*$stdev))*$densitymax/($maxval-$minval);
+				$p[maxpix] = (($meanval + 3*$stdev))*$densitymax/($maxval-$minval);
+			}
+		}
+				
 		if ($p[loadtime])
 			$begin=getmicrotime();
 
 		if ($binning=='auto')
 			$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
-//		$img = imagecreatefrommrc($pic, $p[minpix], $p[maxpix], $p[colormap], $binning);
-		if ($p[fft])
-			$img = imageCreateFFTFromMRC($pic, 10, $p[minpix], $p[maxpix], $p[colormap]);
+		if ($p[fft]) {
+			$img = getfft($pic, $p[minpix], $p[maxpix], $p[colormap], $binning);
+		}
 
 		else if (function_exists($p[filter]))
 			$img = $p[filter]($pic, $p[minpix], $p[maxpix], $p[colormap], $binning);
@@ -382,6 +406,7 @@ class Mosaic {
 
 		$img_w = (2*$margin + $max_col - $min_col)/$ratio;
 		$img_h = (2*$margin + $max_row - $min_row)/$ratio;
+		$mrcimg = mrccreate($img_w, $img_h);
 		$img = imagecreatetruecolor($img_w, $img_h);
 		$background = imagecolorallocate($img, 0, 0, 0);
 		$crosscol = imagecolorallocate($img, 255, 255, 0);
@@ -395,6 +420,7 @@ class Mosaic {
 
 		$sessionId = $imageinfo[0][sessionId];
 		$squaresize = $imageinfo[0][dimx]/$ratio;
+		$this->params['mrc'] = 1;
 		$this->params['size'] = $squaresize;
 		$this->params['binning'] =  ($ratio<1) ? 1 : $ratio;
 
@@ -408,10 +434,15 @@ class Mosaic {
 			$dst_x = $squarepoints[0];
 			$dst_y = $squarepoints[1];
 			$gimg = getImage($sessionId, $r[imageId], $preset, $this->params);
-			$src_w = imagesx($gimg);
-			$src_h = imagesy($gimg);
-			imagecopy($img, $gimg, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h);
-			imagedestroy($gimg);
+			$src_w = mrcsx($gimg);
+			$src_h = mrcsy($gimg);
+			mrccopy($mrcimg, $gimg, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h);
+			mrcdestroy($gimg);
+		//	$gimg = getImage($sessionId, $r[imageId], $preset, $this->params);
+		//	$src_w = imagesx($gimg);
+		//	$src_h = imagesy($gimg);
+	//		imagecopy($img, $gimg, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h);
+	//		imagedestroy($gimg);
 			if ($this->displayframe) {
 				if ($this->cId==$r[imageId]) {
 					$crossquare = $squarepoints;
@@ -419,11 +450,16 @@ class Mosaic {
 					$cdy = $dst_y;
 					$cnb =$k+1;
 				}
-				drawsquare($img, $squarepoints, $mosaicframecol);
-				imagestringshadow($img, 4, $dst_x+1, $dst_y, $k+1, $mosaicframecol);
 			}
 		    }
 		}
+		mrcupdateheader($mrcimg);
+		$img = mrctoimage($mrcimg);
+		mrcdestroy($mrcimg);
+			if ($this->displayframe) {
+				drawsquare($img, $crossquare, $mosaicframecol);
+				imagestringshadow($img, 4, $cdx, $cdy, $cnb , $mosaicframecol);
+			}
 
 		if ($crossquare) {
 			$col = $crosscol;

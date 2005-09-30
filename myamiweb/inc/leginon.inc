@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.46 $
- *	@version $Id: leginon.inc,v 1.46 2005-04-28 18:45:56 dfellman Exp $
+ *	@version $Revision: 1.47 $
+ *	@version $Id: leginon.inc,v 1.47 2005-09-30 23:21:44 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -248,6 +248,26 @@ class leginondata {
 		return array_merge($defaulttypes, $types);
 	}
 
+	function getImageStat($name) {
+		if (!$name)
+			return false;
+		$sqljoin = "LEFT JOIN `AcquisitionImageData` AS `a` "
+				."ON (`a`.`DEF_id`=`s`.`REF|AcquisitionImageData|image`) ";
+		$sqlwhere = "a.`MRC|image`='$name' ";
+		if (is_numeric($name)) {
+			$sqljoin = "";
+			$sqlwhere = "s.`REF|AcquisitionImageData|image`='$name' " ;
+		}
+		$q="SELECT "
+		."`s`.`min`, `s`.`max`, `s`.`stdev`, `s`.`mean` "
+		."FROM "
+		."`AcquisitionImageStatsData` AS `s` "
+		.$sqljoin
+		."WHERE "
+		.$sqlwhere;
+		return $this->mysql->getSQLResult($q);
+	}
+
 	function getFilenames($sessionId, $name="", $table="AcquisitionImageData") {
 		$sessionwhere = "a.`REF|SessionData|session`='$sessionId' ";
 		if (!is_numeric($sessionId)) {
@@ -443,15 +463,16 @@ class leginondata {
 	function getFilename($name) {
 		$sqlwhere = (is_numeric($name)) ? "where `DEF_id`='$name' " 
 				: "where `MRC|image` like '$name' ";
-		$q = "select `DEF_id` as id, `MRC|image` as filename from `AcquisitionImageData` "
+		$q = "select `DEF_id` as id, `MRC|image` as filename, `REF|SessionData|session` as sessionId from `AcquisitionImageData` "
 		    .$sqlwhere;
 		$filenames = $this->mysql->getSQLResult($q);
 		return $filenames;
 	}
 
-	function getFilenameFromId($id) {
+	function getFilenameFromId($id, $path="") {
 			list($filename) = $this->getFilename($id);
-			return $filename['filename'];
+			$path = ($path) ? $this->getImagePath($filename['sessionId']) : "";
+			return $path.$filename['filename'];
 	}
 
 	function getCalibrationIds($calibration, $scopeId=False, $cameraId=False, $limit='', $type='') {

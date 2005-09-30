@@ -30,6 +30,8 @@ if ($min > $defaultmax)
 	$min = $defaultmax;
 if ($max > $defaultmax)
 	$max = $defaultmax;
+if (!$autoscale=$_REQUEST['autoscale'])
+	$autoscale=0;
 $currentgradient='grad.php';
 
 
@@ -47,7 +49,7 @@ $baseurl=implode("/",$arrayurl);
 <script src="js/EventHandler.js"></script>
 <script src="js/Bs_Slider.class.js"></script>
 <script src="js/Bs_FormUtil.lib.js"></script>
-<script src="js/viewiframe.js"></script>
+<script src="js/viewer.js"></script>
 <script><!--
 <?
 
@@ -64,6 +66,7 @@ var jsviewname = '$name';
 var jsfilter = '$currentfilter';
 var jsbinning = '$currentbinning';
 var jsquality = '$currentquality';
+var jsautoscale = '$autoscale';
 var gradient = '/img/dfe/$currentgradient';
 ";
 require('inc/filter.inc');
@@ -72,6 +75,19 @@ $filtertypes = $filterdata->getFilterTypes();
 $binningtypes = $filterdata->getBinningTypes();
 
 ?>
+function getautoscale() {
+	parentwindow.getImageAutoScale(jsviewname);
+	a = parentwindow.getminmax(jsviewname);
+	minpix1.updatePointer(a[0]);
+	maxpix1.updatePointer(a[1]);
+	
+}
+
+function setautoscale() {
+	if (autoscale = document.adjustform.autoscale)
+		jsautoscale = (autoscale.checked==true) ? 1 : 0;
+}
+
 function update() {
 	if (binninglist = document.adjustform.binning)
 		jsbinning=binninglist.options[binninglist.selectedIndex].value;
@@ -85,12 +101,13 @@ function update() {
 			eval("parentwindow.toggleButton('"+jsviewname+"filter_bt', 'filter_bt')");
 	parentwindow.setminmax(jsviewname,jsminpix,jsmaxpix);
 	parentwindow.setcolormap(jsviewname,jscolormap);
+	parentwindow.setautoscale(jsviewname,jsautoscale);
 	if (qualitylist = document.adjustform.quality)
 		jsquality=qualitylist.options[qualitylist.selectedIndex].value;
 	parentwindow.setquality(jsviewname,jsquality);
-	parentwindow.setImageStatus(jsviewname);
+//	parentwindow.setImageStatus(jsviewname);
 	parentwindow.newfile(jsviewname);
-	parentwindow.setImageHistogram(jsviewname);
+//	parentwindow.setImageHistogram(jsviewname);
 }
 
 function drawSliders() {
@@ -148,8 +165,8 @@ function init(){
 <form method="post" name="adjustform" id="adjust" >
 <?   $cmapstr = ($cmap==1) ? "0" : "1";  ?>
 <input type="hidden" name="colormap" value="<?=$cmapstr?>">
-<div id="imagemap" style="z-index:99999;position:absolute;visibility:hidden;border:1px solid black"></div>
-<div id="treedata" style="z-index:99999;position:absolute;visibility:hidden;border:1px solid black"></div>
+<div style="z-index:99999;position:absolute;visibility:hidden;border:1px solid black"></div>
+<div style="z-index:99999;position:absolute;visibility:hidden;border:1px solid black"></div>
 <table border="0">
   <tr>
    <td colspan="3" align="center">
@@ -215,6 +232,11 @@ function init(){
 	}
 	?>
 	</select>
+	</td>
+	<td>AutoScale
+		<?$sel = ($autoscale) ? 'checked' : '';?>
+		<input type="checkbox" name="autoscale" <?=$sel?> onClick="setautoscale()">
+		
 	</td>
 	</tr>
     </table>
