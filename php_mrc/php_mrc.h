@@ -15,7 +15,7 @@
   | Author:                                                              |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.h,v 1.6 2005-09-26 15:55:21 dfellman Exp $ 
+  $Id: php_mrc.h,v 1.7 2005-09-30 23:28:40 dfellman Exp $ 
 */
 
 #ifndef PHP_MRC_H
@@ -53,6 +53,8 @@ ZEND_FUNCTION(mrcfftw);
 #endif
 ZEND_FUNCTION(mrcinfo);
 ZEND_FUNCTION(mrcgetinfo);
+ZEND_FUNCTION(mrcsx);
+ZEND_FUNCTION(mrcsy);
 ZEND_FUNCTION(mrcread);
 ZEND_FUNCTION(mrcreadfromstring);
 ZEND_FUNCTION(mrccreate);

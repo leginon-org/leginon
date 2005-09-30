@@ -19,7 +19,8 @@ int getMaskDataIndexes(int *indexes, int kernel, int index, int imagewidth);
 int gdreadMRCHeader(gdIOCtx *io_ctx, MRCHeader *pMRCHeader);
 int gdloadMRC(gdIOCtx *io_ctx, int in_length, MRC *pMRC);
 
-void mrc_copy(MRC *mrc_src, MRC *mrc_dst, int x1, int y1, int x2, int y2);
+//void mrc_copy(MRC *mrc_src, MRC *mrc_dst, int x1, int y1, int x2, int y2);
+void mrc_copy(MRCPtr pmrc_dst, MRCPtr pmrc_src, int x1, int y1, int x2, int y2) ;
 void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX, int srcY, int w, int h);
 MRCPtr mrc_create(int x_size, int y_size);
 void mrc_destroy(MRCPtr pmrc);

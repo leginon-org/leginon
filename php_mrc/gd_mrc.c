@@ -56,58 +56,6 @@ void mrc_to_float(MRC *mrc, float *pdata_array) {
 }
 /* }}} */
 
-/* {{{ void mrc_copy(MRC *mrc_src, MRC *mrc_dst, int x1, int y1, int x2, int y2) */
-void mrc_copy(MRC *mrc_src, MRC *mrc_dst, int x1, int y1, int x2, int y2) {
-
-        float	*data_array, *data_array_dst;
-
-        int     w_src=mrc_src->header.nx, h_src=mrc_src->header.ny,
-                n_src=w_src*h_src,
-		w_dst, h_dst, n_dst,
-		x_min=x1, x_max=x2,
-		y_min=y1, y_max=y2,
-                i,j,ij,t;
-
-	if (x1>x2) {
-		x_min=x2;
-		x_max=x1;
-	}
-	if (y1>y2) {
-		y_min=y2;
-		y_max=y1;
-	}
-	if (x_max > w_src)
-		x_max = w_src;
-	if (y_max > h_src)
-		y_max = h_src;
-
-	w_dst = x_max-x_min;
-	h_dst = y_max-y_min;
-	n_dst=w_dst*h_dst;
-
-	memcpy(&mrc_dst->header, &mrc_src->header, MRC_HEADER_SIZE);
-
-	mrc_dst->header.nx = w_dst;
-	mrc_dst->header.ny = h_dst;
-	mrc_dst->header.mode = MRC_MODE_FLOAT;
-
-	mrc_dst->pbyData = malloc(sizeof(float)*n_dst);
-	data_array_dst = (float *)mrc_dst->pbyData;
-	
-	data_array = malloc(sizeof(float)*n_src);
-	mrc_to_float(mrc_src, data_array);
-
-	for (t=0, j=y_min; j<y_max; j++) {
-		for (i=x_min; i<x_max; i++) {
-			ij = i + j*w_src;
-			data_array_dst[t] = data_array[ij];
-			t++;
-		}
-	}
-	free(data_array);
-}
-/* }}} */
-
 /* {{{ void mrc_convert_to_float(MRC *mrc_src, MRC *mrc_dst) */
 void mrc_convert_to_float(MRC *mrc_src, MRC *mrc_dst) {
 
@@ -125,11 +73,8 @@ void mrc_convert_to_float(MRC *mrc_src, MRC *mrc_dst) {
 	mrc_dst->pbyData = malloc(sizeof(float)*n_src);
 	data_array_dst = (float *)mrc_dst->pbyData;
 	
-//	data_array = malloc(sizeof(float)*n_src);
 	mrc_to_float(mrc_src, data_array_dst);
-//	memcpy(data_array_dst, data_array, sizeof(float)*n_src);
 
-//	free(data_array);
 }
 /* }}} */
 
@@ -202,18 +147,16 @@ void mrc_update_header(MRC *mrc) {
 void mrc_filter(MRC *mrc, int binning, int kernel, float sigma) {
 
 	float *data_array_src ;
-	int	i, j,
-		n, ni,
-		n_w, w, n_h, h, t, off_w;
-	int index;
 	float f_val;
 
-	int	maskindex=0,
-		masksize = kernel*kernel,
-		x=0,
-		y=0;
+	int	i, j,
+		n_w, w, n_h, h,
+		index, ij, IJ;
 
 	int	*maskindexes;
+	int	maskindex=0,
+		masksize = kernel*kernel;
+
 
 	double  *maskData;
 
@@ -223,8 +166,6 @@ void mrc_filter(MRC *mrc, int binning, int kernel, float sigma) {
 		h = mrc->header.ny;
 		n_w = w/binning;
 		n_h = h/binning;
-		off_w = w - n_w * binning;
-		n=w*h;
 
 		data_array_src = (float *)mrc->pbyData;
 		maskData = malloc(sizeof(double)*masksize);
@@ -232,32 +173,21 @@ void mrc_filter(MRC *mrc, int binning, int kernel, float sigma) {
 
 		gaussianfiltermask(maskData, kernel, sigma);
 
-		for (ni=0, i=-1,j=0,t=0; t<n; t+=binning,j++) {
-			if (j % n_w == 0) {
-				j=0; i++;
-                if (i>0)
-					t += off_w+w*(binning-1);
+		for (j=0; j<n_h; j++) {
+			for (i=0; i<n_w; i++) {
+				ij = i + j*n_w;
+				IJ = i*binning + j*w*binning;
+				getMaskDataIndexes(maskindexes, kernel, IJ, w);
+				for (f_val=0, index = 0; index < masksize; index++) {
+					if (maskindexes[index] != -1)
+						f_val += data_array_src[maskindexes[index]] * maskData[index];
+				}
+				data_array_src[ij] = f_val;
 			}
-			if (ni>n_w*n_h)
-				break;
-
-			getMaskDataIndexes(maskindexes, kernel, t, w);
-			for (f_val=0, index = 0; index < masksize; index++) {
-				if (maskindexes[index] != -1)
-					f_val += data_array_src[maskindexes[index]] * maskData[index];
-			}
-
-			data_array_src[ni] = f_val;
-			ni++;
-
-
-			if (i>=(n_h-1) && j>=(n_w-1))
-				break;
 		}
 
 		mrc->header.nx=n_w;
 		mrc->header.ny=n_h;
-		mrc_update_header(mrc);
 		free(maskData);
 		free(maskindexes);
 	}
@@ -268,55 +198,46 @@ void mrc_filter(MRC *mrc, int binning, int kernel, float sigma) {
 /* {{{ void mrc_binning(MRC *mrc, int binning, int skip_avg) */
 void mrc_binning(MRC *mrc, int binning, int skip_avg) {
 
-	float *data_array_src ;
-	int	i, j,
-		n, ni,
-		n_w, w, n_h, h, t, off_w;
-	int binningsize;
-	int index;
-	float f_val;
 	int *indexes;
+	int	i, j,
+		ij, IJ,
+		n, ni,
+		n_w, w,
+		n_h, h,
+		binningsize,
+		index;
+
+	float *data_array_src ;
+	float f_val;
 
 	if (binning>1) {
 		
  		binningsize = binning*binning;
 		indexes = malloc(sizeof(int)*binningsize);
+		data_array_src = (float *)mrc->pbyData;
 		w = mrc->header.nx;
 		h = mrc->header.ny;
 		n_w = w/binning;
 		n_h = h/binning;
-                off_w = w - n_w * binning;
 		n=w*h;
-		data_array_src = (float *)mrc->pbyData;
-		for (ni=0, i=-1,j=0,t=0; t<n; t+=binning,j++) {
-			if (j % n_w == 0) {
-				j=0; i++;
-                if (i>0)
-					t += off_w+w*(binning-1);
+
+		for (j=0; j<n_h; j++) {
+			for (i=0; i<n_w; i++) {
+				ij = i + j*n_w;
+				IJ = i*binning + j*w*binning;
+				if (skip_avg) {
+					f_val = data_array_src[IJ];
+				} else {
+					getIndexes(indexes, binning, IJ, w);
+					for (f_val=0, index=0; index<binningsize; index++)
+						f_val += data_array_src[indexes[index]];
+					f_val /= binningsize;
+				}
+				data_array_src[ij] = f_val;
 			}
-			if (ni>n_w*n_h)
-				break;
-
-			if (skip_avg) {
-				f_val = data_array_src[t];
-			} else {
-				getIndexes(indexes, binning, t, w) ;
-				for (f_val=0, index=0; index<binningsize; index++)
-					f_val += data_array_src[indexes[index]];
-				f_val /= binningsize;
-			}
-
-			data_array_src[ni] = f_val;
-			ni++;
-
-
-			if (i>=(n_h-1) && j>=(n_w-1))
-				break;
-                }
-
+		}
 		mrc->header.nx=n_w;
 		mrc->header.ny=n_h;
-		mrc_update_header(mrc);
 		free(indexes);
 	}
 }
@@ -363,15 +284,14 @@ void mrc_to_gd(MRC *mrc, int ** tpixels, int pmin, int pmax, int colormap) {
 
 	data_array = (float *)mrc->pbyData;
 
-	scale = fmax - fmin;
-	nmin = fmin + pmin * scale / densitymax;
-	nmax = fmin + pmax * scale / densitymax;
+	nmin = pmin * scale / densitymax;
+	nmax = pmax * scale / densitymax;
 	nscale = nmax - nmin;
 
 	if (nscale != 0)
-		for (i = 0; i < w; ++i) {
-			for (j = 0; j < h; ++j) {
-				ij = i*h + j;
+		for (j = 0; j < h; ++j) {
+			for (i = 0; i < w; ++i) {
+				ij = i + j*w;
 				f_val = data_array[ij];
 				f_val = (f_val-nmin)*densitymax/nscale;
 				tpixels[j][i] = setColorDensity(f_val, gray);
@@ -381,76 +301,77 @@ void mrc_to_gd(MRC *mrc, int ** tpixels, int pmin, int pmax, int colormap) {
 }
 /* }}} */
 
-/* {{{ void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX, int srcY, int w, int h) */
-void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX, int srcY, int w, int h)
-{
-	int c;
-	int x, y;
-	int tox, toy;
-
-
-        int     w_src, h_src, n_src,
-		w_dst, h_dst, n_dst,
-		x_min_src, x_max_src, y_min_src, y_max_src,
-		x_min_dst, x_max_dst, y_min_dst, y_max_dst,
-                i,j,ij,t;
+/* {{{ void mrc_copy(MRCPtr pmrc_dst, MRCPtr pmrc_src, int x1, int y1, int x2, int y2) */
+void mrc_copy(MRCPtr pmrc_dst, MRCPtr pmrc_src, int x1, int y1, int x2, int y2) {
 
 	float	*data_array_src, *data_array_dst;
 
-	w_src = w;
-	h_src = h;
-	n_src = w_src*h_src;
+	int     w_src=pmrc_src->header.nx, h_src=pmrc_src->header.ny,
+			n_src=w_src*h_src,
+			w_dst, h_dst, n_dst,
+			x_min=x1, x_max=x2,
+			y_min=y1, y_max=y2,
+			i,j,ij,t;
 
+	if (x1>x2) {
+		x_min=x2;
+		x_max=x1;
+	}
+	if (y1>y2) {
+		y_min=y2;
+		y_max=y1;
+	}
+	if (x_max > w_src)
+		x_max = w_src;
+	if (y_max > h_src)
+		y_max = h_src;
+
+	mrc_copy_to(pmrc_dst, pmrc_src, 0, 0, x_min, y_min, x_max, y_max);
+
+}
+/* }}} */
+
+/* {{{ void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX, int srcY, int w, int h) */
+void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX, int srcY, int w, int h)
+{
+	int     w_src, h_src, n_src,
+			w_dst, h_dst, n_dst,
+			x_min_src, x_max_src, y_min_src, y_max_src,
+			x_min_dst, x_max_dst, y_min_dst, y_max_dst,
+			i,j,ij,u,v,uv;
+
+	float	*data_array_src, *data_array_dst;
+
+	w_src = pmrc_src->header.nx;
+	h_src = pmrc_src->header.ny;
+	n_src = w_src * h_src;
 	w_dst = pmrc_dst->header.nx;
 	h_dst = pmrc_dst->header.ny;
-	n_dst = w_dst*h_dst;
-
-	x_min_src = srcX;
-	x_max_src = w;
+	n_dst = w_dst * h_dst;
 	y_min_src = srcY;
-	y_max_src = h;
-
-	x_min_dst = dstX;
-	x_max_dst = w_dst; 
-	y_min_dst = dstY;
-	y_max_dst = h_dst;
-
+	y_max_src = y_min_src + h;
 	x_min_src = srcX;
-	x_max_src = x_min_src+w_src;
-	y_min_src = srcY;
-	y_max_src = y_min_src+h_src;
+	x_max_src = x_min_src + w;
 
-	x_min_dst = dstX;
-	x_max_dst = x_max_src+dstX-srcX;
-	y_min_dst = dstY;
-	y_max_dst = y_max_src+dstY-srcY;
-
-	if (0) {
-	zend_printf("x_min_dst: %d ", x_min_dst);
-	zend_printf("x_max_dst: %d ", x_max_dst);
-	zend_printf("y_min_dst: %d ", y_min_dst);
-	zend_printf("y_max_dst: %d ", y_max_dst);
-
-	zend_printf("x_min_src: %d ", x_min_src);
-	zend_printf("x_max_src: %d ", x_max_src);
-	zend_printf("y_min_src: %d ", y_min_src);
-	zend_printf("y_max_src: %d ", y_max_src);
-	}
-	data_array_src = (float *)pmrc_src->pbyData;
 	data_array_dst = (float *)pmrc_dst->pbyData;
+	data_array_src = (float *)pmrc_src->pbyData;
 
-	int re, index=0;
-
-	for (j=y_min_dst; j<y_max_dst; j++) {
-		for (i=x_min_dst; i<x_max_dst; i++) {
-			ij = i + j*w_dst;
-			index = (i-x_min_dst+x_min_src)+(j-y_min_dst+y_min_src)*w;
-			if (index<n_src && ij<n_dst && i<w_dst) {
-				re = data_array_src[index];
-				data_array_dst[ij]=re;
-			}
+	for (v=dstY, j=srcY; j<h; j++, v++) {
+		for (u=dstX, i=srcX; i<w; i++, u++) {
+			ij = i + j*(w_src);
+			uv = u + v*w_dst;
+			data_array_dst[uv] = data_array_src[ij];
 		}
 	}
+	
+/*
+	MRCPtr pmrc_temp;
+	pmrc_temp = mrc_create(w,h);
+	mrc_copy(pmrc_temp, pmrc_src, srcX, srcY, srcX+w, srcY+h);
+	mrc_copy(pmrc_dst, pmrc_temp, 0, 0, w, h);
+	//mrc_copy(pmrc_dst, pmrc_temp, dstX, dstY, dstX+w, dstY+h);
+	mrc_destroy(pmrc_temp);
+*/
 
 }
 /* }}} */
