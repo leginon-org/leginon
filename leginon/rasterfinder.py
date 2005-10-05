@@ -13,10 +13,7 @@ import targetfinder
 import Mrc
 import threading
 import ice
-try:
-	import numarray as Numeric
-except:
-	import Numeric
+import numarray
 import imagefun
 import gui.wx.RasterFinder
 
@@ -27,6 +24,10 @@ class RasterFinder(targetfinder.TargetFinder):
 	defaultsettings.update({
 		'image filename': '',
 		'raster spacing': 100,
+		'raster angle': 0,
+		'raster center x': 0,
+		'raster center y': 0,
+		'raster center on image': True,
 		'raster limit': 5,
 		'ice box size': 15.0,
 		'ice thickness': 1000.0,
@@ -74,16 +75,25 @@ class RasterFinder(targetfinder.TargetFinder):
 		imageshape = self.original.shape
 		spacing = self.settings['raster spacing']
 		limit = self.settings['raster limit']
-		rcenter = imageshape[0]/2
-		ccenter = imageshape[1]/2
+		radians = 3.14159 * self.settings['raster angle'] / 180
+		if self.settings['raster center on image']:
+			rcenter = imageshape[0]/2
+			ccenter = imageshape[1]/2
+		else:
+			ccenter = self.settings['raster center x']
+			rcenter = self.settings['raster center y']
 		points = []
 		for rlayer in range(-limit, limit+1):
-			r = int(rcenter + rlayer * spacing)
-			if r < 0 or r >= imageshape[0]: continue
+			r = rlayer * spacing
 			for clayer in range(-limit, limit+1):
-				c = int(ccenter + clayer * spacing)
-				if c < 0 or c >= imageshape[1]: continue
-				points.append((r,c))
+				c = clayer * spacing
+				rr = -1 * c * numarray.sin(radians) + r * numarray.cos(radians)
+				cc =  c * numarray.cos(radians) + r * numarray.sin(radians)
+				rr = int(rr + rcenter)
+				cc = int(cc + ccenter)
+				if rr < 0 or rr >= imageshape[0]: continue
+				if cc < 0 or cc >= imageshape[1]: continue
+				points.append((int(rr),int(cc)))
 
 		self.setTargets(self.transpose_points(points), 'Raster')
 		self.rasterpoints = points
@@ -103,7 +113,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		if cmax >= image.shape[1]:  cmax = image.shape[1]-1
 
 		subimage = image[rmin:rmax+1, cmin:cmax+1]
-		roi = Numeric.ravel(subimage)
+		roi = numarray.ravel(subimage)
 		mean = imagefun.mean(roi)
 		std = imagefun.stdev(roi, known_mean=mean)
 		n = len(roi)

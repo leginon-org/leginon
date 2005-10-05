@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.17 $
+# $Revision: 1.18 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-18 20:10:18 $
-# $Author: suloway $
+# $Date: 2005-10-05 23:57:12 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -16,7 +16,7 @@ import gui.wx.ImageViewer
 import gui.wx.Settings
 import gui.wx.TargetFinder
 import wx.lib.filebrowsebutton as filebrowse
-from gui.wx.Entry import IntEntry, FloatEntry
+from gui.wx.Entry import Entry, IntEntry, FloatEntry
 import gui.wx.TargetTemplate
 import gui.wx.ToolBar
 import threading
@@ -86,17 +86,30 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 
 		self.widgets['raster spacing'] = IntEntry(self, -1, chars=4)
 		self.widgets['raster limit'] = IntEntry(self, -1, chars=4)
+		self.widgets['raster angle'] = FloatEntry(self, -1, chars=4)
+		self.widgets['raster center on image'] = wx.CheckBox(self, -1, 'Center on image')
+		self.widgets['raster center x'] = FloatEntry(self, -1, chars=4)
+		self.widgets['raster center y'] = FloatEntry(self, -1, chars=4)
 
 		szraster = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Spacing:')
 		szraster.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szraster.Add(self.widgets['raster spacing'], (0, 1), (1, 1),
+		szraster.Add(self.widgets['raster spacing'], (0, 1), (1, 2),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Limit:')
 		szraster.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szraster.Add(self.widgets['raster limit'], (1, 1), (1, 1),
+		szraster.Add(self.widgets['raster limit'], (1, 1), (1, 2),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szraster.AddGrowableCol(1)
+		label = wx.StaticText(self, -1, 'Angle:')
+		szraster.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szraster.Add(self.widgets['raster angle'], (2, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+
+		szraster.Add(self.widgets['raster center on image'], (3, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Center on x,y:')
+		szraster.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szraster.Add(self.widgets['raster center x'], (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szraster.Add(self.widgets['raster center y'], (4, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sb = wx.StaticBox(self, -1, 'Raster')
 		sbszraster = wx.StaticBoxSizer(sb, wx.VERTICAL)
