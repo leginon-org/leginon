@@ -5,116 +5,74 @@
 #			 For terms of the license agreement
 #			 see	http://ami.scripps.edu/software/leginon-license
 #
-try:
-	import numarray as Numeric
-	import numarray.image
-	def toFloat(inputarray):
-		'''
-		if inputarray is an integer type:
-			return a Float32 version of it
-		else:
-			return inputarray
-		'''
-		if isinstance(inputarray.type(), Numeric.IntegralType):
-			return inputarray.astype(Numeric.Float32)
-		else:
-			return inputarray
-except:
-	import Numeric
-	## these are integer types in Numeric
-	numeric_integers = (Numeric.Int, Numeric.Int16, Numeric.Int32, Numeric.Int8, Numeric.UInt16, Numeric.UInt32, Numeric.UInt8,)
-	def toFloat(inputarray):
-		'''
-		if inputarray is an integer type:
-			return a Float32 version of it
-		else:
-			return inputarray
-		'''
-		if inputarray.type() in numeric_integers:
-			return inputarray.astype(Numeric.Float32)
-		else:
-			return inputarray
+import numarray
+import numarray.image
+import numarray.nd_image
 import fftengine
+import numextension
 
 ffteng = fftengine.fftEngine()
 
-try:
-	import numextension
-except ImportError:
-	print '''could not import numextension
-You should use the numextension compiled Numeric extensions to make things 
-faster.  For now you are using slower functions implemented in imagefun'''
-	numextension = None
-
-## Numeric seems to use infinity as a result of zero
+## numarray seems to use infinity as a result of zero
 ## division, but I can find no infinity constant or any other way of 
 ## producing infinity without first doing a zero division
 ## Here is my infinity contant
 inf = 1e500
 
-def stdev_slow(inputarray, known_mean=None):
-	im = toFloat(inputarray)
-	f = Numeric.ravel(im)
-
-	if known_mean is None:
-		m = mean(f)
+def toFloat(inputarray):
+	'''
+	if inputarray is an integer type:
+		return a Float32 version of it
 	else:
-		m = known_mean
+		return inputarray
+	'''
+	if isinstance(inputarray.type(), numarray.IntegralType):
+		return inputarray.astype(numarray.Float32)
+	else:
+		return inputarray
 
-	try:
-		bigsum = Numeric.sum(Numeric.power(f,2))
-	except OverflowError:
-		print 'OverflowError:	stdev returning None'
-		return None
-	n = len(f)
-	stdev = Numeric.sqrt(float(bigsum)/n - Numeric.power(m,2))
-	return float(stdev)
+## as of numarray 1.1, numextension stats functions are faster than
+## numarray.nd_image stats functions
 
-def stdev_fast(inputarray, known_mean=None):
+def stdev(inputarray, known_mean=None):
+	## numextension.stdev has seg fault if known_mean is given
 	s = numextension.stdev(inputarray)
 	return float(s)
 
-if numextension is None:
-	stdev = stdev_slow
-else:
-	stdev = stdev_fast
-
 def mean(inputarray):
 	im = toFloat(inputarray)
-	f = Numeric.ravel(im)
+	f = numarray.ravel(im)
 	inlen = len(f)
-	m = Numeric.sum(f) / float(inlen)
+	m = numarray.sum(f) / float(inlen)
 	return float(m)
 
 def min(inputarray):
-	f = Numeric.ravel(inputarray)
-	i = Numeric.argmin(f)
+	f = numarray.ravel(inputarray)
+	i = numarray.argmin(f)
 	return float(f[i])
 
 def max(inputarray):
-	f = Numeric.ravel(inputarray)
-	i = Numeric.argmax(f)
+	f = numarray.ravel(inputarray)
+	i = numarray.argmax(f)
 	return float(f[i])
 
 ### wrap some functions that are in numextension
-if numextension is not None:
-	def minmax(image):
-		return numextension.minmax(image)
+def minmax(image):
+	return numextension.minmax(image)
 
-	def despike(image, size=11, sigma=3.5, debug=0):
-		'''
-		size is the neighborhood size.  wide spikes require a wider
-		neighborhood.  size = 11 has been shown to work well on spikes
-		up to 3 or 4 pixels wide.
+def despike(image, size=11, sigma=3.5, debug=0):
+	'''
+	size is the neighborhood size.  wide spikes require a wider
+	neighborhood.  size = 11 has been shown to work well on spikes
+	up to 3 or 4 pixels wide.
 
-		sigma is the threshold for spike intensity.
-		the mean and std. dev. are calculated in a neighborhood around
-		each pixel.  if the pixel value varies by more than sigma * std
-		dev. then the pixel will be set to the mean value.
-		'''
-		# last argument is debug flag
-		numextension.despike(image, size, sigma, debug)
-
+	sigma is the threshold for spike intensity.
+	the mean and std. dev. are calculated in a neighborhood around
+	each pixel.  if the pixel value varies by more than sigma * std
+	dev. then the pixel will be set to the mean value.
+	'''
+	# last argument is debug flag
+	numextension.despike(image, size, sigma, debug)
 
 def medianSeries(series):
 	return numarray.image.median(series)
@@ -133,14 +91,14 @@ def scale(array, scale):
 
 	indices = [None, None]
 	for i in range(2):
-		index = Numeric.arrayrange(int(round(scale[i]*array.shape[i])))
+		index = numarray.arrayrange(int(round(scale[i]*array.shape[i])))
 		index = index / scale[i]
 		## mystery stuff:
-		#index = Numeric.floor(index+scale[i]/2.0+0.5).astype(Numeric.Int)
-		index = Numeric.floor(index).astype(Numeric.Int)
+		#index = numarray.floor(index+scale[i]/2.0+0.5).astype(numarray.Int)
+		index = numarray.floor(index).astype(numarray.Int)
 		indices[i] = index
 
-	return Numeric.take(Numeric.take(array, indices[0]), indices[1], 1)
+	return numarray.take(numarray.take(array, indices[0]), indices[1], 1)
 
 def linearscale(input, boundfrom, boundto, extrema=None):
 	"""
@@ -163,20 +121,20 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 		if extrema:
 			minfrom = extrema[0]
 		else:
-			minfrom = Numeric.argmin(Numeric.ravel(input))
-			minfrom = Numeric.ravel(input)[minfrom]
+			minfrom = numarray.argmin(numarray.ravel(input))
+			minfrom = numarray.ravel(input)[minfrom]
 	if maxfrom is None:
 		if extrema:
 			maxfrom = extrema[1]
 		else:
-			maxfrom = Numeric.argmax(Numeric.ravel(input))
-			maxfrom = Numeric.ravel(input)[maxfrom]
+			maxfrom = numarray.argmax(numarray.ravel(input))
+			maxfrom = numarray.ravel(input)[maxfrom]
 
 	## prepare for fast math
 	## with numarray, this is not necessary anymore
-	#rangefrom = Numeric.array((maxfrom - minfrom)).astype('f')
-	#rangeto = Numeric.array((maxto - minto)).astype('f')
-	#minfrom = Numeric.array(minfrom).astype('f')
+	#rangefrom = numarray.array((maxfrom - minfrom)).astype('f')
+	#rangeto = numarray.array((maxto - minto)).astype('f')
+	#minfrom = numarray.array(minfrom).astype('f')
 	rangefrom = maxfrom - minfrom
 	rangeto = maxto - minto
 
@@ -197,11 +155,11 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 
 def power(numericarray, mask_radius=1.0, thresh=3):
 	fft = ffteng.transform(numericarray)
-	pow = Numeric.absolute(fft)
+	pow = numarray.absolute(fft)
 	try:
-		pow = Numeric.log(pow)
+		pow = numarray.log(pow)
 	except OverflowError:
-		pow = Numeric.log(pow+1e-20)
+		pow = numarray.log(pow+1e-20)
 
 	pow = shuffle(pow)
 
@@ -211,9 +169,9 @@ def power(numericarray, mask_radius=1.0, thresh=3):
 
 	m = mean(pow)
 	s = stdev(pow, known_mean=m)
-	minval = Numeric.array(m-thresh*s, Numeric.Float32)
-	maxval = Numeric.array(m+thresh*s, Numeric.Float32)
-	pow = Numeric.clip(pow, minval, maxval)
+	minval = numarray.array(m-thresh*s, numarray.Float32)
+	maxval = numarray.array(m+thresh*s, numarray.Float32)
+	pow = numarray.clip(pow, minval, maxval)
 
 	return pow
 
@@ -223,10 +181,10 @@ def filled_circle(shape, radius):
 	def func(i0, i1):
 		ii0 = i0 - center[0]
 		ii1 = i1 - center[1]
-		rr2 = Numeric.power(ii0,2) + Numeric.power(ii1,2)
-		c = Numeric.where(rr2<r2, 0.0, 1.0)
+		rr2 = numarray.power(ii0,2) + numarray.power(ii1,2)
+		c = numarray.where(rr2<r2, 0.0, 1.0)
 		return c
-	return Numeric.fromfunction(func, shape)
+	return numarray.fromfunction(func, shape)
 
 def center_mask(numericarray, mask_radius):
 	shape = numericarray.shape
@@ -247,37 +205,37 @@ def shuffle(narray):
 	r,c = newshape = oldr, (oldc-1)*2
 
 	## create new full size array 
-	new = Numeric.zeros(newshape, narray.type())
+	new = numarray.zeros(newshape, narray.type())
 
 	## fill in right half
 	new[r/2:,c/2:] = narray[:r/2,1:]
 	new[:r/2,c/2:] = narray[r/2:,1:]
 
 	## fill in left half
-	reverserows = -Numeric.arrayrange(r) - 1
-	reversecols = -Numeric.arrayrange(c/2) - 1
-	new[:,:c/2] = Numeric.take(new[:,c/2:], reverserows, 0)
-	new[:,:c/2] = Numeric.take(new[:,:c/2], reversecols, 1)
+	reverserows = -numarray.arrayrange(r) - 1
+	reversecols = -numarray.arrayrange(c/2) - 1
+	new[:,:c/2] = numarray.take(new[:,c/2:], reverserows, 0)
+	new[:,:c/2] = numarray.take(new[:,:c/2], reversecols, 1)
 
 	return new
 
 def swap(numericarray):
 	rows,cols = numericarray.shape
-	newarray = Numeric.zeros(numericarray.shape, numericarray.type())
+	newarray = numarray.zeros(numericarray.shape, numericarray.type())
 	newarray[:rows/2] = numericarray[rows/2:]
 	newarray[rows/2:] = numericarray[:rows/2]
 	return newarray
 
 def swap_row_halves(numericarray):
 	rows,cols = numericarray.shape
-	newarray = Numeric.zeros(numericarray.shape, numericarray.type())
+	newarray = numarray.zeros(numericarray.shape, numericarray.type())
 	newarray[:rows/2] = numericarray[rows/2:]
 	newarray[rows/2:] = numericarray[:rows/2]
 	return newarray
 
 def swap_col_halves(numericarray):
 	rows,cols = numericarray.shape
-	newarray = Numeric.zeros(numericarray.shape, numericarray.type())
+	newarray = numarray.zeros(numericarray.shape, numericarray.type())
 	newarray[:,:cols/2] = numericarray[:,cols/2:]
 	newarray[:,cols/2:] = numericarray[:,:cols/2]
 	return newarray
@@ -295,7 +253,7 @@ def cross_correlate(im1, im2):
 		im2fft = im1fft
 	else:
 		im2fft = ffteng.transform(im2)
-	xcor = Numeric.multiply(Numeric.conjugate(im2fft), im1fft)
+	xcor = numarray.multiply(numarray.conjugate(im2fft), im1fft)
 	result = ffteng.itransform(xcor)
 	return result
 
@@ -304,7 +262,7 @@ def auto_correlate(image):
 	minor speed up over cross_correlate
 	'''
 	imfft = ffteng.transform(image)
-	xcor = Numeric.absolute(imfft) ** 2
+	xcor = numarray.absolute(imfft) ** 2
 	result = ffteng.itransform(xcor)
 	return result
 
@@ -314,8 +272,8 @@ def phase_correlate(im1, im2):
 		im2fft = im1fft
 	else:
 		im2fft = ffteng.transform(im2)
-	xcor = Numeric.multiply(Numeric.conjugate(im2fft), im1fft)
-	xcor_abs = Numeric.absolute(xcor) + 0.00000000000000001
+	xcor = numarray.multiply(numarray.conjugate(im2fft), im1fft)
+	xcor_abs = numarray.absolute(xcor) + 0.00000000000000001
 	phasecor = xcor / xcor_abs
 	pc = ffteng.itransform(phasecor)
 	## average out the artifical peak at 0,0
@@ -330,11 +288,11 @@ reclim = sys.getrecursionlimit()
 if reclim < 20000:
 	sys.setrecursionlimit(20000)
 
-class Blob(object):
+class OLDBlob(object):
 	'''
 	a Blob instance represets a connected set of pixels
 	'''
-	neighbor_deltas = Numeric.array(((-1,-1),(-1,0),(-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1)))
+	neighbor_deltas = numarray.array(((-1,-1),(-1,0),(-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1)))
 	#maxpoints = 2000
 	def __init__(self, image, mask):
 		self.image = image
@@ -344,46 +302,13 @@ class Blob(object):
 		self.stats = {}
 		self.recursionerror = False
 
-	def add_point(self, row, col, tmpmask):
-		'''
-		attempt to add 
-		'''
-		recursionerror = False
-		self.pixel_list.append((row, col))
-		## turn off pixel in mask
-		tmpmask[row,col] = 0
-		## reset stats
-		self.stats = {}
-
-		# abort this blob if too many points
-		# if we don't abort, we will hit a recursion limit
-		#if len(self.pixel_list) > self.maxpoints:
-		#	return False
-
-		# check neighbors
-		neighbors = self.neighbor_deltas + (row,col)
-		for neighbor in neighbors:
-			if self.recursionerror:
-				break
-			# check if neighbor is out of bounds
-			if neighbor[0] < 0 or neighbor[1] < 0 or neighbor[0] >= tmpmask.shape[0] or neighbor[1] >= tmpmask.shape[1]:
-				continue
-			value = tmpmask[neighbor]
-			if value:
-				try:
-					self.add_point(neighbor[0],neighbor[1],tmpmask)
-				except RuntimeError:
-					self.recursionerror = True
-					break
-		return self.recursionerror
-
 	def calc_stats(self):
 		if self.stats:
 			return
-		pixel_array = Numeric.array(self.pixel_list, Numeric.Float32)
-		sum = Numeric.sum(pixel_array)
+		pixel_array = numarray.array(self.pixel_list, numarray.Float32)
+		sum = numarray.sum(pixel_array)
 		squares = pixel_array**2
-		sumsquares = Numeric.sum(squares)
+		sumsquares = numarray.sum(squares)
 		n = len(pixel_array)
 		self.stats['n'] = n
 
@@ -394,9 +319,9 @@ class Blob(object):
 		if n > 1:
 			tmp1 = n * sumsquares - sum * sum
 			tmp2 = (n - 1) * n
-			self.stats['size'] = Numeric.sqrt(tmp1 / tmp2)
+			self.stats['size'] = numarray.sqrt(tmp1 / tmp2)
 		else:
-			self.stats['size'] = Numeric.zeros((2,),Numeric.Float32)
+			self.stats['size'] = numarray.zeros((2,),numarray.Float32)
 		
 		## get value array using pixel list
 		pixel_array.transpose()
@@ -413,10 +338,10 @@ class Blob(object):
 			print 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
 			raise
 
-		self.value_array = value_array.astype(Numeric.Float32)
-		valuesum = Numeric.sum(self.value_array)
+		self.value_array = value_array.astype(numarray.Float32)
+		valuesum = numarray.sum(self.value_array)
 		valuesquares = self.value_array ** 2
-		sumvaluesquares = Numeric.sum(valuesquares)
+		sumvaluesquares = numarray.sum(valuesquares)
 
 		## mean pixel value
 		self.stats['mean'] = valuesum / n
@@ -426,7 +351,7 @@ class Blob(object):
 			tmp1 = n * sumvaluesquares - valuesum * valuesum
 			if tmp1 < 0:
 				tmp1 = 0.0
-			self.stats['stddev'] = float(Numeric.sqrt(tmp1 / tmp2))
+			self.stats['stddev'] = float(numarray.sqrt(tmp1 / tmp2))
 		else:
 			self.stats['stddev'] = 0.0
 
@@ -439,6 +364,12 @@ class Blob(object):
 		for stat in ('complete', 'n', 'center', 'size', 'mean', 'stddev'):
 			print '\t%s:\t%s' % (stat, self.stats[stat])
 
+class Blob(object):
+	def __init__(self, image, mask, n, center, mean, stddev):
+		self.image = image
+		self.mask = mask
+		self.stats = {'center': center, 'n':n, 'mean':mean, 'stddev':stddev,'size':0}
+
 def near_center(shape, blobs, n):
 	'''
 	filter out no more than n blobs that are closest to image center
@@ -449,7 +380,7 @@ def near_center(shape, blobs, n):
 	distmap = {}
 	for blob in blobs:
 		center = blob.stats['center']
-		distance = Numeric.hypot(center[0]-imcenter[0],center[1]-imcenter[1])
+		distance = numarray.hypot(center[0]-imcenter[0],center[1]-imcenter[1])
 		distmap[blob] = distance
 	## sort blobs based on distance
 	def dist_cmp(x,y):
@@ -464,49 +395,50 @@ def near_center(shape, blobs, n):
 			newblobs.append(blob)
 	return newblobs
 
-def find_blobs_slow(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0):
-	print 'slow blobs'
-	shape = image.shape
+## using numarray.nd_image to implement numextension.blobs
+labelstruct = numarray.array(((1,1,1),(1,1,1),(1,1,1)))
+def numarrayblobs(im,mask):
+	labels,n = numarray.nd_image.label(mask, labelstruct)
+	centers = numarray.nd_image.center_of_mass(im,labels,range(1,n+1))
+	sizes = numarray.nd_image.histogram(labels,1,n+1,n)
+	stds = numarray.nd_image.standard_deviation(im,labels,range(1,n+1))
+	means = numarray.nd_image.mean(im,labels,range(1,n+1))
+
 	blobs = []
-	## create a copy of mask that will be modified
-	tmpmask = mask.astype(Numeric.Int8)
-
-	## zero out tmpmask outside of border
-	if border:
-		tmpmask[:border] = 0
-		tmpmask[-border:] = 0
-		tmpmask[:,:border] = 0
-		tmpmask[:,-border:] = 0
-
-	for row in range(border,shape[0]-border):
-		for col in range(border,shape[1]-border):
-			if tmpmask[row,col]:
-				newblob = Blob(image, mask)
-				err = newblob.add_point(row, col, tmpmask)
-				if (maxblobsize is not None) and (len(newblob.pixel_list) > maxblobsize):
-					continue
-				if (minblobsize is not None) and (len(newblob.pixel_list) < minblobsize):
-					continue
-				if err:
-					continue
-				blobs.append(newblob)
-
-
-	print 'Found %s blobs.' % (len(blobs),)
-	print 'Calculating blob stats'
-	for blob in blobs:
-		blob.calc_stats()
-	## limit to maxblobs
-	if (maxblobs is not None) and (len(blobs) > maxblobs):
-		print 'trimming number of blobs to %s closest to center' % (maxblobs,)
-		blobs = near_center(shape, blobs, maxblobs)
+	for i in range(n):
+		blobs.append({'center':centers[i], 'n':sizes[i], 'mean':means[i],'stddev':stds[i]})
 	return blobs
 
-def find_blobs_fast(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0):
+def OLDnumarrayblobs(im):
+	labels,n = numarray.nd_image.label(im, labelstruct)
+	slices = numarray.nd_image.find_objects(labels)
+	## should cache indices arrays
+	indices = numarray.indices(im.shape)
+
+	blobs = []
+	for i in range(n):
+		s = slices[i]
+		roi_im = im[s]
+		roi_lab = labels[s]
+		roi_rows = indices[0][s]
+		roi_cols = indices[1][s]
+
+		## which elements are in this object
+		condition = roi_lab == i+1
+
+		blob = {}
+		blob['pixelrow'] = numarray.compress(condition, roi_rows)
+		blob['pixelcol'] = numarray.compress(condition, roi_cols)
+		blob['pixelv'] = numarray.compress(condition, roi_im)
+
+		blobs.append(blob)
+	return blobs
+
+def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0):
 	shape = image.shape
 
 	### create copy of mask since it will be modified now
-	tmpmask = Numeric.array(mask, Numeric.Int32)
+	tmpmask = numarray.array(mask, numarray.Int32)
 	## zero out tmpmask outside of border
 	if border:
 		tmpmask[:border] = 0
@@ -514,6 +446,7 @@ def find_blobs_fast(image, mask, border=0, maxblobs=300, maxblobsize=100, minblo
 		tmpmask[:,:border] = 0
 		tmpmask[:,-border:] = 0
 
+	'''
 	## find blobs the new way
 	blobs = numextension.blobs(tmpmask)
 
@@ -522,7 +455,7 @@ def find_blobs_fast(image, mask, border=0, maxblobs=300, maxblobsize=100, minblo
 	toobig = 0
 	toosmall = 0
 	for blob in blobs:
-		fakeblob = Blob(image, mask)
+		fakeblob = OLDBlob(image, mask)
 		fakeblob.pixel_list = zip(blob['pixelrow'], blob['pixelcol'])
 		if len(fakeblob.pixel_list) >= maxblobsize:
 			toobig += 1
@@ -531,6 +464,21 @@ def find_blobs_fast(image, mask, border=0, maxblobs=300, maxblobsize=100, minblo
 			toosmall += 1
 			continue
 		fakeblob.calc_stats()
+		fakeblobs.append(fakeblob)
+	'''
+
+	blobs = numarrayblobs(image,tmpmask)
+	fakeblobs = []
+	toobig = 0
+	toosmall = 0
+	for blob in blobs:
+		fakeblob = Blob(image, mask, blob['n'], blob['center'], blob['mean'], blob['stddev'])
+		if blob['n'] >= maxblobsize:
+			toobig += 1
+			continue
+		if blob['n'] < minblobsize:
+			toosmall += 1
+			continue
 		fakeblobs.append(fakeblob)
 
 	print 'rejected %s oversized blobs' % (toobig,)
@@ -545,11 +493,6 @@ def find_blobs_fast(image, mask, border=0, maxblobs=300, maxblobsize=100, minblo
 		blobs = fakeblobs
 
 	return blobs
-
-if numextension is None:
-	find_blobs = find_blobs_slow
-else:
-	find_blobs = find_blobs_fast
 
 def mark_image(image, coord, value, size=15):
 	'''
