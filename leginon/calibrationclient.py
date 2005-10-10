@@ -154,7 +154,7 @@ class CalibrationClient(object):
 
 			self.node.logger.debug('Peak finding...')
 			self.peakfinder.setImage(pcimage)
-			self.peakfinder.subpixelPeak(npix=9)
+			self.peakfinder.subpixelPeak()
 			peak = self.peakfinder.getResults()
 			pixelpeak = peak['subpixel peak']
 			pixelpeak = pixelpeak[1],pixelpeak[0]
@@ -221,7 +221,7 @@ class CalibrationClient(object):
 		## peak finding
 		self.node.logger.debug('Peak finding...')
 		self.peakfinder.setImage(pcimage)
-		self.peakfinder.subpixelPeak(npix=9)
+		self.peakfinder.subpixelPeak()
 		peak = self.peakfinder.getResults()
 		self.node.logger.debug('Peak minsum %f' % peak['minsum'])
 
