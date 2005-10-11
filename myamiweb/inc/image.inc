@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.20 $
- *	@version $Id: image.inc,v 1.20 2005-09-30 23:21:44 dfellman Exp $
+ *	@version $Revision: 1.21 $
+ *	@version $Id: image.inc,v 1.21 2005-10-11 16:44:20 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -34,6 +34,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		'autoscale' => false,
 		'mrc' => false
 	);
+
 	if (is_array($params))
 		foreach ($params as $k=>$v)
 			$p[$k] = $v;
@@ -91,6 +92,11 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 
 		if ($binning=='auto')
 			$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
+		if ($p[mrc]) {
+                        $imgmrc = mrcread($pic);
+                        mrcbinning($imgmrc, $binning);
+                        return $imgmrc;
+                }
 		if ($p[fft]) {
 			$img = getfft($pic, $p[minpix], $p[maxpix], $p[colormap], $binning);
 		}

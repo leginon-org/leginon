@@ -8,7 +8,6 @@
 var autoscale=false;
 var pl_interval = false;
 var lastoptions = new Array();
-//var n_img;
 
 if (window.XMLHttpRequest) {
         xmlhttp = new XMLHttpRequest();
@@ -118,6 +117,7 @@ function loadImage(view) {
 		n_img_interval = eval("n_img_interval"+view);
 		n_img = eval("n_img_"+view);
 		if (isImageLoaded(view)) {
+			displaydebug('isloaded');
 			window.clearInterval(n_img_interval)
 			n_img_interval = "";
 			img.src=n_img.src;	
@@ -125,6 +125,7 @@ function loadImage(view) {
 				loadingdivstyle.visibility = 'hidden';
 			}
 		} else {
+			displaydebug('isnoload');
 			if (loadingdiv) {
 				loadingdivstyle.visibility = 'visible';
 			}
@@ -173,6 +174,7 @@ function addComment() {
 }
 
 function newfile(view){
+	displaydebug('new');
 	jssize = eval(view+"size");
 	jsvfile = eval("jsvfile"+view);
 	selpreset = eval("jspreset"+view);
@@ -260,7 +262,9 @@ function setform(input, value) {
 
 function isImageLoaded(view) {
 	if (img = document.images[eval("\"" +view+ "img\"")]) {
+		n_img = eval("n_img_"+view);
 		if (n_img.complete){
+			eval("n_img_"+view+"=new Image()");
 			return true;
 		}
 	}
@@ -432,8 +436,8 @@ function decIndex(){
 }
 
 function displaydebug(string) {
-	cur = document.viewerform.debug.value;
-	document.viewerform.debug.value= cur+"\n"+string;
+	if (cur = document.viewerform.debug)
+		document.viewerform.debug.value= cur+"\n"+string;
 }
 
 function bsSliderChange1(sliderObj, val, newPos){ 
