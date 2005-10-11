@@ -265,8 +265,8 @@ void mrc_log(MRC *mrc) {
 }
 /* }}} */
 
-/* {{{ void mrc_to_gd(MRC *mrc, int ** tpixels, int pmin, int pmax, int colormap) */
-void mrc_to_gd(MRC *mrc, int ** tpixels, int pmin, int pmax, int colormap) {
+/* {{{ void mrc_to_gd(MRC *mrc, int ** tpixels, int pmin, int pmax, int colormap) { */
+void mrc_to_gd(MRC *mrc, gdImagePtr im, int pmin, int pmax, int colormap) {
 
 	float	*data_array;
 	float   fmin=mrc->header.amin,
@@ -294,7 +294,7 @@ void mrc_to_gd(MRC *mrc, int ** tpixels, int pmin, int pmax, int colormap) {
 				ij = i + j*w;
 				f_val = data_array[ij];
 				f_val = (f_val-nmin)*densitymax/nscale;
-				tpixels[j][i] = setColorDensity(f_val, gray);
+				gdImageSetPixel (im, i, j, setColorDensity(f_val, gray));
 			}
 		}
 

@@ -158,7 +158,7 @@ void filtergaussian(gdImagePtr im, int kernel, float factor) {
 					ndensityB += densityB * maskData[index];
 				}
 			}
-			im->tpixels[h][w]=setRGBDensity(ndensityR, ndensityG, ndensityB);
+			gdImageSetPixel (im, w, h, setRGBDensity(ndensityR, ndensityG, ndensityB));
 		}
 	}
 
@@ -275,9 +275,9 @@ void copytpixels(gdImagePtr im_dst, gdImagePtr im_src)
 {
   int i,j;
   if (im_dst->tpixels && im_src->tpixels)
-      for (i = 0; (i < im_src->sy); i++)
-	      for (j = 0; (j < im_src->sx); j++)
-          		im_dst->tpixels[i][j] = im_src->tpixels[i][j];
+      for (j = 0; (j < im_src->sy); j++)
+	      for (i = 0; (i < im_src->sx); i++)
+          		im_dst->tpixels[j][i] = im_src->tpixels[j][i];
 }
 /* }}} */
 
@@ -286,9 +286,9 @@ void copytpixels(gdImagePtr im_dst, gdImagePtr im_src)
 void gdLogScale(gdImagePtr im_src) {
   int i,j;
   if (im_src->tpixels)
-      for (i = 0; (i < im_src->sy); i++)
-	      for (j = 0; (j < im_src->sx); j++)
-          		im_src->tpixels[i][j] = getLog(im_src->tpixels[i][j]);
+      for (j = 0; (j < im_src->sy); j++)
+	      for (i = 0; (i < im_src->sx); i++)
+          		im_src->tpixels[j][i] = getLog(im_src->tpixels[j][i]);
 }
 /* }}} */
 

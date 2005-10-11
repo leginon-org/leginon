@@ -15,7 +15,7 @@
   | Author:                                                              |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.9 2005-09-30 23:28:40 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.10 2005-10-11 17:07:48 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -46,13 +46,9 @@ static int le_mrc;
  * Every user visible function must have an entry in mrc_functions[].
  */
 function_entry mrc_functions[] = {
-	ZEND_FE(imagecreatefrommrc, NULL)
-	ZEND_FE(imagecopyfrommrc, NULL)
-	ZEND_FE(imagefilteredcreatefrommrc, NULL)
 	ZEND_FE(imagegaussianfilter, NULL)
 	ZEND_FE(imagescale, NULL)
 	ZEND_FE(imagelogscale, NULL)
-	ZEND_FE(mrchistogram, NULL)
 	ZEND_FE(imagehistogram, NULL)
 #ifdef HAVE_FFTW
 	ZEND_FE(imagefftw, NULL)
@@ -75,6 +71,7 @@ function_entry mrc_functions[] = {
 	ZEND_FE(mrcgetscale, NULL)
 	ZEND_FE(mrcputdata, NULL)
 	ZEND_FE(mrcupdateheader, NULL)
+	ZEND_FE(mrchistogram, NULL)
 	ZEND_FE(mrcdestroy, NULL)
 	{NULL, NULL, NULL}	/* Must be the last line in mrc_functions[] */
 };
@@ -201,253 +198,6 @@ PHP_MINFO_FUNCTION(mrc)
    purposes. */
 
 /* Every user-visible function in PHP should document itself in the source */
-
-/* {{{ imagecreatefrommrc -- Create a new image from MRC file, URL or a String, with rescaling options.
-Description:
-	resource imagecreatefrommrc ( string data [, int pmin [, int pmax [, int binning [, boolean skip]]]])
-	(image resource compatible with gd library)
-*/
-ZEND_FUNCTION(imagecreatefrommrc)
-{
-	zval **data, **PMIN, **PMAX, **BINNING, **SKIP_AVRG, **COLOR_MAP;
-	MRCPtr pmrc;
-	gdImagePtr im;
-	int argc = ZEND_NUM_ARGS();
-	int nWidth = 0;
-	int nHeight = 0;
-	int minPix=densityMIN, maxPix = -1;
-	int binning = 1;
-	int skip_avrg = 0;
-	int colormap = 0;
-
-	if (argc < 1 || argc > 6) 
-	{
-		WRONG_PARAM_COUNT;
-	} 
-
-	zend_get_parameters_ex(argc, &data, &PMIN, &PMAX, &COLOR_MAP, &BINNING, &SKIP_AVRG);
-
-	if (argc>1) {
-		convert_to_long_ex(PMIN);
-		minPix = Z_LVAL_PP(PMIN);
-	}
-	if (argc>2) {
-		convert_to_long_ex(PMAX);
-		maxPix = Z_LVAL_PP(PMAX);
-	}
-	if (argc>3) {
-		convert_to_long_ex(COLOR_MAP);
-		colormap = Z_LVAL_PP(COLOR_MAP);
-	}
-	if (argc>4) {
-		convert_to_long_ex(BINNING);
-		binning = Z_LVAL_PP(BINNING);
-	}
-	if (argc>5) {
-		convert_to_boolean_ex(SKIP_AVRG);
-		skip_avrg = Z_LVAL_PP(SKIP_AVRG);
-	}
-
-	if (binning <= 0) 
-		zend_error(E_ERROR, "%s(): binning must be greater than 0", get_active_function_name(TSRMLS_C));
-
-	pmrc = (MRC *) malloc (sizeof (MRC));
-	_mrc_image_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, pmrc);
-
-	maxPix = (maxPix<0) ?  ((colormap) ? densityColorMAX : densityMAX) : maxPix;
-	mrc_binning(pmrc, binning, skip_avrg);
-	nWidth = pmrc->header.nx/binning;
-	nHeight = pmrc->header.ny/binning;
-	
-	im = gdImageCreateTrueColor(nWidth, nHeight);
-	gdImageColorAllocate(im, 0, 0, 0);
-
-	mrc_to_gd(pmrc, im->tpixels, minPix, maxPix, colormap);
-	mrc_destroy(pmrc);
-
-	ZEND_REGISTER_RESOURCE(return_value, im, le_gd);
-
-}
-/* }}} */
-
-/* {{{ imagecopyfrommrc -- Copy data from (x1,y1) (x2,y2) from a MRC file, URL or a String, with rescaling options.
-Description:
-	resource imagecopyfrommrc ( string data, int x1, int y1, int x2, int y2 [, int pmin [, int pmax [, int binning [, boolean skip]]]])
-	(image resource compatible with gd library)
-*/
-ZEND_FUNCTION(imagecopyfrommrc)
-{
-	zval **data, **X1, **Y1, **X2, **Y2, **PMIN, **PMAX, **BINNING, **SKIP_AVRG, **COLOR_MAP;
-	MRCPtr pmrc_src, pmrc_dst;
-	gdImagePtr im;
-	int argc = ZEND_NUM_ARGS();
-	int nWidth = 0;
-	int nHeight = 0;
-	int x1=0, y1=0, x2=0, y2=0;
-	int minPix=densityMIN, maxPix = -1;
-	int binning = 1;
-	int skip_avrg = 0;
-	int colormap = 0;
-
-	if (argc < 5 || argc > 10) 
-	{
-		WRONG_PARAM_COUNT;
-	} 
-
-	zend_get_parameters_ex(argc, &data, &X1, &Y1, &X2, &Y2, &PMIN, &PMAX, &COLOR_MAP, &BINNING, &SKIP_AVRG);
-
-	if (argc>1) {
-		convert_to_long_ex(X1);
-		x1 = Z_LVAL_PP(X1);
-	}
-	if (argc>2) {
-		convert_to_long_ex(Y1);
-		y1 = Z_LVAL_PP(Y1);
-	}
-	if (argc>3) {
-		convert_to_long_ex(X2);
-		x2 = Z_LVAL_PP(X2);
-	}
-	if (argc>4) {
-		convert_to_long_ex(Y2);
-		y2 = Z_LVAL_PP(Y2);
-	}
-	if (argc>5) {
-		convert_to_long_ex(PMIN);
-		minPix = Z_LVAL_PP(PMIN);
-	}
-	if (argc>6) {
-		convert_to_long_ex(PMAX);
-		maxPix = Z_LVAL_PP(PMAX);
-	}
-	if (argc>7) {
-		convert_to_long_ex(COLOR_MAP);
-		colormap = Z_LVAL_PP(COLOR_MAP);
-	}
-	if (argc>8) {
-		convert_to_long_ex(BINNING);
-		binning = Z_LVAL_PP(BINNING);
-	}
-	if (argc>9) {
-		convert_to_boolean_ex(SKIP_AVRG);
-		skip_avrg = Z_LVAL_PP(SKIP_AVRG);
-	}
-
-	if (binning <= 0) 
-		zend_error(E_ERROR, "%s(): binning must be greater than 0", get_active_function_name(TSRMLS_C));
-	if (x1==x2 && y1==y2) 
-		zend_error(E_ERROR, "%s(): (x1,y1) should be different than (x2,y2)", get_active_function_name(TSRMLS_C));
-	if (x1<0 || x2<0 || y1<0 || y2<0)
-		zend_error(E_ERROR, "%s(): x1,y1,x2,y2 must be strictly positive numbers", get_active_function_name(TSRMLS_C));
-
-	pmrc_src = (MRC *) malloc (sizeof (MRC));
-	_mrc_image_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, pmrc_src);
-
-	pmrc_dst = (MRCPtr)mrc_create(abs(x2-x1), abs(y2-y1));
-
-	mrc_copy(pmrc_dst, pmrc_src, x1, y1, x2, y2);
-	mrc_update_header(pmrc_dst);
-	mrc_binning(pmrc_dst, binning, skip_avrg);
-
-	maxPix = (maxPix<0) ?  ((colormap) ? densityColorMAX : densityMAX) : maxPix;
-	nWidth = pmrc_dst->header.nx;
-	nHeight = pmrc_dst->header.ny;
-
-	
-	im = gdImageCreateTrueColor(nWidth, nHeight);
-	gdImageColorAllocate(im, 0, 0, 0);
-
-	mrc_to_gd(pmrc_dst, im->tpixels, minPix, maxPix, colormap);
-	mrc_destroy(pmrc_dst);
-	mrc_destroy(pmrc_src);
-
-	ZEND_REGISTER_RESOURCE(return_value, im, le_gd);
-
-}
-/* }}} */
-
-/* {{{ imagefilteredcreatefrommrc -- Create a new image from MRC file, URL or a String, with rescaling
-and filtering options.
-Description:
-	resource imagefilteredcreatefrommrc
-		( string data [, int pmin [, int pmax [, int binning [, int kernel [, float sigma]]]]])
-	(image resource compatible with gd library)
-
-*/
-ZEND_FUNCTION(imagefilteredcreatefrommrc)
-{
-	zval **data, **PMIN, **PMAX, **COLOR_MAP, **BINNING, **KERNEL, **SIGMA;
-	MRCPtr pmrc;
-	gdImagePtr im;
-	int 	argc = ZEND_NUM_ARGS(),
-			nWidth = 0,
-			nHeight = 0,
-			minPix = densityMIN,
-			maxPix = densityColorMAX,
-			binning = 1,
-			kernel = 5,
-			colormap = 0;
-	float	sigma = 1.0;
-
-	if (argc < 1 || argc > 7) 
-	{
-		WRONG_PARAM_COUNT;
-	} 
-
-	zend_get_parameters_ex(argc, &data, &PMIN, &PMAX, &COLOR_MAP, &BINNING, &KERNEL, &SIGMA);
-
-	if (argc>1) {
-		convert_to_long_ex(PMIN);
-		minPix = Z_LVAL_PP(PMIN);
-	}
-	if (argc>2) {
-		convert_to_long_ex(PMAX);
-		maxPix = Z_LVAL_PP(PMAX);
-	}
-	if (argc>3) {
-		convert_to_long_ex(COLOR_MAP);
-		colormap = Z_LVAL_PP(COLOR_MAP);
-	}
-	if (argc>4) {
-		convert_to_long_ex(BINNING);
-		binning = Z_LVAL_PP(BINNING);
-	}
-	if (argc>5) {
-		convert_to_long_ex(KERNEL);
-		kernel = Z_LVAL_PP(KERNEL);
-	}
-	if (argc>6 && sigma > 1) {
-		convert_to_double_ex(SIGMA);
-		sigma = Z_DVAL_PP(SIGMA);
-	}
-
-	if (binning <= 0) 
-		zend_error(E_ERROR, "%s(): binning must be greater than 0", get_active_function_name(TSRMLS_C));
-
-	if (kernel % 2 != 1)
-		zend_error(E_ERROR, "%s(): kernel must be an odd numner ", get_active_function_name(TSRMLS_C));
-
-	if (sigma ==0)
-		zend_error(E_ERROR, "%s(): sigma must be different than 0 ", get_active_function_name(TSRMLS_C));
-
-	pmrc = (MRC *) malloc (sizeof (MRC));
-	_mrc_image_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, pmrc);
-
-	maxPix = (maxPix<0) ?  ((colormap) ? densityColorMAX : densityMAX) : maxPix;
-	nWidth = pmrc->header.nx/binning;
-	nHeight = pmrc->header.ny/binning;
-	
-	im = gdImageCreateTrueColor(nWidth, nHeight);
-	gdImageColorAllocate(im, 0, 0, 0);
-
-	mrc_filter(pmrc, binning, kernel, sigma);
-	mrc_to_gd(pmrc, im->tpixels, minPix, maxPix, colormap);
-	mrc_destroy(pmrc);
-
-	ZEND_REGISTER_RESOURCE(return_value, im, le_gd);
-
-}
-/* }}} */
 
 /* {{{ imagegaussianfilter -- apply gaussian filter to an image
 Description:
@@ -918,7 +668,7 @@ PHP_FUNCTION(mrctoimage)
 	im = gdImageCreateTrueColor(nWidth, nHeight);
 	gdImageColorAllocate(im, 0, 0, 0);
 
-	mrc_to_gd(pmrc, im->tpixels, minPix, maxPix, colormap);
+	mrc_to_gd(pmrc, im, minPix, maxPix, colormap);
 	ZEND_REGISTER_RESOURCE(return_value, im, le_gd);
 
 }
