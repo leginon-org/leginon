@@ -1000,6 +1000,13 @@ class EucentricFocusData(MagDependentCalibrationData):
 		)
 	typemap = classmethod(typemap)
 
+class RotationCenterData(MagDependentCalibrationData):
+	def typemap(cls):
+		return MagDependentCalibrationData.typemap() + (
+			('beam tilt', dict),
+		)
+	typemap = classmethod(typemap)
+
 class MatrixCalibrationData(MagDependentCalibrationData):
 	def typemap(cls):
 		return MagDependentCalibrationData.typemap() + (

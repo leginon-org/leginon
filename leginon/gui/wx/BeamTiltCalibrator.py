@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/BeamTiltCalibrator.py,v $
-# $Revision: 1.12 $
+# $Revision: 1.13 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-12 17:54:38 $
-# $Author: suloway $
+# $Date: 2005-10-14 21:48:36 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -39,16 +39,24 @@ class Panel(gui.wx.Calibrator.Panel):
 
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_GET_INSTRUMENT,
-													'instrumentget',
+													'focusget',
 													shortHelpString='Eucentric Focus From Scope')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SET_INSTRUMENT,
-													'instrumentset',
+													'focusset',
 													shortHelpString='Eucentric Focus To Scope')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_GET_BEAMTILT,
+													'beamtiltget',
+													shortHelpString='Beam Tilt Rotation Center From Scope')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SET_BEAMTILT,
+													'beamtiltset',
+													shortHelpString='Beam Tilt Rotation Center To Scope')
 
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
 
 		self.Bind(gui.wx.Events.EVT_GET_INSTRUMENT_DONE, self.onGetInstrumentDone)
 		self.Bind(gui.wx.Events.EVT_SET_INSTRUMENT_DONE, self.onSetInstrumentDone)
+		self.Bind(gui.wx.Events.EVT_GET_BEAMTILT_DONE, self.onGetInstrumentDone)
+		self.Bind(gui.wx.Events.EVT_SET_BEAMTILT_DONE, self.onSetInstrumentDone)
 		self.Bind(gui.wx.Events.EVT_MEASUREMENT_DONE, self.onMeasurementDone)
 
 	def onNodeInitialized(self):
@@ -64,6 +72,10 @@ class Panel(gui.wx.Calibrator.Panel):
 											id=gui.wx.ToolBar.ID_GET_INSTRUMENT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEucToScope,
 											id=gui.wx.ToolBar.ID_SET_INSTRUMENT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onBeamTiltFromScope,
+											id=gui.wx.ToolBar.ID_GET_BEAMTILT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onBeamTiltToScope,
+											id=gui.wx.ToolBar.ID_SET_BEAMTILT)
 
 	def _instrumentEnable(self, enable):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ACQUIRE, enable)
@@ -71,6 +83,8 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_MEASURE, enable)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GET_INSTRUMENT, enable)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SET_INSTRUMENT, enable)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GET_BEAMTILT, enable)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SET_BEAMTILT, enable)
 		self.measuredialog.bmeasure.Enable(enable)
 		if self.node.resultvalue:
 			self.measuredialog.bcorrectdefocus.Enable(enable)
@@ -116,6 +130,14 @@ class Panel(gui.wx.Calibrator.Panel):
 	def onEucFromScope(self, evt):
 		self._instrumentEnable(False)
 		threading.Thread(target=self.node.eucFromScope).start()
+
+	def onBeamTiltToScope(self, evt):
+		self._instrumentEnable(False)
+		threading.Thread(target=self.node.btToScope).start()
+
+	def onBeamTiltFromScope(self, evt):
+		self._instrumentEnable(False)
+		threading.Thread(target=self.node.btFromScope).start()
 
 	def onMeasureTool(self, evt):
 		self.measuredialog.ShowModal()

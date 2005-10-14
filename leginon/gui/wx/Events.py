@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Events.py,v $
-# $Revision: 1.25 $
+# $Revision: 1.26 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-11 01:46:34 $
-# $Author: suloway $
+# $Date: 2005-10-14 21:48:36 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -63,6 +63,8 @@ eventFactory('Atlas Published')
 eventFactory('Calibration Done')
 eventFactory('Get Instrument Done')
 eventFactory('Set Instrument Done')
+eventFactory('Get BeamTilt Done')
+eventFactory('Set BeamTilt Done')
 eventFactory('Measurement Done')
 eventFactory('Submit Targets')
 eventFactory('Targets Submitted')

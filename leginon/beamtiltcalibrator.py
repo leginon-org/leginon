@@ -45,7 +45,52 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		self.start()
 
-	def calibrateAlignment(self, tilt_value):
+	def btFromScope(self):
+		## get current value of beam tilt
+		estr = 'Unable to get beam tilt: %s'
+		try:
+			tem = self.instrument.getTEMData()
+			cam = self.instrument.getCCDCameraData()
+			ht = self.instrument.tem.HighTension
+			mag = self.instrument.tem.Magnification
+			beamtilt = self.instrument.tem.BeamTilt
+		except:
+			self.logger.error(estr % 'unable to get instrument state')
+			self.panel.getInstrumentDone()
+			return
+		self.calclient.storeRotationCenter(tem, cam, ht, mag, beamtilt)
+		self.logger.info('Publishing HT: %s, Mag.: %s, BeamTilt: %s'
+											% (ht, mag, beamtilt))
+		self.panel.getInstrumentDone()
+
+	def btToScope(self):
+		estr = 'Unable to set beam tilt: %s'
+		try:
+			tem = self.instrument.tem.getTEMData()
+			cam = self.instrument.tem.getCCDCameraData()
+			ht = self.instrument.tem.HighTension
+			mag = self.instrument.tem.Magnification
+		except:
+			self.logger.error(estr % 'unable to get instrument state')
+			self.panel.setInstrumentDone()
+			return
+		beamtilt = self.calclient.retreiveRotationCenter(tem, cam, ht, mag)
+		if beamtilt is None:
+			e = 'none saved for HT: %s, Mag.: %s' % (ht, mag)
+			self.logger.error(estr % e)
+			self.panel.setInstrumentDone()
+			return
+		try:
+			self.instrument.tem.BeamTilt = beamtilt
+		except:
+			self.logger.error(estr % 'cannot set instrument parameters')
+		self.panel.setInstrumentDone()
+
+	def calibrateRotationCenter(self):
+		self.btFromScope()
+
+	def FUTUREcalibrateRotationCenter(self, tilt_value):
+		'''rotation center alignment'''
 		if self.initInstruments():
 			return
 
