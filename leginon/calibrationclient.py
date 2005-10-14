@@ -20,6 +20,7 @@ import sys
 import threading
 import gonmodel
 import imagefun
+import tiltcorrector
 
 class Drifting(Exception):
 	pass
@@ -55,6 +56,7 @@ class CalibrationClient(object):
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
 		self.abortevent = threading.Event()
+		self.tiltcorrector = tiltcorrector.TiltCorrector(node)
 
 	def checkAbort(self):
 		if self.abortevent.isSet():
@@ -77,6 +79,9 @@ class CalibrationClient(object):
 		else:
 			return None
 
+	def correctTilt(self, imagedata):
+		self.tiltcorrector.correct_tilt(imagedata)
+
 	def acquireStateImage(self, state, publish_image=0, settle=0.0):
 		self.node.logger.debug('Acquiring image...')
 		## acquire image at this state
@@ -85,6 +90,7 @@ class CalibrationClient(object):
 		time.sleep(settle)
 
 		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+		self.correctTilt(imagedata)
 		actual_state = imagedata['scope']
 
 		if publish_image:
@@ -458,6 +464,27 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		try:
 			return self.instrument.tem.BeamTilt
 		except:
+			return None
+
+	def storeRotationCenter(self, tem, cam, ht, mag, beamtilt):
+		rc = data.RotationCenterData()
+		rc['high tension'] = ht
+		rc['magnification'] = mag
+		rc['beam tilt'] = beamtilt
+		rc['ccdcamera'] = cam
+		rc['tem'] = tem
+		self.node.publish(rc, database=True, dbforce=True)
+
+	def retreiveRotationCenter(self, tem, cam, ht, mag):
+		rc = data.RotationCenterData()
+		rc['tem'] = tem
+		rc['ccdcamera'] = cam
+		rc['high tension'] = ht
+		rc['magnification'] = mag
+		results = self.node.research(datainstance=rc, results=1)
+		if results:
+			return results[0]['beam tilt']
+		else:
 			return None
 
 	def measureDefocusStig(self, tilt_value, publish_images=0, drift_threshold=None, image_callback=None, stig=True, target=None):
