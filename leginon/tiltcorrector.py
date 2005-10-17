@@ -5,6 +5,7 @@ import numarray.nd_image
 import numarray.linear_algebra
 import imagefun
 import math
+import data
 
 ## defocus calibration matrix format:
 ##   x-row  y-row
@@ -17,8 +18,8 @@ class TiltCorrector(object):
 	def __init__(self, node):
 		self.node = node
 		## if tilts are below these thresholds, no need to correct
-		self.alpha_threshold = 0.0001
-		self.bt_threshold = 0.0001
+		self.alpha_threshold = 0.02
+		self.bt_threshold = 0.000001
 
 	def affine_transform_matrix(self, btmatrix, stagematrix, btxy, alpha):
 		'''
@@ -104,29 +105,32 @@ class TiltCorrector(object):
 			excstr = 'No rotation center for %s, %s, %seV, %sx' % (tem, cam, ht, mag)
 			raise RuntimeError(excstr)
 	
-	def correct_tilt(imagedata):
+	def correct_tilt(self, imagedata):
 		'''
 		takes imagedata and calculates a corrected image
 		'''
 		## from imagedata
 		im = imagedata['image']
-		alpha = imagedata'scope']['stage position']['a']
+		alpha = imagedata['scope']['stage position']['a']
 		if abs(alpha) < self.alpha_threshold:
 			return
 		beamtilt = imagedata['scope']['beam tilt']
 		ht = imagedata['scope']['high tension']
-		mag = imagedata['scope']'magnification']
+		mag = imagedata['scope']['magnification']
 		tem = imagedata['scope']['tem']
-		cam = imagedata['scope']['ccdcamera']
+		cam = imagedata['camera']['ccdcamera']
 	
 		## from DB
 		tiltcenter = self.getRotationCenter(tem, cam, ht, mag)
 		tx = beamtilt['x'] - tiltcenter['x']
 		ty = beamtilt['y'] - tiltcenter['y']
-		bt = {'x': tx, 'y': ty}
-		if max(abs(bt['x']),abs(bt['y'])) < self.bt_threshold:
+		bt = (tx,ty)
+		if max(abs(bt[0]),abs(bt[1])) < self.bt_threshold:
 			# don't transform if beam tilt is small enough
 			return
+
+		alphadeg = alpha * 180 / 3.14159
+		self.node.logger.info('correcting tilts, stage: %s deg beam: %s,%s' % (alphadeg, tx, ty))
 
 		defocusmatrix = self.getBeamTiltMatrix(tem, cam, ht, mag)
 		stagematrix = self.getStageMatrix(tem, cam, ht, mag)

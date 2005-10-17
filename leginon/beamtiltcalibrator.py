@@ -66,8 +66,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	def btToScope(self):
 		estr = 'Unable to set beam tilt: %s'
 		try:
-			tem = self.instrument.tem.getTEMData()
-			cam = self.instrument.tem.getCCDCameraData()
+			tem = self.instrument.getTEMData()
+			cam = self.instrument.getCCDCameraData()
 			ht = self.instrument.tem.HighTension
 			mag = self.instrument.tem.Magnification
 		except:
