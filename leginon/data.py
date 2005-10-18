@@ -1835,6 +1835,15 @@ class HoleFinderSettingsData(TargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class JAHCFinderSettingsData(HoleFinderSettingsData):
+	def typemap(cls):
+		return HoleFinderSettingsData.typemap() + (
+			('template diameter', int),
+			('file diameter', int),
+			('template filename', str),
+		)
+	typemap = classmethod(typemap)
+
 class RasterFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
 		return TargetFinderSettingsData.typemap() + (
