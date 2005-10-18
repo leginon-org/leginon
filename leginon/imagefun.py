@@ -399,10 +399,24 @@ def near_center(shape, blobs, n):
 labelstruct = numarray.array(((1,1,1),(1,1,1),(1,1,1)))
 def numarrayblobs(im,mask):
 	labels,n = numarray.nd_image.label(mask, labelstruct)
-	centers = numarray.nd_image.center_of_mass(im,labels,range(1,n+1))
-	sizes = numarray.nd_image.histogram(labels,1,n+1,n)
-	stds = numarray.nd_image.standard_deviation(im,labels,range(1,n+1))
-	means = numarray.nd_image.mean(im,labels,range(1,n+1))
+	## too bad nd_image module is inconsistent with what is returned from
+	## the following functions.  Sometiems a list, sometimes a single value...
+	if n==0:
+		centers = []
+		sizes = []
+		stds = []
+		means = []
+	else:
+		centers = numarray.nd_image.center_of_mass(im,labels,range(1,n+1))
+		sizes = numarray.nd_image.histogram(labels,1,n+1,n)
+		stds = numarray.nd_image.standard_deviation(im,labels,range(1,n+1))
+		means = numarray.nd_image.mean(im,labels,range(1,n+1))
+		if n==1:
+			centers = [centers]
+			stds = [stds]
+			means = [means]
+		else:
+			centers = map(numarray.array, centers)
 
 	blobs = []
 	for i in range(n):
