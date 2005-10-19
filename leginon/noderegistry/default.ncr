@@ -82,6 +82,10 @@ type: Pipeline
 module: holefinder
 type: Pipeline
 
+[HoleDepth]
+module: holedepth
+type: Pipeline
+
 [JAHCFinder]
 module: jahcfinder
 type: Pipeline

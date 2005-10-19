@@ -1496,6 +1496,32 @@ class HoleFinderPrefsData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class HoleDepthFinderPrefsData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('image', AcquisitionImageData),
+			('untilt-hole-image', AcquisitionImageData),
+			('tilt-hole-image', AcquisitionImageData),
+			('I-image', AcquisitionImageData),
+			('I0-image', AcquisitionImageData),
+			('edge-lpf-on', bool),
+			('edge-lpf-size', int),
+			('edge-lpf-sigma', float),
+			('edge-filter-type', str),
+			('edge-threshold', float),
+			('template-rings', tuple),
+			('template-correlation-type', str),
+			('template-lpf', float),
+			('template-tilt-axis', float),
+			('threshold-value', float),
+			('blob-border', int),
+			('blob-max-number', int),
+			('blob-max-size', int),
+			('stats-radius', float),
+			('ice-zero-thickness', float),
+		)
+	typemap = classmethod(typemap)
+
 class HoleStatsData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -1507,6 +1533,18 @@ class HoleStatsData(InSessionData):
 			('thickness-mean', float),
 			('thickness-stdev', float),
 			('good', bool),
+		)
+	typemap = classmethod(typemap)
+
+class HoleDepthStatsData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('prefs', HoleDepthFinderPrefsData),
+			('row', int),
+			('column', int),
+			('mean', float),
+			('thickness-mean', float),
+			('holedepth', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1832,6 +1870,33 @@ class HoleFinderSettingsData(TargetFinderSettingsData):
 			('focus min mean thickness', float),
 			('focus max mean thickness', float),
 			('focus max stdev thickness', float),
+		)
+	typemap = classmethod(typemap)
+
+class HoleDepthFinderSettingsData(TargetFinderSettingsData):
+	def typemap(cls):
+		return TargetFinderSettingsData.typemap() + (
+			('Hole Untilt filename', str),
+			('Hole Tilt filename', str),
+			('I filename', str),
+			('I0 filename', str),
+			('edge lpf', LowPassFilterSettingsData),
+			('edge', bool),
+			('edge type', str),
+			('edge log size', int),
+			('edge log sigma', float),
+			('edge absolute', bool),
+			('edge threshold', float),
+			('template rings', list),
+			('template type', str),
+			('template lpf', LowPassFilterSettingsData),
+			('tilt axis', float),
+			('threshold', float),
+			('blobs border', int),
+			('blobs max', int),
+			('blobs max size', int),
+			('pickhole radius', float),
+			('pickhole zero thickness', float),
 		)
 	typemap = classmethod(typemap)
 
