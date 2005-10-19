@@ -383,8 +383,11 @@ class HoleFinder(object):
 			raise RuntimeError('need blobs to calc hole depth')
 		blobnumber = 0
 		blobcoord = []
+		holedepth = {}
 		binnedpixel=self.dist_config['binned_pixel']
 		tiltangle = self.template_config['tilt_angle']
+		tilt_axis = self.template_config['tilt_axis']
+		tiltaxis=(tilt_axis*Numeric.pi/180)
 		for blob in self.__results['blobs']:
 			blobcoord.append(blob.stats['center'])
 			blobnumber = blobnumber+1
@@ -392,12 +395,16 @@ class HoleFinder(object):
 			if (blobnumber != 1):
 				print 'only 1 or 2 blobs allowed'
 				blobdist=0
+				blobtilt=0
 			else:
 				print 'unresolved'
 				blobdist=1.0
+				blobtilt=tiltaxis
 		else:
 			blobdist = Numeric.sqrt((blobcoord[0][0]-blobcoord[1][0])**2+(blobcoord[0][1]-blobcoord[1][1])**2)
-		holedepth = binnedpixel*blobdist/Numeric.abs(Numeric.sin(tiltangle))
+			blobtilt = -Numeric.arctan((blobcoord[0][0]-blobcoord[1][0])/(blobcoord[0][1]-blobcoord[1][1]))
+		holedepth['depth'] = binnedpixel*blobdist/Numeric.abs(Numeric.sin(tiltangle))
+		holedepth['tilt'] = blobtilt
 		return holedepth
 
 	def configure_pickhole(self, center_list=None):

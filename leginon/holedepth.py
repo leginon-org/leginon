@@ -68,9 +68,6 @@ class HoleDepth(holefinder.HoleFinder):
 		'I filename': None,
 		'I0 filename': None,
 		}
-		self.holedepth = {
-		'Hole Tilt filename': None,
-		}
 
 	def readImage(self,filename,imagetype=None):
 		imagedata = self.getImageFromDB(filename)
@@ -172,8 +169,10 @@ class HoleDepth(holefinder.HoleFinder):
 		self.hf.find_blobs()
 
 		holedepth=self.hf.find_distance()
-		self.holedepth[self.currentimagetype]=holedepth
-		holedepthnm=holedepth*(1e9)
+		self.holedepth=holedepth['depth']
+		self.blobtilt=holedepth['tilt']
+		holedepthnm=holedepth['depth']*(1e9)
+		blobtiltdeg=holedepth['tilt']*180/3.14159
 
 		blobs = self.hf['blobs']
 		#centers = self.blobCenters(blobs)
@@ -181,6 +180,7 @@ class HoleDepth(holefinder.HoleFinder):
 		#self.logger.info('Number of blobs: %s' % (len(centers),))
 		self.logger.info('Number of blobs: %s' % (len(targets),))
 		self.logger.info('Calculated Hole Depth: %.1f nm' % (holedepthnm,))
+		self.logger.info('Blob axis: %d' % (blobtiltdeg,))
 		#self.setTargets(centers, 'Blobs')
 		self.setTargets(targets, 'Blobs')
 
@@ -245,7 +245,6 @@ class HoleDepth(holefinder.HoleFinder):
 	def storeHoleDepthStatsData(self, prefs):
 		holes = self.hf['holes']
 		targets = self.holeStatsTargets(holes)
-		depth = self.holedepth['Hole Tilt filename']
 
 		for target in targets:
 			stats=target['stats']
@@ -254,7 +253,8 @@ class HoleDepth(holefinder.HoleFinder):
 			holestats['column'] = target['x']
 			holestats['mean'] = stats['Mean Intensity']
 			holestats['thickness-mean'] = stats['Mean Thickness']
-			holestats['holedepth'] = depth
+			holestats['holedepth'] = self.holedepth
+			holestats['blobs-axis'] = self.blobtilt
 
 			self.publish(holestats, database=True)
 

@@ -1544,6 +1544,7 @@ class HoleDepthStatsData(InSessionData):
 			('column', int),
 			('mean', float),
 			('thickness-mean', float),
+			('blobs-axis', float),
 			('holedepth', float),
 		)
 	typemap = classmethod(typemap)
