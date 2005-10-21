@@ -113,6 +113,8 @@ class Correlator(object):
 
 			cc = self.fftengine.itransform(ccfft)
 			self.results['cross correlation image'] = cc
+		else:
+			cc = self.results['cross correlation image']
 		return cc
 
 	def phaseCorrelate(self):
