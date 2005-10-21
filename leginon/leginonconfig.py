@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#	   The Leginon software is Copyright 2003
+#	   The Scripps Research Institute, La Jolla, CA
+#	   For terms of the license agreement
+#	   see  http://ami.scripps.edu/software/leginon-license
 #
 
 import errno
@@ -41,7 +41,7 @@ def mkdirs(newdir, mode=0777):
 	try:
 		os.makedirs(newdir, mode)
 	except OSError, err:
-		if err.errno != errno.EEXIST or not os.path.isdir(newdir):
+		if err.errno != errno.EEXIST or not os.path.isdir(newdir) and os.path.splitdrive(newdir)[1]:
 			raise
 ### raise this if something is wrong in this config file
 class LeginonConfigError(Exception):
