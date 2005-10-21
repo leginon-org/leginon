@@ -82,7 +82,7 @@ class CalibrationClient(object):
 	def correctTilt(self, imagedata):
 		self.tiltcorrector.correct_tilt(imagedata)
 
-	def acquireStateImage(self, state, publish_image=0, settle=0.0):
+	def acquireStateImage(self, state, publish_image=0, settle=0.0, correct_tilt=False):
 		self.node.logger.debug('Acquiring image...')
 		## acquire image at this state
 		newemdata = data.ScopeEMData(initializer=state)
@@ -90,7 +90,8 @@ class CalibrationClient(object):
 		time.sleep(settle)
 
 		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
-		self.correctTilt(imagedata)
+		if correct_tilt:
+			self.correctTilt(imagedata)
 		actual_state = imagedata['scope']
 
 		if publish_image:
@@ -105,7 +106,7 @@ class CalibrationClient(object):
 		info = {'requested state': state, 'imagedata': imagedata, 'image stats': image_stats}
 		return info
 
-	def measureStateShift(self, state1, state2, publish_images=0, settle=0.0, drift_threshold=None, image_callback=None, target=None):
+	def measureStateShift(self, state1, state2, publish_images=0, settle=0.0, drift_threshold=None, image_callback=None, target=None, correct_tilt=False):
 		'''
 		Measures the pixel shift between two states
 		 Returned dict has these keys:
@@ -119,7 +120,7 @@ class CalibrationClient(object):
 		self.node.logger.info('Acquiring images...')
 
 		self.node.logger.info('Acquiring image (1 of 2)')
-		info1 = self.acquireStateImage(state1, publish_images, settle)
+		info1 = self.acquireStateImage(state1, publish_images, settle, correct_tilt=correct_tilt)
 		binning = info1['imagedata']['camera']['binning']['x']
 		imagedata1 = info1['imagedata']
 		imagecontent1 = imagedata1
@@ -139,7 +140,7 @@ class CalibrationClient(object):
 		else:
 			self.node.logger.info('Checking for drift...')
 
-			info1 = self.acquireStateImage(state1, publish_images, settle)
+			info1 = self.acquireStateImage(state1, publish_images, settle, correct_tilt=correct_tilt)
 			imagedata1 = info1['imagedata']
 			imagecontent1 = imagedata1
 			stats1 = info1['image stats']
@@ -200,7 +201,7 @@ class CalibrationClient(object):
 		self.checkAbort()
 
 		self.node.logger.info('Acquiring image (2 of 2)')
-		info2 = self.acquireStateImage(state2, publish_images, settle)
+		info2 = self.acquireStateImage(state2, publish_images, settle, correct_tilt=correct_tilt)
 		imagedata2 = info2['imagedata']
 		imagecontent2 = imagedata2
 		stats2 = info2['image stats']
@@ -487,7 +488,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		else:
 			return None
 
-	def measureDefocusStig(self, tilt_value, publish_images=0, drift_threshold=None, image_callback=None, stig=True, target=None):
+	def measureDefocusStig(self, tilt_value, publish_images=0, drift_threshold=None, image_callback=None, stig=True, target=None, correct_tilt=False):
 		self.abortevent.clear()
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
@@ -527,7 +528,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			if nodrift:
 				drift_threshold = None
 			try:
-				shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=0.5, drift_threshold=drift_threshold, image_callback=image_callback, target=target)
+				shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=0.5, drift_threshold=drift_threshold, image_callback=image_callback, target=target, correct_tilt=correct_tilt)
 			except Abort:
 				break
 			except Drifting:
@@ -660,7 +661,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		matrixcolumn = scale * ddiff
 		return matrixcolumn.astype(Numeric.Float32)
 
-	def measureDisplacements(self, tilt_axis, tilt_value, state1, state2):
+	def measureDisplacements(self, tilt_axis, tilt_value, state1, state2, correct_tilt=False):
 		'''
 		This measures the displacements that go into eq. (11)
 		Each call of this function acquires four images
@@ -691,11 +692,11 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			states2[1]['beam tilt'] = beamtilts[1]
 
 			self.node.logger.debug('States 1 %s' % (states1,))
-			shiftinfo = self.measureStateShift(states1[0], states1[1], 1, settle=0.25)
+			shiftinfo = self.measureStateShift(states1[0], states1[1], 1, settle=0.25, correct_tilt=correct_tilt)
 			pixelshift1 = shiftinfo['pixel shift']
 
 			self.node.logger.debug('States 2 %s' % (states2,))
-			shiftinfo = self.measureStateShift(states2[0], states2[1], 1, settle=0.25)
+			shiftinfo = self.measureStateShift(states2[0], states2[1], 1, settle=0.25, correct_tilt=correct_tilt)
 			pixelshift2 = shiftinfo['pixel shift']
 			self.node.logger.info('Pixel shift (1 of 2): (%.2f, %.2f)'
 														% (pixelshift1['col'], pixelshift1['row']))
@@ -708,7 +709,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		return (pixelshift1, pixelshift2)
 
-	def measureDispDiff(self, tilt_axis, tilt_m, tilt_t):
+	def measureDispDiff(self, tilt_axis, tilt_m, tilt_t, correct_tilt=False):
 		'''
 		This measures one displacement difference that go into 
 		eq. (11). Each call of this function acquires four images
@@ -738,10 +739,10 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			stateneg['beam tilt'][tilt_axis] -= tilt_t
 			self.node.logger.debug('State negative %s' % (stateneg,))
 
-			shiftinfo = self.measureStateShift(state0, statepos, 1, settle=0.25)
+			shiftinfo = self.measureStateShift(state0, statepos, 1, settle=0.25, correct_tilt=correct_tilt)
 			pixelshift1 = shiftinfo['pixel shift']
 
-			shiftinfo = self.measureStateShift(state0, stateneg, 1, settle=0.25)
+			shiftinfo = self.measureStateShift(state0, stateneg, 1, settle=0.25, correct_tilt=correct_tilt)
 			pixelshift2 = shiftinfo['pixel shift']
 			self.node.logger.info('Pixel shift 1 %s, Pixel shift 2 %s'
 														% (pixelshift1, pixelshift2))

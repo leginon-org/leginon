@@ -211,11 +211,11 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.beep()
 		return ''
 
-	def measureDefocusStig(self, btilt, stig=True):
+	def measureDefocusStig(self, btilt, stig=True, correct_tilt=False):
 		if self.initInstruments():
 			return
 		try:
-			ret = self.calclient.measureDefocusStig(btilt, stig=stig)
+			ret = self.calclient.measureDefocusStig(btilt, stig=stig, correct_tilt=correct_tilt)
 		except Exception, e:
 			self.logger.exception('Measure defocus failed: %s' % e)
 			ret = {}
@@ -236,8 +236,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 															self.settings['stig delta'])
 		self.panel.calibrationDone()
 
-	def uiMeasureDefocusStig(self, btilt):
-		result = self.measureDefocusStig(btilt, stig=True)
+	def uiMeasureDefocusStig(self, btilt, correct_tilt):
+		result = self.measureDefocusStig(btilt, stig=True, correct_tilt=correct_tilt)
 		self.resultvalue = result
 		self.panel.measurementDone()
 

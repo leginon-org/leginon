@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/BeamTiltCalibrator.py,v $
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-10-14 21:48:36 $
+# $Date: 2005-10-21 17:56:19 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -242,6 +242,7 @@ class MeasureDialog(wx.Dialog):
 		szresult.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szresult.Add(self.sts['stigy'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+		self.correctimages = wx.CheckBox(self, -1, 'Correct Tilted Images')
 		self.bmeasure = wx.Button(self, -1, 'Measure')
 		self.bcorrectdefocus = wx.Button(self, -1, 'Correct Defocus')
 		self.bcorrectstig = wx.Button(self, -1, 'Correct Stigmator')
@@ -250,10 +251,11 @@ class MeasureDialog(wx.Dialog):
 		self.bcorrectstig.Enable(False)
 
 		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.bmeasure, (0, 0), (1, 1), wx.EXPAND)
-		szbutton.Add(self.bcorrectdefocus, (1, 0), (1, 1), wx.EXPAND)
-		szbutton.Add(self.bcorrectstig, (2, 0), (1, 1), wx.EXPAND)
-		szbutton.Add(self.bresetdefocus, (3, 0), (1, 1), wx.EXPAND)
+		szbutton.Add(self.correctimages, (0, 0), (1, 1), wx.EXPAND)
+		szbutton.Add(self.bmeasure, (1, 0), (1, 1), wx.EXPAND)
+		szbutton.Add(self.bcorrectdefocus, (2, 0), (1, 1), wx.EXPAND)
+		szbutton.Add(self.bcorrectstig, (3, 0), (1, 1), wx.EXPAND)
+		szbutton.Add(self.bresetdefocus, (4, 0), (1, 1), wx.EXPAND)
 
 		sz = wx.GridBagSizer(5, 20)
 		label = wx.StaticText(self, -1, 'Beam tilt:')
@@ -283,8 +285,9 @@ class MeasureDialog(wx.Dialog):
 
 	def onMeasureButton(self, evt):
 		self.GetParent()._calibrationEnable(False)
+		correct_tilt = self.correctimages.GetValue()
 		threading.Thread(target=self.node.uiMeasureDefocusStig,
-											args=(self.febeamtilt.GetValue(),)).start()
+											args=(self.febeamtilt.GetValue(), correct_tilt)).start()
 
 	def onCorrectDefocusButton(self, evt):
 		self.GetParent()._instrumentEnable(False)
