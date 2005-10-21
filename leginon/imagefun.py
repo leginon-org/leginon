@@ -34,10 +34,14 @@ def toFloat(inputarray):
 ## as of numarray 1.1, numextension stats functions are faster than
 ## numarray.nd_image stats functions
 
-def stdev(inputarray, known_mean=None):
+def OLDstdev(inputarray, known_mean=None):
 	## numextension.stdev has seg fault if known_mean is given
+	inputarray = toFloat(inputarray)
 	s = numextension.stdev(inputarray)
 	return float(s)
+
+def stdev(inputarray, known_mean=None):
+	return numarray.nd_image.standard_deviation(inputarray)
 
 def mean(inputarray):
 	im = toFloat(inputarray)
