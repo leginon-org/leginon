@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleDepth.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-10-22 03:56:15 $
+# $Date: 2005-10-22 04:39:13 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -365,7 +365,6 @@ class PickHoleSettingsDialog(gui.wx.Settings.Dialog):
 		self.setNodeSettings()
 		parent = self.GetParent()
                 pixels=parent.imagepanel.getTargetPositions('PickHoles')
-		print pixels
 		shift=self.node.correlate_I_I0()
 		newtargets=self.node.applyPickTargetShift(pixels,shift)
 		parent.imagepanel.setTargets('PickHoles', newtargets['PickHoles'])

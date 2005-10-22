@@ -402,8 +402,10 @@ class HoleFinder(object):
 				blobdist=1.0
 				blobtilt=tiltaxis
 		else:
-			blobdist = Numeric.sqrt((blobcoord[0][0]-blobcoord[1][0])**2+(blobcoord[0][1]-blobcoord[1][1])**2)
-			blobtilt = -Numeric.arctan((blobcoord[0][0]-blobcoord[1][0])/(blobcoord[0][1]-blobcoord[1][1]))
+			blobdx=blobcoord[0][0]-blobcoord[1][0]
+			blobdy=blobcoord[0][1]-blobcoord[1][1]
+			blobdist = Numeric.sqrt(blobdx**2+blobdy**2)
+			blobtilt = -Numeric.arctan(blobdx/blobdy)
 		holedepth['depth'] = binnedpixel*blobdist/Numeric.abs(Numeric.sin(tiltangle))
 		holedepth['tilt'] = blobtilt
 		return holedepth
@@ -426,7 +428,9 @@ class HoleFinder(object):
 		for realhole in realholes:
 			coord = [realhole[1],realhole[0]]
 			holestats = self.get_hole_stats(im, coord, r)
-
+			'''
+			First create a dummy blob from the coordinate then fill in the stats
+			'''
 		        hole = imagefun.Blob(im,None,None,coord,None,None)
 			hole.stats['n'] = holestats['n']
 			hole.stats['hole_mean'] = holestats['mean']
@@ -495,7 +499,6 @@ class HoleFinder(object):
 		self.find_blobs()
 		self.mark_holes()
 		self.calc_holestats()
-		#self.calc_ice()
 
 if __name__ == '__main__':
 	import Mrc

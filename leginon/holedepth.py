@@ -175,13 +175,10 @@ class HoleDepth(holefinder.HoleFinder):
 		blobtiltdeg=holedepth['tilt']*180/3.14159
 
 		blobs = self.hf['blobs']
-		#centers = self.blobCenters(blobs)
 		targets = self.blobStatsTargets(blobs)
-		#self.logger.info('Number of blobs: %s' % (len(centers),))
 		self.logger.info('Number of blobs: %s' % (len(targets),))
 		self.logger.info('Calculated Hole Depth: %.1f nm' % (holedepthnm,))
-		self.logger.info('Blob axis: %d' % (blobtiltdeg,))
-		#self.setTargets(centers, 'Blobs')
+		self.logger.info('Blob axis: %d deg (from x to -y)' % (blobtiltdeg,))
 		self.setTargets(targets, 'Blobs')
 
 	def holeStatsTargets(self, holes):
@@ -205,19 +202,24 @@ class HoleDepth(holefinder.HoleFinder):
 		return targets
 
 	def correlate_I_I0(self):
-		I_image=self.hdimagedata['I filename']['image']
-		I0_image=self.hdimagedata['I0 filename']['image']
-		peak=self.hf.shift_holes(I_image,I0_image)
+		if (self.hdimagedata['I filename'] is None) or (self.hdimagedata['I0 filename'] is None):
+			self.logger.warning('Targets Not Shifted - I or I0 image not loaded')
+			peak=(0,0)
+		else:
+			I_image=self.hdimagedata['I filename']['image']
+			I0_image=self.hdimagedata['I0 filename']['image']
+			if (I_image.shape != I0_image.shape):
+				self.logger.warning('Targets Not Shifted-I and I0 images not the same shape ')
+				peak=(0,0)
+			else:
+				peak=self.hf.shift_holes(I_image,I0_image)
 		return peak
 
 	def applyPickTargetShift(self, centers,shift_vect):
-		self.logger.info('apply target shift')
+		self.logger.info('apply target shift by %s' % (shift_vect,))
 		imshape = self.hf['original'].shape
 		newtargets = {'PickHoles':[],}
-		print centers
-		print shift_vect
 		for center in centers:
-			self.logger.info('applying shifts to pick at %s' % (center,))
 			target = center[0]+shift_vect[0], center[1]+shift_vect[1]
 			tarx = target[0]
 			tary = target[1]
@@ -225,7 +227,6 @@ class HoleDepth(holefinder.HoleFinder):
 				self.logger.info('skipping shift point %s: out of image bounds' % (shift_vect,))
 				continue
 			newtargets['PickHoles'].append(target)
-		print newtargets	
 		return newtargets
 
 	def getPickHoleStats(self,holecenters):
