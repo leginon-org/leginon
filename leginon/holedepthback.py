@@ -18,6 +18,7 @@ except:
 	import LinearAlgebra
 import Mrc
 import imagefun
+import correlator
 import peakfinder
 import convolver
 import ice
@@ -432,6 +433,17 @@ class HoleFinder(object):
 			hole.stats['hole_std'] = holestats['std']
 			holes.append(hole)
 		self.__results['holes']=holes
+		
+	def shift_holes(self,I_image=None,I0_image=None):
+		I=I_image
+		I0=I0_image
+		cc = imagefun.cross_correlate(I, I0)
+		self.peakfinder.setImage(cc)
+		peak=self.peakfinder.pixelPeak()
+		delta = correlator.wrap_coord(peak, cc.shape)
+		delta_transposed=(delta[1],delta[0])
+		return delta_transposed
+		
 
 	def mark_holes(self):
 		if None in (self.__results['holes'], self.__results['original']):

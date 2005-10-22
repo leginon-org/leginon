@@ -204,14 +204,48 @@ class HoleDepth(holefinder.HoleFinder):
 			targets.append(target)
 		return targets
 
+	def correlate_I_I0(self):
+		I_image=self.hdimagedata['I filename']['image']
+		I0_image=self.hdimagedata['I0 filename']['image']
+		peak=self.hf.shift_holes(I_image,I0_image)
+		return peak
+
+	def applyPickTargetShift(self, centers,shift_vect):
+		self.logger.info('apply target shift')
+		imshape = self.hf['original'].shape
+		newtargets = {'PickHoles':[],}
+		print centers
+		print shift_vect
+		for center in centers:
+			self.logger.info('applying shifts to pick at %s' % (center,))
+			target = center[0]+shift_vect[0], center[1]+shift_vect[1]
+			tarx = target[0]
+			tary = target[1]
+			if tarx < 0 or tarx >= imshape[1] or tary < 0 or tary >= imshape[0]:
+				self.logger.info('skipping shift point %s: out of image bounds' % (shift_vect,))
+				continue
+			newtargets['PickHoles'].append(target)
+		print newtargets	
+		return newtargets
+
 	def getPickHoleStats(self,holecenters):
 		self.logger.info('pickhole stats')
+		imshape = self.hf['original'].shape
 		
 		r = self.settings['pickhole radius']
 		i0 = self.settings['pickhole zero thickness']
 		self.icecalc.set_i0(i0)
 
-		self.hf.configure_pickhole(center_list=holecenters)
+		good_centers=[]
+		for center in holecenters:
+			tarx = center[0]
+			tary = center[1]
+			if tarx < 0 or tarx >= imshape[1] or tary < 0 or tary >= imshape[0]:
+				self.logger.info('skipping picked point %s: out of image bounds' % (center,))
+				continue
+			good_centers.append(center)
+
+		self.hf.configure_pickhole(center_list=good_centers)
 
 		self.hf.configure_holestats(radius=r)
 		self.hf.calc_holestats()

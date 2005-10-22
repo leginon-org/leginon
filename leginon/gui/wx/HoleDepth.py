@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleDepth.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-10-19 00:32:10 $
+# $Date: 2005-10-22 03:56:15 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -344,6 +344,14 @@ class PickHoleSettingsDialog(gui.wx.Settings.Dialog):
 		sbszstats = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszstats.Add(szstats, 1, wx.EXPAND|wx.ALL, 5)
 
+		self.bshift = wx.Button(self, -1, 'Shiftpicks')
+		szbuttonshift = wx.GridBagSizer(5, 5)
+		szbuttonshift.Add(self.bshift, (0, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbuttonshift.AddGrowableCol(0)
+
+		self.Bind(wx.EVT_BUTTON, self.onShiftButton, self.bshift)
+
 		self.btest = wx.Button(self, -1, 'Test')
 		szbutton = wx.GridBagSizer(5, 5)
 		szbutton.Add(self.btest, (0, 0), (1, 1),
@@ -351,15 +359,22 @@ class PickHoleSettingsDialog(gui.wx.Settings.Dialog):
 		szbutton.AddGrowableCol(0)
 
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
+		return [sbszstats, szbuttonshift,szbutton]
 
-		return [sbszstats, szbutton]
+	def onShiftButton(self, evt):
+		self.setNodeSettings()
+		parent = self.GetParent()
+                pixels=parent.imagepanel.getTargetPositions('PickHoles')
+		print pixels
+		shift=self.node.correlate_I_I0()
+		newtargets=self.node.applyPickTargetShift(pixels,shift)
+		parent.imagepanel.setTargets('PickHoles', newtargets['PickHoles'])
 
 	def onTestButton(self, evt):
 		self.setNodeSettings()
 		parent = self.GetParent()
                 pixels=parent.imagepanel.getTargetPositions('PickHoles')
 		self.node.getPickHoleStats(pixels)
-
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
