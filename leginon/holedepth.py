@@ -167,7 +167,15 @@ class HoleDepth(holefinder.HoleFinder):
 		maxblobs = self.settings['blobs max']
 		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs)
 		self.hf.find_blobs()
+		self.getHoleDepth
 
+	def makeBlobs(self,centers):
+		self.logger.info('create blobs from selection')
+		self.hf.configure_makeblobs(centers)
+		self.hf.make_blobs()
+		
+	def getHoleDepth(self):
+		self.logger.info('calculating hole depth')
 		holedepth=self.hf.find_distance()
 		self.holedepth=holedepth['depth']
 		self.blobtilt=holedepth['tilt']

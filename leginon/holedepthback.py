@@ -170,6 +170,7 @@ class HoleFinder(object):
 		self.correlation_config = {'cortype': 'cross', 'corfilt': (1.0,)}
 		self.threshold = 3.0
 		self.blobs_config = {'border': 20, 'maxblobsize': 50, 'maxblobs':100}
+		self.makeblobs_config = {'center_list': [(100,100)]}
 		self.dist_config = {'binned_pixel': 2e-10}
 		self.pickhole_config = {'center_list': [(100,100)]}
 		self.holestats_config = {'radius': 20}
@@ -375,6 +376,25 @@ class HoleFinder(object):
 		blobs = imagefun.find_blobs(im, mask, border, maxblobs, maxsize)
 		self.__update_result('blobs', blobs)
 
+	def configure_makeblobs(self, center_list=None):
+		if center_list is not None:
+			self.makeblobs_config['center_list'] = center_list
+
+	def make_blobs(self):
+		'''
+		This adds hole stats to holes.
+		'''
+		if self.__results['original'] is None:
+			raise RuntimeError('need original to make dummy blobs')
+		im = self.__results['original']
+		blobs = []
+		realblobs = self.makeblobs_config['center_list']
+		for realblob in realblobs:
+			coord = [realblob[1],realblob[0]]
+		        blob = imagefun.Blob(im,None,None,coord,None,None)
+			blobs.append(blob)
+		self.__results['blobs']=blobs
+		
 	def configure_distance(self, binned_pixel=None):
 		if binned_pixel is not None:
 			self.dist_config['binned_pixel'] = binned_pixel
@@ -405,7 +425,7 @@ class HoleFinder(object):
 			blobdx=blobcoord[0][0]-blobcoord[1][0]
 			blobdy=blobcoord[0][1]-blobcoord[1][1]
 			blobdist = Numeric.sqrt(blobdx**2+blobdy**2)
-			blobtilt = -Numeric.arctan(blobdx/blobdy)
+			blobtilt = -Numeric.arctan(float(blobdx)/blobdy)
 		holedepth['depth'] = binnedpixel*blobdist/Numeric.abs(Numeric.sin(tiltangle))
 		holedepth['tilt'] = blobtilt
 		return holedepth

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleDepth.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-10-22 04:39:13 $
+# $Date: 2005-10-25 19:12:50 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -42,9 +42,11 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel.addTypeTool('Edge', display=True, settings=True)
 		self.imagepanel.addTypeTool('Template', display=True, settings=True)
 		self.imagepanel.addTypeTool('Threshold', display=True, settings=True)
-		self.imagepanel.addTargetTool('Blobs', wx.Color(0, 255, 255),
+		self.imagepanel.addTargetTool('Blobs', wx.Color(0, 255, 255), target=True,
 																settings=True)
 
+		self.imagepanel.selectiontool.setDisplayed('Blobs', True)
+		self.imagepanel.setTargets('Blobs', [])
 		self.imagepanel.addTargetTool('PickHoles', wx.Color(255, 0, 255), target=True,
 																	settings=True)
 		self.imagepanel.selectiontool.setDisplayed('PickHoles', True)
@@ -307,7 +309,15 @@ class BlobsSettingsDialog(gui.wx.Settings.Dialog):
 		sbszblobs = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszblobs.Add(szblobs, 1, wx.EXPAND|wx.ALL, 5)
 
-		self.btest = wx.Button(self, -1, 'Test')
+		self.bpick = wx.Button(self, -1, 'Calc w/ selection')
+		szbuttonpick = wx.GridBagSizer(5, 5)
+		szbuttonpick.Add(self.bpick, (0, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbuttonpick.AddGrowableCol(0)
+
+		self.Bind(wx.EVT_BUTTON, self.onPickedBlobButton, self.bpick)
+
+		self.btest = wx.Button(self, -1, 'Find blobs / Calc depth')
 		szbutton = wx.GridBagSizer(5, 5)
 		szbutton.Add(self.btest, (0, 0), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
@@ -315,12 +325,20 @@ class BlobsSettingsDialog(gui.wx.Settings.Dialog):
 
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
 
-		return [sbszblobs, szbutton]
+		return [sbszblobs,szbuttonpick,szbutton]
 
 	def onTestButton(self, evt):
 		self.setNodeSettings()
 		self.node.findBlobs()
+		self.node.getHoleDepth()
 
+	def onPickedBlobButton(self, evt):
+		self.setNodeSettings()
+		parent = self.GetParent()
+                pixels=parent.imagepanel.getTargetPositions('Blobs')
+		if (len(pixels)==2):
+			self.node.makeBlobs(pixels)
+			self.node.getHoleDepth()
 
 class PickHoleSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
