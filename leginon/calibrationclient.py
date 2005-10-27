@@ -456,6 +456,23 @@ class MatrixCalibrationClient(CalibrationClient):
 		caldata['high tension'] = ht
 		self.node.publish(caldata, database=True, dbforce=True)
 
+	def getMatrixAngles(self, matrix):
+		x_shift_row = matrix[0, 0]
+		x_shift_col = matrix[1, 0]
+		y_shift_row = matrix[0, 1]
+		y_shift_col = matrix[1, 1]
+
+		# calculations invert image coordinates (+y top, -y bottom)
+		# angle from the x shift of the parameter
+		theta_x = math.atan2(x_shift_col, -x_shift_row)
+		# angle from the y shift of the parameter
+		theta_y = math.atan2(y_shift_col, -y_shift_row)
+
+		return theta_x, theta_y
+
+	def getAngles(self, *args):
+		matrix = self.retrieveMatrix(*args)
+		return self.getMatrixAngles(matrix)
 
 class BeamTiltCalibrationClient(MatrixCalibrationClient):
 	def __init__(self, node):
