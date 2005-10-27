@@ -222,7 +222,7 @@ class HoleFinder(object):
 		self.icecalc = ice.IceCalculator()
 
 		## some default configuration parameters
-		self.save_mrc = True
+		self.save_mrc = False
 		self.edges_config = {'filter': 'sobel', 'size': 9, 'sigma': 1.4, 'abs': False, 'lp':True, 'lpsig':1.0, 'thresh':100.0, 'edges': True}
 		self.template_config = {'ring_list': [(25,30)]}
 		self.correlation_config = {'cortype': 'cross', 'corfilt': (1.0,)}
