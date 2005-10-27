@@ -390,8 +390,6 @@ class JAHCFinder(targetfinder.TargetFinder):
 		return newtargets
 
 	def everything(self):
-		# find edges
-		self.findEdges()
 		# correlate template
 		self.correlateTemplate()
 		# threshold
