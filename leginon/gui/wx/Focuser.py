@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.29 $
+# $Revision: 1.30 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-28 21:22:24 $
+# $Date: 2005-10-28 20:48:35 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -15,6 +15,7 @@ import threading
 import wx
 from gui.wx.Choice import Choice
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
+from gui.wx.Presets import EditPresetOrder
 import gui.wx.Acquisition
 import gui.wx.Dialog
 import gui.wx.Events
@@ -105,7 +106,8 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 		self.widgets['correction type'] = Choice(self, -1, choices=focustypes)
 
 		presets = self.node.presetsclient.getPresetNames()
-		self.widgets['preset'] = Choice(self, -1, choices=presets)
+		self.widgets['auto preset order'] = EditPresetOrder(self, -1)
+		self.widgets['auto preset order'].setChoices(presets)
 
 		self.widgets['melt time'] = FloatEntry(self, -1,
 																						min=0.0,
@@ -196,7 +198,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(wx.StaticText(self, -1, 'Preset'), (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['preset'], (2, 1), (1, 1),
+		sz.Add(self.widgets['auto preset order'], (2, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(wx.StaticText(self, -1, 'Melt time:'), (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)

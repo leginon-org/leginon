@@ -37,7 +37,7 @@ class Focuser(acquisition.Acquisition):
 		'duplicate targets': False,
 		'duplicate target type': 'focus',
 		'correction type': 'Defocus',
-		'preset': '',
+		'auto preset order': [],
 		'melt time': 0.0,
 		'beam tilt': 0.01,
 		'drift threshold': 3e-10,
@@ -253,18 +253,20 @@ class Focuser(acquisition.Acquisition):
 
 		## autofocus
 		if self.settings['autofocus']:
-			autofocuspreset = self.settings['preset']
-			autostatus = self.autoFocus(resultdata, autofocuspreset, emtarget)
-			resultdata['auto status'] = autostatus
-			if autostatus == 'ok':
-				status = 'ok'
-			elif autostatus == 'repeat':
-				### when we need to repeat, return immediately 
-				return 'repeat'
+			autofocuspresets = self.settings['auto preset order']
+			for autofocuspreset in autofocuspresets:
+				autofocuspreset = self.settings['preset']
+				autostatus = self.autoFocus(resultdata, autofocuspreset, emtarget)
+				resultdata['auto status'] = autostatus
+				if autostatus == 'ok':
+					status = 'ok'
+				elif autostatus == 'repeat':
+					### when we need to repeat, return immediately 
+					return 'repeat'
+				else:
+					status = autostatus
 			else:
-				status = autostatus
-		else:
-			resultdata['auto status'] = 'skipped'
+				resultdata['auto status'] = 'skipped'
 
 		## post manual check
 		if self.settings['check after']:

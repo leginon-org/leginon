@@ -1993,7 +1993,7 @@ class FocuserSettingsData(AcquisitionSettingsData):
 		return AcquisitionSettingsData.typemap() + (
 			('autofocus', bool),
 			('correction type', str),
-			('preset', str),
+			('auto preset order', list),
 			('melt time', float),
 			('beam tilt', float),
 			('fit limit', float),
