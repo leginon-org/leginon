@@ -286,6 +286,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			movetype = self.settings['move type']
 			oldpreset = targetdata['preset']
 
+			zdiff = 0.0
 			### simulated target does not require transform
 			if targetdata['type'] == 'simulated':
 				newscope = origscope
@@ -318,8 +319,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 						self.logger.error(message)
 						raise NoMoveCalibration(message)
 					zdiff = tmpscope['stage position']['z'] - targetscope['stage position']['z']
-				else:
-					zdiff = 0.0
 	
 			### check if stage position is valid
 			if newscope['stage position']:
