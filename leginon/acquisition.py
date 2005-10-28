@@ -306,6 +306,20 @@ class Acquisition(targetwatcher.TargetWatcher):
 					message = 'No calibration for acquisition move to target'
 					self.logger.error(message)
 					raise NoMoveCalibration(message)
+
+				## if stage is tilted and moving by image shift,
+				## calculate z offset between center of image and target
+				if movetype in ('image shift','image beam shift') and abs(targetscope['stage position']['a']) > 0.02:
+					calclient = self.calclients['stage position']
+					try:
+						tmpscope = calclient.transform(pixelshift, targetscope, targetcamera)
+					except calibrationclient.NoMatrixCalibrationError:
+						message = 'No stage calibration for z measurement'
+						self.logger.error(message)
+						raise NoMoveCalibration(message)
+					zdiff = tmpscope['stage position']['z'] - targetscope['stage position']['z']
+				else:
+					zdiff = 0.0
 	
 			### check if stage position is valid
 			if newscope['stage position']:
@@ -316,6 +330,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			emtargetdata['image shift'] = dict(newscope['image shift'])
 			emtargetdata['beam shift'] = dict(newscope['beam shift'])
 			emtargetdata['stage position'] = dict(newscope['stage position'])
+			emtargetdata['delta z'] = zdiff
 
 		emtargetdata['target'] = targetdata
 

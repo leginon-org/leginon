@@ -1410,6 +1410,7 @@ class EMTargetData(InSessionData):
 			('beam shift', dict),
 			('stage position', dict),
 			('target', AcquisitionImageTargetData),
+			('delta z', float),
 		)
 	typemap = classmethod(typemap)
 

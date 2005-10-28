@@ -1033,6 +1033,10 @@ class PresetsManager(node.Node):
 		scopedata['image shift'] = myimage
 		scopedata['beam shift'] = mybeam
 		scopedata['stage position'] = mystage
+
+		### correct defocus for tilted stage
+		scopedata['defocus'] += emtargetdata['delta z']
+
 		### createCameraEMData with preset
 		cameradata = data.CameraEMData()
 		cameradata.friendly_update(newpreset)
