@@ -255,7 +255,6 @@ class Focuser(acquisition.Acquisition):
 		if self.settings['autofocus']:
 			autofocuspresets = self.settings['auto preset order']
 			for autofocuspreset in autofocuspresets:
-				autofocuspreset = self.settings['preset']
 				autostatus = self.autoFocus(resultdata, autofocuspreset, emtarget)
 				resultdata['auto status'] = autostatus
 				if autostatus == 'ok':
