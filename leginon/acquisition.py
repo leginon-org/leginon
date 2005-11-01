@@ -318,7 +318,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 						message = 'No stage calibration for z measurement'
 						self.logger.error(message)
 						raise NoMoveCalibration(message)
-					zdiff = tmpscope['stage position']['z'] - targetscope['stage position']['z']
+					ydiff = tmpscope['stage position']['y'] - targetscope['stage position']['y']
+					zdiff = ydiff * Numeric.sin(targetscope['stage position']['a'])
 	
 			### check if stage position is valid
 			if newscope['stage position']:

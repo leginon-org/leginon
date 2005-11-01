@@ -1035,7 +1035,9 @@ class PresetsManager(node.Node):
 		scopedata['stage position'] = mystage
 
 		### correct defocus for tilted stage
-		scopedata['defocus'] += emtargetdata['delta z']
+		deltaz = emtargetdata['delta z']
+		self.logger.info('correcting defocus by %.2e for target on tilt' % (deltaz,))
+		scopedata['defocus'] += deltaz
 
 		### createCameraEMData with preset
 		cameradata = data.CameraEMData()
