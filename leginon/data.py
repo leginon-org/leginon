@@ -1916,6 +1916,10 @@ class RasterFinderSettingsData(TargetFinderSettingsData):
 		return TargetFinderSettingsData.typemap() + (
 			('image filename', str),
 			('raster spacing', int),
+			('raster angle', float),
+			('raster center x', int),
+			('raster center y', int),
+			('raster center on image', bool),
 			('raster limit', int),
 			('ice box size', float),
 			('ice thickness', float),
