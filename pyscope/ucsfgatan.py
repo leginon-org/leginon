@@ -10,224 +10,180 @@ import ccdcamera
 import numarray
 import re
 import sys
-
-try:
-    import pythoncom
-    import pywintypes
-    import win32com.client
-    try:
-        import NumSafeArray
-    except ImportError:
-        from pyScope import NumSafeArray
-except ImportError:
-    pass
+import ucsfCamera
 
 class UCSFGatan(ccdcamera.CCDCamera):
-    name = 'UCSF Gatan'
-    def __init__(self):
-        ccdcamera.CCDCamera.__init__(self)
 
-        pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
-        try:
-            self.camera = win32com.client.dynamic.Dispatch('UcsfCCD.GatanCamera')
-        except pywintypes.com_error, e:
-            raise RuntimeError('unable to initialize UCSF Gatan interface')
+	name = 'UCSF Gatan'
 
-        self.cameratypes = ('CCD', 'GIF')
-        self.cameratype = self.cameratypes[0]
+	def __init__(self):
+		ccdcamera.CCDCamera.__init__(self)
+		self.camera = ucsfCamera.GatanCCD()
+		self.cameratypes = ('CCD', 'GIF')
+		self.cameratype = self.cameratypes[0]
+		self.camera.bIsGif = False
+		self.fExposure = 0.5
 
-        try:
-            self.loadConfigFile()
-        except IOError:
-            pass
+		try:
+			self.loadConfigFile()
+		except IOError:
+			pass
 
-        self.binning = {'x': self.camera.BinningX, 'y': self.camera.BinningY}
-        self.offset = {'x': self.camera.ImageLeft, 'y': self.camera.ImageTop}
-        self.dimension = {'x': self.camera.ImageRight - self.camera.ImageLeft,
-                          'y': self.camera.ImageBottom - self.camera.ImageTop}
-        self.exposuretype = 'normal'
+		self.mReadCamera()
+		self.exposuretype = 'normal'
 
-    def loadConfigFile(self, filename='C:\\UCSF\\Tomo\\ConfigTomo.dat'):
-        options = parseConfigTomo(filename)
-        camerasize = {}
-        for axis in ['x', 'y']:
-            key = 'CCDReadout' + axis.upper()
-            if key in options and isinstance(options[key], int):
-                camerasize[axis] = options[key]
-        if 'x' in camerasize and 'y' in camerasize:
-            self.camerasize = camerasize
+	def loadConfigFile(self, filename='C:\\UCSF\\Tomo\\ConfigTomo.dat'):
+		options = parseConfigTomo(filename)
+		camerasize = {}
+		for axis in ['x', 'y']:
+			key = 'CCDReadout' + axis.upper()
+			if key in options and isinstance(options[key], int):
+				camerasize[axis] = options[key]
+		if 'x' in camerasize and 'y' in camerasize:
+			self.camerasize = camerasize
 
-        self.pixelsizes = {}
-        for camera in ('CCD', 'GIF'):
-            try:
-                mag = options[camera + 'PixelMag']
-                pixelsize = options[camera + 'PixelSize']
-                self.pixelsizes[camera] = float(mag)*float(pixelsize)*1e-10
-            except KeyError:
-                pass
+		self.pixelsizes = {}
+		for camera in ('CCD', 'GIF'):
+			try:
+				mag = options[camera + 'PixelMag']
+				pixelsize = options[camera + 'PixelSize']
+				self.pixelsizes[camera] = float(mag)*float(pixelsize)*1e-10
+			except KeyError:
+				pass
 
-    def getCameraType(self):
-        return self.cameratype
+	def getCameraType(self):
+		return self.cameratype
 
-    def setCameraType(self, cameratype):
-        if cameratype not in self.cameratypes:
-            raise ValueError('invalid camera \'%s\'' % cameratype)
-        self.cameratype = cameratype
+	def setCameraType(self, cameratype):
+		if cameratype not in self.cameratypes:
+			raise ValueError('invalid camera \'%s\'' % cameratype)
+		self.cameratype = cameratype
+		if cameratype == self.cameratypes[0]: self.camera.bIsGif = False
+		else: self.camera.bIsGif = True
 
-    def getOffset(self):
-        return dict(self.offset)
+	def getOffset(self):
+		return dict(self.offset)
 
-    def setOffset(self, value):
-        self.offset = dict(value)
+	def setOffset(self, value):
+		self.offset = dict(value)
+		self.camera.setReadout(self.offset['x'], self.dimension['x'],
+			self.offset['y'], self.dimension['y'])
 
-    def getDimension(self):
-        return dict(self.dimension)
+	def getDimension(self):
+		return dict(self.dimension)
 
-    def setDimension(self, value):
-        self.dimension = dict(value)
+	def setDimension(self, value):
+		self.dimension = dict(value)
+		self.camera.setReadout(self.offset['x'], self.dimension['x'],
+			self.offset['y'], self.dimension['y'])
 
-    def getBinning(self):
-        return dict(self.binning)
+	def getBinning(self):
+		return dict(self.binning)
 
-    def setBinning(self, value):
-        self.binning = dict(value)
+	def setBinning(self, value):
+		self.binning = dict(value)
+		self.camera.setBinning(self.binning['x'], self.binning['y'])
 
-    def getExposureTime(self):
-        return int(self.camera.Exposure*1000)
+	def getExposureTime(self):
+		fExposure = self.camera.getExposure()
+		return int(fExposure*1000)
 
-    def setExposureTime(self, value):
-        self.camera.Exposure = float(value)/1000.0
+	def setExposureTime(self, value):
+		self.fExposure = float(value)/1000.0
+		print 'ucsfGatan: exposure time (s) = ', self.fExposure
+		if self.fExposure > 5: self.fExposure = 5
+		self.camera.setExposure(self.fExposure)
 
-    def getExposureTypes(self):
-        return ['normal', 'dark']
+	def getExposureTypes(self):
+		return ['normal', 'dark']
 
-    def getExposureType(self):
-        return self.exposuretype
+	def getExposureType(self):
+		return self.exposuretype
 
-    def setExposureType(self, value):
-        if value not in ['normal', 'dark']:
-            raise ValueError('invalid exposure type')
-        self.exposuretype = value
+	def setExposureType(self, value):
+		if value not in ['normal', 'dark']:
+			raise ValueError('invalid exposure type')
+		self.exposuretype = value
 
-    def getImage(self):
-        try:
-            self.camera.BinningX = self.binning['x']
-            self.camera.BinningY = self.binning['y']
-            self.camera.ImageLeft = self.offset['x']
-            self.camera.ImageTop = self.offset['y']
-            self.camera.ImageRight = self.dimension['x'] + self.camera.ImageLeft
-            self.camera.ImageBottom = self.dimension['y'] + self.camera.ImageTop
-        except pywintypes.com_error, e:
-            raise ValueError('invalid image dimensions')
-        try:
-            if self.getExposureType() == 'dark':
-                return NumSafeArray.call(self.camera, 'AcquireDarkImage')
-            else:
-                return NumSafeArray.call(self.camera, 'AcquireRawImage')
-        except pywintypes.com_error, e:
-            raise ValueError('invalid image dimensions')
+	def getImage(self):
+		self.mWriteCamera()
+		if self.getExposureType() == 'dark': 
+			pImage = self.camera.acquireDarkImage()
+			return pImage
+		else:
+			if self.fExposure > 10:
+				self.setExposureTime(0.5)
+				raise "ucsfgatan: exposure time > 10 s!"
+			pImage = self.camera.acquireRawImage()
+			return pImage
 
-    def getCameraSize(self):
-        if hasattr(self, 'camerasize'):
-            return self.camerasize
-        else:
-            raise NotImplementedError
+	def getCameraSize(self):
+		if hasattr(self, 'camerasize'):
+			return self.camerasize
+		else:
+			raise NotImplementedError
 
-    def getPixelSize(self):
-        try:
-            pixelsize = self.pixelsizes[self.cameratype]
-        except KeyError:
-            raise ValueError('no pixel size for camera type')
-        return {'x': pixelsize, 'y': pixelsize}
+	def getPixelSize(self):
+		try:
+			pixelsize = self.pixelsizes[self.cameratype]
+		except KeyError:
+			raise ValueError('no pixel size for camera type')
+		return {'x': pixelsize, 'y': pixelsize}
 
-    def _getCameraSize(self):
-        binningx = self.camera.BinningX
-        binningy = self.camera.BinningY
-        left = self.camera.ImageLeft
-        right = self.camera.ImageRight
-        top = self.camera.ImageTop
-        bottom = self.camera.ImageBottom
+	def getSlitWidth(self):
+		if self.camera.bIsGif: return self.camera.getSlitWidth()
+		else: return None
 
-        self.camera.BinningX = 1
-        self.camera.BinningY = 1
-        self.camera.ImageLeft = 0
-        self.camera.ImageTop = 0
+	def setSlitWidth(self, width):
+		if self.camera.bIsGif: self.camera.setSlitWidth(width)
 
-        size = {}
-        for i in ['ImageRight', 'ImageBottom']:
-            for j in [4096, 2048, 1024]:
-                try:
-                    setattr(self.camera, i, j)
-                except:
-                    continue
-                try:
-                    setattr(self.camera, i, j + 1)
-                except:
-                    size[i] = j
-                    break
-            if i not in size:
-                j = 0
-                while True:
-                    try:
-                        setattr(self.camera, i, j)
-                        j += 1
-                    except:
-                        break
-                size[i] = j - 1
-        self.camera.BinningX = binningx
-        self.camera.BinningX = binningy
-        self.camera.ImageLeft = left
-        self.camera.ImageRight = right
-        self.camera.ImageTop = top
-        self.camera.ImageBottom = bottom
-        return {'x': size['ImageRight'], 'y': size['ImageBottom']}
+	def mReadCamera(self):
+		pBinning = self.camera.getBinning()
+		pReadout = self.camera.getReadout()
+		self.binning = {'x': pBinning[0], 'y': pBinning[1]}
+		self.offset = {'x': pReadout[0], 'y': pReadout[2]}
+		self.dimension = {'x': pReadout[1], 'y': pReadout[3]}
 
-    def getSlitWidth(self):
-        return self.camera.SlitWidth
+	def mWriteCamera(self):
+		self.camera.setBinning(self.binning['x'], self.binning['y'])
+		self.camera.setReadout(self.offset['x'], self.dimension['x'],
+			self.offset['y'], self.dimension['y'])
 
-    def setSlitWidth(self, width):
-        self.camera.SlitWidth = width
 
 def parseConfigTomo(filename):
-    fp = open(filename)
+	fp = open(filename)
 
-    commentre = re.compile('(?P<line>.*)#')
-    valuere = re.compile(
-        r'(?P<name>[^:=\s][^:=]*)'
-        r'\s*([:=])\s*'
-        r'(?P<value>.*)$'
-    )
+	commentre = re.compile('(?P<line>.*)#')
+	valuere = re.compile(
+		r'(?P<name>[^:=\s][^:=]*)'
+		r'\s*([:=])\s*'
+		r'(?P<value>.*)$'
+	)
 
-    options = {}
-    while True:
-        line = fp.readline()
-        if not line:
-            break
-        mo = commentre.match(line)
-        if mo:
-            line = mo.group('line')
-        mo = valuere.match(line)
-        if mo:
-            name, value = mo.group('name', 'value')
-            name = name.strip()
-            value = value.strip()
-            for i in [int, float, strToBool]:
-                try:
-                    value = i(value)
-                except ValueError:
-                    pass
-                else:
-                    break
-            options[name] = value
-    fp.close()
-
-    return options
+	options = {}
+	while True:
+		line = fp.readline()
+		if not line: break
+		mo = commentre.match(line)
+		if mo: line = mo.group('line')
+		mo = valuere.match(line)
+		if mo:
+			name, value = mo.group('name', 'value')
+			name = name.strip()
+			value = value.strip()
+			for i in [int, float, strToBool]:
+				try:
+					value = i(value)
+				except ValueError:
+					pass
+				else:
+					break
+			options[name] = value
+	fp.close()
+	return options
 
 def strToBool(s):
-    if s.lower() == 'true':
-        return True
-    elif s.lower() == 'false':
-        return False
-    else:
-        raise ValueError
+	if s.lower() == 'true': return True
+	elif s.lower() == 'false': return False
+	else: raise ValueError
 

@@ -1,10 +1,8 @@
-#
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
-#
+# The Leginon software is Copyright 2003
+# The Scripps Research Institute, La Jolla, CA
+# For terms of the license agreement
+# see http://ami.scripps.edu/software/leginon-license
 
 import tem
 import time
@@ -500,8 +498,16 @@ class Tecnai(tem.TEM):
 	def getResetDefocus(self):
 		return False
 	
-	def getMagnification(self):
-		return int(round(self.tecnai.Projection.Magnification))
+	def getMagnification(self, index=None):
+		if index is None:
+			return int(round(self.tecnai.Projection.Magnification))
+		elif not self.getMagnificationsInitialized():
+			raise MagnificationsUninitialized
+		else:
+			try:
+				return self.magnifications[index]
+			except IndexError:
+				raise ValueError('invalid magnification index')
 
 	def getMainScreenMagnification(self):
 		return int(round(self.tecnai.Projection.Magnification*self.mainscreenscale))
@@ -532,8 +538,16 @@ class Tecnai(tem.TEM):
 		self.setMagnificationIndex(index)
 		return
 
-	def getMagnificationIndex(self):
-		return self.tecnai.Projection.MagnificationIndex - 1
+	def getMagnificationIndex(self, magnification=None):
+		if magnification is None:
+			return self.tecnai.Projection.MagnificationIndex - 1
+		elif not self.getMagnificationsInitialized():
+			raise MagnificationsUninitialized
+		else:
+			try:
+				return self.magnifications.index(magnification)
+			except IndexError:
+				raise ValueError('invalid magnification')
 
 	def setMagnificationIndex(self, value):
 		self.tecnai.Projection.MagnificationIndex = value + 1
