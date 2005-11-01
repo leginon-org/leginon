@@ -145,7 +145,7 @@ class Focuser(acquisition.Acquisition):
 			self.logger.exception('Autofocus failed: %s' % e)
 
 		try:
-			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.setImage, target=target)
+			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.setImage, target=target, correct_tilt=True)
 		except calibrationclient.Abort:
 			self.logger.info('Measurement of defocus and stig. has been aborted')
 			return 'aborted'
