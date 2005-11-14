@@ -32,7 +32,7 @@ class ManualAcquisition(node.Node):
 		'image label': '',
 		'loop pause time': 0.0,
 		'low dose': False,
-		'low dose pause time': 4.0,
+		'low dose pause time': 5.0,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.loopstop = threading.Event()
