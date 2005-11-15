@@ -1,10 +1,9 @@
-#
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
-#
+# The Leginon software is Copyright 2003
+# The Scripps Research Institute, La Jolla, CA
+# For terms of the license agreement
+# see  http://ami.scripps.edu/software/leginon-license
+
 import node, data, event
 try:
 	import numarray as Numeric
@@ -110,11 +109,11 @@ class CalibrationClient(object):
 		'''
 		Measures the pixel shift between two states
 		 Returned dict has these keys:
-		    'actual states': tuple with the actual scope states
-		    'pixel shift': the resulting pixel shift, 'row', and 'col'
-		    'peak value': cross correlation peak value
-		    'shape': shape of acquired images
-		    'stats': statistics of two images acquired (not implemented)
+		'actual states': tuple with the actual scope states
+		'pixel shift': the resulting pixel shift, 'row', and 'col'
+		'peak value': cross correlation peak value
+		'shape': shape of acquired images
+		'stats': statistics of two images acquired (not implemented)
 		'''
 
 		self.node.logger.info('Acquiring images...')
@@ -521,7 +520,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				raise RuntimeError('missing calibration matrix')
 
 		tiltcenter = self.getBeamTilt()
-		self.node.logger.info('Tilt center %s' % tiltcenter)
+		self.node.logger.info('Tilt center: x = %g, y = %g.' %
+							  (tiltcenter['x'], tiltcenter['y']))
 
 		### need two tilt displacement measurements
 		### easiest is one on each tilt axis
@@ -551,7 +551,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			except Drifting:
 				## return to original beam tilt
 				self.instrument.tem.BeamTilt = tiltcenter
-				self.node.logger.info('Returned to tilt center %s' % tiltcenter)
+				self.node.logger.info('Returned to tilt center: x = %g, y = %g.' % (tiltcenter['x'], tiltcenter['y']))
+
 				raise
 			nodrift = True
 			if shiftinfo['driftdata'] is not None:
@@ -571,7 +572,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		## return to original beam tilt
 		self.instrument.tem.BeamTilt = tiltcenter
-		self.node.logger.info('Returned to tilt center %s' % tiltcenter)
+		self.node.logger.info('Returned to tilt center: x = %g, y = %g.' % (tiltcenter['x'], tiltcenter['y']))
 
 		self.checkAbort()
 
@@ -587,7 +588,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		else:
 			sol = self.solveEq10_nostig(fmatrix,d1,t1,d2,t2)
 
-		self.node.logger.info('Solution %s' % sol)
+		self.node.logger.info('Solution: defocus = %g, stig. x = %g, y = %g, min. = %g.' % (sol['defocus'], sol['stigx'], sol['stigy'], sol['min']))
 		sol['lastdrift'] = lastdrift
 		return sol
 

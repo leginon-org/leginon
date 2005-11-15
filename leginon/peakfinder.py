@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+# The Leginon software is Copyright 2003
+# The Scripps Research Institute, La Jolla, CA
+# For terms of the license agreement
+# see  http://ami.scripps.edu/software/leginon-license
 #
 
 import convolver
@@ -141,6 +141,11 @@ class PeakFinder(object):
 		self.results['subpixel peak value'] = peakvalue
 		self.results['minsum'] = peakminsum
 		return subpixelpeak
+	
+	def clearBuffer(self):
+		self.image = None
+		self.shape = None
+		self.initResults()
 
 def findPixelPeak(image):
 	peak = Numeric.argmax(image.flat)
