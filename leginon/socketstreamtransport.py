@@ -68,7 +68,7 @@ class Server(object):
 	def start(self):
 		self.thread = threading.Thread(name='socket server thread',
 																		target=self.serve_forever)
-		#self.thread.setDaemon(1)
+		self.thread.setDaemon(1)
 		self.thread.start()
 
 	def serve_forever(self):
