@@ -5,10 +5,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.46 $
+# $Revision: 1.47 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-13 01:04:58 $
-# $Author: pulokas $
+# $Date: 2005-11-16 00:06:51 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -1151,13 +1151,14 @@ class SelectionPanel(wx.Panel):
 		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.cccdcamera, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
 
-		sz.AddGrowableCol(0)
+		sz.AddGrowableCol(1)
 
 		sb = wx.StaticBox(self, -1, 'Instrument')
 		self.sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.sbsz.Add(sz, 0, wx.EXPAND|wx.ALL, 5)
 
-		self.SetSizerAndFit(self.sbsz)
+		self.SetSizer(self.sbsz)
+		self.SetAutoLayout(True)
 
 		self.Bind(gui.wx.Events.EVT_SET_TEMS, self.onSetTEMs)
 		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERAS, self.onSetCCDCameras)
@@ -1226,8 +1227,8 @@ class SelectionPanel(wx.Panel):
 		if self.ctem.FindString(string) == wx.NOT_FOUND:
 			string = self.nonestring
 		self.ctem.SetStringSelection(string)
-		self.sbsz.Layout()
 		self.ctem.Thaw()
+		self.sbsz.Layout()
 
 	def onSetTEMs(self, evt):
 		self.setTEMs(evt.names)
@@ -1258,8 +1259,8 @@ class SelectionPanel(wx.Panel):
 		if self.cccdcamera.FindString(string) == wx.NOT_FOUND:
 			string = self.nonestring
 		self.cccdcamera.SetStringSelection(string)
-		self.sbsz.Layout()
 		self.cccdcamera.Thaw()
+		self.sbsz.Layout()
 
 	def onSetCCDCameras(self, evt):
 		self.setCCDCameras(evt.names)

@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Calibrator.py,v $
-# $Revision: 1.31 $
+# $Revision: 1.32 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-13 01:04:57 $
-# $Author: pulokas $
+# $Date: 2005-11-16 00:06:51 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -26,50 +26,33 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
 
+		self.widgets['correlation type'] = Choice(self, -1, choices=self.node.cortypes)
+		self.widgets['override preset'] = wx.CheckBox(self, -1, 'Override Preset')
 		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self)
 		self.GetParent().setInstrumentSelection(self.widgets['instruments'])
-
-		self.widgets['override preset'] = wx.CheckBox(self, -1,
-																								'Override Preset')
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
-
-		sz = wx.GridBagSizer(5, 10)
-		sz.Add(self.widgets['override preset'], (0, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['instruments'], (1, 0), (1, 1), wx.EXPAND)
-		sz.Add(self.widgets['camera settings'], (0, 1), (2, 1),
-						wx.EXPAND)
-		overridebox = wx.StaticBox(self, -1, "Override Preset")
-		overridesz = wx.StaticBoxSizer(overridebox, wx.VERTICAL)
-		overridesz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-
-		self.widgets['correlation type'] = Choice(self, -1,
-																							choices=self.node.cortypes)
 
 		szcor = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Use')
 		szcor.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szcor.Add(self.widgets['correlation type'], (0, 1), (1, 1),
-							wx.ALIGN_CENTER_VERTICAL)
+		szcor.Add(self.widgets['correlation type'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'correlation')
 		szcor.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(szcor, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['override preset'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['instruments'], (2, 0), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.widgets['camera settings'], (0, 1), (3, 1), wx.ALIGN_CENTER)
 
-		'''
-		sz.Add(self.widgets['instruments'], (1, 0), (1, 1), wx.EXPAND)
-		sz.Add(self.widgets['override preset'], (2, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['camera settings'], (3, 0), (1, 1),
-						wx.EXPAND)
-		'''
-		sz.Add(overridesz, (1, 0), (8, 1))
+		sz.AddGrowableRow(2)
+		sz.AddGrowableCol(0)
+		sz.AddGrowableCol(1)
 
 		sb = wx.StaticBox(self, -1, 'Calibration')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		sbsz.Add(sz, 0, wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz]
 
@@ -162,13 +145,37 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		raise NotImplementedError
 
 if __name__ == '__main__':
+	class FakeInstrument(object):
+		def __init__(self):
+			self.camerasize = {'x': 1024, 'y': 1024}
+
+	class FakeNode(object):
+		def __init__(self):
+			self.cortypes = ['foo', 'bar']
+			self.instrument = FakeInstrument()
+
+		def getSettings(self):
+			return {}
+
+	class FakePanel(wx.Panel):
+		def __init__(self, *args, **kwargs):
+			wx.Panel.__init__(self, *args, **kwargs)
+			self.node = FakeNode()
+
+		def setInstrumentSelection(self, widget):
+			widget.setTEMs(['foo longer name', 'bar'])
+			widget.setTEM('foo longer name')
+			widget.setCCDCameras(['foo longer name', 'bar'])
+			widget.setCCDCamera('bar')
+
 	class App(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Calibration Test')
-			panel = Panel(frame, 'Test')
-			frame.Fit()
+			panel = FakePanel(frame, -1)
+			dialog = SettingsDialog(panel, 'Test')
 			self.SetTopWindow(frame)
 			frame.Show()
+			dialog.ShowModal()
 			return True
 
 	app = App(0)
