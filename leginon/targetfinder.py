@@ -116,7 +116,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			return
 
 		# check if there is already a target list for this image
-		previouslists = self.researchTargetLists(image=imagedata)
+		# exclude sublists (like rejected target lists)
+		previouslists = self.researchTargetLists(image=imagedata, sublist=False)
 		if previouslists:
 			# I hope you can only have one target list on an image, right?
 			targetlist = previouslists[0]

@@ -1366,6 +1366,7 @@ class ImageTargetListData(InSessionData):
 			('mosaic', bool),
 			('image', AcquisitionImageData),
 			('queue', QueueData),
+			('sublist', bool),
 		)
 	typemap = classmethod(typemap)
 
