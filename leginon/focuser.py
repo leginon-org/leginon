@@ -428,11 +428,11 @@ class Focuser(acquisition.Acquisition):
 	def setFocus(self, value):
 		self.manualchecklock.acquire()
 		if self.manual_deltaz:
-			self.logger.info('Setting defocus to %.3e + z offset %.3e = %.3e' % (value,self.manual_deltaz, final))
 			final = value + self.manual_deltaz
+			self.logger.info('Setting defocus to %.3e + z offset %.3e = %.3e' % (value,self.manual_deltaz, final))
 		else:
-			self.logger.info('Setting defocus to %.3e' % (value,))
 			final = value
+			self.logger.info('Setting defocus to %.3e' % (value,))
 		try:
 			self.instrument.tem.Defocus = final
 		finally:
