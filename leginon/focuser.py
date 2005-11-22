@@ -233,12 +233,12 @@ class Focuser(acquisition.Acquisition):
 			camstate1['offset'] = {'x':0,'y':0}
 			self.instrument.setData(camstate1)
 
-			self.logger.info('putting screen down prior to melt...'
+			self.logger.info('putting screen down prior to melt...')
 			self.instrument.tem.MainScreenPosition = 'down'
 			self.logger.info('Melting for %s seconds...' % (melt_time,))
 			self.instrument.ccdcamera.getImage()
 			self.logger.info('Done melting, resetting camera')
-			self.logger.info('putting screen up after melt...'
+			self.logger.info('putting screen up after melt...')
 			self.instrument.tem.MainScreenPosition = 'up'
 			self.logger.info('screen is up.'
 
