@@ -264,8 +264,8 @@ class Focuser(acquisition.Acquisition):
 					return 'repeat'
 				else:
 					status = autostatus
-			else:
-				resultdata['auto status'] = 'skipped'
+		else:
+			resultdata['auto status'] = 'skipped'
 
 		## post manual check
 		if self.settings['check after']:
