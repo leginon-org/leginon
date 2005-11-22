@@ -394,16 +394,19 @@ class Focuser(acquisition.Acquisition):
 		self.manualchecklock.acquire()
 		self.logger.info('Reseting defocus...')
 		if self.manual_deltaz:
-			self.logger.info('applying z offset %.3e for image shifted target before reset defocus' % (self.manual_deltaz,))
-			defocus = self.instrument.tem.Defocus
-			defocus -= self.manual_deltaz
-			self.instrument.tem.Defocus = defocus
+			self.logger.info('temporarily applying defocus offset due to z offset %.3e of image shifted target' % (self.manual_deltaz,))
+			origdefocus = self.instrument.tem.Defocus
+			tempdefocus = origdefocus - self.manual_deltaz
+			self.instrument.tem.Defocus = tempdefocus
 		try:
 			self.resetDefocus()
+			self.logger.info('Defcous reset')
 		finally:
+			if self.manual_deltaz:
+				self.instrument.tem.Defocus = self.manual_deltaz
+				self.logger.info('returned to defocus offset for image shifted target')
 			self.manualchecklock.release()
 			self.panel.manualUpdated()
-		self.logger.info('Defcous reset')
 
 	def resetDefocus(self):
 		errstr = 'Reset defocus failed: %s'
