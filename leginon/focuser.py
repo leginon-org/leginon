@@ -240,7 +240,7 @@ class Focuser(acquisition.Acquisition):
 			self.logger.info('Done melting, resetting camera')
 			self.logger.info('putting screen up after melt...')
 			self.instrument.tem.MainScreenPosition = 'up'
-			self.logger.info('screen is up.'
+			self.logger.info('screen is up.')
 
 			self.instrument.setData(camstate0)
 
