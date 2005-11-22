@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.31 $
+# $Revision: 1.32 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-11-22 21:15:06 $
+# $Date: 2005-11-22 21:20:31 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -285,7 +285,8 @@ class ManualFocusDialog(wx.MiniFrame):
 
 		self.toolbar.AddSeparator()
 
-		self.parameter = Choice(self.toolbar, -1, choices=['Defocus', 'Stage Z'])
+		self.parameter = wx.Choice(self.toolbar, -1, choices=['Defocus', 'Stage Z'])
+		self.parameter.SetStringSelection('Defocus')
 		self.toolbar.AddControl(self.parameter)
 		bitmap = gui.wx.Icons.icon('plus')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLUS, bitmap,
