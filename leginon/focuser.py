@@ -196,6 +196,10 @@ class Focuser(acquisition.Acquisition):
 				self.logger.warning('No method selected for correcting defocus')
 			else:
 				resultdata['defocus correction'] = focustype
+				deltaz = emtarget['delta z']
+				if deltaz:
+					self.logger.info('applying z offset %.3e due to focusing at an image shifted target' % (deltaz,))
+				newdefoc = defoc - emtarget['delta z']
 				focusmethod(defoc)
 			resultstring = 'corrected focus by %.3e using %s (min=%s)' % (defoc, focustype,fitmin)
 		else:
@@ -334,6 +338,10 @@ class Focuser(acquisition.Acquisition):
 			delay = self.settings['pause time']
 			self.logger.info('Pausing for %s seconds' % (delay,))
 			time.sleep(delay)
+		if emtarget is None:
+			self.manual_deltaz = 0
+		else:
+			self.manual_deltaz = emtarget['delta z']
 		self.logger.info('Starting manual focus loop, please confirm defocus...')
 		self.beep()
 		self.manualplayer.play()
@@ -385,6 +393,11 @@ class Focuser(acquisition.Acquisition):
 	def uiResetDefocus(self):
 		self.manualchecklock.acquire()
 		self.logger.info('Reseting defocus...')
+		if self.manual_deltaz:
+			self.logger.info('applying z offset %.3e for image shifted target before reset defocus' % (self.manual_deltaz,))
+			defocus = self.instrument.tem.Defocus
+			defocus -= self.manual_deltaz
+			self.instrument.tem.Defocus = defocus
 		try:
 			self.resetDefocus()
 		finally:
@@ -414,9 +427,14 @@ class Focuser(acquisition.Acquisition):
 
 	def setFocus(self, value):
 		self.manualchecklock.acquire()
-		self.logger.info('Setting defocus to %s' % (value,))
+		if self.manual_deltaz:
+			self.logger.info('Setting defocus to %.3e + z offset %.3e = %.3e' % (value,deltaz, final))
+			final = value + deltaz
+		else:
+			self.logger.info('Setting defocus to %.3e' % (value,))
+			final = value
 		try:
-			self.instrument.tem.Defocus = value
+			self.instrument.tem.Defocus = final
 		finally:
 			self.manualchecklock.release()
 			self.panel.manualUpdated()
