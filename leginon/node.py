@@ -151,6 +151,13 @@ class Node(object):
 		clientname = datatransport.Client.__name__
 		self.clientlogger = gui.wx.Logging.getNodeChildLogger(clientname, self)
 
+	def logToDB(self, record):
+		'''insertes a logger record into the DB'''
+		record_data = data.LoggerRecordData(session=self.session)
+		for atr in ('name','levelno','levelname','pathname','filename','module','lineno','created','thread','process','message','exc_info'):
+			record_data[atr] = getattr(record,atr)
+		self.publish(record_data, database=True, dbforce=True)
+
 	# main, start/stop methods
 
 	def start(self):

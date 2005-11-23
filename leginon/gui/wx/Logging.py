@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Logging.py,v $
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
-# $Author: suloway $
+# $Date: 2005-11-23 00:00:21 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -91,7 +91,7 @@ class EditHandlerDialog(wx.Dialog):
 		self.window = window
 
 		if handler is None:
-			handlertypes = [logging.StreamHandler]
+			handlertypes = [logging.StreamHandler, DatabaseLogHandler]
 			if window is not None:
 				handlertypes.append(MessageLogHandler)
 			self.handlertypes = {}
@@ -154,6 +154,8 @@ class EditHandlerDialog(wx.Dialog):
 				args = ()
 			elif issubclass(handlertype, MessageLogHandler):
 				args = (self.window,)
+			elif issubclass(handlertype, DatabaseLogHandler):
+				args = (self.window.node,)
 			else:
 				raise RuntimeError('Unknown handler type')
 			handler = handlertype(*args)
@@ -425,6 +427,14 @@ class MessageLogHandler(logging.Handler):
 			self.window.GetEventHandler().AddPendingEvent(evt)
 		except wx.PyDeadObjectError:
 			self.window = None
+
+class DatabaseLogHandler(logging.Handler):
+	def __init__(self, node, level=logging.NOTSET):
+		self.node = node
+		logging.Handler.__init__(self, level)
+
+	def emit(self, record):
+		self.node.logToDB(record)
 
 if __name__ == '__main__':
 	class App(wx.App):

@@ -2123,3 +2123,20 @@ class Request(type):
 		super(Request, cls).__init__('Request' + dataclass.__name__, (Data,),
 																	{'datamanager': datamanager})
 
+class LoggerRecordData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('name', str),
+			('levelno', int),
+			('levelname', str),
+			('pathname', str),
+			('filename', str),
+			('module', str),
+			('lineno', int),
+			('created', float),
+			('thread', int),
+			('process', int),
+			('message', str),
+			('exc_info', str),
+		)
+	typemap = classmethod(typemap)
