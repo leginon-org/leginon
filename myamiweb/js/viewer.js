@@ -107,29 +107,38 @@ function playback() {
 	}
 }
 
+function clearinterval() {
+	view = "v1";
+	n_img_interval = eval("n_img_interval"+view);
+	window.clearInterval(n_img_interval);
+}
+
+function setprogressbar(view) {
+	loadingdiv = false;
+	if (loadingdivstyle = document.getElementById("loadingdiv"+view).style) {
+		loadingdiv = true;
+	}
+	if (isImageLoaded(view)) {
+		eval("window.clearInterval(n_img_interval"+view+");");
+		eval("n_img_interval"+view+"='';");
+		if (loadingdiv) {
+			loadingdivstyle.visibility = 'hidden';
+		}
+	} else {
+		if (loadingdiv) {
+			loadingdivstyle.visibility = 'visible';
+		}
+	}
+}
+
 function loadImage(view) {
-	textd="";
-	loadingdiv = true;
 	if (loadingdivstyle = document.getElementById("loadingdiv"+view).style) {
 		loadingdiv = true;
 	}
 	if (img = document.images[eval("\"" +view+ "img\"")]) {
-		n_img_interval = eval("n_img_interval"+view);
 		n_img = eval("n_img_"+view);
-		if (isImageLoaded(view)) {
-			displaydebug('isloaded');
-			window.clearInterval(n_img_interval)
-			n_img_interval = "";
-			img.src=n_img.src;	
-			if (loadingdiv) {
-				loadingdivstyle.visibility = 'hidden';
-			}
-		} else {
-			displaydebug('isnoload');
-			if (loadingdiv) {
-				loadingdivstyle.visibility = 'visible';
-			}
-		}
+		eval("n_img_interval"+view+" = window.setInterval(\"setprogressbar('"+view+"')\", 500)");
+		img.src=n_img.src;	
 	}
 }
 
@@ -174,7 +183,6 @@ function addComment() {
 }
 
 function newfile(view){
-	displaydebug('new');
 	jssize = eval(view+"size");
 	jsvfile = eval("jsvfile"+view);
 	selpreset = eval("jspreset"+view);
@@ -227,7 +235,7 @@ function newfile(view){
 		n_img = eval("n_img_"+view);
 		n_img.name="n"+n;
 		n_img.src = ni;
-		eval("n_img_interval"+view+" = window.setInterval(\"loadImage('"+view+"')\", 500)");
+		loadImage(view);
 	}
 	if (link = document.getElementById(view+"href"))
 		link.href = nlink;
@@ -437,7 +445,7 @@ function decIndex(){
 
 function displaydebug(string) {
 	if (cur = document.viewerform.debug)
-		document.viewerform.debug.value= cur+"\n"+string;
+		document.viewerform.debug.value= cur.value+"\n"+string;
 }
 
 function bsSliderChange1(sliderObj, val, newPos){ 
