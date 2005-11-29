@@ -16,6 +16,7 @@ import ice
 import numarray
 import imagefun
 import gui.wx.RasterFinder
+import polygon
 
 class RasterFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.RasterFinder.Panel
@@ -29,6 +30,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		'raster center y': 0,
 		'raster center on image': True,
 		'raster limit': 5,
+		'select polygon': False,
 		'ice box size': 15.0,
 		'ice thickness': 1000.0,
 		'ice min mean': 0.05,
@@ -45,6 +47,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.icecalc = ice.IceCalculator()
 		self.rasterpoints = None
+		self.polygonrasterpoints = None
 
 		self.userpause = threading.Event()
 		self.images = {
@@ -52,6 +55,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		}
 		self.imagetargets = {
 			'Original': {},
+			'Polygon': {},
 			'Raster': {},
 			'Final': {},
 		}
@@ -99,6 +103,29 @@ class RasterFinder(targetfinder.TargetFinder):
 		self.rasterpoints = points
 		self.logger.info('Full raster has %s points' % (len(points),))
 
+	def waitForPolygon(self):
+		## user part
+		if self.settings['select polygon']:
+			self.setTargets([], 'Polygon Vertices')
+			self.setStatus('user input')
+			self.logger.info('Waiting for user to select polygon...')
+			self.panel.submitTargets()
+			self.userpause.clear()
+			self.userpause.wait()
+			self.panel.targetsSubmitted()
+			self.setStatus('processing')
+
+		self.setPolygon()
+
+	def setPolygon(self):
+		vertices = self.panel.getTargetPositions('Polygon Vertices')
+		vertices = self.transpose_points(vertices)
+		if len(vertices) < 3:
+			self.polygonrasterpoints = self.rasterpoints
+		else:
+			self.polygonrasterpoints = polygon.pointsInPolygon(self.rasterpoints, vertices)
+		self.setTargets(self.transpose_points(self.polygonrasterpoints), 'Polygon Raster')
+
 	def get_box_stats(self, image, coord, boxsize):
 		## select the region of interest
 		b2 = boxsize / 2
@@ -132,7 +159,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		## calculate stats around each raster point
 		goodpoints = []
 		mylist = []
-		for rasterpoint in self.rasterpoints:
+		for rasterpoint in self.polygonrasterpoints:
 			box_stats = self.get_box_stats(self.original, rasterpoint, boxsize)
 			t = self.icecalc.get_thickness(box_stats['mean'])
 			ts = self.icecalc.get_stdev_thickness(box_stats['std'], box_stats['mean'])
@@ -183,6 +210,7 @@ class RasterFinder(targetfinder.TargetFinder):
 
 	def everything(self):
 		self.createRaster()
+		self.waitForPolygon()
 		# ice
 		self.ice()
 

@@ -1922,6 +1922,7 @@ class RasterFinderSettingsData(TargetFinderSettingsData):
 			('raster center y', int),
 			('raster center on image', bool),
 			('raster limit', int),
+			('select polygon', bool),
 			('ice box size', float),
 			('ice thickness', float),
 			('ice min mean', float),

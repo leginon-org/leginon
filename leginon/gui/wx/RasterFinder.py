@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.18 $
+# $Revision: 1.19 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-10-05 23:57:12 $
+# $Date: 2005-11-29 23:50:44 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -31,6 +31,12 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTargetTool('Raster', wx.Color(0, 255, 255),
 																	settings=True)
+		self.imagepanel.addTargetTool('Polygon Vertices', wx.Color(255,0,0),
+																	settings=True, target=True)
+		self.imagepanel.selectiontool.setDisplayed('Polygon Vertices', True)
+		self.imagepanel.setTargets('Polygon Vertices', [])
+		self.imagepanel.addTargetTool('Polygon Raster', wx.Color(255,128,0),
+																	settings=False)
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True,
 																	settings=True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
@@ -55,6 +61,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 		if evt.name == 'Raster':
 			dialog = RasterSettingsDialog(self)
+		elif evt.name == 'Polygon Vertices':
+			dialog = PolygonSettingsDialog(self)
 		elif evt.name == 'acquisition':
 			dialog = FinalSettingsDialog(self)
 		elif evt.name == 'focus':
@@ -128,6 +136,32 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 	def onTestButton(self, evt):
 		self.setNodeSettings()
 		self.node.createRaster()
+
+class PolygonSettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+		self.widgets['select polygon'] = wx.CheckBox(self, -1, 'Select Polygon')
+
+		szpolygon = wx.GridBagSizer(5, 5)
+		szpolygon.Add(self.widgets['select polygon'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		sb = wx.StaticBox(self, -1, 'Polygon')
+		sbszpolygon = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbszpolygon.Add(szpolygon, 1, wx.EXPAND|wx.ALL, 5)
+
+		self.btest = wx.Button(self, -1, 'Test')
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.btest, (0, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbutton.AddGrowableCol(0)
+
+		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
+
+		return [sbszpolygon, szbutton]
+
+	def onTestButton(self, evt):
+		self.setNodeSettings()
+		self.node.setPolygon()
 
 class FinalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
