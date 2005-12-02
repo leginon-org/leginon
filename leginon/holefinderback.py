@@ -10,6 +10,7 @@
 
 import numarray
 import numarray.linear_algebra as LinearAlgebra
+import numarray.nd_image
 import Mrc
 import imagefun
 import peakfinder
@@ -173,33 +174,25 @@ class HoleFinder(object):
 			raise RuntimeError('no original image to find edges on')
 
 		sourceim = self.__results['original']
-		filt = self.edges_config['filter']
 		sigma = self.edges_config['sigma']
-		ab = self.edges_config['abs']
 		lpsig = self.edges_config['lpsig']
 		edgethresh = self.edges_config['thresh']
 		edgesflag = self.edges_config['edges']
 
+		smooth = numarray.nd_image.gaussian_filter(sourceim, sigma)
+
+		'''
 		kernel = convolver.gaussian_kernel(lpsig)
 		n = len(kernel)
 		self.edgefinder.setKernel(kernel)
 		smooth = self.edgefinder.convolve(image=sourceim)
+		'''
 
 		if not edgesflag:
 			edges = smooth
-		elif filt == 'laplacian3':
-			kernel = convolver.laplacian_kernel3
-			self.edgefinder.setKernel(kernel)
-			edges = self.edgefinder.convolve(image=smooth)
-		elif filt == 'laplacian5':
-			kernel = convolver.laplacian_kernel5
-			self.edgefinder.setKernel(kernel)
-			edges = self.edgefinder.convolve(image=smooth)
-		elif filt == 'laplacian-gaussian':
-			kernel = convolver.laplacian_of_gaussian_kernel(n,sigma)
-			self.edgefinder.setKernel(kernel)
-			edges = self.edgefinder.convolve(image=smooth)
-		elif filt == 'sobel':
+		else:
+			edges = numarray.nd_image.generic_gradient_magnitude(smooth, numarray.nd_image.sobel)
+			'''
 			self.edgefinder.setImage(smooth)
 			kernel1 = convolver.sobel_row_kernel
 			kernel2 = convolver.sobel_col_kernel
@@ -211,11 +204,7 @@ class HoleFinder(object):
 			edges[:,:n] = 0
 			edges[:,-n:] = 0
 			edges[-n:] = 0
-		else:
-			raise RuntimeError('no such filter type: %s' % (filt,))
-
-		if ab and edgesflag:
-			edges = numarray.absolute(edges)
+			'''
 
 		if edgethresh and edgesflag:
 			edges = imagefun.threshold(edges, edgethresh)
