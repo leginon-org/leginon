@@ -499,10 +499,6 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 			continue
 		fakeblobs.append(fakeblob)
 
-	print 'rejected %s oversized blobs' % (toobig,)
-	print 'rejected %s undersized blobs' % (toosmall,)
-	print 'Found %s blobs.' % (len(fakeblobs),)
-
 	## limit to maxblobs
 	if (maxblobs is not None) and (len(blobs) > maxblobs):
 		blobs = near_center(shape, fakeblobs, maxblobs)
