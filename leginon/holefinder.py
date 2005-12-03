@@ -230,23 +230,20 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.logger.info('fit lattice')
 		latspace = self.settings['lattice spacing']
 		lattol = self.settings['lattice tolerance']
-		r = self.settings['lattice hole radius']
-		i0 = self.settings['lattice zero thickness']
-		self.icecalc.set_i0(i0)
 
 		self.hf.configure_lattice(spacing=latspace, tolerance=lattol)
 		self.hf.blobs_to_lattice()
+		self.logger.info('Number of lattice blobs: %s' % (len(self.hf['holes']),))
+		self.latticeHoleStats()
 
+	def latticeHoleStats(self):
+		r = self.settings['lattice hole radius']
+		i0 = self.settings['lattice zero thickness']
+		self.icecalc.set_i0(i0)
 		self.hf.configure_holestats(radius=r)
 		self.hf.calc_holestats()
-
 		holes = self.hf['holes']
-		#centers = self.blobCenters(holes)
-		#targets = self.blobTargets(holes)
 		targets = self.holeStatsTargets(holes)
-		#self.logger.info('Number of holes: %s' % (len(centers),))
-		self.logger.info('Number of lattice blobs: %s' % (len(targets),))
-		#self.setTargets(centers, 'Lattice')
 		self.setTargets(targets, 'Lattice')
 
 	def ice(self):

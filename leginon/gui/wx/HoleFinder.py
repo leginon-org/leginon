@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleFinder.py,v $
-# $Revision: 1.37 $
+# $Revision: 1.38 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-11 23:49:31 $
+# $Date: 2005-12-03 00:23:14 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -325,11 +325,19 @@ class LatticeSettingsDialog(gui.wx.Settings.Dialog):
 		sbszstats = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszstats.Add(szstats, 1, wx.EXPAND|wx.ALL, 5)
 
-		self.btest = wx.Button(self, -1, 'Test')
+
 		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.btest, (0, 0), (1, 1),
+		self.bstats = wx.Button(self, -1, 'Calculate stats only')
+		szbutton.Add(self.bstats, (0, 0), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szbutton.AddGrowableCol(0)
+
+		self.Bind(wx.EVT_BUTTON, self.onStatsButton, self.bstats)
+
+		self.btest = wx.Button(self, -1, 'Caculate lattice and stats')
+		szbutton.Add(self.btest, (0, 1), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbutton.AddGrowableCol(1)
 
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
 
@@ -338,6 +346,10 @@ class LatticeSettingsDialog(gui.wx.Settings.Dialog):
 	def onTestButton(self, evt):
 		self.setNodeSettings()
 		self.node.fitLattice()
+
+	def onStatsButton(self, evt):
+		self.setNodeSettings()
+		self.node.latticeHoleStats()
 
 class FinalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
