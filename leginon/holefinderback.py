@@ -174,11 +174,11 @@ class HoleFinder(object):
 			raise RuntimeError('no original image to find edges on')
 
 		sourceim = self.__results['original']
-		sigma = self.edges_config['sigma']
-		lpsig = self.edges_config['lpsig']
+		sigma = self.edges_config['lpsig']
 		edgethresh = self.edges_config['thresh']
 
 		smooth = numarray.nd_image.gaussian_filter(sourceim, sigma)
+		Mrc.numeric_to_mrc(smooth, 'smooth.mrc')
 
 		edges = numarray.nd_image.generic_gradient_magnitude(smooth, derivative=numarray.nd_image.sobel)
 
