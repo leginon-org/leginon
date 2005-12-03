@@ -181,30 +181,7 @@ class HoleFinder(object):
 
 		smooth = numarray.nd_image.gaussian_filter(sourceim, sigma)
 
-		'''
-		kernel = convolver.gaussian_kernel(lpsig)
-		n = len(kernel)
-		self.edgefinder.setKernel(kernel)
-		smooth = self.edgefinder.convolve(image=sourceim)
-		'''
-
-		if not edgesflag:
-			edges = smooth
-		else:
-			edges = numarray.nd_image.generic_gradient_magnitude(smooth, derivative=numarray.nd_image.sobel)
-			'''
-			self.edgefinder.setImage(smooth)
-			kernel1 = convolver.sobel_row_kernel
-			kernel2 = convolver.sobel_col_kernel
-			edger = self.edgefinder.convolve(kernel=kernel1)
-			edgec = self.edgefinder.convolve(kernel=kernel2)
-			edges = numarray.hypot(edger,edgec)
-			## zero the image edge effects
-			edges[:n] = 0
-			edges[:,:n] = 0
-			edges[:,-n:] = 0
-			edges[-n:] = 0
-			'''
+		edges = numarray.nd_image.generic_gradient_magnitude(smooth, derivative=numarray.nd_image.sobel)
 
 		if edgethresh and edgesflag:
 			edges = imagefun.threshold(edges, edgethresh)
