@@ -177,13 +177,12 @@ class HoleFinder(object):
 		sigma = self.edges_config['sigma']
 		lpsig = self.edges_config['lpsig']
 		edgethresh = self.edges_config['thresh']
-		edgesflag = self.edges_config['edges']
 
 		smooth = numarray.nd_image.gaussian_filter(sourceim, sigma)
 
 		edges = numarray.nd_image.generic_gradient_magnitude(smooth, derivative=numarray.nd_image.sobel)
 
-		if edgethresh and edgesflag:
+		if edgethresh:
 			edges = imagefun.threshold(edges, edgethresh)
 
 		self.__update_result('edges', edges)
