@@ -196,12 +196,9 @@ class Focuser(acquisition.Acquisition):
 				self.logger.warning('No method selected for correcting defocus')
 			else:
 				resultdata['defocus correction'] = focustype
-				deltaz = emtarget['delta z']
-				if deltaz:
-					self.logger.info('applying z offset %.3e due to focusing at an image shifted target' % (deltaz,))
-				newdefoc = defoc - emtarget['delta z']
-				focusmethod(defoc)
-			resultstring = 'corrected focus by %.3e using %s (min=%s)' % (defoc, focustype,fitmin)
+				newdefoc = defoc - self.deltaz
+				focusmethod(newdefoc)
+			resultstring = 'corrected focus by %.3e (measured) - %.3e (z due to tilt) = %.3e (total) using %s (min=%s)' % (defoc, self.deltaz, newdefoc, focustype,fitmin)
 		else:
 			resultstring = 'invalid focus measurement (min=%s)' % (fitmin,)
 		if resultdata['stig correction']:
@@ -216,6 +213,13 @@ class Focuser(acquisition.Acquisition):
 		'''
 		resultdata = data.FocuserResultData(session=self.session)
 		resultdata['target'] = target
+
+		## sometimes have to apply or un-apply deltaz if image shifted on
+		## tilted specimen
+		if emtarget is None:
+			self.deltaz = 0
+		else:
+			self.deltaz = emtarget['delta z']
 
 		## Need to melt only once per target, event though
 		## this method may be called multiple times on the same
@@ -338,10 +342,6 @@ class Focuser(acquisition.Acquisition):
 			delay = self.settings['pause time']
 			self.logger.info('Pausing for %s seconds' % (delay,))
 			time.sleep(delay)
-		if emtarget is None:
-			self.manual_deltaz = 0
-		else:
-			self.manual_deltaz = emtarget['delta z']
 		self.logger.info('Starting manual focus loop, please confirm defocus...')
 		self.beep()
 		self.manualplayer.play()
@@ -393,17 +393,17 @@ class Focuser(acquisition.Acquisition):
 	def uiResetDefocus(self):
 		self.manualchecklock.acquire()
 		self.logger.info('Reseting defocus...')
-		if self.manual_deltaz:
-			self.logger.info('temporarily applying defocus offset due to z offset %.3e of image shifted target' % (self.manual_deltaz,))
+		if self.deltaz:
+			self.logger.info('temporarily applying defocus offset due to z offset %.3e of image shifted target' % (self.deltaz,))
 			origdefocus = self.instrument.tem.Defocus
-			tempdefocus = origdefocus - self.manual_deltaz
+			tempdefocus = origdefocus - self.deltaz
 			self.instrument.tem.Defocus = tempdefocus
 		try:
 			self.resetDefocus()
 			self.logger.info('Defcous reset')
 		finally:
-			if self.manual_deltaz:
-				self.instrument.tem.Defocus = self.manual_deltaz
+			if self.deltaz:
+				self.instrument.tem.Defocus = self.deltaz
 				self.logger.info('returned to defocus offset for image shifted target')
 			self.manualchecklock.release()
 			self.panel.manualUpdated()
@@ -430,9 +430,9 @@ class Focuser(acquisition.Acquisition):
 
 	def setFocus(self, value):
 		self.manualchecklock.acquire()
-		if self.manual_deltaz:
-			final = value + self.manual_deltaz
-			self.logger.info('Setting defocus to %.3e + z offset %.3e = %.3e' % (value,self.manual_deltaz, final))
+		if self.deltaz:
+			final = value + self.deltaz
+			self.logger.info('Setting defocus to %.3e + z offset %.3e = %.3e' % (value,self.deltaz, final))
 		else:
 			final = value
 			self.logger.info('Setting defocus to %.3e' % (value,))
