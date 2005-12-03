@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.32 $
+# $Revision: 1.33 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-11-22 21:20:31 $
-# $Author: pulokas $
+# $Date: 2005-12-03 04:33:39 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -159,9 +159,89 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 		self.widgets['check before'] = wx.CheckBox(self, -1,
 																			'Manual focus check before autofocus')
 		self.widgets['check after'] = wx.CheckBox(self, -1,
-																			'Manual focus check after autofocus')
+
+
+		self.widgets['acquire final'] = wx.CheckBox(self, -1, 'Acquire final image')
+
+		self.widgets['drift on z'] = wx.CheckBox(self, -1,
+
 
 		self.widgets['stig correction'] = wx.CheckBox(self, -1, 'Correct')
+		self.stigset = wx.Button(self, -1, 'StigSetting')
+		self.Bind(wx.EVT_BUTTON, self.onStigSetButton, self.stigset)
+
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(self.widgets['stig correction'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.stigset, (0, 1), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+
+		szstig = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Stigmator'), wx.VERTICAL)
+		szstig.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+																						'Declare drift after Z corrected')
+
+		szbtilt = wx.GridBagSizer(5, 5)
+		szbtilt.Add(wx.StaticText(self, -1, 'Beam tilt:'), (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		szbtilt.Add(self.widgets['beam tilt'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+
+
+		szflimit = wx.GridBagSizer(5, 5)
+		szflimit.Add(wx.StaticText(self, -1, 'Fit limit:'), (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		szflimit.Add(self.widgets['fit limit'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+
+		# settings sizer
+		sz = wx.GridBagSizer(10, 4)
+		sz.Add(self.widgets['autofocus'], (0, 0), (1, 3),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(wx.StaticText(self, -1, 'Correction type'), (1, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['correction type'], (1, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+#		sz.Add(wx.StaticText(self, -1, 'Preset'), (2, 0), (1, 1),
+#						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['auto preset order'], (2, 1), (5, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(wx.StaticText(self, -1, 'Melt time:'), (7, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szmelt, (7, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szbtilt, (6, 3), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szflimit, (7, 3), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szdrift, (8, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szcor, (1, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		sz.Add(self.widgets['check before'], (2, 3), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['check after'], (3, 3), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['acquire final'], (4, 3), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['drift on z'], (5, 3), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szstig, (8, 3), (1, 1), wx.ALIGN_CENTER)
+		#sz.AddGrowableRow(6)
+
+		sb = wx.StaticBox(self, -1, 'Autofocus')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+
+		return asz + [sbsz]
+
+	def onStigSetButton(self, evt):
+		dialog = StigSettingsDialog(self)
+
+		dialog.ShowModal()
+		dialog.Destroy()
+
+class StigSettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+
 		self.widgets['stig defocus min'] = FloatEntry(self, -1,
 																									allownone=False,
 																									chars=9,
@@ -170,66 +250,23 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 																									allownone=False,
 																									chars=9,
 																									value='0.0')
-		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.widgets['stig correction'], (0, 0), (1, 3),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(wx.StaticText(self, -1, 'Min.'), (1, 1), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(wx.StaticText(self, -1, 'Max.'), (1, 2), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(wx.StaticText(self, -1, 'Defocus:'), (2, 0), (1, 1),
+		szstg = wx.GridBagSizer(5, 5)
+		szstg.Add(wx.StaticText(self, -1, 'Min.'), (1, 1), (1, 1), wx.ALIGN_CENTER)
+		szstg.Add(wx.StaticText(self, -1, 'Max.'), (1, 2), (1, 1), wx.ALIGN_CENTER)
+		szstg.Add(wx.StaticText(self, -1, 'Defocus:'), (2, 0), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['stig defocus min'], (2, 1), (1, 1),
+		szstg.Add(self.widgets['stig defocus min'], (2, 1), (1, 1),
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		sz.Add(self.widgets['stig defocus max'], (2, 2), (1, 1),
+		szstg.Add(self.widgets['stig defocus max'], (2, 2), (1, 1),
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szstig = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Stigmator'), wx.VERTICAL)
-		szstig.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
-		self.widgets['acquire final'] = wx.CheckBox(self, -1, 'Acquire final image')
-		self.widgets['drift on z'] = wx.CheckBox(self, -1,
-																						'Declare drift after Z corrected')
+		sstg = wx.StaticBox(self, -1, 'Stg Settings')
+		sstgszblobs = wx.StaticBoxSizer(sstg, wx.VERTICAL)
+		sstgszblobs.Add(szstg, 1, wx.EXPAND|wx.ALL, 5)
 
-		# settings sizer
-		sz = wx.GridBagSizer(10, 5)
-		sz.Add(self.widgets['autofocus'], (0, 0), (1, 3),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(wx.StaticText(self, -1, 'Correction type'), (1, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['correction type'], (1, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(wx.StaticText(self, -1, 'Preset'), (2, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['auto preset order'], (2, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(wx.StaticText(self, -1, 'Melt time:'), (3, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szmelt, (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(wx.StaticText(self, -1, 'Beam tilt:'), (4, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['beam tilt'], (4, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sz.Add(wx.StaticText(self, -1, 'Fit limit:'), (5, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['fit limit'], (5, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sz.Add(szdrift, (6, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szcor, (7, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
-		sz.Add(self.widgets['check before'], (1, 2), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['check after'], (2, 2), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['acquire final'], (3, 2), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['drift on z'], (4, 2), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szstig, (5, 2), (3, 1), wx.ALIGN_CENTER)
-		#sz.AddGrowableRow(6)
+		return [sstgszblobs]
 
-		sb = wx.StaticBox(self, -1, 'Autofocus')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-
-		return asz + [sbsz]
 
 class ManualFocusSettingsDialog(gui.wx.Dialog.Dialog):
 	def onInitialize(self):
