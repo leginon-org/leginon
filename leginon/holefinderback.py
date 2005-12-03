@@ -191,7 +191,7 @@ class HoleFinder(object):
 		if not edgesflag:
 			edges = smooth
 		else:
-			edges = numarray.nd_image.generic_gradient_magnitude(smooth, numarray.nd_image.sobel)
+			edges = numarray.nd_image.generic_gradient_magnitude(smooth, derivative=numarray.nd_image.sobel)
 			'''
 			self.edgefinder.setImage(smooth)
 			kernel1 = convolver.sobel_row_kernel
