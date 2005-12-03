@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Rings.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
-# $Author: suloway $
+# $Date: 2005-12-03 01:36:47 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -122,8 +122,6 @@ class Panel(wx.Panel):
 		self._updated(False)
 
 	def getRings(self):
-		if len(self._rings) < 1:
-			raise RuntimeError
 		return list(self._rings)
 
 	def setRings(self, rings):
