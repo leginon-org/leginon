@@ -1994,6 +1994,34 @@ class AcquisitionSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class FocusSequence(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+            ('sequence', list),
+		)
+	typemap = classmethod(typemap)
+
+class FocusSettings(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+            ('name', str),
+            ('preset name', str),
+            ('focus method', str),
+			('melt time', float),
+			('beam tilt', float),
+			('correlation type', str),
+			('fit limit', float),
+			('correction type', str),
+			('stig correction', bool),
+			('stig defocus min', float),
+			('stig defocus max', float),
+			('check drift', bool),
+			('drift threshold', float),
+			('declare drift', bool),
+			('acquire final', bool),
+		)
+	typemap = classmethod(typemap)
+
 class FocuserSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
