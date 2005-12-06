@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.22 $
+# $Revision: 1.23 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-25 03:05:40 $
-# $Author: acheng $
+# $Date: 2005-12-06 00:31:11 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -53,6 +53,9 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 													shortHelpString='Grid')
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
 		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_MANUAL_DOSE,
+													'dose',
+													shortHelpString='Measure Dose')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_ACQUIRE,
 													'acquire',
 													shortHelpString='Acquire')
@@ -87,6 +90,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.settingsdialog = SettingsDialog(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureDoseTool,
+											id=gui.wx.ToolBar.ID_MANUAL_DOSE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool,
 											id=gui.wx.ToolBar.ID_ACQUIRE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
@@ -103,6 +108,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		if self.node.projectdata is not None:
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, enable)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ACQUIRE, enable)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_MANUAL_DOSE, enable)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, enable)
 
 	def onAcquisitionDone(self, evt):
@@ -121,6 +127,10 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	def onAcquireTool(self, evt):
 		self._acquisitionEnable(False)
 		threading.Thread(target=self.node.acquireImage).start()
+
+	def onMeasureDoseTool(self, evt):
+		self._acquisitionEnable(False)
+		threading.Thread(target=self.node.acquireImage, kwargs={'dose':True}).start()
 
 	def onLoopStopped(self, evt):
 		self._acquisitionEnable(True)

@@ -16,6 +16,7 @@ import gui.wx.ManualAcquisition
 import instrument
 import os
 import re
+import calibrationclient
 
 class AcquireError(Exception):
 	pass
@@ -52,6 +53,8 @@ class ManualAcquisition(node.Node):
 		self.instrument = instrument.Proxy(self.objectservice,
 																				self.session,
 																				self.panel)
+
+		self.dosecal = calibrationclient.DoseCalibrationClient(self)
 
 		self.start()
 
@@ -170,7 +173,7 @@ class ManualAcquisition(node.Node):
 		except RuntimeError:
 			raise node.PublishError
 
-	def acquireImage(self):
+	def acquireImage(self, dose=False):
 		try:
 			try:
 				self.preExposure()
@@ -179,7 +182,10 @@ class ManualAcquisition(node.Node):
 				return
 
 			try:
-				self.acquire()
+				if dose:
+					self.measureDose()
+				else:
+					self.acquire()
 			except AcquireError:
 				self.panel.acquisitionDone()
 				return
@@ -285,3 +291,21 @@ class ManualAcquisition(node.Node):
 		gridboxlabels.reverse()
 		return gridboxlabels
 
+	def measureDose(self):
+		self.logger.info('acquiring dose image')
+		# configure camera using settings, but only 512x512 to save time
+		tmpcam = dict(self.settings['camera settings'])
+		tmpcam['dimension'] = {'x':512, 'y':512}
+		self.instrument.ccdcamera.Settings = tmpcam
+
+		# acquire image
+		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+
+		# calculate dose
+		dose = self.dosecal.dose_from_imagedata(imagedata)
+
+		dosedata = data.DoseMeasurementData()
+		dosedata['dose'] = dose
+		dosedata['image'] = imagedata
+		self.publish(dosedata, database=True, dbforce=True)
+		self.logger.info('measured dose: %.3e e/A^2' % (dose/1e20,))

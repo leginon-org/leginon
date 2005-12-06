@@ -2141,3 +2141,11 @@ class LoggerRecordData(InSessionData):
 			('exc_info', str),
 		)
 	typemap = classmethod(typemap)
+
+class DoseMeasurementData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('dose', float),
+			('image', CorrectedCameraImageData),
+		)
+	typemap = classmethod(typemap)
