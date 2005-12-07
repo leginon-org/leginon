@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.33 $
+# $Revision: 1.34 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-12-03 04:33:39 $
-# $Author: acheng $
+# $Date: 2005-12-07 01:41:33 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -158,13 +158,12 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 
 		self.widgets['check before'] = wx.CheckBox(self, -1,
 																			'Manual focus check before autofocus')
-		self.widgets['check after'] = wx.CheckBox(self, -1,
+		self.widgets['check after'] = wx.CheckBox(self, -1, 'Check after')
 
 
 		self.widgets['acquire final'] = wx.CheckBox(self, -1, 'Acquire final image')
 
-		self.widgets['drift on z'] = wx.CheckBox(self, -1,
-
+		self.widgets['drift on z'] = wx.CheckBox(self, -1, 'Declare drift after Z corrected')
 
 		self.widgets['stig correction'] = wx.CheckBox(self, -1, 'Correct')
 		self.stigset = wx.Button(self, -1, 'StigSetting')
@@ -178,7 +177,6 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 
 		szstig = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Stigmator'), wx.VERTICAL)
 		szstig.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-																						'Declare drift after Z corrected')
 
 		szbtilt = wx.GridBagSizer(5, 5)
 		szbtilt.Add(wx.StaticText(self, -1, 'Beam tilt:'), (0, 0), (1, 1),
