@@ -1391,10 +1391,8 @@ class FocuserResultData(InSessionData):
 			('min', float),
 			('stig correction', int),
 			('defocus correction', str),
-			('pre manual check', bool),
-			('post manual check', bool),
-			('auto measured', bool),
-			('auto status', str),
+            ('method', str),
+            ('status', str),
 			('drift', DriftData),
 		)
 	typemap = classmethod(typemap)
@@ -1994,20 +1992,21 @@ class AcquisitionSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class FocusSequence(InSessionData):
+class FocusSequenceData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
+            ('node name', str),
             ('sequence', list),
 		)
 	typemap = classmethod(typemap)
 
-class FocusSettings(InSessionData):
+class FocusSettingData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
+            ('node name', str),
             ('name', str),
             ('preset name', str),
             ('focus method', str),
-			('melt time', float),
 			('beam tilt', float),
 			('correlation type', str),
 			('fit limit', float),
@@ -2018,29 +2017,14 @@ class FocusSettings(InSessionData):
 			('check drift', bool),
 			('drift threshold', float),
 			('declare drift', bool),
-			('acquire final', bool),
 		)
 	typemap = classmethod(typemap)
 
 class FocuserSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
-			('autofocus', bool),
-			('correction type', str),
-			('auto preset order', list),
 			('melt time', float),
-			('beam tilt', float),
-			('fit limit', float),
-			('check drift', bool),
-			('drift threshold', float),
-			('check before', bool),
-			('check after', bool),
-			('stig correction', bool),
-			('stig defocus min', float),
-			('stig defocus max', float),
 			('acquire final', bool),
-			('drift on z', bool),
-			('correlation type', str),
 		)
 	typemap = classmethod(typemap)
 

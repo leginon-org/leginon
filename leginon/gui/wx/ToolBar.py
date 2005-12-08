@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ToolBar.py,v $
-# $Revision: 1.30 $
+# $Revision: 1.31 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-12-06 00:31:12 $
-# $Author: pulokas $
+# $Date: 2005-12-08 00:55:10 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -60,6 +60,7 @@ ID_ABORT_QUEUE = 10043
 ID_GET_BEAMTILT = 10044
 ID_SET_BEAMTILT = 10045
 ID_MANUAL_DOSE = 10046
+ID_FOCUS_SEQUENCE = 10047
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):

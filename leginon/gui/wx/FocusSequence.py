@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-12-06 22:43:34 $
+# $Date: 2005-12-08 00:55:10 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -62,6 +62,7 @@ class EditListBox(gui.wx.ListBox.EditListBox):
 
     def onDelete(self, evt):
         result = gui.wx.ListBox.EditListBox.onDelete(self, evt)
+        self.dialog.removeCurrent()
         name = self.getSelected()
         if name is None:
             self.dialog.setDefaultSetting()
@@ -91,10 +92,16 @@ class Dialog(gui.wx.Dialog.Dialog):
         del self.settings.sequence[i]
         self.settings.sequence.insert(i + direction, self.current_setting)
 
-    def select(self, name):
+    def removeCurrent(self):
+        self.settings.sequence.remove(self.current_setting)
+
+    def saveCurrent(self):
         setting = self.getSetting()
         if self.current_setting is not None:
             self.current_setting.update(setting)
+
+    def select(self, name):
+        self.saveCurrent()
         i, setting = self.getSettingByName(name)
         self.current_setting = setting
         self.setSetting(setting)
@@ -110,7 +117,6 @@ class Dialog(gui.wx.Dialog.Dialog):
         setting = {}
         setting['preset name'] = self.preset_choice.GetStringSelection()
         setting['focus method'] = self.focus_method_choice.GetStringSelection()
-        setting['melt time'] = self.melt_time_entry.GetValue()
         setting['beam tilt'] = self.beam_tilt_entry.GetValue()
         setting['correlation type'] = \
             self.correlation_type_choice.GetStringSelection()
@@ -123,14 +129,12 @@ class Dialog(gui.wx.Dialog.Dialog):
         setting['check drift'] = self.check_drift_checkbox.GetValue()
         setting['drift threshold'] = self.drift_threshold_entry.GetValue()
         setting['declare drift'] = self.declare_drift_checkbox.GetValue()
-        setting['acquire final'] = self.acquire_final_checkbox.GetValue()
 
         return setting
 
     def setSetting(self, setting):
         self.preset_choice.SetStringSelection(setting['preset name'])
         self.focus_method_choice.SetStringSelection(setting['focus method'])
-        self.melt_time_entry.SetValue(setting['melt time'])
         self.beam_tilt_entry.SetValue(setting['beam tilt'])
         self.correlation_type_choice.SetStringSelection(
                                                     setting['correlation type'])
@@ -143,7 +147,6 @@ class Dialog(gui.wx.Dialog.Dialog):
         self.check_drift_checkbox.SetValue(setting['check drift'])
         self.drift_threshold_entry.SetValue(setting['drift threshold'])
         self.declare_drift_checkbox.SetValue(setting['declare drift'])
-        self.acquire_final_checkbox.SetValue(setting['acquire final'])
 
     def insertDefaultSetting(self, i, name):
         setting = self.settings.default_setting.copy()
@@ -157,7 +160,6 @@ class Dialog(gui.wx.Dialog.Dialog):
         widgets = [
             self.preset_choice,
             self.focus_method_choice,
-            self.melt_time_entry,
             self.beam_tilt_entry,
             self.correlation_type_choice,
             self.fit_limit_entry,
@@ -168,7 +170,6 @@ class Dialog(gui.wx.Dialog.Dialog):
             self.check_drift_checkbox,
             self.drift_threshold_entry,
             self.declare_drift_checkbox,
-            self.acquire_final_checkbox,
         ]
 
         [widget.Enable(enable) for widget in widgets]
@@ -192,16 +193,13 @@ class Dialog(gui.wx.Dialog.Dialog):
         self.fit_limit_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
         self.check_drift_checkbox = wx.CheckBox(self, -1,
                                            'Check for drift greater than')
-        self.drift_threshold_entry = gui.wx.Entry.FloatEntry(self, -1, chars=4)
+        self.drift_threshold_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
         self.declare_drift_checkbox = wx.CheckBox(self, -1, 
                                       'Declare drift after correction')
         self.correct_astig_checkbox = wx.CheckBox(self, -1,
                                       'Correct astigmatism for defocus between')
         self.stig_defocus_min_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
         self.stig_defocus_max_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
-        self.melt_time_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
-        self.acquire_final_checkbox = wx.CheckBox(self, -1,
-                                                  'Acquire final image')
 
         drift_sizer = wx.GridBagSizer(3, 3)
         drift_sizer.Add(self.check_drift_checkbox, (0, 0), (1, 1),
@@ -228,7 +226,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 
         sizer = self.sz
 
-        sizer.Add(self.focus_sequence, (0, 0), (11, 1),
+        sizer.Add(self.focus_sequence, (0, 0), (9, 1),
                     wx.EXPAND|wx.ALL, 5)
 
         label = wx.StaticText(self, -1, 'Preset:')
@@ -237,60 +235,50 @@ class Dialog(gui.wx.Dialog.Dialog):
         label = wx.StaticText(self, -1, 'Focus method:')
         self.labels.append(label)
         sizer.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        label = wx.StaticText(self, -1, 'Melt time:')
-        self.labels.append(label)
-        sizer.Add(label, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         label = wx.StaticText(self, -1, 'Beam tilt:')
         self.labels.append(label)
-        sizer.Add(label, (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(label, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         label = wx.StaticText(self, -1, 'Image registration:')
         self.labels.append(label)
-        sizer.Add(label, (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(label, (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         label = wx.StaticText(self, -1, 'Fit limit:')
         self.labels.append(label)
-        sizer.Add(label, (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(label, (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         label = wx.StaticText(self, -1, 'Correction type:')
         self.labels.append(label)
-        sizer.Add(label, (6, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(label, (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
         sizer.Add(self.preset_choice, (0, 2), (1, 1), wx.EXPAND)
         sizer.Add(self.focus_method_choice, (1, 2), (1, 1), wx.EXPAND)
-        sizer.Add(self.melt_time_entry, (2, 2), (1, 1),
-                       wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
-        label = wx.StaticText(self, -1, 'seconds')
-        self.labels.append(label)
-        sizer.Add(label, (2, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(self.beam_tilt_entry, (3, 2), (1, 1),
+        sizer.Add(self.beam_tilt_entry, (2, 2), (1, 1),
                        wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
         label = wx.StaticText(self, -1, 'radians')
         self.labels.append(label)
-        sizer.Add(label, (3, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(self.correlation_type_choice, (4, 2), (1, 1), wx.EXPAND)
+        sizer.Add(label, (2, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.correlation_type_choice, (3, 2), (1, 1), wx.EXPAND)
         label = wx.StaticText(self, -1, 'correlation')
         self.labels.append(label)
-        sizer.Add(label, (4, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(self.fit_limit_entry, (5, 2), (1, 1),
+        sizer.Add(label, (3, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.fit_limit_entry, (4, 2), (1, 1),
                        wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-        sizer.Add(self.correction_type_choice, (6, 2), (1, 1), wx.EXPAND)
+        sizer.Add(self.correction_type_choice, (5, 2), (1, 1), wx.EXPAND)
 
-        sizer.Add(stig_sizer, (7, 1), (1, 3),
+        sizer.Add(stig_sizer, (6, 1), (1, 3),
                                 wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(drift_sizer, (8, 1), (1, 3),
+        sizer.Add(drift_sizer, (7, 1), (1, 3),
                                 wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(self.declare_drift_checkbox, (9, 1), (1, 3),
+        sizer.Add(self.declare_drift_checkbox, (8, 1), (1, 3),
                         wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(self.acquire_final_checkbox, (10, 1), (1, 3),
-                                wx.ALIGN_CENTER_VERTICAL)
 
         sizer.AddGrowableCol(0)
         sizer.AddGrowableCol(1)
-        [sizer.AddGrowableRow(i) for i in range(11)]
+        [sizer.AddGrowableRow(i) for i in range(9)]
 
-        self.addButton('Save', wx.ID_SAVE)
+        self.addButton('OK', wx.ID_OK)
         self.addButton('Cancel', wx.ID_CANCEL)
 
         if self.settings.sequence:
-            setting = sequence[0]
+            setting = self.settings.sequence[0]
             self.setSetting(setting)
             self.focus_sequence.setSelected(setting['name'])
         else:
@@ -306,7 +294,6 @@ if __name__ == '__main__':
     default_setting = {
         'preset name': 'Grid',
         'focus method': 'Auto',
-        'melt time': 0.0,
         'beam tilt': 0.01,
         'correlation type': 'Phase',
         'fit limit': 10000,
@@ -315,9 +302,8 @@ if __name__ == '__main__':
         'stig defocus min': -4e-6,
         'stig defocus max': -2e-6,
         'check drift': False,
-        'drift threshold': 2,
+        'drift threshold': 3e-10,
         'declare drift': False,
-        'acquire final': False,
     }
 
     sequence = [
@@ -325,7 +311,6 @@ if __name__ == '__main__':
         'name': 'Test 1',
         'preset name': 'Hole',
         'focus method': 'Auto',
-        'melt time': 2.0,
         'beam tilt': 0.01,
         'correlation type': 'Phase',
         'fit limit': 10000,
@@ -334,9 +319,8 @@ if __name__ == '__main__':
         'stig defocus min': -4e-6,
         'stig defocus max': -2e-6,
         'check drift': True,
-        'drift threshold': 2,
+        'drift threshold': 3e-10,
         'declare drift': False,
-        'acquire final': True,
     }
     ]
 
