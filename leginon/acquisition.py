@@ -505,7 +505,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		parts.append(mystr)
 
 		filename = sep.join(parts)
-		self.reportStatus('output', 'Using filename "%s"' % filename)
+		#self.reportStatus('output', 'Using filename "%s"' % filename)
 		imagedata['filename'] = filename
 
 	def getRootName(self, imagedata, listlabel=False):
