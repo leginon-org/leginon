@@ -59,3 +59,9 @@ try:
 except:
 	pass
 
+import simtem
+register(simtem)
+
+import simccdcamera
+register(simccdcamera)
+

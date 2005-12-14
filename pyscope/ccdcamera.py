@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyScope/ccdcamera.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-24 00:12:17 $
+# $Date: 2005-12-14 17:07:32 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -77,6 +77,9 @@ class CCDCamera(object):
 	def setExposureTime(self, value):
 		raise NotImplementedError
 
+	def getExposureTypes(self):
+		raise NotImplementedError
+
 	def getExposureType(self):
 		raise NotImplementedError
 
@@ -87,6 +90,9 @@ class CCDCamera(object):
 		raise NotImplementedError
 
 	def getCameraSize(self):
+		raise NotImplementedError
+
+	def getImage(self):
 		raise NotImplementedError
 
 class FastCCDCamera(CCDCamera):

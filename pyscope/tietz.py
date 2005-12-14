@@ -765,6 +765,7 @@ class TietzPXL(Tietz, ccdcamera.CCDCamera):
 		ccdcamera.CCDCamera.__init__(self)
 		Tietz.__init__(self)
 	
+'''
 class TietzSimulation(Tietz, ccdcamera.CCDCamera):
 	name = 'Tietz Simulation'
 	try:
@@ -775,6 +776,7 @@ class TietzSimulation(Tietz, ccdcamera.CCDCamera):
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
 		Tietz.__init__(self)
+'''
 
 class TietzPVCam(Tietz, ccdcamera.CCDCamera):
 	name = 'Tietz PVCam'
