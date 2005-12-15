@@ -804,8 +804,7 @@ class PresetsManager(node.Node):
 		#queryinst = data.InstrumentData()
 		#queryinst['name'] = myinstname
 		#querysession['instrument'] = queryinst
-		limit = 256
-		sessionlist = self.research(datainstance=querysession, results=limit)
+		sessionlist = self.research(datainstance=querysession)
 		sessions = []
 		for session in sessionlist:
 			if 'name' in session and session['name']:
