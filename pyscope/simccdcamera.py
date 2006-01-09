@@ -1,6 +1,7 @@
 import copy
 import ccdcamera
 import numarray
+import numarray.random_array
 
 class SimCCDCamera(ccdcamera.CCDCamera):
     name = 'SimCCDCamera'
@@ -106,5 +107,5 @@ class SimCCDCamera(ccdcamera.CCDCamera):
         if self.exposure_type == 'dark' or self.exposure_time == 0:
             return numarray.zeros(shape, numarray.Float)
         else:
-            return numarray.ones(shape, numarray.Float)
+            return numarray.random_array.random(shape)
 
