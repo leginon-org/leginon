@@ -1,4 +1,4 @@
-dnl $Id: config.m4,v 1.5 2005-06-07 20:36:09 dfellman Exp $
+dnl $Id: config.m4,v 1.6 2006-01-09 23:16:23 dfellman Exp $
 dnl config.m4 for extension mrcmod
 
 dnl Comments in this file start with the string 'dnl'.
@@ -19,7 +19,7 @@ if test "$PHP_MRC" = "yes"; then
 		AC_MSG_ERROR([sfftw.h or srfftw.h not found.])
 	else
 		AC_MSG_RESULT(FFTW_DIR  found)
-		for i in /usr/local/lib /usr/lib; do
+		for i in /usr/local/lib /usr/lib /usr/lib64; do
 		  test -f "$i/libsrfftw.so" && test -f "$i/libsfftw.so" && FFTW_LIB_DIR=$i && break
 		done
 		if test "$FFTW_LIB_DIR"; then
@@ -42,7 +42,7 @@ if test "$PHP_MRC" = "yes"; then
 		AC_MSG_ERROR([gd.h not found.])
 	else
 		AC_MSG_RESULT(GD_DIR  found)
-		for i in /usr/local/lib /usr/lib; do
+		for i in /usr/local/lib /usr/lib /usr/lib64; do
 		  test -f "$i/libgd.so" && GD_LIB_DIR=$i && break
 		done
 		if test "$GD_LIB_DIR"; then
