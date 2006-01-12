@@ -268,11 +268,6 @@ class Focuser(acquisition.Acquisition):
                 resultdata['defocus correction'] = focustype
                 newdefoc = defoc - self.deltaz
                 focusmethod(newdefoc)
-                if setting['declare drift']:
-                ### this is to notify DriftManager that it is responsible
-                ### for updating the X,Y side effect of changing Z
-                    self.logger.info('Declaring drift after correcting stage Z')
-                    self.declareDrift(type='stage')
             resultstring = 'corrected focus by %.3e (measured) - %.3e (z due to tilt) = %.3e (total) using %s (min=%s)' % (defoc, self.deltaz, newdefoc, focustype,fitmin)
         else:
             resultstring = 'invalid focus measurement (min=%s)' % (fitmin,)
@@ -554,6 +549,10 @@ class Focuser(acquisition.Acquisition):
         emdata = data.ScopeEMData(initializer=newstage)
         self.logger.info('Correcting stage Z by %s (defocus change %s at alpha %s)' % (deltaz,delta,alpha))
         self.instrument.setData(emdata)
+
+        # declare drift
+        self.logger.info('Declaring drift after correcting stage Z')
+        self.declareDrift(type='stage')
 
     def correctNone(self, delta):
         self.logger.info('Not applying defocus correction')
