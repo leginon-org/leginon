@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleFinder.py,v $
-# $Revision: 1.39 $
+# $Revision: 1.40 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-01-12 22:06:11 $
+# $Date: 2006-01-12 22:25:01 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -325,6 +325,7 @@ class LatticeSettingsDialog(gui.wx.Settings.Dialog):
 		sbszstats = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszstats.Add(szstats, 1, wx.EXPAND|wx.ALL, 5)
 
+		szbutton = wx.GridBagSizer(5, 5)
 		self.btest = wx.Button(self, -1, 'Caculate lattice and stats')
 		szbutton.Add(self.btest, (0, 1), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
