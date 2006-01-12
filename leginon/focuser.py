@@ -249,9 +249,9 @@ class Focuser(acquisition.Acquisition):
             if validdefocus and stigdefocusmin < abs(defoc) < stigdefocusmax:
                 self.correctStig(stigx, stigy)
                 resultdata['stig correction'] = 1
-						else:
-            	self.logger.info('Stig. correction invalid due to invalid defocus')
-              resultdata['stig correction'] = 0
+            else:
+                self.logger.info('Stig. correction invalid due to invalid defocus')
+                resultdata['stig correction'] = 0
         else:
             resultdata['stig correction'] = 0
 
