@@ -65,7 +65,7 @@ class Corrector(node.Node):
 		'despike size': 11,
 		'despike threshold': 3.5,
 		'camera settings': None,
-		'combine': 'median',
+		'combine': 'average',
 	}
 	eventinputs = node.Node.eventinputs
 	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent]
