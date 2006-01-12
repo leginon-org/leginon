@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-01-12 22:51:51 $
+# $Date: 2006-01-12 22:56:41 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -182,9 +182,6 @@ class Dialog(gui.wx.Dialog.Dialog):
 
         self.focus_sequence = EditListBox(self, -1, 'Focus sequence', None)
         self.focus_sequence.setValues([s['name'] for s in self.settings.sequence])
-        # select first one by default
-        if self.settings.sequence:
-            self.select(self.settings.sequence[0]['name'])
 
         preset_names = self.settings.preset_names
         self.preset_choice = gui.wx.Presets.PresetChoice(self, -1)
@@ -289,6 +286,10 @@ class Dialog(gui.wx.Dialog.Dialog):
         else:
             self.setDefaultSetting()
             self.enableSetting(False)
+
+        # select first one by default
+        if self.settings.sequence:
+            self.select(self.settings.sequence[0]['name'])
 
 if __name__ == '__main__':
     preset_names = ['Grid', 'Square', 'Hole', 'Exposure']
