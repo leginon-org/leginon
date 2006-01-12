@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.19 $
+# $Revision: 1.20 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-11-29 23:50:44 $
+# $Date: 2006-01-12 23:48:09 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -140,7 +140,7 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 class PolygonSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
-		self.widgets['select polygon'] = wx.CheckBox(self, -1, 'Select Polygon')
+		self.widgets['select polygon'] = wx.CheckBox(self, -1, 'Wait for polygon selection')
 
 		szpolygon = wx.GridBagSizer(5, 5)
 		szpolygon.Add(self.widgets['select polygon'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
