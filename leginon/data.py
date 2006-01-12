@@ -2158,6 +2158,5 @@ class DoseMeasurementData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('dose', float),
-			('image', CorrectedCameraImageData),
 		)
 	typemap = classmethod(typemap)

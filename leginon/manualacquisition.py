@@ -306,6 +306,5 @@ class ManualAcquisition(node.Node):
 
 		dosedata = data.DoseMeasurementData()
 		dosedata['dose'] = dose
-		dosedata['image'] = imagedata
 		self.publish(dosedata, database=True, dbforce=True)
 		self.logger.info('measured dose: %.3e e/A^2' % (dose/1e20,))
