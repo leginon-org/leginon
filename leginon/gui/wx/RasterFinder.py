@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.20 $
+# $Revision: 1.21 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-01-12 23:48:09 $
+# $Date: 2006-01-12 23:52:25 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -63,6 +63,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 			dialog = RasterSettingsDialog(self)
 		elif evt.name == 'Polygon Vertices':
 			dialog = PolygonSettingsDialog(self)
+		elif evt.name == 'Polygon Raster':
+			dialog = PolygonRasterSettingsDialog(self)
 		elif evt.name == 'acquisition':
 			dialog = FinalSettingsDialog(self)
 		elif evt.name == 'focus':
@@ -162,6 +164,13 @@ class PolygonSettingsDialog(gui.wx.Settings.Dialog):
 	def onTestButton(self, evt):
 		self.setNodeSettings()
 		self.node.setPolygon()
+
+class PolygonRasterSettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Polygon Raster (No Settings)')
+		sbszpolygon = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		return [sbszpolygon,]
 
 class FinalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
