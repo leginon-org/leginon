@@ -294,12 +294,25 @@ class ManualAcquisition(node.Node):
 	def measureDose(self):
 		self.logger.info('acquiring dose image')
 		# configure camera using settings, but only 512x512 to save time
-		tmpcam = dict(self.settings['camera settings'])
-		tmpcam['dimension'] = {'x':512, 'y':512}
+		origcam = self.settings['camera settings']
+		tmpcam = dict(origcam)
+
+		## cut down to 512x512, adjust offset to keep same center
+		for axis in ('x','y'):
+			change = origcam['dimension'][axis] - 512
+			if change > 0:
+				tmpcam['dimension'][axis] = 512
+				tmpcam['offset'][axis] += (change / 2)
+
 		self.instrument.ccdcamera.Settings = tmpcam
 
 		# acquire image
 		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+
+		# display
+		self.logger.info('Displaying 512x512 dose image...')
+		stats = self.getImageStats(imagedata['image'])
+		self.setImage(imagedata['image'], stats=stats)
 
 		# calculate dose
 		dose = self.dosecal.dose_from_imagedata(imagedata)
@@ -307,4 +320,5 @@ class ManualAcquisition(node.Node):
 		dosedata = data.DoseMeasurementData()
 		dosedata['dose'] = dose
 		self.publish(dosedata, database=True, dbforce=True)
+		self.instrument.ccdcamera.Settings = origcam
 		self.logger.info('measured dose: %.3e e/A^2' % (dose/1e20,))
