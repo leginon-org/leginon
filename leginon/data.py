@@ -2016,7 +2016,6 @@ class FocusSettingData(InSessionData):
 			('stig defocus max', float),
 			('check drift', bool),
 			('drift threshold', float),
-			('declare drift', bool),
 		)
 	typemap = classmethod(typemap)
 
