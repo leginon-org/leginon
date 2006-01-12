@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-01-12 22:36:16 $
+# $Date: 2006-01-12 22:51:51 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -124,6 +124,7 @@ class Dialog(gui.wx.Dialog.Dialog):
         setting['correction type'] = \
             self.correction_type_choice.GetStringSelection()
         setting['stig correction'] = self.correct_astig_checkbox.GetValue()
+        print 'DEBUG:  GET stig correction', setting['stig correction']
         setting['stig defocus min'] = self.stig_defocus_min_entry.GetValue()
         setting['stig defocus max'] = self.stig_defocus_max_entry.GetValue()
         setting['check drift'] = self.check_drift_checkbox.GetValue()
@@ -142,6 +143,7 @@ class Dialog(gui.wx.Dialog.Dialog):
         self.correction_type_choice.SetStringSelection(
                                                     setting['correction type'])
         self.correct_astig_checkbox.SetValue(setting['stig correction'])
+        print 'DEBUG:  SET stig correction', setting['stig correction']
         self.stig_defocus_min_entry.SetValue(setting['stig defocus min'])
         self.stig_defocus_max_entry.SetValue(setting['stig defocus max'])
         self.check_drift_checkbox.SetValue(setting['check drift'])
