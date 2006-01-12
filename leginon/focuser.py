@@ -243,12 +243,15 @@ class Focuser(acquisition.Acquisition):
         ### validate stig correction
         # stig is only valid in a certain defocus range
         if setting['stig correction']:
+            self.logger.info('Stig. correction...')
             stigdefocusmin = setting['stig defocus min']
             stigdefocusmax = setting['stig defocus max']
             if validdefocus and stigdefocusmin < abs(defoc) < stigdefocusmax:
-                self.logger.info('Stig. correction...')
                 self.correctStig(stigx, stigy)
                 resultdata['stig correction'] = 1
+						else:
+            	self.logger.info('Stig. correction invalid due to invalid defocus')
+              resultdata['stig correction'] = 0
         else:
             resultdata['stig correction'] = 0
 
