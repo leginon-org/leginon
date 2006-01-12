@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-01-12 22:56:41 $
+# $Date: 2006-01-12 23:31:20 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -129,7 +129,6 @@ class Dialog(gui.wx.Dialog.Dialog):
         setting['stig defocus max'] = self.stig_defocus_max_entry.GetValue()
         setting['check drift'] = self.check_drift_checkbox.GetValue()
         setting['drift threshold'] = self.drift_threshold_entry.GetValue()
-        setting['declare drift'] = self.declare_drift_checkbox.GetValue()
 
         return setting
 
@@ -148,7 +147,6 @@ class Dialog(gui.wx.Dialog.Dialog):
         self.stig_defocus_max_entry.SetValue(setting['stig defocus max'])
         self.check_drift_checkbox.SetValue(setting['check drift'])
         self.drift_threshold_entry.SetValue(setting['drift threshold'])
-        self.declare_drift_checkbox.SetValue(setting['declare drift'])
 
     def insertDefaultSetting(self, i, name):
         setting = self.settings.default_setting.copy()
@@ -171,7 +169,6 @@ class Dialog(gui.wx.Dialog.Dialog):
             self.stig_defocus_max_entry,
             self.check_drift_checkbox,
             self.drift_threshold_entry,
-            self.declare_drift_checkbox,
         ]
 
         [widget.Enable(enable) for widget in widgets]
@@ -196,8 +193,6 @@ class Dialog(gui.wx.Dialog.Dialog):
         self.check_drift_checkbox = wx.CheckBox(self, -1,
                                            'Check for drift greater than')
         self.drift_threshold_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
-        self.declare_drift_checkbox = wx.CheckBox(self, -1, 
-                                      'Declare drift after correction')
         self.correct_astig_checkbox = wx.CheckBox(self, -1,
                                       'Correct astigmatism for defocus between')
         self.stig_defocus_min_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
@@ -269,8 +264,6 @@ class Dialog(gui.wx.Dialog.Dialog):
                                 wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(drift_sizer, (7, 1), (1, 3),
                                 wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(self.declare_drift_checkbox, (8, 1), (1, 3),
-                        wx.ALIGN_CENTER_VERTICAL)
 
         sizer.AddGrowableCol(0)
         sizer.AddGrowableCol(1)
@@ -309,7 +302,6 @@ if __name__ == '__main__':
         'stig defocus max': -2e-6,
         'check drift': False,
         'drift threshold': 3e-10,
-        'declare drift': False,
     }
 
     sequence = [
@@ -326,7 +318,6 @@ if __name__ == '__main__':
         'stig defocus max': -2e-6,
         'check drift': True,
         'drift threshold': 3e-10,
-        'declare drift': False,
     }
     ]
 

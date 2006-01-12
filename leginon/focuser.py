@@ -66,7 +66,6 @@ class Focuser(acquisition.Acquisition):
             'stig defocus max': -2e-6,
             'check drift': False,
             'drift threshold': 3e-10,
-            'declare drift': False,
         }
         self.manualchecklock = threading.Lock()
         self.maskradius = 1.0
