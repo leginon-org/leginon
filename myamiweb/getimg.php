@@ -71,7 +71,7 @@ if ($g) {
 		foreach ($dtypes as $dtype) {
 			$d = $leginondata->findImage($id, $dtype);
 			$nId = $d['id'];
-			if ($gridIds = $leginondata->getMosaicImages($nId))
+			if ($gridIds = $leginondata->getImageList($nId))
 				break;
 		}
 

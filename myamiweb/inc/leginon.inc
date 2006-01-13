@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.47 $
- *	@version $Id: leginon.inc,v 1.47 2005-09-30 23:21:44 dfellman Exp $
+ *	@version $Revision: 1.48 $
+ *	@version $Id: leginon.inc,v 1.48 2006-01-13 22:51:00 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -446,6 +446,29 @@ class leginondata {
 		$fileInfo = mysql_fetch_array($RfileInfo);
 		return $fileInfo[filename];
 	}
+
+	function getImageList($id) {
+                $q="SELECT "
+                ."`a`.`REF|ImageListData|list` as `list`"
+                ."FROM "
+                ."`AcquisitionImageData` AS `a` "
+                ."WHERE `a`.`DEF_id`=$id";
+                list($R) = $this->mysql->getSQLResult($q);
+
+                $q="SELECT "
+                ."`a`.`DEF_id` as `id` "
+                ."FROM "
+                ."`AcquisitionImageData` AS `a` "
+                ."WHERE `a`.`REF|ImageListData|list`=".$R['list'];
+                $r = $this->mysql->getSQLResult($q);
+                $l=array();
+                if (is_array($r))
+                foreach($r as $ids) {
+                        $l[] = $ids['id'];
+                }
+                return $l;
+
+        }
 
 	function getMosaicImages($id) {
 		$listId = $this->getId(
