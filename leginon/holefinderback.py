@@ -262,7 +262,10 @@ class HoleFinder(object):
 			raise RuntimeError('need correlation image to threshold')
 		self.configure_threshold(threshold)
 		cc = self.__results['correlation']
-		t = imagefun.threshold(cc, self.threshold)
+		mean = imagefun.mean(cc)
+		std = imagefun.stdev(cc)
+		thresh = mean + self.threshold * std
+		t = imagefun.threshold(cc, thresh)
 		self.__update_result('threshold', t)
 		if self.save_mrc:
 			Mrc.numeric_to_mrc(t, 'threshold.mrc')
