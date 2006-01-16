@@ -21,8 +21,7 @@ import gui.wx.Focuser
 import player
 
 class Focuser(acquisition.Acquisition):
-    panelclass = gui.wx.Focuser.Panel
-    settingsclass = data.FocuserSettingsData
+    panelclass = gui.wx.Focuser.Panel settingsclass = data.FocuserSettingsData
     defaultsettings = {
         'pause time': 2.5,
         'move type': 'image shift',
@@ -34,9 +33,9 @@ class Focuser(acquisition.Acquisition):
         'wait for rejects': False,
         'duplicate targets': False,
         'duplicate target type': 'focus',
-		'iterations': 1,
-		'wait time': 0,
-		'adjust for drift': False,
+        'iterations': 1,
+        'wait time': 0,
+        'adjust for drift': False,
         'melt time': 0.0,
         'acquire final': True,
     }
@@ -338,15 +337,19 @@ class Focuser(acquisition.Acquisition):
 
             self.instrument.setData(camstate0)
 
-				status = 'unknown'
+        status = 'unknown'
 
         for setting in self.focus_sequence:
+            if not setting['switch']:
+                message = 'Skipping focus setting \'%s\'...' % setting['name']
+                self.logger.info(message)
+                continue
             message = 'Processing focus setting \'%s\'...' % setting['name']
             self.logger.info(message)
             status = self.processFocusSetting(setting, target=target, emtarget=emtarget)
-						## repeat means give up and do the whole target over
-						if status == 'repeat':
-							return 'repeat'
+            ## repeat means give up and do the whole target over
+            if status == 'repeat':
+                return 'repeat'
 
         # aquire and save the focus image
         if self.settings['acquire final']:
@@ -359,7 +362,6 @@ class Focuser(acquisition.Acquisition):
             ## acquire and publish image, like superclass does
             acquisition.Acquisition.acquire(self, presetdata, target, emtarget)
 
-        # HACK: fix me
         return status
 
     def alreadyAcquired(self, targetdata, presetname):
