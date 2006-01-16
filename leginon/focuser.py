@@ -21,7 +21,8 @@ import gui.wx.Focuser
 import player
 
 class Focuser(acquisition.Acquisition):
-    panelclass = gui.wx.Focuser.Panel settingsclass = data.FocuserSettingsData
+    panelclass = gui.wx.Focuser.Panel
+    settingsclass = data.FocuserSettingsData
     defaultsettings = {
         'pause time': 2.5,
         'move type': 'image shift',
