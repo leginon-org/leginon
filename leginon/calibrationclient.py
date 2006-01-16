@@ -538,7 +538,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		shifts = {}
 		tilts = {}
 		self.checkAbort()
-		self.node.logger.info('Tilting...')
 		nodrift = False
 		lastdrift = None
 		for tiltaxis in ('x','y'):
