@@ -307,7 +307,7 @@ class Focuser(acquisition.Acquisition):
         else:
             self.deltaz = emtarget['delta z']
 
-        ## Need to melt only once per target, event though
+        ## Need to melt only once per target, even though
         ## this method may be called multiple times on the same
         ## target.
         melt_time = self.settings['melt time']
@@ -338,10 +338,15 @@ class Focuser(acquisition.Acquisition):
 
             self.instrument.setData(camstate0)
 
+				status = 'unknown'
+
         for setting in self.focus_sequence:
             message = 'Processing focus setting \'%s\'...' % setting['name']
             self.logger.info(message)
-            self.processFocusSetting(setting, target=target, emtarget=emtarget)
+            status = self.processFocusSetting(setting, target=target, emtarget=emtarget)
+						## repeat means give up and do the whole target over
+						if status == 'repeat':
+							return 'repeat'
 
         # aquire and save the focus image
         if self.settings['acquire final']:
@@ -355,7 +360,7 @@ class Focuser(acquisition.Acquisition):
             acquisition.Acquisition.acquire(self, presetdata, target, emtarget)
 
         # HACK: fix me
-        return 'ok'
+        return status
 
     def alreadyAcquired(self, targetdata, presetname):
         ## for now, always do acquire
