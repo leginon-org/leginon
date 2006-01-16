@@ -2003,10 +2003,11 @@ class FocusSequenceData(InSessionData):
 class FocusSettingData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
-            ('node name', str),
-            ('name', str),
-            ('preset name', str),
-            ('focus method', str),
+			('switch', bool),
+			('node name', str),
+			('name', str),
+			('preset name', str),
+ 			('focus method', str),
 			('beam tilt', float),
 			('correlation type', str),
 			('fit limit', float),

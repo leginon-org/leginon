@@ -55,6 +55,7 @@ class Focuser(acquisition.Acquisition):
         self.correlation_types = ['cross', 'phase']
         self.focus_methods = ['Manual', 'Auto']
         self.default_setting = {
+            'switch': True,
             'preset name': 'Grid',
             'focus method': 'Auto',
             'beam tilt': 0.01,
