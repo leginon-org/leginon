@@ -199,11 +199,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs)
 		self.hf.find_blobs()
 		blobs = self.hf['blobs']
-		#centers = self.blobCenters(blobs)
 		targets = self.blobStatsTargets(blobs)
-		#self.logger.info('Number of blobs: %s' % (len(centers),))
 		self.logger.info('Number of blobs: %s' % (len(targets),))
-		#self.setTargets(centers, 'Blobs')
 		self.setTargets(targets, 'Blobs')
 
 	def holeStatsTargets(self, holes):

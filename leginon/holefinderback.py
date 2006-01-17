@@ -9,7 +9,6 @@
 #
 
 import numarray
-import numarray.linear_algebra as LinearAlgebra
 import numarray.nd_image
 import Mrc
 import imagefun
@@ -214,7 +213,6 @@ class HoleFinder(object):
 			temp = self.circle.get(shape, center, ring[0], ring[1])
 			template = template | temp
 		template = template.astype(numarray.Float32)
-		#template = imagefun.zscore(template)
 		self.__update_result('template', template)
 		if self.save_mrc:
 			Mrc.numeric_to_mrc(template, 'template.mrc')
@@ -244,8 +242,6 @@ class HoleFinder(object):
 			kernel = convolver.gaussian_kernel(*corfilt)
 			self.edgefinder.setKernel(kernel)
 			cc = self.edgefinder.convolve(image=cc)
-		#cc = imagefun.zscore(smooth)
-		#cc = imagefun.zscore(cc)
 		self.__update_result('correlation', cc)
 		if self.save_mrc:
 			Mrc.numeric_to_mrc(cc, 'correlation.mrc')
@@ -349,26 +345,6 @@ class HoleFinder(object):
 		else:
 			best_lattice = best_lattice.points
 		holes = [pointdict[tuple(point)] for point in best_lattice]
-
-		'''
-		lattices = []
-
-		# create a lattice for every blob
-		for blob in blobs:
-			lattices.append(Lattice(blob, s, v, tolerance))
-		# see which blobs fit in which lattices
-		for blob in blobs:
-			#found_lattice = False
-			for lat in lattices:
-				lat.add_blob(blob)
-		# find the best lattice
-		maxblobs = 0
-		best_lattice = None
-		for lat in lattices:
-			if len(lat.blobs) > maxblobs:
-				maxblobs = len(lat.blobs)
-				best_lattice = lat
-		'''
 
 		self.__update_result('lattice', best_lattice)
 		if best_lattice is None:

@@ -129,21 +129,6 @@ class JAHCFinder(targetfinder.TargetFinder):
 		imagedata = results[0]
 		return imagedata
 
-	def findEdges(self):
-		self.logger.info('find edges')
-		n = self.settings['edge log size']
-		sig = self.settings['edge log sigma']
-		ab = self.settings['edge absolute']
-		edges = self.settings['edge']
-		filt = self.settings['edge type']
-		lpfsettings = self.settings['edge lpf']
-		lowpasssig = lpfsettings['sigma']
-		edgethresh = self.settings['edge threshold']
-		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lpsig=lowpasssig, thresh=edgethresh, edges=edges)
-		self.hf.find_edges()
-		# convert to Float32 to prevent seg fault
-		self.setImage(self.hf['edges'].astype(Numeric.Float32), 'Edge')
-
 	def correlateTemplate(self):
 		self.logger.info('correlate ring template')
 		# convert diameters to radii
@@ -199,11 +184,8 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs)
 		self.hf.find_blobs()
 		blobs = self.hf['blobs']
-		#centers = self.blobCenters(blobs)
 		targets = self.blobStatsTargets(blobs)
-		#self.logger.info('Number of blobs: %s' % (len(centers),))
 		self.logger.info('Number of blobs: %s' % (len(targets),))
-		#self.setTargets(centers, 'Blobs')
 		self.setTargets(targets, 'Blobs')
 
 	def holeStatsTargets(self, holes):
@@ -241,12 +223,8 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.hf.calc_holestats()
 
 		holes = self.hf['holes']
-		#centers = self.blobCenters(holes)
-		#targets = self.blobTargets(holes)
 		targets = self.holeStatsTargets(holes)
-		#self.logger.info('Number of holes: %s' % (len(centers),))
 		self.logger.info('Number of lattice blobs: %s' % (len(targets),))
-		#self.setTargets(centers, 'Lattice')
 		self.setTargets(targets, 'Lattice')
 
 	def ice(self):
