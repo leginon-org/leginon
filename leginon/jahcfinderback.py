@@ -8,17 +8,14 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-# this is python Numeric version of -radial_image (mon_radial_image)
-
 import numarray
-Numeric = numarray
 import numarray.nd_image
-import numarray.linear_algebra as LinearAlgebra
 import Mrc
 import imagefun
 import peakfinder
 import convolver
 import ice
+import lattice
 
 hole_template_files = {}
 hole_templates = {}
@@ -54,111 +51,15 @@ class CircleMaskCreator(object):
 		maxradsq = maxradius*maxradius
 		def circle(indices0,indices1):
 			## this shifts and wraps the indices
-			i0 = Numeric.where(indices0<cutoff[0], indices0-center[0]+lshift[0], indices0-center[0]+gshift[0])
-			i1 = Numeric.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[0]+gshift[1])
+			i0 = numarray.where(indices0<cutoff[0], indices0-center[0]+lshift[0], indices0-center[0]+gshift[0])
+			i1 = numarray.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[0]+gshift[1])
 			rsq = i0*i0+i1*i1
-			c = Numeric.where((rsq>=minradsq)&(rsq<=maxradsq), 1.0, 0.0)
-			return c.astype(Numeric.Int8)
-		temp = Numeric.fromfunction(circle, shape)
+			c = numarray.where((rsq>=minradsq)&(rsq<=maxradsq), 1.0, 0.0)
+			return c.astype(numarray.Int8)
+		temp = numarray.fromfunction(circle, shape)
 		self.masks[key] = temp
 		return temp
 
-
-class Lattice(object):
-	def __init__(self, firstblob, spacing=None, vector=None, tolerance=0.1):
-		self.blobs = []
-		self.lattice_points_blob = {}
-		self.lattice_points_err = {}
-		self.center = None
-
-		self.tolerance = tolerance
-		## either spacing or vector is given
-		self.spacing = spacing
-		if vector is None:
-			self.vector = None
-		else:
-			self.vector = Numeric.array(vector, Numeric.Float32)
-
-		self.add_first_blob(firstblob)
-
-	def add_blob(self, newblob):
-		num = len(self.blobs)
-		if num == 0:
-			self.add_first_blob(newblob)
-		elif num == 1:
-			self.add_second_blob(newblob)
-		else:
-			self.add_any_blob(newblob)
-
-	def add_first_blob(self, firstblob):
-		self.blobs.append(firstblob)
-		self.lattice_points_blob[(0,0)] = firstblob
-		self.lattice_points_err[(0,0)] = 0.0
-		self.center = firstblob.stats['center']
-
-	def add_second_blob(self, secondblob):
-		'''
-		If the lattice vector still needs to be determined,
-		see if this blob is at proper spacing, then add it
-		and calculate vector.
-
-		If the lattice vector is already known, treat this blob
-		like any other.
-		'''
-		## check if vector is known
-		if self.vector is None:
-			## check if spacing is within tolerance
-			c1 = self.center
-			c2 = secondblob.stats['center']
-			v = float(c2[0]-c1[0]), float(c2[1]-c1[1])
-			dist = Numeric.hypot(v[0],v[1])
-			nf = dist / self.spacing
-			n = int(round(nf))
-			if n == 0:
-				## we can only have one blob at (0,0)
-				return
-			err = Numeric.absolute(nf - n)
-			if err < self.tolerance:
-				point = (n,0)
-				self.vector = (v[0]/n, v[1]/n)
-				self.lattice_points_blob[point] = secondblob
-				## I am trusting that my new calculated
-				## vector is more reliable than the first
-				## guess for spacing, otherwise I could set
-				## error to be err instead of 0.0
-				self.lattice_points_err[point] = 0.0
-				self.blobs.append(secondblob)
-		else:
-			self.add_any_blob(secondblob)
-
-	def add_any_blob(self, blob):
-		'''
-		this checks to see if a blob falls on a lattice
-		point, within a certain tolerance
-		'''
-		a = Numeric.zeros((2,2), Numeric.Float32)
-		a[:,0] = self.vector
-		a[:,1] = (-self.vector[1], self.vector[0])
-		b = blob.stats['center'] - self.center
-		c = LinearAlgebra.solve_linear_equations(a,b)
-		closest = int(round(c[0])), int(round(c[1]))
-		err = c - closest
-		err = Numeric.hypot(err[0], err[1])
-
-		if err < self.tolerance:
-			## if already have blob at this lattice point,
-			## use the one with least error
-			if closest in self.lattice_points_err:
-				if self.lattice_points_err[closest] > err:
-					## replace existing blob
-					self.blobs.remove(self.lattice_points_blob[closest])
-					self.blobs.append(blob)
-					self.lattice_points_blob[closest] = blob
-					self.lattice_points_err[closest] = err
-			else:
-				self.lattice_points_blob[closest] = blob
-				self.lattice_points_err[closest] = err
-				self.blobs.append(blob)
 
 ### Note:  we should create a base class ImageProcess
 ### which defines the basic idea of a series of operations on 
@@ -216,14 +117,13 @@ class HoleFinder(object):
 		}
 
 		## other necessary components
-		self.edgefinder = convolver.Convolver()
+		self.convolver = convolver.Convolver()
 		self.peakfinder = peakfinder.PeakFinder()
 		self.circle = CircleMaskCreator()
 		self.icecalc = ice.IceCalculator()
 
 		## some default configuration parameters
 		self.save_mrc = False
-		self.edges_config = {'filter': 'sobel', 'size': 9, 'sigma': 1.4, 'abs': False, 'lp':True, 'lpsig':1.0, 'thresh':100.0, 'edges': True}
 		self.template_config = {'ring_list': [(25,30)]}
 		self.correlation_config = {'cortype': 'cross', 'corfilt': (1.0,)}
 		self.threshold = 3.0
@@ -251,79 +151,6 @@ class HoleFinder(object):
 			self.__update_result(depkey, None)
 		## update this result
 		self.__results[key] = image
-
-	def configure_edges(self, filter=None, size=None, sigma=None, absvalue=None, lpsig=None, thresh=None, edges=None):
-		if filter is not None:
-			self.edges_config['filter'] = filter
-		if sigma is not None:
-			self.edges_config['sigma'] = sigma
-		if absvalue is not None:
-			self.edges_config['abs'] = absvalue
-		if lpsig is not None:
-			self.edges_config['lpsig'] = lpsig
-		if thresh is not None:
-			self.edges_config['thresh'] = thresh
-		if edges is not None:
-			self.edges_config['edges'] = edges
-
-	def find_edges(self):
-		'''
-		find edges on the original image
-		'''
-		if self.__results['original'] is None:
-			raise RuntimeError('no original image to find edges on')
-
-		sourceim = self.__results['original']
-		filt = self.edges_config['filter']
-		sigma = self.edges_config['sigma']
-		ab = self.edges_config['abs']
-		lpsig = self.edges_config['lpsig']
-		edgethresh = self.edges_config['thresh']
-		edgesflag = self.edges_config['edges']
-
-		kernel = convolver.gaussian_kernel(lpsig)
-		n = len(kernel)
-		self.edgefinder.setKernel(kernel)
-		smooth = self.edgefinder.convolve(image=sourceim)
-
-		if not edgesflag:
-			edges = smooth
-		elif filt == 'laplacian3':
-			kernel = convolver.laplacian_kernel3
-			self.edgefinder.setKernel(kernel)
-			edges = self.edgefinder.convolve(image=smooth)
-		elif filt == 'laplacian5':
-			kernel = convolver.laplacian_kernel5
-			self.edgefinder.setKernel(kernel)
-			edges = self.edgefinder.convolve(image=smooth)
-		elif filt == 'laplacian-gaussian':
-			kernel = convolver.laplacian_of_gaussian_kernel(n,sigma)
-			self.edgefinder.setKernel(kernel)
-			edges = self.edgefinder.convolve(image=smooth)
-		elif filt == 'sobel':
-			self.edgefinder.setImage(smooth)
-			kernel1 = convolver.sobel_row_kernel
-			kernel2 = convolver.sobel_col_kernel
-			edger = self.edgefinder.convolve(kernel=kernel1)
-			edgec = self.edgefinder.convolve(kernel=kernel2)
-			edges = Numeric.hypot(edger,edgec)
-			## zero the image edge effects
-			edges[:n] = 0
-			edges[:,:n] = 0
-			edges[:,-n:] = 0
-			edges[-n:] = 0
-		else:
-			raise RuntimeError('no such filter type: %s' % (filt,))
-
-		if ab and edgesflag:
-			edges = Numeric.absolute(edges)
-
-		if edgethresh and edgesflag:
-			edges = imagefun.threshold(edges, edgethresh)
-
-		self.__update_result('edges', edges)
-		if self.save_mrc:
-			Mrc.numeric_to_mrc(edges, 'edges.mrc')
 
 	def configure_template(self, diameter=None, filename=None, filediameter=None):
 		if diameter is not None:
@@ -366,7 +193,7 @@ class HoleFinder(object):
 		shift = (shape[0]/2, shape[1]/2)
 		template = numarray.nd_image.shift(template, shift, mode='wrap')
 
-		template = template.astype(Numeric.Float32)
+		template = template.astype(numarray.Float32)
 		self.__update_result('template', template)
 		if self.save_mrc:
 			Mrc.numeric_to_mrc(template, 'template.mrc')
@@ -390,14 +217,11 @@ class HoleFinder(object):
 			cc = imagefun.phase_correlate(edges, template)
 		else:
 			raise RuntimeError('bad correlation type: %s' % (cortype,))
-		#cc = Numeric.absolute(cc)
 
 		if corfilt is not None:
 			kernel = convolver.gaussian_kernel(*corfilt)
-			self.edgefinder.setKernel(kernel)
-			cc = self.edgefinder.convolve(image=cc)
-		#cc = imagefun.zscore(smooth)
-		#cc = imagefun.zscore(cc)
+			self.convolver.setKernel(kernel)
+			cc = self.convolver.convolve(image=cc)
 		self.__update_result('correlation', cc)
 		if self.save_mrc:
 			Mrc.numeric_to_mrc(cc, 'correlation.mrc')
@@ -486,39 +310,29 @@ class HoleFinder(object):
 			raise RuntimeError('need blobs to create lattice')
 		self.configure_lattice(tolerance=tolerance,spacing=spacing,minspace=minspace)
 
-		## if spacing is empty vector, fill in vector now
-		if self.lattice_config['spacing'] is ():
-			self.find_lattice_vector()
-			v = self.__results['vector']
-			s = None
-		else:
-			s = self.lattice_config['spacing']
-			v = None
-			
 		blobs = self.__results['blobs']
-		lattices = []
 		tolerance = self.lattice_config['tolerance']
+		spacing = self.lattice_config['spacing']
+		# make make list of blob coords:
+		points = []
+		pointdict = {}
+		for blob in blobs:
+			point = tuple(blob.stats['center'])
+			points.append(point)
+			pointdict[point] = blob
+		
+		best_lattice = lattice.pointsToLattice(points, spacing, tolerance)
+		if best_lattice is None:
+			best_lattice = []
+		else:
+			best_lattice = best_lattice.points
+		holes = [pointdict[tuple(point)] for point in best_lattice]
 
-		# create a lattice for every blob
-		for blob in blobs:
-			lattices.append(Lattice(blob, s, v, tolerance))
-		# see which blobs fit in which lattices
-		for blob in blobs:
-			#found_lattice = False
-			for lat in lattices:
-				lat.add_blob(blob)
-		# find the best lattice
-		maxblobs = 0
-		best_lattice = None
-		for lat in lattices:
-			if len(lat.blobs) > maxblobs:
-				maxblobs = len(lat.blobs)
-				best_lattice = lat
 		self.__update_result('lattice', best_lattice)
 		if best_lattice is None:
 			self.__update_result('holes', [])
 		else:
-			self.__update_result('holes', best_lattice.blobs)
+			self.__update_result('holes', holes)
 
 	def mark_holes(self):
 		if None in (self.__results['holes'], self.__results['original']):
@@ -550,9 +364,9 @@ class HoleFinder(object):
 		mask = self.circle.get(subimage.shape, center, 0, radius)
 		if self.save_mrc:
 			Mrc.numeric_to_mrc(mask, 'holemask.mrc')
-		im = Numeric.ravel(subimage)
-		mask = Numeric.ravel(mask)
-		roi = Numeric.compress(mask, im)
+		im = numarray.ravel(subimage)
+		mask = numarray.ravel(mask)
+		roi = numarray.compress(mask, im)
 		mean = imagefun.mean(roi)
 		std = imagefun.stdev(roi)
 		n = len(roi)
