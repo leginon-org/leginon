@@ -500,6 +500,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		rc['beam tilt'] = beamtilt
 		rc['ccdcamera'] = cam
 		rc['tem'] = tem
+		rc['session'] = self.node.session
 		self.node.publish(rc, database=True, dbforce=True)
 
 	def retreiveRotationCenter(self, tem, cam, ht, mag):

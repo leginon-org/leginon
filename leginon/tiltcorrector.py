@@ -101,12 +101,12 @@ class TiltCorrector(object):
 		rotdat['ccdcamera'] = cam
 		rotdat['magnification'] = mag
 		rotdat['high tension'] = ht
+		rotdat['session'] = self.node.session
 		caldatalist = self.node.research(datainstance=rotdat, results=1)
 		if caldatalist:
 			return caldatalist[0]['beam tilt']
 		else:
-			excstr = 'No rotation center for %s, %s, %seV, %sx' % (tem, cam, ht, mag)
-			raise RuntimeError(excstr)
+			return None
 
 	def itransform(self, shift, scope, camera):
 		'''
@@ -155,6 +155,10 @@ class TiltCorrector(object):
 	
 		## from DB
 		tiltcenter = self.getRotationCenter(tem, cam, ht, mag)
+		# if no tilt center, then cannot do this
+		if tiltcenter is None:
+			self.node.logger.info('not correcting tilted images, no rotation center found')
+			return
 		tx = beamtilt['x'] - tiltcenter['x']
 		ty = beamtilt['y'] - tiltcenter['y']
 		bt = (tx,ty)
@@ -176,7 +180,6 @@ class TiltCorrector(object):
 		#imageshift['x'] *= -1
 		#imageshift['y'] *= -1
 		pixelshift = self.itransform(imageshift, scope, camera)
-		print 'PIXELSHIFT', pixelshift
 		pixelshift = (pixelshift['row'], pixelshift['col'])
 		offset = self.affine_transform_offset(im.shape, mat, pixelshift)
 		mean=self.edge_mean(im)
