@@ -5,16 +5,17 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.47 $
+# $Revision: 1.48 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-11-16 00:06:51 $
-# $Author: suloway $
+# $Date: 2006-01-18 21:03:19 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
 import wx
 from gui.wx.Camera import CameraPanel, EVT_CONFIGURATION_CHANGED
 from gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY, TypeEntry
+from gui.wx.Choice import Choice
 import gui.wx.Events
 import gui.wx.Node
 import gui.wx.ToolBar
@@ -1140,8 +1141,8 @@ class SelectionPanel(wx.Panel):
 		self.nonestring = 'None'
 		self.passive = passive
 
-		self.ctem = wx.Choice(self, -1, choices=[self.nonestring])
-		self.cccdcamera = wx.Choice(self, -1, choices=[self.nonestring])
+		self.ctem = Choice(self, -1, choices=[self.nonestring])
+		self.cccdcamera = Choice(self, -1, choices=[self.nonestring])
 
 		sz = wx.GridBagSizer(3, 3)
 		label = wx.StaticText(self, -1, 'TEM')
