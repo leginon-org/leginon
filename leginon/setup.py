@@ -21,6 +21,7 @@ setup(
 	packages=['Leginon', 'Leginon.gui', 'Leginon.gui.wx', 'Leginon.icons'],
 	package_dir={'Leginon': ''},
 	data_files=[
+		('Leginon', ['holetemplate.mrc']),
 		('Leginon/config', ['config/default.cfg']),
 		('Leginon/noderegistry', ['noderegistry/default.ncr']),
 		('Leginon/icons', glob.glob('icons/*.png')),
