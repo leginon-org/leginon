@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SetupWizard.py,v $
-# $Revision: 1.17 $
+# $Revision: 1.18 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-06-08 18:27:09 $
-# $Author: pulokas $
+# $Date: 2006-01-20 00:37:22 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -546,9 +546,11 @@ class SessionCreatePage(WizardPage):
 		return self.GetParent().imagedirectorypage
 
 class SetupWizard(wx.wizard.Wizard):
-	def __init__(self, parent, research, publish):
-		self.setup = Setup(research, publish)
-		self.publish = publish
+	def __init__(self, manager):
+		self.manager = manager
+		parent = manager.frame
+		self.setup = Setup(manager.research, manager.publish)
+		self.publish = manager.publish
 		self.session = None
 		image = wx.Image(icons.getPath('setup.png'))
 		bitmap = wx.BitmapFromImage(image)
@@ -576,11 +578,17 @@ class SetupWizard(wx.wizard.Wizard):
 		self.Bind(wx.wizard.EVT_WIZARD_FINISHED, self.onFinished)
 
 		self.FitToPage(self.userpage)
+
+	def run(self):
 		self.Raise()
 		if self.userpage.skip:
-			self.RunWizard(self.userpage.GetNext())
+			result = self.RunWizard(self.userpage.GetNext())
 		else:
-			self.RunWizard(self.userpage)
+			result = self.RunWizard(self.userpage)
+		if result and self.session is not None:
+			self.manager.run(self.session, self.clients)
+			return True
+		return False
 
 	def onFinished(self, evt):
 		if self.session is not None:
@@ -704,6 +712,8 @@ class Setup(object):
 	def getUsers(self):
 		userdata = data.UserData(initializer={})
 		userdatalist = self.research(datainstance=userdata)
+		if not userdatalist:
+			userdatalist = [data.UserData(initializer={'full name': 'Fake User'})]
 		return _indexBy('full name', userdatalist)
 
 	def getSettings(self, userdata):
@@ -822,7 +832,9 @@ if __name__ == '__main__':
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Test')
 			self.SetTopWindow(frame)
-			wizard = SetupWizard(frame, None)
+			import node
+			n = node.Node('Dummy', None)
+			wizard = SetupWizard(frame, n.research, None)
 			frame.Show(True)
 			return True
 

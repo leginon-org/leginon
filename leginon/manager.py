@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#	   The Leginon software is Copyright 2003
+#	   The Scripps Research Institute, La Jolla, CA
+#	   For terms of the license agreement
+#	   see  http://ami.scripps.edu/software/leginon-license
 #
 
 import application
@@ -23,7 +23,6 @@ import copy
 import newdict
 import socket
 from wx import PyDeadObjectError
-import gui.wx.SetupWizard
 import gui.wx.Manager
 import nodeclassreg
 import remotecall
@@ -83,7 +82,7 @@ class Manager(node.Node):
 		self.objectservice = self.objectserviceclass(self)
 
 		self.launcher = None
-		self.frame = gui.wx.Manager.Frame(self, self.research, self.publish)
+		self.frame = None
 
 		self.nodelocations = {}
 		self.broadcast = []
@@ -109,23 +108,16 @@ class Manager(node.Node):
 		self.addEventInput(event.Event, self.distributeEvents)
 
 		self.launcherdict = {}
-		# will move, I promise
-		setup = gui.wx.SetupWizard.SetupWizard(self.frame,
-																						self.research, self.publish)
 
-		# handle better
-		if setup.session is None:
-			self.exit()
-			raise RuntimeError('setup cancelled')
-
-		self.session = setup.session
+	def run(self, session, clients):
+		self.session = session
 		self.frame.session = self.session
 
 		t = threading.Thread(name='create launcher thread',
 													target=self.createLauncher)
 		t.start()
 
-		for client in setup.clients:
+		for client in clients:
 			try:
 				self.addLauncher(client, 55555)
 			except Exception, e:

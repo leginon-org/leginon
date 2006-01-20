@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Manager.py,v $
-# $Revision: 1.25 $
+# $Revision: 1.26 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-06-02 21:07:24 $
-# $Author: pulokas $
+# $Date: 2006-01-20 00:37:22 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -23,6 +23,7 @@ import gui.wx.ApplicationEditor
 import gui.wx.Launcher
 import gui.wx.Logging
 import gui.wx.ToolBar
+import gui.wx.SetupWizard
 
 AddNodeEventType = wx.NewEventType()
 RemoveNodeEventType = wx.NewEventType()
@@ -104,15 +105,20 @@ class App(wx.App):
 		self.session = session
 		self.tcpport = tcpport
 		self.kwargs = kwargs
-		wx.App.__init__(self, 0)
+		wx.App.__init__(self)
 
 	def OnInit(self):
 		try:
-			self.manager = manager.Manager(self.session, self.tcpport, **self.kwargs)
+			self.manager = manager.Manager(self.session, self.tcpport,
+											**self.kwargs)
 		except Exception, e:
 			raise RuntimeError(e)
+		self.manager.frame = Frame(self.manager)
 		self.SetTopWindow(self.manager.frame)
+		setup = gui.wx.SetupWizard.SetupWizard(self.manager)
 		self.manager.frame.Show(True)
+		if not setup.run():
+			raise RuntimeError('setup cancelled')
 		return True
 
 	def OnExit(self):
@@ -123,10 +129,10 @@ class StatusBar(wx.StatusBar):
 		wx.StatusBar.__init__(self, parent, -1)
 
 class Frame(wx.Frame):
-	def __init__(self, manager, research, publish):
+	def __init__(self, manager):
 		self.manager = manager
-		self.research = research
-		self.publish = publish
+		self.research = manager.research
+		self.publish = manager.publish
 		self.session = None
 
 		wx.Frame.__init__(self, None, -1, 'Leginon', size=(750, 750))
@@ -247,7 +253,6 @@ class Frame(wx.Frame):
 
 	def onSize(self, evt):
 		self.panel.SetSize(self.GetClientSize())
-		self.panel.Layout()
 		evt.Skip()
 
 	def onAddLauncherPanel(self, evt):

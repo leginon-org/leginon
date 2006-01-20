@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Launcher.py,v $
-# $Revision: 1.32 $
+# $Revision: 1.33 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-21 23:43:03 $
+# $Date: 2006-01-20 00:37:21 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -114,13 +114,6 @@ class Frame(wx.Frame):
 
 		self.panel = Panel(self, launcher)
 
-		self.Bind(wx.EVT_SIZE, self.onSize)
-
-	def onSize(self, evt):
-		self.panel.SetSize(self.GetClientSize())
-		self.panel.Layout()
-		evt.Skip()
-
 	def onExit(self, evt):
 		self.Close()
 
@@ -155,6 +148,10 @@ class ListCtrlPanel(wx.Panel):
 
 		self.Bind(gui.wx.Selector.EVT_SELECT, self.onSelect, self.selector)
 		self.Bind(wx.EVT_SASH_DRAGGED, self.onSashDragged)
+		self.Bind(wx.EVT_SIZE, self.onSize)
+
+	def onSize(self, evt):
+		self.Layout()
 
 	def addPanel(self, panel, label, icon=None):
 		panel.Show(False)
@@ -240,9 +237,9 @@ class Panel(ListCtrlPanel):
 
 		self.Bind(gui.wx.Events.EVT_STATUS_UPDATED, self.onStatusUpdated)
 		self.Bind(EVT_SET_ORDER, self.onSetOrder)
-		self.swmessage.Bind(wx.EVT_SIZE, self.onSize)
+		self.swmessage.Bind(wx.EVT_SIZE, self.onMessageSize)
 
-	def onSize(self, evt=None):
+	def onMessageSize(self, evt=None):
 		if hasattr(self.panel, 'messagelog'):
 			size = self.swmessage.GetClientSize()
 			self.panel.messagelog.SetSize(size - (10, 10))
