@@ -466,6 +466,7 @@ class MatrixCalibrationClient(CalibrationClient):
 		self.node.publish(caldata, database=True, dbforce=True)
 
 	def getMatrixAngles(self, matrix):
+		matrix = LinearAlgebra.inverse(matrix)
 		x_shift_row = matrix[0, 0]
 		x_shift_col = matrix[1, 0]
 		y_shift_row = matrix[0, 1]
@@ -473,9 +474,9 @@ class MatrixCalibrationClient(CalibrationClient):
 
 		# calculations invert image coordinates (+y top, -y bottom)
 		# angle from the x shift of the parameter
-		theta_x = math.atan2(x_shift_col, -x_shift_row)
+		theta_x = math.atan2(-x_shift_row, x_shift_col)
 		# angle from the y shift of the parameter
-		theta_y = math.atan2(y_shift_col, -y_shift_row)
+		theta_y = math.atan2(-y_shift_row, -y_shift_col)
 
 		return theta_x, theta_y
 
