@@ -67,6 +67,7 @@ minpilver = (1, 1, 4)
 minstr = '.'.join(map(str,minpilver))
 print '--------------------------------------------------------------'
 print 'Python Imaging Library (PIL):'
+print '    importing Image module...'
 try:
 	import Image
 except:
@@ -84,10 +85,67 @@ else:
 ######################################################################
 ## Python MySQL client module
 ######################################################################
+minmysqlver = (1, 2)
+minstr = '.'.join(map(str,minmysqlver))
+print '--------------------------------------------------------------'
+print 'MySQL Python client (MySQLdb):'
+print '    importing MySQLdb module...'
+try:
+	import MySQLdb
+except:
+	print '    *** Could not import MySQLdb module.'
+	print '      You must install Python MySQL version %s or greater' % (minstr,)
+else:
+	mystr = MySQLdb.__version__
+	mymysqlver = MySQLdb.version_info[:3]
+	print '    Python MySQL version: %s' % (mystr,)
+	if versionAtLeast(mymysqlver, minmysqlver):
+		print '        OK (at least %s required)' % (minstr ,)
+	else:
+		print '        *** FAILED (at least %s required)' % (minstr,)
 
 ######################################################################
 ## numarray
 ######################################################################
+minnumver = (1, 1)
+minstr = '.'.join(map(str, minnumver))
+print '--------------------------------------------------------------'
+print 'numarray:'
+print '    importing numarray module...'
+try:
+	import numarray
+except ImportError:
+	print '    *** Failed to import numarray.  Install numarray version %s or greater' % (minstr,)
+else:
+	mystr = numarray.__version__
+	mynumver = map(int, mystr.split('.'))
+	print '    numarray version: %s' % (mystr,)
+	if versionAtLeast(mynumver, minnumver):
+		print '        OK (at least %s required)' % (minstr ,)
+	else:
+		print '        *** FAILED (at least %s required)' % (minstr,)
+
+######################################################################
+## Python XML module
+######################################################################
+minxmlver = (0, 8, 3)
+minstr = '.'.join(map(str,minxmlver))
+print '--------------------------------------------------------------'
+print 'Python XML module:'
+print '    importing xml module...'
+try:
+	import xml
+except:
+	print '    *** Could not import xml module.'
+	print '      You must install Python xml version %s or greater' % (minstr,)
+else:
+	mystr = xml.__version__
+	myxmlver = xml.version_info
+	print '    Python XML version: %s' % (mystr,)
+	if versionAtLeast(myxmlver, minxmlver):
+		print '        OK (at least %s required)' % (minstr ,)
+	else:
+		print '        *** FAILED (at least %s required)' % (minstr,)
 
 ######################################################################
 ## wxPython
@@ -130,4 +188,3 @@ else:
 	app = MyApp(0)
 	app.MainLoop()
 	print '    wxPython test successful'
-
