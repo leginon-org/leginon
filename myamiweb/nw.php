@@ -9,12 +9,13 @@ $fft = ($_GET[fft]) ? '&fft='.$_GET[fft] : '';
 $filter = ($_GET[flt]) ? '&flt='.$_GET[flt] : '';
 $binning = ($_GET[binning]) ? '&binning='.$_GET[binning] : '';
 $colormap = ($_GET[colormap]) ? '&colormap='.$_GET[colormap] : '';
+$autoscale = ($_GET[autoscale]) ? '&autoscale='.$_GET[autoscale] : '';
 $psel = ($_GET['psel']) ? '&psel='.urlencode($_GET['psel']) : ''; 
 
-$options = $tg.$sb.$minpix.$maxpix.$fft.$filter.$binning.$colormap.$psel;
+$options = $tg.$sb.$minpix.$maxpix.$fft.$filter.$binning.$colormap.$autoscale.$psel;
 
 $filename = $leginondata->getFilenameFromId($id);
-$imgsrc = "getparentimgtarget.php?preset=".$_GET[preset]."&session=".$_GET[session]."&id=".$id."&t=png&s=0".$options;
+$imgsrc = "getimg.php?preset=".$_GET[preset]."&session=".$_GET[session]."&id=".$id."&t=png&s=0".$options;
 ?>
 <html>
 <head>

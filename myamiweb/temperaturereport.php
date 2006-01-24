@@ -103,12 +103,12 @@ echo "<td colspan='2'>";
 <br>
 <?
 
-$TEMP_DB_HOST = 'cronus1';
-$TEMP_DB_USER = 'usr_object';
-$TEMP_DB_PASS = '';
-$TEMP_DB = 'temperature';
+$TEMPERATURE_DB_HOST = 'cronus4';
+$TEMPERATURE_DB_USER = 'usr_inst';
+$TEMPERATURE_DB_PASS = '';
+$TEMPERATURE_DB = 'instrumentation';
 
-$db =  new mysql ($TEMP_DB_HOST, $TEMP_DB_USER, $TEMP_DB_PASS, $TEMP_DB);
+$db =  new mysql ($TEMPERATURE_DB_HOST, $TEMPERATURE_DB_USER, $TEMPERATURE_DB_PASS, $TEMPERATURE_DB);
 
 $q = 'SELECT `name` , `description`, `color` '
         . ' FROM `channelinfo` '

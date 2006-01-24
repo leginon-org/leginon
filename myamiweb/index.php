@@ -7,7 +7,8 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require('inc/util.inc');
+require('inc/viewer.inc');
+require ('inc/leginon.inc');
 $link = new iconlink();
 $link->setImagePath('img/');
 $link->cols = 2;
@@ -16,17 +17,52 @@ $link->addlink('3wviewer.php','3 Way Viewer','', '3wviewer');
 $link->addlink('loi.php','LOI','', 'loi');
 $link->addlink('admin.php','Administration','', 'admin');
 
+$ip = $_SERVER['REMOTE_ADDR'];
+$host = $_SERVER['REMOTE_HOST'];
+
+$title = "Viewed sessions";
+$R = $leginondata->getviewerlog('last');
+$content="<b>Lastest:</b><table>";
+foreach ($R as $r) {
+	$url = "3wviewer.php?expId=".$r['sessionId'];
+	$content .= "<tr><td><a href='".$url."'>".$r['name']."</a> ".$r['comment']."</td></tr>";
+}
+$content.="</table>";
+
+$content.="<b>Most:</b><table>";
+$R = $leginondata->getviewerlog('most');
+foreach ($R as $r) {
+	$url = "3wviewer.php?expId=".$r['sessionId'];
+	$content .= "<tr><td><a href='".$url."'>".$r['name']."</a> ".$r['comment']."</td></tr>";
+}
+$content.="</table>";
+$log = display_table($title, $content);
+
+$title = "Viewed sessions from : $host";
+
+$R = $leginondata->getviewerlog('last', $host, $ip);
+$content="<b>Lastest:</b><table>";
+foreach ($R as $r) {
+	$url = "3wviewer.php?expId=".$r['sessionId'];
+	$content .= "<tr><td><a href='".$url."'>".$r['name']."</a> ".$r['comment']."</td></tr>";
+}
+$content.="</table>";
+$R = $leginondata->getviewerlog('most', $host, $ip);
+$content.="<b>Most:</b><table>";
+foreach ($R as $r) {
+	$url = "3wviewer.php?expId=".$r['sessionId'];
+	$content .= "<tr><td><a href='".$url."'>".$r['name']."</a> ".$r['comment']."</td></tr>";
+}
+$content.="</table>";
+$log_from = display_table($title, $content);
+
+
+$title = "Leginon II database Tools";
+viewer_header($title);
 ?>
-
-<html>
-<head>
-<title>Leginon II database Tools</title>
-<link rel="stylesheet" href="css/viewer.css" type="text/css" /> 
-</head>
-<body Background='img/background.jpg'>
-
-
-
+<style>
+	BODY {background-image:url('img/background.jpg')}
+</style>
 
 
 <center><h1>Leginon II Database Tools</h1></center>
@@ -34,10 +70,17 @@ $link->addlink('admin.php','Administration','', 'admin');
 <noscript>
 <?=divtitle("<center>Please enable Javascript in you Browser</center>")?>
 </noscript>
-<?
-$link->Display();
-?>
-
+<table>
+<tr valign="top">
+	<td>
+		<?echo $log_from?>
+		<?echo $log?>
+	</td>
+	<td>
+		<?=$link->Display(); ?>
+	</td>
+</tr>
 </table>
-</body>
-</html>
+<?
+viewer_footer();
+?>

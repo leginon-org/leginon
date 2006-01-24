@@ -29,12 +29,13 @@ if ($id) {
 	echo "<font style='font-size: 12px;'>";
 	$newimage = $leginondata->findImage($id, $preset);
 	$id = $newimage[id];
+	$imageinfo = $leginondata->getImageInfo($id);
 			$gridId	= $leginondata->getGridId($id);
 			$projectdata = new project();
 			if($projectdata->checkDBConnection()) {
 				$gridinfo = $projectdata->getGridInfo($gridId);
 				if ($gridId)
-					echo '<a class="header" target="gridinfo" href="'.$PROJECT_URL.'getgrid.php?gridId='.$gridId.'">grid# '.$gridinfo[number].' info&raquo;</a>';
+					echo '<a class="header" target="gridinfo" href="'.$PROJECT_URL.'getgrid.php?gridId='.$gridId.'">grid#'.$gridinfo[number].' info&raquo;</a>';
 			}
 			list($filename) = $leginondata->getFilename($id);
 			$presets = $leginondata->getPresets($id, $p);
@@ -42,8 +43,10 @@ if ($id) {
 			foreach($presets as $k=>$v)
 				if ($k=='defocus')
 					echo " <b>$k:</b> ",($leginondata->formatDefocus($v));
-				else if ($k=='pixelsize')
+				else if ($k=='pixelsize') {
+					$v *= $imageinfo['binning'];
 					echo " <b>$k:</b> ",($leginondata->formatPixelsize($v));
+				}
 				else if ($k=='dose') {
 					if (!empty($v))
 						echo " <b>$k:</b> ",($leginondata->formatDose($v));

@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.21 $
- *	@version $Id: image.inc,v 1.21 2005-10-11 16:44:20 dfellman Exp $
+ *	@version $Revision: 1.22 $
+ *	@version $Id: image.inc,v 1.22 2006-01-24 19:09:56 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -92,11 +92,12 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 
 		if ($binning=='auto')
 			$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
+
 		if ($p[mrc]) {
-                        $imgmrc = mrcread($pic);
-                        mrcbinning($imgmrc, $binning);
-                        return $imgmrc;
-                }
+			$imgmrc = mrcread($pic);
+			mrcbinning($imgmrc, $binning);
+			return $imgmrc;
+		}
 		if ($p[fft]) {
 			$img = getfft($pic, $p[minpix], $p[maxpix], $p[colormap], $binning);
 		}
@@ -158,7 +159,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			imagestringshadow($img, 4, $ctx, $cty, $tn, $col);
 			
 		    }
-		    if ($targets = $leginondata->getImageFocusTargets($imageId, true)) 
+		    if ($targets = $leginondata->getImageFocusTargets($imageId)) 
 		    foreach ($targets as $target) {
 			$tgn=$target[tversion];
 			$tn='focus';
@@ -391,6 +392,7 @@ class Mosaic {
 			$curimageinfo = $leginondata->getImageInfo($v);
 			$dr = $curimageinfo['delta row'];
 			$dc = $curimageinfo['delta column'];
+			
 			if (is_null($dr) || is_null($dc))
 				continue;
 			$imageinfo[] = $curimageinfo;
@@ -428,7 +430,7 @@ class Mosaic {
 		$squaresize = $imageinfo[0][dimx]/$ratio;
 		$this->params['mrc'] = 1;
 		$this->params['size'] = $squaresize;
-		$this->params['binning'] =  ($ratio<1) ? 1 : $ratio;
+		$this->params['binning'] = ($ratio<1) ? 1 : $ratio;
 
 		if ($fromImg)
 			$img = $fromImg;
@@ -439,6 +441,10 @@ class Mosaic {
 			$squarepoints = getsquarepoints($cx, $cy, $angle, $squaresize);
 			$dst_x = $squarepoints[0];
 			$dst_y = $squarepoints[1];
+			if($dst_x<0)
+				$dst_x=0;
+			if($dst_y<0)
+				$dst_y=0;
 			$gimg = getImage($sessionId, $r[imageId], $preset, $this->params);
 			$src_w = mrcsx($gimg);
 			$src_h = mrcsy($gimg);

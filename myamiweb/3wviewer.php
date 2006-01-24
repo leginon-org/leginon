@@ -12,9 +12,6 @@ $preset = $_POST[$_POST[controlpre]];
 $lastId = $leginondata->getLastSessionId();
 $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
 
-// --- Get data type list
-$datatypes = $leginondata->getAllDatatypes($sessionId);
-
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
 
@@ -29,6 +26,8 @@ $sessionId_exists = $leginondata->sessionIdExists($sessions, $sessionId);
 if (!$sessionId_exists)
 	$sessionId=$sessions[0][id];
 $filenames = $leginondata->getFilenames($sessionId, $preset);
+// --- Get data type list
+$datatypes = $leginondata->getAllDatatypes($sessionId);
 
 $viewer = new viewer();
 if($projectdb) {
@@ -59,6 +58,7 @@ $viewer->add($view3);
 
 
 $javascript .= $viewer->getJavascriptInit();
+require('inc/auth.inc');
 ?>
 <html>
 <head>

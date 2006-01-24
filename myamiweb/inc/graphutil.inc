@@ -55,6 +55,8 @@ function drawcross ($img, $cx, $cy, $size, $col, $arc=true, $angle=0, $shadow=fa
 }
 
 function drawsquare($img, $squarepoints, $col) {
+	if (!is_array($squarepoints))
+		return;
 	$npoints=count($squarepoints)/2;
 	imagepolygon($img, $squarepoints, $npoints, $col);
 	return true;

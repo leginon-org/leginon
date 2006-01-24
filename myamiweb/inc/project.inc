@@ -25,22 +25,23 @@ class project {
 	}
 
 	function getGridInfo($gridId){
-                $info=array();
-                $q='select gridId, label as "label", '
-                  .'date_format(prepdate,"%m/%e/%Y") as prepdate, '
-                  .'specimenId, '
-                  .'substrate, '
-                  .'preparation, '
-                  .'number, '
-                  .'note, '
-                  .'boxId, '
-                  .'peopleId '
-                  .'from grids '
-                  .'where gridId="'.$gridId.'"';
+		$q='select g.gridId, label as "label", '
+		  .'date_format(g.prepdate,"%m/%e/%Y") as prepdate, '
+		  .'g.specimenId, '
+		  .'g.substrate, '
+		  .'g.preparation, '
+		  .'g.number, '
+		  .'g.note, '
+		  .'g.boxId, '
+		  .'g.peopleId, '
+		  .'l.location '
+		  .'from grids g '
+		  .'left join gridlocations l '
+		  .'on (l.gridId = g.gridId) '
+		  .'where g.gridId="'.$gridId.'"';
 
-                $RgridInfo = $this->mysql->SQLQuery($q);
-                $info = mysql_fetch_array($RgridInfo, MYSQL_ASSOC);
-                return $info;
+		list($info) = $this->mysql->getSQLResult($q);
+		return $info;
 	}
 
 	function getProjects($type=""){

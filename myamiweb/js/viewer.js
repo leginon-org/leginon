@@ -291,9 +291,6 @@ function setImageStatus(viewname) {
 	quality = eval("jsquality"+viewname);
 	quality = (isNaN(quality)) ? quality : "jpg"+quality;
 	newstatus = " filter:"+filter+" bin:"+binning+" "+quality;
-	if (imgstatus = document.getElementById(viewname+"imgstat")) {
-		imgstatus.childNodes[0].nodeValue = newstatus;
-	}
 }
 
 function setImageHistogram(viewname) {

@@ -30,10 +30,12 @@ if ($min > $defaultmax)
 	$min = $defaultmax;
 if ($max > $defaultmax)
 	$max = $defaultmax;
-if (!$autoscale=$_REQUEST['autoscale'])
+if (!$autoscale=$_GET['autoscale'])
 	$autoscale=0;
+if ($_POST && !$_POST['autoscale']) {
+	$autoscale=0;
+}
 $currentgradient='grad.php';
-
 
 $arrayurl = explode("/", $_SERVER['PHP_SELF']);
 array_pop($arrayurl);
@@ -105,9 +107,7 @@ function update() {
 	if (qualitylist = document.adjustform.quality)
 		jsquality=qualitylist.options[qualitylist.selectedIndex].value;
 	parentwindow.setquality(jsviewname,jsquality);
-//	parentwindow.setImageStatus(jsviewname);
 	parentwindow.newfile(jsviewname);
-//	parentwindow.setImageHistogram(jsviewname);
 }
 
 function drawSliders() {
@@ -234,8 +234,8 @@ function init(){
 	</select>
 	</td>
 	<td>AutoScale
-		<?$sel = ($autoscale) ? 'checked' : '';?>
-		<input type="checkbox" name="autoscale" <?=$sel?> onClick="setautoscale()">
+		<?$sel = ($autoscale==1) ? "checked" : "" ?>
+		<input type="checkbox" name="autoscale" <?=$sel?> value="1" onClick="setautoscale()">
 		
 	</td>
 	</tr>

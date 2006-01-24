@@ -860,7 +860,7 @@ class view {
 		$htmlframe .= '<tr>
 				<td  width="'.$this->size.'">';
 		$htmlframe .= '
-<div><div id="loadingdiv'.$this->name.'" style="position:absolute; z-index:69; visibility: hidden"><h4> Loading <img src="img/progress.gif"></h4></div></div>
+<div><div id="loadingdiv'.$this->name.'" style="position:absolute; z-index:69; visibility: hidden"><h4> Loading <img src="img/progress_1.gif"></h4></div></div>
 		';
 		$htmlframe .= '
 			<a href="javascript:void(0)" id="'.$this->name.'href">'.
@@ -880,4 +880,47 @@ class view {
 	}
 }
 
+function viewer_header($title="", $javascript="", $onload="") {
+	global $_SERVER;
+
+/*
+	$authlib = new authlib;
+	$login_check = $authlib->is_logged();
+	$username = $login_check[0];
+	$privilege = $login_check[2];
+	$onload = (empty($onload)) ? '' : 'onload="'.$onload.'"';
+	$url = "ln=".urlencode($_SERVER['REQUEST_URI']);
+*/
+
+	echo '
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"  "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
+		<link rel="stylesheet" type="text/css" href="css/view.css">
+	';
+	if (!empty($title))
+			echo '<title>',$title,'</title>';
+	if (!empty($javascript))
+		echo $javascript;
+	echo '
+	</head>
+	<body '.$onload.' >
+';
+/*
+	if ($username) {
+		echo '<a class="header" href="logout.php">[Logout '.$username.']</a>';
+	} else {
+		if (!ereg('login.php', $_SERVER['PHP_SELF']))
+			echo '<a class="header" href="login.php?'.$url.'">[Login]</a>';
+	}
+*/
+}
+
+function viewer_footer() {
+echo '
+	</body>
+</html>
+';
+}
 ?>

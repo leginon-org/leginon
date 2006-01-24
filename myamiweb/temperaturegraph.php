@@ -36,10 +36,10 @@ if($ch6 = $_GET['ch6'])
 if($ch7 = $_GET['ch7'])
 	$channels[] = '7';
 
-$TEMPERATURE_DB_HOST = 'cronus1';
-$TEMPERATURE_DB_USER = 'usr_object';
+$TEMPERATURE_DB_HOST = 'cronus4';
+$TEMPERATURE_DB_USER = 'usr_inst';
 $TEMPERATURE_DB_PASS = '';
-$TEMPERATURE_DB = 'temperature';
+$TEMPERATURE_DB = 'instrumentation';
 
 $db =  new mysql ($TEMPERATURE_DB_HOST, $TEMPERATURE_DB_USER, $TEMPERATURE_DB_PASS, $TEMPERATURE_DB);
 

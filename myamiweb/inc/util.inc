@@ -389,4 +389,20 @@ function dumpData($data, $keys="") {
 	return $dump;
 }
 
+function display_table($title, $content) {
+	$html = '
+<table border="0" cellpadding="1" cellspacing="1">
+		 <tr  class="bgimg1" height="20"> 
+			<td>'.$title.'
+			</td> 
+		</tr>
+		 <tr>
+		<td>
+		<div class="textarea">'.$content.'</div>
+		</td>
+		 </tr>
+		</table> 
+	';
+	return $html;
+}
 ?>

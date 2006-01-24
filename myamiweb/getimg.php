@@ -87,6 +87,8 @@ if ($g) {
 				'scalebar'=>false
 			);
 		
+
+	//	$gridIds = array($gridIds[0], $gridIds[1],$gridIds[2], $gridIds[3]); 
 		$mosaic = new Mosaic();
 		$mosaic->setImageIds($gridIds);
 		$mosaic->setImageParams($imgparams);

@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.48 $
- *	@version $Id: leginon.inc,v 1.48 2006-01-13 22:51:00 dfellman Exp $
+ *	@version $Revision: 1.49 $
+ *	@version $Id: leginon.inc,v 1.49 2006-01-24 19:09:57 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -308,27 +308,45 @@ class leginondata {
 	}
 
 	function getPresets($fileId, $presets=array('mag','defocus','pixelsize','dose')) {
+		$sqljoin=array();
 		if (!$presetfields = $this->mysql->getFields('PresetData'))
 			return array();
 		if (!is_array($presets) || !$fileId)
 			return false;
 		if (in_array('mag', $presets))
 			$sqlselect[]="scope.magnification as mag";
-		if (in_array('defocus', $presets))
-			$sqlselect[]="scope.defocus";
+		if (in_array('defocus', $presets)) {
+			$emtargetId= $this->getId(
+					array('DEF_id' => $fileId),
+					'AcquisitionImageData',
+					'REF|EMTargetData|emtarget'
+					);
+			if ($emtargetId) {
+				$sqlselect[]="scope.defocus-em.`delta z` as `defocus`";
+				$sqljoin[]="left join `EMTargetData` em "
+				."on (em.`DEF_id` =  a.`REF|EMTargetData|emtarget`)";
+			} else {
+				$sqlselect[]="scope.defocus";
+			}
+		}
 		if (in_array('pixelsize', $presets))
 			$sqlselect[]="pi.pixelsize";
 		if (in_array('dose', $presets) && in_array('dose', $presetfields))
 			$sqlselect[]="p.dose";
 		$sqlselectstr=implode(', ',$sqlselect);
+		$sqljoinstr=implode(', ',$sqljoin);
 		$q='
 		select '.$sqlselectstr.'
 		from AcquisitionImageData a , PixelSizeCalibrationData pi 
 			left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) 
+			left join CameraEMData c on (a.`REF|CameraEMData|camera`=c.`DEF_id`)
 		'
 		.' left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) '
-		.' where scope.`REF|InstrumentData|tem`=pi.`REF|InstrumentData|tem`
+		.$sqljoinstr
+		.' where (scope.`REF|InstrumentData|tem`=pi.`REF|InstrumentData|tem`
 				and scope.magnification = pi.magnification 
+				and c.`REF|InstrumentData|ccdcamera`=pi.`REF|InstrumentData|ccdcamera`
+				and pi.`DEF_timestamp`  < a.`DEF_timestamp` )
 				and a.`DEF_id` = '.$fileId.'
 		order by pi.`DEF_timestamp` desc limit 1
 		';
@@ -448,27 +466,27 @@ class leginondata {
 	}
 
 	function getImageList($id) {
-                $q="SELECT "
-                ."`a`.`REF|ImageListData|list` as `list`"
-                ."FROM "
-                ."`AcquisitionImageData` AS `a` "
-                ."WHERE `a`.`DEF_id`=$id";
-                list($R) = $this->mysql->getSQLResult($q);
+		$q="SELECT "
+		."`a`.`REF|ImageListData|list` as `list`"
+		."FROM "
+		."`AcquisitionImageData` AS `a` "
+		."WHERE `a`.`DEF_id`=$id";
+		list($R) = $this->mysql->getSQLResult($q);
+		
+		$q="SELECT "
+		."`a`.`DEF_id` as `id` "
+		."FROM "
+		."`AcquisitionImageData` AS `a` "
+		."WHERE `a`.`REF|ImageListData|list`=".$R['list'];
+		$r = $this->mysql->getSQLResult($q);
+		$l=array();
+		if (is_array($r))
+		foreach($r as $ids) {
+			$l[] = $ids['id'];
+		}
+		return $l;
 
-                $q="SELECT "
-                ."`a`.`DEF_id` as `id` "
-                ."FROM "
-                ."`AcquisitionImageData` AS `a` "
-                ."WHERE `a`.`REF|ImageListData|list`=".$R['list'];
-                $r = $this->mysql->getSQLResult($q);
-                $l=array();
-                if (is_array($r))
-                foreach($r as $ids) {
-                        $l[] = $ids['id'];
-                }
-                return $l;
-
-        }
+	}
 
 	function getMosaicImages($id) {
 		$listId = $this->getId(
@@ -476,11 +494,12 @@ class leginondata {
 				'MosaicTileData',
 				'REF|ImageListData|list'
 				);
-		return $this->getId(
+		$r= $this->getId(
 				array( 'REF|ImageListData|list'  => $listId),
 				'MosaicTileData',
 				'REF|AcquisitionImageData|image'
 				);
+		return $r;
 	}
 
 	function getFilename($name) {
@@ -604,8 +623,11 @@ class leginondata {
 			."atan2(mcal.`ARRAY|matrix|1_1`, mcal.`ARRAY|matrix|2_1`) as angle "
 			."from AcquisitionImageData a, MatrixCalibrationData mcal "
 			."left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) "
+			."left join CameraEMData c on (a.`REF|CameraEMData|camera`=c.`DEF_id`) "
 			."where "
 			."scope.`REF|InstrumentData|tem`=mcal.`REF|InstrumentData|tem` "
+			."and "
+			."c.`REF|InstrumentData|ccdcamera`=mcal.`REF|InstrumentData|ccdcamera` "
 			."and "
 			."scope.magnification = mcal.magnification "
 			."and "
@@ -908,8 +930,8 @@ class leginondata {
 			|| in_array($preset, $this->defaulttypes)
 			|| $preset == $this->manualtype
 		) { 
-			$newimage[id] = $imageinfo[imageId];
-			$newimage[preset] = $imageinfo[preset];
+			$newimage[id] = ($imageinfo[imageId]) ? $imageinfo[imageId] : $imgId;
+			$newimage[preset] = ($imageinfo[preset]) ? $imageinfo[preset] : $preset;
 			return $newimage;
 		}
 
@@ -1796,7 +1818,42 @@ class leginondata {
 			return False;
 	}
 
+	function getviewerlog($type, $host="",$ip="") {
+		if (!$this->mysql->SQLTableExists('viewer_log')) 
+			return array();
+		$where = array();
+		if ($host) {
+			$where[] = "`host`='".$host."'";
+			$where[] = "`ip`='".$ip."'";
+		}
+		$sql_where = ($where) ? "WHERE ".join(' OR ', $where) : "";
+		$sql_select = "`l`.`ip`, `l`.`host`, `l`.`url`, `l`.`sessionId`, `s`.`name`, `s`.`comment`";
+		$sql_date = "date_format(max(`l`.`timestamp`), '%d %M %Y') as `timestamp`";
+		$sql_order_date = "order by `l`.`timestamp` DESC";
+		$sql_nb = "count(`l`.`sessionId`) as `nb`";
+		$sql_order_nb = "order by `nb` DESC";
+		$sql_limit = " limit 5";
+		
+		if ($type=="most")
+
+		$q =	"SELECT $sql_select, $sql_nb FROM `viewer_log` AS `l` "
+			."LEFT JOIN `SessionData` AS `s` ON (`s`.`DEF_id`=`l`.`sessionId`) "
+			.$sql_where
+			." group by `l`.`sessionId` "
+			.$sql_order_nb.$sql_limit;
+		else
+		$q =	"SELECT $sql_select, $sql_date FROM `viewer_log` AS `l` "
+			."LEFT JOIN `SessionData` AS `s` ON (`s`.`DEF_id`=`l`.`sessionId`) "
+			.$sql_where
+			." group by `l`.`sessionId` "
+			.$sql_order_date.$sql_limit;
+
+		return $this->mysql->getSQLResult($q);
+	}
+
+
 }
+
 
 $leginondata = new leginondata();
 
