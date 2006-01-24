@@ -182,6 +182,16 @@ function addComment() {
 	}
 }
 
+function newdatatype(view) {
+	if (listcontrol = eval("document.viewerform.controlpre.value"))
+		if (listcontrol==view+"pre") {
+			newexp();
+			return;
+		}
+	else
+		newfile(view);
+}
+
 function newfile(view){
 	jssize = eval(view+"size");
 	jsvfile = eval("jsvfile"+view);

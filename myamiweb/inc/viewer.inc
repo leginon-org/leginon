@@ -803,7 +803,7 @@ class view {
 		';
 		if (is_array($datatypes)) {
 		$htmlframe .='
-					<select name="'.$prename.'" onchange="newexp()" > 
+				<select name="'.$prename.'" onchange="newdatatype(\''.$name.'\')" > 
 		';
 		foreach ($datatypes as $k=>$v) {
 			if ($k==$selpre) $s='selected'; else $s=''; 	
