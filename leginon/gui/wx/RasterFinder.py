@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.21 $
+# $Revision: 1.22 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-01-12 23:52:25 $
+# $Date: 2006-01-24 22:39:28 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -143,9 +143,11 @@ class PolygonSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
 		self.widgets['select polygon'] = wx.CheckBox(self, -1, 'Wait for polygon selection')
+		self.widgets['publish polygon'] = wx.CheckBox(self, -1, 'Publish polygon vertices as targets')
 
 		szpolygon = wx.GridBagSizer(5, 5)
 		szpolygon.Add(self.widgets['select polygon'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szpolygon.Add(self.widgets['publish polygon'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sb = wx.StaticBox(self, -1, 'Polygon')
 		sbszpolygon = wx.StaticBoxSizer(sb, wx.VERTICAL)

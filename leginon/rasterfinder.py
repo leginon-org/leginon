@@ -23,6 +23,7 @@ class RasterFinder(targetfinder.TargetFinder):
 	settingsclass = data.RasterFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({
+		'publish polygon': False,
 		'image filename': '',
 		'raster spacing': 100,
 		'raster angle': 0,
@@ -236,3 +237,5 @@ class RasterFinder(targetfinder.TargetFinder):
 		self.logger.info('Publishing targets...')
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)
+		if self.settings['publish polygon']:
+			self.publishTargets(imdata, 'Polygon Vertices', targetlist)

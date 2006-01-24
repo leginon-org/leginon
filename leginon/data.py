@@ -1913,6 +1913,7 @@ class JAHCFinderSettingsData(HoleFinderSettingsData):
 class RasterFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
 		return TargetFinderSettingsData.typemap() + (
+			('publish polygon', bool),
 			('image filename', str),
 			('raster spacing', int),
 			('raster angle', float),
