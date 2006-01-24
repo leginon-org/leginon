@@ -991,40 +991,18 @@ class PresetsManager(node.Node):
 				if key not in ('x','y'):
 					del mystage[key]
 
-		## figure out how to transform the target image shift
-		## ???
-		## for now, assume that image shift targets are not passed
-		## across mag mode ranges, so newimage is straight from 
-		## newpreset
-		## Within the same mag mode, use target - oldpreset + newpreset
+		## this assumes that image shift is preserved through a mag change
+		## although this may not always be true.  In particular, I think
+		## that LM and M/SA mag ranges have different image shift coord systems
+		myimage['x'] -= oldpreset['image shift']['x']
+		myimage['x'] += newpreset['image shift']['x']
+		myimage['y'] -= oldpreset['image shift']['y']
+		myimage['y'] += newpreset['image shift']['y']
 
-		if oldpreset['magnification'] < 1500:
-			oldmag = 'LM'
-		else:
-			oldmag = 'SA'
-		if newpreset['magnification'] < 1500:
-			newmag = 'LM'
-		else:
-			newmag = 'SA'
-
-		if oldmag == newmag:
-			self.logger.info('Using same magnification mode')
-			myimage['x'] -= oldpreset['image shift']['x']
-			myimage['x'] += newpreset['image shift']['x']
-			myimage['y'] -= oldpreset['image shift']['y']
-			myimage['y'] += newpreset['image shift']['y']
-
-			mybeam['x'] -= oldpreset['beam shift']['x']
-			mybeam['x'] += newpreset['beam shift']['x']
-			mybeam['y'] -= oldpreset['beam shift']['y']
-			mybeam['y'] += newpreset['beam shift']['y']
-		else:
-			self.logger.info('Using different magnification mode')
-			myimage['x'] = newpreset['image shift']['x']
-			myimage['y'] = newpreset['image shift']['y']
-
-			mybeam['x'] = newpreset['beam shift']['x']
-			mybeam['y'] = newpreset['beam shift']['y']
+		mybeam['x'] -= oldpreset['beam shift']['x']
+		mybeam['x'] += newpreset['beam shift']['x']
+		mybeam['y'] -= oldpreset['beam shift']['y']
+		mybeam['y'] += newpreset['beam shift']['y']
 
 		### create ScopeEMData with preset and target shift
 		scopedata = data.ScopeEMData()
