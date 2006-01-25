@@ -176,13 +176,20 @@ else:
 	class MyApp(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'wxPython test window')
-			self.sizer = wx.BoxSizer(wx.VERTICAL)
-			#button = wx.Button(frame, -1)
-			#self.sizer.Add(button, 1)
+			self.sizer = wx.BoxSizer()
+
+			button = wx.Button(frame, -1, 'TEST')
+			button.SetBackgroundColour(wx.RED)
+			self.sizer.Add(button, 1, border=50, flag=wx.ALL)
+			self.Bind(wx.EVT_BUTTON, self.test, button)
+
 			frame.SetSizerAndFit(self.sizer)
 			self.SetTopWindow(frame)
 			frame.Show(True)
 			return True
+
+		def test(self, evt):
+			print 'TEST'
 	
 	print '    Testing a wxPython application.  Close the window that pops up...'
 	app = MyApp(0)
