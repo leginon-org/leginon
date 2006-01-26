@@ -3,7 +3,7 @@ class button {
 
 	var $crlf="\n";
 	var $path='img/';
-	var $link='javascript:void(0)';
+	var $link=false;
 
 	function button($name,$type) {
 		$this->name = $name."_bt";
@@ -30,19 +30,25 @@ class button {
 	}
 
 	function onClick($jsaction) {
-		$this->jsaction = $jsaction.'()';
+		$this->jsaction = 'javascript:'.$jsaction.'()';
 	}
 
 	function display() {
 		$iconwidth=15;
 		$name = $this->name;
 		$imgname = $this->name.'img';
-		$htmlbutton = '<a id="'.$this->name.'href" '.$this->target.' href="'.$this->link.'"'.$this->crlf
+		$llink=$this->link;
+		$laction=$this->jsaction;
+		if (!$llink)
+			$llink=$laction;
+		else
+			$onclick='onClick="'.$laction.'" '.$this->crlf;
+		$htmlbutton = '<a id="'.$this->name.'href" '.$this->target.' href="'.$llink.'"'.$this->crlf
 				.'onmouseover="imageonfocus(\''.$imgname.'\', \''.$this->name.'\', \'_over\')"'.$this->crlf
 				.'onmouseout="imageoff(\''.$imgname.'\', \''.$this->name.'\', \'\')"'.$this->crlf 
 				.'onmouseup="imageoff(\''.$imgname.'\', \''.$this->name.'\', \'\')"'.$this->crlf 
 				.'onmousedown="imageon(\''.$imgname.'\', \''.$this->name.'\', \'\')"'.$this->crlf 
-				.'onClick="'.$this->jsaction.'" '.$this->crlf 
+				.$onclick
 				.'><img name="'.$imgname
 				.'" src="'.$this->path.$this->type.'_off.gif"'.$this->crlf
 				.'" alt="'.$this->type.'"'
@@ -56,14 +62,14 @@ class togglebutton {
 
 	var $crlf="\n";
 	var $path='img/';
-	var $link='javascript:void(0)';
+	var $link=false;
 	var $defaultstate = 'false';
 
 	function togglebutton($name, $imgoff, $imgon="") {
 		$this->name = $name."_bt";
 		$this->imgoff = $imgoff."_bt";
 		$this->imgon = ($imgon) ? $imgon."_bt" : $this->imgoff;
-		$this->toggle = 'setstate(\''.$this->name.'img\', \''.$this->name.'\');';
+		$this->toggle = 'javascript:setstate(\''.$this->name.'img\', \''.$this->name.'\');';
 	}
 
 	function getJavascript() {
@@ -105,11 +111,17 @@ class togglebutton {
 		$iconwidth=15;
 		$name = $this->name;
 		$imgname = $this->name.'img';
-		$htmlbutton = '<a id="'.$this->name.'href" '.$this->target.' href="'.$this->link.'"'.$this->crlf
+		$llink=$this->link;
+		$laction=$this->jsaction;
+		if(!$llink) {
+			$llink="javascript:".$laction;
+			$laction="";
+		}
+		$htmlbutton = '<a id="'.$this->name.'href" '.$this->target.' href="'.$llink.'"'.$this->crlf
 				.'onmouseover="imageonfocus(\''.$imgname.'\', \''.$this->name.'\', \'_over\')"'.$this->crlf
 				.'onmouseout="imageonfocus(\''.$imgname.'\', \''.$this->name.'\', \'\')"'.$this->crlf
 				.'onclick="'
-				.$this->toggle.' '.$this->jsaction.'"'.$this->crlf 
+				.$this->toggle.' '.$laction.'"'.$this->crlf 
 				.'><img name="'.$imgname
 				.'" src="'.$this->path.$imgdefault.'"'.$this->crlf
 				.'" alt="'.$this->imgoff.'"'
@@ -119,4 +131,3 @@ class togglebutton {
 	}
 }
 ?>
-
