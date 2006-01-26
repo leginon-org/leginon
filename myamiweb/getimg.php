@@ -88,13 +88,12 @@ if ($g) {
 			);
 		
 
-	//	$gridIds = array($gridIds[0], $gridIds[1],$gridIds[2], $gridIds[3]); 
 		$mosaic = new Mosaic();
 		$mosaic->setImageIds($gridIds);
 		$mosaic->setImageParams($imgparams);
 		$mosaic->setCurrentImageId($nId);
 		$mosaic->setFrameColor(0,255,0);
-		$mosaic->setSize(512);
+		$mosaic->setSize($size);
 		$mosaic->displayLoadtime($displayloadingtime);
 		$mosaic->displayFrame($displaytarget);
 		$mosaic->displayScalebar($displayscalebar);

@@ -275,9 +275,31 @@ function getmicrotime()
 
 function matrix($a11, $a12, $a21, $a22) {
 	return array(
-			array($a11, $a12),
-			array($a21, $a22)
+			'1'=>array('1'=>$a11, '2'=>$a12),
+			'2'=>array('1'=>$a21, '2'=>$a22)
 		);
+}
+
+function matrix_inverse($matrix) {
+	$a11 = $matrix[1][1];
+	$a12 = $matrix[1][2];
+	$a21 = $matrix[2][1];
+	$a22 = $matrix[2][2];
+	$d = $a11*$a22-$a12*$a21;
+	return matrix($a22/$d, -$a12/$d, -$a21/$d, $a11/$d);
+	
+}
+
+function matrix_multiply($matrix, $vector) {
+	$vect=array();
+	foreach ($matrix as $i=>$row) {
+		$k=0;
+		foreach ($row as $v) {
+			$vect[$i] += $v * $vector[$k];
+			$k++;
+		}
+	}
+	return $vect;
 }
 
 function displayMatrix($matrix) {

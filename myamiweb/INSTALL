@@ -6,7 +6,7 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-DBEM - leginon DataBase tools for Electron Microscopy
+DBEM - DataBase tools for Electron Microscopy
 
 
 -------------
@@ -41,23 +41,23 @@ Configuration:
 	$DB		= "[database]";
 
 ----------------------------
-Add mrcmodule.so in php.ini:
+Add mrc.so in php.ini:
 ----------------------------
 
 	$ vi /etc/php.ini and locate the extension directory and add
-				mrcmodule.so under [Extension section]:
+				mrc.so under [Extension section]:
 
 	; Directory in which the loadable extensions (modules) reside.
 	extension_dir = "./"
 	extension_dir = /usr/lib/php/extensions
 
 	[extension section]
-	extension=mrcmodule.so
+	extension=mrc.so
 
 	Copy the extension file, and restart the web server
 
-	$ cp ext/mrcmodule.so /usr/lib/php/extensions/
-	$ /etc/init.d/apache restart
+	$ cp ext/mrc.so /usr/lib/php/extensions/
+	$ /etc/init.d/apache[version] restart
 
 --------------
 run:

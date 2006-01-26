@@ -100,19 +100,6 @@ function stopPlayback() {
 	pl_interval = "";;
 }
 
-function playback() {
-	if (isImageLoaded('v1')) {
-		incIndex();
-		updateviews();
-	}
-}
-
-function clearinterval() {
-	view = "v1";
-	n_img_interval = eval("n_img_interval"+view);
-	window.clearInterval(n_img_interval);
-}
-
 function setprogressbar(view) {
 	loadingdiv = false;
 	if (loadingdivstyle = document.getElementById("loadingdiv"+view).style) {
@@ -208,10 +195,6 @@ function newfile(view){
 		if (list)
 			prem.value = selpreset;
 
-	// -- Autoscale --
-	if (autoscale==true) {
-//		getImageAutoScale(view);
-	}
 	setImageStatus(view);
 
 	if (eval(view+"fft_bt_st")) fft="&fft=1"; else fft="";
@@ -233,7 +216,6 @@ function newfile(view){
 
 	if (options == lastoptions[vid])
 		return;
-
 
 	ni = jsimagescriptcur+"?"+options;
 	nlink = "javascript:popUpMap('map.php?"+options+"')";

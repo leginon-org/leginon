@@ -246,13 +246,6 @@ class mysql {
 		return(true);
 	}
 
-	function executeSQLInsert($query) {
-		$this->connect_db();
-		mysql_query($query) or die("Error: ".mysql_error());
-		$this->close_db();
-		return mysql_insert_id();
-	}
-
 	function SQLInsert($table, $data) {
 		if (!$data || !$table || !is_array($data))
 			return False;
@@ -264,6 +257,45 @@ class mysql {
 				$data[$k] = "'".addslashes($v)."'";
 		$q = "INSERT INTO `$table` (".implode(', ',$fields).") VALUES (".implode(', ',$data).")";
 		return $this->SQLQuery($q,true);
+	}
+
+	function array_to_sql($data) {
+		if (!$data || !is_array($data))
+			return False;
+		$sqlformat=array();
+		foreach ($data as $k=>$v) {
+			if (!is_numeric($v))
+				$v = "'".addslashes($v)."'";
+			$sqlformat[] = "`$k`=".$v;
+		} 
+			$sql .= join(' AND ', $sqlformat);
+		return $sql;
+	}
+
+	function array_to_select($data) {
+		if (!$data || !is_array($data))
+			return False;
+		$sqlformat=array();
+		foreach ($data as $field) {
+			$sqlformat[] = "`$field`";
+		}
+		$sql .= join(', ', $sqlformat);
+		return $sql;
+	}
+
+	function SQLInsertIfNotExists($table, $data) {
+		if (!$sql=$this->array_to_sql($data))
+			return False;
+		$q = "SELECT * from `$table` "
+			."WHERE $sql";
+		$res = $this->SQLQuery($q);
+		if (mysql_num_rows($res)>0) {
+			return False;
+		} else {
+			$this->SQLInsert($table, $data);
+			return True;
+		}
+		
 	}
 
 	function SQLUpdate($table, $data, $where="") {
@@ -393,6 +425,62 @@ class mysql {
 		if (in_array($table, $tables))
 			$istable = true;
 		return $istable;
+	}
+
+	function getId($parameters) {
+		// --- return id from specified table. $where_fields is an array
+		// containing the "where" condition:
+		//	field1=>value1, field12=>value2, ...
+		if (!$table = $parameters['table'])
+			return false;
+		if (!$where_fields = $parameters['where'])
+			$where_fields=array();
+		if (!$id=$parameters['id'])
+			$id=$this->getPriKey($table);
+
+		$acq_fields = $this->getFields($table); 
+		$where = array();
+		foreach ($where_fields as $k=>$f) {
+			if (!in_array($k, $acq_fields))
+				return false;
+			$where[] = "`$k`='".addslashes($f)."'";
+		}
+		if (empty($where))
+			return false;
+		$wherestr = implode(' and ', $where);
+		$q = 'select `'.$id.'` as id from `'.$table.'`'
+			.' where '.$wherestr;
+		$R = $this->SQLQuery($q);
+		$ids = array();
+		while ($r = mysql_fetch_array($R))
+			$ids[] = $r[id];
+
+		if (count($ids)==1)
+			return $ids[0];
+		else
+			return $ids;
+	}
+
+	function getData($parameters) {
+		if (!$table = $parameters['table'])
+			return false;
+		if (!$select = $this->array_to_select($parameters['field']))
+			return false;
+		if (is_array($parameters['where'])) {
+			$sql_where = $this->array_to_sql($parameters['where']);
+			if ($sql_where)
+				$sql_where = "WHERE $sql_where";
+		}
+		if (!$sql_order=$parameters['order'])
+			$sql_order="";
+		if (!$sql_limit=$parameters['limit'])
+			$sql_limit="";
+		$q = "SELECT $select from `$table` "
+			.$sql_where
+			.$sql_order
+			.$sql_limit;
+		echo $q;
+		return $this->getSQLResult($q);
 	}
 
 }

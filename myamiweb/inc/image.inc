@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.22 $
- *	@version $Id: image.inc,v 1.22 2006-01-24 19:09:56 dfellman Exp $
+ *	@version $Revision: 1.23 $
+ *	@version $Id: image.inc,v 1.23 2006-01-26 23:12:28 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -44,7 +44,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 
 	$leginondata = new leginondata();
 	// --- get image path
-	$path = $leginondata->getImagePath($sessionId);
+	$path = $leginondata->getImagePathFromImageId($imageId);
 
 	// --- find image
 	$newimage = $leginondata->findImage($imageId, $preset);
@@ -138,6 +138,8 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				$col = $white;
 				$crosscol = $white;
 			}
+//			if (!$target[x] || !$target[y] || !$target[dimx] || !$target[dimy] )
+//				continue;
 			$tn = $target[tnumber];
 			$ratioX = ($size) ? $size/$target[dimx] : (($binning) ? 1/$binning : 1);
 			$ratioY = ($size) ? $size/$target[dimy] : (($binning) ? 1/$binning : 1);
@@ -182,6 +184,26 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			drawcross($img, $cx, $cy, $crosssize*$ratioX, $crosscol);
 			imagestringshadow($img, 4, $ctx, $cty, $tn, $col);
 		    }
+		}
+		if ($p[displayicethicktarget]) {
+			$r = $leginondata->getIceThicknessFromImage($imageId);
+			$imageinfo = $leginondata->getImageInfo($imageId);
+			$ratioX = ($size) ? $size/$imageinfo[dimx] : (($binning) ? 1/$binning : 1);
+			$ratioY = ($size) ? $size/$imageinfo[dimy] : (($binning) ? 1/$binning : 1);
+			$crosssize=20;
+			$crosscol = $yellow;
+			$col = $white;
+			foreach($r as $data) {
+				$cx = ($data[column]+$imageinfo[dimx]/2)*$ratioX;
+				$cy = ($data[row]+$imageinfo[dimy]/2)*$ratioY;
+				$cx = ($data[column])*$ratioX;
+				$cy = ($data[row])*$ratioY;
+				$tn = $data[column]." ".$data[row];
+				$ctx = $cx+$crosssize/2;
+				$cty = $cy;
+				drawcross($img, $cx, $cy, $crosssize*$ratioX, $crosscol);
+				imagestringshadow($img, 4, $ctx, $cty, $tn, $col);
+			}
 		}
 		if ($driftdirection=0) {
 		    if ($targets = $leginondata->getImageFocusTargets($imageId, true)) {
@@ -275,11 +297,12 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 
 }
 
+
 function blankimage($w=256, $h="") {
 	if (!$h)
 		$h=$w;
 	$blkimg = imagecreate($w, $h);
-	imagecolorallocate($blkimg, 255, 255, 255);
+	$w = imagecolorallocate($blkimg, 255, 255, 255);
 	return $blkimg;
 }
 
@@ -468,10 +491,10 @@ class Mosaic {
 		mrcupdateheader($mrcimg);
 		$img = mrctoimage($mrcimg);
 		mrcdestroy($mrcimg);
-			if ($this->displayframe) {
-				drawsquare($img, $crossquare, $mosaicframecol);
-				imagestringshadow($img, 4, $cdx, $cdy, $cnb , $mosaicframecol);
-			}
+		if ($this->displayframe) {
+			drawsquare($img, $crossquare, $mosaicframecol);
+			imagestringshadow($img, 4, $cdx, $cdy, $cnb , $mosaicframecol);
+		}
 
 		if ($crossquare) {
 			$col = $crosscol;

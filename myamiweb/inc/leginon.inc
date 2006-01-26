@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.49 $
- *	@version $Id: leginon.inc,v 1.49 2006-01-24 19:09:57 dfellman Exp $
+ *	@version $Revision: 1.50 $
+ *	@version $Id: leginon.inc,v 1.50 2006-01-26 23:12:28 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -374,9 +374,7 @@ class leginondata {
 
 	function formatPath($path) {
 	# temporary here
-		$npath = eregi_replace('^.*colossus.amishare','/ami/amishare',$path);
-		$npath = eregi_replace('^Z:','/ami/amishare',$path);
-		$npath = ereg_replace('[\\]','/',$npath);
+		$npath = ereg_replace('[\\]','/',$path);
 		$npath = ereg("/$", $npath) ? $npath : $npath."/";
 		return $npath;
 	}
@@ -398,35 +396,27 @@ class leginondata {
 		return $this->formatPath($path[path]);
 	}
 
+	function getImagePathFromImageId($imageId) {
+		$q = "select `REF|SessionData|session` as sessionId from AcquisitionImageData "
+			."where `DEF_id`=$imageId";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $this->getImagePath($r['sessionId']);
+	}
+
 	function findField($name) {
 	    $result = $this->mysql->SQLQuery("SHOW TABLES");
 	    while($row = mysql_fetch_row($result))
 		$tables[] = $row[0];
 	}
 
-	function getId($fields=array(), $table = "AcquisitionImageData", $id="DEF_id") {
-		$acq_fields = $this->mysql->getFields($table); 
-		$where = array();
-		
-		foreach ($fields as $k=>$f) {
-			if (!in_array($k, $acq_fields))
-				return false;
-			$where[] = "`$k`='".addslashes($f)."'";
-		}
-		if (empty($where))
-			return false;
-		$wherestr = implode(' and ', $where);
-		$q = 'select `'.$id.'` as id from `'.$table.'`'
-			.' where '.$wherestr;
-		$R = $this->mysql->SQLQuery($q);
-		$ids = array();
-		while ($r = mysql_fetch_array($R))
-			$ids[] = $r[id];
-
-		if (count($ids)==1)
-			return $ids[0];
-		else
-			return $ids;
+	function getId($where_fields=array(), $table = "AcquisitionImageData", $id="DEF_id") {
+		// --- return id from specified table. $where_fields is an array
+		// containing the "where" condition:
+		//	field1=>value1, field12=>value2, ...
+		$parameters['table']=$table;
+		$parameters['where']=$where_fields;
+		$parameters['id']=$id;
+		return $this->mysql->getId($parameters);
 	}
 
 	function getAll($table) {
@@ -441,11 +431,11 @@ class leginondata {
 		$formated_fields = array();
 		$acq_fields = $this->mysql->getFields($table); 
 		foreach ($acq_fields as $f) {
-			$f = ($f=='DEF_timestamp') ?  "UNIX_TIMESTAMP(`$f`) as `date`" : "`$f`";
 			if (is_array($fields) && !empty($fields)) { 	
 				if (!in_array($f, $fields))
 					continue;
 			}
+			$f = ($f=='DEF_timestamp') ?  "UNIX_TIMESTAMP(`$f`) as `date`" : "`$f`";
 			$formated_fields[] = $f;
 		}
 		$str_fields = implode(', ', $formated_fields);
@@ -584,6 +574,48 @@ class leginondata {
 			.$sql_limit;
 
 		return $this->mysql->getSQLResult($q);
+	}
+
+	function itransform($imgId, $type) {
+		$m = $this->getImageMatrixCalibration($imgId, $type);
+		$matrix = matrix($m[a11],$m[a12],$m[a21],$m[a22]);
+		$presetId=$this->getId(
+				array('DEF_id'=>$imgId),
+				'AcquisitionImageData',
+				'REF|PresetData|preset');
+		$scopeId=$this->getId(
+				array('DEF_id'=>$imgId),
+				'AcquisitionImageData',
+				'REF|ScopeEMData|scope');
+		$cameraId=$this->getId(
+				array('DEF_id'=>$imgId),
+				'AcquisitionImageData',
+				'REF|CameraEMData|camera');
+		list($cameraInfo)=$this->getDataInfo('CameraEMData', $cameraId);
+		list($scopeInfo)=$this->getDataInfo('ScopeEMData', $scopeId);
+		list($presetInfo)=$this->getDataInfo('PresetData', $presetId);
+		$binx = $cameraInfo['SUBD|binning|x'];
+		$biny = $cameraInfo['SUBD|binning|y'];
+		switch ($type) {
+			case 'stage position':
+				$vector = array($scopeInfo['SUBD|stage position|x'],
+					$scopeInfo['SUBD|stage position|y']);
+				break;
+			case 'image shift':
+				$vector = array($scopeInfo['SUBD|image shift|x'],
+					$scopeInfo['SUBD|image shift|y']);
+				break;
+		}
+		$matrix_inv = matrix_inverse($matrix);
+		$pixvect = matrix_multiply($matrix_inv, $vector);
+		$pixpermeterx = hypot($matrix_inv[1][1], $matrix_inv[2][1]);
+		$pixpermetery = hypot($matrix_inv[1][2], $matrix_inv[2][2]);
+		$transform['angle']=$m['angle'];
+		$transform['pixvect']=array(	'row'=>$pixvect[1]/$biny,
+						'col'=>$pixvect[2]/$binx);
+		$transform['pixpermeter']=array('x'=>$pixpermeterx, 'y'=>$pixpermetery);
+		return $transform;
+
 	}
 
 	function getCalibrations($calibration, $scopeId=False, $cameraId=False, $limit='', $type='') {
