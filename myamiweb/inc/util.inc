@@ -344,6 +344,12 @@ function displayMatrix($matrix) {
 	return $html;
 }
 
+function format_filename_str($filename) {
+	$filestr = ereg_replace('[[:alnum:]]+_(.*)', '\1', $filename);
+	$filestr = ereg_replace('00', '', $filestr);
+	return $filestr;
+}
+
 function format_sci_number($data) {
 
 	$decimal = @func_get_arg(1);
@@ -399,16 +405,47 @@ function dumpData($data, $keys="") {
 	$crlf = "\n";
 	$sep = "	";
 	$dump = "<pre>";
-	$keys = ($keys) ? $keys : array_keys(current($data));
-	$dump .= implode($sep, $keys).$crlf;
+	$first = current($data);
+	$keys = ($keys) ? $keys : (is_array($first) ? array_keys($first) : '0');
+	if (is_array($keys))
+		$dump .= implode($sep, $keys).$crlf;
 	foreach ($data as $d) {
 		$f=array();
+		if (is_array($keys)) {
 		foreach ($keys as $k)
 			$f[] = $d[$k];
+		} else {
+			$f[] = $d;
+		}
 		$dump .= implode($sep, $f).$crlf;
 	}
 	$dump .= "</pre>";
 	return $dump;
+}
+
+function downloadfromfile($tmpfile, $filename="") {
+	if (empty($filename))
+		$filename = $tmpfile;
+
+	$mime_type = (USR_BROWSER_AGENT == 'MSIE' || USR_BROWSER_AGENT == 'OPERA')
+	? 'application/octetstream'
+	: 'application/octet-stream';
+	$mime_type = "application/force-download";
+
+	$now = gmdate('D, d M Y H:i:s') . ' GMT';
+
+	header('Content-Type: ' . $mime_type);
+	header('Expires: ' . $now);
+	header("Cache-Control: no-store, no-cache, must-revalidate");
+	if (USR_BROWSER_AGENT == 'MSIE') {
+		header('Content-Disposition: inline; filename="' . $filename . '"');
+		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+		header('Pragma: public');
+	} else {
+		header('Content-Disposition: attachment; filename="' . $filename . '"');
+		header('Pragma: no-cache');
+	}
+	readfile($tmpfile);
 }
 
 function display_table($title, $content) {
@@ -427,4 +464,14 @@ function display_table($title, $content) {
 	';
 	return $html;
 }
+
+function getPathFromString($str) {
+	//--- return path from a string
+	$parts = explode('/',$str);
+	if (!is_array($parts))
+		return $str;
+	array_pop($parts);
+	return implode('/',$parts);
+}
+
 ?>
