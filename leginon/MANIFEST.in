@@ -3,3 +3,4 @@ include noderegistry/default.ncr
 include icons/*.png
 include icons/processing/*.png
 include Leginon.pth
+include holetemplate.mrc
