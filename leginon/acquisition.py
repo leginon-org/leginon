@@ -658,8 +658,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imagetime < lastdeclaredtime:
 			self.logger.info('target needs shift')
 			# yes, now we need a recent image drift for this image
-			query = data.AcquisitionImageDriftData()
-			query['image'] = imagedata
+			query = data.AcquisitionImageDriftData(image=imagedata, session=self.session)
 			imagedrift = self.research(query, results=1)
 			# was image drift already measured for this image?
 			if not imagedrift:

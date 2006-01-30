@@ -97,6 +97,7 @@ class DriftManager(watcher.Watcher):
 		self.logger.info('rows %s, columns %s' % (rows, cols))
 		## publish AcquisitionImageDriftData here
 		imagedrift = data.AcquisitionImageDriftData()
+		imagedrift['session'] = self.session
 		imagedrift['image'] = im
 		imagedrift['rows'] = rows
 		imagedrift['columns'] = cols
