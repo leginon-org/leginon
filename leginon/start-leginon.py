@@ -2,5 +2,5 @@
 #
 # Normal users should start Leginon with this script.
 #
-import Leginon.start
-Leginon.start.start()
+import start
+start.start()
