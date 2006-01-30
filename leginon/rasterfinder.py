@@ -167,12 +167,6 @@ class RasterFinder(targetfinder.TargetFinder):
 			if (tmin <= t <= tmax) and (ts < tstd):
 				goodpoints.append(rasterpoint)
 				mylist.append( (rasterpoint, t, ts))
-				stat_str = 'OK:  '
-			else:
-				stat_str = 'BAD: '
-			ice_stat = '  mean: %.4f,     std: %.4f' % (t,ts)
-			stat_str = stat_str + str(rasterpoint) + ice_stat
-			self.logger.info(stat_str)
 
 		goodpoints = self.transpose_points(goodpoints)
 		self.logger.info('%s points with good ice' % (len(goodpoints),))
