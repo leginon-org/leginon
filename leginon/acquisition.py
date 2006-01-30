@@ -578,7 +578,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		notify DriftManager of drifting
 		'''
-		driftdetecteddata = data.DriftDetectedData(presetname=presetname, emtarget=emtarget, threshold=threshold)
+		driftdetecteddata = data.DriftDetectedData(session=self.session, presetname=presetname, emtarget=emtarget, threshold=threshold)
 		self.driftdone.clear()
 		self.publish(driftdetecteddata, pubevent=True, database=True, dbforce=True)
 		self.reportStatus('acquisition', 'Waiting for DriftManager...')

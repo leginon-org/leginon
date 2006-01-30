@@ -873,9 +873,9 @@ class CameraEMData(EMData):
 		)
 	typemap = classmethod(typemap)
 
-class DriftDetectedData(Data):
+class DriftDetectedData(InSessionData):
 	def typemap(cls):
-		return Data.typemap() + (
+		return InSessionData.typemap() + (
 			('emtarget', EMTargetData),
 			('presetname', str),
 			('threshold', float),
