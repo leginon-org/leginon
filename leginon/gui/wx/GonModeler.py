@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/GonModeler.py,v $
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-25 18:07:44 $
+# $Date: 2006-01-30 23:20:11 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -115,7 +115,7 @@ class Panel(gui.wx.Calibrator.Panel):
 
 	def onMeasurementDone(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_MEASURE, True)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_MEASURE, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
 
 	def measurementDone(self):
 		evt = gui.wx.Events.MeasurementDoneEvent()
