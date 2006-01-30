@@ -17,6 +17,7 @@ import instrument
 import os
 import re
 import calibrationclient
+import copy
 
 class AcquireError(Exception):
 	pass
@@ -295,7 +296,8 @@ class ManualAcquisition(node.Node):
 		self.logger.info('acquiring dose image')
 		# configure camera using settings, but only 512x512 to save time
 		origcam = self.settings['camera settings']
-		tmpcam = dict(origcam)
+		# deep copy so internal dicts don't get modified
+		tmpcam = copy.deepcopy(origcam)
 
 		## cut down to 512x512, adjust offset to keep same center
 		for axis in ('x','y'):
