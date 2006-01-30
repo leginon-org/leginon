@@ -416,4 +416,5 @@ class Node(object):
 		declared = data.DriftDeclaredData()
 		declared['system time'] = self.instrument.tem.SystemTime
 		declared['type'] = type
+		declared['session'] = self.session
 		self.publish(declared, database=True, dbforce=True)

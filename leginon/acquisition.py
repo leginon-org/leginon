@@ -646,7 +646,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imagetime = imagedata['scope']['system time']
 		self.logger.debug('ADJUSTTARGET, imagetime: %s' % (imagetime,))
 		# last declared drift
-		lastdeclared = self.research(data.DriftDeclaredData(), results=1)
+		lastdeclared = self.research(data.DriftDeclaredData(session=self.session), results=1)
 		self.logger.debug('ADJUSTTARGET, lastdeclared: %s' % (lastdeclared,))
 		if not lastdeclared:
 			## no drift declared, no adjustment needed
