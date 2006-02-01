@@ -2,6 +2,7 @@
 require ('inc/leginon.inc');
 require ('inc/project.inc');
 require ('inc/viewer.inc');
+require ('inc/auth.inc');
 
 $sessionId = ($_POST[sessionId]) ? $_POST[sessionId] : $_GET[expId];
 $projectId = ($_POST[projectId]) ? $_POST[projectId] : 'all';
@@ -50,18 +51,9 @@ $viewer->add($view1);
 
 
 $javascript .= $viewer->getJavascriptInit();
-require('inc/auth.inc');
+viewer_header('image viewer', $javascript, 'initviewer()');
 ?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"  "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
-<link rel="stylesheet" type="text/css" href="css/view.css">
-<title>Leginon Image Viewer</title>
-<?=$javascript?>
-</head>
-<body onload='initviewer();'>
-<a class="header" target="summary" href="summary.php?expId=<?=$sessionId?>">&lt;summary&gt;</A>
-<?$viewer->display();?>
-</body>
-</html>
+<a class="header" target="summary" href="summary.php?expId=<?=$sessionId?>">[summary]</A>
+<?$viewer->display();
+viewer_footer();
+?>

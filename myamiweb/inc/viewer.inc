@@ -888,16 +888,22 @@ function viewer_header($title="", $javascript="", $onload="") {
 	$login_check = $authlib->is_logged();
 	$username = $login_check[0];
 	$privilege = $login_check[2];
-	$onload = (empty($onload)) ? '' : 'onload="'.$onload.'"';
 	$url = "ln=".urlencode($_SERVER['REQUEST_URI']);
 */
 
+	$onload = (empty($onload)) ? '' : 'onload="'.$onload.'"';
+	$path = getPathFromString($_SERVER['SCRIPT_NAME']);
 	echo '
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"  "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 	<head>
 		<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 		<link rel="stylesheet" type="text/css" href="css/view.css">
+		<style>
+		.bgimg1 {
+			background-image:url('.$path.'/img/banner2.gif);
+		}
+		</style>
 	';
 	if (!empty($title))
 			echo '<title>',$title,'</title>';

@@ -262,7 +262,6 @@ function setform(input, value) {
 
 function isImageLoaded(view) {
 	if (img = document.images[eval("\"" +view+ "img\"")]) {
-		n_img = eval("n_img_"+view);
 		if (n_img.complete){
 			eval("n_img_"+view+"=new Image()");
 			return true;
