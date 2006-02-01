@@ -45,14 +45,6 @@ try:
 except:
 	pass
 
-'''
-try:
-	import ucsfgatan
-	register(ucsfgatan)
-except:
-	pass
-'''
-
 try:
 	import tietz
 	register(tietz)

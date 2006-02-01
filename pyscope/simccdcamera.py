@@ -2,6 +2,8 @@ import copy
 import ccdcamera
 import numarray
 import numarray.random_array
+import random
+random.seed()
 
 class SimCCDCamera(ccdcamera.CCDCamera):
     name = 'SimCCDCamera'
@@ -107,5 +109,10 @@ class SimCCDCamera(ccdcamera.CCDCamera):
         if self.exposure_type == 'dark' or self.exposure_time == 0:
             return numarray.zeros(shape, numarray.Float)
         else:
-            return numarray.random_array.random(shape)
+            image = numarray.random_array.random(shape)
+            row_offset = random.randint(-shape[0]/8, shape[0]/8) + shape[0]/4
+            column_offset = random.randint(-shape[1]/8, shape[1]/8) + shape[0]/4
+            image[row_offset:row_offset+shape[0]/4,
+                  column_offset:column_offset+shape[1]/4] = 1.0
+            return image
 
