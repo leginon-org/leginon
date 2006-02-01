@@ -126,6 +126,19 @@ else:
 		print '        *** FAILED (at least %s required)' % (minstr,)
 
 ######################################################################
+## numextension
+######################################################################
+print '--------------------------------------------------------------'
+print 'numextension:'
+print '    importing numextension module...'
+try:
+	import numextension
+except ImportError:
+	print '    *** Failed to import numextension.  Install numextension'
+else:
+		print '        OK (but no version checked)'
+
+######################################################################
 ## Python XML module
 ######################################################################
 minxmlver = (0, 8, 3)
@@ -192,6 +205,9 @@ else:
 			print 'TEST'
 	
 	print '    Testing a wxPython application.  Close the window that pops up...'
-	app = MyApp(0)
-	app.MainLoop()
+	try:
+		app = MyApp(0)
+		app.MainLoop()
+	except:
+		print '        Failed to start wx application.  This is usually because you do not have display permission'
 	print '    wxPython test successful'
