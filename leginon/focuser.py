@@ -78,6 +78,7 @@ class Focuser(acquisition.Acquisition):
         self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
         self.euclient = calibrationclient.EucentricFocusClient(self)
         self.focus_sequence = self.researchFocusSequence()
+				self.deltaz = 0.0
 
     def researchFocusSequence(self):
         user_data = data.UserData(initializer=self.session['user'].toDict())
