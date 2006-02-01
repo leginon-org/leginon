@@ -4,14 +4,16 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.61 $
+# $Revision: 1.62 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-08-15 19:14:16 $
-# $Author: pulokas $
+# $Date: 2006-02-01 21:56:12 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
+import copy
 import data
+import instrument
 import newdict
 import threading
 import wx
@@ -101,28 +103,42 @@ class Calibrations(wx.StaticBoxSizer):
 		self.Layout()
 
 class EditPresetDialog(gui.wx.Dialog.Dialog):
-	def __init__(self, parent, instrument, parameters):
+	def __init__(self, parent, parameters, tems, ccd_cameras):
 		self.parameters = parameters
-		self.instrument = instrument
-		self.tems = self.instrument.getTEMNames()
-		self.ccdcameras = self.instrument.getCCDCameraNames()
-		self.camerasizes = dict(self.instrument.camerasizes)
+		self.tems = tems
+		self.ccd_cameras = ccd_cameras
 
-		gui.wx.Dialog.Dialog.__init__(self, parent,
-																	'Edit Preset %s' % parameters['name'],
-																	'Preset Parameters')
+		try:
+			title =  'Edit Preset %s' % parameters['name']
+		except KeyError:
+			raise ValueError
+		gui.wx.Dialog.Dialog.__init__(self, parent, title, 'Preset Parameters')
+
+	def getMagChoices(self):
+		try:
+			mags = self.tems[parameters['tem']['name']]
+		except:
+			mags = []
+		return [str(int(m)) for m in mags]
+
+	def getTEMChoices(self):
+		choices = self.tems.keys()
+		choices.sort()
+		return [self.nonestring] + choices
+
+	def getCCDCameraChoices(self):
+		choices = self.ccd_cameras.keys()
+		choices.sort()
+		return [self.nonestring] + choices
 
 	def onInitialize(self):
 		parameters = self.parameters
 		self.nonestring = '(None)'
 
-		self.ctem = wx.Choice(self, -1, choices=[self.nonestring] + self.tems)
-		try:
-			mags = self.instrument.getMagnifications(parameters['tem']['name'])
-		except:
-			mags = []
-		magchoices = [str(int(m)) for m in mags]
-		self.cmag = wx.Choice(self, -1, choices=magchoices)
+		choices = self.getTEMChoices()
+		self.ctem = wx.Choice(self, -1, choices=choices)
+		choices = self.getMagChoices()
+		self.cmag = wx.Choice(self, -1, choices=choices)
 		self.fedefocus = FloatEntry(self, -1, chars=9)
 		self.fespotsize = FloatEntry(self, -1, chars=2)
 		self.feintensity = FloatEntry(self, -1, chars=9)
@@ -130,45 +146,69 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		self.feimageshifty = FloatEntry(self, -1, chars=9)
 		self.febeamshiftx = FloatEntry(self, -1, chars=9)
 		self.febeamshifty = FloatEntry(self, -1, chars=9)
-		self.cccdcamera = wx.Choice(self, -1,
-																choices=[self.nonestring] + self.ccdcameras)
+
+		choices = self.getCCDCameraChoices()
+		self.cccdcamera = wx.Choice(self, -1, choices=choices)
 		self.cbfilm = wx.CheckBox(self, -1, 'Use film')
+		self.cb_energy_filter = wx.CheckBox(self, -1, 'Energy filtered')
+		self.fe_energy_filter_width = FloatEntry(self, -1, chars=6)
 		self.cpcamconfig = gui.wx.Camera.CameraPanel(self)
 
-		if parameters['tem'] is None:
+		try:
+			tem = parameters['tem']
+		except KeyError:
+			tem = None
+		if tem is None:
 			self.ctem.SetStringSelection(self.nonestring)
 		else:
-			tem = parameters['tem']
 			if self.ctem.FindString(tem['name']) == wx.NOT_FOUND:
 				self.ctem.Append(tem['name'])
 			self.ctem.SetStringSelection(tem['name'])
-		if parameters['magnification'] is not None:
-			mag = str(int(parameters['magnification']))
-			if self.cmag.FindString(mag) == wx.NOT_FOUND:
-				self.cmag.Append(mag)
-			self.cmag.SetStringSelection(mag)
-		self.fedefocus.SetValue(parameters['defocus'])
-		self.fespotsize.SetValue(parameters['spot size'])
-		self.feintensity.SetValue(parameters['intensity'])
-		self.feimageshiftx.SetValue(parameters['image shift']['x'])
-		self.feimageshifty.SetValue(parameters['image shift']['y'])
-		self.febeamshiftx.SetValue(parameters['beam shift']['x'])
-		self.febeamshifty.SetValue(parameters['beam shift']['y'])
 
-		if parameters['ccdcamera'] is None:
+		try:
+			if parameters['magnification'] is not None:
+				mag = str(int(parameters['magnification']))
+				if self.cmag.FindString(mag) == wx.NOT_FOUND:
+					self.cmag.Append(mag)
+				self.cmag.SetStringSelection(mag)
+			self.fedefocus.SetValue(parameters['defocus'])
+			self.fespotsize.SetValue(parameters['spot size'])
+			self.feintensity.SetValue(parameters['intensity'])
+			self.feimageshiftx.SetValue(parameters['image shift']['x'])
+			self.feimageshifty.SetValue(parameters['image shift']['y'])
+			self.febeamshiftx.SetValue(parameters['beam shift']['x'])
+			self.febeamshifty.SetValue(parameters['beam shift']['y'])
+		except KeyError:
+			raise ValueError
+
+		try:
+			ccdcamera = parameters['ccdcamera']
+		except KeyError:
+			ccdcamera = None
+		if ccdcamera is None:
 			self.cccdcamera.SetStringSelection(self.nonestring)
 		else:
-			ccdcamera = parameters['ccdcamera']
 			if self.cccdcamera.FindString(ccdcamera['name']) == wx.NOT_FOUND:
 				self.cccdcamera.Append(ccdcamera['name'])
 			self.cccdcamera.SetStringSelection(ccdcamera['name'])
-		self.cbfilm.SetValue(bool(parameters['film']))
 
 		try:
-			self.cpcamconfig.setSize(self.camerasizes[ccdcamera['name']])
+			self.cbfilm.SetValue(bool(parameters['film']))
+			energy_filter = bool(parameters['energy filter'])
+			self.cb_energy_filter.SetValue(energy_filter)
+			energy_filter_width = parameters['energy filter width']
+			self.fe_energy_filter_width.SetValue(energy_filter_width)
+		except KeyError:
+			raise ValueError
+
+		try:
+			self.cpcamconfig.setSize(self.ccd_cameras[ccdcamera['name']])
 		except:
 			pass
-		self.cpcamconfig.setConfiguration(parameters)
+		try:
+			self.cpcamconfig.setConfiguration(parameters)
+		except KeyError:
+			raise ValueError
 
 		sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'TEM')
@@ -207,9 +247,13 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		sz.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.cccdcamera, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 		sz.Add(self.cbfilm, (1, 3), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.cpcamconfig, (3, 3), (5, 2), wx.EXPAND)
+		sz.Add(self.cb_energy_filter, (2, 3), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Energy filter width')
+		sz.Add(label, (3, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.fe_energy_filter_width, (3, 4), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sz.Add(self.cpcamconfig, (4, 3), (4, 2), wx.ALIGN_CENTER)
 
-		self.sz.Add(sz, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
+		self.sz.Add(sz, (0, 0), (1, 1), wx.EXPAND)
 
 		self.addButton('Save', id=wx.ID_OK)
 		self.addButton('Cancel', id=wx.ID_CANCEL)
@@ -224,7 +268,7 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 			choices = []
 		else:
 			try:
-				mags = self.instrument.getMagnifications(tem)
+				mags = self.tems[tem]
 				choices = [str(int(m)) for m in mags]
 			except KeyError:
 				choices = []
@@ -247,7 +291,7 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 	def onCCDCameraChoice(self, evt):
 		ccdcamera = evt.GetString()
 		try:
-			camerasize = self.camerasizes[ccdcamera]
+			camerasize = self.ccd_cameras[ccdcamera]
 		except KeyError:
 			camerasize = None
 		self.cpcamconfig.setSize(camerasize)
@@ -278,6 +322,8 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 			ccdcamera = None
 		parameters['ccdcamera'] = ccdcamera
 		parameters['film'] = self.cbfilm.GetValue()
+		parameters['energy filter'] = self.cb_energy_filter.GetValue()
+		parameters['energy filter width'] = self.fe_energy_filter_width.GetValue()
 		parameters.update(self.cpcamconfig.getConfiguration())
 		return parameters
 
@@ -595,7 +641,28 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 			return
 		if isinstance(preset, data.Data):
 			preset = preset.toDict(dereference=True)
-		dialog = EditPresetDialog(self, self.node.instrument, preset)
+
+		tems = {}
+		for tem_name in self.node.instrument.getTEMNames():
+			try:
+				tem = self.node.instrument.getTEM(tem_name)
+				tems[tem_name] = tem.Magnifications
+			except instrument.NotAvailableError:
+				continue
+		if not tems:
+			return
+
+		ccd_cameras = {}
+		for ccd_camera_name in self.node.instrument.getCCDCameraNames():
+			try:
+				ccd_camera = self.node.instrument.getCCDCamera(ccd_camera_name)
+				ccd_cameras[ccd_camera_name] = ccd_camera.CameraSize
+			except instrument.NotAvailableError:
+				continue
+		if not ccd_cameras:
+			return
+
+		dialog = EditPresetDialog(self, preset, tems, ccd_cameras)
 		if dialog.ShowModal() == wx.ID_OK:
 			self.node.updatePreset(evt.presetname, dialog.getParameters())
 		dialog.Destroy()
@@ -866,6 +933,8 @@ class Parameters(wx.StaticBoxSizer):
 		self.lblimageshift = self.labelclass(parent, -1, 'Image shift:')
 		self.lblbeamshift = self.labelclass(parent, -1, 'Beam shift:')
 		self.lblfilm = self.labelclass(parent, -1, 'Use film:')
+		self.lblenergyfilter = self.labelclass(parent, -1, 'Energy filtered:')
+		self.lblenergyfilterwidth = self.labelclass(parent, -1, 'Energy filter width:')
 		self.lbldimension = self.labelclass(parent, -1, 'Dimension:')
 		self.lbloffset = self.labelclass(parent, -1, 'Offset:')
 		self.lblbinning = self.labelclass(parent, -1, 'Binning:')
@@ -881,6 +950,8 @@ class Parameters(wx.StaticBoxSizer):
 		self.stbeamshift = wx.StaticText(parent, -1, '')
 		self.stccdcamera = wx.StaticText(parent, -1, '')
 		self.stfilm = wx.StaticText(parent, -1, '')
+		self.stenergyfilter = wx.StaticText(parent, -1, '')
+		self.stenergyfilterwidth = wx.StaticText(parent, -1, '')
 		self.stdimension = wx.StaticText(parent, -1, '')
 		self.stoffset = wx.StaticText(parent, -1, '')
 		self.stbinning = wx.StaticText(parent, -1, '')
@@ -907,26 +978,30 @@ class Parameters(wx.StaticBoxSizer):
 		sz.Add(self.lblbeamshift, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stbeamshift, (6, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.lbldose, (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.stdose, (7, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		sz.Add(self.lblccdcamera, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stccdcamera, (0, 5), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		sz.Add(self.lblfilm, (1, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stfilm, (1, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lbldimension, (2, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stdimension, (2, 5), (1, 1),
+		sz.Add(self.lblenergyfilter, (2, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.stenergyfilter, (2, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.lblenergyfilterwidth, (3, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.stenergyfilterwidth, (3, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.lbldimension, (4, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.stdimension, (4, 5), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lbloffset, (3, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stoffset, (3, 5), (1, 1),
+		sz.Add(self.lbloffset, (5, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.stoffset, (5, 5), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lblbinning, (4, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stbinning, (4, 5), (1, 1),
+		sz.Add(self.lblbinning, (6, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.stbinning, (6, 5), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lblexposuretime, (5, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stexposuretime, (5, 5), (1, 1),
+		sz.Add(self.lblexposuretime, (7, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.stexposuretime, (7, 5), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lbldose, (6, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stdose, (6, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		sz.AddGrowableCol(1)
 		sz.AddGrowableCol(5)
@@ -944,6 +1019,8 @@ class Parameters(wx.StaticBoxSizer):
 			self.stbeamshift.SetLabel('')
 			self.stccdcamera.SetLabel('')
 			self.stfilm.SetLabel('')
+			self.stenergyfilter.SetLabel('')
+			self.stenergyfilterwidth.SetLabel('')
 			self.stdimension.SetLabel('')
 			self.stoffset.SetLabel('')
 			self.stbinning.SetLabel('')
@@ -975,6 +1052,12 @@ class Parameters(wx.StaticBoxSizer):
 			else:
 				s = 'No'
 			self.stfilm.SetLabel(s)
+			if parameters['energy filter']:
+				s = 'Yes'
+			else:
+				s = 'No'
+			self.stenergyfilter.SetLabel(s)
+			self.stenergyfilterwidth.SetLabel(str(parameters['energy filter width']))
 			s = '%d x %d' % (parameters['dimension']['x'],
 												parameters['dimension']['y'])
 			self.stdimension.SetLabel(s)
@@ -1007,6 +1090,8 @@ class SelectParameters(Parameters):
 		selected['image shift'] = self.lblimageshift.GetValue()
 		selected['beam shift'] = self.lblbeamshift.GetValue()
 		selected['use film'] = self.lblfilm.GetValue()
+		selected['energy filter'] = self.lblenergyfilter.GetValue()
+		selected['energy filter width'] = self.lblenergyfilterwidth.GetValue()
 		selected['dimension'] = self.lbldimension.GetValue()
 		selected['offset'] = self.lbloffset.GetValue()
 		selected['binning'] = self.lblbinning.GetValue()
@@ -1023,6 +1108,8 @@ class SelectParameters(Parameters):
 															parameters is None or 'image shift' in parameters)
 		self.lblbeamshift.SetValue(parameters is None or 'beam shift' in parameters)
 		self.lblfilm.SetValue(parameters is None or 'use film' in parameters)
+		self.lblenergyfilter.SetValue(parameters is None or 'energy filter' in parameters)
+		self.lblenergyfilterwidth.SetValue(parameters is None or 'energy filter width' in parameters)
 		self.lbldimension.SetValue(parameters is None or 'dimension' in parameters)
 		self.lbloffset.SetValue(parameters is None or 'offset' in parameters)
 		self.lblbinning.SetValue(parameters is None or 'binning' in parameters)
@@ -1079,8 +1166,27 @@ if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Presets Test')
-			dialog = ImportDialog(frame, None)
-			dialog.Show()
+			preset = {
+				'name': 'Test Preset',
+				'magnification': 100.0,
+				'defocus': 0.0,
+				'spot size': 1,
+				'intensity': 0.0,
+				'image shift': {'x': 0.0, 'y': 0.0},
+				'beam shift': {'x': 0.0, 'y': 0.0},
+				'film': False,
+				'dimension': {'x': 1024, 'y': 1024},
+				'offset': {'x': 0, 'y': 0},
+				'binning': {'x': 1, 'y': 1},
+				'exposure time': 1000,
+				'energy filter': True,
+				'energy filter width': 0.0,
+			}
+			#dialog = EditPresetDialog(frame, preset, {}, {})
+			#dialog.Show()
+			panel = wx.Panel(frame, -1)
+			sz = Parameters(panel)
+			panel.SetSizer(sz)
 			self.SetTopWindow(frame)
 			frame.Show()
 			return True

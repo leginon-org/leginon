@@ -857,6 +857,9 @@ camera_params = (
 	('inserted', bool),
 	('dump', bool),
 	('pixel size', dict),
+	('energy filtered', bool),
+	('energy filter', bool),
+	('energy filter width', float),
 )
 
 class ScopeEMData(EMData):
@@ -1101,6 +1104,8 @@ class PresetData(InSessionData):
 			('film', bool),
 			('tem', InstrumentData),
 			('ccdcamera', InstrumentData),
+			('energy filter', bool),
+			('energy filter width', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1391,8 +1396,8 @@ class FocuserResultData(InSessionData):
 			('min', float),
 			('stig correction', int),
 			('defocus correction', str),
-            ('method', str),
-            ('status', str),
+			('method', str),
+			('status', str),
 			('drift', DriftData),
 		)
 	typemap = classmethod(typemap)
@@ -1996,8 +2001,8 @@ class AcquisitionSettingsData(SettingsData):
 class FocusSequenceData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
-            ('node name', str),
-            ('sequence', list),
+			('node name', str),
+			('sequence', list),
 		)
 	typemap = classmethod(typemap)
 

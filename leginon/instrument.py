@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.32 $
+# $Revision: 1.33 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-07-19 16:51:31 $
+# $Date: 2006-02-01 21:56:12 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -16,10 +16,10 @@ import remotecall
 import gui.wx.Events
 
 class InstrumentError(Exception):
-    pass
+	pass
 
 class NotAvailableError(InstrumentError):
-    pass
+	pass
 
 class Proxy(object):
 	def __init__(self, objectservice, session=None, wxeventhandler=None):
@@ -377,5 +377,8 @@ parametermapping = (
 	('image data', 'Image'),
 	('inserted', 'Inserted'),
 	('pixel size', 'PixelSize'),
+	('energy filtered', 'EnergyFiltered'),
+	('energy filter', 'EnergyFilter'),
+	('energy filter width', 'EnergyFilterWidth'),
 )
 

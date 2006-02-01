@@ -382,7 +382,7 @@ class PresetsManager(node.Node):
 		self.setOrder()
 		self.panel.presetsEvent()
 
-	def toScope(self, pname, magonly=False, outputevent=True):
+	def toScope(self, pname, magonly=False, outputevent=True, final=False):
 		'''
 		'''
 		presetdata = self.presetByName(pname)
@@ -407,6 +407,9 @@ class PresetsManager(node.Node):
 		else:
 			scopedata.friendly_update(presetdata)
 			cameradata.friendly_update(presetdata)
+			if not final:
+				cameradata['energy filter'] = None
+				cameradata['energy filter width'] = None
 
 		self.logger.info(beginmessage)
 
@@ -559,7 +562,7 @@ class PresetsManager(node.Node):
 		if not self.settings['cycle']:
 			if dofinal:
 				try:
-					self.toScope(presetname)
+					self.toScope(presetname, final=True)
 				except PresetChangeError:
 					pass
 			self.beep()
@@ -623,7 +626,7 @@ class PresetsManager(node.Node):
 		## final preset change
 		if dofinal:
 			try:
-				self.toScope(thiscycle[-1])
+				self.toScope(thiscycle[-1], final=True)
 			except PresetChangeError:
 				return
 			self.logger.info('Cycle completed')
