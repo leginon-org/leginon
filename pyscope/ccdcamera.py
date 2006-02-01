@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyScope/ccdcamera.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-12-14 17:07:32 $
+# $Date: 2006-02-01 21:55:07 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -94,6 +94,12 @@ class CCDCamera(object):
 
 	def getImage(self):
 		raise NotImplementedError
+
+	def getRetractable(self):
+		return False
+
+	def getEnergyFiltered(self):
+		return False
 
 class FastCCDCamera(CCDCamera):
 	name = 'Fast CCD Camera'

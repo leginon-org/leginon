@@ -116,3 +116,21 @@ class SimCCDCamera(ccdcamera.CCDCamera):
                   column_offset:column_offset+shape[1]/4] = 1.0
             return image
 
+    def getEnergyFiltered(self):
+        return True
+
+    def getEnergyFilter(self):
+        return self.energy_filter
+
+    def setEnergyFilter(self, value):
+        self.energy_filter = bool(value)
+
+    def getEnergyFilterWidth(self):
+        return self.energy_filter_width
+
+    def setEnergyFilterWidth(self, value):
+        self.energy_filter_width = float(value)
+
+    def alignEnergyFilterZeroLossPeak(self):
+        pass
+

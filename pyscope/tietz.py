@@ -171,104 +171,6 @@ class Tietz(object):
 
 		cameracontrol.addCamera(self)
 
-		self.methodmapping = {
-			'binning': {'get':'getBinning',
-									'set': 'setBinning'},
-			'dimension': {'get':'getDimension',
-										'set': 'setDimension'},
-			'offset': {'get':'getOffset',
-									'set': 'setOffset'},
-			'exposure time': {'get':'getExposureTime',
-												'set': 'setExposureTime'},
-			'exposure type': {'get':'getExposureType',
-												'set': 'setExposureType'},
-			'image data': {'get':'getImage'},
-			'chip name': {'get':'getChipName'},
-			'camera name': {'get':'getCameraName'},
-			'camera size': {'get':'getCameraSize'},
-			'pixel size': {'get':'getPixelSize'},
-			'maximum pixel value': {'get':'getMaximumPixelValue'},
-			'number of gains': {'get':'getNumberOfGains'},
-			'gain factors': {'get':'getGainFactors'},
-			'number of speeds': {'get':'getNumberOfSpeeds'},
-			'speeds': {'get':'getSpeeds'},
-			'live mode available': {'get':'getLiveModeAvailable'},
-			'number of dead columns': {'get':'getNumberOfDeadColumns'},
-			'dead columns': {'get':'getDeadColumns'},
-			'simulation image path': {'get':'getSimulationImagePath'},
-			'gain': {'get':'getGain'},
-			'gain index': {'get':'getGainIndex',
-											'set': 'setGainIndex'},
-			'speed': {'get':'getSpeed'},
-			'speed index': {'get':'getSpeedIndex',
-															'set': 'setSpeedIndex'},
-			'image transform': {'get':'getImageTransform',
-													'set': 'setImageTransform'},
-			'temperature': {'get':'getTemperature',
-											'set': 'setTemperature'},
-			'shutter open delay': {'get':'getShutterOpenDelay',
-															'set': 'setShutterOpenDelay'},
-			'shutter close delay': {'get':'getShutterCloseDelay',
-															'set': 'setShutterCloseDelay'},
-			'serial number': {'get':'getSerialNumber'},
-			'preamp delay': {'get':'getPreampDelay',
-												'set': 'setPreampDelay'},
-			'parallel mode': {'get':'getParallelMode',
-												'set': 'setParallelMode'},
-			'hardware gain index': {'get':'getHardwareGainIndex'},
-			'hardware speed index': {'get':'getHardwareSpeedIndex'},
-			'retractable': {'get':'getRetractable'},
-			'camera axis': {'get':'getCameraAxis'},
-			'speed table gain switch': {'set': 'setUseSpeedTableForGainSwitch'},
-		}
-
-		self.typemapping = {
-			'binning': {'type': dict, 'values':
-																		{'x': {'type': int}, 'y': {'type': int}}},
-			'dimension': {'type': dict, 'values':
-																		{'x': {'type': int}, 'y': {'type': int}}},
-			'offset': {'type': dict, 'values':
-																		{'x': {'type': int}, 'y': {'type': int}}},
-			'exposure time': {'type': int},
-			'exposure type': {'type': str,
-												'values': ['normal', 'dark', 'bias', 'readout']},
-			'image data': {'type': numarray.ArrayType},
-			'chip name': {'type': str},
-			'camera name': {'type': str},
-			'camera size': {'type': dict, 'values':
-																		{'x': {'type': int}, 'y': {'type': int}}},
-			'pixel size': {'type': dict, 'values':
-																	{'x': {'type': float}, 'y': {'type': float}}},
-			'maximum pixel value': {'type': int},
-			'number of gains': {'type': int},
-			'gain factors': {'type': list},
-			'number of speeds': {'type': int},
-			'speeds': {'type': list},
-			'live mode available': {'type': bool},
-			'number of dead columns': {'type': int},
-			'dead columns': {'type': list},
-			'simulation image path': {'type': str},
-			'gain': {'type': int},
-			'gain index': {'type': int},
-			'speed': {'type': int},
-			'speed index': {'type': int},
-			'image transform': {'type': dict, 'values':
-							{'mirror': {'type': str, 'values': ['horizontal', 'vertical']},
-								'rotation': {'type': int,	'values': [0, 90, 180, 270]}}},
-			'temperature': {'type': float},
-			'shutter open delay': {'type': int},
-			'shutter close delay': {'type': int},
-			'serial number': {'type': str},
-			'preamp delay': {'type': int},
-			'parallel mode': {'type': bool},
-			'hardware gain index': {'type': int},
-			'hardware speed index': {'type': int},
-			'retractable': {'type': bool},
-			'camera axis': {'type': str},
-			'speed table gain switch': {'type': bool},
-			'dump': {'type': bool},
-		}
-
 		for methodname, dependencies in self.dependencymapping.items():
 			supported = True
 			for dependency in dependencies:
@@ -276,12 +178,7 @@ class Tietz(object):
 				if permission not in self._getParameterPermissions(parametername):
 					supported = False
 			if not supported:
-				#object.__getattribute__(self, 'unsupported').append(methodname)
 				self.unsupported.append(methodname)
-				for key, methods in self.methodmapping.items():
-					for methodtype, method in methods.items():
-						if method == methodname:
-							del methods[methodtype]
 
 	def __getattribute__(self, attr_name):
 		if attr_name in object.__getattribute__(self, 'unsupported'):
