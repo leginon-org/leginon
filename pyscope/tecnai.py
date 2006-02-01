@@ -304,7 +304,7 @@ class Tecnai(tem.TEM):
 				stigmator = self.tecnai.Projection.DiffractionStigmator
 			else:
 				raise ValueError
-	   
+
 			if relative == 'relative':
 				try:
 					stigs[key]['x'] += stigmator.X
@@ -614,8 +614,7 @@ class Tecnai(tem.TEM):
 				if winerror.SUCCEEDED(wcode) and text is None:
 					raise ValueError('no extended error information, assuming stage limit was hit')
 				else:
-					# ?
-					raise
+					raise RuntimeError(text)
 
 #		for key in position:
 #			while abs(getattr(self.tecnai.Stage.Position, key.upper())
@@ -633,16 +632,15 @@ class Tecnai(tem.TEM):
 				return 'off'
 		except pythoncom.com_error, (hr, msg, exc, arg):
 			if exc is None:
-				# No extended error information, assuming low dose is disenabled
+				# No extended error information, assuming low dose is disabled
 				return 'disabled'
 			else:
 				wcode, source, text, helpFile, helpId, scode = exc
 				if winerror.SUCCEEDED(wcode) and text is None:
-					# No extended error information, assuming low dose is disenabled
+					# No extended error information, assuming low dose is disabled
 					return 'disabled'
 				else:
-					# ?
-					pass
+					raise RuntimeError(text)
  
 	def setLowDose(self, ld):
 		try:
@@ -665,8 +663,7 @@ class Tecnai(tem.TEM):
 					# No extended error information, assuming low dose is disenabled
 					raise RuntimeError('Low dose is not enabled')
 				else:
-					# ?
-					pass
+					raise RuntimerError(text)
 
 	def getLowDoseModes(self):
 		return ['exposure', 'focus1', 'focus2', 'search', 'unknown', 'disabled']
@@ -693,8 +690,7 @@ class Tecnai(tem.TEM):
 					# No extended error information, assuming low dose is disenabled
 					return 'disabled'
 				else:
-					# ?
-					pass
+					raise RuntimerError(text)
 		
 	def setLowDoseMode(self, mode):
 		try:
@@ -718,8 +714,7 @@ class Tecnai(tem.TEM):
 					# No extended error information, assuming low dose is disenabled
 					raise RuntimeError('Low dose is not enabled')
 				else:
-					# ?
-					pass
+					raise RuntimerError(text)
 	
 	def getDiffractionMode(self):
 		if self.tecnai.Projection.Mode == win32com.client.constants.pmImaging:
@@ -1063,4 +1058,17 @@ class Tecnai(tem.TEM):
 				= win32com.client.constants.dtYYMMDD
 		else:
 			raise ValueError('Invalid film date type specified')
+
+	def runBufferCycle(self):
+		try:
+			self.tecnai.Vacuum.RunBufferCycle()
+		except pythoncom.com_error, (hr, msg, exc, arg):
+			if exc is None:
+				raise RuntimeError('no extended error information')
+			else:
+				wcode, source, text, helpFile, helpId, scode = exc
+				if winerror.SUCCEEDED(wcode) and text is None:
+					raise RuntimeError('no extended error information')
+				else:
+					raise RuntimeError(text)
 
