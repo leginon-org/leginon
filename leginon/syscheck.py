@@ -141,7 +141,7 @@ else:
 ######################################################################
 ## Python XML module
 ######################################################################
-minxmlver = (0, 8, 3)
+minxmlver = (0, 8, 2)
 minstr = '.'.join(map(str,minxmlver))
 print '--------------------------------------------------------------'
 print 'Python XML module:'
@@ -153,7 +153,7 @@ except:
 	print '      You must install Python xml version %s or greater' % (minstr,)
 else:
 	mystr = xml.__version__
-	myxmlver = xml.version_info
+	myxmlver = map(int, mystr.split('.'))
 	print '    Python XML version: %s' % (mystr,)
 	if versionAtLeast(myxmlver, minxmlver):
 		print '        OK (at least %s required)' % (minstr ,)
