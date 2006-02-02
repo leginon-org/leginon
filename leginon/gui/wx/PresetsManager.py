@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.63 $
+# $Revision: 1.64 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-02-02 23:17:56 $
+# $Date: 2006-02-02 23:43:53 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -116,7 +116,7 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 
 	def getMagChoices(self):
 		try:
-			mags = self.tems[parameters['tem']['name']].Magnifications
+			mags = self.tems[self.parameters['tem']['name']]
 		except:
 			mags = []
 		return [str(int(m)) for m in mags]
