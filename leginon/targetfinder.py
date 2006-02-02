@@ -31,7 +31,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'wait for done': True,
 		'ignore images': False,
 		'user check': False,
-		'queue drift': False,
+		'queue drift': True,
 	}
 	eventinputs = imagewatcher.ImageWatcher.eventinputs \
 									+ [event.AcquisitionImagePublishEvent] \
