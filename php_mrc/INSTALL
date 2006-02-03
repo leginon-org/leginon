@@ -1,23 +1,30 @@
 PHP-MRC
 
-> cd /usr/src/php-4.3.8/ext 
-> cvs co -d mrc php_mrc
+*1. -- build MRC as a php shared extension
+
+# cd to your php devel directory
+> cd /usr/include/php/ext/
+
+# untar the archive
+> tar zxvf php_mrc.tgz
+> cd mrc/
+
+# Make sure that GD and FFTW devel libraries are installed
+> phpize
+> ./configure 
+> make
+> make install
 
 
-*1.  -- build PHP with MRC support --
+# edit your  php configuration file php.ini to add "mrc.so" extension.
+# You might also increase the memory_limit field. It is set to 8M by default. The more the merrier!
+# 4kx4k float MRC image is about 64MB
+> vi /etc/php.ini
 
-	> cd /usr/src/php-4.3.8/
-	> ./buildconf --force
-	> ./configure --prefix=/usr/share --datadir=/usr/share/php --bindir=/usr/bin --libdir=/usr/share --includedir=/usr/include --with-_lib=lib --with-config-file-path=/etc --with-exec-dir=/usr/lib/php/bin --with-jpeg-dir=/usr --with-zlib=yes --with-gd --enable-mrc --with-apxs=/usr/sbin/apxs
-
-	> make
-	> make install
+[extension section]
+extension=mrc.so
 
 
-*2. -- build MRC as a php shared extension
+# restart your webserver
+> /etc/init.d/apache2 restart
 
-	> cd /usr/src/php-4.3.8/ext/mrc/
-	> phpize
-	> ./configure
-	> make
-	> make install

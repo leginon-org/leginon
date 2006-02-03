@@ -1,22 +1,13 @@
 /*
   +----------------------------------------------------------------------+
-  | PHP Version 4                                                        |
+  | PHP MRC Extension                                                    |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2003 The PHP Group                                |
-  +----------------------------------------------------------------------+
-  | This source file is subject to version 2.02 of the PHP license,      |
-  | that is bundled with this package in the file LICENSE, and is        |
-  | available at through the world-wide-web at                           |
-  | http://www.php.net/license/2_02.txt.                                 |
-  | If you did not receive a copy of the PHP license and are unable to   |
-  | obtain it through the world-wide-web, please send a note to          |
-  | license@php.net so we can mail you a copy immediately.               |
-  +----------------------------------------------------------------------+
-  | Author:                                                              |
+  | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.10 2005-10-11 17:07:48 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.11 2006-02-03 18:19:14 dfellman Exp $ 
 */
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -41,7 +32,7 @@ ZEND_DECLARE_MODULE_GLOBALS(mrc)
 /* True global resources - no need for thread safety here */
 static int le_mrc;
 
-/* {{{ mrc_functions[]
+/* mrc_functions[]
  *
  * Every user visible function must have an entry in mrc_functions[].
  */
@@ -75,9 +66,9 @@ function_entry mrc_functions[] = {
 	ZEND_FE(mrcdestroy, NULL)
 	{NULL, NULL, NULL}	/* Must be the last line in mrc_functions[] */
 };
-/* }}} */
 
-/* {{{ mrc_module_entry
+
+/* mrc_module_entry
  */
 zend_module_entry mrc_module_entry = {
 #if ZEND_MODULE_API_NO >= 20010901
@@ -95,13 +86,13 @@ zend_module_entry mrc_module_entry = {
 #endif
 	STANDARD_MODULE_PROPERTIES
 };
-/* }}} */
+
 
 #ifdef COMPILE_DL_MRC
 ZEND_GET_MODULE(mrc)
 #endif
 
-/* {{{ PHP_INI
+/* PHP_INI
  */
 /* Remove comments and fill if you need to have entries in php.ini
 PHP_INI_BEGIN()
@@ -109,9 +100,9 @@ PHP_INI_BEGIN()
     STD_PHP_INI_ENTRY("mrc.global_string", "foobar", PHP_INI_ALL, OnUpdateString, global_string, zend_mrc_globals, mrc_globals)
 PHP_INI_END()
 */
-/* }}} */
 
-/* {{{ php_mrc_init_globals
+
+/* php_mrc_init_globals
  */
 /* Uncomment this function if you have INI entries
 static void php_mrc_init_globals(zend_mrc_globals *mrc_globals)
@@ -120,18 +111,18 @@ static void php_mrc_init_globals(zend_mrc_globals *mrc_globals)
 	mrc_globals->global_string = NULL;
 }
 */
-/* }}} */
 
-/* {{{ php_free_mrc
+
+/* php_free_mrc
  */
 static void php_free_mrc(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 {
 	mrc_destroy((MRCPtr)rsrc->ptr);
 }
-/* }}} */
 
 
-/* {{{ PHP_MINIT_FUNCTION
+
+/* PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(mrc)
 {
@@ -143,9 +134,9 @@ PHP_MINIT_FUNCTION(mrc)
 	*/
 	return SUCCESS;
 }
-/* }}} */
 
-/* {{{ PHP_MSHUTDOWN_FUNCTION
+
+/* PHP_MSHUTDOWN_FUNCTION
  */
 PHP_MSHUTDOWN_FUNCTION(mrc)
 {
@@ -154,27 +145,27 @@ PHP_MSHUTDOWN_FUNCTION(mrc)
 	*/
 	return SUCCESS;
 }
-/* }}} */
+
 
 /* Remove if there's nothing to do at request start */
-/* {{{ PHP_RINIT_FUNCTION
+/* PHP_RINIT_FUNCTION
  */
 PHP_RINIT_FUNCTION(mrc)
 {
 	return SUCCESS;
 }
-/* }}} */
+
 
 /* Remove if there's nothing to do at request end */
-/* {{{ PHP_RSHUTDOWN_FUNCTION
+/* PHP_RSHUTDOWN_FUNCTION
  */
 PHP_RSHUTDOWN_FUNCTION(mrc)
 {
 	return SUCCESS;
 }
-/* }}} */
 
-/* {{{ PHP_MINFO_FUNCTION
+
+/* PHP_MINFO_FUNCTION
  */
 PHP_MINFO_FUNCTION(mrc)
 {
@@ -191,7 +182,7 @@ PHP_MINFO_FUNCTION(mrc)
 	DISPLAY_INI_ENTRIES();
 	*/
 }
-/* }}} */
+
 
 /* Remove the following function when you have succesfully modified config.m4
    so that your module can be compiled into PHP, it exists only for testing
@@ -199,11 +190,12 @@ PHP_MINFO_FUNCTION(mrc)
 
 /* Every user-visible function in PHP should document itself in the source */
 
-/* {{{ imagegaussianfilter -- apply gaussian filter to an image
-Description:
-	int imagegaussianfilter ( resource image [, int kernel [, float sigma ]])
-
-*/
+/**
+ * apply gaussian filter to an image
+ *
+ * Description:
+ * int imagegaussianfilter ( resource image [, int kernel [, float sigma ]])
+ **/
 ZEND_FUNCTION(imagegaussianfilter)
 {
 	zval **imgind, **KERNEL, **SIGMA;
@@ -238,13 +230,14 @@ ZEND_FUNCTION(imagegaussianfilter)
 
 	RETURN_TRUE;
 }
-/* }}} */
 
-/* {{{ imagescale -- scale an image
-Description:
-	int imagescale ( resource image , float scalefactorX[, float scalefactorY]])
 
-*/
+/** 
+ * scale an image
+ *
+ * Description:
+ * int imagescale ( resource image , float scalefactorX[, float scalefactorY]])
+ */
 ZEND_FUNCTION(imagescale)
 {
 	zval **imgind, **SFX, **SFY;
@@ -287,12 +280,14 @@ ZEND_FUNCTION(imagescale)
 	gdImageDestroy(im_dst);
 	RETURN_TRUE;
 }
-/* }}} */
 
-/* {{{ imagelogscale -- scale an image with log
-Description:
-	 bool imagelogscale ( resource image )
-*/
+
+/**
+ * scale an image with log
+ *
+ * Description:
+ * bool imagelogscale ( resource image )
+ */
 ZEND_FUNCTION(imagelogscale)
 {
 	zval **imgind;
@@ -310,9 +305,9 @@ ZEND_FUNCTION(imagelogscale)
 	gdLogScale(im_src);
 	RETURN_TRUE;
 }
-/* }}} */
 
-/* {{{ imagehistogram(resource image) */
+
+/** imagehistogram(resource image) */
 ZEND_FUNCTION(imagehistogram)
 {
         zval **imgind, **NBBARS;
@@ -370,14 +365,16 @@ ZEND_FUNCTION(imagehistogram)
                 RETURN_FALSE;
         }
 }
-/* }}} */
+
 
 #ifdef HAVE_FFTW
 
-/* {{{ bool imagefftw -- generate FFT from a existing image resource.
-Description:
-	bool imagefftw ( resource image )
-*/
+/**
+ * generate FFT from a existing image resource.
+ *
+ * Description:
+ * bool imagefftw ( resource image )
+ */
 ZEND_FUNCTION(imagefftw)
 {
 	zval **imgind, **MASK;
@@ -402,9 +399,15 @@ ZEND_FUNCTION(imagefftw)
 	gd_fftw(im_src, mask);
 	RETURN_TRUE;
 }
-/* }}} */
 
-/* {{{ mrcfftw(resource src_mrc, int mask) */
+
+/**
+ * compute discrete Fourier transform
+ *
+ * Description:
+ * mrcfftw(resource src_mrc, int mask)
+ * \htmlinclude mrcfft.html
+ */
 ZEND_FUNCTION(mrcfftw)
 {
 
@@ -435,13 +438,15 @@ ZEND_FUNCTION(mrcfftw)
 	mrc_fftw(pmrc, mask);
 
 }
-/* }}} */
+
 
 #endif
 
-	/* {{{ array mrcinfo -- retrieve MRC header information MRC file, URL or a String,
-		as a PHP associative array.
-	*/
+	/**
+	 * retrieve MRC header information MRC file, URL or a String, as a PHP associative array.
+	 *
+	 * Description: array mrcinfo( string filenae)
+	 */
 	ZEND_FUNCTION(mrcinfo)
 	{
 		zval **data;
@@ -458,10 +463,15 @@ ZEND_FUNCTION(mrcfftw)
 		
 
 	}
-	/* }}} */
+	
 
-	/* {{{ array mrcgetinfo(resource src_mrc) */
-	PHP_FUNCTION(mrcgetinfo)
+	/**
+	 * retrieve header information from MRC resource, as a PHP associative array.
+	 *
+	 * Description: 
+	 * array mrcgetinfo(resource src_mrc) 
+	 */
+	ZEND_FUNCTION(mrcgetinfo)
 	{
 		zval **MRCD;
 		MRCPtr pmrc;
@@ -473,10 +483,15 @@ ZEND_FUNCTION(mrcfftw)
 		_mrc_header_data(INTERNAL_FUNCTION_PARAM_PASSTHRU, pmrc);
 
 	}
-	/* }}} */
+	
 
-/* {{{ int mrcsx(resource src_mrc) */
-PHP_FUNCTION(mrcsx)
+/** 
+ * Get image width
+ *
+ * Description:
+ * int mrcsx(resource src_mrc)
+ */
+ZEND_FUNCTION(mrcsx)
 {
 	zval **MRCD;
 	MRCPtr pmrc;
@@ -490,10 +505,15 @@ PHP_FUNCTION(mrcsx)
 	RETURN_LONG(val);
 
 }
-/* }}} */
 
-/* {{{ int mrcsy(resource src_mrc) */
-PHP_FUNCTION(mrcsy)
+
+/** 
+ * Get image height
+ *
+ * Description:
+ * int mrcsy(resource src_mrc)
+ */
+ZEND_FUNCTION(mrcsy)
 {
 	zval **MRCD;
 	MRCPtr pmrc;
@@ -507,9 +527,14 @@ PHP_FUNCTION(mrcsy)
 	RETURN_LONG(val);
 
 }
-/* }}} */
 
-	/* {{{ resource mrcread(string filename) */
+
+	/** 
+	 * read a MRC file
+	 *
+	 * Description:
+	 * resource mrcread(string filename)
+	 */
 	ZEND_FUNCTION(mrcread)
 	{
 
@@ -530,9 +555,14 @@ PHP_FUNCTION(mrcsy)
 		ZEND_REGISTER_RESOURCE(return_value, pmrc, le_mrc);
 
 	}
-	/* }}} */
+	
 
-	/* {{{ resource mrcreadfromstring(string data) */
+	/** 
+	 * Create mrc resource from the data stream in the string
+	 *
+	 * Description:
+	 * resource mrcreadfromstring(string data)
+	 */
 	ZEND_FUNCTION(mrcreadfromstring)
 	{
 
@@ -553,11 +583,15 @@ PHP_FUNCTION(mrcsy)
 		ZEND_REGISTER_RESOURCE(return_value, pmrc, le_mrc);
 
 	}
-	/* }}} */
+	
 
-	/* {{{ resource createmrc(int x_size, int y_size)
-	   Create a new mrc image */
-	PHP_FUNCTION(mrccreate)
+	/** 
+	 * Create a new mrc image
+	 *
+	 * Description:
+	 * resource createmrc(int x_size, int y_size)
+	 */
+	ZEND_FUNCTION(mrccreate)
 	{
 		zval **x_size, **y_size;
 		MRCPtr pmrc;
@@ -580,10 +614,15 @@ PHP_FUNCTION(mrcsy)
 		ZEND_REGISTER_RESOURCE(return_value, pmrc, le_mrc);
 		//ZEND_REGISTER_RESOURCE(return_value, pmrc, le_mrc);
 	}
-	/* }}} */
+	
 
-	/* {{{ bool mrcwrite(resource src_mrc, string filename) */
-	PHP_FUNCTION(mrcwrite)
+	/** 
+	 * write MRC resource to file
+	 *
+	 * Description: bool mrcwrite(resource src_mrc, string filename) 
+	 *  \htmlinclude mrcwrite.html
+ 	 */
+	ZEND_FUNCTION(mrcwrite)
 	{
 		zval	**MRCD, **file;
 		MRCPtr	pmrc;
@@ -617,11 +656,14 @@ PHP_FUNCTION(mrcsy)
 		fclose(fp);
 		RETURN_TRUE;
 	}
-	/* }}} */
+	
 
-/* {{{ resource mrctoimage(resource src_mrc)
-*/ 
-PHP_FUNCTION(mrctoimage)
+/** convert a mrc resource to an image resource
+ *
+ * Description:
+ * resource mrctoimage(resource src_mrc [, int pix_min [, int pix_max [, int color_map ]]])
+ */ 
+ZEND_FUNCTION(mrctoimage)
 {
 	char	*key;
 	zval	**MRCD, **PMIN, **PMAX, **COLOR_MAP;
@@ -672,11 +714,14 @@ PHP_FUNCTION(mrctoimage)
 	ZEND_REGISTER_RESOURCE(return_value, im, le_gd);
 
 }
-/* }}} */
 
-	/* {{{ mrccopy(int dst_mrc, int src_mrc, int dst_x, int dst_y, int src_x, int src_y, int src_w, int src_h)
-	   Copy part of an mrc */ 
-	PHP_FUNCTION(mrccopy)
+
+	/** 
+	 * Copy part of an mrc
+	 *
+	 * mrccopy(int dst_mrc, int src_mrc, int dst_x, int dst_y, int src_x, int src_y, int src_w, int src_h)
+	 */ 
+	ZEND_FUNCTION(mrccopy)
 	{
 		zval **SMRC, **DMRC, **SX, **SY, **SW, **SH, **DX, **DY;
 		MRCPtr mrc_dst, mrc_src;
@@ -707,9 +752,14 @@ PHP_FUNCTION(mrctoimage)
 		mrc_copy_to(mrc_dst, mrc_src, dstX, dstY, srcX, srcY, srcW, srcH);
 		RETURN_TRUE;
 	}
-	/* }}} */
+	
 
-	/* {{{ bool mrcbinning(resource src_mrc, int binning) */
+	/** 
+	 * 
+	 *
+	 * Description:
+	 * bool mrcbinning(resource src_mrc, int binning [, bool skip_avg]) 
+	 */
 	ZEND_FUNCTION(mrcbinning)
 	{
 
@@ -743,9 +793,14 @@ PHP_FUNCTION(mrctoimage)
 		RETURN_TRUE;
 
 	}
-	/* }}} */
+	
 
-	/* {{{ bool mrcgaussianfilter(resource src_mrc, int binning, int kernel, float sigma) */
+	/** 
+	 * apply a gaussion filter
+	 *
+	 * Description:
+	 * bool mrcgaussianfilter(resource src_mrc, int binning, int kernel, float sigma)
+	 */
 	ZEND_FUNCTION(mrcgaussianfilter)
 	{
 
@@ -782,17 +837,20 @@ PHP_FUNCTION(mrctoimage)
 		RETURN_TRUE;
 
 	}
-	/* }}} */
+	
 
-	/* {{{ bool mrclogscale(resource src_mrc) */
+	/**
+	 * apply a log scale  
+	 * 
+	 * Description:
+	 * bool mrclogscale(resource src_mrc) 
+	 */
 	ZEND_FUNCTION(mrclogscale)
 	{
 
 		zval **data;
 		MRCPtr pmrc;
 		int argc = ZEND_NUM_ARGS();
-		int binning = 1;
-		int skip_avg = 0;
 
 		if (argc !=  1)
 		{
@@ -806,10 +864,15 @@ PHP_FUNCTION(mrctoimage)
 		RETURN_TRUE;
 
 	}
-	/* }}} */
+	
 
-	/* {{{ array mrcgetdata(resource src_mrc)*/ 
-	PHP_FUNCTION(mrcgetdata)
+	/**
+	 * retrieve mrc data 
+	 * 
+	 * Description:
+	 * array mrcgetdata(resource src_mrc) 
+	 */
+	ZEND_FUNCTION(mrcgetdata)
 	{
 		char	*key;
 		zval	**MRCD;
@@ -833,10 +896,15 @@ PHP_FUNCTION(mrctoimage)
 			add_next_index_double(return_value, data_array[i]);
 		}
 	}
-	/* }}} */
+	
 
-/* {{{ array mrcgetscale(resource src_mrc)*/ 
-PHP_FUNCTION(mrcgetscale)
+/**
+ * get min and max value scaled within +/- 3 stddev
+ *
+ * Description:
+ * array mrcgetscale(resource src_mrc, int density_max)
+ */ 
+ZEND_FUNCTION(mrcgetscale)
 {
 		char	*key;
 		zval	**MRCD, **DENSITY_MAX;
@@ -885,10 +953,15 @@ PHP_FUNCTION(mrcgetscale)
 		add_assoc_double(return_value, key, smax);
 
 }
-/* }}} */
 
-	/* {{{ mrcputdata(resource src_mrc, array data) */ 
-	PHP_FUNCTION(mrcputdata)
+
+	/** 
+	 * put data
+	 *
+	 * Description:
+	 * mrcputdata(resource src_mrc, array data)
+	 */ 
+	ZEND_FUNCTION(mrcputdata)
 	{
 		zval	**MRCD, **input , **entry;
 		MRCPtr	pmrc;
@@ -938,10 +1011,15 @@ PHP_FUNCTION(mrcgetscale)
 			i++;
 		}
 	}
-	/* }}} */
+	
 
-	/* {{{ mrcupdateheader(resource src_mrc) */ 
-	PHP_FUNCTION(mrcupdateheader)
+	/**
+	 * update header information
+	 *
+	 * Description:
+	 * mrcupdateheader(resource src_mrc)
+	 */ 
+	ZEND_FUNCTION(mrcupdateheader)
 	{
 		char	*key;
 		zval	**MRCD;
@@ -960,9 +1038,14 @@ PHP_FUNCTION(mrcgetscale)
 		mrc_update_header(pmrc);
 
 	}
-	/* }}} */
+	
 
-/* {{{ mrchistogram(resource src_mrc) */
+/**
+ * retrieve classes and frequences
+ *
+ * Description:
+ * array mrchistogram(resource src_mrc)
+ */
 ZEND_FUNCTION(mrchistogram)
 {
 	zval **data, **NBBARS;
@@ -1003,11 +1086,17 @@ ZEND_FUNCTION(mrchistogram)
 	free(classes);
 	mrc_destroy(pmrc);
 }
-/* }}} */
 
-/* {{{ bool mrcdestroy(resource src_mrc)
-   Destroy an image */
-PHP_FUNCTION(mrcdestroy)
+
+/**
+ * destroy a mrc resource
+ *
+ * Description:
+ * bool mrcdestroy(resource src_mrc)
+ *
+ * frees any memory associated with src_mrc
+ */
+ZEND_FUNCTION(mrcdestroy)
 {
 	zval **MRCD;
 	MRCPtr pmrc;
@@ -1022,9 +1111,11 @@ PHP_FUNCTION(mrcdestroy)
 
 	RETURN_TRUE;
 }
-/* }}} */
 
-/* {{{ static void _mrc_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRC *pmrc) */
+
+/**
+ * static void _mrc_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRC *pmrc)
+ */
 static void _mrc_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRC *pmrc) {
 
 	MRC *pmrc_src;
@@ -1045,9 +1136,11 @@ static void _mrc_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MR
 	mrc_destroy(pmrc_src);
 	
 }
-/* }}} */
 
-/* {{{ static void _mrc_image_create_from_string(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRC *pmrc) */
+
+/**
+ * static void _mrc_image_create_from_string(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRC *pmrc)
+ */
 static void _mrc_image_create_from_string(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRC *pmrc) {
 	gdIOCtx *io_ctx;
 	MRC *pmrc_src;
@@ -1074,9 +1167,11 @@ static void _mrc_image_create_from_string(INTERNAL_FUNCTION_PARAMETERS, zval **d
 	free(io_ctx);
 	
 }
-/* }}} */
 
-/* {{{ static void _mrc_header_data(INTERNAL_FUNCTION_PARAMETERS,  MRC *pMRC) */
+
+/**
+ *  static void _mrc_header_data(INTERNAL_FUNCTION_PARAMETERS,  MRC *pMRC)
+ */
 static void _mrc_header_data(INTERNAL_FUNCTION_PARAMETERS,  MRC *pMRC) {
 	
 	MRCHeader mrch;
@@ -1147,10 +1242,9 @@ static void _mrc_header_data(INTERNAL_FUNCTION_PARAMETERS,  MRC *pMRC) {
 	key = "nlabl";
 	add_assoc_long(return_value, key, mrch.nlabl);
 }
-/* }}} */
 
 
-/* {{{	vim options
+/* {{{ vim options
  * Local variables:
  * c-basic-offset: 4
  * End:

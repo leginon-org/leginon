@@ -1,22 +1,44 @@
 /*
   +----------------------------------------------------------------------+
-  | PHP Version 4                                                        |
+  | PHP MRC Extension                                                    |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2003 The PHP Group                                |
-  +----------------------------------------------------------------------+
-  | This source file is subject to version 2.02 of the PHP license,      |
-  | that is bundled with this package in the file LICENSE, and is        |
-  | available at through the world-wide-web at                           |
-  | http://www.php.net/license/2_02.txt.                                 |
-  | If you did not receive a copy of the PHP license and are unable to   |
-  | obtain it through the world-wide-web, please send a note to          |
-  | license@php.net so we can mail you a copy immediately.               |
-  +----------------------------------------------------------------------+
-  | Author:                                                              |
+  | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.h,v 1.8 2005-10-11 17:07:48 dfellman Exp $ 
+  $Id: php_mrc.h,v 1.9 2006-02-03 18:19:14 dfellman Exp $ 
 */
+
+/**
+ * \file php_mrc.h
+
+	\brief PHP functions to manipulate MRC files.
+
+	Introduction
+
+	The php_mrc extension offers the functionalities to create, manipulate, filter and display MRC files.  
+	If compiled with fftw, the discrete Fourier transform can be computed and displayed "on the fly".
+
+	Requirements
+
+	- GD library
+	- FFTW library
+
+	Installation
+
+	\include INSTALL
+
+
+    Example1. Create a MRC file
+    \htmlinclude mrccreate.html
+
+    Example2. Read and Display a MRC file
+    \htmlinclude mrcread.html
+
+    Example3. Retrieve information from a MRC Header
+    \htmlinclude mrcinfo.html
+
+   
+ */
 
 #ifndef PHP_MRC_H
 #define PHP_MRC_H

@@ -8,7 +8,9 @@
 #include "gd_mrc.h"
 #include "filter.h"
 
-/* {{{ void mrc_to_float(MRC *mrc, float *pdata_array) */
+/**
+ * void mrc_to_float(MRC *mrc, float *pdata_array)
+ */
 void mrc_to_float(MRC *mrc, float *pdata_array) {
         float   fmin=mrc->header.amin,
                 fmax=mrc->header.amax;
@@ -54,9 +56,11 @@ void mrc_to_float(MRC *mrc, float *pdata_array) {
          break;
         }
 }
-/* }}} */
 
-/* {{{ void mrc_convert_to_float(MRC *mrc_src, MRC *mrc_dst) */
+
+/**
+ * void mrc_convert_to_float(MRC *mrc_src, MRC *mrc_dst)
+ */
 void mrc_convert_to_float(MRC *mrc_src, MRC *mrc_dst) {
 
         float	*data_array, *data_array_dst;
@@ -76,10 +80,12 @@ void mrc_convert_to_float(MRC *mrc_src, MRC *mrc_dst) {
 	mrc_to_float(mrc_src, data_array_dst);
 
 }
-/* }}} */
 
-/* {{{ MRCPtr mrc_create(int x_size, int y_size)
-	set mode as FLOAT by default
+
+/**
+ * MRCPtr mrc_create(int x_size, int y_size)
+ *
+ * set mode as FLOAT by default
  */
 MRCPtr mrc_create(int x_size, int y_size) {
 
@@ -102,9 +108,11 @@ MRCPtr mrc_create(int x_size, int y_size) {
 	return pmrc;
 
 }
-/* }}} */
 
-/* {{{ void mrc_update_header(MRC *mrc) */
+
+/**
+ * void mrc_update_header(MRC *mrc)
+ */
 void mrc_update_header(MRC *mrc) {
 
 	int	i=0;
@@ -141,9 +149,11 @@ void mrc_update_header(MRC *mrc) {
 	mrc->header.rms = stddev;
 
 }
-/* }}} */
 
-/* {{{ void mrc_filter(MRC *mrc, int binning, int kernel, float sigma) */
+
+/**
+ * void mrc_filter(MRC *mrc, int binning, int kernel, float sigma)
+ */
 void mrc_filter(MRC *mrc, int binning, int kernel, float sigma) {
 
 	float *data_array_src ;
@@ -193,9 +203,11 @@ void mrc_filter(MRC *mrc, int binning, int kernel, float sigma) {
 	}
 
 }
-/* }}} */
 
-/* {{{ void mrc_binning(MRC *mrc, int binning, int skip_avg) */
+
+/**
+ * void mrc_binning(MRC *mrc, int binning, int skip_avg)
+ */
 void mrc_binning(MRC *mrc, int binning, int skip_avg) {
 
 	int *indexes;
@@ -241,9 +253,11 @@ void mrc_binning(MRC *mrc, int binning, int skip_avg) {
 		free(indexes);
 	}
 }
-/* }}} */
 
-/* {{{ void mrc_log(MRC *mrc) */
+
+/**
+ * void mrc_log(MRC *mrc)
+ */
 void mrc_log(MRC *mrc) {
 
 	float *data_array_src ;
@@ -263,9 +277,11 @@ void mrc_log(MRC *mrc) {
 
 	mrc_update_header(mrc);
 }
-/* }}} */
 
-/* {{{ void mrc_to_gd(MRC *mrc, int ** tpixels, int pmin, int pmax, int colormap) { */
+
+/**
+ * void mrc_to_gd(MRC *mrc, int ** tpixels, int pmin, int pmax, int colormap) {
+ */
 void mrc_to_gd(MRC *mrc, gdImagePtr im, int pmin, int pmax, int colormap) {
 
 	float	*data_array;
@@ -299,9 +315,11 @@ void mrc_to_gd(MRC *mrc, gdImagePtr im, int pmin, int pmax, int colormap) {
 		}
 
 }
-/* }}} */
 
-/* {{{ void mrc_copy(MRCPtr pmrc_dst, MRCPtr pmrc_src, int x1, int y1, int x2, int y2) */
+
+/**
+ * void mrc_copy(MRCPtr pmrc_dst, MRCPtr pmrc_src, int x1, int y1, int x2, int y2)
+ */
 void mrc_copy(MRCPtr pmrc_dst, MRCPtr pmrc_src, int x1, int y1, int x2, int y2) {
 
 	float	*data_array_src, *data_array_dst;
@@ -329,9 +347,11 @@ void mrc_copy(MRCPtr pmrc_dst, MRCPtr pmrc_src, int x1, int y1, int x2, int y2) 
 	mrc_copy_to(pmrc_dst, pmrc_src, 0, 0, x_min, y_min, x_max, y_max);
 
 }
-/* }}} */
 
-/* {{{ void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX, int srcY, int w, int h) */
+
+/**
+ * void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX, int srcY, int w, int h)
+ */
 void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX, int srcY, int w, int h)
 {
 	int     w_src, h_src, n_src,
@@ -374,16 +394,20 @@ void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX,
 */
 
 }
-/* }}} */
 
-/* {{{ void mrc_destroy(MRCPtr pmrc) */
+
+/**
+ * void mrc_destroy(MRCPtr pmrc)
+ */
 void mrc_destroy(MRCPtr pmrc) {
 	free(pmrc->pbyData);
 	free(pmrc);
 }
-/* }}} */
 
-/* {{{ void mrc_to_histogram(MRC *mrc, int *frequency, float *classes, int nb_bars) */
+
+/**
+ * void mrc_to_histogram(MRC *mrc, int *frequency, float *classes, int nb_bars)
+ */
 void mrc_to_histogram(MRC *mrc, int *frequency, float *classes, int nb_bars) {
         float   fmin=mrc->header.amin,
                 fmax=mrc->header.amax,
@@ -420,10 +444,13 @@ void mrc_to_histogram(MRC *mrc, int *frequency, float *classes, int nb_bars) {
                 frequency[i] = nb;
         }
 }
-/* }}} */
 
-/* {{{ int getIndexes(int *indexes, int binning, int index, int imagewidth)
-get pixel indexes from a  binning factor applied to a pixel index */
+
+/**
+ * int getIndexes(int *indexes, int binning, int index, int imagewidth)
+ *
+ * get pixel indexes from a  binning factor applied to a pixel index
+ */
 int getIndexes(int *indexes, int binning, int index, int imagewidth) {
 	int	i=0,
 		b_w=0,
@@ -433,10 +460,13 @@ int getIndexes(int *indexes, int binning, int index, int imagewidth) {
                 for(b_h=0; b_h<binning; b_h++, i++)
                         indexes[i] = index + b_w*imagewidth + b_h;
 }
-/* }}} */
 
-/* {{{ int getMaskDataIndexes(int *indexes, int kernel, int index, int imagewidth)
-get pixel indexes from a mask (kernelxkernel) applied to a pixel index */
+
+/**
+ * int getMaskDataIndexes(int *indexes, int kernel, int index, int imagewidth)
+ *
+ * get pixel indexes from a mask (kernelxkernel) applied to a pixel index
+ */
 int getMaskDataIndexes(int *indexes, int kernel, int index, int imagewidth) {
 	int	i=0,
 		m_w=0,
@@ -457,9 +487,11 @@ int getMaskDataIndexes(int *indexes, int kernel, int index, int imagewidth) {
                 }
         }
 }
-/* }}} */
 
-/* {{{ int gdreadMRCHeader(gdIOCtx *io_ctx, MRCHeader *pMRCHeader) */
+
+/**
+ * int gdreadMRCHeader(gdIOCtx *io_ctx, MRCHeader *pMRCHeader)
+ */
 int gdreadMRCHeader(gdIOCtx *io_ctx, MRCHeader *pMRCHeader) {
 
 	gdGetBuf(pMRCHeader, MRC_HEADER_SIZE, io_ctx);
@@ -474,9 +506,11 @@ int gdreadMRCHeader(gdIOCtx *io_ctx, MRCHeader *pMRCHeader) {
 			return -1; /* This is not a valid pMRCHeader header */
 	return 1 ;
 }
-/* }}} */
 
-/* {{{ int gdloadMRC(gdIOCtx *io_ctx, int in_length, MRC *pMRC) */
+
+/**
+ * int gdloadMRC(gdIOCtx *io_ctx, int in_length, MRC *pMRC)
+ */
 int gdloadMRC(gdIOCtx *io_ctx, int in_length, MRC *pMRC) {
 	unsigned int uElementSize = 0;
 	unsigned int uElements = 0;
@@ -519,13 +553,15 @@ int gdloadMRC(gdIOCtx *io_ctx, int in_length, MRC *pMRC) {
 	
 	return 1;
 }
-/* }}} */
 
-/* {{{ vim command
+
+/**
+ * vim command
  * Local variables:
  * tab-width: 4
  * c-basic-offset: 4
  * End:
  * vim600: noet sw=4 ts=4 fdm=marker
  * vim<600: noet sw=4 ts=4
- }}} */
+ }}}
+ */
