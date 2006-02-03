@@ -84,8 +84,11 @@ class CalibrationClient(object):
 	def acquireStateImage(self, state, publish_image=0, settle=0.0, correct_tilt=False):
 		self.node.logger.debug('Acquiring image...')
 		## acquire image at this state
-		newemdata = data.ScopeEMData(initializer=state)
-		self.instrument.setData(newemdata)
+
+		if state is not None:
+			newemdata = data.ScopeEMData(initializer=state)
+			self.instrument.setData(newemdata)
+
 		time.sleep(settle)
 
 		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
@@ -139,7 +142,8 @@ class CalibrationClient(object):
 		else:
 			self.node.logger.info('Checking for drift...')
 
-			info1 = self.acquireStateImage(state1, publish_images, settle, correct_tilt=correct_tilt)
+			## state=None means do not set the values on the scope
+			info1 = self.acquireStateImage(None, publish_images, settle, correct_tilt=correct_tilt)
 			imagedata1 = info1['imagedata']
 			imagecontent1 = imagedata1
 			stats1 = info1['image stats']
