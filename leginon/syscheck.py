@@ -126,19 +126,6 @@ else:
 		print '        *** FAILED (at least %s required)' % (minstr,)
 
 ######################################################################
-## numextension
-######################################################################
-print '--------------------------------------------------------------'
-print 'numextension:'
-print '    importing numextension module...'
-try:
-	import numextension
-except ImportError:
-	print '    *** Failed to import numextension.  Install numextension'
-else:
-		print '        OK (but no version checked)'
-
-######################################################################
 ## Python XML module
 ######################################################################
 minxmlver = (0, 8, 2)
@@ -175,39 +162,47 @@ except ImportError:
 
 else:
 	## check version
-	mystr = wx.__version__
-	if mystr[-1] == 'u':
-		mystr = mystr[:-1]
-	mywxver = map(int, mystr.split('.'))
+	try:
+		## NEWER VERSIONS
+		mystr = wx.__version__
+		if mystr[-1] == 'u':
+			mystr = mystr[:-1]
+		mywxver = map(int, mystr.split('.'))
+	except:
+		## OLDER VERSIONS
+		mywxver = wx.VERSION[:4]
+		mystr = '.'.join(map(str, mywxver))
+
 	print '    wxPython version: %s' % (mystr,)
-	if versionAtLeast(mywxver, minwxver):
-		print '        OK (at least %s required)' % (minstr ,)
-	else:
+	if not versionAtLeast(mywxver, minwxver):
 		print '        *** FAILED (at least %s required)' % (minstr,)
 
+	else:
+		print '        OK (at least %s required)' % (minstr ,)
+
 	## test a wx app
-	class MyApp(wx.App):
-		def OnInit(self):
-			frame = wx.Frame(None, -1, 'wxPython test window')
-			self.sizer = wx.BoxSizer()
+		class MyApp(wx.App):
+			def OnInit(self):
+				frame = wx.Frame(None, -1, 'wxPython test window')
+				self.sizer = wx.BoxSizer()
 
-			button = wx.Button(frame, -1, 'TEST')
-			button.SetBackgroundColour(wx.RED)
-			self.sizer.Add(button, 1, border=50, flag=wx.ALL)
-			self.Bind(wx.EVT_BUTTON, self.test, button)
+				button = wx.Button(frame, -1, 'TEST')
+				button.SetBackgroundColour(wx.RED)
+				self.sizer.Add(button, 1, border=50, flag=wx.ALL)
+				self.Bind(wx.EVT_BUTTON, self.test, button)
 
-			frame.SetSizerAndFit(self.sizer)
-			self.SetTopWindow(frame)
-			frame.Show(True)
-			return True
+				frame.SetSizerAndFit(self.sizer)
+				self.SetTopWindow(frame)
+				frame.Show(True)
+				return True
 
-		def test(self, evt):
-			print 'TEST'
+			def test(self, evt):
+				print 'TEST'
 	
-	print '    Testing a wxPython application.  Close the window that pops up...'
-	try:
-		app = MyApp(0)
-		app.MainLoop()
-	except:
-		print '        Failed to start wx application.  This is usually because you do not have display permission'
-	print '    wxPython test successful'
+		print '    Testing a wxPython application.  Close the window that pops up...'
+		try:
+			app = MyApp(0)
+			app.MainLoop()
+		except:
+			print '        Failed to start wx application.  This is usually because you do not have display permission'
+		print '    wxPython test successful'
