@@ -964,6 +964,11 @@ class PresetsManager(node.Node):
 		self.logger.info('Going to target and to preset %s' % (newpresetname,))
 
 		newpreset = self.presetByName(newpresetname)
+		if newpreset is None:
+			msg = 'Preset change/target move failed: invalid preset name "%s"'
+			msg %= newpresetname
+			self.logger.error(msg)
+			raise PresetChangeError(msg)
 
 		## this is a hack to make this work with simulated targets which
 		## have no "old preset"
@@ -1016,7 +1021,7 @@ class PresetsManager(node.Node):
 
 		### correct defocus for tilted stage
 		deltaz = emtargetdata['delta z']
-		self.logger.info('correcting defocus by %.2e for target on tilt' % (deltaz,))
+		self.logger.info('Correcting defocus by %.2e for target on tilt' % (deltaz,))
 		scopedata['defocus'] += deltaz
 
 		### createCameraEMData with preset
@@ -1028,7 +1033,7 @@ class PresetsManager(node.Node):
 			self.instrument.setTEM(newpreset['tem']['name'])
 			self.instrument.setCCDCamera(newpreset['ccdcamera']['name'])
 		except Exception, e:
-			msg = 'Preset change/target Move failed: %s' % (e,)
+			msg = 'Preset change/target move failed: %s' % (e,)
 			self.logger.error(msg)
 			raise PresetChangeError(msg)
 
