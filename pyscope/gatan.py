@@ -228,19 +228,17 @@ class Gatan(ccdcamera.CCDCamera):
         return True
 
     def getEnergyFilter(self):
-        script = 'if(AFGetSlitState()) Exit(1.0) else Exit(-1.0)'
+        script = 'if(IFCGetSlitIn()) Exit(1.0) else Exit(-1.0)'
         result = self.camera.ExecuteScript(script)
         return result > 0.0
 
     def setEnergyFilter(self, value):
-        script = 'if(AFSetSlitState("%d")) Exit(1.0) else Exit(-1.0)'
+        script = 'IFCSetSlitIn(%d)'
         if value:
             script %= 1
         else:
             script %= 0
-        result = self.camera.ExecuteScript(script)
-        if result < 0.0:
-            raise RuntimeError('unable to set energy filter')
+        self.camera.ExecuteScript(script)
 
     def getEnergyFilterWidth(self):
         script = 'Exit(AFGetSlitWidth())'
@@ -248,7 +246,7 @@ class Gatan(ccdcamera.CCDCamera):
         return result
 
     def setEnergyFilterWidth(self, value):
-        script = 'if(AFSetSlitWidth("%f")) Exit(1.0) else Exit(-1.0)'
+        script = 'if(AFSetSlitWidth(%f)) Exit(1.0) else Exit(-1.0)'
         script %= value
         result = self.camera.ExecuteScript(script)
         if result < 0.0:
