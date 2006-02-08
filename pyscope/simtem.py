@@ -229,3 +229,6 @@ class SimTEM(tem.TEM):
     def setFocus(self, value):
         self.focus = value
 
+    def runBufferCycle(self):
+        pass
+
