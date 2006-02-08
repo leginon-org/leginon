@@ -862,7 +862,7 @@ static PyObject *rgbstring(PyObject *self, PyObject *args) {
 			index += 3;
 		}
 	}
-	PyMem_Del(rgb);
+	//PyMem_Del(rgb);
 
 	Py_DECREF(inputarray);
 
