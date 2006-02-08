@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Manager.py,v $
-# $Revision: 1.27 $
+# $Revision: 1.28 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-01-21 01:07:11 $
+# $Date: 2006-02-08 17:31:25 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -109,33 +109,30 @@ class App(wx.App):
 		wx.App.__init__(self)
 
 	def OnInit(self):
-		e = None
 		try:
 			self.manager = manager.Manager(self.session, self.tcpport,
 											**self.kwargs)
 		except Exception, e:
-			pass
-		self.manager.frame = Frame(self.manager)
-		self.SetTopWindow(self.manager.frame)
-		if e is not None:
-			self.manager.frame.Show(True)
-			dialog = wx.MessageDialog(self.manager.frame,
+			dialog = wx.MessageDialog(None,
 									  'Unable to start Leginon: %s.' % e,
 									  'Error',
 									  wx.ICON_ERROR|wx.OK)
 			dialog.ShowModal()
 			dialog.Destroy()
-			self.manager.exit()
-			self.manager.frame.Close()
 			self.abort = True
 			return True
+
+		self.manager.frame = Frame(self.manager)
+		self.SetTopWindow(self.manager.frame)
 		setup = gui.wx.SetupWizard.SetupWizard(self.manager)
 		self.manager.frame.Show(True)
+
 		if not setup.run():
 			self.manager.exit()
 			self.manager.frame.Close()
 			self.abort = True
 			return True
+
 		return True
 
 	def OnExit(self):
