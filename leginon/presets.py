@@ -516,9 +516,14 @@ class PresetsManager(node.Node):
 		self.logger.info('Preset from %s, %s' % (temname, camname))
 		try:
 			scopedata = self.instrument.getData(data.ScopeEMData)
+		except Exception, e:
+			self.logger.error('Preset from instrument failed, unable to get TEM parameters: %s' % e)
+			return
+
+		try:
 			cameradata = self.instrument.getData(data.CameraEMData, image=False)
-		except:
-			self.logger.error('Preset from instrument failed: unable to get instrument parameters')
+		except Exception, e:
+			self.logger.error('Preset from instrument failed, unable to get CCD camera parameters: %s' % e)
 			return
 
 		newparams = {}

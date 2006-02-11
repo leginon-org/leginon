@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.33 $
+# $Revision: 1.34 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-02-01 21:56:12 $
+# $Date: 2006-02-11 00:27:12 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -257,9 +257,14 @@ class Proxy(object):
 				keys.append(key)
 				attributes.append(attribute)
 				types.append('r')
-		result = proxy.multiCall(attributes, types)
+		results = proxy.multiCall(attributes, types)
 		for i, key in enumerate(keys):
-			instance[key] = result[i]
+			try:
+				if isinstance(results[i], Exception):
+					raise results[i]
+			except (AttributeError, NotImplementedError):
+				continue
+			instance[key] = results[i]
 		if 'session' in instance:
 			instance['session'] = self.session
 		if 'tem' in instance:
@@ -311,7 +316,13 @@ class Proxy(object):
 			keys.append(key)
 			attributes.append(attribute)
 			args.append((instance[key],))
-		proxy.multiCall(attributes, types, args)
+		results = proxy.multiCall(attributes, types, args)
+		for result in results:
+			try:
+				if isinstance(result, Exception):
+					raise result
+			except (AttributeError, NotImplemetedError):
+				pass
 
 class TEM(remotecall.Locker):
 	def getDatabaseType(self):
