@@ -11,6 +11,7 @@ import sqldict
 import threading
 import logging
 import _mysql_exceptions
+import MySQLdb.constants.CR
 
 class DatabaseError(Exception):
 	pass
@@ -19,6 +20,9 @@ class InsertError(DatabaseError):
 	pass
 
 class QueryError(DatabaseError):
+	pass
+
+class Reconnect(DatabaseError):
 	pass
 
 class DBDataKeeper(object):
@@ -48,15 +52,28 @@ class DBDataKeeper(object):
 		else:
 			raise RuntimeError('direct_query should only return a single result')
 
+	def _reconnect(self):
+		try:
+			self.dbd = sqldict.SQLDict()
+		except _mysql_exceptions.OperationalError, e:
+			raise DatabaseError(e.args[-1])
+
 	def query(self, idata, results=None, readimages=True, timelimit=None):
 		if self.logger is not None:
 			self.logger.info('query %s' % idata)
 		self.lock.acquire()
+		args = (idata, results)
+		kwargs = {'readimages': readimages, 'timelimit': timelimit}
 		try:
-			ret = self._query(idata, results, readimages=readimages, timelimit=timelimit)
+			while True:
+				try:
+					result = self._query(*args, **kwargs)
+					break
+				except Reconnect:
+					self._reconnect()
 		finally:
 			self.lock.release()
-		return ret
+		return result
 
 	def _query(self, idata, results=None, readimages=True, timelimit=None):
 		'''
@@ -68,6 +85,8 @@ class DBDataKeeper(object):
 		try:
 			result  = self.dbd.multipleQueries(queryinfo, readimages=readimages)
 		except _mysql_exceptions.OperationalError, e:
+			if e.args[0] == MySQLdb.constants.CR.SERVER_LOST:
+				raise Reconnect(e.args[-1])
 			raise QueryError(e.args[-1])
 
 		if results is not None:
@@ -205,7 +224,12 @@ class DBDataKeeper(object):
 	def insert(self, newdata, force=False):
 		self.lock.acquire()
 		try:
-			self._insert(newdata, force=force)
+			while True:
+				try:
+					self._insert(newdata, force=force)
+					break
+				except Reconnect:
+					self._reconnect()
 		finally:
 			self.lock.release()
 
@@ -239,6 +263,8 @@ class DBDataKeeper(object):
 		try:
 			return self.recursiveInsert(newdata, force=force)
 		except _mysql_exceptions.OperationalError, e:
+			if e.args[0] == MySQLdb.constants.CR.SERVER_LOST:
+				raise Reconnect(e.args[-1])
 			raise InsertError(e.args[-1])
 
 	def flatInsert(self, newdata, force=False):
