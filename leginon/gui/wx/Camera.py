@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Camera.py,v $
-# $Revision: 1.29 $
+# $Revision: 1.30 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-13 01:04:58 $
+# $Date: 2006-02-14 20:01:27 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -302,7 +302,7 @@ class CameraPanel(wx.Panel):
 					label = '%d x %d'
 				label = label % (self.geometry[g]['x'], self.geometry[g]['y'])
 				getattr(self, 'st' + g).SetLabel(label)
-			except KeyError:
+			except:
 				pass
 		self.szmain.Layout()
 		self.Thaw()
