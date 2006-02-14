@@ -11,7 +11,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
         ccdcamera.CCDCamera.__init__(self)
         self.camera_size = {'x': 2048, 'y': 2048}
         self.binning_values = {'x': [1, 2, 4, 8], 'y': [1, 2, 4, 8]}
-        self.pixel_size = 2.5e-5
+        self.pixel_size = {'x': 2.5e-5, 'y': 2.5e-5}
         self.exposure_types = ['normal', 'dark']
 
         self.binning = {'x': 1, 'y': 1}
@@ -19,6 +19,9 @@ class SimCCDCamera(ccdcamera.CCDCamera):
         self.dimension = copy.copy(self.camera_size)
         self.exposure_time = 0.0
         self.exposure_type = 'normal'
+
+        self.energy_filter = False
+        self.energy_filter_width = 0.0
 
     def getBinning(self):
         return copy.copy(self.binning)
@@ -101,19 +104,19 @@ class SimCCDCamera(ccdcamera.CCDCamera):
             if self.dimension[axis] % self.binning[axis] != 0:
                 raise ValueError('invalid dimension/binning combination')
 
-        columns = self.dimension['x']/self.binning['y']
-        rows = self.dimension['y']/self.binning['y']
+        columns = self.dimension['x']
+        rows = self.dimension['y']
 
         shape = (rows, columns)
 
         if self.exposure_type == 'dark' or self.exposure_time == 0:
-            return numarray.zeros(shape, numarray.Float)
+            return numarray.zeros(shape, numarray.Float32)
         else:
             image = numarray.random_array.random(shape)
             row_offset = random.randint(-shape[0]/8, shape[0]/8) + shape[0]/4
             column_offset = random.randint(-shape[1]/8, shape[1]/8) + shape[0]/4
             image[row_offset:row_offset+shape[0]/4,
-                  column_offset:column_offset+shape[1]/4] = 1.0
+                  column_offset:column_offset+shape[1]/4] += 1.0
             return image
 
     def getEnergyFiltered(self):
@@ -133,4 +136,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 
     def alignEnergyFilterZeroLossPeak(self):
         pass
+
+    def getPixelSize(self):
+        return dict(self.pixel_size)
 

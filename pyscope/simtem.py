@@ -197,7 +197,10 @@ class SimTEM(tem.TEM):
         self.main_screen_scale = value
 
     def setMagnification(self, value):
-        self.magnification_index = self.magnifications.index(value)
+        try:
+            self.magnification_index = self.magnifications.index(float(value))
+        except ValueError:
+            raise ValueError('invalid magnification')
 
     def getMagnificationIndex(self, magnification=None):
         if magnification is not None:
