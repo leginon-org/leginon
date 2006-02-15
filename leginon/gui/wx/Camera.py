@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Camera.py,v $
-# $Revision: 1.30 $
+# $Revision: 1.31 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-02-14 20:01:27 $
+# $Date: 2006-02-15 18:59:28 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -240,13 +240,16 @@ class CameraPanel(wx.Panel):
 		if geometry is None:
 			geometry = self.geometry
 		for a in ['x', 'y']:
-			if geometry['dimension'][a] < 1 or geometry['offset'][a] < 0:
-				return False
-			if geometry['binning'][a] not in self.binnings[a]:
-				return False
-			size = geometry['dimension'][a] + geometry['offset'][a]
-			size *= geometry['binning'][a]
-			if size > self.size[a]:
+			try:
+				if geometry['dimension'][a] < 1 or geometry['offset'][a] < 0:
+					return False
+				if geometry['binning'][a] not in self.binnings[a]:
+					return False
+				size = geometry['dimension'][a] + geometry['offset'][a]
+				size *= geometry['binning'][a]
+				if size > self.size[a]:
+					return False
+			except:
 				return False
 		return True
 
