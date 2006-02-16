@@ -208,7 +208,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if p['film']:
 				self.reportStatus('acquisition', 'Acquiring film...')
 				try:
-					self.acquireFilm(p, target=targetdata, emtarget=emtarget)
+					filmresult = self.acquireFilm(p, target=targetdata, emtarget=emtarget)
+					if filmresult == 'no stock':
+						self.player.pause()
+						self.logger.error('No film stock.  Insert more film and press continue')
+						self.beep()
+						return 'repeat'
 					self.reportStatus('acquisition', 'film acquired')
 				except:
 					self.logger.exception('film acquisition')
@@ -353,7 +358,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		stock = self.instrument.tem.FilmStock
 		if stock < 1:
 			self.logger.error('Film stock = %s. Film exposure failed' % (stock,))
-			return
+			return 'no stock'
 
 		## create FilmData(AcquisitionImageData) which 
 		## will be used to store info about this exposure
