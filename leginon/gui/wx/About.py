@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/About.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-26 20:56:05 $
+# $Date: 2006-02-17 18:13:58 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -39,8 +39,15 @@ class Dialog(gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, 'Version %s' % v)
 		self.sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER)
 
-		label = wx.StaticText(self, -1, 'System information')
+		label = wx.StaticText(self, -1, 'Tomography contributed by:')
 		self.sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER)
+		label = wx.StaticText(self, -1, 'Christian Suloway (Jensen Lab, Caltech)')
+		self.sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER)
+		label = wx.StaticText(self, -1, 'Shawn Zheng (Agard Lab, UCSF)')
+		self.sz.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER)
+
+		label = wx.StaticText(self, -1, 'System information')
+		self.sz.Add(label, (6, 0), (1, 1), wx.ALIGN_CENTER)
 
 		sz = wx.GridBagSizer(0, 20)
 
@@ -91,7 +98,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 
 		sz.AddGrowableCol(0)
 
-		self.sz.Add(sz, (4, 0), (1, 1), wx.ALIGN_CENTER)
+		self.sz.Add(sz, (7, 0), (1, 1), wx.ALIGN_CENTER)
 
 		self.addButton('OK', wx.ID_OK, wx.ALIGN_CENTER)
 

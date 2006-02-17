@@ -1251,6 +1251,7 @@ class AcquisitionImageData(PresetImageData):
 			('target', AcquisitionImageTargetData),
 			('emtarget', EMTargetData),
 			('grid', GridData),
+			('tilt series', TiltSeriesData),
 		)
 	typemap = classmethod(typemap)
 
@@ -2166,3 +2167,59 @@ class DoseMeasurementData(InSessionData):
 			('dose', float),
 		)
 	typemap = classmethod(typemap)
+
+class TomographySettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('tilt min', float),
+			('tilt max', float),
+			('tilt start', float),
+			('tilt step', float),
+			('cosine exposure', bool),
+			('thickness value', float),
+			('xcf bin', int),
+			('registration preset order', list),
+			('run buffer cycle', bool),
+			('align zero loss peak', bool),
+		)
+	typemap = classmethod(typemap)
+
+class TomographyPredictionData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('predicted position', dict),
+			('pixel predicted position', dict),
+			('predicted shift', dict),
+			('pixel predicted shift', dict),
+			('position', dict),
+			('pixel position', dict),
+			('correlation', dict),
+			('pixel correlation', dict),
+			('correlated position', dict),
+			('pixel correlated position', dict),
+			('pixel raw correlation', dict),
+			#('image', TiltSeriesImageData),
+			('image', AcquisitionImageData),
+		)
+	typemap = classmethod(typemap)
+
+class TiltSeriesData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('tilt min', float),
+			('tilt max', float),
+			('tilt start', float),
+			('tilt step', float),
+		)
+	typemap = classmethod(typemap)
+
+'''
+class TiltSeriesImageData(AcquisitionImageData):
+	def typemap(cls):
+		return AcquisitionImageData.typemap() + (
+			('shift', dict),
+			('tilt series', TiltSeriesData),
+		)
+	typemap = classmethod(typemap)
+'''
+
