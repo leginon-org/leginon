@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Manager.py,v $
-# $Revision: 1.28 $
+# $Revision: 1.29 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-02-08 17:31:25 $
+# $Date: 2006-02-17 22:14:40 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -814,7 +814,7 @@ class RunApplicationDialog(wx.Dialog):
 				choice.SetSelection(n)
 				self.launchersizer.Add(choice, (i, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 				self.launcherchoices[launcheralias] = choice
-		self.sizer.Add(self.launchersizer, (2, 0), (1, 2), wx.ALIGN_CENTER)
+			self.sizer.Add(self.launchersizer, (2, 0), (1, 2), wx.ALIGN_CENTER)
 		self.dialogsizer.Layout()
 		self.Fit()
 

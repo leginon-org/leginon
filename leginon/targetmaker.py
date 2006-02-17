@@ -157,13 +157,13 @@ class MosaicTargetMaker(TargetMaker):
 							scope['stage position'][key] = center[key]
 		self.logger.debug('Target settings updated')
 
-	def getPixelSize(self, scope):
+	def getPixelSize(self, scope, ccdcamera):
 		try:
 			magnification = scope['magnification']
 		except KeyError:
 			raise AtlasError('unable to get magnification')
 		try:
-			return self.pixelsizecalclient.retrievePixelSize(None, None, magnification)
+			return self.pixelsizecalclient.retrievePixelSize(scope['tem'], ccdcamera['ccdcamera'], magnification)
 		except calibrationclient.NoPixelSizeError:
 			raise AtlasError('unable to get pixel size')
 
@@ -211,7 +211,7 @@ class MosaicTargetMaker(TargetMaker):
 		else:
 			center = None
 		self.updateState(preset, scope, camera, center)
-		pixelsize = self.getPixelSize(scope)
+		pixelsize = self.getPixelSize(scope, camera)
 		binning, imagesize = self.getCameraParameters(camera)
 		targets = self.makeCircle(radius, overlap, pixelsize, binning, imagesize)
 		return targets, scope, camera, preset

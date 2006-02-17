@@ -200,7 +200,12 @@ class Collection(object):
                     pixel[key][axis] = raw[key][axis]/self.pixel_size
 
             try:
-                self.node.correctShift(pixel['predicted shift'], self.settings['move type'])
+                s = {}
+                for axis in ['x', 'y']:
+                    s[axis] = pixel['predicted shift'][axis]
+                    s[axis] /= self.preset['binning'][axis]
+
+                self.node.correctShift(s, self.settings['move type'])
             except Exception, e:
                 self.logger.error('Calibration error: %s' % e) 
                 self.finalize()
