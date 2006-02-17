@@ -76,17 +76,11 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         expsbsz = wx.StaticBoxSizer(expsb, wx.VERTICAL)
         expsbsz.Add(expsz, 0, wx.EXPAND|wx.ALL, 5)
 
-        tomogramsbsz = self.mAddTomogram()
-
         presets = self.node.presetsclient.getPresetNames()
         self.widgets['registration preset order'] = EditPresetOrder(self, -1)
+        self.widgets['registration preset order'].storder.SetLabel('Registration Presets Order')
         self.widgets['registration preset order'].setChoices(presets)
 
-        #self.widgets['xcf bin'] = IntEntry(self, -1,
-        #                                    values=[1, 2, 4, 8],
-        #                                    allownone=False,
-        #                                    chars=1,
-        #                                    value='1')
         self.widgets['run buffer cycle'] = wx.CheckBox(self, -1, 'Run buffer cycle before collection')
         self.widgets['align zero loss peak'] = wx.CheckBox(self, -1, 'Align zero loss peak after collection')
 
@@ -98,10 +92,6 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
                    (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         miscsz.Add(self.widgets['align zero loss peak'],
                    (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        #label = wx.StaticText(self, -1, 'XCF binning')
-        #iscsz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        #iscsz.Add(self.widgets['xcf bin'], (2, 1), (1, 1),
-        #           wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
         miscsz.AddGrowableCol(0)
 
         miscsb = wx.StaticBox(self, -1, 'Misc.')
@@ -109,45 +99,11 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         miscsbsz.Add(miscsz, 0, wx.EXPAND|wx.ALL, 5)
 
         sz = wx.GridBagSizer(10, 10)
-        sz.Add(tomogramsbsz, (0, 0), (1, 1), wx.EXPAND)
-        sz.Add(miscsbsz, (0, 1), (1, 1), wx.EXPAND)
-        sz.Add(tiltsbsz, (1, 0), (1, 1), wx.EXPAND)
-        sz.Add(expsbsz, (1, 1), (1, 1), wx.EXPAND)
+        sz.Add(tiltsbsz, (0, 0), (1, 1), wx.EXPAND)
+        sz.Add(expsbsz, (1, 0), (1, 1), wx.EXPAND)
+        sz.Add(miscsbsz, (0, 1), (2, 1), wx.EXPAND)
 
         return szs + [sz]
-
-    def mAddTomogram(self):
-        self.widgets['unsigned data'] = wx.CheckBox(self, -1, 
-            'Unsigned', style = wx.ALIGN_RIGHT)
-        self.widgets['cryo data'] = wx.CheckBox(self, -1, 
-            'Cryo', style = wx.ALIGN_RIGHT)
-        self.widgets['label'] = Entry(self, -1, chars=24)
-        self.widgets['description'] = Entry(self, -1, style=wx.TE_MULTILINE)
-
-        pDataType = wx.StaticText(self, -1, 'Data Type:')
-        pFileName = wx.StaticText(self, -1, 'File Name:')
-        pLabel = wx.StaticText(self, -1, 'Description:')
-
-        pSizer = wx.GridBagSizer(vgap=5, hgap=10)
-        alignment = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT
-        pSizer.Add(pDataType, (0, 0), (1, 1), alignment)
-        pSizer.Add(pFileName, (1, 0), (1, 1), alignment)
-        pSizer.Add(pLabel, (2, 0), (1, 2), alignment)
-
-        alignment = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT
-        pSizer.Add(self.widgets['unsigned data'], (0, 1), (1, 1), alignment)
-        pSizer.Add(self.widgets['cryo data'], (0, 2), (1, 1), alignment)
-
-        alignment = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT|wx.FIXED_MINSIZE
-        pSizer.Add(self.widgets['label'], (1, 1), (1, 2), alignment)
-        pSizer.Add(self.widgets['description'], (3, 0), (1, 3), wx.EXPAND)
-        pSizer.AddGrowableCol(0)
-        pSizer.AddGrowableRow(3)
-
-        tomogramsb = wx.StaticBox(self, -1, 'Tomogram')
-        tomogramsbsz = wx.StaticBoxSizer(tomogramsb, wx.VERTICAL)
-        tomogramsbsz.Add(pSizer, 1, wx.EXPAND|wx.ALL, 5)
-        return tomogramsbsz
 
 class Panel(gui.wx.Acquisition.Panel):
     settingsdialogclass = SettingsDialog
