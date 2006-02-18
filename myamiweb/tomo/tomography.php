@@ -60,8 +60,7 @@ class Tomography {
             return array();
 
         $query = 'SELECT `DEF_id` as id, '
-            .'UNIX_TIMESTAMP(DEF_timestamp) as timestamp, '
-            .'description as description '
+            .'UNIX_TIMESTAMP(DEF_timestamp) as timestamp '
             .'FROM `TiltSeriesData` '
             ."WHERE `REF|SessionData|session`='$sessionId' "
             .'ORDER BY DEF_timestamp;';
@@ -158,9 +157,10 @@ class Tomography {
         $info = array();
         $count = count($predictionData);
         for ($i = 0; $i < $count; $i++) {
-            foreach ($predictionData[$i] as $key => $value) {
-                $info[$key][$i] = $value;
-            }
+		if (is_array($predictionData[$i]))
+		    foreach ($predictionData[$i] as $key => $value) {
+			$info[$key][$i] = $value;
+		    }
         }
         return $info;
     }

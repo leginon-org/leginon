@@ -321,6 +321,9 @@ $stack_size += $mrc_header_size;
 
 $filename = $results[0]["filename"];
 $filename = ereg_replace("Tomography_.*$", '.mrc', $filename);
+if (!eregi("\.mrc$", $filename))
+	$filename = ereg_replace("$", ".mrc", $filename);
+
 writeHeader($filename, $stack_size);
 
 echo getContents($stack_header, $mrc_stack_format);

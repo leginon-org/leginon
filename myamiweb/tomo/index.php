@@ -34,16 +34,20 @@ foreach ($axes as $axis) {
 
 <head>
 <title>Tomography</title>
-<link rel="stylesheet" href="../css/leginon.css" type="text/css" /> 
+<link rel="stylesheet" href="../css/viewer.css" type="text/css" /> 
 </head>
 
-<body>
+<body onLoad="init()">
 
-<form name="tomography" action="index.php">
+<form name="tomography" method="GET" action="index.php">
 
 <script language="JavaScript">
 function submit() {
 	document.tomography.submit();
+}
+function init() {
+	if (l=document.tomography.tiltSeriesId)
+		l.focus();
 }
 </script>
 
