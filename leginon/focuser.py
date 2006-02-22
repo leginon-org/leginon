@@ -67,6 +67,7 @@ class Focuser(acquisition.Acquisition):
             'stig defocus max': -2e-6,
             'check drift': False,
             'drift threshold': 3e-10,
+            'stig lens': 'objective',
         }
         self.manualchecklock = threading.Lock()
         self.maskradius = 1.0
@@ -173,6 +174,7 @@ class Focuser(acquisition.Acquisition):
 
     def autoFocus(self, setting, emtarget, resultdata):
         presetname = setting['preset name']
+        stiglens = setting['stig lens']
         ## need btilt, pub, driftthresh
         btilt = setting['beam tilt']
         pub = False
@@ -211,7 +213,7 @@ class Focuser(acquisition.Acquisition):
             self.logger.exception('Autofocus failed: %s' % e)
 
         try:
-            correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.setImage, target=target, correct_tilt=True, correlation_type=setting['correlation type'])
+            correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.setImage, target=target, correct_tilt=True, correlation_type=setting['correlation type'], stig=stiglens)
         except calibrationclient.Abort:
             self.logger.info('Measurement of defocus and stig. has been aborted')
             return 'aborted'
@@ -250,7 +252,7 @@ class Focuser(acquisition.Acquisition):
             stigdefocusmin = stigdefocrange[0]
             stigdefocusmax = stigdefocrange[1]
             if validdefocus and stigdefocusmin < abs(defoc) < stigdefocusmax:
-                self.correctStig(stigx, stigy)
+                self.correctStig(stiglens, stigx, stigy)
                 resultdata['stig correction'] = 1
             else:
                 self.logger.info('Stig. correction invalid due to invalid defocus')
@@ -530,11 +532,11 @@ class Focuser(acquisition.Acquisition):
 
         #self.logger.info('Changed %s %s %s' % (parameter, direction, delta,))
 
-    def correctStig(self, deltax, deltay):
+    def correctStig(self, stiglens, deltax, deltay):
         stig = self.instrument.tem.Stigmator
-        stig['objective']['x'] += deltax
-        stig['objective']['y'] += deltay
-        self.logger.info('Correcting stig by %s, %s' % (deltax, deltay))
+        stig[stiglens]['x'] += deltax
+        stig[stiglens]['y'] += deltay
+        self.logger.info('Correcting %s stig by %s, %s' % (stiglens, deltax, deltay))
         self.instrument.tem.Stigmator = stig
 
     def correctDefocus(self, delta):

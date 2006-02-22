@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.8 $
+# $Revision: 1.9 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-01-16 19:58:04 $
+# $Date: 2006-02-22 00:35:44 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -125,6 +125,7 @@ class Dialog(gui.wx.Dialog.Dialog):
         setting['correction type'] = \
             self.correction_type_choice.GetStringSelection()
         setting['stig correction'] = self.correct_astig_checkbox.GetValue()
+        setting['stig lens'] = self.stig_lens.GetValue()
         setting['stig defocus min'] = self.stig_defocus_min_entry.GetValue()
         setting['stig defocus max'] = self.stig_defocus_max_entry.GetValue()
         setting['check drift'] = self.check_drift_checkbox.GetValue()
@@ -146,6 +147,7 @@ class Dialog(gui.wx.Dialog.Dialog):
         self.correction_type_choice.SetStringSelection(
                                                     setting['correction type'])
         self.correct_astig_checkbox.SetValue(setting['stig correction'])
+        self.stig_lens.SetStringSelection(setting['stig lens'])
         self.stig_defocus_min_entry.SetValue(setting['stig defocus min'])
         self.stig_defocus_max_entry.SetValue(setting['stig defocus max'])
         self.check_drift_checkbox.SetValue(setting['check drift'])
@@ -169,6 +171,7 @@ class Dialog(gui.wx.Dialog.Dialog):
             self.fit_limit_entry,
             self.correction_type_choice,
             self.correct_astig_checkbox,
+            self.stig_lens,
             self.stig_defocus_min_entry,
             self.stig_defocus_max_entry,
             self.check_drift_checkbox,
@@ -202,6 +205,8 @@ class Dialog(gui.wx.Dialog.Dialog):
         self.drift_threshold_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
         self.correct_astig_checkbox = wx.CheckBox(self, -1,
                                       'Correct astigmatism for defocus between')
+        self.stig_lens = gui.wx.Choice.Choice(self, -1, choices=['objective','diffraction'])
+        self.stig_lens.SetSelection(0)
         self.stig_defocus_min_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
         self.stig_defocus_max_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
 
@@ -227,6 +232,10 @@ class Dialog(gui.wx.Dialog.Dialog):
         label = wx.StaticText(self, -1, 'meters')
         self.labels.append(label)
         stig_sizer.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        label = wx.StaticText(self, -1, 'Stigmator Lens')
+        self.labels.append(label)
+        stig_sizer.Add(label, (1,0), (1,1))
+        stig_sizer.Add(self.stig_lens, (1,1), (1,1))
         ##
 
         sizer = self.sz
@@ -314,6 +323,7 @@ if __name__ == '__main__':
         'fit limit': 10000,
         'correction type': 'Defocus',
         'stig correction': False,
+        'stig lens': 'objective',
         'stig defocus min': -4e-6,
         'stig defocus max': -2e-6,
         'check drift': False,
@@ -330,6 +340,7 @@ if __name__ == '__main__':
         'fit limit': 10000,
         'correction type': 'Defocus',
         'stig correction': False,
+        'stig lens': 'objective',
         'stig defocus min': -4e-6,
         'stig defocus max': -2e-6,
         'check drift': True,
