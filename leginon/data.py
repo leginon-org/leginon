@@ -2020,6 +2020,7 @@ class FocusSettingData(InSessionData):
 			('fit limit', float),
 			('correction type', str),
 			('stig correction', bool),
+			('stig lens', str),
 			('stig defocus min', float),
 			('stig defocus max', float),
 			('check drift', bool),
