@@ -32,6 +32,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		'second defocus': -4e-6,
 		'stig beam tilt': 0.01,
 		'stig delta': 0.2,
+		'stig lens': 'objective',
 	})
 
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -160,11 +161,11 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.beep()
 		return ''
 
-	def calibrateStigmators(self, tilt_value, delta):
+	def calibrateStigmators(self, lens, tilt_value, delta):
 		if self.initInstruments():
 			return
 
-		currentstig = self.getObjectiveStigmator()
+		currentstig = self.getStigmator(lens)
 		## set up the stig states
 		stig = {'x':{}, 'y':{}}
 		for axis in ('x','y'):
@@ -182,8 +183,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 				self.logger.info('Measuring %s tilt' % (tiltaxis,))
 				stig1 = stig[stigaxis]['+']
 				stig2 = stig[stigaxis]['-']
-				state1 = data.ScopeEMData(stigmator={'objective':stig1})
-				state2 = data.ScopeEMData(stigmator={'objective':stig2})
+				state1 = data.ScopeEMData(stigmator={lens:stig1})
+				state2 = data.ScopeEMData(stigmator={lens:stig2})
 				shift1, shift2 = self.calclient.measureDisplacements(tiltaxis, tilt_value, state1, state2)
 				self.logger.info('Pixel shift (1 of 2): (%.2f, %.2f)'
 														% (shift1['col'], shift1['row']))
@@ -201,17 +202,17 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			self.logger.info('Storing calibration...')
 			mag, mags = self.getMagnification()
 			ht = self.getHighTension()
-			type = 'stig' + stigaxis
+			type = lens + stigaxis
 			self.calclient.storeMatrix(ht, mag, type, matrix)
 			self.logger.info('Calibration stored')
 
 		## return to original stig
-		self.instrument.tem.Stigmator = {'objective': currentstig}
+		self.instrument.tem.Stigmator = {lens: currentstig}
 		self.logger.info('Calibration completed')
 		self.beep()
 		return ''
 
-	def measureDefocusStig(self, btilt, stig=True, correct_tilt=False):
+	def measureDefocusStig(self, btilt, stig, correct_tilt=False):
 		if self.initInstruments():
 			return
 		try:
@@ -222,8 +223,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.logger.info('RET %s' % ret)
 		return ret
 
-	def getObjectiveStigmator(self):
-		return self.instrument.tem.Stigmator['objective']
+	def getStigmator(self, lens):
+		return self.instrument.tem.Stigmator[lens]
 
 	def uiCalibrateDefocus(self):
 		self.calibrateDefocus(self.settings['defocus beam tilt'],
@@ -232,17 +233,17 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.panel.calibrationDone()
 
 	def uiCalibrateStigmators(self):
-		self.calibrateStigmators(self.settings['stig beam tilt'],
+		self.calibrateStigmators(self.settings['stig lens'], self.settings['stig beam tilt'],
 															self.settings['stig delta'])
 		self.panel.calibrationDone()
 
 	def uiMeasureDefocusStig(self, btilt, correct_tilt):
-		result = self.measureDefocusStig(btilt, stig=True, correct_tilt=correct_tilt)
+		result = self.measureDefocusStig(btilt, stig=self.settings['stig lens'], correct_tilt=correct_tilt)
 		self.resultvalue = result
 		self.panel.measurementDone()
 
 	def uiMeasureDefocus(self, btilt):
-		result = self.measureDefocusStig(btilt, stig=False)
+		result = self.measureDefocusStig(btilt, stig=None)
 		self.resultvalue = result
 		self.panel.measurementDone()
 
@@ -264,10 +265,11 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			return
 		current = self.getCurrentValues()	
 
-		newstigx = current['stigx'] + delta['stigx']
-		newstigy = current['stigy'] + delta['stigy']
+		lens = self.settings['stig lens']
+		newstigx = current[lens]['x'] + delta['stigx']
+		newstigy = current[lens]['y'] + delta['stigy']
 
-		self.instrument.tem.Stigmator = {'objective': {'x':newstigx,'y':newstigy}}
+		self.instrument.tem.Stigmator = {lens: {'x':newstigx,'y':newstigy}}
 		self.panel.setInstrumentDone()
 
 	def uiResetDefocus(self):
@@ -279,10 +281,9 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def getCurrentValues(self):
 		defocus = self.instrument.tem.Defocus
-		stig = self.instrument.tem.Stigmator['objective']
-		stigx = stig['x']
-		stigy = stig['y']
-		return {'defocus':defocus, 'stigx':stigx, 'stigy':stigy}
+		ob = self.instrument.tem.Stigmator['objective']
+		dif = self.instrument.tem.Stigmator['diffraction']
+		return {'defocus':defocus, 'objective': ob, 'diffraction': dif}
 
 	def eucToScope(self):
 		estr = 'Unable to set eucentric focus: %s'

@@ -2076,6 +2076,7 @@ class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
 			('second defocus', float),
 			('stig beam tilt', float),
 			('stig delta', float),
+			('stig lens', str),
 		)
 	typemap = classmethod(typemap)
 

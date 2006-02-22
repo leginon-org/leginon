@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/BeamTiltCalibrator.py,v $
-# $Revision: 1.14 $
+# $Revision: 1.15 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-10-21 17:56:19 $
+# $Date: 2006-02-22 00:09:04 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -198,17 +198,26 @@ class StigmatorsSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
 
+		self.widgets['stig lens'] = wx.Choice(self, -1, choices=['objective', 'diffraction'])
+		self.widgets['stig lens'].SetSelection(0)
 		self.widgets['stig beam tilt'] = FloatEntry(self, -1, chars=9)
 		self.widgets['stig delta'] = FloatEntry(self, -1, chars=9)
 
 		sz = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Beam tilt:')
+
+		label = wx.StaticText(self, -1, 'Lens:')
 		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['stig beam tilt'], (0, 1), (1, 1),
+		sz.Add(self.widgets['stig lens'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Delta stig:')
+
+		label = wx.StaticText(self, -1, 'Beam tilt:')
 		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['stig delta'], (1, 1), (1, 1),
+		sz.Add(self.widgets['stig beam tilt'], (1, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+
+		label = wx.StaticText(self, -1, 'Delta stig:')
+		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['stig delta'], (2, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 
 		self.sb = wx.StaticBox(self, -1, 'Stigmator Calibration')

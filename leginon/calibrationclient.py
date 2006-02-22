@@ -520,7 +520,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		else:
 			return None
 
-	def measureDefocusStig(self, tilt_value, publish_images=0, drift_threshold=None, image_callback=None, stig=True, target=None, correct_tilt=False, correlation_type=None):
+	def measureDefocusStig(self, tilt_value, publish_images=0, drift_threshold=None, image_callback=None, stig=None, target=None, correct_tilt=False, correlation_type=None):
 		self.abortevent.clear()
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
@@ -529,9 +529,11 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
 		if fmatrix is None:
 				raise RuntimeError('missing calibration matrix')
-		if stig:
-			amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag)
-			bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag)
+		if stig is not None:
+			typex = stig + 'x'
+			typey = stig + 'y'
+			amatrix = self.retrieveMatrix(tem, cam, typex, ht, mag)
+			bmatrix = self.retrieveMatrix(tem, cam, typey, ht, mag)
 			if None in (amatrix, bmatrix):
 				raise RuntimeError('missing calibration matrix')
 
