@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.12 2006-02-24 00:33:51 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.13 2006-02-24 18:38:20 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -184,10 +184,10 @@ PHP_MINFO_FUNCTION(mrc)
 
 
 /**
- * apply gaussian filter to an image
+ * get image information
  *
  * Description:
- * int imagegaussianfilter ( resource image [, int kernel [, float sigma ]])
+ * array imagegaussianfilter ( resource image )
  **/
 ZEND_FUNCTION(gdimageinfo)
 {
