@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.50 $
- *	@version $Id: leginon.inc,v 1.50 2006-01-26 23:12:28 dfellman Exp $
+ *	@version $Revision: 1.51 $
+ *	@version $Id: leginon.inc,v 1.51 2006-02-24 21:49:50 suloway Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -333,6 +333,8 @@ class leginondata {
 			$sqlselect[]="pi.pixelsize";
 		if (in_array('dose', $presets) && in_array('dose', $presetfields))
 			$sqlselect[]="p.dose";
+		if (in_array('exposure time', $presets) && in_array('exposure time', $presetfields))
+			$sqlselect[]="p.`exposure time`";
 		$sqlselectstr=implode(', ',$sqlselect);
 		$sqljoinstr=implode(', ',$sqljoin);
 		$q='

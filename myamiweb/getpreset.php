@@ -22,6 +22,7 @@ $p[]='mag';
 $p[]='defocus';
 $p[]='pixelsize';
 $p[]='dose';
+$p[]='exposure time';
 $id=$_GET['id'];
 $preset=$_GET['preset'];
 $viewfilename=$_GET['vf'];
@@ -30,29 +31,35 @@ if ($id) {
 	$newimage = $leginondata->findImage($id, $preset);
 	$id = $newimage[id];
 	$imageinfo = $leginondata->getImageInfo($id);
-			$gridId	= $leginondata->getGridId($id);
-			$projectdata = new project();
-			if($projectdata->checkDBConnection()) {
-				$gridinfo = $projectdata->getGridInfo($gridId);
-				if ($gridId)
-					echo '<a class="header" target="gridinfo" href="'.$PROJECT_URL.'getgrid.php?gridId='.$gridId.'">grid#'.$gridinfo[number].' info&raquo;</a>';
+	$gridId	= $leginondata->getGridId($id);
+	$projectdata = new project();
+	if($projectdata->checkDBConnection()) {
+		$gridinfo = $projectdata->getGridInfo($gridId);
+		if ($gridId)
+			echo '<a class="header" target="gridinfo" href="'.$PROJECT_URL.'getgrid.php?gridId='.$gridId.'">grid#'.$gridinfo[number].' info&raquo;</a>';
+	}
+	list($filename) = $leginondata->getFilename($id);
+	$presets = $leginondata->getPresets($id, $p);
+	if (is_array($presets))
+		foreach($presets as $k=>$v)
+			if ($k=='defocus')
+				echo " <b>$k:</b> ",($leginondata->formatDefocus($v));
+			else if ($k=='pixelsize') {
+				$v *= $imageinfo['binning'];
+				echo " <b>$k:</b> ",($leginondata->formatPixelsize($v));
 			}
-			list($filename) = $leginondata->getFilename($id);
-			$presets = $leginondata->getPresets($id, $p);
-			if (is_array($presets))
-			foreach($presets as $k=>$v)
-				if ($k=='defocus')
-					echo " <b>$k:</b> ",($leginondata->formatDefocus($v));
-				else if ($k=='pixelsize') {
-					$v *= $imageinfo['binning'];
-					echo " <b>$k:</b> ",($leginondata->formatPixelsize($v));
-				}
-				else if ($k=='dose') {
-					if (!empty($v))
-						echo " <b>$k:</b> ",($leginondata->formatDose($v));
-				}
-				else
-					echo " <b>$k:</b> $v";
+			else if ($k=='dose') {
+				if (!empty($v))
+					if($presets['exposure time'] && !empty($imageinfo['exposure time']))
+						$dose = $v*$imageinfo['exposure time']/$presets['exposure time'];
+					else
+						$dose = $v;
+					echo " <b>$k:</b> ",($leginondata->formatDose($dose));
+			}
+			else if ($k=='exposure time')
+				continue;
+			else
+				echo " <b>$k:</b> $v";
 	if ($viewfilename)
 		echo " <br>".$filename['filename']."</font>";
 
