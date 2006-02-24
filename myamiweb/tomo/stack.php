@@ -320,7 +320,7 @@ $stack_header["n floats"] = $mrc_stack_extended_format_size/$float_size;
 $stack_size += $mrc_header_size;
 
 $filename = $results[0]["filename"];
-$filename = ereg_replace("Tomography_.*$", '.mrc', $filename);
+$filename = ereg_replace("_[0-9]*$", '_stack.mrc', $filename);
 if (!eregi("\.mrc$", $filename))
 	$filename = ereg_replace("$", ".mrc", $filename);
 
@@ -346,4 +346,3 @@ foreach($extended_headers as $extended_header) {
 }
 
 ?> 
-
