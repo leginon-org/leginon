@@ -52,6 +52,7 @@ class TiltSeries(object):
         tilt_series_image_data['filename'] += '_%03d' % (self.image_counter + 1)
 
         self.node.publish(tilt_series_image_data, database=True)
+        self.node.publishStats(tilt_series_image_data)
 
         self.image_counter += 1
 
