@@ -206,7 +206,6 @@ class viewer {
 		$default = ($this->imageId) ? $this->imageId : $filenames[0][id];
 		foreach ($filenames as $filename) {
 			$filestr = ereg_replace('[[:alnum:]]+_(.*)', '\1', $filename[name]);
-			$filestr = ereg_replace('00', '', $filestr);
 			if ($filename[id]==$default) $s='selected'; else $s='';
          		$selector .= '<option value='.$filename[id].' '.$s.' >'.$filestr.$this->crlf; 
 		}
