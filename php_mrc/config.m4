@@ -1,4 +1,4 @@
-dnl $Id: config.m4,v 1.6 2006-01-09 23:16:23 dfellman Exp $
+dnl $Id: config.m4,v 1.7 2006-02-24 00:33:51 dfellman Exp $
 dnl config.m4 for extension mrcmod
 
 dnl Comments in this file start with the string 'dnl'.
@@ -59,7 +59,6 @@ if test "$PHP_MRC" = "yes"; then
 	fi
 	PHP_ADD_LIBRARY_WITH_PATH(sfftw, $FFTW_LIB_DIR, MRC_SHARED_LIBADD)
 	PHP_ADD_LIBRARY_WITH_PATH(srfftw, $FFTW_LIB_DIR, MRC_SHARED_LIBADD)
-	PHP_ADD_LIBRARY_WITH_PATH(gd, $GD_LIB_DIR, MRC_SHARED_LIBADD)
 	PHP_ADD_INCLUDE($FFTW_DIR/include)
 	PHP_ADD_INCLUDE($GD_DIR)
 	PHP_SUBST(MRC_SHARED_LIBADD)

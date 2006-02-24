@@ -5,9 +5,8 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.11 2006-02-03 18:19:14 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.12 2006-02-24 00:33:51 dfellman Exp $ 
 */
-
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -37,8 +36,8 @@ static int le_mrc;
  * Every user visible function must have an entry in mrc_functions[].
  */
 function_entry mrc_functions[] = {
+	ZEND_FE(gdimageinfo, NULL)
 	ZEND_FE(imagegaussianfilter, NULL)
-	ZEND_FE(imagescale, NULL)
 	ZEND_FE(imagelogscale, NULL)
 	ZEND_FE(imagehistogram, NULL)
 #ifdef HAVE_FFTW
@@ -82,7 +81,7 @@ zend_module_entry mrc_module_entry = {
 	PHP_RSHUTDOWN(mrc),	/* Replace with NULL if there's nothing to do at request end */
 	PHP_MINFO(mrc),
 #if ZEND_MODULE_API_NO >= 20010901
-	"0.1", /* Replace with version number for your extension */
+	"1.2", /* Replace with version number for your extension */
 #endif
 	STANDARD_MODULE_PROPERTIES
 };
@@ -184,11 +183,58 @@ PHP_MINFO_FUNCTION(mrc)
 }
 
 
-/* Remove the following function when you have succesfully modified config.m4
-   so that your module can be compiled into PHP, it exists only for testing
-   purposes. */
+/**
+ * apply gaussian filter to an image
+ *
+ * Description:
+ * int imagegaussianfilter ( resource image [, int kernel [, float sigma ]])
+ **/
+ZEND_FUNCTION(gdimageinfo)
+{
+	zval **imgind;
+	char	*key;
+	gdImagePtr im;
+	int argc = ZEND_NUM_ARGS();
 
-/* Every user-visible function in PHP should document itself in the source */
+	if (argc != 1 ) 
+	{
+		WRONG_PARAM_COUNT;
+	} 
+
+	zend_get_parameters_ex(argc, &imgind);
+
+	ZEND_FETCH_RESOURCE(im, gdImagePtr, imgind, -1, "Image", le_gd);
+
+	array_init(return_value);
+	key = "sx";
+	add_assoc_long(return_value, key, im->sx);
+	key = "sy";
+	add_assoc_long(return_value, key, im->sy);
+	key = "colorsTotal";
+	add_assoc_long(return_value, key, im->colorsTotal);
+	key = "red[gdMaxColors]";
+	key = "green[gdMaxColors]";
+	key = "blue[gdMaxColors]";
+	key = "open[gdMaxColors]";
+	key = "transparent";
+	add_assoc_long(return_value, key, im->transparent);
+	key = "polyAllocated";
+	add_assoc_long(return_value, key, im->polyAllocated);
+	key = "styleLength";
+	add_assoc_long(return_value, key, im->styleLength);
+	key = "stylePos";
+	add_assoc_long(return_value, key, im->stylePos);
+	key = "interlace";
+	add_assoc_long(return_value, key, im->interlace);
+	key = "thick";
+	add_assoc_long(return_value, key, im->thick);
+	key = "trueColor";
+	add_assoc_long(return_value, key, im->trueColor);
+	key = "alphaBlendingFlag";
+	add_assoc_long(return_value, key, im->alphaBlendingFlag);
+	key = "saveAlphaFlag";
+	add_assoc_long(return_value, key, im->saveAlphaFlag);
+}
 
 /**
  * apply gaussian filter to an image
@@ -228,56 +274,6 @@ ZEND_FUNCTION(imagegaussianfilter)
 
 	filtergaussian(im, kernel, sigma);
 
-	RETURN_TRUE;
-}
-
-
-/** 
- * scale an image
- *
- * Description:
- * int imagescale ( resource image , float scalefactorX[, float scalefactorY]])
- */
-ZEND_FUNCTION(imagescale)
-{
-	zval **imgind, **SFX, **SFY;
-	gdImagePtr im_dst, im_src;
-	int	w, h, nw, nh,
-		argc = ZEND_NUM_ARGS();
-	float	scalefactorx,
-		scalefactory;
-
-	if (argc < 2 || argc > 3 ) 
-	{
-		WRONG_PARAM_COUNT;
-	} 
-	zend_get_parameters_ex(argc, &imgind, &SFX, &SFY);
-	convert_to_double_ex(SFX);
-	scalefactorx = Z_DVAL_PP(SFX);
-
-	if (argc==3) {
-		convert_to_double_ex(SFY);
-		scalefactory = Z_DVAL_PP(SFY);
-	} else {
-		scalefactory = scalefactorx;
-	}
-	if (scalefactorx < 0 || scalefactory < 0)
-		zend_error(E_ERROR, "%s(): scale factor must be greater than 0",
-				get_active_function_name(TSRMLS_C));
-
-	ZEND_FETCH_RESOURCE(im_src, gdImagePtr, imgind, -1, "Image", le_gd);
-
-	w = im_src->sx;
-	h = im_src->sy;
-	nw = w*scalefactorx;
-	nh = w*scalefactory;
-
-	im_dst = gdImageCreateTrueColor(nw, nh);
-	gdImageFastCopyResized(im_dst, im_src, 0, 0, 0, 0, nw, nh, w, h);
-	gdImageDestroy(im_src);
-	im_src = gdImageCreateTrueColor(nw, nh);
-	copytpixels(im_src, im_dst);
-	gdImageDestroy(im_dst);
 	RETURN_TRUE;
 }
 
@@ -442,48 +438,47 @@ ZEND_FUNCTION(mrcfftw)
 
 #endif
 
-	/**
-	 * retrieve MRC header information MRC file, URL or a String, as a PHP associative array.
-	 *
-	 * Description: array mrcinfo( string filenae)
-	 */
-	ZEND_FUNCTION(mrcinfo)
-	{
-		zval **data;
-		MRCPtr pmrc;
+/**
+ * retrieve MRC header information MRC file, URL or a String, as a PHP associative array.
+ *
+ * Description: array mrcinfo(string filename)
+ */
+ZEND_FUNCTION(mrcinfo)
+{
+	zval **data;
+	MRCPtr pmrc;
 
-		if (ZEND_NUM_ARGS() != 1 || zend_get_parameters_ex(1, &data) == FAILURE) {
-			ZEND_WRONG_PARAM_COUNT();
-		}
-
-		pmrc = (MRC *) malloc (sizeof (MRC));
-		_mrc_image_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, pmrc);
-		_mrc_header_data(INTERNAL_FUNCTION_PARAM_PASSTHRU, pmrc);
-		mrc_destroy(pmrc);
-		
-
+	if (ZEND_NUM_ARGS() != 1 || zend_get_parameters_ex(1, &data) == FAILURE) {
+		ZEND_WRONG_PARAM_COUNT();
 	}
+
+	pmrc = (MRC *) malloc (sizeof (MRC));
+	_mrc_image_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, pmrc);
+	_mrc_header_data(INTERNAL_FUNCTION_PARAM_PASSTHRU, pmrc);
+	mrc_destroy(pmrc);
 	
 
-	/**
-	 * retrieve header information from MRC resource, as a PHP associative array.
-	 *
-	 * Description: 
-	 * array mrcgetinfo(resource src_mrc) 
-	 */
-	ZEND_FUNCTION(mrcgetinfo)
-	{
-		zval **MRCD;
-		MRCPtr pmrc;
+}
 
-		if (ZEND_NUM_ARGS() != 1 || zend_get_parameters_ex(1, &MRCD) == FAILURE) {
-			ZEND_WRONG_PARAM_COUNT();
-		}
-		ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
-		_mrc_header_data(INTERNAL_FUNCTION_PARAM_PASSTHRU, pmrc);
 
+/**
+ * retrieve header information from MRC resource, as a PHP associative array.
+ *
+ * Description: 
+ * array mrcgetinfo(resource src_mrc) 
+ */
+ZEND_FUNCTION(mrcgetinfo)
+{
+	zval **MRCD;
+	MRCPtr pmrc;
+
+	if (ZEND_NUM_ARGS() != 1 || zend_get_parameters_ex(1, &MRCD) == FAILURE) {
+		ZEND_WRONG_PARAM_COUNT();
 	}
-	
+	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
+	_mrc_header_data(INTERNAL_FUNCTION_PARAM_PASSTHRU, pmrc);
+
+}
 
 /** 
  * Get image width
@@ -529,134 +524,128 @@ ZEND_FUNCTION(mrcsy)
 }
 
 
-	/** 
-	 * read a MRC file
-	 *
-	 * Description:
-	 * resource mrcread(string filename)
-	 */
-	ZEND_FUNCTION(mrcread)
+/** 
+ * read a MRC file
+ *
+ * Description:
+ * resource mrcread(string filename)
+ */
+ZEND_FUNCTION(mrcread)
+{
+
+	zval **data;
+	MRC *pmrc;
+	int argc = ZEND_NUM_ARGS();
+
+	if (argc != 1)
 	{
+		WRONG_PARAM_COUNT;
+	} 
 
-		zval **data;
-		MRC *pmrc;
-		int argc = ZEND_NUM_ARGS();
+	zend_get_parameters_ex(argc, &data);
 
-		if (argc != 1)
-		{
-			WRONG_PARAM_COUNT;
-		} 
+	pmrc = (MRC *) malloc (sizeof (MRC));
+	_mrc_image_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, pmrc);
 
-		zend_get_parameters_ex(argc, &data);
+	ZEND_REGISTER_RESOURCE(return_value, pmrc, le_mrc);
 
-		pmrc = (MRC *) malloc (sizeof (MRC));
-		_mrc_image_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, pmrc);
+}
 
-		ZEND_REGISTER_RESOURCE(return_value, pmrc, le_mrc);
 
+/** 
+ * Create mrc resource from the data stream in the string
+ *
+ * Description:
+ * resource mrcreadfromstring(string data)
+ */
+ZEND_FUNCTION(mrcreadfromstring)
+{
+
+	zval **data;
+	MRC *pmrc;
+	int argc = ZEND_NUM_ARGS();
+
+	if (argc != 1)
+	{
+		WRONG_PARAM_COUNT;
+	} 
+
+	zend_get_parameters_ex(argc, &data);
+
+	pmrc = (MRC *) malloc (sizeof (MRC));
+	_mrc_image_create_from_string(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, pmrc);
+
+	ZEND_REGISTER_RESOURCE(return_value, pmrc, le_mrc);
+
+}
+
+
+/** 
+ * Create a new mrc image
+ *
+ * Description:
+ * resource createmrc(int x_size, int y_size)
+ */
+ZEND_FUNCTION(mrccreate)
+{
+	zval **x_size, **y_size;
+	MRCPtr pmrc;
+	MRC mrc;
+
+	if (ZEND_NUM_ARGS() != 2 || zend_get_parameters_ex(2, &x_size, &y_size) == FAILURE) {
+		ZEND_WRONG_PARAM_COUNT();
+	}
+
+	convert_to_long_ex(x_size);
+	convert_to_long_ex(y_size);
+
+
+	pmrc = (MRCPtr)mrc_create(Z_LVAL_PP(x_size), Z_LVAL_PP(y_size));
+	ZEND_REGISTER_RESOURCE(return_value, pmrc, le_mrc);
+}
+
+
+/** 
+ * write MRC resource to file
+ *
+ * Description: bool mrcwrite(resource src_mrc, string filename) 
+ *  \htmlinclude mrcwrite.html
+ */
+ZEND_FUNCTION(mrcwrite)
+{
+	zval	**MRCD, **file;
+	MRCPtr	pmrc;
+	char *fn = NULL;
+	FILE *fp;
+	int argc = ZEND_NUM_ARGS();
+	int q = -1, i;
+
+	if (argc < 1 || argc > 2 || zend_get_parameters_ex(argc, &MRCD, &file) == FAILURE) {
+		ZEND_WRONG_PARAM_COUNT();
+	}
+
+	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
+
+	convert_to_string_ex(file);
+	fn = Z_STRVAL_PP(file);
+	if (!fn || fn == empty_string || php_check_open_basedir(fn TSRMLS_CC)) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid filename '%s'", fn);
+		RETURN_FALSE;
+	}
+
+	fp = VCWD_FOPEN(fn, "wb");
+	if (!fp) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to open '%s' for writing", fn);
+		RETURN_FALSE;
 	}
 	
+	int uElements = writeMRC(fp, pmrc);
 
-	/** 
-	 * Create mrc resource from the data stream in the string
-	 *
-	 * Description:
-	 * resource mrcreadfromstring(string data)
-	 */
-	ZEND_FUNCTION(mrcreadfromstring)
-	{
+	fflush(fp);
+	fclose(fp);
+	RETURN_TRUE;
+}
 
-		zval **data;
-		MRC *pmrc;
-		int argc = ZEND_NUM_ARGS();
-
-		if (argc != 1)
-		{
-			WRONG_PARAM_COUNT;
-		} 
-
-		zend_get_parameters_ex(argc, &data);
-
-		pmrc = (MRC *) malloc (sizeof (MRC));
-		_mrc_image_create_from_string(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, pmrc);
-
-		ZEND_REGISTER_RESOURCE(return_value, pmrc, le_mrc);
-
-	}
-	
-
-	/** 
-	 * Create a new mrc image
-	 *
-	 * Description:
-	 * resource createmrc(int x_size, int y_size)
-	 */
-	ZEND_FUNCTION(mrccreate)
-	{
-		zval **x_size, **y_size;
-		MRCPtr pmrc;
-		MRC mrc;
-
-		if (ZEND_NUM_ARGS() != 2 || zend_get_parameters_ex(2, &x_size, &y_size) == FAILURE) {
-			ZEND_WRONG_PARAM_COUNT();
-		}
-
-		convert_to_long_ex(x_size);
-		convert_to_long_ex(y_size);
-
-
-		pmrc = (MRCPtr)mrc_create(Z_LVAL_PP(x_size), Z_LVAL_PP(y_size));
-	//	pmrc = (MRC *) malloc (sizeof (MRC));
-	//	mrc_dst->header.nx = w_dst;
-	//	mrc_dst->header.ny = h_dst;
-	//	mrc_dst->header.mode = MRC_MODE_FLOAT;
-
-		ZEND_REGISTER_RESOURCE(return_value, pmrc, le_mrc);
-		//ZEND_REGISTER_RESOURCE(return_value, pmrc, le_mrc);
-	}
-	
-
-	/** 
-	 * write MRC resource to file
-	 *
-	 * Description: bool mrcwrite(resource src_mrc, string filename) 
-	 *  \htmlinclude mrcwrite.html
- 	 */
-	ZEND_FUNCTION(mrcwrite)
-	{
-		zval	**MRCD, **file;
-		MRCPtr	pmrc;
-		char *fn = NULL;
-		FILE *fp;
-		int argc = ZEND_NUM_ARGS();
-		int q = -1, i;
-
-		if (argc < 1 || argc > 2 || zend_get_parameters_ex(argc, &MRCD, &file) == FAILURE) {
-			ZEND_WRONG_PARAM_COUNT();
-		}
-
-		ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
-
-		convert_to_string_ex(file);
-		fn = Z_STRVAL_PP(file);
-		if (!fn || fn == empty_string || php_check_open_basedir(fn TSRMLS_CC)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid filename '%s'", fn);
-			RETURN_FALSE;
-		}
-
-		fp = VCWD_FOPEN(fn, "wb");
-		if (!fp) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to open '%s' for writing", fn);
-			RETURN_FALSE;
-		}
-		
-		int uElements = writeMRC(fp, pmrc);
-
-		fflush(fp);
-		fclose(fp);
-		RETURN_TRUE;
-	}
-	
 
 /** convert a mrc resource to an image resource
  *
@@ -716,187 +705,187 @@ ZEND_FUNCTION(mrctoimage)
 }
 
 
-	/** 
-	 * Copy part of an mrc
-	 *
-	 * mrccopy(int dst_mrc, int src_mrc, int dst_x, int dst_y, int src_x, int src_y, int src_w, int src_h)
-	 */ 
-	ZEND_FUNCTION(mrccopy)
-	{
-		zval **SMRC, **DMRC, **SX, **SY, **SW, **SH, **DX, **DY;
-		MRCPtr mrc_dst, mrc_src;
-		int srcH, srcW, srcY, srcX, dstY, dstX;
+/** 
+ * Copy part of an mrc
+ *
+ * mrccopy(int dst_mrc, int src_mrc, int dst_x, int dst_y, int src_x, int src_y, int src_w, int src_h)
+ */ 
+ZEND_FUNCTION(mrccopy)
+{
+	zval **SMRC, **DMRC, **SX, **SY, **SW, **SH, **DX, **DY;
+	MRCPtr mrc_dst, mrc_src;
+	int srcH, srcW, srcY, srcX, dstY, dstX;
 
-		if (ZEND_NUM_ARGS() != 8 ||	
-			zend_get_parameters_ex(8, &DMRC, &SMRC, &DX, &DY, &SX, &SY, &SW, &SH) == FAILURE) {
-			ZEND_WRONG_PARAM_COUNT();
-		}
-
-		ZEND_FETCH_RESOURCE(mrc_src, MRCPtr, SMRC, -1, "MRCdata", le_mrc);
-		ZEND_FETCH_RESOURCE(mrc_dst, MRCPtr, DMRC, -1, "MRCdata", le_mrc);
-
-		convert_to_long_ex(SX);
-		convert_to_long_ex(SY);
-		convert_to_long_ex(SW);
-		convert_to_long_ex(SH);
-		convert_to_long_ex(DX);
-		convert_to_long_ex(DY);
-
-		srcX = Z_LVAL_PP(SX);
-		srcY = Z_LVAL_PP(SY);
-		srcH = Z_LVAL_PP(SH);
-		srcW = Z_LVAL_PP(SW);
-		dstX = Z_LVAL_PP(DX);
-		dstY = Z_LVAL_PP(DY);
-
-		mrc_copy_to(mrc_dst, mrc_src, dstX, dstY, srcX, srcY, srcW, srcH);
-		RETURN_TRUE;
+	if (ZEND_NUM_ARGS() != 8 ||	
+		zend_get_parameters_ex(8, &DMRC, &SMRC, &DX, &DY, &SX, &SY, &SW, &SH) == FAILURE) {
+		ZEND_WRONG_PARAM_COUNT();
 	}
-	
 
-	/** 
-	 * 
-	 *
-	 * Description:
-	 * bool mrcbinning(resource src_mrc, int binning [, bool skip_avg]) 
-	 */
-	ZEND_FUNCTION(mrcbinning)
+	ZEND_FETCH_RESOURCE(mrc_src, MRCPtr, SMRC, -1, "MRCdata", le_mrc);
+	ZEND_FETCH_RESOURCE(mrc_dst, MRCPtr, DMRC, -1, "MRCdata", le_mrc);
+
+	convert_to_long_ex(SX);
+	convert_to_long_ex(SY);
+	convert_to_long_ex(SW);
+	convert_to_long_ex(SH);
+	convert_to_long_ex(DX);
+	convert_to_long_ex(DY);
+
+	srcX = Z_LVAL_PP(SX);
+	srcY = Z_LVAL_PP(SY);
+	srcH = Z_LVAL_PP(SH);
+	srcW = Z_LVAL_PP(SW);
+	dstX = Z_LVAL_PP(DX);
+	dstY = Z_LVAL_PP(DY);
+
+	mrc_copy_to(mrc_dst, mrc_src, dstX, dstY, srcX, srcY, srcW, srcH);
+	RETURN_TRUE;
+}
+
+
+/** 
+ * bin a mrc image
+ *
+ * Description:
+ * bool mrcbinning(resource src_mrc, int binning [, bool skip_avg]) 
+ */
+ZEND_FUNCTION(mrcbinning)
+{
+
+	zval **data, **BINNING, **SKIP_AVG;
+	MRCPtr pmrc;
+	int argc = ZEND_NUM_ARGS();
+	int binning = 1;
+	int skip_avg = 0;
+
+	if (argc < 1 || argc > 3) 
 	{
+		WRONG_PARAM_COUNT;
+	} 
 
-		zval **data, **BINNING, **SKIP_AVG;
-		MRCPtr pmrc;
-		int argc = ZEND_NUM_ARGS();
-		int binning = 1;
-		int skip_avg = 0;
+	zend_get_parameters_ex(argc, &data, &BINNING, &SKIP_AVG);
 
-		if (argc < 1 || argc > 3) 
-		{
-			WRONG_PARAM_COUNT;
-		} 
-
-		zend_get_parameters_ex(argc, &data, &BINNING, &SKIP_AVG);
-
-		if (argc>1) {
-			convert_to_long_ex(BINNING);
-			binning = Z_LVAL_PP(BINNING);
-		}
-		if (argc>2) {
-			convert_to_boolean_ex(SKIP_AVG);
-			skip_avg = Z_LVAL_PP(SKIP_AVG);
-		}
-
-		if (binning <= 0) 
-			zend_error(E_ERROR, "%s(): binning must be greater than 0", get_active_function_name(TSRMLS_C));
-
-		ZEND_FETCH_RESOURCE(pmrc, MRCPtr, data, -1, "MRCdata", le_mrc);
-		mrc_binning(pmrc, binning, skip_avg);
-		RETURN_TRUE;
-
-	}
-	
-
-	/** 
-	 * apply a gaussion filter
-	 *
-	 * Description:
-	 * bool mrcgaussianfilter(resource src_mrc, int binning, int kernel, float sigma)
-	 */
-	ZEND_FUNCTION(mrcgaussianfilter)
-	{
-
-		zval	**data, **BINNING, **KERNEL, **SIGMA;
-		MRCPtr	pmrc;
-		int	argc = ZEND_NUM_ARGS();
-		int	kernel= 1;
-		int	binning= 1;
-		float	sigma = 1.0;
-
-		if (argc != 4) 
-		{
-			WRONG_PARAM_COUNT;
-		} 
-
-		zend_get_parameters_ex(argc, &data, &BINNING, &KERNEL, &SIGMA);
-
+	if (argc>1) {
 		convert_to_long_ex(BINNING);
-		convert_to_long_ex(KERNEL);
-		convert_to_double_ex(SIGMA);
-		kernel = Z_LVAL_PP(KERNEL);
 		binning = Z_LVAL_PP(BINNING);
-		sigma = Z_DVAL_PP(SIGMA);
-
-		if (sigma == 0) 
-			zend_error(E_ERROR, "%s(): sigma cannot be 0", get_active_function_name(TSRMLS_C));
-
-		if (kernel % 2 != 1)
-			zend_error(E_ERROR, "%s(): kernel must be an odd number", get_active_function_name(TSRMLS_C));
-
-		ZEND_FETCH_RESOURCE(pmrc, MRCPtr, data, -1, "MRCdata", le_mrc);
-
-		mrc_filter(pmrc, binning, kernel, sigma);
-		RETURN_TRUE;
-
 	}
-	
+	if (argc>2) {
+		convert_to_boolean_ex(SKIP_AVG);
+		skip_avg = Z_LVAL_PP(SKIP_AVG);
+	}
 
-	/**
-	 * apply a log scale  
-	 * 
-	 * Description:
-	 * bool mrclogscale(resource src_mrc) 
-	 */
-	ZEND_FUNCTION(mrclogscale)
+	if (binning <= 0) 
+		zend_error(E_ERROR, "%s(): binning must be greater than 0", get_active_function_name(TSRMLS_C));
+
+	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, data, -1, "MRCdata", le_mrc);
+	mrc_binning(pmrc, binning, skip_avg);
+	RETURN_TRUE;
+
+}
+
+
+/** 
+ * apply a gaussion filter
+ *
+ * Description:
+ * bool mrcgaussianfilter(resource src_mrc, int binning, int kernel, float sigma)
+ */
+ZEND_FUNCTION(mrcgaussianfilter)
+{
+
+	zval	**data, **BINNING, **KERNEL, **SIGMA;
+	MRCPtr	pmrc;
+	int	argc = ZEND_NUM_ARGS();
+	int	kernel= 1;
+	int	binning= 1;
+	float	sigma = 1.0;
+
+	if (argc != 4) 
 	{
+		WRONG_PARAM_COUNT;
+	} 
 
-		zval **data;
-		MRCPtr pmrc;
-		int argc = ZEND_NUM_ARGS();
+	zend_get_parameters_ex(argc, &data, &BINNING, &KERNEL, &SIGMA);
 
-		if (argc !=  1)
-		{
-			WRONG_PARAM_COUNT;
-		} 
+	convert_to_long_ex(BINNING);
+	convert_to_long_ex(KERNEL);
+	convert_to_double_ex(SIGMA);
+	kernel = Z_LVAL_PP(KERNEL);
+	binning = Z_LVAL_PP(BINNING);
+	sigma = Z_DVAL_PP(SIGMA);
 
-		zend_get_parameters_ex(argc, &data);
+	if (sigma == 0) 
+		zend_error(E_ERROR, "%s(): sigma cannot be 0", get_active_function_name(TSRMLS_C));
 
-		ZEND_FETCH_RESOURCE(pmrc, MRCPtr, data, -1, "MRCdata", le_mrc);
-		mrc_log(pmrc);
-		RETURN_TRUE;
+	if (kernel % 2 != 1)
+		zend_error(E_ERROR, "%s(): kernel must be an odd number", get_active_function_name(TSRMLS_C));
 
-	}
-	
+	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, data, -1, "MRCdata", le_mrc);
 
-	/**
-	 * retrieve mrc data 
-	 * 
-	 * Description:
-	 * array mrcgetdata(resource src_mrc) 
-	 */
-	ZEND_FUNCTION(mrcgetdata)
+	mrc_filter(pmrc, binning, kernel, sigma);
+	RETURN_TRUE;
+
+}
+
+
+/**
+ * apply a log scale  
+ * 
+ * Description:
+ * bool mrclogscale(resource src_mrc) 
+ */
+ZEND_FUNCTION(mrclogscale)
+{
+
+	zval **data;
+	MRCPtr pmrc;
+	int argc = ZEND_NUM_ARGS();
+
+	if (argc !=  1)
 	{
-		char	*key;
-		zval	**MRCD;
-		MRCPtr	pmrc;
-		MRCHeader	mrch;
-			float	*data_array;
+		WRONG_PARAM_COUNT;
+	} 
 
-			int	i,n;
+	zend_get_parameters_ex(argc, &data);
+
+	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, data, -1, "MRCdata", le_mrc);
+	mrc_log(pmrc);
+	RETURN_TRUE;
+
+}
 
 
-		if (ZEND_NUM_ARGS() != 1 || zend_get_parameters_ex(1, &MRCD) == FAILURE) {
-			ZEND_WRONG_PARAM_COUNT();
-		}
-		ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
+/**
+ * retrieve mrc data 
+ * 
+ * Description:
+ * array mrcgetdata(resource src_mrc) 
+ */
+ZEND_FUNCTION(mrcgetdata)
+{
+	char	*key;
+	zval	**MRCD;
+	MRCPtr	pmrc;
+	MRCHeader	mrch;
+		float	*data_array;
 
-		mrch = pmrc->header;
-		data_array = (float *)pmrc->pbyData;
-		n = mrch.nx * mrch.ny;
-		array_init(return_value);
-		for (i=0; i<n; i++) {
-			add_next_index_double(return_value, data_array[i]);
-		}
+		int	i,n;
+
+
+	if (ZEND_NUM_ARGS() != 1 || zend_get_parameters_ex(1, &MRCD) == FAILURE) {
+		ZEND_WRONG_PARAM_COUNT();
 	}
-	
+	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
+
+	mrch = pmrc->header;
+	data_array = (float *)pmrc->pbyData;
+	n = mrch.nx * mrch.ny;
+	array_init(return_value);
+	for (i=0; i<n; i++) {
+		add_next_index_double(return_value, data_array[i]);
+	}
+}
+
 
 /**
  * get min and max value scaled within +/- 3 stddev
@@ -955,96 +944,96 @@ ZEND_FUNCTION(mrcgetscale)
 }
 
 
-	/** 
-	 * put data
-	 *
-	 * Description:
-	 * mrcputdata(resource src_mrc, array data)
-	 */ 
-	ZEND_FUNCTION(mrcputdata)
-	{
-		zval	**MRCD, **input , **entry;
-		MRCPtr	pmrc;
-		MRCHeader	mrch;
-		HashPosition pos;
-		
-
-		float	*data_array;
-		float val;
-
-		int i, argc = ZEND_NUM_ARGS();
-
-		if (argc != 2 || zend_get_parameters_ex(argc, &MRCD, &input) == FAILURE) {
-			ZEND_WRONG_PARAM_COUNT();
-		}
-
-
-		if (Z_TYPE_PP(input) != IS_ARRAY) {
-					zend_error(E_ERROR, "%s(): Input is not a MRC string ",
-									 get_active_function_name(TSRMLS_C));
-		}
-
-		ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
-
-		data_array = (float *)pmrc->pbyData;
-
-		/* Go through array array and add values to the return array */
-		i=0;
-		zend_hash_internal_pointer_reset_ex(Z_ARRVAL_PP(input), &pos);
-		while (zend_hash_get_current_data_ex(Z_ARRVAL_PP(input), (void **)&entry, &pos) == SUCCESS) {
-
-			
-			(*entry)->refcount++;
-			switch (Z_TYPE_PP(entry)) {
-				case IS_DOUBLE:
-					val = Z_DVAL_PP(entry);
-					break;
-				case IS_LONG:
-					val = Z_LVAL_PP(entry);
-					break;
-				default:
-					val = 0;
-			}
-			data_array[i] =  val;
-
-			zend_hash_move_forward_ex(Z_ARRVAL_PP(input), &pos);
-			i++;
-		}
-	}
-	
-
-	/**
-	 * update header information
-	 *
-	 * Description:
-	 * mrcupdateheader(resource src_mrc)
-	 */ 
-	ZEND_FUNCTION(mrcupdateheader)
-	{
-		char	*key;
-		zval	**MRCD;
-		MRCPtr	pmrc;
-			float	*data_array;
-
-			int	i;
-		float	f_val, fmin, fmax, fmean, stddev;
-		double  somme, somme2, n;
-
-
-		if (ZEND_NUM_ARGS() != 1 || zend_get_parameters_ex(1, &MRCD) == FAILURE) {
-			ZEND_WRONG_PARAM_COUNT();
-		}
-		ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
-		mrc_update_header(pmrc);
-
-	}
-	
-
-/**
- * retrieve classes and frequences
+/** 
+ * put data
  *
  * Description:
- * array mrchistogram(resource src_mrc)
+ * mrcputdata(resource src_mrc, array data)
+ */ 
+ZEND_FUNCTION(mrcputdata)
+{
+	zval	**MRCD, **input , **entry;
+	MRCPtr	pmrc;
+	MRCHeader	mrch;
+	HashPosition pos;
+	
+
+	float	*data_array;
+	float val;
+
+	int i, argc = ZEND_NUM_ARGS();
+
+	if (argc != 2 || zend_get_parameters_ex(argc, &MRCD, &input) == FAILURE) {
+		ZEND_WRONG_PARAM_COUNT();
+	}
+
+
+	if (Z_TYPE_PP(input) != IS_ARRAY) {
+				zend_error(E_ERROR, "%s(): Input is not a MRC string ",
+								 get_active_function_name(TSRMLS_C));
+	}
+
+	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
+
+	data_array = (float *)pmrc->pbyData;
+
+	/* Go through array array and add values to the return array */
+	i=0;
+	zend_hash_internal_pointer_reset_ex(Z_ARRVAL_PP(input), &pos);
+	while (zend_hash_get_current_data_ex(Z_ARRVAL_PP(input), (void **)&entry, &pos) == SUCCESS) {
+
+		
+		(*entry)->refcount++;
+		switch (Z_TYPE_PP(entry)) {
+			case IS_DOUBLE:
+				val = Z_DVAL_PP(entry);
+				break;
+			case IS_LONG:
+				val = Z_LVAL_PP(entry);
+				break;
+			default:
+				val = 0;
+		}
+		data_array[i] =  val;
+
+		zend_hash_move_forward_ex(Z_ARRVAL_PP(input), &pos);
+		i++;
+	}
+}
+
+
+/**
+ * update header information
+ *
+ * Description:
+ * mrcupdateheader(resource src_mrc)
+ */ 
+ZEND_FUNCTION(mrcupdateheader)
+{
+	char	*key;
+	zval	**MRCD;
+	MRCPtr	pmrc;
+		float	*data_array;
+
+		int	i;
+	float	f_val, fmin, fmax, fmean, stddev;
+	double  somme, somme2, n;
+
+
+	if (ZEND_NUM_ARGS() != 1 || zend_get_parameters_ex(1, &MRCD) == FAILURE) {
+		ZEND_WRONG_PARAM_COUNT();
+	}
+	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
+	mrc_update_header(pmrc);
+
+}
+
+
+/**
+ * retrieve classes and frequences from MRC file, URL
+ *
+ * Description:
+ * array mrchistogram(string filename)
  */
 ZEND_FUNCTION(mrchistogram)
 {

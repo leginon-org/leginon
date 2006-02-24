@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.h,v 1.9 2006-02-03 18:19:14 dfellman Exp $ 
+  $Id: php_mrc.h,v 1.10 2006-02-24 00:33:51 dfellman Exp $ 
 */
 
 /**
@@ -62,8 +62,8 @@ PHP_RINIT_FUNCTION(mrc);
 PHP_RSHUTDOWN_FUNCTION(mrc);
 PHP_MINFO_FUNCTION(mrc);
 
+ZEND_FUNCTION(gdimageinfo);
 ZEND_FUNCTION(imagegaussianfilter);
-ZEND_FUNCTION(imagescale);
 ZEND_FUNCTION(imagelogscale);
 ZEND_FUNCTION(imagehistogram);
 #ifdef HAVE_FFTW
