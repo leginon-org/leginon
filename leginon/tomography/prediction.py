@@ -105,17 +105,16 @@ class Position(object):
 
         rows = len(shifts)
 
-        a = numarray.zeros((rows, 1), numarray.Float)
+        a = numarray.zeros((rows, 2), numarray.Float)
         b = numarray.zeros((rows, 1), numarray.Float)
         for i, (tilt, shift) in enumerate(shifts):
-            a[i, 0] = 1.0
-            b[i, 0] = math.atan2(shift['y'], shift['x'])
-            b[i, 0] += math.pi/2
-            b[i, 0] %= math.pi
-            b[i, 0] -= math.pi/2
+            a[i, 0] = shift['x']
+            a[i, 1] = 1.0
+            b[i, 0] = shift['y']
 
         solution = numarray.linear_algebra.linear_least_squares(a, b)
         theta = solution[0][0, 0]
+        theta = math.atan2(1.0, solution[0][0, 0])
         theta += math.pi/2
         theta %= math.pi
         theta -= math.pi/2
@@ -153,7 +152,7 @@ if __name__ == '__main__':
     print p.predict(math.radians(0))
 
     for i in range(8):
-        p.addShift(math.radians(i), {'x': i, 'y': i})
+        p.addShift(math.radians(i), {'x': i, 'y': i + 0.1234})
 
     p.calculate()
     print p.predict(math.radians(-25))
