@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.34 $
+# $Revision: 1.35 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-02-11 00:27:12 $
+# $Date: 2006-03-03 18:16:50 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -262,7 +262,7 @@ class Proxy(object):
 			try:
 				if isinstance(results[i], Exception):
 					raise results[i]
-			except (AttributeError, NotImplementedError):
+			except AttributeError:
 				continue
 			instance[key] = results[i]
 		if 'session' in instance:
@@ -321,7 +321,7 @@ class Proxy(object):
 			try:
 				if isinstance(result, Exception):
 					raise result
-			except (AttributeError, NotImplemetedError):
+			except AttributeError:
 				pass
 
 class TEM(remotecall.Locker):
