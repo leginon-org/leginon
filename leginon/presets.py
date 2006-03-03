@@ -431,7 +431,7 @@ class PresetsManager(node.Node):
 				raise PresetChangeError(msg)
 		else:
 			if presetdata['tem']['name']:
-				msg = 'Preset change failed: canont set TEM to %s' % presetdata['tem']['name']
+				msg = 'Preset change failed: cannot set TEM to %s' % presetdata['tem']['name']
 			else:
 				msg = 'Preset change failed: no TEM selection for this preset'
 			self.logger.error(msg)
@@ -441,12 +441,13 @@ class PresetsManager(node.Node):
 			try:
 				self.instrument.setCCDCamera(presetdata['ccdcamera']['name'])
 			except Exception, e:
+				self.logger.error(e)
 				msg = 'Preset change failed: %s' % (e,)
 				self.logger.error(msg)
 				raise PresetChangeError(msg)
 		else:
 			if presetdata['ccdcamera']['name']:
-				msg = 'Preset change failed: canont set CCD camera to %s' \
+				msg = 'Preset change failed: cannot set CCD camera to %s' \
 								% presetdata['ccdcamera']['name']
 			else:
 				msg = 'Preset change failed: no CCD camera selection for this preset'
@@ -458,6 +459,7 @@ class PresetsManager(node.Node):
 			if cameradata is not None:
 				self.instrument.setData(cameradata)
 		except Exception, e:
+			self.logger.error(e)
 			message = 'Preset change failed: unable to set instrument'
 			self.logger.error(message)
 			raise PresetChangeError(message)
