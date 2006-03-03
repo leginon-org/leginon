@@ -304,7 +304,7 @@ class Collection(object):
             s = (pixel['raw correlation']['x'], pixel['raw correlation']['y'])
             self.viewer.setXC(correlation_image, s)
 
-            time.sleep(5.0)
+            time.sleep(3.0)
 
             self.savePredictionInfo(raw, pixel, tilt_series_image_data)
 
