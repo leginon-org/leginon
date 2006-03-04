@@ -252,7 +252,7 @@ class GonModel:
 		## terminates when precision is reached.
 		# Make sure incp is initially > precision, so loop goes at least once.
 		incp = precision + 1
-		best_resids = 1e999
+		best_resids = None
 		best_period = minp
 		while incp > precision:
 			incp = (maxp - minp) / search_periods
@@ -265,7 +265,7 @@ class GonModel:
 					resids0 = resids[0]
 				except IndexError:
 					raise RuntimeError('Not enough data for %d terms' % (terms,))
-				if resids[0] < best_resids:
+			if best_resids is None or resids[0] < best_resids:
 					best_resids = resids[0]
 					best_period = period
 					best_x = x
