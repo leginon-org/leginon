@@ -32,7 +32,7 @@ try:
 		except ImportError:
 			from pyScope import adacom
 	except ImportError:
-		pass
+		adacom = None
 except ImportError:
 	pass
 
@@ -67,8 +67,8 @@ class Tecnai(tem.TEM):
 		try:
 			self.exposure = win32com.client.Dispatch('adaExp.TAdaExp',
 																					clsctx=pythoncom.CLSCTX_LOCAL_SERVER)
-		except pythoncom.com_error, (hr, msg, exc, arg):
-			raise RuntimeError('unable to initialize exposure adapter, %s' % msg)
+		except:
+			self.exposure = None
 
 		self.magnifications = []
 		self.mainscreenscale = 44000.0 / 50000.0
@@ -738,6 +738,8 @@ class Tecnai(tem.TEM):
 		return ['open', 'closed']
 
 	def setShutter(self, state):
+		if self.exposure is None:
+			raise RuntimeError('setShutter requires adaExp')
 		if state == 'open':
 			if self.exposure.OpenShutter != 0:
 				raise RuntimeError('Open shutter failed')
@@ -748,6 +750,8 @@ class Tecnai(tem.TEM):
 			raise ValueError('Invalid value for setShutter \'%s\'' % (state,))
 
 	def getShutter(self):
+		if self.exposure is None:
+			raise RuntimeError('getShutter requires adaExp')
 		status = self.exposure.ShutterStatus
 		if status:
 			return 'closed'
@@ -758,6 +762,8 @@ class Tecnai(tem.TEM):
 		return ['connected', 'disconnected']
 
 	def setExternalShutter(self, state):
+		if self.exposure is None:
+			raise RuntimeError('setExternalShutter requires adaExp')
 		if state == 'connected':
 			if self.exposure.ConnectExternalShutter != 0:
 				raise RuntimeError('Connect shutter failed')
@@ -768,6 +774,8 @@ class Tecnai(tem.TEM):
 			raise ValueError('Invalid value for setExternalShutter \'%s\'' % (state,))
 		
 	def getExternalShutter(self):
+		if self.exposure is None:
+			raise RuntimeError('getExternalShutter requires adaExp')
 		status = self.exposure.ExternalShutterStatus
 		if status:
 			return 'connected'
@@ -775,6 +783,8 @@ class Tecnai(tem.TEM):
 			return 'disconnected'
 
 	def preFilmExposure(self, value):
+		if self.exposure is None:
+			raise RuntimeError('preFilmExposure requires adaExp')
 		if not value:
 			return
 
@@ -787,6 +797,8 @@ class Tecnai(tem.TEM):
 			raise RuntimeError('Expose plate label failed')
 
 	def postFilmExposure(self, value):
+		if self.exposure is None:
+			raise RuntimeError('postFilmExposure requires adaExp')
 		if not value:
 			return
 
@@ -866,6 +878,8 @@ class Tecnai(tem.TEM):
 			raise ValueError
 
 	def getHolderStatus(self):
+		if adacom is None:
+			raise RuntimeError('getHolderStatus requires adaExp')
 		if self.exposure.SpecimenHolderInserted == adacom.constants.eInserted:
 			return 'inserted'
 		elif self.exposure.SpecimenHolderInserted == adacom.constants.eNotInserted:
@@ -877,6 +891,8 @@ class Tecnai(tem.TEM):
 		return ['no holder', 'single tilt', 'cryo', 'unknown']
 
 	def getHolderType(self):
+		if self.exposure is None:
+			raise RuntimeError('getHolderType requires adaExp')
 		if self.exposure.CurrentSpecimenHolderName == u'No Specimen Holder':
 			return 'no holder'
 		elif self.exposure.CurrentSpecimenHolderName == u'Single Tilt':
@@ -887,6 +903,8 @@ class Tecnai(tem.TEM):
 			return 'unknown'
 
 	def setHolderType(self, holdertype):
+		if self.exposure is None:
+			raise RuntimeError('setHolderType requires adaExp')
 		if holdertype == 'no holder':
 			holderstr = u'No Specimen Holder'
 		elif holdertype == 'single tilt':
@@ -904,6 +922,8 @@ class Tecnai(tem.TEM):
 		raise SystemError('no such holder available')
 
 	def getStageStatus(self):
+		if adacom is None:
+			raise RuntimeError('getStageStatus requires adaExp')
 		if self.exposure.GonioLedStatus == adacom.constants.eOn:
 			return 'busy'
 		elif self.exposure.GonioLedStatus == adacom.constants.eOff:
@@ -912,6 +932,8 @@ class Tecnai(tem.TEM):
 			return 'unknown'
 
 	def getTurboPump(self):
+		if adacom is None:
+			raise RuntimeError('getTurboPump requires adaExp')
 		if self.exposure.GetTmpStatus == adacom.constants.eOn:
 			return 'on'
 		elif self.exposure.GetTmpStatus == adacom.constants.eOff:
@@ -920,6 +942,8 @@ class Tecnai(tem.TEM):
 			return 'unknown'
 
 	def setTurboPump(self, mode):
+		if adacom is None:
+			raise RuntimeError('setTurboPump requires adaExp')
 		if mode == 'on':
 			self.exposure.SetTmp(adacom.constants.eOn)
 		elif mode == 'off':
