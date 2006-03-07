@@ -1,6 +1,8 @@
 import math
 import numarray
 import numarray.linear_algebra
+import numpy
+import scipy.optimize
 
 def RM(theta):
     sin = math.sin(theta)
@@ -11,7 +13,8 @@ def RM(theta):
 class Prediction(object):
     def __init__(self):
         self.beam_position = {'x':0.0, 'y':0.0, 'z':0.0}
-        self.prediction = Position()
+        #self.prediction = Position()
+        self.prediction = LeastSquares()
 
     def reset(self):
         self.beam_position = {'x':0.0, 'y':0.0, 'z':0.0}
@@ -37,10 +40,133 @@ class Prediction(object):
             shift[axis] = prediction[axis] - self.beam_position[axis]
             self.beam_position[axis] = prediction[axis]
 
-        n, t = self.prediction.calculateNT(shift['x'], shift['y'])
+        #n, t = self.prediction.calculateNT(shift['x'], shift['y'])
+        n, t = 0.0, 0.0
         shift['n'], shift['t'] = n, t
 
         return prediction, shift
+
+class LeastSquares(object):
+    def __init__(self):
+        self.a = None
+        self.v_measured = None
+        self.p = None
+
+    def reset(self):
+        self.a = None
+        self.v_measured = None
+        self.p = None
+
+    def addShift(self, tilt, shift):
+        # tilt in radians
+        if self.a is None:
+            self.a = numpy.zeros(1, numpy.Float)
+        else:
+            self.a = numpy.resize(self.a, self.a.shape[0] + 1)
+        self.a[-1] = tilt
+
+        if self.v_measured is None:
+            self.v_measured = numpy.zeros((1, 2), numpy.Float)
+        else:
+            self.v_measured = numpy.resize(self.v_measured,
+                      (self.v_measured.shape[0] + 1, self.v_measured.shape[1]))
+        self.v_measured[-1, 0] = shift['x']
+        self.v_measured[-1, 1] = shift['y']
+
+        n = self.a.shape[0]
+        if n == 2:
+            self.p = [0.0, 0.0]
+        elif n == 3:
+            self.p.append(0.0)
+        elif n == 16:
+            cos_t = numpy.cos(self.p[2])
+            sin_t = numpy.sin(self.p[2])
+            self.p = [ cos_t, sin_t, 0.0,
+                      -sin_t, cos_t, 0.0,
+                         0.0,   0.0, 1.0,
+                      self.p[0], 0.0, self.p[1]]
+
+    def predict(self, tilt):
+        n = 0.0
+        t = 0.0
+        theta = 0.0
+        x, y, z = self.model(numpy.array([tilt], numpy.Float))[0]
+        return {'x': x, 'y': y, 'z': z, 'n': n, 't': t, 'theta': theta}
+
+    def calculate(self):
+        if self.p is None:
+            return
+        result = scipy.optimize.leastsq(self.residuals,
+                                        self.p, args=(self.a, self.v_measured))
+        self.p = result[0]
+
+    def parameters(self, p):
+        affine = numpy.identity(3, numpy.Float)
+        v_object = numpy.zeros(3, numpy.Float)
+    
+        n = len(p)
+        if n == 12:
+            affine[0] = p[0:3]
+            affine[1] = p[3:6]
+            affine[2] = p[6:9]
+            v_object = p[9:12]
+        elif n == 3:
+            t = p[2]
+            cos_t = numpy.cos(t)
+            sin_t = numpy.sin(t)
+            affine[0, 0] = cos_t
+            affine[0, 1] = sin_t
+            affine[1, 0] = -sin_t
+            affine[1, 1] = cos_t
+            v_object[0] = p[0]
+            v_object[2] = p[1]
+        elif n == 2:
+            v_object[0] = p[0]
+            v_object[2] = p[1]
+        else:
+            raise ValueError
+    
+        return affine, v_object
+
+    def residuals(self, p, a, v_measured):
+        affine, v_object = self.parameters(p)
+    
+        cos_a = numpy.cos(a)
+        sin_a = numpy.sin(a)
+    
+        rotation_a = numpy.identity(3, numpy.Float)
+        result = numpy.zeros(v_measured.shape, numpy.Float)
+        for i in range(v_measured.shape[0]):
+            rotation_a[0, 0] = cos_a[i]
+            rotation_a[0, 2] = -sin_a[i]
+            rotation_a[2, 0] = sin_a[i]
+            rotation_a[2, 2] = cos_a[i]
+            transform = numpy.dot(affine, rotation_a)
+            result[i] = numpy.dot(transform, v_object)[:result.shape[1]]
+    
+        error = v_measured - result
+        return numpy.hypot(error[:, 0], error[:, 1])
+
+    def model(self, a):
+        result = numpy.zeros((a.shape[0], 3), numpy.Float)
+        if self.p is None:
+            return result
+
+        affine, v_object = self.parameters(self.p)
+    
+        cos_a = numpy.cos(a)
+        sin_a = numpy.sin(a)
+    
+        rotation_a = numpy.identity(3, numpy.Float)
+        for i in range(a.shape[0]):
+            rotation_a[0, 0] = cos_a[i]
+            rotation_a[0, 2] = -sin_a[i]
+            rotation_a[2, 0] = sin_a[i]
+            rotation_a[2, 2] = cos_a[i]
+            transform = numpy.dot(affine, rotation_a)
+            result[i] = numpy.dot(transform, v_object)
+    
+        return result
 
 class Position(object):
     def __init__(self):
@@ -147,6 +273,7 @@ class Position(object):
 
 if __name__ == '__main__':
     p = Position()
+    p = LeastSquares()
 
     p.calculate()
     print p.predict(math.radians(0))

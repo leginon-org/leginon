@@ -167,7 +167,7 @@ class Collection(object):
 
         self.checkAbort()
 
-        self.prediction.reset()
+        #self.prediction.reset()
 
         if second_loop:
             self.correlator.reset()
