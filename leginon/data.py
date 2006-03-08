@@ -2190,16 +2190,12 @@ class TomographyPredictionData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('predicted position', dict),
-			('pixel predicted position', dict),
 			('predicted shift', dict),
-			('pixel predicted shift', dict),
 			('position', dict),
-			('pixel position', dict),
 			('correlation', dict),
-			('pixel correlation', dict),
 			('correlated position', dict),
-			('pixel correlated position', dict),
-			('pixel raw correlation', dict),
+			('raw correlation', dict),
+			('pixel size', float),
 			#('image', TiltSeriesImageData),
 			('image', AcquisitionImageData),
 		)

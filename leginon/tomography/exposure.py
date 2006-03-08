@@ -15,6 +15,12 @@ class Exposure:
         else:
             return self.calculateSaxtonExposure(tilt)
 
+    def calculateInitialDose(self, total_dose, tilts):
+        if not self.cosine_exposure:
+            raise RuntimeError
+        initial_dose = total_dose/sum([1.0/math.cos(tilt) for tilt in tilts])
+        return initial_dose/math.cos(self.start_tilt)
+
     def calculateSaxtonExposure(self, tilt):
         cos_alpha = math.cos(tilt)
         mean_path = self.calculateMeanPath()
@@ -31,4 +37,8 @@ class Exposure:
     def calculateMeanPath(self):
         kv = self.high_tension/1000.0
         return (350 - 200) / (300.0 - 120.0) * (kv - 120) + 200
+
+if __name__ == '__main__':
+    exposure = Exposure(None, True, None, None, None)
+    print exposure.calculateInitialDose(200.0, math.pi/90, [math.radians(i) for i in range(-60, 60) + [0]])
 

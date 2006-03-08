@@ -1,6 +1,6 @@
 import math
-import numarray
-import numarray.linear_algebra
+#import numarray
+#import numarray.linear_algebra
 import numpy
 import scipy.optimize
 
@@ -19,7 +19,7 @@ class Prediction(object):
     def reset(self):
         self.beam_position = {'x':0.0, 'y':0.0, 'z':0.0}
 
-        self.prediction.reset()
+        #self.prediction.reset()
 
     def refineAll(self, tilt, shift):
         # tilt is in radians
@@ -41,8 +41,7 @@ class Prediction(object):
             self.beam_position[axis] = prediction[axis]
 
         #n, t = self.prediction.calculateNT(shift['x'], shift['y'])
-        n, t = 0.0, 0.0
-        shift['n'], shift['t'] = n, t
+        #shift['n'], shift['t'] = n, t
 
         return prediction, shift
 
@@ -58,7 +57,6 @@ class LeastSquares(object):
         self.p = None
 
     def addShift(self, tilt, shift):
-        # tilt in radians
         if self.a is None:
             self.a = numpy.zeros(1, numpy.Float)
         else:
@@ -75,23 +73,28 @@ class LeastSquares(object):
 
         n = self.a.shape[0]
         if n == 2:
-            self.p = [0.0, 0.0]
+            self.p = numpy.zeros(2, numpy.Float)
         elif n == 3:
-            self.p.append(0.0)
+            p = self.p
+            self.p = numpy.zeros(3, numpy.Float)
+            self.p[0] = p[0]
+            self.p[1] = p[1]
         elif n == 16:
-            cos_t = numpy.cos(self.p[2])
-            sin_t = numpy.sin(self.p[2])
+            p = self.p
+            self.p = numpy.zeros(16, numpy.Float)
+            cos_t = numpy.cos(p[2])
+            sin_t = numpy.sin(p[2])
             self.p = [ cos_t, sin_t, 0.0,
                       -sin_t, cos_t, 0.0,
                          0.0,   0.0, 1.0,
-                      self.p[0], 0.0, self.p[1]]
+                        p[0],   0.0, p[1]]
 
     def predict(self, tilt):
-        n = 0.0
-        t = 0.0
-        theta = 0.0
         x, y, z = self.model(numpy.array([tilt], numpy.Float))[0]
-        return {'x': x, 'y': y, 'z': z, 'n': n, 't': t, 'theta': theta}
+        x = float(x)
+        y = float(y)
+        z = float(z)
+        return {'x': x, 'y': y, 'z': z, 'theta': 0.0}
 
     def calculate(self):
         if self.p is None:
@@ -104,7 +107,10 @@ class LeastSquares(object):
         affine = numpy.identity(3, numpy.Float)
         v_object = numpy.zeros(3, numpy.Float)
     
-        n = len(p)
+        if p is None:
+            n = 0
+        else:
+            n = len(p)
         if n == 12:
             affine[0] = p[0:3]
             affine[1] = p[3:6]
@@ -123,8 +129,6 @@ class LeastSquares(object):
         elif n == 2:
             v_object[0] = p[0]
             v_object[2] = p[1]
-        else:
-            raise ValueError
     
         return affine, v_object
 
@@ -149,8 +153,6 @@ class LeastSquares(object):
 
     def model(self, a):
         result = numpy.zeros((a.shape[0], 3), numpy.Float)
-        if self.p is None:
-            return result
 
         affine, v_object = self.parameters(self.p)
     
@@ -283,4 +285,5 @@ if __name__ == '__main__':
 
     p.calculate()
     print p.predict(math.radians(-25))
+    print p.predict(math.radians(25))
 

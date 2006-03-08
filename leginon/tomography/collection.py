@@ -167,7 +167,7 @@ class Collection(object):
 
         self.checkAbort()
 
-        #self.prediction.reset()
+        self.prediction.reset()
 
         if second_loop:
             self.correlator.reset()
@@ -177,8 +177,8 @@ class Collection(object):
         self.logger.info('Collection loop completed.')
 
     def _loop(self, tilts):
-        raw_position = {'x': 0.0, 'y': 0.0, 'n': 0.0, 't': 0.0}
-        pixel_position = {'x': 0.0, 'y': 0.0, 'n': 0.0, 't': 0.0}
+        pixel_size = self.pixel_size
+        pixel_position = {'x': 0.0, 'y': 0.0}
         for i, tilt in enumerate(tilts):
             self.checkAbort()
 
@@ -188,16 +188,10 @@ class Collection(object):
 
             position, shift = self.prediction.predict(tilt)
 
-            raw = {
+            pixel = {
                 'predicted position': position,
                 'predicted shift': shift,
             }
-
-            pixel = {}
-            for key in raw.keys():
-                pixel[key] = {}
-                for axis in ['x', 'y', 'n', 't']:
-                    pixel[key][axis] = raw[key][axis]/self.pixel_size
 
             try:
                 s = {}
@@ -211,23 +205,26 @@ class Collection(object):
                 self.finalize()
                 raise Fail
 
-            for axis in ['x', 'y', 'n', 't']:
-                raw_position[axis] += raw['predicted shift'][axis]
+            for axis in ['x', 'y']:
                 pixel_position[axis] += pixel['predicted shift'][axis]
 
-            raw['position'] = raw_position
-            pixel['position'] = pixel_position
+            pixel['position'] = dict(pixel_position)
 
-            self.node.correctDefocus(shift['z'])
+            self.node.correctDefocus(pixel['predicted shift']['z']*pixel_size)
 
             m = 'Predicted position (from first image): %g, %g pixels, %g, %g meters.'
             self.logger.info(m % (pixel['predicted position']['x'],
                                   pixel['predicted position']['y'],
-                                  raw['predicted position']['x'], raw['predicted position']['y']))
-            info = (pixel['predicted shift']['x'], pixel['predicted shift']['y'], shift['x'], shift['y'])
+                                  pixel['predicted position']['x']*pixel_size,
+                                  pixel['predicted position']['y']*pixel_size))
+            info = (pixel['predicted shift']['x'],
+                    pixel['predicted shift']['y'],
+                    pixel['predicted shift']['x']*pixel_size,
+                    pixel['predicted shift']['y']*pixel_size)
             m = 'Compensating image shift: %g, %g pixels, %g, %g meters'
             self.logger.info(m % info)
-            self.logger.info('Compensating defocus: %g meters.' % shift['z'])
+            info = (pixel['predicted shift']['z']*pixel_size,)
+            self.logger.info('Compensating defocus: %g meters.' % info)
 
             self.checkAbort()
 
@@ -276,25 +273,25 @@ class Collection(object):
             self.checkAbort()
 
             self.logger.info('Correlating image with previous tilt...')
-            self.correlator.setTiltAxis(raw['predicted position']['theta'])
+            self.correlator.setTiltAxis(pixel['predicted position']['theta'])
             correlation_image = self.correlator.correlate(image, tilt)
             pixel['correlation'] = self.correlator.getShift(False)
-            raw['correlation'] = {}
+            pixel['correlated position'] = {}
             for axis in ['x', 'y']:
                 pixel['correlation'][axis] = float(pixel['correlation'][axis])
-                raw['correlation'][axis] = pixel['correlation'][axis]*self.pixel_size*self.preset['binning'][axis]
-            for info in (raw, pixel): 
-                info['correlated position'] = {}
-                for axis in ['x', 'y']:
-                    info['correlated position'][axis] = info['position'][axis] + info['correlation'][axis]
+                pixel['correlated position'][axis] = pixel['position'][axis]
+                pixel['correlated position'][axis] += pixel['correlation'][axis]
+
             info = (pixel['correlated position']['x'],
                     pixel['correlated position']['y'],
-                    raw['correlated position']['x'],
-                    raw['correlated position']['y'])
+                    pixel['correlated position']['x']*pixel_size,
+                    pixel['correlated position']['y']*pixel_size)
             m = 'Image correlation completed, feature position: %g, %g pixels, %g, %g meters.'
             self.logger.info(m % info)
-            info = (pixel['correlation']['x'], pixel['correlation']['y'],
-                    raw['correlation']['x'], raw['correlation']['y'])
+            info = (pixel['correlation']['x'],
+                    pixel['correlation']['y'],
+                    pixel['correlation']['x']*pixel_size,
+                    pixel['correlation']['y']*pixel_size)
             m = 'Correlated shift from feature: %g, %g pixels, %g, %g meters.'
             self.logger.info(m % info)
 
@@ -306,34 +303,30 @@ class Collection(object):
 
             time.sleep(3.0)
 
-            self.savePredictionInfo(raw, pixel, tilt_series_image_data)
+            self.savePredictionInfo(pixel, self.pixel_size, tilt_series_image_data)
 
             self.checkAbort()
 
-            self.prediction.refineAll(tilt, raw['correlation'])
+            self.prediction.refineAll(tilt, pixel['correlation'])
 
             self.checkAbort()
 
         self.viewer.clearImages()
 
-    def savePredictionInfo(self, raw, pixel, image):
+    def savePredictionInfo(self, info, pixel_size, image):
         initializer = {
-            'predicted position': raw['predicted position'],
-            'pixel predicted position': pixel['predicted position'],
-            'predicted shift': raw['predicted shift'],
-            'pixel predicted shift': pixel['predicted shift'],
-            'position': raw['position'],
-            'pixel position': pixel['position'],
-            'correlation': raw['correlation'],
-            'pixel correlation': pixel['correlation'],
-            'correlated position': raw['correlated position'],
-            'pixel correlated position': pixel['correlated position'],
-            'pixel raw correlation': pixel['raw correlation'],
+            'predicted position': info['predicted position'],
+            'predicted shift': info['predicted shift'],
+            'position': info['position'],
+            'correlation': info['correlation'],
+            'correlated position': info['correlated position'],
+            'raw correlation': info['raw correlation'],
+            'pixel size': pixel_size,
             'image': image,
         }
         tomo_prediction_data = data.TomographyPredictionData(initializer=initializer)
-                        
-        self.node.publish(tomo_prediction_data, database=True)
+                    
+        self.node.publish(tomo_prediction_data, database=True, dbforce=True)
 
     def getTilts(self):
         return getTilts(self.settings['tilt min'], self.settings['tilt max'],
