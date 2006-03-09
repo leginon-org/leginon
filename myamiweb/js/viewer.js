@@ -91,13 +91,37 @@ function trigger()
 }
 
 function startPlayback(refreshtime) {
-	if (refreshtime)
+	displaydebug("started 1");
+	if (refreshtime) {
+		stopPlayback();
 		pl_interval = window.setInterval("playback()", refreshtime);
+	}
+}
+
+function rstartPlayback(refreshtime) {
+	if (refreshtime) {
+		stopPlayback();
+		pl_interval = window.setInterval("rplayback()", refreshtime);
+	}
 }
 
 function stopPlayback() {
 	window.clearInterval (pl_interval);
-	pl_interval = "";;
+	pl_interval = "";
+}
+
+function playback() {
+	if (isImageLoaded('v1')) {
+		incIndex();
+		updateviews();
+	}
+}
+
+function rplayback() {
+	if (isImageLoaded('v1')) {
+		decIndex();
+		updateviews();
+	}
 }
 
 function setprogressbar(view) {
@@ -403,32 +427,36 @@ function popUpPtcl(URL, view, param) {
 	eval (view+"adjw"+" = window.open('"+URL+s+psel+"', '"+view+"ptcl', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');");
 }
 
+function getIndex() {
+	cindex = 0;
+	if (document.viewerform.imageId.length !=0) {
+		for (var i = 0; i < document.viewerform.imageId.length; i++) {
+			if (document.viewerform.imageId.options[i].selected == true) {
+				cindex=i  
+			} 
+    }
+	}
+	return cindex;
+}
+
 function incIndex(){
- if (document.viewerform.imageId.length !=0) {
-     for (var i = 0; i < document.viewerform.imageId.length; i++) {
-      if (document.viewerform.imageId.options[i].selected == true) {
-       index=i  
-      } 
-     }
-     if (index == document.viewerform.imageId.length - 1) {
- 	index = index-1
-     }	
-     document.viewerform.imageId.options[index+1].selected=true;
- }
+	if (document.viewerform.imageId.length !=0) {
+		index = getIndex();
+		if (index == document.viewerform.imageId.length - 1) {
+			index = index-1
+		}	
+		document.viewerform.imageId.options[index+1].selected=true;
+	}
 }
 
 function decIndex(){
- if (document.viewerform.imageId.length !=0) {
-     for (var i = 0; i < document.listform.allfile.length; i++) {
-      if (document.viewerform.imageId.options[i].selected == true) {
-       index=i  
-      } 
-     }
-     if (index == 0) {
- 	index = index+1
-     }	
-     document.viewerform.imageId.options[(index-1)].selected=true;
- }
+	if (document.viewerform.imageId.length !=0) {
+		index = getIndex();
+		if (index == 0) {
+			index = index+1
+		}	
+		document.viewerform.imageId.options[(index-1)].selected=true;
+	}
 }
 
 function displaydebug(string) {

@@ -137,6 +137,8 @@ class viewer {
 	}
 
 	function addPlaybackControl($refreshtime="") {
+		$btrstartpl = new button('st3pl', 'rstart');
+		$btrstartpl->setLink('javascript:rstartpl()');
 		$btstoppl = new button('st1pl', 'stop');
 		$btstoppl->setLink('javascript:stoppl()');
 		$btstartpl = new button('st2pl', 'start');
@@ -144,7 +146,8 @@ class viewer {
 		$playbackjavascript = ''
 		.$btstoppl->getJavascript().$this->crlf
 		.$btstartpl->getJavascript().$this->crlf
-		.'var mintime=1000;'.$this->crlf
+		.$btrstartpl->getJavascript().$this->crlf
+		.'var mintime=100;'.$this->crlf
 		.'var maxtime=60000;'.$this->crlf
 		.'var refreshtime=10000;'.$this->crlf
 		.''.$this->crlf
@@ -153,8 +156,13 @@ class viewer {
 		.'		startPlayback(refreshtime);'.$this->crlf
 		.'}'.$this->crlf
 		.''.$this->crlf
+		.'function rstartpl(){'.$this->crlf
+		.'		formatrefreshtimepl();'.$this->crlf
+		.'		rstartPlayback(refreshtime);'.$this->crlf
+		.'}'.$this->crlf
+		.''.$this->crlf
 		.'function formatrefreshtimepl() {'.$this->crlf
-		.'	refreshtime=parseInt(document.viewerform.refreshtimepl.value)*1000;'.$this->crlf
+		.'	refreshtime=parseFloat(document.viewerform.refreshtimepl.value)*1000;'.$this->crlf
 		.'	if (!refreshtime || refreshtime<mintime)'.$this->crlf
 		.'		refreshtime = mintime;'.$this->crlf
 		.'	if (refreshtime>maxtime)'.$this->crlf
@@ -173,27 +181,29 @@ class viewer {
 		.''.$this->crlf;
 
 		$playback= ''
-		.'<table border="0">'.$this->crlf
+		.'<table border="0" cellspacing="1" cellpadding="0" >'.$this->crlf
 		.'<tr>'.$this->crlf
 		.'<td>'.$this->crlf
-		.'	<label for="refreshtimepl">Playback</label>'.$this->crlf
+		.'	<input type="hidden" name="refreshtimepl" size="4" value="'.$refreshtime.'">'.$this->crlf
 		.'</td>'.$this->crlf
-		.'<td>'.$this->crlf
-		.'	<input class="field" type="text" name="refreshtimepl" size="4" value="'.$refreshtime.'">'.$this->crlf
+		.'<td width="15">'.$this->crlf
+		.'	'.$btrstartpl->display().$this->crlf
 		.'</td>'.$this->crlf
-		.'<td>'.$this->crlf
+		.'<td width="15">'.$this->crlf
 		.'	'.$btstoppl->display().$this->crlf
 		.'</td>'.$this->crlf
-		.'<td>'.$this->crlf
+		.'<td width="15">'.$this->crlf
 		.'	'.$btstartpl->display().$this->crlf
-		.'</td>'.$this->crlf
-		.'<td>'.$this->crlf
 		.'</td>'.$this->crlf
 		.'</tr>'.$this->crlf
 		.'</table>'.$this->crlf;
 
 		$this->addplaybackcontrol = $playback;
 		$this->addplaybackjavascript = $playbackjavascript;
+	}
+
+	function getPlaybackControl() {
+		return $this->addplaybackcontrol;
 	}
 
 	function addCommentBox() {
@@ -297,12 +307,11 @@ class viewer {
 		$fct = "getImageAutoScale('v1', 159720)";
 		$display .= '<input type=button value="'.$fct.'" onclick="'.$fct.'">';
 		}
-		if ($this->addloicontrol || $this->addcommentbox || $this->addplaybackcontrol) 
+		if ($this->addloicontrol || $this->addcommentbox )
 			$display .= '<table border="0"><tr valign="top">';
-		if ($this->addloicontrol || $this->addplaybackcontrol) {
+		if ($this->addloicontrol ) {
 			$display .= '<td>';
 			$display .= $this->addloicontrol;
-			$display .= $this->addplaybackcontrol;
 			$display .= '</td>';
 		}
 		if ($this->addcommentbox) {
@@ -476,9 +485,11 @@ class view {
 			$this->bttargetstate = $bttargetstate;
 		if ($btscalestate=$_REQUEST[$this->btscalememo])
 			$this->btscalestate = $btscalestate;
-
-
 		
+	}
+
+	function addMenuItems($newitems) {
+		$this->newitems = $newitems;
 	}
 
 	function setMinpix($n) {
@@ -737,6 +748,13 @@ class view {
 			<td align="right">
 			<table border="0" cellspacing="1" cellpadding="0">
 			<tr>
+		';
+		if ($this->newitems) 
+		$htmlframe .= '
+			<td>'
+			.$this->newitems.$this->crlf
+			.'
+			</td>
 		';
 		if ($this->displaydownloadicon)
 		$htmlframe .= '

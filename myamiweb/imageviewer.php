@@ -41,10 +41,14 @@ $viewer->setImageId($imageId);
 $viewer->addSessionSelector($sessions);
 $viewer->addFileSelector($filenames);
 $viewer->setNbViewPerRow('1');
+$pl_refresh_time=".5";
+$viewer->addPlaybackControl($pl_refresh_time);
+$playbackcontrol=$viewer->getPlaybackControl();
 $javascript = $viewer->getJavascript();
 
 $view1 = new view('Main View', 'v1');
 $view1->setControl();
+$view1->addMenuItems($playbackcontrol);
 $view1->setDataTypes($datatypes);
 $view1->setSize(512);
 $viewer->add($view1);

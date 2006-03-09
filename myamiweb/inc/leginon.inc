@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.52 $
- *	@version $Id: leginon.inc,v 1.52 2006-03-09 03:29:10 dfellman Exp $
+ *	@version $Revision: 1.53 $
+ *	@version $Id: leginon.inc,v 1.53 2006-03-09 19:02:13 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -1372,7 +1372,7 @@ class leginondata {
 		}
 
 	    if($format=="xml") {
-	    	$this->buildXML($table_def, $buffer, &$dump);
+	    	$this->buildXML($table_def, $buffer, $dump);
 		$dump .= "</applicationdump>" . $crlf;
 	    } else {
 		$dump .= $table_def;
