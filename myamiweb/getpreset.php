@@ -14,9 +14,13 @@
 </head>
 <body leftmargin="5" topmargin="0" bottommargin="0" marginwidth="5" marginheight="0" >
 <font face="Arial, Helvetica, sans-serif" size="2">
+<table>
+<tr valign="top">
+<td>
 <?
 require('inc/leginon.inc');
 require('inc/project.inc');
+$p[]='tilt';
 $p[]='gridId';
 $p[]='mag';
 $p[]='defocus';
@@ -48,6 +52,10 @@ if ($id) {
 				$v *= $imageinfo['binning'];
 				echo " <b>$k:</b> ",($leginondata->formatPixelsize($v));
 			}
+			else if ($k=='tilt') {
+				$angle=$v;
+				$str_tilt=" <b>$k:</b> ".(format_angle_degree($v));
+			}
 			else if ($k=='dose') {
 				if (!empty($v))
 					if($presets['exposure time'] && !empty($imageinfo['exposure time']))
@@ -65,6 +73,17 @@ if ($id) {
 
 }
 ?>
+</td>
+<td>
+<font style='font-size: 12px;'>
+<?=$str_tilt?>
+</font>
+</td>
+<td>
+<img src="imgangle.php?a=<?=$angle?>">
+</td>
+</tr>
+</table>
 </font>
 </body>
 </html>

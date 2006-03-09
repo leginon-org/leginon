@@ -384,6 +384,10 @@ return $data;
 
 }
 
+function format_angle_degree($data) {
+	return number_format(($data), 1,'.','').'&deg;';
+}
+
 function format_micro_number($data) {
 	return number_format(($data/1e-6), 4,'.','').' µm';
 }

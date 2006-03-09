@@ -242,6 +242,7 @@ class viewer {
 		$str .= 'var count;'.$this->crlf;
 		$str .= 'var begin;'.$this->crlf;
 		$str .= 'var end;'.$this->crlf;
+		$str .= 'var mainview;'.$this->crlf;
 
 		$str .= ''.$this->crlf;
 		if ($this->addloijavascript)
@@ -277,6 +278,7 @@ class viewer {
 		$init .= '}'.$this->crlf;
 		$init .= ''.$this->crlf;
 		$init .= 'function initviewer() { '.$this->crlf;
+		$init .= 'mainview=getMainView();'.$this->crlf;
 		if (!empty($initbuttons))
 			$init .= $initbuttons.$this->crlf;
 		$init .= 'setevents();'.$this->crlf;
@@ -299,14 +301,13 @@ class viewer {
 		$n=1;
 		$display = '<form method="post" name="viewerform"  '.
 				'action="'.$_SERVER['PHP_SELF'].'">'.$this->crlf;
-		if ($debug=0) {
-		$display .= '<textarea name=debug rows=10 cols=50></textarea>';
-		$display .= '<input type=button value="clear" onclick="javascript:document.viewerform.debug.value=\'\'">';
-		$fct = "loadImage()";
-		$display .= '<input type=button value="'.$fct.'" onclick="'.$fct.'">';
-		$fct = "getImageAutoScale('v1', 159720)";
-		$display .= '<input type=button value="'.$fct.'" onclick="'.$fct.'">';
-		}
+    if ($this->debug) {
+    $display .= '<textarea class="textarea" name=debug rows=10 cols=50></textarea>';
+    $display .= '<input class="bt1" type="button" value="clear" onclick="javascript:document.viewerform.debug.value=\'\'">';
+    $fct = "cle(document.viewerform.fctval.value)";
+    $display .= '<input class="bt1" type="button" value="eval" onclick="'.$fct.'">';
+    $display .= '<input class="bt1" name="fctval" type="text" size="50">';
+    }
 		if ($this->addloicontrol || $this->addcommentbox )
 			$display .= '<table border="0"><tr valign="top">';
 		if ($this->addloicontrol ) {
@@ -727,10 +728,12 @@ class view {
 		<input type="hidden" name="'.$this->bttargetmemo.'" value="'.$this->bttargetstate.'"> 
 		<input type="hidden" name="'.$this->btscalememo.'" value="'.$this->btscalestate.'"> 
 		<input type="hidden" name="'.$this->ptclselmemo.'" value="0"> ';
-		if ($this->ismaster)
+		if ($this->ismaster) {
 			$htmlframe .= '
 		<input type="hidden" name="controlpre" value="'.$prename.'"> 
+		<input type="hidden" name="controlview" value="'.$name.'"> 
 			';
+		}
 		$htmlframe .= '
 		<table '.$this->framecolor.' border="0" cellspacing="0" cellpadding="1">
 		 <tr '.$this->menucolor.'> 

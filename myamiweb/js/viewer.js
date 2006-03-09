@@ -91,7 +91,6 @@ function trigger()
 }
 
 function startPlayback(refreshtime) {
-	displaydebug("started 1");
 	if (refreshtime) {
 		stopPlayback();
 		pl_interval = window.setInterval("playback()", refreshtime);
@@ -111,15 +110,21 @@ function stopPlayback() {
 }
 
 function playback() {
-	if (isImageLoaded('v1')) {
+	if (isImageLoaded(mainview)) {
 		incIndex();
+		if (getIndex()==document.viewerform.imageId.length-1) {
+			stopPlayback();
+		}
 		updateviews();
 	}
 }
 
 function rplayback() {
-	if (isImageLoaded('v1')) {
+	if (isImageLoaded(mainview)) {
 		decIndex();
+		if (!getIndex()) {
+			stopPlayback();
+		}
 		updateviews();
 	}
 }
@@ -167,6 +172,14 @@ function setimgId() {
 function newexp() {
     window.document.viewerform.submit(); 
     return true;
+}
+
+function getMainView() {
+	mainview = 'v1';
+	if (controlview=eval("document.viewerform.controlview")) {
+		mainview=controlview.value;
+	}
+	return mainview;
 }
 
 function getviewindex(name) {
@@ -478,3 +491,6 @@ function updateGradient() {
 	document.getElementById('gradientDiv').style.background = 'url('+jsbaseurl+gradient+'?colormap='+jscolormap+'&min='+jsminpix+'&max='+jsmaxpix+'&gmin='+jsmingradpix+'&gmax='+jsmaxgradpix+')'; 
 }
 
+function cle(val) {
+  eval(val);
+}

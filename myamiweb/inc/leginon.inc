@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.53 $
- *	@version $Id: leginon.inc,v 1.53 2006-03-09 19:02:13 dfellman Exp $
+ *	@version $Revision: 1.54 $
+ *	@version $Id: leginon.inc,v 1.54 2006-03-09 23:07:19 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -313,6 +313,8 @@ class leginondata {
 			return array();
 		if (!is_array($presets) || !$fileId)
 			return false;
+		if (in_array('tilt', $presets))
+			$sqlselect[]="DEGREES(scope.`SUBD|stage position|a`) AS tilt";
 		if (in_array('mag', $presets))
 			$sqlselect[]="scope.magnification as mag";
 		if (in_array('defocus', $presets)) {
