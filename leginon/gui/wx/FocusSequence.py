@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-02-22 05:23:15 $
-# $Author: acheng $
+# $Date: 2006-03-09 20:19:23 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -122,6 +122,7 @@ class Dialog(gui.wx.Dialog.Dialog):
         setting['correlation type'] = \
             self.correlation_type_choice.GetStringSelection()
         setting['fit limit'] = self.fit_limit_entry.GetValue()
+        setting['change limit'] = self.change_limit_entry.GetValue()
         setting['correction type'] = \
             self.correction_type_choice.GetStringSelection()
         setting['stig correction'] = self.correct_astig_checkbox.GetValue()
@@ -144,6 +145,7 @@ class Dialog(gui.wx.Dialog.Dialog):
         self.correlation_type_choice.SetStringSelection(
                                                     setting['correlation type'])
         self.fit_limit_entry.SetValue(setting['fit limit'])
+        self.change_limit_entry.SetValue(setting['change limit'])
         self.correction_type_choice.SetStringSelection(
                                                     setting['correction type'])
         self.correct_astig_checkbox.SetValue(setting['stig correction'])
@@ -169,6 +171,7 @@ class Dialog(gui.wx.Dialog.Dialog):
             self.beam_tilt_entry,
             self.correlation_type_choice,
             self.fit_limit_entry,
+            self.change_limit_entry,
             self.correction_type_choice,
             self.correct_astig_checkbox,
             self.stig_lens,
@@ -200,6 +203,7 @@ class Dialog(gui.wx.Dialog.Dialog):
         self.correlation_type_choice = gui.wx.Choice.Choice(self, -1,
                                         choices=self.settings.correlation_types)
         self.fit_limit_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
+        self.change_limit_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
         self.check_drift_checkbox = wx.CheckBox(self, -1,
                                            'Check for drift greater than')
         self.drift_threshold_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
@@ -260,9 +264,12 @@ class Dialog(gui.wx.Dialog.Dialog):
         label = wx.StaticText(self, -1, 'Fit limit:')
         self.labels.append(label)
         sizer.Add(label, (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        label = wx.StaticText(self, -1, 'Correction type:')
+        label = wx.StaticText(self, -1, 'Change limit:')
         self.labels.append(label)
         sizer.Add(label, (6, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        label = wx.StaticText(self, -1, 'Correction type:')
+        self.labels.append(label)
+        sizer.Add(label, (7, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         ##
 
         sizer.Add(self.switch_checkbox, (0, 1), (1, 1), wx.EXPAND)
@@ -281,11 +288,13 @@ class Dialog(gui.wx.Dialog.Dialog):
         sizer.Add(label, (4, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(self.fit_limit_entry, (5, 2), (1, 1),
                        wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-        sizer.Add(self.correction_type_choice, (6, 2), (1, 1), wx.EXPAND)
+        sizer.Add(self.change_limit_entry, (6, 2), (1, 1),
+                       wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+        sizer.Add(self.correction_type_choice, (7, 2), (1, 1), wx.EXPAND)
 
-        sizer.Add(stig_sizer, (7, 1), (1, 3),
+        sizer.Add(stig_sizer, (8, 1), (1, 3),
                                 wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(drift_sizer, (8, 1), (1, 3),
+        sizer.Add(drift_sizer, (9, 1), (1, 3),
                                 wx.ALIGN_CENTER_VERTICAL)
         ##
 

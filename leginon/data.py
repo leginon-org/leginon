@@ -2018,6 +2018,7 @@ class FocusSettingData(InSessionData):
 			('beam tilt', float),
 			('correlation type', str),
 			('fit limit', float),
+			('change limit', float),
 			('correction type', str),
 			('stig correction', bool),
 			('stig lens', str),

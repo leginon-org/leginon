@@ -61,6 +61,7 @@ class Focuser(acquisition.Acquisition):
             'beam tilt': 0.01,
             'correlation type': 'phase',
             'fit limit': 10000,
+            'change limit': 1e-3,
             'correction type': 'Defocus',
             'stig correction': False,
             'stig defocus min': -4e-6,
@@ -231,17 +232,28 @@ class Focuser(acquisition.Acquisition):
 
         resultdata.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin, 'drift': lastdrift})
 
+        ###### focus validity checks
+        validdefocus = True
         status = 'ok'
+        logmessage = 'Good focus measurement'
 
-        ### validate defocus correction
+        ### check fit limit
         fitlimit = setting['fit limit']
-        if fitmin <= fitlimit:
-            validdefocus = True
-            self.logger.info('Good focus measurement')
-        else:
-            status = 'untrusted (%s>%s)' % (fitmin, fitlimit)
+        if fitmin > fitlimit:
+            status = 'fit untrusted (%s>%s)' % (fitmin, fitlimit)
             validdefocus = False
-            self.logger.info('Focus measurement failed: min = %s (limit = %s)' % (fitmin, fitlimit))
+            logmessage = 'Focus measurement failed: fit = %s (fit limit = %s)' % (fitmin, fitlimit)
+        ### check change limit
+        changelimit = setting['change limit']
+        if abs(defoc) > changelimit:
+            status = 'change untrusted (abs(%s)>%s)' % (defoc, changelimit)
+            validdefocus = False
+            logmessage = 'Focus measurement failed: change = %s (change limit = %s)' % (defoc, changelimit)
+
+        if validdefocus:
+            self.logger.info(logmessage)
+        else:
+            self.logger.warning(logmessage)
 
         ### validate stig correction
         # stig is only valid in a certain defocus range
