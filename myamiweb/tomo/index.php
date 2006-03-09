@@ -19,7 +19,8 @@ $tiltSeriesSelector = $tomography->getTiltSeriesSelector($tiltSeries, $tiltSerie
 $width = 800;
 $height = 300;
 $images = array();
-$axes = array('x', 'y', 'z', 'n', 't', 'theta');
+#$axes = array('x', 'y', 'z', 'n', 't', 'theta');
+$axes = array('x', 'y', 'z');
 foreach ($axes as $axis) {
 	$images[] = '<img src="graph.php?'
 		."tiltSeriesId=$tiltSeriesId"

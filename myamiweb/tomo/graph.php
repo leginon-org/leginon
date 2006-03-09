@@ -67,7 +67,7 @@ function graphXY($prediction, $position, $correlation, $tilts, $title, $width, $
     $graph->Stroke();
 }
 
-function graphZ($prediction, $tilts, $title, $width, $height) {
+function graphZ($prediction, $tilts, $pixel_size, $title, $width, $height) {
     $graph = new Graph($width, $height, "auto");    
     $graph->SetScale("textlin");
     $graph->SetMarginColor('white');
@@ -78,7 +78,7 @@ function graphZ($prediction, $tilts, $title, $width, $height) {
     $graph->ygrid->SetFill(true,'#EFEFEF@0.75','#BBCCFF@0.75');
 
     for($i = 0; $i < count($prediction); $i++) {
-        $prediction[$i] /= 1e-6;
+        $prediction[$i] *= $pixel_size[$i]/1e-6;
     }
     $predictionplot= new LinePlot($prediction);
     $predictionplot->SetColor("blue");
@@ -231,20 +231,22 @@ $tilts = array_map("formatTilt", $tilts);
 
 $title = $axis.'-axis';
 
+$pixel_size = $predictionData['pixel size'];
+
 if ($axis == 'z') {
     $prediction = $predictionData['SUBD|predicted position|'.$axis];
-    graphZ($prediction, $tilts, $title, $width, $height);
+    graphZ($prediction, $tilts, $pixel_size, $title, $width, $height);
 } else if ($axis == 'x' || $axis == 'y') {
-    $prediction = $predictionData['SUBD|pixel predicted position|'.$axis];
-    $position = $predictionData['SUBD|pixel correlated position|'.$axis];
-    $correlation = $predictionData['SUBD|pixel correlation|'.$axis];
-    graphXY($prediction, $position, $correlation, $tilts, $title, $width, $height);
-} else if ($axis == 'n' || $axis == 't') {
-    $prediction = $predictionData['SUBD|pixel predicted position|'.$axis];
-    graphNT($prediction, $tilts, $title, $width, $height);
-} else if ($axis == 'theta') {
     $prediction = $predictionData['SUBD|predicted position|'.$axis];
-    graphTheta($prediction, $tilts, "theta", $width, $height);
+    $position = $predictionData['SUBD|correlated position|'.$axis];
+    $correlation = $predictionData['SUBD|correlation|'.$axis];
+    graphXY($prediction, $position, $correlation, $tilts, $title, $width, $height);
+#} else if ($axis == 'n' || $axis == 't') {
+#    $prediction = $predictionData['SUBD|predicted position|'.$axis];
+#    graphNT($prediction, $tilts, $title, $width, $height);
+#} else if ($axis == 'theta') {
+#    $prediction = $predictionData['SUBD|predicted position|'.$axis];
+#    graphTheta($prediction, $tilts, "theta", $width, $height);
 }
 
 ?>
