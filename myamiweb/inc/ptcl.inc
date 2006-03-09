@@ -64,7 +64,7 @@ class particledata {
 	}
 
 	function getParticlesFromSelectionId($selectionId, $filename) {
-		$q = "select p.Xcoord, p.Ycoord "
+		$q = "select p.Xcoord, p.Ycoord, p.Boxsize "
 			."from image i "
 			."left join particle p on (i.imageId = p.imageId ) "
 			."where i.ImageName= '".$filename."' "

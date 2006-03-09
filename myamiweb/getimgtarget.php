@@ -26,6 +26,11 @@ switch ($_GET['target']) {
 		$angle = 0;
 		drawcross ($img, $cx, $cy, $size, $col, $arc, $angle, $shadow);
 		break;
+	case "box1":
+		$size = 9;
+		$angle = 0;
+		drawbox ($img, $cx, $cy, $size, $col, $angle, $shadow);
+		break;
 }
 
 header("Content-type: image/png");

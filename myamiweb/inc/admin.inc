@@ -8,9 +8,11 @@
  */
 
 require('inc/leginon.inc');
-$leginondata->importTables($DEF_TABLES_FILE);
+if ($leginondata->checkdb)
+	$leginondata->importTables($DEF_TABLES_FILE);
 
 function admin_header($javascriptinit="") {
+global $leginondata;
 
 
 $link = new iconlink();
@@ -25,7 +27,6 @@ $link->addlink('addinstrument.php','Instruments','', 'tem_tecnai_icon', '');
 $link->addlink('addcal.php','Calibrations','', 'calibration', '');
 $link->addlink('addapp.php','Applications','', 'application', '');
 $link->addlink('goniometer.php','Goniometer','', 'goniometer', '');
-$link->addlink('delsession.php','Sessions','', '', '');
 
 
 ?>
@@ -58,45 +59,5 @@ function admin_footer() {
     </body>
 </html>
 ";
-}
-
-function mysql2UnixTime($mysqltime) {
-	$year = substr($mysqltime, 0,4);
-	$month  = substr($mysqltime, 4,2);
-	$day = substr($mysqltime, 6,2);
-	$hour = substr($mysqltime, 8,2);
-	$minute = substr($mysqltime, 10,2);
-	$second = substr($mysqltime, 12,2);
-	return mktime($hour, $minute, $second, $month, $day, $year);
-}
-
-function display($r, $display_fields=False) {
-	echo "<table border=1 cellspacing=0, cellpadding=5>";
-	if (!is_array($r))
-		return False;
-	$data = $r;
-	if ($display_fields) {
-		if ($r[0]) {
-			$fields = array_keys($r[0]);
-			foreach ($fields as $field)
-				$f[$field] = $field;
-			$data = array_merge(array($f), $r);
-		}
-	}
-	foreach ($data as $row) {
-	echo "<tr>";
-		foreach ($row as $k=>$value) {
-			if (eregi('^DEF_id|^REF\|', $k)) 
-				continue;
-			else if (eregi('^DEF_timestamp$', $k)) {
-				if (!$display_fields)
-					$value = date('D, j M Y G:i:s ', mysql2UnixTime($value));
-				$display_fields = False;
-			}
-			echo "	<td>$value</td>\n";
-		}
-	echo "</tr>";
-	}
-	echo "</table>";
 }
 ?>

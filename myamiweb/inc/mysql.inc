@@ -283,16 +283,24 @@ class mysql {
 		return $sql;
 	}
 
-	function SQLInsertIfNotExists($table, $data) {
+	function SQLInsertIfNotExists($table, $data, $return_id=false) {
 		if (!$sql=$this->array_to_sql($data))
 			return False;
 		$q = "SELECT * from `$table` "
 			."WHERE $sql";
 		$res = $this->SQLQuery($q);
 		if (mysql_num_rows($res)>0) {
+			if ($return_id) {
+				if ($pKey = $this->getPriKey($table)) {
+					$result=mysql_fetch_array($res);
+					return $result[$pKey];
+				}
+			}
 			return False;
 		} else {
-			$this->SQLInsert($table, $data);
+			$id = $this->SQLInsert($table, $data);
+			if ($return_id)
+				return $id;
 			return True;
 		}
 		
@@ -479,7 +487,6 @@ class mysql {
 			.$sql_where
 			.$sql_order
 			.$sql_limit;
-		echo $q;
 		return $this->getSQLResult($q);
 	}
 

@@ -54,6 +54,17 @@ function drawcross ($img, $cx, $cy, $size, $col, $arc=true, $angle=0, $shadow=fa
 	imageline($img, $sp[2], $sp[3], $sp[6], $sp[7], $col);
 }
 
+function drawbox($img, $cx, $cy, $size, $col, $angle=0, $shadow=false) {
+		$square = new square($cx, $cy, $size);
+		$squarepoints = $square->getRotatedPointCoords($angle);
+		if ($shadow) {
+			foreach ($squarepoints as $k=>$v)
+				$squarepoints[$k] += 1;
+			drawsquare($img, $squarepoints, 0);
+		}
+		drawsquare($img, $squarepoints, $col);
+}
+
 function drawsquare($img, $squarepoints, $col) {
 	if (!is_array($squarepoints))
 		return;

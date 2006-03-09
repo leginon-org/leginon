@@ -12,6 +12,8 @@ require_once('inc/ptcl.inc');
 require_once('inc/picker.inc');
 
 $title = "Particle Selection Adjust";
+if (!$name=$_REQUEST['name'])
+	$name='v';
 if ($displayname=$_REQUEST['displayname'])
 	$title .=" - ".$displayname;
 $sessionId = $_REQUEST['session'];
@@ -43,7 +45,7 @@ foreach ($selections as $k=>$selection) {
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 <link rel="stylesheet" type="text/css" href="css/view.css">
 
-<script src="js/viewiframe.js"></script>
+<script src="js/viewer.js"></script>
 <script src="js/picker.js"></script>
 <script><!--
 var jschkobj = '';

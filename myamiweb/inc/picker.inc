@@ -62,7 +62,8 @@ class targetpick {
 	var $targets = array ( 
 				'cross1' => 'getimgtarget.php?target=cross1',
 				'cross2' => 'getimgtarget.php?target=cross2',
-				'cir1' => 'getimgtarget.php?target=cir1' 
+				'cir1' => 'getimgtarget.php?target=cir1', 
+				'box1' => 'getimgtarget.php?target=box1' 
 			);
 
 	var $target = "cross1"; 

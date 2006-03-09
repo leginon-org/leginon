@@ -11,11 +11,13 @@ require('inc/viewer.inc');
 require ('inc/leginon.inc');
 $link = new iconlink();
 $link->setImagePath('img/');
-$link->cols = 2;
+$link->cols = 3;
 $link->addlink('imageviewer.php','Image Viewer','', 'viewer');
 $link->addlink('3wviewer.php','3 Way Viewer','', '3wviewer');
 $link->addlink('loi.php','LOI','', 'loi');
 $link->addlink('admin.php','Administration','', 'admin');
+$link->addlink('tomo/','Tomography','', 'tomo_icon_3');
+
 
 $ip = $_SERVER['REMOTE_ADDR'];
 $host = $_SERVER['REMOTE_HOST'];
@@ -38,6 +40,7 @@ foreach ($R as $r) {
 $content.="</table>";
 $log = display_table($title, $content);
 
+/*
 $title = "Viewed sessions from : $host";
 
 $R = $leginondata->getviewerlog('last', $host, $ip);
@@ -55,6 +58,7 @@ foreach ($R as $r) {
 }
 $content.="</table>";
 $log_from = display_table($title, $content);
+*/
 
 
 $title = "Leginon II database Tools";

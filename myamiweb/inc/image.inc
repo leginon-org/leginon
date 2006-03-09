@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.23 $
- *	@version $Id: image.inc,v 1.23 2006-01-26 23:12:28 dfellman Exp $
+ *	@version $Revision: 1.24 $
+ *	@version $Id: image.inc,v 1.24 2006-03-09 03:29:10 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -75,7 +75,11 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				$meanval = $info['mean'];
 				$stdev = $info['stdev'];
 			} else {
-				$info = mrcinfo($pic);
+				$mrcimg = mrcread($pic);
+				mrcupdateheader($mrcimg);
+				$info = mrcgetinfo($mrcimg);
+				mrcdestroy($mrcimg);
+				$minval = $info['amin'];
 				$minval = $info['amin'];
 				$maxval = $info['amax'];
 				$meanval = $info['amean'];
@@ -276,15 +280,21 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				$dbp = new particledata();
 				$particles = $dbp->getParticlesFromSelectionId($selectionId, $filename);
 				foreach ($particles as $particle) {
+					$tsize = 100*$scalefactor/$binning;
 					$cx = $particle['Xcoord']/$binning*$scalefactor;
 					$cy = $particle['Ycoord']/$binning*$scalefactor;
-					$tsize = 100*$scalefactor/$binning;
+					if (!$boxsize = $particle['Boxsize']/$binning*$scalefactor)
+						$boxsize = $tsize;
+				
 					if ($seltarget=='cir1')
 						drawcircle($img, $cx, $cy, $tsize, $col, true);
 					if ($seltarget=='cross1')
 						drawcross ($img, $cx, $cy, $tsize, $col, false, 45, true);
 					if ($seltarget=='cross2')
 						drawcross ($img, $cx, $cy, $tsize, $col, false, 0, true);
+					if ($seltarget=='box1') {
+						drawbox ($img, $cx, $cy, $boxsize, $col, 0, true);
+				}
 
 				}
 			}
@@ -514,5 +524,17 @@ class Mosaic {
 		}
 		return $img;
 	}
+}
+
+function imagescale(&$img, $percent) {
+	// Get new sizes
+	$source = $img;
+	$width = imagesx($source);
+	$height = imagesy($source);
+	$newwidth = $width * $percent;
+	$newheight = $height * $percent;
+	$img = imagecreatetruecolor($newwidth, $newheight);
+	imagecopyresampled($img, $source, 0, 0, 0, 0, $newwidth, $newheight, $width, $height);
+	imagedestroy($source);
 }
 ?>
