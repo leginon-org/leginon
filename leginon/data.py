@@ -2177,12 +2177,13 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('tilt max', float),
 			('tilt start', float),
 			('tilt step', float),
-			('cosine exposure', bool),
-			('thickness value', float),
 			('xcf bin', int),
 			('registration preset order', list),
 			('run buffer cycle', bool),
 			('align zero loss peak', bool),
+            ('dose', float),
+            ('min exposure', float),
+            ('max exposure', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2217,6 +2218,28 @@ class TiltSeriesImageData(AcquisitionImageData):
 		return AcquisitionImageData.typemap() + (
 			('shift', dict),
 			('tilt series', TiltSeriesData),
+		)
+	typemap = classmethod(typemap)
+
+class AcquisitionImageDespikeData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', AcquisitionImageData),
+			('old stats', AcquisitionImageStatsData),
+			('new stats', AcquisitionImageStatsData),
+			('time', float),
+		)
+	typemap = classmethod(typemap)
+
+class SpikeData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('despike', AcquisitionImageDespikeData),
+			('x', int),
+			('y', int),
+			('old value', float),
+			('new value', float),
+			('valid', bool),
 		)
 	typemap = classmethod(typemap)
 '''

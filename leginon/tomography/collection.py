@@ -1,7 +1,6 @@
 import math
 import time
 import data
-import exposure
 import tiltcorrelator
 import tiltseries
 import registration
@@ -16,11 +15,9 @@ class Fail(Exception):
 class Collection(object):
     def __init__(self):
         self.tilt_series = None
-        self.exposure = None
         self.prediction = None
         self.correlator = None
         self.instrument_state = None
-
         self.tilt_axis = 0.0
 
     def saveInstrumentState(self):
@@ -71,12 +68,6 @@ class Collection(object):
                                                  self.target, self.emtarget)
         self.tilt_series.save()
 
-        self.exposure = exposure.Exposure(self.preset['exposure time']/1000.0,
-                                     self.settings['cosine exposure'],
-                                     self.high_tension,
-                                     self.settings['thickness value'],
-                                     math.radians(self.settings['tilt start']))
-
         self.correlator = tiltcorrelator.Correlator(self.settings['xcf bin'],
                                                     self.tilt_axis)
 
@@ -90,26 +81,34 @@ class Collection(object):
                                           self.tilt_axis,
                                           self.emtarget)
 
-
-
         if self.settings['run buffer cycle']:
             self.runBufferCycle()
 
         return True
 
     def collect(self):
-        tilts = self.getTilts()
-        n_tilts = len(tilts)
-        if n_tilts == 0:
+        n = len(self.tilts)
+
+        # TODO: move to tomography
+        if n != len(self.exposures):
+            raise RuntimeError('tilt angles and exposure times do not match')
+
+        for i in range(n):
+            if len(self.tilts[i]) != len(self.exposures[i]):
+                s = 'tilt angle group #%d and exposure time group do not match'
+                s %= i + 1
+                raise RuntimeError(s)
+
+        if n == 0:
             return
-        elif n_tilts == 1:
-            self.loop(tilts[0], False)
-        elif n_tilts == 2:
-            self.loop(tilts[0], False)
+        elif n == 1:
+            self.loop(self.tilts[0], self.exposures[0], False)
+        elif n == 2:
+            self.loop(self.tilts[0], self.exposures[0], False)
             self.checkAbort()
-            self.loop(tilts[1], True)
+            self.loop(self.tilts[1], self.exposures[1], True)
         else:
-            raise RuntimeError
+            raise RuntimeError('too many tilt angle groups')
 
     def alignZeroLossPeak(self):
         ccd_camera = self.instrument.ccdcamera
@@ -133,8 +132,6 @@ class Collection(object):
     def finalize(self):
         self.tilt_series = None
 
-        self.exposure = None
-
         self.correlator.reset()
 
         self.registration = None
@@ -149,7 +146,7 @@ class Collection(object):
 
         self.viewer.clearImages()
 
-    def loop(self, tilts, second_loop):
+    def loop(self, tilts, exposures, second_loop):
         self.logger.info('Starting tilt collection (%d angles)...' % len(tilts))
 
         if second_loop:
@@ -172,19 +169,19 @@ class Collection(object):
         if second_loop:
             self.correlator.reset()
 
-        self._loop(tilts)
+        self._loop(tilts, exposures)
         
         self.logger.info('Collection loop completed.')
 
-    def _loop(self, tilts):
+    def _loop(self, tilts, exposures):
         pixel_size = self.pixel_size
         pixel_position = {'x': 0.0, 'y': 0.0}
         for i, tilt in enumerate(tilts):
             self.checkAbort()
 
-            self.logger.info('Current tilt angle: %g degrees.' % tilt)
+            self.logger.info('Current tilt angle: %g degrees.' % math.degrees(tilt))
 
-            tilt = math.radians(tilt)
+            #tilt = math.radians(tilt)
 
             position, shift = self.prediction.predict(tilt)
 
@@ -228,7 +225,7 @@ class Collection(object):
 
             self.checkAbort()
 
-            exposure = self.exposure.calculate(tilt)
+            exposure = exposures[i]
             m = 'Acquiring image (%g second exposure)...' % exposure
             self.logger.info(m)
             self.instrument.ccdcamera.ExposureTime = int(exposure*1000)
@@ -265,7 +262,8 @@ class Collection(object):
                 next_tilt = tilts[i + 1]
                 s = 'Tilting stage to next angle (%g degrees)...' % math.degrees(tilt)
                 self.logger.info(s)
-                stage_position = {'a': math.radians(next_tilt)}
+                #stage_position = {'a': math.radians(next_tilt)}
+                stage_position = {'a': next_tilt}
                 self.instrument.tem.StagePosition = stage_position
             except IndexError:
                 pass
@@ -328,31 +326,9 @@ class Collection(object):
                     
         self.node.publish(tomo_prediction_data, database=True, dbforce=True)
 
-    def getTilts(self):
-        return getTilts(self.settings['tilt min'], self.settings['tilt max'],
-                        self.settings['tilt start'], self.settings['tilt step'])
-
     def checkAbort(self):
         state = self.player.wait()
         if state in ('stop', 'stopqueue'):
             self.finalize()
             raise Abort
-
-def getTilts(min_tilt, max_tilt, start_tilt, tilt_step):
-    tilts = []
-    t = _getTilts(min_tilt, max_tilt, start_tilt, tilt_step)
-    if len(t) > 1:
-        tilts.append(t)
-    t = _getTilts(min_tilt, max_tilt, start_tilt, -tilt_step)
-    if len(t) > 1:
-        tilts.append(t)
-    return tilts
-
-def _getTilts(min_tilt, max_tilt, start_tilt, tilt_step):
-    tilt = start_tilt
-    tilts = []
-    while tilt >= min_tilt and tilt <= max_tilt:
-        tilts.append(tilt)
-        tilt += tilt_step
-    return tilts
 

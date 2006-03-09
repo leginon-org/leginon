@@ -7,6 +7,8 @@ import event
 import acquisition
 import gui.wx.tomography.Tomography
 import collection
+import tilts
+import exposure
 
 class CalibrationError(Exception):
     pass
@@ -36,12 +38,13 @@ class Tomography(acquisition.Acquisition):
         'tilt max': 60.0,
         'tilt start': 0.0,
         'tilt step': 1.0,
-        'cosine exposure': True,
-        'thickness value': 100.0,
         'xcf bin': 1,
         'registration preset order': [],
         'run buffer cycle': True,
         'align zero loss peak': True,
+        'dose': 200.0,
+        'min exposure': None,
+        'max exposure': None,
     }
 
     def __init__(self, *args, **kwargs):
@@ -49,7 +52,85 @@ class Tomography(acquisition.Acquisition):
         self.calclients['pixel size'] = \
                 calibrationclient.PixelSizeCalibrationClient(self)
 
+        self.tilts = tilts.Tilts()
+        self.exposure = exposure.Exposure()
+
         self.start()
+
+    '''
+    def onPresetPublished(self, evt):
+        acquisition.Acquisition.onPresetPublished(self, evt)
+
+        preset = evt['data']
+
+        if preset is None or preset['name'] is None:
+            return
+
+        if preset['name'] not in self.settings['preset order']:
+            return
+
+        dose = preset['dose']
+        exposure_time = preset['exposure time']/1000.0
+
+        try:
+            self.exposure.update(dose=dose, exposure=exposure_time)
+        except exposure.LimitError, e:
+            s = 'Exposure time limit exceeded for preset \'%s\': %s.'
+            s %= (preset['name'], e)
+            self.logger.warning(s)
+
+    def setSettings(self, *args, **kwargs):
+        acquisition.Acquisition.setSettings(self, *args, **kwargs)
+        self.update()
+    '''
+
+    def update(self):
+        try:
+            self.tilts.update(min=math.radians(self.settings['tilt min']),
+                              max=math.radians(self.settings['tilt max']),
+                              start=math.radians(self.settings['tilt start']),
+                              step=math.radians(self.settings['tilt step']))
+        except ValueError, e:
+            self.logger.warning('Tilt parameters invalid: %s.' % e)
+
+        total_dose = self.settings['dose']
+        exposure_min = self.settings['min exposure']
+        exposure_max = self.settings['max exposure']
+
+        tilts = self.tilts.getTilts()
+
+        try:
+            name = self.settings['preset order'][-1]
+            preset = self.presetsclient.getPresetFromDB(name)
+        except (IndexError, ValueError):
+            dose = 0.0
+            exposure_time = 0.0
+        else:
+            dose = preset['dose']
+            exposure_time = preset['exposure time']/1000.0
+
+        try:
+            self.exposure.update(total_dose=total_dose,
+                                 tilts=tilts,
+                                 dose=dose,
+                                 exposure=exposure_time,
+                                 exposure_min=exposure_min,
+                                 exposure_max=exposure_max)
+        except exposure.LimitError, e:
+            self.logger.warning('Exposure time out of range: %s.' % e)
+        except exposure.Default, e:
+            self.logger.warning('Using preset exposure time: %s.' % e)
+        else:
+            try:
+                exposure_range = self.exposure.getExposureRange()
+            except ValueError:
+                pass
+            else:
+                s = 'Exposure time range: %g to %g seconds.' % exposure_range
+                self.logger.info(s)
+
+    def checkDose(self):
+        self.update()
 
     def acquireFilm(self, *args, **kwargs):
         self.logger.error('Film acquisition not currently supported.')
@@ -61,11 +142,14 @@ class Tomography(acquisition.Acquisition):
         except CalibrationError, e:
             self.logger.error('Calibration error: %s' % e) 
             return 'failed'
-        #high_tension, pixel_size, tilt_axis, stage_angle, offset_n, offset_z = calibrations
         high_tension, pixel_size = calibrations
 
-        #self.logger.info('Pixel size: %g meters, tilt axis: %g degrees, stage angle: %g degrees, offset n: %g meters.' % (pixel_size, math.degrees(tilt_axis), math.degrees(stage_angle), offset_n))
         self.logger.info('Pixel size: %g meters.' % pixel_size)
+
+        # TODO: error check
+        self.update()
+        tilts = self.tilts.getTilts()
+        exposures = self.exposure.getExposures()
 
         collect = collection.Collection()
         collect.node = self
@@ -82,10 +166,8 @@ class Tomography(acquisition.Acquisition):
         collect.player = self.player
         collect.high_tension = high_tension
         collect.pixel_size = pixel_size
-        #collect.tilt_axis = tilt_axis
-        #collect.stage_angle = stage_angle
-        #collect.offset_n = offset_n
-        #collect.offset_z = offset_z
+        collect.tilts = tilts
+        collect.exposures = exposures
 
         try:
             collect.start()
@@ -121,62 +203,6 @@ class Tomography(acquisition.Acquisition):
         defocus = self.instrument.tem.Defocus
         self.instrument.tem.Defocus = defocus - delta_defocus
 
-    def getStageAngle(self, tem, ccd_camera, high_tension, magnification):
-        parameter = 'stage position'
-        client = self.calclients[parameter]
-        args = (tem, ccd_camera, parameter, high_tension, magnification)
-        try:
-            theta_x, theta_y = client.getAngles(*args)
-        except calibrationclient.NoMatrixCalibrationError, e:
-            raise CalibrationError(e)
-        return theta_y
-
-    def getTiltAxis(self, stage_angle):
-        raw_tilt_axis = stage_angle - math.pi/2
-        tilt_axis = raw_tilt_axis - math.pi/2
-        if tilt_axis > math.pi/2:
-            tilt_axis -= math.pi
-        elif tilt_axis < -math.pi/2:
-            tilt_axis += math.pi
-        return tilt_axis
-
-    def getOpticalAxisCalibration(self, *args):
-        tem, ccd_camera, high_tension, magnification = args
-        initializer = {
-            'tem': tem,
-            'ccdcamera': ccd_camera,
-            'high tension': high_tension,
-            'magnification': magnification,
-        }
-        query_data = data.OpticalAxisCalibrationData(initializer=initializer)
-        try:
-            calibration_data = self.research(query_data, results=1)[0]
-        except IndexError:
-            s = 'no optical axis calibration for %s, %s, %seV, %sX'
-            s %= (tem['name'], ccd_camera['name'], high_tension, magnification)
-            raise CalibrationError(s)
-        n0 = calibration_data['n0']
-        z0 = calibration_data['z0']
-        return n0, z0
-
-    def getOffsetN(self, stage_angle, parameter, scope_data, camera_data,
-                         pixel_size):
-        shift = dict(scope_data[parameter])
-        client = self.calclients[parameter]
-        try:
-            pixel_shift = client.itransform(shift, scope_data, camera_data)
-        except calibrationclient.NoMatrixCalibrationError, e:
-            raise CalibrationError(e)
-
-        # inverting y
-        offset = {
-            'x': pixel_shift['col']*camera_data['binning']['x']*pixel_size,
-            'y': -pixel_shift['row']*camera_data['binning']['y']*pixel_size,
-        }
-
-        n = offset['x']*math.cos(stage_angle) + offset['y']*math.sin(stage_angle)
-        return n
-
     def getCalibrations(self):
         scope_data = self.instrument.getData(data.ScopeEMData)
         camera_data = self.instrument.getData(data.CameraEMData, image=False)
@@ -192,21 +218,6 @@ class Tomography(acquisition.Acquisition):
         if pixel_size is None:
             raise CalibrationError('no pixel size for %gx' % magnification)
 
-        #args = (tem, ccd_camera, high_tension, magnification)
-        #stage_angle = -self.getStageAngle(*args)
-        #n0, z0 = self.getOpticalAxisCalibration(*args)
-
-        #parameter = 'image shift'
-
-        #args = (stage_angle, parameter, scope_data, camera_data, pixel_size)
-        #n = self.getOffsetN(*args)
-        #offset_n = n0 + n
-
-        #tilt_axis = self.getTiltAxis(stage_angle)
-
-        #offset_z = 0
-
-        #return high_tension, pixel_size, tilt_axis, stage_angle, offset_n, offset_z
         return high_tension, pixel_size
 
     def XXXprocessTargetData(self, targetdata, attempt=None):
