@@ -2079,6 +2079,9 @@ class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
 			('stig beam tilt', float),
 			('stig delta', float),
 			('stig lens', str),
+			('measure beam tilt', float),
+			('measure lens', str),
+			('correct tilt', bool),
 		)
 	typemap = classmethod(typemap)
 

@@ -1,16 +1,19 @@
-# COPYRIGHT:
-# The Leginon software is Copyright 2003
+# The Leginon software is Copyright 2004
 # The Scripps Research Institute, La Jolla, CA
 # For terms of the license agreement
-# see  http://ami.scripps.edu/software/leginon-license
+# see http://ami.scripps.edu/software/leginon-license
+#
+# $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
+# $Revision: 1.170 $
+# $Name: not supported by cvs2svn $
+# $Date: 2006-03-10 19:12:57 $
+# $Author: suloway $
+# $State: Exp $
+# $Locker:  $
 
 import node, data, event
-try:
-	import numarray as Numeric
-	import numarray.linear_algebra as LinearAlgebra
-except:
-	import Numeric
-	import LinearAlgebra
+import numarray
+import numarray.linear_algebra
 import math
 import correlator
 import peakfinder
@@ -99,7 +102,7 @@ class CalibrationClient(object):
 		if publish_image:
 			self.node.publish(imagedata, pubevent=True)
 
-		self.node.setImage(imagedata['image'].astype(Numeric.Float32), 'Image')
+		self.node.setImage(imagedata['image'].astype(numarray.Float), 'Image')
 
 		## should find image stats to help determine validity of image
 		## in correlations
@@ -174,7 +177,7 @@ class CalibrationClient(object):
 			pixelpeak = peak['subpixel peak']
 			pixelpeak = pixelpeak[1],pixelpeak[0]
 
-			self.node.setImage(pcimage.astype(Numeric.Float32), 'Correlation')
+			self.node.setImage(pcimage.astype(numarray.Float), 'Correlation')
 			self.node.setTargets([pixelpeak], 'Peak')
 
 			peakvalue = peak['subpixel peak value']
@@ -247,7 +250,7 @@ class CalibrationClient(object):
 
 		pixelpeak = peak['subpixel peak']
 		pixelpeak = pixelpeak[1], pixelpeak[0]
-		self.node.setImage(pcimage.astype(Numeric.Float32), 'Correlation')
+		self.node.setImage(pcimage.astype(numarray.Float), 'Correlation')
 		self.node.setTargets([pixelpeak], 'Peak')
 
 		peakvalue = peak['subpixel peak value']
@@ -464,13 +467,13 @@ class MatrixCalibrationClient(CalibrationClient):
 			tem = self.instrument.getTEMData()
 		if ccdcamera is None:
 			ccdcamera = self.instrument.getCCDCameraData()
-		newmatrix = Numeric.array(matrix, Numeric.Float64)
+		newmatrix = numarray.array(matrix, numarray.Float64)
 		caldata = data.MatrixCalibrationData(session=self.node.session, magnification=mag, type=type, matrix=matrix, tem=tem, ccdcamera=ccdcamera)
 		caldata['high tension'] = ht
 		self.node.publish(caldata, database=True, dbforce=True)
 
 	def getMatrixAngles(self, matrix):
-		matrix = LinearAlgebra.inverse(matrix)
+		matrix = numarray.linear_algebra.inverse(matrix)
 		x_shift_row = matrix[0, 0]
 		x_shift_col = matrix[1, 0]
 		y_shift_row = matrix[0, 1]
@@ -538,8 +541,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				raise RuntimeError('missing calibration matrix')
 
 		tiltcenter = self.getBeamTilt()
-		self.node.logger.info('Tilt center: x = %g, y = %g.' %
-							  (tiltcenter['x'], tiltcenter['y']))
+		#self.node.logger.info('Tilt center: x = %g, y = %g.' % (tiltcenter['x'], tiltcenter['y']))
 
 		### need two tilt displacement measurements
 		### easiest is one on each tilt axis
@@ -568,7 +570,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			except Drifting:
 				## return to original beam tilt
 				self.instrument.tem.BeamTilt = tiltcenter
-				self.node.logger.info('Returned to tilt center: x = %g, y = %g.' % (tiltcenter['x'], tiltcenter['y']))
+				#self.node.logger.info('Returned to tilt center: x = %g, y = %g.' % (tiltcenter['x'], tiltcenter['y']))
 
 				raise
 			nodrift = True
@@ -589,7 +591,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		## return to original beam tilt
 		self.instrument.tem.BeamTilt = tiltcenter
-		self.node.logger.info('Returned to tilt center: x = %g, y = %g.' % (tiltcenter['x'], tiltcenter['y']))
+		#self.node.logger.info('Returned to tilt center: x = %g, y = %g.' % (tiltcenter['x'], tiltcenter['y']))
 
 		self.checkAbort()
 
@@ -605,7 +607,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		else:
 			sol = self.solveEq10_nostig(fmatrix,d1,t1,d2,t2)
 
-		self.node.logger.info('Solution: defocus = %g, stig. x = %g, y = %g, min. = %g.' % (sol['defocus'], sol['stigx'], sol['stigy'], sol['min']))
+		self.node.logger.info('Defocus: %g, %s stig.: (%g, %g), min. = %g' % (sol['defocus'], stig, sol['stigx'], sol['stigy'], sol['min']))
 		sol['lastdrift'] = lastdrift
 		return sol
 
@@ -614,28 +616,28 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		'''
 		This solves Equation 10 from Koster paper
 		 F,A,B are the defocus, stigx, and stigy calibration matrices
-		   (all must be 2x2 Numeric arrays)
+		   (all must be 2x2 numarray arrays)
 		 d1,d2 are displacements resulting from beam tilts t1,t2
-		   (all must be 2x1 Numeric arrays)
+		   (all must be 2x1 numarray arrays)
 		'''
 		## produce the matrix and vector for least squares fit
-		v = Numeric.zeros((4,), Numeric.Float64)
+		v = numarray.zeros((4,), numarray.Float64)
 		v[:2] = d1
 		v[2:] = d2
 
 		## plug calibration matrices and tilt vectors into M
-		M = Numeric.zeros((4,3), Numeric.Float64)
+		M = numarray.zeros((4,3), numarray.Float64)
 
 		# t1 on first two rows
-		M[:2,0] = Numeric.matrixmultiply(F,t1)
-		M[:2,1] = Numeric.matrixmultiply(A,t1)
-		M[:2,2] = Numeric.matrixmultiply(B,t1)
+		M[:2,0] = numarray.matrixmultiply(F,t1)
+		M[:2,1] = numarray.matrixmultiply(A,t1)
+		M[:2,2] = numarray.matrixmultiply(B,t1)
 		# t2 on second two rows
-		M[2:,0] = Numeric.matrixmultiply(F,t2)
-		M[2:,1] = Numeric.matrixmultiply(A,t2)
-		M[2:,2] = Numeric.matrixmultiply(B,t2)
+		M[2:,0] = numarray.matrixmultiply(F,t2)
+		M[2:,1] = numarray.matrixmultiply(A,t2)
+		M[2:,2] = numarray.matrixmultiply(B,t2)
 
-		solution = LinearAlgebra.linear_least_squares(M, v)
+		solution = numarray.linear_algebra.linear_least_squares(M, v)
 		result = {
 			'defocus': solution[0][0],
 			'stigx': solution[0][1],
@@ -649,24 +651,24 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		'''
 		This solves Equation 10 from Koster paper
 		 F,A,B are the defocus, stigx, and stigy calibration matrices
-		   (all must be 2x2 Numeric arrays)
+		   (all must be 2x2 numarray arrays)
 		 d1,d2 are displacements resulting from beam tilts t1,t2
-		   (all must be 2x1 Numeric arrays)
+		   (all must be 2x1 numarray arrays)
 		'''
 		## produce the matrix and vector for least squares fit
-		v = Numeric.zeros((4,), Numeric.Float64)
+		v = numarray.zeros((4,), numarray.Float64)
 		v[:2] = d1
 		v[2:] = d2
 
 		## plug calibration matrices and tilt vectors into M
-		M = Numeric.zeros((4,1), Numeric.Float64)
+		M = numarray.zeros((4,1), numarray.Float64)
 
 		# t1 on first two rows
-		M[:2,0] = Numeric.matrixmultiply(F,t1)
+		M[:2,0] = numarray.matrixmultiply(F,t1)
 		# t2 on second two rows
-		M[2:,0] = Numeric.matrixmultiply(F,t2)
+		M[2:,0] = numarray.matrixmultiply(F,t2)
 
-		solution = LinearAlgebra.linear_least_squares(M, v)
+		solution = numarray.linear_algebra.linear_least_squares(M, v)
 		result = {
 			'defocus': solution[0][0],
 			'stigx': 0,
@@ -675,74 +677,66 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			}
 		return result
 
-	def eq11(self, shift1, shift2, param1, param2, beam_tilt):
+	def eq11(self, shifts, parameters, beam_tilt):
 		'''
 		Equation (11)
 		Calculates one column of a beam tilt calibration matrix given
 		the following arguments:
-		  shift1 - pixel shift resulting from tilt at param1
-		  shift2 - pixel shift resulting from tilt at param2
+		  shifts - pixel shift resulting from tilt at parameters
+		  parameters - value of microscope parameters causing shifts
 		  beam_tilt - value of the induced beam tilt
-		  param1 - value of microscope parameter causing 1
 		'''
-		d1 = Numeric.array((shift1['row'],shift1['col']), Numeric.Float32)
-		d1.shape = (2,)
-		d2 = Numeric.array((shift2['row'],shift2['col']), Numeric.Float32)
-		d2.shape = (2,)
-		ddiff = d2 - d1
+		shift = numarray.zeros((2,), numarray.Float)
+		shift[0] = shifts[1]['row'] - shifts[0]['row']
+		shift[1] = shifts[1]['col'] - shifts[0]['col']
 
-		scale = 1.0 / (2 * (param2 - param1) * beam_tilt)
+		try:
+			return shift/(2*(parameters[1] - parameters[0])*beam_tilt)
+		except ZeroDivisionError:
+			raise ValueError('invalid measurement, scale is zero')
 
-		matrixcolumn = scale * ddiff
-		return matrixcolumn.astype(Numeric.Float32)
-
-	def measureDisplacements(self, tilt_axis, tilt_value, state1, state2, correct_tilt=False):
+	def measureDisplacements(self, tilt_axis, tilt_value, states, **kwargs):
 		'''
 		This measures the displacements that go into eq. (11)
 		Each call of this function acquires four images
 		and returns two shift displacements.
 		'''
-		self.node.logger.debug('State 1 %s, State 2 %s' % (state1, state2))
 		
-		beamtilt = self.getBeamTilt()
-		if beamtilt is None:
-			e = 'unable to get beam tilt'
-			self.node.logger.exception('Calibration measurement failed: %s' % e)
-			return
+		if 'publish_images' not in kwargs:
+			kwargs['publish_images'] = True
+		if 'settle' not in kwargs:
+			kwargs['settle'] = 0.25
 
-		### try/finally to be sure we return to original beam tilt
+		# try/finally to be sure we return to original beam tilt
 		try:
-			self.node.logger.debug('Beam tilt %s' % beamtilt)
-			beamtilts = (dict(beamtilt),dict(beamtilt))
-			beamtilts[0][tilt_axis] += tilt_value
-			beamtilts[1][tilt_axis] -= tilt_value
+			# set up to measure states
+			beam_tilt = self.instrument.tem.BeamTilt
+			beam_tilts = (dict(beam_tilt), dict(beam_tilt))
+			beam_tilts[0][tilt_axis] += tilt_value
+			beam_tilts[1][tilt_axis] -= tilt_value
 
-			## set up to measure states
-			states1 = (data.ScopeEMData(initializer=state1), data.ScopeEMData(initializer=state1))
-			states2 = (data.ScopeEMData(initializer=state2), data.ScopeEMData(initializer=state2))
+			pixel_shifts = []
+			m = 'Beam tilt measurement (%d of '
+			m += str(len(states))
+			m += '): (%g, %g) pixels'
+			for i, state in enumerate(states):
+				args = []
+				for bt in beam_tilts:
+					s = data.ScopeEMData(initializer=state)
+					s['beam tilt'] = bt
+					args.append(s)
+			
+				result = self.measureStateShift(*args, **kwargs)
+				pixel_shift = result['pixel shift']
+				pixel_shifts.append(pixel_shift)
 
-			states1[0]['beam tilt'] = beamtilts[0]
-			states1[1]['beam tilt'] = beamtilts[1]
-			states2[0]['beam tilt'] = beamtilts[0]
-			states2[1]['beam tilt'] = beamtilts[1]
+				args = (i + 1, pixel_shift['col'], pixel_shift['row'])
+				self.node.logger.info(m % args)
+		finally:
+			# return to original beam tilt
+			self.instrument.tem.BeamTilt = beam_tilt
 
-			self.node.logger.debug('States 1 %s' % (states1,))
-			shiftinfo = self.measureStateShift(states1[0], states1[1], 1, settle=0.25, correct_tilt=correct_tilt)
-			pixelshift1 = shiftinfo['pixel shift']
-
-			self.node.logger.debug('States 2 %s' % (states2,))
-			shiftinfo = self.measureStateShift(states2[0], states2[1], 1, settle=0.25, correct_tilt=correct_tilt)
-			pixelshift2 = shiftinfo['pixel shift']
-			self.node.logger.info('Pixel shift (1 of 2): (%.2f, %.2f)'
-														% (pixelshift1['col'], pixelshift1['row']))
-			self.node.logger.info('Pixel shift (2 of 2): (%.2f, %.2f)'
-														% (pixelshift2['col'], pixelshift2['row']))
-		except Exception, e:
-			self.node.logger.exception('Calibration measurement failed: %s' % e)
-		## return to original beam tilt
-		self.instrument.tem.BeamTilt = beamtilt
-
-		return (pixelshift1, pixelshift2)
+		return tuple(pixel_shifts)
 
 	def measureDispDiff(self, tilt_axis, tilt_m, tilt_t, correct_tilt=False):
 		'''
@@ -809,8 +803,8 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		xcol = measurement['x']['col']
 		yrow = measurement['y']['row']
 		ycol = measurement['y']['col']
-		matrix = Numeric.array([[xrow,yrow],[xcol,ycol]],Numeric.Float32)
-		matrix = LinearAlgebra.inverse(matrix)
+		matrix = numarray.array([[xrow,yrow],[xcol,ycol]],numarray.Float)
+		matrix = numarray.linear_algebra.inverse(matrix)
 		return matrix
 
 	def transform(self, pixelshift, scope, camera):
@@ -833,7 +827,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 
 		matrix = self.retrieveMatrix(tem, ccdcamera, par, ht, mag)
 
-		change = Numeric.matrixmultiply(matrix, pixvect)
+		change = numarray.matrixmultiply(matrix, pixvect)
 		changex = change[0]
 		changey = change[1]
 
@@ -841,7 +835,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		if par == 'stage position':
 			if 'a' in scope[par] and scope[par]['a'] is not None:
 				alpha = scope[par]['a']
-				changey = changey / Numeric.cos(alpha)
+				changey = changey / numarray.cos(alpha)
 
 		new = data.ScopeEMData(initializer=scope)
 		## make a copy of this since it will be modified
@@ -867,13 +861,13 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		### take into account effect of alpha tilt on Y stage pos
 		if par == 'stage position' and 'a' in scope[par] and scope[par]['a'] is not None:
 			alpha = scope[par]['a']
-			newshift['y'] = newshift['y'] * Numeric.cos(alpha)
+			newshift['y'] = newshift['y'] * numarray.cos(alpha)
 		vect = (newshift['x'], newshift['y'])
 
 		matrix = self.retrieveMatrix(tem, cam, par, ht, mag)
-		matrix = LinearAlgebra.inverse(matrix)
+		matrix = numarray.linear_algebra.inverse(matrix)
 
-		pixvect = Numeric.matrixmultiply(matrix, vect)
+		pixvect = numarray.matrixmultiply(matrix, vect)
 		pixvect = pixvect / (biny, binx)
 		return {'row':pixvect[0], 'col':pixvect[1]}
 
@@ -1010,8 +1004,8 @@ class ModeledStageCalibrationClient(CalibrationClient):
 			caldata2 = {}
 			caldata2['axis'] = caldata['axis']
 			caldata2['period'] = caldata['period']
-			caldata2['a'] = Numeric.ravel(caldata['a']).copy()
-			caldata2['b'] = Numeric.ravel(caldata['b']).copy()
+			caldata2['a'] = numarray.ravel(caldata['a']).copy()
+			caldata2['b'] = numarray.ravel(caldata['b']).copy()
 			return caldata2
 
 	def timeModelCalibration(self, tem, cam, axis):
@@ -1114,7 +1108,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		### take into account effect of alpha tilt on Y stage pos
 		if 'a' in curstage and curstage['a'] is not None:
 			alpha = curstage['a']
-			delta['y'] = delta['y'] / Numeric.cos(alpha)
+			delta['y'] = delta['y'] / numarray.cos(alpha)
 
 		newscope = data.ScopeEMData(initializer=scope)
 		newscope['stage position'] = dict(scope['stage position'])

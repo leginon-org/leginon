@@ -1,28 +1,27 @@
+# The Leginon software is Copyright 2004
+# The Scripps Research Institute, La Jolla, CA
+# For terms of the license agreement
+# see http://ami.scripps.edu/software/leginon-license
 #
-# COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
-#
-'''
-'''
+# $Source: /ami/sw/cvsroot/pyleginon/beamtiltcalibrator.py,v $
+# $Revision: 1.67 $
+# $Name: not supported by cvs2svn $
+# $Date: 2006-03-10 19:12:57 $
+# $Author: suloway $
+# $State: Exp $
+# $Locker:  $
 
+import numarray
+import threading
 import calibrator
-try:
-	import numarray as Numeric
-	import numarray.linear_algebra as LinearAlgebra
-except:
-	import Numeric
-	import LinearAlgebra
-import data
 import calibrationclient
-import node
+import data
 import gui.wx.BeamTiltCalibrator
 
+class Abort(Exception):
+	pass
+
 class BeamTiltCalibrator(calibrator.Calibrator):
-	'''
-	'''
 	panelclass = gui.wx.BeamTiltCalibrator.Panel
 	settingsclass = data.BeamTiltCalibratorSettingsData
 	defaultsettings = calibrator.Calibrator.defaultsettings
@@ -33,67 +32,68 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		'stig beam tilt': 0.01,
 		'stig delta': 0.2,
 		'stig lens': 'objective',
+		'measure beam tilt': 0.01,
+		'measure lens': 'objective',
+		'correct tilt': True,
 	})
 
-	def __init__(self, id, session, managerlocation, **kwargs):
-		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
+	def __init__(self, *args, **kwargs):
+		calibrator.Calibrator.__init__(self, *args, **kwargs)
 
-		self.defaultmeasurebeamtilt = 0.01
-		self.resultvalue = None
+		self.abort = threading.Event()
 
-		self.calclient = calibrationclient.BeamTiltCalibrationClient(self)
-		self.euclient = calibrationclient.EucentricFocusClient(self)
+		self.measurement = {}
+
+		self.calibration_clients = {
+			'beam tilt': calibrationclient.BeamTiltCalibrationClient(self),
+			'eucentric focus': calibrationclient.EucentricFocusClient(self),
+		}
 
 		self.start()
 
-	def btFromScope(self):
-		## get current value of beam tilt
-		estr = 'Unable to get beam tilt: %s'
-		try:
-			tem = self.instrument.getTEMData()
-			cam = self.instrument.getCCDCameraData()
-			ht = self.instrument.tem.HighTension
-			mag = self.instrument.tem.Magnification
-			beamtilt = self.instrument.tem.BeamTilt
-		except:
-			self.logger.error(estr % 'unable to get instrument state')
-			self.panel.getInstrumentDone()
-			return
-		self.calclient.storeRotationCenter(tem, cam, ht, mag, beamtilt)
-		self.logger.info('Publishing HT: %s, Mag.: %s, BeamTilt: %s'
-											% (ht, mag, beamtilt))
-		self.panel.getInstrumentDone()
+	def _rotationCenterToScope(self):
+		tem = self.instrument.getTEMData()
+		cam = self.instrument.getCCDCameraData()
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		calibration_client = self.calibration_clients['beam tilt']
+		beam_tilt = calibration_client.retreiveRotationCenter(tem, cam, ht, mag)
+		if not beam_tilt:
+			raise RuntimeError('no rotation center for %geV, %gX' % (ht, mag))
+		self.instrument.tem.BeamTilt = beam_tilt
 
-	def btToScope(self):
-		estr = 'Unable to set beam tilt: %s'
+	def rotationCenterToScope(self):
 		try:
-			tem = self.instrument.getTEMData()
-			cam = self.instrument.getCCDCameraData()
-			ht = self.instrument.tem.HighTension
-			mag = self.instrument.tem.Magnification
-		except:
-			self.logger.error(estr % 'unable to get instrument state')
-			self.panel.setInstrumentDone()
-			return
-		beamtilt = self.calclient.retreiveRotationCenter(tem, cam, ht, mag)
-		if beamtilt is None:
-			e = 'none saved for HT: %s, Mag.: %s' % (ht, mag)
-			self.logger.error(estr % e)
-			self.panel.setInstrumentDone()
-			return
-		try:
-			self.instrument.tem.BeamTilt = beamtilt
-		except:
-			self.logger.error(estr % 'cannot set instrument parameters')
+			self._rotationCenterToScope()
+		except Exception, e:
+			self.logger.error('Unable to set rotation center: %s' % e)
+		else:
+			self.logger.info('Set instrument rotation center')
 		self.panel.setInstrumentDone()
 
-	def calibrateRotationCenter(self):
-		self.btFromScope()
+	def _rotationCenterFromScope(self):
+		tem = self.instrument.getTEMData()
+		cam = self.instrument.getCCDCameraData()
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		beam_tilt = self.instrument.tem.BeamTilt
+		calibration_client = self.calibration_clients['beam tilt']
+		calibration_client.storeRotationCenter(tem, cam, ht, mag, beam_tilt)
+
+	def rotationCenterFromScope(self):
+		try:
+			self._rotationCenterFromScope()
+		except Exception, e:
+			self.logger.error('Unable to get rotation center: %s' % e)
+		else:
+			self.logger.info('Saved instrument rotation center')
+		self.panel.setInstrumentDone()
 
 	def FUTUREcalibrateRotationCenter(self, tilt_value):
-		'''rotation center alignment'''
 		if self.initInstruments():
-			return
+			raise RuntimeError('cannot initialize instrument')
+
+		calibration_client = self.calibration_clients['beam tilt']
 
 		state1 = {'beam tilt': tilt_value}
 		state2 = {'beam tilt': -tilt_value}
@@ -103,227 +103,271 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		for axis in ('x','y'):
 			self.logger.info('Measuring %s tilt' % (axis,))
 
-			diff1 = self.calclient.measureDispDiff(axis, tilt_value, tilt_value)
-			diff2 = self.calclient.measureDispDiff(axis, -tilt_value, tilt_value)
+			diff1 = calibration_client.measureDispDiff(axis, tilt_value, tilt_value, correct_tilt=self.settings['correct tilt'])
+			diff2 = calibration_client.measureDispDiff(axis, -tilt_value, tilt_value, correct_tilt=self.settings['correct tilt'])
 
-			matcol = self.calclient.eq11(diff1, diff2, 0, 0, tilt_value)
+			matcol = calibration_client.eq11((diff1, diff2), (0, 0), tilt_value)
 			matdict[axis] = matcol
 
 		self.logger.debug('Making matrix...')
-		matrix = Numeric.zeros((2,2), Numeric.Float32)
+		matrix = numarray.zeros((2,2), numarray.Float)
 		self.logger.debug('Matrix type %s, matrix dict type %s'
 											% (matrix.type(), matdict['x'].type()))
 		matrix[:,0] = matdict['x']
 		matrix[:,1] = matdict['y']
 
-		## store calibration
+		# store calibration
 		self.logger.info('Storing calibration...')
-		mag, mags = self.getMagnification()
-		ht = self.getHighTension()
-		self.calclient.storeMatrix(ht, mag, 'coma-free', matrix)
+		mag = self.instrument.tem.Magnification
+		ht = self.instrument.tem.HighTension
+		calibration_client = self.calibration_clients['beam tilt']
+		calibration_client.storeMatrix(ht, mag, 'coma-free', matrix)
 		self.logger.info('Calibration stored')
-		return ''
 
-	def calibrateDefocus(self, tilt_value, defocus1, defocus2):
+	def __calibrateDefocus(self, beam_tilt, defocii):
 		if self.initInstruments():
-			return
-		state1 = {'defocus': defocus1}
-		state2 = {'defocus': defocus2}
-		matdict = {}
-		for axis in ('x','y'):
-			self.logger.info('Measuring %s tilt' % (axis,))
-			shifts = self.calclient.measureDisplacements(axis, tilt_value, state1, state2)
-			if shifts is None:
-				return
-			shift1, shift2 = shifts
-			matcol = self.calclient.eq11(shift1, shift2, defocus1, defocus2, tilt_value)
-			matdict[axis] = matcol
-		self.logger.debug('Making matrix...')
-		matrix = Numeric.zeros((2,2), Numeric.Float32)
-		self.logger.debug('Matrix type %s, matrix dict type %s'
-											% (matrix.type(), matdict['x'].type()))
+			raise RuntimeError('cannot initialize instrument')
 
-		m00 = float(matdict['x'][0])
-		m10 = float(matdict['x'][1])
-		m01 = float(matdict['y'][0])
-		m11 = float(matdict['y'][1])
-		matrix = Numeric.array([[m00,m01],[m10,m11]],Numeric.Float32)
+		calibration_client = self.calibration_clients['beam tilt']
 
-		## store calibration
-		self.logger.info('Storing calibration...')
-		ht = self.getHighTension()
-		mag, mags = self.getMagnification()
-		self.logger.debug('Matrix %s, shape %s, type %s, flat %s'
-						% (matrix, matrix.shape, matrix.type(), Numeric.ravel(matrix)))
-		self.calclient.storeMatrix(ht, mag, 'defocus', matrix)
-		self.logger.info('Calibration stored')
-		self.logger.info('Calibration completed')
-		self.beep()
-		return ''
+		axes = ('x', 'y')
+		states = ({'defocus': defocii[0]}, {'defocus': defocii[1]})
+		matrix = numarray.identity(2, numarray.Float)
+		for i, axis in enumerate(axes):
+			self.logger.info('Calibrating on %s-axis...' % axis)
+			args = (axis, beam_tilt, states)
+			kwargs = {'correct_tilt': self.settings['correct tilt']}
+			shifts = calibration_client.measureDisplacements(*args, **kwargs)
+			matrix[:, i] = calibration_client.eq11(shifts, defocii, beam_tilt)
+			self.checkAbort()
 
-	def calibrateStigmators(self, lens, tilt_value, delta):
-		if self.initInstruments():
-			return
+		# store calibration
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		calibration_client.storeMatrix(ht, mag, 'defocus', matrix)
 
-		currentstig = self.getStigmator(lens)
-		## set up the stig states
-		stig = {'x':{}, 'y':{}}
-		for axis in ('x','y'):
-			for sign in ('+','-'):
-				stig[axis][sign] = dict(currentstig)
-				if sign == '+':
-					stig[axis][sign][axis] += delta/2.0
-				elif sign == '-':
-					stig[axis][sign][axis] -= delta/2.0
-
-		for stigaxis in ('x','y'):
-			self.logger.debug('Calculating matrix for stig %s' % (stigaxis,))
-			matdict = {}
-			for tiltaxis in ('x','y'):
-				self.logger.info('Measuring %s tilt' % (tiltaxis,))
-				stig1 = stig[stigaxis]['+']
-				stig2 = stig[stigaxis]['-']
-				state1 = data.ScopeEMData(stigmator={lens:stig1})
-				state2 = data.ScopeEMData(stigmator={lens:stig2})
-				shift1, shift2 = self.calclient.measureDisplacements(tiltaxis, tilt_value, state1, state2)
-				self.logger.info('Pixel shift (1 of 2): (%.2f, %.2f)'
-														% (shift1['col'], shift1['row']))
-				self.logger.info('Pixel shift (2 of 2): (%.2f, %.2f)'
-														% (shift2['col'], shift2['row']))
-				stigval1 = stig1[stigaxis]
-				stigval2 = stig2[stigaxis]
-				matcol = self.calclient.eq11(shift1, shift2, stigval1, stigval2, tilt_value)
-				matdict[tiltaxis] = matcol
-			matrix = Numeric.zeros((2,2), Numeric.Float32)
-			matrix[:,0] = matdict['x']
-			matrix[:,1] = matdict['y']
-
-			## store calibration
-			self.logger.info('Storing calibration...')
-			mag, mags = self.getMagnification()
-			ht = self.getHighTension()
-			type = lens + stigaxis
-			self.calclient.storeMatrix(ht, mag, type, matrix)
-			self.logger.info('Calibration stored')
-
-		## return to original stig
-		self.instrument.tem.Stigmator = {lens: currentstig}
-		self.logger.info('Calibration completed')
-		self.beep()
-		return ''
-
-	def measureDefocusStig(self, btilt, stig, correct_tilt=False):
-		if self.initInstruments():
-			return
-		try:
-			ret = self.calclient.measureDefocusStig(btilt, stig=stig, correct_tilt=correct_tilt)
-		except Exception, e:
-			self.logger.exception('Measure defocus failed: %s' % e)
-			ret = {}
-		self.logger.info('RET %s' % ret)
-		return ret
-
-	def getStigmator(self, lens):
-		return self.instrument.tem.Stigmator[lens]
-
-	def uiCalibrateDefocus(self):
-		self.calibrateDefocus(self.settings['defocus beam tilt'],
-													self.settings['first defocus'],
-													self.settings['second defocus'])
-		self.panel.calibrationDone()
-
-	def uiCalibrateStigmators(self):
-		self.calibrateStigmators(self.settings['stig lens'], self.settings['stig beam tilt'],
-															self.settings['stig delta'])
-		self.panel.calibrationDone()
-
-	def uiMeasureDefocusStig(self, btilt, correct_tilt):
-		result = self.measureDefocusStig(btilt, stig=self.settings['stig lens'], correct_tilt=correct_tilt)
-		self.resultvalue = result
-		self.panel.measurementDone()
-
-	def uiMeasureDefocus(self, btilt):
-		result = self.measureDefocusStig(btilt, stig=None)
-		self.resultvalue = result
-		self.panel.measurementDone()
-
-	def uiCorrectDefocus(self):
-		delta = self.resultvalue
-		if not delta:
-			self.logger.info('No result, you must measure first')
-			return
-		current = self.getCurrentValues()	
-
-		newdefocus = current['defocus'] + delta['defocus']
-		self.instrument.tem.Defocus = newdefocus
-		self.panel.setInstrumentDone()
-
-	def uiCorrectStigmator(self):
-		delta = self.resultvalue
-		if not delta:
-			self.logger.info('No result, you must measure first')
-			return
-		current = self.getCurrentValues()	
-
-		lens = self.settings['stig lens']
-		newstigx = current[lens]['x'] + delta['stigx']
-		newstigy = current[lens]['y'] + delta['stigy']
-
-		self.instrument.tem.Stigmator = {lens: {'x':newstigx,'y':newstigy}}
-		self.panel.setInstrumentDone()
-
-	def uiResetDefocus(self):
-		try:
-			self.instrument.tem.resetDefocus(True)
-		except:
-			self.logger.error('Reset defocus failed: unable to set instrument')
-		self.panel.setInstrumentDone()
-
-	def getCurrentValues(self):
+	def _calibrateDefocus(self, beam_tilt, defocii):
+		rotation_center = self.instrument.tem.BeamTilt
 		defocus = self.instrument.tem.Defocus
-		ob = self.instrument.tem.Stigmator['objective']
-		dif = self.instrument.tem.Stigmator['diffraction']
-		return {'defocus':defocus, 'objective': ob, 'diffraction': dif}
-
-	def eucToScope(self):
-		estr = 'Unable to set eucentric focus: %s'
 		try:
-			ht = self.instrument.tem.HighTension
-			mag = self.instrument.tem.Magnification
-		except:
-			self.logger.error(estr % 'unable to get instrument state')
-			self.panel.setInstrumentDone()
-			return
-		eudata = self.euclient.researchEucentricFocus(ht, mag)
-		if eudata is None:
-			e = 'none saved for HT: %s, Mag.: %s' % (ht, mag)
-			self.logger.error(estr % e)
-			self.panel.setInstrumentDone()
-			return
-		focus = eudata['focus']
+			self.__calibrateDefocus(beam_tilt, defocii)
+		finally:
+			self.instrument.tem.BeamTilt = rotation_center
+			self.instrument.tem.Defocus = defocus
+
+	def calibrateDefocus(self):
+		beam_tilt = self.settings['defocus beam tilt']
+		defocii = []
+		defocii.append(self.settings['first defocus'])
+		defocii.append(self.settings['second defocus'])
+
+		self.logger.info('Calibrating defocus...')
+		try:
+			self._calibrateDefocus(beam_tilt, defocii)
+		except Exception, e:
+			self.logger.error('Calibration failed: %s' % e)
+		else:
+			self.logger.info('Calibration completed')
+
+		self.panel.calibrationDone()
+
+	def __calibrateStigmator(self, lens, beam_tilt, delta, stigmator):
+		if self.initInstruments():
+			raise RuntimeError('cannot initialize instrument')
+
+		calibration_client = self.calibration_clients['beam tilt']
+
+		magnification = self.instrument.tem.Magnification
+		high_tension = self.instrument.tem.HighTension
+
+		# set up the stigmator states
+		axes = ('x', 'y')
+		deltas = (delta/2.0, -delta/2.0)
+		for stig_axis in axes:
+			self.logger.info('Calibrating stig. %s-axis...' % stig_axis)
+			parameters = []
+			states = []
+			for delta in deltas:
+				parameter = stigmator[stig_axis] + delta
+				parameters.append(parameter)
+				s = data.ScopeEMData(stigmator={lens: {stig_axis: parameter}})
+				states.append(s)
+
+			matrix = numarray.identity(2, numarray.Float)
+			for i, tilt_axis in enumerate(axes):
+				self.logger.info('Calibrating on %s-axis...' % tilt_axis)
+				args = (tilt_axis, beam_tilt, states)
+				kwargs = {'correct_tilt': self.settings['correct tilt']}
+				shifts = calibration_client.measureDisplacements(*args, **kwargs)
+				args = (shifts, parameters, beam_tilt)
+				matrix[:, i] = calibration_client.eq11(*args)
+				self.checkAbort()
+
+			# store calibration
+			type = lens + stig_axis
+			args = (high_tension, magnification, type, matrix)
+			calibration_client.storeMatrix(*args)
+
+	def _calibrateStigmator(self, lens, beam_tilt, delta):
+		rotation_center = self.instrument.tem.BeamTilt
+		stigmator = self.instrument.tem.Stigmator[lens]
+		try:
+			self.__calibrateStigmator(lens, beam_tilt, delta, stigmator)
+		finally:
+			self.instrument.tem.BeamTilt = rotation_center
+			self.instrument.tem.Stigmator = {lens: stigmator}
+
+	def calibrateStigmator(self):
+		lens = self.settings['stig lens']
+		beam_tilt = self.settings['stig beam tilt']
+		delta = self.settings['stig delta']
+
+		self.logger.info('Calibrating %s stigmator...' % lens)
+		try:
+			self._calibrateStigmator(lens, beam_tilt, delta)
+		except Exception, e:
+			self.logger.error('Calibration failed: %s' % e)
+		else:
+			self.logger.info('Calibration completed')
+
+		self.panel.calibrationDone()
+
+	def _measure(self, beam_tilt, lens, correct_tilt):
+		if self.initInstruments():
+			raise RuntimeError('cannot initialize instrument')
+
+		calibration_client = self.calibration_clients['beam tilt']
+
+		result = calibration_client.measureDefocusStig(beam_tilt, stig=lens, correct_tilt=correct_tilt)
 
 		try:
-			self.instrument.tem.Focus = focus
+			defocus = result['defocus']
+			self.measurement['defocus'] = result['defocus']
+		except KeyError:
+			defocus = None
+
+		self.measurement[lens] = {}
+		stig = {}
+		for axis in ('x', 'y'):
+			try:
+				stig[axis] = result['stig' + axis]
+				self.measurement[lens][axis] = result['stig' + axis]
+			except KeyError:
+				pass
+
+		return defocus, stig
+
+	def measure(self):
+		beam_tilt = self.settings['measure beam tilt']
+		lens = self.settings['measure lens']
+		correct_tilt = self.settings['correct tilt']
+
+		self.logger.info('Measuring defocus and %s stigmator...' % lens)
+		try:
+			args = self._measure(beam_tilt, lens, correct_tilt)
+		except Exception, e:
+			args = (None, {})
+			self.logger.exception('Measurement failed: %s' % e)
+		else:
+			self.logger.info('Measurement completed')
+		self.panel.measurementDone(*args)
+
+	def _correctDefocus(self):
+		try:
+			measurement = self.measurement['defocus']
 		except:
-			self.logger.error(estr % 'cannot set instrument parameters')
+			raise RuntimeError('no measurment')
+		defocus = self.instrument.tem.Defocus
+		self.instrument.tem.Defocus = defocus + measurement
+
+	def correctDefocus(self):
+		self.logger.info('Correcting defocus...')
+		try:
+			self._correctDefocus()
+		except Exception, e:
+			self.logger.exception('Correction failed: %s' % e)
+		else:
+			self.logger.info('Correction completed')
+
 		self.panel.setInstrumentDone()
 
-	def eucFromScope(self):
-		## get current value of focus
-		estr = 'Unable to get eucentric focus: %s'
+	def _correctStigmator(self, lens):
+		stigmator = self.instrument.tem.Stigmator[lens]
 		try:
-			ht = self.instrument.tem.HighTension
-			mag = self.instrument.tem.Magnification
-			focus = self.instrument.tem.Focus
+			for axis in ('x', 'y'):
+				stigmator[axis] += self.measurement[lens][axis]
 		except:
-			self.logger.error(estr % 'unable to get instrument state')
-			self.panel.getInstrumentDone()
-			return
-		self.euclient.publishEucentricFocus(ht, mag, focus)
-		self.logger.info('Publishing HT: %s, Mag.: %s, Euc. Focus: %s'
-											% (ht, mag, focus))
+			raise RuntimeError('no measurment')
+		self.instrument.tem.Stigmator = {lens: stigmator}
+
+	def correctStigmator(self):
+		lens = self.settings['stig lens']
+
+		self.logger.info('Correcting %s stigmator...' % lens)
+		try:
+			self._correctStigmator(lens)
+		except Exception, e:
+			self.logger.exception('Correction failed: %s' % e)
+		else:
+			self.logger.info('Correction completed')
+
+		self.panel.setInstrumentDone()
+
+	def resetDefocus(self):
+		try:
+			self.instrument.tem.resetDefocus()
+		except Exception, e:
+			self.logger.error('Reset defocus failed: %s' % e)
+		else:
+			self.logger.info('Defocus reset')
+
+		self.panel.setInstrumentDone()
+
+	def _eucentricFocusToScope(self):
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		
+		calibration_client = self.calibration_clients['eucentric focus']
+		eucentric = calibration_client.researchEucentricFocus(ht, mag)
+		if not eucentric:
+			raise RuntimeError('no eucentric focus for %geV, %gX' % (ht, mag))
+
+		self.instrument.tem.Focus = eucentric['focus']
+
+	def eucentricFocusToScope(self):
+		try:
+			self._eucentricFocusToScope()
+		except Exception, e:
+			self.logger.error('Set eucentric focus failed: %s' % e)
+		else:
+			self.logger.info('Set eucentric focus')
+
+		self.panel.setInstrumentDone()
+
+	def _eucentricFocusFromScope(self):
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		focus = self.instrument.tem.Focus
+
+		calibration_client = self.calibration_clients['eucentric focus']
+		calibration_client.publishEucentricFocus(ht, mag, focus)
+
+	def eucentricFocusFromScope(self):
+		try:
+			self._eucentricFocusFromScope()
+		except Exception, e:
+			self.logger.error('Unable to get eucentric focus: %s' % e)
+		else:
+			self.logger.info('Saved eucentric focus')
+
 		self.panel.getInstrumentDone()
 
+	def checkAbort(self):
+		if not self.abort.isSet():
+			return
+		self.abort.clear()
+		raise Abort('operation aborted')
+
 	def abortCalibration(self):
-		raise NotImplementedError
+		self.abort.set()
 
