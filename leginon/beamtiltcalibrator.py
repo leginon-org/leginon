@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/beamtiltcalibrator.py,v $
-# $Revision: 1.67 $
+# $Revision: 1.68 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-03-10 19:12:57 $
+# $Date: 2006-03-10 19:30:21 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -35,6 +35,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		'measure beam tilt': 0.01,
 		'measure lens': 'objective',
 		'correct tilt': True,
+		'settling time': 0.5,
 	})
 
 	def __init__(self, *args, **kwargs):
@@ -136,7 +137,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		for i, axis in enumerate(axes):
 			self.logger.info('Calibrating on %s-axis...' % axis)
 			args = (axis, beam_tilt, states)
-			kwargs = {'correct_tilt': self.settings['correct tilt']}
+			kwargs = {
+				'correct_tilt': self.settings['correct tilt'],
+				'settle': self.settings['settling time'],
+			}
 			shifts = calibration_client.measureDisplacements(*args, **kwargs)
 			matrix[:, i] = calibration_client.eq11(shifts, defocii, beam_tilt)
 			self.checkAbort()
@@ -197,7 +201,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			for i, tilt_axis in enumerate(axes):
 				self.logger.info('Calibrating on %s-axis...' % tilt_axis)
 				args = (tilt_axis, beam_tilt, states)
-				kwargs = {'correct_tilt': self.settings['correct tilt']}
+				kwargs = {
+					'correct_tilt': self.settings['correct tilt'],
+					'settle': self.settings['settling time'],
+				}
 				shifts = calibration_client.measureDisplacements(*args, **kwargs)
 				args = (shifts, parameters, beam_tilt)
 				matrix[:, i] = calibration_client.eq11(*args)
@@ -238,7 +245,13 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		calibration_client = self.calibration_clients['beam tilt']
 
-		result = calibration_client.measureDefocusStig(beam_tilt, stig=lens, correct_tilt=correct_tilt)
+		args = (beam_tilt,)
+		kwargs = {
+			'stig': lens,
+			'correct_tilt': self.settings['correct tilt'],
+			'settle': self.settings['settling time'],
+		}
+		result = calibration_client.measureDefocusStig(*args, **kwargs)
 
 		try:
 			defocus = result['defocus']

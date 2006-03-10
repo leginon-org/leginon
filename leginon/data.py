@@ -2082,6 +2082,7 @@ class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
 			('measure beam tilt', float),
 			('measure lens', str),
 			('correct tilt', bool),
+			('settling time', float),
 		)
 	typemap = classmethod(typemap)
 

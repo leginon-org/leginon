@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.170 $
+# $Revision: 1.171 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-03-10 19:12:57 $
+# $Date: 2006-03-10 19:30:22 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -84,7 +84,7 @@ class CalibrationClient(object):
 	def correctTilt(self, imagedata):
 		self.tiltcorrector.correct_tilt(imagedata)
 
-	def acquireStateImage(self, state, publish_image=0, settle=0.0, correct_tilt=False):
+	def acquireStateImage(self, state, publish_image=False, settle=0.0, correct_tilt=False):
 		self.node.logger.debug('Acquiring image...')
 		## acquire image at this state
 
@@ -111,7 +111,7 @@ class CalibrationClient(object):
 		info = {'requested state': state, 'imagedata': imagedata, 'image stats': image_stats}
 		return info
 
-	def measureStateShift(self, state1, state2, publish_images=0, settle=0.0, drift_threshold=None, image_callback=None, target=None, correct_tilt=False, correlation_type=None):
+	def measureStateShift(self, state1, state2, publish_images=False, settle=0.0, drift_threshold=None, image_callback=None, target=None, correct_tilt=False, correlation_type=None):
 		'''
 		Measures the pixel shift between two states
 		 Returned dict has these keys:
@@ -523,7 +523,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		else:
 			return None
 
-	def measureDefocusStig(self, tilt_value, publish_images=0, drift_threshold=None, image_callback=None, stig=None, target=None, correct_tilt=False, correlation_type=None):
+	def measureDefocusStig(self, tilt_value, publish_images=False, drift_threshold=None, image_callback=None, stig=None, target=None, correct_tilt=False, correlation_type=None, settle=0.5):
 		self.abortevent.clear()
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
@@ -564,7 +564,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			if nodrift:
 				drift_threshold = None
 			try:
-				shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=0.5, drift_threshold=drift_threshold, image_callback=image_callback, target=target, correct_tilt=correct_tilt, correlation_type=correlation_type)
+				shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=settle, drift_threshold=drift_threshold, image_callback=image_callback, target=target, correct_tilt=correct_tilt, correlation_type=correlation_type)
 			except Abort:
 				break
 			except Drifting:
@@ -702,11 +702,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		and returns two shift displacements.
 		'''
 		
-		if 'publish_images' not in kwargs:
-			kwargs['publish_images'] = True
-		if 'settle' not in kwargs:
-			kwargs['settle'] = 0.25
-
 		# try/finally to be sure we return to original beam tilt
 		try:
 			# set up to measure states
