@@ -38,10 +38,15 @@ function setColor(color) {
 	}
  	if (picker = getObj('colorpicker')) {
 		picker.style.visibility= 'hidden';
-	return;
-		picker.style.visibility = 'hidden';
 	}
 	eval(getObj(curId + 'field').title);
+}
+
+function getValue(id) {	
+         if (field = getObj(id+ 'field'))		 
+                 return field.value;	 
+         else		 
+                 return False;	 
 }
 
 function setTarget(target) {

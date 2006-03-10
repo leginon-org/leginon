@@ -12,9 +12,9 @@
 <head>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 </head>
-<body leftmargin="5" topmargin="0" bottommargin="0" marginwidth="5" marginheight="0" >
+<body leftmargin="0" topmargin="0" bottommargin="0" marginwidth="5" marginheight="0" >
 <font face="Arial, Helvetica, sans-serif" size="2">
-<table>
+<table cellpadding="0" cellspacing="0">
 <tr valign="top">
 <td>
 <?
@@ -74,6 +74,7 @@ if ($id) {
 }
 ?>
 </td>
+<? if ($display_tilt) { ?>
 <td>
 <font style='font-size: 12px;'>
 <?=$str_tilt?>
@@ -82,9 +83,9 @@ if ($id) {
 <td>
 <img src="imgangle.php?a=<?=$angle?>">
 </td>
+<? } ?>
 </tr>
 </table>
 </font>
 </body>
 </html>
-

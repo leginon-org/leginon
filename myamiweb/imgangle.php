@@ -10,7 +10,7 @@ $ch=$h*.9;
 $angle_rad=$angle*PI()/180;
 
 $img = imagecreatetruecolor($w,$h);
-imageantialias($img,true);
+//imageantialias($img,true);
 $b=imagecolorallocate($img,255,255,255);
 imagefill($img,0,0, $b);
 imagecolortransparent($img,$b);
