@@ -298,6 +298,9 @@ class Focuser(acquisition.Acquisition):
         atilt = setting['beam tilt']
         atilt = atilt * 3.14159 / 180.0
 
+        # fake eucset, because we don't need it, but still need to correct z later
+				self.eucset = True
+
         # not working yet
         #if setting['check drift']:
         #    driftthresh = setting['drift threshold']
