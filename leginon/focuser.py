@@ -308,18 +308,6 @@ class Focuser(acquisition.Acquisition):
         self.presetsclient.toScope(presetname, emtarget)
         target = emtarget['target']
 
-        ## set to eucentric focus if doing Z correction
-        ## WARNING:  this assumes that user will not change
-        ## to another focus type before doing the correction
-        focustype = setting['correction type']
-        if focustype == 'Stage Z':
-            self.logger.info('Setting eucentric focus...')
-            self.eucentricFocusToScope()
-            self.logger.info('Eucentric focus set')
-            self.eucset = True
-        else:
-            self.eucset = False
-
         delay = self.settings['pause time']
         self.logger.info('Pausing for %s seconds' % (delay,))
         time.sleep(delay)
