@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/beamtiltcalibrator.py,v $
-# $Revision: 1.68 $
+# $Revision: 1.69 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-03-10 19:30:21 $
-# $Author: suloway $
+# $Date: 2006-03-14 21:23:28 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -328,7 +328,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def resetDefocus(self):
 		try:
-			self.instrument.tem.resetDefocus()
+			self.instrument.tem.resetDefocus(True)
 		except Exception, e:
 			self.logger.error('Reset defocus failed: %s' % e)
 		else:
