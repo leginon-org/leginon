@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.172 $
+# $Revision: 1.173 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-03-14 21:00:28 $
+# $Date: 2006-03-14 22:07:17 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -507,7 +507,7 @@ class StageTiltCalibrationClient(CalibrationClient):
 
 		state1,state2 = shiftinfo['actual states']
 		pixelshift = shiftinfo['pixel shift']
-		psize = getPixelSize(state1['magnification'])
+		psize = self.getPixelSize(state1['magnification'])
 		dist = psize * math.hypot(pixelshift['row'], pixelshift['col'])
 		z = dist / 2.0 / math.sin(tilt_value)
 		return z
