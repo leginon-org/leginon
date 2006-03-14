@@ -53,7 +53,7 @@ class Focuser(acquisition.Acquisition):
         }
 
         self.correlation_types = ['cross', 'phase']
-        self.focus_methods = ['Manual', 'Auto']
+        self.focus_methods = ['Manual', 'Auto', 'Stage']
         self.default_setting = {
             'switch': True,
             'preset name': 'Grid',
@@ -78,6 +78,7 @@ class Focuser(acquisition.Acquisition):
         self.manualplayer = player.Player(callback=self.onManualPlayer)
         acquisition.Acquisition.__init__(self, id, session, managerlocation, target_types=('focus',), **kwargs)
         self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
+        self.stagetiltcalclient = calibrationclient.StageTiltCalibrationClient(self)
         self.euclient = calibrationclient.EucentricFocusClient(self)
         self.focus_sequence = self.researchFocusSequence()
         self.deltaz = 0.0
@@ -291,6 +292,73 @@ class Focuser(acquisition.Acquisition):
         self.logger.info(resultstring)
         return status
 
+    def autoStage(self, setting, emtarget, resultdata):
+        presetname = setting['preset name']
+        ## need btilt, pub, driftthresh
+        btilt = setting['beam tilt']
+
+        # not working yet
+        #if setting['check drift']:
+        #    driftthresh = setting['drift threshold']
+        #else:
+        #    driftthresh = None
+
+        ## send the autofocus preset to the scope
+        self.presetsclient.toScope(presetname, emtarget)
+        target = emtarget['target']
+
+        ## set to eucentric focus if doing Z correction
+        ## WARNING:  this assumes that user will not change
+        ## to another focus type before doing the correction
+        focustype = setting['correction type']
+        if focustype == 'Stage Z':
+            self.logger.info('Setting eucentric focus...')
+            self.eucentricFocusToScope()
+            self.logger.info('Eucentric focus set')
+            self.eucset = True
+        else:
+            self.eucset = False
+
+        delay = self.settings['pause time']
+        self.logger.info('Pausing for %s seconds' % (delay,))
+        time.sleep(delay)
+
+        z = self.stagetiltcalclient.measureZ(alpha, image_callback=self.setImage, correlation_type=setting['correlation type'])
+
+        self.logger.info('Measured Z: %.4e' % z)
+        resultdata['defocus'] = z
+
+        ###### focus validity checks
+        validdefocus = True
+        status = 'ok'
+        logmessage = 'Good focus measurement'
+
+        ### check change limit
+        changelimit = setting['change limit']
+        if abs(defoc) > changelimit:
+            status = 'change untrusted (abs(%s)>%s)' % (defoc, changelimit)
+            validdefocus = False
+            logmessage = 'Focus measurement failed: change = %s (change limit = %s)' % (defoc, changelimit)
+
+        if not validdefocus:
+            self.logger.warning(logmessage)
+        else:
+            self.logger.info(logmessage)
+
+            self.logger.info('Defocus correction...')
+            try:
+                focustype = setting['correction type']
+                focusmethod = self.correction_types[focustype]
+            except (IndexError, KeyError):
+                self.logger.warning('No method selected for correcting defocus')
+            else:
+                resultdata['defocus correction'] = focustype
+                focusmethod(defoc)
+            resultstring = 'corrected focus by %.3e using %s' % (defoc, focustype)
+
+            self.logger.info(resultstring)
+        return status
+
     def processFocusSetting(self, setting, target=None, emtarget=None):
         resultdata = data.FocuserResultData(session=self.session)
         resultdata['target'] = target
@@ -305,6 +373,8 @@ class Focuser(acquisition.Acquisition):
             status = 'ok'
         elif setting['focus method'] == 'Auto':
             status = self.autoFocus(setting, emtarget, resultdata)
+        elif setting['focus method'] == 'Stage':
+            status = self.autoStage(setting, emtarget, resultdata)
 
         resultdata['status'] = status
         self.publish(resultdata, database=True, dbforce=True)

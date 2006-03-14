@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.171 $
+# $Revision: 1.172 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-03-10 19:30:22 $
-# $Author: suloway $
+# $Date: 2006-03-14 21:00:28 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -490,6 +490,27 @@ class MatrixCalibrationClient(CalibrationClient):
 	def getAngles(self, *args):
 		matrix = self.retrieveMatrix(*args)
 		return self.getMatrixAngles(matrix)
+
+class StageTiltCalibrationClient(CalibrationClient):
+	def __init__(self, node):
+		CalibrationClient.__init__(self, node)
+
+	def measureZ(self, tilt_value, image_callback=None, correlation_type=None):
+
+		tilt_value
+		state1 = data.ScopeEMData()
+		state2 = data.ScopeEMData()
+		state1['stage position'] = {'a':-tilt_value}
+		state2['stage position'] = {'a':tilt_value}
+
+		shiftinfo = self.measureStateShift(state1, state2, image_callback=image_callback, correlation_type=correlation_type)
+
+		state1,state2 = shiftinfo['actual states']
+		pixelshift = shiftinfo['pixel shift']
+		psize = getPixelSize(state1['magnification'])
+		dist = psize * math.hypot(pixelshift['row'], pixelshift['col'])
+		z = dist / 2.0 / math.sin(tilt_value)
+		return z
 
 class BeamTiltCalibrationClient(MatrixCalibrationClient):
 	def __init__(self, node):
