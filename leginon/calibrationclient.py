@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.173 $
+# $Revision: 1.174 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-03-14 22:07:17 $
+# $Date: 2006-03-14 23:52:39 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -491,25 +491,46 @@ class MatrixCalibrationClient(CalibrationClient):
 		matrix = self.retrieveMatrix(*args)
 		return self.getMatrixAngles(matrix)
 
-class StageTiltCalibrationClient(CalibrationClient):
+class StageTiltCalibrationClient(StageCalibrationClient):
 	def __init__(self, node):
-		CalibrationClient.__init__(self, node)
+		StageCalibrationClient.__init__(self, node)
 
 	def measureZ(self, tilt_value, image_callback=None, correlation_type=None):
+		'''
+		This is currently hard coded based on our Tecnai, but should be calibrated
+		for every scope.
+		For a positive stage tilt on Tecnai:
+			If Z is too positive, Y moves negative
+			If Z is too negative, Y moves positive
+		'''
+		orig_a = self.instrument.tem.StagePosition['a']
 
-		tilt_value
+		## do positive tilt and measure image shift
 		state1 = data.ScopeEMData()
 		state2 = data.ScopeEMData()
 		state1['stage position'] = {'a':-tilt_value}
 		state2['stage position'] = {'a':tilt_value}
-
 		shiftinfo = self.measureStateShift(state1, state2, image_callback=image_callback, correlation_type=correlation_type)
+		self.instrument.tem.StagePosition = {'a':orig_a}
 
 		state1,state2 = shiftinfo['actual states']
 		pixelshift = shiftinfo['pixel shift']
-		psize = self.getPixelSize(state1['magnification'])
-		dist = psize * math.hypot(pixelshift['row'], pixelshift['col'])
-		z = dist / 2.0 / math.sin(tilt_value)
+		#psize = self.getPixelSize(state1['magnification'])
+		#dist = psize * math.hypot(pixelshift['row'], pixelshift['col'])
+		
+		# fake the current state for the transform with alpha = 0
+		scope = data.ScopeEMData(initializer=state1)
+		scope['stage position']['a'] = 0.0
+		cam = data.CameraEMData()
+		# measureStateShift already unbinned it, so fake cam bin = 1
+		cam['binning'] = {'x':1,'y':1}
+		cam['ccdcamera'] = self.instrument.getCCDCameraData()
+		# get the virtual x,y movement
+		newscope = self.transform(pixelshift, scope, cam)
+		# y component is all we care about to get Z
+		y = scope['stage position']['y'] - newscope['stage position']['y']
+
+		z = -y / 2.0 / math.sin(tilt_value)
 		return z
 
 class BeamTiltCalibrationClient(MatrixCalibrationClient):
