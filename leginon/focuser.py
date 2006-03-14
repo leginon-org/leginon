@@ -295,7 +295,8 @@ class Focuser(acquisition.Acquisition):
     def autoStage(self, setting, emtarget, resultdata):
         presetname = setting['preset name']
         ## need btilt, pub, driftthresh
-        btilt = setting['beam tilt']
+        atilt = setting['beam tilt']
+        atilt = atilt * 3.14159 / 180.0
 
         # not working yet
         #if setting['check drift']:
@@ -323,7 +324,7 @@ class Focuser(acquisition.Acquisition):
         self.logger.info('Pausing for %s seconds' % (delay,))
         time.sleep(delay)
 
-        z = self.stagetiltcalclient.measureZ(alpha, image_callback=self.setImage, correlation_type=setting['correlation type'])
+        z = self.stagetiltcalclient.measureZ(atilt, image_callback=self.setImage, correlation_type=setting['correlation type'])
 
         self.logger.info('Measured Z: %.4e' % z)
         resultdata['defocus'] = z
