@@ -324,10 +324,10 @@ class Focuser(acquisition.Acquisition):
 
         ### check change limit
         changelimit = setting['change limit']
-        if abs(defoc) > changelimit:
-            status = 'change untrusted (abs(%s)>%s)' % (defoc, changelimit)
+        if abs(z) > changelimit:
+            status = 'change untrusted (abs(%s)>%s)' % (z, changelimit)
             validdefocus = False
-            logmessage = 'Focus measurement failed: change = %s (change limit = %s)' % (defoc, changelimit)
+            logmessage = 'Focus measurement failed: change = %s (change limit = %s)' % (z, changelimit)
 
         if not validdefocus:
             self.logger.warning(logmessage)
@@ -342,8 +342,8 @@ class Focuser(acquisition.Acquisition):
                 self.logger.warning('No method selected for correcting defocus')
             else:
                 resultdata['defocus correction'] = focustype
-                focusmethod(defoc)
-            resultstring = 'corrected focus by %.3e using %s' % (defoc, focustype)
+                focusmethod(z)
+            resultstring = 'corrected focus by %.3e using %s' % (z, focustype)
 
             self.logger.info(resultstring)
         return status
