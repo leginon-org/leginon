@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/BeamTiltCalibrator.py,v $
-# $Revision: 1.17 $
+# $Revision: 1.18 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-03-10 19:30:22 $
-# $Author: suloway $
+# $Date: 2006-03-14 22:02:22 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -23,7 +23,7 @@ class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 		sizers = gui.wx.Calibrator.SettingsDialog.initialize(self)
 
 		self.widgets['measure beam tilt'] = FloatEntry(self, -1, chars=7)
-		self.widgets['stig lens'] = wx.Choice(self, -1, choices=['objective', 'diffraction'])
+		self.widgets['measure lens'] = wx.Choice(self, -1, choices=['objective', 'diffraction'])
 		self.widgets['correct tilt'] = wx.CheckBox(self, -1, 'Correct image for tilt')
 		self.widgets['settling time'] = FloatEntry(self, -1, chars=4)
 
@@ -33,7 +33,7 @@ class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 		sizer.Add(self.widgets['measure beam tilt'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'Measure stig. lens')
 		sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.widgets['stig lens'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.widgets['measure lens'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.widgets['correct tilt'], (0, 2), (1, 3), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'Settling time')
 		sizer.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
