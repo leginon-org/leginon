@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.175 $
+# $Revision: 1.176 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-03-14 23:55:17 $
-# $Author: pulokas $
+# $Date: 2006-03-15 00:27:06 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -937,9 +937,8 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		# get the virtual x,y movement
 		newscope = self.transform(pixelshift, scope, cam)
 		# y component is all we care about to get Z
-		y = scope['stage position']['y'] - newscope['stage position']['y']
-
-		z = -y / 2.0 / math.sin(tilt_value)
+		y = newscope['stage position']['y'] - scope['stage position']['y']
+		z = y / 2.0 / math.sin(tilt_value)
 		return z
 
 
