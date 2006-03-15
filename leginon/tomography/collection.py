@@ -181,8 +181,6 @@ class Collection(object):
 
             self.logger.info('Current tilt angle: %g degrees.' % math.degrees(tilt))
 
-            #tilt = math.radians(tilt)
-
             position, shift = self.prediction.predict(tilt)
 
             pixel = {
@@ -272,7 +270,15 @@ class Collection(object):
 
             self.logger.info('Correlating image with previous tilt...')
             self.correlator.setTiltAxis(pixel['predicted position']['theta'])
-            correlation_image = self.correlator.correlate(image, tilt)
+            while True:
+                try:
+					correlation_image = self.correlator.correlate(image, tilt)
+                    break
+                except Exception, e:
+                    self.logger.warning('Retrying correlate image: %s.' % (e,))
+                for tick in range(15):
+                    self.checkAbort()
+                    time.sleep(1.0)
             pixel['correlation'] = self.correlator.getShift(False)
             pixel['correlated position'] = {}
             for axis in ['x', 'y']:

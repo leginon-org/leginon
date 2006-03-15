@@ -86,12 +86,12 @@ class Registration(object):
     def prepareStage(self, tilts):
         if len(tilts) < 2:
             raise ValueError
-        current_alpha = self.instrument.tem.StagePosition['a']
+        #current_alpha = self.instrument.tem.StagePosition['a']
         delta = math.radians(5.0)
         if tilts[1] - tilts[0] > 0:
-            alpha = current_alpha - delta
+            alpha = tilts[0] - delta
         else:
-            alpha = current_alpha + delta
+            alpha = tilts[0] + delta
         self.instrument.tem.StagePosition = {'a': alpha}
-        self.instrument.tem.StagePosition = {'a': current_alpha}
+        self.instrument.tem.StagePosition = {'a': tilts[0]}
 
