@@ -200,6 +200,7 @@ class Focuser(acquisition.Acquisition):
 			self.eucset = True
 		else:
 			self.eucset = False
+		self.reset = True
 
 		delay = self.settings['pause time']
 		self.logger.info('Pausing for %s seconds' % (delay,))
@@ -300,6 +301,8 @@ class Focuser(acquisition.Acquisition):
 
 		# fake eucset, because we don't need it, but still need to correct z later
 		self.eucset = True
+		# don't reset defocus after it is corrected
+		self.reset = False
 
 		# not working yet
 		#if setting['check drift']:
@@ -630,7 +633,8 @@ class Focuser(acquisition.Acquisition):
 		deltaz = delta * Numeric.cos(alpha)
 		newz = stage['z'] + deltaz
 		newstage = {'stage position': {'z': newz }}
-		newstage['reset defocus'] = 1
+		if self.reset:
+			newstage['reset defocus'] = 1
 		emdata = data.ScopeEMData(initializer=newstage)
 		self.logger.info('Correcting stage Z by %s (defocus change %s at alpha %s)' % (deltaz,delta,alpha))
 		self.instrument.setData(emdata)
