@@ -763,6 +763,7 @@ class PresetsManager(node.Node):
 			newpreset['removed'] = False
 			newpreset['film'] = False
 			newpreset['hasref'] = False
+			newpreset['pre exposure'] = 0.0
 			newpreset.friendly_update(newparams)
 			self.presets[presetname] = newpreset
 			self.presetToDB(newpreset)

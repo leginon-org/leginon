@@ -1106,6 +1106,7 @@ class PresetData(InSessionData):
 			('ccdcamera', InstrumentData),
 			('energy filter', bool),
 			('energy filter width', float),
+			('pre exposure', float),
 		)
 	typemap = classmethod(typemap)
 

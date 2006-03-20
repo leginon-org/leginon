@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.64 $
+# $Revision: 1.65 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-02-02 23:43:53 $
+# $Date: 2006-03-20 20:29:41 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -152,6 +152,7 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		self.cbfilm = wx.CheckBox(self, -1, 'Use film')
 		self.cb_energy_filter = wx.CheckBox(self, -1, 'Energy filtered')
 		self.fe_energy_filter_width = FloatEntry(self, -1, chars=6)
+		self.fe_preexp = FloatEntry(self, -1, chars=6)
 		self.cpcamconfig = gui.wx.Camera.CameraPanel(self)
 
 		try:
@@ -198,6 +199,7 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 			self.cb_energy_filter.SetValue(energy_filter)
 			energy_filter_width = parameters['energy filter width']
 			self.fe_energy_filter_width.SetValue(energy_filter_width)
+			self.fe_preexp.SetValue(parameters['pre exposure'])
 		except KeyError:
 			raise ValueError
 
@@ -248,10 +250,17 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		sz.Add(self.cccdcamera, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 		sz.Add(self.cbfilm, (1, 3), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.cb_energy_filter, (2, 3), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+
+
 		label = wx.StaticText(self, -1, 'Energy filter width')
 		sz.Add(label, (3, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.fe_energy_filter_width, (3, 4), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		sz.Add(self.cpcamconfig, (4, 3), (4, 2), wx.ALIGN_CENTER)
+
+		label = wx.StaticText(self, -1, 'Pre-exposure')
+		sz.Add(label, (4, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.fe_preexp, (4, 4), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+
+		sz.Add(self.cpcamconfig, (5, 3), (4, 2), wx.ALIGN_CENTER)
 
 		self.sz.Add(sz, (0, 0), (1, 1), wx.EXPAND)
 
@@ -324,6 +333,7 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		parameters['film'] = self.cbfilm.GetValue()
 		parameters['energy filter'] = self.cb_energy_filter.GetValue()
 		parameters['energy filter width'] = self.fe_energy_filter_width.GetValue()
+		parameters['pre exposure'] = self.fe_preexp.GetValue()
 		parameters.update(self.cpcamconfig.getConfiguration())
 		return parameters
 
@@ -938,8 +948,9 @@ class Parameters(wx.StaticBoxSizer):
 		self.lbldimension = self.labelclass(parent, -1, 'Dimension:')
 		self.lbloffset = self.labelclass(parent, -1, 'Offset:')
 		self.lblbinning = self.labelclass(parent, -1, 'Binning:')
-		self.lblexposuretime = self.labelclass(parent, -1, 'Exposure time:')
+		self.lblexposuretime = self.labelclass(parent, -1, 'Exposure time (ms):')
 		self.lbldose = self.labelclass(parent, -1, 'Dose (e/A^2):')
+		self.lblpreexp = self.labelclass(parent, -1, 'Pre-Exposure (s):')
 
 		self.sttem = wx.StaticText(parent, -1, '')
 		self.stmag = wx.StaticText(parent, -1, '')
@@ -956,6 +967,7 @@ class Parameters(wx.StaticBoxSizer):
 		self.stoffset = wx.StaticText(parent, -1, '')
 		self.stbinning = wx.StaticText(parent, -1, '')
 		self.stexposuretime = wx.StaticText(parent, -1, '')
+		self.stpreexp = wx.StaticText(parent, -1, '')
 		self.stdose = wx.StaticText(parent, -1, '')
 
 		sz = wx.GridBagSizer(5, 5)
@@ -1002,6 +1014,9 @@ class Parameters(wx.StaticBoxSizer):
 		sz.Add(self.lblexposuretime, (7, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stexposuretime, (7, 5), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.lblpreexp, (8, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.stpreexp, (8, 5), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		sz.AddGrowableCol(1)
 		sz.AddGrowableCol(5)
@@ -1025,6 +1040,7 @@ class Parameters(wx.StaticBoxSizer):
 			self.stoffset.SetLabel('')
 			self.stbinning.SetLabel('')
 			self.stexposuretime.SetLabel('')
+			self.stpreexp.SetLabel('')
 			self.stdose.SetLabel('')
 		else:
 			if parameters['tem'] is None:
@@ -1068,6 +1084,7 @@ class Parameters(wx.StaticBoxSizer):
 												parameters['binning']['y'])
 			self.stbinning.SetLabel(s)
 			self.stexposuretime.SetLabel(str(parameters['exposure time']))
+			self.stpreexp.SetLabel(str(parameters['pre exposure']))
 			if parameters['dose'] is None:
 				dosestr = 'N/A'
 			else:
@@ -1096,6 +1113,7 @@ class SelectParameters(Parameters):
 		selected['offset'] = self.lbloffset.GetValue()
 		selected['binning'] = self.lblbinning.GetValue()
 		selected['exposure time'] = self.lblexposuretime.GetValue()
+		selected['pre exposure'] = self.lblpreexp.GetValue()
 		selected['dose'] = self.lbldose.GetValue()
 		return selected
 
@@ -1115,6 +1133,7 @@ class SelectParameters(Parameters):
 		self.lblbinning.SetValue(parameters is None or 'binning' in parameters)
 		self.lblexposuretime.SetValue(
 														parameters is None or 'exposure time' in parameters)
+		self.lblpreexp.SetValue(parameters is None or 'pre exposure' in parameters)
 		self.lbldose.SetValue(parameters is None or 'dose' in parameters)
 
 class FromScopeDialog(wx.Dialog):
@@ -1179,6 +1198,7 @@ if __name__ == '__main__':
 				'offset': {'x': 0, 'y': 0},
 				'binning': {'x': 1, 'y': 1},
 				'exposure time': 1000,
+				'pre exposure': 0.0,
 				'energy filter': True,
 				'energy filter width': 0.0,
 			}
