@@ -395,13 +395,32 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## record in database
 		self.publish(filmdata, pubevent=True, database=self.settings['save image'])
 
+	def exposeSpecimen(self, seconds):
+		## I want to expose the specimen, but not the camera.
+		## I would rather use some kind of manual shutter where above specimen
+		## shutter opens and below specimen shutter remains closed.
+		## Using the screen down was easier and serves the same purpose, but
+		## with more error on the actual time exposed.
+		self.logger.info('Screen down for %ss to expose specimen...' % (seconds,))
+		self.instrument.tem.MainScreenPosition = 'down'
+		time.sleep(seconds)
+		self.instrument.tem.MainScreenPosition = 'up'
+		self.logger.info('Screen up.')
+
 	def acquire(self, presetdata, target=None, emtarget=None, attempt=None):
 		### corrected or not??
 
-		## acquire image
-		self.reportStatus('acquisition', 'acquiring image...')
 		imagedata = None
 		correctimage = self.settings['correct image']
+
+		## pre-exposure
+		pretime = presetdata['pre exposure']
+		if pretime:
+			self.exposeSpecimen(pretime)
+
+		## acquire image
+		self.reportStatus('acquisition', 'acquiring image...')
+
 		try:
 			if correctimage:
 				dataclass = data.CorrectedCameraImageData
@@ -410,6 +429,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			imagedata = self.instrument.getData(dataclass)
 		except:
 			self.logger.error('Cannot access instrument')
+
 		if imagedata is None:
 			return 'fail'
 

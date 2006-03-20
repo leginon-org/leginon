@@ -395,29 +395,8 @@ class Focuser(acquisition.Acquisition):
 		if melt_time and attempt > 1:
 			self.logger.info('Target attempt %s, not melting' % (attempt,))
 		elif melt_time:
-			melt_time_ms = int(round(melt_time * 1000))
-			camstate0 = self.instrument.getData(data.CameraEMData)
-			camstate1 = copy.copy(camstate0)
-			camstate1['exposure time'] = melt_time_ms
-			## make small image
-			camsize = self.instrument.ccdcamera.CameraSize
-			bin = 8
-			dim = camsize['x'] / bin
-			camstate1['dimension'] = {'x':dim,'y':dim}
-			camstate1['binning'] = {'x':bin,'y':bin}
-			camstate1['offset'] = {'x':0,'y':0}
-			self.instrument.setData(camstate1)
-
-			self.logger.info('Putting screen down prior to melt...')
-			self.instrument.tem.MainScreenPosition = 'down'
-			self.logger.info('Melting for %s seconds...' % (melt_time,))
-			self.instrument.ccdcamera.getImage()
-			self.logger.info('Done melting, resetting camera')
-			self.logger.info('Putting screen up after melt...')
-			self.instrument.tem.MainScreenPosition = 'up'
-			self.logger.info('Screen is up.')
-
-			self.instrument.setData(camstate0)
+			self.logger.info('Melting ice...')
+			self.exposeSpecimen(melt_time)
 
 		status = 'unknown'
 
