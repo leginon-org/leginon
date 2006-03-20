@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.24 $
- *	@version $Id: image.inc,v 1.24 2006-03-09 03:29:10 dfellman Exp $
+ *	@version $Revision: 1.25 $
+ *	@version $Id: image.inc,v 1.25 2006-03-20 23:36:57 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -67,7 +67,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		$imginfo = $leginondata->getImageInfo($imageId);
 		$dimx = $imginfo[dimx];
 		if ($p[autoscale]) {
-			$densitymax = ($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL;
+			$densitymax = ($p['colormap']) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL;
 			list($info) = $leginondata->getImageStat($id);
 			if ($info) {
 				$minval = $info['min'];
@@ -85,7 +85,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				$meanval = $info['amean'];
 				$stdev = $info['rms'];
 			}
-			if ($meanval && $stdev) {
+			if ($meanval && $stdev && $maxval-$minval) {
 				$p[minpix] = (($meanval - 3*$stdev))*$densitymax/($maxval-$minval);
 				$p[maxpix] = (($meanval + 3*$stdev))*$densitymax/($maxval-$minval);
 			}
