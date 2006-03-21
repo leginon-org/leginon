@@ -117,11 +117,11 @@ function imgmousemove(e) {
 
 function imgmapmousedown(e) {
 	if (!e) {e = window.event}
-	o=document.getElementById("divimg");
+	o=document.getElementById("divmap");
 	sldLeft=getAbsLeft(o);
 	sldTop=getAbsTop(o);
-	sldMouseLeft=getAreaWidth()/2-offsetmapX;
-  sldMouseTop=getAreaHeight()/2-offsetmapY;
+	sldMouseLeft=getAreaWidth()/2+sldLeft;
+  sldMouseTop=getAreaHeight()/2+sldTop;
 	setArea(e)
 }
 
