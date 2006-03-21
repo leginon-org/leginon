@@ -170,7 +170,7 @@ function init(){
 <table border="0">
   <tr>
    <td colspan="3" align="center">
-	<img name="imghisto" src="imagehistogram.php?tf=1">
+	<img name="imghisto" src="imagehistogram.php">
    </td>
   </tr>
   <tr>

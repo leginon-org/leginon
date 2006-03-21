@@ -1,6 +1,8 @@
-<?
+<?php
 require('inc/leginon.inc');
+// --- get image parameters from URL
 $id=$_GET[id];
+$imgscript = $_GET[imgsc];
 $preset=$_GET[preset];
 $session=$_GET[session];
 $tg = ($_GET[tg]) ? '&tg=1' : '';
@@ -12,154 +14,299 @@ $filter = ($_GET[flt]) ? '&flt='.$_GET[flt] : '';
 $binning = ($_GET[binning]) ? '&binning='.$_GET[binning] : '';
 $colormap = ($_GET[colormap]) ? '&colormap='.$_GET[colormap] : '';
 $autoscale = ($_GET[autoscale]) ? '&autoscale='.$_GET[autoscale] : '';
+$quality = ($_GET['t']) ? '&t='.$_GET['t']: '';
 $psel = ($_GET['psel']) ? '&psel='.urlencode($_GET['psel']) : ''; 
 
-$options = $tg.$sb.$minpix.$maxpix.$fft.$filter.$binning.$colormap.$autoscale.$psel;
+$options = $tg.$sb.$minpix.$maxpix.$fft.$filter.$colormap.$autoscale.$psel;
 
-$filename = $leginondata->getFilenameFromId($Id);
-$imgsrc = "getimg.php?preset=".$preset."&session=".$session."&id=".$id."&t=80&s=256&binning=auto".$tg.$sb.$minpix.$maxpix.$fft.$filter.$colormap.$autoscale.$psel;
+$filenamewpath = $leginondata->getFilenameFromId($id,true);
+$filename = end(explode("/",$filenamewpath));
+$mrcinfo = mrcinfo($filenamewpath);
+
+if (!$imgwidth = $mrcinfo['nx'])
+	$imgwidth=1024;
+if (!$imgheight= $mrcinfo['ny'])
+	$imgheight=1024;
+
+$imgbinning = $_GET[binning];
+if ($_GET[binning]=='auto')
+	$imgbinning = ($imgwidth > 1024) ? (($imgwidth > 2048) ? 4 : 2 ) : 1;
+
+// --- set image map size and binning
+$imgmapsize=128;
+$mapbinning = ($imgwidth> 1024) ? (($imgwidth> 2048) ? 16 : 8 ) : 4;
+
+$ratio = $imgwidth/$imgbinning/$imgmapsize;
+
+// --- window size 512 is set in viewer.js popUpMap(URL)
+$areasize=512/$ratio;
+
+// --- for colored images display area in black
+$areacolor = ($_GET[colormap]==1) ? "#000000" : "#00FF00";
+
+$imgmapsrc = $imgscript."?preset=".$preset."&session=".$session."&id=".$id."&t=75&s=$imgmapsize&binning=$mapbinning".$options;
+$imgsrc = "getimg.php?preset=".$preset."&session=".$session."&id=".$id.$quality.$binning.$options;
 ?>
 <html>
 <head>
 <title>
 MAP: <?=$filename; ?>
-</title>
+<script language="javascript" src="js/draglayer.js"></script>
 <script>
-var ns4 = (document.layers)? true:false;
+var filename="<?=$filename?>";
 var ns6 = (document.getElementById&&!document.all) ? true:false;
 var ie = (document.all)? true:false;
 
-var coordx=0;
-var coordy=0;
 var mx=0;
 var my=0;
-var mapmx=0;
-var mapmy=0;
-var initx=0;
-var inity=0;
-var cx=256;
-var cy=256;
-var jsmapsize = 256;
-var my1;
-var jsimgwidth;
-var jsimgheight;
-var ratio=1;
-var deoffsetx=0;
-var deoffsety=0;
-var move=false;
-var initmousex=0;
-var initmousey=0;
 
-function mousecoord(e) {
-        if (ns4||ns6) {var mouseX=e.pageX; var mouseY=e.pageY}
-        if (ie) {var mouseX=event.x; var mouseY=event.y}
-	mx = mouseX;
-	my = mouseY;
-}
+var offsetX = 0;
+var offsetY = 0;
 
-function mousedown(e){
-	mousecoord(e);
-	initmousex=mx;
-	initmousey=my;
-	size_timer=setInterval('getImageSize()',250);	
-	getRatio();
-	newLocation();
-		if (move)
-			move=false;
-		else
-			move=true;
-}
+var jsimgwidth=<?=$imgwidth?>;
+var jsimgheight=<?=$imgheight?>;
+var jsmapsize = <?=$imgmapsize?>;
+var ratio=<?=$ratio?>;
+var area;
+var sbleft=0;
+var sbtop=0;
+var offsetmapX = 0;
+var offsetmapY = 0;
 
-function getRatio() {
-	ratio = jsimgwidth/jsmapsize;
-}
-
-function getImageSize() {
-	if (my1.document.getElementById('imgmvId')) 
-	{
-		jsimgwidth = my1.document.getElementById('imgmvId').width;
-		jsimgheight = my1.document.getElementById('imgmvId').height;
-		clearInterval(size_timer);
-	}
-} 
-
-function mouseup(e){
-	if (Math.abs(initmousex-mx)>5 && Math.abs(initmousex-mx)>5)
-		if (move)
-			move=false;
-		else
-			move=true;
-}
-
-function newLocation() {
-	getIframesize();
-	if (ns6) {
-		initx = window.my1.pageXOffset; 
-		inity = window.my1.pageYOffset;
-	}
-	if (ie) {
-		deoffsetx = window.my1.document.body.scrollLeft;
-		deoffsety = window.my1.document.body.scrollTop;
-	}
-	mapmx = parseInt(mx*ratio);
-	mapmy = parseInt(my*ratio);
-	window.my1.scrollBy(mapmx-initx-cx-deoffsetx,mapmy-inity-cy-deoffsety);
-}
-
-function mousemove(e) {
-	mousecoord(e);
-	if (move)
-		newLocation();
-}
-
-function getKey(e) {
-	// --- Spacebar => unicode 32
-	var spacebarunicode = 32;
-        if (ns6) {var unicode = e.which;}
-        if (ie)  {var unicode = event.keyCode;}
-	if (unicode == spacebarunicode)
-		if (move)
-			move=false;
-		else
-			move=true;
-}
-
-function getIframesize(){
-	var iframewidth = ie ? my1.document.body.clientWidth : my1.innerWidth;
-	var iframeheight = ie ? my1.document.body.clientHeight : my1.innerHeight;
-	cx=parseInt(iframewidth/2);
-	cy=parseInt(iframeheight/2);
-}
+var divmapdoDrag=false;
+var doDrag=false;
+var sldimgmoveleft;
+var sldimgmovetop;
 
 function init() {
-	var URL = 'nw.php?preset=<?=$preset?>&session=<?=$session?>&id=<?=$id?><?=$options?>';
-	my1=window.open(URL, 'my1', 'left=300,top=0,height=512,width=512,toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes');
-        document.newimgmv.onmousemove=mousemove;
-        document.newimgmv.onmousedown=mousedown;
-        document.newimgmv.onmouseup=mouseup;
-	document.onkeypress=getKey;
+	initarea();
+	coords_layer = document.getElementById("divcoord");
+	map = document.getElementById('divmap');
+	d = document.getElementById('divimg');
+	d.onscroll=updateArea;
+	window.onresize=updateArea;
 	this.focus();
 }
 
+function initarea() {
+	area=document.getElementById("divarea");
+}
 
-function imgIsComplete() {
-	if (my1.document.getElementById('imgmvId')) 
-	if (my1.document.getElementById('imgmvId').complete) {
-		clearInterval(img_timer)
-		jsimgwidth = my1.document.getElementById('imgmvId').width;
-		jsimgheight = my1.document.getElementById('imgmvId').height;
+function mousecoord(e) {
+	if (ns6){var mouseX=e.pageX; var mouseY=e.pageY}
+	if (ie) {var mouseX=event.x; var mouseY=event.y}
+  mx = mouseX;
+  my = mouseY;
+}
+
+function imgmousedown(e){
+}
+
+function imgmouseup(e){
+}
+
+function imgmousemove(e) {
+  mousecoord(e);
+	o=document.getElementById("divimg");
+	mapmx=parseInt(o.scrollLeft)+mx;
+	mapmy=parseInt(o.scrollTop)+my;
+	displayCoord(mapmx+" "+mapmy);
+
+}
+
+function imgmapmousedown(e) {
+	if (!e) {e = window.event}
+	o=document.getElementById("divimg");
+	sldLeft=getAbsLeft(o);
+	sldTop=getAbsTop(o);
+	sldMouseLeft=getAreaWidth()/2-offsetmapX;
+  sldMouseTop=getAreaHeight()/2-offsetmapY;
+	setArea(e)
+}
+
+function mapmousemove(e) {
+  mousecoord(e);
+	n_mapx = (mx-offsetmapX)*ratio;
+	n_mapy = (my-offsetmapY)*ratio;
+	displayCoord(n_mapx+" "+n_mapy);
+
+}
+
+function imgmovemousedown(e)
+{
+	if (!e) {e = window.event}
+	divmapdoDrag=true;
+	sldimgmoveleft=e.clientX-offsetmapX;
+  sldimgmovetop=e.clientY-offsetmapY;
+}
+
+function imgmovemouseup(e)
+{
+	divmapdoDrag=false;
+}
+
+function imgmovemousemove(e)
+{
+	if (!e) {e = window.event}
+
+	if (divmapdoDrag)
+	{
+		nx = e.clientX-sldimgmoveleft;
+		ny = e.clientY-sldimgmovetop;
+		o=document.getElementById("divmap")
+		setPosition(o, nx, ny);
+		offsetmapX = getAbsLeft(o);
+		offsetmapY = getAbsTop(o);
 	}
 }
 
-function exit() {
-	my1.close();
+function areamousedown(e)
+{
+	if (!e) {e = window.event}
+	doDrag=true;
+	o=document.getElementById("divarea");
+	sldLeft=getAbsLeft(o);
+	sldTop=getAbsTop(o);
+	sldMouseLeft=e.clientX-sldLeft+offsetmapX;
+  sldMouseTop=e.clientY-sldTop+offsetmapY;
 }
 
-</script>
+function areamouseup(e)
+{
+	doDrag=false
+}
 
+function areamousemove(e)
+{
+	if (!e) {e = window.event}
+	mapmousemove(e);
+
+	if (doDrag)
+	{
+		setArea(e)
+	}
+}
+
+function setArea(e) {
+		aw = getAreaWidth()
+		ah = getAreaHeight()
+		maxw = jsmapsize-aw
+		maxh = jsmapsize-ah
+		nx = e.clientX-sldMouseLeft;
+		ny = e.clientY-sldMouseTop;
+		nx = (nx>maxw)? maxw : nx
+		ny = (ny>maxh)? maxh : ny
+		nx = (nx<0)? 0 : nx
+		ny = (ny<0)? 0 : ny
+		o=document.getElementById("divarea")
+		setPosition(o, nx, ny)
+		newLocation()
+}
+
+function updateArea() {
+  ww = ie ? window.document.body.clientWidth : window.innerWidth;
+  wh = ie ? window.document.body.clientHeight : window.innerHeight;
+
+	if (o=document.getElementById("divimg")) {
+	sbleft=parseInt(o.scrollLeft);
+	sbtop=parseInt(o.scrollTop);
+
+  setAreaWidth(ww/ratio);
+  setAreaHeight(wh/ratio);
+	setAreaTop(sbtop/ratio);
+	setAreaLeft(sbleft/ratio);
+	}
+}
+
+function displayCoord(val) {
+	if (coords_layer = document.getElementById("divcoord")) {
+		coords_layer.innerHTML = val
+	}
+}
+
+function newLocation() {
+  mapmx = parseInt(getAreaLeft()*ratio);
+  mapmy = parseInt(getAreaTop()*ratio);
+	o=document.getElementById("divimg");
+	o.scrollLeft=mapmx;
+	o.scrollTop=mapmy;
+}
+
+
+function getAreaWidth() {
+	if (area=getArea())
+		return parseInt(area.style.width);
+}
+
+function getAreaHeight() {
+	if (area=getArea())
+     return parseInt(area.style.height);
+}
+
+function getAreaLeft() {
+	if (area=getArea())
+     return parseInt(area.style.left);
+}
+function getAreaTop() {
+	if (area=getArea())
+     return parseInt(area.style.top);
+}
+
+function setAreaLeft(val) {
+  area.style.left= parseInt(val);
+}
+
+function setAreaTop(val) {
+  area.style.top= parseInt(val);
+}
+
+function setAreaWidth(val) {
+  area.style.width= parseInt(val);
+}
+
+function setAreaHeight(val) {
+  area.style.height= parseInt(val);
+}
+
+function getArea() {
+	if (area=document.getElementById("divarea"))
+		return area
+	return false
+}
+
+
+	</script>
 </head>
-<body leftmargin="0" topmargin="0" bottommargin="0" marginwidth="0" marginheight="0" onload="init();" onUnload="exit();">
-
-<img name="newimgmv" hspace="0" vspace="0" border="0" src="<?=$imgsrc?>">
+<body leftmargin="0" topmargin="0" bottommargin="0" marginwidth="0" marginheight="0" onload="init();" >
+<div id="divmap" 
+		style="z-index:2; position:absolute; left:0px; top:0px; background-color:rgb(0,0,0); border: 1px solid #000000;" > 
+	<div
+		id="divarea"
+		style="z-index:99;position:absolute;visibility:visible;width: <?=$areasize?>px; height:<?=$areasize?>px;border:1px dashed <?=$areacolor?>;cursor:move;background-color:transparent;background:url(none)"
+		onmousedown	= "areamousedown(event)"
+		onmouseup		= "areamouseup(event)"
+		onmousemove = "areamousemove(event)"
+		onmouseout	= "areamouseup(event)"
+	></div>
+	<img id="imgmap" src="<?=$imgmapsrc?>"
+		onmousemove = "areamousemove(event)"
+		onmousedown	= "imgmapmousedown(event)"
+	><br>
+	<div	id="divcoord"
+				style="position:absolute;padding:0px; margin:0px; width:112px; height:15px; background-color:rgb(255,255,200); font-size:12px;"></div>
+	<div id="divimgmove" style="position:relative; padding:0px; margin;0px; left:113px; width:15px; height:15px;cursor:move;background:url(img/imgmove.gif) no-repeat; font-size:12px;"
+		onmousedown	= "imgmovemousedown(event)"
+		onmouseup		= "imgmovemouseup(event)"
+		onmousemove = "imgmovemousemove(event)"
+		onmouseout	= "imgmovemouseup(event)"
+	></div> 
+</div>
+<div id="divimg" style="z-index:1; position:absolute; width:100%; height:100%; overflow:auto; ">
+<img id="img" hspace="0" vspace="0" border="0" src="<?=$imgsrc?>"
+	onmousemove	=	"imgmousemove(event)";
+	onmousedown	=	"imgmousedown(event)";
+	onmouseup		=	"imgmouseup(event)";
+>
+</div>
 </body>
 </html>

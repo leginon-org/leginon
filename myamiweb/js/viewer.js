@@ -246,7 +246,8 @@ function newfile(view){
 	if (cautoscale= eval("jsautoscale"+view)) autoscale="&autoscale="+cautoscale; else autoscale="";
 	if (cptclsel = eval("jsptclsel"+view)) ptclsel="&psel="+escape(cptclsel); else ptclsel="";
 
-	options = "preset="+selpreset+
+	options = "imgsc="+jsimagescriptcur+
+		"&preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
 		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+autoscale+ptclsel;
@@ -410,7 +411,7 @@ function setautoscale(viewname, state) {
 
 function popUpMap(URL)
 {
-	window.open(URL, "map", "left=0,top=0,height=256,width=256,toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes");
+	window.open(URL, "map", "left=0,top=0,height=512,width=512,toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes");
 }
 
 function popUpAdjust(URL, view, param){
