@@ -52,6 +52,7 @@ $imgsrc = $imgscript."?preset=".$preset."&session=".$session."&id=".$id.$quality
 <head>
 <title>
 MAP: <?=$filename; ?>
+</title>
 <script language="javascript" src="js/draglayer.js"></script>
 <script>
 var filename="<?=$filename?>";
