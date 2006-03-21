@@ -2,7 +2,8 @@
 require('inc/leginon.inc');
 // --- get image parameters from URL
 $id=$_GET[id];
-$imgscript = $_GET[imgsc];
+if (!$imgscript=$_GET[imgsc])
+	$imgscript="getimg.php";
 $preset=$_GET[preset];
 $session=$_GET[session];
 $tg = ($_GET[tg]) ? '&tg=1' : '';
@@ -45,7 +46,7 @@ $areasize=512/$ratio;
 $areacolor = ($_GET[colormap]==1) ? "#000000" : "#00FF00";
 
 $imgmapsrc = $imgscript."?preset=".$preset."&session=".$session."&id=".$id."&t=75&s=$imgmapsize&binning=$mapbinning".$options;
-$imgsrc = "getimg.php?preset=".$preset."&session=".$session."&id=".$id.$quality.$binning.$options;
+$imgsrc = $imgscript."?preset=".$preset."&session=".$session."&id=".$id.$quality.$binning.$options;
 ?>
 <html>
 <head>
