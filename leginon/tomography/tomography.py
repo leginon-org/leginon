@@ -181,27 +181,42 @@ class Tomography(acquisition.Acquisition):
 
         return 'ok'
 
-    def getShift(self, shift, move_type):
+    def getPixelPosition(self, move_type, position=None):
         scope_data = self.instrument.getData(data.ScopeEMData)
         camera_data = self.instrument.getData(data.CameraEMData, image=False)
+        if position is not None:
+            scope_data[move_type] = position
+        position = {'x': 0.0, 'y': 0.0}
+        client = self.calclients[move_type]
+        try:
+            pixel_position = client.itransform(position, scope_data, camera_data)
+        except calibrationclient.NoMatrixCalibrationError, e:
+            raise CalibrationError(e)
+        # invert y
+        return {'x': pixel_position['col'], 'y': -pixel_position['row']}
+
+    def getParameterPosition(self, position, move_type):
+        scope_data = self.instrument.getData(data.ScopeEMData)
+        camera_data = self.instrument.getData(data.CameraEMData, image=False)
+        scope_data[move_type] = {'x': 0.0, 'y': 0.0}
         client = self.calclients[move_type]
         # invert y
-        shift = {'row': shift['y'], 'col': -shift['x']}
+        position = {'row': -position['y'], 'col': position['x']}
         try:
-            scope_data = client.transform(shift, scope_data, camera_data)
+            scope_data = client.transform(position, scope_data, camera_data)
         except calibrationclient.NoMatrixCalibrationError, e:
             raise CalibrationError(e)
         return scope_data[move_type]
 
-    def correctShift(self, shift, move_type):
-        position = self.getShift(shift, move_type)
+    def move(self, position, move_type):
+        position = self.getParameterPosition(position, move_type)
         initializer = {move_type: position}
         position = data.ScopeEMData(initializer=initializer)
         self.instrument.setData(position)
+        return position[move_type]
 
-    def correctDefocus(self, delta_defocus):
-        defocus = self.instrument.tem.Defocus
-        self.instrument.tem.Defocus = defocus - delta_defocus
+    def setDefocus(self, defocus):
+        self.instrument.tem.Defocus = defocus
 
     def getCalibrations(self):
         scope_data = self.instrument.getData(data.ScopeEMData)
@@ -288,4 +303,22 @@ class Tomography(acquisition.Acquisition):
         self.logger.info('Processing completed.')
 
         return result
+
+    def getShift(self, shift, move_type):
+        scope_data = self.instrument.getData(data.ScopeEMData)
+        camera_data = self.instrument.getData(data.CameraEMData, image=False)
+        client = self.calclients[move_type]
+        # invert y
+        shift = {'row': shift['y'], 'col': -shift['x']}
+        try:
+            scope_data = client.transform(shift, scope_data, camera_data)
+        except calibrationclient.NoMatrixCalibrationError, e:
+            raise CalibrationError(e)
+        return scope_data[move_type]
+
+    def correctShift(self, shift, move_type):
+        shift = self.getShift(shift, move_type)
+        initializer = {move_type: shift}
+        position = data.ScopeEMData(initializer=initializer)
+        self.instrument.setData(position)
 

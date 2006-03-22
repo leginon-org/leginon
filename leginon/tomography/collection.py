@@ -18,7 +18,9 @@ class Collection(object):
         self.prediction = None
         self.correlator = None
         self.instrument_state = None
-        self.tilt_axis = 0.0
+        self.theta = 0.0
+        self.parameter_position = None
+        self.defocus = None
 
     def saveInstrumentState(self):
         self.instrument_state = self.instrument.getData(data.ScopeEMData)
@@ -63,13 +65,18 @@ class Collection(object):
         self.saveInstrumentState()
         self.logger.info('Instrument state saved.')
 
+        # HACK: fix me
+        key = self.settings['move type']
+        self.parameter_position = self.instrument_state[key]
+        self.defocus = self.instrument_state['defocus']
+
         self.tilt_series = tiltseries.TiltSeries(self.node, self.settings,
                                                  self.session, self.preset,
                                                  self.target, self.emtarget)
         self.tilt_series.save()
 
         self.correlator = tiltcorrelator.Correlator(self.settings['xcf bin'],
-                                                    self.tilt_axis)
+                                                    self.theta)
 
         self.registration = registration.Registration(
                                           self.node,
@@ -78,7 +85,7 @@ class Collection(object):
                                           self.instrument,
                                           self.viewer,
                                           self.settings,
-                                          self.tilt_axis,
+                                          self.theta,
                                           self.emtarget)
 
         if self.settings['run buffer cycle']:
@@ -136,6 +143,9 @@ class Collection(object):
 
         self.registration = None
 
+        self.defocus = None
+        self.parameter_position = None
+
         self.restoreInstrumentState()
         self.instrument_state = None
 
@@ -175,51 +185,44 @@ class Collection(object):
 
     def _loop(self, tilts, exposures):
         pixel_size = self.pixel_size
-        pixel_position = {'x': 0.0, 'y': 0.0}
+        position = self.parameter_position
+        defocus = self.defocus
+        theta = self.theta
         for i, tilt in enumerate(tilts):
             self.checkAbort()
 
             self.logger.info('Current tilt angle: %g degrees.' % math.degrees(tilt))
 
-            position, shift = self.prediction.predict(tilt)
+            #position, shift = self.prediction.predict(tilt)
+            predicted_position = self.prediction.predict(tilt)
+            if predicted_position is None:
+                predicted_position = position
+                predicted_position['z'] = defocus
+                predicted_position['theta'] = theta
 
-            pixel = {
-                'predicted position': position,
-                'predicted shift': shift,
-            }
+            predicted_shift = {}
+            predicted_shift['x'] = predicted_position['x'] - position['x']
+            predicted_shift['x'] = predicted_position['y'] - position['y']
+
+            predicted_shift['z'] = -defocus
+            defocus = self.defocus - predicted_position['z']*pixel_size
+            predicted_shift['z'] += defocus
 
             try:
-                s = {}
-                for axis in ['x', 'y']:
-                    s[axis] = pixel['predicted shift'][axis]
-                    s[axis] /= self.preset['binning'][axis]
-
-                self.node.correctShift(s, self.settings['move type'])
+                self.node.move(predicted_position, self.settings['move type'])
             except Exception, e:
                 self.logger.error('Calibration error: %s' % e) 
                 self.finalize()
                 raise Fail
 
-            for axis in ['x', 'y']:
-                pixel_position[axis] += pixel['predicted shift'][axis]
-
-            pixel['position'] = dict(pixel_position)
-
-            self.node.correctDefocus(pixel['predicted shift']['z']*pixel_size)
+            self.node.setDefocus(defocus)
 
             m = 'Predicted position (from first image): %g, %g pixels, %g, %g meters.'
-            self.logger.info(m % (pixel['predicted position']['x'],
-                                  pixel['predicted position']['y'],
-                                  pixel['predicted position']['x']*pixel_size,
-                                  pixel['predicted position']['y']*pixel_size))
-            info = (pixel['predicted shift']['x'],
-                    pixel['predicted shift']['y'],
-                    pixel['predicted shift']['x']*pixel_size,
-                    pixel['predicted shift']['y']*pixel_size)
-            m = 'Compensating image shift: %g, %g pixels, %g, %g meters'
-            self.logger.info(m % info)
-            info = (pixel['predicted shift']['z']*pixel_size,)
-            self.logger.info('Compensating defocus: %g meters.' % info)
+            self.logger.info(m % (predicted_position['x'],
+                                  predicted_position['y'],
+                                  predicted_position['x']*pixel_size,
+                                  predicted_position['y']*pixel_size))
+            self.logger.info('Predicted defocus: %g meters.' % (predicted_position['z']*pixel_size))
 
             self.checkAbort()
 
@@ -260,7 +263,6 @@ class Collection(object):
                 next_tilt = tilts[i + 1]
                 s = 'Tilting stage to next angle (%g degrees)...' % math.degrees(tilt)
                 self.logger.info(s)
-                #stage_position = {'a': math.radians(next_tilt)}
                 stage_position = {'a': next_tilt}
                 self.instrument.tem.StagePosition = stage_position
             except IndexError:
@@ -269,62 +271,58 @@ class Collection(object):
             self.checkAbort()
 
             self.logger.info('Correlating image with previous tilt...')
-            self.correlator.setTiltAxis(pixel['predicted position']['theta'])
+            self.correlator.setTiltAxis(predicted_position['theta'])
             while True:
                 try:
-					correlation_image = self.correlator.correlate(image, tilt)
+                    correlation_image = self.correlator.correlate(image, tilt)
                     break
                 except Exception, e:
                     self.logger.warning('Retrying correlate image: %s.' % (e,))
                 for tick in range(15):
                     self.checkAbort()
                     time.sleep(1.0)
-            pixel['correlation'] = self.correlator.getShift(False)
-            pixel['correlated position'] = {}
-            for axis in ['x', 'y']:
-                pixel['correlation'][axis] = float(pixel['correlation'][axis])
-                pixel['correlated position'][axis] = pixel['position'][axis]
-                pixel['correlated position'][axis] += pixel['correlation'][axis]
 
-            info = (pixel['correlated position']['x'],
-                    pixel['correlated position']['y'],
-                    pixel['correlated position']['x']*pixel_size,
-                    pixel['correlated position']['y']*pixel_size)
-            m = 'Image correlation completed, feature position: %g, %g pixels, %g, %g meters.'
-            self.logger.info(m % info)
-            info = (pixel['correlation']['x'],
-                    pixel['correlation']['y'],
-                    pixel['correlation']['x']*pixel_size,
-                    pixel['correlation']['y']*pixel_size)
+            correlation = self.correlator.getShift(False)
+
             m = 'Correlated shift from feature: %g, %g pixels, %g, %g meters.'
-            self.logger.info(m % info)
+            self.logger.info(m % (correlation['x'],
+                                  correlation['y'],
+                                  correlation['x']*pixel_size,
+                                  correlation['y']*pixel_size))
+
+            raw_correlation = self.correlator.getShift(True)
+            s = (raw_correlation['x'], raw_correlation['y'])
+            self.viewer.setXC(correlation_image, s)
 
             self.checkAbort()
-
-            pixel['raw correlation'] = self.correlator.getShift(True)
-            s = (pixel['raw correlation']['x'], pixel['raw correlation']['y'])
-            self.viewer.setXC(correlation_image, s)
 
             time.sleep(3.0)
 
-            self.savePredictionInfo(pixel, self.pixel_size, tilt_series_image_data)
+            #self.savePredictionInfo(pixel, self.pixel_size, tilt_series_image_data)
+            self.savePredictionInfo(predicted_position, predicted_shift, position, correlation, raw_correlation, self.pixel_size, tilt_series_image_data)
 
             self.checkAbort()
 
-            self.prediction.refineAll(tilt, pixel['correlation'])
+            position = {
+                'x': predicted_position['x'] + correlation['x'],
+                'y': predicted_position['y'] + correlation['y'],
+            }
+
+            #self.prediction.addShift(refineAll(tilt, pixel['correlation'])
+            self.prediction.addShift(tilt, position)
+            self.prediction.calculate()
 
             self.checkAbort()
 
         self.viewer.clearImages()
 
-    def savePredictionInfo(self, info, pixel_size, image):
+    def savePredictionInfo(self, predicted_position, predicted_shift, position, correlation, raw_correlation, pixel_size, image):
         initializer = {
-            'predicted position': info['predicted position'],
-            'predicted shift': info['predicted shift'],
-            'position': info['position'],
-            'correlation': info['correlation'],
-            'correlated position': info['correlated position'],
-            'raw correlation': info['raw correlation'],
+            'predicted position': predicted_position,
+            'predicted shift': predicted_shift,
+            'position': position,
+            'correlation': correlation,
+            'raw correlation': raw_correlation,
             'pixel size': pixel_size,
             'image': image,
         }

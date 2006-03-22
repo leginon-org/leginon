@@ -1,204 +1,139 @@
-import math
 import scipy
+import scipy.linalg
+import scipy.linalg.basic
 import scipy.optimize
 
 class Prediction(object):
     def __init__(self):
-        self.beam_position = {'x':0.0, 'y':0.0, 'z':0.0}
-        self.prediction = LeastSquares()
+        self.reset()
 
     def reset(self):
-        self.beam_position = {'x':0.0, 'y':0.0, 'z':0.0}
-        self.prediction.reset()
-
-    def refineAll(self, tilt, shift):
-        # tilt is in radians
-        feature = {
-            'x': self.beam_position['x'] + shift['x'],
-            'y': self.beam_position['y'] + shift['y'],
-        }
-
-        self.prediction.addShift(tilt, feature)
-        self.prediction.calculate()
-
-    def predict(self, tilt):
-        # tilt is in radians
-        prediction = self.prediction.predict(tilt)
-
-        shift = {}
-        for axis in ['x', 'y', 'z']:
-            shift[axis] = prediction[axis] - self.beam_position[axis]
-            self.beam_position[axis] = prediction[axis]
-
-        return prediction, shift
-
-class LeastSquares(object):
-    def __init__(self):
-        self.a = None
-        self.v_measured = None
-        self.p = None
-
-    def reset(self):
-        self.a = None
-        self.v_measured = None
-        self.p = None
+        self.tilts = []
+        self.v_shifts = []
+        self.x = [0, 0, 0, 0, 0, 0]
 
     def addShift(self, tilt, shift):
-        if self.a is None:
-            self.a = scipy.zeros(1, scipy.Float)
-        else:
-            self.a = scipy.resize(self.a, (self.a.shape[0] + 1,))
-        self.a[-1] = tilt
-
-        if self.v_measured is None:
-            self.v_measured = scipy.zeros((1, 2), scipy.Float)
-        else:
-            self.v_measured = scipy.resize(self.v_measured,
-                      (self.v_measured.shape[0] + 1, self.v_measured.shape[1]))
-        self.v_measured[-1, 0] = shift['x']
-        self.v_measured[-1, 1] = shift['y']
-
-        n = self.a.shape[0]
-        '''
-        if n >= 16:
-            p = self.p
-            self.p = scipy.zeros(16, scipy.Float)
-            cos_t = scipy.cos(p[2])
-            sin_t = scipy.sin(p[2])
-            self.p = [ cos_t, sin_t, 0.0,
-                      -sin_t, cos_t, 0.0,
-                         0.0,   0.0, 1.0,
-                        p[0],   0.0, p[1]]
-        elif n >= 3:
-            p = self.p
-            self.p = scipy.zeros(3, scipy.Float)
-            self.p[1] = p[0]
-            self.p[2] = p[1]
-        elif n >= 2:
-        '''
-        if n >= 2:
-            self.p = scipy.zeros(2, scipy.Float)
+        self.tilts.append(tilt)
+        v_shift = scipy.array((shift['x'], shift['y'], 0), scipy.Float)
+        self.v_shifts.append(v_shift)
 
     def predict(self, tilt):
-        x, y, z = self.model(scipy.array([tilt], scipy.Float))[0]
+        if not self.tilts:
+            return None
+        x0, y0, z0 = model(self.x, tiltMatrices([self.tilts[0]]))[0]
+        x, y, z = model(self.x, tiltMatrices([tilt]))[0]
         x = float(x)
         y = float(y)
-        z = float(z)
-        return {'x': x, 'y': y, 'z': z, 'theta': 0.0}
+        z = float(z) - float(z0)
+        theta = self.x[0]
+        return {'x': x, 'y': y, 'z': z, 'theta': theta}
 
     def calculate(self):
-        if self.p is None:
-            return
-        result = scipy.optimize.leastsq(self.residuals,
-                                        self.p, args=(self.a, self.v_measured),
-                                        full_output=1)#, maxfev=1200)
-        if result[3]:
-            self.p = result[0]
-            if self.p.shape[0] == 3:
-                args = (self.p[0], self.p[1], math.degrees(self.p[1]))
-                #print 'n0 = %g, z0 = %g, theta = %g' % args
-            elif self.p.shape[0] == 2:
-                args = (self.p[0], math.degrees(self.p[1]))
-                #print 'z0 = %g, theta = %g' % args
+        n = len(self.tilts)
+        if n >= 6:
+            x = self.x
+        elif n >= 3:
+            x = [self.x[0], self.x[1], self.x[3]]
+        elif n >= 2:
+            x = [self.x[0], self.x[3]]
+        elif n >= 1:
+            x = [self.x[3]]
         else:
-            #print result[4]
-            pass
-
-    def parameters(self, p):
-        affine = scipy.identity(3, scipy.Float)
-        v_object = scipy.zeros(3, scipy.Float)
-    
-        if p is None:
-            n = 0
-        else:
-            n = len(p)
-        if n == 12:
-            affine[0] = p[0:3]
-            affine[1] = p[3:6]
-            affine[2] = p[6:9]
-            v_object = p[9:12]
+            return self.x
+        x = leastSquares(x, self.tilts, self.v_shifts)
+        n = len(x)
+        if n == 6:
+            self.x = x
         elif n == 3:
-            v_object[0] = p[0]
-            v_object[2] = p[1]
-            t = p[2]
-            #if t > math.pi:
-            #    t = math.pi
-            #elif t < -math.pi:
-            #    t = -math.pi
-            cos_t = scipy.cos(t)
-            sin_t = scipy.sin(t)
-            affine[0, 0] = cos_t
-            affine[0, 1] = sin_t
-            affine[1, 0] = -sin_t
-            affine[1, 1] = cos_t
+            self.x[0] = x[0]
+            self.x[1] = x[1]
+            self.x[3] = x[2]
         elif n == 2:
-            v_object[2] = p[0]
-            t = p[1]
-            if t > math.pi:
-                t = math.pi
-            elif t < -math.pi:
-                t = -math.pi
-            cos_t = scipy.cos(t)
-            sin_t = scipy.sin(t)
-            affine[0, 0] = cos_t
-            affine[0, 1] = sin_t
-            affine[1, 0] = -sin_t
-            affine[1, 1] = cos_t
-        elif n == 0:
-            pass
-        else:
-            raise ValueError
-    
-        return affine, v_object
+            self.x[0] = x[0]
+            self.x[3] = x[1]
+        elif n == 1:
+            self.x[3] = x[0]
+        return self.x
 
-    def residuals(self, p, a, v_measured):
-        affine, v_object = self.parameters(p)
-    
-        cos_a = scipy.cos(a)
-        sin_a = scipy.sin(a)
-    
-        rotation_a = scipy.identity(3, scipy.Float)
-        result = scipy.zeros(v_measured.shape, scipy.Float)
-        for i in range(v_measured.shape[0]):
-            rotation_a[0, 0] = cos_a[i]
-            rotation_a[0, 2] = -sin_a[i]
-            rotation_a[2, 0] = sin_a[i]
-            rotation_a[2, 2] = cos_a[i]
-            transform = scipy.dot(affine, rotation_a)
-            result[i] = scipy.dot(transform, v_object)[:result.shape[1]]
-    
-        error = v_measured - result
-        return scipy.hypot(error[:, 0], error[:, 1])
+def leastSquares(x, tilts, v_shifts):
+    m_tilts = tiltMatrices(tilts)
+    args = (m_tilts, v_shifts)
+    try:
+        result = scipy.optimize.leastsq(residuals, x, args=args, full_output=1)
+    except scipy.linalg.basic.LinAlgError:
+        result = scipy.optimize.leastsq(residuals, x, args=args, full_output=0)
+    try:
+        x = list(result[0])
+    except TypeError:
+        x = [result[0]]
+    return x
 
-    def model(self, a):
-        result = scipy.zeros((a.shape[0], 3), scipy.Float)
+def tiltMatrices(tilts):
+    m_tilts = []
+    for tilt in tilts:
+        m_tilt = scipy.identity(3, scipy.Float)
+        m_tilt[0, 0] = scipy.cos(tilt)
+        m_tilt[0, 2] = scipy.sin(tilt)
+        m_tilt[2, 0] = -scipy.sin(tilt)
+        m_tilt[2, 2] = scipy.cos(tilt)
+        m_tilts.append(m_tilt)
+    return m_tilts
 
-        affine, v_object = self.parameters(self.p)
+def getParameters(x):
+    m_stage = scipy.identity(3, scipy.Float)
+    v_specimen = scipy.zeros(3, scipy.Float)
+    v_optical_axis = scipy.zeros(3, scipy.Float)
     
-        cos_a = scipy.cos(a)
-        sin_a = scipy.sin(a)
-    
-        rotation_a = scipy.identity(3, scipy.Float)
-        for i in range(a.shape[0]):
-            rotation_a[0, 0] = cos_a[i]
-            rotation_a[0, 2] = -sin_a[i]
-            rotation_a[2, 0] = sin_a[i]
-            rotation_a[2, 2] = cos_a[i]
-            transform = scipy.dot(affine, rotation_a)
-            result[i] = scipy.dot(transform, v_object)
-    
-        return result
+    n = len(x)
+    if n == 6:
+        cg = scipy.cos(x[0])
+        sg = scipy.sin(x[0])
+        m_stage[0, 0] = cg
+        m_stage[0, 1] = -sg
+        m_stage[1, 0] = sg
+        m_stage[1, 1] = cg
+        v_specimen[0] = x[1]
+        v_specimen[1] = x[2]
+        v_specimen[2] = x[3]
+        v_optical_axis[0] = x[4]
+        v_optical_axis[1] = x[5]
+    elif n == 3:
+        cg = scipy.cos(x[0])
+        sg = scipy.sin(x[0])
+        m_stage[0, 0] = cg
+        m_stage[0, 1] = -sg
+        m_stage[1, 0] = sg
+        m_stage[1, 1] = cg
+        v_specimen[0] = x[1]
+        v_specimen[2] = x[2]
+    elif n == 2:
+        cg = scipy.cos(x[0])
+        sg = scipy.sin(x[0])
+        m_stage[0, 0] = cg
+        m_stage[0, 1] = -sg
+        m_stage[1, 0] = sg
+        m_stage[1, 1] = cg
+        v_specimen[2] = x[1]
+    elif n == 2:
+        v_specimen[2] = x[0]
 
-if __name__ == '__main__':
-    p = LeastSquares()
+    return m_stage, v_specimen, v_optical_axis
 
-    p.calculate()
-    print p.predict(math.radians(0))
+def model(x, m_tilts):
+    m_stage, v_specimen, v_optical_axis = getParameters(x)
+    v_shifts = []
+    for m_tilt in m_tilts:
+        v_shift = scipy.dot(m_stage, scipy.dot(m_tilt, v_specimen))
+        v_shift -= v_optical_axis
+        v_shifts.append(v_shift)
+    return v_shifts
 
-    for i in range(8):
-        p.addShift(math.radians(i), {'x': i, 'y': i + 0.1234})
-
-    p.calculate()
-    print p.predict(math.radians(-25))
-    print p.predict(math.radians(25))
+def residuals(x, m_tilts, v_shifts):
+    v_estimate = model(x, m_tilts)
+    n = len(m_tilts)
+    result = scipy.zeros(n, scipy.Float)
+    for i in range(n):
+        for j in range(2):
+            result[i] += (v_shifts[i][j] - v_estimate[i][j])**2
+    return result**0.5
 
