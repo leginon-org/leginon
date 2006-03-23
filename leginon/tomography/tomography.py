@@ -219,6 +219,9 @@ class Tomography(acquisition.Acquisition):
         self.instrument.setData(position)
         return position[move_type]
 
+    def getDefocus(self):
+        return self.instrument.tem.Defocus
+
     def setDefocus(self, defocus):
         self.instrument.tem.Defocus = defocus
 

@@ -19,8 +19,6 @@ class Collection(object):
         self.correlator = None
         self.instrument_state = None
         self.theta = 0.0
-        self.parameter_position = None
-        self.defocus = None
 
     def saveInstrumentState(self):
         self.instrument_state = self.instrument.getData(data.ScopeEMData)
@@ -64,12 +62,6 @@ class Collection(object):
 
         self.saveInstrumentState()
         self.logger.info('Instrument state saved.')
-
-        # HACK: fix me
-        key = self.settings['move type']
-        position = self.instrument_state[key]
-        self.parameter_position = self.node.getPixelPosition(key, position)
-        self.defocus = self.instrument_state['defocus']
 
         self.tilt_series = tiltseries.TiltSeries(self.node, self.settings,
                                                  self.session, self.preset,
@@ -144,9 +136,6 @@ class Collection(object):
 
         self.registration = None
 
-        self.defocus = None
-        self.parameter_position = None
-
         self.restoreInstrumentState()
         self.instrument_state = None
 
@@ -186,9 +175,10 @@ class Collection(object):
 
     def _loop(self, tilts, exposures):
         pixel_size = self.pixel_size
-        position = self.parameter_position
-        defocus = self.defocus
-        theta = self.theta
+        position0 = self.node.getPixelPosition(self.settings['move type'])
+        position = {'x': 0.0, 'y': 0.0}
+        defocus0 = self.node.getDefocus()
+        defocus = defocus0
         for i, tilt in enumerate(tilts):
             self.checkAbort()
 
@@ -196,20 +186,26 @@ class Collection(object):
 
             predicted_position = self.prediction.predict(tilt)
             if predicted_position is None:
-                predicted_position = position
-                predicted_position['z'] = defocus
-                predicted_position['theta'] = theta
+                predicted_position = {
+                    'x': 0.0,
+                    'y': 0.0,
+                    'z': 0.0,
+                    'theta': 0.0,
+                }
 
             predicted_shift = {}
             predicted_shift['x'] = predicted_position['x'] - position['x']
             predicted_shift['x'] = predicted_position['y'] - position['y']
 
             predicted_shift['z'] = -defocus
-            defocus = self.defocus - predicted_position['z']*pixel_size
+            defocus = defocus0 - predicted_position['z']*pixel_size
             predicted_shift['z'] += defocus
 
             try:
-                self.node.setPosition(self.settings['move type'], predicted_position)
+                p = dict(predicted_position)
+                p['x'] += position0['x']
+                p['y'] += position0['y']
+                self.node.setPosition(self.settings['move type'], p)
             except Exception, e:
                 self.logger.error('Calibration error: %s' % e) 
                 self.finalize()
@@ -222,7 +218,7 @@ class Collection(object):
                                   predicted_position['y'],
                                   predicted_position['x']*pixel_size,
                                   predicted_position['y']*pixel_size))
-            self.logger.info('Predicted defocus: %g meters.' % (predicted_position['z']*pixel_size))
+            self.logger.info('Predicted defocus: %g meters.' % defocus)
 
             self.checkAbort()
 
