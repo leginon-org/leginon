@@ -93,7 +93,7 @@ class Tomography(acquisition.Acquisition):
         except ValueError, e:
             self.logger.warning('Tilt parameters invalid: %s.' % e)
 
-        total_dose = self.settings['dose']*1e20
+        total_dose = self.settings['dose']
         exposure_min = self.settings['min exposure']
         exposure_max = self.settings['max exposure']
 
@@ -106,7 +106,7 @@ class Tomography(acquisition.Acquisition):
             dose = 0.0
             exposure_time = 0.0
         else:
-            dose = preset['dose']
+            dose = preset['dose']*1e-20
             exposure_time = preset['exposure time']/1000.0
 
         try:

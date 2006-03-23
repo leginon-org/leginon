@@ -99,8 +99,8 @@ class Exposure:
 
         if min_flag or max_flag:
             dose_rate = self.dose/self.exposure
-            dose_min = exposure_min*dose_rate
-            dose_max = exposure_max*dose_rate
+            dose_min = self.exposure_min*dose_rate
+            dose_max = self.exposure_max*dose_rate
             s = 'dose must be between %g and %g e-/A^2'
             s %= (dose_min, dose_max)
             raise LimitError(s)
