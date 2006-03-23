@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/beamtiltcalibrator.py,v $
-# $Revision: 1.69 $
+# $Revision: 1.70 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-03-14 21:23:28 $
-# $Author: pulokas $
+# $Date: 2006-03-23 01:59:03 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -192,9 +192,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			parameters = []
 			states = []
 			for delta in deltas:
-				parameter = stigmator[stig_axis] + delta
-				parameters.append(parameter)
-				s = data.ScopeEMData(stigmator={lens: {stig_axis: parameter}})
+				v = dict(stigmator)
+				v[stig_axis] += delta
+				parameters.append(v[stig_axis])
+				s = data.ScopeEMData(stigmator={lens: v})
 				states.append(s)
 
 			matrix = numarray.identity(2, numarray.Float)
