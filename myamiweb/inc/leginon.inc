@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.54 $
- *	@version $Id: leginon.inc,v 1.54 2006-03-09 23:07:19 dfellman Exp $
+ *	@version $Revision: 1.55 $
+ *	@version $Id: leginon.inc,v 1.55 2006-03-23 01:32:33 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -667,6 +667,8 @@ class leginondata {
 			."and "
 			."scope.magnification = mcal.magnification "
 			."and "
+			."scope.`high tension` = mcal.`high tension` "
+			."and "
 			."mcal.`type`='".$type."' "
 			."and "
 			."mcal.`DEF_timestamp` < a.`DEF_timestamp` "
@@ -817,7 +819,9 @@ class leginondata {
 			."(cp.`SUBD|binning|y`* ppi.pixelsize)) as targetdim, "
 			."((c.`SUBD|binning|y`* sqrt(c.`SUBD|dimension|x`*c.`SUBD|dimension|x`  "
 			."+ c.`SUBD|dimension|y`*c.`SUBD|dimension|y`) * pi.pixelsize) /  "
-			."(cp.`SUBD|binning|y`* ppi.pixelsize)) as targetdiam,  ";
+			."(cp.`SUBD|binning|y`* ppi.pixelsize)) as targetdiam,  "
+			."(pi.pixelsize/ppi.pixelsize) as pixelsizeratio,  "
+			."ppi.pixelsize as parentpixelsize,  ";
 			$parentjoin = ""
 			."left join AcquisitionImageData parent "
 			."on (parent.`DEF_id`=parenttarget.`REF|AcquisitionImageData|image`) "
@@ -1002,10 +1006,12 @@ class leginondata {
 		return $newimage;
 	}
 
-	function getImageTargets($imgId) {
+	function getImageTargets($imgId, $type="acquisition") {
 		$q =	" select "
 			."floor(t.`delta column`+c.`SUBD|dimension|x`/2) as x, "
 			."floor(t.`delta row`+c.`SUBD|dimension|y`/2) as y, "
+			."t.`delta column` as `delta column`, "
+			."t.`delta row` as `delta row`, "
 			."c.`SUBD|dimension|x` as dimx, "
 			."c.`SUBD|dimension|y` as dimy, "
 			."child.`DEF_id` as childId, "
@@ -1020,7 +1026,7 @@ class leginondata {
 			."left join AcquisitionImageData as child "
 			."on (child.`REF|AcquisitionImageTargetData|target`=t.`DEF_id`) "
 			."where "
-			."t.`type`='acquisition' and "
+			."t.`type`='$type' and "
 			."a.`DEF_id`='".$imgId."' "
 			."order by `tnumber` ";
 
