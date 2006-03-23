@@ -184,9 +184,10 @@ class Tomography(acquisition.Acquisition):
     def getPixelPosition(self, move_type, position=None):
         scope_data = self.instrument.getData(data.ScopeEMData)
         camera_data = self.instrument.getData(data.CameraEMData, image=False)
-        if position is not None:
-            scope_data[move_type] = position
-        position = {'x': 0.0, 'y': 0.0}
+        if position is None:
+            position = {'x': 0.0, 'y': 0.0}
+        else:
+            scope_data[move_type] = {'x': 0.0, 'y': 0.0}
         client = self.calclients[move_type]
         try:
             pixel_position = client.itransform(position, scope_data, camera_data)
@@ -195,13 +196,16 @@ class Tomography(acquisition.Acquisition):
         # invert y
         return {'x': pixel_position['col'], 'y': -pixel_position['row']}
 
-    def getParameterPosition(self, position, move_type):
+    def getParameterPosition(self, move_type, position=None):
         scope_data = self.instrument.getData(data.ScopeEMData)
         camera_data = self.instrument.getData(data.CameraEMData, image=False)
-        scope_data[move_type] = {'x': 0.0, 'y': 0.0}
+        if position is None:
+            position = {'x': 0.0, 'y': 0.0}
+        else:
+            scope_data[move_type] = {'x': 0.0, 'y': 0.0}
         client = self.calclients[move_type]
         # invert y
-        position = {'row': position['y'], 'col': -position['x']}
+        position = {'row': -position['y'], 'col': position['x']}
         try:
             scope_data = client.transform(position, scope_data, camera_data)
         except calibrationclient.NoMatrixCalibrationError, e:

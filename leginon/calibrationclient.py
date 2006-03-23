@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.176 $
+# $Revision: 1.177 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-03-15 00:27:06 $
-# $Author: acheng $
+# $Date: 2006-03-23 20:39:59 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -815,12 +815,11 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		par = self.parameter()
 		tem = scope['tem']
 		ccdcamera = camera['ccdcamera']
+		matrix = self.retrieveMatrix(tem, ccdcamera, par, ht, mag)
 
 		pixrow = pixelshift['row'] * biny
 		pixcol = pixelshift['col'] * binx
 		pixvect = (pixrow, pixcol)
-
-		matrix = self.retrieveMatrix(tem, ccdcamera, par, ht, mag)
 
 		change = numarray.matrixmultiply(matrix, pixvect)
 		changex = change[0]
@@ -840,32 +839,36 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		return new
 
 	def itransform(self, shift, scope, camera):
-		'''
-		Calculate a pixel vector from an image center which 
-		represents the given parameter shift.
-		'''
-		mag = scope['magnification']
-		ht = scope['high tension']
-		binx = camera['binning']['x']
-		biny = camera['binning']['y']
-		par = self.parameter()
-		tem = scope['tem']
-		cam = camera['ccdcamera']
-		newshift = dict(shift)
+		parameter = self.parameter()
+		args = (
+			scope['tem'],
+			camera['ccdcamera'],
+			parameter,
+			scope['high tension'],
+			scope['magnification'],
+		)
+		matrix = self.retrieveMatrix(*args)
+		inverse_matrix = numarray.linear_algebra.inverse(matrix)
 
-		### take into account effect of alpha tilt on Y stage pos
-		if par == 'stage position' and 'a' in scope[par] and scope[par]['a'] is not None:
-			alpha = scope[par]['a']
-			newshift['y'] = newshift['y'] * numarray.cos(alpha)
-		vect = (newshift['x'], newshift['y'])
+		position = dict(scope[parameter])
+		position['x'] += shift['x']
+		position['y'] += shift['y']
 
-		matrix = self.retrieveMatrix(tem, cam, par, ht, mag)
-		matrix = numarray.linear_algebra.inverse(matrix)
+		# take into account effect of stage alpha tilt on y stage position
+		if parameter == 'stage position':
+			if 'a' in scope[parameter] and scope[parameter]['a'] is not None:
+				alpha = scope[parameter]['a']
+				position['y'] = position['y']*numarray.cos(alpha)
 
-		pixvect = numarray.matrixmultiply(matrix, vect)
-		pixvect = pixvect / (biny, binx)
-		return {'row':pixvect[0], 'col':pixvect[1]}
+		position_vector = (position['x'], position['y'])
+		pixel = numarray.matrixmultiply(inverse_matrix, position_vector)
 
+		pixel_position = {
+			'row': pixel[0]/camera['binning']['y'],
+			'col': pixel[1]/camera['binning']['x'],
+		}
+
+		return pixel_position
 
 class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def __init__(self, node):
