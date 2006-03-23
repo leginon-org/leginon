@@ -193,8 +193,8 @@ class Tomography(acquisition.Acquisition):
             pixel_position = client.itransform(position, scope_data, camera_data)
         except calibrationclient.NoMatrixCalibrationError, e:
             raise CalibrationError(e)
-        # invert y
-        return {'x': pixel_position['col'], 'y': -pixel_position['row']}
+        # invert y and position
+        return {'x': -pixel_position['col'], 'y': pixel_position['row']}
 
     def getParameterPosition(self, move_type, position=None):
         scope_data = self.instrument.getData(data.ScopeEMData)
@@ -204,16 +204,16 @@ class Tomography(acquisition.Acquisition):
         else:
             scope_data[move_type] = {'x': 0.0, 'y': 0.0}
         client = self.calclients[move_type]
-        # invert y
-        position = {'row': -position['y'], 'col': position['x']}
+        # invert y and position
+        position = {'row': position['y'], 'col': -position['x']}
         try:
             scope_data = client.transform(position, scope_data, camera_data)
         except calibrationclient.NoMatrixCalibrationError, e:
             raise CalibrationError(e)
         return scope_data[move_type]
 
-    def move(self, position, move_type):
-        position = self.getParameterPosition(position, move_type)
+    def setPosition(self, move_type, position):
+        position = self.getParameterPosition(move_type, position)
         initializer = {move_type: position}
         position = data.ScopeEMData(initializer=initializer)
         self.instrument.setData(position)

@@ -67,7 +67,8 @@ class Collection(object):
 
         # HACK: fix me
         key = self.settings['move type']
-        self.parameter_position = self.instrument_state[key]
+        position = self.instrument_state[key]
+        self.parameter_position = self.node.getPixelPosition(key, position)
         self.defocus = self.instrument_state['defocus']
 
         self.tilt_series = tiltseries.TiltSeries(self.node, self.settings,
@@ -193,7 +194,6 @@ class Collection(object):
 
             self.logger.info('Current tilt angle: %g degrees.' % math.degrees(tilt))
 
-            #position, shift = self.prediction.predict(tilt)
             predicted_position = self.prediction.predict(tilt)
             if predicted_position is None:
                 predicted_position = position
@@ -209,7 +209,7 @@ class Collection(object):
             predicted_shift['z'] += defocus
 
             try:
-                self.node.move(predicted_position, self.settings['move type'])
+                self.node.setPosition(self.settings['move type'], predicted_position)
             except Exception, e:
                 self.logger.error('Calibration error: %s' % e) 
                 self.finalize()
@@ -284,6 +284,17 @@ class Collection(object):
 
             correlation = self.correlator.getShift(False)
 
+            position = {
+                'x': predicted_position['x'] + correlation['x'],
+                'y': predicted_position['y'] + correlation['y'],
+            }
+
+            m = 'Feature position: %g, %g pixels, %g, %g meters.'
+            self.logger.info(m % (position['x'],
+                                  position['y'],
+                                  position['x']*pixel_size,
+                                  position['y']*pixel_size))
+
             m = 'Correlated shift from feature: %g, %g pixels, %g, %g meters.'
             self.logger.info(m % (correlation['x'],
                                   correlation['y'],
@@ -298,17 +309,21 @@ class Collection(object):
 
             time.sleep(3.0)
 
-            #self.savePredictionInfo(pixel, self.pixel_size, tilt_series_image_data)
-            self.savePredictionInfo(predicted_position, predicted_shift, position, correlation, raw_correlation, self.pixel_size, tilt_series_image_data)
+            self.checkAbort()
+
+            args = (
+                predicted_position,
+                predicted_shift,
+                position,
+                correlation,
+                raw_correlation,
+                self.pixel_size,
+                tilt_series_image_data,
+            )
+            self.savePredictionInfo(*args)
 
             self.checkAbort()
 
-            position = {
-                'x': predicted_position['x'] + correlation['x'],
-                'y': predicted_position['y'] + correlation['y'],
-            }
-
-            #self.prediction.addShift(refineAll(tilt, pixel['correlation'])
             self.prediction.addShift(tilt, position)
             self.prediction.calculate()
 
