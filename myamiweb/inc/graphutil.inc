@@ -184,4 +184,102 @@ class arrow extends graphutil {
 	}
 
 }
+
+
+function translatePolygon($cx, $cy, &$polygon) {
+	foreach ($polygon as $k=>$p) {
+			if ($k % 2 ==0)
+				$polygon[$k] += $cx;
+			else
+				$polygon[$k] += $cy;
+	}
+}
+
+function polygon2points($data) {
+	$points=array();
+	for($i=0; $i<count($data); $i+=2) {
+		$x=$data[$i];
+		$y=$data[$i+1];
+		$points[] = new Point2D($x,$y);
+	}
+		return $points;
+}
+
+function getPolarCoord($x,$y) {
+	return array(
+			'r'=>sqrt($x*$x+$y*$y),
+			'angle'=>atan2($y,$x)
+		);
+}
+
+function getPolygonArea($points) {
+	$n=count($points);
+	foreach($points as $i=>$point) {
+		$j = ($i + 1) % $n;
+		$area += $points[$i]->x * $points[$j]->y;
+		$area -= $points[$i]->y * $points[$j]->x;
+   }
+   $area /= 2;
+   return($area < 0 ? -$area : $area);
+}
+
+function getPolygonCenter($data) {
+	$cx=0;
+	$cy=0;
+	$points = polygon2points($data);
+	$n = count($points);
+	if(!$area = getPolygonArea($points))
+		return;
+	$factor=0;
+	for ($i=0;$i<$n;$i++) {
+		$j = ($i + 1) % $n;
+		$factor=($points[$i]->x*$points[$j]->y-$points[$j]->x*$points[$i]->y);
+		$cx+=($points[$i]->x+$points[$j]->x)*$factor;
+		$cy+=($points[$i]->y+$points[$j]->y)*$factor;
+	}
+	$area*=6;
+	$factor=1/$area;
+	$cx*=$factor;
+	$cy*=$factor;
+	return array('cx'=>$cx, 'cy'=>$cy);
+}
+
+function getVectors($polygon) {
+	$points = polygon2points($polygon);
+	$n = count($points);
+	$x = $points[$n-1]->x;
+	$y = $points[$n-1]->y;
+	$vectors=array();
+	foreach($points as $p) {
+			$cur_x = $p->x;
+			$cur_y = $p->y;
+			$vectors[] = getPolarCoord($x-$cur_x,$y-$cur_y);
+			$x = $cur_x;
+			$y = $cur_y;
+	}
+	return $vectors;
+}
+
+function getMaxVector($vectors) {
+		
+		foreach ($vectors as $k=>$vector) {
+				$r = $vector['r'];
+				$max_r = max($r ,$max_r);
+		}
+		foreach ($vectors as $k=>$vector) {
+				$r = $vector['r'];
+				if ($r==$max_r)
+						break;
+		}
+
+		return $vectors[$k];
+}
+
+class Point2D {
+	var $x,$y;
+	function Point2D($x,$y) {
+		$this->x=$x;
+		$this->y=$y;
+	}
+}
 ?>
