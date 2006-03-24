@@ -30,34 +30,36 @@ class Prediction(object):
 
     def calculate(self):
         n = len(self.tilts)
-        if n >= 6:
+        if n >= 3:
             x = self.x
-        elif n >= 3:
-            x = [self.x[0], self.x[1], self.x[3]]
         elif n >= 2:
-            x = [self.x[0], self.x[3]]
+            x = self.x[:4]
         elif n >= 1:
-            x = [self.x[3]]
+            x = self.x[1:3]
         else:
             return self.x
         x = leastSquares(x, self.tilts, self.v_shifts)
         n = len(x)
         if n == 6:
             self.x = x
-        elif n == 3:
+        elif n == 4:
             self.x[0] = x[0]
             self.x[1] = x[1]
-            self.x[3] = x[2]
+            self.x[2] = x[2]
+            self.x[3] = x[3]
         elif n == 2:
             self.x[1] = x[0]
-            self.x[3] = x[1]
-        elif n == 1:
-            self.x[1] = x[0]
+            self.x[2] = x[1]
         return self.x
 
 def leastSquares(x, tilts, v_shifts):
     m_tilts = tiltMatrices(tilts)
-    args = (m_tilts, v_shifts)
+    x_shifts = []
+    y_shifts = []
+    for v_shift in v_shifts:
+        x_shifts.append(v_shift[0])
+        y_shifts.append(v_shift[1])
+    args = (m_tilts, x_shifts, y_shifts)
     try:
         result = scipy.optimize.leastsq(residuals, x, args=args, full_output=1)
     except scipy.linalg.basic.LinAlgError:
@@ -97,7 +99,7 @@ def getParameters(x):
         v_specimen[2] = x[3]
         v_optical_axis[0] = x[4]
         v_optical_axis[1] = x[5]
-    elif n == 3:
+    elif n == 4:
         cg = scipy.cos(x[0])
         sg = scipy.sin(x[0])
         m_stage[0, 0] = cg
@@ -105,12 +107,11 @@ def getParameters(x):
         m_stage[1, 0] = sg
         m_stage[1, 1] = cg
         v_specimen[0] = x[1]
-        v_specimen[2] = x[2]
+        v_specimen[1] = x[2]
+        v_specimen[2] = x[3]
     elif n == 2:
         v_specimen[0] = x[0]
-        v_specimen[2] = x[1]
-    elif n == 1:
-        v_specimen[0] = x[0]
+        v_specimen[1] = x[1]
 
     return m_stage, v_specimen, v_optical_axis
 
@@ -123,12 +124,13 @@ def model(x, m_tilts):
         v_shifts.append(v_shift)
     return v_shifts
 
-def residuals(x, m_tilts, v_shifts):
+def residuals(x, m_tilts, x_shifts, y_shifts):
     v_estimate = model(x, m_tilts)
     n = len(m_tilts)
-    result = scipy.zeros(n, scipy.Float)
+    result = scipy.zeros(n*2, scipy.Float)
     for i in range(n):
-        for j in range(2):
-            result[i] += (v_shifts[i][j] - v_estimate[i][j])**2
-    return result**0.5
+         result[i] = x_shifts[i] - v_estimate[i][0]
+    for i in range(n):
+         result[n + i] = y_shifts[i] - v_estimate[i][1]
+    return result
 
