@@ -49,10 +49,10 @@ class Prediction(object):
             self.x[1] = x[1]
             self.x[3] = x[2]
         elif n == 2:
-            self.x[0] = x[0]
+            self.x[1] = x[0]
             self.x[3] = x[1]
         elif n == 1:
-            self.x[3] = x[0]
+            self.x[1] = x[0]
         return self.x
 
 def leastSquares(x, tilts, v_shifts):
@@ -107,15 +107,10 @@ def getParameters(x):
         v_specimen[0] = x[1]
         v_specimen[2] = x[2]
     elif n == 2:
-        cg = scipy.cos(x[0])
-        sg = scipy.sin(x[0])
-        m_stage[0, 0] = cg
-        m_stage[0, 1] = -sg
-        m_stage[1, 0] = sg
-        m_stage[1, 1] = cg
+        v_specimen[0] = x[0]
         v_specimen[2] = x[1]
-    elif n == 2:
-        v_specimen[2] = x[0]
+    elif n == 1:
+        v_specimen[0] = x[0]
 
     return m_stage, v_specimen, v_optical_axis
 

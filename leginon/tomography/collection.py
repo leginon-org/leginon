@@ -175,23 +175,28 @@ class Collection(object):
 
     def _loop(self, tilts, exposures):
         pixel_size = self.pixel_size
+
         position0 = self.node.getPixelPosition(self.settings['move type'])
-        position = {'x': 0.0, 'y': 0.0}
         defocus0 = self.node.getDefocus()
+
+        m = 'Initial feature position: %g, %g pixels.'
+        self.logger.info(m % (position0['x'], position0['y']))
+        m = 'Initial defocus: %g meters.'
+        self.logger.info(m % defocus0)
+
+        position = dict(position0)
         defocus = defocus0
+
         for i, tilt in enumerate(tilts):
             self.checkAbort()
 
             self.logger.info('Current tilt angle: %g degrees.' % math.degrees(tilt))
+            self.prediction.addShift(tilt, position)
+            self.prediction.calculate()
+
+            self.checkAbort()
 
             predicted_position = self.prediction.predict(tilt)
-            if predicted_position is None:
-                predicted_position = {
-                    'x': 0.0,
-                    'y': 0.0,
-                    'z': 0.0,
-                    'theta': 0.0,
-                }
 
             predicted_shift = {}
             predicted_shift['x'] = predicted_position['x'] - position['x']
@@ -202,10 +207,7 @@ class Collection(object):
             predicted_shift['z'] += defocus
 
             try:
-                p = dict(predicted_position)
-                p['x'] += position0['x']
-                p['y'] += position0['y']
-                self.node.setPosition(self.settings['move type'], p)
+                self.node.setPosition(self.settings['move type'], predicted_position)
             except Exception, e:
                 self.logger.error('Calibration error: %s' % e) 
                 self.finalize()
@@ -213,7 +215,7 @@ class Collection(object):
 
             self.node.setDefocus(defocus)
 
-            m = 'Predicted position (from first image): %g, %g pixels, %g, %g meters.'
+            m = 'Predicted position: %g, %g pixels, %g, %g meters.'
             self.logger.info(m % (predicted_position['x'],
                                   predicted_position['y'],
                                   predicted_position['x']*pixel_size,
@@ -285,17 +287,17 @@ class Collection(object):
                 'y': predicted_position['y'] + correlation['y'],
             }
 
-            m = 'Feature position: %g, %g pixels, %g, %g meters.'
-            self.logger.info(m % (position['x'],
-                                  position['y'],
-                                  position['x']*pixel_size,
-                                  position['y']*pixel_size))
-
             m = 'Correlated shift from feature: %g, %g pixels, %g, %g meters.'
             self.logger.info(m % (correlation['x'],
                                   correlation['y'],
                                   correlation['x']*pixel_size,
                                   correlation['y']*pixel_size))
+
+            m = 'Feature position: %g, %g pixels, %g, %g meters.'
+            self.logger.info(m % (position['x'],
+                                  position['y'],
+                                  position['x']*pixel_size,
+                                  position['y']*pixel_size))
 
             raw_correlation = self.correlator.getShift(True)
             s = (raw_correlation['x'], raw_correlation['y'])
@@ -317,11 +319,6 @@ class Collection(object):
                 tilt_series_image_data,
             )
             self.savePredictionInfo(*args)
-
-            self.checkAbort()
-
-            self.prediction.addShift(tilt, position)
-            self.prediction.calculate()
 
             self.checkAbort()
 
