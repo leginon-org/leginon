@@ -194,7 +194,7 @@ class Tomography(acquisition.Acquisition):
         except calibrationclient.NoMatrixCalibrationError, e:
             raise CalibrationError(e)
         # invert y and position
-        return {'x': -pixel_position['col'], 'y': pixel_position['row']}
+        return {'x': pixel_position['col'], 'y': -pixel_position['row']}
 
     def getParameterPosition(self, move_type, position=None):
         scope_data = self.instrument.getData(data.ScopeEMData)
@@ -205,7 +205,7 @@ class Tomography(acquisition.Acquisition):
             scope_data[move_type] = {'x': 0.0, 'y': 0.0}
         client = self.calclients[move_type]
         # invert y and position
-        position = {'row': position['y'], 'col': -position['x']}
+        position = {'row': -position['y'], 'col': position['x']}
         try:
             scope_data = client.transform(position, scope_data, camera_data)
         except calibrationclient.NoMatrixCalibrationError, e:
