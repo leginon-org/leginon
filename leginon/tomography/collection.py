@@ -283,8 +283,8 @@ class Collection(object):
             correlation = self.correlator.getShift(False)
 
             position = {
-                'x': predicted_position['x'] + correlation['x'],
-                'y': predicted_position['y'] + correlation['y'],
+                'x': predicted_position['x'] - correlation['x'],
+                'y': predicted_position['y'] - correlation['y'],
             }
 
             m = 'Correlated shift from feature: %g, %g pixels, %g, %g meters.'
