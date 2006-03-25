@@ -202,9 +202,13 @@ class Collection(object):
             predicted_shift['x'] = predicted_position['x'] - position['x']
             predicted_shift['x'] = predicted_position['y'] - position['y']
 
-            predicted_shift['z'] = -defocus
-            defocus = defocus0 - predicted_position['z']*pixel_size
-            predicted_shift['z'] += defocus
+            # HACK: fix me
+            if abs(predicted_shift['z']) > 1e-7*(180/scipy.pi):
+                predicted_shift['z'] = 0
+            else:
+                predicted_shift['z'] = -defocus
+                defocus = defocus0 - predicted_position['z']*pixel_size
+                predicted_shift['z'] += defocus
 
             try:
                 self.node.setPosition(self.settings['move type'], predicted_position)
