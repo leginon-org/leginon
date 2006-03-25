@@ -88,7 +88,7 @@ class Correlator(object):
 
     def peak2shift(self, peak, shape):
         shift = list(peak)
-        half = shape[0] / 2, shape[1] / 2
+        half = shape[0] / 2.0, shape[1] / 2.0
         if peak[0] > half[0]:
             shift[0] = peak[0] - shape[0]
         if peak[1] > half[1]:
@@ -111,7 +111,8 @@ class Correlator(object):
         except correlator.MissingImageError:
             return
 
-        peak = self.peakfinder.subpixelPeak(newimage=pc)
+        #peak = self.peakfinder.subpixelPeak(newimage=pc)
+        peak = self.peakfinder.pixelPeak(newimage=pc)
         rows, columns = self.peak2shift(peak, pc.shape)
 
         self.raw_shift = {'x': columns, 'y': rows}
