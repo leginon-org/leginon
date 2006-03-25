@@ -203,7 +203,7 @@ class Collection(object):
             predicted_shift['x'] = predicted_position['y'] - position['y']
 
             # HACK: fix me
-            if abs(predicted_position['z']*pixel_size) > 1e-7*tilt*(180/scipy.pi):
+            if abs(predicted_position['z']*pixel_size) > 1e-7*math.degrees(tilt):
                 predicted_shift['z'] = 0
             else:
                 predicted_shift['z'] = -defocus
