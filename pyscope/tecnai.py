@@ -321,6 +321,9 @@ class Tecnai(tem.TEM):
 
 			try:
 				stigmator.X = stigs[key]['x']
+			except KeyError:
+					pass
+			try:
 				stigmator.Y = stigs[key]['y']
 			except KeyError:
 					pass
