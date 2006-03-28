@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.h,v 1.10 2006-02-24 00:33:51 dfellman Exp $ 
+  $Id: php_mrc.h,v 1.11 2006-03-28 22:50:18 dfellman Exp $ 
 */
 
 /**
@@ -86,6 +86,7 @@ ZEND_FUNCTION(mrclogscale);
 ZEND_FUNCTION(mrcgetdata);
 ZEND_FUNCTION(mrcgetscale);
 ZEND_FUNCTION(mrcputdata);
+ZEND_FUNCTION(mrcrotate);
 ZEND_FUNCTION(mrcupdateheader);
 ZEND_FUNCTION(mrchistogram);
 ZEND_FUNCTION(mrcdestroy);

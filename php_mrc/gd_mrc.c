@@ -554,6 +554,137 @@ int gdloadMRC(gdIOCtx *io_ctx, int in_length, MRC *pMRC) {
 	return 1;
 }
 
+/**
+ * void mrc_rotate(MRC *mrc, double angle)
+ */
+
+MRCPtr mrc_rotate(MRC *mrc_src, double angle) {
+
+	MRCPtr mrc_dst;
+
+	float	*data_array_src, *data_array_dst;
+
+	float min_val=mrc_src->header.amin;
+
+	int	w_src=mrc_src->header.nx, h_src=mrc_src->header.ny,
+      n_src=w_src*h_src;
+
+	mrc_dst = (MRC *) malloc (sizeof (MRC));
+	mrc_convert_to_float(mrc_src, mrc_dst); 
+	data_array_src = (float *)mrc_src->pbyData;
+	data_array_dst = (float *)mrc_dst->pbyData;
+	rotate_2d_image (data_array_src, data_array_dst, h_src, w_src, angle, h_src, w_src, min_val);
+	return mrc_dst;
+}
+
+/**
+ * float * rotate_2d_image (float *in_img, int h, int w, double ang, int new_h, int new_w, 
+ *                          float default_value)
+ *
+ * Description   : rotate image in_img about its center by angle ang (in radians).
+ *                 To solve the problem, we need to consider the problem backwards. 
+ *                 For each pixel(x',y') in the output image, use the inverse of the 
+ *                 rotation functions to figure out which input-image pixel (x,y) maps to it.
+ *                 Then bilinear interpolation is used to generate pixel value.
+ *                 Following equation relates pixel(x',y') to pixel(x,y)
+ *
+ *                     | x'|   | cos(theta) -sin(theta) |   | x - x_c |     | x_c' |
+ *                     |   | = |                        | * |         |   + |      |
+ *                     | y'|   | sin(theta)  cos(theta) |   | y - y_c |     | y_c' |
+ *
+ *                     and,
+ *
+ *                     | x |   | cos(theta)  sin(theta) |   | x' - x_c' |   | x_c |
+ *                     |   | = |                        | * |           | + |     |
+ *                     | y |   | -sin(theta) cos(theta) |   | y' - y_c' |   | y_c |
+ *
+ *
+ *                 where (x_c, y_c) and (x'_c, y'_c) are centers of the image before and after
+ *                 rotation, respectively.
+ *
+ * Return type      : rotated image.
+ *
+ * Argument         : in_img -- input image.
+ * Argument         : h -- height of the input image.
+ * Argument         : w -- width of the input image.
+ * Argument         : new_h -- height of the rotated image.
+ * Argument         : new_w -- width of the rotated image.
+ *
+ *
+ */
+int rotate_2d_image (float *in_img, float *out_img, int h, int w, double ang, int new_h, int new_w, 
+                          float default_value)
+{
+    int old_xmid, old_ymid, new_xmid, new_ymid, new_x, new_y, index;
+   float  dx, dy, old_x, old_y;
+   double  sine, cosine;
+
+   sine = sin(ang);
+   cosine = cos(ang);
+   old_xmid = (int) floor(w/2.0 + 0.5);
+   old_ymid = (int) floor(h/2.0 + 0.5);
+   new_xmid = (int) floor(new_w/2.0 + 0.5);
+   new_ymid = (int) floor(new_h/2.0 + 0.5);
+
+   for (index=0, new_y=0; new_y<new_h; new_y++)       /* visit each row in in_img.*/
+       for (new_x=0; new_x<new_w; new_x++, index++){
+          /* visit each pixel within the xth row. */
+          dx = new_x - new_xmid;
+          dy = new_y - new_ymid;
+          old_x = cosine * dx + sine * dy + old_xmid;
+          old_y = cosine * dy - sine * dx + old_ymid;
+          out_img[index] = linear_2d_interp (in_img, h, w, old_x, old_y, default_value);
+       }
+   return 1;
+}
+
+/*
+ * Function name :  linear_2d_interp
+ *
+ * Return type      : intensity value of the interploted pixel.
+ *
+ * Argument         : in_img -- input image.
+ * Argument         : h -- height of the input image.
+ * Argument         : w -- width of the input image.
+ * Argument         : old_x, old_y -- intended location of the pixel.
+ *
+ */
+float linear_2d_interp (float *in_img, int h, int w, float old_x, float old_y, float default_value)
+ {
+   int floor_x, floor_y, ceil_x, ceil_y, offset1, offset2;
+   float rem_x, rem_y;
+   float out_value;
+
+   if (old_x < 0. || old_x > w-1.0 || old_y < 0. || old_y > h - 1.0)
+       out_value = default_value;
+   else{
+        floor_y = ((int) floor(old_y)) % h;
+        ceil_y = ((int) ceil(old_y)) % h;
+        rem_y = old_y - ((float) floor_y);
+
+        floor_x = ((int) floor(old_x)) % w;
+        ceil_x = ((int) ceil(old_x)) % w;
+        rem_x = old_x - ((float) floor_x);
+
+        offset1 = floor_y * h;
+        offset2 = ceil_y * h;
+        out_value = linear_interp(linear_interp(in_img[offset1+floor_x],
+                    in_img[offset2+floor_x], rem_y), linear_interp(in_img[offset1+ceil_x],
+                    in_img[offset2+ceil_x], rem_y), rem_x);
+   }
+   return out_value;
+}
+
+/**
+ * float linear_interp(float low_value, float high_value, float position)
+ */
+float linear_interp(float low_value, float high_value, float position)
+{
+  float result;
+  result = low_value * (1.0 - position) + high_value * position;
+  return(result);
+}
+
 
 /**
  * vim command

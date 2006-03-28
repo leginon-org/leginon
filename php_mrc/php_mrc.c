@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.13 2006-02-24 18:38:20 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.14 2006-03-28 22:50:18 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -60,6 +60,7 @@ function_entry mrc_functions[] = {
 	ZEND_FE(mrcgetdata, NULL)
 	ZEND_FE(mrcgetscale, NULL)
 	ZEND_FE(mrcputdata, NULL)
+	ZEND_FE(mrcrotate, NULL)
 	ZEND_FE(mrcupdateheader, NULL)
 	ZEND_FE(mrchistogram, NULL)
 	ZEND_FE(mrcdestroy, NULL)
@@ -590,7 +591,6 @@ ZEND_FUNCTION(mrccreate)
 {
 	zval **x_size, **y_size;
 	MRCPtr pmrc;
-	MRC mrc;
 
 	if (ZEND_NUM_ARGS() != 2 || zend_get_parameters_ex(2, &x_size, &y_size) == FAILURE) {
 		ZEND_WRONG_PARAM_COUNT();
@@ -999,6 +999,34 @@ ZEND_FUNCTION(mrcputdata)
 		zend_hash_move_forward_ex(Z_ARRVAL_PP(input), &pos);
 		i++;
 	}
+}
+
+
+
+/** 
+ * Rotate an image with a given angle
+ *
+ * Description:
+ * mrcrotate(resource src_mrc, float angle)
+ */ 
+ZEND_FUNCTION(mrcrotate)
+{
+	zval	**MRCD, **ANGLE;
+	MRCPtr	pmrc, pmrc_rotated;
+	int argc = ZEND_NUM_ARGS();
+	double angle=0;
+
+	if (argc != 2 || zend_get_parameters_ex(argc, &MRCD, &ANGLE) == FAILURE) {
+		ZEND_WRONG_PARAM_COUNT();
+	}
+
+	convert_to_double_ex(ANGLE);
+	angle = Z_DVAL_PP(ANGLE);
+
+	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
+	pmrc_rotated = (MRCPtr)mrc_rotate(pmrc, angle);
+	ZEND_REGISTER_RESOURCE(return_value, pmrc_rotated, le_mrc);
+
 }
 
 
