@@ -57,9 +57,9 @@ class Registration(object):
         self.viewer.setXC(correlation_image, s)
 
         target = data.AcquisitionImageTargetData(initializer=self.target)
+        # reverse y
         target['delta row'] += shift['y']
         target['delta column'] -= shift['x']
-        self.node.logger.info(str(shift))
         self.emtarget = self.node.targetToEMTargetData(target)
         self.node.publish(self.emtarget, database=True)
         self.presets_client.toScope(old_preset_name, self.emtarget)
@@ -68,7 +68,7 @@ class Registration(object):
 
         self.viewer.clearImages()
 
-        return shift
+        return self.emtarget, shift
         
     def prepareStage(self, tilts):
         if len(tilts) < 2:

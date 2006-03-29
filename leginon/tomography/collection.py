@@ -155,7 +155,7 @@ class Collection(object):
 
         self.logger.info('Removing tilt backlash...')
         try:
-            shift = self.registration.removeBacklash(tilts)
+            self.emtarget, shift = self.registration.removeBacklash(tilts)
         except Exception, e:
             self.logger.error('Failed to remove backlash: %s.' % e)
             self.finalize()
