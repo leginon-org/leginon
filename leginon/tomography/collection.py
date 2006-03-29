@@ -79,6 +79,7 @@ class Collection(object):
                                           self.viewer,
                                           self.settings,
                                           self.theta,
+                                          self.target,
                                           self.emtarget)
 
         if self.settings['run buffer cycle']:
