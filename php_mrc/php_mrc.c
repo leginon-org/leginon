@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.14 2006-03-28 22:50:18 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.15 2006-03-29 01:33:51 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -1002,29 +1002,39 @@ ZEND_FUNCTION(mrcputdata)
 }
 
 
-
 /** 
  * Rotate an image with a given angle
  *
  * Description:
- * mrcrotate(resource src_mrc, float angle)
+ * mrcrotate(resource src_mrc, float angle [, boolean resize ])
  */ 
 ZEND_FUNCTION(mrcrotate)
 {
-	zval	**MRCD, **ANGLE;
+	zval	**MRCD, **ANGLE, **RESIZE;
 	MRCPtr	pmrc, pmrc_rotated;
 	int argc = ZEND_NUM_ARGS();
+	int resize = 0;
 	double angle=0;
 
-	if (argc != 2 || zend_get_parameters_ex(argc, &MRCD, &ANGLE) == FAILURE) {
+
+	if (argc < 1 || argc > 3) 
+	{
 		ZEND_WRONG_PARAM_COUNT();
-	}
+	} 
+
+	zend_get_parameters_ex(argc, &MRCD, &ANGLE, &RESIZE);
 
 	convert_to_double_ex(ANGLE);
 	angle = Z_DVAL_PP(ANGLE);
 
+	if (argc>2) {
+		convert_to_boolean_ex(RESIZE);
+		resize = Z_LVAL_PP(RESIZE);
+	}
+
+
 	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
-	pmrc_rotated = (MRCPtr)mrc_rotate(pmrc, angle);
+	pmrc_rotated = (MRCPtr)mrc_rotate(pmrc, angle, resize);
 	ZEND_REGISTER_RESOURCE(return_value, pmrc_rotated, le_mrc);
 
 }

@@ -555,10 +555,10 @@ int gdloadMRC(gdIOCtx *io_ctx, int in_length, MRC *pMRC) {
 }
 
 /**
- * void mrc_rotate(MRC *mrc, double angle)
+ * void mrc_rotate(MRC *mrc, double angle, int resize)
  */
 
-MRCPtr mrc_rotate(MRC *mrc_src, double angle) {
+MRCPtr mrc_rotate(MRC *mrc_src, double angle, int resize) {
 
 	MRCPtr mrc_dst;
 
@@ -568,12 +568,18 @@ MRCPtr mrc_rotate(MRC *mrc_src, double angle) {
 
 	int	w_src=mrc_src->header.nx, h_src=mrc_src->header.ny,
       n_src=w_src*h_src;
+	int	w_dst, h_dst;
 
-	mrc_dst = (MRC *) malloc (sizeof (MRC));
-	mrc_convert_to_float(mrc_src, mrc_dst); 
+	if (resize) {
+					cal_rotated_image_dimension(h_src, w_src, angle, &h_dst, &w_dst);
+	} else {
+		w_dst=w_src;
+		h_dst=h_src;
+	}
+	mrc_dst = mrc_create(w_dst, h_dst);
 	data_array_src = (float *)mrc_src->pbyData;
 	data_array_dst = (float *)mrc_dst->pbyData;
-	rotate_2d_image (data_array_src, data_array_dst, h_src, w_src, angle, h_src, w_src, min_val);
+	rotate_2d_image (data_array_src, data_array_dst, h_src, w_src, angle, h_dst, w_dst, min_val);
 	return mrc_dst;
 }
 
@@ -626,8 +632,8 @@ int rotate_2d_image (float *in_img, float *out_img, int h, int w, double ang, in
    new_xmid = (int) floor(new_w/2.0 + 0.5);
    new_ymid = (int) floor(new_h/2.0 + 0.5);
 
-   for (index=0, new_y=0; new_y<new_h; new_y++)       /* visit each row in in_img.*/
-       for (new_x=0; new_x<new_w; new_x++, index++){
+   for (index=0, new_y=0; new_y<new_h; new_y++) /* visit each row in in_img.*/
+       for (new_x=0; new_x<new_w; new_x++, index++ ) {
           /* visit each pixel within the xth row. */
           dx = new_x - new_xmid;
           dy = new_y - new_ymid;
@@ -666,8 +672,8 @@ float linear_2d_interp (float *in_img, int h, int w, float old_x, float old_y, f
         ceil_x = ((int) ceil(old_x)) % w;
         rem_x = old_x - ((float) floor_x);
 
-        offset1 = floor_y * h;
-        offset2 = ceil_y * h;
+        offset1 = floor_y * w;
+        offset2 = ceil_y * w;
         out_value = linear_interp(linear_interp(in_img[offset1+floor_x],
                     in_img[offset2+floor_x], rem_y), linear_interp(in_img[offset1+ceil_x],
                     in_img[offset2+ceil_x], rem_y), rem_x);
@@ -683,6 +689,20 @@ float linear_interp(float low_value, float high_value, float position)
   float result;
   result = low_value * (1.0 - position) + high_value * position;
   return(result);
+}
+
+/**
+ * void cal_rotated_image_dimension(int h, int w, double ang, int *new_h, int *new_w)
+ */
+void cal_rotated_image_dimension(int h, int w, double ang, int *new_h, int *new_w)
+{
+   double sine, cosine;
+
+   sine = sin(ang);
+   cosine = cos(ang);
+   *new_w = (int)(h * fabs(sine) + w * fabs(cosine)) ;  /* final image width */
+   *new_h = (int)(w * fabs(sine) + h * fabs(cosine)) ;  /* final image height */
+
 }
 
 
