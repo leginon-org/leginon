@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleDepth.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-10-25 19:12:50 $
-# $Author: acheng $
+# $Date: 2006-04-04 21:05:46 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -352,7 +352,7 @@ class PickHoleSettingsDialog(gui.wx.Settings.Dialog):
 		szstats.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szstats.Add(self.widgets['pickhole radius'], (0, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Zero thickness:')
+		label = wx.StaticText(self, -1, 'Reference Intensity:')
 		szstats.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szstats.Add(self.widgets['pickhole zero thickness'], (1, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)

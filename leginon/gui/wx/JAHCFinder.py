@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/JAHCFinder.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-10-18 21:14:02 $
+# $Date: 2006-04-04 21:05:46 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -262,7 +262,7 @@ class LatticeSettingsDialog(gui.wx.Settings.Dialog):
 		szstats.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szstats.Add(self.widgets['lattice hole radius'], (0, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Zero thickness:')
+		label = wx.StaticText(self, -1, 'Reference Intensity:')
 		szstats.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szstats.Add(self.widgets['lattice zero thickness'], (1, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)

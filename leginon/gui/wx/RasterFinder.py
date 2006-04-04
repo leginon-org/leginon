@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.22 $
+# $Revision: 1.23 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-01-24 22:39:28 $
+# $Date: 2006-04-04 21:05:47 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -201,7 +201,7 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		szice.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szice.Add(self.widgets['ice box size'], (0, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Zero thickness:')
+		label = wx.StaticText(self, -1, 'Reference Intensity:')
 		szice.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szice.Add(self.widgets['ice thickness'], (1, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
