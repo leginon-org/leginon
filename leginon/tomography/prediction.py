@@ -60,10 +60,26 @@ def leastSquares(x, tilts, v_shifts):
         x_shifts.append(v_shift[0])
         y_shifts.append(v_shift[1])
     args = (m_tilts, x_shifts, y_shifts)
+    '''
     try:
         result = scipy.optimize.leastsq(residuals, x, args=args, full_output=1)
+        print 'x', result[0]
+        print 'cov_x', result[1]
+        print 'nfev', result[2]['nfev']
+        print 'fvec', result[2]['fvec']
+        print 'ipvt', result[2]['ipvt']
+        print 'qtf', result[2]['qtf']
+        print 'ier', result[3]
+        print result[4]
     except scipy.linalg.basic.LinAlgError:
         result = scipy.optimize.leastsq(residuals, x, args=args, full_output=0)
+    '''
+    kwargs = {
+        'full_output': 0,
+        'ftol': 1e-12,
+        'xtol': 1e-12,
+    }
+    result = scipy.optimize.leastsq(residuals, x, args=args, **kwargs)
     try:
         x = list(result[0])
     except TypeError:
