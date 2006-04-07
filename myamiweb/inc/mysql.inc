@@ -189,7 +189,7 @@ class mysql {
 	}
 
 	function getSQLHost() {
-		return $this->host;
+		return $this->db_host;
 	}
 
 	function getError() {
