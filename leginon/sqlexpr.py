@@ -502,9 +502,9 @@ class CreateTable(SQLExpression):
         if not self.columns:
             return ''
 	if self.type in ('BDB', 'HEAP', 'ISAM', 'InnoDB', 'MERGE', 'MRG_MyISAM', 'MyISAM'):
-		type_str = " TYPE=%s " % self.type
+		type_str = " ENGINE=%s " % self.type
 	else:
-		type_str = " TYPE=MyISAM" 
+		type_str = " ENGINE=MyISAM" 
 
         create = "CREATE TABLE IF NOT EXISTS %s " % backquote(self.table)
 	keys = []
