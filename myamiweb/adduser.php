@@ -1,4 +1,4 @@
-<?
+<?php
 require('inc/admin.inc');
 
 $f_sel_name=$_POST['f_sel_name'];
@@ -86,7 +86,7 @@ function enable_input(state) {
 	}
 }
 
-var jsid = "<?=$id?>";
+var jsid = "<?php=$id?>";
 
 function init() {
 	var index=-1;
@@ -98,23 +98,23 @@ function init() {
 	if (index >=0) {
 		document.data.f_sel_name.options[index].selected = true;
 		document.data.f_sel_name.focus();
-<? if ($_POST['f_name']) { ?>
+<?php if ($_POST['f_name']) { ?>
 	} else {
 		document.data.f_full_name.focus();
 	}
-<? } else { echo "}"; } ?>
+<?php } else { echo "}"; } ?>
 }
 
 </script>
-<h3>Table: <?=$maintable?></h3>
+<h3>Table: <?php=$maintable?></h3>
 Choose a Name in the list or type one, then &lt;Tab&gt;
 <br>
-<form method="POST" name="data" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
+<form method="POST" name="data" enctype="multipart/form-data" action="<?php=$_SERVER['PHP_SELF']?>">
 <table  border=0 cellspacing=1>
 <tr valign="top">
 <td>
 <select name="f_sel_name"  SIZE=20 onClick="update_data();" onchange="update_data();">
-<?
+<?php
 foreach ($users as $user) {
 //	$s = ($f_sel_name==$user['DEF_id']) ? 'selected' : '';
 	echo "<option value='".$user['DEF_id']."' $s>".stripslashes($user['name'])."</option>\n"; 
@@ -135,19 +135,19 @@ foreach ($users as $user) {
 name:<font color="red">*</font>
 </td>
 <td class="dt1"> 
-<input class="field" type="text" name="f_name" maxlength="20" size="17" value ="<?=$f_name?>" onBlur="check_name();" onchange="check_name();"  >
+<input class="field" type="text" name="f_name" maxlength="20" size="17" value ="<?php=$f_name?>" onBlur="check_name();" onchange="check_name();"  >
 </td>
-<? if ($nameerror) { ?>
+<?php if ($nameerror) { ?>
 <td valign="top">
-<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?=$nameerror?></div></td>
-<? } ?>
+<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?php=$nameerror?></div></td>
+<?php } ?>
 </tr>
 <tr>
 <td class="dt2" height="40">
 full name:
 </td>
 <td class="dt2" valign="top">
-  <textarea class="textarea" name="f_full_name" cols="15" rows="2" nowrap><?=htmlentities(stripslashes($f_full_name)); ?></textarea>
+  <textarea class="textarea" name="f_full_name" cols="15" rows="2" nowrap><?php=htmlentities(stripslashes($f_full_name)); ?></textarea>
 </td>
 </tr>
 <tr>
@@ -162,7 +162,7 @@ group:
      </td>
      <td>
 	<select size="1" name="f_group" > 
-	<? foreach ($groups as $group) {
+	<?php foreach ($groups as $group) {
 		$s = ($f_group == $group['DEF_id'] ) ? 'selected' : '';
 		echo "<option value='".$group['DEF_id']."' $s >".$group['name']."</option>\n";
 		}
@@ -183,10 +183,10 @@ group:
 	<td class="dt1" height="40">
 	<input class="field" disabled name="f_groupdata_name" size="17" value="add new" id="id_groupdata_name" style="background-color: #DCDAD5;">
 	</td>
-<? if ($grouperror) { ?>
+<?php if ($grouperror) { ?>
 <td valign="top">
-<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?=$grouperror?></div></td>
-<? } ?>
+<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?php=$grouperror?></div></td>
+<?php } ?>
 	</tr>
 	<tr>
 	<td class="dt2" height="40">
@@ -223,7 +223,7 @@ group:
 </table>
 </form>
 
-<?
+<?php
 /* footer comment */
 admin_footer();
 ?>

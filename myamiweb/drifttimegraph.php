@@ -1,4 +1,4 @@
-<?
+<?php
 include ("inc/jpgraph.php");
 include ("inc/jpgraph_line.php");
 include ("inc/jpgraph_scatter.php");

@@ -1,4 +1,4 @@
-<?
+<?php
 require('inc/ctf.inc');
 require('inc/util.inc');
 require('inc/leginon.inc');
@@ -21,13 +21,13 @@ $stats = $ctf->getStats($fields, $sessionId, $runId);
 ?>
 <html>
 <head>
-<title><?=$title?> CTF report</title>
+<title><?php=$title?> CTF report</title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 </head>
 <body>
-<?= divtitle("CTF Report $title Experiment"); ?>
+<?php= divtitle("CTF Report $title Experiment"); ?>
 <br>
-<?
+<?php
 foreach($stats as  $field=>$data) {
 		foreach($data as $k=>$v) {
 			$imageId = $stats[$field][$k]['id'];

@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  *	The Leginon software is Copyright 2003 

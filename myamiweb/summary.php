@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  *	The Leginon software is Copyright 2003 
@@ -19,7 +19,7 @@ $title = $sessioninfo[Name];
 ?>
 <html>
 <head>
-<title><?=$title?> summary</title>
+<title><?php=$title?> summary</title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 <STYLE type="text/css">
 DIV.comment_section { text-align: justify; 
@@ -45,19 +45,19 @@ function init() {
   <A class="header" HREF="index.php">&lt;index&gt;</A>
  </td>
  <td>
-  <A class="header" HREF="3wviewer.php?expId=<?=$expId?>">&lt;view <?=$title?>&gt;</A>
+  <A class="header" HREF="3wviewer.php?expId=<?php=$expId?>">&lt;view <?php=$title?>&gt;</A>
  </td>
 </tr>
 </table>
 <table border="0" cellpadding=10>
 <tr valign="top">
 	<td colspan="2">
-	<?= divtitle("Summary of $title Experiment"); ?>
+	<?php= divtitle("Summary of $title Experiment"); ?>
 	</td>
 </tr>
 <tr valign="top">
 	<td>
-<?
+<?php
 $sessioninfo = $leginondata->getSessionInfo($expId);
 if (!empty($sessioninfo)) {
 	echo divtitle("Experiment Information");
@@ -143,13 +143,13 @@ if ($r) {
 		$n++;
 ?>
 	<td>
-	Preset: <?=$preset?>
-	<a href="imagestatsgraph.php?hg=1&vdata=1&Id=<?=$sessionId?>&preset=<?=$preset?>">[data]</a>
-	<a href="imagestatsgraph.php?hg=1&vs=1&Id=<?=$sessionId?>&preset=<?=$preset?>">[sql]</a><br>
-	<a href="imagestatsgraph.php?hg=1&Id=<?=$sessionId?>&preset=<?=$preset?>"><img
-	 border="0"  src="imagestatsgraph.php?hg=1&w=210&Id=<?=$sessionId?>&preset=<?=$preset?>"></a>
+	Preset: <?php=$preset?>
+	<a href="imagestatsgraph.php?hg=1&vdata=1&Id=<?php=$sessionId?>&preset=<?php=$preset?>">[data]</a>
+	<a href="imagestatsgraph.php?hg=1&vs=1&Id=<?php=$sessionId?>&preset=<?php=$preset?>">[sql]</a><br>
+	<a href="imagestatsgraph.php?hg=1&Id=<?php=$sessionId?>&preset=<?php=$preset?>"><img
+	 border="0"  src="imagestatsgraph.php?hg=1&w=210&Id=<?php=$sessionId?>&preset=<?php=$preset?>"></a>
 	</td>
-<?
+<?php
 	}
 echo "</tr>";
 echo "</table>";
@@ -186,7 +186,7 @@ $icethicknesspresets = $leginondata->getIceThicknessPresets($expId);
 </tr>
 <tr>
 <td colspan="2">
-<?
+<?php
 $comments = $leginondata->getComments($expId);
 if (!empty($comments)) {
 	echo divtitle("Comments");
@@ -205,7 +205,7 @@ if (!empty($comments)) {
 </tr>
 <tr>
 <td colspan="2">
-<?
+<?php
 echo divtitle("CTF");
 require('inc/ctf.inc');
 $fields = array('defocus1', 'defocus2', 'snr');

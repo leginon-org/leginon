@@ -51,11 +51,11 @@ $imgsrc = $imgscript."?preset=".$preset."&session=".$session."&id=".$id.$quality
 <html>
 <head>
 <title>
-MAP: <?=$filename; ?>
+MAP: <?php=$filename; ?>
 </title>
 <script language="javascript" src="js/draglayer.js"></script>
 <script>
-var filename="<?=$filename?>";
+var filename="<?php=$filename?>";
 var ns6 = (document.getElementById&&!document.all) ? true:false;
 var ie = (document.all)? true:false;
 
@@ -65,10 +65,10 @@ var my=0;
 var offsetX = 0;
 var offsetY = 0;
 
-var jsimgwidth=<?=$imgwidth?>;
-var jsimgheight=<?=$imgheight?>;
-var jsmapsize = <?=$imgmapsize?>;
-var ratio=<?=$ratio?>;
+var jsimgwidth=<?php=$imgwidth?>;
+var jsimgheight=<?php=$imgheight?>;
+var jsmapsize = <?php=$imgmapsize?>;
+var ratio=<?php=$ratio?>;
 var area;
 var sbleft=0;
 var sbtop=0;
@@ -284,13 +284,13 @@ function getArea() {
 		style="z-index:2; position:absolute; left:0px; top:0px; background-color:rgb(0,0,0); border: 1px solid #000000;" > 
 	<div
 		id="divarea"
-		style="z-index:99;position:absolute;visibility:visible;width: <?=$areasize?>px; height:<?=$areasize?>px;border:1px dashed <?=$areacolor?>;cursor:move;background-color:transparent;background:url(none)"
+		style="z-index:99;position:absolute;visibility:visible;width: <?php=$areasize?>px; height:<?php=$areasize?>px;border:1px dashed <?php=$areacolor?>;cursor:move;background-color:transparent;background:url(none)"
 		onmousedown	= "areamousedown(event)"
 		onmouseup		= "areamouseup(event)"
 		onmousemove = "areamousemove(event)"
 		onmouseout	= "areamouseup(event)"
 	></div>
-	<img id="imgmap" src="<?=$imgmapsrc?>"
+	<img id="imgmap" src="<?php=$imgmapsrc?>"
 		onmousemove = "areamousemove(event)"
 		onmousedown	= "imgmapmousedown(event)"
 	><br>
@@ -304,7 +304,7 @@ function getArea() {
 	></div> 
 </div>
 <div id="divimg" style="z-index:1; position:absolute; width:100%; height:100%; overflow:auto; ">
-<img id="img" hspace="0" vspace="0" border="0" src="<?=$imgsrc?>"
+<img id="img" hspace="0" vspace="0" border="0" src="<?php=$imgsrc?>"
 	onmousemove	=	"imgmousemove(event)";
 	onmousedown	=	"imgmousedown(event)";
 	onmouseup		=	"imgmouseup(event)";

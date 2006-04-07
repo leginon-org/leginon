@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  *	The Leginon software is Copyright 2003 
  *	The Scripps Research Institute, La Jolla, CA
@@ -16,10 +16,10 @@ $refreshtime = ($_POST[refreshtime]) ? $_POST[refreshtime] : "10000";
 <html>
 <head>
 <script>
-var jsfileid <?=$strfileid?>;
-var jstime = <?=time()?>;
-var refresh = <?=$refresh?>;
-var refreshtime = "<?=$refreshtime?>";
+var jsfileid <?php=$strfileid?>;
+var jstime = <?php=time()?>;
+var refresh = <?php=$refresh?>;
+var refreshtime = "<?php=$refreshtime?>";
 
 function getfileid() {
 	return jsfileid;
@@ -51,8 +51,8 @@ function rl() {
 <body onload="rl()">
 <form name="memo" method="POST">
 <input type="hidden" name="refreshstate" value="true">
-<input type="hidden" name="refreshtime" value="<?=$refreshtime?>">
-<input type="hidden" name="session" value="<?=$session?>">
+<input type="hidden" name="refreshtime" value="<?php=$refreshtime?>">
+<input type="hidden" name="session" value="<?php=$session?>">
 </form>
 </body>
 </html>

@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  *	Some tools to deal with python string structure representations
  *	stored in the database

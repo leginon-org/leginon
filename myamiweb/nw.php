@@ -1,4 +1,4 @@
-<?
+<?php
 require('inc/leginon.inc');
 $id=$_GET[id];
 $tg = ($_GET[tg]) ? '&tg=1' : '';
@@ -20,7 +20,7 @@ $imgsrc = "getimg.php?preset=".$_GET[preset]."&session=".$_GET[session]."&id=".$
 <html>
 <head>
 <title>
-<? echo $filename; ?>
+<?php echo $filename; ?>
 </title>
 <script>
 function init() {
@@ -29,6 +29,6 @@ function init() {
 </script>
 </head>
 <body leftmargin="0" topmargin="0" bottommargin="0" marginwidth="0" marginheight="0" onload="init();">
-<img name="newimgmv" id="imgmvId" border="0" src="<?=$imgsrc?>" >
+<img name="newimgmv" id="imgmvId" border="0" src="<?php=$imgsrc?>" >
 </body>
 </html>

@@ -1,4 +1,4 @@
-<?
+<?php
 class ScaleBar {
 
 	var $scales = array (

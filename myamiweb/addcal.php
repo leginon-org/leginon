@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  *	The Leginon software is Copyright 2003 
@@ -72,7 +72,7 @@ if ($_POST[bt_import]) {
 admin_header();
 ?>
 <h3>Calibrations Import/Export</h3>
-<form name="data" method="POST" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF'] ?>">
+<form name="data" method="POST" enctype="multipart/form-data" action="<?php=$_SERVER['PHP_SELF'] ?>">
 <table border="0" class=tableborder>
 <tr valign=top >
 <td>
@@ -89,7 +89,7 @@ admin_header();
   <td>
 From database Host:
 	<select name="hostId" onChange="javascript:document.data.submit();">
-		<?
+		<?php
 		foreach($hostkeys as $host) {
 			$selected = ($host==$hostId) ? "selected" : "";
 			echo "<option value='$host' $selected >$host\n";
@@ -102,7 +102,7 @@ From database Host:
 <td nowrap >
 Instrument host:
 	<select name="instrumenthost" onChange="javascript:document.data.submit();">
-<?
+<?php
 foreach($instrumenthosts as $h) {
 	$selected = ($h==$instrumenthost) ? "selected" : "";
 	echo "<option $selected >".$h."</option>";
@@ -114,7 +114,7 @@ foreach($instrumenthosts as $h) {
 <td>
 Scope
 <select name='scopeId' >
-<?
+<?php
 foreach($scopes as $s) {
 	echo "<option value='".$s['id']."' >".$s['name']."</option>";
 }
@@ -122,7 +122,7 @@ foreach($scopes as $s) {
 </select>
 Camera
 <select name='cameraId' >
-<?
+<?php
 foreach($cameras  as $c) {
 	echo "<option value='".$c['id']."' >".$c['name']."</option>";
 }
@@ -136,7 +136,7 @@ foreach($cameras  as $c) {
  <tr valign="bottom">
   <td>
 	<select multiple name="calibrations[]" size="6" >
-	<? foreach ($leginondata->calibrationtables as $table) {
+	<?php foreach ($leginondata->calibrationtables as $table) {
 		$s = (is_array($_POST['calibrations'])) ? ((in_array($table, $_POST['calibrations'])) ? 'selected' : '') : 'selected';
 		echo "<option value='$table' $s >$table</option>\n";
 	}
@@ -146,7 +146,7 @@ foreach($cameras  as $c) {
   <td>
 	<font color="red">*</font><small>Only for MatrixCalibrationData</small><br>
 	<select multiple name="types[]" size="6" >
-	<? foreach ($calibrationtypes as $type) {
+	<?php foreach ($calibrationtypes as $type) {
 		$s = (is_array($_POST['types'])) ? ((in_array($type['type'], $_POST['types'])) ? 'selected' : '') : 'selected';
 		echo "<option value='".$type['type']."' $s >".$type['type']."</option>\n";
 	}
@@ -160,23 +160,23 @@ foreach($cameras  as $c) {
    <table border="0">
 	<tr>
 		<td>
-	<input type="radio" name="format" value="xml" id="radio_format_xml"  <? echo $xmlradiochecked ?> >
+	<input type="radio" name="format" value="xml" id="radio_format_xml"  <?php echo $xmlradiochecked ?> >
 		</td>
 		<td>
 	<label for="radio_format_xml">Export to XML format</label>
-	<input type="checkbox" name="saveasfile" id="checkbox_file_Id" <? echo $filechecked ?> >
+	<input type="checkbox" name="saveasfile" id="checkbox_file_Id" <?php echo $filechecked ?> >
 	<label for="checkbox_file_Id">Save as...</label>
 		</td>
 	</tr>
 	<tr>
 		<td>
-	<input type="radio" name="format" value="host" <? echo $hostradiochecked ?> >
+	<input type="radio" name="format" value="host" <?php echo $hostradiochecked ?> >
 		</td>
 		<td>
 To dbemdata Host:
 
 	<select name="importhostId" onChange="javascript:document.data.submit();">
-		<?
+		<?php
 		foreach($hostkeys as $host) {
 			$selected = ($host==$importhostId) ? "selected" : "";
 			echo "<option value='$host' $selected >$host\n";
@@ -185,7 +185,7 @@ To dbemdata Host:
 	</select>
 Instrument host:
 	<select name="importinstrumenthost" onChange="javascript:document.data.submit();">
-<?
+<?php
 foreach($instrumenthosts as $h) {
 	$selected = ($h==$importinstrumenthost) ? "selected" : "";
 	echo "<option $selected >".$h."</option>";
@@ -195,7 +195,7 @@ foreach($instrumenthosts as $h) {
 	<br>
 Scope
 <select name='importscopeId' >
-<?
+<?php
 foreach($importscopes as $s) {
 	echo "<option value='".$s['id']."' >".$s['name']."</option>";
 }
@@ -203,7 +203,7 @@ foreach($importscopes as $s) {
 </select>
 Camera
 <select name='importcameraId' >
-<?
+<?php
 foreach($importcameras  as $c) {
 	echo "<option value='".$c['id']."' >".$c['name']."</option>";
 }
@@ -213,7 +213,7 @@ foreach($importcameras  as $c) {
 		</tr>
 	<tr>
 		<td>
-	<input type="radio" name="format" value="table" id="radio_format_Id" <? echo $tableradiochecked ?> >
+	<input type="radio" name="format" value="table" id="radio_format_Id" <?php echo $tableradiochecked ?> >
 		</td>
 		<td>
 	<label for="radio_format_Id">View </label>
@@ -254,7 +254,7 @@ To database Host:
      <td>
 
 	<select name="importfilehostId" >
-		<?
+		<?php
 		foreach($hostkeys as $host) {
 			$selected = ($host==$importfilehostId) ? "selected" : "";
 			echo "<option value='$host' $selected >$host\n";
@@ -274,7 +274,7 @@ To database Host:
 </table>
 
 </form>
-<?
+<?php
 if ($_POST[bt_export]) {
 	echo "<hr>";
 	if ($_POST[format]=="xml") {

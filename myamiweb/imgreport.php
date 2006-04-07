@@ -92,28 +92,28 @@ $ctf_display_fields = array (
 ?>
 <html>
 <head>
-<title>Image Report: <?=$filename?></title>
+<title>Image Report: <?php=$filename?></title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
-<? if ($displaytree) { ?>
+<?php if ($displaytree) { ?>
 <link rel="StyleSheet" href="css/tree.css" type="text/css">
 <script src="js/tree.js"></script>
-<? } // --- end if displaytree ?>
-<?=$javascript;?>
+<?php } // --- end if displaytree ?>
+<?php=$javascript;?>
 <script>
 function init() {
 	this.focus();
 }
-<?
+<?php
 if ($displaytree)
 	echo $jstree;
 ?>
 </script>
 </head>
 <body onload="init(); initviewer();">
-<form name="tf" method="POST" action="<?=$REQUEST_URI?>">
-<input type="hidden" name="datatree" value="<?=$displaytreevalue?>">
+<form name="tf" method="POST" action="<?php=$REQUEST_URI?>">
+<input type="hidden" name="datatree" value="<?php=$displaytreevalue?>">
 </form>
-<?
+<?php
 //--- define information to display
 $fileinfokeys = array (	'nx','ny',
 		'mode',
@@ -163,7 +163,7 @@ $mrcmode = array (
 <table border=0>
 <tr valign=top>
 	<td colspan="2">
-<?
+<?php
 echo divtitle("General");
 echo "<table border='0'>";
 echo formatHtmlRow('Filename', $filename);
@@ -178,7 +178,7 @@ echo "</table>";
 </tr>
 <tr valign=top>
 	<td>
-<?
+<?php
 if (is_array($imageinfo)) {
 	echo divtitle("Image Information");
 	echo "<table border='0'>";
@@ -209,7 +209,7 @@ if (is_array($imageinfo)) {
 ?>
 	</td>
 	<td>
-<?
+<?php
 if (is_array($fileinfo)) {
 	echo divtitle("Mrc Header Information");
 	echo "<table border='0'>";
@@ -225,7 +225,7 @@ if (is_array($fileinfo)) {
 <tr valign=top>
 	<td>
 
-<?
+<?php
 if (is_array($imageinfo) && $id=$imageinfo[parentId]) {
 	$parentlinks = array ('parentId', 'parentimage');
 	echo divtitle("Parent Image Information");
@@ -244,7 +244,7 @@ if (is_array($imageinfo) && $id=$imageinfo[parentId]) {
 ?>
 	</td>
 	<td>
-<?
+<?php
 echo divtitle("Image Relations");
 $datatypes = $leginondata->getDatatypes($sessionId);
 echo "<table border='0'>";
@@ -271,7 +271,7 @@ echo "</table>";
 <tr valign=top>
 <td width=300>
 <div style="border: 1px solid #000000; height:290; width:270; margin: 0px;padding:0px;  background-color: #CCCCFF">
-<?$viewer->display();?>
+<?php$viewer->display();?>
 </div>
 </td>
 <td>
@@ -279,14 +279,14 @@ echo "</table>";
 <table align="center" >
 <tr>
 <td>
-<img src="imagehistogram.php?tf=1&rp=1&id=<?=$imgId?>">
+<img src="imagehistogram.php?tf=1&rp=1&id=<?php=$imgId?>">
 </td>
 </tr>
 </table>
 </div>
 </td>
 <td>
-<?
+<?php
 $link = ($displaytree) ? "hide" : "view";
 $url = "<a href='#' class='header' onclick='javascript:document.tf.submit()'>".$link." &raquo;</a>"; 
 echo divtitle("Data Tree ".$url);
@@ -301,12 +301,12 @@ createTree(Tree,0, new Array());
 //-->
 </script>
 </div>
-<? } // --- end if displaytree ?>
+<?php } // --- end if displaytree ?>
 </td>
 </tr>
 <tr valign=top>
 	<td colspan="2">
-<?
+<?php
 echo divtitle("CTF");
 
 if (!empty($ctfdata)) {
@@ -350,7 +350,7 @@ echo divtitle("Calibrations");
 	</td>
 </tr>
 </table>
-<?
+<?php
 foreach ($types as $type) {
 	$t = $type['type'];
 	$m = $leginondata->getImageMatrixCalibration($imgId, $t);

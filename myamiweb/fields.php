@@ -5,7 +5,7 @@
 <title>Data</title>
 
 
-<?
+<?php
 require("config.php");
 require ('inc/mysql.inc');
 
@@ -27,7 +27,7 @@ while ( $row = mysql_fetch_array($Rtables, MYSQL_ASSOC)) {
 }
 ?>
 <pre>
-<?
+<?php
 print_r($data);
 ?>
 </pre>

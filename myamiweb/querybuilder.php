@@ -1,4 +1,4 @@
-<?
+<?php
 require('inc/leginon.inc');
 $tables = $leginondata->mysql->getTables();
 
@@ -44,7 +44,7 @@ $crlf = "<BR>";
 
 
 
-<form name="data" method="POST" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF'] ?>">
+<form name="data" method="POST" enctype="multipart/form-data" action="<?php=$_SERVER['PHP_SELF'] ?>">
 <table border="0">
 <tr>
 <td>
@@ -63,7 +63,7 @@ $crlf = "<BR>";
 <tr valign="top">
 <td>
 <select name="table" onChange="data.submit()">
-	<?
+	<?php
 	foreach ($tables as $t) { 
 		if ($t==$table) {
 			$selected = "selected";
@@ -80,14 +80,14 @@ $crlf = "<BR>";
 	$sqltables = implode(', ',$formatedtables);
 	?>
 </select><br />
-Alias: <input class="field" type="text" name="<?=$table."alias"?>" value="<?=$tablealias?>"</input>
+Alias: <input class="field" type="text" name="<?php=$table."alias"?>" value="<?php=$tablealias?>"</input>
 <br>
 <input class="button" type="submit" name="cleartables" value="Clear">
 <input class="button" type="submit" name="addtables" value="Add">
 </td>
 <td>
 <select multiple name="fields[]" size="10" >
-	<? foreach ($fields as $field) {
+	<?php foreach ($fields as $field) {
 		if (in_array($field, $_POST['fields'])) {
 			$selectedfields[] = $field;
 			$s = 'selected';
@@ -110,7 +110,7 @@ Alias: <input class="field" type="text" name="<?=$table."alias"?>" value="<?=$ta
 </td>
 <td>
 <select multiple name="joins[]" size="10" >
-<?
+<?php
 	foreach ($fields as $field) {
 		if (!ereg('^REF', $field))
 			continue;
@@ -126,7 +126,7 @@ Alias: <input class="field" type="text" name="<?=$table."alias"?>" value="<?=$ta
 ?>
 </select>
 <br>
-<? if ($currentjoins) {
+<?php if ($currentjoins) {
 echo "Aliases: <br>";
 	foreach ($currentjoins as $ref) {
 		$reftable = getRefTable($ref);
@@ -146,7 +146,7 @@ echo "Aliases: <br>";
 <input class="button" type="submit" name="addjoins" value="Add">
 </td>
 <td>
-	<textarea class="textarea" name="condition" cols="40" rows="8"><?=$condition?></textarea>
+	<textarea class="textarea" name="condition" cols="40" rows="8"><?php=$condition?></textarea>
 <br>
 <input class="button" type="submit" name="addselectedfield" value="Add Field">
 <input class="button" type="submit" name="clearselectedfield" value="Clear">
@@ -160,11 +160,11 @@ echo "Aliases: <br>";
 </td>
 </tr>
 </table>
-<input type="hidden" name="sqlfields" value="<?=$sqlfields?>">
-<input type="hidden" name="sqltables" value="<?=$sqltables?>">
-<input type="hidden" name="sqljoins" value="<?=$sqljoins?>">
+<input type="hidden" name="sqlfields" value="<?php=$sqlfields?>">
+<input type="hidden" name="sqltables" value="<?php=$sqltables?>">
+<input type="hidden" name="sqljoins" value="<?php=$sqljoins?>">
 </form>
-<?
+<?php
 
 function addquotes($string) {
 	return '`'.$string.'`';
@@ -191,7 +191,7 @@ function formatJoin($reftable, $refalias, $reffield, $tablealias, $field) {
 ?>
 <hr>
 <h4>SQL:</h4>
-<?
+<?php
 $sqlcondition = ($condition) ? ereg_replace("\n", $crlf, $condition).$crlf : "";
 if ($sqltables)
 	$sqltables.=$crlf;
@@ -207,7 +207,7 @@ echo $query;
 ?>
 <hr>
 <h4>PHP:</h4>
-<?
+<?php
 $phpq = ereg_replace('^', '$q="', $query);
 $phpq = ereg_replace($crlf.'$', '";', $phpq);
 $phpq = ereg_replace($crlf, ' "'.$crlf.'	."', $phpq);

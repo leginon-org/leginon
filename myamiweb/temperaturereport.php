@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  *	The Leginon software is Copyright 2003 
@@ -69,7 +69,7 @@ $title = $sessioninfo[Name];
 ?>
 <html>
 <head>
-<title><?=$title?> drift report</title>
+<title><?php=$title?> drift report</title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 </head>
 
@@ -80,28 +80,28 @@ $title = $sessioninfo[Name];
   <A class="header" HREF="index.php">&lt;index&gt;</A>
  </td>
  <td>
-  <A class="header" HREF="3wviewer.php?sessionId=<?=$sessionId?>">&lt;view <?=$title?>&gt;</A>
+  <A class="header" HREF="3wviewer.php?sessionId=<?php=$sessionId?>">&lt;view <?php=$title?>&gt;</A>
  </td>
 </tr>
 </table>
 <table border="0" cellpadding=10>
 <tr valign="top">
 	<td colspan="2">
-	<?= divtitle("Temperature Report $title Experiment"); ?>
+	<?php= divtitle("Temperature Report $title Experiment"); ?>
 	</td>
 </tr>
-<?
+<?php
 echo "<tr>";
 echo "<td colspan='2'>";
 ?>
-<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
-	max temperature:<input class="field" name="maxr" type="text" size="5" value="<?=$maxtemp?>">
-	min temperature:<input class="field" name="minr" type="text" size="5" value="<?=$mintemp?>">
-	<input type='checkbox' name='opt' <?=$sel_opt?> >filter
+<form method="POST" action="<?php=$_SERVER['REQUEST_URI']?>">
+	max temperature:<input class="field" name="maxr" type="text" size="5" value="<?php=$maxtemp?>">
+	min temperature:<input class="field" name="minr" type="text" size="5" value="<?php=$mintemp?>">
+	<input type='checkbox' name='opt' <?php=$sel_opt?> >filter
 	
 <input class="button" type="submit" value="update">
 <br>
-<?
+<?php
 
 $TEMPERATURE_DB_HOST = 'cronus4';
 $TEMPERATURE_DB_USER = 'usr_inst';
@@ -127,7 +127,7 @@ foreach ($channelinfo as $k=>$a) {
 }
 ?>
 </form>
-<?
+<?php
 $urlrate = ($maxtemp) ? "&maxr=$maxtemp" : "";
 $urlrate .= ($mintemp) ? "&minr=$mintemp" : "";
 echo "<a href='temperaturegraph.php?vd=1&Id=$sessionId&$url_ch'>[data]</a>";

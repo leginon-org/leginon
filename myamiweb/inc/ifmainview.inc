@@ -1,4 +1,4 @@
-<? 
+<?php 
 
 /**
  *	The Leginon software is Copyright 2003 
@@ -33,7 +33,7 @@
 <td>
 	<input type="hidden" name = "mvsel" value="">
 	<select name = "mlist" onchange = "setlist(); newexp(); " > 
-<?
+<?php
 	if (is_array($datatypes))
 	foreach ($datatypes as $k=>$v) {
 		if ($k==$mlist) $s='selected'; else $s=''; 	
@@ -58,11 +58,11 @@
 	 </tr>
 	 <tr>
 <td colspan=4 valign=top height=512 width=512 >
-<?
+<?php
 $iframesize = ($_GET["ifs"]==1) ? 'width=100% height=100% ' : 'width="512" height="512"';
 $src = 'src="getiframeimage.php"';
 ?>
-<iframe id=iframeimg name="picturebox" <? echo "$iframesize  $src" ?> scrolling="auto" ></iframe>
+<iframe id=iframeimg name="picturebox" <?php echo "$iframesize  $src" ?> scrolling="auto" ></iframe>
 </td>
 	 </tr>
 	</table>

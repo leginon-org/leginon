@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  *	The Leginon software is Copyright 2003 
@@ -35,7 +35,7 @@ $title = $sessioninfo[Name];
 ?>
 <html>
 <head>
-<title><?=$title?> ice thickness report</title>
+<title><?php=$title?> ice thickness report</title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 </head>
 
@@ -46,17 +46,17 @@ $title = $sessioninfo[Name];
   <A class="header" HREF="index.php">&lt;index&gt;</A>
  </td>
  <td>
-  <A class="header" HREF="3wviewer.php?sessionId=<?=$sessionId?>">&lt;view <?=$title?>&gt;</A>
+  <A class="header" HREF="3wviewer.php?sessionId=<?php=$sessionId?>">&lt;view <?php=$title?>&gt;</A>
  </td>
 </tr>
 </table>
 <table border="0" cellpadding=10>
 <tr valign="top">
 	<td colspan="2">
-	<?= divtitle("Density Report $title Experiment"); ?>
+	<?php= divtitle("Density Report $title Experiment"); ?>
 	</td>
 </tr>
-<?
+<?php
 echo "<tr>";
 echo "<td colspan='2'>";
 echo divtitle("Ice Thickness");
@@ -84,22 +84,22 @@ $presets = $leginondata->getDatatypes($sessionId);
 </tr>
 <tr>
 <td>
-<?=divtitle("Image Statistics");?>
+<?php=divtitle("Image Statistics");?>
 </td>
 </tr>
-<?
+<?php
 foreach ($presets as $preset) {
 if (!$leginondata->getRelatedStats($sessionId, $preset))
 	continue;
 ?>
 <tr>
 <td>
-<a href="statsgraph.php?vdata=1&Id=<?=$sessionId?>&preset=<?=$preset?>">[data]</a>
-<a href="statsgraph.php?vs=1&Id=<?=$sessionId?>&preset=<?=$preset?>">[sql]</a><br>
-<img src="statsgraph.php?Id=<?=$sessionId?>&preset=<?=$preset?>">
+<a href="statsgraph.php?vdata=1&Id=<?php=$sessionId?>&preset=<?php=$preset?>">[data]</a>
+<a href="statsgraph.php?vs=1&Id=<?php=$sessionId?>&preset=<?php=$preset?>">[sql]</a><br>
+<img src="statsgraph.php?Id=<?php=$sessionId?>&preset=<?php=$preset?>">
 </td>
 </tr>
-<?
+<?php
 }
 ?>
 </table>

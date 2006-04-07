@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  *	The Leginon software is Copyright 2003 
@@ -34,7 +34,7 @@ $title = $sessioninfo[Name];
 ?>
 <html>
 <head>
-<title><?=$title?> drift report</title>
+<title><?php=$title?> drift report</title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 </head>
 
@@ -45,26 +45,26 @@ $title = $sessioninfo[Name];
   <A class="header" HREF="index.php">&lt;index&gt;</A>
  </td>
  <td>
-  <A class="header" HREF="3wviewer.php?sessionId=<?=$sessionId?>">&lt;view <?=$title?>&gt;</A>
+  <A class="header" HREF="3wviewer.php?sessionId=<?php=$sessionId?>">&lt;view <?php=$title?>&gt;</A>
  </td>
 </tr>
 </table>
 <table border="0" cellpadding=10>
 <tr valign="top">
 	<td colspan="2">
-	<?= divtitle("Drift Report $title Experiment"); ?>
+	<?php= divtitle("Drift Report $title Experiment"); ?>
 	</td>
 </tr>
-<?
+<?php
 echo "<tr>";
 echo "<td colspan='2'>";
 echo divtitle("Avg. drift rate at end of measurement cycle");
 echo "<br>";
 ?>
-<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
-	max rate:<input class="field" name="maxr" type="text" size="5" value="<?=$maxrate?>">
+<form method="POST" action="<?php=$_SERVER['REQUEST_URI']?>">
+	max rate:<input class="field" name="maxr" type="text" size="5" value="<?php=$maxrate?>">
 </form>
-<?
+<?php
 $urlrate = ($maxrate) ? "&maxr=$maxrate" : "";
 echo "<a href='avgdriftgraph.php?vd=1&Id=$sessionId'>[data]</a>";
 echo "<a href='avgdriftgraph.php?vs=1&Id=$sessionId'>[sql]</a><br>";
@@ -77,14 +77,14 @@ echo "</td>\n";
 </tr>
 <tr>
 <td>
-<?=divtitle("Total time spent drifting");?>
+<?php=divtitle("Total time spent drifting");?>
 </td>
 </tr>
 <tr>
 <td>
-<a href="drifttimegraph.php?vd=1&Id=<?=$sessionId?>">[data]</a>
-<a href="drifttimegraph.php?vs=1&Id=<?=$sessionId?>">[sql]</a><br>
-<img src="drifttimegraph.php?Id=<?=$sessionId?>">
+<a href="drifttimegraph.php?vd=1&Id=<?php=$sessionId?>">[data]</a>
+<a href="drifttimegraph.php?vs=1&Id=<?php=$sessionId?>">[sql]</a><br>
+<img src="drifttimegraph.php?Id=<?php=$sessionId?>">
 </td>
 </tr>
 </table>

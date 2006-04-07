@@ -1,7 +1,7 @@
-<?
+<?php
 /**
- *	@version $Revision: 1.25 $
- *	@version $Id: image.inc,v 1.25 2006-03-20 23:36:57 dfellman Exp $
+ *	@version $Revision: 1.26 $
+ *	@version $Id: image.inc,v 1.26 2006-04-07 20:40:06 suloway Exp $
  */
 /**
  *	Tools to display images / mosaic

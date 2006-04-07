@@ -1,14 +1,14 @@
-<?
+<?php
 $title = "Please enable Javascript in you Browser";
 ?>
 <html>
 <head>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 <link rel="stylesheet" type="text/css" href="css/view.css">
-<title><?=$title?></title>
+<title><?php=$title?></title>
 </head>
 <body>
 <h3>
-<?=$title?>
+<?php=$title?>
 </h3>
 </html>

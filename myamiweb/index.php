@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  *	The Leginon software is Copyright 2003 
@@ -72,19 +72,19 @@ viewer_header($title);
 <center><h1>Leginon II Database Tools</h1></center>
 <hr/>
 <noscript>
-<?=divtitle("<center>Please enable Javascript in you Browser</center>")?>
+<?php=divtitle("<center>Please enable Javascript in you Browser</center>")?>
 </noscript>
 <table>
 <tr valign="top">
 	<td>
-		<?echo $log_from?>
-		<?echo $log?>
+		<?php echo $log_from?>
+		<?php echo $log?>
 	</td>
 	<td>
-		<?=$link->Display(); ?>
+		<?php echo $link->Display(); ?>
 	</td>
 </tr>
 </table>
-<?
+<?php
 viewer_footer();
 ?>

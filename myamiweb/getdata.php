@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  *	The Leginon software is Copyright 2003 
@@ -26,7 +26,7 @@ if($g) {
         <link rel="StyleSheet" href="css/tree.css" type="text/css">
         <script src="js/tree.js"></script>
         <script>
-<?
+<?php
 	echo $arr_node;
 }
 ?>
@@ -35,10 +35,10 @@ if($g) {
 
 <body >
 <div id="tree">
-<? if ($arr_node) { ?>
+<?php if ($arr_node) { ?>
 <script>
 <!--
-<?
+<?php
 if (ereg("undefined",$opennodes))
 	$opennodes=0;
 if (!empty($opennodes))
@@ -47,7 +47,7 @@ echo "ano = new Array($opennodes);\n";?>
 createTree(Tree,0,ano);
 //-->
 </script>
-<? } ?>
+<?php } ?>
 </div>
 </body>
 </html>

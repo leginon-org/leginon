@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  *	The Leginon software is Copyright 2003 
@@ -48,7 +48,7 @@ if ($_POST[bt_import]) {
 admin_header();
 ?>
 <h3>Applications Import/Export</h3>
-<form name="data" method="POST" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF'] ?>">
+<form name="data" method="POST" enctype="multipart/form-data" action="<?php=$_SERVER['PHP_SELF'] ?>">
 <table border=0 class=tableborder>
 <tr valign=top >
 <td>
@@ -62,7 +62,7 @@ admin_header();
 <td>
 From Host:
 	<select name="exportfromhostId" onChange="javascript:document.data.submit();">
-		<?
+		<?php
 		foreach($hostkeys as $host) {
 			$selected = ($host==$exfromhostId) ? "selected" : "";
 			echo "<option value='$host' $selected >$host\n";
@@ -79,7 +79,7 @@ From Host:
     <tr>
      <td colspan="2">
 	<select name="applicationId">
-	<?
+	<?php
 	foreach ($applications as $application) {
 		$selected = ($application['DEF_Id']==$applicationId) ? "selected" : "";
 		echo "<option value=\"".$application['DEF_Id']."\" $selected >".$application['name'].'-'.$application['version'];
@@ -90,16 +90,16 @@ From Host:
     </tr>
     <tr valign=top>
      <td>
-	<input type="radio" name="format" value="xml" id="radio_format_xml"  <?=$xmlradiochecked ?> >
+	<input type="radio" name="format" value="xml" id="radio_format_xml"  <?php=$xmlradiochecked ?> >
 	<label for="radio_format_xml">Export to XML format</label>
      <br>
-	<input type="radio" name="format" value="table" id="radio_format_Id" <?=$tableradiochecked ?> >
+	<input type="radio" name="format" value="table" id="radio_format_Id" <?php=$tableradiochecked ?> >
 	<label for="radio_format_Id">View </label>
      <br>
-	<input type="radio" name="format" value="host" id="radio_format_host" <?=$hostradiochecked ?> >
+	<input type="radio" name="format" value="host" id="radio_format_host" <?php=$hostradiochecked ?> >
 	<label for="radio_format_host">To Host:</label>
 	<select name="exporttohostId" >
-		<?
+		<?php
 		foreach($hostkeys as $host) {
 			$selected = ($host==$extohostId) ? "selected" : "";
 			echo "<option value='$host' $selected >$host\n";
@@ -108,7 +108,7 @@ From Host:
 	</select>
      </td>
      <td>
-	<input type="checkbox" name="saveasfile" id="checkbox_file_Id" <? echo $filechecked ?> >
+	<input type="checkbox" name="saveasfile" id="checkbox_file_Id" <?php echo $filechecked ?> >
 	<label for="checkbox_file_Id">Save as...</label>
      </td>
     </tr>
@@ -142,7 +142,7 @@ From Host:
       </td>
       <td>
 	<select name="import_hostId">
-		<?
+		<?php
 		foreach($hostkeys as $host) {
 			$selected = ($host==$im_hostId) ? "selected" : "";
 			echo "<option value='$host' $selected >$host\n";
@@ -162,7 +162,7 @@ From Host:
 </table>
 
 </form>
-<?
+<?php
 if ($_POST[bt_export]) {
 	echo "<hr>";
 	if ($_POST[format]=="xml") {

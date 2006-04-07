@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  *	The Leginon software is Copyright 2003 
@@ -12,7 +12,7 @@ require('inc/leginon.inc');
 <html>
 <head>
 </head>
-<?
+<?php
 $template = $_GET['tmpl'];
 $preset = $_GET['preset'];
 $session = $_GET['session'];
@@ -28,7 +28,7 @@ $src = ($template) ?
 ?>
 
 <body leftmargin="0" topmargin="0" bottommargin="0" marginwidth="0" marginheight="0" >
-<img id=imgmv name=newimgmv src="<?= $src ?>">
+<img id=imgmv name=newimgmv src="<?php= $src ?>">
 </body>
 </html>
 

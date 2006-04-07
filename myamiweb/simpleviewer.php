@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  *	The Leginon software is Copyright 2003 
  *	The Scripps Research Institute, La Jolla, CA
@@ -39,9 +39,9 @@ $javascript .= $viewer->getJavascriptInit();
 	<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 	<link rel="stylesheet" type="text/css" href="css/view.css">
 	<title>Simple Viewer</title>
-	<?=$javascript;?>
+	<?php=$javascript;?>
 </head>
 <body onload='initviewer();'>
-	<?$viewer->display();?>
+	<?php$viewer->display();?>
 </body>
 </html>

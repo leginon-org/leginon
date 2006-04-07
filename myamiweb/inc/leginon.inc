@@ -1,12 +1,12 @@
-<?
+<?php
 
 /**
  *	The Leginon software is Copyright 2003 
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.55 $
- *	@version $Id: leginon.inc,v 1.55 2006-03-23 01:32:33 dfellman Exp $
+ *	@version $Revision: 1.56 $
+ *	@version $Id: leginon.inc,v 1.56 2006-04-07 20:40:06 suloway Exp $
  */
 /**
  *	Query definition to access all leginon data 

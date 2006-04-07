@@ -1,4 +1,4 @@
-<?
+<?php
 require('inc/ctf.inc');
 $field = $_GET['f'];
 $id = $_GET['id'];

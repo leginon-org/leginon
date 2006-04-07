@@ -1,4 +1,4 @@
-<?
+<?php
 require('inc/admin.inc');
 
 $f_sel_name=$_POST['f_sel_name'];
@@ -51,7 +51,7 @@ admin_header('onload="init()"');
 ?>
 <script>
 
-var jsname = "<?=$f_name?>";
+var jsname = "<?php=$f_name?>";
 
 function init() {
 	var index=-1;
@@ -63,22 +63,22 @@ function init() {
 	if (index >=0) {
 		document.data.f_sel_name.options[index].selected = true;
 		document.data.f_sel_name.focus();
-<? if ($_POST['f_name'] && $_POST['bt_action']!='remove') { ?>
+<?php if ($_POST['f_name'] && $_POST['bt_action']!='remove') { ?>
 	} else {
 		document.data.f_description.focus();
 	}
-<? } else { echo "}"; } ?>
+<?php } else { echo "}"; } ?>
 }
 </script>
-<h3>Table: <?=$maintable?></h3>
+<h3>Table: <?php=$maintable?></h3>
 Choose a Name in the list or type one, then &lt;Tab&gt;
 <br>
-<form method="POST" name="data" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
+<form method="POST" name="data" enctype="multipart/form-data" action="<?php=$_SERVER['PHP_SELF']?>">
 <table  border=0 cellspacing=1>
 <tr valign="top">
 <td>
 <select name="f_sel_name"  SIZE=20 onClick="update_data();" onchange="update_data();">
-<?
+<?php
 foreach ($groups as $group) {
 	echo "<option value='".$group['DEF_id']."' $s>".stripslashes($group['name'])."</option>\n"; 
 } 
@@ -98,19 +98,19 @@ foreach ($groups as $group) {
 name:<font color="red">*</font>
 </td>
 <td class="dt1"> 
-<input class="field" type="text" name="f_name" maxlength="20" size="17" value ="<?=$f_name?>" onBlur="check_name();" onchange="check_name();"  >
+<input class="field" type="text" name="f_name" maxlength="20" size="17" value ="<?php=$f_name?>" onBlur="check_name();" onchange="check_name();"  >
 </td>
-<? if ($error) { ?>
+<?php if ($error) { ?>
 <td valign="top">
-<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?=$error?></div></td>
-<? } ?>
+<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?php=$error?></div></td>
+<?php } ?>
 </tr>
 <tr>
 <td class="dt2" height="40">
 full name:
 </td>
 <td class="dt2" valign="top">
-  <textarea class="textarea" name="f_description" cols="15" rows="2" nowrap><?=htmlentities(stripslashes($f_description)); ?></textarea>
+  <textarea class="textarea" name="f_description" cols="15" rows="2" nowrap><?php=htmlentities(stripslashes($f_description)); ?></textarea>
 </td>
 </tr>
 <tr>
@@ -130,6 +130,6 @@ full name:
 
 </table>
 </form>
-<?
+<?php
 admin_footer();
 ?>

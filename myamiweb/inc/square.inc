@@ -1,4 +1,4 @@
-<?
+<?php
 class square {
 
 	function square($cx,$cy, $dim) {

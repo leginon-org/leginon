@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  *	The Leginon software is Copyright 2003 
@@ -17,7 +17,7 @@
 <table cellpadding="0" cellspacing="0">
 <tr valign="top">
 <td>
-<?
+<?php
 require('inc/leginon.inc');
 require('inc/project.inc');
 $p[]='tilt';
@@ -74,16 +74,16 @@ if ($id) {
 }
 ?>
 </td>
-<? if ($display_tilt) { ?>
+<?php if ($display_tilt) { ?>
 <td>
 <font style='font-size: 12px;'>
-<?=$str_tilt?>
+<?php=$str_tilt?>
 </font>
 </td>
 <td>
-<img src="imgangle.php?a=<?=$angle?>">
+<img src="imgangle.php?a=<?php=$angle?>">
 </td>
-<? } ?>
+<?php } ?>
 </tr>
 </table>
 </font>

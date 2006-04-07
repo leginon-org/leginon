@@ -1,4 +1,4 @@
-<?
+<?php
 require('inc/admin.inc');
 
 $hostkeys = array_keys($SQL_HOSTS);
@@ -87,20 +87,20 @@ admin_header('onload="init()"');
 ?>
 <script>
 
-var jsid = "<?=$id?>";
+var jsid = "<?php=$id?>";
 
 function init() {
 	document.data.f_sel_name.focus();
 }
 </script>
-<h3>Table: <?=$maintable?></h3>
+<h3>Table: <?php=$maintable?></h3>
 <table  border=0>
-<form method="POST" name="dataimport" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
+<form method="POST" name="dataimport" enctype="multipart/form-data" action="<?php=$_SERVER['PHP_SELF']?>">
 <tr valign=top >
 <td>
 From Host:
 	<select name="hostId" onChange="javascript:document.dataimport.submit();">
-		<?
+		<?php
 		foreach($hostkeys as $host) {
 			$selected = ($host==$hostId) ? "selected" : "";
 			echo "<option value='$host' $selected >$host\n";
@@ -111,7 +111,7 @@ From Host:
 <td>
 Instrument host:
 	<select name="importinstrumenthost" onChange="javascript:document.dataimport.submit();">
-<?
+<?php
 foreach($importinstrumenthosts as $h) {
 	$selected = ($h==$importinstrumenthost) ? "selected" : "";
 	echo "<option $selected >".$h."</option>";
@@ -120,7 +120,7 @@ foreach($importinstrumenthosts as $h) {
 </select>
 Scope
 <select name='importscopeId' >
-<?
+<?php
 foreach($importscopes as $s) {
 	echo "<option value='".$s['id']."' >".$s['name']."</option>";
 }
@@ -128,7 +128,7 @@ foreach($importscopes as $s) {
 </select>
 Camera
 <select name='importcameraId' >
-<?
+<?php
 foreach($importcameras as $c) {
 	echo "<option value='".$c['id']."' >".$c['name']."</option>";
 }
@@ -145,11 +145,11 @@ foreach($importcameras as $c) {
 </table>
 <hr>
 <table  border=0 cellspacing=1>
-<form method="POST" name="data" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
+<form method="POST" name="data" enctype="multipart/form-data" action="<?php=$_SERVER['PHP_SELF']?>">
 <tr valign="top">
 <td>
 <select name="f_sel_name"  SIZE=20 onClick="update_data();" onchange="update_data();">
-<?
+<?php
 foreach ($instruments as $instrument) {
 	$selected = ($instrument['DEF_id']==$f_sel_name) ? "selected" : "";
 	echo "<option value='".$instrument['DEF_id']."' $selected >".stripslashes($instrument['name'])."</option>\n"; 
@@ -172,23 +172,23 @@ Choose a Name in the list
 name:<font color="red">*</font>
 </td>
 <td class="dt1"> 
-<input class="field" type="text" name="f_name" maxlength="30" size="17" value ="<?=$f_name?>" >
-<?
+<input class="field" type="text" name="f_name" maxlength="30" size="17" value ="<?php=$f_name?>" >
+<?php
 //  onBlur="check_name();" onchange="check_name();"  >
 ?>
 </td>
-<? if ($error) { ?>
+<?php if ($error) { ?>
 <td valign="top">
-<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?=$error?></div></td>
-<? } ?>
+<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?php=$error?></div></td>
+<?php } ?>
 </tr>
-<? /*
+<?php /*
 <tr>
 <td class="dt2" height="40">
 description:
 </td>
 <td class="dt2" valign="top">
-  <textarea class="textarea" name="f_description" cols="15" rows="2" nowrap><?=htmlentities(stripslashes($f_description)); ?></textarea>
+  <textarea class="textarea" name="f_description" cols="15" rows="2" nowrap><?php=htmlentities(stripslashes($f_description)); ?></textarea>
 </td>
 </tr>
 */ ?>
@@ -199,7 +199,7 @@ description:
 hostname:
 </td>
 <td class="dt1"> 
-<input class="field" type="text" name="f_hostname" maxlength="30" size="17" value ="<?=$f_hostname?>" >
+<input class="field" type="text" name="f_hostname" maxlength="30" size="17" value ="<?php=$f_hostname?>" >
 </td>
 </tr>
 
@@ -209,7 +209,7 @@ type:
 </td>
 <td class="dt2"> 
 <select name="f_type">
-<?
+<?php
 $intrument_types = array('', 'CCDCamera', 'TEM');
 foreach ($intrument_types as $intrument_type) {
 	$selected = ($intrument_type==$f_type) ? "selected" : "";
@@ -236,6 +236,6 @@ foreach ($intrument_types as $intrument_type) {
 
 </form>
 </table>
-<?
+<?php
 admin_footer();
 ?>

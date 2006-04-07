@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  *	The Leginon software is Copyright 2003 
@@ -41,7 +41,7 @@ foreach ($selections as $k=>$selection) {
 ?>
 <html>
 <head>
-<title><?=$title?></title>
+<title><?php=$title?></title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 <link rel="stylesheet" type="text/css" href="css/view.css">
 
@@ -50,7 +50,7 @@ foreach ($selections as $k=>$selection) {
 <script><!--
 var jschkobj = '';
 var jsobj = Array();
-<?
+<?php
 echo $checkbox;
 if ($p || $pt) {
 	echo $p[0]->getJavascript();
@@ -83,7 +83,7 @@ function update() {
 function init(){
 	parentwindow = window.opener;
 	this.focus();
-	<?=$init?>
+	<?php=$init?>
 } 
 
  // --> 
@@ -102,7 +102,7 @@ function init(){
 		<td>Color</td>
 		<td>Target</td>
 	</tr>
-	<?
+	<?php
 	foreach ($selections as $k=>$selection) {
 		echo "<tr>";
                 echo "<td>";

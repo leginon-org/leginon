@@ -1,4 +1,4 @@
-<?
+<?php
 require('inc/leginon.inc');
 require('inc/image.inc');
 

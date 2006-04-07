@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  *	The Leginon software is Copyright 2003 
@@ -7,10 +7,10 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  *
  * $Source: /ami/sw/cvsroot/dbem/config.php,v $
- * $Revision: 1.18 $
+ * $Revision: 1.19 $
  * $Name: not supported by cvs2svn $
- * $Date: 2006-03-09 19:02:13 $
- * $Author: dfellman $
+ * $Date: 2006-04-07 20:40:04 $
+ * $Author: suloway $
  * $State: Exp $
  * $Locker:  $
  *
@@ -28,7 +28,7 @@ $DB		= "dbemdata";
 // --- Project database URL
 
 $PROJECT_URL = "";
-$PROJECT_DB_HOST = "cronus4";
+$PROJECT_DB_HOST = "";
 $PROJECT_DB_USER = "usr_object";
 $PROJECT_DB_PASS = "";
 $PROJECT_DB = "project";
@@ -64,3 +64,4 @@ $SQL_HOSTS['name1']['db_user'] = 'usr_object';
 $SQL_HOSTS['name1']['db_pass'] = '';
 $SQL_HOSTS['name1']['db'] = 'dbemdata';
 */
+?>

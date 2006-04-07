@@ -1,4 +1,4 @@
-<?
+<?php
 require('inc/ptcl.inc');
 
 $sessions = $leginondata->getSessions();
@@ -67,7 +67,7 @@ ptcl_header('onload="init()"');
 ?>
 <script>
 
-var jsid = "<?=$id?>";
+var jsid = "<?php=$id?>";
 
 function init() {
 	var index=-1;
@@ -79,24 +79,24 @@ function init() {
 	if (index >=0) {
 		document.data.f_sel_name.options[index].selected = true;
 		document.data.f_sel_name.focus();
-<? if ($_POST['f_name']) { ?>
+<?php if ($_POST['f_name']) { ?>
 	} else {
 		document.data.f_criteria.focus();
 	}
-<? } else { echo "}"; } ?>
+<?php } else { echo "}"; } ?>
 }
 
 function enable_groupdata(state) {
 }
 
 </script>
-<h3>Table: <?=$maintable?></h3>
+<h3>Table: <?php=$maintable?></h3>
 <table  border=0 cellspacing=1>
-<form method="POST" name="data" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
+<form method="POST" name="data" enctype="multipart/form-data" action="<?php=$_SERVER['PHP_SELF']?>">
 <tr valign="top">
 <td>
 <select name="f_sel_name"  SIZE=20 onClick="update_data();" onchange="update_data();">
-<?
+<?php
 foreach ($selections as $selection) {
 	echo "<option value='".$selection['SelectionId']."' $s>".$selection['Name']."</option>\n"; 
 } 
@@ -116,12 +116,12 @@ Choose a Name in the list or type one, then &lt;Tab&gt;
 Name:<font color="red">*</font>
 </td>
 <td class="dt1"> 
-<input class="field" type="text" name="f_name" maxlength="20" size="17" value ="<?=$f_name?>" onBlur="check_name();" onchange="check_name();"  >
+<input class="field" type="text" name="f_name" maxlength="20" size="17" value ="<?php=$f_name?>" onBlur="check_name();" onchange="check_name();"  >
 </td>
-<? if ($error) { ?>
+<?php if ($error) { ?>
 <td valign="top">
-<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?=$error?></div></td>
-<? } ?>
+<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?php=$error?></div></td>
+<?php } ?>
 </tr>
 </td>
 </tr>
@@ -131,7 +131,7 @@ Session:
 </td>
 <td class="dt2" >
 <select name="f_sessionId"  SIZE=1 >
-<?
+<?php
 foreach ($sessions as $session) {
 	$s = ($f_sessionId == $session['id'] ) ? 'selected' : '';
 	echo "<option value='".$session['id']."' $s>".$session['name']."</option>\n"; 
@@ -147,7 +147,7 @@ foreach ($sessions as $session) {
 Criteria:
 </td>
 <td class="dt1"> 
-  <textarea class="textarea" name="f_criteria" cols="15" rows="2" nowrap><?=htmlentities(stripslashes($f_criteria)); ?></textarea>
+  <textarea class="textarea" name="f_criteria" cols="15" rows="2" nowrap><?php=htmlentities(stripslashes($f_criteria)); ?></textarea>
 </td>
 </tr>
 
@@ -156,8 +156,8 @@ Criteria:
 Allow public:
 </td>
 <td class="dt2"> 
-N<input class="field" type='radio' name='f_allow' value='N' <?=$allow_N?> >
-Y<input class="field" type='radio' name='f_allow' value='Y' <?=$allow_Y?> >
+N<input class="field" type='radio' name='f_allow' value='N' <?php=$allow_N?> >
+Y<input class="field" type='radio' name='f_allow' value='Y' <?php=$allow_Y?> >
 </td>
 </tr>
 
@@ -166,7 +166,7 @@ Y<input class="field" type='radio' name='f_allow' value='Y' <?=$allow_Y?> >
 Note:
 </td>
 <td class="dt1"> 
-  <textarea class="textarea" name="f_note" cols="15" rows="2" nowrap><?=htmlentities(stripslashes($f_note)); ?></textarea>
+  <textarea class="textarea" name="f_note" cols="15" rows="2" nowrap><?php=htmlentities(stripslashes($f_note)); ?></textarea>
 </td>
 </tr>
 
@@ -175,7 +175,7 @@ Note:
 Time:
 </td>
 <td class="dt2"> 
-<input class="field" type="text" name="f_time" maxlength="20" size="17" value ="<?=$f_time?>" >
+<input class="field" type="text" name="f_time" maxlength="20" size="17" value ="<?php=$f_time?>" >
 </td>
 </tr>
 
@@ -196,6 +196,6 @@ Time:
 
 </form>
 </table>
-<?
+<?php
 ptcl_footer();
 ?>

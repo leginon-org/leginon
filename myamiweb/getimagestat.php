@@ -1,4 +1,4 @@
-<?
+<?php
 require('inc/leginon.inc');
 $id=$_GET[id];
 list($info) = $leginondata->getImageStat($id);

@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  *	The Leginon software is Copyright 2003 
  *	The Scripps Research Institute, La Jolla, CA
@@ -47,7 +47,7 @@ foreach ($datatypes as $datatype) {
 $javascript .= $viewer->getJavascriptInit();
 viewer_header('Leginon Observer Interface', $javascript, 'initviewer()');
 ?>
-<a class="header" target="summary" href="summary.php?expId=<?=$sessionId?>">[summary]</A>
-<?$viewer->display();
+<a class="header" target="summary" href="summary.php?expId=<?php=$sessionId?>">[summary]</A>
+<?php$viewer->display();
 viewer_footer();
 ?>

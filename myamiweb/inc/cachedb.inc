@@ -1,7 +1,7 @@
-<?
+<?php
 /**
- *	@version $Revision: 1.3 $
- *	@version $Id: cachedb.inc,v 1.3 2005-01-24 23:28:43 dfellman Exp $
+ *	@version $Revision: 1.4 $
+ *	@version $Id: cachedb.inc,v 1.4 2006-04-07 20:40:06 suloway Exp $
  */
 /**
  *	cachedb: a class to cache any data in a db.	

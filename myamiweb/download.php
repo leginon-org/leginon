@@ -1,4 +1,4 @@
-<?
+<?php
 require('inc/leginon.inc');
 $imgId  = $_GET[id];
 $preset = $_GET[preset];
