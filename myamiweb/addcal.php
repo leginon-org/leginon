@@ -72,7 +72,7 @@ if ($_POST[bt_import]) {
 admin_header();
 ?>
 <h3>Calibrations Import/Export</h3>
-<form name="data" method="POST" enctype="multipart/form-data" action="<?php=$_SERVER['PHP_SELF'] ?>">
+<form name="data" method="POST" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF'] ?>">
 <table border="0" class=tableborder>
 <tr valign=top >
 <td>

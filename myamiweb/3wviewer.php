@@ -61,7 +61,7 @@ $viewer->add($view3);
 $javascript .= $viewer->getJavascriptInit();
 viewer_header('image viewer', $javascript, 'initviewer()');
 ?>
-<a class="header" target="summary" href="summary.php?expId=<?php=$sessionId?>">[summary]</A>
+<a class="header" target="summary" href="summary.php?expId=<?php echo $sessionId?>">[summary]</A>
 <?php$viewer->display();
 viewer_footer();
 ?>

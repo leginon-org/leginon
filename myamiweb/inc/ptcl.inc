@@ -111,7 +111,7 @@ $link->addlink('addptclselect.php','Selection','', '', '');
 <link rel="stylesheet" href="css/viewer.css" type="text/css" /> 
 <script src="js/dataform.js"></script>
 </head>
-<body Background='img/background.jpg' leftmargin="0" topmargin="5" marginwidth="0" marginheight="5" alink="#00CCCC" vlink="#006699" link="#006699" <?php=$javascriptinit?>>
+<body Background='img/background.jpg' leftmargin="0" topmargin="5" marginwidth="0" marginheight="5" alink="#00CCCC" vlink="#006699" link="#006699" <?php echo $javascriptinit?>>
 
 <center><h1>Particle Tools</h1></center>
 <hr/>

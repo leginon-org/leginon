@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  *	The Leginon software is Copyright 2003 
@@ -44,12 +44,12 @@ $link->addlink('goniometer.php','Goniometer','', 'goniometer', '');
 <table border=0>
 <tr valign="top">
 <td width=100>
-<?
+<?php
 $link->Display();
 ?>
 </td>
 <td>
-<?
+<?php
 }
 
 function admin_footer() {

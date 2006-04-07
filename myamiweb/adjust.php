@@ -43,7 +43,7 @@ $baseurl=implode("/",$arrayurl);
 ?>
 <html>
 <head>
-<title><?php=$title?></title>
+<title><?php echo $title?></title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 <link rel="stylesheet" type="text/css" href="css/view.css">
 
@@ -118,10 +118,10 @@ function drawSliders() {
   minpix1.width         = 255;
   minpix1.height        = 8;
   minpix1.minVal        = 0;
-  minpix1.maxVal        = <?php=$defaultmax?>;
+  minpix1.maxVal        = <?php echo $defaultmax?>;
   minpix1.valueInterval = 1;
   minpix1.arrowAmount   = 1;
-  minpix1.valueDefault  = <?php=$min ?>;
+  minpix1.valueDefault  = <?php echo $min ?>;
   minpix1.imgBasePath   = 'img/';
   minpix1.setBackgroundImage('dfe/white.php', 'no-repeat');
   minpix1.setSliderIcon('dfe/cursor_min2.gif', 11, 8);
@@ -134,10 +134,10 @@ function drawSliders() {
   maxpix1.width         = 255;
   maxpix1.height        = 8;
   maxpix1.minVal        = 0;
-  maxpix1.maxVal        = <?php=$defaultmax?>;
+  maxpix1.maxVal        = <?php echo $defaultmax?>;
   maxpix1.valueInterval = 1;
   maxpix1.arrowAmount   = 1;
-  maxpix1.valueDefault  = <?php=$max ?>;
+  maxpix1.valueDefault  = <?php echo $max ?>;
   maxpix1.imgBasePath   = 'img/';
   maxpix1.setBackgroundImage('dfe/white.php', 'no-repeat');
   maxpix1.setSliderIcon('dfe/cursor_max2.gif', 11, 8);
@@ -164,7 +164,7 @@ function init(){
 <body leftmargin="0" topmargin="0" bottommargin="0" marginwidth="0" marginheight="0" bgcolor="#FFFFFF" onload="init();">
 <form method="post" name="adjustform" id="adjust" >
 <?php   $cmapstr = ($cmap==1) ? "0" : "1";  ?>
-<input type="hidden" name="colormap" value="<?php=$cmapstr?>">
+<input type="hidden" name="colormap" value="<?php echo $cmapstr?>">
 <div style="z-index:99999;position:absolute;visibility:hidden;border:1px solid black"></div>
 <div style="z-index:99999;position:absolute;visibility:hidden;border:1px solid black"></div>
 <table border="0">
@@ -176,7 +176,7 @@ function init(){
   <tr>
    <td>
 	<button class="button" type="submit" value="">
-	<img src="img/dfe/grad.php?w=15&h=15&colormap=<?php=$cmapstr?>">
+	<img src="img/dfe/grad.php?w=15&h=15&colormap=<?php echo $cmapstr?>">
 	</button>
    </td>
    <td>
@@ -235,7 +235,7 @@ function init(){
 	</td>
 	<td>AutoScale
 		<?php$sel = ($autoscale==1) ? "checked" : "" ?>
-		<input type="checkbox" name="autoscale" <?php=$sel?> value="1" onClick="setautoscale()">
+		<input type="checkbox" name="autoscale" <?php echo $sel?> value="1" onClick="setautoscale()">
 		
 	</td>
 	</tr>

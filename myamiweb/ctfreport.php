@@ -21,11 +21,11 @@ $stats = $ctf->getStats($fields, $sessionId, $runId);
 ?>
 <html>
 <head>
-<title><?php=$title?> CTF report</title>
+<title><?php echo $title?> CTF report</title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 </head>
 <body>
-<?php= divtitle("CTF Report $title Experiment"); ?>
+<?php echo  divtitle("CTF Report $title Experiment"); ?>
 <br>
 <?php
 foreach($stats as  $field=>$data) {

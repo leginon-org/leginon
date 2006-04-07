@@ -28,7 +28,7 @@ $src = ($template) ?
 ?>
 
 <body leftmargin="0" topmargin="0" bottommargin="0" marginwidth="0" marginheight="0" >
-<img id=imgmv name=newimgmv src="<?php= $src ?>">
+<img id=imgmv name=newimgmv src="<?php echo  $src ?>">
 </body>
 </html>
 

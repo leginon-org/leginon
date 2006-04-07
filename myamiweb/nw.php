@@ -29,6 +29,6 @@ function init() {
 </script>
 </head>
 <body leftmargin="0" topmargin="0" bottommargin="0" marginwidth="0" marginheight="0" onload="init();">
-<img name="newimgmv" id="imgmvId" border="0" src="<?php=$imgsrc?>" >
+<img name="newimgmv" id="imgmvId" border="0" src="<?php echo $imgsrc?>" >
 </body>
 </html>

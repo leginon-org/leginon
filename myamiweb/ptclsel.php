@@ -41,7 +41,7 @@ foreach ($selections as $k=>$selection) {
 ?>
 <html>
 <head>
-<title><?php=$title?></title>
+<title><?php echo $title?></title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 <link rel="stylesheet" type="text/css" href="css/view.css">
 
@@ -83,7 +83,7 @@ function update() {
 function init(){
 	parentwindow = window.opener;
 	this.focus();
-	<?php=$init?>
+	<?php echo $init?>
 } 
 
  // --> 

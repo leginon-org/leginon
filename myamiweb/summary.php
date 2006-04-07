@@ -19,7 +19,7 @@ $title = $sessioninfo[Name];
 ?>
 <html>
 <head>
-<title><?php=$title?> summary</title>
+<title><?php echo $title?> summary</title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 <STYLE type="text/css">
 DIV.comment_section { text-align: justify; 
@@ -45,14 +45,14 @@ function init() {
   <A class="header" HREF="index.php">&lt;index&gt;</A>
  </td>
  <td>
-  <A class="header" HREF="3wviewer.php?expId=<?php=$expId?>">&lt;view <?php=$title?>&gt;</A>
+  <A class="header" HREF="3wviewer.php?expId=<?php echo $expId?>">&lt;view <?php echo $title?>&gt;</A>
  </td>
 </tr>
 </table>
 <table border="0" cellpadding=10>
 <tr valign="top">
 	<td colspan="2">
-	<?php= divtitle("Summary of $title Experiment"); ?>
+	<?php echo  divtitle("Summary of $title Experiment"); ?>
 	</td>
 </tr>
 <tr valign="top">
@@ -143,11 +143,11 @@ if ($r) {
 		$n++;
 ?>
 	<td>
-	Preset: <?php=$preset?>
-	<a href="imagestatsgraph.php?hg=1&vdata=1&Id=<?php=$sessionId?>&preset=<?php=$preset?>">[data]</a>
-	<a href="imagestatsgraph.php?hg=1&vs=1&Id=<?php=$sessionId?>&preset=<?php=$preset?>">[sql]</a><br>
-	<a href="imagestatsgraph.php?hg=1&Id=<?php=$sessionId?>&preset=<?php=$preset?>"><img
-	 border="0"  src="imagestatsgraph.php?hg=1&w=210&Id=<?php=$sessionId?>&preset=<?php=$preset?>"></a>
+	Preset: <?php echo $preset?>
+	<a href="imagestatsgraph.php?hg=1&vdata=1&Id=<?php echo $sessionId?>&preset=<?php echo $preset?>">[data]</a>
+	<a href="imagestatsgraph.php?hg=1&vs=1&Id=<?php echo $sessionId?>&preset=<?php echo $preset?>">[sql]</a><br>
+	<a href="imagestatsgraph.php?hg=1&Id=<?php echo $sessionId?>&preset=<?php echo $preset?>"><img
+	 border="0"  src="imagestatsgraph.php?hg=1&w=210&Id=<?php echo $sessionId?>&preset=<?php echo $preset?>"></a>
 	</td>
 <?php
 	}

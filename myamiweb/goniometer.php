@@ -13,7 +13,7 @@ $models= $leginondata->getAllGoniometerModels();
 admin_header();
 ?>
 <h3>View Goniometer</h3>
-<form name="goniometerform" method="POST" action="<?php=$_SERVER['PHP_SELF']?>">
+<form name="goniometerform" method="POST" action="<?php echo $_SERVER['PHP_SELF']?>">
 <select name="modelId" onChange="javascript:document.goniometerform.submit()">
 <?php
 foreach($models as $model) {
@@ -31,7 +31,7 @@ foreach($models as $model) {
 <?php
 if($selectedmodelId) {
 ?>
-<img src="goniometergraph.php?Id=<?php=$selectedmodelId?>">
+<img src="goniometergraph.php?Id=<?php echo $selectedmodelId?>">
 <?php
 }
 admin_footer();

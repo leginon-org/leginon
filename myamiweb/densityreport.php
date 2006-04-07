@@ -35,7 +35,7 @@ $title = $sessioninfo[Name];
 ?>
 <html>
 <head>
-<title><?php=$title?> ice thickness report</title>
+<title><?php echo $title?> ice thickness report</title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 </head>
 
@@ -46,14 +46,14 @@ $title = $sessioninfo[Name];
   <A class="header" HREF="index.php">&lt;index&gt;</A>
  </td>
  <td>
-  <A class="header" HREF="3wviewer.php?sessionId=<?php=$sessionId?>">&lt;view <?php=$title?>&gt;</A>
+  <A class="header" HREF="3wviewer.php?sessionId=<?php echo $sessionId?>">&lt;view <?php echo $title?>&gt;</A>
  </td>
 </tr>
 </table>
 <table border="0" cellpadding=10>
 <tr valign="top">
 	<td colspan="2">
-	<?php= divtitle("Density Report $title Experiment"); ?>
+	<?php echo  divtitle("Density Report $title Experiment"); ?>
 	</td>
 </tr>
 <?php
@@ -84,7 +84,7 @@ $presets = $leginondata->getDatatypes($sessionId);
 </tr>
 <tr>
 <td>
-<?php=divtitle("Image Statistics");?>
+<?php echo divtitle("Image Statistics");?>
 </td>
 </tr>
 <?php
@@ -94,9 +94,9 @@ if (!$leginondata->getRelatedStats($sessionId, $preset))
 ?>
 <tr>
 <td>
-<a href="statsgraph.php?vdata=1&Id=<?php=$sessionId?>&preset=<?php=$preset?>">[data]</a>
-<a href="statsgraph.php?vs=1&Id=<?php=$sessionId?>&preset=<?php=$preset?>">[sql]</a><br>
-<img src="statsgraph.php?Id=<?php=$sessionId?>&preset=<?php=$preset?>">
+<a href="statsgraph.php?vdata=1&Id=<?php echo $sessionId?>&preset=<?php echo $preset?>">[data]</a>
+<a href="statsgraph.php?vs=1&Id=<?php echo $sessionId?>&preset=<?php echo $preset?>">[sql]</a><br>
+<img src="statsgraph.php?Id=<?php echo $sessionId?>&preset=<?php echo $preset?>">
 </td>
 </tr>
 <?php

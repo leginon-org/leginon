@@ -72,7 +72,7 @@ viewer_header($title);
 <center><h1>Leginon II Database Tools</h1></center>
 <hr/>
 <noscript>
-<?php=divtitle("<center>Please enable Javascript in you Browser</center>")?>
+<?php echo divtitle("<center>Please enable Javascript in you Browser</center>")?>
 </noscript>
 <table>
 <tr valign="top">

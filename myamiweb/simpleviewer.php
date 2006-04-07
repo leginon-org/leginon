@@ -39,7 +39,7 @@ $javascript .= $viewer->getJavascriptInit();
 	<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 	<link rel="stylesheet" type="text/css" href="css/view.css">
 	<title>Simple Viewer</title>
-	<?php=$javascript;?>
+	<?php echo $javascript;?>
 </head>
 <body onload='initviewer();'>
 	<?php$viewer->display();?>
