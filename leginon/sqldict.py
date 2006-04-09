@@ -1001,7 +1001,7 @@ def flatDict(in_dict):
 
 	for key in keys:
 		value = in_dict[key]
-		if type(value) is type({}):
+		if type(value) is dict:
 			d = flatDict(value)
 			nd={}
 			# build the new keys
@@ -1144,12 +1144,14 @@ def saveMRC(object, name, path, filename, thumb=False):
 	d[k] = filename
 	return d
 
-def sqltype(object,key=None):
+def sqltype(o):
+	return _sqltype(type(o))
+
+def _sqltype(t):
 	"""
 	Convert a python type to an SQL type
 	"""
-	t = type(object)
-	if t is type(""):
+	if t is str:
 		return "TEXT"
 	elif t is float:
 		return "DOUBLE"
@@ -1168,7 +1170,7 @@ def ref2field(key, dataobject):
 	colname = sep.join(['REF',reftable,key])
 	return colname
 
-def sqlColumnsDefinition(in_dict, noDefault=None):
+def sqlColumnsDefinition(in_dict, noDefault=None, null=False):
 	"""
 	Format a table definition for any Data Class:
 
@@ -1202,7 +1204,10 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 			if isinstance(in_dict_types[key], data.Data):
 				value = in_dict_types[key]()
 
-		sqlt = sqltype(value,key)
+		if null and value is None:
+			sqlt = _sqltype(in_dict_types[key])
+		else:
+			sqlt = sqltype(value)
 		if sqlt is not None:
 			### simple types
 			column['Field']=key
@@ -1223,7 +1228,7 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 			### Numeric array
 			if len(Numeric.ravel(value)) < 10:
 				arraydict = matrix2dict(value,key)
-				nd = sqlColumnsDefinition(arraydict, noDefault=[])
+				nd = sqlColumnsDefinition(arraydict, noDefault=[], null=null)
 				nd.sort()
 			else:
 				filename = in_dict.filename()
@@ -1232,18 +1237,21 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 				## MRC in file system, but return filename 
 				## string
 				mrcdict = saveMRC(None,key,path,filename)
-				nd = sqlColumnsDefinition(mrcdict, noDefault=[])
+				nd = sqlColumnsDefinition(mrcdict, noDefault=[], null=null)
 			columns += nd
 		elif type(value) is dict:
 			### python dict
 			flatdict = flatDict({key:value})
-			nd = sqlColumnsDefinition(flatdict, noDefault=[])
+			nd = sqlColumnsDefinition(flatdict, noDefault=[], null=null)
 			nd.sort()
 			columns += nd
 		elif type(value) in [tuple, list]:
 			### python sequences
-			nd = sqlColumnsDefinition({seq2sqlColumn(key):repr(value)}, noDefault=[])
+			nd = sqlColumnsDefinition({seq2sqlColumn(key):repr(value)}, noDefault=[], null=null)
 			columns += nd
+		column['Null'] = 'YES'
+		if 'Type' in column and 'TEXT' not in column['Type'] and 'BLOB' not in column['Type']:
+			column['Default'] = 'NULL'
 			
 	return columns
 
@@ -1291,7 +1299,7 @@ def sqlColumnsSelect(in_dict):
 	return columns
 
 
-def sqlColumnsFormat(in_dict):
+def sqlColumnsFormat(in_dict, null=False):
 	"""
 	{'ARRAY|matrix|2_1': 3.0, 'magnification': 5, 'ARRAY|matrix|2_2': 4.0,
 	 'SUBD|BShift|Y': 18.0, 'SUBD|BShift|X': 45.0, 'ARRAY|matrix|1_1': 1.0,
@@ -1324,6 +1332,8 @@ def sqlColumnsFormat(in_dict):
 			columns[object2sqlColumn(key)] = cPickle.dumps(value.o, cPickle.HIGHEST_PROTOCOL)
 		elif type(value) in [tuple, list]:
 			columns[seq2sqlColumn(key)] = repr(value)
+		elif null and value is None:
+			columns[key] = None
 	return columns
 
 

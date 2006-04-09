@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SetupWizard.py,v $
-# $Revision: 1.18 $
+# $Revision: 1.19 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-01-20 00:37:22 $
+# $Date: 2006-04-09 01:44:51 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -593,7 +593,7 @@ class SetupWizard(wx.wizard.Wizard):
 	def onFinished(self, evt):
 		if self.session is not None:
 			initializer = self.getSettings()
-			self.setup.saveSettings(self.session['user'], initializer)
+			self.setup.saveSettings(self.session, initializer)
 
 	def getUsers(self):
 		users = self.setup.getUsers()
@@ -759,17 +759,21 @@ class Setup(object):
 		clientsdata = data.ConnectToClientsData(initializer=initializer)
 		self.publish(clientsdata, database=True, dbforce=True)
 
-	def saveSettings(self, userdata, initializer):
+	def saveSettings(self, sessiondata, initializer):
 		settingsclass = data.SetupWizardSettingsData
 		sd = settingsclass(initializer=initializer)
-		sd['session'] = data.SessionData(initializer={'user': userdata})
+		sd['session'] = sessiondata
 		self.publish(sd, database=True, dbforce=True)
 
 	def getSessions(self, userdata, n=None):
 		sessiondata = data.SessionData(initializer={'user': userdata})
 		sessiondatalist = self.research(datainstance=sessiondata, results=n)
-		return (map(lambda d: d['name'], sessiondatalist),
-						_indexBy('name', sessiondatalist))
+		names = []
+		for sessiondata in sessiondatalist:
+			name = sessiondata['name']
+			if name is not None:
+				names.append(name)
+		return names, _indexBy('name', sessiondatalist)
 
 	def getProjects(self):
 		if self.projectdata is None:

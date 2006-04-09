@@ -1107,6 +1107,7 @@ class PresetData(InSessionData):
 			('energy filter', bool),
 			('energy filter width', float),
 			('pre exposure', float),
+			('skip', bool),
 		)
 	typemap = classmethod(typemap)
 

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.35 $
+# $Revision: 1.36 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-03-03 18:16:50 $
+# $Date: 2006-04-09 01:44:51 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -207,6 +207,18 @@ class Proxy(object):
 			self.imagecorrection = None
 		else:
 			self.imagecorrection = self.imagecorrections[name]
+
+	def getTEMParameter(self, temname, name):
+		for parameter, attr_name in parametermapping:
+			if parameter == name:
+				return getattr(self.tems[temname], attr_name)
+		raise ValueError
+
+	def getCCDCameraParameter(self, ccdcameraname, name):
+		for parameter, attr_name in parametermapping:
+			if parameter == name:
+				return getattr(self.ccdcameras[ccdcameraname], attr_name)
+		raise ValueError
 
 	def getData(self, dataclass, image=True, temname=None, ccdcameraname=None):
 		if issubclass(dataclass, data.ScopeEMData):

@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.65 $
+# $Revision: 1.66 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-03-20 20:29:41 $
-# $Author: pulokas $
+# $Date: 2006-04-09 01:44:51 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -103,10 +103,11 @@ class Calibrations(wx.StaticBoxSizer):
 		self.Layout()
 
 class EditPresetDialog(gui.wx.Dialog.Dialog):
-	def __init__(self, parent, parameters, tems, ccd_cameras):
+	def __init__(self, parent, parameters, tems, ccd_cameras, getValue=None):
 		self.parameters = parameters
 		self.tems = tems
 		self.ccd_cameras = ccd_cameras
+		self.getValue = getValue
 
 		try:
 			title =  'Edit Preset %s' % parameters['name']
@@ -135,143 +136,177 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		parameters = self.parameters
 		self.nonestring = '(None)'
 
-		choices = self.getTEMChoices()
-		self.ctem = wx.Choice(self, -1, choices=choices)
-		choices = self.getMagChoices()
-		self.cmag = wx.Choice(self, -1, choices=choices)
-		self.fedefocus = FloatEntry(self, -1, chars=9)
-		self.fespotsize = FloatEntry(self, -1, chars=2)
-		self.feintensity = FloatEntry(self, -1, chars=9)
-		self.feimageshiftx = FloatEntry(self, -1, chars=9)
-		self.feimageshifty = FloatEntry(self, -1, chars=9)
-		self.febeamshiftx = FloatEntry(self, -1, chars=9)
-		self.febeamshifty = FloatEntry(self, -1, chars=9)
+		tems = self.getTEMChoices()
+		magnifications = self.getMagChoices()
+		ccdcameras = self.getCCDCameraChoices()
+		self.choices = {
+			'tem': wx.Choice(self, -1, choices=tems),
+			'magnification': wx.Choice(self, -1, choices=magnifications),
+			'ccdcamera': wx.Choice(self, -1, choices=ccdcameras),
+		}
 
-		choices = self.getCCDCameraChoices()
-		self.cccdcamera = wx.Choice(self, -1, choices=choices)
-		self.cbfilm = wx.CheckBox(self, -1, 'Use film')
-		self.cb_energy_filter = wx.CheckBox(self, -1, 'Energy filtered')
-		self.fe_energy_filter_width = FloatEntry(self, -1, chars=6)
-		self.fe_preexp = FloatEntry(self, -1, chars=6)
-		self.cpcamconfig = gui.wx.Camera.CameraPanel(self)
+		self.floats = {
+			'defocus': FloatEntry(self, -1, chars=9),
+			'spot size': FloatEntry(self, -1, chars=2),
+			'intensity': FloatEntry(self, -1, chars=9),
+			'image shift': {
+				'x': FloatEntry(self, -1, chars=9),
+				'y': FloatEntry(self, -1, chars=9),
+			},
+			'beam shift': {
+				'x': FloatEntry(self, -1, chars=9),
+				'y': FloatEntry(self, -1, chars=9),
+			},
+			'energy filter width': FloatEntry(self, -1, chars=6),
+			'pre exposure': FloatEntry(self, -1, chars=6),
+		}
 
-		try:
-			tem = parameters['tem']
-		except KeyError:
-			tem = None
-		if tem is None:
-			self.ctem.SetStringSelection(self.nonestring)
-		else:
-			if self.ctem.FindString(tem['name']) == wx.NOT_FOUND:
-				self.ctem.Append(tem['name'])
-			self.ctem.SetStringSelection(tem['name'])
+		self.bools = {
+			'film': wx.CheckBox(self, -1, 'Use film'),
+			'skip': wx.CheckBox(self, -1, 'Skip when cycling'),
+			'energy filter': wx.CheckBox(self, -1, 'Energy filtered'),
+		}
 
-		try:
-			if parameters['magnification'] is not None:
-				mag = str(int(parameters['magnification']))
-				if self.cmag.FindString(mag) == wx.NOT_FOUND:
-					self.cmag.Append(mag)
-				self.cmag.SetStringSelection(mag)
-			self.fedefocus.SetValue(parameters['defocus'])
-			self.fespotsize.SetValue(parameters['spot size'])
-			self.feintensity.SetValue(parameters['intensity'])
-			self.feimageshiftx.SetValue(parameters['image shift']['x'])
-			self.feimageshifty.SetValue(parameters['image shift']['y'])
-			self.febeamshiftx.SetValue(parameters['beam shift']['x'])
-			self.febeamshifty.SetValue(parameters['beam shift']['y'])
-		except KeyError:
-			raise ValueError
+		self.dicts = {
+			'camera parameters': gui.wx.Camera.CameraPanel(self),
+		}
 
-		try:
-			ccdcamera = parameters['ccdcamera']
-		except KeyError:
-			ccdcamera = None
-		if ccdcamera is None:
-			self.cccdcamera.SetStringSelection(self.nonestring)
-		else:
-			if self.cccdcamera.FindString(ccdcamera['name']) == wx.NOT_FOUND:
-				self.cccdcamera.Append(ccdcamera['name'])
-			self.cccdcamera.SetStringSelection(ccdcamera['name'])
+		buttons = {
+			'tem': (
+				'magnification', 
+				'defocus',
+				'spot size',
+				'intensity',
+				'image shift',
+				'beam shift',
+			),
+			'ccdcamera': (
+				'energy filter',
+				'energy filter width',
+				'camera parameters',
+			),
+		}
+		self._buttons = {}
+		for key in ['tem', 'ccdcamera']:
+			self._buttons[key] = {}
+			for name in buttons[key]:
+				button =  bitmapButton(self, 'instrumentget', 'Set this value from the instrument value')
+				self._buttons[key][name] = button
+				self.Bind(wx.EVT_BUTTON, self.onButton, button)
 
-		try:
-			self.cbfilm.SetValue(bool(parameters['film']))
-			energy_filter = bool(parameters['energy filter'])
-			self.cb_energy_filter.SetValue(energy_filter)
-			energy_filter_width = parameters['energy filter width']
-			self.fe_energy_filter_width.SetValue(energy_filter_width)
-			self.fe_preexp.SetValue(parameters['pre exposure'])
-		except KeyError:
-			raise ValueError
+			if key in parameters and parameters[key] is not None:
+				value = parameters[key]
+				if self.choices[key].FindString(value['name']) == wx.NOT_FOUND:
+					self.choices[key].Append(value['name'])
+				self.choices[key].SetStringSelection(value['name'])
+				enable_buttons = True
+			else:
+				self.choices[key].SetStringSelection(self.nonestring)
+				enable_buttons = False
 
-		try:
-			self.cpcamconfig.setSize(self.ccd_cameras[ccdcamera['name']])
-		except:
-			pass
-		try:
-			self.cpcamconfig.setConfiguration(parameters)
-		except KeyError:
-			raise ValueError
+			for value in self._buttons[key].values():
+				value.Enable(enable_buttons)
 
-		sz = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'TEM')
-		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.ctem, (0, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		label = wx.StaticText(self, -1, 'Magnification')
-		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.cmag, (1, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		label = wx.StaticText(self, -1, 'Defocus')
-		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.fedefocus, (2, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'Spot size')
-		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.fespotsize, (3, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'Intensity')
-		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.feintensity, (4, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		self.setParameters(parameters)
+
+		labels = (
+    		('tem', 'TEM'),
+    		('magnification', 'Magnification'),
+    		('defocus', 'Defocus'),
+    		('spot size', 'Spot size'),
+    		('intensity', 'Intensity'),
+    		('image shift', 'Image shift'),
+    		('beam shift', 'Beam shift'),
+    		('ccdcamera', 'CCD Camera'),
+    		('energy filter width', 'Energy filter width'),
+    		('pre exposure', 'Pre-exposure'),
+		)
+
+		self.labels = {}
+		for key, text in labels:
+			self.labels[key] = wx.StaticText(self, -1, text)
+
+		sizer = wx.GridBagSizer(5, 5)
+		sizer.Add(self.labels['tem'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.choices['tem'], (0, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		sizer.Add(self.labels['magnification'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.choices['magnification'], (1, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		sizer.Add(self._buttons['tem']['magnification'], (1, 3), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.labels['defocus'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.floats['defocus'], (2, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sizer.Add(self._buttons['tem']['defocus'], (2, 3), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.labels['spot size'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.floats['spot size'], (3, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sizer.Add(self._buttons['tem']['spot size'], (3, 3), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.labels['intensity'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.floats['intensity'], (4, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sizer.Add(self._buttons['tem']['intensity'], (4, 3), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'x')
-		sz.Add(label, (5, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(label, (5, 1), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'y')
-		sz.Add(label, (5, 2), (1, 1), wx.ALIGN_CENTER)
-		label = wx.StaticText(self, -1, 'Image shift')
-		sz.Add(label, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.feimageshiftx, (6, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sz.Add(self.feimageshifty, (6, 2), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'Beam shift')
-		sz.Add(label, (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.febeamshiftx, (7, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sz.Add(self.febeamshifty, (7, 2), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sizer.Add(label, (5, 2), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.labels['image shift'], (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.floats['image shift']['x'], (6, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sizer.Add(self.floats['image shift']['y'], (6, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sizer.Add(self._buttons['tem']['image shift'], (6, 3), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.labels['beam shift'], (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.floats['beam shift']['x'], (7, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sizer.Add(self.floats['beam shift']['y'], (7, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sizer.Add(self._buttons['tem']['beam shift'], (7, 3), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.bools['skip'], (9, 0), (1, 8), wx.ALIGN_CENTER)
 
-		label = wx.StaticText(self, -1, 'CCD Camera')
-		sz.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.cccdcamera, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		sz.Add(self.cbfilm, (1, 3), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.cb_energy_filter, (2, 3), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.labels['ccdcamera'], (0, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.choices['ccdcamera'], (0, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.EXPAND)
+		sizer.Add(self.bools['film'], (1, 5), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.bools['energy filter'], (2, 5), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
+		sizer.Add(self._buttons['ccdcamera']['energy filter'], (2, 7), (1, 1), wx.ALIGN_CENTER)
 
-		label = wx.StaticText(self, -1, 'Energy filter width')
-		sz.Add(label, (3, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.fe_energy_filter_width, (3, 4), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sizer.Add(self.labels['energy filter width'], (3, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.floats['energy filter width'], (3, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+		sizer.Add(self._buttons['ccdcamera']['energy filter width'], (3, 7), (1, 1), wx.ALIGN_CENTER)
 
-		label = wx.StaticText(self, -1, 'Pre-exposure')
-		sz.Add(label, (4, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.fe_preexp, (4, 4), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sizer.Add(self.labels['pre exposure'], (4, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.floats['pre exposure'], (4, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 
-		sz.Add(self.cpcamconfig, (5, 3), (4, 2), wx.ALIGN_CENTER)
+		sizer.Add(self.dicts['camera parameters'], (5, 5), (4, 2), wx.ALIGN_CENTER)
+		sizer.Add(self._buttons['ccdcamera']['camera parameters'], (5, 7), (4, 1), wx.ALIGN_CENTER)
 
-		self.sz.Add(sz, (0, 0), (1, 1), wx.EXPAND)
+		sizer.AddGrowableCol(0)
+		sizer.AddGrowableCol(4)
+		sizer.AddGrowableCol(5)
+		for i in range(10):
+			sizer.AddGrowableRow(i)
+
+		self.sz.Add(sizer, (0, 0), (1, 1), wx.ALL|wx.EXPAND)
+		self.sz.AddGrowableRow(0)
+		self.sz.AddGrowableCol(0)
 
 		self.addButton('Save', id=wx.ID_OK)
 		self.addButton('Cancel', id=wx.ID_CANCEL)
 
-		self.Bind(wx.EVT_CHOICE, self.onTEMChoice, self.ctem)
-		self.Bind(wx.EVT_CHOICE, self.onCCDCameraChoice, self.cccdcamera)
+		self.Bind(wx.EVT_CHOICE, self.onTEMChoice, self.choices['tem'])
+		self.Bind(wx.EVT_CHOICE, self.onCCDCameraChoice, self.choices['ccdcamera'])
+
+	def onButton(self, evt):
+		if self.getValue is None:
+			return
+		event_button = evt.GetEventObject()
+		for instrument_type in self._buttons:
+			for name, button in self._buttons[instrument_type].items():
+				if button is event_button:
+					instrument_name = self.choices[instrument_type].GetStringSelection()
+					try:
+						value = self.getValue(instrument_type, instrument_name, name)
+						if name != 'camera parameters':
+							value = {name: value} 
+						self.setParameters(value)
+					except:
+						pass
+					break
 
 	def onTEMChoice(self, evt):
-		mag = self.cmag.GetStringSelection()
+		mag = self.choices['magnification'].GetStringSelection()
 		tem = evt.GetString()
 		if tem == self.nonestring:
 			choices = []
@@ -281,21 +316,25 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 				choices = [str(int(m)) for m in mags]
 			except KeyError:
 				choices = []
-		self.cmag.Freeze()
-		self.cmag.Clear()
-		self.cmag.AppendItems(choices)
-		if self.cmag.FindString(mag) == wx.NOT_FOUND:
+		for value in self._buttons['tem'].values():
+			value.Enable(bool(choices))
+    	#'energy filter',
+		#'camera parameters',
+		self.choices['magnification'].Freeze()
+		self.choices['magnification'].Clear()
+		self.choices['magnification'].AppendItems(choices)
+		if self.choices['magnification'].FindString(mag) == wx.NOT_FOUND:
 			if choices:
-				self.cmag.SetSelection(0)
+				self.choices['magnification'].SetSelection(0)
 		else:
-			self.cmag.SetStringSelection(mag)
-		if self.cmag.IsEnabled():
+			self.choices['magnification'].SetStringSelection(mag)
+		if self.choices['magnification'].IsEnabled():
 			if not choices:
-				self.cmag.Enable(False)
+				self.choices['magnification'].Enable(False)
 		else:
 			if choices:
-				self.cmag.Enable(True)
-		self.cmag.Thaw()
+				self.choices['magnification'].Enable(True)
+		self.choices['magnification'].Thaw()
 
 	def onCCDCameraChoice(self, evt):
 		ccdcamera = evt.GetString()
@@ -303,58 +342,107 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 			camerasize = self.ccd_cameras[ccdcamera]
 		except KeyError:
 			camerasize = None
-		self.cpcamconfig.setSize(camerasize)
+		self.dicts['camera parameters'].setSize(camerasize)
+		for value in self._buttons['ccdcamera'].values():
+			value.Enable(camerasize is not None)
+
+	def setParameters(self, parameters):
+		try:
+			if parameters['magnification'] is not None:
+				magnification = str(int(parameters['magnification']))
+				if self.choices['magnification'].FindString(magnification) == wx.NOT_FOUND:
+					self.choices['magnification'].Append(magnification)
+				self.choices['magnification'].SetStringSelection(magnification)
+		except KeyError:
+			pass
+
+		keys = (
+			'defocus',
+			'spot size',
+			'intensity',
+			'energy filter width',
+			'pre exposure',
+		)
+		for key in keys:
+			try:
+				self.floats[key].SetValue(parameters[key])
+			except KeyError:
+				pass
+
+		for key in ['image shift', 'beam shift']:
+			for axis in ['x', 'y']:
+				try:
+					self.floats[key][axis].SetValue(parameters[key][axis])
+				except KeyError:
+					pass
+
+		for key in ['skip', 'film', 'energy filter']:
+			try:
+				self.bools[key].SetValue(bool(parameters[key]))
+			except KeyError:
+				pass
+
+		try:
+			size = self.ccd_cameras[parameters['ccdcamera']['name']]
+			self.dicts['camera parameters'].setSize(size)
+		except:
+			pass
+
+		try:
+			self.dicts['camera parameters'].setConfiguration(parameters)
+		except KeyError:
+			pass
 
 	def getParameters(self):
 		parameters = {}
-		tem = self.ctem.GetStringSelection()
+		tem = self.choices['tem'].GetStringSelection()
 		if tem == self.nonestring:
 			tem = None
 		parameters['tem'] = tem
-		n = self.cmag.GetSelection()
+		n = self.choices['magnification'].GetSelection()
 		if n < 0:
-			mag = None
+			magnification = None
 		else:
-			mag = int(self.cmag.GetString(n))
-		parameters['magnification'] = mag
-		parameters['defocus'] = float(self.fedefocus.GetValue())
-		parameters['spot size'] = int(self.fespotsize.GetValue())
-		parameters['intensity'] = float(self.feintensity.GetValue())
-		parameters['image shift'] = {}
-		parameters['image shift']['x'] = float(self.feimageshiftx.GetValue())
-		parameters['image shift']['y'] = float(self.feimageshifty.GetValue())
-		parameters['beam shift'] = {}
-		parameters['beam shift']['x'] = float(self.febeamshiftx.GetValue())
-		parameters['beam shift']['y'] = float(self.febeamshifty.GetValue())
-		ccdcamera = self.cccdcamera.GetStringSelection()
+			magnification = int(self.choices['magnification'].GetString(n))
+		parameters['magnification'] = magnification
+		keys = [
+			'defocus',
+			'spot size',
+			'intensity',
+			'energy filter width',
+			'pre exposure',
+		]
+		for key in keys:
+			parameters[key] = float(self.floats[key].GetValue())
+
+		for key in ['image shift', 'beam shift']:
+			parameters[key] = {}
+			for axis in ['x', 'y']:
+				parameters[key][axis] = float(self.floats[key][axis].GetValue())
+
+		for key in ['skip', 'film', 'energy filter']:
+			parameters[key] = bool(self.bools[key].GetValue())
+
+		ccdcamera = self.choices['ccdcamera'].GetStringSelection()
 		if ccdcamera == self.nonestring:
 			ccdcamera = None
 		parameters['ccdcamera'] = ccdcamera
-		parameters['film'] = self.cbfilm.GetValue()
-		parameters['energy filter'] = self.cb_energy_filter.GetValue()
-		parameters['energy filter width'] = self.fe_energy_filter_width.GetValue()
-		parameters['pre exposure'] = self.fe_preexp.GetValue()
-		parameters.update(self.cpcamconfig.getConfiguration())
+		parameters.update(self.dicts['camera parameters'].getConfiguration())
+
 		return parameters
 
 class EditPresets(gui.wx.Presets.PresetOrder):
 	def _widgets(self):
 		gui.wx.Presets.PresetOrder._widgets(self, 'Presets (Cycle Order)')
-		self.btoscope = self._bitmapButton('instrumentset',
-																				'To Scope')
-		self.bedit = self._bitmapButton('edit',
-																		'Edit the selected preset parameters')
-		self.bacquire = self._bitmapButton('acquire',
-																	'Acquire dose image for the selected preset')
-		self.bfromscope = self._bitmapButton('instrumentget',
-							'From Scope')
+		self.btoscope = self._bitmapButton('instrumentset', 'To Scope')
+		self.bedit = self._bitmapButton('edit', 'Edit the selected preset parameters')
+		self.bacquire = self._bitmapButton('acquire', 'Acquire dose image for the selected preset')
+		self.bfromscope = self._bitmapButton('instrumentget', 'From Scope')
 		self.bremove = self._bitmapButton('minus', 'Remove the selected preset')
 
-		self.bnewfromscope = self._bitmapButton('instrumentgetnew',
-												'Create a new preset from the current instrument state')
+		self.bnewfromscope = self._bitmapButton('instrumentgetnew', 'Create a new preset from the current instrument state')
 		self.bnewfromscope.Enable(True)
-		self.bimport = self._bitmapButton('import',
-																			'Import presets from another session')
+		self.bimport = self._bitmapButton('import', 'Import presets from another session')
 		self.bimport.Enable(True)
 
 	def _sizer(self):
@@ -672,7 +760,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		if not ccd_cameras:
 			return
 
-		dialog = EditPresetDialog(self, preset, tems, ccd_cameras)
+		dialog = EditPresetDialog(self, preset, tems, ccd_cameras, self.node.getValue)
 		if dialog.ShowModal() == wx.ID_OK:
 			self.node.updatePreset(evt.presetname, dialog.getParameters())
 		dialog.Destroy()
@@ -934,89 +1022,71 @@ class Parameters(wx.StaticBoxSizer):
 		sb = wx.StaticBox(parent, -1, 'Preset Parameters')
 		wx.StaticBoxSizer.__init__(self, sb, wx.VERTICAL)
 
-		self.lbltem = wx.StaticText(parent, -1, 'TEM:')
-		self.lblccdcamera = wx.StaticText(parent, -1, 'CCD Camera:')
-		self.lblmag = self.labelclass(parent, -1, 'Magnification:')
-		self.lbldefocus = self.labelclass(parent, -1, 'Defocus:')
-		self.lblspotsize = self.labelclass(parent, -1, 'Spot size:')
-		self.lblintensity = self.labelclass(parent, -1, 'Intensity:')
-		self.lblimageshift = self.labelclass(parent, -1, 'Image shift:')
-		self.lblbeamshift = self.labelclass(parent, -1, 'Beam shift:')
-		self.lblfilm = self.labelclass(parent, -1, 'Use film:')
-		self.lblenergyfilter = self.labelclass(parent, -1, 'Energy filtered:')
-		self.lblenergyfilterwidth = self.labelclass(parent, -1, 'Energy filter width:')
-		self.lbldimension = self.labelclass(parent, -1, 'Dimension:')
-		self.lbloffset = self.labelclass(parent, -1, 'Offset:')
-		self.lblbinning = self.labelclass(parent, -1, 'Binning:')
-		self.lblexposuretime = self.labelclass(parent, -1, 'Exposure time (ms):')
-		self.lbldose = self.labelclass(parent, -1, 'Dose (e/A^2):')
-		self.lblpreexp = self.labelclass(parent, -1, 'Pre-Exposure (s):')
-
-		self.sttem = wx.StaticText(parent, -1, '')
-		self.stmag = wx.StaticText(parent, -1, '')
-		self.stdefocus = wx.StaticText(parent, -1, '')
-		self.stspotsize = wx.StaticText(parent, -1, '')
-		self.stintensity = wx.StaticText(parent, -1, '')
-		self.stimageshift = wx.StaticText(parent, -1, '')
-		self.stbeamshift = wx.StaticText(parent, -1, '')
-		self.stccdcamera = wx.StaticText(parent, -1, '')
-		self.stfilm = wx.StaticText(parent, -1, '')
-		self.stenergyfilter = wx.StaticText(parent, -1, '')
-		self.stenergyfilterwidth = wx.StaticText(parent, -1, '')
-		self.stdimension = wx.StaticText(parent, -1, '')
-		self.stoffset = wx.StaticText(parent, -1, '')
-		self.stbinning = wx.StaticText(parent, -1, '')
-		self.stexposuretime = wx.StaticText(parent, -1, '')
-		self.stpreexp = wx.StaticText(parent, -1, '')
-		self.stdose = wx.StaticText(parent, -1, '')
+		labels = (
+			('tem', 'TEM:'),
+			('ccdcamera', 'CCD Camera:'),
+			('magnification', 'Magnification:'),
+			('defocus', 'Defocus:'),
+			('spot size', 'Spot size:'),
+			('intensity', 'Intensity:'),
+			('image shift', 'Image shift:'),
+			('beam shift', 'Beam shift:'),
+			('film', 'Use film:'),
+			('energy filter', 'Energy filtered:'),
+			('energy filter width', 'Energy filter width:'),
+			('dimension', 'Dimension:'),
+			('offset', 'Offset:'),
+			('binning', 'Binning:'),
+			('exposure time', 'Exposure time (ms):'),
+			('dose', 'Dose (e/A^2):'),
+			('pre exposure', 'Pre-Exposure (s):'),
+			('skip', 'Skip when cycling:'),
+		)
+			
+		self.labels = {}
+		self.values = {}
+		for key, value in labels:
+			self.labels[key] = self.labelclass(parent, -1, value)
+			self.values[key] = wx.StaticText(parent, -1, '')
 
 		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.lbltem, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.sttem, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lblmag, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stmag, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lbldefocus, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stdefocus, (2, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lblspotsize, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stspotsize, (3, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lblintensity, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stintensity, (4, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lblimageshift, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stimageshift, (5, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lblbeamshift, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stbeamshift, (6, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lbldose, (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stdose, (7, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['tem'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['tem'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['magnification'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['magnification'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['defocus'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['defocus'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['spot size'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['spot size'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['intensity'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['intensity'], (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['image shift'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['image shift'], (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['beam shift'], (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['beam shift'], (6, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['skip'], (9, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['skip'], (9, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
-		sz.Add(self.lblccdcamera, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stccdcamera, (0, 5), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lblfilm, (1, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stfilm, (1, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lblenergyfilter, (2, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stenergyfilter, (2, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lblenergyfilterwidth, (3, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stenergyfilterwidth, (3, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lbldimension, (4, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stdimension, (4, 5), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lbloffset, (5, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stoffset, (5, 5), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lblbinning, (6, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stbinning, (6, 5), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lblexposuretime, (7, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stexposuretime, (7, 5), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.lblpreexp, (8, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stpreexp, (8, 5), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['ccdcamera'], (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['ccdcamera'], (0, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['film'], (1, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['film'], (1, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['energy filter'], (2, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['energy filter'], (2, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['energy filter width'], (3, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['energy filter width'], (3, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['dimension'], (4, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['dimension'], (4, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['offset'], (5, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['offset'], (5, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['binning'], (6, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['binning'], (6, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['exposure time'], (7, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['exposure time'], (7, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['pre exposure'], (8, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['pre exposure'], (8, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['dose'], (9, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['dose'], (9, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		sz.AddGrowableCol(1)
 		sz.AddGrowableCol(5)
@@ -1025,71 +1095,53 @@ class Parameters(wx.StaticBoxSizer):
 
 	def set(self, parameters):
 		if parameters is None:
-			self.sttem.SetLabel('')
-			self.stmag.SetLabel('')
-			self.stdefocus.SetLabel('')
-			self.stspotsize.SetLabel('')
-			self.stintensity.SetLabel('')
-			self.stimageshift.SetLabel('')
-			self.stbeamshift.SetLabel('')
-			self.stccdcamera.SetLabel('')
-			self.stfilm.SetLabel('')
-			self.stenergyfilter.SetLabel('')
-			self.stenergyfilterwidth.SetLabel('')
-			self.stdimension.SetLabel('')
-			self.stoffset.SetLabel('')
-			self.stbinning.SetLabel('')
-			self.stexposuretime.SetLabel('')
-			self.stpreexp.SetLabel('')
-			self.stdose.SetLabel('')
+			for value in self.values.values():
+				value.SetLabel('')
 		else:
-			if parameters['tem'] is None:
-				self.sttem.SetLabel('None')
-			else:
-				tem = parameters['tem']
-				self.sttem.SetLabel(tem['name'])
-			self.stmag.SetLabel(str(parameters['magnification']))
-			self.stdefocus.SetLabel(str(parameters['defocus']))
-			self.stspotsize.SetLabel(str(parameters['spot size']))
-			self.stintensity.SetLabel(str(parameters['intensity']))
-			s = '(%g, %g)' % (parameters['image shift']['x'],
-												parameters['image shift']['y'])
-			self.stimageshift.SetLabel(s)
-			s = '(%g, %g)' % (parameters['beam shift']['x'],
-												parameters['beam shift']['y'])
-			self.stbeamshift.SetLabel(s)
-			if parameters['ccdcamera'] is None:
-				self.stccdcamera.SetLabel('None')
-			else:
-				ccdcamera = parameters['ccdcamera']
-				self.stccdcamera.SetLabel(ccdcamera['name'])
-			if parameters['film']:
-				s = 'Yes'
-			else:
-				s = 'No'
-			self.stfilm.SetLabel(s)
-			if parameters['energy filter']:
-				s = 'Yes'
-			else:
-				s = 'No'
-			self.stenergyfilter.SetLabel(s)
-			self.stenergyfilterwidth.SetLabel(str(parameters['energy filter width']))
-			s = '%d x %d' % (parameters['dimension']['x'],
-												parameters['dimension']['y'])
-			self.stdimension.SetLabel(s)
-			s = '(%d, %d)' % (parameters['offset']['x'],
-												parameters['offset']['y'])
-			self.stoffset.SetLabel(s)
-			s = '%d x %d' % (parameters['binning']['x'],
-												parameters['binning']['y'])
-			self.stbinning.SetLabel(s)
-			self.stexposuretime.SetLabel(str(parameters['exposure time']))
-			self.stpreexp.SetLabel(str(parameters['pre exposure']))
-			if parameters['dose'] is None:
-				dosestr = 'N/A'
-			else:
-				dosestr = '%.2f' % (parameters['dose']/1e20,)
-			self.stdose.SetLabel(dosestr)
+			for key in ['tem', 'ccdcamera']:
+				if parameters[key] is None:
+					self.values[key].SetLabel('None')
+				else:
+					self.values[key].SetLabel(parameters[key]['name'])
+
+			keys = [
+				'magnification',
+				'defocus',
+				'spot size',
+				'intensity',
+				'energy filter width',
+				'exposure time',
+				'pre exposure',
+			]
+			for key in keys:
+				self.values[key].SetLabel(str(parameters[key]))
+
+			for key in ['image shift', 'beam shift']:
+				s = '(%g, %g)' % (parameters[key]['x'], parameters[key]['y'])
+				self.values[key].SetLabel(s)
+
+			for key in ['film', 'energy filter', 'skip']:
+				if parameters[key]:
+					s = 'Yes'
+				else:
+					s = 'No'
+				self.values[key].SetLabel(s)
+
+			for key in ['dimension', 'binning']:
+				s = '%d x %d' % (parameters[key]['x'], parameters[key]['y'])
+				self.values[key].SetLabel(s)
+
+			for key in ['offset']:
+				s = '(%d, %d)' % (parameters[key]['x'], parameters[key]['y'])
+				self.values[key].SetLabel(s)
+
+			for key in ['dose']:
+				if parameters[key] is None:
+					s = 'N/A'
+				else:
+					s = '%.2f' % (parameters[key]/1e20,)
+				self.values[key].SetLabel(s)
+
 			self.Layout()
 
 class SelectParameters(Parameters):
@@ -1213,4 +1265,13 @@ if __name__ == '__main__':
 
 	app = App(0)
 	app.MainLoop()
+
+def bitmapButton(parent, name, tooltip=None):
+	bitmap = gui.wx.Icons.icon(name)
+	button = wx.lib.buttons.GenBitmapButton(parent, -1, bitmap, size=(20, 20))
+	button.SetBezelWidth(1)
+	button.Enable(False)
+	if tooltip is not None:
+		button.SetToolTip(wx.ToolTip(tooltip))
+	return button
 

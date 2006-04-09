@@ -439,7 +439,7 @@ class ColumnSpec(dict):
 				pieces.append('NOT NULL')
 			if default:
 	                        pieces.append('DEFAULT')
-				pieces.append("'%s'" % default)
+				pieces.append("%s" % default)
 				sql_args.append(default)
 			if auto:
 				pieces.append('AUTO_INCREMENT')
@@ -476,7 +476,8 @@ class AlterTable(SQLExpression):
         if not self.column:
             return ''
 	else:
-	    alter = "ALTER TABLE %s ADD %s %s NOT NULL " % (backquote(self.table), backquote(self.column['Field']), self.column['Type'])
+	    #alter = "ALTER TABLE %s ADD %s %s NOT NULL " % (backquote(self.table), backquote(self.column['Field']), self.column['Type'])
+	    alter = "ALTER TABLE %s ADD %s %s NULL " % (backquote(self.table), backquote(self.column['Field']), self.column['Type'])
 	return alter
 
 

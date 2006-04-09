@@ -1,10 +1,16 @@
+# The Leginon software is Copyright 2003
+# The Scripps Research Institute, La Jolla, CA
+# For terms of the license agreement
+# see  http://ami.scripps.edu/software/leginon-license
 #
-# COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
-#
+# $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
+# $Revision: 1.234 $
+# $Name: not supported by cvs2svn $
+# $Date: 2006-04-09 01:44:51 $
+# $Author: suloway $
+# $State: Exp $
+# $Locker:  $
+
 import node
 import calibrationclient
 import data
@@ -473,7 +479,7 @@ class PresetsManager(node.Node):
 		if outputevent:
 			self.outputEvent(event.PresetChangedEvent(name=name, preset=presetdata))
 
-	def _fromScope(self, name, temname=None, camname=None):
+	def _fromScope(self, name, temname=None, camname=None, parameters=None):
 		'''
 		create a new preset with name
 		if a preset by this name already exists in my 
@@ -532,9 +538,16 @@ class PresetsManager(node.Node):
 		newparams.update(scopedata)
 		newparams.update(cameradata)
 
+		if parameters is not None:
+			for parameter in newparams.keys():
+				if parameter not in parameters:
+					del newparams[parameter]
+
 		# update old preset or create new one
 		if name in self.presets.keys():
 			newpreset = self.updatePreset(name, newparams)
+		elif parameters is not None:
+			raise ValueError
 		else:
 			newpreset = self.newPreset(name, newparams)
 
@@ -657,8 +670,9 @@ class PresetsManager(node.Node):
 				break
 			preset1 = self.presetByName(name1)
 
-			if preset1['magnification'] != preset2['magnification'] or not magshortcut:
-				reduced.insert(0,name1)
+			if not preset1['skip']:
+				if preset1['magnification'] != preset2['magnification'] or not magshortcut:
+					reduced.insert(0,name1)
 			name2 = name1
 			preset2 = preset1
 
@@ -764,6 +778,7 @@ class PresetsManager(node.Node):
 			newpreset['film'] = False
 			newpreset['hasref'] = False
 			newpreset['pre exposure'] = 0.0
+			newpreset['skip'] = False
 			newpreset.friendly_update(newparams)
 			self.presets[presetname] = newpreset
 			self.presetToDB(newpreset)
@@ -1061,4 +1076,19 @@ class PresetsManager(node.Node):
 		message = 'Preset (with target) changed to %s' % (name,)
 		self.logger.info(message)
 		self.outputEvent(event.PresetChangedEvent(name=name, preset=newpreset))
+
+	def getValue(self, instrument_type, instrument_name, parameter):
+		try:
+			if instrument_type == 'tem':
+				return self.instrument.getTEMParameter(instrument_name, parameter)
+			elif instrument_type == 'ccdcamera':
+				if parameter == 'camera parameters':
+					return self.instrument.getData(data.CameraEMData, image=False, ccdcameraname=instrument_name).toDict()
+				else:
+					return self.instrument.getCCDCameraParameter(instrument_name, parameter)
+			else:
+				raise ValueError('no instrument type \'%s\'' % instrument_type)
+		except Exception, e:
+			self.logger.error('Get value failed: %s' % (e,))
+			raise e
 

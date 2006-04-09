@@ -269,8 +269,8 @@ class DBDataKeeper(object):
 
 	def flatInsert(self, newdata, force=False):
 		table = newdata.__class__.__name__
-		definition = sqldict.sqlColumnsDefinition(newdata)
-		formatedData = sqldict.sqlColumnsFormat(newdata)
+		definition = sqldict.sqlColumnsDefinition(newdata, null=True)
+		formatedData = sqldict.sqlColumnsFormat(newdata, null=True)
 		self.dbd.createSQLTable(table, definition)
 		myTable = self.dbd.Table(table)
 		newid = myTable.insert([formatedData], force=force)
