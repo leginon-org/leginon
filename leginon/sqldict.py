@@ -1210,26 +1210,14 @@ def sqlColumnsDefinition(in_dict, noDefault=None, null=False):
 			value_type = value_types[key]
 
 		sql_type = _sqltype(value_type)
+		print key, value_type, sql_type
 
 		if sql_type is not None:
 			### simple types
 			column['Field']=key
 			column['Type']=sql_type
 			columns.append(column)
-		elif issubclass(value_type, data.Data):
-			### data.Data reference
-			if value is None:
-				value = value_type()
-			column['Field'] = ref2field(key,value)
-			column['Type'] = 'INT(20)'
-			column['Key'] = 'INDEX'
-			column['Index'] = [column['Field']]
-			columns.append(column)
-		elif issubclass(value_type, newdict.AnyObject):
-			column['Field'] = object2sqlColumn(key)
-			column['Type'] = 'LONGBLOB'
-			columns.append(column)
-		elif issubclass(value_type, Numeric.ArrayType):
+		elif isinstance(value, Numeric.ArrayType):
 			### Numeric array
 			if len(Numeric.ravel(value)) < 10:
 				arraydict = matrix2dict(value,key)
@@ -1244,6 +1232,19 @@ def sqlColumnsDefinition(in_dict, noDefault=None, null=False):
 				mrcdict = saveMRC(None,key,path,filename)
 				nd = sqlColumnsDefinition(mrcdict, noDefault=[], null=null)
 			columns += nd
+		elif issubclass(value_type, data.Data):
+			### data.Data reference
+			if value is None:
+				value = value_type()
+			column['Field'] = ref2field(key,value)
+			column['Type'] = 'INT(20)'
+			column['Key'] = 'INDEX'
+			column['Index'] = [column['Field']]
+			columns.append(column)
+		elif issubclass(value_type, newdict.AnyObject):
+			column['Field'] = object2sqlColumn(key)
+			column['Type'] = 'LONGBLOB'
+			columns.append(column)
 		elif value_type is dict:
 			### python dict
 			flatdict = flatDict({key:value})
@@ -1327,7 +1328,7 @@ def sqlColumnsFormat(in_dict, null=False):
 		sqlt = _sqltype(value_type)
 		if sqlt is not None:
 			columns[key]=value
-		elif issubclass(value_type, Numeric.ArrayType):
+		elif isinstance(value, Numeric.ArrayType):
 			if len(Numeric.ravel(value)) < 10:
 				datadict = matrix2dict(value,key)
 			else:
