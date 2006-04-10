@@ -273,7 +273,12 @@ class DBDataKeeper(object):
 		formatedData = sqldict.sqlColumnsFormat(newdata, null=True)
 		self.dbd.createSQLTable(table, definition)
 		myTable = self.dbd.Table(table)
-		newid = myTable.insert([formatedData], force=force)
+		try:
+			newid = myTable.insert([formatedData], force=force)
+		except Exception, e:
+			f = sqldict.sqlColumnsFormat(newdata, null=True)
+			print f
+			raise e
 		return newid
 
 	# don't bother with these for now
