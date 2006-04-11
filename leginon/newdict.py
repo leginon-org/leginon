@@ -1,7 +1,4 @@
-try:
-	import numarray as Numeric
-except:
-	import Numeric
+import numarray
 import os
 
 class FileReference(object):
@@ -81,8 +78,8 @@ class OrderedDict(dict):
 		'''
 		itemlist = []
 		for key,value in self.items():
-			if type(value) is Numeric.ArrayType:
-				valuestr = '(NumericArray,shape=%s)' % (value.shape,)
+			if type(value) is numarray.ArrayType:
+				valuestr = '(ArrayType,shape=%s)' % (value.shape,)
 			else:
 				valuestr = str(value)
 			itemstr = "%s: %s" % (str(key), valuestr)
@@ -161,36 +158,25 @@ class AnyObject(object):
 
 registerValidator(AnyObject, AnyObject)
 
-### The type Numeric.ArrayType will not pickle properly, so here I create
-### an object here to represent it
-class _NumericArrayType:
-	'''
-	This represents Numeric.ArrayType, which is not acceptable to pickle
-	'''
-	### this makes sure all instances are compared equal
-	def __eq__(self, other):
-		return isinstance(other, _NumericArrayType)
-	### this makes sure all instances hash the same
-	def __hash__(self):
-		return hash(_NumericArrayType)
-MRCArrayType = _NumericArrayType()
-DatabaseArrayType = _NumericArrayType()
+## ArrayType was previously not hashable, but seems to be now
+MRCArrayType = numarray.ArrayType
+DatabaseArrayType = numarray.ArrayType
 
 ### and here's the validator for it
-def validateNumericArray(obj):
+def validateArrayType(obj):
 	'''
-	if obj is a Numeric array or a FileReference, then return obj
+	if obj is a numarray array or a FileReference, then return obj
 	else raise excpetion.
 	'''
 	if isinstance(obj, FileReference):
 		return obj
 
-	### if it's a Numeric array, it should have the type() attribute
+	### if it's a numarray array, it should have the type() attribute
 	try:
 		obj.type
 	except AttributeError:
 		raise TypeError()
 	return obj
 
-registerValidator(MRCArrayType, validateNumericArray)
-registerValidator(DatabaseArrayType, validateNumericArray)
+registerValidator(MRCArrayType, validateArrayType)
+registerValidator(DatabaseArrayType, validateArrayType)
