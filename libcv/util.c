@@ -157,7 +157,7 @@ void CreateDirectAffineTransform( float x1, float y1, float x2, float y2, float 
 double **IT ) {
 
 	if (IT != NULL ) {
-		 float det = 1.0/(u1*(v2-v3)-v1*(u2-u3)+(u2*v3-u3*v2));
+		 double det = 1.0/(u1*(v2-v3)-v1*(u2-u3)+(u2*v3-u3*v2));
 		 IT[0][0] = ((v2-v3)*x1+(v3-v1)*x2+(v1-v2)*x3)*det;
 		 IT[0][1] = ((v2-v3)*y1+(v3-v1)*y2+(v1-v2)*y3)*det;
 		 IT[0][2] = 0;
@@ -170,7 +170,7 @@ double **IT ) {
 	}
 	
 	if (TR != NULL ) {
-		float det = 1.0/(x1*(y2-y3)-y1*(x2-x3)+(x2*y3-x3*y2));
+		double det = 1.0/(x1*(y2-y3)-y1*(x2-x3)+(x2*y3-x3*y2));
 		TR[0][0] = ((y2-y3)*u1+(y3-y1)*u2+(y1-y2)*u3)*det;
 		TR[0][1] = ((y2-y3)*v1+(y3-y1)*v2+(y1-y2)*v3)*det;
 		TR[0][2] = 0;
@@ -180,7 +180,10 @@ double **IT ) {
 		TR[2][0] = ((x2*y3-x3*y2)*u1+(x3*y1-x1*y3)*u2+(x1*y2-x2*y1)*u3)*det;
 		TR[2][1] = ((x2*y3-x3*y2)*v1+(x3*y1-x1*y3)*v2+(x1*y2-x2*y1)*v3)*det;
 		TR[2][2] = 1;
+		
 	}
+	
+	
 	
 }
 

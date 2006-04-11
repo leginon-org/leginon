@@ -34,7 +34,7 @@ float **AllocFMatrix(int rows, int cols, int ro, int co) {
 		if ( v != NULL ) free(v);
 		return NULL;
 	}
-	memset(v,rows*cols*sizeof(int),0);
+	memset(v,rows*cols*sizeof(float),0);
 	m -= ro; v -= co;
     for (i = ro; i < rows+ro; i++) {
 		m[i] = v;
@@ -52,14 +52,15 @@ float **FreeFMatrix( float **matrix, int ro, int co ) {
 double **AllocDMatrix(int rows, int cols, int ro, int co ) {
     int i;
     double **m, *v;
-    m = (double **) malloc(rows * sizeof(double *));
-    v = (double *)  malloc(rows * cols * sizeof(double));
+    m = (double **) malloc(rows*sizeof(double *));
+    v = (double *)  malloc(rows*cols*sizeof(double));
 	if ( m == NULL || v == NULL ) {
+		FatalError("AllocDMatrix: Out of memory.\n");
 		if ( m != NULL ) free(m);
 		if ( v != NULL ) free(v);
 		return NULL;
 	}
-	memset(v,rows*cols*sizeof(int),0);
+	memset(v,rows*cols*sizeof(double),0);
 	m -= ro; v -= co;
     for (i = ro; i < rows+ro; i++) {
 		m[i] = v;
@@ -76,7 +77,8 @@ double **FreeDMatrix( double **matrix, int ro, int co ) {
 
 void CopyDMatrix( double **FROM, double **TO, int minr, int minc, int maxr, int maxc ) {
 	if ( FROM == NULL || TO == NULL ) return;
-	for (;minr<=maxr;++minr) for(;minc<=maxc;++minc) TO[minr][minc] = FROM[minr][minc];
+	int row, col;
+	for (row=minr;row<=maxr;row++) for(col=minc;col<=maxc;col++) TO[row][col] = FROM[row][col];
 }
 
 FArray NewFArray( int minrow, int mincol, int maxrow, int maxcol ) {
@@ -137,11 +139,11 @@ char FArrayGood( FArray array ) {
 	function will never result in a reduced memory block size.  If this is your
 	goal call the function FArrayCrunch() on your array instead. */
 
-void ResizeFArray( FArray array, int nminr, int nminc, int nmaxr, int nmaxc ) {
+FArray ResizeFArray( FArray array, int nminr, int nminc, int nmaxr, int nmaxc ) {
 
 	/* First we check the array */ 
 	
-	if ( !FArrayGood(array) ) return;
+	if ( !FArrayGood(array) ) return array;
 	
 	/* We store the current array bounds and memory bounds */
 	
@@ -165,7 +167,7 @@ void ResizeFArray( FArray array, int nminr, int nminc, int nmaxr, int nmaxc ) {
 	/* If the new bounds are within the allocated memory space we can return 
 		without having to resize the memory block */
 
-	if ( nminr >= rminr && nminc >= rminc && nmaxr <= rmaxr && nmaxc <= rmaxc ) return;
+	if ( nminr >= rminr && nminc >= rminc && nmaxr <= rmaxr && nmaxc <= rmaxc ) return array;
 		
 	/* If the new bounds are outside the allocated memory space we must calculate new
 		memory bounds.  We guess bounds in an attempt to reduce the number of
@@ -217,14 +219,16 @@ void ResizeFArray( FArray array, int nminr, int nminc, int nmaxr, int nmaxc ) {
 	
 	FreeFMatrix(m2,rminr,rminc);
 	
+	return array;
+	
 }
 
 int FArrayCols( FArray array ) {
-	return array->maxcol - array->mincol;
+	return array->maxcol - array->mincol + 1;
 }
 
 int FArrayRows( FArray array ) {
-	return array->maxrow - array->minrow;
+	return array->maxrow - array->minrow + 1;
 }
 
 void InitFArrayScalar( FArray array, float val ) {
@@ -383,7 +387,7 @@ PStack NewPStack(int size) {
 	stack->items = malloc(sizeof(void *)*size);
 	stack->stacksize = 0;
 	stack->realsize  = size;
-	
+	stack->cursor = 0;
 	return stack;
 	
 }
@@ -424,6 +428,17 @@ char PStackGood( PStack stack ) {
 	if ( stack->items == NULL ) return FALSE;
 	return TRUE;
 }
+
+char PStackCycle( PStack stack ) {
+	if ( stack->cursor >= stack->stacksize-1 ) {
+		stack->cursor = 0;
+		return 0;
+	} return TRUE;
+}
+
+void *CyclePStack( PStack stack ) {
+	return &(stack->items[stack->cursor++]);
+} 
 
 FStack NewFStack(int size) {
 	

@@ -46,65 +46,61 @@ Descriptor FindMatch( Descriptor d1, PStack d2s, int bound ) {
    
 }
 
-int FindArea( PointStack points ) {
+float FindArea( FArray array ) {
 	/* Points must be given in the order in which they form
 		the polygon.  Order does not matter for triangles. */
-	if (points->stacksize<3) return 0;
-	int i, area = 0;
-	Point p = points->items;
-	int stacksize = points->stacksize;
-	for (i=1;i+1<stacksize;i++) {
-		int y1 = p[i].row - p[0].row;
-		int x1 = p[i].col - p[0].col;
-		int y2 = p[i+1].row - p[0].row;
-		int x2 = p[i+1].col - p[0].col;
+	if ( FArrayRows(array) < 3 ) return 0;
+	int i;
+	float **p = array->values, area = 0;
+	int minr = array->minrow;
+	int maxr = array->maxrow;
+	int minc = array->mincol;
+	int maxc = array->maxcol;
+	for (i=minr+1;i+1<=maxr;i++) {
+		int y1 = p[i][minc] - p[minr][minc];
+		int x1 = p[i][maxc] - p[minr][maxc];
+		int y2 = p[i+1][minc] - p[minr][minc];
+		int x2 = p[i+1][maxc] - p[minr][maxc];
 		area += x1*y2 - x2*y1;
 	}
 	return ABS(area)/2;
 }
 
-void CreateAffineTransform( PointStack from, PointStack to, double **TR );
-void CreateAffineTransform( PointStack from, PointStack to, double **TR ) {
+void CreateAffineTransform( FArray PO, double **TR );
+void CreateAffineTransform( FArray PO, double **TR ) {
 	
-	float x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6;
-	Point p;
+	float **ar = PO->values;
 	
-	p = PopPointStack(from);
-	x1 = p->row;
-	y1 = p->col;
-	p = PopPointStack(from);
-	x2 = p->row;
-	y2 = p->col;
-	p = PopPointStack(from);
-	x3 = p->row;
-	y3 = p->col;
-	p = PopPointStack(to);
-	x4 = p->row;
-	y4 = p->col;
-	p = PopPointStack(to);
-	x5 = p->row;
-	y5 = p->col;
-	p = PopPointStack(to);
-	x6 = p->row;
-	y6 = p->col;
-	
-	CreateDirectAffineTransform(x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6,TR,NULL);
+	if ( FArrayRows(PO) == 3 ) 
+		CreateDirectAffineTransform(ar[0][0],ar[0][1],ar[1][0],ar[1][1],ar[2][0],ar[2][1],ar[0][2],ar[0][3],ar[1][2],ar[1][3],ar[2][2],ar[2][3],TR,NULL);
+	else FatalError("CreateAffineTransform: Least Squares fitting not yet implimented.\n");
 }
 
-int ValidateTransform( double **TR );
-int ValidateTransform( double **TR ) {
+int TransformGood( double **TR );
+int TransformGood( double **TR ) {
 	
-	if ( TR[0][0] != TR[0][0] ) return 0;
-	if ( TR[0][1] != TR[0][1] ) return 0;
-	if ( TR[0][2] != TR[0][2] ) return 0;
-	if ( TR[1][0] != TR[1][0] ) return 0;
-	if ( TR[1][1] != TR[1][1] ) return 0;
-	if ( TR[1][2] != TR[1][2] ) return 0;
-	if ( TR[2][0] != TR[2][0] ) return 0;
-	if ( TR[2][1] != TR[2][1] ) return 0;
-	if ( TR[2][2] != TR[2][2] ) return 0;
+	/* This verifies that tranform does not compress everything
+		into a single line. */
+		
+	if ( TR[0][0] == 0.0 && TR[1][0] == 0.0 ) return FALSE;
+	if ( TR[1][0] == 0.0 && TR[1][1] == 0.0 ) return FALSE;
 	
-	return 1;
+	/* This verifies that the tranform does not contain NaN values
+		since a property of NaN is NaN != NaN */
+		
+	if ( TR[0][0] != TR[0][0] ) return FALSE;
+	if ( TR[0][1] != TR[0][1] ) return FALSE;
+	if ( TR[0][2] != TR[0][2] ) return FALSE;
+	if ( TR[1][0] != TR[1][0] ) return FALSE;
+	if ( TR[1][1] != TR[1][1] ) return FALSE;
+	if ( TR[1][2] != TR[1][2] ) return FALSE;
+	if ( TR[2][0] != TR[2][0] ) return FALSE;
+	if ( TR[2][1] != TR[2][1] ) return FALSE;
+	if ( TR[2][2] != TR[2][2] ) return FALSE;
+	
+	/* We have a reasonable tranform */
+	
+	return TRUE;
 	
 }
 	
@@ -112,13 +108,12 @@ void ScreenMatches( PStack matches, double **transform ) {
 	
 	float pgood = 0.95;
 	float pfail = 0.001;
-	int points = 3;
+	int points  = 3;
 	int treshold = 1;
-	int largest = 1;
+	int largest  = 1;
 	int j, goodpoints;
 	unsigned long i, max, L;
-	PointStack from = NewPointStack(3);
-	PointStack to   = NewPointStack(3);
+	FArray fr = NewFArray(0,0,2,3);
 
 	int numberofmatches = matches->stacksize-1;
 	
@@ -128,39 +123,45 @@ void ScreenMatches( PStack matches, double **transform ) {
 	max = (long) ceil((log(pfail))/(log(1-(pow(((float)points/numberofmatches),points)))));
 	
 	for (i=1; i != max; i++) {
-	
+		
+		ResizeFArray(fr,0,0,2,3);
 		for (j=0;j<3;j++) {
 			int entry = randomnumber()*numberofmatches;
 			Match match = matches->items[entry];
-			PushPointStack( from, match->p1->row, match->p1->col );
-			PushPointStack( to  , match->p2->row, match->p2->col );
+			SetFArray(fr,j,0,match->p1->row);
+			SetFArray(fr,j,1,match->p1->col);
+			SetFArray(fr,j,2,match->p2->row);
+			SetFArray(fr,j,3,match->p2->col);
 		}
-	
-		if ( FindArea(from) < 100 ) continue;
-		if ( FindArea(to) < 100 ) continue;
 		
-		CreateAffineTransform(from,to,transform);
-		if ( !ValidateTransform(transform) ) continue;
+		if ( FindArea(ResizeFArray(fr,0,0,2,1)) < 100 ) continue;
+		if ( FindArea(ResizeFArray(fr,0,2,2,3)) < 100 ) continue;
+		
+		CreateAffineTransform(ResizeFArray(fr,0,0,2,3),transform);
+		if ( !TransformGood(transform) ) continue;
 
 		goodpoints=0;
-		for (j=0;j<=numberofmatches;j++) {	
+		
+		for  ( j=0;j<=numberofmatches;j++ ) {	
 			Match match = matches->items[j];	
 			float row1 = match->p1->row;
 			float col1 = match->p1->col;
-			float row2 = match->p2->row;
-			float col2 = match->p2->col;
-							
-			float row = row1*transform[0][0]+col1*transform[1][0]+transform[2][0];
-			float col = row1*transform[0][1]+col1*transform[1][1]+transform[2][1];
 
-			float dist = (row2-row)*(row2-row)+(col2-col)*(col2-col);
+			float row2 = row1*transform[0][0]+col1*transform[1][0]+transform[2][0];
+			float col2 = row1*transform[0][1]+col1*transform[1][1]+transform[2][1];
 			
-			if (dist<treshold) goodpoints++;
+			row1 = match->p2->row;
+			col1 = match->p2->col;
 			
-			if (goodpoints > largest) {
-				largest = goodpoints;
-				CopyDMatrix(transform,tbest,0,0,2,2);
-			}
+			float dist = (row2-row1)*(row2-row1)+(col2-col1)*(col2-col1);
+			
+			if ( dist < treshold ) goodpoints++;
+			
+		}
+		
+		if ( goodpoints > largest ) {
+			largest = goodpoints;
+			CopyDMatrix(transform,tbest,0,0,2,2);
 		}
 
 		if ( i >= L ) {
@@ -169,13 +170,12 @@ void ScreenMatches( PStack matches, double **transform ) {
 		}
 		
 		if (largest > pgood*numberofmatches) {
-			fprintf(stderr,"%lf %lf %lf\n",tbest[0][0],tbest[0][1],tbest[0][2]);
+			
 			fprintf(stderr,"Found matrix that fit %d out of the %d matches.\n",largest,numberofmatches);
 			CopyDMatrix(tbest,transform,0,0,2,2);
-			
+
 			FreeDMatrix(tbest,0,0);
-			FreePointStack(from);
-			FreePointStack(to);
+			FreeFArray(fr);
 			return;
 		}
 		
@@ -183,8 +183,7 @@ void ScreenMatches( PStack matches, double **transform ) {
 	
 	fprintf(stderr, "\nRANSAC failed, returning best match at %d.\n", largest);
 	FreeDMatrix(tbest,0,0);
-	FreePointStack(from);
-	FreePointStack(to);
+	FreeFArray(fr);
 	return;
 }
 

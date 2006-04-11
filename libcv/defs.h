@@ -57,7 +57,7 @@ typedef struct FVecSt {
 
 typedef struct PStackSt {
 	void **items;
-	int stacksize, realsize;
+	int stacksize, realsize, cursor;
 } *PStack;
 
 typedef struct FStackSt {
@@ -140,7 +140,7 @@ double **FreeDMatrix( double **matrix, int roff, int coff );
 void CopyDMatrix( double **FROM, double **TO, int minr, int minc, int maxr, int maxc );
 
 FArray NewFArray( int minrow, int mincol, int maxrow, int maxcol );
-void ResizeFArray( FArray array, int newminrow, int newmincol, int newmaxrow, int newmaxcol );
+FArray ResizeFArray( FArray array, int newminrow, int newmincol, int newmaxrow, int newmaxcol );
 void SetFArray( FArray array, int row, int col, float val );
 float GetFArray( FArray array, int row, int col );
 int FArrayCols( FArray array );
@@ -163,6 +163,9 @@ void PushPStack( PStack stack, void *pointer );
 void *PopPStack( PStack stack );
 char PStackEmpty( PStack stack );
 PStack FreePStack( PStack stack );
+char PStackCycle( PStack stack );
+void *CyclePStack( PStack stack );
+
 FStack NewFStack(int size);
 void PushFStack( FStack stack, float value );
 float PopFStack( FStack stack );
@@ -221,8 +224,9 @@ void FSpline( float *v, int n, float *v2 );
 double pythag( double a, double b );
 
 void FindMatches(PStack k1, PStack k2, PStack matches, int bound );
-int FindArea( PointStack points );
 void ScreenMatches( PStack matches, double **transform);
+
+float FindArea( FArray array );
 
 void EllipseC( Ellipse e, double maj, double min, double cr, double cc, double phi, double mod );
 void FindLineIntersection( int x1, int y1, int x2, int y2, int u1, int v1, int u2, int v2, int *xint, int *yint );

@@ -16,7 +16,7 @@ char CreateMSERKeypoints( Image image, PStack keypoints, int minsize, int maxsiz
 	CreateRegions(pa,-1,minsize,maxsize);
 	RegionsToKeypoints(pa,keypoints,-1,minperiod,minstable);
 
-	FreeMSERArray( pa );
+	FreeMSERArray( pa ); 
 	
 	return TRUE;
 	
@@ -33,14 +33,14 @@ void CreateRegions( MSERArray pa, int ud, int minsize, int maxsize ) {
 	if ( ud ==  1 ) {
 	for (k=pa->minv;k<=pa->maxv;k++) {	
 		kmin = pa->sb[k];
-		if ( k == pa->maxv ) kmax = (pa->rows-2)*(pa->cols-2);
+		if ( k == pa->maxv ) kmax = (pa->rows-2)*(pa->cols-2) - 1;
 		else kmax = pa->sb[k+1];
 		s1 = JoinNeighbors(pa->sp,pa->roots,pa->sizes,pa->flags,pa->cols,kmin,kmax,v1,s1,minsize,maxsize);
 		s1 = ProcessTouchedRoots(pa->roots,pa->sizes,pa->flags,pa->regions,v1,s1,k);
 	}} else {
 	for (k=pa->maxv;k>=0;k--) {
 		kmin = pa->sb[k];
-		if ( k == pa->maxv ) kmax = (pa->rows-2)*(pa->cols-2);
+		if ( k == pa->maxv ) kmax = (pa->rows-2)*(pa->cols-2) - 1;
 		else kmax = pa->sb[k+1];
 		s1 = JoinNeighbors(pa->sp,pa->roots,pa->sizes,pa->flags,pa->cols,kmin,kmax,v1,s1,minsize,maxsize);
 		s1 = ProcessTouchedRoots(pa->roots,pa->sizes,pa->flags,pa->regions,v1,s1,k);

@@ -123,7 +123,7 @@ void KeypointsToDescriptors( PStack keypoints, PStack descriptors, int o1, int o
 		while ( !FStackEmpty(orientations) ) {
 			key->ori = PopFStack(orientations);
 			KeypointToPatch( key, patch );
-			PushPStack(descriptors,NewDescriptor(key,pb*pb*ob,1,CreateSIFTDescriptor(patch,pb,ob)));
+			PushPStack(descriptors,NewDescriptor(key,36,1,CreatePCADescriptor(patch)));
 		}
 	}
 	FreeImage(patch);

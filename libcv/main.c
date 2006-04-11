@@ -28,7 +28,7 @@ int main (int argc, char **argv) {
 	
 	PStack ma = NewPStack(100);
 	double **transform = AllocDMatrix(3,3,0,0);
-	FindMatches(d1,d2,ma,40);
+	FindMatches(d1,d2,ma,30);
 	fprintf(stderr,"Found %d initial matches.\n",ma->stacksize);
 	ScreenMatches(ma,transform);
 	fprintf(stderr,"A1 = [ ");

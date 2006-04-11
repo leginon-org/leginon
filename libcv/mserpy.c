@@ -25,8 +25,8 @@ static PyObject *pyFindClusters(PyObject *self, PyObject *args) {
 	Image im1 = PyArrayObjectToImage( im1pix );
 	Image im2 = PyArrayObjectToImage( im2pix );
 	
-	//EnhanceImage(im1,0,255,0.01,0.01);
-	//EnhanceImage(im2,0,255,0.01,0.01);
+	EnhanceImage(im1,0,255,0.01,0.01);
+	EnhanceImage(im2,0,255,0.01,0.01);
 
 	fprintf(stderr,"Time: %2.2f seconds\n",CPUTIME-t0);
 	
@@ -51,7 +51,7 @@ static PyObject *pyFindClusters(PyObject *self, PyObject *args) {
 	fprintf(stderr,"Descriptors: %d  Time: %2.2f\n",im2desc->stacksize,CPUTIME-t0);
 	
 	double **transform = AllocDMatrix(3,3,0,0);
-	FindMatches(im1desc,im2desc,matches,40);
+	FindMatches(im1desc,im2desc,matches,20);
 	ScreenMatches(matches,transform);
 	
 	Py_XDECREF(im1pix);
