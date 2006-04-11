@@ -1001,7 +1001,7 @@ def flatDict(in_dict):
 
 	for key in keys:
 		value = in_dict[key]
-		if type(value) is dict:
+		if type(value) is type({}):
 			d = flatDict(value)
 			nd={}
 			# build the new keys
@@ -1131,7 +1131,7 @@ def matrix2dict(matrix, name=None):
 			j+=1
 	return d
 
-def sqlColumnsDefinition(in_dict, noDefault=None, null=False):
+def sqlColumnsDefinition(in_dict, noDefault=None):
 	"""
 	Format a table definition for any Data Class:
 
@@ -1155,34 +1155,38 @@ def sqlColumnsDefinition(in_dict, noDefault=None, null=False):
 		columns += defaults
 
 	# get a type map of in_dict into a dictionary
-
-	if hasattr(in_dict, 'typemap'):
-		value_types = dict(in_dict.typemap())
-	else:
-		value_types = None
-
 	for key in in_dict:
 		column={}
 		value=in_dict[key]
 
-		if value_types is None:
-			value_type = type(value)
-		else:
-			value_type = value_types[key]
+		## create empty instance of Data if value is None
+		if value is None:
+			in_dict_types=dict(in_dict.typemap())
+			if isinstance(in_dict_types[key], data.Data):
+				value = in_dict_types[key]()
 
-		sql_type = _sqltype(value_type)
-		print key, value_type, sql_type
-
-		if sql_type is not None:
+		sqlt = sqltype(value,key)
+		if sqlt is not None:
 			### simple types
 			column['Field']=key
-			column['Type']=sql_type
+			column['Type']=sqlt
+			columns.append(column)
+		elif isinstance(value, data.Data):
+			### data.Data reference
+			column['Field'] = ref2field(key,value)
+			column['Type'] = 'INT(20)'
+			column['Key'] = 'INDEX'
+			column['Index'] = [column['Field']]
+			columns.append(column)
+		elif isinstance(value, newdict.AnyObject):
+			column['Field'] = object2sqlColumn(key)
+			column['Type'] = 'LONGBLOB'
 			columns.append(column)
 		elif isinstance(value, Numeric.ArrayType):
 			### Numeric array
 			if len(Numeric.ravel(value)) < 10:
 				arraydict = matrix2dict(value,key)
-				nd = sqlColumnsDefinition(arraydict, noDefault=[], null=null)
+				nd = sqlColumnsDefinition(arraydict, noDefault=[])
 				nd.sort()
 			else:
 				filename = in_dict.filename()
@@ -1191,35 +1195,18 @@ def sqlColumnsDefinition(in_dict, noDefault=None, null=False):
 				## MRC in file system, but return filename 
 				## string
 				mrcdict = saveMRC(None,key,path,filename)
-				nd = sqlColumnsDefinition(mrcdict, noDefault=[], null=null)
+				nd = sqlColumnsDefinition(mrcdict, noDefault=[])
 			columns += nd
-		elif issubclass(value_type, data.Data):
-			### data.Data reference
-			if value is None:
-				value = value_type()
-			column['Field'] = ref2field(key,value)
-			column['Type'] = 'INT(20)'
-			column['Key'] = 'INDEX'
-			column['Index'] = [column['Field']]
-			columns.append(column)
-		elif issubclass(value_type, newdict.AnyObject):
-			column['Field'] = object2sqlColumn(key)
-			column['Type'] = 'LONGBLOB'
-			columns.append(column)
-		elif value_type is dict:
+		elif type(value) is dict:
 			### python dict
 			flatdict = flatDict({key:value})
-			nd = sqlColumnsDefinition(flatdict, noDefault=[], null=null)
+			nd = sqlColumnsDefinition(flatdict, noDefault=[])
 			nd.sort()
 			columns += nd
-		elif value_type in [tuple, list]:
+		elif type(value) in [tuple, list]:
 			### python sequences
-			str_value = repr(value)
-			nd = sqlColumnsDefinition({seq2sqlColumn(key): str_value}, noDefault=[], null=null)
+			nd = sqlColumnsDefinition({seq2sqlColumn(key):repr(value)}, noDefault=[])
 			columns += nd
-		column['Null'] = 'YES'
-		if 'Type' in column and 'TEXT' not in column['Type'] and 'BLOB' not in column['Type']:
-			column['Default'] = 'NULL'
 			
 	return columns
 
@@ -1267,26 +1254,17 @@ def sqlColumnsSelect(in_dict):
 	return columns
 
 
-def sqlColumnsFormat(in_dict, null=False):
+def sqlColumnsFormat(in_dict):
 	"""
 	{'ARRAY|matrix|2_1': 3.0, 'magnification': 5, 'ARRAY|matrix|2_2': 4.0,
 	 'SUBD|BShift|Y': 18.0, 'SUBD|BShift|X': 45.0, 'ARRAY|matrix|1_1': 1.0,
 	 'defocus': -9.9999999999999998e-13, 'ARRAY|matrix|1_2': 2.0,
 	 'float': 12.25, 'type': 'test'}
 	"""
-	if hasattr(in_dict, 'typemap'):
-		value_types = dict(in_dict.typemap())
-	else:
-		value_types = None
-
 	columns={}
 	for key in in_dict:
 		value=in_dict[key]
-		if value_types is None:
-			value_type = type(value)
-		else:
-			value_type = value_types[key]
-		sqlt = _sqltype(value_type)
+		sqlt = sqltype(value)
 		if sqlt is not None:
 			columns[key]=value
 		elif isinstance(value, Numeric.ArrayType):
@@ -1297,20 +1275,18 @@ def sqlColumnsFormat(in_dict, null=False):
 				path = in_dict.path()
 				datadict = saveMRC(value,key,path,filename)
 			columns.update(datadict)
-		elif issubclass(value_type, data.Data):
-			columns[ref2field(key,value)] = value.dbid
-		elif issubclass(value_type, newdict.AnyObject):
-			### AnyObject contains an object,
-			### convert it to a pickle string
-			columns[object2sqlColumn(key)] = cPickle.dumps(value.o, cPickle.HIGHEST_PROTOCOL)
-		elif value_type is dict:
+		elif type(value) is dict:
 			flatdict = flatDict({key:value})
 			nf = sqlColumnsFormat(flatdict)
 			columns.update(nf)
-		elif value_type in (tuple, list):
+		elif isinstance(value, data.Data):
+			columns[ref2field(key,value)] = value.dbid
+		elif isinstance(value, newdict.AnyObject):
+			### AnyObject contains an object,
+			### convert it to a pickle string
+			columns[object2sqlColumn(key)] = cPickle.dumps(value.o, cPickle.HIGHEST_PROTOCOL)
+		elif type(value) in [tuple, list]:
 			columns[seq2sqlColumn(key)] = repr(value)
-		elif null and value is None:
-			columns[key] = None
 	return columns
 
 
@@ -1367,10 +1343,13 @@ def datatype(in_dict, join=None):
 			if not allarrays.has_key(name):
 				allarrays[name]=None
 		elif a0 == 'SEQ':
-			try:
-				content[a[1]] = eval(value)
-			except SyntaxError:
+			if value is None:
 				content[a[1]] = None
+			else:
+				try:
+					content[a[1]] = eval(value)
+				except SyntaxError:
+					content[a[1]] = None
 		elif a0 == 'PICKLE':
 			## contains a python pickle string,
 			## convert it to newdict.AnyObject
@@ -1386,7 +1365,10 @@ def datatype(in_dict, join=None):
 		elif a0 == 'MRC':
 			## set up a FileReference, to be used later
 			## when we know the full path
-			content[a[1]] = newdict.FileReference(value, Mrc.mrc_to_numeric)
+			if value is None:
+				content[a[1]] = None
+			else:
+				content[a[1]] = newdict.FileReference(value, Mrc.mrc_to_numeric)
 		elif a0 == 'REF':
 			if value == 0 or value is None:
 				### NULL reference
@@ -1565,7 +1547,10 @@ def type2column(key, value, value_type):
 
 def type2columns(key, value, value_type, data_instance):
 	if value_type is newdict.DatabaseArrayType:
-		column_dict = value_dict = matrix2dict(value, key)
+		if value is None:
+			column_dict = value_dict = {}
+		else:
+			column_dict = value_dict = matrix2dict(value, key)
 	elif value_type is newdict.MRCArrayType:
 		if value is None:
 			column_dict = {keyMRC(key): ''}
@@ -1576,10 +1561,16 @@ def type2columns(key, value, value_type, data_instance):
 			column_dict = value_dict = saveMRC(value, key, path, filename)
 	elif value_type is dict:
 		# python dict
-		column_dict = value_dict = flatDict({key: value})
+		if value is None:
+			column_dict = value_dict = {}
+		else:
+			column_dict = value_dict = flatDict({key: value})
 	elif value_type in (tuple, list):
 		# python sequences
-		column_dict = value_dict = {seq2sqlColumn(key): repr(value)}
+		if value is None:
+			column_dict = value_dict = {}
+		else:
+			column_dict = value_dict = {seq2sqlColumn(key): repr(value)}
 	else:
 		return None
 	columns, row = subSQLColumns(column_dict, data_instance)

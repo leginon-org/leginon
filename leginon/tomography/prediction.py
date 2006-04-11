@@ -25,7 +25,7 @@ class Prediction(object):
         x = float(x)
         y = float(y)
         z = float(z) - float(z0)
-        theta = self.x[0]
+        theta = float(self.x[0])
         return {'x': x, 'y': y, 'z': z, 'theta': theta}
 
     def calculate(self):

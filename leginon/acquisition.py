@@ -311,7 +311,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				except calibrationclient.NoMatrixCalibrationError, e:
 					m = 'No calibration for acquisition move to target: %s'
 					self.logger.error(m % (e,))
-					raise NoMoveCalibration(message)
+					raise NoMoveCalibration(m)
 
 				## if stage is tilted and moving by image shift,
 				## calculate z offset between center of image and target
