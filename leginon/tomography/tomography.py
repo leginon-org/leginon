@@ -39,7 +39,6 @@ class Tomography(acquisition.Acquisition):
         'tilt start': 0.0,
         'tilt step': 1.0,
         'xcf bin': 1,
-        'registration preset order': [],
         'run buffer cycle': True,
         'align zero loss peak': True,
         'dose': 200.0,
@@ -157,8 +156,6 @@ class Tomography(acquisition.Acquisition):
         collect.node = self
         collect.session = self.session
         collect.logger = self.logger
-        collect.presets_client = self.presetsclient
-        collect.calibration_clients = self.calclients
         collect.instrument = self.instrument
         collect.settings = self.settings.copy()
         collect.preset = presetdata
@@ -166,7 +163,6 @@ class Tomography(acquisition.Acquisition):
         collect.emtarget = emtarget
         collect.viewer = self.panel.viewer
         collect.player = self.player
-        collect.high_tension = high_tension
         collect.pixel_size = pixel_size
         collect.tilts = tilts
         collect.exposures = exposures

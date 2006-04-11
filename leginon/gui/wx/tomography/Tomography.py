@@ -77,6 +77,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         expsz.Add(self.widgets['dose'], (0, 1), (1, 2),
                     wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
         #text = u'e\N{SUPERSCRIPT MINUS}/\N{ANGSTROM SIGN}\N{SUPERSCRIPT TWO}'
+        #label = wx.StaticText(self, -1, text)
         label = wx.StaticText(self, -1, 'e-/A^2')
         expsz.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
@@ -95,37 +96,37 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         expsz.Add(label, (2, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
         expsz.AddGrowableCol(0)
+        expsz.AddGrowableRow(0)
+        expsz.AddGrowableRow(2)
 
         expsb = wx.StaticBox(self, -1, 'Exposure')
         expsbsz = wx.StaticBoxSizer(expsb, wx.VERTICAL)
-        expsbsz.Add(expsz, 0, wx.EXPAND|wx.ALL, 5)
-
-        presets = self.node.presetsclient.getPresetNames()
-        self.widgets['registration preset order'] = EditPresetOrder(self, -1)
-        self.widgets['registration preset order'].storder.SetLabel('Registration Presets Order')
-        self.widgets['registration preset order'].setChoices(presets)
+        expsbsz.Add(expsz, 1, wx.EXPAND|wx.ALL, 5)
 
         self.widgets['run buffer cycle'] = wx.CheckBox(self, -1, 'Run buffer cycle before collection')
         self.widgets['align zero loss peak'] = wx.CheckBox(self, -1, 'Align zero loss peak after collection')
 
         miscsz = wx.GridBagSizer(5, 10)
-        miscsz.Add(self.widgets['registration preset order'],
-                   #(0, 0), (1, 2), wx.ALIGN_CENTER)
-                   (0, 0), (1, 1), wx.ALIGN_CENTER)
         miscsz.Add(self.widgets['run buffer cycle'],
-                   (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+                   (0, 0), (1, 1), wx.ALIGN_CENTER)
         miscsz.Add(self.widgets['align zero loss peak'],
-                   (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+                   (1, 0), (1, 1), wx.ALIGN_CENTER)
+        miscsz.AddGrowableRow(0)
+        miscsz.AddGrowableRow(1)
         miscsz.AddGrowableCol(0)
 
         miscsb = wx.StaticBox(self, -1, 'Misc.')
         miscsbsz = wx.StaticBoxSizer(miscsb, wx.VERTICAL)
-        miscsbsz.Add(miscsz, 0, wx.EXPAND|wx.ALL, 5)
+        miscsbsz.Add(miscsz, 1, wx.EXPAND|wx.ALL, 5)
 
         sz = wx.GridBagSizer(10, 10)
         sz.Add(tiltsbsz, (0, 0), (1, 2), wx.EXPAND)
         sz.Add(expsbsz, (1, 0), (1, 1), wx.EXPAND)
         sz.Add(miscsbsz, (1, 1), (1, 1), wx.EXPAND)
+        sz.AddGrowableRow(0)
+        sz.AddGrowableRow(1)
+        sz.AddGrowableCol(0)
+        sz.AddGrowableCol(1)
 
         return szs + [sz]
 

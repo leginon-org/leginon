@@ -2185,7 +2185,6 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('tilt start', float),
 			('tilt step', float),
 			('xcf bin', int),
-			('registration preset order', list),
 			('run buffer cycle', bool),
 			('align zero loss peak', bool),
             ('dose', float),
