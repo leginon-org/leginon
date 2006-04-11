@@ -4,16 +4,19 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/BeamTiltCalibrator.py,v $
-# $Revision: 1.18 $
+# $Revision: 1.19 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-03-14 22:02:22 $
-# $Author: pulokas $
+# $Date: 2006-04-11 05:25:48 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
 import threading
 import wx
+import numarray
 import gui.wx.Calibrator
+import gui.wx.MatrixCalibrator
+import gui.wx.Dialog
 from gui.wx.Entry import FloatEntry
 import gui.wx.Settings
 import gui.wx.ToolBar
@@ -71,6 +74,8 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SET_INSTRUMENT, 'focusset', shortHelpString='Eucentric Focus To Scope')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_GET_BEAMTILT, 'beamtiltget', shortHelpString='Rotation Center From Scope')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SET_BEAMTILT, 'beamtiltset', shortHelpString='Rotation Center To Scope')
+		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_EDIT, 'edit', shortHelpString='Edit current calibration')
 
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
 
@@ -83,12 +88,15 @@ class Panel(gui.wx.Calibrator.Panel):
 
 		self.measure_dialog = MeasureDialog(self)
 
+		self.Bind(gui.wx.Events.EVT_EDIT_FOCUS_CALIBRATION, self.onEditFocusCalibration)
+
 		self.toolbar.Bind(wx.EVT_TOOL, self.onParameterSettingsTool, id=gui.wx.ToolBar.ID_PARAMETER_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool, id=gui.wx.ToolBar.ID_MEASURE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEucentricFocusFromScope, id=gui.wx.ToolBar.ID_GET_INSTRUMENT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEucentricFocusToScope, id=gui.wx.ToolBar.ID_SET_INSTRUMENT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRotationCenterFromScope, id=gui.wx.ToolBar.ID_GET_BEAMTILT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRotationCenterToScope, id=gui.wx.ToolBar.ID_SET_BEAMTILT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onEditFocusCalibrationTool, id=gui.wx.ToolBar.ID_EDIT)
 
 	def instrumentEnable(self, enable):
 		tools = [
@@ -192,6 +200,20 @@ class Panel(gui.wx.Calibrator.Panel):
 
 	def onAbortTool(self, evt):
 		self.node.abortCalibration()
+
+	def onEditFocusCalibrationTool(self, evt):
+		threading.Thread(target=self.node.editCurrentCalibration).start()
+
+	def onEditFocusCalibration(self, evt):
+		dialog = EditFocusCalibrationDialog(self, evt.matrix, evt.rotation_center, evt.eucentric_focus, 'Edit Calibration')
+		if dialog.ShowModal() == wx.ID_OK:
+			calibration = dialog.getFocusCalibration()
+			self.node.saveCalibration(calibration, evt.parameter, evt.high_tension, evt.magnification, evt.tem, evt.ccd_camera)
+		dialog.Destroy()
+
+	def editCalibration(self, **kwargs):
+		evt = gui.wx.Events.EditFocusCalibrationEvent(**kwargs)
+		self.GetEventHandler().AddPendingEvent(evt)
 
 class DefocusSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -323,4 +345,60 @@ class MeasureDialog(wx.Dialog):
 	def onResetDefocusButton(self, evt):
 		self.GetParent().instrumentEnable(False)
 		threading.Thread(target=self.node.resetDefocus).start()
+
+class EditFocusCalibrationDialog(gui.wx.MatrixCalibrator.EditMatrixDialog):
+	def __init__(self, parent, matrix, rotation_center, eucentric_focus, title, subtitle='Focus Calibration'):
+		self.rotation_center = rotation_center
+		self.eucentric_focus = eucentric_focus
+		gui.wx.MatrixCalibrator.EditMatrixDialog.__init__(self, parent, matrix, title, subtitle='Focus Calibration')
+
+	def onInitialize(self):
+		matrix = gui.wx.MatrixCalibrator.EditMatrixDialog.onInitialize(self)
+		row = 1
+
+		label = wx.StaticText(self, -1, 'Rotation Center:')
+		self.sz.Add(label, (row + 2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.rotation_center_entries = {}
+		for i, axis in enumerate(('x', 'y')):
+			label = wx.StaticText(self, -1, axis)
+			self.sz.Add(label, (row + 1, i + 1), (1, 1), wx.ALIGN_CENTER|wx.ALIGN_BOTTOM)
+			entry = FloatEntry(self, -1, chars=9)
+			if self.rotation_center is not None:
+				try:
+					entry.SetValue(self.rotation_center[axis])
+				except KeyError:
+					pass
+			self.rotation_center_entries[axis] = entry
+			self.sz.Add(entry, (row + 2, i + 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+
+		label = wx.StaticText(self, -1, 'Eucentric Focus:')
+		self.sz.Add(label, (row + 3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.eucentric_focus_entry = FloatEntry(self, -1, chars=9)
+		self.sz.Add(self.eucentric_focus_entry, (row + 3, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		self.eucentric_focus_entry.SetValue(self.eucentric_focus)
+
+	def getFocusCalibration(self):
+		matrix = gui.wx.MatrixCalibrator.EditMatrixDialog.getMatrix(self)
+		rotation_center = {}
+		for axis, entry in self.rotation_center_entries.items():
+			value = entry.GetValue()
+			if value is None:
+				raise ValueError
+			rotation_center[axis] = value
+
+		eucentric_focus = self.eucentric_focus_entry.GetValue()
+		if value is None:
+			raise ValueError
+
+		return matrix, rotation_center, eucentric_focus
+
+if __name__ == '__main__':
+	app = wx.PySimpleApp()
+	app.frame = wx.Frame(None, -1, 'Matrix Calibration Test')
+	matrix = numarray.zeros((2, 2))
+	rotation_center = {'x': 0, 'y': 0}
+	eucentric_focus = 0
+	app.dialog = EditFocusCalibrationDialog(app.frame, matrix, rotation_center, eucentric_focus, 'Test Edit Dialog')
+	app.dialog.Show()
+	app.MainLoop()
 

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/beamtiltcalibrator.py,v $
-# $Revision: 1.70 $
+# $Revision: 1.71 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-03-23 01:59:03 $
+# $Date: 2006-04-11 05:24:42 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -58,7 +58,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
 		calibration_client = self.calibration_clients['beam tilt']
-		beam_tilt = calibration_client.retreiveRotationCenter(tem, cam, ht, mag)
+		beam_tilt = calibration_client.retrieveRotationCenter(tem, cam, ht, mag)
 		if not beam_tilt:
 			raise RuntimeError('no rotation center for %geV, %gX' % (ht, mag))
 		self.instrument.tem.BeamTilt = beam_tilt
@@ -384,4 +384,66 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def abortCalibration(self):
 		self.abort.set()
+
+	def editCurrentCalibration(self):
+		try:
+			kwargs = self.getCurrentCalibration()
+			self.panel.editCalibration(**kwargs)
+		except Exception, e:
+			self.logger.error('Calibration edit failed: %s' % e)
+			return
+
+	def getCurrentCalibration(self):
+		tem = self.instrument.getTEMData()
+		if tem is None:
+			raise RuntimerError('no TEM selected')
+		ccd_camera = self.instrument.getCCDCameraData()
+		if ccd_camera is None:
+			raise RuntimerError('no CCD camera selected')
+		high_tension = self.instrument.tem.HighTension
+		if high_tension is None:
+			raise RuntimerError('cannot get high tension')
+		magnification = self.instrument.tem.Magnification
+		if magnification is None:
+			raise RuntimerError('cannot get magnification')
+		parameter = 'defocus'
+		client = self.calibration_clients['beam tilt']
+		m = 'Get %s calibration failed: %s'
+		try:
+			matrix_data = client.researchMatrix(tem, ccd_camera, parameter, high_tension, magnification)
+			matrix = matrix_data['matrix']
+		except Exception, e:
+			self.logger.warning(m % ('focus', e))
+			matrix = None
+		try:
+			rotation_center = client.retrieveRotationCenter(tem, ccd_camera, high_tension, magnification)
+		except Exception, e:
+			self.logger.warning(m % ('rotation center', e))
+			rotation_center = None
+		client = self.calibration_clients['eucentric focus']
+		try:
+			eucentric_focus_data = client.researchEucentricFocus(high_tension, magnification, tem=tem, ccdcamera=ccd_camera)
+			eucentric_focus = eucentric_focus_data['focus']
+		except Exception, e:
+			self.logger.warning(m % ('eucentric focus', e))
+			eucentric_focus = None
+		kwargs = {
+			'tem': tem,
+			'ccd_camera': ccd_camera,
+			'high_tension': high_tension,
+			'magnification': magnification,
+			'parameter': parameter,
+			'matrix': matrix,
+			'rotation_center': rotation_center,
+			'eucentric_focus': eucentric_focus,
+		}
+		return kwargs
+
+	def saveCalibration(self, calibration, parameter, high_tension, magnification, tem, ccd_camera):
+		matrix, rotation_center, eucentric_focus = calibration
+		client = self.calibration_clients['beam tilt']
+		client.storeMatrix(high_tension, magnification, parameter, matrix, tem, ccd_camera)
+		client.storeRotationCenter(tem, ccd_camera, high_tension, magnification, rotation_center)
+		client = self.calibration_clients['eucentric focus']
+		client.publishEucentricFocus(high_tension, magnification, eucentric_focus)
 

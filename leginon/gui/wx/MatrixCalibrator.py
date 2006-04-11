@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MatrixCalibrator.py,v $
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-11 01:46:34 $
+# $Date: 2006-04-11 05:25:48 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -180,6 +180,8 @@ class EditMatrixDialog(gui.wx.Dialog.Dialog):
 																	style=wx.DEFAULT_DIALOG_STYLE)
 
 	def onInitialize(self):
+		label = wx.StaticText(self, -1, 'Matrix:')
+		self.sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.floatentries = []
 		if self.matrix is None:
 			shape = (2, 2)
@@ -192,7 +194,7 @@ class EditMatrixDialog(gui.wx.Dialog.Dialog):
 				self.floatentries[row][column] = FloatEntry(self, -1, chars=9)
 				if self.matrix is not None:
 					self.floatentries[row][column].SetValue(self.matrix[row, column])
-				self.sz.Add(self.floatentries[row][column], (row, column), (1, 1),
+				self.sz.Add(self.floatentries[row][column], (row, column + 1), (1, 1),
 										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		self.addButton('Save', wx.ID_OK)
@@ -204,7 +206,7 @@ class EditMatrixDialog(gui.wx.Dialog.Dialog):
 		try:
 			self.matrix = self.getMatrix()
 		except ValueError:
-			dialog = wx.MessageDialog(self, 'Invalid matrix values',
+			dialog = wx.MessageDialog(self, 'Invalid calibration values',
 																'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()

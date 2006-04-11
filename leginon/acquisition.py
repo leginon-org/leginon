@@ -308,9 +308,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 				calclient = self.calclients[movetype]
 				try:
 					newscope = calclient.transform(pixelshift, targetscope, targetcamera)
-				except calibrationclient.NoMatrixCalibrationError:
-					message = 'No calibration for acquisition move to target'
-					self.logger.error(message)
+				except calibrationclient.NoMatrixCalibrationError, e:
+					m = 'No calibration for acquisition move to target: %s'
+					self.logger.error(m % (e,))
 					raise NoMoveCalibration(message)
 
 				## if stage is tilted and moving by image shift,

@@ -3,7 +3,6 @@ import time
 import data
 import tiltcorrelator
 import tiltseries
-import registration
 import prediction
 
 class Abort(Exception):
@@ -71,17 +70,6 @@ class Collection(object):
         self.correlator = tiltcorrelator.Correlator(self.settings['xcf bin'],
                                                     self.theta)
 
-        self.registration = registration.Registration(
-                                          self.node,
-                                          self.presets_client,
-                                          self.calibration_clients,
-                                          self.instrument,
-                                          self.viewer,
-                                          self.settings,
-                                          self.theta,
-                                          self.target,
-                                          self.emtarget)
-
         if self.settings['run buffer cycle']:
             self.runBufferCycle()
 
@@ -135,8 +123,6 @@ class Collection(object):
 
         self.correlator.reset()
 
-        self.registration = None
-
         self.restoreInstrumentState()
         self.instrument_state = None
 
@@ -155,13 +141,11 @@ class Collection(object):
 
         self.logger.info('Removing tilt backlash...')
         try:
-            self.emtarget, shift = self.registration.removeBacklash(tilts)
+            self.target, self.emtarget = self.node.removeStageAlphaBacklash(tilts, self.preset['name'], self.target, self.emtarget)
         except Exception, e:
             self.logger.error('Failed to remove backlash: %s.' % e)
             self.finalize()
             raise Fail
-        m = 'Tilt backlash removed (position shifted: %d, %d pixels).'
-        self.logger.info(m % (shift['x'], shift['y']))
 
         self.checkAbort()
 

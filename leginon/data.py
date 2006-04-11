@@ -853,7 +853,7 @@ camera_params = (
 	('offset', dict),
 	('exposure time', float),
 	('exposure type', str),
-	('image data', newdict.NumericArrayType),
+	('image data', newdict.MRCArrayType),
 	('inserted', bool),
 	('dump', bool),
 	('pixel size', dict),
@@ -1014,7 +1014,7 @@ class MatrixCalibrationData(MagDependentCalibrationData):
 	def typemap(cls):
 		return MagDependentCalibrationData.typemap() + (
 			('type', str),
-			('matrix', newdict.NumericArrayType),
+			('matrix', newdict.DatabaseArrayType),
 		)
 	typemap = classmethod(typemap)
 
@@ -1053,8 +1053,8 @@ class StageModelCalibrationData(CalibrationData):
 			('label', str),
 			('axis', str),
 			('period', float),
-			('a', newdict.NumericArrayType),
-			('b', newdict.NumericArrayType),
+			('a', newdict.DatabaseArrayType),
+			('b', newdict.DatabaseArrayType),
 		)
 	typemap = classmethod(typemap)
 
@@ -1131,7 +1131,7 @@ class NewPresetData(InSessionData):
 class ImageData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
-			('image', newdict.NumericArrayType),
+			('image', newdict.MRCArrayType),
 			('label', str),
 			('filename', str),
 			('list', ImageListData),

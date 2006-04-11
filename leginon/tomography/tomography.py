@@ -99,15 +99,17 @@ class Tomography(acquisition.Acquisition):
 
         tilts = self.tilts.getTilts()
 
+        dose = 0.0
+        exposure_time = 0.0
         try:
             name = self.settings['preset order'][-1]
             preset = self.presetsclient.getPresetFromDB(name)
         except (IndexError, ValueError):
-            dose = 0.0
-            exposure_time = 0.0
+            pass
         else:
-            dose = preset['dose']*1e-20
-            exposure_time = preset['exposure time']/1000.0
+            if preset['dose'] is not None:
+                dose = preset['dose']*1e-20
+                exposure_time = preset['exposure time']/1000.0
 
         try:
             self.exposure.update(total_dose=total_dose,
@@ -242,75 +244,6 @@ class Tomography(acquisition.Acquisition):
 
         return high_tension, pixel_size
 
-    def XXXprocessTargetData(self, targetdata, attempt=None):
-        try:
-            preset_names = self.validatePresets()
-        except InvalidPresetsSequence:
-            s = 'Presets sequence is invalid, please correct it'
-            if targetdata is None or targetdata['type'] == 'simulated':
-                self.logger.error(s + ' and try again.')
-                return 'aborted'
-            else:
-                self.player.pause()
-                self.logger.error(s + ' and press continue.')
-                self.beep()
-                return 'repeat'
-
-        result = 'ok'
-        for preset_name in presetnames:
-            if self.alreadyAcquired(targetdata, preset_name):
-                continue
-
-            self.correctBacklash()
-            self.declareDrift('stage')
-
-            if self.settings['adjust for drift']:
-                targetdata = self.adjustTargetForDrift(targetdata)
-
-            try:
-                emtarget = self.targetToEMTargetData(targetdata)
-            except InvalidStagePosition:
-                return 'invalid'
-            except NoMoveCalibration:
-                self.player.pause()
-                self.logger.error('Calibrate this move type, then continue')
-                self.beep()
-                return 'repeat'
-
-            self.setStatus('waiting')
-            self.presetsclient.toScope(preset_name, emtarget)
-            self.setStatus('processing')
-            self.logger.info('Determining current preset...')
-            preset = self.presetsclient.getCurrentPreset()
-
-            if preset is None or preset['name'] != preset_name:
-                self.logger.error('Failed to set preset "%s".' % preset_name)
-                continue
-
-            if preset['film']:
-                self.logger.error('Film currently unsupported for tomography.')
-                return 'invalid'
-
-            self.logger.info('Current preset is "%s".' % preset['name'])
-
-            pause_time = self.settings['pause time']
-            self.logger.info('Pausing for %s seconds...' % pause_time)
-            time.sleep(pause_time)
-
-            result = self.acquire(preset,
-                                  target=targetdata,
-                                  emtarget=emtarget,
-                                  attempt=attempt)
-
-            # in these cases, return immediately
-            if result in ('aborted', 'repeat'):
-                self.logger.info('Acquisition state is "%s"' % result)
-                break
-
-        self.logger.info('Processing completed.')
-
-        return result
-
     def getShift(self, shift, move_type):
         scope_data = self.instrument.getData(data.ScopeEMData)
         camera_data = self.instrument.getData(data.CameraEMData, image=False)
@@ -328,4 +261,30 @@ class Tomography(acquisition.Acquisition):
         initializer = {move_type: shift}
         position = data.ScopeEMData(initializer=initializer)
         self.instrument.setData(position)
+
+    def removeStageAlphaBacklash(self, tilts, preset_name, target, emtarget):
+        if len(tilts) < 2:
+            raise ValueError
+
+        delta = math.radians(5.0)
+
+        if tilts[1] - tilts[0] > 0:
+            alpha = tilts[0] - delta
+        else:
+            alpha = tilts[0] + delta
+
+        self.instrument.tem.StagePosition = {'a': alpha}
+
+        self.instrument.tem.StagePosition = {'a': tilts[0]}
+
+        self.driftDetected(preset_name, emtarget, None)
+        target = self.adjustTargetForDrift(target)
+        emtarget = self.targetToEMTargetData(target)
+
+        self.presetsclient.toScope(preset_name, emtarget)
+        current_preset = self.presetsclient.getCurrentPreset()
+        if current_preset['name'] != preset_name:
+            raise RutimeError('error setting preset \'%s\'' % preset_name)
+
+        return target, emtarget
 

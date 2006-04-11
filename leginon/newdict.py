@@ -173,7 +173,8 @@ class _NumericArrayType:
 	### this makes sure all instances hash the same
 	def __hash__(self):
 		return hash(_NumericArrayType)
-NumericArrayType = _NumericArrayType()
+MRCArrayType = _NumericArrayType()
+DatabaseArrayType = _NumericArrayType()
 
 ### and here's the validator for it
 def validateNumericArray(obj):
@@ -191,4 +192,5 @@ def validateNumericArray(obj):
 		raise TypeError()
 	return obj
 
-registerValidator(NumericArrayType, validateNumericArray)
+registerValidator(MRCArrayType, validateNumericArray)
+registerValidator(DatabaseArrayType, validateNumericArray)

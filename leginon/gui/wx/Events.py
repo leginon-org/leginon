@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Events.py,v $
-# $Revision: 1.26 $
+# $Revision: 1.27 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-10-14 21:48:36 $
-# $Author: pulokas $
+# $Date: 2006-04-11 05:25:48 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -80,6 +80,16 @@ eventFactory('Clear Grid')
 eventFactory('Grid Inserted')
 eventFactory('Extracting Grid')
 eventFactory('Edit Matrix', attributes=['calibrationdata'])
+eventFactory('Edit Focus Calibration', attributes=[
+	'tem',
+	'ccd_camera',
+	'high_tension',
+	'magnification',
+	'parameter',
+	'matrix',
+	'rotation_center',
+	'eucentric_focus',
+])
 eventFactory('Add TEM', attributes=['name'], command=True)
 eventFactory('Remove TEM', attributes=['name'], command=True)
 eventFactory('Set TEM', attributes=['name'], command=True)

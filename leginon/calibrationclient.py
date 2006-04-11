@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.177 $
+# $Revision: 1.178 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-03-23 20:39:59 $
+# $Date: 2006-04-11 05:24:42 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -511,7 +511,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		rc['session'] = self.node.session
 		self.node.publish(rc, database=True, dbforce=True)
 
-	def retreiveRotationCenter(self, tem, cam, ht, mag):
+	def retrieveRotationCenter(self, tem, cam, ht, mag):
 		rc = data.RotationCenterData()
 		rc['tem'] = tem
 		rc['ccdcamera'] = cam

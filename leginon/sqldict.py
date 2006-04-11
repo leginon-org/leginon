@@ -1131,45 +1131,6 @@ def matrix2dict(matrix, name=None):
 			j+=1
 	return d
 
-def saveMRC(object, name, path, filename, thumb=False):
-	"""
-	Save Numeric array to MRC file and replace it with filename
-	"""
-	d={}
-	k = sep.join(['MRC',name])
-	fullname = leginonconfig.mapPath(os.path.join(path,filename))
-	if object is not None:
-		#print 'saving MRC', fullname
-		Mrc.numeric_to_mrc(object, fullname)
-	d[k] = filename
-	return d
-
-def sqltype(o):
-	return _sqltype(type(o))
-
-def _sqltype(t):
-	"""
-	Convert a python type to an SQL type
-	"""
-	if t is str:
-		return "TEXT"
-	elif t is float:
-		return "DOUBLE"
-	elif t in (int,long):
-		return "INT(20)"
-	elif t is bool:
-		return "TINYINT(1)"
-	else:
-		return None
-
-def ref2field(key, dataobject):
-	'''
-	figure out the column name for a Data instance
-	'''
-	reftable = dataobject.__class__.__name__
-	colname = sep.join(['REF',reftable,key])
-	return colname
-
 def sqlColumnsDefinition(in_dict, noDefault=None, null=False):
 	"""
 	Format a table definition for any Data Class:
@@ -1427,7 +1388,7 @@ def datatype(in_dict, join=None):
 			## when we know the full path
 			content[a[1]] = newdict.FileReference(value, Mrc.mrc_to_numeric)
 		elif a0 == 'REF':
-			if value == 0:
+			if value == 0 or value is None:
 				### NULL reference
 				content[a[2]] = None
 			elif a[2] in join:
@@ -1458,3 +1419,184 @@ def datatype(in_dict, join=None):
 
 	content.update(allarrays)
 	return content
+
+def sqltype(o):
+	return _sqltype(type(o))
+
+def _sqltype(t):
+	"""
+	Convert a python type to an SQL type
+	"""
+	if t is str:
+		return "TEXT"
+	elif t is float:
+		return "DOUBLE"
+	elif t in (int,long):
+		return "INT(20)"
+	elif t is bool:
+		return "TINYINT(1)"
+	else:
+		return None
+
+def ref2field(key, dataobject):
+	'''
+	figure out the column name for a Data instance
+	'''
+	return _ref2field(key, dataobject.__class__)
+
+def _ref2field(key, dataclass):
+	reftable = dataclass.__name__
+	colname = sep.join(['REF',reftable,key])
+	return colname
+
+def keyMRC(name):
+	return sep.join(['MRC', name])
+
+def saveMRC(object, name, path, filename, thumb=False):
+	"""
+	Save Numeric array to MRC file and replace it with filename
+	"""
+	d={}
+	k = keyMRC(name)
+	fullname = leginonconfig.mapPath(os.path.join(path,filename))
+	if object is not None:
+		#print 'saving MRC', fullname
+		Mrc.numeric_to_mrc(object, fullname)
+	d[k] = filename
+	return d
+
+def subSQLColumns(value_dict, data_instance):
+	columns = []
+	row = {}
+	for key, value in value_dict.items():
+		value_type = type(value)
+
+		result = type2column(key, value, value_type)
+		if result is not None:
+			columns.append(result[0])
+			row.update(result[1])
+			continue
+
+		result = type2columns(key, value, value_type, data_instance)
+		if result is not None:
+			columns += result[0]
+			row.update(result[1])
+			continue
+
+		raise ValueError
+	return columns, row
+
+def dataSQLColumns(data_instance):
+	columns = []
+	row = {}
+	# default columns
+	columns.append({
+			'Field': 'DEF_id',
+			'Type': 'int(16)',
+			'Key': 'PRIMARY',
+			'Extra':'auto_increment',
+	})
+	columns.append({
+			'Field': 'DEF_timestamp',
+			'Type': 'timestamp',
+			'Key': 'INDEX',
+			'Index': ['DEF_timestamp']
+	})
+
+	type_dict = dict(data_instance.typemap())
+
+	for key, value in data_instance.items():
+		try:
+			value_type = type_dict[key]
+		except KeyError:
+			raise ValueError
+
+		result = type2column(key, value, value_type)
+		if result is not None:
+			columns.append(result[0])
+			row.update(result[1])
+			continue
+
+		result = type2columns(key, value, value_type, data_instance)
+		if result is not None:
+			columns += result[0]
+			row.update(result[1])
+			continue
+
+		raise ValueError
+	return columns, row
+
+def type2column(key, value, value_type):
+	column = {}
+	row = {}
+	sql_type = _sqltype(value_type)
+	if sql_type is not None:
+		# simple types
+		column['Field'] = key
+		column['Type'] = sql_type
+		row[key] = value
+	else:
+		try:
+			if issubclass(value_type, data.Data):
+				# data.Data reference
+				field = _ref2field(key, value_type)
+				column['Field'] = field
+				column['Type'] = 'INT(20)'
+				column['Key'] = 'INDEX'
+				column['Index'] = [column['Field']]
+				if value is None:
+					row[field] = None
+				else:
+					row[field] = value.dbid
+			elif issubclass(value_type, newdict.AnyObject):
+				field = object2sqlColumn(key)
+				column['Field'] = field
+				column['Type'] = 'LONGBLOB'
+				row[field] = cPickle.dumps(value.o, cPickle.HIGHEST_PROTOCOL)
+			else:
+				return None
+		except TypeError:
+			return None
+
+	column['Null'] = 'YES'
+	if not ('TEXT' in column['Type'] or 'BLOB' in column['Type']):
+		column['Default'] = 'NULL'
+	return column, row
+
+def type2columns(key, value, value_type, data_instance):
+	if value_type is newdict.DatabaseArrayType:
+		column_dict = value_dict = matrix2dict(value, key)
+	elif value_type is newdict.MRCArrayType:
+		if value is None:
+			column_dict = {keyMRC(key): ''}
+			value_dict = {keyMRC(key): None}
+		else:
+			filename = data_instance.filename()
+			path = data_instance.path()
+			column_dict = value_dict = saveMRC(value, key, path, filename)
+	elif value_type is dict:
+		# python dict
+		column_dict = value_dict = flatDict({key: value})
+	elif value_type in (tuple, list):
+		# python sequences
+		column_dict = value_dict = {seq2sqlColumn(key): repr(value)}
+	else:
+		return None
+	columns, row = subSQLColumns(column_dict, data_instance)
+	columns.sort()
+	row.update(value_dict)
+	return columns, row
+
+if __name__ == '__main__':
+	data_instance = data.AcquisitionImageData()
+	columns, row = dataSQLColumns(data_instance)
+	for column in columns:
+		field = column['Field']
+		print field
+		print column
+		if field in ('DEF_id', 'DEF_timestamp'):
+			print
+			continue
+		print row[field]
+		print
+
