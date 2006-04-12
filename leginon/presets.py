@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.234 $
+# $Revision: 1.235 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-09 01:44:51 $
+# $Date: 2006-04-12 17:31:26 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -214,6 +214,9 @@ class PresetsManager(node.Node):
 		self.currentpreset = None
 		self.presets = newdict.OrderedDict()
 		self.selectedsessionpresets = None
+
+		# HACK: fix me
+		self.last_value = None
 
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 		self.addEventInput(event.PresetLockEvent, self.handleLock)
@@ -1077,7 +1080,15 @@ class PresetsManager(node.Node):
 		self.logger.info(message)
 		self.outputEvent(event.PresetChangedEvent(name=name, preset=newpreset))
 
-	def getValue(self, instrument_type, instrument_name, parameter):
+	def getValue(self, instrument_type, instrument_name, parameter, event):
+		# HACK: fix me
+		try:
+			value = self._getValue(instrument_type, instrument_name, parameter)
+			self.last_value = value
+		finally:
+			event.set()
+
+	def _getValue(self, instrument_type, instrument_name, parameter):
 		try:
 			if instrument_type == 'tem':
 				return self.instrument.getTEMParameter(instrument_name, parameter)

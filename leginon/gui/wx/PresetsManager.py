@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.66 $
+# $Revision: 1.67 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-09 01:44:51 $
+# $Date: 2006-04-12 17:31:27 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -103,11 +103,11 @@ class Calibrations(wx.StaticBoxSizer):
 		self.Layout()
 
 class EditPresetDialog(gui.wx.Dialog.Dialog):
-	def __init__(self, parent, parameters, tems, ccd_cameras, getValue=None):
+	def __init__(self, parent, parameters, tems, ccd_cameras, node):
 		self.parameters = parameters
 		self.tems = tems
 		self.ccd_cameras = ccd_cameras
-		self.getValue = getValue
+		self.node = node
 
 		try:
 			title =  'Edit Preset %s' % parameters['name']
@@ -289,15 +289,18 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		self.Bind(wx.EVT_CHOICE, self.onCCDCameraChoice, self.choices['ccdcamera'])
 
 	def onButton(self, evt):
-		if self.getValue is None:
-			return
 		event_button = evt.GetEventObject()
 		for instrument_type in self._buttons:
 			for name, button in self._buttons[instrument_type].items():
 				if button is event_button:
 					instrument_name = self.choices[instrument_type].GetStringSelection()
 					try:
-						value = self.getValue(instrument_type, instrument_name, name)
+						target = self.node.getValue
+						event = threading.Event()
+						args = (instrument_type, instrument_name, name, event)
+						threading.Thread(target=target, args=args).start()
+						event.wait()
+						value = self.node.last_value
 						if name != 'camera parameters':
 							value = {name: value} 
 						self.setParameters(value)
@@ -413,12 +416,18 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 			'pre exposure',
 		]
 		for key in keys:
-			parameters[key] = float(self.floats[key].GetValue())
+			value = self.floats[key].GetValue()
+			if value is not None:
+				value = float(value)
+			parameters[key] = value
 
 		for key in ['image shift', 'beam shift']:
 			parameters[key] = {}
 			for axis in ['x', 'y']:
-				parameters[key][axis] = float(self.floats[key][axis].GetValue())
+				value = self.floats[key][axis].GetValue()
+				if value is not None:
+					value = float(value)
+				parameters[key][axis] = value
 
 		for key in ['skip', 'film', 'energy filter']:
 			parameters[key] = bool(self.bools[key].GetValue())
@@ -760,7 +769,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		if not ccd_cameras:
 			return
 
-		dialog = EditPresetDialog(self, preset, tems, ccd_cameras, self.node.getValue)
+		dialog = EditPresetDialog(self, preset, tems, ccd_cameras, self.node)
 		if dialog.ShowModal() == wx.ID_OK:
 			self.node.updatePreset(evt.presetname, dialog.getParameters())
 		dialog.Destroy()
