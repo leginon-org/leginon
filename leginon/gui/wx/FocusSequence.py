@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-03-09 20:19:23 $
-# $Author: pulokas $
+# $Date: 2006-04-12 20:29:45 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -31,6 +31,7 @@ class DialogSettings(object):
         self.correlation_types = correlation_types
         self.default_setting = default_setting
         self.sequence = sequence
+        self.reset_types = ['Default', 'Always', 'Never']
 
 class EditListBox(gui.wx.ListBox.EditListBox):
     def __init__(self, parent, id, label, choices, **kwargs):
@@ -131,8 +132,27 @@ class Dialog(gui.wx.Dialog.Dialog):
         setting['stig defocus max'] = self.stig_defocus_max_entry.GetValue()
         setting['check drift'] = self.check_drift_checkbox.GetValue()
         setting['drift threshold'] = self.drift_threshold_entry.GetValue()
+        setting['reset defocus'] = self.getResetSetting()
 
         return setting
+
+    def getResetSetting(self):
+        choice = self.reset_choice.GetStringSelection()
+        if choice == 'Always':
+            return True
+        elif choice == 'Never':
+            return False
+        else:
+            return None
+
+    def setResetSetting(self, value):
+        if value is True:
+            choice = 'Always'
+        elif value is False:
+            choice = 'Never'
+        else:
+            choice = 'Default'
+        self.reset_choice.SetStringSelection(choice)
 
     def setSetting(self, setting):
         ## fix only necessary if you already have settings saved before
@@ -154,6 +174,7 @@ class Dialog(gui.wx.Dialog.Dialog):
         self.stig_defocus_max_entry.SetValue(setting['stig defocus max'])
         self.check_drift_checkbox.SetValue(setting['check drift'])
         self.drift_threshold_entry.SetValue(setting['drift threshold'])
+        self.setResetSetting(setting['reset defocus'])
 
     def insertDefaultSetting(self, i, name):
         setting = self.settings.default_setting.copy()
@@ -179,6 +200,7 @@ class Dialog(gui.wx.Dialog.Dialog):
             self.stig_defocus_max_entry,
             self.check_drift_checkbox,
             self.drift_threshold_entry,
+            self.reset_choice,
         ]
 
         [widget.Enable(enable) for widget in widgets]
@@ -196,6 +218,8 @@ class Dialog(gui.wx.Dialog.Dialog):
         self.preset_choice.setChoices(preset_names)
 
         self.focus_method_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.focus_methods)
+
+        self.reset_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.reset_types)
 
         ## auto focus only
         self.correction_type_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.correction_types)
@@ -253,54 +277,58 @@ class Dialog(gui.wx.Dialog.Dialog):
         label = wx.StaticText(self, -1, 'Focus method:')
         self.labels.append(label)
         sizer.Add(label, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        label = wx.StaticText(self, -1, 'Reset defocus:')
+        self.labels.append(label)
+        sizer.Add(label, (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
         ## these are auto only
         label = wx.StaticText(self, -1, 'Beam tilt:')
         self.labels.append(label)
-        sizer.Add(label, (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(label, (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         label = wx.StaticText(self, -1, 'Image registration:')
         self.labels.append(label)
-        sizer.Add(label, (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(label, (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         label = wx.StaticText(self, -1, 'Fit limit:')
         self.labels.append(label)
-        sizer.Add(label, (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(label, (6, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         label = wx.StaticText(self, -1, 'Change limit:')
         self.labels.append(label)
-        sizer.Add(label, (6, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(label, (7, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         label = wx.StaticText(self, -1, 'Correction type:')
         self.labels.append(label)
-        sizer.Add(label, (7, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(label, (8, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         ##
 
         sizer.Add(self.switch_checkbox, (0, 1), (1, 1), wx.EXPAND)
         sizer.Add(self.preset_choice, (1, 2), (1, 1), wx.EXPAND)
         sizer.Add(self.focus_method_choice, (2, 2), (1, 1), wx.EXPAND)
+        sizer.Add(self.reset_choice, (3, 2), (1, 1), wx.EXPAND)
 
         ## These are auto only
-        sizer.Add(self.beam_tilt_entry, (3, 2), (1, 1),
+        sizer.Add(self.beam_tilt_entry, (4, 2), (1, 1),
                        wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
         label = wx.StaticText(self, -1, 'radians')
         self.labels.append(label)
-        sizer.Add(label, (3, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(self.correlation_type_choice, (4, 2), (1, 1), wx.EXPAND)
+        sizer.Add(label, (4, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.correlation_type_choice, (5, 2), (1, 1), wx.EXPAND)
         label = wx.StaticText(self, -1, 'correlation')
         self.labels.append(label)
-        sizer.Add(label, (4, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(self.fit_limit_entry, (5, 2), (1, 1),
+        sizer.Add(label, (5, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.fit_limit_entry, (6, 2), (1, 1),
                        wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-        sizer.Add(self.change_limit_entry, (6, 2), (1, 1),
+        sizer.Add(self.change_limit_entry, (7, 2), (1, 1),
                        wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-        sizer.Add(self.correction_type_choice, (7, 2), (1, 1), wx.EXPAND)
+        sizer.Add(self.correction_type_choice, (8, 2), (1, 1), wx.EXPAND)
 
-        sizer.Add(stig_sizer, (8, 1), (1, 3),
+        sizer.Add(stig_sizer, (9, 1), (1, 3),
                                 wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(drift_sizer, (9, 1), (1, 3),
+        sizer.Add(drift_sizer, (10, 1), (1, 3),
                                 wx.ALIGN_CENTER_VERTICAL)
         ##
 
         sizer.AddGrowableCol(0)
         sizer.AddGrowableCol(1)
-        [sizer.AddGrowableRow(i) for i in range(10)]
+        [sizer.AddGrowableRow(i) for i in range(11)]
 
         self.addButton('OK', wx.ID_OK)
         self.addButton('Cancel', wx.ID_CANCEL)
@@ -341,12 +369,14 @@ if __name__ == '__main__':
 
     sequence = [
     {
+        'switch': True,
         'name': 'Test 1',
         'preset name': 'Hole',
         'focus method': 'Auto',
         'beam tilt': 0.01,
         'correlation type': 'Phase',
         'fit limit': 10000,
+        'change limit': 5e-5,
         'correction type': 'Defocus',
         'stig correction': False,
         'stig lens': 'objective',
@@ -354,6 +384,7 @@ if __name__ == '__main__':
         'stig defocus max': -2e-6,
         'check drift': True,
         'drift threshold': 3e-10,
+        'reset defocus': False,
     }
     ]
 

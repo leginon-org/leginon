@@ -69,6 +69,7 @@ class Focuser(acquisition.Acquisition):
 			'check drift': False,
 			'drift threshold': 3e-10,
 			'stig lens': 'objective',
+			'reset defocus': None,
 		}
 		self.manualchecklock = threading.Lock()
 		self.maskradius = 1.0
@@ -284,7 +285,7 @@ class Focuser(acquisition.Acquisition):
 			else:
 				resultdata['defocus correction'] = focustype
 				newdefoc = defoc - self.deltaz
-				focusmethod(newdefoc)
+				focusmethod(newdefoc, setting['reset defocus'])
 			resultstring = 'corrected focus by %.3e (measured) - %.3e (z due to tilt) = %.3e (total) using %s (min=%s)' % (defoc, self.deltaz, newdefoc, focustype,fitmin)
 		else:
 			resultstring = 'invalid focus measurement (min=%s)' % (fitmin,)
@@ -348,7 +349,7 @@ class Focuser(acquisition.Acquisition):
 				self.logger.warning('No method selected for correcting defocus')
 			else:
 				resultdata['defocus correction'] = focustype
-				focusmethod(z)
+				focusmethod(z, setting['reset defocus'])
 			resultstring = 'corrected focus by %.3e using %s' % (z, focustype)
 
 			self.logger.info(resultstring)
@@ -519,7 +520,7 @@ class Focuser(acquisition.Acquisition):
 			self.instrument.tem.Defocus = tempdefocus
 		try:
 			self.resetDefocus()
-			self.logger.info('Defcous reset')
+			self.logger.info('Defocus reset')
 		finally:
 			if self.deltaz:
 				self.instrument.tem.Defocus = self.deltaz
@@ -595,15 +596,16 @@ class Focuser(acquisition.Acquisition):
 		self.logger.info('Correcting %s stig by %s, %s' % (stiglens, deltax, deltay))
 		self.instrument.tem.Stigmator = stig
 
-	def correctDefocus(self, delta):
+	def correctDefocus(self, delta, reset):
 		defocus = self.instrument.tem.Defocus
 		self.logger.info('Defocus before applying correction %s' % defocus)
 		defocus += delta
 		self.logger.info('Correcting defocus by %s' % (delta,))
 		self.instrument.tem.Defocus = defocus
-		self.instrument.tem.resetDefocus(True)
+		if reset or reset is None:
+			self.resetDefocus()
 
-	def correctZ(self, delta):
+	def correctZ(self, delta, reset):
 		if not self.eucset:
 			self.logger.warning('Eucentric focus was not set before measuring defocus because \'Stage Z\' was not selected then, but is now. Skipping Z correction.')
 			return
@@ -611,18 +613,16 @@ class Focuser(acquisition.Acquisition):
 		alpha = stage['a']
 		deltaz = delta * Numeric.cos(alpha)
 		newz = stage['z'] + deltaz
-		newstage = {'stage position': {'z': newz }}
-		if self.reset:
-			newstage['reset defocus'] = 1
-		emdata = data.ScopeEMData(initializer=newstage)
 		self.logger.info('Correcting stage Z by %s (defocus change %s at alpha %s)' % (deltaz,delta,alpha))
-		self.instrument.setData(emdata)
+		self.instrument.tem.StagePosition = {'z': newz}
+		if reset or (reset is None and self.reset):
+			self.resetDefocus()
 
 		# declare drift
 		self.logger.info('Declaring drift after correcting stage Z')
 		self.declareDrift(type='stage')
 
-	def correctNone(self, delta):
+	def correctNone(self, delta, reset):
 		self.logger.info('Not applying defocus correction')
 
 	def uiTest(self):
