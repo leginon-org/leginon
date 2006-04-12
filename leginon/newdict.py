@@ -159,8 +159,10 @@ class AnyObject(object):
 registerValidator(AnyObject, AnyObject)
 
 ## ArrayType was previously not hashable, but seems to be now
-MRCArrayType = numarray.ArrayType
-DatabaseArrayType = numarray.ArrayType
+class MRCArrayType(numarray.ArrayType):
+	pass
+class DatabaseArrayType(numarray.ArrayType):
+	pass
 
 ### and here's the validator for it
 def validateArrayType(obj):
