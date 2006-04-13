@@ -47,7 +47,8 @@ foreach ($datatypes as $datatype) {
 $javascript .= $viewer->getJavascriptInit();
 viewer_header('Leginon Observer Interface', $javascript, 'initviewer()');
 ?>
-<a class="header" target="summary" href="summary.php?expId=<?php echo $sessionId?>">[summary]</A>
-<?php$viewer->display();
+<a class="header" target="summary" href="summary.php?expId=<?php echo $sessionId; ?>">[summary]</A>
+<?php
+$viewer->display();
 viewer_footer();
 ?>

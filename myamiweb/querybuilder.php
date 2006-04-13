@@ -44,7 +44,7 @@ $crlf = "<BR>";
 
 
 
-<form name="data" method="POST" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF'] ?>">
+<form name="data" method="POST" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 <table border="0">
 <tr>
 <td>
@@ -80,7 +80,7 @@ $crlf = "<BR>";
 	$sqltables = implode(', ',$formatedtables);
 	?>
 </select><br />
-Alias: <input class="field" type="text" name="<?php echo $table."alias"?>" value="<?php echo $tablealias?>"</input>
+Alias: <input class="field" type="text" name="<?php echo $table."alias"; ?>" value="<?php echo $tablealias; ?>"</input>
 <br>
 <input class="button" type="submit" name="cleartables" value="Clear">
 <input class="button" type="submit" name="addtables" value="Add">
@@ -146,7 +146,7 @@ echo "Aliases: <br>";
 <input class="button" type="submit" name="addjoins" value="Add">
 </td>
 <td>
-	<textarea class="textarea" name="condition" cols="40" rows="8"><?php echo $condition?></textarea>
+	<textarea class="textarea" name="condition" cols="40" rows="8"><?php echo $condition; ?></textarea>
 <br>
 <input class="button" type="submit" name="addselectedfield" value="Add Field">
 <input class="button" type="submit" name="clearselectedfield" value="Clear">
@@ -160,9 +160,9 @@ echo "Aliases: <br>";
 </td>
 </tr>
 </table>
-<input type="hidden" name="sqlfields" value="<?php echo $sqlfields?>">
-<input type="hidden" name="sqltables" value="<?php echo $sqltables?>">
-<input type="hidden" name="sqljoins" value="<?php echo $sqljoins?>">
+<input type="hidden" name="sqlfields" value="<?php echo $sqlfields; ?>">
+<input type="hidden" name="sqltables" value="<?php echo $sqltables; ?>">
+<input type="hidden" name="sqljoins" value="<?php echo $sqljoins; ?>">
 </form>
 <?php
 

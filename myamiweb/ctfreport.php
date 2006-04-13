@@ -21,7 +21,7 @@ $stats = $ctf->getStats($fields, $sessionId, $runId);
 ?>
 <html>
 <head>
-<title><?php echo $title?> CTF report</title>
+<title><?php echo $title; ?> CTF report</title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 </head>
 <body>

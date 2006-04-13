@@ -67,7 +67,7 @@ ptcl_header('onload="init()"');
 ?>
 <script>
 
-var jsid = "<?php echo $id?>";
+var jsid = "<?php echo $id; ?>";
 
 function init() {
 	var index=-1;
@@ -90,9 +90,9 @@ function enable_groupdata(state) {
 }
 
 </script>
-<h3>Table: <?php echo $maintable?></h3>
+<h3>Table: <?php echo $maintable; ?></h3>
 <table  border=0 cellspacing=1>
-<form method="POST" name="data" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']?>">
+<form method="POST" name="data" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 <tr valign="top">
 <td>
 <select name="f_sel_name"  SIZE=20 onClick="update_data();" onchange="update_data();">
@@ -116,11 +116,11 @@ Choose a Name in the list or type one, then &lt;Tab&gt;
 Name:<font color="red">*</font>
 </td>
 <td class="dt1"> 
-<input class="field" type="text" name="f_name" maxlength="20" size="17" value ="<?php echo $f_name?>" onBlur="check_name();" onchange="check_name();"  >
+<input class="field" type="text" name="f_name" maxlength="20" size="17" value ="<?php echo $f_name; ?>" onBlur="check_name();" onchange="check_name();"  >
 </td>
 <?php if ($error) { ?>
 <td valign="top">
-<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?php echo $error?></div></td>
+<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?php echo $error; ?></div></td>
 <?php } ?>
 </tr>
 </td>
@@ -156,8 +156,8 @@ Criteria:
 Allow public:
 </td>
 <td class="dt2"> 
-N<input class="field" type='radio' name='f_allow' value='N' <?php echo $allow_N?> >
-Y<input class="field" type='radio' name='f_allow' value='Y' <?php echo $allow_Y?> >
+N<input class="field" type='radio' name='f_allow' value='N' <?php echo $allow_N; ?> >
+Y<input class="field" type='radio' name='f_allow' value='Y' <?php echo $allow_Y; ?> >
 </td>
 </tr>
 
@@ -175,7 +175,7 @@ Note:
 Time:
 </td>
 <td class="dt2"> 
-<input class="field" type="text" name="f_time" maxlength="20" size="17" value ="<?php echo $f_time?>" >
+<input class="field" type="text" name="f_time" maxlength="20" size="17" value ="<?php echo $f_time; ?>" >
 </td>
 </tr>
 
@@ -196,6 +196,4 @@ Time:
 
 </form>
 </table>
-<?php
-ptcl_footer();
-?>
+<?php ptcl_footer(); ?>

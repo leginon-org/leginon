@@ -1,7 +1,7 @@
 <?php
 /**
- *	@version $Revision: 1.26 $
- *	@version $Id: image.inc,v 1.26 2006-04-07 20:40:06 suloway Exp $
+ *	@version $Revision: 1.27 $
+ *	@version $Id: image.inc,v 1.27 2006-04-13 22:26:29 suloway Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -115,7 +115,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		$scalefactor=1;
 		if ($size) {
 			$scalefactor = (imagesx($img)) ? $size/imagesx($img) : 1;
-			imagescale($img, $scalefactor);
+			myimagescale($img, $scalefactor);
 		}
 
 		if ($p[loadtime])
@@ -526,7 +526,7 @@ class Mosaic {
 	}
 }
 
-function imagescale(&$img, $percent) {
+function myimagescale(&$img, $percent) {
 	// Get new sizes
 	$source = $img;
 	$width = imagesx($source);

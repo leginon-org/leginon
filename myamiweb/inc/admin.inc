@@ -37,16 +37,14 @@ $link->addlink('goniometer.php','Goniometer','', 'goniometer', '');
 <link rel="stylesheet" href="css/viewer.css" type="text/css" /> 
 <script src="js/dataform.js"></script>
 </head>
-<body Background='img/background.jpg' leftmargin="0" topmargin="5" marginwidth="0" marginheight="5" alink="#00CCCC" vlink="#006699" link="#006699" <?php echo $javascriptinit?>>
+<body Background='img/background.jpg' leftmargin="0" topmargin="5" marginwidth="0" marginheight="5" alink="#00CCCC" vlink="#006699" link="#006699" <?php echo $javascriptinit; ?>>
 
 <center><h1>Leginon II Admin Tools</h1></center>
 <hr/>
 <table border=0>
 <tr valign="top">
 <td width=100>
-<?php
-$link->Display();
-?>
+<?php $link->Display(); ?>
 </td>
 <td>
 <?php

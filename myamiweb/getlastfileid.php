@@ -16,10 +16,10 @@ $refreshtime = ($_POST[refreshtime]) ? $_POST[refreshtime] : "10000";
 <html>
 <head>
 <script>
-var jsfileid <?php echo $strfileid?>;
-var jstime = <?php echo time()?>;
-var refresh = <?php echo $refresh?>;
-var refreshtime = "<?php echo $refreshtime?>";
+var jsfileid <?php echo $strfileid; ?>;
+var jstime = <?php echo time(); ?>;
+var refresh = <?php echo $refresh; ?>;
+var refreshtime = "<?php echo $refreshtime; ?>";
 
 function getfileid() {
 	return jsfileid;
@@ -51,8 +51,8 @@ function rl() {
 <body onload="rl()">
 <form name="memo" method="POST">
 <input type="hidden" name="refreshstate" value="true">
-<input type="hidden" name="refreshtime" value="<?php echo $refreshtime?>">
-<input type="hidden" name="session" value="<?php echo $session?>">
+<input type="hidden" name="refreshtime" value="<?php echo $refreshtime; ?>">
+<input type="hidden" name="session" value="<?php echo $session; ?>">
 </form>
 </body>
 </html>

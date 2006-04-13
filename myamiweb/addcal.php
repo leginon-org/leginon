@@ -72,7 +72,7 @@ if ($_POST[bt_import]) {
 admin_header();
 ?>
 <h3>Calibrations Import/Export</h3>
-<form name="data" method="POST" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF'] ?>">
+<form name="data" method="POST" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 <table border="0" class=tableborder>
 <tr valign=top >
 <td>
@@ -160,17 +160,17 @@ foreach($cameras  as $c) {
    <table border="0">
 	<tr>
 		<td>
-	<input type="radio" name="format" value="xml" id="radio_format_xml"  <?php echo $xmlradiochecked ?> >
+	<input type="radio" name="format" value="xml" id="radio_format_xml"  <?php echo $xmlradiochecked; ?> >
 		</td>
 		<td>
 	<label for="radio_format_xml">Export to XML format</label>
-	<input type="checkbox" name="saveasfile" id="checkbox_file_Id" <?php echo $filechecked ?> >
+	<input type="checkbox" name="saveasfile" id="checkbox_file_Id" <?php echo $filechecked; ?> >
 	<label for="checkbox_file_Id">Save as...</label>
 		</td>
 	</tr>
 	<tr>
 		<td>
-	<input type="radio" name="format" value="host" <?php echo $hostradiochecked ?> >
+	<input type="radio" name="format" value="host" <?php echo $hostradiochecked; ?> >
 		</td>
 		<td>
 To dbemdata Host:
@@ -213,7 +213,7 @@ foreach($importcameras  as $c) {
 		</tr>
 	<tr>
 		<td>
-	<input type="radio" name="format" value="table" id="radio_format_Id" <?php echo $tableradiochecked ?> >
+	<input type="radio" name="format" value="table" id="radio_format_Id" <?php echo $tableradiochecked; ?> >
 		</td>
 		<td>
 	<label for="radio_format_Id">View </label>

@@ -86,7 +86,7 @@ function enable_input(state) {
 	}
 }
 
-var jsid = "<?php echo $id?>";
+var jsid = "<?php echo $id; ?>";
 
 function init() {
 	var index=-1;
@@ -106,10 +106,10 @@ function init() {
 }
 
 </script>
-<h3>Table: <?php echo $maintable?></h3>
+<h3>Table: <?php echo $maintable; ?></h3>
 Choose a Name in the list or type one, then &lt;Tab&gt;
 <br>
-<form method="POST" name="data" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']?>">
+<form method="POST" name="data" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 <table  border=0 cellspacing=1>
 <tr valign="top">
 <td>
@@ -135,11 +135,11 @@ foreach ($users as $user) {
 name:<font color="red">*</font>
 </td>
 <td class="dt1"> 
-<input class="field" type="text" name="f_name" maxlength="20" size="17" value ="<?php echo $f_name?>" onBlur="check_name();" onchange="check_name();"  >
+<input class="field" type="text" name="f_name" maxlength="20" size="17" value ="<?php echo $f_name; ?>" onBlur="check_name();" onchange="check_name();"  >
 </td>
 <?php if ($nameerror) { ?>
 <td valign="top">
-<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?php echo $nameerror?></div></td>
+<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?php echo $nameerror; ?></div></td>
 <?php } ?>
 </tr>
 <tr>
@@ -185,7 +185,7 @@ group:
 	</td>
 <?php if ($grouperror) { ?>
 <td valign="top">
-<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?php echo $grouperror?></div></td>
+<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?php echo $grouperror; ?></div></td>
 <?php } ?>
 	</tr>
 	<tr>

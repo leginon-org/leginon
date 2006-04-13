@@ -48,7 +48,7 @@ if ($_POST[bt_import]) {
 admin_header();
 ?>
 <h3>Applications Import/Export</h3>
-<form name="data" method="POST" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF'] ?>">
+<form name="data" method="POST" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 <table border=0 class=tableborder>
 <tr valign=top >
 <td>
@@ -90,13 +90,13 @@ From Host:
     </tr>
     <tr valign=top>
      <td>
-	<input type="radio" name="format" value="xml" id="radio_format_xml"  <?php echo $xmlradiochecked ?> >
+	<input type="radio" name="format" value="xml" id="radio_format_xml"  <?php echo $xmlradiochecked; ?> >
 	<label for="radio_format_xml">Export to XML format</label>
      <br>
-	<input type="radio" name="format" value="table" id="radio_format_Id" <?php echo $tableradiochecked ?> >
+	<input type="radio" name="format" value="table" id="radio_format_Id" <?php echo $tableradiochecked; ?> >
 	<label for="radio_format_Id">View </label>
      <br>
-	<input type="radio" name="format" value="host" id="radio_format_host" <?php echo $hostradiochecked ?> >
+	<input type="radio" name="format" value="host" id="radio_format_host" <?php echo $hostradiochecked; ?> >
 	<label for="radio_format_host">To Host:</label>
 	<select name="exporttohostId" >
 		<?php
@@ -108,7 +108,7 @@ From Host:
 	</select>
      </td>
      <td>
-	<input type="checkbox" name="saveasfile" id="checkbox_file_Id" <?php echo $filechecked ?> >
+	<input type="checkbox" name="saveasfile" id="checkbox_file_Id" <?php echo $filechecked; ?> >
 	<label for="checkbox_file_Id">Save as...</label>
      </td>
     </tr>

@@ -47,7 +47,9 @@ echo "ano = new Array($opennodes);\n";?>
 createTree(Tree,0,ano);
 //-->
 </script>
-<?php } ?>
+<?php
+}
+?>
 </div>
 </body>
 </html>

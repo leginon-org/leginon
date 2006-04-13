@@ -92,13 +92,13 @@ $ctf_display_fields = array (
 ?>
 <html>
 <head>
-<title>Image Report: <?php echo $filename?></title>
+<title>Image Report: <?php echo $filename; ?></title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 <?php if ($displaytree) { ?>
 <link rel="StyleSheet" href="css/tree.css" type="text/css">
 <script src="js/tree.js"></script>
 <?php } // --- end if displaytree ?>
-<?php echo $javascript;?>
+<?php echo $javascript; ?>
 <script>
 function init() {
 	this.focus();
@@ -110,8 +110,8 @@ if ($displaytree)
 </script>
 </head>
 <body onload="init(); initviewer();">
-<form name="tf" method="POST" action="<?php echo $REQUEST_URI?>">
-<input type="hidden" name="datatree" value="<?php echo $displaytreevalue?>">
+<form name="tf" method="POST" action="<?php echo $REQUEST_URI; ?>">
+<input type="hidden" name="datatree" value="<?php echo $displaytreevalue; ?>">
 </form>
 <?php
 //--- define information to display
@@ -271,7 +271,7 @@ echo "</table>";
 <tr valign=top>
 <td width=300>
 <div style="border: 1px solid #000000; height:290; width:270; margin: 0px;padding:0px;  background-color: #CCCCFF">
-<?php$viewer->display();?>
+<?php $viewer->display(); ?>
 </div>
 </td>
 <td>
@@ -279,7 +279,7 @@ echo "</table>";
 <table align="center" >
 <tr>
 <td>
-<img src="imagehistogram.php?tf=1&rp=1&id=<?php echo $imgId?>">
+<img src="imagehistogram.php?tf=1&rp=1&id=<?php echo $imgId; ?>">
 </td>
 </tr>
 </table>

@@ -77,11 +77,11 @@ if ($id) {
 <?php if ($display_tilt) { ?>
 <td>
 <font style='font-size: 12px;'>
-<?php echo $str_tilt?>
+<?php echo $str_tilt; ?>
 </font>
 </td>
 <td>
-<img src="imgangle.php?a=<?php echo $angle?>">
+<img src="imgangle.php?a=<?php echo $angle; ?>">
 </td>
 <?php } ?>
 </tr>

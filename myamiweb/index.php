@@ -72,13 +72,13 @@ viewer_header($title);
 <center><h1>Leginon II Database Tools</h1></center>
 <hr/>
 <noscript>
-<?php echo divtitle("<center>Please enable Javascript in you Browser</center>")?>
+<?php echo divtitle("<center>Please enable Javascript in you Browser</center>"); ?>
 </noscript>
 <table>
 <tr valign="top">
 	<td>
-		<?php echo $log_from?>
-		<?php echo $log?>
+		<?php echo $log_from; ?>
+		<?php echo $log; ?>
 	</td>
 	<td>
 		<?php echo $link->Display(); ?>

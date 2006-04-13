@@ -34,7 +34,7 @@ $title = $sessioninfo[Name];
 ?>
 <html>
 <head>
-<title><?php echo $title?> drift report</title>
+<title><?php echo $title; ?> drift report</title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 </head>
 
@@ -45,14 +45,14 @@ $title = $sessioninfo[Name];
   <A class="header" HREF="index.php">&lt;index&gt;</A>
  </td>
  <td>
-  <A class="header" HREF="3wviewer.php?sessionId=<?php echo $sessionId?>">&lt;view <?php echo $title?>&gt;</A>
+  <A class="header" HREF="3wviewer.php?sessionId=<?php echo $sessionId; ?>">&lt;view <?php echo $title; ?>&gt;</A>
  </td>
 </tr>
 </table>
 <table border="0" cellpadding=10>
 <tr valign="top">
 	<td colspan="2">
-	<?php echo  divtitle("Drift Report $title Experiment"); ?>
+	<?php echo divtitle("Drift Report $title Experiment"); ?>
 	</td>
 </tr>
 <?php
@@ -61,8 +61,8 @@ echo "<td colspan='2'>";
 echo divtitle("Avg. drift rate at end of measurement cycle");
 echo "<br>";
 ?>
-<form method="POST" action="<?php echo $_SERVER['REQUEST_URI']?>">
-	max rate:<input class="field" name="maxr" type="text" size="5" value="<?php echo $maxrate?>">
+<form method="POST" action="<?php echo $_SERVER['REQUEST_URI']; ?>">
+	max rate:<input class="field" name="maxr" type="text" size="5" value="<?php echo $maxrate; ?>">
 </form>
 <?php
 $urlrate = ($maxrate) ? "&maxr=$maxrate" : "";
@@ -77,14 +77,14 @@ echo "</td>\n";
 </tr>
 <tr>
 <td>
-<?php echo divtitle("Total time spent drifting");?>
+<?php echo divtitle("Total time spent drifting"); ?>
 </td>
 </tr>
 <tr>
 <td>
-<a href="drifttimegraph.php?vd=1&Id=<?php echo $sessionId?>">[data]</a>
-<a href="drifttimegraph.php?vs=1&Id=<?php echo $sessionId?>">[sql]</a><br>
-<img src="drifttimegraph.php?Id=<?php echo $sessionId?>">
+<a href="drifttimegraph.php?vd=1&Id=<?php echo $sessionId; ?>">[data]</a>
+<a href="drifttimegraph.php?vs=1&Id=<?php echo $sessionId; ?>">[sql]</a><br>
+<img src="drifttimegraph.php?Id=<?php echo $sessionId; ?>">
 </td>
 </tr>
 </table>

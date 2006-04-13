@@ -87,15 +87,15 @@ admin_header('onload="init()"');
 ?>
 <script>
 
-var jsid = "<?php echo $id?>";
+var jsid = "<?php echo $id; ?>";
 
 function init() {
 	document.data.f_sel_name.focus();
 }
 </script>
-<h3>Table: <?php echo $maintable?></h3>
+<h3>Table: <?php echo $maintable; ?></h3>
 <table  border=0>
-<form method="POST" name="dataimport" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']?>">
+<form method="POST" name="dataimport" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 <tr valign=top >
 <td>
 From Host:
@@ -145,7 +145,7 @@ foreach($importcameras as $c) {
 </table>
 <hr>
 <table  border=0 cellspacing=1>
-<form method="POST" name="data" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']?>">
+<form method="POST" name="data" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 <tr valign="top">
 <td>
 <select name="f_sel_name"  SIZE=20 onClick="update_data();" onchange="update_data();">
@@ -172,14 +172,14 @@ Choose a Name in the list
 name:<font color="red">*</font>
 </td>
 <td class="dt1"> 
-<input class="field" type="text" name="f_name" maxlength="30" size="17" value ="<?php echo $f_name?>" >
+<input class="field" type="text" name="f_name" maxlength="30" size="17" value ="<?php echo $f_name; ?>" >
 <?php
 //  onBlur="check_name();" onchange="check_name();"  >
 ?>
 </td>
 <?php if ($error) { ?>
 <td valign="top">
-<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?php echo $error?></div></td>
+<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?php echo $error; ?></div></td>
 <?php } ?>
 </tr>
 <?php /*
@@ -199,7 +199,7 @@ description:
 hostname:
 </td>
 <td class="dt1"> 
-<input class="field" type="text" name="f_hostname" maxlength="30" size="17" value ="<?php echo $f_hostname?>" >
+<input class="field" type="text" name="f_hostname" maxlength="30" size="17" value ="<?php echo $f_hostname; ?>" >
 </td>
 </tr>
 

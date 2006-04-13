@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 /**
  *	The Leginon software is Copyright 2003 
@@ -62,7 +62,9 @@
 $iframesize = ($_GET["ifs"]==1) ? 'width=100% height=100% ' : 'width="512" height="512"';
 $src = 'src="getiframeimage.php"';
 ?>
-<iframe id=iframeimg name="picturebox" <?php echo "$iframesize  $src" ?> scrolling="auto" ></iframe>
+<iframe id=iframeimg name="picturebox" <?php
+echo "$iframesize  $src";
+?> scrolling="auto" ></iframe>
 </td>
 	 </tr>
 	</table>
