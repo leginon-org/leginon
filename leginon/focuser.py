@@ -58,10 +58,11 @@ class Focuser(acquisition.Acquisition):
 			'switch': True,
 			'preset name': 'Grid',
 			'focus method': 'Auto',
-			'beam tilt': 0.01,
+			'tilt': 0.01,
 			'correlation type': 'phase',
 			'fit limit': 10000,
-			'change limit': 1e-3,
+			'delta min': 0.0,
+			'delta max': 1e-3,
 			'correction type': 'Defocus',
 			'stig correction': False,
 			'stig defocus min': -4e-6,
@@ -179,7 +180,7 @@ class Focuser(acquisition.Acquisition):
 		presetname = setting['preset name']
 		stiglens = setting['stig lens']
 		## need btilt, pub, driftthresh
-		btilt = setting['beam tilt']
+		btilt = setting['tilt']
 		pub = False
 		if setting['check drift']:
 			driftthresh = setting['drift threshold']
@@ -225,6 +226,12 @@ class Focuser(acquisition.Acquisition):
 			self.driftDetected(presetname, emtarget, driftthresh)
 			self.logger.info('Drift detected (will try again when drift is done)')
 			return 'repeat'
+		except calibrationclient.NoMatrixCalibrationError, e:
+			self.player.pause()
+			self.logger.error('Measurement failed without calibration: %s' % e)
+			self.logger.info('Calibrate and then continue...')
+			self.beep()
+			return 'repeat'
 
 		self.logger.info('Measured defocus and stig %s' % correction)
 		defoc = correction['defocus']
@@ -247,11 +254,12 @@ class Focuser(acquisition.Acquisition):
 			validdefocus = False
 			logmessage = 'Focus measurement failed: fit = %s (fit limit = %s)' % (fitmin, fitlimit)
 		### check change limit
-		changelimit = setting['change limit']
-		if abs(defoc) > changelimit:
-			status = 'change untrusted (abs(%s)>%s)' % (defoc, changelimit)
+		delta_min = setting['delta min']
+		delta_max = setting['delta max']
+		if not (delta_min <= abs(defoc) <= delta_max):
+			status = 'invalid'
 			validdefocus = False
-			logmessage = 'Focus measurement failed: change = %s (change limit = %s)' % (defoc, changelimit)
+			logmessage = 'Focus measurement failed: change = %s (change limit = %s to %s)' % (defoc, delta_min, delta_max)
 
 		if validdefocus:
 			self.logger.info(logmessage)
@@ -297,8 +305,7 @@ class Focuser(acquisition.Acquisition):
 	def autoStage(self, setting, emtarget, resultdata):
 		presetname = setting['preset name']
 		## need btilt, pub, driftthresh
-		atilt = setting['beam tilt']
-		atilt = atilt * 3.14159 / 180.0
+		atilt = setting['tilt']
 
 		# fake eucset, because we don't need it, but still need to correct z later
 		self.eucset = True
@@ -330,11 +337,12 @@ class Focuser(acquisition.Acquisition):
 		logmessage = 'Good focus measurement'
 
 		### check change limit
-		changelimit = setting['change limit']
-		if abs(z) > changelimit:
-			status = 'change untrusted (abs(%s)>%s)' % (z, changelimit)
+		delta_min = setting['delta min']
+		delta_max = setting['delta max']
+		if not (delta_min <= abs(z) <= delta_max):
+			status = 'invalid'
 			validdefocus = False
-			logmessage = 'Focus measurement failed: change = %s (change limit = %s)' % (z, changelimit)
+			logmessage = 'Focus measurement failed: change = %s (change limit = %s to %s)' % (z, delta_min, delta_max)
 
 		if not validdefocus:
 			self.logger.warning(logmessage)

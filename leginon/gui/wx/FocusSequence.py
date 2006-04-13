@@ -4,13 +4,14 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.12 $
+# $Revision: 1.13 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-12 20:29:45 $
+# $Date: 2006-04-13 20:56:45 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
+import math
 import wx
 import gui.wx.Choice
 import gui.wx.Dialog
@@ -32,6 +33,7 @@ class DialogSettings(object):
         self.default_setting = default_setting
         self.sequence = sequence
         self.reset_types = ['Default', 'Always', 'Never']
+        self.stig_lenses = ['objective', 'diffraction']
 
 class EditListBox(gui.wx.ListBox.EditListBox):
     def __init__(self, parent, id, label, choices, **kwargs):
@@ -119,11 +121,12 @@ class Dialog(gui.wx.Dialog.Dialog):
         setting['switch'] = self.switch_checkbox.GetValue()
         setting['preset name'] = self.preset_choice.GetStringSelection()
         setting['focus method'] = self.focus_method_choice.GetStringSelection()
-        setting['beam tilt'] = self.beam_tilt_entry.GetValue()
+        setting['tilt'] = math.radians(self.tilt_entry.GetValue())
         setting['correlation type'] = \
             self.correlation_type_choice.GetStringSelection()
         setting['fit limit'] = self.fit_limit_entry.GetValue()
-        setting['change limit'] = self.change_limit_entry.GetValue()
+        setting['delta min'] = self.delta_min_entry.GetValue()
+        setting['delta max'] = self.delta_max_entry.GetValue()
         setting['correction type'] = \
             self.correction_type_choice.GetStringSelection()
         setting['stig correction'] = self.correct_astig_checkbox.GetValue()
@@ -161,11 +164,13 @@ class Dialog(gui.wx.Dialog.Dialog):
         self.switch_checkbox.SetValue(setting['switch'])
         self.preset_choice.SetStringSelection(setting['preset name'])
         self.focus_method_choice.SetStringSelection(setting['focus method'])
-        self.beam_tilt_entry.SetValue(setting['beam tilt'])
+        #self.tilt_entry.SetValue(0.0)
+        self.tilt_entry.SetValue(math.degrees(setting['tilt']))
         self.correlation_type_choice.SetStringSelection(
                                                     setting['correlation type'])
         self.fit_limit_entry.SetValue(setting['fit limit'])
-        self.change_limit_entry.SetValue(setting['change limit'])
+        self.delta_min_entry.SetValue(setting['delta min'])
+        self.delta_max_entry.SetValue(setting['delta max'])
         self.correction_type_choice.SetStringSelection(
                                                     setting['correction type'])
         self.correct_astig_checkbox.SetValue(setting['stig correction'])
@@ -189,10 +194,11 @@ class Dialog(gui.wx.Dialog.Dialog):
             self.switch_checkbox,
             self.preset_choice,
             self.focus_method_choice,
-            self.beam_tilt_entry,
+            self.tilt_entry,
             self.correlation_type_choice,
             self.fit_limit_entry,
-            self.change_limit_entry,
+            self.delta_min_entry,
+            self.delta_max_entry,
             self.correction_type_choice,
             self.correct_astig_checkbox,
             self.stig_lens,
@@ -223,17 +229,19 @@ class Dialog(gui.wx.Dialog.Dialog):
 
         ## auto focus only
         self.correction_type_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.correction_types)
-        self.beam_tilt_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6) 
+        self.tilt_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6) 
         self.correlation_type_choice = gui.wx.Choice.Choice(self, -1,
                                         choices=self.settings.correlation_types)
         self.fit_limit_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
-        self.change_limit_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
+        self.delta_min_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
+        self.delta_max_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
         self.check_drift_checkbox = wx.CheckBox(self, -1,
                                            'Check for drift greater than')
         self.drift_threshold_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
         self.correct_astig_checkbox = wx.CheckBox(self, -1,
                                       'Correct astigmatism for defocus between')
-        self.stig_lens = gui.wx.Choice.Choice(self, -1, choices=['objective','diffraction'])
+        choices = self.settings.stig_lenses
+        self.stig_lens = gui.wx.Choice.Choice(self, -1, choices=choices)
         self.stig_lens.SetSelection(0)
         self.stig_defocus_min_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
         self.stig_defocus_max_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
@@ -254,16 +262,12 @@ class Dialog(gui.wx.Dialog.Dialog):
                        wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
         label = wx.StaticText(self, -1, 'and')
         self.labels.append(label)
-        stig_sizer.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        stig_sizer.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER)
         stig_sizer.Add(self.stig_defocus_max_entry, (0, 3), (1, 1),
                        wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
         label = wx.StaticText(self, -1, 'meters')
         self.labels.append(label)
         stig_sizer.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        label = wx.StaticText(self, -1, 'Stigmator Lens')
-        self.labels.append(label)
-        stig_sizer.Add(label, (1,0), (1,1))
-        stig_sizer.Add(self.stig_lens, (1,1), (1,1))
         ##
 
         sizer = self.sz
@@ -282,7 +286,7 @@ class Dialog(gui.wx.Dialog.Dialog):
         sizer.Add(label, (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
         ## these are auto only
-        label = wx.StaticText(self, -1, 'Beam tilt:')
+        label = wx.StaticText(self, -1, 'Tilt:')
         self.labels.append(label)
         sizer.Add(label, (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         label = wx.StaticText(self, -1, 'Image registration:')
@@ -291,12 +295,18 @@ class Dialog(gui.wx.Dialog.Dialog):
         label = wx.StaticText(self, -1, 'Fit limit:')
         self.labels.append(label)
         sizer.Add(label, (6, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        label = wx.StaticText(self, -1, 'Change limit:')
+        label = wx.StaticText(self, -1, 'Min. change:')
         self.labels.append(label)
         sizer.Add(label, (7, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        label = wx.StaticText(self, -1, 'Correction type:')
+        label = wx.StaticText(self, -1, 'Max. change:')
         self.labels.append(label)
         sizer.Add(label, (8, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        label = wx.StaticText(self, -1, 'Correction type:')
+        self.labels.append(label)
+        sizer.Add(label, (9, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        label = wx.StaticText(self, -1, 'Stigmator lens:')
+        self.labels.append(label)
+        sizer.Add(label, (11, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         ##
 
         sizer.Add(self.switch_checkbox, (0, 1), (1, 1), wx.EXPAND)
@@ -305,9 +315,9 @@ class Dialog(gui.wx.Dialog.Dialog):
         sizer.Add(self.reset_choice, (3, 2), (1, 1), wx.EXPAND)
 
         ## These are auto only
-        sizer.Add(self.beam_tilt_entry, (4, 2), (1, 1),
+        sizer.Add(self.tilt_entry, (4, 2), (1, 1),
                        wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
-        label = wx.StaticText(self, -1, 'radians')
+        label = wx.StaticText(self, -1, 'degrees')
         self.labels.append(label)
         sizer.Add(label, (4, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(self.correlation_type_choice, (5, 2), (1, 1), wx.EXPAND)
@@ -316,19 +326,20 @@ class Dialog(gui.wx.Dialog.Dialog):
         sizer.Add(label, (5, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(self.fit_limit_entry, (6, 2), (1, 1),
                        wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-        sizer.Add(self.change_limit_entry, (7, 2), (1, 1),
+        sizer.Add(self.delta_min_entry, (7, 2), (1, 1),
                        wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-        sizer.Add(self.correction_type_choice, (8, 2), (1, 1), wx.EXPAND)
+        sizer.Add(self.delta_max_entry, (8, 2), (1, 1),
+                       wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+        sizer.Add(self.correction_type_choice, (9, 2), (1, 1), wx.EXPAND)
 
-        sizer.Add(stig_sizer, (9, 1), (1, 3),
-                                wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(drift_sizer, (10, 1), (1, 3),
-                                wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.stig_lens, (11, 2), (1, 1), wx.EXPAND)
+        sizer.Add(stig_sizer, (10, 1), (1, 3), wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(drift_sizer, (12, 1), (1, 3), wx.ALIGN_CENTER_VERTICAL)
         ##
 
         sizer.AddGrowableCol(0)
         sizer.AddGrowableCol(1)
-        [sizer.AddGrowableRow(i) for i in range(11)]
+        [sizer.AddGrowableRow(i) for i in range(13)]
 
         self.addButton('OK', wx.ID_OK)
         self.addButton('Cancel', wx.ID_CANCEL)
@@ -355,7 +366,7 @@ if __name__ == '__main__':
         'switch': True,
         'preset name': 'Grid',
         'focus method': 'Auto',
-        'beam tilt': 0.01,
+        'tilt': 0.01,
         'correlation type': 'Phase',
         'fit limit': 10000,
         'correction type': 'Defocus',
@@ -373,10 +384,11 @@ if __name__ == '__main__':
         'name': 'Test 1',
         'preset name': 'Hole',
         'focus method': 'Auto',
-        'beam tilt': 0.01,
+        'tilt': 0.01,
         'correlation type': 'Phase',
         'fit limit': 10000,
-        'change limit': 5e-5,
+        'delta min': 0.0,
+        'delta max': 1e-3,
         'correction type': 'Defocus',
         'stig correction': False,
         'stig lens': 'objective',
