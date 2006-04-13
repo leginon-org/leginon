@@ -4,10 +4,9 @@
 // Description:	Line plot extension for JpGraph
 // Created: 	2001-01-08
 // Author:	Johan Persson (johanp@aditus.nu)
-// Ver:		$Id: jpgraph_line.php,v 1.2 2004-12-07 00:30:42 dfellman Exp $
+// Ver:		$Id: jpgraph_line.php,v 1.3 2006-04-13 21:03:31 suloway Exp $
 //
-// License:	This code is released under QPL
-// Copyright (C) 2001,2002 Johan Persson
+// Copyright (c) Aditus Consulting. All rights reserved.
 //========================================================================
 */
 
@@ -33,6 +32,7 @@ class LinePlot extends Plot{
     var $barcenter=false;  // When we mix line and bar. Should we center the line in the bar.
     var $fillFromMin = false ;
     var $fillgrad=false,$fillgrad_fromcolor='navy',$fillgrad_tocolor='silver',$fillgrad_numcolors=100;
+    var $iFastStroke=false;
 
 //---------------
 // CONSTRUCTOR
@@ -83,11 +83,18 @@ class LinePlot extends Plot{
 	
     function Legend(&$graph) {
 	if( $this->legend!="" ) {
-	    if( $this->filled ) {
+	    if( $this->filled && !$this->fillgrad ) {
 		$graph->legend->Add($this->legend,
 				    $this->fill_color,$this->mark,0,
 				    $this->legendcsimtarget,$this->legendcsimalt);
-	    } else {
+	    } 
+	    elseif( $this->fillgrad ) {
+		$color=array($this->fillgrad_fromcolor,$this->fillgrad_tocolor);
+		// In order to differentiate between gradients and cooors specified as an RGB triple
+		$graph->legend->Add($this->legend,$color,"",-2 /* -GRAD_HOR */,
+				    $this->legendcsimtarget,$this->legendcsimalt);
+	    }	
+	    else {
 		$graph->legend->Add($this->legend,
 				    $this->color,$this->mark,$this->line_style,
 				    $this->legendcsimtarget,$this->legendcsimalt);
@@ -125,6 +132,47 @@ class LinePlot extends Plot{
 	    //$graph->xaxis->scale->ticks->SupressMinorTickMarks();
 	}
     }
+
+    function SetFastStroke($aFlg=true) {
+	$this->iFastStroke = $aFlg;
+    }
+
+    function FastStroke(&$img,&$xscale,&$yscale,$aStartPoint=0,$exist_x=true) {
+	// An optimized stroke for many data points with no extra 
+	// features but 60% faster. You can't have values or line styles, or null
+	// values in plots.
+	$numpoints=count($this->coords[0]);
+	if( $this->barcenter ) 
+	    $textadj = 0.5-$xscale->text_scale_off;
+	else
+	    $textadj = 0;
+
+	$img->SetColor($this->color);
+	$img->SetLineWeight($this->weight);
+	$pnts=$aStartPoint;
+	while( $pnts < $numpoints ) {	    
+	    if( $exist_x ) $x=$this->coords[1][$pnts];
+	    else $x=$pnts+$textadj;
+	    $xt = $xscale->Translate($x);
+	    $y=$this->coords[0][$pnts];
+	    $yt = $yscale->Translate($y);    
+	    if( is_numeric($y) ) {
+		$cord[] = $xt;
+		$cord[] = $yt;
+	    }
+	    elseif( $y == '-' && $pnts > 0 ) {
+		// Just ignore
+	    }
+	    else {
+		JpGraphError::Raise('Plot too complicated for fast line Stroke. Use standard Stroke()');
+		return;
+	    }
+	    ++$pnts;
+	} // WHILE
+
+	$img->Polygon($cord,false,true);
+
+    }
 	
     function Stroke(&$img,&$xscale,&$yscale) {
 	$numpoints=count($this->coords[0]);
@@ -151,6 +199,11 @@ class LinePlot extends Plot{
 	if( $startpoint == $numpoints ) 
 	    return;
 
+	if( $this->iFastStroke ) {
+	    $this->FastStroke($img,$xscale,$yscale,$startpoint,$exist_x);
+	    return;
+	}
+
 	if( $exist_x )
 	    $xs=$this->coords[1][$startpoint];
 	else
@@ -159,7 +212,6 @@ class LinePlot extends Plot{
 	$img->SetStartPoint($xscale->Translate($xs),
 			    $yscale->Translate($this->coords[0][$startpoint]));
 
-		
 	if( $this->filled ) {
 	    $cord[] = $xscale->Translate($xs);
 	    $min = $yscale->GetMinVal();
@@ -345,27 +397,34 @@ class LinePlot extends Plot{
 //===================================================
 class AccLinePlot extends Plot {
     var $plots=null,$nbrplots=0,$numpoints=0;
+    var $iStartEndZero=true;
 //---------------
 // CONSTRUCTOR
     function AccLinePlot($plots) {
         $this->plots = $plots;
 	$this->nbrplots = count($plots);
-	$this->numpoints = $plots[0]->numpoints;		
+	$this->numpoints = $plots[0]->numpoints;
+
+	for($i=0; $i < $this->nbrplots; ++$i ) {
+	    $this->LineInterpolate($this->plots[$i]->coords[0]);
+	}	
     }
 
 //---------------
 // PUBLIC METHODS	
     function Legend(&$graph) {
-	foreach( $this->plots as $p )
-	    $p->DoLegend($graph);
+	$n=count($this->plots);
+	for($i=0; $i < $n; ++$i )
+	    $this->plots[$i]->DoLegend($graph);
     }
 	
     function Max() {
 	list($xmax) = $this->plots[0]->Max();
 	$nmax=0;
-	for($i=0; $i<count($this->plots); ++$i) {
-	    $n = count($this->plots[$i]->coords[0]);
-	    $nmax = max($nmax,$n);
+	$n = count($this->plots);
+	for($i=0; $i < $n; ++$i) {
+	    $nc = count($this->plots[$i]->coords[0]);
+	    $nmax = max($nmax,$nc);
 	    list($x) = $this->plots[$i]->Max();
 	    $xmax = Max($xmax,$x);
 	}
@@ -388,9 +447,10 @@ class AccLinePlot extends Plot {
     function Min() {
 	$nmax=0;
 	list($xmin,$ysetmin) = $this->plots[0]->Min();
-	for($i=0; $i<count($this->plots); ++$i) {
-	    $n = count($this->plots[$i]->coords[0]);
-	    $nmax = max($nmax,$n);
+	$n = count($this->plots);
+	for($i=0; $i < $n; ++$i) {
+	    $nc = count($this->plots[$i]->coords[0]);
+	    $nmax = max($nmax,$nc);
 	    list($x,$y) = $this->plots[$i]->Min();
 	    $xmin = Min($xmin,$x);
 	    $ysetmin = Min($y,$ysetmin);
@@ -433,6 +493,75 @@ class AccLinePlot extends Plot {
 	}
 	
     }
+
+    function SetInterpolateMode($aIntMode) {
+	$this->iStartEndZero=$aIntMode;
+    }
+
+    // Replace all '-' with an interpolated value. We use straightforward
+    // linear interpolation. If the data starts with one or several '-' they
+    // will be replaced by the the first valid data point
+    function LineInterpolate(&$aData) {
+
+	$n=count($aData);
+	$i=0;
+    
+	// If first point is undefined we will set it to the same as the first 
+	// valid data
+	if( $aData[$i]==='-' ) {
+	    // Find the first valid data
+	    while( $i < $n && $aData[$i]==='-' ) {
+		++$i;
+	    }
+	    if( $i < $n ) {
+		for($j=0; $j < $i; ++$j ) {
+		    if( $this->iStartEndZero )
+			$aData[$i] = 0;
+		    else
+			$aData[$j] = $aData[$i];
+		}
+	    }
+	    else {
+		// All '-' => Error
+		return false;
+	    }
+	}
+
+	while($i < $n) {
+	    while( $i < $n && $aData[$i] !== '-' ) {
+		++$i;
+	    }
+	    if( $i < $n ) {
+		$pstart=$i-1;
+
+		// Now see how long this segment of '-' are
+		while( $i < $n && $aData[$i] === '-' )
+		    ++$i;
+		if( $i < $n ) {
+		    $pend=$i;
+		    $size=$pend-$pstart;
+		    $k=($aData[$pend]-$aData[$pstart])/$size;
+		    // Replace the segment of '-' with a linear interpolated value.
+		    for($j=1; $j < $size; ++$j ) {
+			$aData[$pstart+$j] = $aData[$pstart] + $j*$k ;
+		    }
+		}
+		else {
+		    // There are no valid end point. The '-' goes all the way to the end
+		    // In that case we just set all the remaining values the the same as the
+		    // last valid data point.
+		    for( $j=$pstart+1; $j < $n; ++$j ) 
+			if( $this->iStartEndZero )
+			    $aData[$j] = 0;
+			else
+			    $aData[$j] = $aData[$pstart] ;		
+		}
+	    }
+	}
+	return true;
+    }
+
+
 
     // To avoid duplicate of line drawing code here we just
     // change the y-values for each plot and then restore it

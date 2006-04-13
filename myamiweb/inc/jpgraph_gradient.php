@@ -4,10 +4,9 @@
 // Description:	Create a color gradient
 // Created: 	2003-02-01
 // Author:	Johan Persson (johanp@aditus.nu)
-// Ver:		$Id: jpgraph_gradient.php,v 1.2 2004-12-07 00:30:42 dfellman Exp $
+// Ver:		$Id: jpgraph_gradient.php,v 1.3 2006-04-13 21:03:31 suloway Exp $
 //
-// License:	This code is released under QPL
-// Copyright (C) 2003 Johan Persson
+// Copyright (c) Aditus Consulting. All rights reserved.
 //========================================================================
 */
 

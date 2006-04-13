@@ -4,7 +4,7 @@
 // Description:	Configuration file for JpGraph library
 // Created: 	2004-03-27
 // Author:	Johan Persson (johanp@aditus.nu)
-// Ver:		$Id: jpg-config.inc,v 1.1 2004-12-07 00:30:42 dfellman Exp $
+// Ver:		$Id: jpg-config.inc,v 1.2 2006-04-13 21:03:29 suloway Exp $
 //
 // License:	This code is released under QPL 1.0
 // Copyright (C) 2004 Johan Persson
@@ -37,7 +37,7 @@
 //
 //------------------------------------------------------------------------
 // DEFINE("CACHE_DIR","/tmp/jpgraph_cache/");
-// DEFINE("TTF_DIR","/usr/X11R6/lib/X11/fonts/truetype/");
+DEFINE("TTF_DIR","/usr/share/fonts/msttcorefonts/");
 
 
 //-------------------------------------------------------------------------

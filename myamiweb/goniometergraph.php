@@ -8,6 +8,7 @@
  */
 
 include ("inc/jpgraph.php");
+include ("inc/jpgraph_utils.inc");
 include ("inc/jpgraph_line.php");
 include ("inc/jpgraph_scatter.php");
 require ("inc/leginon.inc");

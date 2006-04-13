@@ -4,10 +4,9 @@
 // Description:	Class file. Handles plotmarks
 // Created: 	2003-03-21
 // Author:	Johan Persson (johanp@aditus.nu)
-// Ver:		$Id: jpgraph_plotmark.inc,v 1.2 2004-12-07 00:30:42 dfellman Exp $
+// Ver:		$Id: jpgraph_plotmark.inc,v 1.3 2006-04-13 21:03:32 suloway Exp $
 //
-// License:	This code is released under QPL 1.0 
-// Copyright (C) 2003 Johan Persson 
+// Copyright (c) Aditus Consulting. All rights reserved.
 //========================================================================
 
 
@@ -192,9 +191,9 @@ class PlotMark {
 	    $this->csimareas .= "<area shape=\"poly\" coords=\"$coords\" href=\"".$this->csimtarget."\"";
 	    if( !empty($this->csimalt) ) {										
 		$tmp=sprintf($this->csimalt,$this->yvalue,$this->xvalue);
-		$this->csimareas .= " alt=\"$tmp\" title=\"$tmp\"";
+		$this->csimareas .= " title=\"$tmp\"";
 	    }
-	    $this->csimareas .= ">\n";
+	    $this->csimareas .= " alt=\"$tmp\" />\n";
 	}
     }
     
@@ -205,9 +204,9 @@ class PlotMark {
 	    $this->csimareas .= "<area shape=\"circle\" coords=\"$x,$y,$r\" href=\"".$this->csimtarget."\"";
     	    if( !empty($this->csimalt) ) {										
 		$tmp=sprintf($this->csimalt,$this->yvalue,$this->xvalue);
-		$this->csimareas .= " alt=\"$tmp\" title=\"$tmp\"";
+		$this->csimareas .= " title=\"$tmp\"";
 	    }
-            $this->csimareas .= ">\n";        
+            $this->csimareas .= " alt=\"$tmp\" />\n";        
         }
     }
     	
@@ -334,6 +333,9 @@ class PlotMark {
 	    $dw = round($imgscale * $w );
 	    $dh = round($imgscale * $h );
 
+	    // Do potential rotation
+	    list($x,$y) = $img->Rotate($x,$y);
+
 	    $dx = round($x-$dw*$anchor_x);
 	    $dy = round($y-$dh*$anchor_y);
 	    
@@ -346,9 +348,9 @@ class PlotMark {
 		    "href=\"".$this->csimtarget."\"";
 		if( !empty($this->csimalt) ) {
 		    $tmp=sprintf($this->csimalt,$this->yvalue,$this->xvalue);
-		    $this->csimareas .= " alt=\"$tmp\" title=\"$tmp\"";
+		    $this->csimareas .= " title=\"$tmp\"";
 		}
-		$this->csimareas .= ">\n";
+		$this->csimareas .= " alt=\"$tmp\" />\n";
 	    }
 	    
 	    // Stroke title
