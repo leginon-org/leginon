@@ -187,6 +187,8 @@ class Tomography {
                 .'s.`SUBD|image shift|y` AS shift_y, '
                 .'s.defocus AS defocus, '
                 .'s.magnification AS magnification, '
+                .'c.`SUBD|dimension|x` AS dimension_x, '
+                .'c.`SUBD|dimension|y` AS dimension_y, '
                 .'c.`exposure time` AS exposure_time, '
                 .'DEGREES(TomographyPredictionData.`SUBD|predicted position|theta`) AS tilt_axis, '
                 .'AcquisitionImageStatsData.mean AS mean, '

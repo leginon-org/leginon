@@ -20,7 +20,7 @@ $width = 800;
 $height = 300;
 $images = array();
 #$axes = array('x', 'y', 'z', 'n', 't', 'theta');
-$axes = array('x', 'y', 'z');
+$axes = array('x', 'y', 'z', 'theta');
 foreach ($axes as $axis) {
 	$images[] = '<img src="graph.php?'
 		."tiltSeriesId=$tiltSeriesId"
@@ -67,14 +67,14 @@ if($tiltSeriesId != NULL) {
     echo "<a href=stack.php?tiltSeriesId=$tiltSeriesId>Download MRC stack</a><br>";
 }
 ?>
+<tr>
+<td>
+<?php echo $images[0]; ?>
 </td>
-<td><?php echo $images[0]; ?></td>
 </tr>
 <tr><td><?php echo $images[1]; ?></td></tr>
 <tr><td><?php echo $images[2]; ?></td></tr>
 <tr><td><?php echo $images[3]; ?></td></tr>
-<tr><td><?php echo $images[4]; ?></td></tr>
-<tr><td><?php echo $images[5]; ?></td></tr>
 </table>
 </div>
 
