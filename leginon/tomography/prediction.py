@@ -30,12 +30,20 @@ class Prediction(object):
 
     def calculate(self):
         n = len(self.tilts)
+        #if n >= 3:
+        #    x = self.x
+        #elif n >= 2:
+        #    x = self.x[:4]
+        #elif n >= 1:
+        #    x = self.x[1:3]
+        #else:
+        #    return self.x
         if n >= 3:
-            x = self.x
+            x = [0, 0, 0, 0, 0, 0]
         elif n >= 2:
-            x = self.x[:4]
+            x = [0, 0, 0, 0]
         elif n >= 1:
-            x = self.x[1:3]
+            x = [0, 0]
         else:
             return self.x
         x = leastSquares(x, self.tilts, self.v_shifts)
