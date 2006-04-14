@@ -228,6 +228,9 @@ class Corrector(node.Node):
 		else:
 			raise RuntimeError('invalid setting "%s" for combine method' % (combine,))
 
+		## make if float so we can do float math later
+		ref = ref.astype(Numeric.Float32)
+
 		corstate = data.CorrectorCamstateData()
 		geometry = self.instrument.ccdcamera.Geometry
 		corstate.friendly_update(geometry)
@@ -324,7 +327,8 @@ class Corrector(node.Node):
 		## use reference image from database
 		ref = self.researchRef(camstate, type, ccdcameraname, scopedata)
 		if ref:
-			image = ref['image']
+			## make it float to do float math later
+			image = ref['image'].astype(Numeric.Float32)
 			self.ref_cache[key] = image
 		else:
 			image = None
@@ -451,7 +455,7 @@ class Corrector(node.Node):
 		normalized = self.normalize(original, camstate, ccdcamera['name'], scopedata)
 		plan = self.retrievePlan(ccdcamera, camstate)
 		if plan is not None:
-			good = self.fixBadPixels(normalized, plan)
+			self.fixBadPixels(normalized, plan)
 
 		if self.settings['despike']:
 			self.logger.debug('Despiking...')
@@ -459,13 +463,6 @@ class Corrector(node.Node):
 			thresh = self.settings['despike threshold']
 			imagefun.despike(normalized, nsize, thresh)
 			self.logger.debug('Despiked')
-
-		## this has been commented because original.type()
-		## might be unsigned and causes negative values to wrap
-		## around to very large positive values
-		## before doing this astype, we should maybe clip negative
-		## values
-		#return good.astype(original.type())
 
 		final = normalized.astype(Numeric.Float32)
 		return final
