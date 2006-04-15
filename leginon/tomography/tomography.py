@@ -274,7 +274,7 @@ class Tomography(acquisition.Acquisition):
         self.instrument.tem.StagePosition = {'a': tilts[0]}
 
         #self.driftDetected(preset_name, emtarget, None)
-        target = self.adjustTargetForDrift(target)
+        target = self.adjustTargetForDrift(target, force=True)
         emtarget = self.targetToEMTargetData(target)
 
         self.presetsclient.toScope(preset_name, emtarget)

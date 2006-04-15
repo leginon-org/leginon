@@ -82,9 +82,9 @@ class DriftManager(watcher.Watcher):
 		## acquire new image
 		newim = self.acquireImage()
 
-		self.logger.debug('Old image, image shift %s, stage position %s'
+		self.logger.info('Old image, image shift %s, stage position %s'
 									% (im['scope']['image shift'], im['scope']['stage position']))
-		self.logger.debug('New image, image shift %s, stage position %s'
+		self.logger.info('New image, image shift %s, stage position %s'
 						% (newim['scope']['image shift'], newim['scope']['stage position']))
 
 		## do correlation
@@ -111,9 +111,9 @@ class DriftManager(watcher.Watcher):
 		self.declareDrift('manual')
 
 	def processData(self, newdata):
-		self.logger.debug('processData')
+		self.logger.info('processData')
 		if isinstance(newdata, data.DriftDetectedData):
-			self.logger.debug('DriftDetectedData')
+			self.logger.info('DriftDetectedData')
 			self.monitorDrift(newdata)
 
 	def uiMonitorDrift(self):

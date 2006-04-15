@@ -119,14 +119,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if isinstance(newdata, data.QueueData):
 			self.processTargetListQueue(newdata)
 			return
-		self.logger.debug('Acquisition.processData')
+		self.logger.info('Acquisition.processData')
 		self.imagelistdata = data.ImageListData(session=self.session,
 																						targets=newdata)
 		self.publish(self.imagelistdata, database=True)
 		targetwatcher.TargetWatcher.processData(self, newdata)
 		self.publish(self.imagelistdata, pubevent=True)
 		self.presetsclient.unlock()
-		self.logger.debug('Acquisition.processData done')
+		self.logger.info('Acquisition.processData done')
 
 	def validateStagePosition(self, stageposition):
 		## check for out of stage range target
@@ -658,21 +658,21 @@ class Acquisition(targetwatcher.TargetWatcher):
 				imagedata.__setitem__('image', num, force=True)
 			self.setImage(imagedata['image'].astype(Numeric.Float32), 'Image')
 
-	def adjustTargetForDrift(self, oldtarget):
+	def adjustTargetForDrift(self, oldtarget, force=False):
 		if oldtarget['image'] is None:
 			return oldtarget
 		## check if drift has occurred since target's parent image was acquired
 		# hack to be sure image data is not read, since it's not needed
 		imageref = oldtarget.special_getitem('image', dereference=False)
 		imageid = imageref.dbid
-		self.logger.debug('ADJUSTTARGET, imageid: %s' % (imageid,))
+		self.logger.info('ADJUSTTARGET, imageid: %s' % (imageid,))
 		imagedata = self.researchDBID(data.AcquisitionImageData, imageid, readimages=False)
 		# image time
 		imagetime = imagedata['scope']['system time']
-		self.logger.debug('ADJUSTTARGET, imagetime: %s' % (imagetime,))
+		self.logger.info('ADJUSTTARGET, imagetime: %s' % (imagetime,))
 		# last declared drift
 		lastdeclared = self.research(data.DriftDeclaredData(session=self.session), results=1)
-		self.logger.debug('ADJUSTTARGET, lastdeclared: %s' % (lastdeclared,))
+		self.logger.info('ADJUSTTARGET, lastdeclared: %s' % (lastdeclared,))
 		if not lastdeclared:
 			## no drift declared, no adjustment needed
 			return oldtarget
@@ -686,7 +686,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			query = data.AcquisitionImageDriftData(image=imagedata, session=self.session)
 			imagedrift = self.research(query, results=1)
 			# was image drift already measured for this image?
-			if not imagedrift:
+			if not imagedrift or force:
 				self.logger.info('need to request image drift')
 				# no, request measurement now
 				imagedrift = self.requestImageDrift(imagedata)
@@ -729,16 +729,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imageid = imagedata.dbid
 		## set requested_drift to the reply can be recognized
 		self.requested_drift = imageid
-		self.logger.debug('Sending NeedTargetShiftEvent and waiting, imageid = %s' % (imageid,))
+		self.logger.info('Sending NeedTargetShiftEvent and waiting, imageid = %s' % (imageid,))
 		self.outputEvent(ev)
 		self.setStatus('waiting')
 		self.received_image_drift.wait()
 		self.setStatus('processing')
-		self.logger.debug('Done waiting for NeedTargetShiftEvent')
+		self.logger.info('Done waiting for NeedTargetShiftEvent')
 		return self.requested_drift
 
 	def handleImageDrift(self, ev):
-		self.logger.debug('HANDLING IMAGE DRIFT')
+		self.logger.info('HANDLING IMAGE DRIFT')
 		driftdata = ev['data']
 		imageid = driftdata.special_getitem('image', dereference=False).dbid
 		## only continue if this was one that I requested
