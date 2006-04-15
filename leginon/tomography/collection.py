@@ -141,7 +141,7 @@ class Collection(object):
 
         self.logger.info('Removing tilt backlash...')
         try:
-            self.target, self.emtarget = self.node.removeStageAlphaBacklash(tilts, self.preset['name'], self.target, self.emtarget)
+            target, emtarget = self.node.removeStageAlphaBacklash(tilts, self.preset['name'], self.target, self.emtarget)
         except Exception, e:
             self.logger.error('Failed to remove backlash: %s.' % e)
             self.finalize()
