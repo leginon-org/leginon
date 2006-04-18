@@ -176,22 +176,31 @@ class TargetWaitHandler(TargetHandler):
 		self.targetlistevents[tlistid] = {}
 		self.targetlistevents[tlistid]['received'] = threading.Event()
 		self.targetlistevents[tlistid]['status'] = 'waiting'
+		return tlistid
 
-	def waitForTargetListDone(self):
+	def waitForTargetListDone(self, tlistid=None):
 		'''
-		Waits until theading events of all target list data are cleared.
+		Waits until theading events of specified target list or all target lists are cleared.
 		'''
 		try:
 			if self.settings['queue']:
 				return
 		except AttributeError, KeyError:
 			pass
-		for tid, teventinfo in self.targetlistevents.items():
+		if tlistid is None:
+			eventdict = self.targetlistevents
+		else:
+			eventdict = {tlistid:self.targetlistevents[tlistid]}
+		status = None
+		for tid, teventinfo in eventdict.items():
 			self.logger.info('Waiting for target list ID %s...' % (tid[1],))
 			teventinfo['received'].wait()
 			self.logger.info('Target ID %s has been processed.' % (tid[1],))
-		self.targetlistevents.clear()
+			status = teventinfo['status']
+			del self.targetlistevents[tid]
 		self.logger.info('%s done waiting' % (self.name,))
+		## if waiting for more than one, only returns status of final one
+		return status
 
 
 if __name__ == '__main__':
