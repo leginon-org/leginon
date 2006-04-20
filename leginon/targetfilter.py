@@ -63,7 +63,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 			return targetlistdata
 		else:
 			oldtargets = self.researchTargets(list=targetlistdata)
-			self.logger.info('Filter input: %d' % (len(oldtargets),)
+			self.logger.info('Filter input: %d' % (len(oldtargets),))
 			newtargets = self.filterTargets(oldtargets)
 			self.logger.info('Filter output: %d' % (len(newtargets),)
 			newtargetlistdata = data.ImageTargetListData(initializer=targetlistdata)
