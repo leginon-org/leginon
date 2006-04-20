@@ -179,15 +179,13 @@ class TargetHandler(object):
 		'''
 		generate a new target associated with a grid, but not an image
 		'''
-		## do we need nullimage if using list or grid???
-		nullimage = data.NULL(data.AcquisitionImageData)
 		if 'list' in kwargs:
 			list = kwargs['list']
 		else:
 			list = None
-		lastnumber = self.lastTargetNumber(grid=grid, list=list, image=nullimage, session=self.session)
+		lastnumber = self.lastTargetNumber(grid=grid, list=list, image=None, session=self.session)
 		number = lastnumber + 1
-		targetdata = self.newTarget(grid=grid, drow=drow, dcol=dcol, number=number, session=self.session, image=nullimage, **kwargs)
+		targetdata = self.newTarget(grid=grid, drow=drow, dcol=dcol, number=number, session=self.session, image=None, **kwargs)
 		return targetdata
 
 	def newSimulatedTarget(self, preset=None):
@@ -272,7 +270,6 @@ if __name__ == '__main__':
 
 	im = db.direct_query(data.AcquisitionImageData, 49780)
 	print 'DONE DIRECT', im.dmid
-	nullim = data.NULL(data.AcquisitionImageData)
 	tar = t.researchTargets(session=s, image=im)
 	print 'LEN', len(tar)
 	print 'DBID', tar[0].dbid
