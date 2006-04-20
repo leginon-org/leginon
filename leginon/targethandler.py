@@ -47,6 +47,53 @@ class TargetHandler(object):
 			self.logger.debug('Found %s targets' % (len(havelist),))
 		return havelist
 
+	def queueProcessor(self):
+		'''
+		this is run in a thread to watch for and handle queue updates
+		'''
+		while 1:
+			# wait for a queue update
+			self.setStatus('idle')
+			self.queueupdate.wait()
+			self.setStatus('processing')
+			self.queueupdate.clear()
+			self.logger.info('received queue update')
+
+			# get targetlists relating to this queue
+			tarlistquery = data.ImageTargetListData(queue=self.targetlistqueue)
+			targetlists = self.research(datainstance=tarlistquery)
+			# need FIFO queue (query returns LIFO)
+			targetlists.reverse()
+			self.logger.info('%s target lists' % (len(targetlists),))
+			dequeuedquery = data.DequeuedImageTargetListData(queue=self.targetlistqueue)
+			dequeuedlists = self.research(datainstance=dequeuedquery)
+			self.logger.info('%s target lists done' % (len(dequeuedlists),))
+
+			## these dicts make it easier to figure out which lists are done
+			keys = [targetlist.dbid for targetlist in targetlists]
+			active = newdict.OrderedDict(zip(keys,targetlists))
+			keys = [dequeuedlist.special_getitem('list', dereference=False).dbid for dequeuedlist in dequeuedlists]
+			done = newdict.OrderedDict(zip(keys,keys))
+
+			# process all target lists in the queue
+			for dbid, targetlist in active.items():
+				if dbid in done:
+					continue
+				state = self.player.wait()
+				if state == 'stopqueue':
+					self.logger.info('Queue aborted, skipping target list')
+				else:
+					self.revertTargetListZ(targetlist)
+					self.processTargetList(targetlist)
+					state = self.player.wait()
+					if state == 'stopqueue':
+						continue
+					else:
+						self.player.play()
+				donetargetlist = data.DequeuedImageTargetListData(list=targetlist, queue=self.targetlistqueue)
+				self.publish(donetargetlist, database=True)
+			self.player.play()
+
 	def queueStatus(self, queuedata):
 		pass
 
@@ -186,7 +233,7 @@ class TargetWaitHandler(TargetHandler):
 		Waits until theading events of specified target list or all target lists are cleared.
 		'''
 		try:
-			if self.settings['queue']:
+			if 'queue' in self.settings and self.settings['queue']:
 				return
 		except AttributeError, KeyError:
 			pass
