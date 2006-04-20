@@ -35,7 +35,7 @@ class Prediction(object):
         elif len(tilt_group) < 2:
             x, y = tilt_group.xs[-1], tilt_group.ys[-1]
             z = 0.0
-        elif len(tilt_group) < 3:
+        elif len(tilt_group) < 3 or len(self.tilt_groups) < 2:
             x, y = leastSquaresXY(tilt_group.tilts,
                                   tilt_group.xs,
                                   tilt_group.ys,
