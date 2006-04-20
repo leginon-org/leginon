@@ -12,6 +12,9 @@ class TargetHandler(object):
 	eventinputs = [event.QueuePublishEvent]
 	eventoutputs = [event.ImageTargetListPublishEvent, event.QueuePublishEvent]
 
+	def __init__(self):
+		self.queueupdate = threading.Event()
+
 	def compareTargetNumber(self, first, second):
 		### if come from different images, compare image dbid
 		if 'image' in first and 'image' in second:
@@ -47,6 +50,30 @@ class TargetHandler(object):
 			self.logger.debug('Found %s targets' % (len(havelist),))
 		return havelist
 
+	def startQueueProcessor(self):
+		t = threading.Thread(target=self.queueProcessor)
+		t.setDaemon(True)
+		t.start()
+
+	def getListsInQueue(self, queuedata):
+			'''
+			get a list of all active (not done) target lists in the queue
+			'''
+			# get targetlists relating to this queue
+			tarlistquery = data.ImageTargetListData(queue=queuedata)
+			targetlists = self.research(datainstance=tarlistquery)
+			# need FIFO queue (query returns LIFO)
+			targetlists.reverse()
+			dequeuedquery = data.DequeuedImageTargetListData(queue=queuedata)
+			dequeuedlists = self.research(datainstance=dequeuedquery)
+			keys = [targetlist.dbid for targetlist in targetlists]
+			active = newdict.OrderedDict(zip(keys,targetlists))
+			keys = [dequeuedlist.special_getitem('list', dereference=False).dbid for dequeuedlist in dequeuedlists]
+			done = newdict.OrderedDict(zip(keys,keys))
+			for id in done:
+				del active[id]
+			return active
+
 	def queueProcessor(self):
 		'''
 		this is run in a thread to watch for and handle queue updates
@@ -59,26 +86,10 @@ class TargetHandler(object):
 			self.queueupdate.clear()
 			self.logger.info('received queue update')
 
-			# get targetlists relating to this queue
-			tarlistquery = data.ImageTargetListData(queue=self.targetlistqueue)
-			targetlists = self.research(datainstance=tarlistquery)
-			# need FIFO queue (query returns LIFO)
-			targetlists.reverse()
-			self.logger.info('%s target lists' % (len(targetlists),))
-			dequeuedquery = data.DequeuedImageTargetListData(queue=self.targetlistqueue)
-			dequeuedlists = self.research(datainstance=dequeuedquery)
-			self.logger.info('%s target lists done' % (len(dequeuedlists),))
-
-			## these dicts make it easier to figure out which lists are done
-			keys = [targetlist.dbid for targetlist in targetlists]
-			active = newdict.OrderedDict(zip(keys,targetlists))
-			keys = [dequeuedlist.special_getitem('list', dereference=False).dbid for dequeuedlist in dequeuedlists]
-			done = newdict.OrderedDict(zip(keys,keys))
+			active = self.getListsInQueue(self.targetlistqueue)
 
 			# process all target lists in the queue
 			for dbid, targetlist in active.items():
-				if dbid in done:
-					continue
 				state = self.player.wait()
 				if state == 'stopqueue':
 					self.logger.info('Queue aborted, skipping target list')
@@ -95,7 +106,8 @@ class TargetHandler(object):
 			self.player.play()
 
 	def queueStatus(self, queuedata):
-		pass
+		active = self.getListsInQueue(queuedata)
+		# get info on each target list
 
 	def researchTargetLists(self, **kwargs):
 		targetlist = data.ImageTargetListData(session=self.session, **kwargs)

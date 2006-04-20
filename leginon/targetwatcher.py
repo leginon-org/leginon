@@ -32,6 +32,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		watchfor = [event.ImageTargetListPublishEvent, event.QueuePublishEvent]
 		watcher.Watcher.__init__(self, id, session, managerlocation, watchfor,
 															**kwargs)
+		targethandler.TargetHandler.__init__(self)
 
 		self.addEventInput(event.TargetListDoneEvent, self.handleTargetListDone)
 
@@ -39,60 +40,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.panel.playerEvent(self.player.state())
 		self.target_types = target_types
 		self.targetlistevents = {}
-		self.queueupdate = threading.Event()
 		self.startQueueProcessor()
-
-	def startQueueProcessor(self):
-		t = threading.Thread(target=self.queueProcessor)
-		t.setDaemon(True)
-		t.start()
-
-	def queueProcessor(self):
-		'''
-		this is run in a thread to watch for and handle queue updates
-		'''
-		while 1:
-			# wait for a queue update
-			self.setStatus('idle')
-			self.queueupdate.wait()
-			self.setStatus('processing')
-			self.queueupdate.clear()
-			self.logger.info('received queue update')
-
-			# get targetlists relating to this queue
-			tarlistquery = data.ImageTargetListData(queue=self.targetlistqueue)
-			targetlists = self.research(datainstance=tarlistquery)
-			# need FIFO queue (query returns LIFO)
-			targetlists.reverse()
-			self.logger.info('%s target lists' % (len(targetlists),))
-			dequeuedquery = data.DequeuedImageTargetListData(queue=self.targetlistqueue)
-			dequeuedlists = self.research(datainstance=dequeuedquery)
-			self.logger.info('%s target lists done' % (len(dequeuedlists),))
-
-			## these dicts make it easier to figure out which lists are done
-			keys = [targetlist.dbid for targetlist in targetlists]
-			active = newdict.OrderedDict(zip(keys,targetlists))
-			keys = [dequeuedlist.special_getitem('list', dereference=False).dbid for dequeuedlist in dequeuedlists]
-			done = newdict.OrderedDict(zip(keys,keys))
-
-			# process all target lists in the queue
-			for dbid, targetlist in active.items():
-				if dbid in done:
-					continue
-				state = self.player.wait()
-				if state == 'stopqueue':
-					self.logger.info('Queue aborted, skipping target list')
-				else:
-					self.revertTargetListZ(targetlist)
-					self.processTargetList(targetlist)
-					state = self.player.wait()
-					if state == 'stopqueue':
-						continue
-					else:
-						self.player.play()
-				donetargetlist = data.DequeuedImageTargetListData(list=targetlist, queue=self.targetlistqueue)
-				self.publish(donetargetlist, database=True)
-			self.player.play()
 
 	def processData(self, newdata):
 		if isinstance(newdata, data.ImageTargetListData):
