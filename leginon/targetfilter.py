@@ -38,7 +38,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 		targetlistdata = pubevent['data']
 		newtargetlistdata = self.__filterTargetList(targetlistdata)
 		tid = self.makeTargetListEvent(newtargetlistdata)
-		self.publish(newtargetlistdata, database=db, pubevent=pubevent)
+		self.publish(newtargetlistdata, database=True, pubevent=pubevent)
 		status = self.waitForTargetListDone(tid)
 		e = event.TargetListDoneEvent(targetlistid=targetlistdata.dmid, status=status)
 		self.outputEvent(e)
