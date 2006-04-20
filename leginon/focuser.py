@@ -253,6 +253,14 @@ class Focuser(acquisition.Acquisition):
 			status = 'fit untrusted (%s>%s)' % (fitmin, fitlimit)
 			validdefocus = False
 			logmessage = 'Focus measurement failed: fit = %s (fit limit = %s)' % (fitmin, fitlimit)
+			if focustype == 'Defocus':
+				self.logger.info('Setting eucentric focus...')
+				self.eucentricFocusToScope()
+				self.logger.info('Eucentric focus set')
+				self.eucset = True
+				self.resetDefocus()
+			else:
+				self.eucset = False
 		### check change limit
 		delta_min = setting['delta min']
 		delta_max = setting['delta max']
