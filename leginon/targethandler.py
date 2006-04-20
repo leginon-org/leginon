@@ -73,7 +73,7 @@ class TargetHandler(object):
 			done = newdict.OrderedDict(zip(keys,keys))
 			for id in done:
 				del active[id]
-			return active
+			return active.values()
 
 	def queueProcessor(self):
 		'''
@@ -90,7 +90,7 @@ class TargetHandler(object):
 			active = self.getListsInQueue(self.targetlistqueue)
 
 			# process all target lists in the queue
-			for dbid, targetlist in active.items():
+			for targetlist in active:
 				state = self.player.wait()
 				if state == 'stopqueue':
 					self.logger.info('Queue aborted, skipping target list')
