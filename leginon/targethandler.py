@@ -48,7 +48,7 @@ class TargetHandler(object):
 		return havelist
 
 	def queueStatus(self, queuedata):
-		
+		pass
 
 	def researchTargetLists(self, **kwargs):
 		targetlist = data.ImageTargetListData(session=self.session, **kwargs)
