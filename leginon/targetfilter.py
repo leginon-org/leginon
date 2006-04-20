@@ -38,18 +38,27 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 		targetlistdata = pubevent['data']
 		newtargetlistdata = self.__filterTargetList(targetlistdata)
 		tid = self.makeTargetListEvent(newtargetlistdata)
-		self.publish(newtargetlistdata, database=True, pubevent=pubevent)
+		self.publish(newtargetlistdata, pubevent=pubevent)
 		status = self.waitForTargetListDone(tid)
 		e = event.TargetListDoneEvent(targetlistid=targetlistdata.dmid, status=status)
 		self.outputEvent(e)
 
 	def handleQueuePublish(self, pubevent):
-		self.logger.warning('What do I do with a queue?')
-		## probably just filter all target lists in the queue and put them in a new queue
-		return
+		'''
+		filter just passes input queuedata to the output, but the target lists
+		in that queue are filtered.  The old target list is dequeued.
+		'''
+		queuedata = pubevent['data']
+		## this is only active (not dequeued) target lists
+		oldtargetlists = self.getListsInQueue(queuedata)
 
-		newdata = pubevent['data']
-		self.targetlistqueue = newdata
+		for oldtargetlist in oldtargetlists:
+				newtargetlist = self.__filterTargetList(oldtargetlist)
+				if newtargetlist is not oldtargetlist:
+					# newtargetlist has already been put in queue, now dequeue old one
+					donetargetlist = data.DequeuedImageTargetListData(list=targetlist, queue=self.targetlistqueue)
+					self.publish(donetargetlist, database=True)
+		self.publish(queuedata, pubevent=True)
 
 	def __filterTargetList(self, targetlistdata):
 		'''
@@ -67,6 +76,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 			newtargets = self.filterTargets(oldtargets)
 			self.logger.info('Filter output: %d' % (len(newtargets),))
 			newtargetlistdata = data.ImageTargetListData(initializer=targetlistdata)
+			self.publish(newtargetlistdata, database=True, dbforce=True)
 			for newtarget in newtargets:
 				newtarget['list'] = newtargetlistdata
 				self.publish(newtarget, database=True)
