@@ -2,6 +2,7 @@
 import data
 import event
 import threading
+import newdict
 
 class TargetHandler(object):
 	'''
