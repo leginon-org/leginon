@@ -3,158 +3,166 @@ import scipy.linalg
 import scipy.linalg.basic
 import scipy.optimize
 
+class TiltGroup(object):
+    def __init__(self):
+        self.tilts = []
+        self.xs = []
+        self.ys = []
+
+    def addTilt(self, tilt, x, y):
+        self.tilts.append(tilt)
+        self.xs.append(x)
+        self.ys.append(y)
+
+    def __len__(self):
+        return len(self.tilts)
+
 class Prediction(object):
     def __init__(self):
-        self.reset()
+        self.tilt_groups = []
+        self.parameters = [0, 0, 0, 0, 0]
 
     def reset(self):
-        self.tilts = []
-        self.v_shifts = []
-        self.x = [0, 0, 0, 0, 0, 0]
+        self.tilt_groups.append(TiltGroup())
 
-    def addShift(self, tilt, shift):
-        self.tilts.append(tilt)
-        v_shift = scipy.array((shift['x'], shift['y'], 0), scipy.Float)
-        self.v_shifts.append(v_shift)
+    def addPosition(self, tilt, position):
+        self.tilt_groups[-1].addTilt(tilt, position['x'], position['y'])
 
     def predict(self, tilt):
-        if not self.tilts:
-            return None
-        x0, y0, z0 = model(self.x, tiltMatrices([self.tilts[0]]))[0]
-        x, y, z = model(self.x, tiltMatrices([tilt]))[0]
-        x = float(x)
-        y = float(y)
-        z = float(z) - float(z0)
-        theta = float(self.x[0])
-        return {'x': x, 'y': y, 'z': z, 'theta': theta}
+        tilt_group = self.tilt_groups[-1]
+        x, y = leastSquaresXY(tilt_group.tilts,
+                              tilt_group.xs, tilt_group.ys, tilt)
+
+        tilt_group.addTilt(tilt, x, y)
+
+        self.calculate()
+
+        del tilt_group.tilts[-1]
+        del tilt_group.xs[-1]
+        del tilt_group.ys[-1]
+
+        tilt_matrices = scipy.zeros((1, 3, 3), scipy.Float)
+        initial_tilt = tilt_group.tilts[0]
+        tilt_matrices[0, :, :] = tiltMatrix(initial_tilt)
+        z0 = model(self.parameters, [tilt_matrices])[0][0][2]
+
+        tilt_matrices[0, :, :] = tiltMatrix(tilt)
+        z = model(self.parameters, [tilt_matrices])[0][0][2] - z0
+
+        return {'x': float(x), 'y': float(y), 'z': float(z)}
 
     def calculate(self):
-        n = len(self.tilts)
-        #if n >= 3:
-        #    x = self.x
-        #elif n >= 2:
-        #    x = self.x[:4]
-        #elif n >= 1:
-        #    x = self.x[1:3]
-        #else:
-        #    return self.x
-        if n >= 3:
-            x = [0, 0, 0, 0, 0, 0]
-        elif n >= 2:
-            x = [0, 0, 0, 0]
-        elif n >= 1:
-            x = [0, 0]
-        else:
-            return self.x
-        x = leastSquares(x, self.tilts, self.v_shifts)
-        n = len(x)
-        if n == 6:
-            self.x = x
-        elif n == 4:
-            self.x[0] = x[0]
-            self.x[1] = x[1]
-            self.x[2] = x[2]
-            self.x[3] = x[3]
-        elif n == 2:
-            self.x[1] = x[0]
-            self.x[2] = x[1]
-        return self.x
+        if len(self.tilt_groups[-1]) < 3:
+            return
+        self.parameters = leastSquares(self.tilt_groups)
+        return self.parameters
 
-def leastSquares(x, tilts, v_shifts):
-    m_tilts = tiltMatrices(tilts)
-    x_shifts = []
-    y_shifts = []
-    for v_shift in v_shifts:
-        x_shifts.append(v_shift[0])
-        y_shifts.append(v_shift[1])
-    args = (m_tilts, x_shifts, y_shifts)
-    '''
-    try:
-        result = scipy.optimize.leastsq(residuals, x, args=args, full_output=1)
-        print 'x', result[0]
-        print 'cov_x', result[1]
-        print 'nfev', result[2]['nfev']
-        print 'fvec', result[2]['fvec']
-        print 'ipvt', result[2]['ipvt']
-        print 'qtf', result[2]['qtf']
-        print 'ier', result[3]
-        print result[4]
-    except scipy.linalg.basic.LinAlgError:
-        result = scipy.optimize.leastsq(residuals, x, args=args, full_output=0)
-    '''
+def leastSquares(tilt_groups):
+    parameters = [0] + [0, 0] + len(tilt_groups)*[0, 0]
+    tilt_matrices_list = []
+    x_list = []
+    y_list = []
+    for tilt_group in tilt_groups:
+        n = len(tilt_group.tilts)
+        tilt_matrices = scipy.zeros((n, 3, 3), scipy.Float)
+        for i in range(n):
+            tilt_matrices[i, :, :] = tiltMatrix(tilt_group.tilts[i])
+        tilt_matrices_list.append(tilt_matrices)
+
+        x_list.append(tilt_group.xs)
+        y_list.append(tilt_group.ys)
+
+    args = (tilt_matrices_list, x_list, y_list)
     kwargs = {
-        'full_output': 0,
+        #'full_output': 1,
         'ftol': 1e-12,
         'xtol': 1e-12,
     }
-    result = scipy.optimize.leastsq(residuals, x, args=args, **kwargs)
+    result = scipy.optimize.leastsq(residuals, parameters, args=args, **kwargs)
     try:
         x = list(result[0])
     except TypeError:
         x = [result[0]]
     return x
 
-def tiltMatrices(tilts):
-    m_tilts = []
-    for tilt in tilts:
-        m_tilt = scipy.identity(3, scipy.Float)
-        m_tilt[0, 0] = scipy.cos(tilt)
-        m_tilt[0, 2] = scipy.sin(tilt)
-        m_tilt[2, 0] = -scipy.sin(tilt)
-        m_tilt[2, 2] = scipy.cos(tilt)
-        m_tilts.append(m_tilt)
-    return m_tilts
+def tiltMatrix(tilt):
+    matrix = scipy.identity(3, scipy.Float)
+    matrix[0, 0] = scipy.cos(tilt)
+    matrix[0, 2] = -scipy.sin(tilt)
+    matrix[2, 0] = scipy.sin(tilt)
+    matrix[2, 2] = scipy.cos(tilt)
+    return matrix
 
-def getParameters(x):
-    m_stage = scipy.identity(3, scipy.Float)
-    v_specimen = scipy.zeros(3, scipy.Float)
-    v_optical_axis = scipy.zeros(3, scipy.Float)
-    
-    n = len(x)
-    if n == 6:
-        cg = scipy.cos(x[0])
-        sg = scipy.sin(x[0])
-        m_stage[0, 0] = cg
-        m_stage[0, 1] = -sg
-        m_stage[1, 0] = sg
-        m_stage[1, 1] = cg
-        v_specimen[0] = x[1]
-        v_specimen[1] = x[2]
-        v_specimen[2] = x[3]
-        v_optical_axis[0] = x[4]
-        v_optical_axis[1] = x[5]
-    elif n == 4:
-        cg = scipy.cos(x[0])
-        sg = scipy.sin(x[0])
-        m_stage[0, 0] = cg
-        m_stage[0, 1] = -sg
-        m_stage[1, 0] = sg
-        m_stage[1, 1] = cg
-        v_specimen[0] = x[1]
-        v_specimen[1] = x[2]
-        v_specimen[2] = x[3]
-    elif n == 2:
-        v_specimen[0] = x[0]
-        v_specimen[1] = x[1]
+def getParameters(parameters):
+    phi = scipy.identity(3, scipy.Float)
+    cos_phi = scipy.cos(parameters[0])
+    sin_phi = scipy.sin(parameters[0])
+    phi[0, 0] = cos_phi
+    phi[0, 1] = sin_phi
+    phi[1, 0] = -sin_phi
+    phi[1, 1] = cos_phi
 
-    return m_stage, v_specimen, v_optical_axis
+    #psi = scipy.identity(3, scipy.Float)
+    #cos_psi = scipy.cos(parameters[1])
+    #sin_psi = scipy.sin(parameters[1])
+    #psi[1, 1] = cos_psi
+    #psi[1, 2] = sin_psi
+    #psi[2, 1] = -sin_psi
+    #psi[2, 2] = cos_psi
 
-def model(x, m_tilts):
-    m_stage, v_specimen, v_optical_axis = getParameters(x)
-    v_shifts = []
-    for m_tilt in m_tilts:
-        v_shift = scipy.dot(m_stage, scipy.dot(m_tilt, v_specimen))
-        v_shift -= v_optical_axis
-        v_shifts.append(v_shift)
-    return v_shifts
+    optical_axis = scipy.zeros(3, scipy.Float)
+    optical_axis[0] = parameters[1]
+    optical_axis[1] = parameters[2]
 
-def residuals(x, m_tilts, x_shifts, y_shifts):
-    v_estimate = model(x, m_tilts)
-    n = len(m_tilts)
-    result = scipy.zeros(n*2, scipy.Float)
-    for i in range(n):
-         result[i] = x_shifts[i] - v_estimate[i][0]
-    for i in range(n):
-         result[n + i] = y_shifts[i] - v_estimate[i][1]
-    return result
+    n = (len(parameters) - 3)/2
+    specimens = scipy.zeros((n, 3), scipy.Float)
+    specimens[:, 0] = parameters[3::2]
+    specimens[:, 2] = parameters[4::2]
+
+    return phi, optical_axis, specimens
+
+def model(parameters, thetas_list):
+    phi, optical_axis, specimens = getParameters(parameters)
+    position_groups = []
+    for i, thetas in enumerate(thetas_list):
+        positions = scipy.dot(thetas, specimens[i, :])
+        positions += optical_axis
+        for i in range(positions.shape[0]):
+            positions[i, :] = scipy.dot(phi, positions[i, :])
+        position_groups.append(positions)
+    return position_groups
+
+def residuals(parameters, tilt_matrices_list, x_list, y_list):
+    n = len(tilt_matrices_list)
+    residuals_list = []
+    position_groups = model(parameters, tilt_matrices_list)
+    for i in range(len(position_groups)):
+        positions = position_groups[i]
+        n = positions.shape[0]
+        residuals = scipy.zeros((n, 2), scipy.Float)
+        residuals[:, 0] = x_list[i]
+        residuals[:, 1] = y_list[i]
+        residuals -= positions[:, :2]
+        residuals_list.extend(residuals[:, 0])
+        residuals_list.extend(residuals[:, 1])
+    return scipy.array(residuals_list, scipy.Float).flat
+
+def leastSquaresXY(tilts, xs, ys, tilt, n=3):
+    n = min(len(tilts), n)
+    positions = scipy.zeros((n, 2), scipy.Float)
+    positions[:, 0] = xs[-n:]
+    positions[:, 1] = ys[-n:]
+    position = scipy.zeros(2, scipy.Float)
+    for i in range(2):
+        a = scipy.zeros((n, n), scipy.Float)
+        b = scipy.zeros((n, 1), scipy.Float)
+        for j in range(n):
+            v = tilts[-n + j]
+            for k in range(n):
+                a[j, k] = v**k
+            b[j] = positions[j, i]
+        x, resids, rank, s = scipy.linalg.lstsq(a, b)
+        for k in range(n):
+            position[i] += x[k]*tilt**k
+    return position
 
