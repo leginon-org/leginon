@@ -2220,6 +2220,16 @@ class TiltSeriesData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class TargetFilterSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('bypass', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ExampleTargetFilterSettingData(TargetFilterSettingsData):
+	pass
+
 '''
 class TiltSeriesImageData(AcquisitionImageData):
 	def typemap(cls):
