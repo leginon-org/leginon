@@ -56,7 +56,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 				newtargetlist = self.__filterTargetList(oldtargetlist)
 				if newtargetlist is not oldtargetlist:
 					# newtargetlist has already been put in queue, now dequeue old one
-					donetargetlist = data.DequeuedImageTargetListData(list=targetlist, queue=self.targetlistqueue)
+					donetargetlist = data.DequeuedImageTargetListData(list=oldtargetlist,queuedata)
 					self.publish(donetargetlist, database=True)
 		self.publish(queuedata, pubevent=True)
 
