@@ -15,4 +15,5 @@ class ExampleTargetFilter(targetfilter.TargetFilter):
 			newtarget = data.AcquisitionImageTargetData(initializer=target)
 			newtarget['delta row'] += 1
 			newtarget['delta column'] += 1
+			newlist.append(newtarget)
 		return newlist
