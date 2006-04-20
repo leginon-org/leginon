@@ -3,7 +3,6 @@ import time
 import data
 import tiltcorrelator
 import tiltseries
-import prediction
 
 class Abort(Exception):
     pass
@@ -14,7 +13,6 @@ class Fail(Exception):
 class Collection(object):
     def __init__(self):
         self.tilt_series = None
-        self.prediction = None
         self.correlator = None
         self.instrument_state = None
         self.theta = 0.0
@@ -56,7 +54,6 @@ class Collection(object):
     def initialize(self):
         self.logger.info('Initializing...')
 
-        self.prediction = prediction.Prediction()
         self.logger.info('Calibrations loaded.')
 
         self.saveInstrumentState()
@@ -176,7 +173,7 @@ class Collection(object):
             self.checkAbort()
 
             self.logger.info('Current tilt angle: %g degrees.' % math.degrees(tilt))
-            self.prediction.addShift(tilt, position)
+            self.prediction.addPosition(tilt, position)
             self.prediction.calculate()
 
             self.checkAbort()
@@ -187,13 +184,9 @@ class Collection(object):
             predicted_shift['x'] = predicted_position['x'] - position['x']
             predicted_shift['x'] = predicted_position['y'] - position['y']
 
-            # HACK: fix me
-            if abs(predicted_position['z']*pixel_size) > 1e-7*math.degrees(tilt):
-                predicted_shift['z'] = 0
-            else:
-                predicted_shift['z'] = -defocus
-                defocus = defocus0 - predicted_position['z']*pixel_size
-                predicted_shift['z'] += defocus
+            predicted_shift['z'] = -defocus
+            defocus = defocus0 - predicted_position['z']*pixel_size
+            predicted_shift['z'] += defocus
 
             try:
                 self.node.setPosition(self.settings['move type'], predicted_position)

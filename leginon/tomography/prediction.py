@@ -49,7 +49,22 @@ class Prediction(object):
         tilt_matrices[0, :, :] = tiltMatrix(tilt)
         z = model(self.parameters, [tilt_matrices])[0][0][2] - z0
 
-        return {'x': float(x), 'y': float(y), 'z': float(z)}
+        result = {
+            'x': float(x),
+            'y': float(y),
+            'z': float(z),
+            'phi': self.parameters[0],
+            'optical axis': {
+                'x': self.parameters[1],
+                'y': self.parameters[2],
+            },
+            'specimen': {
+                'x': self.parameters[-2],
+                'z': self.parameters[-1],
+            },
+        }
+
+        return result
 
     def calculate(self):
         if len(self.tilt_groups[-1]) < 3:

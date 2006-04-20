@@ -9,6 +9,7 @@ import gui.wx.tomography.Tomography
 import collection
 import tilts
 import exposure
+import prediction
 
 class CalibrationError(Exception):
     pass
@@ -53,6 +54,7 @@ class Tomography(acquisition.Acquisition):
 
         self.tilts = tilts.Tilts()
         self.exposure = exposure.Exposure()
+        self.prediction = prediction.Prediction()
 
         self.start()
 
@@ -166,6 +168,7 @@ class Tomography(acquisition.Acquisition):
         collect.pixel_size = pixel_size
         collect.tilts = tilts
         collect.exposures = exposures
+        collect.prediction = self.prediction
 
         try:
             collect.start()
