@@ -35,6 +35,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 		self.start()
 
 	def handleTargetListPublish(self, pubevent):
+		targetlistdata = pubevent['data']
 		newtargetlistdata = self.__filterTargetList(targetlistdata)
 		tid = self.makeTargetListEvent(newtargetlistdata)
 		self.publish(newtargetlistdata, database=db, pubevent=pubevent)
