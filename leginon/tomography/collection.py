@@ -251,7 +251,7 @@ class Collection(object):
             self.checkAbort()
 
             self.logger.info('Correlating image with previous tilt...')
-            self.correlator.setTiltAxis(predicted_position['theta'])
+            #self.correlator.setTiltAxis(predicted_position['theta'])
             while True:
                 try:
                     correlation_image = self.correlator.correlate(image, tilt)

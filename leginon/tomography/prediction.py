@@ -30,38 +30,51 @@ class Prediction(object):
 
     def predict(self, tilt):
         tilt_group = self.tilt_groups[-1]
-        x, y = leastSquaresXY(tilt_group.tilts,
-                              tilt_group.xs, tilt_group.ys, tilt)
+        if len(tilt_group) < 1:
+            raise RuntimeError
+        elif len(tilt_group) < 2:
+            x, y = tilt_group.xs[-1], tilt_group.ys[-1]
+            z = 0.0
+        elif len(tilt_group) < 3:
+            x, y = leastSquaresXY(tilt_group.tilts,
+                                  tilt_group.xs,
+                                  tilt_group.ys,
+                                  tilt)
+            z = 0.0
+        else:
+            x, y = leastSquaresXY(tilt_group.tilts,
+                                  tilt_group.xs,
+                                  tilt_group.ys,
+                                  tilt)
+            tilt_group.addTilt(tilt, x, y)
 
-        tilt_group.addTilt(tilt, x, y)
+            self.calculate()
 
-        self.calculate()
+            del tilt_group.tilts[-1]
+            del tilt_group.xs[-1]
+            del tilt_group.ys[-1]
 
-        del tilt_group.tilts[-1]
-        del tilt_group.xs[-1]
-        del tilt_group.ys[-1]
+            tilt_matrices = scipy.zeros((1, 3, 3), scipy.Float)
+            initial_tilt = tilt_group.tilts[0]
+            tilt_matrices[0, :, :] = tiltMatrix(initial_tilt)
+            z0 = model(self.parameters, [tilt_matrices])[0][0][2]
 
-        tilt_matrices = scipy.zeros((1, 3, 3), scipy.Float)
-        initial_tilt = tilt_group.tilts[0]
-        tilt_matrices[0, :, :] = tiltMatrix(initial_tilt)
-        z0 = model(self.parameters, [tilt_matrices])[0][0][2]
-
-        tilt_matrices[0, :, :] = tiltMatrix(tilt)
-        z = model(self.parameters, [tilt_matrices])[0][0][2] - z0
+            tilt_matrices[0, :, :] = tiltMatrix(tilt)
+            z = model(self.parameters, [tilt_matrices])[0][0][2] - z0
 
         result = {
             'x': float(x),
             'y': float(y),
             'z': float(z),
-            'phi': self.parameters[0],
-            'optical axis': {
-                'x': self.parameters[1],
-                'y': self.parameters[2],
-            },
-            'specimen': {
-                'x': self.parameters[-2],
-                'z': self.parameters[-1],
-            },
+            #'phi': self.parameters[0],
+            #'optical axis': {
+            #    'x': self.parameters[1],
+            #    'y': self.parameters[2],
+            #},
+            #'specimen': {
+            #    'x': self.parameters[-2],
+            #    'z': self.parameters[-1],
+            #},
         }
 
         return result
