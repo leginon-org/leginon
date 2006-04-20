@@ -82,10 +82,10 @@ class Prediction(object):
     def calculate(self):
         if len(self.tilt_groups[-1]) < 3:
             return
-        self.parameters = leastSquares(self.tilt_groups)
+        self.parameters = leastSquaresModel(self.tilt_groups)
         return self.parameters
 
-def leastSquares(tilt_groups):
+def leastSquaresModel(tilt_groups):
     parameters = [0] + [0, 0] + len(tilt_groups)*[0, 0]
     tilt_matrices_list = []
     x_list = []
@@ -193,7 +193,7 @@ def _leastSquaresXY(tilts, positions, tilt):
     return position
 
 #def leastSquaresXY(tilts, xs, ys, tilt, n=0):
-def leastSquaresXY(tilts, xs, ys, tilt, n=3):
+def leastSquaresXY(tilts, xs, ys, tilt, n=5):
     position = scipy.zeros(2, scipy.Float)
     for i, positions in enumerate((xs, ys)):
         position[i] = _leastSquaresXY(tilts[-n:], positions[-n:], tilt)

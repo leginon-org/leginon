@@ -158,6 +158,7 @@ class Collection(object):
     def _loop(self, tilts, exposures):
         pixel_size = self.pixel_size
 
+        tilt0 = tilts[0]
         position0 = self.node.getPixelPosition(self.settings['move type'])
         defocus0 = self.node.getDefocus()
 
@@ -166,6 +167,8 @@ class Collection(object):
         m = 'Initial defocus: %g meters.'
         self.logger.info(m % defocus0)
 
+        self.prediction.addPosition(tilt0, position0)
+
         position = dict(position0)
         defocus = defocus0
 
@@ -173,12 +176,10 @@ class Collection(object):
             self.checkAbort()
 
             self.logger.info('Current tilt angle: %g degrees.' % math.degrees(tilt))
-            self.prediction.addPosition(tilt, position)
-            self.prediction.calculate()
-
-            self.checkAbort()
 
             predicted_position = self.prediction.predict(tilt)
+
+            self.checkAbort()
 
             predicted_shift = {}
             predicted_shift['x'] = predicted_position['x'] - position['x']
@@ -268,6 +269,8 @@ class Collection(object):
                 'x': predicted_position['x'] - correlation['x'],
                 'y': predicted_position['y'] - correlation['y'],
             }
+
+            self.prediction.addPosition(tilt, position)
 
             m = 'Correlated shift from feature: %g, %g pixels, %g, %g meters.'
             self.logger.info(m % (correlation['x'],
