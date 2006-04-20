@@ -2227,7 +2227,7 @@ class TargetFilterSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class ExampleTargetFilterSettingData(TargetFilterSettingsData):
+class ExampleTargetFilterSettingsData(TargetFilterSettingsData):
 	pass
 
 '''
