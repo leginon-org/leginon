@@ -175,22 +175,27 @@ def residuals(parameters, tilt_matrices_list, x_list, y_list):
         residuals_list.extend(residuals[:, 1])
     return scipy.array(residuals_list, scipy.Float).flat
 
-def leastSquaresXY(tilts, xs, ys, tilt, n=3):
-    n = min(len(tilts), n)
-    positions = scipy.zeros((n, 2), scipy.Float)
-    positions[:, 0] = xs[-n:]
-    positions[:, 1] = ys[-n:]
-    position = scipy.zeros(2, scipy.Float)
-    for i in range(2):
-        a = scipy.zeros((n, n), scipy.Float)
-        b = scipy.zeros((n, 1), scipy.Float)
+def _leastSquaresXY(tilts, positions, tilt):
+    m = len(tilts)
+    #n = 10
+    n = 3
+    a = scipy.zeros((m, n), scipy.Float)
+    b = scipy.zeros((m, 1), scipy.Float)
+    for i in range(m):
+        v = tilts[i]
         for j in range(n):
-            v = tilts[-n + j]
-            for k in range(n):
-                a[j, k] = v**k
-            b[j] = positions[j, i]
-        x, resids, rank, s = scipy.linalg.lstsq(a, b)
-        for k in range(n):
-            position[i] += x[k]*tilt**k
+            a[i, j] = v**j
+        b[i] = positions[i]
+    x, resids, rank, s = scipy.linalg.lstsq(a, b)
+    position = 0
+    for j in range(n):
+        position += x[j]*tilt**j
+    return position
+
+#def leastSquaresXY(tilts, xs, ys, tilt, n=0):
+def leastSquaresXY(tilts, xs, ys, tilt, n=3):
+    position = scipy.zeros(2, scipy.Float)
+    for i, positions in enumerate((xs, ys)):
+        position[i] = _leastSquaresXY(tilts[-n:], positions[-n:], tilt)
     return position
 
