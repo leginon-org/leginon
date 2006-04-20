@@ -47,6 +47,9 @@ class TargetHandler(object):
 			self.logger.debug('Found %s targets' % (len(havelist),))
 		return havelist
 
+	def queueStatus(self, queuedata):
+		
+
 	def researchTargetLists(self, **kwargs):
 		targetlist = data.ImageTargetListData(session=self.session, **kwargs)
 		targetlists = self.research(datainstance=targetlist)
