@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.14 $
+# $Revision: 1.15 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-11 23:49:32 $
-# $Author: pulokas $
+# $Date: 2006-04-21 18:13:54 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -63,6 +63,7 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 											id=gui.wx.ToolBar.ID_FIND_SQUARES)
 
 		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, False)
 
 	def onSubmitTool(self, evt):
 		'''overriding so that submit button stays enabled'''
