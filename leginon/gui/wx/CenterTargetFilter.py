@@ -15,15 +15,7 @@ class Panel(gui.wx.TargetFilter.Panel):
 	def __init__(self, parent, name):
 		gui.wx.TargetFilter.Panel.__init__(self, parent, -1)
 		self.SettingsDialog = SettingsDialog
-
-
-	def onNodeInitialized(self):
-		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
-											id=gui.wx.ToolBar.ID_PLAY)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
-											id=gui.wx.ToolBar.ID_STOP)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
