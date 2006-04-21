@@ -2230,6 +2230,13 @@ class TargetFilterSettingsData(SettingsData):
 class ExampleTargetFilterSettingsData(TargetFilterSettingsData):
 	pass
 
+class CenterTargetFilterSettingsData(TargetFilterSettingsData):
+	def typemap(cls):
+		return TargetFilterSettingsData.typemap() + (
+			('limit', int),
+		)
+	typemap = classmethod(typemap)
+
 '''
 class TiltSeriesImageData(AcquisitionImageData):
 	def typemap(cls):
