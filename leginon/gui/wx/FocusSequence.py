@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.14 $
+# $Revision: 1.15 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-24 21:48:25 $
+# $Date: 2006-04-24 22:59:07 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -120,7 +120,9 @@ class Dialog(gui.wx.Dialog.Dialog):
         setting['switch'] = self.switch_checkbox.GetValue()
         setting['preset name'] = self.preset_choice.GetStringSelection()
         setting['focus method'] = self.focus_method_choice.GetStringSelection()
-        setting['tilt'] = math.radians(self.tilt_entry.GetValue())
+        setting['tilt'] = self.tilt_entry.GetValue()
+        if setting['focus method'] == 'Stage Tilt':
+            setting['tilt'] = math.radians(setting['tilt'])
         setting['correlation type'] = \
             self.correlation_type_choice.GetStringSelection()
         setting['fit limit'] = self.fit_limit_entry.GetValue()
@@ -163,7 +165,11 @@ class Dialog(gui.wx.Dialog.Dialog):
         self.preset_choice.SetStringSelection(setting['preset name'])
         self.focus_method_choice.SetStringSelection(setting['focus method'])
         #self.tilt_entry.SetValue(0.0)
-        self.tilt_entry.SetValue(math.degrees(setting['tilt']))
+        if setting['focus method'] == 'Stage Tilt':
+            angle = math.degrees(setting['tilt'])
+        else:
+            angle = setting['tilt']
+        self.tilt_entry.SetValue(angle)
         self.correlation_type_choice.SetStringSelection(
                                                     setting['correlation type'])
         self.fit_limit_entry.SetValue(setting['fit limit'])
@@ -220,6 +226,7 @@ class Dialog(gui.wx.Dialog.Dialog):
         self.preset_choice.setChoices(preset_names)
 
         self.focus_method_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.focus_methods)
+        self.focus_method_choice.Bind(wx.EVT_CHOICE, self.onFocusMethodChoice)
 
         self.reset_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.reset_types)
 
@@ -307,8 +314,8 @@ class Dialog(gui.wx.Dialog.Dialog):
         ## These are auto only
         sizer.Add(self.tilt_entry, (4, 2), (1, 1),
                        wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
-        label = wx.StaticText(self, -1, 'degrees')
-        self.labels.append(label)
+        self.tiltlabel = wx.StaticText(self, -1, 'radians')
+        self.labels.append(self.tiltlabel)
         sizer.Add(label, (4, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(self.correlation_type_choice, (5, 2), (1, 1), wx.EXPAND)
         label = wx.StaticText(self, -1, 'correlation')
@@ -344,6 +351,15 @@ class Dialog(gui.wx.Dialog.Dialog):
         # select first one by default
         if self.settings.sequence:
             self.select(self.settings.sequence[0]['name'])
+
+    def onFocusMethodChoice(self, evt):
+        method = self.focus_method_choice.GetStringSelection()
+        if method == 'Stage Tilt':
+            self.tiltlabel.SetLabel('degrees')
+        if method == 'Beam Tilt':
+            self.tiltlabel.SetLabel('radians')
+
+
 
 if __name__ == '__main__':
     preset_names = ['Grid', 'Square', 'Hole', 'Exposure']

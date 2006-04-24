@@ -53,11 +53,11 @@ class Focuser(acquisition.Acquisition):
 		}
 
 		self.correlation_types = ['cross', 'phase']
-		self.focus_methods = ['Manual', 'Auto', 'Stage']
+		self.focus_methods = ['Manual', 'Beam Tilt', 'Stage Tilt']
 		self.default_setting = {
 			'switch': True,
 			'preset name': 'Grid',
-			'focus method': 'Auto',
+			'focus method': 'Beam Tilt',
 			'tilt': 0.01,
 			'correlation type': 'phase',
 			'fit limit': 10000,
@@ -382,9 +382,9 @@ class Focuser(acquisition.Acquisition):
 			self.manualCheckLoop(preset_name, emtarget)
 			self.setStatus('processing')
 			status = 'ok'
-		elif setting['focus method'] == 'Auto':
+		elif setting['focus method'] == 'Beam Tilt':
 			status = self.autoFocus(setting, emtarget, resultdata)
-		elif setting['focus method'] == 'Stage':
+		elif setting['focus method'] == 'Stage Tilt':
 			status = self.autoStage(setting, emtarget, resultdata)
 
 		resultdata['status'] = status
