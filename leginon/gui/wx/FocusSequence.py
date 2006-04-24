@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-13 20:56:45 $
-# $Author: suloway $
+# $Date: 2006-04-24 21:48:25 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -33,7 +33,6 @@ class DialogSettings(object):
         self.default_setting = default_setting
         self.sequence = sequence
         self.reset_types = ['Default', 'Always', 'Never']
-        self.stig_lenses = ['objective', 'diffraction']
 
 class EditListBox(gui.wx.ListBox.EditListBox):
     def __init__(self, parent, id, label, choices, **kwargs):
@@ -130,7 +129,6 @@ class Dialog(gui.wx.Dialog.Dialog):
         setting['correction type'] = \
             self.correction_type_choice.GetStringSelection()
         setting['stig correction'] = self.correct_astig_checkbox.GetValue()
-        setting['stig lens'] = self.stig_lens.GetStringSelection()
         setting['stig defocus min'] = self.stig_defocus_min_entry.GetValue()
         setting['stig defocus max'] = self.stig_defocus_max_entry.GetValue()
         setting['check drift'] = self.check_drift_checkbox.GetValue()
@@ -174,7 +172,6 @@ class Dialog(gui.wx.Dialog.Dialog):
         self.correction_type_choice.SetStringSelection(
                                                     setting['correction type'])
         self.correct_astig_checkbox.SetValue(setting['stig correction'])
-        self.stig_lens.SetStringSelection(setting['stig lens'])
         self.stig_defocus_min_entry.SetValue(setting['stig defocus min'])
         self.stig_defocus_max_entry.SetValue(setting['stig defocus max'])
         self.check_drift_checkbox.SetValue(setting['check drift'])
@@ -201,7 +198,6 @@ class Dialog(gui.wx.Dialog.Dialog):
             self.delta_max_entry,
             self.correction_type_choice,
             self.correct_astig_checkbox,
-            self.stig_lens,
             self.stig_defocus_min_entry,
             self.stig_defocus_max_entry,
             self.check_drift_checkbox,
@@ -240,9 +236,6 @@ class Dialog(gui.wx.Dialog.Dialog):
         self.drift_threshold_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
         self.correct_astig_checkbox = wx.CheckBox(self, -1,
                                       'Correct astigmatism for defocus between')
-        choices = self.settings.stig_lenses
-        self.stig_lens = gui.wx.Choice.Choice(self, -1, choices=choices)
-        self.stig_lens.SetSelection(0)
         self.stig_defocus_min_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
         self.stig_defocus_max_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
 
@@ -304,9 +297,6 @@ class Dialog(gui.wx.Dialog.Dialog):
         label = wx.StaticText(self, -1, 'Correction type:')
         self.labels.append(label)
         sizer.Add(label, (9, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        label = wx.StaticText(self, -1, 'Stigmator lens:')
-        self.labels.append(label)
-        sizer.Add(label, (11, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         ##
 
         sizer.Add(self.switch_checkbox, (0, 1), (1, 1), wx.EXPAND)
@@ -332,7 +322,6 @@ class Dialog(gui.wx.Dialog.Dialog):
                        wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
         sizer.Add(self.correction_type_choice, (9, 2), (1, 1), wx.EXPAND)
 
-        sizer.Add(self.stig_lens, (11, 2), (1, 1), wx.EXPAND)
         sizer.Add(stig_sizer, (10, 1), (1, 3), wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(drift_sizer, (12, 1), (1, 3), wx.ALIGN_CENTER_VERTICAL)
         ##
@@ -371,7 +360,6 @@ if __name__ == '__main__':
         'fit limit': 10000,
         'correction type': 'Defocus',
         'stig correction': False,
-        'stig lens': 'objective',
         'stig defocus min': -4e-6,
         'stig defocus max': -2e-6,
         'check drift': False,
@@ -391,7 +379,6 @@ if __name__ == '__main__':
         'delta max': 1e-3,
         'correction type': 'Defocus',
         'stig correction': False,
-        'stig lens': 'objective',
         'stig defocus min': -4e-6,
         'stig defocus max': -2e-6,
         'check drift': True,

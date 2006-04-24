@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/beamtiltcalibrator.py,v $
-# $Revision: 1.71 $
+# $Revision: 1.72 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-11 05:24:42 $
-# $Author: suloway $
+# $Date: 2006-04-24 21:48:23 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -31,9 +31,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		'second defocus': -4e-6,
 		'stig beam tilt': 0.01,
 		'stig delta': 0.2,
-		'stig lens': 'objective',
 		'measure beam tilt': 0.01,
-		'measure lens': 'objective',
 		'correct tilt': True,
 		'settling time': 0.5,
 	})
@@ -212,7 +210,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 				self.checkAbort()
 
 			# store calibration
-			type = lens + stig_axis
+			type = 'stig' + stig_axis
 			args = (high_tension, magnification, type, matrix)
 			calibration_client.storeMatrix(*args)
 
@@ -226,7 +224,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			self.instrument.tem.Stigmator = {lens: stigmator}
 
 	def calibrateStigmator(self):
-		lens = self.settings['stig lens']
+		## lens will eventually be automatically determined based on mag table
+		lens = 'objective'
 		beam_tilt = self.settings['stig beam tilt']
 		delta = self.settings['stig delta']
 
@@ -240,7 +239,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		self.panel.calibrationDone()
 
-	def _measure(self, beam_tilt, lens, correct_tilt):
+	def _measure(self, beam_tilt, correct_tilt):
 		if self.initInstruments():
 			raise RuntimeError('cannot initialize instrument')
 
@@ -248,7 +247,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		args = (beam_tilt,)
 		kwargs = {
-			'stig': lens,
+			'stig': True,
 			'correct_tilt': self.settings['correct tilt'],
 			'settle': self.settings['settling time'],
 		}
@@ -260,12 +259,12 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		except KeyError:
 			defocus = None
 
-		self.measurement[lens] = {}
+		self.measurement = {}
 		stig = {}
 		for axis in ('x', 'y'):
 			try:
 				stig[axis] = result['stig' + axis]
-				self.measurement[lens][axis] = result['stig' + axis]
+				self.measurement[axis] = result['stig' + axis]
 			except KeyError:
 				pass
 
@@ -273,7 +272,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def measure(self):
 		beam_tilt = self.settings['measure beam tilt']
-		lens = self.settings['measure lens']
+		lens = 'objective'
 		correct_tilt = self.settings['correct tilt']
 
 		self.logger.info('Measuring defocus and %s stigmator...' % lens)
@@ -315,7 +314,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.instrument.tem.Stigmator = {lens: stigmator}
 
 	def correctStigmator(self):
-		lens = self.settings['stig lens']
+		lens = 'objective'
 
 		self.logger.info('Correcting %s stigmator...' % lens)
 		try:

@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.178 $
+# $Revision: 1.179 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-11 05:24:42 $
-# $Author: suloway $
+# $Date: 2006-04-24 21:48:23 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -523,7 +523,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		else:
 			return None
 
-	def measureDefocusStig(self, tilt_value, publish_images=False, drift_threshold=None, image_callback=None, stig=None, target=None, correct_tilt=False, correlation_type=None, settle=0.5):
+	def measureDefocusStig(self, tilt_value, publish_images=False, drift_threshold=None, image_callback=None, stig=True, target=None, correct_tilt=False, correlation_type=None, settle=0.5):
 		self.abortevent.clear()
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
@@ -532,13 +532,12 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
 		if fmatrix is None:
 				raise RuntimeError('missing calibration matrix')
-		if stig is not None:
-			typex = stig + 'x'
-			typey = stig + 'y'
-			amatrix = self.retrieveMatrix(tem, cam, typex, ht, mag)
-			bmatrix = self.retrieveMatrix(tem, cam, typey, ht, mag)
+		if stig:
+			amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag)
+			bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag)
 			if None in (amatrix, bmatrix):
-				raise RuntimeError('missing calibration matrix')
+				self.node.logger.warning('No stig matrices found, not solving stig correction.')
+				stig = False
 
 		tiltcenter = self.getBeamTilt()
 		#self.node.logger.info('Tilt center: x = %g, y = %g.' % (tiltcenter['x'], tiltcenter['y']))
@@ -601,7 +600,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		t1 = tilts['x']
 		d2 = shifts['y']
 		t2 = tilts['y']
-		#print 'STIG', stig
 		if stig:
 			sol = self.solveEq10(fmatrix,amatrix,bmatrix,d1,t1,d2,t2)
 		else:
@@ -671,8 +669,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		solution = numarray.linear_algebra.linear_least_squares(M, v)
 		result = {
 			'defocus': solution[0][0],
-			'stigx': 0,
-			'stigy': 0,
+			'stigx': None,
+			'stigy': None,
 			'min': float(solution[1][0])
 			}
 		return result

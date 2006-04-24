@@ -69,7 +69,6 @@ class Focuser(acquisition.Acquisition):
 			'stig defocus max': -2e-6,
 			'check drift': False,
 			'drift threshold': 3e-10,
-			'stig lens': 'objective',
 			'reset defocus': None,
 		}
 		self.manualchecklock = threading.Lock()
@@ -178,7 +177,7 @@ class Focuser(acquisition.Acquisition):
 
 	def autoFocus(self, setting, emtarget, resultdata):
 		presetname = setting['preset name']
-		stiglens = setting['stig lens']
+		stiglens = 'objective'
 		## need btilt, pub, driftthresh
 		btilt = setting['tilt']
 		pub = False
@@ -218,7 +217,7 @@ class Focuser(acquisition.Acquisition):
 			self.logger.exception('Autofocus failed: %s' % e)
 
 		try:
-			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.setImage, target=target, correct_tilt=True, correlation_type=setting['correlation type'], stig=stiglens)
+			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.setImage, target=target, correct_tilt=True, correlation_type=setting['correlation type'], stig=True)
 		except calibrationclient.Abort:
 			self.logger.info('Measurement of defocus and stig. has been aborted')
 			return 'aborted'

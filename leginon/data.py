@@ -2024,7 +2024,6 @@ class FocusSettingData(InSessionData):
 			('delta max', float),
 			('correction type', str),
 			('stig correction', bool),
-			('stig lens', str),
 			('stig defocus min', float),
 			('stig defocus max', float),
 			('check drift', bool),
@@ -2082,9 +2081,7 @@ class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
 			('second defocus', float),
 			('stig beam tilt', float),
 			('stig delta', float),
-			('stig lens', str),
 			('measure beam tilt', float),
-			('measure lens', str),
 			('correct tilt', bool),
 			('settling time', float),
 		)
