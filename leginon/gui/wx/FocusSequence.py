@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.17 $
+# $Revision: 1.18 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-25 00:27:50 $
+# $Date: 2006-04-25 00:54:03 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -108,7 +108,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 		self.current_setting = setting
 		self.setSetting(setting)
 		self.enableSetting(True)
-		self.setTiltLabel()
+		self.onFocusMethodChoice()
 
 	def getSettingByName(self, name):
 		for i, setting in enumerate(self.settings.sequence):
@@ -245,51 +245,68 @@ class Dialog(gui.wx.Dialog.Dialog):
 
 		### Frame for widgets that are not enabled for manual focusing
 		autosizer = wx.GridBagSizer(3, 3)
+		self.autowidgets = []
 
 		label = wx.StaticText(self, -1, 'Reset defocus:')
 		autosizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.autowidgets.append(label)
 		self.reset_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.reset_types)
 		autosizer.Add(self.reset_choice, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.autowidgets.append(self.reset_choice)
 
 		label = wx.StaticText(self, -1, 'Correction type:')
 		autosizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.autowidgets.append(label)
 		self.correction_type_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.correction_types)
 		autosizer.Add(self.correction_type_choice, (1, 1), (1, 1), wx.EXPAND)
+		self.autowidgets.append(self.correction_type_choice)
 
 		tiltsizer = wx.GridBagSizer(3, 3)
 		label = wx.StaticText(self, -1, 'Tilt:')
 		tiltsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.autowidgets.append(label)
 		self.tilt_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6) 
 		tiltsizer.Add(self.tilt_entry, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.autowidgets.append(self.tilt_entry)
 		self.tiltlabel = wx.StaticText(self, -1, 'radians')
 		tiltsizer.Add(self.tiltlabel, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.autowidgets.append(self.tiltlabel)
 		autosizer.Add(tiltsizer, (2, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Image registration:')
+		self.autowidgets.append(label)
 		autosizer.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.correlation_type_choice = gui.wx.Choice.Choice(self, -1,
 										choices=self.settings.correlation_types)
 		autosizer.Add(self.correlation_type_choice, (3, 1), (1, 1), wx.EXPAND)
+		self.autowidgets.append(self.correlation_type_choice)
 		label = wx.StaticText(self, -1, 'correlation')
+		self.autowidgets.append(label)
 		autosizer.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Fit limit:')
+		self.autowidgets.append(label)
 		autosizer.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.fit_limit_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
 		autosizer.Add(self.fit_limit_entry, (4, 1), (1, 1),
 					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		self.autowidgets.append(self.fit_limit_entry)
 
 		self.delta_min_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
 		label = wx.StaticText(self, -1, 'Min. change:')
+		self.autowidgets.append(label)
 		autosizer.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		autosizer.Add(self.delta_min_entry, (5, 1), (1, 1),
 					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		self.autowidgets.append(self.delta_min_entry)
 
 		self.delta_max_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
 		label = wx.StaticText(self, -1, 'Max. change:')
+		self.autowidgets.append(label)
 		autosizer.Add(label, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		autosizer.Add(self.delta_max_entry, (6, 1), (1, 1),
 					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		self.autowidgets.append(self.delta_max_entry)
 
 		### Frame for drift related items
 		driftsizer = wx.GridBagSizer(3, 3)
@@ -298,9 +315,12 @@ class Dialog(gui.wx.Dialog.Dialog):
 		self.drift_threshold_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
 		driftsizer.Add(self.check_drift_checkbox, (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		self.autowidgets.append(self.check_drift_checkbox)
 		driftsizer.Add(self.drift_threshold_entry, (0, 1), (1, 1),
 						wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		self.autowidgets.append(self.drift_threshold_entry)
 		label = wx.StaticText(self, -1, 'm/s')
+		self.autowidgets.append(label)
 		driftsizer.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		autosizer.Add(driftsizer, (7, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
@@ -312,22 +332,28 @@ class Dialog(gui.wx.Dialog.Dialog):
 		self.stig_defocus_max_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
 		stigsizer.Add(self.correct_astig_checkbox, (0, 0), (1, 1),
 					   wx.ALIGN_CENTER_VERTICAL)
+		self.autowidgets.append(self.correct_astig_checkbox)
 		stigsizer.Add(self.stig_defocus_min_entry, (0, 1), (1, 1),
 					   wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		self.autowidgets.append(self.stig_defocus_min_entry)
 		label = wx.StaticText(self, -1, 'and')
+		self.autowidgets.append(label)
 		stigsizer.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER)
 		stigsizer.Add(self.stig_defocus_max_entry, (0, 3), (1, 1),
 					   wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		self.autowidgets.append(self.stig_defocus_max_entry)
 		label = wx.StaticText(self, -1, 'meters')
+		self.autowidgets.append(label)
 		stigsizer.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		autosizer.Add(stigsizer, (8, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
-		sb = wx.StaticBox(self, -1, 'Autofocus')
-		autobox = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		autobox.Add(autosizer, 1, wx.EXPAND|wx.ALL, 5)
-		paramsizer.Add(autobox, (2,0), (1,3))
+		sb = wx.StaticBox(self, -1, '(Autofocus Only)')
+		self.autowidgets.append(sb)
+		self.autobox = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		self.autobox.Add(autosizer, 1, wx.EXPAND|wx.ALL, 5)
+		paramsizer.Add(self.autobox, (2,0), (1,3))
 
-		sb = wx.StaticBox(self, -1, 'Parameters')
+		sb = wx.StaticBox(self, -1)
 		parambox = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		parambox.Add(paramsizer, 1, wx.EXPAND|wx.ALL, 5)
 		sizer.Add(parambox, (1,1), (1,1))
@@ -351,15 +377,20 @@ class Dialog(gui.wx.Dialog.Dialog):
 		if self.settings.sequence:
 			self.select(self.settings.sequence[0]['name'])
 
-	def onFocusMethodChoice(self, evt):
-		self.setTiltLabel()
-
-	def setTiltLabel(self):
+	def onFocusMethodChoice(self, evt=None):
 		method = self.focus_method_choice.GetStringSelection()
 		if method == 'Stage Tilt':
+			self.enableAuto(True)
 			self.tiltlabel.SetLabel('degrees')
 		if method == 'Beam Tilt':
+			self.enableAuto(True)
 			self.tiltlabel.SetLabel('radians')
+		if method == 'Manual':
+			self.enableAuto(False)
+
+	def enableAuto(self, enable):
+		for widget in self.autowidgets:
+			widget.Enable(enable)
 
 
 if __name__ == '__main__':
