@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.37 $
+# $Revision: 1.38 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-13 20:56:45 $
-# $Author: suloway $
+# $Date: 2006-04-25 00:32:18 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -348,11 +348,11 @@ class ManualFocusDialog(wx.MiniFrame):
 
     def onGetInstrumentTool(self, evt):
         self._manualEnable(False)
-        threading.Thread(target=self.node.uiEucentricFromScope).start()
+        threading.Thread(target=self.node.onEucentricFromScope).start()
 
     def onSetInstrumentTool(self, evt):
         self._manualEnable(False)
-        threading.Thread(target=self.node.uiChangeToEucentric).start()
+        threading.Thread(target=self.node.onChangeToEucentric).start()
 
     def onClose(self, evt):
         self.node.manualplayer.stop()

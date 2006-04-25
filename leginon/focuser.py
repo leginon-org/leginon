@@ -60,7 +60,7 @@ class Focuser(acquisition.Acquisition):
 			'focus method': 'Beam Tilt',
 			'tilt': 0.01,
 			'correlation type': 'phase',
-			'fit limit': 10000,
+			'fit limit': 1000,
 			'delta min': 0.0,
 			'delta max': 1e-3,
 			'correction type': 'Defocus',
@@ -517,15 +517,15 @@ class Focuser(acquisition.Acquisition):
 		self.onManualCheckDone()
 		self.logger.info('Manual focus check completed')
 
-	def uiFocusUp(self, parameter):
+	def onFocusUp(self, parameter):
 		self.changeFocus(parameter, 'up')
 		self.panel.manualUpdated()
 
-	def uiFocusDown(self, parameter):
+	def onFocusDown(self, parameter):
 		self.changeFocus(parameter, 'down')
 		self.panel.manualUpdated()
 
-	def uiResetDefocus(self):
+	def onResetDefocus(self):
 		self.manualchecklock.acquire()
 		self.logger.info('Reseting defocus...')
 		if self.deltaz:
@@ -550,7 +550,7 @@ class Focuser(acquisition.Acquisition):
 		except:
 			self.logger.error(errstr % 'unable to access instrument')
 
-	def uiChangeToEucentric(self):
+	def onChangeToEucentric(self):
 		self.manualchecklock.acquire()
 		self.logger.info('Changing to eucentric focus')
 		try:
@@ -559,7 +559,7 @@ class Focuser(acquisition.Acquisition):
 			self.manualchecklock.release()
 			self.panel.manualUpdated()
 
-	def uiEucentricFromScope(self):
+	def onEucentricFromScope(self):
 		self.eucentricFocusFromScope()
 		self.panel.manualUpdated()
 
@@ -640,10 +640,10 @@ class Focuser(acquisition.Acquisition):
 	def correctNone(self, delta, reset):
 		self.logger.info('Not applying defocus correction')
 
-	def uiTest(self):
+	def onTest(self):
 		self.acquire(None)
 
-	def uiAbortFailure(self):
+	def onAbortFailure(self):
 		self.btcalclient.abortevent.set()
 
 	def onManualPlayer(self, state):
