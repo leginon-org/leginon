@@ -15,7 +15,7 @@ class CenterTargetFilter(targetfilter.TargetFilter):
 
 	def filterTargets(self, targetlist):
 		limit = self.settings['limit']
-		self.logger.info('filtering target list:  all targets x,y = x+1,y+1')
+		self.logger.info('filtering target list:  use center %d targets' %limit)
 		newlist = []
 		distlist = []
 		targetdistances = {}
@@ -25,14 +25,12 @@ class CenterTargetFilter(targetfilter.TargetFilter):
 			targetdistances[dist] = target
 			distlist.append(dist)
 		distlist.sort()
+
 		targetnumber = len(distlist)
-		if limit >= targetnumber:
-			for i in range(0,targetnumber):
-				newtarget = data.AcquisitionImageTargetData(initializer=target)
-				newlist.append(newtarget)
-		else:
-			for i in range(0,limit):
-				target = targetdistances[distlist[i]]
-				newtarget = data.AcquisitionImageTargetData(initializer=target)
-				newlist.append(newtarget)
+		outputnumber=min([targetnumber,limit])
+
+		for i in range(0,outputnumber):
+			target = targetdistances[distlist[i]]
+			newtarget = data.AcquisitionImageTargetData(initializer=target)
+			newlist.append(newtarget)
 		return newlist
