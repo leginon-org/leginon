@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-25 00:23:22 $
+# $Date: 2006-04-25 00:27:50 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -108,6 +108,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 		self.current_setting = setting
 		self.setSetting(setting)
 		self.enableSetting(True)
+		self.setTiltLabel()
 
 	def getSettingByName(self, name):
 		for i, setting in enumerate(self.settings.sequence):
@@ -351,6 +352,9 @@ class Dialog(gui.wx.Dialog.Dialog):
 			self.select(self.settings.sequence[0]['name'])
 
 	def onFocusMethodChoice(self, evt):
+		self.setTiltLabel()
+
+	def setTiltLabel(self):
 		method = self.focus_method_choice.GetStringSelection()
 		if method == 'Stage Tilt':
 			self.tiltlabel.SetLabel('degrees')
