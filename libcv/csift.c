@@ -123,6 +123,7 @@ void KeypointsToDescriptors( PStack keypoints, PStack descriptors, int o1, int o
 		while ( !FStackEmpty(orientations) ) {
 			key->ori = PopFStack(orientations);
 			KeypointToPatch( key, patch );
+			//DrawKeypoint(key);
 			PushPStack(descriptors,NewDescriptor(key,36,1,CreatePCADescriptor(patch)));
 		}
 	}

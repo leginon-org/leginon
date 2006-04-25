@@ -10,9 +10,15 @@
 #include <sys/types.h>
 #include <time.h>
 
+#ifndef ABS
 #define ABS(x)    		( (x) >  0  ? (x) : -(x))
+#endif
+#ifndef MAX
 #define MAX(x,y)		( (x) > (y) ? (x) : (y))
+#endif
+#ifndef MIN
 #define MIN(x,y)		( (x) < (y) ? (x) : (y))
+#endif
 #define BOUND(x,y,z)	MAX(x,MIN(y,z))
 #define SIGN(a,b)		((b) >= 0.0 ? ABS(a) : -ABS(a))
 #define PIX3(r,g,b)		(r+(g<<8)+(b<<16))
@@ -106,7 +112,7 @@ typedef struct EllipseSt {
 	double minr, maxr, minc, maxc;
 } *Ellipse;
 
-char CreateMSERKeypoints( Image image, PStack keypoints, int minsize, int maxsize, int minperiod, float minstable );
+char CreateMSERKeypoints( Image image, PStack keypoints, float minsize, float maxsize, float minperiod, float minstable );
 
 Image CreateImage(int rows, int cols );
 void SetImagePixel1( Image im, int row, int col, int val );

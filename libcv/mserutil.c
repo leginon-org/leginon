@@ -12,7 +12,6 @@ void DrawConnectedRegions( MSERArray ma, int minsize, int tic ) {
 	
 	static int *colors = NULL;
 	static int    size = 0;
-	static int     oud = 0;
 	
 	int k, maxcol = ma->cols;
 	
@@ -112,25 +111,23 @@ void DrawKeypoint( Keypoint key ) {
 	
 	static int count = 1;
 	char name[256];
-	int stable = key->stable;
-	stable = 255-stable;
-	sprintf(name,"/tmp/T%03d00000.ppm",stable);
-	Image out = ReadPPMFile(name);
-	if ( out == NULL ) out = ConvertImage1(CopyImage(key->image));
-	else fprintf(stderr," T image found. ");
-	sprintf(name,"/tmp/T%03d%05d.ppm",stable,count++);
+	Image out = ConvertImage1(CopyImage(key->image));
+	sprintf(name,"/tmp/T%05d.ppm",count++);
 	fprintf(stderr,"Writing image %s to disk.\n", name);
 	int wlen = 101;
 	int maxcol = out->cols;
 	
+	/*
 	static Image patch, mags = NULL;
 	if ( mags == NULL ) {
 		mags  = CreateImage(wlen,wlen);
 		patch = CreateImage(wlen,wlen);
 	}
+	*/
 	
 	DrawEllipse(NewEllipse(key->row,key->col,key->maj,key->min,key->phi),out,PIX3(0,255,0));
 	
+	/*
 	ClearImage(patch,0);
 	ClearImage(mags,0);
 	int **p1 = patch->pixels;
@@ -195,7 +192,6 @@ void DrawKeypoint( Keypoint key ) {
 
 	FastLineDraw(key->row,key->col,r1,c1,out,PIX3(0,255,0));
 	
-	/* Draw borders for patch images */ 
 	FastLineDraw(wlen+wroff,wcoff,wlen+wroff,wlen*2+wcoff,out,PIX3(0,0,255));
 	FastLineDraw(wroff,wcoff,wroff,wlen*2+wcoff,out,PIX3(0,0,255));
 	FastLineDraw(wroff,wcoff,wlen+wroff,wcoff,out,PIX3(0,0,255));
@@ -219,9 +215,9 @@ void DrawKeypoint( Keypoint key ) {
 		DrawSizeFVec(si,0.02,key->stable,out);
 		FreeFVec(si);
 	}
-	
+	*/
 	if ( key->border != NULL ) DrawPointStack(key->border,out,PIX3(255,0,0));
-	
+	/*
 	float *bins = malloc(sizeof(float)*360);
 	for(wlen=0;wlen<360;wlen++) bins[wlen] = 0;
 	GenerateGradientOrientationBins(key,key->image,bins);
@@ -229,6 +225,7 @@ void DrawKeypoint( Keypoint key ) {
 	WrapGaussianBlur1D(bins,0,359,15);
 	DrawOrientations(bins,out,key->ori);
 	free(bins);
+	*/
 	
 	WritePPM(name,out);
 	FreeImage(out);

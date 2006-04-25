@@ -2,19 +2,28 @@
 #include "mser.h"
 #include "unionfind.h"
 
-char CreateMSERKeypoints( Image image, PStack keypoints, int minsize, int maxsize, int minperiod, float minstable ) {
+char CreateMSERKeypoints( Image image, PStack keypoints, float minsize, float maxsize, float minperiod, float minstable ) {
 	
 	if ( !ImageGood(image) || !PStackGood(keypoints) ) return FALSE;
 	
 	MSERArray pa = ImageToMSERArray(image);
 	
+	int maxarea = (image->rows)*(image->cols);
+	int maxrange = image->maxv - image->minv;
+	
+	int static_minsize = minsize*maxarea;
+	int static_maxsize = maxsize*maxarea;
+	int static_minperiod = maxrange*minperiod;
+	
+	fprintf(stderr,"Minsize: %d Maxsize: %d Minperiod: %d Minstable: %2.2f\n",static_minsize,static_maxsize,static_minperiod,minstable);
+	
 	ResetMSERArray(pa);
-	CreateRegions(pa,1,minsize,maxsize);
-	RegionsToKeypoints(pa,keypoints,1,minperiod,minstable);
+	CreateRegions(pa,1,static_minsize,static_maxsize);
+	RegionsToKeypoints(pa,keypoints,1,static_minperiod,minstable);
 
 	ResetMSERArray(pa);
-	CreateRegions(pa,-1,minsize,maxsize);
-	RegionsToKeypoints(pa,keypoints,-1,minperiod,minstable);
+	CreateRegions(pa,-1,static_minsize,static_maxsize);
+	RegionsToKeypoints(pa,keypoints,-1,static_minperiod,minstable);
 
 	FreeMSERArray( pa ); 
 	
@@ -52,8 +61,10 @@ void CreateRegions( MSERArray pa, int ud, int minsize, int maxsize ) {
 
 int JoinNeighbors( int *sp, int *roots, int *sizes, char *flags, int stride, int kmin, int kmax, int *idle, int idlesize, int minsize, int maxsize ) {
 	
+	int r;
+	
 	while( kmin <= kmax ) {
-		int r = Connect4(roots,sizes,stride,sp[kmin++]);
+		r = Connect4(roots,sizes,stride,sp[kmin++]);
 		switch ( flags[r] ) {
 			case 3:
 			case 2: break;
@@ -114,7 +125,7 @@ void RegionsToKeypoints( MSERArray pa, PStack keypoints, int ud, int minperiod, 
 			if (ud==1) CarveOutRegionUp(k,pa->image,bp,s);
 			else CarveOutRegionDown(k,pa->image,bp,s);
 			Ellipse e = CalculateAffineEllipse( bp, 2.5 );
-			Keypoint key = NewKeypoint(e,pa->image,NULL,NULL,s);
+			Keypoint key = NewKeypoint(e,pa->image,sizes,bp,s);
 			PushPStack(keypoints, key);
 			if ( e != NULL ) free(e);
 		}

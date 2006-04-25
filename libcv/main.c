@@ -10,7 +10,8 @@ int main (int argc, char **argv) {
 	PStack k1 = NewPStack(100);
 	PStack d1 = NewPStack(100);
 	Image im1 = ReadPGMFile(argv[1]);
-	CreateMSERKeypoints(im1,k1,40,im1->rows*im1->cols,5,0.02);
+	EnhanceImage(im1,0,255,0.01,0.01);
+	CreateMSERKeypoints(im1,k1,40,im1->rows*im1->cols,3,0.01);
 	KeypointsToDescriptors(k1,d1,TRUE,FALSE,FALSE,TRUE,TRUE,4,8,FALSE);
 	fprintf(stderr,"Total time: %f  Regions: %d  Descriptors: %d\n", CPUTIME-t0,k1->stacksize,d1->stacksize);
 	PrintSIFTDescriptors("1.csift",d1);

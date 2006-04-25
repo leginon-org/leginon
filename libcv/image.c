@@ -252,6 +252,8 @@ void DrawEllipse( Ellipse ellipse, Image out, int v ) {
 	int minc = e2->minc;
 	int maxc = e2->maxc;
 	
+	fprintf(stderr,"Drawing Ellipse with bounds %d %d %d %d.\n",minr,minc,maxr,maxc);
+	
 	free(e2);
 	
 	minr = BOUND(0,minr,maxrow);
