@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.18 $
+# $Revision: 1.19 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-25 00:54:03 $
-# $Author: pulokas $
+# $Date: 2006-04-25 02:51:07 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -292,21 +292,26 @@ class Dialog(gui.wx.Dialog.Dialog):
 					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		self.autowidgets.append(self.fit_limit_entry)
 
+
+		changelimitsizer = wx.GridBagSizer(3, 3)
 		self.delta_min_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
-		label = wx.StaticText(self, -1, 'Min. change:')
+		label = wx.StaticText(self, -1, 'Correct for delta Defocus/Z between')
 		self.autowidgets.append(label)
-		autosizer.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		autosizer.Add(self.delta_min_entry, (5, 1), (1, 1),
-					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		self.autowidgets.append(self.delta_min_entry)
+		changelimitsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		changelimitsizer.Add(self.delta_min_entry, (0, 1), (1, 1),
+					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
 		self.delta_max_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
-		label = wx.StaticText(self, -1, 'Max. change:')
+		label = wx.StaticText(self, -1, 'and')
 		self.autowidgets.append(label)
-		autosizer.Add(label, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		autosizer.Add(self.delta_max_entry, (6, 1), (1, 1),
-					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		changelimitsizer.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		changelimitsizer.Add(self.delta_max_entry, (0, 3), (1, 1),
+					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		self.autowidgets.append(self.delta_max_entry)
+		label = wx.StaticText(self, -1, 'meters')
+		changelimitsizer.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.autowidgets.append(label)
+		autosizer.Add(changelimitsizer, (5, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
 		### Frame for drift related items
 		driftsizer = wx.GridBagSizer(3, 3)
@@ -322,7 +327,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, 'm/s')
 		self.autowidgets.append(label)
 		driftsizer.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		autosizer.Add(driftsizer, (7, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
+		autosizer.Add(driftsizer, (6, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
 		### Frame for stig related items
 		stigsizer = wx.GridBagSizer(3, 3)
@@ -345,7 +350,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, 'meters')
 		self.autowidgets.append(label)
 		stigsizer.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		autosizer.Add(stigsizer, (8, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
+		autosizer.Add(stigsizer, (7, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
 		sb = wx.StaticBox(self, -1, '(Autofocus Only)')
 		self.autowidgets.append(sb)
@@ -405,7 +410,9 @@ if __name__ == '__main__':
 		'focus method': 'Auto',
 		'tilt': 0.01,
 		'correlation type': 'Phase',
-		'fit limit': 10000,
+		'fit limit': 1000,
+		'delta min': 0,
+		'delta max': 1e-3,
 		'correction type': 'Defocus',
 		'stig correction': False,
 		'stig defocus min': -4e-6,
@@ -422,7 +429,7 @@ if __name__ == '__main__':
 		'focus method': 'Auto',
 		'tilt': 0.01,
 		'correlation type': 'Phase',
-		'fit limit': 10000,
+		'fit limit': 1000,
 		'delta min': 0.0,
 		'delta max': 1e-3,
 		'correction type': 'Defocus',
