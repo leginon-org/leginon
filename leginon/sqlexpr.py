@@ -635,6 +635,13 @@ def AND_LIKE(list_args):
 def AND_EQUAL(list_args):
     return AND_OP(list_args, '==')
 
+def AND_IS(list_args):
+    e = 'IS(arg[0], arg[1])'
+    new_args = []
+    for arg in list_args:
+	new_args.append(eval(e))
+    return AND(*new_args)
+
 def AND_OP(list_args, op):
     e = 'arg[0] %s arg[1]' % op
     new_args = []
@@ -662,6 +669,9 @@ def OR(*ops):
 
 def NOT(op):
     return SQLPrefix("NOT", op)
+
+def IS(expr, string):
+    return SQLOp("IS", expr, string)
 
 def IN(item, list):
     return SQLOp("IN", item, list)
@@ -741,6 +751,13 @@ def orderFormat(alias):
 	#sqlorder = "ORDER BY %s.DEF_timestamp DESC " % backquote(alias)
 	sqlorder = "ORDER BY %s.DEF_id DESC " % backquote(alias)
 	return sqlorder 
+
+def limitFormat(limit):
+	if limit is None:
+		sqllimit = ""
+	else:
+		sqllimit = "LIMIT %d " % (limit,)
+	return sqllimit
 
 ########################################
 ## Global initializations

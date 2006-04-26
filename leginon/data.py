@@ -1139,13 +1139,18 @@ class ImageData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
-	def path(self):
+	def getpath(self):
+		'''return image path for this image'''
+		impath = self['session']['image path']
+		impath = leginonconfig.mapPath(impath)
+		return impath
+
+	def mkpath(self):
 		'''
 		create a directory for this image file if it does not exist.
 		return the full path of this directory.
 		'''
-		impath = self['session']['image path']
-		impath = leginonconfig.mapPath(impath)
+		impath = self.getpath()
 		leginonconfig.mkdirs(impath)
 		return impath
 

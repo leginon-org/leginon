@@ -403,7 +403,7 @@ class SQLDict(object):
 		### find the path
 		if needpath:
 			try:
-				imagepath = root.path()
+				imagepath = root.getpath()
 			except AttributeError:
 				message = '%s object contains file references, needs a path() method' % (root.__class__,)
 				raise AttributeError(message)
@@ -535,20 +535,31 @@ class SQLDict(object):
 	    unless force is true. The function returns the last inserted row
 	    id for a new insert or an existing primary key."""
 	    c = self.cursor()
-	    wheredict = copy.copy(v[0])
-	    for key in wheredict.keys():
-		    if key[:3] == 'MRC':
-			del wheredict[key]
-	    wherefields = wheredict.keys()
-	    wherevalues = wheredict.values()
-	    whereFormatfields = map(lambda col: sqlexpr.Field(self.table, col), wherefields)
-	    whereFormat = sqlexpr.AND_EQUAL(zip(whereFormatfields,wherevalues))
-	    # whereFormat = sqlexpr.AND_LIKE(zip(whereFormatfields,wherevalues))
+	    nullfields = []
+	    equalpairs = []
+	    for key,value in v[0].items():
+	        if key[:3] == 'MRC':
+	            continue
+	        key = sqlexpr.Field(self.table, key)
+	        print 'KEY', key
+	        if value is None:
+	            nullfields.append((key, value))
+	        else:
+	            equalpairs.append((key, value))
+
+	    whereFormat = sqlexpr.AND_EQUAL(equalpairs)
+
+	    whereFormatNULL = sqlexpr.AND_IS(nullfields)
+
+	    if whereFormatNULL:
+	        whereFormat = sqlexpr.AND(whereFormatNULL,whereFormat)
+
 	    qsel = sqlexpr.SelectAll(self.table, where=whereFormat).sqlRepr()
 	    # print qsel
 	    c.execute(qsel)
 	    result=c.fetchone()
 	    if result is not None and not force:
+    
 		try:
 			return result['DEF_id']
 		except KeyError:
@@ -877,6 +888,7 @@ def queryFormatOptimized(in_dict,tableselect):
 		if r:
 			sqlfrom = sqlexpr.fromFormat(c,a)
 			sqlorder = sqlexpr.orderFormat(a)
+			sqllimit = sqlexpr.limitFormat(value['limit'])
 
 		for field,id in j.items():
 			joinTable = in_dict[id]
@@ -924,7 +936,7 @@ def queryFormatOptimized(in_dict,tableselect):
 	else:
 		sqlwherestr = ''
 
-	sqlquery = "%s %s %s %s" % (sqlfrom, sqljoinstr, sqlwherestr, sqlorder)
+	sqlquery = "%s %s %s %s %s" % (sqlfrom, sqljoinstr, sqlwherestr, sqlorder, sqllimit)
 	return sqlquery
 
 def queryFormat(in_dict):
@@ -945,6 +957,7 @@ def queryFormat(in_dict):
 			if r:
 				sqlfrom = sqlexpr.fromFormat(c,a)
 				sqlorder = sqlexpr.orderFormat(a)
+				sqllimit = sqlexpr.limitFormat(value['limit'])
 			if j:
 				for field,id in j.items():
 					joinTable = in_dict[id]
@@ -961,7 +974,7 @@ def queryFormat(in_dict):
 	else:
 		sqlwherestr = ''
 
-	sqlquery = "%s %s %s %s" % (sqlfrom, sqljoinstr, sqlwherestr, sqlorder)
+	sqlquery = "%s %s %s %s %s" % (sqlfrom, sqljoinstr, sqlwherestr, sqlorder, sqllimit)
 	return sqlquery
 
 def join2ref(key, in_dict):
@@ -1190,7 +1203,7 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 				nd.sort()
 			else:
 				filename = in_dict.filename()
-				path = in_dict.path()
+				path = in_dict.mkpath()
 				## value = None means don't really save
 				## MRC in file system, but return filename 
 				## string
@@ -1272,7 +1285,7 @@ def sqlColumnsFormat(in_dict):
 				datadict = matrix2dict(value,key)
 			else:
 				filename = in_dict.filename()
-				path = in_dict.path()
+				path = in_dict.mkpath()
 				datadict = saveMRC(value,key,path,filename)
 			columns.update(datadict)
 		elif type(value) is dict:
@@ -1557,7 +1570,7 @@ def type2columns(key, value, value_type, data_instance):
 			value_dict = {keyMRC(key): None}
 		else:
 			filename = data_instance.filename()
-			path = data_instance.path()
+			path = data_instance.mkpath()
 			column_dict = value_dict = saveMRC(value, key, path, filename)
 	elif value_type is dict:
 		# python dict
