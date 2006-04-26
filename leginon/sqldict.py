@@ -541,7 +541,6 @@ class SQLDict(object):
 	        if key[:3] == 'MRC':
 	            continue
 	        key = sqlexpr.Field(self.table, key)
-	        print 'KEY', key
 	        if value is None:
 	            nullfields.append((key, value))
 	        else:
