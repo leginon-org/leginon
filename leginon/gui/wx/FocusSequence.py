@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.20 $
+# $Revision: 1.21 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-27 16:56:14 $
+# $Date: 2006-04-27 21:49:39 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -247,20 +247,6 @@ class Dialog(gui.wx.Dialog.Dialog):
 		autosizer = wx.GridBagSizer(3, 3)
 		self.autowidgets = []
 
-		label = wx.StaticText(self, -1, 'Reset defocus:')
-		autosizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.autowidgets.append(label)
-		self.reset_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.reset_types)
-		autosizer.Add(self.reset_choice, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.autowidgets.append(self.reset_choice)
-
-		label = wx.StaticText(self, -1, 'Correction type:')
-		autosizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.autowidgets.append(label)
-		self.correction_type_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.correction_types)
-		autosizer.Add(self.correction_type_choice, (1, 1), (1, 1), wx.EXPAND)
-		self.autowidgets.append(self.correction_type_choice)
-
 		tiltsizer = wx.GridBagSizer(3, 3)
 		label = wx.StaticText(self, -1, 'Tilt:')
 		tiltsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -271,33 +257,33 @@ class Dialog(gui.wx.Dialog.Dialog):
 		self.tiltlabel = wx.StaticText(self, -1, 'radians')
 		tiltsizer.Add(self.tiltlabel, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.autowidgets.append(self.tiltlabel)
-		autosizer.Add(tiltsizer, (2, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
+		autosizer.Add(tiltsizer, (0, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Image registration:')
 		self.autowidgets.append(label)
-		autosizer.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		autosizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.correlation_type_choice = gui.wx.Choice.Choice(self, -1,
 										choices=self.settings.correlation_types)
-		autosizer.Add(self.correlation_type_choice, (3, 1), (1, 1), wx.EXPAND)
+		autosizer.Add(self.correlation_type_choice, (1, 1), (1, 1), wx.EXPAND)
 		self.autowidgets.append(self.correlation_type_choice)
 		label = wx.StaticText(self, -1, 'correlation')
 		self.autowidgets.append(label)
-		autosizer.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		autosizer.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Fit limit:')
 		self.autowidgets.append(label)
-		autosizer.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		autosizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.fit_limit_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
-		autosizer.Add(self.fit_limit_entry, (4, 1), (1, 1),
+		autosizer.Add(self.fit_limit_entry, (2, 1), (1, 1),
 					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		self.autowidgets.append(self.fit_limit_entry)
-
 
 		changelimitsizer = wx.GridBagSizer(3, 3)
 		self.delta_min_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
 		label = wx.StaticText(self, -1, 'Correct for delta Defocus/Z between')
 		self.autowidgets.append(label)
 		changelimitsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.autowidgets.append(self.delta_min_entry)
 		changelimitsizer.Add(self.delta_min_entry, (0, 1), (1, 1),
 					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
@@ -311,7 +297,21 @@ class Dialog(gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, 'meters')
 		changelimitsizer.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.autowidgets.append(label)
-		autosizer.Add(changelimitsizer, (5, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
+		autosizer.Add(changelimitsizer, (3, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, 'Correction type:')
+		autosizer.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.autowidgets.append(label)
+		self.correction_type_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.correction_types)
+		autosizer.Add(self.correction_type_choice, (4, 1), (1, 1), wx.EXPAND)
+		self.autowidgets.append(self.correction_type_choice)
+
+		label = wx.StaticText(self, -1, 'Reset defocus:')
+		autosizer.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.autowidgets.append(label)
+		self.reset_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.reset_types)
+		autosizer.Add(self.reset_choice, (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.autowidgets.append(self.reset_choice)
 
 		### Frame for drift related items
 		driftsizer = wx.GridBagSizer(3, 3)
