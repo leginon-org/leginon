@@ -273,6 +273,12 @@ class DBDataKeeper(object):
 		newid = myTable.insert([formatedData], force=force)
 		return newid
 
+	def diffData(self, newdata):
+		table = newdata.__class__.__name__
+		definition, formatedData = sqldict.dataSQLColumns(newdata)
+		return self.dbd.diffSQLTable(table, definition)
+	
+
 	# don't bother with these for now
 	def remove(self, id):
 		pass

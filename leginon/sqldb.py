@@ -10,15 +10,19 @@ import MySQLdb
 import leginonconfig
 
 def connect(**kwargs):
+	defaults = getDefault()
+	defaults.update(kwargs)
+	c = MySQLdb.connect(**defaults)
+	return c
+
+def getDefault():
 	defaults = {
 		'host':leginonconfig.DB_HOST,
 		'user':leginonconfig.DB_USER,
 		'db':leginonconfig.DB_NAME,
 		'passwd':leginonconfig.DB_PASS
 	}
-	defaults.update(kwargs)
-	c = MySQLdb.connect(**defaults)
-	return c
+	return defaults
 
 def escape(anystring):
 	'addslashes to any quotes if necessary'
