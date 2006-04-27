@@ -230,21 +230,21 @@ class SQLDict(object):
 				  self.cursors[key] = query
 				  continue
 				c = self._cursor()
-			try:
-				#print '-----------------------------------------------'
-				#print 'query =', query
-				c.execute(query)
-			except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
-				errno = e.args[0]
-				## 1146:  table does not exist
-				## 1054:  column does not exist
-				if errno in (1146, 1054):
-					pass
-					#print 'non-fatal query error:', e
+				try:
+					#print '-----------------------------------------------'
+					#print 'query =', query
+					c.execute(query)
+				except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
+					errno = e.args[0]
+					## 1146:  table does not exist
+					## 1054:  column does not exist
+					if errno in (1146, 1054):
+						pass
+						#print 'non-fatal query error:', e
+					else:
+						raise
 				else:
-					raise
-			else:
-				self.cursors[key] = c
+					self.cursors[key] = c
 
 		def fetchmany(self, size):
 			cursorresults = {}

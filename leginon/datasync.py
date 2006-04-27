@@ -12,8 +12,8 @@ dbparams = {
 	'db':leginonconfig.DB_NAME,
 	'passwd':leginonconfig.DB_PASS
 }
-dbparams['host']='stratocaster'
-dbparams['db']='dbemtest'
+dbparams['user']='pulokas'
+dbparams['passwd']='jim5my'
 
 db = dbdatakeeper.DBDataKeeper(**dbparams)
 
@@ -49,7 +49,7 @@ for table in tables:
 	for d in r:
 		if d['Field'] in ('DEF_id', 'DEF_timestamp',):
 			continue
-		if d['Null'] is not 'YES':
+		if d['Null'] != 'YES':
 			qalter = "ALTER TABLE `%s` CHANGE `%s` `%s` %s NULL " % (table, d['Field'], d['Field'], d['Type'],)
 			dbc.execute(qalter)
 
@@ -77,7 +77,7 @@ for table in tables:
 		dataclasses[table] = cls
 		tableclass.append(table)
 	except:
-		print "Not a class: ",table
+		print "-- Not a class: ",table
 		notableclass.append(table)
 		pass
 
