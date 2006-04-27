@@ -107,10 +107,6 @@ module: tomography
 type: Pipeline
 package: tomography
 
-[ExampleTargetFilter]
-module: exampletargetfilter
-type: Pipeline
-
 [CenterTargetFilter]
 module: centertargetfilter
 type: Pipeline
