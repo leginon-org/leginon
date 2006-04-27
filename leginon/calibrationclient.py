@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.179 $
+# $Revision: 1.180 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-24 21:48:23 $
+# $Date: 2006-04-27 00:34:33 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -529,14 +529,15 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
-		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
-		if fmatrix is None:
+		try:
+			fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
+		except NoMatrixCalibrationError:
 				raise RuntimeError('missing calibration matrix')
 		if stig:
-			amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag)
-			bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag)
-			if None in (amatrix, bmatrix):
-				self.node.logger.warning('No stig matrices found, not solving stig correction.')
+			try:
+				amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag)
+				bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag)
+			except NoMatrixCalibrationError:
 				stig = False
 
 		tiltcenter = self.getBeamTilt()
@@ -602,10 +603,11 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		t2 = tilts['y']
 		if stig:
 			sol = self.solveEq10(fmatrix,amatrix,bmatrix,d1,t1,d2,t2)
+			self.node.logger.info('Defocus: %g, %s stig.: (%g, %g), min. = %g' % (sol['defocus'], stig, sol['stigx'], sol['stigy'], sol['min']))
 		else:
 			sol = self.solveEq10_nostig(fmatrix,d1,t1,d2,t2)
+			self.node.logger.info('Defocus: %g, stig.: (not measured), min. = %g' % (sol['defocus'], sol['min']))
 
-		self.node.logger.info('Defocus: %g, %s stig.: (%g, %g), min. = %g' % (sol['defocus'], stig, sol['stigx'], sol['stigy'], sol['min']))
 		sol['lastdrift'] = lastdrift
 		return sol
 

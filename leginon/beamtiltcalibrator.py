@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/beamtiltcalibrator.py,v $
-# $Revision: 1.72 $
+# $Revision: 1.73 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-24 21:48:23 $
+# $Date: 2006-04-27 00:34:33 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -277,7 +277,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		self.logger.info('Measuring defocus and %s stigmator...' % lens)
 		try:
-			args = self._measure(beam_tilt, lens, correct_tilt)
+			args = self._measure(beam_tilt, correct_tilt)
 		except Exception, e:
 			args = (None, {})
 			self.logger.exception('Measurement failed: %s' % e)
