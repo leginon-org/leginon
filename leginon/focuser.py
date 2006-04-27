@@ -298,13 +298,13 @@ class Focuser(acquisition.Acquisition):
 			self.logger.info('Defocus correction...')
 			try:
 				focustype = setting['correction type']
-				focusmethod = self.correction_types[focustype]
+				correctmethod = self.correction_types[focustype]
 			except (IndexError, KeyError):
 				self.logger.warning('No method selected for correcting defocus')
 			else:
 				resultdata['defocus correction'] = focustype
 				newdefoc = defoc - self.deltaz
-				focusmethod(newdefoc, setting['reset defocus'])
+				correctmethod(newdefoc, setting['reset defocus'])
 			resultstring = 'corrected focus by %.3e (measured) - %.3e (z due to tilt) = %.3e (total) using %s (min=%s)' % (defoc, self.deltaz, newdefoc, focustype,fitmin)
 		else:
 			resultstring = 'invalid focus measurement (min=%s)' % (fitmin,)
@@ -367,12 +367,12 @@ class Focuser(acquisition.Acquisition):
 			self.logger.info('Defocus correction...')
 			try:
 				focustype = setting['correction type']
-				focusmethod = self.correction_types[focustype]
+				correctmethod = self.correction_types[focustype]
 			except (IndexError, KeyError):
 				self.logger.warning('No method selected for correcting defocus')
 			else:
 				resultdata['defocus correction'] = focustype
-				focusmethod(z, setting['reset defocus'])
+				correctmethod(z, setting['reset defocus'])
 			resultstring = 'corrected focus by %.3e using %s' % (z, focustype)
 
 			self.logger.info(resultstring)
@@ -632,8 +632,16 @@ class Focuser(acquisition.Acquisition):
 		if not self.eucset:
 			self.logger.warning('Eucentric focus was not set before measuring defocus because \'Stage Z\' was not selected then, but is now. Skipping Z correction.')
 			return
-		stage = self.instrument.tem.StagePosition
-		alpha = stage['a']
+
+		## We are not smart enough to center the "Stage Tilt" method around
+		## the current tilt, so we center it around 0.0
+		## We must take this into account for the cos() correction
+		if self.settings['focus method'] == 'Stage Tilt':
+			alpha = 0.0
+		else:
+			stage = self.instrument.tem.StagePosition
+			alpha = stage['a']
+
 		deltaz = delta * Numeric.cos(alpha)
 		newz = stage['z'] + deltaz
 		self.logger.info('Correcting stage Z by %s (defocus change %s at alpha %s)' % (deltaz,delta,alpha))
