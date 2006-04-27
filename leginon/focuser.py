@@ -350,6 +350,10 @@ class Focuser(acquisition.Acquisition):
 		### check change limit
 		delta_min = setting['delta min']
 		delta_max = setting['delta max']
+		deltarange = [abs(setting['delta min']),abs(setting['delta max'])]
+		deltarange.sort()
+		delta_min = deltarange[0]
+		delta_max = deltarange[1]
 		if not (delta_min <= abs(z) <= delta_max):
 			status = 'invalid'
 			validdefocus = False

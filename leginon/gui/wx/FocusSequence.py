@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.19 $
+# $Revision: 1.20 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-25 02:51:07 $
-# $Author: acheng $
+# $Date: 2006-04-27 16:56:14 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -294,14 +294,14 @@ class Dialog(gui.wx.Dialog.Dialog):
 
 
 		changelimitsizer = wx.GridBagSizer(3, 3)
-		self.delta_min_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
+		self.delta_min_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
 		label = wx.StaticText(self, -1, 'Correct for delta Defocus/Z between')
 		self.autowidgets.append(label)
 		changelimitsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		changelimitsizer.Add(self.delta_min_entry, (0, 1), (1, 1),
 					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
-		self.delta_max_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
+		self.delta_max_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
 		label = wx.StaticText(self, -1, 'and')
 		self.autowidgets.append(label)
 		changelimitsizer.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -333,8 +333,8 @@ class Dialog(gui.wx.Dialog.Dialog):
 		stigsizer = wx.GridBagSizer(3, 3)
 		self.correct_astig_checkbox = wx.CheckBox(self, -1,
 									  'Correct astigmatism for defocus between')
-		self.stig_defocus_min_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
-		self.stig_defocus_max_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
+		self.stig_defocus_min_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
+		self.stig_defocus_max_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
 		stigsizer.Add(self.correct_astig_checkbox, (0, 0), (1, 1),
 					   wx.ALIGN_CENTER_VERTICAL)
 		self.autowidgets.append(self.correct_astig_checkbox)
