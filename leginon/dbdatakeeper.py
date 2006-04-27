@@ -26,10 +26,10 @@ class Reconnect(DatabaseError):
 	pass
 
 class DBDataKeeper(object):
-	def __init__(self, logger=None):
+	def __init__(self, logger=None, **kwargs):
 		self.logger = logger
 		try:
-			self.dbd = sqldict.SQLDict()
+			self.dbd = sqldict.SQLDict(**kwargs)
 		except _mysql_exceptions.OperationalError, e:
 			raise DatabaseError(e.args[-1])
 		self.lock = threading.RLock()
