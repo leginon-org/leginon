@@ -1592,114 +1592,6 @@ class SquareStatsData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
-# for testing
-class DiaryData(InSessionData):
-	'''
-	User's diary entry
-	'''
-	def typemap(cls):
-		return InSessionData.typemap() + (
-			('message', str),
-		)
-	typemap = classmethod(typemap)
-
-class UIData(InSessionData):
-	def typemap(cls):
-		return InSessionData.typemap() + (
-			('object', tuple),
-			('value', newdict.AnyObject)
-		)
-	typemap = classmethod(typemap)
-
-class wxData(InSessionData):
-	def typemap(cls):
-		return InSessionData.typemap() + (
-			('path', str),
-		)
-	typemap = classmethod(typemap)
-
-class wxRadioBoxData(wxData):
-	def typemap(cls):
-		return wxData.typemap() + (
-			('string selection', str),
-		)
-	typemap = classmethod(typemap)
-
-class wxChoiceData(wxData):
-	def typemap(cls):
-		return wxData.typemap() + (
-			('string selection', str),
-		)
-	typemap = classmethod(typemap)
-
-class wxCheckBoxData(wxData):
-	def typemap(cls):
-		return wxData.typemap() + (
-			('value', bool),
-		)
-	typemap = classmethod(typemap)
-
-class wxTextCtrlData(wxData):
-	def typemap(cls):
-		return wxData.typemap() + (
-			('value', str),
-		)
-	typemap = classmethod(typemap)
-
-class wxIntCtrlData(wxData):
-	def typemap(cls):
-		return wxData.typemap() + (
-			('value', int),
-		)
-	typemap = classmethod(typemap)
-
-class wxNumCtrlData(wxData):
-	def typemap(cls):
-		return wxData.typemap() + (
-			('value', float),
-		)
-	typemap = classmethod(typemap)
-
-class wxPresetOrderData(wxData):
-	def typemap(cls):
-		return wxData.typemap() + (
-			('preset order', list),
-		)
-	typemap = classmethod(typemap)
-
-wxEditPresetOrderData = wxPresetOrderData
-
-class wxPresetChoiceData(wxData):
-	def typemap(cls):
-		return wxData.typemap() + (
-			('string selection', list),
-		)
-	typemap = classmethod(typemap)
-
-class wxCameraPanelData(wxData):
-	def typemap(cls):
-		return wxData.typemap() + (
-			('dimension', dict),
-			('binning', dict),
-			('offset', dict),
-			('exposure time', float),
-		)
-	typemap = classmethod(typemap)
-
-class wxEntryData(wxData):
-	_valuetype = str
-	def typemap(cls):
-		return wxData.typemap() + (
-			('value', cls._valuetype),
-		)
-	typemap = classmethod(typemap)
-
-class wxIntEntryData(wxEntryData):
-	_valuetype = int
-
-class wxFloatEntryData(wxEntryData):
-	_valuetype = float
-
 class SettingsData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -2229,47 +2121,12 @@ class TargetFilterSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class ExampleTargetFilterSettingsData(TargetFilterSettingsData):
-	pass
-
 class CenterTargetFilterSettingsData(TargetFilterSettingsData):
 	def typemap(cls):
 		return TargetFilterSettingsData.typemap() + (
 			('limit', int),
 		)
 	typemap = classmethod(typemap)
-
-'''
-class TiltSeriesImageData(AcquisitionImageData):
-	def typemap(cls):
-		return AcquisitionImageData.typemap() + (
-			('shift', dict),
-			('tilt series', TiltSeriesData),
-		)
-	typemap = classmethod(typemap)
-
-class AcquisitionImageDespikeData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
-			('image', AcquisitionImageData),
-			('old stats', AcquisitionImageStatsData),
-			('new stats', AcquisitionImageStatsData),
-			('time', float),
-		)
-	typemap = classmethod(typemap)
-
-class SpikeData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
-			('despike', AcquisitionImageDespikeData),
-			('x', int),
-			('y', int),
-			('old value', float),
-			('new value', float),
-			('valid', bool),
-		)
-	typemap = classmethod(typemap)
-'''
 
 class RCTAcquisitionSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
