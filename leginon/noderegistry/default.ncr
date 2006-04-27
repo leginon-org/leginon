@@ -110,3 +110,7 @@ package: tomography
 [CenterTargetFilter]
 module: centertargetfilter
 type: Pipeline
+
+[RCTAcquisition]
+module: rctacquisition 
+type: Pipeline

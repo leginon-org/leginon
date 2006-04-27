@@ -2271,3 +2271,15 @@ class SpikeData(Data):
 	typemap = classmethod(typemap)
 '''
 
+class RCTAcquisitionSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('tilt1', float),
+			('tilt2', float),
+			('sigma', float),
+			('minsize', float),
+			('maxsize', float),
+			('minperiod', float),
+			('minstable', float),
+		)
+	typemap = classmethod(typemap)
