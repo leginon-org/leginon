@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.22 $
+# $Revision: 1.23 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-28 00:46:05 $
+# $Date: 2006-04-28 17:59:57 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -414,7 +414,7 @@ if __name__ == '__main__':
 	default_setting = {
 		'switch': True,
 		'preset name': 'Grid',
-		'focus method': 'Auto',
+		'focus method': 'Beam Tilt',
 		'tilt': 0.01,
 		'correlation type': 'Phase',
 		'fit limit': 1000,
@@ -433,7 +433,7 @@ if __name__ == '__main__':
 		'switch': True,
 		'name': 'Test 1',
 		'preset name': 'Hole',
-		'focus method': 'Auto',
+		'focus method': 'Beam Tilt',
 		'tilt': 0.01,
 		'correlation type': 'Phase',
 		'fit limit': 1000,
