@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.67 $
+# $Revision: 1.68 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-12 17:31:27 $
-# $Author: suloway $
+# $Date: 2006-04-28 23:28:55 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -977,16 +977,17 @@ class ImportDialog(wx.Dialog):
 		agestr = '-%d 0:0:0' % (days,)
 		pquery = data.PresetData(tem=tem, ccdcamera=ccd)
 		presets = self.node.research(pquery, timelimit=agestr)
-		sessions = newdict.OrderedDict()
+		self.sessiondict = newdict.OrderedDict()
 		for p in presets:
 			sname = p['session']['name']
 			if sname:
-				sessions[sname] = p['session']
-		self.session.setSessions(sessions.values())
+				self.sessiondict[sname] = p['session']
+		self.session.setSessions(self.sessiondict.values())
 
 	def onSessionSelected(self, evt):
 		name = evt.GetText()
-		self.presets = self.node.getSessionPresets(name)
+		sessiondata = self.sessiondict[name]
+		self.presets = self.node.getSessionPresets(sessiondata)
 		presetnames = self.presets.keys()
 		self.bimport.Enable(False)
 		self.lbpresets.Clear()

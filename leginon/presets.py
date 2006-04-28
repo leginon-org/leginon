@@ -4,10 +4,10 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.235 $
+# $Revision: 1.236 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-12 17:31:26 $
-# $Author: suloway $
+# $Date: 2006-04-28 23:28:55 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -224,7 +224,6 @@ class PresetsManager(node.Node):
 
 		## this will fill in UI with current session presets
 		self.getPresetsFromDB()
-		self.getSessionList()
 		self.start()
 
 	def handleLock(self, ievent):
@@ -561,11 +560,7 @@ class PresetsManager(node.Node):
 	def presetNames(self):
 		return self.presets.keys()
 
-	def getSessions(self):
-		return self.sessiondict.keys()
-
-	def getSessionPresets(self, name):
-		sessiondata = self.sessiondict[name]
+	def getSessionPresets(self, sessiondata):
 		return self.presetsclient.getPresetsFromDB(sessiondata)
 
 	def cycleToScope(self, presetname):
@@ -819,26 +814,6 @@ class PresetsManager(node.Node):
 			self.panel.setParameters(newpreset)
 		self.presetToDB(newpreset)
 		return newpreset
-
-	def getSessionList(self):
-		'''
-		get list of session names from this instrument
-		'''
-		# this has to be done differently
-		#if self.session['instrument'] is None:
-		#	self.sessiondict = {}
-		#	return
-		#myinstname = self.session['instrument']['name']
-		querysession = data.SessionData()
-		#queryinst = data.InstrumentData()
-		#queryinst['name'] = myinstname
-		#querysession['instrument'] = queryinst
-		sessionlist = self.research(datainstance=querysession)
-		sessions = []
-		for session in sessionlist:
-			if 'name' in session and session['name']:
-				sessions.append((session['name'], session))
-		self.sessiondict = newdict.OrderedDict(sessions)
 
 	def acquireDoseImage(self, presetname):
 		errstr = 'Acquire dose image failed: %s'
