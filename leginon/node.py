@@ -130,6 +130,14 @@ class Node(object):
 			del self.settings['session']
 			del self.settings['name']
 
+		# check if None in any fields
+		for key,value in self.settings.items():
+			if value is None:
+				print 'NEED DEFAULT', self.name, key
+				if key in self.defaultsettings:
+					print '  HAVE DEFAULT', self.name, key
+					self.settings[key] = copy.deepcopy(self.defaultsettings[key])
+
 	def setSettings(self, d, isdefault=False):
 		self.settings = d
 		sd = self.settingsclass.fromDict(d)
