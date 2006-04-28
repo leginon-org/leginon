@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.21 $
+# $Revision: 1.22 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-27 21:49:39 $
+# $Date: 2006-04-28 00:46:05 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -159,9 +159,16 @@ class Dialog(gui.wx.Dialog.Dialog):
 		self.reset_choice.SetStringSelection(choice)
 
 	def setSetting(self, setting):
-		## fix only necessary if you already have settings saved before
-		## switch was added (None is read from DB instead of bool value)
-		#self.switch_checkbox.SetValue(bool(setting['switch']))
+		## FIX CRAP
+		for key,value in setting.items():
+			if value is None:
+				if key in self.settings.default_setting:
+					setting[key] = self.settings.default_setting[key]
+		setting['stig defocus min'] = abs(setting['stig defocus min'])
+		setting['stig defocus max'] = abs(setting['stig defocus max'])
+		setting['delta min'] = abs(setting['delta min'])
+		setting['delta max'] = abs(setting['delta max'])
+
 		self.switch_checkbox.SetValue(setting['switch'])
 		self.preset_choice.SetStringSelection(setting['preset name'])
 		self.focus_method_choice.SetStringSelection(setting['focus method'])
