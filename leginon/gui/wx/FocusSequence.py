@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.23 $
+# $Revision: 1.24 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-28 17:59:57 $
+# $Date: 2006-04-28 20:42:51 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -164,10 +164,6 @@ class Dialog(gui.wx.Dialog.Dialog):
 			if value is None:
 				if key in self.settings.default_setting:
 					setting[key] = self.settings.default_setting[key]
-		setting['stig defocus min'] = abs(setting['stig defocus min'])
-		setting['stig defocus max'] = abs(setting['stig defocus max'])
-		setting['delta min'] = abs(setting['delta min'])
-		setting['delta max'] = abs(setting['delta max'])
 
 		self.switch_checkbox.SetValue(setting['switch'])
 		self.preset_choice.SetStringSelection(setting['preset name'])
@@ -407,7 +403,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 
 if __name__ == '__main__':
 	preset_names = ['Grid', 'Square', 'Hole', 'Exposure']
-	focus_methods = ['Manual', 'Auto']
+	focus_methods = ['Manual', 'Beam Tilt', 'Stage Tilt']
 	correction_types = ['Defocus', 'Stage Z']
 	correlation_types = ['Cross', 'Phase']
 
@@ -422,8 +418,8 @@ if __name__ == '__main__':
 		'delta max': 1e-3,
 		'correction type': 'Defocus',
 		'stig correction': False,
-		'stig defocus min': -4e-6,
-		'stig defocus max': -2e-6,
+		'stig defocus min': 2e-6,
+		'stig defocus max': 4e-6,
 		'check drift': False,
 		'drift threshold': 3e-10,
 	}
@@ -441,8 +437,8 @@ if __name__ == '__main__':
 		'delta max': 1e-3,
 		'correction type': 'Defocus',
 		'stig correction': False,
-		'stig defocus min': -4e-6,
-		'stig defocus max': -2e-6,
+		'stig defocus min': 2e-6,
+		'stig defocus max': 4e-6,
 		'check drift': True,
 		'drift threshold': 3e-10,
 		'reset defocus': False,
