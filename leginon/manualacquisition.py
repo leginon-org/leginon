@@ -137,7 +137,7 @@ class ManualAcquisition(node.Node):
 		suffix = 'ma'
 		extension = 'mrc'
 		try:
-			path = imagedata.getpath()
+			path = imagedata.mkpath()
 		except Exception, e:
 			raise node.PublishError(e)
 		filenames = os.listdir(path)
