@@ -275,7 +275,7 @@ class DBDataKeeper(object):
 
 	def diffData(self, newdata):
 		table = newdata.__class__.__name__
-		definition, formatedData = sqldict.dataSQLColumns(newdata)
+		definition, formated = sqldict.dataSQLColumns(newdata)
 		return self.dbd.diffSQLTable(table, definition)
 	
 

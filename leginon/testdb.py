@@ -9,43 +9,37 @@
 #
 import sys
 import data
-import cPickle
 import dbdatakeeper
+import sqldb
+import numarray
 
  #initializer = {'name': 'voici'}
-initializer = {'name': 'Session Test 2'}
+initializer = {'name': 'Session Test 2' }
 session = data.SessionData(initializer=initializer)
 
-# n = node.Node(('my node',), None)
-# n.research(datainstance=session)
-# n.publish(session, database=True)
+a = numarray.array((1,2,3,4,5,6,))
+a.shape = 2,3
 
-dk = dbdatakeeper.DBDataKeeper()
-# d = dbdatakeeper.DBDataKeeper(('fake',), session)
-value = {"denis":68}
-# namelist = ('ufer', 'Presets Manager', 'Selection', 'Cycle', 'Cycle On')
-namelist = ('Manager', 'Nodes', 'Add Existing Node', 'Hostname', 'History')
+initializer = {'matrix': a}
+db = dbdatakeeper.DBDataKeeper()
+#r=db.diffData(session)
+# r=db.insert(data.MatrixCalibrationData(initializer=initializer))
+# r=db.query(data.MatrixCalibrationData(), results=1)
+r=db.insert(data.SessionData(session))
+r=db.query(data.SessionData())
+initializer = {'session': None, 'dimension': {'y': None, 'x': None}, 'binning': {'y': None, 'x': None}, 'offset': {'y': None, 'x': None}}
+r = db.query(data.CorrectorCamstateData(initializer))
 
-initializer = {'session': session,
-		'object': namelist,
-		'value': value }
-
-odata = data.UIData(initializer=initializer)
-Dk.insert(odata)
-print odata
-
-# sys.exit()
-
-
-# result = dk.query(odata)
-#print "----------------------"
-#print "Result: ",result
+print '--------------------------------------'
+print r
 
 
 
 sys.exit()
 
-from sqldict import *
+
+
+
 
 
 db = SQLDict(host='stratocaster')

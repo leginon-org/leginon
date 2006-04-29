@@ -637,6 +637,13 @@ class DropTable(SQLExpression):
 	def sqlRepr(self):
 			return "DROP TABLE %s" % self.table
 
+class Describe(SQLExpression):
+	def __init__(self, table):
+		self.table = table
+
+	def sqlRepr(self):
+			return "DESCRIBE %s" % backquote(self.table,)
+
 ########################################
 ## SQL Builtins
 ########################################
