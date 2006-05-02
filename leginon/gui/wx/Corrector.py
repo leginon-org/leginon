@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.45 $
+# $Revision: 1.46 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-11-22 18:48:42 $
+# $Date: 2006-05-02 21:25:54 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -110,23 +110,6 @@ def str2pixels(string):
 
 def pixels2str(pixels):
 	return 'There are %d bad pixels' % len(pixels)
-
-def pixels2strOLD(pixels):
-	n = 3
-	pixels = map(str, pixels)
-	groups = []
-	group = -1
-	for i,p in enumerate(pixels):
-		if not i%n:
-			groups.append([])
-			group += 1
-		groups[group].append(p)
-	groupstr = []
-	for group in groups:
-		s = ', '.join(group)
-		groupstr.append(s)
-	bigstr = '\n'.join(groupstr)
-	return bigstr
 
 class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	icon = 'corrector'
