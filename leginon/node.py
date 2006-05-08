@@ -133,9 +133,7 @@ class Node(object):
 		# check if None in any fields
 		for key,value in self.settings.items():
 			if value is None:
-				print 'NEED DEFAULT', self.name, key
 				if key in self.defaultsettings:
-					print '  HAVE DEFAULT', self.name, key
 					self.settings[key] = copy.deepcopy(self.defaultsettings[key])
 
 	def setSettings(self, d, isdefault=False):
