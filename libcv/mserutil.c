@@ -6,7 +6,7 @@
 void DrawSizeFVec(FVec sizes, float ms, int stable, Image out );
 void DrawFVec(FVec sizes, int im_rmin, int im_cmin, int im_rmax, int im_cmax, int v, Image out );
 
-void DrawConnectedRegions( MSERArray ma, int minsize, int tic ) {
+void DrawConnectedRegions( MSERArray ma ) {
 	
 	char name[256];
 	
@@ -26,7 +26,7 @@ void DrawConnectedRegions( MSERArray ma, int minsize, int tic ) {
 		for (k=0;k<size;k++) colors[k] = 0;
 	}
 	static int count = 0;
-	sprintf(name,"/tmp/T%03d00000.ppm",count++);
+	sprintf(name,"/tmp/T%03d.ppm",count++);
 	fprintf(stderr,"Writing %s to disk.\n",name);
 	
 	Image out = ConvertImage1(CopyImage(ma->image));
@@ -54,7 +54,7 @@ void DrawConnectedRegions( MSERArray ma, int minsize, int tic ) {
 		if ( in[r] != fa ) { sa[si++] = r; in[r] = fa; }
 	}
 	
-	while ( si >= 0 ) {
+	while ( si > 0 ) {
 		int r = sa[--si];
 		int row = r/maxcol;
 		int col = r%maxcol;
@@ -64,14 +64,14 @@ void DrawConnectedRegions( MSERArray ma, int minsize, int tic ) {
 			FastLineDraw(row+3,col-3,row+3,col+3,out,BL);
 			FastLineDraw(row+3,col+3,row-3,col+3,out,BL);
 			FastLineDraw(row-3,col+3,row-3,col-3,out,BL);
-		}/*
+		}
 		if ( flags[r] == 0 ) {
-			SetImagePixel1(out,row,col,RE);
-			FastLineDraw(row-1,col-1,row+1,col-1,out,RE);
-			FastLineDraw(row+1,col-1,row+1,col+1,out,RE);
-			FastLineDraw(row+1,col+1,row-1,col+1,out,RE);
-			FastLineDraw(row-1,col+1,row-1,col-1,out,RE);
-		}*/
+			//SetImagePixel1(out,row,col,RE);
+			//FastLineDraw(row-1,col-1,row+1,col-1,out,RE);
+			//FastLineDraw(row+1,col-1,row+1,col+1,out,RE);
+			//FastLineDraw(row+1,col+1,row-1,col+1,out,RE);
+			//FastLineDraw(row-1,col+1,row-1,col-1,out,RE);
+		}
 		if ( flags[r] == 2 ) {
 			SetImagePixel1(out,row,col,RE);
 			FastLineDraw(row-4,col-4,row+4,col-4,out,GR);
@@ -105,7 +105,7 @@ void DrawOrientations( float *bins, Image out, float ori ) {
 	FastLineDraw(110-0.9*100,220,110-0.9*100,359+221,out,PIX3(255,0,0));
 }
 
-void DrawKeypoint( Keypoint key ) {
+void DrawRegion( Region key ) {
 	
 	if ( key == NULL ) return;
 	
@@ -117,23 +117,27 @@ void DrawKeypoint( Keypoint key ) {
 	int wlen = 101;
 	int maxcol = out->cols;
 	
-	/*
+	int RE = PIX3(255,0,0);
+	int BL = PIX3(0,0,255);
+	int GR = PIX3(0,255,0);
+	
+	
 	static Image patch, mags = NULL;
 	if ( mags == NULL ) {
 		mags  = CreateImage(wlen,wlen);
 		patch = CreateImage(wlen,wlen);
 	}
-	*/
+	
 	
 	DrawEllipse(NewEllipse(key->row,key->col,key->maj,key->min,key->phi),out,PIX3(0,255,0));
 	
-	/*
+	
 	ClearImage(patch,0);
 	ClearImage(mags,0);
 	int **p1 = patch->pixels;
 
-	KeypointToPatch(key,patch);
-	
+	RegionToPatch(key,patch);
+	/*
 	float *desc = CreateSIFTDescriptor(patch,4,8);
 	struct FVecSt de;
 	de.values = desc;
@@ -184,19 +188,20 @@ void DrawKeypoint( Keypoint key ) {
 		}
 	}
 	
-	float c = cos(key->ori*RAD);
-	float s = sin(key->ori*RAD);
-	
-	int r1 = -100*s + key->row;
-	int c1 =  100*c + key->col;
-
-	FastLineDraw(key->row,key->col,r1,c1,out,PIX3(0,255,0));
-	
 	FastLineDraw(wlen+wroff,wcoff,wlen+wroff,wlen*2+wcoff,out,PIX3(0,0,255));
 	FastLineDraw(wroff,wcoff,wroff,wlen*2+wcoff,out,PIX3(0,0,255));
 	FastLineDraw(wroff,wcoff,wlen+wroff,wcoff,out,PIX3(0,0,255));
 	FastLineDraw(wroff,wlen*2+wcoff,wlen+wroff,wlen*2+wcoff,out,PIX3(0,0,255));
 	
+	int krow = key->root / maxcol;
+	int kcol = key->root % maxcol;
+	
+	SetImagePixel1(out,krow,kcol,RE);
+	FastLineDraw(krow-3,kcol-3,krow+3,kcol-3,out,BL);
+	FastLineDraw(krow+3,kcol-3,krow+3,kcol+3,out,BL);
+	FastLineDraw(krow+3,kcol+3,krow-3,kcol+3,out,BL);
+	FastLineDraw(krow-3,kcol+3,krow-3,kcol-3,out,BL);
+	*/
 	if ( key->sizes != NULL ) {
 		PointStack stack = key->sizes;
 		int t1 = stack->items[0].row;
@@ -204,18 +209,19 @@ void DrawKeypoint( Keypoint key ) {
 		FVec si = NewFVec(MIN(t1,t2),MAX(t1,t2));
 		while ( PointStackCycle(stack) == TRUE ) {
 			Point p = CyclePointStack(stack);
-			SetFVec(si,(int)p->row,p->col);
+			SetFVec(si,(int)p->row,(float)p->col);
 		}
+		
 		int k;
 		if ( t1 < t2 ) {
 			for(k=MIN(t1,t2)+1;k<=MAX(t1,t2);k++) if ( si->values[k] == 0 ) si->values[k] = si->values[k-1];
 		} else {
 			for(k=MAX(t1,t2)-1;k>=MIN(t1,t2);k--) if ( si->values[k] == 0 ) si->values[k] = si->values[k+1];
 		}
-		DrawSizeFVec(si,0.02,key->stable,out);
+		DrawSizeFVec(si,0.05,key->stable,out);
 		FreeFVec(si);
 	}
-	*/
+	
 	if ( key->border != NULL ) DrawPointStack(key->border,out,PIX3(255,0,0));
 	/*
 	float *bins = malloc(sizeof(float)*360);
@@ -226,7 +232,6 @@ void DrawKeypoint( Keypoint key ) {
 	DrawOrientations(bins,out,key->ori);
 	free(bins);
 	*/
-	
 	WritePPM(name,out);
 	FreeImage(out);
 
@@ -239,7 +244,7 @@ void DrawSizeFVec(FVec sizes, float ms, int stable, Image out ) {
 	
 	int im_rmin = maxrow/2;
 	int im_cmin = 0;
-	int im_rmax = maxrow;
+	int im_rmax = maxrow-100;
 	int im_cmax = maxcol;
 	
 	int k, l = sizes->l, r = sizes->r;
@@ -279,7 +284,7 @@ void DrawSizeFVec(FVec sizes, float ms, int stable, Image out ) {
 			FastLineDraw(maxrow,c2n,r2n-10,c2n,out,PIX3(255,0,0));
 		}
 		
-		if ( k == stable ) FastLineDraw(r1n-10,c1n,r1n+10,c1n,out,PIX3(0,0,255));
+		if ( k+1 == stable ) FastLineDraw(r1n-10,c2n,r1n+10,c2n,out,PIX3(0,0,255));
 		
 	}
 	
@@ -287,5 +292,19 @@ void DrawSizeFVec(FVec sizes, float ms, int stable, Image out ) {
 	
 }
 
-
+void DrawRegionOnConnectedRegions( Region reg ) {
+	
+	int treshold = reg->stable;
+	
+	char name[256];
+	sprintf(name,"/tmp/T%03d.ppm",255-treshold);
+	
+	Image out = ReadPPMFile(name);
+	
+	DrawPointStack(reg->border,out,PIX3(255,0,0));
+	
+	WritePPM(name,out);
+	FreeImage(out);
+	
+}
 

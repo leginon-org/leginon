@@ -11,8 +11,8 @@ int main (int argc, char **argv) {
 	PStack d1 = NewPStack(100);
 	Image im1 = ReadPGMFile(argv[1]);
 	EnhanceImage(im1,0,255,0.01,0.01);
-	CreateMSERKeypoints(im1,k1,40,im1->rows*im1->cols,3,0.01);
-	KeypointsToDescriptors(k1,d1,TRUE,FALSE,FALSE,TRUE,TRUE,4,8,FALSE);
+	FindMSERegions(im1,k1,0.00004,1.0,0.03,0.05);
+	RegionsToDescriptors(k1,d1,TRUE,FALSE,FALSE,TRUE,TRUE,4,8,FALSE);
 	fprintf(stderr,"Total time: %f  Regions: %d  Descriptors: %d\n", CPUTIME-t0,k1->stacksize,d1->stacksize);
 	PrintSIFTDescriptors("1.csift",d1);
 	
@@ -21,11 +21,10 @@ int main (int argc, char **argv) {
 	PStack k2 = NewPStack(100);
 	PStack d2 = NewPStack(100);
 	Image im2 = ReadPGMFile(argv[2]);
-	CreateMSERKeypoints(im2,k2,40,im2->rows*im2->cols*0.9,5,0.02);
-	KeypointsToDescriptors(k2,d2,TRUE,FALSE,FALSE,TRUE,TRUE,4,8,FALSE);
+	FindMSERegions(im2,k2,0.00004,1.0,0.03,0.05);
+	RegionsToDescriptors(k2,d2,TRUE,FALSE,FALSE,TRUE,TRUE,4,8,FALSE);
 	fprintf(stderr,"Total time: %f  Regions: %d  Descriptors: %d\n", CPUTIME-t0,k2->stacksize,d2->stacksize);
 	PrintSIFTDescriptors("2.csift",d2);
-	
 	
 	PStack ma = NewPStack(100);
 	double **transform = AllocDMatrix(3,3,0,0);

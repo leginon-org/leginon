@@ -285,7 +285,7 @@ FVec NewFVec( int l, int r ) {
 	newvec->max_l = l;
 	newvec->max_r = r;
 	if ( !FVecGood(newvec) ) return FreeFVec(newvec);
-	memset(newvec->values+l,(r-l+1)*sizeof(int),0);
+	while ( l <= r ) newvec->values[l++] = 0.0;
 	return newvec;
 }
 
@@ -368,6 +368,11 @@ void CopyCArrayIntoFVec( FVec vec, float *v, int ol, int or ) {
 		nl++;
 	}
 
+}
+
+void PrintFVec( FVec vec ) {
+	int k;
+	for (k=vec->l;k<=vec->r;k++) fprintf(stderr,"%f ",vec->values[k]);fprintf(stderr,"\n");
 }
 
 float GetFVec( FVec vec, int k ) {

@@ -37,16 +37,16 @@ static PyObject *pyMatchImages(PyObject *self, PyObject *args) {
 	
 	t0 = CPUTIME;
 	fprintf(stderr,"Image 1:  ");
-	CreateMSERKeypoints(im1,im1keys,minsize,maxsize,minperiod,minstable);
+	FindMSERegions(im1,im1keys,minsize,maxsize,minperiod,minstable);
 	fprintf(stderr,"Keypoints: %d  ",im1keys->stacksize);
-	KeypointsToDescriptors(im1keys,im1desc,TRUE,FALSE,FALSE,TRUE,TRUE,4,8,FALSE);
+	RegionsToDescriptors(im1keys,im1desc,TRUE,FALSE,FALSE,TRUE,TRUE,4,8,FALSE);
 	fprintf(stderr,"Descriptors: %d  Time: %2.2f\n",im1desc->stacksize,CPUTIME-t0);
 	
 	t0 = CPUTIME;
 	fprintf(stderr,"Image 2:  ");
-	CreateMSERKeypoints(im2,im2keys,minsize,maxsize,minperiod,minstable);
+	FindMSERegions(im2,im2keys,minsize,maxsize,minperiod,minstable);
 	fprintf(stderr,"Keypoints: %d  ",im2keys->stacksize);
-	KeypointsToDescriptors(im2keys,im2desc,TRUE,FALSE,FALSE,TRUE,TRUE,4,8,FALSE);
+	RegionsToDescriptors(im2keys,im2desc,TRUE,FALSE,FALSE,TRUE,TRUE,4,8,FALSE);
 	fprintf(stderr,"Descriptors: %d  Time: %2.2f\n",im2desc->stacksize,CPUTIME-t0);
 	
 	double **transform = AllocDMatrix(3,3,0,0);
@@ -76,7 +76,7 @@ static PyObject *pyFindRegions( PyObject *self, PyObject *args ) {
 	EnhanceImage(im1,0,255,0.01,0.01);
 	
 	PStack keys = NewPStack(1000);
-	CreateMSERKeypoints(im1,keys,minsize,maxsize,minperiod,minstable);
+	FindMSERegions(im1,keys,minsize,maxsize,minperiod,minstable);
 	
 	fprintf(stderr,"Found %d regions.\n", keys->stacksize);
 	
@@ -144,7 +144,7 @@ static FArray KeypointsPStackToFArray( PStack keys ) {
 	
 	int count = 0;
 	while ( !PStackEmpty(keys) ) {
-		Keypoint key = PopPStack(keys);
+		Region key = PopPStack(keys);
 		SetFArray(array,count,0,key->row);
 		SetFArray(array,count,1,key->col);
 		SetFArray(array,count,2,key->maj);

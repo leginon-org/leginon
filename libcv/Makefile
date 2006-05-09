@@ -8,7 +8,7 @@ LIBS = -lm
 #   -Wall for strict gcc warnings (requires prototypes for all functions).
 #   -g to produce debug data for gdb
 #   -O for optimization
-CFLAGS = -Wall -g -O2
+CFLAGS = -Wall -g -O3
 
 CC = gcc
 

@@ -2,40 +2,41 @@
 
 /*----------------------------------------------------------------------*/
 
-Keypoint NewKeypoint( Ellipse e, Image image, PointStack sizes, PointStack border, int stable ) {
+Region NewRegion( Ellipse e, Image image, PointStack sizes, PointStack border, int stable, int root ) {
 
 	if ( e == NULL ) return NULL;
 	
-	Keypoint key = malloc(sizeof(struct KeypointSt));
-	if ( key == NULL ) return NULL;
+	Region reg = malloc(sizeof(struct RegionSt));
+	if ( reg == NULL ) return NULL;
 	
-	key->stable = stable;
-	key->border = CopyPointStack(border);
-	key->sizes  = CopyPointStack(sizes);
+	reg->root   = root;
+	reg->stable = stable;
+	reg->border = CopyPointStack(border);
+	reg->sizes  = CopyPointStack(sizes);
 	
-	key->image = image;
-	key->row = e->erow;
-	key->col = e->ecol;
-	key->maj = e->majaxis;
-	key->min = e->minaxis;
-	key->phi = e->phi;
-	key->ori = e->phi*DEG;
-	key->A = e->A;
-	key->B = e->B;
-	key->C = e->C;
-	key->D = e->D;
-	key->E = e->E;
-	key->F = e->F;
-	key->minr = e->minr;
-	key->maxr = e->maxr;
-	key->minc = e->minc;
-	key->maxc = e->maxc;
+	reg->image = image;
+	reg->row = e->erow;
+	reg->col = e->ecol;
+	reg->maj = e->majaxis;
+	reg->min = e->minaxis;
+	reg->phi = e->phi;
+	reg->ori = e->phi*DEG;
+	reg->A = e->A;
+	reg->B = e->B;
+	reg->C = e->C;
+	reg->D = e->D;
+	reg->E = e->E;
+	reg->F = e->F;
+	reg->minr = e->minr;
+	reg->maxr = e->maxr;
+	reg->minc = e->minc;
+	reg->maxc = e->maxc;
 	
-	return key;
+	return reg;
 	
 }
 	
-void GenerateGradientOrientationBins( Keypoint key, Image im, float *bins ) {
+void GenerateGradientOrientationBins( Region key, Image im, float *bins ) {
 
 	int row, col, i;
 	static double **IT = NULL;
@@ -89,7 +90,7 @@ void GenerateGradientOrientationBins( Keypoint key, Image im, float *bins ) {
 	
 }
 
-void DetermineMajorGradientOrientations( Keypoint key, FStack orientations ) {
+void DetermineMajorGradientOrientations( Region key, FStack orientations ) {
 	
 	if ( key == NULL || key->image == NULL || orientations == NULL ) return;
 
@@ -112,25 +113,24 @@ void DetermineMajorGradientOrientations( Keypoint key, FStack orientations ) {
 	
 }
 
-void KeypointsToDescriptors( PStack keypoints, PStack descriptors, int o1, int o2, int o3, int o4, int d1, int pb, int ob, int d2 ) {
-	if ( keypoints == NULL || descriptors == NULL ) return;
+void RegionsToDescriptors( PStack regions, PStack descriptors, int o1, int o2, int o3, int o4, int d1, int pb, int ob, int d2 ) {
+	if ( regions == NULL || descriptors == NULL ) return;
 	Image patch = CreateImage(41,41);
 	FStack orientations = NewFStack(15);
 	int k;
-	for (k=0;k<keypoints->stacksize;k++) {
-		Keypoint key = keypoints->items[k];
+	for (k=0;k<regions->stacksize;k++) {
+		Region key = regions->items[k];
 		DetermineMajorGradientOrientations(key,orientations);
 		while ( !FStackEmpty(orientations) ) {
 			key->ori = PopFStack(orientations);
-			KeypointToPatch( key, patch );
-			//DrawKeypoint(key);
+			RegionToPatch( key, patch );
 			PushPStack(descriptors,NewDescriptor(key,36,1,CreatePCADescriptor(patch)));
 		}
 	}
 	FreeImage(patch);
 }
 
-void KeypointToPatch( Keypoint key, Image patch ) {
+void RegionToPatch( Region key, Image patch ) {
 	if ( key == NULL || patch == NULL ) return;
 	struct EllipseSt e1, e2;
 	double **IT = AllocDMatrix(3,3,0,0);
@@ -148,7 +148,7 @@ void KeypointToPatch( Keypoint key, Image patch ) {
 	FreeDMatrix(TR,0,0);
 }
 
-Descriptor NewDescriptor( Keypoint key, int dlength, char dtype, float *d ) {
+Descriptor NewDescriptor( Region key, int dlength, char dtype, float *d ) {
 	if ( key == NULL || d == NULL ) return NULL;
 	Descriptor des = malloc(sizeof(struct DescriptorSt));
 	if ( des == NULL ) return NULL;
@@ -328,13 +328,13 @@ void PrintSIFTDescriptors( char *name, PStack descriptors ) {
 	
 }
 
-void PrintKeypoints( char *name, PStack keypoints ) {
+void PrintRegions( char *name, PStack Regions ) {
 	FILE *fp = fopen(name,"w");
 	if ( fp == NULL ) return;
 	int k;
-	fprintf(fp,"1.0\n%d\n",keypoints->stacksize);
-	for(k=0;k<keypoints->stacksize;k++) {
-		Keypoint key = keypoints->items[k];
+	fprintf(fp,"1.0\n%d\n",Regions->stacksize);
+	for(k=0;k<Regions->stacksize;k++) {
+		Region key = Regions->items[k];
 		float A = 1.0/(key->min*key->min);
 		float C = 1.0/(key->maj*key->maj);
 		float sine = sin(key->phi);

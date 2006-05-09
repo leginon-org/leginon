@@ -252,8 +252,6 @@ void DrawEllipse( Ellipse ellipse, Image out, int v ) {
 	int minc = e2->minc;
 	int maxc = e2->maxc;
 	
-	fprintf(stderr,"Drawing Ellipse with bounds %d %d %d %d.\n",minr,minc,maxr,maxc);
-	
 	free(e2);
 	
 	minr = BOUND(0,minr,maxrow);
@@ -602,8 +600,8 @@ void PascalBlurImage( Image im, float sigma ) {
 
 void DrawFVec(FVec sizes, int im_rmin, int im_cmin, int im_rmax, int im_cmax, int v, Image out ) {
 	
-	int maxcol = out->cols;
-	int maxrow = out->rows;
+	int maxcol = out->cols-1;
+	int maxrow = out->rows-1;
 	
 	
 	int k, l = sizes->l, r = sizes->r;
@@ -615,10 +613,10 @@ void DrawFVec(FVec sizes, int im_rmin, int im_cmin, int im_rmax, int im_cmax, in
 	int vec_cmin = l;
 	int vec_rmax = large;
 	int vec_rmin = small;
-	
+
 	double **tr = AllocDMatrix(3,3,0,0);
 	CreateDirectAffineTransform( vec_rmax,vec_cmax, vec_rmin,vec_cmin, vec_rmin,vec_cmax, im_rmin,im_cmax, im_rmax,im_cmin, im_rmax,im_cmax, tr,NULL);
-	
+
 	for (k=l;k<r;k++) {
 	
 		float r1 = sizes->values[k];
@@ -639,7 +637,7 @@ void DrawFVec(FVec sizes, int im_rmin, int im_cmin, int im_rmax, int im_cmax, in
 		FastLineDraw(r1n,c1n,r2n,c2n,out,v);
 		
 	}
-	
+
 	FreeDMatrix(tr,0,0);
 	
 }

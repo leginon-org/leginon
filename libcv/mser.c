@@ -2,28 +2,24 @@
 #include "mser.h"
 #include "unionfind.h"
 
-char CreateMSERKeypoints( Image image, PStack keypoints, float minsize, float maxsize, float minperiod, float minstable ) {
+
+char FindMSERegions( Image image, PStack regions, float minsize, float maxsize, float minperiod, float minstable ) {
 	
-	if ( !ImageGood(image) || !PStackGood(keypoints) ) return FALSE;
+	if ( !ImageGood(image) || !PStackGood(regions) ) return FALSE;
 	
 	MSERArray pa = ImageToMSERArray(image);
 	
-	int maxarea = (image->rows)*(image->cols);
-	int maxrange = image->maxv - image->minv;
+	int maxarea  = pa->size;
+	int maxrange = pa->maxv - pa->minv;
 	
-	int static_minsize = minsize*maxarea;
-	int static_maxsize = maxsize*maxarea;
-	int static_minperiod = maxrange*minperiod;
+	if ( minsize <= 1.0 ) minsize = MAX(maxarea*minsize,5);
+	if ( maxsize <= 1.0 ) maxsize = maxarea*maxsize,maxarea;
+	if ( minperiod <= 1.0 ) minperiod = MAX(minperiod*maxrange,1);
 	
-	fprintf(stderr,"Minsize: %d Maxsize: %d Minperiod: %d Minstable: %2.2f\n",static_minsize,static_maxsize,static_minperiod,minstable);
+	fprintf(stderr,"Finding stable regions in image with %d pixels and dynamic range %d.\n",maxarea,maxrange);
+	fprintf(stderr,"MinSize: %d pixels\nMaxSize: %d pixels\nMinPeriod: %d tresholds\nMinStable: %2.2f%% size growth\n",(int)minsize,(int)maxsize,(int)minperiod,minstable*100);
 	
-	ResetMSERArray(pa);
-	CreateRegions(pa,1,static_minsize,static_maxsize);
-	RegionsToKeypoints(pa,keypoints,1,static_minperiod,minstable);
-
-	ResetMSERArray(pa);
-	CreateRegions(pa,-1,static_minsize,static_maxsize);
-	RegionsToKeypoints(pa,keypoints,-1,static_minperiod,minstable);
+	TrackRegions(pa,regions,minsize,maxarea,minperiod,minstable);
 
 	FreeMSERArray( pa ); 
 	
@@ -31,40 +27,85 @@ char CreateMSERKeypoints( Image image, PStack keypoints, float minsize, float ma
 	
 }
 
-void CreateRegions( MSERArray pa, int ud, int minsize, int maxsize ) {
-	
+void TrackRegions( MSERArray pa, PStack regions, int minsize, int maxsize, int minperiod, float minstable ) {
+
 	int kmin, kmax, k;
 	
 	int *v1 = malloc(sizeof(int)*pa->size);
-		
 	int s1 = 0;
-
-	if ( ud ==  1 ) {
+	
+	ResetMSERArray(pa);
 	for (k=pa->minv;k<=pa->maxv;k++) {	
 		kmin = pa->sb[k];
-		if ( k == pa->maxv ) kmax = (pa->rows-2)*(pa->cols-2) - 1;
-		else kmax = pa->sb[k+1];
-		s1 = JoinNeighbors(pa->sp,pa->roots,pa->sizes,pa->flags,pa->cols,kmin,kmax,v1,s1,minsize,maxsize);
+		kmax = pa->sb[k+1];
+		s1 = JoinNeighborsUp(pa->sp,pa->roots,pa->sizes,pa->tvals,pa->flags,pa->cols,k,kmin,kmax,v1,s1,minsize,maxsize);	
 		s1 = ProcessTouchedRoots(pa->roots,pa->sizes,pa->flags,pa->regions,v1,s1,k);
-	}} else {
-	for (k=pa->maxv;k>=0;k--) {
-		kmin = pa->sb[k];
-		if ( k == pa->maxv ) kmax = (pa->rows-2)*(pa->cols-2) - 1;
-		else kmax = pa->sb[k+1];
-		s1 = JoinNeighbors(pa->sp,pa->roots,pa->sizes,pa->flags,pa->cols,kmin,kmax,v1,s1,minsize,maxsize);
-		s1 = ProcessTouchedRoots(pa->roots,pa->sizes,pa->flags,pa->regions,v1,s1,k);
-	}}
+	}
+	DetermineStableRegions(pa,regions,1,minperiod,minstable);
 	
+	ResetMSERArray(pa);
+	for (k=pa->maxv;k>=pa->minv;k--) {
+		kmin = pa->sb[k];
+		kmax = pa->sb[k+1];
+		s1 = JoinNeighborsDown(pa->sp,pa->roots,pa->sizes,pa->tvals,pa->flags,pa->cols,k,kmin,kmax,v1,s1,minsize,maxsize);
+		s1 = ProcessTouchedRoots(pa->roots,pa->sizes,pa->flags,pa->regions,v1,s1,k);
+	}
+	DetermineStableRegions(pa,regions,-1,minperiod,minstable);
+
 	free(v1);
 		
 }
 
-int JoinNeighbors( int *sp, int *roots, int *sizes, char *flags, int stride, int kmin, int kmax, int *idle, int idlesize, int minsize, int maxsize ) {
+int JoinNeighbors( int *sp, int *roots, int *sizes, int *tvals, char *flags, int stride, int k, int kmin, int kmax, int *idle, int idlesize, int minsize, int maxsize ) {
 	
 	int r;
 	
-	while( kmin <= kmax ) {
+	while( kmin < kmax ) {
 		r = Connect4(roots,sizes,stride,sp[kmin++]);
+		switch ( flags[r] ) {
+			case 3:
+			case 2: break;
+			case 1: flags[r] = 2;
+					break;
+			case 0: if ( sizes[r] < minsize ) break;
+					if ( sizes[r] > maxsize ) break;
+					flags[r] = 3;
+					idle[idlesize++] = r;
+					break;
+		}
+	}
+	
+	return idlesize;
+}
+
+int JoinNeighborsUp( int *sp, int *roots, int *sizes, int *tvals, char *flags, int stride, int k, int kmin, int kmax, int *idle, int idlesize, int minsize, int maxsize ) {
+	
+	int r;
+	
+	while( kmin < kmax ) {
+		r = Connect4Up(roots,sizes,tvals,stride,sp[kmin++],k);
+		switch ( flags[r] ) {
+			case 3:
+			case 2: break;
+			case 1: flags[r] = 2;
+					break;
+			case 0: if ( sizes[r] < minsize ) break;
+					if ( sizes[r] > maxsize ) break;
+					flags[r] = 3;
+					idle[idlesize++] = r;
+					break;
+		}
+	}
+	
+	return idlesize;
+}
+
+int JoinNeighborsDown( int *sp, int *roots, int *sizes, int *tvals, char *flags, int stride, int k, int kmin, int kmax, int *idle, int idlesize, int minsize, int maxsize ) {
+	
+	int r;
+	
+	while( kmin < kmax ) {
+		r = Connect4Down(roots,sizes,tvals,stride,sp[kmin++],k);
 		switch ( flags[r] ) {
 			case 3:
 			case 2: break;
@@ -94,7 +135,7 @@ int ProcessTouchedRoots( int *roots, int *sizes, char *flags, void **regions, in
 					flags[r] = 1;
 					temp[tempsize++] = r;
 					break;
-			case 1: if ( roots[r] != r ) PushPointStack(regions[r],tic,sizes[r]);
+			case 1: if ( roots[r] != r ) PushPointStack(regions[r],tic,sizes[r]*2);
 					else temp[tempsize++] = r;
 					break;
 		}
@@ -103,79 +144,87 @@ int ProcessTouchedRoots( int *roots, int *sizes, char *flags, void **regions, in
 	return tempsize;
 	
 }
-void RegionsToKeypoints( MSERArray pa, PStack keypoints, int ud, int minperiod, float minstable ) {
+
+void DetermineStableRegions( MSERArray pa, PStack regions, int ud, int minPeriod, float minStable ) {
 	
-	if ( !PStackGood(keypoints) ) return;
+	if ( !PStackGood(regions) ) return;
 	
 	FStack sp = NewFStack(10);
 	PointStack bp = NewPointStack(10);
 	
 	char *flags = pa->flags;
-	void **regions = pa->regions;
+	void **sizeStacks = pa->regions;
 	int k;
-		
+
 	for (k=0;k<pa->size;k++) {
 
 		if ( flags[k] == 0 ) continue;
 		if ( flags[k] == 3 ) continue;
-		PointStack sizes = regions[k];
-		FindStablePeriods(sizes,sp,minperiod,minstable);
+		PointStack sizes = sizeStacks[k];
+		FindStablePeriods(sizes,sp,minPeriod,minStable);
 		while ( !FStackEmpty(sp) ) {
 			float s = PopFStack(sp);
 			if (ud==1) CarveOutRegionUp(k,pa->image,bp,s);
 			else CarveOutRegionDown(k,pa->image,bp,s);
-			Ellipse e = CalculateAffineEllipse( bp, 2.5 );
-			Keypoint key = NewKeypoint(e,pa->image,sizes,bp,s);
-			PushPStack(keypoints, key);
+			Ellipse e = CalculateAffineEllipse( bp, 3.0 );
+			Region key = NewRegion(e,pa->image,sizes,bp,s,k);
+			PushPStack(regions, key);
 			if ( e != NULL ) free(e);
 		}
 		FreePointStack(sizes);
 	}
 	FreeFStack(sp);
 	FreePointStack(bp);
-	
 }
 
-void FindStablePeriods( PointStack sizes, FStack sp, int minperiod, float minstable ) {
+void FindStablePeriods( PointStack sizes, FStack sp, int minPeriod, float minStable ) {
 	
 	if ( !PointStackGood(sizes) || !FStackGood(sp) ) return;
 	if ( PointStackEmpty(sizes) ) return;
 	
-	FStack jumps = NewFStack(10);	
 	Point p;
-	float t1, t2, s1, s2;
+	float oldTime, oldSize, lastSpike, lastStable, period;
+	float bestStability, curTime, curSize, currentChange;
 	
 	p = CyclePointStack(sizes);
-	t1 = p->row;
-	s1 = p->col;
+	oldTime = p->row;
+	oldSize = p->col;
+	lastSpike = oldTime;
+	lastStable = oldTime;
+	bestStability = 1.0;
 	
-	PushFStack(jumps,t1);
 	while ( PointStackCycle(sizes) ) {
+	
 		p = CyclePointStack(sizes);
-		t2 = p->row;
-		s2 = p->col;
-		if ( (s2 - s1) > minstable*s1 ) {
-			PushFStack(jumps,t1);
-			PushFStack(jumps,t2);
+		
+		curTime = p->row;
+		curSize = p->col;
+		
+		currentChange = ( curSize - oldSize ) / oldSize;
+		if ( currentChange > minStable ) {
+			period = lastSpike - curTime;
+			lastSpike = curTime;
+			if ( ABS(period) > minPeriod ) { PushFStack(sp,lastStable);}
+			lastStable = oldTime;
+			bestStability = currentChange;
+		} else if ( currentChange < bestStability ) {
+			 bestStability = currentChange;
+			 lastStable = curTime;
 		}
-		s1 = s2; t1 = t2;
+		oldSize = curSize; oldTime = curTime;
 	}
-	PushFStack(jumps,t1);
-	
-	t1 = PopFStack(jumps);
-	while( !FStackEmpty(jumps) ) {
-		t2 = PopFStack(jumps);
-		if ( ABS(t1-t2) > minperiod ) PushFStack(sp,(t1+t2)/2);
-		t1 = t2;
-	}
-	
-	FreeFStack(jumps);
-	
+
 }
 
-int SearchHoodUp( int row, int col, int **p, int t1, float t, int maxrow, int maxcol ) {
+int SearchHoodUp1( int row, int col, int **p, int t1, float t, int maxrow, int maxcol ) {
 	if ( t1<=t && row>=0 && row<maxrow && col>=0 && col<maxcol ) return 0;
 	else if ( row>=0 && row<maxrow && col>=0 && col<maxcol && p[row][col]<=t ) return 0;		
+	return 1;
+}
+
+int SearchHoodUp2( int row, int col, int **p, int t1, float t, int maxrow, int maxcol ) {
+	if ( row < 0 || col < 0 || row >= maxrow || col >= maxcol ) return 1;
+	if ( p[row][col] <= t ) return 0;
 	return 1;
 }
 
@@ -188,8 +237,8 @@ void CarveOutRegionUp( int root, Image image, PointStack borderpixels, float t )
 
 	int **p = image->pixels;
 	
-	int row = root/maxcol;
-	int col = root%maxcol;
+	int row = root / maxcol;
+	int col = root % maxcol;
 	int leftmost = col;
 
 	FStack leaving = NewFStack(3);
@@ -197,21 +246,22 @@ void CarveOutRegionUp( int root, Image image, PointStack borderpixels, float t )
 	int rightturns = 0;
 	while ( rightturns <= 0 ) {
 		
-		rightturns=0; col=leftmost;
-		while ( col > 0 && p[row][col] <= t ) col--;
-		int srow = row;
-		int scol = col;
 		int pt = p[row][col];
 		
+		rightturns=0; col=leftmost;
+		while ( col > 0 && p[row][col-1] <= t ) col--;
+		int srow = row;
+		int scol = col;
+
 		int direction = 0;
 		int lastdirection = 0;
 		int visits = 1;
 		
 		leaving->stacksize=0; borderpixels->stacksize=0;
-		if ( SearchHoodUp(row+1,col,p,pt,t,maxrow,maxcol)==0 ) {PushFStack(leaving,3);}
-		if ( SearchHoodUp(row,col+1,p,pt,t,maxrow,maxcol)==0 ) {PushFStack(leaving,2);}
-		if ( SearchHoodUp(row-1,col,p,pt,t,maxrow,maxcol)==0 ) {PushFStack(leaving,1);}
-		
+		if ( SearchHoodUp2(row+1,col,p,pt,t,maxrow,maxcol)==0 ) PushFStack(leaving,3);
+		if ( SearchHoodUp2(row,col+1,p,pt,t,maxrow,maxcol)==0 ) PushFStack(leaving,2);
+		if ( SearchHoodUp2(row-1,col,p,pt,t,maxrow,maxcol)==0 ) PushFStack(leaving,1);
+
 		do {
 			
 			if (row>0 && row<maxrow-1 && col>0 && col<maxcol-1) PushPointStack(borderpixels,row,col);
@@ -220,10 +270,10 @@ void CarveOutRegionUp( int root, Image image, PointStack borderpixels, float t )
 			pt = p[row][col];
 			while ( done ) {
 				direction = (direction+1) % 4;
-				if ( direction==0 ) if (SearchHoodUp(row,col-1,p,pt,t,maxrow,maxcol)==0) {done=0;col--;}
-				if ( direction==1 ) if (SearchHoodUp(row-1,col,p,pt,t,maxrow,maxcol)==0) {done=0;row--;}
-				if ( direction==2 ) if (SearchHoodUp(row,col+1,p,pt,t,maxrow,maxcol)==0) {done=0;col++;}
-				if ( direction==3 ) if (SearchHoodUp(row+1,col,p,pt,t,maxrow,maxcol)==0) {done=0;row++;}
+				if ( direction==0 ) if (SearchHoodUp2(row,col-1,p,pt,t,maxrow,maxcol)==0) {done=0;col--;}
+				if ( direction==1 ) if (SearchHoodUp2(row-1,col,p,pt,t,maxrow,maxcol)==0) {done=0;row--;}
+				if ( direction==2 ) if (SearchHoodUp2(row,col+1,p,pt,t,maxrow,maxcol)==0) {done=0;col++;}
+				if ( direction==3 ) if (SearchHoodUp2(row+1,col,p,pt,t,maxrow,maxcol)==0) {done=0;row++;}
 			}
 
 			if ( direction != lastdirection ) {
@@ -240,12 +290,19 @@ void CarveOutRegionUp( int root, Image image, PointStack borderpixels, float t )
 		} while ( visits );
 	}
 	FreeFStack(leaving);
+
 }
 
-int SearchHoodDown( int row, int col, int **p, int t1, float t, int maxrow, int maxcol ) {
+int SearchHoodDown1( int row, int col, int **p, int t1, float t, int maxrow, int maxcol ) {
 	if ( t1>=t && row>=0 && row<maxrow && col>=0 && col<maxcol ) return 0;
 	else if ( row>=0 && row<maxrow && col>=0 && col<maxcol && p[row][col]>=t ) return 0;		
 	return 1;
+}
+
+int SearchHoodDown2( int row, int col, int **p, int t1, float t, int maxrow, int maxcol ) {
+	if ( row < 0 || col < 0 || row >= maxrow || col >= maxcol ) return 1;
+	if ( p[row][col] >= t ) return 0;
+	else return 1;
 }
 
 void CarveOutRegionDown( int root, Image image, PointStack borderpixels, float t ) {
@@ -257,28 +314,30 @@ void CarveOutRegionDown( int root, Image image, PointStack borderpixels, float t
 
 	int **p = image->pixels;
 	
-	int row = root/maxcol;
-	int col = root%maxcol;
+	int row = root / maxcol;
+	int col = root % maxcol;
 	int leftmost = col;
 	
 	FStack leaving = NewFStack(3);
 	int rightturns = 0;
 	while ( rightturns <= 0 ) {
 		
+		int pt = p[row][col];
+		
 		rightturns=0; col=leftmost;
-		while ( col > 0 && p[row][col] >= t ) col--;
+		while ( col > 0 && p[row][col-1] >= t ) col--;
 		int srow = row;
 		int scol = col;
-		int pt = p[row][col];
+		
 		int direction = 0;
 		int lastdirection = 0;
 		int visits = 1;
 		
 		leaving->stacksize=0;
 		borderpixels->stacksize=0;
-		if ( SearchHoodDown(row+1,col,p,pt,t,maxrow,maxcol)==0 ) {PushFStack(leaving,3);}
-		if ( SearchHoodDown(row,col+1,p,pt,t,maxrow,maxcol)==0 ) {PushFStack(leaving,2);}
-		if ( SearchHoodDown(row-1,col,p,pt,t,maxrow,maxcol)==0 ) {PushFStack(leaving,1);}
+		if ( SearchHoodDown2(row+1,col,p,pt,t,maxrow,maxcol)==0 ) {PushFStack(leaving,3);}
+		if ( SearchHoodDown2(row,col+1,p,pt,t,maxrow,maxcol)==0 ) {PushFStack(leaving,2);}
+		if ( SearchHoodDown2(row-1,col,p,pt,t,maxrow,maxcol)==0 ) {PushFStack(leaving,1);}
 
 		do {
 		
@@ -288,10 +347,10 @@ void CarveOutRegionDown( int root, Image image, PointStack borderpixels, float t
 			pt=p[row][col];
 			while ( done ) {
 				direction = (direction+1) % 4;
-				if ( direction==0 ) if (SearchHoodDown(row,col-1,p,pt,t,maxrow,maxcol)==0) {done=0;col--;}
-				if ( direction==1 ) if (SearchHoodDown(row-1,col,p,pt,t,maxrow,maxcol)==0) {done=0;row--;}
-				if ( direction==2 ) if (SearchHoodDown(row,col+1,p,pt,t,maxrow,maxcol)==0) {done=0;col++;}
-				if ( direction==3 ) if (SearchHoodDown(row+1,col,p,pt,t,maxrow,maxcol)==0) {done=0;row++;}
+				if ( direction==0 ) if (SearchHoodDown2(row,col-1,p,pt,t,maxrow,maxcol)==0) {done=0;col--;}
+				if ( direction==1 ) if (SearchHoodDown2(row-1,col,p,pt,t,maxrow,maxcol)==0) {done=0;row--;}
+				if ( direction==2 ) if (SearchHoodDown2(row,col+1,p,pt,t,maxrow,maxcol)==0) {done=0;col++;}
+				if ( direction==3 ) if (SearchHoodDown2(row+1,col,p,pt,t,maxrow,maxcol)==0) {done=0;row++;}
 			}
 
 			if ( direction != lastdirection ) {
@@ -324,12 +383,12 @@ void ResetMSERArray( MSERArray pa ) {
 
 MSERArray FreeMSERArray( MSERArray pa ) {
 	if ( pa == NULL ) return NULL;
-	if ( pa->sb+pa->minv != NULL ) free(pa->sb+pa->minv);
-	if ( pa->sp != NULL ) free(pa->sp);
-	if ( pa->roots != NULL ) free(pa->roots);
-	if ( pa->sizes != NULL ) free(pa->sizes);
-	if ( pa->flags != NULL ) free(pa->flags);
-	if ( pa->regions != NULL ) free(pa->regions);
+	if ( pa->sb+pa->minv != NULL )	free(pa->sb+pa->minv);
+	if ( pa->sp != NULL )			free(pa->sp);
+	if ( pa->roots != NULL )		free(pa->roots);
+	if ( pa->sizes != NULL )		free(pa->sizes);
+	if ( pa->flags != NULL )		free(pa->flags);
+	if ( pa->regions != NULL )		free(pa->regions);
 	free(pa);
 	return NULL;
 }
@@ -374,7 +433,7 @@ MSERArray ImageToMSERArray( Image image ) {
 	mser->flags 	= malloc(arraymax*sizeof(char));
 	mser->regions 	= malloc(arraymax*sizeof(void *));
 	mser->sp		= malloc(sizeof(int)*maxr*maxc);
-	mser->sb		= ((int *)malloc(sizeof(int)*(maxv-minv+1))) - minv;
+	mser->sb		= ((int *)malloc(sizeof(int)*(maxv-minv+2))) - minv;
 	
 	if ( !MSERArrayGood(mser) ) return FreeMSERArray(mser);
 
@@ -382,9 +441,9 @@ MSERArray ImageToMSERArray( Image image ) {
 	int **p = image->pixels;
 	int *sp = mser->sp;
 	int *sb = mser->sb;
-	for (k=minv;k<=maxv;k++) sb[k] = 0;
+	for (k=minv;k<=maxv+1;k++) sb[k] = 0;
 	for (r=1;r<=maxr;r++) for (c=1;c<=maxc;c++) sb[p[r][c]]++;
-	for (k=minv;k<maxv;k++) sb[k+1] += sb[k];
+	for (k=minv;k<=maxv;k++) sb[k+1] += sb[k];
 	for (r=1;r<=maxr;r++) for (c=1;c<=maxc;c++) sp[--sb[p[r][c]]] = r*(maxcol)+c;
 
 	return mser;

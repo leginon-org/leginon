@@ -84,7 +84,7 @@ typedef struct PointSt {
 	float row, col;
 } *Point;
 
-typedef struct KeypointSt {
+typedef struct RegionSt {
 
 	float row, col, ori, scale;
 	
@@ -95,9 +95,9 @@ typedef struct KeypointSt {
 	
 	struct PointStackSt *sizes;
 	struct PointStackSt *border;
-	int stable;
+	int stable, root;
 	
-} *Keypoint;
+} *Region;
 
 typedef struct DescriptorSt {
 	float row, col, scale, ori;
@@ -112,7 +112,7 @@ typedef struct EllipseSt {
 	double minr, maxr, minc, maxc;
 } *Ellipse;
 
-char CreateMSERKeypoints( Image image, PStack keypoints, float minsize, float maxsize, float minperiod, float minstable );
+char FindMSERegions( Image image, PStack Regions, float minsize, float maxsize, float minperiod, float minstable );
 
 Image CreateImage(int rows, int cols );
 void SetImagePixel1( Image im, int row, int col, int val );
@@ -163,6 +163,7 @@ float GetFVec( FVec vec, int k );
 FVec FreeFVec( FVec vec );
 char FVecGood( FVec vec );
 void CopyCArrayIntoFVec( FVec vec, float *v, int ol, int or );
+void PrintFVec( FVec vec );
 
 PStack NewPStack(int size);
 void PushPStack( PStack stack, void *pointer );
@@ -195,22 +196,22 @@ IStack NewIStack( int size );
 void PushIStack( IStack stack, int value );
 int PopIStack( IStack stack );
 
-Keypoint NewKeypoint( Ellipse e, Image im, PointStack vec, PointStack border, int stable );
-void KeypointsToDescriptors( PStack keypoints, PStack descriptors, int o1, int o2, int o3, int o4, int d1, int pb, int ob, int d2 );
-void DetermineMajorOrientations( Keypoint key, PStack keypoints, FStack orientations );
+Region NewRegion( Ellipse e, Image im, PointStack vec, PointStack border, int stable, int region );
+void RegionsToDescriptors( PStack Regions, PStack descriptors, int o1, int o2, int o3, int o4, int d1, int pb, int ob, int d2 );
+void DetermineMajorOrientations( Region key, PStack Regions, FStack orientations );
 void PrintSIFTDescriptors( char *name, PStack descriptors );
 float *CreateSIFTDescriptor( Image patch, int pb, int ob );
 float *CreatePCADescriptor( Image patch );
-void GenerateGradientOrientationBins( Keypoint key, Image im, float *bins );
-void KeypointToPatch( Keypoint key, Image patch );
-Descriptor NewDescriptor( Keypoint key, int dlength, char dtype, float *d );
-void OrientKeypointsAsClusters( PStack keypoints );
-void GenerateClusterBins( Keypoint key, PStack keys, float *bins );
-void PrintKeypoints( char *name, PStack keypoints );
+void GenerateGradientOrientationBins( Region key, Image im, float *bins );
+void RegionToPatch( Region key, Image patch );
+Descriptor NewDescriptor( Region key, int dlength, char dtype, float *d );
+void OrientRegionsAsClusters( PStack Regions );
+void GenerateClusterBins( Region key, PStack keys, float *bins );
+void PrintRegions( char *name, PStack Regions );
 void DrawDescriptor( Descriptor d, Image out );
-void DrawKeypoint( Keypoint key );
+void DrawRegion( Region key );
 void DrawOrientations( float *bins, Image out, float ori );
-void PlotNeighborClusters( Keypoint key, PStack keys, Image out );
+void PlotNeighborClusters( Region key, PStack keys, Image out );
 
 Ellipse CalculateAffineEllipse( PointStack pixels, float scale );
 void ComputeEllipseTransform( Ellipse e1, Ellipse e2, double **TR, double **IT );
