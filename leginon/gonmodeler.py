@@ -55,16 +55,6 @@ class GonModeler(calibrator.Calibrator):
 
 		self.start()
 
-	## use this sometime
-	def withinTolerance(self, delta, imx, imy, known_pixelsize, tolerance):
-			measuredpixsize = abs(delta / math.hypot(imx,imy))
-			error = abs(measuredpixsize - known_pixelsize) / known_pixelsize
-			if error > tolerance/100.0:
-				self.logger.info('Measured pixel size %s' % (measuredpixsize,))
-				return False
-			else:
-				return True
-
 	# calibrate needs to take a specific value
 	def loop(self, label, axis, points, interval):
 		try:
@@ -108,7 +98,7 @@ class GonModeler(calibrator.Calibrator):
 			self.logger.info('Delta %s' % (delta,))
 			self.logger.info('Correlation shift %s, %s' % (imx, imy))
 
-			measuredpixsize = delta / math.hypot(imx,imy)
+			measuredpixsize = abs(delta) / math.hypot(imx,imy)
 			self.logger.info('Measured pixel size %s' % (measuredpixsize,))
 			error = abs(measuredpixsize - known_pixelsize) / known_pixelsize
 			self.logger.info('Error %s' % (error,))

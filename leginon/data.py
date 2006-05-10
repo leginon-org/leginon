@@ -21,6 +21,7 @@ import dbdatakeeper
 import copy
 import tcptransport
 import weakref
+import os
 
 class DataError(Exception):
 	pass
@@ -564,8 +565,11 @@ class Data(newdict.TypedDict):
 				# use new reference
 				value = value.getData()
 		if isinstance(value, newdict.FileReference):
-				value = value.read()
-				self.__setitem__(key, value, force=True)
+			value = value.read()
+			## Optionally, we could skip the next line and continue to
+			## hold only a reference as a way of conserving memory at the 
+			## expense of having to read the image every time
+			self.__setitem__(key, value, force=True)
 		return value
 
 	def __getitem__(self, key):
@@ -1141,8 +1145,11 @@ class ImageData(InSessionData):
 
 	def getpath(self):
 		'''return image path for this image'''
-		impath = self['session']['image path']
-		impath = leginonconfig.mapPath(impath)
+		try:
+			impath = self['session']['image path']
+			impath = leginonconfig.mapPath(impath)
+		except:
+			impath = os.path.abspath(os.path.curdir)
 		return impath
 
 	def mkpath(self):
@@ -2010,6 +2017,10 @@ class ManualAcquisitionSettingsData(SettingsData):
 			('image label', str),
 			('low dose', bool),
 			('low dose pause time', float),
+			('defocus1switch', bool),
+			('defocus1', float),
+			('defocus2switch', bool),
+			('defocus2', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2131,8 +2142,8 @@ class CenterTargetFilterSettingsData(TargetFilterSettingsData):
 class RCTAcquisitionSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
-			('tilt1', float),
-			('tilt2', float),
+			('tilts', str),
+			('stepsize', float),
 			('sigma', float),
 			('minsize', float),
 			('maxsize', float),

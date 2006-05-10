@@ -35,6 +35,10 @@ class ManualAcquisition(node.Node):
 		'loop pause time': 0.0,
 		'low dose': False,
 		'low dose pause time': 5.0,
+		'defcous1switch': False,
+		'defcous1': 0.0,
+		'defcous2switch': False,
+		'defcous2': 0.0,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.loopstop = threading.Event()
@@ -42,6 +46,7 @@ class ManualAcquisition(node.Node):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 
 		self.lowdosemode = None
+		self.defocus = None
 
 		try:
 			self.projectdata = project.ProjectData()
@@ -136,23 +141,28 @@ class ManualAcquisition(node.Node):
 		digits = 5
 		suffix = 'ma'
 		extension = 'mrc'
+		if self.defocus is None:
+			defindex = '_0'
+		else:
+			defindex = '_%d' % (self.defocus,)
 		try:
 			path = imagedata.mkpath()
 		except Exception, e:
 			raise node.PublishError(e)
 		filenames = os.listdir(path)
-		pattern = '^%s_[0-9]{%d}%s.%s$' % (prefix, digits, suffix, extension)
+		pattern = '^%s_[0-9]{%d}%s_[0-9].%s$' % (prefix, digits, suffix, extension)
 		number = 0
-		end = len('%s.%s' % (suffix, extension))
+		end = len('%s%s.%s' % (suffix, defindex, extension))
 		for filename in filenames:
 			if re.search(pattern, filename):
 				n = int(filename[-digits - end:-end])
 				if n > number:
 					number = n
-		number += 1
+		if self.defocus != 2:
+			number += 1
 		if number >= 10**digits:
 			raise node.PublishError('too many images, time to go home')
-		filename = ('%s_%0' + str(digits) + 'd%s') % (prefix, number, suffix)
+		filename = ('%s_%0' + str(digits) + 'd%s' + '%s') % (prefix, number, suffix, defindex)
 		imagedata['filename'] = filename
 
 	def publishImageData(self, imagedata):
@@ -186,7 +196,19 @@ class ManualAcquisition(node.Node):
 				if dose:
 					self.measureDose()
 				else:
-					self.acquire()
+					if self.settings['defocus1switch']:
+						self.logger.info('Setting defocus 1: %s' % (self.settings['defocus1'],))
+						self.instrument.tem.Defocus = self.settings['defocus1']
+						self.defocus = 1
+						self.acquire()
+					if self.settings['defocus2switch']:
+						self.logger.info('Setting defocus 2: %s' % (self.settings['defocus2'],))
+						self.instrument.tem.Defocus = self.settings['defocus2']
+						self.defocus = 2
+						self.acquire()
+					if not (self.settings['defocus1switch'] or self.settings['defocus2switch']):
+						self.defocus = None
+						self.acquire()
 			except AcquireError:
 				self.panel.acquisitionDone()
 				return

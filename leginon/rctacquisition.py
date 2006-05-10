@@ -13,11 +13,17 @@ import numarray
 import numarray.nd_image
 pi = numarray.pi
 
+def radians(degrees):
+	return degrees * pi / 180.0
+
+def degrees(radians):
+	return radians * 180.0 / pi
+
 class RCTAcquisition(acquisition.Acquisition):
 	panelclass = gui.wx.RCTAcquisition.Panel
 	settingsclass = data.RCTAcquisitionSettingsData
 	defaultsettings = acquisition.Acquisition.defaultsettings
-	defaultsettings.update({'tilt1': 0.0, 'tilt2': 0.0, 'sigma':0.5, 'minsize': 0.0015, 'maxsize': 0.9, 'minperiod': 0.02, 'minstable': 0.02})
+	defaultsettings.update({'tilts': '(-45, 45)', 'stepsize': 10, 'sigma':0.5, 'minsize': 0.0015, 'maxsize': 0.9, 'minperiod': 0.02, 'minstable': 0.02})
 	eventinputs = acquisition.Acquisition.eventinputs
 	eventoutputs = acquisition.Acquisition.eventoutputs
 
@@ -28,96 +34,108 @@ class RCTAcquisition(acquisition.Acquisition):
 	def setImageFilename(self, imagedata):
 		acquisition.Acquisition.setImageFilename(self, imagedata)
 		imagedata['filename'] = imagedata['filename'] + '_%02d' % (self.tiltnumber,)
-		
-	def processTargetList(self, newdata):
-		'''
-		We override this so we can process each target list twice
-		'''
-		# set tilt1 = tilt of parent image
-		self.tiltnumber = 1
-		image1 = newdata['image']
-		tilt1 = image1['scope']['stage position']['a']
-		self.logger.info('doing tilt 1 = %s degrees' % (tilt1*180/pi,))
-		self.instrument.tem.StagePosition = {'a': tilt1}
-		acquisition.Acquisition.processTargetList(self, newdata)
 
-		tilt1targets = self.researchTargets(list=newdata, status='new')
-		if not tilt1targets:
+	def processTargetList(self, tilt0targetlist):
+		'''
+		We override this so we can process each target list for each tilt
+		'''
+
+		## return if no targets in list
+		tilt0targets = self.researchTargets(list=tilt0targetlist, status='new')
+		if not tilt0targets:
 			return
 
-		tilt2 = self.settings['tilt2'] * pi / 180.0
-		self.tiltnumber = 2
-		tilt2targetlist = self.tiltTargets(tilt1, tilt2, newdata)
+		## list of tilts entered by user in degrees, converted to radians
+		tiltstr = self.settings['tilts']
+		try:
+			tilts = eval(tiltstr)
+		except:
+			self.logger.error('Invalid tilt list')
+			return
+		tilts = map(radians, tilts)
 
-		# set tilt2
-		self.logger.info('doing tilt 2 = %s degrees' % (tilt2*180/pi,))
-		self.instrument.tem.StagePosition = {'a': tilt2}
-		acquisition.Acquisition.processTargetList(self, tilt2targetlist)
+		## parent image and tilt of parent image
+		image0 = tilt0targetlist['image']
+		tilt0 = image0['scope']['stage position']['a']
 
-		self.logger.info('resetting tilt1')
-		self.instrument.tem.StagePosition = {'a': tilt1}
+		## loop through each tilt
+		for i,tilt in enumerate(tilts):
+			self.tiltnumber = i
 
-	def tiltTargets(self, tilt1, tilt2, tilt1targetlist):
+			## only make new targets if tilt is different than tilt0
+			if tilt == tilt0:
+				tiltedtargetlist = tilt0targetlist
+			else:
+				tiltedtargetlist = self.tiltTargets(tilt0, tilt, tilt0targetlist)
+
+			self.logger.info('doing tilt %d = %s degrees' % (i, degrees(tilt),))
+			self.instrument.tem.StagePosition = {'a': tilt}
+			acquisition.Acquisition.processTargetList(self, tiltedtargetlist)
+
+		self.logger.info('returning to tilt0')
+		self.instrument.tem.StagePosition = {'a': tilt0}
+
+	def tiltTargets(self, tilt0, tilt, tilt0targetlist):
 		# find matrix
-		#stepsize = self.settings['stepsize'] * pi / 180.0
-		stepsizedeg = self.settings['tilt1']
-		stepsize = stepsizedeg * pi / 180
-		image1 = tilt1targetlist['image']
-		matrix,tilt2imagedata = self.trackStage(image1, tilt1, tilt2, stepsize)
+		image0 = tilt0targetlist['image']
+		matrix,tiltedimagedata = self.trackStage(image0, tilt0, tilt)
 
-		# create new target list adjusted for tilt2
-		tilt1targets = self.researchTargets(list=tilt1targetlist, status='new')
-		rows,cols = image1['camera']['dimension']['y'], image1['camera']['dimension']['x']
-		tilt2targetlist = self.newTargetList(image=tilt2imagedata)
-		self.publish(tilt2targetlist, database=True)
+		# create new target list adjusted for new tilt
+		tilt0targets = self.researchTargets(list=tilt0targetlist, status='new')
+		rows,cols = image0['camera']['dimension']['y'], image0['camera']['dimension']['x']
+		tiltedtargetlist = self.newTargetList(image=tiltedimagedata)
+		self.publish(tiltedtargetlist, database=True)
 		displaytargets = []
-		for tilt1target in tilt1targets:
-			row = tilt1target['delta row'] + rows/2
-			col = tilt1target['delta column'] + cols/2
+		for tilt0target in tilt0targets:
+			row = tilt0target['delta row'] + rows/2
+			col = tilt0target['delta column'] + cols/2
 			v = numarray.array((row,col,1))
 			row2,col2,one = numarray.matrixmultiply(v, matrix)
 			displaytargets.append((col2,row2))
-			tilt2target = data.AcquisitionImageTargetData(initializer=tilt1target)
-			tilt2target['delta row'] = row2 - rows/2
-			tilt2target['delta column'] = col2 - cols/2
-			tilt2target['list'] = tilt2targetlist
-			tilt2target['image'] = tilt2imagedata
-			tilt2target['scope'] = tilt2imagedata['scope']
-			tilt2target['version'] = 0
-			self.publish(tilt2target, database=True)
+			tiltedtarget = data.AcquisitionImageTargetData(initializer=tilt0target)
+			tiltedtarget['delta row'] = row2 - rows/2
+			tiltedtarget['delta column'] = col2 - cols/2
+			tiltedtarget['list'] = tiltedtargetlist
+			tiltedtarget['image'] = tiltedimagedata
+			tiltedtarget['scope'] = tiltedimagedata['scope']
+			tiltedtarget['version'] = 0
+			self.publish(tiltedtarget, database=True)
 
 		self.setTargets(displaytargets, 'Peak')
 
-		return tilt2targetlist
+		return tiltedtargetlist
 
-	def trackStage(self, image1, tilt1, tilt2, stepsize):
+	def trackStage(self, image0, tilt0, tilt):
+		stepsizedeg = self.settings['stepsize']
+		stepsize = radians(stepsizedeg)
+
 		#### copied from drift manager
-		## go to state of image1
+		## go to state of image0
 		## go through preset manager to ensure we follow the right
 		## cycle
-		self.logger.info('Returning to state of image1')
-		presetname = image1['preset']['name']
-		emtarget = image1['emtarget']
+		self.logger.info('Returning to state of image0')
+		presetname = image0['preset']['name']
+		emtarget = image0['emtarget']
 		self.presetsclient.toScope(presetname, emtarget)
 
 		## calculate tilts
-		tiltrange = tilt2 - tilt1
+		tiltrange = tilt - tilt0
 		nsteps = abs(int(round(float(tiltrange) / stepsize)))
-		tilts = [tilt2]
+		tilts = [tilt]
 		if nsteps > 0:
 			tilts = []
 			stepsize = float(tiltrange) / nsteps
 			for i in range(1, nsteps+1):
-				tilts.append(tilt1+i*stepsize)
-		self.logger.info('Tilts: %s' % ([t*180/3.14159 for t in tilts],))
+				tilts.append(tilt0+i*stepsize)
+		self.logger.info('Tilts: %s' % ([degrees(t) for t in tilts],))
 
 		## loop through tilts
-		imageold = image1
+		imageold = image0
 		sigma = self.settings['sigma']
 		arrayold = numarray.nd_image.gaussian_filter(imageold['image'], sigma)
 		runningresult = numarray.identity(3, numarray.Float64)
 		for tilt in tilts:
-			self.logger.info('Tilt: %s' % (tilt*180/3.14159,))
+			self.logger.info('Tilt: %s' % (degrees(tilt),))
 			self.instrument.tem.StagePosition = {'a': tilt}
 
 			self.logger.info('Acquire intermediate tilted parent image')
@@ -148,7 +166,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.publish(imageold['camera'], database=True)
 
 		## convert CameraImageData to AcquisitionImageData
-		imagedata = data.AcquisitionImageData(initializer=imageold, preset=image1['preset'], label=self.name, target=image1['target'], list=None, emtarget=image1['emtarget'])
+		imagedata = data.AcquisitionImageData(initializer=imageold, preset=image0['preset'], label=self.name, target=image0['target'], list=None, emtarget=image0['emtarget'])
 		self.publishDisplayWait(imagedata)
 		
 		self.logger.info('Final Matrix: %s' % (runningresult,))

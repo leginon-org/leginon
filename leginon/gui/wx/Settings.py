@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Settings.py,v $
-# $Revision: 1.25 $
+# $Revision: 1.26 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-12-06 22:43:34 $
-# $Author: suloway $
+# $Date: 2006-05-10 22:55:26 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -31,6 +31,7 @@ attributes = {
 	gui.wx.Entry.Entry: ('GetValue', 'SetValue', gui.wx.Entry.EVT_ENTRY),
 	gui.wx.Entry.IntEntry: ('GetValue', 'SetValue', gui.wx.Entry.EVT_ENTRY),
 	gui.wx.Entry.FloatEntry: ('GetValue', 'SetValue', gui.wx.Entry.EVT_ENTRY),
+	gui.wx.Entry.FloatSequenceEntry: ('GetValue', 'SetValue', gui.wx.Entry.EVT_ENTRY),
 	gui.wx.Presets.PresetChoice:
 		('GetStringSelection', 'SetStringSelection',
 			gui.wx.Presets.EVT_PRESET_CHOICE),

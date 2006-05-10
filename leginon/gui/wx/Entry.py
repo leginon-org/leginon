@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Entry.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-07-07 23:13:43 $
-# $Author: suloway $
+# $Date: 2006-05-10 22:55:26 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -48,7 +48,8 @@ class Entry(wx.TextCtrl):
 		self.cleancolor = self.GetBackgroundColour()
 		self.dirtycolor = wx.Color(196, 225, 255)
 
-		if not self._setStringValue(wx.TextCtrl.GetValue(self)):
+		stuff = wx.TextCtrl.GetValue(self)
+		if not self._setStringValue(stuff):
 			raise ValueError
 
 		self.Bind(wx.EVT_KILL_FOCUS, self.onKillFocus)
@@ -149,11 +150,35 @@ class TypeEntry(Entry):
 		return True
 
 	def _validateString(self, string):
+		if string is None:
+			string = self._nonestring
 		try:
 			value = self.stringToValue(string)
 		except:
 			return False
 		return self._validateValue(value)
+
+class TypeSequenceEntry(TypeEntry):
+	def valueToString(self, value):
+		if not value:
+			return self._nonestring
+		return ', '.join(map(str, value))
+
+	def stringToValue(self, string):
+		print 'STRING', string
+		if string == '':
+			return None
+		strings = string.split(',')
+		stuff = TypeEntry.stringToValue
+		values = map(TypeEntry.stringToValue, strings)
+		return tuple(values)
+
+	def _validateString(self, string):
+		try:
+			value = self.stringToValue(string)
+			return True
+		except:
+			return False
 
 class NumberEntry(TypeEntry):
 	def __init__(self, parent, id, min=None, max=None, values=None, **kwargs):
@@ -188,6 +213,9 @@ class FloatEntry(NumberEntry):
 		if value is None:
 			return self._nonestring
 		return '%g' % value
+
+class FloatSequenceEntry(TypeSequenceEntry):
+	_type = float
 
 if __name__ == '__main__':
 	class App(wx.App):
