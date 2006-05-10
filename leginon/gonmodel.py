@@ -265,7 +265,7 @@ class GonModel:
 					resids0 = resids[0]
 				except IndexError:
 					raise RuntimeError('Not enough data for %d terms' % (terms,))
-			if best_resids is None or resids[0] < best_resids:
+				if best_resids is None or resids[0] < best_resids:
 					best_resids = resids[0]
 					best_period = period
 					best_x = x
