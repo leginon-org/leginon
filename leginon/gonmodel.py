@@ -92,7 +92,7 @@ class GonData:
 		for point in datapoints:
 			self.gonpos[n] = point[gonposcol]
 			self.othergonpos[n] = point[othergonposcol]
-			self.pixpertick[n] = math.sqrt(point[3] * point[3] + point[4] * point[4]) /  point[2]
+			self.pixpertick[n] = math.hypot(point[3], point[4]) /  abs(point[2])
 			self.avg += self.pixpertick[n]
 			self.angle += math.atan2(point[4],point[3])
 			n += 1
