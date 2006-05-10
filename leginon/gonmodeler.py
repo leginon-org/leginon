@@ -57,7 +57,7 @@ class GonModeler(calibrator.Calibrator):
 
 	## use this sometime
 	def withinTolerance(self, delta, imx, imy, known_pixelsize, tolerance):
-			measuredpixsize = delta / math.hypot(imx,imy)
+			measuredpixsize = abs(delta / math.hypot(imx,imy))
 			error = abs(measuredpixsize - known_pixelsize) / known_pixelsize
 			if error > tolerance/100.0:
 				self.logger.info('Measured pixel size %s' % (measuredpixsize,))
