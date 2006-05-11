@@ -35,10 +35,10 @@ class ManualAcquisition(node.Node):
 		'loop pause time': 0.0,
 		'low dose': False,
 		'low dose pause time': 5.0,
-		'defcous1switch': False,
-		'defcous1': 0.0,
-		'defcous2switch': False,
-		'defcous2': 0.0,
+		'defocus1switch': False,
+		'defocus1': 0.0,
+		'defocus2switch': False,
+		'defocus2': 0.0,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.loopstop = threading.Event()
