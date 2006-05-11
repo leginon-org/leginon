@@ -137,6 +137,7 @@ class Robot(node.Node):
 		'grid tray': None,
 	}
 	defaultcolumnpressurethreshold = 3.5e-5
+	defaultzposition = 0
 	def __init__(self, id, session, managerlocation, **kwargs):
 
 		#self.simulate = True
@@ -322,6 +323,10 @@ class Robot(node.Node):
 		self.instrument.tem.StagePosition = {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0}
 		self.logger.info('Stage position is zeroed.')
 
+	def moveStagePositionZ(self,zval):
+		self.logger.info("Move stage position Z to: %s",zval)
+		self.instrument.tem.StagePosition = {'z': zval}
+
 	def holderNotInScope(self):
 		self.logger.info('Verifying there is no holder inserted...')
 		self.waitScope('HolderStatus', 'not inserted')
@@ -382,6 +387,13 @@ class Robot(node.Node):
 		if threshold is None:
 			threshold = self.defaultcolumnpressurethreshold
 		return threshold
+
+	def getDefaultZPosition(self):
+		defzposition = self.settings['default Z position']
+		if defzposition is None:
+			defzposition = self.defaultzposition
+		return defzposition 
+
 
 	def checkColumnPressure(self):
 		threshold = self.getColumnPressureThreshold()
@@ -447,6 +459,9 @@ class Robot(node.Node):
 		self.insertCameras()
 		self.checkHighTensionOn()
 		self.vacuumReady()
+		zposition = self.getDefaultZPosition()
+		if zposition:
+			self.moveStagePositionZ(zposition)
 		self.checkColumnPressure()
 		self.openColumnValves()
 		self.logger.info('Microscope ready for imaging.')

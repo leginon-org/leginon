@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RobotAtlasTargetFinder.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-24 18:23:34 $
-# $Author: suloway $
+# $Date: 2006-05-11 21:39:26 $
+# $Author: dfellman $
 # $State: Exp $
 # $Locker:  $
 
@@ -32,7 +32,7 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.Realize()
 
 		self.atlaslist = []
-		self.listbox = wx.ListBox(self, -1)
+		self.listbox = wx.ListBox(self, -1, style=wx.LB_SINGLE)
 		self.listbox.Enable(False)
 
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
