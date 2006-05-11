@@ -443,10 +443,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=target, list=self.imagelistdata, emtarget=emtarget)
 		if target is not None and 'grid' in target and target['grid'] is not None:
 			imagedata['grid'] = target['grid']
-
-		print 'AAAAAAAAAAAAAAAAAAAA'
-		threading.Thread(target=self.publishDisplayWait, args=(imagedata,)).run()
-		print 'BBBBBBBBBBBBBBBBBBB'
+		self.publishDisplayWait(imagedata)
 
 	def retrieveImagesFromDB(self):
 		imagequery = data.AcquisitionImageData()
