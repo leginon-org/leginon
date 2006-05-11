@@ -299,7 +299,7 @@ class _Table:
 
 		if orderBy is not None:
 			orderBy = copy.deepcopy(orderBy)
-		orderBy['fields'] = map(lambda id: sqlexpr.Field(self.table, id), orderBy['fields'])
+			orderBy['fields'] = map(lambda id: sqlexpr.Field(self.table, id), orderBy['fields'])
 
 		c = self.cursor()
 		if self.columns:
