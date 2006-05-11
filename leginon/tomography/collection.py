@@ -311,6 +311,7 @@ class Collection(object):
 
     def savePredictionInfo(self, predicted_position, predicted_shift, position, correlation, raw_correlation, pixel_size, image):
         initializer = {
+            'session': self.node.session,
             'predicted position': predicted_position,
             'predicted shift': predicted_shift,
             'position': position,

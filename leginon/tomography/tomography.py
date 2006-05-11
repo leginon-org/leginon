@@ -55,6 +55,7 @@ class Tomography(acquisition.Acquisition):
         self.tilts = tilts.Tilts()
         self.exposure = exposure.Exposure()
         self.prediction = prediction.Prediction()
+        self.loadPredictionInfo()
 
         self.start()
 
@@ -286,4 +287,49 @@ class Tomography(acquisition.Acquisition):
             raise RutimeError('error setting preset \'%s\'' % preset_name)
 
         return target, emtarget
+
+    def loadPredictionInfo(self):
+        initializer = {
+            'session': self.session,
+        }
+        query_data = data.TiltSeriesData(initializer=initializer)
+        results = self.research(query_data)
+
+        keys = []
+        settings = {}
+        positions = {}
+        for result in results:
+            key = result.dbid
+            keys.append(key)
+            settings[key] = result
+            positions[key] = []
+
+        initializer = {
+            'session': self.session,
+        }
+        query_data = data.TomographyPredictionData(initializer=initializer)
+        results = self.research(query_data)
+        results.reverse()
+
+        for result in results:
+            image = result['image']
+            tilt_series = image['tilt series']
+            tilt = image['scope']['stage position']['a']
+            position = result['position']
+            positions[tilt_series.dbid].append((tilt, position))
+
+        self.prediction.reset()
+        n_series = 0
+        n_positions = 0
+        for key in keys:
+            start = settings[key]['tilt start']
+            for i, (tilt, position) in enumerate(positions[key]):
+                if i > 0 and tilt > start - 1e-6 and tilt < start + 1e-6:
+                    self.prediction.reset()
+                self.prediction.addPosition(tilt, position)
+                n_positions += 1
+            n_series += 1
+            self.prediction.reset()
+        
+        self.logger.info('Loaded %d data points from %d previous series' % (n_positions, n_series))
 

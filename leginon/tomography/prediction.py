@@ -23,7 +23,8 @@ class Prediction(object):
         self.parameters = [0, 0, 0, 0, 0]
 
     def reset(self):
-        self.tilt_groups.append(TiltGroup())
+        if len(self.tilt_groups) < 1 or len(self.tilt_groups[-1]) > 0:
+            self.tilt_groups.append(TiltGroup())
 
     def addPosition(self, tilt, position):
         self.tilt_groups[-1].addTilt(tilt, position['x'], position['y'])
@@ -177,7 +178,6 @@ def residuals(parameters, tilt_matrices_list, x_list, y_list):
 
 def _leastSquaresXY(tilts, positions, tilt):
     m = len(tilts)
-    #n = 10
     n = 3
     a = scipy.zeros((m, n), scipy.Float)
     b = scipy.zeros((m, 1), scipy.Float)
@@ -192,7 +192,6 @@ def _leastSquaresXY(tilts, positions, tilt):
         position += x[j]*tilt**j
     return position
 
-#def leastSquaresXY(tilts, xs, ys, tilt, n=0):
 def leastSquaresXY(tilts, xs, ys, tilt, n=5):
     position = scipy.zeros(2, scipy.Float)
     for i, positions in enumerate((xs, ys)):
