@@ -527,7 +527,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		if self.targetlist is None:
 			self.targetlist = self.newTargetList()
 			self.publish(self.targetlist, database=True, dbforce=True)
-		targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=self.targetlist)
+		targetdata = self.newTargetForTile(imagedata, drow, dcol, type=typename, list=self.targetlist)
 		self.publish(targetdata, database=True)
 		return targetdata
 

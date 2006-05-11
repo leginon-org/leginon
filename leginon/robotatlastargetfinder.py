@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-24 18:22:11 $
+# $Date: 2006-05-11 20:30:08 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -167,7 +167,7 @@ class Image(object):
 
 	def addTarget(self, target):
 		row, column = target
-		targetdata = self.node.newTargetForImage(self.data, row, column,
+		targetdata = self.node.newTargetForTile(self.data, row, column,
 																							type='acquisition', status='new')
 																							#list=targetlist)
 		self.node.publish(targetdata, database=True)
@@ -640,7 +640,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				targetdatalist = []
 				for originaltargetdata, target, imagedata in targets:
 					row, column = target
-					targetdata = self.newTargetForImage(imagedata, row, column,
+					targetdata = self.newTargetForTile(imagedata, row, column,
 																							type='acquisition',
 																							list=targetlist)
 					self.publish(targetdata, database=True)

@@ -17,11 +17,6 @@ class TargetHandler(object):
 		self.queueupdate = threading.Event()
 
 	def compareTargetNumber(self, first, second):
-		### if come from different images, compare image dbid
-		if 'image' in first and 'image' in second:
-			if None not in (first['image'], second['image']):
-				if first['image'] is not second['image']:
-					return cmp(first['image'].dbid, second['image'].dbid)
 		return cmp(first['number'], second['number'])
 
 	def researchTargets(self, **kwargs):
@@ -171,7 +166,10 @@ class TargetHandler(object):
 			targetdata['status'] = 'new'
 		return targetdata
 
-	def newTargetForImage(self, imagedata, drow, dcol, **kwargs):
+	def newTargetForTile(self, imagedata, drow, dcol, **kwargs):
+		return self.newTargetForImage(imagedata, drow, dcol, fortile=True, **kwargs)
+
+	def newTargetForImage(self, imagedata, drow, dcol, fortile=False, **kwargs):
 		'''
 		returns a new target data object with data filled in from the image data
 		'''
@@ -182,7 +180,14 @@ class TargetHandler(object):
 
 		## get next number if not already specified
 		if 'number' not in kwargs or kwargs['number'] is None:
-			lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
+			## If image is a mosaic tile, then target number should be global for
+			## the entire mosaic to be sure they are in the same order chosen
+			if fortile:
+				qimagedata = data.AcquisitionImageData()
+				qimagedata['list'] = imagedata['list']
+			else:
+				qimagedata = imagedata
+			lastnumber = self.lastTargetNumber(image=qimagedata, session=self.session)
 			kwargs['number'] = lastnumber + 1
 
 		targetdata = self.newTarget(image=imagedata, scope=imagedata['scope'], camera=imagedata['camera'], preset=imagedata['preset'], drow=drow, dcol=dcol, session=self.session, grid=grid, **kwargs)
