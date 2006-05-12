@@ -1,12 +1,8 @@
-#!/usr/bin/env python
-
-#
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
-#
+# The Leginon software is Copyright 2003
+# The Scripps Research Institute, La Jolla, CA
+# For terms of the license agreement
+# see http://ami.scripps.edu/software/leginon-license
 
 import leginonconfig
 try:
@@ -36,19 +32,19 @@ class DataDuplicateError(DataError):
 How DataManager manages references between Data
 -----------------------------------------------
 Take the case of one Data instance referencing another Data instance:
-     iii = ImageData()
-     sss = SessionData()
-     iii['session'] = sss
+	iii = ImageData()
+	sss = SessionData()
+	iii['session'] = sss
 In this example, there is no direct reference between sss and iii.
 Instead, iii['session'] actually contains a DataReference object.
 If we try to access iii['session'], the DataManager will use the
 DataReference to find the actual data (sss).  This dereferencing
 operation happens automatically, for example:
-     mysession = iii['session']
+	mysession = iii['session']
 Now mysession is sss.
 
 If dereferencing is not desired, Data objects have a special method:
-     myref = iii.special_getitem('session', dereference=False)
+	myref = iii.special_getitem('session', dereference=False)
 will return a reference to sss instead of sss.
 
 pickling and deepcopying are optimized because they do not dereference.
@@ -178,7 +174,7 @@ class DataManager(object):
 		finally:
 			self.lock.release()
 
-	def getDataFromDB(self, dataclass, dbid):
+	def getDataFromDB(self, dataclass, dbid, **kwargs):
 		self.dblock.acquire()
 		try:
 			if self.db is None:
@@ -188,7 +184,7 @@ class DataManager(object):
 			try:
 				dat = self.dbcache[dataclass,dbid]
 			except KeyError:
-				dat = self.db.direct_query(dataclass, dbid)
+				dat = self.db.direct_query(dataclass, dbid, **kwargs)
 			return dat
 		finally:
 			self.dblock.release()
@@ -215,7 +211,7 @@ class DataManager(object):
 		datainstance.sync()
 		return datainstance
 
-	def getData(self, datareference):
+	def getData(self, datareference, **kwargs):
 		dataclass = datareference.dataclass
 		referent = None
 		dmid = datareference.dmid
@@ -238,11 +234,12 @@ class DataManager(object):
 			dbid = datareference.dbid
 			if dbid is not None:
 				## in database
-				referent = self.getDataFromDB(dataclass, dbid)
+				referent = self.getDataFromDB(dataclass, dbid, **kwargs)
 			if referent is None:
 				### try remote location
 				if dmid is not None and dmid[0] != self.location:
 					## in remote memory
+					# TODO: kwargs
 					referent = self.getRemoteData(datareference)
 
 		## if sill None, then must not exist anymore
@@ -274,9 +271,9 @@ datamanager = DataManager()
 class DataReference(object):
 	'''
 	initialized with one of these three:
-	    datarefernce (become a copy of an existing data reference)
-	    datainstance (become a reference an existing data instance)
-	    dataclass (become a reference to a non-existing data instance)
+		datarefernce (become a copy of an existing data reference)
+		datainstance (become a reference an existing data instance)
+		dataclass (become a reference to a non-existing data instance)
 	if using dataclass, also specify either a dmid or a dbid
 	'''
 	def __init__(self, datareference=None, referent=None, dataclass=None, dmid=None, dbid=None):
@@ -326,7 +323,7 @@ class DataReference(object):
 			self.dmid = o.dmid
 			self.dbid = o.dbid
 
-	def getData(self):
+	def getData(self, **kwargs):
 		referent = None
 		#### Try weak reference, return referent if found
 		if self.wr is not None:
@@ -339,7 +336,7 @@ class DataReference(object):
 			#### instead, return new reference to referent
 			#### to signify that this reference is defunct
 			goodref = False
-			referent = datamanager.getData(self)
+			referent = datamanager.getData(self, **kwargs)
 		else:
 			goodref = True
 
@@ -547,7 +544,7 @@ class Data(newdict.TypedDict):
 			deref.append(val)
 		return deref
 
-	def special_getitem(self, key, dereference):
+	def special_getitem(self, key, dereference, **kwargs):
 		'''
 		'''
 		## actual value
@@ -557,13 +554,13 @@ class Data(newdict.TypedDict):
 		if not dereference:
 			return value
 		if isinstance(value, DataReference):
-			value = value.getData()
+			value = value.getData(**kwargs)
 			### if got new DataReference, replace existing one
 			if isinstance(value, DataReference):
 				# replace my reference with new one
 				self.__setitem__(key, value, force=True)
 				# use new reference
-				value = value.getData()
+				value = value.getData(**kwargs)
 		if isinstance(value, newdict.FileReference):
 			value = value.read()
 			## Optionally, we could skip the next line and continue to
@@ -710,9 +707,9 @@ def NULL(dataclass):
 ##   - do not overload the __init__ method (unless you have a good reason)
 ##   - Override the typemap(cls) class method
 ##   - make sure typemap is defined as a classmethod:
-##      typemap = classmethod(typemap)
+##		typemap = classmethod(typemap)
 ##   - typemap() should return a sequence mapping, usually a list
-##       of tuples:   [ (key, type), (key, type),... ]
+##		of tuples:   [ (key, type), (key, type),... ]
 ## Examples:
 class NewData(Data):
 	def typemap(cls):
@@ -2094,9 +2091,9 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('xcf bin', int),
 			('run buffer cycle', bool),
 			('align zero loss peak', bool),
-            ('dose', float),
-            ('min exposure', float),
-            ('max exposure', float),
+			('dose', float),
+			('min exposure', float),
+			('max exposure', float),
 		)
 	typemap = classmethod(typemap)
 
