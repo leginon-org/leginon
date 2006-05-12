@@ -294,6 +294,7 @@ class Tomography(acquisition.Acquisition):
         }
         query_data = data.TiltSeriesData(initializer=initializer)
         results = self.research(query_data)
+        results.reverse()
 
         keys = []
         settings = {}
@@ -312,24 +313,23 @@ class Tomography(acquisition.Acquisition):
         results.reverse()
 
         for result in results:
-            image = result['image']
+            image = result.special_getitem('image', True, readimages=False)
             tilt_series = image['tilt series']
             tilt = image['scope']['stage position']['a']
             position = result['position']
             positions[tilt_series.dbid].append((tilt, position))
 
-        self.prediction.reset()
-        n_series = 0
-        n_positions = 0
         for key in keys:
             start = settings[key]['tilt start']
-            for i, (tilt, position) in enumerate(positions[key]):
-                if i > 0 and tilt > start - 1e-6 and tilt < start + 1e-6:
-                    self.prediction.reset()
-                self.prediction.addPosition(tilt, position)
-                n_positions += 1
-            n_series += 1
             self.prediction.reset()
-        
-        self.logger.info('Loaded %d data points from %d previous series' % (n_positions, n_series))
+            for i, (tilt, position) in enumerate(positions[key]):
+                if i > 0 and round(tilt, 6) == round(start, 6):
+                    self.prediction.reset()
+                if not self.prediction.addPosition(tilt, position):
+                    break
+
+        n_groups = len(self.prediction.tilt_groups)
+        n_points = sum([len(tg) for tg in self.prediction.tilt_groups])
+        m = 'Loaded %d points from %d previous series' % (n_points, n_groups)
+        self.logger.info(m)
 

@@ -270,7 +270,10 @@ class Collection(object):
                 'y': predicted_position['y'] - correlation['y'],
             }
 
-            self.prediction.addPosition(tilt, position)
+            if not self.prediction.addPosition(tilt, position):
+                self.logger.error('Position out of range, aborting series...')
+                self.finalize()
+                raise Abort
 
             m = 'Correlated shift from feature: %g, %g pixels, %g, %g meters.'
             self.logger.info(m % (correlation['x'],

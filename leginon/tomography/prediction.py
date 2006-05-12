@@ -22,12 +22,29 @@ class Prediction(object):
         self.tilt_groups = []
         self.parameters = [0, 0, 0, 0, 0]
 
+        self.min_points = 16
+        n = 2**(11 + 4)
+        self.max_absolute = scipy.hypot(n, n)
+        n = 2**11
+        self.max_relative = scipy.hypot(n, n)
+
     def reset(self):
-        if len(self.tilt_groups) < 1 or len(self.tilt_groups[-1]) > 0:
-            self.tilt_groups.append(TiltGroup())
+        if len(self.tilt_groups) > 0:
+            if len(self.tilt_groups[-1]) < self.min_points:
+                del self.tilt_groups[-1]
+        self.tilt_groups.append(TiltGroup())
 
     def addPosition(self, tilt, position):
-        self.tilt_groups[-1].addTilt(tilt, position['x'], position['y'])
+        tilt_group = self.tilt_groups[-1]
+        if len(tilt_group) > 0:
+            origin = {'x': tilt_group.xs[0],
+                      'y': tilt_group.ys[0]}
+            previous = {'x': tilt_group.xs[-1],
+                        'y': tilt_group.ys[-1]}
+            if not self.valid(position, origin, previous):
+                return False
+        tilt_group.addTilt(tilt, position['x'], position['y'])
+        return True
 
     def predict(self, tilt):
         tilt_group = self.tilt_groups[-1]
@@ -85,6 +102,19 @@ class Prediction(object):
             return
         self.parameters = leastSquaresModel(self.tilt_groups)
         return self.parameters
+
+    def valid(self, position, origin, previous):
+        absolute = scipy.hypot(position['x'] - origin['x'],
+                               position['y'] - origin['y'])
+        if absolute > self.max_absolute:
+            return False
+
+        relative = scipy.hypot(position['x'] - previous['x'],
+                               position['y'] - previous['y'])
+        if relative > self.max_relative:
+            return False
+
+        return True
 
 def leastSquaresModel(tilt_groups):
     parameters = [0] + [0, 0] + len(tilt_groups)*[0, 0]
