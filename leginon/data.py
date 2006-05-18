@@ -439,6 +439,16 @@ class Data(newdict.TypedDict):
 		newdict.TypedDict.__init__(self)
 
 		self._reference = DataReference(referent=self)
+		
+		# This is something we will be experimenting with to see if
+		# we can use less memory during robot reacquisition.
+		# This is only useful if readimages=False during the query.
+		# Setting this to True is the original behavior:  Data object
+		# will hold the actual image array.  Setting to False will
+		# ensure that we only hole a reference the the FileReference,
+		# not the actual data.  In that case, every __getitem__ will
+		# read the image file, creating a potentially huge slowdown.
+		self.holdimages = True
 
 		self.__size = 2500
 		k = self.keys()
@@ -562,11 +572,17 @@ class Data(newdict.TypedDict):
 				# use new reference
 				value = value.getData(**kwargs)
 		if isinstance(value, newdict.FileReference):
+			fileref = value
 			value = value.read()
-			## Optionally, we could skip the next line and continue to
-			## hold only a reference as a way of conserving memory at the 
-			## expense of having to read the image every time
-			self.__setitem__(key, value, force=True)
+			# This gives the option of keeping the FileReference rather
+			# than the image data, for memory vs. speed tradeoff
+			if self.holdimages:
+				# Replace FileReference with the actual array
+				self.__setitem__(key, value, force=True)
+			else:
+				# Keep FileReference.
+				# Make sure FileReference does not hold image array:
+				fileref.data = None
 		return value
 
 	def __getitem__(self, key):
