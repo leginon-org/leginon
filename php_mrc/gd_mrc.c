@@ -378,7 +378,11 @@ void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX,
 
 	for (v=dstY, j=srcY; j<h; j++, v++) {
 		for (u=dstX, i=srcX; i<w; i++, u++) {
-			ij = i + j*(w_src);
+			if ((dstX+i>w_dst) || (dstY+j>h_dst) ||
+					(dstX+i<0) || (dstY+j<0)
+				)
+				continue;
+			ij = i + j*w_src;
 			uv = u + v*w_dst;
 			data_array_dst[uv] = data_array_src[ij];
 		}
