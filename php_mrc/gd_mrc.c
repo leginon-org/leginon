@@ -16,8 +16,9 @@ void mrc_to_float(MRC *mrc, float *pdata_array) {
                 fmax=mrc->header.amax;
 
         int     h=mrc->header.nx, w=mrc->header.ny,
-                mode=mrc->header.mode,
-                n=w*h,
+                mode=mrc->header.mode;
+
+				long		n=w*h,
                 i;
 
         switch (mode) {
@@ -65,8 +66,9 @@ void mrc_convert_to_float(MRC *mrc_src, MRC *mrc_dst) {
 
         float	*data_array, *data_array_dst;
 
-        int     w_src=mrc_src->header.nx, h_src=mrc_src->header.ny,
-                n_src=w_src*h_src;
+        int     w_src=mrc_src->header.nx, h_src=mrc_src->header.ny;
+
+				long	n_src=w_src*h_src;
 
 	memcpy(&mrc_dst->header, &mrc_src->header, MRC_HEADER_SIZE);
 
@@ -89,7 +91,7 @@ void mrc_convert_to_float(MRC *mrc_src, MRC *mrc_dst) {
  */
 MRCPtr mrc_create(int x_size, int y_size) {
 
-	int n = x_size * y_size;
+	long n = x_size * y_size;
 	char map[4] = "MAP ";
 	char *pmap;
 	MRCPtr pmrc;
@@ -159,9 +161,10 @@ void mrc_filter(MRC *mrc, int binning, int kernel, float sigma) {
 	float *data_array_src ;
 	float f_val;
 
+	long index, ij, IJ;
+
 	int	i, j,
-		n_w, w, n_h, h,
-		index, ij, IJ;
+		n_w, w, n_h, h;
 
 	int	*maskindexes;
 	int	maskindex=0,
@@ -210,17 +213,17 @@ void mrc_filter(MRC *mrc, int binning, int kernel, float sigma) {
  */
 void mrc_binning(MRC *mrc, int binning, int skip_avg) {
 
+	float *data_array_src ;
+	float f_val;
+
+	long	ij, IJ;
+
 	int *indexes;
 	int	i, j,
-		ij, IJ,
-		n, ni,
 		n_w, w,
 		n_h, h,
 		binningsize,
 		index;
-
-	float *data_array_src ;
-	float f_val;
 
 	if (binning>1) {
 		
@@ -231,7 +234,6 @@ void mrc_binning(MRC *mrc, int binning, int skip_avg) {
 		h = mrc->header.ny;
 		n_w = w/binning;
 		n_h = h/binning;
-		n=w*h;
 
 		for (j=0; j<n_h; j++) {
 			for (i=0; i<n_w; i++) {
@@ -261,8 +263,11 @@ void mrc_binning(MRC *mrc, int binning, int skip_avg) {
 void mrc_log(MRC *mrc) {
 
 	float *data_array_src ;
-	int	w, h, i, n;
 	float val;
+
+	long	n;
+
+	int	w, h, i;
 
 	w = mrc->header.nx;
 	h = mrc->header.ny;
@@ -293,10 +298,12 @@ void mrc_to_gd(MRC *mrc, gdImagePtr im, int pmin, int pmax, int colormap) {
 			f_val;
 
 	int	w=mrc->header.nx, h=mrc->header.ny,
-		n=w*h,
-		i,j,ij;
+		i,j;
 	int densitymax = (colormap) ? densityColorMAX : densityMAX;
 	int gray = (colormap) ? 0 : 1;
+
+	long n=w*h, ij;
+
 
 	data_array = (float *)mrc->pbyData;
 
@@ -324,12 +331,10 @@ void mrc_copy(MRCPtr pmrc_dst, MRCPtr pmrc_src, int x1, int y1, int x2, int y2) 
 
 	float	*data_array_src, *data_array_dst;
 
-	int     w_src=pmrc_src->header.nx, h_src=pmrc_src->header.ny,
-			n_src=w_src*h_src,
-			w_dst, h_dst, n_dst,
+	int	w_src=pmrc_src->header.nx, h_src=pmrc_src->header.ny,
+			w_dst, h_dst, 
 			x_min=x1, x_max=x2,
-			y_min=y1, y_max=y2,
-			i,j,ij,t;
+			y_min=y1, y_max=y2;
 
 	if (x1>x2) {
 		x_min=x2;
@@ -354,11 +359,13 @@ void mrc_copy(MRCPtr pmrc_dst, MRCPtr pmrc_src, int x1, int y1, int x2, int y2) 
  */
 void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX, int srcY, int w, int h)
 {
-	int     w_src, h_src, n_src,
-			w_dst, h_dst, n_dst,
+	int     w_src, h_src,
+			w_dst, h_dst, 
 			x_min_src, x_max_src, y_min_src, y_max_src,
-			x_min_dst, x_max_dst, y_min_dst, y_max_dst,
-			i,j,ij,u,v,uv;
+			x_min_dst, x_max_dst, y_min_dst, y_max_dst;
+
+	long	n_src, n_dst,
+				i,j,ij,u,v,uv;
 
 	float	*data_array_src, *data_array_dst;
 
@@ -378,7 +385,7 @@ void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX,
 
 	for (v=dstY, j=srcY; j<h; j++, v++) {
 		for (u=dstX, i=srcX; i<w; i++, u++) {
-			if ((dstX+i>w_dst) || (dstY+j>h_dst) ||
+			if ((dstX+i>=w_dst) || (dstY+j>=h_dst) ||
 					(dstX+i<0) || (dstY+j<0)
 				)
 				continue;
@@ -418,11 +425,11 @@ void mrc_to_histogram(MRC *mrc, int *frequency, float *classes, int nb_bars) {
                 interval;
         float *data_array;
 
-        int     h=mrc->header.nx, w=mrc->header.ny,
-                n=w*h;
+        int     h=mrc->header.nx, w=mrc->header.ny;
         int i, i1, i2, j, d;
         int mode=mrc->header.mode;
         int nb=0;
+				long	n=w*h;
 
         interval=(fmax-fmin)/nb_bars;
 
@@ -570,9 +577,10 @@ MRCPtr mrc_rotate(MRC *mrc_src, double angle, int resize) {
 
 	float min_val=mrc_src->header.amin;
 
-	int	w_src=mrc_src->header.nx, h_src=mrc_src->header.ny,
-      n_src=w_src*h_src;
+	int	w_src=mrc_src->header.nx, h_src=mrc_src->header.ny;
 	int	w_dst, h_dst;
+
+	long n_src=w_src*h_src;
 
 	if (resize) {
 					cal_rotated_image_dimension(h_src, w_src, angle, &h_dst, &w_dst);
