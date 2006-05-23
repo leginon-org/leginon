@@ -134,10 +134,11 @@ class Robot(node.Node):
 	settingsclass = data.RobotSettingsData
 	defaultsettings = {
 		'column pressure threshold': 3.5e-5,
+		'default Z position': -140e-6,
 		'grid tray': None,
 	}
 	defaultcolumnpressurethreshold = 3.5e-5
-	defaultzposition = 0
+	defaultzposition = -140e-6
 	def __init__(self, id, session, managerlocation, **kwargs):
 
 		#self.simulate = True

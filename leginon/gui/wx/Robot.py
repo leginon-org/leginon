@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Robot.py,v $
-# $Revision: 1.9 $
+# $Revision: 1.10 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-05-11 21:39:26 $
+# $Date: 2006-05-23 21:45:46 $
 # $Author: dfellman $
 # $State: Exp $
 # $Locker:  $
@@ -196,10 +196,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		self.widgets['column pressure threshold'] = FloatEntry(self, -1, min=0.0,
 																														chars=6)
-		self.widgets['default Z position'] = FloatEntry(self, -1,
-																														allownone=False,
-																														chars=6,
-																														value='0.0')
+		self.widgets['default Z position'] = FloatEntry(self, -1, min=-2.0,
+																														chars=8)
 
 		szcolumnpressure = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Column pressure threshold:')
