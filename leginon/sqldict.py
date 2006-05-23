@@ -1571,7 +1571,10 @@ def saveMRC(object, name, path, filename, thumb=False):
 	d={}
 	k = keyMRC(name)
 	fullname = leginonconfig.mapPath(os.path.join(path,filename))
-	if object is not None:
+	if object is None or isinstance(object, newdict.FileReference):
+		## either there is no image data, or it is already saved
+		pass
+	else:
 		#print 'saving MRC', fullname
 		Mrc.numeric_to_mrc(object, fullname)
 	d[k] = filename
