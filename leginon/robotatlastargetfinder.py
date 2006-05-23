@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.14 $
+# $Revision: 1.15 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-05-11 20:30:08 $
-# $Author: pulokas $
+# $Date: 2006-05-23 21:37:22 $
+# $Author: dfellman $
 # $State: Exp $
 # $Locker:  $
 
@@ -583,7 +583,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			image1 = numarray.nd_image.shift(image1, shift)
 			shape = image1.shape
 			image1 = align.rotateScaleOffset(image1, rotation, scale, (0.0, 0.0),
-																				shape=(shape[0]/2.0, shape[1]/2.0))
+																				shape=(shape[0]/2, shape[1]/2))
 
 			i = numarray.zeros(shape, image1.type())
 			o = int(round(shape[0]/4.0)), int(round(shape[1]/4.0))
