@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.15 $
+# $Revision: 1.16 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-05-23 21:37:22 $
-# $Author: dfellman $
+# $Date: 2006-05-24 17:54:46 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -723,6 +723,14 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		emtargetdata[movetype] = dict(scopedata[movetype])
 		emtargetdata['target'] = targetdata
 		#emtargetdata['preset'] = presetdata
+
+		## It seems like emtargetdata is being cleaned from DataManager before
+		## the call to presetsclient.toScope.
+		## As in Acquisition node:
+		## publish in DB because it will likely be needed later
+		## when returning to the same target,
+		## even after it is removed from memory
+		self.publish(emtargetdata, database=True)
 
 		query = data.AcquisitionImageTargetData()
 		query['session'] = self.session
