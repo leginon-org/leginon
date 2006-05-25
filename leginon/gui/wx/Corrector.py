@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.46 $
+# $Revision: 1.47 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-05-02 21:25:54 $
+# $Date: 2006-05-25 18:28:07 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -272,6 +272,19 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['despike'] = wx.CheckBox(self, -1, 'Despike images')
 		self.widgets['despike size'] = IntEntry(self, -1, min=1, chars=4)
 		self.widgets['despike threshold'] = FloatEntry(self, -1, min=0, chars=9)
+		self.widgets['clip min'] = FloatEntry(self, -1, chars=9)
+		self.widgets['clip max'] = FloatEntry(self, -1, chars=9)
+
+		szclip = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Clip min:')
+		szclip.Add(label, (0, 0), (1, 1))
+		szclip.Add(self.widgets['clip min'], (0, 1), (1, 1))
+		label = wx.StaticText(self, -1, 'Clip max:')
+		szclip.Add(label, (1, 0), (1, 1))
+		szclip.Add(self.widgets['clip max'], (1, 1), (1, 1))
+		sb = wx.StaticBox(self, -1, 'Clipping')
+		sbszclip = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbszclip.Add(szclip, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
 
 		szdespike = wx.GridBagSizer(5, 5)
 		szdespike.Add(self.widgets['despike'], (0, 0), (1, 2),
@@ -290,7 +303,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(self.widgets['instruments'], (0, 0), (2, 1), wx.EXPAND)
-		sz.Add(self.widgets['camera settings'], (2, 0), (1, 1), wx.EXPAND)
+		sz.Add(self.widgets['camera settings'], (2, 0), (2, 1), wx.EXPAND)
 
 		label = wx.StaticText(self, -1, 'Images to combine:')
 		sz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -301,7 +314,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['combine'], (1, 2), (1, 1))
 
-		sz.Add(sbszdespike, (2, 1), (1, 2), wx.ALIGN_CENTER|wx.ALL)
+		sz.Add(sbszclip, (2, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL)
+		sz.Add(sbszdespike, (3, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL)
 
 		sb = wx.StaticBox(self, -1, 'Image Correction')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)

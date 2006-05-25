@@ -64,6 +64,8 @@ class Corrector(node.Node):
 		'despike': True,
 		'despike size': 11,
 		'despike threshold': 3.5,
+		'clip min': 0,
+		'clip max': 2**16,
 		'camera settings': None,
 		'combine': 'average',
 	}
@@ -457,14 +459,18 @@ class Corrector(node.Node):
 		if plan is not None:
 			self.fixBadPixels(normalized, plan)
 
+		clipmin = self.settings['clip min']
+		clipmax = self.settings['clip max']
+		clipped = Numeric.clip(normalized, clipmin, clipmax)
+
 		if self.settings['despike']:
 			self.logger.debug('Despiking...')
 			nsize = self.settings['despike size']
 			thresh = self.settings['despike threshold']
-			imagefun.despike(normalized, nsize, thresh)
+			imagefun.despike(clipped, nsize, thresh)
 			self.logger.debug('Despiked')
 
-		final = normalized.astype(Numeric.Float32)
+		final = clipped.astype(Numeric.Float32)
 		return final
 
 	def fixBadPixels(self, image, plan):

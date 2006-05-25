@@ -1693,6 +1693,8 @@ class CorrectorSettingsData(SettingsData):
 			('despike threshold', float),
 			('camera settings', CameraSettingsData),
 			('combine', str),
+			('clip min', float),
+			('clip max', float),
 		)
 	typemap = classmethod(typemap)
 
