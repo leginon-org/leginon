@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/beamtiltcalibrator.py,v $
-# $Revision: 1.73 $
+# $Revision: 1.74 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-27 00:34:33 $
+# $Date: 2006-05-26 23:22:11 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -252,6 +252,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			'settle': self.settings['settling time'],
 		}
 		result = calibration_client.measureDefocusStig(*args, **kwargs)
+		self.measurement = {}
 
 		try:
 			defocus = result['defocus']
@@ -259,7 +260,6 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		except KeyError:
 			defocus = None
 
-		self.measurement = {}
 		stig = {}
 		for axis in ('x', 'y'):
 			try:
