@@ -19,6 +19,31 @@ def radians(degrees):
 def degrees(radians):
 	return radians * 180.0 / pi
 
+def corner(center, shape):
+	return center[0] + shape[0]/2, center[1] + shape[1]/2
+
+def center(corner, shape):
+	return corner[0] - shape[0]/2, corner[1] - shape[1]/2
+
+def corners(centers, shape):
+	return [corner(x,shape) for x in centers]
+
+def centers(corners, shape):
+	return [center(x,shape) for x in corners]
+
+def targetShape(target):
+	dims = target['image']['camera']['dimension']
+	return dims['y'],dims['x']
+
+def transposePoints(points):
+	return [(x,y) for y,x in points]
+
+def targetPoint(target):
+	return target['delta row'],target['delta column']
+
+def targetPoints(targets):
+	return map(targetPoint, targets)
+
 class RCTAcquisition(acquisition.Acquisition):
 	panelclass = gui.wx.RCTAcquisition.Panel
 	settingsclass = data.RCTAcquisitionSettingsData
@@ -43,6 +68,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		## return if no targets in list
 		tilt0targets = self.researchTargets(list=tilt0targetlist, status='new')
 		if not tilt0targets:
+			self.reportTargetListDone(tilt0targetlist.dmid, 'success')
 			return
 
 		## list of tilts entered by user in degrees, converted to radians
@@ -74,38 +100,59 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		self.logger.info('returning to tilt0')
 		self.instrument.tem.StagePosition = {'a': tilt0}
+		self.reportTargetListDone(tilt0targetlist.dmid, 'success')
+
+	def transformPoints(self, matrix, points):
+		newpoints = []
+		for point in points:
+			v = numarray.array((point[0],point[1],1))
+			new0,new1,one = numarray.matrixmultiply(v, matrix)
+			newpoints.append((new0,new1))
+		return newpoints
+
+	def transformTargets(self, matrix, targets):
+
+		points = targetPoints(targets)
+		shape = targetShape(targets[0])
+		points = corners(points, shape)
+		newpoints = self.transformPoints(matrix, points)
+		centerpoints = centers(newpoints, shape)
+
+		newtargets = []
+		for centerpoint,target in zip(centerpoints,targets):
+			tiltedtarget = data.AcquisitionImageTargetData(initializer=target)
+			tiltedtarget['delta row'] = centerpoint[0]
+			tiltedtarget['delta column'] = centerpoint[1]
+			tiltedtarget['version'] = 0
+			newtargets.append(tiltedtarget)
+
+		displaypoints = transposePoints(newpoints)
+		self.setTargets(displaypoints, 'Peak')
+
+		return newtargets
 
 	def tiltTargets(self, tilt0, tilt, tilt0targetlist):
 		# find matrix
 		image0 = tilt0targetlist['image']
-		matrix,tiltedimagedata = self.trackStage(image0, tilt0, tilt)
+		tilt0targets = self.researchTargets(list=tilt0targetlist, status='new')
+		matrix,tiltedimagedata = self.trackStage(image0, tilt0, tilt, tilt0targets)
 
 		# create new target list adjusted for new tilt
-		tilt0targets = self.researchTargets(list=tilt0targetlist, status='new')
-		rows,cols = image0['camera']['dimension']['y'], image0['camera']['dimension']['x']
+		self.transformTargets(matrix, tilt0targets)
+
+		## publish everything
 		tiltedtargetlist = self.newTargetList(image=tiltedimagedata)
 		self.publish(tiltedtargetlist, database=True)
-		displaytargets = []
-		for tilt0target in tilt0targets:
-			row = tilt0target['delta row'] + rows/2
-			col = tilt0target['delta column'] + cols/2
-			v = numarray.array((row,col,1))
-			row2,col2,one = numarray.matrixmultiply(v, matrix)
-			displaytargets.append((col2,row2))
-			tiltedtarget = data.AcquisitionImageTargetData(initializer=tilt0target)
-			tiltedtarget['delta row'] = row2 - rows/2
-			tiltedtarget['delta column'] = col2 - cols/2
+		tiltedtargets = self.transformTargets(matrix, tilt0targets)
+		for tiltedtarget in tiltedtargets:
 			tiltedtarget['list'] = tiltedtargetlist
 			tiltedtarget['image'] = tiltedimagedata
 			tiltedtarget['scope'] = tiltedimagedata['scope']
-			tiltedtarget['version'] = 0
 			self.publish(tiltedtarget, database=True)
-
-		self.setTargets(displaytargets, 'Peak')
 
 		return tiltedtargetlist
 
-	def trackStage(self, image0, tilt0, tilt):
+	def trackStage(self, image0, tilt0, tilt, tilt0targets):
 		stepsizedeg = self.settings['stepsize']
 		stepsize = radians(stepsizedeg)
 
@@ -144,6 +191,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			imagenew = self.instrument.getData(dataclass)
 			arraynew = numarray.nd_image.gaussian_filter(imagenew['image'], sigma)
 			self.setImage(imagenew['image'].astype(numarray.Float32), 'Image')
+			self.setTargets([], 'Peak')
 
 			self.logger.info('Craig stuff')
 			print 'Craig stuff'
@@ -154,7 +202,11 @@ class RCTAcquisition(acquisition.Acquisition):
 			result = mser.matchImages(arrayold, arraynew, minsize, maxsize, minperiod, minstable)
 			print 'Craig stuff done'
 			self.logger.info('Matrix: %s' % (result,))
+
 			runningresult = numarray.matrixmultiply(runningresult, result)
+
+			self.transformTargets(runningresult, tilt0targets)
+
 			print 'runningresult', runningresult
 
 			imageold = imagenew
@@ -167,6 +219,7 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		## convert CameraImageData to AcquisitionImageData
 		imagedata = data.AcquisitionImageData(initializer=imageold, preset=image0['preset'], label=self.name, target=image0['target'], list=None, emtarget=image0['emtarget'])
+		self.setTargets([], 'Peak')
 		self.publishDisplayWait(imagedata)
 		
 		self.logger.info('Final Matrix: %s' % (runningresult,))
