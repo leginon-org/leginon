@@ -300,6 +300,16 @@ class GonModel:
 		self.b = self.a0 * self.b
 		self.axis = gondata.axis
 
+	def fitInto(self, gondata):
+		# calculate scale for each data point
+		avg = 0.0
+		for pos,pix in zip(gondata.gonpos, gondata.pixpertick):
+			modval = self.eval(pos)
+			scale = modval / pix
+			avg += scale
+		avg /= len(gondata.gonpos)
+		return avg
+
 
 if __name__ == '__main__':
 	mymod = GonModel()

@@ -199,12 +199,17 @@ class GonModeler(calibrator.Calibrator):
 		# label, mag, axis, terms,...
 		self.initInstruments()
 		try:
-			self.calclient.fit(None, None,
+			if self.settings['model mag only']:
+				self.calclient.fitMagOnly(None, None,
+													self.settings['model label'],
+													self.settings['model magnification'],
+													self.settings['model axis'])
+			else:
+				self.calclient.fit(None, None,
 													self.settings['model label'],
 													self.settings['model magnification'],
 													self.settings['model axis'],
-													self.settings['model terms'],
-													magonly=self.settings['model mag only'])
+													self.settings['model terms'])
 		except Exception, e:
 			self.logger.error('Modeled stage fit failed: %s' % e)
 		self.panel.calibrationDone()
