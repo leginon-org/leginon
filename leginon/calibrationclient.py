@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.180 $
+# $Revision: 1.181 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-27 00:34:33 $
+# $Date: 2006-05-31 19:49:42 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -1081,7 +1081,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 			datapoints.append(datapoint)
 		return {'datapoints':datapoints, 'ht': ht}
 
-	def fit(self, tem, cam, label, mag, axis, terms, magonly=1):
+	def fit(self, tem, cam, label, mag, axis, terms):
 		if tem is None:
 			tem = self.node.instrument.getTEMData()
 		if cam is None:
@@ -1111,9 +1111,33 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		b = mod.b
 		
 		self.storeMagCalibration(tem, cam, label, ht, mag, axis, angle, mean)
-		if magonly:
-			return
 		self.storeModelCalibration(tem, cam, label, axis, period, a, b)
+
+	def fitMagOnly(self, tem, cam, label, mag, axis):
+		if tem is None:
+			tem = self.node.instrument.getTEMData()
+		if cam is None:
+			cam = self.node.instrument.getCCDCameraData()
+		# get data from DB
+		info = self.getLabeledData(tem, cam, label, mag, axis)
+		datapoints = info['datapoints']
+		ht = info['ht']
+		dat = gonmodel.GonData()
+		dat.import_data(mag, axis, datapoints)
+
+		## fit a model to existing model
+		modeldata = self.retrieveModelCalibration(tem, cam, axis)
+		mod = gonmodel.GonModel()
+		mod.fromDict(modeldata)
+
+		mean = mod.fitInto(dat)
+
+		### mag info
+		axis = dat.axis
+		mag = dat.mag
+		angle = dat.angle
+		
+		self.storeMagCalibration(tem, cam, label, ht, mag, axis, angle, mean)
 
 	def transform(self, pixelshift, scope, camera):
 		curstage = scope['stage position']
