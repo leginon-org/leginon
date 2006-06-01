@@ -285,8 +285,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		else:
 			acq_points = centers
 
-		self.setTargets(acq_points, 'acquisition')
-		self.setTargets(focus_points, 'focus')
+		self.setTargets(acq_points, 'acquisition', block=True)
+		self.setTargets(focus_points, 'focus', block=True)
 		self.logger.info('Acquisition Targets: %s' % (len(acq_points),))
 		self.logger.info('Focus Targets: %s' % (len(focus_points),))
 		hfprefs = self.storeHoleFinderPrefsData(self.currentimagedata)
@@ -337,8 +337,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		return closest_point
 
 	def bypass(self):
-		self.setTargets([], 'acquisition')
-		self.setTargets([], 'focus')
+		self.setTargets([], 'acquisition', block=True)
+		self.setTargets([], 'focus', block=True)
 
 	def applyTargetTemplate(self, centers):
 		self.logger.info('apply template')

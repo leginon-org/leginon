@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleFinder.py,v $
-# $Revision: 1.41 $
+# $Revision: 1.42 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-04 21:05:46 $
+# $Date: 2006-06-01 19:36:54 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -21,6 +21,7 @@ from gui.wx.Choice import Choice
 from gui.wx.Entry import Entry, IntEntry, FloatEntry
 import gui.wx.TargetTemplate
 import gui.wx.ToolBar
+import threading
 
 class Panel(gui.wx.TargetFinder.Panel):
 	icon = 'holefinder'
@@ -433,7 +434,7 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 
 	def onTestButton(self, evt):
 		self.setNodeSettings()
-		self.node.ice()
+		threading.Thread(self.node.ice).start()
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
