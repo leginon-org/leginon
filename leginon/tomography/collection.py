@@ -172,6 +172,7 @@ class Collection(object):
         position = dict(position0)
         defocus = defocus0
 
+        abort_loop = False
         for i, tilt in enumerate(tilts):
             self.checkAbort()
 
@@ -271,9 +272,13 @@ class Collection(object):
             }
 
             if not self.prediction.addPosition(tilt, position):
-                self.logger.error('Position out of range, aborting series...')
-                self.finalize()
-                raise Abort
+                if i < 0.9*len(tilts):
+                    self.logger.error('Position out of range, aborting series...')
+                    self.finalize()
+                    raise Abort
+                else:
+                    self.logger.warning('Position out of range, aborting loop...')
+                    abort_loop = True
 
             m = 'Correlated shift from feature: %g, %g pixels, %g, %g meters.'
             self.logger.info(m % (correlation['x'],
@@ -309,6 +314,9 @@ class Collection(object):
             self.savePredictionInfo(*args)
 
             self.checkAbort()
+
+            if abort_loop:
+                break
 
         self.viewer.clearImages()
 
