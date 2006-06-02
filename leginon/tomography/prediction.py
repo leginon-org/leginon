@@ -33,6 +33,9 @@ class Prediction(object):
             if len(self.tilt_groups[-1]) < self.min_points:
                 del self.tilt_groups[-1]
         self.tilt_groups.append(TiltGroup())
+        # HACK: fix me
+        if len(self.tilt_groups) > 8:
+            self.tilt_groups = self.tilt_groups[-8:]
 
     def addPosition(self, tilt, position):
         tilt_group = self.tilt_groups[-1]
