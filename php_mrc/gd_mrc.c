@@ -380,6 +380,15 @@ void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX,
 	w = (w>w_src) ? w_src : w;
 	h = (h>h_src) ? h_src : h;
 
+	if (srcX<0) {
+		w+=srcX;
+		srcX=0;
+	}
+	if (srcY<0) {
+		h+=srcY;
+		srcY=0;
+	}
+
 	data_array_dst = (float *)pmrc_dst->pbyData;
 	data_array_src = (float *)pmrc_src->pbyData;
 
