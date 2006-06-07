@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.h,v 1.11 2006-03-28 22:50:18 dfellman Exp $ 
+  $Id: php_mrc.h,v 1.12 2006-06-07 20:17:48 dfellman Exp $ 
 */
 
 /**
@@ -91,6 +91,7 @@ ZEND_FUNCTION(mrcupdateheader);
 ZEND_FUNCTION(mrchistogram);
 ZEND_FUNCTION(mrcdestroy);
 
+static void _mrc_header_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRCHeader *pmrch);
 static void _mrc_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRC *pmrc);
 static void _mrc_image_create_from_string(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRC *pmrc);
 static void _mrc_header_data(INTERNAL_FUNCTION_PARAMETERS,  MRC *pmrc);

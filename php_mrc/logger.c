@@ -19,10 +19,15 @@ void _logger(char *filename, char* data) {
 		tm = time(NULL);
 		ptr = localtime(&tm);
 		strftime(str_t, 100, "%c",ptr);
+/*
 		fprintf( fp, "[%s]: file: %s - function: %s - param %s \n", 
 				str_t,
 				zend_get_executed_filename(TSRMLS_C),
-				get_active_function_name(TSRMLS_C),
+			get_active_function_name(TSRMLS_C),
+				data);
+*/
+		fprintf( fp, "[%s]: %s \n", 
+				str_t,
 				data);
 		fclose(fp);
 	}

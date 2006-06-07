@@ -12,8 +12,6 @@
  * void mrc_to_float(MRC *mrc, float *pdata_array)
  */
 void mrc_to_float(MRC *mrc, float *pdata_array) {
-        float   fmin=mrc->header.amin,
-                fmax=mrc->header.amax;
 
         int     h=mrc->header.nx, w=mrc->header.ny,
                 mode=mrc->header.mode;
@@ -64,11 +62,11 @@ void mrc_to_float(MRC *mrc, float *pdata_array) {
  */
 void mrc_convert_to_float(MRC *mrc_src, MRC *mrc_dst) {
 
-        float	*data_array, *data_array_dst;
+	float	*data_array, *data_array_dst;
 
-        int     w_src=mrc_src->header.nx, h_src=mrc_src->header.ny;
+  int		w_src=mrc_src->header.nx, h_src=mrc_src->header.ny;
 
-				long	n_src=w_src*h_src;
+	long	n_src=w_src*h_src;
 
 	memcpy(&mrc_dst->header, &mrc_src->header, MRC_HEADER_SIZE);
 

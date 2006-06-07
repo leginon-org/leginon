@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.15 2006-03-29 01:33:51 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.16 2006-06-07 20:17:48 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -454,13 +454,11 @@ ZEND_FUNCTION(mrcinfo)
 	}
 
 	pmrc = (MRC *) malloc (sizeof (MRC));
-	_mrc_image_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, pmrc);
+	_mrc_header_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, &(pmrc->header));
 	_mrc_header_data(INTERNAL_FUNCTION_PARAM_PASSTHRU, pmrc);
 	mrc_destroy(pmrc);
-	
 
 }
-
 
 /**
  * retrieve header information from MRC resource, as a PHP associative array.
@@ -547,7 +545,6 @@ ZEND_FUNCTION(mrcread)
 
 	pmrc = (MRC *) malloc (sizeof (MRC));
 	_mrc_image_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, pmrc);
-
 	ZEND_REGISTER_RESOURCE(return_value, pmrc, le_mrc);
 
 }
@@ -1139,6 +1136,18 @@ ZEND_FUNCTION(mrcdestroy)
 	RETURN_TRUE;
 }
 
+/**
+ * static void _mrc_header_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRC *pmrc)
+ */
+static void _mrc_header_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRCHeader *pmrch) {
+	char *ptfile;
+	convert_to_string_ex(data);
+	ptfile = (char *)((*data)->value.str.val);
+	if(loadMRCHeader(ptfile, pmrch)==-1) {
+				zend_error(E_ERROR, "%s(): %s : No such file or directory ", 
+				get_active_function_name(TSRMLS_C),ptfile);
+	}
+}
 
 /**
  * static void _mrc_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRC *pmrc)
@@ -1147,6 +1156,7 @@ static void _mrc_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MR
 
 	MRC *pmrc_src;
 	char *ptfile;
+	int mode;
 
 	convert_to_string_ex(data);
 	pmrc_src = (MRC *) malloc (sizeof (MRC));
@@ -1155,13 +1165,18 @@ static void _mrc_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MR
 				zend_error(E_ERROR, "%s(): %s : No such file or directory ", 
 				get_active_function_name(TSRMLS_C),ptfile);
 	}
+	
+	mode = pmrc_src->header.mode;
 
 	/**
 	* copy mrc source as mrc float to further manipulation
 	**/
-	mrc_convert_to_float(pmrc_src, pmrc);
+	if (mode==MRC_MODE_FLOAT) {
+		*pmrc = *pmrc_src;
+	} else {
+		mrc_convert_to_float(pmrc_src, pmrc);
+	}
 	mrc_destroy(pmrc_src);
-	
 }
 
 
@@ -1172,6 +1187,7 @@ static void _mrc_image_create_from_string(INTERNAL_FUNCTION_PARAMETERS, zval **d
 	gdIOCtx *io_ctx;
 	MRC *pmrc_src;
 	int in_length=0;
+	int mode;
 
 	convert_to_string_ex(data);
 	io_ctx = gdNewDynamicCtx (Z_STRLEN_PP(data), Z_STRVAL_PP(data));
@@ -1189,7 +1205,11 @@ static void _mrc_image_create_from_string(INTERNAL_FUNCTION_PARAMETERS, zval **d
 	/**
 	* copy mrc source as mrc float to further manipulation
 	**/
-	mrc_convert_to_float(pmrc_src, pmrc);
+	if (mode==MRC_MODE_FLOAT) {
+		*pmrc = *pmrc_src;
+	} else {
+		mrc_convert_to_float(pmrc_src, pmrc);
+	}
 	mrc_destroy(pmrc_src);
 	free(io_ctx);
 	
