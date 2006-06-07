@@ -123,7 +123,7 @@ class TargetHandler(object):
 
 	########## TARGET CREATION #############
 
-	def newTargetList(self, label='', mosaic=False, image=None, queue=False):
+	def newTargetList(self, label='', mosaic=False, image=None, queue=False, sublist=False):
 		'''
 		label will be included in filenames
 		mosaic is boolean to indicate list of targets will
@@ -133,7 +133,7 @@ class TargetHandler(object):
 			queuedata = self.getQueue()
 		else:
 			queuedata = None
-		listdata = data.ImageTargetListData(session=self.session, label=label, mosaic=mosaic, image=image, queue=queuedata)
+		listdata = data.ImageTargetListData(session=self.session, label=label, mosaic=mosaic, image=image, queue=queuedata, sublist=sublist)
 		return listdata
 
 	def getQueue(self, label=None):

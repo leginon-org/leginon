@@ -221,8 +221,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			parentimage = targets[0]['image']
 		else:
 			parentimage = None
-		rejectlist = self.newTargetList(image=parentimage)
-		rejectlist['sublist'] = True
+		rejectlist = self.newTargetList(image=parentimage, sublist=True)
 		self.publish(rejectlist, database=True)
 		for target in targets:
 			reject = data.AcquisitionImageTargetData(initializer=target)
