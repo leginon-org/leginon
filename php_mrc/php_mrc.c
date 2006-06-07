@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.16 2006-06-07 20:17:48 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.17 2006-06-07 21:19:08 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -1173,10 +1173,11 @@ static void _mrc_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MR
 	**/
 	if (mode==MRC_MODE_FLOAT) {
 		*pmrc = *pmrc_src;
+		free(pmrc_src);
 	} else {
 		mrc_convert_to_float(pmrc_src, pmrc);
+		mrc_destroy(pmrc_src);
 	}
-	mrc_destroy(pmrc_src);
 }
 
 
@@ -1207,10 +1208,11 @@ static void _mrc_image_create_from_string(INTERNAL_FUNCTION_PARAMETERS, zval **d
 	**/
 	if (mode==MRC_MODE_FLOAT) {
 		*pmrc = *pmrc_src;
+		free(pmrc_src);
 	} else {
 		mrc_convert_to_float(pmrc_src, pmrc);
+		mrc_destroy(pmrc_src);
 	}
-	mrc_destroy(pmrc_src);
 	free(io_ctx);
 	
 }
