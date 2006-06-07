@@ -14,8 +14,9 @@ import numarray
 
 db = DBDataKeeper()
 
-def querymodel(axis, label):
-	sm = data.StageModelCalibrationData(axis=axis, label=label)
+def querymodel(axis, hostname):
+	tem = data.InstrumentData(hostname=hostname)
+	sm = data.StageModelCalibrationData(axis=axis, tem=tem)
 	model = db.query(sm, results=1)
 	if not model:
 		return None
@@ -24,17 +25,21 @@ def querymodel(axis, label):
 	model['b'].shape = (-1,)
 	mod = gonmodel.GonModel()
 	mod.fromDict(model)
-	sm = data.StageModelMagCalibrationData(axis=axis, label=label)
+	return mod
+
+def querymodelmag(axis, label, hostname):
+	tem = data.InstrumentData(hostname=hostname)
+	sm = data.StageModelMagCalibrationData(axis=axis, label=label, tem=tem)
 	magcal = db.query(sm, results=1)
 	mean = magcal[0]['mean']
-	mod.a0 = 1.0 / mean
-	return mod
+	return 1.0 / mean
 
 def normalizepoints(points, a0):
 	return map(lambda x: (x[0],x[1]/a0), points)
 
-def querypoints(axis, label):
-	sm = data.StageMeasurementData(label=label, axis=axis)
+def querypoints(axis, label, hostname):
+	tem = data.InstrumentData(hostname=hostname)
+	sm = data.StageMeasurementData(label=label, axis=axis, tem=tem)
 	points = db.query(sm)
 	xy = []
 	for point in points:
@@ -68,9 +73,18 @@ class MyFrame(wx.Frame):
 
 	def draw(self, *args):
 		colors = 'blue','red','green','yellow'
+		modelstep = 1e-7
 		allpoints = []
+		per =  0.0
 		for points,mod in args:
 			allpoints.extend(points)
+			if mod.period > per:
+				per = mod.period
+		xaxis,yaxis = findrange(allpoints)
+		xaxis = xaxis[0]-per, xaxis[1]+per
+		for points,mod in args:
+			modpoints = modelpoints(mod, xaxis, modelstep)
+			allpoints.extend(modpoints)
 		xaxis,yaxis = findrange(allpoints)
 
 		objects = []
@@ -78,7 +92,7 @@ class MyFrame(wx.Frame):
 			color = colors[i]
 			poly = wx.lib.plot.PolyMarker(arg[0], colour=color, marker='triangle', width=1, size=0.5)
 			objects.append(poly)
-			xy = modelpoints(arg[1], xaxis, 1e-7)
+			xy = modelpoints(arg[1], xaxis, modelstep)
 			poly = wx.lib.plot.PolyLine(xy, colour=color, width=2)
 			objects.append(poly)
 
@@ -94,15 +108,16 @@ class MyApp(wx.PySimpleApp):
 
 
 ## args:  axis label label label
-axis = sys.argv[1]
-labels = sys.argv[2:]
+insthost = sys.argv[1]
+axis = sys.argv[2]
+labels = sys.argv[3:]
 
 drawargs = []
 for label in labels:
-	points = querypoints(axis, label)
-	model = querymodel(axis, label)
-	points = normalizepoints(points, model.a0)
-	print model.a0
+	points = querypoints(axis, label, insthost)
+	modelmag = querymodelmag(axis, label, insthost)
+	points = normalizepoints(points, modelmag)
+	model = querymodel(axis, insthost)
 	drawargs.append((points,model))
 
 app = MyApp(0)
