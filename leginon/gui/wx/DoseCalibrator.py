@@ -5,10 +5,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/DoseCalibrator.py,v $
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-12-13 22:58:56 $
-# $Author: suloway $
+# $Date: 2006-06-08 00:17:06 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -140,7 +140,7 @@ class DoseCalibrationDialog(gui.wx.Settings.Dialog):
         try:
             self.stbeamcurrent.SetLabel('%.5g' % results['beam current'])
             self.stscreenmag.SetLabel(str(results['screen magnification']))
-            self.stdoserate.SetLabel('%.5g' % (results['dose rate']/10e20))
+            self.stdoserate.SetLabel('%.5g' % (results['dose rate']/1e20))
         except KeyError:
             self.stbeamcurrent.SetLabel('')
             self.stscreenmag.SetLabel('')
