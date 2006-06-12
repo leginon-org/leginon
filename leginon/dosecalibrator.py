@@ -63,13 +63,9 @@ class DoseCalibrator(calibrator.Calibrator):
 			return
 
 		screen_mag = self.results['screen magnification']
-		print 'SCREEN MAG', screen_mag
 		beam_current = self.results['beam current']
-		print 'BEAM CURRENT', beam_current
 		beam_diameter = self.settings['beam diameter']
-		print 'BEAM DIAMETER', beam_diameter
 		doserate = self.calclient.dose_from_screen(screen_mag, beam_current, beam_diameter)
-		print 'DOSE RATE', doserate
 		self.results['dose rate'] = doserate
 		CallAfter(self.panel.dialog._setDoseResults, self.results)
 
