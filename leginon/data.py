@@ -1526,6 +1526,9 @@ class HoleFinderPrefsData(InSessionData):
 			('template-on', bool),
 			('template-focus', tuple),
 			('template-acquisition', tuple),
+			('template-diameter', tuple),
+			('file-diameter', tuple),
+			('template-filename', str),
 		)
 	typemap = classmethod(typemap)
 

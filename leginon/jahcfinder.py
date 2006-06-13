@@ -273,6 +273,8 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.setTargets(focus_points, 'focus', block=True)
 		self.logger.info('Acquisition Targets: %s' % (len(acq_points),))
 		self.logger.info('Focus Targets: %s' % (len(focus_points),))
+		hfprefs = self.storeHoleFinderPrefsData(self.currentimagedata)
+		self.storeHoleStatsData(hfprefs)
 
 	def centroid(self, points):
 		## find centroid
@@ -392,6 +394,48 @@ class JAHCFinder(targetfinder.TargetFinder):
 			holestats['thickness-stdev'] = stats['thickness-stdev']
 			holestats['good'] = stats['good']
 			self.publish(holestats, database=True)
+
+	def storeHoleFinderPrefsData(self, imagedata):
+		hfprefs = data.HoleFinderPrefsData()
+		hfprefs.update({
+			'session': self.session,
+			'image': imagedata,
+			'user-check': self.settings['user check'],
+			'skip-auto': self.settings['skip'],
+			'queue': self.settings['queue'],
+
+			'edge-lpf-sigma': self.settings['edge lpf']['sigma'],
+			'edge-filter-type': self.settings['edge type'],
+			'edge-threshold': self.settings['edge threshold'],
+
+			'template-rings': self.settings['template rings'],
+			'template-correlation-type': self.settings['template type'],
+			'template-lpf': self.settings['template lpf']['sigma'],
+
+			'threshold-value': self.settings['threshold'],
+			'blob-border': self.settings['blobs border'],
+			'blob-max-number': self.settings['blobs max'],
+			'blob-max-size': self.settings['blobs max size'],
+			'lattice-spacing': self.settings['lattice spacing'],
+			'lattice-tolerance': self.settings['lattice tolerance'],
+			'stats-radius': self.settings['lattice hole radius'],
+			'ice-zero-thickness': self.settings['lattice zero thickness'],
+
+			'ice-min-thickness': self.settings['ice min mean'],
+			'ice-max-thickness': self.settings['ice max mean'],
+			'ice-max-stdev': self.settings['ice max std'],
+			'template-on': self.settings['target template'],
+			'template-focus': self.settings['focus template'],
+			'template-acquisition': self.settings['acquisition template'],
+
+			## these are in JAHCFinder only
+			'template-diameter': self.settings['template diameter'],
+			'file-diameter': self.settings['file diameter'],
+			'template-filename': self.settings['template filename'],
+		})
+
+		self.publish(hfprefs, database=True)
+		return hfprefs
 
 	def findTargets(self, imdata, targetlist):
 		self.setStatus('processing')
