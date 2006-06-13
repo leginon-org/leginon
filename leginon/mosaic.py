@@ -435,20 +435,36 @@ class EMMosaic(object):
 		self.calculateMosaicImage()
 
 		### scale the mosaic shape
-		mshape = self.mosaicshape
 		if maxdimension is None:
 			scale = 1.0
 		else:
 			maxdim = max(self.mosaicshape)
 			self.scale = float(maxdimension) / float(maxdim)
-			mshape = self.scaled(mshape)
 			## this is stupid, but avoids rounding problems
 			## and misaligned matrices errors
 			scale = float(maxdimension-1) / float(maxdim)
 		self.scale = scale
 
-		### create mosaic image
 		numtype = self.tiles[0].image.type()
+
+		### find shape of final mosaic
+		### optimize me
+		maxrow = maxcol = 0
+		for tile in self.tiles:
+			scaled_tile = imagefun.scale(tile.image, (scale, scale)).astype(numtype)
+			scaled_shape = scaled_tile.shape
+			scaled_pos = self.scaled(tile.corner_pos)
+			rowslice1 = scaled_pos[0],scaled_pos[0]+scaled_shape[0]
+			colslice1 = scaled_pos[1],scaled_pos[1]+scaled_shape[1]
+			rowslice = slice(scaled_pos[0],scaled_pos[0]+scaled_shape[0])
+			colslice = slice(scaled_pos[1],scaled_pos[1]+scaled_shape[1])
+			if rowslice1[1] > maxrow:
+				maxrow = rowslice1[1]
+			if colslice1[1] > maxcol:
+				maxcol = colslice1[1]
+		mshape = (maxrow,maxcol)
+
+		### create mosaic image
 		mosaicimage = Numeric.zeros(mshape, numtype)
 
 		### scale and insert tiles
