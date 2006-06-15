@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.17 2006-06-07 21:19:08 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.18 2006-06-15 21:13:54 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -1156,7 +1156,6 @@ static void _mrc_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MR
 
 	MRC *pmrc_src;
 	char *ptfile;
-	int mode;
 
 	convert_to_string_ex(data);
 	pmrc_src = (MRC *) malloc (sizeof (MRC));
@@ -1166,18 +1165,12 @@ static void _mrc_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MR
 				get_active_function_name(TSRMLS_C),ptfile);
 	}
 	
-	mode = pmrc_src->header.mode;
-
 	/**
 	* copy mrc source as mrc float to further manipulation
 	**/
-	if (mode==MRC_MODE_FLOAT) {
-		*pmrc = *pmrc_src;
-		free(pmrc_src);
-	} else {
-		mrc_convert_to_float(pmrc_src, pmrc);
-		mrc_destroy(pmrc_src);
-	}
+	mrc_convert_to_float(pmrc_src, pmrc);
+	mrc_destroy(pmrc_src);
+
 }
 
 
@@ -1188,7 +1181,6 @@ static void _mrc_image_create_from_string(INTERNAL_FUNCTION_PARAMETERS, zval **d
 	gdIOCtx *io_ctx;
 	MRC *pmrc_src;
 	int in_length=0;
-	int mode;
 
 	convert_to_string_ex(data);
 	io_ctx = gdNewDynamicCtx (Z_STRLEN_PP(data), Z_STRVAL_PP(data));
@@ -1206,13 +1198,8 @@ static void _mrc_image_create_from_string(INTERNAL_FUNCTION_PARAMETERS, zval **d
 	/**
 	* copy mrc source as mrc float to further manipulation
 	**/
-	if (mode==MRC_MODE_FLOAT) {
-		*pmrc = *pmrc_src;
-		free(pmrc_src);
-	} else {
-		mrc_convert_to_float(pmrc_src, pmrc);
-		mrc_destroy(pmrc_src);
-	}
+	mrc_convert_to_float(pmrc_src, pmrc);
+	mrc_destroy(pmrc_src);
 	free(io_ctx);
 	
 }
