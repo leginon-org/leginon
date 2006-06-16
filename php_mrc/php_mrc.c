@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.18 2006-06-15 21:13:54 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.19 2006-06-16 16:39:25 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -615,7 +615,6 @@ ZEND_FUNCTION(mrcwrite)
 	char *fn = NULL;
 	FILE *fp;
 	int argc = ZEND_NUM_ARGS();
-	int q = -1, i;
 
 	if (argc < 1 || argc > 2 || zend_get_parameters_ex(argc, &MRCD, &file) == FAILURE) {
 		ZEND_WRONG_PARAM_COUNT();
@@ -636,7 +635,7 @@ ZEND_FUNCTION(mrcwrite)
 		RETURN_FALSE;
 	}
 	
-	int uElements = writeMRC(fp, pmrc);
+	writeMRC(fp, pmrc);
 
 	fflush(fp);
 	fclose(fp);

@@ -66,7 +66,8 @@ int byteswapwrite(FILE *pFWrite, void *pBuffer, unsigned int uElements,
 		((fuByteOrder == BIG_ENDIAN_DATA) && LITTLE_ENDIAN_HOST))
 		byteswapbuffer(pBuffer, uElements, uElementSize);
 
-	uResult = fwrite((char *)pBuffer, uElementSize, uElements, pFWrite);
+		uResult = fwrite((char *)pBuffer, uElementSize, uElements, pFWrite);
+
 	if(ferror(pFWrite)) {
 		return -1;
 	}
@@ -162,6 +163,7 @@ int writeMRC(FILE *pFMRC, MRC *pMRC) {
 	unsigned int uElementSize = 0;
 	unsigned int uElements = 0;
 	unsigned int fuByteOrder = LITTLE_ENDIAN_DATA;
+	unsigned int maxElement=500000000;
 
 	uElements = pMRC->header.nx * pMRC->header.ny; //  * pMRC->header.nz;
 	switch(pMRC->header.mode) {
@@ -188,7 +190,18 @@ int writeMRC(FILE *pFMRC, MRC *pMRC) {
 
 	if(!writeMRCHeader(pFMRC, &(pMRC->header)))
 		return -1;
-	if(byteswapwrite(pFMRC, pMRC->pbyData, uElements, uElementSize, fuByteOrder) == -1)
+
+	if (uElements>maxElement) {
+		// --- split writing in two --- // 
+		if(byteswapwrite(pFMRC, &(pMRC->pbyData[0]), uElements-maxElement, uElementSize, fuByteOrder) == -1)
+			return -1;
+		if(byteswapwrite(pFMRC, &(pMRC->pbyData[uElements-maxElement]), maxElement, uElementSize, fuByteOrder) == -1)
+			return -1;
+	} else {
+		if(byteswapwrite(pFMRC, pMRC->pbyData, uElements, uElementSize, fuByteOrder) == -1)
+			return -1;
+	}
+
 		return 1;
 }
 
@@ -218,6 +231,7 @@ int loadMRC(char *pszFilename, MRC *pMRC) {
 	unsigned int uElementSize = 0;
 	unsigned int uElements = 0;
 	unsigned int fuByteOrder = LITTLE_ENDIAN_DATA;
+	unsigned int maxElement=500000000;
 
 	if((pFMRC = fopen(pszFilename, "rb")) == NULL)
 		return -1;
@@ -251,15 +265,29 @@ int loadMRC(char *pszFilename, MRC *pMRC) {
 
     if((pMRC->pbyData = malloc(uElements*uElementSize)) == NULL)
     	pMRC->pbyData = malloc(uElements*uElementSize);
-	
-	if(byteswapread(pFMRC, pMRC->pbyData, uElements, uElementSize, fuByteOrder) == -1) {
-		free(pMRC->pbyData);
-		fclose(pFMRC);
-		return -1;
-	}
 
+	if (uElements>maxElement) {
+		// --- split writing in two --- // 
+		if(byteswapread(pFMRC, &(pMRC->pbyData[0]), uElements-maxElement, uElementSize, fuByteOrder) == -1) {
+			free(pMRC->pbyData);
+			fclose(pFMRC);
+			return -1;
+		}
+		if(byteswapread(pFMRC, &(pMRC->pbyData[uElements-maxElement]), maxElement, uElementSize, fuByteOrder) == -1) {
+			free(pMRC->pbyData);
+			fclose(pFMRC);
+			return -1;
+		}
+	} else {
+		if(byteswapread(pFMRC, pMRC->pbyData, uElements, uElementSize, fuByteOrder) == -1) {
+			free(pMRC->pbyData);
+			fclose(pFMRC);
+			return -1;
+		}
+	}
+	
 	fclose(pFMRC);
-    return 1;
+  return 1;
 }
 
 int readImagic5Header(FILE *pFHeader, Imagic5Header *pHeader) {
