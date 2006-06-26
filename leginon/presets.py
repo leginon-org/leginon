@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.236 $
+# $Revision: 1.237 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-28 23:28:55 $
+# $Date: 2006-06-26 22:39:45 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -24,6 +24,7 @@ import unique
 import newdict
 import gui.wx.PresetsManager
 import instrument
+import random
 
 try:
 	import numarray as Numeric
@@ -306,6 +307,8 @@ class PresetsManager(node.Node):
 			if not name:
 				continue
 			newp = data.PresetData(initializer=preset, session=self.session)
+			## for safety, disable random defocus range
+			newp['defocus range min'] = newp['defocus range max'] = None
 			self.presetToDB(newp)
 			self.presets[name] = newp
 		self.setOrder()
@@ -918,7 +921,10 @@ class PresetsManager(node.Node):
 				s = 'Dose of preset "%s" reset due to change in %s' % (newpreset['name'], paramstr)
 				self.logger.info(s)
 			elif newpreset['exposure time'] != oldpreset['exposure time']:
-				scale = float(newpreset['exposure time']) / float(oldpreset['exposure time'])
+				try:
+					scale = float(newpreset['exposure time']) / float(oldpreset['exposure time'])
+				except ZeroDivisionError:
+					scale = 0.0
 				newpreset['dose'] = scale * oldpreset['dose']
 				self.logger.info('Scaling dose of preset "%s" x%.3f due to change in exposure time' % (newpreset['name'], scale,))
 
@@ -938,7 +944,10 @@ class PresetsManager(node.Node):
 			if not newpreset['dose']:
 				## set my dose from a similar preset
 				sim = similarpresets[0]
-				scale = float(newpreset['exposure time']) / float(sim['exposure time'])
+				try:
+					scale = float(newpreset['exposure time']) / float(sim['exposure time'])
+				except ZeroDivisionError:
+					scale = 0.0
 				if sim['dose'] is None:
 					newpreset['dose'] = None
 				else:
@@ -947,7 +956,10 @@ class PresetsManager(node.Node):
 			elif oldpreset['dose'] != newpreset['dose']:
 				## my dose changed, now update dose in other similar presets
 				for sim in similarpresets:
-					scale = float(sim['exposure time']) / float(newpreset['exposure time'])
+					try:
+						scale = float(sim['exposure time']) / float(newpreset['exposure time'])
+					except ZeroDivisionError:
+						scale = 0.0
 					self.logger.info('Copying and scaling dose from preset "%s" to similar preset "%s"' % (newpreset['name'], sim['name']))
 					simdose = scale * newpreset['dose']
 					self.updatePreset(sim['name'], {'dose': simdose}, updatedose=False)
@@ -1013,17 +1025,29 @@ class PresetsManager(node.Node):
 		mybeam['y'] -= oldpreset['beam shift']['y']
 		mybeam['y'] += newpreset['beam shift']['y']
 
+		mymin = newpreset['defocus range min']
+		mymax = newpreset['defocus range max']
+		if None in (mymin, mymax):
+			mydefocus = newpreset['defocus']
+		else:
+			# min <= defocus < max
+			mydefocus = random.uniform(mymin, mymax)
+			self.logger.info('Random defocus for preset %s:  %s' % (newpreset['name'], mydefocus))
+
+
 		### create ScopeEMData with preset and target shift
 		scopedata = data.ScopeEMData()
 		scopedata.friendly_update(newpreset)
 		scopedata['image shift'] = myimage
 		scopedata['beam shift'] = mybeam
 		scopedata['stage position'] = mystage
+		scopedata['defocus'] = mydefocus
 
 		### correct defocus for tilted stage
 		deltaz = emtargetdata['delta z']
-		self.logger.info('Correcting defocus by %.2e for target on tilt' % (deltaz,))
-		scopedata['defocus'] += deltaz
+		if deltaz:
+			self.logger.info('Correcting defocus by %.2e for target on tilt' % (deltaz,))
+			scopedata['defocus'] += deltaz
 
 		### createCameraEMData with preset
 		cameradata = data.CameraEMData()

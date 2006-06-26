@@ -1111,6 +1111,8 @@ class PresetData(InSessionData):
 			('image shift', dict),
 			('beam shift', dict),
 			('defocus', float),
+			('defocus range min', float),
+			('defocus range max', float),
 			('dimension', dict),
 			('binning', dict),
 			('offset', dict),

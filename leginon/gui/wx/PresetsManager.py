@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.68 $
+# $Revision: 1.69 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-28 23:28:55 $
+# $Date: 2006-06-26 22:39:45 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -147,6 +147,8 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 
 		self.floats = {
 			'defocus': FloatEntry(self, -1, chars=9),
+			'defocus range min': FloatEntry(self, -1, chars=9),
+			'defocus range max': FloatEntry(self, -1, chars=9),
 			'spot size': FloatEntry(self, -1, chars=2),
 			'intensity': FloatEntry(self, -1, chars=9),
 			'image shift': {
@@ -213,6 +215,7 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
     		('tem', 'TEM'),
     		('magnification', 'Magnification'),
     		('defocus', 'Defocus'),
+    		('defocus range', 'Random Defocus Range'),
     		('spot size', 'Spot size'),
     		('intensity', 'Intensity'),
     		('image shift', 'Image shift'),
@@ -232,27 +235,40 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		sizer.Add(self.labels['magnification'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.choices['magnification'], (1, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 		sizer.Add(self._buttons['tem']['magnification'], (1, 3), (1, 1), wx.ALIGN_CENTER)
+
+
+
+
+
 		sizer.Add(self.labels['defocus'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.floats['defocus'], (2, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		sizer.Add(self._buttons['tem']['defocus'], (2, 3), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.labels['spot size'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.floats['spot size'], (3, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		sizer.Add(self._buttons['tem']['spot size'], (3, 3), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.labels['intensity'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.floats['intensity'], (4, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		sizer.Add(self._buttons['tem']['intensity'], (4, 3), (1, 1), wx.ALIGN_CENTER)
+
+
+
+		sizer.Add(self.labels['defocus range'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.floats['defocus range min'], (3, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sizer.Add(self.floats['defocus range max'], (3, 2), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+
+
+		sizer.Add(self.labels['spot size'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.floats['spot size'], (4, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sizer.Add(self._buttons['tem']['spot size'], (4, 3), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.labels['intensity'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.floats['intensity'], (5, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sizer.Add(self._buttons['tem']['intensity'], (5, 3), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'x')
-		sizer.Add(label, (5, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(label, (6, 1), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'y')
-		sizer.Add(label, (5, 2), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.labels['image shift'], (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.floats['image shift']['x'], (6, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sizer.Add(self.floats['image shift']['y'], (6, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sizer.Add(self._buttons['tem']['image shift'], (6, 3), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.labels['beam shift'], (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.floats['beam shift']['x'], (7, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sizer.Add(self.floats['beam shift']['y'], (7, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sizer.Add(self._buttons['tem']['beam shift'], (7, 3), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(label, (6, 2), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.labels['image shift'], (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.floats['image shift']['x'], (7, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sizer.Add(self.floats['image shift']['y'], (7, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sizer.Add(self._buttons['tem']['image shift'], (7, 3), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.labels['beam shift'], (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.floats['beam shift']['x'], (8, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sizer.Add(self.floats['beam shift']['y'], (8, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sizer.Add(self._buttons['tem']['beam shift'], (8, 3), (1, 1), wx.ALIGN_CENTER)
 		sizer.Add(self.bools['skip'], (9, 0), (1, 8), wx.ALIGN_CENTER)
 
 		sizer.Add(self.labels['ccdcamera'], (0, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -361,6 +377,8 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 
 		keys = (
 			'defocus',
+			'defocus range min',
+			'defocus range max',
 			'spot size',
 			'intensity',
 			'energy filter width',
@@ -410,6 +428,8 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		parameters['magnification'] = magnification
 		keys = [
 			'defocus',
+			'defocus range min',
+			'defocus range max',
 			'spot size',
 			'intensity',
 			'energy filter width',
@@ -1037,6 +1057,7 @@ class Parameters(wx.StaticBoxSizer):
 			('ccdcamera', 'CCD Camera:'),
 			('magnification', 'Magnification:'),
 			('defocus', 'Defocus:'),
+			('defocus range', 'Random Defocus Range:'),
 			('spot size', 'Spot size:'),
 			('intensity', 'Intensity:'),
 			('image shift', 'Image shift:'),
@@ -1066,14 +1087,16 @@ class Parameters(wx.StaticBoxSizer):
 		sz.Add(self.values['magnification'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		sz.Add(self.labels['defocus'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.values['defocus'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.labels['spot size'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.values['spot size'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.labels['intensity'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.values['intensity'], (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.labels['image shift'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.values['image shift'], (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.labels['beam shift'], (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.values['beam shift'], (6, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['defocus range'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['defocus range'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['spot size'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['spot size'], (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['intensity'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['intensity'], (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['image shift'], (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['image shift'], (6, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['beam shift'], (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['beam shift'], (7, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		sz.Add(self.labels['skip'], (9, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.values['skip'], (9, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
@@ -1125,6 +1148,18 @@ class Parameters(wx.StaticBoxSizer):
 			]
 			for key in keys:
 				self.values[key].SetLabel(str(parameters[key]))
+
+			r = []
+			for key in ('defocus range min','defocus range max'):
+				if parameters[key] is None:
+					r = None
+					break
+				r.append('%.3g' % (parameters[key],))
+			if r is None:
+				s = 'None'
+			else:
+				s = '(%s, %s)' % tuple(r)
+			self.values['defocus range'].SetLabel(s)
 
 			for key in ['image shift', 'beam shift']:
 				s = '(%g, %g)' % (parameters[key]['x'], parameters[key]['y'])
