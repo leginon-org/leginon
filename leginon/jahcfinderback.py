@@ -127,6 +127,7 @@ class HoleFinder(object):
 		self.template_config = {'ring_list': [(25,30)]}
 		self.correlation_config = {'cortype': 'cross', 'corfilt': (1.0,)}
 		self.threshold = 3.0
+		self.threshold_method = "Threshold = mean + A * stdev"
 		self.blobs_config = {'border': 20, 'maxblobsize': 50, 'maxblobs':100}
 		self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20}
 		self.holestats_config = {'radius': 20}
@@ -226,22 +227,28 @@ class HoleFinder(object):
 		if self.save_mrc:
 			Mrc.numeric_to_mrc(cc, 'correlation.mrc')
 
-	def configure_threshold(self, threshold=None):
+	def configure_threshold(self, threshold=None, threshold_method=None):
 		if threshold is not None:
 			self.threshold = threshold
+		if threshold_method is not None:
+			self.threshold_method = threshold_method
 
-	def threshold_correlation(self, threshold=None):
+	def threshold_correlation(self, threshold=None, thresholdmethod=None):
 		'''
 		Threshold the correlation image.
 		'''
 		if self.__results['correlation'] is None:
 			raise RuntimeError('need correlation image to threshold')
-		self.configure_threshold(threshold)
+		self.configure_threshold(threshold, thresholdmethod)
 		cc = self.__results['correlation']
 
-		mean = imagefun.mean(cc)
-		std = imagefun.stdev(cc)
-		thresh = mean + self.threshold * std
+		meth = self.threshold_method
+		if meth == "Threshold = mean + A * stdev":
+			mean = imagefun.mean(cc)
+			std = imagefun.stdev(cc)
+			thresh = mean + self.threshold * std
+		elif meth == "Threshold = A":
+			thresh = self.threshold
 
 		t = imagefun.threshold(cc, thresh)
 		self.__update_result('threshold', t)

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/JAHCFinder.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-06-13 19:02:44 $
+# $Date: 2006-06-27 20:53:10 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -169,9 +169,13 @@ class ThresholdSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['threshold'] = FloatEntry(self, -1, chars=9)
 
 		szthreshold = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Threshold:')
-		szthreshold.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szthreshold.Add(self.widgets['threshold'], (0, 1), (1, 1),
+		self.widgets['threshold method'] = Choice(self, -1, choices=(
+			"Threshold = mean + A * stdev",
+			"Threshold = A"))
+		szthreshold.Add(self.widgets['threshold method'], (0,0), (1,2))
+		label = wx.StaticText(self, -1, 'A:')
+		szthreshold.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szthreshold.Add(self.widgets['threshold'], (1, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szthreshold.AddGrowableCol(1)
 

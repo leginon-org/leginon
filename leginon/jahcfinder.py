@@ -47,6 +47,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 			'sigma': 1.0,
 		},
 		'threshold': 3.0,
+		'threshold method': "Threshold = mean + A * stdev",
 		'blobs border': 20,
 		'blobs max': 300,
 		'blobs max size': 1000,
@@ -151,7 +152,8 @@ class JAHCFinder(targetfinder.TargetFinder):
 	def threshold(self):
 		self.logger.info('threshold')
 		tvalue = self.settings['threshold']
-		self.hf.configure_threshold(tvalue)
+		tmeth = self.settings['threshold method']
+		self.hf.configure_threshold(tvalue, tmeth)
 		self.hf.threshold_correlation()
 		# convert to Float32 to prevent seg fault
 		self.setImage(self.hf['threshold'].astype(Numeric.Float32), 'Threshold')
@@ -413,6 +415,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 			'template-lpf': self.settings['template lpf']['sigma'],
 
 			'threshold-value': self.settings['threshold'],
+			'threshold-method': self.settings['threshold method'],
 			'blob-border': self.settings['blobs border'],
 			'blob-max-number': self.settings['blobs max'],
 			'blob-max-size': self.settings['blobs max size'],
