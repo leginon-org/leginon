@@ -50,10 +50,10 @@ class DriftManager(watcher.Watcher):
 				}
 			),
 	}
-	eventinputs = watcher.Watcher.eventinputs + [event.DriftDetectedEvent, event.NeedTargetShiftEvent, event.PresetChangedEvent]
-	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftDoneEvent, event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.AcquisitionImageDriftPublishEvent]
+	eventinputs = watcher.Watcher.eventinputs + [event.DriftMonitorRequestEvent, event.NeedTargetShiftEvent, event.PresetChangedEvent]
+	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftMonitorResultEvent, event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.AcquisitionImageDriftPublishEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
-		watchfor = [event.DriftDetectedEvent]
+		watchfor = [event.DriftMonitorRequestEvent]
 		watcher.Watcher.__init__(self, id, session, managerlocation, watchfor, **kwargs)
 
 		self.correlator = correlator.Correlator()
@@ -78,6 +78,29 @@ class DriftManager(watcher.Watcher):
 		emtarget = im['emtarget']
 		self.logger.info('Preset name %s' % presetname)
 		self.presetsclient.toScope(presetname, emtarget)
+
+		### Some parameters of the original acquisition were not set by
+		### the presets manager, so we need to override them here using
+		### info from the original image.  Also, the preset may have
+		### changed since the original image was acquired.  The drift
+		### manager can be used to adjust targets after a preset is
+		### modified, so it is good to use many of the new preset's
+		### parameters.  However, some of the new parameters will
+		### break the drift manager.  If the old preset camera config is
+		### different than the new one, then correlations will fail.
+
+		# Use camera config of original image to make sure correlation works
+		oldcam = im['camera']
+		newcam = data.CameraEMData()
+		newcam['dimension'] = oldcam['dimension']
+		newcam['binning'] = oldcam['binning']
+		newcam['offset'] = oldcam['offset']
+		newcam['exposure time'] = oldcam['exposure time']
+		self.instrument.setData(newcam)
+
+		# other things that make correlation difficult if they changed:
+		# stage tilt also ???
+		# what if preset mag changed ???
 
 		## acquire new image
 		newim = self.acquireImage()
@@ -112,8 +135,8 @@ class DriftManager(watcher.Watcher):
 
 	def processData(self, newdata):
 		self.logger.info('processData')
-		if isinstance(newdata, data.DriftDetectedData):
-			self.logger.info('DriftDetectedData')
+		if isinstance(newdata, data.DriftMonitorRequestData):
+			self.logger.info('DriftMonitorRequest')
 			self.monitorDrift(newdata)
 
 	def uiMonitorDrift(self):
@@ -133,23 +156,33 @@ class DriftManager(watcher.Watcher):
 			threshold = driftdata['threshold']
 			target = emtarget['target']
 			self.presetsclient.toScope(pname, emtarget)
+
+			# There is a bug due to the fact that sending the preset
+			# and target to the scope is not sufficient to get the
+			# same drift measurement that focuser is getting.  Beam tilt
+			# was not the same as it is here.  We could find a way to 
+			# set the same beam tilt here, but it is easier to do the focuser
+			# drift measurement without a beam tilt.
+
 		else:
 			target = None
 			threshold = None
 
 		## acquire images, measure drift
 		self.abortevent.clear()
-		self.acquireLoop(target, threshold=threshold)
+		status,final = self.acquireLoop(target, threshold=threshold)
+		if status == 'drifted':
+			## declare drift above threshold
+			self.declareDrift('threshold')
 
-		## declare drift above threshold
-		self.declareDrift('threshold')
-
-		## DriftDoneEvent
+		## Generate DriftMonitorResultData
 		## only output if this was called from another node
 		if driftdata is not None:
-			self.logger.info('DriftManager sending DriftDoneEvent...')
-			ev = event.DriftDoneEvent()
-			self.outputEvent(ev)
+			self.logger.info('Publishing DriftMonitorResultData...')
+			result = data.DriftMonitorResultData()
+			result['status'] = status
+			result['final'] = final
+			self.publish(result, pubevent=True, database=True, dbforce=True)
 		self.logger.info('DriftManager done monitoring drift')
 		self.setStatus('idle')
 
@@ -160,7 +193,6 @@ class DriftManager(watcher.Watcher):
 		return imagedata
 
 	def acquireLoop(self, target=None, threshold=None):
-
 		## acquire first image
 		imagedata = self.acquireImage()
 		if imagedata is None:
@@ -181,9 +213,9 @@ class DriftManager(watcher.Watcher):
 		else:
 			self.logger.info('using requested threshold: %.2e' % (threshold,))
 			requested = True
-		## ensure that loop executes once
-		current_drift = threshold + 1.0
-		while current_drift > threshold:
+
+		status = 'ok'
+		while 1:
 			## wait for interval
 			time.sleep(self.settings['pause time'])
 
@@ -221,11 +253,14 @@ class DriftManager(watcher.Watcher):
 			## t0 becomes t1 and t1 will be reset for next image
 			t0 = t1
 
+			if current_drift < threshold:
+				return status, d
+			else:
+				status = 'drifted'
+
 			## check for abort
 			if self.abortevent.isSet():
-				return 'aborted'
-
-		return 'success'
+				return 'aborted', current_drift
 
 	def abort(self):
 		self.abortevent.set()

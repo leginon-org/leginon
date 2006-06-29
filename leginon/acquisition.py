@@ -57,7 +57,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'adjust for drift': False,
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
-								+ [event.DriftDoneEvent,
+								+ [event.DriftMonitorResultEvent,
 										event.ImageProcessDoneEvent, event.AcquisitionImageDriftPublishEvent] \
 								+ presets.PresetsClient.eventinputs
 	eventoutputs = targetwatcher.TargetWatcher.eventoutputs \
@@ -67,14 +67,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.NeedTargetShiftEvent,
 										
 	event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent,
-											event.DriftDetectedEvent, 
+											event.DriftMonitorRequestEvent, 
 											event.ImageListPublishEvent]
 
 	def __init__(self, id, session, managerlocation, target_types=('acquisition',), **kwargs):
 
 		targetwatcher.TargetWatcher.__init__(self, id, session, managerlocation, target_types=target_types, **kwargs)
 
-		self.addEventInput(event.DriftDoneEvent, self.handleDriftDone)
+		self.addEventInput(event.DriftMonitorResultEvent, self.handleDriftResult)
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)
 		self.addEventInput(event.AcquisitionImageDriftPublishEvent,
 												self.handleImageDrift)
@@ -103,9 +103,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		evt = gui.wx.Presets.NewPresetEvent()
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
-	def handleDriftDone(self, ev):
-		self.reportStatus('acquisition', 'Received notification drift done')
-		self.driftdonestatus = ev['status']
+	def handleDriftResult(self, ev):
+		driftresult = ev['data']
+		status = driftresult['status']
+		final = driftresult['final']
+		drift = Numeric.hypot(final['rowmeters'],final['colmeters']) / final['interval']
+		self.reportStatus('acquisition', 'Received drift result status "%s", final drift: %.3e' % (status, drift))
+		self.driftresult = driftresult
 		self.driftdone.set()
 
 	def handleImageProcessDone(self, ev):
@@ -598,15 +602,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 		presetnames = self.presetsclient.getPresetNames()
 		return presetnames
 
-	def driftDetected(self, presetname, emtarget, threshold):
+	def checkDrift(self, presetname, emtarget, threshold):
 		'''
-		notify DriftManager of drifting
+		request DriftManager to monitor drift
 		'''
-		driftdetecteddata = data.DriftDetectedData(session=self.session, presetname=presetname, emtarget=emtarget, threshold=threshold)
+		driftdata = data.DriftMonitorRequestData(session=self.session, presetname=presetname, emtarget=emtarget, threshold=threshold)
 		self.driftdone.clear()
-		self.publish(driftdetecteddata, pubevent=True, database=True, dbforce=True)
-		self.reportStatus('acquisition', 'Waiting for DriftManager...')
+		self.publish(driftdata, pubevent=True, database=True, dbforce=True)
+		self.reportStatus('acquisition', 'Waiting for DriftManager to check drift...')
 		self.driftdone.wait()
+		return self.driftresult
 
 	def reportStatus(self, type, message):
 		self.logger.info('%s: %s' % (type, message))

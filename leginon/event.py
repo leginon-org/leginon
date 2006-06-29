@@ -111,14 +111,6 @@ class ImageProcessDoneEvent(NotificationEvent):
 		)
 	typemap = classmethod(typemap)
 
-class DriftDoneEvent(NotificationEvent):
-	'Event indicating that drift has ended'
-	def typemap(cls):
-		return NotificationEvent.typemap() + (
-			('status', str),
-		)
-	typemap = classmethod(typemap)
-
 class GridInsertedEvent(NotificationEvent):
 	'Event indicating a grid has been inserted'
 	def typemap(cls):
@@ -172,11 +164,11 @@ class NeedTargetShiftEvent(NotificationEvent):
 		)
 	typemap = classmethod(typemap)
 
-## this is a PublishEvent because we want to publish the EM state
-## that was used to detect the drift, so that we can continue to monitor
-## drift at this state.
-class DriftDetectedEvent(PublishEvent):
-	dataclass = data.DriftDetectedData
+class DriftMonitorRequestEvent(PublishEvent):
+	dataclass = data.DriftMonitorRequestData
+
+class DriftMonitorResultEvent(PublishEvent):
+	dataclass = data.DriftMonitorResultData
 
 class NodeOrderEvent(Event):
 	'ControlEvent sent to a NodeLauncher specifying a node to launch'

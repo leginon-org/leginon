@@ -181,10 +181,6 @@ class Focuser(acquisition.Acquisition):
 		## need btilt, pub, driftthresh
 		btilt = setting['tilt']
 		pub = False
-		if setting['check drift']:
-			driftthresh = setting['drift threshold']
-		else:
-			driftthresh = None
 
 		## send the autofocus preset to the scope
 		self.presetsclient.toScope(presetname, emtarget)
@@ -208,23 +204,30 @@ class Focuser(acquisition.Acquisition):
 		time.sleep(delay)
 
 		### report the current focus and defocus values
-		self.logger.info('Before autofocus...')
 		try:
 			defoc = self.instrument.tem.Defocus
 			foc = self.instrument.tem.Focus
-			self.logger.info('Defocus: %s, Focus: %s' % (defoc, foc))
 		except Exception, e:
 			self.logger.exception('Autofocus failed: %s' % e)
 
+		### Drift check
+		if setting['check drift']:
+			driftthresh = setting['drift threshold']
+			driftresult = self.checkDrift(presetname, emtarget, driftthresh)
+			if driftresult['status'] == 'drifted':
+				self.logger.info('Drift was detected so target will be repeated')
+				return 'repeat'
+			lastdrift = driftresult['final']
+		else:
+			lastdrift = None
+
 		try:
-			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.setImage, target=target, correct_tilt=True, correlation_type=setting['correlation type'], stig=True)
+			## drift_threshold=None because now DriftManager does all the work.
+			## Should eventually remove all the drift stuff from calclient
+			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=None, image_callback=self.setImage, target=target, correct_tilt=True, correlation_type=setting['correlation type'], stig=True)
 		except calibrationclient.Abort:
 			self.logger.info('Measurement of defocus and stig. has been aborted')
 			return 'aborted'
-		except calibrationclient.Drifting:
-			self.driftDetected(presetname, emtarget, driftthresh)
-			self.logger.info('Drift detected (will try again when drift is done)')
-			return 'repeat'
 		except calibrationclient.NoMatrixCalibrationError, e:
 			self.player.pause()
 			self.logger.error('Measurement failed without calibration: %s' % e)
@@ -232,12 +235,11 @@ class Focuser(acquisition.Acquisition):
 			self.beep()
 			return 'repeat'
 
-		self.logger.info('Measured defocus and stig %s' % correction)
+		self.logger.info('Measured defocus: %.3e, stigx: %.3f, stigy: %.3f, min: %.2f' % (correction['defocus'], correction['stigx'], correction['stigy'], correction['min']))
 		defoc = correction['defocus']
 		stigx = correction['stigx']
 		stigy = correction['stigy']
 		fitmin = correction['min']
-		lastdrift = correction['lastdrift']
 
 		resultdata.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin, 'drift': lastdrift})
 
@@ -624,7 +626,7 @@ class Focuser(acquisition.Acquisition):
 		defocus = self.instrument.tem.Defocus
 		self.logger.info('Defocus before applying correction %s' % defocus)
 		defocus += delta
-		self.logger.info('Correcting defocus by %s' % (delta,))
+		self.logger.info('Correcting defocus by %.3e' % (delta,))
 		self.instrument.tem.Defocus = defocus
 		if reset or reset is None:
 			self.resetDefocus()

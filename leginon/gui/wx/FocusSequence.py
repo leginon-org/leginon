@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.24 $
+# $Revision: 1.25 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-28 20:42:51 $
+# $Date: 2006-06-29 23:40:18 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -319,7 +319,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 		### Frame for drift related items
 		driftsizer = wx.GridBagSizer(3, 3)
 		self.check_drift_checkbox = wx.CheckBox(self, -1,
-										   'Check for drift greater than')
+										   'Wait for drift to be less than')
 		self.drift_threshold_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
 		driftsizer.Add(self.check_drift_checkbox, (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)

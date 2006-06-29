@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.181 $
+# $Revision: 1.182 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-05-31 19:49:42 $
+# $Date: 2006-06-29 23:40:17 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -603,10 +603,10 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		t2 = tilts['y']
 		if stig:
 			sol = self.solveEq10(fmatrix,amatrix,bmatrix,d1,t1,d2,t2)
-			self.node.logger.info('Defocus: %g, %s stig.: (%g, %g), min. = %g' % (sol['defocus'], stig, sol['stigx'], sol['stigy'], sol['min']))
+			#self.node.logger.info('Defocus: %g, stig.: (%g, %g), min. = %g' % (sol['defocus'], sol['stigx'], sol['stigy'], sol['min']))
 		else:
 			sol = self.solveEq10_nostig(fmatrix,d1,t1,d2,t2)
-			self.node.logger.info('Defocus: %g, stig.: (not measured), min. = %g' % (sol['defocus'], sol['min']))
+			#self.node.logger.info('Defocus: %g, stig.: (not measured), min. = %g' % (sol['defocus'], sol['min']))
 
 		sol['lastdrift'] = lastdrift
 		return sol
