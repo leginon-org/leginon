@@ -75,7 +75,8 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 			self.logger.info('Filter input: %d' % (len(oldtargets),))
 			newtargets = self.filterTargets(oldtargets)
 			self.logger.info('Filter output: %d' % (len(newtargets),))
-			newtargetlistdata = data.ImageTargetListData(initializer=targetlistdata)
+			newtargetlistdata = targethandler.newTargetList()
+			newtargetlistdata.update(targetlistdata)
 			self.publish(newtargetlistdata, database=True, dbforce=True)
 			for newtarget in newtargets:
 				newtarget['list'] = newtargetlistdata
