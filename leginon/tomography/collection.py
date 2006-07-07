@@ -3,6 +3,7 @@ import time
 import data
 import tiltcorrelator
 import tiltseries
+import numarray
 
 class Abort(Exception):
     pass
@@ -220,6 +221,10 @@ class Collection(object):
             # TODO: error checking
             image_data = self.instrument.getData(data.CorrectedCameraImageData)
             self.logger.info('Image acquired.')
+
+            # HACK: fix me
+            image_data['image'] = numarray.around(image_data['image']*10).astype(numarray.Int16)
+
             image = image_data['image']
 
             self.logger.info('Saving image...')
