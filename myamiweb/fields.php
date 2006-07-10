@@ -3,9 +3,8 @@
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 <link rel="stylesheet" type="text/css" href="css/view.css">
 <title>Data</title>
-
-
 <?php
+
 require("config.php");
 require ('inc/mysql.inc');
 

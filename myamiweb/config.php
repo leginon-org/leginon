@@ -7,10 +7,10 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  *
  * $Source: /ami/sw/cvsroot/dbem/config.php,v $
- * $Revision: 1.19 $
+ * $Revision: 1.20 $
  * $Name: not supported by cvs2svn $
- * $Date: 2006-04-07 20:40:04 $
- * $Author: suloway $
+ * $Date: 2006-07-10 17:41:27 $
+ * $Author: dfellman $
  * $State: Exp $
  * $Locker:  $
  *
@@ -20,34 +20,34 @@
 
 // --- Set your leginon MySQL database server parameters
 
-$DB_HOST	= "";
+$DB_HOST	= "cronus4";
 $DB_USER	= "usr_object";
 $DB_PASS	= "";
 $DB		= "dbemdata";
 
 // --- Project database URL
 
-$PROJECT_URL = "";
-$PROJECT_DB_HOST = "";
+$PROJECT_URL = "http://cronus3.scripps.edu/projectdb/";
+$PROJECT_DB_HOST = "cronus4";
 $PROJECT_DB_USER = "usr_object";
 $PROJECT_DB_PASS = "";
 $PROJECT_DB = "project";
 
 // --- Particle database
 
-$PARTICLE_DB_HOST = "";
+$PARTICLE_DB_HOST = "cronus4";
 $PARTICLE_DB_USER = "usr_object";
 $PARTICLE_DB_PASS = "";
 $PARTICLE_DB = "particledb";
 
-$PROCESSING_DB_HOST = "";
+$PROCESSING_DB_HOST = "cronus4";
 $PROCESSING_DB_USER = "usr_object";
 $PROCESSING_DB_PASS = "";
 $PROCESSING_DB = "processing";
 
 // --- Set Default table definition
 
-$DEF_TABLES_FILE = "defaulttables20041021.xml";
+$DEF_TABLES_FILE = "defaulttables20060120.xml";
 
 // --- Set External SQL server here (use for import/export application)
 // --- You can add as many as you want, just copy and paste the block

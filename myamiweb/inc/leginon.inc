@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.56 $
- *	@version $Id: leginon.inc,v 1.56 2006-04-07 20:40:06 suloway Exp $
+ *	@version $Revision: 1.57 $
+ *	@version $Id: leginon.inc,v 1.57 2006-07-10 17:41:28 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -1007,28 +1007,28 @@ class leginondata {
 	}
 
 	function getImageTargets($imgId, $type="acquisition") {
-		$q =	" select "
-			."floor(t.`delta column`+c.`SUBD|dimension|x`/2) as x, "
-			."floor(t.`delta row`+c.`SUBD|dimension|y`/2) as y, "
-			."t.`delta column` as `delta column`, "
-			."t.`delta row` as `delta row`, "
-			."c.`SUBD|dimension|x` as dimx, "
-			."c.`SUBD|dimension|y` as dimy, "
-			."child.`DEF_id` as childId, "
-			."t.`DEF_id` as tId, "
-			."t.`version` as tversion, "
-			."t.`status` as tstatus, "
-			."t.`number` as tnumber "
-			."from AcquisitionImageData as a "
-			."left join AcquisitionImageTargetData as t "
-			."on (a.`DEF_id` = t.`REF|AcquisitionImageData|image`) "
-			."left join CameraEMData c on (t.`REF|CameraEMData|camera`=c.`DEF_id`) "
-			."left join AcquisitionImageData as child "
-			."on (child.`REF|AcquisitionImageTargetData|target`=t.`DEF_id`) "
-			."where "
-			."t.`type`='$type' and "
-			."a.`DEF_id`='".$imgId."' "
-			."order by `tnumber` ";
+    $q =  " select "
+      ."floor(t.`delta column`+c.`SUBD|dimension|x`/2) as x, "
+      ."floor(t.`delta row`+c.`SUBD|dimension|y`/2) as y, "
+      ."t.`delta column` as `delta column`, "
+      ."t.`delta row` as `delta row`, "
+      ."c.`SUBD|dimension|x` as dimx, "
+      ."c.`SUBD|dimension|y` as dimy, "
+      ."child.`DEF_id` as childId, "
+      ."t.`DEF_id` as tId, "
+      ."t.`version` as tversion, "
+      ."t.`status` as tstatus, "
+      ."t.`number` as tnumber "
+      ."from AcquisitionImageData as a "
+      ."left join AcquisitionImageTargetData as t "
+      ."on (a.`DEF_id` = t.`REF|AcquisitionImageData|image`) "
+      ."left join CameraEMData c on (t.`REF|CameraEMData|camera`=c.`DEF_id`) "
+      ."left join AcquisitionImageData as child "
+      ."on (child.`REF|AcquisitionImageTargetData|target`=t.`DEF_id`) "
+      ."where "
+      ."t.`type`='$type' and "
+      ."a.`DEF_id`='".$imgId."' "
+      ."order by `tnumber` ";
 
 		return $this->mysql->getSQLResult($q);
 	}
