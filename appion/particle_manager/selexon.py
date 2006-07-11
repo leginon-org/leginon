@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 # Python wrapper for the selexon program
 # Will by default create a "jpgs" directory and save jpg images of selections & crudfinder results
+# testing CVS
 
 import os, re, sys
 import tempfile
