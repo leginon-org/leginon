@@ -62,23 +62,33 @@ def parseInput(args):
     # create params dictionary & set defaults
     params=createDefaults()
 
-    # make sure that the input file exists
-    if (os.path.exists(args[1])):
-        mrcfile=args[1]
-        mrcfileroot=os.path.splitext(mrcfile)[0]
-        params["mrcfileroot"]=mrcfileroot
+    lastarg=1
 
     # check if user just wants make template images
-    elif (args[1]=='preptemplate'):
+    if (args[1]=='preptemplate'):
         params["preptmplt"]='TRUE'
-
-    else :
-        print "file '%s' does not exist \n" %args[1]
-        sys.exit(1)
+        lastarg=2
 
     # save the input parameters into the "params" dictionary
-    for arg in args[2:]:
-        elements=arg.split('=') 
+    # first get all images
+    
+    mrcfileroot=[]
+    for arg in args[lastarg:]:
+        # gather all input files into mrcfileroot list
+        if '=' in  arg:
+            break
+        else:
+            mrcfile=arg
+            if (os.path.exists(mrcfile)):
+                mrcfileroot.append(os.path.splitext(mrcfile)[0])
+            else:
+                print ("file '%s' does not exist \n" % mrcfile)
+                sys.exit()
+        lastarg+=1
+    params["mrcfileroot"]=mrcfileroot
+    # next get all selection parameters
+    for arg in args[lastarg:]:
+        elements=arg.split('=')
         if (elements[0]=='template'):
             params["template"]=elements[1]
         elif (elements[0]=='apix'):
@@ -126,7 +136,6 @@ def parseInput(args):
     # find the number of template files
     if (params["crudonly"]=='FALSE'):
         params=checkTemplates(params)
-
     return params
 
 def checkTemplates(params):
@@ -164,19 +173,17 @@ def checkTemplates(params):
 
     return(params)
 
-def dwnsizeImg(params):
+def dwnsizeImg(params,file):
     # run downsizeandfilter2 from the FindEM package
-
-    # remove downsized mrc file if exists
-    if (os.path.exists(params["mrcfileroot"]+".dwn.mrc")):
-        os.remove(params["mrcfileroot"]+".dwn.mrc")
-
     # get parameters
     lp=str(params["lp"])
     hp=str(params["hp"])
-    file=params["mrcfileroot"]
     scale=str(params["bin"])
     pix=str(params["apix"])
+    
+    # remove downsized mrc file if exists
+    if (os.path.exists(file + ".dwn.mrc")):
+        os.remove(file + ".dwn.mrc")
     
     # run "downsizeandfilter2"
     f=os.popen('${FINDEM_PATH}/downsizeandfilter2','w')
@@ -191,9 +198,8 @@ def dwnsizeImg(params):
 
     f.flush
     
-def runFindEM(params):
+def runFindEM(params,file):
     # run FindEM
-    file=params["mrcfileroot"]
     tmplt=params["template"]
     numcls=params["classes"]
     pixdwn=str(params["apixdwn"])
@@ -227,11 +233,9 @@ def runFindEM(params):
         f.flush
         classavg=classavg+1
 
-def findPeaks(params):
+def findPeaks(params,file):
     # create tcl script to process the cccmaxmap***.mrc images & find peaks
     tmpfile=tempfile.NamedTemporaryFile()
-
-    file=params["mrcfileroot"]
     imgsize=int(getImgSize(file))
     wsize=str(params["win_size"])
     clsnum=str(params["classes"])
@@ -353,7 +357,7 @@ def createJPG(params):
     tclfile.close()
     os.system("viewit "+tmpfile.name)
     
-def findCrud(params):
+def findCrud(params,file):
     # run the crud finder
     tmpfile=tempfile.NamedTemporaryFile()
 
@@ -361,7 +365,6 @@ def findCrud(params):
     if not (os.path.exists("jpgs")):
         os.mkdir("jpgs")
     
-    file=params["mrcfileroot"]
 
     # remove crud pik file if it exists
     if (os.path.exists("pikfiles/"+file+".a.pik.nocrud")):
@@ -374,7 +377,7 @@ def findCrud(params):
     scale=str(params["bin"])
     fracscale=str(1.0/params["bin"])
     size=str(int(params["diam"]/30)) #size of cross to draw    
-    sigma="4.5"
+    sigma="3.5"
     low_t="0.6"
     high_t="0.95"
     pm="2.0"
@@ -473,15 +476,13 @@ def prepTemplate(params):
             mrcfile=name
         else:
             mrcfile=name+str(i)
-        params["mrcfileroot"]=mrcfile
         os.system("fix_mrc "+mrcfile+".mrc")
-        dwnsizeImg(params)
+        dwnsizeImg(params,mrcfile)
         i=i+1
     print "\ndownsize & filtered "+str(num)+" file(s) with root \""+params["template"]+"\"\n"
     sys.exit(1)
     
-def pik2Box(params):
-    file=params["mrcfileroot"]
+def pik2Box(params,file):
     box=params["box"]
     if (params["crud"]=='TRUE'):
         fname="pikfiles/"+file+".a.pik.nocrud"
@@ -521,9 +522,20 @@ def getImgSize(fname):
         sys.exit()
     return(size)
 
+def writeSelexLog(commandline):
+    f=open('.selexonlog','a')
+    out=""
+    for n in commandline:
+        out=out+n+" "
+    f.write(out)
+    f.write("\n")
+    f.close()
+
 #-----------------------------------------------------------------------
 
 if __name__ == '__main__':
+    # record command line
+    writeSelexLog(sys.argv)
     # parse command line input
     params=parseInput(sys.argv)
 
@@ -558,24 +570,26 @@ if __name__ == '__main__':
         os.mkdir("pikfiles")
 
     # run selexon
-    dwnsizeImg(params)
-    runFindEM(params)
-    findPeaks(params)
+    images=params["mrcfileroot"]
+    for img in images:
+        dwnsizeImg(params,img)
+        runFindEM(params,img)
+        findPeaks(params,img)
 
     # if no particles were found, exit
-    if not (os.path.exists("pikfiles/"+params["mrcfileroot"]+".a.pik")):
-        print "no particles found in \""+params["mrcfileroot"]+".mrc\"\n"
-        sys.exit(1)
-        
-    # run the crud finder on selected particles if specified
-    if (params["crud"]=='TRUE'):
-        findCrud(params)
-        
-    # create jpg of selected particles if not created by crudfinder
-    if (params["crud"]=='FALSE'):
-        createJPG(params)
+ #   if not (os.path.exists("pikfiles/"+params["mrcfileroot"]+".a.pik")):
+ #       print "no particles found in \""+params["mrcfileroot"]+".mrc\"\n"
+ #       sys.exit(1)
+ 
+        # run the crud finder on selected particles if specified
+        if (params["crud"]=='TRUE'):
+            findCrud(params,img)
 
-    # convert resulting pik file to eman box file
-    if (params["box"]>0):
-        pik2Box(params)
+        # create jpg of selected particles if not created by crudfinder
+        if (params["crud"]=='FALSE'):
+            createJPG(params,img)
+
+        # convert resulting pik file to eman box file
+        if (params["box"]>0):
+            pik2Box(params,img)
 
