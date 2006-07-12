@@ -312,7 +312,7 @@ def findPeaks(params,file):
     tclfile.close()
     os.system('viewit '+tmpfile.name)
 
-def createJPG(params):
+def createJPG(params,img):
     # create a jpg image to visualize the final list of targetted particles
     tmpfile=tempfile.NamedTemporaryFile()
 
@@ -321,7 +321,7 @@ def createJPG(params):
         os.mkdir("jpgs")
     
     scale=str(params["bin"])
-    file=params["mrcfileroot"]
+    file=img
     size=str(int(params["diam"]/30)) #size of cross to draw
 
     cmdlist=[]
