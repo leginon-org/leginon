@@ -7,7 +7,7 @@ import tempfile
 import string
 
 def printHelp():
-    print "\nUsage:\nselexon.py <file> template=<name> apix=<pixel> diam=<n> bin=<n> [range=<start,stop,incr>] [thresh=<threshold> or autopik=<n>] [lp=<n>] [hp=<n>] [crud or crudonly or cruddiam=<n>] [box=<n>]"
+    print "\nUsage:\nselexon.py <file> template=<name> apix=<pixel> diam=<n> bin=<n> [range=<start,stop,incr>] [thresh=<threshold> or autopik=<n>] [lp=<n>] [hp=<n>] [crud or cruddiam=<n>] [crudonly] [crudblur=<n>] [crudlow=<n>] [crudhi=<n>] [box=<n>]"
     print "or\nselexon.py preptemplate template=<name> apix=<pixel> bin=<n>\n"
     print "Example:\nselexon 05jun23a_00001en.mrc template=groEL apix=1.63 diam=250 bin=4 range=0,90,10 thresh=0.45 crud\n"
     print "preptemplate     : this will prepare all your template files for selexon"
@@ -23,9 +23,13 @@ def printHelp():
     print "autopik=<thr>    : automatically calculate threshold, n = average number of particles per image"
     print "lp=<n>, hp=<n>   : low-pass and hi-pass filter (in Angstroms) - defaults are 30 & 600\n"
     print "crud             : run the crud finder after the particle selection"
-    print "crudonly         : only run the crud finder to check and view the settings"
+    print "                   (will use particle diameter by default)"
     print "cruddiam=<n>     : set the diameter to use for the crud finder"
-    print "                   (particle diameter used by default)"
+    print "                   (don't need to use the \"crud\" option if using this)"
+    print "crudblur=<n>     : amount to blur the image for edge detection (default is 3.5)"
+    print "crudlo=<n>       : lower limit for edge detection (0-1, default=0.6)"
+    print "crudhi=<n>       : upper threshold for edge detection (0-1, default=0.95)"
+    print "crudonly         : only run the crud finder to check and view the settings"
     print "box=<n>          : output will be saved as EMAN box file with given box size"
     print "\n"
 
@@ -50,6 +54,9 @@ def createDefaults():
     params["box"]=0
     params["crud"]='FALSE'
     params["cdiam"]=0
+    params["cblur"]=3.5
+    params["clo"]=0.6
+    params["chi"]=0.95
     params["crudonly"]='FALSE'
     params["onetemplate"]='FALSE'
     return params
@@ -70,12 +77,14 @@ def parseInput(args):
         lastarg=2
 
     # save the input parameters into the "params" dictionary
+
     # first get all images
-    
     mrcfileroot=[]
     for arg in args[lastarg:]:
         # gather all input files into mrcfileroot list
         if '=' in  arg:
+            break
+        elif (arg=='crudonly' or arg=='crud'):
             break
         else:
             mrcfile=arg
@@ -86,6 +95,7 @@ def parseInput(args):
                 sys.exit()
         lastarg+=1
     params["mrcfileroot"]=mrcfileroot
+
     # next get all selection parameters
     for arg in args[lastarg:]:
         elements=arg.split('=')
@@ -121,6 +131,12 @@ def parseInput(args):
         elif (elements[0]=='cruddiam'):
             params["crud"]='TRUE'
             params["cdiam"]=int(elements[1])
+        elif (elements[0]=='crudblur'):
+            params["cblur"]=float(elements[1])
+        elif (elements[0]=='crudlo'):
+            params["clo"]=float(elements[1])
+        elif (elements[0]=='crudhi'):
+            params["chi"]=float(elements[1])
         elif (arg=='crudonly'):
             params["crudonly"]='TRUE'
         else:
@@ -377,9 +393,9 @@ def findCrud(params,file):
     scale=str(params["bin"])
     fracscale=str(1.0/params["bin"])
     size=str(int(params["diam"]/30)) #size of cross to draw    
-    sigma="3.5"
-    low_t="0.6"
-    high_t="0.95"
+    sigma=str(params["cblur"]) # blur amount for edge detection
+    low_t=str(params["clo"]) # low threshold for edge detection
+    high_t=str(params["chi"]) # upper threshold for edge detection
     pm="2.0"
     am="3.0" 
 
@@ -543,6 +559,9 @@ if __name__ == '__main__':
     if (params["preptmplt"]=='TRUE'):
         prepTemplate(params)
 
+    # get list of input images, since wildcards are supported
+    images=params["mrcfileroot"]
+
     # check to see if user only wants to run the crud finder
     if (params["crudonly"]=='TRUE'):
         if (params["crud"]=='TRUE' and params["cdiam"]==0):
@@ -551,7 +570,8 @@ if __name__ == '__main__':
         if (params["diam"]==0): # diameter must be set
             print "\nError: please input the diameter of your particle\n\n"
             sys.exit(1)
-        findCrud(params)
+        for img in images:
+            findCrud(params,img)
         sys.exit(1)
         
     # check for wrong or missing inputs
@@ -570,7 +590,6 @@ if __name__ == '__main__':
         os.mkdir("pikfiles")
 
     # run selexon
-    images=params["mrcfileroot"]
     for img in images:
         dwnsizeImg(params,img)
         runFindEM(params,img)
