@@ -391,7 +391,6 @@ def findCrud(params,file):
     if (params["cdiam"]==0):
         cdiam=diam
     scale=str(params["bin"])
-    fracscale=str(1.0/params["bin"])
     size=str(int(params["diam"]/30)) #size of cross to draw    
     sigma=str(params["cblur"]) # blur amount for edge detection
     low_t=str(params["clo"]) # low threshold for edge detection
@@ -415,8 +414,13 @@ def findCrud(params,file):
         cmdlist.append("      -load ss1 outlined_img\n")
         cmdlist.append("      -oformat JPEG -o \"jpgs/"+file+".a.pik.nocrud.jpg\"}\n")
     cmdlist.append("    -iformat MRC -i [file join . "+file+".mrc] -collapse\n")
-    cmdlist.append("    -store orig_img ss1\n")
-    cmdlist.append("    -scale "+fracscale+" "+fracscale+"\n")
+    cmdlist.append("    set x "+scale+"\n")
+    if (params["bin"]>1):
+        cmdlist.append("    -store orig_img ss1\n")
+        cmdlist.append("    while { $x > 1} {\n")
+        cmdlist.append("      -scale 0.5 0.5\n")
+        cmdlist.append("      set x [expr $x / 2]\n")
+        cmdlist.append("    }\n")    
     cmdlist.append("    -store scaled_img ss1\n")
     cmdlist.append("    set imgheight [get_rows]\n")
     cmdlist.append("    set imgwidth  [get_cols]\n")
