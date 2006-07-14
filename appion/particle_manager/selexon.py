@@ -595,10 +595,10 @@ if __name__ == '__main__':
         runFindEM(params,img)
         findPeaks(params,img)
 
-    # if no particles were found, exit
- #   if not (os.path.exists("pikfiles/"+params["mrcfileroot"]+".a.pik")):
- #       print "no particles found in \""+params["mrcfileroot"]+".mrc\"\n"
- #       sys.exit(1)
+        # if no particles were found, skip rest and go to next image
+        if not (os.path.exists("pikfiles/"+img+".a.pik")):
+            print "no particles found in \""+img+".mrc\"\n"
+            continue
  
         # run the crud finder on selected particles if specified
         if (params["crud"]=='TRUE'):
