@@ -102,15 +102,19 @@ type: Pipeline
 module: fftmaker
 type: Pipeline
 
-[Tomography]
-module: tomography
-type: Pipeline
-package: tomography
+#[Tomography]
+#module: tomography
+#type: Pipeline
+#package: tomography
 
 [CenterTargetFilter]
 module: centertargetfilter
 type: Pipeline
 
-[RCTAcquisition]
-module: rctacquisition 
-type: Pipeline
+#[RCTAcquisition]
+#module: rctacquisition 
+#type: Pipeline
+
+[ImageAssessor]
+module: imageassessor
+type: Utility

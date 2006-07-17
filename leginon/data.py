@@ -2182,3 +2182,12 @@ class RCTAcquisitionSettingsData(AcquisitionSettingsData):
 			('minstable', float),
 		)
 	typemap = classmethod(typemap)
+
+class ImageAssessorSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('format', str),
+			('image directory', str),
+			('outputfile', str),
+		)
+	typemap = classmethod(typemap)
