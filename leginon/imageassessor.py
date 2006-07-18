@@ -46,6 +46,8 @@ class ImageAssessor(node.Node):
 				self.files.append(file)
 			if format == 'mrc' and ext in ('mrc','MRC'):
 				self.files.append(file)
+			if format == 'png' and ext in ('png','PNG'):
+				self.files.append(file)
 		if self.files:
 			self.readResults()
 			self.currentindex = 0
@@ -100,6 +102,8 @@ class ImageAssessor(node.Node):
 			imarray = self.readMRC(fullname)
 		if format == 'jpg':
 			imarray = self.readJPG(fullname)
+		if format == 'png':
+			imarray = self.readPNG(fullname)
 		self.setImage(imarray, 'Image')
 
 	def readResults(self):
@@ -135,3 +139,9 @@ class ImageAssessor(node.Node):
 		i = Image.open(filename)
 		i.load()
 		return i
+
+	def readPNG(self, filename):
+		i = Image.open(filename)
+		i.load()
+		return i
+

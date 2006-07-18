@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageAssessor.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-07-17 23:31:55 $
-# $Author: pulokas $
+# $Date: 2006-07-18 16:44:14 $
+# $Author: glander $
 # $State: Exp $
 # $Locker:  $
 
@@ -101,7 +101,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['image directory'], (0, 1), (1, 1))
 
 		label = wx.StaticText(self, -1, 'Image Format:')
-		self.widgets['format'] = gui.wx.Choice.Choice(self, -1, choices=['mrc','jpg'])
+		self.widgets['format'] = gui.wx.Choice.Choice(self, -1, choices=['mrc','jpg','png'])
 		sz.Add(label, (1, 0), (1, 1))
 		sz.Add(self.widgets['format'], (1, 1), (1, 1))
 
