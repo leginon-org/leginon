@@ -143,9 +143,9 @@ while (trial <3)
   [val, pg, imfftabs, rat, ang] = getprofile(file,stig,medium,tempdir);
 
    if(isempty(val)) 
-    fprintf(outid,'\n%s %s\n', filename,...
+    fprintf(outid,'\n%s %s', filename,...
 	'Could not process micrograph: Problem with ellipse fit'); 
-    fprintf('\n%s %s\n', filename,...
+    fprintf('\n%s %s', filename,...
 	'Could not process micrograph : Problem with ellipse fit'); 
     fclose(outid);
     ctfparams(1:17) = -1; 
@@ -159,9 +159,9 @@ while (trial <3)
   %START: Check for hyperbolic or parabolic distortion
   
   if(rat==-1) 
-    fprintf(outid,'%s %s\n',filename,...
+    fprintf(outid,'\n%s %s',filename,...
 	'Could not process micrograph: Hyperbolic distortion');
-    fprintf('%s %s\n',filename,...
+    fprintf('\n%s %s',filename,...
 	'Could not process micrograph: Hyperbolic distortion');
     fclose(outid); 
      h1=figure('Visible','off');
@@ -223,9 +223,9 @@ while (trial <3)
   
   if(~isreal(x) | x>0.35*imwidth)
    
-    fprintf(outid,'%s %s\n', filename,...
+    fprintf(outid,'\n%s %s', filename,...
 	'Could not process micrograph:Low SNR'); 
-    fprintf('%s %s\n', filename,...
+    fprintf('\n%s %s', filename,...
 	'Could not process micrograph:Low SNR '); 
     fclose(outid); 
     h1=figure('Visible','off');
@@ -288,9 +288,9 @@ while (trial <3)
       [],[],[],[1e6 0 0 0],[],options1,A1,b1);
   
   if(eflag1<0) 
-    fprintf(outid,'%s %s\n', filename,...
+    fprintf(outid,'\n%s %s', filename,...
 	'Could not process micrograph,:Unreliable noise fit'); 
-    fprintf('%s %s\n', filename,...
+    fprintf('\n%s %s', filename,...
 	'Could not process micrograph:Unreliable noise fit'); 
     fclose(outid); 
     h1=figure('Visible','off');
@@ -360,9 +360,9 @@ while (trial <3)
 	optparams2(3)*(freqfactor) optparams2(4)*(freqfactor).^2]; 
     
   if(eflag2<0) 
-    fprintf(outid,'%s %s\n', filename,...
+    fprintf(outid,'\n%s %s', filename,...
 	'Could not process micrograph:Unreliable envelope fit'); 
-    fprintf('%s %s\n', filename,...
+    fprintf('\n%s %s', filename,...
 	'Could not process micrograph :Unreliable envelope fit'); 
     fclose(outid);
     h1=figure('Visible','off');
@@ -484,10 +484,10 @@ while (trial <3)
 
 	if(eflag3<0) 
 	  
-	  fprintf(outid ,'%s %s\n', filename,...
+	  fprintf(outid ,'\n%s %s', filename,...
 	      'Could not process micrograph:Unreliable defocus fit'); 
       
-	  fprintf('%s %s\n', filename,...
+	  fprintf('\n%s %s', filename,...
 	      'Could not process micrograph:Unreliable defocus fit'); 
 	  fclose(outid); 
 	  h1=figure('Visible','off');
@@ -553,9 +553,9 @@ while (trial <3)
 
 if(~isnan(conf) & conf ~= 0)
 %  if(conf<=confth) 
-%      fprintf(outid,'%s %s\n', filename,...
+%      fprintf(outid,'\n%s %s', filename,...
 %	  'Could not process micrograph:Confidence below threshold'); 
-%      fprintf('%s %s\n', filename,...
+%      fprintf('\n%s %s', filename,...
 %	  'Could not process micrograph:Confidence below threshold'); 
 %      fclose(outid); 
 %      h1=figure('Visible','off');
@@ -596,8 +596,8 @@ if(~isnan(conf) & conf ~= 0)
    envparams/2 lowercutoff uppercutoff snr conf];
 
 else 
-  fprintf(outid,'%s %s\n', filename,'Could not process micrograph'); 
-  fprintf('%s %s\n', filename,'Could not process micrograph'); 
+  fprintf(outid,'\n%s %s', filename,'Could not process micrograph'); 
+  fprintf('\n%s %s', filename,'Could not process micrograph'); 
   fclose(outid);
   h1=figure('Visible','off');
      load(strcat(tempdir,'k1')) 
