@@ -1,0 +1,48 @@
+<productinfo
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="http://www.mathworks.com/namespace/info/v1/info.xsd">
+<?xml-stylesheet type="text/xsl" href="http://www.mathworks.com/namespace/info/v1/info.xsl"?>
+
+<matlabrelease>14</matlabrelease>
+<name>ACE</name>
+<type>toolbox</type>
+<icon>$toolbox/matlab/icons/matlabicon.gif</icon>
+<help_location>/acehelp</help_location>
+
+<list>
+
+<listitem>
+<label> Introduction </label>
+<callback>doc ace</callback>
+<icon>$toolbox/matlab/icons/book_mat.gif</icon>
+</listitem>
+
+<listitem>
+<label>ACE Help</label>
+<callback>doc acedemo</callback>
+<icon>$toolbox/matlab/icons/book_mat.gif</icon>
+</listitem>
+
+<listitem>
+<label>ACE Correction Help</label>
+<callback>doc acedemo</callback>
+<icon>$toolbox/matlab/icons/book_mat.gif</icon>
+</listitem>
+
+<listitem>
+<label>LEGINON ACE Help</label>
+<callback>doc leginon_ace_gui</callback>
+<icon>$toolbox/matlab/icons/book_mat.gif</icon>
+</listitem>
+
+<listitem>
+<label>LEGINON ACE Correction Help</label>
+<callback>doc leginon_ace_correct</callback>
+<icon>$toolbox/matlab/icons/book_mat.gif</icon>
+</listitem>
+
+
+
+</list>
+
+</productinfo>
