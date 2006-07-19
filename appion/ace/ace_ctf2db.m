@@ -116,15 +116,6 @@ function process_Callback(hObject, eventdata, handles)
         fprintf(' does not exist.\n');
         return
     end
-%    defoci = ctfparams(1:2);
-%    A  = ctfparams(3);
-%    ast_ang = pi/2+ctfparams(4);
-%    envp = ctfparams(9:12);
-%    noisep = ctfparams(5:8);
-
-%    V = scopeparams(1)*1e3;
-%    Cs = scopeparams(2)*1e-3;
-%    Ca = scopeparams(3)*1e-10;
     
     conn = connect_db('dbemdata');
     query = strcat('select Name as Experiment, `image path` as Path, DEF_id as experimentId from SessionData where name like "',expname,'"');
@@ -231,7 +222,8 @@ function runname_CreateFcn(hObject, eventdata, handles)
 
 function update_expdir(handles) 
   conn = connect_db('dbemdata');
-  query = strcat('select Name as Experiment, `image path` as Path from SessionData where name like "',get(handles.expname,'String'),'"');
+  expname = get(handles.expname,'String');
+  query = strcat('select Name as Experiment, `image path` as Path from SessionData where name like "',expname,'"');
   
   curs = exec(conn, query);
   setdbprefs('DataReturnFormat','cellarray');
@@ -240,10 +232,13 @@ function update_expdir(handles)
       dirname = cell2mat(result.Data(2));
       dirname  = strcat(dirname,'/');
       dirname = strrep(dirname,'rawdata/','');
-      set(handles.expdir,'String',dirname);
-      set(handles.opexpdir,'String',dirname);
-      set(handles.dirname,'String',dirname);
-      set(handles.opdirname,'String',dirname);
+      matdirname = strcat(dirname,'ctf_ace/',expname,'/matfiles/');
+      opdirname = strcat(dirname,'ctf_ace/',expname,'/opimages/');
+      set(handles.expdir,'String',matdirname);
+      set(handles.opexpdir,'String',opdirname);
+      set(handles.dirname,'String',matdirname);
+      set(handles.opdirname,'String',opdirname);
+      load_listbox(handles)
   else 
      set(handles.expdir,'String','');  
   end 
