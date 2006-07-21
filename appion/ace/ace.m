@@ -21,9 +21,9 @@ function   ctfparams = ace(filename,outfile,display,stig,medium,dforig,tempdir);
 %              
 %        ctfparams: Vector of ctf parameters. First two element give 
 %                   the defoci, the third value is Amplitude contrast, 
-%                   the forth value is the angle of astigmatism, elements 
+%                   the fourth value is the angle of astigmatism, elements 
 %                   5-8 are the noise parameters and 9-12 are the envelope 
-%                   parameters.
+%                   parameters. 17 & 18 are the confidence values.
 %       
 % 
 % See also leginon_ace_gui and acedemo. 
@@ -148,7 +148,7 @@ while (trial <3)
     fprintf('\n%s %s', filename,...
 	'Could not process micrograph : Problem with ellipse fit'); 
     fclose(outid);
-    ctfparams(1:17) = -1; 
+    ctfparams(1:18) = -1; 
    return
    end 
   %END: Get 1D profile 
@@ -177,7 +177,7 @@ while (trial <3)
   
      print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im1.png'));  
      print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im2.png'));  
-     ctfparams(1:17) = -1;
+     ctfparams(1:18) = -1;
     return; 
     
   end 
@@ -241,7 +241,7 @@ while (trial <3)
     
     print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im1.png'));  
     print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im2.png'));  
-    ctfparams(1:17) = -1;
+    ctfparams(1:18) = -1;
     return; 
   end 
   
@@ -307,7 +307,7 @@ while (trial <3)
     print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im1.png'));  
     print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im2.png'));  
       
-    ctfparams(1:17) = -1; 
+    ctfparams(1:18) = -1; 
     return
   end 
   A1 = [ones(length(s),1) sqrt(s) s s.^2];
@@ -379,7 +379,7 @@ while (trial <3)
     print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im1.png'));  
     print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im2.png'));  
     
-    ctfparams(1:17) = -1;
+    ctfparams(1:18) = -1;
     return
   end 
   A2 = [ones(length(s),1) sqrt(s) s s.^2 ];
@@ -508,36 +508,33 @@ while (trial <3)
       print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im1.png'));  
       print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im2.png'));  
           
-	  ctfparams(1:17) = -1; 
+	  ctfparams(1:18) = -1; 
 	  return
   
     end 
 	
       	zfinal = param(1); 
 	Afinal = param(2); 
-	gmmafinal = getgamma(snew,zfinal,Cs,lambda); 
-	%gmmafinal1 = getgamma(snew1,zfinal,Cs,lambda); 
-	ctffinal = getctf(gmmafinal,Afinal); 
-	%ctffinal1 = getctf(gmmafinal1,Afinal); 
-	% End: Refined estimate of defocus
-      
-	% End: Estimation of B-factor 
-       
-	% Start: Calculating the confidence of estimation 
-	%meanctffinal = mean(ctffinal((length(h)-1)/2+1:...
-	 %   (length(h)-1)/2+round(imwidth/4))); 
-	 meanctffinal = mean(ctffinal); 
-	 meanctf_filt = mean(ctffilt); 
+	gmmafinal = getgamma(snew,zfinal,Cs,lambda);
+	ctffinal = getctf(gmmafinal,Afinal);
+
+% Start: Calculating the confidence of estimation 
+	meanctffinal = mean(ctffinal);
+	meanctf_filt = mean(ctffilt);
 	 
-	%meanctf_filt = mean(ctffilt(1:round(imwidth/4))); 
-        %conf = mean((ctffinal((length(h)-1)/2+1:(length(h)-1)/2+ ...
-	 %    round(imwidth/4))-meanctffinal).*(ctffilt(1:round(imwidth/4))...
-	 %   -meanctf_filt)); 
-	%conf = conf/(std(ctffinal((length(h)-1)/2+1:(length(h)-1)/2+ ...
-	 %   round(imwidth/4)))*std(ctffilt(1:round(imwidth/4)))); 
-      
-	 conf = mean((ctffinal - meanctffinal).*(ctffilt -meanctf_filt)); 
-	 conf = conf/(std(ctffinal)*std(ctffilt)); 
+	conf = mean((ctffinal - meanctffinal).*(ctffilt -meanctf_filt)); 
+	conf = conf/(std(ctffinal)*std(ctffilt));
+
+% Start: Calculating the confidence of estimation based on the slopes
+	ctffinal_d=diff(ctffinal);
+	ctffilt_d=diff(ctffilt);
+
+	meanctffinal = mean(ctffinal_d);
+	meanctf_filt = mean(ctffilt_d);
+	 
+	conf_d = mean((ctffinal_d - meanctffinal).*(ctffilt_d -meanctf_filt)); 
+	conf_d = conf_d/(std(ctffinal_d)*std(ctffilt_d));
+
       if(conf<confth)
 	trial=trial+1; 
       else 
@@ -546,54 +543,34 @@ while (trial <3)
     else 
       trial = trial+1; 
     end 
-    end 
-    % End: Calculating the confidence of estimation 
+  end 
+% End: Calculating the confidence of estimation 
 
 
 
-if(~isnan(conf) & conf ~= 0)
-%  if(conf<=confth) 
-%      fprintf(outid,'\n%s %s', filename,...
-%	  'Could not process micrograph:Confidence below threshold'); 
-%      fprintf('\n%s %s', filename,...
-%	  'Could not process micrograph:Confidence below threshold'); 
-%      fclose(outid); 
-%      h1=figure('Visible','off');
-%     load(strcat(tempdir,'k1')) 
-%     load(strcat(tempdir,'k2'))
-%     imshow(log(abs(fftshift(fft2(im)))),[])
-%     
-%     hold on; 
-%     quiver('v6',imwidth/2,imwidth/2,-sqrt(1/k1)*sin(pi*ang/180),-sqrt(1/k1)*cos(pi*ang/180)); 
-%     quiver('v6',imwidth/2,imwidth/2,sqrt(1/k1)*sin(pi*ang/180),sqrt(1/k1)*cos(pi*ang/180)); 
-%     quiver('v6',imwidth/2,imwidth/2,sqrt(1/k2)*sin(pi*(ang+90)/180),sqrt(1/k2)*cos(pi*(ang+90)/180)); 
-%     quiver('v6',imwidth/2,imwidth/2, -sqrt(1/k2)*sin(pi*(ang+90)/180),-sqrt(1/k2)*cos(pi*(ang+90)/180)); 
-%  
-%     print('-dpng','-r75',strcat(tempdir,'im1.png')); 
-%      print('-dpng','-r75',strcat(tempdir,'im2.png'));; 
-%  return
-%    end 
+if(~isnan(conf) & conf ~= 0 & ~isnan(conf_d) & conf_d ~=0)
   slarge =sqrt((-zfinal*lambda+sqrt(zfinal^2*lambda^2+2*Cs*lambda^3))...
       /(Cs*lambda^3)); 
   ssmall = slarge*rat; 
   zsmall = (1-Cs*lambda^3*ssmall^4/2)/(lambda*ssmall^2); 
   defoci = [zfinal zsmall];   Ampconst = Afinal; 
-  fprintf(outid,'\n %s %f %f %f %f %f %f  %f %f %f',filename,...
-     abs(dforig)*1e6, zinit*1e6, zfinal*1e6,zsmall*1e6,Afinal, rat, ang,conf); 
-  fprintf('%s %f %f %f %f %f  %f %f %f \n',filename, abs(dforig)*1e6, zinit*1e6,zfinal*1e6 ,zsmall*1e6 ,Afinal, rat, ang,conf); 
+  fprintf(outid,'\n %s %f %f %f %f %f %f  %f %f %f %f',filename,...
+     abs(dforig)*1e6, zinit*1e6, zfinal*1e6,zsmall*1e6,Afinal, rat, ang,conf,conf_d); 
+  fprintf('%s %f %f %f %f %f %f %f\n', filename, abs(dforig)*1e6, ...
+     zinit*1e6, zfinal*1e6, zsmall*1e6, Afinal, conf, conf_d); 
   fclose(outid);
   lowercutoff = (x-pixeloff)/freqfactor;
   uppercutoff = (x+upcut-pixeloff)/freqfactor;
 
-   ssnr = [round(imwidth/20):round(imwidth/4)]'; 
-   ssnr = ssnr*1e10/(imwidth*Ca); 
-   Asnr = [ones(length(ssnr),1) sqrt(ssnr) ssnr ssnr.^2];
-   noise_snr = exp(Asnr*noiseparams'); 
-   env_snr   = exp(Asnr*envparams'); 
-   snr= sum((env_snr./noise_snr));
+  ssnr = [round(imwidth/20):round(imwidth/4)]'; 
+  ssnr = ssnr*1e10/(imwidth*Ca); 
+  Asnr = [ones(length(ssnr),1) sqrt(ssnr) ssnr ssnr.^2];
+  noise_snr = exp(Asnr*noiseparams'); 
+  env_snr   = exp(Asnr*envparams'); 
+  snr= sum((env_snr./noise_snr));
   
   ctfparams = [defoci(1), defoci(2) zinit Ampconst -ang*pi/180, noiseparams/2,...
-   envparams/2 lowercutoff uppercutoff snr conf];
+  envparams/2 lowercutoff uppercutoff snr conf conf_d];
 
 else 
   fprintf(outid,'\n%s %s', filename,'Could not process micrograph'); 
@@ -613,7 +590,7 @@ else
      print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im1.png'));  
      print(strcat('-f',num2str(h1)),'-dpng','-r75',strcat(tempdir,'im2.png'));  
      
-     ctfparams(1:17) = -1; 
+     ctfparams(1:18) = -1; 
   return
 end 
 

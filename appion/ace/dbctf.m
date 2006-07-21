@@ -24,6 +24,7 @@ lowercutoff = ctfparams(14);
 uppercutoff = ctfparams(15);
 snr = ctfparams(16); 
 confidence = ctfparams(17); 
+confidence_d = ctfparams(18);
 blobgraph1 = file2hexstr(graph1); 
 blobgraph2 = file2hexstr(graph2); 
 
@@ -94,9 +95,9 @@ end
 
 
 %insert ctf data
-ctf_fields = { 'runId', 'imageId', 'defocus1', 'defocus2', 'defocusinit','amplitude_constrast', 'angle_astigmatism', 'noise1', 'noise2', 'noise3', 'noise4', 'envelope1', 'envelope2', 'envelope3', 'envelope4', 'lowercutoff', 'uppercutoff', 'graph1', 'graph2', 'mat_file', 'snr', 'confidence'};
+ctf_fields = { 'runId', 'imageId', 'defocus1', 'defocus2', 'defocusinit','amplitude_constrast', 'angle_astigmatism', 'noise1', 'noise2', 'noise3', 'noise4', 'envelope1', 'envelope2', 'envelope3', 'envelope4', 'lowercutoff', 'uppercutoff', 'graph1', 'graph2', 'mat_file', 'snr', 'confidence','confidence_d'};
 
-ctf_values = { runId, imageId, defocus1, defocus2, defocusinit,amplitude_constrast, angle_astigmatism, noise1, noise2, noise3, noise4, envelope1, envelope2, envelope3, envelope4, lowercutoff, uppercutoff, graph1, graph2, mat_file, snr,confidence };
+ctf_values = { runId, imageId, defocus1, defocus2, defocusinit, amplitude_constrast, angle_astigmatism, noise1, noise2, noise3, noise4, envelope1, envelope2, envelope3, envelope4, lowercutoff, uppercutoff, graph1, graph2, mat_file, snr, confidence, confidence_d };
 
 insert(conn, 'ctf', ctf_fields, ctf_values) 
 
