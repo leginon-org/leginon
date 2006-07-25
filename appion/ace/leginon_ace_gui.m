@@ -296,15 +296,6 @@ end
 
 
 function done_Callback(hObject, eventdata, handles)
-% hObject    handle to browse (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Saving the current screen shot
-frame = getframe(gcf);
-frame = frame2im(frame);
-imshow(frame);
-imwrite(frame,'screenshot.png');
 
 update_perlviewer(handles);
 set(handles.mainwindow,'Visible','off');
@@ -819,25 +810,8 @@ doc leginon_ace_gui
 
 % --- Executes on button press in report.
 function report_Callback(hObject, eventdata, handles)
-% hObject    handle to report (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
 diary off
 edit session.log;
-!display screenshot.png&
-
-
-
-% --- Executes on button press in ziperror.
-function ziperror_Callback(hObject, eventdata, handles)
-% hObject    handle to ziperror (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-zip('report.zip',{'screenshot.png','session.log'});
-fprintf('Email report.zip to spmallick@graphics.ucsd.edu \n');
-
-
 
 function runname_Callback(hObject, eventdata, handles)
 % hObject    handle to runname (see GCBO)
