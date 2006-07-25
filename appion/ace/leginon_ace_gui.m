@@ -431,6 +431,10 @@ else
 end
 fprintf('Processing: End\n');
 set(handles.mainwindow,'Visible','on');
+%clean up directory if no errors occurred
+delete('session.log')
+delete('perlviewer.pl')
+rmdir(tempdir,'s')
 
 function expname_Callback(hObject, eventdata, handles)
   update_expdir(handles);
@@ -812,14 +816,6 @@ doc leginon_ace_gui
 function report_Callback(hObject, eventdata, handles)
 diary off
 edit session.log;
-
-function runname_Callback(hObject, eventdata, handles)
-% hObject    handle to runname (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of runname as text
-%        str2double(get(hObject,'String')) returns contents of runname as a double
 
 
 % --- Executes during object creation, after setting all properties.
