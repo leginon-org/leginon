@@ -913,7 +913,7 @@ for i=1:length(flist)
     end
 end
 set(handles.filelistbox,'Value',ind);
-
+update_msg(handles)
 
 % --- Executes on button press in checkbox11.
 function checkbox11_Callback(hObject, eventdata, handles)
