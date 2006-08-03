@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys
 if len(sys.argv) < 3:
-	print 'usage:    %s x|y label1 label2 label3....' % (sys.argv[0],)
+	print 'usage:    %s inst x|y label1 label2 label3....' % (sys.argv[0],)
 	sys.exit(0)
 
 import wx
@@ -14,9 +14,9 @@ import numarray
 
 db = DBDataKeeper()
 
-def querymodel(axis, hostname):
+def querymodel(axis, hostname, label=None):
 	tem = data.InstrumentData(hostname=hostname)
-	sm = data.StageModelCalibrationData(axis=axis, tem=tem)
+	sm = data.StageModelCalibrationData(axis=axis, tem=tem, label=label)
 	model = db.query(sm, results=1)
 	if not model:
 		return None
@@ -68,11 +68,11 @@ def modelpoints(model, xrange, step):
 class MyFrame(wx.Frame):
 	def __init__(self):
 		wx.Frame.__init__(self, None, -1, "Plot")
-		self.plotcan = wx.lib.plot.PlotCanvas(self, -1)
+		self.plotcan = wx.lib.plot.PlotCanvas(self)
 		self.plotcan.SetFocus()
 
 	def draw(self, *args):
-		colors = 'blue','red','green','yellow'
+		colors = 'red', 'green', 'blue', 'yellow'
 		modelstep = 1e-7
 		allpoints = []
 		per =  0.0
@@ -117,7 +117,7 @@ for label in labels:
 	points = querypoints(axis, label, insthost)
 	modelmag = querymodelmag(axis, label, insthost)
 	points = normalizepoints(points, modelmag)
-	model = querymodel(axis, insthost)
+	model = querymodel(axis, insthost, label=label)
 	drawargs.append((points,model))
 
 app = MyApp(0)
