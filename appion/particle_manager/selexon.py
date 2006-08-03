@@ -5,6 +5,9 @@
 import os, re, sys
 import tempfile
 import string
+import cPickle
+
+selexondonename='.selexondone.py'
 
 def printHelp():
     print "\nUsage:\nselexon.py <file> template=<name> apix=<pixel> diam=<n> bin=<n> [range=<start,stop,incr>] [thresh=<threshold> or autopik=<n>] [lp=<n>] [hp=<n>] [crud or cruddiam=<n>] [crudonly] [crudblur=<n>] [crudlow=<n>] [crudhi=<n>] [box=<n>]"
@@ -59,6 +62,7 @@ def createDefaults():
     params["chi"]=0.95
     params["crudonly"]='FALSE'
     params["onetemplate"]='FALSE'
+    params["continue"]='FALSE'
     return params
 
 def parseInput(args):
@@ -139,6 +143,8 @@ def parseInput(args):
             params["chi"]=float(elements[1])
         elif (arg=='crudonly'):
             params["crudonly"]='TRUE'
+        elif (arg=='continue'):
+            params["continue"]='TRUE'
         else:
             print "undefined parameter '"+arg+"'\n"
             sys.exit(1)
@@ -551,6 +557,32 @@ def writeSelexLog(commandline):
     f.write("\n")
     f.close()
 
+def getDoneDict():
+    if os.path.exists(selexondonename):
+        # unpickle previously modified dictionary
+        f=open(selexondonename,'r')
+        donedict=cPickle.load(f)
+        f.close()
+    else:
+        #set up dictionary
+        donedict={}
+    return (donedict)
+
+def writeDoneDict(donedict):
+    f=open(selexondonename,'w')
+    cPickle.dump(donedict,f)
+    f.close()
+
+def doneCheck(donedict,im):
+    # check to see if image has been processed yet and
+    # append dictionary if it hasn't
+    # this may not be the best way to do this
+    if donedict.has_key(im):
+        pass
+    else:
+        donedict[im]=None
+    return
+
 #-----------------------------------------------------------------------
 
 if __name__ == '__main__':
@@ -558,6 +590,8 @@ if __name__ == '__main__':
     writeSelexLog(sys.argv)
     # parse command line input
     params=parseInput(sys.argv)
+    # unpickle dictionary of previously processed images
+    donedict=getDoneDict()
 
     # check to see if user only wants to downsize & filter template files
     if (params["preptmplt"]=='TRUE'):
@@ -595,9 +629,22 @@ if __name__ == '__main__':
 
     # run selexon
     for img in images:
+        
+        # if continue option is true, check to see if image has already been processed
+        doneCheck(donedict,img)
+        if (params["continue"]=='TRUE'):
+            if donedict[img]:
+                print img,'already processed. To process again, remove "continue" option.'
+                continue
+
+        # run selexon
         dwnsizeImg(params,img)
         runFindEM(params,img)
         findPeaks(params,img)
+
+        # write results to dictionary
+        donedict[img]=True
+        writeDoneDict(donedict)
 
         # if no particles were found, skip rest and go to next image
         if not (os.path.exists("pikfiles/"+img+".a.pik")):
