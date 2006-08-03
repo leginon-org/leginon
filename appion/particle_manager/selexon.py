@@ -34,6 +34,8 @@ def printHelp():
     print "crudhi=<n>       : upper threshold for edge detection (0-1, default=0.95)"
     print "crudonly         : only run the crud finder to check and view the settings"
     print "box=<n>          : output will be saved as EMAN box file with given box size"
+    print "continue         : if this option is turned on, selexon will skip previously processed"
+    print "                   micrographs"
     print "\n"
 
     sys.exit(1)
