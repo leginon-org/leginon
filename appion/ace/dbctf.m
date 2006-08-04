@@ -8,7 +8,7 @@ function dbctf(expid, runname, legimgId, legpresetId, imagename,defocus_nom,ctfp
 % Copyright 2004 Denis Fellman and Satya P. Mallick
 
 defocus1 = ctfparams(1); 
-defocus2 = ctfparams(2); 
+defocus2 = ctfparams(2);
 defocusinit = ctfparams(3); 
 amplitude_constrast = ctfparams(4);
 angle_astigmatism = ctfparams(5)*180/pi; 
@@ -28,7 +28,28 @@ confidence_d = ctfparams(18);
 blobgraph1 = file2hexstr(graph1); 
 blobgraph2 = file2hexstr(graph2); 
 
+%check for failed CTF estimation
 
+if defocus1 == -1,
+	defocus1 = ''; 
+	defocus2 = '';
+	defocusinit = '';
+	amplitude_constrast = '';
+	angle_astigmatism = ''; 
+	noise1 = '';
+	noise2 = '';
+	noise3 = '';
+	noise4 = ''; 
+	envelope1 = '';
+	envelope2 = '';
+	envelope3 = '';
+	envelope4 = '';
+	lowercutoff = '';
+	uppercutoff = '';
+	snr = '';
+	confidence = '';
+	confidence_d = '';
+end
 
 
 conn = connect_db('processing');
