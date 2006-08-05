@@ -5,7 +5,7 @@ import os, re, sys
 import string
 
 def printHelp():
-    print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected] [phaseflip] [noinvert] [spider]\n"
+    print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected=<file>] [phaseflip] [noinvert] [spider]\n"
     print "Examples:\nmakestack.py extract/001ma.box single=stacks/start.hed ace=0.8 boxsize=180 inspected"
     print "makestack.py extract/*.box outdir=stacks/noctf/ ace=0.8 boxsize=180\n"
     print "* Supports wildcards - By default a stack file of the same name as the box file"
@@ -16,7 +16,7 @@ def printHelp():
     print "                       (density will be inverted)"
     print "ace=<n>              : Only use micrographs with this ACE confidence value and higher"
     print "boxsize=<n>          : Make stacks with this box size"
-    print "inspected            : Use if you have manually checked for bad images"
+    print "inspected=<file>     : Text file containing results of manually checked images"
     print "phaseflip            : Stack will be phase flipped using best ACE value in database"
     print "noinvert             : If writing to a single stack, images will NOT be inverted"
     print "                       (stack images are inverted by default)"
@@ -33,7 +33,7 @@ def createDefaults():
     params["single"]=''
     params["ace"]=0
     params["boxsize"]=0
-    params["inspected"]='FALSE'
+    params["inspected"]=''
     params["phaseflip"]='FALSE'
     params["hasace"]='FALSE'
     params["apix"]=0
@@ -58,7 +58,7 @@ def parseInput(args):
         # gather all input files into mrcfileroot list
         if '=' in  arg:
             break
-        elif (arg=='inspected' or arg=='phaseflip'):
+        elif (arg=='phaseflip'):
             break
         else:
             boxfile=arg
@@ -84,8 +84,8 @@ def parseInput(args):
             params["ace"]=float(elements[1])
         elif (elements[0]=='boxsize'):
             params["boxsize"]=int(elements[1])
-        elif (arg=='inspected'):
-            params["inspected"]='TRUE'
+        elif (elements[0]=='inspected'):
+            params["inspected"]=elements[1]
         elif (arg=='phaseflip'):
             params["phaseflip"]='TRUE'
         elif (arg=='noinvert'):
@@ -111,8 +111,19 @@ def getFilePath(img):
     return path
 
 def checkInspected(img):
-    print "checking inspection"
-    
+    f=open(params["inspected"],'r')
+    results=f.readlines()
+    status=''
+    for line in results:
+        words=line.split('\t')
+        if (string.find(words[0],img)==0):
+            status=words[1]
+            status.rstrip('\n')
+            break
+    if (status.rstrip('\n')=='keep'):
+        return 'TRUE'
+    return 'FALSE'
+        
 def getAceValues(params,img):
     if (params["hasace"]=='TRUE'):
         return
@@ -120,6 +131,8 @@ def getAceValues(params,img):
         filename=img+'.mrc'
         f=os.popen('getace %s' %filename)
         lines=f.readlines()
+        if (lines==''):
+            print "empty!"
         f.close()
         for n in lines:
             words=n.split()
@@ -138,7 +151,7 @@ def getAceValues(params,img):
             if 'tension:' in words:
                 kv=int(words[-1])/1000
                 params["kv"]=kv
-        if (apix>0 and kv>0 and (conf !=0 or conf_d !=0)):
+        if (params["apix"]>0 and params["kv"]>0 and (params["conf"] !=0 or params["conf_d"] !=0)):
             params["hasace"]='TRUE'
         return
     
@@ -269,9 +282,10 @@ if __name__ == '__main__':
         params["filepath"]=getFilePath(img)
 
         # check if the image has been marked as good
-        if (params["inspected"]=='TRUE'):
+        if (params["inspected"]!=''):
             goodimg=checkInspected(img)
             if (goodimg=='FALSE'):
+                print img+".mrc has been rejected upon inspection"
                 continue
 
         # check that ACE estimation is above confidence threshold
