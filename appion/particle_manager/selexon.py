@@ -210,17 +210,21 @@ def dwnsizeImg(params,file):
         os.remove(file + ".dwn.mrc")
     
     # run "downsizeandfilter2"
-    f=os.popen('${FINDEM_PATH}/downsizeandfilter2','w')
-    print >>f, file+".mrc"
-    print >>f, file+".dwn.mrc"
-    print >>f, scale
-    print >>f, lp+", "+hp
-    print >>f, "0"
-    print >>f, "n"
-    print >>f, pix
-    print >>f, "1"
-
-    f.flush
+    fin,fout,fstderr=os.popen3('${FINDEM_PATH}/downsizeandfilter2')
+    fin.write(file+".mrc\n")
+    fin.write(file+".dwn.mrc\n")
+    fin.write(scale+"\n")
+    fin.write(lp+", "+hp+"\n")
+    fin.write("0\n")
+    fin.write("n\n")
+    fin.write(pix+"\n")
+    fin.write("1\n")
+    fin.flush()
+    print "downsizing and filtering image"
+    results=fout.readlines()
+    fin.close()
+    fout.close()
+    fstderr.close()
     
 def runFindEM(params,file):
     # run FindEM
@@ -239,29 +243,28 @@ def runFindEM(params,file):
         cccfile="cccmaxmap%i00.mrc" %classavg
         if (os.path.exists(cccfile)):
             os.remove(cccfile)
-            print "removed existing file:",cccfile
 
-        f=os.popen('${FINDEM_PATH}/FindEM_SB','w')
-        print >>f, file+".dwn.mrc"
+        fin=os.popen('${FINDEM_PATH}/FindEM_SB','w')
+        fin.write(file+".dwn.mrc\n")
         if (params["onetemplate"]=='TRUE'):
-            print >>f, tmplt+".dwn.mrc"
+            fin.write(tmplt+".dwn.mrc\n")
         else:
-            print >>f, tmplt+str(classavg)+".dwn.mrc"
-        print >>f, "-200.0"
-        print >>f, pixdwn
-        print >>f, d
-        print >>f, str(classavg)+"00"
-        print >>f, strt+','+end+','+incr
-        print >>f, bw
-
-        f.flush
+            fin.write(tmplt+str(classavg)+".dwn.mrc\n")
+        fin.write("-200.0\n")
+        fin.write(pixdwn+"\n")
+        fin.write(d+"\n")
+        fin.write(str(classavg)+"00\n")
+        fin.write(strt+','+end+','+incr+"\n")
+        fin.write(bw+"\n")
+        fin.flush
+        print "running findEM"
         classavg=classavg+1
-
+        
 def findPeaks(params,file):
     # create tcl script to process the cccmaxmap***.mrc images & find peaks
     tmpfile=tempfile.NamedTemporaryFile()
     imgsize=int(getImgSize(file))
-    wsize=str(params["win_size"])
+    wsize=str(params["win_size"]-50)
     clsnum=str(params["classes"])
     cutoff=str(params["thresh"])
     scale=str(params["bin"])
@@ -329,12 +332,17 @@ def findPeaks(params,file):
         cmdlist.append("write_picks "+file+".mrc $final_peaks "+scale+" pikfiles/"+file+".a.pik\n")
     else:
         cmdlist.append("set peaks [-zhimg_peak BYVALUE "+cutoff+" "+wsize+"]\n")
+        cmdlist.append("puts \"$peaks\"\n")
         cmdlist.append("write_picks "+file+".mrc $peaks "+scale+" pikfiles/"+file+".a.pik\nexit\n")
 
     tclfile=open(tmpfile.name,'w')
     tclfile.writelines(cmdlist)
     tclfile.close()
-    os.system('viewit '+tmpfile.name)
+    f=os.popen('viewit '+tmpfile.name)
+    result=f.readlines()
+    line=result[-2].split()
+    peaks=line[0]
+    print "found",peaks,"peaks"
 
 def createJPG(params,img):
     # create a jpg image to visualize the final list of targetted particles
@@ -379,7 +387,8 @@ def createJPG(params,img):
     tclfile=open(tmpfile.name,'w')
     tclfile.writelines(cmdlist)
     tclfile.close()
-    os.system("viewit "+tmpfile.name)
+    f=os.popen('viewit '+tmpfile.name)
+    result=f.readlines()
     
 def findCrud(params,file):
     # run the crud finder
@@ -389,7 +398,6 @@ def findCrud(params,file):
     if not (os.path.exists("jpgs")):
         os.mkdir("jpgs")
     
-
     # remove crud pik file if it exists
     if (os.path.exists("pikfiles/"+file+".a.pik.nocrud")):
         os.remove("pikfiles/"+file+".a.pik.nocrud")
@@ -488,7 +496,11 @@ def findCrud(params,file):
     tclfile=open(tmpfile.name,'w')
     tclfile.writelines(cmdlist)
     tclfile.close()
-    os.system("viewit "+tmpfile.name)
+    f=os.popen('viewit '+tmpfile.name)
+    result=f.readlines()
+    line=result[-2].split()
+    reject=line[1]
+    print "crudfinder rejected",reject,"particles"
     
 def prepTemplate(params):
     # check that parameters are set:
@@ -532,7 +544,7 @@ def pik2Box(params,file):
     bfile.writelines(piklist)
     bfile.close()
 
-    print "\nresults written to",file+".box\n"
+    print "results written to",file+".box\n"
 
 def getImgSize(fname):
     # get image size (in pixels) of the given mrc file
@@ -644,19 +656,25 @@ if __name__ == '__main__':
         runFindEM(params,img)
         findPeaks(params,img)
 
-        # write results to dictionary
-        donedict[img]=True
-        writeDoneDict(donedict)
-
         # if no particles were found, skip rest and go to next image
         if not (os.path.exists("pikfiles/"+img+".a.pik")):
             print "no particles found in \""+img+".mrc\"\n"
+            # write results to dictionary
+            donedict[img]=True
+            writeDoneDict(donedict)
             continue
  
         # run the crud finder on selected particles if specified
         if (params["crud"]=='TRUE'):
             findCrud(params,img)
-
+            # if crudfinder removes all the particles, go to next image
+            if not (os.path.exists("pikfiles/"+img+".a.pik.nocrud")):
+                print "no particles left after crudfinder in \""+img+".mrc\"\n"
+                # write results to dictionary
+                donedict[img]=True
+                writeDoneDict(donedict)
+                continue
+                
         # create jpg of selected particles if not created by crudfinder
         if (params["crud"]=='FALSE'):
             createJPG(params,img)
@@ -664,4 +682,8 @@ if __name__ == '__main__':
         # convert resulting pik file to eman box file
         if (params["box"]>0):
             pik2Box(params,img)
+
+        # write results to dictionary
+        donedict[img]=True
+        writeDoneDict(donedict)
 
