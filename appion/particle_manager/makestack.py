@@ -200,8 +200,14 @@ def singleStack(params,img):
         input=params["outdir"]+img+'.hed'
     output=params["outdir"]+params["single"]
     
-    cmd="proc2d %s %s" %(input, output)
+    singlepath=os.path.split(output)[0]
 
+    # create output directory if it does not exist
+    if (not os.path.exists(singlepath)):
+        os.mkdir(singlepath)
+           
+    cmd="proc2d %s %s" %(input, output)
+    
     # unless specified, invert the images
     if (params["noinvert"]=='FALSE'):
         cmd=cmd+" invert"
@@ -210,6 +216,7 @@ def singleStack(params,img):
     if (params["spider"]=='TRUE'):
         cmd=cmd+" spiderswap"
     
+    print "writing particles to stackfile: %s" %output
     # run proc2d & get number of particles
     f=os.popen(cmd)
     lines=f.readlines()
@@ -220,7 +227,7 @@ def singleStack(params,img):
             count=int(words[-2])
 
     # create particle log file
-    f=open(params["outdir"]+'.particlelog','a')
+    f=open(singlepath+'/.particlelog','a')
     out=''
     for n in range(count-params["particle"]):
         particlenum=str(1+n+params["particle"])
@@ -236,7 +243,7 @@ def singleStack(params,img):
         os.remove(params["outdir"]+img+".ctf.img")
 
 def writeBoxLog(commandline):
-    f=open('.boxlog','a')
+    f=open('.makestacklog','a')
     out=""
     for n in commandline:
         out=out+n+" "
