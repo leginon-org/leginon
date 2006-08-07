@@ -28,30 +28,6 @@ confidence_d = ctfparams(18);
 blobgraph1 = file2hexstr(graph1); 
 blobgraph2 = file2hexstr(graph2); 
 
-%check for failed CTF estimation
-
-if defocus1 == -1,
-	defocus1 = ''; 
-	defocus2 = '';
-	defocusinit = '';
-	amplitude_constrast = '';
-	angle_astigmatism = ''; 
-	noise1 = '';
-	noise2 = '';
-	noise3 = '';
-	noise4 = ''; 
-	envelope1 = '';
-	envelope2 = '';
-	envelope3 = '';
-	envelope4 = '';
-	lowercutoff = '';
-	uppercutoff = '';
-	snr = '';
-	confidence = '';
-	confidence_d = '';
-end
-
-
 conn = connect_db('processing');
 
  
@@ -115,10 +91,14 @@ if iscell(runId)
 end
 
 
-%insert ctf data
-ctf_fields = { 'runId', 'imageId', 'defocus1', 'defocus2', 'defocusinit','amplitude_constrast', 'angle_astigmatism', 'noise1', 'noise2', 'noise3', 'noise4', 'envelope1', 'envelope2', 'envelope3', 'envelope4', 'lowercutoff', 'uppercutoff', 'graph1', 'graph2', 'mat_file', 'snr', 'confidence','confidence_d'};
-
-ctf_values = { runId, imageId, defocus1, defocus2, defocusinit, amplitude_constrast, angle_astigmatism, noise1, noise2, noise3, noise4, envelope1, envelope2, envelope3, envelope4, lowercutoff, uppercutoff, graph1, graph2, mat_file, snr, confidence, confidence_d };
+%check for failed CTF estimation and insert ctf data
+if defocus1==-1,
+	ctf_fields = { 'runId', 'imageId'};
+	ctf_values = { runId, imageId };
+else,
+	ctf_fields = { 'runId', 'imageId', 'defocus1', 'defocus2', 'defocusinit','amplitude_constrast', 'angle_astigmatism', 'noise1', 'noise2', 'noise3', 'noise4', 'envelope1', 'envelope2', 'envelope3', 'envelope4', 'lowercutoff', 'uppercutoff', 'graph1', 'graph2', 'mat_file', 'snr', 'confidence','confidence_d'};
+	ctf_values = { runId, imageId, defocus1, defocus2, defocusinit, amplitude_constrast, angle_astigmatism, noise1, noise2, noise3, noise4, envelope1, envelope2, envelope3, envelope4, lowercutoff, uppercutoff, graph1, graph2, mat_file, snr, confidence, confidence_d };
+end
 
 insert(conn, 'ctf', ctf_fields, ctf_values) 
 
