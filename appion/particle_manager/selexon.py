@@ -65,6 +65,7 @@ def createDefaults():
     params["crudonly"]='FALSE'
     params["onetemplate"]='FALSE'
     params["continue"]='FALSE'
+    params["multiple_range"]='FALSE'
     return params
 
 def parseInput(args):
@@ -119,6 +120,17 @@ def parseInput(args):
                 params["startang"]=float(angs[0])
                 params["endang"]=float(angs[1])
                 params["incrang"]=float(angs[2])
+            else:
+                print "range must include start & stop angle & increment"
+                sys.exit(1)
+        elif (re.match('range\d+',elements[0])):
+            num=elements[0][-1]
+            angs=elements[1].split(',')
+            if (len(angs)==3):
+                params["startang"+num]=float(angs[0])
+                params["endang"+num]=float(angs[1])
+                params["incrang"+num]=float(angs[2])
+                params["multiple_range"]='TRUE'
             else:
                 print "range must include start & stop angle & increment"
                 sys.exit(1)
@@ -232,9 +244,10 @@ def runFindEM(params,file):
     numcls=params["classes"]
     pixdwn=str(params["apixdwn"])
     d=str(params["diam"])
-    strt=str(params["startang"])
-    end=str(params["endang"])
-    incr=str(params["incrang"])
+    if (params["multiple_range"]=='FALSE'):
+        strt=str(params["startang"])
+        end=str(params["endang"])
+        incr=str(params["incrang"])
     bw=str(params["borderwidth"])
 
     classavg=1
@@ -244,6 +257,10 @@ def runFindEM(params,file):
         if (os.path.exists(cccfile)):
             os.remove(cccfile)
 
+        if (params["multiple_range"]=='TRUE'):
+            strt=str(params["startang"+str(classavg)])
+            end=str(params["endang"+str(classavg)])
+            incr=str(params["incrang"+str(classavg)])
         fin=os.popen('${FINDEM_PATH}/FindEM_SB','w')
         fin.write(file+".dwn.mrc\n")
         if (params["onetemplate"]=='TRUE'):
@@ -264,7 +281,7 @@ def findPeaks(params,file):
     # create tcl script to process the cccmaxmap***.mrc images & find peaks
     tmpfile=tempfile.NamedTemporaryFile()
     imgsize=int(getImgSize(file))
-    wsize=str(params["win_size"]-50)
+    wsize=str(params["win_size"])
     clsnum=str(params["classes"])
     cutoff=str(params["thresh"])
     scale=str(params["bin"])
