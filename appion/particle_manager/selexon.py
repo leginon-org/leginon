@@ -21,6 +21,7 @@ def printHelp():
     print "bin=<n>          : images will be binned by this amount (default is 4)"
     print "range=<st,end,i> : each template will be rotated from the starting angle to the"
     print "                   stop angle at the given increment"
+    print "                   User can also specify ranges for each template (i.e. range1=0,60,20)"
     print "                   NOTE: if you don't want to rotate the image, leave this parameter out"
     print "thresh=<thr>     : manual cutoff for correlation peaks (0-1), don't use if want autopik"
     print "autopik=<thr>    : automatically calculate threshold, n = average number of particles per image"
