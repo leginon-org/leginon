@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Camera.py,v $
-# $Revision: 1.31 $
+# $Revision: 1.32 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-02-15 18:59:28 $
+# $Date: 2006-08-08 19:20:19 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -333,7 +333,6 @@ class CameraPanel(wx.Panel):
 class CustomDialog(wx.Dialog):
 	def __init__(self, parent, geometry):
 		wx.Dialog.__init__(self, parent, -1, 'Custom')
-		binnings = parent.binnings
 
 		stx = wx.StaticText(self, -1, 'x')
 		sty = wx.StaticText(self, -1, 'y')
@@ -343,8 +342,8 @@ class CustomDialog(wx.Dialog):
 		self.ieydimension = IntEntry(self, -1, min=1, max=parent.size['y'],
 																	chars=len(str(parent.size['y'])))
 		stbinning = wx.StaticText(self, -1, 'Binning:')
-		self.cxbinning = wx.Choice(self, -1, choices=parent.binnings['x'])
-		self.cybinning = wx.Choice(self, -1, choices=parent.binnings['y'])
+		self.cxbinning = wx.Choice(self, -1, choices=map(str,parent.binnings['x']))
+		self.cybinning = wx.Choice(self, -1, choices=map(str,parent.binnings['y']))
 		stoffset = wx.StaticText(self, -1, 'Offset:')
 		self.iexoffset = IntEntry(self, -1, min=0, max=parent.size['x'],
 																	chars=len(str(parent.size['x'])))
