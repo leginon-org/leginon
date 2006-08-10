@@ -178,6 +178,7 @@ class Tomography {
             return array();
 
         $query = 'SELECT '
+                .'a.DEF_id AS id, '
                 .'DEGREES(s.`SUBD|stage position|a`) AS alpha, '
                 #.'DEGREES(s.`SUBD|stage position|b`) AS beta '
                 .'s.`SUBD|stage position|x` AS stage_x, '
