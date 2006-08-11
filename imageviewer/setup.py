@@ -9,7 +9,7 @@ setup(
     maintainer='Christian Suloway',
     maintainer_email='suloway@caltech.edu',
     url='http://www.jensenlab.caltech.edu/',
-    packages=['ImageViewer'],
+    packages=['ImageViewer', 'ImageViewer.icons'],
     package_dir={'ImageViewer': ''},
 )
 
