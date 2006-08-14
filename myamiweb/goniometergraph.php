@@ -17,6 +17,9 @@ $Id=$_GET[Id];
 
 $goniometer = $leginondata->getGoniometerModel($Id);
 while(list($k, $v) = each($goniometer)) {
+	// --- convert NULL value to 0
+	if (!$v)
+			$v=0;
 	if (eregi("^ARRAY\|a", $k))
 		$A[] = $v;
 	if (eregi("^ARRAY\|b", $k))

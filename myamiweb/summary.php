@@ -8,12 +8,20 @@
  */
 
 require('inc/leginon.inc');
+require('inc/project.inc');
 
 // --- Set  experimentId
 $lastId = $leginondata->getLastSessionId();
 $expId = (empty($_GET[expId])) ? $lastId : $_GET[expId];
 $sessioninfo = $leginondata->getSessionInfo($expId);
 $title = $sessioninfo[Name];
+
+$projectdata = new project();
+$projectdb = $projectdata->checkDBConnection();
+if($projectdb) {
+	$currentproject = $projectdata->getProjectFromSession($sessioninfo['Name']);
+	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
+}
 
 
 ?>
@@ -55,6 +63,7 @@ function init() {
 	<?php echo divtitle("Summary of $title Experiment"); ?>
 	</td>
 </tr>
+	<?=($currentproject) ? '<tr><td><span class="datafield0">Project: </span>'.$proj_link.'</td></tr>' :'' ?>
 <tr valign="top">
 	<td>
 <?php
@@ -223,11 +232,11 @@ foreach($stats as  $field=>$data) {
 			$cdf = '<a href="ctfgraph.php?hg=1&Id='.$sessionId
 				.'&f='.$field.'&df='.$data[$k]['defocus_nominal'].'">'
 				.'<img border="0" src="ctfgraph.php?w=150&hg=1&Id='.$sessionId
-				.'&f='.$field.'&df='.$data[$k]['defocus_nominal'].'"></a>';
+				.'&f='.$field.'&preset='.$p['name'].'"></a>';
 			$stats[$field][$k]['img'] = $cdf;
 		}
 }
-$display_keys = array ('defocus_nominal', 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
+$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
 if ($display_ctf) {
 	echo "<table>";
 	echo "<tr>";

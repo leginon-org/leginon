@@ -44,6 +44,17 @@ class project {
 		return $info;
 	}
 
+	function getProjectfromSession($session) {
+		$q='select p.projectId, p.name  '
+			.'from projectexperiments pe '
+			.'left join projects p '
+			.'on (pe.projectId=p.projectId) '
+		  .'where pe.name="'.$session.'"';
+
+		list($info) = $this->mysql->getSQLResult($q);
+		return $info;
+	}
+
 	function getProjects($type=""){
                 $projects = array();
 		if ($type=="all")  

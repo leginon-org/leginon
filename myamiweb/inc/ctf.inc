@@ -142,12 +142,16 @@ class ctfdata {
 			$q =	"select ".$select." "
 			."from image i left join ctf c "
 			."on (c.imageId=i.imageId) "
+			."left join dbemdata.`AcquisitionImageData` a "
+			."on (a.DEF_id = i.DEF_id) "
+			."left join dbemdata.`PresetData` p "
+			."on (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
 			."where i.sessionId='$sessionId' ";
 			if ($runId)
 				$q .= "and c.runId='$runId' ";
 			else
 				$q .= "and c.ctfId=(select max(c2.ctfId) from ctf c2 where c2.imageId = c.imageId)";
-			$q .= "group by i.defocus_nominal";
+			$q .= "group by p.`name`";
 			$r = $this->mysql->getSQLResult($q);
 			$stats[$k] = $r;
 		}

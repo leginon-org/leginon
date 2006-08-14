@@ -36,10 +36,7 @@ function TimeCallback($aVal) {
     return Date('H:i',$aVal);
 }
 
-
 foreach($ctfinfo as $t) {
-	if ($t['defocus_nominal']!=$defocus_nom)
-		continue;
 	$id = $t['DEF_id'];
 	$p = $leginondata->getPresetFromImageId($id);
 	if ($p['name']!=$preset)
@@ -47,7 +44,6 @@ foreach($ctfinfo as $t) {
 	$data[$id] = $t[$f];
 	$where[] = "DEF_id=".$id;
 }
-
 
 $sqlwhere = "WHERE (".join(' OR ',$where).") and a.`REF|SessionData|session`=".$sessionId ;
 $q = 	"select DEF_id, unix_timestamp(DEF_timestamp) as unix_timestamp, "
@@ -60,6 +56,7 @@ $q = 	"select DEF_id, unix_timestamp(DEF_timestamp) as unix_timestamp, "
 		$datax[]=$row['unix_timestamp'];
 		$datay[]=$data[$row['DEF_id']];
 	}
+
 
 if ($viewdata) {
 	$keys = array("timestamp", "$f" );

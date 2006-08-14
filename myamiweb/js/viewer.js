@@ -16,6 +16,17 @@ if (window.XMLHttpRequest) {
         xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
 }
 
+function setproject(id) {
+	if (obj=document.viewerform.projectId) {
+		for (var i in obj.options) {
+			if (obj.options[i].value == id) {
+				obj.options[i].selected=true;
+				break;
+			}
+		}
+		newexp();
+	}
+}
 
 function setevents()
 {

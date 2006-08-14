@@ -42,7 +42,7 @@ class viewer {
 		$this->imageId=$imageId;
 	}
 
-	function addProjectSelector($projects=array()) {
+	function addProjectSelector($projects=array(), $currentproject=false) {
 		$projectselector = '<select name="projectId" onchange="newexp()">'.$this->crlf;
 		foreach ($projects as $project) {
 			if ($project[id]==$this->projectId) $s='selected'; else $s='';
@@ -50,6 +50,15 @@ class viewer {
 						.$project[name].'</option>'.$this->crlf; 
 		}
 		$projectselector .= '</select>'.$this->crlf;
+		if ($currentproject) {
+			$name = $currentproject['name'];
+			$id = $currentproject['projectId'];
+		if ($this->projectId==$id) 
+			$projectselector .= '<br>Select <a href="javascript:setproject(\'all\')">all projects</a>'.$this->crlf;
+		else
+			$projectselector .= '<br>Select <a href="javascript:setproject('.$id.')">'.$name.' project</a>'.$this->crlf;
+
+		}
 		$this->addprojectsel = $projectselector;
 	}
 
@@ -57,6 +66,10 @@ class viewer {
 		$selector = '<select name="sessionId" onchange="newexp()">'.$this->crlf;
 		foreach ($sessions as $session) {
 			if ($session[id]==$this->sessionId) $s='selected'; else $s='';
+			$maxlength=70;
+			if (strlen($session[name])>$maxlength) {
+				$session[name]=substr($session[name],0,$maxlength)."... ";
+			}
 			$selector .= '<option value='.$session[id].' '.$s.' >'
 					.$session[name].'</option>'.$this->crlf; 
 		}
@@ -343,7 +356,7 @@ class viewer {
 			$display .= '</tr></table>';
 		$display .= '<table border="0">';
 		if ($this->addsessionsel) {
-			$display .= '<tr>';
+			$display .= '<tr valign="top">';
 			if ($this->addprojectsel) {
 				$display .= '<td>';
 				$display .= $this->addprojectsel;

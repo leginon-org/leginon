@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.57 $
- *	@version $Id: leginon.inc,v 1.57 2006-07-10 17:41:28 dfellman Exp $
+ *	@version $Revision: 1.58 $
+ *	@version $Id: leginon.inc,v 1.58 2006-08-14 22:30:24 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -366,7 +366,7 @@ class leginondata {
 			."`p`.`SUBD|beam shift|y`, `p`.`defocus`, `p`.`SUBD|dimension|x`, "
 			."`p`.`SUBD|dimension|y`, `p`.`SUBD|binning|x`, `p`.`SUBD|binning|y`, "
 			."`p`.`SUBD|offset|x`, `p`.`SUBD|offset|y`, `p`.`exposure time`, "
-			."`p`.`removed`, `p`.`hasref`, `p`.`eucentric focus`, `p`.`dose`, `p`.`number`, "
+			."`p`.`removed`, `p`.`hasref`, `p`.`dose`, `p`.`number`, "
 			."`p`.`film`, `p`.`REF|InstrumentData|tem`, `p`.`REF|InstrumentData|ccdcamera` "
 			."FROM "
 			."`AcquisitionImageData` AS `a` "
@@ -1735,8 +1735,9 @@ class leginondata {
 	}
 
 	function readDataTree(&$arr_node,$Rq,$refname="",$recursive=true) {
-		while  ($row  =  mysql_fetch_row($Rq))  { 
-			for  ($i=0;  $i<mysql_num_fields($Rq);  $i++)  { 
+		if ($Rq)
+		while  ($row  =  mysql_fetch_row($Rq))  {
+			for  ($i=0;  $i<mysql_num_fields($Rq);  $i++)  {
 				$field = mysql_field_name(($Rq), $i);
 				if (ereg("^REF\|",$field)){
 					$ref = ereg_replace("^REF\|",'',$field);

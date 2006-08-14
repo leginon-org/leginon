@@ -33,8 +33,15 @@ $datatypes = $leginondata->getAllDatatypes($sessionId);
 
 $viewer = new viewer();
 if($projectdb) {
+	foreach($sessions as $s) {
+		if ($s['id']==$sessionId) {
+			$sessionname = $s['name_org'];
+			break;
+		}
+	}
+	$currentproject = $projectdata->getProjectFromSession($sessionname);
 	$viewer->setProjectId($projectId);
-	$viewer->addProjectSelector($projects);
+	$viewer->addProjectSelector($projects, $currentproject);
 }
 $viewer->setSessionId($sessionId);
 $viewer->setImageId($imageId);
