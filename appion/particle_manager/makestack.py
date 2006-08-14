@@ -187,7 +187,7 @@ def phaseFlip(params,img):
     input=params["outdir"]+img+'.hed'
     output=params["outdir"]+img+'.ctf.hed'
 
-    cmd="applyctf %s %s parm=%f,200,1,0.1,0,17,0.4,9,1.53,%i,2,%f setparm flipphase" %(input,output,params["df"],params["kv"],params["apix"])
+    cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" %(input,output,params["df"],params["kv"],params["apix"])
     print "phaseflipping",input
 
     f=os.popen(cmd)
