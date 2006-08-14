@@ -10,6 +10,7 @@ import collection
 import tilts
 import exposure
 import prediction
+import time
 
 class CalibrationError(Exception):
     pass
@@ -267,15 +268,24 @@ class Tomography(acquisition.Acquisition):
             raise ValueError
 
         delta = math.radians(5.0)
+        n = 5
+        increment = delta/n
 
         if tilts[1] - tilts[0] > 0:
-            alpha = tilts[0] - delta
+            sign = -1
         else:
-            alpha = tilts[0] + delta
+            sign = 1
+
+        alpha = tilts[0] + sign*delta
 
         self.instrument.tem.StagePosition = {'a': alpha}
 
-        self.instrument.tem.StagePosition = {'a': tilts[0]}
+        time.sleep(1.0)
+
+        for i in range(n):
+            alpha -= sign*increment
+            self.instrument.tem.StagePosition = {'a': alpha}
+            time.sleep(1.0)
 
         #self.driftDetected(preset_name, emtarget, None)
         target = self.adjustTargetForDrift(target, force=True)
