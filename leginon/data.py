@@ -1413,7 +1413,6 @@ class ReferenceRequestData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('preset', str),
-			('pause time', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2214,6 +2213,7 @@ class ReferenceSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
 			('move type', str),
+			('pause time', float),
 		)
 	typemap = classmethod(typemap)
 

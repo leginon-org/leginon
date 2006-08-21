@@ -1,7 +1,7 @@
 # $Source: /ami/sw/cvsroot/pyleginon/reference.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-21 23:10:17 $
+# $Date: 2006-08-21 23:50:28 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -31,6 +31,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
     defaultsettings = {
         'move type': 'stage position',
+        'pause time': 3.0,
     }
 
     def __init__(self, *args, **kwargs):
@@ -114,7 +115,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
     def _processRequest(self, request_data):
         preset_name = request_data['preset']
-        pause_time = request_data['pause time']
+        pause_time = self.settings['pause time']
 
         try:
             self.moveToTarget(preset_name)
