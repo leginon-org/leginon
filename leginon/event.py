@@ -153,6 +153,15 @@ class ConfirmationEvent(NotificationEvent):
 class QueuePublishEvent(PublishEvent):
 	dataclass = data.QueueData
 
+class ReferenceTargetPublishEvent(PublishEvent):
+	dataclass = data.ReferenceTargetData
+
+class AlignZeroLossPeakPublishEvent(PublishEvent):
+	dataclass = data.AlignZeroLossPeakData
+
+class TargetListDoneEvent(NotificationEvent):
+    pass
+
 class AcquisitionImageDriftPublishEvent(PublishEvent):
 	dataclass = data.AcquisitionImageDriftData
 

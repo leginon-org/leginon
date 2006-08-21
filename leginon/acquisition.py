@@ -68,7 +68,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 										
 	event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent,
 											event.DriftMonitorRequestEvent, 
-											event.ImageListPublishEvent]
+											event.ImageListPublishEvent,
+											event.ReferenceTargetPublishEvent]
 
 	def __init__(self, id, session, managerlocation, target_types=('acquisition',), **kwargs):
 

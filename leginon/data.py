@@ -1402,6 +1402,24 @@ class AcquisitionImageTargetData(ImageTargetData):
 		)
 	typemap = classmethod(typemap)
 
+class ReferenceTargetData(ImageTargetData):
+	def typemap(cls):
+		return ImageTargetData.typemap() + (
+			('image', AcquisitionImageData),
+		)
+	typemap = classmethod(typemap)
+
+class ReferenceRequestData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('preset', str),
+			('pause time', float),
+		)
+	typemap = classmethod(typemap)
+
+class AlignZeroLossPeakData(ReferenceRequestData):
+    pass
+
 class ImageTargetListData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -2191,3 +2209,11 @@ class ImageAssessorSettingsData(SettingsData):
 			('outputfile', str),
 		)
 	typemap = classmethod(typemap)
+
+class ReferenceSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('move type', str),
+		)
+	typemap = classmethod(typemap)
+

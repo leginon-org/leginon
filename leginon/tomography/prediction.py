@@ -75,7 +75,7 @@ class Prediction(object):
             del tilt_group.xs[-1]
             del tilt_group.ys[-1]
 
-            tilt_matrices = scipy.zeros((1, 3, 3), scipy.Float)
+            tilt_matrices = scipy.zeros((1, 3, 3), scipy.dtype('f4'))
             initial_tilt = tilt_group.tilts[0]
             tilt_matrices[0, :, :] = tiltMatrix(initial_tilt)
             z0 = model(self.parameters, [tilt_matrices])[0][0][2]
@@ -126,7 +126,7 @@ def leastSquaresModel(tilt_groups):
     y_list = []
     for tilt_group in tilt_groups:
         n = len(tilt_group.tilts)
-        tilt_matrices = scipy.zeros((n, 3, 3), scipy.Float)
+        tilt_matrices = scipy.zeros((n, 3, 3), scipy.dtype('f4'))
         for i in range(n):
             tilt_matrices[i, :, :] = tiltMatrix(tilt_group.tilts[i])
         tilt_matrices_list.append(tilt_matrices)
@@ -148,7 +148,7 @@ def leastSquaresModel(tilt_groups):
     return x
 
 def tiltMatrix(tilt):
-    matrix = scipy.identity(3, scipy.Float)
+    matrix = scipy.identity(3, scipy.dtype('f4'))
     matrix[0, 0] = scipy.cos(tilt)
     matrix[0, 2] = -scipy.sin(tilt)
     matrix[2, 0] = scipy.sin(tilt)
@@ -156,7 +156,7 @@ def tiltMatrix(tilt):
     return matrix
 
 def getParameters(parameters):
-    phi = scipy.identity(3, scipy.Float)
+    phi = scipy.identity(3, scipy.dtype('f4'))
     cos_phi = scipy.cos(parameters[0])
     sin_phi = scipy.sin(parameters[0])
     phi[0, 0] = cos_phi
@@ -164,7 +164,7 @@ def getParameters(parameters):
     phi[1, 0] = -sin_phi
     phi[1, 1] = cos_phi
 
-    #psi = scipy.identity(3, scipy.Float)
+    #psi = scipy.identity(3, scipy.dtype('f4'))
     #cos_psi = scipy.cos(parameters[1])
     #sin_psi = scipy.sin(parameters[1])
     #psi[1, 1] = cos_psi
@@ -172,12 +172,12 @@ def getParameters(parameters):
     #psi[2, 1] = -sin_psi
     #psi[2, 2] = cos_psi
 
-    optical_axis = scipy.zeros(3, scipy.Float)
+    optical_axis = scipy.zeros(3, scipy.dtype('f4'))
     optical_axis[0] = parameters[1]
     optical_axis[1] = parameters[2]
 
     n = (len(parameters) - 3)/2
-    specimens = scipy.zeros((n, 3), scipy.Float)
+    specimens = scipy.zeros((n, 3), scipy.dtype('f4'))
     specimens[:, 0] = parameters[3::2]
     specimens[:, 2] = parameters[4::2]
 
@@ -201,19 +201,19 @@ def residuals(parameters, tilt_matrices_list, x_list, y_list):
     for i in range(len(position_groups)):
         positions = position_groups[i]
         n = positions.shape[0]
-        residuals = scipy.zeros((n, 2), scipy.Float)
+        residuals = scipy.zeros((n, 2), scipy.dtype('f4'))
         residuals[:, 0] = x_list[i]
         residuals[:, 1] = y_list[i]
         residuals -= positions[:, :2]
         residuals_list.extend(residuals[:, 0])
         residuals_list.extend(residuals[:, 1])
-    return scipy.array(residuals_list, scipy.Float).flat
+    return scipy.array(residuals_list, scipy.dtype('f4')).flat
 
 def _leastSquaresXY(tilts, positions, tilt):
     m = len(tilts)
     n = 3
-    a = scipy.zeros((m, n), scipy.Float)
-    b = scipy.zeros((m, 1), scipy.Float)
+    a = scipy.zeros((m, n), scipy.dtype('f4'))
+    b = scipy.zeros((m, 1), scipy.dtype('f4'))
     for i in range(m):
         v = tilts[i]
         for j in range(n):
@@ -226,7 +226,7 @@ def _leastSquaresXY(tilts, positions, tilt):
     return position
 
 def leastSquaresXY(tilts, xs, ys, tilt, n=5):
-    position = scipy.zeros(2, scipy.Float)
+    position = scipy.zeros(2, scipy.dtype('f4'))
     for i, positions in enumerate((xs, ys)):
         position[i] = _leastSquaresXY(tilts[-n:], positions[-n:], tilt)
     return position

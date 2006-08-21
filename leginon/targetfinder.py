@@ -188,7 +188,7 @@ class ClickTargetFinder(TargetFinder):
 
 
 class MosaicClickTargetFinder(ClickTargetFinder):
-	targetnames = ['acquisition']
+	targetnames = ['acquisition', 'reference']
 	panelclass = gui.wx.MosaicClickTargetFinder.Panel
 	settingsclass = data.MosaicClickTargetFinderSettingsData
 	defaultsettings = dict(ClickTargetFinder.defaultsettings)
@@ -220,7 +220,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		},
 	})
 
-	eventoutputs = ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
+	eventoutputs = ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent, event.ReferenceTargetPublishEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.mosaicselectionmapping = {}
 		ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -250,6 +250,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.existing_targets = {}
 		self.clearTiles()
 
+		self.reference_target = None
+
 		if self.__class__ == MosaicClickTargetFinder:
 			self.start()
 
@@ -277,16 +279,33 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			displayedtargetdata[t].append(targetdata)
 		self.displayedtargetdata = displayedtargetdata
 
+	def getDisplayedReferenceTarget(self):
+		try:
+			column, row = self.panel.getTargetPositions('reference')[-1]
+		except IndexError:
+			return None
+		imagedata, delta_row, delta_column = self._mosaicToTarget(row, column)
+		return self.newReferenceTarget(imagedata, delta_row, delta_column)
+
 	def submitTargets(self):
-		self.logger.info('Submitting targets')
+		self.logger.info('Submitting targets...')
 		self.getTargetDataList('acquisition')
 		#self.getTargetDataList('focus')
 		try:
 			self.publish(self.targetlist, pubevent=True)
 		except node.PublishError, e:
-			self.logger.error('Submitting targets failed.')
+			self.logger.error('Submitting acquisition targets failed')
 		else:
-			self.logger.info('Targets submitted')
+			self.logger.info('Acquisition targets submitted')
+
+		reference_target = self.getDisplayedReferenceTarget()
+		if reference_target is not None:
+			try:
+				self.publish(reference_target, database=True, pubevent=True)
+			except node.PublishError, e:
+				self.logger.error('Submitting reference target failed')
+			else:
+				self.logger.info('Reference target submitted')
 
 	def clearTiles(self):
 		self.tilemap = {}
@@ -308,7 +327,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		newtile = self.mosaic.addTile(imagedata)
 		self.tilemap[imid] = newtile
 		self.imagemap[imid] = imagedata
-		targets = self.researchTargets(image=imagedata)
+		targets = self.researchTargets(image=imagedata, type='acquisition')
 		if targets and self.targetlist is None:
 			self.targetlist = targets[0]['list']
 		self.targetmap[imid] = targets
@@ -316,11 +335,12 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def targetsFromDatabase(self):
 		for id, imagedata in self.imagemap.items():
-			targets = self.researchTargets(image=imagedata)
+			targets = self.researchTargets(image=imagedata, type='acquisition')
 			### set my target list to same as first target found
 			if targets and self.targetlist is None:
 				self.targetlist = targets[0]['list']
 			self.targetmap[id] = targets
+		self.reference_target = self.getReferenceTarget()
 
 	def refreshCurrentPosition(self):
 		self.updateCurrentPosition()
@@ -387,6 +407,19 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		# ...
 		#self.setTargets([], 'focus')
 		self.setTargets(donetargets, 'done')
+
+		# ...
+		reference_target = []
+		if self.reference_target is not None:
+			id = self.reference_target['image'].dbid
+			try:
+				tile = self.tilemap[id]
+				y, x = self.targetToMosaic(tile, self.reference_target)
+				reference_target = [(x, y)]
+			except KeyError:
+				pass
+		self.setTargets(reference_target, 'reference')
+
 		self.updateCurrentPosition()
 		self.setTargets(self.currentposition, 'position')
 		n = len(targets)
@@ -502,6 +535,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.logger.info('Finding image %i of %i' % (i + 1, ntotal))
 			imagedata = tile['image']
 			self.addTile(imagedata)
+		self.reference_target = self.getReferenceTarget()
 		self.logger.info('Mosaic loaded (%i of %i images loaded successfully)' % (i+1, ntotal))
 		if self.settings['mosaic image on tile change']:
 			self.createMosaicImage()
@@ -515,7 +549,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		scaledpos = self.mosaic.scaled(mospos)
 		return scaledpos
 
-	def mosaicToTarget(self, typename, row, col):
+	def _mosaicToTarget(self, row, col):
 		self.logger.debug('mosaicToTarget r %s, c %s' % (row, col))
 		unscaled = self.mosaic.unscaled((row,col))
 		tile, pos = self.mosaic.mosaic2tile(unscaled)
@@ -523,6 +557,10 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		drow,dcol = pos[0]-shape[0]/2, pos[1]-shape[1]/2
 		imagedata = tile.imagedata
 		self.logger.debug('target tile image: %s, pos: %s' % (imagedata.dbid,pos))
+		return imagedata, drow, dcol
+
+	def mosaicToTarget(self, typename, row, col):
+		imagedata, drow, dcol = self._mosaicToTarget(row, col)
 		### create a new target list if we don't have one already
 		if self.targetlist is None:
 			self.targetlist = self.newTargetList()

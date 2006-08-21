@@ -17,7 +17,8 @@ class CalibrationError(Exception):
 
 class Tomography(acquisition.Acquisition):
     eventinputs = acquisition.Acquisition.eventinputs
-    eventoutputs = acquisition.Acquisition.eventoutputs
+    eventoutputs = acquisition.Acquisition.eventoutputs + \
+                    [event.AlignZeroLossPeakPublishEvent]
 
     panelclass = gui.wx.tomography.Tomography.Panel
     settingsclass = data.TomographySettingsData
@@ -342,4 +343,17 @@ class Tomography(acquisition.Acquisition):
         n_points = sum([len(tg) for tg in self.prediction.tilt_groups])
         m = 'Loaded %d points from %d previous series' % (n_points, n_groups)
         self.logger.info(m)
+
+    def alignZeroLossPeak(self, preset_name):
+        request_data = data.AlignZeroLossPeakData()
+        request_data['session'] = self.session
+        request_data['preset'] = preset_name
+        request_data['pause time'] = 3.0
+        self.publish(request_data, database=True, pubevent=True, wait=True)
+
+    def processTargetData(self, *args, **kwargs):
+        if self.settings['align zero loss peak']:
+            preset_name = self.settings['preset order'][-1]
+            self.alignZeroLossPeak(preset_name)
+        acquisition.Acquisition.processTargetData(self, *args, **kwargs)
 

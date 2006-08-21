@@ -151,6 +151,18 @@ class TargetHandler(object):
 			self.targetlistqueue = newqueue
 		return self.targetlistqueue
 
+	def newReferenceTarget(self, image_data, drow, dcol):
+		target_data = data.ReferenceTargetData()
+		target_data['image'] = image_data
+		target_data['scope'] = image_data['scope']
+		target_data['camera'] = image_data['camera']
+		target_data['preset'] = image_data['preset']
+		target_data['grid'] = image_data['grid']
+		target_data['delta row'] = drow
+		target_data['delta column'] = dcol
+		target_data['session'] = self.session
+		return target_data
+
 	def newTarget(self, drow, dcol, **kwargs):
 		'''
 		create new AcquistionImageTargetData and fill in all fields
@@ -213,6 +225,14 @@ class TargetHandler(object):
 		nextnumber = lastnumber + 1
 		newtarget = self.newTarget(drow=0, dcol=0, number=nextnumber, type='simulated', scope=scopedata, preset=preset)
 		return newtarget
+
+	def getReferenceTarget(self):
+		target_data = data.ReferenceTargetData()
+		target_data['session'] = self.session
+		try:
+			return self.research(target_data, results=1)[-1]
+		except IndexError:
+			return None
 
 class TargetWaitHandler(TargetHandler):
 	eventinputs = TargetHandler.eventinputs + [event.TargetListDoneEvent]

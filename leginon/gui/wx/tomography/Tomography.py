@@ -104,7 +104,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         expsbsz.Add(expsz, 1, wx.EXPAND|wx.ALL, 5)
 
         self.widgets['run buffer cycle'] = wx.CheckBox(self, -1, 'Run buffer cycle before collection')
-        self.widgets['align zero loss peak'] = wx.CheckBox(self, -1, 'Align zero loss peak after collection')
+        self.widgets['align zero loss peak'] = wx.CheckBox(self, -1, 'Align zero loss peak before collection')
 
         miscsz = wx.GridBagSizer(5, 10)
         miscsz.Add(self.widgets['run buffer cycle'],

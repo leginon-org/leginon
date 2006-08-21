@@ -5,10 +5,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.46 $
+# $Revision: 1.47 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-09-16 23:18:06 $
-# $Author: pulokas $
+# $Date: 2006-08-21 23:10:17 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -1262,12 +1262,12 @@ class TypeTool(object):
 		self.togglebuttons['settings'].GetEventHandler().AddPendingEvent(evt)
 
 class TargetTypeTool(TypeTool):
-	def __init__(self, parent, name, display=None, settings=None, target=None, shape='+'):
+	def __init__(self, parent, name, display=None, settings=None, target=None, shape='+', unique=False):
 		self.color = display
 		self.shape = shape 
 		TypeTool.__init__(self, parent, name, display=display, settings=settings)
 
-		self.targettype = TargetType(self.name, self.color, self.shape)
+		self.targettype = TargetType(self.name, self.color, self.shape, unique)
 
 		self.togglebuttons['display'].SetBitmapDisabled(self.bitmaps['display'])
 
@@ -1507,8 +1507,9 @@ class StatsTarget(Target):
 		self.stats = stats
 
 class TargetType(object):
-	def __init__(self, name, color, shape='+'):
+	def __init__(self, name, color, shape='+', unique=False):
 		self.name = name
+		self.unique = unique
 		self.bitmaps = {}
 		self.bitmaps['default'], self.bitmaps['selected'] = getTargetBitmaps(color, shape)
 		self.targets = None
@@ -1520,11 +1521,17 @@ class TargetType(object):
 
 	def addTarget(self, x, y):
 		target = Target(x, y, self)
-		self.targets.append(target)
+		if self.unique:
+			self.targets = [target]
+		else:
+			self.targets.append(target)
 
 	def insertTarget(self, pos, x, y):
 		target = Target(x, y, self)
-		self.targets.insert(pos, target)
+		if self.unique:
+			self.targets = [target]
+		else:
+			self.targets.insert(pos, target)
 
 	def deleteTarget(self, target):
 		if target not in self.targets:
@@ -1532,6 +1539,8 @@ class TargetType(object):
 		self.targets.remove(target)
 
 	def setTargets(self, targets):
+		if self.unique and len(targets) > 1:
+			raise ValueError
 		self.targets = []
 		for target in targets:
 			if isinstance(target, dict):

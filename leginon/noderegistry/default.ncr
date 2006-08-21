@@ -118,3 +118,8 @@ type: Pipeline
 [ImageAssessor]
 module: imageassessor
 type: Utility
+
+[AlignZeroLossPeak]
+module: reference
+type: Utility
+

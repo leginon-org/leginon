@@ -326,7 +326,7 @@ class Node(object):
 
 	# data publish/research methods
 
-	def publish(self, idata, database=False, dbforce=False, pubevent=False, pubeventclass=None, broadcast=False):
+	def publish(self, idata, database=False, dbforce=False, pubevent=False, pubeventclass=None, broadcast=False, wait=False):
 		'''
 		Make a piece of data available to other nodes.
 		Arguments:
@@ -364,7 +364,7 @@ class Node(object):
 			e['data'] = idata.reference()
 			if broadcast:
 				e['destination'] = ''
-			return self.outputEvent(e)
+			return self.outputEvent(e, wait=wait)
 
 	def research(self, datainstance, results=None, readimages=True, timelimit=None):
 		'''

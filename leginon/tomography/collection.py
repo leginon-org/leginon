@@ -97,6 +97,7 @@ class Collection(object):
         else:
             raise RuntimeError('too many tilt angle groups')
 
+    '''
     def alignZeroLossPeak(self):
         ccd_camera = self.instrument.ccdcamera
         if not ccd_camera.EnergyFiltered:
@@ -115,6 +116,7 @@ class Collection(object):
         except Exception, e:
             s = 'Energy filter align zero loss peak failed: %s.'
             self.logger.error(s % e)
+    '''
 
     def finalize(self):
         self.tilt_series = None
@@ -124,8 +126,8 @@ class Collection(object):
         self.restoreInstrumentState()
         self.instrument_state = None
 
-        if self.settings['align zero loss peak']:
-            self.alignZeroLossPeak()
+        #if self.settings['align zero loss peak']:
+        #    self.alignZeroLossPeak()
 
         self.logger.info('Data collection ended.')
 
