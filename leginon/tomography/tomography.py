@@ -348,7 +348,6 @@ class Tomography(acquisition.Acquisition):
         request_data = data.AlignZeroLossPeakData()
         request_data['session'] = self.session
         request_data['preset'] = preset_name
-        request_data['pause time'] = 3.0
         self.publish(request_data, database=True, pubevent=True, wait=True)
 
     def processTargetData(self, *args, **kwargs):
