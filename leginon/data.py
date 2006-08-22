@@ -2139,6 +2139,8 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('tilt max', float),
 			('tilt start', float),
 			('tilt step', float),
+            ('equally sloped', bool),
+            ('equally sloped n', int),
 			('xcf bin', int),
 			('run buffer cycle', bool),
 			('align zero loss peak', bool),

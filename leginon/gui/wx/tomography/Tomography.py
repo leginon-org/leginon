@@ -28,6 +28,8 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
                                                 allownone=False,
                                                 chars=7,
                                                 value='0.0')
+        self.widgets['equally sloped'] = wx.CheckBox(self, -1, 'Use equally sloped angles, power of 2 angles in 180 degree range:')
+        self.widgets['equally sloped n'] = IntEntry(self, -1, min=2, allownone=False, chars=5, value='8')
 
         tiltsz = wx.GridBagSizer(5, 10)
 
@@ -53,6 +55,11 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         label = wx.StaticText(self, -1, 'degree(s)')
         tiltsz.Add(label, (1, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+        tiltsz.Add(self.widgets['equally sloped'], (2, 0), (1, 4),
+                    wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+        tiltsz.Add(self.widgets['equally sloped n'], (2, 4), (1, 1),
+                    wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+
         tiltsz.AddGrowableCol(0)
 
         tiltsb = wx.StaticBox(self, -1, 'Tilt')
@@ -71,6 +78,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
                                                             allownone=False,
                                                             chars=5,
                                                             value='2.0')
+
         expsz = wx.GridBagSizer(5, 10)
         label = wx.StaticText(self, -1, 'Total dose')
         expsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)

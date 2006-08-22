@@ -41,6 +41,8 @@ class Tomography(acquisition.Acquisition):
         'tilt max': 60.0,
         'tilt start': 0.0,
         'tilt step': 1.0,
+        'equally sloped': False,
+        'equally sloped n': 8,
         'xcf bin': 1,
         'run buffer cycle': True,
         'align zero loss peak': True,
@@ -90,12 +92,17 @@ class Tomography(acquisition.Acquisition):
 
     def update(self):
         try:
-            self.tilts.update(min=math.radians(self.settings['tilt min']),
+            self.tilts.update(equally_sloped=self.settings['equally sloped'],
+                              min=math.radians(self.settings['tilt min']),
                               max=math.radians(self.settings['tilt max']),
                               start=math.radians(self.settings['tilt start']),
-                              step=math.radians(self.settings['tilt step']))
+                              step=math.radians(self.settings['tilt step']),
+                              n=self.settings['equally sloped n'])
         except ValueError, e:
             self.logger.warning('Tilt parameters invalid: %s.' % e)
+        else:
+            n = sum([len(tilts) for tilts in self.tilts.getTilts()])
+            self.logger.info('%d tilt angle(s) for series.' % n)
 
         total_dose = self.settings['dose']
         exposure_min = self.settings['min exposure']
