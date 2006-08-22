@@ -1,7 +1,7 @@
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Reference.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-21 23:51:11 $
+# $Date: 2006-08-22 17:37:39 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -31,9 +31,16 @@ class SettingsDialog(gui.wx.Settings.Dialog):
         szpausetime.Add(self.widgets['pause time'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
         szpausetime.Add(wx.StaticText(self, -1, 'seconds before performing request'), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+        self.widgets['interval time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='0.0')
+        szintervaltime = wx.GridBagSizer(5, 5)
+        szintervaltime.Add(wx.StaticText(self, -1, 'If request performed less than'), (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        szintervaltime.Add(self.widgets['interval time'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+        szintervaltime.Add(wx.StaticText(self, -1, 'seconds ago, ignore request'), (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
         sz = wx.GridBagSizer(5, 5)
         sz.Add(szmovetype, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         sz.Add(szpausetime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        sz.Add(szintervaltime, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
         sb = wx.StaticBox(self, -1, 'Reference Target')
         sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)

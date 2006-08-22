@@ -1,7 +1,7 @@
 # $Source: /ami/sw/cvsroot/pyleginon/reference.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-21 23:50:28 $
+# $Date: 2006-08-22 17:37:17 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -21,7 +21,7 @@ class MoveError(Exception):
     pass
 
 class Reference(watcher.Watcher, targethandler.TargetHandler):
-    panelclass = gui.wx.Reference.AlignZeroLossPeakPanel
+    panelclass = gui.wx.Reference.ReferencePanel
     settingsclass = data.ReferenceSettingsData
     eventinputs = watcher.Watcher.eventinputs + \
                   presets.PresetsClient.eventinputs + \
@@ -32,6 +32,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
     defaultsettings = {
         'move type': 'stage position',
         'pause time': 3.0,
+        'interval time': 0.0,
     }
 
     def __init__(self, *args, **kwargs):
@@ -56,6 +57,8 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
         self.lock = threading.RLock()
         self.reference_target = self.getReferenceTarget()
+
+        self.last_processed = None
 
         self.start()
 
@@ -116,6 +119,14 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
     def _processRequest(self, request_data):
         preset_name = request_data['preset']
         pause_time = self.settings['pause time']
+        interval_time = self.settings['interval time']
+
+        if interval_time is not None and self.last_processed is not None:
+            interval = time.time() - self.last_processed
+            if interval < interval_time:
+                message = '%d second(s) since last request, ignoring request'
+                self.logger.info(message % interval)
+                return
 
         try:
             self.moveToTarget(preset_name)
@@ -132,6 +143,8 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
             self.logger.error('Error executing request, %s' % e)
             return
 
+        self.last_processed = time.time()
+
     def processRequest(self, request_data):
         self.lock.acquire()
         try:
@@ -143,8 +156,13 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
         pass
 
 class AlignZeroLossPeak(Reference):
+    defaultsettings = {
+        'move type': 'stage position',
+        'pause time': 3.0,
+        'interval time': 900.0,
+    }
     eventinputs = Reference.eventinputs + [event.AlignZeroLossPeakPublishEvent]
-
+    panelclass = gui.wx.Reference.AlignZeroLossPeakPanel
     def __init__(self, *args, **kwargs):
         try:
             watch = kwargs['watchfor']

@@ -2216,6 +2216,7 @@ class ReferenceSettingsData(SettingsData):
 		return SettingsData.typemap() + (
 			('move type', str),
 			('pause time', float),
+			('interval time', float),
 		)
 	typemap = classmethod(typemap)
 
