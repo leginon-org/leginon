@@ -100,11 +100,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			drow = row - imagearray.shape[0]/2
 			dcol = column - imagearray.shape[1]/2
 
-			targetdata = self.newTargetForImage(imagedata,
-																					drow, dcol,
-																					type=typename,
-																					list=targetlist,
-																					number=number)
+			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist, number=number)
 			self.publish(targetdata, database=True)
 			number += 1
 
@@ -159,7 +155,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.userpause.set()
 
 class ClickTargetFinder(TargetFinder):
-	targetnames = ['focus', 'acquisition']
+	targetnames = ['reference', 'focus', 'acquisition']
 	panelclass = gui.wx.ClickTargetFinder.Panel
 	settingsclass = data.ClickTargetFinderSettingsData
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -185,11 +181,29 @@ class ClickTargetFinder(TargetFinder):
 		self.setStatus('processing')
 		self.logger.info('Publishing targets...')
 		for i in self.targetnames:
-			self.publishTargets(imdata, i, targetlist)
+			if i == 'reference':
+				self.publishReferenceTarget(imdata)
+			else:
+				self.publishTargets(imdata, i, targetlist)
 		self.setStatus('idle')
 
+	def publishReferenceTarget(self, image_data):
+		try:
+			column, row = self.panel.getTargetPositions('reference')[-1]
+		except IndexError:
+			return
+		rows, columns = image_data['image'].shape
+		delta_row = row - rows/2
+		delta_column = column - columns/2
+		reference_target = self.newReferenceTarget(image_data, delta_row, delta_column)
+		try:
+			self.publish(reference_target, database=True, pubevent=True)
+		except node.PublishError, e:
+			self.logger.error('Submitting reference target failed')
+		else:
+			self.logger.info('Reference target submitted')
+
 class MosaicClickTargetFinder(ClickTargetFinder):
-	targetnames = ['acquisition', 'reference']
 	panelclass = gui.wx.MosaicClickTargetFinder.Panel
 	settingsclass = data.MosaicClickTargetFinderSettingsData
 	defaultsettings = dict(ClickTargetFinder.defaultsettings)
