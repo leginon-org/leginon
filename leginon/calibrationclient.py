@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.183 $
+# $Revision: 1.184 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-22 23:54:52 $
+# $Date: 2006-08-22 23:58:25 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -628,6 +628,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		## plug calibration matrices and tilt vectors into M
 		M = numarray.zeros((4,3), numarray.Float64)
 
+		t1 = numarray.array(t1)
+		t2 = numarray.array(t2)
+
 		# t1 on first two rows
 		M[:2,0] = numarray.matrixmultiply(F,t1)
 		M[:2,1] = numarray.matrixmultiply(A,t1)
@@ -819,7 +822,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 
 		pixrow = pixelshift['row'] * biny
 		pixcol = pixelshift['col'] * binx
-		pixvect = (pixrow, pixcol)
+		pixvect = numarray.array((pixrow, pixcol))
 
 		change = numarray.matrixmultiply(matrix, pixvect)
 		changex = change[0]
@@ -860,7 +863,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 				alpha = scope[parameter]['a']
 				position['y'] = position['y']*numarray.cos(alpha)
 
-		position_vector = (position['x'], position['y'])
+		position_vector = numarray.array((position['x'], position['y']))
 		pixel = numarray.matrixmultiply(inverse_matrix, position_vector)
 
 		pixel_position = {
