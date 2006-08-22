@@ -1,7 +1,7 @@
 # $Source: /ami/sw/cvsroot/pyleginon/reference.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-22 19:22:33 $
+# $Date: 2006-08-22 19:44:32 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -227,5 +227,14 @@ class MeasureDose(Reference):
         self.presets_client.measureDose(preset_name, em_target_data)
 
     def execute(self, request_data):
-        pass
+        preset_name = request_data['preset']
+        preset = self.presets_client.getPresetByName(preset_name)
+        dose = preset['dose']/1e20
+        exposure_time = preset['exposure time']/1000.0
+        try:
+            dose_rate = dose/exposure_time
+        except ZeroDivisionError:
+            dose_rate = 0
+        self.logger.info('Measured dose for preset \'%s\'' % preset_name)
+        self.logger.info('Dose: %g e-/A^2, rate: %g e-/A^2/s' % (dose, dose_rate))
 
