@@ -35,6 +35,39 @@ def pointsInPolygon(inputpoints, vertices):
 	outputpoints = map(tuple, outputpoints)
 	return outputpoints
 
+def getPolygonArea(polygon):
+	area=0.0
+	N = len(polygon)
+	for i in range(N):
+		j = (i+1) % N
+		ax,ay = polygon[i]
+		bx,by = polygon[j]
+		area += ax * by
+		area -= ay * bx
+	area /= 2.0
+	if area<0:
+		return -area
+	return area
+
+def getPolygonCenter(polygon):
+	N = len(polygon)
+	A = getPolygonArea(polygon)
+	if not A:
+		return ()
+	cx = cy = factor = 0.0
+	for i in range(N):
+		j = (i+1) % N
+		ax,ay = polygon[i]
+		bx,by = polygon[j]
+		factor = ax*by - bx*ay
+		cx += (ax + bx) * factor
+		cy -= (ay + by) * factor
+	A *= 6.0
+	factor = 1/A
+	cx *= factor
+	cy *= factor
+	return (cx,cy,)
+
 if __name__ == '__main__':
 	if 0:
 		import Mrc
@@ -43,3 +76,7 @@ if __name__ == '__main__':
 
 	if 1:
 		pointsInPolygon( ((1,1),(2,2),(2,3),(3,2),(3,3),(8,8),(12,12)), ((2,2),(2,10),(10,10),(10,2)))
+		points= ((1,1),(2,2),(2,3),(3,3),(3,0),)
+		print points
+		print getPolygonCenter(points)
+
