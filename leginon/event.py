@@ -159,6 +159,9 @@ class ReferenceTargetPublishEvent(PublishEvent):
 class AlignZeroLossPeakPublishEvent(PublishEvent):
 	dataclass = data.AlignZeroLossPeakData
 
+class MeasureDosePublishEvent(PublishEvent):
+	dataclass = data.MeasureDoseData
+
 class TargetListDoneEvent(NotificationEvent):
     pass
 
@@ -357,6 +360,12 @@ class PresetChangedEvent(Event):
 			('preset', data.PresetData),
 		)
 	typemap = classmethod(typemap)
+
+class MeasureDoseEvent(ChangePresetEvent):
+    pass
+
+class DoseMeasuredEvent(PresetChangedEvent):
+    pass
 
 class SetEMEvent(PublishEvent):
 	pass

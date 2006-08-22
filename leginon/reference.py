@@ -1,7 +1,7 @@
 # $Source: /ami/sw/cvsroot/pyleginon/reference.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-22 17:37:17 $
+# $Date: 2006-08-22 19:22:33 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -194,4 +194,38 @@ class AlignZeroLossPeak(Reference):
         except Exception, e:
             s = 'Energy filter align zero loss peak failed: %s.'
             self.logger.error(s % e)
+
+class MeasureDose(Reference):
+    defaultsettings = {
+        'move type': 'stage position',
+        'pause time': 3.0,
+        'interval time': 900.0,
+    }
+    # relay measure does events
+    eventinputs = Reference.eventinputs + [event.MeasureDosePublishEvent]
+    eventoutputs = Reference.eventoutputs
+    panelclass = gui.wx.Reference.MeasureDosePanel
+    def __init__(self, *args, **kwargs):
+        try:
+            watch = kwargs['watchfor']
+        except KeyError:
+            watch = []
+        kwargs['watchfor'] = watch + [event.MeasureDosePublishEvent]
+        Reference.__init__(self, *args, **kwargs)
+
+    def processData(self, incoming_data):
+        Reference.processData(self, incoming_data)
+        if isinstance(incoming_data, data.MeasureDoseData):
+            self.processRequest(incoming_data)
+
+    # override move to measure dose...
+    def moveToTarget(self, preset_name):
+        em_target_data = self.getEMTargetData()
+
+        self.publish(em_target_data, database=True)
+
+        self.presets_client.measureDose(preset_name, em_target_data)
+
+    def execute(self, request_data):
+        pass
 

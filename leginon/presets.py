@@ -4,10 +4,10 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.237 $
+# $Revision: 1.238 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-06-26 22:39:45 $
-# $Author: pulokas $
+# $Date: 2006-08-22 19:22:33 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -48,13 +48,15 @@ class PresetsClient(object):
 	'''
 	client functions for nodes to access PresetsManager
 	'''
-	eventinputs = [event.PresetChangedEvent, event.PresetPublishEvent]
-	eventoutputs = [event.ChangePresetEvent]
+	eventinputs = [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent]
+	eventoutputs = [event.ChangePresetEvent, event.MeasureDoseEvent]
 	def __init__(self, node):
 		self.node = node
 		self.node.addEventInput(event.PresetChangedEvent, self.presetchanged)
 		self.node.addEventInput(event.PresetPublishEvent, self.onPresetPublished)
+		self.node.addEventInput(event.DoseMeasuredEvent, self.doseMeasured)
 		self.pchanged = {}
+		self.dose_measured = {}
 		self.currentpreset = None
 		self.havelock = False
 
@@ -157,6 +159,23 @@ class PresetsClient(object):
 
 		self.node.confirmEvent(ievent)
 
+	def measureDose(self, preset_name, em_target=None):
+		if not preset_name:
+			raise ValueError('invalid preset name')
+		request_event = event.MeasureDoseEvent()
+		request_event['name'] = preset_name
+		request_event['emtarget'] = em_target
+		self.dose_measured[preset_name] = threading.Event()
+		self.node.outputEvent(request_event)
+		self.dose_measured[preset_name].wait()
+
+	def doseMeasured(self, status_event):
+		self.currentpreset = status_event['preset']
+		name = self.currentpreset['name']
+		if name in self.dose_measured:
+			self.dose_measured[name].set()
+		self.node.confirmEvent(status_event)
+
 	def onPresetPublished(self, evt):
 		if hasattr(self.node, 'onPresetPublished'):
 			self.node.onPresetPublished(evt)
@@ -189,8 +208,8 @@ class PresetsManager(node.Node):
 		'optimize cycle': True,
 		'mag only': True,
 	}
-	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent]
-	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent]
+	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.MeasureDoseEvent]
+	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent]
 
 	def __init__(self, name, session, managerlocation, **kwargs):
 		node.Node.__init__(self, name, session, managerlocation, **kwargs)
@@ -220,6 +239,7 @@ class PresetsManager(node.Node):
 		self.last_value = None
 
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
+		self.addEventInput(event.MeasureDoseEvent, self.measureDose)
 		self.addEventInput(event.PresetLockEvent, self.handleLock)
 		self.addEventInput(event.PresetUnlockEvent, self.handleUnlock)
 
@@ -288,6 +308,11 @@ class PresetsManager(node.Node):
 		## should we confirm if failure?
 		self.confirmEvent(ievent)
 		self.setStatus('idle')
+
+	def measureDose(self, request_event):
+		self.changePreset(request_event)
+		preset_name = request_event['name']
+		self.acquireDoseImage(preset_name, display=False)
 
 	def getPresetsFromDB(self):
 		'''
@@ -818,7 +843,7 @@ class PresetsManager(node.Node):
 		self.presetToDB(newpreset)
 		return newpreset
 
-	def acquireDoseImage(self, presetname):
+	def acquireDoseImage(self, presetname, display=True):
 		errstr = 'Acquire dose image failed: %s'
 
 		if not presetname:
@@ -836,11 +861,13 @@ class PresetsManager(node.Node):
 			self.panel.presetsEvent()
 			return
 
-		self._acquireDoseImage()
+		self._acquireDoseImage(display=display)
 
 		self.panel.presetsEvent()
 
-	def _acquireDoseImage(self):
+		self.outputEvent(event.DoseMeasuredEvent(name=presetname, preset=self.currentpreset))
+
+	def _acquireDoseImage(self, display=True):
 		errstr = 'Acquire dose image failed: %s'
 		self.logger.info('Acquiring dose image at 512x512')
 		camdata0 = data.CameraEMData()
@@ -888,9 +915,14 @@ class PresetsManager(node.Node):
 			self.logger.error('No sensitivity data for this magnification')
 			return
 			
-		if dose is not None:
-			self.panel.setDoseValue(dose)
-			self.setImage(imagedata['image'].astype(Numeric.Float32))
+		if dose is None:
+			self.logger.error('Invalid dose measurement result')
+		else:
+			if display:
+				self.panel.setDoseValue(dose)
+				self.setImage(imagedata['image'].astype(Numeric.Float32))
+			else:
+				self.saveDose(dose, self.currentpreset['name'])
 
 	def saveDose(self, dose, presetname):
 		## store the dose in the current preset

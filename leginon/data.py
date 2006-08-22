@@ -1419,6 +1419,9 @@ class ReferenceRequestData(InSessionData):
 class AlignZeroLossPeakData(ReferenceRequestData):
     pass
 
+class MeasureDoseData(ReferenceRequestData):
+    pass
+
 class ImageTargetListData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -2144,6 +2147,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('xcf bin', int),
 			('run buffer cycle', bool),
 			('align zero loss peak', bool),
+			('measure dose', bool),
 			('dose', float),
 			('min exposure', float),
 			('max exposure', float),

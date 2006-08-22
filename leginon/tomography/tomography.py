@@ -18,7 +18,8 @@ class CalibrationError(Exception):
 class Tomography(acquisition.Acquisition):
     eventinputs = acquisition.Acquisition.eventinputs
     eventoutputs = acquisition.Acquisition.eventoutputs + \
-                    [event.AlignZeroLossPeakPublishEvent]
+                    [event.AlignZeroLossPeakPublishEvent,
+					 event.MeasureDosePublishEvent]
 
     panelclass = gui.wx.tomography.Tomography.Panel
     settingsclass = data.TomographySettingsData
@@ -46,6 +47,7 @@ class Tomography(acquisition.Acquisition):
         'xcf bin': 1,
         'run buffer cycle': True,
         'align zero loss peak': True,
+        'measure dose': True,
         'dose': 200.0,
         'min exposure': None,
         'max exposure': None,
@@ -357,9 +359,17 @@ class Tomography(acquisition.Acquisition):
         request_data['preset'] = preset_name
         self.publish(request_data, database=True, pubevent=True, wait=True)
 
+    def measureDose(self, preset_name):
+        request_data = data.MeasureDoseData()
+        request_data['session'] = self.session
+        request_data['preset'] = preset_name
+        self.publish(request_data, database=True, pubevent=True, wait=True)
+
     def processTargetData(self, *args, **kwargs):
+        preset_name = self.settings['preset order'][-1]
         if self.settings['align zero loss peak']:
-            preset_name = self.settings['preset order'][-1]
             self.alignZeroLossPeak(preset_name)
+        if self.settings['measure dose']:
+            self.measureDose(preset_name)
         acquisition.Acquisition.processTargetData(self, *args, **kwargs)
 

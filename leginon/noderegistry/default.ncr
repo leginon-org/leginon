@@ -123,3 +123,7 @@ type: Utility
 module: reference
 type: Utility
 
+[MeasureDose]
+module: reference
+type: Utility
+

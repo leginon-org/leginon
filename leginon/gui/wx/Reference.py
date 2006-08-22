@@ -1,7 +1,7 @@
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Reference.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-22 17:37:39 $
+# $Date: 2006-08-22 19:22:33 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -65,4 +65,7 @@ class ReferencePanel(gui.wx.Node.Panel):
 
 class AlignZeroLossPeakPanel(ReferencePanel):
     icon = 'alignzlp'
+
+class MeasureDosePanel(ReferencePanel):
+    icon = 'dose'
 
