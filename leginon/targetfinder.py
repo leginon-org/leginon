@@ -157,6 +157,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 class ClickTargetFinder(TargetFinder):
 	targetnames = ['reference', 'focus', 'acquisition']
 	panelclass = gui.wx.ClickTargetFinder.Panel
+	eventoutputs = TargetFinder.eventoutputs + [event.ReferenceTargetPublishEvent]
 	settingsclass = data.ClickTargetFinderSettingsData
 	def __init__(self, id, session, managerlocation, **kwargs):
 		TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -235,7 +236,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		},
 	})
 
-	eventoutputs = ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent, event.ReferenceTargetPublishEvent]
+	eventoutputs = ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.mosaicselectionmapping = {}
 		ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
