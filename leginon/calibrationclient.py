@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.182 $
+# $Revision: 1.183 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-06-29 23:40:17 $
+# $Date: 2006-08-22 23:54:52 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -1037,9 +1037,6 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		if caldata is None:
 			raise RuntimeError('no model calibration')
 		else:
-			self.node.logger.info('Period %s' % caldata['period'])
-			self.node.logger.info('A %s %s' % (caldata['a'], caldata['a'].shape))
-			self.node.logger.info('B %s %s' % (caldata['b'], caldata['b'].shape))
 			## return it to rank 0 array
 			caldata2 = {}
 			caldata2['axis'] = caldata['axis']
