@@ -172,20 +172,21 @@ class ClickTargetFinder(TargetFinder):
 
 	def findTargets(self, imdata, targetlist):
 		# display image
-		map(self.setTargets, zip([[]]*len(self.typenames), self.typenames))
+		for target_name in self.targetnames:
+			self.setTargets([], target_name, block=True)
 		self.setImage(imdata['image'], 'Image')
-		#self.clickimage.imagedata = imdata
 
-		# user now clicks on targets
-		self.notifyUserSubmit()
-		self.userpause.clear()
 		self.setStatus('user input')
+		self.logger.info('Waiting for user to check targets...')
+		self.panel.submitTargets()
+		self.userpause.clear()
 		self.userpause.wait()
+		self.panel.targetsSubmitted()
 		self.setStatus('processing')
-		self.logger.info('User has submitted targets')
+		self.logger.info('Publishing targets...')
 		for i in self.targetnames:
 			self.publishTargets(imdata, i, targetlist)
-
+		self.setStatus('idle')
 
 class MosaicClickTargetFinder(ClickTargetFinder):
 	targetnames = ['acquisition', 'reference']

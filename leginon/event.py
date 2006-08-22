@@ -162,9 +162,6 @@ class AlignZeroLossPeakPublishEvent(PublishEvent):
 class MeasureDosePublishEvent(PublishEvent):
 	dataclass = data.MeasureDoseData
 
-class TargetListDoneEvent(NotificationEvent):
-    pass
-
 class AcquisitionImageDriftPublishEvent(PublishEvent):
 	dataclass = data.AcquisitionImageDriftData
 

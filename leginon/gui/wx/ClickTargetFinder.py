@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ClickTargetFinder.py,v $
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-21 23:10:17 $
+# $Date: 2006-08-22 21:00:07 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -18,15 +18,16 @@ import gui.wx.TargetFinder
 import gui.wx.ToolBar
 
 class Panel(gui.wx.TargetFinder.Panel):
-	def initialize(self, focus=True):
+	icon = 'clicktargetfinder'
+	def initialize(self):
 		gui.wx.TargetFinder.Panel.initialize(self)
 		self.SettingsDialog = gui.wx.TargetFinder.SettingsDialog
 
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
-		#self.imagepanel.addTargetTool('focus', wx.BLUE, target=True)
-		#self.imagepanel.selectiontool.setDisplayed('focus', True)
+		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True)
+		self.imagepanel.selectiontool.setDisplayed('focus', True)
 		self.imagepanel.addTargetTool('done', wx.RED)
 		self.imagepanel.selectiontool.setDisplayed('done', True)
 		self.imagepanel.addTargetTool('position', wx.Color(255, 128, 0))

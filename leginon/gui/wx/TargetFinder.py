@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetFinder.py,v $
-# $Revision: 1.15 $
+# $Revision: 1.16 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-25 17:50:55 $
-# $Author: pulokas $
+# $Date: 2006-08-22 21:00:08 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -98,7 +98,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		#self.widgets['wait for done'] = wx.CheckBox(self, -1,
 		#			'Wait for another node to process targets before marking them done')
 		self.widgets['user check'] = wx.CheckBox(self, -1,
-																	'Allow for user verification of picked holes')
+																	'Allow for user verification of selected targets')
 		self.widgets['queue'] = wx.CheckBox(self, -1,
 																							'Queue up targets')
 		self.widgets['queue drift'] = wx.CheckBox(self, -1, 'Declare drift when queue submitted')

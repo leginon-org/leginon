@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.15 $
+# $Revision: 1.16 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-21 18:13:54 $
-# $Author: acheng $
+# $Date: 2006-08-22 21:00:07 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -22,7 +22,7 @@ import gui.wx.ToolBar
 class Panel(gui.wx.ClickTargetFinder.Panel):
 	icon = 'atlastarget'
 	def initialize(self):
-		gui.wx.ClickTargetFinder.Panel.initialize(self, focus=False)
+		gui.wx.ClickTargetFinder.Panel.initialize(self)
 
 		self.toolbar.InsertSeparator(4)
 
