@@ -1898,6 +1898,31 @@ class RasterFinderSettingsData(TargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class PolyFinderSettingsData(TargetFinderSettingsData):
+	def typemap(cls):
+		return TargetFinderSettingsData.typemap() + (
+			('publish polygon', bool),
+			('image filename', str),
+			('raster spacing', int),
+			('raster angle', float),
+			('raster center x', int),
+			('raster center y', int),
+			('raster center on image', bool),
+			('raster limit', int),
+			('select polygon', bool),
+			('ice box size', float),
+			('ice thickness', float),
+			('ice min mean', float),
+			('ice max mean', float),
+			('ice max std', float),
+			('focus convolve', bool),
+			('focus convolve template', list),
+			('focus constant template', list),
+			('acquisition convolve', bool),
+			('acquisition convolve template', list),
+			('acquisition constant template', list),
+		)
+
 class BlobFinderSettingsData(Data):
 	def typemap(cls):
 		return SettingsData.typemap() + (

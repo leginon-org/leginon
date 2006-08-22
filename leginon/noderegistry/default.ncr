@@ -94,6 +94,10 @@ type: Pipeline
 module: rasterfinder
 type: Pipeline
 
+[PolyFinder]
+module: polyfinder
+type: Pipeline
+
 [MatlabTargetFinder]
 module: matlabtargetfinder
 type: Pipeline
@@ -106,10 +110,6 @@ type: Pipeline
 #module: tomography
 #type: Pipeline
 #package: tomography
-
-[CenterTargetFilter]
-module: centertargetfilter
-type: Pipeline
 
 #[RCTAcquisition]
 #module: rctacquisition 
@@ -126,4 +126,3 @@ type: Utility
 [MeasureDose]
 module: reference
 type: Utility
-
