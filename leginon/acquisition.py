@@ -23,6 +23,7 @@ import imagefun
 import gui.wx.Acquisition
 import gui.wx.Presets
 import newdict
+import navigator
 try:
 	import numarray as Numeric
 except:
@@ -55,6 +56,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'iterations': 1,
 		'wait time': 0,
 		'adjust for drift': False,
+		'mover': 'presets manager',
+		'move precision': 0.0,
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
@@ -68,8 +71,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 										
 	event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent,
 											event.DriftMonitorRequestEvent, 
-											event.ImageListPublishEvent,
-											event.ReferenceTargetPublishEvent]
+											event.ImageListPublishEvent, event.ReferenceTargetPublishEvent] \
+											+ navigator.NavigatorClient.eventoutputs
 
 	def __init__(self, id, session, managerlocation, target_types=('acquisition',), **kwargs):
 
@@ -89,6 +92,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.calclients['image beam shift'] = calibrationclient.ImageBeamShiftCalibrationClient(self)
 
 		self.presetsclient = presets.PresetsClient(self)
+		self.navclient = navigator.NavigatorClient(self)
 		self.doneevents = {}
 		self.imagelistdata = None
 		self.simloopstop = threading.Event()
@@ -195,8 +199,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.beep()
 				return 'repeat'
 
-			self.setStatus('waiting')
-			self.presetsclient.toScope(newpresetname, emtarget)
+			movefunction = self.settings['mover']
+			if movefunction == 'presets manager':
+
+				self.setStatus('waiting')
+				self.presetsclient.toScope(newpresetname, emtarget)
+			elif movefunction == 'navigator':
+				if targetdata['type'] != 'simulated':
+					movetype = self.settings['move type']
+					precision = self.settings['move precision']
+					self.navclient.moveToTarget(targetdata, movetype, precision)
+				self.presetsclient.toScope(newpresetname, None)
+
 			self.setStatus('processing')
 			self.reportStatus('processing', 'Determining current preset')
 			p = self.presetsclient.getCurrentPreset()

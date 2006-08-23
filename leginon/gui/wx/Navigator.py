@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Navigator.py,v $
-# $Revision: 1.35 $
+# $Revision: 1.36 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-09-27 23:35:48 $
+# $Date: 2006-08-23 00:13:51 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -296,6 +296,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		# misc. checkboxes
 		self.widgets['check calibration'] = wx.CheckBox(self, -1,
 																										'Check calibration error')
+		self.widgets['precision'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=6, value='0.0')
 		self.widgets['override preset'] = wx.CheckBox(self, -1,
 																								'Override Preset')
 		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self, passive=True)
@@ -315,9 +316,11 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		# settings sizer
 		sz = wx.GridBagSizer(5, 10)
-		sz.Add(szpausetime, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['check calibration'], (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['precision'], (2, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szpausetime, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(overridesz, (0,1), (8,1))
 
 		sb = wx.StaticBox(self, -1, 'Navigation')

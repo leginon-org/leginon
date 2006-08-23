@@ -1742,6 +1742,7 @@ class NavigatorSettingsData(SettingsData):
 			('override preset', bool),
 			('camera settings', CameraSettingsData),
 			('instruments', dict),
+			('precision', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1977,6 +1978,8 @@ class AcquisitionSettingsData(SettingsData):
 			('wait time', float),
 			('iterations', int),
 			('adjust for drift', bool),
+			('mover', str),
+			('move precision', float),
 		)
 	typemap = classmethod(typemap)
 

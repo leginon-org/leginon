@@ -382,6 +382,15 @@ class DeviceUnlockEvent(ControlEvent):
 class DeviceGetPublishEvent(PublishEvent):
 	dataclass = data.DeviceGetData
 
+class MoveToTargetEvent(Event):
+	def typemap(cls):
+		return Event.typemap() + (
+			('target', data.AcquisitionImageTargetData),
+			('movetype', str),
+			('move precision', float),
+		)
+	typemap = classmethod(typemap)
+
 class DevicePublishEvent(PublishEvent):
 	dataclass = data.DeviceData
 	def typemap(cls):

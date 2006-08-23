@@ -22,6 +22,20 @@ import newdict
 import instrument
 import presets
 
+class NavigatorClient(object):
+	eventoutputs = [event.MoveToTargetEvent]
+
+	def __init__(self, node):
+		self.node = node
+
+	def moveToTarget(self, target, movetype, precision=0.0):
+		ev = event.MoveToTargetEvent(target=target, movetype=movetype)
+		ev['move precision'] = precision
+		print 'nav client waiting'
+		self.node.outputEvent(ev, wait=True)
+		print 'nav client done waiting'
+
+
 class Navigator(node.Node):
 	panelclass = gui.wx.Navigator.Panel
 	settingsclass = data.NavigatorSettingsData
@@ -30,6 +44,7 @@ class Navigator(node.Node):
 		'pause time': 2.5,
 		'move type': 'image shift',
 		'check calibration': True,
+		'precision': 0.0,
 		'complete state': True,
 		'override preset': False,
 		'camera settings':
@@ -51,7 +66,7 @@ class Navigator(node.Node):
 				}
 			),
 	}
-	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs
+	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs + [event.MoveToTargetEvent]
 	eventoutputs = node.Node.eventoutputs + [event.CameraImagePublishEvent]
 
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -72,18 +87,32 @@ class Navigator(node.Node):
 
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
-		self.newshape = None
-		self.oldshape = None
+		self.imagedata = None
+		self.oldimagedata = None
 
-		self.scope = None
-		self.camera = None
-		self.shape = None
+		self.addEventInput(event.MoveToTargetEvent, self.handleMoveEvent)
+
 		self.start()
 
-	def newImage(self, newimage):
-		self.oldshape = self.newshape
-		self.newshape = newimage.shape
-		self.correlator.insertImage(newimage)
+	def handleMoveEvent(self, ev):
+		nodename = ev['node']
+		movetype = ev['movetype']
+		targetdata = ev['target']
+		precision = ev['move precision']
+		self.logger.info('handling %s request from %s' % (movetype, nodename,))
+		imagedata = targetdata['image']
+		self.newImage(imagedata)
+		rows = targetdata['delta row']
+		cols = targetdata['delta column']
+		
+		self.move(imagedata, rows, cols, movetype, precision)
+		self.confirmEvent(ev)
+
+	def newImage(self, imagedata):
+		self.oldimagedata = self.imagedata
+		self.imagedata = imagedata
+		self.correlator.insertImage(imagedata['image'])
+		self.setImage(imagedata['image'])
 
 	def newShift(self):
 		if self.oldshape is None or self.newshape is None:
@@ -96,37 +125,45 @@ class Navigator(node.Node):
 		delta = correlator.wrap_coord(peak, pc.shape)
 		return delta
 
+	## called by GUI when image is clicked
 	def navigate(self, xy):
-		errstr = 'Move failed: %s'
-		# get relavent info from click event
+		movetype = self.settings['move type']
+		precision = self.settings['precision']
 		clickrow = xy[1]
 		clickcol = xy[0]
-		clickshape = self.shape
-		clickscope = self.scope
-		clickcamera = self.camera
-
-		if None in (clickrow, clickcol, clickshape, clickscope, clickcamera):
-			self.panel.navigateDone()
-			return
-
-		self.logger.info('Moving to clicked position...')
+		clickshape = self.imagedata['image'].shape
 
 		# calculate delta from image center
 		deltarow = clickrow - clickshape[0] / 2
 		deltacol = clickcol - clickshape[1] / 2
 
-		# to shift clicked point to center...
-		deltarow = -deltarow
-		deltacol = -deltacol
+		self.move(self.imagedata, deltarow, deltacol, movetype, precision)
 
-		pixelshift = {'row':deltarow, 'col':deltacol}
-		mag = clickscope['magnification']
+		# wait for a while
+		time.sleep(self.settings['pause time'])
+
+		## acquire image
+		self._acquireImage()
+
+		#if self.settings['check calibration']:
+		#	self.errorCheck()
+
+		self.panel.navigateDone()
+
+	def _move(self, image, row, col, movetype):
+		errstr = 'Move failed: %s'
+		# get relavent info from click event
+
+		self.logger.info('Moving...')
+
+		pixelshift = {'row':-row, 'col':-col}
+		scope = image['scope']
+		camera = image['camera']
 
 		# figure out shift
-		movetype = self.settings['move type']
 		calclient = self.calclients[movetype]
 		try:
-			newstate = calclient.transform(pixelshift, clickscope, clickcamera)
+			newstate = calclient.transform(pixelshift, scope, camera)
 		except calibrationclient.NoMatrixCalibrationError, e:
 			errsubstr = 'unable to find calibration for %s' % e
 			self.logger.error(errstr % errsubstr)
@@ -138,58 +175,60 @@ class Navigator(node.Node):
 			self.beep()
 			self.panel.navigateDone()
 			return
-		if not self.settings['complete state']:
-			if movetype == 'modeled stage position':
-				newmovetype = 'stage position'
-				newstate = {newmovetype: newstate[newmovetype]}
-			elif movetype == 'image beam shift':
-				newstate = {'image shift': newstate['image shift'], 'beam shift': newstate['beam shift']}
-			else:
-				newmovetype = movetype
-				newstate = {newmovetype: newstate[newmovetype]}
+
 		emdat = data.ScopeEMData(initializer=newstate)
 		try:
 			self.instrument.setData(emdat)
-		except node.PublishError:
+		except:
 			self.logger.exception(errstr % 'unable to set instrument')
 			return
-		except node.ConfirmationNoBinding:
-			self.logger.exception(errstr % 'unable to set instrument (not bound)')
-			return
 
-		# wait for a while
-		time.sleep(self.settings['pause time'])
+	def move(self, image, row, col, movetype, precision=0.0):
+		self.setStatus('processing')
+		self._move(image, row, col, movetype)
 
-		## acquire image
-		self._acquireImage()
+		if precision:
+			self.logger.info('checking that move error is less than %.3e' % (precision,))
+			image2 = self._acquireImage()
+			r,c,dist = self.checkMoveError(image, image2, row, col)
+			self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
+			while dist > precision:
+				self._move(image2, r, c, movetype)
+				image2 = self._acquireImage()
+				lastdist = dist
+				r,c,dist = self.checkMoveError(image, image2, r, c)
+				self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
+				if dist > lastdist:
+					self.logger.info('error got worse')
+					break
 
-		## calibration error checking
-		if self.settings['check calibration']:
-			newshift = self.newShift()
-			if newshift is None:
-				res = 'Error calculation failed'
-			else:
-				r_error = pixelshift['row'] - newshift[0]
-				c_error = pixelshift['col'] - newshift[1]
-				error = r_error, c_error
-				errordist = math.hypot(error[0], error[1])
+			self.logger.info('correction done')
 
-				pixsize = self.pcal.retrievePixelSize(None, None, mag)
-				binning = clickcamera['binning']['x']
-				dist = errordist * pixsize * binning
-				umdist = dist * 1000000.0
+		self.setStatus('idle')
 
-				res = 'Error: %.3f microns (%.3f pixels) [requested <%d, %d>, moved <%.2f, %.2f>]' % (umdist, errordist, pixelshift['col'], pixelshift['row'], newshift[1], newshift[0])
+	def checkMoveError(self, image1, image2, rmove, cmove):
+			pc = self.correlator.phaseCorrelate()
+			self.peakfinder.setImage(pc)
+			peak = self.peakfinder.subpixelPeak()
+			rcmoved = correlator.wrap_coord(peak, pc.shape)
+			print 'MOVE', rmove, cmove
+			r_error = rmove + rcmoved[0]
+			c_error = cmove + rcmoved[1]
+			print 'ERROR', r_error, c_error
 
-				if (abs(pixelshift['row']) > clickshape[0]/4) or (abs(pixelshift['col']) > clickshape[1]/4):
-					self.logger.warning('Error calculation untrusted due to large requested move')
-				else:
-					## insert into DB?
-					pass
-			self.logger.info(res)
+			## calculate error distance
+			mag = image1['scope']['magnification']
+			tem = image1['scope']['tem']
+			ccdcamera = image1['camera']['ccdcamera']
+			pixelsize = self.pcal.retrievePixelSize(tem, ccdcamera, mag)
+			cbin = image1['camera']['binning']['x']
+			rbin = image1['camera']['binning']['y']
+			rpix = r_error * rbin
+			cpix = c_error * cbin
+			pixdist = math.hypot(rpix,cpix)
+			distance = pixdist * pixelsize
 
-		self.beep()
-		self.panel.navigateDone()
+			return r_error, c_error, distance
 
 	def acquireImage(self):
 		self._acquireImage()
@@ -225,12 +264,8 @@ class Navigator(node.Node):
 			self.logger.error('Acquire image failed')
 			return
 
-		self.scope = imagedata['scope']
-		self.camera = imagedata['camera']
-		newimage = imagedata['image']
-		self.shape = newimage.shape
-		self.newImage(newimage)
-		self.setImage(newimage)
+		self.newImage(imagedata)
+		return imagedata
 
 	def fromScope(self, name, comment='', xyonly=True):
 		'''

@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.35 $
+# $Revision: 1.36 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-10-24 21:02:51 $
-# $Author: suloway $
+# $Date: 2006-08-23 00:13:50 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -100,6 +100,18 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sbszsim = wx.StaticBoxSizer(sbsim, wx.VERTICAL)
 		sbszsim.Add(szsim, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
+		szmover = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Mover:')
+		self.widgets['mover'] = Choice(self, -1, choices=['presets manager','navigator'])
+		szmover.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szmover.Add(self.widgets['mover'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+
+		szmoveprec = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Move Precision (m):')
+		self.widgets['move precision'] = FloatEntry(self, -1, min=0.0, chars=6)
+		szmoveprec.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szmoveprec.Add(self.widgets['move precision'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
 #		# duplicate target
 #		self.widgets['duplicate targets'] = wx.CheckBox(self, -1,
 #																				'Duplicate targets with type:')
@@ -129,6 +141,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['adjust for drift'], (5, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sbszsim, (6,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szmover, (7,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szmoveprec, (8,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(szduplicate, (5, 1), (1, 1),
 #						wx.ALIGN_CENTER_VERTICAL)
 #		sz.AddGrowableRow(6)
