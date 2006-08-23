@@ -18,7 +18,7 @@ setup(
 	description=
 		'Automated data acquisition for transmission electron microscopes',
 	cmdclass={'install_data': InstallData},
-	packages=['Leginon', 'Leginon.gui', 'Leginon.gui.wx', 'Leginon.icons'],
+	packages=['Leginon', 'Leginon.gui', 'Leginon.gui.wx', 'Leginon.icons', 'Leginon.tomography', 'Leginon.gui.wx.tomography'],
 	package_dir={'Leginon': ''},
 	data_files=[
 		('Leginon', ['holetemplate.mrc']),
