@@ -106,10 +106,10 @@ type: Pipeline
 module: fftmaker
 type: Pipeline
 
-#[Tomography]
-#module: tomography
-#type: Pipeline
-#package: tomography
+[Tomography]
+module: tomography
+type: Pipeline
+package: tomography
 
 #[RCTAcquisition]
 #module: rctacquisition 
