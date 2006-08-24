@@ -225,7 +225,7 @@ class Collection(object):
             self.logger.info('Image acquired.')
 
             # HACK: fix me
-            image_data['image'] = numarray.around(image_data['image']*10).astype(numarray.Int16)
+            #image_data['image'] = numarray.around(image_data['image']*10).astype(numarray.Int16)
 
             image = image_data['image']
 
