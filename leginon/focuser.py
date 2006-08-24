@@ -39,6 +39,7 @@ class Focuser(acquisition.Acquisition):
 		'adjust for drift': False,
 		'melt time': 0.0,
 		'acquire final': True,
+        'process target type': 'focus',
 	}
 
 	eventinputs = acquisition.Acquisition.eventinputs
@@ -77,7 +78,7 @@ class Focuser(acquisition.Acquisition):
 		self.man_power = None
 		self.man_image = None
 		self.manualplayer = player.Player(callback=self.onManualPlayer)
-		acquisition.Acquisition.__init__(self, id, session, managerlocation, target_types=('focus',), **kwargs)
+		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.stagetiltcalclient = calibrationclient.StageTiltCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)

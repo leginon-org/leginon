@@ -23,12 +23,16 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	process.  All other targets are republished in another target list.
 	'''
 
+	settingsclass = data.TargetWatcherSettingsData
+	defaultsettings = {
+		'process target type': 'acquisition',
+	}
+
 	eventinputs = watcher.Watcher.eventinputs + targethandler.TargetHandler.eventinputs + [event.TargetListDoneEvent,
 																						event.ImageTargetListPublishEvent]
 	eventoutputs = watcher.Watcher.eventoutputs + targethandler.TargetHandler.eventoutputs + [event.TargetListDoneEvent]
 
-	def __init__(self, id, session, managerlocation, target_types=('acquisition',),
-								**kwargs):
+	def __init__(self, id, session, managerlocation, **kwargs):
 		watchfor = [event.ImageTargetListPublishEvent, event.QueuePublishEvent]
 		watcher.Watcher.__init__(self, id, session, managerlocation, watchfor,
 															**kwargs)
@@ -38,7 +42,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 		self.player = player.Player(callback=self.onPlayer)
 		self.panel.playerEvent(self.player.state())
-		self.target_types = target_types
 		self.targetlistevents = {}
 		self.startQueueProcessor()
 
@@ -78,9 +81,10 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.logger.debug('TargetWatcher will process %s targets in list %s' % (len(targetlist), listid))
 
 		# separate the good targets from the rejects
+		completed_targets = []
 		goodtargets = []
 		rejects = []
-		ignored = []
+		#ignored = []
 
 		for target in targetlist:
 			im = target['image']
@@ -89,15 +93,27 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			else:
 				imageid = None
 			self.logger.debug('IMAGEID ' + str(imageid))
-			if target['type'] in self.target_types:
-				goodtargets.append(target)
-			elif not rejects:
+			if target['type'] == self.settings['process target type']:
+				if target['status'] in ('done', 'aborted'):
+					completed_targets.append(target)
+				else:
+					goodtargets.append(target)
+			#elif not rejects:
 				## this only allows one reject
-				rejects.append(target)
 			else:
-				ignored.append(target)
+				rejects.append(target)
+			#else:
+			#	ignored.append(target)
 
-		self.logger.debug('%d process, %d pass, %d ignored, %d total' % (len(goodtargets), len(rejects), len(ignored), len(targetlist)))
+		self.logger.info('%d target(s) in the list' % len(targetlist))
+		if completed_targets:
+			self.logger.info('%d target(s) have been processed' % len(completed_targets))
+		if rejects:
+			self.logger.info('%d target(s) will be passed to another node' % len(rejects))
+		#if ignored:
+		#	self.logger.info('%d target(s) will be ignored' % len(ignored))
+		if goodtargets:
+			self.logger.info('Processing %d targets...' % len(goodtargets))
 
 		# republish the rejects and wait for them to complete
 		waitrejects = rejects and self.settings['wait for rejects']
@@ -108,7 +124,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				## may not be a good idea all the time
 				## This means if rejects were aborted
 				## then this whole target list was aborted
-				self.logger.warning('Passed targets not processed, aborting current target list')
+				self.logger.debug('Passed targets not processed, aborting current target list')
 				self.reportTargetListDone(newdata.dmid, rejectstatus)
 				self.setStatus('idle')
 				return

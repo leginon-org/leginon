@@ -58,6 +58,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'adjust for drift': False,
 		'mover': 'presets manager',
 		'move precision': 0.0,
+        'process target type': 'acquisition',
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
@@ -74,9 +75,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.ImageListPublishEvent, event.ReferenceTargetPublishEvent] \
 											+ navigator.NavigatorClient.eventoutputs
 
-	def __init__(self, id, session, managerlocation, target_types=('acquisition',), **kwargs):
+	def __init__(self, id, session, managerlocation, **kwargs):
 
-		targetwatcher.TargetWatcher.__init__(self, id, session, managerlocation, target_types=target_types, **kwargs)
+		targetwatcher.TargetWatcher.__init__(self, id, session, managerlocation, **kwargs)
 
 		self.addEventInput(event.DriftMonitorResultEvent, self.handleDriftResult)
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)

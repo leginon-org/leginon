@@ -155,7 +155,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.userpause.set()
 
 class ClickTargetFinder(TargetFinder):
-	targetnames = ['reference', 'focus', 'acquisition']
+	targetnames = ['preview', 'reference', 'focus', 'acquisition']
 	panelclass = gui.wx.ClickTargetFinder.Panel
 	eventoutputs = TargetFinder.eventoutputs + [event.ReferenceTargetPublishEvent]
 	settingsclass = data.ClickTargetFinderSettingsData
@@ -172,12 +172,24 @@ class ClickTargetFinder(TargetFinder):
 		for target_name in self.targetnames:
 			self.setTargets([], target_name, block=True)
 		self.setImage(imdata['image'], 'Image')
-
-		self.setStatus('user input')
-		self.logger.info('Waiting for user to check targets...')
-		self.panel.submitTargets()
-		self.userpause.clear()
-		self.userpause.wait()
+		wait = True
+		while wait:
+			self.setStatus('user input')
+			self.logger.info('Waiting for user to check targets...')
+			self.panel.submitTargets()
+			self.userpause.clear()
+			self.userpause.wait()
+			self.setStatus('processing')
+			preview_targets = self.panel.getTargetPositions('preview')
+			if preview_targets:
+				self.publishTargets(imdata, 'preview', targetlist)
+				self.setTargets([], 'preview', block=True)
+				self.makeTargetListEvent(targetlist)
+				self.publish(targetlist, database=True, dbforce=True, pubevent=True)
+				self.setStatus('waiting')
+				self.waitForTargetListDone()
+			else:
+				wait = False
 		self.panel.targetsSubmitted()
 		self.setStatus('processing')
 		self.logger.info('Publishing targets...')

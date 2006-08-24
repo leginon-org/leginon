@@ -1962,9 +1962,16 @@ class MosaicClickTargetFinderSettingsData(ClickTargetFinderSettingsData,
 		return typemap
 	typemap = classmethod(typemap)
 
-class AcquisitionSettingsData(SettingsData):
+class TargetWatcherSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
+			('process target type', str),
+		)
+	typemap = classmethod(typemap)
+
+class AcquisitionSettingsData(TargetWatcherSettingsData):
+	def typemap(cls):
+		return TargetWatcherSettingsData.typemap() + (
 			('pause time', float),
 			('move type', str),
 			('preset order', list),

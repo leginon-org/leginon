@@ -4,6 +4,8 @@ import event
 import threading
 import newdict
 
+target_types = ('acquisition', 'focus', 'preview')
+
 class TargetHandler(object):
 	'''
 	nodes should inherit this if they want to work with targets

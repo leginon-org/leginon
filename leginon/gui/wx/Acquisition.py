@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.36 $
+# $Revision: 1.37 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-23 00:13:50 $
-# $Author: pulokas $
+# $Date: 2006-08-24 18:11:39 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -22,6 +22,7 @@ import gui.wx.ImageViewer
 import gui.wx.ToolBar
 import threading
 from gui.wx.ImageBrowser import ImageBrowserPanel
+import targethandler
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -110,7 +111,15 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		label = wx.StaticText(self, -1, 'Move Precision (m):')
 		self.widgets['move precision'] = FloatEntry(self, -1, min=0.0, chars=6)
 		szmoveprec.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szmoveprec.Add(self.widgets['move precision'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szmoveprec.Add(self.widgets['move precision'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+
+		sz_target_type = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Process')
+		sz_target_type.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['process target type'] = Choice(self, -1, choices=targethandler.target_types)
+		sz_target_type.Add(self.widgets['process target type'], (0, 1), (1, 1), wx.ALIGN_CENTER)
+		label = wx.StaticText(self, -1, 'targets')
+		sz_target_type.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 #		# duplicate target
 #		self.widgets['duplicate targets'] = wx.CheckBox(self, -1,
@@ -128,7 +137,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz = wx.GridBagSizer(5, 25)
 		sz.Add(szmovetype, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szpausetime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['preset order'], (0, 1), (5, 1), wx.ALIGN_CENTER)
+		sz.Add(self.widgets['preset order'], (0, 1), (6, 1), wx.ALIGN_CENTER)
 #		sz.Add(self.widgets['correct image'], (0, 1), (1, 1),
 #						wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(self.widgets['display image'], (1, 1), (1, 1),
@@ -140,9 +149,10 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['adjust for drift'], (5, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sbszsim, (6,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szmover, (7,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szmoveprec, (8,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sbszsim, (6,0), (3,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szmover, (6,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szmoveprec, (7,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_target_type, (8,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(szduplicate, (5, 1), (1, 1),
 #						wx.ALIGN_CENTER_VERTICAL)
 #		sz.AddGrowableRow(6)
