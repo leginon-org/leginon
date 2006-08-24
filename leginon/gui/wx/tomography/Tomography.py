@@ -111,25 +111,25 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         expsbsz = wx.StaticBoxSizer(expsb, wx.VERTICAL)
         expsbsz.Add(expsz, 1, wx.EXPAND|wx.ALL, 5)
 
-        self.widgets['run buffer cycle'] = wx.CheckBox(self, -1, 'Run buffer cycle before collection')
-        self.widgets['align zero loss peak'] = wx.CheckBox(self, -1, 'Align zero loss peak before collection')
-        self.widgets['measure dose'] = wx.CheckBox(self, -1, 'Measure dose before collection')
+        self.widgets['run buffer cycle'] = wx.CheckBox(self, -1, 'Run buffer cycle')
+        self.widgets['align zero loss peak'] = wx.CheckBox(self, -1, 'Align zero loss peak')
+        self.widgets['measure dose'] = wx.CheckBox(self, -1, 'Measure dose')
 
         miscsz = wx.GridBagSizer(5, 10)
         miscsz.Add(self.widgets['run buffer cycle'],
-                   (0, 0), (1, 1), wx.ALIGN_CENTER)
+                   (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         miscsz.Add(self.widgets['align zero loss peak'],
-                   (1, 0), (1, 1), wx.ALIGN_CENTER)
+                   (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         miscsz.Add(self.widgets['measure dose'],
-                   (2, 0), (1, 1), wx.ALIGN_CENTER)
+                   (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         miscsz.AddGrowableRow(0)
         miscsz.AddGrowableRow(1)
         miscsz.AddGrowableRow(2)
         miscsz.AddGrowableCol(0)
 
-        miscsb = wx.StaticBox(self, -1, 'Misc.')
+        miscsb = wx.StaticBox(self, -1, 'Before Collection')
         miscsbsz = wx.StaticBoxSizer(miscsb, wx.VERTICAL)
-        miscsbsz.Add(miscsz, 1, wx.EXPAND|wx.ALL, 5)
+        miscsbsz.Add(miscsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
 
         sz = wx.GridBagSizer(10, 10)
         sz.Add(tiltsbsz, (0, 0), (1, 2), wx.EXPAND)
