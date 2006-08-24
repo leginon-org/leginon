@@ -6,37 +6,44 @@ import os, re, sys
 import tempfile
 import string
 import cPickle
+import data
+import dbdatakeeper
+import time
 
+db=dbdatakeeper.DBDataKeeper()
 selexondonename='.selexondone.py'
 
 def printHelp():
-    print "\nUsage:\nselexon.py <file> template=<name> apix=<pixel> diam=<n> bin=<n> [range=<start,stop,incr>] [thresh=<threshold> or autopik=<n>] [lp=<n>] [hp=<n>] [crud or cruddiam=<n>] [crudonly] [crudblur=<n>] [crudlow=<n>] [crudhi=<n>] [box=<n>] [continue]"
+    print "\nUsage:\nselexon.py <file> template=<name> apix=<pixel> diam=<n> bin=<n> [range=<start,stop,incr>] [thresh=<threshold> or autopik=<n>] [lp=<n>] [hp=<n>] [crud or cruddiam=<n>] [crudonly] [crudblur=<n>] [crudlow=<n>] [crudhi=<n>] [box=<n>] [continue] [dbimages=<session>,<preset>]"
     print "or\nselexon.py preptemplate template=<name> apix=<pixel> bin=<n>\n"
-    print "Example:\nselexon 05jun23a_00001en.mrc template=groEL apix=1.63 diam=250 bin=4 range=0,90,10 thresh=0.45 crud\n"
-    print "preptemplate     : this will prepare all your template files for selexon"
-    print "template=<name>  : name should not have the extension, or number."
-    print "                   groEL1.mrc, groEL2.mrc would be simply \"template=groEL\""
-    print "apix=<pixel>     : angstroms per pixel (unbinned)"
-    print "diam=<n>         : approximate diameter of particle (in Angstroms, unbinned)"
-    print "bin=<n>          : images will be binned by this amount (default is 4)"
-    print "range=<st,end,i> : each template will be rotated from the starting angle to the"
-    print "                   stop angle at the given increment"
-    print "                   User can also specify ranges for each template (i.e. range1=0,60,20)"
-    print "                   NOTE: if you don't want to rotate the image, leave this parameter out"
-    print "thresh=<thr>     : manual cutoff for correlation peaks (0-1), don't use if want autopik"
-    print "autopik=<thr>    : automatically calculate threshold, n = average number of particles per image"
-    print "lp=<n>, hp=<n>   : low-pass and hi-pass filter (in Angstroms) - defaults are 30 & 600\n"
-    print "crud             : run the crud finder after the particle selection"
-    print "                   (will use particle diameter by default)"
-    print "cruddiam=<n>     : set the diameter to use for the crud finder"
-    print "                   (don't need to use the \"crud\" option if using this)"
-    print "crudblur=<n>     : amount to blur the image for edge detection (default is 3.5)"
-    print "crudlo=<n>       : lower limit for edge detection (0-1, default=0.6)"
-    print "crudhi=<n>       : upper threshold for edge detection (0-1, default=0.95)"
-    print "crudonly         : only run the crud finder to check and view the settings"
-    print "box=<n>          : output will be saved as EMAN box file with given box size"
-    print "continue         : if this option is turned on, selexon will skip previously processed"
-    print "                   micrographs"
+    print "Examples:\nselexon 05jun23a_00001en.mrc template=groEL apix=1.63 diam=250 bin=4 range=0,90,10 thresh=0.45 crud\n"
+    print "selexon template=groEL apix=1.63 diam=250 bin=4 range=0,90,10 thresh=0.45 crud dbimages=05jun23a,en continue"
+    print "preptemplate       : this will prepare all your template files for selexon"
+    print "template=<name>    : name should not have the extension, or number."
+    print "                     groEL1.mrc, groEL2.mrc would be simply \"template=groEL\""
+    print "apix=<pixel>       : angstroms per pixel (unbinned)"
+    print "diam=<n>           : approximate diameter of particle (in Angstroms, unbinned)"
+    print "bin=<n>            : images will be binned by this amount (default is 4)"
+    print "range=<st,end,i>   : each template will be rotated from the starting angle to the"
+    print "                     stop angle at the given increment"
+    print "                     User can also specify ranges for each template (i.e. range1=0,60,20)"
+    print "                     NOTE: if you don't want to rotate the image, leave this parameter out"
+    print "thresh=<thr>       : manual cutoff for correlation peaks (0-1), don't use if want autopik"
+    print "autopik=<thr>      : automatically calculate threshold, n = average number of particles per image"
+    print "lp=<n>, hp=<n>     : low-pass and hi-pass filter (in Angstroms) - defaults are 30 & 600\n"
+    print "crud               : run the crud finder after the particle selection"
+    print "                     (will use particle diameter by default)"
+    print "cruddiam=<n>       : set the diameter to use for the crud finder"
+    print "                     (don't need to use the \"crud\" option if using this)"
+    print "crudblur=<n>       : amount to blur the image for edge detection (default is 3.5)"
+    print "crudlo=<n>         : lower limit for edge detection (0-1, default=0.6)"
+    print "crudhi=<n>         : upper threshold for edge detection (0-1, default=0.95)"
+    print "crudonly           : only run the crud finder to check and view the settings"
+    print "box=<n>            : output will be saved as EMAN box file with given box size"
+    print "continue           : if this option is turned on, selexon will skip previously processed"
+    print "                     micrographs"
+    print "dbimages=<sess,pr> : if this option is turned on, selexon will continuously get images from the database"
+    print "                     do not use this option if you are specifying particular images"
     print "\n"
 
     sys.exit(1)
@@ -67,6 +74,9 @@ def createDefaults():
     params["onetemplate"]='FALSE'
     params["continue"]='FALSE'
     params["multiple_range"]='FALSE'
+    params["dbimages"]='FALSE'
+    params["session"]=None
+    params["preset"]=None
     return params
 
 def parseInput(args):
@@ -160,6 +170,15 @@ def parseInput(args):
             params["crudonly"]='TRUE'
         elif (arg=='continue'):
             params["continue"]='TRUE'
+        elif (elements[0]=='dbimages'):
+            dbinfo=elements[1].split(',')
+            if len(dbinfo) == 2:
+                params['session']=dbinfo[0]
+                params['preset']=dbinfo[1]
+                params["dbimages"]='TRUE'
+                params["continue"]='TRUE' # continue should be on for dbimages option
+            else:
+                print "dbimages must include both session and preset parameters"
         else:
             print "undefined parameter '"+arg+"'\n"
             sys.exit(1)
@@ -566,17 +585,13 @@ def pik2Box(params,file):
 
 def getImgSize(fname):
     # get image size (in pixels) of the given mrc file
-    f=os.popen('dbemls -f %s.mrc -i' % fname)
-    lines=f.readlines()
-    f.close()
-    found=0
-    for n in lines:
-        words=n.split()
-        if 'dimx:' in words:
-            size=int(words[-1])
-            found=1
-    if found!=1:
-        print "Image size for", fname, "can not be determined"
+    imageq=data.AcquisitionImageData(filename=fname)
+    imagedata=db.query(imageq, results=1, readimages=False)
+    if imagedata:
+        size=int(imagedata[0]['camera']['dimension']['y'])
+        return(size)
+    else:
+        print "Image", fname," not found in db"
         sys.exit()
     return(size)
 
@@ -615,6 +630,53 @@ def doneCheck(donedict,im):
         donedict[im]=None
     return
 
+def getImageData(imagename):
+    # get image data object from database
+    imagedataq = data.AcquisitionImageData(filename=imagename)
+    imagedata = db.query(imagedataq, results=1)
+    if imagedata:
+        return imagedata[0]
+    else:
+        print "Image", imagename,"not found in database"
+        sys.exit()
+
+def getPixelSize(imagedata):
+    # use image data object to get pixel size
+    # multiplies by binning and also by 1e10 to return image pixel size in angstroms
+    pixelsizeq=data.PixelSizeCalibrationData()
+    pixelsizeq['magnification']=imagedata['scope']['magnification']
+    pixelsizeq['tem']=imagedata['scope']['tem']
+    pixelsizeq['ccdcamera'] = imagedata['camera']['ccdcamera']
+    pixelsizedata=db.query(pixelsizeq, results=1)
+	
+    binning=imagedata['camera']['binning']['x']
+    pixelsize=pixelsizedata[0]['pixelsize'] * binning
+	
+    return(pixelsize*1e10)
+
+def getImagesFromDB(session,preset):
+    # returns list of image names from DB
+    print "Querying database for images"
+    sessionq = data.SessionData(name=session)
+    presetq=data.PresetData(name=preset)
+    imageq=data.AcquisitionImageData()
+    imageq['preset'] = presetq
+    imageq['session'] = sessionq
+    # readimages=False to keep db from returning actual image
+    # readimages=True could be used for doing processing w/i this script
+    imagelist=db.query(imageq, readimages=False)
+    images=[]
+    #create list of images and make a link to them if they are not already in curr dir
+    for n in imagelist:
+        imagename=n['filename']
+        images.append(imagename)
+        imgpath=n['session']['image path'] + '/' + imagename + '.mrc'
+        if not os.path.exists((imagename + '.mrc')):
+            command=('ln -s %s .' %  imgpath)
+            print command
+            os.system(command)
+    return (images)
+    
 #-----------------------------------------------------------------------
 
 if __name__ == '__main__':
@@ -630,7 +692,10 @@ if __name__ == '__main__':
         prepTemplate(params)
 
     # get list of input images, since wildcards are supported
-    images=params["mrcfileroot"]
+    if params['dbimages']=='TRUE':
+        images=getImagesFromDB(params['session'],params['preset'])
+    else:
+        images=params["mrcfileroot"]
 
     # check to see if user only wants to run the crud finder
     if (params["crudonly"]=='TRUE'):
@@ -654,54 +719,67 @@ if __name__ == '__main__':
     if (params["diam"]==0):
         print "\nError: please input the diameter of your particle\n\n"
         sys.exit(1)
+    if len(params["mrcfileroot"]) > 0 and params["dbimages"]=='TRUE':
+        print len(images)
+        print "\nError: dbimages can not be specified if particular images have been specified"
+        sys.exit(1)
 
     # create directory to contain the 'pik' files
     if not (os.path.exists("pikfiles")):
         os.mkdir("pikfiles")
 
     # run selexon
-    for img in images:
-        
-        # if continue option is true, check to see if image has already been processed
-        doneCheck(donedict,img)
-        if (params["continue"]=='TRUE'):
-            if donedict[img]:
-                print img,'already processed. To process again, remove "continue" option.'
-                continue
+    notdone=True
+    while notdone:
+        for img in images:
+            # if continue option is true, check to see if image has already been processed
+            doneCheck(donedict,img)
+            if (params["continue"]=='TRUE'):
+                if donedict[img]:
+                    print img,'already processed. To process again, remove "continue" option.'
+                    continue
 
-        # run selexon
-        dwnsizeImg(params,img)
-        runFindEM(params,img)
-        findPeaks(params,img)
+            # run FindEM
+            dwnsizeImg(params,img)
+            runFindEM(params,img)
+            findPeaks(params,img)
 
-        # if no particles were found, skip rest and go to next image
-        if not (os.path.exists("pikfiles/"+img+".a.pik")):
-            print "no particles found in \""+img+".mrc\"\n"
-            # write results to dictionary
-            donedict[img]=True
-            writeDoneDict(donedict)
-            continue
- 
-        # run the crud finder on selected particles if specified
-        if (params["crud"]=='TRUE'):
-            findCrud(params,img)
-            # if crudfinder removes all the particles, go to next image
-            if not (os.path.exists("pikfiles/"+img+".a.pik.nocrud")):
-                print "no particles left after crudfinder in \""+img+".mrc\"\n"
+            # if no particles were found, skip rest and go to next image
+            if not (os.path.exists("pikfiles/"+img+".a.pik")):
+                print "no particles found in \""+img+".mrc\"\n"
                 # write results to dictionary
                 donedict[img]=True
                 writeDoneDict(donedict)
                 continue
-                
-        # create jpg of selected particles if not created by crudfinder
-        if (params["crud"]=='FALSE'):
-            createJPG(params,img)
 
-        # convert resulting pik file to eman box file
-        if (params["box"]>0):
-            pik2Box(params,img)
+            # run the crud finder on selected particles if specified
+            if (params["crud"]=='TRUE'):
+                findCrud(params,img)
+                # if crudfinder removes all the particles, go to next image
+                if not (os.path.exists("pikfiles/"+img+".a.pik.nocrud")):
+                    print "no particles left after crudfinder in \""+img+".mrc\"\n"
+                    # write results to dictionary
+                    donedict[img]=True
+                    writeDoneDict(donedict)
+                    continue
 
-        # write results to dictionary
-        donedict[img]=True
-        writeDoneDict(donedict)
+            # create jpg of selected particles if not created by crudfinder
+            if (params["crud"]=='FALSE'):
+                createJPG(params,img)
+
+            # convert resulting pik file to eman box file
+            if (params["box"]>0):
+                pik2Box(params,img)
+
+            # write results to dictionary
+            donedict[img]=True
+            writeDoneDict(donedict)
+
+        if params["dbimages"]=='TRUE':
+            notdone=True
+            print "Waiting one minute for new images"
+            time.sleep(60)
+            images=getImagesFromDB(params['session'],params['preset'])
+        else:
+            notdone=False
 
