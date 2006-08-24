@@ -93,11 +93,10 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			else:
 				imageid = None
 			self.logger.debug('IMAGEID ' + str(imageid))
-			if target['type'] == self.settings['process target type']:
-				if target['status'] in ('done', 'aborted'):
-					completed_targets.append(target)
-				else:
-					goodtargets.append(target)
+			if target['status'] in ('done', 'aborted'):
+				completed_targets.append(target)
+			elif target['type'] == self.settings['process target type']:
+				goodtargets.append(target)
 			#elif not rejects:
 				## this only allows one reject
 			else:
