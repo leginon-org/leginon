@@ -1,6 +1,5 @@
 import scipy
 import scipy.linalg
-import scipy.linalg.basic
 import scipy.optimize
 
 class TiltGroup(object):
