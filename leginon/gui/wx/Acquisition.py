@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.37 $
+# $Revision: 1.38 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-24 18:11:39 $
-# $Author: suloway $
+# $Date: 2006-08-25 22:25:35 $
+# $Author: dfellman $
 # $State: Exp $
 # $Locker:  $
 
@@ -22,6 +22,7 @@ import gui.wx.ImageViewer
 import gui.wx.ToolBar
 import threading
 from gui.wx.ImageBrowser import ImageBrowserPanel
+import gui.wx.Icons 
 import targethandler
 
 class SettingsDialog(gui.wx.Settings.Dialog):
@@ -308,11 +309,13 @@ class Panel(gui.wx.Node.Panel):
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 
 	def onBrowseImagesTool(self, evt):
-		frame = wx.Frame(None, -1, 'Image Browser Test')
+		icon = wx.EmptyIcon()
+		icon.CopyFromBitmap(gui.wx.Icons.icon("imagebrowser"))
+		frame = wx.Frame(None, -1, 'Image Browser')
 		frame.node = self.node
+		frame.SetIcon(icon)
 		panel = ImageBrowserPanel(frame)
 		frame.Fit()
-		#self.SetTopWindow(frame)
 		frame.Show()
 
 if __name__ == '__main__':
