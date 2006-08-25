@@ -206,7 +206,7 @@ def singleStack(params,img):
     if (not os.path.exists(singlepath)):
         os.mkdir(singlepath)
            
-    cmd="proc2d %s %s" %(input, output)
+    cmd="proc2d %s %s norm=0.0,1.0" %(input, output)
     
     # unless specified, invert the images
     if (params["noinvert"]=='FALSE'):
@@ -325,3 +325,4 @@ if __name__ == '__main__':
         # add boxed particles to a single stack
         if (params["single"]!=''):
             singleStack(params,img)
+    print "Done!"
