@@ -423,6 +423,20 @@ class Focuser(acquisition.Acquisition):
 			self.logger.info('Target attempt %s, not melting' % (attempt,))
 		elif melt_time:
 			self.logger.info('Melting ice...')
+
+			#### change to melt preset
+			#### (this is a temporary hack until a real
+			#### "melt preset" setting is added to focuser)
+			presetnames = self.validatePresets()
+			if presetnames:
+				meltpresetname = presetnames[0] + 'm'
+				meltpreset = self.presetsclient.getPresetByName(meltpresetname)
+				if meltpreset is not None:
+					self.presetsclient.toScope(meltpresetname, emtarget)
+				else:
+					meltpresetname = self.presetsclient.getCurrentPreset()['name']
+			self.logger.info('melt preset: %s' % (meltpresetname,))
+
 			self.exposeSpecimen(melt_time)
 
 		status = 'unknown'
