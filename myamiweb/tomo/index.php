@@ -1,5 +1,6 @@
 <?php
 require_once('tomography.php');
+require_once('thumbnails.php');
 $sessionId = $_GET['sessionId'];
 $tiltSeriesId = $_GET['tiltSeriesId'];
 ?>
@@ -67,11 +68,14 @@ if($tiltSeriesId != NULL) {
     echo "<a href=stack.php?tiltSeriesId=$tiltSeriesId>Download MRC stack</a><br>";
 }
 ?>
-<tr>
-<td>
-<?php echo $images[0]; ?>
-</td>
-</tr>
+<?php
+if($tiltSeriesId != NULL) {
+	echo '<tr><td>';
+	thumbnails($tiltSeriesId, $tomography);
+	echo '</td></tr>';
+}
+?>
+<tr><td><?php echo $images[0]; ?></td></tr>
 <tr><td><?php echo $images[1]; ?></td></tr>
 <tr><td><?php echo $images[2]; ?></td></tr>
 <tr><td><?php echo $images[3]; ?></td></tr>
