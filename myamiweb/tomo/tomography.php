@@ -194,6 +194,7 @@ class Tomography {
                 .'DEGREES(TomographyPredictionData.`SUBD|predicted position|theta`) AS tilt_axis, '
                 .'AcquisitionImageStatsData.mean AS mean, '
                 .'a.filename, '
+		.'a.DEF_id AS imageId, '
                 .'p1.pixelsize AS pixel_size '
                 .'FROM AcquisitionImageData a '
                 .'LEFT JOIN ScopeEMData s '
