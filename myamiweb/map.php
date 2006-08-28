@@ -284,7 +284,7 @@ function getArea() {
 		style="z-index:2; position:absolute; left:0px; top:0px; background-color:rgb(0,0,0); border: 1px solid #000000;" > 
 	<div
 		id="divarea"
-		style="z-index:99;position:absolute;visibility:visible;width: <?=$areasize?>px; height:<?=$areasize?>px;border:1px dashed <?=$areacolor?>;cursor:move;background-color:transparent;background-image: none"
+		style="z-index:99;position:absolute;visibility:visible;width: <?php=$areasize?>px; height:<?php=$areasize?>px;border:1px dashed <?php=$areacolor?>;cursor:move;background-color:transparent;background-image: none"
 		onmousedown	= "areamousedown(event)"
 		onmouseup		= "areamouseup(event)"
 		onmousemove = "areamousemove(event)"
