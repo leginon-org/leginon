@@ -95,18 +95,10 @@ class TiltCorrector(object):
 	def getImageShiftMatrix(self, tem, cam, ht, mag):
 		return self.getMatrix(tem, cam, ht, mag, 'image shift')
 	
-	def getRotationCenter(self, tem, cam, ht, mag):
-		rotdat = data.RotationCenterData()
-		rotdat['tem'] = tem
-		rotdat['ccdcamera'] = cam
-		rotdat['magnification'] = mag
-		rotdat['high tension'] = ht
-		rotdat['session'] = self.node.session
-		caldatalist = self.node.research(datainstance=rotdat, results=1)
-		if caldatalist:
-			return caldatalist[0]['beam tilt']
-		else:
-			return None
+	def getRotationCenter(self, tem, ht, mag):
+		# XXX how do I know my node has a btcalclient?
+		beam_tilt = self.node.btcalclient.retrieveRotationCenter(tem, ht, mag)
+		return beam_tilt
 
 	def itransform(self, shift, scope, camera):
 		'''
@@ -154,7 +146,7 @@ class TiltCorrector(object):
 		cam = imagedata['camera']['ccdcamera']
 	
 		## from DB
-		tiltcenter = self.getRotationCenter(tem, cam, ht, mag)
+		tiltcenter = self.getRotationCenter(tem, ht, mag)
 		# if no tilt center, then cannot do this
 		if tiltcenter is None:
 			self.node.logger.info('not correcting tilted images, no rotation center found')

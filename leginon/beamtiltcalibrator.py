@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/beamtiltcalibrator.py,v $
-# $Revision: 1.74 $
+# $Revision: 1.75 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-05-26 23:22:11 $
+# $Date: 2006-08-29 23:44:39 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -52,11 +52,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def _rotationCenterToScope(self):
 		tem = self.instrument.getTEMData()
-		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
 		calibration_client = self.calibration_clients['beam tilt']
-		beam_tilt = calibration_client.retrieveRotationCenter(tem, cam, ht, mag)
+		beam_tilt = calibration_client.retrieveRotationCenter(tem, ht, mag)
 		if not beam_tilt:
 			raise RuntimeError('no rotation center for %geV, %gX' % (ht, mag))
 		self.instrument.tem.BeamTilt = beam_tilt
@@ -72,12 +71,11 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def _rotationCenterFromScope(self):
 		tem = self.instrument.getTEMData()
-		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
 		beam_tilt = self.instrument.tem.BeamTilt
 		calibration_client = self.calibration_clients['beam tilt']
-		calibration_client.storeRotationCenter(tem, cam, ht, mag, beam_tilt)
+		calibration_client.storeRotationCenter(tem, ht, mag, beam_tilt)
 
 	def rotationCenterFromScope(self):
 		try:
@@ -415,7 +413,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			self.logger.warning(m % ('focus', e))
 			matrix = None
 		try:
-			rotation_center = client.retrieveRotationCenter(tem, ccd_camera, high_tension, magnification)
+			rotation_center = client.retrieveRotationCenter(tem, high_tension, magnification)
 		except Exception, e:
 			self.logger.warning(m % ('rotation center', e))
 			rotation_center = None
@@ -442,7 +440,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		matrix, rotation_center, eucentric_focus = calibration
 		client = self.calibration_clients['beam tilt']
 		client.storeMatrix(high_tension, magnification, parameter, matrix, tem, ccd_camera)
-		client.storeRotationCenter(tem, ccd_camera, high_tension, magnification, rotation_center)
+		client.storeRotationCenter(tem, high_tension, magnification, rotation_center)
 		client = self.calibration_clients['eucentric focus']
 		client.publishEucentricFocus(high_tension, magnification, eucentric_focus)
 
