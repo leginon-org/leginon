@@ -189,12 +189,12 @@ class Navigator(node.Node):
 
 		if precision:
 			self.logger.info('checking that move error is less than %.3e' % (precision,))
-			image2 = self._acquireImage()
+			image2 = self._acquireImage(previousimage=image)
 			r,c,dist = self.checkMoveError(image, image2, row, col)
 			self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
 			while dist > precision:
 				self._move(image2, r, c, movetype)
-				image2 = self._acquireImage()
+				image2 = self._acquireImage(previousimage=image2)
 				lastdist = dist
 				r,c,dist = self.checkMoveError(image, image2, r, c)
 				self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
@@ -234,9 +234,19 @@ class Navigator(node.Node):
 		self._acquireImage()
 		self.panel.acquisitionDone()
 
-	def _acquireImage(self):
+	def _acquireImage(self, previousimage=None):
 		errstr = 'Acquire image failed: %s'
-		if self.settings['override preset']:
+
+		# configure camera
+		if previousimage is not None:
+			## acquire just like previous image
+			cameradata = previousimage['camera']
+			ccdcamera = cameradata['ccdcamera']
+			#camerasettings = data.CameraSettingsData(initializer=camera)
+			self.instrument.setCCDCamera(ccdcamera['name'])
+			self.instrument.setData(cameradata)
+		elif self.settings['override preset']:
+			## use override
 			instruments = self.settings['instruments']
 			try:
 				self.instrument.setTEM(instruments['tem'])
@@ -250,10 +260,12 @@ class Navigator(node.Node):
 				self.logger.error(errstr % e)
 				return
 		else:
+			# default to current camera config set by preset
 			if self.presetsclient.getCurrentPreset() is None:
 				self.logger.error('Preset is unknown and preset override is off')
 				return
 
+		# acquire image
 		try:
 			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		except:
