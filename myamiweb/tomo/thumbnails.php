@@ -1,5 +1,5 @@
 <?php
-
+ini_set("include_path", ".:../");
 require_once('config.php');
 require_once('inc/image.inc');
 require_once('tomo/tomography.php');
@@ -36,6 +36,7 @@ function sortTiltSeriesData(&$data) {
 function findMinImageId($results) {
     $min_image_id = -1;
     $tilts = array();
+		if (is_array($results))
     foreach($results as $result) {
         if($result['imageId'] < $min_image_id or $min_image_id == -1)
             $min_image_id = $result['imageId'];

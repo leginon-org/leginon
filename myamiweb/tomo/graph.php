@@ -9,6 +9,9 @@ $width = $_GET['width'];
 $height = $_GET['height'];
 
 function graphXY($prediction, $position, $correlation, $tilts, $title, $width, $height) {
+		// --- to avoid jpgraph plot warning image --- merci beaucoup --- //
+		if (count($correlation)==1)
+			$correlation[]=$correlation[0];
     $graph = new Graph($width, $height, "auto");    
     $graph->SetScale("textlin");
     $graph->SetY2Scale("lin");
@@ -68,6 +71,9 @@ function graphXY($prediction, $position, $correlation, $tilts, $title, $width, $
 }
 
 function graphZ($prediction, $tilts, $pixel_size, $title, $width, $height) {
+		// --- to avoid jpgraph plot warning image --- merci beaucoup --- //
+		if (count($prediction)==1)
+			$prediction[]=$prediction[0];
     $graph = new Graph($width, $height, "auto");    
     $graph->SetScale("textlin");
     $graph->SetMarginColor('white');
@@ -139,6 +145,7 @@ function graphNT($prediction, $tilts, $title, $width, $height) {
 
     $graph->Stroke();
 }
+
 function graphTheta($prediction, $tilts, $title, $width, $height) {
     $graph = new Graph($width, $height, "auto");    
     $graph->SetScale("textlin");
@@ -149,7 +156,7 @@ function graphTheta($prediction, $tilts, $title, $width, $height) {
     $graph->ygrid->Show(true, false);
     $graph->ygrid->SetFill(true,'#EFEFEF@0.75','#BBCCFF@0.75');
 
-    $prediction = array_map("rad2deg", $prediction);
+    $prediction = ($prediction) ? array_map("rad2deg", $prediction) : array(0,0);
 
     $predictionplot= new LinePlot($prediction);
     $predictionplot->SetColor("blue");
@@ -175,6 +182,7 @@ function graphTheta($prediction, $tilts, $title, $width, $height) {
 
     $graph->Stroke();
 }
+
 function emptyImage($width, $height, $message) {
     $im = imagecreate($width, $height);
     $white = imagecolorallocate ($im, 255, 255, 255);

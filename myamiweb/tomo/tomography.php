@@ -191,7 +191,7 @@ class Tomography {
                 .'c.`SUBD|dimension|x` AS dimension_x, '
                 .'c.`SUBD|dimension|y` AS dimension_y, '
                 .'c.`exposure time` AS exposure_time, '
-                .'DEGREES(TomographyPredictionData.`SUBD|predicted position|theta`) AS tilt_axis, '
+                #.'DEGREES(TomographyPredictionData.`SUBD|predicted position|theta`) AS tilt_axis, '
                 .'AcquisitionImageStatsData.mean AS mean, '
                 .'a.filename, '
 		.'a.DEF_id AS imageId, '
