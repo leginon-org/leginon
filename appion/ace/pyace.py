@@ -12,7 +12,27 @@ db=dbdatakeeper.DBDataKeeper()
 acedonename='.acedone.py'
 
 def printHelp():
-	print "\nUsage:\npyace.py edgethcarbon=<n> edgethice=<n> pfcarbon=<n> pfice=<n> overlap=<n> fieldsize=<n> resamplefr=<n> drange=<n>"
+	print "\nUsage:\npyace.py edgethcarbon=<n> edgethice=<n> pfcarbon=<n> pfice=<n> overlap=<n> fieldsize=<n> resamplefr=<n> drange=<n> dbimages=<session_id>,<preset> tempdir=<dir> [medium=carbon or medium=ice] cs=<n> outdir=<dir> runid=<runid> [display=1 or display=0] [stig=0 or stig=1] continue nominal=<n>\n"
+	print "Example:\npyace.py dbimages=06aug30b,en medium=ice continue\n"
+	print "edgethcarbon=<n>            : threshold for edge detection with medium=carbon (default=0.8)"
+	print "edgethice=<n>               : threshold for edge detection with medium=ice (default=0.6)"
+	print "pfcarbon=<n>                : power factor that determines the location of the upper cutoff frequency with medium=carbon (default=0.9)"
+	print "pfice=<n>                   : power factor that determines the location of the upper cutoff frequency with medium=ice (default=0.3)"
+	print "overlap=<n>                 : overlap of subimages for determining power spectrum (default=2)"
+	print "fieldsize=<512>             : field size of subimages for determining power spectrum (default=512)"
+	print "resamplefr=<n>              : resample value: increase if images have high defocus or small pixel size (default=1)"
+	print "drange=0 or 1               : switch dynamic range compression on or off (default=0)"
+	print "dbimages=<session>,<preset> : images to process will be queried based on session and preset"
+	print "tempdir=<tempdir>           : temporary directory to hold intermediate files (default=./temp/)"
+	print "medium=carbon or ice        : switch to determine thresholds for edge detection and power spectrum (default=carbon)"
+	print "cs=<n>                      : spherical abberation (default=2.0)"
+	print "outdir=<dir>                : directory into which to place the output (default=(session directory))"
+	print "runid=<runid>               : subdirectory for output (default=run1)"
+	print "display=0 or 1              : switch to determine whether output images will be written (default=1)"
+	print "stig=0 or 1                 : switch to determine whether astigmatism will be estimated (default=0)"
+	print "continue                    : if continue is specified, previously processed images for <runid> will be skipped"
+	print "nominal=<n>                 : if present, the value specified by nominal will override the value returned from the database (default=None)"
+	print "                              value specified should be in meters, for example: nominal=-2.0e-6"
 	sys.exit()
 		 
 def createDefaults():
@@ -37,6 +57,7 @@ def createDefaults():
 	params['display']=1
 	params['stig']=0
 	params['continue']='FALSE'
+	params['nominal']=None
 
 	return(params)
 
@@ -109,7 +130,9 @@ def parseInput(args):
 				print "stig must be 0 or 1"
 				sys.exit()
 		elif arg=='continue':
-			params['continue']='TRUE'		
+			params['continue']='TRUE'
+		elif (elements[0]=='nominal'):
+			params['nominal']=float(elements[1])
 		else:
 			print "undefined parameter", arg
 			sys.exit()
@@ -220,9 +243,14 @@ def runAce(matlab,img,params):
 	imgname=img['filename']
 	imgpath=imgpath + '/' + imgname + '.mrc'
 	
-	nominal=img['scope']['defocus']
-	pymat.eval(matlab,("dforig = %f;" % nominal))
-	acecommand=("ctfparams = ace('%s','%s',%d,%d,'%s',%f,'%s');" % (imgpath, params['outtextfile'], params['display'], params['stig'], params['medium'], -nominal, params['tempdir']))
+	if params['nominal']:
+		nominal=params['nominal']
+	else:
+		nominal=img['scope']['defocus']
+	
+	pymat.eval(matlab,("dforig = %e;" % nominal))
+	acecommand=("ctfparams = ace('%s','%s',%d,%d,'%s',%e,'%s');" % (imgpath, params['outtextfile'], params['display'], params['stig'], params['medium'], -nominal, params['tempdir']))
+#	print acecommand
 	print "Processing", imgname
 	pymat.eval(matlab,acecommand)
 
