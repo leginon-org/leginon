@@ -222,6 +222,14 @@ class Tomography {
 
         return $this->mysql->getSQLResult($query);
     }
+
+    function getMeanValues($tilt_series_id) {
+        if($tilt_series_id == NULL)
+            return array();
+        $query = 'SELECT image_data.DEF_id as id, stats_data.mean AS mean, ROUND(DEGREES(scope_data.`SUBD|stage position|a`), 1) AS alpha from AcquisitionImageData image_data LEFT JOIN AcquisitionImageStatsData stats_data ON stats_data.`REF|AcquisitionImageData|image`=image_data.DEF_id LEFT JOIN ScopeEMData scope_data ON image_data.`REF|ScopeEMData|scope`=scope_data.DEF_id WHERE `REF|TiltSeriesData|tilt series`='.$tilt_series_id.' ORDER BY alpha ASC, id DESC;';
+        $results = $this->mysql->getSQLResult($query);
+        return $results;
+    }
 }
 
 $mysql = &new mysql($DB_HOST, $DB_USER, $DB_PASS, $DB);

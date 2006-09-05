@@ -31,6 +31,13 @@ foreach ($axes as $axis) {
 		.'" '
 		."width=$width height=$height>";
 }
+
+$images[] = '<img src="graphmean.php?'
+	."tiltSeriesId=$tiltSeriesId"
+	."&width=$width"
+	."&height=$height"
+	.'" '
+	."width=$width height=$height>";
 ?>
 <html>
 
@@ -61,7 +68,7 @@ Tomography Prediction Plot
 <table>
 <tr><td colspan=2>Session <?php echo $sessionSelector; ?></td></tr>
 <tr>
-<td rowspan=6 valign=top>Tilt Series<br>
+<td rowspan=7 valign=top>Tilt Series<br>
 <?php
 echo $tiltSeriesSelector.'<br>';
 if($tiltSeriesId != NULL) {
@@ -78,7 +85,14 @@ if($tiltSeriesId != NULL) {
 <tr><td><?php echo $images[0]; ?></td></tr>
 <tr><td><?php echo $images[1]; ?></td></tr>
 <tr><td><?php echo $images[2]; ?></td></tr>
-<tr><td><?php echo $images[3]; ?></td></tr>
+<!--- <tr><td><?php echo $images[3]; ?></td></tr> --->
+<?php
+if($tiltSeriesId != NULL) {
+	echo '<tr><td>';
+	echo $images[4];
+	echo '</td></tr>';
+}
+?>
 </table>
 </div>
 
