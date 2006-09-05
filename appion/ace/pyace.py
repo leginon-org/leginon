@@ -97,6 +97,7 @@ def parseInput(args):
 				params['session']=dbinfo[0]
 				params['preset']=dbinfo[1]
 				params['dbimages']='TRUE'
+				params['continue']='TRUE'
 			else:
 				print "dbimages must include both session and preset parameters"
 				sys.exit()
@@ -259,6 +260,9 @@ def runAce(matlab,img,params):
 	savematcommand=("save('%s','ctfparams','scopeparams','dforig');" % (matfile))
 #	print savematcommand
 	pymat.eval(matlab,savematcommand)
+	ctfparams=pymat.get(matlab,'ctfparams')
+	print "Nominal, Defocus1, Defocus2, Confidence1, Confidence2"
+	print ('%1.3f %1.3f %1.3f %1.3f %1.3f' % (float(-nominal*1e6), float(ctfparams[0]*1e6), float(ctfparams[1]*1e6), ctfparams[16], ctfparams[17]))
 	if params['display']:
 		imfile1=params['tempdir']+'im1.png'
 		imfile2=params['tempdir']+'im2.png'
