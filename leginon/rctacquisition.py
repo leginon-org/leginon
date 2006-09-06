@@ -54,7 +54,7 @@ class RCTAcquisition(acquisition.Acquisition):
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
-		self.tiltnumber = None
+		self.tiltnumber = 0
 
 	def setImageFilename(self, imagedata):
 		acquisition.Acquisition.setImageFilename(self, imagedata)
