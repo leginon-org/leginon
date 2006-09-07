@@ -110,7 +110,7 @@ class Target {
         if(is_null($prefix)) {
             $prefix = '';
         } else {
-           $status.= $indexed[end($this->ids)]['status'];
+           $status = $indexed[end($this->ids)]['status'];
            $type = null;
            $preset = null;
            foreach($this->ids as $id) {
@@ -171,15 +171,18 @@ function buildTargetListTree(&$parent_object, &$lists, &$indexed) {
                     exit('parent target mismatch');
             }
 
-            if(is_null($parent_object->list_id) and !is_null($parent_id))
-                continue;
-            $parent = $indexed[$parent_id];
-            $parent_list_id = $parent['list'];
-            $parent_number = $parent['number'];
-            if($parent_object->list_id != $parent_list_id)
-                continue;
-            if($parent_object->number  != $parent_number)
-                continue;
+            if(is_null($parent_id)) {
+                if(!is_null($parent_object->list_id))
+                  continue;
+            } else {
+                $parent = $indexed[$parent_id];
+                $parent_list_id = $parent['list'];
+                $parent_number = $parent['number'];
+                if($parent_object->list_id != $parent_list_id)
+                    continue;
+                if($parent_object->number  != $parent_number)
+                    continue;
+            }
 
             $object = new Target($list_id, $number);
             $object->addIDs($ids);
