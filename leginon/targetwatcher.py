@@ -154,12 +154,12 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				continue
 
 			### generate a focus target
-			if self.settings['duplicate targets']:
-				focustarget = data.AcquisitionImageTargetData(initializer=target)
-				focustarget['type'] = self.settings['duplicate target type']
-				self.publish(focustarget, database=True)
-				tlist = [focustarget]
-				self.rejectTargets(tlist)
+			#if self.settings['duplicate targets']:
+			#	focustarget = data.AcquisitionImageTargetData(initializer=target)
+			#	focustarget['type'] = self.settings['duplicate target type']
+			#	self.publish(focustarget, database=True)
+			#	tlist = [focustarget]
+			#	self.rejectTargets(tlist)
 
 			self.logger.debug('Creating processing target...')
 			adjustedtarget = data.AcquisitionImageTargetData(initializer=target,
@@ -242,6 +242,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			reject = data.AcquisitionImageTargetData(initializer=target)
 			reject['list'] = rejectlist
 			self.publish(reject, database=True)
+			done_target = data.AcquisitionImageTargetData(initializer=target, status='done')
+			self.publish(done_target, database=True)
 		tlistid = rejectlist.dmid
 		self.targetlistevents[tlistid] = {}
 		self.targetlistevents[tlistid]['received'] = threading.Event()
