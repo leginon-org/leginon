@@ -9,6 +9,10 @@ import cPickle
 import data
 import dbdatakeeper
 import time
+import convolver
+import Mrc
+import numarray.nd_image
+import imagefun
 
 db=dbdatakeeper.DBDataKeeper()
 selexondonename='.selexondone.py'
@@ -16,8 +20,9 @@ selexondonename='.selexondone.py'
 def printHelp():
     print "\nUsage:\nselexon.py <file> template=<name> apix=<pixel> diam=<n> bin=<n> [range=<start,stop,incr>] [thresh=<threshold> or autopik=<n>] [lp=<n>] [hp=<n>] [crud or cruddiam=<n>] [crudonly] [crudblur=<n>] [crudlow=<n>] [crudhi=<n>] [box=<n>] [continue] [dbimages=<session>,<preset>]"
     print "or\nselexon.py preptemplate template=<name> apix=<pixel> bin=<n>\n"
-    print "Examples:\nselexon 05jun23a_00001en.mrc template=groEL apix=1.63 diam=250 bin=4 range=0,90,10 thresh=0.45 crud\n"
-    print "selexon template=groEL apix=1.63 diam=250 bin=4 range=0,90,10 thresh=0.45 crud dbimages=05jun23a,en continue"
+    print "Examples:\nselexon 05jun23a_00001en.mrc template=groEL apix=1.63 diam=250 bin=4 range=0,90,10 thresh=0.45 crud"
+    print "or"
+    print "selexon template=groEL apix=1.63 diam=250 bin=4 range=0,90,10 thresh=0.45 crud dbimages=05jun23a,en continue\n"
     print "preptemplate       : this will prepare all your template files for selexon"
     print "template=<name>    : name should not have the extension, or number."
     print "                     groEL1.mrc, groEL2.mrc would be simply \"template=groEL\""
@@ -30,7 +35,8 @@ def printHelp():
     print "                     NOTE: if you don't want to rotate the image, leave this parameter out"
     print "thresh=<thr>       : manual cutoff for correlation peaks (0-1), don't use if want autopik"
     print "autopik=<thr>      : automatically calculate threshold, n = average number of particles per image"
-    print "lp=<n>, hp=<n>     : low-pass and hi-pass filter (in Angstroms) - defaults are 30 & 600\n"
+    print "lp=<n>, hp=<n>     : low-pass and high-pass filter (in Angstroms) - defaults are 30 & 600\n"
+    print "                     NOTE: high-pass filtering is currently disabled"
     print "crud               : run the crud finder after the particle selection"
     print "                     (will use particle diameter by default)"
     print "cruddiam=<n>       : set the diameter to use for the crud finder"
@@ -179,6 +185,7 @@ def parseInput(args):
                 params["continue"]='TRUE' # continue should be on for dbimages option
             else:
                 print "dbimages must include both session and preset parameters"
+                sys.exit()
         else:
             print "undefined parameter '"+arg+"'\n"
             sys.exit(1)
@@ -229,35 +236,45 @@ def checkTemplates(params):
 
     return(params)
 
-def dwnsizeImg(params,file):
-    # run downsizeandfilter2 from the FindEM package
-    # get parameters
-    lp=str(params["lp"])
-    hp=str(params["hp"])
-    scale=str(params["bin"])
-    pix=str(params["apix"])
+def dwnsizeImg(params,img):
+    #downsize and filter leginon image     
+    imagedata=getImageData(img)    
+    bin=params['bin']
+    print "downsizing", img
+    im=binImg(imagedata['image'],bin)
+
+    print "filtering", img
+    apix=params['apix']*bin
+    im=filterImg(im,apix,params['lp'])
+    Mrc.numeric_to_mrc(im,(img+'.dwn.mrc'))
+    return
+
+def dwnsizeTemplate(params,img):
+    #downsize and filter arbitary MRC template image
+    bin=params['bin']
+    im=Mrc.mrc_to_numeric(img+'.mrc')
+    print "downsizing", img
+    im=binImg(im,bin)
+
+    print "filtering",img
+    apix=params['apix']*bin
+    im=filterImg(im,apix,params['lp'])
+    Mrc.numeric_to_mrc(im,(img+'.dwn.mrc'))
+    return
+
+def binImg(img,binning):
+    #bin image using leginon imagefun library
+    #img must be a numarray image
+    return(imagefun.bin(img,binning))
     
-    # remove downsized mrc file if exists
-    if (os.path.exists(file + ".dwn.mrc")):
-        os.remove(file + ".dwn.mrc")
-    
-    # run "downsizeandfilter2"
-    fin,fout,fstderr=os.popen3('${FINDEM_PATH}/downsizeandfilter2')
-    fin.write(file+".mrc\n")
-    fin.write(file+".dwn.mrc\n")
-    fin.write(scale+"\n")
-    fin.write(lp+", "+hp+"\n")
-    fin.write("0\n")
-    fin.write("n\n")
-    fin.write(pix+"\n")
-    fin.write("1\n")
-    fin.flush()
-    print "downsizing and filtering image"
-    results=fout.readlines()
-    fin.close()
-    fout.close()
-    fstderr.close()
-    
+def filterImg(img,apix,res):
+    # low pass filter image to res resolution
+    c=convolver.Convolver()
+    sigma=(res/apix)/3.0
+    kernel=convolver.gaussian_kernel(sigma)
+    #Mrc.numeric_to_mrc(kernel,'kernel.mrc')
+    return(c.convolve(image=img,kernel=kernel))
+           
 def runFindEM(params,file):
     # run FindEM
     tmplt=params["template"]
@@ -554,7 +571,7 @@ def prepTemplate(params):
         else:
             mrcfile=name+str(i)
         os.system("fix_mrc "+mrcfile+".mrc")
-        dwnsizeImg(params,mrcfile)
+        dwnsizeTemplate(params,mrcfile)
         i=i+1
     print "\ndownsize & filtered "+str(num)+" file(s) with root \""+params["template"]+"\"\n"
     sys.exit(1)
