@@ -14,7 +14,7 @@ class Target {
     var $status;
     var $type;
     var $preset;
-    var $target_list;
+    var $target_number;
     var $target_list_id;
     var $parent_image_id;
     var $parent_image;
@@ -29,13 +29,13 @@ class Target {
         $this->preset = $array['preset'];
         $this->target_list_id =  $array['list_id'];
         $this->parent_image_id =  $array['image_id'];
-        $this->target_list = null;
+        $this->target_number = null;
         $this->parent_image = null;
         $this->child_image = null;
     }
 
-    function setTargetList(&$target_list) {
-        $this->target_list = $target_list;
+    function setTargetNumber(&$target_number) {
+        $this->target_number = $target_number;
     }
 
     function setParentImage(&$parent_image) {
@@ -46,12 +46,34 @@ class Target {
         $this->child_image = $child_image;
     }
 }
+
+class TargetNumber {
+    var $number;
+    var $targets;
+    var $target_list;
+
+    function TargetNumber($number) {
+        $this->number = $number;
+        $this->target_list = null;
+        $this->targets = array();
+    }
+
+    function setTargetList(&$target_list) {
+        $this->target_list = $target_list;
+    }
+
+    function addTarget(&$target) {
+        $this->targets[$target->id] = &$target;
+    }
+}
+
 class Image {
     var $id;
     var $preset;
     var $parent_target_id;
     var $parent_target;
     var $child_targets;
+    var $child_target_lists;
 
     function Image($array) {
         $this->id = $array['id'];
@@ -59,6 +81,7 @@ class Image {
         $this->parent_target_id = $array['target_id'];
         $this->parent_target = null;
         $this->child_targets = array();
+        $this->child_target_lists = array();
     }
 
     function setParentTarget(&$parent_target) {
@@ -68,21 +91,38 @@ class Image {
     function addChildTarget(&$child_target) {
         $this->child_targets[$child_target->id] = &$child_target;
     }
+
+    function addChildTargetList(&$child_target_list) {
+        $this->child_target_lists[$child_target_list->id] = &$child_target_list;
+    }
 }
 
 class TargetList {
     var $id;
-    var $targets;
+    var $target_numbers;
+    var $parent_image_id;
+    var $parent_image;
 
     function TargetList($array) {
         $this->id = $array['id'];
-        $this->targets = array();
+        $this->parent_image_id =  $array['image_id'];
+        $this->target_numbers = array();
+        $this->parent_image = null;
     }
 
-    function addTarget(&$target) {
-        if(!array_key_exists($target->number, $this->targets))
-            $this->targets[$target->number] = array();
-        $this->targets[$target->number][$target->id] = &$target;
+    function setParentImage(&$parent_image) {
+        $this->parent_image = $parent_image;
+    }
+
+    function &getTargetNumber(&$number) {
+        if(!array_key_exists($number, $this->target_numbers)) {
+            $target_number = new TargetNumber($number);
+            $this->target_numbers[$number] = &$target_number;
+            $target_number->setTargetList($this);
+        } else {
+            $target_number = &$this->target_numbers[$number];
+        }
+        return $target_number;
     }
 }
 
@@ -120,7 +160,8 @@ $image_query = 'SELECT'
         .';';
 
 $target_list_query = 'SELECT'
-        .' target_list.DEF_id AS id'
+        .' target_list.DEF_id AS id,'
+        .' target_list.`REF|AcquisitionImageData|image` AS image_id'
         .' FROM'
         .' ImageTargetListData target_list'
         .' WHERE'
@@ -148,13 +189,23 @@ foreach(array_keys($targets) as $target_id) {
     $target = &$targets[$target_id];
     if(!is_null($target->target_list_id)) {
         $target_list = &$target_lists[$target->target_list_id];
-        $target->setTargetList($target_list);
-        $target_list->addTarget($target);
+        $target_number = &$target_list->getTargetNumber($target->number);
+        $target->setTargetNumber($target_number);
+        $target_number->addTarget($target);
     }
     if(!is_null($target->parent_image_id)) {
         $parent_image = &$images[$target->parent_image_id];
         $target->setParentImage($parent_image);
         $parent_image->addChildTarget($target);
+    }
+}
+
+foreach(array_keys($target_lists) as $target_list_id) {
+    $target_list = &$target_lists[$target_list_id];
+    if(!is_null($target_list->parent_image_id)) {
+        $parent_image = &$images[$target_list->parent_image_id];
+        $target_list->setParentImage($parent_image);
+        $parent_image->addChildTargetList($target_list);
     }
 }
 
@@ -167,30 +218,34 @@ foreach(array_keys($images) as $image_id) {
     }
 }
 
-function printImage(&$image) {
-    echo 'Image '.$image->id.'<br>';
-    foreach(array_keys($image->child_targets) as $child_target_id) {
-        $target = $image->child_targets[$child_target_id];
-        printTarget($target);
+function printImage(&$image, $prefix='') {
+    echo $prefix.'Image '.$image->id.'<br>';
+    foreach(array_keys($image->child_target_lists) as $child_target_list_id) {
+        $target_list = $image->child_target_lists[$child_target_list_id];
+        printTargetList($target_list, $prefix.'___');
     }
 }
 
-function printTarget(&$target) {
-    echo 'Target '.$target->id.'<br>';
+function printTarget(&$target, $prefix='') {
+    echo $prefix.'Target '.$target->id.'<br>';
     if(!is_null($target->child_image)) {
-        printImage($target->child_image);
+        printImage($target->child_image, $prefix.'___');
     }
 }
 
-function printTargetList(&$target_list) {
-    echo 'TargetList '.$target_list->id.'<br>';
-    foreach(array_keys($target_list->targets) as $number) {
-        echo '#'.$number.'<br>';
-        $list_targets = &$target_list->targets[$number];
-        foreach(array_keys($list_targets) as $list_target_id) {
-            $list_target = &$list_targets[$list_target_id];
-            printTarget($list_target);
-        }
+function printTargetNumber(&$target_number, $prefix='') {
+    echo $prefix.'Target #'.$target_number->number.'<br>';
+    foreach(array_keys($target_number->targets) as $target_id) {
+        $target = &$target_number->targets[$target_id];
+        printTarget($target, $prefix.'___');
+    }
+}
+
+function printTargetList(&$target_list, $prefix='') {
+    echo $prefix.'TargetList '.$target_list->id.'<br>';
+    foreach(array_keys($target_list->target_numbers) as $number) {
+        $target_number = &$target_list->target_numbers[$number];
+        printTargetNumber($target_number, $prefix.'___');
     }
 }
 
