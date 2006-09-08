@@ -90,6 +90,16 @@ class Target {
        $this->ids = array_merge($this->ids, $ids);
     }
 
+    function getStatus(&$status_array, &$indexed) {
+       $id = end($this->ids);
+       $string = $indexed[$id]['status'];
+       $type = $indexed[$id]['type'];
+       $preset = $indexed[$id]['preset'];
+       $status_array[$string][$type][$preset]++;
+       foreach($this->children as $child)
+          $child->getStatus($status_array, $indexed);
+    }
+
     function getColorTag($status) {
         $colors = array(
             'new' => 'green',
@@ -195,7 +205,68 @@ function buildTargetListTree(&$parent_object, &$lists, &$indexed) {
 
 $root = new Target(null, null);
 buildTargetListTree($root, $target_lists, $indexed_targets);
-$string = $root->toString(null, $indexed_targets);
+#echo $root->toString(null, $indexed_targets);
+
+$target_status = array();
+$root->getStatus($target_status, $indexed_targets);
+
+$status_array = array();
+$type_array = array();
+$preset_array = array();
+foreach($results as $result) {
+    $status = $result['status'];
+    if(!in_array($status, $status_array) and !is_null($status))
+        $status_array[] = $status;
+    $type = $result['type'];
+    if(!in_array($type, $type_array) and !is_null($type))
+        $type_array[] = $type;
+    $preset = $result['preset'];
+    if(!in_array($preset, $preset_array) and !is_null($preset))
+        $preset_array[] = $preset;
+}
+
+echo '<table>';
+echo '<tr>';
+echo '<th>';
+echo '</th>';
+$n = count($type_array);
+foreach($preset_array as $preset) {
+    echo '<th colspan='.$n.'>';
+    echo $preset;
+    echo '</th>';
+}
+echo '</tr>';
+echo '<tr>';
+echo '<th>';
+echo '</th>';
+foreach($preset_array as $preset) {
+    foreach($type_array as $type) {
+        echo '<th>';
+        echo $type;
+        echo '</th>';
+    }
+}
+echo '</tr>';
+foreach($status_array as $status) {
+    echo '<tr>';
+    echo '<th>';
+    echo $status;
+    echo '</th>';
+    foreach($preset_array as $preset) {
+        foreach($type_array as $type) {
+            echo '<td>';
+            $n = $target_status[$status][$type][$preset];
+            if(is_null($n))
+                $n = 0;
+            echo $n;
+            echo ' ';
+            echo '</td>';
+        }
+    }
+    echo '</tr>';
+}
+
+echo '</table>';
 
 ?>
 <html>
@@ -205,8 +276,6 @@ Target Test
 </title>
 </head>
 <body>
-<tt>
 <?php echo $string; ?>
-</tt>
 </body>
 </html>
