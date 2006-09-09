@@ -45,6 +45,13 @@ class Target {
     function setChildImage(&$child_image) {
         $this->child_image = $child_image;
     }
+
+    function toString($prefix='') {
+        $string = $prefix.'Target '.$this->id.'<br>';
+        if(!is_null($this->child_image))
+            $string .= $this->child_image->toString($prefix.'___');
+        return $string;
+    }
 }
 
 class TargetNumber {
@@ -65,6 +72,16 @@ class TargetNumber {
     function addTarget(&$target) {
         $this->targets[$target->id] = &$target;
     }
+
+    function toString($prefix='') {
+        $string = $prefix.'Target #'.$this->number.'<br>';
+        foreach(array_keys($this->targets) as $target_id) {
+            $target = &$this->targets[$target_id];
+            $string .= $target->toString($prefix.'___');
+        }
+        return $string;
+    }
+
 }
 
 class Image {
@@ -95,6 +112,16 @@ class Image {
     function addChildTargetList(&$child_target_list) {
         $this->child_target_lists[$child_target_list->id] = &$child_target_list;
     }
+
+    function toString($prefix='') {
+        $string = $prefix.'Image '.$this->id.'<br>';
+        foreach(array_keys($this->child_target_lists)
+                    as $child_target_list_id) {
+            $target_list = $this->child_target_lists[$child_target_list_id];
+            $string .= $target_list->toString($prefix.'___');
+        }
+        return $string;
+    }
 }
 
 class TargetList {
@@ -102,12 +129,18 @@ class TargetList {
     var $target_numbers;
     var $parent_image_id;
     var $parent_image;
+    var $queue_id;
+    var $queue;
+    var $image_lists;
 
     function TargetList($array) {
         $this->id = $array['id'];
         $this->parent_image_id =  $array['image_id'];
+        $this->queue_id =  $array['queue_id'];
         $this->target_numbers = array();
         $this->parent_image = null;
+        $this->queue = null;
+        $this->image_lists = array();
     }
 
     function setParentImage(&$parent_image) {
@@ -123,6 +156,69 @@ class TargetList {
             $target_number = &$this->target_numbers[$number];
         }
         return $target_number;
+    }
+
+    function setQueue(&$queue) {
+        $this->queue = $queue;
+    }
+
+    function addImageList(&$image_list) {
+        $this->image_lists[$image_list->id] = &$image_list;
+    }
+
+    function toString($prefix='') {
+        $string = $prefix.'TargetList '.$this->id.'<br>';
+        foreach(array_keys($this->target_numbers) as $number) {
+            $target_number = &$this->target_numbers[$number];
+            $string .= $target_number->toString($prefix.'___');
+        }
+        return $string;
+    }
+}
+
+class ImageList {
+    var $id;
+    var $target_list_id;
+    var $target_list;
+
+    function ImageList($array) {
+        $this->id = $array['id'];
+        $this->target_list_id = $array['target_list_id'];
+        $this->target_list = null;
+    }
+
+    function setTargetList(&$target_list) {
+        $this->target_list = &$target_list;
+    }
+
+    function toString($prefix='') {
+        $string = $prefix.'ImageList '.$this->id.'<br>';
+        if(!is_null($this->target_list)) 
+            $string .= $this->target_list->toString($prefix.'___');
+        return $string;
+    }
+}
+
+class Queue {
+    var $id;
+    var $target_lists;
+
+    function Queue($array) {
+        $this->id = $array['id'];
+        $this->target_lists = array();
+    }
+
+    function addTargetList(&$target_list) {
+        $this->target_lists[$target_list->id] = &$target_list;
+    }
+
+    function toString($prefix='') {
+        $string = $prefix.'Queue '.$this->id.'<br>';
+        foreach(array_keys($this->target_lists) as $target_list_id) {
+            $target_list = &$this->target_lists[$target_list_id];
+            $string .= $target_list->toString($prefix.'___');
+        }
+        return $string;
     }
 }
 
@@ -161,11 +257,29 @@ $image_query = 'SELECT'
 
 $target_list_query = 'SELECT'
         .' target_list.DEF_id AS id,'
+        .' target_list.`REF|QueueData|queue` AS queue_id,'
         .' target_list.`REF|AcquisitionImageData|image` AS image_id'
         .' FROM'
         .' ImageTargetListData target_list'
         .' WHERE'
         .' target_list.`REF|SessionData|session`='.$session
+        .';';
+
+$image_list_query = 'SELECT'
+        .' image_list.DEF_id AS id,'
+        .' image_list.`REF|ImageTargetListData|targets` AS target_list_id'
+        .' FROM'
+        .' ImageListData image_list'
+        .' WHERE'
+        .' image_list.`REF|SessionData|session`='.$session
+        .';';
+
+$queue_query = 'SELECT'
+        .' queue.DEF_id AS id'
+        .' FROM'
+        .' QueueData queue'
+        .' WHERE'
+        .' queue.`REF|SessionData|session`='.$session
         .';';
 
 $mysql = new mysql($DB_HOST, $DB_USER, $DB_PASS, $DB);
@@ -184,6 +298,16 @@ $query_results = $mysql->getSQLResult($target_list_query);
 $target_lists = array();
 foreach($query_results as $query_result)
    $target_lists[$query_result['id']] = &new TargetList($query_result);
+
+$query_results = $mysql->getSQLResult($image_list_query);
+$image_lists = array();
+foreach($query_results as $query_result)
+   $image_lists[$query_result['id']] = &new ImageList($query_result);
+
+$query_results = $mysql->getSQLResult($queue_query);
+$queues = array();
+foreach($query_results as $query_result)
+   $queues[$query_result['id']] = &new Queue($query_result);
 
 foreach(array_keys($targets) as $target_id) {
     $target = &$targets[$target_id];
@@ -207,6 +331,20 @@ foreach(array_keys($target_lists) as $target_list_id) {
         $target_list->setParentImage($parent_image);
         $parent_image->addChildTargetList($target_list);
     }
+    if(!is_null($target_list->queue_id)) {
+        $queue = &$queues[$target_list->queue_id];
+        $target_list->setQueue($queue);
+        $queue->addTargetList($target_list);
+    }
+}
+
+foreach(array_keys($image_lists) as $image_list_id) {
+    $image_list = &$image_lists[$image_list_id];
+    if(!is_null($image_list->target_list_id)) {
+        $target_list = &$target_lists[$image_list->target_list_id];
+        $image_list->setTargetList($target_list);
+        $target_list->addImageList($image_list);
+    }
 }
 
 foreach(array_keys($images) as $image_id) {
@@ -218,40 +356,21 @@ foreach(array_keys($images) as $image_id) {
     }
 }
 
-function printImage(&$image, $prefix='') {
-    echo $prefix.'Image '.$image->id.'<br>';
-    foreach(array_keys($image->child_target_lists) as $child_target_list_id) {
-        $target_list = $image->child_target_lists[$child_target_list_id];
-        printTargetList($target_list, $prefix.'___');
-    }
-}
-
-function printTarget(&$target, $prefix='') {
-    echo $prefix.'Target '.$target->id.'<br>';
-    if(!is_null($target->child_image)) {
-        printImage($target->child_image, $prefix.'___');
-    }
-}
-
-function printTargetNumber(&$target_number, $prefix='') {
-    echo $prefix.'Target #'.$target_number->number.'<br>';
-    foreach(array_keys($target_number->targets) as $target_id) {
-        $target = &$target_number->targets[$target_id];
-        printTarget($target, $prefix.'___');
-    }
-}
-
-function printTargetList(&$target_list, $prefix='') {
-    echo $prefix.'TargetList '.$target_list->id.'<br>';
-    foreach(array_keys($target_list->target_numbers) as $number) {
-        $target_number = &$target_list->target_numbers[$number];
-        printTargetNumber($target_number, $prefix.'___');
-    }
-}
-
+/*
 foreach(array_keys($target_lists) as $target_list_id) {
     $target_list = &$target_lists[$target_list_id];
-    printTargetList($target_list);
+    echo $target_list->toString();
 }
+
+foreach(array_keys($queues) as $queue_id) {
+    $queue = &$queues[$queue_id];
+    echo $queue->toString();
+}
+
+foreach(array_keys($image_lists) as $image_list_id) {
+    $image_list = &$image_lists[$image_list_id];
+    echo $image_list->toString();
+}
+*/
 
 ?>
