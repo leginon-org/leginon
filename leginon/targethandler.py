@@ -99,7 +99,7 @@ class TargetHandler(object):
 						continue
 					else:
 						self.player.play()
-				donetargetlist = data.DequeuedImageTargetListData(list=targetlist, queue=self.targetlistqueue)
+				donetargetlist = data.DequeuedImageTargetListData(session=self.session, list=targetlist, queue=self.targetlistqueue)
 				self.publish(donetargetlist, database=True)
 			self.player.play()
 
