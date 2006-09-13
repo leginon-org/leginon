@@ -43,6 +43,9 @@ class ImageCorrection(remotecall.Object):
 	def getImageData(self, ccdcameraname=None):
 		return self.node.acquireCorrectedImageData(ccdcameraname=ccdcameraname)
 
+	def setChannel(self, channel):
+		self.node.setChannel(channel)
+
 class Corrector(node.Node):
 	'''
 	Manages dark/bright images and does other corrections
@@ -77,6 +80,7 @@ class Corrector(node.Node):
 
 		self.ref_cache = {}
 		self.plan = None
+		self.channel = 0
 
 		self.instrument = instrument.Proxy(self.objectservice,
 																				self.session,
@@ -84,11 +88,10 @@ class Corrector(node.Node):
 		self.correctionobject = ImageCorrection(self)
 		self.objectservice._addObject('Image Correction', self.correctionobject)
 
-		self.imagedata = data.DataHandler(data.CorrectedCameraImageData,
-																			getdata=self.acquireCorrectedImageData)
-		self.publish(self.imagedata, pubevent=True, broadcast=True)
-
 		self.start()
+
+	def setChannel(self, channel):
+		self.channel = channel
 
 	def setPlan(self):
 		newcamstate = data.CorrectorCamstateData()
@@ -335,6 +338,7 @@ class Corrector(node.Node):
 
 		## use reference image from database
 		ref = self.researchRef(camstate, type, ccdcameraname, scopedata, channel)
+		self.logger.info('%s channel %s' % (type, ref['channel'],))
 		if ref:
 			## make it float to do float math later
 			image = ref['image'].astype(Numeric.Float32)
@@ -422,12 +426,11 @@ class Corrector(node.Node):
 			cam = self.instrument.getCCDCameraData(name=ccdcameraname)
 			scopedata = self.instrument.getData(data.ScopeEMData)
 			cameradata = self.instrument.getData(data.CameraEMData)
-			channel = cameradata['correction channel']
 		except Exception, e:
 			self.logger.exception('Unable to acquire image: %s' % e)
 			return None
 		try:
-			image = self.correct(cam, image, geometry, scopedata, channel)
+			image = self.correct(cam, image, geometry, scopedata)
 		except Exception, e:
 			self.logger.warning('Unable to correct acquired image: %s' % e)
 			return None
@@ -453,20 +456,19 @@ class Corrector(node.Node):
 		corstate['dimension'] = camdata['dimension']
 		corstate['offset'] = camdata['offset']
 		corstate['binning'] = camdata['binning']
-		channel = camdata['correction channel']
-		corrected = self.correct(ccdcamera, numimage, corstate, scopedata, channel)
+		corrected = self.correct(ccdcamera, numimage, corstate, scopedata)
 		newdata = data.CorrectedCameraImageData(initializer=imagedata,
 																						image=corrected)
 		self.setStatus('idle')
 		return newdata
 
-	def correct(self, ccdcamera, original, camstate, scopedata, channel):
+	def correct(self, ccdcamera, original, camstate, scopedata):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
 		if type(camstate) is dict:
 			camstate = data.CorrectorCamstateData(initializer=camstate)
-		normalized = self.normalize(original, camstate, ccdcamera['name'], scopedata, channel)
+		normalized = self.normalize(original, camstate, ccdcamera['name'], scopedata)
 		plan = self.retrievePlan(ccdcamera, camstate)
 		if plan is not None:
 			self.fixBadPixels(normalized, plan)
@@ -557,10 +559,8 @@ class Corrector(node.Node):
 					else:
 						image[:,bad] = image[:,good]
 
-	def normalize(self, raw, camstate, ccdcameraname, scopedata, channel):
-		## if channel not set, default to 0
-		if channel is None:
-			channel = 0
+	def normalize(self, raw, camstate, ccdcameraname, scopedata):
+		channel = self.channel
 		dark = self.retrieveRef(camstate, 'dark', ccdcameraname, scopedata, channel)
 		norm = self.retrieveRef(camstate, 'norm', ccdcameraname, scopedata, channel)
 		if dark is not None and norm is not None:

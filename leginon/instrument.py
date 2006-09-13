@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.36 $
+# $Revision: 1.37 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-09 01:44:51 $
-# $Author: suloway $
+# $Date: 2006-09-13 22:10:58 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -335,6 +335,16 @@ class Proxy(object):
 					raise result
 			except AttributeError:
 				pass
+
+	def setCorrectionChannel(self, channel, imagecorrection=None):
+		if imagecorrection is None:
+			proxy = self.imagecorrection
+		else:
+			try:
+				proxy = self.imagecorrections[imagecorrection]
+			except KeyError:
+				raise NotAvailableError('Image correction \'%s\' not available' % (imagecorrection,))
+		proxy.setChannel(channel)	
 
 class TEM(remotecall.Locker):
 	def getDatabaseType(self):
