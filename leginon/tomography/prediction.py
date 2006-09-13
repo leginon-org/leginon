@@ -86,15 +86,15 @@ class Prediction(object):
             'x': float(x),
             'y': float(y),
             'z': float(z),
-            #'phi': self.parameters[0],
-            #'optical axis': {
-            #    'x': self.parameters[1],
-            #    'y': self.parameters[2],
-            #},
-            #'specimen': {
-            #    'x': self.parameters[-2],
-            #    'z': self.parameters[-1],
-            #},
+            'phi': float(self.parameters[0]),
+            'optical axis': {
+                'x': float(self.parameters[1]),
+                'y': float(self.parameters[2]),
+            },
+            'specimen': {
+                'x': float(self.parameters[-2]),
+                'z': float(self.parameters[-1]),
+            },
         }
 
         return result
