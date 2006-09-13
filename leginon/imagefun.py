@@ -267,8 +267,6 @@ def phase_correlate(im1, im2):
 	xcor_abs = numarray.absolute(xcor) + 0.00000000000000001
 	phasecor = xcor / xcor_abs
 	pc = ffteng.itransform(phasecor)
-	## average out the artifical peak at 0,0
-	pc[0,0] = (pc[0,1] + pc[0,-1] + pc[1,0] + pc[-1,0]) /4.0
 	return pc
 
 ## The Blob.add_point method below is recursive while searching for neighbors.

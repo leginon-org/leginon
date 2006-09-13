@@ -128,8 +128,6 @@ class Correlator(object):
 			pcfft = ccfft / Numeric.absolute(ccfft)
 			self.results['phase correlation fft'] = pcfft
 			pc = self.fftengine.itransform(pcfft)
-			## average out the artifical peak at 0,0
-			pc[0,0] = (pc[0,1] + pc[0,-1] + pc[1,0] + pc[-1,0]) /4.0
 
 			self.results['phase correlation image'] = pc
 		return pc
