@@ -127,7 +127,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				self.reportTargetListDone(newdata.dmid, rejectstatus)
 				self.setStatus('idle')
 				return
-
+			self.markTargetsDone(rejects)
 			self.logger.info('Passed targets processed, processing current target list')
 
 		# process the good ones
@@ -242,8 +242,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			reject = data.AcquisitionImageTargetData(initializer=target)
 			reject['list'] = rejectlist
 			self.publish(reject, database=True)
-			done_target = data.AcquisitionImageTargetData(initializer=target, status='done')
-			self.publish(done_target, database=True)
 		tlistid = rejectlist.dmid
 		self.targetlistevents[tlistid] = {}
 		self.targetlistevents[tlistid]['received'] = threading.Event()
@@ -254,6 +252,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		rejectstatus = self.waitForRejects()
 		self.setStatus('processing')
 		return rejectstatus
+
+	def markTargetsDone(self, targets):
+		for target in targets:
+			done_target = data.AcquisitionImageTargetData(initializer=target, status='done')
+			self.publish(done_target, database=True)
 
 	def handleTargetListDone(self, targetlistdoneevent):
 		targetlistid = targetlistdoneevent['targetlistid']
