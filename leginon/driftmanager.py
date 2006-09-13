@@ -102,8 +102,13 @@ class DriftManager(watcher.Watcher):
 		# stage tilt also ???
 		# what if preset mag changed ???
 
-		## acquire new image
-		newim = self.acquireImage()
+		## acquire new image using different correction channel
+		chan = im['correction channel']
+		if chan in (None, 0):
+			newchan = 1
+		else:
+			newchan = 0
+		newim = self.acquireImage(channel=newchan)
 
 		self.logger.info('Old image, image shift %s, stage position %s'
 									% (im['scope']['image shift'], im['scope']['stage position']))
@@ -116,6 +121,9 @@ class DriftManager(watcher.Watcher):
 		pc = self.correlator.phaseCorrelate()
 		peak = self.peakfinder.subpixelPeak(newimage=pc)
 		rows,cols = self.peak2shift(peak, pc.shape)
+
+		self.setImage(pc, 'Correlation')
+		self.setTargets([(peak[1],peak[0])], 'Peak')
 
 		self.logger.info('rows %s, columns %s' % (rows, cols))
 		## publish AcquisitionImageDriftData here
@@ -156,14 +164,6 @@ class DriftManager(watcher.Watcher):
 			threshold = driftdata['threshold']
 			target = emtarget['target']
 			self.presetsclient.toScope(pname, emtarget)
-
-			# There is a bug due to the fact that sending the preset
-			# and target to the scope is not sufficient to get the
-			# same drift measurement that focuser is getting.  Beam tilt
-			# was not the same as it is here.  We could find a way to 
-			# set the same beam tilt here, but it is easier to do the focuser
-			# drift measurement without a beam tilt.
-
 		else:
 			target = None
 			threshold = None
@@ -186,15 +186,17 @@ class DriftManager(watcher.Watcher):
 		self.logger.info('DriftManager done monitoring drift')
 		self.setStatus('idle')
 
-	def acquireImage(self):
+	def acquireImage(self, channel=0):
+		self.instrument.setCorrectionChannel(channel)
 		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		if imagedata is not None:
-			self.setImage(imagedata['image'])
+			self.setImage(imagedata['image'], 'Image')
 		return imagedata
 
 	def acquireLoop(self, target=None, threshold=None):
 		## acquire first image
-		imagedata = self.acquireImage()
+		corchan = 0
+		imagedata = self.acquireImage(channel=corchan)
 		if imagedata is None:
 			return 'aborted'
 		numdata = imagedata['image']
@@ -219,8 +221,12 @@ class DriftManager(watcher.Watcher):
 			## wait for interval
 			time.sleep(self.settings['pause time'])
 
-			## acquire next image
-			imagedata = self.acquireImage()
+			## acquire next image at different correction channel than previous
+			if corchan == 0:
+				corchan = 1
+			else:
+				corchan = 0
+			imagedata = self.acquireImage(channel=corchan)
 			numdata = imagedata['image']
 			binning = imagedata['camera']['binning']['x']
 			t1 = imagedata['scope']['system time']
@@ -231,6 +237,9 @@ class DriftManager(watcher.Watcher):
 			peak = self.peakfinder.subpixelPeak(newimage=pc)
 			rows,cols = self.peak2shift(peak, pc.shape)
 			dist = Numeric.hypot(rows,cols)
+
+			self.setImage(pc, 'Correlation')
+			self.setTargets([(peak[1],peak[0])], 'Peak')
 
 			## calculate drift 
 			meters = dist * binning * pixsize
@@ -284,7 +293,7 @@ class DriftManager(watcher.Watcher):
 		self.logger.info('Pixel size %s' % (pixsize,))
 
 		## acquire first image
-		imagedata = self.acquireImage()
+		imagedata = self.acquireImage(0)
 		numdata = imagedata['image']
 		t0 = imagedata['scope']['system time']
 		self.correlator.insertImage(numdata)
@@ -293,7 +302,7 @@ class DriftManager(watcher.Watcher):
 		time.sleep(self.settings['pause time'])
 		
 		## acquire next image
-		imagedata = self.acquireImage()
+		imagedata = self.acquireImage(1)
 		numdata = imagedata['image']
 		t1 = imagedata['scope']['system time']
 		self.correlator.insertImage(numdata)
@@ -303,6 +312,9 @@ class DriftManager(watcher.Watcher):
 		peak = self.peakfinder.subpixelPeak(newimage=pc)
 		rows,cols = self.peak2shift(peak, pc.shape)
 		dist = Numeric.hypot(rows,cols)
+
+		self.setImage(pc, 'Correlation')
+		self.setTargets([(peak[1],peak[0])], 'Peak')
 
 		## calculate drift 
 		meters = dist * pixsize
