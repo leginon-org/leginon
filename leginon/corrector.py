@@ -68,6 +68,7 @@ class Corrector(node.Node):
 		'clip max': 2**16,
 		'camera settings': None,
 		'combine': 'average',
+		'channels': 1,
 	}
 	eventinputs = node.Node.eventinputs
 	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent]
@@ -122,23 +123,27 @@ class Corrector(node.Node):
 			self.plan = self.retrievePlan(ccdcamera, newcamstate)
 
 	def acquireDark(self):
-		try:
-			imagedata = self.acquireReference(dark=True)
-		except Exception, e:
-			self.logger.exception('Cannot acquire dark reference: %s' % e)
-		else:
-			self.displayImage(imagedata)
-			self.beep()
+		channels = self.settings['channels']
+		for channel in range(channels):
+			try:
+				imagedata = self.acquireReference(type='dark', channel=channel)
+			except Exception, e:
+				self.logger.exception('Cannot acquire dark reference: %s' % e)
+			else:
+				self.displayImage(imagedata)
+				self.beep()
 		self.panel.acquisitionDone()
 
 	def acquireBright(self):
-		try:
-			imagedata = self.acquireReference(dark=False)
-		except Exception, e:
-			self.logger.exception('Cannot acquire bright reference: %s' % e)
-		else:
-			self.displayImage(imagedata)
-			self.beep()
+		channels = self.settings['channels']
+		for channel in range(channels):
+			try:
+				imagedata = self.acquireReference(type='bright', channel=channel)
+			except Exception, e:
+				self.logger.exception('Cannot acquire bright reference: %s' % e)
+			else:
+				self.displayImage(imagedata)
+				self.beep()
 		self.panel.acquisitionDone()
 
 	def acquireRaw(self):
@@ -197,11 +202,11 @@ class Corrector(node.Node):
 			series.append(image)
 		return series
 
-	def acquireReference(self, dark=False):
+	def acquireReference(self, type, channel):
 		try:
 			self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			exposuretype = self.instrument.ccdcamera.ExposureType
-			if dark:
+			if type == 'dark':
 				if exposuretype != 'dark':
 					self.instrument.ccdcamera.ExposureType = 'dark'
 				typekey = 'dark'
@@ -238,7 +243,7 @@ class Corrector(node.Node):
 		corstate.friendly_update(geometry)
 		scopedata = self.instrument.getData(data.ScopeEMData)
 
-		refimagedata = self.storeRef(typekey, ref, corstate, scopedata)
+		refimagedata = self.storeRef(typekey, ref, corstate, scopedata, channel)
 		if refimagedata is not None:
 			self.logger.info('Got reference image, calculating normalization')
 			self.calc_norm(refimagedata, self.instrument.getCCDCameraName(), scopedata)
@@ -251,7 +256,7 @@ class Corrector(node.Node):
 
 		return ref
 
-	def researchRef(self, camstate, type, ccdcameraname, scopedata):
+	def researchRef(self, camstate, type, ccdcameraname, scopedata, channel):
 		if type == 'dark':
 			imagetemp = data.DarkImageData()
 		elif type == 'bright':
@@ -268,6 +273,7 @@ class Corrector(node.Node):
 		# only care about high tension for query
 		imagetemp['scope'] = data.ScopeEMData()
 		imagetemp['scope']['high tension'] = scopedata['high tension']
+		imagetemp['channel'] = channel
 		try:
 			ref = self.research(datainstance=imagetemp, results=1)[0]
 		except node.ResearchError, e:
@@ -295,13 +301,13 @@ class Corrector(node.Node):
 				exptype = key[6]
 		except IndexError:
 			exptype = 'unknown image'
-		s = '%s: %dV, %dx%d, offset (%d, %d), binned %dx%d'
+		s = '%s, %dV, size %dx%d, bin %dx%d, offset (%d,%d), channel %d'
 		try:
-			return s % (exptype, key[8], key[0], key[1], key[4], key[5], key[2], key[3])
+			return s % (exptype, key[8], key[0], key[1], key[2], key[3], key[4], key[5], key[9])
 		except IndexError:
 			return str(key)
 
-	def refKey(self, camstate, type, ccdcameraname, scopedata):
+	def refKey(self, camstate, type, ccdcameraname, scopedata, channel):
 		mylist = []
 		for param in ('dimension', 'binning', 'offset'):
 			values = camstate[param]
@@ -313,10 +319,11 @@ class Corrector(node.Node):
 		mylist.append(type)
 		mylist.append(ccdcameraname)
 		mylist.append(scopedata['high tension'])
+		mylist.append(channel)
 		return tuple(mylist)
 
-	def retrieveRef(self, camstate, type, ccdcameraname, scopedata):
-		key = self.refKey(camstate, type, ccdcameraname, scopedata)
+	def retrieveRef(self, camstate, type, ccdcameraname, scopedata, channel):
+		key = self.refKey(camstate, type, ccdcameraname, scopedata, channel)
 		## another way to do the cache would be to use the local
 		##   data keeper
 
@@ -327,7 +334,7 @@ class Corrector(node.Node):
 			self.logger.info('Loading %s...' % self.formatKey(key))
 
 		## use reference image from database
-		ref = self.researchRef(camstate, type, ccdcameraname, scopedata)
+		ref = self.researchRef(camstate, type, ccdcameraname, scopedata, channel)
 		if ref:
 			## make it float to do float math later
 			image = ref['image'].astype(Numeric.Float32)
@@ -336,14 +343,14 @@ class Corrector(node.Node):
 			image = None
 		return image
 
-	def storeRef(self, type, numdata, camstate, scopedata):
+	def storeRef(self, type, numdata, camstate, scopedata, channel):
 		## another way to do the cache would be to use the local
 		## data keeper
 
 		ccdcameraname = self.instrument.getCCDCameraName()
 		ht = scopedata['high tension']
 		## store in cache
-		key = self.refKey(camstate, type, ccdcameraname, scopedata)
+		key = self.refKey(camstate, type, ccdcameraname, scopedata, channel)
 		self.ref_cache[key] = numdata
 
 		## store in database
@@ -360,6 +367,7 @@ class Corrector(node.Node):
 		imagetemp['tem'] = self.instrument.getTEMData()
 		imagetemp['ccdcamera'] = self.instrument.getCCDCameraData()
 		imagetemp['scope'] = scopedata
+		imagetemp['channel'] = channel
 		self.logger.info('Publishing reference image...')
 		try:
 			self.publish(imagetemp, pubevent=True, database=True)
@@ -375,15 +383,16 @@ class Corrector(node.Node):
 
 	def calc_norm(self, corimagedata, ccdcameraname, scopedata):
 		corstate = corimagedata['camstate']
+		channel = corimagedata['channel']
 		if isinstance(corimagedata, data.DarkImageData):
 			dark = corimagedata['image']
-			bright = self.retrieveRef(corstate, 'bright', ccdcameraname, scopedata)
+			bright = self.retrieveRef(corstate, 'bright', ccdcameraname, scopedata, channel)
 			if bright is None:
 				self.logger.warning('No bright reference image for normalization calculations')
 				return
 		if isinstance(corimagedata, data.BrightImageData):
 			bright = corimagedata['image']
-			dark = self.retrieveRef(corstate, 'dark', ccdcameraname, scopedata)
+			dark = self.retrieveRef(corstate, 'dark', ccdcameraname, scopedata, channel)
 			if dark is None:
 				self.logger.warning('No dark reference image for normalization calculations')
 				return
@@ -398,7 +407,7 @@ class Corrector(node.Node):
 		# so make sure there are no zeros in norm
 		norm = Numeric.clip(norm, 0.001, sys.maxint)
 		norm = normavg / norm
-		self.storeRef('norm', norm, corstate, scopedata)
+		self.storeRef('norm', norm, corstate, scopedata, channel)
 
 	def acquireCorrectedImage(self, ccdcameraname=None):
 		try:
@@ -412,11 +421,13 @@ class Corrector(node.Node):
 			geometry = proxy.Geometry
 			cam = self.instrument.getCCDCameraData(name=ccdcameraname)
 			scopedata = self.instrument.getData(data.ScopeEMData)
+			cameradata = self.instrument.getData(data.CameraEMData)
+			channel = cameradata['correction channel']
 		except Exception, e:
 			self.logger.exception('Unable to acquire image: %s' % e)
 			return None
 		try:
-			image = self.correct(cam, image, geometry, scopedata)
+			image = self.correct(cam, image, geometry, scopedata, channel)
 		except Exception, e:
 			self.logger.warning('Unable to correct acquired image: %s' % e)
 			return None
@@ -442,19 +453,20 @@ class Corrector(node.Node):
 		corstate['dimension'] = camdata['dimension']
 		corstate['offset'] = camdata['offset']
 		corstate['binning'] = camdata['binning']
-		corrected = self.correct(ccdcamera, numimage, corstate, scopedata)
+		channel = camdata['correction channel']
+		corrected = self.correct(ccdcamera, numimage, corstate, scopedata, channel)
 		newdata = data.CorrectedCameraImageData(initializer=imagedata,
 																						image=corrected)
 		self.setStatus('idle')
 		return newdata
 
-	def correct(self, ccdcamera, original, camstate, scopedata):
+	def correct(self, ccdcamera, original, camstate, scopedata, channel):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
 		if type(camstate) is dict:
 			camstate = data.CorrectorCamstateData(initializer=camstate)
-		normalized = self.normalize(original, camstate, ccdcamera['name'], scopedata)
+		normalized = self.normalize(original, camstate, ccdcamera['name'], scopedata, channel)
 		plan = self.retrievePlan(ccdcamera, camstate)
 		if plan is not None:
 			self.fixBadPixels(normalized, plan)
@@ -545,9 +557,12 @@ class Corrector(node.Node):
 					else:
 						image[:,bad] = image[:,good]
 
-	def normalize(self, raw, camstate, ccdcameraname, scopedata):
-		dark = self.retrieveRef(camstate, 'dark', ccdcameraname, scopedata)
-		norm = self.retrieveRef(camstate, 'norm', ccdcameraname, scopedata)
+	def normalize(self, raw, camstate, ccdcameraname, scopedata, channel):
+		## if channel not set, default to 0
+		if channel is None:
+			channel = 0
+		dark = self.retrieveRef(camstate, 'dark', ccdcameraname, scopedata, channel)
+		norm = self.retrieveRef(camstate, 'norm', ccdcameraname, scopedata, channel)
 		if dark is not None and norm is not None:
 			diff = raw - dark
 			## this may result in some infinity values

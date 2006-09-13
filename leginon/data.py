@@ -877,6 +877,7 @@ camera_params = (
 	('energy filtered', bool),
 	('energy filter', bool),
 	('energy filter width', float),
+	('correction channel', int),
 )
 
 class ScopeEMData(EMData):
@@ -1231,6 +1232,7 @@ class CorrectorImageData(ImageData):
 			('tem', InstrumentData),
 			('ccdcamera', InstrumentData),
 			('scope', ScopeEMData),
+			('channel', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -1729,6 +1731,7 @@ class CorrectorSettingsData(SettingsData):
 			('combine', str),
 			('clip min', float),
 			('clip max', float),
+			('channels', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -2258,4 +2261,3 @@ class ReferenceSettingsData(SettingsData):
 			('interval time', float),
 		)
 	typemap = classmethod(typemap)
-
