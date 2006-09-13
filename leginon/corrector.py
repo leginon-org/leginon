@@ -278,18 +278,31 @@ class Corrector(node.Node):
 		imagetemp['scope']['high tension'] = scopedata['high tension']
 		imagetemp['channel'] = channel
 		try:
-			ref = self.research(datainstance=imagetemp, results=1)[0]
+			ref = self.research(datainstance=imagetemp, results=1)
 		except node.ResearchError, e:
 			self.logger.warning('Loading reference image failed: %s' % (e,))
-			ref = None
-		except IndexError:
-			self.logger.warning('Loading reference image failed')
 			ref = None
 		except Exception, e:
 			self.logger.error('Loading reference image failed: %s' % e)
 			ref = None
+
+		if ref:
+			ref = ref[0]
 		else:
+			# check if no results because no ref of requested channel
+			# try to get ref of any channel
+			imagetemp['channel'] = None
+			ref = self.research(datainstance=imagetemp, results=1)
+			if ref:
+				ref = ref[0]
+				self.logger.warning('channel requested: %s, channel available: %s' % (channel, ref['channel']))
+			else:
+				self.logger.error('No reference image in database')
+				ref = None
+
+		if ref is not None:
 			self.logger.info('Reference image loaded: %s' % (ref['filename'],))
+
 		return ref
 
 	def formatKey(self, key):
@@ -338,7 +351,6 @@ class Corrector(node.Node):
 
 		## use reference image from database
 		ref = self.researchRef(camstate, type, ccdcameraname, scopedata, channel)
-		self.logger.info('%s channel %s' % (type, ref['channel'],))
 		if ref:
 			## make it float to do float math later
 			image = ref['image'].astype(Numeric.Float32)
