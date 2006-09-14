@@ -89,6 +89,8 @@ class Navigator(node.Node):
 		self.peakfinder = peakfinder.PeakFinder()
 		self.imagedata = None
 		self.oldimagedata = None
+		self.oldstate = None
+		self.newstate = None
 
 		self.addEventInput(event.MoveToTargetEvent, self.handleMoveEvent)
 
@@ -150,6 +152,15 @@ class Navigator(node.Node):
 
 		self.panel.navigateDone()
 
+	def _moveback(self):
+		self.logger.info('moving back to previous state')
+		emdat = data.ScopeEMData(initializer=self.oldstate)
+		try:
+			self.instrument.setData(emdat)
+		except:
+			self.logger.exception(errstr % 'unable to set instrument')
+			return
+
 	def _move(self, image, row, col, movetype):
 		errstr = 'Move failed: %s'
 		# get relavent info from click event
@@ -176,6 +187,8 @@ class Navigator(node.Node):
 			self.panel.navigateDone()
 			return
 
+		self.oldstate = self.newstate
+		self.newstate = newstate
 		emdat = data.ScopeEMData(initializer=newstate)
 		try:
 			self.instrument.setData(emdat)
@@ -200,6 +213,7 @@ class Navigator(node.Node):
 				self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
 				if dist > lastdist:
 					self.logger.info('error got worse')
+					self._moveback()
 					break
 
 			self.logger.info('correction done')
