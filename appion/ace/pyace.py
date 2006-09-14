@@ -12,7 +12,7 @@ db=dbdatakeeper.DBDataKeeper()
 acedonename='.acedone.py'
 
 def printHelp():
-	print "\nUsage:\npyace.py edgethcarbon=<n> edgethice=<n> pfcarbon=<n> pfice=<n> overlap=<n> fieldsize=<n> resamplefr=<n> drange=<n> dbimages=<session_id>,<preset> tempdir=<dir> [medium=carbon or medium=ice] cs=<n> outdir=<dir> runid=<runid> [display=1 or display=0] [stig=0 or stig=1] continue nominal=<n>\n"
+	print "\nUsage:\npyace.py edgethcarbon=<n> edgethice=<n> pfcarbon=<n> pfice=<n> overlap=<n> fieldsize=<n> resamplefr=<n> drange=<n> dbimages=<session_id>,<preset> tempdir=<dir> [medium=carbon or medium=ice] cs=<n> outdir=<dir> runid=<runid> [display=1 or display=0] [stig=0 or stig=1] continue nominal=<n> commit\n"
 	print "Example:\npyace.py dbimages=06aug30b,en medium=ice continue\n"
 	print "edgethcarbon=<n>            : threshold for edge detection with medium=carbon (default=0.8)"
 	print "edgethice=<n>               : threshold for edge detection with medium=ice (default=0.6)"
@@ -33,6 +33,7 @@ def printHelp():
 	print "continue                    : if continue is specified, previously processed images for <runid> will be skipped"
 	print "nominal=<n>                 : if present, the value specified by nominal will override the value returned from the database (default=None)"
 	print "                              value specified should be in meters, for example: nominal=-2.0e-6"
+	print "commit                      : if commit is specified, ctf parameters will be stored to the database"
 	sys.exit()
 		 
 def createDefaults():
@@ -58,6 +59,7 @@ def createDefaults():
 	params['stig']=0
 	params['continue']='FALSE'
 	params['nominal']=None
+	params['commit']='FALSE'
 
 	return(params)
 
@@ -134,6 +136,9 @@ def parseInput(args):
 			params['continue']='TRUE'
 		elif (elements[0]=='nominal'):
 			params['nominal']=float(elements[1])
+		elif arg=='commit':
+			params['commit']='TRUE'
+			params['display']=1
 		else:
 			print "undefined parameter", arg
 			sys.exit()
@@ -274,7 +279,19 @@ def runAce(matlab,img,params):
 		pymat.eval(matlab,("im1 = imread('%s');" % (imfile1)))
 		pymat.eval(matlab,("im2 = imread('%s');" % (imfile2))) 
 		pymat.eval(matlab,("imwrite(im1,'%s');" % (opimfile1)))
-		pymat.eval(matlab,("imwrite(im2,'%s');" % (opimfile2)))		
+		pymat.eval(matlab,("imwrite(im2,'%s');" % (opimfile2)))
+
+		#display must be on to be able to commit to db 	
+		if params['commit']=='TRUE':
+			expid=int(img['session'].dbid)
+			legimgid=int(img.dbid)
+			legpresetid =int(img['preset'].dbid)
+			dforig=img['scope']['defocus']
+			commitcommand=("dbctf(%d, '%s', %d, %d, '%s', %e, ctfparams, '%s', '%s', '%s')" % (expid, params['runid'], legimgid, legpresetid, (imgname + '.mrc'), -dforig, opimfile1, opimfile2, matfile))
+			#print commitcommand
+			print "Committing ctf parameters for", imgname, "to database."
+			pymat.eval(matlab, commitcommand)
+				
 	return
 
 def getOutDirs(params):
