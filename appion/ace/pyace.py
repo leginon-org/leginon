@@ -12,7 +12,7 @@ db=dbdatakeeper.DBDataKeeper()
 acedonename='.acedone.py'
 
 def printHelp():
-	print "\nUsage:\npyace.py edgethcarbon=<n> edgethice=<n> pfcarbon=<n> pfice=<n> overlap=<n> fieldsize=<n> resamplefr=<n> drange=<n> dbimages=<session_id>,<preset> tempdir=<dir> [medium=carbon or medium=ice] cs=<n> outdir=<dir> runid=<runid> [display=1 or display=0] [stig=0 or stig=1] continue nominal=<n> commit\n"
+	print "\nUsage:\npyace.py edgethcarbon=<n> edgethice=<n> pfcarbon=<n> pfice=<n> overlap=<n> fieldsize=<n> fr=<n> drange=<n> dbimages=<session_id>,<preset> tempdir=<dir> [medium=carbon or medium=ice] cs=<n> outdir=<dir> runid=<runid> [display=1 or display=0] [stig=0 or stig=1] continue nominal=<n> commit\n"
 	print "Example:\npyace.py dbimages=06aug30b,en medium=ice continue\n"
 	print "edgethcarbon=<n>            : threshold for edge detection with medium=carbon (default=0.8)"
 	print "edgethice=<n>               : threshold for edge detection with medium=ice (default=0.6)"
@@ -85,7 +85,7 @@ def parseInput(args):
 		elif (elements[0]=='fieldsize'):
 			params["fieldsize"]=int(elements[1])
 		elif (elements[0]=='resamplefr'):
-			params["resamplefr"]=int(elements[1])
+			params["resamplefr"]=float(elements[1])
 		elif (elements[0]=='drange'):
 			drange=int(elements[1])
 			if drange == 1 or drange== 0:
@@ -225,7 +225,7 @@ def setAceConfig(matlab,params):
 		pymat.eval(matlab, ("pfice=%f;" % params['pfice']))
 		pymat.eval(matlab, ("overlap=%d;" % params['overlap']))
 		pymat.eval(matlab, ("fieldsize=%d;" % params['fieldsize']))
-		pymat.eval(matlab, ("resamplefr=%d;" % params['resamplefr']))
+		pymat.eval(matlab, ("resamplefr=%f;" % params['resamplefr']))
 		pymat.eval(matlab, ("drange=%d;" % params['drange']))
 		acecommand=("save('%s','edgethcarbon','edgethice','pfcarbon','pfice','overlap','fieldsize','resamplefr','drange');" % aceconfig )
 #		print acecommand
