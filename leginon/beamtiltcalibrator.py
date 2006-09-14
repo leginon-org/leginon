@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/beamtiltcalibrator.py,v $
-# $Revision: 1.75 $
+# $Revision: 1.76 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-29 23:44:39 $
+# $Date: 2006-09-14 00:03:18 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -171,7 +171,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		self.panel.calibrationDone()
 
-	def __calibrateStigmator(self, lens, beam_tilt, delta, stigmator):
+	def __calibrateStigmator(self, beam_tilt, delta, stigmator):
 		if self.initInstruments():
 			raise RuntimeError('cannot initialize instrument')
 
@@ -191,7 +191,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 				v = dict(stigmator)
 				v[stig_axis] += delta
 				parameters.append(v[stig_axis])
-				s = data.ScopeEMData(stigmator={lens: v})
+				s = data.ScopeEMData(stigmator={'objective': v})
 				states.append(s)
 
 			matrix = numarray.identity(2, numarray.Float)
@@ -212,24 +212,22 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			args = (high_tension, magnification, type, matrix)
 			calibration_client.storeMatrix(*args)
 
-	def _calibrateStigmator(self, lens, beam_tilt, delta):
+	def _calibrateStigmator(self, beam_tilt, delta):
 		rotation_center = self.instrument.tem.BeamTilt
-		stigmator = self.instrument.tem.Stigmator[lens]
+		stigmator = self.instrument.tem.Stigmator['objective']
 		try:
-			self.__calibrateStigmator(lens, beam_tilt, delta, stigmator)
+			self.__calibrateStigmator(beam_tilt, delta, stigmator)
 		finally:
 			self.instrument.tem.BeamTilt = rotation_center
-			self.instrument.tem.Stigmator = {lens: stigmator}
+			self.instrument.tem.Stigmator = {'objective': stigmator}
 
 	def calibrateStigmator(self):
-		## lens will eventually be automatically determined based on mag table
-		lens = 'objective'
 		beam_tilt = self.settings['stig beam tilt']
 		delta = self.settings['stig delta']
 
-		self.logger.info('Calibrating %s stigmator...' % lens)
+		self.logger.info('Calibrating objective stigmator...')
 		try:
-			self._calibrateStigmator(lens, beam_tilt, delta)
+			self._calibrateStigmator(beam_tilt, delta)
 		except Exception, e:
 			self.logger.error('Calibration failed: %s' % e)
 		else:
@@ -270,10 +268,9 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def measure(self):
 		beam_tilt = self.settings['measure beam tilt']
-		lens = 'objective'
 		correct_tilt = self.settings['correct tilt']
 
-		self.logger.info('Measuring defocus and %s stigmator...' % lens)
+		self.logger.info('Measuring defocus and objective stigmator...')
 		try:
 			args = self._measure(beam_tilt, correct_tilt)
 		except Exception, e:
@@ -287,7 +284,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		try:
 			measurement = self.measurement['defocus']
 		except:
-			raise RuntimeError('no measurment')
+			raise RuntimeError('no measurement')
 		defocus = self.instrument.tem.Defocus
 		self.instrument.tem.Defocus = defocus + measurement
 
@@ -302,21 +299,19 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		self.panel.setInstrumentDone()
 
-	def _correctStigmator(self, lens):
-		stigmator = self.instrument.tem.Stigmator[lens]
+	def _correctStigmator(self):
+		stigmator = self.instrument.tem.Stigmator['objective']
 		try:
 			for axis in ('x', 'y'):
-				stigmator[axis] += self.measurement[lens][axis]
+				stigmator[axis] += self.measurement[axis]
 		except:
-			raise RuntimeError('no measurment')
-		self.instrument.tem.Stigmator = {lens: stigmator}
+			raise RuntimeError('no measurement')
+		self.instrument.tem.Stigmator = {'objective': stigmator}
 
 	def correctStigmator(self):
-		lens = 'objective'
-
-		self.logger.info('Correcting %s stigmator...' % lens)
+		self.logger.info('Correcting objective stigmator...')
 		try:
-			self._correctStigmator(lens)
+			self._correctStigmator()
 		except Exception, e:
 			self.logger.exception('Correction failed: %s' % e)
 		else:
