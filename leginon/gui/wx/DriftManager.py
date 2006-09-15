@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/DriftManager.py,v $
-# $Revision: 1.22 $
+# $Revision: 1.23 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-25 17:50:55 $
+# $Date: 2006-09-15 18:07:15 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -45,7 +45,12 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.toolbar.Realize()
 
 		# image
-		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
+		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
+		self.imagepanel.addTypeTool('Image', display=True)
+		self.imagepanel.selectiontool.setDisplayed('Image', True)
+		self.imagepanel.addTypeTool('Correlation', display=True)
+		self.imagepanel.addTargetTool('Peak', wx.Color(255,0,0))
+
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 
 		self.szmain.AddGrowableRow(1)
