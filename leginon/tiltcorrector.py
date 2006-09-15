@@ -180,3 +180,160 @@ class TiltCorrector(object):
 		#im2 = self.filter.convolve(im2)
 		imagedata['image'] = im2
 		return
+
+class VirtualStageTilter(object):
+	def __init__(self, node):
+		self.node = node
+
+	def maketrans(self, x1, y1, x2, y2, x3, y3, u1, v1, u2, v2, u3, v3):
+		'''
+		A method to create an affine transform matrix without thinking too hard.
+		Stolen from Craigs libcv code.
+		Given three points x,y, and their transformed points u,v, create
+		the transform between them (or is it inverse transform?)
+
+		Some day when we get smart, we can find a way to generate the affine
+		trans matrix directly from the stage calibration matrix without the
+		intermediate step of creating some fake points like this.
+		'''
+		det = 1.0/(u1*(v2-v3)-v1*(u2-u3)+(u2*v3-u3*v2))
+		IT = numarray.zeros((3,3), numarray.Float32)
+		IT[0][0] = ((v2-v3)*x1+(v3-v1)*x2+(v1-v2)*x3)*det
+		IT[0][1] = ((v2-v3)*y1+(v3-v1)*y2+(v1-v2)*y3)*det
+		IT[0][2] = 0
+		IT[1][0] = ((u3-u2)*x1+(u1-u3)*x2+(u2-u1)*x3)*det
+		IT[1][1] = ((u3-u2)*y1+(u1-u3)*y2+(u2-u1)*y3)*det
+		IT[1][2] = 0
+		IT[2][0] = ((u2*v3-u3*v2)*x1+(u3*v1-u1*v3)*x2+(u1*v2-u2*v1)*x3)*det
+		IT[2][1] = ((u2*v3-u3*v2)*y1+(u3*v1-u1*v3)*y2+(u1*v2-u2*v1)*y3)*det
+		IT[2][2] = 1
+		return IT
+
+	def affine_transform_matrix(self, stagematrix, alpha):
+		'''
+		create an affine transform matrix that will simulate a stage tilt
+		'''
+		## calculate stretch factor due to alpha tilt
+		stretch = 1.0 / numarray.cos(alpha)
+
+		## calculate angle of tiltaxis with respect to image row axis
+		tiltaxis = math.atan2(stagematrix[1,0],stagematrix[0,0])
+
+		## pixel vector for x move
+		xpixel = self.stageToPixel(stagematrix, 1.0, 0.0)
+		ypixel1 = self.stageToPixel(stagematrix, 0.0, 1.0)
+		ypixel2 = stretch*ypixel1[0], stretch*ypixel1[1]
+		
+		it = self.maketrans(0,0,xpixel[0],xpixel[1],ypixel1[0],ypixel1[1],0,0,xpixel[0],xpixel[1],ypixel2[0],ypixel2[1])
+
+		## create transform matrix
+		mat = it[:2,:2]
+
+		## inverted to calculate input coord from output coord
+		#mat = numarray.linear_algebra.inverse(mat)
+		return mat
+
+	def stageToPixel(self, matrix, x, y):
+		inverse_matrix = numarray.linear_algebra.inverse(matrix)
+		position_vector = numarray.array((x, y))
+		pixel = numarray.matrixmultiply(inverse_matrix, position_vector)
+		return pixel
+	
+	## calculation of offset for affine transform
+	def affine_transform_offset(self, shape, affine_matrix, imageshift):
+		'''
+		calculation of affine transform offset
+		for now we assume center of image
+		'''
+		carray = numarray.array(shape, numarray.Float32)
+		carray.shape = (2,)
+		carray = carray / 2.0
+
+		carray = carray + imageshift
+
+		carray2 = numarray.matrixmultiply(affine_matrix, carray)
+		imageshift2 = numarray.matrixmultiply(affine_matrix, carray)
+
+		offset = carray - carray2
+		return offset
+
+	def getMatrix(self, tem, cam, ht, mag, type):
+		matdat = data.MatrixCalibrationData()
+		matdat['tem'] = tem
+		matdat['ccdcamera'] = cam
+		matdat['type'] = type
+		matdat['magnification'] = mag
+		matdat['high tension'] = ht
+		caldatalist = self.node.research(datainstance=matdat, results=1)
+		if caldatalist:
+			return caldatalist[0]['matrix']
+		else:
+			excstr = 'No %s matrix for %s, %s, %seV, %sx' % (type, tem, cam, ht, mag)
+			raise RuntimeError(excstr)
+
+	def getStageMatrix(self, tem, cam, ht, mag):
+		return self.getMatrix(tem, cam, ht, mag, 'stage position')
+	
+	def getImageShiftMatrix(self, tem, cam, ht, mag):
+		return self.getMatrix(tem, cam, ht, mag, 'image shift')
+	
+	def itransform(self, shift, scope, camera):
+		'''
+		Copy of calibrationclient method
+		Calculate a pixel vector from an image center which 
+		represents the given parameter shift.
+		'''
+		mag = scope['magnification']
+		ht = scope['high tension']
+		binx = camera['binning']['x']
+		biny = camera['binning']['y']
+		par = 'image shift'
+		tem = scope['tem']
+		cam = camera['ccdcamera']
+		newshift = dict(shift)
+		vect = (newshift['x'], newshift['y'])
+		matrix = self.getImageShiftMatrix(tem, cam, ht, mag)
+		matrix = numarray.linear_algebra.inverse(matrix)
+
+		pixvect = numarray.matrixmultiply(matrix, vect)
+		pixvect = pixvect / (biny, binx)
+		return {'row':pixvect[0], 'col':pixvect[1]}
+
+	def edge_mean(self, im):
+		m1 = imagefun.mean(im[0])
+		m2 = imagefun.mean(im[-1])
+		m3 = imagefun.mean(im[:,0])
+		m4 = imagefun.mean(im[:,-1])
+		m = (m1+m2+m3+m4) / 4.0
+		return m
+	
+	def undo_tilt(self, imagedata):
+		'''
+		takes imagedata and calculates a corrected image
+		'''
+		## from imagedata
+		im = imagedata['image']
+		alpha = imagedata['scope']['stage position']['a']
+		ht = imagedata['scope']['high tension']
+		mag = imagedata['scope']['magnification']
+		tem = imagedata['scope']['tem']
+		cam = imagedata['camera']['ccdcamera']
+	
+		stagematrix = self.getStageMatrix(tem, cam, ht, mag)
+
+		mat = self.affine_transform_matrix(stagematrix, alpha)
+		scope = imagedata['scope']
+		camera = imagedata['camera']
+		## calculate pixel shift to get to image shift 0,0
+		imageshift = dict(scope['image shift'])
+		#pixelshift = self.itransform(imageshift, scope, camera)
+		#pixelshift = (pixelshift['row'], pixelshift['col'])
+		pixelshift = (0.0, 0.0)
+		offset = self.affine_transform_offset(im.shape, mat, pixelshift)
+		mean=self.edge_mean(im)
+		im2 = numarray.nd_image.affine_transform(im, mat, offset=offset, mode='constant', cval=mean)
+
+		#im2 = self.filter.convolve(im2)
+		imagedata['image'] = im2
+		return
+
