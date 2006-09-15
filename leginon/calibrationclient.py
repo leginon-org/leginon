@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.185 $
+# $Revision: 1.186 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-29 23:46:19 $
+# $Date: 2006-09-15 18:14:08 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -59,6 +59,7 @@ class CalibrationClient(object):
 		self.peakfinder = peakfinder.PeakFinder()
 		self.abortevent = threading.Event()
 		self.tiltcorrector = tiltcorrector.TiltCorrector(node)
+		self.stagetiltcorrector = tiltcorrector.VirtualStageTilter(node)
 
 	def checkAbort(self):
 		if self.abortevent.isSet():
@@ -84,7 +85,7 @@ class CalibrationClient(object):
 	def correctTilt(self, imagedata):
 		self.tiltcorrector.correct_tilt(imagedata)
 
-	def acquireStateImage(self, state, publish_image=False, settle=0.0, correct_tilt=False):
+	def acquireStateImage(self, state, publish_image=False, settle=0.0, correct_tilt=False, corchannel=0):
 		self.node.logger.debug('Acquiring image...')
 		## acquire image at this state
 
@@ -94,6 +95,7 @@ class CalibrationClient(object):
 
 		time.sleep(settle)
 
+		self.instrument.setCorrectionChannel(corchannel)
 		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		if correct_tilt:
 			self.correctTilt(imagedata)
@@ -111,7 +113,7 @@ class CalibrationClient(object):
 		info = {'requested state': state, 'imagedata': imagedata, 'image stats': image_stats}
 		return info
 
-	def measureStateShift(self, state1, state2, publish_images=False, settle=0.0, drift_threshold=None, image_callback=None, target=None, correct_tilt=False, correlation_type=None):
+	def measureStateShift(self, state1, state2, publish_images=False, settle=0.0, drift_threshold=None, target=None, correct_tilt=False, correlation_type=None):
 		'''
 		Measures the pixel shift between two states
 		 Returned dict has these keys:
@@ -125,7 +127,7 @@ class CalibrationClient(object):
 		self.node.logger.info('Acquiring images...')
 
 		self.node.logger.info('Acquiring image (1 of 2)')
-		info1 = self.acquireStateImage(state1, publish_images, settle, correct_tilt=correct_tilt)
+		info1 = self.acquireStateImage(state1, publish_images, settle, correct_tilt=correct_tilt, corchannel=0)
 		binning = info1['imagedata']['camera']['binning']['x']
 		imagedata1 = info1['imagedata']
 		imagecontent1 = imagedata1
@@ -133,8 +135,7 @@ class CalibrationClient(object):
 		actual1 = imagecontent1['scope']
 		t0 = actual1['system time']
 		self.numimage1 = imagecontent1['image']
-		if image_callback is not None:
-			apply(image_callback, (self.numimage1, 'Correlation'))
+		self.displayImage(self.numimage1)
 		self.correlator.insertImage(self.numimage1)
 
 		self.checkAbort()
@@ -146,15 +147,14 @@ class CalibrationClient(object):
 			self.node.logger.info('Checking for drift...')
 
 			## state=None means do not set the values on the scope
-			info1 = self.acquireStateImage(None, publish_images, settle, correct_tilt=correct_tilt)
+			info1 = self.acquireStateImage(None, publish_images, settle, correct_tilt=correct_tilt, )
 			imagedata1 = info1['imagedata']
 			imagecontent1 = imagedata1
 			stats1 = info1['image stats']
 			actual1 = imagecontent1['scope']
 			t1 = actual1['system time']
 			self.numimage1 = imagecontent1['image']
-			if image_callback is not None:
-				apply(image_callback, (self.numimage1, 'Correlation'))
+			self.displayCorrelation(self.numimage1)
 			self.correlator.insertImage(self.numimage1)
 
 			self.node.logger.info('Correlating...')
@@ -175,10 +175,8 @@ class CalibrationClient(object):
 			self.peakfinder.subpixelPeak()
 			peak = self.peakfinder.getResults()
 			pixelpeak = peak['subpixel peak']
-			pixelpeak = pixelpeak[1],pixelpeak[0]
-
-			self.node.setImage(pcimage.astype(numarray.Float), 'Correlation')
-			self.node.setTargets([pixelpeak], 'Peak')
+			self.displayCorrelation(pcimage)
+			self.displayPeak(pixelpeak)
 
 			peakvalue = peak['subpixel peak value']
 			shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
@@ -212,14 +210,13 @@ class CalibrationClient(object):
 		self.checkAbort()
 
 		self.node.logger.info('Acquiring image (2 of 2)')
-		info2 = self.acquireStateImage(state2, publish_images, settle, correct_tilt=correct_tilt)
+		info2 = self.acquireStateImage(state2, publish_images, settle, correct_tilt=correct_tilt, corchannel=1)
 		imagedata2 = info2['imagedata']
 		imagecontent2 = imagedata2
 		stats2 = info2['image stats']
 		actual2 = imagecontent2['scope']
 		self.numimage2 = imagecontent2['image']
-		if image_callback is not None:
-			apply(image_callback, (self.numimage2,))
+		self.displayImage(self.numimage2)
 		self.correlator.insertImage(self.numimage2)
 
 		actual = (actual1, actual2)
@@ -233,7 +230,7 @@ class CalibrationClient(object):
 			try:
 				correlation_type = self.node.settings['correlation type']
 			except KeyError:
-				raise ValueError
+				correlation_type = 'phase'
 		if correlation_type == 'cross':
 			pcimage = self.correlator.crossCorrelate()
 		elif correlation_type == 'phase':
@@ -249,9 +246,8 @@ class CalibrationClient(object):
 		self.node.logger.debug('Peak minsum %f' % peak['minsum'])
 
 		pixelpeak = peak['subpixel peak']
-		pixelpeak = pixelpeak[1], pixelpeak[0]
-		self.node.setImage(pcimage.astype(numarray.Float), 'Correlation')
-		self.node.setTargets([pixelpeak], 'Peak')
+		self.displayCorrelation(pcimage)
+		self.displayPeak(pixelpeak)
 
 		peakvalue = peak['subpixel peak value']
 		shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
@@ -265,6 +261,28 @@ class CalibrationClient(object):
 		shiftinfo.update({'actual states': actual, 'pixel shift': unbinned, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2), 'driftdata': driftdata})
 		return shiftinfo
 
+	def displayImage(self, im):
+		try:
+			self.node.setImage(im.astype(numarray.Float), 'Image')
+		except:
+			pass
+
+	def displayCorrelation(self, im):
+		try:
+			self.node.setImage(im.astype(numarray.Float), 'Correlation')
+		except:
+			pass
+
+	def displayPeak(self, rowcol=None):
+		if rowcol is None:
+			targets = []
+		else:
+			# target display requires x,y order not row,col
+			targets = [(rowcol[1], rowcol[0])]
+		try:
+			self.node.setTargets(targets, 'Peak')
+		except:
+			pass
 
 class DoseCalibrationClient(CalibrationClient):
 	coulomb = 6.2414e18
@@ -521,7 +539,28 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		else:
 			return None
 
-	def measureDefocusStig(self, tilt_value, publish_images=False, drift_threshold=None, image_callback=None, stig=True, target=None, correct_tilt=False, correlation_type=None, settle=0.5):
+	def measureRotationCenter(self, defocus1, defocus2, drift_threshold=None, target=None, correlation_type=None, settle=0.5):
+		tem = self.instrument.getTEMData()
+		cam = self.instrument.getCCDCameraData()
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		try:
+			fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
+		except NoMatrixCalibrationError:
+				raise RuntimeError('missing calibration matrix')
+
+		state1 = data.ScopeEMData()
+		state2 = data.ScopeEMData()
+		state1['defocus'] = defocus1
+		state2['defocus'] = defocus2
+
+		shiftinfo = self.measureStateShift(state1, state2, settle=settle, drift_threshold=drift_threshold, target=target, correlation_type=correlation_type)
+		shift = shiftinfo['pixel shift']
+		d = shift['row'],shift['col']
+		bt = self.solveEq10_t(fmatrix, defocus1, defocus2, d)
+		return {'x':bt[0], 'y':bt[1]}
+
+	def measureDefocusStig(self, tilt_value, publish_images=False, drift_threshold=None, stig=True, target=None, correct_tilt=False, correlation_type=None, settle=0.5):
 		self.abortevent.clear()
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
@@ -562,7 +601,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			if nodrift:
 				drift_threshold = None
 			try:
-				shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=settle, drift_threshold=drift_threshold, image_callback=image_callback, target=target, correct_tilt=correct_tilt, correlation_type=correlation_type)
+				shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=settle, drift_threshold=drift_threshold, target=target, correct_tilt=correct_tilt, correlation_type=correlation_type)
 			except Abort:
 				break
 			except Drifting:
@@ -677,6 +716,18 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			'min': float(solution[1][0])
 			}
 		return result
+
+	def solveEq10_t(self, F, f1, f2, d):
+		'''
+		This solves t (misalignment) in equation 10 from Koster paper
+		given a displacement resulting from a defocus change
+		F is defocus calibration matric
+		f1, f2 are two defoci used to measure displacement d (row,col)
+		'''
+		a = (f2-f1) * F
+		b = numarray.array(d, numarray.Float)
+		tiltx,tilty = numarray.linear_algebra.solve_linear_equations(a,b)
+		return tiltx,tilty
 
 	def eq11(self, shifts, parameters, beam_tilt):
 		'''
@@ -908,7 +959,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 	def __init__(self, node):
 		StageCalibrationClient.__init__(self, node)
 
-	def measureZ(self, tilt_value, image_callback=None, correlation_type=None):
+	def measureZ(self, tilt_value, correlation_type=None):
 		'''
 		This is currently hard coded based on our Tecnai, but should be calibrated
 		for every scope.
@@ -923,7 +974,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		state2 = data.ScopeEMData()
 		state1['stage position'] = {'a':-tilt_value}
 		state2['stage position'] = {'a':tilt_value}
-		shiftinfo = self.measureStateShift(state1, state2, image_callback=image_callback, correlation_type=correlation_type)
+		shiftinfo = self.measureStateShift(state1, state2, correlation_type=correlation_type)
 		self.instrument.tem.StagePosition = {'a':orig_a}
 
 		state1,state2 = shiftinfo['actual states']
@@ -945,6 +996,49 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		z = y / 2.0 / math.sin(tilt_value)
 		return z
 
+	def measureTiltAxisLocation(self, tilt_value, correlation_type=None):
+		'''
+		measure position on image of tilt axis
+		'''
+		orig_a = self.instrument.tem.StagePosition['a']
+
+		state0 = data.ScopeEMData()
+		state1 = data.ScopeEMData()
+		state2 = data.ScopeEMData()
+		state0['stage position'] = {'a':0}
+		state1['stage position'] = {'a':-tilt_value}
+		state2['stage position'] = {'a':tilt_value}
+
+		self.node.logger.info('acquiring tilt=0')
+		self.instrument.setData(state0)
+		imagedata0 = self.instrument.getData(data.CorrectedCameraImageData)
+		im0 = imagedata0['image']
+		self.displayImage(im0)
+
+		self.node.logger.info('acquiring tilt=%s' % (-tilt_value,))
+		self.instrument.setData(state1)
+		imagedata1 = self.instrument.getData(data.CorrectedCameraImageData)
+		self.stagetiltcorrector.undo_tilt(imagedata1)
+		im1 = imagedata1['image']
+		self.displayImage(im1)
+
+		self.instrument.tem.StagePosition = {'a':orig_a}
+
+		self.node.logger.info('correlating')
+		self.correlator.setImage(0, im0)
+		self.correlator.setImage(1, im1)
+		pc = self.correlator.phaseCorrelate()
+		self.displayCorrelation(pc)
+
+		peak01 = self.peakfinder.subpixelPeak(pc)
+		shift01 = correlator.wrap_coord(peak01, pc.shape)
+
+		self.displayPeak(peak01)
+
+		# after drawing lots triangles, you get this equation:
+		scale = 1.0 / numarray.tan(tilt_value/2.0) / numarray.tan(tilt_value)
+		vector = scale*shift01[0], scale*shift01[1]
+		return imagedata0, vector
 
 class ModeledStageCalibrationClient(CalibrationClient):
 	def __init__(self, node):

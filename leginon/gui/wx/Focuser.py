@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.38 $
+# $Revision: 1.39 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-25 00:32:18 $
+# $Date: 2006-09-15 18:14:09 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -27,10 +27,14 @@ import gui.wx.FocusSequence
 UpdateImagesEventType = wx.NewEventType()
 ManualCheckEventType = wx.NewEventType()
 ManualCheckDoneEventType = wx.NewEventType()
+MeasureTiltAxisEventType = wx.NewEventType()
+AlignRotationCenterEventType = wx.NewEventType()
 
 EVT_UPDATE_IMAGES = wx.PyEventBinder(UpdateImagesEventType)
 EVT_MANUAL_CHECK = wx.PyEventBinder(ManualCheckEventType)
 EVT_MANUAL_CHECK_DONE = wx.PyEventBinder(ManualCheckDoneEventType)
+EVT_MEASURE_TILT_AXIS= wx.PyEventBinder(MeasureTiltAxisEventType)
+EVT_ALIGN = wx.PyEventBinder(AlignRotationCenterEventType)
 
 class UpdateImagesEvent(wx.PyCommandEvent):
     def __init__(self, source):
@@ -58,6 +62,10 @@ class Panel(gui.wx.Acquisition.Panel):
         self.toolbar.AddSeparator()
         self.toolbar.AddTool(gui.wx.ToolBar.ID_MANUAL_FOCUS, 'manualfocus',
                              shortHelpString='Manual Focus')
+        self.toolbar.AddTool(gui.wx.ToolBar.ID_ALIGN, 'rotcenter',
+                             shortHelpString='Align rotation center')
+        self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE_TILT_AXIS, 'tiltaxis',
+                             shortHelpString='Measure stage tilt axis')
         # correlation image
         self.imagepanel.addTypeTool('Correlation', display=True)
         self.imagepanel.addTargetTool('Peak', wx.Color(255, 128, 0))
@@ -65,6 +73,10 @@ class Panel(gui.wx.Acquisition.Panel):
         self.szmain.Layout()
 
     def onNodeInitialized(self):
+        self.measure_dialog = MeasureTiltAxisDialog(self)
+        self.Bind(EVT_MEASURE_TILT_AXIS, self.onMeasureTiltAxis, self)
+        self.align_dialog = AlignRotationCenterDialog(self)
+        self.Bind(EVT_ALIGN, self.onAlignRotationCenter, self)
         self.manualdialog = ManualFocusDialog(self, self.node)
         self.Bind(EVT_MANUAL_CHECK, self.onManualCheck, self)
         self.Bind(EVT_MANUAL_CHECK_DONE, self.onManualCheckDone, self)
@@ -75,6 +87,10 @@ class Panel(gui.wx.Acquisition.Panel):
                           id=gui.wx.ToolBar.ID_FOCUS_SEQUENCE)
         self.toolbar.Bind(wx.EVT_TOOL, self.onManualFocusTool,
                           id=gui.wx.ToolBar.ID_MANUAL_FOCUS)
+        self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTiltAxis,
+                          id=gui.wx.ToolBar.ID_MEASURE_TILT_AXIS)
+        self.toolbar.Bind(wx.EVT_TOOL, self.onAlignRotationCenter,
+                          id=gui.wx.ToolBar.ID_ALIGN)
 
     def onSettingsTool(self, evt):
         dialog = SettingsDialog(self)
@@ -125,6 +141,12 @@ class Panel(gui.wx.Acquisition.Panel):
     def manualUpdated(self):
         self.manualdialog.manualUpdated()
 
+    def onMeasureTiltAxis(self, evt):
+        self.measure_dialog.Show()
+
+    def onAlignRotationCenter(self, evt):
+        self.align_dialog.Show()
+
 class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
     def initialize(self):
         sizers = gui.wx.Acquisition.SettingsDialog.initialize(self)
@@ -150,6 +172,68 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 
         return sizers + [sbsz]
 
+class MeasureTiltAxisDialog(wx.Dialog):
+	def __init__(self, parent):
+		self.node = parent.node
+
+		wx.Dialog.__init__(self, parent, -1, 'Measure Stage Tilt Axis Location')
+
+		self.measure = wx.Button(self, -1, 'Measure')
+		self.Bind(wx.EVT_BUTTON, self.onMeasureButton, self.measure)
+
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.measure, (0, 0), (1, 1), wx.EXPAND)
+
+		sbsz = wx.GridBagSizer(5, 5)
+
+		tiltlabel = wx.StaticText(self, -1, 'Tilt (degrees):')
+		self.tiltvalue = FloatEntry(self, -1, allownone=False, chars=5, value='30')
+		sbsz.Add(tiltlabel, (0,0), (1,1))
+		sbsz.Add(self.tiltvalue, (0,1), (1,1))
+
+		self.sizer = wx.GridBagSizer(5, 5)
+		self.sizer.Add(sbsz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(self.measure, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
+
+		self.SetSizerAndFit(self.sizer)
+
+	def onMeasureButton(self, evt):
+		atilt = self.tiltvalue.GetValue()
+		threading.Thread(target=self.node.measureTiltAxis, args=(atilt,)).start()
+
+class AlignRotationCenterDialog(wx.Dialog):
+	def __init__(self, parent):
+		self.node = parent.node
+
+		wx.Dialog.__init__(self, parent, -1, 'Align Rotation Center')
+
+		self.measure = wx.Button(self, -1, 'Align')
+		self.Bind(wx.EVT_BUTTON, self.onMeasureButton, self.measure)
+
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.measure, (0, 0), (1, 1), wx.EXPAND)
+
+		sbsz = wx.GridBagSizer(5, 5)
+
+		label = wx.StaticText(self, -1, 'Defocus 1:')
+		self.d1value = FloatEntry(self, -1, allownone=False, chars=5, value='-2e-6')
+		sbsz.Add(label, (0,0), (1,1))
+		sbsz.Add(self.d1value, (0,1), (1,1))
+		label = wx.StaticText(self, -1, 'Defocus 2:')
+		self.d2value = FloatEntry(self, -1, allownone=False, chars=5, value='-4e-6')
+		sbsz.Add(label, (1,0), (1,1))
+		sbsz.Add(self.d2value, (1,1), (1,1))
+
+		self.sizer = wx.GridBagSizer(5, 5)
+		self.sizer.Add(sbsz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(self.measure, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
+
+		self.SetSizerAndFit(self.sizer)
+
+	def onMeasureButton(self, evt):
+		d1 = self.d1value.GetValue()
+		d2 = self.d2value.GetValue()
+		threading.Thread(target=self.node.alignRotationCenter, args=(d1,d2,)).start()
 
 class ManualFocusSettingsDialog(gui.wx.Dialog.Dialog):
     def onInitialize(self):

@@ -81,6 +81,7 @@ class Focuser(acquisition.Acquisition):
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.stagetiltcalclient = calibrationclient.StageTiltCalibrationClient(self)
+		self.imageshiftcalclient = calibrationclient.ImageShiftCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
 		self.focus_sequence = self.researchFocusSequence()
 		self.deltaz = 0.0
@@ -225,7 +226,7 @@ class Focuser(acquisition.Acquisition):
 		try:
 			## drift_threshold=None because now DriftManager does all the work.
 			## Should eventually remove all the drift stuff from calclient
-			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=None, image_callback=self.setImage, target=target, correct_tilt=True, correlation_type=setting['correlation type'], stig=True)
+			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=None, target=target, correct_tilt=True, correlation_type=setting['correlation type'], stig=setting['stig correction'])
 		except calibrationclient.Abort:
 			self.logger.info('Measurement of defocus and stig. has been aborted')
 			return 'aborted'
@@ -236,7 +237,12 @@ class Focuser(acquisition.Acquisition):
 			self.beep()
 			return 'repeat'
 
-		self.logger.info('Measured defocus: %.3e, stigx: %.3f, stigy: %.3f, min: %.2f' % (correction['defocus'], correction['stigx'], correction['stigy'], correction['min']))
+		if setting['stig correction']:
+			sx = '%.3f' % correction['stigx']
+			sy = '%.3f' % correction['stigy']
+		else:
+			sx = sy = 'N/A'
+		self.logger.info('Measured defocus: %.3e, stigx: %s, stigy: %s, min: %.2f' % (correction['defocus'], sx, sy, correction['min']))
 		defoc = correction['defocus']
 		stigx = correction['stigx']
 		stigy = correction['stigy']
@@ -340,7 +346,7 @@ class Focuser(acquisition.Acquisition):
 		self.logger.info('Pausing for %s seconds' % (delay,))
 		time.sleep(delay)
 
-		z = self.stagetiltcalclient.measureZ(atilt, image_callback=self.setImage, correlation_type=setting['correlation type'])
+		z = self.stagetiltcalclient.measureZ(atilt, correlation_type=setting['correlation type'])
 
 		self.logger.info('Measured Z: %.4e' % z)
 		resultdata['defocus'] = z
@@ -380,6 +386,25 @@ class Focuser(acquisition.Acquisition):
 
 			self.logger.info(resultstring)
 		return status
+
+	def alignRotationCenter(self, defocus1, defocus2):
+		bt = self.btcalclient.measureRotationCenter(defocus1, defocus2, drift_threshold=None, target=None, correlation_type=None, settle=0.5)
+		self.logger.info('Misalignment correction: %.4f, %.4f' % (bt['x'],bt['y'],))
+		oldbt = self.instrument.tem.BeamTilt
+		self.logger.info('Old beam tilt: %.4f, %.4f' % (oldbt['x'],oldbt['y'],))
+		newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
+		self.instrument.tem.BeamTilt = newbt
+		self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
+
+	def measureTiltAxis(self, atilt):
+		atilt = atilt * 3.14159 / 180.0
+		im0, axisoffset = self.stagetiltcalclient.measureTiltAxisLocation(atilt, correlation_type='phase')
+		pixelshift = {'row':-axisoffset[0], 'col':-axisoffset[1]}
+		oldscope = im0['scope']
+		newscope = self.imageshiftcalclient.transform(pixelshift, oldscope, im0['camera'])
+		imx = newscope['image shift']['x'] - oldscope['image shift']['x']
+		imy = newscope['image shift']['y'] - oldscope['image shift']['y']
+		self.logger.info('Image shift offset:  x = %.3e, y = %.3e' % (imx, imy))
 
 	def processFocusSetting(self, setting, target=None, emtarget=None):
 		resultdata = data.FocuserResultData(session=self.session)
