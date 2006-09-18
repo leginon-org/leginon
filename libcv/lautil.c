@@ -1,9 +1,41 @@
-#include "defs.h"
 #include "lautil.h"
+#include "util.h"
+#include "mutil.h"
 
-char InvertMatrix( double **matrix, double **result, int size ) {
+char GaussJordanElimination( double **matrix, double **result, int size ) {
 	
-	#define SWAP(a,b)	{ temp=(a); (a)=(b); (b)=temp; }
+	double **TEMP = CopyDMatrix(matrix,NULL,0,0,size-1,size-1);
+	
+	if ( TEMP == NULL ) {
+		Debug(1,"GaussJordanElimination: Out of memory.\n");
+		return FALSE;
+	}
+	
+	if ( !InvertMatrix(TEMP,size) ) {
+		Debug(1,"GaussJordanElimination: Matrix could not be inverted.\n");
+		FreeDMatrix(TEMP,0,0);
+		return FALSE;
+	}
+	
+	MATMULT( TEMP, result, 0,0, size-1,size-1 );
+	FreeDMatrix(TEMP,0,0);
+	
+	return TRUE;
+		
+}
+
+void MATMULT( double **A, double **B, int r1, int c1, int r2, int c2 ) {
+	int r, c, i;
+	double **TEMP = CopyDMatrix(B,NULL,r1,c1,r2,c2);
+	for (r=r1;r<=r2;r++) {
+		for (c=c1;c<=c2;c++) {
+			B[r][c] = 0;
+			for (i=c1;i<=c2;i++) B[r][c] += A[r][i] * TEMP[i][c];
+	}}
+	FreeDMatrix(TEMP,0,0);
+}	
+
+char InvertMatrix( double **A, int size ) {
 	
 	int i, icol = 0, irow = 0, j, k ,l ,ll;
 	double big, dum, pivinv, temp;
@@ -20,42 +52,47 @@ char InvertMatrix( double **matrix, double **result, int size ) {
 			if (ipiv[j] != 1) {
 				for(k=0;k<size;k++) {
 					if (ipiv[k] == 0) {
-						if (ABS(matrix[j][k]) >= big) {
-							big = ABS(matrix[j][k]);
+						if (ABS(A[j][k]) >= big) {
+							big = ABS(A[j][k]);
 							irow = j;
 							icol = k;
 						}
-					} else if ( ipiv[k] > 1) return FALSE;
+					} else if ( ipiv[k] > 1) {
+						Debug(1,"InvertMatrix: Matrix could not be inverted (Singular)\n");
+						return FALSE;
+					}
 				}
 			}
 		}
+		
 		++(ipiv[icol]);
 		
-		if (irow != icol) {
-			for (l=0;l<size;l++) SWAP(matrix[irow][l],matrix[icol][l])
-			for (l=0;l<size;l++) SWAP(result[irow][l],result[icol][l])
-		}
-		
+		if (irow != icol) for (l=0;l<size;l++) SWAP(A[irow][l],A[icol][l]);
+
 		indxr[i] = irow;
 		indxc[i] = icol;
 		
-		if (matrix[icol][icol] == 0) return FALSE;
-		pivinv = 1.0/matrix[icol][icol];
-		matrix[icol][icol] = 1;
-		for(l=0;l<size;l++) matrix[icol][l] *= pivinv;
-		for(l=0;l<size;l++) result[icol][l] *= pivinv;
+		if (A[icol][icol] == 0) {
+			Debug(1,"InvertMatrix: Matrix could not be inverted (Singular)\n");
+			return FALSE;
+		}
+		
+		pivinv = 1.0 / A[icol][icol];
+		A[icol][icol] = 1;
+		
+		for(l=0;l<size;l++) A[icol][l] *= pivinv;
 		
 		for (ll=0;ll<size;ll++) {
 			if	( ll != icol ) {
-				dum = matrix[ll][icol];
-				matrix[ll][icol] = 0;
-				for (l=0;l<size;l++) matrix[ll][l] -= matrix[icol][l]*dum;
-				for (l=0;l<size;l++) result[ll][l] -= result[icol][l]*dum;
+				dum = A[ll][icol];
+				A[ll][icol] = 0;
+				for (l=0;l<size;l++) A[ll][l] -= A[icol][l]*dum;
 			}
 		}
+		
 	}
 	
-	for (l=size-1; l >=0; l--) if (indxr[l] != indxc[l]) for (k=0;k<size;k++) SWAP(matrix[k][indxr[l]],matrix[k][indxc[l]]);
+	for (l=size-1; l >=0; l--) if (indxr[l] != indxc[l]) for (k=0;k<size;k++) SWAP(A[k][indxr[l]],A[k][indxc[l]]);
 	
 	return TRUE;
 		
@@ -312,7 +349,7 @@ void VZERO( double *vector, int l, int r ) {
 }
 
 void VRAND( double *vector, int l, int r ) {
-	while(l<=r) vector[l++] = randomnumber();
+	while(l<=r) vector[l++] = RandomNumber(0,1);
 }
 
 double IP( double *dp1, double *dp2, int l, int r ) {
@@ -853,4 +890,30 @@ char SVDCMP( double **A, int m, int n, double *W, double **V ) {
 		}
 	}
 	return TRUE;
+}
+
+char CholeskyDecomposition( double **A, int size ) {
+	
+	int	i, j, k;
+	double	sum;
+	double p[size];
+	
+	for ( i = 0; i < size; i++ ) {	
+		for ( j = i; j < size; j++ ) {
+			for ( sum=A[i][j],k=i-1;k>=0;k-- ) sum -= A[i][k]*A[j][k];
+			if ( i == j ) p[i] = sqrt(sum);
+			else A[j][i] = sum / p[i];
+		}
+	}
+
+	for ( i = 0; i < size; i++) {
+		for ( j = 0; j < i; j++) {
+			A[j][i] = A[i][j];
+			A[i][j] = 0.0;
+	}}
+
+	for( i = 0; i < size; i++ ) A[i][i] = p[i];
+	
+	return TRUE;
+	
 }

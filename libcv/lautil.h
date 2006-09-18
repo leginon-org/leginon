@@ -1,5 +1,11 @@
 
-char InvertMatrix( double **matrix, double **result, int size );
+#ifndef libCV_lautil
+#define libCV_lautil
+
+#define SWAP(a,b) { temp=(a); (a)=(b); (b)=temp; }
+
+char GaussJordanElimination( double **matrix, double **result, int size );
+char InvertMatrix( double **matrix, int size );
 
 char LUSolveMatrix( double **A, double **B, int m );
 char LUDecomp( double **A, int n, int *index );
@@ -7,6 +13,8 @@ void LUSolveVec( double **LU, int n, int *index, double *b );
 
 char SchurEigenVectors( double **T, double **Q, double **X_re, double **X_im, int m );
 char SchurDecomposition( double **A, double **Q, int m);
+
+char CholeskyDecomposition( double **A, int size );
 
 /* Low level C array functions.  They do not check any values passed for
 	correctness.  As a rule this means any passed pointer(s) must be addressable
@@ -44,3 +52,7 @@ void HHLDR3(double x, double y, double z, double *nu1, double *beta, double *new
 void ROTROWS( double **mat, int i, int k, double c, double s, double **out, int m, int n);
 void HHLDR3ROWS(double **A, int k, int i0, double beta, double nu1, double nu2, double nu3, int m, int n);
 void HHLDR3COLS(double **A, int k, int j0, double beta, double nu1, double nu2, double nu3, int m, int n);
+void MATMULT( double **A, double **B, int r1, int c1, int r2, int c2 );
+
+
+#endif

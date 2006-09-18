@@ -1,8 +1,8 @@
-#include "defs.h"
+#include "match.h"
 #include "lautil.h"
 
 /* Local Function Prototypes */
-Descriptor FindMatch( Descriptor d1, PStack d2s, int bound );
+void FindMatch( Descriptor d1, PStack d2s, int bound, PStack );
 float DistSquared( float *d1, float *d2);
 
 void FindMatches(PStack d1s, PStack d2s, PStack matches, int bound ) {	
@@ -10,23 +10,18 @@ void FindMatches(PStack d1s, PStack d2s, PStack matches, int bound ) {
 	int size = d1s->stacksize;
 	for (k=0;k<size;k++) {	
 		Descriptor d1 = d1s->items[k];
-		Descriptor d2 = FindMatch( d1, d2s, bound );
-		if ( d1 == NULL || d2 == NULL ) continue;
-		Match match = malloc(sizeof(struct MatchSt));
-		match->p1 = d1;
-		match->p2 = d2;
-		PushPStack(matches, match);
+		FindMatch( d1, d2s, bound, matches );
 	}
 }
 
-Descriptor FindMatch( Descriptor d1, PStack d2s, int bound ) {
+void FindMatch( Descriptor d1, PStack d2s, int bound, PStack matches ) {
 	
-    float distsq1 = 1000000000, distsq2 = 1000000000;
+	float distsq1 = 1000000000, distsq2 = 1000000000;
 	Descriptor d2 = NULL, dbest = NULL;
 	
 	int k;
 	int size = d2s->stacksize;
-    for (k=0;k<size;k++) {
+	for (k=0;k<size;k++) {
 		d2 = d2s->items[k];
 		if ( d1->descriptortype != d2->descriptortype ) continue;
 		if ( d1->descriptorlength != d2->descriptorlength ) continue;
@@ -39,11 +34,16 @@ Descriptor FindMatch( Descriptor d1, PStack d2s, int bound ) {
 		} else if (dist < distsq2) {
 			distsq2 = dist;
 		}
-    }
+	}
     
-	if ( distsq1*bound*bound >= distsq2*(bound-1)*(bound-1) ) return NULL;
-	return dbest;
-   
+	if ( distsq1*bound*bound >= distsq2*(bound-1)*(bound-1) ) return;
+
+	Match match = malloc(sizeof(struct MatchSt));
+   	match->p1 = d1;
+	match->p2 = dbest;
+	match->score = distsq1;
+	PushPStack(matches,match);
+
 }
 
 float FindArea( FArray array ) {
@@ -109,13 +109,18 @@ void ScreenMatches( PStack matches, double **transform ) {
 	float pgood = 0.95;
 	float pfail = 0.001;
 	int points  = 3;
-	int treshold = 1;
+	float treshold = 2;
 	int largest  = 1;
 	int j, goodpoints;
 	unsigned long i, max, L;
 	FArray fr = NewFArray(0,0,2,3);
 
 	int numberofmatches = matches->stacksize-1;
+	
+	if ( numberofmatches < 5 ) {
+		fprintf(stderr,"Not enough matches\n");
+		return;
+	}
 	
 	double **tbest = AllocDMatrix(3,3,0,0);
 	
@@ -126,7 +131,7 @@ void ScreenMatches( PStack matches, double **transform ) {
 		
 		ResizeFArray(fr,0,0,2,3);
 		for (j=0;j<3;j++) {
-			int entry = randomnumber()*numberofmatches;
+			int entry = RandomNumber(0,numberofmatches);
 			Match match = matches->items[entry];
 			SetFArray(fr,j,0,match->p1->row);
 			SetFArray(fr,j,1,match->p1->col);
@@ -165,7 +170,7 @@ void ScreenMatches( PStack matches, double **transform ) {
 		}
 
 		if ( i >= L ) {
-			pgood = pgood - 0.01;
+			pgood = pgood - 0.05;
 			L = (int) ceil((log(pfail))/(log(1-(pow(pgood,points)))));
 		}
 		

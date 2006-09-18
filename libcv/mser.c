@@ -1,384 +1,326 @@
-#include "defs.h"
+#include "util.h"
 #include "mser.h"
 #include "unionfind.h"
+#include "geometry.h"
 
+Ellipse FilterEllipse( Ellipse e ); void DrawRegion( Region key, float scale );
+void TrackRegions( MSERArray pa, PStack regions, int minSize, int maxSize );
+void EvaluateStableRegions( MSERArray ma, void **tSizes, PStack regions );
+void FindBorder( Image image, int row, int col, int t, Polygon borderPixels );
+void JoinNeighborsBelow( MSERArray ma, void **, int minSize, int maxSize );
+void JoinNeighborsAbove( MSERArray ma, void **, int minSize, int maxSize );
+void DrawConnectedRegions( MSERArray ma, int t, int minSize, int maxSize );
 
-char FindMSERegions( Image image, PStack regions, float minsize, float maxsize, float minperiod, float minstable ) {
+char FindMSERegions( Image image, PStack regions, float minSize, float maxSize, float minperiod, float minstable ) {
 	
-	if ( !ImageGood(image) || !PStackGood(regions) ) return FALSE;
+	if ( !ImageIsGood(image) || !PStackGood(regions) ) return FALSE;
 	
-	MSERArray pa = ImageToMSERArray(image);
+	float blurSigma = 2;
+	float sharpenSigma = 4.0;
 	
-	int maxarea  = pa->size;
-	int maxrange = pa->maxv - pa->minv;
-	
-	if ( minsize <= 1.0 ) minsize = MAX(maxarea*minsize,5);
-	if ( maxsize <= 1.0 ) maxsize = maxarea*maxsize,maxarea;
-	if ( minperiod <= 1.0 ) minperiod = MAX(minperiod*maxrange,1);
-	
-	fprintf(stderr,"Finding stable regions in image with %d pixels and dynamic range %d.\n",maxarea,maxrange);
-	fprintf(stderr,"MinSize: %d pixels\nMaxSize: %d pixels\nMinPeriod: %d tresholds\nMinStable: %2.2f%% size growth\n",(int)minsize,(int)maxsize,(int)minperiod,minstable*100);
-	
-	TrackRegions(pa,regions,minsize,maxarea,minperiod,minstable);
+	EnhanceImage(image,0,255,0.01,0.01);
+	GaussianBlurImage(image,blurSigma);
+	UnsharpMaskImage(image,sharpenSigma);
+	MSERArray ma = ImageToMSERArray(image);
+	if ( minSize <= 1.0 ) minSize = minSize*ma->size;
+	if ( maxSize <= 1.0 ) maxSize = maxSize*ma->size;
+	fprintf(stderr,"Min / Max region sizes %d - %d pixels\n",(int)minSize,(int)maxSize); 
+	TrackRegions(ma,regions,minSize,maxSize);
+	FreeMSERArray( ma ); 
 
-	FreeMSERArray( pa ); 
-	
 	return TRUE;
 	
 }
 
-void TrackRegions( MSERArray pa, PStack regions, int minsize, int maxsize, int minperiod, float minstable ) {
+char libCV_above = FALSE;
+char libCV_below = FALSE;
 
-	int kmin, kmax, k;
+void TrackRegions( MSERArray ma, PStack regions, int minSize, int maxSize ) {
 	
-	int *v1 = malloc(sizeof(int)*pa->size);
-	int s1 = 0;
+	void **sizes = malloc(sizeof(void **)*ma->size);
+	int k; for (k=0;k<ma->size;k++) sizes[k] = NULL;
 	
-	ResetMSERArray(pa);
-	for (k=pa->minv;k<=pa->maxv;k++) {	
-		kmin = pa->sb[k];
-		kmax = pa->sb[k+1];
-		s1 = JoinNeighborsUp(pa->sp,pa->roots,pa->sizes,pa->tvals,pa->flags,pa->cols,k,kmin,kmax,v1,s1,minsize,maxsize);	
-		s1 = ProcessTouchedRoots(pa->roots,pa->sizes,pa->flags,pa->regions,v1,s1,k);
-	}
-	DetermineStableRegions(pa,regions,1,minperiod,minstable);
+	libCV_below = TRUE;
+	libCV_above = FALSE;
 	
-	ResetMSERArray(pa);
-	for (k=pa->maxv;k>=pa->minv;k--) {
-		kmin = pa->sb[k];
-		kmax = pa->sb[k+1];
-		s1 = JoinNeighborsDown(pa->sp,pa->roots,pa->sizes,pa->tvals,pa->flags,pa->cols,k,kmin,kmax,v1,s1,minsize,maxsize);
-		s1 = ProcessTouchedRoots(pa->roots,pa->sizes,pa->flags,pa->regions,v1,s1,k);
-	}
-	DetermineStableRegions(pa,regions,-1,minperiod,minstable);
-
-	free(v1);
-		
+	JoinNeighborsBelow(ma,sizes,minSize,maxSize);
+	EvaluateStableRegions(ma,sizes,regions);
+	
+	libCV_below = FALSE;
+	libCV_above = TRUE;
+	
+	//JoinNeighborsAbove(ma,sizes,minSize,maxSize);
+	//EvaluateStableRegions(ma,sizes,regions);
+	
+	free(sizes);
+	
 }
 
-int JoinNeighbors( int *sp, int *roots, int *sizes, int *tvals, char *flags, int stride, int k, int kmin, int kmax, int *idle, int idlesize, int minsize, int maxsize ) {
+void EvaluateStableRegions( MSERArray ma, void **tSizes, PStack regions ) {
 	
-	int r;
+	int i; TSize tSize, oldTSize;
+	Polygon polygon = NewPolygon(1000);
+	float total;
 	
-	while( kmin < kmax ) {
-		r = Connect4(roots,sizes,stride,sp[kmin++]);
-		switch ( flags[r] ) {
-			case 3:
-			case 2: break;
-			case 1: flags[r] = 2;
-					break;
-			case 0: if ( sizes[r] < minsize ) break;
-					if ( sizes[r] > maxsize ) break;
-					flags[r] = 3;
-					idle[idlesize++] = r;
-					break;
+	int *hist = malloc(sizeof(int)*101);
+
+	total = 0;
+	for (i=0;i<=100;i++) hist[i] = 0;
+	for (i=0;i<ma->size;i++) {
+		if ( tSizes[i] == NULL ) continue;	
+		for ( tSize = tSizes[i]; tSize->next != NULL; tSize = tSize->next ) {
+			float newSize = tSize->size;
+			float oldSize = tSize->next->size;
+			int sizeChange = ( ( newSize - oldSize ) / oldSize ) * 1000;
+			tSize->size = sizeChange;
+			if ( sizeChange == 0  ) continue;
+			if ( sizeChange > 100 ) continue;
+			hist[sizeChange]++;
+			total++;
 		}
 	}
-	
-	return idlesize;
-}
 
-int JoinNeighborsUp( int *sp, int *roots, int *sizes, int *tvals, char *flags, int stride, int k, int kmin, int kmax, int *idle, int idlesize, int minsize, int maxsize ) {
+	int minStable, maxVal = total * 0.5; total = 0;
+	for ( minStable = 0; total < maxVal && minStable <= 100; minStable++ ) total += hist[minStable];
 	
-	int r;
-	
-	while( kmin < kmax ) {
-		r = Connect4Up(roots,sizes,tvals,stride,sp[kmin++],k);
-		switch ( flags[r] ) {
-			case 3:
-			case 2: break;
-			case 1: flags[r] = 2;
-					break;
-			case 0: if ( sizes[r] < minsize ) break;
-					if ( sizes[r] > maxsize ) break;
-					flags[r] = 3;
-					idle[idlesize++] = r;
-					break;
-		}
-	}
-	
-	return idlesize;
-}
-
-int JoinNeighborsDown( int *sp, int *roots, int *sizes, int *tvals, char *flags, int stride, int k, int kmin, int kmax, int *idle, int idlesize, int minsize, int maxsize ) {
-	
-	int r;
-	
-	while( kmin < kmax ) {
-		r = Connect4Down(roots,sizes,tvals,stride,sp[kmin++],k);
-		switch ( flags[r] ) {
-			case 3:
-			case 2: break;
-			case 1: flags[r] = 2;
-					break;
-			case 0: if ( sizes[r] < minsize ) break;
-					if ( sizes[r] > maxsize ) break;
-					flags[r] = 3;
-					idle[idlesize++] = r;
-					break;
-		}
-	}
-	
-	return idlesize;
-}
-
-int ProcessTouchedRoots( int *roots, int *sizes, char *flags, void **regions, int *idle, int idlesize, int tic ) {
-
-	int temp[idlesize], tempsize = 0;
-	
-	while ( idlesize > 0 ) {
-		int r = idle[--idlesize];
-		switch ( flags[r] ) {
-			case 3: if ( roots[r] != r ) break;
-					regions[r] = NewPointStack(20);
-			case 2: PushPointStack(regions[r],tic,sizes[r]);
-					flags[r] = 1;
-					temp[tempsize++] = r;
-					break;
-			case 1: if ( roots[r] != r ) PushPointStack(regions[r],tic,sizes[r]*2);
-					else temp[tempsize++] = r;
-					break;
-		}
-	}
-	memcpy(idle,temp,sizeof(int)*tempsize);
-	return tempsize;
-	
-}
-
-void DetermineStableRegions( MSERArray pa, PStack regions, int ud, int minPeriod, float minStable ) {
-	
-	if ( !PStackGood(regions) ) return;
-	
-	FStack sp = NewFStack(10);
-	PointStack bp = NewPointStack(10);
-	
-	char *flags = pa->flags;
-	void **sizeStacks = pa->regions;
-	int k;
-
-	for (k=0;k<pa->size;k++) {
-
-		if ( flags[k] == 0 ) continue;
-		if ( flags[k] == 3 ) continue;
-		PointStack sizes = sizeStacks[k];
-		FindStablePeriods(sizes,sp,minPeriod,minStable);
-		while ( !FStackEmpty(sp) ) {
-			float s = PopFStack(sp);
-			if (ud==1) CarveOutRegionUp(k,pa->image,bp,s);
-			else CarveOutRegionDown(k,pa->image,bp,s);
-			Ellipse e = CalculateAffineEllipse( bp, 3.0 );
-			Region key = NewRegion(e,pa->image,sizes,bp,s,k);
-			PushPStack(regions, key);
-			if ( e != NULL ) free(e);
-		}
-		FreePointStack(sizes);
-	}
-	FreeFStack(sp);
-	FreePointStack(bp);
-}
-
-void FindStablePeriods( PointStack sizes, FStack sp, int minPeriod, float minStable ) {
-	
-	if ( !PointStackGood(sizes) || !FStackGood(sp) ) return;
-	if ( PointStackEmpty(sizes) ) return;
-	
-	Point p;
-	float oldTime, oldSize, lastSpike, lastStable, period;
-	float bestStability, curTime, curSize, currentChange;
-	
-	p = CyclePointStack(sizes);
-	oldTime = p->row;
-	oldSize = p->col;
-	lastSpike = oldTime;
-	lastStable = oldTime;
-	bestStability = 1.0;
-	
-	while ( PointStackCycle(sizes) ) {
-	
-		p = CyclePointStack(sizes);
-		
-		curTime = p->row;
-		curSize = p->col;
-		
-		currentChange = ( curSize - oldSize ) / oldSize;
-		if ( currentChange > minStable ) {
-			period = lastSpike - curTime;
-			lastSpike = curTime;
-			if ( ABS(period) > minPeriod ) { PushFStack(sp,lastStable);}
-			lastStable = oldTime;
-			bestStability = currentChange;
-		} else if ( currentChange < bestStability ) {
-			 bestStability = currentChange;
-			 lastStable = curTime;
-		}
-		oldSize = curSize; oldTime = curTime;
-	}
-
-}
-
-int SearchHoodUp1( int row, int col, int **p, int t1, float t, int maxrow, int maxcol ) {
-	if ( t1<=t && row>=0 && row<maxrow && col>=0 && col<maxcol ) return 0;
-	else if ( row>=0 && row<maxrow && col>=0 && col<maxcol && p[row][col]<=t ) return 0;		
-	return 1;
-}
-
-int SearchHoodUp2( int row, int col, int **p, int t1, float t, int maxrow, int maxcol ) {
-	if ( row < 0 || col < 0 || row >= maxrow || col >= maxcol ) return 1;
-	if ( p[row][col] <= t ) return 0;
-	return 1;
-}
-
-void CarveOutRegionUp( int root, Image image, PointStack borderpixels, float t ) {
-	
-	if ( image == NULL || borderpixels == NULL ) return;
-	
-	int maxrow = image->rows;
-	int maxcol = image->cols;
-
-	int **p = image->pixels;
-	
-	int row = root / maxcol;
-	int col = root % maxcol;
-	int leftmost = col;
-
-	FStack leaving = NewFStack(3);
-
-	int rightturns = 0;
-	while ( rightturns <= 0 ) {
-		
-		int pt = p[row][col];
-		
-		rightturns=0; col=leftmost;
-		while ( col > 0 && p[row][col-1] <= t ) col--;
-		int srow = row;
-		int scol = col;
-
-		int direction = 0;
-		int lastdirection = 0;
-		int visits = 1;
-		
-		leaving->stacksize=0; borderpixels->stacksize=0;
-		if ( SearchHoodUp2(row+1,col,p,pt,t,maxrow,maxcol)==0 ) PushFStack(leaving,3);
-		if ( SearchHoodUp2(row,col+1,p,pt,t,maxrow,maxcol)==0 ) PushFStack(leaving,2);
-		if ( SearchHoodUp2(row-1,col,p,pt,t,maxrow,maxcol)==0 ) PushFStack(leaving,1);
-
-		do {
+	total = 0;
+	for (i=0;i<=100;i++) hist[i] = 0;
+	for (i=0;i<ma->size;i++) {
+		if ( tSizes[i] == NULL ) continue;	
+		tSize = tSizes[i];
+		int lastSpike  = tSize->time;
+		int mostStable = minStable;
+		int bestStable = lastSpike;
+		for ( tSize=tSizes[i];tSize->next!=NULL;tSize=tSize->next) {
 			
-			if (row>0 && row<maxrow-1 && col>0 && col<maxcol-1) PushPointStack(borderpixels,row,col);
+			int sizeChange = tSize->size;
+			tSize->size = 0;
 			
-			int done=1;
-			pt = p[row][col];
-			while ( done ) {
-				direction = (direction+1) % 4;
-				if ( direction==0 ) if (SearchHoodUp2(row,col-1,p,pt,t,maxrow,maxcol)==0) {done=0;col--;}
-				if ( direction==1 ) if (SearchHoodUp2(row-1,col,p,pt,t,maxrow,maxcol)==0) {done=0;row--;}
-				if ( direction==2 ) if (SearchHoodUp2(row,col+1,p,pt,t,maxrow,maxcol)==0) {done=0;col++;}
-				if ( direction==3 ) if (SearchHoodUp2(row+1,col,p,pt,t,maxrow,maxcol)==0) {done=0;row++;}
+			if ( sizeChange < mostStable ) {
+				mostStable = sizeChange;
+				bestStable = tSize->time;
 			}
-
-			if ( direction != lastdirection ) {
-				if ( direction == (lastdirection+3)%4 ) { rightturns--; }
-				else if ( direction == (lastdirection+1)%4 ) { rightturns++; }
-					else { rightturns += 2; }
-			}
-
-			if ( row == srow && col == scol && (direction+2)%4 != PopFStack(leaving) ) visits = 0;
-			if ( row == srow && col < leftmost ) leftmost = col;
-			lastdirection = direction;
-			direction = (direction+2) % 4;
-				
-		} while ( visits );
-	}
-	FreeFStack(leaving);
-
-}
-
-int SearchHoodDown1( int row, int col, int **p, int t1, float t, int maxrow, int maxcol ) {
-	if ( t1>=t && row>=0 && row<maxrow && col>=0 && col<maxcol ) return 0;
-	else if ( row>=0 && row<maxrow && col>=0 && col<maxcol && p[row][col]>=t ) return 0;		
-	return 1;
-}
-
-int SearchHoodDown2( int row, int col, int **p, int t1, float t, int maxrow, int maxcol ) {
-	if ( row < 0 || col < 0 || row >= maxrow || col >= maxcol ) return 1;
-	if ( p[row][col] >= t ) return 0;
-	else return 1;
-}
-
-void CarveOutRegionDown( int root, Image image, PointStack borderpixels, float t ) {
-	
-	if ( image == NULL || borderpixels == NULL ) return;
-	
-	int maxrow = image->rows;
-	int maxcol = image->cols;
-
-	int **p = image->pixels;
-	
-	int row = root / maxcol;
-	int col = root % maxcol;
-	int leftmost = col;
-	
-	FStack leaving = NewFStack(3);
-	int rightturns = 0;
-	while ( rightturns <= 0 ) {
-		
-		int pt = p[row][col];
-		
-		rightturns=0; col=leftmost;
-		while ( col > 0 && p[row][col-1] >= t ) col--;
-		int srow = row;
-		int scol = col;
-		
-		int direction = 0;
-		int lastdirection = 0;
-		int visits = 1;
-		
-		leaving->stacksize=0;
-		borderpixels->stacksize=0;
-		if ( SearchHoodDown2(row+1,col,p,pt,t,maxrow,maxcol)==0 ) {PushFStack(leaving,3);}
-		if ( SearchHoodDown2(row,col+1,p,pt,t,maxrow,maxcol)==0 ) {PushFStack(leaving,2);}
-		if ( SearchHoodDown2(row-1,col,p,pt,t,maxrow,maxcol)==0 ) {PushFStack(leaving,1);}
-
-		do {
-		
-			if ( row>0 && row<maxrow-1 && col>0 && col<maxcol-1 ) PushPointStack(borderpixels,row,col);
 			
-			int done=1;
-			pt=p[row][col];
-			while ( done ) {
-				direction = (direction+1) % 4;
-				if ( direction==0 ) if (SearchHoodDown2(row,col-1,p,pt,t,maxrow,maxcol)==0) {done=0;col--;}
-				if ( direction==1 ) if (SearchHoodDown2(row-1,col,p,pt,t,maxrow,maxcol)==0) {done=0;row--;}
-				if ( direction==2 ) if (SearchHoodDown2(row,col+1,p,pt,t,maxrow,maxcol)==0) {done=0;col++;}
-				if ( direction==3 ) if (SearchHoodDown2(row+1,col,p,pt,t,maxrow,maxcol)==0) {done=0;row++;}
+			if ( sizeChange > minStable ) {
+				int period = ABS( tSize->time - lastSpike );
+				tSize->time = ( tSize->time + lastSpike ) / 2;
+				tSize->size = period;
+				lastSpike = tSize->time;
+				bestStable = lastSpike;
+				mostStable = minStable;
+				if ( period > 20 ) continue;
+				hist[period]++;
+				total++;
 			}
-
-			if ( direction != lastdirection ) {
-				if ( direction == (lastdirection+3)%4 ) { rightturns--; }
-				else if ( direction == (lastdirection+1)%4 ) { rightturns++; }
-					else { rightturns += 2; }
-			}
-
-			if ( row == srow && col == scol && (direction+2)%4 != PopFStack(leaving) ) visits = 0;		
-			if ( row == srow && col < leftmost ) leftmost = col;
-			lastdirection = direction;
-			direction = (direction+2) % 4;
-				
-		} while ( visits );
+			
+		}
 	}
-	FreeFStack(leaving);
+	
+	int minPeriod; maxVal = total * 0.9; total = 0;
+	for ( minPeriod = 0; total < maxVal && minPeriod <= 100; minPeriod++ ) total += hist[minPeriod];
+	
+	for (i=0;i<ma->size;i++) {
+		if ( tSizes[i] == NULL ) continue;	
+		for ( tSize=tSizes[i];tSize->next!=NULL;tSize=tSize->next) {
+			int period = tSize->size;
+			if ( period > minPeriod ) {
+				int treshold = tSize->time;
+				int row = i / ma->cols;
+				int col = i % ma->cols;
+				FindBorder(ma->image,row,col,treshold,polygon);
+				Ellipse e = CalculateEllipseFromPolygon( polygon );
+				Region newRegion = NewRegion(e,ma->image,NULL,polygon,treshold,i);
+				PushPStack(regions,newRegion);
+				if ( e != NULL ) free(e);
+			}
+		}
+	}
+	
+
+	
+	for (i=0;i<ma->size;i++) {
+		if ( tSizes[i] == NULL ) continue;	
+		tSize = tSizes[i];
+		while ( tSize != NULL ) {
+			oldTSize = tSize;
+			tSize = tSize->next;
+			free(oldTSize);
+		}
+		tSizes[i] = NULL;
+	}
+	
+	fprintf(stderr,"Mean stability : %d  ", minStable);
+	fprintf(stderr,"Mean period : %d\n", minPeriod);
+	
+	free(hist);
+	
+}
+		
+			
+
+void JoinNeighborsBelow( MSERArray ma, void **sizes, int minSize, int maxSize ) {
+	
+	ResetMSERArray(ma);
+	
+	int i, r, p, t;
+	
+	int *stack = malloc(sizeof(int)*ma->size);
+	int stackSize = 0;
+	int curSize = 0;
+
+	int rd = 1;
+	int cd = ma->cols;
+	
+	for (t=ma->minv;t<=ma->maxv;t++) {
+		
+		int tMin = ma->sb[t];
+		int tMax = ma->sb[t+1];
+		while ( tMin < tMax ) {
+			p = ma->sp[tMin++];
+			r = Find(ma->roots,p);
+			if ( ma->tvals[p-rd] <= t ) r = UnionFindB(ma->roots,ma->sizes,r,p-rd);
+			if ( ma->tvals[p+rd] <= t ) r = UnionFindB(ma->roots,ma->sizes,r,p+rd);
+			if ( ma->tvals[p-cd] <= t ) r = UnionFindB(ma->roots,ma->sizes,r,p-cd);
+			if ( ma->tvals[p+cd] <= t ) r = UnionFindB(ma->roots,ma->sizes,r,p+cd);
+			if ( ma->sizes[r] < minSize ) continue;
+			if ( ma->flags[r] == 1 ) continue;
+			stack[stackSize++] = r;
+			ma->flags[r] = 1;
+		}
+		
+		curSize = 0;
+		for (i=0;i<stackSize;i++) {
+			r = stack[i];
+			if ( ma->roots[r] != r ) continue;
+			if ( ma->sizes[r] > maxSize ) continue;
+			TSize tSize = malloc(sizeof(struct TSizeSt));
+			tSize->next = sizes[r];
+			sizes[r] = tSize;
+			tSize->size = ma->sizes[r];
+			tSize->time = t;
+			stack[curSize++] = r;
+		}
+		stackSize = curSize;
+		
+	}
+	
+	free(stack);
+	
 }
 
-void ResetMSERArray( MSERArray pa ) {
-	if ( !MSERArrayGood(pa) ) return;
-	int  *roots = pa->roots;
-	int  *sizes = pa->sizes;
-	char *flags = pa->flags;
-	int k, max = pa->size;
-	for (k=0;k<max;++k) sizes[k] = 1;
-	for (k=0;k<max;++k) roots[k] = k;
-	for (k=0;k<max;++k) flags[k] = 0;
+void JoinNeighborsAbove( MSERArray ma, void **sizes, int minSize, int maxSize ) {
+	
+	ResetMSERArray(ma);
+	
+	int i, r, p, t;
+	
+	int *stack = malloc(sizeof(int)*ma->size);
+	int stackSize = 0;
+	int curSize = 0;
 
+	int rd = 1;
+	int cd = ma->cols;
+	
+	for (t=ma->maxv;t>=ma->minv;t--) {
+		
+		int tMin = ma->sb[t];
+		int tMax = ma->sb[t+1];
+		while ( tMin < tMax ) {
+			p = ma->sp[tMin++];
+			r = Find(ma->roots,p);
+			if ( ma->tvals[p-rd] >= t ) r = UnionFindB(ma->roots,ma->sizes,r,p-rd);
+			if ( ma->tvals[p+rd] >= t ) r = UnionFindB(ma->roots,ma->sizes,r,p+rd);
+			if ( ma->tvals[p-cd] >= t ) r = UnionFindB(ma->roots,ma->sizes,r,p-cd);
+			if ( ma->tvals[p+cd] >= t ) r = UnionFindB(ma->roots,ma->sizes,r,p+cd);			
+			if ( ma->sizes[r] < minSize ) continue;
+			if ( ma->flags[r] == 1 ) continue;
+			stack[stackSize++] = r;
+			ma->flags[r] = 1;
+		}
+		
+		curSize = 0;
+		for (i=0;i<stackSize;i++) {
+			r = stack[i];
+			if ( ma->roots[r] != r ) continue;
+			if ( ma->sizes[r] > maxSize ) continue;
+			TSize tSize = malloc(sizeof(struct TSizeSt));
+			tSize->next = sizes[r];
+			sizes[r] = tSize;
+			tSize->size = ma->sizes[r];
+			tSize->time = t;
+			stack[curSize++] = r;
+		}
+		stackSize = curSize;
+		
+	}
+	
+	free(stack);
+
+}
+
+char TestRC( Image im, int r, int c, int t ) {
+	if ( r < 1 ) return FALSE;
+	if ( c < 1 ) return FALSE;
+	if ( r >= im->rows-1 ) return FALSE;
+	if ( c >= im->cols-1 ) return FALSE;
+	if ( im->pixels[r][c] == t ) return TRUE;
+	if ( im->pixels[r][c] < t ) return libCV_below;
+	else return libCV_above;
+}
+
+void FindBorder( Image image, int row, int col, int t, Polygon borderPixels ) {
+	
+	if ( !ImageIsGood(image) || !PolygonIsGood(borderPixels) ) {
+		Debug(1,"FastFindBorder: Input image or polygon is broken.\n");
+		return;
+	}
+	
+	if ( libCV_above == TRUE ) Debug(1,"FastFindBorder: Including pixels >= %d.\n",t);
+	if ( libCV_below == TRUE ) Debug(1,"FastFindBorder: Including pixels <= %d.\n",t);
+	
+	int dr[4], dc[4], lt[4], rt[4];
+	dr[0] = 0; dr[1] = -1; dr[2] =  0; dr[3] = 1;
+	dc[0] = 1; dc[1] =  0; dc[2] = -1; dc[3] = 0;
+	lt[0] = 1, lt[1] =  2, lt[2] =  3; lt[3] = 0;
+	rt[0] = 3, rt[1] =  0; rt[2] =  1; rt[3] = 2;
+	
+	int srow = row;
+	int scol = image->cols;
+	int i, d = 2, ld = 1, sd = 1;
+	
+	do {
+		
+		if ( col < scol && row == srow ) {
+			while ( TestRC(image,row,col-1,t) ) col--;
+			if ( col != scol ) {
+				scol = col; borderPixels->numberOfVertices = 0; ld = 0; sd = 3;
+				if ( TestRC(image,row,col+1,t) ) sd = 2;
+				if ( TestRC(image,row+1,col,t) ) sd = 1;
+			}
+		}
+		
+		if ( row > 1 && col > 1 && row < image->rows-2 && col < image->cols-2 )
+			AddPolygonVertex(borderPixels,row,col);
+		
+		for (d=lt[ld],i=0;i<4;i++,d=rt[d])
+			if ( TestRC(image,row+dr[d],col+dc[d],t) ) break;
+		
+		if ( i == 4 ) break;
+		
+		row += dr[d];
+		col += dc[d];
+		
+		ld = d;
+		
+	} while ( row != srow || col != scol || d != sd );
+}
+
+void ResetMSERArray( MSERArray ma ) {
+	if ( !MSERArrayIsGood(ma) ) return;
+	int k, max = ma->size;
+	for (k=0;k<max;++k) ma->sizes[k] = 1;
+	for (k=0;k<max;++k) ma->roots[k] = k;
+	for (k=0;k<max;++k) ma->flags[k] = 0;
 }
 
 MSERArray FreeMSERArray( MSERArray pa ) {
@@ -388,17 +330,15 @@ MSERArray FreeMSERArray( MSERArray pa ) {
 	if ( pa->roots != NULL )		free(pa->roots);
 	if ( pa->sizes != NULL )		free(pa->sizes);
 	if ( pa->flags != NULL )		free(pa->flags);
-	if ( pa->regions != NULL )		free(pa->regions);
 	free(pa);
 	return NULL;
 }
 
-char MSERArrayGood( MSERArray array ) {
+char MSERArrayIsGood( MSERArray array ) {
 	if ( array == NULL ) return FALSE;
 	if ( array->sizes == NULL ) return FALSE;
 	if ( array->flags == NULL ) return FALSE;
 	if ( array->roots == NULL ) return FALSE;
-	if ( array->regions == NULL ) return FALSE;
 	if ( array->sp == NULL ) return FALSE;
 	if ( array->sb + array->minv == NULL ) return FALSE;
 	return TRUE;
@@ -406,7 +346,7 @@ char MSERArrayGood( MSERArray array ) {
 
 MSERArray ImageToMSERArray( Image image ) {
 	
-	if ( !ImageGood(image) ) return NULL;
+	if ( !ImageIsGood(image) ) return NULL;
 	if ( !ImageRangeDefined(image) ) FindImageLimits(image);
 
 	int maxrow   	= image->rows;
@@ -418,7 +358,7 @@ MSERArray ImageToMSERArray( Image image ) {
 	int maxc 		= maxcol - 2;
 	
 	MSERArray mser = malloc(sizeof(struct MSERArraySt));
-	if ( mser == NULL ) return FreeMSERArray(mser);
+	if ( mser == NULL ) return NULL;
 	
 	mser->rows  = maxrow;
 	mser->cols  = maxcol;
@@ -430,13 +370,12 @@ MSERArray ImageToMSERArray( Image image ) {
 	mser->tvals 	= image->pixels[0];	
 	mser->roots 	= malloc(arraymax*sizeof(int));
 	mser->sizes 	= malloc(arraymax*sizeof(int));
-	mser->flags 	= malloc(arraymax*sizeof(char));
-	mser->regions 	= malloc(arraymax*sizeof(void *));
+	mser->flags 	= malloc(arraymax*sizeof(int));
 	mser->sp		= malloc(sizeof(int)*maxr*maxc);
 	mser->sb		= ((int *)malloc(sizeof(int)*(maxv-minv+2))) - minv;
 	
-	if ( !MSERArrayGood(mser) ) return FreeMSERArray(mser);
-
+	if ( !MSERArrayIsGood(mser) ) return FreeMSERArray(mser);
+ 
 	int k,r,c;
 	int **p = image->pixels;
 	int *sp = mser->sp;
@@ -450,3 +389,102 @@ MSERArray ImageToMSERArray( Image image ) {
 	
 }
 
+Region NewRegion( Ellipse e, Image image, Polygon sizes, Polygon border, int stable, int root ) {
+
+	if ( e == NULL ) return NULL;
+	
+	Region reg = malloc(sizeof(struct RegionSt));
+	if ( reg == NULL ) return NULL;
+	
+	reg->root   = root;
+	reg->stable = stable;
+	reg->border = CopyPolygon(border);
+	reg->sizes  = CopyPolygon(sizes);
+	
+	reg->image = image;
+	reg->row = e->x;
+	reg->col = e->y;
+	reg->maj = e->majorAxis;
+	reg->min = e->minorAxis;
+	reg->phi = e->phi;
+	reg->ori = e->phi*DEG;
+	reg->A = e->A;
+	reg->B = e->B;
+	reg->C = e->C;
+	reg->D = e->D;
+	reg->E = e->E;
+	reg->F = e->F;
+	reg->minr = e->topBound;
+	reg->maxr = e->bottomBound;
+	reg->minc = e->leftBound;
+	reg->maxc = e->rightBound;
+	
+	return reg;
+	
+}
+	
+void DrawConnectedRegions( MSERArray ma, int t, int minSize, int maxSize ) {
+	
+	char name[256];
+	
+	static int *colors = NULL;
+	static int size = 0;
+	
+	int rr = 100;
+	int er = 200;
+	
+	int k;
+	
+	if ( size != ma->size ) {
+		size = ma->size;
+		colors = malloc(sizeof(int)*size);
+		for (k=0;k<size;k++) colors[k] = 0;
+	}
+	
+	sprintf(name,"/tmp/V%03d.ppm",t);
+	fprintf(stderr,"Wrote %s to disk.\n",name);
+	Image out = ConvertImage1(CopyImage(ma->image));
+	
+	int *pixels = out->pixels[0];
+	
+	int *stack = malloc(sizeof(int)*size);
+	int *flags = malloc(sizeof(int)*size);
+	int stackSize = 0;
+	
+	for (k=0;k<size;k++) flags[k] = 0;
+	
+	for (k=0;k<size;k++) {
+		int r = Find(ma->roots,k);
+		if ( ma->sizes[r] <= 1 ) continue;
+		if ( colors[r] == 0 ) {
+			int rv = RandomNumber(rr,er);
+			int gv = RandomNumber(rr,er);
+			int bv = RandomNumber(rr,er);
+			colors[r] = PIX3(rv,gv,bv);
+		}
+		pixels[k] = colors[r];
+		if ( flags[r] == 1 ) continue;
+		if ( ma->sizes[r] < minSize ) continue;
+		if ( ma->sizes[r] > maxSize ) continue;
+		stack[stackSize++] = r;
+		flags[r] = 1;
+	}
+	
+	Polygon bp = NewPolygon(1000);
+	
+	for(k=0;k<stackSize;k++) {
+		int r = stack[k];
+		if ( ma->roots[r] != r ) continue;
+		int row = r / ma->cols;
+		int col = r % ma->cols;
+		FindBorder(ma->image,row,col,t,bp);
+		DrawPolygon(bp,out,colors[r]>>1);
+	}
+	
+	free(flags); free(stack);
+	
+	FreePolygon(bp);
+	WritePPM(name,out);
+	FreeImage(out);
+
+}

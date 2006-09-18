@@ -1,17 +1,26 @@
-#include "defs.h"
+#include "util.h"
 
 void FatalError(char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
     fprintf(stderr, "Error: ");
     vfprintf(stderr, fmt, args);
-    fprintf(stderr,"\n");
     va_end(args);
     exit(1);
 }
 
-float randomnumber( ) {
-	return (float)rand() / RAND_MAX;
+void Debug(int lvl, char *fmt, ...) {
+	if ( libCV_debug < lvl ) return; 
+	va_list args;
+	va_start(args,fmt);
+	vfprintf(stderr, fmt, args);
+	va_end(args);
+}
+
+float RandomNumber( float min, float max) {
+	float random = (float)rand() / RAND_MAX;
+	random = random*(max-min) + min;
+	return random;
 }
 
 float *CreateGaussianKernel( int ksize, float sigma ) {
@@ -83,16 +92,6 @@ int FastLineIntegrate(int y0, int x0, int y1, int x1, int *pixels, int maxcol) {
 
 }
 
-float LargestValue( float *array, int l, int r ) {
-	if ( l == r ) return array[l];
-	float u, v;
-	int m = (l+r)/2;
-	u = LargestValue( array, l, m );
-	v = LargestValue( array, m+1, r );
-	if ( u > v ) return u;
-	else return v;
-}
-
 void Time( float *time ) {
 	static float t0=0;
 	if (t0 == 0) t0=CPUTIME;
@@ -153,65 +152,37 @@ void FSpline( float *v, int n, float *v2 ) {
 	free(u);
 }
 
-void CreateDirectAffineTransform( float x1, float y1, float x2, float y2, float x3, float y3, float u1, float v1, float u2, float v2, float u3, float v3, double **TR,
-double **IT ) {
-
-	if (IT != NULL ) {
-		 double det = 1.0/(u1*(v2-v3)-v1*(u2-u3)+(u2*v3-u3*v2));
-		 IT[0][0] = ((v2-v3)*x1+(v3-v1)*x2+(v1-v2)*x3)*det;
-		 IT[0][1] = ((v2-v3)*y1+(v3-v1)*y2+(v1-v2)*y3)*det;
-		 IT[0][2] = 0;
-		 IT[1][0] = ((u3-u2)*x1+(u1-u3)*x2+(u2-u1)*x3)*det;
-		 IT[1][1] = ((u3-u2)*y1+(u1-u3)*y2+(u2-u1)*y3)*det;
-		 IT[1][2] = 0;
-		 IT[2][0] = ((u2*v3-u3*v2)*x1+(u3*v1-u1*v3)*x2+(u1*v2-u2*v1)*x3)*det;
-		 IT[2][1] = ((u2*v3-u3*v2)*y1+(u3*v1-u1*v3)*y2+(u1*v2-u2*v1)*y3)*det;
-		 IT[2][2] = 1;
-	}
-	
-	if (TR != NULL ) {
-		double det = 1.0/(x1*(y2-y3)-y1*(x2-x3)+(x2*y3-x3*y2));
-		TR[0][0] = ((y2-y3)*u1+(y3-y1)*u2+(y1-y2)*u3)*det;
-		TR[0][1] = ((y2-y3)*v1+(y3-y1)*v2+(y1-y2)*v3)*det;
-		TR[0][2] = 0;
-		TR[1][0] = ((x3-x2)*u1+(x1-x3)*u2+(x2-x1)*u3)*det;
-		TR[1][1] = ((x3-x2)*v1+(x1-x3)*v2+(x2-x1)*v3)*det;
-		TR[1][2] = 0;
-		TR[2][0] = ((x2*y3-x3*y2)*u1+(x3*y1-x1*y3)*u2+(x1*y2-x2*y1)*u3)*det;
-		TR[2][1] = ((x2*y3-x3*y2)*v1+(x3*y1-x1*y3)*v2+(x1*y2-x2*y1)*v3)*det;
-		TR[2][2] = 1;
-		
-	}
-	
-	
-	
-}
-
-void ComputeEllipseTransform( Ellipse e1, Ellipse e2, double **TR, double **IT ) {
-
-	float er1 = e1->erow, ec1 = e1->ecol;
-	float maj1 = e1->majaxis;
-	float min1 = e1->minaxis;
-	float c1 = cos(e1->phi), s1 = sin(e1->phi);
-	float er2 = e2->erow, ec2 = e2->ecol;
-	float maj2 = e2->majaxis;
-	float min2 = e2->minaxis;
-	float c2 = cos(e2->phi), s2 = sin(e2->phi);
-		
-	float x1 = er1-min1*s1, y1 = ec1+min1*c1;
-	float x2 = er1-maj1*c1, y2 = ec1-maj1*s1;
-	float x3 = er1, y3 = ec1;
-	float u1 = er2-min2*s2, v1 = ec2+min2*c2;
-	float u2 = er2-maj2*c2, v2 = ec2-maj2*s2;
-	float u3 = er2, v3 = ec2; 
-	
-	CreateDirectAffineTransform(x1,y1,x2,y2,x3,y3,u1,v1,u2,v2,u3,v3,TR,IT);
-	
-}	
 
 double pythag( double a, double b ) {
 	double absa = ABS(a);
 	double absb = ABS(b);
 	if ( absa > absb ) return absa*sqrt(1+(absb/absa)*(absb/absa));
 	else return ( absb == 0.0 ? 0.0 : absb*(sqrt(1+absa/absb)) );
+}
+
+float MeanValue( float *A, int l, int r ) {
+	float sum = 0; int i, size = r - l + 1;
+	for (i=l;i<=r;i++) sum += A[i];
+	sum = sum / size;
+	return sum;
+}
+
+float StandardDeviation( float *A, int l, int r ) {
+	float mean = MeanValue(A,l,r);
+	float sum = 0; int i;
+	for (i=l;i<=r;i++) sum += ABS( A[i] - mean );
+	sum /= ( r - l + 1 );
+	return sqrt(sum);
+}
+
+float LargestValue( float *array, int l, int r ) {
+	int i; float max = array[l];
+	for(i=l;i<=r;i++) max = MAX(max,array[i]);
+	return max;
+}
+
+float SmallestValue( float *array, int l, int r ) {
+	int i; float max = array[l];
+	for(i=l;i<=r;i++) max = MIN(max,array[i]);
+	return max;
 }

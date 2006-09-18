@@ -1,10 +1,52 @@
-#include "defs.h"
+#include "mutil.h"
+#include "util.h"
+
+double **AllocDMatrix(int rows, int cols, int ro, int co ) {
+	int i;
+	double **m, *v;
+	m = (double **) malloc(rows*sizeof(double *));
+	v = (double *)  malloc(rows*cols*sizeof(double));
+	if ( m == NULL || v == NULL ) {
+		Debug(1,"AllocDMatrix: No memory for allocation of %d X %d matrix.\n",rows,cols);
+		if ( m != NULL ) free(m);
+		if ( v != NULL ) free(v);
+		return NULL;
+	}
+	memset(v,rows*cols*sizeof(double),0);
+	m -= ro; v -= co;
+	for (i = ro; i < rows+ro; i++) {
+		m[i] = v;
+		v += cols;
+	}
+	return (m);
+}
+
+float **AllocFMatrix(int rows, int cols, int ro, int co) {
+	int i;
+	float **m, *v;	
+	v = (float *)  malloc(rows * cols * sizeof(float));
+	m = (float **) malloc(rows * sizeof(float *));
+	if ( m == NULL || v == NULL ) {
+		Debug(1,"AllocDMatrix: No memory for allocation of %d X %d matrix.\n",rows,cols);
+		if ( m != NULL ) free(m);
+		if ( v != NULL ) free(v);
+		return NULL;
+	}
+	memset(v,rows*cols*sizeof(float),0);
+	m -= ro; v -= co;
+	for (i = ro; i < rows+ro; i++) {
+		m[i] = v;
+		v += cols;
+	}
+	return m;
+}
 
 int **AllocIMatrix(int rows, int cols, int ro, int co) {
-    int i, **m, *v;
+	int i, **m, *v;
 	m = (int **) malloc(rows * sizeof(int *));
 	v = (int *)  malloc(rows * cols * sizeof(int));
 	if ( m == NULL || v == NULL ) {
+		Debug(1,"AllocDMatrix: No memory for allocation of %d X %d matrix.\n",rows,cols);
 		if ( m != NULL ) free(m);
 		if ( v != NULL ) free(v);
 		return NULL;
@@ -18,67 +60,49 @@ int **AllocIMatrix(int rows, int cols, int ro, int co) {
 	return m;
 }
 
-int **FreeIMatrix( int **matrix, int ro, int co ) {
+double **FreeDMatrix( double **matrix, int ro, int co ) {
+	if ( matrix == NULL ) return NULL;
 	if ( matrix[ro]+co != NULL ) free(matrix[ro]+co);
 	if ( matrix+ro != NULL ) free(matrix+ro);
 	return NULL;
-}
-
-float **AllocFMatrix(int rows, int cols, int ro, int co) {
-    int i;
-    float **m, *v;	
-	v = (float *)  malloc(rows * cols * sizeof(float));
-    m = (float **) malloc(rows * sizeof(float *));
-	if ( m == NULL || v == NULL ) {
-		if ( m != NULL ) free(m);
-		if ( v != NULL ) free(v);
-		return NULL;
-	}
-	memset(v,rows*cols*sizeof(float),0);
-	m -= ro; v -= co;
-    for (i = ro; i < rows+ro; i++) {
-		m[i] = v;
-		v += cols;
-    }
-    return m;
 }
 
 float **FreeFMatrix( float **matrix, int ro, int co ) {
+	if ( matrix == NULL ) return NULL;;
 	if ( matrix[ro]+co != NULL ) free(matrix[ro]+co);
 	if ( matrix+ro != NULL ) free(matrix+ro);
 	return NULL;
 }
 
-double **AllocDMatrix(int rows, int cols, int ro, int co ) {
-    int i;
-    double **m, *v;
-    m = (double **) malloc(rows*sizeof(double *));
-    v = (double *)  malloc(rows*cols*sizeof(double));
-	if ( m == NULL || v == NULL ) {
-		FatalError("AllocDMatrix: Out of memory.\n");
-		if ( m != NULL ) free(m);
-		if ( v != NULL ) free(v);
-		return NULL;
-	}
-	memset(v,rows*cols*sizeof(double),0);
-	m -= ro; v -= co;
-    for (i = ro; i < rows+ro; i++) {
-		m[i] = v;
-		v += cols;
-    }
-    return (m);
-}
-
-double **FreeDMatrix( double **matrix, int ro, int co ) {
+int **FreeIMatrix( int **matrix, int ro, int co ) {
+	if ( matrix == NULL ) return NULL;
 	if ( matrix[ro]+co != NULL ) free(matrix[ro]+co);
 	if ( matrix+ro != NULL ) free(matrix+ro);
 	return NULL;
 }
 
-void CopyDMatrix( double **FROM, double **TO, int minr, int minc, int maxr, int maxc ) {
-	if ( FROM == NULL || TO == NULL ) return;
+double **CopyDMatrix( double **FROM, double **TO, int minr, int minc, int maxr, int maxc ) {
+	if ( FROM == NULL || FROM[minr] == NULL ) return NULL;
+	if ( TO == NULL ) TO = AllocDMatrix(maxr-minr+1,maxc-minc+1,minr,minc);
 	int row, col;
 	for (row=minr;row<=maxr;row++) for(col=minc;col<=maxc;col++) TO[row][col] = FROM[row][col];
+	return TO;
+}
+
+float **CopyFMatrix( float **FROM, float **TO, int minr, int minc, int maxr, int maxc ) {
+	if ( FROM == NULL || FROM[minr] == NULL ) return NULL;
+	if ( TO == NULL ) TO = AllocFMatrix(maxr-minr+1,maxc-minc+1,minr,minc);
+	int row, col;
+	for (row=minr;row<=maxr;row++) for(col=minc;col<=maxc;col++) TO[row][col] = FROM[row][col];
+	return TO;
+}
+
+int **CopyIMatrix( int **FROM, int **TO, int minr, int minc, int maxr, int maxc ) {
+	if ( FROM == NULL || FROM[minr] == NULL ) return NULL;
+	if ( TO == NULL ) TO = AllocIMatrix(maxr-minr+1,maxc-minc+1,minr,minc);
+	int row, col;
+	for (row=minr;row<=maxr;row++) for(col=minc;col<=maxc;col++) TO[row][col] = FROM[row][col];
+	return TO;
 }
 
 FArray NewFArray( int minrow, int mincol, int maxrow, int maxcol ) {
@@ -95,7 +119,7 @@ FArray NewFArray( int minrow, int mincol, int maxrow, int maxcol ) {
 	array->rminrow = minrow;
 	array->rmincol = mincol;
 	
-	if ( !FArrayGood(array) ) return FreeFArray(array);
+	if ( !FArrayIsGood(array) ) return FreeFArray(array);
 	
 	return array;
 	
@@ -103,7 +127,7 @@ FArray NewFArray( int minrow, int mincol, int maxrow, int maxcol ) {
 
 void SetFArray( FArray array, int row, int col, float val ) {
 	
-	if ( !FArrayGood(array) ) return;
+	if ( !FArrayIsGood(array) ) return;
 
 	int maxrow = array->maxrow;
 	int maxcol = array->maxcol;
@@ -112,7 +136,7 @@ void SetFArray( FArray array, int row, int col, float val ) {
 	
 	if ( row <  minrow || col <  mincol || row > maxrow || col > maxcol ) {
 		ResizeFArray( array, MIN(row,minrow), MIN(col,mincol), MAX(row,maxrow), MAX(col,maxcol) );
-		if ( !FArrayGood(array) ) return;
+		if ( !FArrayIsGood(array) ) return;
 	}
 	
 	array->values[row][col] = val;
@@ -124,10 +148,14 @@ float GetFArray( FArray array, int row, int col ) {
 	else return 0.0;
 }
 
-char FArrayGood( FArray array ) {
+char FArrayIsGood( FArray array ) {
 	if ( array == NULL ) return FALSE;
 	if ( array->values == NULL ) return FALSE;
 	if ( array->values[array->rminrow] == NULL ) return FALSE;
+	if ( array->rminrow > array->minrow || array->rmaxrow < array->maxrow ) return FALSE;
+	if ( array->rmincol > array->mincol || array->rmaxrow < array->maxrow ) return FALSE;
+	if ( array->minrow > array->maxrow ) return FALSE;
+	if ( array->mincol > array->maxcol ) return FALSE;
 	return TRUE;
 }
 
@@ -143,7 +171,7 @@ FArray ResizeFArray( FArray array, int nminr, int nminc, int nmaxr, int nmaxc ) 
 
 	/* First we check the array */ 
 	
-	if ( !FArrayGood(array) ) return array;
+	if ( !FArrayIsGood(array) ) return array;
 	
 	/* We store the current array bounds and memory bounds */
 	
@@ -233,7 +261,7 @@ int FArrayRows( FArray array ) {
 
 void InitFArrayScalar( FArray array, float val ) {
 	
-	if ( !FArrayGood(array) ) return;
+	if ( !FArrayIsGood(array) ) return;
 	
 	int row,col;
 	int minrow = array->minrow;
@@ -248,9 +276,9 @@ void InitFArrayScalar( FArray array, float val ) {
 			
 }
 
-void CopyCArrayIntoFArray( FArray array, float **m, int lr, int lc, int rr, int rc ) {
+FArray CopyCArrayIntoFArray( FArray array, float **m, int lr, int lc, int rr, int rc ) {
 	
-	if ( !FArrayGood(array) ) return;
+	if ( !FArrayIsGood(array) ) array = NewFArray(lr,lc,rr,rc);
 	
 	int minrow = array->minrow;
 	int mincol = array->mincol;
@@ -267,7 +295,9 @@ void CopyCArrayIntoFArray( FArray array, float **m, int lr, int lc, int rr, int 
 	for (r=minrow;r<=maxrow;r++)
 		for (c=mincol;c<=maxcol;c++)
 			values[r][c] = m[r][c];
-			
+	
+	return array;
+	
 }
 
 FArray FreeFArray( FArray array ) {
@@ -276,7 +306,7 @@ FArray FreeFArray( FArray array ) {
 	return NULL;
 }
 
-FVec NewFVec( int l, int r ) {
+FVec FVecNew( int l, int r ) {
 	FVec newvec = malloc(sizeof(struct FVecSt));
 	if ( newvec == NULL ) return NULL;
 	newvec->values = (float *)malloc(sizeof(float)*(r-l+1)) - l;
@@ -284,12 +314,12 @@ FVec NewFVec( int l, int r ) {
 	newvec->r     = r;
 	newvec->max_l = l;
 	newvec->max_r = r;
-	if ( !FVecGood(newvec) ) return FreeFVec(newvec);
+	if ( !FVecIsGood(newvec) ) return FVecFree(newvec);
 	while ( l <= r ) newvec->values[l++] = 0.0;
 	return newvec;
 }
 
-char FVecGood( FVec vec ) {
+char FVecIsGood( FVec vec ) {
 	if ( vec == NULL ) return FALSE;
 	if ( vec->values + vec->max_l == NULL ) return FALSE;
 	if ( vec->r < vec->l ) return FALSE;
@@ -297,20 +327,67 @@ char FVecGood( FVec vec ) {
 	return TRUE;
 }
 
-void SetFVec( FVec vec, int k, float val ) {
-	if ( !FVecGood(vec) ) return;
+void FVecDivideBy( FVec vec, float val ) {
+	if ( val == 0.0 ) {
+		Debug(1,"DivideFVec: Attempted division by zero\n");
+		return;
+	}
+	FVecMultiplyBy( vec, 1.0 / val );
+}
+
+void FVecMultiplyBy( FVec vec, float val ) {
+	int i;
+	if ( !FVecIsGood(vec) ) return;
+	for (i=vec->l;i<=vec->r;i++) vec->values[i] *= val;
+}
+
+float FVecStandardDeviation( FVec vec ) {
+	if ( !FVecIsGood(vec) ) return NaN;
+	return StandardDeviation(vec->values,vec->l,vec->r);
+}
+
+void FVecAddAt( FVec vec, int pos, float val ) {
+	if ( !FVecIsGood(vec) ) return;
+	if ( pos < vec->l ) return;
+	if ( pos > vec->r ) return;
+	vec->values[pos] += val;
+}
+
+float FVecMean( FVec vec ) {
+	if ( !FVecIsGood(vec) ) return NaN;
+	return MeanValue(vec->values,vec->l,vec->r);
+}
+
+float FVecMax( FVec vec ) {
+	if ( !FVecIsGood(vec) ) return NaN;
+	return LargestValue(vec->values,vec->l,vec->r);
+}
+
+float FVecMin( FVec vec ) {
+	if ( !FVecIsGood(vec) ) return NaN;
+	return SmallestValue(vec->values,vec->l,vec->r);
+}
+
+void FVecSet( FVec vec, float val ) {
+	int i;
+	if ( !FVecIsGood(vec) ) return;
+	for (i=vec->l;i<=vec->r;i++) vec->values[i] = val;
+}
+
+void FVecSetAt( FVec vec, int k, float val ) {
+	if ( !FVecIsGood(vec) ) return;
 	int l = vec->l;
 	int r = vec->r;
 	if ( k > r || k < l ) {
-		ResizeFVec( vec, MIN(k,l), MAX(k,r) );
-		if ( !FVecGood(vec) ) return;
+		FVecResize( vec, MIN(k,l), MAX(k,r) );
+		if ( !FVecIsGood(vec) ) return;
 	}
 	vec->values[k] = val;
 }
 
-void ResizeFVec( FVec vec, int nl, int nr ) {
+void FVecResize( FVec vec, int nl, int nr ) {
 	
-	if ( !FVecGood(vec) ) return;
+	if ( !FVecIsGood(vec) ) return;
 
 	int fl = vec->l;
 	int fr = vec->r;
@@ -353,7 +430,7 @@ void ResizeFVec( FVec vec, int nl, int nr ) {
 
 void CopyCArrayIntoFVec( FVec vec, float *v, int ol, int or ) {
 	
-	if ( !FVecGood(vec) ) return;
+	if ( !FVecIsGood(vec) ) return;
 	
 	int nr = vec->r;
 	int nl = vec->l;
@@ -370,17 +447,17 @@ void CopyCArrayIntoFVec( FVec vec, float *v, int ol, int or ) {
 
 }
 
-void PrintFVec( FVec vec ) {
+void FVecPrint( FVec vec ) {
 	int k;
 	for (k=vec->l;k<=vec->r;k++) fprintf(stderr,"%f ",vec->values[k]);fprintf(stderr,"\n");
 }
 
-float GetFVec( FVec vec, int k ) {
+float FVecGetAt( FVec vec, int k ) {
 	if (k<vec->l||k>vec->r||vec->values==NULL) return 0.0;
 	else return vec->values[k];
 }
 
-FVec FreeFVec( FVec vec ) {
+FVec FVecFree( FVec vec ) {
 	if ( vec->values + vec->max_l != NULL ) free( vec->values + vec->max_l );
 	free( vec );
 	return NULL;
@@ -493,77 +570,6 @@ void FreeFStack( FStack stack ) {
 	free(stack);
 }
 
-PointStack NewPointStack( int size ) {
-	PointStack pstack = malloc(sizeof(struct PointStackSt));
-	if ( pstack == NULL ) return NULL;
-	pstack->items     = malloc(sizeof(struct PointSt)*size);
-	if ( pstack->items == NULL ) { free(pstack); return NULL; }
-	pstack->realsize  = size;
-	pstack->stacksize = 0;
-	pstack->cursor    = 0;
-	return pstack;
-}
-	
-void PushPointStack( PointStack stack, int row, int col ) {
-	if ( stack->stacksize == stack->realsize ) {
-		stack->realsize *= 2;
-		Point points = malloc(sizeof(struct PointSt)*(stack->realsize));
-		memcpy(points, stack->items, sizeof(struct PointSt)*(stack->stacksize));
-		free(stack->items);
-		stack->items = points;
-	}
-	stack->items[stack->stacksize].row = row;
-	stack->items[stack->stacksize].col = col;
-	stack->stacksize++;
-}
-
-Point PopPointStack( PointStack stack ) {
-	if ( stack->stacksize == 0 ) return NULL;
-	else return &(stack->items[--stack->stacksize]);
-}
-
-void FreePointStack( PointStack stack ) {
-	if ( stack == NULL ) return;
-	free(stack->items);
-	free(stack);
-}
-
-char PointStackEmpty( PointStack stack ) {
-	if ( stack->stacksize == 0 ) return TRUE;
-	else return FALSE;
-}
-
-int PointStackSize( PointStack stack ) {
-	return stack->stacksize;
-}
-
-char PointStackCycle( PointStack stack ) {
-	if ( stack->cursor == stack->stacksize ) {
-		stack->cursor = 0;
-		return FALSE;
-	} else return TRUE;
-}
-
-PointStack CopyPointStack( PointStack stack ) {
-	if ( !PointStackGood(stack) ) return NULL;
-	PointStack copy = NewPointStack(stack->stacksize);
-	if ( !PointStackGood(copy) ) return NULL;
-	memcpy(copy->items,stack->items,sizeof(struct PointSt)*(stack->stacksize));
-	copy->stacksize = stack->stacksize;
-	copy->cursor    = stack->cursor;
-	return copy;
-}
-
-Point CyclePointStack( PointStack stack ) {
-	return &(stack->items[stack->cursor++]);
-} 
-
-char PointStackGood( PointStack stack ) {
-	if ( stack == NULL ) return FALSE;
-	if ( stack->items == NULL ) return FALSE;
-	return TRUE;
-}
-
 IStack NewIStack( int size ) {
 	IStack stack = malloc(sizeof(struct IStackSt));
 	stack->items = malloc(sizeof(int)*size);
@@ -584,3 +590,161 @@ int PopIStack( IStack stack ) {
 	return value;
 }
 
+char HeapQIsGood( HeapQ q ) {
+	if ( q == NULL ) return FALSE;
+	if ( q->da == NULL ) return FALSE;
+	if ( q->pq == NULL ) return FALSE;
+	if ( q->qp == NULL ) return FALSE;
+	return TRUE;
+}
+
+HeapQ HeapQFree( HeapQ q ) {
+	if ( q != NULL ) {
+		if ( q->pq != NULL ) free(q->pq);
+		if ( q->qp != NULL ) free(q->qp);
+		if ( q->da != NULL ) free(q->da);
+		free(q);
+	}
+	return NULL;
+}
+
+HeapQ HeapQNew( int size ) {
+	HeapQ new = malloc(sizeof(struct HeapQSt));
+	//if ( !HeapQIsGood(new) ) return HeapQFree(new);
+	new->pq = malloc(sizeof(int)*(size+1));
+	new->qp = malloc(sizeof(int)*(size+1));
+	new->da = malloc(sizeof(float)*(size+1));
+	//if ( !HeapQIsGood(new) ) return HeapQFree(new);
+	new->rN = size;
+	new->N = 0;
+	return new;
+}
+	
+void HeapQFixUp( HeapQ q, int k ) {
+	while ( k > 1 && HeapQLs( q->da, q->pq[k/2], q->pq[k] ) ) {
+		HeapQEx( q->qp, q->pq, q->pq[k], q->pq[k/2] ); k = k / 2;
+	}
+}
+
+void HeapQFixDown( HeapQ q, int k ) {
+	while ( 2 * k <= q->N ) {
+		int j = 2 * k;
+		if ( j < q->N && HeapQLs( q->da, q->pq[j], q->pq[j+1] ) ) j++;
+		if ( !HeapQLs( q->da, q->pq[k], q->pq[j] ) ) break;
+		HeapQEx( q->qp, q->pq, q->pq[k], q->pq[j] ); k = j;
+	}
+}
+
+void HeapQEx( int *qp, int *pq, int i, int j ) {
+	int t;
+	t = qp[i]; qp[i] = qp[j]; qp[j] = t;
+	pq[qp[i]] = i; pq[qp[j]] = j;
+}
+
+void HeapQInsert( HeapQ q, int k, float val ) {
+	if ( q->N == q->rN ) return;
+	q->qp[k] = ++(q->N);
+	q->pq[q->N] = k;
+	q->da[k] = val;
+	HeapQFixUp( q, q->N );
+}
+
+int HeapQDelMax( HeapQ q ) {
+	if ( q->N == 0 ) return 0;
+	HeapQEx( q->qp, q->pq, q->pq[1], q->pq[q->N] ); q->N--;
+	HeapQFixDown( q, 1 );
+	int r = q->pq[q->N+1];
+	q->qp[r] = 0;
+	return q->pq[q->N+1];
+}
+
+void HeapQChange( HeapQ q, int k, float val ) {
+	if ( q->qp[k] == 0 ) return;
+	q->da[k] = val;
+	HeapQFixUp( q, q->qp[k] );
+	HeapQFixDown( q, q->qp[k] );
+}
+
+char HeapQLs( float *data, int k, int j ) {
+	if ( data[k] > data[j] ) return TRUE;
+	else return FALSE;
+}
+
+float HeapQMax( HeapQ q ) {
+	return q->da[q->pq[1]];
+}
+
+RBNode RBNewNode( float val, int idx, RBNode l, RBNode r, int N, char sw ) {
+	RBNode x = malloc(sizeof(struct RBNodeSt));
+	x->x = val; x->l = l; x->r = r; x->N = N; x->idx = idx; x->t = sw;
+	return x;
+}
+
+int RBSize( RBTree tree ) {
+	return tree->head->N;
+}
+
+RBTree RBNewTree( char *name ) {
+	RBTree newTree = malloc(sizeof(struct RBTreeSt));
+	sprintf(newTree->id,"%s",name);
+	newTree->head = NULL;
+	return newTree;
+}
+
+RBNode RBNodeSearch( RBNode r, float key ) {
+	if ( r == NULL ) return NULL;
+	if ( r->x == key ) return r;
+	if ( r->x < key ) return RBNodeSearch( r->r, key );
+	else return RBNodeSearch( r->l, key );
+}
+
+int RBSearch( RBTree tree, float key ) {
+	return RBNodeSearch( tree->head, key )->idx;
+}
+
+RBNode RBRotR( RBNode r ) {
+	RBNode x = r->l; r->l = x->r; x->r = r;
+	return x;
+}
+
+RBNode RBRotL( RBNode r ) {
+	RBNode x = r->r; r->r = x->l; x->l = r;
+	return x;
+}
+
+RBNode RBSelectNode( RBNode r, int k ) {
+	int t;
+	if ( r == NULL ) return NULL;
+	t = ( r->l == NULL ) ? 0 : r->l->N;
+	if ( t > k ) return RBSelectNode( r->l, k );
+	if ( t < k ) return RBSelectNode( r->r, k-t-1 );
+	return r;
+}
+
+int RBSelect( RBTree tree, int k ) {
+	return RBSelectNode( tree->head, k )->idx;
+}
+
+RBNode RBInsertNode( RBNode h, float key, int idx, int sw ) {
+	if ( h == NULL ) return RBNewNode( key, idx, NULL, NULL,  1, 1 );
+	if ( h->l->t && h->r->t ) { h->t = 1; h->l->t = 0; h->r->t = 0; }
+	if ( key < h->x ) {
+		h->l = RBInsertNode( h->l, key, idx, 0 );
+		if ( h->t && h->l->t && sw ) h = RBRotR( h );
+		if ( h->l->t && h->l->l->t ) { h = RBRotR( h ); h->t = 0; h->r->t = 1; }
+	} else {
+		h->r = RBInsertNode( h->r, key, idx, 1 );
+		if ( h->t && h->r->t && !sw ) h = RBRotL( h );
+		if ( h->r->t && h->r->r->t ) { h = RBRotL( h ); h->t = 0; h->l->t = 1; }
+	}
+	return h;
+}
+
+void RBInsert( RBTree tree, float key, int idx ) {
+	tree->head = RBInsertNode( tree->head, key, idx, 0 );
+	tree->head->t = 0;
+}
+
+
+	
+	

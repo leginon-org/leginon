@@ -1,6 +1,12 @@
 #include <Python.h>
 #include <numarray/libnumarray.h>
-#include "defs.h"
+#include "geometry.h"
+#include "util.h"
+#include "image.h"
+#include "mser.h"
+#include "csift.h"
+#include "match.h"
+#include "lautil.h"
 
 static Image PyObjectToImage( PyObject *object );
 static PyObject *ImageToPyObject( Image image );
@@ -24,9 +30,6 @@ static PyObject *pyMatchImages(PyObject *self, PyObject *args) {
 	Image im1 = PyObjectToImage( oim1 );
 	Image im2 = PyObjectToImage( oim2 );
 	
-	EnhanceImage(im1,0,255,0.01,0.01);
-	EnhanceImage(im2,0,255,0.01,0.01);
-
 	fprintf(stderr,"Time: %2.2f seconds\n",CPUTIME-t0);
 	
 	PStack im1keys = NewPStack(100);

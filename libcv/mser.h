@@ -2,32 +2,45 @@
 #ifndef libCV_mser
 #define libCV_mser
 
+#include "mutil.h"
+#include "image.h"
+#include "geometry.h"
+
 typedef struct MSERArraySt {
 	struct ImageSt *image;
 	int maxv, minv, rows, cols, size;
 	int *sp, *sb, maxbin;
-	int *roots, *sizes, *tvals;
-	void **regions;
-	char *flags;	
+	int *roots, *sizes, *tvals, *flags;
 } *MSERArray;
 
-void TrackRegions( MSERArray pa, PStack regions, int minsize, int maxsize, int minperiod, float minstable );
-void DetermineStableRegions( MSERArray pa, PStack regions, int ud, int minPeriod, float minStable );
-void FindStablePeriods( PointStack sizes, FStack sp, int minPeriod, float minStable );
-int JoinNeighbors( int *sp, int *roots, int *sizes, int *tvals, char *flags, int stride, int k, int kmin, int kmax, int *idle, int idlesize, int minsize, int maxsize );
-int JoinNeighborsUp( int *sp, int *roots, int *sizes, int *tvals, char *flags, int stride, int k, int kmin, int kmax, int *idle, int idlesize, int minsize, int maxsize );
-int JoinNeighborsDown( int *sp, int *roots, int *sizes, int *tvals, char *flags, int stride, int k, int kmin, int kmax, int *idle, int idlesize, int minsize, int maxsize );
-int ProcessTouchedRoots( int *roots, int *sizes, char *flags, void **regions, int *idle, int idlesize, int tic );
-void CarveOutRegionUp( int root, Image image, PointStack borderpixels, float t );
-int SearchHoodUp( int row, int col, int **p, int t1, float t, int maxrow, int maxcol );
-int SearchHoodDown( int row, int col, int **p, int t1, float t, int maxrow, int maxcol );
-void CarveOutRegionDown( int root, Image image, PointStack borderpixels, float t );
+typedef struct RegionSt {
+
+	float row, col, ori, scale;
+	
+	double A,B,C,D,E,F,maj,min,phi;
+	double minr, maxr, minc, maxc;
+	
+	struct ImageSt *image;
+	
+	struct PolygonSt *sizes;
+	struct PolygonSt *border;
+	int stable, root;
+	
+} *Region;
+
+typedef struct TSizeSt {
+	float size;
+	float time;
+	struct TSizeSt *next;
+} *TSize;
+
+char FindMSERegions( Image image, PStack Regions, float minsize, float maxsize, float minperiod, float minstable );
 
 void ResetMSERArray( MSERArray pa );
 MSERArray FreeMSERArray( MSERArray pa );
 MSERArray ImageToMSERArray( Image image );
-char MSERArrayGood( MSERArray array );
+char MSERArrayIsGood( MSERArray array );
 
-void DrawConnectedRegions( MSERArray ma );
+Region NewRegion( Ellipse e, Image im, Polygon vec, Polygon border, int stable, int region );
 
 #endif

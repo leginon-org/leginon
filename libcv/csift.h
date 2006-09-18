@@ -1,13 +1,10 @@
-#include "defs.h"
+
+#ifndef libCV_csift
+#define libCV_csift
+
+#include "mser.h"
 #include "mutil.h"
 #include "image.h"
-
-typedef struct KeypointSt {
-	float row, col, ori, scale;
-	double A,B,C,D,E,F,maj,min,phi;
-	int minr, maxr, minc, maxc;
-	struct ImageSt *image;
-} *Keypoint;
 
 typedef struct DescriptorSt {
 	float row, col, scale, ori;
@@ -16,22 +13,15 @@ typedef struct DescriptorSt {
 	float *descriptor;
 } *Descriptor;
 
-Keypoint EllipseToKeypoint( Ellipse e, Image im );
-void KeypointsToDescriptors( PStack keypoints, PStack descriptors, int pb, int ob );
-void DetermineMajorOrientations( Keypoint key, PStack keypoints, FStack orientations );
+void RegionsToSIFTDescriptors( PStack regions, PStack descriptors, int pb, int ob, int psize );
+void RegionToPatch( Region key, Image source, Image patch, float scale );
+void PatchToMags( Image patch, FArray mags, FArray oris );
+Descriptor NewDescriptor( Region key, int dlength, char dtype, float *d );
+float *SIFTDescriptorFromPatch( FArray mags, FArray oris, float ori, int pb, int ob );
+float *GLOHDescriptorFromPatch( Image patch, int pb, int ob );
 void PrintSIFTDescriptors( char *name, PStack descriptors );
-float *CreateSIFTDescriptor( Image patch, int pb, int ob );
-float *CreatePCADescriptor( Image patch );
-void GenerateOrientationBins( Keypoint key, Image im, float *bins );
-void KeypointToPatch( Keypoint key, Image patch );
-Descriptor NewDescriptor( Keypoint key, int dlength, char dtype, float *d );
-void OrientKeypointsAsClusters( PStack keypoints );
-void GenerateClusterBins( Keypoint key, PStack keys, float *bins );
-void FindMajorOrientations( PStack keys );
-void PrintKeypoints( char *name, PStack keypoints );
+float *PCADescriptorFromPatch( Image patch );
+void PrintRegions( char *name, PStack Regions );
+void DrawRegion( Region key, float scale );
 
-void DrawDescriptor( Descriptor d, Image out );
-void DrawKeypoint( Keypoint key, Image out, float ori );
-void DrawOrientations( float *bins, Image out, float ori );
-void DrawRegionInfo( MSERegion region, float t, Image out );
-void PlotNeighborClusters( Keypoint key, PStack keys, Image out );
+#endif

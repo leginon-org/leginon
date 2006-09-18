@@ -1,12 +1,18 @@
+
+#ifndef libCV_match
+#define libCV_match
+
+#include "geometry.h"
+#include "csift.h"
+
 typedef struct MatchSt {
 	struct DescriptorSt *p1, *p2;
+	float score;
 } *Match;
 
 
-/*-------------------------- Function prototypes -------------------------*/
-
-
-
 void FindMatches(PStack k1, PStack k2, PStack matches, int bound );
-int FindArea( PointStack points );
+float FindArea( FArray array );
 void ScreenMatches( PStack matches, double **transform);
+
+#endif

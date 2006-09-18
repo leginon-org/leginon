@@ -15,7 +15,7 @@ CC = gcc
 # --------------------- Code modules ----------------------------
 
 # Object files
-OBJ = main.o util.o ellipsefit.o lautil.o csift.o mserutil.o mutil.c mser.o image.o match.o unionfind.o
+OBJ = main.o geometry.o lautil.o mutil.o util.o image.o mser.o unionfind.o csift.o match.o
 
 # Definitions
 DEFS = defs.h

@@ -2,14 +2,20 @@
 #ifndef libCV_unionfind
 #define libCV_unionfind
 
-typedef struct UnionFindSt {
+typedef struct UnionFindTreeSt {
 	int size;
 	int *roots;
 	int *sizes;
-} *UnionFind;
+} *UnionFindTree;
+
+UnionFindTree NewUnionFindTree( int size );
+void ResetUnionFindTree( UnionFindTree tree );
+int FindRootInTree( UnionFindTree tree, int node );
+int FindRootInTreeAndCompressPath( UnionFindTree tree, int node );
+int JoinNodesInTree( UnionFindTree tree, int node1, int node2 );
 
 int Find( int *roots, int p );
-int FindCompress( int *roots, int p );
+int FindAndCompress( int *roots, int p );
 int UnionFindB( int *roots, int *sizes, int a, int b );
 int UnionFindA( int *roots, int *sizes, int a, int b );
 int UnionFindAB( int *roots, int *sizes, int a, int b );

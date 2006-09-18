@@ -1,9 +1,4 @@
-#include "defs.h"
-#include "ellipsefit.h"
-
-Image ReadPGM(FILE *fp);
-Image ReadPPM(FILE *fp);
-void SkipComments(FILE *fp);
+#include "image.h"
 
 Image CreateImage(int rows, int cols ) {
     Image im = (Image)malloc(sizeof(struct ImageSt));
@@ -94,15 +89,9 @@ void ClearImage( Image out, int val ) {
 }
 
 void FreeImage( Image out ) {
-	if ( out != NULL ) {
-		if ( out->pixels != NULL ) 	{
-			if ( out->pixels[0] != NULL ) {
-				free(out->pixels[0]);
-			}
-			free(out->pixels);
-		}
-		free(out);
-	}
+	if ( out == NULL ) return;
+	FreeIMatrix(out->pixels,0,0);
+	free(out);
 }
 
 Image ReadPPMFile( char *filename ) {
@@ -132,7 +121,13 @@ Image ReadPPM( FILE *fp ) {
 	fgetc(fp); 
 
 	Image image = CreateImage(height, width);
-	for (r = 0; r < height; r++) for (c = 0; c < width; c++) SetImagePixel3(image,r,c,fgetc(fp),fgetc(fp),fgetc(fp));
+	for (r = 0; r < height; r++) {
+		for (c = 0; c < width; c++) {
+			int rv = fgetc(fp);
+			int gv = fgetc(fp);
+			int bv = fgetc(fp);
+			SetImagePixel1(image,r,c,PIX3(rv,gv,bv));
+	}}
 	
 	SkipComments(fp);
   	
@@ -202,27 +197,31 @@ Image ConvertImage3( Image im ) {
 	return im;
 }
 
-char ImageGood( Image image ) {
+char ImageIsGood( Image image ) {
 	if ( image == NULL ) return FALSE;
 	if ( image->pixels == NULL ) return FALSE;
 	if ( image->pixels[0] == NULL ) return FALSE;
 	return TRUE;
 }
 
-void DrawPointStack( PointStack points, Image out, int v ) {
+void DrawPolygon( Polygon poly, Image out, int v ) {
 	
-	if ( !PointStackGood(points) || !ImageGood(out) ) return;
+	if ( !PolygonIsGood(poly) || !ImageIsGood(out) ) return;
 	
-	while ( PointStackCycle(points) ) {
-		Point p = CyclePointStack(points);
-		SetImagePixel1(out,p->row,p->col,v);
+	int i, size = poly->numberOfVertices;
+	Point p = poly->vertices;
+	for(i=0;i<size;i++) {
+		int k = ( i + 1 ) % size;
+		float x1 = p[i].x, y1 = p[i].y;
+		float x2 = p[k].x, y2 = p[k].y;
+		FastLineDraw(x1,y1,x2,y2,out,v);
 	}
 	
 }
 
 void DrawEllipse( Ellipse ellipse, Image out, int v ) {
 
-	if ( ellipse == NULL || !ImageGood(out) ) return;	
+	if ( ellipse == NULL || !ImageIsGood(out) ) return;	
 	int maxrow = out->rows-1;
 	int maxcol = out->cols-1;
 	int **pix = out->pixels;
@@ -232,10 +231,10 @@ void DrawEllipse( Ellipse ellipse, Image out, int v ) {
 	double D1 = ellipse->D;
 	double E1 = ellipse->E;
 	double F1 = ellipse->F;
-	double maj = ellipse->majaxis;
-	double min = ellipse->minaxis;
-	double ero = ellipse->erow;
-	double eco = ellipse->ecol;
+	double maj = ellipse->majorAxis;
+	double min = ellipse->minorAxis;
+	double ero = ellipse->x;
+	double eco = ellipse->y;
 	double phi = ellipse->phi;
 		
 	Ellipse e2 = NewEllipse(ero,eco,maj+2,min+2,phi);
@@ -247,10 +246,10 @@ void DrawEllipse( Ellipse ellipse, Image out, int v ) {
 	double E2 = e2->E;
 	double F2 = e2->F;
 	
-	int minr = e2->minr;
-	int maxr = e2->maxr;
-	int minc = e2->minc;
-	int maxc = e2->maxc;
+	int minr = e2->topBound;
+	int maxr = e2->bottomBound;
+	int minc = e2->leftBound;
+	int maxc = e2->rightBound;
 	
 	free(e2);
 	
@@ -352,12 +351,13 @@ Image CombineImagesHorizontally(Image im1, Image im2) {
 	
 }
 
-void GaussianBlurImage( Image im, float sigma ) {
+Image GaussianBlurImage( Image im, float sigma ) {
 	
 	int row, col, i;
 	int maxr = im->rows-1, maxc = im->cols-1;
 	
 	int kernelsize = sigma*3*2;
+	kernelsize = MAX(3,kernelsize);
 	if (kernelsize%2 == 0) kernelsize++;
 	int krad=kernelsize/2;
 	
@@ -370,11 +370,12 @@ void GaussianBlurImage( Image im, float sigma ) {
 			float sum = 0;
 			for (i=-krad;i<=krad;++i) {
 				int absPos=col+i;
-				if (absPos<0) absPos=0;
-				else if (absPos>maxc) absPos=maxc;
-				sum += kernel[i]*p1[row][absPos];
+				absPos = BOUND(0,absPos,maxc);
+				int pix = p1[row][absPos];
+				if ( pix < 0 ) continue;
+				sum += kernel[i]*pix;
 			}
-			p2[col][row] = sum+0.5;
+			p2[col][row] = sum + 0.5;
 	}}
 	
 	for (row=0;row<=maxc;++row) {
@@ -382,18 +383,21 @@ void GaussianBlurImage( Image im, float sigma ) {
 			float sum = 0; 
 			for (i=-krad;i<=krad;++i) {
 				int absPos=col+i;
-				if (absPos<0) absPos=0;
-				else if (absPos>maxc) absPos=maxc;
-				sum += kernel[i]*p2[row][absPos];
+				absPos = BOUND(0,absPos,maxc);
+				int pix = p2[row][absPos];
+				if ( pix < 0 ) continue;
+				sum += kernel[i]*pix;
 			}
-			p1[col][row] = sum+0.5;
+			p1[col][row] = sum + 0.5;
 			
 		}
 	}
 	
 	free(kernel-krad);
 	FreeIMatrix(p2,0,0);
-
+	
+	return im;
+	
 }
 
 void SplineImage( Image im, float **v2 ) {
@@ -437,6 +441,30 @@ void WrapGaussianBlur1D( float *line, int l, int r, float sigma ) {
 	
 }
 
+void GaussianBlur1D( float *line, int l, int r, float sigma ) {
+	
+	int i, k;
+	int kernelSize = sigma*3*2+1;
+	kernelSize = MAX(3,kernelSize);
+	int radius = kernelSize/2;
+	float *kernel = CreateGaussianKernel(kernelSize,sigma);
+	int buffersize = r-l+1;
+	float *buffer = malloc(sizeof(float)*buffersize);
+	buffer = buffer - l;
+	for (i=l;i<=r;i++) buffer[i] = line[i];
+	for (i=l;i<=r;i++) {
+		line[i] = 0;
+		for (k=-radius;k<=radius;k++) {
+			int pos = i+k;
+			if ( pos < l ) continue;
+			if ( pos > r ) continue;
+			line[i] += buffer[pos]*kernel[k];
+		}
+	}
+	free(buffer+l); free(kernel-radius);
+	
+}
+
 int InterpolatePixelValue( Image im, float row, float col ) {
 	int maxrow = im->rows-1;
 	int maxcol = im->cols-1;
@@ -458,29 +486,7 @@ int InterpolatePixelValue( Image im, float row, float col ) {
 void AffineTransformImage( Image from, Image to, double **tr, double **it ) {
 
 	int row, col;
-	int **p1 = to->pixels;	
-	
-	float crshift = it[1][0];
-	float ccshift = it[1][1];
-	float rrshift = it[0][0];
-	float rcshift = it[0][1];
-	
-	float rad1 = 0.5;
-	
-	float r1 =  it[0][0]*rad1;
-	float c1 =  it[0][1]*rad1;  
-	float r2 =  it[1][0]*rad1;
-	float c2 =  it[1][1]*rad1;
-	
-	float r3 =  it[0][0]*rad1+it[1][0]*rad1;
-	float c3 =  it[0][1]*rad1+it[1][1]*rad1;
-	float r4 =  it[0][0]*rad1-it[1][0]*rad1;
-	float c4 =  it[0][1]*rad1-it[1][1]*rad1;
-	float r5 = -it[0][0]*rad1-it[1][0]*rad1;
-	float c5 = -it[0][1]*rad1-it[1][1]*rad1;
-	float r6 = -it[0][0]*rad1+it[1][0]*rad1;
-	float c6 = -it[0][1]*rad1+it[1][1]*rad1;
-	
+
 	float nrow = it[2][0];
 	float ncol = it[2][1];
 
@@ -488,22 +494,14 @@ void AffineTransformImage( Image from, Image to, double **tr, double **it ) {
 		float tnrow = nrow;
 		float tncol = ncol;
 		for (col=0;col<to->cols;col++) {
-			int q1 = InterpolatePixelValue(from,tnrow,tncol);
-			int q2 = InterpolatePixelValue(from,tnrow+r1,tncol+c1);
-			int q3 = InterpolatePixelValue(from,tnrow-r1,tncol-c1);
-			int q4 = InterpolatePixelValue(from,tnrow+r2,tncol+c2);
-			int q5 = InterpolatePixelValue(from,tnrow-r2,tncol-c2);
-			int q6 = InterpolatePixelValue(from,tnrow+r3,tncol+c3);	
-			int q7 = InterpolatePixelValue(from,tnrow+r4,tncol+c4);	
-			int q8 = InterpolatePixelValue(from,tnrow+r5,tncol+c5);	
-			int q9 = InterpolatePixelValue(from,tnrow+r6,tncol+c6);
-			if (q2<0||q3<0||q4<0||q5<0||q6<0||q7<0||q8<0||q9<0) p1[row][col] = -1; 
-			else p1[row][col] = ( q1 + ((q2+q3+q4+q5)>>1) + ((q6+q7+q8+q9)>>2) ) >> 2;
-			tnrow+=crshift;
-			tncol+=ccshift;
+			int q1 = InterpolatePixelValue(from,tnrow,tncol); // Uses bi-linear interpolation
+			if ( q1 < 0 ) to->pixels[row][col] = -10000;
+			else to->pixels[row][col] = q1;
+			tnrow+=it[1][0];
+			tncol+=it[1][1];
 		}
-		nrow+=rrshift;
-		ncol+=rcshift;
+		nrow+=it[0][0];
+		ncol+=it[0][1];
 	}
 		
 }
@@ -535,46 +533,55 @@ FVec GenerateImageHistogram( Image im ) {
 	int *p = im->pixels[0];
 	int k, size = im->rows*im->cols;
 	if ( !ImageRangeDefined(im) ) FindImageLimits(im);
-	FVec histogram = NewFVec(im->minv,im->maxv);
-	for (k=0;k<size;k++,p++) histogram->values[*p]++;
+	FVec histogram = FVecNew(im->minv,im->maxv);
+	for (k=0;k<size;k++,p++) {
+		histogram->values[*p]++;
+	}
 	return histogram;
 }
 
 Image EnhanceImage( Image im, int min, int max, float minh, float maxh ) {
 
-	if ( !ImageGood(im) || minh >= 1 || maxh >= 1 || min > max ) return im;
+	if ( !ImageIsGood(im) || minh >= 1 || maxh >= 1 || min > max ) return im;
 	
 	int totalsize = im->rows*im->cols;
 	
-	minh = totalsize*minh;
-	maxh = totalsize*maxh;
-	
-	FVec hist = GenerateImageHistogram( im );
+	minh = totalsize * minh;
+	maxh = totalsize * maxh;
 
+	FVec hist = GenerateImageHistogram( im );
+	float *LUT = hist->values;
+	
 	int minv = im->minv, maxv = im->maxv, sum;
-	for ( sum = 0; sum + hist->values[minv] < minh; sum += hist->values[minv++] );
-	for ( sum = 0; sum + hist->values[maxv] < maxh; sum += hist->values[maxv--] );
+	for ( sum = 0; sum + LUT[minv] < minh; sum += LUT[minv++] );
+	for ( sum = 0; sum + LUT[maxv] < maxh; sum += LUT[maxv--] );
 	
-	FreeFVec(hist);
+	int i;
+	float norm =  (float)(max-min) / (maxv-minv);
 	
-	float normalizingfactor = (float)max/(maxv-minv+min);
+	for (i=minv+1;i<maxv;i++) LUT[i] = (i-minv)*norm + 0.5;
+	for (i=im->minv;i<=minv;i++) LUT[i] = min;
+	for (i=maxv;i<=im->maxv;i++) LUT[i] = max;
+	
 	int *p = im->pixels[0], k;
-	for (k=0;k<totalsize;k++,p++) *p = MAX(0,MIN(max,(*p-minv+min)*normalizingfactor+0.5));
-	
+	for (k=0;k<totalsize;k++,p++) *p = LUT[*p];
+
 	im->maxv = max;
 	im->minv = min;
+	
+	FVecFree(hist);
 	
 	return im;
 	
 }
 
-void PascalBlurImage( Image im, float sigma ) {
+Image PascalBlurImage( Image im, float sigma ) {
 	
 	int maxrow = im->rows;
 	int maxcol = im->cols;
 	
 	int tmp1, tmp2, SR0, SR1, row, col, i;
-	int iterations = sigma*sigma*4+0.5;
+	int iterations = sigma*sigma*4;
 	int SC0[maxcol];
 	int SC1[maxcol];
 
@@ -596,6 +603,9 @@ void PascalBlurImage( Image im, float sigma ) {
 			}
 		}
 	}
+	
+	return im;
+	
 }
 
 void DrawFVec(FVec sizes, int im_rmin, int im_cmin, int im_rmax, int im_cmax, int v, Image out ) {
@@ -640,4 +650,267 @@ void DrawFVec(FVec sizes, int im_rmin, int im_cmin, int im_rmax, int im_cmax, in
 
 	FreeDMatrix(tr,0,0);
 	
+}
+
+void SeparableAffineTransform( Image im1, Image im2, double **TR, double **IT ) {
+	
+	int sourceRows = im1->rows;
+	int sourceCols = im1->cols;
+	int destinationRows = im2->rows;
+	int destinationCols = im2->cols;
+	
+	static int **b1 = NULL;
+	static int oldb1rows = 0;
+	static int oldb1cols = 0;
+	
+	if ( oldb1rows != sourceRows || oldb1cols != destinationCols ) {
+		FreeIMatrix(b1,0,0);
+		b1 = AllocIMatrix(sourceRows,destinationCols,0,0);
+		oldb1rows = sourceRows;
+		oldb1cols = destinationCols;
+	}
+	
+	int **p1 = im1->pixels;
+	int **p2 = im2->pixels;
+
+	int r,c;
+	
+	/*	
+		If the forward transform from source to patch is :		[a d 0]
+																[b e 0]
+																[c f 1]
+		
+		and the inverse transform from patch to source is :		[g j 0]
+																[h k 0]
+																[i l 1]
+		
+		Then the col only, first stage forward transform is:	[1 d 0]
+																[0 e 0]
+																[0 f 1]
+		
+		and the col only first stage inverse transform is:		[1    j/g    0]
+																[0 k-(h*j)/g 0]
+																[0 l-(i*j)/g 1]
+																
+		The row only, second stage forward transform is:		[a-(d*b)/e 0 0]
+																[   b/e    0 0]
+																[c-(f*b)/e 0 1]
+																
+		The row only, second stage inverse transform is:		[g 0 0]
+																[h 1 0]
+																[i 0 1]
+		
+	*/
+	
+	
+	float TR1 = TR[0][0]-(TR[0][1]*TR[1][0])/TR[1][1];
+	float TR5 = TR[1][1];
+	
+	float IT1 = IT[0][0];
+	float IT2 = IT[1][0];
+	float IT3 = IT[2][0];
+	float IT4 = IT[0][1]/IT[0][0];
+	float IT5 = IT[1][1]-(IT[1][0]*IT[0][1])/IT[0][0];
+	float IT6 = IT[2][1]-(IT[2][0]*IT[0][1])/IT[0][0];
+	
+	
+	/* We kknow ahead of time all the rows in the source image might not go into the 
+		patch image.  Here we find the row values of the four corners of the patch 
+		transformed into the source image.  Everything in the patch image will come 
+		from between the largest and smallest of these numbers so we can clip them to
+		the image bounds and use them to constrain the number of rows that go through
+		the one-dimensional scale and skew operation. */
+	  
+	float r1 = IT[2][0];
+	float r2 = destinationRows*IT[0][0] + r1;
+	float r3 = destinationCols*IT[1][0] + r1;
+	float r4 = destinationRows*IT[0][0] + r3;
+	
+	int minRow = MAX(0,MIN(r1,MIN(r2,MIN(r3,r4))));
+	int maxRow = MIN(sourceRows,MAX(r1,MAX(r2,MAX(r3,r4)))+1);
+	
+	/* If the maximum and minimum are outside the source image then there will be
+		no image in the patch!! Return if this is the case */
+		
+	if ( minRow >= sourceRows ) return;
+	if ( maxRow < 0 ) return;
+	
+	float sS, oS, iS;
+	
+	
+	/* While this code may look tricky what it is doing is moving through the
+		rows in the patch image and filling in values from the source.  This
+		is done continuously, and the rate between outputing pixels into the patch
+		and reading them from the source is controlled by value oS which is equal to
+		IT5.  This value basically describes how many input pixels must go into each output.
+		The start position for the patch is always set to 0, since we want to completely
+		fill in the patch image, while the beginning position in the source is set by the
+		value sS.  This value is set once at the beginning and merely incremented by its
+		derivative IT4 or IT2, depending on wether we are transforming the rows or cols.
+		To simplify things we test the current input pixel position to see wether it is
+		in bounds, if not, we run a simplified version of the code to keep track of the rates
+		but we set all the input pixels to a negative value (transparent) */
+	
+	sS = minRow*IT4 + IT6;
+	for(r=minRow;r<maxRow;r++) {
+
+		float accumulator = 0.0;
+		float inputPixel = 0.0;
+		
+		iS = (1.0 - ( sS - (int)sS ) );
+		oS = IT5;
+		
+		int im1p = sS;
+		
+		for ( c=0; c<=destinationCols-1; ) {
+			if ( im1p < 0 || im1p >= sourceCols-1 ) {
+				if ( iS <= oS ) {
+					oS = oS - iS;
+					im1p++;
+					iS = 1.0;
+				} else {
+					iS = iS - oS;
+					oS = IT5;
+					b1[r][c++] = -10000;
+				}
+			} else {
+				inputPixel = p1[r][im1p]*iS + p1[r][im1p+1]*(1-iS);
+				if ( iS <= oS ) {
+					oS = oS - iS;
+					accumulator += inputPixel * iS;
+					im1p++;
+					iS = 1.0;
+				} else {
+					accumulator += inputPixel * oS;
+					iS = iS - oS;
+					oS = IT5;
+					b1[r][c++] = accumulator * TR5;
+					accumulator = 0.0;
+				}
+			}
+		}
+		
+		sS += IT4;
+		
+	}
+		
+	for(sS=IT3,c=0;c<destinationCols;c++) {
+		
+		float accumulator = 0.0;
+		float inputPixel = 0.0;
+		
+		iS = (1.0 - ( sS - (int)sS ) );
+		oS = IT1;
+
+		int im1p = sS;
+
+		for ( r=0;r<=destinationRows-1; ) {
+			if ( im1p < 0 || im1p >= sourceRows-1 ) {
+				if ( iS <= oS ) {
+					oS = oS - iS;
+					im1p++;
+					iS = 1.0;
+				} else {
+					iS = iS - oS;
+					oS = IT1;
+					p2[r++][c] = -10000;
+				}
+			} else {
+				inputPixel = b1[im1p][c]*iS + b1[im1p+1][c]*(1-iS);
+				if ( iS <= oS ) {
+					oS = oS - iS;
+					accumulator += inputPixel * iS;
+					im1p++;
+					iS = 1.0;
+				} else {
+					accumulator += inputPixel * oS;
+					iS = iS - oS;
+					oS = IT1;
+					p2[r++][c] = accumulator * TR1;
+					accumulator = 0.0;
+				}
+			}
+		}
+		
+		sS += IT2;
+		
+	}
+	
+	
+}
+
+Image SubtractImages( Image im1, Image im2, Image im3 ) {
+	int maxr = MIN(im1->rows,im2->rows);
+	int maxc = MIN(im1->cols,im2->cols);
+	if ( im3 == NULL ) im3 = CreateImage(maxr,maxc);
+	maxr = MIN(maxr,im3->rows);
+	maxc = MIN(maxc,im3->cols);
+	int minv = MIN(im1->minv,im2->minv);
+	int maxv = MAX(im1->maxv,im2->maxv);
+	int r, c;
+	for (r=0;r<maxr;r++) {
+		for (c=0;c<maxc;c++) {
+			int pix = im1->pixels[r][c] - im2->pixels[r][c];
+			pix = BOUND(minv,pix,maxv);
+			im3->pixels[r][c] = pix;
+	}}
+	
+	return im3;
+	
+}
+
+Image MultiplyImages( Image im1, Image im2, Image im3 ) {
+	int maxr = MIN(im1->rows,im2->rows);
+	int maxc = MIN(im1->cols,im2->cols);
+	if ( im3 == NULL ) im3 = CreateImage(maxr,maxc);
+	maxr = MIN(maxr,im3->rows);
+	maxc = MIN(maxc,im3->cols);
+	int minv = MIN(im1->minv,im2->minv);
+	int maxv = MAX(im1->maxv,im2->maxv);
+	int r,c;
+	for (r=0;r<maxr;r++) {
+		for (c=0;c<maxc;c++) {
+			int pix = im1->pixels[r][c] * ((float)im2->pixels[r][c]/maxv);
+			pix = BOUND(minv,pix,maxv);
+			im3->pixels[r][c] = pix;
+	}}
+	
+	return im3;
+}
+
+Image UnsharpMaskImage( Image im, float sigma ) {
+	
+	Image copy = GaussianBlurImage(CopyImage(im),sigma);
+	copy = SubtractImages( im, copy, copy );
+	im = SubtractImages( im, copy, im );
+	FreeImage(copy);
+	return im;
+	
+}
+
+char RowColWithinImage( Image image, int row, int col ) {
+	if ( row < 0 ) return FALSE;
+	if ( col < 0 ) return FALSE;
+	if ( row >= image->rows ) return FALSE;
+	if ( col >= image->cols ) return FALSE;
+	return TRUE;
+}
+
+void PasteImage( Image clip, Image targ, int row, int col ) {
+	int r, c;
+	for (r=0;r<clip->rows;r++) {
+		for (c=0;c<clip->cols;c++) {
+			int tr = row + r;
+			int tc = col + c;
+			if ( tr < 0 || tc < 0 ) continue;
+			if ( tr >= targ->rows || tc >= targ->cols ) continue;
+			targ->pixels[tr][tc] = clip->pixels[r][c];
+	}}
+}
+
+int RandomColor( int lum ) {
+	int rv = RandomNumber(lum,255);
+	int gv = RandomNumber(rv,255);
+	int bv = RandomNumber(gv,255);
+	return (PIX3(rv,gv,bv));
 }

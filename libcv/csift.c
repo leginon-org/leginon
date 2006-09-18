@@ -1,151 +1,125 @@
-#include "defs.h"
+#include "csift.h"
+#include "geometry.h"
 
-/*----------------------------------------------------------------------*/
+FVec GenerateOrientationHistogram( Image patch );
+void FindDominantOrientations( FVec hist, float peak, FStack orientations );
+void DeterminePatchOrientations( Image patch, FStack orientations );
 
-Region NewRegion( Ellipse e, Image image, PointStack sizes, PointStack border, int stable, int root ) {
+void DeterminePatchOrientations( Image patch, FStack orientations ) {
 
-	if ( e == NULL ) return NULL;
-	
-	Region reg = malloc(sizeof(struct RegionSt));
-	if ( reg == NULL ) return NULL;
-	
-	reg->root   = root;
-	reg->stable = stable;
-	reg->border = CopyPointStack(border);
-	reg->sizes  = CopyPointStack(sizes);
-	
-	reg->image = image;
-	reg->row = e->erow;
-	reg->col = e->ecol;
-	reg->maj = e->majaxis;
-	reg->min = e->minaxis;
-	reg->phi = e->phi;
-	reg->ori = e->phi*DEG;
-	reg->A = e->A;
-	reg->B = e->B;
-	reg->C = e->C;
-	reg->D = e->D;
-	reg->E = e->E;
-	reg->F = e->F;
-	reg->minr = e->minr;
-	reg->maxr = e->maxr;
-	reg->minc = e->minc;
-	reg->maxc = e->maxc;
-	
-	return reg;
+	FVec hist = GenerateOrientationHistogram(patch);
+	if ( hist == NULL ) return;
+	WrapGaussianBlur1D(hist->values,hist->l,hist->r,10);
+	FindDominantOrientations(hist,0.9,orientations);
+	FVecFree(hist);
 	
 }
-	
-void GenerateGradientOrientationBins( Region key, Image im, float *bins ) {
 
-	int row, col, i;
-	static double **IT = NULL;
-	static Image patch;
-	static float *kernel;
-	int wrad = 20;
-	int maxd = wrad*2;
-	if ( IT == NULL ) {
-		patch = CreateImage(maxd+1,maxd+1);
-		int ksize = wrad+1;
-		kernel = malloc(ksize*sizeof(float));
-		float sigma = 30;
-		float sigma2sq = sigma*sigma*2;
-		float norm = 1.0/(sqrt(2*PI)*sigma);
-		for (i=0;i<ksize;i++) { kernel[i] = exp(-(i*i)/sigma2sq)*norm;}
-		IT = AllocDMatrix(3,3,0,0);
+FVec GenerateOrientationHistogram( Image patch ) {
+	
+	if ( !ImageIsGood(patch) ) return NULL;
+	
+	int i, r, c;
+	FVec hist = FVecNew(0,359);
+	for (i=0;i<=359;i++) hist->values[i] = 0.0;
+	
+	int maxRow = patch->rows;
+	int maxCol = patch->cols;
+		
+	for (r=1;r<maxRow-1;r++) {
+		for (c=1;c<maxCol-1;c++) {
+			int v1 = patch->pixels[r-1][c];
+			int v2 = patch->pixels[r+1][c];
+			int v3 = patch->pixels[r][c+1];
+			int v4 = patch->pixels[r][c-1];
+			if ( v1 < 0 || v2 < 0 || v3 < 0 || v4 < 0 ) continue;
+			int vmag = v1 - v2;
+			int hmag = v3 - v4;
+			int mag = sqrt(hmag*hmag+vmag*vmag);
+			int ori = atan2(vmag,hmag)*DEG + 0.5;
+			if ( ori < 0 ) ori += 360;
+			hist->values[ori] += mag;
+		}
 	}
 
-	struct EllipseSt e1, e2;
-	e1.phi = key->phi;
-	e1.erow = key->row; e1.ecol = key->col;
-	e1.majaxis = key->maj; e1.minaxis = key->min;
-	e2.phi = key->phi;
-	e2.erow = wrad, e2.ecol = wrad;
-	e2.minaxis = wrad; e2.majaxis = wrad;
-	
-	ComputeEllipseTransform(&e1,&e2,NULL,IT);
-	AffineTransformImage( im, patch, NULL, IT );
-	
-	int mag = 0, ang = 0;
-	float vmag =0, hmag = 0;
-
-	int **p1 = patch->pixels;
-	for (row=1;row<maxd;row++) {
-		for (col=1;col<maxd;col++) {
-			int rad  = sqrt((row-wrad)*(row-wrad)+(col-wrad)*(col-wrad));
-			if ( rad > wrad ) continue;
-			int a = p1[row][col+1];
-			int b = p1[row][col-1];
-			int c = p1[row-1][col];
-			int d = p1[row+1][col];
-			if ( a<0||b<0||c<0||d<0 ) continue;
-			vmag = c-d;
-			hmag = a-b;
-			mag = sqrt(vmag*vmag+hmag*hmag);
-			ang = atan2(vmag,hmag)*DEG; if ( ang < 0 ) ang += 360;
-			bins[ang] += mag*kernel[rad];
-	}}
-	
-	
+	return hist;
 	
 }
 
-void DetermineMajorGradientOrientations( Region key, FStack orientations ) {
+void FindDominantOrientations( FVec hist, float peak, FStack orientations ) {
 	
-	if ( key == NULL || key->image == NULL || orientations == NULL ) return;
-
 	int i, k;
-	float *bins = malloc(sizeof(float)*360), largest;
 	
-	for (i=0;i<360;i++) bins[i] = 0.0;
-	GenerateGradientOrientationBins(key,key->image,bins);
-	WrapGaussianBlur1D(bins,0,359,5);
-	largest = LargestValue(bins,0,359)*0.9;
-	for (i=0;i<360&&bins[i]>largest;i++);
+	float largest = LargestValue(hist->values,hist->l,hist->r)*peak;
+	
+	for (i=hist->l; i<=hist->r && hist->values[i]>largest; i++);
+	
 	while (i<360) {
 		k=i;
-		while ( bins[k%360] > largest ) k++;
+		while ( hist->values[k%360] > largest ) k++;
 		if ( k != i ) PushFStack(orientations,((i+k)/2)%360);
 		i=k+1;
 	}
 	
-	free(bins);
-	
 }
 
-void RegionsToDescriptors( PStack regions, PStack descriptors, int o1, int o2, int o3, int o4, int d1, int pb, int ob, int d2 ) {
+void RotateImage( Image im1, Image im2, float angle );
+
+void RegionsToSIFTDescriptors( PStack regions, PStack descriptors, int pb, int ob, int psize ) {
+	
 	if ( regions == NULL || descriptors == NULL ) return;
-	Image patch = CreateImage(41,41);
+	
+	if ( psize % 2 == 0 ) psize++;
+	Image patch = CreateImage(psize*sqrt(2),psize*sqrt(2));
+	Image rpatch = CreateImage(psize,psize);
 	FStack orientations = NewFStack(15);
+	
 	int k;
+	
 	for (k=0;k<regions->stacksize;k++) {
-		Region key = regions->items[k];
-		DetermineMajorGradientOrientations(key,orientations);
+		Region region = regions->items[k];
+		RegionToPatch(region,region->image,patch,1);
+		DeterminePatchOrientations(patch,orientations);
 		while ( !FStackEmpty(orientations) ) {
-			key->ori = PopFStack(orientations);
-			RegionToPatch( key, patch );
-			PushPStack(descriptors,NewDescriptor(key,36,1,CreatePCADescriptor(patch)));
+			float orientation = PopFStack(orientations);
+			RotateImage(patch,rpatch,orientation);
+			float *newDescriptor = PCADescriptorFromPatch(rpatch);
+			PushPStack(descriptors,NewDescriptor(region,36,3,newDescriptor));
 		}
 	}
-	FreeImage(patch);
+	
+	FreeImage(patch); FreeImage(rpatch);
+
 }
 
-void RegionToPatch( Region key, Image patch ) {
-	if ( key == NULL || patch == NULL ) return;
-	struct EllipseSt e1, e2;
+void RotateImage( Image im1, Image im2, float angle ) {
+	int Xc1 = im1->rows * 0.5;
+	int Yc1 = im1->cols * 0.5;
+	int Xc2 = im2->rows * 0.5;
+	int Yc2 = im2->cols * 0.5;
+	Ellipse e1 = NewEllipse(Xc1,Yc1,Xc1,Yc1,angle*RAD);
+	Ellipse e2 = NewEllipse(Xc2,Yc2,Xc2+1,Yc2+1,0);
+	double **IT = AllocDMatrix(3,3,0,0);
+	ComputeEllipseTransform(e1,e2,NULL,IT);
+	AffineTransformImage(im1,im2,NULL,IT);
+	free(e1); free(e2); FreeDMatrix(IT,0,0);
+	
+}	
+			
+void RegionToPatch( Region key, Image source, Image patch, float scale ) {
+	
+	if ( key == NULL ) return;
+	if ( !ImageIsGood(key->image) ) return;
+	if ( !ImageIsGood(patch) ) return;
+	
 	double **IT = AllocDMatrix(3,3,0,0);
 	double **TR = AllocDMatrix(3,3,0,0);
-	int desrad = (patch->rows-1)/2;
-	e1.majaxis = key->maj; e1.minaxis = key->min;
-	e1.erow = key->row; e1.ecol = key->col;
-	e1.phi = key->phi;
-	e2.majaxis = desrad; e2.minaxis = desrad;
-	e2.erow = desrad; e2.ecol = desrad;
-	e2.phi = key->phi-key->ori*RAD;
-	ComputeEllipseTransform(&e1,&e2,TR,IT);
-	AffineTransformImage(key->image,patch,TR,IT);
-	FreeDMatrix(IT,0,0);
-	FreeDMatrix(TR,0,0);
+	int rad = patch->rows/2;
+	Ellipse e1 = NewEllipse(key->row,key->col,key->maj*scale,key->min*scale,key->phi);
+	Ellipse e2 = NewEllipse(rad,rad,rad,rad,key->phi);
+	ComputeEllipseTransform(e1,e2,TR,IT); free(e1); free(e2);
+	SeparableAffineTransform(source,patch,TR,IT);
+	
 }
 
 Descriptor NewDescriptor( Region key, int dlength, char dtype, float *d ) {
@@ -156,103 +130,51 @@ Descriptor NewDescriptor( Region key, int dlength, char dtype, float *d ) {
 	des->descriptorlength = dlength;
 	des->row = key->row;
 	des->col = key->col;
-	des->ori = key->phi-key->ori*RAD;
+	des->ori = key->phi;
 	des->descriptor = d;
 	return des;
 }
 
-float *CreateSIFTDescriptor( Image patch, int pb, int ob ) {
+float *GLOHDescriptorFromPatch( Image patch, int pb, int ob ) {
 	
-	if ( patch == NULL ) return NULL;
-
-	int row, col, k;
-	float des[pb][pb][ob];
-	for (row=0;row<pb;row++) for (col=0;col<pb;col++) for (k=0;k<ob;k++) des[row][col][k] = 0;
+	int maxRow = patch->rows-1;
+	int maxCol = patch->cols-1;
 	
-	int desrad = 20;
-	float binrat = (float)ob/360.0;
-	float bincet = 360/(2*ob);
-	float sizrat = (float)pb/(desrad*2);
-
-	int **p1 = patch->pixels;
+	float radIncrement = (float)maxRow / pb;
+	int patchCenter = maxRow / 2;
 	
-	int ksize = sqrt(desrad*desrad*2)+0.5;
-	float *gkernel = malloc(ksize*sizeof(float));
-	float sigma = 10;
-	float sigma2sq = sigma*sigma*2;
-	float norm = 1.0/(sqrt(2*PI)*sigma);
-	for (k=0;k<ksize;k++) { gkernel[k] = exp(-(k*k)/sigma2sq)*norm;}
+	float orientationIncrement = 360.0 / ob;
 	
-	for (row=1;row<desrad*2;row++) {
-		for (col=1;col<desrad*2;col++) {
-			int a = p1[row][col+1];
-			int b = p1[row][col-1];
-			int c = p1[row-1][col];
-			int d = p1[row+1][col];
-			if ( a<0||b<0||c<0||d<0 ) continue;
-			int vmag = c-d;
-			int hmag = a-b;
-			float ang = atan2(vmag,hmag)*DEG-bincet;
-			int rad = sqrt((row-desrad)*(row-desrad)+(col-desrad)*(col-desrad));
-			int mag = sqrt(hmag*hmag+vmag*vmag)*gkernel[rad];   
-			if ( ang < 0 ) ang += 360;
-			ang *= binrat;
-			float orow = row*sizrat-0.5;
-			float ocol = col*sizrat-0.5;
-			int ridx, cidx;
-			if ( orow < 0 ) ridx = orow-1;
-			else ridx = orow;
-			if ( ocol < 0 ) cidx = ocol-1;
-			else cidx = ocol;
-			int didx1 = ang;
-			int didx2 = (didx1+1)%ob;
-			float rwgt1 = 1 - orow + ridx;
-			float rwgt2 = 1 - rwgt1;
-			float cwgt1 = 1 - ocol + cidx;
-			float cwgt2 = 1 - cwgt1;
-			float dwgt1 = 1 - ang + didx1;
-			float dwgt2 = 1 - dwgt1;
-			if (ridx>=0&&ridx<pb&&cidx>=0&&cidx<pb) {
-				des[ridx][cidx][didx1] += mag*rwgt1*cwgt1*dwgt1;
-				des[ridx][cidx][didx2] += mag*rwgt1*cwgt1*dwgt2;
-			} ridx++;
-			if (ridx>=0&&ridx<pb&&cidx>=0&&cidx<pb) {
-				des[ridx][cidx][didx1] += mag*rwgt2*cwgt1*dwgt1;
-				des[ridx][cidx][didx2] += mag*rwgt2*cwgt1*dwgt2;
-			} cidx++;
-			if (ridx>=0&&ridx<pb&&cidx>=0&&cidx<pb) {
-				des[ridx][cidx][didx1] += mag*rwgt2*cwgt2*dwgt1;
-				des[ridx][cidx][didx2] += mag*rwgt2*cwgt2*dwgt2;
-			} ridx--;
-			if (ridx>=0&&ridx<pb&&cidx>=0&&cidx<pb) {
-				des[ridx][cidx][didx1] += mag*rwgt1*cwgt2*dwgt1;
-				des[ridx][cidx][didx2] += mag*rwgt1*cwgt2*dwgt2;
-			}
-		}
-	}
+	int descriptorSize = pb * ob;
+	float *descriptor = malloc(sizeof(float)*descriptorSize);
 	
-	int j = 0;
-	int desize = pb*pb*ob;
-	float *de = malloc(sizeof(float)*desize);
-	if (de == NULL) return NULL;
-	for (row=0;row<pb;row++) {
-		for (col=0;col<pb;col++) {
-			for (k=0;k<ob;k++) {
-				de[j++] = des[row][col][k];
-	}}}
-	float l = 0, s = 1000000;
-	for(k=0;k<desize;k++) de[k] = MIN(de[k],1000000);
-	for(k=0;k<desize;k++) {
-		s = MIN(s,de[k]);
-		l = MAX(l,de[k]);
-	}
-	for(k=0;k<desize;k++) de[k] = (de[k]-s)*(255.0/(l-s));
-		
-	return de;
-
-}
-
-float *CreatePCADescriptor( Image patch ) {
+	int r,c;
+	
+	for (r=0;r<descriptorSize;r++) descriptor[r] = 0.0;
+	
+	for (r=1;r<maxRow;r++) {
+		for (c=1;c<maxCol;c++) {
+			float mRad = sqrt( ( r - patchCenter ) * ( r - patchCenter ) + ( c - patchCenter ) * ( c - patchCenter ) );
+			int radiusBin = mRad / radIncrement;
+			if ( radiusBin >= pb ) continue;
+			int pixA = patch->pixels[r-1][c];
+			int pixB = patch->pixels[r+1][c];
+			int pixC = patch->pixels[r][c+1];
+			int pixD = patch->pixels[r][c-1];
+			if ( pixA < 0 || pixB < 0 || pixC < 0 || pixD < 0 ) continue;
+			int mag = sqrt( (pixA-pixB)*(pixA-pixB) + (pixC-pixD)*(pixC-pixD) );
+			float orientation = atan2(pixA-pixB,pixC-pixD)*DEG;
+			if ( orientation < 0 ) orientation += 360;
+			int orientationBin = ( orientation / orientationIncrement ) + 0.5;
+			if ( orientationBin >= ob ) continue;
+			descriptor[radiusBin*ob+orientationBin] += mag;
+	}}
+	
+	return descriptor;
+	
+}	
+	
+float *PCADescriptorFromPatch( Image patch ) {
 	
 	#define PatchSize  41
 	#define PatchLength (PatchSize * PatchSize)
@@ -268,21 +190,22 @@ float *CreatePCADescriptor( Image patch ) {
 	if ( avgs == NULL ) {
 		float val;
 		FILE *pcaf = fopen("pcavects.txt", "rb");
+		if ( pcaf == NULL ) {fprintf(stderr,"No valid pcavects.txt file!\n");return NULL;}
 		avgs = malloc(sizeof(float)*GPLEN);
 		eigs = AllocFMatrix(EPCALEN,GPLEN,0,0);
 		for (i=0;i<GPLEN;++i) {
-			if (fscanf(pcaf, "%f", &val) != 1) FatalError("Invalid PCA Vector File.\n");
+			if (fscanf(pcaf, "%f", &val) != 1) {fprintf(stderr,"No valid pcavects.txt file!\n");return NULL;}
 			avgs[i] = (float)val;
 		}
 		for (i=0;i<GPLEN;++i) {
 			for (j=0;j<PCALEN;j++) {
-				if (fscanf(pcaf,"%f", &val) != 1) FatalError("Invalid PCA Vector File.\n");
+				if (fscanf(pcaf,"%f", &val) != 1) {fprintf(stderr,"No valid pcavects.txt file!\n");return NULL;}
 				if (j<EPCALEN) eigs[j][i] = (float)val;
 			}
 		}
 		fclose(pcaf);
 	}
-		
+	
 	int count=0, **p1 = patch->pixels, row, col;
 	for (row=1;row<PatchSize-1;++row) {
 		for (col=1;col<PatchSize-1;++col) {	
@@ -290,7 +213,7 @@ float *CreatePCADescriptor( Image patch ) {
 			int b = p1[row][col-1];
 			int c = p1[row-1][col];
 			int d = p1[row+1][col];
-			if ( a<0||b<0||c<0||d<0 ) {
+			if ( a<0 || b<0 || c<0 || d<0 ) {
 				kv[count]   = 0;
 				kv[count+1] = 0;
 			} else {	
@@ -345,4 +268,129 @@ void PrintRegions( char *name, PStack Regions ) {
 		printf("%f %f %f %f %f\n",key->col,key->row,A1,B1,C1);
 	}
 	fclose(fp);
+}
+
+void DrawSizeFVec(FVec sizes, int im_rmin, int im_cmin, int im_rmax, int im_cmax, int v, int stable, Image out );
+
+void DrawRegion( Region key, float scale ) {
+	
+	if ( key == NULL ) return;
+	
+	int stable = key->stable;
+	
+	char name[256];
+	sprintf(name,"/tmp/T%03d.ppm",stable);
+	Image out = ReadPPMFile(name);
+	
+	static int count = 0;
+	
+	if ( !ImageIsGood(out) ) {
+		out = ConvertImage1(CopyImage(key->image));
+		sprintf(name,"/tmp/R%05d.ppm",count++);
+	} else sprintf(name,"/tmp/T%03d.ppm",stable);
+	
+	fprintf(stderr,".");
+	
+	int rv = RandomNumber(0,255);
+	int gv = RandomNumber(0,rv);
+	int bv = RandomNumber(0,gv);
+	
+	int color = PIX3(rv,gv,bv);
+	
+	DrawPolygon(key->border,out,color);
+	
+	Ellipse e1 = NewEllipse(key->row,key->col,key->maj*scale,key->min*scale,key->phi);
+	DrawEllipse(e1,out,color); free(e1);
+	Image patch = CreateImage(41*sqrt(2),41*sqrt(2));
+	RegionToPatch(key,key->image,patch,scale);
+
+	FVec hist = GenerateOrientationHistogram(patch);
+	GaussianBlur1D(hist->values,hist->l,hist->r,2);
+	DrawFVec(hist,10,10,200,400,PIX3(0,0,250),out);
+	FVecFree(hist);
+	
+	if ( PolygonIsGood(key->sizes) ) {
+		
+		struct PointSt p1 = key->sizes->vertices[0];
+		struct PointSt p2 = key->sizes->vertices[key->sizes->numberOfVertices-1];
+
+		int i;
+		hist = FVecNew(0,255);
+		Point p;
+		while ( ( p = NextPolygonVertex(key->sizes) ) != NULL ) FVecSetAt(hist,p->y,p->x);
+		if ( p1.y < p2.y ) {
+			for(i=p1.y;i<=p2.y;i++) if ( hist->values[i] == 0.0 ) FVecAddAt(hist,i,1);
+		} else {
+			for(i=p2.y;i>=p1.y;i--) if ( hist->values[i] == 0.0 ) FVecAddAt(hist,i,1);
+		}
+		
+		hist->l = MIN(p1.y,p2.y);
+		hist->r = MAX(p2.y-1,p1.y-1);
+		
+		DrawSizeFVec(hist,497,0,1021,1023,color,stable,out);
+		DrawSizeFVec(hist,498,0,1022,1023,color,stable,out);
+		DrawSizeFVec(hist,499,0,1023,1023,color,stable,out);
+		
+	}
+	
+	WritePPM(name,out);
+	FreeImage(out);
+
+}
+
+void DrawSizeFVec(FVec sizes, int im_rmin, int im_cmin, int im_rmax, int im_cmax, int v, int stable, Image out ) {
+	
+	int maxcol = out->cols-1;
+	int maxrow = out->rows-1;
+	
+	int k, l = sizes->l, r = sizes->r;
+	float large = sizes->values[l], small = sizes->values[l];
+	for (k=l;k<=r;k++) large = MAX(large,sizes->values[k]);
+	for (k=l;k<=r;k++) small = MIN(small,sizes->values[k]);
+	
+	int vec_cmax = r;
+	int vec_cmin = l;
+	int vec_rmax = large;
+	int vec_rmin = small;
+
+	double **tr = AllocDMatrix(3,3,0,0);
+	CreateDirectAffineTransform( vec_rmax,vec_cmax, vec_rmin,vec_cmin, vec_rmin,vec_cmax, im_rmin,im_cmax, im_rmax,im_cmin, im_rmax,im_cmax, tr,NULL);
+
+	for (k=l;k<r;k++) {
+	
+		float r1 = sizes->values[k];
+		float r2 = sizes->values[k+1];
+		float c1 = k;
+		float c2 = k+1;
+		
+		float r1n = r1*tr[0][0]+c1*tr[1][0]+tr[2][0];
+		float c1n = r1*tr[0][1]+c1*tr[1][1]+tr[2][1];
+		float r2n = r2*tr[0][0]+c2*tr[1][0]+tr[2][0];
+		float c2n = r2*tr[0][1]+c2*tr[1][1]+tr[2][1];
+		
+		r1n = MAX(0,MIN(r1n,maxrow));
+		c1n = MAX(0,MIN(c1n,maxcol));
+		r2n = MAX(0,MIN(r2n,maxrow));
+		c2n = MAX(0,MIN(c2n,maxcol));
+		
+		int v1 = v;
+		float sizeChange = (MAX(r1,r2)-MIN(r1,r2))/MIN(r1,r2);
+		if ( sizeChange > 0.03 ) v1 = PIX3(255,0,0);
+		else v1 = PIX3(0,255,0);
+		if ( c1 == stable ) v1 = PIX3(0,0,255);
+		
+		FastLineDraw(r1n,c1n,r2n,c2n,out,v);
+		
+		SetImagePixel1(out,r1n,c1n,v1);
+		SetImagePixel1(out,r1n+1,c1n,v1);
+		SetImagePixel1(out,r1n-1,c1n,v1);
+		SetImagePixel1(out,r1n,c1n+1,v1);
+		SetImagePixel1(out,r1n,c1n-1,v1);
+		
+		
+		
+	}
+
+	FreeDMatrix(tr,0,0);
+	
 }
