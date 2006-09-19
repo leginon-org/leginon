@@ -37,7 +37,7 @@ class SimTEM(tem.TEM):
         for axis in self.stage_axes:
             self.stage_position[axis] = 0.0
 
-        self.screen_current = 0.0
+        self.screen_current = 0.000001
         self.intensity_range = (0.0, 1.0)
         self.intensity = 0.0
 
