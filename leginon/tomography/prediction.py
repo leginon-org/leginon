@@ -1,6 +1,19 @@
+# Due to the difficulty in building scipy on SuSE, we have created our
+# own stripped down version of scipy.  It includes most of the optimize
+# module (including non-linear least squares).  It does not include
+# the linalg module, so we have to use the linear least squares function
+# from numarray instead.  Otherwise, all other calls to scipy seem to
+# work fine with our modified scipy.
+
 import scipy
-import scipy.linalg
 import scipy.optimize
+try:
+	from scipy.linalg import lstsq
+	lsmod = scipy
+except ImportError:
+	from numarray.linear_algebra import linear_least_squares as lstsq
+	import numarray
+	lsmod = numarray
 
 class TiltGroup(object):
     def __init__(self):
@@ -211,14 +224,18 @@ def residuals(parameters, tilt_matrices_list, x_list, y_list):
 def _leastSquaresXY(tilts, positions, tilt):
     m = len(tilts)
     n = 3
-    a = scipy.zeros((m, n), scipy.dtype('d'))
-    b = scipy.zeros((m, 1), scipy.dtype('d'))
+    if lsmod is scipy:
+      a = scipy.zeros((m, n), scipy.dtype('d'))
+      b = scipy.zeros((m, 1), scipy.dtype('d'))
+    else:
+      a = numarray.zeros((m, n), numarray.Float64)
+      b = numarray.zeros((m, 1), numarray.Float64)
     for i in range(m):
         v = tilts[i]
         for j in range(n):
             a[i, j] = v**j
         b[i] = positions[i]
-    x, resids, rank, s = scipy.linalg.lstsq(a, b)
+    x, resids, rank, s = lstsq(a, b)
     position = 0
     for j in range(n):
         position += x[j]*tilt**j
