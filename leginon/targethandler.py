@@ -18,8 +18,20 @@ class TargetHandler(object):
 	def __init__(self):
 		self.queueupdate = threading.Event()
 
+	def transpose_points(self, points):
+		newpoints = []
+		for point in points:
+			newpoints.append((point[1],point[0]))
+		return newpoints
+
 	def compareTargetNumber(self, first, second):
 		return cmp(first['number'], second['number'])
+
+	def reportTargetListDone(self, targetlistdata, status):
+		listid = targetlistdata.dmid
+		self.logger.info('%s done with target list ID: %s, status: %s' % (self.name, listid, status))
+		e = event.TargetListDoneEvent(targetlistid=listid, status=status)
+		self.outputEvent(e)
 
 	def researchTargets(self, **kwargs):
 		'''

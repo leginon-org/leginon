@@ -124,7 +124,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				## This means if rejects were aborted
 				## then this whole target list was aborted
 				self.logger.debug('Passed targets not processed, aborting current target list')
-				self.reportTargetListDone(newdata.dmid, rejectstatus)
+				self.reportTargetListDone(newdata, rejectstatus)
 				self.setStatus('idle')
 				return
 			self.markTargetsDone(rejects)
@@ -206,13 +206,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.publish(donetarget, database=True)
 			self.logger.debug('Done target published')
 
-		self.reportTargetListDone(newdata.dmid, targetliststatus)
+		self.reportTargetListDone(newdata, targetliststatus)
 		self.setStatus('idle')
-
-	def reportTargetListDone(self, listid, status):
-		self.logger.info('%s done with target list ID: %s, status: %s' % (self.name, listid, status))
-		e = event.TargetListDoneEvent(targetlistid=listid, status=status)
-		self.outputEvent(e)
 
 	def waitForRejects(self):
 		# wait for focus target list to complete

@@ -68,7 +68,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		## return if no targets in list
 		tilt0targets = self.researchTargets(list=tilt0targetlist, status='new')
 		if not tilt0targets:
-			self.reportTargetListDone(tilt0targetlist.dmid, 'success')
+			self.reportTargetListDone(tilt0targetlist, 'success')
 			return
 
 		## list of tilts entered by user in degrees, converted to radians
@@ -100,7 +100,7 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		self.logger.info('returning to tilt0')
 		self.instrument.tem.StagePosition = {'a': tilt0}
-		self.reportTargetListDone(tilt0targetlist.dmid, 'success')
+		self.reportTargetListDone(tilt0targetlist, 'success')
 
 	def transformPoints(self, matrix, points):
 		newpoints = []
