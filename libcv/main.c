@@ -14,54 +14,44 @@ int main (int argc, char **argv) {
 	libCV_debug = 0;
 	
 	int i, j, k;
-	float minSize = 5000, maxSize = 1.0, minPeriod = 0.1, minStable = 0.1;
+	float minSize = 10000, maxSize = 1.0, minPeriod = 0.1, minStable = 0.1;
 
-	PStack im1Regions = NewPStack(100);
 	PStack im2Regions = NewPStack(100);
 
 	float t0 = CPUTIME;
 	
-	Image im1 = ReadPGMFile(argv[1]);
-	Image im2 = ReadPGMFile(argv[2]);
+	Image im2 = ReadPGMFile(argv[1]);
 	Image out = ConvertImage1(CopyImage(im2));
-		
-	FindMSERegions(im2,im2Regions,minSize,maxSize,minPeriod,minStable);
-	FindMSERegions(im1,im1Regions,minSize,maxSize,minPeriod,minStable);
-	
-	float maxArea = 0; Polygon template = NULL, search = NULL, current = NULL;
-	for(i=0;i<im1Regions->stacksize;i++) {
-		Region re = im1Regions->items[i];
-		float ellipseArea = PolygonArea(re->border);
-		int numberOfSections = ellipseArea / 44000;
-		if ( numberOfSections >= 1 && numberOfSections < 2 ) {
-			fprintf(stderr,"Found %d sections with size %f.\n",numberOfSections,ellipseArea);
-			current = re->border;
-			for(k=0;k<im1Regions->stacksize;k++) {
-				re = im1Regions->items[k];
-				if ( !PointInPolygon(current,re->row,re->col) ) continue;
-				ellipseArea = ( re->maj * re->min * PI ) / 48361;
-				if ( ellipseArea < 0.8 && maxArea < ellipseArea ) maxArea = ellipseArea;
-			}
-		}
-	}
-	
-	WritePPM("sections.ppm",out);
-	
+	fprintf(stderr,"Read in image %s with dimensions %d %d\n",argv[1],im2->rows,im2->cols);
+	FindMSERegions(im2,im2Regions,minSize,maxSize,1,2,FALSE,TRUE);
+
 	PStack dc = NewPStack(10);
 	
 	for(i=0;i<im2Regions->stacksize;i++) {
 		Region re = im2Regions->items[i];
-		float ellipseArea = PolygonArea(re->border);
-		int numberOfSections = ellipseArea / 44000 + 0.5;
+		float area = PolygonArea(re->border);
+		float numberOfSections = area / 44000;
 		if ( numberOfSections >= 1 && numberOfSections < 5 ) {
-			if ( ABS(re->maj-148) > 5 && ABS(re->min-148) > 5 ) continue;
-			fprintf(stderr,"Found %d sections.\n",numberOfSections);
-			DrawPolygon(re->border,out,PIX3(255,0,0));
-			PolygonACD(re->border,2,0.1,1.0,dc);
+			PolygonACD(re->border,0.06,dc);
 		}
 	}
 	
+	Region cc = im2Regions->items[k];
+	//DrawPolygon(cc->border,out,PIX3(0,255,0));
+	for(i=0;i<dc->stacksize;i++) {
+		Polygon border = dc->items[i];
+		int area = PolygonArea(border);
+		if ( area < 44000 || area > 44000 * 1.6 ) continue;
+		PolygonVertexEvolution(border,4);
+		int color = RandomColor(150);
+		for(j=0;j<border->numberOfVertices;j++) {
+			Ellipse e = NewEllipse(border->vertices[j].x,border->vertices[j].y,5,5,0);
+			DrawEllipse(e,out,color); free(e);
+		}
+		DrawPolygon(border,out,color);
+	}
 	WritePPM("sections.ppm",out);
+	
 	
 	//RegionsToSIFTDescriptors(im1Regions,im1Descriptors,4,8,41);
 	//fprintf(stderr,"Created %d descriptors from %d regions in %2.2f seconds\n",im1Descriptors->stacksize,im1Regions->stacksize,CPUTIME-t0);

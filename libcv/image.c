@@ -148,10 +148,10 @@ Image ReadPPM( FILE *fp ) {
 
 void SkipComments(FILE *fp) {
     int ch;
-    fscanf(fp," ");      
+    ch = fscanf(fp," ");      
 	while ((ch = fgetc(fp)) == '#') {
 		while ((ch = fgetc(fp)) != '\n'  &&  ch != EOF);
-		fscanf(fp," ");
+		ch = fscanf(fp," ");
     }
     ungetc(ch, fp);
 }
@@ -353,6 +353,8 @@ Image CombineImagesHorizontally(Image im1, Image im2) {
 
 Image GaussianBlurImage( Image im, float sigma ) {
 	
+	if ( sigma <= 0 ) return im;
+	
 	int row, col, i;
 	int maxr = im->rows-1, maxc = im->cols-1;
 	
@@ -375,20 +377,20 @@ Image GaussianBlurImage( Image im, float sigma ) {
 				if ( pix < 0 ) continue;
 				sum += kernel[i]*pix;
 			}
-			p2[col][row] = sum + 0.5;
+			p2[row][col] = sum + 0.5;
 	}}
 	
-	for (row=0;row<=maxc;++row) {
-		for (col=0;col<=maxc;++col) {
+	for (col=0;col<=maxc;++col) {
+		for (row=0;row<=maxr;++row) {
 			float sum = 0; 
 			for (i=-krad;i<=krad;++i) {
-				int absPos=col+i;
-				absPos = BOUND(0,absPos,maxc);
-				int pix = p2[row][absPos];
+				int absPos=row+i;
+				absPos = BOUND(0,absPos,maxr);
+				int pix = p2[absPos][col];
 				if ( pix < 0 ) continue;
 				sum += kernel[i]*pix;
 			}
-			p1[col][row] = sum + 0.5;
+			p1[row][col] = sum + 0.5;
 			
 		}
 	}
@@ -879,7 +881,7 @@ Image MultiplyImages( Image im1, Image im2, Image im3 ) {
 }
 
 Image UnsharpMaskImage( Image im, float sigma ) {
-	
+	if ( sigma <= 0.0 ) return im;
 	Image copy = GaussianBlurImage(CopyImage(im),sigma);
 	copy = SubtractImages( im, copy, copy );
 	im = SubtractImages( im, copy, im );
@@ -909,8 +911,9 @@ void PasteImage( Image clip, Image targ, int row, int col ) {
 }
 
 int RandomColor( int lum ) {
-	int rv = RandomNumber(lum,255);
-	int gv = RandomNumber(rv,255);
-	int bv = RandomNumber(gv,255);
+	int rv = RandomNumber(0,255);
+	int gv = RandomNumber(0,255);
+	int bv = RandomNumber(0,255);
+	if ( rv < lum && gv < lum && bv < lum ) { rv += lum; gv += lum; bv += lum; }
 	return (PIX3(rv,gv,bv));
 }

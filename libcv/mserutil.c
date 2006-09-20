@@ -1,4 +1,3 @@
-#include "defs.h"
 #include "mser.h"
 #include "unionfind.h"
 #include "ellipsefit.h"

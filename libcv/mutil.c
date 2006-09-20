@@ -12,7 +12,7 @@ double **AllocDMatrix(int rows, int cols, int ro, int co ) {
 		if ( v != NULL ) free(v);
 		return NULL;
 	}
-	memset(v,rows*cols*sizeof(double),0);
+	v = memset(v,rows*cols*sizeof(double),0);
 	m -= ro; v -= co;
 	for (i = ro; i < rows+ro; i++) {
 		m[i] = v;
@@ -32,7 +32,7 @@ float **AllocFMatrix(int rows, int cols, int ro, int co) {
 		if ( v != NULL ) free(v);
 		return NULL;
 	}
-	memset(v,rows*cols*sizeof(float),0);
+	v = memset(v,rows*cols*sizeof(float),0);
 	m -= ro; v -= co;
 	for (i = ro; i < rows+ro; i++) {
 		m[i] = v;
@@ -51,7 +51,7 @@ int **AllocIMatrix(int rows, int cols, int ro, int co) {
 		if ( v != NULL ) free(v);
 		return NULL;
 	}
-	memset(v,rows*cols*sizeof(int),0);
+	v = memset(v,rows*cols*sizeof(int),0);
 	m -= ro; v -= co;
 	for (i=ro;i<rows+ro;i++) {
 		m[i] = v;
@@ -499,7 +499,7 @@ PStack FreePStack( PStack stack ) {
 	return NULL;	
 }
 
-char PStackEmpty( PStack stack ) {
+char PStackIsEmpty( PStack stack ) {
 	if ( stack == NULL ) return TRUE;
 	if ( stack->stacksize == 0 ) return TRUE;
 	return FALSE;
@@ -674,6 +674,10 @@ float HeapQMax( HeapQ q ) {
 	return q->da[q->pq[1]];
 }
 
+int HeapQMaxIdx( HeapQ q ) {
+	return q->pq[1];
+}
+
 RBNode RBNewNode( float val, int idx, RBNode l, RBNode r, int N, char sw ) {
 	RBNode x = malloc(sizeof(struct RBNodeSt));
 	x->x = val; x->l = l; x->r = r; x->N = N; x->idx = idx; x->t = sw;
@@ -744,7 +748,3 @@ void RBInsert( RBTree tree, float key, int idx ) {
 	tree->head = RBInsertNode( tree->head, key, idx, 0 );
 	tree->head->t = 0;
 }
-
-
-	
-	

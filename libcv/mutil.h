@@ -177,5 +177,6 @@ int HeapQDelMax( HeapQ q );
 void HeapQChange( HeapQ, int k, float val );
 char HeapQLs( float *data, int k, int j );
 float HeapQMax( HeapQ q );
+int HeapQMaxIdx( HeapQ q );
 
 #endif

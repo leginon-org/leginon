@@ -8,27 +8,29 @@
 #include "match.h"
 #include "lautil.h"
 
-static Image PyObjectToImage( PyObject *object );
-static PyObject *ImageToPyObject( Image image );
-static PyObject *FArrayToPyObject( FArray array );
-static FArray KeypointsPStackToFArray( PStack keys );
+static Image PyArrayToImage( PyObject *object );
+static PyObject *ImageToPyArray( Image image );
 
-static PyObject *pyMatchImages(PyObject *self, PyObject *args) {
+static PyObject *FArrayToPyArray( FArray array );
+
+static PyObject *RegionToPyObject( Region r );
+
+static Polygon PyArrayToPolygon( PyObject *object );
+static PyObject *PolygonToPyArray( Polygon poly );
+
+static PyObject *PyMatchImages(PyObject *self, PyObject *args) {
 
 	PyObject *oim1, *oim2;
-
-	float minsize = 0.002;
-	float maxsize = 0.9;
-	float minperiod = 0.02;
-	float minstable = 0.02;
-	float t0 = 0;
+	float t0 = CPUTIME;
 	
-	t0 = CPUTIME;
 	fprintf(stderr,"Preparing images for Python wrapper:  ");
-	if (!PyArg_ParseTuple(args, "OOffff", &oim1, &oim2, &minsize, &maxsize, &minperiod, &minstable)) return NULL;
 	
-	Image im1 = PyObjectToImage( oim1 );
-	Image im2 = PyObjectToImage( oim2 );
+	float minSize = 0.002, maxSize = 0.9, blur = 0.0, sharpen = 0.0;
+	int U = TRUE, D = TRUE;
+	if (!PyArg_ParseTuple(args, "OOffffii", &oim1, &oim2, &minSize, &maxSize, &blur, &sharpen, &U, &D )) return NULL;
+	
+	Image im1 = PyArrayToImage( oim1 );
+	Image im2 = PyArrayToImage( oim2 );
 	
 	fprintf(stderr,"Time: %2.2f seconds\n",CPUTIME-t0);
 	
@@ -40,16 +42,16 @@ static PyObject *pyMatchImages(PyObject *self, PyObject *args) {
 	
 	t0 = CPUTIME;
 	fprintf(stderr,"Image 1:  ");
-	FindMSERegions(im1,im1keys,minsize,maxsize,minperiod,minstable);
+	FindMSERegions(im1,im1keys,minSize,maxSize,blur,sharpen,U,D);
 	fprintf(stderr,"Keypoints: %d  ",im1keys->stacksize);
-	RegionsToDescriptors(im1keys,im1desc,TRUE,FALSE,FALSE,TRUE,TRUE,4,8,FALSE);
+	RegionsToSIFTDescriptors(im1keys,im1desc,4,8,41);
 	fprintf(stderr,"Descriptors: %d  Time: %2.2f\n",im1desc->stacksize,CPUTIME-t0);
 	
 	t0 = CPUTIME;
 	fprintf(stderr,"Image 2:  ");
-	FindMSERegions(im2,im2keys,minsize,maxsize,minperiod,minstable);
+	FindMSERegions(im2,im2keys,minSize,maxSize,blur,sharpen,U,D);
 	fprintf(stderr,"Keypoints: %d  ",im2keys->stacksize);
-	RegionsToDescriptors(im2keys,im2desc,TRUE,FALSE,FALSE,TRUE,TRUE,4,8,FALSE);
+	RegionsToSIFTDescriptors(im2keys,im2desc,4,8,41);
 	fprintf(stderr,"Descriptors: %d  Time: %2.2f\n",im2desc->stacksize,CPUTIME-t0);
 	
 	double **transform = AllocDMatrix(3,3,0,0);
@@ -66,60 +68,135 @@ static PyObject *pyMatchImages(PyObject *self, PyObject *args) {
 	
 }
 
-static PyObject *pyFindRegions( PyObject *self, PyObject *args ) {
+static PyObject *PyFindRegions( PyObject *self, PyObject *args ) {
 	
 	float t0 = CPUTIME;
 	
 	PyObject *oim1;
-	float minsize, maxsize, minperiod, minstable;
+	float minSize = 0.002, maxSize = 0.9, blur = 0.0, sharpen = 0.0;
+	int U = TRUE, D = TRUE, R = TRUE;
+	if (!PyArg_ParseTuple(args, "Offffiii", &oim1, &minSize, &maxSize, &blur, &sharpen, &U, &D, &R )) return NULL;
 	
-	if ( !PyArg_ParseTuple(args, "Offff", &oim1, &minsize, &maxsize, &minperiod, &minstable) ) return NULL;
-	Image im1 = PyObjectToImage( oim1 );
+	Image im1 = PyArrayToImage( oim1 );
 	
-	EnhanceImage(im1,0,255,0.01,0.01);
+	PStack regions = NewPStack(1000);
+	FindMSERegions(im1,regions,minSize,maxSize,blur,sharpen,U,D);
 	
-	PStack keys = NewPStack(1000);
-	FindMSERegions(im1,keys,minsize,maxsize,minperiod,minstable);
+	fprintf(stderr,"Found %d regions.\n", regions->stacksize);
 	
-	fprintf(stderr,"Found %d regions.\n", keys->stacksize);
+	PyObject *regionList = PyList_New(0);
 	
-	FArray keyarray = KeypointsPStackToFArray( keys );
-	PyObject *pyarray = FArrayToPyObject( keyarray );
+	while ( !PStackIsEmpty(regions) ) {
+		Region r = PopPStack(regions);
+		PyObject *pyRegion = RegionToPyObject(r);
+		PyList_Append(regionList,pyRegion);
+		Ellipse e = NewEllipse(r->row,r->col,r->maj,r->min,r->phi);
+		DrawEllipse(e,im1,RandomColor(200)); free(e);
+		FreePolygon(r->border); free(r);
+	}
+	
+	PyObject *regionImage = ImageToPyArray(im1);
+		
+	FreeImage(im1);
 	
 	fprintf(stderr,"Total time: %2.2f\n",CPUTIME-t0);
 	
-	FreeImage(im1);
-	FreeFArray( keyarray );
+	return Py_BuildValue("OO", regionList, regionImage );
 	
-	return pyarray;
+}
+ 
+static PyObject *PyPolygonACD( PyObject *self, PyObject *args ) {
+	
+	PyObject *vertices; float treshold = 0.1;
+	if ( !PyArg_ParseTuple(args,"Of", &vertices, &treshold) ) return Py_None;
+	
+	Polygon poly = PyArrayToPolygon( vertices );
+	
+	Image out = CreateImage(1024,1024); DrawPolygon(poly,out,255); WritePPM("sect.ppm",out);
+	
+	fprintf(stderr,"Performing Decomposition\n");
+	PStack decomp = NewPStack(10);
+	PolygonACD( poly, treshold, decomp );
+	FreePolygon( poly );
+	
+	fprintf(stderr,"Decomposed into %d pieces\n",decomp->stacksize);
+	
+	PyObject *polygonDecomposition = PyList_New(0);
+	
+	while ( !PStackIsEmpty(decomp) ) {
+		poly = PopPStack(decomp);
+		PyList_Append( polygonDecomposition, (PyObject *)PolygonToPyArray(poly) );
+		DrawPolygon(poly,out,RandomColor(200));
+		FreePolygon(poly);
+	}
+	
+	FreePStack(decomp);
+	
+	WritePPM("sect.ppm",out); FreeImage(out);
+	
+	return polygonDecomposition;
 	
 }
 
-static Image PyObjectToImage( PyObject *object ) {
+static PyObject *PyPolygonVE( PyObject *self, PyObject *args ) {
 	
-	PyArrayObject *pixels = NA_InputArray(object,tInt32,NUM_C_ARRAY);
+	PyObject *vertices; float treshold = 0.1;
+	if ( !PyArg_ParseTuple(args, "Of", &vertices, &treshold ) ) return Py_None;
 	
-	int maxrow = pixels->dimensions[0];
-	int maxcol = pixels->dimensions[1];
+	Polygon poly = PyArrayToPolygon( vertices );
 	
-	Image newimage = CreateImage(maxrow,maxcol);
+	PolygonVertexEvolution( poly, treshold );
 	
-	memcpy(newimage->pixels[0],pixels->data,sizeof(tInt32)*maxrow*maxcol);
+	return PolygonToPyArray(poly);
 	
-	Py_XDECREF( pixels );
+}
 	
-	return newimage;
+static Polygon PyArrayToPolygon( PyObject *object ) {
+	
+	PyArrayObject *vertices = NA_InputArray(object,tFloat32,NUM_C_ARRAY);
+
+	int i, size = vertices->dimensions[1];
+	
+	float *x = NA_OFFSETDATA(vertices);
+	float *y = x + size;
+	
+	Polygon poly = NewPolygon(size);
+	Point p = poly->vertices;
+	
+	for (i=0;i<size;i++) { p[i].x = x[i]; p[i].y = y[i]; } 
+	
+	Py_XDECREF( vertices );
+	
+	poly->numberOfVertices = size;
+	
+	return poly;
+
+}
+	
+	
+static Image PyArrayToImage( PyObject *image ) {
+	
+	PyArrayObject *temp = NA_InputArray(image,tInt32,NUM_C_ARRAY);
+	
+	int maxrow = temp->dimensions[0];
+	int maxcol = temp->dimensions[1];
+	
+	Image newImage = CreateImage(maxrow,maxcol);
+	memcpy(newImage->pixels[0],NA_OFFSETDATA(temp),sizeof(tInt32)*maxrow*maxcol);
+	
+	Py_XDECREF( temp );
+	
+	return newImage;
 	
 }	
 
-static PyObject *ImageToPyObject( Image image ) {
+static PyObject *ImageToPyArray( Image image ) {
 	int maxrow = image->rows;
 	int maxcol = image->cols;
-	PyArrayObject *pyarray = NA_NewArray((void *)image->pixels[0], tInt32, 2, maxrow, maxcol );
-	return (PyObject *)pyarray;
+	return (PyObject *)NA_NewArray(image->pixels[0], tInt32, 2, maxrow, maxcol );
 }
 
-static PyObject *FArrayToPyObject( FArray array ) {
+static PyObject *FArrayToPyArray( FArray array ) {
 	
 	int rows = FArrayRows(array);
 	int cols = FArrayCols(array);
@@ -133,51 +210,57 @@ static PyObject *FArrayToPyObject( FArray array ) {
 			buffer[count++] = values[row][col];
 	}}
 	
-	PyArrayObject *pyarray = NA_NewArray((void*)buffer, tFloat32, 2, rows, cols );
+	PyObject *pyarray = (PyObject *)NA_NewArray(buffer, tFloat32, 2, rows, cols );
 	
 	free(buffer);
 
-	return (PyObject *)pyarray;
+	return pyarray;
 	
 }
 
-static FArray KeypointsPStackToFArray( PStack keys ) {
-
-	FArray array = NewFArray(0,0,0,0);
+static PyObject *RegionToPyObject( Region r ) {
 	
-	int count = 0;
-	while ( !PStackEmpty(keys) ) {
-		Region key = PopPStack(keys);
-		SetFArray(array,count,0,key->row);
-		SetFArray(array,count,1,key->col);
-		SetFArray(array,count,2,key->maj);
-		SetFArray(array,count,3,key->min);
-		SetFArray(array,count,4,key->phi);
-		SetFArray(array,count,5,key->A);
-		SetFArray(array,count,6,key->B);
-		SetFArray(array,count,7,key->C);
-		SetFArray(array,count,8,key->D);
-		SetFArray(array,count,9,key->E);
-		SetFArray(array,count,10,key->F);
-		free(key); count++;
-	}
+	PyObject *ellipseParameters, *pyRegion;
+	PyObject *borderPoints;
 	
-	FreePStack(keys);
+	ellipseParameters = Py_BuildValue("fffffffffff",r->row,r->col,r->maj,r->min,r->phi,r->A,r->B,r->C,r->D,r->E,r->F);
+	borderPoints = PolygonToPyArray( r->border );
 	
-	return array;
+	pyRegion  = Py_BuildValue("{s:O,s:O}","regionEllipse",ellipseParameters,"regionBorder",borderPoints);
+	Py_XDECREF(ellipseParameters); Py_XDECREF(borderPoints);
+	
+	return pyRegion;
 	
 }
-		
 
-static PyMethodDef mserMethods[] = {
-	{"matchImages", pyMatchImages, METH_VARARGS, "BLANK"},
-	{"findRegions", pyFindRegions, METH_VARARGS, "BLANK"},
+static PyObject *PolygonToPyArray( Polygon poly ) {
+	
+	if ( poly == NULL ) return Py_None;
+	int i, size = poly->numberOfVertices;
+	if ( size == 0 ) return Py_None;
+	Point v = poly->vertices;
+	
+	float *x = malloc(sizeof(float)*size*2);
+	float *y = x + size;
+	
+	for (i=0;i<size;i++) { x[i] = v[i].x; y[i] = v[i].y; }
+	
+	return (PyObject *)NA_NewArray(x,tFloat32,2,2,size);
+	
+}
+	
+
+static PyMethodDef libCVMethods[] = {
+	{"MatchImages", PyMatchImages, METH_VARARGS, "BLANK"},
+	{"FindRegions", PyFindRegions, METH_VARARGS, "BLANK"},
+	{"PolygonACD", PyPolygonACD, METH_VARARGS, "BLANK"},
+	{"PolygonVE", PyPolygonVE, METH_VARARGS, "BLANK"},
 	{NULL, NULL}
 };
 
-void initmser()
+void initlibCV()
 {
-	(void) Py_InitModule("mser", mserMethods);
+	(void) Py_InitModule("libCV", libCVMethods);
 	import_libnumarray()
 }
 

@@ -3,56 +3,59 @@
 #include "unionfind.h"
 #include "geometry.h"
 
-Ellipse FilterEllipse( Ellipse e ); void DrawRegion( Region key, float scale );
-void TrackRegions( MSERArray pa, PStack regions, int minSize, int maxSize );
+Ellipse FilterEllipse( Ellipse e );
+void DrawRegion( Region key, float scale );
+void ResetMSERArray( MSERArray pa );
+MSERArray FreeMSERArray( MSERArray pa );
+MSERArray ImageToMSERArray( Image image );
+char MSERArrayIsGood( MSERArray array );
 void EvaluateStableRegions( MSERArray ma, void **tSizes, PStack regions );
 void FindBorder( Image image, int row, int col, int t, Polygon borderPixels );
 void JoinNeighborsBelow( MSERArray ma, void **, int minSize, int maxSize );
 void JoinNeighborsAbove( MSERArray ma, void **, int minSize, int maxSize );
 void DrawConnectedRegions( MSERArray ma, int t, int minSize, int maxSize );
 
-char FindMSERegions( Image image, PStack regions, float minSize, float maxSize, float minperiod, float minstable ) {
-	
-	if ( !ImageIsGood(image) || !PStackGood(regions) ) return FALSE;
-	
-	float blurSigma = 2;
-	float sharpenSigma = 4.0;
-	
-	EnhanceImage(image,0,255,0.01,0.01);
-	GaussianBlurImage(image,blurSigma);
-	UnsharpMaskImage(image,sharpenSigma);
-	MSERArray ma = ImageToMSERArray(image);
-	if ( minSize <= 1.0 ) minSize = minSize*ma->size;
-	if ( maxSize <= 1.0 ) maxSize = maxSize*ma->size;
-	fprintf(stderr,"Min / Max region sizes %d - %d pixels\n",(int)minSize,(int)maxSize); 
-	TrackRegions(ma,regions,minSize,maxSize);
-	FreeMSERArray( ma ); 
-
-	return TRUE;
-	
-}
 
 char libCV_above = FALSE;
 char libCV_below = FALSE;
 
-void TrackRegions( MSERArray ma, PStack regions, int minSize, int maxSize ) {
+char FindMSERegions( Image image, PStack regions, float minSize, float maxSize, float blur, float sharpen, char u, char d ) {
+	
+	if ( !ImageIsGood(image) || !PStackGood(regions) ) return FALSE;
+	
+	fprintf(stderr,"Filtering image\n");
+	
+	EnhanceImage(image,0,255,0.01,0.01);
+	GaussianBlurImage(image,blur);
+	UnsharpMaskImage(image,sharpen);
+	
+	fprintf(stderr,"Creating MSERArray\n");
+	MSERArray ma = ImageToMSERArray(image);
+	if ( minSize <= 1.0 ) minSize = minSize*ma->size;
+	if ( maxSize <= 1.0 ) maxSize = maxSize*ma->size;
+	
+	fprintf(stderr,"Min / Max region sizes %d - %d pixels\n",(int)minSize,(int)maxSize); 
 	
 	void **sizes = malloc(sizeof(void **)*ma->size);
 	int k; for (k=0;k<ma->size;k++) sizes[k] = NULL;
 	
-	libCV_below = TRUE;
-	libCV_above = FALSE;
+	if ( d ) {
+		libCV_below = TRUE;
+		libCV_above = FALSE;
+		JoinNeighborsBelow(ma,sizes,minSize,maxSize);
+		EvaluateStableRegions(ma,sizes,regions);
+	}
 	
-	JoinNeighborsBelow(ma,sizes,minSize,maxSize);
-	EvaluateStableRegions(ma,sizes,regions);
+	if ( u ) {
+		libCV_below = FALSE;
+		libCV_above = TRUE;
+		JoinNeighborsAbove(ma,sizes,minSize,maxSize);
+		EvaluateStableRegions(ma,sizes,regions);
+	}
 	
-	libCV_below = FALSE;
-	libCV_above = TRUE;
-	
-	//JoinNeighborsAbove(ma,sizes,minSize,maxSize);
-	//EvaluateStableRegions(ma,sizes,regions);
-	
-	free(sizes);
+	FreeMSERArray( ma ); free(sizes);
+
+	return TRUE;
 	
 }
 
@@ -82,7 +85,7 @@ void EvaluateStableRegions( MSERArray ma, void **tSizes, PStack regions ) {
 
 	int minStable, maxVal = total * 0.5; total = 0;
 	for ( minStable = 0; total < maxVal && minStable <= 100; minStable++ ) total += hist[minStable];
-	
+
 	total = 0;
 	for (i=0;i<=100;i++) hist[i] = 0;
 	for (i=0;i<ma->size;i++) {
@@ -116,7 +119,7 @@ void EvaluateStableRegions( MSERArray ma, void **tSizes, PStack regions ) {
 		}
 	}
 	
-	int minPeriod; maxVal = total * 0.9; total = 0;
+	int minPeriod; maxVal = total * 0.95; total = 0;
 	for ( minPeriod = 0; total < maxVal && minPeriod <= 100; minPeriod++ ) total += hist[minPeriod];
 	
 	for (i=0;i<ma->size;i++) {
@@ -135,9 +138,7 @@ void EvaluateStableRegions( MSERArray ma, void **tSizes, PStack regions ) {
 			}
 		}
 	}
-	
 
-	
 	for (i=0;i<ma->size;i++) {
 		if ( tSizes[i] == NULL ) continue;	
 		tSize = tSizes[i];
@@ -155,8 +156,6 @@ void EvaluateStableRegions( MSERArray ma, void **tSizes, PStack regions ) {
 	free(hist);
 	
 }
-		
-			
 
 void JoinNeighborsBelow( MSERArray ma, void **sizes, int minSize, int maxSize ) {
 	

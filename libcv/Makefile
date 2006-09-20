@@ -18,7 +18,6 @@ CC = gcc
 OBJ = main.o geometry.o lautil.o mutil.o util.o image.o mser.o unionfind.o csift.o match.o
 
 # Definitions
-DEFS = defs.h
 
 # ------------------------ Rules --------------------------------
 
