@@ -62,22 +62,11 @@ class RasterFinder(targetfinder.TargetFinder):
 		}
 		self.start()
 
-	def readImage(self, filename):
-		orig = Mrc.mrc_to_numeric(filename)
-		self.original = orig
-		self.setImage(orig, 'Original')
-
-	def transpose_points(self, points):
-		newpoints = []
-		for point in points:
-			newpoints.append((point[1],point[0]))
-		return newpoints
-
 	def createRaster(self):
 		'''
 		from center of image, generate a raster of points
 		'''
-		imageshape = self.original.shape
+		imageshape = self.currentimagedata['image'].shape
 		spacing = self.settings['raster spacing']
 		limit = self.settings['raster limit']
 		radians = 3.14159 * self.settings['raster angle'] / 180
@@ -161,7 +150,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		goodpoints = []
 		mylist = []
 		for rasterpoint in self.polygonrasterpoints:
-			box_stats = self.get_box_stats(self.original, rasterpoint, boxsize)
+			box_stats = self.get_box_stats(self.currentimagedata['image'], rasterpoint, boxsize)
 			t = self.icecalc.get_thickness(box_stats['mean'])
 			ts = self.icecalc.get_stdev_thickness(box_stats['std'], box_stats['mean'])
 			if (tmin <= t <= tmax) and (ts < tstd):
@@ -214,7 +203,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		self.setImage(imdata['image'], 'Original')
 
 		## automated part
-		self.original = imdata['image']
+		self.currentimagedata = imdata
 		self.everything()
 
 		## user part

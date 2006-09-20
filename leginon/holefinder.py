@@ -102,31 +102,6 @@ class HoleFinder(targetfinder.TargetFinder):
 
 		self.start()
 
-	def readImage(self, filename):
-		imagedata = self.getImageFromDB(filename)
-		if imagedata is None:
-			try:
-				orig = Mrc.mrc_to_numeric(filename)
-			except Exception, e:
-				self.logger.exception('Read image failed: %s' % e[-1])
-				return
-		else:
-			orig = imagedata['image']
-		self.currentimagedata = imagedata
-		self.hf['original'] = orig
-		self.setImage(orig, 'Original')
-
-	def getImageFromDB(self, filename):
-		# only want filename without path and extension
-		filename = os.path.split(filename)[1]
-		filename = '.'.join(filename.split('.')[:-1])
-		q = data.AcquisitionImageData(session=self.session, filename=filename)
-		results = self.research(datainstance=q)
-		if not results:
-			return None
-		imagedata = results[0]
-		return imagedata
-
 	def findEdges(self):
 		self.logger.info('find edges')
 		n = self.settings['edge log size']
