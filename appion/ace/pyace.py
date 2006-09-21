@@ -291,6 +291,10 @@ def insertAceParams(params,expid):
 	runq['dbemdata|SessionData|session']=expid
 	runids=acedb.query(runq, results=1)
 
+	dfnom='None'
+	if params['nominal']:
+		dfnom=-params['nominal']
+		
 	# if no run entry exists, insert new run entry into run.processing
 	# then create a new ace_param entry
 	if not(runids):
@@ -310,7 +314,7 @@ def insertAceParams(params,expid):
 		aceparams['drange']=params['drange']
 		# if nominal df is set, save override df to database, else don't set
 		if params['nominal']:
-			aceparams['df_override']=-params['nominal']
+			aceparams['df_override']=dfnom
 	       	acedb.insert(aceparams)
 		
 	# if continuing a previous run, make sure that all the current
@@ -331,7 +335,7 @@ def insertAceParams(params,expid):
 		    acelist['fieldsize']!=params['fieldsize'] or
 		    acelist['resamplefr']!=params['resamplefr'] or
 		    acelist['drange']!=params['drange'] or
-		    acelist['df_override']!=-params['nominal']):
+		    str(acelist['df_override'])!=str(dfnom)):
 			print "All parameters for a single ACE run must be identical!"
 			print "please check your parameter settings."
 			sys.exit()
