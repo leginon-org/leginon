@@ -5,10 +5,13 @@ import cPickle
 import pymat
 import glob
 import data
+import processingData
 import dbdatakeeper
 import time
+#import MySQLdb
 
 db=dbdatakeeper.DBDataKeeper()
+acedb=dbdatakeeper.DBDataKeeper(db='processing')
 acedonename='.acedone.py'
 
 def printHelp():
@@ -35,7 +38,7 @@ def printHelp():
 	print "                              value specified should be in meters, for example: nominal=-2.0e-6"
 	print "commit                      : if commit is specified, ctf parameters will be stored to the database"
 	sys.exit()
-		 
+	
 def createDefaults():
 	# create default values for parameters
 	params={}
@@ -255,6 +258,12 @@ def runAce(matlab,img,params):
 		nominal=img['scope']['defocus']
 	
 	pymat.eval(matlab,("dforig = %e;" % nominal))
+
+	expid=int(img['session'].dbid)
+	if params['commit']=='TRUE':
+		#insert ace params into processing.ace_params table in db
+		insertAceParams(params,expid)
+
 	acecommand=("ctfparams = ace('%s','%s',%d,%d,'%s',%e,'%s');" % (imgpath, params['outtextfile'], params['display'], params['stig'], params['medium'], -nominal, params['tempdir']))
 #	print acecommand
 	print "Processing", imgname
@@ -268,30 +277,126 @@ def runAce(matlab,img,params):
 	ctfparams=pymat.get(matlab,'ctfparams')
 	print "Nominal, Defocus1, Defocus2, Confidence1, Confidence2"
 	print ('%1.3f %1.3f %1.3f %1.3f %1.3f' % (float(-nominal*1e6), float(ctfparams[0]*1e6), float(ctfparams[1]*1e6), ctfparams[16], ctfparams[17]))
-	if params['display']:
-		imfile1=params['tempdir']+'im1.png'
-		imfile2=params['tempdir']+'im2.png'
-		opimname1=imgname+'.mrc1.png'
-		opimname2=imgname+'.mrc2.png'
-		opimfile1=os.path.join(params['opimagedir'],opimname1)
-		opimfile2=os.path.join(params['opimagedir'],opimname2)
 
-		pymat.eval(matlab,("im1 = imread('%s');" % (imfile1)))
-		pymat.eval(matlab,("im2 = imread('%s');" % (imfile2))) 
-		pymat.eval(matlab,("imwrite(im1,'%s');" % (opimfile1)))
-		pymat.eval(matlab,("imwrite(im2,'%s');" % (opimfile2)))
+	#display must be on to be able to commit ctf results to db 	
+	if (params['display'] and params['commit']=='TRUE'):
+		#insert ctf params into processing.ctf table in db
+		insertCtfParams(img,params,imgname,matfile,expid,ctfparams)
 
-		#display must be on to be able to commit to db 	
-		if params['commit']=='TRUE':
-			expid=int(img['session'].dbid)
-			legimgid=int(img.dbid)
-			legpresetid =int(img['preset'].dbid)
-			dforig=img['scope']['defocus']
-			commitcommand=("dbctf(%d, '%s', %d, %d, '%s', %e, ctfparams, '%s', '%s', '%s')" % (expid, params['runid'], legimgid, legpresetid, (imgname + '.mrc'), -dforig, opimfile1, opimfile2, matfile))
-			#print commitcommand
-			print "Committing ctf parameters for", imgname, "to database."
-			pymat.eval(matlab, commitcommand)
+	return
+
+def insertAceParams(params,expid):
+	runq=processingData.run()
+	runq['name']=params['runid']
+	runq['dbemdata|SessionData|session']=expid
+	runids=acedb.query(runq, results=1)
+
+	# if no run entry exists, insert new run entry into run.processing
+	# then create a new ace_param entry
+	if not(runids):
+		acedb.insert(runq)
+		aceparams=processingData.ace_params()
+		aceparams['runId']=runq
+		aceparams['display']=params['display']
+		aceparams['stig']=params['stig']
+		aceparams['medium']=params['medium']
+		aceparams['edgethcarbon']=params['edgethcarbon']
+		aceparams['edgethice']=params['edgethice']
+		aceparams['pfcarbon']=params['pfcarbon']
+		aceparams['pfice']=params['pfice']
+		aceparams['overlap']=params['overlap']
+		aceparams['fieldsize']=params['fieldsize']
+		aceparams['resamplefr']=params['resamplefr']
+		aceparams['drange']=params['drange']
+		# if nominal df is set, save override df to database, else don't set
+		if params['nominal']:
+			aceparams['df_override']=-params['nominal']
+	       	acedb.insert(aceparams)
+		
+	# if continuing a previous run, make sure that all the current
+	# parameters are the same as the previous
+	else:
+		runlist=runids[0]
+		aceq=processingData.ace_params(runId=runq)
+		aceresults=acedb.query(aceq, results=1)
+		acelist=aceresults[0]
+		if (acelist['display']!=params['display'] or
+		    acelist['stig']!=params['stig'] or
+		    acelist['medium']!=params['medium'] or
+		    acelist['edgethcarbon']!=params['edgethcarbon'] or
+		    acelist['edgethice']!=params['edgethice'] or
+		    acelist['pfcarbon']!=params['pfcarbon'] or
+		    acelist['pfice']!=params['pfice'] or
+		    acelist['overlap']!=params['overlap'] or
+		    acelist['fieldsize']!=params['fieldsize'] or
+		    acelist['resamplefr']!=params['resamplefr'] or
+		    acelist['drange']!=params['drange'] or
+		    acelist['df_override']!=-params['nominal']):
+			print "All parameters for a single ACE run must be identical!"
+			print "please check your parameter settings."
+			sys.exit()
+	return
+
+def insertCtfParams(img,params,imgname,matfile,expid,ctfparams):
+	runq=processingData.run()
+	runq['name']=params['runid']
+	runq['dbemdata|SessionData|session']=expid
+	legimgid=int(img.dbid)
+	legpresetid =int(img['preset'].dbid)
+	dforig=img['scope']['defocus']
+
+	imfile1=params['tempdir']+'im1.png'
+	imfile2=params['tempdir']+'im2.png'
+	opimname1=imgname+'.mrc1.png'
+	opimname2=imgname+'.mrc2.png'
+	opimfile1=os.path.join(params['opimagedir'],opimname1)
+	opimfile2=os.path.join(params['opimagedir'],opimname2)
+
+	pymat.eval(matlab,("im1 = imread('%s');" % (imfile1)))
+	pymat.eval(matlab,("im2 = imread('%s');" % (imfile2))) 
+	pymat.eval(matlab,("imwrite(im1,'%s');" % (opimfile1)))
+	pymat.eval(matlab,("imwrite(im2,'%s');" % (opimfile2)))
 				
+	procimgq = processingData.image(imagename=imgname + '.mrc')
+	procimgq['dbemdata|SessionData|session']=expid
+	procimgq['dbemdata|AcquisitionImageData|image']=legimgid
+	procimgq['dbemdata|PresetData|preset']=legpresetid
+	procimgq['dbemdata|ScopeEMData|defocus']=dforig
+
+	imgids=acedb.query(procimgq)
+
+	# if no image entry, make one
+	if not (imgids):
+		acedb.insert(procimgq)
+
+	print "Committing ctf parameters for", imgname, "to database."
+	ctfq=processingData.ctf()
+	ctfq['runId']=runq
+	ctfq['imageId']=procimgq
+	ctfq['defocus1']=ctfparams[0]
+	ctfq['defocus2']=ctfparams[1]
+	ctfq['defocusinit']=ctfparams[2]
+	ctfq['amplitude_contrast']=ctfparams[3]
+	ctfq['angle_astigmatism']=ctfparams[4]
+	ctfq['noise1']=ctfparams[5]
+	ctfq['noise2']=ctfparams[6]
+	ctfq['noise3']=ctfparams[7]
+	ctfq['noise4']=ctfparams[8]
+	ctfq['envelope1']=ctfparams[9]
+	ctfq['envelope2']=ctfparams[10]
+	ctfq['envelope3']=ctfparams[11]
+	ctfq['envelope4']=ctfparams[12]
+	ctfq['lowercutoff']=ctfparams[13]
+	ctfq['uppercutoff']=ctfparams[14]
+	ctfq['graph1']=opimfile1
+	ctfq['graph2']=opimfile2
+	ctfq['mat_file']=matfile
+	ctfq['snr']=ctfparams[15]
+	ctfq['confidence']=ctfparams[16]
+	ctfq['confidence_d']=ctfparams[17]
+
+	acedb.insert(ctfq)
+	
 	return
 
 def getOutDirs(params):
