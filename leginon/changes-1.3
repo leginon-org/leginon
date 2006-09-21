@@ -1,0 +1,89 @@
+Changes since tag version-1-2-0 (cvs diff through focuser.py)
+
+datasync.py
+	updates the database for v1.3.  There is also a php script by
+	Denis that may be a better way to do it
+
+Navigator Node:
+	iterative move correction where user specifies move precision
+
+Acquisition Node:
+	can request Navigator to move to targets rather than presets manager
+	also may specify move precision, requires application changes with
+	new events to navigator
+
+	reference target (christian) - need to figure this out
+
+	no longer internal drift check, only makes requests to drift manager
+	this requires application changes with new events
+
+	uses new preset pre exposure, which puts screen down to expose
+
+Presets Manager
+	pre exposure
+
+Beam Tilt Calibrator
+	some change regarding beam tilt to/from scope?
+	rotation center to/from scope
+
+calibrationclient.py
+	when stig off, equation is solved without need of A,B
+		by "min" is different (higher) in this case
+
+	stage tilt z correction
+
+	different fitting function for mag only stage model updates
+	is this working?
+
+	measureStateShift now includes setting of correction channel
+		(but not for drift check image)
+
+	measure stage tilt axis location (maybe not in 1.3)
+
+	stage model mag only fit changes
+
+GonModeler
+	stage model mag only fit changes
+
+Focuser
+	new stage tilt z correction
+
+	diff shows a lot of other stuff
+
+	measure stage tilt axis location (maybe not in 1.3)
+
+	rotation center alignment (or does this go somewhere else)
+
+Corrector
+	fixes regarding strange extreme values in images
+
+	clip min/max
+
+	multiple "channels" of reference images.  several nodes will now
+	use different channels when acquiring images, but if those extra channels
+	do not exist, it will still work with whatever channel is available
+
+Hole Finder
+	threshold method option (is this only in JAHC?)
+
+Poly Finder
+	Denis working on this
+
+Tomography
+	new great stuff!
+
+Target Filter base class
+	center target filter, Anchi can describe
+
+RCT
+	working on it
+
+Image Assessor
+	new utility node
+
+dbdatakeeper
+	something about limiting results
+
+Drift Manager
+	handles all drift measurement (not in focuser anymore)
+	recommended to use 2 correction channels
