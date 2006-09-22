@@ -8,7 +8,7 @@ import processingData
 import dbdatakeeper
 
 acedb=dbdatakeeper.DBDataKeeper(db='processing')
-db=dbdatakeeper.DBDataKeeper()
+db=dbdatakeeper.DBDataKeeper(db='dbemdata')
 
 def printHelp():
     print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected=<file>] [phaseflip] [noinvert] [spider]\n"
