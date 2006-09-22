@@ -269,10 +269,14 @@ def binImg(img,binning):
     
 def filterImg(img,apix,res):
     # low pass filter image to res resolution
-    c=convolver.Convolver()
-    sigma=(res/apix)/3.0
-    kernel=convolver.gaussian_kernel(sigma)
-    #Mrc.numeric_to_mrc(kernel,'kernel.mrc')
+    if res==0:
+        print "Skipping low pass filter"
+        return(img)
+    else:
+        c=convolver.Convolver()
+        sigma=(res/apix)/3.0
+        kernel=convolver.gaussian_kernel(sigma)
+        #Mrc.numeric_to_mrc(kernel,'kernel.mrc')
     return(c.convolve(image=img,kernel=kernel))
            
 def runFindEM(params,file):
