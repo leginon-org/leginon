@@ -513,6 +513,11 @@ def findCrud(params,file):
     cmdlist.append("    -zhptls_chull\n")
     cmdlist.append("    -zhprun_plgn BYSIZE $area_t\n")
     cmdlist.append("    -zhmerge_plgn CONVEXHULL\n")
+    cmdlist.append("    set zmet [-zhlpl_attr]\n")
+    cmdlist.append("    set currentfile "+file+".mrc\n")
+    cmdlist.append("    set fic [open crudfiles/"+file+".crud w+]\n")
+    cmdlist.append("    puts $fic $zmet\n")
+    cmdlist.append("    close $fic\n")
     cmdlist.append("    -store convex_hulls ss1\n")
     cmdlist.append("    set line_width 2\n")
     cmdlist.append("    set line_intensity 0\n")
@@ -726,6 +731,9 @@ if __name__ == '__main__':
         if (params["diam"]==0): # diameter must be set
             print "\nError: please input the diameter of your particle\n\n"
             sys.exit(1)
+    	# create directory to contain the 'crud' files
+    	if not (os.path.exists("crudfiles")):
+        	os.mkdir("crudfiles")
         for img in images:
             findCrud(params,img)
         sys.exit(1)
@@ -775,6 +783,8 @@ if __name__ == '__main__':
 
             # run the crud finder on selected particles if specified
             if (params["crud"]=='TRUE'):
+                if not (os.path.exists("crudfiles")):
+        	    os.mkdir("crudfiles")
                 findCrud(params,img)
                 # if crudfinder removes all the particles, go to next image
                 if not (os.path.exists("pikfiles/"+img+".a.pik.nocrud")):
@@ -795,6 +805,7 @@ if __name__ == '__main__':
             # write results to dictionary
             donedict[img]=True
             writeDoneDict(donedict)
+	    
 
         if params["dbimages"]=='TRUE':
             notdone=True
