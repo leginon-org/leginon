@@ -3,6 +3,12 @@
 
 import os, re, sys
 import string
+import data
+import processingData
+import dbdatakeeper
+
+acedb=dbdatakeeper.DBDataKeeper(db='processing')
+db=dbdatakeeper.DBDataKeeper()
 
 def printHelp():
     print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected=<file>] [phaseflip] [noinvert] [spider]\n"
@@ -123,7 +129,8 @@ def checkInspected(img):
     if (status.rstrip('\n')=='keep'):
         return 'TRUE'
     return 'FALSE'
-        
+
+"""       
 def getAceValues(params,img):
     if (params["hasace"]=='TRUE'):
         return
@@ -154,7 +161,48 @@ def getAceValues(params,img):
         if (params["apix"]>0 and params["kv"]>0 and (params["conf"] !=0 or params["conf_d"] !=0)):
             params["hasace"]='TRUE'
         return
-    
+"""
+def getAceValues(params,img):
+    if params['hasace']=='TRUE':
+        return
+    else:
+        filename=img+'.mrc'
+        ctfq=processingData.ctf()
+        imq=processingData.image(imagename=filename)
+        ctfq['image']=imq
+        ctfparams=acedb.query(ctfq)
+        imagedata=db.directquery(dataclass=data.AcquisitionImageData, id=ctfparams[0]['imageId']['dbemdata|AcquisitionImageData|image'], readimages=False)
+        if ctfparams[0]['imageId']['imagename'] != imagedata['filename']+'.mrc':
+            print "There are serious problems with the database queries.", ctfparams[0]['imageId']['imagename'] ,'not equal to' , imagedata['filename']+'.mrc'
+	    sys.exit()
+	if imagedata and ctfparams:
+	    if ['stig']==0:
+		params['hasace']='TRUE'
+		params['df']=ctfparams['defocus1']
+		params['conf_d']=ctfparams['confidence_d']
+		params['conf']=ctfparams['confidence']
+		params['apix']=getPixelSize(imagedata)
+		params['kv']=imagedata['scope']['high tension']
+	    else:
+		print "Skipping image", filename, "because makestack cannot handle ACE estimates with astigmatism turned on"
+		params['hasace']='FALSE'
+        return
+            
+def getPixelSize(imagedata):
+    # use image data object to get pixel size
+    # multiplies by binning and also by 1e10 to return image pixel size in angstroms
+    pixelsizeq=data.PixelSizeCalibrationData()
+    pixelsizeq['magnification']=imagedata['scope']['magnification']
+    pixelsizeq['tem']=imagedata['scope']['tem']
+    pixelsizeq['ccdcamera'] = imagedata['camera']['ccdcamera']
+    pixelsizedata=db.query(pixelsizeq, results=1)
+	
+    binning=imagedata['camera']['binning']['x']
+    pixelsize=pixelsizedata[0]['pixelsize'] * binning
+	
+    return(pixelsize*1e10)
+
+        
 def checkAce(img):
     conf_d=params["conf_d"]
     conf=params["conf"]
@@ -267,6 +315,7 @@ if __name__ == '__main__':
             os.remove(stackfile)
         # set up counter for particle log
         p_logfile=params["outdir"]+'.particlelog'
+
         if (os.path.exists(p_logfile)):
             os.remove(p_logfile)
         params["particle"]=0
