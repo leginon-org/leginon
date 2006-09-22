@@ -42,6 +42,7 @@ class ctf(data.Data):
         def typemap(cls):
                 return data.Data.typemap() + (
                         ('runId', run),
+			('aceId', ace_params),
                         ('imageId', image),
                         ('defocus1', float),
                         ('defocus2', float), 

@@ -315,6 +315,7 @@ def insertAceParams(params,expid):
 		# if nominal df is set, save override df to database, else don't set
 		if params['nominal']:
 			aceparams['df_override']=dfnom
+		print aceparams
 	       	acedb.insert(aceparams)
 		
 	# if continuing a previous run, make sure that all the current
@@ -345,6 +346,11 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams):
 	runq=processingData.run()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
+
+	# get corresponding ace_params entry
+	aceq=processingData.ace_params(runId=runq)
+	acevals=acedb.query(aceq, results=1)
+
 	legimgid=int(img.dbid)
 	legpresetid =int(img['preset'].dbid)
 	dforig=img['scope']['defocus']
@@ -376,6 +382,7 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams):
 	print "Committing ctf parameters for", imgname, "to database."
 	ctfq=processingData.ctf()
 	ctfq['runId']=runq
+	ctfq['aceId']=acevals[0]
 	ctfq['imageId']=procimgq
 	ctfq['defocus1']=ctfparams[0]
 	ctfq['defocus2']=ctfparams[1]

@@ -30,7 +30,6 @@ blobgraph2 = file2hexstr(graph2);
 
 conn = connect_db('processing');
 
- 
 
 %get default leginon image Id
 
