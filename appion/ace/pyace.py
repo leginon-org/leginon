@@ -275,8 +275,12 @@ def runAce(matlab,img,params):
 #	print savematcommand
 	pymat.eval(matlab,savematcommand)
 	ctfparams=pymat.get(matlab,'ctfparams')
-	print "Nominal, Defocus1, Defocus2, Confidence1, Confidence2"
-	print ('%1.3f %1.3f %1.3f %1.3f %1.3f' % (float(-nominal*1e6), float(ctfparams[0]*1e6), float(ctfparams[1]*1e6), ctfparams[16], ctfparams[17]))
+	if (params['stig']==0):
+		print "Nominal Defocus Confidence1 Confidence2"
+		print ('%1.3f   %1.3f   %1.3f       %1.3f' % (float(-nominal*1e6), float(ctfparams[0]*1e6), ctfparams[16], ctfparams[17]))
+	else:
+		print "Nominal Defocus1 Defocus2 Confidence1 Confidence2"
+		print ('%1.3f   %1.3f   %1.3f       %1.3f       %1.3f' % (float(-nominal*1e6), float(ctfparams[0]*1e6), float(ctfparams[1]*1e6), ctfparams[16], ctfparams[17]))
 
 	#display must be on to be able to commit ctf results to db 	
 	if (params['display'] and params['commit']=='TRUE'):
@@ -315,7 +319,6 @@ def insertAceParams(params,expid):
 		# if nominal df is set, save override df to database, else don't set
 		if params['nominal']:
 			aceparams['df_override']=dfnom
-		print aceparams
 	       	acedb.insert(aceparams)
 		
 	# if continuing a previous run, make sure that all the current
