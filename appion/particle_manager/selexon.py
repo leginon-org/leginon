@@ -460,6 +460,10 @@ def findCrud(params,file):
     if (os.path.exists("pikfiles/"+file+".a.pik.nocrud")):
         os.remove("pikfiles/"+file+".a.pik.nocrud")
 
+    # remove crud info file if it exists
+    if (os.path.exists("crudfiles/"+file+".crud")):
+        os.remove("crudfiles/"+file+".crud")
+
     diam=str(params["diam"]/4)
     cdiam=str(params["cdiam"]/4)
     if (params["cdiam"]==0):
