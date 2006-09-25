@@ -175,11 +175,11 @@ def getImagesToReprocess(params):
 	for n in images:
 		imagename=n['filename']+'.mrc'
 		ctfq=processingData.ctf()
-		imq=processingData.image(name=imagename)
+		imq=processingData.image(imagename=imagename)
 		ctfq['imageId']=imq
 		ctfparams=acedb.query(ctfq)
 		if ctfparams:
-			if ctfparams['confidence'] > threshold and ctfparams['confidence_d'] > threshold:
+			if ctfparams[0]['confidence'] > threshold and ctfparams[0]['confidence_d'] > threshold:
 				print imagename, 'has confidence and confidence_d <', threshold
 				imagelist.append(n)
 		else:
