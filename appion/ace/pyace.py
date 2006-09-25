@@ -187,6 +187,13 @@ def getImagesToReprocess(params):
 			imagelist.append(n)
 	return (imagelist)
 
+def getCTFParamsForImage(imagedata):
+	imagename=imagedata['filename']+'.mrc'
+	ctfq=processingData.ctf()
+	imq=processingData.image(imagename=imagename)
+	ctfq['imageId']=imq
+	return(acedb.query(ctfq))
+	
 def getPixelSize(imagedata):
 	pixelsizeq=data.PixelSizeCalibrationData()
 	pixelsizeq['magnification']=imagedata['scope']['magnification']
@@ -345,6 +352,8 @@ def insertAceParams(params,expid):
 		# if nominal df is set, save override df to database, else don't set
 		if params['nominal']:
 			aceparams['df_override']=dfnom
+		if params['reprocess']:
+			aceparams['reprocess']=params['reprocess']
 	       	acedb.insert(aceparams)
 		
 	# if continuing a previous run, make sure that all the current
@@ -365,6 +374,7 @@ def insertAceParams(params,expid):
 		    acelist['fieldsize']!=params['fieldsize'] or
 		    acelist['resamplefr']!=params['resamplefr'] or
 		    acelist['drange']!=params['drange'] or
+		    acelist['reprocess']!=params['reprocess'] or
 		    str(acelist['df_override'])!=str(dfnom)):
 			print "All parameters for a single ACE run must be identical!"
 			print "please check your parameter settings."
@@ -494,10 +504,10 @@ if __name__ == '__main__':
 	(params, donedict)=getDoneDict(params)
 	
 	#get image data objects from Leg. database
-	if params['dbimages'] == 'TRUE' and not params['reprocess']:
-		images=getImagesFromDB(params['session'],params['preset'])
-	else:
-		images=getImagesToReprocess(params)
+#	if params['dbimages'] == 'TRUE' and not params['reprocess']:
+	images=getImagesFromDB(params['session'],params['preset'])
+#	else:
+#		images=getImagesToReprocess(params)
 	
 	notdone=True
 	while notdone:
@@ -510,6 +520,22 @@ if __name__ == '__main__':
 					print img['filename'], 'already processed. To process again, remove "continue" option.'
 					continue
 			
+			#if reprocess option is specified, skip over images with confidence better than specified
+			if params['reprocess']:
+				ctfparams=getCTFParamsForImage(img)
+				reprocess=True
+				if ctfparams:
+					for ctfvalue in ctfparams:
+						if ctfvalue['confidence'] > params['reprocess'] or ctfvalue['confidence_d'] > params['reprocess']:
+							reprocess=False
+					if reprocess:
+						print "Reprocessing", img['filename']
+					else:
+						print "Skipping", img['filename']
+						continue
+				else:
+					print img['filename'],'not processed yet. Will process with current ACE parameters.'
+					
 			#set up and write scopeparams.mat file to temp directory
 			#do this for every image because pixel size can be different
 			scopeparams={}
