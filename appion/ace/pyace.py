@@ -15,7 +15,7 @@ acedb=dbdatakeeper.DBDataKeeper(db='processing')
 acedonename='.acedone.py'
 
 def printHelp():
-	print "\nUsage:\npyace.py edgethcarbon=<n> edgethice=<n> pfcarbon=<n> pfice=<n> overlap=<n> fieldsize=<n> fr=<n> drange=<n> dbimages=<session_id>,<preset> tempdir=<dir> [medium=carbon or medium=ice] cs=<n> outdir=<dir> runid=<runid> [display=1 or display=0] [stig=0 or stig=1] continue nominal=<n> commit\n"
+	print "\nUsage:\npyace.py edgethcarbon=<n> edgethice=<n> pfcarbon=<n> pfice=<n> overlap=<n> fieldsize=<n> fr=<n> drange=<n> dbimages=<session_id>,<preset> tempdir=<dir> [medium=carbon or medium=ice] cs=<n> outdir=<dir> runid=<runid> [display=1 or display=0] [stig=0 or stig=1] continue nominal=<n> commit reprocess=<n>\n"
 	print "Example:\npyace.py dbimages=06aug30b,en medium=ice continue\n"
 	print "edgethcarbon=<n>            : threshold for edge detection with medium=carbon (default=0.8)"
 	print "edgethice=<n>               : threshold for edge detection with medium=ice (default=0.6)"
@@ -37,6 +37,8 @@ def printHelp():
 	print "nominal=<n>                 : if present, the value specified by nominal will override the value returned from the database (default=None)"
 	print "                              value specified should be in meters, for example: nominal=-2.0e-6"
 	print "commit                      : if commit is specified, ctf parameters will be stored to the database"
+	print "reprocess=<n>               : if reprocess is specified, images that have already been processed but have both confidence and confidence_d"
+	print "                              values less than <n> will be reprocessed. Note: A new runid must be specified" 
 	sys.exit()
 	
 def createDefaults():
@@ -63,6 +65,7 @@ def createDefaults():
 	params['continue']='FALSE'
 	params['nominal']=None
 	params['commit']='FALSE'
+	params['reprocess']=None
 
 	return(params)
 
@@ -142,6 +145,8 @@ def parseInput(args):
 		elif arg=='commit':
 			params['commit']='TRUE'
 			params['display']=1
+		elif (elements[0]=='reprocess'):
+			params['reprocess']=float(elements[1])
 		else:
 			print "undefined parameter", arg
 			sys.exit()
@@ -159,6 +164,27 @@ def getImagesFromDB(session,preset):
 	# readimages=False to keep db from returning actual image
 	# readimages=True could be used for doing processing w/i this script
 	imagelist=db.query(imageq, readimages=False)
+	return (imagelist)
+
+def getImagesToReprocess(params):
+	session=params['session']
+	preset=params['preset']
+	threshold=params['reprocess']
+	images=getImagesFromDB(session,preset)
+	imagelist=[]
+	for n in images:
+		imagename=n['filename']+'.mrc'
+		ctfq=processingData.ctf()
+		imq=processingData.image(name=imagename)
+		ctfq['imageId']=imq
+		ctfparams=acedb.query(ctfq)
+		if ctfparams:
+			if ctfparams['confidence'] > threshold and ctfparams['confidence_d'] > threshold:
+				print imagename, 'has confidence and confidence_d <', threshold
+				imagelist.append(n)
+		else:
+			print imagename, 'not processed yet. Will process now with current ACE parameters.'
+			imagelist.append(n)
 	return (imagelist)
 
 def getPixelSize(imagedata):
@@ -468,7 +494,10 @@ if __name__ == '__main__':
 	(params, donedict)=getDoneDict(params)
 	
 	#get image data objects from Leg. database
-	images=getImagesFromDB(params['session'],params['preset'])
+	if params['dbimages'] == 'TRUE' and not params['reprocess']:
+		images=getImagesFromDB(params['session'],params['preset'])
+	else:
+		images=getImagesToReprocess(params)
 	
 	notdone=True
 	while notdone:
@@ -497,7 +526,7 @@ if __name__ == '__main__':
 			donedict[img['filename']]=True
 			writeDoneDict(donedict,params)
 			
-		if params['dbimages']=='TRUE':
+		if params['dbimages']=='TRUE' and not params['reprocess']:
 			notdone=True
 			print "Waiting one minute for new images"
 			time.sleep(60)
