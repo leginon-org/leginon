@@ -10,7 +10,7 @@ import dbdatakeeper
 db=dbdatakeeper.DBDataKeeper()
 
 class run(data.Data):
-        def typemap(cls):
+	def typemap(cls):
 		return data.Data.typemap() + (
 			('dbemdata|SessionData|session', int),
 			('name', str), 

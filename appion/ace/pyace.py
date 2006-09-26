@@ -417,7 +417,7 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams):
 	# if no image entry, make one
 	if not (imgids):
 		acedb.insert(procimgq)
-
+			
 	print "Committing ctf parameters for", imgname, "to database."
 	ctfq=processingData.ctf()
 	ctfq['runId']=runq
@@ -445,7 +445,11 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams):
 	ctfq['confidence']=ctfparams[16]
 	ctfq['confidence_d']=ctfparams[17]
 
-	acedb.insert(ctfq)
+	if ctfq['defocus1']==-1:
+		ctf_failedq=processinData.ctf(runId=runq, aceId=acevals[0], imageId=procimgq)
+		acedb.insert(ctf_failedq)
+	else:
+		acedb.insert(ctfq)
 	
 	return
 
