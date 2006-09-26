@@ -33,27 +33,35 @@ class ctfdata {
 	}
 
 	function getLastCtfRun($sessionId) {
-		$q = "select max(runId) as runId "
-			."from `run` where `sessionId`='$sessionId'";
+		$q = "select max(DEF_id) as runId "
+			."from `run` where `dbemdata|SessionData|session`='$sessionId'";
 		list($r) = $this->mysql->getSQLResult($q);
-		return $r['runId'];
+		return $r['DEF_id'];
 	}
 
 	function getCtfRunIds($sessionId) {
-		$q = "select runId "
-			."from `run` where `sessionId`='$sessionId'";
+		$q = "select * "
+			."from `run` where `dbemdata|SessionData|session`='$sessionId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
 
-	function getCtfInfo($sessionId, $runId=false) {
+	function getAceParams($runId) {
+		$q = "select * "
+			."from `ace_params` "
+			."where `REF|run|runId` = '$runId'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+	
+	function getCtfInfoWithNominal($sessionId, $runId=false) {
 		$q =	"select "
-			."i.`DEF_id`, "
-			."i.`defocus_nominal`, "
+			."i.`dbemdata|AcquisitionImageData|image`, "
+			."i.`dbemdata|ScopeEMData|defocus`, "
 			."c.`defocus1`, "
 			."c.`defocus2`, "
 			."c.`defocusinit`, "
-			."c.`amplitude_constrast`, "
+			."c.`amplitude_contrast`, "
 			."c.`angle_astigmatism`, "
 			."c.`noise1`, "
 			."c.`noise2`, "
@@ -65,26 +73,53 @@ class ctfdata {
 			."c.`envelope4`, "
 			."c.`lowercutoff`, "
 			."c.`uppercutoff`, "
+			."c.`confidence` , "
+			."c.`confidence_d` , "
 			."c.`snr` "
 			."from image i left join ctf c "
-			."on (c.imageId=i.imageId) "
-			."where i.sessionId='$sessionId' ";
+			."on (c.`REF|image|imageId`=i.`DEF_id`) "
+			."where i.`dbemdata|SessionData|session`='$sessionId' ";
 			if ($runId)
-				$q .= "and c.runId='$runId' ";
+				$q .= "and c.`REF|run|runId`='$runId' ";
 			else
-				$q .= "and c.ctfId=(select max(c2.ctfId) from ctf c2 where c2.imageId = c.imageId)";
+				$q .= "and c.`DEF_id`=(select max(c2.`DEF_id`) from ctf c2 where c2.`REF|image|imageId` = c.`REF|image|imageId`)";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getCtfInfo($runId) {
+		$q =	"select "
+			."i.`dbemdata|AcquisitionImageData|image`, "
+			."c.`defocus1`, "
+			."c.`defocus2`, "
+			."c.`defocusinit`, "
+			."c.`amplitude_contrast`, "
+			."c.`angle_astigmatism`, "
+			."c.`noise1`, "
+			."c.`noise2`, "
+			."c.`noise3`, "
+			."c.`noise4`, "
+			."c.`envelope1`, "
+			."c.`envelope2`, "
+			."c.`envelope3`, "
+			."c.`envelope4`, "
+			."c.`lowercutoff`, "
+			."c.`uppercutoff`, "
+			."c.`confidence` , "
+			."c.`confidence_d` , "
+			."c.`snr` "
+			."from ctf c , image i where c.`REF|run|runId`='$runId' and c.`REF|image|imageId`=i.`DEF_id`";
 		return $this->mysql->getSQLResult($q);
 	}
 
 	function getCtfInfoFromImageId($imageId) {
 		$q =	"select "
-			."c.`ctfId`, "
-			."i.`DEF_id`, "
-			."i.`defocus_nominal`, "
+			."c.`DEF_id`, "
+			."i.`dbemdata|AcquisitionImageData|image`, "
+			."i.`dbemdata|ScopeEMData|defocus`, "
 			."c.`defocus1`, "
 			."c.`defocus2`, "
 			."c.`defocusinit`, "
-			."c.`amplitude_constrast`, "
+			."c.`amplitude_contrast`, "
 			."c.`angle_astigmatism`, "
 			."c.`noise1`, "
 			."c.`noise2`, "
@@ -96,10 +131,12 @@ class ctfdata {
 			."c.`envelope4`, "
 			."c.`lowercutoff`, "
 			."c.`uppercutoff`, "
+			."c.`confidence` , "
+			."c.`confidence_d` , "
 			."c.`snr` "
 			."from image i left join ctf c "
-			."on (c.imageId=i.imageId) "
-			."where i.DEF_id='$imageId' ";
+			."on (c.`REF|image|imageId`=i.`DEF_id`) "
+			."where i.`dbemdata|AcquisitionImageData|image`='$imageId' ";
 		return $this->mysql->getSQLResult($q);
 	}
 
@@ -108,7 +145,7 @@ class ctfdata {
 			return false;
 		$q =	"select "
 			."`$blobfield`"
-			."FROM ctfblob WHERE ctfblobId=$id";
+			."FROM ctfblob WHERE DEF_id=$id";
 		$blobres = $this->mysql->SQLQuery($q);
 		list($blob) = mysql_fetch_row($blobres);
 		return $blob;
@@ -128,7 +165,7 @@ class ctfdata {
 		if (!is_array($fields))
 			return False;
 		foreach ($fields as $field) {
-			$selects[$field] = "i.DEF_id as id, i.defocus_nominal, "
+			$selects[$field] = "i.`dbemdata|AcquisitionImageData|image` as id, i.`dbemdata|ScopeEMData|defocus`, "
 					. "count(i.DEF_id) as `nb`, "
 					. "min(c.`$field`) as `min`, "
 					. "max(c.`$field`) as `max`, "
@@ -141,16 +178,16 @@ class ctfdata {
 		foreach ($selects as $k=>$select) {
 			$q =	"select ".$select." "
 			."from image i left join ctf c "
-			."on (c.imageId=i.imageId) "
+			."on (c.`REF|image|imageId`=i.`DEF_id`) "
 			."left join dbemdata.`AcquisitionImageData` a "
-			."on (a.DEF_id = i.DEF_id) "
+			."on (a.`DEF_id` = i.`dbemdata|AcquisitionImageData|image`) "
 			."left join dbemdata.`PresetData` p "
 			."on (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
-			."where i.sessionId='$sessionId' ";
+			."where i.`dbemdata|SessionData|session`='$sessionId' ";
 			if ($runId)
-				$q .= "and c.runId='$runId' ";
+				$q .= "and c.`REF|run|runId`='$runId' ";
 			else
-				$q .= "and c.ctfId=(select max(c2.ctfId) from ctf c2 where c2.imageId = c.imageId)";
+				$q .= "and c.`DEF_id`=(select max(c2.`DEF_id`) from ctf c2 where c2.`REF|image|imageId` = c.`REF|image|imageId`)";
 			$q .= "group by p.`name`";
 			$r = $this->mysql->getSQLResult($q);
 			$stats[$k] = $r;
@@ -162,7 +199,7 @@ class ctfdata {
 		if (!is_array($fields))
 			return False;
 		foreach ($fields as $field) {
-			$selects[$field] = "i.DEF_id as id, i.defocus_nominal, "
+			$selects[$field] = "i.`dbemdata|AcquisitionImageData|image` as id, i.`dbemdata|ScopEMData|defocus`, "
 					. "`$field`";
 		}
 		if (!is_array($selects))
@@ -171,12 +208,12 @@ class ctfdata {
 		foreach ($selects as $k=>$select) {
 			$q =	"select ".$select." "
 			."from image i left join ctf c "
-			."on (c.imageId=i.imageId) "
-			."where i.sessionId='$sessionId' ";
+			."on (c.`REF|image|imageId`=i.`DEF_id`) "
+			."where i.`dbemdata|SessionData|session`='$sessionId' ";
 			if ($runId)
-				$q .= "and c.runId='$runId' ";
+				$q .= "and c.`REF|run|runId`='$runId' ";
 			else
-				$q .= "and c.ctfId=(select max(c2.ctfId) from ctf c2 where c2.imageId = c.imageId)";
+				$q .= "and c.`DEF_id`=(select max(c2.`DEF_id`) from ctf c2 where c2.`REF|image|imageId` = c.`REF|image|imageId`)";
 			$r = $this->mysql->getSQLResult($q);
 			$stats[$k] = $r;
 		}

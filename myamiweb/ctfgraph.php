@@ -18,16 +18,15 @@ require_once ("inc/leginon.inc");
 
 $defaultId= 1766;
 $sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
+$runId= ($_GET[rId]);
 $viewdata = ($_GET['vd']==1) ? true : false;
 $histogram = ($_GET[hg]==1) ? true : false;
 $f = $_GET[f];
-$defocus_nom = $_GET[df];
 $preset=$_GET['preset'];
 
 $ctf = new ctfdata();
-$runId = $ctf->getLastCtfRun($sessionId);
-$ctfinfo = $ctf->getCtfInfo($sessionId, $runId);
-
+//$runId = $ctf->getLastCtfRun($sessionId);
+$ctfinfo = $ctf->getCtfInfo($runId);
 function scicallback($a) {
 	return format_sci_number($a,3,true);
 }
@@ -37,14 +36,13 @@ function TimeCallback($aVal) {
 }
 
 foreach($ctfinfo as $t) {
-	$id = $t['DEF_id'];
+	$id = $t['dbemdata|AcquisitionImageData|image'];
 	$p = $leginondata->getPresetFromImageId($id);
 	if ($p['name']!=$preset)
 		continue;
 	$data[$id] = $t[$f];
 	$where[] = "DEF_id=".$id;
 }
-
 $sqlwhere = "WHERE (".join(' OR ',$where).") and a.`REF|SessionData|session`=".$sessionId ;
 $q = 	"select DEF_id, unix_timestamp(DEF_timestamp) as unix_timestamp, "
 	." DEF_timestamp as timestamp from AcquisitionImageData a "
@@ -80,12 +78,13 @@ if (!$data) {
 
 		$rdatax = $rdata['x'];
 		$rdatay = $rdata['y'];
-
+		
 		$graph->SetScale("linlin");
+                
 		$bplot = new BarPlot($rdatay, $rdatax);
 		$graph->Add($bplot);
 
-		$graph->title->Set("Histogram $f : $defocus_nom: $preset ");
+		$graph->title->Set("Histogram $f : $preset ");
 		$graph->xaxis->title->Set("$f");
 		$graph->xaxis->SetTextLabelInterval(3);
 		$graph->xaxis->SetLabelFormatCallback('scicallback');
@@ -101,7 +100,7 @@ if (!$data) {
 		$graph->xaxis->title->Set("time");
 		$graph->yaxis->SetTitlemargin(35);
 		$graph->yaxis->SetLabelFormatCallback('scicallback');
-		$graph->title->Set("$f : $defocus_nom: $preset ");
+		$graph->title->Set("$f : $preset ");
 
 		$sp1 = new ScatterPlot($datay,$datax);
 		$sp1->mark->SetType(MARK_CIRCLE);

@@ -216,38 +216,46 @@ if (!empty($comments)) {
 <?php
 echo divtitle("CTF");
 require('inc/ctf.inc');
-$fields = array('defocus1', 'defocus2', 'snr');
 $sessionId=$expId;
 $ctf = new ctfdata();
-$runId = $ctf->getLastCtfRun($sessionId);
-$stats = $ctf->getStats($fields, $sessionId, $runId);
-
-$display_ctf=false;
-foreach($stats as  $field=>$data) {
-		foreach($data as $k=>$v) {
-			$display_ctf=true;
-			$imageId = $stats[$field][$k]['id'];
-			$p = $leginondata->getPresetFromImageId($imageId);
-			$stats[$field][$k]['preset'] = $p['name'];
-			$cdf = '<a href="ctfgraph.php?hg=1&Id='.$sessionId
-				.'&f='.$field.'&df='.$data[$k]['defocus_nominal'].'">'
-				.'<img border="0" src="ctfgraph.php?w=150&hg=1&Id='.$sessionId
-				.'&f='.$field.'&preset='.$p['name'].'"></a>';
-			$stats[$field][$k]['img'] = $cdf;
-		}
+//$runId = $ctf->getLastCtfRun($sessionId);
+//echo "$runId<BR>";
+$runIds = $ctf->getCtfRunIds($sessionId);
+foreach ($runIds as $runId) {
+	$rId=$runId['DEF_id'];
+	$rName=$runId['name'];
+	$ace_params= $ctf->getAceParams($rId);
+	if ($ace_params['stig']==0) {
+		$fields = array('defocus1', 'confidence', 'confidence_d');
+	}
+	else {
+		$fields = array('defocus1', 'defocus2', 'confidence', 'confidence_d');
+	}
+	$stats = $ctf->getStats($fields, $sessionId, $rId);
+	$display_ctf=false;
+	foreach($stats as  $field=>$data) {
+			foreach($data as $k=>$v) {
+				$display_ctf=true;
+				$imageId = $stats[$field][$k]['id'];
+				$p = $leginondata->getPresetFromImageId($imageId);
+				$stats[$field][$k]['preset'] = $p['name'];
+				$cdf = '<a href="ctfgraph.php?&hg=1&Id='.$sessionId.'&rId='.$rId.'&f='.$field.'&preset='.$p['name'].'">'
+					.'<img border="0" src="ctfgraph.php?w=150&hg=1&Id='.$sessionId.'&rId='.$rId.'&f='.$field.'&preset='.$p['name'].'"></a>';
+				$stats[$field][$k]['img'] = $cdf;
+			}
+	}
+	$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
+	if ($display_ctf) {
+		echo "\n<table>";
+		echo "<tr>";
+			echo "<td>";
+			echo "Run: $rName";
+			echo "</td>";
+		echo "</tr>";
+		echo "</table>";
+		echo display_stats($stats, $display_keys);
+	} else echo "no CTF information available";
 }
-$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
-if ($display_ctf) {
-	echo "<table>";
-	echo "<tr>";
-		echo "<td>";
-		echo "<a href='ctfreport.php?Id=$expId'>report &raquo;</a>";
-		echo "</td>";
-	echo "</tr>";
-	echo "</table>";
-	echo display_stats($stats, $display_keys);
-} else echo "no CTF information available"
-
 ?>
 </td>
 </tr>

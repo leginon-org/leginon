@@ -85,6 +85,7 @@ $ctf_display_fields = array (
 	'uppercutoff',
 	'snr',
 	'confidence',
+	'confidence_d',
 	'blobgraph1',
 	'blobgraph2',
 );
