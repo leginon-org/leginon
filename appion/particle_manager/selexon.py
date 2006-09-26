@@ -44,6 +44,7 @@ def printHelp():
     print "crudblur=<n>       : amount to blur the image for edge detection (default is 3.5)"
     print "crudlo=<n>         : lower limit for edge detection (0-1, default=0.6)"
     print "crudhi=<n>         : upper threshold for edge detection (0-1, default=0.95)"
+    print "crudstd=<n>        : lower limit for scaling the edge detection limits (i.e. stdev of the image) (default=1= never scale)"
     print "crudonly           : only run the crud finder to check and view the settings"
     print "box=<n>            : output will be saved as EMAN box file with given box size"
     print "continue           : if this option is turned on, selexon will skip previously processed"
@@ -76,6 +77,7 @@ def createDefaults():
     params["cblur"]=3.5
     params["clo"]=0.6
     params["chi"]=0.95
+    params["cstd"]=1
     params["crudonly"]='FALSE'
     params["onetemplate"]='FALSE'
     params["continue"]='FALSE'
@@ -172,6 +174,8 @@ def parseInput(args):
             params["clo"]=float(elements[1])
         elif (elements[0]=='crudhi'):
             params["chi"]=float(elements[1])
+        elif (elements[0]=='crudstd'):
+            params["cstd"]=float(elements[1])
         elif (arg=='crudonly'):
             params["crudonly"]='TRUE'
         elif (arg=='continue'):
@@ -471,10 +475,33 @@ def findCrud(params,file):
     scale=str(params["bin"])
     size=str(int(params["diam"]/30)) #size of cross to draw    
     sigma=str(params["cblur"]) # blur amount for edge detection
-    low_t=str(params["clo"]) # low threshold for edge detection
-    high_t=str(params["chi"]) # upper threshold for edge detection
+    low_tn=float(params["clo"]) # low threshold for edge detection
+    high_tn=float(params["chi"]) # upper threshold for edge detection
+    standard=float(params["cstd"]) # lower threshold for full scale edge detection
     pm="2.0"
     am="3.0" 
+
+    # scale the edge detection limit if the image standard deviation is lower than the standard
+    # This creates an edge detection less sensitive to noises in mostly empty images
+    image=Mrc.mrc_to_numeric(file+".mrc")
+    imean=imagefun.mean(image)
+    istdev=imagefun.stdev(image,known_mean=imean)
+    print imean,istdev
+    low_tns=low_tn/(istdev/standard)
+    high_tns=high_tn/(istdev/standard)
+    if (low_tns > 1.0):
+    	low_tns=1.0
+    if (low_tns < low_tn):
+    	low_tns=low_tn
+    if (high_tns > 1.0):
+    	high_tns=1.0
+    if (high_tns < high_tn):
+    	high_tns=high_tn
+    high_t=str(high_tns)
+    low_t=str(low_tns)
+    print high_tns,low_tns
+
+
 
     cmdlist=[]
     cmdlist.append("#!/usr/bin/env viewit\n")
