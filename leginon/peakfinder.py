@@ -9,6 +9,7 @@
 #
 
 import convolver
+import imagefun
 
 try:
 	import numarray as Numeric
@@ -109,25 +110,8 @@ class PeakFinder(object):
 		self.pixelPeak()
 		peakrow,peakcol = self.results['pixel peak']
 
-		rows,cols = self.shape
-
-		rowrange = (peakrow-npix/2, peakrow+npix/2+1)
-		rowinds = range(rowrange[0], rowrange[1])
-
-		colrange = (peakcol-npix/2, peakcol+npix/2+1)
-		colinds = range(colrange[0], colrange[1])
-
 		## cut out a region of interest around the peak
-		roi = Numeric.zeros((npix,npix), Numeric.Float32)
-		for row in range(npix):
-			for col in range(npix):
-				srow = peakrow + row - npix/2
-				if srow >= rows:
-					srow -= rows
-				scol = peakcol + col - npix/2
-				if scol >= cols:
-					scol -= cols
-				roi[row,col] = self.image[srow,scol]
+		roi = imagefun.crop_at(self.image, (peakrow,peakcol), (npix,npix))
 
 		## fit a quadratic to it and find the subpixel peak
 		roipeak = self.quadFitPeak(roi)
@@ -210,23 +194,8 @@ def findSubpixelPeak(image, npix=5):
 
 	rows, cols = image.shape
 
-	rowrange = (peakrow-npix/2, peakrow+npix/2+1)
-	rowinds = range(rowrange[0], rowrange[1])
-
-	colrange = (peakcol-npix/2, peakcol+npix/2+1)
-	colinds = range(colrange[0], colrange[1])
-
 	## cut out a region of interest around the peak
-	roi = Numeric.zeros((npix,npix), Numeric.Float32)
-	for row in range(npix):
-		for col in range(npix):
-			srow = peakrow + row - npix/2
-			if srow >= rows:
-				srow -= rows
-			scol = peakcol + col - npix/2
-			if scol >= cols:
-				scol -= cols
-			roi[row,col] = image[srow,scol]
+	roi = imagefun.crop_at(image, (peakrow,peakcol), (npix,npix))
 
 	# fit a quadratic to it and find the subpixel peak
 	roipeak = quadraticPeakFit(roi)
