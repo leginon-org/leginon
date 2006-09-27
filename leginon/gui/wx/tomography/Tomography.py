@@ -28,7 +28,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
                                                 allownone=False,
                                                 chars=7,
                                                 value='0.0')
-        self.widgets['equally sloped'] = wx.CheckBox(self, -1, 'Use equally sloped angles, power of 2 angles in 180 degree range:')
+        self.widgets['equally sloped'] = wx.CheckBox(self, -1, 'Use equally sloped (symmetric) angles, power of 2 angles in 180 degree range:')
         self.widgets['equally sloped n'] = IntEntry(self, -1, min=2, allownone=False, chars=5, value='8')
 
         tiltsz = wx.GridBagSizer(5, 10)

@@ -23,6 +23,41 @@ def equallySloped(n):
     angles += [math.atan2(m, i) for i in range(m, 0, -1)]
     return angles
 
+def angles2lines(thetas, n):
+    p = len(thetas)
+    lines = []
+
+    for theta in thetas:
+        if theta >= 3*math.pi/4:
+            theta -= math.pi
+
+        if round(theta, 6) >= -math.pi/4 and round(theta, 6) <= math.pi/4:
+            line = n*0.5*(1 + math.tan(theta)) + 1
+        else:
+            line = n*(1.5 + 0.5*math.tan(math.pi/2 - theta)) + 1
+
+        line = round(line)
+
+        if line > 2*n:
+            line = line - 2*n
+        lines.append(line)
+
+    return lines
+
+def symmetric(thetas, n):
+    n = 2**n
+    lines = angles2lines(thetas, n) 
+    symmetric_angles = []
+    for line in lines:
+        if line <= n + 1:
+            symmetric_angle = math.atan((n + 2 - 2*line)/n)
+        else:
+            symmetric_angle = math.pi/2 - math.atan((3*n + 2 - 2*line)/n)
+        if symmetric_angle > math.pi/2:
+            symmetric_angle -= math.pi
+        symmetric_angles.append(symmetric_angle)
+    return symmetric_angles
+
 class Tilts(object):
     def __init__(self, **kwargs):
         self.update(**kwargs)
@@ -47,6 +82,7 @@ class Tilts(object):
     def updateTilts(self):
         self.tilts = []
 
+        '''
         if self.equally_sloped:
             if self.start < self.min or self.start > self.max:
                 raise ValueError('start angle out of range')
@@ -77,6 +113,19 @@ class Tilts(object):
             tilt_half.reverse()
             if len(tilt_half) > 1:
                 self.tilts.append(tilt_half)
+        '''
+        if self.equally_sloped:
+            parameters = [
+                (self.min, self.max, self.start, self.step),
+                (self.min, self.max, self.start, -self.step),
+            ]
+
+            for args in parameters:
+                tilts = equallyAngled(*args)
+                tilts = symmetric(tilts, self.n)
+                if len(tilts) < 2:
+                    continue
+                self.tilts.append(tilts)
         else:
             parameters = [
                 (self.min, self.max, self.start, self.step),
@@ -99,13 +148,14 @@ if __name__ == '__main__':
         'max': math.radians(60),
         'start': math.radians(0),
         'step': math.radians(1),
-        'n': 8,
+        'n': 10,
     }
     tilts = Tilts(**kwargs)
     print sum([len(t) for t in tilts.getTilts()])
-    print tilts.getTilts()
-    tilts.update(equally_sloped=True)
-    print sum([len(t) for t in tilts.getTilts()])
-    print tilts.getTilts()
-
+    for ts in tilts.getTilts():
+        for t in ts:
+            print math.degrees(t)
+    #tilts.update(equally_sloped=True)
+    #print sum([len(t) for t in tilts.getTilts()])
+    #print tilts.getTilts()
 
