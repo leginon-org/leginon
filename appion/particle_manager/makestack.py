@@ -4,10 +4,10 @@
 import os, re, sys
 import string
 import data
-import processingData
+import ctfData
 import dbdatakeeper
 
-acedb=dbdatakeeper.DBDataKeeper(db='processing')
+acedb=dbdatakeeper.DBDataKeeper(db='dbctfdata')
 db=dbdatakeeper.DBDataKeeper(db='dbemdata')
 
 def printHelp():
@@ -169,12 +169,12 @@ def getAceValues(params,img):
 	else:
 		filename=img+'.mrc'
 		
-		imq=processingData.image(imagename=filename)
+		imq=ctfData.image(imagename=filename)
 		imparams=acedb.query(imq)
 		
-		runq=processingData.run()
-		ctfq=processingData.ctf()
-		aceq=processingData.ace_params()
+		runq=ctfData.run()
+		ctfq=ctfData.ctf()
+		aceq=ctfData.ace_params()
 
 		ctfq['imageId']=imq
 		ctfq['runId']=runq
