@@ -446,7 +446,7 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams):
 	ctfq['confidence_d']=ctfparams[17]
 
 	if ctfq['defocus1']==-1:
-		ctf_failedq=processinData.ctf(runId=runq, aceId=acevals[0], imageId=procimgq)
+		ctf_failedq=processingData.ctf(runId=runq, aceId=acevals[0], imageId=procimgq)
 		acedb.insert(ctf_failedq)
 	else:
 		acedb.insert(ctfq)
