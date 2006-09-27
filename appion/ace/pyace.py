@@ -5,13 +5,13 @@ import cPickle
 import pymat
 import glob
 import data
-import processingData
+import ctfData
 import dbdatakeeper
 import time
 #import MySQLdb
 
 db=dbdatakeeper.DBDataKeeper()
-acedb=dbdatakeeper.DBDataKeeper(db='processing')
+acedb=dbdatakeeper.DBDataKeeper(db='dbctfdata')
 acedonename='.acedone.py'
 
 def printHelp():
@@ -174,8 +174,8 @@ def getImagesToReprocess(params):
 	imagelist=[]
 	for n in images:
 		imagename=n['filename']+'.mrc'
-		ctfq=processingData.ctf()
-		imq=processingData.image(imagename=imagename)
+		ctfq=ctfData.ctf()
+		imq=ctfData.image(imagename=imagename)
 		ctfq['imageId']=imq
 		ctfparams=acedb.query(ctfq)
 		if ctfparams:
@@ -189,8 +189,8 @@ def getImagesToReprocess(params):
 
 def getCTFParamsForImage(imagedata):
 	imagename=imagedata['filename']+'.mrc'
-	ctfq=processingData.ctf()
-	imq=processingData.image(imagename=imagename)
+	ctfq=ctfData.ctf()
+	imq=ctfData.image(imagename=imagename)
 	ctfq['imageId']=imq
 	return(acedb.query(ctfq))
 	
@@ -294,7 +294,7 @@ def runAce(matlab,img,params):
 
 	expid=int(img['session'].dbid)
 	if params['commit']=='TRUE':
-		#insert ace params into processing.ace_params table in db
+		#insert ace params into dbctfdata.ace_params table in db
 		insertAceParams(params,expid)
 
 	acecommand=("ctfparams = ace('%s','%s',%d,%d,'%s',%e,'%s');" % (imgpath, params['outtextfile'], params['display'], params['stig'], params['medium'], -nominal, params['tempdir']))
@@ -317,13 +317,13 @@ def runAce(matlab,img,params):
 
 	#display must be on to be able to commit ctf results to db 	
 	if (params['display'] and params['commit']=='TRUE'):
-		#insert ctf params into processing.ctf table in db
+		#insert ctf params into dbctfdata.ctf table in db
 		insertCtfParams(img,params,imgname,matfile,expid,ctfparams)
 
 	return
 
 def insertAceParams(params,expid):
-	runq=processingData.run()
+	runq=ctfData.run()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
 	runids=acedb.query(runq, results=1)
@@ -332,11 +332,11 @@ def insertAceParams(params,expid):
 	if params['nominal']:
 		dfnom=-params['nominal']
 		
-	# if no run entry exists, insert new run entry into run.processing
+	# if no run entry exists, insert new run entry into run.dbctfdata
 	# then create a new ace_param entry
 	if not(runids):
 		acedb.insert(runq)
-		aceparams=processingData.ace_params()
+		aceparams=ctfData.ace_params()
 		aceparams['runId']=runq
 		aceparams['display']=params['display']
 		aceparams['stig']=params['stig']
@@ -360,7 +360,7 @@ def insertAceParams(params,expid):
 	# parameters are the same as the previous
 	else:
 		runlist=runids[0]
-		aceq=processingData.ace_params(runId=runq)
+		aceq=ctfData.ace_params(runId=runq)
 		aceresults=acedb.query(aceq, results=1)
 		acelist=aceresults[0]
 		if (acelist['display']!=params['display'] or
@@ -382,12 +382,12 @@ def insertAceParams(params,expid):
 	return
 
 def insertCtfParams(img,params,imgname,matfile,expid,ctfparams):
-	runq=processingData.run()
+	runq=ctfData.run()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
 
 	# get corresponding ace_params entry
-	aceq=processingData.ace_params(runId=runq)
+	aceq=ctfData.ace_params(runId=runq)
 	acevals=acedb.query(aceq, results=1)
 
 	legimgid=int(img.dbid)
@@ -406,7 +406,7 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams):
 	pymat.eval(matlab,("imwrite(im1,'%s');" % (opimfile1)))
 	pymat.eval(matlab,("imwrite(im2,'%s');" % (opimfile2)))
 				
-	procimgq = processingData.image(imagename=imgname + '.mrc')
+	procimgq = ctfData.image(imagename=imgname + '.mrc')
 	procimgq['dbemdata|SessionData|session']=expid
 	procimgq['dbemdata|AcquisitionImageData|image']=legimgid
 	procimgq['dbemdata|PresetData|preset']=legpresetid
@@ -419,7 +419,7 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams):
 		acedb.insert(procimgq)
 			
 	print "Committing ctf parameters for", imgname, "to database."
-	ctfq=processingData.ctf()
+	ctfq=ctfData.ctf()
 	ctfq['runId']=runq
 	ctfq['aceId']=acevals[0]
 	ctfq['imageId']=procimgq
@@ -446,7 +446,7 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams):
 	ctfq['confidence_d']=ctfparams[17]
 
 	if ctfq['defocus1']==-1:
-		ctf_failedq=processingData.ctf(runId=runq, aceId=acevals[0], imageId=procimgq)
+		ctf_failedq=ctfData.ctf(runId=runq, aceId=acevals[0], imageId=procimgq)
 		acedb.insert(ctf_failedq)
 	else:
 		acedb.insert(ctfq)
