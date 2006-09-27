@@ -103,7 +103,10 @@ class DriftManager(watcher.Watcher):
 		# what if preset mag changed ???
 
 		## acquire new image using different correction channel
-		chan = im['correction channel']
+		try:
+			chan = im['correction channel']
+		except KeyError:
+			chan = None
 		if chan in (None, 0):
 			newchan = 1
 		else:
