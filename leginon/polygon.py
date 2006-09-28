@@ -35,38 +35,22 @@ def pointsInPolygon(inputpoints, vertices):
 	outputpoints = map(tuple, outputpoints)
 	return outputpoints
 
-def getPolygonArea(polygon):
-	area=0.0
-	N = len(polygon)
-	for i in range(N):
-		j = (i+1) % N
-		ax,ay = polygon[i]
-		bx,by = polygon[j]
-		area += ax * by
-		area -= ay * bx
-	area /= 2.0
-	if area<0:
-		return -area
+def getPolygonArea(polygon, signed=False):
+	a = numarray.transpose(polygon)
+	b = numarray.concatenate((a[:,1:],a[:,:1]),1)
+	area = numarray.sum(a[0]*b[1]-a[1]*b[0]) / 2.0
+	if not signed:
+		area = numarray.abs(area)
 	return area
 
 def getPolygonCenter(polygon):
-	N = len(polygon)
-	A = getPolygonArea(polygon)
-	if not A:
-		return ()
-	cx = cy = factor = 0.0
-	for i in range(N):
-		j = (i+1) % N
-		ax,ay = polygon[i]
-		bx,by = polygon[j]
-		factor = ax*by - bx*ay
-		cx += (ax + bx) * factor
-		cy -= (ay + by) * factor
-	A *= 6.0
-	factor = 1/A
-	cx *= factor
-	cy *= factor
-	return (cx,cy,)
+	a = numarray.transpose(polygon)
+	b = numarray.concatenate((a[:,1:],a[:,:1]),1)
+	area = getPolygonArea(polygon, signed=True)
+	c = (a[0]*b[1]-b[0]*a[1]) / 6.0 / area
+	cx = numarray.sum((a[0]+b[0])*c)
+	cy = numarray.sum((a[1]+b[1])*c)
+	return (cx,cy)
 
 if __name__ == '__main__':
 	if 0:
