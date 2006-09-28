@@ -446,7 +446,7 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams):
 	ctfq['confidence_d']=ctfparams[17]
 
 	if ctfq['defocus1']==-1:
-		ctf_failedq=ctfData.ctf(runId=runq, aceId=acevals[0], imageId=procimgq)
+		ctf_failedq=ctfData.ctf(runId=runq, aceId=acevals[0], imageId=procimgq, mat_file=ctfq['mat_file'], graph1=ctfq['graph1'], graph2=ctfq['graph2'])
 		acedb.insert(ctf_failedq)
 	else:
 		acedb.insert(ctfq)
@@ -536,6 +536,9 @@ if __name__ == '__main__':
 						print "Reprocessing", img['filename']
 					else:
 						print "Skipping", img['filename']
+						#write results to donedict
+						donedict[img['filename']]=True
+						writeDoneDict(donedict,params)
 						continue
 				else:
 					print img['filename'],'not processed yet. Will process with current ACE parameters.'
