@@ -10,7 +10,9 @@
 
 import numarray
 import numarray.nd_image
-import Mrc import imagefun import peakfinder
+import Mrc
+import imagefun
+import peakfinder
 import convolver
 import ice
 import lattice
