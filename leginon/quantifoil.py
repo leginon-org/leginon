@@ -16,6 +16,7 @@ import convolver
 import peakfinder
 import fftengine
 import os
+import correlator
 
 ffteng = fftengine.fftEngine()
 
@@ -176,7 +177,7 @@ class QuantifoilSolver(object):
 
 	def findLatticeVectors(self, edges, guess1, tolerance):
 		print 'edges', edges.typecode()
-		autocorr = imagefun.auto_correlate(edges)
+		autocorr = correlator.auto_correlate(edges)
 		save_mrc(autocorr, 'autocorr.mrc')
 		shape = edges.shape
 
@@ -254,7 +255,7 @@ class QuantifoilSolver(object):
 		return smooth
 
 	def correlateTemplate(self, edges, temp):
-		cc = imagefun.cross_correlate(edges, temp)
+		cc = correlator.cross_correlate(edges, temp)
 		save_mrc(cc, 'cc.mrc')
 		center = self.peakfinder.subpixelPeak(cc)
 		return center

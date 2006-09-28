@@ -13,18 +13,22 @@ try:
 except:
 	import Numeric
 import fftengine
+import imagefun
 
 class Correlator(object):
 	'''
 	Provides correlation handling functions.
 	A buffer of two images is maintained.
 	'''
-	def __init__(self):
+	def __init__(self, pad=False):
 		self.fftengine = fftengine.fftEngine()
 		self.clearBuffer()
+		self.pad = pad
 
 	def setImage(self, index, newimage):
 		'''put a new image in the buffer'''
+		if self.pad:
+			newimage = imagefun.pad(newimage)
 		self.buffer[index]['image'] = newimage
 		self.setFFT(index, None)
 		self.initResults()
@@ -117,7 +121,7 @@ class Correlator(object):
 			cc = self.results['cross correlation image']
 		return cc
 
-	def phaseCorrelate(self):
+	def phaseCorrelate(self, zero=True):
 		# elementwise phase-correlation =
 		# cross-correlation / magnitude(cross-correlation
 		#print 'phaseCorrelate start'
@@ -128,7 +132,8 @@ class Correlator(object):
 			pcfft = ccfft / Numeric.absolute(ccfft)
 			self.results['phase correlation fft'] = pcfft
 			pc = self.fftengine.itransform(pcfft)
-			pc[0, 0] = 0
+			if zero:
+				pc[0, 0] = 0
 
 			self.results['phase correlation image'] = pc
 		return pc
@@ -148,6 +153,20 @@ def wrap_coord(coord, shape):
 		wrapped1 = coord[1] - shape[1]
 	return (wrapped0, wrapped1)
 
+def cross_correlate(im1, im2, pad=False):
+	cor = Correlator(pad=pad)
+	cor.setImage(0, im1)
+	cor.setImage(1, im2)
+	return cor.crossCorrelate()
+
+def phase_correlate(im1, im2, zero, pad=False):
+	cor = Correlator(pad=pad)
+	cor.setImage(0, im1)
+	cor.setImage(1, im2)
+	return cor.phaseCorrelate(zero=zero)
+
+def auto_correlate(im, pad=False):
+	return cross_correlate(im, im, pad=pad)
 
 class MissingImageError(Exception):
 	def __init__(self, info):

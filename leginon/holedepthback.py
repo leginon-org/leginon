@@ -320,9 +320,9 @@ class HoleFinder(object):
 		cortype = self.correlation_config['cortype']
 		corfilt = self.correlation_config['corfilt']
 		if cortype == 'cross':
-			cc = imagefun.cross_correlate(edges, template)
+			cc = correlator.cross_correlate(edges, template)
 		elif cortype == 'phase':
-			cc = imagefun.phase_correlate(edges, template)
+			cc = correlator.phase_correlate(edges, template, zero=False)
 		else:
 			raise RuntimeError('bad correlation type: %s' % (cortype,))
 		cc = Numeric.absolute(cc)
@@ -461,7 +461,7 @@ class HoleFinder(object):
 	def shift_holes(self,I_image=None,I0_image=None):
 		I=I_image
 		I0=I0_image
-		cc = imagefun.cross_correlate(I, I0)
+		cc = correlator.cross_correlate(I, I0)
 		self.peakfinder.setImage(cc)
 		peak=self.peakfinder.pixelPeak()
 		delta = correlator.wrap_coord(peak, cc.shape)

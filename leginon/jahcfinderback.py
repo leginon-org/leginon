@@ -10,12 +10,11 @@
 
 import numarray
 import numarray.nd_image
-import Mrc
-import imagefun
-import peakfinder
+import Mrc import imagefun import peakfinder
 import convolver
 import ice
 import lattice
+import correlator
 
 hole_template_files = {}
 hole_templates = {}
@@ -213,9 +212,9 @@ class HoleFinder(object):
 		cortype = self.correlation_config['cortype']
 		corfilt = self.correlation_config['corfilt']
 		if cortype == 'cross':
-			cc = imagefun.cross_correlate(edges, template)
+			cc = correlator.cross_correlate(edges, template)
 		elif cortype == 'phase':
-			cc = imagefun.phase_correlate(edges, template)
+			cc = correlator.phase_correlate(edges, template, zero=False)
 		else:
 			raise RuntimeError('bad correlation type: %s' % (cortype,))
 
@@ -292,7 +291,7 @@ class HoleFinder(object):
 
 		## autocorrelation
 		mask = self.__results['threshold']
-		ac = imagefun.cross_correlate(mask, mask)
+		ac = correlator.auto_correlate(mask)
 		minspace = self.lattice_config['minspace']
 
 		## zero out circle around the minimum 

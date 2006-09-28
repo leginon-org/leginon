@@ -236,38 +236,14 @@ def swap_quadrants(numericarray):
 	newarray = swap_col_halves(newarray)
 	return newarray
 
-## see the correlator.py module for a more efficient way to do
-## correlations on a series of images
-def cross_correlate(im1, im2):
-	im1fft = ffteng.transform(im1)
-	if im1 is im2:
-		im2fft = im1fft
-	else:
-		im2fft = ffteng.transform(im2)
-	xcor = numarray.multiply(numarray.conjugate(im2fft), im1fft)
-	result = ffteng.itransform(xcor)
-	return result
-
-def auto_correlate(image):
-	'''
-	minor speed up over cross_correlate
-	'''
-	imfft = ffteng.transform(image)
-	xcor = numarray.absolute(imfft) ** 2
-	result = ffteng.itransform(xcor)
-	return result
-
-def phase_correlate(im1, im2):
-	im1fft = ffteng.transform(im1)
-	if im1 is im2:
-		im2fft = im1fft
-	else:
-		im2fft = ffteng.transform(im2)
-	xcor = numarray.multiply(numarray.conjugate(im2fft), im1fft)
-	xcor_abs = numarray.absolute(xcor) + 0.00000000000000001
-	phasecor = xcor / xcor_abs
-	pc = ffteng.itransform(phasecor)
-	return pc
+def pad(im, value=None):
+	# maybe use numarray.concatenate instead?
+	if value is None:
+		value = mean(im)
+	padshape = im.shape[0]*2, im.shape[1]*2
+	paddedimage = value * numarray.ones(padshape, im.type())
+	paddedimage[:im.shape[0], :im.shape[1]] = im
+	return paddedimage
 
 ## The Blob.add_point method below is recursive while searching for neighbors.
 ## Here we make sure that python will allow enough recursion to get decent

@@ -16,6 +16,7 @@ import peakfinder
 import convolver
 import ice
 import lattice
+import correlator
 
 class CircleMaskCreator(object):
 	def __init__(self):
@@ -231,9 +232,9 @@ class HoleFinder(object):
 		cortype = self.correlation_config['cortype']
 		corfilt = self.correlation_config['corfilt']
 		if cortype == 'cross':
-			cc = imagefun.cross_correlate(edges, template)
+			cc = correlator.cross_correlate(edges, template)
 		elif cortype == 'phase':
-			cc = imagefun.phase_correlate(edges, template)
+			cc = correlator.phase_correlate(edges, template, zero=False)
 		else:
 			raise RuntimeError('bad correlation type: %s' % (cortype,))
 		cc = numarray.absolute(cc)
@@ -303,7 +304,7 @@ class HoleFinder(object):
 
 		## autocorrelation
 		mask = self.__results['threshold']
-		ac = imagefun.cross_correlate(mask, mask)
+		ac = correlator.auto_correlate(mask)
 		minspace = self.lattice_config['minspace']
 
 		## zero out circle around the minimum 
