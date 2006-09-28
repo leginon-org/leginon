@@ -1205,6 +1205,7 @@ class CameraImageData(ImageData):
 		return ImageData.typemap() + (
 			('scope', ScopeEMData),
 			('camera', CameraEMData),
+			('correction channel', int),
 		)
 	typemap = classmethod(typemap)
 

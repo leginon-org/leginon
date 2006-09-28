@@ -471,6 +471,7 @@ class Corrector(node.Node):
 		corrected = self.correct(ccdcamera, numimage, corstate, scopedata)
 		newdata = data.CorrectedCameraImageData(initializer=imagedata,
 																						image=corrected)
+		newdata['correction channel'] = self.channel
 		self.setStatus('idle')
 		return newdata
 

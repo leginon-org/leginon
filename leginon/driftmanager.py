@@ -225,10 +225,10 @@ class DriftManager(watcher.Watcher):
 			time.sleep(self.settings['pause time'])
 
 			## acquire next image at different correction channel than previous
-			if corchan == 0:
-				corchan = 1
-			else:
+			if corchan:
 				corchan = 0
+			else:
+				corchan = 1
 			imagedata = self.acquireImage(channel=corchan)
 			numdata = imagedata['image']
 			binning = imagedata['camera']['binning']['x']

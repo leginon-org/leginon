@@ -139,16 +139,15 @@ class Navigator(node.Node):
 		deltarow = clickrow - clickshape[0] / 2
 		deltacol = clickcol - clickshape[1] / 2
 
-		self.move(self.imagedata, deltarow, deltacol, movetype, precision)
+		check = self.settings['check calibration']
+		self.move(self.imagedata, deltarow, deltacol, movetype, precision, check)
 
 		# wait for a while
 		time.sleep(self.settings['pause time'])
 
-		## acquire image
-		self._acquireImage()
-
-		#if self.settings['check calibration']:
-		#	self.errorCheck()
+		## acquire image if check not done
+		if not check:
+			self._acquireImage()
 
 		self.panel.navigateDone()
 
@@ -158,7 +157,7 @@ class Navigator(node.Node):
 		try:
 			self.instrument.setData(emdat)
 		except:
-			self.logger.exception(errstr % 'unable to set instrument')
+			self.logger.exception('unable to set instrument')
 			return
 
 	def _move(self, image, row, col, movetype):
@@ -196,47 +195,46 @@ class Navigator(node.Node):
 			self.logger.exception(errstr % 'unable to set instrument')
 			return
 
-	def move(self, image, row, col, movetype, precision=0.0):
+	def move(self, image, row, col, movetype, precision=0.0, check=False):
 		self.setStatus('processing')
 		self._move(image, row, col, movetype)
 
-		if precision:
-			self.logger.info('checking that move error is less than %.3e' % (precision,))
-			image2 = self._acquireImage(previousimage=image)
-			r,c,dist = self.checkMoveError(image, image2, row, col)
+		if check:
+			image2 = self._acquireImage()
+			r,c,dist = self.checkMoveError(image['scope'], image['camera'], row, col)
 			self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
-			while dist > precision:
-				self._move(image2, r, c, movetype)
-				image2 = self._acquireImage(previousimage=image2)
-				lastdist = dist
-				r,c,dist = self.checkMoveError(image, image2, r, c)
-				self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
-				if dist > lastdist:
-					self.logger.info('error got worse')
-					self._moveback()
-					break
 
-			self.logger.info('correction done')
+			if precision:
+				self.logger.info('checking that move error is less than %.3e' % (precision,))
+				while dist > precision:
+					self._move(image2, r, c, movetype)
+					image2 = self._acquireImage()
+					lastdist = dist
+					r,c,dist = self.checkMoveError(image['scope'], image['camera'], r, c)
+					self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
+					if dist > lastdist:
+						self.logger.info('error got worse')
+						self._moveback()
+						break
+				self.logger.info('correction done')
 
 		self.setStatus('idle')
 
-	def checkMoveError(self, image1, image2, rmove, cmove):
+	def checkMoveError(self, scope, camera, rmove, cmove):
 			pc = self.correlator.phaseCorrelate()
 			self.peakfinder.setImage(pc)
 			peak = self.peakfinder.subpixelPeak()
 			rcmoved = correlator.wrap_coord(peak, pc.shape)
-			print 'MOVE', rmove, cmove
 			r_error = rmove + rcmoved[0]
 			c_error = cmove + rcmoved[1]
-			print 'ERROR', r_error, c_error
 
 			## calculate error distance
-			mag = image1['scope']['magnification']
-			tem = image1['scope']['tem']
-			ccdcamera = image1['camera']['ccdcamera']
+			mag = scope['magnification']
+			tem = scope['tem']
+			ccdcamera = camera['ccdcamera']
 			pixelsize = self.pcal.retrievePixelSize(tem, ccdcamera, mag)
-			cbin = image1['camera']['binning']['x']
-			rbin = image1['camera']['binning']['y']
+			cbin = camera['binning']['x']
+			rbin = camera['binning']['y']
 			rpix = r_error * rbin
 			cpix = c_error * cbin
 			pixdist = math.hypot(rpix,cpix)
@@ -248,14 +246,20 @@ class Navigator(node.Node):
 		self._acquireImage()
 		self.panel.acquisitionDone()
 
-	def _acquireImage(self, previousimage=None):
+	def _acquireImage(self):
 		errstr = 'Acquire image failed: %s'
 
 		# configure camera
-		if previousimage is not None:
+		if self.oldimagedata is not None:
 			## acquire just like previous image
-			cameradata = previousimage['camera']
+			cameradata = self.oldimagedata['camera']
 			ccdcamera = cameradata['ccdcamera']
+			## except correction channel should be opposite
+			if self.oldimagedata['correction channel']:
+				corchannel = 0
+			else:
+				corchannel = 1
+			self.instrument.setCorrectionChannel(corchannel)
 			#camerasettings = data.CameraSettingsData(initializer=camera)
 			self.instrument.setCCDCamera(ccdcamera['name'])
 			self.instrument.setData(cameradata)

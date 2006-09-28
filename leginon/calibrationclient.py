@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.186 $
+# $Revision: 1.187 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-09-15 18:14:08 $
+# $Date: 2006-09-28 19:26:59 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -127,7 +127,8 @@ class CalibrationClient(object):
 		self.node.logger.info('Acquiring images...')
 
 		self.node.logger.info('Acquiring image (1 of 2)')
-		info1 = self.acquireStateImage(state1, publish_images, settle, correct_tilt=correct_tilt, corchannel=0)
+		corchannel=0
+		info1 = self.acquireStateImage(state1, publish_images, settle, correct_tilt=correct_tilt, corchannel=corchannel)
 		binning = info1['imagedata']['camera']['binning']['x']
 		imagedata1 = info1['imagedata']
 		imagecontent1 = imagedata1
@@ -146,8 +147,13 @@ class CalibrationClient(object):
 		else:
 			self.node.logger.info('Checking for drift...')
 
+			## use opposite correction channel
+			if corchannel:
+				corchannel = 0
+			else:
+				corchannel = 1
 			## state=None means do not set the values on the scope
-			info1 = self.acquireStateImage(None, publish_images, settle, correct_tilt=correct_tilt, )
+			info1 = self.acquireStateImage(None, publish_images, settle, correct_tilt=correct_tilt, corchannel=corchannel)
 			imagedata1 = info1['imagedata']
 			imagecontent1 = imagedata1
 			stats1 = info1['image stats']
@@ -210,7 +216,12 @@ class CalibrationClient(object):
 		self.checkAbort()
 
 		self.node.logger.info('Acquiring image (2 of 2)')
-		info2 = self.acquireStateImage(state2, publish_images, settle, correct_tilt=correct_tilt, corchannel=1)
+		## use opposite correction channel
+		if corchannel:
+			corchannel = 0
+		else:
+			corchannel = 1
+		info2 = self.acquireStateImage(state2, publish_images, settle, correct_tilt=correct_tilt, corchannel=corchannel)
 		imagedata2 = info2['imagedata']
 		imagecontent2 = imagedata2
 		stats2 = info2['image stats']

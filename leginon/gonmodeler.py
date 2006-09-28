@@ -50,6 +50,7 @@ class GonModeler(calibrator.Calibrator):
 		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
 		self.calclient = calibrationclient.ModeledStageCalibrationClient(self)
 		self.pcal = calibrationclient.PixelSizeCalibrationClient(self)
+		self.corchannel = None
 
 		self.axes = ['x', 'y']
 
@@ -118,9 +119,16 @@ class GonModeler(calibrator.Calibrator):
 			self.instrument.tem.StagePosition = {axis: state[axis]}
 			time.sleep(self.settle)
 
+		## alternate correction channel
+		if self.corchannel:
+			self.corchannel = 0
+		else:
+			self.corchannel = 1
+		self.instrument.setCorrectionChannel(self.corchannel)
+
 		## acquire image
-		newimagedata = self.instrument.getData(data.CameraImageData)
-			
+		newimagedata = self.instrument.getData(data.CorrectedCameraImageData)
+
 		newnumimage = newimagedata['image']
 		self.setImage(newnumimage.astype(Numeric.Float32), 'Image')
 

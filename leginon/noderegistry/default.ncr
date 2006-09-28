@@ -126,3 +126,7 @@ type: Utility
 [MeasureDose]
 module: reference
 type: Utility
+
+[CenterTargetFilter]
+module: centertargetfilter
+type: Pipelin

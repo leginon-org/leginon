@@ -6,10 +6,6 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 import node, event, data
-import fftengine
-import correlator
-import peakfinder
-import time
 import gui.wx.Calibrator
 import instrument
 import presets
