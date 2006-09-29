@@ -1,7 +1,7 @@
 import math
 import correlator
 import peakfinder
-import numpy
+import numarray
 import scipy.ndimage
 
 class TiltCorrelator(object):
@@ -143,7 +143,6 @@ class Correlator(object):
         return shift
 
 if __name__ == '__main__':
-    import numarray
     import numarray.random_array
     _correlator = Correlator(None, None)
 
