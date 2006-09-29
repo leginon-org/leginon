@@ -34,7 +34,7 @@ typedef struct TSizeSt {
 	struct TSizeSt *next;
 } *TSize;
 
-char FindMSERegions( Image image, PStack Regions, float minsize, float maxsize, float blur, float sharpen, char u, char d );
+char FindMSERegions( Image image, PStack Regions, float minsize, float maxsize, int minTreshold, int maxTreshold, float blur, float sharpen, char u, char d );
 Region NewRegion( Ellipse e, Image im, Polygon vec, Polygon border, int stable, int region );
 
 #endif

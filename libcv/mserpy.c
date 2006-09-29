@@ -74,13 +74,13 @@ static PyObject *PyFindRegions( PyObject *self, PyObject *args ) {
 	
 	PyObject *oim1;
 	float minSize = 0.002, maxSize = 0.9, blur = 0.0, sharpen = 0.0;
-	int U = TRUE, D = TRUE, R = TRUE;
-	if (!PyArg_ParseTuple(args, "Offffiii", &oim1, &minSize, &maxSize, &blur, &sharpen, &U, &D, &R )) return NULL;
+	int U = TRUE, D = TRUE, R = TRUE, minT = 0, maxT = 255;
+	if (!PyArg_ParseTuple(args, "Offffiiii", &oim1, &minSize, &maxSize, &blur, &sharpen, &U, &D, &minT, &maxT )) return NULL;
 	
 	Image im1 = PyArrayToImage( oim1 );
 	
 	PStack regions = NewPStack(1000);
-	FindMSERegions(im1,regions,minSize,maxSize,blur,sharpen,U,D);
+	FindMSERegions(im1,regions,minSize,maxSize,blur,sharpen,minT,maxT,U,D);
 	
 	fprintf(stderr,"Found %d regions.\n", regions->stacksize);
 	

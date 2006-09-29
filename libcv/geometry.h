@@ -63,5 +63,6 @@ Polygon PolygonLineReduction( Polygon poly, int minr, int maxr );
 void PolygonVertexEvolution( Polygon poly, float percent );
 void PolygonACD( Polygon poly, float treshold, PStack stack );
 int *ConvexHull2D( Polygon p );
+int *ConvexHull2D3( Polygon poly );
 
 #endif

@@ -854,100 +854,12 @@ void PolygonACD( Polygon poly, float treshold, PStack stack ) {
 	
 	PolygonVertexClean( poly);
 	
-	int i;
-	int size = poly->numberOfVertices;
-	Point p = poly->vertices;
+	fprintf(stderr,"Polygon Cleaned\n");
 	
-	if ( size < 12 ) return;
+	int *sT = ConvexHull2D3( poly );
+	int size = sT[0], i;
 	
-	Debug(1,"Begin ACD on polygon with %d vertices.\n",size);
-	
-	int **idx = ConvexHull2D2( poly );
-	size = poly->numberOfVertices;
-	Debug(1,"  Convex Hull and map built with %d vertices\n",idx[5][0]);
-	
-	int *mL = idx[1];
-	int *mR = idx[2];
-	int *sC = idx[3];
-	int *sT = idx[5];
-	
-	int s1 = sT[0]; sT[0] = sT[s1];
-	int sum1 = 0, sum2 = 0;
-	for(i=0;i<s1;i++) {
-		sum1 += p[sT[i]].y * p[sT[i+1]].x;
-		sum2 += p[sT[i]].x * p[sT[i+1]].y;
-	}
-	
-	float pArea = PolygonArea(poly)*2;
-	float cArea = sum1 - sum2;
-	float ratio = ( cArea - pArea )  / cArea;
-	
-	if ( ratio < treshold ) { PushPStack(stack,poly); return; }
-	
-	int c1 = 0, c2, l1, r1, l2, r2, max = 0, area, sc, l, r;
-	for(i=0;i<size;i++) {
-		int d1 = 0;
-		for(l=i;mR[mL[l]]!=mL[mR[l]];l=mL[l]) d1 += PDist(p,l,mL[l]);
-		for(r=i;mR[mL[r]]!=mL[mR[r]];r=mR[r]) d1 += PDist(p,r,mR[r]);
-		sC[i] = sC[i] * d1;
-		if ( sC[i] > sC[c1] ) c1 = i;
-	}
-
-	for(l=c1;mR[mL[l]]!=mL[mR[l]];l=mL[l]);
-	for(r=c1;mR[mL[r]]!=mL[mR[r]];r=mR[r]);
-	
-	max = (r+1)%size;
-	for(c2=(r+1)%size;c2!=l;c2=(c2+1)%size) {
-		
-		area = 0; int d1 = 0;
-		for(l2=c2;mR[mL[l2]]!=mL[mR[l2]];l2=mL[l2]) {
-			if ( ( sc = EvaluateVertexScore2(p,c1,l2,mL[l2]) ) < 0 ) break;
-			area -= sc; d1 += PDist(p,l2,mL[l2]);
-		}
-		
-		for(r1=c1;mR[mL[r1]]!=mL[mR[r1]];r1=mR[r1]) {
-			if ( ( sc = EvaluateVertexScore2(p,l2,r1,mR[r1]) ) > 0 ) break;
-			area += sc; d1 += PDist(p,r1,mR[r1]);
-		}
-
-		for(r2=c2;mR[mL[r2]]!=mL[mR[r2]];r2=mR[r2]) {
-			if ( ( sc = EvaluateVertexScore2(p,c1,r2,mR[r2]) ) > 0 ) break;
-			area += sc; d1 += PDist(p,r2,mR[r2]);
-		}
-		
-		for(l1=c1;mR[mL[l1]]!=mL[mR[l1]];l1=mL[l1]) {
-			if ( ( sc = EvaluateVertexScore2(p,r2,l1,mL[l1]) ) < 0 ) break;
-			area -= sc; d1 += PDist(p,l1,mL[l1]);
-		}
-		
-		float dist = sqrt( (p[c2].x-p[c1].x)*(p[c2].x-p[c1].x) + (p[c2].y-p[c1].y)*(p[c2].y-p[c1].y) );
-		float score = sC[c2] + area * d1; score = score / ( 1 + dist );
-		
-		sC[c2] = score;
-		
-		if ( sC[max] < sC[c2] ) max = c2;
-
-	}
-	
-	c2 = max;
-
-	Debug(1,"  Break polygon at %d %d\n",c1,c2);
-	
-	Polygon newPolygon1 = NewPolygon(100);
-	Polygon newPolygon2 = NewPolygon(100);
-	
-	for (i=0;i<size;i++) {
-		if ( BoundTest(c1,i,c2) ) AddPolygonVertex(newPolygon1,p[i].x,p[i].y);
-		if ( BoundTest(c2,i,c1) ) AddPolygonVertex(newPolygon2,p[i].x,p[i].y);
-	}
-	
-	FreeIMatrix(idx,0,0);
-
-	if ( size == newPolygon1->numberOfVertices ) return;
-	if ( size == newPolygon2->numberOfVertices ) return;
-
-	PolygonACD(newPolygon1,treshold,stack);
-	PolygonACD(newPolygon2,treshold,stack);
+	fprintf(stderr,"Convex Hull Found\n");
 	
 }
 
@@ -957,110 +869,72 @@ char BoundTest( int l, int k, int r ) {
 	return FALSE;
 }
 
-int **ConvexHull2D2( Polygon poly ) {
+int *ConvexHull2D3( Polygon poly ) {
 	
-	//libCV_debug = 1;
-	//Image temp = CreateImage(1024,1024); PolygonVertexClean(poly); DrawPolygon(poly,temp,PIX3(255,0,0));
-	
-	int i, k, size = poly->numberOfVertices, s1, s2, area;
-	int **std = AllocIMatrix(7,size+1,0,0);
-	int *iD  = std[0];
-	int *mL  = std[1];
-	int *mR  = std[2];
-	int *sc1 = std[3];
-	int *sc2 = std[4];
-	int *st1 = std[5];
-	int *st2 = std[6];
-	
-	float sc;
-	
-	Point p = poly->vertices;
-	
-	for (i=1,k=0;i<size;i++) {
-		if ( p[i].x < p[k].x ) k = i;
-		else if ( p[i].x == p[k].x && p[i].y > p[k].y ) k = i;
-	}
-	
-	Debug(1,"Found start point\n");
-	
-	for (i=0;i<size+1;i++,k=(k+1)%size) iD[i] = k;
-	
-	Debug(1,"Initialized Index\n");
-	
-	s1 = 1; area = 0; st1[0] = iD[0]; mL[iD[1]] = iD[0];
-	
-
-	
-	for ( i=1;i<size; ) {
-		sc = EvaluateVertexScore2(p,iD[i-1],iD[i],iD[i+1]); st1[s1++] = iD[i++];
-		if ( sc >= 0 ) {
-			while ( s1 != 1 && ( sc = EvaluateVertexScore2(p,st1[s1-2],st1[s1-1],iD[i]) ) <= 0 ) 
-				{ area -= sc; s1--; }
-		} else {
-			while ( i < size && EvaluateVertexScore2(p,st1[s1-2],st1[s1-1],iD[i]) >  0 )
-			{  sc1[iD[i]] = area; mL[iD[i]] = st1[s1-2]; i++; } 
-			while ( s1 != 1 && ( sc = EvaluateVertexScore2(p,st1[s1-2],st1[s1-1],iD[i]) ) <= 0 ) 
-				{ area -= sc; s1--; }
-		}
-		sc1[iD[i]] = area; mL[iD[i]] = st1[s1-1];
-		
-		//if ( i%100==0 ) {
-		//Image out = CopyImage(temp); char name[256]; sprintf(name,"/tmp/ACD%05d.ppm",count++);
-		//for(k=0;k<s1-1;k++) FastLineDraw(p[st1[k]].x,p[st1[k]].y,p[st1[k+1]].x,p[st1[k+1]].y,out,PIX3(255,0,0));
-		//WritePPM(name,out); FreeImage(out); fprintf(stderr,"wrote %s %d\n",name,i);
-		//}
-
-	}
-	
-	Debug(1,"Computed left map\n");
-	
-	s2 = 1; area = 0; st2[0] = iD[0]; mR[iD[size-1]] = iD[0];
-	
-	for ( i=size-1;i>0; ) {
-		sc = EvaluateVertexScore3(p,iD[i+1],iD[i],iD[i-1]);
-		st2[s2++] = iD[i--];
-		if ( sc <= 0 ) {
-			while ( s2 != 1 && ( sc = EvaluateVertexScore3(p,st2[s2-2],st2[s2-1],iD[i]) ) >= 0 ) 
-			{ area += sc; s2--;	}
-		} else {
-			while ( i > 0 && EvaluateVertexScore3(p,st2[s2-2],st2[s2-1],iD[i]) <  0 )
-			{  sc2[iD[i]] = area; mR[iD[i]] = st2[s2-2]; i--; } 
-			while ( s2 != 1 && ( sc = EvaluateVertexScore3(p,st2[s2-2],st2[s2-1],iD[i]) ) >= 0 ) 
-			{ area += sc; s2--; }
-		}
-		sc2[iD[i]] = area; mR[iD[i]] = st2[s2-1];
-	}
-	
-	Debug(1,"Computed right map\n");
-	
-	sc1[st1[0]] = sc1[st1[0]]>>1; sc2[st1[0]] = sc2[st1[0]]>>1;
-	
-	for (i=0;i<size;i++) sc1[i] = sc1[i] + sc2[i];
-	int maxR = MAX(sc1[st1[0]],sc2[st2[0]]);
-	for (i=0;i<size;i++) sc1[i] = maxR - sc1[i];
-	
-	Debug(1,"Computed scores\n");
-	
-	st1[s1] = st1[0]; st2[s2] = st2[0]; st1[0] = s1; st2[0] = s2;
-
-	return std;
-	
-}
-
-int *ComputeVisibility( Polygon poly, int k ) {
+	Debug(1,"Building Convex Hull: ");
 	
 	int size = poly->numberOfVertices;
-	int i; Point p = poly->vertices;
+	int i, k; Point p = poly->vertices;
 	
 	int *st = malloc(sizeof(int)*size), s = 0;
 	
-	st[s++] = k;
+	int p1=0, p2=0, p3=0, p4=0;
 	
-	for (i=(k+1)%size;i!=k;) {
-		st[s++] = i; i = ( i + 1 ) % size;
-		int v = EvaluateVertexScore2(p,st[s-2],st[s-1],i);
-		if ( v <= 0 ) while ( EvaluateVertexScore2(p,st[s-2],st[s-1],i) <= 0 ) i = ( i + 1 ) % size;
+	for (i=0;i<size;i++) {
+		if ( p[p1].y > p[i].y ) p1 = i;
+		if ( p[p2].x > p[i].x ) p2 = i;
+		if ( p[p3].y < p[i].y ) p3 = i;
+		if ( p[p4].x < p[i].x ) p4 = i; 
 	}
+	
+	Debug(1,"Corners Found...");
+	
+	int *iD = malloc(sizeof(int)*(size+1));
+	
+	for (i=0,k=p1;i<=size;i++,k=(k+1)%size) iD[i] = k;
+	
+	Debug(1,"Offset Index Built...");
+	
+	st[0] = p4; st[1] = p1; s = 1;
+	
+	for (i=1;iD[i]!=p2;i++) {
+		if ( EvaluateVertexScore3(p,st[s],iD[i],p2) > 0 ) {
+			while ( EvaluateVertexScore3(p,st[s-1],st[s],iD[i]) <= 0 ) s--;
+			st[++s] = iD[i];
+		}
+	}
+	
+	for (;iD[i]!=p3;i++) {
+		if ( EvaluateVertexScore3(p,st[s],iD[i],p3) > 0 ) {
+			while ( EvaluateVertexScore3(p,st[s-1],st[s],iD[i]) <= 0 ) s--;
+			st[++s] = iD[i];
+		}
+	}
+	
+	for (;iD[i]!=p4;i++) {
+		if ( EvaluateVertexScore3(p,st[s],iD[i],p4) > 0 ) {
+			while ( EvaluateVertexScore3(p,st[s-1],st[s],iD[i]) <= 0 ) s--;
+			st[++s] = iD[i];
+		}
+	}
+	
+	for (;iD[i]!=p1;i++) {
+		if ( EvaluateVertexScore3(p,st[s],iD[i],p1) > 0 ) {
+			while ( EvaluateVertexScore3(p,st[s-1],st[s],iD[i]) <= 0 ) s--;
+			st[++s] = iD[i];
+		}
+	}
+	
+	st[++s] = p1;
+	
+	Debug(1,"Hull Has %d Vertices...DONE\n",s);
+	
+	free(iD);
+	
+	return st;
+	
 }
+
+
 	
 	
