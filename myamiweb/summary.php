@@ -217,45 +217,72 @@ if (!empty($comments)) {
 echo divtitle("CTF");
 require('inc/ctf.inc');
 $sessionId=$expId;
+echo "<a href='ctfreport.php?Id=$sessionId'>report &raquo;</a>";
 $ctf = new ctfdata();
-//$runId = $ctf->getLastCtfRun($sessionId);
-//echo "$runId<BR>";
-$runIds = $ctf->getCtfRunIds($sessionId);
-foreach ($runIds as $runId) {
-	$rId=$runId['DEF_id'];
-	$rName=$runId['name'];
-	$ace_params= $ctf->getAceParams($rId);
-	if ($ace_params['stig']==0) {
-		$fields = array('defocus1', 'confidence', 'confidence_d');
-	}
-	else {
-		$fields = array('defocus1', 'defocus2', 'confidence', 'confidence_d');
-	}
-	$stats = $ctf->getStats($fields, $sessionId, $rId);
-	$display_ctf=false;
-	foreach($stats as  $field=>$data) {
-			foreach($data as $k=>$v) {
-				$display_ctf=true;
-				$imageId = $stats[$field][$k]['id'];
-				$p = $leginondata->getPresetFromImageId($imageId);
-				$stats[$field][$k]['preset'] = $p['name'];
-				$cdf = '<a href="ctfgraph.php?&hg=1&Id='.$sessionId.'&rId='.$rId.'&f='.$field.'&preset='.$p['name'].'">'
-					.'<img border="0" src="ctfgraph.php?w=150&hg=1&Id='.$sessionId.'&rId='.$rId.'&f='.$field.'&preset='.$p['name'].'"></a>';
-				$stats[$field][$k]['img'] = $cdf;
-			}
-	}
+
+if ($ctf->hasCtfData($sessionId)) {
 	$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
-	if ($display_ctf) {
-		echo "\n<table>";
-		echo "<tr>";
-			echo "<td>";
-			echo "Run: $rName";
-			echo "</td>";
-		echo "</tr>";
-		echo "</table>";
-		echo display_stats($stats, $display_keys);
-	} else echo "no CTF information available";
+	$fields = array('defocus1', 'confidence', 'confidence_d');
+	$bestctf = $ctf->getBestStats($fields, $sessionId);
+	foreach($bestctf as $field=>$data) {
+		foreach($data as $k=>$v) {
+			$preset = $bestctf[$field][$k]['name'];
+			$cdf = '<a href="ctfgraph.php?&hg=1&Id='.$sessionId.'&s=1&f='.$field.'&preset='.$preset.'">'
+				.'<img border="0" src="ctfgraph.php?w=150&hg=1&Id='.$sessionId.'&s=1&f='.$field.'&preset='.$preset.'"></a>';
+			$bestctf[$field][$k]['img'] = $cdf;
+		}
+	}
+	echo "<br>";
+	$display_keys = array ( 'name', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
+	echo display_stats($bestctf, $display_keys);
+	
 }
+else {
+echo "no CTF information available";
+}
+
+/*
+if (count($runIds) > 0) {
+	foreach ($runIds as $runId) {
+		$rId=$runId['DEF_id'];
+		$rName=$runId['name'];
+		$ace_params= $ctf->getAceParams($rId);
+		if ($ace_params['stig']==0) {
+			$fields = array('defocus1', 'confidence', 'confidence_d');
+		}
+		else {
+			$fields = array('defocus1', 'defocus2', 'confidence', 'confidence_d');
+		}
+		$stats = $ctf->getStats($fields, $sessionId, $rId);
+		$display_ctf=false;
+		foreach($stats as  $field=>$data) {
+				foreach($data as $k=>$v) {
+					$display_ctf=true;
+					$imageId = $stats[$field][$k]['id'];
+					$p = $leginondata->getPresetFromImageId($imageId);
+					$stats[$field][$k]['preset'] = $p['name'];
+					$cdf = '<a href="ctfgraph.php?&hg=1&Id='.$sessionId.'&rId='.$rId.'&f='.$field.'&preset='.$p['name'].'">'
+						.'<img border="0" src="ctfgraph.php?w=150&hg=1&Id='.$sessionId.'&rId='.$rId.'&f='.$field.'&preset='.$p['name'].'"></a>';
+					$stats[$field][$k]['img'] = $cdf;
+				}
+		}
+		$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
+		if ($display_ctf) {
+			echo "\n<table>";
+			echo "<tr>";
+				echo "<td>";
+				echo "Run: $rName";
+				echo "</td>";
+			echo "</tr>";
+			echo "</table>";
+			echo display_stats($stats, $display_keys);
+		} else echo "no CTF information available";
+	}
+}
+else {
+echo "no CTF information available";
+}
+*/
 ?>
 </td>
 </tr>

@@ -36,7 +36,7 @@ class ctfdata {
 		$q = "select max(DEF_id) as runId "
 			."from `run` where `dbemdata|SessionData|session`='$sessionId'";
 		list($r) = $this->mysql->getSQLResult($q);
-		return $r['DEF_id'];
+		return $r[runId];
 	}
 
 	function getCtfRunIds($sessionId) {
@@ -111,7 +111,7 @@ class ctfdata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getCtfInfoFromImageId($imageId) {
+	function getCtfInfoFromImageId($imageId, $order=false) {
 		$q =	"select "
 			."c.`DEF_id`, "
 			."i.`dbemdata|AcquisitionImageData|image`, "
@@ -137,8 +137,44 @@ class ctfdata {
 			."from image i left join ctf c "
 			."on (c.`REF|image|imageId`=i.`DEF_id`) "
 			."where i.`dbemdata|AcquisitionImageData|image`='$imageId' ";
+		if ($order) {
+			$fields = $order['fields'];
+			$q .= " order by ".join(", ",$fields);
+		}
 		return $this->mysql->getSQLResult($q);
 	}
+
+	function getBestCtfInfoForSessionId($sessionId) {
+			$q = "select  ctfdata.* "
+			."from "
+			."	( "
+			."	select  "
+			."		i.`dbemdata|AcquisitionImageData|image`, "
+			."		i.`DEF_id`, "
+			."		p.`name`, "
+			."		i.`dbemdata|AcquisitionImageData|image`, "
+			."		i.`dbemdata|ScopeEMData|defocus`, "
+			."		c.`defocus1`, c.`defocus2`, c.`defocusinit`, c.`angle_astigmatism`, "
+			."		c.`noise1`, c.`noise2`, c.`noise3`, c.`noise4`, "
+			."		c.`envelope1`, c.`envelope2`, c.`envelope3`, c.`envelope4`, c.`lowercutoff`, c.`uppercutoff`, c.`snr`, "
+			."		c.`confidence`,c.`confidence_d`  "
+			."	from image i "
+			."	left join dbemdata.`AcquisitionImageData` a on (a.DEF_id=i.`dbemdata|AcquisitionImageData|image`) "
+			."	left join dbemdata.`PresetData` p on (p.DEF_id=a.`REF|PresetData|preset`) "
+			."	left join ctf c  "
+			."	on (c.`REF|image|imageId`=i.DEF_id)  "
+			."	where "
+			."	i.`dbemdata|AcquisitionImageData|image` in  "
+			."	( "
+			."		select a.`DEF_id` from dbemdata.`AcquisitionImageData` a  "
+			."		where a.`REF|SessionData|session`='$sessionId'  "
+			."		)  "
+			."		order by (if(confidence_d>confidence, confidence_d, confidence)) desc  "
+			."	) ctfdata "
+			."group by ctfdata.DEF_id ";
+
+		return $this->mysql->getSQLResult($q);
+}
 
 	function getCTFBlobs($blobfield, $id) {
 		if (!$blobfield || !$id)
@@ -195,6 +231,55 @@ class ctfdata {
 		return $stats;
 	}
 
+	function getBestStats($fields, $sessionId) {
+		if (!is_array($fields))
+			return False;
+		foreach ($fields as $field) {
+			$selects[$field] =  " ctfdata.name , "
+					. "count(ctfdata.`$field`) as `nb`, "
+					. "min(ctfdata.`$field`) as `min`, "
+					. "max(ctfdata.`$field`) as `max`, "
+					. "avg(ctfdata.`$field`) as `avg`, "
+					. "stddev(ctfdata.`$field`) as `stddev`";
+		}
+		
+		if (!is_array($selects))
+			return False;
+		$stats = array();
+		foreach ($selects as $k=>$select) {
+				$q = "select  $select "
+				."from "
+				."	( "
+				."	select  "
+				."		i.`dbemdata|AcquisitionImageData|image`, "
+				."		i.`DEF_id`, "
+				."		p.`name`, "
+				."		i.`dbemdata|AcquisitionImageData|image`, "
+				."		i.`dbemdata|ScopeEMData|defocus`, "
+				."		c.`defocus1`, c.`defocus2`, c.`defocusinit`, c.`angle_astigmatism`, "
+				."		c.`noise1`, c.`noise2`, c.`noise3`, c.`noise4`, "
+				."		c.`envelope1`, c.`envelope2`, c.`envelope3`, c.`envelope4`, c.`lowercutoff`, c.`uppercutoff`, c.`snr`, "
+				."		c.`confidence`,c.`confidence_d`  "
+				."	from image i "
+				."	left join dbemdata.`AcquisitionImageData` a on (a.DEF_id=i.`dbemdata|AcquisitionImageData|image`) "
+				."	left join dbemdata.`PresetData` p on (p.DEF_id=a.`REF|PresetData|preset`) "
+				."	left join ctf c  "
+				."	on (c.`REF|image|imageId`=i.DEF_id)  "
+				."	where "
+				."	i.`dbemdata|AcquisitionImageData|image` in  "
+				."	( "
+				."		select a.`DEF_id` from dbemdata.`AcquisitionImageData` a  "
+				."		where a.`REF|SessionData|session`='$sessionId'  "
+				."		)  "
+				."		order by (if(confidence_d>confidence, confidence_d, confidence)) desc  "
+				."	) ctfdata "
+				."group by ctfdata.name ";
+			$r = $this->mysql->getSQLResult($q);
+			$stats[$k] = $r;
+		}
+		return $stats;
+}
+
 	function getData($fields, $sessionId, $runId=false) {
 		if (!is_array($fields))
 			return False;
@@ -240,6 +325,8 @@ function display_stats($stats, $display_keys) {
 		foreach($data as $row) {
 			$html .= "<tr>\n";
 			foreach($display_keys as $key) {
+				if (!is_array($row))
+					continue;
 				if (array_key_exists($key, $row))
 					$val = $row[$key];
 				else
@@ -260,6 +347,33 @@ function display_stats($stats, $display_keys) {
 		}
 		$html .= "</tr>\n";
 	}
+	$html .= "</table>";
+	return $html;
+}
+
+function display_data($data, $display_keys) {
+	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>";
+		$html .= "<tr>\n";
+		foreach($display_keys as $key) {
+			$html .= "<th>";
+			$html .= " ".$key."<br>\n";
+			$html .= "</th>";
+		}
+		$html .= "</tr>\n";
+		$html .= "<tr>\n";
+		foreach($data as $row) {
+			$html .= "<tr>\n";
+			foreach($display_keys as $key) {
+					$val = $row[$key];
+					if (eregi('defocus', $key)) {
+							$val = format_micro_number($val);
+					}
+				$html .= "<td>";
+				$html .= " ".$val."<br>\n";
+				$html .= "</td>";
+			}
+			$html .= "</tr>\n";
+		}
 	$html .= "</table>";
 	return $html;
 }

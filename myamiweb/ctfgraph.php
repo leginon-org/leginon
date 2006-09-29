@@ -18,15 +18,22 @@ require_once ("inc/leginon.inc");
 
 $defaultId= 1766;
 $sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
-$runId= ($_GET[rId]);
 $viewdata = ($_GET['vd']==1) ? true : false;
 $histogram = ($_GET[hg]==1) ? true : false;
 $f = $_GET[f];
 $preset=$_GET['preset'];
+$summary = ($_GET[s]==1 ) ? true : false;
 
 $ctf = new ctfdata();
-//$runId = $ctf->getLastCtfRun($sessionId);
-$ctfinfo = $ctf->getCtfInfo($runId);
+
+//If summary is true, get only the data with the best confidence
+if ($summary) {
+	$ctfinfo = $ctf->getBestCtfInfoForSessionId($sessionId);
+} else {
+	$runId= ($_GET[rId]);
+	$ctfinfo = $ctf->getCtfInfo($runId);
+}
+
 function scicallback($a) {
 	return format_sci_number($a,3,true);
 }
