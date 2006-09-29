@@ -51,6 +51,7 @@ class particle(data.Data):
 			('xcoord', int),
 			('ycoord', int),
 			('correlation', float),
+			('insidecrud', int),
 		)
 	typemap = classmethod(typemap)
 data.particle=particle
@@ -77,4 +78,3 @@ class selexonParams(data.Data):
 		)
 	typemap = classmethod(typemap)
 data.selexonParams=selexonParams
-
