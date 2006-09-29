@@ -7,7 +7,7 @@
 import data
 import dbdatakeeper
 
-db=dbdatakeeper.DBDataKeeper(db='dbemparticles')
+db=dbdatakeeper.DBDataKeeper(db='dbparticledata')
 
 class run(data.Data):
 	def typemap(cls):
