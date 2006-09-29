@@ -23,12 +23,13 @@ $histogram = ($_GET[hg]==1) ? true : false;
 $f = $_GET[f];
 $preset=$_GET['preset'];
 $summary = ($_GET[s]==1 ) ? true : false;
+$minimum = $_GET[mconf];
 
 $ctf = new ctfdata();
 
 //If summary is true, get only the data with the best confidence
 if ($summary) {
-	$ctfinfo = $ctf->getBestCtfInfoForSessionId($sessionId);
+	$ctfinfo = $ctf->getBestCtfInfoForSessionId($sessionId, $minimum);
 } else {
 	$runId= ($_GET[rId]);
 	$ctfinfo = $ctf->getCtfInfo($runId);
@@ -45,8 +46,9 @@ function TimeCallback($aVal) {
 foreach($ctfinfo as $t) {
 	$id = $t['dbemdata|AcquisitionImageData|image'];
 	$p = $leginondata->getPresetFromImageId($id);
-	if ($p['name']!=$preset)
+	if ($p['name']!=$preset) {
 		continue;
+	}
 	$data[$id] = $t[$f];
 	$where[] = "DEF_id=".$id;
 }

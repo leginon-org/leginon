@@ -144,7 +144,7 @@ class ctfdata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getBestCtfInfoForSessionId($sessionId) {
+	function getBestCtfInfoForSessionId($sessionId, $limit=false) {
 			$q = "select  ctfdata.* "
 			."from "
 			."	( "
@@ -158,10 +158,10 @@ class ctfdata {
 			."		c.`noise1`, c.`noise2`, c.`noise3`, c.`noise4`, "
 			."		c.`envelope1`, c.`envelope2`, c.`envelope3`, c.`envelope4`, c.`lowercutoff`, c.`uppercutoff`, c.`snr`, "
 			."		c.`confidence`,c.`confidence_d`  "
-			."	from image i "
+			."	from dbctfdata.`image` i "
 			."	left join dbemdata.`AcquisitionImageData` a on (a.DEF_id=i.`dbemdata|AcquisitionImageData|image`) "
 			."	left join dbemdata.`PresetData` p on (p.DEF_id=a.`REF|PresetData|preset`) "
-			."	left join ctf c  "
+			."	left join dbctfdata.`ctf` c  "
 			."	on (c.`REF|image|imageId`=i.DEF_id)  "
 			."	where "
 			."	i.`dbemdata|AcquisitionImageData|image` in  "
@@ -170,9 +170,12 @@ class ctfdata {
 			."		where a.`REF|SessionData|session`='$sessionId'  "
 			."		)  "
 			."		order by (if(confidence_d>confidence, confidence_d, confidence)) desc  "
-			."	) ctfdata "
-			."group by ctfdata.DEF_id ";
-
+			."	) ctfdata ";
+			// if $limit is specified, report only values with confidences > $limit
+			if ($limit) {
+				$q .= " where ctfdata.confidence > $limit || ctfdata.confidence_d > $limit ";
+			}
+			$q .= " group by ctfdata.DEF_id ";
 		return $this->mysql->getSQLResult($q);
 }
 
@@ -231,7 +234,7 @@ class ctfdata {
 		return $stats;
 	}
 
-	function getBestStats($fields, $sessionId) {
+	function getBestStats($fields, $sessionId, $limit=false) {
 		if (!is_array($fields))
 			return False;
 		foreach ($fields as $field) {
@@ -240,7 +243,7 @@ class ctfdata {
 					. "min(ctfdata.`$field`) as `min`, "
 					. "max(ctfdata.`$field`) as `max`, "
 					. "avg(ctfdata.`$field`) as `avg`, "
-					. "stddev(ctfdata.`$field`) as `stddev`";
+					. "stddev(ctfdata.`$field`) as `stddev` ";
 		}
 		
 		if (!is_array($selects))
@@ -250,30 +253,39 @@ class ctfdata {
 				$q = "select  $select "
 				."from "
 				."	( "
-				."	select  "
-				."		i.`dbemdata|AcquisitionImageData|image`, "
-				."		i.`DEF_id`, "
-				."		p.`name`, "
-				."		i.`dbemdata|AcquisitionImageData|image`, "
-				."		i.`dbemdata|ScopeEMData|defocus`, "
-				."		c.`defocus1`, c.`defocus2`, c.`defocusinit`, c.`angle_astigmatism`, "
-				."		c.`noise1`, c.`noise2`, c.`noise3`, c.`noise4`, "
-				."		c.`envelope1`, c.`envelope2`, c.`envelope3`, c.`envelope4`, c.`lowercutoff`, c.`uppercutoff`, c.`snr`, "
-				."		c.`confidence`,c.`confidence_d`  "
-				."	from image i "
-				."	left join dbemdata.`AcquisitionImageData` a on (a.DEF_id=i.`dbemdata|AcquisitionImageData|image`) "
-				."	left join dbemdata.`PresetData` p on (p.DEF_id=a.`REF|PresetData|preset`) "
-				."	left join ctf c  "
-				."	on (c.`REF|image|imageId`=i.DEF_id)  "
-				."	where "
-				."	i.`dbemdata|AcquisitionImageData|image` in  "
-				."	( "
-				."		select a.`DEF_id` from dbemdata.`AcquisitionImageData` a  "
-				."		where a.`REF|SessionData|session`='$sessionId'  "
-				."		)  "
-				."		order by (if(confidence_d>confidence, confidence_d, confidence)) desc  "
-				."	) ctfdata "
-				."group by ctfdata.name ";
+				."	select allctfdata.* "
+				."	from "
+				."		( "
+				."		select  "
+				."			i.`dbemdata|AcquisitionImageData|image`, "
+				."			i.`DEF_id`, "
+				."			p.`name`, "
+				."			i.`dbemdata|AcquisitionImageData|image`, "
+				."			i.`dbemdata|ScopeEMData|defocus`, "
+				."			c.`defocus1`, c.`defocus2`, c.`defocusinit`, c.`angle_astigmatism`, "
+				."			c.`noise1`, c.`noise2`, c.`noise3`, c.`noise4`, "
+				."			c.`envelope1`, c.`envelope2`, c.`envelope3`, c.`envelope4`, c.`lowercutoff`, c.`uppercutoff`, c.`snr`, "
+				."			c.`confidence`,c.`confidence_d`  "
+				."		from dbctfdata.`image` i "
+				."		left join dbemdata.`AcquisitionImageData` a on (a.DEF_id=i.`dbemdata|AcquisitionImageData|image`) "
+				."		left join dbemdata.`PresetData` p on (p.DEF_id=a.`REF|PresetData|preset`) "
+				."		left join dbctfdata.`ctf` c  "
+				."		on (c.`REF|image|imageId`=i.DEF_id)  "
+				."		where "
+				."		i.`dbemdata|AcquisitionImageData|image` in  "
+				."		( "
+				."			select a.`DEF_id` from dbemdata.`AcquisitionImageData` a  "
+				."			where a.`REF|SessionData|session`='$sessionId'  "
+				."			)  "
+				."			order by (if(confidence_d>confidence, confidence_d, confidence)) desc  "
+				."		) allctfdata "
+				."	group by allctfdata.`DEF_id` "
+				."	) ctfdata ";
+				// if $limit is specified, report only values with confidences > $limit
+				if ($limit){
+					$q .= " where ctfdata.confidence > $limit || ctfdata.confidence_d > $limit ";
+				}
+				$q .= " group by ctfdata.name ";
 			$r = $this->mysql->getSQLResult($q);
 			$stats[$k] = $r;
 		}
