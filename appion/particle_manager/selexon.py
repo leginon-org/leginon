@@ -50,8 +50,9 @@ def printHelp():
 	print "box=<n>            : output will be saved as EMAN box file with given box size"
 	print "continue           : if this option is turned on, selexon will skip previously processed"
 	print "                     micrographs"
-	print "commit                      : if commit is specified, ctf parameters will be stored to the database"
+	print "commit             : if commit is specified, ctf parameters will be stored to the database"
 	print "dbimages=<sess,pr> : if this option is turned on, selexon will continuously get images from the database"
+	print "runid=<runid>      : subdirectory for output (default=run1)"
 	print "                     do not use this option if you are specifying particular images"
 	print "\n"
 
@@ -87,6 +88,8 @@ def createDefaults():
 	params["dbimages"]='FALSE'
 	params["session"]=None
 	params["preset"]=None
+	params["runid"]='run1'
+	params["commit"]='FALSE'
 	return params
 
 def parseInput(args):
@@ -192,6 +195,8 @@ def parseInput(args):
 			else:
 				print "dbimages must include both session and preset parameters"
 				sys.exit()
+		elif arg=='commit':
+			params['commit']='TRUE'
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
@@ -734,8 +739,66 @@ def getImagesFromDB(session,preset):
 			command=('ln -s %s .' %  imgpath)
 			print command
 			os.system(command)
-	return (images)
+	return (imagelist)
     
+def insertSelexonParams(params,expid):
+	runq=particleData.run()
+	runq['name']=params['runid']
+	runq['dbemdata|SessionData|session']=expid
+	runids=partdb.query(runq, results=1)
+
+## 	dfnom='None'
+## 	if params['nominal']:
+## 		dfnom=-params['nominal']
+		
+## 	# if no run entry exists, insert new run entry into run.dbctfdata
+## 	# then create a new ace_param entry
+## 	if not(runids):
+## 		acedb.insert(runq)
+## 		aceparams=ctfData.ace_params()
+## 		aceparams['runId']=runq
+## 		aceparams['display']=params['display']
+## 		aceparams['stig']=params['stig']
+## 		aceparams['medium']=params['medium']
+## 		aceparams['edgethcarbon']=params['edgethcarbon']
+## 		aceparams['edgethice']=params['edgethice']
+## 		aceparams['pfcarbon']=params['pfcarbon']
+## 		aceparams['pfice']=params['pfice']
+## 		aceparams['overlap']=params['overlap']
+## 		aceparams['fieldsize']=params['fieldsize']
+## 		aceparams['resamplefr']=params['resamplefr']
+## 		aceparams['drange']=params['drange']
+## 		# if nominal df is set, save override df to database, else don't set
+## 		if params['nominal']:
+## 			aceparams['df_override']=dfnom
+## 		if params['reprocess']:
+## 			aceparams['reprocess']=params['reprocess']
+## 	       	acedb.insert(aceparams)
+		
+## 	# if continuing a previous run, make sure that all the current
+## 	# parameters are the same as the previous
+## 	else:
+## 		runlist=runids[0]
+## 		aceq=ctfData.ace_params(runId=runq)
+## 		aceresults=acedb.query(aceq, results=1)
+## 		acelist=aceresults[0]
+## 		if (acelist['display']!=params['display'] or
+## 		    acelist['stig']!=params['stig'] or
+## 		    acelist['medium']!=params['medium'] or
+## 		    acelist['edgethcarbon']!=params['edgethcarbon'] or
+## 		    acelist['edgethice']!=params['edgethice'] or
+## 		    acelist['pfcarbon']!=params['pfcarbon'] or
+## 		    acelist['pfice']!=params['pfice'] or
+## 		    acelist['overlap']!=params['overlap'] or
+## 		    acelist['fieldsize']!=params['fieldsize'] or
+## 		    acelist['resamplefr']!=params['resamplefr'] or
+## 		    acelist['drange']!=params['drange'] or
+## 		    acelist['reprocess']!=params['reprocess'] or
+## 		    str(acelist['df_override'])!=str(dfnom)):
+## 			print "All parameters for a single ACE run must be identical!"
+## 			print "please check your parameter settings."
+## 			sys.exit()
+	return
 #-----------------------------------------------------------------------
 
 if __name__ == '__main__':
@@ -754,7 +817,12 @@ if __name__ == '__main__':
 	if params['dbimages']=='TRUE':
 		images=getImagesFromDB(params['session'],params['preset'])
 	else:
-		images=params["mrcfileroot"]
+		imglist=params["mrcfileroot"]
+		images=[]
+		for img in imglist:
+			imageq=data.AcquisitionImageData(filename=img)
+			imageresult=db.query(imageq, readimages=False)
+			images=images+imageresult
 
 	# check to see if user only wants to run the crud finder
 	if (params["crudonly"]=='TRUE'):
@@ -768,7 +836,8 @@ if __name__ == '__main__':
 		if not (os.path.exists("crudfiles")):
 			os.mkdir("crudfiles")
 		for img in images:
-			findCrud(params,img)
+			imgname=img['filename']
+			findCrud(params,imgname)
 		sys.exit(1)
         
 	# check for wrong or missing inputs
@@ -795,22 +864,28 @@ if __name__ == '__main__':
 	while notdone:
 		for img in images:
 			# if continue option is true, check to see if image has already been processed
-			doneCheck(donedict,img)
+			imgname=img['filename']
+			doneCheck(donedict,imgname)
 			if (params["continue"]=='TRUE'):
-				if donedict[img]:
-					print img,'already processed. To process again, remove "continue" option.'
+				if donedict[imgname]:
+					print imgname,'already processed. To process again, remove "continue" option.'
 					continue
 
+			#insert selexon params into dbparticledata.selexonParams table
+			expid=int(img['session'].dbid)
+			if params['commit']=='TRUE':
+				insertSelexonParams(params,expid)
+
 			# run FindEM
-			dwnsizeImg(params,img)
-			runFindEM(params,img)
-			findPeaks(params,img)
+			dwnsizeImg(params,imgname)
+			runFindEM(params,imgname)
+			findPeaks(params,imgname)
 
 			# if no particles were found, skip rest and go to next image
-			if not (os.path.exists("pikfiles/"+img+".a.pik")):
-				print "no particles found in \""+img+".mrc\"\n"
+			if not (os.path.exists("pikfiles/"+imgname+".a.pik")):
+				print "no particles found in \""+imgname+".mrc\"\n"
 				# write results to dictionary
-				donedict[img]=True
+				donedict[imgname]=True
 				writeDoneDict(donedict)
 				continue
 
@@ -818,25 +893,25 @@ if __name__ == '__main__':
 			if (params["crud"]=='TRUE'):
 				if not (os.path.exists("crudfiles")):
 					os.mkdir("crudfiles")
-					findCrud(params,img)
+					findCrud(params,imgname)
 				# if crudfinder removes all the particles, go to next image
-				if not (os.path.exists("pikfiles/"+img+".a.pik.nocrud")):
-					print "no particles left after crudfinder in \""+img+".mrc\"\n"
+				if not (os.path.exists("pikfiles/"+imgname+".a.pik.nocrud")):
+					print "no particles left after crudfinder in \""+imgname+".mrc\"\n"
  					# write results to dictionary
-					donedict[img]=True
+					donedict[imgname]=True
 					writeDoneDict(donedict)
 					continue
 
 			# create jpg of selected particles if not created by crudfinder
 			if (params["crud"]=='FALSE'):
-				createJPG(params,img)
+				createJPG(params,imgname)
 
 			# convert resulting pik file to eman box file
 			if (params["box"]>0):
-				pik2Box(params,img)
+				pik2Box(params,imgname)
 
 			# write results to dictionary
- 			donedict[img]=True
+ 			donedict[imgname]=True
 			writeDoneDict(donedict)
 	    
 
