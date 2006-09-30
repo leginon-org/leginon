@@ -141,7 +141,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		previouslists = self.researchTargetLists(image=imagedata, sublist=False)
 		if previouslists:
 			# I hope you can only have one target list on an image, right?
-			targetlist = previouslists[0]
+			#targetlist = previouslists[0]
+			targetlist = previouslists[-1]
 			db = False
 			self.logger.info('Already processed this image... republishing')
 		else:
@@ -207,6 +208,8 @@ class ClickTargetFinder(TargetFinder):
 			self.setStatus('processing')
 			preview_targets = self.panel.getTargetPositions('preview')
 			if preview_targets:
+				# HACK: this will break things, I think...
+				targetlist = self.newTargetList(image=imdata)
 				self.publishTargets(imdata, 'preview', targetlist)
 				self.setTargets([], 'preview', block=True)
 				self.makeTargetListEvent(targetlist)
