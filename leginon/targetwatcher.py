@@ -206,7 +206,9 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.publish(donetarget, database=True)
 			self.logger.debug('Done target published')
 
-		self.reportTargetListDone(newdata, targetliststatus)
+		# HACK: ...
+		if goodtargets:
+			self.reportTargetListDone(newdata, targetliststatus)
 		self.setStatus('idle')
 
 	def waitForRejects(self):
