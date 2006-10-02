@@ -1,19 +1,21 @@
-#!/usr/bin/env python
-
+# The Leginon software is Copyright 2004
+# The Scripps Research Institute, La Jolla, CA
+# For terms of the license agreement
+# see http://ami.scripps.edu/software/leginon-license
 #
-# COPYRIGHT:
-#			 The Leginon software is Copyright 2003
-#			 The Scripps Research Institute, La Jolla, CA
-#			 For terms of the license agreement
-#			 see	http://ami.scripps.edu/software/leginon-license
-#
+# $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
+# $Revision: 1.109 $
+# $Name: not supported by cvs2svn $
+# $Date: 2006-10-02 21:50:53 $
+# $Author: suloway $
+# $State: Exp $
+# $Locker:  $
 
 import node
 import event
 import data
 import time
 import calibrationclient
-import copy
 import correlator
 import peakfinder
 import math
@@ -221,28 +223,29 @@ class Navigator(node.Node):
 		self.setStatus('idle')
 
 	def checkMoveError(self, scope, camera, rmove, cmove):
-			pc = self.correlator.phaseCorrelate()
-			self.peakfinder.setImage(pc)
-			peak = self.peakfinder.subpixelPeak()
-			rcmoved = correlator.wrap_coord(peak, pc.shape)
-			r_error = rmove + rcmoved[0]
-			c_error = cmove + rcmoved[1]
+		pc = self.correlator.phaseCorrelate()
+		self.peakfinder.setImage(pc)
+		peak = self.peakfinder.subpixelPeak()
+		rcmoved = correlator.wrap_coord(peak, pc.shape)
+		r_error = rmove + rcmoved[0]
+		c_error = cmove + rcmoved[1]
 
-			## calculate error distance
-			mag = scope['magnification']
-			tem = scope['tem']
-			ccdcamera = camera['ccdcamera']
-			pixelsize = self.pcal.retrievePixelSize(tem, ccdcamera, mag)
-			cbin = camera['binning']['x']
-			rbin = camera['binning']['y']
-			rpix = r_error * rbin
-			cpix = c_error * cbin
-			pixdist = math.hypot(rpix,cpix)
-			distance = pixdist * pixelsize
+		## calculate error distance
+		mag = scope['magnification']
+		tem = scope['tem']
+		ccdcamera = camera['ccdcamera']
+		pixelsize = self.pcal.retrievePixelSize(tem, ccdcamera, mag)
+		cbin = camera['binning']['x']
+		rbin = camera['binning']['y']
+		rpix = r_error * rbin
+		cpix = c_error * cbin
+		pixdist = math.hypot(rpix,cpix)
+		distance = pixdist * pixelsize
 
-			return r_error, c_error, distance
+		return r_error, c_error, distance
 
 	def acquireImage(self):
+		self.oldimagedata = None
 		self._acquireImage()
 		self.panel.acquisitionDone()
 
