@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Navigator.py,v $
-# $Revision: 1.37 $
+# $Revision: 1.38 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-09-28 19:27:00 $
-# $Author: pulokas $
+# $Date: 2006-10-02 22:43:34 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -307,8 +307,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['override preset'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['instruments'], (1, 0), (1, 1), wx.EXPAND)
-		sz.Add(self.widgets['camera settings'], (0, 1), (2, 1),
-						wx.EXPAND)
+		sz.Add(self.widgets['camera settings'], (2, 0), (1, 1), wx.EXPAND)
 		overridebox = wx.StaticBox(self, -1, "Override Preset")
 		overridesz = wx.StaticBoxSizer(overridebox, wx.VERTICAL)
 		overridesz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
@@ -318,20 +317,24 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		label1 = wx.StaticText(self, -1, 'Move to within')
 		self.widgets['precision'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=6, value='0.0')
 		label2 = wx.StaticText(self, -1, 'm of clicked position')
-		precsz.Add(label1, (0, 0), (1, 1))
+		precsz.Add(label1, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		precsz.Add(self.widgets['precision'], (0, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		precsz.Add(label2, (0, 2), (1, 1))
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		precsz.Add(label2, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		# settings sizer
+
+		settingsz = wx.GridBagSizer(5, 5)
+		settingsz.Add(self.widgets['check calibration'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		settingsz.Add(precsz, (1, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		settingsz.Add(szpausetime, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
 		sz = wx.GridBagSizer(5, 10)
+		sz.Add(settingsz, (0, 0), (1, 1))
+		sz.Add(overridesz, (0, 1), (2, 1))
 
-		sz.Add(self.widgets['check calibration'], (1, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(precsz, (2, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szpausetime, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(overridesz, (0,1), (8,1))
+		sz.AddGrowableRow(2)
 
 		sb = wx.StaticBox(self, -1, 'Navigation')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)

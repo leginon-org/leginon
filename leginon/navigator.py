@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
-# $Revision: 1.109 $
+# $Revision: 1.110 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-02 21:50:53 $
+# $Date: 2006-10-02 22:43:34 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -23,6 +23,7 @@ import gui.wx.Navigator
 import newdict
 import instrument
 import presets
+import types
 
 class NavigatorClient(object):
 	eventoutputs = [event.MoveToTargetEvent]
@@ -357,13 +358,15 @@ class Navigator(node.Node):
 		if type(loc) is int:
 			locremove = self.stagelocations[loc]
 			del self.stagelocations[loc]
-		elif type(loc) is str:
+		elif type(loc) in types.StringTypes:
 			loccopy = list(self.stagelocations)
 			for location in loccopy:
 				if location['name'] == loc:
 					locremove = location
 					self.stagelocations.remove(location)
 		else:
+			print type(loc)
+			print loc
 			locremove = loc 
 			self.stagelocations.remove(loc)
 
