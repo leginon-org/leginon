@@ -44,7 +44,8 @@ class ImageBrowserPanel(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.onPublish, self.publish)
 
 	def __set_properties(self):
-		self.imagebox.SetSelection(1)
+		if self.imagebox.GetCount() > 0:
+			self.imagebox.SetSelection(1)
 
 	def __do_layout(self):
 		sbsz = wx.StaticBoxSizer(self.sbsz_staticbox, wx.VERTICAL)

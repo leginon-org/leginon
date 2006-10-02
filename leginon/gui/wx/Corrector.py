@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.48 $
+# $Revision: 1.49 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-09-13 19:10:17 $
-# $Author: pulokas $
+# $Date: 2006-10-02 23:01:20 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -273,18 +273,18 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 		self.widgets['despike'] = wx.CheckBox(self, -1, 'Despike images')
 		self.widgets['despike size'] = IntEntry(self, -1, min=1, chars=4)
-		self.widgets['despike threshold'] = FloatEntry(self, -1, min=0, chars=9)
-		self.widgets['clip min'] = FloatEntry(self, -1, chars=9)
-		self.widgets['clip max'] = FloatEntry(self, -1, chars=9)
+		self.widgets['despike threshold'] = FloatEntry(self, -1, min=0, chars=4)
+		self.widgets['clip min'] = FloatEntry(self, -1, chars=6)
+		self.widgets['clip max'] = FloatEntry(self, -1, chars=6)
 
 		szclip = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Clip min:')
-		szclip.Add(label, (0, 0), (1, 1))
-		szclip.Add(self.widgets['clip min'], (0, 1), (1, 1))
+		szclip.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szclip.Add(self.widgets['clip min'], (0, 1), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'Clip max:')
-		szclip.Add(label, (1, 0), (1, 1))
-		szclip.Add(self.widgets['clip max'], (1, 1), (1, 1))
-
+		szclip.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szclip.Add(self.widgets['clip max'], (1, 1), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szclip.AddGrowableCol(1)
 		sb = wx.StaticBox(self, -1, 'Clipping')
 		sbszclip = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszclip.Add(szclip, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
@@ -295,42 +295,41 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		label = wx.StaticText(self, -1, 'Neighborhood size:')
 		szdespike.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szdespike.Add(self.widgets['despike size'], (1, 1), (1, 1),
-									wx.ALIGN_CENTER_VERTICAL)
+									wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'Threshold:')
 		szdespike.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szdespike.Add(self.widgets['despike threshold'], (2, 1), (1, 1),
-									wx.ALIGN_CENTER_VERTICAL)
+									wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szdespike.AddGrowableCol(1)
 		sb = wx.StaticBox(self, -1, 'Despike')
 		sbszdespike = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszdespike.Add(szdespike, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
 
-		sz = wx.GridBagSizer(5, 10)
-		sz.Add(self.widgets['instruments'], (0, 0), (1, 1), wx.EXPAND)
-		sz.Add(self.widgets['camera settings'], (1, 0), (2, 1), wx.EXPAND)
-
 		szref = wx.GridBagSizer(5, 5)
 
 		label = wx.StaticText(self, -1, 'Images to combine:')
-		szref.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szref.Add(self.widgets['n average'], (0, 2), (1, 1),
-						wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szref.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szref.Add(self.widgets['n average'], (0, 1), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
 		label = wx.StaticText(self, -1, 'Combine method:')
-		szref.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szref.Add(self.widgets['combine'], (1, 2), (1, 1))
+		szref.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szref.Add(self.widgets['combine'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		label = wx.StaticText(self, -1, 'Number of Channels:')
-		szref.Add(label, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szref.Add(self.widgets['channels'], (2, 2), (1, 1),
-						wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szref.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szref.Add(self.widgets['channels'], (2, 1), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szref.AddGrowableCol(1)
 
 		sb = wx.StaticBox(self, -1, 'Reference Creation')
 		sbszref = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszref.Add(szref, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
 
-		sz.Add(sbszref, (0, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL)
-		sz.Add(sbszclip, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL)
-		sz.Add(sbszdespike, (2, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL)
+		sz = wx.GridBagSizer(5, 10)
+		sz.Add(self.widgets['instruments'], (0, 0), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.widgets['camera settings'], (1, 0), (2, 1), wx.ALIGN_CENTER)
+		sz.Add(sbszref, (0, 1), (1, 1), wx.EXPAND)
+		sz.Add(sbszclip, (1, 1), (1, 1), wx.EXPAND)
+		sz.Add(sbszdespike, (2, 1), (1, 1), wx.EXPAND)
 
 		sb = wx.StaticBox(self, -1, 'Image Correction')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
