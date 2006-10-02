@@ -187,7 +187,7 @@ class Collection(object):
 
             predicted_shift = {}
             predicted_shift['x'] = predicted_position['x'] - position['x']
-            predicted_shift['x'] = predicted_position['y'] - position['y']
+            predicted_shift['y'] = predicted_position['y'] - position['y']
 
             predicted_shift['z'] = -defocus
             defocus = defocus0 - predicted_position['z']*pixel_size
