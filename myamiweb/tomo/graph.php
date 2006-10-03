@@ -17,6 +17,7 @@ function graphXY($prediction, $position, $correlation, $tilts, $title, $width, $
     $graph->SetY2Scale("lin");
     $graph->SetMarginColor('white');
     $graph->img->SetMargin(70, 70, 50, 50);
+    $graph->img->SetAntiAliasing();
 
     $graph->xgrid->Show(true, false);
     $graph->ygrid->Show(true, false);
@@ -78,6 +79,7 @@ function graphZ($prediction, $tilts, $pixel_size, $title, $width, $height) {
     $graph->SetScale("textlin");
     $graph->SetMarginColor('white');
     $graph->img->SetMargin(70, 20, 50, 50);
+    $graph->img->SetAntiAliasing();
 
     $graph->xgrid->Show(true, false);
     $graph->ygrid->Show(true, false);
@@ -116,6 +118,7 @@ function graphNT($prediction, $tilts, $title, $width, $height) {
     $graph->SetScale("textlin");
     $graph->SetMarginColor('white');
     $graph->img->SetMargin(70, 20, 50, 50);
+    $graph->img->SetAntiAliasing();
 
     $graph->xgrid->Show(true, false);
     $graph->ygrid->Show(true, false);
@@ -151,6 +154,7 @@ function graphTheta($prediction, $tilts, $title, $width, $height) {
     $graph->SetScale("textlin");
     $graph->SetMarginColor('white');
     $graph->img->SetMargin(70, 20, 50, 50);
+    $graph->img->SetAntiAliasing();
 
     $graph->xgrid->Show(true, false);
     $graph->ygrid->Show(true, false);

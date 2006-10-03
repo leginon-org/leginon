@@ -555,6 +555,66 @@ foreach(array_keys($dequeueds) as $dequeued_id) {
     }
 }
 
+$colors = array(
+    'new' => 'green',
+    'processing' => 'orange',
+    'aborted' => 'red',
+    'done' => 'blue',
+);
+
+echo '<table>';
+foreach(array_keys($targets) as $target_id) {
+    $target = &$targets[$target_id];
+    echo '<tr>';
+    echo '<td>';
+    echo $target->id;
+    echo '</td>';
+    echo '<td>';
+    echo $target->version;
+    echo '</td>';
+    echo '<td>';
+    echo $target->status;
+    echo '</td>';
+    echo '<td>';
+    echo $target->type;
+    echo '</td>';
+    echo '<td>';
+    echo $target->preset;
+    echo '</td>';
+    if(is_null($target->target_number)) {
+        $target_number = '';
+        $target_list_id = '';
+    } else {
+        $target_number = $target->target_number->number;
+        $target_list_id = $target->target_number->target_list->id;
+    }
+    echo '<td>';
+    echo $target_number;
+    echo '</td>';
+    echo '<td>';
+    echo $target_list_id;
+    echo '</td>';
+    if(is_null($target->parent_image)) {
+        $parent_image_id = '';
+    } else {
+        $parent_image_id = $target->parent_image->id;
+    }
+    echo '<td>';
+    echo $parent_image_id;
+    echo '</td>';
+    echo '<td>';
+    $child_image_ids = array();
+    foreach(array_keys($target->child_images) as $child_image_id) {
+        $child_image = $target->child_images[$child_image_id];
+        $child_image_ids[] = $child_image->id;
+    }
+    echo implode(', ', $child_image_ids);
+    echo '</td>';
+    echo '</tr>';
+}
+echo '</table>';
+
+/*
 $statuses = array();
 foreach(array_keys($target_lists) as $target_list_id) {
     $target_list = &$target_lists[$target_list_id];
@@ -574,7 +634,6 @@ foreach(array_keys($target_lists) as $target_list_id) {
 }
 print_r($statuses);
 
-/*
 function targetListTable(&$target_list) {
     $n = count($target_list->target_numbers);
 

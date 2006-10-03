@@ -231,6 +231,14 @@ class Tomography {
         $results = $this->mysql->getSQLResult($query);
         return $results;
     }
+
+    function getDose($session_id, $preset_name) {
+        if($session_id == NULL or $preset_name == NULL)
+            return array();
+        $query = 'SELECT p.dose/1e20 AS dose, p.`exposure time`/1e3 as exposure_time, p.DEF_timestamp AS timestamp, UNIX_TIMESTAMP(p.DEF_timestamp) AS unix_timestamp FROM PresetData p WHERE p.name="'.$preset_name.'" AND `REF|SessionData|session`='.$session_id.' ORDER BY timestamp;';
+        $results = $this->mysql->getSQLResult($query);
+        return $results;
+    }
 }
 
 $mysql = &new mysql($DB_HOST, $DB_USER, $DB_PASS, $DB);
