@@ -335,7 +335,6 @@ def insertAceParams(params,expid):
 	# if no run entry exists, insert new run entry into run.dbctfdata
 	# then create a new ace_param entry
 	if not(runids):
-		acedb.insert(runq)
 		aceparams=ctfData.ace_params()
 		aceparams['runId']=runq
 		aceparams['display']=params['display']
@@ -354,13 +353,16 @@ def insertAceParams(params,expid):
 			aceparams['df_override']=dfnom
 		if params['reprocess']:
 			aceparams['reprocess']=params['reprocess']
+		acedb.insert(runq)
 	       	acedb.insert(aceparams)
 		
 	# if continuing a previous run, make sure that all the current
 	# parameters are the same as the previous
 	else:
 		runlist=runids[0]
+		print runq
 		aceq=ctfData.ace_params(runId=runq)
+		print aceq
 		aceresults=acedb.query(aceq, results=1)
 		acelist=aceresults[0]
 		if (acelist['display']!=params['display'] or
