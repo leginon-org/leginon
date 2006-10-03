@@ -79,7 +79,7 @@ def parseInput(args):
 	for arg in args[1:]:
 		elements=arg.split('=')
 		if (elements[0]=='edgethcarbon'):
-			params["edgethcarbon"]=elements[1]
+			params["edgethcarbon"]=float(elements[1])
 		elif (elements[0]=='edgethice'):
 			params["edgethice"]=float(elements[1])
 		elif (elements[0]=='pfcarbon'):
