@@ -360,9 +360,7 @@ def insertAceParams(params,expid):
 	# parameters are the same as the previous
 	else:
 		runlist=runids[0]
-		print runq
 		aceq=ctfData.ace_params(runId=runq)
-		print aceq
 		aceresults=acedb.query(aceq, results=1)
 		acelist=aceresults[0]
 		if (acelist['display']!=params['display'] or
