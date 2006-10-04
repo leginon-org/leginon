@@ -4,11 +4,15 @@ import peakfinder
 import numarray
 import scipy.ndimage
 
-def hanning(N):
+def hanning(size):
+    border = size/2**5
     def function(m, n):
-        n = (numarray.hypot(m - N/2.0 + 0.5, n - N/2.0 + 0.5))/N + 0.5
-        return 0.5*(1 - numarray.cos(2*numarray.pi*n))
-    return numarray.fromfunction(function, (N, N))
+        m = abs(m - (size - 1)/2.0) - ((size + 1)/2.0 - border)
+        n = abs(n - (size - 1)/2.0) - ((size + 1)/2.0 - border)
+        v = numarray.where(m > n, m, n)
+        v = numarray.where(v > 0, v, 0)
+        return 0.5*(1 - numarray.cos(numarray.pi*v/border - numarray.pi))
+    return numarray.fromfunction(function, (size, size))
 
 class Correlator(object):
     def __init__(self, binning, tilt_axis):
@@ -55,13 +59,17 @@ class Correlator(object):
         padded_image = numarray.zeros(image.shape, image.type())
         image = scipy.ndimage.zoom(image, 0.5)
 
+        mean = image.mean()
+        image -= mean
+
         if self.hanning is None or image.shape[0] != self.hanning.shape[0]:
             self.hanning = hanning(image.shape[0])
         image *= self.hanning
 
         row = (padded_image.shape[0] - image.shape[0])/2
         column = (padded_image.shape[1] - image.shape[1])/2
-        padded_image[row:row + image.shape[0], column:column + image.shape[1]] = image
+        padded_image[row:row + image.shape[0],
+                     column:column + image.shape[1]] = image
         self.correlation.insertImage(padded_image)
         try:
             pc = self.correlation.phaseCorrelate()
