@@ -61,7 +61,7 @@ function init() {
 </script>
 
 <div class="header">
-Tomography Prediction Plot
+<a href="summary.php?sessionId=<?php echo $sessionId; ?>">Summary</a>
 </div>
 
 <div class="body">

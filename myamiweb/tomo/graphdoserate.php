@@ -16,18 +16,25 @@ $results = $tomography->getDose($session_id, "Tomography");
 $times = array();
 $timesstamps = array();
 $rates = array();
-$t0 = $results[0]['unix_timestamp'];
 foreach($results as $result) {
-    $times[] = ($result['unix_timestamp'] - $t0)/(60*60);
+    if($result['exposure_time'] == 0)
+        continue;
+    if(is_null($result['dose']))
+        continue;
+    $times[] = $result['unix_timestamp'];
     $timestamps[] = $result['timestamp'];
     $rates[] = $result['dose']/$result['exposure_time'];
+}
+
+function callback($label) {
+    return strftime('%m/%d %H:%M', $label);
 }
 
 function graphDoseRate($times, $timestamps, $rates, $width, $height) {
     $graph = new Graph($width, $height, "auto");    
     $graph->SetScale("intlin");
     $graph->SetMarginColor('white');
-    $graph->img->SetMargin(70, 70, 50, 50);
+    $graph->img->SetMargin(100, 100, 50, 100);
     $graph->img->SetAntiAliasing();
     $graph->xgrid->Show(true, false);
     $graph->ygrid->Show(true, false);
@@ -44,11 +51,12 @@ function graphDoseRate($times, $timestamps, $rates, $width, $height) {
     
     $graph->xaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
     $graph->xaxis->title->SetFont(FF_ARIAL);
-    $graph->xaxis->title->Set("Time (hours)");
+    $graph->xaxis->title->Set("Time");
     
-    #$graph->xaxis->SetTickLabels($timestamps);
-    #$graph->xaxis->SetTextTickInterval(10);
     $graph->xaxis->SetPos("min");
+    $graph->xaxis->SetLabelFormatCallback('callback');
+    $graph->xaxis->SetLabelAngle(45);
+    $graph->xaxis->SetTitleMargin(50);
     
     $graph->yaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
     $graph->yaxis->title->SetFont(FF_ARIAL);
