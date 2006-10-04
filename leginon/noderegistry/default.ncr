@@ -94,10 +94,6 @@ type: Pipeline
 module: rasterfinder
 type: Pipeline
 
-[PolyFinder]
-module: polyfinder
-type: Pipeline
-
 [MatlabTargetFinder]
 module: matlabtargetfinder
 type: Pipeline
@@ -126,6 +122,10 @@ type: Utility
 [MeasureDose]
 module: reference
 type: Utility
+
+[RegionFinder]
+module: regionfinder
+type: Pipeline
 
 [CenterTargetFilter]
 module: centertargetfilter
