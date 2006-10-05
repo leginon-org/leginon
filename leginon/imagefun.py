@@ -484,7 +484,7 @@ def mark_image(image, coord, value, size=15):
 def bin(image, binning):
 	return numextension.bin(image, binning)
 
-def crop_at(im, center, shape):
+def crop_at(im, center, shape, mode='wrap', cval=None):
 	'''
 	Crops an image such that the resulting image has im[center] at the center
 	Image is treatead as wrapping around at the edges.
@@ -492,9 +492,14 @@ def crop_at(im, center, shape):
 	## can't crop area larger than image
 	if shape[0]>im.shape[0] or shape[1]>im.shape[1]:
 		raise ValueError('crop_at: crop shape %s must not be larger than image shape %s' % (shape, im.shape))
+	if center == 'center':
+		center = im.shape[0]/2.0 - 0.5, im.shape[1]/2.0 - 0.5
 	croppedcenter = shape[0]/2.0 - 0.5, shape[1]/2.0 - 0.5
 	shift = croppedcenter[0]-center[0], croppedcenter[1]-center[1]
-	shifted = numarray.nd_image.shift(im, shift, mode='wrap')
+	if mode == 'constant':
+		shifted = numarray.nd_image.shift(im, shift, mode=mode, cval=cval)
+	else:
+		shifted = numarray.nd_image.shift(im, shift, mode=mode)
 	cropped = shifted[:shape[0], :shape[1]]
 	return cropped
 
