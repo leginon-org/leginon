@@ -28,7 +28,7 @@ $ace_params_fields = array ('REF|run|runId', 'display', 'stig', 'medium', 'df_ov
 		$acestring=rtrim($acestring,',');	
 		echo $acestring;
 		?>){
-		var newwindow=window.open('','name','width=300');
+		var newwindow=window.open('','name','height=400, width=200, scrollbar=1');
 		newwindow.document.write('<HTML><HEAD><link rel="stylesheet" type="text/css" href="css/viewer.css">');
 		newwindow.document.write('<TITLE>Ace Parameters</TITLE>');
 		newwindow.document.write("</HEAD><BODY><TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>");
