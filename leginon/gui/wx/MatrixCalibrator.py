@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MatrixCalibrator.py,v $
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-11 05:25:48 $
-# $Author: suloway $
+# $Date: 2006-10-05 17:38:11 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -22,6 +22,7 @@ import gui.wx.ImageViewer
 import gui.wx.Settings
 import gui.wx.ToolBar
 import numarray
+import math
 
 def capitalize(string):
 	if string:
@@ -42,6 +43,8 @@ class Panel(gui.wx.Calibrator.Panel):
 													shortHelpString='Parameter Settings')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_EDIT, 'edit',
 													shortHelpString='Edit current calibration')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_CALC_PIXEL, 'calculate',
+													shortHelpString='Transform pixel vectors between mags')
 
 	def onNodeInitialized(self):
 		gui.wx.Calibrator.Panel.onNodeInitialized(self)
@@ -53,6 +56,8 @@ class Panel(gui.wx.Calibrator.Panel):
 											id=gui.wx.ToolBar.ID_PARAMETER_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEditMatrixTool,
 											id=gui.wx.ToolBar.ID_EDIT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onCalcPixel,
+											id=gui.wx.ToolBar.ID_CALC_PIXEL)
 		self.toolbar.Realize()
 
 	def onParameterSettingsTool(self, evt):
@@ -100,6 +105,11 @@ class Panel(gui.wx.Calibrator.Panel):
 	def editCalibration(self, calibrationdata):
 		evt = gui.wx.Events.EditMatrixEvent(calibrationdata=calibrationdata)
 		self.GetEventHandler().AddPendingEvent(evt)
+
+	def onCalcPixel(self, evt):
+		dialog = PixelToPixelDialog(self, 'Pixel Vector Calculator')
+		dialog.ShowModal()
+		dialog.Destroy()
 
 class MatrixSettingsDialog(gui.wx.Settings.Dialog):
 	def __init__(self, parent, parameter, parametername):
@@ -226,6 +236,92 @@ class EditMatrixDialog(gui.wx.Dialog.Dialog):
 					raise ValueError
 				matrix[row, column] = value
 		return matrix
+
+class PixelToPixelDialog(gui.wx.Dialog.Dialog):
+	def __init__(self, parent, title):
+		self.node = parent.node
+		gui.wx.Dialog.Dialog.__init__(self, parent, title, style=wx.DEFAULT_DIALOG_STYLE)
+
+	def onInitialize(self):
+		mag1lab = wx.StaticText(self, -1, 'Mag 1:')
+		self.mag1 = IntEntry(self, -1, chars=8)
+		mag2lab = wx.StaticText(self, -1, 'Mag 2:')
+		self.mag2 = IntEntry(self, -1, chars=8)
+		p1lab = wx.StaticText(self, -1, 'Pixel 1:')
+		self.p1row = FloatEntry(self, -1, chars=4)
+		self.p1col = FloatEntry(self, -1, chars=4)
+		p2lab = wx.StaticText(self, -1, 'Pixel 2:')
+		self.p2row = FloatEntry(self, -1, chars=4)
+		self.p2col = FloatEntry(self, -1, chars=4)
+
+		angle1lab = wx.StaticText(self, -1, 'Angle 1')
+		self.angle1 = wx.StaticText(self, -1, '')
+		len1lab = wx.StaticText(self, -1, 'Length 1')
+		self.len1 = wx.StaticText(self, -1, '')
+		angle2lab = wx.StaticText(self, -1, 'Angle 2')
+		self.angle2 = wx.StaticText(self, -1, '')
+		len2lab = wx.StaticText(self, -1, 'Length 2')
+		self.len2 = wx.StaticText(self, -1, '')
+
+		calcp1 = wx.Button(self, -1, 'Calculate')
+		self.Bind(wx.EVT_BUTTON, self.calcp1, calcp1)
+		calcp2 = wx.Button(self, -1, 'Calculate')
+		self.Bind(wx.EVT_BUTTON, self.calcp2, calcp2)
+		
+		self.sz.Add(mag1lab, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.mag1, (0, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(mag2lab, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.mag2, (0, 4), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(p1lab, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.p1row, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.p1col, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(p2lab, (1, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.p2row, (1, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.p2col, (1, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		self.sz.Add(angle1lab, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.angle1, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(angle2lab, (2, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.angle2, (2, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(len1lab, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.len1, (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(len2lab, (3, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.len2, (3, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		self.sz.Add(calcp1, (4, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(calcp2, (4, 3), (1, 3), wx.ALIGN_CENTER_VERTICAL)
+
+	def calcp1(self, evt):
+		p2row = self.p2row.GetValue()
+		p2col = self.p2col.GetValue()
+		mag1 = self.mag1.GetValue()
+		mag2 = self.mag2.GetValue() 
+		p2 = p2row,p2col
+		p1 = self.node.pixelToPixel(mag2, mag1, p2)
+		self.p1row.SetValue(p1[0])
+		self.p1col.SetValue(p1[1])
+		a,n = self.angle_len(p1)
+		self.angle1.SetLabel(str(a))
+		self.len1.SetLabel(str(n))
+
+	def calcp2(self, evt):
+		p1row = self.p1row.GetValue()
+		p1col = self.p1col.GetValue()
+		mag1 = self.mag1.GetValue()
+		mag2 = self.mag2.GetValue() 
+		p1 = p1row,p1col
+		p2 = self.node.pixelToPixel(mag1, mag2, p1)
+		self.p2row.SetValue(p2[0])
+		self.p2col.SetValue(p2[1])
+		a,n = self.angle_len(p2)
+		self.angle2.SetLabel(str(a))
+		self.len2.SetLabel(str(n))
+
+	def angle_len(self, vect):
+		angle = numarray.arctan2(*tuple(vect))
+		angle = math.degrees(angle)
+		len = numarray.hypot(*tuple(vect))
+		return angle, len
 
 if __name__ == '__main__':
 	class App(wx.App):

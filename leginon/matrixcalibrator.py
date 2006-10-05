@@ -278,3 +278,10 @@ class MatrixCalibrator(calibrator.Calibrator):
 			raise RuntimeError('no parameter selected')
 		calclient.storeMatrix(ht, mag, parameter, matrix, tem, ccdcamera)
 
+	def pixelToPixel(self, mag1, mag2, p1):
+		stagecal = self.parameters['stage position']
+		tem = self.instrument.getTEMData()
+		cam = self.instrument.getCCDCameraData()
+		ht = self.instrument.tem.HighTension
+		p2 = stagecal.pixelToPixel(tem, cam, ht, mag1, mag2, p1)
+		return p2
