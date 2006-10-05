@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Robot.py,v $
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-05-23 21:45:46 $
-# $Author: dfellman $
+# $Date: 2006-10-05 00:25:36 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -36,6 +36,8 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_GRID,
 													'cleargrid', shortHelpString='Grid Cleared')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PAUSE,
+													'pause', shortHelpString='Continue')
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
 		self.toolbar.Realize()
@@ -82,6 +84,7 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onGridTool, id=gui.wx.ToolBar.ID_GRID)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onExtractTool,
 											id=gui.wx.ToolBar.ID_EXTRACT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPauseTool, id=gui.wx.ToolBar.ID_PAUSE)
 		self.Bind(gui.wx.Events.EVT_GRID_QUEUE_EMPTY, self.onGridQueueEmpty)
 		self.Bind(gui.wx.Events.EVT_CLEAR_GRID, self.onClearGrid)
 		self.Bind(gui.wx.Events.EVT_GRID_INSERTED, self.onGridInserted)
@@ -113,6 +116,9 @@ class Panel(gui.wx.Node.Panel):
 	def onPlayTool(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 		self.node.startevent.set()
+
+	def onPauseTool(self, evt):
+		self.node.userContinue()
 
 	def onGridTool(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)

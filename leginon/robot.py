@@ -155,6 +155,7 @@ class Robot(node.Node):
 		self.extractinfo = None
 		self.extractcondition = threading.Condition()
 		self.gridcleared = threading.Event()
+		self.usercontinue = threading.Event()
 
 		self.emailclient = emailnotification.EmailClient(self)
 
@@ -180,6 +181,9 @@ class Robot(node.Node):
 		self.addEventInput(event.UnloadGridEvent, self.handleUnloadGrid)
 
 		self.start()
+
+	def userContinue(self):
+		self.usercontinue.set()
 
 	def handleQueueGrids(self, ievent):
 		nodename = ievent['node']
@@ -456,7 +460,7 @@ class Robot(node.Node):
 
 	def scopeReadyForImaging(self):
 		self.logger.info('Readying microscope for imaging...')
-		self.turboPumpOff()
+		#self.turboPumpOff()
 		self.insertCameras()
 		self.checkHighTensionOn()
 		self.vacuumReady()
@@ -674,7 +678,7 @@ class Robot(node.Node):
 		self.logger.info('Inserting holder into microscope')
 
 
-		self.turboPumpOn()
+		#self.turboPumpOn()
 
 		self.robotReadyForInsertion()
 
@@ -716,7 +720,7 @@ class Robot(node.Node):
 
 		self.lockScope()
 
-		self.turboPumpOn()
+		#self.turboPumpOn()
 
 		self.robotReadyForExtraction()
 		try:
@@ -733,6 +737,15 @@ class Robot(node.Node):
 
 	def handleGridDataCollectionDone(self, ievent):
 		# ...
+		if True:
+			# pause for user check
+			self.setStatus('user input')
+			self.logger.info('waiting for user to continue...')
+			self.usercontinue.wait()
+			self.usercontinue.clear()
+			self.setStatus('processing')
+			self.logger.info('continuing')
+
 		self.panel.extractingGrid()
 		self.extractcondition.acquire()
 		self.extractinfo = (None, None)
