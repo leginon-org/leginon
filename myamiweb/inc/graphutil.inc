@@ -212,6 +212,28 @@ function getPolarCoord($x,$y) {
 		);
 }
 
+function getCartesianCoord($r, $angle) {
+	return array(
+			'x'=>$r*cos($angle),
+			'y'=>$r*sin($angle)
+		);
+}
+
+// --- return true if ($x,$y) in polygon delimited by $data
+function insidePolygon($x, $y, $data) {
+	$p = polygon2points($data);
+	$n = count($p);
+  $i = $j = 0;
+	$c = false;
+  for ($i = 0, $j = $n-1; $i < $n; $j = $i++) {
+    if (((($p[$i]->y<$y) && ($y<$p[$j]->y)) ||
+         (($p[$j]->y<$y) && ($y<$p[$i]->y))) &&
+        ($x < ($p[$j]->x - $p[$i]->x) * ($y - $p[$i]->y) / ($p[$j]->y - $p[$i]->y) + $p[$i]->x))
+      $c = !$c;
+  }
+  return $c;
+}
+
 function getPolygonArea($points) {
 	$n=count($points);
 	foreach($points as $i=>$point) {
