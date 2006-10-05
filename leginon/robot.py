@@ -741,6 +741,7 @@ class Robot(node.Node):
 			# pause for user check
 			self.setStatus('user input')
 			self.logger.info('waiting for user to continue...')
+			self.usercontinue.clear()
 			self.usercontinue.wait()
 			self.usercontinue.clear()
 			self.setStatus('processing')
