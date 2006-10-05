@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.187 $
+# $Revision: 1.188 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-09-28 19:26:59 $
+# $Date: 2006-10-05 17:39:18 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -965,6 +965,22 @@ class StageCalibrationClient(SimpleMatrixCalibrationClient):
 
 	def parameter(self):
 		return 'stage position'
+
+	def pixelToPixel(self, tem, ccdcamera, ht, mag1, mag2, p1):
+		'''
+		Using stage position as a global coordinate system, we can
+		do pixel to pixel transforms between mags.
+		This function will calculate a pixel vector at mag2, given
+		a pixel vector at mag1.
+		'''
+		par = self.parameter()
+		matrix1 = self.retrieveMatrix(tem, ccdcamera, par, ht, mag1)
+		matrix2 = self.retrieveMatrix(tem, ccdcamera, par, ht, mag2)
+		matrix2inv = numarray.linear_algebra.inverse(matrix2)
+		p1 = numarray.array(p1)
+		stagepos = numarray.matrixmultiply(matrix1, p1)
+		p2 = numarray.matrixmultiply(matrix2inv, stagepos)
+		return p2
 
 class StageTiltCalibrationClient(StageCalibrationClient):
 	def __init__(self, node):
