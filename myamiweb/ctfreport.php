@@ -6,12 +6,46 @@ $ctf = new ctfdata();
 
 $defaultId= 1766;
 $sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
+$ace_params_fields = array ('REF|run|runId', 'display', 'stig', 'medium', 'df_override', 'edgethcarbon', 'edgethice', 'pfcarbon', 'pfice', 'overlap', 'fieldsize', 'resamplefr', 'drange', 'reprocess' );
 
+
+	
 ?>
 <html>
 <head>
 <title><?php echo $title; ?> CTF report</title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
+<script LANGUAGE='JavaScript'>
+	function infopopup(<?
+		foreach ($ace_params_fields as $param) {
+			if (ereg("\|", $param)) {
+				$namesplit=explode("|",$param);
+				$param=end($namesplit);
+			}
+			$acestring .= "$param,";
+		}
+
+		$acestring=rtrim($acestring,',');	
+		echo $acestring;
+		?>){
+		var newwindow=window.open('','name','width=300');
+		newwindow.document.write('<HTML><HEAD><link rel="stylesheet" type="text/css" href="css/viewer.css">');
+		newwindow.document.write('<TITLE>Ace Parameters</TITLE>');
+		newwindow.document.write("</HEAD><BODY><TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>");
+		<?
+				foreach ($ace_params_fields as $param) {
+					if (ereg("\|", $param)) {
+						$namesplit=explode("|",$param);
+						$param=end($namesplit);
+					}
+					echo "newwindow.document.write('<TR><TD>$param</TD>');\n";
+					echo "newwindow.document.write('<TD>'+$param+'</TD></TR>');\n";
+				}
+				echo "newwindow.document.write('</TABLE></BODY></HTML>');\n";
+				echo "newwindow.document.close()\n";
+			?>
+	}
+</script>
 </head>
 <body>
 <?php echo  divtitle("CTF Report $title Experiment"); ?>
@@ -47,11 +81,20 @@ foreach ($runIds as $runId) {
 		echo "\n<table>";
 		echo "<tr>";
 			echo "<td>";
-			echo "Run: $rName";
+			echo "Run: ";
+			$acestring2='';
+			echo "<A HREF=\"javascript:infopopup(";
+			foreach ($ace_params_fields as $param) {
+				$acestring2 .= "'$ace_params[$param]',";
+			}
+			$acestring2=rtrim($acestring2,',');	
+			echo $acestring2;
+			echo ")\"><B>$rName</B></A>";
 			echo "</td>";
-		echo "</tr>";
-		echo "</table>";
+		echo "</tr>\n";
 		echo display_stats($stats, $display_keys);
+		echo "</table>";
+		echo "<br>";	
 	} else echo "no CTF information available";
 }
 

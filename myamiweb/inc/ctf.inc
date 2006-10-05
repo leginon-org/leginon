@@ -51,7 +51,7 @@ class ctfdata {
 			."from `ace_params` "
 			."where `REF|run|runId` = '$runId'";
 		$r = $this->mysql->getSQLResult($q);
-		return $r;
+		return end($r);
 	}
 	
 	function getCtfInfoWithNominal($sessionId, $runId=false) {
@@ -374,7 +374,6 @@ function display_data($data, $display_keys) {
 		$html .= "</tr>\n";
 		$html .= "<tr>\n";
 		foreach($data as $row) {
-			$html .= "<tr>\n";
 			foreach($display_keys as $key) {
 					$val = $row[$key];
 					if (eregi('defocus', $key)) {

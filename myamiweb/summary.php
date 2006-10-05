@@ -220,16 +220,17 @@ $minconf = (is_numeric($_POST['mconf'])) ? $_POST['mconf']
 echo divtitle("CTF");
 require('inc/ctf.inc');
 $sessionId=$expId;
-echo "<a href='ctfreport.php?Id=$sessionId'>report &raquo;</a>\n";
-
-?>
-<form method="POST" action="<?php echo $_SERVER['REQUEST_URI']; ?>">
-	minimum allowed confidence:<input class="field" name="mconf" type="text" size="5" value="<?php echo $minconf; ?>">
-</form>
-<?php
-$urlmconf = ($minconf) ? "&mconf=$minconf" : "";
 $ctf = new ctfdata();
 if ($ctf->hasCtfData($sessionId)) {
+
+	echo "<a href='ctfreport.php?Id=$sessionId'>report &raquo;</a>\n";
+	?>
+	<form method="POST" action="<?php echo $_SERVER['REQUEST_URI']; ?>">
+		minimum allowed confidence:<input class="field" name="mconf" type="text" size="5" value="<?php echo $minconf; ?>">
+	</form>
+	<?php
+	$urlmconf = ($minconf) ? "&mconf=$minconf" : "";
+
 	$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
 	$fields = array('defocus1', 'confidence', 'confidence_d');
 	$bestctf = $ctf->getBestStats($fields, $sessionId, $minconf);
