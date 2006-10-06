@@ -11,7 +11,7 @@ acedb=dbdatakeeper.DBDataKeeper(db='dbctfdata')
 db=dbdatakeeper.DBDataKeeper(db='dbemdata')
 
 def printHelp():
-	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected=<file>] [phaseflip] [noinvert] [spider]\n"
+	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected=<file>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n>\n"
 	print "Examples:\nmakestack.py extract/001ma.box single=stacks/start.hed ace=0.8 boxsize=180 inspected"
 	print "makestack.py extract/*.box outdir=stacks/noctf/ ace=0.8 boxsize=180\n"
 	print "* Supports wildcards - By default a stack file of the same name as the box file"
@@ -27,6 +27,10 @@ def printHelp():
 	print "noinvert             : If writing to a single stack, images will NOT be inverted"
 	print "                       (stack images are inverted by default)"
 	print "spider               : Single output stack will be in SPIDER format"
+	print "mindefocus=<n>       : Limit the defocus to values above what is specified ( no limits by default )"
+	print "                       Example <mindefocus = -1.0e-6>"
+	print "maxdefocus=<n>       : Limit the defocus to values below what is specified ( no limits by default )"
+	print "                       Example <maxdefocus = -3.0e-6>"
 	print "\n"
 
 	sys.exit(1)
@@ -47,6 +51,8 @@ def createDefaults():
 	params["noinvert"]='FALSE'
 	params["spider"]='FALSE'
 	params["df"]=0.0
+	params['mindefocus']=None
+	params['maxdefocus']=None
 	return params
 
 def parseInput(args):
@@ -99,6 +105,20 @@ def parseInput(args):
 			params["noinvert"]='TRUE'
 		elif (arg=='spider'):
 			params["spider"]='TRUE'
+		elif (elements[0]=='mindefocus'):
+			mindf=float(elements[1])
+			if mindf > 0:
+				print "mindefocus must be negative and specified in meters"
+				sys.exit()
+			else:
+				params['mindefocus']=mindf*1e6
+		elif (elements[0]=='maxdefocus'):
+			maxdf=float(elements[1])
+			if maxdf > 0:
+				print "maxdefocus must be negative and specified in meters" 
+				sys.exit()
+			else:
+				params['maxdefocus']=maxdf*1e6
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
@@ -381,6 +401,17 @@ if __name__ == '__main__':
 			goodimg=checkAce(img)
 			if (goodimg=='FALSE'):
 				print img+".mrc is below ACE threshold"
+				continue
+
+		# skip micrograph that have defocus above or below min/max defocus levels
+		if params['mindefocus']:
+			if params['df'] > params['mindefocus']:
+				print img+'.mrc rejected because defocus(',params['df'],') is less than specified in mindefocus (',params['mindefocus'],')'
+				continue
+	
+		if params['maxdefocus']:
+			if params['df'] < params['maxdefocus']:
+				print img+'.mrc rejected because defocus(',params['df'],') greater than specified in maxdefocus (',params['maxdefocus'],')'
 				continue
 
 		# box the particles
