@@ -209,15 +209,23 @@ class TargetHandler(object):
 			## If image is a mosaic tile, then target number should be global for
 			## the entire mosaic to be sure they are in the same order chosen
 			if fortile:
-				qimagedata = data.AcquisitionImageData()
-				qimagedata['list'] = imagedata['list']
+				lastnumber = self.lastTargetNumberOnMosaic(imagedata['list'])
 			else:
-				qimagedata = imagedata
-			lastnumber = self.lastTargetNumber(image=qimagedata, session=self.session)
+				lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 			kwargs['number'] = lastnumber + 1
 
 		targetdata = self.newTarget(image=imagedata, scope=imagedata['scope'], camera=imagedata['camera'], preset=imagedata['preset'], drow=drow, dcol=dcol, session=self.session, grid=grid, **kwargs)
 		return targetdata
+
+	def lastTargetNumberOnMosaic(self, imagelist):
+		qimagedata = data.AcquisitionImageData()
+		qimagedata['list'] = imagelist
+		targetquery = data.AcquisitionImageTargetData(image=qimagedata)
+		targets = self.research(datainstance=targetquery, results=1)
+		if targets:
+			return targets[0]['number']
+		else:
+			return 0
 
 	def newTargetForGrid(self, grid, drow, dcol, **kwargs):
 		'''
