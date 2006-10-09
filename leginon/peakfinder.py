@@ -22,11 +22,14 @@ class FindPeakError(Exception):
 	pass
 
 class PeakFinder(object):
-	def __init__(self):
+	def __init__(self, lpf=None):
 		self.initResults()
-		self.lpf = True
-		gauss = convolver.gaussian_kernel(1.5)
-		self.filter = convolver.Convolver(kernel=gauss)
+		if lpf is not None:
+			self.lpf = True
+			gauss = convolver.gaussian_kernel(lpf)
+			self.filter = convolver.Convolver(kernel=gauss)
+		else:
+			self.lpf = False
 
 	def initResults(self):
 		self.results = {
@@ -45,21 +48,61 @@ class PeakFinder(object):
 	def getResults(self):
 		return self.results
 
-	def pixelPeak(self, newimage=None):
+	def pixelPeak(self, newimage=None, guess=None, limit=None):
+		'''
+		guess = where to center your search for the peak (row,col)
+		limit = shape of the search box (with guess at the center)
+		Setting guess and limit can serve two purposes:
+			1) You can imit your peak search if you are pretty sure
+				where it will be
+			2) Given that the image may wrap around into negative
+				space, you can specify that you want to search for the peak
+				in these out of bounds areas.  For instance, a (512,512)
+				image may have a peak at (500,500).  You may specify a guess
+				of (-10,-10) and a relatively small limit box.
+				The (500,500) peak will be found, but it will be returned
+				as (-12,-12).
+		'''
 		if newimage is not None:
 			self.setImage(newimage)
 
 		if self.results['pixel peak'] is None:
-			flatimage = Numeric.ravel(self.image)
+
+			if None not in (guess, limit):
+				print 'GUESS,LIMIT', guess, limit
+				cropcenter = limit[0]/2.0-0.5, limit[1]/2.0-0.5
+				im = imagefun.crop_at(self.image, guess, limit)
+				import Mrc
+				Mrc.numeric_to_mrc(im, 'im.mrc')
+			else:
+				cropcenter = None
+				im = self.image
+
+
+			flatimage = Numeric.ravel(im)
 			peak = Numeric.argmax(flatimage)
 			peakvalue = flatimage[peak]
-			rows,cols = self.shape
+			rows,cols = im.shape
 			peakrow = peak / cols
 			peakcol = peak % cols
+			print 'IM PEAK', peakrow, peakcol
+
+			if cropcenter is not None:
+				peakrow = int(round(guess[0]+peakrow-cropcenter[0]))
+				peakcol = int(round(guess[1]+peakcol-cropcenter[1]))
+
 			pixelpeak = (peakrow, peakcol)
 			self.results['pixel peak'] = pixelpeak
 			self.results['pixel peak value'] = peakvalue
-			#print 'pixel peak value', peakvalue
+			if peakrow < 0:
+				unsignedr = peakrow + self.image.shape[0]
+			else:
+				unsignedr = peakrow
+			if peakcol < 0:
+				unsignedc = peakcol + self.image.shape[0]
+			else:
+				unsignedc = peakcol
+			self.results['unsigned pixel peak'] = unsignedr,unsignedc
 
 		return self.results['pixel peak']
 
@@ -100,14 +143,17 @@ class PeakFinder(object):
 
 		return {'row': row0, 'col': col0, 'value': peak, 'minsum': minsum}
 
-	def subpixelPeak(self, newimage=None, npix=5):
+	def subpixelPeak(self, newimage=None, npix=5, guess=None, limit=None):
+		'''
+		see pixelPeak doc string for info about guess and limit
+		'''
 		if newimage is not None:
 			self.setImage(newimage)
 
 		if self.results['subpixel peak'] is not None:
 			return self.results['subpixel peak']
 
-		self.pixelPeak()
+		self.pixelPeak(guess=guess, limit=limit)
 		peakrow,peakcol = self.results['pixel peak']
 
 		## cut out a region of interest around the peak
@@ -131,86 +177,15 @@ class PeakFinder(object):
 		self.shape = None
 		self.initResults()
 
-def findPixelPeak(image):
-	peak = Numeric.argmax(image.flat)
-	rows, cols = image.shape
-	peakrow, peakcol = divmod(peak, cols)
-	peakvalue = image[peakrow, peakcol]
-	pixelpeak = (peakrow, peakcol)
-	results = {}
-	results['pixel peak'] = pixelpeak
-	results['pixel peak value'] = peakvalue
-	return results
+def findPixelPeak(image, guess=None, limit=None):
+	pf = PeakFinder()
+	pf.pixelPeak(newimage=image, guess=guess, limit=limit)
+	return pf.getResults()
 
-def weightedPeakFit(numarray):
-	rows, cols = numarray.shape
-	w = numarray/numarray[rows/2, cols/2]
-	rowoffset = 0.0
-	columnoffset = 0.0
-	for i in range(rows):
-		for j in range(cols):
-			if i == 0 and j == 0:
-				continue
-			di = i - rows/2
-			dj = j - cols/2
-			angle = Numeric.arctan2(di, dj)
-			weight = Numeric.absolute(Numeric.sin(angle)) + Numeric.absolute(Numeric.cos(angle))
-			rowoffset += Numeric.sin(angle)*w[i, j]/weight
-			columnoffset += Numeric.cos(angle)*w[i, j]/weight
-	return {'row': rowoffset, 'col': columnoffset}
-
-def quadraticPeakFit(numarray):
-	rows, cols = numarray.shape
-
-	# create design matrix and vector
-	dm = Numeric.zeros(rows * cols * 5, numarray.type())
-	dm.shape = (rows * cols, 5)
-	v = Numeric.zeros((rows * cols,), numarray.type())
-
-	i = 0
-	for row in range(rows):
-		for col in range(cols):
-			dm[i] = (row**2, row, col**2, col, 1)
-			v[i] = numarray[row, col]
-			i += 1
-
-	# fit quadratic
-	fit = linear_least_squares(dm, v)
-	coeffs = fit[0]
-	minsum = fit[1][0]
-
-	# find root
-	row0 = -coeffs[1] / 2.0 / coeffs[0] - rows/2
-	col0 = -coeffs[3] / 2.0 / coeffs[2] - cols/2
-
-	## find peak value
-	peak = coeffs[0] * row0**2 + coeffs[1] * row0 + coeffs[2] * col0**2 + coeffs[3] * col0 + coeffs[4]
-
-	return {'row': row0, 'col': col0, 'value': peak, 'minsum': minsum}
-
-def findSubpixelPeak(image, npix=5):
-	results = findPixelPeak(image)
-	peakrow, peakcol = results['pixel peak']
-
-	rows, cols = image.shape
-
-	## cut out a region of interest around the peak
-	roi = imagefun.crop_at(image, (peakrow,peakcol), (npix,npix))
-
-	# fit a quadratic to it and find the subpixel peak
-	roipeak = quadraticPeakFit(roi)
-	#roipeak = weightedPeakFit(roi)
-	srow = peakrow + roipeak['row']
-	scol = peakcol + roipeak['col']
-
-	subpixelpeak = (srow, scol)
-	results['subpixel peak'] = subpixelpeak
-	try:
-		results['subpixel peak value'] = roipeak['value']
-		results['minsum'] = roipeak['minsum']
-	except KeyError:
-		pass
-	return results
+def findSubpixelPeak(image, npix=5, guess=None, limit=None):
+	pf = PeakFinder()
+	pf.subpixelPeak(newimage=image, npix=npix, guess=guess, limit=limit)
+	return pf.getResults()
 
 if __name__ == '__main__':
 	im = Numeric.array(
