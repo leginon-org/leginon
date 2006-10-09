@@ -5,10 +5,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.47 $
+# $Revision: 1.48 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-21 23:10:17 $
-# $Author: suloway $
+# $Date: 2006-10-09 21:50:26 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -114,40 +114,29 @@ def getTargetIconBitmap(color, shape='+'):
 	try:
 		return targeticonbitmaps[color,shape]
 	except KeyError:
-		if shape == '+':
-			bitmap = targetIcon_plus(color)
-		elif shape == '.':
-			bitmap = targetIcon_point(color)
-		else:
-			raise RuntimeError('invalid target shape')
-
+		bitmap = targetIcon(color, shape)
 		targeticonbitmaps[color,shape] = bitmap
 		return bitmap
 
-def targetIcon_point(color):
-		bitmap = wx.EmptyBitmap(3,3)
+def targetIcon(color, shape):
+		bitmap = wx.EmptyBitmap(16,16)
 		dc = wx.MemoryDC()
 		dc.SelectObject(bitmap)
 		dc.BeginDrawing()
 		dc.Clear()
 		dc.SetPen(wx.Pen(color, 2))
-		for point in ((0,1),(1,0),(1,1),(1,2),(2,1)):
-			dc.DrawPoint(*point)
-		dc.EndDrawing()
-		dc.SelectObject(wx.NullBitmap)
-		bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
-		return bitmap
-
-def targetIcon_plus(color):
-		bitmap = wx.EmptyBitmap(16, 16)
-		dc = wx.MemoryDC()
-		dc.SelectObject(bitmap)
-		dc.BeginDrawing()
-		dc.Clear()
-		dc.SetPen(wx.Pen(color, 2))
-		dc.DrawLine(8, 1, 8, 14)
-		dc.DrawLine(1, 8, 14, 8)
-		dc.DrawPoint(1, 7)
+		if shape == '.':
+			for point in ((0,8),(8,0),(8,8),(8,9),(9,8)):
+				dc.DrawPoint(*point)
+		elif shape == '+':
+			dc.DrawLine(8, 1, 8, 14)
+			dc.DrawLine(1, 8, 14, 8)
+			dc.DrawPoint(1, 7)
+		elif shape == 'polygon':
+			dc.DrawLine(3, 1, 13, 1)
+			dc.DrawLine(13, 1, 13, 13)
+			dc.DrawLine(13, 13, 7, 13)
+			dc.DrawLine(7, 13, 3, 1)
 		dc.EndDrawing()
 		dc.SelectObject(wx.NullBitmap)
 		bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
@@ -1510,8 +1499,11 @@ class TargetType(object):
 	def __init__(self, name, color, shape='+', unique=False):
 		self.name = name
 		self.unique = unique
-		self.bitmaps = {}
-		self.bitmaps['default'], self.bitmaps['selected'] = getTargetBitmaps(color, shape)
+		self.shape = shape
+		self.color = color
+		if shape != 'polygon':
+			self.bitmaps = {}
+			self.bitmaps['default'], self.bitmaps['selected'] = getTargetBitmaps(color, shape)
 		self.targets = None
 
 	def getTargets(self):
@@ -1644,12 +1636,44 @@ class TargetImagePanel(ImagePanel):
 		for type in self.order:
 			targets = self.targets[type]
 			if targets:
-				self._drawTargets(dc, type.bitmaps['default'], targets, scale)
+				if type.shape == 'polygon':
+					self.drawPolygon(dc, type.color, targets)
+				else:
+					self._drawTargets(dc, type.bitmaps['default'], targets, scale)
 
-		if self.selectedtarget is not None:
+		if self.selectedtarget is not None and type.shape != 'polygon':
 			if self.selectedtarget.type in self.targets:
-				bitmap = self.selectedtarget.type.bitmaps['selected']
-				self._drawTargets(dc, bitmap, [self.selectedtarget], scale)
+				try:
+					bitmap = self.selectedtarget.type.bitmaps['selected']
+					self._drawTargets(dc, bitmap, [self.selectedtarget], scale)
+				except AttributeError:
+					pass
+
+	def drawPolygon(self, dc, color, targets):
+			dc.SetPen(wx.Pen(color, 1))
+			#if self.scaleImage():
+			if False:
+				xscale = self.scale[0]
+				yscale = self.scale[1]
+				print 'scaled', xscale, yscale
+				scaledpoints = []
+				for target in targets:
+					point = target.x/xscale, target.y/yscale
+					scaledpoints.append(point)
+			else:
+				scaledpoints = [(target.x,target.y) for target in targets]
+	
+			for i,p1 in enumerate(scaledpoints[:-1]):
+				p2 = scaledpoints[i+1]
+				p1 = self.image2view(p1)
+				p2 = self.image2view(p2)
+				dc.DrawLine(p1[0], p1[1], p2[0], p2[1])
+			# close it with final edge
+			p1 = scaledpoints[-1]
+			p2 = scaledpoints[0]
+			p1 = self.image2view(p1)
+			p2 = self.image2view(p2)
+			dc.DrawLine(p1[0], p1[1], p2[0], p2[1])
 
 	def Draw(self, dc):
 		ImagePanel.Draw(self, dc)
@@ -1720,6 +1744,17 @@ class TargetImagePanel(ImagePanel):
 					else:
 						strings.append('%s: %s' % (key, value))
 		return strings
+
+class ClickAndTargetImagePanel(TargetImagePanel):
+	def __init__(self, parent, id, disable=False):
+		TargetImagePanel.__init__(self, parent, id)
+		self.clicktool = self.addTool(ClickTool(self, self.toolsizer, disable))
+		self.Bind(EVT_IMAGE_CLICK_DONE, self.onImageClickDone)
+		self.sizer.Layout()
+		self.Fit()
+
+	def onImageClickDone(self, evt):
+		self.clicktool.onImageClickDone(evt)
 
 if __name__ == '__main__':
 	import sys
