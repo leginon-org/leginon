@@ -35,17 +35,37 @@ def pointsInPolygon(inputpoints, vertices):
 	outputpoints = map(tuple, outputpoints)
 	return outputpoints
 
-def getPolygonArea(polygon, signed=False):
+def polygonSegments(polygon):
 	a = numarray.transpose(polygon)
 	b = numarray.concatenate((a[:,1:],a[:,:1]),1)
+	return a,b
+
+def distancePointsToPolygon(points, polygon):
+	a,b = polygonSegments(polygon)
+	evectors = b-a
+	elengths = numarray.hypot(*evectors)
+	eunitvectors = evectors / elengths
+	pdists = []
+	for p in points:
+		pvectors = numarray.array((p[0]-a[0],p[1]-a[1]))
+		dotprods = numarray.sum(evectors*pvectors)
+		scalerproj = dotprods / elengths
+		elengths2 = numarray.clip(scalerproj, 0, elengths)
+		epoints = elengths2 * eunitvectors
+		d = epoints - pvectors
+		dists = numarray.hypot(*d)
+		pdists.append(min(dists))
+	return numarray.array(pdists)
+
+def getPolygonArea(polygon, signed=False):
+	a,b = polygonSegments(polygon)
 	area = numarray.sum(a[0]*b[1]-a[1]*b[0]) / 2.0
 	if not signed:
 		area = numarray.abs(area)
 	return area
 
 def getPolygonCenter(polygon):
-	a = numarray.transpose(polygon)
-	b = numarray.concatenate((a[:,1:],a[:,:1]),1)
+	a,b = polygonSegments(polygon)
 	area = getPolygonArea(polygon, signed=True)
 	c = (a[0]*b[1]-b[0]*a[1]) / 6.0 / area
 	cx = numarray.sum((a[0]+b[0])*c)
