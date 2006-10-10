@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Navigator.py,v $
-# $Revision: 1.38 $
+# $Revision: 1.39 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-02 22:43:34 $
-# $Author: suloway $
+# $Date: 2006-10-10 00:06:48 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -50,7 +50,11 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 													'stagelocations',
 													shortHelpString='Stage Locations')
 		# image
-		self.imagepanel = gui.wx.ImageViewer.ClickImagePanel(self, -1, disable=True)
+		self.imagepanel = gui.wx.ImageViewer.ClickAndTargetImagePanel(self, -1)
+		self.imagepanel.addTypeTool('Image', display=True)
+		self.imagepanel.selectiontool.setDisplayed('Image', True)
+		self.imagepanel.addTypeTool('Correlation', display=True)
+		self.imagepanel.addTargetTool('Peak', wx.Color(255,0,0))
 
 		self.szmain.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
 
@@ -89,9 +93,6 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	def onMoveTypeChoice(self, evt):
 		self.node.settings['move type'] = evt.GetString()
 
-	def onSetImage(self, evt):
-		self.imagepanel.setImage(evt.image)
-
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
@@ -105,7 +106,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 	def onAcquireTool(self, evt):
 		self._acquisitionEnable(False)
-		threading.Thread(target=self.node.acquireImage).start()
+		threading.Thread(target=self.node.uiAcquireImage).start()
 
 	def onStageLocationsTool(self, evt):
 		self.locationsdialog.ShowModal()
@@ -293,9 +294,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 								(0, 2), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL)
 
-		# misc. checkboxes
-		self.widgets['check calibration'] = wx.CheckBox(self, -1,
-																										'Measure move error')
+		# override preset
 		self.widgets['override preset'] = wx.CheckBox(self, -1,
 																								'Override Preset')
 		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self, passive=True)
@@ -312,7 +311,9 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		overridesz = wx.StaticBoxSizer(overridebox, wx.VERTICAL)
 		overridesz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
-
+		# error checking and correction
+		self.widgets['check calibration'] = wx.CheckBox(self, -1,
+																										'Measure move error')
 		precsz = wx.GridBagSizer(5, 5)
 		label1 = wx.StaticText(self, -1, 'Move to within')
 		self.widgets['precision'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=6, value='0.0')
@@ -322,19 +323,30 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		precsz.Add(label2, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-
-		settingsz = wx.GridBagSizer(5, 5)
-		settingsz.Add(self.widgets['check calibration'], (0, 0), (1, 1),
+		maxerrsz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Maximum Measurable Error (pixels)')
+		self.widgets['max error'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=6, value='0.0')
+		maxerrsz.Add(label, (0, 0), (1, 1))
+		maxerrsz.Add(self.widgets['max error'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		settingsz.Add(precsz, (1, 0), (1, 1),
+		## 
+		sz = wx.GridBagSizer(5,5)
+		sz.Add(self.widgets['check calibration'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		settingsz.Add(szpausetime, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(maxerrsz, (1, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(precsz, (2, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		errbox = wx.StaticBox(self, -1, "Error Checking and Correction")
+		errsz = wx.StaticBoxSizer(errbox, wx.VERTICAL)
+		errsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
+		# settings sizer
 		sz = wx.GridBagSizer(5, 10)
-		sz.Add(settingsz, (0, 0), (1, 1))
-		sz.Add(overridesz, (0, 1), (2, 1))
-
-		sz.AddGrowableRow(2)
+		sz.Add(overridesz, (0, 0), (1, 1))
+		sz.Add(szpausetime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(errsz, (2,0), (1,1))
+		#sz.AddGrowableRow(2)
 
 		sb = wx.StaticBox(self, -1, 'Navigation')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)

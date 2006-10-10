@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
-# $Revision: 1.110 $
+# $Revision: 1.111 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-02 22:43:34 $
-# $Author: suloway $
+# $Date: 2006-10-10 00:06:48 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -23,6 +23,7 @@ import gui.wx.Navigator
 import newdict
 import instrument
 import presets
+import imagefun
 import types
 
 class NavigatorClient(object):
@@ -34,10 +35,7 @@ class NavigatorClient(object):
 	def moveToTarget(self, target, movetype, precision=0.0):
 		ev = event.MoveToTargetEvent(target=target, movetype=movetype)
 		ev['move precision'] = precision
-		print 'nav client waiting'
 		self.node.outputEvent(ev, wait=True)
-		print 'nav client done waiting'
-
 
 class Navigator(node.Node):
 	panelclass = gui.wx.Navigator.Panel
@@ -50,6 +48,7 @@ class Navigator(node.Node):
 		'precision': 0.0,
 		'complete state': True,
 		'override preset': False,
+		'max error': 200,
 		'camera settings':
 			data.CameraSettingsData(
 				initializer={
@@ -90,8 +89,8 @@ class Navigator(node.Node):
 
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
-		self.imagedata = None
 		self.oldimagedata = None
+		self.newimagedata = None
 		self.oldstate = None
 		self.newstate = None
 
@@ -110,25 +109,18 @@ class Navigator(node.Node):
 		rows = targetdata['delta row']
 		cols = targetdata['delta column']
 		
-		self.move(imagedata, rows, cols, movetype, precision)
+		if precision:
+			check=True
+		else:
+			check=False
+		self.move(rows, cols, movetype, precision, check)
 		self.confirmEvent(ev)
 
 	def newImage(self, imagedata):
-		self.oldimagedata = self.imagedata
-		self.imagedata = imagedata
+		self.oldimagedata = self.newimagedata
+		self.newimagedata = imagedata
+		self.setImage(imagedata['image'], 'Image')
 		self.correlator.insertImage(imagedata['image'])
-		self.setImage(imagedata['image'])
-
-	def newShift(self):
-		if self.oldshape is None or self.newshape is None:
-			return None
-		if self.oldshape != self.newshape:
-			return None
-		pc = self.correlator.phaseCorrelate()
-		self.peakfinder.setImage(pc)
-		peak = self.peakfinder.subpixelPeak()
-		delta = correlator.wrap_coord(peak, pc.shape)
-		return delta
 
 	## called by GUI when image is clicked
 	def navigate(self, xy):
@@ -136,21 +128,23 @@ class Navigator(node.Node):
 		precision = self.settings['precision']
 		clickrow = xy[1]
 		clickcol = xy[0]
-		clickshape = self.imagedata['image'].shape
+		clickshape = self.newimagedata['image'].shape
 
 		# calculate delta from image center
-		deltarow = clickrow - clickshape[0] / 2
-		deltacol = clickcol - clickshape[1] / 2
+		centerr = clickshape[0] / 2.0 - 0.5
+		centerc = clickshape[1] / 2.0 - 0.5
+		deltarow = clickrow - centerr
+		deltacol = clickcol - centerc
 
 		check = self.settings['check calibration']
-		self.move(self.imagedata, deltarow, deltacol, movetype, precision, check)
+		self.move(deltarow, deltacol, movetype, precision, check)
 
 		# wait for a while
 		time.sleep(self.settings['pause time'])
 
 		## acquire image if check not done
 		if not check:
-			self._acquireImage()
+			self.reacquireImage()
 
 		self.panel.navigateDone()
 
@@ -163,15 +157,15 @@ class Navigator(node.Node):
 			self.logger.exception('unable to set instrument')
 			return
 
-	def _move(self, image, row, col, movetype):
+	def _move(self, row, col, movetype):
 		errstr = 'Move failed: %s'
 		# get relavent info from click event
 
 		self.logger.info('Moving...')
 
 		pixelshift = {'row':-row, 'col':-col}
-		scope = image['scope']
-		camera = image['camera']
+		scope = self.newimagedata['scope']
+		camera = self.newimagedata['camera']
 
 		# figure out shift
 		calclient = self.calclients[movetype]
@@ -182,12 +176,12 @@ class Navigator(node.Node):
 			self.logger.error(errstr % errsubstr)
 			self.beep()
 			self.panel.navigateDone()
-			return
+			return True
 		except Exception, e:
 			self.logger.exception(errstr % e)
 			self.beep()
 			self.panel.navigateDone()
-			return
+			return True
 
 		self.oldstate = self.newstate
 		self.newstate = newstate
@@ -196,24 +190,30 @@ class Navigator(node.Node):
 			self.instrument.setData(emdat)
 		except:
 			self.logger.exception(errstr % 'unable to set instrument')
+			return True
+
+		self.lastmove = (row, col)
+		return False
+
+	def move(self, row, col, movetype, precision=0.0, check=False):
+		self.setStatus('processing')
+		err = self._move(row, col, movetype)
+		if err:
+			self.setStatus('idle')
 			return
 
-	def move(self, image, row, col, movetype, precision=0.0, check=False):
-		self.setStatus('processing')
-		self._move(image, row, col, movetype)
-
 		if check:
-			image2 = self._acquireImage()
-			r,c,dist = self.checkMoveError(image['scope'], image['camera'], row, col)
+			self.reacquireImage()
+			r,c,dist = self.checkMoveError()
 			self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
 
 			if precision:
 				self.logger.info('checking that move error is less than %.3e' % (precision,))
 				while dist > precision:
-					self._move(image2, r, c, movetype)
-					image2 = self._acquireImage()
+					self._move(r, c, movetype)
+					self.reacquireImage()
 					lastdist = dist
-					r,c,dist = self.checkMoveError(image['scope'], image['camera'], r, c)
+					r,c,dist = self.checkMoveError()
 					self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
 					if dist > lastdist:
 						self.logger.info('error got worse')
@@ -223,15 +223,43 @@ class Navigator(node.Node):
 
 		self.setStatus('idle')
 
-	def checkMoveError(self, scope, camera, rmove, cmove):
-		pc = self.correlator.phaseCorrelate()
-		self.peakfinder.setImage(pc)
-		peak = self.peakfinder.subpixelPeak()
-		rcmoved = correlator.wrap_coord(peak, pc.shape)
-		r_error = rmove + rcmoved[0]
-		c_error = cmove + rcmoved[1]
+	def checkMoveError(self):
+		rmove,cmove = self.lastmove
+		maxerror = self.settings['max error']
+		limit = (int(maxerror*2), int(maxerror*2))
+		guess = (int(-rmove), int(-cmove))
+
+		if True:
+			oldshape = self.oldimagedata['image'].shape
+			location = oldshape[0]/2.0-0.5+rmove, oldshape[1]/2.0-0.5+cmove
+			im1 = imagefun.crop_at(self.oldimagedata['image'], location, limit)
+			im2 = imagefun.crop_at(self.newimagedata['image'], 'center', limit)
+			pc = correlator.phase_correlate(im1,im2,zero=False)
+			subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0,0), limit=limit)
+			res = self.peakfinder.getResults()
+			pixelpeak = res['pixel peak']
+			unsignedpixelpeak = res['unsigned pixel peak']
+			peaktargets = [(unsignedpixelpeak[1], unsignedpixelpeak[0])]
+			r_error = subpixelpeak[0]
+			c_error = subpixelpeak[1]
+
+		if False:
+			pc = self.correlator.phaseCorrelate(zero=False)
+			subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=guess, limit=limit)
+			res = self.peakfinder.getResults()
+			pixelpeak = res['pixel peak']
+			unsignedpixelpeak = res['unsigned pixel peak']
+			peaktargets = [(unsignedpixelpeak[1], unsignedpixelpeak[0])]
+			r_error = rmove + subpixelpeak[0]
+			c_error = cmove + subpixelpeak[1]
+
+		self.setImage(pc, 'Correlation')
+		peaktargets = [(unsignedpixelpeak[1], unsignedpixelpeak[0])]
+		self.setTargets(peaktargets, 'Peak')
 
 		## calculate error distance
+		scope = self.newimagedata['scope']
+		camera = self.newimagedata['camera']
 		mag = scope['magnification']
 		tem = scope['tem']
 		ccdcamera = camera['ccdcamera']
@@ -245,29 +273,29 @@ class Navigator(node.Node):
 
 		return r_error, c_error, distance
 
-	def acquireImage(self):
-		self.oldimagedata = None
-		self._acquireImage()
+	def uiAcquireImage(self):
+		self.acquireImage()
 		self.panel.acquisitionDone()
 
-	def _acquireImage(self):
-		errstr = 'Acquire image failed: %s'
+	def reacquireImage(self):
+		if self.newimagedata is None:
+			raise RuntimeError('no image to reacquire')
+		# configure camera just like current image
+		cameradata = self.newimagedata['camera']
+		ccdcamera = cameradata['ccdcamera']
+		## except correction channel should be opposite
+		if self.newimagedata['correction channel']:
+			corchannel = 0
+		else:
+			corchannel = 1
+		self.instrument.setCorrectionChannel(corchannel)
+		#camerasettings = data.CameraSettingsData(initializer=camera)
+		self.instrument.setCCDCamera(ccdcamera['name'])
+		self.instrument.setData(cameradata)
+		return self._acquireImage()
 
-		# configure camera
-		if self.oldimagedata is not None:
-			## acquire just like previous image
-			cameradata = self.oldimagedata['camera']
-			ccdcamera = cameradata['ccdcamera']
-			## except correction channel should be opposite
-			if self.oldimagedata['correction channel']:
-				corchannel = 0
-			else:
-				corchannel = 1
-			self.instrument.setCorrectionChannel(corchannel)
-			#camerasettings = data.CameraSettingsData(initializer=camera)
-			self.instrument.setCCDCamera(ccdcamera['name'])
-			self.instrument.setData(cameradata)
-		elif self.settings['override preset']:
+	def acquireImage(self):
+		if self.settings['override preset']:
 			## use override
 			instruments = self.settings['instruments']
 			try:
@@ -279,6 +307,7 @@ class Navigator(node.Node):
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			except Exception, e:
+				errstr = 'Acquire image failed: %s'
 				self.logger.error(errstr % e)
 				return
 		else:
@@ -286,8 +315,9 @@ class Navigator(node.Node):
 			if self.presetsclient.getCurrentPreset() is None:
 				self.logger.error('Preset is unknown and preset override is off')
 				return
+		return self._acquireImage()
 
-		# acquire image
+	def _acquireImage(self):
 		try:
 			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		except:
@@ -365,8 +395,6 @@ class Navigator(node.Node):
 					locremove = location
 					self.stagelocations.remove(location)
 		else:
-			print type(loc)
-			print loc
 			locremove = loc 
 			self.stagelocations.remove(loc)
 
