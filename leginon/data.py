@@ -1746,6 +1746,7 @@ class NavigatorSettingsData(SettingsData):
 			('camera settings', CameraSettingsData),
 			('instruments', dict),
 			('precision', float),
+			('max error', float),
 		)
 	typemap = classmethod(typemap)
 
