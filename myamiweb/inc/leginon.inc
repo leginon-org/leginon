@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.59 $
- *	@version $Id: leginon.inc,v 1.59 2006-10-03 20:31:30 glander Exp $
+ *	@version $Revision: 1.60 $
+ *	@version $Id: leginon.inc,v 1.60 2006-10-11 22:27:33 suloway Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -18,10 +18,10 @@ require_once("inc/util.inc");
 require_once('inc/xmlapplicationimport.inc');
 require_once('inc/mysql.inc');
 
-define(DB_HOST, $DB_HOST);
-define(DB_USER, $DB_USER);
-define(DB_PASS, $DB_PASS);
-define(DB, $DB);
+define('DB_HOST', $DB_HOST);
+define('DB_USER', $DB_USER);
+define('DB_PASS', $DB_PASS);
+define('DB', $DB);
 
 class leginondata {
 
@@ -402,7 +402,7 @@ class leginondata {
 			." order by `DEF_timestamp` desc limit 1 ";
 		$RfileInfo = $this->mysql->SQLQuery($q);
 		$fileInfo = mysql_fetch_array($RfileInfo);
-		return $fileInfo[id];
+		return $fileInfo['id'];
 	} 
 
 	function getImagePath($sessionId) {
@@ -410,7 +410,7 @@ class leginondata {
 		    ." where `DEF_id`='$sessionId' ";
 		$Rpath=$this->mysql->SQLQuery($q);
 		$path = mysql_fetch_array($Rpath);
-		return $this->formatPath($path[path]);
+		return $this->formatPath($path['path']);
 	}
 
 	function getImagePathFromImageId($imageId) {
@@ -469,7 +469,7 @@ class leginondata {
 		    ." `REF|SessionData|Session` =\"$sessionId\"  ";
 		$RfileInfo = $this->mysql->SQLQuery($q);
 		$fileInfo = mysql_fetch_array($RfileInfo);
-		return $fileInfo[filename];
+		return $fileInfo['filename'];
 	}
 
 	function getImageList($id) {
@@ -778,10 +778,10 @@ class leginondata {
 			."where " 
 			."a.`DEF_id` ='".$imgId."' "; 
 
-		$parents=array();
-		if ($Rparent = $this->mysql->getSQLResult($q))
-			$parent = $Rparent[0];
-		return $parent;
+		if($Rparent = $this->mysql->getSQLResult($q))
+			return $Rparent[0];
+		else
+			return NULL;
 	}
 
 	function getImageInfo($imgId) {
@@ -804,6 +804,7 @@ class leginondata {
 		$parentjoin = "";
 		$gridtable = $this->mysql->isTable('GridData');
 		$parenttargetfields = $this->mysql->getFields('AcquisitionImageTargetData');
+		$parentcoords = "";
 		$parentcoords .= (in_array('delta column', $parenttargetfields)) ?  
 			"parenttarget.`delta column`, " : "";
 		$parentcoords .= (in_array('delta row', $parenttargetfields)) ?  
@@ -842,7 +843,7 @@ class leginondata {
 			."on (pp.DEF_id=parent.`REF|PresetData|preset`) "
 			."left join ScopeEMData pscope on (pscope.`DEF_id`=parent.`REF|ScopeEMData|scope`) "
 			."left join SessionData ps1 on (ps1.`DEF_id`=parent.`REF|SessionData|session`) "
-			."left join SessionData ps2 on (ps2.`DEF_id`=ppi.`REF|SessionData|session`) "
+			#."left join SessionData ps2 on (ps2.`DEF_id`=ppi.`REF|SessionData|session`) "
 			."cross join PixelSizeCalibrationData ppi on "
 			."(pscope.`REF|InstrumentData|tem`= ppi.`REF|InstrumentData|tem` and "
 			."pscope.magnification = ppi.magnification and "
@@ -899,7 +900,7 @@ class leginondata {
 
 		$Rgridinfo = $this->mysql->SQLQuery($q);
 		$gridinfo = mysql_fetch_array($Rgridinfo);
-		return $gridinfo[gridId];
+		return $gridinfo['gridId'];
 	}
 
 	function getImageRelation($imgId, $preset='', $matchtargetnb=true) {
@@ -963,9 +964,9 @@ class leginondata {
 		$newimage = array();
 		$relations = $this->getImageRelation($imgId, $type, $matchtargetnb);
 		foreach ($relations as $relation) {
-			if ($relation[siblingpreset]==$preset && $relation[parentId]) {
-				$newimage[id] = $relation[siblingimageId];
-				$newimage[preset] = $relation[siblingpreset];
+			if ($relation['siblingpreset']==$preset && $relation['parentId']) {
+				$newimage['id'] = $relation['siblingimageId'];
+				$newimage['preset'] = $relation['siblingpreset'];
 				break;
 			}
 		}
@@ -979,12 +980,12 @@ class leginondata {
 		$newimage=array();
 		$imageinfo = $this->getImageInfo($imgId);
 		if (	empty($preset)
-			|| $imageinfo[preset]==$preset 
+			|| $imageinfo['preset']==$preset 
 			|| in_array($preset, $this->defaulttypes)
 			|| $preset == $this->manualtype
 		) { 
-			$newimage[id] = ($imageinfo[imageId]) ? $imageinfo[imageId] : $imgId;
-			$newimage[preset] = ($imageinfo[preset]) ? $imageinfo[preset] : $preset;
+			$newimage['id'] = ($imageinfo['imageId']) ? $imageinfo['imageId'] : $imgId;
+			$newimage['preset'] = ($imageinfo['preset']) ? $imageinfo['preset'] : $preset;
 			return $newimage;
 		}
 
@@ -992,12 +993,12 @@ class leginondata {
 		$parentId = $imgId;
 		while ($parentId) {
 			$parent = $this->getParent($parentId);
-			$parentId = $parent[parentId];
-			$parentpreset=$parent[parentpreset];
+			$parentId = $parent['parentId'];
+			$parentpreset=$parent['parentpreset'];
 			if ($parentpreset==$preset) {
-				$newimage[id] = $parent[parentId];
-				$newimage[preset] = $parent[parentpreset];
-				$newimage[childid] = $parent[imageId];
+				$newimage['id'] = $parent['parentId'];
+				$newimage['preset'] = $parent['parentpreset'];
+				$newimage['childid'] = $parent['imageId'];
 				break;
 			}
 		}
@@ -1053,7 +1054,7 @@ class leginondata {
 			return false;
 
 		foreach ($targets as $target)
-			$grouptargets[$target[tnumber]][] = $target;
+			$grouptargets[$target['tnumber']][] = $target;
 
 		foreach ($grouptargets as $ts) {
 			if (!$this->asChildId($ts)) {
@@ -1069,16 +1070,16 @@ class leginondata {
 	function joinChildId($targets, &$ntargets) {
 		foreach ($targets as $target) {
 
-			if (!$target[childId]) {
-				$tx = $target[x];
-				$ty = $target[y];
+			if (!$target['childId']) {
+				$tx = $target['x'];
+				$ty = $target['y'];
 				continue;
 			}
 
 			if ($tx)
-				$target[x] = $tx;
+				$target['x'] = $tx;
 			if ($ty)
-				$target[y] = $ty;
+				$target['y'] = $ty;
 
 			$ntargets[] = $target;
 		}
@@ -1088,7 +1089,7 @@ class leginondata {
 	function asChildId($targets) {
 		$ret = false;
 		foreach ($targets as $target)
-			if ($target[childId]) {
+			if ($target['childId']) {
 				$ret = true;
 				break;
 			}
@@ -1230,7 +1231,7 @@ class leginondata {
 	    foreach($tables as $table) {
 	    	$result = $this->mysql->SQLQuery("SHOW FIELDS FROM $table"); 
 	    	while($row = mysql_fetch_array($result))
-			if (ereg("^REF\|SessionData", $row[Field]))
+			if (ereg("^REF\|SessionData", $row['Field']))
 				if(!in_array($table,$ref_tables))
 					$ref_tables[]=$table;
 
@@ -1346,7 +1347,7 @@ class leginondata {
 			continue;
 	    	$result = $this->mysql->SQLQuery("SHOW FIELDS FROM $table"); 
 	    	while($row = mysql_fetch_array($result))
-			if (ereg("^REF\|$tbl_applicationdata", $row[Field]))
+			if (ereg("^REF\|$tbl_applicationdata", $row['Field']))
 				if(!in_array($table,$ref_tables))
 					$ref_tables[]=$table;
 	    }
@@ -1478,7 +1479,7 @@ class leginondata {
 		$this->mysql->SQLQueries($sqldef);
 
 		//--- Check if application exits
-		$applicationinfo = $fieldvalues[ApplicationData];
+		$applicationinfo = $fieldvalues['ApplicationData'];
 		foreach($applicationinfo as $k=>$v) {
 			if (ereg('DEF_',$k)) continue;
 			$sqlwhere[] = "`$k`=$v";
@@ -1506,9 +1507,9 @@ class leginondata {
 		}
 
 		$msg = "Application "
-			.str_replace('"', '', $applicationinfo[name])
+			.str_replace('"', '', $applicationinfo['name'])
 			."-"
-			.str_replace('"', '', $applicationinfo[version])
+			.str_replace('"', '', $applicationinfo['version'])
 			." imported successfully"
 			." on ".$this->mysql->getSQLHost();
 		return $msg;
@@ -1550,7 +1551,7 @@ class leginondata {
 		$q="SELECT `DEF_id` from StageModelCalibrationData where label=\"$label\" and axis=\"$axis\" order by `DEF_timestamp` DESC limit 1";
 		$result = $this->mysql->SQLQuery($q);
 		$row = mysql_fetch_array($result);
-		return $row[DEF_id];
+		return $row['DEF_id'];
 	}
 
 	function getGoniometerModel($Id) {

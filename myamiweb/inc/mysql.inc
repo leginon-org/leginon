@@ -98,14 +98,14 @@ class mysql {
 	    $result = $this->SQLQuery("SHOW FIELDS FROM $table") or die("show fields error");
 	    while($row = mysql_fetch_array($result))
 	    {
-	        $schema_create .= "   $backquotestr$row[Field]$backquotestr $row[Type]";
+	        $schema_create .= "   $backquotestr".$row['Field']."$backquotestr ".$row['Type'];
 	
 	        if(isset($row["Default"]) && (!empty($row["Default"]) || $row["Default"] == "0"))
-	            $schema_create .= " DEFAULT '$row[Default]'";
+	            $schema_create .= " DEFAULT '".$row['Default']."'";
 	        if($row["Null"] != "YES")
 	            $schema_create .= " NOT NULL";
 	        if($row["Extra"] != "")
-	            $schema_create .= " $row[Extra]";
+	            $schema_create .= " ".$row['Extra'];
 	        $schema_create .= ",$crlf";
 	    }
 	    $schema_create = ereg_replace(",".$crlf."$", "", $schema_create);
@@ -383,7 +383,7 @@ class mysql {
 			$R = $this->SQLQuery("SHOW FIELDS FROM `$table`");
 			while ($r = mysql_fetch_array($R))
 				if ($r['Key']=='PRI') {
-					$prikey = $r[Field];
+					$prikey = $r['Field'];
 					break;
 				}
 		}
@@ -395,7 +395,7 @@ class mysql {
 		if ($table && $this->SQLTableExists($table)) {
 			$R = $this->SQLQuery("SHOW FIELDS FROM `$table`");
 			while ($r = mysql_fetch_array($R))
-				$fields[] = $r[Field];
+				$fields[] = $r['Field'];
 		}
 		return $fields;
 	}
@@ -461,7 +461,7 @@ class mysql {
 		$R = $this->SQLQuery($q);
 		$ids = array();
 		while ($r = mysql_fetch_array($R))
-			$ids[] = $r[id];
+			$ids[] = $r['id'];
 
 		if (count($ids)==1)
 			return $ids[0];

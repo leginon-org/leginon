@@ -33,14 +33,14 @@ $viewfilename=$_GET['vf'];
 if ($id) {
 	echo "<font style='font-size: 12px;'>";
 	$newimage = $leginondata->findImage($id, $preset);
-	$id = $newimage[id];
+	$id = $newimage['id'];
 	$imageinfo = $leginondata->getImageInfo($id);
 	$gridId	= $leginondata->getGridId($id);
 	$projectdata = new project();
 	if($projectdata->checkDBConnection()) {
 		$gridinfo = $projectdata->getGridInfo($gridId);
 		if ($gridId)
-			echo '<a class="header" target="gridinfo" href="'.$PROJECT_URL.'getgrid.php?gridId='.$gridId.'">grid#'.$gridinfo[number].' info&raquo;</a>';
+			echo '<a class="header" target="gridinfo" href="'.$PROJECT_URL.'getgrid.php?gridId='.$gridId.'">grid#'.$gridinfo['number'].' info&raquo;</a>';
 	}
 	list($filename) = $leginondata->getFilename($id);
 	$presets = $leginondata->getPresets($id, $p);

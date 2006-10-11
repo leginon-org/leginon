@@ -12,14 +12,14 @@ require('inc/leginon.inc');
 require('inc/image.inc');
 
 $g=true;
-if (!$sessionId=stripslashes($_GET[session])) {
+if (!$sessionId=stripslashes($_GET['session'])) {
 	$g=false;
 }
-if (!$id=stripslashes($_GET[id])) {
+if (!$id=stripslashes($_GET['id'])) {
 	$g=false;
 }
 
-$preset = stripslashes($_GET[preset]);
+$preset = stripslashes($_GET['preset']);
 $t = $_GET['t'];
 if ($t=='png') {
         $type = "image/x-png";

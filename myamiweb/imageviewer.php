@@ -4,10 +4,10 @@ require ('inc/project.inc');
 require ('inc/viewer.inc');
 require ('inc/auth.inc');
 
-$sessionId = ($_POST[sessionId]) ? $_POST[sessionId] : $_GET[expId];
-$projectId = ($_POST[projectId]) ? $_POST[projectId] : 'all';
-$imageId = $_POST[imageId];
-$preset = $_POST[$_POST[controlpre]];
+$sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];
+$projectId = ($_POST['projectId']) ? $_POST['projectId'] : 'all';
+$imageId = $_POST['imageId'];
+$preset = $_POST[$_POST['controlpre]'];
 
 // --- Set sessionId
 $lastId = $leginondata->getLastSessionId();
@@ -25,7 +25,7 @@ if(!$sessions)
 // --- update SessionId while a project is selected
 $sessionId_exists = $leginondata->sessionIdExists($sessions, $sessionId);
 if (!$sessionId_exists)
-	$sessionId=$sessions[0][id];
+	$sessionId=$sessions[0]['id'];
 $filenames = $leginondata->getFilenames($sessionId, $preset);
 
 // --- Get data type list

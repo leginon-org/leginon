@@ -8,7 +8,7 @@ function insertlog($ip, $host, $url, $sessionId) {
 	$db->sqlQuery($q);
 	return true;
 }
-insertlog($_SERVER[REMOTE_ADDR], $_SERVER[REMOTE_HOST], $_SERVER[REQUEST_URI], $sessionId);
+insertlog($_SERVER['REMOTE_ADDR'], $_SERVER['REMOTE_HOST'], $_SERVER['REQUEST_URI'], $sessionId);
 
 require("inc/authconfig.inc.php");
 

@@ -7,9 +7,9 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-define(MIN_PIXEL_VAL, 0); 
-define(MAX_PIXEL_VAL, 255); 
-define(MAX_COLOR_PIXEL_VAL, 1274); 
+define('MIN_PIXEL_VAL', 0); 
+define('MAX_PIXEL_VAL', 255); 
+define('MAX_COLOR_PIXEL_VAL', 1274); 
 
 class filter {
 
