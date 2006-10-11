@@ -8,7 +8,7 @@
 import data
 import acquisition
 import gui.wx.RCTAcquisition
-import mser
+import libCV
 import numarray
 import numarray.nd_image
 pi = numarray.pi
@@ -48,7 +48,15 @@ class RCTAcquisition(acquisition.Acquisition):
 	panelclass = gui.wx.RCTAcquisition.Panel
 	settingsclass = data.RCTAcquisitionSettingsData
 	defaultsettings = acquisition.Acquisition.defaultsettings
-	defaultsettings.update({'tilts': '(-45, 45)', 'stepsize': 10, 'sigma':0.5, 'minsize': 0.0015, 'maxsize': 0.9, 'minperiod': 0.02, 'minstable': 0.02})
+	defaultsettings.update({
+		'tilts': '(-45, 45)',
+		'stepsize': 10,
+		'sigma':0.5,
+		'minsize': 0.0015,
+		'maxsize': 0.9,
+		'blur': 0.0,
+		'sharpen': 0.0,
+		})
 	eventinputs = acquisition.Acquisition.eventinputs
 	eventoutputs = acquisition.Acquisition.eventoutputs
 
@@ -85,6 +93,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		tilt0 = image0['scope']['stage position']['a']
 
 		## loop through each tilt
+		focused = False
 		for i,tilt in enumerate(tilts):
 			self.tiltnumber = i
 
@@ -96,11 +105,26 @@ class RCTAcquisition(acquisition.Acquisition):
 
 			self.logger.info('doing tilt %d = %s degrees' % (i, degrees(tilt),))
 			self.instrument.tem.StagePosition = {'a': tilt}
+
+			## mark focus target done if already focused
+			if focused:
+				self.focusDone(tiltedtargetlist)
+
 			acquisition.Acquisition.processTargetList(self, tiltedtargetlist)
+			focused = True
 
 		self.logger.info('returning to tilt0')
 		self.instrument.tem.StagePosition = {'a': tilt0}
 		self.reportTargetListDone(tilt0targetlist, 'success')
+
+	def focusDone(self, targetlistdata):
+		self.logger.info('focus already done at previous tilt, forcing focus target status=done')
+		targetlist = self.researchTargets(list=targetlistdata)
+		for targetdata in targetlist:
+			if targetdata['type'] == 'focus':
+				if targetdata['status'] != 'done':
+					donetarget = data.AcquisitionImageTargetData(initializer=targetdata, status='done')
+					self.publish(donetarget, database=True)
 
 	def transformPoints(self, matrix, points):
 		newpoints = []
@@ -178,8 +202,9 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		## loop through tilts
 		imageold = image0
-		sigma = self.settings['sigma']
-		arrayold = numarray.nd_image.gaussian_filter(imageold['image'], sigma)
+		#sigma = self.settings['sigma']
+		#arrayold = numarray.nd_image.gaussian_filter(imageold['image'], sigma)
+		arrayold = imageold['image']
 		runningresult = numarray.identity(3, numarray.Float64)
 		for tilt in tilts:
 			self.logger.info('Tilt: %s' % (degrees(tilt),))
@@ -189,7 +214,8 @@ class RCTAcquisition(acquisition.Acquisition):
 			print 'acquire intertilt'
 			dataclass = data.CorrectedCameraImageData
 			imagenew = self.instrument.getData(dataclass)
-			arraynew = numarray.nd_image.gaussian_filter(imagenew['image'], sigma)
+			#arraynew = numarray.nd_image.gaussian_filter(imagenew['image'], sigma)
+			arraynew = imagenew['image']
 			self.setImage(imagenew['image'].astype(numarray.Float32), 'Image')
 			self.setTargets([], 'Peak')
 
@@ -197,9 +223,9 @@ class RCTAcquisition(acquisition.Acquisition):
 			print 'Craig stuff'
 			minsize = self.settings['minsize']
 			maxsize = self.settings['maxsize']
-			minperiod = self.settings['minperiod']
-			minstable = self.settings['minstable']
-			result = mser.matchImages(arrayold, arraynew, minsize, maxsize, minperiod, minstable)
+			blur = self.settings['blur']
+			sharpen = self.settings['sharpen']
+			result = libCV.MatchImages(arrayold, arraynew, minsize, maxsize, blur, sharpen, 1, 1)
 			print 'Craig stuff done'
 			self.logger.info('Matrix: %s' % (result,))
 
@@ -234,28 +260,30 @@ class RCTAcquisition(acquisition.Acquisition):
 			return
 
 		# filter
-		sigma = self.settings['sigma']
-		im = numarray.nd_image.gaussian_filter(im, sigma)
+		#sigma = self.settings['sigma']
+		#im = numarray.nd_image.gaussian_filter(im, sigma)
 
 		self.setImage(im)
 
 		# find regions
 		minsize = self.settings['minsize']
 		maxsize = self.settings['maxsize']
-		minperiod = self.settings['minperiod']
-		minstable = self.settings['minstable']
-		result = mser.findRegions(im, minsize, maxsize, minperiod, minstable)
-		n = len(result)
+		blur = self.settings['blur']
+		sharpen = self.settings['sharpen']
+		regions,image = libCV.FindRegions(im, minsize, maxsize, blur, sharpen, 1, 1, 5)
+		# this is copied from targetfinder:
+		#regions,image = libCV.FindRegions(self.mosaicimage, minsize, maxsize, 0, 0, 0, 1, 5)
+		n = len(regions)
 		self.logger.info('Regions found: %s' % (n,))
-		self.displayRegions(result)
+		self.displayRegions(regions)
 
 	def displayRegions(self, regions):
 		targets = []
 		limit = 2000
-		for i, region in enumerate(regions):
+		for i,region in enumerate(regions):
 			if i > limit:
 				break
-			r,c = region[:2]
+			r,c = region['regionEllipse'][:2]
 			targets.append((c,r))
 		self.setTargets(targets, 'Peak')
 		

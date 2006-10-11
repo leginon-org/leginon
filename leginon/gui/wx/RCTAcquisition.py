@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RCTAcquisition.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-05-10 22:55:26 $
+# $Date: 2006-10-11 20:44:10 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -81,15 +81,15 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 		self.widgets['maxsize'] = FloatEntry(self, -1, chars=6, value='0.0')
 		sizer.Add(self.widgets['maxsize'], (4,1), (1,1))
 
-		label = wx.StaticText(self, -1, 'Min Period')
+		label = wx.StaticText(self, -1, 'Blur')
 		sizer.Add(label, (5, 0), (1, 1))
-		self.widgets['minperiod'] = FloatEntry(self, -1, chars=6, value='0.0')
-		sizer.Add(self.widgets['minperiod'], (5,1), (1,1))
+		self.widgets['blur'] = FloatEntry(self, -1, chars=6, value='0.0')
+		sizer.Add(self.widgets['blur'], (5,1), (1,1))
 
-		label = wx.StaticText(self, -1, 'Min Stable')
+		label = wx.StaticText(self, -1, 'Sharpen')
 		sizer.Add(label, (6, 0), (1, 1))
-		self.widgets['minstable'] = FloatEntry(self, -1, chars=6, value='0.0')
-		sizer.Add(self.widgets['minstable'], (6,1), (1,1))
+		self.widgets['sharpen'] = FloatEntry(self, -1, chars=6, value='0.0')
+		sizer.Add(self.widgets['sharpen'], (6,1), (1,1))
 
 		sb = wx.StaticBox(self, -1, 'RCT Options')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
