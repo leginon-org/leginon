@@ -460,6 +460,7 @@ def getOutDirs(params):
 		sessionq=data.SessionData(name=params['session'])
 		sessiondata=db.query(sessionq)
 		impath=sessiondata[0]['image path']
+		params['imgdir']=impath+'/'
 		outdir=os.path.split(impath)[0]
 		outdir=os.path.join(outdir,'ctf_ace/')
 		params['outdir']=outdir
@@ -516,7 +517,11 @@ if __name__ == '__main__':
 	notdone=True
 	while notdone:
 		for img in images:
-	
+			# skip if image doesn't exist:
+			if not os.path.isfile(params['imgdir']+img['filename']+'.mrc'):
+				print img['filename']+".mrc not found, skipping"
+				continue
+			
 			#if continue option is true, check to see if image has already been processed
 			doneCheck(donedict,img['filename'])
 			if params['continue']=='TRUE':
