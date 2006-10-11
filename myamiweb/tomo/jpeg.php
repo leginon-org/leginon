@@ -12,7 +12,11 @@ $imageId = $_GET['imageId'];
 $path = $leginondata->getImagePathFromImageId($imageId);
 $filename = $leginondata->getFilenameFromId($imageId);
 $input = fopen($path.$filename, 'rb');
+if(!$input)
+    exit('cannot open file');
 $output = fopen('php://output', 'wb');
+if(!$output)
+    exit('cannot output');
 
 header("Content-type: image/jpeg");
 mrc2jpeg($input, $output, $binning, $sigma, $quality);

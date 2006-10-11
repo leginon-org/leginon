@@ -1,6 +1,6 @@
 <?php
 
-require_once('config.php');
+require_once('../config.php');
 require_once('tomography.php');
 require_once('../inc/jpgraph.php');
 require_once('../inc/jpgraph_line.php');
