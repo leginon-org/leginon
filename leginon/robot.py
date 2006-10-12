@@ -397,11 +397,13 @@ class Robot(node.Node):
 		self.logger.info('Stage is ready...')
 
 	def setHolderType(self):
-		self.logger.info('Setting holder type to single tilt...')
-		self.instrument.tem.HolderType = 'single tilt'
-		self.logger.info('Verifying holder type is set to single tilt...')
-		self.waitScope('HolderType', 'single tilt', 0.25)
-		self.logger.info('Holder type is set to single tilt.')
+		#type = 'single tilt'
+		type = 'cryo'
+		self.logger.info('Setting holder type to %s...' % (type,))
+		self.instrument.tem.HolderType = type
+		self.logger.info('Verifying holder type is set to %s...' % (type,))
+		self.waitScope('HolderType', type, 0.25)
+		self.logger.info('Holder type is set to %s.' % (type,))
 
 	def getColumnPressureThreshold(self):
 		threshold = self.settings['column pressure threshold']
