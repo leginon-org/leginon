@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
-# $Revision: 1.112 $
+# $Revision: 1.113 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-11 22:53:48 $
+# $Date: 2006-10-12 18:08:32 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -229,29 +229,18 @@ class Navigator(node.Node):
 		limit = (int(maxerror*2), int(maxerror*2))
 		guess = (int(-rmove), int(-cmove))
 
-		if True:
-			oldshape = self.oldimagedata['image'].shape
-			location = oldshape[0]/2.0-0.5+rmove, oldshape[1]/2.0-0.5+cmove
-			im1 = imagefun.crop_at(self.oldimagedata['image'], location, limit)
-			im2 = imagefun.crop_at(self.newimagedata['image'], 'center', limit)
-			pc = correlator.phase_correlate(im2,im1,zero=False)
-			subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0,0), limit=limit)
-			res = self.peakfinder.getResults()
-			pixelpeak = res['pixel peak']
-			unsignedpixelpeak = res['unsigned pixel peak']
-			peaktargets = [(unsignedpixelpeak[1], unsignedpixelpeak[0])]
-			r_error = subpixelpeak[0]
-			c_error = subpixelpeak[1]
-
-		if False:
-			pc = self.correlator.phaseCorrelate(zero=False)
-			subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=guess, limit=limit)
-			res = self.peakfinder.getResults()
-			pixelpeak = res['pixel peak']
-			unsignedpixelpeak = res['unsigned pixel peak']
-			peaktargets = [(unsignedpixelpeak[1], unsignedpixelpeak[0])]
-			r_error = rmove + subpixelpeak[0]
-			c_error = cmove + subpixelpeak[1]
+		oldshape = self.oldimagedata['image'].shape
+		location = oldshape[0]/2.0-0.5+rmove, oldshape[1]/2.0-0.5+cmove
+		im1 = imagefun.crop_at(self.oldimagedata['image'], location, limit)
+		im2 = imagefun.crop_at(self.newimagedata['image'], 'center', limit)
+		pc = correlator.phase_correlate(im2,im1,zero=False)
+		subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0,0), limit=limit)
+		res = self.peakfinder.getResults()
+		pixelpeak = res['pixel peak']
+		unsignedpixelpeak = res['unsigned pixel peak']
+		peaktargets = [(unsignedpixelpeak[1], unsignedpixelpeak[0])]
+		r_error = subpixelpeak[0]
+		c_error = subpixelpeak[1]
 
 		self.setImage(pc, 'Correlation')
 		peaktargets = [(unsignedpixelpeak[1], unsignedpixelpeak[0])]
