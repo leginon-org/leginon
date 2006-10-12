@@ -7,7 +7,7 @@ require ('inc/auth.inc');
 $sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];
 $projectId = ($_POST['projectId']) ? $_POST['projectId'] : 'all';
 $imageId = $_POST['imageId'];
-$preset = $_POST[$_POST['controlpre]'];
+$preset = $_POST[$_POST['controlpre']];
 
 // --- Set sessionId
 $lastId = $leginondata->getLastSessionId();
