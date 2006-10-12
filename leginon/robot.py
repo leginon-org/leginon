@@ -324,9 +324,25 @@ class Robot(node.Node):
 		self.logger.info('Scope unlocked.')
 
 	def zeroStage(self):
-		self.logger.info('Zeroing stage position...')
-		self.instrument.tem.StagePosition = {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0}
+		while True:
+			self.logger.info('Zeroing stage position...')
+			self.instrument.tem.StagePosition = {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0}
+			if self.stageIsZeroed():
+				break
+			else:
+				self.logger.info('Stage is not zeroed, trying again...')
 		self.logger.info('Stage position is zeroed.')
+
+	def stageIsZeroed(self, xyzlimit=1e-6, alimit=0.001):
+		stage = self.instrument.tem.StagePosition
+		x = abs(stage['x'])
+		y = abs(stage['y'])
+		z = abs(stage['z'])
+		a = abs(stage['a'])
+		if x<xyzlimit and y<xyzlimit and z<xyzlimit and a<alimit:
+			return True
+		else:
+			return False
 
 	def moveStagePositionZ(self,zval):
 		self.logger.info("Move stage position Z to: %s",zval)
