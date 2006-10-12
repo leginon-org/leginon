@@ -1,20 +1,20 @@
 <?php
 require('inc/leginon.inc');
 // --- get image parameters from URL
-$id=$_GET[id];
-if (!$imgscript=$_GET[imgsc])
+$id=$_GET['id'];
+if (!$imgscript=$_GET['imgsc'])
 	$imgscript="getimg.php";
-$preset=$_GET[preset];
-$session=$_GET[session];
-$tg = ($_GET[tg]) ? '&tg=1' : '';
-$sb = ($_GET[sb]) ? '&sb=1' : '';
-$minpix = ($_GET[np]) ? '&np='.$_GET[np] : '';
-$maxpix = ($_GET[xp]) ? '&xp='.$_GET[xp] : '';
-$fft = ($_GET[fft]) ? '&fft='.$_GET[fft] : '';
-$filter = ($_GET[flt]) ? '&flt='.$_GET[flt] : '';
-$binning = ($_GET[binning]) ? '&binning='.$_GET[binning] : '';
-$colormap = ($_GET[colormap]) ? '&colormap='.$_GET[colormap] : '';
-$autoscale = ($_GET[autoscale]) ? '&autoscale='.$_GET[autoscale] : '';
+$preset=$_GET['preset'];
+$session=$_GET['session'];
+$tg = ($_GET['tg']) ? '&tg=1' : '';
+$sb = ($_GET['sb']) ? '&sb=1' : '';
+$minpix = ($_GET['np']) ? '&np='.$_GET['np'] : '';
+$maxpix = ($_GET['xp']) ? '&xp='.$_GET['xp'] : '';
+$fft = ($_GET['fft']) ? '&fft='.$_GET['fft'] : '';
+$filter = ($_GET['flt']) ? '&flt='.$_GET['flt'] : '';
+$binning = ($_GET['binning']) ? '&binning='.$_GET['binning'] : '';
+$colormap = ($_GET['colormap']) ? '&colormap='.$_GET['colormap'] : '';
+$autoscale = ($_GET['autoscale']) ? '&autoscale='.$_GET['autoscale'] : '';
 $quality = ($_GET['t']) ? '&t='.$_GET['t']: '';
 $psel = ($_GET['psel']) ? '&psel='.urlencode($_GET['psel']) : ''; 
 
@@ -29,8 +29,8 @@ if (!$imgwidth = $mrcinfo['nx'])
 if (!$imgheight= $mrcinfo['ny'])
 	$imgheight=1024;
 
-$imgbinning = $_GET[binning];
-if ($_GET[binning]=='auto')
+$imgbinning = $_GET['binning'];
+if ($_GET['binning']=='auto')
 	$imgbinning = ($imgwidth > 1024) ? (($imgwidth > 2048) ? 4 : 2 ) : 1;
 
 // --- set image map size and binning
@@ -43,7 +43,7 @@ $ratio = $imgwidth/$imgbinning/$imgmapsize;
 $areasize=512/$ratio;
 
 // --- for colored images display area in black
-$areacolor = ($_GET[colormap]==1) ? "#000000" : "#00FF00";
+$areacolor = ($_GET['colormap']==1) ? "#000000" : "#00FF00";
 
 $imgmapsrc = $imgscript."?preset=".$preset."&session=".$session."&id=".$id."&t=75&s=$imgmapsize&binning=$mapbinning".$options;
 $imgsrc = $imgscript."?preset=".$preset."&session=".$session."&id=".$id.$quality.$binning.$options;
