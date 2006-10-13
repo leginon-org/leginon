@@ -2218,6 +2218,14 @@ class TiltSeriesData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class InternalEnergyShiftData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('before', float),
+			('after', float),
+		)
+	typemap = classmethod(typemap)
+
 class TargetFilterSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (

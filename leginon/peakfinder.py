@@ -69,7 +69,7 @@ class PeakFinder(object):
 		if self.results['pixel peak'] is None:
 
 			if None not in (guess, limit):
-				print 'GUESS,LIMIT', guess, limit
+				#print 'GUESS,LIMIT', guess, limit
 				cropcenter = limit[0]/2.0-0.5, limit[1]/2.0-0.5
 				im = imagefun.crop_at(self.image, guess, limit)
 				import Mrc
@@ -85,7 +85,7 @@ class PeakFinder(object):
 			rows,cols = im.shape
 			peakrow = peak / cols
 			peakcol = peak % cols
-			print 'IM PEAK', peakrow, peakcol
+			#print 'IM PEAK', peakrow, peakcol
 
 			if cropcenter is not None:
 				peakrow = int(round(guess[0]+peakrow-cropcenter[0]))

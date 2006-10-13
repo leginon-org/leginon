@@ -1,7 +1,7 @@
 # $Source: /ami/sw/cvsroot/pyleginon/reference.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-22 19:44:32 $
+# $Date: 2006-10-13 04:12:32 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -181,6 +181,22 @@ class AlignZeroLossPeak(Reference):
         if not ccd_camera.EnergyFiltered:
             self.logger.warning('No energy filter on this instrument.')
             return
+        before_shift = None
+        after_shift = None
+        try:
+            if not ccd_camera.EnergyFilter:
+                self.logger.warning('Energy filtering is not enabled.')
+                return
+            before_shift = ccd_camera.getInternalEnergyShift()
+            m = 'Energy filter internal shift: %g.' % before_shift
+            self.logger.info(m)
+        except AttributeError:
+            m = 'Energy filter methods are not available on this instrument.'
+            self.logger.warning(m)
+        except Exception, e:
+            s = 'Energy internal shift query failed: %s.'
+            self.logger.error(s % e)
+
         try:
             if not ccd_camera.EnergyFilter:
                 self.logger.warning('Energy filtering is not enabled.')
@@ -194,6 +210,23 @@ class AlignZeroLossPeak(Reference):
         except Exception, e:
             s = 'Energy filter align zero loss peak failed: %s.'
             self.logger.error(s % e)
+
+        try:
+            if not ccd_camera.EnergyFilter:
+                self.logger.warning('Energy filtering is not enabled.')
+                return
+            after_shift = ccd_camera.getInternalEnergyShift()
+            m = 'Energy filter internal shift: %g.' % after_shift
+            self.logger.info(m)
+        except AttributeError:
+            m = 'Energy filter methods are not available on this instrument.'
+            self.logger.warning(m)
+        except Exception, e:
+            s = 'Energy internal shift query failed: %s.'
+            self.logger.error(s % e)
+
+        shift_data = data.InternalEnergyShiftData(before=before_shift, after=after_shift)
+        self.publish(shift_data, database=True, dbforce=True)
 
 class MeasureDose(Reference):
     defaultsettings = {
