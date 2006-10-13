@@ -1,7 +1,7 @@
 # $Source: /ami/sw/cvsroot/pyleginon/reference.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-13 04:12:32 $
+# $Date: 2006-10-13 04:13:07 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -225,7 +225,7 @@ class AlignZeroLossPeak(Reference):
             s = 'Energy internal shift query failed: %s.'
             self.logger.error(s % e)
 
-        shift_data = data.InternalEnergyShiftData(before=before_shift, after=after_shift)
+        shift_data = data.InternalEnergyShiftData(session=self.session, before=before_shift, after=after_shift)
         self.publish(shift_data, database=True, dbforce=True)
 
 class MeasureDose(Reference):
