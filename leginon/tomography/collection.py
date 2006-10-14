@@ -197,6 +197,8 @@ class Collection(object):
             time.sleep(self.settings['tilt pause time'])
 
             # TODO: error checking
+            channel = self.correlator.getChannel()
+            self.instrument.setCorrectionChannel(channel)
             image_data = self.instrument.getData(data.CorrectedCameraImageData)
             self.logger.info('Image acquired.')
 
@@ -248,7 +250,7 @@ class Collection(object):
             #self.correlator.setTiltAxis(predicted_position['theta'])
             while True:
                 try:
-                    correlation_image = self.correlator.correlate(image, tilt)
+                    correlation_image = self.correlator.correlate(image, tilt, channel=channel)
                     break
                 except Exception, e:
                     self.logger.warning('Retrying correlate image: %s.' % (e,))

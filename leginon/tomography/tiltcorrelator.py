@@ -21,6 +21,13 @@ class Correlator(object):
         self.reset()
         self.setBinning(binning)
         self.hanning = None
+        self.channel = None
+
+    def getChannel(self):
+        if self.channel is None or self.channel == 1:
+            return 0
+        else:
+            return 1
 
     def setBinning(self, binning):
         pass
@@ -51,7 +58,7 @@ class Correlator(object):
         image[rows/2:, :columns/2] = image[:rows/2, columns/2:]
         image[:rows/2, columns/2:] = swap
 
-    def correlate(self, image, tilt):
+    def correlate(self, image, tilt, channel=None):
         # pad for now (not enough time to not be lazy)
         if len(image.shape) != 2 or image.shape[0] != image.shape[1]:
             raise ValueError
@@ -71,6 +78,7 @@ class Correlator(object):
         padded_image[row:row + image.shape[0],
                      column:column + image.shape[1]] = image
         self.correlation.insertImage(padded_image)
+        self.channel = channel
         try:
             pc = self.correlation.phaseCorrelate()
         except correlator.MissingImageError:
