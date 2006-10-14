@@ -2190,6 +2190,9 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('dose', float),
 			('min exposure', float),
 			('max exposure', float),
+			('mean threshold', float),
+			('collection threshold', float),
+            ('tilt pause time', float),
 		)
 	typemap = classmethod(typemap)
 

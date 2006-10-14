@@ -51,6 +51,9 @@ class Tomography(acquisition.Acquisition):
         'dose': 200.0,
         'min exposure': None,
         'max exposure': None,
+        'mean threshold': 100.0,
+        'collection threshold': 90.0,
+        'tilt pause time': 1.0,
     }
 
     def __init__(self, *args, **kwargs):

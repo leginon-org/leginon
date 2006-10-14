@@ -97,27 +97,6 @@ class Collection(object):
         else:
             raise RuntimeError('too many tilt angle groups')
 
-    '''
-    def alignZeroLossPeak(self):
-        ccd_camera = self.instrument.ccdcamera
-        if not ccd_camera.EnergyFiltered:
-            self.logger.warning('No energy filter on this instrument.')
-            return
-        try:
-            if not ccd_camera.EnergyFilter:
-                self.logger.warning('Energy filtering is not enabled.')
-                return
-            ccd_camera.alignEnergyFilterZeroLossPeak()
-            m = 'Energy filter zero loss peak aligned.'
-            self.logger.info(m)
-        except AttributeError:
-            m = 'Energy filter methods are not available on this instrument.'
-            self.logger.warning(m)
-        except Exception, e:
-            s = 'Energy filter align zero loss peak failed: %s.'
-            self.logger.error(s % e)
-    '''
-
     def finalize(self):
         self.tilt_series = None
 
@@ -125,9 +104,6 @@ class Collection(object):
 
         self.restoreInstrumentState()
         self.instrument_state = None
-
-        #if self.settings['align zero loss peak']:
-        #    self.alignZeroLossPeak()
 
         self.logger.info('Data collection ended.')
 
@@ -218,7 +194,7 @@ class Collection(object):
 
             self.checkAbort()
 
-            time.sleep(1.0)
+            time.sleep(self.settings['tilt pause time'])
 
             # TODO: error checking
             image_data = self.instrument.getData(data.CorrectedCameraImageData)
@@ -228,6 +204,15 @@ class Collection(object):
             image_data['image'] = numarray.around(image_data['image']*10).astype(numarray.Int16)
 
             image = image_data['image']
+
+            if image.mean() < self.settings['mean threshold']:
+                if i < (self.settings['collection threshold']/100.0)*len(tilts):
+                    self.logger.error('Image counts below threshold, aborting series...')
+                    self.finalize()
+                    raise Abort
+                else:
+                    self.logger.warning('Image counts below threshold, aborting loop...')
+                    break
 
             self.logger.info('Saving image...')
             while True:
@@ -279,7 +264,7 @@ class Collection(object):
             }
 
             if not self.prediction.addPosition(tilt, position):
-                if i < 0.9*len(tilts):
+                if i < (self.settings['collection threshold']/100.0)*len(tilts):
                     self.logger.error('Position out of range, aborting series...')
                     self.finalize()
                     raise Abort

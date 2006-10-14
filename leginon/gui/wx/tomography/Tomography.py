@@ -115,26 +115,76 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         self.widgets['align zero loss peak'] = wx.CheckBox(self, -1, 'Align zero loss peak')
         self.widgets['measure dose'] = wx.CheckBox(self, -1, 'Measure dose')
 
-        miscsz = wx.GridBagSizer(5, 10)
-        miscsz.Add(self.widgets['run buffer cycle'],
+        bcsz = wx.GridBagSizer(5, 10)
+        bcsz.Add(self.widgets['run buffer cycle'],
                    (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        miscsz.Add(self.widgets['align zero loss peak'],
+        bcsz.Add(self.widgets['align zero loss peak'],
                    (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        miscsz.Add(self.widgets['measure dose'],
+        bcsz.Add(self.widgets['measure dose'],
                    (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        bcsz.AddGrowableRow(0)
+        bcsz.AddGrowableRow(1)
+        bcsz.AddGrowableRow(2)
+        bcsz.AddGrowableCol(0)
+
+        bcsb = wx.StaticBox(self, -1, 'Before Collection')
+        bcsbsz = wx.StaticBoxSizer(bcsb, wx.VERTICAL)
+        bcsbsz.Add(bcsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
+
+        self.widgets['mean threshold'] = FloatEntry(self, -1, min=0.0,
+                                                            allownone=False,
+                                                            chars=5,
+                                                            value='100.0')
+        self.widgets['collection threshold'] = FloatEntry(self, -1, min=0.0,
+                                                            allownone=False,
+                                                            chars=5,
+                                                            value='90.0')
+        self.widgets['tilt pause time'] = FloatEntry(self, -1, min=0.0,
+                                                            allownone=False,
+                                                            chars=5,
+                                                            value='1.0')
+        mtsz = wx.GridBagSizer(5, 5)
+        label = wx.StaticText(self, -1, 'Consider images with less than')
+        mtsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        mtsz.Add(self.widgets['mean threshold'],
+                   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+        label = wx.StaticText(self, -1, 'counts as obstructed')
+        mtsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+        ctsz = wx.GridBagSizer(5, 5)
+        label = wx.StaticText(self, -1, 'Abort series if one half has collected less than')
+        ctsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        ctsz.Add(self.widgets['collection threshold'],
+                   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+        label = wx.StaticText(self, -1, 'percent of images')
+        ctsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+        tptsz = wx.GridBagSizer(5, 5)
+        label = wx.StaticText(self, -1, 'Pause')
+        tptsz.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        tptsz.Add(self.widgets['tilt pause time'],
+                   (0, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+        label = wx.StaticText(self, -1, 'seconds before each tilt image.')
+        tptsz.Add(label, (0, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+        miscsz = wx.GridBagSizer(5, 10)
+        miscsz.Add(mtsz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        miscsz.Add(ctsz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        miscsz.Add(tptsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         miscsz.AddGrowableRow(0)
         miscsz.AddGrowableRow(1)
         miscsz.AddGrowableRow(2)
         miscsz.AddGrowableCol(0)
 
-        miscsb = wx.StaticBox(self, -1, 'Before Collection')
+        miscsb = wx.StaticBox(self, -1, 'Misc.')
         miscsbsz = wx.StaticBoxSizer(miscsb, wx.VERTICAL)
         miscsbsz.Add(miscsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
 
         sz = wx.GridBagSizer(10, 10)
         sz.Add(tiltsbsz, (0, 0), (1, 2), wx.EXPAND)
         sz.Add(expsbsz, (1, 0), (1, 1), wx.EXPAND)
-        sz.Add(miscsbsz, (1, 1), (1, 1), wx.EXPAND)
+        sz.Add(bcsbsz, (1, 1), (1, 1), wx.EXPAND)
+        sz.Add(miscsbsz, (2, 0), (1, 2), wx.EXPAND)
         sz.AddGrowableRow(0)
         sz.AddGrowableRow(1)
         sz.AddGrowableCol(0)
