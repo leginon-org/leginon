@@ -31,7 +31,6 @@ data.image=image
 class shift(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('runId', run),
 			('dbemdata|AcquisitionImageData|image1', int),
 			('dbemdata|AcquisitionImageData|image2', int),
 			('shiftx', float),
