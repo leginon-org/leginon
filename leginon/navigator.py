@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
-# $Revision: 1.113 $
+# $Revision: 1.114 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-12 18:08:32 $
+# $Date: 2006-10-18 22:04:04 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -108,7 +108,7 @@ class Navigator(node.Node):
 		self.newImage(imagedata)
 		rows = targetdata['delta row']
 		cols = targetdata['delta column']
-		
+
 		if precision:
 			check=True
 		else:
@@ -192,11 +192,12 @@ class Navigator(node.Node):
 			self.logger.exception(errstr % 'unable to set instrument')
 			return True
 
-		self.lastmove = (row, col)
 		return False
 
 	def move(self, row, col, movetype, precision=0.0, check=False):
 		self.setStatus('processing')
+		self.origimagedata = self.newimagedata
+		self.origmove = row,col
 		err = self._move(row, col, movetype)
 		if err:
 			self.setStatus('idle')
@@ -224,14 +225,12 @@ class Navigator(node.Node):
 		self.setStatus('idle')
 
 	def checkMoveError(self):
-		rmove,cmove = self.lastmove
 		maxerror = self.settings['max error']
 		limit = (int(maxerror*2), int(maxerror*2))
-		guess = (int(-rmove), int(-cmove))
 
 		oldshape = self.oldimagedata['image'].shape
-		location = oldshape[0]/2.0-0.5+rmove, oldshape[1]/2.0-0.5+cmove
-		im1 = imagefun.crop_at(self.oldimagedata['image'], location, limit)
+		location = oldshape[0]/2.0-0.5+self.origmove[0], oldshape[1]/2.0-0.5+self.origmove[1]
+		im1 = imagefun.crop_at(self.origimagedata['image'], location, limit)
 		im2 = imagefun.crop_at(self.newimagedata['image'], 'center', limit)
 		pc = correlator.phase_correlate(im2,im1,zero=False)
 		subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0,0), limit=limit)

@@ -38,6 +38,74 @@ class InvalidStagePosition(Exception):
 class InvalidPresetsSequence(Exception):
 	pass
 
+def setImageFilename(imagedata):
+	listlabel = ''
+	## use either data id or target number
+	if imagedata['target'] is None or imagedata['target']['number'] is None:
+		print 'This image does not have a target number, it would be nice to have an alternative to target number, like an image number.  for now we will use dmid'
+		numberstr = '%05d' % (imagedata.dmid[-1],)
+	else:
+		numberstr = '%05d' % (imagedata['target']['number'],)
+		if imagedata['target']['list'] is not None:
+			listlabel = imagedata['target']['list']['label']
+	if imagedata['preset'] is None:
+		presetstr = ''
+	else:
+		presetstr = imagedata['preset']['name']
+	mystr = numberstr + presetstr
+
+	rootname = getRootName(imagedata, listlabel)
+	parts = []
+	parts.append(rootname)
+	if listlabel:
+		parts.append(listlabel)
+	parts.append(mystr)
+	vstr = 'v%02d' % (imagedata['version'],)
+	parts.append(vstr)
+
+	filename = '_'.join(parts)
+	imagedata['filename'] = filename
+
+def getRootName(imagedata, listlabel=False):
+	'''
+	get the root name of an image from its parent
+	'''
+	parent_target = imagedata['target']
+	gridlabel = not listlabel
+	if parent_target is None:
+		## there is no parent target
+		## create my own root name
+		return newRootName(imagedata, gridlabel)
+
+	parent_image = parent_target['image']
+	if parent_image is None:
+		## there is no parent image
+		return newRootName(imagedata, gridlabel)
+
+	## use root name from parent image
+	parent_root = parent_image['filename']
+	if parent_root:
+		return parent_root
+	else:
+		return newRootName(imagedata, gridlabel)
+
+def newRootName(imagedata, gridlabel):
+	parts = []
+	sessionstr = imagedata['session']['name']
+	parts.append(sessionstr)
+	if gridlabel:
+		if 'grid' in imagedata and imagedata['grid'] is not None:
+			if 'grid ID' in imagedata['grid'] and imagedata['grid']['grid ID'] is not None:
+				grididstr = 'GridID%05d' % (imagedata['grid']['grid ID'],)
+				parts.append(grididstr)
+			if 'insertion' in imagedata['grid'] and imagedata['grid']['insertion'] is not None:
+				insertionstr = 'Insertion%03d' % (imagedata['grid']['insertion'],)
+				parts.append(insertionstr)
+	sep = '_'
+	name = sep.join(parts)
+	return name
+
+
 class Acquisition(targetwatcher.TargetWatcher):
 	panelclass = gui.wx.Acquisition.Panel
 	settingsclass = data.AcquisitionSettingsData
@@ -385,7 +453,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		filmdata = data.FilmData(session=self.session, preset=presetdata, label=self.name, target=target, emtarget=emtarget)
 		## no image to store in file, but this provides 'filename' for
 		## the case that we later scan the film
-		self.setImageFilename(filmdata)
+		setImageFilename(filmdata)
 
 		## first three of user name
 		self.instrument.tem.FilmUserCode = self.session['user']['name'][:3]
@@ -461,18 +529,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		## convert CameraImageData to AcquisitionImageData
 		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=target, list=self.imagelistdata, emtarget=emtarget)
+		imagedata['version'] = 0
 		if target is not None and 'grid' in target and target['grid'] is not None:
 			imagedata['grid'] = target['grid']
 		self.publishDisplayWait(imagedata)
-
-	def retrieveImagesFromDB(self):
-		imagequery = data.AcquisitionImageData()
-		imagequery['session'] = self.session
-		imagequery['label'] = self.name
-		## don't read images because we only need the id
-		images = self.research(datainstance=imagequery, readimages=False)
-		imageids = [x.dbid for x in images]
-		return imageids
 
 	def publishDisplayWait(self, imagedata):
 		'''
@@ -480,7 +540,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		process it
 		'''
 		## set the 'filename' value
-		self.setImageFilename(imagedata)
+		setImageFilename(imagedata)
 
 		self.reportStatus('output', 'Publishing image...')
 		self.publish(imagedata, pubevent=True, database=self.settings['save image'])
@@ -520,76 +580,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def publishImage(self, imdata):
 		self.publish(imdata, pubevent=True)
-
-	def setImageFilename(self, imagedata):
-		if imagedata['filename']:
-			return
-		parts = []
-
-		listlabel = ''
-		## use either data id or target number
-		if imagedata['target'] is None or imagedata['target']['number'] is None:
-			print 'This image does not have a target number, it would be nice to have an alternative to target number, like an image number.  for now we will use dmid'
-			numberstr = '%05d' % (imagedata.dmid[-1],)
-		else:
-			numberstr = '%05d' % (imagedata['target']['number'],)
-			if imagedata['target']['list'] is not None:
-				listlabel = imagedata['target']['list']['label']
-		if imagedata['preset'] is None:
-			presetstr = ''
-		else:
-			presetstr = imagedata['preset']['name']
-		mystr = numberstr + presetstr
-		sep = '_'
-
-		rootname = self.getRootName(imagedata, listlabel)
-		parts.append(rootname)
-		if listlabel:
-			parts.append(listlabel)
-		parts.append(mystr)
-
-		filename = sep.join(parts)
-		#self.reportStatus('output', 'Using filename "%s"' % filename)
-		imagedata['filename'] = filename
-
-	def getRootName(self, imagedata, listlabel=False):
-		'''
-		get the root name of an image from its parent
-		'''
-		parent_target = imagedata['target']
-		gridlabel = not listlabel
-		if parent_target is None:
-			## there is no parent target
-			## create my own root name
-			return self.newRootName(imagedata, gridlabel)
-
-		parent_image = parent_target['image']
-		if parent_image is None:
-			## there is no parent image
-			return self.newRootName(imagedata, gridlabel)
-
-		## use root name from parent image
-		parent_root = parent_image['filename']
-		if parent_root:
-			return parent_root
-		else:
-			return self.newRootName(imagedata, gridlabel)
-
-	def newRootName(self, imagedata, gridlabel):
-		parts = []
-		sessionstr = self.session['name']
-		parts.append(sessionstr)
-		if gridlabel:
-			if 'grid' in imagedata and imagedata['grid'] is not None:
-				if 'grid ID' in imagedata['grid'] and imagedata['grid']['grid ID'] is not None:
-					grididstr = 'GridID%05d' % (imagedata['grid']['grid ID'],)
-					parts.append(grididstr)
-				if 'insertion' in imagedata['grid'] and imagedata['grid']['insertion'] is not None:
-					insertionstr = 'Insertion%03d' % (imagedata['grid']['insertion'],)
-					parts.append(insertionstr)
-		sep = '_'
-		name = sep.join(parts)
-		return name
 
 	def waitForImageProcessDone(self):
 		imageids = self.doneevents.keys()
@@ -703,44 +693,67 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imagetime < lastdeclaredtime:
 			self.logger.info('target needs shift')
 			# yes, now we need a recent image drift for this image
-			query = data.AcquisitionImageDriftData(image=imagedata, session=self.session)
-			imagedrift = self.research(query, results=1)
 			# was image drift already measured for this image?
-			if not imagedrift or force:
+			driftsequence = self.getImageDriftSequence(imagedata)
+			if not driftsequence or force:
 				self.logger.info('need to request image drift')
 				# no, request measurement now
 				imagedrift = self.requestImageDrift(imagedata)
+				driftsequence = [imagedrift]
 			else:
 				# yes, but was it measured after declared drift?
-				imagedrift = imagedrift[0]
-				if imagedrift['system time'] < lastdeclaredtime:
-					self.logger.info('existing image drift, but too old, requesting new one')
+				lastimagedrift = driftsequence[-1]
+				if lastimagedrift['system time'] < lastdeclaredtime:
 					# too old, need to measure it again
-					imagedrift = self.requestImageDrift(imagedata)
+					self.logger.info('existing image drift, but too old, requesting new one')
+					imagedrift = self.requestImageDrift(lastimagedrift['new image'])
+					driftsequence.append(imagedrift)
 
-			## create new adjusted target from old adjusted target and original target
-			originaltargetquery = data.AcquisitionImageTargetData(initializer=oldtarget)
-			originaltargetquery['version'] = 0
-			originaltargetquery['delta row'] = None
-			originaltargetquery['delta column'] = None
-			results = self.research(datainstance=originaltargetquery, results=1)
-			originaltarget = results[0]
-			dr = originaltarget['delta row']
-			dc = originaltarget['delta column']
-			self.logger.info('original target:  %s, %s' % (dr, dc))
+			newtarget = self.sequentialTargetAdjustment(oldtarget, driftsequence)
 
-			newtarget = data.AcquisitionImageTargetData(initializer=oldtarget)
-			newtarget['version'] += 1
-			newtarget['delta row'] = originaltarget['delta row'] + imagedrift['rows']
-			newtarget['delta column'] = originaltarget['delta column'] + imagedrift['columns']
+			odr = oldtarget['delta row']
+			odc = oldtarget['delta column']
 			dr = newtarget['delta row']
 			dc = newtarget['delta column']
-			self.logger.info('new target:  %s, %s' % (dr, dc))
+			self.logger.info('old target:  %s, %s, new target:  %s, %s' % (odr, odc, dr, dc))
 			self.publish(newtarget, database=True, dbforce=True)
 			return newtarget
 		else:
 			self.logger.info('target does not need shift')
 			return oldtarget
+
+	def sequentialTargetAdjustment(self, target, driftsequence):
+		oldtarget = target
+		row = oldtarget['delta row']
+		col = oldtarget['delta column']
+		for imagedrift in driftsequence:
+			## create new adjusted target from old target
+			row += imagedrift['rows']
+			col += imagedrift['columns']
+		imagedrift = driftsequence[-1]
+		newtarget = data.AcquisitionImageTargetData(initializer=oldtarget)
+		newtarget['version'] = imagedrift['new image']['version']
+		newtarget['image'] = imagedrift['new image']
+		newtarget['delta row'] = row
+		newtarget['delta column'] = col
+		self.logger.info('sequentially applied %d drift correction(s)' % (len(driftsequence,)))
+		return newtarget
+
+	def getImageDriftSequence(self, imagedata):
+		'''get the full history of AcquisitionImageDriftData for this image'''
+		driftsequence = []
+		oldimage = imagedata
+		while True:
+			query = data.AcquisitionImageDriftData(initializer={'old image':oldimage, 'session':self.session})
+			imagedrift = self.research(query, results=1)
+			if imagedrift:
+				imagedrift = imagedrift[0]
+				driftsequence.append(imagedrift)
+				oldimageid = imagedrift.special_getitem('new image', dereference=False).dbid
+				oldimage = self.researchDBID(data.AcquisitionImageData, oldimageid, readimages=False)
+			else:
+				break
+		return driftsequence
 
 	def requestImageDrift(self, imagedata):
 		# need to have drift manager do it
@@ -760,7 +773,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def handleImageDrift(self, ev):
 		self.logger.info('HANDLING IMAGE DRIFT')
 		driftdata = ev['data']
-		imageid = driftdata.special_getitem('image', dereference=False).dbid
+		imageid = driftdata.special_getitem('old image', dereference=False).dbid
 		## only continue if this was one that I requested
 		if imageid == self.requested_drift:
 			self.requested_drift = driftdata

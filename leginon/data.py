@@ -1291,6 +1291,7 @@ class AcquisitionImageData(PresetImageData):
 			('emtarget', EMTargetData),
 			('grid', GridData),
 			('tilt series', TiltSeriesData),
+			('version', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -1308,7 +1309,8 @@ class AcquisitionImageStatsData(InSessionData):
 class AcquisitionImageDriftData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
-			('image', AcquisitionImageData),
+			('old image', AcquisitionImageData),
+			('new image', AcquisitionImageData),
 			('rows', float),
 			('columns', float),
 			('system time', float),

@@ -24,6 +24,7 @@ import copy
 import EM
 import gui.wx.DriftManager
 import instrument
+import acquisition
 
 class DriftManager(watcher.Watcher):
 	panelclass = gui.wx.DriftManager.Panel
@@ -108,12 +109,10 @@ class DriftManager(watcher.Watcher):
 			newchan = 1
 		else:
 			newchan = 0
-		newim = self.acquireImage(channel=newchan)
+		newcamim = self.acquireImage(channel=newchan)
 
-		self.logger.info('Old image, image shift %s, stage position %s'
-									% (im['scope']['image shift'], im['scope']['stage position']))
-		self.logger.info('New image, image shift %s, stage position %s'
-						% (newim['scope']['image shift'], newim['scope']['stage position']))
+		## store new version of image to database
+		newim = self.newImageVersion(im, newcamim)
 
 		## do correlation
 		self.correlator.insertImage(im['image'])
@@ -129,7 +128,8 @@ class DriftManager(watcher.Watcher):
 		## publish AcquisitionImageDriftData here
 		imagedrift = data.AcquisitionImageDriftData()
 		imagedrift['session'] = self.session
-		imagedrift['image'] = im
+		imagedrift['old image'] = im
+		imagedrift['new image'] = newim
 		imagedrift['rows'] = rows
 		imagedrift['columns'] = cols
 		imagedrift['system time'] = newim['scope']['system time']
@@ -137,6 +137,32 @@ class DriftManager(watcher.Watcher):
 
 		self.setStatus('idle')
 		self.confirmEvent(ev)
+
+	## much of the following method was stolen from acquisition.py
+	def newImageVersion(self, oldimagedata, newimagedata):
+		## store EMData to DB to prevent referencing errors
+		self.publish(newimagedata['scope'], database=True)
+		self.publish(newimagedata['camera'], database=True)
+
+		## convert CameraImageData to AcquisitionImageData
+		newimagedata = data.AcquisitionImageData(initializer=newimagedata)
+		## then add stuff from old imagedata
+		newimagedata['preset'] = oldimagedata['preset']
+		newimagedata['label'] = oldimagedata['label']
+		newimagedata['target'] = oldimagedata['target']
+		newimagedata['list'] = oldimagedata['list']
+		newimagedata['emtarget'] = oldimagedata['emtarget']
+		newimagedata['version'] = oldimagedata['version'] + 1
+		target = newimagedata['target']
+		if target is not None and 'grid' in target and target['grid'] is not None:
+			newimagedata['grid'] = target['grid']
+
+		## set the 'filename' value
+		acquisition.setImageFilename(newimagedata)
+
+		self.logger.info('Publishing new version of image...')
+		self.publish(newimagedata, database=True, dbforce=True)
+		return newimagedata
 
 	def uiDeclareDrift(self):
 		self.declareDrift('manual')
