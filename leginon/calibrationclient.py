@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.188 $
+# $Revision: 1.189 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-05 17:39:18 $
+# $Date: 2006-10-18 22:04:58 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -530,6 +530,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		except:
 			return None
 
+	def setBeamTilt(self, bt):
+		self.instrument.tem.BeamTilt = bt
+
 	def storeRotationCenter(self, tem, ht, mag, beamtilt):
 		rc = data.RotationCenterData()
 		rc['high tension'] = ht
@@ -796,51 +799,79 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		return tuple(pixel_shifts)
 
-	def measureDispDiff(self, tilt_axis, tilt_m, tilt_t, correct_tilt=False):
+	def measureMatrixC(self, m, t):
 		'''
-		This measures one displacement difference that go into 
-		eq. (11). Each call of this function acquires four images
-		and returns one shift displacement.  We could also use
-		something other than measureStateShift and do this with
-		only 3 images.
+		determine matrix C, the coma-free matrix
+		m = misalignment value, t = tilt value
 		'''
-		beamtilt = self.getBeamTilt()
-
+		# original beam tilt
+		btorig = self.getBeamTilt()
 		### try/finally to be sure we return to original beam tilt
 		try:
-			self.node.logger.debug('Beam tilt %s' % beamtilt)
-
-			### apply misalignment, this is the base value
-			### from which the two equal and opposite tilts
-			### are made
-			bt0 = dict(beamtilt)
-			bt0[tilt_axis] += tilt_m
-			state0 = data.ScopeEMData(initializer={'beam tilt':bt0})
-			self.node.logger.debug('State 0 %s' % (state0,))
-			### create the two equal and opposite tilted states
-			statepos = data.ScopeEMData(initializer={'beam tilt':dict(bt0)})
-			stateneg = data.ScopeEMData(initializer={'beam tilt':dict(bt0)})
-
-			statepos['beam tilt'][tilt_axis] += tilt_t
-			self.node.logger.debug('State positive %s' % (statepos,))
-			stateneg['beam tilt'][tilt_axis] -= tilt_t
-			self.node.logger.debug('State negative %s' % (stateneg,))
-
-			shiftinfo = self.measureStateShift(state0, statepos, 1, settle=0.25, correct_tilt=correct_tilt)
-			pixelshift1 = shiftinfo['pixel shift']
-
-			shiftinfo = self.measureStateShift(state0, stateneg, 1, settle=0.25, correct_tilt=correct_tilt)
-			pixelshift2 = shiftinfo['pixel shift']
-			self.node.logger.info('Pixel shift 1 %s, Pixel shift 2 %s'
-														% (pixelshift1, pixelshift2))
+			bt0 = btorig['x'], btorig['y']
+			## tilt x makes first column, tilt y makes second column
+			matrix = numarray.zeros((2,2), numarray.Float32)
+			for axisn, axisname in ((0,'x'),(1,'y')):
+				## misalign + then -
+				dc = {}
+				for msign in (1,-1):
+					misbt = list(bt0)
+					misbt[axisn] += msign*m
+					btdict = {'beam tilt': {'x':misbt[0], 'y':misbt[1]}}
+					state0 = data.ScopeEMData(initializer=btdict)
+					## tilt + then -
+					displace = {}
+					for tsign in (1,-1):
+						tiltbt = list(misbt)
+						tiltbt[axisn] += tsign*t
+						btdict = {'beam tilt': {'x':tiltbt[0], 'y':tiltbt[1]}}
+						state1 = data.ScopeEMData(initializer=btdict)
+						shiftinfo = self.measureStateShift(state0, state1)
+						pixelshift = shiftinfo['pixel shift']
+						displace[tsign] = pixelshift['row'],pixelshift['col']
+					## calculate displacemnt diff
+					dc[msign] = numarray.subtract(displace[-1],displace[1])
+				## calculate matrix column
+				matrix[:,axisn] = (dc[-1]-dc[1]) / 2.0 / m
 		finally:
 			## return to original beam tilt
-			self.instrument.tem.BeamTilt = beamtilt
+			self.setBeamTilt(btorig)
 
-		pixelshiftdiff = {}
-		pixelshiftdiff['row'] = pixelshift2['row'] - pixelshift1['row']
-		pixelshiftdiff['col'] = pixelshift2['col'] - pixelshift1['col']
-		return pixelshiftdiff
+		return matrix
+
+	def measureComaFree(self, tilt_value):
+
+		tem = self.instrument.getTEMData()
+		cam = self.instrument.getCCDCameraData()
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		try:
+			cmatrix = self.retrieveMatrix(tem, cam, 'coma-free', ht, mag)
+		except NoMatrixCalibrationError:
+			raise RuntimeError('missing calibration matrix')
+
+		btorig = self.getBeamTilt()
+		btdict = {'beam tilt': btorig}
+		state0 = data.ScopeEMData(initializer=btdict)
+		### try/finally to be sure we return to original beam tilt
+		try:
+			displace = {}
+			for tsign in (1,-1):
+				tiltbt = dict(btorig)
+				tiltbt['x'] += tsign*tilt_value
+				tiltbt['y'] += tsign*tilt_value
+				btdict = {'beam tilt': tiltbt}
+				state1 = data.ScopeEMData(initializer=btdict)
+				shiftinfo = self.measureStateShift(state0, state1)
+				pixelshift = shiftinfo['pixel shift']
+				displace[tsign] = pixelshift['row'],pixelshift['col']
+		finally:
+			self.setBeamTilt(btorig)
+
+		## calculate displacemnt diff
+		dc = numarray.subtract(displace[-1],displace[1])
+		cftilt = numarray.linear_algebra.solve_linear_equations(cmatrix, dc)
+		return cftilt
 
 class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 	def __init__(self, node):
