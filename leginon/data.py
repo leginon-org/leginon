@@ -1928,6 +1928,18 @@ class PolyFinderSettingsData(TargetFinderSettingsData):
 			('acquisition constant template', list),
 		)
 
+class RegionFinderSettingsData(TargetFinderSettingsData):
+	def typemap(cls):
+		return TargetFinderSettingsData.typemap() + (
+			('image filename', str),
+			('min region area', float),
+			('max region area', float),
+			('ve limit', float),
+			('raster spacing', float),
+			('raster angle', float),
+		)
+	typemap = classmethod(typemap)
+
 class BlobFinderSettingsData(Data):
 	def typemap(cls):
 		return SettingsData.typemap() + (
@@ -1962,6 +1974,14 @@ class MosaicClickTargetFinderSettingsData(ClickTargetFinderSettingsData,
 			('scale image', bool),
 			('scale size', int),
 			('mosaic image on tile change', bool),
+			('min region area', float),
+			('max region area', float),
+			('ve limit', float),
+			('raster spacing', float),
+			('raster angle', float),
+			('watchdone', bool),
+			('targetpreset', str),
+			('raster overlap', float),
 		)
 		return typemap
 	typemap = classmethod(typemap)
@@ -2077,6 +2097,8 @@ class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
 			('measure beam tilt', float),
 			('correct tilt', bool),
 			('settling time', float),
+			('comafree beam tilt', float),
+			('comafree misalign', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -2243,6 +2265,14 @@ class CenterTargetFilterSettingsData(TargetFilterSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class PolygonRasterSettingsData(TargetFilterSettingsData):
+	def typemap(cls):
+		return TargetFilterSettingsData.typemap() + (
+			('spacing', float),
+			('angle', float),
+		)
+	typemap = classmethod(typemap)
+
 class RCTAcquisitionSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
@@ -2251,8 +2281,8 @@ class RCTAcquisitionSettingsData(AcquisitionSettingsData):
 			('sigma', float),
 			('minsize', float),
 			('maxsize', float),
-			('minperiod', float),
-			('minstable', float),
+			('blur', float),
+			('sharpen', float),
 		)
 	typemap = classmethod(typemap)
 
