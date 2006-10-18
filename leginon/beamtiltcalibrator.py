@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/beamtiltcalibrator.py,v $
-# $Revision: 1.76 $
+# $Revision: 1.77 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-09-14 00:03:18 $
+# $Date: 2006-10-18 21:45:36 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -34,6 +34,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		'measure beam tilt': 0.01,
 		'correct tilt': True,
 		'settling time': 0.5,
+		'comafree beam tilt': 0.01,
+		'comafree misalign': 0.002,
 	})
 
 	def __init__(self, *args, **kwargs):
@@ -86,40 +88,30 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			self.logger.info('Saved instrument rotation center')
 		self.panel.setInstrumentDone()
 
-	def FUTUREcalibrateRotationCenter(self, tilt_value):
+	def calibrateComaFree(self):
+		'''determine the calibration matrix for coma-free alignment'''
 		if self.initInstruments():
 			raise RuntimeError('cannot initialize instrument')
 
 		calibration_client = self.calibration_clients['beam tilt']
+		tilt_value = self.settings['comafree beam tilt']
+		m_value = self.settings['comafree misalign']
 
-		state1 = {'beam tilt': tilt_value}
-		state2 = {'beam tilt': -tilt_value}
-
-		matdict = {}
-
-		for axis in ('x','y'):
-			self.logger.info('Measuring %s tilt' % (axis,))
-
-			diff1 = calibration_client.measureDispDiff(axis, tilt_value, tilt_value, correct_tilt=self.settings['correct tilt'])
-			diff2 = calibration_client.measureDispDiff(axis, -tilt_value, tilt_value, correct_tilt=self.settings['correct tilt'])
-
-			matcol = calibration_client.eq11((diff1, diff2), (0, 0), tilt_value)
-			matdict[axis] = matcol
-
-		self.logger.debug('Making matrix...')
-		matrix = numarray.zeros((2,2), numarray.Float)
-		self.logger.debug('Matrix type %s, matrix dict type %s'
-											% (matrix.type(), matdict['x'].type()))
-		matrix[:,0] = matdict['x']
-		matrix[:,1] = matdict['y']
+		matrix = calibration_client.measureMatrixC(m_value, tilt_value)
 
 		# store calibration
 		self.logger.info('Storing calibration...')
 		mag = self.instrument.tem.Magnification
 		ht = self.instrument.tem.HighTension
-		calibration_client = self.calibration_clients['beam tilt']
 		calibration_client.storeMatrix(ht, mag, 'coma-free', matrix)
 		self.logger.info('Calibration stored')
+
+		self.panel.calibrationDone()
+
+	def measureComaFree(self, tilt_value):
+		calibration_client = self.calibration_clients['beam tilt']
+		cftilt = calibration_client.measureComaFree(tilt_value)
+		print 'COMA-FREE', cftilt
 
 	def __calibrateDefocus(self, beam_tilt, defocii):
 		if self.initInstruments():

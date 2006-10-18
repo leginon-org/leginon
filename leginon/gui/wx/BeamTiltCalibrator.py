@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/BeamTiltCalibrator.py,v $
-# $Revision: 1.20 $
+# $Revision: 1.21 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-24 21:48:24 $
+# $Date: 2006-10-18 21:45:36 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -57,7 +57,7 @@ class Panel(gui.wx.Calibrator.Panel):
 	def initialize(self):
 		gui.wx.Calibrator.Panel.initialize(self)
 
-		choices = ['Defocus', 'Stigmator']
+		choices = ['Defocus', 'Stigmator', 'Coma-free']
 		self.parameter = wx.Choice(self.toolbar, -1, choices=choices)
 		self.parameter.SetSelection(0)
 
@@ -72,6 +72,7 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SET_BEAMTILT, 'beamtiltset', shortHelpString='Rotation Center To Scope')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_EDIT, 'edit', shortHelpString='Edit current calibration')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE_COMAFREE, 'ruler', shortHelpString='Measure Coma-free')
 
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
 
@@ -83,11 +84,13 @@ class Panel(gui.wx.Calibrator.Panel):
 		gui.wx.Calibrator.Panel.onNodeInitialized(self)
 
 		self.measure_dialog = MeasureDialog(self)
+		self.comafree_dialog = MeasureComafreeDialog(self)
 
 		self.Bind(gui.wx.Events.EVT_EDIT_FOCUS_CALIBRATION, self.onEditFocusCalibration)
 
 		self.toolbar.Bind(wx.EVT_TOOL, self.onParameterSettingsTool, id=gui.wx.ToolBar.ID_PARAMETER_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool, id=gui.wx.ToolBar.ID_MEASURE)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureComafreeTool, id=gui.wx.ToolBar.ID_MEASURE_COMAFREE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEucentricFocusFromScope, id=gui.wx.ToolBar.ID_GET_INSTRUMENT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEucentricFocusToScope, id=gui.wx.ToolBar.ID_SET_INSTRUMENT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRotationCenterFromScope, id=gui.wx.ToolBar.ID_GET_BEAMTILT)
@@ -173,12 +176,17 @@ class Panel(gui.wx.Calibrator.Panel):
 	def onMeasureTool(self, evt):
 		self.measure_dialog.Show()
 
+	def onMeasureComafreeTool(self, evt):
+		self.comafree_dialog.Show()
+
 	def onParameterSettingsTool(self, evt):
 		parameter = self.parameter.GetStringSelection()
 		if parameter == 'Defocus':
 			dialog = DefocusSettingsDialog(self)
 		elif parameter == 'Stigmator':
 			dialog = StigmatorSettingsDialog(self)
+		elif parameter == 'Coma-free':
+			dialog = ComafreeSettingsDialog(self)
 		else:
 			raise RuntimeError
 		dialog.ShowModal()
@@ -191,6 +199,8 @@ class Panel(gui.wx.Calibrator.Panel):
 			threading.Thread(target=self.node.calibrateDefocus).start()
 		elif parameter == 'Stigmator':
 			threading.Thread(target=self.node.calibrateStigmator).start()
+		elif parameter == 'Coma-free':
+			threading.Thread(target=self.node.calibrateComaFree).start()
 		else:
 			raise RuntimeError
 
@@ -258,6 +268,58 @@ class StigmatorSettingsDialog(gui.wx.Settings.Dialog):
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz]
+
+class ComafreeSettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+
+		self.widgets['comafree beam tilt'] = FloatEntry(self, -1, chars=9)
+		self.widgets['comafree misalign'] = FloatEntry(self, -1, chars=9)
+
+		sz = wx.GridBagSizer(5, 5)
+
+		label = wx.StaticText(self, -1, 'Beam tilt (+/-)')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['comafree beam tilt'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+
+		label = wx.StaticText(self, -1, 'Misalignment (+/-)')
+		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['comafree misalign'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+
+		sb = wx.StaticBox(self, -1, 'Coma-free Calibration')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+
+		return [sbsz]
+
+class MeasureComafreeDialog(wx.Dialog):
+	def __init__(self, parent):
+		self.node = parent.node
+
+		wx.Dialog.__init__(self, parent, -1, 'Measure Coma-free Alignment')
+
+		self.measure = wx.Button(self, -1, 'Measure')
+		self.Bind(wx.EVT_BUTTON, self.onMeasureButton, self.measure)
+
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.measure, (0, 0), (1, 1), wx.EXPAND)
+
+		sbsz = wx.GridBagSizer(5, 5)
+
+		tiltlabel = wx.StaticText(self, -1, 'Tilt (radian):')
+		self.tiltvalue = FloatEntry(self, -1, allownone=False, chars=5, value='0.01')
+		sbsz.Add(tiltlabel, (0,0), (1,1))
+		sbsz.Add(self.tiltvalue, (0,1), (1,1))
+
+		self.sizer = wx.GridBagSizer(5, 5)
+		self.sizer.Add(sbsz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(self.measure, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
+
+		self.SetSizerAndFit(self.sizer)
+
+	def onMeasureButton(self, evt):
+		btilt = self.tiltvalue.GetValue()
+		threading.Thread(target=self.node.measureComaFree, args=(btilt,)).start()
 
 class MeasureDialog(wx.Dialog):
 	def __init__(self, parent):
