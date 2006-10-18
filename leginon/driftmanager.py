@@ -198,7 +198,7 @@ class DriftManager(watcher.Watcher):
 		corchan = 0
 		imagedata = self.acquireImage(channel=corchan)
 		if imagedata is None:
-			return 'aborted'
+			return 'aborted', None
 		numdata = imagedata['image']
 		t0 = imagedata['scope']['system time']
 		self.correlator.insertImage(numdata)
@@ -269,7 +269,7 @@ class DriftManager(watcher.Watcher):
 
 			## check for abort
 			if self.abortevent.isSet():
-				return 'aborted', current_drift
+				return 'aborted', d
 
 	def abort(self):
 		self.abortevent.set()
