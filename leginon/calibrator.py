@@ -77,7 +77,12 @@ class Calibrator(node.Node):
 		return 0
 
 	def acquireImage(self):
-		status = self.initInstruments()
+		try:
+			status = self.initInstruments()
+		except Exception, e:
+			self.logger.exception('Acquisition failed: %s' % e)
+			self.panel.acquisitionDone()
+			return
 		if status:
 			self.panel.acquisitionDone()
 			return
