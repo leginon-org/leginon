@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/beamtiltcalibrator.py,v $
-# $Revision: 1.77 $
+# $Revision: 1.78 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-18 21:45:36 $
+# $Date: 2006-10-18 21:47:43 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -260,6 +260,12 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def measure(self):
 		beam_tilt = self.settings['measure beam tilt']
+		if not beam_tilt > 0:
+			self.logger.error('measure beam tilt must be greater than 0...')
+			args = (None, {})
+			self.panel.measurementDone(*args)
+			return
+
 		correct_tilt = self.settings['correct tilt']
 
 		self.logger.info('Measuring defocus and objective stigmator...')
