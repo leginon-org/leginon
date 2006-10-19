@@ -79,7 +79,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if 'images' not in imagelistdata or imagelistdata['images'] is None:
 			return
 
-		querydata = data.AcquistiionImageData(list=imagelistdata)
+		querydata = data.AcquisitionImageData(list=imagelistdata)
 		## research, but don't read images until later
 		images = self.research(querydata, readimages=False)
 		targetlist = self.newTargetList(queue=self.settings['queue'])
