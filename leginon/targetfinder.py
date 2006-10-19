@@ -113,13 +113,13 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			number += 1
 
 	def publishTargets(self, imagedata, typename, targetlist):
+		imagetargets = self.panel.getTargetPositions(typename)
+		if not imagetargets:
+			return
 		imagearray = imagedata['image']
 		lastnumber = self.lastTargetNumber(image=imagedata,
 																				session=self.session)
 		number = lastnumber + 1
-		imagetargets = self.panel.getTargetPositions(typename)
-		if not imagetargets:
-			return
 		for imagetarget in imagetargets:
 			column, row = imagetarget
 			drow = row - imagearray.shape[0]/2
