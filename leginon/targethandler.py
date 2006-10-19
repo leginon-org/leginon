@@ -256,6 +256,11 @@ class TargetHandler(object):
 		except IndexError:
 			return None
 
+	def markTargetsDone(self, targets):
+		for target in targets:
+			done_target = data.AcquisitionImageTargetData(initializer=target, status='done')
+			self.publish(done_target, database=True)
+
 class TargetWaitHandler(TargetHandler):
 	eventinputs = TargetHandler.eventinputs + [event.TargetListDoneEvent]
 	def __init__(self):

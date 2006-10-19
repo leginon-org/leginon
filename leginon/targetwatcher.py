@@ -250,11 +250,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.setStatus('processing')
 		return rejectstatus
 
-	def markTargetsDone(self, targets):
-		for target in targets:
-			done_target = data.AcquisitionImageTargetData(initializer=target, status='done')
-			self.publish(done_target, database=True)
-
 	def handleTargetListDone(self, targetlistdoneevent):
 		targetlistid = targetlistdoneevent['targetlistid']
 		status = targetlistdoneevent['status']
