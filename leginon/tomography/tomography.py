@@ -19,7 +19,7 @@ class Tomography(acquisition.Acquisition):
     eventinputs = acquisition.Acquisition.eventinputs
     eventoutputs = acquisition.Acquisition.eventoutputs + \
                     [event.AlignZeroLossPeakPublishEvent,
-					 event.MeasureDosePublishEvent]
+                        event.MeasureDosePublishEvent]
 
     panelclass = gui.wx.tomography.Tomography.Panel
     settingsclass = data.TomographySettingsData
@@ -54,12 +54,16 @@ class Tomography(acquisition.Acquisition):
         'mean threshold': 100.0,
         'collection threshold': 90.0,
         'tilt pause time': 1.0,
+        'measure defocus': False,
     }
 
     def __init__(self, *args, **kwargs):
         acquisition.Acquisition.__init__(self, *args, **kwargs)
         self.calclients['pixel size'] = \
                 calibrationclient.PixelSizeCalibrationClient(self)
+        self.calclients['beam tilt'] = \
+                calibrationclient.BeamTiltCalibrationClient(self)
+        self.btcalclient = self.calclients['beam tilt'] 
 
         self.tilts = tilts.Tilts()
         self.exposure = exposure.Exposure()
@@ -375,4 +379,23 @@ class Tomography(acquisition.Acquisition):
         if self.settings['measure dose']:
             self.measureDose(preset_name)
         acquisition.Acquisition.processTargetData(self, *args, **kwargs)
+
+    def measureDefocus(self):
+        beam_tilt = 0.01
+        publish_images = False
+        drift_threshold = None
+        stig = False
+        target = None
+        correct_tilt = True
+        correlation_type = 'phase'
+        settle = 0.5
+        args = (beam_tilt, publish_images, drift_threshold, stig, target, correct_tilt, correlation_type, settle)
+        try:
+            result = self.calclients['beam tilt'].measureDefocusStig(*args)
+        except calibrationclient.NoMatrixCalibrationError, e:
+            self.logger.error('Measurement failed without calibration: %s' % e)
+            return None
+        delta_defocus = result['defocus']
+        fit = result['min']
+        return delta_defocus
 

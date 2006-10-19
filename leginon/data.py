@@ -1421,10 +1421,10 @@ class ReferenceRequestData(InSessionData):
 	typemap = classmethod(typemap)
 
 class AlignZeroLossPeakData(ReferenceRequestData):
-    pass
+	pass
 
 class MeasureDoseData(ReferenceRequestData):
-    pass
+	pass
 
 class ImageTargetListData(InSessionData):
 	def typemap(cls):
@@ -2205,8 +2205,8 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('tilt max', float),
 			('tilt start', float),
 			('tilt step', float),
-            ('equally sloped', bool),
-            ('equally sloped n', int),
+			('equally sloped', bool),
+			('equally sloped n', int),
 			('xcf bin', int),
 			('run buffer cycle', bool),
 			('align zero loss peak', bool),
@@ -2216,7 +2216,8 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('max exposure', float),
 			('mean threshold', float),
 			('collection threshold', float),
-            ('tilt pause time', float),
+			('tilt pause time', float),
+			('measure defocus', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -2232,6 +2233,7 @@ class TomographyPredictionData(InSessionData):
 			('pixel size', float),
 			#('image', TiltSeriesImageData),
 			('image', AcquisitionImageData),
+            ('measured defocus', float),
 		)
 	typemap = classmethod(typemap)
 

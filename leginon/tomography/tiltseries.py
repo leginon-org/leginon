@@ -1,5 +1,6 @@
 import data
 import instrument
+from acquisition import setImageFilename
 
 class TiltSeries(object):
     def __init__(self, node, settings, session, preset, target, emtarget):
@@ -45,8 +46,9 @@ class TiltSeries(object):
         # TODO: put in seperate data
         #tilt_series_image_data['shift'] = None
         tilt_series_image_data['tilt series'] = self.tilt_series_data
+        tilt_series_image_data['version'] = 0
 
-        self.node.setImageFilename(tilt_series_image_data)
+        setImageFilename(tilt_series_image_data)
 
         # HACK: fix me
         tilt_series_image_data['filename'] += '_%03d' % (self.image_counter + 1)

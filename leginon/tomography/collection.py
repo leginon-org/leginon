@@ -165,9 +165,17 @@ class Collection(object):
             predicted_shift['x'] = predicted_position['x'] - position['x']
             predicted_shift['y'] = predicted_position['y'] - position['y']
 
+            measured_defocus = defocus
             predicted_shift['z'] = -defocus
             defocus = defocus0 - predicted_position['z']*pixel_size
             predicted_shift['z'] += defocus
+
+            if self.settings['measure defocus']:
+                measured_defocus += self.node.measureDefocus()
+                self.logger.info('Measured defocus: %g meters.' % measured_defocus)
+                self.logger.info('Predicted defocus: %g meters.' % defocus)
+            else:
+                measured_defocus = None
 
             try:
                 self.node.setPosition(self.settings['move type'], predicted_position)
@@ -223,6 +231,7 @@ class Collection(object):
                     break
                 except Exception, e:
                     self.logger.warning('Retrying save image: %s.' % (e,))
+                    raise
                 for tick in range(60):
                     self.checkAbort()
                     time.sleep(1.0)
@@ -304,6 +313,7 @@ class Collection(object):
                 raw_correlation,
                 self.pixel_size,
                 tilt_series_image_data,
+                measured_defocus,
             )
             self.savePredictionInfo(*args)
 
@@ -314,7 +324,7 @@ class Collection(object):
 
         self.viewer.clearImages()
 
-    def savePredictionInfo(self, predicted_position, predicted_shift, position, correlation, raw_correlation, pixel_size, image):
+    def savePredictionInfo(self, predicted_position, predicted_shift, position, correlation, raw_correlation, pixel_size, image, measured_defocus=None):
         initializer = {
             'session': self.node.session,
             'predicted position': predicted_position,
@@ -324,6 +334,7 @@ class Collection(object):
             'raw correlation': raw_correlation,
             'pixel size': pixel_size,
             'image': image,
+            'measured defocus': measured_defocus,
         }
         tomo_prediction_data = data.TomographyPredictionData(initializer=initializer)
                     

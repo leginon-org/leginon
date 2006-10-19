@@ -8,6 +8,16 @@ from gui.wx.Entry import Entry, FloatEntry, IntEntry
 from gui.wx.Presets import EditPresetOrder
 import gui.wx.tomography.TomographyViewer as TomoViewer
 
+class ImagePanel(object):
+    def setImage(self, image):
+        pass
+
+    def setTargets(self, type_name, targets):
+        pass
+
+    def setImageType(self, type_name, iamge):
+        pass
+
 class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
     def initialize(self):
         szs = gui.wx.Acquisition.SettingsDialog.initialize(self)
@@ -143,6 +153,8 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
                                                             allownone=False,
                                                             chars=5,
                                                             value='1.0')
+        self.widgets['measure defocus'] = wx.CheckBox(self, -1, 'Measure defocus')
+
         mtsz = wx.GridBagSizer(5, 5)
         label = wx.StaticText(self, -1, 'Consider images with less than')
         mtsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -171,6 +183,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         miscsz.Add(mtsz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         miscsz.Add(ctsz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         miscsz.Add(tptsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        miscsz.Add(self.widgets['measure defocus'], (3, 0), (1, 1), wx.ALIGN_CENTER)
         miscsz.AddGrowableRow(0)
         miscsz.AddGrowableRow(1)
         miscsz.AddGrowableRow(2)
@@ -200,6 +213,7 @@ class Panel(gui.wx.Acquisition.Panel):
         self.toolbar.AddTool(gui.wx.ToolBar.ID_CHECK_DOSE,
                              'dose',
                              shortHelpString='Check dose')
+        self.imagepanel = ImagePanel()
 
     def addImagePanel(self):
         self.viewer = TomoViewer.Viewer(self, -1)
