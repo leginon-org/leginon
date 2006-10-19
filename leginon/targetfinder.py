@@ -62,7 +62,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		# only want filename without path and extension
 		filename = os.path.split(filename)[1]
 		filename = '.'.join(filename.split('.')[:-1])
-		q = data.AcquisitionImageData(session=self.session, filename=filename)
+		q = data.AcquisitionImageData(filename=filename)
 		results = self.research(datainstance=q)
 		if not results:
 			return None
