@@ -80,7 +80,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 			self.publish(newtargetlistdata, database=True, dbforce=True)
 			for newtarget in newtargets:
 				newtarget['list'] = newtargetlistdata
-				self.publish(newtarget, database=True)
+				self.publish(newtarget, database=True, dbforce=Force)
 			return newtargetlistdata
 
 	def filterTargets(self, targetlist):
