@@ -206,9 +206,10 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.publish(donetarget, database=True)
 			self.logger.debug('Done target published')
 
-		# HACK: ...
-		if goodtargets:
-			self.reportTargetListDone(newdata, targetliststatus)
+		# (Hack removed: Sometimes we are processing an empty
+		# target list. The TargetListDone event still has to go
+		# back to the other node or else application hangs.
+		self.reportTargetListDone(newdata, targetliststatus)
 		self.setStatus('idle')
 
 	def waitForRejects(self):
