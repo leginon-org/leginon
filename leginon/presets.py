@@ -4,10 +4,10 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.238 $
+# $Revision: 1.239 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-22 19:22:33 $
-# $Author: suloway $
+# $Date: 2006-10-19 23:57:03 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -289,19 +289,25 @@ class PresetsManager(node.Node):
 		self.setStatus('processing')
 		pname = ievent['name']
 		emtarget = ievent['emtarget']
-		try:
-			if emtarget is None or emtarget['movetype'] is None:
-				self.logger.info('Changing preset to "%s"' % pname)
-				self._cycleToScope(pname)
+		failwait = 60
+		failtries = 3
+		for i in range(failtries):
+			try:
+				if emtarget is None or emtarget['movetype'] is None:
+					self.logger.info('Changing preset to "%s"' % pname)
+					self._cycleToScope(pname)
+				else:
+					self.logger.info('Changing preset to "%s" and targeting' % pname)
+					self.targetToScope(pname, emtarget)
+			except PresetChangeError:
+				self.logger.info('preset request to "%s" failed, waiting %d seconds to try again' % (pname,failwait))
+				time.sleep(failwait)
+				pass
 			else:
-				self.logger.info('Changing preset to "%s" and targeting' % pname)
-				self.targetToScope(pname, emtarget)
-		except PresetChangeError:
-			self.logger.info('preset request to "%s" failed' % pname)
-			pass
-		else:
-			self.logger.info('Preset changed to "%s"' % pname)
-			pass
+				self.logger.info('Preset changed to "%s"' % pname)
+				break
+
+		self.logger.error('preset request to "%s" failed %d times' % (pname,failtries))
 
 		if tmplock:
 						self.unlock(ievent['node'])
