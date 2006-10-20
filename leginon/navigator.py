@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
-# $Revision: 1.114 $
+# $Revision: 1.115 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-18 22:04:04 $
+# $Date: 2006-10-20 00:46:30 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -230,10 +230,10 @@ class Navigator(node.Node):
 
 		oldshape = self.oldimagedata['image'].shape
 		location = oldshape[0]/2.0-0.5+self.origmove[0], oldshape[1]/2.0-0.5+self.origmove[1]
-		im1 = imagefun.crop_at(self.origimagedata['image'], location, limit)
+		im1 = imagefun.crop_at(self.origimagedata['image'], location, limit, mode='constant', cval=0.0)
 		im2 = imagefun.crop_at(self.newimagedata['image'], 'center', limit)
 		pc = correlator.phase_correlate(im2,im1,zero=False)
-		subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0,0), limit=limit)
+		subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0.5,0.5), limit=limit)
 		res = self.peakfinder.getResults()
 		pixelpeak = res['pixel peak']
 		unsignedpixelpeak = res['unsigned pixel peak']
