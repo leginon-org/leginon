@@ -39,6 +39,8 @@ class InvalidPresetsSequence(Exception):
 	pass
 
 def setImageFilename(imagedata):
+	if imagedata['filename'] is not None:
+		return
 	listlabel = ''
 	## use either data id or target number
 	if imagedata['target'] is None or imagedata['target']['number'] is None:
