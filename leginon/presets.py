@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.239 $
+# $Revision: 1.240 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-19 23:57:03 $
+# $Date: 2006-10-20 00:33:19 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -291,6 +291,7 @@ class PresetsManager(node.Node):
 		emtarget = ievent['emtarget']
 		failwait = 60
 		failtries = 3
+		succeed = False
 		for i in range(failtries):
 			try:
 				if emtarget is None or emtarget['movetype'] is None:
@@ -302,12 +303,13 @@ class PresetsManager(node.Node):
 			except PresetChangeError:
 				self.logger.info('preset request to "%s" failed, waiting %d seconds to try again' % (pname,failwait))
 				time.sleep(failwait)
-				pass
 			else:
 				self.logger.info('Preset changed to "%s"' % pname)
+				succeed = True
 				break
 
-		self.logger.error('preset request to "%s" failed %d times' % (pname,failtries))
+		if not succeed:
+			self.logger.error('preset request to "%s" failed %d times' % (pname,failtries))
 
 		if tmplock:
 						self.unlock(ievent['node'])
