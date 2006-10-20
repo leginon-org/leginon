@@ -84,8 +84,18 @@ while (trial <3)
   
   %End: Initialization 
   
-  
-  file = readmrc(filename); 
+
+  % get filename extension  
+  fileType=filename((max(findstr(filename,'.'))+1):length(filename));
+
+  % read mrc or tiff formatted files
+  switch fileType
+     case {'mrc','MRC'}
+        file = readmrc(filename);
+     case {'tif','TIF','tiff','TIFF'}
+        file=imread(filename);
+  end
+
   filesz = size(file); 
   file = file - mean(file(:)); 
   
