@@ -72,8 +72,6 @@ class PeakFinder(object):
 				#print 'GUESS,LIMIT', guess, limit
 				cropcenter = limit[0]/2.0-0.5, limit[1]/2.0-0.5
 				im = imagefun.crop_at(self.image, guess, limit)
-				import Mrc
-				Mrc.numeric_to_mrc(im, 'im.mrc')
 			else:
 				cropcenter = None
 				im = self.image
