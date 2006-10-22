@@ -71,7 +71,7 @@ function graphXY($prediction, $position, $correlation, $tilts, $title, $width, $
     $graph->Stroke();
 }
 
-function graphZ($prediction, $tilts, $pixel_size, $title, $width, $height) {
+function graphZ($prediction, $position, $tilts, $pixel_size, $title, $width, $height) {
 		// --- to avoid jpgraph plot warning image --- merci beaucoup --- //
 		if (count($prediction)==1)
 			$prediction[]=$prediction[0];
@@ -87,11 +87,18 @@ function graphZ($prediction, $tilts, $pixel_size, $title, $width, $height) {
 
     for($i = 0; $i < count($prediction); $i++) {
         $prediction[$i] *= $pixel_size[$i]/1e-6;
+        $position[$i] /= 1e-6;
     }
     $predictionplot= new LinePlot($prediction);
     $predictionplot->SetColor("blue");
+    $predictionplot->SetLegend("Prediction");
+
+    $positionplot= new LinePlot($position);
+    $positionplot->SetColor("orange");
+    $positionplot->SetLegend("Measurement");
 
     $graph->Add($predictionplot);
+    $graph->Add($positionplot);
 
     $graph->title->SetFont(FF_ARIAL, FS_BOLD, 14);
     $graph->title->Set($title);
@@ -109,6 +116,11 @@ function graphZ($prediction, $tilts, $pixel_size, $title, $width, $height) {
     $graph->yaxis->title->SetFont(FF_ARIAL);
     $graph->yaxis->title->Set("Prediction (microns)");
     $graph->yaxis->SetTitleMargin(50);
+
+    $graph->legend->SetFillColor('#FFFFFF@0.25');
+    $graph->legend->SetFont(FF_ARIAL);
+    $graph->legend->SetAbsPos(20, 20, 'right', 'top');
+    $graph->legend->SetLayout(LEGEND_HOR);
 
     $graph->Stroke();
 }
@@ -247,7 +259,8 @@ $pixel_size = $predictionData['pixel size'];
 
 if ($axis == 'z') {
     $prediction = $predictionData['SUBD|predicted position|'.$axis];
-    graphZ($prediction, $tilts, $pixel_size, $title, $width, $height);
+    $position = $predictionData['measured defocus'];
+    graphZ($prediction, $position, $tilts, $pixel_size, $title, $width, $height);
 } else if ($axis == 'x' || $axis == 'y') {
     $prediction = $predictionData['SUBD|predicted position|'.$axis];
 #    $position = $predictionData['SUBD|correlated position|'.$axis];

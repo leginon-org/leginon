@@ -19,6 +19,9 @@ Tomography Summary
 <tr><td>
 <img src="graphdoserate.php?sessionId=<?php echo $sessionId; ?>&width=800&height=500">
 </td></tr>
+<tr><td>
+<img src="graphenergyshift.php?sessionId=<?php echo $sessionId; ?>&width=800&height=500">
+</td></tr>
 </table>
 </div>
 

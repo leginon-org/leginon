@@ -239,6 +239,14 @@ class Tomography {
         $results = $this->mysql->getSQLResult($query);
         return $results;
     }
+
+    function getEnergyShift($session_id) {
+        if($session_id == NULL)
+            return array();
+        $query = 'SELECT `before`, `after`, DEF_timestamp AS timestamp, UNIX_TIMESTAMP(DEF_timestamp) AS unix_timestamp FROM InternalEnergyShiftData WHERE `REF|SessionData|session`='.$session_id.' ORDER BY timestamp;';
+        $results = $this->mysql->getSQLResult($query);
+        return $results;
+    }
 }
 
 $mysql = &new mysql($DB_HOST, $DB_USER, $DB_PASS, $DB);
