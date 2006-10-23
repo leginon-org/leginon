@@ -9,14 +9,21 @@ from gui.wx.Presets import EditPresetOrder
 import gui.wx.tomography.TomographyViewer as TomoViewer
 
 class ImagePanel(object):
+    def __init__(self, viewer):
+        self.viewer = viewer
+
     def setImage(self, image):
         pass
 
     def setTargets(self, type_name, targets):
-        pass
+        if type_name == 'Peak':
+            self.viewer.setXCShift(targets[0], center=False)
 
-    def setImageType(self, type_name, iamge):
-        pass
+    def setImageType(self, type_name, image):
+        if type_name == 'Image':
+            self.viewer.addImage(image)
+        elif type_name == 'Correlation':
+            self.viewer.setXC(image)
 
 class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
     def initialize(self):
@@ -213,7 +220,7 @@ class Panel(gui.wx.Acquisition.Panel):
         self.toolbar.AddTool(gui.wx.ToolBar.ID_CHECK_DOSE,
                              'dose',
                              shortHelpString='Check dose')
-        self.imagepanel = ImagePanel()
+        self.imagepanel = ImagePanel(self.viewer)
 
     def addImagePanel(self):
         self.viewer = TomoViewer.Viewer(self, -1)
