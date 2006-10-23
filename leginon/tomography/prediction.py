@@ -32,7 +32,7 @@ class TiltGroup(object):
 class Prediction(object):
     def __init__(self):
         self.tilt_groups = []
-        self.parameters = [0, 0, 0]
+        self.parameters = [0, 0]
 
         self.min_points = 16
         n = 2**(11 + 4)
@@ -92,7 +92,8 @@ class Prediction(object):
             tilt0 = tilt_group.tilts[0]
             sin_tilts = scipy.sin(scipy.array([tilt0, tilt]))
             cos_tilts = scipy.cos(scipy.array([tilt0, tilt]))
-            result = model(self.parameters, [x0], [y0], [sin_tilts], [cos_tilts])
+            parameters = (self.parameters[0], self.parameters[-1])
+            result = model(parameters, [x0], [y0], [sin_tilts], [cos_tilts])
             z0 = result[0][0][2]
             z = result[0][1][2] - z0
 
@@ -101,7 +102,6 @@ class Prediction(object):
             'y': float(y),
             'z': float(z),
             'phi': float(self.parameters[0]),
-            'optical axis': float(self.parameters[1]),
             'z0': float(self.parameters[-1]),
         }
 
@@ -113,7 +113,8 @@ class Prediction(object):
         y0 = tilt_group.ys[0]
         sin_tilts = scipy.sin(scipy.array(tilts))
         cos_tilts = scipy.cos(scipy.array(tilts))
-        return model(self.parameters, [x0], [y0], [sin_tilts], [cos_tilts])[0]
+        parameters = (self.parameters[0], self.parameters[-1])
+        return model(parameters, [x0], [y0], [sin_tilts], [cos_tilts])[0]
 
     def calculate(self):
         if len(self.tilt_groups[-1]) < 3:
@@ -135,7 +136,7 @@ class Prediction(object):
         return True
 
 def leastSquaresModel(tilt_groups):
-    parameters = [0] + [0] + len(tilt_groups)*[0]
+    parameters = [0] + len(tilt_groups)*[0]
     x0_list = []
     y0_list = []
     sin_tilts_list = []
@@ -181,13 +182,11 @@ def tiltMatrix(tilt):
 
 def getParameters(parameters):
     phi = parameters[0]
-    optical_axis = parameters[1]
-    zs = scipy.array(parameters[2:], scipy.dtype('d'))
-
-    return phi, optical_axis, zs
+    zs = scipy.array(parameters[1:], scipy.dtype('d'))
+    return phi, zs
 
 def model(parameters, x0_list, y0_list, sin_tilts_list, cos_tilts_list):
-    phi, optical_axis, zs = getParameters(parameters)
+    phi, zs = getParameters(parameters)
     sin_phi = scipy.sin(phi)
     cos_phi = scipy.cos(phi)
     position_groups = []
@@ -200,10 +199,8 @@ def model(parameters, x0_list, y0_list, sin_tilts_list, cos_tilts_list):
         # transform position, rotate, inverse transform to get rotated x, y, z
         positions[:, 0] = cos_phi*x0_list[i] + sin_phi*y0_list[i]
         positions[:, 1] = -sin_phi*x0_list[i] + cos_phi*y0_list[i]
-        positions[:, 0] -= optical_axis
         positions[:, 2] = sin_tilts*positions[:, 0] + cos_tilts*zs[i]
         positions[:, 0] = cos_tilts*positions[:, 0] - sin_tilts*zs[i]
-        positions[:, 0] += optical_axis
         x_positions = cos_phi*positions[:, 0] - sin_phi*positions[:, 1]
         y_positions = sin_phi*positions[:, 0] + cos_phi*positions[:, 1]
         positions[:, 0] = x_positions
@@ -250,70 +247,9 @@ def _leastSquaresXY(tilts, positions, tilt):
         position += x[j]*tilt**j
     return position
 
-def jacobian(parameters, x0_list, y0_list, sin_tilts_list, cos_tilts_list, x_list, y_list):
-    print parameters
-    phi, n, z0 = getParameters(parameters)
-    print phi, n, z0
-    sin_phi = scipy.sin(phi)
-    cos_phi = scipy.cos(phi)
-    groups = []
-    m = len(sin_tilts_list)
-    for i in range(m):
-        x0 = x0_list[i]
-        y0 = y0_list[i]
-        sin_theta = sin_tilts_list[i]
-        cos_theta = cos_tilts_list[i]
-
-        shape = (sin_theta.shape[0], len(parameters))
-        x_jacobians = scipy.zeros(shape, 'd')
-        y_jacobians = scipy.zeros(shape, 'd')
-
-        # rows
-        #[-2*cos_theta*cos_phi*x0*sin_phi+2*cos_theta*cos_phi**2*y0-cos_theta*y0+sin_phi*cos_theta*n+sin_phi*z0*sin_theta-sin_phi*n+2*sin_phi*x0*cos_phi-2*y0*cos_phi**2+y0, -(cos_theta-1)*cos_phi, -sin_theta*cos_phi]
-        #[-cos_theta*x0+2*cos_theta*x0*cos_phi**2+2*sin_phi*cos_theta*y0*cos_phi-cos_phi*cos_theta*n-cos_phi*z0*sin_theta+cos_phi*n+x0-2*x0*cos_phi**2-2*cos_phi*y0*sin_phi, -(cos_theta-1)*sin_phi, -sin_theta*sin_phi]
-        #[-(x0*sin_phi-y0*cos_phi)*sin_theta, -sin_theta, cos_theta]
-
-        indices = scipy.arange(2, x_jacobians.shape[1])
-        x_jacobians[:, 0] = -2*cos_theta*cos_phi*x0*sin_phi+2*cos_theta*cos_phi**2*y0-cos_theta*y0+sin_phi*cos_theta*n+sin_phi*z0*sin_theta-sin_phi*n+2*sin_phi*x0*cos_phi-2*y0*cos_phi**2+y0
-        x_jacobians[:, 1] = -(cos_theta-1)*cos_phi
-        for j in indices:
-            x_jacobians[:, j] = -sin_theta*cos_phi
-
-        indices = scipy.arange(2, y_jacobians.shape[1])
-        y_jacobians[:, 0] = -cos_theta*x0+2*cos_theta*x0*cos_phi**2+2*sin_phi*cos_theta*y0*cos_phi-cos_phi*cos_theta*n-cos_phi*z0*sin_theta+cos_phi*n+x0-2*x0*cos_phi**2-2*cos_phi*y0*sin_phi
-        y_jacobians[:, 1] = -(cos_theta-1)*sin_phi
-        for j in indices:
-            y_jacobians[:, j] = -sin_theta*sin_phi
-
-        jacobians = scipy.zeros((shape[0]*2, shape[1]))
-        jacobians[:shape[0], :] = x_jacobians
-        jacobians[shape[0]:, :] = y_jacobians
-
-        groups.append(jacobians)
-
-    groups = scipy.array(groups, scipy.dtype('d'))
-    groups.shape = (groups.size/groups.shape[2], groups.shape[2])
-    print groups
-    print
-    return groups
-
 def leastSquaresXY(tilts, xs, ys, tilt, n=5):
     position = scipy.zeros(2, scipy.dtype('d'))
     for i, positions in enumerate((xs, ys)):
         position[i] = _leastSquaresXY(tilts[-n:], positions[-n:], tilt)
     return position
-
-if __name__ == '__main__':
-    parameters = (45, 0, 0)
-    x0 = 1
-    y0 = 2
-    tilts = scipy.array((0, 15, 30, 45), 'd')*scipy.pi/180
-    sin_tilts = scipy.sin(tilts)
-    cos_tilts = scipy.cos(tilts)
-    x = scipy.array(scipy.arange(0, 4), 'd')
-    y = scipy.array((0, 0, 0, 0), 'd')
-    result = residuals(parameters, [x0], [y0], [sin_tilts], [cos_tilts], [x], [y])
-    print result
-    result = jacobian(parameters, [x0], [y0], [sin_tilts], [cos_tilts], [x], [y])
-    print result
 
