@@ -2234,6 +2234,7 @@ class TomographyPredictionData(InSessionData):
 			#('image', TiltSeriesImageData),
 			('image', AcquisitionImageData),
             ('measured defocus', float),
+            ('measured fit', float),
 		)
 	typemap = classmethod(typemap)
 
