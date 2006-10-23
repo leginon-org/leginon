@@ -166,7 +166,7 @@ class Collection(object):
             predicted_shift['y'] = predicted_position['y'] - position['y']
 
             predicted_shift['z'] = -defocus
-            defocus = defocus0 - predicted_position['z']*pixel_size
+            defocus = defocus0 + predicted_position['z']*pixel_size
             predicted_shift['z'] += defocus
 
             try:
@@ -175,8 +175,6 @@ class Collection(object):
                 self.logger.error('Calibration error: %s' % e) 
                 self.finalize()
                 raise Fail
-
-            self.node.setDefocus(defocus)
 
             m = 'Predicted position: %g, %g pixels, %g, %g meters.'
             self.logger.info(m % (predicted_position['x'],
@@ -194,6 +192,8 @@ class Collection(object):
             else:
                 measured_defocus = None
                 measured_fit = None
+
+            self.node.setDefocus(defocus)
 
             self.checkAbort()
 
