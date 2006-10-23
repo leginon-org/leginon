@@ -169,16 +169,6 @@ class Collection(object):
             defocus = defocus0 - predicted_position['z']*pixel_size
             predicted_shift['z'] += defocus
 
-            if self.settings['measure defocus']:
-                defocus_measurement = self.node.measureDefocus()
-                measured_defocus = defocus0 + defocus_measurement[0]
-                measured_fit = defocus_measurement[1]
-                self.logger.info('Measured defocus: %g meters.' % measured_defocus)
-                self.logger.info('Predicted defocus: %g meters.' % defocus)
-            else:
-                measured_defocus = None
-                measured_fit = None
-
             try:
                 self.node.setPosition(self.settings['move type'], predicted_position)
             except Exception, e:
@@ -194,6 +184,16 @@ class Collection(object):
                                   predicted_position['x']*pixel_size,
                                   predicted_position['y']*pixel_size))
             self.logger.info('Predicted defocus: %g meters.' % defocus)
+
+            if self.settings['measure defocus']:
+                defocus_measurement = self.node.measureDefocus()
+                measured_defocus = defocus0 + defocus_measurement[0]
+                measured_fit = defocus_measurement[1]
+                self.logger.info('Measured defocus: %g meters.' % -defocus_measurement[0])
+                self.logger.info('Predicted defocus: %g meters.' % defocus)
+            else:
+                measured_defocus = None
+                measured_fit = None
 
             self.checkAbort()
 
@@ -212,14 +212,15 @@ class Collection(object):
             image_data = self.instrument.getData(data.CorrectedCameraImageData)
             self.logger.info('Image acquired.')
 
+            image_mean = image_data['image'].mean()*10
             # HACK: fix me
             image_data['image'] = numarray.around(image_data['image']*10).astype(numarray.Int16)
 
             image = image_data['image']
 
-            if image.mean() < self.settings['mean threshold']:
+            if image_mean < self.settings['mean threshold']:
                 if i < (self.settings['collection threshold']/100.0)*len(tilts):
-                    self.logger.error('Image counts below threshold, aborting series...')
+                    self.logger.error('Image counts below threshold (mean of %.1f, threshold %.1f), aborting series...' % (image_mean, self.settings['mean threshold']))
                     self.finalize()
                     raise Abort
                 else:
