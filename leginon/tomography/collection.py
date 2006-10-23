@@ -65,9 +65,8 @@ class Collection(object):
                                                  self.target, self.emtarget)
         self.tilt_series.save()
 
-        #self.correlator = tiltcorrelator.Correlator(self.settings['xcf bin'],
-        self.correlator = tiltcorrelator.Correlator(self.preset['binning'],
-                                                    self.theta)
+        self.correlator = tiltcorrelator.Correlator(self.theta)
+        #self.settings['xcf bin']
 
         if self.settings['run buffer cycle']:
             self.runBufferCycle()
@@ -136,7 +135,7 @@ class Collection(object):
         self.logger.info('Collection loop completed.')
 
     def _loop(self, tilts, exposures):
-        pixel_size = self.pixel_size
+        pixel_size = self.pixel_size*self.preset['binning']['x']
 
         tilt0 = tilts[0]
         position0 = self.node.getPixelPosition(self.settings['move type'])
@@ -166,14 +165,13 @@ class Collection(object):
             predicted_shift['x'] = predicted_position['x'] - position['x']
             predicted_shift['y'] = predicted_position['y'] - position['y']
 
-            measured_defocus = defocus
             predicted_shift['z'] = -defocus
             defocus = defocus0 - predicted_position['z']*pixel_size
             predicted_shift['z'] += defocus
 
             if self.settings['measure defocus']:
                 defocus_measurement = self.node.measureDefocus()
-                measured_defocus += defocus_measurement[0]
+                measured_defocus = defocus0 - defocus_measurement[0]
                 measured_fit = defocus_measurement[1]
                 self.logger.info('Measured defocus: %g meters.' % measured_defocus)
                 self.logger.info('Predicted defocus: %g meters.' % defocus)
@@ -315,7 +313,7 @@ class Collection(object):
                 position,
                 correlation,
                 raw_correlation,
-                self.pixel_size,
+                pixel_size,
                 tilt_series_image_data,
                 measured_defocus,
                 measured_fit,

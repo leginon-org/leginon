@@ -201,8 +201,8 @@ def model(parameters, x0_list, y0_list, sin_tilts_list, cos_tilts_list):
         positions[:, 0] = cos_phi*x0_list[i] + sin_phi*y0_list[i]
         positions[:, 1] = -sin_phi*x0_list[i] + cos_phi*y0_list[i]
         positions[:, 0] -= optical_axis
-        positions[:, 2] = -sin_tilts*positions[:, 0] + cos_tilts*zs[i]
-        positions[:, 0] = cos_tilts*positions[:, 0] + sin_tilts*zs[i]
+        positions[:, 2] = sin_tilts*positions[:, 0] + cos_tilts*zs[i]
+        positions[:, 0] = cos_tilts*positions[:, 0] - sin_tilts*zs[i]
         positions[:, 0] += optical_axis
         x_positions = cos_phi*positions[:, 0] - sin_phi*positions[:, 1]
         y_positions = sin_phi*positions[:, 0] + cos_phi*positions[:, 1]

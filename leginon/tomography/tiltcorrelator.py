@@ -15,11 +15,10 @@ def hanning(size):
     return numarray.fromfunction(function, (size, size))
 
 class Correlator(object):
-    def __init__(self, binning, tilt_axis, correlation_binning=2):
+    def __init__(self, tilt_axis, correlation_binning=2):
         self.correlation = correlator.Correlator()
         self.peakfinder = peakfinder.PeakFinder()
         self.reset()
-        self.setBinning(binning)
         self.setCorrelationBinning(correlation_binning)
         self.hanning = None
         self.channel = None
@@ -29,12 +28,6 @@ class Correlator(object):
             return 0
         else:
             return 1
-
-    def getBinning(self):
-        return dict(self.binning)
-
-    def setBinning(self, binning):
-        self.binning = binning
 
     def getCorrelationBinning(self):
         return self.correlation_binning
@@ -101,8 +94,8 @@ class Correlator(object):
 
         self.raw_shift = {'x': columns, 'y': rows}
 
-        self.shift['x'] += self.raw_shift['x']*self.correlation_binning*self.binning['x']
-        self.shift['y'] -= self.raw_shift['y']*self.correlation_binning*self.binning['y']
+        self.shift['x'] += self.raw_shift['x']*self.correlation_binning
+        self.shift['y'] -= self.raw_shift['y']*self.correlation_binning
 
         self.swapQuadrants(pc)
 
