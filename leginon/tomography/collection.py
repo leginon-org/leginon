@@ -166,7 +166,7 @@ class Collection(object):
             predicted_shift['y'] = predicted_position['y'] - position['y']
 
             predicted_shift['z'] = -defocus
-            defocus = defocus0 + predicted_position['z']*pixel_size
+            defocus = defocus0 - predicted_position['z']*pixel_size
             predicted_shift['z'] += defocus
 
             try:
@@ -185,9 +185,9 @@ class Collection(object):
 
             if self.settings['measure defocus']:
                 defocus_measurement = self.node.measureDefocus()
-                measured_defocus = defocus0 + defocus_measurement[0]
+                measured_defocus = -defocus_measurement[0]
                 measured_fit = defocus_measurement[1]
-                self.logger.info('Measured defocus: %g meters.' % -defocus_measurement[0])
+                self.logger.info('Measured defocus: %g meters.' % measure_defocus)
                 self.logger.info('Predicted defocus: %g meters.' % defocus)
             else:
                 measured_defocus = None
