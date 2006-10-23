@@ -183,6 +183,8 @@ class Collection(object):
                                   predicted_position['y']*pixel_size))
             self.logger.info('Predicted defocus: %g meters.' % defocus)
 
+            self.node.setDefocus(defocus)
+
             if self.settings['measure defocus']:
                 defocus_measurement = self.node.measureDefocus()
                 measured_defocus = -defocus_measurement[0]
@@ -192,8 +194,6 @@ class Collection(object):
             else:
                 measured_defocus = None
                 measured_fit = None
-
-            self.node.setDefocus(defocus)
 
             self.checkAbort()
 
