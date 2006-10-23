@@ -65,7 +65,8 @@ class Collection(object):
                                                  self.target, self.emtarget)
         self.tilt_series.save()
 
-        self.correlator = tiltcorrelator.Correlator(self.settings['xcf bin'],
+        #self.correlator = tiltcorrelator.Correlator(self.settings['xcf bin'],
+        self.correlator = tiltcorrelator.Correlator(self.preset['binning'],
                                                     self.theta)
 
         if self.settings['run buffer cycle']:
@@ -171,11 +172,14 @@ class Collection(object):
             predicted_shift['z'] += defocus
 
             if self.settings['measure defocus']:
-                measured_defocus += self.node.measureDefocus()
+                defocus_measurement = self.node.measureDefocus()
+                measured_defocus += defocus_measurement[0]
+                measured_fit = defocus_measurement[1]
                 self.logger.info('Measured defocus: %g meters.' % measured_defocus)
                 self.logger.info('Predicted defocus: %g meters.' % defocus)
             else:
                 measured_defocus = None
+                measured_fit = None
 
             try:
                 self.node.setPosition(self.settings['move type'], predicted_position)
@@ -296,7 +300,10 @@ class Collection(object):
                                   position['y']*pixel_size))
 
             raw_correlation = self.correlator.getShift(True)
-            s = (raw_correlation['x'], raw_correlation['y'])
+            correlation_binning = self.correlator.getCorrelationBinning()
+            binning = self.correlator.getBinning()
+            s = (raw_correlation['x']/(correlation_binning*binning['x']),
+                 raw_correlation['y']/(correlation_binning*binning['y']))
             self.viewer.setXC(correlation_image, s)
 
             self.checkAbort()
@@ -314,6 +321,7 @@ class Collection(object):
                 self.pixel_size,
                 tilt_series_image_data,
                 measured_defocus,
+                measured_fit,
             )
             self.savePredictionInfo(*args)
 
@@ -324,7 +332,7 @@ class Collection(object):
 
         self.viewer.clearImages()
 
-    def savePredictionInfo(self, predicted_position, predicted_shift, position, correlation, raw_correlation, pixel_size, image, measured_defocus=None):
+    def savePredictionInfo(self, predicted_position, predicted_shift, position, correlation, raw_correlation, pixel_size, image, measured_defocus=None, measured_fit=None):
         initializer = {
             'session': self.node.session,
             'predicted position': predicted_position,
@@ -335,6 +343,7 @@ class Collection(object):
             'pixel size': pixel_size,
             'image': image,
             'measured defocus': measured_defocus,
+            'measured fit': measured_fit,
         }
         tomo_prediction_data = data.TomographyPredictionData(initializer=initializer)
                     

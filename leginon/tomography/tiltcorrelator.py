@@ -15,11 +15,12 @@ def hanning(size):
     return numarray.fromfunction(function, (size, size))
 
 class Correlator(object):
-    def __init__(self, binning, tilt_axis):
+    def __init__(self, binning, tilt_axis, correlation_binning=2):
         self.correlation = correlator.Correlator()
         self.peakfinder = peakfinder.PeakFinder()
         self.reset()
         self.setBinning(binning)
+        self.setCorrelationBinning(correlation_binning)
         self.hanning = None
         self.channel = None
 
@@ -29,8 +30,17 @@ class Correlator(object):
         else:
             return 1
 
+    def getBinning(self):
+        return dict(self.binning)
+
     def setBinning(self, binning):
-        pass
+        self.binning = binning
+
+    def getCorrelationBinning(self):
+        return self.correlation_binning
+
+    def setCorrelationBinning(self, correlation_binning):
+        self.correlation_binning = correlation_binning
 
     def setTiltAxis(self, tilt_axis):
         pass
@@ -64,7 +74,7 @@ class Correlator(object):
             raise ValueError
 
         padded_image = numarray.zeros(image.shape, image.type())
-        image = scipy.ndimage.zoom(image, 0.5)
+        image = scipy.ndimage.zoom(image, 1.0/self.correlation_binning)
 
         mean = image.mean()
         image -= mean
@@ -88,8 +98,8 @@ class Correlator(object):
         peak = self.peakfinder.pixelPeak(newimage=pc)
         rows, columns = self.peak2shift(peak, pc.shape)
 
-        rows *= 2
-        columns *= 2
+        rows *= self.correlation_binning
+        columns *= self.correlation_binning
 
         self.raw_shift = {'x': columns, 'y': rows}
 
@@ -105,6 +115,8 @@ class Correlator(object):
             shift = self.raw_shift.copy()
         else:
             shift = self.shift.copy()
+        shift['x'] *= self.binning['x']
+        shift['y'] *= self.binning['y']
         return shift
 
 if __name__ == '__main__':

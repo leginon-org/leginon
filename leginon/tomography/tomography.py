@@ -397,5 +397,5 @@ class Tomography(acquisition.Acquisition):
             return None
         delta_defocus = result['defocus']
         fit = result['min']
-        return delta_defocus
+        return delta_defocus, fit
 
