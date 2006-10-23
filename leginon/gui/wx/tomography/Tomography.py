@@ -17,7 +17,7 @@ class ImagePanel(object):
 
     def setTargets(self, type_name, targets):
         if type_name == 'Peak':
-            self.viewer.setXCShift(targets[0])
+            self.viewer.setXCShift(targets[0], center=False)
 
     def setImageType(self, type_name, image):
         if type_name == 'Image':
