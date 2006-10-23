@@ -98,13 +98,11 @@ class Correlator(object):
         peak = self.peakfinder.pixelPeak(newimage=pc)
         rows, columns = self.peak2shift(peak, pc.shape)
 
-        rows *= self.correlation_binning
-        columns *= self.correlation_binning
 
         self.raw_shift = {'x': columns, 'y': rows}
 
-        self.shift['x'] += self.raw_shift['x']
-        self.shift['y'] -= self.raw_shift['y']
+        self.shift['x'] += self.raw_shift['x']*self.correlation_binning*self.binning['x']
+        self.shift['y'] -= self.raw_shift['y']*self.correlation_binning*self.binning['y']
 
         self.swapQuadrants(pc)
 
@@ -115,8 +113,6 @@ class Correlator(object):
             shift = self.raw_shift.copy()
         else:
             shift = self.shift.copy()
-        shift['x'] *= self.binning['x']
-        shift['y'] *= self.binning['y']
         return shift
 
 if __name__ == '__main__':

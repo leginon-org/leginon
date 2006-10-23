@@ -300,10 +300,7 @@ class Collection(object):
                                   position['y']*pixel_size))
 
             raw_correlation = self.correlator.getShift(True)
-            correlation_binning = self.correlator.getCorrelationBinning()
-            binning = self.correlator.getBinning()
-            s = (raw_correlation['x']/(correlation_binning*binning['x']),
-                 raw_correlation['y']/(correlation_binning*binning['y']))
+            s = (raw_correlation['x'], raw_correlation['y'])
             self.viewer.setXC(correlation_image, s)
 
             self.checkAbort()
