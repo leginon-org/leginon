@@ -187,7 +187,7 @@ class Collection(object):
 
             if self.settings['measure defocus']:
                 defocus_measurement = self.node.measureDefocus()
-                measured_defocus = -defocus_measurement[0]
+                measured_defocus = defocus0 - defocus + defocus_measurement[0]
                 measured_fit = defocus_measurement[1]
                 self.logger.info('Measured defocus: %g meters.' % measured_defocus)
                 self.logger.info('Predicted defocus: %g meters.' % defocus)
