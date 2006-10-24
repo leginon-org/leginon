@@ -89,10 +89,15 @@ class Collection(object):
         if n == 0:
             return
         elif n == 1:
+            self.prediction.newTiltSeries()
+            self.prediction.newTiltGroup()
             self.loop(self.tilts[0], self.exposures[0], False)
         elif n == 2:
+            self.prediction.newTiltSeries()
+            self.prediction.newTiltGroup()
             self.loop(self.tilts[0], self.exposures[0], False)
             self.checkAbort()
+            self.prediction.newTiltGroup()
             self.loop(self.tilts[1], self.exposures[1], True)
         else:
             raise RuntimeError('too many tilt angle groups')
@@ -124,8 +129,6 @@ class Collection(object):
             raise Fail
 
         self.checkAbort()
-
-        self.prediction.reset()
 
         if second_loop:
             self.correlator.reset()
@@ -277,14 +280,7 @@ class Collection(object):
                 'y': predicted_position['y'] - correlation['y'],
             }
 
-            if not self.prediction.addPosition(tilt, position):
-                if i < (self.settings['collection threshold']/100.0)*len(tilts):
-                    self.logger.error('Position out of range, aborting series...')
-                    self.finalize()
-                    raise Abort
-                else:
-                    self.logger.warning('Position out of range, aborting loop...')
-                    abort_loop = True
+            self.prediction.addPosition(tilt, position)
 
             m = 'Correlated shift from feature: %g, %g pixels, %g, %g meters.'
             self.logger.info(m % (correlation['x'],

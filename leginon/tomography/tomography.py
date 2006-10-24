@@ -348,15 +348,17 @@ class Tomography(acquisition.Acquisition):
 
         for key in keys:
             start = settings[key]['tilt start']
-            self.prediction.reset()
-            for i, (tilt, position) in enumerate(positions[key]):
-                if i > 0 and round(tilt, 6) == round(start, 6):
-                    self.prediction.reset()
-                if not self.prediction.addPosition(tilt, position):
-                    break
+            self.prediction.newTiltSeries()
+            for tilt, position in positions[key]:
+                if round(tilt, 6) == round(start, 6):
+                    self.prediction.newTiltGroup()
+                self.prediction.addPosition(tilt, position)
 
-        n_groups = len(self.prediction.tilt_groups)
-        n_points = sum([len(tg) for tg in self.prediction.tilt_groups])
+        n_groups = len(self.prediction.tilt_series_list)
+        n_points = 0
+        for tilt_series in self.prediction.tilt_series_list:
+            for tilt_group in tilt_series.tilt_groups:
+                n_points += len(tilt_group)
         m = 'Loaded %d points from %d previous series' % (n_points, n_groups)
         self.logger.info(m)
 

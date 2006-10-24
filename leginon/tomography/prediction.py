@@ -15,6 +15,19 @@ except ImportError:
 	import numarray
 	lsmod = numarray
 
+class TiltSeries(object):
+    def __init__(self):
+        self.tilt_groups = []
+
+    def addTiltGroup(self, tilt_group):
+        self.tilt_groups.append(tilt_group)
+
+    def __len__(self):
+        return len(self.tilt_groups)
+
+    def getCurrentTiltGroup(self):
+        return self.tilt_groups[-1]
+
 class TiltGroup(object):
     def __init__(self):
         self.tilts = []
@@ -31,44 +44,52 @@ class TiltGroup(object):
 
 class Prediction(object):
     def __init__(self):
-        self.tilt_groups = []
-        self.parameters = [0, 0]
+        self.tilt_series_list = []
+        self.parameters = [0, 0, 0]
 
-        self.min_points = 16
-        n = 2**(11 + 4)
-        self.max_absolute = scipy.hypot(n, n)
-        n = 2**11
-        self.max_relative = scipy.hypot(n, n)
+    def addTiltSeries(self, tilt_series):
+        self.tilt_series_list.append(tilt_series)
 
-    def reset(self):
-        if len(self.tilt_groups) > 0:
-            if len(self.tilt_groups[-1]) < self.min_points:
-                del self.tilt_groups[-1]
-        self.tilt_groups.append(TiltGroup())
-        # HACK: fix me
-        if len(self.tilt_groups) > 8:
-            self.tilt_groups = self.tilt_groups[-8:]
+    def newTiltSeries(self):
+        if self.tilt_series_list and len(self.tilt_series_list[-1]) < 1:
+            return
+        tilt_series = TiltSeries()
+        self.addTiltSeries(tilt_series)
+
+    def getCurrentTiltSeries(self):
+        return self.tilt_series_list[-1]
+
+    def newTiltGroup(self):
+        tilt_series = self.getCurrentTiltSeries()
+        if tilt_series.tilt_groups and len(tilt_series.tilt_groups[-1]) < 1:
+            return
+        tilt_group = TiltGroup()
+        tilt_series.addTiltGroup(tilt_group)
+
+    def getCurrentTiltGroup(self):
+        tilt_series = self.getCurrentTiltSeries()
+        return tilt_series.getCurrentTiltGroup()
 
     def addPosition(self, tilt, position):
-        tilt_group = self.tilt_groups[-1]
+        tilt_group = self.getCurrentTiltGroup()
         if len(tilt_group) > 0:
             origin = {'x': tilt_group.xs[0],
                       'y': tilt_group.ys[0]}
             previous = {'x': tilt_group.xs[-1],
                         'y': tilt_group.ys[-1]}
-            if not self.valid(position, origin, previous):
-                return False
         tilt_group.addTilt(tilt, position['x'], position['y'])
-        return True
+
+    def getCurrentParameters(self):
+        return tuple(self.parameters[:2] + [self.parameters[-1]])
 
     def predict(self, tilt):
-        tilt_group = self.tilt_groups[-1]
+        tilt_group = self.getCurrentTiltGroup()
         if len(tilt_group) < 1:
             raise RuntimeError
         elif len(tilt_group) < 2:
             x, y = tilt_group.xs[-1], tilt_group.ys[-1]
             z = 0.0
-        elif len(tilt_group) < 3 or len(self.tilt_groups) < 2:
+        elif len(tilt_group) < 3:
             x, y = leastSquaresXY(tilt_group.tilts,
                                   tilt_group.xs,
                                   tilt_group.ys,
@@ -90,80 +111,73 @@ class Prediction(object):
             x0 = tilt_group.xs[0]
             y0 = tilt_group.ys[0]
             tilt0 = tilt_group.tilts[0]
-            sin_tilts = scipy.sin(scipy.array([tilt0, tilt]))
             cos_tilts = scipy.cos(scipy.array([tilt0, tilt]))
-            parameters = (self.parameters[0], self.parameters[-1])
-            result = model(parameters, [x0], [y0], [sin_tilts], [cos_tilts])
-            z0 = result[0][0][2]
-            z = result[0][1][2] - z0
+            sin_tilts = scipy.sin(scipy.array([tilt0, tilt]))
+            parameters = self.getCurrentParameters()
+            args_list = [(cos_tilts, sin_tilts, x0, y0, None, None)]
+            result = model(parameters, args_list)
+            z0 = result[-1][0][2]
+            z = result[-1][-1][2] - z0
 
         result = {
             'x': float(x),
             'y': float(y),
             'z': float(z),
             'phi': float(self.parameters[0]),
+            'optical axis': float(self.parameters[1]),
             'z0': float(self.parameters[-1]),
         }
 
         return result
 
     def model(self, tilts):
-        tilt_group = self.tilt_groups[-1]
+        parameters = self.getCurrentParameters()
+        tilt_group = self.getCurrentTiltGroup()
         x0 = tilt_group.xs[0]
         y0 = tilt_group.ys[0]
-        sin_tilts = scipy.sin(scipy.array(tilts))
         cos_tilts = scipy.cos(scipy.array(tilts))
-        parameters = (self.parameters[0], self.parameters[-1])
-        return model(parameters, [x0], [y0], [sin_tilts], [cos_tilts])[0]
+        sin_tilts = scipy.sin(scipy.array(tilts))
+        args_list = [(cos_tilts, sin_tilts, x0, y0, None, None)]
+        result = model(parameters, args_list)
+        return result[0]
 
     def calculate(self):
-        if len(self.tilt_groups[-1]) < 3:
+        tilt_group = self.getCurrentTiltGroup()
+        if len(tilt_group) < 3:
             return
-        self.parameters = leastSquaresModel(self.tilt_groups)
+        if len(self.tilt_series_list) > 8:
+            tilt_series_list = self.tilt_series_list[-8:]
+        else:
+            tilt_series_list = self.tilt_series_list
+        self.parameters = leastSquaresModel(tilt_series_list)
         return self.parameters
 
-    def valid(self, position, origin, previous):
-        absolute = scipy.hypot(position['x'] - origin['x'],
-                               position['y'] - origin['y'])
-        if absolute > self.max_absolute:
-            return False
+def leastSquaresModel(tilt_series_list):
+    parameters = [0, 0]
+    args_list = []
+    for tilt_series in tilt_series_list:
+        for tilt_group in tilt_series.tilt_groups:
+            parameters.extend([0])
 
-        relative = scipy.hypot(position['x'] - previous['x'],
-                               position['y'] - previous['y'])
-        if relative > self.max_relative:
-            return False
+            tilts = scipy.array(tilt_group.tilts)
 
-        return True
+            cos_tilts = scipy.cos(tilts)
+            sin_tilts = scipy.sin(tilts)
 
-def leastSquaresModel(tilt_groups):
-    parameters = [0] + len(tilt_groups)*[0]
-    x0_list = []
-    y0_list = []
-    sin_tilts_list = []
-    cos_tilts_list = []
-    x_list = []
-    y_list = []
-    for tilt_group in tilt_groups:
-        tilts = scipy.array(tilt_group.tilts)
-        sin_tilts_list.append(scipy.sin(tilts))
-        cos_tilts_list.append(scipy.cos(tilts))
+            x0 = tilt_group.xs[0]
+            y0 = tilt_group.ys[0]
 
-        x0_list.append(tilt_group.xs[0])
-        y0_list.append(tilt_group.ys[0])
+            x = scipy.array(tilt_group.xs)
+            y = scipy.array(tilt_group.ys)
 
-        x_list.append(scipy.array(tilt_group.xs))
-        y_list.append(scipy.array(tilt_group.ys))
+            args_list.append((cos_tilts, sin_tilts, x0, y0, x, y))
 
-    x0_list = scipy.array(x0_list)
-    y0_list = scipy.array(y0_list)
-
-    args = (x0_list, y0_list, sin_tilts_list, cos_tilts_list, x_list, y_list)
+    args = (args_list,)
     kwargs = {
         'args': args,
         #'full_output': 1,
         #'ftol': 1e-12,
         #'xtol': 1e-12,
-        #'Dfun': jacobian,
     }
     result = scipy.optimize.leastsq(residuals, parameters, **kwargs)
     try:
@@ -172,54 +186,43 @@ def leastSquaresModel(tilt_groups):
         x = [result[0]]
     return x
 
-def tiltMatrix(tilt):
-    matrix = scipy.matrix(scipy.identity(3, scipy.dtype('d')))
-    matrix[0, 0] = scipy.cos(tilt)
-    matrix[0, 2] = -scipy.sin(tilt)
-    matrix[2, 0] = scipy.sin(tilt)
-    matrix[2, 2] = scipy.cos(tilt)
-    return matrix
-
 def getParameters(parameters):
     phi = parameters[0]
-    zs = scipy.array(parameters[1:], scipy.dtype('d'))
-    return phi, zs
+    optical_axis = parameters[1]
+    zs = scipy.array(parameters[2:], scipy.dtype('d'))
+    return phi, optical_axis, zs
 
-def model(parameters, x0_list, y0_list, sin_tilts_list, cos_tilts_list):
-    phi, zs = getParameters(parameters)
+def model(parameters, args_list):
+    phi, optical_axis, zs = getParameters(parameters)
     sin_phi = scipy.sin(phi)
     cos_phi = scipy.cos(phi)
     position_groups = []
-    m = len(sin_tilts_list)
-    for i in range(m):
-        sin_tilts = sin_tilts_list[i]
-        cos_tilts = cos_tilts_list[i]
-
-        positions = scipy.zeros((sin_tilts.shape[0], 3), 'd')
+    for i, (cos_tilts, sin_tilts, x0, y0, x, y) in enumerate(args_list):
+        positions = scipy.zeros((cos_tilts.shape[0], 3), 'd')
+        z = zs[i]
         # transform position, rotate, inverse transform to get rotated x, y, z
-        positions[:, 0] = cos_phi*x0_list[i] + sin_phi*y0_list[i]
-        positions[:, 1] = -sin_phi*x0_list[i] + cos_phi*y0_list[i]
-        positions[:, 2] = sin_tilts*positions[:, 0] + cos_tilts*zs[i]
-        positions[:, 0] = cos_tilts*positions[:, 0] - sin_tilts*zs[i]
+        positions[:, 0] = cos_phi*x0 + sin_phi*y0
+        positions[:, 1] = -sin_phi*x0 + cos_phi*y0
+        positions[:, 0] += optical_axis
+        positions[:, 2] = sin_tilts*positions[:, 0] + cos_tilts*z
+        positions[:, 0] = cos_tilts*positions[:, 0] - sin_tilts*z
+        positions[:, 0] -= optical_axis
         x_positions = cos_phi*positions[:, 0] - sin_phi*positions[:, 1]
         y_positions = sin_phi*positions[:, 0] + cos_phi*positions[:, 1]
         positions[:, 0] = x_positions
         positions[:, 1] = y_positions
-
         position_groups.append(positions)
     return position_groups
 
-def residuals(parameters, x0_list, y0_list, sin_tilts_list, cos_tilts_list, x_list, y_list):
-    n = len(sin_tilts_list)
+def residuals(parameters, args_list):
     residuals_list = []
-    args = (parameters, x0_list, y0_list, sin_tilts_list, cos_tilts_list)
-    position_groups = model(*args)
-    for i in range(len(position_groups)):
-        positions = position_groups[i]
+    position_groups = model(parameters, args_list)
+    for i, positions in enumerate(position_groups):
         n = positions.shape[0]
+        cos_tilts, sin_tilts, x0, y0, x, y = args_list[i]
         residuals = scipy.zeros((n, 2), scipy.dtype('d'))
-        residuals[:, 0] = x_list[i]
-        residuals[:, 1] = y_list[i]
+        residuals[:, 0] = x
+        residuals[:, 1] = y
         residuals -= positions[:, :2]
         residuals_list.extend(residuals[:, 0])
         residuals_list.extend(residuals[:, 1])
