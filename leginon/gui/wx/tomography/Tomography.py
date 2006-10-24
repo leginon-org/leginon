@@ -16,14 +16,16 @@ class ImagePanel(object):
         pass
 
     def setTargets(self, type_name, targets):
-        if type_name == 'Peak':
-            self.viewer.setXCShift(targets[0], center=False)
+        #if type_name == 'Peak':
+        #    self.viewer.setXCShift(targets[0], center=False)
+        pass
 
     def setImageType(self, type_name, image):
-        if type_name == 'Image':
-            self.viewer.addImage(image)
-        elif type_name == 'Correlation':
-            self.viewer.setXC(image)
+        #if type_name == 'Image':
+        #    self.viewer.addImage(image)
+        #elif type_name == 'Correlation':
+        #    self.viewer.setXC(image)
+        pass
 
 class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
     def initialize(self):
