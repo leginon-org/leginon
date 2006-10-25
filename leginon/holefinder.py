@@ -102,6 +102,10 @@ class HoleFinder(targetfinder.TargetFinder):
 
 		self.start()
 
+	def readImage(self, filename):
+		targetfinder.TargetFinder.readImage(self, filename)
+		self.hf['original'] = self.currentimagedata['image']
+
 	def findEdges(self):
 		self.logger.info('find edges')
 		n = self.settings['edge log size']

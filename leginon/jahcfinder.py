@@ -105,6 +105,10 @@ class JAHCFinder(targetfinder.TargetFinder):
 
 		self.start()
 
+	def readImage(self, filename):
+		targetfinder.TargetFinder.readImage(self, filename)
+		self.hf['original'] = self.currentimagedata['image']
+
 	def correlateTemplate(self):
 		self.logger.info('correlate ring template')
 		# convert diameters to radii
