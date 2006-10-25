@@ -1,5 +1,17 @@
 #!/usr/bin/env python
 
+'''
+The TiltCorrector class implements the methods of the following paper:
+Correction of autofocusing errors due to specimen tilt for automated
+electron tomography.  Journal of Microscopy, Vol 211, Pt 2, August 2003,
+pp. 179-185
+It is useful if you need to cross correlate two images that are at
+different beam tilts, and you are on a tilted specimen.
+
+The VirtualStageTilter class is used to stretch images that were acquired
+on a tilted stage so that they appear to be untilted.
+'''
+
 import numarray
 import numarray.nd_image
 import numarray.linear_algebra
