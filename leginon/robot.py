@@ -755,7 +755,7 @@ class Robot(node.Node):
 
 	def handleGridDataCollectionDone(self, ievent):
 		# ...
-		if True:
+		if False:
 			# pause for user check
 			self.setStatus('user input')
 			self.logger.info('waiting for user to continue...')
