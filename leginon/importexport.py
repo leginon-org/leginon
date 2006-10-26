@@ -14,6 +14,9 @@ import xml.dom.minidom as dom
 import sqldb
 import re
 
+class ApplicationImportError(Exception):
+	pass
+
 class XMLApplicationExport:
 	"""XMLApplicationExport: An object class which exports an application as
 	a xml file"""
@@ -304,7 +307,7 @@ class ImportExport:
 		try:
 			xmlapp = XMLApplicationImport(filename)
 		except IOError,e:
-			print e
+			raise ApplicationImportError(e)
 			return
 		# Create SQL tables
 		sqldef = xmlapp.getSQLDefinitionQueries()
@@ -323,10 +326,11 @@ class ImportExport:
 			
 		checkquery = "Select `DEF_id`, name, version from ApplicationData where %s" % (where,)
 		check = self.db.selectone(checkquery)
+		check = False
 
 		# Insert New Application data
 		if check:
-			self.warning = "Application %s-%s exists" % (check['name'], check['version'])
+			raise ApplicationImportError("Application %s (version %d) exists" % (check['name'], check['version']))
 		else:
 			q = xmlapp.getSQLApplicationQuery()
 			applicationId = self.db.insert(q)
