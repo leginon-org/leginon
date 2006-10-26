@@ -350,7 +350,7 @@ class Tomography(acquisition.Acquisition):
             start = settings[key]['tilt start']
             self.prediction.newTiltSeries()
             for tilt, position in positions[key]:
-                if round(tilt, 4) == round(start, 4):
+                if round(tilt, 3) == round(start, 3):
                     self.prediction.newTiltGroup()
                 self.prediction.addPosition(tilt, position)
 
