@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Manager.py,v $
-# $Revision: 1.29 $
+# $Revision: 1.30 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-02-17 22:14:40 $
+# $Date: 2006-10-26 21:56:28 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -725,13 +725,13 @@ class RunApplicationDialog(wx.Dialog):
 		self.dialogsizer = wx.GridBagSizer()
 		self.sizer = wx.GridBagSizer(5, 5)
 
-		self.sizer.Add(wx.StaticText(self, -1, 'Application:'), (1, 0), (1, 1),
+		self.sizer.Add(wx.StaticText(self, -1, 'Application:'), (0, 0), (1, 1),
 							wx.ALIGN_CENTER_VERTICAL)
 		if recentapps:
 			self.appchoice = wx.Choice(self, -1, choices=recentapps)
 		else:
 			self.appchoice = wx.Choice(self, -1, choices=apps.keys())
-		self.sizer.Add(self.appchoice, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sizer.Add(self.appchoice, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.launchersizer = None
 		self.launcherlabels = []
 		self.launcherchoices = {}
@@ -740,7 +740,7 @@ class RunApplicationDialog(wx.Dialog):
 		self.Bind(wx.EVT_CHOICE, self.onChoice, self.appchoice)
 		showall = wx.Button(self, -1, 'Show All')
 		self.Bind(wx.EVT_BUTTON, self.onShowAll, showall)
-		self.sizer.Add(showall, (0, 1), (1, 1))
+		self.sizer.Add(showall, (0, 2), (1, 1))
 
 		buttonsizer = wx.GridBagSizer(0, 3)
 		runbutton = wx.Button(self, wx.ID_OK, 'Run')
@@ -753,7 +753,7 @@ class RunApplicationDialog(wx.Dialog):
 
 		buttonsizer.AddGrowableCol(0)
 
-		self.sizer.Add(buttonsizer, (3, 0), (1, 2), wx.EXPAND)
+		self.sizer.Add(buttonsizer, (2, 0), (1, 3), wx.EXPAND)
 
 		self.dialogsizer.Add(self.sizer, (0, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 10)
 		self.SetSizerAndFit(self.dialogsizer)
@@ -814,7 +814,7 @@ class RunApplicationDialog(wx.Dialog):
 				choice.SetSelection(n)
 				self.launchersizer.Add(choice, (i, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 				self.launcherchoices[launcheralias] = choice
-			self.sizer.Add(self.launchersizer, (2, 0), (1, 2), wx.ALIGN_CENTER)
+			self.sizer.Add(self.launchersizer, (1, 0), (1, 2), wx.ALIGN_CENTER)
 		self.dialogsizer.Layout()
 		self.Fit()
 
