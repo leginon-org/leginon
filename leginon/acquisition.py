@@ -129,7 +129,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'adjust for drift': False,
 		'mover': 'presets manager',
 		'move precision': 0.0,
-        'process target type': 'acquisition',
+		'process target type': 'acquisition',
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
@@ -671,7 +671,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				imagedata.__setitem__('image', num, force=True)
 			self.setImage(imagedata['image'].astype(Numeric.Float32), 'Image')
 
-	def adjustTargetForDrift(self, oldtarget, force=False):
+	def adjustTargetForDrift(self, oldtarget, force=False, drifted=False):
 		if oldtarget['image'] is None:
 			return oldtarget
 		## check if drift has occurred since target's parent image was acquired
@@ -680,50 +680,51 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imageid = imageref.dbid
 		self.logger.info('ADJUSTTARGET, imageid: %s' % (imageid,))
 		imagedata = self.researchDBID(data.AcquisitionImageData, imageid, readimages=False)
-		# image time
-		imagetime = imagedata['scope']['system time']
-		self.logger.info('ADJUSTTARGET, imagetime: %s' % (imagetime,))
-		# last declared drift
-		lastdeclared = self.research(data.DriftDeclaredData(session=self.session), results=1)
-		self.logger.info('ADJUSTTARGET, lastdeclared: %s' % (lastdeclared,))
-		if not lastdeclared:
-			## no drift declared, no adjustment needed
-			return oldtarget
-		# last declared drift time
-		lastdeclared = lastdeclared[0]
-		lastdeclaredtime = lastdeclared['system time']
-		# has drift occurred?
-		if imagetime < lastdeclaredtime:
-			self.logger.info('target needs shift')
-			# yes, now we need a recent image drift for this image
-			# was image drift already measured for this image?
-			driftsequence = self.getImageDriftSequence(imagedata)
-			if not driftsequence or force:
-				self.logger.info('need to request image drift')
-				# no, request measurement now
-				imagedrift = self.requestImageDrift(imagedata)
-				driftsequence = [imagedrift]
-			else:
-				# yes, but was it measured after declared drift?
-				lastimagedrift = driftsequence[-1]
-				if lastimagedrift['system time'] < lastdeclaredtime:
-					# too old, need to measure it again
-					self.logger.info('existing image drift, but too old, requesting new one')
-					imagedrift = self.requestImageDrift(lastimagedrift['new image'])
-					driftsequence.append(imagedrift)
-
-			newtarget = self.sequentialTargetAdjustment(oldtarget, driftsequence)
-
-			odr = oldtarget['delta row']
-			odc = oldtarget['delta column']
-			dr = newtarget['delta row']
-			dc = newtarget['delta column']
-			self.logger.info('old target:  %s, %s, new target:  %s, %s' % (odr, odc, dr, dc))
-			self.publish(newtarget, database=True, dbforce=True)
-			return newtarget
+		if not drifted:
+			# image time
+			imagetime = imagedata['scope']['system time']
+			self.logger.info('ADJUSTTARGET, imagetime: %s' % (imagetime,))
+			# last declared drift
+			lastdeclared = self.research(data.DriftDeclaredData(session=self.session), results=1)
+			self.logger.info('ADJUSTTARGET, lastdeclared: %s' % (lastdeclared,))
+			if not lastdeclared:
+				## no drift declared, no adjustment needed
+				self.logger.info('target does not need shift')
+				return oldtarget
+			# last declared drift time
+			lastdeclared = lastdeclared[0]
+			lastdeclaredtime = lastdeclared['system time']
+			# has drift occurred?
+			if imagetime > lastdeclaredtime:
+				self.logger.info('target does not need shift')
+				return oldtarget
+		self.logger.info('target needs shift')
+		# yes, now we need a recent image drift for this image
+		# was image drift already measured for this image?
+		driftsequence = self.getImageDriftSequence(imagedata)
+		if not driftsequence or force:
+			self.logger.info('need to request image drift')
+			# no, request measurement now
+			imagedrift = self.requestImageDrift(imagedata)
+			driftsequence = [imagedrift]
 		else:
-			self.logger.info('target does not need shift')
-			return oldtarget
+			# yes, but was it measured after declared drift?
+			lastimagedrift = driftsequence[-1]
+			if lastimagedrift['system time'] < lastdeclaredtime:
+				# too old, need to measure it again
+				self.logger.info('existing image drift, but too old, requesting new one')
+				imagedrift = self.requestImageDrift(lastimagedrift['new image'])
+				driftsequence.append(imagedrift)
+
+		newtarget = self.sequentialTargetAdjustment(oldtarget, driftsequence)
+
+		odr = oldtarget['delta row']
+		odc = oldtarget['delta column']
+		dr = newtarget['delta row']
+		dc = newtarget['delta column']
+		self.logger.info('old target:  %s, %s, new target:  %s, %s' % (odr, odc, dr, dc))
+		self.publish(newtarget, database=True, dbforce=True)
+		return newtarget
 
 	def sequentialTargetAdjustment(self, target, driftsequence):
 		oldtarget = target
