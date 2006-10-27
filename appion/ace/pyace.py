@@ -454,13 +454,14 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams):
 	return
 
 def getOutDirs(params):
+	sessionq=data.SessionData(name=params['session'])
+	sessiondata=db.query(sessionq)
+	impath=sessiondata[0]['image path']
+	params['imgdir']=impath+'/'
+
 	if params['outdir']:
 		pass
 	else:
-		sessionq=data.SessionData(name=params['session'])
-		sessiondata=db.query(sessionq)
-		impath=sessiondata[0]['image path']
-		params['imgdir']=impath+'/'
 		outdir=os.path.split(impath)[0]
 		outdir=os.path.join(outdir,'ctf_ace/')
 		params['outdir']=outdir
