@@ -5,7 +5,7 @@ import numarray
 import scipy.ndimage
 
 def hanning(size):
-    border = size/2**5
+    border = size >> 5
     def function(m, n):
         m = abs(m - (size - 1)/2.0) - ((size + 1)/2.0 - border)
         n = abs(n - (size - 1)/2.0) - ((size + 1)/2.0 - border)
@@ -109,20 +109,27 @@ class Correlator(object):
         return shift
 
 if __name__ == '__main__':
-    import numarray.random_array
-    _correlator = Correlator(None, None)
+#    import numarray.random_array
+#    _correlator = Correlator(None, None)
+#
+#    size = 16
+#
+#    offset = (400 + 64, 400 + 64)
+#    image = numarray.random_array.random((512, 512))
+#    image[offset[0]:offset[0] + size, offset[1]:offset[1] + size] += 16
+#    _correlator.correlate(image, None)
+#
+#    offset = (50 + 64, 50 + 64)
+#    image = numarray.random_array.random((512, 512))
+#    image[offset[0]:offset[0] + size, offset[1]:offset[1] + size] += 16
+#    _correlator.correlate(image, None)
+#
+#    print _correlator.getShift(True)
 
-    size = 16
+    import Mrc
+    import numarray
 
-    offset = (400 + 64, 400 + 64)
-    image = numarray.random_array.random((512, 512))
-    image[offset[0]:offset[0] + size, offset[1]:offset[1] + size] += 16
-    _correlator.correlate(image, None)
+    window = hanning(1024)
 
-    offset = (50 + 64, 50 + 64)
-    image = numarray.random_array.random((512, 512))
-    image[offset[0]:offset[0] + size, offset[1]:offset[1] + size] += 16
-    _correlator.correlate(image, None)
-
-    print _correlator.getShift(True)
+    Mrc.numeric_to_mrc(window, 'foo.mrc')
 
