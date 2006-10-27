@@ -680,24 +680,23 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imageid = imageref.dbid
 		self.logger.info('ADJUSTTARGET, imageid: %s' % (imageid,))
 		imagedata = self.researchDBID(data.AcquisitionImageData, imageid, readimages=False)
-		if not drifted:
-			# image time
-			imagetime = imagedata['scope']['system time']
-			self.logger.info('ADJUSTTARGET, imagetime: %s' % (imagetime,))
-			# last declared drift
-			lastdeclared = self.research(data.DriftDeclaredData(session=self.session), results=1)
-			self.logger.info('ADJUSTTARGET, lastdeclared: %s' % (lastdeclared,))
-			if not lastdeclared:
-				## no drift declared, no adjustment needed
-				self.logger.info('target does not need shift')
-				return oldtarget
-			# last declared drift time
-			lastdeclared = lastdeclared[0]
-			lastdeclaredtime = lastdeclared['system time']
-			# has drift occurred?
-			if imagetime > lastdeclaredtime:
-				self.logger.info('target does not need shift')
-				return oldtarget
+		# image time
+		imagetime = imagedata['scope']['system time']
+		self.logger.info('ADJUSTTARGET, imagetime: %s' % (imagetime,))
+		# last declared drift
+		lastdeclared = self.research(data.DriftDeclaredData(session=self.session), results=1)
+		self.logger.info('ADJUSTTARGET, lastdeclared: %s' % (lastdeclared,))
+		if not lastdeclared and not drifted:
+			## no drift declared, no adjustment needed
+			self.logger.info('target does not need shift')
+			return oldtarget
+		# last declared drift time
+		lastdeclared = lastdeclared[0]
+		lastdeclaredtime = lastdeclared['system time']
+		# has drift occurred?
+		if imagetime > lastdeclaredtime and not drifted:
+			self.logger.info('target does not need shift')
+			return oldtarget
 		self.logger.info('target needs shift')
 		# yes, now we need a recent image drift for this image
 		# was image drift already measured for this image?
@@ -708,9 +707,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			imagedrift = self.requestImageDrift(imagedata)
 			driftsequence = [imagedrift]
 		else:
-			# yes, but was it measured after declared drift?
 			lastimagedrift = driftsequence[-1]
-			if lastimagedrift['system time'] < lastdeclaredtime:
+			# yes, but was it measured after declared drift?
+			if lastimagedrift['system time'] < lastdeclaredtime or drifted:
 				# too old, need to measure it again
 				self.logger.info('existing image drift, but too old, requesting new one')
 				imagedrift = self.requestImageDrift(lastimagedrift['new image'])
