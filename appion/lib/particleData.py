@@ -9,14 +9,16 @@ import dbdatakeeper
 
 db=dbdatakeeper.DBDataKeeper(db='dbparticledata')
 
-class run(data.Data):
+class crud(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('dbemdata|SessionData|session', int),
-			('name', str), 
+			('runId', run),
+			('imageId', image),
+			('x', int),
+			('y', int),
 		)
 	typemap = classmethod(typemap)
-data.run=run
+data.crud=crud
 
 class image(data.Data):
 	def typemap(cls):
@@ -27,18 +29,6 @@ class image(data.Data):
 		)
 	typemap = classmethod(typemap)
 data.image=image
-
-class shift(data.Data):
-	def typemap(cls):
-		return data.Data.typemap() + (
-			('dbemdata|AcquisitionImageData|image1', int),
-			('dbemdata|AcquisitionImageData|image2', int),
-			('shiftx', float),
-			('shifty', float),
-			('correlation', float),
-		)
-	typemap = classmethod(typemap)
-data.shift=shift
 
 class particle(data.Data):
 	def typemap(cls):
@@ -55,16 +45,22 @@ class particle(data.Data):
 	typemap = classmethod(typemap)
 data.particle=particle
 
+class run(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('dbemdata|SessionData|session', int),
+			('name', str), 
+		)
+	typemap = classmethod(typemap)
+data.run=run
+
 class selexonParams(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
 			('runId', run),
-			('template', str),
+			('templateRunId', templateRun),
 			('diam', int),
 			('bin', int),
-			('range_start', int),
-			('range_end', int),
-			('range_increment', int),
 			('manual_thresh', float),
 			('auto_thresh', int),
 			('lp_filt', int),
@@ -77,3 +73,68 @@ class selexonParams(data.Data):
 		)
 	typemap = classmethod(typemap)
 data.selexonParams=selexonParams
+
+class shift(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('dbemdata|AcquisitionImageData|image1', int),
+			('dbemdata|AcquisitionImageData|image2', int),
+			('shiftx', float),
+			('shifty', float),
+			('correlation', float),
+			('scale', int),
+		)
+	typemap = classmethod(typemap)
+data.shift=shift
+
+class templateImage(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('project|projects|projectId', int),
+			('templatepath', str),
+			('apix', float),
+			('description', str),
+		)
+	typemap = classmethod(typemap)
+data.templateImage=templateImage
+
+class templateRun(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('templateId', templateImage),
+			('runId', run),
+			('range_start', int),
+			('range_end', int),
+			('range_incr', int),
+		)
+	typemap = classmethod(typemap)
+data.templateRun=templateRun
+
+class stackParams(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('stackPath', str),
+			('name' , str),
+			('description', str),
+			('boxSize', int),
+			('phaseFlipped', bool),
+			('aceCutoff', float),
+			('selexonCutoff', float),
+			('checkCrud', bool),
+			('checkImage', bool),
+			('minDefocus', float),
+			('maxDefocus', float),
+			('fileType', str),
+		)
+	typemap = classmethod(typemap)
+data.stackParams=stackParams
+
+class stackParticles(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('stackId', stackParams),
+			('particleId', particle),
+	        )
+	typemap = classmethod(typemap)
+data.stackParticles = stackParticles
+
