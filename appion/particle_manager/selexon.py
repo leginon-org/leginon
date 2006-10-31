@@ -13,6 +13,7 @@ import convolver
 import Mrc
 import numarray.nd_image
 import imagefun
+import particleData
 
 db=dbdatakeeper.DBDataKeeper()
 partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
@@ -90,6 +91,7 @@ def createDefaults():
 	params["preset"]=None
 	params["runid"]='run1'
 	params["commit"]='FALSE'
+	params["abspath"]=os.path.abspath('.')+'/'
 	return params
 
 def parseInput(args):
@@ -231,10 +233,12 @@ def checkTemplates(params):
 	# counter will assume that there is only one template
 	while (stop==0):
 		if (os.path.exists(name+ext)):
+#			insertTemplateImage(params,name+ext) #insert image to database
 			n=n+1
 			params["onetemplate"]='TRUE'
 			stop=1
 		elif (os.path.exists(name+str(n+1)+ext)):
+#			insertTemplateImage(params,name+str(n+1)+ext) #insert image to database
 			n=n+1
 		else:
 			stop=1
@@ -747,58 +751,95 @@ def insertSelexonParams(params,expid):
 	runq['dbemdata|SessionData|session']=expid
 	runids=partdb.query(runq, results=1)
 
-## 	dfnom='None'
-## 	if params['nominal']:
-## 		dfnom=-params['nominal']
+ 	# if no run entry exists, insert new run entry into run.dbparticledata
+ 	# then create a new selexonParam entry
+ 	if not(runids):
+ 		partdb.insert(runq)
+ 		selexonparams=particleData.selexonParams()
+ 		selexonparams['runId']=runq
+ 		selexonparams['template']=params['template']
+ 		selexonparams['diam']=params['diam']
+ 		selexonparams['bin']=params['bin']
+ 		selexonparams['range_start']=params['startang']
+ 		selexonparams['range_end']=params['endang']
+ 		selexonparams['range_increment']=params['incrang']
+ 		selexonparams['manual_thresh']=params['thresh']
+ 		selexonparams['auto_thresh']=params['autopik']
+ 		selexonparams['lp_filt']=params['lp']
+ 		selexonparams['hp_filt']=params['hp']
+ 		selexonparams['crud_diameter']=params['cdiam']
+ 		selexonparams['crud_blur']=params['cblur']
+ 		selexonparams['crud_low']=params['clo']
+ 		selexonparams['crud_high']=params['chi']
+ 		selexonparams['crud_std']=params['cstd']
+ 	       	partdb.insert(selexonparams)
 		
-## 	# if no run entry exists, insert new run entry into run.dbctfdata
-## 	# then create a new ace_param entry
-## 	if not(runids):
-## 		acedb.insert(runq)
-## 		aceparams=ctfData.ace_params()
-## 		aceparams['runId']=runq
-## 		aceparams['display']=params['display']
-## 		aceparams['stig']=params['stig']
-## 		aceparams['medium']=params['medium']
-## 		aceparams['edgethcarbon']=params['edgethcarbon']
-## 		aceparams['edgethice']=params['edgethice']
-## 		aceparams['pfcarbon']=params['pfcarbon']
-## 		aceparams['pfice']=params['pfice']
-## 		aceparams['overlap']=params['overlap']
-## 		aceparams['fieldsize']=params['fieldsize']
-## 		aceparams['resamplefr']=params['resamplefr']
-## 		aceparams['drange']=params['drange']
-## 		# if nominal df is set, save override df to database, else don't set
-## 		if params['nominal']:
-## 			aceparams['df_override']=dfnom
-## 		if params['reprocess']:
-## 			aceparams['reprocess']=params['reprocess']
-## 	       	acedb.insert(aceparams)
-		
-## 	# if continuing a previous run, make sure that all the current
-## 	# parameters are the same as the previous
-## 	else:
-## 		runlist=runids[0]
-## 		aceq=ctfData.ace_params(runId=runq)
-## 		aceresults=acedb.query(aceq, results=1)
-## 		acelist=aceresults[0]
-## 		if (acelist['display']!=params['display'] or
-## 		    acelist['stig']!=params['stig'] or
-## 		    acelist['medium']!=params['medium'] or
-## 		    acelist['edgethcarbon']!=params['edgethcarbon'] or
-## 		    acelist['edgethice']!=params['edgethice'] or
-## 		    acelist['pfcarbon']!=params['pfcarbon'] or
-## 		    acelist['pfice']!=params['pfice'] or
-## 		    acelist['overlap']!=params['overlap'] or
-## 		    acelist['fieldsize']!=params['fieldsize'] or
-## 		    acelist['resamplefr']!=params['resamplefr'] or
-## 		    acelist['drange']!=params['drange'] or
-## 		    acelist['reprocess']!=params['reprocess'] or
-## 		    str(acelist['df_override'])!=str(dfnom)):
-## 			print "All parameters for a single ACE run must be identical!"
-## 			print "please check your parameter settings."
-## 			sys.exit()
+ 	# if continuing a previous run, make sure that all the current
+ 	# parameters are the same as the previous
+ 	else:
+ 		runlist=runids[0]
+ 		partq=particleData.selexonParams(runId=runq)
+ 		partresults=partdb.query(partq, results=1)
+		selexonparams=partresults[0]
+ 		if (selexonparams['template']!=params['template'] or
+		    selexonparams['diam']!=params['diam'] or
+		    selexonparams['bin']!=params['bin'] or
+		    selexonparams['range_start']!=params['startang'] or
+		    selexonparams['range_end']!=params['endang'] or
+		    selexonparams['range_increment']!=params['incrang'] or
+		    selexonparams['manual_thresh']!=params['thresh'] or
+		    selexonparams['auto_thresh']!=params['autopik'] or
+		    selexonparams['lp_filt']!=params['lp'] or
+		    selexonparams['hp_filt']!=params['hp'] or
+		    selexonparams['crud_diameter']!=params['cdiam'] or
+		    selexonparams['crud_blur']!=params['cblur'] or
+		    selexonparams['crud_low']!=params['clo'] or
+		    selexonparams['crud_high']!=params['chi'] or
+		    selexonparams['crud_std']!=params['cstd']):
+			print "All parameters for a selexon run must be identical!"
+ 			print "please check your parameter settings."
+ 			sys.exit()
 	return
+
+def insertTemplateImage(params,name):
+	templateq=particleData.templateImage()
+	templateq['templatepath']=params['abspath']+name
+	templateId=partdb.query(templateq, results=1)
+	#insert template to database if doesn't exist
+	if not (templateId):
+		templateq['apix']=params['apix']
+		partdb.insert(templateq)
+	return
+
+def insertParticlePicks(params,img,expid):
+	runq=particleData.run()
+	runq['name']=params['runid']
+	runq['dbemdata|SessionData|session']=expid
+	runids=partdb.query(runq, results=1)
+
+	# get corresponding selexonParams entry
+	partq=particleData.selexonParams(runId=runq)
+	partresult=partdb.query(partq, results=1)
+
+        legimgid=int(img.dbid)
+        legpresetid =int(img['preset'].dbid)
+
+	imgname=img['filename']
+	print imgname
+        imgq = particleData.image()
+        imgq['dbemdata|SessionData|session']=expid
+        imgq['dbemdata|AcquisitionImageData|image']=legimgid
+        imgq['dbemdata|PresetData|preset']=legpresetid
+
+	imgids=partdb.query(imgq)	
+	print imgids
+
+        # if no image entry, make one
+        if not (imgids):
+                partdb.insert(imgq)
+
+	return
+	
 #-----------------------------------------------------------------------
 
 if __name__ == '__main__':
@@ -889,6 +930,9 @@ if __name__ == '__main__':
 				writeDoneDict(donedict)
 				continue
 
+			insertParticlePicks(params,img,expid)
+
+			sys.exit()
 			# run the crud finder on selected particles if specified
 			if (params["crud"]=='TRUE'):
 				if not (os.path.exists("crudfiles")):
