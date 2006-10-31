@@ -1292,6 +1292,7 @@ class AcquisitionImageData(PresetImageData):
 			('grid', GridData),
 			('tilt series', TiltSeriesData),
 			('version', int),
+			('tiltnumber', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -2288,6 +2289,8 @@ class RCTAcquisitionSettingsData(AcquisitionSettingsData):
 			('maxsize', float),
 			('blur', float),
 			('sharpen', float),
+			('drift threshold', float),
+			('drift preset', str),
 		)
 	typemap = classmethod(typemap)
 
