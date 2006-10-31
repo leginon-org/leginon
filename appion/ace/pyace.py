@@ -316,9 +316,22 @@ def runAce(matlab,img,params):
 		print ('%1.3f   %1.3f   %1.3f       %1.3f       %1.3f' % (float(-nominal*1e6), float(ctfparams[0]*1e6), float(ctfparams[1]*1e6), ctfparams[16], ctfparams[17]))
 
 	#display must be on to be able to commit ctf results to db 	
-	if (params['display'] and params['commit']=='TRUE'):
+	if (params['display']):
+		imfile1=params['tempdir']+'im1.png'
+		imfile2=params['tempdir']+'im2.png'
+		opimname1=imgname+'.mrc1.png'
+		opimname2=imgname+'.mrc2.png'
+		opimfile1=os.path.join(params['opimagedir'],opimname1)
+		opimfile2=os.path.join(params['opimagedir'],opimname2)
+		
+		pymat.eval(matlab,("im1 = imread('%s');" % (imfile1)))
+		pymat.eval(matlab,("im2 = imread('%s');" % (imfile2))) 
+		pymat.eval(matlab,("imwrite(im1,'%s');" % (opimfile1)))
+		pymat.eval(matlab,("imwrite(im2,'%s');" % (opimfile2)))
+
 		#insert ctf params into dbctfdata.ctf table in db
-		insertCtfParams(img,params,imgname,matfile,expid,ctfparams)
+		if (params['commit']=='TRUE'):
+			insertCtfParams(img,params,imgname,matfile,expid,ctfparams)
 
 	return
 
@@ -394,18 +407,6 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams):
 	legpresetid =int(img['preset'].dbid)
 	dforig=img['scope']['defocus']
 
-	imfile1=params['tempdir']+'im1.png'
-	imfile2=params['tempdir']+'im2.png'
-	opimname1=imgname+'.mrc1.png'
-	opimname2=imgname+'.mrc2.png'
-	opimfile1=os.path.join(params['opimagedir'],opimname1)
-	opimfile2=os.path.join(params['opimagedir'],opimname2)
-
-	pymat.eval(matlab,("im1 = imread('%s');" % (imfile1)))
-	pymat.eval(matlab,("im2 = imread('%s');" % (imfile2))) 
-	pymat.eval(matlab,("imwrite(im1,'%s');" % (opimfile1)))
-	pymat.eval(matlab,("imwrite(im2,'%s');" % (opimfile2)))
-				
 	procimgq = ctfData.image(imagename=imgname + '.mrc')
 	procimgq['dbemdata|SessionData|session']=expid
 	procimgq['dbemdata|AcquisitionImageData|image']=legimgid
