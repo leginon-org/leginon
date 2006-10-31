@@ -444,6 +444,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			filmdata = None
 		return filmdata
 
+	def setImageFilename(self, imagedata):
+		setImageFilename(imagedata)
+
 	def acquireFilm(self, presetdata, target=None, emtarget=None):
 		## get current film parameters
 		stock = self.instrument.tem.FilmStock
@@ -456,7 +459,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		filmdata = data.FilmData(session=self.session, preset=presetdata, label=self.name, target=target, emtarget=emtarget)
 		## no image to store in file, but this provides 'filename' for
 		## the case that we later scan the film
-		setImageFilename(filmdata)
+		self.setImageFilename(filmdata)
 
 		## first three of user name
 		self.instrument.tem.FilmUserCode = self.session['user']['name'][:3]
@@ -543,7 +546,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		process it
 		'''
 		## set the 'filename' value
-		setImageFilename(imagedata)
+		self.setImageFilename(imagedata)
 
 		self.reportStatus('output', 'Publishing image...')
 		self.publish(imagedata, pubevent=True, database=self.settings['save image'])
