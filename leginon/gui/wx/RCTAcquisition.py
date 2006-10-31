@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RCTAcquisition.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-11 20:44:10 $
+# $Date: 2006-10-31 19:17:08 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -16,6 +16,7 @@ import wx
 from gui.wx.Choice import Choice
 from gui.wx.Entry import Entry, FloatEntry, EVT_ENTRY
 from gui.wx.Presets import EditPresetOrder
+from gui.wx.Presets import PresetChoice
 import gui.wx.Acquisition
 import gui.wx.Dialog
 import gui.wx.Events
@@ -54,13 +55,11 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 
 		sizer = wx.GridBagSizer(5, 5)
 
-		print 'TILTS'
 		label = wx.StaticText(self, -1, 'Tilts (deg)')
 		sizer.Add(label, (0, 0), (1, 1))
 		self.widgets['tilts'] = Entry(self, -1)
 		sizer.Add(self.widgets['tilts'], (0,1), (1,1))
 
-		print 'STEPSIZE'
 		label = wx.StaticText(self, -1, 'Step Size (deg)')
 		sizer.Add(label, (1, 0), (1, 1))
 		self.widgets['stepsize'] = FloatEntry(self, -1, chars=6, value='0.0')
@@ -90,6 +89,18 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 		sizer.Add(label, (6, 0), (1, 1))
 		self.widgets['sharpen'] = FloatEntry(self, -1, chars=6, value='0.0')
 		sizer.Add(self.widgets['sharpen'], (6,1), (1,1))
+
+		label = wx.StaticText(self, -1, 'Drift threshold')
+		sizer.Add(label, (7, 0), (1, 1))
+		self.widgets['drift threshold'] = FloatEntry(self, -1, chars=6, value='0.0')
+		sizer.Add(self.widgets['drift threshold'], (7,1), (1,1))
+
+		label = wx.StaticText(self, -1, 'Drift preset')
+		sizer.Add(label, (8, 0), (1, 1))
+		presets = self.node.presetsclient.getPresetNames()
+		self.widgets['drift preset'] = PresetChoice(self, -1)
+		self.widgets['drift preset'].setChoices(presets)
+		sizer.Add(self.widgets['drift preset'], (8,1), (1,1))
 
 		sb = wx.StaticBox(self, -1, 'RCT Options')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
