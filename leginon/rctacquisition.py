@@ -13,6 +13,13 @@ import numarray
 import numarray.nd_image
 pi = numarray.pi
 
+def setImageFilename(imagedata, tiltnumber=None):
+		acquisition.setImageFilename(imagedata)
+		if tiltnumber is None:
+			tiltnumber = imagedata['tiltnumber']
+		if tiltnumber is not None:
+			imagedata['filename'] = imagedata['filename'] + '_%02d' % (tiltnumber,)
+
 def radians(degrees):
 	return degrees * pi / 180.0
 
@@ -56,6 +63,8 @@ class RCTAcquisition(acquisition.Acquisition):
 		'maxsize': 0.9,
 		'blur': 0.0,
 		'sharpen': 0.0,
+		'drift threshold': 0.0,
+		'drift preset': None,
 		})
 	eventinputs = acquisition.Acquisition.eventinputs
 	eventoutputs = acquisition.Acquisition.eventoutputs
@@ -65,8 +74,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.tiltnumber = 0
 
 	def setImageFilename(self, imagedata):
-		acquisition.Acquisition.setImageFilename(self, imagedata)
-		imagedata['filename'] = imagedata['filename'] + '_%02d' % (self.tiltnumber,)
+		setImageFilename(imagedata, tiltnumber=self.tiltnumber)
 
 	def processTargetList(self, tilt0targetlist):
 		'''
@@ -106,6 +114,26 @@ class RCTAcquisition(acquisition.Acquisition):
 			self.logger.info('doing tilt %d = %s degrees' % (i, degrees(tilt),))
 			self.instrument.tem.StagePosition = {'a': tilt}
 
+			## drift check
+			try:
+				focustarget = self.getFocusTargets(tiltedtargetlist)[0]
+			except:
+				self.logger.error('Need at least one focus target to check drift')
+				focustarget = None
+			try:
+				emtarget = self.targetToEMTargetData(focustarget)
+			except:
+				self.logger.error('EMTarget failed, check move type')
+				emtarget = None
+			try:
+				presetname = self.settings['drift preset']
+			except:
+				self.logger.error('Need preset to check drift')
+				presetname = None
+			if None not in (focustarget, emtarget, presetname):
+				threshold = self.settings['drift threshold']
+				self.checkDrift(presetname, emtarget, threshold)
+
 			## mark focus target done if already focused
 			if focused:
 				self.focusDone(tiltedtargetlist)
@@ -117,14 +145,20 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.instrument.tem.StagePosition = {'a': tilt0}
 		self.reportTargetListDone(tilt0targetlist, 'success')
 
+	def getFocusTargets(self, targetlistdata):
+		targets = []
+		targetlist = self.researchTargets(list=targetlistdata, type='focus')
+		for targetdata in targetlist:
+			if targetdata['status'] != 'done':
+				targets.append(targetdata)
+		return targets
+
 	def focusDone(self, targetlistdata):
 		self.logger.info('focus already done at previous tilt, forcing focus target status=done')
-		targetlist = self.researchTargets(list=targetlistdata)
+		targetlist = self.getFocusTargets(targetlistdata)
 		for targetdata in targetlist:
-			if targetdata['type'] == 'focus':
-				if targetdata['status'] != 'done':
-					donetarget = data.AcquisitionImageTargetData(initializer=targetdata, status='done')
-					self.publish(donetarget, database=True)
+				donetarget = data.AcquisitionImageTargetData(initializer=targetdata, status='done')
+				self.publish(donetarget, database=True)
 
 	def transformPoints(self, matrix, points):
 		newpoints = []
@@ -244,7 +278,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.publish(imageold['camera'], database=True)
 
 		## convert CameraImageData to AcquisitionImageData
-		imagedata = data.AcquisitionImageData(initializer=imageold, preset=image0['preset'], label=self.name, target=image0['target'], list=None, emtarget=image0['emtarget'])
+		imagedata = data.AcquisitionImageData(initializer=imageold, preset=image0['preset'], label=self.name, target=image0['target'], list=None, emtarget=image0['emtarget'], version=0, tiltnumber=self.tiltnumber)
 		self.setTargets([], 'Peak')
 		self.publishDisplayWait(imagedata)
 		
