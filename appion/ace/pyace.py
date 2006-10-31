@@ -331,7 +331,7 @@ def runAce(matlab,img,params):
 
 		#insert ctf params into dbctfdata.ctf table in db
 		if (params['commit']=='TRUE'):
-			insertCtfParams(img,params,imgname,matfile,expid,ctfparams)
+			insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfile2)
 
 	return
 
@@ -394,7 +394,7 @@ def insertAceParams(params,expid):
 			sys.exit()
 	return
 
-def insertCtfParams(img,params,imgname,matfile,expid,ctfparams):
+def insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfile2):
 	runq=ctfData.run()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
