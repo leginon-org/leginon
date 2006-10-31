@@ -25,6 +25,7 @@ import EM
 import gui.wx.DriftManager
 import instrument
 import acquisition
+import rctacquisition
 
 class DriftManager(watcher.Watcher):
 	panelclass = gui.wx.DriftManager.Panel
@@ -158,7 +159,10 @@ class DriftManager(watcher.Watcher):
 			newimagedata['grid'] = target['grid']
 
 		## set the 'filename' value
-		acquisition.setImageFilename(newimagedata)
+		if newimagedata['label'] == 'RCT':
+			rctacquisition.setImageFilename(newimagedata)
+		else:
+			acquisition.setImageFilename(newimagedata)
 
 		self.logger.info('Publishing new version of image...')
 		self.publish(newimagedata, database=True, dbforce=True)
