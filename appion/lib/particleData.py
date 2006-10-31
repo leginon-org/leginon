@@ -35,7 +35,6 @@ class particle(data.Data):
 		return data.Data.typemap() + (
 			('runId', run),
 			('imageId', image),
-			('shiftId', shift),
 			('selexonId', selexonParams),
 			('xcoord', int),
 			('ycoord', int),
@@ -58,7 +57,6 @@ class selexonParams(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
 			('runId', run),
-			('templateRunId', templateRun),
 			('diam', int),
 			('bin', int),
 			('manual_thresh', float),
