@@ -89,14 +89,15 @@ def createDefaults():
 	params["crudonly"]='FALSE'
 	params["onetemplate"]='FALSE'
 	params["continue"]='FALSE'
-	params["multiple_range"]='FALSE'
+	params["multiple_range"]=False
 	params["dbimages"]='FALSE'
 	params["session"]=None
 	params["preset"]=None
 	params["runid"]='run1'
-	params["commit"]='FALSE'
+	params["commit"]=False
 	params["defocpair"]='FALSE'
 	params["abspath"]=os.path.abspath('.')+'/'
+	params["descr"]=''
 	return params
 
 def parseInput(args):
@@ -148,9 +149,9 @@ def parseInput(args):
 		elif (elements[0]=='range'):
 			angs=elements[1].split(',')
 			if (len(angs)==3):
-				params["startang"]=float(angs[0])
-				params["endang"]=float(angs[1])
-				params["incrang"]=float(angs[2])
+				params["startang"]=int(angs[0])
+				params["endang"]=int(angs[1])
+				params["incrang"]=int(angs[2])
 			else:
 				print "range must include start & stop angle & increment"
 				sys.exit(1)
@@ -158,10 +159,10 @@ def parseInput(args):
 			num=elements[0][-1]
 			angs=elements[1].split(',')
 			if (len(angs)==3):
-				params["startang"+num]=float(angs[0])
-				params["endang"+num]=float(angs[1])
-				params["incrang"+num]=float(angs[2])
-				params["multiple_range"]='TRUE'
+				params["startang"+num]=int(angs[0])
+				params["endang"+num]=int(angs[1])
+				params["incrang"+num]=int(angs[2])
+				params["multiple_range"]=True
 			else:
  				print "range must include start & stop angle & increment"
 				sys.exit(1)
@@ -188,6 +189,8 @@ def parseInput(args):
 			params["chi"]=float(elements[1])
 		elif (elements[0]=='crudstd'):
 			params["cstd"]=float(elements[1])
+		elif (elements[0]=='runid'):
+			params["runid"]=elements[1]
 		elif (arg=='crudonly'):
 			params["crudonly"]='TRUE'
 		elif (arg=='continue'):
@@ -203,7 +206,7 @@ def parseInput(args):
 				print "dbimages must include both session and preset parameters"
 				sys.exit()
 		elif arg=='commit':
-			params['commit']='TRUE'
+			params['commit']=True
 		elif arg=='defocpair':
 			params['defocpair']='TRUE'
 		else:
@@ -240,12 +243,16 @@ def checkTemplates(params):
 	# counter will assume that there is only one template
 	while (stop==0):
 		if (os.path.exists(name+ext)):
-#			insertTemplateImage(params,name+ext) #insert image to database
+			#insert image to database
+			if (params['commit']==True and params['preptmplt']=='TRUE'):
+				insertTemplateImage(params,name+ext)
 			n=n+1
 			params["onetemplate"]='TRUE'
 			stop=1
 		elif (os.path.exists(name+str(n+1)+ext)):
-#			insertTemplateImage(params,name+str(n+1)+ext) #insert image to database
+			#insert image to database
+			if (params['commit']==True and params['preptmplt']=='TRUE'):
+				insertTemplateImage(params,name+str(n+1)+ext)
 			n=n+1
 		else:
 			stop=1
@@ -275,6 +282,13 @@ def dwnsizeTemplate(params,img):
 	#downsize and filter arbitary MRC template image
 	bin=params['bin']
 	im=Mrc.mrc_to_numeric(img+'.mrc')
+	boxsize=im.shape
+	if ((boxsize[0]/bin)%2!=0):
+		print "Error: binned image must be divisible by 2"
+		sys.exit(1)
+	if (boxsize[0]%bin!=0):
+		print "Error: box size not divisible by binning factor"
+		sys.exit(1)
 	print "downsizing", img
 	im=binImg(im,bin)
 
@@ -307,7 +321,7 @@ def runFindEM(params,file):
 	numcls=params["classes"]
 	pixdwn=str(params["apixdwn"])
 	d=str(params["diam"])
-	if (params["multiple_range"]=='FALSE'):
+	if (params["multiple_range"]==False):
 		strt=str(params["startang"])
 		end=str(params["endang"])
 		incr=str(params["incrang"])
@@ -320,7 +334,7 @@ def runFindEM(params,file):
 		if (os.path.exists(cccfile)):
 			os.remove(cccfile)
 
-		if (params["multiple_range"]=='TRUE'):
+		if (params["multiple_range"]==True):
 			strt=str(params["startang"+str(classavg)])
 			end=str(params["endang"+str(classavg)])
 			incr=str(params["incrang"+str(classavg)])
@@ -628,21 +642,21 @@ def prepTemplate(params):
 			mrcfile=name
 		else:
 			mrcfile=name+str(i)
-		os.system("fix_mrc "+mrcfile+".mrc")
+#		os.system("fix_mrc "+mrcfile+".mrc")
+#		img=Mrc.mrc_to_numeric(mrcfile+".mrc")
 		dwnsizeTemplate(params,mrcfile)
 		i=i+1
 	print "\ndownsize & filtered "+str(num)+" file(s) with root \""+params["template"]+"\"\n"
 	sys.exit(1)
     
 def pik2Box(params,file):
-	box=params["box"]
 	if (params["crud"]=='TRUE'):
 		fname="pikfiles/"+file+".a.pik.nocrud"
 	else:
 		fname="pikfiles/"+file+".a.pik"
         
+	# read through the pik file
 	pfile=open(fname,"r")
-	bfile=open(file+".box","w")
 	piklist=[]
 	for line in pfile:
 		elements=line.split(' ')
@@ -653,10 +667,15 @@ def pik2Box(params,file):
 		if (xcoord>0 and ycoord>0):
 			piklist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
 	pfile.close()
+
+	# write to the box file
+	box=params["box"]
+	bfile=open(file+".box","w")
 	bfile.writelines(piklist)
 	bfile.close()
 
 	print "results written to",file+".box\n"
+	return
 
 def getImgSize(fname):
 	# get image size (in pixels) of the given mrc file
@@ -829,20 +848,30 @@ def insertSelexonParams(params,expid):
 	runq=particleData.run()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
+	
 	runids=partdb.query(runq, results=1)
 
  	# if no run entry exists, insert new run entry into run.dbparticledata
  	# then create a new selexonParam entry
  	if not(runids):
- 		partdb.insert(runq)
+		if params['onetemplate']=='TRUE':
+			imgname=params['abspath']+params['template']+'.mrc'
+			insertTemplateRun(params,runq,imgname,params['startang'],params['endang'],params['incrang'])
+		else:
+			for i in range(1,params['classes']+1):
+				imgname=params['abspath']+params['template']+str(i)+'.mrc'
+				if (params["multiple_range"]==True):
+					strt=params["startang"+str(i)]
+					end=params["endang"+str(i)]
+					incr=params["incrang"+str(i)]
+					insertTemplateRun(params,runq,imgname,strt,end,incr)
+				else:
+					insertTemplateRun(params,runq,imgname,params['startang'],params['endang'],params['incrang'])
+					
  		selexonparams=particleData.selexonParams()
  		selexonparams['runId']=runq
- 		selexonparams['template']=params['template']
  		selexonparams['diam']=params['diam']
  		selexonparams['bin']=params['bin']
- 		selexonparams['range_start']=params['startang']
- 		selexonparams['range_end']=params['endang']
- 		selexonparams['range_increment']=params['incrang']
  		selexonparams['manual_thresh']=params['thresh']
  		selexonparams['auto_thresh']=params['autopik']
  		selexonparams['lp_filt']=params['lp']
@@ -852,21 +881,55 @@ def insertSelexonParams(params,expid):
  		selexonparams['crud_low']=params['clo']
  		selexonparams['crud_high']=params['chi']
  		selexonparams['crud_std']=params['cstd']
+ 		partdb.insert(runq)
  	       	partdb.insert(selexonparams)
 		
  	# if continuing a previous run, make sure that all the current
  	# parameters are the same as the previous
  	else:
- 		runlist=runids[0]
+		# get existing selexon parameters from previous run
  		partq=particleData.selexonParams(runId=runq)
+		tmpltq=particleData.templateRun(runId=runq)
+
  		partresults=partdb.query(partq, results=1)
+		tmpltresults=partdb.query(tmpltq)
 		selexonparams=partresults[0]
- 		if (selexonparams['template']!=params['template'] or
-		    selexonparams['diam']!=params['diam'] or
+		# make sure that using same number of templates
+		if params['classes']!=len(tmpltresults):
+			print "All parameters for a selexon run must be identical!"
+			print "You do not have the same number of templates as your last run"
+			sys.exit(1)
+		# param check if using multiple ranges for templates
+		if (params['multiple_range']==True):
+			# check that all ranges have same values
+			for i in range(0,params['classes']):
+				tmpltimgq=particleData.templateImage()
+				tmpltrunq=particleData.templateRun()
+
+				tmpltimgq['templatepath']=params['abspath']+params['template']+str(i+1)+'.mrc'
+				tmpltrunq['runId']=runq
+				tmpltrunq['templateId']=tmpltimgq
+
+				tmpltNameResult=partdb.query(tmpltrunq,results=1)
+				strt=params["startang"+str(i+1)]
+				end=params["endang"+str(i+1)]
+				incr=params["incrang"+str(i+1)]
+				if (tmpltNameResult[0]['range_start']!=strt or
+				    tmpltNameResult[0]['range_end']!=end or
+				    tmpltNameResult[0]['range_incr']!=incr):
+					print "All parameters for a selexon run must be identical!"
+					print "Template search ranges are not the same as your last run"
+					sys.exit(1)
+		# param check for single range
+		else:
+			if (tmpltresults[0]['range_start']!=params["startang"] or
+			    tmpltresults[0]['range_end']!=params["endang"] or
+			    tmpltresults[0]['range_incr']!=params["incrang"]):
+				print "All parameters for a selexon run must be identical!"
+				print "Template search ranges are not the same as your last run"
+				sys.exit(1)
+ 		if (selexonparams['diam']!=params['diam'] or
 		    selexonparams['bin']!=params['bin'] or
-		    selexonparams['range_start']!=params['startang'] or
-		    selexonparams['range_end']!=params['endang'] or
-		    selexonparams['range_increment']!=params['incrang'] or
 		    selexonparams['manual_thresh']!=params['thresh'] or
 		    selexonparams['auto_thresh']!=params['autopik'] or
 		    selexonparams['lp_filt']!=params['lp'] or
@@ -877,9 +940,27 @@ def insertSelexonParams(params,expid):
 		    selexonparams['crud_high']!=params['chi'] or
 		    selexonparams['crud_std']!=params['cstd']):
 			print "All parameters for a selexon run must be identical!"
- 			print "please check your parameter settings."
+			print "please check your parameter settings."
  			sys.exit()
 	return
+
+def insertTemplateRun(params,runq,imgname,strt,end,incr):
+	templateq=particleData.templateRun()
+	templateq['runId']=runq
+
+	templateImgq=particleData.templateImage(templatepath=imgname)
+	templateId=partdb.query(templateImgq,results=1)
+
+	# if no templates in the database, exit
+	if not (templateId):
+		print "Template",imgname,"not found in database.  Use preptemplate"
+		sys.exit(1)
+	templateq['templateId']=templateId[0]
+	templateq['runId']=runq
+	templateq['range_start']=float(strt)
+	templateq['range_end']=float(end)
+	templateq['range_incr']=float(incr)
+	partdb.insert(templateq)
 
 def insertTemplateImage(params,name):
 	templateq=particleData.templateImage()
@@ -898,26 +979,54 @@ def insertParticlePicks(params,img,expid):
 	runids=partdb.query(runq, results=1)
 
 	# get corresponding selexonParams entry
-	partq=particleData.selexonParams(runId=runq)
-	partresult=partdb.query(partq, results=1)
+	selexonq=particleData.selexonParams(runId=runq)
+	selexonresult=partdb.query(selexonq, results=1)
 
         legimgid=int(img.dbid)
         legpresetid =int(img['preset'].dbid)
 
 	imgname=img['filename']
-	print imgname
         imgq = particleData.image()
         imgq['dbemdata|SessionData|session']=expid
         imgq['dbemdata|AcquisitionImageData|image']=legimgid
         imgq['dbemdata|PresetData|preset']=legpresetid
 
 	imgids=partdb.query(imgq)	
-	print imgids
 
         # if no image entry, make one
         if not (imgids):
                 partdb.insert(imgq)
 
+	
+	# WRITE PARTICLES TO DATABASE
+	print "\nInserting particles into Database...\n"
+
+	# first open pik file
+	if (params["crud"]=='TRUE'):
+		fname="pikfiles/"+imgname+".a.pik.nocrud"
+	else:
+		fname="pikfiles/"+imgname+".a.pik"
+        
+	# read through the pik file
+	pfile=open(fname,"r")
+	piklist=[]
+	for line in pfile:
+		elements=line.split(' ')
+		xcenter=int(elements[1])
+		ycenter=int(elements[2])
+		corr=float(elements[3])
+
+		particlesq=particleData.particle()
+		particlesq['runId']=runq
+		particlesq['imageId']=imgq
+		particlesq['selexonId']=selexonresult[0]
+		particlesq['xcoord']=xcenter
+		particlesq['ycoord']=ycenter
+		particlesq['correlation']=corr
+
+		partdb.insert(particlesq)
+	pfile.close()
+	
 	return
 	
 #-----------------------------------------------------------------------
@@ -994,7 +1103,7 @@ if __name__ == '__main__':
 
 			#insert selexon params into dbparticledata.selexonParams table
 			expid=int(img['session'].dbid)
-			if params['commit']=='TRUE':
+			if params['commit']==True:
 				insertSelexonParams(params,expid)
 
 			# run FindEM
