@@ -150,7 +150,7 @@ class TiltCorrector(object):
 		im = imagedata['image']
 		alpha = imagedata['scope']['stage position']['a']
 		if abs(alpha) < self.alpha_threshold:
-			return
+			return False
 		beamtilt = imagedata['scope']['beam tilt']
 		ht = imagedata['scope']['high tension']
 		mag = imagedata['scope']['magnification']
@@ -162,13 +162,13 @@ class TiltCorrector(object):
 		# if no tilt center, then cannot do this
 		if tiltcenter is None:
 			self.node.logger.info('not correcting tilted images, no rotation center found')
-			return
+			return False
 		tx = beamtilt['x'] - tiltcenter['x']
 		ty = beamtilt['y'] - tiltcenter['y']
 		bt = (tx,ty)
 		if max(abs(bt[0]),abs(bt[1])) < self.bt_threshold:
 			# don't transform if beam tilt is small enough
-			return
+			return False
 
 		alphadeg = alpha * 180 / 3.14159
 		self.node.logger.info('correcting tilts, stage: %s deg beam: %s,%s' % (alphadeg, tx, ty))
@@ -191,11 +191,12 @@ class TiltCorrector(object):
 
 		#im2 = self.filter.convolve(im2)
 		imagedata['image'] = im2
-		return
+		return True
 
 class VirtualStageTilter(object):
 	def __init__(self, node):
 		self.node = node
+		self.alpha_threshold = 0.02
 
 	def maketrans(self, x1, y1, x2, y2, x3, y3, u1, v1, u2, v2, u3, v3):
 		'''
@@ -330,6 +331,9 @@ class VirtualStageTilter(object):
 		mag = imagedata['scope']['magnification']
 		tem = imagedata['scope']['tem']
 		cam = imagedata['camera']['ccdcamera']
+
+		if abs(alpha) < self.alpha_threshold:
+			return False
 	
 		stagematrix = self.getStageMatrix(tem, cam, ht, mag)
 
@@ -347,5 +351,6 @@ class VirtualStageTilter(object):
 
 		#im2 = self.filter.convolve(im2)
 		imagedata['image'] = im2
-		return
+		self.node.logger.info('image stretched to reverse alpha tilt')
+		return True
 
