@@ -62,7 +62,7 @@ def setImageFilename(imagedata):
 	if listlabel:
 		parts.append(listlabel)
 	parts.append(mystr)
-	if imagedata['version'] is not None:
+	if imagedata['version']:
 		vstr = 'v%02d' % (imagedata['version'],)
 		parts.append(vstr)
 
