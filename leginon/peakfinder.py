@@ -172,13 +172,13 @@ class PeakFinder(object):
 		self.shape = None
 		self.initResults()
 
-def findPixelPeak(image, guess=None, limit=None):
-	pf = PeakFinder()
+def findPixelPeak(image, guess=None, limit=None, lpf=None):
+	pf = PeakFinder(lpf=lpf)
 	pf.pixelPeak(newimage=image, guess=guess, limit=limit)
 	return pf.getResults()
 
-def findSubpixelPeak(image, npix=5, guess=None, limit=None):
-	pf = PeakFinder()
+def findSubpixelPeak(image, npix=5, guess=None, limit=None, lpf=None):
+	pf = PeakFinder(lpf=lpf)
 	pf.subpixelPeak(newimage=image, npix=npix, guess=guess, limit=limit)
 	return pf.getResults()
 
