@@ -96,7 +96,7 @@ def createDefaults():
 	params["preset"]=None
 	params["runid"]='run1'
 	params["commit"]=False
-	params["defocpair"]='FALSE'
+	params["defocpair"]=False
 	params["abspath"]=os.path.abspath('.')+'/'
 	params["shiftonly"]=False
 	return params
@@ -821,9 +821,7 @@ def getShift(imagedata1,imagedata2):
 		shrinkfactor1=dimension1/finalsize
 		shrinkfactor2=dimension2/finalsize
 		binned1=binImg(imagedata1['image'],shrinkfactor1)
-		del(imagedata1)
 		binned2=binImg(imagedata2['image'],shrinkfactor2)
-		del(imagedata2)
 		pc=correlator.phase_correlate(binned1,binned2,zero=True)
 		Mrc.numeric_to_mrc(pc,'pc.mrc')
 		peak=findSubpixelPeak(pc, lpf=1.5) # this is a temp fix. When jim fixes peakfinder, this should be peakfinder.findSubpixelPeak
@@ -840,9 +838,8 @@ def findSubpixelPeak(image, npix=5, guess=None, limit=None, lpf=None):
 	pf.subpixelPeak(newimage=image, npix=npix, guess=guess, limit=limit)
 	return pf.getResults()
 
-def recordShift(img,sibling,peak):
-	sess=img['session']['name']
-	filename=sess+'.shift.txt'
+def recordShift(params,img,sibling,peak):
+	filename=params['session']+'.shift.txt'
 	f=open(filename,'a')
 	f.write('%s\t%s\t%f\t%f\t%f\t%f\n' % (img['filename'],sibling['filename'],peak['shift'][1],peak['shift'][0],peak['scalefactor'],peak['subpixel peak value']))
 	f.close()
@@ -1101,6 +1098,7 @@ if __name__ == '__main__':
 			imageq=data.AcquisitionImageData(filename=img)
 			imageresult=db.query(imageq, readimages=False)
 			images=images+imageresult
+		params['session']=images[0]['session']['name']
 
 	# check to see if user only wants to run the crud finder
 	if (params["crudonly"]=='TRUE'):
@@ -1124,7 +1122,7 @@ if __name__ == '__main__':
 			sibling=getDefocusPair(img)
 			if sibling:
 				peak=getShift(img,sibling)
-				recordShift(img,sibling,peak)
+				recordShift(params,img,sibling,peak)
 				if params['commit']:
 					insertShift(img,sibling,peak)
 		sys.exit()	
@@ -1136,7 +1134,8 @@ if __name__ == '__main__':
 	# run selexon
 	notdone=True
 	while notdone:
-		for img in images:
+		while images:
+			img = images.pop(0)
 			# if continue option is true, check to see if image has already been processed
 			imgname=img['filename']
 			doneCheck(donedict,imgname)
@@ -1183,13 +1182,13 @@ if __name__ == '__main__':
 			# convert resulting pik file to eman box file
 			if (params["box"]>0):
 				pik2Box(params,imgname)
-			
+		
 			# find defocus pair if defocpair is specified
 			if params['defocpair']:
 				sibling=getDefocusPair(img)
 				if sibling:
 					peak=getShift(img,sibling)
-					recordShift(img,sibling,peak)
+					recordShift(params,img,sibling,peak)
 					if params['commit']:
 						insertShift(img,sibling,peak)
 			
