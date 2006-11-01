@@ -1,7 +1,7 @@
 <?php
 /**
- *	@version $Revision: 1.28 $
- *	@version $Id: image.inc,v 1.28 2006-10-11 22:27:33 suloway Exp $
+ *	@version $Revision: 1.29 $
+ *	@version $Id: image.inc,v 1.29 2006-11-01 17:30:51 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -32,6 +32,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		'loadtime' => false,
 		'ptlc' => false,
 		'autoscale' => false,
+		'targettype' => false,
 		'mrc' => false
 	);
 
@@ -86,8 +87,8 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				$stdev = $info['rms'];
 			}
 			if ($meanval && $stdev && $maxval-$minval) {
-				$p['minpix'] = (($meanval - 3*$stdev))*$densitymax/($maxval-$minval);
-				$p['maxpix'] = (($meanval + 3*$stdev))*$densitymax/($maxval-$minval);
+				$p['minpix'] = (($meanval - 3*$stdev)-$minval)*$densitymax/($maxval-$minval);
+				$p['maxpix'] = (($meanval + 3*$stdev)-$minval)*$densitymax/($maxval-$minval);
 			}
 		}
 				
@@ -130,12 +131,17 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		    foreach ($targets as $target) {
 			$tId=$target['childId'];
 			$targetinfo = $leginondata->getImageInfo($tId);
-			$targetcal = $leginondata->getImageMatrixCalibration($tId);
-			$parentcal = $leginondata->getImageMatrixCalibration($imageId);
+			// --- use "stage possition" or "image shift" based on magnification
+			$type = "image shift" ;
+			$type = "stage position";
+			$type = ($targetinfo['magnification']>2500 && $imginfo['magnification']>2500) ? "image shift" : "stage position";
+
+			$targetcal = $leginondata->getImageMatrixCalibration($tId, $type);
+			$parentcal = $leginondata->getImageMatrixCalibration($imageId, $type);
 			$truediam=$targetinfo['targetdiam'];
 			$truedim=$targetinfo['targetdim'];
-			if (abs($target['x']-$parent['targetx'])<5
-				&& abs($target['y']-$parent['targety'])<5 ){
+			if (abs($target[x]-$parent['targetx'])<5
+				&& abs($target[y]-$parent['targety'])<5 ){
 				$col = $blue;
 				$crosscol = $yellow;
 			} else {
@@ -151,18 +157,25 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			$cy = $target['y']*$ratioY;
 
 			if ($tId) {
-				$angle = $targetcal['angle']-$parentcal['angle'];
-				$squarepoints = getsquarepoints($cx, $cy, $angle, $truedim*$ratioX);
-				drawsquare($img, $squarepoints, $crosscol);
+				if ($p['targettype']) {
+					$crosscol = imagecolorallocate($img, 255,0,0);
+					$crosssize=20;
+					drawcross($img, $cx, $cy, $crosssize*$ratioX, $crosscol, false);
+				} else {
+					$angle = $targetcal['angle']-$parentcal['angle'];
+					$squarepoints = getsquarepoints($cx, $cy, $angle, $truedim*$ratioX);
+					drawsquare($img, $squarepoints, $crosscol);
+				}
 				$ctx = $squarepoints[0]+1;
 				$cty = $squarepoints[1]+1;
 			} else {
 				$crosssize=20;
 				$ctx = $cx+$crosssize/2;
 				$cty = $cy;
-				drawcross($img, $cx, $cy, $crosssize*$ratioX, $crosscol);
+				// drawcross($img, $cx, $cy, $crosssize*$ratioX, $crosscol);
+				//drawcircle($img, $cx, $cy, 2, $crosscol);
 			}
-			imagestringshadow($img, 4, $ctx, $cty, $tn, $col);
+			// imagestringshadow($img, 4, $ctx, $cty, $tn, $col);
 			
 		    }
 		    if ($targets = $leginondata->getImageFocusTargets($imageId)) 
