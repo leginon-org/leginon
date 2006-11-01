@@ -23,7 +23,7 @@ partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
 selexondonename='.selexondone.py'
 
 def printHelp():
-	print "\nUsage:\nselexon.py <file> template=<name> apix=<pixel> diam=<n> bin=<n> [range=<start,stop,incr>] [thresh=<threshold> or autopik=<n>] [lp=<n>] [hp=<n>] [crud or cruddiam=<n>] [crudonly] [crudblur=<n>] [crudlow=<n>] [crudhi=<n>] [box=<n>] [continue] [dbimages=<session>,<preset>] [commit] [defocpair]"
+	print "\nUsage:\nselexon.py <file> template=<name> apix=<pixel> diam=<n> bin=<n> [range=<start,stop,incr>] [thresh=<threshold> or autopik=<n>] [lp=<n>] [hp=<n>] [crud or cruddiam=<n>] [crudonly] [crudblur=<n>] [crudlow=<n>] [crudhi=<n>] [box=<n>] [continue] [dbimages=<session>,<preset>] [commit] [defocpair] [shiftonly]"
 	print "or\nselexon.py preptemplate template=<name> apix=<pixel> bin=<n>\n"
 	print "Examples:\nselexon 05jun23a_00001en.mrc template=groEL apix=1.63 diam=250 bin=4 range=0,90,10 thresh=0.45 crud"
 	print "or"
@@ -59,6 +59,7 @@ def printHelp():
 	print "runid=<runid>      : subdirectory for output (default=run1)"
 	print "                     do not use this option if you are specifying particular images"
 	print "defocpair          : calculate shift between defocus pairs"
+	print "shiftonly          : skip particle picking and only calculate shifts"
 	print "\n"
 
 	sys.exit(1)
@@ -97,7 +98,7 @@ def createDefaults():
 	params["commit"]=False
 	params["defocpair"]='FALSE'
 	params["abspath"]=os.path.abspath('.')+'/'
-	params["descr"]=''
+	params["shiftonly"]=False
 	return params
 
 def parseInput(args):
@@ -208,7 +209,9 @@ def parseInput(args):
 		elif arg=='commit':
 			params['commit']=True
 		elif arg=='defocpair':
-			params['defocpair']='TRUE'
+			params['defocpair']=True
+		elif arg=='shiftonly':
+			params['shiftonly']=True
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
@@ -222,6 +225,10 @@ def parseInput(args):
 	# find the number of template files
 	if (params["crudonly"]=='FALSE'):
 		params=checkTemplates(params)
+
+	# if shiftonly is specified, make defocpair true
+	if params['shiftonly']:
+		params['defocpair']=True
 	return params
 
 def checkTemplates(params):
@@ -789,7 +796,7 @@ def getDefocusPair(imagedata):
 				defocpair=sib
 				break
 	else:
-		defocpair=None	
+		defocpair=None
 	return(defocpair)
 
 def getShift(imagedata1,imagedata2):
@@ -827,7 +834,6 @@ def getShift(imagedata1,imagedata2):
 		shift=correlator.wrap_coord(subpixpeak,pc.shape)
 		peak['scalefactor']=dimension2/float(dimension1)
 		peak['shift']=(shift[0]*shrinkfactor1,shift[1]*shrinkfactor1)
-		print peak
 	return(peak)
 
 def findSubpixelPeak(image, npix=5, guess=None, limit=None, lpf=None):
@@ -843,7 +849,23 @@ def recordShift(img,sibling,peak):
 	f.write('%s\t%s\t%f\t%f\t%f\t%f\n' % (img['filename'],sibling['filename'],peak['shift'][1],peak['shift'][0],peak['scalefactor'],peak['subpixel peak value']))
 	f.close()
 	return()
-	
+
+def insertShift(img,sibling,peak):
+	shiftq=particleData.shift()
+	shiftq['dbemdata|AcquisitionImageData|image1']=img.dbid
+	shiftdata=partdb.query(shiftq)
+	if shiftdata:
+		print "Warning: Shift values already in database"
+	else:
+		shiftq['dbemdata|AcquisitionImageData|image2']=sibling.dbid
+		shiftq['shiftx']=peak['shift'][1]
+		shiftq['shifty']=peak['shift'][0]
+		shiftq['scale']=peak['scalefactor']
+		shiftq['correlation']=peak['subpixel peak value']
+		print 'Inserting shift beteween', img['filename'], 'and', sibling['filename'], 'into database'
+		partdb.insert(shiftq)
+	return()
+
 def insertSelexonParams(params,expid):
 	runq=particleData.run()
 	runq['name']=params['runid']
@@ -1039,6 +1061,32 @@ if __name__ == '__main__':
 	# unpickle dictionary of previously processed images
 	donedict=getDoneDict()
 
+	# check to make sure that incompatible parameters are not set
+	if params['crudonly']=='TRUE' and params['shiftonly']=='TRUE':
+		print 'crudonly and shiftonly can not be specified at the same time'
+		sys.exit()
+	if params['preptmplt']=='TRUE' and params['crudonly']=='TRUE':
+		print 'preptemplate and crudonly can not be specified at the same time'
+		sys.exit()
+	if params['preptmplt']=='TRUE' and params['shiftonly']=='TRUE':
+		print 'preptemplate and shiftonly can not be specified at the same time'
+		sys.exit()
+	# check for wrong or missing inputs
+	if (params["thresh"]==0 and params["autopik"]==0):
+		print "\nError: neither manual threshold or autopik parameters are set, please set one.\n"
+		sys.exit(1)
+	if (params["apix"]==0):
+		print "\nError: no pixel size has been entered\n\n"
+		sys.exit(1)
+	if (params["diam"]==0):
+		print "\nError: please input the diameter of your particle\n\n"
+		sys.exit(1)
+	if len(params["mrcfileroot"]) > 0 and params["dbimages"]=='TRUE':
+		print len(images)
+		print "\nError: dbimages can not be specified if particular images have been specified"
+		sys.exit(1)
+	
+	
 	# check to see if user only wants to downsize & filter template files
 	if (params["preptmplt"]=='TRUE'):
 		prepTemplate(params)
@@ -1070,21 +1118,17 @@ if __name__ == '__main__':
 			findCrud(params,imgname)
 		sys.exit(1)
         
-	# check for wrong or missing inputs
-	if (params["thresh"]==0 and params["autopik"]==0):
-		print "\nError: neither manual threshold or autopik parameters are set, please set one.\n"
-		sys.exit(1)
-	if (params["apix"]==0):
-		print "\nError: no pixel size has been entered\n\n"
-		sys.exit(1)
-	if (params["diam"]==0):
-		print "\nError: please input the diameter of your particle\n\n"
-		sys.exit(1)
-	if len(params["mrcfileroot"]) > 0 and params["dbimages"]=='TRUE':
-		print len(images)
-		print "\nError: dbimages can not be specified if particular images have been specified"
-		sys.exit(1)
-
+	# check to see if user only wants to find shifts
+	if params['shiftonly']:
+		for img in images:
+			sibling=getDefocusPair(img)
+			if sibling:
+				peak=getShift(img,sibling)
+				recordShift(img,sibling,peak)
+				if params['commit']:
+					insertShift(img,sibling,peak)
+		sys.exit()	
+	
 	# create directory to contain the 'pik' files
 	if not (os.path.exists("pikfiles")):
 		os.mkdir("pikfiles")
@@ -1119,9 +1163,6 @@ if __name__ == '__main__':
 				writeDoneDict(donedict)
 				continue
 
-			insertParticlePicks(params,img,expid)
-
-			sys.exit()
 			# run the crud finder on selected particles if specified
 			if (params["crud"]=='TRUE'):
 				if not (os.path.exists("crudfiles")):
@@ -1144,11 +1185,16 @@ if __name__ == '__main__':
 				pik2Box(params,imgname)
 			
 			# find defocus pair if defocpair is specified
-			if (params['defocpair'] == 'TRUE'):
+			if params['defocpair']:
 				sibling=getDefocusPair(img)
 				if sibling:
 					peak=getShift(img,sibling)
 					recordShift(img,sibling,peak)
+					if params['commit']:
+						insertShift(img,sibling,peak)
+			
+			if params['commit']:
+				insertParticlePicks(params,img,expid)
 
 			# write results to dictionary
  			donedict[imgname]=True
