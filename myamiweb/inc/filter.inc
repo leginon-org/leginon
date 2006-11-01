@@ -40,17 +40,17 @@ class filter {
 
 }
 
-function getfft($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1) {
+function getfft($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1, $autoscale=false) {
 	$densitymax = ($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL;
 	$mrcimg = mrcread($filename);
-	mrcfftw($mrcimg,10);
+	mrcfftw($mrcimg,50);
 	mrcbinning($mrcimg, $binning);
-	list($minpix, $maxpix) = mrcgetscale($mrcimg, $densitymax);
+	if ($autoscale)
+		list($minpix, $maxpix) = mrcgetscale($mrcimg, $densitymax);
 	$img = mrctoimage($mrcimg, $minpix, $maxpix, $colormap);
 	mrcdestroy($mrcimg);
 	return $img;
 }
-
 
 function getdefault($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1, $type='default') {
 	$densitymax = ($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL;
