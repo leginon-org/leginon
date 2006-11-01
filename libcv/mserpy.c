@@ -21,7 +21,9 @@ static PyObject *PolygonToPyArray( Polygon poly );
 static PyObject *PyMatchImages(PyObject *self, PyObject *args) {
 
 	PyObject *oim1, *oim2;
+#ifdef CPUTIME
 	float t0 = CPUTIME;
+#endif
 	
 	fprintf(stderr,"Preparing images for Python wrapper:  ");
 	
@@ -32,7 +34,9 @@ static PyObject *PyMatchImages(PyObject *self, PyObject *args) {
 	Image im1 = PyArrayToImage( oim1 );
 	Image im2 = PyArrayToImage( oim2 );
 	
+#ifdef CPUTIME
 	fprintf(stderr,"Time: %2.2f seconds\n",CPUTIME-t0);
+#endif
 	
 	PStack im1keys = NewPStack(100);
 	PStack im1desc = NewPStack(100);
@@ -40,19 +44,27 @@ static PyObject *PyMatchImages(PyObject *self, PyObject *args) {
 	PStack im2desc = NewPStack(100);
 	PStack matches = NewPStack(100);
 	
+#ifdef CPUTIME
 	t0 = CPUTIME;
+#endif
 	fprintf(stderr,"Image 1:  ");
-	FindMSERegions(im1,im1keys,minSize,maxSize,blur,sharpen,U,D);
+	FindMSERegions(im1,im1keys,minSize,maxSize,-1,-1,blur,sharpen,U,D);
 	fprintf(stderr,"Keypoints: %d  ",im1keys->stacksize);
 	RegionsToSIFTDescriptors(im1keys,im1desc,4,8,41);
+#ifdef CPUTIME
 	fprintf(stderr,"Descriptors: %d  Time: %2.2f\n",im1desc->stacksize,CPUTIME-t0);
+#endif
 	
+#ifdef CPUTIME
 	t0 = CPUTIME;
+#endif
 	fprintf(stderr,"Image 2:  ");
-	FindMSERegions(im2,im2keys,minSize,maxSize,blur,sharpen,U,D);
+	FindMSERegions(im2,im2keys,minSize,maxSize,-1,-1,blur,sharpen,U,D);
 	fprintf(stderr,"Keypoints: %d  ",im2keys->stacksize);
 	RegionsToSIFTDescriptors(im2keys,im2desc,4,8,41);
+#ifdef CPUTIME
 	fprintf(stderr,"Descriptors: %d  Time: %2.2f\n",im2desc->stacksize,CPUTIME-t0);
+#endif
 	
 	double **transform = AllocDMatrix(3,3,0,0);
 	FindMatches(im1desc,im2desc,matches,20);
@@ -70,7 +82,9 @@ static PyObject *PyMatchImages(PyObject *self, PyObject *args) {
 
 static PyObject *PyFindRegions( PyObject *self, PyObject *args ) {
 	
+#ifdef CPUTIME
 	float t0 = CPUTIME;
+#endif
 	
 	PyObject *oim1;
 	float minSize = 0.002, maxSize = 0.9, blur = 0.0, sharpen = 0.0;
@@ -99,7 +113,9 @@ static PyObject *PyFindRegions( PyObject *self, PyObject *args ) {
 		
 	FreeImage(im1);
 	
+#ifdef CPUTIME
 	fprintf(stderr,"Total time: %2.2f\n",CPUTIME-t0);
+#endif
 	
 	return Py_BuildValue("OO", regionList, regionImage );
 	

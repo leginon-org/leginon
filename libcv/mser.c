@@ -128,8 +128,8 @@ void EvaluateStableRegions( MSERArray ma, void **tSizes, PStack regions, int min
 			int period = tSize->size;
 			if ( period > minPeriod ) {
 				int treshold = tSize->time;
-				if ( treshold < minTreshold ) continue;
-				if ( treshold > maxTreshold ) continue;
+				if ( treshold < minTreshold && minTreshold > -1 ) continue;
+				if ( treshold > maxTreshold && maxTreshold > -1 ) continue;
 				int row = i / ma->cols;
 				int col = i % ma->cols;
 				FindBorder(ma->image,row,col,treshold,polygon);

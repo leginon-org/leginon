@@ -3,7 +3,9 @@
 #define libCV_util 1
 
 #include <sys/time.h>
+#ifdef HAS_RUSAGE
 #include <sys/resource.h>
+#endif
 #include <sys/types.h>
 #include <time.h>
 #include <stdlib.h>
@@ -24,7 +26,9 @@
 #endif
 #define BOUND(x,y,z)	MAX(x,MIN(y,z))
 #define SIGN(a,b)	((b) >= 0.0 ? ABS(a) : -ABS(a))
+#ifdef HAS_RUSAGE
 #define CPUTIME		(getrusage(RUSAGE_SELF,&ruse),ruse.ru_utime.tv_sec+ruse.ru_stime.tv_sec+1e-6*(ruse.ru_utime.tv_usec+ruse.ru_stime.tv_usec))
+#endif
 
 #define TRUE	1
 #define FALSE	0
@@ -36,7 +40,9 @@
 #define NaN	-91919191
 
 char libCV_debug;
+#ifdef HAS_RUSAGE
 struct rusage ruse;
+#endif
 
 void FatalError(char *fmt, ...);
 void Debug(int lvl, char *fmt, ...);

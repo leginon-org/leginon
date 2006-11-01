@@ -92,11 +92,13 @@ int FastLineIntegrate(int y0, int x0, int y1, int x1, int *pixels, int maxcol) {
 
 }
 
+#ifdef CPUTIME
 void Time( float *time ) {
 	static float t0=0;
 	if (t0 == 0) t0=CPUTIME;
 	else { *time+=CPUTIME-t0; t0=0; }
 }
+#endif
 
 void ISplint( int *v, float *v2, int n, float x, float *val ) {
 	int klo, khi;
