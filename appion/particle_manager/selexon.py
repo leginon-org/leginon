@@ -649,8 +649,6 @@ def prepTemplate(params):
 			mrcfile=name
 		else:
 			mrcfile=name+str(i)
-#		os.system("fix_mrc "+mrcfile+".mrc")
-#		img=Mrc.mrc_to_numeric(mrcfile+".mrc")
 		dwnsizeTemplate(params,mrcfile)
 		i=i+1
 	print "\ndownsize & filtered "+str(num)+" file(s) with root \""+params["template"]+"\"\n"
@@ -975,7 +973,7 @@ def insertTemplateRun(params,runq,imgname,strt,end,incr):
 
 	# if no templates in the database, exit
 	if not (templateId):
-		print "Template",imgname,"not found in database.  Use preptemplate"
+		print "\nTemplate",imgname,"not found in database.  Use preptemplate"
 		sys.exit(1)
 	templateq['templateId']=templateId[0]
 	templateq['runId']=runq
@@ -1071,12 +1069,19 @@ if __name__ == '__main__':
 	if params['preptmplt']=='TRUE' and params['shiftonly']=='TRUE':
 		print 'preptemplate and shiftonly can not be specified at the same time'
 		sys.exit()
+
 	# check for wrong or missing inputs
-	if (params["thresh"]==0 and params["autopik"]==0):
-		print "\nError: neither manual threshold or autopik parameters are set, please set one.\n"
-		sys.exit(1)
 	if (params["apix"]==0):
 		print "\nError: no pixel size has been entered\n\n"
+		sys.exit(1)
+
+	# check to see if user only wants to downsize & filter template files
+	if (params["preptmplt"]=='TRUE'):
+		prepTemplate(params)
+
+
+	if (params["thresh"]==0 and params["autopik"]==0):
+		print "\nError: neither manual threshold or autopik parameters are set, please set one.\n"
 		sys.exit(1)
 	if (params["diam"]==0):
 		print "\nError: please input the diameter of your particle\n\n"
@@ -1086,11 +1091,6 @@ if __name__ == '__main__':
 		print "\nError: dbimages can not be specified if particular images have been specified"
 		sys.exit(1)
 	
-	
-	# check to see if user only wants to downsize & filter template files
-	if (params["preptmplt"]=='TRUE'):
-		prepTemplate(params)
-
 	# get list of input images, since wildcards are supported
 	if params['dbimages']=='TRUE':
 		images=getImagesFromDB(params['session'],params['preset'])
