@@ -441,9 +441,10 @@ def findPeaks(params,file):
 	tclfile.close()
 	f=os.popen('viewit '+tmpfile.name)
 	result=f.readlines()
-	line=result[-2].split()
-	peaks=line[0]
-	print "found",peaks,"peaks"
+	if (params["thresh"]!=0):
+		line=result[-2].split()
+		peaks=line[0]
+		print peaks,"peaks were extracted"
 
 def createJPG(params,img):
 	# create a jpg image to visualize the final list of targetted particles
