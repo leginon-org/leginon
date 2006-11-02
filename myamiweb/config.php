@@ -7,9 +7,9 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  *
  * $Source: /ami/sw/cvsroot/dbem/config.php,v $
- * $Revision: 1.21 $
+ * $Revision: 1.22 $
  * $Name: not supported by cvs2svn $
- * $Date: 2006-09-29 03:20:23 $
+ * $Date: 2006-11-02 07:55:56 $
  * $Author: sstagg $
  * $State: Exp $
  * $Locker:  $
@@ -38,7 +38,7 @@ $PROJECT_DB = "project";
 $PARTICLE_DB_HOST = "cronus4";
 $PARTICLE_DB_USER = "usr_object";
 $PARTICLE_DB_PASS = "";
-$PARTICLE_DB = "particledb";
+$PARTICLE_DB = "dbparticledata";
 
 $PROCESSING_DB_HOST = "cronus4";
 $PROCESSING_DB_USER = "usr_object";

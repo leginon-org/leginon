@@ -15,11 +15,11 @@ define('PARTICLE_DB_USER', $PARTICLE_DB_USER);
 define('PARTICLE_DB_PASS', $PARTICLE_DB_PASS);
 define('PARTICLE_DB', $PARTICLE_DB);
 
-class particledata {
+class particledata_a {
 
 	var $crlf = "\n";
 
-	function particledata() {
+	function particledata_a() {
 		$this->mysql = new mysql(
 					PARTICLE_DB_HOST,
 					PARTICLE_DB_USER,

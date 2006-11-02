@@ -232,7 +232,7 @@ if ($ctf->hasCtfData($sessionId)) {
 	$urlmconf = ($minconf) ? "&mconf=$minconf" : "";
 
 	$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
-	$fields = array('defocus1', 'confidence', 'confidence_d');
+	$fields = array('defocus1', 'defocus2', 'confidence', 'confidence_d');
 	$bestctf = $ctf->getBestStats($fields, $sessionId, $minconf);
 	foreach($bestctf as $field=>$data) {
 		foreach($data as $k=>$v) {
@@ -250,6 +250,37 @@ if ($ctf->hasCtfData($sessionId)) {
 else {
 echo "no CTF information available";
 }
+?>
+
+</td>
+</tr>
+<tr>
+<td colspan="2">
+<?php
+echo divtitle("Particles");
+require('inc/particledata.inc');
+$sessionId=$expId;
+$particle = new particledata();
+if ($particle->hasParticleData($sessionId)) {
+	$particlerun=$particle->getLastParticleRun($sessionId);
+	$particlestats=$particle->getStats($particlerun);
+	$particlestatsimg = '<a href="particlegraph.php?hg=1&run='.$particlerun.'">'
+		.'<img border="0" '
+		.'src="particlegraph.php?w=150&hg=1&run='
+		.$particlerun.'"></a>';
+	$particlestats['img']= $particlestatsimg;
+//	echo $particlerun;
+	echo "<BR>";
+//	print_r($particlestats);
+	$display_keys = array ( 'totparticles', 'min', 'max', 'avg', 'stddev', 'img');
+	$particletable=$particle->displayParticleStats($particlestats, $display_keys, $particlerun);
+	echo $particletable;
+}
+else {
+echo "no Particle information available";
+}
+
+
 ?>
 </td>
 </tr>
