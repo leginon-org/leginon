@@ -9,7 +9,7 @@ void ResetMSERArray( MSERArray pa );
 MSERArray FreeMSERArray( MSERArray pa );
 MSERArray ImageToMSERArray( Image image );
 char MSERArrayIsGood( MSERArray array );
-void EvaluateStableRegions( MSERArray ma, void **tSizes, PStack regions, int minTreshold, int maxTreshold );
+void EvaluateStableRegions( MSERArray ma, void **tSizes, PStack regions);
 void FindBorder( Image image, int row, int col, int t, Polygon borderPixels );
 void JoinNeighborsBelow( MSERArray ma, void **, int minSize, int maxSize );
 void JoinNeighborsAbove( MSERArray ma, void **, int minSize, int maxSize );
@@ -19,7 +19,7 @@ void DrawConnectedRegions( MSERArray ma, int t, int minSize, int maxSize );
 char libCV_above = FALSE;
 char libCV_below = FALSE;
 
-char FindMSERegions( Image image, PStack regions, float minSize, float maxSize, int minTreshold, int maxTreshold, float blur, float sharpen, char u, char d ) {
+char FindMSERegions( Image image, PStack regions, float minSize, float maxSize, float blur, float sharpen, char u, char d ) {
 	
 	if ( !ImageIsGood(image) || !PStackGood(regions) ) return FALSE;
 	
@@ -43,14 +43,14 @@ char FindMSERegions( Image image, PStack regions, float minSize, float maxSize, 
 		libCV_below = TRUE;
 		libCV_above = FALSE;
 		JoinNeighborsBelow(ma,sizes,minSize,maxSize);
-		EvaluateStableRegions(ma,sizes,regions,minTreshold,maxTreshold);
+		EvaluateStableRegions(ma,sizes,regions);
 	}
 	
 	if ( u ) {
 		libCV_below = FALSE;
 		libCV_above = TRUE;
 		JoinNeighborsAbove(ma,sizes,minSize,maxSize);
-		EvaluateStableRegions(ma,sizes,regions,minTreshold,maxTreshold);
+		EvaluateStableRegions(ma,sizes,regions);
 	}
 	
 	FreeMSERArray( ma ); free(sizes);
@@ -59,7 +59,7 @@ char FindMSERegions( Image image, PStack regions, float minSize, float maxSize, 
 	
 }
 
-void EvaluateStableRegions( MSERArray ma, void **tSizes, PStack regions, int minTreshold, int maxTreshold ) {
+void EvaluateStableRegions( MSERArray ma, void **tSizes, PStack regions) {
 	
 	int i; TSize tSize, oldTSize;
 	Polygon polygon = NewPolygon(1000);
@@ -128,8 +128,6 @@ void EvaluateStableRegions( MSERArray ma, void **tSizes, PStack regions, int min
 			int period = tSize->size;
 			if ( period > minPeriod ) {
 				int treshold = tSize->time;
-				if ( treshold < minTreshold && minTreshold > -1 ) continue;
-				if ( treshold > maxTreshold && maxTreshold > -1 ) continue;
 				int row = i / ma->cols;
 				int col = i % ma->cols;
 				FindBorder(ma->image,row,col,treshold,polygon);

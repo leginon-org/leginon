@@ -48,7 +48,7 @@ static PyObject *PyMatchImages(PyObject *self, PyObject *args) {
 	t0 = CPUTIME;
 #endif
 	fprintf(stderr,"Image 1:  ");
-	FindMSERegions(im1,im1keys,minSize,maxSize,-1,-1,blur,sharpen,U,D);
+	FindMSERegions(im1,im1keys,minSize,maxSize,blur,sharpen,U,D);
 	fprintf(stderr,"Keypoints: %d  ",im1keys->stacksize);
 	RegionsToSIFTDescriptors(im1keys,im1desc,4,8,41);
 #ifdef CPUTIME
@@ -59,7 +59,7 @@ static PyObject *PyMatchImages(PyObject *self, PyObject *args) {
 	t0 = CPUTIME;
 #endif
 	fprintf(stderr,"Image 2:  ");
-	FindMSERegions(im2,im2keys,minSize,maxSize,-1,-1,blur,sharpen,U,D);
+	FindMSERegions(im2,im2keys,minSize,maxSize,blur,sharpen,U,D);
 	fprintf(stderr,"Keypoints: %d  ",im2keys->stacksize);
 	RegionsToSIFTDescriptors(im2keys,im2desc,4,8,41);
 #ifdef CPUTIME
@@ -89,12 +89,12 @@ static PyObject *PyFindRegions( PyObject *self, PyObject *args ) {
 	PyObject *oim1;
 	float minSize = 0.002, maxSize = 0.9, blur = 0.0, sharpen = 0.0;
 	int U = TRUE, D = TRUE, R = TRUE, minT = 0, maxT = 255;
-	if (!PyArg_ParseTuple(args, "Offffiiii", &oim1, &minSize, &maxSize, &blur, &sharpen, &U, &D, &minT, &maxT )) return NULL;
+	if (!PyArg_ParseTuple(args, "Offffii", &oim1, &minSize, &maxSize, &blur, &sharpen, &U, &D)) return NULL;
 	
 	Image im1 = PyArrayToImage( oim1 );
 	
 	PStack regions = NewPStack(1000);
-	FindMSERegions(im1,regions,minSize,maxSize,blur,sharpen,minT,maxT,U,D);
+	FindMSERegions(im1,regions,minSize,maxSize,blur,sharpen,U,D);
 	
 	fprintf(stderr,"Found %d regions.\n", regions->stacksize);
 	
