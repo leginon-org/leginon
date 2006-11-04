@@ -55,6 +55,23 @@ class project {
 		return $info;
 	}
 
+	function getProjectfromSessionId($sessionid) {
+	        $dbemdata = &new leginondata;
+	        $db  = &$dbemdata->mysql;
+	        $q='select `name` as sessionname '
+		  .'from `SessionData` '
+                  .'where `DEF_id`='.$sessionid;
+		list($r)=$db->getSQLResult($q);
+		$sname=$r[sessionname];
+ 		$q='select p.projectId, p.name  '
+ 			.'from projectexperiments pe '
+ 			.'left join projects p '
+ 			.'on (pe.projectId=p.projectId) '
+ 		  .'where pe.name="'.$sname.'"';
+		list($info) = $this->mysql->getSQLResult($q);
+		return $info;
+	}
+
 	function getProjects($type=""){
                 $projects = array();
 		if ($type=="all")  
