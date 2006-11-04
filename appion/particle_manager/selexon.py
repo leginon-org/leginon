@@ -12,8 +12,17 @@ selexondonename='.selexondone.py'
 if __name__ == '__main__':
 	# record command line
 	writeSelexLog(sys.argv)
+
+	# create params dictionary & set defaults
+	params=createDefaults()
+
 	# parse command line input
-	params=parseInput(sys.argv)
+	parseInput(sys.argv,params)
+
+	# if shiftonly is specified, make defocpair true
+	if params['shiftonly']:
+		params['defocpair']=True
+
 	# unpickle dictionary of previously processed images
 	donedict=getDoneDict(selexondonename)
 
@@ -32,9 +41,22 @@ if __name__ == '__main__':
 		sys.exit()
 
 	# check for wrong or missing inputs
-	if (params["apix"]==0):
+	if (params["apix"]==0 and not params["templateIds"]):
 		print "\nError: no pixel size has been entered\n\n"
 		sys.exit(1)
+
+	# if templateIds specified, create temporary template files in this directory
+	if params['templateIds']:
+		getDBTemplates(params)
+		# set the template name to the copied file names
+		params['template']='originalTemporaryTemplate'
+	
+	# find the number of template files
+	if (params["crudonly"]=='FALSE'):
+		params=checkTemplates(params)
+		# set the template name to scaled file name if getting from database
+		if params['templateIds']:
+			params['template']='scaledTemporaryTemplate'
 
 	# check to see if user only wants to downsize & filter template files
 	if (params["preptmplt"]=='TRUE' and not params["templateIds"]):
@@ -94,10 +116,6 @@ if __name__ == '__main__':
 	if not (os.path.exists("pikfiles")):
 		os.mkdir("pikfiles")
 
-	# if templateIds specified, create temporary template files in this directory
-	if params['templateIds']:
-		getDBTemplates(params)
-	
 	# run selexon
 	notdone=True
 	while notdone:
@@ -115,6 +133,9 @@ if __name__ == '__main__':
 			expid=int(img['session'].dbid)
 			if params['commit']==True:
 				insertSelexonParams(params,expid)
+
+			# get the image's pixel size, store to params:
+			params['apix']=getPixelSize(img)
 
 			# match the original template pixel size to the img pixel size
 			if params['templateIds']:
@@ -178,4 +199,17 @@ if __name__ == '__main__':
 			images=getImagesFromDB(params['session'],params['preset'])
 		else:
 			notdone=False
+
+	# remove temporary templates if getting images from db
+	if params['templateIds']:
+		i=1
+		for tmplt in params['ogTmpltInfo']:
+			ogname="originalTemporaryTemplate"+str(i)+".mrc"
+			scname="scaledTemporaryTemplate"+str(i)+".mrc"
+			scdwnname="scaledTemporaryTemplate"+str(i)+".dwn.mrc"
+			os.remove(ogname)
+			os.remove(scname)
+			os.remove(scdwnname)
+			i=i+1
+			
 

@@ -3,7 +3,6 @@
 
 import os, re, sys
 import tempfile
-import string
 import cPickle
 import data
 import dbdatakeeper
@@ -13,10 +12,53 @@ import numarray.nd_image
 import imagefun
 import peakfinder
 import correlator
+import math
 import particleData
 
 db=dbdatakeeper.DBDataKeeper()
 partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
+
+def createDefaults():
+	# create default values for parameters
+	params={}
+	params["mrcfileroot"]=''
+	params["preptmplt"]='FALSE'
+	params["template"]=''
+	params["apix"]=0
+	params["diam"]=0
+	params["bin"]=4
+	params["startang"]=0
+	params["endang"]=90
+	params["incrang"]=100
+	params["thresh"]=0
+	params["autopik"]=0
+	params["lp"]=30
+	params["hp"]=600
+	params["box"]=0
+	params["crud"]='FALSE'
+	params["cdiam"]=0
+	params["cblur"]=3.5
+	params["clo"]=0.6
+	params["chi"]=0.95
+	params["cstd"]=1
+	params["crudonly"]='FALSE'
+	params["onetemplate"]='FALSE'
+	params["continue"]='FALSE'
+	params["multiple_range"]=False
+	params["dbimages"]='FALSE'
+	params["session"]=None
+	params["preset"]=None
+	params["runid"]='run1'
+	params["commit"]=False
+	params["defocpair"]=False
+	params["abspath"]=os.path.abspath('.')+'/'
+	params["shiftonly"]=False
+	params["templateIds"]=''
+	params["ogTmpltInfo"]=[]
+	params["newTmpltInfo"]=[]
+	params["scaledapix"]=[]
+
+	return params
 
 def printHelp():
 	print "\nUsage:\nselexon.py <file> template=<name> apix=<pixel> diam=<n> bin=<n> [templateIds=<n,n,n,n,...>] [range=<start,stop,incr>] [thresh=<threshold> or autopik=<n>] [lp=<n>] [hp=<n>] [crud or cruddiam=<n>] [crudonly] [crudblur=<n>] [crudlow=<n>] [crudhi=<n>] [box=<n>] [continue] [dbimages=<session>,<preset>] [commit] [defocpair] [shiftonly]"
@@ -61,13 +103,10 @@ def printHelp():
 
 	sys.exit(1)
 
-def parseInput(args):
+def parseInput(args,params):
 	# check that there are enough input parameters
 	if (len(args)<2 or args[1]=='help') :
 		printHelp()
-
-	# create params dictionary & set defaults
-	params=createDefaults()
 
 	lastarg=1
 
@@ -179,32 +218,17 @@ def parseInput(args):
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
         
-	# determine win_size, borderwidth, & dwn pixel size
-	if (params["apix"]>0):
-		params["win_size"]=int(1.5 * params["diam"]/params["apix"]/params["bin"])
-		params["borderwidth"]=params["win_size"]/2
-		params["apixdwn"]=params["apix"]*params["bin"]
-
-	# find the number of template files
-	if (params["crudonly"]=='FALSE' and not params["templateIds"]):
-		params=checkTemplates(params)
-
-	# if shiftonly is specified, make defocpair true
-	if params['shiftonly']:
-		params['defocpair']=True
-	return params
-
 def runFindEM(params,file):
 	# run FindEM
 	tmplt=params["template"]
 	numcls=params["classes"]
-	pixdwn=str(params["apixdwn"])
+	pixdwn=str(params["apix"]*params["bin"])
 	d=str(params["diam"])
 	if (params["multiple_range"]==False):
 		strt=str(params["startang"])
 		end=str(params["endang"])
 		incr=str(params["incrang"])
-	bw=str(params["borderwidth"])
+	bw=str(int((1.5 * params["diam"]/params["apix"]/params["bin"])/2))
 
 	classavg=1
 	while classavg<=params["classes"]:
@@ -237,7 +261,7 @@ def findPeaks(params,file):
 	# create tcl script to process the cccmaxmap***.mrc images & find peaks
 	tmpfile=tempfile.NamedTemporaryFile()
 	imgsize=int(getImgSize(file))
-	wsize=str(params["win_size"])
+	wsize=str(int(1.5 * params["diam"]/params["apix"]/params["bin"]))
 	clsnum=str(params["classes"])
 	cutoff=str(params["thresh"])
 	scale=str(params["bin"])
@@ -521,51 +545,12 @@ def getImgSize(fname):
 		sys.exit()
 	return(size)
 
-def createDefaults():
-	# create default values for parameters
-	params={}
-	params["mrcfileroot"]=''
-	params["preptmplt"]='FALSE'
-	params["template"]=''
-	params["apix"]=0
-	params["diam"]=0
-	params["bin"]=4
-	params["startang"]=0
-	params["endang"]=90
-	params["incrang"]=100
-	params["thresh"]=0
-	params["autopik"]=0
-	params["lp"]=30
-	params["hp"]=600
-	params["box"]=0
-	params["crud"]='FALSE'
-	params["cdiam"]=0
-	params["cblur"]=3.5
-	params["clo"]=0.6
-	params["chi"]=0.95
-	params["cstd"]=1
-	params["crudonly"]='FALSE'
-	params["onetemplate"]='FALSE'
-	params["continue"]='FALSE'
-	params["multiple_range"]=False
-	params["dbimages"]='FALSE'
-	params["session"]=None
-	params["preset"]=None
-	params["runid"]='run1'
-	params["commit"]=False
-	params["defocpair"]=False
-	params["abspath"]=os.path.abspath('.')+'/'
-	params["shiftonly"]=False
-	params["templateIds"]=''
-	params["ogTmpltInfo"]=[]
-	return params
-
 def checkTemplates(params):
 	# determine number of template files
 	# if using 'preptemplate' option, will count number of '.mrc' files
 	# otherwise, will count the number of '.dwn.mrc' files
 
-	if (params["preptmplt"]=='TRUE'):
+	if (params["preptmplt"]=='TRUE' or params['templateIds']):
 		ext='.mrc'
 	else:
 		ext='.dwn.mrc'
@@ -614,10 +599,10 @@ def dwnsizeImg(params,img):
 	Mrc.numeric_to_mrc(im,(img+'.dwn.mrc'))
 	return
 
-def dwnsizeTemplate(params,img):
+def dwnsizeTemplate(params,filename):
 	#downsize and filter arbitary MRC template image
 	bin=params['bin']
-	im=Mrc.mrc_to_numeric(img+'.mrc')
+	im=Mrc.mrc_to_numeric(filename)
 	boxsize=im.shape
 	if ((boxsize[0]/bin)%2!=0):
 		print "Error: binned image must be divisible by 2"
@@ -625,13 +610,17 @@ def dwnsizeTemplate(params,img):
 	if (boxsize[0]%bin!=0):
 		print "Error: box size not divisible by binning factor"
 		sys.exit(1)
-	print "downsizing", img
+	print "downsizing", filename
 	im=binImg(im,bin)
 
-	print "filtering",img
+	print "filtering",filename
 	apix=params['apix']*bin
 	im=filterImg(im,apix,params['lp'])
-	Mrc.numeric_to_mrc(im,(img+'.dwn.mrc'))
+
+	#replace extension with .dwn.mrc
+	ext=re.compile('\.mrc$')
+	filename=ext.sub('.dwn.mrc',filename)
+	Mrc.numeric_to_mrc(im,(filename))
 	return
 
 def binImg(img,binning):
@@ -662,9 +651,9 @@ def prepTemplate(params):
 	name=params["template"]
 	while i<=num:
 		if params["onetemplate"]=='TRUE':
-			mrcfile=name
+			mrcfile=name+'.mrc'
 		else:
-			mrcfile=name+str(i)
+			mrcfile=name+str(i)+'.mrc'
 		dwnsizeTemplate(params,mrcfile)
 		i=i+1
 	print "\ndownsize & filtered "+str(num)+" file(s) with root \""+params["template"]+"\"\n"
@@ -743,16 +732,16 @@ def getImageData(imagename):
 		print "Image", imagename,"not found in database"
 		sys.exit()
 
-def getPixelSize(imagedata):
+def getPixelSize(img):
 	# use image data object to get pixel size
 	# multiplies by binning and also by 1e10 to return image pixel size in angstroms
 	pixelsizeq=data.PixelSizeCalibrationData()
-	pixelsizeq['magnification']=imagedata['scope']['magnification']
-	pixelsizeq['tem']=imagedata['scope']['tem']
-	pixelsizeq['ccdcamera'] = imagedata['camera']['ccdcamera']
+	pixelsizeq['magnification']=img['scope']['magnification']
+	pixelsizeq['tem']=img['scope']['tem']
+	pixelsizeq['ccdcamera'] = img['camera']['ccdcamera']
 	pixelsizedata=db.query(pixelsizeq, results=1)
 	
-	binning=imagedata['camera']['binning']['x']
+	binning=img['camera']['binning']['x']
 	pixelsize=pixelsizedata[0]['pixelsize'] * binning
 	
 	return(pixelsize*1e10)
@@ -797,8 +786,32 @@ def getDBTemplates(params):
 	return
 
 def rescaleTemplates(img,params):
-	print "resizing templates"
+	i=1
+	for tmplt in params['ogTmpltInfo']:
+		ogtmpltname="originalTemporaryTemplate"+str(i)+".mrc"
+		newtmpltname="scaledTemporaryTemplate"+str(i)+".mrc"
+
+		if params['apix']!=tmplt['apix'] or not os.path.exists(newtmpltname):
+			print "rescaling template",str(i),":",tmplt['apix'],"->",params['apix']
+			scalefactor=tmplt['apix']/params['apix']
+			scaleandclip(ogtmpltname,(scalefactor,scalefactor),newtmpltname)
+			params['newTmpltInfo'].append(params['apix'])
+			dwnsizeTemplate(params,newtmpltname)
+		i=i+1
+	return
 	
+def scaleandclip(fname,scalefactor,newfname):
+	print "scaling now...."
+	image=Mrc.mrc_to_numeric(fname)
+	boxsz=image.shape
+	scaledimg=imagefun.scale(image,scalefactor)
+	scboxsz=scaledimg.shape[1]
+	Mrc.numeric_to_mrc(scaledimg,newfname)
+	# make sure the box size is divisible by 16
+	if (scboxsz%16!=0):
+	    clipsize=str(math.ceil(float(scboxsz)/16)*16)
+	    os.system("proc2d "+newfname+" "+newfname+" clip="+clipsize+","+clipsize+" edgenorm")
+
 def getDefocusPair(imagedata):
 	target=imagedata['target']
 	qtarget=data.AcquisitionImageTargetData()
