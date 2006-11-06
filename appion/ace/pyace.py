@@ -372,7 +372,6 @@ def insertAceParams(params,expid):
 	# if continuing a previous run, make sure that all the current
 	# parameters are the same as the previous
 	else:
-		runlist=runids[0]
 		aceq=ctfData.ace_params(runId=runq)
 		aceresults=acedb.query(aceq, results=1)
 		acelist=aceresults[0]
