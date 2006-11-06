@@ -241,6 +241,7 @@ def runFindEM(params,file):
 			strt=str(params["startang"+str(classavg)])
 			end=str(params["endang"+str(classavg)])
 			incr=str(params["incrang"+str(classavg)])
+		fin='';
 		fin=os.popen('${FINDEM_PATH}/FindEM_SB','w')
 		fin.write(file+".dwn.mrc\n")
 		if (params["onetemplate"]=='TRUE'):
@@ -254,8 +255,10 @@ def runFindEM(params,file):
 		fin.write(strt+','+end+','+incr+"\n")
 		fin.write(bw+"\n")
 		fin.flush
+		fin.close()
 		print "running findEM"
 		classavg=classavg+1
+	return
         
 def findPeaks(params,file):
 	# create tcl script to process the cccmaxmap***.mrc images & find peaks
@@ -341,6 +344,7 @@ def findPeaks(params,file):
 		line=result[-2].split()
 		peaks=line[0]
 		print peaks,"peaks were extracted"
+	f.close()
 
 def createJPG(params,img):
 	# create a jpg image to visualize the final list of targetted particles
@@ -387,6 +391,7 @@ def createJPG(params,img):
 	tclfile.close()
 	f=os.popen('viewit '+tmpfile.name)
 	result=f.readlines()
+	f.close()
     
 def findCrud(params,file):
 	# run the crud finder
@@ -531,6 +536,7 @@ def findCrud(params,file):
 	line=result[-2].split()
 	reject=line[1]
 	print "crudfinder rejected",reject,"particles"
+	f.close()
         return
 
 def getImgSize(fname):
@@ -541,7 +547,7 @@ def getImgSize(fname):
 		size=int(imagedata[0]['camera']['dimension']['y'])
 		return(size)
 	else:
-		print "Image", fname," not found in db"
+		print "Image", fname," not found in database"
 		sys.exit()
 	return(size)
 
@@ -775,6 +781,9 @@ def getDBTemplates(params):
 	for tid in params['templateIds']:
 		# find templateImage row
 		tmpltinfo=partdb.direct_query(data.templateImage, tid)
+		if not (tmpltinfo):
+			print "\nTemplateId",tid,"not found in database.  Use preptemplate"
+			sys.exit(1)
 		fname=tmpltinfo['templatepath']
 		apix=tmpltinfo['apix']
 		# store row data in params dictionary
@@ -912,7 +921,10 @@ def insertSelexonParams(params,expid):
 			insertTemplateRun(params,runq,imgname,params['startang'],params['endang'],params['incrang'])
 		else:
 			for i in range(1,params['classes']+1):
-				imgname=params['abspath']+params['template']+str(i)+'.mrc'
+				if params['templateIds']:
+					imgname=params['templateIds'][i-1]
+				else:
+					imgname=params['abspath']+params['template']+str(i)+'.mrc'
 				if (params["multiple_range"]==True):
 					strt=params["startang"+str(i)]
 					end=params["endang"+str(i)]
@@ -920,7 +932,6 @@ def insertSelexonParams(params,expid):
 					insertTemplateRun(params,runq,imgname,strt,end,incr)
 				else:
 					insertTemplateRun(params,runq,imgname,params['startang'],params['endang'],params['incrang'])
-					
  		selexonparams=particleData.selexonParams()
  		selexonparams['runId']=runq
  		selexonparams['diam']=params['diam']
@@ -954,12 +965,16 @@ def insertSelexonParams(params,expid):
 			sys.exit(1)
 		# param check if using multiple ranges for templates
 		if (params['multiple_range']==True):
-			# check that all ranges have same values
+			# check that all ranges have same values as previous run
 			for i in range(0,params['classes']):
-				tmpltimgq=particleData.templateImage()
+				if params['templateIds']:
+					tmpltimgq=partdb.direct_query(data.templateImage,params['templateIds'][i])
+				else:
+					tmpltimgq=particleData.templateImage()
+					tmpltimgq['templatepath']=params['abspath']+params['template']+str(i+1)+'.mrc'
+
 				tmpltrunq=particleData.templateRun()
 
-				tmpltimgq['templatepath']=params['abspath']+params['template']+str(i+1)+'.mrc'
 				tmpltrunq['runId']=runq
 				tmpltrunq['templateId']=tmpltimgq
 
@@ -1001,14 +1016,17 @@ def insertTemplateRun(params,runq,imgname,strt,end,incr):
 	templateq=particleData.templateRun()
 	templateq['runId']=runq
 
-	templateImgq=particleData.templateImage(templatepath=imgname)
-	templateId=partdb.query(templateImgq,results=1)
+	if params['templateIds']:
+		templateId=partdb.direct_query(data.templateImage,imgname)
+	else:
+		templateImgq=particleData.templateImage(templatepath=imgname)
+		templateId=partdb.query(templateImgq,results=1)[0]
 
 	# if no templates in the database, exit
 	if not (templateId):
 		print "\nTemplate",imgname,"not found in database.  Use preptemplate"
 		sys.exit(1)
-	templateq['templateId']=templateId[0]
+	templateq['templateId']=templateId
 	templateq['runId']=runq
 	templateq['range_start']=float(strt)
 	templateq['range_end']=float(end)
