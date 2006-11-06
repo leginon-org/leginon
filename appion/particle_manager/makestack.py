@@ -31,6 +31,7 @@ def printHelp():
 	print "                       Example <mindefocus = -1.0e-6>"
 	print "maxdefocus=<n>       : Limit the defocus to values below what is specified ( no limits by default )"
 	print "                       Example <maxdefocus = -3.0e-6>"
+	print "description=\"text\"   : description of the stack being created- surround text with double quotes"
 	print "\n"
 
 	sys.exit(1)
@@ -53,6 +54,7 @@ def createDefaults():
 	params["df"]=0.0
 	params['mindefocus']=None
 	params['maxdefocus']=None
+	params['description']=None
 	return params
 
 def parseInput(args):
@@ -119,6 +121,9 @@ def parseInput(args):
 				sys.exit()
 			else:
 				params['maxdefocus']=maxdf*1e6
+		elif (elements[0]=='description'):
+			params["description"]=elements[1]
+			print params['description']
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
