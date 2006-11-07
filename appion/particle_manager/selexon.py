@@ -18,7 +18,11 @@ if __name__ == '__main__':
 
 	# parse command line input
 	parseInput(sys.argv,params)
+	getOutDirs(params)
 
+	# move to run directory
+	os.chdir(params['rundir'])
+	
 	# if shiftonly is specified, make defocpair true
 	if params['shiftonly']:
 		params['defocpair']=True
@@ -121,6 +125,12 @@ if __name__ == '__main__':
 	while notdone:
 		while images:
 			img = images.pop(0)
+
+			# skip if image doesn't exist:
+			if not os.path.isfile(params['imgdir']+img['filename']+'.mrc'):
+				print img['filename']+".mrc not found, skipping"
+				continue
+
 			# if continue option is true, check to see if image has already been processed
 			imgname=img['filename']
 			doneCheck(donedict,imgname)

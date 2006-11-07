@@ -57,6 +57,7 @@ def createDefaults():
 	params["ogTmpltInfo"]=[]
 	params["newTmpltInfo"]=[]
 	params["scaledapix"]=[]
+	params["outdir"]=None
 
 	return params
 
@@ -198,6 +199,8 @@ def parseInput(args,params):
 		elif (elements[0]=='templateIds'):
 			templatestring=elements[1].split(',')
 			params['templateIds']=templatestring
+		elif (elements[0]=='outdir'):
+			params['outdir']=elements[1]
 		elif (elements[0]=='dbimages'):
 			dbinfo=elements[1].split(',')
 			if len(dbinfo) == 2:
@@ -260,6 +263,29 @@ def runFindEM(params,file):
 		classavg=classavg+1
 	return
         
+def getOutDirs(params):
+	sessionq=data.SessionData(name=params['session'])
+	sessiondata=db.query(sessionq)
+	impath=sessiondata[0]['image path']
+	params['imgdir']=impath+'/'
+
+	if params['outdir']:
+		pass
+	else:
+		outdir=os.path.split(impath)[0]
+		outdir=os.path.join(outdir,'extract/')
+		params['outdir']=outdir
+
+	params['rundir']=os.path.join(params['outdir'],params['runid'])
+	print params['rundir']
+	
+	if os.path.exists(params['rundir']):
+			print "\nWarning: run directory for", params['runid'],"already exists. Make sure continue option is on if you don't want to overwrite previous run.\n"
+	else:
+		os.makedirs(params['rundir'])
+
+	return(params)
+
 def findPeaks(params,file):
 	# create tcl script to process the cccmaxmap***.mrc images & find peaks
 	tmpfile=tempfile.NamedTemporaryFile()
@@ -800,7 +826,7 @@ def rescaleTemplates(img,params):
 		ogtmpltname="originalTemporaryTemplate"+str(i)+".mrc"
 		newtmpltname="scaledTemporaryTemplate"+str(i)+".mrc"
 
-		if params['apix']!=tmplt['apix'] or not os.path.exists(newtmpltname):
+		if str(params['apix'])!=str(tmplt['apix']) or not os.path.exists(newtmpltname):
 			print "rescaling template",str(i),":",tmplt['apix'],"->",params['apix']
 			scalefactor=tmplt['apix']/params['apix']
 			scaleandclip(ogtmpltname,(scalefactor,scalefactor),newtmpltname)
