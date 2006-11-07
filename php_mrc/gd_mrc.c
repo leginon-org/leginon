@@ -305,6 +305,8 @@ void mrc_to_gd(MRC *mrc, gdImagePtr im, int pmin, int pmax, int colormap) {
 
 	data_array = (float *)mrc->pbyData;
 
+	nmin = fmin + pmin * scale / densitymax;
+	nmax = fmin + pmax * scale / densitymax;
 	nmin = pmin * scale / densitymax;
 	nmax = pmax * scale / densitymax;
 	nscale = nmax - nmin;

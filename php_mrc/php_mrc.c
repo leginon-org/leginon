@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.19 2006-06-16 16:39:25 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.20 2006-11-07 21:01:33 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -62,6 +62,7 @@ function_entry mrc_functions[] = {
 	ZEND_FE(mrcputdata, NULL)
 	ZEND_FE(mrcrotate, NULL)
 	ZEND_FE(mrcupdateheader, NULL)
+	ZEND_FE(mrcset, NULL)
 	ZEND_FE(mrchistogram, NULL)
 	ZEND_FE(mrcdestroy, NULL)
 	{NULL, NULL, NULL}	/* Must be the last line in mrc_functions[] */
@@ -624,7 +625,7 @@ ZEND_FUNCTION(mrcwrite)
 
 	convert_to_string_ex(file);
 	fn = Z_STRVAL_PP(file);
-	if (!fn || fn == empty_string || php_check_open_basedir(fn TSRMLS_CC)) {
+	if (!fn || fn == "" || php_check_open_basedir(fn TSRMLS_CC)) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid filename '%s'", fn);
 		RETURN_FALSE;
 	}
@@ -916,16 +917,19 @@ ZEND_FUNCTION(mrcgetscale)
 		pmean = mrch.amean;
 		pmin = mrch.amin;
 		pmax = mrch.amax;
-		pmean = mrch.amean;
 		rms	= mrch.rms;
-		if (!rms || !pmean)
+		if (!rms || !pmean) {
 			mrc_update_header(pmrc);
+			mrch = pmrc->header;
+			pmean = mrch.amean;
+			rms	= mrch.rms;
+		}
 
 		scale = pmax - pmin;
 
 		if (scale!=0) {
-			smin = (pmean-3*rms)*densitymax/scale;
-			smax = (pmean+3*rms)*densitymax/scale;
+			smin = (pmean-3*rms-pmin)*densitymax/scale;
+			smax = (pmean+3*rms-pmin)*densitymax/scale;
 		}
 		
 
@@ -965,7 +969,7 @@ ZEND_FUNCTION(mrcputdata)
 
 
 	if (Z_TYPE_PP(input) != IS_ARRAY) {
-				zend_error(E_ERROR, "%s(): Input is not a MRC string ",
+				zend_error(E_ERROR, "%s(): Input is not an Array",
 								 get_active_function_name(TSRMLS_C));
 	}
 
@@ -1044,15 +1048,8 @@ ZEND_FUNCTION(mrcrotate)
  */ 
 ZEND_FUNCTION(mrcupdateheader)
 {
-	char	*key;
 	zval	**MRCD;
 	MRCPtr	pmrc;
-		float	*data_array;
-
-		int	i;
-	float	f_val, fmin, fmax, fmean, stddev;
-	double  somme, somme2, n;
-
 
 	if (ZEND_NUM_ARGS() != 1 || zend_get_parameters_ex(1, &MRCD) == FAILURE) {
 		ZEND_WRONG_PARAM_COUNT();
@@ -1062,6 +1059,43 @@ ZEND_FUNCTION(mrcupdateheader)
 
 }
 
+/**
+ * Set header [key] to new [value] 
+ *
+ * Description:
+ * mrcset(resource src_mrc, string key, mixed value)
+ */ 
+ZEND_FUNCTION(mrcset)
+{
+	zval	**MRCD, **key, **value;
+	MRCPtr	pmrc;
+	char *str_key = NULL;
+	int argc = ZEND_NUM_ARGS();
+
+	if (argc != 3 || zend_get_parameters_ex(argc, &MRCD, &key, &value) == FAILURE) {
+		ZEND_WRONG_PARAM_COUNT();
+	}
+
+	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
+
+	convert_to_string_ex(key);
+	str_key = Z_STRVAL_PP(key);
+	if (!str_key || str_key == "" ) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid key '%s'", str_key);
+		RETURN_FALSE;
+	}
+	
+	if (strcmp(str_key,"amin")==0) {
+		convert_to_double_ex(value);
+		pmrc->header.amax= Z_DVAL_PP(value);
+	}
+	if (strcmp(str_key,"amax")==0) {
+		convert_to_double_ex(value);
+		pmrc->header.amax= Z_DVAL_PP(value);
+	}
+
+
+}
 
 /**
  * retrieve classes and frequences from MRC file, URL
