@@ -83,13 +83,17 @@ class Prediction(object):
         return tuple(self.parameters[:2] + [self.parameters[-1]])
 
     def predict(self, tilt):
+        tilt_series = self.getCurrentTiltSeries()
         tilt_group = self.getCurrentTiltGroup()
-        if len(tilt_group) < 1:
+        n_tilt_series = len(self.tilt_series_list)
+        n_tilt_groups = len(tilt_series)
+        n_tilts = len(tilt_group)
+        if n_tilts < 1:
             raise RuntimeError
-        elif len(tilt_group) < 2:
+        elif n_tilts < 2:
             x, y = tilt_group.xs[-1], tilt_group.ys[-1]
             z = 0.0
-        elif len(tilt_group) < 3:
+        elif n_tilts < 3 or (n_tilt_series < 2 and n_tilt_groups < 2):
             x, y = leastSquaresXY(tilt_group.tilts,
                                   tilt_group.xs,
                                   tilt_group.ys,
