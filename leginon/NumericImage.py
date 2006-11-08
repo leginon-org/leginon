@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-from wxPython.wx import wxEmptyImage
+from wx import EmptyImage
 import Image
 try:
 	import numarray as Numeric
@@ -46,7 +46,7 @@ def Numeric2PILImage(numericarray, scale=False):
 
 def Numeric2wxImage(numericarray):
 	image = Numeric2PILImage(numericarray)
-	wximage = wxEmptyImage(image.size[0], image.size[1])
+	wximage = EmptyImage(image.size[0], image.size[1])
 	wximage.SetData(image.convert('RGB').tostring())
 	return wximage
 
@@ -171,7 +171,7 @@ class NumericImage:
 			image = self.image
 
 	def wxImage(self):
-		wximage = wxEmptyImage(self.image.size[0], self.image.size[1])
+		wximage = EmptyImage(self.image.size[0], self.image.size[1])
 		wximage.SetData(self.image.convert('RGB').tostring())
 		return wximage
 
