@@ -1113,7 +1113,7 @@ def insertParticlePicks(params,img,expid):
 		particlesq=particleData.particle()
 		particlesq['runId']=runq
 		particlesq['imageId']=imgq
-		particlesq['selexonId']=selexonresult[0]
+		particlesq['selectionId']=selexonresult[0]
 		particlesq['xcoord']=xcenter
 		particlesq['ycoord']=ycenter
 		particlesq['correlation']=corr

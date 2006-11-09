@@ -35,7 +35,7 @@ class particle(data.Data):
 		return data.Data.typemap() + (
 			('runId', run),
 			('imageId', image),
-			('selexonId', selectionParams),
+			('selectionId', selectionParams),
 			('xcoord', int),
 			('ycoord', int),
 			('correlation', float),
