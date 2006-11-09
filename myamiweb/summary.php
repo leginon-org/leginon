@@ -262,19 +262,9 @@ require('inc/particledata.inc');
 $sessionId=$expId;
 $particle = new particledata();
 if ($particle->hasParticleData($sessionId)) {
-	$particlerun=$particle->getLastParticleRun($sessionId);
-	$particlestats=$particle->getStats($particlerun);
-	$particlestatsimg = '<a href="particlegraph.php?hg=1&run='.$particlerun.'">'
-		.'<img border="0" '
-		.'src="particlegraph.php?w=150&hg=1&run='
-		.$particlerun.'"></a>';
-	$particlestats['img']= $particlestatsimg;
-//	echo $particlerun;
-	echo "<BR>";
-//	print_r($particlestats);
 	$display_keys = array ( 'totparticles', 'min', 'max', 'avg', 'stddev', 'img');
-	$particletable=$particle->displayParticleStats($particlestats, $display_keys, $particlerun);
-	echo $particletable;
+	$particleruns=$particle->getParticleRunIds($sessionId);
+	echo $particle->displayParticleStats($particleruns, $display_keys);
 }
 else {
 echo "no Particle information available";

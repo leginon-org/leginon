@@ -92,23 +92,37 @@ class particledata {
 		return $r;
 	}
 
-	function displayParticleStats($stats, $display_keys, $runId) {
-		if (!is_array($stats) || !is_array($display_keys))
+	function displayParticleStats($particleruns, $display_keys) {
+		if (!is_array($particleruns))
 			return ;
-		$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>";
-		$html .= "<tr> <td> </td>";
-		foreach($stats as  $field=>$data) {
-			$html .= "<td> <span class='datafield0'>".$field."</span> </td> ";
+		$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
+		$html .= "<tr> <td> </td>\n";
+		foreach($display_keys as $key) {
+			$html .= "<td> <span class='datafield0'>".$key."</span> </td> ";
 		}
-		$html .= "</tr> <tr>";
-		$q = "select name from `run` where `DEF_id` = $runId";
-		$r = $this->mysql->getSQLResult($q);
-		$r0 = $r[0];
-		$html .= "<td> $r0[name] </td> ";
-		foreach($stats as $field=>$data) {
-			$html .= "<td> $data </td> ";
+		$html .= "</tr>";
+
+		foreach ($particleruns as $particle) {
+		        $html .= "<tr>";
+			$runId=$particle['DEF_id'];
+		        $particlestats=$this->getStats($runId);
+		        $particlestats['img'] = '<a href="particlegraph.php?hg=1&run='.$runId.'">'
+		                .'<img border="0" '
+		                .'src="particlegraph.php?w=150&hg=1&run='
+		                .$runId.'"></a>';
+			$q = "select name from `run` where `DEF_id` = $runId";
+			$r = $this->mysql->getSQLResult($q);
+			$r0 = $r[0];
+			$html .= "<td> $r0[name] </td>\n";
+			foreach($particlestats as $field=>$data) {
+			        if (eregi('^min|^max|^avg|^stddev', $field)) {
+				        $data=format_sci_number($data,4);
+				}
+				$html .= "<td> $data </td> \n";
+			}
+			$html .= "</tr>\n";
 		}
-		$html .= "</tr> </table>";
+		$html .= "</table>\n";
 		return $html;
 	}
 
