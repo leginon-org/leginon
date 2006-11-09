@@ -577,6 +577,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		mean = imagefun.mean(im)
 		std = imagefun.stdev(im, mean)
 		statsdata = data.AcquisitionImageStatsData()
+		statsdata['session'] = self.session
 		statsdata['min'] = mn
 		statsdata['max'] = mx
 		statsdata['mean'] = mean
