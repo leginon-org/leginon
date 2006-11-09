@@ -200,7 +200,7 @@ def parseInput(args,params):
 		elif (elements[0]=='dbimages'):
 			dbinfo=elements[1].split(',')
 			if len(dbinfo) == 2:
-				params['session']['name']=dbinfo[0]
+				params['sessionname']=dbinfo[0]
 				params['preset']=dbinfo[1]
 				params["dbimages"]='TRUE'
 				params["continue"]='TRUE' # continue should be on for dbimages option

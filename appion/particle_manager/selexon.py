@@ -44,7 +44,8 @@ if __name__ == '__main__':
 
 	# get list of input images, since wildcards are supported
 	if params['dbimages']=='TRUE':
-		images=getImagesFromDB(params['session']['name'],params['preset'])
+		images=getImagesFromDB(params['sessionname'],params['preset'])
+		params['session']=images[0]['session']
 	elif params['preptmplt']=='FALSE':
 		imglist=params["mrcfileroot"]
 		images=[]
@@ -132,7 +133,6 @@ if __name__ == '__main__':
 			# get the image's pixel size:
 			params['apix']=getPixelSize(img)
 
-			print params['imgdir']
 			# skip if image doesn't exist:
 			if not os.path.isfile(params['imgdir']+img['filename']+'.mrc'):
 				print img['filename']+".mrc not found, skipping"
