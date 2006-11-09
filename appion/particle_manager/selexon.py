@@ -146,7 +146,7 @@ if __name__ == '__main__':
 					print imgname,'already processed. To process again, remove "continue" option.'
 					continue
 
-			# insert selexon params into dbparticledata.selexonParams table
+			# insert selexon params into dbparticledata.selectionParams table
 			expid=int(img['session'].dbid)
 			if params['commit']==True:
 				insertSelexonParams(params,expid)

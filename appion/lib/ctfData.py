@@ -7,7 +7,7 @@
 import data
 import dbdatakeeper
 
-db=dbdatakeeper.DBDataKeeper()
+db=dbdatakeeper.DBDataKeeper(db='dbctfdata')
 
 class run(data.Data):
 	def typemap(cls):

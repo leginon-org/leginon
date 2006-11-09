@@ -955,7 +955,7 @@ def insertSelexonParams(params,expid):
 					insertTemplateRun(params,runq,imgname,strt,end,incr)
 				else:
 					insertTemplateRun(params,runq,imgname,params['startang'],params['endang'],params['incrang'])
- 		selexonparams=particleData.selexonParams()
+ 		selexonparams=particleData.selectionParams()
  		selexonparams['runId']=runq
  		selexonparams['diam']=params['diam']
  		selexonparams['bin']=params['bin']
@@ -975,7 +975,7 @@ def insertSelexonParams(params,expid):
  	# parameters are the same as the previous
  	else:
 		# get existing selexon parameters from previous run
- 		partq=particleData.selexonParams(runId=runq)
+ 		partq=particleData.selectionParams(runId=runq)
 		tmpltq=particleData.templateRun(runId=runq)
 
  		partresults=partdb.query(partq, results=1)
@@ -1072,8 +1072,8 @@ def insertParticlePicks(params,img,expid):
 	runq['dbemdata|SessionData|session']=expid
 	runids=partdb.query(runq, results=1)
 
-	# get corresponding selexonParams entry
-	selexonq=particleData.selexonParams(runId=runq)
+	# get corresponding selectionParams entry
+	selexonq=particleData.selectionParams(runId=runq)
 	selexonresult=partdb.query(selexonq, results=1)
 
         legimgid=int(img.dbid)
