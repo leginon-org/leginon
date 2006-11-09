@@ -18,17 +18,10 @@ if __name__ == '__main__':
 
 	# parse command line input
 	parseInput(sys.argv,params)
-	getOutDirs(params)
 
-	# move to run directory
-	os.chdir(params['rundir'])
-	
 	# if shiftonly is specified, make defocpair true
 	if params['shiftonly']:
 		params['defocpair']=True
-
-	# unpickle dictionary of previously processed images
-	donedict=getDoneDict(selexondonename)
 
 	# check to make sure that incompatible parameters are not set
 	if params['templateIds'] and params['template']:
@@ -48,6 +41,23 @@ if __name__ == '__main__':
 	if (params["apix"]==0 and not params["templateIds"]):
 		print "\nError: no pixel size has been entered\n\n"
 		sys.exit(1)
+
+	# get list of input images, since wildcards are supported
+	if params['dbimages']=='TRUE':
+		images=getImagesFromDB(params['session']['name'],params['preset'])
+	elif params['preptmplt']=='FALSE':
+		imglist=params["mrcfileroot"]
+		images=[]
+		for img in imglist:
+			imageq=data.AcquisitionImageData(filename=img)
+			imageresult=db.query(imageq, readimages=False)
+			images=images+imageresult
+		params['session']=images[0]['session']
+
+	getOutDirs(params)
+
+	# move to run directory
+	os.chdir(params['rundir'])
 
 	# if templateIds specified, create temporary template files in this directory
 	if params['templateIds']:
@@ -77,18 +87,11 @@ if __name__ == '__main__':
 		print "\nError: dbimages can not be specified if particular images have been specified"
 		sys.exit(1)
 	
-	# get list of input images, since wildcards are supported
-	if params['dbimages']=='TRUE':
-		images=getImagesFromDB(params['session'],params['preset'])
-	else:
-		imglist=params["mrcfileroot"]
-		images=[]
-		for img in imglist:
-			imageq=data.AcquisitionImageData(filename=img)
-			imageresult=db.query(imageq, readimages=False)
-			images=images+imageresult
-		params['session']=images[0]['session']['name']
+	# unpickle dictionary of previously processed images
+	donedict=getDoneDict(selexondonename)
 
+	createImageLinks(images)
+	
 	# check to see if user only wants to run the crud finder
 	if (params["crudonly"]=='TRUE'):
 		if (params["crud"]=='TRUE' and params["cdiam"]==0):
@@ -126,6 +129,10 @@ if __name__ == '__main__':
 		while images:
 			img = images.pop(0)
 
+			# get the image's pixel size:
+			params['apix']=getPixelSize(img)
+
+			print params['imgdir']
 			# skip if image doesn't exist:
 			if not os.path.isfile(params['imgdir']+img['filename']+'.mrc'):
 				print img['filename']+".mrc not found, skipping"
@@ -143,9 +150,6 @@ if __name__ == '__main__':
 			expid=int(img['session'].dbid)
 			if params['commit']==True:
 				insertSelexonParams(params,expid)
-
-			# get the image's pixel size, store to params:
-			params['apix']=getPixelSize(img)
 
 			# match the original template pixel size to the img pixel size
 			if params['templateIds']:
@@ -206,7 +210,7 @@ if __name__ == '__main__':
 			notdone=True
 			print "Waiting one minute for new images"
 			time.sleep(60)
-			images=getImagesFromDB(params['session'],params['preset'])
+			images=getImagesFromDB(params['session']['name'],params['preset'])
 		else:
 			notdone=False
 

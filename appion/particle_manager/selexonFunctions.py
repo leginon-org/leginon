@@ -128,11 +128,7 @@ def parseInput(args,params):
 			break
 		else:
 			mrcfile=arg
-			if (os.path.exists(mrcfile)):
-				mrcfileroot.append(os.path.splitext(mrcfile)[0])
-			else:
-				print ("file '%s' does not exist \n" % mrcfile)
-				sys.exit()
+			mrcfileroot.append(os.path.splitext(mrcfile)[0])
 		lastarg+=1
 	params["mrcfileroot"]=mrcfileroot
 
@@ -204,7 +200,7 @@ def parseInput(args,params):
 		elif (elements[0]=='dbimages'):
 			dbinfo=elements[1].split(',')
 			if len(dbinfo) == 2:
-				params['session']=dbinfo[0]
+				params['session']['name']=dbinfo[0]
 				params['preset']=dbinfo[1]
 				params["dbimages"]='TRUE'
 				params["continue"]='TRUE' # continue should be on for dbimages option
@@ -264,7 +260,7 @@ def runFindEM(params,file):
 	return
         
 def getOutDirs(params):
-	sessionq=data.SessionData(name=params['session'])
+	sessionq=data.SessionData(name=params['session']['name'])
 	sessiondata=db.query(sessionq)
 	impath=sessiondata[0]['image path']
 	params['imgdir']=impath+'/'
@@ -277,7 +273,6 @@ def getOutDirs(params):
 		params['outdir']=outdir
 
 	params['rundir']=os.path.join(params['outdir'],params['runid'])
-	print params['rundir']
 	
 	if os.path.exists(params['rundir']):
 			print "\nWarning: run directory for", params['runid'],"already exists. Make sure continue option is on if you don't want to overwrite previous run.\n"
@@ -789,17 +784,18 @@ def getImagesFromDB(session,preset):
 	# readimages=False to keep db from returning actual image
 	# readimages=True could be used for doing processing w/i this script
 	imagelist=db.query(imageq, readimages=False)
-	images=[]
-	#create list of images and make a link to them if they are not already in curr dir
+	return (imagelist)
+
+def createImageLinks(imagelist):
+	# make a link to all images in list if they are not already in curr dir
 	for n in imagelist:
 		imagename=n['filename']
-		images.append(imagename)
 		imgpath=n['session']['image path'] + '/' + imagename + '.mrc'
 		if not os.path.exists((imagename + '.mrc')):
 			command=('ln -s %s .' %  imgpath)
 			print command
 			os.system(command)
-	return (imagelist)
+	return
 
 def getDBTemplates(params):
 	tmptmplt='originalTemporaryTemplate'
@@ -817,6 +813,7 @@ def getDBTemplates(params):
 		# copy file to current directory
 		print "getting image:",fname
 		os.system("cp "+fname+" "+tmptmplt+str(i)+".mrc")
+		
 		i=i+1
 	return
 
@@ -910,7 +907,7 @@ def findSubpixelPeak(image, npix=5, guess=None, limit=None, lpf=None):
 	return pf.getResults()
 
 def recordShift(params,img,sibling,peak):
-	filename=params['session']+'.shift.txt'
+	filename=params['session']['name']+'.shift.txt'
 	f=open(filename,'a')
 	f.write('%s\t%s\t%f\t%f\t%f\t%f\n' % (img['filename'],sibling['filename'],peak['shift'][1],peak['shift'][0],peak['scalefactor'],peak['subpixel peak value']))
 	f.close()
