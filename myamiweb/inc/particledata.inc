@@ -45,13 +45,21 @@ class particledata {
 		$q = "select p.xcoord, p.ycoord, p.correlation, p.insidecrud "
 			."from particle p "
 			."left join image i "
-			."on (i.`dbemdata|AcquisitionImageData|image` = p.`REF|image|imageId` ) "
+			."on (i.`DEF_id` = p.`REF|image|imageId` ) "
 			."where p.`REF|run|runId` = '$runId' "
 			."and i.`dbemdata|AcquisitionImageData|image` = '$imageId' ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
 	
+	function getSelectionParams($runId) {
+		$q = "select * "
+			."from selectionParams s "
+			."where s.`REF|run|runId` = '$runId' ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+		
 	function getParticles($runId) {
 		$q="select p.DEF_id, p.xcoord, p.ycoord, p.correlation, p.insidecrud "
 			."from particle p "
