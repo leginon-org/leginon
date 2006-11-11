@@ -13,7 +13,7 @@ acedb=dbdatakeeper.DBDataKeeper(db='dbctfdata')
 db=dbdatakeeper.DBDataKeeper(db='dbemdata')
 
 def printHelp():
-	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected=<file>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n>\n"
+	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected or inspectfile=<file>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n>\n"
 	print "Examples:\nmakestack.py extract/001ma.box single=stacks/start.hed ace=0.8 boxsize=180 inspected"
 	print "makestack.py extract/*.box outdir=stacks/noctf/ ace=0.8 boxsize=180\n"
 	print "* Supports wildcards - By default a stack file of the same name as the box file"
@@ -27,7 +27,8 @@ def printHelp():
 	print "ace=<n>              : Only use micrographs with this ACE confidence value and higher"
 	print "selexoncutoff=<n>    : Only use particles of this correlation value and higher"
 	print "boxsize=<n>          : Make stacks with this box size"
-	print "inspected=<file>     : Text file containing results of manually checked images"
+	print "inspected            : Use only manually inspected images from database"
+	print "inspectfile=<file>   : Text file containing results of manually checked images"
 	print "phaseflip            : Stack will be phase flipped using best ACE value in database"
 	print "noinvert             : If writing to a single stack, images will NOT be inverted"
 	print "                       (stack images are inverted by default)"
@@ -38,6 +39,7 @@ def printHelp():
 	print "                       Example <maxdefocus = -3.0e-6>"
 	print "description=\"text\"   : description of the stack being created- surround text with double quotes"
 	print "prtlrunId=<n>        : use particles from database corresponding to selexon run id"
+	print "commit               : store particles to database"
 	print "\n"
 
 	sys.exit(1)
@@ -46,13 +48,13 @@ def createDefaults():
 	# create default values for parameters
 	params={}
 	params["imgs"]=''
-	params["outdir"]=''
+	params["outdir"]=os.path.abspath('.')+'/'
 	params["runid"]=None
-	params["single"]=''
-	params["ace"]=0
-	params["boxsize"]=0
-	params["inspected"]=''
-	params["phaseflip"]='FALSE'
+	params["single"]=None
+	params["ace"]=None
+	params["boxsize"]=None
+	params["inspected"]=False
+	params["phaseflip"]=False
 	params["hasace"]=False
 	params["apix"]=0
 	params["kv"]=0
@@ -64,6 +66,7 @@ def createDefaults():
 	params['description']=None
 	params['selexonId']=None
 	params['selexoncutoff']=None
+	params['commit']=False
 	return params
 
 def parseInput(args):
@@ -82,7 +85,7 @@ def parseInput(args):
 		# gather all input files into mrcfileroot list
 		if '=' in  arg:
 			break
-		elif (arg=='phaseflip'):
+		elif (arg=='phaseflip' or arg=='commit' or arg=='noinvert' or arg=='spider'):
 			break
 		else:
 			boxfile=arg
@@ -112,14 +115,21 @@ def parseInput(args):
 			params["selexoncutoff"]=float(elements[1])
 		elif (elements[0]=='boxsize'):
 			params["boxsize"]=int(elements[1])
-		elif (elements[0]=='inspected'):
-			params["inspected"]=elements[1]
+		elif (elements[0]=='inspectfile'):
+			params["inspectfile"]=elements[1]
+		elif (arg=='inspected'):
+			params["inspected"]=True
 		elif (arg=='phaseflip'):
-			params["phaseflip"]='TRUE'
+			params["phaseflip"]=True
 		elif (arg=='noinvert'):
 			params["noinvert"]='TRUE'
 		elif (arg=='spider'):
 			params["spider"]=True
+		elif (arg=='commit'):
+			params['commit']=True
+			# if commit is set, must have a runid:
+			if not params['runid']:
+				params['runid']='stack1'
 		elif (elements[0]=='mindefocus'):
 			mindf=float(elements[1])
 			if mindf > 0:
@@ -157,7 +167,7 @@ def getFilePath(img):
 	return path
 
 def checkInspected(img):
-	f=open(params["inspected"],'r')
+	f=open(params["inspectfile"],'r')
 	results=f.readlines()
 	status=''
 	for line in results:
@@ -260,7 +270,7 @@ def batchBox(params, img):
 	output=params["outdir"]+img['filename']+'.hed'
 
 	# create output directory if it does not exist
-	if (params["outdir"]!='' and not os.path.exists(params["outdir"])):
+	if not os.path.exists(params["outdir"]):
 		print "creating directory:",params['outdir']
 		os.makedirs(params['outdir'])
            
@@ -273,7 +283,7 @@ def batchBox(params, img):
 		dbbox=img['filename']+'.box'
 
 	# write batchboxer command
-	if (params["boxsize"]!=0):
+	if params["boxsize"]:
 		cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i insideonly" %(input, dbbox, output, params["boxsize"])
 	else: 
  		cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(input, dbbox, output)
@@ -319,7 +329,7 @@ def phaseFlip(params,img):
 	f.close()
     
 def singleStack(params,img):
- 	if (params["phaseflip"]=='TRUE'):
+ 	if (params["phaseflip"]==True):
 		input=params["outdir"]+img['filename']+'.ctf.hed'
 	else:
 		input=params["outdir"]+img['filename']+'.hed'
@@ -363,7 +373,7 @@ def singleStack(params,img):
     
 	os.remove(params["outdir"]+img['filename']+".hed")
 	os.remove(params["outdir"]+img['filename']+".img")
-	if (params["phaseflip"]=='TRUE'):
+	if (params["phaseflip"]==True):
 		os.remove(params["outdir"]+img['filename']+".ctf.hed")
 		os.remove(params["outdir"]+img['filename']+".ctf.img")
 
@@ -409,6 +419,65 @@ def getImgsFromSelexonId(params):
 
 	return(imagelist)
 
+def insertStackParams(params):
+	if params['spider']==True:
+		fileType='spider'
+	else:
+		fileType='imagic'
+
+	# get stack parameters if they already exist in table
+	stparamq=particleData.stackParams()
+	stparamq['stackPath']=params['outdir']
+	stparamq['name']=params['single']
+
+	stackparams=partdb.query(stparamq,results=1)
+
+	# if not in the database, insert new stack parameters
+	if not stackparams:
+		print "Inserting stack parameters into DB"
+		stparamq['description']=params['description']
+		stparamq['boxSize']=params['boxsize']
+		stparamq['fileType']=fileType
+		if params['phaseflip']==True:
+			stparamq['phaseFlipped']=True
+		if params['ace']:
+			stparamq['aceCutoff']=params['ace']
+		if params['selexoncutoff']:
+			stparamq['selexonCutoff']=params['selexoncutoff']
+		if params['inspected']:
+			stparamq['checkImage']=True
+		if params['mindefocus']:
+			stparamq['minDefocus']=params['mindefocus']
+		if params['maxdefocus']:
+			stparamq['maxDefocus']=params['maxdefocus']
+		partdb.insert(stparamq)
+	else:
+		stackparams=stackparams[0]
+		print stackparams['phaseFlipped'],params['phaseflip'] 
+		print stackparams['description'],params['description']
+		print stackparams['boxSize'],params['boxsize']
+		print stackparams['phaseFlipped'],params['phaseflip']
+		print stackparams['aceCutoff'],params['ace']
+		print stackparams['selexonCutoff'],params['selexoncutoff']
+		print stackparams['checkImage'],params['inspected']
+		print stackparams['minDefocus'],params['mindefocus']
+		print stackparams['maxDefocus'],params['maxdefocus']
+		print stackparams['fileType'],fileType
+		    
+		if (stackparams['description']!=params['description'] or
+		    stackparams['boxSize']!=params['boxsize'] or
+		    stackparams['phaseFlipped']!=params['phaseflip'] or
+		    stackparams['aceCutoff']!=params['ace'] or
+		    stackparams['selexonCutoff']!=params['selexoncutoff'] or
+		    stackparams['checkImage']!=params['inspected'] or
+		    stackparams['minDefocus']!=params['mindefocus'] or
+		    stackparams['maxDefocus']!=params['maxdefocus'] or
+		    stackparams['fileType']!=fileType):
+			print "ERROR: All parameters for a single ACE run must be identical!"
+			print "please check your parameter settings."
+			sys.exit()
+	sys.exit()
+	
 #-----------------------------------------------------------------------
 
 if __name__ == '__main__':
@@ -418,9 +487,32 @@ if __name__ == '__main__':
 	# parse command line input
 	params=parseInput(sys.argv)
 
+	# stack must have a description
+#	if not params['description']:
+#		print "\nERROR: Stack must have a description\n"
+#		sys.exit()
+		
+	# if a runId is specified, outdir will have a subdirectory named runId
+	if params['runid']:
+		params['outdir']=params['outdir']+params['runid']+'/'
+
+	# if saving to the database, stack must be a single file
+	if params['commit'] and not params['single']:
+		print "\nERROR: When committing to database, stack must be a single file."
+		print "use the single=filename option"
+		sys.exit()
+
+	# if getting particles from db or committing, a box size must be set
+	if (params['commit'] or params['prtlrunId']) and not params['boxsize']:
+		print "\nERROR: specify a box size\n"
+		sys.exit()
+
 	# if making a single stack, remove existing stack if exists
-	if (params["single"]!=''):
+	if params["single"]:
 		stackfile=params["outdir"]+os.path.splitext(params["single"])[0]
+		# if saving to the database, store the stack parameters
+		if (params['commit']==True):
+			insertStackParams(params)
 		if (params["spider"]==True):
 			if (os.path.exists(stackfile+".spi")):
 				os.remove(stackfile+".spi")
@@ -471,14 +563,14 @@ if __name__ == '__main__':
 		params["hasace"]=False
 
 		# check if the image has been marked as good
-		if (params["inspected"]!=''):
+		if params["inspectfile"]:
 			goodimg=checkInspected(img)
 			if (goodimg=='FALSE'):
 				print img['filename']+".mrc has been rejected upon inspection"
 				continue
 
 		# check that ACE estimation is above confidence threshold
- 		if (params["ace"] != 0):
+ 		if params["ace"]:
 			# find ace values in database
  			getAceValues(params,img)
 			if (params["hasace"]==False): 
@@ -510,7 +602,7 @@ if __name__ == '__main__':
 			continue
         
 		# phase flip boxed particles if requested
-		if (params["phaseflip"]=='TRUE'):
+		if (params["phaseflip"]==True):
 			getAceValues(params,img) # find ace values in database
 			if (params["hasace"]==False): 
 				print img['filename']+".mrc has no ACE values"
@@ -518,6 +610,7 @@ if __name__ == '__main__':
 			phaseFlip(params,img) # phase flip stack file
 
 		# add boxed particles to a single stack
-		if (params["single"]!=''):
+		if params["single"]:
 			singleStack(params,img)
+
 	print "Done!"

@@ -14,17 +14,19 @@ import peakfinder
 import correlator
 import math
 import particleData
+import project
 
 db=dbdatakeeper.DBDataKeeper()
 partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
+projdb=dbdatakeeper.DBDataKeeper(db='project')
 
 def createDefaults():
 	# create default values for parameters
 	params={}
 	params["mrcfileroot"]=''
-	params["preptmplt"]='FALSE'
 	params["template"]=''
-	params["apix"]=0
+	params["templatelist"]=[]
+	params["apix"]=None
 	params["diam"]=0
 	params["bin"]=4
 	params["startang"]=0
@@ -42,7 +44,6 @@ def createDefaults():
 	params["chi"]=0.95
 	params["cstd"]=1
 	params["crudonly"]='FALSE'
-	params["onetemplate"]='FALSE'
 	params["continue"]='FALSE'
 	params["multiple_range"]=False
 	params["dbimages"]='FALSE'
@@ -58,16 +59,28 @@ def createDefaults():
 	params["newTmpltInfo"]=[]
 	params["scaledapix"]=[]
 	params["outdir"]=None
+	params['description']=None
+	params['projectId']=None
 
 	return params
 
-def printHelp():
-	print "\nUsage:\nselexon.py <file> template=<name> apix=<pixel> diam=<n> bin=<n> [templateIds=<n,n,n,n,...>] [range=<start,stop,incr>] [thresh=<threshold> or autopik=<n>] [lp=<n>] [hp=<n>] [crud or cruddiam=<n>] [crudonly] [crudblur=<n>] [crudlow=<n>] [crudhi=<n>] [box=<n>] [continue] [dbimages=<session>,<preset>] [commit] [defocpair] [shiftonly]"
-	print "or\nselexon.py preptemplate template=<name> apix=<pixel> bin=<n>\n"
+def printUploadHelp():
+	print "\nUsage:\nuploadTemplate.py template=<name> apix=<pixel> session=<session> [commit]\n"
+	print "selexon template=groEL apix=1.63 session=06nov10a commit\n"
+	print "template=<name>      : name should not have the extension, or number."
+	print "                       groEL1.mrc, groEL2.mrc would be simply \"template=groEL\""
+	print "apix=<pixel>         : angstroms per pixel (unbinned)"
+	print "session=<sessionId>  : session name associated with template (i.e. 06mar12a)"
+	print "description=\"text\"   : description of the template - must be in quotes"
+	print "commit               : store templates to database"
+	print "\n"
+
+	sys.exit(1)
+
+def printSelexonHelp():
+	print "\nUsage:\nselexon.py <file> template=<name> apix=<pixel> diam=<n> bin=<n> [templateIds=<n,n,n,n,...>] [range=<start,stop,incr>] [thresh=<threshold> or autopik=<n>] [lp=<n>] [hp=<n>] [crud or cruddiam=<n>] [crudonly] [crudblur=<n>] [crudlow=<n>] [crudhi=<n>] [box=<n>] [continue] [dbimages=<session>,<preset>] [commit] [defocpair] [shiftonly] [outdir=<path>]"
 	print "Examples:\nselexon 05jun23a_00001en.mrc template=groEL apix=1.63 diam=250 bin=4 range=0,90,10 thresh=0.45 crud"
-	print "or"
 	print "selexon template=groEL apix=1.63 diam=250 bin=4 range=0,90,10 thresh=0.45 crud dbimages=05jun23a,en continue\n"
-	print "preptemplate       : this will prepare all your template files for selexon"
 	print "template=<name>    : name should not have the extension, or number."
 	print "                     groEL1.mrc, groEL2.mrc would be simply \"template=groEL\""
 	print "apix=<pixel>       : angstroms per pixel (unbinned)"
@@ -100,21 +113,39 @@ def printHelp():
 	print "defocpair          : calculate shift between defocus pairs"
 	print "shiftonly          : skip particle picking and only calculate shifts"
 	print "templateIds        : list the database id's of the templates to use"
+	print "outdir=<path>      : output directory in which results will be written"
 	print "\n"
 
 	sys.exit(1)
 
-def parseInput(args,params):
+def parseUploadInput(args,params):
 	# check that there are enough input parameters
 	if (len(args)<2 or args[1]=='help') :
-		printHelp()
+		printUploadHelp()
+
+	# save the input parameters into the "params" dictionary
+	for arg in args[1:]:
+		elements=arg.split('=')
+		if (elements[0]=='template'):
+			params["template"]=elements[1]
+		elif (elements[0]=='apix'):
+			params["apix"]=float(elements[1])
+		elif (elements[0]=='session'):
+			params["session"]=elements[1]
+		elif (elements[0]=='description'):
+			params['description']=elements[1]
+		elif (arg=='commit'):
+			params['commit']=True
+		else:
+			print "undefined parameter '"+arg+"'\n"
+			sys.exit(1)
+        
+def parseSelexonInput(args,params):
+	# check that there are enough input parameters
+	if (len(args)<2 or args[1]=='help') :
+		printSelexonHelp()
 
 	lastarg=1
-
-	# check if user just wants make template images
-	if (args[1]=='preptemplate'):
-		params["preptmplt"]='TRUE'
-		lastarg=2
 
 	# save the input parameters into the "params" dictionary
 
@@ -220,7 +251,7 @@ def parseInput(args,params):
 def runFindEM(params,file):
 	# run FindEM
 	tmplt=params["template"]
-	numcls=params["classes"]
+	numcls=len(params['templatelist'])
 	pixdwn=str(params["apix"]*params["bin"])
 	d=str(params["diam"])
 	if (params["multiple_range"]==False):
@@ -230,7 +261,7 @@ def runFindEM(params,file):
 	bw=str(int((1.5 * params["diam"]/params["apix"]/params["bin"])/2))
 
 	classavg=1
-	while classavg<=params["classes"]:
+	while classavg<=len(params['templatelist']):
 		# first remove the existing cccmaxmap** file
 		cccfile="cccmaxmap%i00.mrc" %classavg
 		if (os.path.exists(cccfile)):
@@ -243,7 +274,7 @@ def runFindEM(params,file):
 		fin='';
 		fin=os.popen('${FINDEM_PATH}/FindEM_SB','w')
 		fin.write(file+".dwn.mrc\n")
-		if (params["onetemplate"]=='TRUE'):
+		if (len(params['templatelist'])==1 and not params['templateIds']):
 			fin.write(tmplt+".dwn.mrc\n")
 		else:
 			fin.write(tmplt+str(classavg)+".dwn.mrc\n")
@@ -253,12 +284,23 @@ def runFindEM(params,file):
 		fin.write(str(classavg)+"00\n")
 		fin.write(strt+','+end+','+incr+"\n")
 		fin.write(bw+"\n")
+		print "running findEM"
 		fin.flush
 		fin.close()
-		print "running findEM"
 		classavg=classavg+1
 	return
         
+def getProjectId(params):
+	projectdata=project.ProjectData()
+	projects=projectdata.getProjectExperiments()
+	for i in projects.getall():
+		if i['name']==params['session']:
+			params['projectId']=i['projectId']
+	if not params['projectId']:
+		print "\nERROR: no project associated with this session\n"
+		sys.exit()
+	return
+	
 def getOutDirs(params):
 	sessionq=data.SessionData(name=params['session']['name'])
 	sessiondata=db.query(sessionq)
@@ -286,7 +328,7 @@ def findPeaks(params,file):
 	tmpfile=tempfile.NamedTemporaryFile()
 	imgsize=int(getImgSize(file))
 	wsize=str(int(1.5 * params["diam"]/params["apix"]/params["bin"]))
-	clsnum=str(params["classes"])
+	clsnum=str(len(params['templatelist']))
 	cutoff=str(params["thresh"])
 	scale=str(params["bin"])
 	sz=str(imgsize/params["bin"])
@@ -572,44 +614,36 @@ def getImgSize(fname):
 		sys.exit()
 	return(size)
 
-def checkTemplates(params):
+def checkTemplates(params,upload=None):
 	# determine number of template files
 	# if using 'preptemplate' option, will count number of '.mrc' files
 	# otherwise, will count the number of '.dwn.mrc' files
 
-	if (params["preptmplt"]=='TRUE' or params['templateIds']):
-		ext='.mrc'
-	else:
-		ext='.dwn.mrc'
-
 	name=params["template"]
 	stop=0 
-	n=0    # number of template files
     
 	# count number of template images.
 	# if a template image exists with no number after it
 	# counter will assume that there is only one template
+	n=0
 	while (stop==0):
-		if (os.path.exists(name+ext)):
-			#insert image to database
-			if (params['commit']==True and params['preptmplt']=='TRUE'):
-				insertTemplateImage(params,name+ext)
+		if (os.path.exists(name+'.mrc') and os.path.exists(name+str(n+1)+'.mrc')):
+			# templates not following naming scheme
+			print "ERROR: Both",name+'.mrc',"and",name+str(n+1)+'.mrc',"exist.\n"
+			sys.exit()
+		if (os.path.exists(name+'.mrc')):
+			params['templatelist'].append(name+'.mrc')
 			n=n+1
-			params["onetemplate"]='TRUE'
 			stop=1
-		elif (os.path.exists(name+str(n+1)+ext)):
-			#insert image to database
-			if (params['commit']==True and params['preptmplt']=='TRUE'):
-				insertTemplateImage(params,name+str(n+1)+ext)
+		elif (os.path.exists(name+str(n+1)+'.mrc')):
+			params['templatelist'].append(name+str(n+1)+'.mrc')
 			n=n+1
 		else:
 			stop=1
 
-	if (n==0):
+	if not params['templatelist']:
 		print "There are no template images found with basename \""+name+"\"\n"
 		sys.exit(1)
-	else :
-		params["classes"]=n
 
 	return(params)
 
@@ -667,26 +701,9 @@ def filterImg(img,apix,res):
 		#Mrc.numeric_to_mrc(kernel,'kernel.mrc')
 	return(c.convolve(image=img,kernel=kernel))
     
-def prepTemplate(params):
-	# check that parameters are set:
-	if (params["apix"]==0 or params["template"]=='' or params["bin"]==0):
-		printHelp()
-
-	# go through the template mrc files and downsize & filter them
-	i=1
-	num=params["classes"]
-	name=params["template"]
-	while i<=num:
-		if params["onetemplate"]=='TRUE':
-			mrcfile=name+'.mrc'
-		else:
-			mrcfile=name+str(i)+'.mrc'
-		dwnsizeTemplate(params,mrcfile)
-		i=i+1
-	print "\ndownsize & filtered "+str(num)+" file(s) with root \""+params["template"]+"\"\n"
-	sys.exit(1)
-    
 def pik2Box(params,file):
+	box=params["box"]
+
 	if (params["crud"]=='TRUE'):
 		fname="pikfiles/"+file+".a.pik.nocrud"
 	else:
@@ -706,7 +723,6 @@ def pik2Box(params,file):
 	pfile.close()
 
 	# write to the box file
-	box=params["box"]
 	bfile=open(file+".box","w")
 	bfile.writelines(piklist)
 	bfile.close()
@@ -798,13 +814,13 @@ def createImageLinks(imagelist):
 	return
 
 def getDBTemplates(params):
-	tmptmplt='originalTemporaryTemplate'
+	tmptmplt=params['template']
 	i=1
 	for tid in params['templateIds']:
 		# find templateImage row
 		tmpltinfo=partdb.direct_query(data.templateImage, tid)
 		if not (tmpltinfo):
-			print "\nTemplateId",tid,"not found in database.  Use preptemplate"
+			print "\nTemplateId",tid,"not found in database.  Use 'uploadTemplate.py'"
 			sys.exit(1)
 		fname=tmpltinfo['templatepath']
 		apix=tmpltinfo['apix']
@@ -813,7 +829,6 @@ def getDBTemplates(params):
 		# copy file to current directory
 		print "getting image:",fname
 		os.system("cp "+fname+" "+tmptmplt+str(i)+".mrc")
-		
 		i=i+1
 	return
 
@@ -833,7 +848,6 @@ def rescaleTemplates(img,params):
 	return
 	
 def scaleandclip(fname,scalefactor,newfname):
-	print "scaling now...."
 	image=Mrc.mrc_to_numeric(fname)
 	boxsz=image.shape
 	scaledimg=imagefun.scale(image,scalefactor)
@@ -939,11 +953,11 @@ def insertSelexonParams(params,expid):
  	# if no run entry exists, insert new run entry into run.dbparticledata
  	# then create a new selexonParam entry
  	if not(runids):
-		if params['onetemplate']=='TRUE':
+		if len(params['templatelist'])==1:
 			imgname=params['abspath']+params['template']+'.mrc'
 			insertTemplateRun(params,runq,imgname,params['startang'],params['endang'],params['incrang'])
 		else:
-			for i in range(1,params['classes']+1):
+			for i in range(1,len(params['templatelist']+1)):
 				if params['templateIds']:
 					imgname=params['templateIds'][i-1]
 				else:
@@ -982,14 +996,14 @@ def insertSelexonParams(params,expid):
 		tmpltresults=partdb.query(tmpltq)
 		selexonparams=partresults[0]
 		# make sure that using same number of templates
-		if params['classes']!=len(tmpltresults):
+		if len(params['templatelist'])!=len(tmpltresults):
 			print "All parameters for a selexon run must be identical!"
 			print "You do not have the same number of templates as your last run"
 			sys.exit(1)
 		# param check if using multiple ranges for templates
 		if (params['multiple_range']==True):
 			# check that all ranges have same values as previous run
-			for i in range(0,params['classes']):
+			for i in range(0,len(params['templatelist'])):
 				if params['templateIds']:
 					tmpltimgq=partdb.direct_query(data.templateImage,params['templateIds'][i])
 				else:
@@ -1056,14 +1070,18 @@ def insertTemplateRun(params,runq,imgname,strt,end,incr):
 	templateq['range_incr']=float(incr)
 	partdb.insert(templateq)
 
-def insertTemplateImage(params,name):
-	templateq=particleData.templateImage()
-	templateq['templatepath']=params['abspath']+name
-	templateId=partdb.query(templateq, results=1)
-	#insert template to database if doesn't exist
-	if not (templateId):
-		templateq['apix']=params['apix']
-		partdb.insert(templateq)
+def insertTemplateImage(params):
+	for name in params['templatelist']:
+		templateq=particleData.templateImage()
+		templateq['templatepath']=params['abspath']+name
+		templateId=partdb.query(templateq, results=1)
+	        #insert template to database if doesn't exist
+		if not (templateId):
+			print "Inserting",name,"into the template database"
+			templateq['apix']=params['apix']
+			templateq['description']=params['description']
+			templateq['project|projects|projectId']=params['projectId']
+			partdb.insert(templateq)
 	return
 
 def insertParticlePicks(params,img,expid):

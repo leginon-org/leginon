@@ -17,36 +17,41 @@ if __name__ == '__main__':
 	params=createDefaults()
 
 	# parse command line input
-	parseInput(sys.argv,params)
+	parseSelexonInput(sys.argv,params)
 
 	# if shiftonly is specified, make defocpair true
 	if params['shiftonly']:
 		params['defocpair']=True
 
 	# check to make sure that incompatible parameters are not set
+	if not params['templateIds'] and not params['apix']:
+		print "\nERROR: if not using templateIds, you must enter a template pixel size\n"
+		sys.exit()
 	if params['templateIds'] and params['template']:
-		print "\nBoth template database IDs and mrc file templates are specified,\nChoose one\n";
+		print "\nERROR: Both template database IDs and mrc file templates are specified,\nChoose one\n"
 		sys.exit(1)
 	if params['crudonly']=='TRUE' and params['shiftonly']=='TRUE':
-		print 'crudonly and shiftonly can not be specified at the same time'
+		print 'ERROR: crudonly and shiftonly can not be specified at the same time'
 		sys.exit()
-	if params['preptmplt']=='TRUE' and params['crudonly']=='TRUE':
-		print 'preptemplate and crudonly can not be specified at the same time'
-		sys.exit()
-	if params['preptmplt']=='TRUE' and params['shiftonly']=='TRUE':
-		print 'preptemplate and shiftonly can not be specified at the same time'
-		sys.exit()
-
-	# check for wrong or missing inputs
-	if (params["apix"]==0 and not params["templateIds"]):
-		print "\nError: no pixel size has been entered\n\n"
+	if (params["thresh"]==0 and params["autopik"]==0):
+		print "\nERROR: neither manual threshold or autopik parameters are set, please set one.\n"
 		sys.exit(1)
-
+	if (params["diam"]==0):
+		print "\nERROR: please input the diameter of your particle\n\n"
+		sys.exit(1)
+	if len(params["mrcfileroot"]) > 0 and params["dbimages"]=='TRUE':
+		print len(images)
+		print "\nERROR: dbimages can not be specified if particular images have been specified\n"
+		sys.exit(1)
+	
 	# get list of input images, since wildcards are supported
 	if params['dbimages']=='TRUE':
 		images=getImagesFromDB(params['sessionname'],params['preset'])
 		params['session']=images[0]['session']
-	elif params['preptmplt']=='FALSE':
+	else:
+		if not params['mrcfileroot']:
+			print "\nERROR: no files specified\n"
+			sys.exit()
 		imglist=params["mrcfileroot"]
 		images=[]
 		for img in imglist:
@@ -57,37 +62,28 @@ if __name__ == '__main__':
 
 	getOutDirs(params)
 
-	# move to run directory
-	os.chdir(params['rundir'])
-
-	# if templateIds specified, create temporary template files in this directory
+	# if templateIds specified, create temporary template files in this directory & rescale
 	if params['templateIds']:
-		getDBTemplates(params)
-		# set the template name to the copied file names
+		# get the first image's pixel size:
+		params['apix']=getPixelSize(images[0])
 		params['template']='originalTemporaryTemplate'
-	
+		# move to run directory
+		os.chdir(params['rundir'])
+		# get the templates from the database
+		getDBTemplates(params)
+		# scale them to the appropriate pixel size
+		rescaleTemplates(images[0],params)
+		# set the template name to the copied file names
+		params['template']='scaledTemporaryTemplate'
+		
 	# find the number of template files
-	if (params["crudonly"]=='FALSE'):
-		params=checkTemplates(params)
-		# set the template name to scaled file name if getting from database
-		if params['templateIds']:
-			params['template']='scaledTemporaryTemplate'
-
-	# check to see if user only wants to downsize & filter template files
-	if (params["preptmplt"]=='TRUE' and not params["templateIds"]):
-		prepTemplate(params)
-
-	if (params["thresh"]==0 and params["autopik"]==0):
-		print "\nError: neither manual threshold or autopik parameters are set, please set one.\n"
-		sys.exit(1)
-	if (params["diam"]==0):
-		print "\nError: please input the diameter of your particle\n\n"
-		sys.exit(1)
-	if len(params["mrcfileroot"]) > 0 and params["dbimages"]=='TRUE':
-		print len(images)
-		print "\nError: dbimages can not be specified if particular images have been specified"
-		sys.exit(1)
-	
+	if params["crudonly"]=='FALSE':
+		checkTemplates(params)
+		# go through the template mrc files and downsize & filter them
+		for tmplt in params['templatelist']:
+			dwnsizeTemplate(params,tmplt)
+		print "\ndownsize & filtered "+str(len(params['templatelist']))+" file(s) with root \""+params["template"]+"\"\n"
+			
 	# unpickle dictionary of previously processed images
 	donedict=getDoneDict(selexondonename)
 
