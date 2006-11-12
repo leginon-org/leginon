@@ -123,6 +123,7 @@ class stackParams(data.Data):
 			('minDefocus', float),
 			('maxDefocus', float),
 			('fileType', str),
+			('inverted', bool),
 		)
 	typemap = classmethod(typemap)
 data.stackParams=stackParams
@@ -130,6 +131,7 @@ data.stackParams=stackParams
 class stackParticles(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
+			('particleNumber', int),
 			('stackId', stackParams),
 			('particleId', particle),
 	        )

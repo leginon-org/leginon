@@ -53,12 +53,13 @@ def createDefaults():
 	params["single"]=None
 	params["ace"]=None
 	params["boxsize"]=None
-	params["inspected"]=False
-	params["phaseflip"]=False
+	params["inspected"]=None
+	params['inspectfile']=None
+	params["phaseflip"]=None
 	params["hasace"]=False
 	params["apix"]=0
 	params["kv"]=0
-	params["noinvert"]='FALSE'
+	params["noinvert"]=False
 	params["spider"]=False
 	params["df"]=0.0
 	params['mindefocus']=None
@@ -67,6 +68,8 @@ def createDefaults():
 	params['selexonId']=None
 	params['selexoncutoff']=None
 	params['commit']=False
+	params['outdir']=os.path.abspath('.')+'/'
+	params['particleNumber']=0
 	return params
 
 def parseInput(args):
@@ -101,7 +104,12 @@ def parseInput(args):
 	for arg in args[lastarg:]:
 		elements=arg.split('=')
 		if (elements[0]=='outdir'):
-			params["outdir"]=elements[1]
+			outputdir=elements[1]
+			# if user has not specified a full path:
+			if not outputdir[0]=='/':
+				params['outdir']=params['outdir']+outputdir
+			else:
+				params['outdir']=outputdir
 			# make sure the directory path has '/' at end
 			if not(params["outdir"][-1]=='/'):
 				params["outdir"]=params["outdir"]+'/'
@@ -122,7 +130,7 @@ def parseInput(args):
 		elif (arg=='phaseflip'):
 			params["phaseflip"]=True
 		elif (arg=='noinvert'):
-			params["noinvert"]='TRUE'
+			params["noinvert"]=True
 		elif (arg=='spider'):
 			params["spider"]=True
 		elif (arg=='commit'):
@@ -308,6 +316,16 @@ def writeParticleBoxfile(img,dbbox):
 			if (params['selexoncutoff']):
 				if params['selexoncutoff']>prtl['correlation']:
 					continue
+			# save the particles to the database
+			if params['commit']:
+				stackpq=particleData.stackParticles()
+				stackpq['stackId']=params['stackId']
+				stackpq['particleId']=prtl
+				stackres=partdb.query(stackpq)
+				if not stackres:
+					params['particleNumber']=params['particleNumber']+1
+					stackpq['particleNumber']=params['particleNumber']
+					partdb.insert(stackpq)
 			xcoord=prtl['xcoord']-int(box/2)
 			ycoord=prtl['ycoord']-int(box/2)
 			if (xcoord>0 and ycoord>0):
@@ -344,7 +362,7 @@ def singleStack(params,img):
 	cmd="proc2d %s %s norm=0.0,1.0" %(input, output)
     
 	# unless specified, invert the images
-	if (params["noinvert"]=='FALSE'):
+	if (params["noinvert"]==False):
 		cmd=cmd+" invert"
 
 	# if specified, create spider stack
@@ -370,7 +388,7 @@ def singleStack(params,img):
 		f.write(line+"\n")
 	f.close()
 	params["particle"]=count
-    
+	
 	os.remove(params["outdir"]+img['filename']+".hed")
 	os.remove(params["outdir"]+img['filename']+".img")
 	if (params["phaseflip"]==True):
@@ -425,6 +443,11 @@ def insertStackParams(params):
 	else:
 		fileType='imagic'
 
+	if params['noinvert']==True:
+		inverted=None
+	else:
+		inverted=True
+
 	# get stack parameters if they already exist in table
 	stparamq=particleData.stackParams()
 	stparamq['stackPath']=params['outdir']
@@ -438,6 +461,7 @@ def insertStackParams(params):
 		stparamq['description']=params['description']
 		stparamq['boxSize']=params['boxsize']
 		stparamq['fileType']=fileType
+		stparamq['inverted']=inverted
 		if params['phaseflip']==True:
 			stparamq['phaseFlipped']=True
 		if params['ace']:
@@ -450,20 +474,11 @@ def insertStackParams(params):
 			stparamq['minDefocus']=params['mindefocus']
 		if params['maxdefocus']:
 			stparamq['maxDefocus']=params['maxdefocus']
-		partdb.insert(stparamq)
+       		partdb.insert(stparamq)
+		stp=particleData.stackParams(stackPath=params['outdir'],name=params['single'])
+		stackparams=partdb.query(stp,results=1)[0]
 	else:
 		stackparams=stackparams[0]
-		print stackparams['phaseFlipped'],params['phaseflip'] 
-		print stackparams['description'],params['description']
-		print stackparams['boxSize'],params['boxsize']
-		print stackparams['phaseFlipped'],params['phaseflip']
-		print stackparams['aceCutoff'],params['ace']
-		print stackparams['selexonCutoff'],params['selexoncutoff']
-		print stackparams['checkImage'],params['inspected']
-		print stackparams['minDefocus'],params['mindefocus']
-		print stackparams['maxDefocus'],params['maxdefocus']
-		print stackparams['fileType'],fileType
-		    
 		if (stackparams['description']!=params['description'] or
 		    stackparams['boxSize']!=params['boxsize'] or
 		    stackparams['phaseFlipped']!=params['phaseflip'] or
@@ -472,12 +487,14 @@ def insertStackParams(params):
 		    stackparams['checkImage']!=params['inspected'] or
 		    stackparams['minDefocus']!=params['mindefocus'] or
 		    stackparams['maxDefocus']!=params['maxdefocus'] or
-		    stackparams['fileType']!=fileType):
-			print "ERROR: All parameters for a single ACE run must be identical!"
+		    stackparams['fileType']!=fileType or
+		    stackparams['inverted']!=inverted):
+			print "ERROR: All parameters for a particular stack must be identical!"
 			print "please check your parameter settings."
 			sys.exit()
-	sys.exit()
-	
+	# get the stack Id
+	params['stackId']=stackparams
+
 #-----------------------------------------------------------------------
 
 if __name__ == '__main__':
@@ -488,9 +505,9 @@ if __name__ == '__main__':
 	params=parseInput(sys.argv)
 
 	# stack must have a description
-#	if not params['description']:
-#		print "\nERROR: Stack must have a description\n"
-#		sys.exit()
+	if not params['description']:
+		print "\nERROR: Stack must have a description\n"
+		sys.exit()
 		
 	# if a runId is specified, outdir will have a subdirectory named runId
 	if params['runid']:
@@ -503,7 +520,7 @@ if __name__ == '__main__':
 		sys.exit()
 
 	# if getting particles from db or committing, a box size must be set
-	if (params['commit'] or params['prtlrunId']) and not params['boxsize']:
+	if (params['commit'] or params['selexonId']) and not params['boxsize']:
 		print "\nERROR: specify a box size\n"
 		sys.exit()
 
@@ -534,6 +551,9 @@ if __name__ == '__main__':
 		
 	# get list of input images, since wildcards are supported
 	else:
+		if not params['imgs']:
+			print "\nERROR: enter particle images to box or use a particles selection runId\n"
+			sys.exit()
 		imglist=params["imgs"]
 		images=[]
 		for img in imglist:
@@ -612,5 +632,8 @@ if __name__ == '__main__':
 		# add boxed particles to a single stack
 		if params["single"]:
 			singleStack(params,img)
+
+		if os.path.exists(params['outdir']+'temporaryParticlesFromDB.box'):
+			os.remove(params['outdir']+'temporaryParticlesFromDB.box')
 
 	print "Done!"
