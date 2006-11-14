@@ -567,8 +567,8 @@ if __name__ == '__main__':
 			
 		if params['dbimages']=='TRUE' and not params['reprocess']:
 			notdone=True
-			print "Waiting one minute for new images"
-			time.sleep(60)
+			print "Waiting ten minutes for new images"
+			time.sleep(600)
 			images=getImagesFromDB(params['session'],params['preset'])
 		else:
 			notdone=False

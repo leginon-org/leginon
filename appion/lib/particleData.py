@@ -80,7 +80,7 @@ class shift(data.Data):
 			('shiftx', float),
 			('shifty', float),
 			('correlation', float),
-			('scale', int),
+			('scale', float),
 		)
 	typemap = classmethod(typemap)
 data.shift=shift
