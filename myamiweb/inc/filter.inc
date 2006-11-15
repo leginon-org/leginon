@@ -43,7 +43,7 @@ class filter {
 function getfft($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1, $autoscale=false) {
 	$densitymax = ($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL;
 	$mrcimg = mrcread($filename);
-	mrcfftw($mrcimg,50);
+	mrcfftw($mrcimg,10);
 	mrcbinning($mrcimg, $binning);
 	if ($autoscale)
 		list($minpix, $maxpix) = mrcgetscale($mrcimg, $densitymax);

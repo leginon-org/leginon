@@ -1,7 +1,7 @@
 <?php
 /**
- *	@version $Revision: 1.29 $
- *	@version $Id: image.inc,v 1.29 2006-11-01 17:30:51 dfellman Exp $
+ *	@version $Revision: 1.30 $
+ *	@version $Id: image.inc,v 1.30 2006-11-15 22:15:58 glander Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -31,6 +31,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		'displaytargets' => true,
 		'loadtime' => false,
 		'ptlc' => false,
+		'newptcl' => false,
 		'autoscale' => false,
 		'targettype' => false,
 		'mrc' => false
@@ -104,7 +105,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			return $imgmrc;
 		}
 		if ($p['fft']) {
-			$img = getfft($pic, $p['minpix'], $p['maxpix'], $p['colormap'], $binning);
+			$img = getfft($pic, $p['minpix'], $p['maxpix'], $p['colormap'], $binning, $p['autoscale']);
 		}
 
 		else if (function_exists($p['filter']))
@@ -313,6 +314,22 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			}
 		
 		}
+		if ($p['newptcl']) {
+				require ('inc/particledata.inc');
+				$particle = new particledata();
+				$particlerun=$particle->getLastParticleRun($sessionId);
+				$particledata=$particle->getParticlesFromImageId($particlerun, $imageId);
+				list($selectionparams)=$particle->getSelectionParams($particlerun);
+				$diam = $selectionparams[diam];
+				$col = imagecolorallocate($img, 255,255,255);
+				$diam = $diam*$scalefactor/$binning;
+				foreach ($particledata as $particle) {
+					$cx = $particle['xcoord']/$binning*$scalefactor;
+					$cy = $particle['ycoord']/$binning*$scalefactor;
+					drawcircle($img, $cx, $cy, $diam, $col, true);
+				}
+		}
+
 	} else {
 		$img = blankimage();
 	}

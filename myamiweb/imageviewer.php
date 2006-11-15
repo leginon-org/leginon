@@ -5,8 +5,8 @@ require ('inc/viewer.inc');
 require ('inc/auth.inc');
 
 $sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];
-$projectId = ($_POST['projectId']) ? $_POST['projectId'] : 'all';
-$imageId = $_POST['imageId'];
+$projectId = ($_POST['projectId']) ? $_POST['projectId'] : $_GET['projectId'];
+$imageId = ($_POST['imageId']) ? $_POST['imageId'] : $_GET['imageId'];
 $preset = $_POST[$_POST['controlpre']];
 
 // --- Set sessionId
@@ -55,8 +55,10 @@ $javascript = $viewer->getJavascript();
 
 $view1 = new view('Main View', 'v1');
 $view1->setControl();
+$view1->displayParticleIcon(false); 
 $view1->addMenuItems($playbackcontrol);
 $view1->setDataTypes($datatypes);
+$view1->displayPTCL(false);
 $view1->setSize(512);
 $viewer->add($view1);
 
@@ -65,6 +67,7 @@ $javascript .= $viewer->getJavascriptInit();
 viewer_header('image viewer', $javascript, 'initviewer()');
 ?>
 <a class="header" target="summary" href="summary.php?expId=<?php echo $sessionId ?>">[summary]</A>
+<a class="header" target="processing" href="processing.php?expId=<?php echo $sessionId; ?>">[processing]</A>
 <?php
 $viewer->display();
 viewer_footer();

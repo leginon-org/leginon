@@ -437,6 +437,8 @@ class view {
 		$this->btfft->onToggle($name.'btfftaction'); 
 		$this->btclose = new toggleButton($this->name.'close', 'open', 'close');
 		$this->btclose->onToggle($name.'btcloseaction'); 
+		$this->btnptcl = new toggleButton($this->name.'nptcl', 'ptcl');
+		$this->btnptcl->onToggle($name.'btnptclaction');
 
 		$param = "left=0,top=".($this->viewnb*180+20).",height=170,width=370";
 		$url = "ptclsel.php?name=$name&displayname=$this->title";
@@ -446,6 +448,7 @@ class view {
 		$this->displayscaleicon = true;
 		$this->displayscaleicon = true;
 		$this->displaytargeticon = true;
+		$this->displaynptclicon = true;
 		$this->displayffticon = true;
 		$this->displayinfoicon = true;
 		$this->displayparticleicon = true;
@@ -458,8 +461,10 @@ class view {
 		$this->imagescript = 'getimg.php';
 		$this->scale_st = "true";
 		$this->target_st = "false";
+		$this->nptcl_st = "false";
 		$this->btscalestate = "true";
 		$this->bttargetstate = "true";
+		$this->btnptclstate = "true";
 		$this->quality = "80";
 		$this->filter= "default";
 		$this->binning= "auto";
@@ -476,6 +481,7 @@ class view {
 		$this->autoscalememo = $this->name.'autos';
 		$this->btfftmemo = $this->name.'fft_bt_st';
 		$this->bttargetmemo = $this->name.'target_bt_st';
+		$this->btnptclmemo = $this->name.'nptcl_bt_st';
 		$this->btscalememo = $this->name.'scale_bt_st';
 		if ($ptcl=$_REQUEST[$this->ptclselmemo])
 			$this->ptclsel = $ptcl;
@@ -497,6 +503,8 @@ class view {
 			$this->btfftstate = $btfftstate;
 		if ($bttargetstate=$_REQUEST[$this->bttargetmemo])
 			$this->bttargetstate = $bttargetstate;
+		if ($btnptclstate=$_REQUEST[$this->btnptclmemo])
+			$this->btnptclstate = $btnptclstate;
 		if ($btscalestate=$_REQUEST[$this->btscalememo])
 			$this->btscalestate = $btscalestate;
 		
@@ -597,6 +605,17 @@ class view {
 	function displayTarget($state) {
 		$state_str = ($state) ? "true" : "false";
 		$this->target_st= $state_str;
+		$this->bttargetstate = $state_str;
+	}
+
+	function displayPTCLIcon($state) {
+		$this->displaynptclicon = $state;
+	}
+
+	function displayPTCL($state) {
+		$state_str = ($state) ? "true" : "false";
+		$this->nptcl_st= $state_str;
+		$this->btnptclstate = $state_str;
 	}
 
 	function displayScaleIcon($state) {
@@ -650,6 +669,7 @@ class view {
 			.$this->btdownload->getJavascript()
 			.$this->btscale->getJavascript()
 			.$this->bttarget->getJavascript()
+			.$this->btnptcl->getJavascript()
 			.$this->btfft->getJavascript()
 			.$this->btclose->getJavascript()
 			.$this->crlf;
@@ -670,6 +690,12 @@ class view {
 			.'	setImageHistogram("'.$this->name.'");'.$this->crlf
 			.'}'.$this->crlf;
 
+		$javascript .= 'function '.$name.'btnptclaction(state) { '.$this->crlf
+			.'	newfile("'.$this->name.'");'.$this->crlf
+			.'	setform("'.$this->btnptclmemo.'", state);'.$this->crlf
+			//.'	setImageHistogram("'.$this->name.'");'.$this->crlf
+			.'}'.$this->crlf;
+
 		$javascript .= 'function '.$name.'btcloseaction(state) { '.$this->crlf
 			.'	setform("'.$this->displayname.'", state);'.$this->crlf
 			.'	newexp();'.$this->crlf
@@ -687,6 +713,8 @@ class view {
 			$javascript .= $this->btscale->getjstoggle();
 		if ($this->bttargetstate=='true') 
 				$javascript .= $this->bttarget->getjstoggle();
+		if ($this->btnptclstate=='true') 
+				$javascript .= $this->btnptcl->getjstoggle();
 		return $javascript;
 	}
 
@@ -739,6 +767,7 @@ class view {
 		<input type="hidden" name="'.$this->maxpixmemo.'" value="'.$this->maxpix.'"> 
 		<input type="hidden" name="'.$this->btfftmemo.'" value="'.$this->btfftstate.'"> 
 		<input type="hidden" name="'.$this->bttargetmemo.'" value="'.$this->bttargetstate.'"> 
+		<input type="hidden" name="'.$this->btnptclmemo.'" value="'.$this->btnptclstate.'"> 
 		<input type="hidden" name="'.$this->btscalememo.'" value="'.$this->btscalestate.'"> 
 		<input type="hidden" name="'.$this->ptclselmemo.'" value="0"> ';
 		if ($this->ismaster) {
@@ -807,6 +836,14 @@ class view {
 			$htmlframe .= '
 			</td>';
 		}
+		if ($this->displaynptclicon) {
+			$htmlframe .= '
+				<td width="15">';
+			$htmlframe .= $this->btnptcl->display();
+			$htmlframe .= '
+			</td>';
+		}
+
 		if ($this->displayscaleicon) {
 			$htmlframe .= '
 			<td width="15">';

@@ -39,6 +39,7 @@ $minpix = ($_GET['np']) ? $_GET['np'] : 0;
 $maxpix = ($_GET['xp']) ? $_GET['xp'] : (($colormap) ? 1274 : 255);
 $size = $_GET['s'];
 $displaytarget = ($_GET['tg']==1) ? true : false;
+$displaynptcl = ($_GET['nptcl']==1) ? true : false;
 $displayscalebar = ($_GET['sb']==1) ? true : false;
 $fft = ($_GET['fft']==1) ? true : false;
 if (!$filter=$_GET['flt']) 
@@ -62,6 +63,7 @@ if ($g) {
 		'displaytargets' => $displaytarget,
 		'loadtime' => $displayloadingtime,
 		'autoscale' => $autoscale,
+		'newptcl' => $displaynptcl,
 		'ptcl' => urldecode($displayparticle)
 	);
 

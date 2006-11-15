@@ -248,6 +248,7 @@ function newfile(view){
 	if (eval(view+"fft_bt_st")) fft="&fft=1"; else fft="";
 	if (eval(view+"scale_bt_st")) sb="&sb=1"; else sb="";
 	if (eval(view+"target_bt_st")) tg="&tg=1"; else tg="";
+	if (eval(view+"nptcl_bt_st")) nptcl="&nptcl=1"; else nptcl="";
 	if (cmin = eval("jsmin"+view)) np="&np="+cmin; else np="";
 	if (cmax = eval("jsmax"+view)) xp="&xp="+cmax; else xp="";
 	if (cfilter = eval("jsfilter"+view)) flt="&flt="+cfilter; else flt="";
@@ -261,7 +262,7 @@ function newfile(view){
 		"&preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+autoscale+ptclsel;
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+autoscale+ptclsel+nptcl;
 
 	if (options == lastoptions[vid])
 		return;
