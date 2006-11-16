@@ -75,9 +75,8 @@ class PeakFinder(object):
 				cropcenter = None
 				im = self.image
 
-			flatimage = Numeric.ravel(im)
-			peak = Numeric.argmax(flatimage)
-			peakvalue = flatimage[peak]
+			peak = Numeric.argmax(im.flat)
+			peakvalue = im.flat[peak]
 			rows,cols = im.shape
 			peakrow = peak / cols
 			peakcol = peak % cols

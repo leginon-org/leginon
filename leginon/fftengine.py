@@ -1,7 +1,21 @@
 #!/usr/bin/env python
 try:
 	import numarray as Numeric
-	import numarray.fft as FFT
+	try:
+		import scipy.fftpack
+		import scipy.__config__
+		if not scipy.__config__.get_info('fftw3_info'):
+			raise ImportError
+
+		def real_fft2d(*args, **kwargs):
+			return Numeric.asarray(scipy.fftpack.fft2(*args, **kwargs))
+
+		def inverse_real_fft2d(*args, **kwargs):
+			return Numeric.asarray(scipy.fftpack.ifft2(*args, **kwargs).real)
+
+	except ImportError:
+		from numarray.fft import real_fft2d
+		from numarray.fft import inverse_real_fft2d
 except ImportError:
 	import Numeric
 	import FFT
@@ -61,11 +75,11 @@ if len(fftw_mods) != 2:
 			_fftEngine.__init__(self)
 
 		def _transform(self, im):
-			fftim = FFT.real_fft2d(im)
+			fftim = real_fft2d(im)
 			return fftim
 
 		def _itransform(self, fftim):
-			im = FFT.inverse_real_fft2d(fftim)
+			im = inverse_real_fft2d(fftim)
 			return im
 
 else:
