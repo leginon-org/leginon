@@ -73,7 +73,6 @@ def printUploadHelp():
 	print "diam=<n>             : approximate diameter of particle (in Angstroms, unbinned)"
 	print "session=<sessionId>  : session name associated with template (i.e. 06mar12a)"
 	print "description=\"text\"   : description of the template - must be in quotes"
-	print "commit               : store templates to database"
 	print "\n"
 
 	sys.exit(1)
@@ -137,8 +136,6 @@ def parseUploadInput(args,params):
 			params['session']=elements[1]
 		elif (elements[0]=='description'):
 			params['description']=elements[1]
-		elif (arg=='commit'):
-			params['commit']=True
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)

@@ -34,9 +34,8 @@ if __name__ == '__main__':
 	checkTemplates(params,"upload")
 
 	# insert templates to database
-	if params['commit']:
-		getProjectId(params)
-		insertTemplateImage(params)
+	getProjectId(params)
+	insertTemplateImage(params)
 
 	
 	
