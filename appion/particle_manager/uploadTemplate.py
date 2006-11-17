@@ -17,6 +17,9 @@ if __name__ == '__main__':
 	if not params['apix']:
 		print "\nERROR: enter a pixel size\n";
 		sys.exit()
+	if not params['diam']:
+		print "\nERROR: enter the particle diameter in Angstroms\n";
+		sys.exit()
 	if not params['template']:
 		print "\nERROR: enter a template root name\n";
 		sys.exit()
