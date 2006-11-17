@@ -91,6 +91,7 @@ class templateImage(data.Data):
 			('project|projects|projectId', int),
 			('templatepath', str),
 			('apix', float),
+			('diam', int),
 			('description', str),
 		)
 	typemap = classmethod(typemap)
