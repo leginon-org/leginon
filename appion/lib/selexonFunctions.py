@@ -30,8 +30,8 @@ def createDefaults():
 	params["diam"]=0
 	params["bin"]=4
 	params["startang"]=0
-	params["endang"]=90
-	params["incrang"]=100
+	params["endang"]=10
+	params["incrang"]=20
 	params["thresh"]=0
 	params["autopik"]=0
 	params["lp"]=30
@@ -70,6 +70,7 @@ def printUploadHelp():
 	print "template=<name>      : name should not have the extension, or number."
 	print "                       groEL1.mrc, groEL2.mrc would be simply \"template=groEL\""
 	print "apix=<pixel>         : angstroms per pixel (unbinned)"
+	print "diam=<n>             : approximate diameter of particle (in Angstroms, unbinned)"
 	print "session=<sessionId>  : session name associated with template (i.e. 06mar12a)"
 	print "description=\"text\"   : description of the template - must be in quotes"
 	print "commit               : store templates to database"
@@ -127,11 +128,13 @@ def parseUploadInput(args,params):
 	for arg in args[1:]:
 		elements=arg.split('=')
 		if (elements[0]=='template'):
-			params["template"]=elements[1]
+			params['template']=elements[1]
 		elif (elements[0]=='apix'):
-			params["apix"]=float(elements[1])
+			params['apix']=float(elements[1])
+		elif (elements[0]=='diam'):
+			params['diam']=int(elements[1])
 		elif (elements[0]=='session'):
-			params["session"]=elements[1]
+			params['session']=elements[1]
 		elif (elements[0]=='description'):
 			params['description']=elements[1]
 		elif (arg=='commit'):
@@ -161,25 +164,25 @@ def parseSelexonInput(args,params):
 			mrcfile=arg
 			mrcfileroot.append(os.path.splitext(mrcfile)[0])
 		lastarg+=1
-	params["mrcfileroot"]=mrcfileroot
+	params['mrcfileroot']=mrcfileroot
 
 	# next get all selection parameters
 	for arg in args[lastarg:]:
 		elements=arg.split('=')
 		if (elements[0]=='template'):
-			params["template"]=elements[1]
+			params['template']=elements[1]
 		elif (elements[0]=='apix'):
-			params["apix"]=float(elements[1])
+			params['apix']=float(elements[1])
 		elif (elements[0]=='diam'):
-			params["diam"]=int(elements[1])
+			params['diam']=int(elements[1])
 		elif (elements[0]=='bin'):
-			params["bin"]=int(elements[1])
+			params['bin']=int(elements[1])
 		elif (elements[0]=='range'):
 			angs=elements[1].split(',')
 			if (len(angs)==3):
-				params["startang"]=int(angs[0])
-				params["endang"]=int(angs[1])
-				params["incrang"]=int(angs[2])
+				params['startang']=int(angs[0])
+				params['endang']=int(angs[1])
+				params['incrang']=int(angs[2])
 			else:
 				print "range must include start & stop angle & increment"
 				sys.exit(1)
@@ -187,10 +190,10 @@ def parseSelexonInput(args,params):
 			num=elements[0][-1]
 			angs=elements[1].split(',')
 			if (len(angs)==3):
-				params["startang"+num]=int(angs[0])
-				params["endang"+num]=int(angs[1])
-				params["incrang"+num]=int(angs[2])
-				params["multiple_range"]=True
+				params['startang'+num]=int(angs[0])
+				params['endang'+num]=int(angs[1])
+				params['incrang'+num]=int(angs[2])
+				params['multiple_range']=True
 			else:
  				print "range must include start & stop angle & increment"
 				sys.exit(1)
@@ -954,7 +957,10 @@ def insertSelexonParams(params,expid):
  	# then create a new selexonParam entry
  	if not(runids):
 		if len(params['templatelist'])==1:
-			imgname=params['abspath']+params['template']+'.mrc'
+			if params['templateIds']:
+				imgname=params['templateIds'][0]
+			else:
+				imgname=params['abspath']+params['template']+'.mrc'
 			insertTemplateRun(params,runq,imgname,params['startang'],params['endang'],params['incrang'])
 		else:
 			for i in range(1,len(params['templatelist']+1)):
@@ -1055,6 +1061,8 @@ def insertTemplateRun(params,runq,imgname,strt,end,incr):
 
 	if params['templateIds']:
 		templateId=partdb.direct_query(data.templateImage,imgname)
+		print imgname
+		print templateId
 	else:
 		templateImgq=particleData.templateImage(templatepath=imgname)
 		templateId=partdb.query(templateImgq,results=1)[0]
@@ -1079,6 +1087,7 @@ def insertTemplateImage(params):
 		if not (templateId):
 			print "Inserting",name,"into the template database"
 			templateq['apix']=params['apix']
+			templateq['diam']=params['diam']
 			templateq['description']=params['description']
 			templateq['project|projects|projectId']=params['projectId']
 			partdb.insert(templateq)
