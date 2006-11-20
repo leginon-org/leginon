@@ -88,12 +88,19 @@ class Prediction(object):
         n_tilt_series = len(self.tilt_series_list)
         n_tilt_groups = len(tilt_series)
         n_tilts = len(tilt_group)
+        n = []
+        for s in self.tilt_series_list:
+            for g in s.tilt_groups:
+                n.append(len(tilt_group))
+        n_max = max(n)
+
         if n_tilts < 1:
             raise RuntimeError
         elif n_tilts < 2:
             x, y = tilt_group.xs[-1], tilt_group.ys[-1]
             z = 0.0
-        elif n_tilts < 3 or (n_tilt_series < 2 and n_tilt_groups < 2):
+        # HACK: use residuals instead
+        elif n_tilts < 3 or n_max < 16:
             x, y = leastSquaresXY(tilt_group.tilts,
                                   tilt_group.xs,
                                   tilt_group.ys,
