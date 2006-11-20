@@ -91,7 +91,7 @@ class Prediction(object):
         n = []
         for s in self.tilt_series_list:
             for g in s.tilt_groups:
-                n.append(len(tilt_group))
+                n.append(len(g))
         n_max = max(n)
 
         if n_tilts < 1:
