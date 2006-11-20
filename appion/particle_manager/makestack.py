@@ -175,12 +175,13 @@ def getFilePath(img):
 	return path
 
 def checkInspected(img):
+	filename=img['filename']+'.mrc'
 	f=open(params["inspectfile"],'r')
 	results=f.readlines()
 	status=''
 	for line in results:
 		words=line.split('\t')
-		if (string.find(words[0],img)==0):
+		if (string.find(words[0],filename)==0):
 			status=words[1]
 			status.rstrip('\n')
 			break
