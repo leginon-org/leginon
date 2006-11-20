@@ -960,7 +960,7 @@ def insertSelexonParams(params,expid):
 				imgname=params['abspath']+params['template']+'.mrc'
 			insertTemplateRun(params,runq,imgname,params['startang'],params['endang'],params['incrang'])
 		else:
-			for i in range(1,len(params['templatelist']+1)):
+			for i in range(1,len(params['templatelist'])+1):
 				if params['templateIds']:
 					imgname=params['templateIds'][i-1]
 				else:
