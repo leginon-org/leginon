@@ -30,7 +30,10 @@ if __name__ == '__main__':
 		sys.exit()
 	imglist=params["imgs"]
 	images=[]
+
+	print "getting image data from database:"
 	for img in imglist:
+		print "image:",img
 		imageq=data.AcquisitionImageData(filename=img)
 		imageresult=db.query(imageq, readimages=False)
 		images=images+imageresult
