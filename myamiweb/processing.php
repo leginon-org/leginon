@@ -161,7 +161,7 @@ if ($sessionId) {
     echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>
-    <A HREF='runAssessor.php?expId=$sessionId'>";
+    <A HREF='imgAssessor.php?expId=$sessionId'>";
     if ($assessruns==0) {echo "Begin Processing";}
     else {echo "Continue Processing";}
     echo"</A>

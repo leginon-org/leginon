@@ -206,36 +206,15 @@ else {
 	writeTop("PyACE Launcher","Automated CTF Estimation With PyACE",$javafunctions);
 	echo"
         <FORM NAME='viewerform' method='POST' action='$phpself'>\n";
-
-	if ($expId){
-	        $currentproject=$projectdata->getProjectFromSession($sessioninfo['Name']);
-		$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
-		$sessionName=$sessioninfo['Purpose'];
-		echo "Project: $proj_link<BR>\nSession: $sessionName\n";
+	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+        $sessioninfo=$sessiondata['info'];
+	$presets=$sessiondata['presets'];
+	if (!empty($sessioninfo)) {
+	        $sessionpath=$sessioninfo['Image path'];
+		$sessionpath=ereg_replace("rawdata","ctf_ace/",$sessionpath);
+		$sessionname=$sessioninfo['Name'];
 	}
-	else {
-	        echo"
-               <B>Select Session:</B><BR>
-               <SELECT NAME='projectId' onchange='newexp()'>\n";
-
-		foreach ($projects as $k=>$project) {
-		        $sel = ($project['id']==$projectId) ? "selected" : '';
-		        echo "<option value='".$project['id']."' ".$sel.">".$project['name']."</option>\n";
-		}
-
-		echo"
-                </select>
-                <BR>
-
-                <SELECT NAME='sessionId' onchange='newexp()'>\n";
-
-		foreach ($sessions as $k=>$session) {
-		        $sel = ($session['id']==$sessionId) ? 'selected' : '';
-			$shortname=substr($session['name'],0,90);
-			echo "<option value='".$session['id']."'".$sel.">".$shortname."</option>";
-		}
-		echo"</select>\n";
-	}
+	
 	echo"
         <P>
         <TABLE BORDER=0 CLASS=tableborder>

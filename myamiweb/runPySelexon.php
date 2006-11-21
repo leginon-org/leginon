@@ -245,52 +245,23 @@ function createSelexonForm($extra=false, $title='PySelexon Launcher', $heading='
                 echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
         }
         echo"
-        <form name='viewerform' method='POST' ACTION='$formAction'>\n";
-        // Collect session info from database
-        $sessiondata=getSessionList($projectId,$sessionId);
+        <form name='viewerform' method='POST' ACTION='$formAction'>
+        <INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
+	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
         $sessioninfo=$sessiondata['info'];
-        $presets=$sessiondata['presets'];
-        $sessions=$sessiondata['sessions'];
-        $currentproject=$sessiondata['currentproject'];
-        if (!empty($sessioninfo)) {
-                $sessionpath=$sessioninfo['Image path'];
-                $sessionpath=ereg_replace("rawdata","extract/",$sessionpath);
-                $sessionname=$sessioninfo['Name'];
-        }
+	$presets=$sessiondata['presets'];
+	if (!empty($sessioninfo)) {
+	        $sessionpath=$sessioninfo['Image path'];
+		$sessionpath=ereg_replace("rawdata","extract/",$sessionpath);
+		$sessionname=$sessioninfo['Name'];
+	}
 
-        if ($expId){
-                $proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
-                $sessionDescr=$sessioninfo['Purpose'];
-                echo "Project: $proj_link<BR>\nSession: $sessionDescr\n";
-        }
-        else {
-                echo"
-                <B>Select Session:</B><BR>
-                <SELECT NAME='projectId' onchange='newexp()'>\n";
-                $projects=getProjectList();
-                foreach ($projects as $k=>$project) {
-                        $sel = ($project['id']==$projectId) ? "selected" : '';
-                        echo "<option value='".$project['id']."' ".$sel.">".$project['name']."</option>\n";
-                }
- 
-                echo"
-                </select>
-                <BR>
- 
-                <SELECT NAME='sessionId' onchange='newexp()'>
-                <option value=''>all sessions</OPTION>\n";
-                foreach ($sessions as $k=>$session) {
-                        $sel = ($session['id']==$sessionId) ? 'selected' : '';
-                        $shortname=substr($session['name'],0,90);
-                        echo "<option value='".$session['id']."'".$sel.">".$shortname."</option>";
-                }
-                echo"</select>\n";
-        }
 
+	// if session is changed, change the output directory
+	$sessionpathval=(($_POST['sessionId']==$_POST['lastSessionId'] || $expId) && $_POST['lastSessionId']) ? $_POST['outdir'] : $sessionpath;
         // Set any existing parameters in form
         $runidval = ($_POST['runid']) ? $_POST['runid'] : 'run1';
         $presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
-        $sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
         $defocpaircheck = ($_POST['defocpair']=='on') ? 'CHECKED' : '';
         $shiftonlycheck = ($_POST['shiftonly']=='on') ? 'CHECKED' : '';
         $contcheck = ($_POST['cont']=='on') ? 'CHECKED' : '';
