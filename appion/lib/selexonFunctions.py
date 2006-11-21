@@ -60,6 +60,7 @@ def createDefaults():
 	params["scaledapix"]=[]
 	params["outdir"]=None
 	params['description']=None
+	params['scale']=1
 	params['projectId']=None
 
 	return params
@@ -73,6 +74,16 @@ def printUploadHelp():
 	print "diam=<n>             : approximate diameter of particle (in Angstroms, unbinned)"
 	print "session=<sessionId>  : session name associated with template (i.e. 06mar12a)"
 	print "description=\"text\"   : description of the template - must be in quotes"
+	print "\n"
+
+	sys.exit(1)
+
+def printPrtlUploadHelp():
+	print "\nUsage:\nuploadParticles.py <boxfiles> scale=<n>\n"
+	print "selexon *.box scale=2\n"
+	print "<boxfiles>            : EMAN box file(s) containing picked particle coordinates"
+	print "runid=<runid>         : name associated with these picked particles (default is 'manual1')"
+	print "scale=<n>             : If particles were picked on binned images, enter the binning factor"
 	print "\n"
 
 	sys.exit(1)
@@ -136,6 +147,42 @@ def parseUploadInput(args,params):
 			params['session']=elements[1]
 		elif (elements[0]=='description'):
 			params['description']=elements[1]
+		else:
+			print "undefined parameter '"+arg+"'\n"
+			sys.exit(1)
+        
+def parsePrtlUploadInput(args,params):
+	# check that there are enough input parameters
+	if (len(args)<2 or args[1]=='help') :
+		printUploadHelp()
+
+	lastarg=1
+	
+	# first get all box files
+	mrcfileroot=[]
+	for arg in args[lastarg:]:
+		# gather all input files into mrcfileroot list
+		if '=' in  arg:
+			break
+		else:
+			boxfile=arg
+			if (os.path.exists(boxfile)):
+				mrcfileroot.append(os.path.splitext(boxfile)[0])
+			else:
+				print ("file '%s' does not exist \n" % boxfile)
+				sys.exit()
+		lastarg+=1
+	params["imgs"]=mrcfileroot
+
+	# save the input parameters into the "params" dictionary
+	for arg in args[lastarg:]:
+		elements=arg.split('=')
+		if (elements[0]=='scale'):
+			params['scale']=int(elements[1])
+		elif (elements[0]=='runid'):
+			params["runid"]=elements[1]
+		elif (elements[0]=='diam'):
+			params['diam']=int(elements[1])
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
@@ -287,7 +334,7 @@ def runFindEM(params,file):
 		print "running findEM"
 		fin.flush
 		fin.close()
-		classavg=classavg+1
+		classavg+=1
 	return
         
 def getProjectId(params):
@@ -341,7 +388,7 @@ def findPeaks(params,file):
 		if (os.path.exists(fname)):
 			os.remove(fname)
 			print "removed existing file:",fname
-		i=i+1
+		i+=1
 	if (os.path.exists("pikfiles/"+file+".a.pik")):
 		os.remove("pikfiles/"+file+".a.pik")
         
@@ -633,11 +680,11 @@ def checkTemplates(params,upload=None):
 			sys.exit()
 		if (os.path.exists(name+'.mrc')):
 			params['templatelist'].append(name+'.mrc')
-			n=n+1
+			n+=1
 			stop=1
 		elif (os.path.exists(name+str(n+1)+'.mrc')):
 			params['templatelist'].append(name+str(n+1)+'.mrc')
-			n=n+1
+			n+=1
 		else:
 			stop=1
 
@@ -829,7 +876,7 @@ def getDBTemplates(params):
 		# copy file to current directory
 		print "getting image:",fname
 		os.system("cp "+fname+" "+tmptmplt+str(i)+".mrc")
-		i=i+1
+		i+=1
 	return
 
 def rescaleTemplates(img,params):
@@ -844,7 +891,7 @@ def rescaleTemplates(img,params):
 			scaleandclip(ogtmpltname,(scalefactor,scalefactor),newtmpltname)
 			params['newTmpltInfo'].append(params['apix'])
 			dwnsizeTemplate(params,newtmpltname)
-		i=i+1
+		i+=1
 	return
 	
 def scaleandclip(fname,scalefactor,newfname):
@@ -943,7 +990,25 @@ def insertShift(img,sibling,peak):
 		partdb.insert(shiftq)
 	return()
 
+def insertManualParams(params,expid):
+	runq=particleData.run()
+	runq['name']=params['runid']
+	runq['dbemdata|SessionData|session']=expid
+	
+	runids=partdb.query(runq, results=1)
+
+ 	# if no run entry exists, insert new run entry into run.dbparticledata
+ 	# then create a new selexonParam entry
+ 	if not(runids):
+		print "inserting manual runId into database"
+ 		manparams=particleData.selectionParams()
+ 		manparams['runId']=runq
+ 		manparams['diam']=params['diam']
+ 		partdb.insert(runq)
+ 	       	partdb.insert(manparams)
+	
 def insertSelexonParams(params,expid):
+
 	runq=particleData.run()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
@@ -1090,7 +1155,7 @@ def insertTemplateImage(params):
 			partdb.insert(templateq)
 	return
 
-def insertParticlePicks(params,img,expid):
+def insertParticlePicks(params,img,expid,manual=False):
 	runq=particleData.run()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
@@ -1115,15 +1180,38 @@ def insertParticlePicks(params,img,expid):
         if not (imgids):
                 partdb.insert(imgq)
 
-	
 	# WRITE PARTICLES TO DATABASE
-	print "\nInserting particles into Database...\n"
+	print "Inserting",imgname,"particles into Database..."
 
-	# first open pik file
-	if (params["crud"]=='TRUE'):
-		fname="pikfiles/"+imgname+".a.pik.nocrud"
+      	# first open pik file, or create a temporary one if uploading a box file
+	if (manual==True):
+		fname="temporaryPikFileForUpload.pik"
+
+		# read through the pik file
+		boxfile=open(imgname+".box","r")
+		piklist=[]
+		for line in boxfile:
+			elements=line.split('\t')
+			xcoord=int(elements[0])
+			ycoord=int(elements[1])
+			xbox=int(elements[2])
+			ybox=int(elements[3])
+			xcenter=(xcoord + (xbox/2))*params['scale']
+			ycenter=(ycoord + (ybox/2))*params['scale']
+			if (xcenter < 4096 and ycenter < 4096):
+				piklist.append(imgname+" "+str(xcenter)+" "+str(ycenter)+" 1.0\n")			
+		boxfile.close()
+
+		# write to the pik file
+		pfile=open(fname,"w")
+		pfile.writelines(piklist)
+		pfile.close()
+		
 	else:
-		fname="pikfiles/"+imgname+".a.pik"
+		if (params["crud"]=='TRUE'):
+			fname="pikfiles/"+imgname+".a.pik.nocrud"
+		else:
+			fname="pikfiles/"+imgname+".a.pik"
         
 	# read through the pik file
 	pfile=open(fname,"r")
@@ -1142,7 +1230,9 @@ def insertParticlePicks(params,img,expid):
 		particlesq['ycoord']=ycenter
 		particlesq['correlation']=corr
 
-		partdb.insert(particlesq)
+		presult=partdb.query(particlesq)
+		if not (presult):
+			partdb.insert(particlesq)
 	pfile.close()
 	
 	return
