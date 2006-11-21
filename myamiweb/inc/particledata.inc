@@ -69,6 +69,15 @@ class particledata {
 		$this->mysql->SQLUpdate('image',$data,$where); 
 	}
 
+        function getNumAssessedImages($sessionId) {
+		$q = "select count(DEF_id) as num "
+			."from `image` where "
+		        ."`keep` IS NOT NULL "
+             	        ."AND `dbemdata|SessionData|session` = '$sessionId' ";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['num'];
+	}
+
 	function getSelectionParams($runId) {
 		$q = "select * "
 			."from selectionParams s "

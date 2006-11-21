@@ -101,6 +101,9 @@ if ($sessionId) {
   $prtlrunIds = $particle->getParticleRunIds($sessionId);
   $prtlruns=count($prtlrunIds);
 
+  // --- Get Micrograph Assessment Data
+  $assessedimgs = $particle->getNumAssessedImages($sessionId);
+  
   // --- Get Stack Data
   $stackruns=0;
 
@@ -149,20 +152,20 @@ if ($sessionId) {
     </TD>
   </TR>
   <TR>\n";
-  if ($assessruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
+  if ($assessedimgs==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
   else {$bgcolor=$donecolor;$gifimg=$donepic;}
   echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
     <TD BGCOLOR='$bgcolor'>
     <B>Micrograph Assessment</B>
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
-    if ($assessruns==0) {echo "none";}
-    else {echo "<A HREF='assessreport.php?Id=$sessionId'>$assessruns completed</A>";}
+    if ($assessedimgs==0) {echo "none";}
+    else {echo "<A HREF='assessreport.php?Id=$sessionId'>$assessedimgs assessed</A>";}
     echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>
     <A HREF='imgAssessor.php?expId=$sessionId'>";
-    if ($assessruns==0) {echo "Begin Processing";}
+    if ($assessedimgs==0) {echo "Begin Processing";}
     else {echo "Continue Processing";}
     echo"</A>
     </TD>
