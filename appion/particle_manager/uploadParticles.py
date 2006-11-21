@@ -32,11 +32,14 @@ if __name__ == '__main__':
 	images=[]
 
 	print "getting image data from database:"
+	totimgs=len(imglist)
+	i=1
 	for img in imglist:
-		print "image:",img
+		print "image",i,"of",totimgs,":",img
 		imageq=data.AcquisitionImageData(filename=img)
 		imageresult=db.query(imageq, readimages=False)
 		images=images+imageresult
+		i+=1
 	params['session']=images[0]['session']['name']
 
 	# unpickle dictionary of previously processed images
