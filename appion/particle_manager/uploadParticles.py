@@ -6,8 +6,6 @@ import data
 import time
 from selexonFunctions import *
 
-selexondonename='.selexondone.py'
-
 if __name__ == '__main__':
 	# record command line
 	writeSelexLog(sys.argv)
@@ -41,9 +39,6 @@ if __name__ == '__main__':
 		images=images+imageresult
 		i+=1
 	params['session']=images[0]['session']['name']
-
-	# unpickle dictionary of previously processed images
-	donedict=getDoneDict(selexondonename)
 
 	# upload Particles
 	while images:

@@ -15,6 +15,7 @@ import correlator
 import math
 import particleData
 import project
+import string
 
 db=dbdatakeeper.DBDataKeeper()
 partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
@@ -62,6 +63,7 @@ def createDefaults():
 	params['description']=None
 	params['scale']=1
 	params['projectId']=None
+	params['prtltype']=None
 
 	return params
 
@@ -167,7 +169,11 @@ def parsePrtlUploadInput(args,params):
 		else:
 			boxfile=arg
 			if (os.path.exists(boxfile)):
-				mrcfileroot.append(os.path.splitext(boxfile)[0])
+				# in case of multiple extenstions, such as pik files
+				splitfname=(os.path.basename(boxfile).split('.'))
+				mrcfileroot.append(splitfname[0])
+				params['extension']=string.join(splitfname[1:],'.')
+				params['prtltype']=splitfname[-1]
 			else:
 				print ("file '%s' does not exist \n" % boxfile)
 				sys.exit()
@@ -1183,8 +1189,9 @@ def insertParticlePicks(params,img,expid,manual=False):
 	# WRITE PARTICLES TO DATABASE
 	print "Inserting",imgname,"particles into Database..."
 
+	
       	# first open pik file, or create a temporary one if uploading a box file
-	if (manual==True):
+	if (manual==True and params['prtltype']=='box'):
 		fname="temporaryPikFileForUpload.pik"
 
 		# read through the pik file
@@ -1207,6 +1214,8 @@ def insertParticlePicks(params,img,expid,manual=False):
 		pfile.writelines(piklist)
 		pfile.close()
 		
+	elif (manual==True and params['prtltype']=='pik'):
+		fname=imgname+"."+params['extension']
 	else:
 		if (params["crud"]=='TRUE'):
 			fname="pikfiles/"+imgname+".a.pik.nocrud"
