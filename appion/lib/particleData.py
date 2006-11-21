@@ -26,7 +26,7 @@ class image(data.Data):
 			('dbemdata|AcquisitionImageData|image', int),
 			('dbemdata|SessionData|session', int),
 			('dbemdata|PresetData|preset', int),
-			('reject', bool),
+			('keep', bool),
 		)
 	typemap = classmethod(typemap)
 data.image=image
