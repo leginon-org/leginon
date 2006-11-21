@@ -432,9 +432,7 @@ function runMakestack() {
         $command.="/home/glander/pyappion/particle_manager/makestack.py ";
         $command.="single=$single ";
         $command.="runid=$runid ";
-        $command.="outdir=$outdir"."$runid/ ";
-        $command.="single=start.hed ";
-        //        $command.="description=$description ";
+        $command.="outdir=$outdir ";
         $command.="prtlrunId=$prtlrunId ";
         if ($invert) $command.="invert ";
         if ($phaseflip) $command.="phaseflip ";
