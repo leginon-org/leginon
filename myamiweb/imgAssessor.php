@@ -1,0 +1,166 @@
+<?php
+/**
+ *      The Leginon software is Copyright 2003 
+ *      The Scripps Research Institute, La Jolla, CA
+ *      For terms of the license agreement
+ *      see  http://ami.scripps.edu/software/leginon-license
+ *
+ *      Simple viewer to view a image using mrcmodule
+ */
+
+require ('inc/particledata.inc');
+require ('inc/project.inc');
+require ('inc/viewer.inc');
+require ('inc/processing.inc');
+require ('inc/leginon.inc');
+
+// check if coming directly from a session
+$expId=$_GET['expId'];
+if ($expId) {
+        $sessionId=$expId;
+	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+}
+else {
+        $sessionId=$_POST['sessionId'];
+	$formAction=$_SERVER['PHP_SELF'];	
+}
+$projectId=$_POST['projectId'];
+
+$imgtypes=array('jpg','png','mrc','dwn.mrc');
+
+$javascript="<script src='js/viewer.js'></script>\n";
+writeTop("Leginon Image Assessor","Image Assessor",$javascript);
+
+echo"<form name='viewerform' method='POST' ACTION='$formAction'>\n";
+echo"<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
+
+$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+$sessioninfo=$sessiondata['info'];
+$presets=$sessiondata['presets'];
+if (!empty($sessioninfo)) {
+        $sessionpath=$sessioninfo['Image path'];
+	$sessionpath=ereg_replace("rawdata","extract/",$sessionpath);
+	$sessionname=$sessioninfo['Name'];
+}
+// if session is changed, change the output directory
+$sessionpathval=(($_POST['sessionId']==$_POST['lastSessionId'] || $expId) && $_POST['lastSessionId']) ? $_POST['imgdir'] : $sessionpath;
+
+echo"<P>\n";
+echo"<TABLE BORDER=0 CLASS=tableborder WIDTH='600'>\n";
+echo"<TR><TD VALIGN='TOP'>\n";
+echo"<B>Image Directory:</B><BR>\n";
+echo"<INPUT TYPE='text' NAME='imgdir' VALUE='$sessionpathval' SIZE='60' onchange='this.form.submit()'></TD>\n";
+echo"<TD VALIGN='TOP'>\n";
+echo"<B>Image Type:</B><BR>\n";
+echo"<SELECT NAME='imgtype' onchange='this.form.submit()'>\n";
+foreach ($imgtypes as $type) {
+        $s = ($_POST['imgtype']==$type) ? 'SELECTED' : '';
+	echo "<OPTION $s>$type</OPTION>\n";
+}
+echo"</SELECT>\n";
+echo"</TD></TR>\n";
+echo"<TR><TD COLSPAN='2' ALIGN='CENTER'>\n";
+
+$imgdir=$_POST['imgdir'];
+if ($imgdir) {
+	// make sure imgdir ends with '/'
+	if (substr($imgdir,-1,1)!='/') $imgdir.='/';
+        if (file_exists($imgdir)) {
+                // open image directory
+                $pathdir=opendir($imgdir);
+		// get all files in directory
+		$ext=$_POST['imgtype'];
+		while ($filename=readdir($pathdir)) {
+		        if (preg_match('`\.'.$ext.'$`i',$filename)) $files[]=$filename;
+		}
+		closedir($pathdir);
+		if ($files) {
+			displayImage($_POST,$files,$imgdir,$leginondata);
+		}
+		else echo"<HR><FONT COLOR='RED'>No files found in this directory with extension: $ext</FONT>\n";
+	}
+	else echo "<HR><FONT COLOR='RED'>Specified path: $_POST[imgdir] does not exist</FONT>\n";
+}
+
+echo"</CENTER>\n";
+echo"</TD></TR>\n";
+echo"</TABLE>\n";
+echo"</FORM>\n";
+writeBottom();
+
+
+function displayImage($_POST,$files,$imgdir,$leginondata){
+        $particledata=new particledata();
+
+        $numfiles=count($files);
+	$imlst=$_POST['imagelist'];
+        $imgindx= ($_POST['imgindex']) ? $_POST['imgindex'] : 0;
+	echo "<BR>\n";
+
+	// go directly to a particular image number
+	if ($_POST['imgjump']) {
+	        $imgindx=$_POST['imgjump']-1;
+		// make sure it's within range
+		if ($imgindx < 0) $imgindx=0;
+		elseif ($imgindx > $numfiles-1) $imgindx=$numfiles-1;
+	}
+	// otherwise, increment or decrement the displayed image
+	else {
+	        if ($imlst=='Back') {
+		        $imgindx--;
+			if ($imgindx < 0) {
+			        echo "<FONT COLOR='RED'> At beginning of image list</FONT><BR>\n";
+				$imgindx=0;
+			}
+		}
+		elseif ($imlst=='Next' || $imlst=='Keep' || $imlst=='Remove') {
+		        if($imlst=='Keep') $particledata->updateKeepStatus($_POST['imageid'],'1');
+		        if($imlst=='Remove') $particledata->updateKeepStatus($_POST['imageid'],'0');
+		        $imgindx++;
+			if ($imgindx > $numfiles-1) {
+			        echo "<FONT COLOR='RED'> At end of image list</FONT><BR>\n";
+				$imgindx=$numfiles-1;
+			}
+		}
+		elseif ($imlst=='First') $imgindx=0;
+		elseif ($imlst=='Last') $imgindx=$numfiles-1;
+	}
+
+	$thisnum=$imgindx+1;
+	$imgname=$files[$imgindx];
+	$imgbase=split("\.",$imgname);
+	$imgbase=$imgbase[0];
+	$imgid=$leginondata->getId(array('filename'=>$imgbase),'AcquisitionImageData','DEF_id');
+	$imgstatus=$particledata->getKeepStatus($imgid);
+	
+	echo"<TABLE BORDER='0' CELLPADDING='0' CELLSPACING='0' WIDTH='400'>\n";
+	echo"<TR><TD ALIGN='LEFT'>\n";
+	echo"Image $thisnum of $numfiles</TD>\n";
+	echo"<TD ALIGN='RIGHT'>Jump to image:";
+	echo"<INPUT TYPE='text' NAME='imgjump' SIZE='5'></TD></TR></TABLE>";
+	echo"<BR>$imgname<HR>\n<B>Current Status: ";
+	if ($imgstatus=='0') echo"<FONT COLOR='RED'>REJECT</FONT>";
+	elseif ($imgstatus=='1') echo "<FONT COLOR='GREEN'>KEEP</FONT>";
+	else echo"none";
+	echo "</B>\n";
+
+	$imgfull=$imgdir.$imgname;
+	echo"<INPUT TYPE='HIDDEN' NAME='imgindex' VALUE='$imgindx'>\n";
+	echo"<INPUT TYPE='HIDDEN' NAME='imageid' VALUE='$imgid'>\n";
+	echo"<TABLE BORDER='0' CELLPADDING='5' CELLSPACING='0'><TR><TD>\n";
+	echo"<INPUT TYPE='IMAGE' WIDTH='30' SRC='img/firstbutton.jpg' ALT='First' NAME='imagelist' VALUE='First'>\n";
+	echo"</TD><TD>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/backbutton.jpg' ALT='Back' NAME='imagelist' VALUE='Back'>\n";
+	echo"</TD><TD>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/stopbutton.jpg' ALT='Remove' NAME='imagelist' VALUE='Remove'>\n";
+	echo"</TD><TD>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/playbutton.jpg' ALT='Keep' NAME='imagelist' VALUE='Keep'>\n";
+	echo"</TD><TD>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/nextbutton.jpg' ALT='Next' NAME='imagelist' VALUE='Next'>\n";
+	echo"</TD><TD>\n";
+	echo"<INPUT TYPE='IMAGE' WIDTH='30' SRC='img/lastbutton.jpg' ALT='Last' NAME='imagelist' VALUE='Last'>\n";
+	echo"</TD></TR></TABLE>\n";
+	echo"<IMG WIDTH='500' SRC='loadimg.php?filename=$imgfull&scale=0.5'><P>\n";
+}
+
+?>

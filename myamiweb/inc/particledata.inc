@@ -52,6 +52,23 @@ class particledata {
 		return $r;
 	}
 	
+        function getKeepStatus($imageId){
+	        // returns a boolean value, 0 if rejected, 1 if keeping,
+	        // null if no status in database
+                $q = "select keep "
+		        ."from image "
+		        ."where `dbemdata|AcquisitionImageData|image` = '$imageId' ";
+		list($r)=$this->mysql->getSQLResult($q);
+		return $r['keep'];
+	}
+
+        function updateKeepStatus($imageId,$value){
+	        // update image status : 0 if rejected, 1 if keeping,
+          	$data = array('keep'=>$value);
+	        $where = array('dbemdata|AcquisitionImageData|image'=>$imageId);
+		$this->mysql->SQLUpdate('image',$data,$where); 
+	}
+
 	function getSelectionParams($runId) {
 		$q = "select * "
 			."from selectionParams s "
