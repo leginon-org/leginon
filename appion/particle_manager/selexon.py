@@ -204,9 +204,10 @@ if __name__ == '__main__':
 
 		if params["dbimages"]=='TRUE':
 			notdone=True
-			print "Waiting one minute for new images"
-			time.sleep(60)
+			print "Waiting ten minutes for new images"
+			time.sleep(120)
 			images=getImagesFromDB(params['session']['name'],params['preset'])
+			createImageLinks(images)
 		else:
 			notdone=False
 

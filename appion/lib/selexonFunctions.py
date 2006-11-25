@@ -1129,8 +1129,6 @@ def insertTemplateRun(params,runq,imgname,strt,end,incr):
 
 	if params['templateIds']:
 		templateId=partdb.direct_query(data.templateImage,imgname)
-		print imgname
-		print templateId
 	else:
 		templateImgq=particleData.templateImage(templatepath=imgname)
 		templateId=partdb.query(templateImgq,results=1)[0]
@@ -1179,11 +1177,11 @@ def insertParticlePicks(params,img,expid,manual=False):
         imgq['dbemdata|SessionData|session']=expid
         imgq['dbemdata|AcquisitionImageData|image']=legimgid
         imgq['dbemdata|PresetData|preset']=legpresetid
-
 	imgids=partdb.query(imgq)	
 
         # if no image entry, make one
         if not (imgids):
+		print "Inserting image entry for",imgname
                 partdb.insert(imgq)
 
 	# WRITE PARTICLES TO DATABASE
