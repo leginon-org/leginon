@@ -149,6 +149,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
         $inspectcheck = ($_POST['inspected']=='on') ? 'CHECKED' : '';
         $commitcheck = ($_POST['commit']=='on') ? 'CHECKED' : '';
         $boxszval = $_POST['boxsize'];
+	$binval=$_POST['bin'];
         // ice check params
         $iceval = ($_POST['icecheck']=='on') ? $_POST['ice'] : '0.8';
         $icecheck = ($_POST['icecheck']=='on') ? 'CHECKED' : '';
@@ -257,7 +258,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
         <TR>
                 <TD VALIGN='TOP'>
                 <INPUT TYPE='text' NAME='boxsize' SIZE='5' VALUE='$boxszval'>
-                Box Size (Pixels)
+                Box Size (Unbinned, in pixels)<BR>
                 </TD>
         </TR>
         <TR>
@@ -267,8 +268,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
                 <FONT COLOR='grey'>Low Pass</FONT><BR>
                 <INPUT TYPE='text' NAME='hp' VALUE='$hpval' DISABLED SIZE='4'>
                 <FONT COLOR='grey'>High Pass</FONT><BR>
-                <INPUT TYPE='text' NAME='bin' VALUE='$binval' DISABLED SIZE='4'>
-                <FONT COLOR='grey'>Binning</FONT><BR>
+                <INPUT TYPE='text' NAME='bin' VALUE='$binval' SIZE='4'>
+                Binning<BR>
         </TR>
         <TR>
                 <TD>
@@ -347,7 +348,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
           </select>
           <BR>
           <input type='submit' name='process' value='Create Stack'><BR>
-          <FONT COLOR='RED'>Submission will NOT run ACE, only output that command that you can copy and paste into a unix shell</FONT>
+          <FONT COLOR='RED'>Submission will NOT create a stack, only output that command that you can copy and paste into a unix shell</FONT>
           </TD>
         </TR>
         </TABLE>
@@ -390,6 +391,14 @@ function runMakestack() {
         $phaseflip = ($_POST['phaseflip']=='on') ? 'phaseflip' : '';
         $inspected = ($_POST['inspected']=='on') ? 'inspected' : '';
         $commit = ($_POST['commit']=="on") ? 'commit' : '';
+	// binning amount
+	$bin=$_POST['bin'];
+	if ($bin) {
+	        if (!is_numeric($bin)) {
+		        createMakestackForm("<B>ERROR:</B> Binning amount must be 2, 4, 8, 16, 32...");
+			exit;
+		}
+	}
 
         // box size
         $boxsize = $_POST['boxsize'];
@@ -439,6 +448,7 @@ function runMakestack() {
         if ($inspected) $command.="inspected ";
         if ($commit) $command.="commit ";
         $command.="boxsize=$boxsize ";
+	if ($bin) $command.="shrink=$bin ";
         if ($ace) $command.="ace=$ace ";
         if ($selexon) $command.="selexoncutoff=$selexon ";
         if ($dfmin) $command.="mindefocus=$dfmin ";
@@ -453,11 +463,10 @@ function runMakestack() {
 
         echo"
         <P>
-        <TABLE WIDTH='600'>
+        <TABLE WIDTH='600' BORDER='1'>
         <TR><TD COLSPAN='2'>
         <B>Makestack Command:</B><BR>
         $command
-        <HR>
         </TD></TR>
         <TR><TD>stack name</TD><TD>$single</TD></TR>
         <TR><TD>runid</TD><TD>$runid</TD></TR>
@@ -469,6 +478,7 @@ function runMakestack() {
         <TR><TD>inspected</TD><TD>$inspected</TD></TR>
         <TR><TD>commit</TD><TD>$commit</TD></TR>
         <TR><TD>box size</TD><TD>$boxsize</TD></TR>
+        <TR><TD>binning</TD><TD>$bin</TD></TR>
         <TR><TD>ace cutoff</TD><TD>$ace</TD></TR>
         <TR><TD>selexon cutoff</TD><TD>$selexon</TD></TR>
         <TR><TD>minimum defocus</TD><TD>$dfmin</TD></TR>
