@@ -156,7 +156,7 @@ def parseUploadInput(args,params):
 def parsePrtlUploadInput(args,params):
 	# check that there are enough input parameters
 	if (len(args)<2 or args[1]=='help') :
-		printUploadHelp()
+		printPrtlUploadHelp()
 
 	lastarg=1
 	
