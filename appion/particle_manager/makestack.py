@@ -13,7 +13,7 @@ acedb=dbdatakeeper.DBDataKeeper(db='dbctfdata')
 db=dbdatakeeper.DBDataKeeper(db='dbemdata')
 
 def printHelp():
-	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected or inspectfile=<file>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n>\n"
+	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected or inspectfile=<file>] [bin=<n>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n>\n"
 	print "Examples:\nmakestack.py extract/001ma.box single=stacks/start.hed ace=0.8 boxsize=180 inspected"
 	print "makestack.py extract/*.box outdir=stacks/noctf/ ace=0.8 boxsize=180\n"
 	print "* Supports wildcards - By default a stack file of the same name as the box file"
@@ -26,10 +26,11 @@ def printHelp():
 	print "                       (density will be inverted)"
 	print "ace=<n>              : Only use micrographs with this ACE confidence value and higher"
 	print "selexoncutoff=<n>    : Only use particles of this correlation value and higher"
-	print "boxsize=<n>          : Make stacks with this box size"
+	print "boxsize=<n>          : Make stacks with this box size (unbinned)"
 	print "inspected            : Use only manually inspected images from database"
 	print "inspectfile=<file>   : Text file containing results of manually checked images"
 	print "phaseflip            : Stack will be phase flipped using best ACE value in database"
+	print "bin=<n>              : final images will be binned by this amount"
 	print "noinvert             : If writing to a single stack, images will NOT be inverted"
 	print "                       (stack images are inverted by default)"
 	print "spider               : Single output stack will be in SPIDER format"
@@ -70,6 +71,7 @@ def createDefaults():
 	params['commit']=False
 	params['outdir']=os.path.abspath('.')+'/'
 	params['particleNumber']=0
+	params['bin']=None
 	return params
 
 def parseInput(args):
@@ -125,6 +127,8 @@ def parseInput(args):
 			params["boxsize"]=int(elements[1])
 		elif (elements[0]=='inspectfile'):
 			params["inspectfile"]=elements[1]
+		elif (elements[0]=='bin'):
+			params['bin']=int(elements[1])
 		elif (arg=='inspected'):
 			params["inspected"]=True
 		elif (arg=='phaseflip'):
@@ -174,7 +178,7 @@ def getFilePath(img):
 		path=string.rstrip(words[1])
 	return path
 
-def checkInspected(img):
+def checkInspectFile(img):
 	filename=img['filename']+'.mrc'
 	f=open(params["inspectfile"],'r')
 	results=f.readlines()
@@ -187,6 +191,15 @@ def checkInspected(img):
 			break
 	if (status.rstrip('\n')=='keep'):
 		return 'TRUE'
+	return 'FALSE'
+
+def checkInspectDB(img):
+	imq=particleData.image()
+	imq['dbemdata|AcquisitionImageData|image']=img.dbid
+	imgresult=partdb.query(imq, results=1)
+	if imgresult:
+		if imgresult[0]['keep']==True:
+			return 'TRUE'
 	return 'FALSE'
 
 def getAceValues(params,img):
@@ -361,7 +374,11 @@ def singleStack(params,img):
 		os.mkdir(singlepath)
            
 	cmd="proc2d %s %s norm=0.0,1.0" %(input, output)
-    
+
+	# bin images is specified
+	if params['bin']:
+		cmd=cmd+" shrink=%i" %params['bin']
+		
 	# unless specified, invert the images
 	if (params["noinvert"]==False):
 		cmd=cmd+" invert"
@@ -583,13 +600,19 @@ if __name__ == '__main__':
 
 		params["hasace"]=False
 
-		# check if the image has been marked as good
+		# check if the image has inspected, in file or in database
 		if params["inspectfile"]:
-			goodimg=checkInspected(img)
+			goodimg=checkInspectFile(img)
 			if (goodimg=='FALSE'):
-				print img['filename']+".mrc has been rejected upon inspection"
+				print img['filename']+".mrc has been rejected in manual inspection file"
 				continue
 
+		if params["inspected"]:
+			goodimg=checkInspectDB(img)
+			if (goodimg=='FALSE'):
+				print img['filename']+".mrc has been rejected by manual inspection"
+				continue
+		
 		# check that ACE estimation is above confidence threshold
  		if params["ace"]:
 			# find ace values in database
