@@ -75,6 +75,8 @@ if ($imgdir) {
 		}
 		closedir($pathdir);
 		if ($files) {
+		        $skipcheck=($_POST['skipdone']=='on') ? 'CHECKED' : '';
+		        echo "<INPUT TYPE='CHECKBOX' NAME='skipdone' $skipcheck>Skip assessed images<BR>\n"; 
 			displayImage($_POST,$files,$imgdir,$leginondata);
 		}
 		else echo"<HR><FONT COLOR='RED'>No files found in this directory with extension: $ext</FONT>\n";
@@ -95,6 +97,7 @@ function displayImage($_POST,$files,$imgdir,$leginondata){
         $numfiles=count($files);
 	$imlst=$_POST['imagelist'];
         $imgindx= ($_POST['imgindex']) ? $_POST['imgindex'] : 0;
+	$imgrescl= ($_POST['imgrescale']) ? $_POST['imgrescale'] : 0.5; 
 	echo "<BR>\n";
 
 	// go directly to a particular image number
@@ -103,41 +106,66 @@ function displayImage($_POST,$files,$imgdir,$leginondata){
 		// make sure it's within range
 		if ($imgindx < 0) $imgindx=0;
 		elseif ($imgindx > $numfiles-1) $imgindx=$numfiles-1;
+		$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata);
 	}
 	// otherwise, increment or decrement the displayed image
 	else {
 	        if ($imlst=='Back') {
-		        $imgindx--;
-			if ($imgindx < 0) {
-			        echo "<FONT COLOR='RED'> At beginning of image list</FONT><BR>\n";
-				$imgindx=0;
+		        while ($found!='TRUE') {
+		                $imgindx--;
+				if ($imgindx < 0) {
+				        echo "<FONT COLOR='RED'> At beginning of image list</FONT><BR>\n";
+					$imgindx=0;
+					$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata);
+					break;
+				}
+				$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata);
+				if ($_POST['skipdone']=='on') {
+				        if ($statdata['status']=='0' || $statdata['status']=='1') $found='FALSE';
+					else $found='TRUE';
+				}
+				else break;
 			}
 		}
 		elseif ($imlst=='Next' || $imlst=='Keep' || $imlst=='Remove') {
 		        if($imlst=='Keep') $particledata->updateKeepStatus($_POST['imageid'],'1');
-		        if($imlst=='Remove') $particledata->updateKeepStatus($_POST['imageid'],'0');
-		        $imgindx++;
-			if ($imgindx > $numfiles-1) {
-			        echo "<FONT COLOR='RED'> At end of image list</FONT><BR>\n";
-				$imgindx=$numfiles-1;
+			if($imlst=='Remove') $particledata->updateKeepStatus($_POST['imageid'],'0');
+		        while ($found!='TRUE') {
+			        $imgindx++;
+				if ($imgindx > $numfiles-1) {
+				        echo "<FONT COLOR='RED'> At end of image list</FONT><BR>\n";
+					$imgindx=$numfiles-1;
+					$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata);
+					break;
+				}
+				$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata);
+				if ($_POST['skipdone']=='on') {
+				        if ($statdata['status']=='0' || $statdata['status']=='1') $found='FALSE';
+					else $found='TRUE';
+				}
+				else break;
 			}
 		}
-		elseif ($imlst=='First') $imgindx=0;
-		elseif ($imlst=='Last') $imgindx=$numfiles-1;
+		else {
+		        if ($imlst=='First') $imgindx=0;
+			elseif ($imlst=='Last') $imgindx=$numfiles-1;
+			$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata);
+		}
 	}
 
+
+	$imgname=$statdata['name'];
+	$imgid=$statdata['id'];
+	$imgstatus=$statdata['status'];
+
 	$thisnum=$imgindx+1;
-	$imgname=$files[$imgindx];
-	$imgbase=split("\.",$imgname);
-	$imgbase=$imgbase[0];
-	$imgid=$leginondata->getId(array('filename'=>$imgbase),'AcquisitionImageData','DEF_id');
-	$imgstatus=$particledata->getKeepStatus($imgid);
-	
 	echo"<TABLE BORDER='0' CELLPADDING='0' CELLSPACING='0' WIDTH='400'>\n";
 	echo"<TR><TD ALIGN='LEFT'>\n";
 	echo"Image $thisnum of $numfiles</TD>\n";
 	echo"<TD ALIGN='RIGHT'>Jump to image:";
-	echo"<INPUT TYPE='text' NAME='imgjump' SIZE='5'></TD></TR></TABLE>";
+	echo"<INPUT TYPE='text' NAME='imgjump' SIZE='5'>\n";
+        echo"Scale Factor:<INPUT TYPE='text' NAME='imgrescale' VALUE='$imgrescl' SIZE='4'>\n";
+	echo"</TD></TR></TABLE>";
 	echo"<BR>$imgname<HR>\n<B>Current Status: ";
 	if ($imgstatus=='0') echo"<FONT COLOR='RED'>REJECT</FONT>";
 	elseif ($imgstatus=='1') echo "<FONT COLOR='GREEN'>KEEP</FONT>";
@@ -160,7 +188,16 @@ function displayImage($_POST,$files,$imgdir,$leginondata){
 	echo"</TD><TD>\n";
 	echo"<INPUT TYPE='IMAGE' WIDTH='30' SRC='img/lastbutton.jpg' ALT='Last' NAME='imagelist' VALUE='Last'>\n";
 	echo"</TD></TR></TABLE>\n";
-	echo"<IMG WIDTH='500' SRC='loadimg.php?filename=$imgfull&scale=0.5'><P>\n";
+	echo"<IMG SRC='loadimg.php?filename=$imgfull&scale=$imgrescl'><P>\n";
 }
 
+function getImageStatus($imgname,$leginondata,$particledata) {
+	// get the status of the image index
+	$imgbase=split("\.",$imgname);
+	$imgbase=$imgbase[0];
+	$statdata['id']=$leginondata->getId(array('filename'=>$imgbase),'AcquisitionImageData','DEF_id');
+	$statdata['status']=$particledata->getKeepStatus($statdata['id']);
+	$statdata['name']=$imgname;
+	return $statdata;
+}
 ?>
