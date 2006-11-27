@@ -72,10 +72,11 @@ except:
 	pass
 
 ## stig defocus max >0 AND stig defocus min >0
-q = "UPDATE `FocusSettingData` SET `stig defocus max`=ABS(`stig defocus max`), `stig defocus min`=ABS(`stig defocus min`)"
+q = "UPDATE `FocusSettingData` SET `stig defocus max`=ABS(`stig defocus max`), `stig defocus min`=ABS(`stig defocus min`) WHERE `stig defocus max` <0 OR `stig defocus min` <0"
 try:
 	r = dbc.execute(q)
 except:
+	print "SQL update `FocusSettingData` error"
 	pass
 
 dbc.close()
