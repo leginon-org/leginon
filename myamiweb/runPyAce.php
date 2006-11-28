@@ -90,7 +90,7 @@ if ($_POST['process']) {
 	//$command.="alias matlab /ami/sw/packages/matlab72/bin/matlab;";
 	//$command.="cd /home/$user/pyappion/ace/;";
 
-	$command.="python pyace.py ";
+	$command.="pyace.py ";
 	$command.="runid=$runid ";
 	$command.="dbimages=$dbimages ";
 	$command.="edgethcarbon=$edgethcarbon ";
@@ -341,7 +341,7 @@ else {
           <BR>
           <INPUT TYPE='hidden' name='sessionname' value='$sessionname'>
           <input type='submit' name='process' value='Run ACE'><BR>
-          <FONT COLOR='RED'>Submission will NOT run ACE, only output that command that you can copy and paste into a unix shell</FONT>
+          <FONT COLOR='RED'>Submission will NOT run ACE, only output a command that you can copy and paste into a unix shell</FONT>
           </TD>
         </TR>
         </TABLE>

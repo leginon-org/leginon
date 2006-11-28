@@ -348,7 +348,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
           </select>
           <BR>
           <input type='submit' name='process' value='Create Stack'><BR>
-          <FONT COLOR='RED'>Submission will NOT create a stack, only output that command that you can copy and paste into a unix shell</FONT>
+          <FONT COLOR='RED'>Submission will NOT create a stack, only output a command that you can copy and paste into a unix shell</FONT>
           </TD>
         </TR>
         </TABLE>
@@ -438,7 +438,7 @@ function runMakestack() {
 //        $command ="source /ami/sw/ami.csh;";
 //        $command.="source /ami/sw/share/python/usepython.csh common32;";
 //        $command.="source /home/$user/pyappion/useappion.csh;";
-        $command.="/home/glander/pyappion/particle_manager/makestack.py ";
+        $command.="makestack.py ";
         $command.="single=$single ";
         $command.="runid=$runid ";
         $command.="outdir=$outdir ";

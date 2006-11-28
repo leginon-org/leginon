@@ -232,7 +232,7 @@ function createSelexonForm($extra=false, $title='PySelexon Launcher', $heading='
                          var newwindow=window.open('','name','height=150,width=300');
                          newwindow.document.write('<HTML><BODY>');
                          if (infoname=='runid'){
-                                 newwindow.document.write('Specifies the name associated with the ACE results unique to the specified session and parameters.        An attempt to use the same run name for a session using different ACE parameters will result in an error.');
+                                 newwindow.document.write('Specifies the name associated with the Selexon results unique to the specified session and parameters.        An attempt to use the same run name for a session using different Selexon parameters will result in an error.');
                          }
                          newwindow.document.write('</BODY></HTML>');
                          newwindow.document.close();
@@ -401,7 +401,7 @@ function createSelexonForm($extra=false, $title='PySelexon Launcher', $heading='
                 </select>
                 <BR>
                 <input type='submit' name='process' value='Run Selexon'><BR>
-                <FONT COLOR='RED'>Submission will NOT run ACE, only output that command that you can copy and paste into a unix shell</FONT>
+                <FONT COLOR='RED'>Submission will NOT run Selexon, only output a command that you can copy and paste into a unix shell</FONT>
                 </TD>
         </TR>
         </TABLE>
@@ -505,7 +505,7 @@ function runSelexon() {
 		$command.="source /ami/sw/share/python/usepython.csh common32;";
 		$command.="source /home/$user/pyappion/useappion.csh;";
 	}
-	$command.="/home/glander/pyappion/particle_manager/selexon.py ";
+	$command.="selexon.py ";
 	if ($testimage) $command.="$testimage ";
 	else $command.="dbimages=$dbimages ";
 	$command.="templateIds=$templateIds ";
