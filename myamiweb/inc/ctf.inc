@@ -75,7 +75,9 @@ class ctfdata {
 			."c.`uppercutoff`, "
 			."c.`confidence` , "
 			."c.`confidence_d` , "
-			."c.`snr` "
+			."c.`snr` , "
+		        ."c.`graph1` , "
+		        ."c.`graph2` "
 			."from image i left join ctf c "
 			."on (c.`REF|image|imageId`=i.`DEF_id`) "
 			."where i.`dbemdata|SessionData|session`='$sessionId' ";
@@ -106,7 +108,9 @@ class ctfdata {
 			."c.`uppercutoff`, "
 			."c.`confidence` , "
 			."c.`confidence_d` , "
-			."c.`snr` "
+			."c.`snr` , "
+		        ."c.`graph1` , "
+		        ."c.`graph2` "
 			."from ctf c , image i where c.`REF|run|runId`='$runId' and c.`REF|image|imageId`=i.`DEF_id`";
 		return $this->mysql->getSQLResult($q);
 	}
@@ -133,7 +137,9 @@ class ctfdata {
 			."c.`uppercutoff`, "
 			."c.`confidence` , "
 			."c.`confidence_d` , "
-			."c.`snr` "
+			."c.`snr` , "
+		        ."c.`graph1` , "
+		        ."c.`graph2` "
 			."from image i left join ctf c "
 			."on (c.`REF|image|imageId`=i.`DEF_id`) "
 			."where i.`dbemdata|AcquisitionImageData|image`='$imageId' ";

@@ -86,8 +86,8 @@ $ctf_display_fields = array (
 	'snr',
 	'confidence',
 	'confidence_d',
-	'blobgraph1',
-	'blobgraph2',
+	'graph1',
+	'graph2',
 );
 
 ?>
@@ -321,25 +321,25 @@ if (!empty($ctfdata)) {
 			continue;	
 		if (eregi('defocus', $k))
 			$display = format_micro_number($v);
-		else if ($v-floor($v)) 
+		elseif ($v-floor($v)) 
 			$display = format_sci_number($v,4,2);
+		elseif ($k=='graph1')
+		        $graph1=$v;
+		elseif ($k=='graph2')
+		        $graph2=$v;
 		else
 			$display = $v;
 		echo formatHtmlRow($k,$display);
 	}
-		echo "<tr>";
-	$blobs = $ctf->getBlobFields();
-	foreach ($blobs as $blob) {
-		echo "<td>";
-		foreach ($ctfIds as $ctfId) {
-				echo "<a href=blob2img.php?id=".$ctfId."&f=".$blob.">"
-				."<img border=0 src=blob2img.php?w=280&id=".$ctfId."&f=".$blob.">"
-				."</a>";
-		}
-		echo "</td>";
-	}
-		echo "</tr>";
-	echo "<tr><td colspan=2><hr></td></tr>";	
+	echo "<TR>";
+	echo "<TD ALIGN='LEFT'>\n";
+	echo "<A HREF='loadimg.php?filename=$graph1'>\n";
+	echo "<IMG SRC='loadimg.php?filename=$graph1&scale=0.5'></A></TD>\n";
+        echo "<TD ALIGN='LEFT'>\n";
+	echo "<A HREF='loadimg.php?filename=$graph2'>\n";
+	echo "<IMG SRC='loadimg.php?filename=$graph2&scale=0.4'></A></TD>\n";
+	echo "</TR>\n";
+	echo "<TR><TD colspan=2><HR></TD></TR>";	
 	}
 	echo "</table>";
 	

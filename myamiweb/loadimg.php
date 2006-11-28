@@ -17,8 +17,12 @@ if (preg_match('`\.mrc$`i',$filename)) {
 	
 }
 
-else {
+elseif (preg_match('`\.jpg$`i',$filename)) {
         $image = imagecreatefromjpeg($filename);
+}
+
+elseif (preg_match('`\.png$`i',$filename)) {
+        $image = imagecreatefrompng($filename);
 }
 
 if ($scale){
