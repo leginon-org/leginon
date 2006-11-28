@@ -448,7 +448,7 @@ function runMakestack() {
         if ($inspected) $command.="inspected ";
         if ($commit) $command.="commit ";
         $command.="boxsize=$boxsize ";
-	if ($bin) $command.="shrink=$bin ";
+	if ($bin) $command.="bin=$bin ";
         if ($ace) $command.="ace=$ace ";
         if ($selexon) $command.="selexoncutoff=$selexon ";
         if ($dfmin) $command.="mindefocus=$dfmin ";
