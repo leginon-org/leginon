@@ -48,6 +48,7 @@ def createDefaults():
 	params["continue"]='FALSE'
 	params["multiple_range"]=False
 	params["dbimages"]='FALSE'
+	params["alldbimages"]=False
 	params["session"]=None
 	params["preset"]=None
 	params["runid"]='run1'
@@ -91,7 +92,7 @@ def printPrtlUploadHelp():
 	sys.exit(1)
 
 def printSelexonHelp():
-	print "\nUsage:\nselexon.py <file> template=<name> apix=<pixel> diam=<n> bin=<n> [templateIds=<n,n,n,n,...>] [range=<start,stop,incr>] [thresh=<threshold> or autopik=<n>] [lp=<n>] [hp=<n>] [crud or cruddiam=<n>] [crudonly] [crudblur=<n>] [crudlow=<n>] [crudhi=<n>] [box=<n>] [continue] [dbimages=<session>,<preset>] [commit] [defocpair] [shiftonly] [outdir=<path>]"
+	print "\nUsage:\nselexon.py <file> template=<name> apix=<pixel> diam=<n> bin=<n> [templateIds=<n,n,n,n,...>] [range=<start,stop,incr>] [thresh=<threshold> or autopik=<n>] [lp=<n>] [hp=<n>] [crud or cruddiam=<n>] [crudonly] [crudblur=<n>] [crudlow=<n>] [crudhi=<n>] [box=<n>] [continue] [dbimages=<session>,<preset>] [alldbimages=<session>] [commit] [defocpair] [shiftonly] [outdir=<path>]"
 	print "Examples:\nselexon 05jun23a_00001en.mrc template=groEL apix=1.63 diam=250 bin=4 range=0,90,10 thresh=0.45 crud"
 	print "selexon template=groEL apix=1.63 diam=250 bin=4 range=0,90,10 thresh=0.45 crud dbimages=05jun23a,en continue\n"
 	print "template=<name>    : name should not have the extension, or number."
@@ -121,6 +122,8 @@ def printSelexonHelp():
 	print "                     micrographs"
 	print "commit             : if commit is specified, particles will be stored to the database (not implemented yet)"
 	print "dbimages=<sess,pr> : if this option is turned on, selexon will continuously get images from the database"
+	print "alldbimages=<sess> : if this option is turned on selexon will query the database for all images"
+	print "                     associated with the session"
 	print "runid=<runid>      : subdirectory for output (default=run1)"
 	print "                     do not use this option if you are specifying particular images"
 	print "defocpair          : calculate shift between defocus pairs"
@@ -291,6 +294,9 @@ def parseSelexonInput(args,params):
 			else:
 				print "dbimages must include both session and preset parameters"
 				sys.exit()
+		elif (elements[0]=='alldbimages'):
+			params['sessionname']=elements[1]
+			params['alldbimages']=True
 		elif arg=='commit':
 			params['commit']=True
 		elif arg=='defocpair':
@@ -855,6 +861,15 @@ def getImagesFromDB(session,preset):
 	imagelist=db.query(imageq, readimages=False)
 	return (imagelist)
 
+def getAllImagesFromDB(session):
+	# returns list of image data based on session name
+	print "Querying database for images"
+	sessionq= data.SessionData(name=session)
+	imageq=data.AcquisitionImageData()
+	imageq['session']=sessionq
+	imagelist=db.query(imageq, readimages=False)
+	return (imagelist)
+	
 def createImageLinks(imagelist):
 	# make a link to all images in list if they are not already in curr dir
 	for n in imagelist:
@@ -1170,7 +1185,9 @@ def insertParticlePicks(params,img,expid,manual=False):
 	selexonresult=partdb.query(selexonq, results=1)
 
         legimgid=int(img.dbid)
-        legpresetid =int(img['preset'].dbid)
+        legpresetid=None
+	if img['preset']:
+		legpresetid =int(img['preset'].dbid)
 
 	imgname=img['filename']
         imgq = particleData.image()

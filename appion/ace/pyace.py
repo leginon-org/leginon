@@ -15,7 +15,7 @@ acedb=dbdatakeeper.DBDataKeeper(db='dbctfdata')
 acedonename='.acedone.py'
 
 def printHelp():
-	print "\nUsage:\npyace.py edgethcarbon=<n> edgethice=<n> pfcarbon=<n> pfice=<n> overlap=<n> fieldsize=<n> fr=<n> drange=<n> dbimages=<session_id>,<preset> tempdir=<dir> [medium=carbon or medium=ice] cs=<n> outdir=<dir> runid=<runid> [display=1 or display=0] [stig=0 or stig=1] continue nominal=<n> commit reprocess=<n>\n"
+	print "\nUsage:\npyace.py edgethcarbon=<n> edgethice=<n> pfcarbon=<n> pfice=<n> overlap=<n> fieldsize=<n> fr=<n> drange=<n> dbimages=<session>,<preset> alldbimages=<session> tempdir=<dir> [medium=carbon or medium=ice] cs=<n> outdir=<dir> runid=<runid> [display=1 or display=0] [stig=0 or stig=1] continue nominal=<n> commit reprocess=<n>\n"
 	print "Example:\npyace.py dbimages=06aug30b,en medium=ice continue\n"
 	print "edgethcarbon=<n>            : threshold for edge detection with medium=carbon (default=0.8)"
 	print "edgethice=<n>               : threshold for edge detection with medium=ice (default=0.6)"
@@ -26,6 +26,7 @@ def printHelp():
 	print "resamplefr=<n>              : resample value: increase if images have high defocus or small pixel size (default=1)"
 	print "drange=0 or 1               : switch dynamic range compression on or off (default=0)"
 	print "dbimages=<session>,<preset> : images to process will be queried based on session and preset"
+	print "alldbimages=<session>       : images to process will be queried based on session"
 	print "tempdir=<tempdir>           : temporary directory to hold intermediate files (default=./temp/)"
 	print "medium=carbon or ice        : switch to determine thresholds for edge detection and power spectrum (default=carbon)"
 	print "cs=<n>                      : spherical abberation (default=2.0)"
@@ -53,6 +54,7 @@ def createDefaults():
 	params['resamplefr']=1
 	params['drange']=0
 	params['dbimages']='FALSE'
+	params['alldbimages']=False
 	params['session']=None
 	params['preset']=None
 	params['tempdir']='./temp/'
@@ -109,6 +111,9 @@ def parseInput(args):
 			else:
 				print "dbimages must include both session and preset parameters"
 				sys.exit()
+		elif (elements[0]=='alldbimages'):
+			params['session']=elements[1]
+			params['alldbimages']=True
 		elif (elements[0]=='tempdir'):
 			params['tempdir']=elements[1]
 		elif (elements[0]=='medium'):
@@ -166,6 +171,15 @@ def getImagesFromDB(session,preset):
 	imagelist=db.query(imageq, readimages=False)
 	return (imagelist)
 
+def getAllImagesFromDB(session):
+	# returns list of image data based on session name
+	print "Querying database for images"
+	sessionq= data.SessionData(name=session)
+	imageq=data.AcquisitionImageData()
+	imageq['session']=sessionq
+	imagelist=db.query(imageq, readimages=False)
+	return (imagelist)
+	
 def getImagesToReprocess(params):
 	session=params['session']
 	preset=params['preset']
@@ -511,7 +525,10 @@ if __name__ == '__main__':
 	
 	#get image data objects from Leg. database
 #	if params['dbimages'] == 'TRUE' and not params['reprocess']:
-	images=getImagesFromDB(params['session'],params['preset'])
+	if params['dbimages'] == 'TRUE':
+		images=getImagesFromDB(params['session'],params['preset'])
+	elif params['alldbimages']:
+		images=getAllImagesFromDB(params['session'])
 #	else:
 #		images=getImagesToReprocess(params)
 	

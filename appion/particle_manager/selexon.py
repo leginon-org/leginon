@@ -43,10 +43,19 @@ if __name__ == '__main__':
 		print len(images)
 		print "\nERROR: dbimages can not be specified if particular images have been specified\n"
 		sys.exit(1)
+	if params['alldbimages'] and params['dbimages']=='TRUE':
+		print "ERROR: dbimages and alldbimages can not be specified at the same time\n"
+		sys.exit()
+	if len(params['mrcfileroot']) > 0 and params['alldbimages']:
+		print "ERROR: alldbimages can not be specified if particular images have been specified\n"
+		sys.exit()
 	
 	# get list of input images, since wildcards are supported
 	if params['dbimages']=='TRUE':
 		images=getImagesFromDB(params['sessionname'],params['preset'])
+		params['session']=images[0]['session']
+	elif params['alldbimages']:
+		images=getAllImagesFromDB(params['sessionname'])
 		params['session']=images[0]['session']
 	else:
 		if not params['mrcfileroot']:
