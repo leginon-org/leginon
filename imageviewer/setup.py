@@ -9,7 +9,7 @@ class InstallData(install_data):
 		return install_data.run(self)
 
 setup(
-    name='Image Viewer',
+    name='ImageViewer',
     version='0.1',
     description='An image viewer package for wxPython',
     author='Christian Suloway',
