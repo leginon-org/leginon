@@ -310,7 +310,7 @@ def batchBox(params, img):
 	else: 
  		cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(input, dbbox, output)
 
-	print "boxing",input
+	print "boxing particles"
 	f=os.popen(cmd)
 	f.close()
     
@@ -348,14 +348,14 @@ def writeParticleBoxfile(img,dbbox):
 		boxfile.writelines(plist)
 		boxfile.close()
 		
-	print img['filename']
+	print "\nprocessing:",img['filename']
 	
 def phaseFlip(params,img):
 	input=params["outdir"]+img['filename']+'.hed'
 	output=params["outdir"]+img['filename']+'.ctf.hed'
 
 	cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" %(input,output,params["df"],params["kv"],params["apix"])
-	print "phaseflipping",input
+	print "phaseflipping particles"
 
 	f=os.popen(cmd)
 	f.close()
@@ -387,7 +387,7 @@ def singleStack(params,img):
 	if (params["spider"]==True):
 		cmd=cmd+" spiderswap"
     
- 	print "writing particles to stackfile: %s" %output
+ 	print "writing to: %s" %output
 	# run proc2d & get number of particles
 	f=os.popen(cmd)
  	lines=f.readlines()

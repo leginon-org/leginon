@@ -1177,12 +1177,18 @@ def insertParticlePicks(params,img,expid,manual=False):
         imgq['dbemdata|SessionData|session']=expid
         imgq['dbemdata|AcquisitionImageData|image']=legimgid
         imgq['dbemdata|PresetData|preset']=legpresetid
-	imgids=partdb.query(imgq)	
+	imgids=partdb.query(imgq, results=1)
 
         # if no image entry, make one
         if not (imgids):
 		print "Inserting image entry for",imgname
                 partdb.insert(imgq)
+		imgq=None
+		imgq = particleData.image()
+		imgq['dbemdata|SessionData|session']=expid
+		imgq['dbemdata|AcquisitionImageData|image']=legimgid
+		imgq['dbemdata|PresetData|preset']=legpresetid
+		imgids=partdb.query(imgq, results=1)
 
 	# WRITE PARTICLES TO DATABASE
 	print "Inserting",imgname,"particles into Database..."
@@ -1231,7 +1237,7 @@ def insertParticlePicks(params,img,expid,manual=False):
 
 		particlesq=particleData.particle()
 		particlesq['runId']=runq
-		particlesq['imageId']=imgq
+		particlesq['imageId']=imgids[0]
 		particlesq['selectionId']=selexonresult[0]
 		particlesq['xcoord']=xcenter
 		particlesq['ycoord']=ycenter
