@@ -1,4 +1,5 @@
 from distutils.core import setup
+import glob
 
 setup(
     name='Image Viewer',
@@ -11,5 +12,8 @@ setup(
     url='http://www.jensenlab.caltech.edu/',
     packages=['ImageViewer', 'ImageViewer.icons'],
     package_dir={'ImageViewer': ''},
-)
 
+	data_files=[
+		('ImageViewer/icons', glob.glob('icons/*.png'))
+	]
+)
