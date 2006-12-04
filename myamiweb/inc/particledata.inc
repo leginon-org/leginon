@@ -99,19 +99,43 @@ class particledata {
 		return $r;
 	}
 	
-	function getStats ($runId){
-		$q="select count(p.DEF_id) as `totparticles`, "
+	function getStats ($runId, $inspect=''){
+		$q="select count(p.`DEF_id`) as `totparticles`, "
+		        ."count(distinct p.`REF|image|imageId`) as num, "
 			."min(p.correlation) as `min`, "
 			."max(p.correlation) as `max`, "
 			."avg(p.correlation) as `avg`, "
 			."stddev(p.correlation) as `stddev` "
-			."from particle p "
-			."where p.`REF|run|runId` = '$runId' ";
+		        ."from particle p ";
+		if ($inspect) {
+		        $q.= "left join image i "
+			    ."on (i.`DEF_id` = p.`REF|image|imageId`) ";
+		}
+		$q.="WHERE ";
+		if ($inspect) $q.="i.keep=1 AND ";
+		$q.="p.`REF|run|runId` = '$runId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 			
 	}
 	
+        function getNumImgs($runId){
+	        $q="SELECT count(distinct `REF|image|imageId`) as num "
+		   . "FROM `particle` "
+		   . "WHERE `REF|run|runId`='$runId' ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0]['num'];
+	}
+
+        function getNumInspectedImgs($sessionId){
+		$q="select count(*) as `num` "
+		        ."FROM image "
+		        ."WHERE keep IS NOT NULL AND "
+		        ."`dbemdata|SessionData|session`='$sessionId'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0]['num'];
+	}
+
 	function getLastParticleRun ($sessionId) {
 		$q = "select max(DEF_id) as runId "
 			."from `run` where `dbemdata|SessionData|session` = '$sessionId'";
@@ -126,7 +150,7 @@ class particledata {
 		return $r;
 	}
 
-	function displayParticleStats($particleruns, $display_keys) {
+	function displayParticleStats($particleruns, $display_keys, $inspect='') {
 		if (!is_array($particleruns))
 			return ;
 		$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
@@ -139,7 +163,11 @@ class particledata {
 		foreach ($particleruns as $particle) {
 		        $html .= "<tr>";
 			$runId=$particle['DEF_id'];
-		        $particlestats=$this->getStats($runId);
+			$particlestats = $this->getStats($runId, $inspect);
+			$numptl=$particlestats['totparticles'];
+			$numimg=$particlestats['num'];
+			$ppimg=(int)($numptl/$numimg);
+			$particlestats['num']=$numimg.'<BR>('.$ppimg.' prtl/img)';
 		        $particlestats['img'] = '<a href="particlegraph.php?hg=1&run='.$runId.'">'
 		                .'<img border="0" '
 		                .'src="particlegraph.php?w=150&hg=1&run='

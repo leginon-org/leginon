@@ -248,7 +248,7 @@ if ($ctf->hasCtfData($sessionId)) {
 	
 }
 else {
-echo "no CTF information available";
+        echo "no CTF information available";
 }
 ?>
 
@@ -259,15 +259,21 @@ echo "no CTF information available";
 <?php
 echo divtitle("Particles");
 require('inc/particledata.inc');
+$inspectcheck=($_POST['onlyinspected']=='on') ? 'CHECKED' : '';
+echo"<FORM NAME='prtl' method='POST' action='$_SERVER[REQUEST_URI]'>
+     <input TYPE='CHECKBOX' name='onlyinspected' $inspectcheck onclick='javascript:document.prtl.submit()'>Don't use particles from discarded images
+     </form>\n";
 $sessionId=$expId;
 $particle = new particledata();
+$numinspected=$particle->getNumInspectedImgs($sessionId);
+echo"Inpected images: $numinspected\n";
 if ($particle->hasParticleData($sessionId)) {
-	$display_keys = array ( 'totparticles', 'min', 'max', 'avg', 'stddev', 'img');
+	$display_keys = array ( 'totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev', 'img');
 	$particleruns=$particle->getParticleRunIds($sessionId);
-	echo $particle->displayParticleStats($particleruns, $display_keys);
+	echo $particle->displayParticleStats($particleruns, $display_keys, $inspectcheck);
 }
 else {
-echo "no Particle information available";
+        echo "no Particle information available";
 }
 
 
