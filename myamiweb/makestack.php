@@ -450,7 +450,7 @@ function runMakestack() {
         $command.="boxsize=$boxsize ";
 	if ($bin) $command.="bin=$bin ";
         if ($ace) $command.="ace=$ace ";
-        if ($selexon) $command.="selexoncutoff=$selexon ";
+        if ($selexon) $command.="selexonmin=$selexon ";
         if ($dfmin) $command.="mindefocus=$dfmin ";
         if ($dfmax) $command.="maxdefocus=$dfmax ";
         if ($fileformat) $command.="spider ";
