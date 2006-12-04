@@ -25,7 +25,8 @@ def printHelp():
 	print "single=<file>        : Create a single stack containing all the boxed particles"
 	print "                       (density will be inverted)"
 	print "ace=<n>              : Only use micrographs with this ACE confidence value and higher"
-	print "selexoncutoff=<n>    : Only use particles of this correlation value and higher"
+	print "selexonmin=<n>       : Only use particles of this correlation value and higher"
+	print "selexonmax=<n>       : Only use particles of this correlation value and lower"
 	print "boxsize=<n>          : Make stacks with this box size (unbinned)"
 	print "inspected            : Use only manually inspected images from database"
 	print "inspectfile=<file>   : Text file containing results of manually checked images"
@@ -67,7 +68,8 @@ def createDefaults():
 	params['maxdefocus']=None
 	params['description']=None
 	params['selexonId']=None
-	params['selexoncutoff']=None
+	params['selexonmin']=None
+	params['selexonmax']=None
 	params['commit']=False
 	params['outdir']=os.path.abspath('.')+'/'
 	params['particleNumber']=0
@@ -121,8 +123,10 @@ def parseInput(args):
 			params["single"]=elements[1]
 		elif (elements[0]=='ace'):
 			params["ace"]=float(elements[1])
-		elif (elements[0]=='selexoncutoff'):
-			params["selexoncutoff"]=float(elements[1])
+		elif (elements[0]=='selexonmin'):
+			params["selexonmin"]=float(elements[1])
+		elif (elements[0]=='selexonmax'):
+			params["selexonmax"]=float(elements[1])
 		elif (elements[0]=='boxsize'):
 			params["boxsize"]=int(elements[1])
 		elif (elements[0]=='inspectfile'):
@@ -327,8 +331,11 @@ def writeParticleBoxfile(img,dbbox):
 		plist=[]
 		box=params['boxsize']	
 		for prtl in particles:
-			if (params['selexoncutoff']):
-				if params['selexoncutoff']>prtl['correlation']:
+			if params['selexonmin']:
+				if params['selexonmin']>prtl['correlation']:
+					continue
+			if params['selexonmax']:
+				if params['selexonmax']<prtl['correlation']:
 					continue
 			# save the particles to the database
 			if params['commit']:
@@ -484,8 +491,8 @@ def insertStackParams(params):
 			stparamq['phaseFlipped']=True
 		if params['ace']:
 			stparamq['aceCutoff']=params['ace']
-		if params['selexoncutoff']:
-			stparamq['selexonCutoff']=params['selexoncutoff']
+		if params['selexonmin']:
+			stparamq['selexoncutoff']=params['selexonmin']
 		if params['inspected']:
 			stparamq['checkImage']=True
 		if params['mindefocus']:
@@ -501,7 +508,7 @@ def insertStackParams(params):
 		    stackparams['boxSize']!=params['boxsize'] or
 		    stackparams['phaseFlipped']!=params['phaseflip'] or
 		    stackparams['aceCutoff']!=params['ace'] or
-		    stackparams['selexonCutoff']!=params['selexoncutoff'] or
+		    stackparams['selexoncutoff']!=params['selexonmin'] or
 		    stackparams['checkImage']!=params['inspected'] or
 		    stackparams['minDefocus']!=params['mindefocus'] or
 		    stackparams['maxDefocus']!=params['maxdefocus'] or
