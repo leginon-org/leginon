@@ -82,7 +82,7 @@ function createTemplateForm() {
 
 				// create the image template table
 				$templatetable.="<TR><TD>\n";
-				$templatetable.="<IMG SRC='loadmrc.php?filename=$filename&rescale=True' WIDTH='200'></TD>\n";
+				$templatetable.="<IMG SRC='loadimg.php?filename=$filename&rescale=True' WIDTH='200'></TD>\n";
 				$templatetable.="<TD>\n";
 				$templatetable.="<INPUT TYPE='hidden' NAME='templateId".$i."' VALUE='$templateinfo[DEF_id]'>\n";
 				$templatetable.="<INPUT TYPE='hidden' NAME='diam' VALUE='$templateinfo[diam]'>\n";
@@ -174,7 +174,7 @@ function createSelexonForm($extra=false, $title='PySelexon Launcher', $heading='
 			$templateInfo=$particle->getTemplatesFromId($templateId);
 			$tmpltrows=$templateInfo[0];
 			$filename=$tmpltrows[templatepath];
-			$templateTable.="<TD VALIGN='TOP'><IMG SRC='loadmrc.php?filename=$filename&rescale=True' WIDTH='200'><BR>\n";
+			$templateTable.="<TD VALIGN='TOP'><IMG SRC='loadimg.php?filename=$filename&rescale=True' WIDTH='200'><BR>\n";
 			if (!$start && !$end && !$incr) $templateTable.="<B>no rotation</B>\n";
 			elseif ($start=='' || !$end || !$incr) {
 			        echo "<B>Error in template $i</B><BR> missing rotation parameter - fix this<BR>\n";
@@ -581,8 +581,8 @@ function writeTestResults($jpg,$ccclist){
         echo"<IMG SRC='loadimg.php?filename=$jpg&scale=0.35'></A>\n";
 	if (count($ccclist)>1) echo "<BR>\n";
 	foreach ($ccclist as $ccc){
-	        echo"<A HREF='loadmrc.php?filename=$ccc&scale=0.8'>\n";
-	        echo"<IMG SRC='loadmrc.php?filename=$ccc&scale=0.35'></A>\n";
+	        echo"<A HREF='loadimg.php?filename=$ccc&scale=0.8'>\n";
+	        echo"<IMG SRC='loadimg.php?filename=$ccc&scale=0.35'></A>\n";
 	}
 	echo"</CENTER>\n";
 }
