@@ -1,7 +1,7 @@
 <?php
 /**
- *	@version $Revision: 1.30 $
- *	@version $Id: image.inc,v 1.30 2006-11-15 22:15:58 glander Exp $
+ *	@version $Revision: 1.31 $
+ *	@version $Id: image.inc,v 1.31 2006-12-04 21:37:30 glander Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -139,6 +139,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 
 			$targetcal = $leginondata->getImageMatrixCalibration($tId, $type);
 			$parentcal = $leginondata->getImageMatrixCalibration($imageId, $type);
+
 			$truediam=$targetinfo['targetdiam'];
 			$truedim=$targetinfo['targetdim'];
 			if (abs($target[x]-$parent['targetx'])<5
@@ -322,7 +323,8 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				list($selectionparams)=$particle->getSelectionParams($particlerun);
 				$diam = $selectionparams[diam];
 				$col = imagecolorallocate($img, 255,255,255);
-				$diam = $diam*$scalefactor/$binning;
+				$apix = $imginfo[pixelsize]*1e10;
+				$diam = $diam*$scalefactor/$binning/$apix;
 				foreach ($particledata as $particle) {
 					$cx = $particle['xcoord']/$binning*$scalefactor;
 					$cy = $particle['ycoord']/$binning*$scalefactor;
