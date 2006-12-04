@@ -304,7 +304,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		maxsize = self.settings['maxsize']
 		blur = self.settings['blur']
 		sharpen = self.settings['sharpen']
-		regions,image = libCV.FindRegions(im, minsize, maxsize, blur, sharpen, 1, 1, 5)
+		regions,image = libCV.FindRegions(im, minsize, maxsize, blur, sharpen, 1, 1)
 		# this is copied from targetfinder:
 		#regions,image = libCV.FindRegions(self.mosaicimage, minsize, maxsize, 0, 0, 0, 1, 5)
 		n = len(regions)
