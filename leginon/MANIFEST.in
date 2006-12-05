@@ -2,5 +2,6 @@ include config/default.cfg
 include noderegistry/default.ncr
 include icons/*.png
 include icons/processing/*.png
+include applications/*.xml
 include Leginon.pth
 include holetemplate.mrc
