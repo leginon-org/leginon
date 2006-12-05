@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Navigator.py,v $
-# $Revision: 1.39 $
+# $Revision: 1.40 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-10 00:06:48 $
+# $Date: 2006-12-05 22:21:38 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -324,11 +324,19 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		precsz.Add(label2, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		maxerrsz = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Maximum Measurable Error (pixels)')
+		label = wx.StaticText(self, -1, 'Local Correlation Size (pixels)')
 		self.widgets['max error'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=6, value='0.0')
 		maxerrsz.Add(label, (0, 0), (1, 1))
 		maxerrsz.Add(self.widgets['max error'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+
+		hysfixsz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, '')
+		self.widgets['cycle after'] = wx.CheckBox(self, -1, 'Preset cycle after final move')
+		self.widgets['cycle each'] = wx.CheckBox(self, -1, 'Preset cycle after each move')
+		hysfixsz.Add(self.widgets['cycle after'], (0, 0), (1, 1))
+		hysfixsz.Add(self.widgets['cycle each'], (1, 0), (1, 1))
+
 		## 
 		sz = wx.GridBagSizer(5,5)
 		sz.Add(self.widgets['check calibration'], (0, 0), (1, 1),
@@ -336,6 +344,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(maxerrsz, (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(precsz, (2, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(hysfixsz, (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		errbox = wx.StaticBox(self, -1, "Error Checking and Correction")
 		errsz = wx.StaticBoxSizer(errbox, wx.VERTICAL)

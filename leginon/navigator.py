@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
-# $Revision: 1.115 $
+# $Revision: 1.116 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-20 00:46:30 $
+# $Date: 2006-12-05 22:21:37 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -49,6 +49,8 @@ class Navigator(node.Node):
 		'complete state': True,
 		'override preset': False,
 		'max error': 200,
+		'cycle after': False,
+		'cycle each': False,
 		'camera settings':
 			data.CameraSettingsData(
 				initializer={
@@ -69,7 +71,7 @@ class Navigator(node.Node):
 			),
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs + [event.MoveToTargetEvent]
-	eventoutputs = node.Node.eventoutputs + [event.CameraImagePublishEvent]
+	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs + [event.CameraImagePublishEvent]
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
@@ -106,6 +108,7 @@ class Navigator(node.Node):
 		self.logger.info('handling %s request from %s' % (movetype, nodename,))
 		imagedata = targetdata['image']
 		self.newImage(imagedata)
+		preset = imagedata['preset']
 		rows = targetdata['delta row']
 		cols = targetdata['delta column']
 
@@ -113,7 +116,7 @@ class Navigator(node.Node):
 			check=True
 		else:
 			check=False
-		self.move(rows, cols, movetype, precision, check)
+		self.move(rows, cols, movetype, precision, check, preset=preset)
 		self.confirmEvent(ev)
 
 	def newImage(self, imagedata):
@@ -194,7 +197,13 @@ class Navigator(node.Node):
 
 		return False
 
-	def move(self, row, col, movetype, precision=0.0, check=False):
+	def cycleToPreset(self, preset=None):
+		if preset is None:
+			return
+		self.logger.info('preset cycle')
+		self.presetsclient.toScope(preset['name'])
+
+	def move(self, row, col, movetype, precision=0.0, check=False, preset=None):
 		self.setStatus('processing')
 		self.origimagedata = self.newimagedata
 		self.origmove = row,col
@@ -204,6 +213,8 @@ class Navigator(node.Node):
 			return
 
 		if check:
+			if self.settings['cycle each']:
+				self.cycleToPreset(preset)
 			self.reacquireImage()
 			r,c,dist = self.checkMoveError()
 			self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
@@ -212,6 +223,8 @@ class Navigator(node.Node):
 				self.logger.info('checking that move error is less than %.3e' % (precision,))
 				while dist > precision:
 					self._move(r, c, movetype)
+					if self.settings['cycle each']:
+						self.cycleToPreset(preset)
 					self.reacquireImage()
 					lastdist = dist
 					r,c,dist = self.checkMoveError()
@@ -221,6 +234,8 @@ class Navigator(node.Node):
 						self._moveback()
 						break
 				self.logger.info('correction done')
+				if self.settings['cycle after']:
+					self.cycleToPreset(preset)
 
 		self.setStatus('idle')
 
