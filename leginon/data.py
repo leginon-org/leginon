@@ -28,6 +28,30 @@ class DataAccessError(DataError):
 class DataDuplicateError(DataError):
 	pass
 
+
+#### version 1.3 database check
+import sqldb
+import sys
+testdb = sqldb.connect()
+cur = testdb.cursor()
+try:
+	cur.execute('describe UserData')
+except:
+	## most likely no UserData table
+	pass
+else:
+	fields = cur.fetchall()
+	for field in fields:
+		if field[0] == 'DEF_id':
+			continue
+		if field[2] != 'YES':
+			print '******************************************************'
+			print 'Database not compatible with Leginon 1.3'
+			print 'Backup your database, then run the datasync.py script.'
+			print '******************************************************'
+			sys.exit()
+
+
 '''
 How DataManager manages references between Data
 -----------------------------------------------
@@ -1293,6 +1317,7 @@ class AcquisitionImageData(PresetImageData):
 			('tilt series', TiltSeriesData),
 			('version', int),
 			('tiltnumber', int),
+			('version', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -1663,6 +1688,9 @@ class ConnectToClientsData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('clients', list),
+			('localhost', str),
+			('installation', str),
+			('version', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1750,6 +1778,8 @@ class NavigatorSettingsData(SettingsData):
 			('instruments', dict),
 			('precision', float),
 			('max error', float),
+			('cycle each', bool),
+			('cycle after', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -2066,6 +2096,9 @@ class CalibratorSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class PixelSizeCalibratorSettingsData(CalibratorSettingsData):
+	pass
+
 class DoseCalibratorSettingsData(CalibratorSettingsData):
 	def typemap(cls):
 		return CalibratorSettingsData.typemap() + (
@@ -2151,6 +2184,8 @@ class RobotSettingsData(SettingsData):
 		return SettingsData.typemap() + (
 			('column pressure threshold', float),
 			('default Z position', float),
+			('simulate', bool),
+			('turbo on', bool),
 			('grid tray', str),
 		)
 	typemap = classmethod(typemap)
@@ -2234,8 +2269,8 @@ class TomographyPredictionData(InSessionData):
 			('pixel size', float),
 			#('image', TiltSeriesImageData),
 			('image', AcquisitionImageData),
-            ('measured defocus', float),
-            ('measured fit', float),
+			('measured defocus', float),
+			('measured fit', float),
 		)
 	typemap = classmethod(typemap)
 
