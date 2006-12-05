@@ -36,6 +36,12 @@ if __name__ == '__main__':
 		create_shortcut(target, 'Leginon Client', path, '',
 										os.path.join(pythonfolder, 'Leginon'))
 		file_created(path)
+
+		target = os.path.join(pythonfolder, 'Leginon')
+		path = os.path.join(leginonfolder, 'Leginon Folder.lnk')
+		create_shortcut(target, 'Leginon Folder', path, '',
+										os.path.join(pythonfolder, 'Leginon'))
+		file_created(path)
 	elif sys.argv[1] == '-remove':
 		pass
 	else:
