@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/BeamTiltCalibrator.py,v $
-# $Revision: 1.21 $
+# $Revision: 1.22 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-18 21:45:36 $
+# $Date: 2006-12-05 22:13:11 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -25,14 +25,14 @@ class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 	def initialize(self):
 		sizers = gui.wx.Calibrator.SettingsDialog.initialize(self)
 
-		self.widgets['measure beam tilt'] = FloatEntry(self, -1, chars=7)
+#		self.widgets['measure beam tilt'] = FloatEntry(self, -1, chars=7)
 		self.widgets['correct tilt'] = wx.CheckBox(self, -1, 'Correct image for tilt')
 		self.widgets['settling time'] = FloatEntry(self, -1, chars=4)
 
 		sizer = wx.GridBagSizer(5, 20)
-		label = wx.StaticText(self, -1, 'Measure beam tilt (+/-)')
-		sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.widgets['measure beam tilt'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+#		label = wx.StaticText(self, -1, 'Measure beam tilt (+/-)')
+#		sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+#		sizer.Add(self.widgets['measure beam tilt'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		sizer.Add(self.widgets['correct tilt'], (0, 2), (1, 3), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'Settling time')
 		sizer.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -70,6 +70,7 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SET_INSTRUMENT, 'focusset', shortHelpString='Eucentric Focus To Scope')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_GET_BEAMTILT, 'beamtiltget', shortHelpString='Rotation Center From Scope')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SET_BEAMTILT, 'beamtiltset', shortHelpString='Rotation Center To Scope')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_ALIGN, 'rotcenter', shortHelpString='Align Rotation Center')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_EDIT, 'edit', shortHelpString='Edit current calibration')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE_COMAFREE, 'ruler', shortHelpString='Measure Coma-free')
@@ -85,6 +86,7 @@ class Panel(gui.wx.Calibrator.Panel):
 
 		self.measure_dialog = MeasureDialog(self)
 		self.comafree_dialog = MeasureComafreeDialog(self)
+		self.align_dialog = AlignRotationCenterDialog(self)
 
 		self.Bind(gui.wx.Events.EVT_EDIT_FOCUS_CALIBRATION, self.onEditFocusCalibration)
 
@@ -96,6 +98,7 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRotationCenterFromScope, id=gui.wx.ToolBar.ID_GET_BEAMTILT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRotationCenterToScope, id=gui.wx.ToolBar.ID_SET_BEAMTILT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEditFocusCalibrationTool, id=gui.wx.ToolBar.ID_EDIT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onAlignRotationCenter, id=gui.wx.ToolBar.ID_ALIGN)
 
 	def instrumentEnable(self, enable):
 		tools = [
@@ -173,8 +176,11 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.instrumentEnable(False)
 		threading.Thread(target=self.node.rotationCenterFromScope).start()
 
+	def onAlignRotationCenter(self, evt):
+		self.align_dialog.Show()
+
 	def onMeasureTool(self, evt):
-		self.measure_dialog.Show()
+		self.measure_dialog.ShowModal()
 
 	def onMeasureComafreeTool(self, evt):
 		self.comafree_dialog.Show()
@@ -321,11 +327,46 @@ class MeasureComafreeDialog(wx.Dialog):
 		btilt = self.tiltvalue.GetValue()
 		threading.Thread(target=self.node.measureComaFree, args=(btilt,)).start()
 
-class MeasureDialog(wx.Dialog):
+class AlignRotationCenterDialog(wx.Dialog):
 	def __init__(self, parent):
 		self.node = parent.node
 
-		wx.Dialog.__init__(self, parent, -1, 'Measure Defocus/Stig.')
+		wx.Dialog.__init__(self, parent, -1, 'Align Rotation Center')
+
+		self.measure = wx.Button(self, -1, 'Align')
+		self.Bind(wx.EVT_BUTTON, self.onMeasureButton, self.measure)
+
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.measure, (0, 0), (1, 1), wx.EXPAND)
+
+		sbsz = wx.GridBagSizer(5, 5)
+
+		label = wx.StaticText(self, -1, 'Defocus 1:')
+		self.d1value = FloatEntry(self, -1, allownone=False, chars=5, value='-2e-6')
+		sbsz.Add(label, (0,0), (1,1))
+		sbsz.Add(self.d1value, (0,1), (1,1))
+		label = wx.StaticText(self, -1, 'Defocus 2:')
+		self.d2value = FloatEntry(self, -1, allownone=False, chars=5, value='-4e-6')
+		sbsz.Add(label, (1,0), (1,1))
+		sbsz.Add(self.d2value, (1,1), (1,1))
+
+		self.sizer = wx.GridBagSizer(5, 5)
+		self.sizer.Add(sbsz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(self.measure, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
+
+		self.SetSizerAndFit(self.sizer)
+
+	def onMeasureButton(self, evt):
+		d1 = self.d1value.GetValue()
+		d2 = self.d2value.GetValue()
+		threading.Thread(target=self.node.alignRotationCenter, args=(d1,d2,)).start()
+
+class MeasureDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+
+		gui.wx.Settings.Dialog.initialize(self)
+
+		self.widgets['measure beam tilt'] = FloatEntry(self, -1, chars=7)
 
 		self.labels = {}
 		self.labels['defocus'] = wx.StaticText(self, -1, '(Not measured)')
@@ -334,18 +375,23 @@ class MeasureDialog(wx.Dialog):
 			self.labels['stigmator'][axis] = wx.StaticText(self, -1, '(Not measured)')
 
 		szresult = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Defocus')
+		label = wx.StaticText(self, -1, 'beam tilt (+/-)')
 		szresult.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szresult.Add(self.labels['defocus'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Stig. x')
+		szresult.Add(self.widgets['measure beam tilt'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+
+		label = wx.StaticText(self, -1, 'Defocus')
 		szresult.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szresult.Add(self.labels['stigmator']['x'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Stig. y')
+		szresult.Add(self.labels['defocus'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Stig. x')
 		szresult.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szresult.Add(self.labels['stigmator']['y'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szresult.Add(self.labels['stigmator']['x'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Stig. y')
+		szresult.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szresult.Add(self.labels['stigmator']['y'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szresult.AddGrowableRow(0)
 		szresult.AddGrowableRow(1)
 		szresult.AddGrowableRow(2)
+		szresult.AddGrowableRow(3)
 		szresult.AddGrowableCol(0)
 
 		self.measure = wx.Button(self, -1, 'Measure')
@@ -369,20 +415,15 @@ class MeasureDialog(wx.Dialog):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
-		self.done = wx.Button(self, wx.ID_OK, 'Close')
-
-		self.sizer = wx.GridBagSizer(5, 5)
-		self.sizer.Add(sbsz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
-		self.sizer.Add(self.done, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
-
-		self.SetSizerAndFit(self.sizer)
-
 		self.Bind(wx.EVT_BUTTON, self.onMeasureButton, self.measure)
 		self.Bind(wx.EVT_BUTTON, self.onCorrectDefocusButton, self.correctdefocus)
 		self.Bind(wx.EVT_BUTTON, self.onCorrectStigButton, self.correctstig)
 		self.Bind(wx.EVT_BUTTON, self.onResetDefocusButton, self.resetdefocus)
 
+		return [sbsz]
+
 	def onMeasureButton(self, evt):
+		self.setNodeSettings()
 		self.GetParent()._calibrationEnable(False)
 		threading.Thread(target=self.node.measure).start()
 
