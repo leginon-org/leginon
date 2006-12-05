@@ -126,6 +126,43 @@ else:
 		print '        *** FAILED (at least %s required)' % (minstr,)
 
 ######################################################################
+## numpy
+######################################################################
+testednumpy = ('1.0b5',)
+print '--------------------------------------------------------------'
+print 'numpy:'
+print '    importing numpy module...'
+try:
+	import numpy
+except ImportError:
+	print '    *** Failed to import numpy.  Install numpy first.'
+else:
+	mystr = numpy.__version__
+	print '    numpy version: %s' % (mystr,)
+	if mystr in testednumpy:
+		print '        OK'
+	else:
+		print '        *** WARNING: untested version of numpy.  Tested versions: %s'  % (testednumpy,)
+
+######################################################################
+## scipy
+######################################################################
+print '--------------------------------------------------------------'
+print 'scipy:'
+print '    importing scipy.optimize module...'
+try:
+	import scipy.optimize
+except ImportError:
+	print '    *** Failed to import scipy.optimize.  Install scipy first'
+else:
+	try:
+		print '      testing for leastsq function...'
+		scipy.optimize.leastsq
+		print '       OK'
+	except:
+		print '        *** FAILED: need version of scipy.optimize with leastsq'
+		
+######################################################################
 ## Python XML module
 ######################################################################
 minxmlver = (0, 8, 2)
@@ -146,6 +183,19 @@ else:
 		print '        OK (at least %s required)' % (minstr ,)
 	else:
 		print '        *** FAILED (at least %s required)' % (minstr,)
+
+######################################################################
+## ImageViewer
+######################################################################
+print '--------------------------------------------------------------'
+print 'ImageViewer module:'
+print '    importing ImageViewer module...'
+try:
+	import ImageViewer
+except:
+	print '    *** FAILED: Could not import ImageViewer.'
+else:
+	print '        OK (no version requirement at this time)'
 
 ######################################################################
 ## wxPython
