@@ -1,109 +1,139 @@
 #!/usr/bin/env python
-"""
-datasync.py:
-	- update all table fields with NULL
-	- update FocusSettingData
-	- generate SQL queries to update the current database state 
-		with Data Classes defined in data.py
 
-"""
-import data
-import dbdatakeeper
-import sqldb
-import leginonconfig
 import sys
-		
-### use a user with alter/drop/update privileges
-dbparams = {
-	'host':leginonconfig.DB_HOST,
-	'user':leginonconfig.DB_USER,
-	'db':leginonconfig.DB_NAME,
-	'passwd':leginonconfig.DB_PASS
-}
+import MySQLdb
+import getpass
 
-## modify you db params here
-## dbparams['host']='stratocaster'
-## dbparams['db']='dbemdata'
+print '''
+LEGINON 1.3 DATABASE UPDATE SCRIPT
 
-db = dbdatakeeper.DBDataKeeper(**dbparams)
+This script will update several tables in the Leginon database.
+Older versions of Leginon will no longer work after this update.
 
-dataclasses = {}
+*****************************************************************
+* YOU SHOULD CREATE A BACKUP OF YOUR DATABASE BEFORE CONTINUING *
+*****************************************************************
+'''
 
+## ask if a backup was made
+text = raw_input('If you have created a backup, please enter YES at the prompt: ')
+if text != 'YES':
+	print 'aborted'
+	sys.exit()
 
-tables = []
-tableclass = []
-notableclass = []
-dataclasses={}
+print ''
+print 'Enter configuration information for the database you wish to update.'
+print 'You must have alter, insert, and create privileges to update the tables.'
+print ''
+dbhost = raw_input('Database Host: ')
+dbname = raw_input('Database Name: ')
+dbuser = raw_input('User: ')
+dbpass = getpass.getpass('Password: ')
+print ''
+print ''
 
-## get tables
-## dbc = sqldb.sqlDB(host='stratocaster')
-dbc = sqldb.sqlDB(**dbparams)
-r = dbc.selectall('show tables')
-dbc.close()
+db = MySQLdb.connect(host=dbhost, db=dbname, user=dbuser, passwd=dbpass)
 
-for d in r:
-	for key,value in d.items():
-		tables.append(value)
+## get list of tables
+cur = db.cursor()
+cur.execute('show tables')
+tableresults = cur.fetchall()
+tables = [row[0] for row in tableresults]
+if not tables:
+	print 'No tables in this database, so no update is necessary'
+	sys.exit()
 
-## set default NULL
-dbc = sqldb.sqlDB(**dbparams)
+def get_fields_info(db, table):
+	cur = db.cursor()
+	cur.execute('DESCRIBE `%s`' % (table,))
+	fields = cur.fetchall()
+	return fields
 
-for table in tables:
-	q = "SHOW FIELDS FROM `%s`" % (table)
-	r = dbc.selectall(q)
-	qalter = "ALTER TABLE `%s` " % (table)
-	changes = []
-	for d in r:
-		if d['Field'] in ('DEF_id', 'DEF_timestamp',):
-			continue
-		if d['Null'] != 'YES':
-			changes.append( "CHANGE `%s` `%s` %s NULL " % (d['Field'], d['Field'], d['Type'],))
+def get_field_names(db, table):
+	cur = db.cursor()
+	cur.execute('DESCRIBE `%s`' % (table,))
+	fields = cur.fetchall()
+	return [field[0] for field in fields]
 
-	if changes:
-		qalter += ", ".join(changes)
-		dbc.execute(qalter)
+def field_is_null(db, table, field):
+	'''This function checks if NULL is enabled for the given table and field'''
+	try:
+		results = get_fields_info(db, table)
+	except:
+		return False
+	for res in results:
+		if field == res[0]:
+			if res[2] == 'YES':
+				return True
+	return False
+
+# spot check if NULL has been enabled
+# Make sure at least one exists and that those that exist pass the test
+checkthese = (
+	('UserData','name'),
+	('ApplicationData', 'name'),
+	('InstrumentData', 'hostname')
+)
+havenull = 0
+exist = 0
+for table,field in checkthese:
+	if table in tables:
+		exist += 1
+		if field_is_null(db, table, field):
+			havenull += 1
+if exist == 0:
+	## could not determine from our spot check, so need to assume it is not done
+	nullenabled = False
+else:
+	if havenull == exist:
+		## all passed the test, null is enabled
+		nullenabled = True
+	else:
+		## one or more did not pass the test
+		nullenabled = False
+
+## alter the tables to enable the NULL flag on fields
+if nullenabled:
+	print 'NULL already enabled on tables.  Skipping this modification'
+else:
+	print 'Enabling NULL on tables...'
+
+	for table in tables:
+		print '  %s' % table
+		fields = get_fields_info(db, table)
+		for field in fields:
+			if field[0] in ('DEF_id', 'DEF_timestamp',):
+				continue
+			cur = db.cursor()
+			alter = 'ALTER TABLE `%s` MODIFY `%s` %s NULL' % (table,field[0],field[1])
+			cur.execute(alter)
+print ''
 
 ## update FocusSettingData 
-table = 'FocusSettingData'
-q = "ALTER TABLE `FocusSettingData` CHANGE `beam tilt` `tilt` DOUBLE NULL" 
-try:
-	r = dbc.execute(q)
-except:
-	pass
+if 'FocusSettingData' in tables:
+	# tilt field
+	fields = get_field_names(db, 'FocusSettingData')
+	if 'tilt' in fields:
+		print 'FocusSettingData already contains tilt field.  Skipping this modification'
+	else:
+		print 'Updating tilt field of FocusSettingData...'
+		cur = db.cursor()
+		cur.execute('ALTER TABLE `FocusSettingData` CHANGE `beam tilt` `tilt` DOUBLE')
+		print '   done.'
+	print ''
 
-## stig defocus max >0 AND stig defocus min >0
-q = "UPDATE `FocusSettingData` SET `stig defocus max`=ABS(`stig defocus max`), `stig defocus min`=ABS(`stig defocus min`) WHERE `stig defocus max` <0 OR `stig defocus min` <0"
-try:
-	r = dbc.execute(q)
-except:
-	print "SQL update `FocusSettingData` error"
-	pass
+	# stig defocus min/max updated to be positive
+	print 'Updating stig defocus min/max fields of FocusSettingData'
+	cur = db.cursor()
+	cur.execute("UPDATE `FocusSettingData` SET `stig defocus max`=ABS(`stig defocus max`), `stig defocus min`=ABS(`stig defocus min`) WHERE `stig defocus max` <0 OR `stig defocus min` <0")
+	print '   done.'
+	print ''
 
-dbc.close()
-
-## check if table is a Data class
-for table in tables:
-	try:
-		cls = getattr(data, table)
-		dataclasses[table] = cls
-		tableclass.append(table)
-	except:
-		print "-- Not a class: ",table
-		notableclass.append(table)
-		pass
-
-
-## check Class definition
-for table,value in dataclasses.items():
-	instance = db.dbd.sqlColumns2Data(table)
-	print "--" 
-	print "-- Table: ",table
-	addcolumns, dropcolumns, queries = db.diffData(instance)
-	for s in addcolumns:
-		print "--  UPDATE `%s`" % (s['Field'],)
-	for s in dropcolumns:
-		print "--  DROP `%s`" % (s['Field'],)
-	print "--" 
-	for s in queries :
-		print s
-	print "\n"
+# rename CalibratorSettingsData to PixelSizeCalibratorSettingsData
+if 'PixelSizeCalibratorSettingsData' in tables:
+	print 'PixelSizeCalibratorSettingsData already exists.  Skipping this modification'
+elif 'CalibratorSettingsData' in tables:
+	print 'Renaming CalibratorSettingsData...'
+	cur = db.cursor()
+	cur.execute('ALTER TABLE `CalibratorSettingsData` RENAME `PixelSizeCalibratorSettingsData`')
+	print '   done.'
