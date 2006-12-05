@@ -123,7 +123,7 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
     if ($prtlruns==0) {echo "none";}
-    else {echo "<A HREF='prtlreport.php?Id=$sessionId'>$prtlruns completed</A>\n";}
+    else {echo "<A HREF='prtlreport.php?expId=$sessionId'>$prtlruns completed</A>\n";}
     echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>
