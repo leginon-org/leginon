@@ -96,49 +96,14 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
   
 	echo"
        <FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
+        $sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+        $sessioninfo=$sessiondata['info'];
+        if (!empty($sessioninfo)) {
+                $sessionpath=$sessioninfo['Image path'];
+                $sessionpath=ereg_replace("rawdata","stacks/",$sessionpath);
+                $sessionname=$sessioninfo['Name'];
+        }
 
-	// Collect session info from database
-	$sessiondata=getSessionList($projectId,$sessionId);
-	$sessioninfo=$sessiondata['info'];
-	$sessions=$sessiondata['sessions'];
-	$currentproject=$sessiondata['currentproject'];
-	if (!empty($sessioninfo)) {
-	        $sessionpath=$sessioninfo['Image path'];
-		$sessionpath=ereg_replace("rawdata","stacks/",$sessionpath);
-		$sessionname=$sessioninfo['Name'];
-	}
-
-	// If expId specified, don't show pulldowns, only session info
-	if ($expId){
-	        $proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
-		$sessionDescr=$sessioninfo['Purpose'];
-		echo "Project: $proj_link<BR>\nSession: $sessionDescr\n";
-	}
-	// Show project & session pulldowns
-	else {
-	        echo"
-                <B>Select Session:</B><BR>
-                <SELECT NAME='projectId' onchange='newexp()'>\n";
-		$projects=getProjectList();
-		foreach ($projects as $k=>$project) {
-		        $sel = ($project['id']==$projectId) ? "selected" : '';
-			echo "<option value='".$project['id']."' ".$sel.">".$project['name']."</option>\n";
-		}
-		
-		echo"
-                </select>
-                <BR>
- 
-                <SELECT NAME='sessionId' onchange='newexp()'>
-                <option value=''>all sessions</OPTION>\n";
-		foreach ($sessions as $k=>$session) {
-		        $sel = ($session['id']==$sessionId) ? 'selected' : '';
-			$shortname=substr($session['name'],0,90);
-			echo "<option value='".$session['id']."'".$sel.">".$shortname."</option>";
-		}
-		echo"</select>\n";
-	}
-	
         // Set any existing parameters in form
         $single = ($_POST['single']) ? $_POST['single'] : 'start.hed';
         $runidval = ($_POST['runid']) ? $_POST['runid'] : 'stack1';
