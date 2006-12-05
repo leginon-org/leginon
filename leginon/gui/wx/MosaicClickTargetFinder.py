@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-22 21:00:07 $
-# $Author: suloway $
+# $Date: 2006-12-05 22:28:41 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -199,6 +199,7 @@ class MosaicSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbsz]
 
 	def onCreateButton(self, evt):
+		self.setNodeSettings()
 		self.node.createMosaicImage()
 		self.bsave.Enable(self.node.hasMosaicImage())
 

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.25 $
+# $Revision: 1.26 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-06-29 23:40:18 $
+# $Date: 2006-12-05 22:28:41 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -141,7 +141,8 @@ class Dialog(gui.wx.Dialog.Dialog):
 		return setting
 
 	def getResetSetting(self):
-		choice = self.reset_choice.GetStringSelection()
+#		choice = self.reset_choice.GetStringSelection()
+		choice = None
 		if choice == 'Always':
 			return True
 		elif choice == 'Never':
@@ -156,7 +157,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 			choice = 'Never'
 		else:
 			choice = 'Default'
-		self.reset_choice.SetStringSelection(choice)
+#		self.reset_choice.SetStringSelection(choice)
 
 	def setSetting(self, setting):
 		## FIX CRAP
@@ -213,7 +214,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 			self.stig_defocus_max_entry,
 			self.check_drift_checkbox,
 			self.drift_threshold_entry,
-			self.reset_choice,
+#			self.reset_choice,
 		]
 
 		[widget.Enable(enable) for widget in widgets]
@@ -310,11 +311,11 @@ class Dialog(gui.wx.Dialog.Dialog):
 		self.autowidgets.append(self.correction_type_choice)
 
 		label = wx.StaticText(self, -1, 'Reset defocus:')
-		autosizer.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.autowidgets.append(label)
-		self.reset_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.reset_types)
-		autosizer.Add(self.reset_choice, (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.autowidgets.append(self.reset_choice)
+#		autosizer.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+#		self.autowidgets.append(label)
+#		self.reset_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.reset_types)
+#		autosizer.Add(self.reset_choice, (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+#		self.autowidgets.append(self.reset_choice)
 
 		### Frame for drift related items
 		driftsizer = wx.GridBagSizer(3, 3)

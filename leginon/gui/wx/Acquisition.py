@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.38 $
+# $Revision: 1.39 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-25 22:25:35 $
-# $Author: dfellman $
+# $Date: 2006-12-05 22:28:41 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -109,7 +109,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		szmover.Add(self.widgets['mover'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
 		szmoveprec = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Move Precision (m):')
+		label = wx.StaticText(self, -1, 'Navigator Tolerance (m):')
 		self.widgets['move precision'] = FloatEntry(self, -1, min=0.0, chars=6)
 		szmoveprec.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szmoveprec.Add(self.widgets['move precision'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)

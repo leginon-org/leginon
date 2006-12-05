@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.49 $
+# $Revision: 1.50 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-02 23:01:20 $
-# $Author: suloway $
+# $Date: 2006-12-05 22:28:41 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -138,32 +138,26 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		# settings
 		self.szplan = self._getStaticBoxSizer('Plan', (0, 0), (1, 1), wx.ALIGN_TOP)
 
-		self.stbadrows = wx.StaticText(self, -1)
-		self.stbadcolumns = wx.StaticText(self, -1)
-		self.stbadpixels = wx.StaticText(self, -1)
+		self.stbadrowscount = wx.StaticText(self, -1)
+		self.stbadcolumnscount = wx.StaticText(self, -1)
+		self.stbadpixelscount = wx.StaticText(self, -1)
 		self.beditplan = wx.Button(self, -1, 'Edit...')
 		self.bgrabpixels = wx.Button(self, -1, 'Grab From Image')
-		self.bclearpixels = wx.Button(self, -1, 'Clear All')
+		self.bclearpixels = wx.Button(self, -1, 'Clear Bad Pixels')
 
-		label = wx.StaticText(self, -1, 'Bad rows:')
-		self.szplan.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szplan.Add(self.stbadrows, (0, 1), (1, 1),
+		self.szplan.Add(self.beditplan, (0, 0), (1, 1),
+												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+		self.szplan.Add(self.stbadrowscount, (2, 0), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		label = wx.StaticText(self, -1, 'Bad columns:')
-		self.szplan.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szplan.Add(self.stbadcolumns, (1, 1), (1, 1),
+
+		self.szplan.Add(self.stbadcolumnscount, (3, 0), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		self.szplan.AddGrowableCol(1)
-		self.szplan.Add(self.beditplan, (2, 1), (1, 2),
-												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Bad Pixels (x,y):')
-		self.szplan.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szplan.Add(self.stbadpixels, (3, 1), (1, 1),
+		self.szplan.Add(self.stbadpixelscount, (4, 0), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		self.szplan.Add(self.bclearpixels, (4, 0), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		self.szplan.Add(self.bgrabpixels, (4, 1), (1, 2),
-												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.szplan.Add(self.bclearpixels, (5, 0), (1, 1),
+												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+		self.szplan.Add(self.bgrabpixels, (6, 0), (1, 1),
+												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
 
 		# image
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
@@ -227,16 +221,16 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		if not hasattr(self, 'plan'):
 			self.plan = {}
 		if plan is None or plan is {}:
-			self.stbadrows.SetLabel('')
-			self.stbadcolumns.SetLabel('')
-			self.stbadpixels.SetLabel('')
 			self.imagepanel.setTargets('Bad Pixels', [])
+			self.stbadrowscount.SetLabel('0')
+			self.stbadcolumnscount.SetLabel('0')
+			self.stbadpixelsscount.SetLabel('0')
 		else:
 			self.plan.update(plan)
-			self.stbadrows.SetLabel(plan2str(self.plan['rows']))
-			self.stbadcolumns.SetLabel(plan2str(self.plan['columns']))
-			self.stbadpixels.SetLabel(pixels2str(self.plan['pixels']))
 			self.imagepanel.setTargets('Bad Pixels', self.plan['pixels'])
+			self.stbadrowscount.SetLabel(str(len(self.plan['rows']))+' Bad rows')
+			self.stbadcolumnscount.SetLabel(str(len(self.plan['columns']))+' Bad columns')
+			self.stbadpixelscount.SetLabel(str(len(self.plan['pixels']))+' Bad pixels')
 
 	def onEditPlan(self, evt):
 		dialog = EditPlanDialog(self)
@@ -348,9 +342,11 @@ class EditPlanDialog(wx.Dialog):
 		stpixels = wx.StaticText(self, -1, 'Bad Pixels:')
 
 		pixels = ', '.join(map(str,self.plan['pixels']))
+		rows = ', '.join(map(str,self.plan['rows']))
+		columns = ', '.join(map(str,self.plan['columns']))
 
-		self.tcrows = wx.TextCtrl(self, -1, parent.stbadrows.GetLabel())
-		self.tccolumns = wx.TextCtrl(self, -1, parent.stbadcolumns.GetLabel())
+		self.tcrows = wx.TextCtrl(self, -1, rows)
+		self.tccolumns = wx.TextCtrl(self, -1, columns)
 		self.tcpixels = wx.TextCtrl(self, -1, pixels)
 
 		bsave = wx.Button(self, wx.ID_OK, 'Save')
