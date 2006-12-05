@@ -22,6 +22,9 @@ try:
 except:
 	import Numeric
 import gui.wx.JAHCFinder
+import version
+
+default_template = os.path.join(version.getInstalledLocation(),'holetemplate.mrc')
 
 class JAHCFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.JAHCFinder.Panel
@@ -40,7 +43,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'edge absolute': False,
 		'edge threshold': 100.0,
 		'template diameter': 40,
-		'template filename': '',
+		'template filename': default_template,
 		'file diameter': 168,
 		'template type': 'cross',
 		'template lpf': {
@@ -389,7 +392,6 @@ class JAHCFinder(targetfinder.TargetFinder):
 			'edge-filter-type': self.settings['edge type'],
 			'edge-threshold': self.settings['edge threshold'],
 
-			'template-rings': self.settings['template rings'],
 			'template-correlation-type': self.settings['template type'],
 			'template-lpf': self.settings['template lpf']['sigma'],
 
