@@ -271,14 +271,17 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.beep()
 				return 'repeat'
 
+			movetype = self.settings['move type']
 			movefunction = self.settings['mover']
-			if movefunction == 'presets manager':
+			if movetype == 'image shift' and movefunction == 'navigator':
+				self.logger.warning('Navigator cannot be used for image shift, using Presets Manager instead')
+				movefunction = 'presets manager'
 
+			if movefunction == 'presets manager':
 				self.setStatus('waiting')
 				self.presetsclient.toScope(newpresetname, emtarget)
 			elif movefunction == 'navigator':
 				if targetdata['type'] != 'simulated':
-					movetype = self.settings['move type']
 					precision = self.settings['move precision']
 					self.navclient.moveToTarget(targetdata, movetype, precision)
 				self.presetsclient.toScope(newpresetname, None)
@@ -512,6 +515,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if pretime:
 			self.exposeSpecimen(pretime)
 
+		## set correction channel
+		## in the future, may want this based on preset or something
+		self.instrument.setCorrectionChannel(0)
+
 		## acquire image
 		self.reportStatus('acquisition', 'acquiring image...')
 
@@ -635,6 +642,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if currentpreset is None:
 			self.logger.warning('No preset currently on instrument. Targeting may fail.')
 		targetdata = self.newSimulatedTarget(preset=currentpreset)
+		print targetdata
 		self.publish(targetdata, database=True)
 		## change to 'processing' just like targetwatcher does
 		proctargetdata = data.AcquisitionImageTargetData(initializer=targetdata, status='processing')
