@@ -22,7 +22,7 @@ class FindPeakError(Exception):
 	pass
 
 class PeakFinder(object):
-	def __init__(self, lpf=None):
+	def __init__(self, lpf=1.5):
 		self.initResults()
 		if lpf is not None:
 			self.lpf = True
