@@ -260,8 +260,11 @@ else {
 echo divtitle("Particles");
 require('inc/particledata.inc');
 $inspectcheck=($_POST['onlyinspected']=='on') ? 'CHECKED' : '';
+$mselexval=(is_numeric($_POST['mselex'])) ? $_POST['mselex'] 
+		: (is_numeric($_GET['mselex']) ? $_GET['mselex'] : false);
 echo"<FORM NAME='prtl' method='POST' action='$_SERVER[REQUEST_URI]'>
-     <input TYPE='CHECKBOX' name='onlyinspected' $inspectcheck onclick='javascript:document.prtl.submit()'>Don't use particles from discarded images
+     <INPUT TYPE='CHECKBOX' name='onlyinspected' $inspectcheck onclick='javascript:document.prtl.submit()'>Don't use particles from discarded images<BR>
+     <INPUT CLASS='field' NAME='mselex' TYPE='text' size='5' VALUE='$mselexval'>Minimum correlation value
      </form>\n";
 $sessionId=$expId;
 $particle = new particledata();
@@ -270,7 +273,7 @@ echo"Inpected images: $numinspected\n";
 if ($particle->hasParticleData($sessionId)) {
 	$display_keys = array ( 'totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev', 'img');
 	$particleruns=$particle->getParticleRunIds($sessionId);
-	echo $particle->displayParticleStats($particleruns, $display_keys, $inspectcheck);
+	echo $particle->displayParticleStats($particleruns, $display_keys, $inspectcheck, $mselexval);
 }
 else {
         echo "no Particle information available";
