@@ -135,14 +135,14 @@ class Robot(node.Node):
 	defaultsettings = {
 		'column pressure threshold': 3.5e-5,
 		'default Z position': -140e-6,
+		'simulate': False,
+		'turbo on': True,
 		'grid tray': None,
 	}
 	defaultcolumnpressurethreshold = 3.5e-5
 	defaultzposition = -140e-6
 	def __init__(self, id, session, managerlocation, **kwargs):
 
-		#self.simulate = True
-		self.simulate = False
 
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
@@ -158,6 +158,8 @@ class Robot(node.Node):
 		self.usercontinue = threading.Event()
 
 		self.emailclient = emailnotification.EmailClient(self)
+
+		self.simulate = self.settings['simulate']
 
 		# if label is same, kinda screwed
 		self.gridtrayids = {}
@@ -233,7 +235,7 @@ class Robot(node.Node):
 		self.extractcondition.release()
 
 	def _queueHandler(self):
-		if self.simulate:
+		if self.simulate or self.settings['simulate']:
 			self.communication = TestCommunication()
 		else:
 			pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
@@ -478,7 +480,8 @@ class Robot(node.Node):
 
 	def scopeReadyForImaging(self):
 		self.logger.info('Readying microscope for imaging...')
-		#self.turboPumpOff()
+		if not self.settings['turbo on']:
+			self.turboPumpOff()
 		self.insertCameras()
 		self.checkHighTensionOn()
 		self.vacuumReady()
@@ -680,7 +683,7 @@ class Robot(node.Node):
 	def insert(self):
 		self.lockScope()
 
-		if self.simulate:
+		if self.simulate or self.settings['simulate']:
 			self.estimateTimeLeft()
 			self.logger.info('Insertion of holder successfully completed')
 			try:
@@ -730,7 +733,7 @@ class Robot(node.Node):
 		return griddata
 
 	def extract(self):
-		if self.simulate:
+		if self.simulate or self.settings['simulate']:
 			self.logger.info('Extraction of holder successfully completed')
 			return
 
@@ -796,7 +799,7 @@ class Robot(node.Node):
 		return [int(i['location']) for i in gridlocations]
 
 	def gridInserted(self, gridnumber):
-		if self.simulate:
+		if self.simulate or self.settings['simulate']:
 			evt = event.MakeTargetListEvent()
 			evt['grid'] = self.makeGridData(gridnumber)
 			if evt['grid'] is None:

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.18 $
+# $Revision: 1.19 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-24 20:13:22 $
+# $Date: 2006-12-05 22:23:40 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -170,7 +170,7 @@ class Image(object):
 		targetdata = self.node.newTargetForTile(self.data, row, column,
 																							type='acquisition', status='new')
 																							#list=targetlist)
-		self.node.publish(targetdata, database=True)
+		self.node.publish(targetdata, database=True, dbforce=True)
 		self.targetdatalist.insert(0, targetdata)
 
 	def removeTarget(self, target):
@@ -185,7 +185,7 @@ class Image(object):
 		i = self.targetdatalist.index(targetdata)
 		targetdata = targetdata.__class__(initializer=targetdata)
 		targetdata['status'] = status
-		self.node.publish(targetdata, database=True)
+		self.node.publish(targetdata, database=True, dbforce=True)
 		self.targetdatalist[i] = targetdata
 		return targetdata
 
@@ -425,12 +425,17 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		newtargets = []
 		submittedtargets = []
 		processedtargets = []
+		# markdonetargets is a temporary function used once when the first pass targets
+		# are filtered but not marked done.  By marking them done as they are displayed,
+		# there is no need to remove them one by one.  Should be made proper later.
+		#markdonetargets = []
 		for image in self.insertion.images:
 			for targetdata in image.targetdatalist:
 				target = (targetdata['delta column'] + image.halfwidth + image.location[1][0],
 									targetdata['delta row'] + image.halfheight + image.location[0][0])
 				if targetdata['status'] == 'new':
 					newtargets.append(target)
+					#markdonetargets.append(targetdata)
 				elif targetdata['status'] == 'processing':
 					submittedtargets.append(target)
 				elif targetdata['status'] == 'done':
@@ -438,6 +443,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		self.setTargets(newtargets, 'New')
 		self.setTargets(submittedtargets, 'Submitted')
 		self.setTargets(processedtargets, 'Processed')
+		#self.markTargetsDone(markdonetargets)
 
 	def hasTargets(self, grid):
 		for insertion in grid.insertions:
@@ -637,17 +643,20 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 					self.updateAtlasViewTargets()
 
 				targetlist = self.newTargetList(image=image.data)
+				self.publish(targetlist, database=True, dbforce=True)
 				targetdatalist = []
 				for originaltargetdata, target, imagedata in targets:
 					row, column = target
 					targetdata = self.newTargetForTile(imagedata, row, column,
 																							type='acquisition',
 																							list=targetlist)
-					self.publish(targetdata, database=True)
+					## maybe should be forced
+					self.publish(targetdata, database=True, dbforce=True)
 					targetdatalist.append((originaltargetdata, targetdata))
 
+
 				self.makeTargetListEvent(targetlist)
-				self.publish(targetlist, database=True, dbforce=True, pubevent=True)
+				self.publish(targetlist, pubevent=True)
 				self.waitForTargetListDone()
 
 				for originaltargetdata, targetdata in targetdatalist:
@@ -659,6 +668,8 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 					for imagedata in imagedatalist:
 						imagedata = data.AcquisitionImageData(initializer=imagedata)
 						imagedata['target'] = originaltargetdata
+						## this will probably save the image file again with
+						## the same filename
 						self.publish(imagedata, database=True)
 					image.updateTargetStatus(originaltargetdata, 'done')
 				if insertion == self.insertion:
