@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SetupWizard.py,v $
-# $Revision: 1.20 $
+# $Revision: 1.21 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-18 20:15:55 $
+# $Date: 2006-12-05 22:28:24 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -22,6 +22,8 @@ import wx.wizard
 import wx.lib.intctrl
 import gui.wx.Dialog
 import gui.wx.ListBox
+import version
+import socket
 
 class WizardPage(wx.wizard.PyWizardPage):
 	pass
@@ -759,7 +761,10 @@ class Setup(object):
 		return clients
 
 	def saveClients(self, session, clients):
-		initializer = {'session': session, 'clients': clients}
+		ver = version.getVersion()
+		loc = version.getInstalledLocation()
+		host = socket.gethostname()
+		initializer = {'session': session, 'clients': clients, 'localhost':host, 'version': ver, 'installation': loc}
 		clientsdata = data.ConnectToClientsData(initializer=initializer)
 		self.publish(clientsdata, database=True, dbforce=True)
 
