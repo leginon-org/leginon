@@ -658,7 +658,12 @@ class Manager(node.Node):
 			if appname not in apps:
 				app = application.Application(self, name=appname)
 				apps[appname] = app
-		return apps
+		appnames = apps.keys()
+		appnames.sort()
+		orderedapps = newdict.OrderedDict()
+		for appname in appnames:
+			orderedapps[appname] = apps[appname]
+		return orderedapps
 
 	def getApplicationHistory(self):
 		initializer = {'session': data.SessionData(user=self.session['user']),
