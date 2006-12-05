@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.240 $
+# $Revision: 1.241 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-20 00:33:19 $
+# $Date: 2006-12-05 22:22:52 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -301,8 +301,11 @@ class PresetsManager(node.Node):
 					self.logger.info('Changing preset to "%s" and targeting' % pname)
 					self.targetToScope(pname, emtarget)
 			except PresetChangeError:
-				self.logger.info('preset request to "%s" failed, waiting %d seconds to try again' % (pname,failwait))
-				time.sleep(failwait)
+				if i < failtries-1:
+					self.logger.warning('preset request to "%s" failed, waiting %d seconds to try again' % (pname,failwait))
+					time.sleep(failwait)
+				else:
+					self.logger.error('preset request to "%s" failed %d times' % (pname,failtries))
 			else:
 				self.logger.info('Preset changed to "%s"' % pname)
 				succeed = True
