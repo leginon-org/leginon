@@ -99,7 +99,7 @@ class particledata {
 		return $r;
 	}
 	
-	function getStats ($runId, $inspect=''){
+	function getStats ($runId, $inspect=False, $selexval=False){
 		$q="select count(p.`DEF_id`) as `totparticles`, "
 		        ."count(distinct p.`REF|image|imageId`) as num, "
 			."min(p.correlation) as `min`, "
@@ -113,6 +113,7 @@ class particledata {
 		}
 		$q.="WHERE ";
 		if ($inspect) $q.="i.keep=1 AND ";
+		if ($selexval) $q.="p.`correlation`>='$selexval' AND ";
 		$q.="p.`REF|run|runId` = '$runId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
@@ -150,7 +151,24 @@ class particledata {
 		return $r;
 	}
 
-	function displayParticleStats($particleruns, $display_keys, $inspect='') {
+	function getStackIds ($sessionId) {
+	        $runids=$this->getParticleRunIds($sessionId);
+		$stackidlist=array();
+		if (!is_array($runids)) return;
+		foreach ($runids as $runid) {
+		        $run=$runid['DEF_id'];
+			$q = "select distinct(`REF|stackParams|stackId`) as stackid "
+			    ."from `stackParticles` sp left join particle p on "
+			    ."(p.`DEF_id` = sp.`REF|particle|particleId`) "
+			    ."WHERE `REF|run|runId` ='$run'";
+			$r = $this->mysql->getSQLResult($q);
+			if (is_array($r[0]))
+			        array_push($stackidlist,$r[0]['stackid']);
+		}
+		return $stackidlist;
+	}
+
+	function displayParticleStats($particleruns, $display_keys, $inspect=False, $selexval=False) {
 		if (!is_array($particleruns))
 			return ;
 		$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
@@ -161,25 +179,23 @@ class particledata {
 		$html .= "</tr>";
 
 		foreach ($particleruns as $particle) {
-		        $html .= "<tr>";
 			$runId=$particle['DEF_id'];
-			$particlestats = $this->getStats($runId, $inspect);
+			$particlestats = $this->getStats($runId, $inspect, $selexval);
+			$html .= "<tr>";
 			$numptl=$particlestats['totparticles'];
 			$numimg=$particlestats['num'];
-			$ppimg=(int)($numptl/$numimg);
+			$ppimg = ($numimg > 0) ? (int)($numptl/$numimg) : 0;
 			$particlestats['num']=$numimg.'<BR>('.$ppimg.' prtl/img)';
-		        $particlestats['img'] = '<a href="particlegraph.php?hg=1&run='.$runId.'">'
-		                .'<img border="0" '
-		                .'src="particlegraph.php?w=150&hg=1&run='
-		                .$runId.'"></a>';
+			$particlestats['img'] = '<a href="particlegraph.php?hg=1&run='.$runId.'">'
+			        .'<img border="0" '
+			        .'src="particlegraph.php?w=150&hg=1&run='
+				.$runId.'"></a>';
 			$q = "select name from `run` where `DEF_id` = $runId";
 			$r = $this->mysql->getSQLResult($q);
 			$r0 = $r[0];
 			$html .= "<td> $r0[name] </td>\n";
 			foreach($particlestats as $field=>$data) {
-			        if (eregi('^min|^max|^avg|^stddev', $field)) {
-				        $data=format_sci_number($data,4);
-				}
+			        if (eregi('^min|^max|^avg|^stddev', $field)) $data=format_sci_number($data,4);
 				$html .= "<td> $data </td> \n";
 			}
 			$html .= "</tr>\n";

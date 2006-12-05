@@ -105,7 +105,8 @@ if ($sessionId) {
   $assessedimgs = $particle->getNumAssessedImages($sessionId);
   
   // --- Get Stack Data
-  $stackruns=0;
+  $stackIds = $particle->getStackIds($sessionId);
+  $stackruns=count($stackIds);
 
   // --- Get Reconstruction Data
   $reconruns=0;
@@ -127,8 +128,8 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>
     <A HREF='runPySelexon.php?expId=$sessionId'>";
-    if ($prtlruns==0) {echo "Begin Processing";}
-    else {echo "Continue Processing";}
+    if ($prtlruns==0) {echo "Begin Picking";}
+    else {echo "Continue Picking";}
     echo"</A>
     </TD>
   </TR>
@@ -146,8 +147,8 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>
     <A HREF='runPyAce.php?expId=$sessionId'>";
-    if ($ctfruns==0) {echo "Begin Processing";}
-    else {echo "Continue Processing";}
+    if ($ctfruns==0) {echo "Begin Estimation";}
+    else {echo "Continue Estimation";}
     echo"</A>
     </TD>
   </TR>
@@ -160,13 +161,13 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
     if ($assessedimgs==0) {echo "none";}
-    else {echo "<A HREF='assessreport.php?Id=$sessionId'>$assessedimgs assessed</A>";}
+    else {echo "$assessedimgs assessed";}
     echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>
     <A HREF='imgAssessor.php?expId=$sessionId'>";
-    if ($assessedimgs==0) {echo "Begin Processing";}
-    else {echo "Continue Processing";}
+    if ($assessedimgs==0) {echo "Begin Assessment";}
+    else {echo "Continue Assessment";}
     echo"</A>
     </TD>
   </TR>
@@ -179,18 +180,16 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
     if ($stackruns==0) {echo "none";}
-    else {echo "<A HREF='ctfreport.php?Id=$sessionId'>$ctfruns completed</A>";}
+    else {echo "$stackruns completed";}
     echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>
     <A HREF='makestack.php?expId=$sessionId'>";
-    if ($stackruns==0) {echo "Begin Processing";}
-    else {echo "Continue Processing";}
-    echo"</A>
+    echo"Create New Stack</A>
     </TD>
   </TR>
   <TR>\n";
-  if ($stackruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
+  if ($reconruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
   else {$bgcolor=$donecolor;$gifimg=$donepic;}
   echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
     <TD BGCOLOR='$bgcolor'>
@@ -198,13 +197,13 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
     if ($reconruns==0) {echo "none";}
-    else {echo "<A HREF='ctfreport.php?Id=$sessionId'>$ctfruns completed</A>";}
+    else {echo "$ctfruns completed</A>";}
     echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>
     <A HREF='runPyAce.php?expId=$sessionId'>";
-    if ($reconruns==0) {echo "Begin Processing";}
-    else {echo "Continue Processing";}
+    if ($reconruns==0) {echo "Begin Reconstruction";}
+    else {echo "Continue Reconstruction";}
     echo"</A>
     </TD>
   </TR>
