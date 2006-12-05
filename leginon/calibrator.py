@@ -17,7 +17,6 @@ class Calibrator(node.Node):
 	'''
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs
 	panelclass = gui.wx.Calibrator.Panel
-	settingsclass = data.CalibratorSettingsData
 	defaultsettings = {
 		'instruments': {'tem': None, 'ccdcamera': None},
 		'override preset': False,

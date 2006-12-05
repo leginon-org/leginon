@@ -17,6 +17,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 	calibrate the pixel size for different mags
 	'''
 	panelclass = gui.wx.PixelSizeCalibrator.Panel
+	settingsclass = data.PixelSizeCalibratorSettingsData
 	def __init__(self, id, session, managerlocation, **kwargs):
 		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
 		self.mag = None
