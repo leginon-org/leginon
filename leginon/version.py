@@ -4,12 +4,14 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/version.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-26 20:46:29 $
-# $Author: suloway $
+# $Date: 2006-12-05 22:27:14 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
+
+import os.path
 
 cvsname = '$Name: not supported by cvs2svn $'
 
@@ -53,5 +55,14 @@ def getVersion():
 
 	return version
 
+def getInstalledLocation():
+	'''where is this module located'''
+	# full path of this module
+	fullmod = os.path.abspath(__file__)
+	# just the directory
+	dirname = os.path.dirname(fullmod)
+	return dirname
+
 if __name__ == '__main__':
 	print getVersion()
+	print getInstalledLocation()
