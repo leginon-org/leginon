@@ -451,11 +451,15 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				vcoord = c,r
 				if vcoord not in self.displayedtargetdata:
 					self.displayedtargetdata[vcoord] = []
-				self.displayedtargetdata[vcoord].append(targetdata)
 				if targetdata['status'] in ('done', 'aborted'):
 					donetargets.append(vcoord)
-				else:
+					self.displayedtargetdata[vcoord].append(targetdata)
+				elif targetdata['status'] in ('new','processing'):
 					targets.append(vcoord)
+					self.displayedtargetdata[vcoord].append(targetdata)
+				else:
+					# other status ignored (mainly NULL)
+					pass
 		self.setTargets(targets, 'acquisition')
 		# ...
 		#self.setTargets([], 'focus')

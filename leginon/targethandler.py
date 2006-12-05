@@ -220,12 +220,13 @@ class TargetHandler(object):
 	def lastTargetNumberOnMosaic(self, imagelist):
 		qimagedata = data.AcquisitionImageData()
 		qimagedata['list'] = imagelist
-		targetquery = data.AcquisitionImageTargetData(image=qimagedata)
+		targetquery = data.AcquisitionImageTargetData(image=qimagedata, status='new')
 		targets = self.research(datainstance=targetquery, results=1)
 		if targets:
-			return targets[0]['number']
-		else:
-			return 0
+			for target in targets:
+				if target['number'] is not None:
+					return target['number']
+		return 0
 
 	def newTargetForGrid(self, grid, drow, dcol, **kwargs):
 		'''
