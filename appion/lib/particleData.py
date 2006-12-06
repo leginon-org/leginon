@@ -117,6 +117,7 @@ class stackParams(data.Data):
 			('name' , str),
 			('description', str),
 			('boxSize', int),
+			('bin', int),
 			('phaseFlipped', bool),
 			('aceCutoff', float),
 			('selexonCutoff', float),
