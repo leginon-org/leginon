@@ -326,34 +326,37 @@ def writeParticleBoxfile(img,dbbox):
 	prtlq=particleData.particle(imageId=imq,runId=selexonrun)
 	particles=partdb.query(prtlq)
 
-	if (particles):
-		#write the tmp box file
-		plist=[]
-		box=params['boxsize']	
-		for prtl in particles:
-			if params['selexonmin']:
-				if params['selexonmin']>prtl['correlation']:
-					continue
-			if params['selexonmax']:
-				if params['selexonmax']<prtl['correlation']:
-					continue
-			# save the particles to the database
-			if params['commit']:
-				stackpq=particleData.stackParticles()
-				stackpq['stackId']=params['stackId']
-				stackpq['particleId']=prtl
-				stackres=partdb.query(stackpq)
-				if not stackres:
-					params['particleNumber']=params['particleNumber']+1
-					stackpq['particleNumber']=params['particleNumber']
-					partdb.insert(stackpq)
-			xcoord=prtl['xcoord']-int(box/2)
-			ycoord=prtl['ycoord']-int(box/2)
-			if (xcoord>0 and ycoord>0):
-				plist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
-		boxfile=open(dbbox,'w')
-		boxfile.writelines(plist)
-		boxfile.close()
+	if not particles:
+		print img['filename'],"contains no particles"
+		return
+
+	#write the tmp box file
+	plist=[]
+	box=params['boxsize']	
+	for prtl in particles:
+		if params['selexonmin']:
+			if params['selexonmin']>prtl['correlation']:
+				continue
+		if params['selexonmax']:
+			if params['selexonmax']<prtl['correlation']:
+				continue
+		# save the particles to the database
+		if params['commit']:
+			stackpq=particleData.stackParticles()
+			stackpq['stackId']=params['stackId']
+			stackpq['particleId']=prtl
+			stackres=partdb.query(stackpq)
+			if not stackres:
+				params['particleNumber']=params['particleNumber']+1
+				stackpq['particleNumber']=params['particleNumber']
+				partdb.insert(stackpq)
+		xcoord=prtl['xcoord']-int(box/2)
+		ycoord=prtl['ycoord']-int(box/2)
+		if (xcoord>0 and ycoord>0):
+			plist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
+	boxfile=open(dbbox,'w')
+	boxfile.writelines(plist)
+	boxfile.close()
 		
 	print "\nprocessing:",img['filename']
 	
@@ -434,33 +437,30 @@ def writeBoxLog(commandline):
 def getImgsFromSelexonId(params):
 	print "finding Leginon Images that have particles for selexon run:", params['selexonId']
 
+	# get selection run id
 	selexonrun=partdb.direct_query(data.run,params['selexonId'])
 	if not (selexonrun):
 		print "\nError: specified runId '"+str(params['selexonId'])+"' not in database\n"
 		sys.exit()
-
-	imgq=particleData.image()
-	prtlq=particleData.particle(runId=selexonrun, imageId=imgq)
-	prtllist=partdb.query(prtlq)
-	if not (prtllist):
-		print "\nError: no particles for run '"+str(params['selexonId'])+"'\n"
+	
+	# from id get the session
+	sessionid=db.direct_query(data.SessionData,selexonrun['dbemdata|SessionData|session'])
+	# get all images from session
+	dbimgq=data.AcquisitionImageData(session=sessionid)
+	dbimginfo=db.query(dbimgq,readimages=False)
+	if not (dbimginfo):
+		print "\nError: no images associated with this runId\n"
 		sys.exit()
 
-	# for every particle, get image it came from and create a single list of unique images
-	imageIdlist={}
-	for prtl in prtllist:
-		dbimg=prtl['imageId']
-		imgkey=dbimg.dbid
-		imgval=dbimg['dbemdata|AcquisitionImageData|image']
-		imageIdlist[imgkey]=imgval
-
-	# create a list of image objects that contain particles
-	imagelist=[]
-	for img in imageIdlist:
-		imginfo=db.direct_query(data.AcquisitionImageData,imageIdlist[img],readimages=False)
-		imagelist.append(imginfo)
-
-	return(imagelist)
+	# for every image, find corresponding image entry in the particle database
+	dbimglist=[]
+	for img in dbimginfo:
+		pimgq=particleData.image()
+		pimgq['dbemdata|AcquisitionImageData|image']=img.dbid
+		pimg=partdb.query(pimgq)
+		if pimg:
+			dbimglist.append(img)
+	return (dbimglist)
 
 def insertStackParams(params):
 	if params['spider']==True:
@@ -487,12 +487,14 @@ def insertStackParams(params):
 		stparamq['boxSize']=params['boxsize']
 		stparamq['fileType']=fileType
 		stparamq['inverted']=inverted
+		if params['bin']:
+			stparamq['bin']=params['bin']
 		if params['phaseflip']==True:
 			stparamq['phaseFlipped']=True
 		if params['ace']:
 			stparamq['aceCutoff']=params['ace']
 		if params['selexonmin']:
-			stparamq['selexoncutoff']=params['selexonmin']
+			stparamq['selexonCutoff']=params['selexonmin']
 		if params['inspected']:
 			stparamq['checkImage']=True
 		if params['mindefocus']:
@@ -506,9 +508,10 @@ def insertStackParams(params):
 		stackparams=stackparams[0]
 		if (stackparams['description']!=params['description'] or
 		    stackparams['boxSize']!=params['boxsize'] or
+		    stackparams['bin']!=params['bin'] or
 		    stackparams['phaseFlipped']!=params['phaseflip'] or
 		    stackparams['aceCutoff']!=params['ace'] or
-		    stackparams['selexoncutoff']!=params['selexonmin'] or
+		    stackparams['selexonCutoff']!=params['selexonmin'] or
 		    stackparams['checkImage']!=params['inspected'] or
 		    stackparams['minDefocus']!=params['mindefocus'] or
 		    stackparams['maxDefocus']!=params['maxdefocus'] or
