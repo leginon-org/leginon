@@ -58,8 +58,7 @@ def createDefaults():
 	params["shiftonly"]=False
 	params["templateIds"]=''
 	params["ogTmpltInfo"]=[]
-	params["newTmpltInfo"]=[]
-	params["scaledapix"]=[]
+	params["scaledapix"]=0
 	params["outdir"]=None
 	params['description']=None
 	params['scale']=1
@@ -905,12 +904,12 @@ def rescaleTemplates(img,params):
 	for tmplt in params['ogTmpltInfo']:
 		ogtmpltname="originalTemporaryTemplate"+str(i)+".mrc"
 		newtmpltname="scaledTemporaryTemplate"+str(i)+".mrc"
-
-		if str(params['apix'])!=str(tmplt['apix']) or not os.path.exists(newtmpltname):
+		
+		if params['apix']!=params['scaledapix']:
 			print "rescaling template",str(i),":",tmplt['apix'],"->",params['apix']
 			scalefactor=tmplt['apix']/params['apix']
 			scaleandclip(ogtmpltname,(scalefactor,scalefactor),newtmpltname)
-			params['newTmpltInfo'].append(params['apix'])
+			params['scaledapix']=params['apix']
 			dwnsizeTemplate(params,newtmpltname)
 		i+=1
 	return
