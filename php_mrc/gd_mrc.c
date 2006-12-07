@@ -36,7 +36,6 @@ void mrc_to_float(MRC *mrc, float *pdata_array) {
                         pdata_array[i] = (float)data_array_short[i];
                 }
 
-
          }
          break;
          case MRC_MODE_FLOAT:
@@ -307,8 +306,6 @@ void mrc_to_gd(MRC *mrc, gdImagePtr im, int pmin, int pmax, int colormap) {
 
 	nmin = fmin + pmin * scale / densitymax;
 	nmax = fmin + pmax * scale / densitymax;
-	nmin = pmin * scale / densitymax;
-	nmax = pmax * scale / densitymax;
 	nscale = nmax - nmin;
 
 	if (nscale != 0)

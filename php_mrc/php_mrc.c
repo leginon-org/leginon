@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.20 2006-11-07 21:01:33 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.21 2006-12-07 22:16:55 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -597,7 +597,6 @@ ZEND_FUNCTION(mrccreate)
 	convert_to_long_ex(x_size);
 	convert_to_long_ex(y_size);
 
-
 	pmrc = (MRCPtr)mrc_create(Z_LVAL_PP(x_size), Z_LVAL_PP(y_size));
 	ZEND_REGISTER_RESOURCE(return_value, pmrc, le_mrc);
 }
@@ -1064,6 +1063,7 @@ ZEND_FUNCTION(mrcupdateheader)
  *
  * Description:
  * mrcset(resource src_mrc, string key, mixed value)
+ * valid keys sofar: [nx, ny, nz, amin, amax, amean, rms]
  */ 
 ZEND_FUNCTION(mrcset)
 {
@@ -1085,6 +1085,18 @@ ZEND_FUNCTION(mrcset)
 		RETURN_FALSE;
 	}
 	
+	if (strcmp(str_key,"nx")==0) {
+		convert_to_long_ex(value);
+		pmrc->header.nx= Z_LVAL_PP(value);
+	}
+	if (strcmp(str_key,"ny")==0) {
+		convert_to_long_ex(value);
+		pmrc->header.ny= Z_LVAL_PP(value);
+	}
+	if (strcmp(str_key,"nz")==0) {
+		convert_to_long_ex(value);
+		pmrc->header.nz= Z_LVAL_PP(value);
+	}
 	if (strcmp(str_key,"amin")==0) {
 		convert_to_double_ex(value);
 		pmrc->header.amax= Z_DVAL_PP(value);
@@ -1093,7 +1105,14 @@ ZEND_FUNCTION(mrcset)
 		convert_to_double_ex(value);
 		pmrc->header.amax= Z_DVAL_PP(value);
 	}
-
+	if (strcmp(str_key,"amean")==0) {
+		convert_to_double_ex(value);
+		pmrc->header.amean= Z_DVAL_PP(value);
+	}
+	if (strcmp(str_key,"rms")==0) {
+		convert_to_double_ex(value);
+		pmrc->header.rms= Z_DVAL_PP(value);
+	}
 
 }
 
