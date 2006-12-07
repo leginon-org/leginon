@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.21 2006-12-07 22:16:55 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.22 2006-12-07 22:19:32 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -1063,7 +1063,7 @@ ZEND_FUNCTION(mrcupdateheader)
  *
  * Description:
  * mrcset(resource src_mrc, string key, mixed value)
- * valid keys sofar: [nx, ny, nz, amin, amax, amean, rms]
+ * valid keys sofar: [nx, ny, nz, mode, amin, amax, amean, rms]
  */ 
 ZEND_FUNCTION(mrcset)
 {
@@ -1096,6 +1096,10 @@ ZEND_FUNCTION(mrcset)
 	if (strcmp(str_key,"nz")==0) {
 		convert_to_long_ex(value);
 		pmrc->header.nz= Z_LVAL_PP(value);
+	}
+	if (strcmp(str_key,"mode")==0) {
+		convert_to_long_ex(value);
+		pmrc->header.mode= Z_LVAL_PP(value);
 	}
 	if (strcmp(str_key,"amin")==0) {
 		convert_to_double_ex(value);
