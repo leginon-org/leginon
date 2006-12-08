@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.69 $
+# $Revision: 1.70 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-06-26 22:39:45 $
+# $Date: 2006-12-08 22:58:14 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -897,7 +897,10 @@ class SessionListCtrl(wx.ListCtrl, ColumnSorterMixin):
 		sessions.reverse()
 		for i, session in enumerate(sessions):
 			name = session['name']
-			time = session.timestamp
+			try:
+				time = session.timestamp
+			except:
+				time = None
 			user = session['user']['full name']
 			comment = session['comment']
 			index = self.InsertStringItem(0, name)
