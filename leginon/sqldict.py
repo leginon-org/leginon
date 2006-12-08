@@ -190,6 +190,9 @@ class SQLDict(object):
 			self.sqlexception = e
 			raise
 
+	def connect_kwargs(self):
+		return self.db.kwargs
+
 	def isConnected(self):
 		return self.connected
 

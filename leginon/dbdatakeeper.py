@@ -34,6 +34,9 @@ class DBDataKeeper(object):
 			raise DatabaseError(e.args[-1])
 		self.lock = threading.RLock()
 
+	def connect_kwargs(self):
+		return self.dbd.connect_kwargs()
+
 	def direct_query(self, dataclass, id, readimages=True):
 		dummy = dataclass()
 		dummy.isRoot = True

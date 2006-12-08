@@ -13,6 +13,7 @@ def connect(**kwargs):
 	defaults = getDefault()
 	defaults.update(kwargs)
 	c = MySQLdb.connect(**defaults)
+	c.kwargs = dict(defaults)
 	return c
 
 def getDefault():
@@ -40,7 +41,7 @@ class sqlDB(object):
 	def __init__(self, **kwargs):
 		self.dbConnection = connect(**kwargs)
 		self.c = self.dbConnection.cursor(cursorclass=MySQLdb.cursors.DictCursor)
-		
+
 	def selectone(self, strSQL, param=None):
 		'Execute a query and return the first row.'
 		self.c.execute(strSQL, param)
