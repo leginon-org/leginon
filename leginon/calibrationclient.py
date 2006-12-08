@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.189 $
+# $Revision: 1.190 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-18 22:04:58 $
+# $Date: 2006-12-08 22:48:54 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -932,7 +932,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		new[par]['y'] += changey
 		return new
 
-	def itransform(self, shift, scope, camera):
+	def itransform(self, position, scope, camera):
 		parameter = self.parameter()
 		args = (
 			scope['tem'],
@@ -944,25 +944,25 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		matrix = self.retrieveMatrix(*args)
 		inverse_matrix = numarray.linear_algebra.inverse(matrix)
 
-		position = dict(scope[parameter])
-		position['x'] += shift['x']
-		position['y'] += shift['y']
+		shift = dict(position)
+		shift['x'] -= scope[parameter]['x']
+		shift['y'] -= scope[parameter]['y']
 
 		# take into account effect of stage alpha tilt on y stage position
 		if parameter == 'stage position':
 			if 'a' in scope[parameter] and scope[parameter]['a'] is not None:
 				alpha = scope[parameter]['a']
-				position['y'] = position['y']*numarray.cos(alpha)
+				shift['y'] = shift['y']*numarray.cos(alpha)
 
-		position_vector = numarray.array((position['x'], position['y']))
-		pixel = numarray.matrixmultiply(inverse_matrix, position_vector)
+		shift_vector = numarray.array((shift['x'], shift['y']))
+		pixel = numarray.matrixmultiply(inverse_matrix, shift_vector)
 
-		pixel_position = {
+		pixel_shift = {
 			'row': pixel[0]/camera['binning']['y'],
 			'col': pixel[1]/camera['binning']['x'],
 		}
 
-		return pixel_position
+		return pixel_shift
 
 class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def __init__(self, node):
@@ -1085,18 +1085,37 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		self.node.logger.info('correlating')
 		self.correlator.setImage(0, im0)
 		self.correlator.setImage(1, im1)
-		pc = self.correlator.phaseCorrelate()
+		if correlation_type == 'phase':
+			pc = self.correlator.phaseCorrelate()
+		else:
+			pc = self.correlator.crossCorrelate()
 		self.displayCorrelation(pc)
 
 		peak01 = self.peakfinder.subpixelPeak(pc)
 		shift01 = correlator.wrap_coord(peak01, pc.shape)
-
 		self.displayPeak(peak01)
+
+		pixelshift = {'row':shift01[0], 'col':shift01[1]}
+		self.node.logger.info('measured pixel shift: %s' % (pixelshift,))
+
+		## convert pixel shift into stage movement
+		newscope = self.transform(pixelshift, imagedata0['scope'], imagedata0['camera'])
+		## only want the y offset (distance from tilt axis)
+		deltay = newscope['stage position']['y'] - imagedata0['scope']['stage position']['y']
+		self.node.logger.info('stage delta y: %s' % (deltay,))
+		shift = {'x':0, 'y':deltay}
+		position = dict(imagedata0['scope']['stage position'])
+		position['x'] += shift['x']
+		position['y'] += shift['y']
+		pixelshift = self.itransform(position, imagedata0['scope'], imagedata0['camera'])
+		self.node.logger.info('pixelshift for delta y: %s' % (pixelshift,))
 
 		# after drawing lots triangles, you get this equation:
 		scale = 1.0 / numarray.tan(tilt_value/2.0) / numarray.tan(tilt_value)
-		vector = scale*shift01[0], scale*shift01[1]
-		return imagedata0, vector
+		pixelshift = {'row':scale*pixelshift['row'], 'col':scale*pixelshift['col']}
+		self.node.logger.info('pixelshift from axis: %s' % (pixelshift,))
+
+		return imagedata0, pixelshift
 
 class ModeledStageCalibrationClient(CalibrationClient):
 	def __init__(self, node):
