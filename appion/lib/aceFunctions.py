@@ -415,7 +415,10 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfil
 	acevals=acedb.query(aceq, results=1)
 
 	legimgid=int(img.dbid)
-	legpresetid =int(img['preset'].dbid)
+	legpresetid=None
+	if img['preset']:		
+		legpresetid =int(img['preset'].dbid)
+		
 	dforig=img['scope']['defocus']
 
 	procimgq = ctfData.image(imagename=imgname + '.mrc')
