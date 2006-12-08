@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.17 $
+# $Revision: 1.18 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-12-05 22:28:41 $
+# $Date: 2006-12-08 22:52:00 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -18,6 +18,8 @@ import gui.wx.Settings
 import gui.wx.TargetFinder
 import gui.wx.ClickTargetFinder
 import gui.wx.ToolBar
+import threading
+from gui.wx.Presets import PresetChoice
 
 class Panel(gui.wx.ClickTargetFinder.Panel):
 	icon = 'atlastarget'
@@ -63,7 +65,8 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 											id=gui.wx.ToolBar.ID_FIND_SQUARES)
 
 		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, False)
+		# need this enabled for new auto region target finding
+		#self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, False)
 
 	def onSubmitTool(self, evt):
 		'''overriding so that submit button stays enabled'''
@@ -102,9 +105,22 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 			dialog = BlobSettingsDialog(self)
 			dialog.ShowModal()
 			dialog.Destroy()
+		elif evt.name == 'region':
+			dialog = RegionSettingsDialog(self)
+			dialog.ShowModal()
+			dialog.Destroy()
+		elif evt.name == 'acquisition':
+			dialog = RasterSettingsDialog(self)
+			dialog.ShowModal()
+			dialog.Destroy()
+		elif evt.name == 'focus':
+			dialog = FocusSettingsDialog(self)
+			dialog.ShowModal()
+			dialog.Destroy()
 
 	def onFindSquaresButton(self, evt):
-		self.node.findSquares()
+		#self.node.findSquares()
+		threading.Thread(target=self.node.findRegions).start()
 
 class TilesDialog(wx.Dialog):
 	def __init__(self, parent, choices):
@@ -228,6 +244,120 @@ class LPFSettingsDialog(gui.wx.Settings.Dialog):
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz]
+
+class RegionSettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+
+		szoptions = wx.GridBagSizer(5, 5)
+
+		self.widgets['watchdone'] = wx.CheckBox(self, -1, 'Run auto targeting when image source is finished')
+		szoptions.Add(self.widgets['watchdone'], (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, 'Minimum Region Area')
+		self.widgets['min region area'] = FloatEntry(self, -1, chars=8)
+		szoptions.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['min region area'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, 'Maximum Region Area')
+		self.widgets['max region area'] = FloatEntry(self, -1, chars=8)
+		szoptions.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['max region area'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, 'Vertex Evolution Limit')
+		self.widgets['ve limit'] = FloatEntry(self, -1, chars=8)
+		szoptions.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['ve limit'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, 'Min Threshold')
+		self.widgets['min threshold'] = FloatEntry(self, -1, chars=8)
+		szoptions.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['min threshold'], (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, 'Max Threshold')
+		self.widgets['max threshold'] = FloatEntry(self, -1, chars=8)
+		szoptions.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['max threshold'], (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		self.btest = wx.Button(self, -1, 'Test')
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.btest, (0, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbutton.AddGrowableCol(0)
+
+		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
+
+		return [szoptions, szbutton]
+
+	def onTestButton(self, evt):
+		self.setNodeSettings()
+		self.node.findRegions()
+
+class RasterSettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+
+		szoptions = wx.GridBagSizer(5, 5)
+
+		label = wx.StaticText(self, -1, 'Raster Spacing')
+		self.widgets['raster spacing'] = FloatEntry(self, -1, chars=8)
+		szoptions.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['raster spacing'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, 'Raster Angle')
+		self.widgets['raster angle'] = FloatEntry(self, -1, chars=8)
+		szoptions.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['raster angle'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		## auto raster
+		self.autobut = wx.Button(self, -1, 'Auto using this preset and overlap percent')
+		self.Bind(wx.EVT_BUTTON, self.onAutoButton, self.autobut)
+		presets = self.node.presetsclient.getPresetNames()
+		self.widgets['targetpreset'] = PresetChoice(self, -1)
+		self.widgets['targetpreset'].setChoices(presets)
+		self.widgets['raster overlap'] = FloatEntry(self, -1, chars=8)
+
+		szoptions.Add(self.autobut, (2, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['targetpreset'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['raster overlap'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		self.btest = wx.Button(self, -1, 'Test')
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.btest, (0, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbutton.AddGrowableCol(0)
+
+		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
+
+		return [szoptions, szbutton]
+
+	def onAutoButton(self, evt):
+		s,a = self.node.autoSpacingAngle()
+		self.widgets['raster spacing'].SetValue(s)
+		self.widgets['raster angle'].SetValue(a)
+
+	def onTestButton(self, evt):
+		self.setNodeSettings()
+		threading.Thread(target=self.node.makeRaster).start()
+
+class FocusSettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+
+		self.btest = wx.Button(self, -1, 'Test')
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.btest, (0, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbutton.AddGrowableCol(0)
+
+		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
+
+		return [szbutton]
+
+	def onTestButton(self, evt):
+		self.setNodeSettings()
+		self.node.makeFocusTarget()
+
 
 class BlobSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):

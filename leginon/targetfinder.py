@@ -22,6 +22,12 @@ import numarray
 import gui.wx.TargetFinder
 import gui.wx.ClickTargetFinder
 import gui.wx.MosaicClickTargetFinder
+import os
+import libCV
+import math
+import polygon
+import raster
+import presets
 
 class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	panelclass = gui.wx.TargetFinder.Panel
@@ -55,7 +61,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		else:
 			orig = imagedata['image']
 		self.currentimagedata = imagedata
-		self.hf['original'] = orig
+
 		self.setImage(orig, 'Original')
 
 	def getImageFromDB(self, filename):
@@ -64,6 +70,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		filename = '.'.join(filename.split('.')[:-1])
 		q = data.AcquisitionImageData(filename=filename)
 		results = self.research(datainstance=q)
+		print 'len', len(results)
 		if not results:
 			return None
 		imagedata = results[0]
@@ -246,6 +253,11 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	settingsclass = data.MosaicClickTargetFinderSettingsData
 	defaultsettings = dict(ClickTargetFinder.defaultsettings)
 	defaultsettings.update({
+		'min region area': 0.01,
+		'max region area': 0.8,
+		've limit': 50,
+		'raster spacing': 50,
+		'raster angle': 0,
 		# unlike other targetfinders, no wait is default
 		'wait for done': False,
 		#'no resubmit': True,
@@ -254,6 +266,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		'scale image': True,
 		'scale size': 512,
 		'mosaic image on tile change': True,
+		'watchdone': False,
+		'targetpreset': None,
 		'lpf': {
 			'on': True,
 			'size': 5,
@@ -297,6 +311,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.mosaicimagedata = None
 		self.convolver = convolver.Convolver()
 		self.currentposition = []
+		self.imagesourcedone = threading.Event()
+		self.presetsclient = presets.PresetsClient(self)
 
 		self.mosaic.setCalibrationClient(self.calclients[parameter])
 
@@ -310,12 +326,20 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
-		self.logger.info('Target list done')
-		### XXX should we clear self.mosaicimagelist here???
-		#self.tileListToDatabase()
-		self.clearTiles()
-		self.outputEvent(event.MosaicDoneEvent())
-		self.logger.info('Mosaic is done, notification sent')
+		if self.settings['watchdone']:
+			# HACK: TargetListDone indicates that all grid images are
+			# acquired could probably figure this out with a little
+			# research instead of a user setting
+			self.imagesourcedone.set()
+		else:
+			# TargetListDone indicates that targets created in this node were
+			# processed by another node
+			self.logger.info('Target list done')
+			### XXX should we clear self.mosaicimagelist here???
+			#self.tileListToDatabase()
+			self.clearTiles()
+			self.outputEvent(event.MosaicDoneEvent())
+			self.logger.info('Mosaic is done, notification sent')
 
 	def getTargetDataList(self, typename):
 		displayedtargetdata = {}
@@ -341,15 +365,19 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		return self.newReferenceTarget(imagedata, delta_row, delta_column)
 
 	def submitTargets(self):
+		self.userpause.set()
+		if self.settings['watchdone']:
+			return
 		self.logger.info('Submitting targets...')
 		self.getTargetDataList('acquisition')
-		#self.getTargetDataList('focus')
-		try:
-			self.publish(self.targetlist, pubevent=True)
-		except node.PublishError, e:
-			self.logger.error('Submitting acquisition targets failed')
-		else:
-			self.logger.info('Acquisition targets submitted')
+		self.getTargetDataList('focus')
+		if self.targetlist is not None:
+			try:
+				self.publish(self.targetlist, pubevent=True)
+			except node.PublishError, e:
+				self.logger.error('Submitting acquisition targets failed')
+			else:
+				self.logger.info('Acquisition targets submitted')
 
 		reference_target = self.getDisplayedReferenceTarget()
 		if reference_target is not None:
@@ -623,6 +651,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.targetlist = self.newTargetList()
 			self.publish(self.targetlist, database=True, dbforce=True)
 		targetdata = self.newTargetForTile(imagedata, drow, dcol, type=typename, list=self.targetlist)
+		## can we do dbforce here?  it might speed it up
 		self.publish(targetdata, database=True)
 		return targetdata
 
@@ -645,12 +674,16 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		#self.clickimage.imagedata = None
 		self.displayTargets()
 		self.beep()
+		## if all images are now in mosaic, then do processing
+		if self.imagesourcedone.isSet():
+			self.autoTargetFinder()
 
 	def clearMosaicImage(self):
 		self.setImage(None, 'Image')
 		self.mosaicimage = None
 		self.mosaicimagescale = None
 		self.mosaicimagedata = None
+		self.regionarrays = None
 
 	def uiPublishMosaicImage(self):
 		self.publishMosaicImage()
@@ -675,9 +708,183 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.publish(prefs, database=True)
 		return prefs
 
+	def findRegions(self):
+		imshape = self.mosaicimage.shape
+		minsize = self.settings['min region area']
+		maxsize = self.settings['max region area']
+		velimit = self.settings['ve limit']
+		mint = self.settings['min threshold']
+		maxt = self.settings['max threshold']
+		# make zero border
+		pad = 2
+		self.mosaicimage[:pad] = 0
+		self.mosaicimage[-pad:] = 0
+		self.mosaicimage[:,:pad] = 0
+		self.mosaicimage[:,-pad:] = 0
+		regions,image = libCV.FindRegions(self.mosaicimage, minsize, maxsize, 0, 0, 0, 1)
+		self.regionarrays = []
+		displaypoints = []
+		for i,region in enumerate(regions):
+			regionarray = region['regionBorder']
+			self.logger.info('Region %d has %d points' % (i, regionarray.shape[1]))
+			## reduce to 20 points
+			regionarray = libCV.PolygonVE(regionarray, velimit)
+			regionarray.transpose()
+			self.regionarrays.append(regionarray)
+
+			regiondisplaypoints = self.transpose_points(regionarray)
+			displaypoints.extend(regiondisplaypoints)
+
+		self.setTargets(displaypoints, 'region', block=False)
+
+	def autoSpacingAngle(self):
+		imagedata = self.imagemap[self.imagemap.keys()[0]]
+		tem = imagedata['scope']['tem']
+		cam = imagedata['camera']['ccdcamera']
+		ht = imagedata['scope']['high tension']
+
+		# transforming from target mag
+		targetpresetname = self.settings['targetpreset']
+		targetpreset = self.presetsclient.getPresetByName(targetpresetname)
+		mag1 = targetpreset['magnification']
+		dim1 = targetpreset['dimension']['x']
+		bin1 = targetpreset['binning']['x']
+		fulldim = dim1 * bin1
+		p1 = (0,fulldim)
+
+		# transforming into mag of atlas
+		mag2 = imagedata['scope']['magnification']
+		bin2 = imagedata['camera']['binning']['x']
+
+		print 'p2p', tem, cam, ht, mag1, mag2, p1
+		p2 = self.calclients['stage position'].pixelToPixel(tem, cam, ht, mag1, mag2, p1)
+		print 'P2', p2
+		# bin
+		p2 = p2[0]/float(bin2), p2[1]/float(bin2)
+		print 'bin', p2
+		# atlas scaling
+		atlasscale = self.mosaic.scale
+		p2 = atlasscale*p2[0], atlasscale*p2[1]
+		print 'atlas', p2
+		# overlap
+		overlap = self.settings['raster overlap']
+		overlapscale = 1.0 - overlap/100.0
+		p2 = overlapscale*p2[0], overlapscale*p2[1]
+		print 'overlap', p2
+		
+		spacing = numarray.hypot(*p2)
+		angle = numarray.arctan2(*p2)
+		angle = math.degrees(angle)
+		return spacing,angle
+
+	def makeRaster(self):
+		shape = self.mosaicimage.shape
+		spacing = self.settings['raster spacing']
+		angledeg = self.settings['raster angle']
+		anglerad = math.radians(angledeg)
+		rasterpoints = raster.createRaster(shape, spacing, anglerad)
+		fullrasterset = set()
+		'''
+		boxes = []
+		for region in self.regionarrays:
+			box = self.regionToBox(region, spacing)
+			boxes.append(box)
+		'''
+
+		## this block will reduce the number of raster points
+		if self.regionarrays:
+			print 'original raster', len(rasterpoints)
+			region = self.regionarrays[0]
+			gmin0 = gmax0 = region[0][0]
+			gmin1 = gmax1 = region[0][1]
+			for region in self.regionarrays:
+				min0 = min(region[:,0])
+				min1 = min(region[:,1])
+				max0 = max(region[:,0])
+				max1 = max(region[:,1])
+				if min0 < gmin0:
+					gmin0 = min0
+				if min1 < gmin1:
+					gmin1 = min1
+				if max0 > gmax0:
+					gmax0 = max0
+				if max1 > gmax1:
+					gmax1 = max1
+			gmin0 -= (2*spacing)
+			gmin1 -= (2*spacing)
+			gmax0 += (2*spacing)
+			gmax1 += (2*spacing)
+			newrasterpoints = []
+			for rasterpoint in rasterpoints:
+				if gmin0 < rasterpoint[0] < gmax0:
+					if gmin1 < rasterpoint[1] < gmax1:
+						newrasterpoints.append(rasterpoint)
+			rasterpoints = newrasterpoints
+			print 'reduced raster', len(rasterpoints)
+
+		#for region in self.regionarrays:
+		for region in self.regionarrays:
+			### keep raster points that are either in the polygon
+			### or near the polygon
+			fillraster = polygon.pointsInPolygon(rasterpoints, region)
+			fullrasterset = fullrasterset.union(fillraster)
+
+			leftovers = list(set(rasterpoints).difference(fillraster))
+			print 'leftover raster', len(leftovers)
+
+			distances = polygon.distancePointsToPolygon(leftovers, region)
+			isnear = distances < spacing
+			#nearraster = numarray.compress(distances<spacing, rasterpoints)
+			nearraster = []
+			for i, point in enumerate(leftovers):
+				if isnear[i]:
+					nearraster.append(point)
+			fullrasterset = fullrasterset.union(nearraster)
+		# set is unordered, so use original rasterpoints for order
+		self.fullraster = []
+		for point in rasterpoints:
+			if point in fullrasterset:
+				self.fullraster.append(point)
+
+		fullrasterdisplay = self.transpose_points(self.fullraster)
+		self.setTargets(fullrasterdisplay, 'acquisition', block=True)
+
+	def regionToBox(self, region, space):
+		minr,minc = region[0]
+		maxr,maxc = region[0]
+		for r,c in region:
+			if r < minr:
+				minr = r
+			if c < minc:
+				minc = c
+			if r > maxr:
+				maxr = r
+			if c > maxc:
+				maxc = c
+		minr -= space
+		maxr += space
+		minc -= space
+		maxc += space
+		box = [(minr,minc),(minr,maxc),(maxr,maxc),(maxr,minc)]
+		return box
+
+	def makeFocusTarget(self):
+		if not self.regionarrays:
+			return
+		biggestregion = self.regionarrays[0]
+		biggestregionlen = len(biggestregion)
+		for region in self.regionarrays:
+			newlen = len(region)
+			if newlen > biggestregionlen:
+				biggestregionlen = newlen
+				biggestregion = region
+		center = polygon.getPolygonCenter(biggestregion)
+		focusdisplay = self.transpose_points([center])
+		self.setTargets(focusdisplay, 'focus', block=True)
+
 	def findSquares(self):
 		if self.mosaicimagedata is None:
-			message = 'You must dave the current mosaic image before finding squares on it.'
+			message = 'You must save the current mosaic image before finding squares on it.'
 			self.logger.error(message)
 			return
 		original_image = self.mosaicimagedata['image']
@@ -731,3 +938,47 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		message = 'found %s squares' % (len(targets),)
 		self.logger.info(message)
 
+	def autoTargetFinder(self):
+		self.imagesourcedone.clear()
+
+		self.logger.info('Finding regions...')
+		self.findRegions()
+		self.logger.info('Filling regions with raster...')
+		self.makeRaster()
+		self.logger.info('Making focus target...')
+		self.makeFocusTarget()
+		## user part
+		if self.settings['user check']:
+			self.setStatus('user input')
+			self.logger.info('Waiting for user to check targets...')
+			self.panel.submitTargets()
+			self.userpause.clear()
+			self.userpause.wait()
+			self.panel.targetsSubmitted()
+		self.setStatus('processing')
+
+		## get targets from image
+		targets = {}
+		targets['acquisition'] = self.panel.getTargetPositions('acquisition')
+		targets['focus'] = self.panel.getTargetPositions('focus')
+		
+		## new target list
+		if targets['acquisition'] or targets['focus']:
+			targetlist = self.newTargetList()
+			self.publish(targetlist, database=True, dbforce=True)
+		else:
+			self.setStatus('idle')
+			return
+
+		for type in ('focus', 'acquisition'):
+			n = len(targets[type])
+			self.logger.info('Publishing %d %s targets...' % (n, type))
+			for t in targets[type]:
+				## convert to TargetData
+				c,r = t
+				imagedata, drow, dcol = self._mosaicToTarget(r, c)
+				targetdata = self.newTargetForTile(imagedata, drow, dcol, type=type, list=targetlist)
+				self.publish(targetdata, database=True, dbforce=True)
+
+		self.publish(targetlist, pubevent=True)
+		self.setStatus('idle')
