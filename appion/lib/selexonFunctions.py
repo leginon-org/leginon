@@ -58,7 +58,7 @@ def createDefaults():
 	params["shiftonly"]=False
 	params["templateIds"]=''
 	params["ogTmpltInfo"]=[]
-	params["scaledapix"]=0
+	params["scaledapix"]={}
 	params["outdir"]=None
 	params['description']=None
 	params['scale']=1
@@ -896,6 +896,7 @@ def getDBTemplates(params):
 		# copy file to current directory
 		print "getting image:",fname
 		os.system("cp "+fname+" "+tmptmplt+str(i)+".mrc")
+		params['scaledapix'][i]=0
 		i+=1
 	return
 
@@ -905,11 +906,11 @@ def rescaleTemplates(img,params):
 		ogtmpltname="originalTemporaryTemplate"+str(i)+".mrc"
 		newtmpltname="scaledTemporaryTemplate"+str(i)+".mrc"
 		
-		if params['apix']!=params['scaledapix']:
+		if params['apix']!=params['scaledapix'][i]:
 			print "rescaling template",str(i),":",tmplt['apix'],"->",params['apix']
 			scalefactor=tmplt['apix']/params['apix']
 			scaleandclip(ogtmpltname,(scalefactor,scalefactor),newtmpltname)
-			params['scaledapix']=params['apix']
+			params['scaledapix'][i]=params['apix']
 			dwnsizeTemplate(params,newtmpltname)
 		i+=1
 	return
