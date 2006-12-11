@@ -13,7 +13,7 @@ acedb=dbdatakeeper.DBDataKeeper(db='dbctfdata')
 db=dbdatakeeper.DBDataKeeper(db='dbemdata')
 
 def printHelp():
-	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected or inspectfile=<file>] [bin=<n>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n>\n"
+	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected or inspectfile=<file>] [bin=<n>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n>\n [limit=<n>]"
 	print "Examples:\nmakestack.py extract/001ma.box single=stacks/start.hed ace=0.8 boxsize=180 inspected"
 	print "makestack.py extract/*.box outdir=stacks/noctf/ ace=0.8 boxsize=180\n"
 	print "* Supports wildcards - By default a stack file of the same name as the box file"
@@ -35,12 +35,14 @@ def printHelp():
 	print "noinvert             : If writing to a single stack, images will NOT be inverted"
 	print "                       (stack images are inverted by default)"
 	print "spider               : Single output stack will be in SPIDER format"
-	print "mindefocus=<n>       : Limit the defocus to values above what is specified ( no limits by default )"
+	print "mindefocus=<n>       : Limit the defocus to values above what is specified (no limits by default)"
 	print "                       Example <mindefocus = -1.0e-6>"
-	print "maxdefocus=<n>       : Limit the defocus to values below what is specified ( no limits by default )"
+	print "maxdefocus=<n>       : Limit the defocus to values below what is specified (no limits by default)"
 	print "                       Example <maxdefocus = -3.0e-6>"
-	print "description=\"text\"   : description of the stack being created- surround text with double quotes"
+	print "description=\"text\" : description of the stack being created- surround text with double quotes"
 	print "prtlrunId=<n>        : use particles from database corresponding to selexon run id"
+	print "limit=<n>            : stop boxing particles after total particles gets above limit (no limits by default)"
+	print "                     : Example <limit=10000>"
 	print "commit               : store particles to database"
 	print "\n"
 
@@ -74,6 +76,7 @@ def createDefaults():
 	params['outdir']=os.path.abspath('.')+'/'
 	params['particleNumber']=0
 	params['bin']=None
+	params['limit']=None
 	return params
 
 def parseInput(args):
@@ -164,6 +167,8 @@ def parseInput(args):
 			params["description"]=elements[1]
 		elif (elements[0]=='prtlrunId'):
 			params["selexonId"]=int(elements[1])
+		elif elements[0]=='limit':
+			params['limit']=int(elements[1])
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
@@ -307,7 +312,12 @@ def batchBox(params, img):
 		writeParticleBoxfile(img,dbbox)
 	else:
 		dbbox=img['filename']+'.box'
-
+	
+	#count number of particles in box file
+	f=open(dbbox,'r')
+	lines=f.readlines()
+	f.close
+	nptcls=len(lines)
 	# write batchboxer command
 	if params["boxsize"]:
 		cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i insideonly" %(input, dbbox, output, params["boxsize"])
@@ -317,6 +327,7 @@ def batchBox(params, img):
 	print "boxing particles"
 	f=os.popen(cmd)
 	f.close()
+	return(nptcls)
     
 def writeParticleBoxfile(img,dbbox):
 	imq=particleData.image()
@@ -592,6 +603,7 @@ if __name__ == '__main__':
 			
 	# box particles
 	# if any restrictions are set, check the image
+	totptcls=0
 	while images:
 		img = images.pop(0)
 
@@ -650,7 +662,7 @@ if __name__ == '__main__':
 				continue
 
 		# box the particles
-		batchBox(params,img)
+		totptcls+=batchBox(params,img)
 		if not(os.path.exists(params["outdir"]+img['filename']+".hed")):
 			print "no particles were boxed from "+img['filename']+".mrc"
 			continue
@@ -666,6 +678,13 @@ if __name__ == '__main__':
 		# add boxed particles to a single stack
 		if params["single"]:
 			singleStack(params,img)
+		
+		
+		# limit total particles if limit is specified
+		print "Total particles =",totptcls
+		if params['limit']:
+			if totptcls>params['limit']:
+				break
 
 		if os.path.exists(params['outdir']+'temporaryParticlesFromDB.box'):
 			os.remove(params['outdir']+'temporaryParticlesFromDB.box')
