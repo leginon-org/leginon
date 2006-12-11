@@ -691,6 +691,12 @@ class _multipleQueries:
 		if root.dbid is not None:
 			return 
 
+		dbinfo = self.db.kwargs
+		dbhost = dbinfo['host']
+		dbname = dbinfo['db']
+		root.dbhost = dbhost
+		root.dbname = dbname
+
 		needpath = []
 		for key,value in root.items(dereference=False):
 			if isinstance(value, data.UnknownData):
@@ -703,10 +709,11 @@ class _multipleQueries:
 		### find the path
 		if needpath:
 			try:
-				imagepath = root.getpath()
+				getpath = root.getpath
 			except AttributeError:
 				message = '%s object contains file references, needs a path() method' % (root.__class__,)
 				raise AttributeError(message)
+			imagepath = getpath()
 		## now set path in FileReferences, read image
 		for key in needpath:
 			fileref = root.special_getitem(key, dereference=False)
@@ -716,7 +723,7 @@ class _multipleQueries:
 				root[key] = fileref.read()
 
 		## now the object is final, so we can safely set dbid
-		root.setPersistent(root.pending_dbid)
+		root.setPersistent(dbhost, dbname, root.pending_dbid)
 		del root.pending_dbid
 
 class _createSQLTable:
@@ -1159,7 +1166,7 @@ def unflatDict(in_dict, join):
 				allsubdicts[a[1]]=None
 		
 		elif a[0] != 'ARRAY':
-			items.update(datatype({key:value},join))
+			items.update(datatype({key:value},join=join))
 
 	for subdict in allsubdicts:
 		dm={}
@@ -1454,13 +1461,15 @@ def sql2data(in_dict, qikey=None, qinfo=None):
 
 	if None in (qikey,qinfo):
 		join = None
+		db = None
 	else:
 		join = qinfo[qikey]['join']
-	content = datatype(in_dict, join)
+		db = qinfo[qikey]['db']
+	content = datatype(in_dict, db=db, join=join)
 
 	return content
 
-def datatype(in_dict, join=None):
+def datatype(in_dict, db=None, join=None):
 	"""
 	This function converts a specific string or a SQL type to 
 	a python type.
@@ -1514,7 +1523,11 @@ def datatype(in_dict, join=None):
 				## not in result, but create reference
 				dclassname = a[1]
 				dclass = getattr(data, dclassname)
-				content[a[2]] = data.DataReference(dataclass=dclass, dbid=value)
+
+				# host and name should come from parent object
+				dbhost = db['host']
+				dbname = db['db']
+				content[a[2]] = data.DataReference(dataclass=dclass, dbid=value, dbhost=dbhost, dbname=dbname)
 		elif a0 == 'SUBD':
 			subditems[key] = value
 		else:

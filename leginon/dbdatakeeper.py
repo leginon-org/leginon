@@ -181,6 +181,7 @@ class DBDataKeeper(object):
 			del mydata.isRoot
 
 		info['root'] = isroot
+		info['db'] = self.connect_kwargs()
 
 		finalinfo = {myid: info}
 		return [finalinfo]
@@ -256,8 +257,11 @@ class DBDataKeeper(object):
 					self.recursiveInsert(dat)
 
 		## insert this object
+		dbinfo = self.connect_kwargs()
+		dbhost = dbinfo['host']
+		dbname = dbinfo['db']
 		dbid = self.flatInsert(newdata, force=force)
-		newdata.setPersistent(dbid)
+		newdata.setPersistent(dbhost, dbname, dbid)
 
 	def _insert(self, newdata, force=False):
 		#self.flatInsert(newdata)

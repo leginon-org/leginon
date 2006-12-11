@@ -85,7 +85,7 @@ sss will be queried automatically when accessing iii['session']
 class DataManager(object):
 	def __init__(self):
 		## will connect to database before first query
-		self.db = None
+		self.db = {}
 		### maybe dblock will fix some suspicious errors comming
 		### from database access
 		self.dblock = threading.RLock()
@@ -198,17 +198,22 @@ class DataManager(object):
 		finally:
 			self.lock.release()
 
-	def getDataFromDB(self, dataclass, dbid, **kwargs):
+	def getDataFromDB(self, dbhost, dbname, dataclass, dbid, **kwargs):
 		self.dblock.acquire()
 		try:
-			if self.db is None:
+			dbkey = (dbhost, dbname)
+			if dbkey in self.db:
+				db = self.db[dbkey]
+			else:
 				name = dbdatakeeper.DBDataKeeper.__name__
-				self.db = dbdatakeeper.DBDataKeeper(name)
+				db = dbdatakeeper.DBDataKeeper(name, host=dbhost, db=dbname)
+				self.db[dbkey] = db
+
 			### try to get data from dbcache before doing query
 			try:
-				dat = self.dbcache[dataclass,dbid]
+				dat = self.dbcache[dbhost, dbname, dataclass, dbid]
 			except KeyError:
-				dat = self.db.direct_query(dataclass, dbid, **kwargs)
+				dat = db.direct_query(dataclass, dbid, **kwargs)
 			return dat
 		finally:
 			self.dblock.release()
@@ -216,11 +221,13 @@ class DataManager(object):
 	def setPersistent(self, datainstance):
 		if datainstance is None or datainstance.dbid is None:
 			return
+		dbhost = datainstance.dbhost
+		dbname = datainstance.dbname
 		dbid = datainstance.dbid
 		dataclass = datainstance.__class__
 		self.dblock.acquire()
 		try:
-			self.dbcache[dataclass,dbid] = datainstance
+			self.dbcache[dbhost, dbname, dataclass, dbid] = datainstance
 		finally:
 			self.dblock.release()
 
@@ -258,7 +265,9 @@ class DataManager(object):
 			dbid = datareference.dbid
 			if dbid is not None:
 				## in database
-				referent = self.getDataFromDB(dataclass, dbid, **kwargs)
+				dbhost = datareference.dbhost
+				dbname = datareference.dbname
+				referent = self.getDataFromDB(dbhost, dbname, dataclass, dbid, **kwargs)
 			if referent is None:
 				### try remote location
 				if dmid is not None and dmid[0] != self.location:
@@ -300,13 +309,15 @@ class DataReference(object):
 		dataclass (become a reference to a non-existing data instance)
 	if using dataclass, also specify either a dmid or a dbid
 	'''
-	def __init__(self, datareference=None, referent=None, dataclass=None, dmid=None, dbid=None):
+	def __init__(self, datareference=None, referent=None, dataclass=None, dmid=None, dbid=None, dbhost=None, dbname=None):
 		self.datahandler = False
 		self.wr = None
 		if datareference is not None:
 			self.dataclass = datareference.dataclass
 			self.dmid = datareference.dmid
 			self.dbid = datareference.dbid
+			self.dbhost = datareference.dbhost
+			self.dbname = datareference.dbname
 		elif referent is not None:
 			## Data or DataHandler
 			if isinstance(referent, Data):
@@ -323,6 +334,8 @@ class DataReference(object):
 			self.dataclass = dataclass
 			self.dmid = dmid
 			self.dbid = dbid
+			self.dbhost = dbhost
+			self.dbname = dbname
 		else:
 			raise DataError('DataReference needs either DataReference, Data class, or Data instance for initialization')
 
@@ -334,7 +347,7 @@ class DataReference(object):
 
 	def sync(self, o=None):
 		'''
-		sync my dmid and dbid with my referent, either directly
+		sync my db info with my referent, either directly
 		(if given the optional argument which is the referent)
 		or through a weak reference to the referent
 		'''
@@ -346,6 +359,8 @@ class DataReference(object):
 			self.wr = weakref.ref(o)
 			self.dmid = o.dmid
 			self.dbid = o.dbid
+			self.dbhost = o.dbhost
+			self.dbname = o.dbname
 
 	def getData(self, **kwargs):
 		referent = None
@@ -373,7 +388,7 @@ class DataReference(object):
 			return referent.reference()
 
 	def __str__(self):
-		s = 'DataReference(%s), class: %s, dmid: %s, dbid: %s' % (id(self), self.dataclass, self.dmid, self.dbid)
+		s = 'DataReference(%s), class: %s, dmid: %s, dbhost: %s, dbname: %s, dbid: %s' % (id(self), self.dataclass, self.dmid, self.dbhost, self.dbname, self.dbid)
 		if self.datahandler:
 			s = s + ' (datahandler)'
 		if self.wr is not None:
@@ -450,9 +465,11 @@ class Data(newdict.TypedDict):
 		#  dmid tracking when getting remote data (via pickle)
 		####################################################
 
-		## Database ID (primary key)
-		## If this is None, then this data has not
+		## Database info:  host, database, primary key
+		## If these are None, then this data has not
 		## been inserted into the database
+		self.dbhost = None
+		self.dbname = None
 		self.dbid = None
 
 		## DataManager ID
@@ -530,7 +547,9 @@ class Data(newdict.TypedDict):
 	def __copy__(self):
 		return self.__class__(initializer=self)
 
-	def setPersistent(self, dbid):
+	def setPersistent(self, dbhost, dbname, dbid):
+		self.dbhost = dbhost
+		self.dbname = dbname
 		self.dbid = dbid
 		self.sync()
 		datamanager.setPersistent(self)
@@ -1196,6 +1215,7 @@ class ImageData(InSessionData):
 			impath = self['session']['image path']
 			impath = leginonconfig.mapPath(impath)
 		except:
+			raise
 			impath = os.path.abspath(os.path.curdir)
 		return impath
 
