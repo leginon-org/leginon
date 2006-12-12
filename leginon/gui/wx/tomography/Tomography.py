@@ -150,6 +150,11 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         bcsbsz = wx.StaticBoxSizer(bcsb, wx.VERTICAL)
         bcsbsz.Add(bcsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
 
+        self.widgets['integer'] = wx.CheckBox(self, -1, 'Scale by')
+        self.widgets['intscale'] = FloatEntry(self, -1, min=0.0,
+                                                            allownone=False,
+                                                            chars=5,
+                                                            value='10.0')
         self.widgets['mean threshold'] = FloatEntry(self, -1, min=0.0,
                                                             allownone=False,
                                                             chars=5,
@@ -163,6 +168,13 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
                                                             chars=5,
                                                             value='1.0')
         self.widgets['measure defocus'] = wx.CheckBox(self, -1, 'Measure defocus')
+
+
+        intsz = wx.GridBagSizer(5, 5)
+        intsz.Add(self.widgets['integer'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        intsz.Add(self.widgets['intscale'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        label = wx.StaticText(self, -1, 'to convert to integer')
+        intsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
         mtsz = wx.GridBagSizer(5, 5)
         label = wx.StaticText(self, -1, 'Consider images with less than')
@@ -189,10 +201,11 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         tptsz.Add(label, (0, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
         miscsz = wx.GridBagSizer(5, 10)
-        miscsz.Add(mtsz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        miscsz.Add(ctsz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        miscsz.Add(tptsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        miscsz.Add(self.widgets['measure defocus'], (3, 0), (1, 1), wx.ALIGN_CENTER)
+        miscsz.Add(intsz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        miscsz.Add(mtsz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        miscsz.Add(ctsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        miscsz.Add(tptsz, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        miscsz.Add(self.widgets['measure defocus'], (4, 0), (1, 1), wx.ALIGN_CENTER)
         miscsz.AddGrowableRow(0)
         miscsz.AddGrowableRow(1)
         miscsz.AddGrowableRow(2)

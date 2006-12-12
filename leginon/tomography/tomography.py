@@ -55,6 +55,8 @@ class Tomography(acquisition.Acquisition):
         'collection threshold': 90.0,
         'tilt pause time': 1.0,
         'measure defocus': False,
+        'integer': False,
+        'intscale': 10,
     }
 
     def __init__(self, *args, **kwargs):

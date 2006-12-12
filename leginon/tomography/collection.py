@@ -215,9 +215,11 @@ class Collection(object):
             image_data = self.instrument.getData(data.CorrectedCameraImageData)
             self.logger.info('Image acquired.')
 
-            image_mean = image_data['image'].mean()*10
-            # HACK: fix me
-            image_data['image'] = numarray.around(image_data['image']*10).astype(numarray.Int16)
+            image_mean = image_data['image'].mean()
+            if self.settings['integer']:
+                intscale = self.settings['intscale']
+                image_data['image'] = numarray.around(image_data['image']*intscale).astype(numarray.Int16)
+                image_mean *= intscale
 
             image = image_data['image']
 
