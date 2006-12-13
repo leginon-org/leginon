@@ -2278,6 +2278,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('measure defocus', bool),
 			('integer', bool),
 			('intscale', float),
+			('pausegroup', bool),
 		)
 	typemap = classmethod(typemap)
 

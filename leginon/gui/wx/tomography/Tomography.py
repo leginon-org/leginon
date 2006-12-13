@@ -49,6 +49,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
                                                 value='0.0')
         self.widgets['equally sloped'] = wx.CheckBox(self, -1, 'Use equally sloped (symmetric) angles, power of 2 angles in 180 degree range:')
         self.widgets['equally sloped n'] = IntEntry(self, -1, min=2, allownone=False, chars=5, value='8')
+        self.widgets['pausegroup'] = wx.CheckBox(self, -1, 'Pause between +/- tilt groups')
 
         tiltsz = wx.GridBagSizer(5, 10)
 
@@ -78,6 +79,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
                     wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
         tiltsz.Add(self.widgets['equally sloped n'], (2, 4), (1, 1),
                     wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+        tiltsz.Add(self.widgets['pausegroup'], (3, 1), (1, 2))
 
         tiltsz.AddGrowableCol(0)
 

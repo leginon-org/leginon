@@ -57,6 +57,7 @@ class Tomography(acquisition.Acquisition):
         'measure defocus': False,
         'integer': False,
         'intscale': 10,
+        'pausegroup': False,
     }
 
     def __init__(self, *args, **kwargs):
