@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+'''
+
+'''
 
 import numpy
 
@@ -33,8 +36,10 @@ class CCDImageCorrector(object):
 	def key(self, type, shape, offset, binning):
 		'''
 		Creates a dictionary key for a reference image
+			type - one of: 'bias', 'dark', 'flat'
 			shape - a shape tuple
-			offset - tuple, representing unbinned offset from corner of CCD
+			offset - tuple, representing unbinned offset from upper left
+				corner of CCD
 			binning - the binning factor
 		'''
 		key = (type,) + shape + offset + (binning,)
@@ -44,7 +49,7 @@ class CCDImageCorrector(object):
 		'''
 		Assigns a reference image to this object.
 			image - image to be added
-			type - must be one of: bias, dark, gain
+			type - must be one of: bias, dark, flat
 		'''
 		self.references[self.key(type,image.shape,offset,binning)] = image
 
@@ -76,20 +81,20 @@ class CCDImageCorrector(object):
 		dark = combineImages(darkseries, reject=3.0)
 		self.setReference(dark, 'dark', offset, binning)
 
-	def createGain(self, brights, exptimes, offset, binning):
+	def createFlat(self, brights, exptimes, offset, binning):
 		'''
-		Creates a gain image from a series of bright images
+		Creates a flat image from a series of bright images
 		'''
-		gainseries = []
+		flatseries = []
 		for i, bright in enumerate(brights):
 			exptime = exptimes[i]
 			bright = self.correctBias(bright, offset, binning)
 			bright = self.correctDark(bright, offset, binning, exptime)
 			avg = bright.mean()
-			gain = avg / bright
-			gainseries.append(avg/bright)
-		gain = combineImages(gainseries, reject=3.0)
-		self.setReference(gain, 'gain', offset, binning)
+			flat = avg / bright
+			flatseries.append(avg/bright)
+		flat = combineImages(flatseries, reject=3.0)
+		self.setReference(flat, 'flat', offset, binning)
 
 	def correctBias(self, input, offset, binning):
 		bias = self.getReference('bias', offset, binning, input.shape)
@@ -99,14 +104,14 @@ class CCDImageCorrector(object):
 		dark = self.getReference('dark', offset, binning, input.shape)
 		return input - exptime * dark
 
-	def correctGain(self, input, offset, binning):
-		gain = self.getReference('gain', offset, binning, input.shape)
-		return gain * input
+	def correctFlat(self, input, offset, binning):
+		flat = self.getReference('flat', offset, binning, input.shape)
+		return flat * input
 
-	def correctBiasDarkGain(self, input, offset, binning, exptime):
+	def correctBiasDarkFlat(self, input, offset, binning, exptime):
 		input = self.correctBias(input, offset, binning)
 		input = self.correctDark(input, offset, binning, exptime)
-		output = self.correctGain(input, offset, binning)
+		output = self.correctFlat(input, offset, binning)
 		return output
 
 
@@ -134,16 +139,16 @@ if __name__ == '__main__':
 	darks = [bias + exptime * randomImage(shape, 10, 1) for exptime in exptimes]
 	c.createDark(darks, exptimes, (0,0), 2)
 
-	# fake gain
+	# fake flat
 	exptimes = [1,2,3]
 	# add fake bias into fake darks
 	bias = c.getReference('bias', (0,0), 2, shape)
 	dark = c.getReference('dark', (0,0), 2, shape)
-	gain = numpy.arange(shape[0]*shape[1], dtype=numpy.float32)
-	gain.shape = shape
-	gain = gain / gain.mean()
-	gains = [bias + exptime * dark + exptime * 1000 * gain for exptime in exptimes]
-	c.createGain(gains, exptimes, (0,0), 2)
+	flat = numpy.arange(shape[0]*shape[1], dtype=numpy.float32)
+	flat.shape = shape
+	flat = flat / flat.mean()
+	flats = [bias + exptime * dark + exptime * 1000 * flat for exptime in exptimes]
+	c.createFlat(flats, exptimes, (0,0), 2)
 
 	for key,value in c.references.items():
 		print key
@@ -151,4 +156,4 @@ if __name__ == '__main__':
 
 	# fake raw image
 	im = randomImage(shape, 5000, 100)
-	im = c.correctBiasDarkGain(im, (0,0), 2, 5)
+	im = c.correctBiasDarkFlat(im, (0,0), 2, 5)
