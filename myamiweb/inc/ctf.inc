@@ -155,6 +155,7 @@ class ctfdata {
 			."from "
 			."	( "
 			."	select  "
+			."		a.`filename`, "
 			."		i.`dbemdata|AcquisitionImageData|image`, "
 			."		i.`DEF_id`, "
 			."		p.`name`, "

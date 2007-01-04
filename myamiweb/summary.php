@@ -242,7 +242,8 @@ if ($ctf->hasCtfData($sessionId)) {
 			$bestctf[$field][$k]['img'] = $cdf;
 		}
 	}
-	echo "<br>";
+	echo '<a href="showctfdata.php?Id='.$sessionId.''.$urlmconf.'&vd=1">[data]</a>';
+	echo '<a href="showctfdata.php?Id='.$sessionId.''.$urlmconf.'&vs=1">[sql]</a>';
 	$display_keys = array ( 'name', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
 	echo display_stats($bestctf, $display_keys);
 	
