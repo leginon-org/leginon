@@ -158,8 +158,7 @@ class Robot(node.Node):
 		self.usercontinue = threading.Event()
 
 		self.emailclient = emailnotification.EmailClient(self)
-
-		self.simulate = self.settings['simulate']
+		self.simulate = False
 
 		# if label is same, kinda screwed
 		self.gridtrayids = {}
@@ -235,19 +234,22 @@ class Robot(node.Node):
 		self.extractcondition.release()
 
 	def _queueHandler(self):
-		if self.simulate or self.settings['simulate']:
+		self.logger.info('_queueHandler '+str(self.simulate)+' setting'+str(self.settings['simulate']))
+		if self.simulate:
 			self.communication = TestCommunication()
 		else:
-			pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 			try:
-				self.communication = win32com.client.Dispatch(
+				pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
+				communication_good = win32com.client.Dispatch(
 																								'RobotCommunications.Signal')
+				self.communication = communication_good
 			except:
 				self.logger.warning(
 					'Cannot initialize robot communications, starting in simulation mode'
 				)
 				self.simulate = True
 				self.communication = TestCommunication()
+				communication_good = TestCommunication()
 				
 		request = None
 
@@ -266,9 +268,15 @@ class Robot(node.Node):
 					if request is None:
 						break
 
+				if self.settings['simulate']:
+					self.communication = TestCommunication()
+				else:
+					self.communication = communication_good
+					
 				self.setStatus('processing')
 				gridnumber = request.number
 				self.selectGrid(gridnumber)
+				self.logger.info('grid selected')
 				self.gridnumber = gridnumber
 
 				try:
@@ -294,6 +302,11 @@ class Robot(node.Node):
 				while (self.extractinfo is None
 								or self.extractinfo != (request.gridid, request.node)):
 					self.extractcondition.wait()
+				if self.settings['simulate']:
+					self.communication = TestCommunication()
+				else:
+					self.communication = communication_good
+					
 				self.setStatus('processing')
 				self.extractinfo = None
 				self.extractcondition.release()
@@ -682,6 +695,7 @@ class Robot(node.Node):
 
 	def insert(self):
 		self.lockScope()
+		self.logger.info('insert '+str(self.simulate)+' setting'+str(self.settings['simulate']))
 
 		if self.simulate or self.settings['simulate']:
 			self.estimateTimeLeft()
@@ -699,7 +713,7 @@ class Robot(node.Node):
 		self.logger.info('Inserting holder into microscope')
 
 
-		#self.turboPumpOn()
+		self.turboPumpOn()
 
 		self.robotReadyForInsertion()
 
@@ -741,7 +755,7 @@ class Robot(node.Node):
 
 		self.lockScope()
 
-		#self.turboPumpOn()
+		self.turboPumpOn()
 
 		self.robotReadyForExtraction()
 		try:
