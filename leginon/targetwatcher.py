@@ -126,7 +126,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				self.logger.debug('Passed targets not processed, aborting current target list')
 				self.reportTargetListDone(newdata, rejectstatus)
 				self.setStatus('idle')
-				return
+				if rejectstatus != 'aborted':
+					return
 			self.markTargetsDone(rejects)
 			self.logger.info('Passed targets processed, processing current target list')
 
