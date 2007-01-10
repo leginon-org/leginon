@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.190 $
+# $Revision: 1.191 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-12-08 22:48:54 $
+# $Date: 2007-01-10 21:25:28 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -1121,6 +1121,28 @@ class ModeledStageCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
+	def parameter(self):
+		return 'stage position'
+
+	def pixelToPixel(self, tem, ccdcamera, ht, mag1, mag2, p1):
+		'''
+		Using stage position as a global coordinate system, we can
+		do pixel to pixel transforms between mags.
+		This function will calculate a pixel vector at mag2, given
+		a pixel vector at mag1.
+		'''
+
+		self.transform(pixelshift, scope, camera)
+		self.itransform(position, scope, camera)
+
+		matrix1 = self.retrieveMatrix(tem, ccdcamera, par, ht, mag1)
+		matrix2 = self.retrieveMatrix(tem, ccdcamera, par, ht, mag2)
+		matrix2inv = numarray.linear_algebra.inverse(matrix2)
+		p1 = numarray.array(p1)
+		stagepos = numarray.matrixmultiply(matrix1, p1)
+		p2 = numarray.matrixmultiply(matrix2inv, stagepos)
+		return p2
+
 	def storeMagCalibration(self, tem, cam, label, ht, mag, axis, angle, mean):
 		caldata = data.StageModelMagCalibrationData()
 		caldata['session'] = self.node.session
@@ -1308,6 +1330,37 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		
 		self.storeMagCalibration(tem, cam, label, ht, mag, axis, angle, mean)
 
+	def itransform(self, position, scope, camera):
+		curstage = scope['stage position']
+
+		tem = scope['tem']
+		ccd = camera['ccdcamera']
+		binx = camera['binning']['x']
+		biny = camera['binning']['y']
+
+		xmodcal = self.retrieveModelCalibration(tem, ccd, 'x')
+		ymodcal = self.retrieveModelCalibration(tem, ccd, 'y')
+		self.node.logger.debug('x model a %s' % xmodcal['a'])
+		self.node.logger.debug('x model b %s' % xmodcal['b'])
+		self.node.logger.debug('y model a shape %s' % ymodcal['a'].shape)
+		self.node.logger.debug('y model b shape %s' % ymodcal['b'].shape)
+		xmod = gonmodel.GonModel()
+		xmod.fromDict(xmodcal)
+		ymod = gonmodel.GonModel()
+		ymod.fromDict(ymodcal)
+
+		xmagcal = self.retrieveMagCalibration(tem, ccd, scope['high tension'], scope['magnification'], 'x')
+		ymagcal = self.retrieveMagCalibration(tem, ccd, scope['high tension'], scope['magnification'], 'y')
+		self.node.logger.debug('x mag cal %s' % (xmagcal,))
+		self.node.logger.debug('y mag cal %s' % (ymagcal,))
+
+		newx = position['x']
+		newy = position['y']
+		pix = self.tixpix(xmod, ymod, xmagcal, ymagcal, curstage['x'], curstage['y'], newx, newy)
+
+		pixelshift = {'row': pix[0]/biny, 'col': pix[1]/binx}
+		return pixelshift
+
 	def transform(self, pixelshift, scope, camera):
 		curstage = scope['stage position']
 
@@ -1365,6 +1418,26 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		gony1 = ymod.predict(gony,gony1)
 	
 		return {'x':gonx1, 'y':gony1}
+
+	def tixpix(self, xmod, ymod, xmagcal, ymagcal, gonx0, gony0, gonx1, gony1):
+		## integrate
+		gonx = xmod.integrate(gonx0,gonx1)
+		gony = ymod.integrate(gony0,gony1)
+
+		## rotate/scale
+		modavgx = xmagcal['mean']
+		modavgy = ymagcal['mean']
+		anglex = xmagcal['angle']
+		angley = ymagcal['angle']
+
+		gonx = gonx / modavgx
+		gony = gony / modavgy
+	
+		m = numarray.array(((numarray.cos(anglex),numarray.sin(anglex)),(numarray.cos(angley),numarray.sin(angley))), numarray.Float32)
+		minv = numarray.linear_algebra.inverse(m)
+		ix,iy = numarray.matrixmultiply(minv, (gonx,gony))
+	
+		return iy,ix
 	
 	def pixelShift(self, ievent):
 		# XXX
