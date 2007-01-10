@@ -331,15 +331,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			# acquired could probably figure this out with a little
 			# research instead of a user setting
 			self.imagesourcedone.set()
-		else:
-			# TargetListDone indicates that targets created in this node were
-			# processed by another node
-			self.logger.info('Target list done')
-			### XXX should we clear self.mosaicimagelist here???
-			#self.tileListToDatabase()
-			self.clearTiles()
-			self.outputEvent(event.MosaicDoneEvent())
-			self.logger.info('Mosaic is done, notification sent')
 
 	def getTargetDataList(self, typename):
 		displayedtargetdata = {}
@@ -408,19 +399,23 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		newtile = self.mosaic.addTile(imagedata)
 		self.tilemap[imid] = newtile
 		self.imagemap[imid] = imagedata
-		targets = self.researchTargets(image=imagedata, type='acquisition')
-		if targets and self.targetlist is None:
-			self.targetlist = targets[0]['list']
-		self.targetmap[imid] = targets
+		self.targetmap[imid] = {}
+		for type in ('acquisition','focus'):
+			targets = self.researchTargets(image=imagedata, type=type)
+			if targets and self.targetlist is None:
+				self.targetlist = targets[0]['list']
+			self.targetmap[imid][type] = targets
 		self.logger.info('Image added to mosaic')
 
 	def targetsFromDatabase(self):
 		for id, imagedata in self.imagemap.items():
-			targets = self.researchTargets(image=imagedata, type='acquisition')
-			### set my target list to same as first target found
-			if targets and self.targetlist is None:
-				self.targetlist = targets[0]['list']
-			self.targetmap[id] = targets
+			self.targetmap[id] = {}
+			for type in ('acquisition','focus'):
+				targets = self.researchTargets(image=imagedata, type=type)
+				### set my target list to same as first target found
+				if targets and self.targetlist is None:
+					self.targetlist = targets[0]['list']
+				self.targetmap[id][type] = targets
 		self.reference_target = self.getReferenceTarget()
 
 	def refreshCurrentPosition(self):
@@ -468,29 +463,30 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.logger.error('Create mosaic image before displaying targets')
 			return
 		self.logger.info('Displaying targets...')
-		targets = []
 		donetargets = []
 		self.displayedtargetdata = {}
-		for id, targetlist in self.targetmap.items():
-			for targetdata in targetlist:
-				tile = self.tilemap[id]
-				#tilepos = self.mosaic.getTilePosition(tile)
-				r,c = self.targetToMosaic(tile, targetdata)
-				vcoord = c,r
-				if vcoord not in self.displayedtargetdata:
-					self.displayedtargetdata[vcoord] = []
-				if targetdata['status'] in ('done', 'aborted'):
-					donetargets.append(vcoord)
-					self.displayedtargetdata[vcoord].append(targetdata)
-				elif targetdata['status'] in ('new','processing'):
-					targets.append(vcoord)
-					self.displayedtargetdata[vcoord].append(targetdata)
-				else:
-					# other status ignored (mainly NULL)
-					pass
-		self.setTargets(targets, 'acquisition')
-		# ...
-		#self.setTargets([], 'focus')
+		targets = {}
+		for type in ('acquisition','focus'):
+			targets[type] = []
+			for id, targetlists in self.targetmap.items():
+				targetlist = targetlists[type]
+				for targetdata in targetlist:
+					tile = self.tilemap[id]
+					#tilepos = self.mosaic.getTilePosition(tile)
+					r,c = self.targetToMosaic(tile, targetdata)
+					vcoord = c,r
+					if vcoord not in self.displayedtargetdata:
+						self.displayedtargetdata[vcoord] = []
+					if targetdata['status'] in ('done', 'aborted'):
+						donetargets.append(vcoord)
+						self.displayedtargetdata[vcoord].append(targetdata)
+					elif targetdata['status'] in ('new','processing'):
+						targets[type].append(vcoord)
+						self.displayedtargetdata[vcoord].append(targetdata)
+					else:
+						# other status ignored (mainly NULL)
+						pass
+			self.setTargets(targets[type], type)
 		self.setTargets(donetargets, 'done')
 
 		# ...
@@ -507,7 +503,9 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 		self.updateCurrentPosition()
 		self.setTargets(self.currentposition, 'position')
-		n = len(targets)
+		n = 0
+		for type in ('acquisition','focus'):
+			n += len(targets[type])
 		ndone = len(donetargets)
 		self.logger.info('displayed %s targets (%s done)' % (n+ndone, ndone))
 
@@ -634,6 +632,15 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		scaledpos = self.mosaic.scaled(mospos)
 		return scaledpos
 
+	def scaleToMosaic(self, d):
+		shape = tile.image.shape
+		drow = targetdata['delta row']
+		dcol = targetdata['delta column']
+		tilepos = drow+shape[0]/2, dcol+shape[1]/2
+		mospos = self.mosaic.tile2mosaic(tile, tilepos)
+		scaledpos = self.mosaic.scaled(mospos)
+		return scaledpos
+
 	def _mosaicToTarget(self, row, col):
 		self.logger.debug('mosaicToTarget r %s, c %s' % (row, col))
 		unscaled = self.mosaic.unscaled((row,col))
@@ -712,6 +719,17 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		imshape = self.mosaicimage.shape
 		minsize = self.settings['min region area']
 		maxsize = self.settings['max region area']
+		minsize /= 100.0
+		maxsize /= 100.0
+
+		tileshape = self.mosaic.tiles[0].image.shape
+		tilearea = tileshape[0] * tileshape[1]
+		mosaicarea = imshape[0] * imshape[1]
+		areascale = self.mosaic.scale * self.mosaic.scale
+		scale = areascale * tilearea / mosaicarea
+		minsize = scale * minsize
+		maxsize = scale * maxsize
+
 		velimit = self.settings['ve limit']
 		mint = self.settings['min threshold']
 		maxt = self.settings['max threshold']
@@ -790,6 +808,15 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			box = self.regionToBox(region, spacing)
 			boxes.append(box)
 		'''
+
+		# if self.regionarrays is empty, check for manually picked region
+		#if not self.regionarrays:
+		if len(self.regionarrays) < 2:
+			manualregion = self.panel.getTargetPositions('region')
+			if manualregion:
+				manualregion = self.transpose_points(manualregion)
+				manualregionarray = numarray.array(manualregion)
+				self.regionarrays = [manualregionarray]
 
 		## this block will reduce the number of raster points
 		if self.regionarrays:
@@ -878,8 +905,18 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			if newlen > biggestregionlen:
 				biggestregionlen = newlen
 				biggestregion = region
-		center = polygon.getPolygonCenter(biggestregion)
+
+		#center = polygon.getPolygonCenter(biggestregion)
+
+		box = self.regionToBox(biggestregion, 0)
+		print 'box', box
+		p0 = box[0]
+		p1 = box[2]
+		center = (p1[0]+p0[0])/2, (p1[1]+p0[1])/2
+		print 'center', center
+
 		focusdisplay = self.transpose_points([center])
+		print 'display'
 		self.setTargets(focusdisplay, 'focus', block=True)
 
 	def findSquares(self):
