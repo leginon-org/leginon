@@ -143,6 +143,9 @@ class GonModel:
 			result -= self.b[i] / k / (i+1) * math.cos(q)
 		return result
 
+	def integrate(self, pos0, pos1):
+		return self.eval_int(pos1) - self.eval_int(pos0)
+
 	## return a goniometer delta based on an image delta
 	## this is a rotation, not scaled to the model
 	## this only calculates the gon delta for one axis
