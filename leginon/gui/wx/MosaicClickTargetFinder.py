@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.18 $
+# $Revision: 1.19 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-12-08 22:52:00 $
+# $Date: 2007-01-10 21:26:04 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -254,12 +254,12 @@ class RegionSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['watchdone'] = wx.CheckBox(self, -1, 'Run auto targeting when image source is finished')
 		szoptions.Add(self.widgets['watchdone'], (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
-		label = wx.StaticText(self, -1, 'Minimum Region Area')
+		label = wx.StaticText(self, -1, 'Minimum Region Area (% of tile area)')
 		self.widgets['min region area'] = FloatEntry(self, -1, chars=8)
 		szoptions.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szoptions.Add(self.widgets['min region area'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		label = wx.StaticText(self, -1, 'Maximum Region Area')
+		label = wx.StaticText(self, -1, 'Maximum Region Area (% of tile area)')
 		self.widgets['max region area'] = FloatEntry(self, -1, chars=8)
 		szoptions.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szoptions.Add(self.widgets['max region area'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -332,6 +332,7 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 		return [szoptions, szbutton]
 
 	def onAutoButton(self, evt):
+		self.setNodeSettings()
 		s,a = self.node.autoSpacingAngle()
 		self.widgets['raster spacing'].SetValue(s)
 		self.widgets['raster angle'].SetValue(a)
@@ -356,7 +357,7 @@ class FocusSettingsDialog(gui.wx.Settings.Dialog):
 
 	def onTestButton(self, evt):
 		self.setNodeSettings()
-		self.node.makeFocusTarget()
+		threading.Thread(target=self.node.makeFocusTarget).start()
 
 
 class BlobSettingsDialog(gui.wx.Settings.Dialog):
