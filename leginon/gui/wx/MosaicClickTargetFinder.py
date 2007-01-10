@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.19 $
+# $Revision: 1.20 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-01-10 21:26:04 $
+# $Date: 2007-01-10 22:02:04 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -310,19 +310,31 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 		szoptions.Add(self.widgets['raster angle'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		## auto raster
-		self.autobut = wx.Button(self, -1, 'Auto using this preset and overlap percent')
+		self.autobut = wx.Button(self, -1, 'Calculate spacing and angle using the following parameters:')
 		self.Bind(wx.EVT_BUTTON, self.onAutoButton, self.autobut)
-		presets = self.node.presetsclient.getPresetNames()
-		self.widgets['targetpreset'] = PresetChoice(self, -1)
-		self.widgets['targetpreset'].setChoices(presets)
-		self.widgets['raster overlap'] = FloatEntry(self, -1, chars=8)
-
 		szoptions.Add(self.autobut, (2, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		szoptions.Add(self.widgets['targetpreset'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szoptions.Add(self.widgets['raster overlap'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, 'Target Preset')
+		self.widgets['targetpreset'] = PresetChoice(self, -1)
+		presets = self.node.presetsclient.getPresetNames()
+		self.widgets['targetpreset'].setChoices(presets)
+		szoptions.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['targetpreset'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, 'Overlap percent')
+		self.widgets['raster overlap'] = FloatEntry(self, -1, chars=8)
+		szoptions.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['raster overlap'], (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, 'Calibration')
+		choices = self.node.calclients.keys()
+		self.widgets['raster calibration'] = Choice(self, -1, choices=choices)
+		szoptions.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['raster calibration'], (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
 
 		self.btest = wx.Button(self, -1, 'Test')
-		szbutton = wx.GridBagSizer(5, 5)
+		szbutton = wx.GridBagSizer(6, 5)
 		szbutton.Add(self.btest, (0, 0), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szbutton.AddGrowableCol(0)

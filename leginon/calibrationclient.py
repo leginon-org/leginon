@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.191 $
+# $Revision: 1.192 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-01-10 21:25:28 $
+# $Date: 2007-01-10 22:02:03 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -1132,16 +1132,23 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		a pixel vector at mag1.
 		'''
 
-		self.transform(pixelshift, scope, camera)
-		self.itransform(position, scope, camera)
+		scope = data.ScopeEMData()
+		scope['tem'] = tem
+		scope['high tension'] = ht
+		scope['stage position'] = {'x':0.0, 'y':0.0}
+		camera = data.CameraEMData()
+		camera['ccdcamera'] = ccdcamera
+		camera['binning'] = {'x':1,'y':1}
 
-		matrix1 = self.retrieveMatrix(tem, ccdcamera, par, ht, mag1)
-		matrix2 = self.retrieveMatrix(tem, ccdcamera, par, ht, mag2)
-		matrix2inv = numarray.linear_algebra.inverse(matrix2)
-		p1 = numarray.array(p1)
-		stagepos = numarray.matrixmultiply(matrix1, p1)
-		p2 = numarray.matrixmultiply(matrix2inv, stagepos)
-		return p2
+		scope['magnification'] = mag1
+		pixelshift = {'row':p1[0], 'col':p1[1]}
+		newscope = self.transform(pixelshift, scope, camera)
+
+		scope['magnification'] = mag2
+		position = newscope['stage position']
+		pix = self.itransform(position, scope, camera)
+
+		return pix['row'],pix['col']
 
 	def storeMagCalibration(self, tem, cam, label, ht, mag, axis, angle, mean):
 		caldata = data.StageModelMagCalibrationData()
