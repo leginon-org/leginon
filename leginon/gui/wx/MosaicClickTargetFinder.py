@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.20 $
+# $Revision: 1.21 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-01-10 22:02:04 $
-# $Author: pulokas $
+# $Date: 2007-01-11 20:10:55 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -279,8 +279,11 @@ class RegionSettingsDialog(gui.wx.Settings.Dialog):
 		szoptions.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szoptions.Add(self.widgets['max threshold'], (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+		self.widgets['black on white'] = wx.CheckBox(self, -1, 'Look for black objects on white background')
+		szoptions.Add(self.widgets['black on white'], (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
 		self.btest = wx.Button(self, -1, 'Test')
-		szbutton = wx.GridBagSizer(5, 5)
+		szbutton = wx.GridBagSizer(6, 6)
 		szbutton.Add(self.btest, (0, 0), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szbutton.AddGrowableCol(0)

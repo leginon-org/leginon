@@ -256,6 +256,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		'min region area': 0.01,
 		'max region area': 0.8,
 		've limit': 50,
+		'black on white': False,
 		'raster spacing': 50,
 		'raster angle': 0,
 		# unlike other targetfinders, no wait is default
@@ -719,8 +720,10 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		imshape = self.mosaicimage.shape
 		minsize = self.settings['min region area']
 		maxsize = self.settings['max region area']
+		black_on_white = self.settings['black on white']
 		minsize /= 100.0
 		maxsize /= 100.0
+		white_on_black =  not black_on_white
 
 		tileshape = self.mosaic.tiles[0].image.shape
 		tilearea = tileshape[0] * tileshape[1]
@@ -739,7 +742,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.mosaicimage[-pad:] = 0
 		self.mosaicimage[:,:pad] = 0
 		self.mosaicimage[:,-pad:] = 0
-		regions,image = libCV.FindRegions(self.mosaicimage, minsize, maxsize, 0, 0, 0, 1)
+		regions,image = libCV.FindRegions(self.mosaicimage, minsize, maxsize, 0, 0, white_on_black,black_on_white)
 		self.regionarrays = []
 		displaypoints = []
 		for i,region in enumerate(regions):
