@@ -385,7 +385,7 @@ class EMMosaic(object):
 			## calculate the parameter shift from center of 
 			## mosaic image to center of tile
 			for axis in ('x','y'):
-				tileparam[axis] = tile.imagedata['scope'][param][axis] - center[axis]
+				tileparam[axis] = tile.imagedata['scope'][param][axis]
 			## calculate corresponding pixel shift (float)
 			center2center = self.positionByCalibration(tileparam)
 			## for targeting, until it's fixed
