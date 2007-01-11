@@ -141,3 +141,98 @@ class stackParticles(data.Data):
 	typemap = classmethod(typemap)
 data.stackParticles = stackParticles
 
+### Reconstruction Tables ###
+
+class reconRun(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('name', str),
+			('stackId', stackParams),
+			('initialModelId', initialModel),
+			('path', str),
+			('package', str),
+		)
+	typemap = classmethod(typemap)
+data.reconRun=reconRun
+
+class initialModel(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('path', str),
+			('name', str),
+			('symmetryId', symmetry),
+			('pixelsize', float),
+			('boxsize', int),
+			('description', str),
+		)
+	typemap = classmethod(typemap)
+data.initialModel=initialModel
+
+class symmetry(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('symmetry', str),
+			('description', str),
+		)
+	typemap = classmethod(typemap)
+data.symmetry=symmetry
+
+class refinement(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('reconRunId', reconRun),
+			('refinementParamsId', refinementParams),
+			('iteration', int),
+			('resolutionId', resolution),
+			('classAverage', str),
+			('classVariance', str),
+			('volumeSnapshot', str),
+			('volumeDensity',str),
+		)
+	typemap = classmethod(typemap)
+data.refinement=refinement
+
+class refinementParams(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('angIncr', float),
+			('mask', int),
+			('imask', int),
+			('lpfilter', int),
+			('hpfilter', int),
+			('fourier_padding', int),
+			('EMAN_hard', int),
+			('EMAN_classkeep', float),
+			('EMAN_classiter', int),
+			('EMAN_median', bool),
+			('EMAN_phasecls', bool),
+			('EMAN_refine', bool),
+		)
+	typemap = classmethod(typemap)
+data.refinementParams=refinementParams
+
+class resolution(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('fscfile', str),
+			('half', float),
+		)
+	typemap = classmethod(typemap)
+data.resolution=resolution
+
+class particleClassification(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('refinementId', refinement),
+			('particleId', particle),
+			('classnumber', int),
+			('euler1', float),
+			('euler2', float),
+			('euler3', float),
+			('shiftx', float),
+			('shifty', float),
+			('inplane_rotation', float),
+			('quality_factor', float),
+		)
+	typemap = classmethod(typemap)
+data.particleClassification=particleClassification
