@@ -168,6 +168,47 @@ class particledata {
 		return $stackidlist;
 	}
 
+        function getStackParams ($stackId) {
+	        $q = "SELECT * "
+		    ."FROM `stackParams` "
+		  ."WHERE `DEF_id` = '$stackId'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+        function getNumStackParticles ($stackId) {
+	        $q= "SELECT count(*) as num "
+		   ."FROM `stackParticles` "
+		   ."WHERE `REF|stackParams|stackId` = '$stackId'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0]['num'];
+	}    
+
+        function getPixelSizeFromStackId($stackId) {
+	        $q= "SELECT `REF|InstrumentData|tem` t, magnification m, `REF|InstrumentData|ccdcamera` c, a.`DEF_timestamp` time "
+                   ."FROM stackParticles sp "
+                   ."left join particle p on (p.`DEF_id`=sp.`REF|particle|particleId`) "
+                   ."left join image i on (i.`DEF_id`=p.`REF|image|imageId`) "
+                   ."left join dbemdata.AcquisitionImageData a on (a.`DEF_id`=i.`dbemdata|AcquisitionImageData|image`) "
+                   ."left join dbemdata.PresetData pd on (a.`REF|PresetData|preset`=pd.`DEF_id`) "
+                   ."WHERE sp.`REF|stackParams|stackId`='$stackId' "
+                   ."GROUP BY `REF|InstrumentData|tem`";
+		$r = $this->mysql->getSQLResult($q);
+		if (is_array($r[0])) {
+		        $tem=$r[0]['t'];
+			$mag=$r[0]['m'];
+			$ccd=$r[0]['c'];
+			$time=$r[0]['time'];
+			$q="SELECT pixelsize FROM dbemdata.PixelSizeCalibrationData "
+			  ."WHERE `REF|InstrumentData|tem`='$tem' "
+			  ."AND `magnification`= '$mag' "
+			  ."AND `REF|InstrumentData|ccdcamera`='$ccd' "
+			  ."AND `DEF_timestamp`<'$time'";
+			$r = $this->mysql->getSQLResult($q);
+			return $r[0]['pixelsize'];
+		}
+		else return;
+	}
 	function displayParticleStats($particleruns, $display_keys, $inspect=False, $selexval=False) {
 		if (!is_array($particleruns))
 			return ;
@@ -202,6 +243,45 @@ class particledata {
 		}
 		$html .= "</table>\n";
 		return $html;
+	}
+#---------RECONSTRUCTION FUNCTIONS---------------#
+
+	function getReconIds ($stackId) {
+		$q = "select * "
+			."from `reconRun` where `REF|stackParams|stackId` = '$stackId'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+        function getInitModelInfo ($modelId) {
+	        $q = "SELECT * "
+		    ."FROM `initialModel` WHERE `DEF_id` = '$modelId'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+        function getSymInfo($symId){
+	        $q = "SELECT * "
+		    ."FROM `symmetry` WHERE `DEF_id` = '$symId'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+        function getResolutionInfo($resId) {
+	        $q = "SELECT * "
+		   ."FROM `resolution` WHERE `DEF_id` = '$resId'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+		
+        function getIterationInfo($reconId) {
+	        $q = "SELECT * "
+		    ."FROM `refinement` r "
+		    ."LEFT JOIN `refinementParams` p "
+		    ."ON (r.`REF|refinementParams|refinementParamsId` = p.`DEF_id`) "
+		    ."WHERE r.`REF|reconRun|reconRunId` = '$reconId' ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
 	}
 
 }

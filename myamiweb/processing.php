@@ -109,7 +109,10 @@ if ($sessionId) {
   $stackruns=count($stackIds);
 
   // --- Get Reconstruction Data
-  $reconruns=0;
+  foreach ($stackIds as $stackid) {
+          $reconIds = $particle->getReconIds($stackid);
+	  $reconruns+=count($reconIds);
+  }
 
   echo"
   </FORM>
@@ -180,7 +183,7 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
     if ($stackruns==0) {echo "none";}
-    else {echo "$stackruns completed";}
+    else {echo "<A HREF='stacksummary.php?expId=$sessionId'>$stackruns completed<A>";}
     echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>
@@ -197,11 +200,11 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
     if ($reconruns==0) {echo "none";}
-    else {echo "$ctfruns completed</A>";}
+    else {echo "<A HREF='reconsummary.php?expId=$sessionId'>$reconruns completed</A>";}
     echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>
-    <A HREF='runPyAce.php?expId=$sessionId'>";
+    <A HREF='submitrecon.php?expId=$sessionId'>";
     if ($reconruns==0) {echo "Begin Reconstruction";}
     else {echo "Continue Reconstruction";}
     echo"</A>
