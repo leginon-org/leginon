@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.21 $
+# $Revision: 1.22 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-01-11 20:10:55 $
-# $Author: acheng $
+# $Date: 2007-01-12 22:36:35 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -71,6 +71,9 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 	def onSubmitTool(self, evt):
 		'''overriding so that submit button stays enabled'''
 		gui.wx.ClickTargetFinder.Panel.onSubmitTool(self, evt)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
+
+	def onTargetsSubmitted(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
 
 	def onTilesButton(self, evt):
