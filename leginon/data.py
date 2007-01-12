@@ -2038,6 +2038,7 @@ class MosaicClickTargetFinderSettingsData(ClickTargetFinderSettingsData,
 			('watchdone', bool),
 			('targetpreset', str),
 			('raster overlap', float),
+			('black on white', bool),
 		)
 		return typemap
 	typemap = classmethod(typemap)
