@@ -681,6 +681,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		## imagedata would be full mosaic image
 		#self.clickimage.imagedata = None
 		self.displayTargets()
+		self.setTargets([], 'region')
 		self.beep()
 		## if all images are now in mosaic, then do processing
 		if self.imagesourcedone.isSet():
