@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.22 $
+# $Revision: 1.23 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-01-12 22:36:35 $
+# $Date: 2007-01-13 00:49:57 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -331,13 +331,6 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['raster overlap'] = FloatEntry(self, -1, chars=8)
 		szoptions.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szoptions.Add(self.widgets['raster overlap'], (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		label = wx.StaticText(self, -1, 'Calibration')
-		choices = self.node.calclients.keys()
-		self.widgets['raster calibration'] = Choice(self, -1, choices=choices)
-		szoptions.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szoptions.Add(self.widgets['raster calibration'], (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
 
 		self.btest = wx.Button(self, -1, 'Test')
 		szbutton = wx.GridBagSizer(6, 5)

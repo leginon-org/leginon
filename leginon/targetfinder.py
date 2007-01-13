@@ -28,6 +28,11 @@ import math
 import polygon
 import raster
 import presets
+try:
+	set = set
+except NameError:
+	import sets
+	set = Set
 
 class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	panelclass = gui.wx.TargetFinder.Panel
@@ -767,7 +772,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 		# transforming from target mag
 		targetpresetname = self.settings['targetpreset']
-		targetcalibration = self.settings['raster calibration']
 		targetpreset = self.presetsclient.getPresetByName(targetpresetname)
 		mag1 = targetpreset['magnification']
 		dim1 = targetpreset['dimension']['x']
@@ -780,7 +784,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		bin2 = imagedata['camera']['binning']['x']
 
 		print 'p2p', tem, cam, ht, mag1, mag2, p1
-		p2 = self.calclients[targetcalibration].pixelToPixel(tem, cam, ht, mag1, mag2, p1)
+		p2 = self.calclients['stage position'].pixelToPixel(tem, cam, ht, mag1, mag2, p1)
 		print 'P2', p2
 		# bin
 		p2 = p2[0]/float(bin2), p2[1]/float(bin2)
