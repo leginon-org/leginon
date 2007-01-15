@@ -32,7 +32,7 @@ try:
 	set = set
 except NameError:
 	import sets
-	set = Set
+	set = sets.Set
 
 class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	panelclass = gui.wx.TargetFinder.Panel
