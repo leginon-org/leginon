@@ -309,26 +309,30 @@ def batchBox(params, img):
 	# box file will be created
 	if params['selexonId']:
 		dbbox=params['outdir']+"temporaryParticlesFromDB.box"
-		writeParticleBoxfile(img,dbbox)
+		hasparticles=writeParticleBoxfile(img,dbbox)
 	else:
 		dbbox=img['filename']+'.box'
+		hasparticles=True
 	
-	#count number of particles in box file
-	f=open(dbbox,'r')
-	lines=f.readlines()
-	f.close
-	nptcls=len(lines)
-	# write batchboxer command
-	if params["boxsize"]:
-		cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i insideonly" %(input, dbbox, output, params["boxsize"])
-	else: 
- 		cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(input, dbbox, output)
-
-	print "boxing particles"
-	f=os.popen(cmd)
-	f.close()
-	return(nptcls)
-    
+	if hasparticles:
+		#count number of particles in box file
+		f=open(dbbox,'r')
+		lines=f.readlines()
+		f.close
+		nptcls=len(lines)
+		# write batchboxer command
+		if params["boxsize"]:
+			cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i insideonly" %(input, dbbox, output, params["boxsize"])
+		else: 
+	 		cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(input, dbbox, output)
+	
+		print "boxing particles"
+		f=os.popen(cmd)
+		f.close()
+		return(nptcls)
+	else:
+		return(0)		
+	
 def writeParticleBoxfile(img,dbbox):
 	imq=particleData.image()
 	imq['dbemdata|AcquisitionImageData|image']=img.dbid
@@ -339,7 +343,7 @@ def writeParticleBoxfile(img,dbbox):
 
 	if not particles:
 		print img['filename'],"contains no particles"
-		return
+		return (False)
 
 	#write the tmp box file
 	plist=[]
@@ -370,6 +374,7 @@ def writeParticleBoxfile(img,dbbox):
 	boxfile.close()
 		
 	print "\nprocessing:",img['filename']
+	return (True)
 	
 def phaseFlip(params,img):
 	input=params["outdir"]+img['filename']+'.hed'
