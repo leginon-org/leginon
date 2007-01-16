@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Robot.py,v $
-# $Revision: 1.12 $
+# $Revision: 1.13 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-12-05 22:23:40 $
-# $Author: pulokas $
+# $Date: 2007-01-16 02:55:27 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -208,6 +208,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 																	'Simulate Robot Insert/Extraction')
 		self.widgets['turbo on'] = wx.CheckBox(self, -1,
 																	'Turbo Pump Always On')
+		self.widgets['pause'] = wx.CheckBox(self, -1,
+																	'Pause before Extraction')
 
 		szcolumnpressure = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Column pressure threshold:')
@@ -230,10 +232,15 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL)
 
 		sz = wx.GridBagSizer(5, 5)
+		szpause = wx.GridBagSizer(5, 5)
+		szpause.Add(self.widgets['pause'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+
 		sz.Add(szcolumnpressure, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szdefzposition, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szsimu, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szpump, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szpause, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sb = wx.StaticBox(self, -1, 'Robot')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
