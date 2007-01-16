@@ -652,7 +652,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		unscaled = self.mosaic.unscaled((row,col))
 		tile, pos = self.mosaic.mosaic2tile(unscaled)
 		shape = tile.image.shape
-		drow,dcol = pos[0]-shape[0]/2, pos[1]-shape[1]/2
+		drow,dcol = pos[0]-shape[0]/2.0, pos[1]-shape[1]/2.0
 		imagedata = tile.imagedata
 		self.logger.debug('target tile image: %s, pos: %s' % (imagedata.dbid,pos))
 		return imagedata, drow, dcol
@@ -784,7 +784,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		bin2 = imagedata['camera']['binning']['x']
 
 		print 'p2p', tem, cam, ht, mag1, mag2, p1
-		p2 = self.calclients['stage position'].pixelToPixel(tem, cam, ht, mag1, mag2, p1)
+		p2 = self.calclients['modeled stage position'].pixelToPixel(tem, cam, ht, mag1, mag2, p1)
 		print 'P2', p2
 		# bin
 		p2 = p2[0]/float(bin2), p2[1]/float(bin2)
