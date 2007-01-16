@@ -2209,6 +2209,7 @@ class RobotSettingsData(SettingsData):
 			('default Z position', float),
 			('simulate', bool),
 			('turbo on', bool),
+			('pause', bool),
 			('grid tray', str),
 		)
 	typemap = classmethod(typemap)
