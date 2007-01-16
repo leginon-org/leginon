@@ -137,6 +137,7 @@ class Robot(node.Node):
 		'default Z position': -140e-6,
 		'simulate': False,
 		'turbo on': True,
+		'pause': False,
 		'grid tray': None,
 	}
 	defaultcolumnpressurethreshold = 3.5e-5
@@ -772,7 +773,7 @@ class Robot(node.Node):
 
 	def handleGridDataCollectionDone(self, ievent):
 		# ...
-		if False:
+		if self.settings['pause']:
 			# pause for user check
 			self.setStatus('user input')
 			self.logger.info('waiting for user to continue...')
