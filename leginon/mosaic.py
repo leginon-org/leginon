@@ -428,7 +428,7 @@ class EMMosaic(object):
 		return intcoord
 
 	def unscaled(self, coord):
-		newcoord = coord[0]/self.scale, coord[1]/self.scale
+		newcoord = float(coord[0])/self.scale, float(coord[1])/self.scale
 		return newcoord
 
 	def getMosaicImage(self, maxdimension=None):
