@@ -242,7 +242,12 @@ def array2image(a):
 def readPikFile(file,draw,diam,bin,apix):
 	print "Making circles..."
 
-	circle_colors = ["red","blue","yellow","green","violet","orange"]
+	circle_colors = [ \
+		"#ff4040","#3df23d","#3d3df2", \
+		"#f2f23d","#3df2f2","#f23df2", \
+		"#f2973d","#3df297","#973df2", \
+		"#97f23d","#3d97f2","#f23d97",
+		]
 	ps=int(1.5*diam*0.5/float(bin)/apix) #1.5x particle radius
 	ps=float(1.5*diam*0.5/float(bin)/apix) #1.5x particle radius
 	f=open(file, 'r')
