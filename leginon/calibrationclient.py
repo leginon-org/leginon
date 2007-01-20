@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.193 $
+# $Revision: 1.194 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-01-20 02:05:59 $
+# $Date: 2007-01-20 02:26:34 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -1328,7 +1328,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 		a = mod.a
 		b = mod.b
 		if terms > 0:
-			self.node.logger.info('model period: %6.2f' % period)
+			self.node.logger.info('model period: %6.1f micrometer' % period*1e6)
 		
 		self.storeMagCalibration(tem, cam, label, ht, mag, axis, angle, mean)
 		self.storeModelCalibration(tem, cam, label, axis, period, a, b)
