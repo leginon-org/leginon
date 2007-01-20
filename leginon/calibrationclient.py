@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.192 $
+# $Revision: 1.193 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-01-10 22:02:03 $
-# $Author: pulokas $
+# $Date: 2007-01-20 02:05:59 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -1117,7 +1117,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 
 		return imagedata0, pixelshift
 
-class ModeledStageCalibrationClient(CalibrationClient):
+class ModeledStageCalibrationClient(MatrixCalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
@@ -1185,7 +1185,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 	def retrieveMagCalibration(self, tem, cam, ht, mag, axis):
 		caldata = self.researchMagCalibration(tem, cam, ht, mag, axis)
 		if caldata is None:
-			raise RuntimeError('no model mag calibration')
+			raise RuntimeError('no model mag calibration in axis %s'% axis)
 		else:
 			caldata2 = dict(caldata)
 			return caldata2
@@ -1197,6 +1197,25 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		else:
 			timeinfo = caldata.timestamp
 		return timeinfo
+
+	def getMatrixFromStageModelMag(self, tem, cam, ht, mag):
+		try:
+			caldatax = self.retrieveMagCalibration(tem, cam, ht, mag, 'x')
+			caldatay = self.retrieveMagCalibration(tem, cam, ht, mag, 'y')
+		except Exception, e:
+			matrix = None
+			self.node.logger.warning('Cannot get matrix from stage model: %s' % e)
+			return matrix
+			
+		means = [caldatax['mean'],caldatay['mean']]
+		angles = [caldatax['angle'],caldatay['angle']]
+		matrix = numarray.ones((2,2), numarray.Float64)
+		matrix[0, 0]=means[0]*math.sin(angles[0])
+		matrix[1, 0]=means[0]*math.cos(angles[0])
+		matrix[0, 1]=means[1]*math.sin(angles[1])
+		matrix[1, 1]=means[1]*math.cos(angles[1])
+		
+		return matrix
 
 	def storeModelCalibration(self, tem, cam, label, axis, period, a, b):
 		caldata = data.StageModelCalibrationData()
@@ -1236,7 +1255,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 	def retrieveModelCalibration(self, tem, ccd, axis):
 		caldata = self.researchModelCalibration(tem, ccd, axis)
 		if caldata is None:
-			raise RuntimeError('no model calibration')
+			raise RuntimeError('no model calibration in axis %s'% axis)
 		else:
 			## return it to rank 0 array
 			caldata2 = {}
@@ -1302,15 +1321,22 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		# using data mean, could use model mean
 		mean = dat.avg
 		#mean = mod.a0
+		self.node.logger.info('model mean: %5.3e meter/pixel, angle: %6.3f radian' % (mean,angle))
 
 		### model info
 		period = mod.period
 		a = mod.a
 		b = mod.b
+		if terms > 0:
+			self.node.logger.info('model period: %6.2f' % period)
 		
 		self.storeMagCalibration(tem, cam, label, ht, mag, axis, angle, mean)
 		self.storeModelCalibration(tem, cam, label, axis, period, a, b)
 
+		matrix = self.getMatrixFromStageModelMag(tem, cam, ht, mag)
+		if matrix is not None:
+			self.storeMatrix(ht, mag, 'stage position', matrix, tem, cam)
+		
 	def fitMagOnly(self, tem, cam, label, mag, axis):
 		if tem is None:
 			tem = self.node.instrument.getTEMData()
@@ -1334,8 +1360,13 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		axis = dat.axis
 		mag = dat.mag
 		angle = dat.angle
+		self.node.logger.info('model mean: %5.3e, angle: %6.3e ' % (mean,angle))
 		
 		self.storeMagCalibration(tem, cam, label, ht, mag, axis, angle, mean)
+
+		matrix = self.getMatrixFromStageModelMag(tem, cam, ht, mag)
+		if matrix is not None:
+			self.storeMatrix(ht, mag, 'stage position', matrix, tem, cam)
 
 	def itransform(self, position, scope, camera):
 		curstage = scope['stage position']
