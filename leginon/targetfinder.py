@@ -748,6 +748,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.mosaicimage[-pad:] = 0
 		self.mosaicimage[:,:pad] = 0
 		self.mosaicimage[:,-pad:] = 0
+
+		self.mosaicimage = numarray.clip(self.mosaicimage, mint, maxt)
 		regions,image = libCV.FindRegions(self.mosaicimage, minsize, maxsize, 0, 0, white_on_black,black_on_white)
 		self.regionarrays = []
 		displaypoints = []
