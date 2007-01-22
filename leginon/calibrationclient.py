@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.194 $
+# $Revision: 1.195 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-01-20 02:26:34 $
-# $Author: acheng $
+# $Date: 2007-01-22 20:13:33 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -1328,7 +1328,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 		a = mod.a
 		b = mod.b
 		if terms > 0:
-			self.node.logger.info('model period: %6.1f micrometer' % period*1e6)
+			self.node.logger.info('model period: %6.1f micrometer' % (period*1e6,))
 		
 		self.storeMagCalibration(tem, cam, label, ht, mag, axis, angle, mean)
 		self.storeModelCalibration(tem, cam, label, axis, period, a, b)
@@ -1361,7 +1361,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 		mag = dat.mag
 		angle = dat.angle
 		self.node.logger.info('model mean: %5.3e, angle: %6.3e ' % (mean,angle))
-		
+
 		self.storeMagCalibration(tem, cam, label, ht, mag, axis, angle, mean)
 
 		matrix = self.getMatrixFromStageModelMag(tem, cam, ht, mag)
@@ -1395,7 +1395,6 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 		newx = position['x']
 		newy = position['y']
 		pix = self.tixpix(xmod, ymod, xmagcal, ymagcal, curstage['x'], curstage['y'], newx, newy)
-
 		pixelshift = {'row': pix[0]/biny, 'col': pix[1]/binx}
 		return pixelshift
 
