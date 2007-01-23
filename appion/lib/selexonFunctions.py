@@ -313,7 +313,7 @@ def parseSelexonInput(args,params):
 			params['shiftonly']=True
 		elif (elements[0]=='method'):
 			params['method']=str(elements[1])
-		elif (elements[0]=='overlapdist'):
+		elif (elements[0]=='overlapmult'):
 			params['overlapmult']=float(elements[1])
 		else:
 			print "undefined parameter '"+arg+"'\n"
