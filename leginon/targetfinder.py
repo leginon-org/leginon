@@ -1012,9 +1012,9 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		targets['focus'] = self.panel.getTargetPositions('focus')
 		
 		## new target list
-		if targets['acquisition'] or targets['focus']:
-			targetlist = self.newTargetList()
-			self.publish(targetlist, database=True, dbforce=True)
+		#if targets['acquisition'] or targets['focus']:
+		targetlist = self.newTargetList()
+		self.publish(targetlist, database=True, dbforce=True)
 		##### commented out so it will still publish,
 		#####   even if empty target list
 		#else:
