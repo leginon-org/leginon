@@ -135,6 +135,7 @@ if __name__ == '__main__':
 	notdone=True
 	while notdone:
 		while images:
+			tbegin=time.time()
 			img = images.pop(0)
 
 			# get the image's pixel size:
@@ -199,7 +200,9 @@ if __name__ == '__main__':
 			if (params["crud"]=='TRUE'):
 				if not (os.path.exists("crudfiles")):
 					os.mkdir("crudfiles")
+					t1=time.time()
 					findCrud(params,imgname)
+					tfindCrud= "%.2f" % float(time.time()-t1)
 				# if crudfinder removes all the particles, go to next image
 				if not (os.path.exists("pikfiles/"+imgname+".a.pik.nocrud")):
 					print "no particles left after crudfinder in \""+imgname+".mrc\"\n"
@@ -251,6 +254,11 @@ if __name__ == '__main__':
 			print "	CrossCorr: \t",tcrosscorr,"seconds"
 			print "	findPeaks: \t",tfindPeaks,"seconds"
 			print "	createJPG: \t",tcreateJPG,"seconds"
+			if (params["crud"]=='TRUE'):
+				print "	findCrud:  \t",tfindCrud,"seconds"
+			print " ---------- \t ----------------"
+			ttotal= "%.2f" % float(time.time()-tbegin)
+			print "	TOTAL:     \t",ttotal,"seconds"
 
 		if params["dbimages"]=='TRUE':
 			notdone=True
