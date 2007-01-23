@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python -O
 
 import sys
 import os
@@ -12,6 +12,7 @@ import numextension
 import string
 import math
 
+
 def findPeaks2(params,file):
 	#Does NOT use viewit
 	#Resulting in a 5-fold speed up over findPeaks()
@@ -21,16 +22,18 @@ def findPeaks2(params,file):
 	bin =       int(params["bin"])
 	diam =      float(params["diam"])
 	apix =      float(params["apix"])
+	olapmult =      float(params["overlapmult"])
 
 	blobs = []
 	for i in range(numtempl):
-		blobs.append(findPeaksInMap(file,i+1,threshold,bin))
+		blobs.append(findPeaksInMap(file,i+1,threshold,diam,bin,apix,olapmult))
 
-	mergePikFiles(file,blobs,diam,bin,apix)
+	mergePikFiles(file,blobs,diam,bin,apix,olapmult)
 
 	return
 
-def findPeaksInMap(file,num,threshold,bin):
+
+def findPeaksInMap(file,num,threshold,diam,bin,apix,olapmult):
 
 	infile="cccmaxmap"+str(num)+"00.mrc"
 	outfile="pikfiles/"+file+"."+str(num)+".pik"
@@ -49,9 +52,12 @@ def findPeaksInMap(file,num,threshold,bin):
 	#	blobs = imagefun.find_blobs(cc,cc2,6,3000,60,1)
 	#	print thresh," ",len(blobs)
 
-	blobs = imagefun.find_blobs(cc,cc2,6,100,int(250/bin**2+1),0)
+	blobs = imagefun.find_blobs(cc,cc2,6,3000,int(250/bin**2+1),0)
 	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize)
 	print "Template "+str(num)+": Found",len(blobs),"peaks"
+
+	cutoff = olapmult*diam*0.5/float(bin)/apix	#1.5x particle radius in pixels
+	removeOverlappingBlobs(blobs,cutoff)
 
 	blobs.sort(blob_compare)
 
@@ -71,49 +77,54 @@ def findPeaksInMap(file,num,threshold,bin):
 
 	return blobs
 
+
 def blob_compare(x,y):
 	if float(x.stats['mean']) < float(y.stats['mean']):
 		return 1
 	else:
 		return -1
 
-def mergePikFiles(file,blobs,diam,bin,apix):
-	print "Merging #.pik files into a.pik file"
-	outfile="pikfiles/"+file+"-2.a.pik"
-	if (os.path.exists(outfile)):
-		os.remove(outfile)
-		print "...removed existing file:",outfile
 
+def removeOverlappingBlobs(blobs,cutoff):
 	#distance in pixels for two blobs to be too close together
-	cutoff = 1.5*diam*0.5/float(bin)/apix	#1.5x particle radius in pixels
 	print "... distance cutoff:",cutoff,"pixels"
 	cutsq = cutoff**2+1
 
-	allblobs = []
-	for i in range(len(blobs)):
-		allblobs.extend(blobs[i])
-		#for j in range(len(blobs[i])):
-		#	allblobs.append((blobs[i])[j])
-
-	initblobs = len(allblobs)
-
-	allblobs.sort(blob_compare)
-	
+	initblobs = len(blobs)
+	blobs.sort(blob_compare)
 	i=0
-	while i < len(allblobs):
+	while i < len(blobs):
 		j=0
 		while j < i:
-			distsq = blob_distsq((allblobs)[i],(allblobs)[j])
+			distsq = blob_distsq((blobs)[i],(blobs)[j])
 			if(distsq < cutsq):
-				#print j,i,math.sqrt(distsq)
-				del allblobs[i]
+				del blobs[i]
 				i=i-1
 				j=j-1
 			j=j+1
 		i=i+1
+	postblobs = len(blobs)
+	print "Kept",postblobs,"of",initblobs,"overlapping particles"
+	return blobs
 
-	postblobs = len(allblobs)
 
+def mergePikFiles(file,blobs,diam,bin,apix,olapmult):
+	print "Merging #.pik files into a.pik file"
+	outfile="pikfiles/"+file+".a.pik"
+	if (os.path.exists(outfile)):
+		os.remove(outfile)
+		print "...removed existing file:",outfile
+
+	#PUT ALL THE BLOBS IN ONE ARRAY
+	allblobs = []
+	for i in range(len(blobs)):
+		allblobs.extend(blobs[i])
+
+	#REMOVE OVERLAPPING BLOBS
+	cutoff = olapmult*diam*0.5/float(bin)/apix	#1.5x particle radius in pixels
+	allblobs = removeOverlappingBlobs(allblobs,cutoff)
+
+	#WRITE SELECTED BLOBS TO FILE
 	f=open(outfile, 'w')
 	for i in range(len(blobs)):
 		for blob in (blobs[i]):
@@ -129,8 +140,6 @@ def mergePikFiles(file,blobs,diam,bin,apix):
 					" "+mean_str+" "+std_str+" "+str(int(size))+" "+str(i)
 				f.write(str(out)+"\n")
 	f.close()
-		
-	print "Kept",postblobs,"of",initblobs,"particles"	
 	return
 
 
@@ -165,7 +174,7 @@ def createJPG2(params,file):
 	image2 = array2image(numer)
 	image2 = image2.convert("RGB")
 
-	pikfile="pikfiles/"+file+"-2.a.pik"
+	pikfile="pikfiles/"+file+".a.pik"
 	print "Reading Pik: ",pikfile
 	draw = ImageDraw.Draw(image2)
 	#blend(image1,image2,0.5)
@@ -173,7 +182,7 @@ def createJPG2(params,file):
 	del draw
 
 	
-	outfile="jpgs/"+file+".prtl-2.jpg"
+	outfile="jpgs/"+mrcfile+".prtl.jpg"
 	print "Writing JPEG: ",outfile
 	image2.save(outfile, "JPEG", quality=95)
 
@@ -181,30 +190,22 @@ def createJPG2(params,file):
 def normalizeImage(a):
     screenLevels = 240.0
     print "Normalizing image..."
-    #b=numarray.ravel(a)
     devlimit=5
 
     avg1=numarray.nd_image.mean(a)
-    #print "Average: ",avg1
 
     stdev1=numarray.nd_image.standard_deviation(a)
-    #print "Stdev:   ",stdev1
 
-    min1=numarray.nd_image.minimum(a) #b[numarray.argmin(b)]
-    #print "Min:     ",min1
+    min1=numarray.nd_image.minimum(a)
     if(min1 < avg1-devlimit*stdev1):
-	#print "BIG MIN"
     	min1 = avg1-devlimit*stdev1
 
     max1=numarray.nd_image.maximum(a)
-    #print "Max:     ",max1
     if(max1 > avg1+devlimit*stdev1):
-	#print "BIG MAX"
     	max1 = avg1+devlimit*stdev1
 
     c = (a - min1)/(max1 - min1)*screenLevels
 
-    #print "done"
     return c
 
 
@@ -236,9 +237,6 @@ def array2image(a):
         raise ValueError, "unsupported image mode"
 
 
-
-
-
 def readPikFile(file,draw,diam,bin,apix):
 	print "Making circles..."
 
@@ -247,6 +245,7 @@ def readPikFile(file,draw,diam,bin,apix):
 		"#f2f23d","#3df2f2","#f23df2", \
 		"#f2973d","#3df297","#973df2", \
 		"#97f23d","#3d97f2","#f23d97", ]
+
 	ps=int(1.5*diam*0.5/float(bin)/apix) #1.5x particle radius
 	ps=float(1.5*diam*0.5/float(bin)/apix) #1.5x particle radius
 	f=open(file, 'r')
@@ -259,10 +258,11 @@ def readPikFile(file,draw,diam,bin,apix):
 		y1=float(bits[2])/float(bin)
 		coord=(x1-ps, y1-ps, x1+ps, y1+ps)
 		if(len(bits) > 6):
-			num = int(bits[6])
+			num = int(bits[6])%12
 		else:
 			num = 0
 		draw.ellipse(coord,outline=circle_colors[num])
 		#draw.rectangle(coord,outline=color1)
 	f.close()
 	return draw
+

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python -O
 # Python functions for selexon.py
 
 import os, re, sys
@@ -33,7 +33,7 @@ def createDefaults():
 	params["startang"]=0
 	params["endang"]=10
 	params["incrang"]=20
-	params["thresh"]=0
+	params["thresh"]=0.5
 	params["autopik"]=0
 	params["lp"]=30
 	params["hp"]=600
@@ -64,6 +64,8 @@ def createDefaults():
 	params['scale']=1
 	params['projectId']=None
 	params['prtltype']=None
+	params['method']="updated"
+	params['overlapmult']=1.5
 
 	return params
 
@@ -91,7 +93,7 @@ def printPrtlUploadHelp():
 	sys.exit(1)
 
 def printSelexonHelp():
-	print "\nUsage:\nselexon.py <file> template=<name> apix=<pixel> diam=<n> bin=<n> [templateIds=<n,n,n,n,...>] [range=<start,stop,incr>] [thresh=<threshold> or autopik=<n>] [lp=<n>] [hp=<n>] [crud or cruddiam=<n>] [crudonly] [crudblur=<n>] [crudlow=<n>] [crudhi=<n>] [box=<n>] [continue] [dbimages=<session>,<preset>] [alldbimages=<session>] [commit] [defocpair] [shiftonly] [outdir=<path>]"
+	print "\nUsage:\nselexon.py <file> template=<name> apix=<pixel> diam=<n> bin=<n> [templateIds=<n,n,n,n,...>] [range=<start,stop,incr>] [thresh=<threshold> or autopik=<n>] [lp=<n>] [hp=<n>] [crud or cruddiam=<n>] [crudonly] [crudblur=<n>] [crudlow=<n>] [crudhi=<n>] [box=<n>] [continue] [dbimages=<session>,<preset>] [alldbimages=<session>] [commit] [defocpair] [shiftonly] [outdir=<path>] [method=<method>] [overlapmult=<n>]"
 	print "Examples:\nselexon 05jun23a_00001en.mrc template=groEL apix=1.63 diam=250 bin=4 range=0,90,10 thresh=0.45 crud"
 	print "selexon template=groEL apix=1.63 diam=250 bin=4 range=0,90,10 thresh=0.45 crud dbimages=05jun23a,en continue\n"
 	print "template=<name>    : name should not have the extension, or number."
@@ -103,9 +105,10 @@ def printSelexonHelp():
 	print "                     stop angle at the given increment"
 	print "                     User can also specify ranges for each template (i.e. range1=0,60,20)"
 	print "                     NOTE: if you don't want to rotate the image, leave this parameter out"
-	print "thresh=<thr>       : manual cutoff for correlation peaks (0-1), don't use if want autopik"
+	print "thresh=<thr>       : manual cutoff for correlation peaks (0-1), don't use if want autopik (default is 0.5)"
 	print "autopik=<thr>      : automatically calculate threshold, n = average number of particles per image"
-	print "lp=<n>, hp=<n>     : low-pass and high-pass filter (in Angstroms) - defaults are 30 & 600\n"
+	print "                     NOTE: autopik does NOT work for *updated* method"
+	print "lp=<n>, hp=<n>     : low-pass and high-pass filter (in Angstroms) - (defaults are 30 & 600)"
 	print "                     NOTE: high-pass filtering is currently disabled"
 	print "crud               : run the crud finder after the particle selection"
 	print "                     (will use particle diameter by default)"
@@ -129,6 +132,11 @@ def printSelexonHelp():
 	print "shiftonly          : skip particle picking and only calculate shifts"
 	print "templateIds        : list the database id's of the templates to use"
 	print "outdir=<path>      : output directory in which results will be written"
+	print "method=<method>    : choices: classic, updated (default), and experimental"
+	print "                       *classic* calls findem and viewit"
+	print "                       *updated* uses findem and internally find peaks (default)"
+	print "                       *experimental* internally generates cc maps and find peaks"
+	print "overlapmult=<n>    : distance multiple for two particles to overlap (default is 1.5 X)"
 	print "\n"
 
 	sys.exit(1)
@@ -197,7 +205,8 @@ def parsePrtlUploadInput(args,params):
         
 def parseSelexonInput(args,params):
 	# check that there are enough input parameters
-	if (len(args)<2 or args[1]=='help') :
+	if (len(args)<2 or args[1]=='help' or args[1]=='--help' \
+		or args[1]=='-h' or args[1]=='-help') :
 		printSelexonHelp()
 
 	lastarg=1
@@ -302,6 +311,10 @@ def parseSelexonInput(args,params):
 			params['defocpair']=True
 		elif arg=='shiftonly':
 			params['shiftonly']=True
+		elif (elements[0]=='method'):
+			params['method']=str(elements[1])
+		elif (elements[0]=='overlapdist'):
+			params['overlapmult']=float(elements[1])
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)

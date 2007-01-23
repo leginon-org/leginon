@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/python -O
 # Python wrapper for the selexon program
 # Will by default create a "jpgs" directory and save jpg images of selections & crudfinder results
 
@@ -6,6 +6,7 @@ import os, re, sys
 import data
 import time
 from selexonFunctions import *
+from selexonFunctions2 import *
 
 selexondonename='.selexondone.py'
 
@@ -91,7 +92,8 @@ if __name__ == '__main__':
 		# go through the template mrc files and downsize & filter them
 		for tmplt in params['templatelist']:
 			dwnsizeTemplate(params,tmplt)
-		print "\ndownsize & filtered "+str(len(params['templatelist']))+" file(s) with root \""+params["template"]+"\"\n"
+		print "\ndownsize & filtered "+str(len(params['templatelist']))+ \
+			" file(s) with root \""+params["template"]+"\"\n"
 			
 	# unpickle dictionary of previously processed images
 	donedict=getDoneDict(selexondonename)
@@ -161,9 +163,29 @@ if __name__ == '__main__':
 				rescaleTemplates(img,params)
 			
 			# run FindEM
-			dwnsizeImg(params,imgname)
-			runFindEM(params,imgname)
-			findPeaks(params,imgname)
+			if params['method'] == "experimental":
+				print "Using *experimental* Python CC Method..."
+				t1=time.time()
+				print "THIS IS CURRENTLY DISABLED"
+				#runCrossCorr(params,imgname)
+				tcrosscorr= "%.2f" % float(time.time()-t1)
+			else:
+				print "Using *classic* FindEM Method..."
+				t1=time.time()
+				dwnsizeImg(params,imgname)
+				runFindEM(params,imgname)
+				tcrosscorr= "%.2f" % float(time.time()-t1)
+
+			if params['method'] == "classic":
+				print "Using *classic* Viewit Method..."
+				t1=time.time()
+				findPeaks(params,imgname)
+				tfindPeaks= "%.2f" % float(time.time()-t1)
+			else:
+				print "Using *updated* Leginon Method..."
+				t1=time.time()
+				findPeaks2(params,imgname)
+				tfindPeaks= "%.2f" % float(time.time()-t1)
 
 			# if no particles were found, skip rest and go to next image
 			if not (os.path.exists("pikfiles/"+imgname+".a.pik")):
@@ -188,7 +210,16 @@ if __name__ == '__main__':
 
 			# create jpg of selected particles if not created by crudfinder
 			if (params["crud"]=='FALSE'):
-				createJPG(params,imgname)
+				if params['method'] == "classic":
+					print "Using *classic* Viewit Method..."
+					t1=time.time()
+					createJPG(params,imgname)
+					tcreateJPG= "%.2f" % float(time.time()-t1)
+				else:
+					print "Using *updated* python imaging Method..."
+					t1=time.time()
+					createJPG2(params,imgname)
+					tcreateJPG= "%.2f" % float(time.time()-t1)
 
 			# convert resulting pik file to eman box file
 			if (params["box"]>0):
@@ -210,6 +241,16 @@ if __name__ == '__main__':
  			donedict[imgname]=True
 			writeDoneDict(donedict,selexondonename)
 	    
+			print "TIME SUMMARY:"
+			if params['method'] == "classic":
+				print "Using *classic* Viewit Method..."
+			elif params['method'] == "experimental":
+				print "Using *experimental* FindEM-free Method..."
+			else:
+				print "Using *updated* Selexon Method..."
+			print "	CrossCorr: \t",tcrosscorr,"seconds"
+			print "	findPeaks: \t",tfindPeaks,"seconds"
+			print "	createJPG: \t",tcreateJPG,"seconds"
 
 		if params["dbimages"]=='TRUE':
 			notdone=True
@@ -232,4 +273,5 @@ if __name__ == '__main__':
 			os.remove(scdwnname)
 			i=i+1
 			
+
 
