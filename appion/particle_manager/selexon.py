@@ -251,14 +251,14 @@ if __name__ == '__main__':
 				print "Using *experimental* FindEM-free Method..."
 			else:
 				print "Using *updated* Selexon Method..."
-			print "	CrossCorr: \t",tcrosscorr,"seconds"
-			print "	findPeaks: \t",tfindPeaks,"seconds"
-			print "	createJPG: \t",tcreateJPG,"seconds"
+			print "\tCrossCorr: \t",tcrosscorr,"seconds"
+			print "\tfindPeaks: \t",tfindPeaks,"seconds"
+			print "\tcreateJPG: \t",tcreateJPG,"seconds"
 			if (params["crud"]=='TRUE'):
 				print "	findCrud:  \t",tfindCrud,"seconds"
-			print " ---------- \t ----------------"
+			print "\t---------- \t----------------"
 			ttotal= "%.2f" % float(time.time()-tbegin)
-			print "	TOTAL:     \t",ttotal,"seconds"
+			print "\tTOTAL:     \t",ttotal,"seconds"
 
 		if params["dbimages"]=='TRUE':
 			notdone=True
