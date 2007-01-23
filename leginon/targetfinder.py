@@ -1015,9 +1015,11 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		if targets['acquisition'] or targets['focus']:
 			targetlist = self.newTargetList()
 			self.publish(targetlist, database=True, dbforce=True)
-		else:
-			self.setStatus('idle')
-			return
+		##### commented out so it will still publish,
+		#####   even if empty target list
+		#else:
+		#	self.setStatus('idle')
+		#	return
 
 		for type in ('focus', 'acquisition'):
 			n = len(targets[type])
