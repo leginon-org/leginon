@@ -909,7 +909,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def makeFocusTarget(self):
 		if not self.regionarrays:
 			return
-		biggestregion = self.regionarrays[0]
+		middle = len(self.regionarrays) / 2
+		biggestregion = self.regionarrays[middle]
 		biggestregionlen = len(biggestregion)
 		for region in self.regionarrays:
 			newlen = len(region)
