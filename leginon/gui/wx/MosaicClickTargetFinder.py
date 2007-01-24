@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.23 $
+# $Revision: 1.24 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-01-13 00:49:57 $
-# $Author: pulokas $
+# $Date: 2007-01-24 18:38:23 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -282,8 +282,13 @@ class RegionSettingsDialog(gui.wx.Settings.Dialog):
 		szoptions.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szoptions.Add(self.widgets['max threshold'], (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+		label = wx.StaticText(self, -1, 'Max Ellipse Axis Ratio')
+		self.widgets['axis ratio'] = FloatEntry(self, -1, chars=8)
+		szoptions.Add(label, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['axis ratio'], (6, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
 		self.widgets['black on white'] = wx.CheckBox(self, -1, 'Look for black objects on white background')
-		szoptions.Add(self.widgets['black on white'], (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['black on white'], (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		self.btest = wx.Button(self, -1, 'Test')
 		szbutton = wx.GridBagSizer(6, 6)
