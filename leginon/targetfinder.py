@@ -260,6 +260,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	defaultsettings.update({
 		'min region area': 0.01,
 		'max region area': 0.8,
+		'axis ratio': 2.0,
 		've limit': 50,
 		'black on white': False,
 		'raster spacing': 50,
@@ -753,16 +754,22 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		regions,image = libCV.FindRegions(self.mosaicimage, minsize, maxsize, 0, 0, white_on_black,black_on_white)
 		self.regionarrays = []
 		displaypoints = []
+		self.regionpolygon = []
 		for i,region in enumerate(regions):
-			regionarray = region['regionBorder']
-			self.logger.info('Region %d has %d points' % (i, regionarray.shape[1]))
-			## reduce to 20 points
-			regionarray = libCV.PolygonVE(regionarray, velimit)
-			regionarray.transpose()
-			self.regionarrays.append(regionarray)
+			regionpolygon = region['regionEllipse']
+			regionaxismajor = regionpolygon[2]
+			regionaxisminor = regionpolygon[3]
+			axisratio = regionaxismajor/regionaxisminor
+			if axisratio < self.settings['axis ratio']:
+				regionarray = region['regionBorder']
+				self.logger.info('Region %d has %d points' % (i, regionarray.shape[1]))
+				## reduce to 20 points
+				regionarray = libCV.PolygonVE(regionarray, velimit)
+				regionarray.transpose()
+				self.regionarrays.append(regionarray)
 
-			regiondisplaypoints = self.transpose_points(regionarray)
-			displaypoints.extend(regiondisplaypoints)
+				regiondisplaypoints = self.transpose_points(regionarray)
+				displaypoints.extend(regiondisplaypoints)
 
 		self.setTargets(displaypoints, 'region', block=False)
 
