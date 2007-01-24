@@ -5,10 +5,10 @@ affine_transform(input, matrix, offset=0.0, output_shape=None, output_type=None,
 
 offset means:
 	coordinate of input that corresponds to 0,0 in output
-
 '''
 
 import Mrc
+import Mrcmm
 import numarray
 import numarray.nd_image
 import numarray.linear_algebra
@@ -20,71 +20,101 @@ import time
 import sys
 import gonmodel
 import newdict
+import profile
+import cPickle
+import glob
+import os.path
+
+def memmapMRC(fileref):
+	fullname = os.path.join(fileref.path, fileref.filename)
+	im = Mrcmm.mrc_to_numeric(fullname)
+	return im
+
+def calculateSectionAngle(target1, target2):
+	target1['delta row']
 
 stagetransformers = {}
-def getStageTransformer(tem, ccd, ht, mag, timestamp):
-	key = (tem.dbid,ccd.dbid,ht,mag,timestamp)
+def getStageTransformer(tem, ccd, ht, mag, timestamp, rotation=0.0):
+	key = (tem.dbid,ccd.dbid,ht,mag,rotation)
 	if key in stagetransformers:
 		return stagetransformers[key]
-	st = StageTransformer(tem, ccd, ht, mag, timestamp)
+	st = StageTransformer(tem, ccd, ht, mag, timestamp, rotation)
 	stagetransformers[key] = st
 	return st
 
 class StageTransformer(object):
-	def __init__(self, tem, ccd, ht, mag, timestamp):
+	def __init__(self, tem, ccd, ht, mag, timestamp, rotation=0.0):
 		## load stage model from db
 		self.xmod = self.getModelCal(tem, ccd, 'x', timestamp)
 		self.ymod = self.getModelCal(tem, ccd, 'y', timestamp)
 		self.xmag = self.getMagCal(tem, ccd, 'x', ht, mag, timestamp)
 		self.ymag = self.getMagCal(tem, ccd, 'y', ht, mag, timestamp)
+		self.matrixcal = self.getMatrixCal(tem, ccd, ht, mag, timestamp)
+		self.rotation = rotation
 		self.createMatrix()
 
-	def createMatrix(self):
-		xscale = self.xmag['mean']
-		yscale = self.ymag['mean']
-		xang = self.xmag['angle']
-		yang = self.ymag['angle']
-		self.matrix = numarray.array(
-			((xscale * numarray.sin(xang) , xscale * numarray.cos(xang)),
-			(yscale * numarray.sin(yang) , yscale * numarray.cos(yang))), numarray.Float32
+	def rotationMatrix(self, angle):
+		mat = numarray.array(
+			(
+				(numarray.cos(angle),-numarray.sin(angle)),
+				(numarray.sin(angle), numarray.cos(angle))
+			), numarray.Float32
 		)
+		return mat
+
+	def createMatrix(self):
+		if None in (self.xmag, self.ymag):
+			self.matrix = self.matrixcal
+		else:
+			xscale = self.xmag['mean']
+			yscale = self.ymag['mean']
+			xang = self.xmag['angle']
+			yang = self.ymag['angle']
+			self.matrix = numarray.array(
+				((xscale * numarray.sin(xang) , xscale * numarray.cos(xang)),
+				(yscale * numarray.sin(yang) , yscale * numarray.cos(yang))), numarray.Float32
+			)
+		rot = self.rotationMatrix(self.rotation)
+		self.matrix = numarray.matrixmultiply(self.matrix, rot)
 		self.imatrix = numarray.linear_algebra.inverse(self.matrix)
 
-	def itransform(self, position, scope, camera):
-		gx0 = scope['stage position']['x']
-		gy0 = scope['stage position']['y']
+	def itransform(self, position, stage0, bin):
+		gx0 = stage0['x']
+		gy0 = stage0['y']
 		gx1 = position['x']
 		gy1 = position['y']
-		binx = camera['binning']['x']
-		biny = camera['binning']['y']
+		binx = bin['x']
+		biny = bin['y']
 
 		## integrate over model
-		dgx = self.xmod.integrate(gx0,gx1)
-		dgy = self.ymod.integrate(gy0,gy1)
+		if None in (self.xmod, self.ymod):
+			dgx = gx1 - gx0
+			dgy = gy1 - gy0
+		else:
+			dgx = self.xmod.integrate(gx0,gx1)
+			dgy = self.ymod.integrate(gy0,gy1)
 		## rotate/scale
-		drow,dcol = numarray.matrixmultiply(self.imatrix, (dgx,dgy))
+		drow,dcol = -numarray.matrixmultiply(self.imatrix, (dgx,dgy))
 
 		pixelshift = {'row': drow/biny, 'col': dcol/binx}
 		return pixelshift
 	
-	def transform(self, pixelshift, scope, camera):
-		gx0 = scope['stage position']['x']
-		gy0 = scope['stage position']['y']
-		binx = camera['binning']['x']
-		biny = camera['binning']['y']
-		pixrow = pixelshift['row'] * biny
-		pixcol = pixelshift['col'] * binx
-	
-		gx1,gy1 = numarray.matrixmultiply(self.matrix, (pixrow,pixcol))
+	def transform(self, pixvect, stage0, bin):
+		gx0 = stage0['x']
+		gy0 = stage0['y']
+		binx = bin['x']
+		biny = bin['y']
 
-		dgx = self.xmod.predict(gx0,gx1)
-		dgy = self.ymod.predict(gy0,gy1)
+		pixrow = pixvect['row'] * biny
+		pixcol = pixvect['col'] * binx
 	
-		newscope = data.ScopeEMData(initializer=scope)
-		newscope['stage position'] = dict(scope['stage position'])
-		newscope['stage position']['x'] += dgx
-		newscope['stage position']['y'] += dgy
-		return newscope
+		dgx,dgy = -numarray.matrixmultiply(self.matrix, (pixrow,pixcol))
+
+		if None not in (self.xmod, self.ymod):
+			dgx = self.xmod.predict(gx0,dgx)
+			dgy = self.ymod.predict(gy0,dgy)
+
+		return {'x':gx0+dgx, 'y':gy0+dgy}
 		
 	def getMagCal(self, tem, ccd, axis, ht, mag, timestamp):
 		qinst = data.StageModelMagCalibrationData(magnification=mag, axis=axis)
@@ -95,13 +125,19 @@ class StageTransformer(object):
 		caldatalist = dbdk.query(qinst)
 	
 		# get the one that was valid at timestamp
+		caldata = None
 		for cal in caldatalist:
 			if cal.timestamp < timestamp:
-				caldata = cal
+				caldata = dict(cal)
 				break
+
+		if caldata is None:
+			if caldatalist:
+				caldata = dict(caldatalist[0])
+			else:
+				caldata = None
 	
-		caldata2 = dict(caldata)
-		return caldata2
+		return caldata
 	
 	def getModelCal(self, tem, ccd, axis, timestamp):
 		qinst = data.StageModelCalibrationData(axis=axis)
@@ -110,10 +146,17 @@ class StageTransformer(object):
 		caldatalist = dbdk.query(qinst)
 	
 		# get the one that was valid at timestamp
+		caldata = None
 		for cal in caldatalist:
 			if cal.timestamp < timestamp:
 				caldata = cal
 				break
+
+		if caldata is None:
+			if caldatalist:
+				caldata = caldatalist[0]
+			else:
+				return None
 	
 		## return it to rank 0 array
 		caldata2 = {}
@@ -124,6 +167,30 @@ class StageTransformer(object):
 		mod = gonmodel.GonModel()
 		mod.fromDict(caldata2)
 		return mod
+
+	def getMatrixCal(self, tem, ccd, ht, mag, timestamp):
+		qinst = data.MatrixCalibrationData(type='stage position', magnification=mag)
+		qinst['high tension'] = ht
+		qinst['tem'] = tem
+		qinst['ccdcamera'] = ccd
+	
+		caldatalist = dbdk.query(qinst)
+	
+		# get the one that was valid at timestamp
+		caldata = None
+		for cal in caldatalist:
+			if cal.timestamp < timestamp:
+				caldata = cal['matrix']
+				break
+
+		if caldata is None:
+			if caldatalist:
+				caldata = caldatalist[0]['matrix']
+			else:
+				caldata = None
+	
+		return caldata
+
 
 import mrc2jpg2out
 def writeJPG(a, filename, clip, quality):
@@ -137,12 +204,12 @@ def affine_transform_offset(inputshape, outputshape, affine_matrix, offset=(0,0)
 	'''
 	outcenter = numarray.array(outputshape, numarray.Float32)
 	outcenter.shape = (2,)
-	outcenter /= 2.0
+	outcenter = outcenter / 2.0 - 0.5
 	outcenter += offset
 
 	incenter = numarray.array(inputshape, numarray.Float32)
 	incenter.shape = (2,)
-	incenter /= 2.0
+	incenter = incenter / 2.0 - 0.5
 
 	outcenter2 = numarray.matrixmultiply(affine_matrix, outcenter)
 
@@ -160,14 +227,21 @@ def getSimpleStageMatrix(scope, camera):
 	return caldatalist[0]['matrix']
 
 class Image(object):
-	def __init__(self, scope, camera, timestamp, fileref=None):
+	def __init__(self, scope, camera, timestamp, fileref=None, rotation=0.0):
 		self.scope = data.ScopeEMData(initializer=scope)
 		self.camera = data.CameraEMData(initializer=camera)
 		self.shape = self.camera['dimension']['y'], self.camera['dimension']['x']
 		self.fileref = fileref
 		self.timestamp = timestamp
-		self.trans = getStageTransformer(scope['tem'], camera['ccdcamera'], scope['high tension'], scope['magnification'], timestamp)
-		self.calculateCorners()
+		self.trans = getStageTransformer(scope['tem'], camera['ccdcamera'], scope['high tension'], scope['magnification'], timestamp, rotation)
+		self.newStage(scope['stage position'])
+
+	def newStage(self, stage):
+		self.scope['stage position'] = stage
+		self.stage = stage
+		self.stagex = stage['x']
+		self.stagey = stage['y']
+		self.calculateStagePositions()
 		self.calculateMaxDist()
 
 	def readImage(self):
@@ -176,27 +250,32 @@ class Image(object):
 		self.fileref.data = None
 		return im
 	
-	def calculateCorners(self):
+	def calculateStagePositions(self):
+		self.bin = self.camera['binning']
+		self.binx = self.bin['x']
+		self.biny = self.bin['y']
+
 		rowhalf = self.shape[0]/2.0
 		colhalf = self.shape[1]/2.0
 		pixelcorners = (-rowhalf,-colhalf), (-rowhalf,colhalf), (rowhalf,colhalf), (rowhalf,-colhalf)
+
 		self.stagecorners = []
 		for row,col in pixelcorners:
 			pixelshift = {'row':row, 'col':col}
-			newscope = self.trans.transform(pixelshift, self.scope, self.camera)
-			stage = newscope['stage position']
-			self.stagecorners.append( (stage['x'],stage['y']) )
+			newstage = self.trans.transform(pixelshift, self.stage, self.bin)
+			self.stagecorners.append( (newstage['x'],newstage['y']) )
+		self.stagecenter = (self.stage['x'], self.stage['y'])
 
 	def calculateMaxDist(self):
 		self.maxdist = 0.0
 		for corner in self.stagecorners:
 			dist = numarray.hypot(self.scope['stage position']['x']-corner[0], self.scope['stage position']['y']-corner[1])
 			if dist > self.maxdist:	
-				self.maxdist = dist
+				self.maxdist = 1.1 * dist
 
 	def isClose(self, other):
-		xdist = other.scope['stage position']['x'] - self.scope['stage position']['x']
-		ydist = other.scope['stage position']['y'] - self.scope['stage position']['y']
+		xdist = other.stagex - self.stagex
+		ydist = other.stagey - self.stagey
 		dist = numarray.hypot(xdist,ydist)
 		if dist > (self.maxdist + other.maxdist):
 			return False
@@ -204,56 +283,44 @@ class Image(object):
 			return True
 	
 class OutputImage(Image):
-	def __init__(self, scope, camera, timestamp, scale=1.0, rotation=0.0):
-		Image.__init__(self, scope, camera, timestamp)
+	def __init__(self, scope, camera, timestamp, rotation=0.0):
+		Image.__init__(self, scope, camera, timestamp, rotation=rotation)
 
-		self.calculateOutputMatrix(scale, rotation)
-
+		self.rotation = rotation
+		self.outputmatrix = self.trans.imatrix
 		self.image = None
 		self.inserted = 0
-
-	def calculateOutputMatrix(self, scale, rotation):
-		matrix = self.trans.imatrix
-		'''
-		if scale is not None:
-			self.scale = numarray.array(((scale, 0),(0,scale)), numarray.Float32)
-			matrix = numarray.matrixmultiply(self.scale, matrix)
-		else:
-			self.scale = numarray.identity(2)
-		if rotation is not None:
-			self.rot = numarray.array( ((numarray.cos(rotation), -numarray.sin(rotation)),
-			 (numarray.sin(rotation),  numarray.cos(rotation))), numarray.Float32)
-			matrix = numarray.matrixmultiply(self.rot, matrix)
-		else:
-			self.rot = numarray.identity(2)
-		'''
-		self.outputmatrix = matrix
+		self.targets = []
 
 	def containInputs(self, inputimages):
-		## find necessary range for global space
-		rowmin = rowmax = colmin = colmax = 0
+		stagepositions = []
 		for input in inputimages:
-			for pos in input.stagecorners:
-				# find pixel position in global space
-				stage = {'x':pos[0], 'y':pos[1]}
-				pixels = self.trans.itransform(stage, self.scope, self.camera)
-				if pixels['row'] < rowmin:
-					rowmin = pixels['row']
-				if pixels['row'] > rowmax:
-					rowmax = pixels['row']
-				if pixels['col'] < colmin:
-					colmin = pixels['col']
-				if pixels['col'] > colmax:
-					colmax = pixels['col']
+			stagepositions.extend(input.stagecorners)
+		self.containStagePositions(stagepositions)
+
+	def containStagePositions(self, stagepositions):
+		## find necessary range for global space
+		rows = []
+		cols = []
+		for stage in stagepositions:
+			# find pixel position in global space
+			stagepos = {'x':stage[0], 'y':stage[1]}
+			pixels = self.trans.itransform(stagepos, self.stage, self.bin)
+			rows.append(pixels['row'])
+			cols.append(pixels['col'])
+		rowmin = min(rows)
+		rowmax = max(rows)
+		colmin = min(cols)
+		colmax = max(cols)
 
 		## transform back to stage coordinates
 		centerpixel = {'row':(rowmin+rowmax)/2.0, 'col':(colmin+colmax)/2.0}
-
 		## update scope and camera info to contain all inputs
 		self.shape = int(round(rowmax-rowmin)), int(round(colmax-colmin))
 		self.camera['dimension']['x'] = self.shape[1]
 		self.camera['dimension']['y'] = self.shape[0]
-		self.scope = self.trans.transform(centerpixel, self.scope, self.camera)
+		newstage = self.trans.transform(centerpixel, self.stage, self.bin)
+		self.newStage(newstage)
 
 	def calculateTiles(self, tilesize):
 		## figure out the final shape of global space
@@ -269,16 +336,19 @@ class OutputImage(Image):
 		for row in numarray.arange(firstpixel, rowsize, tilesize):
 			coli = 0
 			for col in numarray.arange(firstpixel, colsize, tilesize):
-				pixel = {'row':centerpixel[0]-row, 'col':centerpixel[1]-col}
-				tilescope = self.trans.transform(pixel, self.scope, self.camera)
+				pixel = {'row':row-centerpixel[0], 'col':col-centerpixel[1]}
+				newstage = self.trans.transform(pixel, self.stage, self.bin)
+				tilescope = data.ScopeEMData(initializer=self.scope)
+				tilescope['stage position'] = newstage
 				tilecamera = data.CameraEMData(initializer=self.camera)
 				tilecamera['dimension'] = {'x':tilesize, 'y':tilesize}
 				args = tilescope, tilecamera, self.timestamp
-				tiles[(rowi,coli)] = args
+				kwargs = {'rotation': self.rotation}
+				tiles[(rowi,coli)] = {'args':args, 'kwargs':kwargs}
 				coli += 1
 			rowi += 1
-		
-		print 'Calculated Tiles:', len(tiles)
+
+		print 'Calculated %d tiles, %d rows, %d cols' % (len(tiles), rowi, coli)
 		return tiles
 
 	def needImage(self, image):
@@ -286,149 +356,367 @@ class OutputImage(Image):
 			return False
 		if polygon.pointsInPolygon(image.stagecorners, self.stagecorners):
 			return True
+		if polygon.pointsInPolygon([image.stagecenter], self.stagecorners):
+			return True
 		if polygon.pointsInPolygon(self.stagecorners, image.stagecorners):
+			return True
+		if polygon.pointsInPolygon([self.stagecenter], image.stagecorners):
 			return True
 		return False
 
-	def insertImage(self, input):
+	def insertImage(self, input, target=None):
 		if not self.needImage(input):
 			return
 
 		## differnce in binning requires scaling
 		## assume equal x and y binning
-		binscale = float(input.camera['binning']['x']) / self.camera['binning']['x']
+		binscale = float(input.binx) / self.binx
 		binmatrix = binscale * numarray.identity(2)
 
 		## affine transform matrix is input matrix
 		atmatrix = numarray.matrixmultiply(binmatrix, input.trans.matrix)
-		atmatrix = numarray.matrixmultiply(atmatrix, self.outputmatrix)
+		atmatrix = numarray.matrixmultiply(self.outputmatrix, atmatrix)
 		## affine_transform function requires the inverse matrix
 		atmatrix = numarray.linear_algebra.inverse(atmatrix)
-	
-	
-		## calculate offset position
-		pixels = self.trans.itransform(input.scope['stage position'], self.scope, self.camera)
-		## additional scale and rotation
-		pixels = (pixels['row'],pixels['col'])
-		'''
-		pixels = numarray.matrixmultiply(self.rot, pixels)
-		pixels = numarray.matrixmultiply(self.scale, pixels)
-		'''
 
-		shift = -pixels[0], -pixels[1]
+		## calculate offset position
+		if target is None:
+			instage = input.stage
+		else:
+			instage = input.trans.transform(target, input.stage, input.bin)
+
+		pixels = self.trans.itransform(instage, self.stage, self.bin)
+		pixels = (pixels['row'],pixels['col'])
+		shift = pixels[0], pixels[1]
 		offset = affine_transform_offset(input.shape, self.shape, atmatrix, shift)
 
-		## affine transform into temporary output
-		output = numarray.zeros(self.shape, numarray.Float32)
-		inputarray = input.readImage()
-		numarray.nd_image.affine_transform(inputarray, atmatrix, offset=offset, output=output, output_shape=self.shape, mode='constant', cval=0.0, order=3)
-	
-		## copy temporary into final
-		if self.image is None:
-			self.image = numarray.zeros(self.shape, numarray.Float32)
-		numarray.putmask(self.image, output, output)
-		self.inserted += 1
+		if target is None:
+			## affine transform into temporary output
+			output = numarray.zeros(self.shape, numarray.Float32)
+
+			inputarray = memmapMRC(input.fileref)
+
+			numarray.nd_image.affine_transform(inputarray, atmatrix, offset=offset, output=output, output_shape=self.shape, mode='constant', cval=0.0, order=splineorder)
+
+			if self.image is None:
+				self.image = numarray.zeros(self.shape, numarray.Float32)
+
+			## copy temporary into final
+			numarray.putmask(self.image, output, output)
+			self.inserted += 1
+		else:
+			pix = self.shape[0]/2.0+shift[0],self.shape[1]/2.0+shift[1]
+			self.targets.append(pix)
+
 
 class InputImage(Image):
 	pass
 
 
-def getImageData(filename):
-	q = data.AcquisitionImageData(filename=filename)
-	images = dbdk.query(q, readimages=False, results=1)
-	return images[0]
+def getImageData(filename_or_id):
+	print 'getImageData(%s)' % (filename_or_id,)
+	if isinstance(filename_or_id, basestring):
+		q = data.AcquisitionImageData(filename=filename_or_id)
+		images = dbdk.query(q, readimages=False, results=1)
+		return images[0]
+	else:
+		im = dbdk.direct_query(data.AcquisitionImageData, filename_or_id, readimages=False)
+		return im
 
+def createTargetInputs(targetimages):
+	targetinputs = []
+	for id, target in targetimages:
+		imdata = getImageData(id)
+		fileref = imdata.special_getitem('image', dereference=False)
+		input = InputImage(imdata['scope'], imdata['camera'], imdata.timestamp, fileref)
+		targetinputs.append((input, target))
+	return targetinputs
 
-dbdk = dbdatakeeper.DBDataKeeper()
+def targetStagePositions(targetinputs):
+	stagepositions = []
+	for input in targetinputs:
+		inputim = input[0]
+		target = input[1]
+		stage = inputim.trans.transform(target, inputim.stage, inputim.bin)
+		stagepositions.append(stage)
+	return stagepositions
 
-## exb 1-221
-#exfilenames = ['07jan10c_r_00001gr_%05dexa' % i for i in range(2,222)]
-exfilenames = ['07jan10c_r_00001gr_00%03dexa' % i for i in range(100,102)]
+def longEdgeAngle(left_target, right_target, output):
+	# angle from column axis
+	# assumes all targets from same mag
 
-print 'reading image metadata from DB'
-eximages = [getImageData(filename) for filename in exfilenames]
+	# find stage positions of targets
+	stagepos = []
+	for input in (left_target, right_target):
+		inputim = input[0]
+		target = input[1]
+		stage = inputim.trans.transform(target, inputim.stage, inputim.bin)
+		stagepos.append(stage)
+	edgevectx = stagepos[1]['x'] - stagepos[0]['x']
+	edgevecty = stagepos[1]['y'] - stagepos[0]['y']
 
-inputimages = []
-for imdata in eximages:
-	fileref = imdata.special_getitem('image', dereference=False)
-	input = InputImage(imdata['scope'], imdata['camera'], imdata.timestamp, fileref)
-	inputimages.append(input)
+	## angle from horizontal axis, defined by first two corners
+	horizx = output.stagecorners[1][0] - output.stagecorners[0][0]
+	horizy = output.stagecorners[1][1] - output.stagecorners[0][1]
 
-## for tiles, this is global output space
-im0 = eximages[0]
-timestamp = im0.timestamp
-scope = im0['scope']
-camera = im0['camera']
-globaloutput = OutputImage(scope, camera, timestamp)
-globaloutput.containInputs(inputimages)
-tileargsdict = globaloutput.calculateTiles(256)
-
-'''
-print 'calculating image stats...'
-min = None
-max = None
-mean = None
-std = None
-q = data.AcquisitionImageStatsData(image=eximages[0])
-stats = db.query(q, results=1)[0]
-sum = stats['mean']
-std = stats['stdev']
-for im in eximages[1:]:
-	q = data.AcquisitionImageStatsData(image=im)
-	stats = db.query(q, results=1)[0]
-	if stats['stdev'] > std:
-		std = stats['stdev']
-	sum += stats['mean']
-mean = sum / len(eximages)
-clip = (mean-3*std, mean+3*std)
-print 'clip', clip
-'''
-
-def test():
-	t0 = time.time()
-	tilesdone = 0
-	tilestotal = len(tileargsdict)
-	for tileindex,tileargs in tileargsdict.items():
-		print 'TILE', tileindex
-		output = OutputImage(*tileargs)
+	edgeangle = numarray.arctan2(edgevecty, edgevectx)
+	horizangle = numarray.arctan2(horizy, horizx)
 	
-		for input in inputimages:
-			output.insertImage(input)
-		print '   inserted %d images' % (output.inserted,)
-	
-		f = open('outputinfo', 'a')
-		r,c = tileindex
-		x,y = output.scope['stage position']['x'], output.scope['stage position']['y']
-		f.write('%d\t%d\t%e\t%e\n' % (r,c,x,y))
+	return edgeangle - horizangle
+
+def createInputs(images, cachefile=None):
+	inputimages = []
+	for imdata in images:
+		fileref = imdata.special_getitem('image', dereference=False)
+		print 'Creating InputImage:', imdata['filename']
+		input = InputImage(imdata['scope'], imdata['camera'], imdata.timestamp, fileref)
+		inputimages.append(input)
+	if cachefile is not None:
+		f = open(cachefile, 'w')
+		cPickle.dump(inputimages, f, cPickle.HIGHEST_PROTOCOL)
 		f.close()
+	return inputimages
 
-		Mrc.numeric_to_mrc(output.image, '%d_%d.mrc' % tileindex)
+def readInputs(cachefile):
+	print 'reading inputs info'
+	f = open(cachefile, 'r')
+	inputimages = cPickle.load(f)
+	f.close()
+	return inputimages
 
-		'''
-		writeJPG(output.image, '%d_%d.jpg' % tileindex, clip, 90)
-		'''
+def createGlobalOutput(imdata, angle=0.0, bin=1):
+	print 'creating global image space'
+	timestamp = imdata.timestamp
+	scope = data.ScopeEMData(initializer=imdata['scope'])
+	camera = data.CameraEMData(initializer=imdata['camera'])
+	binning = {'x':camera['binning']['x']*bin, 'y':camera['binning']['y']*bin}
+	camera['binning'] = binning
+	globaloutput = OutputImage(scope, camera, timestamp, rotation=angle)
+	return globaloutput
 
-		tilesdone += 1
-		tilesleft = tilestotal - tilesdone
-		elapsed = time.time() - t0
-		tilespersec = tilesdone / elapsed
+def readTileInfo():
+	print 'reading tile info'
+	f = open('tiles', 'r')
+	tiles = cPickle.load(f)
+	f.close()
+	print 'done'
+	return tiles
 
-		secleft = tilesleft * tilespersec
-		hrleft = secleft / 3600.0
-		hrleft = int(hrleft)
-		secleft = secleft - hrleft * 3600.0
-		minleft = secleft / 60.0
-		minleft = int(minleft)
-		secleft = secleft - minleft * 60.0
-		secleft = int(secleft)
-		print 'Done %d of %d, Avg: %.2f tiles/sec,  Estimated time left: %02d:%02d:%02d' % (tilesdone,tilestotal,tilespersec,hrleft,minleft,secleft)
+def storeTileInfo(tiledict):
+	f = open('tiles', 'w')
+	cPickle.dump(tiledict, f, cPickle.HIGHEST_PROTOCOL)
+	f.close()
 
-def test2():
-	for input in inputimages:
-		print 'input'
+def markTarget(im, target):
+	size = 4
+	r1 = int(target[0]-size)
+	r2 = int(target[0]+size)
+	c1 = int(target[1]-size)
+	c2 = int(target[1]+size)
+	im[r1:r2, c1:c2] -= 3000
+
+def createSingleImage(inputimages, globaloutput, mrcfile):
+	n = len(inputimages)
+	for i,input in enumerate(inputimages):
+		print 'inserting %d of %d' % (i+1,n)
 		globaloutput.insertImage(input)
-	Mrc.numeric_to_mrc(globaloutput.image, 'global.mrc')
+	'''
+	if targetinputs:
+		for input,target in targetinputs:
+			globaloutput.insertImage(input, target)
+		print 'inserted %s targets' % (len(globaloutput.targets),)
+	for target in globaloutput.targets:
+		print 'T', target
+		markTarget(globaloutput.image, target)
+	'''
+	Mrc.numeric_to_mrc(globaloutput.image, mrcfile)
 
-#import profile
-test2()
+def createTiles(inputs, tiledict, tilesize, row1=None, row2=None, col1=None, col2=None):
+	blank = numarray.zeros((tilesize,tilesize), numarray.Float32)
 
+	if None in (row1,row2,col1,col2):
+		tileindices = tiledict.keys()
+	else:
+		tileindices = []
+		for rowi in range(row1, row2+1):
+			for coli in range(col1, col2+1):
+				tileindices.append((rowi,coli))
+
+	f = open('outputinfo', 'w')
+	f.close()
+
+	tilestotal = len(tileindices)
+	t0 = time.time()
+	for i,tileindex in enumerate(tileindices):
+			tileargs = tiledict[tileindex]
+			print 'Creating tile:', tileindex
+			output = OutputImage(*tileargs['args'], **tileargs['kwargs'])
+		
+			for input in inputs:
+				output.insertImage(input)
+			print '   Inserted %d images' % (output.inserted,)
+			if output.inserted:
+				outim = output.image
+			else:
+				outim = blank
+		
+			f = open('outputinfo', 'a')
+			r,c = tileindex
+			x,y = output.scope['stage position']['x'], output.scope['stage position']['y']
+			f.write('%d\t%d\t%e\t%e\n' % (r,c,x,y))
+			f.close()
+	
+			Mrc.numeric_to_mrc(outim, '%d_%d.mrc' % tileindex)
+	
+			'''
+			writeJPG(output.image, '%d_%d.jpg' % tileindex, clip, 90)
+			'''
+	
+			tilesdone = i+1
+			tilesleft = tilestotal - tilesdone
+			elapsed = time.time() - t0
+			tilespersec = tilesdone / elapsed
+	
+			secleft = tilesleft * tilespersec
+			hrleft = secleft / 3600.0
+			hrleft = int(hrleft)
+			secleft = secleft - hrleft * 3600.0
+			minleft = secleft / 60.0
+			minleft = int(minleft)
+			secleft = secleft - minleft * 60.0
+			secleft = int(secleft)
+			print '   Done %d of %d, Avg: %.2f tiles/sec,  Estimated time left: %02d:%02d:%02d' % (tilesdone,tilestotal,tilespersec,hrleft,minleft,secleft)
+
+########## End of classes and functions...
+########## Now the script!
+
+
+if __name__ == '__main__':
+	from optparse import OptionParser
+	
+	parser = OptionParser()
+
+	parser.add_option('-i', '--input-list', action='store', type='string', dest='infilename', help="read the file containing list of input images")
+	parser.add_option('-I', '--input-cache', action='store', type='string', dest='incache', help="read the file containing image cache")
+	parser.add_option('-o', '--output-mrc', action='store', type='string', dest='outmrc', help="write the resulting image to an MRC file")
+	parser.add_option('-t', '--tile-size', action='store', type='int', dest='tilesize', help="generate tiles from the output image with the specified tile size")
+	parser.add_option('-b', '--bin', action='store', type='float', dest='bin', help="apply the additional binning factor to the output")
+	parser.add_option('-d', '--output-definition', action='store', type='string', dest='outdef', help="use the given image as the space to transform into")
+	parser.add_option('-s', '--spline-order', action='store', type='int', dest='splineorder', help="use the given spline order for affine transforms")
+
+	(options, args) = parser.parse_args()
+
+	badargs = False
+	if options.infilename is None and options.incache is None:
+		print 'You must specify either an input file list (-i) or an input cache (-I).'
+		badargs = True
+
+	if options.outmrc is None and options.tilesize is None:
+		print 'You must specify either an output MRC filename (-o) for a single output file'
+		print '   or a tile size (-t) if you want to generate tiles'
+		badargs = True
+
+	if badargs:
+		sys.exit()
+
+	dbdk = dbdatakeeper.DBDataKeeper()
+	
+	############## Set up inputs ################
+	if options.infilename is not None:
+		f = open(options.infilename, 'r')
+		filenames = f.readlines()
+		f.close()
+		filenames = [filename[:-1] for filename in filenames]
+
+		## database has filenames without the mrc extension
+		filenames = map(os.path.basename, filenames)
+		filenames = [filename[:-4] for filename in filenames]
+	
+		print 'reading image metadata'
+		images = [getImageData(filename) for filename in filenames]
+		print 'creating input image objects'
+		inputimages = createInputs(images, options.incache)
+	elif options.incache is not None:
+		print 'reading input image objects'
+		inputimages = readInputs(options.incache)
+
+	############# Set up output image
+	if options.outdef is None:
+		fname = inputimages[0].fileref.filename[:-4]
+	else:
+		fname = options.outdef
+	outim = getImageData(fname)
+
+	if options.bin is None:
+		bin = 1.0
+	else:
+		bin = options.bin
+
+	tempoutput = createGlobalOutput(outim, 0.0, bin=bin)
+
+	## rotate to section edge
+	if False:
+		angle = longEdgeAngle(targetinputs[2], targetinputs[1], tempoutput)
+		globaloutput = createGlobalOutput(outim, angle, bin=bin)
+	else:
+		globaloutput = tempoutput
+	
+	#### set output boundaries and center
+	globaloutput.containInputs(inputimages)
+
+	print 'Output shape:', globaloutput.shape
+	
+	############## Set up targtets for rotat##############
+	'''
+	targetimages = (
+		(301393, {'row':-111,'col':-237}),
+		(301393, {'row':-150,'col':-44}),
+		(301393, {'row':132,'col':-82}),
+		(301396, {'row':91,'col':248}),
+	)
+	#### Target stuff
+	print 'creating input target objects'
+	targetinputs = createTargetInputs(targetimages)
+	longedge = targetinputs[3], targetinputs[2]
+	targetstages = targetStagePositions(targetinputs)
+	globaloutput.containStagePositions(targetstages)
+	'''
+	
+	############ create outputs and save ###############
+	if options.splineorder is None:
+		splineorder = 1
+	else:
+		splineorder = options.splineorder
+
+	if options.tilesize is not None:
+		tilesize = options.tilesize
+		print 'calc tiles'
+		tiledict = globaloutput.calculateTiles(tilesize)
+		#storeTileInfo(tiledict)
+		createTiles(inputimages, tiledict, tilesize)
+	elif options.outmrc is not None:
+		createSingleImage(inputimages, globaloutput, options.outmrc)
+		
+	#tiledict = readTileInfo()
+	
+	############# Image stats ############
+	'''
+	print 'calculating image stats...'
+	min = None
+	max = None
+	mean = None
+	std = None
+	q = data.AcquisitionImageStatsData(image=images[0])
+	stats = db.query(q, results=1)[0]
+	sum = stats['mean']
+	std = stats['stdev']
+	for im in images[1:]:
+		q = data.AcquisitionImageStatsData(image=im)
+		stats = db.query(q, results=1)[0]
+		if stats['stdev'] > std:
+			std = stats['stdev']
+		sum += stats['mean']
+	mean = sum / len(images)
+	clip = (mean-3*std, mean+3*std)
+	print 'clip', clip
+	'''
