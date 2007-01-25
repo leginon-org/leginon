@@ -121,6 +121,7 @@ class GonModel:
 		self.b = []
 		self.magcal = None
 
+
 	## evaluate the model at a given position
 	def eval(self, pos):
 		k = 2.0 * math.pi / self.period
@@ -133,7 +134,7 @@ class GonModel:
 		return result
 
 	## evaluate the model at a given position
-	def eval_int(self, pos):
+	def eval_intOLD(self, pos):
 		k = 2.0 * math.pi / self.period
 		k2 = k * pos
 		result = pos
@@ -141,6 +142,12 @@ class GonModel:
 			q = (i + 1) * k2
 			result += self.a[i] / k / (i+1) * math.sin(q)
 			result -= self.b[i] / k / (i+1) * math.cos(q)
+		return result
+
+	def eval_int(self, pos):
+		a = self.ai * Numeric.sin(self.xia * pos)
+		b = self.bi * Numeric.cos(self.xib * pos)
+		result = pos + a.sum() - b.sum()
 		return result
 
 	def integrate(self, pos0, pos1):
@@ -155,12 +162,12 @@ class GonModel:
 
 	## calculate a delta ticks from current position and delta nm
 	def predict(self, pos, delta):
-
+		intposdel = self.eval_int(pos) + delta
 		# initial guess
 		k = pos + delta
 
 		# first iteration
-		f = self.eval_int(k) - self.eval_int(pos) - delta
+		f = self.eval_int(k) - intposdel
 		df = self.eval(k)
 		correction = f / df
 		kplus = k - correction
@@ -168,13 +175,13 @@ class GonModel:
 		# iterate to machine precision
 		while k != kplus:
 			k = kplus
-			f = self.eval_int(k) - self.eval_int(pos) - delta
+			f = self.eval_int(k) - intposdel
 			df = self.eval(k)
 			correction = f / df
 			kplus = k - correction
 
 			# check if damping is necessary
-			while self.eval_int(kplus) - self.eval_int(pos) - delta > f:
+			while self.eval_int(kplus) - intposdel > f:
 				correction = 0.5 * correction
 				kplus = k - correction
 
@@ -205,11 +212,34 @@ class GonModel:
 		ss['b'] = self.b
 		return ss
 
+	def removeTrailingZeros(self, seq):
+		n = len(seq)
+		for i in range(n-1,-1,-1):
+			if seq[i]:
+				break
+		return seq[:i+1]
+
 	def fromDict(self, d):
 		self.axis = d['axis']
 		self.period = d['period']
-		self.a = d['a']
-		self.b = d['b']
+
+		a = self.removeTrailingZeros(d['a'])
+		self.a = Numeric.array(a, Numeric.Float32)
+		self.a = self.a.flat
+
+		b = self.removeTrailingZeros(d['b'])
+		self.b = Numeric.array(b, Numeric.Float32)
+		self.b = self.b.flat
+
+		k = 2.0 * Numeric.pi / self.period
+
+		i = Numeric.arange(1,len(self.a)+1, 1, Numeric.Float32)
+		self.ai = self.a / k / i
+		self.xia = i * k
+
+		i = Numeric.arange(1,len(self.b)+1, 1, Numeric.Float32)
+		self.bi = self.b / k / i
+		self.xib = i * k
 
 	def design_matrix(self, gondata, terms, period):
 		ma = 2 * terms + 1
@@ -316,14 +346,26 @@ class GonModel:
 
 if __name__ == '__main__':
 	mymod = GonModel()
-	mymod.read_model('1600.gonx')
-	print mymod.eval(1234)
-	print mymod.predict(12345, 1000)
-	print mymod.rotate(123, 300)
-	mymod.read_data('01sep24.x')
-	mymod.fit_data(3,35000,70000)
-	print "period", mymod.period
-	print "rotation", mymod.rotation
-	print "a0", mymod.a0
-	print "a", mymod.a
-	print "b", mymod.b
+	import numarray
+	import numarray.random_array as rand
+	a = rand.random((1,12))
+	b = rand.random((1,12))
+	d = {
+		'axis': 'x',
+		'period': 5.6e-5,
+		'a': a,
+		'b': b,
+	}
+	mymod.fromDict(d)
+
+	import profile
+	xs =  rand.random(10000)
+	def test1():
+		for x in xs:
+			mymod.eval_int(x)
+	def test2():
+		for x in xs:
+			mymod.eval_int2(x)
+
+	profile.run('test2()')
+	profile.run('test1()')
