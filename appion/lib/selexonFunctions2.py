@@ -63,7 +63,8 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 
 	#BIN IMAGES
 	image    = imagefun.bin(image,bin)
-	templatebin = imagefun.bin(template,bin) #FAKE FOR SIZING
+	#TEMPLATE COMES PRE-BINNED
+	#template = imagefun.bin(template,bin) #FAKE FOR SIZING
 
 	#NORMALIZE
 	image    = normStdev(image)
@@ -80,7 +81,7 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 	#crossmin = 0*image+10
 	#crossavg = 0*image
 	#crossstd = 0*image
-	imagefft = calc_imagefft(image,templatebin) #SAVE SOME CPU CYCLES
+	imagefft = calc_imagefft(image,template) #SAVE SOME CPU CYCLES
 	ang = strt
 	i = 1
 	totalrots = int( (end - strt) / incr + 0.999)
