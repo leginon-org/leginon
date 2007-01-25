@@ -16,6 +16,7 @@ import math
 import particleData
 import project
 import string
+import time
 
 db=dbdatakeeper.DBDataKeeper()
 partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
@@ -388,7 +389,9 @@ def getOutDirs(params):
 	params['rundir']=os.path.join(params['outdir'],params['runid'])
 	
 	if os.path.exists(params['rundir']):
-			print "\nWarning: run directory for", params['runid'],"already exists. Make sure continue option is on if you don't want to overwrite previous run.\n"
+		print "\nWARNING: run directory for", params['runid'],"already exists.\n",\
+			"   Make sure continue option is on if you don't want to overwrite previous run.\n"
+		time.sleep(5)
 	else:
 		os.makedirs(params['rundir'])
 
@@ -722,10 +725,10 @@ def dwnsizeImg(params,img):
 	#downsize and filter leginon image     
 	imagedata=getImageData(img)    
 	bin=params['bin']
-	print "downsizing", img
+	print " ... downsizing", img
 	im=binImg(imagedata['image'],bin)
 
-	print "filtering", img
+	print " ... filtering", img
 	apix=params['apix']*bin
 	im=filterImg(im,apix,params['lp'])
 	Mrc.numeric_to_mrc(im,(img+'.dwn.mrc'))
@@ -742,10 +745,10 @@ def dwnsizeTemplate(params,filename):
 	if (boxsize[0]%bin!=0):
 		print "Error: box size not divisible by binning factor"
 		sys.exit(1)
-	print "downsizing", filename
+	print " ... downsizing", filename
 	im=binImg(im,bin)
 
-	print "filtering",filename
+	print " ... filtering",filename
 	apix=params['apix']*bin
 	im=filterImg(im,apix,params['lp'])
 

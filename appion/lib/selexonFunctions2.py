@@ -58,7 +58,6 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 
 	#READ IMAGES
 	image    = Mrc.mrc_to_numeric(imagefile)
-	print "Reading file:",templfile
 	template = Mrc.mrc_to_numeric(templfile)
 
 	#BIN IMAGES
@@ -94,6 +93,8 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 		templatefft = calc_templatefft(image,template2)
 		cross       = cross_correlate_fft(image,template2,imagefft,templatefft)
 		#cross       = cross_correlate(image,template2) #CLASSIC CALCULATION
+		del template2
+		del templatefft
 		cross       = normRange(cross)
 
 		crossmax    = numarray.where(cross>crossmax,cross,crossmax)
@@ -102,8 +103,7 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 		#crossstd    = crossstd + cross * cross
 
 		del cross
-		del template2
-		del templatefft
+
 
 		ang = ang + incr
 		i = i + 1
@@ -223,7 +223,7 @@ def removeOverlappingBlobs(blobs,cutoff):
 			j=j+1
 		i=i+1
 	postblobs = len(blobs)
-	print "Kept",postblobs,"of",initblobs,"overlapping particles"
+	print " ... kept",postblobs," non-overlapping particles of",initblobs,"total particles"
 	return blobs
 
 
