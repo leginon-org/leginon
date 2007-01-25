@@ -167,8 +167,7 @@ if __name__ == '__main__':
 			if params['method'] == "experimental":
 				print "Using *experimental* Python CC Method..."
 				t1=time.time()
-				print "THIS IS CURRENTLY DISABLED"
-				#runCrossCorr(params,imgname)
+				runCrossCorr(params,imgname)
 				tcrosscorr= "%.2f" % float(time.time()-t1)
 			else:
 				print "Using *classic* FindEM Method..."

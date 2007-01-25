@@ -5,12 +5,120 @@ import os
 import Mrc
 import imagefun
 import numarray
-import numarray.nd_image
+import numarray.nd_image as nd_image
+import numarray.convolve as convolve
+import numarray.fft as fft
 import Image
 import ImageDraw
 import numextension
 import string
 import math
+
+def runCrossCorr(params,file):
+	# Run Neil's version of FindEM
+	bin = int(params["bin"])
+	apix = float(params["apix"])
+	diam = float(params["diam"])
+	imagefile = file+".mrc"
+	tmplt=params["template"]
+
+	#CYCLE OVER EACH TEMPLATE
+	classavg=1
+	while classavg<=len(params['templatelist']):
+		outfile="cccmaxmap%i00.mrc" % classavg
+		if (os.path.exists(outfile)):
+			print "... removing outfile:",outfile
+			os.remove(outfile)
+
+		if (params["multiple_range"]==True):
+			strt=float(params["startang"+str(classavg)])
+			end=float(params["endang"+str(classavg)])
+			incr=float(params["incrang"+str(classavg)])
+		else:
+			strt=float(params["startang"])
+			end=float(params["endang"])
+			incr=float(params["incrang"])
+
+		if (len(params['templatelist'])==1 and not params['templateIds']):
+			templfile = tmplt+".mrc"
+		else:
+			templfile = tmplt+str(classavg)+".mrc"
+
+		createCrossCorr(imagefile,templfile,outfile,bin,apix,diam,strt,end,incr)
+
+		classavg+=1
+	return
+
+
+def createCrossCorr(imagefile, templfile, outfile, bin, apix, diam, strt, end, incr):
+	#READ IMAGES
+	image    = Mrc.mrc_to_numeric(imagefile)
+	template = Mrc.mrc_to_numeric(templfile)
+
+	#BIN IMAGES
+	image    = imagefun.bin(image,bin)
+	templatebin = imagefun.bin(template,bin) #FAKE FOR SIZING
+
+	#NORMALIZE
+	image    = normStdev(image)
+	template = normStdev(template)
+
+	#MASK IF YOU WANT
+	#tmplmask = circ_mask(template,diam/apix)
+	#template = template*tmplmask
+
+	crossmax = 0*image-10
+	#crossmin = 0*image+10
+	#crossavg = 0*image
+	#crossstd = 0*image
+	imagefft = calc_imagefft(image,templatebin) #SAVE SOME CPU CYCLES
+	ang = strt
+	i = 1
+	totalrots = int( (end - strt) / incr )
+	while(ang < end):
+		print "...rotation:",i,"of",totalrots,"\t angle =",ang
+		template2   = nd_image.rotate(template,ang,reshape=False,mode="wrap")
+		template2   = imagefun.bin(template2,bin)
+
+		templatefft = calc_templatefft(image,template2)
+		cross       = cross_correlate_fft(image,template2,imagefft,templatefft)
+		#cross       = cross_correlate(image,template2) #CLASSIC CALCULATION
+		cross       = normRange(cross)
+
+		crossmax    = numarray.where(cross>crossmax,cross,crossmax)
+		#crossmin    = numarray.where(cross<crossmin,cross,crossmin)
+		#crossavg    = crossavg + cross
+		#crossstd    = crossstd + cross * cross
+
+		del cross
+		del template2
+		del templatefft
+
+		ang = ang + incr
+		i = i + 1
+
+	#CREATE BEST FILTERED IMAGE
+	rad = int(diam/apix/bin/2+1)
+	crossmed    = nd_image.minimum_filter(crossmax,size=3)
+	crossmed    = nd_image.median_filter(crossmed,size=rad)
+	crossnorm   = crossmax - crossmed
+	del crossmed
+	del crossmax
+	crossnorm   = nd_image.median_filter(crossnorm,size=3)
+	crossnorm   = normRange(crossnorm)
+	#NORMalized = MAXimum - MEDian (WORKS?)
+
+	#crossavg    = crossavg / rot
+	#crossstd    = (crossstd - rot * crossavg * crossavg) / (rot - 1)
+
+	Mrc.numeric_to_mrc(crossnorm,outfile)
+	#numeric_to_jpg(crossmed,"crossmed.jpg")
+	#numeric_to_jpg(crossnorm,"crossnorm.jpg")
+	#numeric_to_jpg(crossmax,"crossmax.jpg")
+	#numeric_to_jpg(crossstd2,"crossstd.jpg")
+	#numeric_to_jpg(crossmin,"crossmin.jpg")
+	#numeric_to_jpg(crossavg,"crossavg.jpg")
+	del crossnorm
 
 
 def findPeaks2(params,file):
@@ -192,15 +300,15 @@ def normalizeImage(a):
     print "Normalizing image..."
     devlimit=5
 
-    avg1=numarray.nd_image.mean(a)
+    avg1=nd_image.mean(a)
 
-    stdev1=numarray.nd_image.standard_deviation(a)
+    stdev1=nd_image.standard_deviation(a)
 
-    min1=numarray.nd_image.minimum(a)
+    min1=nd_image.minimum(a)
     if(min1 < avg1-devlimit*stdev1):
     	min1 = avg1-devlimit*stdev1
 
-    max1=numarray.nd_image.maximum(a)
+    max1=nd_image.maximum(a)
     if(max1 > avg1+devlimit*stdev1):
     	max1 = avg1+devlimit*stdev1
 
@@ -265,4 +373,131 @@ def readPikFile(file,draw,diam,bin,apix):
 		#draw.rectangle(coord,outline=color1)
 	f.close()
 	return draw
+
+def circ_mask(numer,pixrad):
+	indices = numarray.indices(numer.shape)
+	x0, y0 = (numer.shape)[0]/2, (numer.shape)[1]/2
+	dx, dy = indices[0]-y0,indices[1]-x0
+	return numarray.sqrt(dx**2+dy**2)<pixrad
+
+
+def numeric_to_jpg(numer,file):
+	numer=normalizeImage(numer)
+	image = array2image(numer)
+	#image = image.convert("RGB")
+	print "Writing JPEG: ",file
+	image.save(file, "JPEG", quality=85)
+
+def normRange(im):
+	min1=nd_image.minimum(im)
+	max1=nd_image.maximum(im)
+	return (im - min1)/(max1 - min1)
+
+def normStdev(im):
+	avg1=nd_image.mean(im)
+	std1=nd_image.standard_deviation(im)
+	return (im - avg1)/std1
+
+def cross_correlate(image,template):	
+	#CALCULATE BIGGER MAP SIZE
+	shape = image.shape
+	kshape = template.shape
+	oversized = (numarray.array(shape) + numarray.array(kshape))
+
+	#EXPAND IMAGE TO BIGGER SIZE
+	avg=nd_image.mean(image)
+	image2 = convolve.iraf_frame.frame(image, oversized, mode="constant", cval=avg)
+
+	#CALCULATE FOURIER TRANSFORMS
+	imagefft = fft.real_fft2d(image2, s=oversized)
+	del image2
+	templatefft = fft.real_fft2d(template, s=oversized)
+
+	#MULTIPLY FFTs TOGETHER
+	newfft = imagefft * templatefft 
+	del imagefft
+	del templatefft
+
+	#INVERSE TRANSFORM TO GET RESULT
+	correlation = fft.inverse_real_fft2d(newfft, s=oversized)
+	del newfft
+
+	#RETURN CENTRAL PART OF IMAGE (SIDES ARE JUNK)
+	return correlation[ kshape[0]-1:shape[0]+kshape[0]-1, kshape[1]-1:shape[1]+kshape[1]-1 ]
+
+
+def calc_templatefft(image, template):
+	#CALCULATE BIGGER MAP SIZE
+	shape = image.shape
+	kshape = template.shape
+	oversized = (numarray.array(shape) + numarray.array(kshape))
+
+	#CALCULATE FOURIER TRANSFORMS
+	templatefft = fft.real_fft2d(template, s=oversized)
+
+	return templatefft
+
+
+def calc_imagefft(image, template):
+	#CALCULATE BIGGER MAP SIZE
+	shape = image.shape
+	kshape = template.shape
+	oversized = (numarray.array(shape) + numarray.array(kshape))
+
+	#EXPAND IMAGE TO BIGGER SIZE
+	avg=nd_image.mean(image)
+	image2 = convolve.iraf_frame.frame(image, oversized, mode="constant", cval=avg)
+
+	#CALCULATE FOURIER TRANSFORMS
+	imagefft = fft.real_fft2d(image2, s=oversized)
+	del image2
+
+	return imagefft
+
+
+def cross_correlate_fft(image, template, imagefft, templatefft):
+	#CALCULATE BIGGER MAP SIZE
+	shape = image.shape
+	kshape = template.shape
+	oversized = (numarray.array(shape) + numarray.array(kshape))
+
+	#MULTIPLY FFTs TOGETHER
+	newfft = imagefft * templatefft 
+	del templatefft
+
+	#INVERSE TRANSFORM TO GET RESULT
+	correlation = fft.inverse_real_fft2d(newfft, s=oversized)
+
+	#RETURN CENTRAL PART OF IMAGE (SIDES ARE JUNK)
+	return correlation[ kshape[0]-1:shape[0]+kshape[0]-1, kshape[1]-1:shape[1]+kshape[1]-1 ]
+
+
+def phase_correlate(image, template):	
+	#CALCULATE BIGGER MAP SIZE
+	shape = image.shape
+	kshape = template.shape
+	oversized = (numarray.array(shape) + numarray.array(kshape))
+
+	#EXPAND IMAGE TO BIGGER SIZE
+	avg=nd_image.mean(image)
+	image2 = convolve.iraf_frame.frame(image, oversized, mode="constant", cval=avg)
+
+	#CALCULATE FOURIER TRANSFORMS
+	imagefft = fft.real_fft2d(image2, s=oversized)
+	templatefft = fft.real_fft2d(template, s=oversized)
+
+	#MULTIPLY FFTs TOGETHER
+	newfft = imagefft * templatefft 
+	del templatefft
+
+	#NORMALIZE CC TO GET PC
+	phasefft = newfft / numarray.absolute(newfft)
+	del newfft
+
+	#INVERSE TRANSFORM TO GET RESULT
+	correlation = fft.inverse_real_fft2d(phasefft, s=oversized)
+	del phasefft
+
+	#RETURN CENTRAL PART OF IMAGE (SIDES ARE JUNK)
+	return correlation[ kshape[0]-1:shape[0]+kshape[0]-1, kshape[1]-1:shape[1]+kshape[1]-1 ]
 

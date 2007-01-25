@@ -133,9 +133,9 @@ def printSelexonHelp():
 	print "templateIds        : list the database id's of the templates to use"
 	print "outdir=<path>      : output directory in which results will be written"
 	print "method=<method>    : choices: classic, updated (default), and experimental"
-	print "                       *classic* calls findem and viewit"
-	print "                       *updated* uses findem and internally find peaks (default)"
-	print "                       *experimental* internally generates cc maps and find peaks"
+	print "                       classic - calls findem and viewit"
+	print "                       updated - uses findem and internally find peaks (default)"
+	print "                       experimental - internally generates cc maps and find peaks"
 	print "overlapmult=<n>    : distance multiple for two particles to overlap (default is 1.5 X)"
 	print "\n"
 
