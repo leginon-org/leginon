@@ -296,29 +296,35 @@ def createJPG2(params,file):
 
 
 def normalizeImage(a):
-    screenLevels = 240.0
-    print "Normalizing image..."
-    devlimit=5
+"""	Normalizes numarray to fit into an image format
+	that is values between 0 and 255.
+"""
+#Minimum image value, i.e. how black the image can get
+	minlevel = 0.0
+#Maximum image value, i.e. how white the image can get
+	maxlevel = 235.0
+#Maximum standard deviations to include, i.e. pixel > N*stdev --> white
+	devlimit=5
+ 	imrange = maxlevel - minlevel
 
-    avg1=nd_image.mean(a)
+	avg1=nd_image.mean(a)
 
-    stdev1=nd_image.standard_deviation(a)
+	stdev1=nd_image.standard_deviation(a)
 
-    min1=nd_image.minimum(a)
-    if(min1 < avg1-devlimit*stdev1):
-    	min1 = avg1-devlimit*stdev1
+	min1=nd_image.minimum(a)
+	if(min1 < avg1-devlimit*stdev1):
+		min1 = avg1-devlimit*stdev1
 
-    max1=nd_image.maximum(a)
-    if(max1 > avg1+devlimit*stdev1):
-    	max1 = avg1+devlimit*stdev1
+	max1=nd_image.maximum(a)
+	if(max1 > avg1+devlimit*stdev1):
+		max1 = avg1+devlimit*stdev1
 
-    c = (a - min1)/(max1 - min1)*screenLevels
+	c = (a - min1)/(max1 - min1)*imrange + minlevel
 
-    return c
+	return c
 
 
 def array2image(a):
-    #print "Converting image..."
     """
     Converts array object (numarray) to image object (PIL).
     """
@@ -330,7 +336,6 @@ def array2image(a):
 
     if a.type()==int32 or a.type()==uint32 or a.type()==float32 or a.type()==float64:
         a = a.astype(numarray.UInt8) # convert to 8-bit
-    #print "done"
     if len(a.shape)==3:
         if a.shape[2]==3:  # a.shape == (y, x, 3)
             r = Image.fromstring("L", (w, h), a[:,:,0].tostring())
@@ -346,14 +351,17 @@ def array2image(a):
 
 
 def readPikFile(file,draw,diam,bin,apix):
-	print "Making circles..."
-
+"""	Reads a .pik file and draw circles around all the points
+	in the .pik file
+"""
 	circle_colors = [ \
-		"#ff4040","#3df23d","#3d3df2", \
 		"#f2f23d","#3df2f2","#f23df2", \
+		"#ff4040","#3df23d","#3d3df2", \
 		"#f2973d","#3df297","#973df2", \
 		"#97f23d","#3d97f2","#f23d97", ]
-
+"""	Order: 	Yellow, Cyan, Magenta, Red, Green, Blue,
+		Orange, Teal, Purple, Lime-Green, Sky-Blue, Pink
+"""
 	ps=int(1.5*diam*0.5/float(bin)/apix) #1.5x particle radius
 	ps=float(1.5*diam*0.5/float(bin)/apix) #1.5x particle radius
 	f=open(file, 'r')
