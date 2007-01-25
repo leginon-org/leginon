@@ -58,6 +58,7 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 
 	#READ IMAGES
 	image    = Mrc.mrc_to_numeric(imagefile)
+	print "Reading file:",templfile
 	template = Mrc.mrc_to_numeric(templfile)
 
 	#BIN IMAGES
@@ -86,7 +87,8 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 	while(ang < end):
 		print " ... rotation:",i,"of",totalrots,"  \tangle =",ang
 		template2   = nd_image.rotate(template,ang,reshape=False,mode="wrap")
-		template2   = imagefun.bin(template2,bin)
+		#TEMPLATE COMES PRE-BINNED
+		#template2   = imagefun.bin(template2,bin)
 
 		templatefft = calc_templatefft(image,template2)
 		cross       = cross_correlate_fft(image,template2,imagefft,templatefft)
