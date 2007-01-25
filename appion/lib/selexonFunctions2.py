@@ -13,21 +13,20 @@ import ImageDraw
 import numextension
 import string
 import math
+import selexonFunctions
 
 def runCrossCorr(params,file):
 	# Run Neil's version of FindEM
-	bin = int(params["bin"])
-	apix = float(params["apix"])
-	diam = float(params["diam"])
 	imagefile = file+".mrc"
-	tmplt=params["template"]
+	tmplt     =params["template"]
 
 	#CYCLE OVER EACH TEMPLATE
 	classavg=1
 	while classavg<=len(params['templatelist']):
+		print "Template ",classavg
 		outfile="cccmaxmap%i00.mrc" % classavg
 		if (os.path.exists(outfile)):
-			print "... removing outfile:",outfile
+			print " ... removing outfile:",outfile
 			os.remove(outfile)
 
 		if (params["multiple_range"]==True):
@@ -44,13 +43,19 @@ def runCrossCorr(params,file):
 		else:
 			templfile = tmplt+str(classavg)+".mrc"
 
-		createCrossCorr(imagefile,templfile,outfile,bin,apix,diam,strt,end,incr)
+		#MAIN FUNCTION HERE:
+		createCrossCorr(params,imagefile,templfile,outfile,strt,end,incr)
 
 		classavg+=1
 	return
 
 
-def createCrossCorr(imagefile, templfile, outfile, bin, apix, diam, strt, end, incr):
+def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
+	bin     = int(params["bin"])
+	apix    = float(params["apix"])
+	diam    = float(params["diam"])
+	lowpass	= float(params["lp"])
+
 	#READ IMAGES
 	image    = Mrc.mrc_to_numeric(imagefile)
 	template = Mrc.mrc_to_numeric(templfile)
@@ -63,6 +68,9 @@ def createCrossCorr(imagefile, templfile, outfile, bin, apix, diam, strt, end, i
 	image    = normStdev(image)
 	template = normStdev(template)
 
+	#LOW PASS FILTER
+	image    = selexonFunctions.filterImg(image,apix*float(bin),lowpass)
+
 	#MASK IF YOU WANT
 	#tmplmask = circ_mask(template,diam/apix)
 	#template = template*tmplmask
@@ -74,9 +82,9 @@ def createCrossCorr(imagefile, templfile, outfile, bin, apix, diam, strt, end, i
 	imagefft = calc_imagefft(image,templatebin) #SAVE SOME CPU CYCLES
 	ang = strt
 	i = 1
-	totalrots = int( (end - strt) / incr )
+	totalrots = int( (end - strt) / incr + 0.999)
 	while(ang < end):
-		print "...rotation:",i,"of",totalrots,"\t angle =",ang
+		print " ... rotation:",i,"of",totalrots,"  \tangle =",ang
 		template2   = nd_image.rotate(template,ang,reshape=False,mode="wrap")
 		template2   = imagefun.bin(template2,bin)
 
@@ -147,7 +155,7 @@ def findPeaksInMap(file,num,threshold,diam,bin,apix,olapmult):
 	outfile="pikfiles/"+file+"."+str(num)+".pik"
 	if (os.path.exists(outfile)):
 		os.remove(outfile)
-		print "...removed existing file:",outfile
+		print " ... removed existing file:",outfile
 
 	cc=Mrc.mrc_to_numeric(infile)
 	cc2=imagefun.threshold(cc,threshold)
@@ -195,7 +203,7 @@ def blob_compare(x,y):
 
 def removeOverlappingBlobs(blobs,cutoff):
 	#distance in pixels for two blobs to be too close together
-	print "... distance cutoff:",cutoff,"pixels"
+	print " ... distance cutoff:",round(cutoff,1),"pixels"
 	cutsq = cutoff**2+1
 
 	initblobs = len(blobs)
@@ -221,7 +229,7 @@ def mergePikFiles(file,blobs,diam,bin,apix,olapmult):
 	outfile="pikfiles/"+file+".a.pik"
 	if (os.path.exists(outfile)):
 		os.remove(outfile)
-		print "...removed existing file:",outfile
+		print " ... removed existing file:",outfile
 
 	#PUT ALL THE BLOBS IN ONE ARRAY
 	allblobs = []
