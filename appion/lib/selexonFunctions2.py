@@ -122,7 +122,7 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 
 	Mrc.numeric_to_mrc(crossnorm,outfile)
 	#numeric_to_jpg(crossmed,"crossmed.jpg")
-	#numeric_to_jpg(crossnorm,"crossnorm.jpg")
+	numeric_to_jpg(crossnorm,outfile+".jpg")
 	#numeric_to_jpg(crossmax,"crossmax.jpg")
 	#numeric_to_jpg(crossstd2,"crossstd.jpg")
 	#numeric_to_jpg(crossmin,"crossmin.jpg")
@@ -134,23 +134,29 @@ def findPeaks2(params,file):
 	#Does NOT use viewit
 	#Resulting in a 5-fold speed up over findPeaks()
 
-	threshold = float(params["thresh"])
-	numtempl =  len(params['templatelist'])
-	bin =       int(params["bin"])
-	diam =      float(params["diam"])
-	apix =      float(params["apix"])
-	olapmult =      float(params["overlapmult"])
+	numtempl =    len(params['templatelist'])
+	bin =         int(params["bin"])
+	diam =        float(params["diam"])
+	apix =        float(params["apix"])
+	#MAXBLOBSIZE ==> 1/8 AREA OF PARTICLE
+	maxblobsize = int(round(math.pi*(apix*diam/float(bin))**2/32.0,0))+1
 
 	blobs = []
 	for i in range(numtempl):
-		blobs.append(findPeaksInMap(file,i+1,threshold,diam,bin,apix,olapmult))
+		blobs.append(findPeaksInMap(file,i+1,params,maxblobsize))
 
-	mergePikFiles(file,blobs,diam,bin,apix,olapmult)
+	mergePikFiles(file,blobs,params)
 
 	return
 
 
-def findPeaksInMap(file,num,threshold,diam,bin,apix,olapmult):
+def findPeaksInMap(file,num,params,maxblobsize):
+
+	threshold =   float(params["thresh"])
+	bin =         int(params["bin"])
+	diam =        float(params["diam"])
+	apix =        float(params["apix"])
+	olapmult =    float(params["overlapmult"])
 
 	infile="cccmaxmap"+str(num)+"00.mrc"
 	outfile="pikfiles/"+file+"."+str(num)+".pik"
@@ -169,7 +175,9 @@ def findPeaksInMap(file,num,threshold,diam,bin,apix,olapmult):
 	#	blobs = imagefun.find_blobs(cc,cc2,6,3000,60,1)
 	#	print thresh," ",len(blobs)
 
-	blobs = imagefun.find_blobs(cc,cc2,6,3000,int(250/bin**2+1),0)
+	maxblobsize = diam
+
+	blobs = imagefun.find_blobs(cc,cc2,6,3000,maxblobsize,0)
 	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize)
 	print "Template "+str(num)+": Found",len(blobs),"peaks"
 
@@ -225,8 +233,13 @@ def removeOverlappingBlobs(blobs,cutoff):
 	return blobs
 
 
-def mergePikFiles(file,blobs,diam,bin,apix,olapmult):
+def mergePikFiles(file,blobs,params):
 	print "Merging #.pik files into a.pik file"
+	bin =         int(params["bin"])
+	diam =        float(params["diam"])
+	apix =        float(params["apix"])
+	olapmult =    float(params["overlapmult"])
+
 	outfile="pikfiles/"+file+".a.pik"
 	if (os.path.exists(outfile)):
 		os.remove(outfile)
@@ -314,7 +327,7 @@ def normalizeImage(a):
 #Maximum image value, i.e. how white the image can get
 	maxlevel = 235.0
 #Maximum standard deviations to include, i.e. pixel > N*stdev --> white
-	devlimit=5
+	devlimit=5.0
  	imrange = maxlevel - minlevel
 
 	avg1=nd_image.mean(a)
@@ -330,6 +343,8 @@ def normalizeImage(a):
 		max1 = avg1+devlimit*stdev1
 
 	c = (a - min1)/(max1 - min1)*imrange + minlevel
+	c = numarray.where(c > maxlevel,255.0,c)
+	c = numarray.where(c < minlevel,0.0,c)
 
 	return c
 

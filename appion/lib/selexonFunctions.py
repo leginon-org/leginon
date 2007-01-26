@@ -391,7 +391,7 @@ def getOutDirs(params):
 	if os.path.exists(params['rundir']):
 		print "\nWARNING: run directory for", params['runid'],"already exists.\n",\
 			"   Make sure continue option is on if you don't want to overwrite previous run.\n"
-		time.sleep(5)
+		time.sleep(2)
 	else:
 		os.makedirs(params['rundir'])
 
