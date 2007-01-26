@@ -175,8 +175,6 @@ def findPeaksInMap(file,num,params,maxblobsize):
 	#	blobs = imagefun.find_blobs(cc,cc2,6,3000,60,1)
 	#	print thresh," ",len(blobs)
 
-	maxblobsize = diam
-
 	blobs = imagefun.find_blobs(cc,cc2,6,3000,maxblobsize,0)
 	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize)
 	print "Template "+str(num)+": Found",len(blobs),"peaks"
