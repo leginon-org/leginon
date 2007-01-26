@@ -243,18 +243,18 @@ if __name__ == '__main__':
  			donedict[imgname]=True
 			writeDoneDict(donedict,selexondonename)
 	    
-			print "TIME SUMMARY:"
 			if params['method'] == "classic":
 				print "Using *classic* Viewit Method..."
 			elif params['method'] == "experimental":
 				print "Using *experimental* FindEM-free Method..."
 			else:
 				print "Using *updated* Selexon Method..."
+			print "TIME SUMMARY:"
 			print "\tCrossCorr: \t",tcrosscorr,"seconds"
-			print "\tfindPeaks: \t",tfindPeaks,"seconds"
-			print "\tcreateJPG: \t",tcreateJPG,"seconds"
+			print "\tFindPeaks: \t",tfindPeaks,"seconds"
+			print "\tCreateJPG: \t",tcreateJPG,"seconds"
 			if (params["crud"]=='TRUE'):
-				print "	findCrud:  \t",tfindCrud,"seconds"
+				print "\tFindCrud:  \t",tfindCrud,"seconds"
 			print "\t---------- \t----------------"
 			ttotal= "%.2f" % float(time.time()-tbegin)
 			print "\tTOTAL:     \t",ttotal,"seconds"

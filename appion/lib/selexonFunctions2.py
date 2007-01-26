@@ -62,8 +62,7 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 
 	#BIN IMAGES
 	image    = imagefun.bin(image,bin)
-	#TEMPLATE COMES PRE-BINNED
-	#template = imagefun.bin(template,bin) #FAKE FOR SIZING
+	templatebin = imagefun.bin(template,bin) #FAKE FOR SIZING
 
 	#NORMALIZE
 	image    = normStdev(image)
@@ -80,15 +79,14 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 	#crossmin = 0*image+10
 	#crossavg = 0*image
 	#crossstd = 0*image
-	imagefft = calc_imagefft(image,template) #SAVE SOME CPU CYCLES
+	imagefft = calc_imagefft(image,templatebin) #SAVE SOME CPU CYCLES
 	ang = strt
 	i = 1
 	totalrots = int( (end - strt) / incr + 0.999)
 	while(ang < end):
 		print " ... rotation:",i,"of",totalrots,"  \tangle =",ang
 		template2   = nd_image.rotate(template,ang,reshape=False,mode="wrap")
-		#TEMPLATE COMES PRE-BINNED
-		#template2   = imagefun.bin(template2,bin)
+		template2   = imagefun.bin(template2,bin)
 
 		templatefft = calc_templatefft(image,template2)
 		cross       = cross_correlate_fft(image,template2,imagefft,templatefft)
@@ -206,7 +204,7 @@ def blob_compare(x,y):
 
 def removeOverlappingBlobs(blobs,cutoff):
 	#distance in pixels for two blobs to be too close together
-	print " ... distance cutoff:",round(cutoff,1),"pixels"
+	print " ... overlap distance cutoff:",round(cutoff,1),"pixels"
 	cutsq = cutoff**2+1
 
 	initblobs = len(blobs)
@@ -223,7 +221,7 @@ def removeOverlappingBlobs(blobs,cutoff):
 			j=j+1
 		i=i+1
 	postblobs = len(blobs)
-	print " ... kept",postblobs," non-overlapping particles of",initblobs,"total particles"
+	print " ... kept",postblobs,"non-overlapping particles of",initblobs,"total particles"
 	return blobs
 
 
