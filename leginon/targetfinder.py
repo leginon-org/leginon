@@ -518,9 +518,11 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def getMosaicImageList(self, targetlist):
 		self.logger.debug('in getMosaicImageList')
+		'''
 		if not targetlist['mosaic']:
 			self.logger.debug('target list not mosaic')
 			raise RuntimeError('TargetListData for mosaic ImageListData should have mosaic=True')
+		'''
 		if self.mosaicimagelist and self.mosaicimagelist['targets'] is targetlist:
 			### same targetlist we got before
 			self.logger.debug('same targets')
