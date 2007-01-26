@@ -111,14 +111,23 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 	crossmed    = nd_image.minimum_filter(crossmax,size=3)
 	crossmed    = nd_image.median_filter(crossmed,size=rad)
 	crossnorm   = crossmax - crossmed
+	#crossnorm   = crossmax
 	del crossmed
 	del crossmax
-	crossnorm   = nd_image.median_filter(crossnorm,size=3)
+	#crossnorm   = nd_image.median_filter(crossnorm,size=3)
 	crossnorm   = normRange(crossnorm)
 	#NORMalized = MAXimum - MEDian (WORKS?)
 
 	#crossavg    = crossavg / rot
 	#crossstd    = (crossstd - rot * crossavg * crossavg) / (rot - 1)
+
+	#REMOVE OUTSIDE AREA
+	cutrad = (templatebin.shape)[0]/2 #ASSUME TEMPLATE IS SQUARE!
+	cshape = crossnorm.shape
+ 	crossnorm[ 0:cutrad, 0:cshape[1] ] = 0
+	crossnorm[ 0:cshape[0], 0:cutrad ] = 0
+ 	crossnorm[ cshape[0]-cutrad:cshape[0], 0:cshape[1] ] = 0
+	crossnorm[ 0:cshape[0], cshape[1]-cutrad:cshape[1] ] = 0
 
 	Mrc.numeric_to_mrc(crossnorm,outfile)
 	#numeric_to_jpg(crossmed,"crossmed.jpg")
