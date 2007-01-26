@@ -129,4 +129,8 @@ type: Pipeline
 
 [CenterTargetFilter]
 module: centertargetfilter
-type: Pipelin
+type: Pipeline
+
+[RasterTargetFilter]
+module: rastertargetfilter
+type: Pipeline

@@ -2334,6 +2334,18 @@ class CenterTargetFilterSettingsData(TargetFilterSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class RasterTargetFilterSettingsData(TargetFilterSettingsData):
+	def typemap(cls):
+		return TargetFilterSettingsData.typemap() + (
+			('raster spacing', float),
+			('raster angle', float),
+			('raster preset', str),
+			('raster movetype', str),
+			('raster overlap', float),
+			('raster width', float),
+		)
+	typemap = classmethod(typemap)
+
 class PolygonRasterSettingsData(TargetFilterSettingsData):
 	def typemap(cls):
 		return TargetFilterSettingsData.typemap() + (
