@@ -13,6 +13,11 @@ class CenterTargetFilter(targetfilter.TargetFilter):
 		'bypass':True,
 	}
 
+	def __init__(self, *args, **kwargs):
+		targetfilter.TargetFilter.__init__(self, *args, **kwargs)
+		if self.__class__ == CenterTargetFilter:
+			self.start()
+
 	def filterTargets(self, targetlist):
 		limit = self.settings['limit']
 		self.logger.info('filtering target list:  use center %d targets' %limit)

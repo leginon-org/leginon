@@ -32,7 +32,8 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 		self.addEventInput(event.ImageTargetListPublishEvent, self.handleTargetListPublish)
 		self.addEventInput(event.QueuePublishEvent, self.handleQueuePublish)
 
-		self.start()
+		if self.__class__ == TargetFilter:
+			self.start()
 
 	def handleTargetListPublish(self, pubevent):
 		targetlistdata = pubevent['data']
