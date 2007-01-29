@@ -79,9 +79,22 @@ class particledata {
 	}
 
 	function getSelectionParams($runId) {
-		$q = "select * "
+		$q = "select s.*, r.name, r.`dbemdata|SessionData|session` "
 			."from selectionParams s "
+			."left join run r on (s.`REF|run|runId` = r.`DEF_id`) "
 			."where s.`REF|run|runId` = '$runId' ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+	
+	function getTemplateRunParams($runId) {
+		$q = "select i.DEF_id as id, i.templatepath as path, i.apix, i.description, "
+			."t.range_start, t.range_end, t.range_incr, "
+			."r.name "
+			."from templateRun t "
+			."left join templateImage i on (t.`REF|templateImage|templateId`=i.`DEF_id`) "
+			."left join run r on (t.`REF|run|runId` = r.`DEF_id`) "
+			."where t.`REF|run|runId` = '$runId' ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
@@ -226,7 +239,7 @@ class particledata {
 			$numptl=$particlestats['totparticles'];
 			$numimg=$particlestats['num'];
 			$ppimg = ($numimg > 0) ? (int)($numptl/$numimg) : 0;
-			$particlestats['num']=$numimg.'<BR>('.$ppimg.' prtl/img)';
+			$particlestats['numimgs']=$numimg.'<BR>('.$ppimg.' prtl/img)';
 			$particlestats['img'] = '<a href="particlegraph.php?hg=1&run='.$runId.'">'
 			        .'<img border="0" '
 			        .'src="particlegraph.php?w=150&hg=1&run='
@@ -234,16 +247,17 @@ class particledata {
 			$q = "select name from `run` where `DEF_id` = $runId";
 			$r = $this->mysql->getSQLResult($q);
 			$r0 = $r[0];
-			$html .= "<td> $r0[name] </td>\n";
-			foreach($particlestats as $field=>$data) {
-			        if (eregi('^min|^max|^avg|^stddev', $field)) $data=format_sci_number($data,4);
-				$html .= "<td> $data </td> \n";
+			$html .= '<td><a href="particlerunreport.php?rId='.$runId.'">'.$r0[name].'</a></td>\n';
+			foreach($display_keys as $field) {
+			        if (eregi('^min|^max|^avg|^stddev', $particlestats[$field])) $data=format_sci_number($data,4);
+				$html .= "<td> $particlestats[$field] </td> \n";
 			}
 			$html .= "</tr>\n";
 		}
 		$html .= "</table>\n";
 		return $html;
 	}
+
 #---------RECONSTRUCTION FUNCTIONS---------------#
 
 	function getReconIds ($stackId) {
