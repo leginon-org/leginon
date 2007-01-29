@@ -226,7 +226,7 @@ class particledata {
 		if (!is_array($particleruns))
 			return ;
 		$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
-		$html .= "<tr> <td> </td>\n";
+		$html .= "<tr> <td> </td>";
 		foreach($display_keys as $key) {
 			$html .= "<td> <span class='datafield0'>".$key."</span> </td> ";
 		}
@@ -247,7 +247,7 @@ class particledata {
 			$q = "select name from `run` where `DEF_id` = $runId";
 			$r = $this->mysql->getSQLResult($q);
 			$r0 = $r[0];
-			$html .= '<td><a href="particlerunreport.php?rId='.$runId.'">'.$r0[name].'</a></td>\n';
+			$html .= '<td><a href="particlerunreport.php?rId='.$runId.'">'.$r0[name].'</a></td>';
 			foreach($display_keys as $field) {
 			        if (eregi('^min|^max|^avg|^stddev', $particlestats[$field])) $data=format_sci_number($data,4);
 				$html .= "<td> $particlestats[$field] </td> \n";
