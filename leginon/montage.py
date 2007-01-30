@@ -18,213 +18,20 @@ import polygon
 import raster
 import time
 import sys
-import gonmodel
 import newdict
 import profile
 import cPickle
 import glob
 import os.path
+import affine
+import caltransformer
+
+dbdk = dbdatakeeper.DBDataKeeper()
 
 def memmapMRC(fileref):
 	fullname = os.path.join(fileref.path, fileref.filename)
 	im = Mrcmm.mrc_to_numeric(fullname)
 	return im
-
-def calculateSectionAngle(target1, target2):
-	target1['delta row']
-
-stagetransformers = {}
-def getStageTransformer(tem, ccd, ht, mag, timestamp, rotation=0.0):
-	key = (tem.dbid,ccd.dbid,ht,mag,rotation)
-	if key in stagetransformers:
-		return stagetransformers[key]
-	st = StageTransformer(tem, ccd, ht, mag, timestamp, rotation)
-	stagetransformers[key] = st
-	return st
-
-class StageTransformer(object):
-	def __init__(self, tem, ccd, ht, mag, timestamp, rotation=0.0):
-		## load stage model from db
-		self.xmod = self.getModelCal(tem, ccd, 'x', timestamp)
-		self.ymod = self.getModelCal(tem, ccd, 'y', timestamp)
-		self.xmag = self.getMagCal(tem, ccd, 'x', ht, mag, timestamp)
-		self.ymag = self.getMagCal(tem, ccd, 'y', ht, mag, timestamp)
-		self.matrixcal = self.getMatrixCal(tem, ccd, ht, mag, timestamp)
-		self.rotation = rotation
-		self.createMatrix()
-
-	def rotationMatrix(self, angle):
-		mat = numarray.array(
-			(
-				(numarray.cos(angle),-numarray.sin(angle)),
-				(numarray.sin(angle), numarray.cos(angle))
-			), numarray.Float32
-		)
-		return mat
-
-	def createMatrix(self):
-		if None in (self.xmag, self.ymag):
-			self.matrix = self.matrixcal
-		else:
-			xscale = self.xmag['mean']
-			yscale = self.ymag['mean']
-			xang = self.xmag['angle']
-			yang = self.ymag['angle']
-			self.matrix = numarray.array(
-				((xscale * numarray.sin(xang) , xscale * numarray.cos(xang)),
-				(yscale * numarray.sin(yang) , yscale * numarray.cos(yang))), numarray.Float32
-			)
-		rot = self.rotationMatrix(self.rotation)
-		self.matrix = numarray.matrixmultiply(self.matrix, rot)
-		self.imatrix = numarray.linear_algebra.inverse(self.matrix)
-
-	def itransform(self, position, stage0, bin):
-		gx0 = stage0['x']
-		gy0 = stage0['y']
-		gx1 = position['x']
-		gy1 = position['y']
-		binx = bin['x']
-		biny = bin['y']
-
-		## integrate over model
-		if None in (self.xmod, self.ymod):
-			dgx = gx1 - gx0
-			dgy = gy1 - gy0
-		else:
-			dgx = self.xmod.integrate(gx0,gx1)
-			dgy = self.ymod.integrate(gy0,gy1)
-		## rotate/scale
-		drow,dcol = -numarray.matrixmultiply(self.imatrix, (dgx,dgy))
-
-		pixelshift = {'row': drow/biny, 'col': dcol/binx}
-		return pixelshift
-	
-	def transform(self, pixvect, stage0, bin):
-		gx0 = stage0['x']
-		gy0 = stage0['y']
-		binx = bin['x']
-		biny = bin['y']
-
-		pixrow = pixvect['row'] * biny
-		pixcol = pixvect['col'] * binx
-	
-		dgx,dgy = -numarray.matrixmultiply(self.matrix, (pixrow,pixcol))
-
-		if None not in (self.xmod, self.ymod):
-			dgx = self.xmod.predict(gx0,dgx)
-			dgy = self.ymod.predict(gy0,dgy)
-
-		return {'x':gx0+dgx, 'y':gy0+dgy}
-		
-	def getMagCal(self, tem, ccd, axis, ht, mag, timestamp):
-		qinst = data.StageModelMagCalibrationData(magnification=mag, axis=axis)
-		qinst['high tension'] = ht
-		qinst['tem'] = tem
-		qinst['ccdcamera'] = ccd
-	
-		caldatalist = dbdk.query(qinst)
-	
-		# get the one that was valid at timestamp
-		caldata = None
-		for cal in caldatalist:
-			if cal.timestamp < timestamp:
-				caldata = dict(cal)
-				break
-
-		if caldata is None:
-			if caldatalist:
-				caldata = dict(caldatalist[0])
-			else:
-				caldata = None
-	
-		return caldata
-	
-	def getModelCal(self, tem, ccd, axis, timestamp):
-		qinst = data.StageModelCalibrationData(axis=axis)
-		qinst['tem'] = tem
-		qinst['ccdcamera'] = ccd
-		caldatalist = dbdk.query(qinst)
-	
-		# get the one that was valid at timestamp
-		caldata = None
-		for cal in caldatalist:
-			if cal.timestamp < timestamp:
-				caldata = cal
-				break
-
-		if caldata is None:
-			if caldatalist:
-				caldata = caldatalist[0]
-			else:
-				return None
-	
-		## return it to rank 0 array
-		caldata2 = {}
-		caldata2['axis'] = caldata['axis']
-		caldata2['period'] = caldata['period']
-		caldata2['a'] = numarray.ravel(caldata['a']).copy()
-		caldata2['b'] = numarray.ravel(caldata['b']).copy()
-		mod = gonmodel.GonModel()
-		mod.fromDict(caldata2)
-		return mod
-
-	def getMatrixCal(self, tem, ccd, ht, mag, timestamp):
-		qinst = data.MatrixCalibrationData(type='stage position', magnification=mag)
-		qinst['high tension'] = ht
-		qinst['tem'] = tem
-		qinst['ccdcamera'] = ccd
-	
-		caldatalist = dbdk.query(qinst)
-	
-		# get the one that was valid at timestamp
-		caldata = None
-		for cal in caldatalist:
-			if cal.timestamp < timestamp:
-				caldata = cal['matrix']
-				break
-
-		if caldata is None:
-			if caldatalist:
-				caldata = caldatalist[0]['matrix']
-			else:
-				caldata = None
-	
-		return caldata
-
-
-import mrc2jpg2out
-def writeJPG(a, filename, clip, quality):
-	img = mrc2jpg2out.Numeric_to_Image(a, clip)
-	mrc2jpg2out.write_jpeg(img, filename, quality)
-
-def affine_transform_offset(inputshape, outputshape, affine_matrix, offset=(0,0)):
-	'''
-	calculation of affine transform offset
-	for now we assume center of image
-	'''
-	outcenter = numarray.array(outputshape, numarray.Float32)
-	outcenter.shape = (2,)
-	outcenter = outcenter / 2.0 - 0.5
-	outcenter += offset
-
-	incenter = numarray.array(inputshape, numarray.Float32)
-	incenter.shape = (2,)
-	incenter = incenter / 2.0 - 0.5
-
-	outcenter2 = numarray.matrixmultiply(affine_matrix, outcenter)
-
-	offset = incenter - outcenter2
-	return offset
-
-def getSimpleStageMatrix(scope, camera):
-	queryinstance = data.MatrixCalibrationData()
-	queryinstance['tem'] = scope['tem']
-	queryinstance['ccdcamera'] = camera['ccdcamera']
-	queryinstance['type'] = 'stage position'
-	queryinstance['magnification'] = scope['magnification']
-	queryinstance['high tension'] = scope['high tension']
-	caldatalist = db.query(queryinstance, results=1)
-	return caldatalist[0]['matrix']
 
 class Image(object):
 	def __init__(self, scope, camera, timestamp, fileref=None, rotation=0.0):
@@ -233,7 +40,7 @@ class Image(object):
 		self.shape = self.camera['dimension']['y'], self.camera['dimension']['x']
 		self.fileref = fileref
 		self.timestamp = timestamp
-		self.trans = getStageTransformer(scope['tem'], camera['ccdcamera'], scope['high tension'], scope['magnification'], timestamp, rotation)
+		self.trans = caltransformer.getTransformer(scope['tem'], camera['ccdcamera'], scope['high tension'], scope['magnification'], timestamp, rotation)
 		self.newStage(scope['stage position'])
 
 	def newStage(self, stage):
@@ -388,7 +195,7 @@ class OutputImage(Image):
 		pixels = self.trans.itransform(instage, self.stage, self.bin)
 		pixels = (pixels['row'],pixels['col'])
 		shift = pixels[0], pixels[1]
-		offset = affine_transform_offset(input.shape, self.shape, atmatrix, shift)
+		offset = affine.affine_transform_offset(input.shape, self.shape, atmatrix, shift)
 
 		if target is None:
 			## affine transform into temporary output
@@ -396,7 +203,8 @@ class OutputImage(Image):
 
 			inputarray = memmapMRC(input.fileref)
 
-			numarray.nd_image.affine_transform(inputarray, atmatrix, offset=offset, output=output, output_shape=self.shape, mode='constant', cval=0.0, order=splineorder)
+			#inputarray = splines.filter(input.fileref.filename, inputarray)
+			numarray.nd_image.affine_transform(inputarray, atmatrix, offset=offset, output=output, output_shape=self.shape, mode='constant', cval=0.0, order=splineorder, prefilter=False)
 
 			if self.image is None:
 				self.image = numarray.zeros(self.shape, numarray.Float32)
@@ -418,7 +226,10 @@ def getImageData(filename_or_id):
 	if isinstance(filename_or_id, basestring):
 		q = data.AcquisitionImageData(filename=filename_or_id)
 		images = dbdk.query(q, readimages=False, results=1)
-		return images[0]
+		if images:
+			return images[0]
+		else:
+			raise RuntimeError('%s does not exist' % (filename_or_id,))
 	else:
 		im = dbdk.direct_query(data.AcquisitionImageData, filename_or_id, readimages=False)
 		return im
@@ -515,7 +326,7 @@ def markTarget(im, target):
 	c2 = int(target[1]+size)
 	im[r1:r2, c1:c2] -= 3000
 
-def createSingleImage(inputimages, globaloutput, mrcfile):
+def createSingleImage(inputimages, globaloutput, outfilename, outformat):
 	n = len(inputimages)
 	for i,input in enumerate(inputimages):
 		print 'inserting %d of %d' % (i+1,n)
@@ -529,7 +340,7 @@ def createSingleImage(inputimages, globaloutput, mrcfile):
 		print 'T', target
 		markTarget(globaloutput.image, target)
 	'''
-	Mrc.numeric_to_mrc(globaloutput.image, mrcfile)
+	Mrc.numeric_to_mrc(globaloutput.image, outfilename)
 
 def createTiles(inputs, tiledict, tilesize, row1=None, row2=None, col1=None, col2=None):
 	blank = numarray.zeros((tilesize,tilesize), numarray.Float32)
@@ -569,7 +380,7 @@ def createTiles(inputs, tiledict, tilesize, row1=None, row2=None, col1=None, col
 			Mrc.numeric_to_mrc(outim, '%d_%d.mrc' % tileindex)
 	
 			'''
-			writeJPG(output.image, '%d_%d.jpg' % tileindex, clip, 90)
+			jpeg.save(output.image, clip[0], clip[1], '%d_%d.jpg' % tileindex, 90)
 			'''
 	
 			tilesdone = i+1
@@ -598,11 +409,12 @@ if __name__ == '__main__':
 
 	parser.add_option('-i', '--input-list', action='store', type='string', dest='infilename', help="read the file containing list of input images")
 	parser.add_option('-I', '--input-cache', action='store', type='string', dest='incache', help="read the file containing image cache")
-	parser.add_option('-o', '--output-mrc', action='store', type='string', dest='outmrc', help="write the resulting image to an MRC file")
+	parser.add_option('-o', '--output-mrc', action='store', type='string', dest='outfilename', help="write the resulting image to an MRC file")
 	parser.add_option('-t', '--tile-size', action='store', type='int', dest='tilesize', help="generate tiles from the output image with the specified tile size")
 	parser.add_option('-b', '--bin', action='store', type='float', dest='bin', help="apply the additional binning factor to the output")
 	parser.add_option('-d', '--output-definition', action='store', type='string', dest='outdef', help="use the given image as the space to transform into")
 	parser.add_option('-s', '--spline-order', action='store', type='int', dest='splineorder', help="use the given spline order for affine transforms")
+	parser.add_option('-f', '--output-format-order', action='store', type='string', dest='outformat', help="jpeg or mrc")
 
 	(options, args) = parser.parse_args()
 
@@ -611,7 +423,7 @@ if __name__ == '__main__':
 		print 'You must specify either an input file list (-i) or an input cache (-I).'
 		badargs = True
 
-	if options.outmrc is None and options.tilesize is None:
+	if options.outfilename is None and options.tilesize is None:
 		print 'You must specify either an output MRC filename (-o) for a single output file'
 		print '   or a tile size (-t) if you want to generate tiles'
 		badargs = True
@@ -619,7 +431,6 @@ if __name__ == '__main__':
 	if badargs:
 		sys.exit()
 
-	dbdk = dbdatakeeper.DBDataKeeper()
 	
 	############## Set up inputs ################
 	if options.infilename is not None:
@@ -694,8 +505,9 @@ if __name__ == '__main__':
 		tiledict = globaloutput.calculateTiles(tilesize)
 		#storeTileInfo(tiledict)
 		createTiles(inputimages, tiledict, tilesize)
-	elif options.outmrc is not None:
-		createSingleImage(inputimages, globaloutput, options.outmrc)
+	elif options.outfilename is not None:
+		profile.run('createSingleImage(inputimages, globaloutput, options.outfilename, options.outformat)')
+		#createSingleImage(inputimages, globaloutput, options.outmrc)
 		
 	#tiledict = readTileInfo()
 	
