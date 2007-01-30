@@ -181,19 +181,20 @@ def removeCrud(image,imagefile,stdev,params):
 	imagemed = filterImg(image,apix*float(bin),int(8*pixrad+1))
 	print " ... ... max/min filters"
 	fp = numarray.array([[0,1,1,0],[1,1,1,1],[1,1,1,1],[0,1,1,0]])
-	imagemed = nd_image.minimum_filter(imagemed,size=int(2*pixrad+1), \
+	imagemed = nd_image.minimum_filter(imagemed,size=int(4*pixrad+1), \
 		footprint=fp,mode="constant",cval=0)
-	imagemed = nd_image.maximum_filter(imagemed,size=int(5*pixrad+1), \
+	imagemed = nd_image.maximum_filter(imagemed,size=int(8*pixrad+1), \
 		footprint=fp,mode="constant",cval=stdev)
 	imagemed = nd_image.minimum_filter(imagemed,size=int(10*pixrad+1), \
 		footprint=fp,mode="constant",cval=0)
+
 	imagemed = normStdev(imagemed)
 	print " ... ... create mask"
 	imagemask = numarray.where(imagemed>stdev,0.0,1.0)
 	numeric_to_jpg(imagemask,imagefile+"-mask.jpg")
 	#image = numarray.where(imagemask<0.1,image,image-3)
 	print " ... ... create random noise data"
-	imagerand = random_array.normal(0.0, 1.5, shape=image.shape)
+	imagerand = random_array.normal(0.0, 1.0, shape=image.shape)
 	print " ... ... replace crud with noise"
 	image = numarray.where(imagemask<0.1,image,imagerand) #random.gauss(-1.0,1.0))
 	numeric_to_jpg(image,imagefile+"-modified.jpg")
