@@ -78,7 +78,7 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 	image    = selexonFunctions.filterImg(image,apix*float(bin),lowpass)
 
 	#BLACK OUT DARK AREAS, LESS THAN 2 STDEVS
-	image = removeCrud(image,imagefile,-2.0,params)
+	#image = removeCrud(image,imagefile,-2.0,params)
 
 	#MASK IF YOU WANT
 	#tmplmask = circ_mask(template,diam/apix)
