@@ -70,14 +70,14 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 
 	#NORMALIZE
 	image    = normStdev(image)
-	image = PlaneRegression(image)
+	image    = PlaneRegression(image)
 	template = normStdev(template)
 
 	#LOW PASS FILTER
 	image    = selexonFunctions.filterImg(image,apix*float(bin),lowpass)
 
-	#BLACK OUT DARK AREAS, LESS THAN 3 STDEVS
-	image = removeCrud(image,imagefile,params)
+	#BLACK OUT DARK AREAS, LESS THAN 2 STDEVS
+	image = removeCrud(image,imagefile,-2.0,params)
 
 	#MASK IF YOU WANT
 	#tmplmask = circ_mask(template,diam/apix)
@@ -166,24 +166,24 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 	del normmax
 
 
-def removeCrud(image,imagefile,params):
+def removeCrud(image,imagefile,stdev,params):
 	bin     = int(params["bin"])
 	apix    = float(params["apix"])
 	diam    = float(params["diam"])
 	lowpass	= float(params["lp"])
-	pixrad  = diam/apix/2.0
+	pixrad  = diam/apix/2.0/float(bin)
 
 	#BLACK OUT DARK AREAS, LESS THAN 3 STDEVS
 	#imagemed = selexonFunctions.filterImg(image,apix*float(bin),int(pixrad+1))
 	print " ... put noise in low density regions (crud remover)"
 	print " ... ... low pass filter"
-	imagemed = filterImg(image,apix*float(bin),int(2*pixrad+1))
+	imagemed = filterImg(image,apix*float(bin),int(4*pixrad+1))
 	print " ... ... max/min filters"
-	imagemed = nd_image.minimum_filter(imagemed,size=int(pixrad+1),mode="constant",cval=0)
-	imagemed = nd_image.maximum_filter(imagemed,size=int(pixrad/2+1),mode="constant",cval=-2)
+	imagemed = nd_image.minimum_filter(imagemed,size=int(4*pixrad+1),mode="constant",cval=0)
+	imagemed = nd_image.maximum_filter(imagemed,size=int(2*pixrad+1),mode="constant",cval=-2)
 	imagemed = normStdev(imagemed)
 	print " ... ... create mask"
-	imagemask = numarray.where(imagemed>-2,0.0,1.0)
+	imagemask = numarray.where(imagemed>stdev,0.0,1.0)
 	numeric_to_jpg(imagemask,imagefile+"-mask.jpg")
 	#image = numarray.where(imagemask<0.1,image,image-3)
 	print " ... ... create random noise data"
