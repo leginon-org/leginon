@@ -19,6 +19,7 @@ import imagefun
 import math
 import data
 import convolver
+import affine
 
 ## defocus calibration matrix format:
 ##   x-row  y-row
@@ -66,24 +67,6 @@ class TiltCorrector(object):
 		mat = numarray.linear_algebra.inverse(mat)
 		return mat
 	
-	## calculation of offset for affine transform
-	def affine_transform_offset(self, shape, affine_matrix, imageshift):
-		'''
-		calculation of affine transform offset
-		for now we assume center of image
-		'''
-		carray = numarray.array(shape, numarray.Float32)
-		carray.shape = (2,)
-		carray = carray / 2.0
-
-		carray = carray + imageshift
-
-		carray2 = numarray.matrixmultiply(affine_matrix, carray)
-		imageshift2 = numarray.matrixmultiply(affine_matrix, carray)
-
-		offset = carray - carray2
-		return offset
-
 	def getMatrix(self, tem, cam, ht, mag, type):
 		matdat = data.MatrixCalibrationData()
 		matdat['tem'] = tem
@@ -185,7 +168,7 @@ class TiltCorrector(object):
 		#imageshift['y'] *= -1
 		pixelshift = self.itransform(imageshift, scope, camera)
 		pixelshift = (pixelshift['row'], pixelshift['col'])
-		offset = self.affine_transform_offset(im.shape, mat, pixelshift)
+		offset = affine.affine_transform_offset(im.shape, im.shape, mat, pixelshift)
 		mean=self.edge_mean(im)
 		im2 = numarray.nd_image.affine_transform(im, mat, offset=offset, mode='constant', cval=mean)
 
