@@ -78,14 +78,14 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 	image    = selexonFunctions.filterImg(image,apix*float(bin),lowpass)
 
 	#BLACK OUT DARK AREAS, LESS THAN 2 STDEVS
-	#image = removeCrud(image,imagefile,-2.0,params)
+	image = removeCrud(image,imagefile,-1.5,params)
 
 	#MASK IF YOU WANT
 	#tmplmask = circ_mask(template,diam/apix)
 	#template = template*tmplmask
 
 	crossmax = 0*image-10
-	normmax  = crossmax
+	#normmax  = crossmax
 	#crossmin = 0*image+10
 	#crossavg = 0*image
 	#crossstd = 0*image
@@ -98,34 +98,34 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 	while(ang < end):
 		print " ... rotation:",i,"of",totalrots,"  \tangle =",ang
 		template2   = nd_image.rotate(template,ang,reshape=False,mode="wrap")
-		template3   = nd_image.gaussian_filter(template2,sigma=int(pixrad/5.0+1.0),mode="wrap")
+		#template3   = nd_image.gaussian_filter(template2,sigma=int(pixrad/5.0+1.0),mode="wrap")
 		#template3   = nd_image.median_filter(template2,size=rad,mode="wrap")
 		#template3   = selexonFunctions.filterImg(template2,apix,diam*apix/4.0)
 		#numeric_to_jpg(template2,"template2.jpg")
 		#numeric_to_jpg(template3,"template3.jpg")
 		template2   = imagefun.bin(template2,bin)
-		template3   = imagefun.bin(template3,bin)
+		#template3   = imagefun.bin(template3,bin)
 
 		templatefft  = calc_templatefft(image,template2)
-		templatefft3 = calc_templatefft(image,template3)
+		#templatefft3 = calc_templatefft(image,template3)
 		cross        = cross_correlate_fft(image,template2,imagefft,templatefft)
-		norm         = cross_correlate_fft(image,template3,imagefft,templatefft3)
+		#norm         = cross_correlate_fft(image,template3,imagefft,templatefft3)
 		#cross       = cross_correlate(image,template2) #CLASSIC CALCULATION
 		del template2
 		del templatefft
-		del template3
-		del templatefft3
+		#del template3
+		#del templatefft3
 		#cross       = normRange(cross)
 		#norm        = normRange(norm)
 
 		crossmax    = numarray.where(cross>crossmax,cross,crossmax)
-		normmax     = numarray.where(norm>normmax,norm,normmax)
+		#normmax     = numarray.where(norm>normmax,norm,normmax)
 		#crossmin    = numarray.where(cross<crossmin,cross,crossmin)
 		#crossavg    = crossavg + cross
 		#crossstd    = crossstd + cross * cross
 
 		del cross
-		del norm
+		#del norm
 
 		ang = ang + incr
 		i = i + 1
@@ -134,12 +134,13 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 	rad = int(diam/apix/bin/2+1)
 	#crossmed    = nd_image.minimum_filter(crossmax,size=3)
 	#crossmed    = nd_image.median_filter(crossmed,size=rad)
-	crossnorm   = crossmax - normmax
+	#crossnorm   = crossmax - normmax
 	#crossnorm   = crossmax
 	#del crossmed
 
 	#crossnorm   = nd_image.median_filter(crossnorm,size=3)
-	crossnorm   = normRange(crossnorm)
+	crossmax   = normRange(crossmax)
+	#crossnorm   = normRange(crossnorm)
 	#NORMalized = MAXimum - MEDian (WORKS?)
 
 	#crossavg    = crossavg / rot
@@ -148,41 +149,45 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 	#REMOVE OUTSIDE AREA
 	cutrad = int(diam/apix/float(bin)/2.0)
 	#cutrad = (templatebin.shape)[0]/2 #ASSUME TEMPLATE IS SQUARE!
-	cshape = crossnorm.shape
- 	crossnorm[ 0:cutrad, 0:cshape[1] ] = 0.1
-	crossnorm[ 0:cshape[0], 0:cutrad ] = 0.1
- 	crossnorm[ cshape[0]-cutrad:cshape[0], 0:cshape[1] ] = 0.1
-	crossnorm[ 0:cshape[0], cshape[1]-cutrad:cshape[1] ] = 0.1
+	cshape = crossmax.shape
+ 	crossmax[ 0:cutrad, 0:cshape[1] ] = 0.1
+	crossmax[ 0:cshape[0], 0:cutrad ] = 0.1
+ 	crossmax[ cshape[0]-cutrad:cshape[0], 0:cshape[1] ] = 0.1
+	crossmax[ 0:cshape[0], cshape[1]-cutrad:cshape[1] ] = 0.1
 
-	Mrc.numeric_to_mrc(crossnorm,outfile)
+	Mrc.numeric_to_mrc(crossmax,outfile)
 	#numeric_to_jpg(crossmed,"crossmed.jpg")
+	numeric_to_jpg(crossmax,imagefile+"-ccmaxmap.jpg")
 	#numeric_to_jpg(crossnorm,outfile+".jpg")
 	#numeric_to_jpg(crossmax,"crossmax.jpg")
 	#numeric_to_jpg(normmax,"normmax.jpg")
 	#numeric_to_jpg(crossstd2,"crossstd.jpg")
 	#numeric_to_jpg(crossmin,"crossmin.jpg")
 	#numeric_to_jpg(crossavg,"crossavg.jpg")
-	del crossnorm
+	#del crossnorm
 	del crossmax
-	del normmax
+	#del normmax
 
 
 def removeCrud(image,imagefile,stdev,params):
+	print "Put noise in low density regions (crud remover)"
+
 	bin     = int(params["bin"])
 	apix    = float(params["apix"])
 	diam    = float(params["diam"])
 	lowpass	= float(params["lp"])
 	pixrad  = diam/apix/2.0/float(bin)
 
-	#BLACK OUT DARK AREAS, LESS THAN 3 STDEVS
-	#imagemed = selexonFunctions.filterImg(image,apix*float(bin),int(pixrad+1))
-	print " ... put noise in low density regions (crud remover)"
-	print " ... ... low pass filter"
-	imagemed = filterImg(image,apix*float(bin),int(8*pixrad+1))
-	print " ... ... max/min filters"
+	#BLACK OUT DARK AREAS, LESS THAN 2 STDEVS
 
+	print " ... low pass filter"
+	#imagemed = selexonFunctions.filterImg(image,apix*float(bin),int(pixrad+1))
+	imagemed = filterImg(image,apix*float(bin),int(16*pixrad+1))
+
+	print " ... max/min filters"
 	#GROW
-	rad = int(2*pixrad+1)
+	print " ... ... grow filter"
+	rad = int(pixrad/2+1)
 	def distsq(x,y):
 		return (x-rad)**2 + (y-rad)**2
 	fp = numarray.fromfunction(distsq, (rad*2,rad*2))
@@ -190,15 +195,17 @@ def removeCrud(image,imagefile,stdev,params):
 	imagemed = nd_image.minimum_filter(imagemed, \
 		footprint=fp,mode="constant",cval=stdev)
 	#SHRINK
-	rad = int(3*pixrad+1)
+	print " ... ... shrink filter"
+	rad = int(2*pixrad+1)
 	def distsq(x,y):
 		return (x-rad)**2 + (y-rad)**2
 	fp = numarray.fromfunction(distsq, (rad*2,rad*2))
 	fp = numarray.where(fp < rad**2,1.0,0.0)
 	imagemed = nd_image.maximum_filter(imagemed, \
-		footprint=fp,mode="constant",cval=stdev)
+		footprint=fp,mode="constant",cval=0.0)
 	#GROW
-	rad = int(4*pixrad+1)
+	print " ... ... grow filter"
+	rad = int(2*pixrad+1)
 	def distsq(x,y):
 		return (x-rad)**2 + (y-rad)**2
 	fp = numarray.fromfunction(distsq, (rad*2,rad*2))
@@ -206,14 +213,24 @@ def removeCrud(image,imagefile,stdev,params):
 	imagemed = nd_image.minimum_filter(imagemed, \
 		footprint=fp,mode="constant",cval=stdev)
 
+	#SHRINK
+	print " ... ... shrink filter"
+	rad = int(pixrad/2+1)
+	def distsq(x,y):
+		return (x-rad)**2 + (y-rad)**2
+	fp = numarray.fromfunction(distsq, (rad*2,rad*2))
+	fp = numarray.where(fp < rad**2,1.0,0.0)
+	imagemed = nd_image.maximum_filter(imagemed, \
+		footprint=fp,mode="constant",cval=0.0)
+
 	imagemed = normStdev(imagemed)
-	print " ... ... create mask"
+	print " ... create mask"
 	imagemask = numarray.where(imagemed>stdev,0.0,1.0)
 	numeric_to_jpg(imagemask,imagefile+"-mask.jpg")
 	#image = numarray.where(imagemask<0.1,image,image-3)
-	print " ... ... create random noise data"
+	print " ... create random noise data"
 	imagerand = random_array.normal(0.0, 1.0, shape=image.shape)
-	print " ... ... replace crud with noise"
+	print " ... replace crud with noise"
 	image = numarray.where(imagemask<0.1,image,imagerand) #random.gauss(-1.0,1.0))
 	numeric_to_jpg(image,imagefile+"-modified.jpg")
 	del imagemed
@@ -426,10 +443,11 @@ def createJPG2(params,file):
 
 	mrcfile = file+".mrc"
 	count =   len(params['templatelist'])
-	bin =     int(params["bin"])
+	bin =     int(params["bin"])/2
 	diam =    float(params["diam"])
 	apix =    float(params["apix"])
-
+	if bin < 1: 
+		bin = 1
 	if not (os.path.exists("jpgs")):
 		os.mkdir("jpgs")
 
