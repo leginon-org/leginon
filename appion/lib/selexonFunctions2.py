@@ -71,6 +71,7 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 	#NORMALIZE
 	image    = normStdev(image)
 	image    = PlaneRegression(image)
+	image    = normStdev(image)
 	template = normStdev(template)
 
 	#LOW PASS FILTER
@@ -177,17 +178,22 @@ def removeCrud(image,imagefile,stdev,params):
 	#imagemed = selexonFunctions.filterImg(image,apix*float(bin),int(pixrad+1))
 	print " ... put noise in low density regions (crud remover)"
 	print " ... ... low pass filter"
-	imagemed = filterImg(image,apix*float(bin),int(4*pixrad+1))
+	imagemed = filterImg(image,apix*float(bin),int(8*pixrad+1))
 	print " ... ... max/min filters"
-	imagemed = nd_image.minimum_filter(imagemed,size=int(4*pixrad+1),mode="constant",cval=0)
-	imagemed = nd_image.maximum_filter(imagemed,size=int(2*pixrad+1),mode="constant",cval=-2)
+	fp = numarray.array([[0,1,1,0],[1,1,1,1],[1,1,1,1],[0,1,1,0]])
+	imagemed = nd_image.minimum_filter(imagemed,size=int(2*pixrad+1), \
+		footprint=fp,mode="constant",cval=0)
+	imagemed = nd_image.maximum_filter(imagemed,size=int(5*pixrad+1), \
+		footprint=fp,mode="constant",cval=stdev)
+	imagemed = nd_image.minimum_filter(imagemed,size=int(10*pixrad+1), \
+		footprint=fp,mode="constant",cval=0)
 	imagemed = normStdev(imagemed)
 	print " ... ... create mask"
 	imagemask = numarray.where(imagemed>stdev,0.0,1.0)
 	numeric_to_jpg(imagemask,imagefile+"-mask.jpg")
 	#image = numarray.where(imagemask<0.1,image,image-3)
 	print " ... ... create random noise data"
-	imagerand = random_array.normal(0.0, 0.75, shape=image.shape)
+	imagerand = random_array.normal(0.0, 1.5, shape=image.shape)
 	print " ... ... replace crud with noise"
 	image = numarray.where(imagemask<0.1,image,imagerand) #random.gauss(-1.0,1.0))
 	numeric_to_jpg(image,imagefile+"-modified.jpg")
