@@ -38,7 +38,7 @@ def linearscale(input, boundfrom, boundto):
 	minto,maxto = boundto
 
 	## prepare for fast math
-	rangefrom = Numeric.array((maxfrom - minfrom)).astype('f')
+	rangefrom = float(maxfrom - minfrom)
 	rangeto = Numeric.array((maxto - minto)).astype('f')
 	minfrom = Numeric.array(minfrom).astype('f')
 
