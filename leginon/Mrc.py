@@ -24,12 +24,14 @@ mrcmode_type = {
 	1: (2, Numeric.Int16),
 	2: (4, Numeric.Float32),
 	3: (8, Numeric.Complex32),
+	6: (2, Numeric.UInt16),
 }
 type_mrcmode = {
 	Numeric.UInt8: 0,
 	Numeric.Int16: 1,
 	Numeric.Float32: 2,
 	Numeric.Complex32: 3,
+	Numeric.UInt16: 6,
 }
 
 ## MRC is lame because it only supports a few of the C types
@@ -40,7 +42,6 @@ unsupported_types = {
 	Numeric.Float64:   Numeric.Float32,   # precision loss
 	Numeric.Int32:     Numeric.Float32,   # precision loss
 	Numeric.Int:       Numeric.Float32,   # precision loss
-	Numeric.UInt16:    Numeric.Float32,   # 2 bytes wasted
 	Numeric.Int8:      Numeric.Int16,     # 1 byte wasted
 	Numeric.Bool:      Numeric.UInt8,     # 1 byte wasted
 }
