@@ -88,8 +88,8 @@ class Image(object):
 			return False
 		else:
 			return True
-	
-class OutputImage(Image):
+
+class MontageImage(Image):
 	def __init__(self, scope, camera, timestamp, rotation=0.0):
 		Image.__init__(self, scope, camera, timestamp, rotation=rotation)
 
@@ -217,10 +217,6 @@ class OutputImage(Image):
 			self.targets.append(pix)
 
 
-class InputImage(Image):
-	pass
-
-
 def getImageData(filename_or_id):
 	print 'getImageData(%s)' % (filename_or_id,)
 	if isinstance(filename_or_id, basestring):
@@ -239,7 +235,7 @@ def createTargetInputs(targetimages):
 	for id, target in targetimages:
 		imdata = getImageData(id)
 		fileref = imdata.special_getitem('image', dereference=False)
-		input = InputImage(imdata['scope'], imdata['camera'], imdata.timestamp, fileref)
+		input = Image(imdata['scope'], imdata['camera'], imdata.timestamp, fileref)
 		targetinputs.append((input, target))
 	return targetinputs
 
@@ -279,8 +275,8 @@ def createInputs(images, cachefile=None):
 	inputimages = []
 	for imdata in images:
 		fileref = imdata.special_getitem('image', dereference=False)
-		print 'Creating InputImage:', imdata['filename']
-		input = InputImage(imdata['scope'], imdata['camera'], imdata.timestamp, fileref)
+		print 'Creating Image:', imdata['filename']
+		input = Image(imdata['scope'], imdata['camera'], imdata.timestamp, fileref)
 		inputimages.append(input)
 	if cachefile is not None:
 		f = open(cachefile, 'w')
@@ -302,7 +298,7 @@ def createGlobalOutput(imdata, angle=0.0, bin=1):
 	camera = data.CameraEMData(initializer=imdata['camera'])
 	binning = {'x':camera['binning']['x']*bin, 'y':camera['binning']['y']*bin}
 	camera['binning'] = binning
-	globaloutput = OutputImage(scope, camera, timestamp, rotation=angle)
+	globaloutput = MontageImage(scope, camera, timestamp, rotation=angle)
 	return globaloutput
 
 def readTileInfo():
@@ -361,7 +357,7 @@ def createTiles(inputs, tiledict, tilesize, row1=None, row2=None, col1=None, col
 	for i,tileindex in enumerate(tileindices):
 			tileargs = tiledict[tileindex]
 			print 'Creating tile:', tileindex
-			output = OutputImage(*tileargs['args'], **tileargs['kwargs'])
+			output = MontageImage(*tileargs['args'], **tileargs['kwargs'])
 		
 			for input in inputs:
 				output.insertImage(input)
@@ -431,7 +427,7 @@ if __name__ == '__main__':
 	if badargs:
 		sys.exit()
 
-	
+
 	############## Set up inputs ################
 	if options.infilename is not None:
 		f = open(options.infilename, 'r')
@@ -476,7 +472,7 @@ if __name__ == '__main__':
 	globaloutput.containInputs(inputimages)
 
 	print 'Output shape:', globaloutput.shape
-	
+
 	############## Set up targtets for rotat##############
 	'''
 	targetimages = (
