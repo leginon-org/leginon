@@ -180,13 +180,31 @@ def removeCrud(image,imagefile,stdev,params):
 	print " ... ... low pass filter"
 	imagemed = filterImg(image,apix*float(bin),int(8*pixrad+1))
 	print " ... ... max/min filters"
-	fp = numarray.array([[0,1,1,0],[1,1,1,1],[1,1,1,1],[0,1,1,0]])
-	imagemed = nd_image.minimum_filter(imagemed,size=int(4*pixrad+1), \
-		footprint=fp,mode="constant",cval=0)
-	imagemed = nd_image.maximum_filter(imagemed,size=int(8*pixrad+1), \
+
+	#GROW
+	rad = int(2*pixrad+1)
+	def distsq(x,y):
+		return (x-rad)**2 + (y-rad)**2
+	fp = numarray.fromfunction(distsq, (rad*2,rad*2))
+	fp = numarray.where(fp < rad**2,1.0,0.0)
+	imagemed = nd_image.minimum_filter(imagemed, \
 		footprint=fp,mode="constant",cval=stdev)
-	imagemed = nd_image.minimum_filter(imagemed,size=int(10*pixrad+1), \
-		footprint=fp,mode="constant",cval=0)
+	#SHRINK
+	rad = int(3*pixrad+1)
+	def distsq(x,y):
+		return (x-rad)**2 + (y-rad)**2
+	fp = numarray.fromfunction(distsq, (rad*2,rad*2))
+	fp = numarray.where(fp < rad**2,1.0,0.0)
+	imagemed = nd_image.maximum_filter(imagemed, \
+		footprint=fp,mode="constant",cval=stdev)
+	#GROW
+	rad = int(4*pixrad+1)
+	def distsq(x,y):
+		return (x-rad)**2 + (y-rad)**2
+	fp = numarray.fromfunction(distsq, (rad*2,rad*2))
+	fp = numarray.where(fp < rad**2,1.0,0.0)
+	imagemed = nd_image.minimum_filter(imagemed, \
+		footprint=fp,mode="constant",cval=stdev)
 
 	imagemed = normStdev(imagemed)
 	print " ... ... create mask"
