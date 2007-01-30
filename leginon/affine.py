@@ -2,6 +2,9 @@
 things that make affine_transform easier
 '''
 
+import numarray
+import numarray.nd_image
+
 def affine_transform_offset(inputshape, outputshape, affine_matrix, offset=(0,0)):
 	'''
 	calculation of affine transform offset
