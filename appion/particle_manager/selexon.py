@@ -133,8 +133,11 @@ if __name__ == '__main__':
 
 	# run selexon
 	notdone=True
+	twhole=time.time()
+	count  = 0
 	while notdone:
 		while images:
+			count = count + 1
 			tbegin=time.time()
 			img = images.pop(0)
 
@@ -267,7 +270,8 @@ if __name__ == '__main__':
 			createImageLinks(images)
 		else:
 			notdone=False
-
+	ttotal= "%.2f" % float(time.time()-twhole)
+	print "\tCOMPLETE LOOP:\t",ttotal,"seconds for",count,"images"
 	# remove temporary templates if getting images from db
 	if params['templateIds']:
 		i=1

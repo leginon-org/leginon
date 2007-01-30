@@ -13,6 +13,9 @@ import ImageDraw
 import numextension
 import string
 import math
+import convolver
+import numarray.random_array as random_array
+import numarray.linear_algebra as linear_algebra
 import selexonFunctions
 
 def runCrossCorr(params,file):
@@ -55,6 +58,7 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 	apix    = float(params["apix"])
 	diam    = float(params["diam"])
 	lowpass	= float(params["lp"])
+	pixrad  = diam/apix/2.0
 
 	#READ IMAGES
 	image    = Mrc.mrc_to_numeric(imagefile)
@@ -66,54 +70,73 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 
 	#NORMALIZE
 	image    = normStdev(image)
+	image = PlaneRegression(image)
 	template = normStdev(template)
 
 	#LOW PASS FILTER
 	image    = selexonFunctions.filterImg(image,apix*float(bin),lowpass)
+
+	#BLACK OUT DARK AREAS, LESS THAN 3 STDEVS
+	image = removeCrud(image,imagefile,params)
 
 	#MASK IF YOU WANT
 	#tmplmask = circ_mask(template,diam/apix)
 	#template = template*tmplmask
 
 	crossmax = 0*image-10
+	normmax  = crossmax
 	#crossmin = 0*image+10
 	#crossavg = 0*image
 	#crossstd = 0*image
 	imagefft = calc_imagefft(image,templatebin) #SAVE SOME CPU CYCLES
 	ang = strt
 	i = 1
+
+	print "Starting rotations ... "
 	totalrots = int( (end - strt) / incr + 0.999)
 	while(ang < end):
 		print " ... rotation:",i,"of",totalrots,"  \tangle =",ang
 		template2   = nd_image.rotate(template,ang,reshape=False,mode="wrap")
+		template3   = nd_image.gaussian_filter(template2,sigma=int(pixrad/5.0+1.0),mode="wrap")
+		#template3   = nd_image.median_filter(template2,size=rad,mode="wrap")
+		#template3   = selexonFunctions.filterImg(template2,apix,diam*apix/4.0)
+		#numeric_to_jpg(template2,"template2.jpg")
+		#numeric_to_jpg(template3,"template3.jpg")
 		template2   = imagefun.bin(template2,bin)
+		template3   = imagefun.bin(template3,bin)
 
-		templatefft = calc_templatefft(image,template2)
-		cross       = cross_correlate_fft(image,template2,imagefft,templatefft)
+		templatefft  = calc_templatefft(image,template2)
+		templatefft3 = calc_templatefft(image,template3)
+		cross        = cross_correlate_fft(image,template2,imagefft,templatefft)
+		norm         = cross_correlate_fft(image,template3,imagefft,templatefft3)
 		#cross       = cross_correlate(image,template2) #CLASSIC CALCULATION
 		del template2
 		del templatefft
-		cross       = normRange(cross)
+		del template3
+		del templatefft3
+		#cross       = normRange(cross)
+		#norm        = normRange(norm)
 
 		crossmax    = numarray.where(cross>crossmax,cross,crossmax)
+		normmax     = numarray.where(norm>normmax,norm,normmax)
 		#crossmin    = numarray.where(cross<crossmin,cross,crossmin)
 		#crossavg    = crossavg + cross
 		#crossstd    = crossstd + cross * cross
 
 		del cross
-
+		del norm
 
 		ang = ang + incr
 		i = i + 1
 
 	#CREATE BEST FILTERED IMAGE
 	rad = int(diam/apix/bin/2+1)
-	crossmed    = nd_image.minimum_filter(crossmax,size=3)
-	crossmed    = nd_image.median_filter(crossmed,size=rad)
-	crossnorm   = crossmax - crossmed
+	#crossmed    = nd_image.minimum_filter(crossmax,size=3)
+	#crossmed    = nd_image.median_filter(crossmed,size=rad)
+	crossnorm   = crossmax - normmax
 	#crossnorm   = crossmax
-	del crossmed
-	del crossmax
+	#del crossmed
+
 	#crossnorm   = nd_image.median_filter(crossnorm,size=3)
 	crossnorm   = normRange(crossnorm)
 	#NORMalized = MAXimum - MEDian (WORKS?)
@@ -122,21 +145,102 @@ def createCrossCorr(params, imagefile, templfile, outfile, strt, end, incr):
 	#crossstd    = (crossstd - rot * crossavg * crossavg) / (rot - 1)
 
 	#REMOVE OUTSIDE AREA
-	cutrad = (templatebin.shape)[0]/2 #ASSUME TEMPLATE IS SQUARE!
+	cutrad = int(diam/apix/float(bin)/2.0)
+	#cutrad = (templatebin.shape)[0]/2 #ASSUME TEMPLATE IS SQUARE!
 	cshape = crossnorm.shape
- 	crossnorm[ 0:cutrad, 0:cshape[1] ] = 0
-	crossnorm[ 0:cshape[0], 0:cutrad ] = 0
- 	crossnorm[ cshape[0]-cutrad:cshape[0], 0:cshape[1] ] = 0
-	crossnorm[ 0:cshape[0], cshape[1]-cutrad:cshape[1] ] = 0
+ 	crossnorm[ 0:cutrad, 0:cshape[1] ] = 0.1
+	crossnorm[ 0:cshape[0], 0:cutrad ] = 0.1
+ 	crossnorm[ cshape[0]-cutrad:cshape[0], 0:cshape[1] ] = 0.1
+	crossnorm[ 0:cshape[0], cshape[1]-cutrad:cshape[1] ] = 0.1
 
 	Mrc.numeric_to_mrc(crossnorm,outfile)
 	#numeric_to_jpg(crossmed,"crossmed.jpg")
-	numeric_to_jpg(crossnorm,outfile+".jpg")
+	#numeric_to_jpg(crossnorm,outfile+".jpg")
 	#numeric_to_jpg(crossmax,"crossmax.jpg")
+	#numeric_to_jpg(normmax,"normmax.jpg")
 	#numeric_to_jpg(crossstd2,"crossstd.jpg")
 	#numeric_to_jpg(crossmin,"crossmin.jpg")
 	#numeric_to_jpg(crossavg,"crossavg.jpg")
 	del crossnorm
+	del crossmax
+	del normmax
+
+
+def removeCrud(image,imagefile,params):
+	bin     = int(params["bin"])
+	apix    = float(params["apix"])
+	diam    = float(params["diam"])
+	lowpass	= float(params["lp"])
+	pixrad  = diam/apix/2.0
+
+	#BLACK OUT DARK AREAS, LESS THAN 3 STDEVS
+	#imagemed = selexonFunctions.filterImg(image,apix*float(bin),int(pixrad+1))
+	print " ... put noise in low density regions (crud remover)"
+	print " ... ... low pass filter"
+	imagemed = filterImg(image,apix*float(bin),int(2*pixrad+1))
+	print " ... ... max/min filters"
+	imagemed = nd_image.minimum_filter(imagemed,size=int(pixrad+1),mode="constant",cval=0)
+	imagemed = nd_image.maximum_filter(imagemed,size=int(pixrad/2+1),mode="constant",cval=-2)
+	imagemed = normStdev(imagemed)
+	print " ... ... create mask"
+	imagemask = numarray.where(imagemed>-2,0.0,1.0)
+	numeric_to_jpg(imagemask,imagefile+"-mask.jpg")
+	#image = numarray.where(imagemask<0.1,image,image-3)
+	print " ... ... create random noise data"
+	imagerand = random_array.normal(0.0, 0.75, shape=image.shape)
+	print " ... ... replace crud with noise"
+	image = numarray.where(imagemask<0.1,image,imagerand) #random.gauss(-1.0,1.0))
+	numeric_to_jpg(image,imagefile+"-modified.jpg")
+	del imagemed
+	del imagemask
+	del imagerand
+	return image
+
+
+def filterImg(img,apix,res):
+	# low pass filter image to res resolution
+	if res==0:
+		print "Skipping low pass filter"
+		return(img)
+	else:
+		sigma=(res/apix)/3.0
+		kernel=convolver.gaussian_kernel(sigma)
+		#Mrc.numeric_to_mrc(kernel,'kernel.mrc')
+	#return(convolve.convolve2d(img,kernel,fft=1,mode='reflect'))
+	c=convolver.Convolver()
+	return(c.convolve(image=img,kernel=kernel))
+
+def PlaneRegression(sqarray):
+	print " ... calculate 2d linear regression"
+	if ( (sqarray.shape)[0] != (sqarray.shape)[1] ):
+		print "Array is NOT square"
+		sys.exit(1)
+	size = (sqarray.shape)[0]
+	count = float((sqarray.shape)[0]*(sqarray.shape)[1])
+	def retx(y,x):
+		return x
+	def rety(y,x):
+		return y	
+	xarray = numarray.fromfunction(retx, sqarray.shape)
+	yarray = numarray.fromfunction(rety, sqarray.shape)
+	xsum = float(xarray.sum())
+	xsumsq = float((xarray*xarray).sum())
+	ysum = xsum
+	ysumsq = xsumsq
+	xysum = float((xarray*yarray).sum())
+	xzsum = float((xarray*sqarray).sum())
+	yzsum = float((yarray*sqarray).sum())
+	zsum = sqarray.sum()
+	zsumsq = (sqarray*sqarray).sum()
+	xarray = xarray.astype(numarray.Float64)
+	yarray = yarray.astype(numarray.Float64)
+	leftmat = numarray.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]] )
+	rightmat = numarray.array( [xzsum, yzsum, zsum] )
+	resvec = linear_algebra.solve_linear_equations(leftmat,rightmat)
+	print " ... plane_regress: x-slope:",round(resvec[0]*size,5),\
+		", y-slope:",round(resvec[1]*size,5),", xy-intercept:",round(resvec[2],5)
+	return sqarray - xarray*resvec[0] - yarray*resvec[1] - resvec[2]
+	sys.exit(1)
 
 
 def findPeaks2(params,file):
@@ -166,6 +270,8 @@ def findPeaksInMap(file,num,params,maxblobsize):
 	diam =        float(params["diam"])
 	apix =        float(params["apix"])
 	olapmult =    float(params["overlapmult"])
+
+	print " ... threshold",threshold
 
 	infile="cccmaxmap"+str(num)+"00.mrc"
 	outfile="pikfiles/"+file+"."+str(num)+".pik"
@@ -312,7 +418,7 @@ def createJPG2(params,file):
 	image2 = image2.convert("RGB")
 
 	pikfile="pikfiles/"+file+".a.pik"
-	print "Reading Pik: ",pikfile
+	print " ... reading Pik: ",pikfile
 	draw = ImageDraw.Draw(image2)
 	#blend(image1,image2,0.5)
 	draw = readPikFile(pikfile,draw,diam,bin,apix) 
@@ -320,7 +426,7 @@ def createJPG2(params,file):
 
 	
 	outfile="jpgs/"+mrcfile+".prtl.jpg"
-	print "Writing JPEG: ",outfile
+	print " ... writing JPEG: ",outfile
 	image2.save(outfile, "JPEG", quality=95)
 
 
@@ -427,7 +533,7 @@ def numeric_to_jpg(numer,file):
 	numer=normalizeImage(numer)
 	image = array2image(numer)
 	#image = image.convert("RGB")
-	print "Writing JPEG: ",file
+	print " ... writing JPEG: ",file
 	image.save(file, "JPEG", quality=85)
 
 def normRange(im):
