@@ -39,16 +39,16 @@ def createDefaults():
 	params["lp"]=30
 	params["hp"]=600
 	params["box"]=0
-	params["crud"]='FALSE'
+	params["crud"]=False
 	params["cdiam"]=0
 	params["cblur"]=3.5
 	params["clo"]=0.6
 	params["chi"]=0.95
 	params["cstd"]=1
-	params["crudonly"]='FALSE'
-	params["continue"]='FALSE'
+	params["crudonly"]=False
+	params["continue"]=False
 	params["multiple_range"]=False
-	params["dbimages"]='FALSE'
+	params["dbimages"]=False
 	params["alldbimages"]=False
 	params["session"]=None
 	params["preset"]=None
@@ -270,9 +270,9 @@ def parseSelexonInput(args,params):
 		elif (elements[0]=='box'):
 			params["box"]=int(elements[1])
 		elif (arg=='crud'):
-			params["crud"]='TRUE'
+			params["crud"]=True
 		elif (elements[0]=='cruddiam'):
-			params["crud"]='TRUE'
+			params["crud"]=True
 			params["cdiam"]=int(elements[1])
 		elif (elements[0]=='crudblur'):
 			params["cblur"]=float(elements[1])
@@ -285,9 +285,9 @@ def parseSelexonInput(args,params):
 		elif (elements[0]=='runid'):
 			params["runid"]=elements[1]
 		elif (arg=='crudonly'):
-			params["crudonly"]='TRUE'
+			params["crudonly"]=True
 		elif (arg=='continue'):
-			params["continue"]='TRUE'
+			params["continue"]=True
 		elif (elements[0]=='templateIds'):
 			templatestring=elements[1].split(',')
 			params['templateIds']=templatestring
@@ -298,8 +298,8 @@ def parseSelexonInput(args,params):
 			if len(dbinfo) == 2:
 				params['sessionname']=dbinfo[0]
 				params['preset']=dbinfo[1]
-				params["dbimages"]='TRUE'
-				params["continue"]='TRUE' # continue should be on for dbimages option
+				params["dbimages"]=True
+				params["continue"]=True # continue should be on for dbimages option
 			else:
 				print "dbimages must include both session and preset parameters"
 				sys.exit()
@@ -585,7 +585,7 @@ def findCrud(params,file):
 	cmdlist.append("#!/usr/bin/env viewit\n")
 	cmdlist.append("source $env(SELEXON_PATH)/io_subs.tcl\n")
 	cmdlist.append("source $env(SELEXON_PATH)/image_subs.tcl\n")
-	if (params["crudonly"]=='FALSE'):
+	if (params["crudonly"]==False):
 		cmdlist.append("set x 0\n")
 		cmdlist.append("set currentfile \"not_a_valid_file\"\n")
 		cmdlist.append("set fp [open pikfiles/"+file+".a.pik r]\n")
@@ -638,7 +638,7 @@ def findCrud(params,file):
 	cmdlist.append("    -xchg\n")
 	cmdlist.append("    -store outlined_img ss1\n")
 	cmdlist.append("    -load ss1 convex_hulls\n")
-	if (params["crudonly"]=='FALSE'):
+	if (params["crudonly"]==False):
 		cmdlist.append("    set currentfile "+file+".mrc\n")
 		cmdlist.append("  } else {\n")
 		cmdlist.append("    -load ss1 convex_hulls}\n")
@@ -653,15 +653,15 @@ def findCrud(params,file):
 	cmdlist.append("  set thickness 2\n")
 	cmdlist.append("  set pixel_value 255\n")
 	cmdlist.append("  -load ss1 outlined_img\n")
-	if (params["crudonly"]=='FALSE'):
+	if (params["crudonly"]==False):
 		cmdlist.append("  -zhsuper_prtl 0 $xcenter $ycenter "+size+" $thickness $pixel_value\n")
 	cmdlist.append("  -store outlined_img ss1\n")
-	if (params["crudonly"]=='FALSE'):
+	if (params["crudonly"]==False):
 		cmdlist.append("}\n")
 		cmdlist.append("close $fp\n")
 	cmdlist.append("-load ss1 outlined_img\n")
 	cmdlist.append("-oformat JPEG -o \"jpgs/"+file+".a.pik.nocrud.jpg\"\n")
-	if (params["crudonly"]=='FALSE'):
+	if (params["crudonly"]==False):
 		cmdlist.append("puts \"$x particles rejected due to being inside a crud.\"\n")
 	cmdlist.append("exit\n")
 
@@ -778,7 +778,7 @@ def filterImg(img,apix,res):
 def pik2Box(params,file):
 	box=params["box"]
 
-	if (params["crud"]=='TRUE'):
+	if (params["crud"]==True):
 		fname="pikfiles/"+file+".a.pik.nocrud"
 	else:
 		fname="pikfiles/"+file+".a.pik"
@@ -1254,7 +1254,7 @@ def insertParticlePicks(params,img,expid,manual=False):
 	elif (manual==True and params['prtltype']=='pik'):
 		fname=imgname+"."+params['extension']
 	else:
-		if (params["crud"]=='TRUE'):
+		if (params["crud"]==True):
 			fname="pikfiles/"+imgname+".a.pik.nocrud"
 		else:
 			fname="pikfiles/"+imgname+".a.pik"

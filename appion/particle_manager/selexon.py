@@ -31,7 +31,7 @@ if __name__ == '__main__':
 	if params['templateIds'] and params['template']:
 		print "\nERROR: Both template database IDs and mrc file templates are specified,\nChoose one\n"
 		sys.exit(1)
-	if params['crudonly']=='TRUE' and params['shiftonly']=='TRUE':
+	if params['crudonly']==True and params['shiftonly']==True:
 		print 'ERROR: crudonly and shiftonly can not be specified at the same time'
 		sys.exit()
 	if (params["thresh"]==0 and params["autopik"]==0):
@@ -40,11 +40,11 @@ if __name__ == '__main__':
 	if (params["diam"]==0):
 		print "\nERROR: please input the diameter of your particle\n\n"
 		sys.exit(1)
-	if len(params["mrcfileroot"]) > 0 and params["dbimages"]=='TRUE':
+	if len(params["mrcfileroot"]) > 0 and params["dbimages"]==True:
 		print len(images)
 		print "\nERROR: dbimages can not be specified if particular images have been specified\n"
 		sys.exit(1)
-	if params['alldbimages'] and params['dbimages']=='TRUE':
+	if params['alldbimages'] and params['dbimages']==True:
 		print "ERROR: dbimages and alldbimages can not be specified at the same time\n"
 		sys.exit()
 	if len(params['mrcfileroot']) > 0 and params['alldbimages']:
@@ -52,7 +52,7 @@ if __name__ == '__main__':
 		sys.exit()
 	
 	# get list of input images, since wildcards are supported
-	if params['dbimages']=='TRUE':
+	if params['dbimages']==True:
 		images=getImagesFromDB(params['sessionname'],params['preset'])
 		params['session']=images[0]['session']
 	elif params['alldbimages']:
@@ -87,7 +87,7 @@ if __name__ == '__main__':
 		params['template']='scaledTemporaryTemplate'
 		
 	# find the number of template files
-	if params["crudonly"]=='FALSE':
+	if params["crudonly"]==False:
 		checkTemplates(params)
 		# go through the template mrc files and downsize & filter them
 		for tmplt in params['templatelist']:
@@ -101,8 +101,8 @@ if __name__ == '__main__':
 	createImageLinks(images)
 	
 	# check to see if user only wants to run the crud finder
-	if (params["crudonly"]=='TRUE'):
-		if (params["crud"]=='TRUE' and params["cdiam"]==0):
+	if (params["crudonly"]==True):
+		if (params["crud"]==True and params["cdiam"]==0):
 			print "\nError: both \"crud\" and \"crudonly\" are set, choose one or the other.\n"
 			sys.exit(1)
 		if (params["diam"]==0): # diameter must be set
@@ -146,13 +146,13 @@ if __name__ == '__main__':
 
 			# skip if image doesn't exist:
 			if not os.path.isfile(params['imgdir']+img['filename']+'.mrc'):
-				print img['filename']+".mrc not found, skipping"
+				print "!!! "+img['filename']+".mrc not found, skipping"
 				continue
 
 			# if continue option is true, check to see if image has already been processed
 			imgname=img['filename']
 			doneCheck(donedict,imgname)
-			if (params["continue"]=='TRUE'):
+			if (params["continue"]==True):
 				if donedict[imgname]:
 					print imgname,'already processed. To process again, remove "continue" option.'
 					continue
@@ -199,7 +199,7 @@ if __name__ == '__main__':
 				continue
 
 			# run the crud finder on selected particles if specified
-			if (params["crud"]=='TRUE'):
+			if (params["crud"]==True):
 				if not (os.path.exists("crudfiles")):
 					os.mkdir("crudfiles")
 					t1=time.time()
@@ -214,7 +214,7 @@ if __name__ == '__main__':
 					continue
 
 			# create jpg of selected particles if not created by crudfinder
-			if (params["crud"]=='FALSE'):
+			if (params["crud"]==False):
 				if params['method'] == "classic":
 					print "Using *classic* Viewit Method..."
 					t1=time.time()
@@ -256,13 +256,13 @@ if __name__ == '__main__':
 			print "\tCrossCorr: \t",tcrosscorr,"seconds"
 			print "\tFindPeaks: \t",tfindPeaks,"seconds"
 			print "\tCreateJPG: \t",tcreateJPG,"seconds"
-			if (params["crud"]=='TRUE'):
+			if (params["crud"]==True):
 				print "\tFindCrud:  \t",tfindCrud,"seconds"
 			print "\t---------- \t----------------"
 			ttotal= "%.2f" % float(time.time()-tbegin)
 			print "\tTOTAL:     \t",ttotal,"seconds"
 
-		if params["dbimages"]=='TRUE':
+		if params["dbimages"]==True:
 			notdone=True
 			print "Waiting ten minutes for new images"
 			time.sleep(600)
