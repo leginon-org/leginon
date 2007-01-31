@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import numarray
+import Image
+import ImageDraw
 
 def insidePolygon(indices, polygon):
 	'''
@@ -84,3 +86,18 @@ if __name__ == '__main__':
 		print points
 		print getPolygonCenter(points)
 
+def plot_polygons(shape,gpolygons):
+	zeros=numarray.zeros(shape,type=numarray.Int8)
+	img=Image.new('L',shape)
+	draw=ImageDraw.Draw(img)
+	for p in gpolygons:
+		plist =p.tolist()
+		for i,point in enumerate(plist):
+			plist[i]=tuple(point)
+		if len(plist) > 2:
+			draw.polygon(plist,fill=1)	  
+	seq=list(img.getdata())
+	polygon_image=numarray.array(seq)
+	polygon_image=numarray.reshape(polygon_image,shape)
+	polygon_image=numarray.transpose(polygon_image)
+	return polygon_image
