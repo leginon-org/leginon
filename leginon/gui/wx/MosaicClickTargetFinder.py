@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.26 $
+# $Revision: 1.27 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-02-01 06:41:05 $
+# $Date: 2007-02-01 19:37:13 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -257,7 +257,7 @@ class RegionSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['watchdone'] = wx.CheckBox(self, -1, 'Run auto targeting when image source is finished')
 		szoptions.Add(self.widgets['watchdone'], (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
-		label = wx.StaticText(self, -1, 'Minimum Region Area (% of tile area)')
+		label = wx.StaticText(self, -1, 'Initial Minimum Region Area (% of tile area)')
 		self.widgets['min region area'] = FloatEntry(self, -1, chars=8)
 		szoptions.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szoptions.Add(self.widgets['min region area'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -272,12 +272,12 @@ class RegionSettingsDialog(gui.wx.Settings.Dialog):
 		szoptions.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szoptions.Add(self.widgets['ve limit'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		label = wx.StaticText(self, -1, 'Min Threshold')
+		label = wx.StaticText(self, -1, 'Region Min Threshold')
 		self.widgets['min threshold'] = FloatEntry(self, -1, chars=8)
 		szoptions.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szoptions.Add(self.widgets['min threshold'], (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		label = wx.StaticText(self, -1, 'Max Threshold')
+		label = wx.StaticText(self, -1, 'Section/Background Threshold')
 		self.widgets['max threshold'] = FloatEntry(self, -1, chars=8)
 		szoptions.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szoptions.Add(self.widgets['max threshold'], (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
