@@ -14,104 +14,10 @@
 #define M_SQRT2 1.41421356237309504880
 #endif
 
-int PyArray_Size(PyArrayObject *input)
-{
-	int size, dims, i;
-	size = 1.0;
-	dims = input->nd;
-	for(i=0;i<dims;i++)
-	{
-		size = size * input->dimensions[i];
-	}
-	return size;
-}
 
 /******************************************
  statistical functions
 ******************************************/
-
-#undef min
-#undef max
-
-/****
-Note from Jim about min(), max(), etc.:  It would be nice to do these 
-more in the style of argmin and argmax in Numeric's multiarraymodule.c 
-so that there are actually several type specific functions instead of 
-simply casting to floats all the time.  It would also be nice to use
-their style because there is a lot of repetitive code here that could
-be cleaned up by using macros like they did.
-****/
-static PyObject *
-min(PyObject *self, PyObject *args)
-{
-	PyObject *input;
-	PyArrayObject *inputarray;
-	float *iter;
-	float result;
-	int len, i;
-
-	if (!PyArg_ParseTuple(args, "O", &input))
-		return NULL;
-
-	/* create proper PyArrayObjects from input source */
-	inputarray = NA_InputArray(input, tFloat32, NUM_C_ARRAY);
-	if (inputarray == NULL) {
-		Py_XDECREF(inputarray);
-		return NULL;
-	}
-
-	len = PyArray_Size(inputarray);
-
-	iter = (float *)inputarray->data;
-	result = *iter;
-	iter++;
-	for(i=1; i<len; i++) {
-		if (*iter < result) {
-			result = *iter;
-		}
-		iter++;
-	}
-
-	Py_XDECREF(inputarray);
-
-	return Py_BuildValue("f", result);
-}
-
-static PyObject *
-max(PyObject *self, PyObject *args)
-{
-	PyObject *input;
-	PyArrayObject *inputarray;
-	float *iter;
-	float result;
-	int len, i;
-
-	if (!PyArg_ParseTuple(args, "O", &input))
-		return NULL;
-
-	/* create proper PyArrayObjects from input source */
-	inputarray = NA_InputArray(input, tFloat32, NUM_C_ARRAY);
-	if (inputarray == NULL) {
-		Py_XDECREF(inputarray);
-		return NULL;
-	}
-
-	len = PyArray_Size(inputarray);
-
-	iter = (float *)inputarray->data;
-	result = *iter;
-	iter++;
-	for(i=1; i<len; i++) {
-		if (*iter > result) {
-			result = *iter;
-		}
-		iter++;
-	}
-
-	Py_XDECREF(inputarray);
-
-	return Py_BuildValue("f", result);
-}
 
 /****
 The minmax function calculates both min and max of an array in one loop.
@@ -127,7 +33,8 @@ minmax(PyObject *self, PyObject *args)
 	PyArrayObject *inputarray;
 	float *iter;
 	float minresult, maxresult;
-	int len, i;
+	int i;
+	unsigned long len;
 
 	if (!PyArg_ParseTuple(args, "O", &input))
 		return NULL;
@@ -139,7 +46,7 @@ minmax(PyObject *self, PyObject *args)
 		return NULL;
 	}
 
-	len = PyArray_Size(inputarray);
+	len = NA_elements(inputarray);
 
 	iter = (float *)inputarray->data;
 	if(len % 2) {
@@ -176,221 +83,12 @@ minmax(PyObject *self, PyObject *args)
 	return Py_BuildValue("ff", minresult, maxresult);
 }
 
-float sum_FLOAT(float *array, int len) {
-	float *ptr=array;
-	double result=0.0;
-	int i;
-
-	for(i=0; i<len; i++,ptr++) {
-		result += *ptr;
-	}
-	/* double -> float? */
-	return result;
-}
-
-float sum_squares_FLOAT(float *array, int len) {
-	float *ptr=array;
-	double result=0.0;
-	int i;
-
-	for(i=0; i<len; i++,ptr++) {
-		result += (*ptr)*(*ptr);
-	}
-	/* double -> float? */
-	return result;
-}
-
-float mean_FLOAT(float *array, int len) {
-	double result;
-
-	result = sum_FLOAT(array, len);
-	result /= (float)len;
-	/* double -> float? */
-	return result;
-}
-
-float standard_deviation_FLOAT(float *array, int len, int know_mean, float mean) {
-	double m, sumsquares, result;
-
-	sumsquares = sum_squares_FLOAT(array, len);
-	if(know_mean) {
-		m = mean;
-	} else {
-		m = mean_FLOAT(array, len);
-	}
-	result = sqrt(sumsquares / (float)len - m*m);
-	/* double -> float? */
-	return result;
-}
-
-static PyObject *
-stdev(PyObject *self, PyObject *args)
-{
-	PyObject *input, *meanobject;
-	PyArrayObject *inputarray;
-	int len;
-	float result, mean;
-	int have_mean;
-
-	meanobject = Py_None;
-	if (!PyArg_ParseTuple(args, "O|f", &input, &meanobject))
-		return NULL;
-
-	if (meanobject == Py_None) {
-		have_mean = 0;
-		mean = 0.0;
-	} else {
-		have_mean = 1;
-		mean = (float)PyFloat_AsDouble(meanobject);
-	}
-
-	/* create proper PyArrayObjects from input source */
-	inputarray = NA_InputArray(input, tFloat32, NUM_C_ARRAY);
-	if (inputarray == NULL) {
-		Py_XDECREF(inputarray);
-		return NULL;
-	}
-
-	len = PyArray_Size(inputarray);
-	result = standard_deviation_FLOAT((float *)inputarray->data, len, have_mean, mean);
-
-	Py_XDECREF(inputarray);
-
-	return Py_BuildValue("f", result);
-}
-
-
-/*******************
-blob finder stuff
-*******************/
-
-/*
-  25000 is about the limit on bnc16 where I tested it
-  more than that causes seg fault, probably from too much recursion
-*/
-#define BLOBLIMIT 25000
-
-int add_blob_point(PyArrayObject *map, PyObject *pixelrow, PyObject *pixelcol, PyObject *pixelv, int row, int col) {
-	/* delete this point from map */
-	int *map_ptr;
-	int rows, cols, r, c;
-	int index;
-
-	map_ptr = (int *)map->data;
-	rows = map->dimensions[0];
-	cols = map->dimensions[1];
-	index = row*cols+col;
-
-	/* reset this pixel in the map */
-	map_ptr[index] = 0;
-	/* add to the blob lists */
-	PyList_Append(pixelrow, PyInt_FromLong(row));
-	PyList_Append(pixelcol, PyInt_FromLong(col));
-
-	if (PyList_Size(pixelrow) > BLOBLIMIT) {
-		/* return int? */
-		return;
-	}
-
-	/* rercursively run this on neighbors */
-	for(r=row-1; r<row+2; r++) {
-		if(r < 0 || r >= rows) continue;
-		for(c=col-1; c<col+2; c++) {
-			if(c < 0 || c >= cols) continue;
-			if(map_ptr[r*cols+c])
-				add_blob_point(map, pixelrow, pixelcol, pixelv, r, c);
-		}
-	}
-	/* return int? */
-}
-
-static PyObject *
-blobs(PyObject *self, PyObject *args)
-{
-	PyArrayObject *inputmap, *map;
-	PyObject *results, *newblob, *pixelrow, *pixelcol, *pixelv;
-	int rows, cols, r, c, len;
-	int *map_ptr;
-	int i, size;
-
-	if (!PyArg_ParseTuple(args, "O", &inputmap))
-		return NULL;
-
-	/* must be 2-d integer array */
-	if (inputmap->nd != 2) {
-		PyErr_SetString(PyExc_ValueError, "map must be two-dimensional");
-		return NULL;
-	}
-
-	/* create a contiguous bit map from input map */
-	map = NA_InputArray(inputmap, tInt32, NUM_C_ARRAY|NUM_COPY);
-	if (map == NULL) {
-		Py_XDECREF(map);
-		return NULL;
-	}
-
-	rows = map->dimensions[0];
-	cols = map->dimensions[1];
-	len = rows*cols;
-
-	results = PyList_New(0);
-
-	map_ptr = (int *)map->data;
-	for(r=0; r<rows; r++) {
-		for(c=0; c<cols; c++) {
-			if(*map_ptr) {
-				/* new blob */
-				newblob = PyDict_New();
-				pixelrow = PyList_New(0);
-				pixelcol = PyList_New(0);
-				pixelv = PyList_New(0);
-				PyDict_SetItemString(newblob, "pixelrow", pixelrow);
-				PyDict_SetItemString(newblob, "pixelcol", pixelcol);
-				PyDict_SetItemString(newblob, "pixelv", pixelv);
-				if (newblob == NULL) return NULL;
-
-				/* find all points in blob */
-				add_blob_point(map, pixelrow, pixelcol, pixelv, r, c);
-
-				/* append blob to our results */
-				if (PyList_Append(results, newblob)) {
-					Py_DECREF(newblob);
-					return NULL;
-				}
-				/*
-				size = PyList_Size(newblob);
-				for(i = 0; i < size; i++)
-					Py_DECREF(PyList_GetItem(newblob, i));
-				*/
-				Py_DECREF(newblob);
-				size = PyList_Size(pixelrow);
-				for(i = 0; i < size; i++)
-					Py_DECREF(PyList_GetItem(pixelrow, i));
-				Py_DECREF(pixelrow);
-				size = PyList_Size(pixelcol);
-				for(i = 0; i < size; i++)
-					Py_DECREF(PyList_GetItem(pixelcol, i));
-				Py_DECREF(pixelcol);
-				size = PyList_Size(pixelv);
-				for(i = 0; i < size; i++)
-					Py_DECREF(PyList_GetItem(pixelv, i));
-				Py_DECREF(pixelv);
-			}
-			map_ptr++;
-		}
-	}
-
-	Py_XDECREF(map);
-
-	return results;
-}
-
 int despike_FLOAT(float *array, int rows, int cols, int statswidth, float ztest) {
 	float *newptr, *oldptr, *rowptr, *colptr;
 	int sw2, sw2cols, sw2cols_sw2, sw2cols__sw2;
 	int r, c, rr, cc;
 	int spikes=0;
-	float mean, std, nn, ppm;
+	float mean, std, nn;
 	float sum, sum2;
 
 	sw2 = statswidth / 2;
@@ -501,8 +199,9 @@ bin(PyObject *self, PyObject *args)
 	int binsize, rows, cols, newdims[2];
 	float *original, *resultrow, *resultpixel;
 	int i, j, ib, jb;
-	int reslen, resrows, rescols, n;
+	int resrows, rescols, n;
 	char errstr[80];
+	unsigned long reslen;
 
 	if (!PyArg_ParseTuple(args, "Oi", &image, &binsize))
 		return NULL;
@@ -533,7 +232,7 @@ bin(PyObject *self, PyObject *args)
 	newdims[0] = resrows;
 	newdims[1] = rescols;
 	result = NA_vNewArray(NULL, tFloat32, 2, newdims);
-	reslen = PyArray_Size(result);
+	reslen = NA_elements(result);
 
 	/* zero the result */
 	resultpixel = (float *)result->data;
@@ -726,80 +425,6 @@ static PyObject *houghline(PyObject *self, PyObject *args) {
 	return NA_OutputArray(hough, tFloat64, 0);
 }
 
-void getrange(PyArrayObject *array, float *minresult, float *maxresult) {
-	int length, i;
-	float *iter;
-
-	length = PyArray_Size(array);
-
-	iter = (float *)array->data;
-	if(length % 2) {
-		/* odd length:  initial min and max are first element */
-		*minresult = *maxresult = *iter;
-		iter += 1;
-		length -= 1;
-	} else {
-		/* even length:  min and max from first two elements */
-		if(iter[0] > iter[1]) {
-			*maxresult = iter[0];
-			*minresult = iter[1];
-		} else {
-			*maxresult = iter[1];
-			*minresult = iter[0];
-		}
-		iter += 2;
-		length -= 2;
-	}
-
-	for(i = 0; i < length; i += 2) {
-		if(iter[0] > iter[1]) {
-			if(iter[0] > *maxresult) *maxresult = iter[0];
-			if(iter[1] < *minresult) *minresult = iter[1];
-		} else {
-			if(iter[1] > *maxresult) *maxresult = iter[1];
-			if(iter[0] < *minresult) *minresult = iter[0];
-		}
-		iter += 2;
-	}
-}
-
-static PyObject *linearscale(PyObject *self, PyObject *args) {
-	PyObject *input;
-	PyArrayObject *inputarray, *outputarray;
-	int i, j;
-	float frommin, frommax, fromrange, scale, value;
-
-	if(!PyArg_ParseTuple(args, "Off", &input, &frommin, &frommax))
-		return NULL;
-
-	inputarray = NA_InputArray(input, tFloat32, NUM_C_ARRAY|NUM_COPY);
-
-	/*getrange(inputarray, &frommin, &frommax);*/
-	fromrange = frommax - frommin;
-	if(fromrange == 0.0)
-		scale = 0.0;
-	else
-		scale = 255.0/fromrange;
-
-	outputarray = NA_vNewArray(NULL, tUInt8, 2, inputarray->dimensions);
-
-	for(i = 0; i < inputarray->dimensions[0]; i++) {
-		for(j = 0; j < inputarray->dimensions[1]; j++) {
-			value = *(float *)(inputarray->data
-												+ i*inputarray->strides[0] + j*inputarray->strides[1]);
-			if(value <= frommin) {
-				*(unsigned char *)(outputarray->data + i*outputarray->strides[0] + j*outputarray->strides[1]) = 0;
-			} else if(value >= frommax) {
-				*(unsigned char *)(outputarray->data + i*outputarray->strides[0] + j*outputarray->strides[1]) = 255;
-			} else {
-				*(unsigned char *)(outputarray->data + i*outputarray->strides[0] + j*outputarray->strides[1]) = (unsigned char)(scale*(value - frommin));
-			}
-		}
-	}
-
-	return NA_OutputArray(outputarray, tUInt8, 0);
-}
-
 static PyObject *rgbstring(PyObject *self, PyObject *args) {
 	PyObject *input, *output, *colormap = NULL, *values = NULL, *cvalue = NULL;
 	PyArrayObject *inputarray;
@@ -827,7 +452,6 @@ static PyObject *rgbstring(PyObject *self, PyObject *args) {
 
 	inputarray = NA_InputArray(input, tFloat32, NUM_C_ARRAY|NUM_COPY);
 
-/*	getrange(inputarray, &frommin, &frommax); */
 	fromrange = frommax - frommin;
 	if(fromrange == 0.0)
 		scale = 0.0;
@@ -920,33 +544,6 @@ static PyObject *highpass(PyObject *self, PyObject *args) {
 	return NA_OutputArray(result, tFloat32, 0);
 }
 
-float bilinear(float *array, int m, int n, float x, float y) {
-	int x0, y0, x1, y1;
-	float v00 = 0.0, v01 = 0.0, v10 = 0.0, v11 = 0.0;
-	x0 = (int)x;
-	y0 = (int)y;
-	x1 = x0 + 1;
-	y1 = y0 + 1;
-	if((x0 < n) && (y0 < m) && (x0 >= 0) && (y0 >= 0))
-		v00 = array[y0*n + x0];
-	if((x1 < n) && (y0 < m) && (x1 >= 0) && (y0 >= 0))
-		v01 = array[y0*n + x1];
-	if((x0 < n) && (y1 < m) && (x0 >= 0) && (y1 >= 0))
-		v10 = array[y1*n + x0];
-	if((x1 < n) && (y1 < m) && (x1 >= 0) && (y1 >= 0))
-		v01 = array[y1*n + x1];
-	return (v00*(y1 - y)*(x1 - x)) + (v01*(y1 - y)*(x - x0))
-					+ (v10*(y - y0)*(x1 - x)) + (v11*(y - y0)*(x - x0));
-}
-
-float nearestneighbor(float *array, int m, int n, float x, float y) {
-	int x0 = (int)(x + 0.5);
-	int y0 = (int)(y + 0.5);
-	if((x0 < 0) || (y0 < 0) || (x0 >= n) || (y0 >= m))
-		return 0.0;
-	return array[y0*n + x0];
-}
-
 static PyObject *logpolar(PyObject *self, PyObject *args) {
 	PyObject *input;
 	int phis, logrhos;
@@ -1036,22 +633,101 @@ static PyObject *logpolar(PyObject *self, PyObject *args) {
 	return Py_BuildValue("(Off)", NA_OutputArray(oarray, tFloat32, 0), base, phiscale);
 }
 
+/*
+int FilterFunction(	double *buffer, int filter_size, double *return_value, void *callback_data)
+    The calling function iterates over the elements of the input and output arrays, calling the callback function at each element. The elements within the footprint of the filter at the current element are passed through the buffer parameter, and the number of elements within the footprint through filter_size. The calculated valued should be returned in the return_value argument.
+*/
+
+/* return 1 if center element of buffer is local maximum, otherwise 0 */
+/* callback_data points to index of center element */
+int isLocalMaximum(double *buffer, int filter_size, double *return_value, void *callback_data)
+{
+	double center_value, *p;
+	int i;
+	center_value = buffer[*(int *)callback_data];
+	p = buffer;
+	for(i=0; i<filter_size; i++,p++) {
+		if(i == *(int *)callback_data) continue;
+		if(*p >= center_value) {
+			*return_value = 0;
+			return 1;
+		}
+	}
+	*return_value = 1;
+	return 1;
+}
+
+/* return 1 if center element of buffer is local minimum, otherwise 0 */
+/* callback_data points to index of center element */
+int isLocalMinimum(double *buffer, int filter_size, double *return_value, void *callback_data)
+{
+	double center_value, *p;
+	int i;
+	center_value = buffer[*(int *)callback_data];
+	p = buffer;
+	for(i=0; i<filter_size; i++,p++) {
+		if(i == *(int *)callback_data) continue;
+		if(*p <= center_value) {
+			*return_value = 0;
+			return 1;
+		}
+	}
+	*return_value = 1;
+	return 1;
+}
+
+static PyObject *
+py_isLocalMaximum(PyObject *obj, PyObject *args)
+{
+	int center_index;
+	if (!PyArg_ParseTuple(args, "i", &center_index)) {
+		PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
+		return NULL;
+	} else {
+		/* wrap function and callback_data in a CObject: */
+		return PyCObject_FromVoidPtrAndDesc(isLocalMaximum, &center_index, NULL);
+	}
+}
+
+static PyObject *
+py_isLocalMinimum(PyObject *obj, PyObject *args)
+{
+	int center_index;
+	if (!PyArg_ParseTuple(args, "i", &center_index)) {
+		PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
+		return NULL;
+	} else {
+		/* wrap function and callback_data in a CObject: */
+		return PyCObject_FromVoidPtrAndDesc(isLocalMinimum, &center_index, NULL);
+	}
+}
+
 static struct PyMethodDef numeric_methods[] = {
-	{"min", min, METH_VARARGS},
-	{"max", max, METH_VARARGS},
+// used by align, ImageViewer2,
 	{"minmax", minmax, METH_VARARGS},
-	{"stdev", stdev, METH_VARARGS},
-	{"blobs", blobs, METH_VARARGS},
-	{"despike", despike, METH_VARARGS},
+
+// used by rctacquisition, maybe could use nd_image interpolation instead
 	{"bin", bin, METH_VARARGS},
+
+// should find a way to do this using numarray
+	{"despike", despike, METH_VARARGS},
+
+// used by Leginon.squarefinder2.py
 	{"nonmaximasuppress", nonmaximasuppress, METH_VARARGS},
 	{"hysteresisthreshold", hysteresisthreshold, METH_VARARGS},
 	{"houghline", houghline, METH_VARARGS},
-	{"linearscale", linearscale, METH_VARARGS},
+
+// used by Leginon.gui.wx.ImageViewer and ImageViewer2
 	{"rgbstring", rgbstring, METH_VARARGS},
+
+// used by Leginon.align
 	{"hanning", hanning, METH_VARARGS|METH_KEYWORDS},
 	{"highpass", highpass, METH_VARARGS},
 	{"logpolar", logpolar, METH_VARARGS},
+
+// new stuff
+	{"islocalmaximum", py_isLocalMaximum, METH_VARARGS},
+	{"islocalminimum", py_isLocalMinimum, METH_VARARGS},
 	{NULL, NULL}
 };
 
