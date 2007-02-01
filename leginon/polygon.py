@@ -86,18 +86,22 @@ if __name__ == '__main__':
 		print points
 		print getPolygonCenter(points)
 
-def plot_polygons(shape,gpolygons):
+def plot_polygons(shape,polygons):
+	# Input 'polygons' is a list of polygon vertices array
 	zeros=numarray.zeros(shape,type=numarray.Int8)
 	img=Image.new('L',shape)
 	draw=ImageDraw.Draw(img)
-	for p in gpolygons:
+	for p in polygons:
 		plist =p.tolist()
 		for i,point in enumerate(plist):
 			plist[i]=tuple(point)
 		if len(plist) > 2:
 			draw.polygon(plist,fill=1)	  
 	seq=list(img.getdata())
-	polygon_image=numarray.array(seq)
-	polygon_image=numarray.reshape(polygon_image,shape)
+	polygon_image=numarray.array(seq,type=numarray.Int8)
+	
+	# The data sequence coverted this way is transposed in contrast to
+	# the numarray that generates it
+	polygon_image=numarray.reshape(polygon_image,(shape[1],shape[0]))
 	polygon_image=numarray.transpose(polygon_image)
 	return polygon_image
