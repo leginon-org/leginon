@@ -948,6 +948,28 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		angledeg = self.settings['raster angle']
 		anglerad = math.radians(angledeg)
 		rasterpoints = raster.createRaster(shape, spacing, anglerad)
+		if False:
+			rasterpoints = self.insideRegionArrays(rasterpoints)
+		else:
+			rasterpoints = self.insideRegionImage(rasterpoints)
+
+		fullrasterdisplay = self.transpose_points(rasterpoints)
+		self.setTargets(fullrasterdisplay, 'acquisition', block=True)
+
+	def insideRegionImage(self, rasterpoints):
+		results = []
+		for point in rasterpoints:
+			row = int(round(point[0]))
+			col = int(round(point[1]))
+			if row < 0 or row >= self.regionimage.shape[0]:
+				continue
+			if col < 0 or col >= self.regionimage.shape[1]:
+				continue
+			if self.regionimage[row,col]:
+				results.append(point)
+		return results
+
+	def insideRegionArrays(self, rasterpoints):
 		fullrasterset = set()
 		'''
 		boxes = []
@@ -1015,13 +1037,14 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 					nearraster.append(point)
 			fullrasterset = fullrasterset.union(nearraster)
 		# set is unordered, so use original rasterpoints for order
-		self.fullraster = []
+		fullraster = []
 		for point in rasterpoints:
 			if point in fullrasterset:
-				self.fullraster.append(point)
+				fullraster.append(point)
 
-		fullrasterdisplay = self.transpose_points(self.fullraster)
-		self.setTargets(fullrasterdisplay, 'acquisition', block=True)
+		return fullraster
+
+
 
 	def regionToBox(self, region, space):
 		minr,minc = region[0]
