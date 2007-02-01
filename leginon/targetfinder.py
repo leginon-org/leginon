@@ -737,20 +737,20 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			displaypoints = []
 			self.regionpolygon = []
 			for i,region in enumerate(regions):
-				insidesections = False
 				regionpolygon = region['regionEllipse']
-				regionrow = int(regionpolygon[0])
-				regioncol = int(regionpolygon[1])
 				regionaxismajor = regionpolygon[2]
 				regionaxisminor = regionpolygon[3]
-				regionphi = regionpolygon[4]
 				axisratio = regionaxismajor/regionaxisminor
 				if axisratio < axisratiolimit:
 					overlap = False
+					regionrow = int(regionpolygon[0])
+					regioncol = int(regionpolygon[1])
 					for j,regionellipse in enumerate(regionellipses):
-						if regionrow > regionellipse[0]-0.5*regionellipse[3] and regionrow < regionellipse[0]+0.5*regionellipse[3] and regioncol > regionellipse[1]-0.5*regionellipse[3] and regioncol < regionellipse[1]+0.5*regionellipse[3]:
+						halfminor = 0.5*regionellipse[3]
+						if regionrow > regionellipse[0]-halfminor and regionrow < regionellipse[0]+halfminor and regioncol > regionellipse[1]-halfminor and regioncol < regionellipse[1]+halfminor:
 							overlap = True
 							break
+					insidesections = False
 					if sectionimage != None:
 						if sectionimage[(regionrow,regioncol)] == 1:
 							insidesections = True
@@ -768,6 +768,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 					
 						regiondisplaypoints = self.transpose_points(regionarray)
 						displaypoints.extend(regiondisplaypoints)				
+						regionphi = regionpolygon[4]
 						print regionrow,regioncol,regionaxismajor,regionaxisminor,regionphi
 			
 			return regionarrays,regionellipses,displaypoints
