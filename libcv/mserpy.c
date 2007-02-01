@@ -104,12 +104,17 @@ static PyObject *PyFindRegions( PyObject *self, PyObject *args ) {
 		Region r = PopPStack(regions);
 		PyObject *pyRegion = RegionToPyObject(r);
 		PyList_Append(regionList,pyRegion);
+		/*
 		Ellipse e = NewEllipse(r->row,r->col,r->maj,r->min,r->phi);
 		DrawEllipse(e,im1,RandomColor(200)); free(e);
 		FreePolygon(r->border); free(r);
+		*/
 	}
 	
+	
+	/*
 	PyObject *regionImage = ImageToPyArray(im1);
+	*/
 		
 	FreeImage(im1);
 	
@@ -117,7 +122,7 @@ static PyObject *PyFindRegions( PyObject *self, PyObject *args ) {
 	fprintf(stderr,"Total time: %2.2f\n",CPUTIME-t0);
 #endif
 	
-	return Py_BuildValue("OO", regionList, regionImage );
+	return Py_BuildValue("OO", regionList, Py_None);
 	
 }
  
@@ -209,7 +214,8 @@ static Image PyArrayToImage( PyObject *image ) {
 static PyObject *ImageToPyArray( Image image ) {
 	int maxrow = image->rows;
 	int maxcol = image->cols;
-	return (PyObject *)NA_NewArray(image->pixels[0], tInt32, 2, maxrow, maxcol );
+	PyObject *temp = NA_NewArray(image->pixels[0], tInt32, 2, maxrow, maxcol );
+	return temp;
 }
 
 static PyObject *FArrayToPyArray( FArray array ) {
