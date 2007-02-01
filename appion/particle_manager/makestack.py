@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # Will create a stack file based on a set of input parameters using EMAN's batchboxer
 
-import os, re, sys
+import os, re, sys, math
 import string
 import data
 import ctfData
@@ -13,7 +13,7 @@ acedb=dbdatakeeper.DBDataKeeper(db='dbctfdata')
 db=dbdatakeeper.DBDataKeeper(db='dbemdata')
 
 def printHelp():
-	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected or inspectfile=<file>] [bin=<n>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n>\n [limit=<n>]"
+	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected or inspectfile=<file>] [bin=<n>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n>\n [limit=<n>] [defocpair=<preset>]"
 	print "Examples:\nmakestack.py extract/001ma.box single=stacks/start.hed ace=0.8 boxsize=180 inspected"
 	print "makestack.py extract/*.box outdir=stacks/noctf/ ace=0.8 boxsize=180\n"
 	print "* Supports wildcards - By default a stack file of the same name as the box file"
@@ -44,6 +44,9 @@ def printHelp():
 	print "limit=<n>            : stop boxing particles after total particles gets above limit (no limits by default)"
 	print "                     : Example <limit=10000>"
 	print "commit               : store particles to database"
+	print "defocpair            : Get particle coords for the focal pair of the image that was picked in runid"
+	print "                       For example if your selexon run picked ef images and you specify 'defocpair'"
+	print "                       makestack will get the particles from the en images"
 	print "\n"
 
 	sys.exit(1)
@@ -77,6 +80,7 @@ def createDefaults():
 	params['particleNumber']=0
 	params['bin']=None
 	params['limit']=None
+	params['defocpair']=False
 	return params
 
 def parseInput(args):
@@ -169,6 +173,8 @@ def parseInput(args):
 			params["selexonId"]=int(elements[1])
 		elif elements[0]=='limit':
 			params['limit']=int(elements[1])
+		elif arg=='defocpair':
+			params['defocpair']=True
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
@@ -297,8 +303,8 @@ def checkAce():
 	return 'FALSE'
 
 def batchBox(params, img):
-	input=params["filepath"]+'/'+img['filename']+'.mrc'
-	output=params["outdir"]+img['filename']+'.hed'
+	input=os.path.join(params["filepath"],(img['filename']+'.mrc'))
+	output=os.path.join(params["outdir"],(img['filename']+'.hed'))
 
 	# create output directory if it does not exist
 	if not os.path.exists(params["outdir"]):
@@ -308,8 +314,27 @@ def batchBox(params, img):
 	# if getting particles from database, a temporary
 	# box file will be created
 	if params['selexonId']:
-		dbbox=params['outdir']+"temporaryParticlesFromDB.box"
-		hasparticles=writeParticleBoxfile(img,dbbox)
+		dbbox=os.path.join(params['outdir'],"temporaryParticlesFromDB.box")
+		if params['defocpair']:
+			particles,shift=getDefocPairParticles(img,params)
+			#hasparticles=writeDefocPairParticleBoxfile(img,dbbox,params)
+		else:
+			particles,shift=getParticles(img)
+			#hasparticles=writeParticleBoxfile(img,dbbox)
+		print "###number particles=",len(particles)
+		if len(particles)>0:			
+			###apply limits
+			if params['selexonmin'] or params['selexonmax']:
+				particles=eliminateMinMaxCCParticles(particles,params)
+			
+			###save particles
+			if len(particles)>0:
+				hasparticles=True
+				saveParticles(particles,shift,dbbox,params)
+			else:
+				hasparticles=False
+		else:
+			hasparticles=False
 	else:
 		dbbox=img['filename']+'.box'
 		hasparticles=True
@@ -332,7 +357,79 @@ def batchBox(params, img):
 		return(nptcls)
 	else:
 		return(0)		
+
+def getParticles(img):
+	imq=particleData.image()
+	imq['dbemdata|AcquisitionImageData|image']=img.dbid
+	selexonrun=partdb.direct_query(data.run,params['selexonId'])
 	
+	prtlq=particleData.particle(imageId=imq,runId=selexonrun)
+	particles=partdb.query(prtlq)
+	shift={'shiftx':0, 'shifty':0}
+	return(particles,shift)
+		
+def getDefocPairParticles(img,params):
+	imq=particleData.image()
+	print "finding pair for", img.dbid, '=',params['sibpairs'][img.dbid]
+	imq['dbemdata|AcquisitionImageData|image']=params['sibpairs'][img.dbid]
+	selexonrun=partdb.direct_query(data.run,params['selexonId'])
+	
+	prtlq=particleData.particle(imageId=imq,runId=selexonrun)
+	particles=partdb.query(prtlq)
+	print img['filename'],len(particles)
+	
+	shiftq=particleData.shift()
+	shiftq['dbemdata|AcquisitionImageData|image1']=params['sibpairs'][img.dbid]
+	shiftdata=partdb.query(shiftq,readimages=False)[0]
+	shiftx=shiftdata['shiftx']*shiftdata['scale']
+	shifty=shiftdata['shifty']*shiftdata['scale']
+	print shiftdata
+	shift={}
+	shift['shiftx']=shiftx
+	shift['shifty']=shifty
+		
+	return(particles,shift)
+
+def eliminateMinMaxCCParticles(particles,params):
+	newparticles=[]
+	for prtl in particles:
+		keep=False
+		if params['selexonmin']:
+			if params['selexonmin']>prtl['correlation']:
+				keep=True
+		if params['selexonmax']:
+			if params['selexonmax']<prtl['correlation']:
+				keep=True
+		if keep:
+			newparticles.append(prtl)
+	return(newparticles)
+
+def saveParticles(particles,shift,dbbox,params):
+	plist=[]
+	box=params['boxsize']
+	for prtl in particles:
+		# save the particles to the database
+		xcoord=int(math.floor(prtl['xcoord']-(box/2)-shift['shiftx']+0.5))
+		ycoord=int(math.floor(prtl['ycoord']-(box/2)-shift['shifty']+0.5))
+		if (xcoord>0 and ycoord>0):
+			plist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
+			if params['commit']:
+				stackpq=particleData.stackParticles()
+				stackpq['stackId']=params['stackId']
+				stackpq['particleId']=prtl
+				stackres=partdb.query(stackpq)
+				if not stackres:
+					params['particleNumber']=params['particleNumber']+1
+					stackpq['particleNumber']=params['particleNumber']
+					partdb.insert(stackpq)
+	#write boxfile
+	boxfile=open(dbbox,'w')
+	boxfile.writelines(plist)
+	boxfile.close()
+		
+	print "\nprocessing:",img['filename']
+
+
 def writeParticleBoxfile(img,dbbox):
 	imq=particleData.image()
 	imq['dbemdata|AcquisitionImageData|image']=img.dbid
@@ -374,6 +471,59 @@ def writeParticleBoxfile(img,dbbox):
 	boxfile.close()
 		
 	print "\nprocessing:",img['filename']
+	return (True)
+	
+def writeDefocPairParticleBoxfile(img,dbbox,params):
+	imq=particleData.image()
+	print "finding pair for", img.dbid, '=',params['sibpairs'][img.dbid]
+	imq['dbemdata|AcquisitionImageData|image']=params['sibpairs'][img.dbid]
+	selexonrun=partdb.direct_query(data.run,params['selexonId'])
+	
+	prtlq=particleData.particle(imageId=imq,runId=selexonrun)
+	particles=partdb.query(prtlq)
+	print img['filename'],len(particles)
+	
+	shiftq=particleData.shift()
+	shiftq['dbemdata|AcquisitionImageData|image1']=params['sibpairs'][img.dbid]
+	shiftdata=partdb.query(shiftq,readimages=False)[0]
+	shiftx=shiftdata['shiftx']*shiftdata['scale']
+	shifty=shiftdata['shifty']*shiftdata['scale']
+	print shiftdata
+	
+	if not particles:
+		print img['filename'],"contains no particles"
+		return (False)
+
+	#write the tmp box file
+	plist=[]
+	box=params['boxsize']	
+	for prtl in particles:
+		if params['selexonmin']:
+			if params['selexonmin']>prtl['correlation']:
+				continue
+		if params['selexonmax']:
+			if params['selexonmax']<prtl['correlation']:
+				continue
+		# save the particles to the database
+		if params['commit']:
+			stackpq=particleData.stackParticles()
+			stackpq['stackId']=params['stackId']
+			stackpq['particleId']=prtl
+			stackres=partdb.query(stackpq)
+			if not stackres:
+				params['particleNumber']=params['particleNumber']+1
+				stackpq['particleNumber']=params['particleNumber']
+				partdb.insert(stackpq)
+		xcoord=int(prtl['xcoord']-int(box/2)-math.floor(shiftx+0.5))
+		ycoord=int(prtl['ycoord']-int(box/2)-math.floor(shifty+0.5))
+		if (xcoord>0 and ycoord>0):
+			plist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
+	boxfile=open(dbbox,'w')
+	boxfile.writelines(plist)
+	boxfile.close()
+		
+	print "\nprocessing:",img['filename']
+
 	return (True)
 	
 def phaseFlip(params,img):
@@ -478,6 +628,46 @@ def getImgsFromSelexonId(params):
 			dbimglist.append(img)
 	return (dbimglist)
 
+def getImgsDefocPairFromSelexonId(params):
+	print "finding Leginon image defocus pairs that have particles for selexon run:", params['selexonId']
+
+	# get selection run id
+	selexonrun=partdb.direct_query(data.run,params['selexonId'])
+	if not (selexonrun):
+		print "\nError: specified runId '"+str(params['selexonId'])+"' not in database\n"
+		sys.exit()
+	
+	# from id get the session
+	sessionid=db.direct_query(data.SessionData,selexonrun['dbemdata|SessionData|session'])
+	# get all images from session
+	dbimgq=data.AcquisitionImageData(session=sessionid)
+	dbimginfo=db.query(dbimgq,readimages=False)
+	if not (dbimginfo):
+		print "\nError: no images associated with this runId\n"
+		sys.exit()
+
+	# for every image, find corresponding image entry in the shift table
+	dbimglist=[]
+	params['sibpairs']={}
+	for img in dbimginfo:
+		pimgq=particleData.image()
+		pimgq['dbemdata|AcquisitionImageData|image']=img.dbid
+		pimg=partdb.query(pimgq)
+		if pimg:
+			simgq=particleData.shift()
+			simgq['dbemdata|AcquisitionImageData|image1']=img.dbid
+			simg=partdb.query(simgq,readimages=False)[0]
+			if simg:
+				siblingimage=db.direct_query(data.AcquisitionImageData,simg['dbemdata|AcquisitionImageData|image2'],readimages=False)
+				#create a dictionary for keeping the dbids of image pairs so we don't have to query later
+				params['sibpairs'][simg['dbemdata|AcquisitionImageData|image2']]=simg['dbemdata|AcquisitionImageData|image1']
+				dbimglist.append(siblingimage)
+			else:
+				print "Warning: No shift data for ",img['filename']
+			
+			
+	return (dbimglist)
+
 def insertStackParams(params):
 	if params['spider']==True:
 		fileType='spider'
@@ -555,7 +745,7 @@ if __name__ == '__main__':
 		
 	# if a runId is specified, outdir will have a subdirectory named runId
 	if params['runid']:
-		params['outdir']=params['outdir']+params['runid']+'/'
+		params['outdir']=os.path.join(params['outdir'],params['runid'])
 
 	# if saving to the database, stack must be a single file
 	if params['commit'] and not params['single']:
@@ -591,7 +781,10 @@ if __name__ == '__main__':
             
 	# get images from database if using a selexon runId
 	if params['selexonId']:
-		images=getImgsFromSelexonId(params)
+		if params['defocpair']:
+			images=getImgsDefocPairFromSelexonId(params)
+		else:
+			images=getImgsFromSelexonId(params)
 		
 	# get list of input images, since wildcards are supported
 	else:
@@ -611,7 +804,8 @@ if __name__ == '__main__':
 	totptcls=0
 	while images:
 		img = images.pop(0)
-
+		print img.dbid
+				
 		params['apix']=getPixelSize(img)
 
  		# get session ID
@@ -665,9 +859,10 @@ if __name__ == '__main__':
 			if params['df'] < params['maxdefocus']:
 				print img['filename']+".mrc rejected because defocus(",params['df'],") greater than specified in maxdefocus (",params['maxdefocus'],")"
 				continue
-
+					
 		# box the particles
 		totptcls+=batchBox(params,img)
+		sys.exit()
 		if not(os.path.exists(params["outdir"]+img['filename']+".hed")):
 			print "no particles were boxed from "+img['filename']+".mrc"
 			continue
@@ -690,7 +885,7 @@ if __name__ == '__main__':
 		if params['limit']:
 			if totptcls>params['limit']:
 				break
-
+				
 		if os.path.exists(params['outdir']+'temporaryParticlesFromDB.box'):
 			os.remove(params['outdir']+'temporaryParticlesFromDB.box')
 
