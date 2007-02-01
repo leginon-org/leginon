@@ -777,7 +777,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def findRegions(self):
 		imshape = self.mosaicimage.shape
 		minsize = self.settings['min region area']
-		maxsize = self.settings['max region area']
+		maxsize = self.settings['max region area']			
 		black_on_white = self.settings['black on white']
 		limitbysection = self.settings['limit region in sections']
 		onesectionarea = self.settings['section area']
@@ -893,7 +893,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				break
 		
 		self.logger.info('found %i regions after %i iterations' % (len(regionarrays),count))
-
+		
+			
 		self.regionarrays = regionarrays
 		if displaysection:
 			displaypoints.extend(sectiondisplaypoints)
