@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.25 $
+# $Revision: 1.26 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-01-31 23:12:46 $
+# $Date: 2007-02-01 06:41:05 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -295,18 +295,23 @@ class RegionSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['limit region in sections'] = wx.CheckBox(self, -1, 'Limit the found region within sections')
 		szsections.Add(self.widgets['limit region in sections'], (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
-		label = wx.StaticText(self, -1, 'Minimum Per Section Area (% of tile area)')
+		label = wx.StaticText(self, -1, 'Single Section Area (% of tile area)')
 		self.widgets['section area'] = FloatEntry(self, -1, chars=8)
 		szsections.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szsections.Add(self.widgets['section area'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+		label = wx.StaticText(self, -1, 'Single Section Axis Ratio')
+		self.widgets['section axis ratio'] = FloatEntry(self, -1, chars=8)
+		szsections.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsections.Add(self.widgets['section axis ratio'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
 		label = wx.StaticText(self, -1, 'Maximum Number of Section per Grid')
 		self.widgets['max sections'] = IntEntry(self, -1, min=1, chars=4)
-		szsections.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szsections.Add(self.widgets['max sections'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsections.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsections.Add(self.widgets['max sections'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		self.widgets['section display'] = wx.CheckBox(self, -1, 'Display the found sections')
-		szsections.Add(self.widgets['section display'], (3, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		szsections.Add(self.widgets['section display'], (4, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
 		self.btest = wx.Button(self, -1, 'Test')
 		szbutton = wx.GridBagSizer(7, 7)

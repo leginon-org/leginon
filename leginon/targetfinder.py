@@ -267,6 +267,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		'black on white': False,
 		'limit region in sections': False,
 		'section area': 99.0,
+		'section axis ratio': 1.0,
 		'max sections': 5,
 		'section display': False,
 		'raster spacing': 50,
@@ -731,7 +732,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.publish(prefs, database=True)
 		return prefs
 
-	def reduceRegions(self,regions,axisratiolimit,velimit,sectionimage = None):
+	def reduceRegions(self,regions,axisratiolimits,velimit,sectionimage = None):
 			regionarrays = []
 			regionellipses = []
 			displaypoints = []
@@ -741,7 +742,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				regionaxismajor = regionpolygon[2]
 				regionaxisminor = regionpolygon[3]
 				axisratio = regionaxismajor/regionaxisminor
-				if axisratio < axisratiolimit:
+				if axisratio > axisratiolimits[0] and axisratio < axisratiolimits[1]:
 					overlap = False
 					regionrow = int(regionpolygon[0])
 					regioncol = int(regionpolygon[1])
@@ -769,7 +770,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 						regiondisplaypoints = self.transpose_points(regionarray)
 						displaypoints.extend(regiondisplaypoints)				
 						regionphi = regionpolygon[4]
-						print regionrow,regioncol,regionaxismajor,regionaxisminor,regionphi
+						#print regionrow,regioncol,regionaxismajor,regionaxisminor,regionphi
 			
 			return regionarrays,regionellipses,displaypoints
 			
@@ -780,6 +781,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		black_on_white = self.settings['black on white']
 		limitbysection = self.settings['limit region in sections']
 		onesectionarea = self.settings['section area']
+		sectionaxisratio = float(self.settings['section axis ratio'])
 		maxsection = self.settings['max sections']
 		displaysection = self.settings['section display']
 		
@@ -816,41 +818,47 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		backgroundlabel,nlabels = nd.label(background)
 		bkgrndmean = nd.mean(self.mosaicimage,labels=backgroundlabel)
 		bkgrndstddev = nd.standard_deviation(self.mosaicimage,labels=backgroundlabel)
+		print "--------background mean %f, stddev %f" % (bkgrndmean, bkgrndstddev)
 				
 		
+		sectiondisplaypoints=[]
 		if limitbysection:
-				
-			maxt1 = bkgrndmean+2*bkgrndstddev
-			sectionarrays = []
-			multisections=onesectionarea*maxsection*1.5
-			while len(sectionarrays) == 0 and maxt1 < self.mosaicimage.max():
-				m = numarray.clip(self.mosaicimage, mint, maxt1)
-				regions,image = libCV.FindRegions(m, onesectionarea*0.5, multisections, 0, 0, white_on_black,black_on_white)
-				sectionarrays,sectionellipses,sectiondisplaypoints = self.reduceRegions(regions,maxsection,velimit,None)
-#				multisections += onesectionarea*1.5
-				onesectionarea = 0.8*onesectionarea
-				maxt1 += 2*bkgrndstddev
-				print len(sectionarrays),len(sectiondisplaypoints),mint, maxt1+bkgrndstddev,onesectionarea/0.8, multisections
-
-			if len(sectionarrays) > 0:
-				sectionimage = polygon.plot_polygons(imshape,sectionarrays)
-			else:
-				masked_section = ma.masked_inside(self.mosaicimage,mint,maxt)
-				sectionimage = masked_section.mask()
-				sectionarrays = ['dummy',]
-				sectiondisplaypoints=[]
-				print "no section found*****"
 			
-		else:
+			#find sections
+			count = 0	
+			maxt1 = bkgrndmean+2*bkgrndstddev
+			mosaicmax = self.mosaicimage.max()
+			stepmaxt = 0.49*(mosaicmax - maxt1)
+			stepscale = 0.8
+			tolerance = 0.5
+			sectionarrays = []
+			
+			axisratiomax = sectionaxisratio * maxsection
+			axisratiomin = sectionaxisratio / maxsection
+			axisratiolimits = [axisratiomin,axisratiomax]
+			multisections=onesectionarea*maxsection*(1+tolerance)
+			while len(sectionarrays) == 0 and maxt1 < mosaicmax:
+				count += 1
+				onesectionmin = onesectionarea*(1-tolerance)
+				m = numarray.clip(self.mosaicimage, mint, maxt1)
+				regions,image = libCV.FindRegions(m, onesectionmin, multisections, 0, 0, white_on_black,black_on_white)
+				sectionarrays,sectionellipses,sectiondisplaypoints = self.reduceRegions(regions,axisratiolimits,velimit,None)
+				onesectionarea = stepscale*onesectionarea
+				maxt1 += stepmaxt
+
+			self.logger.info('found %i sections after %i iterations' % (len(sectionarrays),count))
+			
+		if len(sectiondisplaypoints) == 0:
 			# rough section by threshold only
 			masked_section = ma.masked_inside(self.mosaicimage,mint,maxt)
 			sectionimage = masked_section.mask()
 			sectionarrays = ['dummy',]
-			sectiondisplaypoints=[]
+		else:
+			sectionimage = polygon.plot_polygons(imshape,sectionarrays)
+		
 		
 		nonmissingregion = numarray.where(self.mosaicimage==0,0,1)
-		if sectionimage.shape == nonmissingregion.shape:
-			sectionimage = sectionimage*nonmissingregion
+		sectionimage = sectionimage*nonmissingregion
 		
 		# get section stats
 		sectionlabel,nlabels = nd.label(sectionimage)
@@ -863,26 +871,29 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			sectionimage = None
 		
 		# find tissue
-		if sectionstddev > 0.1:
-			tissuecontrast = (sectionmean-mint)/(sectionstddev)
+#		if sectionstddev > 0.1:
+#			tissuecontrast = (sectionmean-mint)/(sectionstddev)
 		
-		
+		tissuecontrast = 1
 		maxt2 = sectionmean+bkgrndstddev/tissuecontrast
-
+		
+		count = 0
 		regionarrays = []
 		displaypoints = []
+		stepscale = 0.2
 		while len(regionarrays) < len(sectionarrays) and maxt2 > sectionmean:
+			count += 1
 			m = numarray.clip(self.mosaicimage, mint, maxt2)
 			print mint,maxt2,minsize,maxsize
 			regions,image = libCV.FindRegions(m, minsize, maxsize, 0, 0, white_on_black,black_on_white)
-			regionarrays,regionellipses,displaypoints = self.reduceRegions(regions,self.settings['axis ratio'],velimit,sectionimage)
-			minsize = 0.2*minsize
-			maxt2 = maxt2 -0.2*bkgrndstddev/tissuecontrast
+			regionarrays,regionellipses,displaypoints = self.reduceRegions(regions,[1.0,self.settings['axis ratio']],velimit,sectionimage)
+			minsize = stepscale*minsize
+			maxt2 = maxt2 -stepscale*bkgrndstddev/tissuecontrast
 			if minsize*mosaicarea < 4:
-				print "--------no tissue found"
-				
 				break
 		
+		self.logger.info('found %i regions after %i iterations' % (len(regionarrays),count))
+
 		self.regionarrays = regionarrays
 		if displaysection:
 			displaypoints.extend(sectiondisplaypoints)
