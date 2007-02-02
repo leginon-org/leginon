@@ -783,9 +783,11 @@ py_pointsInPolygon(PyObject *obj, PyObject *args)
 
 		temp = PySequence_GetItem(temp2, 0);
 		pointx = PyFloat_AsDouble(temp);
+		Py_DECREF(temp);
 
 		temp = PySequence_GetItem(temp2, 1);
 		pointy = PyFloat_AsDouble(temp);
+		Py_DECREF(temp);
 
 		Py_DECREF(temp2);
 
