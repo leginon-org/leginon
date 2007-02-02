@@ -702,6 +702,106 @@ py_isLocalMinimum(PyObject *obj, PyObject *args)
 	}
 }
 
+
+int
+pointInPolygon(float x, float y, float *polygon, int nvertices)
+{
+	int intersections=0;
+	float *ax, *ay, *bx, *by;
+	int i;
+
+	/* loop through all edges */
+	ax = polygon;
+	ay = polygon+1;
+	bx = polygon+2;
+	by = polygon+3;
+	for(i=0; i<nvertices-1; i++,ax+=2,ay+=2,bx+=2,by+=2)
+	{
+		if(*ax == *bx) continue;
+		if(
+			((*bx < x && *ax >= x) || (*bx >= x && *ax < x)) &&
+					(((*by - *ay) / (*bx - *ax) * (x - *ax) + *ay) > y))
+		{
+			intersections++;
+		}
+	}
+
+	bx = polygon;
+	by = polygon+1;
+
+	if(*ax != *bx)
+	{
+		if(
+			((*bx < x && *ax >= x) || (*bx >= x && *ax < x)) &&
+					(((*by - *ay) / (*bx - *ax) * (x - *ax) + *ay) > y))
+		{
+			intersections++;
+		}
+	}
+
+	return intersections % 2;
+}
+
+
+
+static PyObject *
+py_pointsInPolygon(PyObject *obj, PyObject *args)
+{
+	PyObject *points, *polygon, *temp, *temp2, *insidelist, *insidebool;
+	float pointx, pointy;
+	float *vertices;
+	int npoints, nvertices, i, j, k, inside;
+
+	if (!PyArg_ParseTuple(args, "OO", &points, &polygon)) {
+		PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
+		return NULL;
+	}
+
+
+	/* loop through each vertex, find number of intersections */
+	nvertices = PySequence_Size(polygon);
+	vertices = (float *)malloc(2*nvertices*sizeof(float));
+	for(i=0,k=0; i<nvertices; i++)
+	{
+		temp = PySequence_GetItem(polygon, i);
+		for(j=0; j<2; j++,k++)
+		{
+			temp2 = PySequence_GetItem(temp, j);
+			vertices[k] = PyFloat_AsDouble(temp2);
+			Py_DECREF(temp2);
+		}
+		Py_DECREF(temp);
+	}
+
+	npoints = PySequence_Size(points);
+
+	insidelist = PyList_New(npoints);
+	for(i=0; i<npoints; i++)
+	{
+		temp2 = PySequence_GetItem(points, i);
+		/* get two float values from point */
+
+		temp = PySequence_GetItem(temp2, 0);
+		pointx = PyFloat_AsDouble(temp);
+
+		temp = PySequence_GetItem(temp2, 1);
+		pointy = PyFloat_AsDouble(temp);
+
+		Py_DECREF(temp2);
+
+		inside = pointInPolygon(pointx, pointy, vertices, nvertices);
+
+		insidebool = PyBool_FromLong(inside);
+		PyList_SetItem(insidelist, i, insidebool);
+		//Py_DECREF(insidebool);
+	}
+
+	free(vertices);
+
+	return insidelist;
+}
+
+
 static struct PyMethodDef numeric_methods[] = {
 // used by align, ImageViewer2,
 	{"minmax", minmax, METH_VARARGS},
@@ -728,6 +828,7 @@ static struct PyMethodDef numeric_methods[] = {
 // new stuff
 	{"islocalmaximum", py_isLocalMaximum, METH_VARARGS},
 	{"islocalminimum", py_isLocalMinimum, METH_VARARGS},
+	{"pointsInPolygon", py_pointsInPolygon, METH_VARARGS},
 	{NULL, NULL}
 };
 
