@@ -867,13 +867,19 @@ def getImagesFromDB(session,preset):
 	# returns list of image names from DB
 	print "Querying database for images"
 	sessionq = data.SessionData(name=session)
-	presetq=data.PresetData(name=preset)
-	imageq=data.AcquisitionImageData()
+	presetq = data.PresetData(name=preset)
+	imageq = data.AcquisitionImageData()
 	imageq['preset'] = presetq
 	imageq['session'] = sessionq
 	# readimages=False to keep db from returning actual image
 	# readimages=True could be used for doing processing w/i this script
 	imagelist=db.query(imageq, readimages=False)
+	#loop through images and make data.holdimages false
+	#this makes it so that data.py doesn't hold images in memory
+	#solves a bug where selexon quits after a dozen or so images
+	for img in imagelist:
+		img.holdimages=False
+		
 	return (imagelist)
 
 def getAllImagesFromDB(session):
@@ -958,6 +964,7 @@ def getDefocusPair(imagedata):
 				pass
 			else:
 				defocpair=sib
+				defocpair.holdimages=False
 				break
 	else:
 		defocpair=None
@@ -989,7 +996,7 @@ def getShift(imagedata1,imagedata2):
 		binned1=binImg(imagedata1['image'],shrinkfactor1)
 		binned2=binImg(imagedata2['image'],shrinkfactor2)
 		pc=correlator.phase_correlate(binned1,binned2,zero=True)
-		Mrc.numeric_to_mrc(pc,'pc.mrc')
+		#Mrc.numeric_to_mrc(pc,'pc.mrc')
 		peak=findSubpixelPeak(pc, lpf=1.5) # this is a temp fix. When jim fixes peakfinder, this should be peakfinder.findSubpixelPeak
 		subpixpeak=peak['subpixel peak']
 		#find shift relative to origin

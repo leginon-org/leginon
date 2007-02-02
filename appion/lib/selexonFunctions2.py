@@ -545,8 +545,9 @@ def readPikFile(file,draw,diam,bin,apix):
 	Order: 	Yellow, Cyan, Magenta, Red, Green, Blue,
 		Orange, Teal, Purple, Lime-Green, Sky-Blue, Pink
 	"""
-	ps=int(1.5*diam*0.5/float(bin)/apix) #1.5x particle radius
-	ps=float(1.5*diam*0.5/float(bin)/apix) #1.5x particle radius
+	dscale=1 #variable to scale particle radius, can be a commandline option later
+	ps=int(dscale*diam*0.5/float(bin)/apix) 
+	ps=float(dscale*diam*0.5/float(bin)/apix) 
 	f=open(file, 'r')
 	for line in f:
 		line=string.rstrip(line)

@@ -55,14 +55,13 @@ def createDefaults():
 	# create default values for parameters
 	params={}
 	params["imgs"]=''
-	params["outdir"]=os.path.abspath('.')+'/'
 	params["runid"]=None
 	params["single"]=None
 	params["ace"]=None
 	params["boxsize"]=None
 	params["inspected"]=None
 	params['inspectfile']=None
-	params["phaseflip"]=None
+	params["phaseflip"]=False
 	params["hasace"]=False
 	params["apix"]=0
 	params["kv"]=0
@@ -118,7 +117,7 @@ def parseInput(args):
 			outputdir=elements[1]
 			# if user has not specified a full path:
 			if not outputdir[0]=='/':
-				params['outdir']=params['outdir']+outputdir
+				params['outdir']=os.path.join(params['outdir'],outputdir)
 			else:
 				params['outdir']=outputdir
 			# make sure the directory path has '/' at end
@@ -205,8 +204,8 @@ def checkInspectFile(img):
 			status.rstrip('\n')
 			break
 	if (status.rstrip('\n')=='keep'):
-		return 'TRUE'
-	return 'FALSE'
+		return (True)
+	return (False)
 
 def checkInspectDB(img):
 	imq=particleData.image()
@@ -214,8 +213,17 @@ def checkInspectDB(img):
 	imgresult=partdb.query(imq, results=1)
 	if imgresult:
 		if imgresult[0]['keep']==True:
-			return 'TRUE'
-	return 'FALSE'
+			return(True)
+	return(False)
+
+def checkPairInspectDB(img,params):
+	imq=particleData.image()
+	imq['dbemdata|AcquisitionImageData|image']=params['sibpairs'][img.dbid]
+	imgresult=partdb.query(imq, results=1)
+	if imgresult:
+		if imgresult[0]['keep']==True:
+			return(True)
+	return(False)
 
 def getAceValues(params,img):
 	# if already got ace values in a previous step,
@@ -303,6 +311,7 @@ def checkAce():
 	return 'FALSE'
 
 def batchBox(params, img):
+	print "\nprocessing:",img['filename']
 	input=os.path.join(params["filepath"],(img['filename']+'.mrc'))
 	output=os.path.join(params["outdir"],(img['filename']+'.hed'))
 
@@ -317,11 +326,8 @@ def batchBox(params, img):
 		dbbox=os.path.join(params['outdir'],"temporaryParticlesFromDB.box")
 		if params['defocpair']:
 			particles,shift=getDefocPairParticles(img,params)
-			#hasparticles=writeDefocPairParticleBoxfile(img,dbbox,params)
 		else:
 			particles,shift=getParticles(img)
-			#hasparticles=writeParticleBoxfile(img,dbbox)
-		print "###number particles=",len(particles)
 		if len(particles)>0:			
 			###apply limits
 			if params['selexonmin'] or params['selexonmax']:
@@ -370,28 +376,27 @@ def getParticles(img):
 		
 def getDefocPairParticles(img,params):
 	imq=particleData.image()
-	print "finding pair for", img.dbid, '=',params['sibpairs'][img.dbid]
+	print "finding pair for", img['filename'] 
 	imq['dbemdata|AcquisitionImageData|image']=params['sibpairs'][img.dbid]
 	selexonrun=partdb.direct_query(data.run,params['selexonId'])
 	
 	prtlq=particleData.particle(imageId=imq,runId=selexonrun)
 	particles=partdb.query(prtlq)
-	print img['filename'],len(particles)
 	
 	shiftq=particleData.shift()
 	shiftq['dbemdata|AcquisitionImageData|image1']=params['sibpairs'][img.dbid]
 	shiftdata=partdb.query(shiftq,readimages=False)[0]
 	shiftx=shiftdata['shiftx']*shiftdata['scale']
 	shifty=shiftdata['shifty']*shiftdata['scale']
-	print shiftdata
 	shift={}
 	shift['shiftx']=shiftx
 	shift['shifty']=shifty
-		
+	print "shifting particles by", shiftx, shifty
 	return(particles,shift)
 
 def eliminateMinMaxCCParticles(particles,params):
 	newparticles=[]
+	eliminated=0
 	for prtl in particles:
 		keep=False
 		if params['selexonmin']:
@@ -402,6 +407,9 @@ def eliminateMinMaxCCParticles(particles,params):
 				keep=True
 		if keep:
 			newparticles.append(prtl)
+		else:
+			eliminated+=1
+	print eliminated,"particles eliminated due to selexonmin or selexonmax"
 	return(newparticles)
 
 def saveParticles(particles,shift,dbbox,params):
@@ -426,109 +434,10 @@ def saveParticles(particles,shift,dbbox,params):
 	boxfile=open(dbbox,'w')
 	boxfile.writelines(plist)
 	boxfile.close()
-		
-	print "\nprocessing:",img['filename']
-
-
-def writeParticleBoxfile(img,dbbox):
-	imq=particleData.image()
-	imq['dbemdata|AcquisitionImageData|image']=img.dbid
-	selexonrun=partdb.direct_query(data.run,params['selexonId'])
-	
-	prtlq=particleData.particle(imageId=imq,runId=selexonrun)
-	particles=partdb.query(prtlq)
-
-	if not particles:
-		print img['filename'],"contains no particles"
-		return (False)
-
-	#write the tmp box file
-	plist=[]
-	box=params['boxsize']	
-	for prtl in particles:
-		if params['selexonmin']:
-			if params['selexonmin']>prtl['correlation']:
-				continue
-		if params['selexonmax']:
-			if params['selexonmax']<prtl['correlation']:
-				continue
-		# save the particles to the database
-		if params['commit']:
-			stackpq=particleData.stackParticles()
-			stackpq['stackId']=params['stackId']
-			stackpq['particleId']=prtl
-			stackres=partdb.query(stackpq)
-			if not stackres:
-				params['particleNumber']=params['particleNumber']+1
-				stackpq['particleNumber']=params['particleNumber']
-				partdb.insert(stackpq)
-		xcoord=prtl['xcoord']-int(box/2)
-		ycoord=prtl['ycoord']-int(box/2)
-		if (xcoord>0 and ycoord>0):
-			plist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
-	boxfile=open(dbbox,'w')
-	boxfile.writelines(plist)
-	boxfile.close()
-		
-	print "\nprocessing:",img['filename']
-	return (True)
-	
-def writeDefocPairParticleBoxfile(img,dbbox,params):
-	imq=particleData.image()
-	print "finding pair for", img.dbid, '=',params['sibpairs'][img.dbid]
-	imq['dbemdata|AcquisitionImageData|image']=params['sibpairs'][img.dbid]
-	selexonrun=partdb.direct_query(data.run,params['selexonId'])
-	
-	prtlq=particleData.particle(imageId=imq,runId=selexonrun)
-	particles=partdb.query(prtlq)
-	print img['filename'],len(particles)
-	
-	shiftq=particleData.shift()
-	shiftq['dbemdata|AcquisitionImageData|image1']=params['sibpairs'][img.dbid]
-	shiftdata=partdb.query(shiftq,readimages=False)[0]
-	shiftx=shiftdata['shiftx']*shiftdata['scale']
-	shifty=shiftdata['shifty']*shiftdata['scale']
-	print shiftdata
-	
-	if not particles:
-		print img['filename'],"contains no particles"
-		return (False)
-
-	#write the tmp box file
-	plist=[]
-	box=params['boxsize']	
-	for prtl in particles:
-		if params['selexonmin']:
-			if params['selexonmin']>prtl['correlation']:
-				continue
-		if params['selexonmax']:
-			if params['selexonmax']<prtl['correlation']:
-				continue
-		# save the particles to the database
-		if params['commit']:
-			stackpq=particleData.stackParticles()
-			stackpq['stackId']=params['stackId']
-			stackpq['particleId']=prtl
-			stackres=partdb.query(stackpq)
-			if not stackres:
-				params['particleNumber']=params['particleNumber']+1
-				stackpq['particleNumber']=params['particleNumber']
-				partdb.insert(stackpq)
-		xcoord=int(prtl['xcoord']-int(box/2)-math.floor(shiftx+0.5))
-		ycoord=int(prtl['ycoord']-int(box/2)-math.floor(shifty+0.5))
-		if (xcoord>0 and ycoord>0):
-			plist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
-	boxfile=open(dbbox,'w')
-	boxfile.writelines(plist)
-	boxfile.close()
-		
-	print "\nprocessing:",img['filename']
-
-	return (True)
 	
 def phaseFlip(params,img):
-	input=params["outdir"]+img['filename']+'.hed'
-	output=params["outdir"]+img['filename']+'.ctf.hed'
+	input=os.path.join(params["outdir"],(img['filename']+'.hed'))
+	output=os.path.join(params["outdir"],(img['filename']+'.ctf.hed'))
 
 	cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" %(input,output,params["df"],params["kv"],params["apix"])
 	print "phaseflipping particles"
@@ -538,10 +447,10 @@ def phaseFlip(params,img):
     
 def singleStack(params,img):
  	if (params["phaseflip"]==True):
-		input=params["outdir"]+img['filename']+'.ctf.hed'
+		input=os.path.join(params["outdir"],(img['filename']+'.ctf.hed'))
 	else:
-		input=params["outdir"]+img['filename']+'.hed'
-	output=params["outdir"]+params["single"]
+		input=os.path.join(params["outdir"],(img['filename']+'.hed'))
+	output=os.path.join(params["outdir"],params["single"])
     
 	singlepath=os.path.split(output)[0]
 
@@ -583,11 +492,11 @@ def singleStack(params,img):
 	f.close()
 	params["particle"]=count
 	
-	os.remove(params["outdir"]+img['filename']+".hed")
-	os.remove(params["outdir"]+img['filename']+".img")
+	os.remove(os.path.join(params["outdir"],(img['filename']+".hed")))
+	os.remove(os.path.join(params["outdir"],(img['filename']+".img")))
 	if (params["phaseflip"]==True):
-		os.remove(params["outdir"]+img['filename']+".ctf.hed")
-		os.remove(params["outdir"]+img['filename']+".ctf.img")
+		os.remove(os.path.join(params["outdir"],(img['filename']+".ctf.hed")))
+		os.remove(os.path.join(params["outdir"],(img['filename']+".ctf.img")))
 
 def writeBoxLog(commandline):
 	f=open('.makestacklog','a')
@@ -760,7 +669,7 @@ if __name__ == '__main__':
 
 	# if making a single stack, remove existing stack if exists
 	if params["single"]:
-		stackfile=params["outdir"]+os.path.splitext(params["single"])[0]
+		stackfile=os.path.join(params["outdir"],os.path.splitext(params["single"])[0])
 		# if saving to the database, store the stack parameters
 		if (params['commit']==True):
 			insertStackParams(params)
@@ -773,7 +682,7 @@ if __name__ == '__main__':
 			os.remove(stackfile+".img")
 			
 		# set up counter for particle log
-		p_logfile=params["outdir"]+'.particlelog'
+		p_logfile=os.path.join(params["outdir"],'.particlelog')
 
  		if (os.path.exists(p_logfile)):
 			os.remove(p_logfile)
@@ -804,7 +713,6 @@ if __name__ == '__main__':
 	totptcls=0
 	while images:
 		img = images.pop(0)
-		print img.dbid
 				
 		params['apix']=getPixelSize(img)
 
@@ -813,7 +721,7 @@ if __name__ == '__main__':
 		params['filepath']=img['session']['image path']
 		
 		# first remove any existing boxed files
-		stackfile=params["outdir"]+img['filename']
+		stackfile=os.path.join(params["outdir"],img['filename'])
 	
 		if (os.path.exists(stackfile+".hed") or os.path.exists(stackfile+".img")):
 			os.remove(stackfile+".hed")
@@ -824,13 +732,16 @@ if __name__ == '__main__':
 		# check if the image has inspected, in file or in database
 		if params["inspectfile"]:
 			goodimg=checkInspectFile(img)
-			if (goodimg=='FALSE'):
+			if not goodimg:
 				print img['filename']+".mrc has been rejected in manual inspection file"
 				continue
 
 		if params["inspected"]:
-			goodimg=checkInspectDB(img)
-			if (goodimg=='FALSE'):
+			if params['defocpair']:
+				goodimg=checkPairInspectDB(img,params)
+			else:
+				goodimg=checkInspectDB(img)
+			if not goodimg:
 				print img['filename']+".mrc has been rejected by manual inspection"
 				continue
 		
@@ -862,19 +773,17 @@ if __name__ == '__main__':
 					
 		# box the particles
 		totptcls+=batchBox(params,img)
-		sys.exit()
-		if not(os.path.exists(params["outdir"]+img['filename']+".hed")):
+		if not(os.path.exists(os.path.join(params["outdir"],(img['filename']+".hed")))):
 			print "no particles were boxed from "+img['filename']+".mrc"
 			continue
         
 		# phase flip boxed particles if requested
-		if (params["phaseflip"]==True):
+		if params["phaseflip"]:
 			getAceValues(params,img) # find ace values in database
 			if (params["hasace"]==False): 
 				print img['filename']+".mrc has no ACE values"
 				continue
 			phaseFlip(params,img) # phase flip stack file
-
 		# add boxed particles to a single stack
 		if params["single"]:
 			singleStack(params,img)
@@ -886,7 +795,7 @@ if __name__ == '__main__':
 			if totptcls>params['limit']:
 				break
 				
-		if os.path.exists(params['outdir']+'temporaryParticlesFromDB.box'):
-			os.remove(params['outdir']+'temporaryParticlesFromDB.box')
+		if os.path.exists(os.path.join(params['outdir'],'temporaryParticlesFromDB.box')):
+			os.remove(os.path.join(params['outdir'],'temporaryParticlesFromDB.box'))
 
 	print "Done!"
