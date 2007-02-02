@@ -1,38 +1,21 @@
 #!/usr/bin/env python
 
 import numarray
+import numarray.ma
 import Image
 import ImageDraw
+import numextension
 
-def insidePolygon(indices, polygon):
-	'''
-	test which points in indices are inside polygon
-	'''
-	intersections = numarray.zeros(indices.shape[1:])
-	p0,p1 = indices
-	## test each edge intersection with ray originating at each point in indices
-	for v in range(len(polygon)):
-		a0,a1 = polygon[v-1]
-		b0,b1 = float(polygon[v][0]), float(polygon[v][1])
-		if a0 != b0:
-			intersection = numarray.logical_and(
-					numarray.logical_or(
-						numarray.logical_and(b0 < p0, a0 >= p0),
-						numarray.logical_and(b0 >= p0, a0 < p0)),
-					((b1 - a1) / (b0 - a0) * (p0 - a0) + a1) > p1)
-			intersections += intersection
-	## if only 1 intersection, then point is inside polygon
-	inside = intersections % 2 == 1
-	return inside
+def insidePolygon(points, polygon):
+	return numextension.pointsInPolygon(points, polygon)
 
 def filledPolygon(shape, vertices):
-	indices = numarray.indices(shape)
-	return insidePolygon(indices, vertices)
+	points = numarray.array(numarray.transpose(numarray.indices(shape), (1,2,0)), shape=(-1,2))
+	inside = insidePolygon(points, vertices)
+	return numarray.array(inside, shape=shape)
 
 def pointsInPolygon(inputpoints, vertices):
-	indices = numarray.array(inputpoints)
-	indices.transpose()
-	inside = insidePolygon(indices, vertices)
+	inside = insidePolygon(inputpoints, vertices)
 	outputpoints = numarray.compress(inside, inputpoints)
 	outputpoints = map(tuple, outputpoints)
 	return outputpoints
