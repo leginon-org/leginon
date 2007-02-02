@@ -253,82 +253,6 @@ reclim = sys.getrecursionlimit()
 if reclim < 20000:
 	sys.setrecursionlimit(20000)
 
-class OLDBlob(object):
-	'''
-	a Blob instance represets a connected set of pixels
-	'''
-	neighbor_deltas = numarray.array(((-1,-1),(-1,0),(-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1)))
-	#maxpoints = 2000
-	def __init__(self, image, mask):
-		self.image = image
-		self.mask = mask
-		self.pixel_list = []
-		self.value_list = []
-		self.stats = {}
-		self.recursionerror = False
-
-	def calc_stats(self):
-		if self.stats:
-			return
-		pixel_array = numarray.array(self.pixel_list, numarray.Float32)
-		sum = numarray.sum(pixel_array)
-		squares = pixel_array**2
-		sumsquares = numarray.sum(squares)
-		n = len(pixel_array)
-		self.stats['n'] = n
-
-		## center
-		self.stats['center'] = sum / n
-
-		## size
-		if n > 1:
-			tmp1 = n * sumsquares - sum * sum
-			tmp2 = (n - 1) * n
-			self.stats['size'] = numarray.sqrt(tmp1 / tmp2)
-		else:
-			self.stats['size'] = numarray.zeros((2,),numarray.Float32)
-		
-		## get value array using pixel list
-		pixel_array.transpose()
-		rows = pixel_array[0]
-		cols = pixel_array[1]
-		try:
-			value_array = self.image[rows,cols]
-		except:
-			print 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-			print 'SHAPE', self.image.shape
-			print 'LEN RC', len(rows), len(cols)
-			print 'ROWS', minmax(rows)
-			print 'COLS', minmax(cols)
-			print 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-			raise
-
-		self.value_array = value_array.astype(numarray.Float32)
-		valuesum = numarray.sum(self.value_array)
-		valuesquares = self.value_array ** 2
-		sumvaluesquares = numarray.sum(valuesquares)
-
-		## mean pixel value
-		self.stats['mean'] = valuesum / n
-
-		## stddev pixel value
-		if n > 1:
-			tmp1 = n * sumvaluesquares - valuesum * valuesum
-			if tmp1 < 0:
-				tmp1 = 0.0
-			self.stats['stddev'] = float(numarray.sqrt(tmp1 / tmp2))
-		else:
-			self.stats['stddev'] = 0.0
-
-		## whether this blob is complete because of recursion error
-		self.stats['complete'] = not self.recursionerror
-		if self.recursionerror:
-			print 'ERROR', n
-
-	def print_stats(self):
-		for stat in ('complete', 'n', 'center', 'size', 'mean', 'stddev'):
-			print '\t%s:\t%s' % (stat, self.stats[stat])
-
 class Blob(object):
 	def __init__(self, image, mask, n, center, mean, stddev):
 		self.image = image
@@ -360,7 +284,7 @@ def near_center(shape, blobs, n):
 			newblobs.append(blob)
 	return newblobs
 
-## using numarray.nd_image to implement numextension.blobs
+## using numarray.nd_image to find blobs
 labelstruct = numarray.array(((1,1,1),(1,1,1),(1,1,1)))
 def numarrayblobs(im,mask):
 	labels,n = numarray.nd_image.label(mask, labelstruct)
@@ -388,31 +312,6 @@ def numarrayblobs(im,mask):
 		blobs.append({'center':centers[i], 'n':sizes[i], 'mean':means[i],'stddev':stds[i]})
 	return blobs
 
-def OLDnumarrayblobs(im):
-	labels,n = numarray.nd_image.label(im, labelstruct)
-	slices = numarray.nd_image.find_objects(labels)
-	## should cache indices arrays
-	indices = numarray.indices(im.shape)
-
-	blobs = []
-	for i in range(n):
-		s = slices[i]
-		roi_im = im[s]
-		roi_lab = labels[s]
-		roi_rows = indices[0][s]
-		roi_cols = indices[1][s]
-
-		## which elements are in this object
-		condition = roi_lab == i+1
-
-		blob = {}
-		blob['pixelrow'] = numarray.compress(condition, roi_rows)
-		blob['pixelcol'] = numarray.compress(condition, roi_cols)
-		blob['pixelv'] = numarray.compress(condition, roi_im)
-
-		blobs.append(blob)
-	return blobs
-
 def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0):
 	shape = image.shape
 
@@ -424,27 +323,6 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 		tmpmask[-border:] = 0
 		tmpmask[:,:border] = 0
 		tmpmask[:,-border:] = 0
-
-	'''
-	## find blobs the new way
-	blobs = numextension.blobs(tmpmask)
-
-	## then fake them into the original blob class
-	fakeblobs = []
-	toobig = 0
-	toosmall = 0
-	for blob in blobs:
-		fakeblob = OLDBlob(image, mask)
-		fakeblob.pixel_list = zip(blob['pixelrow'], blob['pixelcol'])
-		if len(fakeblob.pixel_list) >= maxblobsize:
-			toobig += 1
-			continue
-		if len(fakeblob.pixel_list) < minblobsize:
-			toosmall += 1
-			continue
-		fakeblob.calc_stats()
-		fakeblobs.append(fakeblob)
-	'''
 
 	blobs = numarrayblobs(image,tmpmask)
 	fakeblobs = []
