@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.241 $
+# $Revision: 1.242 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-12-05 22:22:52 $
+# $Date: 2007-02-03 00:26:43 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -438,6 +438,15 @@ class PresetsManager(node.Node):
 			self.logger.error(message)
 			raise PresetChangeError(message)
 
+		mymin = presetdata['defocus range min']
+		mymax = presetdata['defocus range max']
+		if None in (mymin, mymax):
+			mydefocus = presetdata['defocus']
+		else:
+			# min <= defocus < max
+			mydefocus = random.uniform(mymin, mymax)
+			self.logger.info('Random defocus for preset %s:  %s' % (presetdata['name'], mydefocus))
+
 		scopedata = data.ScopeEMData()
 		cameradata = data.CameraEMData()
 
@@ -457,6 +466,7 @@ class PresetsManager(node.Node):
 			if not final:
 				cameradata['energy filter'] = None
 				cameradata['energy filter width'] = None
+			scopedata['defocus'] = mydefocus
 
 		self.logger.info(beginmessage)
 
