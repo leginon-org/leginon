@@ -186,6 +186,9 @@ class refinement(data.Data):
 			('resolutionId', resolution),
 			('classAverage', str),
 			('classVariance', str),
+			('numClassAvg', int),
+			('numClassAvgKept', int),
+			('numBadParticles', int),
 			('volumeSnapshot', str),
 			('volumeDensity',str),
 		)
@@ -233,6 +236,7 @@ class particleClassification(data.Data):
 			('shifty', float),
 			('inplane_rotation', float),
 			('quality_factor', float),
+			('thrown_out',int),
 		)
 	typemap = classmethod(typemap)
 data.particleClassification=particleClassification
