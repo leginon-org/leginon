@@ -248,6 +248,9 @@ int loadMRC(char *pszFilename, MRC *pMRC) {
 		case MRC_MODE_SHORT:
 			uElementSize = sizeof(short);
 			break;
+		case MRC_MODE_UNSIGNED_SHORT:
+			uElementSize = sizeof(short);
+			break;
 		case MRC_MODE_FLOAT:
 			uElementSize = sizeof(float);
 			break;

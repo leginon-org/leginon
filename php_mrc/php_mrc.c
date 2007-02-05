@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.22 2006-12-07 22:19:32 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.23 2007-02-05 23:46:49 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -54,11 +54,12 @@ function_entry mrc_functions[] = {
 	ZEND_FE(mrcwrite, NULL)
 	ZEND_FE(mrctoimage, NULL)
 	ZEND_FE(mrccopy, NULL)
+	ZEND_FE(mrccopyfromfile, NULL)
 	ZEND_FE(mrcbinning, NULL)
 	ZEND_FE(mrcgaussianfilter, NULL)
 	ZEND_FE(mrclogscale, NULL)
 	ZEND_FE(mrcgetdata, NULL)
-	ZEND_FE(mrcgetscale, NULL)
+	ZEND_FE(mrcstdevscale, NULL)
 	ZEND_FE(mrcputdata, NULL)
 	ZEND_FE(mrcrotate, NULL)
 	ZEND_FE(mrcupdateheader, NULL)
@@ -457,7 +458,6 @@ ZEND_FUNCTION(mrcinfo)
 	pmrc = (MRC *) malloc (sizeof (MRC));
 	_mrc_header_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, &(pmrc->header));
 	_mrc_header_data(INTERNAL_FUNCTION_PARAM_PASSTHRU, pmrc);
-	mrc_destroy(pmrc);
 
 }
 
@@ -720,24 +720,79 @@ ZEND_FUNCTION(mrccopy)
 	ZEND_FETCH_RESOURCE(mrc_src, MRCPtr, SMRC, -1, "MRCdata", le_mrc);
 	ZEND_FETCH_RESOURCE(mrc_dst, MRCPtr, DMRC, -1, "MRCdata", le_mrc);
 
+	convert_to_long_ex(DX);
+	convert_to_long_ex(DY);
 	convert_to_long_ex(SX);
 	convert_to_long_ex(SY);
 	convert_to_long_ex(SW);
 	convert_to_long_ex(SH);
-	convert_to_long_ex(DX);
-	convert_to_long_ex(DY);
 
+	dstX = Z_LVAL_PP(DX);
+	dstY = Z_LVAL_PP(DY);
 	srcX = Z_LVAL_PP(SX);
 	srcY = Z_LVAL_PP(SY);
 	srcH = Z_LVAL_PP(SH);
 	srcW = Z_LVAL_PP(SW);
-	dstX = Z_LVAL_PP(DX);
-	dstY = Z_LVAL_PP(DY);
 
 	mrc_copy_to(mrc_dst, mrc_src, dstX, dstY, srcX, srcY, srcW, srcH);
 	RETURN_TRUE;
 }
 
+/** 
+ * Copy part of an mrc from a mrc file
+ *
+ * Description:
+ * int mrccopyfromfile(string filename, int dst_x, int dst_y, int dst_w, int dst_h, int src_x, int src_y)
+ * Note: Memory won't be allocated for the whole mrc image, 
+ *	but only for the part set by dst_w and dst_h
+ */ 
+ZEND_FUNCTION(mrccopyfromfile)
+{
+
+	MRCPtr pmrc_dst;
+
+	char *ptfile;
+	zval **filename, **DX, **DY, **DW, **DH, **SX, **SY, **SW, **SH;
+	int	dstX, dstY, dstW, dstH,
+			srcX, srcY;
+	int argc = ZEND_NUM_ARGS();
+	int ret;
+
+
+	if (argc != 7 ||	
+		zend_get_parameters_ex(7, &filename, &DX, &DY, &DW, &DH, &SX, &SY) == FAILURE) {
+		ZEND_WRONG_PARAM_COUNT();
+	}
+
+	convert_to_string_ex(filename);
+	convert_to_long_ex(DX);
+	convert_to_long_ex(DY);
+	convert_to_long_ex(DW);
+	convert_to_long_ex(DH);
+	convert_to_long_ex(SX);
+	convert_to_long_ex(SY);
+
+	dstX = Z_LVAL_PP(DX);
+	dstY = Z_LVAL_PP(DY);
+	dstW = Z_LVAL_PP(DW);
+	dstH = Z_LVAL_PP(DH);
+	srcX = Z_LVAL_PP(SX);
+	srcY = Z_LVAL_PP(SY);
+
+
+	ptfile = (char *)((*filename)->value.str.val);
+	pmrc_dst = (MRCPtr)mrc_create(dstW, dstH);
+
+	ret=mrc_copy_from_file(pmrc_dst, ptfile, dstX, dstY, srcX, srcY);
+	if(ret==-1) {
+				zend_error(E_ERROR, "%s(): %s : No such file or directory ", 
+				get_active_function_name(TSRMLS_C),ptfile);
+	} else if (ret==-2) {
+				zend_error(E_ERROR, "%s(): %s : Could not read MRC header", 
+				get_active_function_name(TSRMLS_C),ptfile);
+	} 
+	ZEND_REGISTER_RESOURCE(return_value, pmrc_dst, le_mrc);
+}
 
 /** 
  * bin a mrc image
@@ -884,31 +939,39 @@ ZEND_FUNCTION(mrcgetdata)
 
 
 /**
- * get min and max value scaled within +/- 3 stddev
+ * get min and max value scaled within +/- n_stdev stddev
  *
  * Description:
- * array mrcgetscale(resource src_mrc, int density_max)
+ * array mrcstdevscale(resource src_mrc, int density_max, int n_stdev)
  */ 
-ZEND_FUNCTION(mrcgetscale)
+ZEND_FUNCTION(mrcstdevscale)
 {
 		char	*key;
-		zval	**MRCD, **DENSITY_MAX;
+		zval	**MRCD, **DENSITY_MAX, **N_STDEV;
 		MRCPtr	pmrc;
 		MRCHeader	mrch;
 
 		int argc = ZEND_NUM_ARGS();
 		int densitymax;
+
+		int n_stdev=3;
 		
 		float pmin, pmax, pmean, rms, scale;
 		float smin, smax;
 
-
-		if (argc != 2 || zend_get_parameters_ex(argc, &MRCD, &DENSITY_MAX) == FAILURE) {
+		if (argc < 2 || argc > 3) {
 			ZEND_WRONG_PARAM_COUNT();
 		}
 
+		zend_get_parameters_ex(argc, &MRCD, &DENSITY_MAX, &N_STDEV);
+
 		convert_to_long_ex(DENSITY_MAX);
 		densitymax = Z_LVAL_PP(DENSITY_MAX);
+
+		if (argc>2) {
+			convert_to_long_ex(N_STDEV);
+			n_stdev=Z_LVAL_PP(N_STDEV);
+		}
 
 		ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
 
@@ -927,8 +990,8 @@ ZEND_FUNCTION(mrcgetscale)
 		scale = pmax - pmin;
 
 		if (scale!=0) {
-			smin = (pmean-3*rms-pmin)*densitymax/scale;
-			smax = (pmean+3*rms-pmin)*densitymax/scale;
+			smin = (pmean-n_stdev*rms-pmin)*densitymax/scale;
+			smax = (pmean+n_stdev*rms-pmin)*densitymax/scale;
 		}
 		
 
@@ -1103,7 +1166,7 @@ ZEND_FUNCTION(mrcset)
 	}
 	if (strcmp(str_key,"amin")==0) {
 		convert_to_double_ex(value);
-		pmrc->header.amax= Z_DVAL_PP(value);
+		pmrc->header.amin= Z_DVAL_PP(value);
 	}
 	if (strcmp(str_key,"amax")==0) {
 		convert_to_double_ex(value);

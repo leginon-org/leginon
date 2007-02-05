@@ -60,6 +60,11 @@ int mrc_fftw(MRC *pMRC, int mask_radius) {
 		data_array = (fftw_real *)((short *)pMRC->pbyData);
 		break;
 	 }
+	 case MRC_MODE_UNSIGNED_SHORT:
+         {
+		data_array = (fftw_real *)((unsigned short *)pMRC->pbyData);
+		break;
+	 }
 	 case MRC_MODE_FLOAT:
          {
 		data_array = (fftw_real *)((float *)pMRC->pbyData);

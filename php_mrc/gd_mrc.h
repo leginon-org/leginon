@@ -20,7 +20,8 @@ int gdreadMRCHeader(gdIOCtx *io_ctx, MRCHeader *pMRCHeader);
 int gdloadMRC(gdIOCtx *io_ctx, int in_length, MRC *pMRC);
 
 void mrc_copy(MRCPtr pmrc_dst, MRCPtr pmrc_src, int x1, int y1, int x2, int y2) ;
-void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX, int srcY, int w, int h);
+void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX, int srcY, int srcW, int srcH);
+int mrc_copy_from_file(MRCPtr pmrc_dst, char *pszFilename, int dstX, int dstY, int srcX, int srcY);
 MRCPtr mrc_create(int x_size, int y_size);
 MRCPtr mrc_rotate(MRC *mrc_src, double angle, int resize);
 void mrc_destroy(MRCPtr pmrc);

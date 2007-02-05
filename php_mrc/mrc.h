@@ -25,7 +25,7 @@ extern "C" {
 #define MRC_MODE_FLOAT          2
 #define MRC_MODE_SHORT_COMPLEX  3
 #define MRC_MODE_FLOAT_COMPLEX  4
-#define MRC_MODE_UNSIGNED_SHORT 3
+#define MRC_MODE_UNSIGNED_SHORT 6
 
 #define MRC_USER            25
 #define MRC_LABEL_SIZE      80

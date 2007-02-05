@@ -353,13 +353,13 @@ void mrc_copy(MRCPtr pmrc_dst, MRCPtr pmrc_src, int x1, int y1, int x2, int y2) 
 
 /**
  * void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX, int srcY, int w, int h)
+ * mrc_copy_to(mrc_dst, mrc_src, dstX, dstY, srcX, srcY, srcW, srcH);
  */
-void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX, int srcY, int w, int h)
+
+void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX, int srcY, int srcW, int srcH)
 {
-	int     w_src, h_src,
-			w_dst, h_dst, 
-			x_min_src, x_max_src, y_min_src, y_max_src,
-			x_min_dst, x_max_dst, y_min_dst, y_max_dst;
+	int	w,h,w_src, h_src,
+			w_dst, h_dst; 
 
 	long	n_src, n_dst,
 				i,j,ij,u,v,uv;
@@ -374,8 +374,8 @@ void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX,
 	n_dst = w_dst * h_dst;
 	srcX = (srcX>w_src) ? w_src : srcX;
 	srcY = (srcY>h_src) ? h_src : srcY;
-	w = (w>w_src) ? w_src : w;
-	h = (h>h_src) ? h_src : h;
+	w = (srcW>w_src) ? w_src : srcW;
+	h = (srcH>h_src) ? h_src : srcH;
 
 	if (srcX<0) {
 		w+=srcX;
@@ -389,7 +389,7 @@ void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX,
 	data_array_dst = (float *)pmrc_dst->pbyData;
 	data_array_src = (float *)pmrc_src->pbyData;
 
-	for (v=dstY, j=srcY; j<h; j++, v++) {
+	for (v=dstY, j=srcY; j<srcY+h_dst; j++, v++) {
 		for (u=dstX, i=srcX; i<w; i++, u++) {
 			ij = i + j*w_src;
 			uv = u + v*w_dst;
@@ -403,15 +403,94 @@ void mrc_copy_to(MRCPtr pmrc_dst, MRCPtr pmrc_src, int dstX, int dstY, int srcX,
 		}
 	}
 	
-/*
-	MRCPtr pmrc_temp;
-	pmrc_temp = mrc_create(w,h);
-	mrc_copy(pmrc_temp, pmrc_src, srcX, srcY, srcX+w, srcY+h);
-	mrc_copy(pmrc_dst, pmrc_temp, 0, 0, w, h);
-	//mrc_copy(pmrc_dst, pmrc_temp, dstX, dstY, dstX+w, dstY+h);
-	mrc_destroy(pmrc_temp);
-*/
+}
 
+
+/**
+ * int mrc_copy_from_file(MRCPtr pmrc_dst, char *pszFilename, int dstX, int dstY, int srcX, int srcY, int srcW, int srcH)
+ */
+int mrc_copy_from_file(MRCPtr pmrc_dst, char *pszFilename, int dstX, int dstY, int srcX, int srcY)
+{
+	FILE *pFMRC;
+	MRCHeader pmrch;
+
+	unsigned int uElementSize = 0;
+
+	int w, h,
+			w_src, h_src,
+			w_dst, h_dst,
+			offset; 
+
+	long	n_src, n_dst,
+				i,j,ij,u,v,uv;
+
+
+	float *data_array = (float *)pmrc_dst->pbyData;
+
+	if((pFMRC = fopen(pszFilename, "rb")) == NULL)
+		return -1;
+
+	if(!readMRCHeader(pFMRC, &pmrch)) {
+		return -2;
+	}
+
+	w_src = pmrch.nx;
+	h_src = pmrch.ny;
+	n_src = w_src * h_src;
+	w_dst = pmrc_dst->header.nx;
+	h_dst = pmrc_dst->header.ny;
+	n_dst = w_dst * h_dst;
+	srcX = (srcX>w_src) ? w_src : srcX;
+	srcY = (srcY>h_src) ? h_src : srcY;
+
+	// set new header
+	pmrc_dst->header.amin=pmrch.amin;
+	pmrc_dst->header.amax=pmrch.amax;
+	pmrc_dst->header.amean=pmrch.amean;
+	pmrc_dst->header.rms=pmrch.rms;
+
+
+	switch(pmrch.mode) {
+		case MRC_MODE_BYTE:
+			uElementSize = sizeof(char);
+			break;
+		case MRC_MODE_SHORT:
+			uElementSize = sizeof(short);
+			break;
+		case MRC_MODE_UNSIGNED_SHORT:
+			uElementSize = sizeof(short);
+			break;
+		case MRC_MODE_FLOAT:
+			uElementSize = sizeof(float);
+			break;
+	}
+
+	w = (w_dst>w_src) ? w_src : w_dst+srcX;
+	h = h_dst+srcY;
+	offset = (w_dst>w_src) ? 
+						(dstX<0) ? srcX-dstX : srcX 
+						: w_src-w_dst+abs(dstX);
+
+	// --- position pointer file where copy should start: (srcX, srcY);
+	fseek(pFMRC, (srcX+srcY*w_src)*uElementSize, SEEK_CUR);
+	for (v=dstY, j=srcY; j<h; j++, v++) {
+		for (u=dstX, i=srcX; i<w; i++, u++) {
+			ij = i + j*w_src;
+			uv = u + v*w_dst;
+			if ((u>=w_dst) || (v>=h_dst) ||
+					(u<0) || (v<0) ||
+					(ij<0) || (uv<0) ||
+					(ij>n_src-1) || (uv>n_dst-1)
+				)
+					continue;
+			fread(&(data_array[uv]), uElementSize,1,pFMRC);
+		}
+		// --- seek next row of interested area
+		fseek(pFMRC, offset*uElementSize, SEEK_CUR);
+	}
+	
+	fclose(pFMRC);
+	return 1;
 }
 
 
@@ -544,6 +623,9 @@ int gdloadMRC(gdIOCtx *io_ctx, int in_length, MRC *pMRC) {
 			uElementSize = sizeof(char);
 			break;
 		case MRC_MODE_SHORT:
+			uElementSize = sizeof(short);
+			break;
+		case MRC_MODE_UNSIGNED_SHORT:
 			uElementSize = sizeof(short);
 			break;
 		case MRC_MODE_FLOAT:
