@@ -8,7 +8,6 @@ import data
 import dbdatakeeper
 import convolver
 import Mrc
-import numarray.nd_image
 import imagefun
 import peakfinder
 import correlator
@@ -17,6 +16,9 @@ import particleData
 import project
 import string
 import time
+import numarray
+import numarray.convolve as convolve
+import numarray.nd_image as nd_image
 
 db=dbdatakeeper.DBDataKeeper()
 partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
@@ -766,9 +768,10 @@ def binImg(img,binning):
 def filterImg(img,apix,res):
 	# low pass filter image to res resolution
 	if res==0:
-		print "Skipping low pass filter"
+		print " ... skipping low pass filter"
 		return(img)
 	else:
+		print " ... performing low pass filter"
 		c=convolver.Convolver()
 		sigma=(res/apix)/3.0
 		kernel=convolver.gaussian_kernel(sigma)
@@ -867,19 +870,13 @@ def getImagesFromDB(session,preset):
 	# returns list of image names from DB
 	print "Querying database for images"
 	sessionq = data.SessionData(name=session)
-	presetq = data.PresetData(name=preset)
-	imageq = data.AcquisitionImageData()
+	presetq=data.PresetData(name=preset)
+	imageq=data.AcquisitionImageData()
 	imageq['preset'] = presetq
 	imageq['session'] = sessionq
 	# readimages=False to keep db from returning actual image
 	# readimages=True could be used for doing processing w/i this script
 	imagelist=db.query(imageq, readimages=False)
-	#loop through images and make data.holdimages false
-	#this makes it so that data.py doesn't hold images in memory
-	#solves a bug where selexon quits after a dozen or so images
-	for img in imagelist:
-		img.holdimages=False
-		
 	return (imagelist)
 
 def getAllImagesFromDB(session):
@@ -939,14 +936,29 @@ def rescaleTemplates(img,params):
 	
 def scaleandclip(fname,scalefactor,newfname):
 	image=Mrc.mrc_to_numeric(fname)
+	if(image.shape[0] != image.shape[1]):
+		print "WARNING: template is NOT square, this may cause errors"
 	boxsz=image.shape
 	scaledimg=imagefun.scale(image,scalefactor)
+
 	scboxsz=scaledimg.shape[1]
-	Mrc.numeric_to_mrc(scaledimg,newfname)
-	# make sure the box size is divisible by 16
+	#make sure the box size is divisible by 16
 	if (scboxsz%16!=0):
-	    clipsize=str(math.ceil(float(scboxsz)/16)*16)
-	    os.system("proc2d "+newfname+" "+newfname+" clip="+clipsize+","+clipsize+" edgenorm")
+		padsize=int(math.ceil(float(scboxsz)/16)*16)
+		padshape = numarray.array([padsize,padsize])
+		print " ... changing box size from",scboxsz,"to",padsize
+		#GET AVERAGE VALUE OF EDGES
+		leftedgeavg = nd_image.mean(scaledimg[0:scboxsz, 0:0])
+		rightedgeavg = nd_image.mean(scaledimg[0:scboxsz, scboxsz:scboxsz])
+		topedgeavg = nd_image.mean(scaledimg[0:0, 0:scboxsz])
+		bottomedgeavg = nd_image.mean(scaledimg[scboxsz:scboxsz, 0:scboxsz])
+		edgeavg = (leftedgeavg + rightedgeavg + topedgeavg + bottomedgeavg)/4.0
+		#PAD IMAGE
+		scaledimg = convolve.iraf_frame.frame(scaledimg, padshape, mode="constant", cval=edgeavg)
+        	#WHY ARE WE USING EMAN???
+		#os.system("proc2d "+newfname+" "+newfname+" clip="+str(padsize)+\
+			#","+str(padsize)+" edgenorm")
+	Mrc.numeric_to_mrc(scaledimg,newfname)
 
 def getDefocusPair(imagedata):
 	target=imagedata['target']
@@ -964,7 +976,6 @@ def getDefocusPair(imagedata):
 				pass
 			else:
 				defocpair=sib
-				defocpair.holdimages=False
 				break
 	else:
 		defocpair=None
@@ -996,7 +1007,7 @@ def getShift(imagedata1,imagedata2):
 		binned1=binImg(imagedata1['image'],shrinkfactor1)
 		binned2=binImg(imagedata2['image'],shrinkfactor2)
 		pc=correlator.phase_correlate(binned1,binned2,zero=True)
-		#Mrc.numeric_to_mrc(pc,'pc.mrc')
+		Mrc.numeric_to_mrc(pc,'pc.mrc')
 		peak=findSubpixelPeak(pc, lpf=1.5) # this is a temp fix. When jim fixes peakfinder, this should be peakfinder.findSubpixelPeak
 		subpixpeak=peak['subpixel peak']
 		#find shift relative to origin

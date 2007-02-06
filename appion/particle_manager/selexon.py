@@ -14,6 +14,7 @@ if __name__ == '__main__':
 	# record command line
 	writeSelexLog(sys.argv)
 
+	print " ... checking parameters"
 	# create params dictionary & set defaults
 	params=createDefaults()
 
@@ -52,6 +53,7 @@ if __name__ == '__main__':
 		sys.exit()
 	
 	# get list of input images, since wildcards are supported
+	print " ... getting images"
 	if params['dbimages']==True:
 		images=getImagesFromDB(params['sessionname'],params['preset'])
 		params['session']=images[0]['session']
@@ -73,6 +75,7 @@ if __name__ == '__main__':
 	getOutDirs(params)
 
 	# if templateIds specified, create temporary template files in this directory & rescale
+	print " ... getting templates"
 	if params['templateIds']:
 		# get the first image's pixel size:
 		params['apix']=getPixelSize(images[0])
@@ -92,8 +95,8 @@ if __name__ == '__main__':
 		# go through the template mrc files and downsize & filter them
 		for tmplt in params['templatelist']:
 			dwnsizeTemplate(params,tmplt)
-		print "\ndownsize & filtered "+str(len(params['templatelist']))+ \
-			" file(s) with root \""+params["template"]+"\"\n"
+		print " ... downsize & filtered "+str(len(params['templatelist']))+ \
+			" file(s) with root \""+params["template"]+"\""
 			
 	# unpickle dictionary of previously processed images
 	donedict=getDoneDict(selexondonename)
@@ -135,8 +138,14 @@ if __name__ == '__main__':
 	notdone=True
 	twhole=time.time()
 	count  = 0
+	peaksum = 0
+	peaksumsq = 0
+	timesum = 0
+	timesumsq = 0
 	while notdone:
 		while images:
+			print ""
+			print "Starting next image ..."
 			count = count + 1
 			tbegin=time.time()
 			img = images.pop(0)
@@ -146,7 +155,7 @@ if __name__ == '__main__':
 
 			# skip if image doesn't exist:
 			if not os.path.isfile(params['imgdir']+img['filename']+'.mrc'):
-				print "!!! "+img['filename']+".mrc not found, skipping"
+				print " !!! "+img['filename']+".mrc not found, skipping"
 				continue
 
 			# if continue option is true, check to see if image has already been processed
@@ -170,7 +179,10 @@ if __name__ == '__main__':
 			if params['method'] == "experimental":
 				print "Using *experimental* Python CC Method..."
 				t1=time.time()
-				runCrossCorr(params,imgname)
+				#Finds peaks as well:
+				numpeaks = runCrossCorr(params,imgname)
+				peaksum = peaksum + numpeaks
+				peaksumsq = peaksumsq + numpeaks**2
 				tcrosscorr= "%.2f" % float(time.time()-t1)
 			else:
 				print "Using *classic* FindEM Method..."
@@ -186,10 +198,15 @@ if __name__ == '__main__':
 				t1=time.time()
 				findPeaks(params,imgname)
 				tfindPeaks= "%.2f" % float(time.time()-t1)
+			elif params['method'] == "experimental":
+				print "Finished *expermental* Method..."
+				tfindPeaks = 0.0
 			else:
 				print "Using *updated* Leginon Method..."
 				t1=time.time()
-				findPeaks2(params,imgname)
+				numpeaks = findPeaks2(params,imgname)
+				peaksum = peaksum + numpeaks
+				peaksumsq = peaksumsq + numpeaks**2
 				tfindPeaks= "%.2f" % float(time.time()-t1)
 
 			# if no particles were found, skip rest and go to next image
@@ -261,8 +278,19 @@ if __name__ == '__main__':
 			if (params["crud"]==True):
 				print "\tFindCrud:  \t",tfindCrud,"seconds"
 			print "\t---------- \t----------------"
-			ttotal= "%.2f" % float(time.time()-tbegin)
+			tdiff = time.time()-tbegin
+			timesum = timesum + tdiff
+			timesumsq = timesumsq + (tdiff**2)
+			ttotal = "%.2f" % float(tdiff)
 			print "\tTOTAL:     \t",ttotal,"seconds"
+			if(count > 1):
+				peakstdev = math.sqrt(float(count*peaksumsq - peaksum**2) / float(count*(count-1)))
+				print "PEAKS:\t",round(float(peaksum)/float(count),1),"+/-",\
+					round(peakstdev,1),"peaks\t( TOTAL:",peaksum,"peaks )"
+				timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
+				print "TIME: \t",round(float(timesum)/float(count),3),"+/-",\
+					round(timestdev,3),"sec\t( TOTAL:",round(timesum,3),"sec )"
+
 
 		if params["dbimages"]==True:
 			notdone=True
@@ -273,7 +301,9 @@ if __name__ == '__main__':
 		else:
 			notdone=False
 	ttotal= "%.2f" % float(time.time()-twhole)
-	print "\tCOMPLETE LOOP:\t",ttotal,"seconds for",count,"images"
+	print "COMPLETE LOOP:\t",ttotal,"seconds for",count,"images"
+	print "end run"
+	print ""
 	# remove temporary templates if getting images from db
 	if params['templateIds']:
 		i=1
