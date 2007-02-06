@@ -807,11 +807,17 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				ngoodregion += 1
 				newregionimage += numarray.where(regionlabel==(i+1),1,0)
 
-		tempregionimage=nd.binary_dilation(newregionimage,structure=base,iterations=iteration)
-		finalregionimage=nd.binary_fill_holes(tempregionimage,structure=base)
-		finalregionlabel,nlabels = nd.label(finalregionimage)
+#		tempregionimage=nd.binary_dilation(newregionimage,structure=base,iterations=iteration)
+		finalregionimage=nd.binary_fill_holes(newregionimage,structure=base)
+		finalregionlabel,ngoodregion = nd.label(finalregionimage)
+		if ngoodregion > 0:
+			regioncenters = nd.center_of_mass(ones,finalregionlabel,range(1,ngoodregion+1))
+		else:
+			regioncenters = []
+		if ngoodregion == 1:
+			regioncenters = [regioncenters]
 				
-		return finalregionimage,ngoodregion
+		return finalregionimage,ngoodregion,regioncenters
 		
 		
 			
@@ -929,7 +935,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				# good section as image only - smooth,threshold,size limit etc.
 				minsizepixels = onesectionmin * mosaicarea
 				maxsizepixels = multisections * mosaicarea
-				sectionimage, nsection = self.findRegionByLabel(self.mosaicimage,mint,maxt,minsizepixels,maxsizepixels)
+				sectionimage, nsection,sectionellipses = self.findRegionByLabel(self.mosaicimage,mint,maxt,minsizepixels,maxsizepixels)
 				sectionarrays = []
 				self.logger.info('use sectionimage for rastering and found %d good sections' %nsection)
 		else:
@@ -1011,6 +1017,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				displaypoints.extend(sectiondisplaypoints)
 
 		self.regionarrays = regionarrays
+		self.regionellipses = regionellipses
 
 		self.setTargets(displaypoints, 'region', block=False)
 			
@@ -1076,7 +1083,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 		# if self.regionarrays is empty, check for manually picked region
 		#if not self.regionarrays:
-		print len(self.regionarrays)	
 		if len(self.regionarrays) < 2:
 			manualregion = self.panel.getTargetPositions('region')
 			if manualregion:
@@ -1107,13 +1113,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def insideRegionArrays(self, rasterpoints,spacing):
 		fullrasterset = set()
-		'''
-		boxes = []
-		for region in self.regionarrays:
-			box = self.regionToBox(region, spacing)
-			boxes.append(box)
-		'''
-
 
 		## this block will reduce the number of raster points
 		if self.regionarrays:
@@ -1173,50 +1172,16 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		return fullraster
 
 
-
-	def regionToBox(self, region, space):
-		minr,minc = region[0]
-		maxr,maxc = region[0]
-		for r,c in region:
-			if r < minr:
-				minr = r
-			if c < minc:
-				minc = c
-			if r > maxr:
-				maxr = r
-			if c > maxc:
-				maxc = c
-		minr -= space
-		maxr += space
-		minc -= space
-		maxc += space
-		box = [(minr,minc),(minr,maxc),(maxr,maxc),(maxr,minc)]
-		return box
-
 	def makeFocusTarget(self):
-		if not self.regionarrays:
+		if not self.regionellipses:
 			return
-		middle = len(self.regionarrays) / 2
-		biggestregion = self.regionarrays[middle]
-		biggestregionlen = len(biggestregion)
-		for region in self.regionarrays:
-			newlen = len(region)
-			if newlen > biggestregionlen:
-				biggestregionlen = newlen
-				biggestregion = region
-
-		#center = polygon.getPolygonCenter(biggestregion)
-
-		box = self.regionToBox(biggestregion, 0)
-		print 'box', box
-		p0 = box[0]
-		p1 = box[2]
-		center = (p1[0]+p0[0])/2, (p1[1]+p0[1])/2
-		print 'center', center
-
+		middle = len(self.regionellipses) / 2
+		middleregion = self.regionellipses[middle]
+		center = middleregion[0],middleregion[1]
+		
 		focusdisplay = self.transpose_points([center])
 		print 'display'
-		self.setTargets(focusdisplay, 'focus', block=True)
+		self.setTargets(focusdisplay, 'focus', block=True)				
 
 	def findSquares(self):
 		if self.mosaicimagedata is None:
