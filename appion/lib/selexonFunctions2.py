@@ -276,6 +276,35 @@ def removeCrud(image,imagefile,stdev,params):
 	return image
 
 #########################################################
+
+def tmpRemoveCrud(params,imagefile):
+	bin     = int(params["bin"])
+	apix    = float(params["apix"])
+	diam    = float(params["diam"])
+	lowpass	= float(params["lp"])
+	pixrad  = diam/apix/2.0
+	
+	imagefile=imagefile+'.mrc'
+	#READ IMAGES
+	image    = Mrc.mrc_to_numeric(imagefile)
+
+	#BIN IMAGES
+	image    = imagefun.bin(image,bin)
+
+	#NORMALIZE
+	image    = normStdev(image)
+#	image    = PlaneRegression(image)
+#	image    = normStdev(image)
+
+	#LOW PASS FILTER
+	image    = selexonFunctions.filterImg(image,apix*float(bin),lowpass)
+
+	#BLACK OUT DARK AREAS, LESS THAN 2 STDEVS
+	image = removeCrud(image,imagefile,-1.0,params)
+	Mrc.numeric_to_mrc(image,(imagefile.split('.')[0]+'.dwn.mrc'))
+	return()
+
+#########################################################
 #########################################################
 
 def filterImg(img,apix,bin,rad):
@@ -874,30 +903,3 @@ def phase_correlate(image, template):
 
 	#RETURN CENTRAL PART OF IMAGE (SIDES ARE JUNK)
 	return correlation[ kshape[0]-1:shape[0]+kshape[0]-1, kshape[1]-1:shape[1]+kshape[1]-1 ]
-
-def tmpRemoveCrud(params,imagefile):
-	bin     = int(params["bin"])
-	apix    = float(params["apix"])
-	diam    = float(params["diam"])
-	lowpass	= float(params["lp"])
-	pixrad  = diam/apix/2.0
-	
-	imagefile=imagefile+'.mrc'
-	#READ IMAGES
-	image    = Mrc.mrc_to_numeric(imagefile)
-
-	#BIN IMAGES
-	image    = imagefun.bin(image,bin)
-
-	#NORMALIZE
-	image    = normStdev(image)
-#	image    = PlaneRegression(image)
-#	image    = normStdev(image)
-
-	#LOW PASS FILTER
-	image    = selexonFunctions.filterImg(image,apix*float(bin),lowpass)
-
-	#BLACK OUT DARK AREAS, LESS THAN 2 STDEVS
-	image = removeCrud(image,imagefile,-1.0,params)
-	Mrc.numeric_to_mrc(image,(imagefile.split('.')[0]+'.dwn.mrc'))
-	return()
