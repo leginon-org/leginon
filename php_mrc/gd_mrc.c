@@ -449,45 +449,79 @@ int mrc_copy_from_file(MRCPtr pmrc_dst, char *pszFilename, int dstX, int dstY, i
 	pmrc_dst->header.amean=pmrch.amean;
 	pmrc_dst->header.rms=pmrch.rms;
 
-
-	switch(pmrch.mode) {
-		case MRC_MODE_BYTE:
-			uElementSize = sizeof(char);
-			break;
-		case MRC_MODE_SHORT:
-			uElementSize = sizeof(short);
-			break;
-		case MRC_MODE_UNSIGNED_SHORT:
-			uElementSize = sizeof(short);
-			break;
-		case MRC_MODE_FLOAT:
-			uElementSize = sizeof(float);
-			break;
-	}
-
 	w = (w_dst>w_src) ? w_src : w_dst+srcX;
 	h = h_dst+srcY;
 	offset = (w_dst>w_src) ? 
 						(dstX<0) ? srcX-dstX : srcX 
 						: w_src-w_dst+abs(dstX);
 
-	// --- position pointer file where copy should start: (srcX, srcY);
-	fseek(pFMRC, (srcX+srcY*w_src)*uElementSize, SEEK_CUR);
-	for (v=dstY, j=srcY; j<h; j++, v++) {
-		for (u=dstX, i=srcX; i<w; i++, u++) {
-			ij = i + j*w_src;
-			uv = u + v*w_dst;
-			if ((u>=w_dst) || (v>=h_dst) ||
-					(u<0) || (v<0) ||
-					(ij<0) || (uv<0) ||
-					(ij>n_src-1) || (uv>n_dst-1)
-				)
-					continue;
-			fread(&(data_array[uv]), uElementSize,1,pFMRC);
+	if(pmrch.mode == MRC_MODE_BYTE) 
+		{
+			uElementSize = sizeof(char);
+			char data_val[1];
+			// --- position pointer file where copy should start: (srcX, srcY);
+			fseek(pFMRC, (srcX+srcY*w_src)*uElementSize, SEEK_CUR);
+			for (v=dstY, j=srcY; j<h; j++, v++) {
+				for (u=dstX, i=srcX; i<w; i++, u++) {
+					ij = i + j*w_src;
+					uv = u + v*w_dst;
+					if ((u>=w_dst) || (v>=h_dst) ||
+							(u<0) || (v<0) ||
+							(ij<0) || (uv<0) ||
+							(ij>n_src-1) || (uv>n_dst-1)
+						)
+							continue;
+					fread(data_val, uElementSize,1,pFMRC);
+					data_array[uv] = *data_val;
+				}
+				// --- seek next row of interested area
+				fseek(pFMRC, offset*uElementSize, SEEK_CUR);
+			}
+		} else if (pmrch.mode==MRC_MODE_UNSIGNED_SHORT ||
+				pmrch.mode == MRC_MODE_UNSIGNED_SHORT) 
+		{
+			uElementSize = sizeof(short);
+			short data_val[1];
+			// --- position pointer file where copy should start: (srcX, srcY);
+			fseek(pFMRC, (srcX+srcY*w_src)*uElementSize, SEEK_CUR);
+			for (v=dstY, j=srcY; j<h; j++, v++) {
+				for (u=dstX, i=srcX; i<w; i++, u++) {
+					ij = i + j*w_src;
+					uv = u + v*w_dst;
+					if ((u>=w_dst) || (v>=h_dst) ||
+							(u<0) || (v<0) ||
+							(ij<0) || (uv<0) ||
+							(ij>n_src-1) || (uv>n_dst-1)
+						)
+							continue;
+					fread(data_val, uElementSize,1,pFMRC);
+					data_array[uv] = *data_val;
+				}
+				// --- seek next row of interested area
+				fseek(pFMRC, offset*uElementSize, SEEK_CUR);
+			}
+
+		} else if (pmrch.mode = MRC_MODE_FLOAT) 
+		{
+			uElementSize = sizeof(float);
+			// --- position pointer file where copy should start: (srcX, srcY);
+			fseek(pFMRC, (srcX+srcY*w_src)*uElementSize, SEEK_CUR);
+			for (v=dstY, j=srcY; j<h; j++, v++) {
+				for (u=dstX, i=srcX; i<w; i++, u++) {
+					ij = i + j*w_src;
+					uv = u + v*w_dst;
+					if ((u>=w_dst) || (v>=h_dst) ||
+							(u<0) || (v<0) ||
+							(ij<0) || (uv<0) ||
+							(ij>n_src-1) || (uv>n_dst-1)
+						)
+							continue;
+					fread(&(data_array[uv]), uElementSize,1,pFMRC);
+				}
+				// --- seek next row of interested area
+				fseek(pFMRC, offset*uElementSize, SEEK_CUR);
+			}
 		}
-		// --- seek next row of interested area
-		fseek(pFMRC, offset*uElementSize, SEEK_CUR);
-	}
 	
 	fclose(pFMRC);
 	return 1;
