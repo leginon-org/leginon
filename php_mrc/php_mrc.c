@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.23 2007-02-05 23:46:49 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.24 2007-02-06 18:04:30 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -84,7 +84,7 @@ zend_module_entry mrc_module_entry = {
 	PHP_RSHUTDOWN(mrc),	/* Replace with NULL if there's nothing to do at request end */
 	PHP_MINFO(mrc),
 #if ZEND_MODULE_API_NO >= 20010901
-	"1.2", /* Replace with version number for your extension */
+	"1.3", /* Replace with version number for your extension */
 #endif
 	STANDARD_MODULE_PROPERTIES
 };
@@ -173,6 +173,7 @@ PHP_MINFO_FUNCTION(mrc)
 {
 	php_info_print_table_start();
 	php_info_print_table_header(2, "mrc support", "enabled");
+	php_info_print_table_row(2, "Version", "1.3");
 #if HAVE_FFTW
 	php_info_print_table_row(2, "FFTW support", "enabled");
 #else
