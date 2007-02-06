@@ -264,9 +264,9 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		'max region area': 0.8,
 		'axis ratio': 2.0,
 		've limit': 50,
-		'find section options':'limit within sections',
-		'black on white': False,
-		'limit region in sections': False,
+		'find section options':'Limit by Sections',
+#		'black on white': False,
+#		'limit region in sections': False,
 		'section area': 99.0,
 		'section axis ratio': 1.0,
 		'max sections': 5,
@@ -339,6 +339,10 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.onesectionarea = None
 		self.oldonesectionarea1 = None
 		
+		self.regionarrays = []
+		self.regionellipses = []
+		self.regionimage = None
+
 		if self.__class__ == MosaicClickTargetFinder:
 			self.start()
 
@@ -778,7 +782,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			
 			return regionarrays,regionellipses,displaypoints
 	
-	def findRegionByLabel(self,image,mint,maxt,minsize,maxsize):
+	def regionsByLabel(self,image,mint,maxt,minsize,maxsize):
 		imshape = image.shape
 
 		sigma = 3.0
@@ -819,12 +823,27 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				
 		return finalregionimage,ngoodregion,regioncenters
 		
+	def regionsFromCenters(self,centers,maxsize):	
+		halfbox = int(math.sqrt(maxsize)/2.0)
+		regionimage = numarray.zeros(self.mosaicimage.shape)
+		for center in centers:
+			for row in range(center[0]-halfbox,center[0]+halfbox+1):
+				if row < 0 or row >= self.regionimage.shape[0]:
+					continue
+				for col in range(center[1]-halfbox,center[1]+halfbox+1):
+					if col < 0 or col >= self.regionimage.shape[1]:
+						continue
+					else:
+						regionimage[row,col]=1
+		return regionimage
 		
-			
 	def findRegions(self):
 		imshape = self.mosaicimage.shape
-		minsize = self.settings['min region area']
+		self.regionarrays = []
+		self.regionellipses = []
+		self.regionimage = numarray.zeros(imshape)
 		maxsize = self.settings['max region area']
+		minsize = self.settings['min region area']
 		onesectionarea1 = self.settings['section area']
 		modifyarea = self.settings['adjust section area']
 		newareasetting = False
@@ -836,11 +855,11 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		displaysection = self.settings['section display']
 		findsectionoption = self.settings['find section options']
 
-		if findsectionoption == 'sections only':
+		if findsectionoption == 'Sections Only':
 			sectiononly = True
 			limitbysection = False
 		else:
-			if findsectionoption == 'limit by sections':
+			if findsectionoption == 'Limit by Sections':
 				limitbysection = True
 				sectiononly = False
 			else:
@@ -860,6 +879,15 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		minsize = scale * minsize
 		maxsize = scale * maxsize
 		onesectionarea = scale * onesectionarea
+
+		if findsectionoption =='Regions from Centers':
+			manualcenters = self.panel.getTargetPositions('region')
+			if manualcenters:
+				manualcenters = self.transpose_points(manualcenters)
+			maxsizepixel = maxsize * mosaicarea
+			self.regionimage = self.regionsFromCenters(manualcenters,maxsizepixel)
+			self.regionellipses = manualcenters
+			return
 
 		velimit = self.settings['ve limit']
 		mint = self.settings['min threshold']
@@ -893,8 +921,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		sectiondisplaypoints=[]
 		sectionarrays = []
 		sectionellipses = []
-		self.regionarray = []
-		self.regionimage = numarray.zeros(imshape)
 		
 #		Find Section with simple thresholding and Label in numarray.nd_image for now until
 #		better segamentation is available for sections that connects to the edge
@@ -935,7 +961,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				# good section as image only - smooth,threshold,size limit etc.
 				minsizepixels = onesectionmin * mosaicarea
 				maxsizepixels = multisections * mosaicarea
-				sectionimage, nsection,sectionellipses = self.findRegionByLabel(self.mosaicimage,mint,maxt,minsizepixels,maxsizepixels)
+				sectionimage, nsection,sectionellipses = self.regionsByLabel(self.mosaicimage,mint,maxt,minsizepixels,maxsizepixels)
 				sectionarrays = []
 				self.logger.info('use sectionimage for rastering and found %d good sections' %nsection)
 		else:
@@ -1083,7 +1109,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 		# if self.regionarrays is empty, check for manually picked region
 		#if not self.regionarrays:
-		if len(self.regionarrays) < 2:
+		if len(self.regionarrays) < 1 and self.settings['find section options']!='Regions from Centers':
 			manualregion = self.panel.getTargetPositions('region')
 			if manualregion:
 				manualregion = self.transpose_points(manualregion)
@@ -1097,6 +1123,10 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 		fullrasterdisplay = self.transpose_points(rasterpoints)
 		self.setTargets(fullrasterdisplay, 'acquisition', block=True)
+
+	def clearTargets(self,targettype):
+		displaypoints=[]
+		self.setTargets(displaypoints, targettype, block=False)
 
 	def insideRegionImage(self, rasterpoints):
 		results = []
@@ -1154,8 +1184,15 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 			leftovers = list(set(rasterpoints).difference(fillraster))
 			print 'leftover raster', len(leftovers)
-
-			distances = polygon.distancePointsToPolygon(leftovers, region)
+			if len(region) > 1:
+				distances = polygon.distancePointsToPolygon(leftovers, region)
+			else:
+			# handle the case for one point in the region
+				regionlist = region.tolist()
+				regionlist =[(regionlist[0][0],regionlist[0][1]),(regionlist[0][0]+1,regionlist[0][1]+1)]
+				newregion = numarray.array(regionlist)
+				distances = polygon.distancePointsToPolygon(leftovers, newregion)
+				
 			isnear = distances < spacing
 			#nearraster = numarray.compress(distances<spacing, rasterpoints)
 			nearraster = []
