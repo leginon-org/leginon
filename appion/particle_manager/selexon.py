@@ -175,6 +175,8 @@ if __name__ == '__main__':
 			else:
 				print "Using *classic* FindEM Method..."
 				t1=time.time()
+#				tmpRemoveCrud(params,imgname)
+#				sys.exit()
 				dwnsizeImg(params,imgname)
 				runFindEM(params,imgname)
 				tcrosscorr= "%.2f" % float(time.time()-t1)

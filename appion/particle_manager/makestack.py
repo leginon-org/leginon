@@ -565,8 +565,9 @@ def getImgsDefocPairFromSelexonId(params):
 		if pimg:
 			simgq=particleData.shift()
 			simgq['dbemdata|AcquisitionImageData|image1']=img.dbid
-			simg=partdb.query(simgq,readimages=False)[0]
-			if simg:
+			simgdata=partdb.query(simgq,readimages=False)
+			if simgdata:
+				simg=simgdata[0]
 				siblingimage=db.direct_query(data.AcquisitionImageData,simg['dbemdata|AcquisitionImageData|image2'],readimages=False)
 				#create a dictionary for keeping the dbids of image pairs so we don't have to query later
 				params['sibpairs'][simg['dbemdata|AcquisitionImageData|image2']]=simg['dbemdata|AcquisitionImageData|image1']
