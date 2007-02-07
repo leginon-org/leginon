@@ -9,7 +9,7 @@ if (preg_match('`\.mrc$`i',$filename)) {
 	if ($rescale) {
 	        // --- scale image values (not size)
 	        $densitymax=255;
-	        list($pmin, $pmax) = mrcgetscale($src_mrc, $densitymax);
+	        list($pmin, $pmax) = mrcstdevscale($src_mrc, $densitymax);
 		$image = mrctoimage($src_mrc,$pmin,$pmax);
 	}
 	else $image = mrctoimage($src_mrc);
