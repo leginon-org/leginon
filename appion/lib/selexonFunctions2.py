@@ -407,10 +407,10 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 
 	ccthreshmap=imagefun.threshold(ccmaxmap,threshold)
 	blobs = imagefun.find_blobs(ccmaxmap, ccthreshmap, 6, 10000, maxblobsize, 0)
-	if(len(blobs) > 1000):
-		print " !!! more than 1000 peaks, selecting only top 500 peaks"
+	if(len(blobs) > 9000):
+		print " !!! more than 10000 peaks, selecting only top 1500 peaks"
 		blobs.sort(blob_compare)
-		blobs = blobs[0:500]
+		blobs = blobs[0:1500]
 
 	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize)
 	print "Template "+str(num)+": Found",len(blobs),"peaks"
