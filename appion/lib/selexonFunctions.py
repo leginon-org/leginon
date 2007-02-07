@@ -69,6 +69,7 @@ def createDefaults():
 	params['prtltype']=None
 	params['method']="updated"
 	params['overlapmult']=1.5
+	params['maxpeaks']=1500
 
 	return params
 
@@ -140,6 +141,7 @@ def printSelexonHelp():
 	print "                       updated - uses findem and internally find peaks (default)"
 	print "                       experimental - internally generates cc maps and find peaks"
 	print "overlapmult=<n>    : distance multiple for two particles to overlap (default is 1.5 X)"
+	print "maxpeaks=<n>       : maximum number of particles allowed per image"
 	print "\n"
 
 	sys.exit(1)
@@ -318,6 +320,8 @@ def parseSelexonInput(args,params):
 			params['method']=str(elements[1])
 		elif (elements[0]=='overlapmult'):
 			params['overlapmult']=float(elements[1])
+		elif (elements[0]=='maxpeaks'):
+			params['maxpeaks']=int(elements[1])
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
@@ -391,8 +395,8 @@ def getOutDirs(params):
 	params['rundir']=os.path.join(params['outdir'],params['runid'])
 	
 	if os.path.exists(params['rundir']):
-		print "\nWARNING: run directory for", params['runid'],"already exists.\n",\
-			"   Make sure continue option is on if you don't want to overwrite previous run.\n"
+		print " !!! WARNING: run directory for \'"+str(params['runid'])+"\' already exists.\n",\
+			" ... make sure continue option is on if you don't want to overwrite previous run."
 		time.sleep(2)
 	else:
 		os.makedirs(params['rundir'])
@@ -1287,22 +1291,23 @@ def insertParticlePicks(params,img,expid,manual=False):
 	pfile=open(fname,"r")
 	piklist=[]
 	for line in pfile:
-		elements=line.split(' ')
-		xcenter=int(elements[1])
-		ycenter=int(elements[2])
-		corr=float(elements[3])
+		if(line[0] != "#"):
+			elements=line.split(' ')
+			xcenter=int(elements[1])
+			ycenter=int(elements[2])
+			corr=float(elements[3])
 
-		particlesq=particleData.particle()
-		particlesq['runId']=runq
-		particlesq['imageId']=imgids[0]
-		particlesq['selectionId']=selexonresult[0]
-		particlesq['xcoord']=xcenter
-		particlesq['ycoord']=ycenter
-		particlesq['correlation']=corr
+			particlesq=particleData.particle()
+			particlesq['runId']=runq
+			particlesq['imageId']=imgids[0]
+			particlesq['selectionId']=selexonresult[0]
+			particlesq['xcoord']=xcenter
+			particlesq['ycoord']=ycenter
+			particlesq['correlation']=corr
 
-		presult=partdb.query(particlesq)
-		if not (presult):
-			partdb.insert(particlesq)
+			presult=partdb.query(particlesq)
+			if not (presult):
+				partdb.insert(particlesq)
 	pfile.close()
 	
 	return

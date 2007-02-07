@@ -152,31 +152,24 @@ def createCrossCorr(image,templfile,classavg,strt,end,incr,params):
 		i = i + 1
 
 	#NORMALIZE
-	print "NormConvMap"
-	imageinfo(normconvmap)
-	print "CCMaxMap"
-	imageinfo(ccmaxmap)
+	#print "NormConvMap"
+	#imageinfo(normconvmap)
+	#print "CCMaxMap"
+	#imageinfo(ccmaxmap)
 	ccmaxmap = numarray.where(normconvmap > err, ccmaxmap/normconvmap, 0.0)
 	ccmaxmap = numarray.where(ccmaxmap > 1.0, 1.0, ccmaxmap)
 	ccmaxmap = numarray.where(ccmaxmap < 0.0, 0.0, ccmaxmap)
-	print "NormCCMaxMap"
-	imageinfo(ccmaxmap)
-
-	#WOW THIS IS A HACK:
-	#ccmaxmap = normStdev(ccmaxmap)/4
-	#print "NormCCMaxMap-Hacked"
+	#print "NormCCMaxMap"
 	#imageinfo(ccmaxmap)
 
 	#REMOVE OUTSIDE AREA
 	cshape = ccmaxmap.shape
-	black = -0.01
+	#SET BLACK TO -1.2 FOR MORE EXACT FINDEM MAPS
+	black = -0.1
  	ccmaxmap[ 0:pixrad, 0:cshape[1] ] = black
 	ccmaxmap[ 0:cshape[0], 0:pixrad ] = black
  	ccmaxmap[ cshape[0]-pixrad:cshape[0], 0:cshape[1] ] = black
 	ccmaxmap[ 0:cshape[0], cshape[1]-pixrad:cshape[1] ] = black
-
-	#NORMALIZE
-	ccmaxmap   = normRange(ccmaxmap)
 
 	return ccmaxmap
 
@@ -385,6 +378,7 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 	diam =        float(params["diam"])
 	apix =        float(params["apix"])
 	olapmult =    float(params["overlapmult"])
+	maxpeaks =    int(params["maxpeaks"])
 	pixrad =      diam/apix/2.0/float(bin)
 	#MAXBLOBSIZE ==> 1/8 AREA OF PARTICLE
 	maxblobsize = int(round(math.pi*(apix*diam/float(bin))**2/32.0,0))+1
@@ -405,12 +399,12 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 		else:
 			print " ... varying  threshold:",thresh,"gives",len(blobs),"peaks"
 
-	ccthreshmap=imagefun.threshold(ccmaxmap,threshold)
-	blobs = imagefun.find_blobs(ccmaxmap, ccthreshmap, 6, 10000, maxblobsize, 0)
-	if(len(blobs) > 9000):
-		print " !!! more than 10000 peaks, selecting only top 1500 peaks"
+	ccthreshmap = imagefun.threshold(ccmaxmap,threshold)
+	blobs       = imagefun.find_blobs(ccmaxmap, ccthreshmap, 6, 10000, maxblobsize, 0)
+	if(len(blobs) > maxpeaks):
+		print " !!! more than maxpeaks ("+str(maxpeaks)+") peaks, selecting only top peaks"
 		blobs.sort(blob_compare)
-		blobs = blobs[0:1500]
+		blobs = blobs[0:maxpeaks]
 
 	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize)
 	print "Template "+str(num)+": Found",len(blobs),"peaks"
@@ -420,23 +414,41 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 
 	blobs.sort(blob_compare)
 
+	blobs = calc_corr_coeffs(blobs,file)
+
 	#WRITE PIK FILE
 	f=open(outfile, 'w')
+	f.write("#filename x y mean stdev corr_coeff peak_size templ_num\n")
 	for blob in blobs:
 		row = blob.stats['center'][0]
-		column = blob.stats['center'][1]
+		col = blob.stats['center'][1]
 		mean = blob.stats['mean']
 		std = blob.stats['stddev']
+		rho = blob.stats['corrcoeff']
 		size = blob.stats['n']
 		mean_str = "%.4f" % mean
 		std_str = "%.4f" % std
-		out = file+".mrc "+str(int(column)*bin)+" "+str(int(row)*bin)+ \
-			" "+mean_str+" "+std_str+" "+str(int(size))
+
+		#filename x y mean stdev corr_coeff peak_size templ_num
+		out = file+".mrc "+str(int(col)*bin)+" "+str(int(row)*bin)+ \
+			" "+mean_str+" "+std_str+" "+str(rho)+" "+str(int(size))+ \
+			" "+str(num)
 		f.write(str(out)+"\n")
 	f.close()
 
 	draw = drawBlobs(ccmaxmap,blobs,file,num,bin,pixrad)
 
+	return blobs
+
+#########################################################
+
+
+def calc_corr_coeffs(blobs,file):
+	for blob in blobs:
+		x = blob.stats['center'][1]
+		y = blob.stats['center'][0]
+		rho = 0.0
+		blob.stats['corrcoeff'] = rho
 	return blobs
 
 #########################################################
@@ -450,13 +462,13 @@ def drawBlobs(ccmaxmap,blobs,file,num,bin,pixrad):
 
 	draw = ImageDraw.Draw(image)
 
-	ps=float(1.5*pixrad) #1.5x particle radius
+	ps=float(0.5*pixrad) #0.5x particle radius
 	for blob in blobs:
 		x1=blob.stats['center'][1]
 		y1=blob.stats['center'][0]
 		coord=(x1-ps, y1-ps, x1+ps, y1+ps)
-		#draw.ellipse(coord,outline="white")
-		draw.rectangle(coord,outline="white")
+		draw.ellipse(coord,outline="white")
+		#draw.rectangle(coord,outline="white")
 	del draw
 
 	outfile="ccmaxmaps/"+file+".ccmaxmap"+str(num)+".jpg"
@@ -524,18 +536,22 @@ def mergePikFiles(file,blobs,params):
 	#WRITE SELECTED BLOBS TO FILE
 	count = 0
 	f=open(outfile, 'w')
+	f.write("#filename x y mean stdev corr_coeff peak_size templ_num\n")
 	for i in range(len(blobs)):
 		for blob in (blobs[i]):
 			if blob in allblobs:
 				row = blob.stats['center'][0]
-				column = blob.stats['center'][1]
+				col = blob.stats['center'][1]
 				mean = blob.stats['mean']
 				std = blob.stats['stddev']
+				rho = blob.stats['corrcoeff']
 				size = blob.stats['n']
 				mean_str = "%.4f" % mean
 				std_str = "%.4f" % std
-				out = file+".mrc "+str(int(column)*bin)+" "+str(int(row)*bin)+ \
-					" "+mean_str+" "+std_str+" "+str(int(size))+" "+str(i)
+				#filename x y mean stdev corr_coeff peak_size templ_num
+				out = file+".mrc "+str(int(col)*bin)+" "+str(int(row)*bin)+ \
+					" "+mean_str+" "+std_str+" "+str(rho)+" "+str(int(size))+ \
+					" "+str(i)
 				count = count + 1
 				f.write(str(out)+"\n")
 	f.close()
@@ -610,19 +626,18 @@ def drawPikFile(file,draw,bin,pixrad):
 	ps=float(1.5*pixrad) #1.5x particle radius
 	f=open(file, 'r')
 	for line in f:
-		line=string.rstrip(line)
-		bits=line.split(' ')
-		#x1=int(bits[1])/bin
-		#y1=int(bits[2])/bin
-		x1=float(bits[1])/float(bin)
-		y1=float(bits[2])/float(bin)
-		coord=(x1-ps, y1-ps, x1+ps, y1+ps)
-		if(len(bits) > 6):
-			num = int(bits[6])%12
-		else:
-			num = 0
-		draw.ellipse(coord,outline=circle_colors[num])
-		#draw.rectangle(coord,outline=color1)
+		if(line[0] != "#"):
+			line=string.rstrip(line)
+			bits=line.split(' ')
+			x1=float(bits[1])/float(bin)
+			y1=float(bits[2])/float(bin)
+			coord=(x1-ps, y1-ps, x1+ps, y1+ps)
+			if(len(bits) > 6):
+				num = int(bits[6])%12
+			else:
+				num = 0
+			draw.ellipse(coord,outline=circle_colors[num])
+			#draw.rectangle(coord,outline=color1)
 	f.close()
 	return draw
 
@@ -853,7 +868,9 @@ def calc_norm_conv_map(image, imagefft, tmplmask, oversized, bin):
 	#numeric_to_jpg(v,"v.jpg")
 
 	#print " ... ... normconvmap = sqrt(v2)"
-	normconvmap = numarray.where(v2 > err, numarray.sqrt(v2), 0.0)
+	v2 = numarray.where(v2 < err, err, v2)
+	normconvmap = numarray.sqrt(v2)
+	#normconvmap = numarray.where(v2 > err, numarray.sqrt(v2), 0.0)
 	del v2
 	#numeric_to_jpg(v2,"v2.jpg")
 	print " ... ... TIME: %.2f" % float(time.time()-t1)

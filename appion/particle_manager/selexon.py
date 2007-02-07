@@ -286,10 +286,10 @@ if __name__ == '__main__':
 			if(count > 1):
 				peakstdev = math.sqrt(float(count*peaksumsq - peaksum**2) / float(count*(count-1)))
 				print "PEAKS:\t",round(float(peaksum)/float(count),1),"+/-",\
-					round(peakstdev,1),"peaks\t( TOTAL:",peaksum,"peaks )"
+					round(peakstdev,1),"peaks\t( TOTAL:",peaksum,"peaks for",count,"images )"
 				timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
 				print "TIME: \t",round(float(timesum)/float(count),3),"+/-",\
-					round(timestdev,3),"sec\t( TOTAL:",round(timesum,3),"sec )"
+					round(timestdev,3),"sec\t( TOTAL:",round(timesum/60.0,2),"min )"
 
 
 		if params["dbimages"]==True:
