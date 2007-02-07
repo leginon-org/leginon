@@ -24,12 +24,11 @@ def runCrossCorr(params,file):
 	imagefile = file+".mrc"
 	tmplt     =params["template"]
 
+	image = process_image(imagefile,params)
+
 	#CYCLE OVER EACH TEMPLATE
 	classavg=1
 	blobs = []
-
-	image = process_image(imagefile,params)
-
 	while classavg<=len(params['templatelist']):
 		print "Template ",classavg
 		outfile="cccmaxmap%i00.mrc" % classavg
@@ -52,12 +51,7 @@ def runCrossCorr(params,file):
 			templfile = tmplt+str(classavg)+".mrc"
 
 		#MAIN FUNCTION HERE:
-		ccmaxmap = createCrossCorr(image,templfile,classavg,strt,end,incr,params)
-
-		#OUTPUT FILE
-		#Mrc.numeric_to_mrc(ccmaxmap,outfile)
-
-		blobs.append(findPeaksInMap(ccmaxmap,file,classavg,params))
+		blobs.append(getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params))
 
 		classavg+=1
 	
@@ -95,7 +89,7 @@ def process_image(imagefile,params):
 
 #########################################################
 
-def createCrossCorr(image,templfile,classavg,strt,end,incr,params):
+def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 	bin     = int(params["bin"])
 	apix    = float(params["apix"])
 	diam    = float(params["diam"])
@@ -107,7 +101,6 @@ def createCrossCorr(image,templfile,classavg,strt,end,incr,params):
 	templatebin = imagefun.bin(template,bin) #FAKE FOR SIZING
 	template = normRange(template)-0.5
 
-
 	#MASK IF YOU WANT
 	tmplmask = circ_mask(template,diam/apix)
 	template = normStdev2(template,tmplmask.sum())
@@ -117,6 +110,7 @@ def createCrossCorr(image,templfile,classavg,strt,end,incr,params):
 	#TRANSFORM IMAGE
 	oversized = get_oversize(image,templatebin).copy()
 	ccmaxmap  = numarray.zeros(image.shape)-50.0
+	anglemap  = numarray.zeros(image.shape)
 	imagefft  = calc_imagefft(image,oversized) #SAVE SOME CPU CYCLES
 
 	#GET NORMALIZATION FUNCTION
@@ -146,6 +140,7 @@ def createCrossCorr(image,templfile,classavg,strt,end,incr,params):
 		del templatefft
 		#GET MAXIMUM VALUES
 		ccmaxmap    = numarray.where(ccmap>ccmaxmap,ccmap,ccmaxmap)
+		anglemap    = numarray.where(ccmap==ccmaxmap, ang, anglemap)
 		del ccmap
 		#INCREMENT
 		ang = ang + incr
@@ -157,6 +152,7 @@ def createCrossCorr(image,templfile,classavg,strt,end,incr,params):
 	#print "CCMaxMap"
 	#imageinfo(ccmaxmap)
 	ccmaxmap = numarray.where(normconvmap > err, ccmaxmap/normconvmap, 0.0)
+	#ccmaxmap = ccmaxmap/4.0
 	ccmaxmap = numarray.where(ccmaxmap > 1.0, 1.0, ccmaxmap)
 	ccmaxmap = numarray.where(ccmaxmap < 0.0, 0.0, ccmaxmap)
 	#print "NormCCMaxMap"
@@ -171,7 +167,12 @@ def createCrossCorr(image,templfile,classavg,strt,end,incr,params):
  	ccmaxmap[ cshape[0]-pixrad:cshape[0], 0:cshape[1] ] = black
 	ccmaxmap[ 0:cshape[0], cshape[1]-pixrad:cshape[1] ] = black
 
-	return ccmaxmap
+	#OUTPUT FILE
+	#Mrc.numeric_to_mrc(ccmaxmap,outfile)
+
+	blobs = findPeaksInMapPlus(ccmaxmap,file,classavg,params,template,tmplmask,anglemap)
+
+	return blobs
 
 #########################################################
 
@@ -358,8 +359,6 @@ def findPeaks2(params,file):
 	diam =        float(params["diam"])
 	apix =        float(params["apix"])
 
-
-
 	blobs = []
 	for i in range(numtempl):
 		infile="cccmaxmap"+str(i+1)+"00.mrc"
@@ -369,10 +368,80 @@ def findPeaks2(params,file):
 	numpeaks = mergePikFiles(file,blobs,params)
 
 	return numpeaks
-
 #########################################################
 
 def findPeaksInMap(ccmaxmap,file,num,params):
+	threshold =   float(params["thresh"])
+	bin =         int(params["bin"])
+	diam =        float(params["diam"])
+	apix =        float(params["apix"])
+	olapmult =    float(params["overlapmult"])
+	maxpeaks =    int(params["maxpeaks"])
+	pixrad =      diam/apix/2.0/float(bin)
+	#MAXBLOBSIZE ==> 1/16 AREA OF PARTICLE
+	maxblobsize = int(round(math.pi*(apix*diam/float(bin))**2/64.0,0))+1
+
+	print " ... threshold",threshold
+
+	outfile="pikfiles/"+file+"."+str(num)+".pik"
+	if (os.path.exists(outfile)):
+		os.remove(outfile)
+		print " ... removed existing file:",outfile
+
+	for i in range(5):
+		thresh      = threshold + float(i-2)*0.05
+		ccthreshmap = imagefun.threshold(ccmaxmap,thresh)
+		blobs       = imagefun.find_blobs(ccmaxmap,ccthreshmap,6,10000,60,1)
+		if(thresh == threshold):
+			print " ... selected threshold:",thresh,"gives",len(blobs),"peaks ***"
+		else:
+			print " ... varying  threshold:",thresh,"gives",len(blobs),"peaks"
+
+	ccthreshmap = imagefun.threshold(ccmaxmap,threshold)
+	blobs       = imagefun.find_blobs(ccmaxmap, ccthreshmap, 6, 10000, maxblobsize, 0)
+	if(len(blobs) > maxpeaks):
+		print " !!! more than maxpeaks ("+str(maxpeaks)+") peaks, selecting only top peaks"
+		blobs.sort(blob_compare)
+		blobs = blobs[0:maxpeaks]
+
+	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize)
+	print "Template "+str(num)+": Found",len(blobs),"peaks"
+
+	cutoff = olapmult*pixrad	#1.5x particle radius in pixels
+	removeOverlappingBlobs(blobs,cutoff)
+
+	blobs.sort(blob_compare)
+
+	#blobs = calc_corr_coeffs(blobs,file)
+
+	#WRITE PIK FILE
+	f=open(outfile, 'w')
+	f.write("#filename x y mean stdev corr_coeff peak_size templ_num\n")
+	for blob in blobs:
+		row = blob.stats['center'][0]
+		col = blob.stats['center'][1]
+		mean = blob.stats['mean']
+		std = blob.stats['stddev']
+		#HACK BELOW
+		blob.stats['corrcoeff']  = 1.0
+		rho = blob.stats['corrcoeff']
+		size = blob.stats['n']
+		mean_str = "%.4f" % mean
+		std_str = "%.4f" % std
+		#filename x y mean stdev corr_coeff peak_size templ_num
+		out = file+".mrc "+str(int(col)*bin)+" "+str(int(row)*bin)+ \
+			" "+mean_str+" "+std_str+" "+str(rho)+" "+str(int(size))+ \
+			" "+str(num)
+		f.write(str(out)+"\n")
+	f.close()
+
+	draw = drawBlobs(ccmaxmap,blobs,file,num,bin,pixrad)
+
+	return blobs
+
+#########################################################
+
+def findPeaksInMapPlus(ccmaxmap,file,num,params,template,tmplmask,anglemap):
 	threshold =   float(params["thresh"])
 	bin =         int(params["bin"])
 	diam =        float(params["diam"])
@@ -414,7 +483,7 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 
 	blobs.sort(blob_compare)
 
-	blobs = calc_corr_coeffs(blobs,file)
+	blobs = calc_corr_coeffs(blobs,file,bin,template,tmplmask,anglemap)
 
 	#WRITE PIK FILE
 	f=open(outfile, 'w')
@@ -428,10 +497,11 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 		size = blob.stats['n']
 		mean_str = "%.4f" % mean
 		std_str = "%.4f" % std
+		rho_str = "%.4f" % rho
 
 		#filename x y mean stdev corr_coeff peak_size templ_num
 		out = file+".mrc "+str(int(col)*bin)+" "+str(int(row)*bin)+ \
-			" "+mean_str+" "+std_str+" "+str(rho)+" "+str(int(size))+ \
+			" "+mean_str+" "+std_str+" "+rho_str+" "+str(int(size))+ \
 			" "+str(num)
 		f.write(str(out)+"\n")
 	f.close()
@@ -443,13 +513,50 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 #########################################################
 
 
-def calc_corr_coeffs(blobs,file):
+def calc_corr_coeffs(blobs,imfile,bin,template,tmplmask,anglemap):
+	print " ... processing correlation coefficients"
+	image    = Mrc.mrc_to_numeric(imfile+".mrc")
+	tx = (template.shape)[0]/2
+	ty = (template.shape)[1]/2
+	ix = (image.shape)[0] - tx
+	iy = (image.shape)[1] - ty
 	for blob in blobs:
-		x = blob.stats['center'][1]
-		y = blob.stats['center'][0]
-		rho = 0.0
-		blob.stats['corrcoeff'] = rho
+		x = int(blob.stats['center'][1])
+		y = int(blob.stats['center'][0])
+		if(x > tx and y > ty and x < ix and y < iy):
+			smimage = image[ x-tx:x+tx, y-ty:y+ty ]
+			angle = anglemap[x/bin,y/bin]
+			template2 = nd_image.rotate(template, angle, reshape=False, mode="wrap")
+			rho = corr_coeff(smimage,template2,tmplmask)
+			blob.stats['corrcoeff'] = rho
+		else:
+			blob.stats['corrcoeff'] = 0.0
+	initblobs = len(blobs)
+	blobs.sort(blob_compare)
+	i=0
+	while i < len(blobs):
+		rho = float(blobs[i].stats['corrcoeff'])
+		if(rho <= 0.0):
+			del blobs[i]
+			i=i-1
+		i=i+1
+	postblobs = len(blobs)
+	print " ... kept",postblobs,"correlating particles of",initblobs,"total particles"
+
+	
+
 	return blobs
+
+#########################################################
+
+def corr_coeff(x,y,mask):
+	tot = float(mask.sum())
+	x = normStdev(x)
+	y = normStdev(y)
+	z = x*y
+	z = z*mask
+	sm  = float(z.sum())
+	return sm/tot
 
 #########################################################
 
@@ -625,6 +732,8 @@ def drawPikFile(file,draw,bin,pixrad):
 	"""
 	ps=float(1.5*pixrad) #1.5x particle radius
 	f=open(file, 'r')
+	#00000000 1 2 3333 44444 5555555555 666666666 777777777
+	#filename x y mean stdev corr_coeff peak_size templ_num
 	for line in f:
 		if(line[0] != "#"):
 			line=string.rstrip(line)
@@ -632,8 +741,9 @@ def drawPikFile(file,draw,bin,pixrad):
 			x1=float(bits[1])/float(bin)
 			y1=float(bits[2])/float(bin)
 			coord=(x1-ps, y1-ps, x1+ps, y1+ps)
-			if(len(bits) > 6):
-				num = int(bits[6])%12
+			if(len(bits) > 7):
+				#GET templ_num
+				num = int(bits[7])%12
 			else:
 				num = 0
 			draw.ellipse(coord,outline=circle_colors[num])
@@ -873,7 +983,7 @@ def calc_norm_conv_map(image, imagefft, tmplmask, oversized, bin):
 	#normconvmap = numarray.where(v2 > err, numarray.sqrt(v2), 0.0)
 	del v2
 	#numeric_to_jpg(v2,"v2.jpg")
-	print " ... ... TIME: %.2f" % float(time.time()-t1)
+	#print " ... ... time %.2f sec" % float(time.time()-t1)
 
 	return normconvmap[ tmplshape[0]-1:imshape[0]+tmplshape[0]-1, tmplshape[1]-1:imshape[1]+tmplshape[1]-1 ]
 
