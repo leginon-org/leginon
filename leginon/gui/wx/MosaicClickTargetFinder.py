@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.28 $
+# $Revision: 1.29 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-02-05 23:38:01 $
+# $Date: 2007-02-07 00:48:37 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -257,65 +257,59 @@ class RegionSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['watchdone'] = wx.CheckBox(self, -1, 'Run auto targeting when image source is finished')
 		szoptions.Add(self.widgets['watchdone'], (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
+		choices = ['Limit by Sections','Sections Only','Tissue only','Regions from Centers']
+		self.widgets['find section options'] = Choice(self, -1, choices=choices)
+		label = wx.StaticText(self, -1, 'Finding Mode')
+		szoptions.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['find section options'], (1, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+
 		label = wx.StaticText(self, -1, 'Initial Minimum Region Area (% of tile area)')
 		self.widgets['min region area'] = FloatEntry(self, -1, chars=8)
-		szoptions.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szoptions.Add(self.widgets['min region area'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['min region area'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Maximum Region Area (% of tile area)')
 		self.widgets['max region area'] = FloatEntry(self, -1, chars=8)
-		szoptions.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szoptions.Add(self.widgets['max region area'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['max region area'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Vertex Evolution Limit')
 		self.widgets['ve limit'] = FloatEntry(self, -1, chars=8)
-		szoptions.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szoptions.Add(self.widgets['ve limit'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['ve limit'], (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Region Min Threshold')
 		self.widgets['min threshold'] = FloatEntry(self, -1, chars=8)
-		szoptions.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szoptions.Add(self.widgets['min threshold'], (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['min threshold'], (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Section/Background Threshold')
 		self.widgets['max threshold'] = FloatEntry(self, -1, chars=8)
-		szoptions.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szoptions.Add(self.widgets['max threshold'], (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(label, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['max threshold'], (6, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Max Ellipse Axis Ratio')
 		self.widgets['axis ratio'] = FloatEntry(self, -1, chars=8)
-		szoptions.Add(label, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szoptions.Add(self.widgets['axis ratio'], (6, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(label, (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['axis ratio'], (7, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		szsections = wx.GridBagSizer(6, 6)
 
-		choices = ['limit by sections','sections only','tissue only']
-		self.widgets['find section options'] = Choice(self, -1, choices=choices)
-		label = wx.StaticText(self, -1, 'Finding Mode')
-		szsections.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szsections.Add(self.widgets['find section options'], (0, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-
-#		self.widgets['black on white'] = wx.CheckBox(self, -1, 'Look for sections only')
-#		szsections.Add(self.widgets['black on white'], (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-#		self.widgets['limit region in sections'] = wx.CheckBox(self, -1, 'Limit the found region within sections')
-#		szsections.Add(self.widgets['limit region in sections'], (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-
 		label = wx.StaticText(self, -1, 'Per-Section Area (% of tile area)')
 		self.widgets['section area'] = FloatEntry(self, -1, chars=8)
-		szsections.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szsections.Add(self.widgets['section area'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsections.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsections.Add(self.widgets['section area'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Maximum Number of Section per Grid')
 		self.widgets['max sections'] = IntEntry(self, -1, min=1, chars=4)
-		szsections.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szsections.Add(self.widgets['max sections'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsections.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsections.Add(self.widgets['max sections'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Per-Section Area Modification Thershold (% of current)')
 		self.widgets['adjust section area'] = FloatEntry(self, -1, chars=8)
-		szsections.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szsections.Add(self.widgets['adjust section area'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsections.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsections.Add(self.widgets['adjust section area'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 #		label = wx.StaticText(self, -1, 'Single Section Axis Ratio')
 #		self.widgets['section axis ratio'] = FloatEntry(self, -1, chars=8)
@@ -382,11 +376,19 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 		szoptions.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szoptions.Add(self.widgets['raster overlap'], (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		self.btest = wx.Button(self, -1, 'Test')
 		szbutton = wx.GridBagSizer(6, 5)
-		szbutton.Add(self.btest, (0, 0), (1, 1),
-									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+
+		self.bclear = wx.Button(self, -1, 'Clear Targets')
+		szbutton.Add(self.bclear, (0, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
 		szbutton.AddGrowableCol(0)
+
+		self.Bind(wx.EVT_BUTTON, self.onClearButton, self.bclear)
+
+		self.btest = wx.Button(self, -1, 'Test')
+		szbutton.Add(self.btest, (0, 1), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbutton.AddGrowableCol(1)
 
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
 
@@ -401,6 +403,10 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 	def onTestButton(self, evt):
 		self.setNodeSettings()
 		threading.Thread(target=self.node.makeRaster).start()
+
+	def onClearButton(self, evt):
+		self.setNodeSettings()
+		self.node.clearTargets('acquisition')
 
 class FocusSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
