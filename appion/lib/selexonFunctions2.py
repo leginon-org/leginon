@@ -25,6 +25,8 @@ def runCrossCorr(params,file):
 	tmplt     =params["template"]
 
 	image = process_image(imagefile,params)
+	print "Processed image Stats:"
+	imageinfo(image)
 
 	#CYCLE OVER EACH TEMPLATE
 	classavg=1
@@ -72,15 +74,20 @@ def process_image(imagefile,params):
 	image    = Mrc.mrc_to_numeric(imagefile)
 
 	#BIN IMAGES
-	image       = imagefun.bin(image,bin)
+	image    = imagefun.bin(image,bin)
 
 	#NORMALIZE
-	image    = normStdev(image)
-	image    = PlaneRegression(image)
-	image    = normRange(image)-0.5
+	#image    = normStdev(image)
+	#image    = PlaneRegression(image)
+	#image    = normStdev(image)/2.0
+	#image    = normRange(image)-0.5
+	#numeric_to_jpg(image,"normimage.jpg")
 
 	#LOW PASS FILTER
 	image    = filterImg(image,apix,bin,lowpass)
+
+	image    = (image-6990.0)/316.0
+	image = image + 8.0
 
 	#BLACK OUT DARK AREAS, LESS THAN 2 STDEVS
 	#image = removeCrud(image,imagefile,-2.0,params)
@@ -93,7 +100,7 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 	bin     = int(params["bin"])
 	apix    = float(params["apix"])
 	diam    = float(params["diam"])
-	pixrad  = int(math.ceil(diam/apix/2.0/float(bin)))
+	pixrad  = int(diam/apix/2.0/float(bin) + 0.5)
 	err     = 0.00001
 
 	#PROCESS TEMPLATE
@@ -102,19 +109,21 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 	template = normRange(template)-0.5
 
 	#MASK IF YOU WANT
-	tmplmask = circ_mask(template,diam/apix)
+	tmplmask = circ_mask(template,pixrad*float(bin))
 	template = normStdev2(template,tmplmask.sum())
-	tmplmaskbin = imagefun.bin(tmplmask,bin)
-	nm = float(tmplmaskbin.sum())
+	tmplmaskbin = circ_mask(templatebin,diam/apix/2.0/float(bin))
+	#tmplmaskbin = imagefun.bin(tmplmask,bin)
+	nmask = float(tmplmaskbin.sum())
 
 	#TRANSFORM IMAGE
 	oversized = get_oversize(image,templatebin).copy()
-	ccmaxmap  = numarray.zeros(image.shape)-50.0
+	ccmaxmap  = numarray.zeros(image.shape)-1.0
 	anglemap  = numarray.zeros(image.shape)
 	imagefft  = calc_imagefft(image,oversized) #SAVE SOME CPU CYCLES
 
-	#GET NORMALIZATION FUNCTION
-	normconvmap = calc_norm_conv_map(image, imagefft, tmplmaskbin, oversized, bin)
+	#GET FINDEM NORMALIZATION FUNCTION
+	normconvmap = calc_norm_conv_map(image, imagefft, tmplmaskbin, oversized)
+
 
 	print "Starting rotations ... "
 	ang = strt
@@ -129,34 +138,46 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 		#BIN
 		template2   = imagefun.bin(template2,bin)
 		#NORMALIZE
-		template2   = normStdev2(template2,nm)
+		template2   = normStdev2(template2,nmask)
 		#TRANSFORM
 		templatefft = calc_templatefft(template2,oversized)
 
 		#CROSS CORRELATE
 		ccmap       = cross_correlate_fft(imagefft,templatefft,image.shape,template2.shape)
-		ccmap       = ccmap / nm
+		ccmap       = ccmap / nmask
+		imageinfo(ccmap)
 		del template2
 		del templatefft
+
 		#GET MAXIMUM VALUES
-		ccmaxmap    = numarray.where(ccmap>ccmaxmap,ccmap,ccmaxmap)
-		anglemap    = numarray.where(ccmap==ccmaxmap, ang, anglemap)
+		ccmaxmap    = numarray.where(ccmap>ccmaxmap, ccmap, ccmaxmap)
+		anglemap    = numarray.where(ccmap==ccmaxmap,  ang, anglemap)
 		del ccmap
+
 		#INCREMENT
 		ang = ang + incr
 		i = i + 1
 
+		#sys.exit(1)
 	#NORMALIZE
-	#print "NormConvMap"
-	#imageinfo(normconvmap)
-	#print "CCMaxMap"
-	#imageinfo(ccmaxmap)
+	print "NormConvMap Stats:"
+	imageinfo(normconvmap)
+	numeric_to_jpg(normconvmap,"normconvmap.jpg")
+	print "CCMaxMap Stats:"
+	imageinfo(ccmaxmap)
+	numeric_to_jpg(ccmaxmap,"ccmaxmap.jpg")
 	ccmaxmap = numarray.where(normconvmap > err, ccmaxmap/normconvmap, 0.0)
+	print "NormCCMaxMap Stats:"
+	imageinfo(ccmaxmap)
+	numeric_to_jpg(ccmaxmap,"normccmaxmap.jpg")
+
+	print "Normalized CCMaxMap Stats:"
 	#ccmaxmap = ccmaxmap/4.0
-	ccmaxmap = numarray.where(ccmaxmap > 1.0, 1.0, ccmaxmap)
-	ccmaxmap = numarray.where(ccmaxmap < 0.0, 0.0, ccmaxmap)
-	#print "NormCCMaxMap"
-	#imageinfo(ccmaxmap)
+	#ccmaxmap = numarray.where(ccmaxmap > 1.0, 1.0, ccmaxmap)
+	#ccmaxmap = numarray.where(ccmaxmap < 0.0, 0.0, ccmaxmap)
+	ccmaxmap = normStdev(ccmaxmap)/5.0
+	#numeric_to_jpg(ccmaxmap,"editccmaxmap.jpg")
+	imageinfo(ccmaxmap)
 
 	#REMOVE OUTSIDE AREA
 	cshape = ccmaxmap.shape
@@ -169,6 +190,8 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 
 	#OUTPUT FILE
 	#Mrc.numeric_to_mrc(ccmaxmap,outfile)
+
+	#sys.exit(1)
 
 	blobs = findPeaksInMapPlus(ccmaxmap,file,classavg,params,template,tmplmask,anglemap)
 
@@ -378,8 +401,8 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 	olapmult =    float(params["overlapmult"])
 	maxpeaks =    int(params["maxpeaks"])
 	pixrad =      diam/apix/2.0/float(bin)
-	#MAXBLOBSIZE ==> 1/16 AREA OF PARTICLE
-	maxblobsize = int(round(math.pi*(apix*diam/float(bin))**2/64.0,0))+1
+	#MAXBLOBSIZE ==> 1x AREA OF PARTICLE
+	maxblobsize = int(round(math.pi*(apix*diam/float(bin))**2/4.0,0))+1
 
 	print " ... threshold",threshold
 
@@ -391,21 +414,32 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 	for i in range(5):
 		thresh      = threshold + float(i-2)*0.05
 		ccthreshmap = imagefun.threshold(ccmaxmap,thresh)
-		blobs       = imagefun.find_blobs(ccmaxmap,ccthreshmap,6,10000,60,1)
+		percentcover =  round(100.0*float(ccthreshmap.sum())/float(totalarea),2)
+		blobs       = imagefun.find_blobs(ccmaxmap,ccthreshmap,6,maxpeaks*2,maxblobsize,2)
+		tstr  = "%.2f" % thresh
+		lbstr = "%4d" % len(blobs)
+		pcstr = "%.2f" % percentcover
 		if(thresh == threshold):
-			print " ... selected threshold:",thresh,"gives",len(blobs),"peaks ***"
+			print " ... *** selected threshold: "+tstr+" gives "+lbstr+" peaks ("+\
+				pcstr+"% coverage ) ***"
 		else:
-			print " ... varying  threshold:",thresh,"gives",len(blobs),"peaks"
+			print " ...      varying threshold: "+tstr+" gives "+lbstr+" peaks ("+\
+				pcstr+"% coverage )"
 
 	ccthreshmap = imagefun.threshold(ccmaxmap,threshold)
-	blobs       = imagefun.find_blobs(ccmaxmap, ccthreshmap, 6, 10000, maxblobsize, 0)
+	percentcover =  round(100.0*float(ccthreshmap.sum())/float(totalarea),3)
+
+	blobs = imagefun.find_blobs(ccmaxmap, ccthreshmap, 6, maxpeaks*2, maxblobsize, 2)
 	if(len(blobs) > maxpeaks):
 		print " !!! more than maxpeaks ("+str(maxpeaks)+") peaks, selecting only top peaks"
 		blobs.sort(blob_compare)
 		blobs = blobs[0:maxpeaks]
 
 	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize)
-	print "Template "+str(num)+": Found",len(blobs),"peaks"
+	print "Template "+str(num)+": Found",len(blobs),"peaks ("+\
+		str(percentcover)+"% coverage)"
+	if(percentcover > 10):
+		print " !!! WARNING: thresholding covers more than 10% of image"
 
 	cutoff = olapmult*pixrad	#1.5x particle radius in pixels
 	removeOverlappingBlobs(blobs,cutoff)
@@ -416,7 +450,7 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 
 	#WRITE PIK FILE
 	f=open(outfile, 'w')
-	f.write("#filename x y mean stdev corr_coeff peak_size templ_num\n")
+	f.write("#filename x y mean stdev corr_coeff peak_size templ_num angle\n")
 	for blob in blobs:
 		row = blob.stats['center'][0]
 		col = blob.stats['center'][1]
@@ -428,7 +462,7 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 		size = blob.stats['n']
 		mean_str = "%.4f" % mean
 		std_str = "%.4f" % std
-		#filename x y mean stdev corr_coeff peak_size templ_num
+		#filename x y mean stdev corr_coeff peak_size templ_num angle
 		out = file+".mrc "+str(int(col)*bin)+" "+str(int(row)*bin)+ \
 			" "+mean_str+" "+std_str+" "+str(rho)+" "+str(int(size))+ \
 			" "+str(num)
@@ -449,8 +483,9 @@ def findPeaksInMapPlus(ccmaxmap,file,num,params,template,tmplmask,anglemap):
 	olapmult =    float(params["overlapmult"])
 	maxpeaks =    int(params["maxpeaks"])
 	pixrad =      diam/apix/2.0/float(bin)
-	#MAXBLOBSIZE ==> 1/8 AREA OF PARTICLE
-	maxblobsize = int(round(math.pi*(apix*diam/float(bin))**2/32.0,0))+1
+	#MAXBLOBSIZE ==> 2x AREA OF PARTICLE
+	maxblobsize = int(round(math.pi*(apix*diam/float(bin))**2/2.0,0))+1
+	totalarea =   (ccmaxmap.shape)[0]**2
 
 	print " ... threshold",threshold
 
@@ -462,21 +497,33 @@ def findPeaksInMapPlus(ccmaxmap,file,num,params,template,tmplmask,anglemap):
 	for i in range(5):
 		thresh      = threshold + float(i-2)*0.05
 		ccthreshmap = imagefun.threshold(ccmaxmap,thresh)
-		blobs       = imagefun.find_blobs(ccmaxmap,ccthreshmap,6,10000,60,1)
+		percentcover =  round(100.0*float(ccthreshmap.sum())/float(totalarea),3)
+		blobs       = imagefun.find_blobs(ccmaxmap,ccthreshmap,6,maxpeaks*2,maxblobsize,2)
+		tstr  = "%.2f" % thresh
+		lbstr = "%4d" % len(blobs)
+		pcstr = "%.2f" % percentcover
 		if(thresh == threshold):
-			print " ... selected threshold:",thresh,"gives",len(blobs),"peaks ***"
+			print " ... *** selected threshold: "+tstr+" gives "+lbstr+" peaks ("+\
+				pcstr+"% coverage ) ***"
 		else:
-			print " ... varying  threshold:",thresh,"gives",len(blobs),"peaks"
+			print " ...      varying threshold: "+tstr+" gives "+lbstr+" peaks ("+\
+				pcstr+"% coverage )"
 
 	ccthreshmap = imagefun.threshold(ccmaxmap,threshold)
-	blobs       = imagefun.find_blobs(ccmaxmap, ccthreshmap, 6, 10000, maxblobsize, 0)
+	percentcover =  round(100.0*float(ccthreshmap.sum())/float(totalarea),2)
+
+	#numeric_to_jpg(ccthreshmap,"ccthreshmap.jpg")
+	blobs = imagefun.find_blobs(ccmaxmap, ccthreshmap, 6, maxpeaks*2, maxblobsize, 2)
 	if(len(blobs) > maxpeaks):
 		print " !!! more than maxpeaks ("+str(maxpeaks)+") peaks, selecting only top peaks"
 		blobs.sort(blob_compare)
 		blobs = blobs[0:maxpeaks]
 
 	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize)
-	print "Template "+str(num)+": Found",len(blobs),"peaks"
+	print "Template "+str(num)+": Found",len(blobs),"peaks ("+\
+		str(percentcover)+"% coverage)"
+	if(percentcover > 10):
+		print " !!! WARNING: thresholding covers more than 10% of image"
 
 	cutoff = olapmult*pixrad	#1.5x particle radius in pixels
 	removeOverlappingBlobs(blobs,cutoff)
@@ -487,7 +534,7 @@ def findPeaksInMapPlus(ccmaxmap,file,num,params,template,tmplmask,anglemap):
 
 	#WRITE PIK FILE
 	f=open(outfile, 'w')
-	f.write("#filename x y mean stdev corr_coeff peak_size templ_num\n")
+	f.write("#filename x y mean stdev corr_coeff peak_size templ_num angle\n")
 	for blob in blobs:
 		row = blob.stats['center'][0]
 		col = blob.stats['center'][1]
@@ -499,7 +546,7 @@ def findPeaksInMapPlus(ccmaxmap,file,num,params,template,tmplmask,anglemap):
 		std_str = "%.4f" % std
 		rho_str = "%.4f" % rho
 
-		#filename x y mean stdev corr_coeff peak_size templ_num
+		#filename x y mean stdev corr_coeff peak_size templ_num angle
 		out = file+".mrc "+str(int(col)*bin)+" "+str(int(row)*bin)+ \
 			" "+mean_str+" "+std_str+" "+rho_str+" "+str(int(size))+ \
 			" "+str(num)
@@ -514,10 +561,13 @@ def findPeaksInMapPlus(ccmaxmap,file,num,params,template,tmplmask,anglemap):
 
 
 def calc_corr_coeffs(blobs,imfile,bin,template,tmplmask,anglemap):
-	print " ... processing correlation coefficients"
+	print "Processing correlation coefficients"
+	t1 = time.time()
 	image    = Mrc.mrc_to_numeric(imfile+".mrc")
-	tx = (template.shape)[0]/2
-	ty = (template.shape)[1]/2
+	image    = imagefun.bin(image,2)
+	tmplmask = imagefun.bin(tmplmask,2)
+	tx = (template.shape)[0]/4
+	ty = (template.shape)[1]/4
 	ix = (image.shape)[0] - tx
 	iy = (image.shape)[1] - ty
 	for blob in blobs:
@@ -527,20 +577,22 @@ def calc_corr_coeffs(blobs,imfile,bin,template,tmplmask,anglemap):
 			smimage = image[ x-tx:x+tx, y-ty:y+ty ]
 			angle = anglemap[x/bin,y/bin]
 			template2 = nd_image.rotate(template, angle, reshape=False, mode="wrap")
+			template2 = imagefun.bin(template2,2)
 			rho = corr_coeff(smimage,template2,tmplmask)
 			blob.stats['corrcoeff'] = rho
 		else:
-			blob.stats['corrcoeff'] = 0.0
+			blob.stats['corrcoeff'] = -1.0
 	initblobs = len(blobs)
 	blobs.sort(blob_compare)
 	i=0
 	while i < len(blobs):
 		rho = float(blobs[i].stats['corrcoeff'])
-		if(rho <= 0.0):
+		if(rho <= -0.5):
 			del blobs[i]
 			i=i-1
 		i=i+1
 	postblobs = len(blobs)
+	print " ... time %.2f sec" % float(time.time()-t1)
 	print " ... kept",postblobs,"correlating particles of",initblobs,"total particles"
 
 	
@@ -564,17 +616,23 @@ def drawBlobs(ccmaxmap,blobs,file,num,bin,pixrad):
 	if not (os.path.exists("ccmaxmaps")):
 		os.mkdir("ccmaxmaps")
 
-	ccmaxmap =  normalizeImage(ccmaxmap)
+	ccmaxmap =  blackNormalizeImage(ccmaxmap)
 	image    = array2image(ccmaxmap)
 
 	draw = ImageDraw.Draw(image)
 
-	ps=float(0.5*pixrad) #0.5x particle radius
+	ps=float(pixrad) #1x particle radius
+	psp = ps+1
+	psn = ps-1
 	for blob in blobs:
 		x1=blob.stats['center'][1]
 		y1=blob.stats['center'][0]
 		coord=(x1-ps, y1-ps, x1+ps, y1+ps)
 		draw.ellipse(coord,outline="white")
+		coord=(x1-psp, y1-psp, x1+psp, y1+psp)
+		draw.ellipse(coord,outline="black")
+		coord=(x1-psn, y1-psn, x1+psn, y1+psn)
+		draw.ellipse(coord,outline="black")
 		#draw.rectangle(coord,outline="white")
 	del draw
 
@@ -643,7 +701,7 @@ def mergePikFiles(file,blobs,params):
 	#WRITE SELECTED BLOBS TO FILE
 	count = 0
 	f=open(outfile, 'w')
-	f.write("#filename x y mean stdev corr_coeff peak_size templ_num\n")
+	f.write("#filename x y mean stdev corr_coeff peak_size templ_num angle\n")
 	for i in range(len(blobs)):
 		for blob in (blobs[i]):
 			if blob in allblobs:
@@ -655,9 +713,10 @@ def mergePikFiles(file,blobs,params):
 				size = blob.stats['n']
 				mean_str = "%.4f" % mean
 				std_str = "%.4f" % std
-				#filename x y mean stdev corr_coeff peak_size templ_num
+				rho_str = "%.4f" % rho
+				#filename x y mean stdev corr_coeff peak_size templ_num angle
 				out = file+".mrc "+str(int(col)*bin)+" "+str(int(row)*bin)+ \
-					" "+mean_str+" "+std_str+" "+str(rho)+" "+str(int(size))+ \
+					" "+mean_str+" "+std_str+" "+rho_str+" "+str(int(size))+ \
 					" "+str(i)
 				count = count + 1
 				f.write(str(out)+"\n")
@@ -698,7 +757,7 @@ def createJPG2(params,file):
 	numer=numextension.bin(numer,bin)
 
 	#print "Image: ",numer.getshape()
-	numer=normalizeImage(numer)
+	numer=whiteNormalizeImage(numer)
 	image2 = array2image(numer)
 	image2 = image2.convert("RGB")
 
@@ -733,7 +792,7 @@ def drawPikFile(file,draw,bin,pixrad):
 	ps=float(1.5*pixrad) #1.5x particle radius
 	f=open(file, 'r')
 	#00000000 1 2 3333 44444 5555555555 666666666 777777777
-	#filename x y mean stdev corr_coeff peak_size templ_num
+	#filename x y mean stdev corr_coeff peak_size templ_num angle
 	for line in f:
 		if(line[0] != "#"):
 			line=string.rstrip(line)
@@ -752,6 +811,72 @@ def drawPikFile(file,draw,bin,pixrad):
 	return draw
 
 #########################################################
+#########################################################
+
+def whiteNormalizeImage(a):
+	"""	
+	Normalizes numarray to fit into an image format
+	that is values between 0 and 255.
+	"""
+	#Minimum image value, i.e. how black the image can get
+	minlevel = 55.0
+	#Maximum image value, i.e. how white the image can get
+	maxlevel = 255.0
+	#Maximum standard deviations to include, i.e. pixel > N*stdev --> white
+	devlimit=5.0
+ 	imrange = maxlevel - minlevel
+
+	avg1=nd_image.mean(a)
+
+	stdev1=nd_image.standard_deviation(a)
+
+	min1=nd_image.minimum(a)
+	if(min1 < avg1-devlimit*stdev1):
+		min1 = avg1-devlimit*stdev1
+
+	max1=nd_image.maximum(a)
+	if(max1 > avg1+devlimit*stdev1):
+		max1 = avg1+devlimit*stdev1
+
+	c = (a - min1)/(max1 - min1)*imrange + minlevel
+	c = numarray.where(c > maxlevel,255.0,c)
+	c = numarray.where(c < minlevel,0.0,c)
+
+	return c
+
+#########################################################
+
+def blackNormalizeImage(a):
+	"""	
+	Normalizes numarray to fit into an image format
+	that is values between 0 and 255.
+	"""
+	#Minimum image value, i.e. how black the image can get
+	minlevel = 0.0
+	#Maximum image value, i.e. how white the image can get
+	maxlevel = 200.0
+	#Maximum standard deviations to include, i.e. pixel > N*stdev --> white
+	devlimit=5.0
+ 	imrange = maxlevel - minlevel
+
+	avg1=nd_image.mean(a)
+
+	stdev1=nd_image.standard_deviation(a)
+
+	min1=nd_image.minimum(a)
+	if(min1 < avg1-devlimit*stdev1):
+		min1 = avg1-devlimit*stdev1
+
+	max1=nd_image.maximum(a)
+	if(max1 > avg1+devlimit*stdev1):
+		max1 = avg1+devlimit*stdev1
+
+	c = (a - min1)/(max1 - min1)*imrange + minlevel
+	c = numarray.where(c > maxlevel,255.0,c)
+	c = numarray.where(c < minlevel,0.0,c)
+
+	return c
+
 #########################################################
 
 def normalizeImage(a):
@@ -815,7 +940,16 @@ def array2image(a):
 #########################################################
 
 def numeric_to_jpg(numer,file):
-	numer=normalizeImage(numer)
+	numer= normalizeImage(numer)
+	image = array2image(numer)
+	#image = image.convert("RGB")
+	print " ... writing JPEG: ",file
+	image.save(file, "JPEG", quality=85)
+
+#########################################################
+
+def numeric_to_jpg2(numer,file):
+	numer = numer*255.0
 	image = array2image(numer)
 	#image = image.convert("RGB")
 	print " ... writing JPEG: ",file
@@ -838,13 +972,16 @@ def normStdev(im):
 #########################################################
 
 def imageinfo(im):
+	#print " ... size: ",im.shape
+	print " ... sum:  ",im.sum()
+
 	avg1=nd_image.mean(im)
 	stdev1=nd_image.standard_deviation(im)
-	print " ... avg:  ",round(avg1,3),"+-",round(stdev1,3)
+	print " ... avg:  ",round(avg1,6),"+-",round(stdev1,6)
 
 	min1=nd_image.minimum(im)
 	max1=nd_image.maximum(im)
-	print " ... range:",round(min1,3),"<>",round(max1,3)
+	print " ... range:",round(min1,6),"<>",round(max1,6)
 
 	return
 
@@ -864,6 +1001,7 @@ def get_oversize(image,template):
 	kshape    = template.shape
 	oversized = (numarray.array(shape) + numarray.array(kshape)).copy()
 	return oversized
+	#return numarray.array(shape) +numarray.array([1,1])
 
 #########################################################
 
@@ -898,6 +1036,7 @@ def cross_correlate(image,template):
 def calc_templatefft(template, oversized):
 	#CALCULATE FOURIER TRANSFORMS
 	templatefft = fft.real_fft2d(template, s=oversized)
+	#templatefft = fft.fft2d(template, s=oversized)
 
 	return templatefft
 
@@ -910,6 +1049,7 @@ def calc_imagefft(image, oversized):
 
 	#CALCULATE FOURIER TRANSFORMS
 	imagefft = fft.real_fft2d(image2, s=oversized)
+	#imagefft = fft.fft2d(image2, s=oversized)
 	del image2
 
 	return imagefft
@@ -926,66 +1066,113 @@ def cross_correlate_fft(imagefft, templatefft, imshape, tmplshape):
 
 	#INVERSE TRANSFORM TO GET RESULT
 	corr = fft.inverse_real_fft2d(newfft, s=oversized)
+	#corr = fft.inverse_fft2d(newfft, s=oversized)
+	#corr = corr.astype(numarray.Float64)
 	del newfft
 
 	#ROTATION, NEGATE AND SHIFT:
 	rot = numarray.array( [ [-1, 0], [0, -1] ] )
 	corr = nd_image.affine_transform(corr, rot, offset=tmplshape[0]-1, mode='wrap', order=0)
 
-	corr=corr*imshape[0]
+	#corr=corr*imshape[0]
+
 
 	#RETURN CENTRAL PART OF IMAGE (SIDES ARE JUNK)
 	return corr[ tmplshape[0]-1:imshape[0]+tmplshape[0]-1, tmplshape[1]-1:imshape[1]+tmplshape[1]-1 ]
 
 #########################################################
 
-def calc_norm_conv_map(image, imagefft, tmplmask, oversized, bin):
+def calc_norm_conv_map(image, imagefft, tmplmask, oversized):
 	t1 = time.time()
 	print " ... computing FindEM's norm_conv_map"
 
 	tmplsize = (tmplmask.shape)[1]
-	nm = tmplmask.sum()
+	nmask = tmplmask.sum()
 	tmplshape  = tmplmask.shape
 	imshape  = image.shape
-	shift = int(-1*tmplsize/float(bin)/2.0)
-	err = 0.00001
 
-	#print " ... ... compute ffts"
-	tmplmaskfft = fft.real_fft2d(tmplmask, s=oversized)
+	shift = int(-1*tmplsize/2.0)
+	#tmplmask2 = nd_image.shift(tmplmask, shift, mode='wrap', order=0)
+	tmplmask2 = tmplmask
+
+	err = 0.000001
+
+	#print " IMAGESQ"
+	#imageinfo(image*image)
+
+	#print " CNV2 = convolution(image**2, mask)"
+	tmplmaskfft = fft.real_fft2d(tmplmask2, s=oversized)
 	imagesqfft = fft.real_fft2d(image*image, s=oversized)
-	del tmplmask
-
-	#print " ... ... cnv2 = convolution(image**2, mask)"
 	cnv2 = convolution_fft(imagesqfft, tmplmaskfft, oversized)
+	cnv2 = cnv2 + err
 	del imagesqfft
 	#SHIFTING CAN BE SLOW
-	cnv2 = nd_image.shift(cnv2, shift, mode='wrap', order=0)
-	cnv2 = cnv2 + err
+	#cnv2 = nd_image.shift(cnv2, shift, mode='wrap', order=0)
+	#imageinfo(cnv2)
+	#print cnv2[499,499],cnv2[500,500],cnv2[501,501]
 	#numeric_to_jpg(cnv2,"cnv2.jpg")
 
-	#print " ... ... cnv1 = convolution(image, mask)"
+	#print " CNV1 = convolution(image, mask)"
 	cnv1 = convolution_fft(imagefft, tmplmaskfft, oversized)
+	cnv1 = cnv1 + err
 	del tmplmaskfft
 	#SHIFTING CAN BE SLOW
 	cnv1 = nd_image.shift(cnv1, shift, mode='wrap', order=0)
-	cnv1 = cnv1 + err
-	#numeric_to_jpg(cnv1,"cnv1.jpg")
+	#imageinfo(cnv1)
+	#print cnv1[499,499],cnv1[500,500],cnv1[501,501]
+	#numeric_to_jpg(cnv1*cnv1,"cnv1.jpg")
 
-	#print " ... ... v2 = ((nm*cnv2)-(cnv1*cnv1))/(nm*nm)"
-	v2=((-1*nm*cnv2)+(cnv1*cnv1))/(nm*nm) + err
+	#print " V2 = ((nm*cnv2)-(cnv1*cnv1))/(nm*nm)"
+	a1 = nmask*cnv2
+	a1=a1[ tmplshape[0]/2-1:imshape[0]+tmplshape[0]/2-1, tmplshape[1]/2-1:imshape[1]+tmplshape[1]/2-1 ]
+	#imageinfo(a1)
+	#print a1[499,499],a1[500,500],a1[501,501]
+	b1 = cnv1*cnv1
+	b1=b1[ tmplshape[0]/2-1:imshape[0]+tmplshape[0]/2-1, tmplshape[1]/2-1:imshape[1]+tmplshape[1]/2-1 ]
 	del cnv2
 	del cnv1
-	#numeric_to_jpg(v,"v.jpg")
+	#imageinfo(b1)
+	#print b1[499,499],b1[500,500],b1[501,501]
 
-	#print " ... ... normconvmap = sqrt(v2)"
+	#phase = cross_correlate(a1,b1)
+	#print numarray.argmax(numarray.ravel(phase))
+	#phase = normRange(phase)
+	#phase = numarray.where(phase > 0.8,phase,0.7)
+	#phase = nd_image.shift(phase, (phase.shape)[0]/2, mode='wrap', order=0)
+	#numeric_to_jpg(phase,"cross.jpg")
+	#phase = phase_correlate(a1[,b1)
+	phase = phase_correlate(a1[128:896,128:896],b1[128:896,128:896])
+	#print numarray.argmax(numarray.ravel(phase))
+	phase = normRange(phase)
+	phase = numarray.where(phase > 0.8,phase,0.7)
+	phase = nd_image.shift(phase, (phase.shape)[0]/2, mode='wrap', order=0)
+	numeric_to_jpg(phase,"phase.jpg")
+
+	v2= (a1 - b1)/(nmask*nmask)
+	del a1
+	del b1
+	xn = (v2.shape)[0]/2
+	if(v2[xn-1,xn-1] > 1.0 or v2[xn,xn] > 1.0 or v2[xn+1,xn+1] > 1.0 or nd_image.mean(v2) > 1.0):
+		print " !!! MAJOR ERROR IN NORMALIZATION CALCUATION (values > 1)"
+		imageinfo(v2)
+		print " ... VALUES: ",v2[xn-1,xn-1],v2[xn,xn],v2[xn+1,xn+1],nd_image.mean(v2)
+		sys.exit(1)
+	#numeric_to_jpg(v2,"v2.jpg")
+
+	#print " Normconvmap = sqrt(v2)"
 	v2 = numarray.where(v2 < err, err, v2)
 	normconvmap = numarray.sqrt(v2)
+	#numeric_to_jpg(normconvmap,"normconvmap-zero.jpg")
 	#normconvmap = numarray.where(v2 > err, numarray.sqrt(v2), 0.0)
 	del v2
-	#numeric_to_jpg(v2,"v2.jpg")
+
+	imageinfo(normconvmap)
+	print normconvmap[499,499],normconvmap[500,500],normconvmap[501,501]
+	#numeric_to_jpg(normconvmap,"normconvmap-big.jpg")
 	#print " ... ... time %.2f sec" % float(time.time()-t1)
 
-	return normconvmap[ tmplshape[0]-1:imshape[0]+tmplshape[0]-1, tmplshape[1]-1:imshape[1]+tmplshape[1]-1 ]
+	#RETURN CENTER
+	return normconvmap
 
 #########################################################
 
@@ -996,8 +1183,11 @@ def convolution_fft(afft,bfft,oversized):
 	#ny = (afft.shape)[1]
 	cfft = afft * bfft
 	c = fft.inverse_real_fft2d(cfft, s=oversized)
+	#c = fft.inverse_fft2d(cfft, s=oversized)
+	#c = c.astype(numarray.Float64)
+
 	del cfft
-	c=c*nx
+	#c=c
 	return c
 
 #########################################################
@@ -1015,6 +1205,8 @@ def phase_correlate(image, template):
 	#CALCULATE FOURIER TRANSFORMS
 	imagefft = fft.real_fft2d(image2, s=oversized)
 	templatefft = fft.real_fft2d(template, s=oversized)
+	#imagefft = fft.fft2d(image2, s=oversized)
+	#templatefft = fft.fft2d(template, s=oversized)
 
 	#MULTIPLY FFTs TOGETHER
 	newfft = imagefft * templatefft 
@@ -1026,7 +1218,8 @@ def phase_correlate(image, template):
 
 	#INVERSE TRANSFORM TO GET RESULT
 	correlation = fft.inverse_real_fft2d(phasefft, s=oversized)
+	#correlation = fft.inverse_fft2d(phasefft, s=oversized)
 	del phasefft
 
 	#RETURN CENTRAL PART OF IMAGE (SIDES ARE JUNK)
-	return correlation[ kshape[0]-1:shape[0]+kshape[0]-1, kshape[1]-1:shape[1]+kshape[1]-1 ]
+	return correlation[ kshape[0]/2-1:shape[0]+kshape[0]/2-1, kshape[1]/2-1:shape[1]+kshape[1]/2-1 ]
