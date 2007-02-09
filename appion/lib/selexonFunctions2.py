@@ -25,8 +25,8 @@ def runCrossCorr(params,file):
 	tmplt     =params["template"]
 
 	image = process_image(imagefile,params)
-	print "Processed image Stats:"
-	imageinfo(image)
+	#print "Processed image Stats:"
+	#imageinfo(image)
 
 	#CYCLE OVER EACH TEMPLATE
 	classavg=1
@@ -145,7 +145,7 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 		#CROSS CORRELATE
 		ccmap       = cross_correlate_fft(imagefft,templatefft,image.shape,template2.shape)
 		ccmap       = ccmap / nmask
-		imageinfo(ccmap)
+		#imageinfo(ccmap)
 		del template2
 		del templatefft
 
@@ -175,9 +175,9 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 	#ccmaxmap = ccmaxmap/4.0
 	#ccmaxmap = numarray.where(ccmaxmap > 1.0, 1.0, ccmaxmap)
 	#ccmaxmap = numarray.where(ccmaxmap < 0.0, 0.0, ccmaxmap)
-	ccmaxmap = normStdev(ccmaxmap)/5.0
+	#ccmaxmap = normStdev(ccmaxmap)/5.0
 	#numeric_to_jpg(ccmaxmap,"editccmaxmap.jpg")
-	imageinfo(ccmaxmap)
+	#imageinfo(ccmaxmap)
 
 	#REMOVE OUTSIDE AREA
 	cshape = ccmaxmap.shape
@@ -207,7 +207,9 @@ def normStdev2(map,n):
 	mean=nd_image.mean(map)
 	sum_sqs=(map*map).sum()
 	sq = (n*sum_sqs - lsum*lsum)/(n*n)
-	if (sq < 0): sys.exit(1)
+	if (sq < 0): 
+		print " !!! BAD NORMALIZATION"
+		sys.exit(1)
 
 	th=0.00001
 	if (sq > th):
@@ -368,7 +370,6 @@ def PlaneRegression(sqarray):
 	print " ... plane_regress: x-slope:",round(resvec[0]*size,5),\
 		", y-slope:",round(resvec[1]*size,5),", xy-intercept:",round(resvec[2],5)
 	return sqarray - xarray*resvec[0] - yarray*resvec[1] - resvec[2]
-	sys.exit(1)
 
 #########################################################
 #########################################################
@@ -1166,8 +1167,8 @@ def calc_norm_conv_map(image, imagefft, tmplmask, oversized):
 	#normconvmap = numarray.where(v2 > err, numarray.sqrt(v2), 0.0)
 	del v2
 
-	imageinfo(normconvmap)
-	print normconvmap[499,499],normconvmap[500,500],normconvmap[501,501]
+	#imageinfo(normconvmap)
+	#print normconvmap[499,499],normconvmap[500,500],normconvmap[501,501]
 	#numeric_to_jpg(normconvmap,"normconvmap-big.jpg")
 	#print " ... ... time %.2f sec" % float(time.time()-t1)
 
