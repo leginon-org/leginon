@@ -182,11 +182,11 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 	#REMOVE OUTSIDE AREA
 	cshape = ccmaxmap.shape
 	#SET BLACK TO -1.2 FOR MORE EXACT FINDEM MAPS
-	black = -0.1
- 	ccmaxmap[ 0:pixrad, 0:cshape[1] ] = black
-	ccmaxmap[ 0:cshape[0], 0:pixrad ] = black
- 	ccmaxmap[ cshape[0]-pixrad:cshape[0], 0:cshape[1] ] = black
-	ccmaxmap[ 0:cshape[0], cshape[1]-pixrad:cshape[1] ] = black
+	black = -2.1
+ 	ccmaxmap[ 0:pixrad*2, 0:cshape[1] ] = black
+	ccmaxmap[ 0:cshape[0], 0:pixrad*2 ] = black
+ 	ccmaxmap[ cshape[0]-pixrad*2:cshape[0], 0:cshape[1] ] = black
+	ccmaxmap[ 0:cshape[0], cshape[1]-pixrad*2:cshape[1] ] = black
 
 	#OUTPUT FILE
 	#Mrc.numeric_to_mrc(ccmaxmap,outfile)
@@ -1142,12 +1142,12 @@ def calc_norm_conv_map(image, imagefft, tmplmask, oversized):
 	#phase = nd_image.shift(phase, (phase.shape)[0]/2, mode='wrap', order=0)
 	#numeric_to_jpg(phase,"cross.jpg")
 	#phase = phase_correlate(a1[,b1)
-	phase = phase_correlate(a1[128:896,128:896],b1[128:896,128:896])
+	#phase = phase_correlate(a1[128:896,128:896],b1[128:896,128:896])
 	#print numarray.argmax(numarray.ravel(phase))
-	phase = normRange(phase)
-	phase = numarray.where(phase > 0.8,phase,0.7)
-	phase = nd_image.shift(phase, (phase.shape)[0]/2, mode='wrap', order=0)
-	numeric_to_jpg(phase,"phase.jpg")
+	#phase = normRange(phase)
+	#phase = numarray.where(phase > 0.8,phase,0.7)
+	#phase = nd_image.shift(phase, (phase.shape)[0]/2, mode='wrap', order=0)
+	#numeric_to_jpg(phase,"phase.jpg")
 
 	v2= (a1 - b1)/(nmask*nmask)
 	del a1

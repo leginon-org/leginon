@@ -145,8 +145,7 @@ if __name__ == '__main__':
 	while notdone:
 		while images:
 			print ""
-			print "Starting next image ..."
-			count = count + 1
+			print "Starting image ",(count+1),"..."
 			tbegin=time.time()
 			img = images.pop(0)
 
@@ -279,10 +278,13 @@ if __name__ == '__main__':
 				print "\tFindCrud:  \t",tfindCrud,"seconds"
 			print "\t---------- \t----------------"
 			tdiff = time.time()-tbegin
-			timesum = timesum + tdiff
-			timesumsq = timesumsq + (tdiff**2)
+
 			ttotal = "%.2f" % float(tdiff)
 			print "\tTOTAL:     \t",ttotal,"seconds"
+			if(params["continue"]==True and tdiff > 0.5):
+				timesum = timesum + tdiff
+				timesumsq = timesumsq + (tdiff**2)
+				count = count + 1
 			if(count > 1):
 				peakstdev = math.sqrt(float(count*peaksumsq - peaksum**2) / float(count*(count-1)))
 				print "PEAKS:\t",round(float(peaksum)/float(count),1),"+/-",\
