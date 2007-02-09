@@ -734,7 +734,6 @@ def dwnsizeImg(params,img):
 	bin=params['bin']
 	print " ... downsizing", img
 	im=binImg(imagedata['image'],bin)
-
 	print " ... filtering", img
 	apix=params['apix']*bin
 	im=filterImg(im,apix,params['lp'])
@@ -850,7 +849,8 @@ def doneCheck(donedict,im):
 def getImageData(imagename):
 	# get image data object from database
 	imagedataq = data.AcquisitionImageData(filename=imagename)
-	imagedata = db.query(imagedataq, results=1)
+	imagedata = db.query(imagedataq, results=1, readimages=False)
+	imagedata[0].holdimages=False
 	if imagedata:
 		return imagedata[0]
 	else:
