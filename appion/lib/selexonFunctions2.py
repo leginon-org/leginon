@@ -78,7 +78,7 @@ def process_image(imagefile,params):
 
 	#NORMALIZE
 	#image    = normStdev(image)
-	#image    = PlaneRegression(image)
+	image    = PlaneRegression(image)
 	#image    = normStdev(image)/2.0
 	#image    = normRange(image)-0.5
 	#numeric_to_jpg(image,"normimage.jpg")
@@ -86,11 +86,15 @@ def process_image(imagefile,params):
 	#LOW PASS FILTER
 	image    = filterImg(image,apix,bin,lowpass)
 
-	image    = (image-6990.0)/316.0
-	image = image + 8.0
+	#image    = (image-6990.0)/316.0
+	#image = image + 8.0
 
 	#BLACK OUT DARK AREAS, LESS THAN 2 STDEVS
 	#image = removeCrud(image,imagefile,-2.0,params)
+
+	#IMAGE MUST HAVE NORMALIZED RANGE OR THE WHOLE THING BREAKS
+	# AND BE POSSITIVE EVERYWHERE
+	image = normRange(image)+0.000001
 
 	return image
 
@@ -110,7 +114,7 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 
 	#MASK IF YOU WANT
 	tmplmask = circ_mask(template,pixrad*float(bin))
-	template = normStdev2(template,tmplmask.sum())
+	template = normStdev(template)*tmplmask.sum()/((tmplmask.shape)[0]**2)
 	tmplmaskbin = circ_mask(templatebin,diam/apix/2.0/float(bin))
 	#tmplmaskbin = imagefun.bin(tmplmask,bin)
 	nmask = float(tmplmaskbin.sum())
@@ -122,8 +126,7 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 	imagefft  = calc_imagefft(image,oversized) #SAVE SOME CPU CYCLES
 
 	#GET FINDEM NORMALIZATION FUNCTION
-	normconvmap = calc_norm_conv_map(image, imagefft, tmplmaskbin, oversized)
-
+	normconvmap = calc_normconvmap(image, imagefft, tmplmaskbin, oversized, pixrad)
 
 	print "Starting rotations ... "
 	ang = strt
@@ -167,26 +170,29 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 	imageinfo(ccmaxmap)
 	numeric_to_jpg(ccmaxmap,"ccmaxmap.jpg")
 	ccmaxmap = numarray.where(normconvmap > err, ccmaxmap/normconvmap, 0.0)
-	print "NormCCMaxMap Stats:"
-	imageinfo(ccmaxmap)
-	numeric_to_jpg(ccmaxmap,"normccmaxmap.jpg")
-
-	print "Normalized CCMaxMap Stats:"
-	#ccmaxmap = ccmaxmap/4.0
-	#ccmaxmap = numarray.where(ccmaxmap > 1.0, 1.0, ccmaxmap)
-	#ccmaxmap = numarray.where(ccmaxmap < 0.0, 0.0, ccmaxmap)
-	#ccmaxmap = normStdev(ccmaxmap)/5.0
-	#numeric_to_jpg(ccmaxmap,"editccmaxmap.jpg")
-	#imageinfo(ccmaxmap)
 
 	#REMOVE OUTSIDE AREA
 	cshape = ccmaxmap.shape
 	#SET BLACK TO -1.2 FOR MORE EXACT FINDEM MAPS
-	black = -2.1
+	black = -0.1
  	ccmaxmap[ 0:pixrad*2, 0:cshape[1] ] = black
 	ccmaxmap[ 0:cshape[0], 0:pixrad*2 ] = black
  	ccmaxmap[ cshape[0]-pixrad*2:cshape[0], 0:cshape[1] ] = black
 	ccmaxmap[ 0:cshape[0], cshape[1]-pixrad*2:cshape[1] ] = black
+
+
+	print "NormCCMaxMap Stats:"
+	imageinfo(ccmaxmap)
+	#numeric_to_jpg(ccmaxmap,"normccmaxmap.jpg")
+
+	#print "Normalized CCMaxMap Stats:"
+	#ccmaxmap = ccmaxmap/4.0
+	ccmaxmap = numarray.where(ccmaxmap > 1.0, 1.0, ccmaxmap)
+	ccmaxmap = numarray.where(ccmaxmap < 0.0, 0.0, ccmaxmap)
+	#ccmaxmap = normStdev(ccmaxmap)/5.0
+	#numeric_to_jpg(ccmaxmap,"editccmaxmap.jpg")
+	#imageinfo(ccmaxmap)
+
 
 	#OUTPUT FILE
 	#Mrc.numeric_to_mrc(ccmaxmap,outfile)
@@ -203,12 +209,14 @@ def normStdev2(map,n):
 	"""
 	normalizes mean and stdev of image inside mask only
 	"""
-	lsum = map.sum()
-	mean=nd_image.mean(map)
-	sum_sqs=(map*map).sum()
-	sq = (n*sum_sqs - lsum*lsum)/(n*n)
+	lsum  = map.sum()
+	mean  = nd_image.mean(map)
+	sumsq = (map*map).sum()
+	a = n*sumsq
+	b = lsum*lsum
+	sq = (a - b)/(n*n)
 	if (sq < 0): 
-		print " !!! BAD NORMALIZATION"
+		print " !!! BAD NORMALIZATION: sq > 0:",sq
 		sys.exit(1)
 
 	th=0.00001
@@ -1013,7 +1021,7 @@ def cross_correlate(image,template):
 	oversized = (numarray.array(shape) + numarray.array(kshape))
 
 	#EXPAND IMAGE TO BIGGER SIZE
-	image2 = convolve.iraf_frame.frame(image, oversized, mode="constant", cval=0.0)
+	image2 = convolve.iraf_frame.frame(image, oversized, mode="wrap", cval=0.0)
 
 	#CALCULATE FOURIER TRANSFORMS
 	imagefft = fft.real_fft2d(image2, s=oversized)
@@ -1083,9 +1091,19 @@ def cross_correlate_fft(imagefft, templatefft, imshape, tmplshape):
 
 #########################################################
 
-def calc_norm_conv_map(image, imagefft, tmplmask, oversized):
+def calc_normconvmap(image, imagefft, tmplmask, oversized, pixrad):
 	t1 = time.time()
 	print " ... computing FindEM's norm_conv_map"
+
+	#print " IMAGE"
+	#imageinfo(image)
+	#numeric_to_jpg(image,"image.jpg")
+	#print " TMPLMASK"
+	#imageinfo(tmplmask)
+	#numeric_to_jpg(tmplmask,"tmplmask.jpg")
+
+	if(nd_image.minimum(image) < 0.0 or nd_image.minimum(tmplmask) < 0.0):
+		print " !!! WARNING image or mask is less than zero"
 
 	tmplsize = (tmplmask.shape)[1]
 	nmask = tmplmask.sum()
@@ -1094,7 +1112,7 @@ def calc_norm_conv_map(image, imagefft, tmplmask, oversized):
 
 	shift = int(-1*tmplsize/2.0)
 	#tmplmask2 = nd_image.shift(tmplmask, shift, mode='wrap', order=0)
-	tmplmask2 = tmplmask
+	#tmplmask2 = tmplmask
 
 	err = 0.000001
 
@@ -1102,7 +1120,7 @@ def calc_norm_conv_map(image, imagefft, tmplmask, oversized):
 	#imageinfo(image*image)
 
 	#print " CNV2 = convolution(image**2, mask)"
-	tmplmaskfft = fft.real_fft2d(tmplmask2, s=oversized)
+	tmplmaskfft = fft.real_fft2d(tmplmask, s=oversized)
 	imagesqfft = fft.real_fft2d(image*image, s=oversized)
 	cnv2 = convolution_fft(imagesqfft, tmplmaskfft, oversized)
 	cnv2 = cnv2 + err
@@ -1125,39 +1143,65 @@ def calc_norm_conv_map(image, imagefft, tmplmask, oversized):
 
 	#print " V2 = ((nm*cnv2)-(cnv1*cnv1))/(nm*nm)"
 	a1 = nmask*cnv2
-	a1=a1[ tmplshape[0]/2-1:imshape[0]+tmplshape[0]/2-1, tmplshape[1]/2-1:imshape[1]+tmplshape[1]/2-1 ]
+	a1 = a1[ tmplshape[0]/2-1:imshape[0]+tmplshape[0]/2-1, tmplshape[1]/2-1:imshape[1]+tmplshape[1]/2-1 ]
 	#imageinfo(a1)
 	#print a1[499,499],a1[500,500],a1[501,501]
 	b1 = cnv1*cnv1
-	b1=b1[ tmplshape[0]/2-1:imshape[0]+tmplshape[0]/2-1, tmplshape[1]/2-1:imshape[1]+tmplshape[1]/2-1 ]
+	b1 = b1[ tmplshape[0]/2-1:imshape[0]+tmplshape[0]/2-1, tmplshape[1]/2-1:imshape[1]+tmplshape[1]/2-1 ]
 	del cnv2
 	del cnv1
 	#imageinfo(b1)
 	#print b1[499,499],b1[500,500],b1[501,501]
 
-	#phase = cross_correlate(a1,b1)
-	#print numarray.argmax(numarray.ravel(phase))
-	#phase = normRange(phase)
-	#phase = numarray.where(phase > 0.8,phase,0.7)
-	#phase = nd_image.shift(phase, (phase.shape)[0]/2, mode='wrap', order=0)
-	#numeric_to_jpg(phase,"cross.jpg")
-	#phase = phase_correlate(a1[,b1)
+	#print (a1[500,500]-b1[500,500])
+	#print nmask**2
+
+	#cross = cross_correlate(a1,b1)
+	#print numarray.argmax(numarray.ravel(cross))
+	#cross = normRange(cross)
+	#cross = numarray.where(cross > 0.8,cross,0.7)
+	#cross = nd_image.shift(cross, (cross.shape)[0]/2, mode='wrap', order=0)
+	#numeric_to_jpg(cross,"cross.jpg")
 	#phase = phase_correlate(a1[128:896,128:896],b1[128:896,128:896])
 	#print numarray.argmax(numarray.ravel(phase))
 	#phase = normRange(phase)
-	#phase = numarray.where(phase > 0.8,phase,0.7)
+	#phase = numarray.where(phase > 0.7,phase,0.6)
 	#phase = nd_image.shift(phase, (phase.shape)[0]/2, mode='wrap', order=0)
 	#numeric_to_jpg(phase,"phase.jpg")
 
-	v2= (a1 - b1)/(nmask*nmask)
-	del a1
-	del b1
+	v2= (a1 - b1)
+	v2 = v2/(nmask**2)
+
+	#REMOVE OUTSIDE AREA
+	cshape = v2.shape
+	white = 0.3
+ 	v2[ 0:pixrad*2, 0:cshape[1] ] = white
+	v2[ 0:cshape[0], 0:pixrad*2 ] = white
+ 	v2[ cshape[0]-pixrad*2:cshape[0], 0:cshape[1] ] = white
+	v2[ 0:cshape[0], cshape[1]-pixrad*2:cshape[1] ] = white
+
 	xn = (v2.shape)[0]/2
-	if(v2[xn-1,xn-1] > 1.0 or v2[xn,xn] > 1.0 or v2[xn+1,xn+1] > 1.0 or nd_image.mean(v2) > 1.0):
+	#IMPORTANT TO CHECK FOR ERROR
+	if(v2[xn-1,xn-1] > 1.0 or v2[xn,xn] > 1.0 or v2[xn+1,xn+1] > 1.0 \
+		or nd_image.mean(v2[xn/2:3*xn/2,xn/2:3*xn/2]) > 1.0):
 		print " !!! MAJOR ERROR IN NORMALIZATION CALCUATION (values > 1)"
 		imageinfo(v2)
 		print " ... VALUES: ",v2[xn-1,xn-1],v2[xn,xn],v2[xn+1,xn+1],nd_image.mean(v2)
+		numeric_to_jpg(a1,"a1.jpg")
+		numeric_to_jpg(b1,"b1.jpg")
+		numeric_to_jpg(b1,"v2.jpg")
 		sys.exit(1)
+	if(v2[xn-1,xn-1] < 0.0 or v2[xn,xn] < 0.0 or v2[xn+1,xn+1] < 0.0 \
+		or nd_image.mean(v2[xn/2:3*xn/2,xn/2:3*xn/2]) < 0.0):
+		print " !!! MAJOR ERROR IN NORMALIZATION CALCUATION (values < 0)"
+		imageinfo(v2)
+		print " ... VALUES: ",v2[xn-1,xn-1],v2[xn,xn],v2[xn+1,xn+1],nd_image.mean(v2)
+		numeric_to_jpg(a1,"a1.jpg")
+		numeric_to_jpg(b1,"b1.jpg")
+		numeric_to_jpg(b1,"v2.jpg")
+		sys.exit(1)
+	del a1
+	del b1
 	#numeric_to_jpg(v2,"v2.jpg")
 
 	#print " Normconvmap = sqrt(v2)"
@@ -1201,7 +1245,7 @@ def phase_correlate(image, template):
 
 	#EXPAND IMAGE TO BIGGER SIZE
 	avg=nd_image.mean(image)
-	image2 = convolve.iraf_frame.frame(image, oversized, mode="constant", cval=avg)
+	image2 = convolve.iraf_frame.frame(image, oversized, mode="wrap", cval=avg)
 
 	#CALCULATE FOURIER TRANSFORMS
 	imagefft = fft.real_fft2d(image2, s=oversized)
@@ -1210,12 +1254,14 @@ def phase_correlate(image, template):
 	#templatefft = fft.fft2d(template, s=oversized)
 
 	#MULTIPLY FFTs TOGETHER
-	newfft = imagefft * templatefft 
+	newfft = (templatefft * numarray.conjugate(imagefft)).copy()
 	del templatefft
 
 	#NORMALIZE CC TO GET PC
+	print "d"
 	phasefft = newfft / numarray.absolute(newfft)
 	del newfft
+	print "d"
 
 	#INVERSE TRANSFORM TO GET RESULT
 	correlation = fft.inverse_real_fft2d(phasefft, s=oversized)
