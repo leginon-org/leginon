@@ -12,6 +12,7 @@ import imagefun
 import numextension
 import convolver
 import numarray
+import numpy
 import numarray.nd_image as nd_image
 import numarray.convolve as convolve
 import numarray.fft as fft
@@ -78,7 +79,7 @@ def process_image(imagefile,params):
 
 	#NORMALIZE
 	#image    = normStdev(image)
-	image    = PlaneRegression(image)
+	#image    = PlaneRegression(image)
 	#image    = normStdev(image)/2.0
 	#image    = normRange(image)-0.5
 	#numeric_to_jpg(image,"normimage.jpg")
@@ -165,25 +166,29 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 	#NORMALIZE
 	print "NormConvMap Stats:"
 	imageinfo(normconvmap)
-	numeric_to_jpg(normconvmap,"normconvmap.jpg")
+	print ccmaxmap[499,499],ccmaxmap[500,500],ccmaxmap[501,501]
+	#numeric_to_jpg(normconvmap,str(classavg)+"anormconvmap.jpg")
 	print "CCMaxMap Stats:"
 	imageinfo(ccmaxmap)
-	numeric_to_jpg(ccmaxmap,"ccmaxmap.jpg")
+	print ccmaxmap[499,499],ccmaxmap[500,500],ccmaxmap[501,501]
+	#numeric_to_jpg(ccmaxmap,str(classavg)+"bccmaxmap.jpg")
+	
 	ccmaxmap = numarray.where(normconvmap > err, ccmaxmap/normconvmap, 0.0)
 
 	#REMOVE OUTSIDE AREA
 	cshape = ccmaxmap.shape
 	#SET BLACK TO -1.2 FOR MORE EXACT FINDEM MAPS
-	black = -0.1
- 	ccmaxmap[ 0:pixrad*2, 0:cshape[1] ] = black
-	ccmaxmap[ 0:cshape[0], 0:pixrad*2 ] = black
- 	ccmaxmap[ cshape[0]-pixrad*2:cshape[0], 0:cshape[1] ] = black
-	ccmaxmap[ 0:cshape[0], cshape[1]-pixrad*2:cshape[1] ] = black
+	black1 = -1.2
+ 	ccmaxmap[ 0:pixrad*2, 0:cshape[1] ] = black1
+	ccmaxmap[ 0:cshape[0], 0:pixrad*2 ] = black1
+ 	ccmaxmap[ cshape[0]-pixrad*2:cshape[0], 0:cshape[1] ] = black1
+	ccmaxmap[ 0:cshape[0], cshape[1]-pixrad*2:cshape[1] ] = black1
 
 
 	print "NormCCMaxMap Stats:"
 	imageinfo(ccmaxmap)
-	#numeric_to_jpg(ccmaxmap,"normccmaxmap.jpg")
+	print ccmaxmap[499,499],ccmaxmap[500,500],ccmaxmap[501,501]
+	#numeric_to_jpg(ccmaxmap,str(classavg)+"cnormccmaxmap.jpg")
 
 	#print "Normalized CCMaxMap Stats:"
 	#ccmaxmap = ccmaxmap/4.0
@@ -412,6 +417,7 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 	pixrad =      diam/apix/2.0/float(bin)
 	#MAXBLOBSIZE ==> 1x AREA OF PARTICLE
 	maxblobsize = int(round(math.pi*(apix*diam/float(bin))**2/4.0,0))+1
+	totalarea =   (ccmaxmap.shape)[0]**2
 
 	print " ... threshold",threshold
 
@@ -454,8 +460,6 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 	removeOverlappingBlobs(blobs,cutoff)
 
 	blobs.sort(blob_compare)
-
-	#blobs = calc_corr_coeffs(blobs,file)
 
 	#WRITE PIK FILE
 	f=open(outfile, 'w')
@@ -539,7 +543,8 @@ def findPeaksInMapPlus(ccmaxmap,file,num,params,template,tmplmask,anglemap):
 
 	blobs.sort(blob_compare)
 
-	blobs = calc_corr_coeffs(blobs,file,bin,template,tmplmask,anglemap)
+	#blobs = calc_corrcoeffs(blobs,file,bin,template,tmplmask,anglemap)
+	blobs = fake_corrcoeffs(blobs,file,bin,template,tmplmask,anglemap)
 
 	#WRITE PIK FILE
 	f=open(outfile, 'w')
@@ -569,7 +574,7 @@ def findPeaksInMapPlus(ccmaxmap,file,num,params,template,tmplmask,anglemap):
 #########################################################
 
 
-def calc_corr_coeffs(blobs,imfile,bin,template,tmplmask,anglemap):
+def calc_corrcoeffs(blobs,imfile,bin,template,tmplmask,anglemap):
 	print "Processing correlation coefficients"
 	t1 = time.time()
 	image    = Mrc.mrc_to_numeric(imfile+".mrc")
@@ -610,6 +615,16 @@ def calc_corr_coeffs(blobs,imfile,bin,template,tmplmask,anglemap):
 
 #########################################################
 
+def fake_corrcoeffs(blobs,imfile,bin,template,tmplmask,anglemap):
+	print "Faking correlation coefficients"
+
+	for blob in blobs:
+		blob.stats['corrcoeff'] = 1.0
+
+	return blobs
+
+#########################################################
+
 def corr_coeff(x,y,mask):
 	tot = float(mask.sum())
 	x = normStdev(x)
@@ -637,12 +652,12 @@ def drawBlobs(ccmaxmap,blobs,file,num,bin,pixrad):
 		x1=blob.stats['center'][1]
 		y1=blob.stats['center'][0]
 		coord=(x1-ps, y1-ps, x1+ps, y1+ps)
-		draw.ellipse(coord,outline="white")
+		draw.rectangle(coord,outline="white")
 		coord=(x1-psp, y1-psp, x1+psp, y1+psp)
-		draw.ellipse(coord,outline="black")
+		draw.rectangle(coord,outline="black")
 		coord=(x1-psn, y1-psn, x1+psn, y1+psn)
-		draw.ellipse(coord,outline="black")
-		#draw.rectangle(coord,outline="white")
+		draw.rectangle(coord,outline="black")
+		#draw.ellipse(coord,outline="white")
 	del draw
 
 	outfile="ccmaxmaps/"+file+".ccmaxmap"+str(num)+".jpg"
@@ -982,7 +997,7 @@ def normStdev(im):
 
 def imageinfo(im):
 	#print " ... size: ",im.shape
-	print " ... sum:  ",im.sum()
+	#print " ... sum:  ",im.sum()
 
 	avg1=nd_image.mean(im)
 	stdev1=nd_image.standard_deviation(im)
@@ -1070,19 +1085,24 @@ def cross_correlate_fft(imagefft, templatefft, imshape, tmplshape):
 	oversized = (numarray.array(imshape) + numarray.array(tmplshape))
 
 	#MULTIPLY FFTs TOGETHER
+	t1 = time.time()
 	newfft = (templatefft * numarray.conjugate(imagefft)).copy()
+	print " ... ... time %.2f sec" % float(time.time()-t1)
 	del templatefft
 
 	#INVERSE TRANSFORM TO GET RESULT
+	t1 = time.time()
 	corr = fft.inverse_real_fft2d(newfft, s=oversized)
+	print " ... ... time %.2f sec" % float(time.time()-t1)
 	#corr = fft.inverse_fft2d(newfft, s=oversized)
 	#corr = corr.astype(numarray.Float64)
 	del newfft
 
 	#ROTATION, NEGATE AND SHIFT:
+	t1 = time.time()
 	rot = numarray.array( [ [-1, 0], [0, -1] ] )
 	corr = nd_image.affine_transform(corr, rot, offset=tmplshape[0]-1, mode='wrap', order=0)
-
+	print " ... ... time %.2f sec" % float(time.time()-t1)
 	#corr=corr*imshape[0]
 
 
@@ -1174,11 +1194,11 @@ def calc_normconvmap(image, imagefft, tmplmask, oversized, pixrad):
 
 	#REMOVE OUTSIDE AREA
 	cshape = v2.shape
-	white = 0.3
- 	v2[ 0:pixrad*2, 0:cshape[1] ] = white
-	v2[ 0:cshape[0], 0:pixrad*2 ] = white
- 	v2[ cshape[0]-pixrad*2:cshape[0], 0:cshape[1] ] = white
-	v2[ 0:cshape[0], cshape[1]-pixrad*2:cshape[1] ] = white
+	white1 = 0.01
+ 	v2[ 0:pixrad*2, 0:cshape[1] ] = white1
+	v2[ 0:cshape[0], 0:pixrad*2 ] = white1
+ 	v2[ cshape[0]-pixrad*2:cshape[0], 0:cshape[1] ] = white1
+	v2[ 0:cshape[0], cshape[1]-pixrad*2:cshape[1] ] = white1
 
 	xn = (v2.shape)[0]/2
 	#IMPORTANT TO CHECK FOR ERROR
@@ -1214,7 +1234,7 @@ def calc_normconvmap(image, imagefft, tmplmask, oversized, pixrad):
 	#imageinfo(normconvmap)
 	#print normconvmap[499,499],normconvmap[500,500],normconvmap[501,501]
 	#numeric_to_jpg(normconvmap,"normconvmap-big.jpg")
-	#print " ... ... time %.2f sec" % float(time.time()-t1)
+	print " ... ... time %.2f sec" % float(time.time()-t1)
 
 	#RETURN CENTER
 	return normconvmap

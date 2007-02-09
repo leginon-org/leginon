@@ -351,6 +351,7 @@ def runFindEM(params,file):
 			incr=str(params["incrang"+str(classavg)])
 		fin='';
 		fin=os.popen('${FINDEM_PATH}/FindEM_SB','w')
+		#fin=os.popen('/home/vossman/appion2/findem/bin/findem.exe','w')
 		fin.write(file+".dwn.mrc\n")
 		if (len(params['templatelist'])==1 and not params['templateIds']):
 			fin.write(tmplt+".dwn.mrc\n")
