@@ -203,8 +203,7 @@ if __name__ == '__main__':
 			else:
 				print "Using *updated* Leginon Method..."
 				t1=time.time()
-				while(True):
-					numpeaks = findPeaks2(params,imgname)
+				numpeaks = findPeaks2(params,imgname)
 				peaksum = peaksum + numpeaks
 				peaksumsq = peaksumsq + numpeaks**2
 				tfindPeaks= "%.2f" % float(time.time()-t1)
