@@ -9,7 +9,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
     name = 'SimCCDCamera'
     def __init__(self):
         ccdcamera.CCDCamera.__init__(self)
-        self.camera_size = {'x': 2048, 'y': 2048}
+        self.camera_size = {'x': 4096, 'y': 4096}
         self.binning_values = {'x': [1, 2, 4, 8], 'y': [1, 2, 4, 8]}
         self.pixel_size = {'x': 2.5e-5, 'y': 2.5e-5}
         self.exposure_types = ['normal', 'dark']
