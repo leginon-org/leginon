@@ -336,7 +336,7 @@ def batchBox(params, img):
 			###save particles
 			if len(particles)>0:
 				hasparticles=True
-				saveParticles(particles,shift,dbbox,params)
+				saveParticles(particles,shift,dbbox,params,img)
 			else:
 				hasparticles=False
 		else:
@@ -352,7 +352,9 @@ def batchBox(params, img):
 		f.close
 		nptcls=len(lines)
 		# write batchboxer command
-		if params["boxsize"]:
+		if params["selexonId"]:
+			cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(input, dbbox, output, params["boxsize"])
+		elif params["boxsize"]:
 			cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i insideonly" %(input, dbbox, output, params["boxsize"])
 		else: 
 	 		cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(input, dbbox, output)
@@ -412,14 +414,16 @@ def eliminateMinMaxCCParticles(particles,params):
 	print eliminated,"particles eliminated due to selexonmin or selexonmax"
 	return(newparticles)
 
-def saveParticles(particles,shift,dbbox,params):
+def saveParticles(particles,shift,dbbox,params,img):
 	plist=[]
 	box=params['boxsize']
+	imgxy=img['camera']['dimension']
+	eliminated=0
 	for prtl in particles:
 		# save the particles to the database
 		xcoord=int(math.floor(prtl['xcoord']-(box/2)-shift['shiftx']+0.5))
 		ycoord=int(math.floor(prtl['ycoord']-(box/2)-shift['shifty']+0.5))
-		if (xcoord>0 and ycoord>0):
+		if (xcoord>0 and xcoord+box <= imgxy['x'] and ycoord>0 and ycoord+box <= imgxy['y']):
 			plist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
 			if params['commit']:
 				stackpq=particleData.stackParticles()
@@ -430,6 +434,9 @@ def saveParticles(particles,shift,dbbox,params):
 					params['particleNumber']=params['particleNumber']+1
 					stackpq['particleNumber']=params['particleNumber']
 					partdb.insert(stackpq)
+		else:
+			eliminated+=1
+	print eliminated, "particles eliminated because out of bounds"
 	#write boxfile
 	boxfile=open(dbbox,'w')
 	boxfile.writelines(plist)
