@@ -7,6 +7,7 @@ import data
 import time
 from selexonFunctions import *
 from selexonFunctions2 import *
+from crudFinderFunctions2 import *
 
 selexondonename='.selexondone.py'
 
@@ -117,6 +118,7 @@ if __name__ == '__main__':
 		for img in images:
 			imgname=img['filename']
 			findCrud(params,imgname)
+			#findCrud2(params,imgname)
 		sys.exit(1)
         
 	# check to see if user only wants to find shifts

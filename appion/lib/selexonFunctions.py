@@ -70,6 +70,13 @@ def createDefaults():
 	params['method']="updated"
 	params['overlapmult']=1.5
 	params['maxpeaks']=1500
+	params["cschi"]=1
+	params["csclo"]=0
+	params["convolve"]=0
+	params["no_hull"]=False
+	params["no_length_prune"]=False
+	params["stdev"]=0
+	params["test"]=False
 
 	return params
 
@@ -142,6 +149,14 @@ def printSelexonHelp():
 	print "                       experimental - internally generates cc maps and find peaks"
 	print "overlapmult=<n>    : distance multiple for two particles to overlap (default is 1.5 X)"
 	print "maxpeaks=<n>       : maximum number of particles allowed per image"
+	print "crudschi=<n>               : image standard deviation hi limit for scaling the edge detection limits (default=1: use crudhi&crudlo)"
+	print "crudsclo=<n>               : image standard deviation lower limit for scaling the edge detection limits (default=0: use crudhi&crudlo)"
+	print "convolve=<n>               : if not zero, convolve the thresholded edge blobs with a disk at the particle diameter to unify blobs"
+	print "                             and then threshold it at <n> fraction of peak self covolution of the disk (0-1, default=0"
+	print "no_hull                    : if ON, convex hull is not calculated"
+	print "no_length_prune            : if ON, pruning by crud perimeters is not done before convex hull"
+	print "stdev=<n>                  : if not zero, only regions with stdev larger than n*image_stdev is passed (default=0)"
+	print "test                       : if ON, images at each step are saved"
 	print "\n"
 
 	sys.exit(1)
@@ -322,6 +337,20 @@ def parseSelexonInput(args,params):
 			params['overlapmult']=float(elements[1])
 		elif (elements[0]=='maxpeaks'):
 			params['maxpeaks']=int(elements[1])
+		elif (elements[0]=='crudschi'):
+			params["cschi"]=float(elements[1])
+		elif (elements[0]=='crudsclo'):
+			params["csclo"]=float(elements[1])
+		elif (elements[0]=='convolve'):
+			params["convolve"]=float(elements[1])
+		elif (elements[0]=='stdev'):
+			params["stdev"]=float(elements[1])
+		elif (arg=='no_hull'):
+			params["no_hull"]=True
+		elif (arg=='no_length_prune'):
+			params["no_length_prune"]=True
+		elif (arg=='test'):
+			params["test"]=True
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
