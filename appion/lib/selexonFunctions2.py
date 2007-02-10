@@ -95,7 +95,7 @@ def process_image(imagefile,params):
 
 	#IMAGE MUST HAVE NORMALIZED RANGE OR THE WHOLE THING BREAKS
 	# AND BE POSSITIVE EVERYWHERE
-	image = normRange(image)+0.000001
+	image = 5.0*normRange(image)+0.000001
 
 	return image
 
@@ -166,28 +166,27 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 	#NORMALIZE
 	print "NormConvMap Stats:"
 	imageinfo(normconvmap)
-	print ccmaxmap[499,499],ccmaxmap[500,500],ccmaxmap[501,501]
+	print normconvmap[511,511],normconvmap[512,512],normconvmap[513,513]
 	#numeric_to_jpg(normconvmap,str(classavg)+"anormconvmap.jpg")
 	print "CCMaxMap Stats:"
 	imageinfo(ccmaxmap)
-	print ccmaxmap[499,499],ccmaxmap[500,500],ccmaxmap[501,501]
+	print ccmaxmap[511,511],ccmaxmap[512,512],ccmaxmap[513,513]
 	#numeric_to_jpg(ccmaxmap,str(classavg)+"bccmaxmap.jpg")
 	
-	ccmaxmap = numarray.where(normconvmap > err, ccmaxmap/normconvmap, 0.0)
+	ccmaxmap = numarray.where(normconvmap != 0.0, ccmaxmap/normconvmap, ccmaxmap)
 
 	#REMOVE OUTSIDE AREA
 	cshape = ccmaxmap.shape
 	#SET BLACK TO -1.2 FOR MORE EXACT FINDEM MAPS
-	black1 = -1.2
+	black1 = -0.1
  	ccmaxmap[ 0:pixrad*2, 0:cshape[1] ] = black1
 	ccmaxmap[ 0:cshape[0], 0:pixrad*2 ] = black1
  	ccmaxmap[ cshape[0]-pixrad*2:cshape[0], 0:cshape[1] ] = black1
 	ccmaxmap[ 0:cshape[0], cshape[1]-pixrad*2:cshape[1] ] = black1
 
-
 	print "NormCCMaxMap Stats:"
 	imageinfo(ccmaxmap)
-	print ccmaxmap[499,499],ccmaxmap[500,500],ccmaxmap[501,501]
+	print ccmaxmap[511,511],ccmaxmap[512,512],ccmaxmap[513,513]
 	#numeric_to_jpg(ccmaxmap,str(classavg)+"cnormccmaxmap.jpg")
 
 	#print "Normalized CCMaxMap Stats:"
@@ -197,7 +196,6 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 	#ccmaxmap = normStdev(ccmaxmap)/5.0
 	#numeric_to_jpg(ccmaxmap,"editccmaxmap.jpg")
 	#imageinfo(ccmaxmap)
-
 
 	#OUTPUT FILE
 	#Mrc.numeric_to_mrc(ccmaxmap,outfile)
@@ -1085,26 +1083,31 @@ def cross_correlate_fft(imagefft, templatefft, imshape, tmplshape):
 	oversized = (numarray.array(imshape) + numarray.array(tmplshape))
 
 	#MULTIPLY FFTs TOGETHER
-	t1 = time.time()
 	newfft = (templatefft * numarray.conjugate(imagefft)).copy()
-	print " ... ... time %.2f sec" % float(time.time()-t1)
 	del templatefft
 
 	#INVERSE TRANSFORM TO GET RESULT
-	t1 = time.time()
 	corr = fft.inverse_real_fft2d(newfft, s=oversized)
-	print " ... ... time %.2f sec" % float(time.time()-t1)
 	#corr = fft.inverse_fft2d(newfft, s=oversized)
 	#corr = corr.astype(numarray.Float64)
 	del newfft
 
-	#ROTATION, NEGATE AND SHIFT:
-	t1 = time.time()
-	rot = numarray.array( [ [-1, 0], [0, -1] ] )
-	corr = nd_image.affine_transform(corr, rot, offset=tmplshape[0]-1, mode='wrap', order=0)
-	print " ... ... time %.2f sec" % float(time.time()-t1)
-	#corr=corr*imshape[0]
+	#ROTATION AND SHIFT
 
+	#ROTATE 180 DEGREES, NEIL STYLE
+	#corr = numarray.transpose(corr)
+	#corr = corr[(corr.shape)[0]::-1,:]
+	#corr = numarray.transpose(corr)
+	#corr = corr[(corr.shape)[0]::-1,:]
+
+	#ROTATE 180 DEGREES, CRAIG STYLE
+	corrshape = corr.shape
+	corr = numarray.ravel(corr)
+	corr = numarray.reshape(corr[(corr.shape)[0]::-1],corrshape)
+
+	corr = nd_image.shift(corr, tmplshape[0], mode='wrap', order=0)
+
+	#print " ... ... rot time %.2f sec" % float(time.time()-t1)
 
 	#RETURN CENTRAL PART OF IMAGE (SIDES ARE JUNK)
 	return corr[ tmplshape[0]-1:imshape[0]+tmplshape[0]-1, tmplshape[1]-1:imshape[1]+tmplshape[1]-1 ]

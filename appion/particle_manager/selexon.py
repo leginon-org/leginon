@@ -281,7 +281,7 @@ if __name__ == '__main__':
 
 			ttotal = "%.2f" % float(tdiff)
 			print "\tTOTAL:     \t",ttotal,"seconds"
-			if(params["continue"]==True and tdiff > 0.5):
+			if(params["continue"]==False or tdiff > 0.3):
 				timesum = timesum + tdiff
 				timesumsq = timesumsq + (tdiff**2)
 				count = count + 1
