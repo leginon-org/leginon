@@ -436,7 +436,8 @@ def saveParticles(particles,shift,dbbox,params,img):
 					partdb.insert(stackpq)
 		else:
 			eliminated+=1
-	print eliminated, "particles eliminated because out of bounds"
+	if eliminated>0:
+		print eliminated, "particles eliminated because out of bounds"
 	#write boxfile
 	boxfile=open(dbbox,'w')
 	boxfile.writelines(plist)
