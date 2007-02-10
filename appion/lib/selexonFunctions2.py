@@ -166,11 +166,11 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 	#NORMALIZE
 	print "NormConvMap Stats:"
 	imageinfo(normconvmap)
-	print normconvmap[511,511],normconvmap[512,512],normconvmap[513,513]
+	#print normconvmap[511,511],normconvmap[512,512],normconvmap[513,513]
 	#numeric_to_jpg(normconvmap,str(classavg)+"anormconvmap.jpg")
 	print "CCMaxMap Stats:"
 	imageinfo(ccmaxmap)
-	print ccmaxmap[511,511],ccmaxmap[512,512],ccmaxmap[513,513]
+	#print ccmaxmap[511,511],ccmaxmap[512,512],ccmaxmap[513,513]
 	#numeric_to_jpg(ccmaxmap,str(classavg)+"bccmaxmap.jpg")
 	
 	ccmaxmap = numarray.where(normconvmap != 0.0, ccmaxmap/normconvmap, ccmaxmap)
@@ -186,7 +186,7 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 
 	print "NormCCMaxMap Stats:"
 	imageinfo(ccmaxmap)
-	print ccmaxmap[511,511],ccmaxmap[512,512],ccmaxmap[513,513]
+	#print ccmaxmap[511,511],ccmaxmap[512,512],ccmaxmap[513,513]
 	#numeric_to_jpg(ccmaxmap,str(classavg)+"cnormccmaxmap.jpg")
 
 	#print "Normalized CCMaxMap Stats:"
