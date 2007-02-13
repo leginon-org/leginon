@@ -1,16 +1,18 @@
 <?php
 require_once('inc/mysql.inc');
 
-function insertlog($ip, $host, $url, $sessionId) {
+function insertlog($ip, $url, $sessionId) {
 	$db = &new mysql(DB_HOST, DB_USER, DB_PASS, DB);
-	$q = "insert into viewer_log (ip, host, url, sessionId) values "
-		."('".$ip."', " ." '".$host."', " ." '".$url."', " ." '".$sessionId."') ";
+	$q = "insert into viewer_log (ip, url, sessionId) values "
+		."('".$ip."', '".$url."', '".$sessionId."') ";
 	$db->sqlQuery($q);
 	return true;
 }
-insertlog($_SERVER['REMOTE_ADDR'], $_SERVER['REMOTE_HOST'], $_SERVER['REQUEST_URI'], $sessionId);
 
-require("inc/authconfig.inc.php");
+if ($sessionId = ($_POST[sessionId]) ? $_POST[sessionId] : $_GET[expId])
+	insertlog($_SERVER['REMOTE_ADDR'], $_SERVER['REQUEST_URI'], $sessionId);
+
+require("inc/authconfig.php");
 
 class authlib extends config_class {
 
