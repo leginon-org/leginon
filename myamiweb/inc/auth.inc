@@ -20,9 +20,9 @@ class authlib extends config_class {
 	var $tbl_user = "users";
 	var $tbl_confirm = "";
 
-	function register ($username, $password, $password2, $name, $email, $age, $sex, $school) {
+	function register ($username, $password, $password2, $name, $email) {
 
-		if (!$username || !$password || !$password2 || !$name || !$email || !$age || !$sex || !$school) {
+		if (!$username || !$password || !$password2 || !$name ) {
 
 			return $this->error[14];
 
@@ -39,24 +39,6 @@ class authlib extends config_class {
 			if (!eregi("^([a-z0-9]+)([._-]([a-z0-9]+))*[@]([a-z0-9]+)([._-]([a-z0-9]+))*[.]([a-z0-9]){2}([a-z0-9])?$", $email)) {
 
 				return $this->error[4];
-
-			}
-
-			if (ereg("[^0-9]", $age)) {
-
-				return $this->error[10];
-
-			}
-
-			if ($sex != "Male" && $sex != "Female") {
-
-				return $this->error[11];
-
-			}
-
-			if (!eregi("^[a-z0-9 ]+$", $school)) {
-
-				return $this->error[9];
 
 			}
 
@@ -129,7 +111,7 @@ class authlib extends config_class {
 
 			$hash = md5($this->secret.$username);
 
-			$is_success = mysql_query("insert into `".$this->tbl_confirm."` values ('$hash', '$username', '$password', '$name', '$email', '$age', '$sex', '$school', now())");
+			$is_success = mysql_query("insert into `".$this->tbl_confirm."` values ('$hash', '$username', '$password', '$name', '$email', now())");
 
 			mysql_close();
 
@@ -142,9 +124,6 @@ class authlib extends config_class {
 			@mail($email, $this->config_reg_subj, "Thank You, $name for registering. Here is the information we recieved :\n
 				\nName     : $name
 				\nEmail    : $email
-				\nAge      : $age
-				\nSex      : $sex
-				\nSchool   : $school
 				\nUsername : $username
 				\nPassword : $password
 
@@ -250,15 +229,15 @@ class authlib extends config_class {
 
 		mysql_close();
 
-		list ($id, $name, $email, $age, $sex, $school) = mysql_fetch_row($query);
+		list ($id, $name, $email) = mysql_fetch_row($query);
 
-		return array($name, $age, $sex, $school, $email);
+		return array($name, $email);
 
 	}
 
-	function edit ($id, $name, $age, $sex, $school) {
+	function edit ($id, $name) {
 
-		if (!$name || !$age || !$sex || !$school) {
+		if (!$name) {
 
 			return $this->error[14];
 
@@ -272,28 +251,10 @@ class authlib extends config_class {
 
 			}
 
-			if (!eregi("^[a-z0-9 ]+$", $school)) {
-	
-				return $this->error[9];
-
-			}
-
-			if (ereg("[^0-9]", $age)) {
-
-				return $this->error[10];
-
-			}
-
-			if ($sex != "Male" && $sex != "Female") {
-
-				return $this->error[11];
-
-			}
-
-        	        mysql_connect($this->server, $this->db_user, $this->db_pass);
+			mysql_connect($this->server, $this->db_user, $this->db_pass);
 			mysql_select_db($this->database);
 
-			$query = mysql_query("update `".$this->tbl_user."` set name = '$name', age = '$age', sex = '$sex', school = '$school' where id = '$id'");
+			$query = mysql_query("update `".$this->tbl_user."` set name = '$name' where id = '$id'");
 
 			mysql_close();
 
@@ -333,13 +294,13 @@ class authlib extends config_class {
 
 			}
 
-			list($hd,$username,$password,$name,$email,$age,$sex,$school) = mysql_fetch_row($query);
+			list($hd,$username,$password,$name,$email) = mysql_fetch_row($query);
 
 			$is_success_first = mysql_query("insert into `".$this->tbl_login."` (username, password) values ('$username', '$password')");
 
 			if ($is_success_first) {
 
-				$is_success_second = mysql_query("insert into `".$this->tbl_user."` (name, email, age, sex, school) values ('$name', '$email', '$age', '$sex', '$school')");
+				$is_success_second = mysql_query("insert into `".$this->tbl_user."` (name, email) values ('$name', '$email')");
 
 				if ($is_success_second) {
 
@@ -380,9 +341,6 @@ class authlib extends config_class {
 			@mail($email, "$this->wsname Confirmation", "Thank You, $name for registering. Here is the information we recieved :\n
 					\nName     : $name
 					\nEmail    : $email
-					\nAge      : $age
-					\nSex      : $sex
-					\nSchool   : $school
 					\nUsername : $username
 					\nPassword : $password", "From: $this->webmaster");
 
