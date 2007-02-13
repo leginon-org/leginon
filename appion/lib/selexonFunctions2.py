@@ -79,7 +79,7 @@ def process_image(imagefile,params):
 
 	#NORMALIZE
 	#image    = normStdev(image)
-	#image    = PlaneRegression(image)
+	image    = PlaneRegression(image)
 	#image    = normStdev(image)/2.0
 	#image    = normRange(image)-0.5
 	#numeric_to_jpg(image,"normimage.jpg")
@@ -164,15 +164,16 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 
 		#sys.exit(1)
 	#NORMALIZE
-	print "NormConvMap Stats:"
-	imageinfo(normconvmap)
+	#print "NormConvMap Stats:"
+	#imageinfo(normconvmap)
 	#print normconvmap[511,511],normconvmap[512,512],normconvmap[513,513]
 	#numeric_to_jpg(normconvmap,str(classavg)+"anormconvmap.jpg")
-	print "CCMaxMap Stats:"
-	imageinfo(ccmaxmap)
+	#print "CCMaxMap Stats:"
+	#imageinfo(ccmaxmap)
 	#print ccmaxmap[511,511],ccmaxmap[512,512],ccmaxmap[513,513]
 	#numeric_to_jpg(ccmaxmap,str(classavg)+"bccmaxmap.jpg")
-	
+
+
 	ccmaxmap = numarray.where(normconvmap != 0.0, ccmaxmap/normconvmap, ccmaxmap)
 
 	#REMOVE OUTSIDE AREA
@@ -599,7 +600,7 @@ def calc_corrcoeffs(blobs,imfile,bin,template,tmplmask,anglemap):
 	i=0
 	while i < len(blobs):
 		rho = float(blobs[i].stats['corrcoeff'])
-		if(rho <= -0.5):
+		if(rho <= 0.1):
 			del blobs[i]
 			i=i-1
 		i=i+1
@@ -638,7 +639,7 @@ def drawBlobs(ccmaxmap,blobs,file,num,bin,pixrad):
 	if not (os.path.exists("ccmaxmaps")):
 		os.mkdir("ccmaxmaps")
 
-	ccmaxmap =  blackNormalizeImage(ccmaxmap)
+	ccmaxmap = whiteNormalizeImage(ccmaxmap)
 	image    = array2image(ccmaxmap)
 
 	draw = ImageDraw.Draw(image)

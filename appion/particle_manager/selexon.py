@@ -307,6 +307,10 @@ if __name__ == '__main__':
 	ttotal= "%.2f" % float(time.time()-twhole)
 	print "COMPLETE LOOP:\t",ttotal,"seconds for",count,"images"
 	print "end run"
+	print "====================================================="
+	print "====================================================="
+	print "====================================================="
+	print "====================================================="
 	print ""
 	# remove temporary templates if getting images from db
 	if params['templateIds']:
