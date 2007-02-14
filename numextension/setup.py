@@ -1,7 +1,7 @@
 from distutils.core import setup, Extension
 from numarray.numarrayext import NumarrayExtension
 
-module = NumarrayExtension('numextension', sources = ['numextension.c', 'py_canny_edge.c', 'canny_edge.c'])
+module = NumarrayExtension('numextension', sources = ['numextension.c', 'canny_edge.c'])
 
 setup(
 	name='NumExtension',
