@@ -152,7 +152,7 @@ if __name__ == '__main__':
 	while notdone:
 		while images:
 			if(lastcount != count):
-				print "\nStarting image",(count+1),"..."
+				print "\nStarting image",count,"..."
 				lastcount = count
 			tbegin=time.time()
 			img = images.pop(0)
@@ -311,7 +311,7 @@ if __name__ == '__main__':
 			i=i+1
 			
 	ttotal= "%.2f" % float(time.time()-twhole)
-	print "COMPLETE LOOP:\t",ttotal,"seconds for",count,"images"
+	print "COMPLETE LOOP:\t",ttotal,"seconds for",count-1,"images"
 	print "end run"
 	print "====================================================="
 	print "====================================================="

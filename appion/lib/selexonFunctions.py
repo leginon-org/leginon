@@ -796,7 +796,10 @@ def dwnsizeTemplate(params,filename):
 def binImg(img,binning):
 	#bin image using leginon imagefun library
 	#img must be a numarray image
-	return(imagefun.bin(img,binning))
+
+	#imagefun.bin results in memory loss
+	#return imagefun.bin(img,binning)
+	return nd_image.zoom(img,1.0/float(binning),order=1)
     
 def filterImg(img,apix,res):
 	# low pass filter image to res resolution

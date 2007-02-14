@@ -9,16 +9,15 @@ import Image
 import ImageDraw
 import Mrc
 import imagefun
-import numextension
 import convolver
 import numarray
-import numpy
 import numarray.nd_image as nd_image
 import numarray.convolve as convolve
 import numarray.fft as fft
 import numarray.random_array as random_array
 import numarray.linear_algebra as linear_algebra
-
+#import numextension
+#import mem
 
 def runCrossCorr(params,file):
 	# Run Neil's version of FindEM
@@ -60,6 +59,8 @@ def runCrossCorr(params,file):
 	
 	numpeaks = mergePikFiles(file,blobs,params)
 
+	del blobs
+
 	return numpeaks
 
 #########################################################
@@ -75,7 +76,7 @@ def process_image(imagefile,params):
 	image    = Mrc.mrc_to_numeric(imagefile)
 
 	#BIN IMAGES
-	image    = imagefun.bin(image,bin)
+	image    = bin_img(image,bin)
 
 	#NORMALIZE
 	#image    = normStdev(image)
@@ -110,14 +111,14 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 
 	#PROCESS TEMPLATE
 	template = Mrc.mrc_to_numeric(templfile)
-	templatebin = imagefun.bin(template,bin) #FAKE FOR SIZING
+	templatebin = bin_img(template,bin) #FAKE FOR SIZING
 	template = normRange(template)-0.5
 
 	#MASK IF YOU WANT
 	tmplmask = circ_mask(template,pixrad*float(bin))
 	template = normStdev(template)*tmplmask.sum()/((tmplmask.shape)[0]**2)
 	tmplmaskbin = circ_mask(templatebin,diam/apix/2.0/float(bin))
-	#tmplmaskbin = imagefun.bin(tmplmask,bin)
+	#tmplmaskbin = bin_img(tmplmask,bin)
 	nmask = float(tmplmaskbin.sum())
 
 	#TRANSFORM IMAGE
@@ -141,7 +142,7 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 		#MASK
 		template2   = template2*tmplmask
 		#BIN
-		template2   = imagefun.bin(template2,bin)
+		template2   = bin_img(template2,bin)
 		#NORMALIZE
 		template2   = normStdev2(template2,nmask)
 		#TRANSFORM
@@ -175,7 +176,6 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 	#print ccmaxmap[511,511],ccmaxmap[512,512],ccmaxmap[513,513]
 	#numeric_to_jpg(ccmaxmap,str(classavg)+"bccmaxmap.jpg")
 
-
 	ccmaxmap = numarray.where(normconvmap != 0.0, ccmaxmap/normconvmap, ccmaxmap)
 
 	#REMOVE OUTSIDE AREA
@@ -206,6 +206,8 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 	#sys.exit(1)
 
 	blobs = findPeaksInMapPlus(ccmaxmap,file,classavg,params,template,tmplmask,anglemap)
+
+	del ccmaxmap,tmplmask,anglemap
 
 	return blobs
 
@@ -322,7 +324,7 @@ def tmpRemoveCrud(params,imagefile):
 	image    = Mrc.mrc_to_numeric(imagefile)
 
 	#BIN IMAGES
-	image    = imagefun.bin(image,bin)
+	image    = bin_img(image,bin)
 
 	#NORMALIZE
 	image    = normStdev(image)
@@ -381,9 +383,12 @@ def PlaneRegression(sqarray):
 	leftmat = numarray.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]] )
 	rightmat = numarray.array( [xzsum, yzsum, zsum] )
 	resvec = linear_algebra.solve_linear_equations(leftmat,rightmat)
+	del leftmat,rightmat
 	print " ... plane_regress: x-slope:",round(resvec[0]*size,5),\
 		", y-slope:",round(resvec[1]*size,5),", xy-intercept:",round(resvec[2],5)
-	return sqarray - xarray*resvec[0] - yarray*resvec[1] - resvec[2]
+	newarray = sqarray - xarray*resvec[0] - yarray*resvec[1] - resvec[2]
+	del sqarray,xarray,yarray,resvec
+	return newarray
 
 #########################################################
 #########################################################
@@ -400,12 +405,16 @@ def findPeaks2(params,file):
 	blobs = []
 	for i in range(numtempl):
 		infile="cccmaxmap"+str(i+1)+"00.mrc"
-		ccmaxmap=Mrc.mrc_to_numeric(infile)
+		ccmaxmap = Mrc.mrc_to_numeric(infile)
 		blobs.append(findPeaksInMap(ccmaxmap,file,i+1,params))
 
+	del ccmaxmap
+
 	numpeaks = mergePikFiles(file,blobs,params)
+	del blobs
 
 	return numpeaks
+
 #########################################################
 
 def findPeaksInMap(ccmaxmap,file,num,params):
@@ -451,6 +460,8 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 		blobs.sort(blob_compare)
 		blobs = blobs[0:maxpeaks]
 
+	del ccthreshmap
+
 	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize)
 	print "Template "+str(num)+": Found",len(blobs),"peaks ("+\
 		str(percentcover)+"% coverage)"
@@ -483,7 +494,7 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 		f.write(str(out)+"\n")
 	f.close()
 
-	draw = drawBlobs(ccmaxmap,blobs,file,num,bin,pixrad)
+	drawBlobs(ccmaxmap,blobs,file,num,bin,pixrad)
 
 	return blobs
 
@@ -533,6 +544,8 @@ def findPeaksInMapPlus(ccmaxmap,file,num,params,template,tmplmask,anglemap):
 		blobs.sort(blob_compare)
 		blobs = blobs[0:maxpeaks]
 
+	del ccthreshmap
+
 	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize)
 	print "Template "+str(num)+": Found",len(blobs),"peaks ("+\
 		str(percentcover)+"% coverage)"
@@ -568,19 +581,18 @@ def findPeaksInMapPlus(ccmaxmap,file,num,params,template,tmplmask,anglemap):
 		f.write(str(out)+"\n")
 	f.close()
 
-	draw = drawBlobs(ccmaxmap,blobs,file,num,bin,pixrad)
+	drawBlobs(ccmaxmap,blobs,file,num,bin,pixrad)
 
 	return blobs
 
 #########################################################
 
-
 def calc_corrcoeffs(blobs,imfile,bin,template,tmplmask,anglemap):
 	print "Processing correlation coefficients"
 	t1 = time.time()
 	image    = Mrc.mrc_to_numeric(imfile+".mrc")
-	image    = imagefun.bin(image,2)
-	tmplmask = imagefun.bin(tmplmask,2)
+	image    = bin_img(image,2)
+	tmplmask = bin_img(tmplmask,2)
 	tx = (template.shape)[0]/4
 	ty = (template.shape)[1]/4
 	ix = (image.shape)[0] - tx
@@ -592,7 +604,7 @@ def calc_corrcoeffs(blobs,imfile,bin,template,tmplmask,anglemap):
 			smimage = image[ x-tx:x+tx, y-ty:y+ty ]
 			angle = anglemap[x/bin,y/bin]
 			template2 = nd_image.rotate(template, angle, reshape=False, mode="wrap")
-			template2 = imagefun.bin(template2,2)
+			template2 = bin_img(template2,2)
 			rho = corr_coeff(smimage,template2,tmplmask)
 			blob.stats['corrcoeff'] = rho
 		else:
@@ -659,11 +671,12 @@ def drawBlobs(ccmaxmap,blobs,file,num,bin,pixrad):
 		coord=(x1-psn, y1-psn, x1+psn, y1+psn)
 		draw.rectangle(coord,outline="black")
 		#draw.ellipse(coord,outline="white")
-	del draw
 
 	outfile="ccmaxmaps/"+file+".ccmaxmap"+str(num)+".jpg"
 	print " ... writing JPEG: ",outfile
 	image.save(outfile, "JPEG", quality=90)
+
+	del image,draw
 
 	return
 
@@ -697,6 +710,7 @@ def removeOverlappingBlobs(blobs,cutoff):
 		i=i+1
 	postblobs = len(blobs)
 	print " ... kept",postblobs,"non-overlapping particles of",initblobs,"total particles"
+
 	return blobs
 
 #########################################################
@@ -746,6 +760,9 @@ def mergePikFiles(file,blobs,params):
 				count = count + 1
 				f.write(str(out)+"\n")
 	f.close()
+	
+	del allblobs,f
+
 	return count
 
 #########################################################
@@ -778,25 +795,28 @@ def createJPG2(params,file):
 		os.mkdir("jpgs")
 
 	#print "Reading MRC: ",mrcfile
-	numer=Mrc.mrc_to_numeric(mrcfile)
-	numer=numextension.bin(numer,bin)
+	numer = Mrc.mrc_to_numeric(mrcfile)
+	numer = bin_img(numer,bin)
 
-	#print "Image: ",numer.getshape()
-	numer=whiteNormalizeImage(numer)
-	image2 = array2image(numer)
-	image2 = image2.convert("RGB")
+	numer = whiteNormalizeImage(numer)
+	image = array2image(numer)
+	image = image.convert("RGB")
 
 	pikfile="pikfiles/"+file+".a.pik"
-	print " ... reading Pik: ",pikfile
-	draw = ImageDraw.Draw(image2)
+
+	draw = ImageDraw.Draw(image)
 	#blend(image1,image2,0.5)
 
-	draw = drawPikFile(pikfile,draw,bin,pixrad) 
-	del draw
+	drawPikFile(pikfile,draw,bin,pixrad)
 
 	outfile="jpgs/"+mrcfile+".prtl.jpg"
 	print " ... writing JPEG: ",outfile
-	image2.save(outfile, "JPEG", quality=97)
+
+	image.save(outfile, "JPEG", quality=95)
+
+	del image,numer,draw
+
+	return
 
 #########################################################
 
@@ -815,6 +835,8 @@ def drawPikFile(file,draw,bin,pixrad):
 		Orange, Teal, Purple, Lime-Green, Sky-Blue, Pink
 	"""
 	ps=float(1.5*pixrad) #1.5x particle radius
+
+	#print " ... reading Pik file: ",file
 	f=open(file, 'r')
 	#00000000 1 2 3333 44444 5555555555 666666666 777777777
 	#filename x y mean stdev corr_coeff peak_size templ_num angle
@@ -833,7 +855,9 @@ def drawPikFile(file,draw,bin,pixrad):
 			draw.ellipse(coord,outline=circle_colors[num])
 			#draw.rectangle(coord,outline=color1)
 	f.close()
-	return draw
+	del f
+
+	return
 
 #########################################################
 #########################################################
@@ -863,11 +887,11 @@ def whiteNormalizeImage(a):
 	if(max1 > avg1+devlimit*stdev1):
 		max1 = avg1+devlimit*stdev1
 
-	c = (a - min1)/(max1 - min1)*imrange + minlevel
-	c = numarray.where(c > maxlevel,255.0,c)
-	c = numarray.where(c < minlevel,0.0,c)
+	a = (a - min1)/(max1 - min1)*imrange + minlevel
+	a = numarray.where(a > maxlevel,255.0,a)
+	a = numarray.where(a < minlevel,45.0,a)
 
-	return c
+	return a
 
 #########################################################
 
@@ -896,11 +920,11 @@ def blackNormalizeImage(a):
 	if(max1 > avg1+devlimit*stdev1):
 		max1 = avg1+devlimit*stdev1
 
-	c = (a - min1)/(max1 - min1)*imrange + minlevel
-	c = numarray.where(c > maxlevel,255.0,c)
-	c = numarray.where(c < minlevel,0.0,c)
+	a = (a - min1)/(max1 - min1)*imrange + minlevel
+	a = numarray.where(a > maxlevel,215.0,a)
+	a = numarray.where(a < minlevel,0.0,a)
 
-	return c
+	return a
 
 #########################################################
 
@@ -929,11 +953,11 @@ def normalizeImage(a):
 	if(max1 > avg1+devlimit*stdev1):
 		max1 = avg1+devlimit*stdev1
 
-	c = (a - min1)/(max1 - min1)*imrange + minlevel
-	c = numarray.where(c > maxlevel,255.0,c)
-	c = numarray.where(c < minlevel,0.0,c)
+	a = (a - min1)/(max1 - min1)*imrange + minlevel
+	a = numarray.where(a > maxlevel,255.0,a)
+	a = numarray.where(a < minlevel,0.0,a)
 
-	return c
+	return a
 
 #########################################################
 
@@ -965,11 +989,13 @@ def array2image(a):
 #########################################################
 
 def numeric_to_jpg(numer,file):
-	numer= normalizeImage(numer)
+	numer = normalizeImage(numer)
 	image = array2image(numer)
 	#image = image.convert("RGB")
 	print " ... writing JPEG: ",file
 	image.save(file, "JPEG", quality=85)
+	del image
+	return
 
 #########################################################
 
@@ -979,6 +1005,8 @@ def numeric_to_jpg2(numer,file):
 	#image = image.convert("RGB")
 	print " ... writing JPEG: ",file
 	image.save(file, "JPEG", quality=85)
+	del image
+	return
 
 #########################################################
 
@@ -1296,3 +1324,11 @@ def phase_correlate(image, template):
 
 	#RETURN CENTRAL PART OF IMAGE (SIDES ARE JUNK)
 	return correlation[ kshape[0]/2-1:shape[0]+kshape[0]/2-1, kshape[1]/2-1:shape[1]+kshape[1]/2-1 ]
+
+#########################################################
+
+def bin_img(image,bin):
+	""" numextension causes mem leaks """
+	#return numextension.bin(image,bin)
+	return nd_image.zoom(image,1.0/bin,order=1)
+
