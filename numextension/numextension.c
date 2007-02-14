@@ -1,6 +1,7 @@
 #include <Python.h>
 #include <numarray/libnumarray.h>
 #include <math.h>
+#include "py_canny_edge.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -831,6 +832,13 @@ static struct PyMethodDef numeric_methods[] = {
 	{"islocalmaximum", py_isLocalMaximum, METH_VARARGS},
 	{"islocalminimum", py_isLocalMinimum, METH_VARARGS},
 	{"pointsInPolygon", py_pointsInPolygon, METH_VARARGS},
+
+// from beamfinder.c
+	//{"resamplearray", resamplearray, METH_VARARGS},
+	{"cannyedge", cannyedge, METH_VARARGS}, 
+	//{"componentlabeling", componentlabeling, METH_VARARGS}, 
+	//{"fitcircle2edges", fitcircle2edges, METH_VARARGS}, 
+
 	{NULL, NULL}
 };
 
