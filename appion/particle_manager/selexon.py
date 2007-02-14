@@ -10,6 +10,7 @@ from selexonFunctions2 import *
 from crudFinderFunctions2 import *
 
 selexondonename='.selexondone.py'
+imagesskipped=False
 
 if __name__ == '__main__':
 	# record command line
@@ -167,7 +168,8 @@ if __name__ == '__main__':
 			doneCheck(donedict,imgname)
 			if (params["continue"]==True):
 				if donedict[imgname]:
-					print imgname,'already processed. To process again, remove "continue" option.'
+					imagesskipped=True
+					#print imgname,'already processed. To process again, remove "continue" option.'
 					continue
 
 			# insert selexon params into dbparticledata.selectionParams table
@@ -282,7 +284,11 @@ if __name__ == '__main__':
 
 		if params["dbimages"]==True:
 			notdone=True
-			print "Waiting ten minutes for new images"
+			if(imagesskipped == True):
+				print " !!! Images already processed and were therefore skipped."
+				print " !!! to them process again, remove \'continue\' option and run selexon again."
+				imagesskipped=False
+			print "\nAll images processed. Waiting ten minutes for new images."
 			time.sleep(600)
 			images=getImagesFromDB(params['session']['name'],params['preset'])
 			createImageLinks(images)
