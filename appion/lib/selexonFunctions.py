@@ -180,7 +180,7 @@ def parseUploadInput(args,params):
 		elif (elements[0]=='description'):
 			params['description']=elements[1]
 		else:
-			print "undefined parameter '"+arg+"'\n"
+			print "\nERROR: undefined parameter \'"+arg+"\'\n"
 			sys.exit(1)
         
 def parsePrtlUploadInput(args,params):
@@ -205,7 +205,7 @@ def parsePrtlUploadInput(args,params):
 				params['extension']=string.join(splitfname[1:],'.')
 				params['prtltype']=splitfname[-1]
 			else:
-				print ("file '%s' does not exist \n" % boxfile)
+				print ("\nERROR: file \'%s\' does not exist \n" % boxfile)
 				sys.exit()
 		lastarg+=1
 	params["imgs"]=mrcfileroot
@@ -220,7 +220,7 @@ def parsePrtlUploadInput(args,params):
 		elif (elements[0]=='diam'):
 			params['diam']=int(elements[1])
 		else:
-			print "undefined parameter '"+arg+"'\n"
+			print "\nERROR: undefined parameter \'"+arg+"\'\n"
 			sys.exit(1)
         
 def parseSelexonInput(args,params):
@@ -265,7 +265,7 @@ def parseSelexonInput(args,params):
 				params['endang']=int(angs[1])
 				params['incrang']=int(angs[2])
 			else:
-				print "range must include start & stop angle & increment"
+				print "\nERROR: \'range\' must include 3 angle parameters: start, stop, & increment\n"
 				sys.exit(1)
 		elif (re.match('range\d+',elements[0])):
 			num=elements[0][-1]
@@ -276,7 +276,7 @@ def parseSelexonInput(args,params):
 				params['incrang'+num]=int(angs[2])
 				params['multiple_range']=True
 			else:
- 				print "range must include start & stop angle & increment"
+ 				print "\nERROR: \'range\' must include 3 angle parameters: start, stop, & increment\n"
 				sys.exit(1)
 		elif (elements[0]=='thresh'):
 			params["thresh"]=float(elements[1])
@@ -320,8 +320,9 @@ def parseSelexonInput(args,params):
 				params["dbimages"]=True
 				params["continue"]=True # continue should be on for dbimages option
 			else:
-				print "dbimages must include both session and preset parameters"
-				sys.exit()
+				print "\nERROR: dbimages must include both \'session\' and \'preset\'"+\
+					"parameters (ex: \'07feb13a,en\')\n"
+				sys.exit(1)
 		elif (elements[0]=='alldbimages'):
 			params['sessionname']=elements[1]
 			params['alldbimages']=True
@@ -352,7 +353,7 @@ def parseSelexonInput(args,params):
 		elif (arg=='test'):
 			params["test"]=True
 		else:
-			print "undefined parameter '"+arg+"'\n"
+			print "\nERROR: undefined parameter \'"+arg+"\'\n"
 			sys.exit(1)
         
 def runFindEM(params,file):
@@ -720,8 +721,8 @@ def getImgSize(fname):
 		size=int(imagedata[0]['camera']['dimension']['y'])
 		return(size)
 	else:
-		print "Image", fname," not found in database"
-		sys.exit()
+		print "\nERROR: Image",fname,"not found in database\n"
+		sys.exit(1)
 	return(size)
 
 def checkTemplates(params,upload=None):
@@ -739,8 +740,8 @@ def checkTemplates(params,upload=None):
 	while (stop==0):
 		if (os.path.exists(name+'.mrc') and os.path.exists(name+str(n+1)+'.mrc')):
 			# templates not following naming scheme
-			print "ERROR: Both",name+'.mrc',"and",name+str(n+1)+'.mrc',"exist.\n"
-			sys.exit()
+			print "ERROR: Both",name+".mrc and",name+str(n+1)+".mrc exist\n"
+			sys.exit(1)
 		if (os.path.exists(name+'.mrc')):
 			params['templatelist'].append(name+'.mrc')
 			n+=1
@@ -752,7 +753,7 @@ def checkTemplates(params,upload=None):
 			stop=1
 
 	if not params['templatelist']:
-		print "There are no template images found with basename \""+name+"\"\n"
+		print "\nERROR: There are no template images found with basename \'"+name+"\'\n"
 		sys.exit(1)
 
 	return(params)
@@ -761,9 +762,9 @@ def dwnsizeImg(params,img):
 	#downsize and filter leginon image     
 	imagedata=getImageData(img)    
 	bin=params['bin']
-	print " ... downsizing", img
+	#print " ... downsizing", img
 	im=binImg(imagedata['image'],bin)
-	print " ... filtering", img
+	#print " ... filtering", img
 	apix=params['apix']*bin
 	im=filterImg(im,apix,params['lp'])
 	Mrc.numeric_to_mrc(im,(img+'.dwn.mrc'))
@@ -775,15 +776,14 @@ def dwnsizeTemplate(params,filename):
 	im=Mrc.mrc_to_numeric(filename)
 	boxsize=im.shape
 	if ((boxsize[0]/bin)%2!=0):
-		print "Error: binned image must be divisible by 2"
+		print "\nERROR: binned image must be divisible by 2\n"
 		sys.exit(1)
 	if (boxsize[0]%bin!=0):
-		print "Error: box size not divisible by binning factor"
+		print "\nERROR: box size not divisible by binning factor\n"
 		sys.exit(1)
-	print " ... downsizing", filename
+	#print " ... downsizing", filename
 	im=binImg(im,bin)
-
-	print " ... filtering",filename
+	#print " ... filtering",filename
 	apix=params['apix']*bin
 	im=filterImg(im,apix,params['lp'])
 
@@ -837,7 +837,7 @@ def pik2Box(params,file):
 	bfile.writelines(piklist)
 	bfile.close()
 
-	print "results written to",file+".box\n"
+	print "results written to \'"+file+".box\'"
 	return
 
 def writeSelexLog(commandline, file=".selexonlog"):
@@ -883,8 +883,8 @@ def getImageData(imagename):
 	if imagedata:
 		return imagedata[0]
 	else:
-		print "Image", imagename,"not found in database"
-		sys.exit()
+		print "\nERROR: Image", imagename,"not found in database\n"
+		sys.exit(1)
 
 def getPixelSize(img):
 	# use image data object to get pixel size
@@ -945,7 +945,7 @@ def getDBTemplates(params):
 		# find templateImage row
 		tmpltinfo=partdb.direct_query(data.templateImage, tid)
 		if not (tmpltinfo):
-			print "\nTemplateId",tid,"not found in database.  Use 'uploadTemplate.py'"
+			print "\nERROR: TemplateId",tid,"not found in database.  Use 'uploadTemplate.py'\n"
 			sys.exit(1)
 		fname=tmpltinfo['templatepath']
 		apix=tmpltinfo['apix']
@@ -1160,7 +1160,7 @@ def insertSelexonParams(params,expid):
 		selexonparams=partresults[0]
 		# make sure that using same number of templates
 		if len(params['templatelist'])!=len(tmpltresults):
-			print "All parameters for a selexon run must be identical!"
+			print "\nERROR: All parameters for a selexon run must be identical!"
 			print "You do not have the same number of templates as your last run"
 			sys.exit(1)
 		# param check if using multiple ranges for templates
@@ -1185,7 +1185,7 @@ def insertSelexonParams(params,expid):
 				if (tmpltNameResult[0]['range_start']!=strt or
 				    tmpltNameResult[0]['range_end']!=end or
 				    tmpltNameResult[0]['range_incr']!=incr):
-					print "All parameters for a selexon run must be identical!"
+					print "\nERROR: All parameters for a selexon run must be identical!"
 					print "Template search ranges are not the same as your last run"
 					sys.exit(1)
 		# param check for single range
@@ -1193,7 +1193,7 @@ def insertSelexonParams(params,expid):
 			if (tmpltresults[0]['range_start']!=params["startang"] or
 			    tmpltresults[0]['range_end']!=params["endang"] or
 			    tmpltresults[0]['range_incr']!=params["incrang"]):
-				print "All parameters for a selexon run must be identical!"
+				print "\nERROR: All parameters for a selexon run must be identical!"
 				print "Template search ranges are not the same as your last run"
 				sys.exit(1)
  		if (selexonparams['diam']!=params['diam'] or
@@ -1207,9 +1207,9 @@ def insertSelexonParams(params,expid):
 		    selexonparams['crud_low']!=params['clo'] or
 		    selexonparams['crud_high']!=params['chi'] or
 		    selexonparams['crud_std']!=params['cstd']):
-			print "All parameters for a selexon run must be identical!"
+			print "\nERROR: All parameters for a selexon run must be identical!"
 			print "please check your parameter settings."
- 			sys.exit()
+ 			sys.exit(1)
 	return
 
 def insertTemplateRun(params,runq,imgname,strt,end,incr):
@@ -1224,7 +1224,7 @@ def insertTemplateRun(params,runq,imgname,strt,end,incr):
 
 	# if no templates in the database, exit
 	if not (templateId):
-		print "\nTemplate",imgname,"not found in database.  Use preptemplate"
+		print "\nERROR: Template",imgname,"not found in database. Use preptemplate"
 		sys.exit(1)
 	templateq['templateId']=templateId
 	templateq['runId']=runq

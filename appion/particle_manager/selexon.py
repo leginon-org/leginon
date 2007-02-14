@@ -29,29 +29,29 @@ if __name__ == '__main__':
 	# check to make sure that incompatible parameters are not set
 	if not params['templateIds'] and not params['apix']:
 		print "\nERROR: if not using templateIds, you must enter a template pixel size\n"
-		sys.exit()
+		sys.exit(1)
 	if params['templateIds'] and params['template']:
-		print "\nERROR: Both template database IDs and mrc file templates are specified,\nChoose one\n"
+		print "\nERROR: Both template database IDs and mrc file templates are specified,\nChoose only one\n"
 		sys.exit(1)
 	if params['crudonly']==True and params['shiftonly']==True:
-		print 'ERROR: crudonly and shiftonly can not be specified at the same time'
-		sys.exit()
+		print "\nERROR: crudonly and shiftonly can not be specified at the same time\n"
+		sys.exit(1)
 	if (params["thresh"]==0 and params["autopik"]==0):
 		print "\nERROR: neither manual threshold or autopik parameters are set, please set one.\n"
 		sys.exit(1)
 	if (params["diam"]==0):
-		print "\nERROR: please input the diameter of your particle\n\n"
+		print "\nERROR: please input the diameter of your particle\n"
 		sys.exit(1)
 	if len(params["mrcfileroot"]) > 0 and params["dbimages"]==True:
 		print len(images)
 		print "\nERROR: dbimages can not be specified if particular images have been specified\n"
 		sys.exit(1)
 	if params['alldbimages'] and params['dbimages']==True:
-		print "ERROR: dbimages and alldbimages can not be specified at the same time\n"
-		sys.exit()
+		print "\nERROR: dbimages and alldbimages can not be specified at the same time\n"
+		sys.exit(1)
 	if len(params['mrcfileroot']) > 0 and params['alldbimages']:
-		print "ERROR: alldbimages can not be specified if particular images have been specified\n"
-		sys.exit()
+		print "\nERROR: alldbimages can not be specified if particular images have been specified\n"
+		sys.exit(1)
 	
 	# get list of input images, since wildcards are supported
 	print " ... getting images"
@@ -64,7 +64,7 @@ if __name__ == '__main__':
 	else:
 		if not params['mrcfileroot']:
 			print "\nERROR: no files specified\n"
-			sys.exit()
+			sys.exit(1)
 		imglist=params["mrcfileroot"]
 		images=[]
 		for img in imglist:
@@ -107,10 +107,10 @@ if __name__ == '__main__':
 	# check to see if user only wants to run the crud finder
 	if (params["crudonly"]==True):
 		if (params["crud"]==True and params["cdiam"]==0):
-			print "\nError: both \"crud\" and \"crudonly\" are set, choose one or the other.\n"
+			print "\nERROR: both \"crud\" and \"crudonly\" are set, choose one or the other.\n"
 			sys.exit(1)
 		if (params["diam"]==0): # diameter must be set
-			print "\nError: please input the diameter of your particle\n\n"
+			print "\nERROR: please input the diameter of your particle\n\n"
 			sys.exit(1)
 		# create directory to contain the 'crud' files
 		if not (os.path.exists("crudfiles")):
@@ -202,7 +202,7 @@ if __name__ == '__main__':
 
 			# if no particles were found, skip rest and go to next image
 			if not (os.path.exists("pikfiles/"+imgname+".a.pik")):
-				print "no particles found in \""+imgname+".mrc\"\n"
+				print "no particles found in \'"+imgname+".mrc\'"
 				# write results to dictionary
 				donedict[imgname]=True
 				writeDoneDict(donedict,selexondonename)
@@ -217,7 +217,7 @@ if __name__ == '__main__':
 					tfindCrud= "%.2f" % float(time.time()-t1)
 				# if crudfinder removes all the particles, go to next image
 				if not (os.path.exists("pikfiles/"+imgname+".a.pik.nocrud")):
-					print "no particles left after crudfinder in \""+imgname+".mrc\"\n"
+					print "no particles left after crudfinder in \'"+imgname+".mrc\'"
  					# write results to dictionary
 					donedict[imgname]=True
 					writeDoneDict(donedict)
@@ -254,23 +254,30 @@ if __name__ == '__main__':
 			tdiff = time.time()-tbegin
 			ttotal = "%.2f" % float(tdiff)
 			if(params["continue"]==False or tdiff > 0.3):
-				print "\n\t-----------------------------"
-				print "\tSUMMARY:"
-				print "\tUsing the",params['method'],"method"
+				count = count + 1
+
+				print "\n\t\tSUMMARY:"
+				print "\t-----------------------------"
+				print "\t...using the",params['method'],"method"
 				if (params["crud"]==True):
 					print "\tFindCrud:  \t",tfindCrud,"seconds"
+
 				print "\tPEAKS:    \t",numpeaks,"peaks"
-				print "\tTIME:     \t",ttotal,"sec"
-				timesum = timesum + tdiff
-				timesumsq = timesumsq + (tdiff**2)
-				count = count + 1
 				if(count > 1):
 					peakstdev = math.sqrt(float(count*peaksumsq - peaksum**2) / float(count*(count-1)))
 					print "\tAVG PEAKS:\t",round(float(peaksum)/float(count),1),"+/-",\
-						round(peakstdev,1),"peaks\n\t( TOTAL:",peaksum,"peaks for",count,"images )"
+						round(peakstdev,1),"peaks"
+					print "\t(- TOTAL:",peaksum,"peaks for",count,"images -)"
+
+				print "\tTIME:     \t",ttotal,"sec"
+				timesum = timesum + tdiff
+				timesumsq = timesumsq + (tdiff**2)
+				if(count > 1):
 					timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
-					print "\tAVG TIME: \t",round(float(timesum)/float(count),3),"+/-",\
-						round(timestdev,3),"sec\n\t( TOTAL:",round(timesum/60.0,2),"min )"
+					print "\tAVG TIME: \t",round(float(timesum)/float(count),1),"+/-",\
+						round(timestdev,1),"sec"
+					print "\t(- TOTAL:",round(timesum/60.0,2),"min -)"
+
 				print "\t-----------------------------"
 
 		if params["dbimages"]==True:
@@ -281,14 +288,7 @@ if __name__ == '__main__':
 			createImageLinks(images)
 		else:
 			notdone=False
-	ttotal= "%.2f" % float(time.time()-twhole)
-	print "COMPLETE LOOP:\t",ttotal,"seconds for",count,"images"
-	print "end run"
-	print "====================================================="
-	print "====================================================="
-	print "====================================================="
-	print "====================================================="
-	print ""
+
 	# remove temporary templates if getting images from db
 	if params['templateIds']:
 		i=1
@@ -301,5 +301,12 @@ if __name__ == '__main__':
 			os.remove(scdwnname)
 			i=i+1
 			
-
+	ttotal= "%.2f" % float(time.time()-twhole)
+	print "COMPLETE LOOP:\t",ttotal,"seconds for",count,"images"
+	print "end run"
+	print "====================================================="
+	print "====================================================="
+	print "====================================================="
+	print "====================================================="
+	print ""
 
