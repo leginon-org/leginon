@@ -143,15 +143,17 @@ if __name__ == '__main__':
 	# run selexon
 	notdone=True
 	twhole=time.time()
-	count  = 0
+	count  = 1
+	lastcount = 0
 	peaksum = 0
 	peaksumsq = 0
 	timesum = 0
 	timesumsq = 0
 	while notdone:
 		while images:
-			print ""
-			print "Starting image",(count+1),"..."
+			if(lastcount != count):
+				print "\nStarting image",(count+1),"..."
+				lastcount = count
 			tbegin=time.time()
 			img = images.pop(0)
 
@@ -256,7 +258,7 @@ if __name__ == '__main__':
 			tdiff = time.time()-tbegin
 			ttotal = "%.2f" % float(tdiff)
 			if(params["continue"]==False or tdiff > 0.3):
-				count = count + 1
+
 
 				print "\n\t\tSUMMARY:"
 				print "\t-----------------------------"
@@ -280,6 +282,7 @@ if __name__ == '__main__':
 						round(timestdev,1),"sec"
 					print "\t(- TOTAL:",round(timesum/60.0,2),"min -)"
 
+				count = count + 1
 				print "\t-----------------------------"
 
 		if params["dbimages"]==True:
