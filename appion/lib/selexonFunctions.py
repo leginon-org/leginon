@@ -840,8 +840,8 @@ def pik2Box(params,file):
 	print "results written to",file+".box\n"
 	return
 
-def writeSelexLog(commandline):
-	f=open('.selexonlog','a')
+def writeSelexLog(commandline, file=".selexonlog"):
+	f=open(file,'a')
 	out=""
 	for n in commandline:
 		out=out+n+" "

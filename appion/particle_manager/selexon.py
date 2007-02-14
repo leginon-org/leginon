@@ -136,6 +136,9 @@ if __name__ == '__main__':
 	if not (os.path.exists("pikfiles")):
 		os.mkdir("pikfiles")
 
+	#Write log to rundir
+	writeSelexLog(sys.argv,file="selexon.log")
+
 	# run selexon
 	notdone=True
 	twhole=time.time()
@@ -147,7 +150,7 @@ if __name__ == '__main__':
 	while notdone:
 		while images:
 			print ""
-			print "Starting image ",(count+1),"..."
+			print "Starting image",(count+1),"..."
 			tbegin=time.time()
 			img = images.pop(0)
 
@@ -178,37 +181,24 @@ if __name__ == '__main__':
 			
 			# run FindEM
 			if params['method'] == "experimental":
-				print "Using *experimental* Python CC Method..."
-				t1=time.time()
 				#Finds peaks as well:
 				numpeaks = runCrossCorr(params,imgname)
 				peaksum = peaksum + numpeaks
 				peaksumsq = peaksumsq + numpeaks**2
-				tcrosscorr= "%.2f" % float(time.time()-t1)
 			else:
-				print "Using *classic* FindEM Method..."
-				t1=time.time()
 #				tmpRemoveCrud(params,imgname)
 #				sys.exit()
 				dwnsizeImg(params,imgname)
 				runFindEM(params,imgname)
-				tcrosscorr= "%.2f" % float(time.time()-t1)
 
 			if params['method'] == "classic":
-				print "Using *classic* Viewit Method..."
-				t1=time.time()
 				findPeaks(params,imgname)
-				tfindPeaks= "%.2f" % float(time.time()-t1)
 			elif params['method'] == "experimental":
-				print "Finished *expermental* Method..."
-				tfindPeaks = 0.0
+				print "skipping findpeaks..."
 			else:
-				print "Using *updated* Leginon Method..."
-				t1=time.time()
 				numpeaks = findPeaks2(params,imgname)
 				peaksum = peaksum + numpeaks
 				peaksumsq = peaksumsq + numpeaks**2
-				tfindPeaks= "%.2f" % float(time.time()-t1)
 
 			# if no particles were found, skip rest and go to next image
 			if not (os.path.exists("pikfiles/"+imgname+".a.pik")):
@@ -236,15 +226,9 @@ if __name__ == '__main__':
 			# create jpg of selected particles if not created by crudfinder
 			if (params["crud"]==False):
 				if params['method'] == "classic":
-					print "Using *classic* Viewit Method..."
-					t1=time.time()
 					createJPG(params,imgname)
-					tcreateJPG= "%.2f" % float(time.time()-t1)
 				else:
-					print "Using *updated* python imaging Method..."
-					t1=time.time()
 					createJPG2(params,imgname)
-					tcreateJPG= "%.2f" % float(time.time()-t1)
 
 			# convert resulting pik file to eman box file
 			if (params["box"]>0):
@@ -265,36 +249,29 @@ if __name__ == '__main__':
 			# write results to dictionary
  			donedict[imgname]=True
 			writeDoneDict(donedict,selexondonename)
-	    
-			if params['method'] == "classic":
-				print "Using *classic* Viewit Method..."
-			elif params['method'] == "experimental":
-				print "Using *experimental* FindEM-free Method..."
-			else:
-				print "Using *updated* Selexon Method..."
-			print "TIME SUMMARY:"
-			print "\tCrossCorr: \t",tcrosscorr,"seconds"
-			print "\tFindPeaks: \t",tfindPeaks,"seconds"
-			print "\tCreateJPG: \t",tcreateJPG,"seconds"
-			if (params["crud"]==True):
-				print "\tFindCrud:  \t",tfindCrud,"seconds"
-			print "\t---------- \t----------------"
-			tdiff = time.time()-tbegin
 
+			#SUMMARIZE INFO
+			tdiff = time.time()-tbegin
 			ttotal = "%.2f" % float(tdiff)
-			print "\tTOTAL:     \t",ttotal,"seconds"
 			if(params["continue"]==False or tdiff > 0.3):
+				print "\n\t-----------------------------"
+				print "\tSUMMARY:"
+				print "\tUsing the",params['method'],"method"
+				if (params["crud"]==True):
+					print "\tFindCrud:  \t",tfindCrud,"seconds"
+				print "\tPEAKS:    \t",numpeaks,"peaks"
+				print "\tTIME:     \t",ttotal,"sec"
 				timesum = timesum + tdiff
 				timesumsq = timesumsq + (tdiff**2)
 				count = count + 1
-			if(count > 1):
-				peakstdev = math.sqrt(float(count*peaksumsq - peaksum**2) / float(count*(count-1)))
-				print "PEAKS:\t",round(float(peaksum)/float(count),1),"+/-",\
-					round(peakstdev,1),"peaks\t( TOTAL:",peaksum,"peaks for",count,"images )"
-				timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
-				print "TIME: \t",round(float(timesum)/float(count),3),"+/-",\
-					round(timestdev,3),"sec\t( TOTAL:",round(timesum/60.0,2),"min )"
-
+				if(count > 1):
+					peakstdev = math.sqrt(float(count*peaksumsq - peaksum**2) / float(count*(count-1)))
+					print "\tAVG PEAKS:\t",round(float(peaksum)/float(count),1),"+/-",\
+						round(peakstdev,1),"peaks\n\t( TOTAL:",peaksum,"peaks for",count,"images )"
+					timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
+					print "\tAVG TIME: \t",round(float(timesum)/float(count),3),"+/-",\
+						round(timestdev,3),"sec\n\t( TOTAL:",round(timesum/60.0,2),"min )"
+				print "\t-----------------------------"
 
 		if params["dbimages"]==True:
 			notdone=True

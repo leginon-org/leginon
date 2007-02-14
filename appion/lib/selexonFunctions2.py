@@ -129,12 +129,13 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 	#GET FINDEM NORMALIZATION FUNCTION
 	normconvmap = calc_normconvmap(image, imagefft, tmplmaskbin, oversized, pixrad)
 
-	print "Starting rotations ... "
+	totalrots = int( (end - strt) / incr + 0.999)
+	sys.stderr.write("Doing "+str(totalrots)+" rotations ")
 	ang = strt
 	i = 1
-	totalrots = int( (end - strt) / incr + 0.999)
 	while(ang < end):
-		print " ... rotation:",i,"of",totalrots,"  \tangle =",ang
+		#print " ... rotation:",i,"of",totalrots,"  \tangle =",ang
+		sys.stderr.write(".")
 		#ROTATE
 		template2   = nd_image.rotate(template,ang,reshape=False,mode="wrap").copy()
 		#MASK
@@ -163,6 +164,7 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 		i = i + 1
 
 		#sys.exit(1)
+	print ""
 	#NORMALIZE
 	#print "NormConvMap Stats:"
 	#imageinfo(normconvmap)
