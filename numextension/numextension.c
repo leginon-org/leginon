@@ -218,7 +218,7 @@ bin(PyObject *self, PyObject *args)
 	rows = image->dimensions[0];
 	cols = image->dimensions[1];
 	if ((rows%binsize) || (cols%binsize) ) {
-		sprintf(errstr, "bin by %d does not allow image dimensions %d,%d do not allow binning by %d", rows,cols,binsize);
+		sprintf(errstr, "image dimensions %d,%d do not allow binning by %d", rows,cols,binsize);
 		PyErr_SetString(PyExc_ValueError, errstr);
 		return NULL;
 	}
@@ -270,7 +270,7 @@ bin(PyObject *self, PyObject *args)
 
 	Py_DECREF(floatimage);
 
-	return NA_OutputArray(result, tFloat32, 0);
+	return (PyObject *)result;
 }
 
 static PyObject *nonmaximasuppress(PyObject *self, PyObject *args) {
@@ -346,7 +346,7 @@ static PyObject *hysteresisthreshold(PyObject *self, PyObject *args) {
 		}
 	}
 	Py_DECREF(inputarray);
-	return NA_OutputArray(outputarray, tInt32, 0);
+	return (PyObject *)outputarray;
 }
 
 static PyObject *houghline(PyObject *self, PyObject *args) {
@@ -354,7 +354,7 @@ static PyObject *houghline(PyObject *self, PyObject *args) {
 	PyArrayObject *inputarray, *gradientarray = NULL, *hough;
 	int dimensions[3];
 	int n, nd;
-	int i, j, k, kmin, kmax, r, direction;
+	int i, j, k, kmin, kmax, r, direction=0;
 	double rtheta;
 	double gradientvalue;
 	int ntheta = 90;
@@ -424,7 +424,7 @@ static PyObject *houghline(PyObject *self, PyObject *args) {
 	Py_DECREF(inputarray);
 	Py_DECREF(gradientarray);
 
-	return NA_OutputArray(hough, tFloat64, 0);
+	return (PyObject *)hough;
 }
 
 static PyObject *rgbstring(PyObject *self, PyObject *args) {
@@ -432,7 +432,7 @@ static PyObject *rgbstring(PyObject *self, PyObject *args) {
 	PyArrayObject *inputarray;
 	int i, j, size;
 	float frommin, frommax, fromrange, scale, value;
-	unsigned char *string, *index;
+	unsigned char *index;
 	int scaledvalue;
 	float colors = 255.0;
 	unsigned char *rgb = NULL;
@@ -462,7 +462,7 @@ static PyObject *rgbstring(PyObject *self, PyObject *args) {
 
 	size = inputarray->dimensions[0]*inputarray->dimensions[1]*3;
 	output = PyString_FromStringAndSize(NULL, size);
-	index = PyString_AsString(output);
+	index = (unsigned char *)PyString_AsString(output);
 	for(i = 0; i < inputarray->dimensions[0]; i++) {
 		for(j = 0; j < inputarray->dimensions[1]; j++) {
 			value = *(float *)(inputarray->data
@@ -496,7 +496,6 @@ static PyObject *rgbstring(PyObject *self, PyObject *args) {
 }
 
 static PyObject *hanning(PyObject *self, PyObject *args, PyObject *kwargs) {
-	PyObject *shape;
 	int m, n;
 	float a = 0.5, b;
 	PyArrayObject *result;
@@ -520,7 +519,7 @@ static PyObject *hanning(PyObject *self, PyObject *args, PyObject *kwargs) {
 		}
 	}
 
-	return NA_OutputArray(result, tFloat32, 0);
+	return (PyObject *)result;
 }
 
 static PyObject *highpass(PyObject *self, PyObject *args) {
@@ -543,7 +542,7 @@ static PyObject *highpass(PyObject *self, PyObject *args) {
 		}
 	}
 
-	return NA_OutputArray(result, tFloat32, 0);
+	return (PyObject *)result;
 }
 
 static PyObject *logpolar(PyObject *self, PyObject *args) {
@@ -632,7 +631,7 @@ static PyObject *logpolar(PyObject *self, PyObject *args) {
 
 	Py_XDECREF(iarray);
 
-	return Py_BuildValue("(Off)", NA_OutputArray(oarray, tFloat32, 0), base, phiscale);
+	return Py_BuildValue("(Off)", (PyObject *)oarray, base, phiscale);
 }
 
 /*
@@ -841,8 +840,8 @@ void float_to_ubyte( float* image, int nsize, unsigned char* outimg, int scale_f
 PyObject *cannyedge(PyObject *self, PyObject *args) {
 	PyObject *input;
 	PyArrayObject *inputarray=NULL, *outputarray=NULL;
-	int i, j;
-        unsigned pos, nelements;
+	int i;
+        unsigned nelements;
 	float sigma, tlow, thigh;
         unsigned char *image=NULL;
         unsigned char *edge=NULL;
@@ -882,7 +881,7 @@ PyObject *cannyedge(PyObject *self, PyObject *args) {
         if (image !=NULL) free(image);
 	outputarray = NA_vNewArray(edge, tUInt8, inputarray->nd, inputarray->dimensions); 
 	Py_DECREF(inputarray);
-	return NA_OutputArray(outputarray, tUInt8, 0);
+	return (PyObject *)outputarray;
 }
 
 
