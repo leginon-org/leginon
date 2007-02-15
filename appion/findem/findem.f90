@@ -68,7 +68,7 @@ program main
 	character*80 imagefile,templatefile,relaxfile,angmapname,cccmaxmap,blank
 	real sampling,real_sampling,resmin,resmax,defocus,downsize,thresh,bord
 	real diameter, rot_matrix(2,2)
-	integer iteration, search_radius
+	integer iteration, search_radius, numrot
 
 	integer px,py,pz,err,x,y,z,p,np,ival
 	real ang,ccc,min1,max1
@@ -186,7 +186,9 @@ program main
 
 	CALL normconvfunc(image,nxft,nyft,pxft,pyft,normconvmap,radius,sampling)
 
-	PRINT*,"X DOING ROTATIONS..."
+	numrot = (anglimit-0.1-angstart)/angstepsize
+
+	PRINT*,"X DOING",numrot,"ROTATIONS..."
 	! LOOP OVER ANGLES
 	DO ang = angstart, anglimit-0.1, angstepsize
 		!PRINT*,'angle=',ang
