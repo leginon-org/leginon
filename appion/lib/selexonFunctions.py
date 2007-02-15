@@ -380,7 +380,8 @@ def runFindEM(params,file):
 			end=str(params["endang"+str(classavg)])
 			incr=str(params["incrang"+str(classavg)])
 		fin='';
-		fin=os.popen('${FINDEM_PATH}/FindEM_SB','w')
+		#fin=os.popen('${FINDEM_PATH}/FindEM_SB','w')
+		fin=os.popen('${FINDEM_EXE}','w')
 		#fin=os.popen('/home/vossman/appion2/findem/bin/findem.exe','w')
 		fin.write(file+".dwn.mrc\n")
 		if (len(params['templatelist'])==1 and not params['templateIds']):
@@ -393,7 +394,7 @@ def runFindEM(params,file):
 		fin.write(str(classavg)+"00\n")
 		fin.write(strt+','+end+','+incr+"\n")
 		fin.write(bw+"\n")
-		print "running findEM"
+		print "running findem.exe"
 		fin.flush
 		fin.close()
 		classavg+=1

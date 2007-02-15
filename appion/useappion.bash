@@ -1,5 +1,5 @@
-export APPIONDIR="~/pyappion"
+export APPIONDIR="/home/`whoami`/pyappion"
 export PYTHONPATH="${PYTHONPATH}:${APPIONDIR}/lib"
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${APPIONDIR}/lib"
 export PATH="${PATH}:$APPIONDIR/particle_manager"
-export FINDEMEXE="${APPIONDIR}/particle_manager/findem.exe"
+export FINDEM_EXE="${APPIONDIR}/particle_manager/findem.exe"
