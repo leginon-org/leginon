@@ -403,8 +403,6 @@ def runFindEM(params,file):
 			sys.exit(1)
 
 		classavg+=1
-		
-
 	return
         
 def getProjectId(params):
