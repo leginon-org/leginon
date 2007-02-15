@@ -10,6 +10,8 @@ import convolver
 import Image
 import ImageDraw
 import imagefun
+import numextension
+import polygon
 #import libCV
 from selexonFunctions2 import *
 
@@ -18,7 +20,7 @@ from selexonFunctions2 import *
 # Convexhull related functions Starts
 ######################################################################
 
-"""Taken from internet serach
+"""Taken from internet
    , strip down to needed parts and add Colinear test and complete the polygon
    with the initial point if lacked
 Anchi"""
@@ -27,11 +29,6 @@ Anchi"""
 
 Calculate the convex hull of a set of n 2D-points in O(n log n) time.  
 Taken from Berg et al., Computational Geometry, Springer-Verlag, 1997.
-
-Usage:
-
-	convexhull.py <numPoints> <squareLength> <outFile>
-
 Dinu C. Gherman
 """
 
@@ -142,17 +139,17 @@ def image2array(im, convertType='UInt8'):
     copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
     """
     if im.mode == "L":
-        a = numarray.fromstring(im.tostring(), N.UInt8)
+        a = numarray.fromstring(im.tostring(), numarray.UInt8)
         a = numarray.reshape(a, (im.size[1], im.size[0]))
         #a.shape = (im.size[1], im.size[0], 1)  # alternate way
     elif (im.mode=='RGB'):
-        a = numarray.fromstring(im.tostring(), N.UInt8)
+        a = numarray.fromstring(im.tostring(), numarray.UInt8)
         a.shape = (im.size[1], im.size[0], 3)
     else:
         raise ValueError, im.mode+" mode not considered"
 
     if convertType == 'Float32':
-        a = a.astype(N.Float32)
+        a = a.astype(numarray.Float32)
     return a
 
 def prepimage(image,cutoff=5.0):
@@ -184,10 +181,14 @@ def outputimage(array,name,description,testlog):
 		testlog[1] += 1
 		if array.type()==numarray.Bool:
 			array=array.astype(numarray.Int8)
+		if array.type()==numarray.UInt8:
+			array=array.astype(numarray.Int16)
+		if array.type()==numarray.Int64:
+			array=array.astype(numarray.Int32)
 		Mrc.numeric_to_mrc(array,mrcname)
 	return testlog
 
-def find_edge(image,sigma,amin,amax,output,testlog):
+def find_edge_sobel(image,sigma,amin,amax,output,testlog):
 	if (output):
 		testlog=outputimage(image,'input','input image',testlog)
 	if (sigma > 0):
@@ -205,14 +206,61 @@ def find_edge(image,sigma,amin,amax,output,testlog):
 	tedges=ma.masked_inside(edges,edgemax*amin,edgemax*amax)
 	return tedges,testlog
 
+def find_edge_canny(image,sigma,amin,amax,output,testlog):
+
+	tedges,edges,testlog = canny2(image,sigma,5,True,amin,amax,testlog)
+	if (output):
+		testlog=outputimage(image,'input','input image',testlog)
+		testlog=outputimage(edges,'grad','gradient magnitude image',testlog)
+	
+	return tedges,testlog
+
+def canny2_CS(image, sigma=1.8, nonmaximawindow=7, hysteresis=True, tlow=0.3, thigh=0.9,testlog=None):
+	gaussiankernel = convolver.gaussian_kernel(sigma)
+	print len(gaussiankernel)
+	c = convolver.Convolver()
+	c.setImage(image)
+	gaussianimage = c.convolve(kernel=gaussiankernel)
+	if True:
+		testlog=outputimage(gaussianimage,'smooth','smooth image',testlog)
+	gradient_col = nd.sobel(gaussianimage,axis=-1)
+	gradient_row = nd.sobel(gaussianimage,axis=0)
+	edgeimage=nd.generic_gradient_magnitude(gaussianimage, derivative=nd.sobel)
+	gradientimage= ma.filled(ma.arctan2(gradient_row,gradient_col))
+
+	numextension.nonmaximasuppress(edgeimage, gradientimage, nonmaximawindow)
+
+	if hysteresis:
+		totaledge = nd.sum(numarray.where(edgeimage > 0,1,0))
+		highcount = int(totaledge * thigh + 0.5)
+		histo_width = edgeimage.max()
+		bin = int(histo_width)
+		hist = nd.histogram(edgeimage,1,histo_width,bin)
+		r=0
+		numedges = hist[0]
+		while numedges < highcount and r < bin-1 :
+			r += 1
+			numedges +=hist[r]
+			
+		highthreshold = r*(histo_width/bin)
+		lowthreshold = int(highthreshold*tlow + 0.5)
+		
+		edgeimage_final = numextension.hysteresisthreshold(edgeimage,
+			lowthreshold, highthreshold) * edgeimage
+		edges = ma.masked_greater(edgeimage_final,0,1)
+	return edges, edgeimage,testlog
+
+def canny2(image, sigma=1.8, nonmaximawindow=7, hysteresis=True, tlow=0.3, thigh=0.9,testlog=None):
+	edgeimage_final = numextension.cannyedge(image,sigma,tlow,thigh)
+	edges = ma.masked_less(edgeimage_final,100,0)
+	return edges, edgeimage_final,testlog
+	
+
 def fill_mask(mask_image,iteration):
 	base=nd.generate_binary_structure(2,2)
 	mask_image=nd.binary_dilation(mask_image,structure=base,iterations=iteration)
+	base=nd.generate_binary_structure(2,1)
 	mask_image=nd.binary_erosion(mask_image,structure=base,iterations=iteration)
-	if (numarray.__version__ >= '1.5'):
-		mask_image=nd.binary_fill_holes(mask_image,structure=base)
-	else:
-		print "fill_holes function not available in numarray version %s, do dilation/erosion only" %numarray.__version__
 	return mask_image
 	
 
@@ -436,26 +484,54 @@ def convex_hull_union(bimage,cruds,clabels,testlog):
 	cruds,clabels=nd.label(polygon_image)
 
 	testlog=outputimage(cruds,'crud_labelp','Convex hull union labeled polygons',testlog)
-	return cruds,clabels,testlog
+	return cruds,clabels,gpolygons,testlog
 	
-def get_labeled_info(image,alledgemask,labeled_image,ltotal,testlog):
+def get_labeled_info(image,alledgemask,labeled_image,ltotal,fast,testlog):
+	print "getting crud info"
 	info={}
 	imageshape=numarray.shape(labeled_image)
-	edgeimage,testlog=find_edge(alledgemask,0,-1,0.0,False,testlog)
-	mask=1-ma.getmask(edgeimage)
-	mask=nd.binary_dilation(mask,iterations=1)
-	testlog=outputimage(mask,'labeledge','Edges of the image labels',testlog)
+	if not fast:
+		edgeimage,testlog=find_edge_sobel(alledgemask,0,-1,0.0,False,testlog)
+		mask=1-ma.getmask(edgeimage)
+		mask=nd.binary_dilation(mask,iterations=1)
+		testlog=outputimage(mask,'labeledge','Edges of the image labels',testlog)
+	else:
+		objs = nd.find_objects(labeled_image)
 	ones=numarray.ones(imageshape)
 	# individual crud is masked to avoid problem of overlapped of crud_obj slices
+	avgall = nd.mean(image)
 	for l in range(1,ltotal+1):
-		length=nd.sum(mask,labels=labeled_image,index=l)
-		area=nd.sum(ones,labels=labeled_image,index=l)
-		avg=nd.mean(image,labels=labeled_image,index=l)
-		stdev=nd.standard_deviation(image,labels=labeled_image,index=l)
-		center=nd.center_of_mass(ones,labels=labeled_image,index=l)
+		if not fast:
+			length=nd.sum(mask,labels=labeled_image,index=l)
+			area=nd.sum(ones,labels=labeled_image,index=l)
+			avg=nd.mean(image,labels=labeled_image,index=l)
+			stdev=nd.standard_deviation(image,labels=labeled_image,index=l)
+			center=nd.center_of_mass(ones,labels=labeled_image,index=l)
+		else:
+			lengths = []
+			lengths.append(objs[l-1][0].stop - objs[l-1][0].start)
+			lengths.append(objs[l-1][1].stop - objs[l-1][1].start)
+			length = 2*(lengths[0]+lengths[1])
+			area = lengths[0]*lengths[1]
+			avg = avgall
+			stdev = 2
+			center=(imageshape[0]/2,imageshape[1]/2)
 		info[l]=(area,avg,stdev,length,center)
 	return info,testlog 
 
+def get_polygon_info(polygons,testlog):
+	print "get polygon info"
+	polygons_arrays = polygon.polygons_tuples2arrays(polygons)
+	info={}
+	for l,p in enumerate(polygons_arrays):
+		length = 2*(p[:,0].max()-p[:,0].min())+2*(p[:,1].max()-p[:,1].min())
+		area = polygon.getPolygonArea(p)
+		center = polygon.getPolygonCenter(p)
+		avg = 100
+		stdev = 2
+		info[l+1]=(area,avg,stdev,length,center)
+	return info,testlog 
+		
 def prune_by_length(info,length_min,length_max,goodcruds_in):
 	print "pruning by edge length"
 	goodcruds=[]
@@ -489,24 +565,35 @@ def prune_by_stdev(info,stdev_min,goodcruds_in):
 				goodcruds.append(l-1)
 	print "pruned to %d region" %len(goodcruds)
 	return goodcruds
-
+	
 def make_pruned_labels(file,labeled_image,ltotal,info,goodlabels):
+	print "remake labeled image after pruning"
 	imageshape=numarray.shape(labeled_image)
 	goodinfo=""
-	goodl=0
 	new_labeled_image=numarray.zeros(imageshape,numarray.Int8)
 	base=numarray.ones(imageshape)
-	for l in range(1,ltotal+1):
+	for i,l1 in enumerate(goodlabels):
+		l=l1+1
 		region=ma.masked_outside(labeled_image,l,l)
-		if (l-1 in goodlabels):
-			goodl=goodl+1
-			region=region/l+goodl-1
-			one_region=region.filled(0)
-			new_labeled_image=new_labeled_image+one_region
-			# output: center area average stdev
-			goodcrudline=file+".mrc "+str(int(info[l][4][1]))+" "+str(int(info[l][4][0]))+" "+str(info[l][0])+" "+str(info[l][1])+" "+str(info[l][2])+" "+str(info[l][3])+"\n"
-			goodinfo=goodinfo+goodcrudline
-	return new_labeled_image,goodl,goodinfo
+		region=region/l+i
+		one_region=region.filled(0)
+		new_labeled_image=new_labeled_image+one_region
+		# output: centerx centery area average stdev length
+		goodcrudline=file+".mrc "+str(int(info[l][4][1]))+" "+str(int(info[l][4][0]))+" "+str(info[l][0])+" "+str(info[l][1])+" "+str(info[l][2])+" "+str(info[l][3])+"\n"
+		goodinfo=goodinfo+goodcrudline
+	return new_labeled_image,len(goodlabels),goodinfo
+
+def make_pruned_polygons(file,gpolygons,imageshape,info,goodlabels):
+	goodpolygons=[]
+	goodinfo=""
+	for l1 in goodlabels:
+		l=l1+1
+		goodcrudline=file+".mrc "+str(int(info[l][4][1]))+" "+str(int(info[l][4][0]))+" "+str(info[l][0])+" "+str(info[l][1])+" "+str(info[l][2])+" "+str(info[l][3])+"\n"
+		goodinfo=goodinfo+goodcrudline
+		goodpolygons.append(gpolygons[l1])
+	cruds = polygon.plot_polygons(imageshape,goodpolygons)
+	return cruds,len(goodpolygons),goodinfo
+
 
 #def findCrud_Craig(bimage,area_t):
 #		print "try FindRegions",area_t
@@ -554,11 +641,15 @@ def findCrud2(params,file):
 		else:
 			os.mkdir("tests")
 
-	list_t=3.14159*diam
-	radius=diam/2
-	area_t=3.1415926*cdiam*cdiam/4
+	pm = 2.0
+	am = 3.0
+	
+	list_t=pm*3.14159*cdiam/bin
+	radius=cdiam/2.0/bin
+	area_t=am*3.1415926*radius*radius
 	crudinfo=""
 	
+	print cdiam,diam,scale,list_t,radius,area_t
 	
 	image=Mrc.mrc_to_numeric(file+".mrc")
 	image=imagefun.bin(image,bin)
@@ -591,7 +682,7 @@ def findCrud2(params,file):
 	print 'scaled crudhi= %.4f crudlo= %.4f' %(high,low)
 
 	#binary edge
-	edgeimage,testlog=find_edge(image,sigma,low,high,True,testlog)
+	edgeimage,testlog=find_edge_canny(image,sigma,low,high,True,testlog)
 
 	nedge=ma.count(edgeimage)
 	# If the area not within the threshold is too large or zero, no further calculation is necessary
@@ -620,20 +711,23 @@ def findCrud2(params,file):
 		testlog=outputimage(cruds,'crud_label','Segmented labeled image',testlog)
 
 		#pruning by length of the perimeters of the labeled regions.
-		# Caution, it will be slow because the need to reconstruct the labeled image
 		if (do_prune_by_length):
-			allinfo,testlog=get_labeled_info(image,mask,cruds,clabels,testlog)
+			allinfo,testlog=get_labeled_info(image,mask,cruds,clabels,True,testlog)
 			goodcruds=range(clabels)
+			print list_t,garea*0.5
 			goodcruds=prune_by_length(allinfo,list_t,garea*0.5,goodcruds)
 			cruds,clabels,goodinfo=make_pruned_labels(file,cruds,clabels,allinfo,goodcruds)
 		
 		#create convex hulls and merge overlapped or inside cruds
-		if (do_convex_hulls):
-			cruds,clabels,testlog=convex_hull_union(mask,cruds,clabels,testlog)		
-
+		if do_convex_hulls:
+			cruds,clabels,gpolygons,testlog=convex_hull_union(mask,cruds,clabels,testlog)
+		
 		if (clabels > 0):
 			testlog[0]=False
-			allinfo,testlog=get_labeled_info(image,mask,cruds,clabels,testlog)
+			if do_convex_hulls:
+				allinfo,testlog=get_polygon_info(gpolygons,testlog)
+			else:				
+				allinfo,testlog=get_labeled_info(image,mask,cruds,clabels,False,testlog)
 			testlog[0]=test
 			goodcruds=range(clabels)
 			#pruning by area as in selexon
@@ -652,16 +746,22 @@ def findCrud2(params,file):
 						temp_cruds,temp_clabels,goodinfo=make_pruned_labels(file,cruds,clabels,allinfo,goodcruds)
 						testlog=outputimage(temp_cruds,'crud_labels','Stdev pruned labeled image',testlog)
 
-			if (test):
+			if test:
 				cruds,clabels,crudinfo=temp_cruds,temp_clabels,goodinfo
 			else:
-				cruds,clabels,crudinfo=make_pruned_labels(file,cruds,clabels,allinfo,goodcruds)
+				if do_convex_hulls:
+					cruds,clabels,crudinfo=make_pruned_polygons(file,gpolygons,shape,allinfo,goodcruds)
+				else:
+					cruds,clabels,crudinfo=make_pruned_labels(file,cruds,clabels,allinfo,goodcruds)
 
 #		create edge image of the cruds for display
 		if (clabels >0):
-			equalcruds=ma.masked_greater_equal(cruds,1)
+			int32cruds=cruds.astype(numarray.Int32)
+			equalcruds=ma.masked_greater_equal(int32cruds,1)
 			equalcruds=equalcruds.filled(100)
-			crudedges,testlog=find_edge(equalcruds,1,0.5,1.0,False,testlog)
+			if (test):
+				testlog=outputimage(equalcruds,'equalcruds','Final Equal Crud image',testlog)
+			crudedges,testlog=find_edge_sobel(equalcruds,1,0.5,1.0,False,testlog)
 			masklabel=1-ma.getmask(crudedges)
 		else:
 			masklabel=numarray.ones(numarray.shape(image))
