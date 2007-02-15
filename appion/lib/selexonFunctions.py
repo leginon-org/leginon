@@ -397,7 +397,14 @@ def runFindEM(params,file):
 		print "running findem.exe"
 		fin.flush
 		fin.close()
+
+		if (not os.path.exists(cccfile)):
+			print "\nERROR: findem.exe did not run or crashed. Did you source useappion.sh?\n"
+			sys.exit(1)
+
 		classavg+=1
+		
+
 	return
         
 def getProjectId(params):
