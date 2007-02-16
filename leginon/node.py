@@ -20,6 +20,7 @@ import gui.wx.Node
 import copy
 import socket
 import remotecall
+import time
 
 import leginonconfig
 import os
@@ -364,7 +365,8 @@ class Node(object):
 			e['data'] = idata.reference()
 			if broadcast:
 				e['destination'] = ''
-			return self.outputEvent(e, wait=wait)
+			r = self.outputEvent(e, wait=wait)
+			return r
 
 	def research(self, datainstance, results=None, readimages=True, timelimit=None):
 		'''
@@ -427,3 +429,39 @@ class Node(object):
 		declared['type'] = type
 		declared['session'] = self.session
 		self.publish(declared, database=True, dbforce=True)
+
+	def timerKey(self, label):
+		return self.name, label
+
+	def storeTime(self, label, type):
+		key = self.timerKey(label)
+		if type == 'start' and key in start_times:
+			raise RuntimeError('Timer restart is not allowed: %s' % (key,))
+		if type == 'stop' and key not in start_times:
+			raise RuntimeError('Stopping timer that was never started: %s' % (key,))
+
+		t = data.TimerData()
+		t['session'] = self.session
+		t['node'] = self.name
+		t['t'] = time.time()
+		t['label'] = label
+
+		if type == 'stop':
+			### this is stop time
+			t0 = start_times[key]
+			t['t0'] = t0
+			del start_times[key]
+			t['diff'] = t['t'] - t0['t']
+		else:
+			### this is start time
+			start_times[key] = t
+		self.publish(t, database=True, dbforce=True)
+
+	def startTimer(self, label):
+		self.storeTime(label, type='start')
+
+	def stopTimer(self, label):
+		self.storeTime(label, type='stop')
+
+## module global for storing start times
+start_times = {}
