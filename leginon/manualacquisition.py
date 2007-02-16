@@ -95,7 +95,8 @@ class ManualAcquisition(node.Node):
 		else:
 			if correct:
 				ccdcameraname = self.instrument.getCCDCameraName()
-				image = self.instrument.imagecorrection.getImage(ccdcameraname=ccdcameraname)
+				imagedata = self.instrument.imagecorrection.getImageData(ccdcameraname=ccdcameraname)
+				image = imagedata['image']
 			else:
 				image = self.instrument.ccdcamera.Image
 
