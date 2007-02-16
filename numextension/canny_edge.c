@@ -72,14 +72,13 @@ unsigned char * float2unsignedchar (float *fp, int nsize)
 * DATE: 2/15/96
 *******************************************************************************/
 void canny(unsigned char *image, int rows, int cols, float sigma,
-         float tlow, float thigh, unsigned char **edge, char *fname)
+         float tlow, float thigh, short int **magnitude, unsigned char **edge, char *fname)
 {
    FILE *fpdir=NULL;          /* File to write the gradient image to.     */
    unsigned char *nms;        /* Points that are local maximal magnitude. */
    short int *smoothedim,     /* The image after gaussian smoothing.      */
              *delta_x,        /* The first devivative image, x-direction. */
-             *delta_y,        /* The first derivative image, y-direction. */
-             *magnitude;      /* The magnitude of the gadient image.      */
+             *delta_y;        /* The first derivative image, y-direction. */
    int r, c, pos;
    float *dir_radians=NULL;   /* Gradient direction image.                */
 
@@ -124,7 +123,7 @@ void canny(unsigned char *image, int rows, int cols, float sigma,
    * Compute the magnitude of the gradient.
    ****************************************************************************/
    if(VERBOSE) printf("Computing the magnitude of the gradient.\n");
-   magnitude_x_y(delta_x, delta_y, rows, cols, &magnitude);
+   magnitude_x_y(delta_x, delta_y, rows, cols, magnitude);
 
    /****************************************************************************
    * Perform non-maximal suppression.
@@ -155,7 +154,7 @@ void canny(unsigned char *image, int rows, int cols, float sigma,
    free(smoothedim);
    free(delta_x);
    free(delta_y);
-   free(magnitude);
+/*   free(magnitude); */
    free(nms);
 }
 

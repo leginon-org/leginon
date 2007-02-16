@@ -4,7 +4,7 @@
 #include "imgbase.h"
 
 void canny(unsigned char *image, int rows, int cols, float sigma,
-         float tlow, float thigh, unsigned char **edge, char *fname);
+         float tlow, float thigh, short int **magnitude, unsigned char **edge, char *fname);
 
 void gaussian_smooth(unsigned char *image, int rows, int cols, float sigma,
         short int **smoothedim);

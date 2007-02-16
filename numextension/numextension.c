@@ -839,11 +839,18 @@ void float_to_ubyte( float* image, int nsize, unsigned char* outimg, int scale_f
 
 PyObject *cannyedge(PyObject *self, PyObject *args) {
 	PyObject *input;
+<<<<<<< numextension.c
+	PyArrayObject *inputarray=NULL, *outputarraym=NULL, *outputarray=NULL;
+	int i, j;
+        unsigned pos, nelements;
+=======
 	PyArrayObject *inputarray=NULL, *outputarray=NULL;
 	int i;
         unsigned nelements;
+>>>>>>> 1.27
 	float sigma, tlow, thigh;
         unsigned char *image=NULL;
+        short int *magnitude=NULL;
         unsigned char *edge=NULL;
 
 	if(!PyArg_ParseTuple(args, "Offf", &input, &sigma, &tlow, &thigh))
@@ -865,7 +872,7 @@ PyObject *cannyedge(PyObject *self, PyObject *args) {
         }
 
         float_to_ubyte((float *)inputarray->data, nelements, image, DO_SCALE);
-        canny(image, inputarray->dimensions[0], inputarray->dimensions[1], sigma, tlow, thigh, &edge, NULL);
+        canny(image, inputarray->dimensions[0], inputarray->dimensions[1], sigma, tlow, thigh, &magnitude, &edge, NULL);
         if (edge == NULL) {
            PyErr_SetString(PyExc_ValueError, "failed to generate canny edge of unsigned char.\n");
            return NULL;
@@ -879,9 +886,12 @@ PyObject *cannyedge(PyObject *self, PyObject *args) {
         if (edge !=NULL) free(edge);
 */
         if (image !=NULL) free(image);
+	outputarraym = NA_vNewArray(magnitude, tInt16, inputarray->nd, inputarray->dimensions); 
 	outputarray = NA_vNewArray(edge, tUInt8, inputarray->nd, inputarray->dimensions); 
 	Py_DECREF(inputarray);
+
 	return (PyObject *)outputarray;
+
 }
 
 
