@@ -37,9 +37,6 @@ class ImageCorrection(remotecall.Object):
 		self.node = node
 		remotecall.Object.__init__(self)
 
-	def getImage(self, ccdcameraname=None):
-		return self.node.acquireCorrectedImage(ccdcameraname=ccdcameraname)
-
 	def getImageData(self, ccdcameraname=None):
 		return self.node.acquireCorrectedImageData(ccdcameraname=ccdcameraname)
 
@@ -150,31 +147,44 @@ class Corrector(node.Node):
 		self.panel.acquisitionDone()
 
 	def acquireRaw(self):
+		self.startTimer('acquireRaw')
 		try:
+			self.startTimer('set cam')
 			self.instrument.ccdcamera.Settings = self.settings['camera settings']
+			self.stopTimer('set cam')
+			self.startTimer('get image')
 			image = self.instrument.ccdcamera.Image
+			self.stopTimer('get image')
 		except Exception, e:
 			self.logger.exception('Raw acquisition failed: %s' % e)
 		else:
 			self.displayImage(image)
 		self.panel.acquisitionDone()
+		self.stopTimer('acquireRaw')
 
 	def acquireCorrected(self):
+		self.startTimer('acquireCorrected')
 		try:
+			self.startTimer('set ccd')
 			self.instrument.ccdcamera.Settings = self.settings['camera settings']
-			image = self.acquireCorrectedImage()
+			self.stopTimer('set ccd')
+			imagedata = self.acquireCorrectedImageData()
+			image = imagedata['image']
 		except Exception, e:
 			self.logger.exception('Corrected acquisition failed: %s' % e)
 		else:
 			if image is not None:
 				self.displayImage(image)
 		self.panel.acquisitionDone()
+		self.stopTimer('acquireCorrected')
 
 	def displayImage(self, image):
+		self.startTimer('Corrector.displayImage')
 		if image is None:
 			self.setImage(None, stats={})
 		else:
 			self.setImage(image.astype(Numeric.Float32), stats=self.stats(image))
+		self.stopTimer('Corrector.displayImage')
 
 	def retrievePlan(self, ccdcamera, corstate):
 		qplan = data.CorrectorPlanData()
@@ -425,41 +435,21 @@ class Corrector(node.Node):
 		norm = normavg / norm
 		self.storeRef('norm', norm, corstate, scopedata, channel)
 
-	def acquireCorrectedImage(self, ccdcameraname=None):
-		try:
-			if ccdcameraname is None:
-				proxy = self.instrument.ccdcamera
-			else:
-				proxy = self.instrument.getCCDCamera(ccdcameraname)
-			if proxy is None:
-				raise ValueError('CCD Camera is unavailable')
-			image = proxy.Image
-			geometry = proxy.Geometry
-			cam = self.instrument.getCCDCameraData(name=ccdcameraname)
-			scopedata = self.instrument.getData(data.ScopeEMData)
-			cameradata = self.instrument.getData(data.CameraEMData)
-		except Exception, e:
-			self.logger.exception('Unable to acquire image: %s' % e)
-			return None
-		try:
-			image = self.correct(cam, image, geometry, scopedata)
-		except Exception, e:
-			self.logger.warning('Unable to correct acquired image: %s' % e)
-			return None
-		return image
-
 	def acquireCorrectedImageData(self, ccdcameraname=None):
+		self.startTimer('acquireCorrectedImageData')
 		self.setStatus('processing')
 		errstr = 'Acquisition of corrected image failed: %s'
+		self.startTimer('instument.getData')
 		try:
-			imagedata = self.instrument.getData(data.CameraImageData,
-																					ccdcameraname=ccdcameraname)
+			imagedata = self.instrument.getData(data.CameraImageData, ccdcameraname=ccdcameraname)
 		except Exception, e:
 			self.logger.warning(errstr % 'unable to access instrument')
 			self.setStatus('idle')
 			self.logger.warning('Retrying...')
 			# ...
+			self.stopTimer('instument.getData')
 			return self.acquireCorrectedImageData(ccdcameraname=ccdcameraname)
+		self.stopTimer('instument.getData')
 		numimage = imagedata['image']
 		camdata = imagedata['camera']
 		scopedata = imagedata['scope']
@@ -468,11 +458,14 @@ class Corrector(node.Node):
 		corstate['dimension'] = camdata['dimension']
 		corstate['offset'] = camdata['offset']
 		corstate['binning'] = camdata['binning']
+		self.startTimer('correct')
 		corrected = self.correct(ccdcamera, numimage, corstate, scopedata)
+		self.stopTimer('correct')
 		newdata = data.CorrectedCameraImageData(initializer=imagedata,
 																						image=corrected)
 		newdata['correction channel'] = self.channel
 		self.setStatus('idle')
+		self.stopTimer('acquireCorrectedImageData')
 		return newdata
 
 	def correct(self, ccdcamera, original, camstate, scopedata):
@@ -481,23 +474,33 @@ class Corrector(node.Node):
 		'''
 		if type(camstate) is dict:
 			camstate = data.CorrectorCamstateData(initializer=camstate)
+		self.startTimer('normalize')
 		normalized = self.normalize(original, camstate, ccdcamera['name'], scopedata)
+		self.stopTimer('normalize')
 		plan = self.retrievePlan(ccdcamera, camstate)
 		if plan is not None:
+			self.startTimer('fixBadPixels')
 			self.fixBadPixels(normalized, plan)
+			self.stopTimer('fixBadPixels')
 
 		clipmin = self.settings['clip min']
 		clipmax = self.settings['clip max']
+		self.startTimer('clip')
 		clipped = Numeric.clip(normalized, clipmin, clipmax)
+		self.stopTimer('clip')
 
 		if self.settings['despike']:
 			self.logger.debug('Despiking...')
 			nsize = self.settings['despike size']
 			thresh = self.settings['despike threshold']
+			self.startTimer('despike')
 			imagefun.despike(clipped, nsize, thresh)
+			self.stopTimer('despike')
 			self.logger.debug('Despiked')
 
+		self.startTimer('astype')
 		final = clipped.astype(Numeric.Float32)
+		self.stopTimer('astype')
 		return final
 
 	def fixBadPixels(self, image, plan):
@@ -574,12 +577,16 @@ class Corrector(node.Node):
 
 	def normalize(self, raw, camstate, ccdcameraname, scopedata):
 		channel = self.channel
+		self.startTimer('retrieveRefs')
 		dark = self.retrieveRef(camstate, 'dark', ccdcameraname, scopedata, channel)
 		norm = self.retrieveRef(camstate, 'norm', ccdcameraname, scopedata, channel)
+		self.stopTimer('retrieveRefs')
 		if dark is not None and norm is not None:
+			self.startTimer('norm math')
 			diff = raw - dark
 			## this may result in some infinity values
 			r = diff * norm
+			self.stopTimer('norm math')
 			return r
 		else:
 			self.logger.warning('Cannot find references, image will not be normalized')
