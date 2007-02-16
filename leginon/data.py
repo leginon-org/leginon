@@ -2392,3 +2392,14 @@ class ReferenceSettingsData(SettingsData):
 			('interval time', float),
 		)
 	typemap = classmethod(typemap)
+
+class TimerData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('node', str),
+			('label', str),
+			('t', float),
+			('t0', TimerData),
+			('diff', float),
+		)
+	typemap = classmethod(typemap)
