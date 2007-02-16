@@ -839,15 +839,9 @@ void float_to_ubyte( float* image, int nsize, unsigned char* outimg, int scale_f
 
 PyObject *cannyedge(PyObject *self, PyObject *args) {
 	PyObject *input;
-<<<<<<< numextension.c
 	PyArrayObject *inputarray=NULL, *outputarraym=NULL, *outputarray=NULL;
 	int i, j;
         unsigned pos, nelements;
-=======
-	PyArrayObject *inputarray=NULL, *outputarray=NULL;
-	int i;
-        unsigned nelements;
->>>>>>> 1.27
 	float sigma, tlow, thigh;
         unsigned char *image=NULL;
         short int *magnitude=NULL;
@@ -890,7 +884,8 @@ PyObject *cannyedge(PyObject *self, PyObject *args) {
 	outputarray = NA_vNewArray(edge, tUInt8, inputarray->nd, inputarray->dimensions); 
 	Py_DECREF(inputarray);
 
-	return (PyObject *)outputarray;
+	//return (PyObject *)outputarray;
+	return Py_BuildValue("OO", outputarray, outputarraym);
 
 }
 

@@ -3,6 +3,7 @@
 #include <math.h>
 
 #include "edge.h"
+#define VERBOSE 1
 
 /*
 #ifndef VERBOSE
@@ -134,7 +135,7 @@ void canny(unsigned char *image, int rows, int cols, float sigma,
       exit(1);
    }
 
-   non_max_supp(magnitude, delta_x, delta_y, rows, cols, nms);
+   non_max_supp(*magnitude, delta_x, delta_y, rows, cols, nms);
 
    /****************************************************************************
    * Use hysteresis to mark the edge pixels.
@@ -145,7 +146,7 @@ void canny(unsigned char *image, int rows, int cols, float sigma,
       exit(1);
    }
 
-   apply_hysteresis(magnitude, nms, rows, cols, tlow, thigh, *edge);
+   apply_hysteresis(*magnitude, nms, rows, cols, tlow, thigh, *edge);
 
    /****************************************************************************
    * Free all of the memory that we allocated except for the edge image that
