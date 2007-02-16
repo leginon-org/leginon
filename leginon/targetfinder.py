@@ -30,6 +30,7 @@ import math
 import polygon
 import raster
 import presets
+import time
 try:
 	set = set
 except NameError:
@@ -193,6 +194,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	def submitTargets(self):
 		self.userpause.set()
 
+	def clearTargets(self,targettype):
+		self.setTargets([], targettype, block=False)
+
 class ClickTargetFinder(TargetFinder):
 	targetnames = ['preview', 'reference', 'focus', 'acquisition']
 	panelclass = gui.wx.ClickTargetFinder.Panel
@@ -336,9 +340,9 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.clearTiles()
 
 		self.reference_target = None
+
 		self.onesectionarea = None
-		self.oldonesectionarea1 = None
-		
+		self.oldonesectionarea1 = None		
 		self.regionarrays = []
 		self.regionellipses = []
 		self.regionimage = None
@@ -811,9 +815,10 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				ngoodregion += 1
 				newregionimage += numarray.where(regionlabel==(i+1),1,0)
 
-#		tempregionimage=nd.binary_dilation(newregionimage,structure=base,iterations=iteration)
-		finalregionimage=nd.binary_fill_holes(newregionimage,structure=base)
+#		finalregionimage=nd.binary_fill_holes(newregionimage,structure=base)
+		finalregionimage = newregionimage
 		finalregionlabel,ngoodregion = nd.label(finalregionimage)
+
 		if ngoodregion > 0:
 			regioncenters = nd.center_of_mass(ones,finalregionlabel,range(1,ngoodregion+1))
 		else:
@@ -824,18 +829,24 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		return finalregionimage,ngoodregion,regioncenters
 		
 	def regionsFromCenters(self,centers,maxsize):	
-		halfbox = int(math.sqrt(maxsize)/2.0)
+		halfedge = math.sqrt(maxsize)/(2*(1+math.sqrt(2.0)))
+		halfbox = math.sqrt(maxsize)/2
 		regionimage = numarray.zeros(self.mosaicimage.shape)
+		regionarrays=[]
 		for center in centers:
-			for row in range(center[0]-halfbox,center[0]+halfbox+1):
-				if row < 0 or row >= self.regionimage.shape[0]:
-					continue
-				for col in range(center[1]-halfbox,center[1]+halfbox+1):
-					if col < 0 or col >= self.regionimage.shape[1]:
-						continue
-					else:
-						regionimage[row,col]=1
-		return regionimage
+			polygon = [
+					[center[0]-halfedge,center[1]-halfbox],
+					[center[0]+halfedge,center[1]-halfbox],
+					[center[0]+halfbox,center[1]-halfedge],
+					[center[0]+halfbox,center[1]+halfedge],
+					[center[0]+halfedge,center[1]+halfbox],
+					[center[0]-halfedge,center[1]+halfbox],
+					[center[0]-halfbox,center[1]+halfedge],
+					[center[0]-halfbox,center[1]-halfedge]
+				]
+			regionarray = numarray.array(polygon,numarray.Float32)
+			regionarrays.append(regionarray)
+		return regionarrays
 		
 	def findRegions(self):
 		imshape = self.mosaicimage.shape
@@ -845,15 +856,16 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		maxsize = self.settings['max region area']
 		minsize = self.settings['min region area']
 		onesectionarea1 = self.settings['section area']
-		modifyarea = self.settings['adjust section area']
-		newareasetting = False
-		if self.oldonesectionarea1 == None or self.oldonesectionarea1 != self.settings['section area'] or modifyarea < 0.01:
-			newareasetting = True
-		self.oldonesectionarea1 = onesectionarea1
 		sectionaxisratio = float(self.settings['section axis ratio'])
 		maxsection = self.settings['max sections']
 		displaysection = self.settings['section display']
 		findsectionoption = self.settings['find section options']
+		modifyarea = self.settings['adjust section area']
+
+		newareasetting = False
+		if self.oldonesectionarea1 == None or self.oldonesectionarea1 != self.settings['section area'] or modifyarea < 0.01:
+			newareasetting = True
+		self.oldonesectionarea1 = onesectionarea1
 
 		if findsectionoption == 'Sections Only':
 			sectiononly = True
@@ -885,7 +897,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			if manualcenters:
 				manualcenters = self.transpose_points(manualcenters)
 			maxsizepixel = maxsize * mosaicarea
-			self.regionimage = self.regionsFromCenters(manualcenters,maxsizepixel)
+			self.regionarrays = self.regionsFromCenters(manualcenters,maxsizepixel)
 			self.regionellipses = manualcenters
 			return
 
@@ -900,7 +912,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.mosaicimage[-pad:] = 0
 		self.mosaicimage[:,:pad] = 0
 		self.mosaicimage[:,-pad:] = 0
-
+		t00=time.time()
 		print "-------------"
 		
 		# get background stats
@@ -908,7 +920,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		backgroundlabel,nlabels = nd.label(background)
 		bkgrndmean = nd.mean(self.mosaicimage,labels=backgroundlabel)
 		bkgrndstddev = nd.standard_deviation(self.mosaicimage,labels=backgroundlabel)
-		print "--------background mean %f, stddev %f" % (bkgrndmean, bkgrndstddev)
+		t01=time.time()
+		print "---%5.1f-----background mean %f, stddev %f" % ((t01-t00),bkgrndmean, bkgrndstddev)
 				
 		#refresh to setting if not auto adjust
 		if self.onesectionarea == None or newareasetting:
@@ -926,7 +939,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 #		better segamentation is available for sections that connects to the edge
 
 #		if limitbysection or sectiononly:
-		if False:
+		uselibCV = False
+		if uselibCV and (limitbysection or sectiononly):
 			
 			#find sections
 			count = 0	
@@ -952,24 +966,21 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.logger.info('found %i sections after %i iterations' % (len(sectionarrays),count))
 			
 		if len(sectiondisplaypoints) == 0:
-			if False:
+			if uselibCV and (not limitbysection):
 				# rough section by threshold only
 				masked_section = ma.masked_inside(self.mosaicimage,mint,maxt)
 				sectionimage = masked_section.mask()
-				sectionarrays = ['dummy',]
+				nlabel = 1
 			else:
 				# good section as image only - smooth,threshold,size limit etc.
 				minsizepixels = onesectionmin * mosaicarea
 				maxsizepixels = multisections * mosaicarea
 				sectionimage, nsection,sectionellipses = self.regionsByLabel(self.mosaicimage,mint,maxt,minsizepixels,maxsizepixels)
-				sectionarrays = []
 				self.logger.info('use sectionimage for rastering and found %d good sections' %nsection)
 		else:
 			sectionimage = polygon.plot_polygons(imshape,sectionarrays)
-			
-		
-		nonmissingregion = numarray.where(self.mosaicimage==0,0,1)
-		sectionimage = sectionimage*nonmissingregion
+			nonmissingregion = numarray.where(self.mosaicimage==0,0,1)
+			sectionimage = sectionimage*nonmissingregion
 		
 		# get section stats
 		sectionlabel,nlabels = nd.label(sectionimage)
@@ -979,7 +990,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			return
 		sectionarea = sectionimage.sum()
 		sectionmean = nd.mean(self.mosaicimage,labels=sectionlabel)
-		sectionstddev = nd.standard_deviation(self.mosaicimage,labels=sectionlabel)
+#		sectionstddev = nd.standard_deviation(self.mosaicimage,labels=sectionlabel)
 		sectionareanum = sectionarea / (self.onesectionarea * mosaicarea)
 		sectionareaint = int(round(sectionareanum))
 		
@@ -987,7 +998,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.onesectionarea = float(sectionarea) /(sectionareaint * mosaicarea)
 			areapercenttile = 100 * self.onesectionarea /scale
 			self.logger.info('modify per-section area to %f for next round' %areapercenttile)
-		print "--------section num %d mean %f, stddev %f" % (sectionareaint, sectionmean, sectionstddev)
+		t02=time.time()
+		print "----%5.1f----section num %d mean %f" % ((t02-t01),sectionareaint, sectionmean)
 		
 		if not (limitbysection or sectiononly):
 			sectionimage = None
@@ -1032,13 +1044,15 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				print mint2a,maxt2a,minsize,maxsize
 				regions,image = libCV.FindRegions(m, minsize, maxsize, 0, 0, white_on_black,black_on_white)
 				regionarrays,regionellipses,displaypoints = self.reduceRegions(regions,[1.0,self.settings['axis ratio']],velimit,sectionimage)
+				print regionarrays
 				minsize = stepscale*minsize
 				maxt2 = maxt2-stepscale*bkgrndstddev*tissuecontrast
 				if minsize*mosaicarea < 4:
 					break
 		
 			self.logger.info('found %i regions after %i iterations' % (len(regionarrays),count))
-		
+			t03=time.time()
+			print "----%5.1f----tissue" % ((t03-t02),)
 			if displaysection:
 				displaypoints.extend(sectiondisplaypoints)
 
@@ -1050,9 +1064,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def clearRegions(self):
 		imshape = self.mosaicimage.shape
 		self.regionarrays = []
-		self.regionimage = numarray.zeros(imshape)
-		displaypoints=[]
-		self.setTargets(displaypoints, 'region', block=False)
+		self.regionimage = None
+		self.clearTargets('region')
 
 	def autoSpacingAngle(self):
 		imagedata = self.imagemap[self.imagemap.keys()[0]]
@@ -1123,10 +1136,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 		fullrasterdisplay = self.transpose_points(rasterpoints)
 		self.setTargets(fullrasterdisplay, 'acquisition', block=True)
-
-	def clearTargets(self,targettype):
-		displaypoints=[]
-		self.setTargets(displaypoints, targettype, block=False)
 
 	def insideRegionImage(self, rasterpoints):
 		results = []
