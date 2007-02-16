@@ -230,6 +230,7 @@ class DriftManager(watcher.Watcher):
 	def acquireLoop(self, target=None, threshold=None):
 		## acquire first image
 		corchan = 0
+		t0 = time.time()
 		imagedata = self.acquireImage(channel=corchan)
 		if imagedata is None:
 			return 'aborted', None
@@ -252,10 +253,16 @@ class DriftManager(watcher.Watcher):
 
 		status = 'ok'
 		while 1:
-			## wait for interval
-			self.startTimer('drift pause')
-			time.sleep(self.settings['pause time'])
-			self.stopTimer('drift pause')
+			# make sure we have waited at least "pause time" before acquire
+			t1 = time.time()
+			dt = t1 - t0
+			t0 = t1
+			pausetime = self.settings['pause time']
+			if dt < pausetime:
+				thispause = pausetime - dt
+				self.startTimer('drift pause')
+				time.sleep(thispause)
+				self.stopTimer('drift pause')
 
 			## acquire next image at different correction channel than previous
 			if corchan:
@@ -333,13 +340,21 @@ class DriftManager(watcher.Watcher):
 		self.logger.info('Pixel size %s' % (pixsize,))
 
 		## acquire first image
+		t0 = time.time()
 		imagedata = self.acquireImage(0)
 		numdata = imagedata['image']
 		t0 = imagedata['scope']['system time']
 		self.correlator.insertImage(numdata)
 
-		# pause
-		time.sleep(self.settings['pause time'])
+		# make sure we have waited at least "pause time" before acquire
+		t1 = time.time()
+		dt = t1 - t0
+		pausetime = self.settings['pause time']
+		if dt < pausetime:
+			thispause = pausetime - dt
+			self.startTimer('drift pause')
+			time.sleep(thispause)
+			self.stopTimer('drift pause')
 		
 		## acquire next image
 		imagedata = self.acquireImage(1)

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/DriftManager.py,v $
-# $Revision: 1.23 $
+# $Revision: 1.24 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-09-15 18:07:15 $
+# $Date: 2007-02-16 21:39:35 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -110,11 +110,11 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		szthreshold.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		szpause = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Wait')
+		label = wx.StaticText(self, -1, 'Wait at least')
 		szpause.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szpause.Add(self.widgets['pause time'], (0, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'seconds between checking drift')
+		label = wx.StaticText(self, -1, 'seconds between images')
 		szpause.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sz = wx.GridBagSizer(5, 10)
