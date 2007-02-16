@@ -69,17 +69,40 @@ if __name__ == '__main__':
 		print points
 		print getPolygonCenter(points)
 
+def polygons_tuples2arrays(polygons_tuples):
+	polygons_arrays=[]
+	for p in polygons_tuples:
+		polygon=[]
+		for i,point in enumerate(p):
+			polygon.append(list(point))
+		polygon_array =numarray.array(polygon,type=numarray.Float32)
+		polygons_arrays.append(polygon_array)
+	return polygons_arrays	
+	
+def polygons_arrays2tuples(polygons_arrays):
+	# Input 'polygons' is a list of polygon vertices array
+	polygons_tuples=[]
+	for p in polygons_arrays:
+		plist =p.tolist()
+		polygon_tuples=[]
+		for i,point in enumerate(plist):
+			polygon_tuples.append(tuple(point))
+		polygons_tuples.append(polygon_tuples)
+	return polygons_tuples	
+
 def plot_polygons(shape,polygons):
 	# Input 'polygons' is a list of polygon vertices array
 	zeros=numarray.zeros(shape,type=numarray.Int8)
 	img=Image.new('L',shape)
 	draw=ImageDraw.Draw(img)
+	try:
+		polygons = polygons_arrays2tuples(polygons)
+	except:
+		pass
 	for p in polygons:
-		plist =p.tolist()
-		for i,point in enumerate(plist):
-			plist[i]=tuple(point)
-		if len(plist) > 2:
-			draw.polygon(plist,fill=1)	  
+		
+		if len(p) > 2:
+			draw.polygon(p,fill=1)	  
 	seq=list(img.getdata())
 	polygon_image=numarray.array(seq,type=numarray.Int8)
 	
