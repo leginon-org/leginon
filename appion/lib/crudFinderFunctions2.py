@@ -12,7 +12,7 @@ import ImageDraw
 import imagefun
 import numextension
 import polygon
-#import libCV
+import libCV
 from selexonFunctions2 import *
 
 
@@ -567,7 +567,7 @@ def prune_by_stdev(info,stdev_min,goodcruds_in):
 	return goodcruds
 	
 def make_pruned_labels(file,labeled_image,ltotal,info,goodlabels):
-	print "remake labeled image after pruning"
+	print "remaking labeled image after pruning"
 	imageshape=numarray.shape(labeled_image)
 	goodinfo=""
 	new_labeled_image=numarray.zeros(imageshape,numarray.Int8)
@@ -584,6 +584,7 @@ def make_pruned_labels(file,labeled_image,ltotal,info,goodlabels):
 	return new_labeled_image,len(goodlabels),goodinfo
 
 def make_pruned_polygons(file,gpolygons,imageshape,info,goodlabels):
+	print "remaking polygons after pruning"
 	goodpolygons=[]
 	goodinfo=""
 	for l1 in goodlabels:
@@ -595,6 +596,32 @@ def make_pruned_polygons(file,gpolygons,imageshape,info,goodlabels):
 	return cruds,len(goodpolygons),goodinfo
 
 
+def reduceRegions(regions,velimit):
+	regionarrays = []
+	regionellipses = []
+	for i,region in enumerate(regions):
+		regionpolygon = region['regionEllipse']
+		regionaxismajor = regionpolygon[2]
+		regionaxisminor = regionpolygon[3]
+		overlap = False
+		regionrow = int(regionpolygon[0])
+		regioncol = int(regionpolygon[1])
+		for j,regionellipse in enumerate(regionellipses):
+			halfminor = 0.5*regionellipse[3]
+			if regionrow > regionellipse[0]-halfminor and regionrow < regionellipse[0]+halfminor and regioncol > regionellipse[1]-halfminor and regioncol < regionellipse[1]+halfminor:
+				overlap = True
+				break
+		if not overlap:
+			regionellipse = region['regionEllipse']
+			regionarray = region['regionBorder']
+			## reduce to 20 points
+			regionarray = libCV.PolygonVE(regionarray, velimit)
+			regionarray.transpose()
+			regionarrays.append(regionarray)
+			regionellipses.append(regionellipse)
+					
+	return regionarrays
+	
 #def findCrud_Craig(bimage,area_t):
 #		print "try FindRegions",area_t
 #		result=libCV.FindRegions(mask,area_t,0.05,1,0,1,0,1)
@@ -628,6 +655,7 @@ def findCrud2(params,file):
 	stdev_t=float(params["stdev"]) # lower threshold for stdev pruning
 	convolve_t=float(params["convolve"]) # convolved mask threshold
 	do_convex_hulls=not params["no_hull"] # convex hull flag
+	do_cv=params["cv"] # convex hull flag
 	do_prune_by_length=not params["no_length_prune"] # convex hull flag
 	test=params["test"] # test mode flag
 	lognumber=0
@@ -644,13 +672,14 @@ def findCrud2(params,file):
 	pm = 2.0
 	am = 3.0
 	
-	list_t=pm*3.14159*cdiam/bin
-	radius=cdiam/2.0/bin
-	area_t=am*3.1415926*radius*radius
+	list_t=pm*3.14159*cdiam
+#	list_t=pm*3.14159*cdiam/4	#old selexon.py values--not correct-cdiam scaled in tcl script and python script
+	pradius = diam/2.0	
+	cradius=cdiam/2.0
+#	cradius=cdiam/2.0/4	#old selexon.py values--not correct-cdiam scaled in tcl script and python script
+	area_t=am*3.1415926*cradius*cradius
 	crudinfo=""
-	
-	print cdiam,diam,scale,list_t,radius,area_t
-	
+		
 	image=Mrc.mrc_to_numeric(file+".mrc")
 	image=imagefun.bin(image,bin)
 	shape=numarray.shape(image)
@@ -682,7 +711,10 @@ def findCrud2(params,file):
 	print 'scaled crudhi= %.4f crudlo= %.4f' %(high,low)
 
 	#binary edge
-	edgeimage,testlog=find_edge_canny(image,sigma,low,high,True,testlog)
+	if convolve_t < 0.001:
+		edgeimage,testlog=find_edge_canny(image,sigma,low,high,True,testlog)
+	else:
+		edgeimage,testlog=find_edge_sobel(image,sigma,low,high,True,testlog)
 
 	nedge=ma.count(edgeimage)
 	# If the area not within the threshold is too large or zero, no further calculation is necessary
@@ -701,7 +733,7 @@ def findCrud2(params,file):
 
 		if (convolve_t > 0):
 			#convolve with the disk image of the particle
-			mask,testlog=convolve_disk(mask,radius,convolve_t,testlog)
+			mask,testlog=convolve_disk(mask,pradius,convolve_t,testlog)
 		
 
 		#segmentation
@@ -714,27 +746,37 @@ def findCrud2(params,file):
 		if (do_prune_by_length):
 			allinfo,testlog=get_labeled_info(image,mask,cruds,clabels,True,testlog)
 			goodcruds=range(clabels)
-			print list_t,garea*0.5
 			goodcruds=prune_by_length(allinfo,list_t,garea*0.5,goodcruds)
 			cruds,clabels,goodinfo=make_pruned_labels(file,cruds,clabels,allinfo,goodcruds)
 		
 		#create convex hulls and merge overlapped or inside cruds
 		if do_convex_hulls:
 			cruds,clabels,gpolygons,testlog=convex_hull_union(mask,cruds,clabels,testlog)
-		
+		else:
+			if do_cv:
+				regions,dummyimage=libCV.FindRegions(mask,area_t,0.5,1,0,1,0)
+				gpolygons = reduceRegions(regions,60)
+				clabels = len(gpolygons)
+
 		if (clabels > 0):
 			testlog[0]=False
-			if do_convex_hulls:
-				allinfo,testlog=get_polygon_info(gpolygons,testlog)
+			if do_convex_hulls or do_cv:
+				if stdev_t < 0.001:
+					allinfo,testlog=get_polygon_info(gpolygons,testlog)
+				else:
+					mask = polygon.plot_polygons(shape,gpolygons)
+					cruds,clabels=nd.label(mask)
+					allinfo,testlog=get_labeled_info(image,mask,cruds,clabels,False,testlog)
 			else:				
 				allinfo,testlog=get_labeled_info(image,mask,cruds,clabels,False,testlog)
 			testlog[0]=test
 			goodcruds=range(clabels)
-			#pruning by area as in selexon
-			goodcruds=prune_by_area(allinfo,area_t,garea*0.5,goodcruds)
-			if (test):
-				temp_cruds,temp_clabels,goodinfo=make_pruned_labels(file,cruds,clabels,allinfo,goodcruds)
-				testlog=outputimage(temp_cruds,'crud_labela','Area pruned labeled image',testlog)
+			if not do_cv:
+				#pruning by area as in selexon
+				goodcruds=prune_by_area(allinfo,area_t,garea*0.5,goodcruds)
+				if (test):
+					temp_cruds,temp_clabels,goodinfo=make_pruned_labels(file,cruds,clabels,allinfo,goodcruds)
+					testlog=outputimage(temp_cruds,'crud_labela','Area pruned labeled image',testlog)
 
 			if (len(goodcruds)>0):
 				#pruning by standard deviation in the cruds
@@ -746,13 +788,13 @@ def findCrud2(params,file):
 						temp_cruds,temp_clabels,goodinfo=make_pruned_labels(file,cruds,clabels,allinfo,goodcruds)
 						testlog=outputimage(temp_cruds,'crud_labels','Stdev pruned labeled image',testlog)
 
-			if test:
+			if test and (not do_cv or stdev_t > 0):
 				cruds,clabels,crudinfo=temp_cruds,temp_clabels,goodinfo
+
+			if do_convex_hulls or do_cv and stdev_t < 0.01:
+				cruds,clabels,crudinfo=make_pruned_polygons(file,gpolygons,shape,allinfo,goodcruds)
 			else:
-				if do_convex_hulls:
-					cruds,clabels,crudinfo=make_pruned_polygons(file,gpolygons,shape,allinfo,goodcruds)
-				else:
-					cruds,clabels,crudinfo=make_pruned_labels(file,cruds,clabels,allinfo,goodcruds)
+				cruds,clabels,crudinfo=make_pruned_labels(file,cruds,clabels,allinfo,goodcruds)
 
 #		create edge image of the cruds for display
 		if (clabels >0):
@@ -760,7 +802,7 @@ def findCrud2(params,file):
 			equalcruds=ma.masked_greater_equal(int32cruds,1)
 			equalcruds=equalcruds.filled(100)
 			if (test):
-				testlog=outputimage(equalcruds,'equalcruds','Final Equal Crud image',testlog)
+				testlog=outputimage(equalcruds,'finalcruds','Final Crud image',testlog)
 			crudedges,testlog=find_edge_sobel(equalcruds,1,0.5,1.0,False,testlog)
 			masklabel=1-ma.getmask(crudedges)
 		else:
@@ -777,4 +819,12 @@ def findCrud2(params,file):
 	crudfile.write(crudinfo+"\n")
 	crudfile.close()
 
+def rejectPiksInPolygon(piks,gpolygons):
+	goodpiks = set(piks)	
+	badpiks = []	
+	for polygon in gpolygons:
+		badpiks.extend(polygon.pointsInPolygon(piks,polygon))
+	goodpiks = list(goodpiks.difference(badpiks))
+	
+	return goodpiks
 		

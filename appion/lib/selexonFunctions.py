@@ -74,6 +74,7 @@ def createDefaults():
 	params["csclo"]=0
 	params["convolve"]=0
 	params["no_hull"]=False
+	params["cv"]=False
 	params["no_length_prune"]=False
 	params["stdev"]=0
 	params["test"]=False
@@ -125,7 +126,7 @@ def printSelexonHelp():
 	print "                     (will use particle diameter by default)"
 	print "cruddiam=<n>       : set the diameter to use for the crud finder"
 	print "                     (don't need to use the \"crud\" option if using this)"
-	print "crudblur=<n>       : amount to blur the image for edge detection (default is 3.5)"
+	print "crudblur=<n>       : amount to blur the image for edge detection (default is 3.5 binned_pixels)"
 	print "crudlo=<n>         : lower limit for edge detection (0-1, default=0.6)"
 	print "crudhi=<n>         : upper threshold for edge detection (0-1, default=0.95)"
 	print "crudstd=<n>        : lower limit for scaling the edge detection limits (i.e. stdev of the image) (default=1= never scale)"
@@ -154,6 +155,7 @@ def printSelexonHelp():
 	print "convolve=<n>               : if not zero, convolve the thresholded edge blobs with a disk at the particle diameter to unify blobs"
 	print "                             and then threshold it at <n> fraction of peak self covolution of the disk (0-1, default=0"
 	print "no_hull                    : if ON, convex hull is not calculated"
+	print "cv                         : if ON, polygon vertices are calculated us libCV"
 	print "no_length_prune            : if ON, pruning by crud perimeters is not done before convex hull"
 	print "stdev=<n>                  : if not zero, only regions with stdev larger than n*image_stdev is passed (default=0)"
 	print "test                       : if ON, images at each step are saved"
@@ -255,7 +257,7 @@ def parseSelexonInput(args,params):
 		elif (elements[0]=='apix'):
 			params['apix']=float(elements[1])
 		elif (elements[0]=='diam'):
-			params['diam']=int(elements[1])
+			params['diam']=float(elements[1])
 		elif (elements[0]=='bin'):
 			params['bin']=int(elements[1])
 		elif (elements[0]=='range'):
@@ -292,7 +294,7 @@ def parseSelexonInput(args,params):
 			params["crud"]=True
 		elif (elements[0]=='cruddiam'):
 			params["crud"]=True
-			params["cdiam"]=int(elements[1])
+			params["cdiam"]=float(elements[1])
 		elif (elements[0]=='crudblur'):
 			params["cblur"]=float(elements[1])
 		elif (elements[0]=='crudlo'):
@@ -347,6 +349,9 @@ def parseSelexonInput(args,params):
 		elif (elements[0]=='stdev'):
 			params["stdev"]=float(elements[1])
 		elif (arg=='no_hull'):
+			params["no_hull"]=True
+		elif (arg=='cv'):
+			params["cv"]=True
 			params["no_hull"]=True
 		elif (arg=='no_length_prune'):
 			params["no_length_prune"]=True
