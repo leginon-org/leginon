@@ -175,7 +175,9 @@ class DriftManager(watcher.Watcher):
 		self.logger.info('processData')
 		if isinstance(newdata, data.DriftMonitorRequestData):
 			self.logger.info('DriftMonitorRequest')
+			self.startTimer('monitorDrift')
 			self.monitorDrift(newdata)
+			self.stopTimer('monitorDrift')
 
 	def uiMonitorDrift(self):
 		self.instrument.ccdcamera.Settings = self.settings['camera settings']
@@ -217,10 +219,12 @@ class DriftManager(watcher.Watcher):
 		self.setStatus('idle')
 
 	def acquireImage(self, channel=0):
+		self.startTimer('drift acquire')
 		self.instrument.setCorrectionChannel(channel)
 		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		if imagedata is not None:
 			self.setImage(imagedata['image'], 'Image')
+		self.stopTimer('drift acquire')
 		return imagedata
 
 	def acquireLoop(self, target=None, threshold=None):
@@ -249,7 +253,9 @@ class DriftManager(watcher.Watcher):
 		status = 'ok'
 		while 1:
 			## wait for interval
+			self.startTimer('drift pause')
 			time.sleep(self.settings['pause time'])
+			self.stopTimer('drift pause')
 
 			## acquire next image at different correction channel than previous
 			if corchan:
@@ -263,8 +269,12 @@ class DriftManager(watcher.Watcher):
 			self.correlator.insertImage(numdata)
 
 			## do correlation
+			self.startTimer('drift correlate')
 			pc = self.correlator.phaseCorrelate()
+			self.stopTimer('drift correlate')
+			self.startTimer('drift peak')
 			peak = self.peakfinder.subpixelPeak(newimage=pc)
+			self.stopTimer('drift peak')
 			rows,cols = self.peak2shift(peak, pc.shape)
 			dist = Numeric.hypot(rows,cols)
 

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.195 $
+# $Revision: 1.196 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-01-22 20:13:33 $
+# $Date: 2007-02-16 21:15:22 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -93,7 +93,9 @@ class CalibrationClient(object):
 			newemdata = data.ScopeEMData(initializer=state)
 			self.instrument.setData(newemdata)
 
+		self.node.startTimer('acquire state pause')
 		time.sleep(settle)
+		self.node.stopTimer('acquire state pause')
 
 		self.instrument.setCorrectionChannel(corchannel)
 		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
@@ -164,6 +166,7 @@ class CalibrationClient(object):
 			self.correlator.insertImage(self.numimage1)
 
 			self.node.logger.info('Correlating...')
+			self.node.startTimer('shift correction')
 			if correlation_type is None:
 				try:
 					correlation_type = self.node.settings['correlation type']
@@ -175,14 +178,19 @@ class CalibrationClient(object):
 				pcimage = self.correlator.phaseCorrelate()
 			else:
 				raise RuntimeError('invalid correlation type')
+			self.node.stopTimer('shift correction')
 
 			self.node.logger.debug('Peak finding...')
 			self.peakfinder.setImage(pcimage)
+			self.node.startTimer('shift peak')
 			self.peakfinder.subpixelPeak()
+			self.node.stopTimer('shift peak')
 			peak = self.peakfinder.getResults()
 			pixelpeak = peak['subpixel peak']
+			self.node.startTimer('shift display')
 			self.displayCorrelation(pcimage)
 			self.displayPeak(pixelpeak)
+			self.node.stopTimer('shift display')
 
 			peakvalue = peak['subpixel peak value']
 			shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
@@ -237,6 +245,7 @@ class CalibrationClient(object):
 
 		self.node.logger.info('Calculating shift between the images...')
 		self.node.logger.debug('Correlating...')
+		self.node.startTimer('shift correlation')
 		if correlation_type is None:
 			try:
 				correlation_type = self.node.settings['correlation type']
@@ -248,17 +257,22 @@ class CalibrationClient(object):
 			pcimage = self.correlator.phaseCorrelate()
 		else:
 			raise RuntimeError('invalid correlation type')
+		self.node.stopTimer('shift correlation')
 
 		## peak finding
 		self.node.logger.debug('Peak finding...')
 		self.peakfinder.setImage(pcimage)
+		self.node.startTimer('shift peak')
 		self.peakfinder.subpixelPeak()
+		self.node.stopTimer('shift peak')
 		peak = self.peakfinder.getResults()
 		self.node.logger.debug('Peak minsum %f' % peak['minsum'])
 
 		pixelpeak = peak['subpixel peak']
+		self.node.startTimer('shift display')
 		self.displayCorrelation(pcimage)
 		self.displayPeak(pixelpeak)
+		self.node.stopTimer('shift display')
 
 		peakvalue = peak['subpixel peak value']
 		shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)

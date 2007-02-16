@@ -297,7 +297,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			pausetime = self.settings['pause time']
 			self.reportStatus('processing',
 												'Pausing for %s seconds before acquiring' % pausetime)
+			self.startTimer('acq pause')
 			time.sleep(pausetime)
+			self.stopTimer('acq pause')
 
 			if p['film']:
 				self.reportStatus('acquisition', 'Acquiring film...')
@@ -312,7 +314,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 				except:
 					self.logger.exception('film acquisition')
 			else:
+				self.startTimer('acquire')
 				ret = self.acquire(p, target=targetdata, emtarget=emtarget, attempt=attempt)
+				self.stopTimer('acquire')
 				# in these cases, return immediately
 				if ret in ('aborted', 'repeat'):
 					self.reportStatus('acquisition', 'Acquisition state is "%s"' % ret)
@@ -522,6 +526,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## acquire image
 		self.reportStatus('acquisition', 'acquiring image...')
 
+		self.startTimer('acquire getData')
 		try:
 			if correctimage:
 				dataclass = data.CorrectedCameraImageData
@@ -530,6 +535,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			imagedata = self.instrument.getData(dataclass)
 		except:
 			self.logger.error('Cannot access instrument')
+		self.stopTimer('acquire getData')
 
 		if imagedata is None:
 			return 'fail'
@@ -556,10 +562,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.setImageFilename(imagedata)
 
 		self.reportStatus('output', 'Publishing image...')
+		self.startTimer('publish image')
 		self.publish(imagedata, pubevent=True, database=self.settings['save image'])
+		self.stopTimer('publish image')
 		self.reportStatus('output', 'Image published')
 		self.reportStatus('output', 'Publishing stats...')
+		self.startTimer('publish stats')
 		self.publishStats(imagedata)
+		self.stopTimer('publish stats')
 		self.reportStatus('output', 'Stats published...')
 
 		## set up to handle done events
@@ -569,12 +579,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.doneevents[dataid]['status'] = 'waiting'
 		if self.settings['display image']:
 			self.reportStatus('output', 'Displaying image...')
+			self.startTimer('display')
 			self.setImage(imagedata['image'].astype(Numeric.Float32), 'Image')
+			self.stopTimer('display')
 			self.reportStatus('output', 'Image displayed')
 
 		if self.settings['wait for process']:
 			self.setStatus('waiting')
+			self.startTimer('waitForImageProcess')
 			self.waitForImageProcessDone()
+			self.stopTimer('waitForImageProcess')
 			self.setStatus('processing')
 		return 'ok'
 

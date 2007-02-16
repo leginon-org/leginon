@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
-# $Revision: 1.116 $
+# $Revision: 1.117 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-12-05 22:21:37 $
+# $Date: 2007-02-16 21:19:11 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -33,9 +33,11 @@ class NavigatorClient(object):
 		self.node = node
 
 	def moveToTarget(self, target, movetype, precision=0.0):
+		self.node.startTimer('moveToTarget')
 		ev = event.MoveToTargetEvent(target=target, movetype=movetype)
 		ev['move precision'] = precision
 		self.node.outputEvent(ev, wait=True)
+		self.node.stopTimer('moveToTarget')
 
 class Navigator(node.Node):
 	panelclass = gui.wx.Navigator.Panel
@@ -116,7 +118,9 @@ class Navigator(node.Node):
 			check=True
 		else:
 			check=False
+		self.startTimer('move')
 		self.move(rows, cols, movetype, precision, check, preset=preset)
+		self.stopTimer('move')
 		self.confirmEvent(ev)
 
 	def newImage(self, imagedata):

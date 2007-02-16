@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.242 $
+# $Revision: 1.243 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-02-03 00:26:43 $
+# $Date: 2007-02-16 21:19:34 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -141,8 +141,10 @@ class PresetsClient(object):
 		evt['emtarget'] = emtarget
 		self.node.logger.info('Requesting preset change to \'%s\'...' % presetname)
 		self.pchanged[presetname] = threading.Event()
+		self.node.startTimer('preset toScope')
 		self.node.outputEvent(evt)
 		self.pchanged[presetname].wait()
+		self.node.stopTimer('preset toScope')
 		self.node.logger.info('Preset change to \'%s\' completed.' % presetname)
 
 	def presetchanged(self, ievent):
@@ -521,7 +523,9 @@ class PresetsManager(node.Node):
 			self.logger.error(message)
 			raise PresetChangeError(message)
 
+		self.startTimer('preset pause')
 		time.sleep(self.settings['pause time'])
+		self.stopTimer('preset pause')
 		if magonly:
 			self.currentpreset = None
 		else:
@@ -1125,7 +1129,9 @@ class PresetsManager(node.Node):
 			self.logger.error(message)
 			raise PresetChangeError(message)
 
+		self.startTimer('preset pause')
 		time.sleep(self.settings['pause time'])
+		self.stopTimer('preset pause')
 		name = newpreset['name']
 		self.currentpreset = newpreset
 		message = 'Preset (with target) changed to %s' % (name,)

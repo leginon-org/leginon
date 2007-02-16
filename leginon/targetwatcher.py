@@ -48,7 +48,9 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	def processData(self, newdata):
 		if isinstance(newdata, data.ImageTargetListData):
 			self.setStatus('processing')
+			self.startTimer('processTargetList')
 			self.processTargetList(newdata)
+			self.stopTimer('processTargetList')
 			self.player.play()
 			self.setStatus('idle')
 		if isinstance(newdata, data.QueueData):
@@ -176,6 +178,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				attempt += 1
 
 				# now have processTargetData work on it
+				self.startTimer('processTargetData')
 				try:
 					process_status = self.processTargetData(adjustedtarget, attempt=attempt)
 				except node.PublishError, e:
@@ -185,6 +188,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				except Exception, e:
 					self.logger.exception('Process target failed: %s' % e)
 					process_status = 'exception'
+				self.stopTimer('processTargetData')
 
 				# pause
 				# ...

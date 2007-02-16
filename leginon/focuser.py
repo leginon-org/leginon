@@ -203,7 +203,9 @@ class Focuser(acquisition.Acquisition):
 
 		delay = self.settings['pause time']
 		self.logger.info('Pausing for %s seconds' % (delay,))
+		self.startTimer('autoFocus pause')
 		time.sleep(delay)
+		self.stopTimer('autoFocus pause')
 
 		### report the current focus and defocus values
 		try:
@@ -415,13 +417,19 @@ class Focuser(acquisition.Acquisition):
 
 		if setting['focus method'] == 'Manual':
 			self.setStatus('user input')
+			self.startTimer('manualCheckLoop')
 			self.manualCheckLoop(preset_name, emtarget)
+			self.stopTimer('manualCheckLoop')
 			self.setStatus('processing')
 			status = 'ok'
 		elif setting['focus method'] == 'Beam Tilt':
+			self.startTimer('autoFocus')
 			status = self.autoFocus(setting, emtarget, resultdata)
+			self.stopTimer('autoFocus')
 		elif setting['focus method'] == 'Stage Tilt':
+			self.startTimer('autoStage')
 			status = self.autoStage(setting, emtarget, resultdata)
+			self.stopTimer('autoStage')
 
 		resultdata['status'] = status
 		self.publish(resultdata, database=True, dbforce=True)
@@ -447,6 +455,7 @@ class Focuser(acquisition.Acquisition):
 		if melt_time and attempt > 1:
 			self.logger.info('Target attempt %s, not melting' % (attempt,))
 		elif melt_time:
+			self.startTimer('melt')
 			self.logger.info('Melting ice...')
 
 			#### change to melt preset
@@ -462,7 +471,10 @@ class Focuser(acquisition.Acquisition):
 					meltpresetname = self.presetsclient.getCurrentPreset()['name']
 			self.logger.info('melt preset: %s' % (meltpresetname,))
 
+			self.startTimer('melt exposeSpecimen')
 			self.exposeSpecimen(melt_time)
+			self.stopTimer('melt exposeSpecimen')
+			self.stopTimer('melt')
 
 		status = 'unknown'
 
@@ -473,7 +485,9 @@ class Focuser(acquisition.Acquisition):
 				continue
 			message = 'Processing focus setting \'%s\'...' % setting['name']
 			self.logger.info(message)
+			self.startTimer('processFocusSetting')
 			status = self.processFocusSetting(setting, target=target, emtarget=emtarget)
+			self.stopTimer('processFocusSetting')
 			## repeat means give up and do the whole target over
 			if status == 'repeat':
 				return 'repeat'
@@ -484,7 +498,9 @@ class Focuser(acquisition.Acquisition):
 			self.presetsclient.toScope(presetdata['name'], emtarget)
 			delay = self.settings['pause time']
 			self.logger.info('Pausing for %s seconds' % (delay,))
+			self.startTimer('final pause')
 			time.sleep(delay)
+			self.stopTimer('final pause')
 
 			## acquire and publish image, like superclass does
 			acquisition.Acquisition.acquire(self, presetdata, target, emtarget)
