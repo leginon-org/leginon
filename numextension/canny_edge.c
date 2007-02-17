@@ -3,7 +3,7 @@
 #include <math.h>
 
 #include "edge.h"
-#define VERBOSE 1
+#define VERBOSE 0
 
 /*
 #ifndef VERBOSE
@@ -545,6 +545,8 @@ void apply_hysteresis(short int *mag, unsigned char *nms, int rows, int cols,
    if(VERBOSE){
       printf("The input low and high fractions of %f and %f computed to\n",
 	 tlow, thigh);
+      printf("high threshold count: %d\n",
+	 highcount);
       printf("magnitude of the gradient threshold values of: %d %d\n",
 	 lowthreshold, highthreshold);
    }
