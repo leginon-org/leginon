@@ -172,7 +172,7 @@ def medium(image):
 	botquad=image1d[size/4]
 	return medium,topquad,botquad
 
-def outputimage(array,name,description,testlog):
+def outputimage_mrc(array,name,description,testlog):
 	width=25
 	if testlog[0]:
 		mrcname="tests/%02d%s.mrc" %(testlog[1],name)
@@ -186,6 +186,29 @@ def outputimage(array,name,description,testlog):
 		if array.type()==numarray.Int64:
 			array=array.astype(numarray.Int32)
 		Mrc.numeric_to_mrc(array,mrcname)
+	return testlog
+
+def outputimage(array,name,description,testlog):
+	width=25
+	if testlog[0]:
+		jpgname="tests/%02d%s.jpg" %(testlog[1],name)
+		space=(width-len(jpgname))*' '
+		testlog[2]+= "%s:%s%s\n" % (jpgname,space,description)
+		testlog[1] += 1
+	else:
+		if testlog[1] == -1:
+			jpgname="jpgs/%s.crud.jpg" %(name,)
+		else:
+			return testlog
+	if array.type()==numarray.Bool:
+		array=array.astype(numarray.Int8)
+	if array.type()==numarray.UInt8:
+		array=array.astype(numarray.Int16)
+	if array.type()==numarray.Int64:
+		array=array.astype(numarray.Int32)
+	array = whiteNormalizeImage(array)
+	PILimage = array2image(array)
+	PILimage.save(jpgname, "JPEG", quality=95)
 	return testlog
 
 def find_edge_sobel(image,sigma,amin,amax,output,testlog):
@@ -208,34 +231,40 @@ def find_edge_sobel(image,sigma,amin,amax,output,testlog):
 
 def find_edge_canny(image,sigma,amin,amax,output,testlog):
 
-	tedges,edges,testlog = canny2(image,sigma,5,True,amin,amax,testlog)
+	tedges,gradient,testlog = canny(image,sigma,5,True,amin,amax,testlog)
+# nonmaximawindow and hysteresis are parameters only for canny_squarefinder2)	
+
 	if (output):
-		testlog=outputimage(image,'input','input image',testlog)
-		testlog=outputimage(edges,'grad','gradient magnitude image',testlog)
+		testlog=outputimage(gradient,'grad','gradient magnitude image',testlog)
 	
 	return tedges,testlog
 
-def canny2_CS(image, sigma=1.8, nonmaximawindow=7, hysteresis=True, tlow=0.3, thigh=0.9,testlog=None):
-	gaussiankernel = convolver.gaussian_kernel(sigma)
-	print len(gaussiankernel)
-	c = convolver.Convolver()
-	c.setImage(image)
-	gaussianimage = c.convolve(kernel=gaussiankernel)
+def canny_squarefinder2(image, sigma=1.8, nonmaximawindow=5, hysteresis=True, tlow=0.3, thigh=0.9,testlog=None):
+# This is taken from squarefinder2.py in pyleginon. The nonmaximasuppress and
+#hysteresisthresholding are not as good as the one from viewit
+	gaussianimage = nd.gaussian_filter(image,sigma,mode='reflect')
 	if True:
 		testlog=outputimage(gaussianimage,'smooth','smooth image',testlog)
 	gradient_col = nd.sobel(gaussianimage,axis=-1)
 	gradient_row = nd.sobel(gaussianimage,axis=0)
-	edgeimage=nd.generic_gradient_magnitude(gaussianimage, derivative=nd.sobel)
-	gradientimage= ma.filled(ma.arctan2(gradient_row,gradient_col))
+	
+#The three methods of obtaining gradient magnitude gave the same result
+#	gradient_mag=nd.generic_gradient_magnitude(gaussianimage,derivative=nd.sobel)
+#	gradient_mag=nd.gaussian_gradient_magnitude(image,sigma)
+	dummy,gradient_mag,testlog=canny(image, sigma, nonmaximawindow, hysteresis, tlow, thigh,testlog)
 
-	numextension.nonmaximasuppress(edgeimage, gradientimage, nonmaximawindow)
+	directionimage= ma.filled(ma.arctan2(gradient_row,gradient_col))
+	
+	nm_mag = gradient_mag
+
+	numextension.nonmaximasuppress(nm_mag, directionimage, nonmaximawindow)
 
 	if hysteresis:
-		totaledge = nd.sum(numarray.where(edgeimage > 0,1,0))
+		totaledge = nd.sum(numarray.where(nm_mag > 0,1,0))
 		highcount = int(totaledge * thigh + 0.5)
-		histo_width = edgeimage.max()
+		histo_width = nm_mag.max()
 		bin = int(histo_width)
-		hist = nd.histogram(edgeimage,1,histo_width,bin)
+		hist = nd.histogram(nm_mag,1,histo_width,bin)
 		r=0
 		numedges = hist[0]
 		while numedges < highcount and r < bin-1 :
@@ -244,16 +273,16 @@ def canny2_CS(image, sigma=1.8, nonmaximawindow=7, hysteresis=True, tlow=0.3, th
 			
 		highthreshold = r*(histo_width/bin)
 		lowthreshold = int(highthreshold*tlow + 0.5)
-		
-		edgeimage_final = numextension.hysteresisthreshold(edgeimage,
-			lowthreshold, highthreshold) * edgeimage
-		edges = ma.masked_greater(edgeimage_final,0,1)
-	return edges, edgeimage,testlog
+		print highcount,highthreshold,lowthreshold
+		edgeimage = numextension.hysteresisthreshold(nm_mag,
+			lowthreshold, highthreshold)
+		edges = ma.masked_greater(edgeimage,0,1)
+	return edges, directionimage,testlog
 
-def canny2(image, sigma=1.8, nonmaximawindow=7, hysteresis=True, tlow=0.3, thigh=0.9,testlog=None):
-	edgeimage_final = numextension.cannyedge(image,sigma,tlow,thigh)
-	edges = ma.masked_less(edgeimage_final,100,0)
-	return edges, edgeimage_final,testlog
+def canny(image, sigma=1.8, nonmaximawindow=7, hysteresis=True, tlow=0.3, thigh=0.9,testlog=None):
+	edgeimage,grad_mag = numextension.cannyedge(image,sigma,tlow,thigh)
+	edges = ma.masked_less(edgeimage,100,0)
+	return edges, grad_mag,testlog
 	
 
 def fill_mask(mask_image,iteration):
@@ -622,15 +651,12 @@ def reduceRegions(regions,velimit):
 					
 	return regionarrays
 	
-#def findCrud_Craig(bimage,area_t):
-#		print "try FindRegions",area_t
-#		result=libCV.FindRegions(mask,area_t,0.05,1,0,1,0,1)
 
 def findCrud2(params,file):
 	filelog="\nTEST OUTPUT IMAGES\n----------------------------------------\n"
 	# create "jpgs" directory if doesn't exist
-	if not (os.path.exists("mrcs")):
-		os.mkdir("mrcs")
+	if not (os.path.exists("jpgs")):
+		os.mkdir("jpgs")
 
 	# remove crud info file if it exists
 	if (os.path.exists("crudfiles/"+file+".crud")):
@@ -709,6 +735,9 @@ def findCrud2(params,file):
 				high=(high_tn-1.0)*delta_stdev/delta_scale+1.0
 
 	print 'scaled crudhi= %.4f crudlo= %.4f' %(high,low)
+
+	if (test):
+		testlog=outputimage(image,'input','input image',testlog)
 
 	#binary edge
 	if convolve_t < 0.001:
@@ -809,22 +838,18 @@ def findCrud2(params,file):
 			masklabel=numarray.ones(numarray.shape(image))
 		superimage=image*masklabel
 	
-	Mrc.numeric_to_mrc(superimage,"mrcs/"+file+".crud.mrc")
 	testlog=outputimage(superimage,'output','Final Crud w/ image',testlog)
 	
 	if (test):
 		print testlog[2]
 	
+	testlog[0]=False
+	testlog[1]=-1
+	testlog=outputimage(superimage,file,'Final Crud w/ image',testlog)
+	
 	crudfile=open("crudfiles/"+file+".crud",'w')
 	crudfile.write(crudinfo+"\n")
 	crudfile.close()
-
-def rejectPiksInPolygon(piks,gpolygons):
-	goodpiks = set(piks)	
-	badpiks = []	
-	for polygon in gpolygons:
-		badpiks.extend(polygon.pointsInPolygon(piks,polygon))
-	goodpiks = list(goodpiks.difference(badpiks))
 	
-	return goodpiks
+	return equalcruds
 		
