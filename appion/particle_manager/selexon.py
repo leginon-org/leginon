@@ -200,6 +200,7 @@ if __name__ == '__main__':
 
 			if params['method'] == "classic":
 				findPeaks(params,imgname)
+				numpeaks = 0
 			elif params['method'] == "experimental":
 				print "skipping findpeaks..."
 			else:

@@ -847,12 +847,15 @@ def drawPikFile(file,draw,bin,pixrad):
 			x1=float(bits[1])/float(bin)
 			y1=float(bits[2])/float(bin)
 			coord=(x1-ps, y1-ps, x1+ps, y1+ps)
+			ps = ps - 1
+			coord2=(x1-ps, y1-ps, x1+ps, y1+ps)
 			if(len(bits) > 7):
 				#GET templ_num
 				num = int(bits[7])%12
 			else:
 				num = 0
 			draw.ellipse(coord,outline=circle_colors[num])
+			draw.ellipse(coord2,outline=circle_colors[num])
 			#draw.rectangle(coord,outline=color1)
 	f.close()
 	del f
