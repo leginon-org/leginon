@@ -118,8 +118,11 @@ if __name__ == '__main__':
 			os.mkdir("crudfiles")
 		for img in images:
 			imgname=img['filename']
-			findCrud(params,imgname)
-			#findCrud2(params,imgname)
+			tstart=time.time()
+			#findCrud(params,imgname)
+			findCrud2(params,imgname)
+			tend=time.time()
+			print "CRUD FINDING TIME",tend-tstart
 		sys.exit(1)
         
 	# check to see if user only wants to find shifts
