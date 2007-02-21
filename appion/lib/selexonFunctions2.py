@@ -840,6 +840,7 @@ def drawPikFile(file,draw,bin,pixrad):
 	f=open(file, 'r')
 	#00000000 1 2 3333 44444 5555555555 666666666 777777777
 	#filename x y mean stdev corr_coeff peak_size templ_num angle
+	psm1 = ps - 1
 	for line in f:
 		if(line[0] != "#"):
 			line=string.rstrip(line)
@@ -847,8 +848,7 @@ def drawPikFile(file,draw,bin,pixrad):
 			x1=float(bits[1])/float(bin)
 			y1=float(bits[2])/float(bin)
 			coord=(x1-ps, y1-ps, x1+ps, y1+ps)
-			ps = ps - 1
-			coord2=(x1-ps, y1-ps, x1+ps, y1+ps)
+			coord2=(x1-psm1, y1-psm1, x1+psm1, y1+psm1)
 			if(len(bits) > 7):
 				#GET templ_num
 				num = int(bits[7])%12
