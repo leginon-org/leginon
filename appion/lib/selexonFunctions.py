@@ -806,8 +806,6 @@ def dwnsizeTemplate(params,filename):
 def binImg(img,binning):
 	#bin image using leginon imagefun library
 	#img must be a numarray image
-
-	#imagefun.bin results in memory loss
 	return imagefun.bin(img,binning)
    
 def filterImg(img,apix,res):
