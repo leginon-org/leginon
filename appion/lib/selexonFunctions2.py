@@ -807,7 +807,8 @@ def createJPG2(params,file):
 	draw = ImageDraw.Draw(image)
 	#blend(image1,image2,0.5)
 
-	drawPikFile(pikfile,draw,bin,pixrad)
+	circmult = 1.0
+	drawPikFile(pikfile,draw,bin,pixrad,circmult)
 
 	outfile="jpgs/"+mrcfile+".prtl.jpg"
 	print " ... writing JPEG: ",outfile
@@ -820,7 +821,7 @@ def createJPG2(params,file):
 
 #########################################################
 
-def drawPikFile(file,draw,bin,pixrad):
+def drawPikFile(file,draw,bin,pixrad,circmult):
 	"""	
 	Reads a .pik file and draw circles around all the points
 	in the .pik file
@@ -834,7 +835,7 @@ def drawPikFile(file,draw,bin,pixrad):
 	Order: 	Yellow, Cyan, Magenta, Red, Green, Blue,
 		Orange, Teal, Purple, Lime-Green, Sky-Blue, Pink
 	"""
-	ps=float(1.5*pixrad) #1.5x particle radius
+	ps=float(circmult*pixrad) #1.5x particle radius
 
 	#print " ... reading Pik file: ",file
 	f=open(file, 'r')
