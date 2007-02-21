@@ -16,6 +16,7 @@ import numarray.convolve as convolve
 import numarray.fft as fft
 import numarray.random_array as random_array
 import numarray.linear_algebra as linear_algebra
+import threading
 #import numextension
 #import mem
 
@@ -237,6 +238,64 @@ def normStdev2(map,n):
 		val = -mean/sd
 
 	return map
+
+#########################################################
+#########################################################
+
+class findemjob(threading.Thread):
+   def __init__ (self, feed):
+      threading.Thread.__init__(self)
+      self.feed = feed
+   def run(self):
+		fin=''
+		fin=os.popen('${FINDEM_EXE}','w')
+		fin.write(self.feed)
+		print "running findem.exe"
+		fin.flush
+		fin.close()
+
+#########################################################
+
+def threadFindEM(params,file):
+	tmplt=params["template"]
+	numcls=len(params['templatelist'])
+	pixdwn=str(params["apix"]*params["bin"])
+	d=str(params["diam"])
+	if (params["multiple_range"]==False):
+		strt=str(params["startang"])
+		end=str(params["endang"])
+		incr=str(params["incrang"])
+	bw=str(int((1.5 * params["diam"]/params["apix"]/params["bin"])/2))
+	joblist = []
+
+	classavg=1
+	while classavg<=len(params['templatelist']):
+		cccfile="./cccmaxmap%i00.mrc" % classavg
+		if (os.path.exists(cccfile)):
+			os.remove(cccfile)
+
+		if (params["multiple_range"]==True):
+			strt=str(params["startang"+str(classavg)])
+			end=str(params["endang"+str(classavg)])
+			incr=str(params["incrang"+str(classavg)])
+
+		feed = file+".dwn.mrc\n"
+		if (len(params['templatelist'])==1 and not params['templateIds']):
+			feed = feed+tmplt+".dwn.mrc\n"
+		else:
+			feed = feed+tmplt+str(classavg)+".dwn.mrc\n"
+		feed = feed+"-200.0\n"+pixdwn+"\n"+d+"\n"
+		feed = feed+str(classavg)+"00\n"
+		feed = feed+strt+','+end+','+incr+"\n"
+		feed = feed+bw+"\n"
+		current = findemjob(feed)
+		joblist.append(current)
+		current.start()
+		classavg+=1
+
+	for job in joblist:
+		job.join()
+	return
 
 #########################################################
 #########################################################

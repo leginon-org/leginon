@@ -194,9 +194,9 @@ if __name__ == '__main__':
 				peaksumsq = peaksumsq + numpeaks**2
 			else:
 #				tmpRemoveCrud(params,imgname)
-#				sys.exit()
 				dwnsizeImg(params,imgname)
-				runFindEM(params,imgname)
+#				runFindEM(params,imgname)
+				threadFindEM(params,imgname)
 
 			if params['method'] == "classic":
 				findPeaks(params,imgname)
