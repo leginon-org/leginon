@@ -1333,6 +1333,5 @@ def phase_correlate(image, template):
 
 def bin_img(image,bin):
 	""" numextension causes mem leaks """
-	#return numextension.bin(image,bin)
-	return nd_image.zoom(image,1.0/bin,order=1)
+	return imagefun.bin(image,bin)
 

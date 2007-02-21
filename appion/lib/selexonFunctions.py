@@ -808,9 +808,8 @@ def binImg(img,binning):
 	#img must be a numarray image
 
 	#imagefun.bin results in memory loss
-	#return imagefun.bin(img,binning)
-	return nd_image.zoom(img,1.0/float(binning),order=1)
-    
+	return imagefun.bin(img,binning)
+   
 def filterImg(img,apix,res):
 	# low pass filter image to res resolution
 	if res==0:
