@@ -564,6 +564,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reportStatus('output', 'Publishing image...')
 		self.startTimer('publish image')
 		self.publish(imagedata, pubevent=True, database=self.settings['save image'])
+
+		## set up to handle done events
+		dataid = imagedata.dbid
+		doneevent = {}
+		doneevent['received'] = threading.Event()
+		doneevent['status'] = 'waiting'
+		self.doneevents[dataid] = doneevent
+
 		self.stopTimer('publish image')
 		self.reportStatus('output', 'Image published')
 		self.reportStatus('output', 'Publishing stats...')
@@ -572,11 +580,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.stopTimer('publish stats')
 		self.reportStatus('output', 'Stats published...')
 
-		## set up to handle done events
-		dataid = imagedata.dbid
-		self.doneevents[dataid] = {}
-		self.doneevents[dataid]['received'] = threading.Event()
-		self.doneevents[dataid]['status'] = 'waiting'
 		if self.settings['display image']:
 			self.reportStatus('output', 'Displaying image...')
 			self.startTimer('display')
