@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.70 $
+# $Revision: 1.71 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-12-08 22:58:14 $
-# $Author: pulokas $
+# $Date: 2007-02-24 01:47:57 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -935,7 +935,7 @@ class ImportDialog(wx.Dialog):
 
 		self.parameters = Parameters(self)
 
-		self.lbpresets = wx.ListBox(self, -1, style=wx.LB_EXTENDED)
+		self.lbpresets = wx.ListBox(self, -1, style=wx.LB_EXTENDED,size=(80,60))
 
 		sz = wx.GridBagSizer(5, 0)
 		sz.Add(self.instrumentselection, (0, 0), (1, 4), wx.EXPAND)
