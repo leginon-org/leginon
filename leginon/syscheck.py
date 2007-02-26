@@ -240,15 +240,26 @@ else:
 				button.SetBackgroundColour(wx.RED)
 				self.sizer.Add(button, 1, border=50, flag=wx.ALL)
 				self.Bind(wx.EVT_BUTTON, self.test, button)
+				
+				self.extlist = wx.ListBox(frame, -1, style=wx.LB_EXTENDED)
+				self.extlist.InsertItems(['test1','test2','test3','test4','test5'],0)
+				sz = wx.GridBagSizer(2, 0)
+				label = wx.StaticText(frame, -1, 'A Scrollable Listbox')
+				sz.Add(label, (1, 0), (1, 4), wx.ALIGN_CENTER)
+				sz.Add(self.extlist, (2, 0), (1, 4), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
-				frame.SetSizerAndFit(self.sizer)
+				self.szmain = wx.GridBagSizer(2, 2)
+				self.szmain.Add(sz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+				self.szmain.Add(self.sizer, (1, 0), (1, 1),wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
+							
+				frame.SetSizerAndFit(self.szmain)
 				self.SetTopWindow(frame)
 				frame.Show(True)
 				return True
 
 			def test(self, evt):
 				print 'TEST'
-	
+				
 		print '    Testing a wxPython application.  Close the window that pops up...'
 		try:
 			app = MyApp(0)
