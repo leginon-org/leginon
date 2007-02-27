@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.39 $
+# $Revision: 1.40 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-09-15 18:14:09 $
-# $Author: pulokas $
+# $Date: 2007-02-27 21:07:00 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -301,10 +301,10 @@ class ManualFocusDialog(wx.MiniFrame):
 
         self.toolbar.AddSeparator()
 
-        self.value = FloatEntry(self.toolbar, -1, allownone=False, chars=6,
-                                                        value='0.0')
+        self.value = FloatEntry(self.toolbar, -1, allownone=False, chars=6, value='0.0')
         self.toolbar.AddControl(self.value)
-        self.toolbar.AddControl(wx.StaticText(self.toolbar, -1, ' m'))
+	# size is defined because some wxPython installation lack good wxDefaultSize
+        self.toolbar.AddControl(wx.StaticText(self.toolbar, -1, ' m',size=(20,20)))
         bitmap = gui.wx.Icons.icon('instrumentset')
         self.toolbar.AddTool(gui.wx.ToolBar.ID_VALUE, bitmap,
                                                     shortHelpString='Set instrument')
@@ -326,7 +326,6 @@ class ManualFocusDialog(wx.MiniFrame):
                                                     shortHelpString='Eucentric to instrument')
 
         self.toolbar.Realize()
-
         self.SetToolBar(self.toolbar)
 
         self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
@@ -338,6 +337,8 @@ class ManualFocusDialog(wx.MiniFrame):
         self.SetStatusBar(self.statusbar)
 
         self.Fit()
+	
+	self.SetAutoLayout(True)
 
         self.settingsdialog = ManualFocusSettingsDialog(self,
                                                                                                         'Manual Focus Settings',
@@ -448,10 +449,10 @@ if __name__ == '__main__':
     class App(wx.App):
         def OnInit(self):
             frame = wx.Frame(None, -1, 'Focuser Test')
-            dialog = ManualFocusDialog(frame)
-            frame.Fit()
-            self.SetTopWindow(frame)
-            frame.Show()
+            dialog = ManualFocusDialog(frame,None)
+#            frame.Fit()
+#            self.SetTopWindow(frame)
+#            frame.Show()
             dialog.Show()
             return True
 

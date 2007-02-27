@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.26 $
+# $Revision: 1.27 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-12-05 22:28:41 $
-# $Author: pulokas $
+# $Date: 2007-02-27 21:06:59 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -310,7 +310,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 		autosizer.Add(self.correction_type_choice, (4, 1), (1, 1), wx.EXPAND)
 		self.autowidgets.append(self.correction_type_choice)
 
-		label = wx.StaticText(self, -1, 'Reset defocus:')
+#		label = wx.StaticText(self, -1, 'Reset defocus:')
 #		autosizer.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 #		self.autowidgets.append(label)
 #		self.reset_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.reset_types)

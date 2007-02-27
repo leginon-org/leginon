@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetTemplate.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-12-06 21:15:26 $
-# $Author: suloway $
+# $Date: 2007-02-27 21:07:00 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -95,10 +95,10 @@ class Panel(wx.Panel):
 		sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, title)
 		sz.Add(label, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.lbtemplate, (1, 0), (1, 3), wx.EXPAND)
-		sz.Add(self.badd, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.bedit, (2, 1), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(self.bdelete, (2, 2), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.lbtemplate, (1, 0), (2, 3), wx.EXPAND)
+		sz.Add(self.badd, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.bedit, (3, 1), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.bdelete, (3, 2), (1, 1), wx.ALIGN_CENTER)
 		sz.AddGrowableRow(1)
 		sz.AddGrowableCol(0)
 
