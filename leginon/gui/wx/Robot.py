@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Robot.py,v $
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-01-16 02:55:27 $
+# $Date: 2007-03-01 21:19:23 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -38,6 +38,9 @@ class Panel(gui.wx.Node.Panel):
 													'cleargrid', shortHelpString='Grid Cleared')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PAUSE,
 													'pause', shortHelpString='Continue')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,
+													'refresh',
+													shortHelpString='Refresh Trays')
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
 		self.toolbar.Realize()
@@ -85,6 +88,8 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onExtractTool,
 											id=gui.wx.ToolBar.ID_EXTRACT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPauseTool, id=gui.wx.ToolBar.ID_PAUSE)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onRefreshTraysButton,
+											id=gui.wx.ToolBar.ID_REFRESH)
 		self.Bind(gui.wx.Events.EVT_GRID_QUEUE_EMPTY, self.onGridQueueEmpty)
 		self.Bind(gui.wx.Events.EVT_CLEAR_GRID, self.onClearGrid)
 		self.Bind(gui.wx.Events.EVT_GRID_INSERTED, self.onGridInserted)
@@ -93,6 +98,8 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(wx.EVT_CHOICE, self.onTrayChoice, self.ctray)
 		choices = self.node.getTrayLabels()
 		if choices:
+			print dir(self.ctray)
+			self.ctray.Clear()
 			self.ctray.AppendItems(choices)
 			if self.node.settings['grid tray']:
 				n = self.ctray.FindString(self.node.settings['grid tray'])
@@ -161,6 +168,23 @@ class Panel(gui.wx.Node.Panel):
 
 	def onSelectNoneButton(self, evt):
 		self.tray.selectNone()
+		
+	def onRefreshTraysButton(self, evt):
+		choices = self.node.getTrayLabels()
+		if choices:
+			self.ctray.Clear()
+			self.ctray.AppendItems(choices)
+			if self.node.settings['grid tray']:
+				n = self.ctray.FindString(self.node.settings['grid tray'])
+			else:
+				n = wx.NOT_FOUND
+			if n == wx.NOT_FOUND:
+				self.ctray.SetSelection(0)
+			else:
+				self.ctray.SetSelection(n)
+			self.ctray.Enable(True)
+			self.onTrayChoice()
+		
 
 	def getNextGrid(self):
 		return self.tray.getNextGrid()
