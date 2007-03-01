@@ -495,8 +495,8 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 		os.remove(outfile)
 		print " ... removed existing file:",outfile
 
-	for i in range(5):
-		thresh      = threshold + float(i-2)*0.05
+	for i in numarray.array([-0.05,-0.01,0.00,0.01,0.05]):
+		thresh      = threshold + float(i)
 		ccthreshmap = imagefun.threshold(ccmaxmap,thresh)
 		percentcover =  round(100.0*float(ccthreshmap.sum())/float(totalarea),2)
 		blobs       = imagefun.find_blobs(ccmaxmap,ccthreshmap,6,maxpeaks*2,maxblobsize,2)
@@ -856,8 +856,12 @@ def createJPG2(params,file):
 	#print "Reading MRC: ",mrcfile
 	numer = Mrc.mrc_to_numeric(mrcfile)
 	numer = bin_img(numer,bin)
+	numer = filterImg(numer,apix,bin,params["lp"])
+	#numer = PlaneRegression(numer,bin)
 
-	numer = whiteNormalizeImage(numer)
+	#numer = whiteNormalizeImage(numer)
+	#numer = blackNormalizeImage(numer)
+	numer = normalizeImage(numer)
 	image = array2image(numer)
 	image = image.convert("RGB")
 
@@ -867,7 +871,9 @@ def createJPG2(params,file):
 	#blend(image1,image2,0.5)
 
 	circmult = 1.0
-	drawPikFile(pikfile,draw,bin,pixrad,circmult)
+	numcircs = 2
+	circshape = "circle"
+	drawPikFile(pikfile,draw,bin,pixrad,circmult,numcircs,circshape)
 
 	outfile="jpgs/"+mrcfile+".prtl.jpg"
 	print " ... writing JPEG: ",outfile
@@ -880,7 +886,7 @@ def createJPG2(params,file):
 
 #########################################################
 
-def drawPikFile(file,draw,bin,pixrad,circmult):
+def drawPikFile(file,draw,bin,pixrad,circmult,numcircs,circshape):
 	"""	
 	Reads a .pik file and draw circles around all the points
 	in the .pik file
@@ -891,7 +897,7 @@ def drawPikFile(file,draw,bin,pixrad,circmult):
 		"#f2973d","#3df297","#973df2", \
 		"#97f23d","#3d97f2","#f23d97", ]
 	"""	
-	Order: 	Yellow, Cyan, Magenta, Red, Green, Blue,
+	Order: 	Red, Green, Blue, Yellow, Cyan, Magenta,
 		Orange, Teal, Purple, Lime-Green, Sky-Blue, Pink
 	"""
 	ps=float(circmult*pixrad) #1.5x particle radius
@@ -907,16 +913,23 @@ def drawPikFile(file,draw,bin,pixrad,circmult):
 			bits=line.split(' ')
 			x1=float(bits[1])/float(bin)
 			y1=float(bits[2])/float(bin)
-			coord=(x1-ps, y1-ps, x1+ps, y1+ps)
+
 			coord2=(x1-psm1, y1-psm1, x1+psm1, y1+psm1)
 			if(len(bits) > 7):
 				#GET templ_num
 				num = int(bits[7])%12
 			else:
 				num = 0
-			draw.ellipse(coord,outline=circle_colors[num])
-			draw.ellipse(coord2,outline=circle_colors[num])
-			#draw.rectangle(coord,outline=color1)
+			#Draw (numcircs) circles of size (circmult*pixrad)
+			count = 0
+			while(count < numcircs):
+				tps = ps + count
+				coord=(x1-tps, y1-tps, x1+tps, y1+tps)
+				if(circshape == "square"):
+					draw.rectangle(coord,outline=circle_colors[num])
+				else:
+					draw.ellipse(coord,outline=circle_colors[num])
+				count = count + 1
 	f.close()
 	del f
 
