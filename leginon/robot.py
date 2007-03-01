@@ -161,15 +161,7 @@ class Robot(node.Node):
 		self.emailclient = emailnotification.EmailClient(self)
 		self.simulate = False
 
-		# if label is same, kinda screwed
-		self.gridtrayids = {}
-		try:
-			projectdata = project.ProjectData()
-			gridboxes = projectdata.getGridBoxes()
-			for i in gridboxes.getall():
-				self.gridtrayids[i['label']] = i['gridboxId']
-		except project.NotConnectedError, e:
-			self.logger.error('Failed to connect to the project database: %s' % e)
+		self.traysFromDB()
 
 		self.queue = Queue.Queue()
 		threading.Thread(name='robot control queue handler thread',
@@ -183,6 +175,17 @@ class Robot(node.Node):
 		self.addEventInput(event.UnloadGridEvent, self.handleUnloadGrid)
 
 		self.start()
+
+	def traysFromDB(self):
+		# if label is same, kinda screwed
+		self.gridtrayids = {}
+		try:
+			projectdata = project.ProjectData()
+			gridboxes = projectdata.getGridBoxes()
+			for i in gridboxes.getall():
+				self.gridtrayids[i['label']] = i['gridboxId']
+		except project.NotConnectedError, e:
+			self.logger.error('Failed to connect to the project database: %s' % e)
 
 	def userContinue(self):
 		self.usercontinue.set()
@@ -790,6 +793,7 @@ class Robot(node.Node):
 		self.extractcondition.release()
 
 	def getTrayLabels(self):
+		self.traysFromDB()
 		return self.gridtrayids.keys()
 
 	def setTray(self, traylabel):
