@@ -387,13 +387,16 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 			continue
 		fakeblobs.append(fakeblob)
 
+	#print " ... blob summary:",len(fakeblobs),"total:",toobig,"toobig:",toosmall,"toosmall:",toooblong,"toooblong"
+
 	## limit to maxblobs
 	if (maxblobs is not None) and (len(blobs) > maxblobs):
 		if(method == "highest"):
-			blobs = highest_peaks(fakeblobs, maxblobs)
+			print " !!! trimming number of blobs to the %s highest peaks" % (maxblobs,)
+			blobs = highest_peaks(fakeblobs, int(maxblobs))
 		else:
+			print " !!! trimming number of blobs to %s closest to center" % (maxblobs,)
 			blobs = near_center(shape, fakeblobs, maxblobs)
-		print " !!! trimming number of blobs to %s closest to center" % (maxblobs,)
 	else:
 		blobs = fakeblobs
 
