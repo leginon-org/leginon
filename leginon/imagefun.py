@@ -19,18 +19,6 @@ ffteng = fftengine.fftEngine()
 ## Here is my infinity contant
 inf = 1e500
 
-def toFloat(inputarray):
-	'''
-	if inputarray is an integer type:
-		return a Float32 version of it
-	else:
-		return inputarray
-	'''
-	if isinstance(inputarray.type(), numarray.IntegralType):
-		return inputarray.astype(numarray.Float32)
-	else:
-		return inputarray
-
 def stdev(inputarray, known_mean=None):
 	return numarray.nd_image.standard_deviation(inputarray)
 
@@ -361,6 +349,20 @@ def mark_image(image, coord, value, size=15):
 
 def bin(image, binning):
 	return numextension.bin(image, binning)
+
+def bin2(a, factor):
+	'''
+	This is based on: http://scipy.org/Cookbook/Rebinning
+	This version is modified to use numarray instead of numpy.
+	It is also simplified to the case of a 2D array with the same
+	binning factor in both dimensions.
+	'''
+	oldshape = a.shape
+	newshape = numarray.asarray(oldshape)/factor
+	tmpshape = (newshape[0], factor, newshape[1], factor)
+	f = factor * factor
+	binned = numarray.sum(numarray.sum(numarray.reshape(a, tmpshape), 1), 2) / f
+	return binned
 
 def crop_at(im, center, shape, mode='wrap', cval=None):
 	'''
