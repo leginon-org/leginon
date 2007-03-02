@@ -317,7 +317,7 @@ def numarrayblobs(im,mask):
 
 	blobs = []
 	for i in range(n):
-		blobs.append({'center':centers[i], 'n':sizes[i], 'mean':means[i],'stddev':stds[i]})
+		blobs.append({'center':centers[i], 'n':sizes[i], 'mean':means[i],'stddev':stds[i],'moment':moments[i]})
 	return blobs
 
 def moment_of_inertia(input, labels, index = None):
