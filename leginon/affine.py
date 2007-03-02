@@ -67,7 +67,9 @@ class SplineFilterCache(ImageCache):
 
 def transform(input, libcvMatrix):
 	'''
-	transform using a matrix returned by libCV
+	libCV.MatchImages returns a matrix representing the transform between
+	image1 and image2.  This function will take that matrix and image2
+	and transform image2 to look like image1.
 	'''
 	matrix = numarray.array(libcvMatrix)
 	matrix.transpose()
@@ -75,6 +77,5 @@ def transform(input, libcvMatrix):
 	offset = tuple(matrix[:2,2])
 	inputshape = input.shape
 	outputshape = inputshape
-	offset = affine_transform_offset(inputshape, outputshape, mat, offset=offset)
-	output = numarray.nd_image.affine_transform(input, mat, offset=offset, mode='constant', cval=0.0)
+	output = numarray.nd_image.affine_transform(input, mat, offset=offset)
 	return output
