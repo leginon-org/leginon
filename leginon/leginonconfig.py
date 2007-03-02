@@ -64,9 +64,10 @@ config_locations = [
 	os.path.join(MODULE, 'config', 'leginon.cfg'),
 	os.path.join(HOME, 'leginon.cfg'),
 ]
-print 'Possible config locations:', config_locations
 configfiles = configparser.read(config_locations)
-print 'Actually read: ', configfiles
+print 'Leginon config files used: '
+for configfile in configfiles:
+	print '   %s' % (configfile,)
 
 # Database sections
 dbsections = []
@@ -76,7 +77,6 @@ for section in allsections:
 		dbsections.append(section)
 databases = {}
 for section in dbsections:
-	print 'SECTION', section
 	dbconfig = {}
 	options = configparser.options(section)
 	for key in options:
