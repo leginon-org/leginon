@@ -242,10 +242,29 @@ if reclim < 20000:
 	sys.setrecursionlimit(20000)
 
 class Blob(object):
-	def __init__(self, image, mask, n, center, mean, stddev):
+	def __init__(self, image, mask, n, center, mean, stddev, moment):
 		self.image = image
 		self.mask = mask
-		self.stats = {'center': center, 'n':n, 'mean':mean, 'stddev':stddev,'size':0}
+		self.stats = {"center":center, "n":n, "mean":mean, "stddev":stddev, "size":0, "moment":moment}
+
+def highest_peaks(blobs, n):
+	"""
+	filter out no more than n blobs that have the highest mean
+	"""
+	
+	## sort blobs based on mean
+	def blob_compare(x,y):
+		if float(x.stats['mean']) < float(y.stats['mean']): return 1
+		else: return -1
+	sortedblobs = list(blobs)
+	sortedblobs.sort(blob_compare)
+	sortedblobs = sortedblobs[:n]
+	## make new list of blobs that have the highest mean
+	newblobs = []
+	for blob in blobs:
+		if blob in sortedblobs:
+			newblobs.append(blob)
+	return newblobs
 
 def near_center(shape, blobs, n):
 	'''
@@ -288,6 +307,7 @@ def numarrayblobs(im,mask):
 		sizes = numarray.nd_image.histogram(labels,1,n+1,n)
 		stds = numarray.nd_image.standard_deviation(im,labels,range(1,n+1))
 		means = numarray.nd_image.mean(im,labels,range(1,n+1))
+		moments = moment_of_inertia(image,labels,range(1,n+1))
 		if n==1:
 			centers = [centers]
 			stds = [stds]
@@ -300,7 +320,44 @@ def numarrayblobs(im,mask):
 		blobs.append({'center':centers[i], 'n':sizes[i], 'mean':means[i],'stddev':stds[i]})
 	return blobs
 
-def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0):
+def moment_of_inertia(input, labels, index = None):
+	"""
+	Calculate the moment of inertia of of the array.
+
+	The index parameter is a single label number or a sequence of
+	label numbers of the objects to be measured. If index is None, all
+	values are used where labels is larger than zero.
+	"""
+	input = numarray.asarray(input)
+	if isinstance(input.type(), numarray.ComplexType):
+		raise TypeError, 'Complex type not supported'
+	if labels == None:
+		raise RuntimeError, 'labels are needed'
+	if labels.shape != input.shape:
+		raise RuntimeError, 'input and labels shape are not equal'
+	moments = []
+	for label in nd_image.find_objects(labels):
+		submask = image[label].copy()
+		moment = _moment(input)
+		moments.append(moment)
+	return moments
+
+
+def _moment(subimage):
+	if(subimage.shape[0]+subimage.shape[1] < 4):
+		return 1.0
+	twopi = 2*3.1415926535898
+	r0 = nd_image.center_of_mass(subimage)
+	sqmat = _distsqmat(r0,subimage.shape)
+	moi = nd_image.sum(subimage*sqmat)/(nd_image.sum(subimage)**2)*twopi
+	return moi
+
+def _distsqmat(r0,shape):
+	indices = numarray.indices(shape)
+	dx, dy = indices[0]-r0[0],indices[1]-r0[1]
+	return (dx**2+dy**2)
+
+def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0, maxmoment=2.5, method="central"):
 	shape = image.shape
 
 	### create copy of mask since it will be modified now
@@ -316,20 +373,27 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 	fakeblobs = []
 	toobig = 0
 	toosmall = 0
+	toooblong = 0
 	for blob in blobs:
-		fakeblob = Blob(image, mask, blob['n'], blob['center'], blob['mean'], blob['stddev'])
+		fakeblob = Blob(image, mask, blob['n'], blob['center'], blob['mean'], blob['stddev'], blob['moment'])
 		if blob['n'] >= maxblobsize:
 			toobig += 1
 			continue
 		if blob['n'] < minblobsize:
 			toosmall += 1
 			continue
+		if blob['moment'] >= maxmoment:
+			toooblong += 1
+			continue
 		fakeblobs.append(fakeblob)
 
 	## limit to maxblobs
 	if (maxblobs is not None) and (len(blobs) > maxblobs):
-		blobs = near_center(shape, fakeblobs, maxblobs)
-		print 'trimming number of blobs to %s closest to center' % (maxblobs,)
+		if(method == "highest"):
+			blobs = highest_peaks(fakeblobs, maxblobs)
+		else:
+			blobs = near_center(shape, fakeblobs, maxblobs)
+		print " !!! trimming number of blobs to %s closest to center" % (maxblobs,)
 	else:
 		blobs = fakeblobs
 
