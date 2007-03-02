@@ -65,17 +65,32 @@ class SplineFilterCache(ImageCache):
 			self.insert(key, spline)
 		return self.get(key)
 
-def transform(input, libcvMatrix):
+def matrixAngle(mat):
+	print numarray.arccos(mat[0,0])
+	print numarray.arcsin(-mat[0,1])
+	print numarray.arcsin(mat[1,0])
+	print numarray.arccos(mat[1,1])
+
+def transform(image2, libcvMatrix, image1shape):
 	'''
 	libCV.MatchImages returns a matrix representing the transform between
 	image1 and image2.  This function will take that matrix and image2
-	and transform image2 to look like image1.
+	and transform image2 to look like image1.  Center of resulting image
+	should match center of image 1.
 	'''
 	matrix = numarray.array(libcvMatrix)
+
+	## add additional shift to use image centers as center of transform
+	image2shape = numarray.array(image2.shape)
+	image1shape = numarray.array(image1shape)
+	off = image1shape/2.0 - image2shape/2.0
+	offmat = numarray.identity(3)
+	offmat[2,0] = off[0]
+	offmat[2,1] = off[1]
+	matrix = numarray.matrixmultiply(offmat, matrix)
+
 	matrix.transpose()
 	mat = matrix[:2,:2]
 	offset = tuple(matrix[:2,2])
-	inputshape = input.shape
-	outputshape = inputshape
-	output = numarray.nd_image.affine_transform(input, mat, offset=offset)
+	output = numarray.nd_image.affine_transform(image2, mat, offset=offset)
 	return output
