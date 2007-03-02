@@ -499,7 +499,7 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 		thresh      = threshold + float(i)
 		ccthreshmap = imagefun.threshold(ccmaxmap,thresh)
 		percentcover =  round(100.0*float(ccthreshmap.sum())/float(totalarea),2)
-		blobs       = imagefun.find_blobs(ccmaxmap,ccthreshmap,6,maxpeaks*2,maxblobsize,2)
+		blobs       = imagefun.find_blobs(ccmaxmap,ccthreshmap,6,maxpeaks*2,maxblobsize,2,2.5,"highest")
 		tstr  = "%.2f" % thresh
 		lbstr = "%4d" % len(blobs)
 		pcstr = "%.2f" % percentcover
@@ -513,7 +513,7 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 	ccthreshmap = imagefun.threshold(ccmaxmap,threshold)
 	percentcover =  round(100.0*float(ccthreshmap.sum())/float(totalarea),3)
 
-	blobs = imagefun.find_blobs(ccmaxmap, ccthreshmap, 6, maxpeaks*2, maxblobsize, 2)
+	blobs = imagefun.find_blobs(ccmaxmap, ccthreshmap, 6, maxpeaks*2, maxblobsize, 2,2.5,"highest")
 	if(len(blobs) > maxpeaks):
 		print " !!! more than maxpeaks ("+str(maxpeaks)+") peaks, selecting only top peaks"
 		blobs.sort(blob_compare)
@@ -521,7 +521,7 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 
 	del ccthreshmap
 
-	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize)
+	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize,maxmoment,method)
 	print "Template "+str(num)+": Found",len(blobs),"peaks ("+\
 		str(percentcover)+"% coverage)"
 	if(percentcover > 10):
@@ -582,7 +582,7 @@ def findPeaksInMapPlus(ccmaxmap,file,num,params,template,tmplmask,anglemap):
 		thresh      = threshold + float(i-2)*0.05
 		ccthreshmap = imagefun.threshold(ccmaxmap,thresh)
 		percentcover =  round(100.0*float(ccthreshmap.sum())/float(totalarea),3)
-		blobs       = imagefun.find_blobs(ccmaxmap,ccthreshmap,6,maxpeaks*2,maxblobsize,2)
+		blobs       = imagefun.find_blobs(ccmaxmap,ccthreshmap,6,maxpeaks*2,maxblobsize,2,2.5,"highest")
 		tstr  = "%.2f" % thresh
 		lbstr = "%4d" % len(blobs)
 		pcstr = "%.2f" % percentcover
@@ -597,7 +597,7 @@ def findPeaksInMapPlus(ccmaxmap,file,num,params,template,tmplmask,anglemap):
 	percentcover =  round(100.0*float(ccthreshmap.sum())/float(totalarea),2)
 
 	#numeric_to_jpg(ccthreshmap,"ccthreshmap.jpg")
-	blobs = imagefun.find_blobs(ccmaxmap, ccthreshmap, 6, maxpeaks*2, maxblobsize, 2)
+	blobs = imagefun.find_blobs(ccmaxmap, ccthreshmap, 6, maxpeaks*2, maxblobsize, 2,2.5,"highest")
 	if(len(blobs) > maxpeaks):
 		print " !!! more than maxpeaks ("+str(maxpeaks)+") peaks, selecting only top peaks"
 		blobs.sort(blob_compare)
