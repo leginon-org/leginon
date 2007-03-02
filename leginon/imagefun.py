@@ -307,7 +307,7 @@ def numarrayblobs(im,mask):
 		sizes = numarray.nd_image.histogram(labels,1,n+1,n)
 		stds = numarray.nd_image.standard_deviation(im,labels,range(1,n+1))
 		means = numarray.nd_image.mean(im,labels,range(1,n+1))
-		moments = moment_of_inertia(image,labels,range(1,n+1))
+		moments = moment_of_inertia(im,labels,range(1,n+1))
 		if n==1:
 			centers = [centers]
 			stds = [stds]
