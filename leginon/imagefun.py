@@ -7,7 +7,7 @@
 #
 import numarray
 import numarray.image
-import numarray.nd_image
+import numarray.nd_image as nd_image
 import fftengine
 import numextension
 
@@ -20,10 +20,10 @@ ffteng = fftengine.fftEngine()
 inf = 1e500
 
 def stdev(inputarray, known_mean=None):
-	return numarray.nd_image.standard_deviation(inputarray)
+	return nd_image.standard_deviation(inputarray)
 
 def mean(inputarray):
-	return numarray.nd_image.mean(inputarray)
+	return nd_image.mean(inputarray)
 
 def min(inputarray):
 	f = numarray.ravel(inputarray)
@@ -291,10 +291,10 @@ def near_center(shape, blobs, n):
 			newblobs.append(blob)
 	return newblobs
 
-## using numarray.nd_image to find blobs
+## using nd_image to find blobs
 labelstruct = numarray.array(((1,1,1),(1,1,1),(1,1,1)))
 def numarrayblobs(im,mask):
-	labels,n = numarray.nd_image.label(mask, labelstruct)
+	labels,n = nd_image.label(mask, labelstruct)
 	## too bad nd_image module is inconsistent with what is returned from
 	## the following functions.  Sometiems a list, sometimes a single value...
 	if n==0:
@@ -303,10 +303,10 @@ def numarrayblobs(im,mask):
 		stds = []
 		means = []
 	else:
-		centers = numarray.nd_image.center_of_mass(im,labels,range(1,n+1))
-		sizes = numarray.nd_image.histogram(labels,1,n+1,n)
-		stds = numarray.nd_image.standard_deviation(im,labels,range(1,n+1))
-		means = numarray.nd_image.mean(im,labels,range(1,n+1))
+		centers = nd_image.center_of_mass(im,labels,range(1,n+1))
+		sizes = nd_image.histogram(labels,1,n+1,n)
+		stds = nd_image.standard_deviation(im,labels,range(1,n+1))
+		means = nd_image.mean(im,labels,range(1,n+1))
 		moments = moment_of_inertia(im,labels,range(1,n+1))
 		if n==1:
 			centers = [centers]
@@ -441,9 +441,9 @@ def crop_at(im, center, shape, mode='wrap', cval=None):
 	croppedcenter = shape[0]/2.0 - 0.5, shape[1]/2.0 - 0.5
 	shift = croppedcenter[0]-center[0], croppedcenter[1]-center[1]
 	if mode == 'constant':
-		shifted = numarray.nd_image.shift(im, shift, mode=mode, cval=cval)
+		shifted = nd_image.shift(im, shift, mode=mode, cval=cval)
 	else:
-		shifted = numarray.nd_image.shift(im, shift, mode=mode)
+		shifted = nd_image.shift(im, shift, mode=mode)
 	cropped = shifted[:shape[0], :shape[1]]
 	return cropped
 
