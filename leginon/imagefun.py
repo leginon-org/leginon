@@ -337,8 +337,8 @@ def moment_of_inertia(input, labels, index = None):
 		raise RuntimeError, 'input and labels shape are not equal'
 	moments = []
 	for label in nd_image.find_objects(labels):
-		submask = image[label].copy()
-		moment = _moment(input)
+		submask = input[label].copy()
+		moment = _moment(submask)
 		moments.append(moment)
 	return moments
 
