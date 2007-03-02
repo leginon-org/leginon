@@ -64,3 +64,17 @@ class SplineFilterCache(ImageCache):
 			spline = numarray.nd_image.spline_filter(image, order=3)
 			self.insert(key, spline)
 		return self.get(key)
+
+def transform(input, libcvMatrix):
+	'''
+	transform using a matrix returned by libCV
+	'''
+	matrix = numarray.array(libcvMatrix)
+	matrix.transpose()
+	mat = matrix[:2,:2]
+	offset = tuple(matrix[:2,2])
+	inputshape = input.shape
+	outputshape = inputshape
+	offset = affine_transform_offset(inputshape, outputshape, mat, offset=offset)
+	output = numarray.nd_image.affine_transform(input, mat, offset=offset, mode='constant', cval=0.0)
+	return output
