@@ -19,9 +19,7 @@ import raster
 import time
 import sys
 import newdict
-import profile
 import cPickle
-import glob
 import os.path
 import affine
 import caltransformer
@@ -400,10 +398,13 @@ def createTiles(inputs, tiledict, tilesize, row1=None, row2=None, col1=None, col
 
 if __name__ == '__main__':
 	from optparse import OptionParser
+	import stitchparser
+	import profile
 	
 	parser = OptionParser()
 
 	parser.add_option('-i', '--input-list', action='store', type='string', dest='infilename', help="read the file containing list of input images")
+	parser.add_option('-x', '--stitch-xml', action='store', type='string', dest='xmlfilename', help="read the XML stitch file for list of input images")
 	parser.add_option('-I', '--input-cache', action='store', type='string', dest='incache', help="read the file containing image cache")
 	parser.add_option('-o', '--output-mrc', action='store', type='string', dest='outfilename', help="write the resulting image to an MRC file")
 	parser.add_option('-t', '--tile-size', action='store', type='int', dest='tilesize', help="generate tiles from the output image with the specified tile size")
@@ -415,8 +416,8 @@ if __name__ == '__main__':
 	(options, args) = parser.parse_args()
 
 	badargs = False
-	if options.infilename is None and options.incache is None:
-		print 'You must specify either an input file list (-i) or an input cache (-I).'
+	if options.infilename is None and options.incache is None and options.xmlfilename is None:
+		print 'You must specify either an input file list (-i) or an input cache (-I) or an XML file (-x).'
 		badargs = True
 
 	if options.outfilename is None and options.tilesize is None:
@@ -429,18 +430,30 @@ if __name__ == '__main__':
 
 
 	############## Set up inputs ################
-	if options.infilename is not None:
-		f = open(options.infilename, 'r')
-		filenames = f.readlines()
-		f.close()
-		filenames = [filename[:-1] for filename in filenames]
+	if options.xmlfilename is not None or options.infilename is not None:
+		if options.xmlfilename is not None:
+			info = stitchparser.parse(options.xmlfilename)
+			filenames = info['images']
+			print 'FILENAMES', filenames
 
-		## database has filenames without the mrc extension
-		filenames = map(os.path.basename, filenames)
-		filenames = [filename[:-4] for filename in filenames]
+		if options.infilename is not None:
+			f = open(options.infilename, 'r')
+			filenames = f.readlines()
+			f.close()
+			filenames = [filename[:-1] for filename in filenames]
+
+			## database has filenames without the mrc extension
+			filenames = map(os.path.basename, filenames)
+			filenames = [filename[:-4] for filename in filenames]
 	
 		print 'reading image metadata'
-		images = [getImageData(filename) for filename in filenames]
+		images1 = [getImageData(filename) for filename in filenames]
+		images = []
+		for image in images1:
+			if image['filename'][-2:] != 'gr':
+				images.append(image)
+			else:
+				print 'rejecting', image['filename']
 		print 'creating input image objects'
 		inputimages = createInputs(images, options.incache)
 	elif options.incache is not None:
@@ -502,8 +515,8 @@ if __name__ == '__main__':
 		#storeTileInfo(tiledict)
 		createTiles(inputimages, tiledict, tilesize)
 	elif options.outfilename is not None:
-		profile.run('createSingleImage(inputimages, globaloutput, options.outfilename, options.outformat)')
-		#createSingleImage(inputimages, globaloutput, options.outmrc)
+		createSingleImage(inputimages, globaloutput, options.outfilename, options.outformat)
+		#profile.run('createSingleImage(inputimages, globaloutput, options.outfilename, options.outformat)')
 		
 	#tiledict = readTileInfo()
 	
