@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Stats.py,v $
-# $Revision: 1.9 $
+# $Revision: 1.10 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
-# $Author: suloway $
+# $Date: 2007-03-05 21:27:49 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -59,7 +59,7 @@ class Stats(Panel):
 		'Mean': 'mean',
 		'Min.': 'min',
 		'Max.': 'max',
-		'Std. dev.': 'stdev',
+		'Std. dev.': 'std',
 	}
 
 class Position(Panel):

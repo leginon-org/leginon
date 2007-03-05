@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.71 $
+# $Revision: 1.72 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-02-24 01:47:57 $
-# $Author: acheng $
+# $Date: 2007-03-05 21:27:49 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -950,7 +950,8 @@ class ImportDialog(wx.Dialog):
 		sz.Add(self.parameters, (3, 0), (1, 4), wx.EXPAND)
 		label = wx.StaticText(self, -1, 'Presets')
 		sz.Add(label, (4, 0), (1, 4), wx.ALIGN_CENTER)
-		sz.Add(self.lbpresets, (5, 0), (1, 4), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		#sz.Add(self.lbpresets, (5, 0), (1, 4), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sz.Add(self.lbpresets, (5, 0), (1, 4), wx.EXPAND)
 
 		sz.AddGrowableCol(3)
 

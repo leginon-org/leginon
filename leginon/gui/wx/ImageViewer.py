@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.48 $
+# $Revision: 1.49 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-09 21:50:26 $
+# $Date: 2007-03-05 21:27:48 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -33,7 +33,7 @@ import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
 import NumericImage
 import Image
-import imagefun
+import arraystats
 import icons
 import numextension
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
@@ -807,7 +807,7 @@ class ImagePanel(wx.Panel):
 		y = int(round(vheight*cheight - height/2.0))
 		self.panel.Scroll(x, y)
 
-	def setNumericImage(self, numericimage, stats={}):
+	def setNumericImage(self, numericimage):
 		'''
 		Set the numeric image, update bitmap, update buffer, set viewport size,
 		scroll, and refresh the screen.
@@ -820,20 +820,14 @@ class ImagePanel(wx.Panel):
 
 		self.imagedata = numericimage
 
-		if 'min' not in stats or 'max' not in stats:
-			stats['min'], stats['max'] = imagefun.minmax(self.imagedata)
-		if 'mean' not in stats:
-			stats['mean'] = imagefun.mean(self.imagedata)
-		if 'stdev' not in stats:
-			stats['stdev'] = imagefun.stdev(self.imagedata, known_mean=stats['mean'])
-
+		stats = arraystats.all(self.imagedata)
 		self.statspanel.set(stats)
 		self.sizer.SetItemMinSize(self.statspanel, self.statspanel.GetSize())
 
 		dflt_std = 5
 		## use these...
-		dflt_min = stats['mean'] - dflt_std * stats['stdev']
-		dflt_max = stats['mean'] + dflt_std * stats['stdev']
+		dflt_min = stats['mean'] - dflt_std * stats['std']
+		dflt_max = stats['mean'] + dflt_std * stats['std']
 		## unless they go beyond min and max of image
 		dflt_min = max(dflt_min, stats['min'])
 		dflt_max = min(dflt_max, stats['max'])

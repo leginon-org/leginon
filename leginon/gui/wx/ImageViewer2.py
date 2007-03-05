@@ -1,5 +1,5 @@
 import math
-import numextension
+import arraystats
 import wx
 import time
 
@@ -13,7 +13,8 @@ colormap = getColorMap()
 
 def wxBitmapFromNumarray(n, min=None, max=None, color=False):
 	if min is None or max is None:
-		min, max = numextension.minmax(n)
+		min = arraystats.min(n)
+		max = arraystats.max(n)
 	wximage = wx.EmptyImage(n.shape[1], n.shape[0])
 	if color:
 		wximage.SetData(numextension.rgbstring(n, float(min), float(max), colormap))
