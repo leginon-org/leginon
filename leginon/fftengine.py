@@ -1,24 +1,22 @@
 #!/usr/bin/env python
+
 try:
-	import numarray as Numeric
-	try:
-		import scipy.fftpack
-		import scipy.__config__
-		if not scipy.__config__.get_info('fftw3_info'):
-			raise ImportError
+	import scipy.fftpack
+	import scipy.__config__
+	if not scipy.__config__.get_info('fftw3_info'):
+		raise ImportError
 
-		def real_fft2d(*args, **kwargs):
-			return Numeric.asarray(scipy.fftpack.fft2(*args, **kwargs))
+	def real_fft2d(*args, **kwargs):
+		return Numeric.asarray(scipy.fftpack.fft2(*args, **kwargs))
 
-		def inverse_real_fft2d(*args, **kwargs):
-			return Numeric.asarray(scipy.fftpack.ifft2(*args, **kwargs).real)
+	def inverse_real_fft2d(*args, **kwargs):
+		return Numeric.asarray(scipy.fftpack.ifft2(*args, **kwargs).real)
 
-	except ImportError:
-		from numarray.fft import real_fft2d
-		from numarray.fft import inverse_real_fft2d
 except ImportError:
-	import Numeric
-	import FFT
+	import numarray
+	from numarray.fft import real_fft2d
+	from numarray.fft import inverse_real_fft2d
+
 import time
 import sys
 
@@ -64,6 +62,8 @@ try:
 except ImportError:
 	pass
 	#print 'could not import fftw modules'
+
+
 
 if len(fftw_mods) != 2:
 	#print 'Warning:  you are using Numeric for FFTs.'
