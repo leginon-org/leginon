@@ -13,12 +13,8 @@ import numextension
 
 ffteng = fftengine.fftEngine()
 
-## numarray seems to use infinity as a result of zero
-## division, but I can find no infinity constant or any other way of 
-## producing infinity without first doing a zero division
-## Here is my infinity contant
-inf = 1e500
-
+## These following stats functions have been replaced by they
+## arraystats module
 def stdev(inputarray, known_mean=None):
 	return nd_image.standard_deviation(inputarray)
 
