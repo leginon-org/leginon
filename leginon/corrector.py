@@ -13,15 +13,13 @@ import data
 import event
 import imagefun
 import node
-try:
-	import numarray as Numeric
-except:
-	import Numeric
+import numarray
 import threading
 import gui.wx.Corrector
 import remotecall
 import instrument
 import sys
+import arraystats
 
 class CameraError(Exception):
 	pass
@@ -183,7 +181,7 @@ class Corrector(node.Node):
 		if image is None:
 			self.setImage(None, stats={})
 		else:
-			self.setImage(image.astype(Numeric.Float32), stats=self.stats(image))
+			self.setImage(numarray.asarray(image, numarray.Float32), stats=self.stats(image))
 		self.stopTimer('Corrector.displayImage')
 
 	def retrievePlan(self, ccdcamera, corstate):
@@ -249,7 +247,7 @@ class Corrector(node.Node):
 			raise RuntimeError('invalid setting "%s" for combine method' % (combine,))
 
 		## make if float so we can do float math later
-		ref = ref.astype(Numeric.Float32)
+		ref = numarray.asarray(ref, numarray.Float32)
 
 		corstate = data.CorrectorCamstateData()
 		geometry = self.instrument.ccdcamera.Geometry
@@ -363,7 +361,7 @@ class Corrector(node.Node):
 		ref = self.researchRef(camstate, type, ccdcameraname, scopedata, channel)
 		if ref:
 			## make it float to do float math later
-			image = ref['image'].astype(Numeric.Float32)
+			image = numarray.asarray(ref['image'], numarray.Float32)
 			self.ref_cache[key] = image
 		else:
 			image = None
@@ -424,14 +422,14 @@ class Corrector(node.Node):
 				return
 
 		norm = bright - dark
-		norm = norm.astype(Numeric.Float32)
+		norm = numarray.asarray(norm, numarray.Float32)
 
 		## there may be a better normavg than this
-		normavg = imagefun.mean(norm)
+		normavg = arraystats.mean(norm)
 
 		# division may result infinity or zero division
 		# so make sure there are no zeros in norm
-		norm = Numeric.clip(norm, 0.001, sys.maxint)
+		norm = numarray.clip(norm, 0.001, sys.maxint)
 		norm = normavg / norm
 		self.storeRef('norm', norm, corstate, scopedata, channel)
 
@@ -485,9 +483,12 @@ class Corrector(node.Node):
 
 		clipmin = self.settings['clip min']
 		clipmax = self.settings['clip max']
-		self.startTimer('clip')
-		clipped = Numeric.clip(normalized, clipmin, clipmax)
-		self.stopTimer('clip')
+		if clipmin == clipmax == 0.0:
+			clipped = normalized
+		else:
+			self.startTimer('clip')
+			clipped = numarray.clip(normalized, clipmin, clipmax)
+			self.stopTimer('clip')
 
 		if self.settings['despike']:
 			self.logger.debug('Despiking...')
@@ -498,9 +499,9 @@ class Corrector(node.Node):
 			self.stopTimer('despike')
 			self.logger.debug('Despiked')
 
-		self.startTimer('astype')
-		final = clipped.astype(Numeric.Float32)
-		self.stopTimer('astype')
+		self.startTimer('asarray')
+		final = numarray.asarray(clipped, numarray.Float32)
+		self.stopTimer('asarray')
 		return final
 
 	def fixBadPixels(self, image, plan):
@@ -593,11 +594,8 @@ class Corrector(node.Node):
 			return raw
 
 	def stats(self, im):
-		mean = imagefun.mean(im)
-		stdev = imagefun.stdev(im, known_mean=mean)
-		mn = imagefun.min(im)
-		mx = imagefun.max(im)
-		return {'mean':mean,'stdev':stdev,'min':mn,'max':mx}
+		s = arraystats.all(im)
+		return {'mean':s['mean'], 'stdev':s['std'], 'min':s['min'], 'max':s['max']}
 
 	def uiAutoAcquireReferences(self):
 		binning = self.autobinning.get()
@@ -620,7 +618,7 @@ class Corrector(node.Node):
 		raise NotImplementedError('need to work out the details of configuring the camera here')
 
 		im = self.instrument.ccdcamera.Image
-		mean = darkmean = imagefun.mean(im)
+		mean = darkmean = arraystats.mean(im)
 		self.displayImage(im)
 		self.logger.info('Dark reference mean: %s' % str(darkmean))
 
@@ -635,7 +633,7 @@ class Corrector(node.Node):
 			config = { 'exposure time': trial_exp }
 			raise NotImplementedError('need to work out the details of configuring the camera here')
 			im = self.instrument.ccdcamera.Image
-			mean = imagefun.mean(im)
+			mean = arraystats.mean(im)
 			self.displayImage(im)
 			self.logger.info('Image mean: %s' % str(mean))
 
