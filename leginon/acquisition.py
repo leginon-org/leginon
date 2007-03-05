@@ -24,10 +24,8 @@ import gui.wx.Acquisition
 import gui.wx.Presets
 import newdict
 import navigator
-try:
-	import numarray as Numeric
-except:
-	import Numeric
+import numarray
+import arraystats
 
 class NoMoveCalibration(Exception):
 	pass
@@ -184,7 +182,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		driftresult = ev['data']
 		status = driftresult['status']
 		final = driftresult['final']
-		drift = Numeric.hypot(final['rowmeters'],final['colmeters']) / final['interval']
+		drift = numarray.hypot(final['rowmeters'],final['colmeters']) / final['interval']
 		self.reportStatus('acquisition', 'Received drift result status "%s", final drift: %.3e' % (status, drift))
 		self.driftresult = driftresult
 		self.driftdone.set()
@@ -422,7 +420,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 						self.logger.error(message)
 						raise NoMoveCalibration(message)
 					ydiff = tmpscope['stage position']['y'] - targetscope['stage position']['y']
-					zdiff = ydiff * Numeric.sin(targetscope['stage position']['a'])
+					zdiff = ydiff * numarray.sin(targetscope['stage position']['a'])
 	
 			### check if stage position is valid
 			if newscope['stage position']:
@@ -583,7 +581,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if self.settings['display image']:
 			self.reportStatus('output', 'Displaying image...')
 			self.startTimer('display')
-			self.setImage(imagedata['image'].astype(Numeric.Float32), 'Image')
+			self.setImage(numarray.asarray(imagedata['image'], numarray.Float32), 'Image')
 			self.stopTimer('display')
 			self.reportStatus('output', 'Image displayed')
 
@@ -597,15 +595,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def publishStats(self, imagedata):
 		im = imagedata['image']
-		mn,mx = imagefun.minmax(im)
-		mean = imagefun.mean(im)
-		std = imagefun.stdev(im, mean)
+		allstats = arraystats.all(im)
 		statsdata = data.AcquisitionImageStatsData()
 		statsdata['session'] = self.session
-		statsdata['min'] = mn
-		statsdata['max'] = mx
-		statsdata['mean'] = mean
-		statsdata['stdev'] = std
+		statsdata['min'] = allstats['min']
+		statsdata['max'] = allstats['max']
+		statsdata['mean'] = allstats['mean']
+		statsdata['stdev'] = allstats['std']
 		statsdata['image'] = imagedata
 		self.publish(statsdata, database=True)
 
@@ -698,7 +694,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 				pass
 			else:
 				imagedata.__setitem__('image', num, force=True)
-			self.setImage(imagedata['image'].astype(Numeric.Float32), 'Image')
+			#self.setImage(imagedata['image'].astype(numarray.Float32), 'Image')
+			self.setImage(numarray.asarray(imagedata['image'], numarray.Float32), 'Image')
 
 	def adjustTargetForDrift(self, oldtarget, force=False, drifted=False):
 		if oldtarget['image'] is None:
