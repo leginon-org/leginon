@@ -694,7 +694,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 				pass
 			else:
 				imagedata.__setitem__('image', num, force=True)
-			#self.setImage(imagedata['image'].astype(numarray.Float32), 'Image')
 			self.setImage(numarray.asarray(imagedata['image'], numarray.Float32), 'Image')
 
 	def adjustTargetForDrift(self, oldtarget, force=False, drifted=False):
