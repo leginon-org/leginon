@@ -80,6 +80,7 @@ def transform(image2, libcvMatrix, image1shape):
 	'''
 	matrix = numarray.array(libcvMatrix)
 
+	'''
 	## add additional shift to use image centers as center of transform
 	image2shape = numarray.array(image2.shape)
 	image1shape = numarray.array(image1shape)
@@ -88,9 +89,10 @@ def transform(image2, libcvMatrix, image1shape):
 	offmat[2,0] = off[0]
 	offmat[2,1] = off[1]
 	matrix = numarray.matrixmultiply(offmat, matrix)
+	'''
 
 	matrix.transpose()
 	mat = matrix[:2,:2]
 	offset = tuple(matrix[:2,2])
-	output = numarray.nd_image.affine_transform(image2, mat, offset=offset)
+	output = numarray.nd_image.affine_transform(image2, mat, offset=offset, output_shape=image1shape)
 	return output
