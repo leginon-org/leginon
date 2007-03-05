@@ -240,7 +240,7 @@ class ValueScaleBitmap(wx.StaticBitmap):
 		array = numarray.arange(width, type=numarray.Float, shape=(1, width))
 		array *= float(self.extrema[1] - self.extrema[0])/(width - 1)
 		array += self.extrema[0]
-		array = array.astype(arraytype)
+		array = numarray.asarray(array, arraytype)
 		array = array.repeat(height)
 
 		bitmap = numarrayimage.numarray2wxBitmap(array, fromrange=self.fromrange)
