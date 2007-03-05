@@ -16,7 +16,7 @@ import array
 import struct
 import sys
 import cStringIO
-import imagefun
+import arraystats
 
 ## MRC supported types
 mrcmode_type = {
@@ -192,7 +192,7 @@ class MrcData:
 			numtype = t
 		elif t in unsupported_types:
 			numtype = unsupported_types[t]
-			narray = narray.astype(numtype)
+			narray = Numeric.asarray(narray, numtype)
 		else:
 			raise TypeError('Invalid Numeric array type for MRC conversion: %s' % (t,))
 
@@ -218,9 +218,11 @@ class MrcData:
 		else:
 			raise 'unsupported'
 
-		self.amin,self.amax = imagefun.minmax(narray)
-		self.amean = imagefun.mean(narray)
-		self.rms = imagefun.stdev(narray, self.amean)
+		stats = arraystats.all(narray)
+		self.amin = stats['min']
+		self.amax = stats['max']
+		self.amean = stats['mean']
+		self.rms = stats['std']
 
 		## for now, using little endian as standard
 		if sys.byteorder != 'little':
