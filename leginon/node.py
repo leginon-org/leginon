@@ -179,6 +179,7 @@ class Node(object):
 		evt.event.wait()
 
 	def setImage(self, image, typename=None):
+		image = numarray.asarray(image, numarray.Float32)
 		evt = gui.wx.Events.SetImageEvent(image, typename)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
