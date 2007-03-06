@@ -435,6 +435,7 @@ class Node(object):
 		return self.name, label
 
 	def storeTime(self, label, type):
+		return
 		key = self.timerKey(label)
 		if type == 'start' and key in start_times:
 			raise RuntimeError('Timer restart is not allowed: %s' % (key,))
