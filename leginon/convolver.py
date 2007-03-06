@@ -8,10 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-try:
-	import numarray as Numeric
-except:
-	import Numeric
+import numarray
 import fftengine
 
 class Convolver(object):
@@ -53,7 +50,7 @@ class Convolver(object):
 			self.setImage(image)
 		
 	def setKernel(self, kernel):
-		self.kernel = kernel
+		self.kernel = numarray.asarray(kernel, numarray.Float32)
 		self.kernel_fft = {}
 
 	def setImage(self, image):
@@ -69,7 +66,7 @@ class Convolver(object):
 
 		kim = Numeric.zeros(self.shape, Numeric.Float32)
 		### center the kernel at 0,0 in the image
-		k = self.kernel.astype(Numeric.Float32)
+		k = self.kernel
 		kind = Numeric.indices(k.shape)
 		krows = kind[0]
 		kcols = kind[1]
@@ -140,14 +137,15 @@ def gaussian_kernel(sigma):
 	n = 2 * half + 1
 	k1 = 1.0 / (2.0 * Numeric.pi * sigma**2)
 	def i(rows,cols):
-		rows = rows.astype(Numeric.Float32)
-		cols = cols.astype(Numeric.Float32)
+		rows = numarray.asarray(rows, numarray.Float32)
+		cols = numarray.asarray(cols, numarray.Float32)
 		rows = rows - half
 		cols = cols - half
-		k2 = Numeric.exp(-(rows**2+cols**2) / 2.0 / sigma**2)
+		k2 = numarray.exp(-(rows**2+cols**2) / 2.0 / sigma**2)
 		return k1 * k2
-	k = Numeric.fromfunction(i, (n,n))
-	return k.astype(Numeric.Float32)
+	k = numarray.fromfunction(i, (n,n))
+	k = numarray.asarray(k, numarray.Float32)
+	return k
 
 #### Laplacian of Gaussian
 def laplacian_of_gaussian_kernel(n, sigma):
@@ -156,11 +154,11 @@ def laplacian_of_gaussian_kernel(n, sigma):
 	half = (n - 1) / 2
 	def func(x,y):
 		f1 = (x**2 + y**2) / 2.0 / sigma**2
-		f2 = -1.0 / Numeric.pi / (sigma**4)
+		f2 = -1.0 / numarray.pi / (sigma**4)
 		f3 = 1 - f1
-		f4 = Numeric.exp(-f1)
+		f4 = numarray.exp(-f1)
 		return f2 * f3 * f4
-	k = Numeric.zeros((n,n), Numeric.Float32)
+	k = numarray.zeros((n,n), numarray.Float32)
 	for row in range(n):
 		x = row - half
 		for col in range(n):
@@ -169,11 +167,11 @@ def laplacian_of_gaussian_kernel(n, sigma):
 	return k
 
 #### Sobel Row Derivative
-sobel_row_kernel = Numeric.array((1,2,1,0,0,0,-1,-2,-1), Numeric.Float32)
+sobel_row_kernel = numarray.array((1,2,1,0,0,0,-1,-2,-1), numarray.Float32)
 sobel_row_kernel.shape = (3,3)
 
 #### Sobel Column Derivative
-sobel_col_kernel = Numeric.array((1,0,-1,2,0,-2,1,0,-1), Numeric.Float32)
+sobel_col_kernel = numarray.array((1,0,-1,2,0,-2,1,0,-1), numarray.Float32)
 sobel_col_kernel.shape = (3,3)
 
 
@@ -184,9 +182,9 @@ if __name__ == '__main__':
 
 	filename = sys.argv[1]
 
-	sobel_row = Numeric.array((1,2,1,0,0,0,-1,-2,-1), Numeric.Float32)
+	sobel_row = numarray.array((1,2,1,0,0,0,-1,-2,-1), numarray.Float32)
 	sobel_row.shape = (3,3)
-	sobel_col = Numeric.array((1,0,-1,2,0,-2,1,0,-1), Numeric.Float32)
+	sobel_col = numarray.array((1,0,-1,2,0,-2,1,0,-1), numarray.Float32)
 	sobel_col.shape = (3,3)
 	gauss = imagefun.gaussian_kernel(1.6)
 
@@ -198,5 +196,5 @@ if __name__ == '__main__':
 	s = c.convolve(kernel=gauss)
 	r = c.convolve(kernel=sobel_row, image=s)
 	c = c.convolve(kernel=sobel_col, image=s)
-	edge = Numeric.sqrt(r**2 + c**2)
+	edge = numarray.sqrt(r**2 + c**2)
 	Mrc.numeric_to_mrc(edge, 'edge.mrc')
