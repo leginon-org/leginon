@@ -18,7 +18,6 @@ except ImportError:
 	from numarray.fft import inverse_real_fft2d
 
 import time
-import sys
 
 class _fftEngine(object):
 	'''base class for a FFT engine'''
