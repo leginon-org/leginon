@@ -179,9 +179,9 @@ class Corrector(node.Node):
 	def displayImage(self, image):
 		self.startTimer('Corrector.displayImage')
 		if image is None:
-			self.setImage(None, stats={})
+			self.setImage(None)
 		else:
-			self.setImage(numarray.asarray(image, numarray.Float32), stats=self.stats(image))
+			self.setImage(numarray.asarray(image, numarray.Float32))
 		self.stopTimer('Corrector.displayImage')
 
 	def retrievePlan(self, ccdcamera, corstate):
