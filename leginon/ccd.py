@@ -10,8 +10,9 @@ def combineImages(images, reject=None):
 	Creates an average image from a stack of images.
 	reject - specifies outlier rejection threshold
 	'''
-	# if a list of images was give, convert to 3d array
+	# if a list of images was given, convert to 3d array
 	images = numpy.asarray(images)
+
 	if reject is None:
 		# no mask
 		avg = numpy.mean(images, 0)
@@ -20,7 +21,7 @@ def combineImages(images, reject=None):
 		std = numpy.std(images, 0)
 
 		# calculate median through stack
-		med = numpy.median(images)
+		med = numpy.mean(images)
 
 		# outliers deviate from the median by too much
 		outliers = numpy.abs(images-med) > (reject * std)
@@ -29,7 +30,68 @@ def combineImages(images, reject=None):
 		avg = numpy.ma.average(maskedimages, 0)
 	return numpy.asarray(avg)
 
-class CCDImageCorrector(object):
+class StackAccumulator(object):
+	'''
+	A stack accumulator object keeps track of various statistics
+	on a stack of images.  The stats are updated whenever a new image
+	is inserted into the stack.
+	Available stats:
+		mean()
+		std()
+		sum()
+	'''
+	def __init__(self):
+		self.reset()
+
+	def reset(self):
+		self.n = 0
+		self.mean = None
+		self.sum2 = None
+		self._std = None
+
+	def insert(self, x):
+		self._std = None
+		self.n += 1
+		if self.n == 0:
+			self.mean = numpy.asarray(x, numpy.float)
+			self.sum2 = numpy.zeros(self.mean.shape, numpy.float)
+		elif self.n == 1:
+			delta = x - self.mean
+			self.mean = self.mean + delta / self.n
+			self.sum2 = delta * (x - self.mean)
+		else:
+			delta = x - self.mean
+			self.mean = self.mean + delta / self.n
+			self.sum2 = self.sum2 + delta * (x - self.mean)
+
+	def mean(self):
+		return self.mean
+
+	def std(self):
+		if self.n == 0:
+			raise RuntimeError('no data inserted yet')
+		if self._std is None:
+			if self.n == 1:
+				self._std = numpy.sqrt(self.sum2)
+			else:
+				self._std = numpy.sqrt(self.sum2 / self.n)
+		return self._std
+
+class MedianAccumulator(object):
+	def __init__(self):
+		self.n = 0
+		self.a = None
+
+	def insert(self, x):
+		self.n += 1
+		x = numpy.asarray(x).reshape(-1)
+		if self.n == 1:
+			self.a = x
+		else:
+			self.a = numpy.concatenate((self.a, x))
+		print self.a
+
+class Corrector(object):
 	def __init__(self):
 		self.references = {}
 
@@ -42,7 +104,7 @@ class CCDImageCorrector(object):
 				corner of CCD
 			binning - the binning factor
 		'''
-		key = (type,) + shape + offset + (binning,)
+		key = (type,) + shape + offset + binning
 		return key
 
 	def setReference(self, image, type, offset, binning):
