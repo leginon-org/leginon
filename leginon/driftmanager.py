@@ -179,6 +179,11 @@ class DriftManager(watcher.Watcher):
 			self.monitorDrift(newdata)
 			self.stopTimer('monitorDrift')
 
+	def uiMeasureDrift(self):
+		t = threading.Thread(target=self.measureDrift)
+		t.setDaemon(1)
+		t.start()
+
 	def uiMonitorDrift(self):
 		self.instrument.ccdcamera.Settings = self.settings['camera settings']
 		## calls monitorDrift in a new thread

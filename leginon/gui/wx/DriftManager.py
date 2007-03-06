@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/DriftManager.py,v $
-# $Revision: 1.24 $
+# $Revision: 1.25 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-02-16 21:39:35 $
+# $Date: 2007-03-06 22:58:26 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -85,7 +85,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.node.abort()
 
 	def onMeasureDriftTool(self, evt):
-		self.node.measureDrift()
+		self.node.uiMeasureDrift()
 
 	def onDeclareDriftTool(self, evt):
 		self.node.uiDeclareDrift()
