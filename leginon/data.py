@@ -104,6 +104,10 @@ class DataManager(object):
 		self.limitreached = False
 		megs = 300
 		self.maxsize = megs * 1024 * 1024
+		self.holdimages = True
+
+	def holdImages(self, value):
+		self.holdimages = value
 
 	def exit(self):
 		if self.server is not None:
@@ -191,9 +195,9 @@ class DataManager(object):
 					break
 				if not self.limitreached:
 					self.limitreached = True
-#					print '************************************************************************'
-#					print '***** DataManager size reached, removing data as needed ******'
-#					print '************************************************************************'
+					print '************************************************************************'
+					print '***** DataManager size reached, removing data as needed ******'
+					print '************************************************************************'
 				self.remove(key)
 		finally:
 			self.lock.release()
@@ -300,6 +304,9 @@ class DataManager(object):
 			return self.query(request)
 
 datamanager = DataManager()
+
+def holdImages(value):
+	datamanager.holdImages(value)
 
 class DataReference(object):
 	'''
@@ -481,16 +488,6 @@ class Data(newdict.TypedDict):
 
 		self._reference = DataReference(referent=self)
 		
-		# This is something we will be experimenting with to see if
-		# we can use less memory during robot reacquisition.
-		# This is only useful if readimages=False during the query.
-		# Setting this to True is the original behavior:  Data object
-		# will hold the actual image array.  Setting to False will
-		# ensure that we only hole a reference the the FileReference,
-		# not the actual data.  In that case, every __getitem__ will
-		# read the image file, creating a potentially huge slowdown.
-		self.holdimages = True
-
 		self.__size = 2500
 		k = self.keys()
 		self.__sizedict = dict(zip(k, [0 for key in k]))
@@ -619,7 +616,7 @@ class Data(newdict.TypedDict):
 			value = value.read()
 			# This gives the option of keeping the FileReference rather
 			# than the image data, for memory vs. speed tradeoff
-			if self.holdimages:
+			if datamanager.holdimages:
 				# Replace FileReference with the actual array
 				self.__setitem__(key, value, force=True)
 			else:
@@ -627,6 +624,18 @@ class Data(newdict.TypedDict):
 				# Make sure FileReference does not hold image array:
 				fileref.data = None
 		return value
+
+	def dumpArray(self, key):
+		'''
+		If the value for this item is an image array,
+		replace it with the file reference to save memory.
+		'''
+		value = self.special_getitem(key, dereference=False)
+		if type(value) is Numeric.ArrayType:
+			if hasattr(value, 'fileref'):
+				self.__setitem__(key, value.fileref, force=True)
+			else:
+				self.__setitem__(key, None)
 
 	def __getitem__(self, key):
 		return self.special_getitem(key, dereference=True)
@@ -667,7 +676,7 @@ class Data(newdict.TypedDict):
 			## there is only one None object
 			return 0
 		elif type(value) is Numeric.ArrayType:
-			return reduce(Numeric.multiply, value.shape) * value.itemsize()
+			return value.size() * value.itemsize()
 		else:
 			## this is my stupid estimate of size for other objects
 			## We could also check for int, str, float, etc.
@@ -1337,7 +1346,6 @@ class AcquisitionImageData(PresetImageData):
 			('tilt series', TiltSeriesData),
 			('version', int),
 			('tiltnumber', int),
-			('version', int),
 		)
 	typemap = classmethod(typemap)
 
