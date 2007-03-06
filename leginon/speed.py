@@ -4,6 +4,7 @@ import time
 import sys
 import SocketServer
 import socket
+import correlator
 
 '''
 try:
@@ -275,6 +276,17 @@ def timeRandomCorrect(n, size):
 	b = rand.random(s)
 	b = num.array(b, float64)
 	timefunc(n, correct, (a,d,b))
+
+def correlate(im1, im2):
+	c = correlator.Correlator()
+	c.insertImage(im1)
+	c.insertImage(im2)
+	pc = c.phaseCorrelate()
+
+def timeRandomCorrelate(n, size):
+	im1 = randomImage(size)
+	im2 = randomImage(size)
+	timefunc(n, correlate, (im1,im2))
 
 if __name__ == '__main__':
 	'''
