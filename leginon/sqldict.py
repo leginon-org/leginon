@@ -1593,6 +1593,10 @@ def saveMRC(object, name, path, filename, thumb=False):
 	else:
 		#print 'saving MRC', fullname
 		Mrc.numeric_to_mrc(object, fullname)
+		fileref = newdict.FileReference(filename, Mrc.mrc_to_numeric)
+		fileref.setPath(path)
+		object.fileref = fileref
+
 	d[k] = filename
 	return d
 
