@@ -129,7 +129,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 			corfilt = None
 		self.hf.configure_correlation(cortype, corfilt)
 		self.hf.correlate_template()
-		self.setImage(self.hf['correlation'].astype(Numeric.Float32), 'Template')
+		self.setImage(self.hf['correlation'], 'Template')
 
 	def threshold(self):
 		self.logger.info('threshold')
@@ -138,7 +138,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.hf.configure_threshold(tvalue, tmeth)
 		self.hf.threshold_correlation()
 		# convert to Float32 to prevent seg fault
-		self.setImage(self.hf['threshold'].astype(Numeric.Float32), 'Threshold')
+		self.setImage(self.hf['threshold'], 'Threshold')
 
 	def blobCenters(self, blobs):
 		centers = []

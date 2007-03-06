@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.243 $
+# $Revision: 1.244 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-02-16 21:19:34 $
+# $Date: 2007-03-06 19:39:05 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -945,7 +945,7 @@ class PresetsManager(node.Node):
 		else:
 			if display:
 				self.panel.setDoseValue(dose)
-				self.setImage(imagedata['image'].astype(Numeric.Float32))
+				self.setImage(imagedata['image'])
 			else:
 				self.saveDose(dose, self.currentpreset['name'])
 

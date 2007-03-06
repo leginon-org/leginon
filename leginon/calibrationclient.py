@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.196 $
+# $Revision: 1.197 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-02-16 21:15:22 $
+# $Date: 2007-03-06 19:39:04 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -106,7 +106,7 @@ class CalibrationClient(object):
 		if publish_image:
 			self.node.publish(imagedata, pubevent=True)
 
-		self.node.setImage(imagedata['image'].astype(numarray.Float), 'Image')
+		self.node.setImage(imagedata['image'], 'Image')
 
 		## should find image stats to help determine validity of image
 		## in correlations
@@ -288,13 +288,13 @@ class CalibrationClient(object):
 
 	def displayImage(self, im):
 		try:
-			self.node.setImage(im.astype(numarray.Float), 'Image')
+			self.node.setImage(im, 'Image')
 		except:
 			pass
 
 	def displayCorrelation(self, im):
 		try:
-			self.node.setImage(im.astype(numarray.Float), 'Correlation')
+			self.node.setImage(im, 'Correlation')
 		except:
 			pass
 

@@ -250,7 +250,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			imagenew = self.instrument.getData(dataclass)
 			#arraynew = numarray.nd_image.gaussian_filter(imagenew['image'], sigma)
 			arraynew = imagenew['image']
-			self.setImage(imagenew['image'].astype(numarray.Float32), 'Image')
+			self.setImage(imagenew['image'], 'Image')
 			self.setTargets([], 'Peak')
 
 			self.logger.info('Craig stuff')

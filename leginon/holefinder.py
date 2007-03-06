@@ -119,7 +119,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lpsig=lowpasssig, thresh=edgethresh, edges=edges)
 		self.hf.find_edges()
 		# convert to Float32 to prevent seg fault
-		self.setImage(self.hf['edges'].astype(Numeric.Float32), 'Edge')
+		self.setImage(self.hf['edges'], 'Edge')
 
 	def correlateTemplate(self):
 		self.logger.info('correlate ring template')
@@ -140,7 +140,7 @@ class HoleFinder(targetfinder.TargetFinder):
 			corfilt = None
 		self.hf.configure_correlation(cortype, corfilt)
 		self.hf.correlate_template()
-		self.setImage(self.hf['correlation'].astype(Numeric.Float32), 'Template')
+		self.setImage(self.hf['correlation'], 'Template')
 
 	def threshold(self):
 		self.logger.info('threshold')
@@ -148,7 +148,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_threshold(tvalue)
 		self.hf.threshold_correlation()
 		# convert to Float32 to prevent seg fault
-		self.setImage(self.hf['threshold'].astype(Numeric.Float32), 'Threshold')
+		self.setImage(self.hf['threshold'], 'Threshold')
 
 	def blobCenters(self, blobs):
 		centers = []

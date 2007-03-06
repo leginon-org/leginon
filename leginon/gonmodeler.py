@@ -130,7 +130,7 @@ class GonModeler(calibrator.Calibrator):
 		newimagedata = self.instrument.getData(data.CorrectedCameraImageData)
 
 		newnumimage = newimagedata['image']
-		self.setImage(newnumimage.astype(Numeric.Float32), 'Image')
+		self.setImage(newnumimage, 'Image')
 
 		## insert into correlator
 		self.correlator.insertImage(newnumimage)
@@ -139,7 +139,7 @@ class GonModeler(calibrator.Calibrator):
 		if self.oldimagedata is not None:
 			## cross correlation
 			crosscorr = self.correlator.phaseCorrelate()
-			self.setImage(crosscorr.astype(Numeric.Float32), 'Correlation')
+			self.setImage(crosscorr, 'Correlation')
 			
 			## subtract auto correlation
 			#crosscorr -= self.autocorr

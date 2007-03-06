@@ -1243,12 +1243,12 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		kernel = convolver.gaussian_kernel(sigma)
 		self.convolver.setKernel(kernel)
 		image = self.convolver.convolve(image=original_image)
-		self.setImage(image.astype(numarray.Float32), 'Filtered')
+		self.setImage(image, 'Filtered')
 
 		## threshold grid bars
 		squares_thresh = self.settings['threshold']
 		image = imagefun.threshold(image, squares_thresh)
-		self.setImage(image.astype(numarray.Float32), 'Thresholded')
+		self.setImage(image, 'Thresholded')
 
 		## find blobs
 		blobs = imagefun.find_blobs(original_image, image,
