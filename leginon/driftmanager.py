@@ -53,7 +53,7 @@ class DriftManager(watcher.Watcher):
 			),
 	}
 	eventinputs = watcher.Watcher.eventinputs + [event.DriftMonitorRequestEvent, event.NeedTargetShiftEvent, event.PresetChangedEvent]
-	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftMonitorResultEvent, event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.AcquisitionImageDriftPublishEvent]
+	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftMonitorResultEvent, event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.AcquisitionImageDriftPublishEvent, event.AcquisitionImagePublishEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
 		watchfor = [event.DriftMonitorRequestEvent]
 		watcher.Watcher.__init__(self, id, session, managerlocation, watchfor, **kwargs)
@@ -196,13 +196,14 @@ class DriftManager(watcher.Watcher):
 			threshold = driftdata['threshold']
 			target = emtarget['target']
 			self.presetsclient.toScope(pname, emtarget)
+			presetdata = self.presetsclient.getCurrentPreset()
 		else:
 			target = None
 			threshold = None
 
 		## acquire images, measure drift
 		self.abortevent.clear()
-		status,final = self.acquireLoop(target, threshold=threshold)
+		status,final,im = self.acquireLoop(target, threshold=threshold)
 		if status == 'drifted':
 			## declare drift above threshold
 			self.declareDrift('threshold')
@@ -210,6 +211,13 @@ class DriftManager(watcher.Watcher):
 		## Generate DriftMonitorResultData
 		## only output if this was called from another node
 		if driftdata is not None:
+			self.logger.info('Publishing final drift image...')
+			acqim = data.AcquisitionImageData(initializer=im)
+			acqim['target'] = target
+			acqim['emtarget'] = emtarget
+			acqim['preset'] = presetdata
+			self.publish(acqim, pubevent=True)
+
 			self.logger.info('Publishing DriftMonitorResultData...')
 			result = data.DriftMonitorResultData()
 			result['status'] = status
@@ -310,13 +318,13 @@ class DriftManager(watcher.Watcher):
 			t0 = t1
 
 			if current_drift < threshold:
-				return status, d
+				return status, d, imagedata
 			else:
 				status = 'drifted'
 
 			## check for abort
 			if self.abortevent.isSet():
-				return 'aborted', d
+				return 'aborted', d, imagedata
 
 	def abort(self):
 		self.abortevent.set()

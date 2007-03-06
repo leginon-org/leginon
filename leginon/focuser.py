@@ -201,12 +201,6 @@ class Focuser(acquisition.Acquisition):
 			self.eucset = False
 		self.reset = True
 
-		delay = self.settings['pause time']
-		self.logger.info('Pausing for %s seconds' % (delay,))
-		self.startTimer('autoFocus pause')
-		time.sleep(delay)
-		self.stopTimer('autoFocus pause')
-
 		### report the current focus and defocus values
 		try:
 			defoc = self.instrument.tem.Defocus
@@ -222,13 +216,16 @@ class Focuser(acquisition.Acquisition):
 				self.logger.info('Drift was detected so target will be repeated')
 				return 'repeat'
 			lastdrift = driftresult['final']
+			lastdriftimage = self.driftimage
+			self.logger.info('using final drift image in focuser')
+			self.setImage(lastdriftimage['image'], 'Image')
 		else:
 			lastdrift = None
 
 		try:
 			## drift_threshold=None because now DriftManager does all the work.
 			## Should eventually remove all the drift stuff from calclient
-			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=None, target=target, correct_tilt=True, correlation_type=setting['correlation type'], stig=setting['stig correction'])
+			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=None, target=target, correct_tilt=True, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=0.25)
 		except calibrationclient.Abort:
 			self.logger.info('Measurement of defocus and stig. has been aborted')
 			return 'aborted'
@@ -344,10 +341,6 @@ class Focuser(acquisition.Acquisition):
 		self.presetsclient.toScope(presetname, emtarget)
 		target = emtarget['target']
 
-		delay = self.settings['pause time']
-		self.logger.info('Pausing for %s seconds' % (delay,))
-		time.sleep(delay)
-
 		z = self.stagetiltcalclient.measureZ(atilt, correlation_type=setting['correlation type'])
 
 		self.logger.info('Measured Z: %.4e' % z)
@@ -408,9 +401,9 @@ class Focuser(acquisition.Acquisition):
 		imy = newscope['image shift']['y'] - oldscope['image shift']['y']
 		self.logger.info('Image shift offset:  x = %.3e, y = %.3e' % (imx, imy))
 
-	def processFocusSetting(self, setting, target=None, emtarget=None):
+	def processFocusSetting(self, setting, emtarget=None):
 		resultdata = data.FocuserResultData(session=self.session)
-		resultdata['target'] = target
+		resultdata['target'] = emtarget['target']
 		resultdata['method'] = setting['focus method']
 		status = 'unknown'
 		preset_name = setting['preset name']
@@ -436,7 +429,7 @@ class Focuser(acquisition.Acquisition):
 
 		return status
 
-	def acquire(self, presetdata, target=None, emtarget=None, attempt=None):
+	def acquire(self, presetdata, emtarget=None, attempt=None):
 		'''
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we do autofocus
@@ -486,7 +479,7 @@ class Focuser(acquisition.Acquisition):
 			message = 'Processing focus setting \'%s\'...' % setting['name']
 			self.logger.info(message)
 			self.startTimer('processFocusSetting')
-			status = self.processFocusSetting(setting, target=target, emtarget=emtarget)
+			status = self.processFocusSetting(setting, emtarget=emtarget)
 			self.stopTimer('processFocusSetting')
 			## repeat means give up and do the whole target over
 			if status == 'repeat':
@@ -494,16 +487,7 @@ class Focuser(acquisition.Acquisition):
 
 		# aquire and save the focus image
 		if self.settings['acquire final']:
-			## go back to focus preset and target
-			self.presetsclient.toScope(presetdata['name'], emtarget)
-			delay = self.settings['pause time']
-			self.logger.info('Pausing for %s seconds' % (delay,))
-			self.startTimer('final pause')
-			time.sleep(delay)
-			self.stopTimer('final pause')
-
-			## acquire and publish image, like superclass does
-			acquisition.Acquisition.acquire(self, presetdata, target, emtarget)
+			acquisition.Acquisition.acquire(self, presetdata, emtarget)
 
 		return status
 
@@ -540,9 +524,6 @@ class Focuser(acquisition.Acquisition):
 		## go to preset and target
 		if presetname is not None:
 			self.presetsclient.toScope(presetname, emtarget)
-			delay = self.settings['pause time']
-			self.logger.info('Pausing for %s seconds' % (delay,))
-			time.sleep(delay)
 		self.logger.info('Starting manual focus loop, please confirm defocus...')
 		self.beep()
 		self.manualplayer.play()

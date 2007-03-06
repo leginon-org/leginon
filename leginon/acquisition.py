@@ -131,7 +131,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
-										event.ImageProcessDoneEvent, event.AcquisitionImageDriftPublishEvent] \
+										event.ImageProcessDoneEvent, event.AcquisitionImageDriftPublishEvent, event.AcquisitionImagePublishEvent] \
 								+ presets.PresetsClient.eventinputs
 	eventoutputs = targetwatcher.TargetWatcher.eventoutputs \
 									+ [event.LockEvent,
@@ -148,11 +148,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		targetwatcher.TargetWatcher.__init__(self, id, session, managerlocation, **kwargs)
 
+		self.addEventInput(event.AcquisitionImagePublishEvent, self.handleDriftImage)
 		self.addEventInput(event.DriftMonitorResultEvent, self.handleDriftResult)
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)
 		self.addEventInput(event.AcquisitionImageDriftPublishEvent,
 												self.handleImageDrift)
 		self.driftdone = threading.Event()
+		self.driftimagedone = threading.Event()
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
 
 		self.calclients = newdict.OrderedDict()
@@ -186,6 +188,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reportStatus('acquisition', 'Received drift result status "%s", final drift: %.3e' % (status, drift))
 		self.driftresult = driftresult
 		self.driftdone.set()
+
+	def handleDriftImage(self, ev):
+		driftimage = ev['data']
+		self.reportStatus('acquisition', 'Received drift image')
+		self.driftimage = driftimage
+		self.driftimagedone.set()
 
 	def handleImageProcessDone(self, ev):
 		imageid = ev['imageid']
@@ -259,6 +267,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if self.settings['adjust for drift']:
 				targetdata = self.adjustTargetForDrift(targetdata)
 
+			### determine how to move to target
 			try:
 				emtarget = self.targetToEMTargetData(targetdata)
 			except InvalidStagePosition:
@@ -269,56 +278,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.beep()
 				return 'repeat'
 
-			movetype = self.settings['move type']
-			movefunction = self.settings['mover']
-			if movetype == 'image shift' and movefunction == 'navigator':
-				self.logger.warning('Navigator cannot be used for image shift, using Presets Manager instead')
-				movefunction = 'presets manager'
+			presetdata = self.presetsclient.getPresetByName(newpresetname)
 
-			if movefunction == 'presets manager':
-				self.setStatus('waiting')
-				self.presetsclient.toScope(newpresetname, emtarget)
-			elif movefunction == 'navigator':
-				if targetdata['type'] != 'simulated':
-					precision = self.settings['move precision']
-					self.navclient.moveToTarget(targetdata, movetype, precision)
-				self.presetsclient.toScope(newpresetname, None)
-
-			self.setStatus('processing')
-			self.reportStatus('processing', 'Determining current preset')
-			p = self.presetsclient.getCurrentPreset()
-			if p['name'] != newpresetname:
-				self.logger.error('failed to set preset %s' % (newpresetname,))
-				continue
-			if p is not None:
-				self.reportStatus('processing', 'Current preset is "%s"' % p['name'])
-			pausetime = self.settings['pause time']
-			self.reportStatus('processing',
-												'Pausing for %s seconds before acquiring' % pausetime)
-			self.startTimer('acq pause')
-			time.sleep(pausetime)
-			self.stopTimer('acq pause')
-
-			if p['film']:
-				self.reportStatus('acquisition', 'Acquiring film...')
-				try:
-					filmresult = self.acquireFilm(p, target=targetdata, emtarget=emtarget)
-					if filmresult == 'no stock':
-						self.player.pause()
-						self.logger.error('No film stock.  Insert more film and press continue')
-						self.beep()
-						return 'repeat'
-					self.reportStatus('acquisition', 'film acquired')
-				except:
-					self.logger.exception('film acquisition')
-			else:
-				self.startTimer('acquire')
-				ret = self.acquire(p, target=targetdata, emtarget=emtarget, attempt=attempt)
-				self.stopTimer('acquire')
-				# in these cases, return immediately
-				if ret in ('aborted', 'repeat'):
-					self.reportStatus('acquisition', 'Acquisition state is "%s"' % ret)
-					break
+			### acquire film or CCD
+			self.startTimer('acquire')
+			ret = self.acquire(presetdata, emtarget, attempt=attempt)
+			self.stopTimer('acquire')
+			# in these cases, return immediately
+			if ret in ('aborted', 'repeat'):
+				self.reportStatus('acquisition', 'Acquisition state is "%s"' % ret)
+				break
+			if ret == 'repeat':
+				return repeat
 
 		self.reportStatus('processing', 'Processing complete')
 
@@ -452,19 +423,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def setImageFilename(self, imagedata):
 		setImageFilename(imagedata)
 
-	def acquireFilm(self, presetdata, target=None, emtarget=None):
+	def acquireFilm(self, presetdata, emtarget=None):
 		## get current film parameters
 		stock = self.instrument.tem.FilmStock
 		if stock < 1:
 			self.logger.error('Film stock = %s. Film exposure failed' % (stock,))
 			return 'no stock'
-
 		## create FilmData(AcquisitionImageData) which 
 		## will be used to store info about this exposure
-		filmdata = data.FilmData(session=self.session, preset=presetdata, label=self.name, target=target, emtarget=emtarget)
-		## no image to store in file, but this provides 'filename' for
-		## the case that we later scan the film
-		self.setImageFilename(filmdata)
+		targetdata = emtarget['target']
+		filmdata = data.FilmData(session=self.session, preset=presetdata, label=self.name, target=targetdata, emtarget=emtarget)
 
 		## first three of user name
 		self.instrument.tem.FilmUserCode = self.session['user']['name'][:3]
@@ -481,18 +449,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## get scope for database
 		scopebefore = self.instrument.getData(data.ScopeEMData)
 		filmdata['scope'] = scopebefore
-
 		## insert film
 		self.instrument.tem.preFilmExposure(True)
-
 		# expose film
 		self.instrument.ccdcamera.getImage()
-
 		## take out film
 		self.instrument.tem.postFilmExposure(True)
-
-		## record in database
-		self.publish(filmdata, pubevent=True, database=self.settings['save image'])
+		return filedata
 
 	def exposeSpecimen(self, seconds):
 		## I want to expose the specimen, but not the camera.
@@ -506,24 +469,33 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.instrument.tem.MainScreenPosition = 'up'
 		self.logger.info('Screen up.')
 
-	def acquire(self, presetdata, target=None, emtarget=None, attempt=None):
-		### corrected or not??
+	def moveAndPreset(self, presetdata, emtarget):
+			presetname = presetdata['name']
+			targetdata = emtarget['target']
+			#### move and change preset
+			movetype = self.settings['move type']
+			movefunction = self.settings['mover']
+			if movetype == 'image shift' and movefunction == 'navigator':
+				self.logger.warning('Navigator cannot be used for image shift, using Presets Manager instead')
+				movefunction = 'presets manager'
+			self.setStatus('waiting')
+			if movefunction == 'presets manager':
+				self.presetsclient.toScope(presetname, emtarget)
+			elif movefunction == 'navigator':
+				if targetdata['type'] != 'simulated':
+					precision = self.settings['move precision']
+					self.navclient.moveToTarget(targetdata, movetype, precision)
+				self.presetsclient.toScope(presetname, None)
+			self.setStatus('processing')
 
-		imagedata = None
-		correctimage = self.settings['correct image']
-
-		## pre-exposure
-		pretime = presetdata['pre exposure']
-		if pretime:
-			self.exposeSpecimen(pretime)
-
+	def acquireCCD(self, presetdata, emtarget=None):
+		targetdata = emtarget['target']
 		## set correction channel
 		## in the future, may want this based on preset or something
 		self.instrument.setCorrectionChannel(0)
-
 		## acquire image
 		self.reportStatus('acquisition', 'acquiring image...')
-
+		correctimage = self.settings['correct image']
 		self.startTimer('acquire getData')
 		try:
 			if correctimage:
@@ -531,24 +503,37 @@ class Acquisition(targetwatcher.TargetWatcher):
 			else:
 				dataclass = data.CameraImageData
 			imagedata = self.instrument.getData(dataclass)
+			self.reportStatus('acquisition', 'image acquired')
 		except:
 			self.logger.error('Cannot access instrument')
+			imagedata = None
 		self.stopTimer('acquire getData')
-
 		if imagedata is None:
 			return 'fail'
-
-		self.reportStatus('acquisition', 'image acquired')
-
+		## convert CameraImageData to AcquisitionImageData
+		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=self.imagelistdata, emtarget=emtarget)
+		imagedata['version'] = 0
 		## store EMData to DB to prevent referencing errors
 		self.publish(imagedata['scope'], database=True)
 		self.publish(imagedata['camera'], database=True)
+		return imagedata
 
-		## convert CameraImageData to AcquisitionImageData
-		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=target, list=self.imagelistdata, emtarget=emtarget)
-		imagedata['version'] = 0
-		if target is not None and 'grid' in target and target['grid'] is not None:
-			imagedata['grid'] = target['grid']
+	def acquire(self, presetdata, emtarget=None, attempt=None):
+		self.moveAndPreset(presetdata, emtarget)
+
+		## pre-exposure
+		pretime = presetdata['pre exposure']
+		if pretime:
+			self.exposeSpecimen(pretime)
+
+		if presetdata['film']:
+			imagedata = self.acquireFilm(presetdata, emtarget)
+		else:
+			imagedata = self.acquireCCD(presetdata, emtarget)
+
+		targetdata = emtarget['target']
+		if targetdata is not None and 'grid' in targetdata and targetdata['grid'] is not None:
+			imagedata['grid'] = targetdata['grid']
 		self.publishDisplayWait(imagedata)
 
 	def publishDisplayWait(self, imagedata):
@@ -641,8 +626,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		driftdata = data.DriftMonitorRequestData(session=self.session, presetname=presetname, emtarget=emtarget, threshold=threshold)
 		self.driftdone.clear()
+		self.driftimagedone.clear()
 		self.publish(driftdata, pubevent=True, database=True, dbforce=True)
 		self.reportStatus('acquisition', 'Waiting for DriftManager to check drift...')
+		self.driftimagedone.wait()
 		self.driftdone.wait()
 		return self.driftresult
 
@@ -655,7 +642,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if currentpreset is None:
 			self.logger.warning('No preset currently on instrument. Targeting may fail.')
 		targetdata = self.newSimulatedTarget(preset=currentpreset)
-		print targetdata
 		self.publish(targetdata, database=True)
 		## change to 'processing' just like targetwatcher does
 		proctargetdata = data.AcquisitionImageTargetData(initializer=targetdata, status='processing')
