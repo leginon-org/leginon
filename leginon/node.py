@@ -21,7 +21,7 @@ import copy
 import socket
 import remotecall
 import time
-
+import numarray
 import leginonconfig
 import os
 
