@@ -67,11 +67,10 @@ class ManualAcquisition(node.Node):
 	def getImageStats(self, image):
 		if image is None:
 			return {'mean': None, 'stdev': None, 'min': None, 'max': None}
-		mean = imagefun.mean(image)
-		stdev = imagefun.stdev(image, known_mean=mean)
-		min = imagefun.min(image)
-		max = imagefun.max(image)
-		return {'mean': mean, 'stdev': stdev, 'min': min, 'max': max}
+
+		stats = arraystats.all(image)
+		stats['stdev'] = stats['std']
+		return stats
 
 	def acquire(self):
 		correct = self.settings['correct image']
@@ -101,8 +100,8 @@ class ManualAcquisition(node.Node):
 				image = self.instrument.ccdcamera.Image
 
 		self.logger.info('Displaying image...')
-		stats = self.getImageStats(image)
-		self.setImage(image, stats=stats)
+		self.getImageStats(image)
+		self.setImage(image)
 
 		if self.settings['save image']:
 			self.logger.info('Saving image to database...')
@@ -336,8 +335,8 @@ class ManualAcquisition(node.Node):
 
 		# display
 		self.logger.info('Displaying 512x512 dose image...')
-		stats = self.getImageStats(imagedata['image'])
-		self.setImage(imagedata['image'], stats=stats)
+		self.getImageStats(imagedata['image'])
+		self.setImage(imagedata['image'])
 
 		# calculate dose
 		dose = self.dosecal.dose_from_imagedata(imagedata)
