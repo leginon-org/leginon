@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import numarray
 try:
 	import scipy.fftpack
 	import scipy.__config__
@@ -7,13 +8,12 @@ try:
 		raise ImportError
 
 	def real_fft2d(*args, **kwargs):
-		return Numeric.asarray(scipy.fftpack.fft2(*args, **kwargs))
+		return numarray.asarray(scipy.fftpack.fft2(*args, **kwargs))
 
 	def inverse_real_fft2d(*args, **kwargs):
-		return Numeric.asarray(scipy.fftpack.ifft2(*args, **kwargs).real)
+		return numarray.asarray(scipy.fftpack.ifft2(*args, **kwargs).real)
 
 except ImportError:
-	import numarray
 	from numarray.fft import real_fft2d
 	from numarray.fft import inverse_real_fft2d
 
@@ -51,7 +51,7 @@ class _fftEngine(object):
 
 
 ### this attempts to use fftw single and double
-### if that fails, it will use Numeric
+### if that fails, it will use numarray
 fftw_mods = []
 
 try:
@@ -66,11 +66,11 @@ except ImportError:
 
 
 if len(fftw_mods) != 2:
-	#print 'Warning:  you are using Numeric for FFTs.'
+	#print 'Warning:  you are using numarray for FFTs.'
 	#print 'Compile the fftw modules for faster FFTs.'
-	### use Numeric if fftw not available
+	### use numarray if fftw not available
 	class fftEngine(_fftEngine):
-		'''subclass of fftEngine which uses FFT from Numeric module'''
+		'''subclass of fftEngine which uses FFT from numarray module'''
 		def __init__(self, *args, **kwargs):
 			_fftEngine.__init__(self)
 
@@ -88,18 +88,18 @@ else:
 		mod.iplans = {}
 	# mapping numarray type to (fftwmodule, transformed type)
 	type_module = {
-		Numeric.Float32: fftw.single,
-		Numeric.Float64: fftw.double,
-		Numeric.Complex32: fftw.single,
-		Numeric.Complex64: fftw.double,
+		numarray.Float32: fftw.single,
+		numarray.Float64: fftw.double,
+		numarray.Complex32: fftw.single,
+		numarray.Complex64: fftw.double,
 	}
 	real_complex = {
-		Numeric.Float32: Numeric.Complex32,
-		Numeric.Float64: Numeric.Complex64,
+		numarray.Float32: numarray.Complex32,
+		numarray.Float64: numarray.Complex64,
 	}
 	complex_real = {
-		Numeric.Complex32: Numeric.Float32,
-		Numeric.Complex64: Numeric.Float64,
+		numarray.Complex32: numarray.Float32,
+		numarray.Complex64: numarray.Float64,
 	}
 
 	class fftEngine(_fftEngine):
@@ -130,12 +130,13 @@ else:
 		def _transform(self, im):
 			if im.type() not in complex_real.values():
 				try:
-					im = im.astype(complex_real[im.type()])
+					realtype = complex_real[im.type()]
 				except KeyError:
-					im = im.astype(Numeric.Float32)
+					realtype = numarray.Float32
+				im = numarray.asarray(im, realtype)
 
 			fftshape = (im.shape[1], im.shape[0] / 2 + 1)
-			imfft = Numeric.zeros(fftshape, real_complex[im.type()])
+			imfft = numarray.zeros(fftshape, real_complex[im.type()])
 			mod = type_module[im.type()]
 			plan = self.timer(self.plan, (im.shape,mod))
 			mod.rfftwnd_one_real_to_complex(plan, im, imfft)
@@ -144,20 +145,21 @@ else:
 		def _itransform(self, fftim):
 			if fftim.type() not in real_complex.values():
 				try:
-					fftim = fftim.astype(real_complex[fftim.type()])
+					complextype = real_complex[fftim.type()]
 				except KeyError:
-					fftim = fftim.astype(Numeric.Complex32)
+					complextype = numarray.Complex32
+				fftim = numarray.asarray(fftim, complextype)
 
 			imshape = (2*(fftim.shape[1]-1), fftim.shape[0])
 
-			im = Numeric.zeros(imshape, complex_real[fftim.type()])
+			im = numarray.zeros(imshape, complex_real[fftim.type()])
 			mod = type_module[fftim.type()]
 			plan = self.timer(self.iplan, (imshape,mod))
 			### the input image will be destroyed, so make copy
 			fftimcopy = fftim.copy()
 			mod.rfftwnd_one_complex_to_real(plan, fftimcopy, im)
 			norm = imshape[0] * imshape[1]
-			im = Numeric.divide(im, norm)
+			im = numarray.divide(im, norm)
 			return im
 
 		def plan(self, shape, mod):
