@@ -16,8 +16,8 @@ class Convolver(object):
 	Provides an efficent convolution calculator.
 
 	Create an instance with two optional arguments:
-	     'kernel':  a convolution kernel as a 2-d Numeric array
-	     'image':  the subject image as a 2-d Numeric array
+	     'kernel':  a convolution kernel as a 2-d numarray array
+	     'image':  the subject image as a 2-d numarray array
 	These values can also be set later using the setKernel and 
 	setImage methods.  The convolution is executed using the method
 	'convolve', which takes the same two optional arguments.
@@ -64,10 +64,10 @@ class Convolver(object):
 		if self.shape in self.kernel_fft:
 			return self.kernel_fft[self.shape]
 
-		kim = Numeric.zeros(self.shape, Numeric.Float32)
+		kim = numarray.zeros(self.shape, numarray.Float32)
 		### center the kernel at 0,0 in the image
 		k = self.kernel
-		kind = Numeric.indices(k.shape)
+		kind = numarray.indices(k.shape)
 		krows = kind[0]
 		kcols = kind[1]
 		kr,kc = self.kernel.shape
@@ -98,7 +98,7 @@ class Convolver(object):
 			imfft = self.result_fft
 
 		kfft = self.makeKernelFFT()
-		self.result_fft = Numeric.multiply(kfft, imfft)
+		self.result_fft = numarray.multiply(kfft, imfft)
 		result = self.fftengine.itransform(self.result_fft)
 
 		# what to do with border?
@@ -117,11 +117,11 @@ class Convolver(object):
 ########
 
 #### 3x3 Laplacian
-laplacian_kernel3 = Numeric.array((0,-1,0,-1,4,-1,0,-1,0), Numeric.Float32)
+laplacian_kernel3 = numarray.array((0,-1,0,-1,4,-1,0,-1,0), numarray.Float32)
 laplacian_kernel3.shape = (3,3)
 
 #### 5x5 Laplacian
-laplacian_kernel5 = -Numeric.ones((5,5), Numeric.Float32)
+laplacian_kernel5 = -numarray.ones((5,5), numarray.Float32)
 laplacian_kernel5[2,2] = 24.0
 
 #### Gaussian
@@ -132,10 +132,10 @@ def gaussian_kernel(sigma):
 	if sigma < 0.1:
 		## sigma is very small and probably shouldn't be doing this at all
 		## so just make delta function
-		return Numeric.ones((1,1), Numeric.Float32)
+		return numarray.ones((1,1), numarray.Float32)
 	half = int(5 * sigma)
 	n = 2 * half + 1
-	k1 = 1.0 / (2.0 * Numeric.pi * sigma**2)
+	k1 = 1.0 / (2.0 * numarray.pi * sigma**2)
 	def i(rows,cols):
 		rows = numarray.asarray(rows, numarray.Float32)
 		cols = numarray.asarray(cols, numarray.Float32)
