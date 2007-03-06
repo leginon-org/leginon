@@ -268,7 +268,6 @@ class DriftManager(watcher.Watcher):
 			# make sure we have waited at least "pause time" before acquire
 			t1 = self.instrument.tem.SystemTime
 			dt = t1 - t0
-			t0 = t1
 			pausetime = self.settings['pause time']
 			if dt < pausetime:
 				thispause = pausetime - dt
