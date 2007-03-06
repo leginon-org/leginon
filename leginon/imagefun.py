@@ -55,25 +55,10 @@ def medianSeries(series):
 def averageSeries(series):
 	return numarray.image.average(series)
 
-def scaleToShape(array, scaledshape):
-	scale = (float(scaledshape[0])/float(array.shape[0]),
-						float(scaledshape[1])/float(array.shape[1]))
-	return scale(array, scale)
-
 def scale(array, scale):
-	if scale == (1.0, 1.0):
+	if scale == 1.0:
 		return array
-
-	indices = [None, None]
-	for i in range(2):
-		index = numarray.arrayrange(int(round(scale[i]*array.shape[i])))
-		index = index / scale[i]
-		## mystery stuff:
-		#index = numarray.floor(index+scale[i]/2.0+0.5).astype(numarray.Int)
-		index = numarray.floor(index).astype(numarray.Int)
-		indices[i] = index
-
-	return numarray.take(numarray.take(array, indices[0]), indices[1], 1)
+	return numarray.nd_image.zoom(array, scale, order=1)
 
 def linearscale(input, boundfrom, boundto, extrema=None):
 	"""
