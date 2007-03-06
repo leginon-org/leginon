@@ -178,8 +178,8 @@ class Node(object):
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 		evt.event.wait()
 
-	def setImage(self, image, typename=None, stats={}):
-		evt = gui.wx.Events.SetImageEvent(image, typename, stats)
+	def setImage(self, image, typename=None):
+		evt = gui.wx.Events.SetImageEvent(image, typename)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def setTargets(self, targets, typename, block=False):

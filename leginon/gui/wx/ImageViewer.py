@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.49 $
+# $Revision: 1.50 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-03-05 21:27:48 $
+# $Date: 2007-03-06 00:48:55 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -759,18 +759,18 @@ class ImagePanel(wx.Panel):
 		self.selectiontool.setImage(name, imagedata, **kwargs)
 		#self.setImage(imagedata, **kwargs)
 
-	def setImage(self, imagedata, stats={}):
-		stats = dict(stats)
+	def setImage(self, imagedata):
 		if isinstance(imagedata, Numeric.ArrayType):
-			self.setNumericImage(imagedata, stats)
+			self.setNumericImage(imagedata)
 		elif isinstance(imagedata, Image.Image):
 			self.setPILImage(imagedata)
+			stats = arraystats.all(imagedata)
 			self.statspanel.set(stats)
 			self.sizer.SetItemMinSize(self.statspanel, self.statspanel.GetSize())
 			self.sizer.Layout()
 		elif imagedata is None:
 			self.clearImage()
-			self.statspanel.set(stats)
+			self.statspanel.set({})
 			self.sizer.SetItemMinSize(self.statspanel, self.statspanel.GetSize())
 			self.sizer.Layout()
 		else:
