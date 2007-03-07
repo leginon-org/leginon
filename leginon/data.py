@@ -1988,6 +1988,7 @@ class PolyFinderSettingsData(TargetFinderSettingsData):
 			('acquisition convolve template', list),
 			('acquisition constant template', list),
 		)
+	typemap = classmethod(typemap)
 
 class RegionFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
