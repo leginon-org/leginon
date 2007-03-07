@@ -25,6 +25,7 @@ $host = $_SERVER['REMOTE_HOST'];
 $title = "Viewed sessions";
 $R = $leginondata->getviewerlog('last');
 $content="<b>Lastest:</b><table>";
+if ($R)
 foreach ($R as $r) {
 	$url = "3wviewer.php?expId=".$r['sessionId'];
 	$content .= "<tr><td><a href='".$url."'>".$r['name']."</a> ".$r['comment']."</td></tr>";
@@ -33,6 +34,7 @@ $content.="</table>";
 
 $content.="<b>Most:</b><table>";
 $R = $leginondata->getviewerlog('most');
+if ($R)
 foreach ($R as $r) {
 	$url = "3wviewer.php?expId=".$r['sessionId'];
 	$content .= "<tr><td><a href='".$url."'>".$r['name']."</a> ".$r['comment']."</td></tr>";

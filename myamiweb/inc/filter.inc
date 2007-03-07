@@ -46,7 +46,7 @@ function getfft($filename="", $minpix="", $maxpix="", $colormap=false, $binning=
 	mrcfftw($mrcimg,10);
 	mrcbinning($mrcimg, $binning);
 	if ($autoscale)
-		list($minpix, $maxpix) = mrcgetscale($mrcimg, $densitymax);
+		list($minpix, $maxpix) = mrcstdevscale($mrcimg, $densitymax);
 	$img = mrctoimage($mrcimg, $minpix, $maxpix, $colormap);
 	mrcdestroy($mrcimg);
 	return $img;
