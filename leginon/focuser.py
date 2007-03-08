@@ -216,9 +216,11 @@ class Focuser(acquisition.Acquisition):
 				self.logger.info('Drift was detected so target will be repeated')
 				return 'repeat'
 			lastdrift = driftresult['final']
+			'''
 			lastdriftimage = self.driftimage
 			self.logger.info('using final drift image in focuser')
 			self.setImage(lastdriftimage['image'], 'Image')
+			'''
 		else:
 			lastdrift = None
 
