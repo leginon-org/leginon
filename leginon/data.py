@@ -2225,6 +2225,7 @@ class RobotSettingsData(SettingsData):
 			('default Z position', float),
 			('simulate', bool),
 			('turbo on', bool),
+			('grid clear wait', bool),
 			('pause', bool),
 			('grid tray', str),
 		)
