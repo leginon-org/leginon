@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Robot.py,v $
-# $Revision: 1.14 $
+# $Revision: 1.15 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-03-01 21:19:23 $
+# $Date: 2007-03-10 02:59:41 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -97,8 +97,13 @@ class Panel(gui.wx.Node.Panel):
 
 		self.Bind(wx.EVT_CHOICE, self.onTrayChoice, self.ctray)
 		choices = self.node.getTrayLabels()
+		self.setTraySelection(choices)
+
+		self.Bind(wx.EVT_BUTTON, self.onSelectAllButton, self.bselectall)
+		self.Bind(wx.EVT_BUTTON, self.onSelectNoneButton, self.bselectnone)
+	
+	def setTraySelection(self,choices):
 		if choices:
-			print dir(self.ctray)
 			self.ctray.Clear()
 			self.ctray.AppendItems(choices)
 			if self.node.settings['grid tray']:
@@ -111,9 +116,7 @@ class Panel(gui.wx.Node.Panel):
 				self.ctray.SetSelection(n)
 			self.ctray.Enable(True)
 			self.onTrayChoice()
-
-		self.Bind(wx.EVT_BUTTON, self.onSelectAllButton, self.bselectall)
-		self.Bind(wx.EVT_BUTTON, self.onSelectNoneButton, self.bselectnone)
+	
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -171,20 +174,7 @@ class Panel(gui.wx.Node.Panel):
 		
 	def onRefreshTraysButton(self, evt):
 		choices = self.node.getTrayLabels()
-		if choices:
-			self.ctray.Clear()
-			self.ctray.AppendItems(choices)
-			if self.node.settings['grid tray']:
-				n = self.ctray.FindString(self.node.settings['grid tray'])
-			else:
-				n = wx.NOT_FOUND
-			if n == wx.NOT_FOUND:
-				self.ctray.SetSelection(0)
-			else:
-				self.ctray.SetSelection(n)
-			self.ctray.Enable(True)
-			self.onTrayChoice()
-		
+		self.setTraySelection(choices)		
 
 	def getNextGrid(self):
 		return self.tray.getNextGrid()
@@ -196,34 +186,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
 
-#		self.widgets['column pressure threshold'] = FloatEntry(self, -1, min=0.0, chars=6)
-#		self.widgets['Z position'] = FloatEntry(self, -1, min=0.0, chars=6)
-
-#		szcolumnpressure = wx.GridBagSizer(5, 5)
-#		label = wx.StaticText(self, -1, 'Column pressure threshold:')
-#		szcolumnpressure.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-#		szcolumnpressure.Add(self.widgets['column pressure threshold'], (0, 1), (1, 1),
-#						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-
-#		szzposition = wx.GridBagSizer(5, 5)
-#		label = wx.StaticText(self, -1, 'Default Z position:')
-#		szzposition.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-#		szzposition.Add(self.widgets['column pressure threshold'], (0, 1), (1, 1),
-#						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-#
-
-#		sz = wx.GridBagSizer(5, 15)
-#		sz.Add(szcolumnpressure, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-#		sz.Add(szpausetime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-#		sb = wx.StaticBox(self, -1, 'Robot')
-#		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-#		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-#		sbsz.Add(szcolumnpressure, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-#		sbsz.Add(szzposition, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-#		return [sbsz]
-
 		self.widgets['column pressure threshold'] = FloatEntry(self, -1, min=0.0,
 																														chars=6)
 		self.widgets['default Z position'] = FloatEntry(self, -1, min=-2.0,
@@ -232,6 +194,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 																	'Simulate Robot Insert/Extraction')
 		self.widgets['turbo on'] = wx.CheckBox(self, -1,
 																	'Turbo Pump Always On')
+		self.widgets['grid clear wait'] = wx.CheckBox(self, -1,
+																	'Wait for User Confirmation of Grid Clearing')
 		self.widgets['pause'] = wx.CheckBox(self, -1,
 																	'Pause before Extraction')
 
@@ -256,6 +220,11 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL)
 
 		sz = wx.GridBagSizer(5, 5)
+		szgridclear = wx.GridBagSizer(5, 5)
+		szgridclear.Add(self.widgets['grid clear wait'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+
+		sz = wx.GridBagSizer(5, 5)
 		szpause = wx.GridBagSizer(5, 5)
 		szpause.Add(self.widgets['pause'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
@@ -264,7 +233,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(szdefzposition, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szsimu, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szpump, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szpause, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szgridclear, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szpause, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sb = wx.StaticBox(self, -1, 'Robot')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)

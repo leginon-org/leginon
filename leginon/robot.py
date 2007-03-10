@@ -139,6 +139,7 @@ class Robot(node.Node):
 		'turbo on': True,
 		'pause': False,
 		'grid tray': None,
+		'grid clear wait': False,
 	}
 	defaultcolumnpressurethreshold = 3.5e-5
 	defaultzposition = -140e-6
@@ -556,6 +557,15 @@ class Robot(node.Node):
 
 		self.communication.Signal10 = 1
 
+	def autoGridClear(self):
+		self.gridcleared.clear()
+
+		self.logger.warning('Assume that grid is clear')
+		self.setStatus('processing')
+		self.logger.info('Resuming operation')
+
+		self.communication.Signal10 = 1
+
 	def gridCleared(self):
 		self.gridcleared.set()
 
@@ -586,7 +596,10 @@ class Robot(node.Node):
 			if self.communication.Signal9:
 				self.logger.warning('Robot failed to remove grid from specimen holder')
 				self.communication.Signal9 = 0
-				self.waitForGridClear()
+				if not self.settings['grid clear wait']:
+					self.autoGridClear()
+				else:
+					self.waitForGridClear()
 			time.sleep(0.5)
 		self.communication.Signal7 = 0
 		self.logger.info('Robot has completed extraction')
