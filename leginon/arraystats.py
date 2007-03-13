@@ -11,6 +11,9 @@ then you must specify force=True.
 import numarray
 import numarray.nd_image
 import numpy
+if not hasattr(numpy, 'min'):
+	numpy.min = numpy.minimum
+	numpy.max = numpy.maximum
 
 debug = False
 def dprint(s):
