@@ -257,6 +257,7 @@ class Robot(node.Node):
 				communication_good = TestCommunication()
 				
 		request = None
+		self.communication.Signal11 = int(self.settings['grid clear wait'])
 
 		while True:
 			self.startevent.clear()
@@ -552,17 +553,12 @@ class Robot(node.Node):
 		self.gridcleared.wait()
 		self.gridcleared = threading.Event()
 
-		self.setStatus('processing')
-		self.logger.info('Resuming operation')
-
 		self.communication.Signal10 = 1
 
 	def autoGridClear(self):
 		self.gridcleared.clear()
 
-		self.logger.warning('Assume that grid is clear')
-		self.setStatus('processing')
-		self.logger.info('Resuming operation')
+		self.logger.info('Auto probe clearing')
 
 		self.communication.Signal10 = 1
 
@@ -593,13 +589,16 @@ class Robot(node.Node):
 	def waitForRobotToExtract(self):
 		self.logger.info('Waiting for robot to complete extraction')
 		while not self.communication.Signal7:
+			self.communication.Signal11 = int(self.settings['grid clear wait'])
 			if self.communication.Signal9:
 				self.logger.warning('Robot failed to remove grid from specimen holder')
-				self.communication.Signal9 = 0
-				if not self.settings['grid clear wait']:
+				if self.communication.Signal11 == 0:
 					self.autoGridClear()
 				else:
 					self.waitForGridClear()
+				self.communication.Signal9 = 0
+				self.setStatus('processing')
+				self.logger.info('Resuming operation')
 			time.sleep(0.5)
 		self.communication.Signal7 = 0
 		self.logger.info('Robot has completed extraction')
