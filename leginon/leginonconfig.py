@@ -65,9 +65,11 @@ config_locations = [
 	os.path.join(HOME, 'leginon.cfg'),
 ]
 configfiles = configparser.read(config_locations)
+'''
 print 'Leginon config files used: '
 for configfile in configfiles:
 	print '   %s' % (configfile,)
+'''
 
 # Database sections
 dbsections = []
