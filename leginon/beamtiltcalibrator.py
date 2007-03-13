@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/beamtiltcalibrator.py,v $
-# $Revision: 1.79 $
+# $Revision: 1.80 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-12-05 22:13:11 $
+# $Date: 2007-03-13 20:07:44 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -54,7 +54,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def alignRotationCenter(self, defocus1, defocus2):
 		cal = self.calibration_clients['beam tilt']
-		bt = cal.measureRotationCenter(defocus1, defocus2, drift_threshold=None, target=None, correlation_type=None, settle=0.5)
+		bt = cal.measureRotationCenter(defocus1, defocus2, correlation_type=None, settle=0.5)
 		self.logger.info('Misalignment correction: %.4f, %.4f' % (bt['x'],bt['y'],))
 		oldbt = self.instrument.tem.BeamTilt
 		self.logger.info('Old beam tilt: %.4f, %.4f' % (oldbt['x'],oldbt['y'],))

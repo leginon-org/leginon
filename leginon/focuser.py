@@ -182,7 +182,6 @@ class Focuser(acquisition.Acquisition):
 		stiglens = 'objective'
 		## need btilt, pub, driftthresh
 		btilt = setting['tilt']
-		pub = False
 
 		## send the autofocus preset to the scope
 		self.presetsclient.toScope(presetname, emtarget)
@@ -216,18 +215,17 @@ class Focuser(acquisition.Acquisition):
 				self.logger.info('Drift was detected so target will be repeated')
 				return 'repeat'
 			lastdrift = driftresult['final']
-			'''
 			lastdriftimage = self.driftimage
 			self.logger.info('using final drift image in focuser')
 			self.setImage(lastdriftimage['image'], 'Image')
-			'''
 		else:
 			lastdrift = None
+			lastdriftimage = None
 
 		try:
 			## drift_threshold=None because now DriftManager does all the work.
 			## Should eventually remove all the drift stuff from calclient
-			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=None, target=target, correct_tilt=True, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=0.25)
+			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=True, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=0.25, image0=lastdriftimage)
 		except calibrationclient.Abort:
 			self.logger.info('Measurement of defocus and stig. has been aborted')
 			return 'aborted'
@@ -325,7 +323,7 @@ class Focuser(acquisition.Acquisition):
 
 	def autoStage(self, setting, emtarget, resultdata):
 		presetname = setting['preset name']
-		## need btilt, pub, driftthresh
+		## need btilt, driftthresh
 		atilt = setting['tilt']
 
 		# fake eucset, because we don't need it, but still need to correct z later

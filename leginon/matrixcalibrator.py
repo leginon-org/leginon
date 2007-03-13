@@ -78,7 +78,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.settle = {
 		  'image shift': 0.25,
 		  'beam shift': 0.25,
-		  'stage position': 5.0
+		  'stage position': 1.0
 		}
 
 		self.axislist = ['x', 'y']
@@ -129,7 +129,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 				state1 = self.makeState(basevalue, axis)
 				state2 = self.makeState(newvalue, axis)
 				self.logger.debug('States %s, %s' % (state1, state2))
-				shiftinfo = calclient.measureStateShift(state1, state2, 1, settle=self.settle[self.parameter])
+				im1 = calclient.acquireImage(state1, settle=self.settle[self.parameter])
+				shiftinfo = calclient.measureScopeChange(im1, state2, settle=self.settle[self.parameter])
 
 				rowpix = shiftinfo['pixel shift']['row']
 				colpix = shiftinfo['pixel shift']['col']
@@ -138,9 +139,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 				if totalpix == 0.0:
 					raise CalibrationError('total pixel shift is zero')
 
-				actual_states = shiftinfo['actual states']
-				actual1 = actual_states[0][self.parameter][axis]
-				actual2 = actual_states[1][self.parameter][axis]
+				actual1 = shiftinfo['previous']['scope'][self.parameter][axis]
+				actual2 = shiftinfo['next']['scope'][self.parameter][axis]
 				change = actual2 - actual1
 				if change == 0.0:
 					raise CalibrationError('change in %s is zero' % self.parameter)

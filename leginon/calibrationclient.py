@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.197 $
+# $Revision: 1.198 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-03-06 19:39:04 $
+# $Date: 2007-03-13 20:07:44 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -56,7 +56,6 @@ class CalibrationClient(object):
 			raise RuntimeError('CalibrationClient node needs instrument')
 
 		self.correlator = correlator.Correlator()
-		self.peakfinder = peakfinder.PeakFinder()
 		self.abortevent = threading.Event()
 		self.tiltcorrector = tiltcorrector.TiltCorrector(node)
 		self.stagetiltcorrector = tiltcorrector.VirtualStageTilter(node)
@@ -85,205 +84,89 @@ class CalibrationClient(object):
 	def correctTilt(self, imagedata):
 		self.tiltcorrector.correct_tilt(imagedata)
 
-	def acquireStateImage(self, state, publish_image=False, settle=0.0, correct_tilt=False, corchannel=0):
-		self.node.logger.debug('Acquiring image...')
-		## acquire image at this state
-
-		if state is not None:
-			newemdata = data.ScopeEMData(initializer=state)
+	def acquireImage(self, scope, settle=0.0, correct_tilt=False, corchannel=0):
+		if scope is not None:
+			newemdata = data.ScopeEMData(initializer=scope)
 			self.instrument.setData(newemdata)
 
-		self.node.startTimer('acquire state pause')
+		self.node.startTimer('calclient acquire pause')
 		time.sleep(settle)
-		self.node.stopTimer('acquire state pause')
+		self.node.stopTimer('calclient acquire pause')
 
 		self.instrument.setCorrectionChannel(corchannel)
 		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		if correct_tilt:
 			self.correctTilt(imagedata)
-		actual_state = imagedata['scope']
-
-		if publish_image:
-			self.node.publish(imagedata, pubevent=True)
+		newscope = imagedata['scope']
 
 		self.node.setImage(imagedata['image'], 'Image')
 
-		## should find image stats to help determine validity of image
-		## in correlations
-		image_stats = None
+		return imagedata
 
-		info = {'requested state': state, 'imagedata': imagedata, 'image stats': image_stats}
-		return info
-
-	def measureStateShift(self, state1, state2, publish_images=False, settle=0.0, drift_threshold=None, target=None, correct_tilt=False, correlation_type=None):
+	def measureScopeChange(self, previousimage, nextscope, settle=0.0, correct_tilt=False, correlation_type='phase'):
 		'''
-		Measures the pixel shift between two states
-		 Returned dict has these keys:
-		'actual states': tuple with the actual scope states
-		'pixel shift': the resulting pixel shift, 'row', and 'col'
-		'peak value': cross correlation peak value
-		'shape': shape of acquired images
-		'stats': statistics of two images acquired (not implemented)
+		Acquire an image at nextscope and correlate to previousimage
 		'''
-
-		self.node.logger.info('Acquiring images...')
-
-		self.node.logger.info('Acquiring image (1 of 2)')
-		corchannel=0
-		info1 = self.acquireStateImage(state1, publish_images, settle, correct_tilt=correct_tilt, corchannel=corchannel)
-		binning = info1['imagedata']['camera']['binning']['x']
-		imagedata1 = info1['imagedata']
-		imagecontent1 = imagedata1
-		stats1 = info1['image stats']
-		actual1 = imagecontent1['scope']
-		t0 = actual1['system time']
-		self.numimage1 = imagecontent1['image']
-		self.displayImage(self.numimage1)
-		self.correlator.insertImage(self.numimage1)
 
 		self.checkAbort()
 
-		## for drift check, continue to acquire at state1
-		if drift_threshold is None:
-			driftdata = None
-		else:
-			self.node.logger.info('Checking for drift...')
+		# make sure previous image is in the correlator
+		if self.correlator.getImage(1) is not previousimage['image']:
+			self.correlator.insertImage(previousimage['image'])
 
-			## use opposite correction channel
-			if corchannel:
-				corchannel = 0
-			else:
-				corchannel = 1
-			## state=None means do not set the values on the scope
-			info1 = self.acquireStateImage(None, publish_images, settle, correct_tilt=correct_tilt, corchannel=corchannel)
-			imagedata1 = info1['imagedata']
-			imagecontent1 = imagedata1
-			stats1 = info1['image stats']
-			actual1 = imagecontent1['scope']
-			t1 = actual1['system time']
-			self.numimage1 = imagecontent1['image']
-			self.displayCorrelation(self.numimage1)
-			self.correlator.insertImage(self.numimage1)
-
-			self.node.logger.info('Correlating...')
-			self.node.startTimer('shift correction')
-			if correlation_type is None:
-				try:
-					correlation_type = self.node.settings['correlation type']
-				except KeyError:
-					raise ValueError
-			if correlation_type == 'cross':
-				pcimage = self.correlator.crossCorrelate()
-			elif correlation_type == 'phase':
-				pcimage = self.correlator.phaseCorrelate()
-			else:
-				raise RuntimeError('invalid correlation type')
-			self.node.stopTimer('shift correction')
-
-			self.node.logger.debug('Peak finding...')
-			self.peakfinder.setImage(pcimage)
-			self.node.startTimer('shift peak')
-			self.peakfinder.subpixelPeak()
-			self.node.stopTimer('shift peak')
-			peak = self.peakfinder.getResults()
-			pixelpeak = peak['subpixel peak']
-			self.node.startTimer('shift display')
-			self.displayCorrelation(pcimage)
-			self.displayPeak(pixelpeak)
-			self.node.stopTimer('shift display')
-
-			peakvalue = peak['subpixel peak value']
-			shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
-			self.node.logger.info('pixel shift (row,col): %s' % (shift,))
-			shiftrows = shift[0]
-			shiftcols = shift[1]
-			seconds = t1 - t0
-
-			## publish scope and camera to be used with drift data
-			scope = imagedata1['scope']
-			self.node.publish(scope, database=True, dbforce=True)
-			camera = imagedata1['camera']
-			self.node.publish(camera, database=True, dbforce=True)
-			driftdata = data.DriftData(session=self.node.session, rows=shiftrows, cols=shiftcols, interval=seconds, target=target, scope=scope, camera=camera)
-			self.node.publish(driftdata, database=True, dbforce=True)
-
-			pixels = binning * abs(shift[0] + 1j * shift[1])
-			# convert to meters
-			mag = actual1['magnification']
-			pixelsize = self.getPixelSize(mag)
-			self.node.logger.info('pixelsize: %s, binning: %s' % (pixelsize, binning))
-			meters = pixelsize * pixels
-			drift = meters / seconds
-			self.node.logger.info('Seconds %f, pixels %f, meters %.4e, meters/second %.4e'
-							% (seconds, pixels, meters, drift))
-			if drift > drift_threshold:
-				## declare drift above threshold
-				self.node.declareDrift('threshold')
-				raise Drifting()
-
-		self.checkAbort()
-
-		self.node.logger.info('Acquiring image (2 of 2)')
 		## use opposite correction channel
+		corchannel = previousimage['correction channel']
 		if corchannel:
 			corchannel = 0
 		else:
 			corchannel = 1
-		info2 = self.acquireStateImage(state2, publish_images, settle, correct_tilt=correct_tilt, corchannel=corchannel)
-		imagedata2 = info2['imagedata']
-		imagecontent2 = imagedata2
-		stats2 = info2['image stats']
-		actual2 = imagecontent2['scope']
-		self.numimage2 = imagecontent2['image']
-		self.displayImage(self.numimage2)
-		self.correlator.insertImage(self.numimage2)
-
-		actual = (actual1, actual2)
-		shiftinfo = {}
 
 		self.checkAbort()
 
-		self.node.logger.info('Calculating shift between the images...')
-		self.node.logger.debug('Correlating...')
-		self.node.startTimer('shift correlation')
+		## acquire neximage
+		nextimage = self.acquireImage(nextscope, settle, correct_tilt=correct_tilt, corchannel=corchannel)
+		self.correlator.insertImage(nextimage['image'])
+
+		self.checkAbort()
+
+		## correlate
+		self.node.startTimer('scope change correlation')
 		if correlation_type is None:
 			try:
 				correlation_type = self.node.settings['correlation type']
 			except KeyError:
 				correlation_type = 'phase'
 		if correlation_type == 'cross':
-			pcimage = self.correlator.crossCorrelate()
+			cor = self.correlator.crossCorrelate()
 		elif correlation_type == 'phase':
-			pcimage = self.correlator.phaseCorrelate()
+			cor = self.correlator.phaseCorrelate()
 		else:
 			raise RuntimeError('invalid correlation type')
-		self.node.stopTimer('shift correlation')
+		self.node.stopTimer('scope change correlation')
+		self.displayCorrelation(cor)
 
-		## peak finding
-		self.node.logger.debug('Peak finding...')
-		self.peakfinder.setImage(pcimage)
+		## find peak
 		self.node.startTimer('shift peak')
-		self.peakfinder.subpixelPeak()
+		peak = peakfinder.findSubpixelPeak(cor)
 		self.node.stopTimer('shift peak')
-		peak = self.peakfinder.getResults()
-		self.node.logger.debug('Peak minsum %f' % peak['minsum'])
+
+		self.node.logger.debug('Peak %s' % (peak,))
 
 		pixelpeak = peak['subpixel peak']
 		self.node.startTimer('shift display')
-		self.displayCorrelation(pcimage)
 		self.displayPeak(pixelpeak)
 		self.node.stopTimer('shift display')
 
 		peakvalue = peak['subpixel peak value']
-		shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
+		shift = correlator.wrap_coord(peak['subpixel peak'], cor.shape)
 		self.node.logger.debug('pixel shift (row,col): %s' % (shift,))
 
 		## need unbinned result
-		binx = imagecontent1['camera']['binning']['x']
-		biny = imagecontent1['camera']['binning']['y']
+		binx = nextimage['camera']['binning']['x']
+		biny = nextimage['camera']['binning']['y']
 		unbinned = {'row':shift[0] * biny, 'col': shift[1] * binx}
 
-		shiftinfo.update({'actual states': actual, 'pixel shift': unbinned, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2), 'driftdata': driftdata})
+		shiftinfo = {'previous': previousimage, 'next': nextimage, 'pixel shift': unbinned}
 		return shiftinfo
 
 	def displayImage(self, im):
@@ -567,7 +450,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		else:
 			return None
 
-	def measureRotationCenter(self, defocus1, defocus2, drift_threshold=None, target=None, correlation_type=None, settle=0.5):
+	def measureRotationCenter(self, defocus1, defocus2, correlation_type=None, settle=0.5):
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
@@ -582,13 +465,79 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		state1['defocus'] = defocus1
 		state2['defocus'] = defocus2
 
-		shiftinfo = self.measureStateShift(state1, state2, settle=settle, drift_threshold=drift_threshold, target=target, correlation_type=correlation_type)
+		im1 = self.acquireImage(state1, settle=settle)
+		shiftinfo = self.measureScopeChange(im1, state2, settle=settle, correlation_type=correlation_type)
+
 		shift = shiftinfo['pixel shift']
 		d = shift['row'],shift['col']
 		bt = self.solveEq10_t(fmatrix, defocus1, defocus2, d)
 		return {'x':bt[0], 'y':bt[1]}
 
-	def measureDefocusStig(self, tilt_value, publish_images=False, drift_threshold=None, stig=True, target=None, correct_tilt=False, correlation_type=None, settle=0.5):
+	def measureDefocusStig(self, tilt_value, stig=True, correct_tilt=False, correlation_type=None, settle=0.5, image0=None):
+		self.abortevent.clear()
+		tem = self.instrument.getTEMData()
+		cam = self.instrument.getCCDCameraData()
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		try:
+			fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
+		except NoMatrixCalibrationError:
+				raise RuntimeError('missing calibration matrix')
+		if stig:
+			try:
+				amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag)
+				bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag)
+			except NoMatrixCalibrationError:
+				stig = False
+
+		tiltcenter = self.getBeamTilt()
+
+		if image0 is None:
+			image0 = self.acquireImage(None, settle=settle, correct_tilt=correct_tilt)
+
+		### need two tilt displacement measurements to get stig
+		shifts = {}
+		tilts = {}
+		self.checkAbort()
+		for tiltaxis in ('x','y'):
+			bt2 = dict(tiltcenter)
+			bt2[tiltaxis] += tilt_value
+			state2 = data.ScopeEMData()
+			state2['beam tilt'] = bt2
+			try:
+				shiftinfo = self.measureScopeChange(image0, state2, settle=settle, correlation_type=correlation_type)
+			except Abort:
+				break
+
+			pixshift = shiftinfo['pixel shift']
+
+			shifts[tiltaxis] = (pixshift['row'], pixshift['col'])
+			if tiltaxis == 'x':
+				tilts[tiltaxis] = (tilt_value, 0)
+			else:
+				tilts[tiltaxis] = (0, tilt_value)
+			try:
+				self.checkAbort()
+			except Abort:
+				break
+
+		## return to original beam tilt
+		self.instrument.tem.BeamTilt = tiltcenter
+
+		self.checkAbort()
+
+		d1 = shifts['x']
+		t1 = tilts['x']
+		d2 = shifts['y']
+		t2 = tilts['y']
+		if stig:
+			sol = self.solveEq10(fmatrix,amatrix,bmatrix,d1,t1,d2,t2)
+		else:
+			sol = self.solveEq10_nostig(fmatrix,d1,t1,d2,t2)
+
+		return sol
+
+	def OLDmeasureDefocusStig(self, tilt_value, publish_images=False, drift_threshold=None, stig=True, target=None, correct_tilt=False, correlation_type=None, settle=0.5):
 		self.abortevent.clear()
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
@@ -677,7 +626,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		return sol
 
 	def solveEq10(self, F, A, B, d1, t1, d2, t2):
-		#print 'SOLVE STIG'
 		'''
 		This solves Equation 10 from Koster paper
 		 F,A,B are the defocus, stigx, and stigy calibration matrices
@@ -715,7 +663,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		return result
 
 	def solveEq10_nostig(self, F, d1, t1, d2, t2):
-		#print 'SOLVE NO STIG'
 		'''
 		This solves Equation 10 from Koster paper
 		 F,A,B are the defocus, stigx, and stigy calibration matrices
@@ -781,7 +728,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		Each call of this function acquires four images
 		and returns two shift displacements.
 		'''
-		
+
 		# try/finally to be sure we return to original beam tilt
 		try:
 			# set up to measure states
@@ -796,12 +743,12 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			m += '): (%g, %g) pixels'
 			for i, state in enumerate(states):
 				args = []
-				for bt in beam_tilts:
-					s = data.ScopeEMData(initializer=state)
-					s['beam tilt'] = bt
-					args.append(s)
-			
-				result = self.measureStateShift(*args, **kwargs)
+				s0 = data.ScopeEMData(initializer=state)
+				s0['beam tilt'] = beam_tilts[0]
+				s1 = data.ScopeEMData(initializer=state)
+				s1['beam tilt'] = beam_tilts[1]
+				im0 = self.acquireImage(s0, **kwargs)
+				result = self.measureScopeChange(im0, s1, **kwargs)
 				pixel_shift = result['pixel shift']
 				pixel_shifts.append(pixel_shift)
 
@@ -840,7 +787,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 						tiltbt[axisn] += tsign*t
 						btdict = {'beam tilt': {'x':tiltbt[0], 'y':tiltbt[1]}}
 						state1 = data.ScopeEMData(initializer=btdict)
-						shiftinfo = self.measureStateShift(state0, state1)
+						im0 = self.acquireImage(state0)
+						shiftinfo = self.measureScopeChange(im0, state1)
 						pixelshift = shiftinfo['pixel shift']
 						displace[tsign] = pixelshift['row'],pixelshift['col']
 					## calculate displacemnt diff
@@ -867,6 +815,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		btorig = self.getBeamTilt()
 		btdict = {'beam tilt': btorig}
 		state0 = data.ScopeEMData(initializer=btdict)
+		im0 = self.acquireImage(state0)
 		### try/finally to be sure we return to original beam tilt
 		try:
 			displace = {}
@@ -876,7 +825,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				tiltbt['y'] += tsign*tilt_value
 				btdict = {'beam tilt': tiltbt}
 				state1 = data.ScopeEMData(initializer=btdict)
-				shiftinfo = self.measureStateShift(state0, state1)
+				shiftinfo = self.measureScopeChange(im0, state1)
 				pixelshift = shiftinfo['pixel shift']
 				displace[tsign] = pixelshift['row'],pixelshift['col']
 		finally:
@@ -1046,10 +995,12 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		state2 = data.ScopeEMData()
 		state1['stage position'] = {'a':-tilt_value}
 		state2['stage position'] = {'a':tilt_value}
-		shiftinfo = self.measureStateShift(state1, state2, correlation_type=correlation_type)
+		im1 = self.acquireImage(state1)
+		shiftinfo = self.measureScopeChange(im1, state2, correlation_type=correlation_type)
 		self.instrument.tem.StagePosition = {'a':orig_a}
 
-		state1,state2 = shiftinfo['actual states']
+		state1 = shiftinfo['previous']['scope']
+		state2 = shiftinfo['next']['scope']
 		pixelshift = shiftinfo['pixel shift']
 		#psize = self.getPixelSize(state1['magnification'])
 		#dist = psize * math.hypot(pixelshift['row'], pixelshift['col'])
@@ -1058,7 +1009,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		scope = data.ScopeEMData(initializer=state1)
 		scope['stage position']['a'] = 0.0
 		cam = data.CameraEMData()
-		# measureStateShift already unbinned it, so fake cam bin = 1
+		# measureScopeChange already unbinned it, so fake cam bin = 1
 		cam['binning'] = {'x':1,'y':1}
 		cam['ccdcamera'] = self.instrument.getCCDCameraData()
 		# get the virtual x,y movement
@@ -1105,7 +1056,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 			pc = self.correlator.crossCorrelate()
 		self.displayCorrelation(pc)
 
-		peak01 = self.peakfinder.subpixelPeak(pc)
+		peak01 = peakfinder.findSubpixelPeak(pc)
 		shift01 = correlator.wrap_coord(peak01, pc.shape)
 		self.displayPeak(peak01)
 
