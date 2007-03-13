@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.198 $
+# $Revision: 1.199 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-03-13 20:07:44 $
+# $Date: 2007-03-13 23:21:34 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -483,12 +483,19 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
 		except NoMatrixCalibrationError:
 				raise RuntimeError('missing calibration matrix')
+
+		## only do stig if stig matrices exist
+		amatrix = bmatrix = None
 		if stig:
+			tiltaxes = ('x','y')
 			try:
 				amatrix = self.retrieveMatrix(tem, cam, 'stigx', ht, mag)
 				bmatrix = self.retrieveMatrix(tem, cam, 'stigy', ht, mag)
 			except NoMatrixCalibrationError:
 				stig = False
+				tiltaxes = ('x',)
+		else:
+			tiltaxes = ('x',)
 
 		tiltcenter = self.getBeamTilt()
 
@@ -496,10 +503,10 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			image0 = self.acquireImage(None, settle=settle, correct_tilt=correct_tilt)
 
 		### need two tilt displacement measurements to get stig
-		shifts = {}
-		tilts = {}
+		shifts = []
+		tilts = []
 		self.checkAbort()
-		for tiltaxis in ('x','y'):
+		for tiltaxis in tiltaxes:
 			bt2 = dict(tiltcenter)
 			bt2[tiltaxis] += tilt_value
 			state2 = data.ScopeEMData()
@@ -511,11 +518,11 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 			pixshift = shiftinfo['pixel shift']
 
-			shifts[tiltaxis] = (pixshift['row'], pixshift['col'])
+			shifts.append( (pixshift['row'], pixshift['col']) )
 			if tiltaxis == 'x':
-				tilts[tiltaxis] = (tilt_value, 0)
+				tilts.append( (tilt_value, 0) )
 			else:
-				tilts[tiltaxis] = (0, tilt_value)
+				tilts.append( (0, tilt_value) )
 			try:
 				self.checkAbort()
 			except Abort:
@@ -526,15 +533,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		self.checkAbort()
 
-		d1 = shifts['x']
-		t1 = tilts['x']
-		d2 = shifts['y']
-		t2 = tilts['y']
-		if stig:
-			sol = self.solveEq10(fmatrix,amatrix,bmatrix,d1,t1,d2,t2)
-		else:
-			sol = self.solveEq10_nostig(fmatrix,d1,t1,d2,t2)
-
+		sol = self.solveEq10(fmatrix, amatrix, bmatrix, tilts, shifts)
 		return sol
 
 	def OLDmeasureDefocusStig(self, tilt_value, publish_images=False, drift_threshold=None, stig=True, target=None, correct_tilt=False, correlation_type=None, settle=0.5):
@@ -625,7 +624,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		sol['lastdrift'] = lastdrift
 		return sol
 
-	def solveEq10(self, F, A, B, d1, t1, d2, t2):
+	def solveEq10(self, F, A, B, tilts, shifts):
 		'''
 		This solves Equation 10 from Koster paper
 		 F,A,B are the defocus, stigx, and stigy calibration matrices
@@ -633,64 +632,46 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		 d1,d2 are displacements resulting from beam tilts t1,t2
 		   (all must be 2x1 numarray arrays)
 		'''
-		## produce the matrix and vector for least squares fit
-		v = numarray.zeros((4,), numarray.Float64)
-		v[:2] = d1
-		v[2:] = d2
 
-		## plug calibration matrices and tilt vectors into M
-		M = numarray.zeros((4,3), numarray.Float64)
+		v = numarray.array(shifts, numarray.Float64).flat
 
-		t1 = numarray.array(t1)
-		t2 = numarray.array(t2)
+		matrices = []
+		for matrix in (F,A,B):
+			if matrix is not None:
+				matrices.append(matrix)
 
-		# t1 on first two rows
-		M[:2,0] = numarray.matrixmultiply(F,t1)
-		M[:2,1] = numarray.matrixmultiply(A,t1)
-		M[:2,2] = numarray.matrixmultiply(B,t1)
-		# t2 on second two rows
-		M[2:,0] = numarray.matrixmultiply(F,t2)
-		M[2:,1] = numarray.matrixmultiply(A,t2)
-		M[2:,2] = numarray.matrixmultiply(B,t2)
-
-		solution = numarray.linear_algebra.linear_least_squares(M, v)
-		result = {
-			'defocus': solution[0][0],
-			'stigx': solution[0][1],
-			'stigy': solution[0][2],
-			'min': float(solution[1][0])
-			}
-		return result
-
-	def solveEq10_nostig(self, F, d1, t1, d2, t2):
-		'''
-		This solves Equation 10 from Koster paper
-		 F,A,B are the defocus, stigx, and stigy calibration matrices
-		   (all must be 2x2 numarray arrays)
-		 d1,d2 are displacements resulting from beam tilts t1,t2
-		   (all must be 2x1 numarray arrays)
-		'''
-		## produce the matrix and vector for least squares fit
-		v = numarray.zeros((4,), numarray.Float64)
-		v[:2] = d1
-		v[2:] = d2
-
-		## plug calibration matrices and tilt vectors into M
-		M = numarray.zeros((4,1), numarray.Float64)
-
-		# t1 on first two rows
-		M[:2,0] = numarray.matrixmultiply(F,t1)
-		# t2 on second two rows
-		M[2:,0] = numarray.matrixmultiply(F,t2)
+		mt = []
+		for tilt in tilts:
+			t = numarray.array(tilt, shape=(2,1))
+			mm = []
+			for matrix in matrices:
+				m = numarray.matrixmultiply(matrix, t)
+				mm.append(m)
+			m = numarray.concatenate(mm, 1)
+			mt.append(m)
+		M = numarray.concatenate(mt, 0)
 
 		solution = numarray.linear_algebra.linear_least_squares(M, v)
-		result = {
-			'defocus': solution[0][0],
-			'stigx': None,
-			'stigy': None,
-			'min': float(solution[1][0])
-			}
+
+		result = {'defocus': solution[0][0], 'min': float(solution[1][0])}
+		if len(solution[0]) == 3:
+			result['stigx'] = solution[0][1]
+			result['stigy'] = solution[0][2]
+		else:
+			result['stigx'] = None
+			result['stigy'] = None
 		return result
+	solveEq10 = classmethod(solveEq10)
+
+	def solveDefocus(self, F, d, t, tiltaxis):
+		if tiltaxis == 'x':
+			ft = t * numarray.hypot(*F[:,0])
+		else:
+			ft = t * numarray.hypot(*F[:,1])
+		print 'FT', ft
+		f = d / ft
+		return f
+	solveDefocus = classmethod(solveDefocus)
 
 	def solveEq10_t(self, F, f1, f2, d):
 		'''
@@ -1409,16 +1390,16 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 		modavgy = ymagcal['mean']
 		anglex = xmagcal['angle']
 		angley = ymagcal['angle']
-	
+
 		gonx1 = xmod.rotate(anglex, pixx, pixy)
 		gony1 = ymod.rotate(angley, pixx, pixy)
-	
+
 		gonx1 = gonx1 * modavgx
 		gony1 = gony1 * modavgy
-	
+
 		gonx1 = xmod.predict(gonx,gonx1)
 		gony1 = ymod.predict(gony,gony1)
-	
+
 		return {'x':gonx1, 'y':gony1}
 
 	def tixpix(self, xmod, ymod, xmagcal, ymagcal, gonx0, gony0, gonx1, gony1):
@@ -1434,13 +1415,13 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 
 		gonx = gonx / modavgx
 		gony = gony / modavgy
-	
+
 		m = numarray.array(((numarray.cos(anglex),numarray.sin(anglex)),(numarray.cos(angley),numarray.sin(angley))), numarray.Float32)
 		minv = numarray.linear_algebra.inverse(m)
 		ix,iy = numarray.matrixmultiply(minv, (gonx,gony))
-	
+
 		return iy,ix
-	
+
 	def pixelShift(self, ievent):
 		# XXX
 		mag = ievent.content['magnification']
@@ -1496,4 +1477,3 @@ class EucentricFocusClient(CalibrationClient):
 		newdata['magnification'] = mag
 		newdata['focus'] = ef
 		self.node.publish(newdata, database=True, dbforce=True)
-
