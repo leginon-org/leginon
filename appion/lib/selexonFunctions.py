@@ -924,7 +924,7 @@ def getImagesFromDB(session,preset):
 	#loop through images and make data.holdimages false 	 
 	#this makes it so that data.py doesn't hold images in memory 	 
 	#solves a bug where selexon quits after a dozen or so images 	 
-	for img in imagelist: 	 
+	#for img in imagelist: 	 
 		#img.holdimages=False
 	return (imagelist)
 
