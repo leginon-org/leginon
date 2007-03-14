@@ -104,7 +104,8 @@ if __name__ == '__main__':
 	# unpickle dictionary of previously processed images
 	donedict=getDoneDict(selexondonename)
 
-	createImageLinks(images)
+	if (params["crud"]==True or params['method'] == "classic"):
+		createImageLinks(images)
 	
 	# check to see if user only wants to run the crud finder
 	if (params["crudonly"]==True):
@@ -309,7 +310,8 @@ if __name__ == '__main__':
 			print "\nAll images processed. Waiting ten minutes for new images."
 			time.sleep(600)
 			images=getImagesFromDB(params['session']['name'],params['preset'])
-			createImageLinks(images)
+			if (params["crud"]==True or params['method'] == "classic"):
+				createImageLinks(images)
 		else:
 			notdone=False
 
