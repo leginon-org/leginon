@@ -10,6 +10,7 @@ from selexonFunctions import *
 from selexonFunctions2 import *
 from crudFinderFunctions2 import *
 
+data.holdImages(False)
 selexondonename='.selexondone.py'
 imagesskipped=False
 
