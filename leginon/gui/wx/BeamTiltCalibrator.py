@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/BeamTiltCalibrator.py,v $
-# $Revision: 1.22 $
+# $Revision: 1.23 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-12-05 22:13:11 $
+# $Date: 2007-03-14 18:54:25 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -151,7 +151,7 @@ class Panel(gui.wx.Calibrator.Panel):
 				label = '%g' % value
 			self.measure_dialog.labels['stigmator'][axis].SetLabel(label)
 
-		self.measure_dialog.sizer.Layout()
+		self.measure_dialog.Layout()
 		self.measure_dialog.Fit()
 
 	def measurementDone(self, defocus, stig):
