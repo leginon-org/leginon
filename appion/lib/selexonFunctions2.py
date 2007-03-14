@@ -499,7 +499,7 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 		thresh      = threshold + float(i)
 		ccthreshmap = imagefun.threshold(ccmaxmap,thresh)
 		percentcover =  round(100.0*float(ccthreshmap.sum())/float(totalarea),2)
-		blobs       = imagefun.find_blobs(ccmaxmap,ccthreshmap,6,maxpeaks*2,maxblobsize,2,2.5,"highest")
+		blobs       = imagefun.find_blobs(ccmaxmap,ccthreshmap,6,maxpeaks*4,maxblobsize,2,5,"highest")
 		tstr  = "%.2f" % thresh
 		lbstr = "%4d" % len(blobs)
 		pcstr = "%.2f" % percentcover
@@ -513,11 +513,7 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 	ccthreshmap = imagefun.threshold(ccmaxmap,threshold)
 	percentcover =  round(100.0*float(ccthreshmap.sum())/float(totalarea),3)
 
-	blobs = imagefun.find_blobs(ccmaxmap, ccthreshmap, 6, maxpeaks*2, maxblobsize, 2,2.5,"highest")
-	if(len(blobs) > maxpeaks):
-		print " !!! more than maxpeaks ("+str(maxpeaks)+") peaks, selecting only top peaks"
-		blobs.sort(blob_compare)
-		blobs = blobs[0:maxpeaks]
+	blobs = imagefun.find_blobs(ccmaxmap, ccthreshmap, 6, maxpeaks*4, maxblobsize, 2,5,"highest")
 
 	del ccthreshmap
 
@@ -530,26 +526,33 @@ def findPeaksInMap(ccmaxmap,file,num,params):
 	cutoff = olapmult*pixrad	#1.5x particle radius in pixels
 	removeOverlappingBlobs(blobs,cutoff)
 
+	if(len(blobs) > maxpeaks):
+		print " !!! more than maxpeaks ("+str(maxpeaks)+" peaks), selecting only top peaks"
+		blobs.sort(blob_compare)
+		blobs = blobs[0:maxpeaks]
+
 	blobs.sort(blob_compare)
 
 	#WRITE PIK FILE
 	f=open(outfile, 'w')
-	f.write("#filename x y mean stdev corr_coeff peak_size templ_num angle\n")
+	f.write("#filename x y mean stdev corr_coeff peak_size templ_num angle moment\n")
 	for blob in blobs:
 		row = blob.stats['center'][0]
 		col = blob.stats['center'][1]
 		mean = blob.stats['mean']
 		std = blob.stats['stddev']
+		mom = blob.stats['moment']
 		#HACK BELOW
 		blob.stats['corrcoeff']  = 1.0
 		rho = blob.stats['corrcoeff']
 		size = blob.stats['n']
 		mean_str = "%.4f" % mean
 		std_str = "%.4f" % std
-		#filename x y mean stdev corr_coeff peak_size templ_num angle
+		mom_str = "%.4f" % mom
+		#filename x y mean stdev corr_coeff peak_size templ_num angle moment
 		out = file+".mrc "+str(int(col)*bin)+" "+str(int(row)*bin)+ \
 			" "+mean_str+" "+std_str+" "+str(rho)+" "+str(int(size))+ \
-			" "+str(num)
+			" "+str(num)+" 0 "+mom_str
 		f.write(str(out)+"\n")
 	f.close()
 
@@ -582,7 +585,7 @@ def findPeaksInMapPlus(ccmaxmap,file,num,params,template,tmplmask,anglemap):
 		thresh      = threshold + float(i-2)*0.05
 		ccthreshmap = imagefun.threshold(ccmaxmap,thresh)
 		percentcover =  round(100.0*float(ccthreshmap.sum())/float(totalarea),3)
-		blobs       = imagefun.find_blobs(ccmaxmap,ccthreshmap,6,maxpeaks*2,maxblobsize,2,2.5,"highest")
+		blobs       = imagefun.find_blobs(ccmaxmap,ccthreshmap,6,maxpeaks*4,maxblobsize,2,5,"highest")
 		tstr  = "%.2f" % thresh
 		lbstr = "%4d" % len(blobs)
 		pcstr = "%.2f" % percentcover
@@ -597,7 +600,7 @@ def findPeaksInMapPlus(ccmaxmap,file,num,params,template,tmplmask,anglemap):
 	percentcover =  round(100.0*float(ccthreshmap.sum())/float(totalarea),2)
 
 	#numeric_to_jpg(ccthreshmap,"ccthreshmap.jpg")
-	blobs = imagefun.find_blobs(ccmaxmap, ccthreshmap, 6, maxpeaks*2, maxblobsize, 2,2.5,"highest")
+	blobs = imagefun.find_blobs(ccmaxmap, ccthreshmap, 6, maxpeaks*4, maxblobsize, 2,5,"highest")
 	if(len(blobs) > maxpeaks):
 		print " !!! more than maxpeaks ("+str(maxpeaks)+") peaks, selecting only top peaks"
 		blobs.sort(blob_compare)
@@ -621,22 +624,24 @@ def findPeaksInMapPlus(ccmaxmap,file,num,params,template,tmplmask,anglemap):
 
 	#WRITE PIK FILE
 	f=open(outfile, 'w')
-	f.write("#filename x y mean stdev corr_coeff peak_size templ_num angle\n")
+	f.write("#filename x y mean stdev corr_coeff peak_size templ_num angle moment\n")
 	for blob in blobs:
 		row = blob.stats['center'][0]
 		col = blob.stats['center'][1]
 		mean = blob.stats['mean']
 		std = blob.stats['stddev']
 		rho = blob.stats['corrcoeff']
+		mom = blob.stats['moment']
 		size = blob.stats['n']
 		mean_str = "%.4f" % mean
 		std_str = "%.4f" % std
 		rho_str = "%.4f" % rho
+		mom_str = "%.4f" % mom
 
-		#filename x y mean stdev corr_coeff peak_size templ_num angle
+		#filename x y mean stdev corr_coeff peak_size templ_num angle moment
 		out = file+".mrc "+str(int(col)*bin)+" "+str(int(row)*bin)+ \
 			" "+mean_str+" "+std_str+" "+rho_str+" "+str(int(size))+ \
-			" "+str(num)
+			" "+str(num)+" 0 "+mom_str
 		f.write(str(out)+"\n")
 	f.close()
 
@@ -721,14 +726,23 @@ def drawBlobs(ccmaxmap,blobs,file,num,bin,pixrad):
 	psp = ps+1
 	psn = ps-1
 	for blob in blobs:
-		x1=blob.stats['center'][1]
-		y1=blob.stats['center'][0]
-		coord=(x1-ps, y1-ps, x1+ps, y1+ps)
-		draw.rectangle(coord,outline="white")
-		coord=(x1-psp, y1-psp, x1+psp, y1+psp)
-		draw.rectangle(coord,outline="black")
-		coord=(x1-psn, y1-psn, x1+psn, y1+psn)
-		draw.rectangle(coord,outline="black")
+		x1 = float(blob.stats['center'][1])
+		y1 = float(blob.stats['center'][0])
+		m1 = float(blob.stats['moment'])
+		if(m1 < 2.2):
+			coord=(x1-ps, y1-ps, x1+ps, y1+ps)
+			draw.ellipse(coord,outline="white")
+			coord=(x1-psp, y1-psp, x1+psp, y1+psp)
+			draw.ellipse(coord,outline="black")
+			coord=(x1-psn, y1-psn, x1+psn, y1+psn)
+			draw.ellipse(coord,outline="black")
+		else:
+			coord=(x1-ps, y1-ps, x1+ps, y1+ps)
+			draw.rectangle(coord,outline="white")
+			coord=(x1-psp, y1-psp, x1+psp, y1+psp)
+			draw.rectangle(coord,outline="black")
+			coord=(x1-psn, y1-psn, x1+psn, y1+psn)
+			draw.rectangle(coord,outline="black")
 		#draw.ellipse(coord,outline="white")
 
 	outfile="ccmaxmaps/"+file+".ccmaxmap"+str(num)+".jpg"
@@ -799,7 +813,7 @@ def mergePikFiles(file,blobs,params):
 	#WRITE SELECTED BLOBS TO FILE
 	count = 0
 	f=open(outfile, 'w')
-	f.write("#filename x y mean stdev corr_coeff peak_size templ_num angle\n")
+	f.write("#filename x y mean stdev corr_coeff peak_size templ_num angle moment\n")
 	for i in range(len(blobs)):
 		for blob in (blobs[i]):
 			if blob in allblobs:
@@ -808,18 +822,20 @@ def mergePikFiles(file,blobs,params):
 				mean = blob.stats['mean']
 				std = blob.stats['stddev']
 				rho = blob.stats['corrcoeff']
+				mom = blob.stats['moment']
 				size = blob.stats['n']
 				mean_str = "%.4f" % mean
 				std_str = "%.4f" % std
 				rho_str = "%.4f" % rho
-				#filename x y mean stdev corr_coeff peak_size templ_num angle
+				mom_str = "%.4f" % mom
+				#filename x y mean stdev corr_coeff peak_size templ_num angle moment
 				out = file+".mrc "+str(int(col)*bin)+" "+str(int(row)*bin)+ \
 					" "+mean_str+" "+std_str+" "+rho_str+" "+str(int(size))+ \
-					" "+str(i)
+					" "+str(i)+" 0 "+mom_str
 				count = count + 1
 				f.write(str(out)+"\n")
 	f.close()
-	
+
 	del allblobs,f
 
 	return count
@@ -905,7 +921,7 @@ def drawPikFile(file,draw,bin,pixrad,circmult,numcircs,circshape):
 	#print " ... reading Pik file: ",file
 	f=open(file, 'r')
 	#00000000 1 2 3333 44444 5555555555 666666666 777777777
-	#filename x y mean stdev corr_coeff peak_size templ_num angle
+	#filename x y mean stdev corr_coeff peak_size templ_num angle moment
 	psm1 = ps - 1
 	for line in f:
 		if(line[0] != "#"):
@@ -1407,5 +1423,6 @@ def bin_img(image,bin):
 	""" zoom does a bad job of binning """
 	#return nd_image.zoom(img,1.0/float(binning),order=1)
 	""" numextension used to cause mem leaks """
+	#return imagefun.bin(image,bin)
 	return imagefun.bin(image,bin)
 
