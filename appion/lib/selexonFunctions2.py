@@ -17,12 +17,13 @@ import numarray.fft as fft
 import numarray.random_array as random_array
 import numarray.linear_algebra as linear_algebra
 import threading
+import selexonFunctions as sf1
 #import numextension
 #import mem
 
 def runCrossCorr(params,file):
 	# Run Neil's version of FindEM
-	imagefile = file+".mrc"
+	#imagefile = file+".mrc"
 	tmplt     =params["template"]
 
 	image = process_image(imagefile,params)
@@ -74,7 +75,8 @@ def process_image(imagefile,params):
 	pixrad  = int(math.ceil(diam/apix/2.0/float(bin)))
 
 	#READ IMAGES
-	image    = Mrc.mrc_to_numeric(imagefile)
+	image = sf1.getImageData(imagefile) ['image']
+	#image = Mrc.mrc_to_numeric(imagefile)
 
 	#BIN IMAGES
 	image    = bin_img(image,bin)
@@ -112,6 +114,7 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 
 	#PROCESS TEMPLATE
 	template = Mrc.mrc_to_numeric(templfile)
+	#image = sf1.getImageData(imagefile)['image']
 	templatebin = bin_img(template,bin) #FAKE FOR SIZING
 	template = normRange(template)-0.5
 
@@ -378,9 +381,11 @@ def tmpRemoveCrud(params,imagefile):
 	lowpass	= float(params["lp"])
 	pixrad  = diam/apix/2.0
 	
-	imagefile=imagefile+'.mrc'
+
 	#READ IMAGES
-	image    = Mrc.mrc_to_numeric(imagefile)
+	#imagefile=imagefile+'.mrc'
+	#image = Mrc.mrc_to_numeric(imagefile)
+	image = sf1.getImageData(imagefile)['image']
 
 	#BIN IMAGES
 	image    = bin_img(image,bin)
@@ -654,7 +659,8 @@ def findPeaksInMapPlus(ccmaxmap,file,num,params,template,tmplmask,anglemap):
 def calc_corrcoeffs(blobs,imfile,bin,template,tmplmask,anglemap):
 	print "Processing correlation coefficients"
 	t1 = time.time()
-	image    = Mrc.mrc_to_numeric(imfile+".mrc")
+	#image    = Mrc.mrc_to_numeric(imfile+".mrc")
+	image = sf1.getImageData(imfile)['image'] 
 	image    = bin_img(image,2)
 	tmplmask = bin_img(tmplmask,2)
 	tx = (template.shape)[0]/4
@@ -857,7 +863,6 @@ def createJPG2(params,file):
 	#Resulting in a 2-fold speed up over createJPG()
 	#With more features!!!
 
-	mrcfile = file+".mrc"
 	count =   len(params['templatelist'])
 	bin =     int(params["bin"])/2
 	diam =    float(params["diam"])
@@ -870,7 +875,9 @@ def createJPG2(params,file):
 		os.mkdir("jpgs")
 
 	#print "Reading MRC: ",mrcfile
-	numer = Mrc.mrc_to_numeric(mrcfile)
+	#mrcfile = file+".mrc"
+	#numer = Mrc.mrc_to_numeric(mrcfile)
+	numer = sf1.getImageData(file)['image']
 	numer = bin_img(numer,bin)
 	numer = filterImg(numer,apix,bin,params["lp"])
 	#numer = PlaneRegression(numer,bin)
@@ -891,7 +898,7 @@ def createJPG2(params,file):
 	circshape = "circle"
 	drawPikFile(pikfile,draw,bin,pixrad,circmult,numcircs,circshape)
 
-	outfile="jpgs/"+mrcfile+".prtl.jpg"
+	outfile="jpgs/"+file+".prtl.jpg"
 	print " ... writing JPEG: ",outfile
 
 	image.save(outfile, "JPEG", quality=95)
@@ -1426,3 +1433,4 @@ def bin_img(image,bin):
 	#return imagefun.bin(image,bin)
 	return imagefun.bin(image,bin)
 
+#########################################################
