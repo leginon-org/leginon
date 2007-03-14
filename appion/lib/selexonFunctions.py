@@ -889,7 +889,7 @@ def getImageData(imagename):
 	# get image data object from database
 	imagedataq = data.AcquisitionImageData(filename=imagename)
 	imagedata = db.query(imagedataq, results=1, readimages=False)
-	imagedata[0].holdimages=False
+	#imagedata[0].holdimages=False
 	if imagedata:
 		return imagedata[0]
 	else:
@@ -925,7 +925,7 @@ def getImagesFromDB(session,preset):
 	#this makes it so that data.py doesn't hold images in memory 	 
 	#solves a bug where selexon quits after a dozen or so images 	 
 	for img in imagelist: 	 
-		img.holdimages=False
+		#img.holdimages=False
 	return (imagelist)
 
 def getAllImagesFromDB(session):
@@ -1025,7 +1025,7 @@ def getDefocusPair(imagedata):
 				pass
 			else:
 				defocpair=sib
-				defocpair.holdimages=False
+				#defocpair.holdimages=False
 				break
 	else:
 		defocpair=None
