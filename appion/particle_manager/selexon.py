@@ -5,6 +5,7 @@
 import os, re, sys
 import data
 import time
+import mem
 from selexonFunctions import *
 from selexonFunctions2 import *
 from crudFinderFunctions2 import *
@@ -148,10 +149,12 @@ if __name__ == '__main__':
 	twhole=time.time()
 	count  = 1
 	lastcount = 0
+	startmem = mem.used()
 	peaksum = 0
 	peaksumsq = 0
 	timesum = 0
 	timesumsq = 0
+	lastimageskipped = False
 	while notdone:
 		while images:
 			if(lastcount != count):
@@ -173,9 +176,17 @@ if __name__ == '__main__':
 			doneCheck(donedict,imgname)
 			if (params["continue"]==True):
 				if donedict[imgname]:
+					if(lastimageskipped==False):
+						sys.stderr.write("skipping images")
+					else:
+						sys.stderr.write(".")
 					imagesskipped=True
+					lastimageskipped=True
 					#print imgname,'already processed. To process again, remove "continue" option.'
 					continue
+				else:
+					print ""
+					lastimageskipped=False
 
 			# insert selexon params into dbparticledata.selectionParams table
 			expid=int(img['session'].dbid)
@@ -285,7 +296,7 @@ if __name__ == '__main__':
 					print "\tAVG TIME: \t",round(float(timesum)/float(count),1),"+/-",\
 						round(timestdev,1),"sec"
 					print "\t(- TOTAL:",round(timesum/60.0,2),"min -)"
-
+				print "\tMEM: ",(mem.used()-startmem)/1024,"M (",(mem.used()-startmem)/(1024*count),"M)"
 				count = count + 1
 				print "\t-----------------------------"
 
