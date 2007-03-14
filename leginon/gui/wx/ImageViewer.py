@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.50 $
+# $Revision: 1.51 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-03-06 00:48:55 $
+# $Date: 2007-03-14 20:36:21 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -40,6 +40,7 @@ from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import gui.wx.Stats
 import time
 import gui.wx.ImageViewer2
+import threading
 
 wx.InitAllImageHandlers()
 
@@ -1520,9 +1521,10 @@ class TargetType(object):
 			self.targets.insert(pos, target)
 
 	def deleteTarget(self, target):
-		if target not in self.targets:
-			raise ValueError('Target not in targets')
-		self.targets.remove(target)
+		try:
+			self.targets.remove(target)
+		except ValueError:
+			pass
 
 	def setTargets(self, targets):
 		if self.unique and len(targets) > 1:
