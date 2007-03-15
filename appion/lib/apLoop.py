@@ -112,10 +112,10 @@ def printSummary(params):
 	if(count > 1):
 		timeavg = float(timesum)/float(count)
 		timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
-		timeremain = (float(timeavg)+float(timestdev))*len(images)
+		timeremain = (float(timeavg)+float(timestdev))*params['imagesleft']
 		print "\tAVG TIME: \t",_timeString(timeavg,timestdev)
 		#print "\t(- TOTAL:",_timeString(timesum)," -)"
-		print "\t(- REMAINING TIME:",_timeString(timeremain),"for",len(images),"images -)"
+		print "\t(- REMAINING TIME:",_timeString(timeremain),"for",params['imagesleft'],"images -)"
 	#print "\tMEM: ",(mem.used()-startmem)/1024,"M (",(mem.used()-startmem)/(1024*count),"M)"
 	params['count'] = params['count'] + 1
 	_printLine()
