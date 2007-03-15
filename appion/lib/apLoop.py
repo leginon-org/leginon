@@ -3,6 +3,7 @@
 import os
 import cPickle
 import time
+import math
 import selexonFunctions  as sf1
 import selexonFunctions2 as sf2
 
