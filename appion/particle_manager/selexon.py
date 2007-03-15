@@ -191,7 +191,8 @@ if __name__ == '__main__':
 					#print imgname,'already processed. To process again, remove "continue" option.'
 					continue
 				else:
-					print ""
+					if(lastimageskipped==True):
+						print " skipped",skipcount,"images"
 					lastimageskipped=False
 
 			# insert selexon params into dbparticledata.selectionParams table
@@ -279,7 +280,6 @@ if __name__ == '__main__':
 			tdiff = time.time()-tbegin
 			ttotal = "%.2f" % float(tdiff)
 			if(params["continue"]==False or tdiff > 0.3):
-
 
 				print "\n\tSUMMARY: using the",params['method'],"method"
 				print "\t------------------------------------------"
