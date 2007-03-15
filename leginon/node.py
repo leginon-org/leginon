@@ -436,12 +436,6 @@ class Node(object):
 
 	def storeTime(self, label, type):
 		key = self.timerKey(label)
-		'''
-		if type == 'start' and key in start_times:
-			raise RuntimeError('Timer restart is not allowed: %s' % (key,))
-		if type == 'stop' and key not in start_times:
-			raise RuntimeError('Stopping timer that was never started: %s' % (key,))
-		'''
 
 		t = data.TimerData()
 		t['session'] = self.session
@@ -450,11 +444,12 @@ class Node(object):
 		t['label'] = label
 
 		if type == 'stop':
-			### this is stop time
-			t0 = start_times[key]
-			t['t0'] = t0
-			del start_times[key]
-			t['diff'] = t['t'] - t0['t']
+			### this is stop time, but may have no start time
+			if key in start_times:
+				t0 = start_times[key]
+				t['t0'] = t0
+				del start_times[key]
+				t['diff'] = t['t'] - t0['t']
 		else:
 			### this is start time
 			start_times[key] = t
