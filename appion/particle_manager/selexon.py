@@ -158,6 +158,7 @@ if __name__ == '__main__':
 	peaksumsq = 0
 	timesum = 0
 	timesumsq = 0
+	waittime = 0
 	lastimageskipped = False
 	while notdone:
 		while images:
@@ -191,6 +192,7 @@ if __name__ == '__main__':
 					#print imgname,'already processed. To process again, remove "continue" option.'
 					continue
 				else:
+					waittime = 0
 					if(lastimageskipped==True):
 						print " skipped",skipcount,"images"
 					lastimageskipped=False
@@ -315,14 +317,19 @@ if __name__ == '__main__':
 		if params["dbimages"]==True:
 			notdone=True
 			if(imagesskipped == True):
+				print ""
 				print " !!! Images already processed and were therefore skipped."
 				print " !!! to them process again, remove \'continue\' option and run selexon again."
 				imagesskipped=False
 			print "\nAll images processed. Waiting ten minutes for new images."
 			time.sleep(600)
+			waittime = waittime + 10
 			images=getImagesFromDB(params['session']['name'],params['preset'])
 			if (params["crud"]==True or params['method'] == "classic"):
 				createImageLinks(images)
+			if(waittime > 120):
+				print "Waited longer than two hours, so I am quitting"
+				notdone=False
 		else:
 			notdone=False
 
