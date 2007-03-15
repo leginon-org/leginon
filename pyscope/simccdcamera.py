@@ -110,13 +110,16 @@ class SimCCDCamera(ccdcamera.CCDCamera):
         shape = (rows, columns)
 
         if self.exposure_type == 'dark' or self.exposure_time == 0:
-            return numarray.zeros(shape, numarray.Float32)
+            return numarray.zeros(shape, numarray.UInt16)
         else:
-            image = numarray.random_array.random(shape)
+            mean = self.exposure_time * 1000.0
+            sigma = 0.1 * mean
+            image = numarray.random_array.normal(mean, sigma, shape)
             row_offset = random.randint(-shape[0]/8, shape[0]/8) + shape[0]/4
             column_offset = random.randint(-shape[1]/8, shape[1]/8) + shape[0]/4
-            image[row_offset:row_offset+shape[0]/4,
-                  column_offset:column_offset+shape[1]/4] += 1.0
+            image[row_offset:row_offset+shape[0]/2,
+                  column_offset:column_offset+shape[1]/2] *= 1.5
+            image = numarray.asarray(image, type=numarray.UInt16)
             return image
 
     def getEnergyFiltered(self):
