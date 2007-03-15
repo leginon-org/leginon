@@ -33,31 +33,7 @@ if __name__ == '__main__':
 		params['defocpair']=True
 
 	# check to make sure that incompatible parameters are not set
-	if not params['templateIds'] and not params['apix']:
-		print "\nERROR: if not using templateIds, you must enter a template pixel size\n"
-		sys.exit(1)
-	if params['templateIds'] and params['template']:
-		print "\nERROR: Both template database IDs and mrc file templates are specified,\nChoose only one\n"
-		sys.exit(1)
-	if params['crudonly']==True and params['shiftonly']==True:
-		print "\nERROR: crudonly and shiftonly can not be specified at the same time\n"
-		sys.exit(1)
-	if (params["thresh"]==0 and params["autopik"]==0):
-		print "\nERROR: neither manual threshold or autopik parameters are set, please set one.\n"
-		sys.exit(1)
-	if (params["diam"]==0):
-		print "\nERROR: please input the diameter of your particle\n"
-		sys.exit(1)
-	if len(params["mrcfileroot"]) > 0 and params["dbimages"]==True:
-		print len(images)
-		print "\nERROR: dbimages can not be specified if particular images have been specified\n"
-		sys.exit(1)
-	if params['alldbimages'] and params['dbimages']==True:
-		print "\nERROR: dbimages and alldbimages can not be specified at the same time\n"
-		sys.exit(1)
-	if len(params['mrcfileroot']) > 0 and params['alldbimages']:
-		print "\nERROR: alldbimages can not be specified if particular images have been specified\n"
-		sys.exit(1)
+	apParam.checkParamConflicts(params)
 	
 	# get list of input images, since wildcards are supported
 	print " ... getting images"
@@ -78,6 +54,7 @@ if __name__ == '__main__':
 			imageresult=db.query(imageq, readimages=False)
 			images=images+imageresult
 		params['session']=images[0]['session']
+	params['imagecount']=len(images)
 
 	getOutDirs(params)
 
@@ -164,35 +141,11 @@ if __name__ == '__main__':
 	params['lastimageskipped'] = False
 	while notdone:
 		while images:
-			if(lastcount != count):
-				print "\nStarting new image",count,"( skipped:",skipcount,\
-					", remain:",len(images),")"
-				lastcount = count
-			tbegin=time.time()
 			img = images.pop(0)
-
-			# get the image's pixel size:
-			params['apix']=getPixelSize(img)
-
-			# skip if image doesn't exist:
-			if not os.path.isfile(params['imgdir']+img['filename']+'.mrc'):
-				print " !!! "+img['filename']+".mrc not found, skipping"
-				continue
-
-			# if continue option is true, check to see if image has already been processed
 			imgname=img['filename']
-			if(apLoop.alreadyProcessed(donedict,imgname,params)==True):
+			if(apLoop.startLoop(img,donedict,params) ==False):
 				continue
 
-			# insert selexon params into dbparticledata.selectionParams table
-			expid=int(img['session'].dbid)
-			if params['commit']==True:
-				insertSelexonParams(params,expid)
-
-			# match the original template pixel size to the img pixel size
-			if params['templateIds']:
-				rescaleTemplates(img,params)
-			
 			# run FindEM
 			if params['method'] == "experimental":
 				#Finds peaks as well:
@@ -265,41 +218,8 @@ if __name__ == '__main__':
  			donedict[imgname]=True
 			apLoop.writeDoneDict(donedict,params)
 
-			#SUMMARIZE INFO
-			tdiff = time.time()-tbegin
-			ttotal = "%.2f" % float(tdiff)
-			if(params["continue"]==False or tdiff > 0.3):
-
-				print "\n\tSUMMARY: using the",params['method'],"method"
-				print "\t------------------------------------------"
-
-
-				if (params["crud"]==True):
-					print "\tFindCrud:  \t",tfindCrud,"seconds"
-
-				print "\tPEAKS:    \t",numpeaks,"peaks"
-				if(count > 1):
-					peakstdev = math.sqrt(float(count*peaksumsq - peaksum**2) / float(count*(count-1)))
-					print "\tAVG PEAKS:\t",round(float(peaksum)/float(count),1),"+/-",\
-						round(peakstdev,1),"peaks"
-					print "\t(- TOTAL:",peaksum,"peaks for",count,"images -)"
-
-				print "\t------------------------------------------"
-
-				print "\tTIME:     \t",timeString(ttotal)
-				timesum = timesum + tdiff
-				timesumsq = timesumsq + (tdiff**2)
-				if(count > 1):
-					timeavg = float(timesum)/float(count)
-					timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
-					timeremain = (float(timeavg)+float(timestdev))*len(images)
-					print "\tAVG TIME: \t",timeString(timeavg,timestdev)
-					#print "\t(- TOTAL:",timeString(timesum)," -)"
-					print "\t(- REMAINING TIME:",timeString(timeremain),"for",len(images),"images -)"
-				#print "\tMEM: ",(mem.used()-startmem)/1024,"M (",(mem.used()-startmem)/(1024*count),"M)"
-				count = count + 1
-				
-				print "\t------------------------------------------"
+		if(params["continue"]==False or tdiff > 0.3):
+			apLoop.printSummary(params)
 
 		if params["dbimages"]==True:
 			notdone=True

@@ -60,17 +60,44 @@ def createDefaults():
 
 	notdone=True
 	params["startTime"]=time.time()
-	count  = 1
-	skipcount = 1
-	lastcount = 0
+	params['count']  = 1
+	params['skipcount'] = 1
+	params['lastcount'] = 0
 	#startmem = mem.used()
-	peaksum = 0
-	peaksumsq = 0
-	timesum = 0
-	timesumsq = 0
+	params['peaksum'] = 0
+	params['lastpeaks'] = None
+	params['peaksumsq'] = 0
+	params['timesum'] = 0
+	params['timesumsq'] = 0
 	params['doneDictName'] = ".selexondone"
 	params['skipcount'] = 0
 	params['waittime'] = 0
 	params['lastimageskipped'] = False
-
 	return params
+
+def checkParamConflicts(params):
+	if not params['templateIds'] and not params['apix']:
+		print "\nERROR: if not using templateIds, you must enter a template pixel size\n"
+		sys.exit(1)
+	if params['templateIds'] and params['template']:
+		print "\nERROR: Both template database IDs and mrc file templates are specified,\nChoose only one\n"
+		sys.exit(1)
+	if params['crudonly']==True and params['shiftonly']==True:
+		print "\nERROR: crudonly and shiftonly can not be specified at the same time\n"
+		sys.exit(1)
+	if (params["thresh"]==0 and params["autopik"]==0):
+		print "\nERROR: neither manual threshold or autopik parameters are set, please set one.\n"
+		sys.exit(1)
+	if (params["diam"]==0):
+		print "\nERROR: please input the diameter of your particle\n"
+		sys.exit(1)
+	if len(params["mrcfileroot"]) > 0 and params["dbimages"]==True:
+		print len(images)
+		print "\nERROR: dbimages can not be specified if particular images have been specified\n"
+		sys.exit(1)
+	if params['alldbimages'] and params['dbimages']==True:
+		print "\nERROR: dbimages and alldbimages can not be specified at the same time\n"
+		sys.exit(1)
+	if len(params['mrcfileroot']) > 0 and params['alldbimages']:
+		print "\nERROR: alldbimages can not be specified if particular images have been specified\n"
+		sys.exit(1)
