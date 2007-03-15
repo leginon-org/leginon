@@ -218,8 +218,8 @@ if __name__ == '__main__':
  			donedict[imgname]=True
 			apLoop.writeDoneDict(donedict,params)
 
-		if(params["continue"]==False or tdiff > 0.3):
-			apLoop.printSummary(params)
+			if(params["continue"]==False or tdiff > 0.3):
+				apLoop.printSummary(params)
 
 		if params["dbimages"]==True:
 			notdone=True

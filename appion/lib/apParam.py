@@ -2,6 +2,7 @@
 
 import os
 import time
+import mem
 
 def createDefaults():
 	# create default values for parameters
@@ -63,7 +64,7 @@ def createDefaults():
 	params['count']  = 1
 	params['skipcount'] = 1
 	params['lastcount'] = 0
-	#startmem = mem.used()
+	params['startmem'] = mem.used()
 	params['peaksum'] = 0
 	params['lastpeaks'] = None
 	params['peaksumsq'] = 0
@@ -92,7 +93,7 @@ def checkParamConflicts(params):
 		print "\nERROR: please input the diameter of your particle\n"
 		sys.exit(1)
 	if len(params["mrcfileroot"]) > 0 and params["dbimages"]==True:
-		print len(images)
+		print params['imagecount']
 		print "\nERROR: dbimages can not be specified if particular images have been specified\n"
 		sys.exit(1)
 	if params['alldbimages'] and params['dbimages']==True:
