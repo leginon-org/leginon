@@ -436,9 +436,10 @@ def getOutDirs(params):
 	params['rundir']=os.path.join(params['outdir'],params['runid'])
 	
 	if os.path.exists(params['rundir']):
-		print " !!! WARNING: run directory for \'"+str(params['runid'])+"\' already exists.\n",\
-			" ... make sure continue option is on if you don't want to overwrite previous run."
-		time.sleep(2)
+		print " !!! WARNING: run directory for \'"+str(params['runid'])+"\' already exists.\n"
+		if params["continue"]==False:
+			print " !!! WARNING: continue option is OFF if you WILL overwrite previous run."
+			time.sleep(10)
 	else:
 		os.makedirs(params['rundir'])
 
@@ -769,14 +770,13 @@ def checkTemplates(params,upload=None):
 	return(params)
 
 def dwnsizeImg(params,img):
-	#downsize and filter leginon image     
+	#downsize and filter leginon image
 	imagedata=getImageData(img)    
 	bin=params['bin']
-	#print " ... downsizing", img
 	im=binImg(imagedata['image'],bin)
-	#print " ... filtering", img
 	apix=params['apix']*bin
 	im=filterImg(im,apix,params['lp'])
+
 	Mrc.numeric_to_mrc(im,(img+'.dwn.mrc'))
 	return
 

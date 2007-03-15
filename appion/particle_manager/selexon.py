@@ -5,7 +5,7 @@
 import os, re, sys
 import data
 import time
-import mem
+#import mem
 from selexonFunctions import *
 from selexonFunctions2 import *
 from crudFinderFunctions2 import *
@@ -15,6 +15,7 @@ selexondonename='.selexondone.py'
 imagesskipped=False
 
 if __name__ == '__main__':
+
 	# record command line
 	writeSelexLog(sys.argv)
 
@@ -150,8 +151,9 @@ if __name__ == '__main__':
 	notdone=True
 	twhole=time.time()
 	count  = 1
+	totalcount = 1
 	lastcount = 0
-	startmem = mem.used()
+	#startmem = mem.used()
 	peaksum = 0
 	peaksumsq = 0
 	timesum = 0
@@ -160,7 +162,8 @@ if __name__ == '__main__':
 	while notdone:
 		while images:
 			if(lastcount != count):
-				print "\nStarting image",count,"..."
+				print "\nStarting new image",count,"( total:",totalcount,\
+					", remain:",len(images),")"
 				lastcount = count
 			tbegin=time.time()
 			img = images.pop(0)
@@ -184,6 +187,7 @@ if __name__ == '__main__':
 						sys.stderr.write(".")
 					imagesskipped=True
 					lastimageskipped=True
+					totalcount = totalcount + 1
 					#print imgname,'already processed. To process again, remove "continue" option.'
 					continue
 				else:
@@ -290,16 +294,20 @@ if __name__ == '__main__':
 						round(peakstdev,1),"peaks"
 					print "\t(- TOTAL:",peaksum,"peaks for",count,"images -)"
 
-				print "\tTIME:     \t",ttotal,"sec"
+				print "\tTIME:     \t",timeString(ttotal)
 				timesum = timesum + tdiff
 				timesumsq = timesumsq + (tdiff**2)
 				if(count > 1):
+					timeavg = float(timesum)/float(count)
+					timeremain = float(timeavg)*1.10*len(images)
 					timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
-					print "\tAVG TIME: \t",round(float(timesum)/float(count),1),"+/-",\
-						round(timestdev,1),"sec"
-					print "\t(- TOTAL:",round(timesum/60.0,2),"min -)"
-				print "\tMEM: ",(mem.used()-startmem)/1024,"M (",(mem.used()-startmem)/(1024*count),"M)"
+					print "\tAVG TIME: \t",timeString(timeavg,timestdev)
+					#print "\t(- TOTAL:",timeString(timesum)," -)"
+					print "\t(- REMAINING:",timeString(timeremain)," -)"
+				#print "\tMEM: ",(mem.used()-startmem)/1024,"M (",(mem.used()-startmem)/(1024*count),"M)"
 				count = count + 1
+				totalcount = totalcount + 1
+				
 				print "\t-----------------------------"
 
 		if params["dbimages"]==True:

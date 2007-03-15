@@ -1434,3 +1434,27 @@ def bin_img(image,bin):
 	return imagefun.bin(image,bin)
 
 #########################################################
+
+def timeString(avg,stdev=0):
+	avg = float(avg)
+	stdev = float(stdev)
+	#less than 90 seconds
+	if avg < 90.0:
+		if stdev > 0.0:
+			timestr = str(round(avg,1))+" +/- "+str(round(stdev,1))+" sec"
+		else:
+			timestr = str(round(avg,1))+" sec"
+	#less than 90 minutes
+	elif avg < 5400.0:
+		if stdev > 0.0:
+			timestr = str(round(avg/60.0,1))+" +/- "+str(round(stdev/60.0,1))+" min"
+		else:
+			timestr = str(round(avg/60.0,1))+" min"
+	#seconds
+	else:
+		if stdev > 0.0:
+			timestr = str(round(avg/3600.0,1))+" +/- "+str(round(stdev/3600.0,1))+" hrs"
+		else:
+			timestr = str(round(avg/3600.0,1))+" hrs"
+	return str(timestr)
+
