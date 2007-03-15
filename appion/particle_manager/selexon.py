@@ -151,7 +151,7 @@ if __name__ == '__main__':
 	notdone=True
 	twhole=time.time()
 	count  = 1
-	totalcount = 1
+	skipcount = 1
 	lastcount = 0
 	#startmem = mem.used()
 	peaksum = 0
@@ -162,7 +162,7 @@ if __name__ == '__main__':
 	while notdone:
 		while images:
 			if(lastcount != count):
-				print "\nStarting new image",count,"( total:",totalcount,\
+				print "\nStarting new image",count,"( skipped:",skipcount,\
 					", remain:",len(images),")"
 				lastcount = count
 			tbegin=time.time()
@@ -187,7 +187,7 @@ if __name__ == '__main__':
 						sys.stderr.write(".")
 					imagesskipped=True
 					lastimageskipped=True
-					totalcount = totalcount + 1
+					skipcount = skipcount + 1
 					#print imgname,'already processed. To process again, remove "continue" option.'
 					continue
 				else:
@@ -281,9 +281,10 @@ if __name__ == '__main__':
 			if(params["continue"]==False or tdiff > 0.3):
 
 
-				print "\n\t\tSUMMARY:"
-				print "\t-----------------------------"
-				print "\t...using the",params['method'],"method"
+				print "\n\tSUMMARY: using the",params['method'],"method"
+				print "\t------------------------------------------"
+
+
 				if (params["crud"]==True):
 					print "\tFindCrud:  \t",tfindCrud,"seconds"
 
@@ -293,6 +294,8 @@ if __name__ == '__main__':
 					print "\tAVG PEAKS:\t",round(float(peaksum)/float(count),1),"+/-",\
 						round(peakstdev,1),"peaks"
 					print "\t(- TOTAL:",peaksum,"peaks for",count,"images -)"
+
+				print "\t------------------------------------------"
 
 				print "\tTIME:     \t",timeString(ttotal)
 				timesum = timesum + tdiff
@@ -306,9 +309,8 @@ if __name__ == '__main__':
 					print "\t(- REMAINING TIME:",timeString(timeremain),"for",len(images),"images -)"
 				#print "\tMEM: ",(mem.used()-startmem)/1024,"M (",(mem.used()-startmem)/(1024*count),"M)"
 				count = count + 1
-				totalcount = totalcount + 1
 				
-				print "\t-----------------------------"
+				print "\t------------------------------------------"
 
 		if params["dbimages"]==True:
 			notdone=True
