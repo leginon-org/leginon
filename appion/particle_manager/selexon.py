@@ -263,7 +263,7 @@ if __name__ == '__main__':
 
 			# write results to dictionary
  			donedict[imgname]=True
-			apLoop.writeDoneDict(donedict,selexondonename)
+			apLoop.writeDoneDict(donedict,params)
 
 			#SUMMARIZE INFO
 			tdiff = time.time()-tbegin
