@@ -1,5 +1,8 @@
 #Part of the new pyappion
 
+import os
+import time
+
 def createDefaults():
 	# create default values for parameters
 	params={}
@@ -56,7 +59,7 @@ def createDefaults():
 	params["test"]=False
 
 	notdone=True
-	twhole=time.time()
+	params["startTime"]=time.time()
 	count  = 1
 	skipcount = 1
 	lastcount = 0
@@ -65,8 +68,9 @@ def createDefaults():
 	peaksumsq = 0
 	timesum = 0
 	timesumsq = 0
+	params['doneDictName'] = ".selexondone"
+	params['skipcount'] = 0
 	params['waittime'] = 0
 	params['lastimageskipped'] = False
-
 
 	return params

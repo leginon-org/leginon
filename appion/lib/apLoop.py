@@ -1,6 +1,10 @@
 #Part of the new pyappion
 
-def doneCheck(donedict,imgname,params):
+import os
+import cPickle
+
+
+def alreadyProcessed(donedict,imgname,params):
 	""" 
 	checks to see if image (imgname) has been done already
 	"""
@@ -12,12 +16,33 @@ def doneCheck(donedict,imgname,params):
 				sys.stderr.write(".")
 			params['lastimageskipped']=True
 			params['skipcount'] = params['skipcount'] + 1
-			continue
+			return True
 		else:
 			params['waittime'] = 0
 			if(params['lastimageskipped']==True):
 				print " skipped",params['skipcount'],"images so far"
 			params['lastimageskipped']=False
+	return False
+
+
+def readDoneDict(params):
+	doneDictName = params['doneDictName']
+	if os.path.exists(doneDictName):
+		# unpickle previously modified dictionary
+		f=open(doneDictName,'r')
+		donedict=cPickle.load(f)
+		f.close()
+	else:
+		#set up dictionary
+		donedict={}
+	return (donedict)
+
+
+def writeDoneDict(donedict,params):
+	doneDictName = params['doneDictName']
+	f=open(doneDictName,'w')
+	cPickle.dump(donedict,f)
+	f.close()
 
 
 def _timeString(avg,stdev=0):

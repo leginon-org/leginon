@@ -420,39 +420,6 @@ def filterImg(img,apix,bin,rad):
 
 #########################################################
 
-def PlaneRegression(sqarray):
-	print " ... calculate 2d linear regression"
-	if ( (sqarray.shape)[0] != (sqarray.shape)[1] ):
-		print "Array is NOT square"
-		sys.exit(1)
-	size = (sqarray.shape)[0]
-	count = float((sqarray.shape)[0]*(sqarray.shape)[1])
-	def retx(y,x):
-		return x
-	def rety(y,x):
-		return y	
-	xarray = numarray.fromfunction(retx, sqarray.shape)
-	yarray = numarray.fromfunction(rety, sqarray.shape)
-	xsum = float(xarray.sum())
-	xsumsq = float((xarray*xarray).sum())
-	ysum = xsum
-	ysumsq = xsumsq
-	xysum = float((xarray*yarray).sum())
-	xzsum = float((xarray*sqarray).sum())
-	yzsum = float((yarray*sqarray).sum())
-	zsum = sqarray.sum()
-	zsumsq = (sqarray*sqarray).sum()
-	xarray = xarray.astype(numarray.Float64)
-	yarray = yarray.astype(numarray.Float64)
-	leftmat = numarray.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]] )
-	rightmat = numarray.array( [xzsum, yzsum, zsum] )
-	resvec = linear_algebra.solve_linear_equations(leftmat,rightmat)
-	del leftmat,rightmat
-	print " ... plane_regress: x-slope:",round(resvec[0]*size,5),\
-		", y-slope:",round(resvec[1]*size,5),", xy-intercept:",round(resvec[2],5)
-	newarray = sqarray - xarray*resvec[0] - yarray*resvec[1] - resvec[2]
-	del sqarray,xarray,yarray,resvec
-	return newarray
 
 #########################################################
 #########################################################

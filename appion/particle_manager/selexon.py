@@ -6,12 +6,14 @@ import os, re, sys
 import data
 import time
 #import mem
+import apLoop
+import apParam
 from selexonFunctions import *
 from selexonFunctions2 import *
 from crudFinderFunctions2 import *
 
 data.holdImages(False)
-selexondonename='.selexondone.py'
+
 imagesskipped=False
 
 if __name__ == '__main__':
@@ -21,7 +23,7 @@ if __name__ == '__main__':
 
 	print " ... checking parameters"
 	# create params dictionary & set defaults
-	params=createDefaults()
+	params=apParam.createDefaults()
 
 	# parse command line input
 	parseSelexonInput(sys.argv,params)
@@ -104,7 +106,7 @@ if __name__ == '__main__':
 			" file(s) with root \""+params["template"]+"\""
 			
 	# unpickle dictionary of previously processed images
-	donedict=getDoneDict(selexondonename)
+	donedict=apLoop.readDoneDict(params)
 
 	if (params["crud"]==True or params['method'] == "classic"):
 		createImageLinks(images)
@@ -158,8 +160,8 @@ if __name__ == '__main__':
 	peaksumsq = 0
 	timesum = 0
 	timesumsq = 0
-	waittime = 0
-	lastimageskipped = False
+	params['waittime'] = 0
+	params['lastimageskipped'] = False
 	while notdone:
 		while images:
 			if(lastcount != count):
@@ -179,23 +181,8 @@ if __name__ == '__main__':
 
 			# if continue option is true, check to see if image has already been processed
 			imgname=img['filename']
-			doneCheck(donedict,imgname)
-			if (params["continue"]==True):
-				if donedict[imgname]:
-					if(lastimageskipped==False):
-						sys.stderr.write("skipping images")
-					else:
-						sys.stderr.write(".")
-					imagesskipped=True
-					lastimageskipped=True
-					skipcount = skipcount + 1
-					#print imgname,'already processed. To process again, remove "continue" option.'
-					continue
-				else:
-					waittime = 0
-					if(lastimageskipped==True):
-						print " skipped",skipcount,"images so far"
-					lastimageskipped=False
+			if(apLoop.alreadyProcessed(donedict,imgname,params)==True):
+				continue
 
 			# insert selexon params into dbparticledata.selectionParams table
 			expid=int(img['session'].dbid)
@@ -233,7 +220,7 @@ if __name__ == '__main__':
 				print "no particles found in \'"+imgname+".mrc\'"
 				# write results to dictionary
 				donedict[imgname]=True
-				writeDoneDict(donedict,selexondonename)
+				writeDoneDict(donedict,params)
 				continue
 
 			# run the crud finder on selected particles if specified
@@ -276,7 +263,7 @@ if __name__ == '__main__':
 
 			# write results to dictionary
  			donedict[imgname]=True
-			writeDoneDict(donedict,selexondonename)
+			apLoop.writeDoneDict(donedict,selexondonename)
 
 			#SUMMARIZE INFO
 			tdiff = time.time()-tbegin
@@ -316,19 +303,19 @@ if __name__ == '__main__':
 
 		if params["dbimages"]==True:
 			notdone=True
-			if(imagesskipped == True):
+			if(params['skipcount'] > 0):
 				print ""
 				print " !!! Images already processed and were therefore skipped (total",skipcount,"skipped)."
 				print " !!! to them process again, remove \'continue\' option and run selexon again."
-				imagesskipped=False
-				skipcount = 0
-			print "\nAll images processed. Waiting ten minutes for new images (waited",waittime,"min so far)."
+				params['skipcount'] = 0
+			print "\nAll images processed. Waiting ten minutes for new images (waited",\
+				params['waittime'],"min so far)."
 			time.sleep(600)
-			waittime = waittime + 10
+			params['waittime'] = params['waittime'] + 10
 			images=getImagesFromDB(params['session']['name'],params['preset'])
 			if (params["crud"]==True or params['method'] == "classic"):
 				createImageLinks(images)
-			if(waittime > 120):
+			if(params['waittime'] > 120):
 				print "Waited longer than two hours, so I am quitting"
 				notdone=False
 		else:
