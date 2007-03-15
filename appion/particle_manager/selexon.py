@@ -318,8 +318,7 @@ if __name__ == '__main__':
 			notdone=True
 			if(imagesskipped == True):
 				print ""
-				print " !!! Images already processed and were therefore skipped ",\
-					"(total",skipcount,"of",len(images),"skipped)."
+				print " !!! Images already processed and were therefore skipped (total",skipcount,"skipped)."
 				print " !!! to them process again, remove \'continue\' option and run selexon again."
 				imagesskipped=False
 				skipcount = 0
