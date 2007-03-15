@@ -299,11 +299,11 @@ if __name__ == '__main__':
 				timesumsq = timesumsq + (tdiff**2)
 				if(count > 1):
 					timeavg = float(timesum)/float(count)
-					timeremain = float(timeavg)*1.10*len(images)
 					timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
+					timeremain = (float(timeavg)+float(timestdev))*len(images)
 					print "\tAVG TIME: \t",timeString(timeavg,timestdev)
 					#print "\t(- TOTAL:",timeString(timesum)," -)"
-					print "\t(- REMAINING:",timeString(timeremain)," -)"
+					print "\t(- REMAINING TIME:",timeString(timeremain),"for",len(images),"images -)"
 				#print "\tMEM: ",(mem.used()-startmem)/1024,"M (",(mem.used()-startmem)/(1024*count),"M)"
 				count = count + 1
 				totalcount = totalcount + 1
