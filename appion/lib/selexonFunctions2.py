@@ -1449,12 +1449,12 @@ def timeString(avg,stdev=0):
 		if stdev > 0.0:
 			timestr = str(round(avg/60.0,2))+" +/- "+str(round(stdev/60.0,2))+" min"
 		else:
-			timestr = str(int(avg/60.0))+" min "+str(int(avg/60.0-int(avg/60.0)))+" sec"
+			timestr = str(int(avg/60.0))+" min "+str(int((avg/60.0-int(avg/60.0))*60.0+0.5))+" sec"
 	#seconds
 	else:
 		if stdev > 0.0:
 			timestr = str(round(avg/3600.0,2))+" +/- "+str(round(stdev/3600.0,2))+" hrs"
 		else:
-			timestr = str(int(avg/3600.0))+" hrs "+str(int((avg/3600.0-int(avg/3600.0))*60.0))+" min"
+			timestr = str(int(avg/3600.0))+" hrs "+str(int((avg/3600.0-int(avg/3600.0))*60.0+0.5))+" min"
 	return str(timestr)
 

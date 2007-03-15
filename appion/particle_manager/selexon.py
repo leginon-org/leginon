@@ -194,7 +194,7 @@ if __name__ == '__main__':
 				else:
 					waittime = 0
 					if(lastimageskipped==True):
-						print " skipped",skipcount,"images"
+						print " skipped",skipcount,"images so far"
 					lastimageskipped=False
 
 			# insert selexon params into dbparticledata.selectionParams table
@@ -318,10 +318,12 @@ if __name__ == '__main__':
 			notdone=True
 			if(imagesskipped == True):
 				print ""
-				print " !!! Images already processed and were therefore skipped."
+				print " !!! Images already processed and were therefore skipped ",\
+					"(total",skipcount,"of",len(images),"skipped)."
 				print " !!! to them process again, remove \'continue\' option and run selexon again."
 				imagesskipped=False
-			print "\nAll images processed. Waiting ten minutes for new images."
+				skipcount = 0
+			print "\nAll images processed. Waiting ten minutes for new images (waited",waittime,"min so far)."
 			time.sleep(600)
 			waittime = waittime + 10
 			images=getImagesFromDB(params['session']['name'],params['preset'])
