@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.40 $
+# $Revision: 1.41 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-02-27 21:07:00 $
-# $Author: acheng $
+# $Date: 2007-03-15 01:05:48 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -160,10 +160,18 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
                         wx.ALIGN_CENTER_VERTICAL)
         self.widgets['acquire final'] = \
                 wx.CheckBox(self, -1, 'Acquire post-focus image')
-        label = wx.StaticText(self, -1, 'Melt time:')
+
+        presetnames = self.node.presetsclient.getPresetNames()
+        self.widgets['melt preset'] = gui.wx.Presets.PresetChoice(self, -1)
+        self.widgets['melt preset'].setChoices(presetnames)
+        label = wx.StaticText(self, -1, 'Melt preset:')
         sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(melt_sizer, (0, 1), (1, 1), wx.ALIGN_CENTER)
-        sizer.Add(self.widgets['acquire final'], (1, 0), (1, 2),
+        sizer.Add(self.widgets['melt preset'], (0, 1), (1, 1), wx.ALIGN_CENTER)
+
+        label = wx.StaticText(self, -1, 'Melt time:')
+        sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(melt_sizer, (1, 1), (1, 1), wx.ALIGN_CENTER)
+        sizer.Add(self.widgets['acquire final'], (2, 0), (1, 2),
                   wx.ALIGN_CENTER)
 
         sb = wx.StaticBox(self, -1, 'Focusing')

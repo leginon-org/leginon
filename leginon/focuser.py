@@ -38,6 +38,7 @@ class Focuser(acquisition.Acquisition):
 		'wait time': 0,
 		'adjust for drift': False,
 		'melt time': 0.0,
+		'melt preset': '',
 		'acquire final': True,
         'process target type': 'focus',
 	}
@@ -183,30 +184,6 @@ class Focuser(acquisition.Acquisition):
 		## need btilt, pub, driftthresh
 		btilt = setting['tilt']
 
-		## send the autofocus preset to the scope
-		self.presetsclient.toScope(presetname, emtarget)
-		target = emtarget['target']
-
-		## set to eucentric focus if doing Z correction
-		## WARNING:  this assumes that user will not change
-		## to another focus type before doing the correction
-		focustype = setting['correction type']
-		if focustype == 'Stage Z':
-			self.logger.info('Setting eucentric focus...')
-			self.eucentricFocusToScope()
-			self.logger.info('Eucentric focus set')
-			self.eucset = True
-		else:
-			self.eucset = False
-		self.reset = True
-
-		### report the current focus and defocus values
-		try:
-			defoc = self.instrument.tem.Defocus
-			foc = self.instrument.tem.Focus
-		except Exception, e:
-			self.logger.exception('Autofocus failed: %s' % e)
-
 		### Drift check
 		if setting['check drift']:
 			driftthresh = setting['drift threshold']
@@ -222,9 +199,26 @@ class Focuser(acquisition.Acquisition):
 			lastdrift = None
 			lastdriftimage = None
 
+		## send the autofocus preset to the scope
+		## drift check may have done this already
+		p = self.presetsclient.getCurrentPreset()
+		if p is None or p['name'] != presetname:
+			self.presetsclient.toScope(presetname, emtarget)
+
+		## set to eucentric focus if doing Z correction
+		## WARNING:  this assumes that user will not change
+		## to another focus type before doing the correction
+		focustype = setting['correction type']
+		if focustype == 'Stage Z':
+			self.logger.info('Setting eucentric focus...')
+			self.eucentricFocusToScope()
+			self.logger.info('Eucentric focus set')
+			self.eucset = True
+		else:
+			self.eucset = False
+		self.reset = True
+
 		try:
-			## drift_threshold=None because now DriftManager does all the work.
-			## Should eventually remove all the drift stuff from calclient
 			correction = self.btcalclient.measureDefocusStig(btilt, correct_tilt=True, correlation_type=setting['correlation type'], stig=setting['stig correction'], settle=0.25, image0=lastdriftimage)
 		except calibrationclient.Abort:
 			self.logger.info('Measurement of defocus and stig. has been aborted')
@@ -452,16 +446,10 @@ class Focuser(acquisition.Acquisition):
 			self.logger.info('Melting ice...')
 
 			#### change to melt preset
-			#### (this is a temporary hack until a real
-			#### "melt preset" setting is added to focuser)
-			presetnames = self.validatePresets()
-			if presetnames:
-				meltpresetname = presetnames[0] + 'm'
-				meltpreset = self.presetsclient.getPresetByName(meltpresetname)
-				if meltpreset is not None:
-					self.presetsclient.toScope(meltpresetname, emtarget)
-				else:
-					meltpresetname = self.presetsclient.getCurrentPreset()['name']
+			meltpresetname = self.settings['melt preset']
+			p = self.presetsclient.getCurrentPreset()['name']
+			if p != meltpresetname:
+				self.presetsclient.toScope(meltpresetname, emtarget)
 			self.logger.info('melt preset: %s' % (meltpresetname,))
 
 			self.startTimer('melt exposeSpecimen')

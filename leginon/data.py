@@ -2120,6 +2120,7 @@ class FocusSettingData(InSessionData):
 class FocuserSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
+			('melt preset', str),
 			('melt time', float),
 			('acquire final', bool),
 		)
