@@ -8,17 +8,18 @@ import time
 #import mem
 import apLoop
 import apParam
+import apDatabase
 import selexonFunctions  as sf1
 import selexonFunctions2 as sf2
-from selexonFunctions import *
-from selexonFunctions2 import *
+#from selexonFunctions import *
+#from selexonFunctions2 import *
 import apCrud
 
 data.holdImages(False)
 
 if __name__ == '__main__':
 	# record command line
-	apParam.writeFunctionLog(sys.argv,".selexonlog")
+	apParam.writeFunctionLog(sys.argv,file=".selexonlog")
 
 	print " ... checking parameters"
 	# create params dictionary & set defaults
@@ -37,55 +38,37 @@ if __name__ == '__main__':
 	apParam.checkParamConflicts(params)
 	
 	# get list of input images, since wildcards are supported
-	print " ... getting images"
-	if params['dbimages']==True:
-		images=getImagesFromDB(params['sessionname'],params['preset'])
-		params['session']=images[0]['session']
-	elif params['alldbimages']:
-		images=getAllImagesFromDB(params['sessionname'])
-		params['session']=images[0]['session']
-	else:
-		if not params['mrcfileroot']:
-			print "\nERROR: no files specified\n"
-			sys.exit(1)
-		imglist=params["mrcfileroot"]
-		images=[]
-		for img in imglist:
-			imageq=data.AcquisitionImageData(filename=img)
-			imageresult=db.query(imageq, readimages=False)
-			images=images+imageresult
-		params['session']=images[0]['session']
-	stats['imagecount']=len(images)
+	images = apDatabase.getAllImages(params,stats)
 
 	apParam.createOutputDirs(params)
-	#sf1.getOutDirs(params)
+	apParam.writeFunctionLog(sys.argv,params=params)
 
 	# if templateIds specified, create temporary template files in this directory & rescale
 	print " ... getting templates"
 	if params['templateIds']:
 		# get the first image's pixel size:
-		params['apix'] = getPixelSize(images[0])
+		params['apix'] = sf1.getPixelSize(images[0])
 		params['template']='originalTemporaryTemplate'
 		# move to run directory
 		os.chdir(params['rundir'])
 		# get the templates from the database
-		getDBTemplates(params)
+		sf1.getDBTemplates(params)
 		# scale them to the appropriate pixel size
-		rescaleTemplates(images[0],params)
+		sf1.rescaleTemplates(images[0],params)
 		# set the template name to the copied file names
 		params['template']='scaledTemporaryTemplate'
 		
 	# find the number of template files
 	if params["crudonly"]==False:
-		checkTemplates(params)
+		sf1.checkTemplates(params)
 		# go through the template mrc files and downsize & filter them
 		for tmplt in params['templatelist']:
-			dwnsizeTemplate(params,tmplt)
+			sf1.dwnsizeTemplate(params,tmplt)
 		print " ... downsize & filtered "+str(len(params['templatelist']))+ \
 			" file(s) with root \""+params["template"]+"\""
 
 	if (params["crud"]==True or params['method'] == "classic"):
-		createImageLinks(images)
+		sf1.createImageLinks(images)
 	
 	# check to see if user only wants to run the crud finder
 	if (params["crudonly"]==True):
@@ -110,20 +93,17 @@ if __name__ == '__main__':
 	# check to see if user only wants to find shifts
 	if params['shiftonly']:
 		for img in images:
-			sibling=getDefocusPair(img)
+			sibling=sf1.getDefocusPair(img)
 			if sibling:
-				peak=getShift(img,sibling)
-				recordShift(params,img,sibling,peak)
+				peak=sf1.getShift(img,sibling)
+				sf1.recordShift(params,img,sibling,peak)
 				if params['commit']:
-					insertShift(img,sibling,peak)
+					sf1.insertShift(img,sibling,peak)
 		sys.exit(1)	
 	
 	# create directory to contain the 'pik' files
 	if not (os.path.exists("pikfiles")):
 		os.mkdir("pikfiles")
-
-	#Write log to rundir
-	writeSelexLog(sys.argv,file="selexon.log")
 
 	# unpickle dictionary of previously processed images
 	donedict = apLoop.readDoneDict(params)
@@ -143,24 +123,24 @@ if __name__ == '__main__':
 			# run FindEM
 			if params['method'] == "experimental":
 				#Finds peaks as well:
-				numpeaks = runCrossCorr(params,imgname)
+				numpeaks = sf2.runCrossCorr(params,imgname)
 				stats['lastpeaks'] = numpeaks
 				stats['peaksum']   = stats['peaksum'] + numpeaks
 				stats['peaksumsq'] = stats['peaksumsq'] + numpeaks**2
 			else:
-#				tmpRemoveCrud(params,imgname)
-				dwnsizeImg(params,imgname)
-#				runFindEM(params,imgname)
-				threadFindEM(params,imgname)
+#				sf2.tmpRemoveCrud(params,imgname)
+				sf1.dwnsizeImg(params,imgname)
+#				sf1.runFindEM(params,imgname)
+				sf2.threadFindEM(params,imgname)
 
 			#FIND PEAKS
 			if params['method'] == "classic":
-				findPeaks(params,imgname)
+				sf1.findPeaks(params,imgname)
 				numpeaks = 0
 			elif params['method'] == "experimental":
 				print "skipping findpeaks..."
 			else:
-				numpeaks = findPeaks2(params,imgname)
+				numpeaks = sf2.findPeaks2(params,imgname)
 				stats['lastpeaks'] = numpeaks
 				stats['peaksum']   = stats['peaksum'] + numpeaks
 				stats['peaksumsq'] = stats['peaksumsq'] + numpeaks**2
@@ -190,22 +170,22 @@ if __name__ == '__main__':
 			#CREATE JPG of selected particles if not created by crudfinder
 			if (params["crud"]==False):
 				if params['method'] == "classic":
-					createJPG(params,imgname)
+					sf1.createJPG(params,imgname)
 				else:
-					createJPG2(params,imgname)
+					sf2.createJPG2(params,imgname)
 
 			# convert resulting pik file to eman box file
 			if (params["box"]>0):
-				pik2Box(params,imgname)
+				sf1.pik2Box(params,imgname)
 		
 			# find defocus pair if defocpair is specified
 			if params['defocpair'] == True:
-				sibling=getDefocusPair(img)
+				sibling=sf1.getDefocusPair(img)
 				if sibling:
-					peak=getShift(img,sibling)
-					recordShift(params,img,sibling,peak)
+					peak=sf1.getShift(img,sibling)
+					sf1.recordShift(params,img,sibling,peak)
 					if params['commit']:
-						insertShift(img,sibling,peak)
+						sf1.insertShift(img,sibling,peak)
 			
 			if params['commit'] == True:
 				expid=int(img['session'].dbid)

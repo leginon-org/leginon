@@ -1,10 +1,9 @@
 #Part of the new pyappion
 
-import os
+import os,sys
 import cPickle
 import time
 import math
-import sys
 import selexonFunctions  as sf1
 import selexonFunctions2 as sf2
 
@@ -34,20 +33,23 @@ def readDoneDict(params):
 	doneDictName = params['doneDictName']
 	if os.path.exists(doneDictName):
 		# unpickle previously modified dictionary
-		f=open(doneDictName,'r')
+		f = open(doneDictName,'r')
 		donedict=cPickle.load(f)
 		f.close()
+		print " ... reading old done dictionary:",doneDictName,
+		print " ... found",len(donedict),"entries"
 	else:
 		#set up dictionary
 		donedict={}
-	return (donedict)
+		print " ... creating new done dictionary:",doneDictName
+	return donedict
 
 
 def writeDoneDict(donedict,params,imgname=None):
 	if imgname != None:
 	 	donedict[imgname]=True
 	doneDictName = params['doneDictName']
-	f=open(doneDictName,'w')
+	f = open(doneDictName,'w',0666)
 	cPickle.dump(donedict,f)
 	f.close()
 
@@ -69,7 +71,7 @@ def _alreadyProcessed(donedict, imgname, stats, params):
 			donedict[imgname]=None
 			stats['waittime'] = 0
 			if(stats['lastimageskipped']==True):
-				print " skipped",stats['skipcount'],"images so far"
+				print "\nskipped",stats['skipcount'],"images so far"
 			stats['lastimageskipped']=False
 			return False
 	return False
@@ -89,8 +91,9 @@ def startLoop(img,donedict,stats,params):
 	params['apix']=sf1.getPixelSize(img)
 
 	# skip if image doesn't exist:
-	if not os.path.isfile(params['imgdir']+img['filename']+'.mrc'):
-		print " !!! "+img['filename']+".mrc not found, skipping"
+	imagepath = params['imgdir']+img['filename']+'.mrc'
+	if not os.path.isfile(imagepath):
+		print " !!!",imagepath,"not found, skipping"
 		return False
 
 	# if continue option is true, check to see if image has already been processed
@@ -157,7 +160,7 @@ def _printLine():
 
 def completeLoop(stats):
 	ttotal= time.time()-stats["startTime"]
-	print "COMPLETE LOOP:\t",_timeString(ttotal),"for",stats["count"],"images"
+	print "COMPLETE LOOP:\t",_timeString(ttotal),"for",stats["count"]-1,"images"
 	print "end run"
 	print "====================================================="
 	print "====================================================="

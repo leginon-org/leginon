@@ -9,33 +9,23 @@ import selexonFunctions  as sf1
 import apLoop
 import apParam
 import apDog
+import apDatabase
 
 data.holdImages(False)
 
 if __name__ == '__main__':
 
-	apParam.writeFunctionLog(sys.argv,".dogpickerlog")
+	apParam.writeFunctionLog(sys.argv,file=".dogpickerlog")
 	params = apParam.createDefaultParams(function=sys.argv[0])
 	params = apDog.modifyDefaultParams(params)
 	stats  = apParam.createDefaultStats()
 	apParam.parseCommandLineInput(sys.argv,params)
-
 	if len(sys.argv) < 2:
 		apDog.dogHelp()
-	else:
-		apParam.parseCommandLineInput(sys.argv,params)
-		#apDog.parseDogInput(sys.argv,params)
-	
+		sys.exit(1)
 	apParam.createOutputDirs(params)
-
-	#estimated_size = estimated_size / ( scale * bin )
-	#search_range   =  search_range  / ( scale * bin )
-	
-	images=sf1.getImagesFromDB(params['sessionname'],params['preset'])
-	stats['imagecount']=len(images)
-
-	params['session']=images[0]['session']
-	
+	apParam.writeFunctionLog(sys.argv,params=params)
+	images = apDatabase.getAllImages(params,stats)
 	donedict=apLoop.readDoneDict(params)
 
 	notdone = True

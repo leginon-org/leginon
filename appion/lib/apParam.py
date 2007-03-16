@@ -7,6 +7,7 @@ import re
 import data
 import dbdatakeeper
 
+### TEMPORARY, PLEASE MAKE IT SO NOT REQUIRED HERE
 db=dbdatakeeper.DBDataKeeper()
 partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
 projdb=dbdatakeeper.DBDataKeeper(db='project')
@@ -15,15 +16,14 @@ data.holdImages(False)
 def createDefaultParams(function=None):
 	# create default values for parameters
 	params={}
+
 	if(function != None):
 		function = os.path.basename(function)
 		function = function.replace(".py","")
 		print "FUNCTION:",function
-		params['doneDictName'] = "."+str(function)+"donedict"
 		params['function']=function
 	else:
 		params['function']="generic"
-		params['doneDictName'] = ".functiondonedict"
 
 ### SELEXON PARAMETERS
 	params['mrcfileroot']=''
@@ -93,7 +93,6 @@ def createDefaultParams(function=None):
 	params["id"]='picka_'
 
 ### COMMON PARAMETERS
-	params["outdir"]="/tmp"
 	params['sessionname']=None
 	params['session']=None
 	params['preset']=None
@@ -106,6 +105,11 @@ def createDefaultParams(function=None):
 	params['continue']=False
 	params['commit']=False
 	params['description']=None
+	params['rundir']=None
+	params['matdir']=None
+	params['opimagedir']=None
+	params['doneDictName']=None
+	params['functionLog']=None
 
 	return params
 
@@ -127,8 +131,12 @@ def createDefaultStats():
 	stats['lastimageskipped'] = False
 	return stats
 
-def writeFunctionLog(commandline, file=".functionlog"):
-	f=open(file,'a')
+def writeFunctionLog(commandline, params=None, file=None):
+	if(file==None and params!=None and params['functionLog']!=None):
+		file = params['functionLog']
+	else:
+		file = ".functionlog"
+	f=open(file,'aw')
 	out=""
 	for n in commandline:
 		out=out+n+" "
@@ -150,11 +158,6 @@ def createOutputDirs(params):
 		outdir=os.path.join(outdir,params['function']+"/") #'extract/')
 		params['outdir']=outdir
 
-	params['rundir']=os.path.join(params['outdir'],params['runid'])
-	print " ... run directory defined as:",params['rundir']
-	params['matdir']=os.path.join(params['rundir'],"matfiles")
-	params['opimagedir']=os.path.join(params['rundir'],"opimages")
-
 	if os.path.exists(params['rundir']):
 		print " !!! WARNING: run directory for \'"+str(params['runid'])+"\' already exists."
 		if params['continue']==False:
@@ -162,16 +165,45 @@ def createOutputDirs(params):
 			time.sleep(10)
 		#else:
 			#if(params['function'] == "pyace"):
-				#os.makedirs(params['matdir'])
-				#os.makedirs(params['opimagedir'])
+				#os.makedirs(params['matdir'],0777)
+				#os.makedirs(params['opimagedir'],0777)
 	else:
-		os.makedirs(params['rundir'])
+		os.makedirs(params['rundir'],0777)
 		if(params['function'] == "pyace"):
-			os.makedirs(params['matdir'])
-			os.makedirs(params['opimagedir'])
+			os.makedirs(params['matdir'],0777)
+			os.makedirs(params['opimagedir'],0777)
+
+	if(params['sessionname'] != None):
+		params['outtextfile']=os.path.join(params['rundir'],(params['sessionname']+'.txt'))
 
 	return params
 
+def checkParamConflicts(params):
+	if not params['templateIds'] and not params['apix']:
+		print "\nERROR: if not using templateIds, you must enter a template pixel size\n"
+		sys.exit(1)
+	if params['templateIds'] and params['template']:
+		print "\nERROR: Both template database IDs and mrc file templates are specified,\nChoose only one\n"
+		sys.exit(1)
+	if params['crudonly']==True and params['shiftonly']==True:
+		print "\nERROR: crudonly and shiftonly can not be specified at the same time\n"
+		sys.exit(1)
+	if (params['thresh']==0 and params['autopik']==0):
+		print "\nERROR: neither manual threshold or autopik parameters are set, please set one.\n"
+		sys.exit(1)
+	if (params['diam']==0):
+		print "\nERROR: please input the diameter of your particle\n"
+		sys.exit(1)
+	if len(params['mrcfileroot']) > 0 and params['dbimages']==True:
+		print params['imagecount']
+		print "\nERROR: dbimages can not be specified if particular images have been specified\n"
+		sys.exit(1)
+	if params['alldbimages'] and params['dbimages']==True:
+		print "\nERROR: dbimages and alldbimages can not be specified at the same time\n"
+		sys.exit(1)
+	if len(params['mrcfileroot']) > 0 and params['alldbimages']:
+		print "\nERROR: alldbimages can not be specified if particular images have been specified\n"
+		sys.exit(1)
 
 def parseCommandLineInput(args,params):
 	# check that there are enough input parameters
@@ -352,6 +384,8 @@ def parseCommandLineInput(args,params):
 ### GENERAL PARAMETERS
 		elif (elements[0]=='outdir'):
 			params['outdir']=elements[1]
+			if(params['outdir'][0] != "/"):
+				params['outdir'] = os.path.join(os.getcwd(),params['outdir'])
 		elif (elements[0]=='runid'):
 			params['runid']=elements[1]
 		elif (elements[0]=='apix'):
@@ -383,35 +417,26 @@ def parseCommandLineInput(args,params):
 			print "\nERROR: undefined parameter \'"+arg+"\'\n"
 			sys.exit(1)
 
+	sessionq=data.SessionData(name=params['sessionname'])
+	sessiondata=db.query(sessionq)
+	impath=sessiondata[0]['image path']
+	params['imgdir']=impath+'/'
+
+	if params['outdir']:
+		pass
+	else:
+		outdir=os.path.split(impath)[0]
+		params['outdir']=os.path.join(outdir,params['function']+"/")
+
+	params['rundir']=os.path.join(params['outdir'],params['runid'])
+	params['matdir']=os.path.join(params['rundir'],"matfiles")
+	params['opimagedir']=os.path.join(params['rundir'],"opimages")
+	params['doneDictName']=os.path.join(params['rundir'],"."+params['function']+"donedict")
+	params['functionLog']=os.path.join(params['rundir'],"."+params['function']+"log")
+	print " ... run directory defined as:",params['rundir']
+
 	if(params['apix'] != None and params['diam'] > 0):
 		params['pixdiam'] = params['diam']/params['apix']
 		params['binpixdiam'] = params['diam']/params['apix']/params['bin']
 
 	return params
-
-def checkParamConflicts(params):
-	if not params['templateIds'] and not params['apix']:
-		print "\nERROR: if not using templateIds, you must enter a template pixel size\n"
-		sys.exit(1)
-	if params['templateIds'] and params['template']:
-		print "\nERROR: Both template database IDs and mrc file templates are specified,\nChoose only one\n"
-		sys.exit(1)
-	if params['crudonly']==True and params['shiftonly']==True:
-		print "\nERROR: crudonly and shiftonly can not be specified at the same time\n"
-		sys.exit(1)
-	if (params['thresh']==0 and params['autopik']==0):
-		print "\nERROR: neither manual threshold or autopik parameters are set, please set one.\n"
-		sys.exit(1)
-	if (params['diam']==0):
-		print "\nERROR: please input the diameter of your particle\n"
-		sys.exit(1)
-	if len(params['mrcfileroot']) > 0 and params['dbimages']==True:
-		print params['imagecount']
-		print "\nERROR: dbimages can not be specified if particular images have been specified\n"
-		sys.exit(1)
-	if params['alldbimages'] and params['dbimages']==True:
-		print "\nERROR: dbimages and alldbimages can not be specified at the same time\n"
-		sys.exit(1)
-	if len(params['mrcfileroot']) > 0 and params['alldbimages']:
-		print "\nERROR: alldbimages can not be specified if particular images have been specified\n"
-		sys.exit(1)

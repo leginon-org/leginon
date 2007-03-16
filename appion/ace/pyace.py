@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python -O
 
 import os, sys
 import cPickle
@@ -7,25 +7,31 @@ import time
 import aceFunctions as ace
 import apParam
 import apLoop
+import apDatabase
+import apCtf
+import data
 #from aceFunctions import *
 
+data.holdImages(False)
 			
 if __name__ == '__main__':
-	apParam.writeFunctionLog(sys.argv,".pyacelog")
+	apParam.writeFunctionLog(sys.argv,file=".pyacelog")
 
 	#parse input and set up output dirs and params dictionary
 	params = apParam.createDefaultParams(function=sys.argv[0])
 	params = apParam.parseCommandLineInput(sys.argv,params)
 	apParam.createOutputDirs(params)
+	apParam.writeFunctionLog(sys.argv,params=params)
 	stats  = apParam.createDefaultStats()
 
-	params=ace.getOutTextFile(params)
+
 	ace.mkTempDir(params['tempdir'])
 
 	#start connection to matlab	
-	print "Connecting to matlab ... "
+	sys.stderr.write("Connecting to matlab ... ")
 	matlab=pymat.open()
-	
+	sys.stderr.write("done\n")
+
 	#write ace config file to temp directory
 	ace.setAceConfig(matlab,params)
 	
@@ -33,14 +39,7 @@ if __name__ == '__main__':
 	donedict = apLoop.readDoneDict(params)
 	
 	#get image data objects from Leg. database
-#	if params['dbimages'] == True and not params['reprocess']:
-	if params['dbimages'] == True:
-		images=ace.getImagesFromDB(params['sessionname'],params['preset'])
-	elif params['alldbimages']:
-		images=ace.getAllImagesFromDB(params['sessionname'])
-#	else:
-#		images=ace.getImagesToReprocess(params)
-	stats['imagecount']=len(images)
+	images = apDatabase.getAllImages(params,stats)
 
 	notdone=True
 	while notdone:
@@ -67,11 +66,10 @@ if __name__ == '__main__':
 					else:
 						print "Skipping", img['filename']
 						#write results to donedict
-						ace.donedict[img['filename']]=True
-						ace.writeDoneDict(donedict,params)
+						apLoop.writeDoneDict(donedict,params,imagename)
 						continue
-				else:
-					print img['filename'],'not processed yet. Will process with current ACE parameters.'
+				#else:
+					#print img['filename'],'not processed yet. Will process with current ACE parameters.'
 					
 			#set up and write scopeparams.mat file to temp directory
 			#do this for every image because pixel size can be different
@@ -82,13 +80,10 @@ if __name__ == '__main__':
 			scopeparams['tempdir']=params['tempdir']
 			ace.setScopeParams(matlab,scopeparams)
 			
-			#run ace
-			ace.runAce(matlab,img,params)
-			
-			#write results to donedict
-			#donedict[img['filename']]=True
-			#ace.writeDoneDict(donedict,params)
-			
+### RUN ACE
+			apCtf.runAce(matlab,img,params)
+### END RUN ACE
+		
 			apLoop.printSummary(stats, params)
 
 			apLoop.writeDoneDict(donedict,params,imagename)
