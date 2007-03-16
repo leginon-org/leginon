@@ -179,9 +179,9 @@ if __name__ == '__main__':
 			if (params["crud"]==True):
 				if not (os.path.exists("crudfiles")):
 					os.mkdir("crudfiles")
-					t1=time.time()
-					findCrud(params,imgname)
-					tfindCrud= "%.2f" % float(time.time()-t1)
+				t1=time.time()
+				apCrud.removCrudPiks(params,imgname)
+				tfindCrud= "%.2f" % float(time.time()-t1)
 				# if crudfinder removes all the particles, go to next image
 				if not (os.path.exists("pikfiles/"+imgname+".a.pik.nocrud")):
 					print "no particles left after crudfinder in \'"+imgname+".mrc\'"

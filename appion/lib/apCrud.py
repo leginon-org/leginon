@@ -14,6 +14,7 @@ import numextension
 import polygon
 import libCV
 import selexonFunctions2
+import string
 
 
 def prepImage(image,cutoff=5.0):
@@ -60,8 +61,6 @@ def outputImage(array,name,description,testlog):
 	return testlog
 
 def findEdgeSobel(image,sigma,amin,amax,output,testlog):
-	if (output):
-		testlog=outputImage(image,'input','input image',testlog)
 	if (sigma > 0):
 		smooth=nd.gaussian_filter(image,sigma)
 		if (output):
@@ -219,10 +218,10 @@ def doPointsOverlap(p1,p2):
 	return False
 
 def includOneInAnother(p1,p2):
-	for point in p1:
-		if point not in p2:
-			p2.append(point)
-	return p2
+	p2set = set(p2)
+	p12set = p2set.union(p1)
+	p12 = list(p12set)
+	return p12
 
 def mergePolygonPoints(points):
 	p1=0
@@ -385,10 +384,12 @@ def pruneByStdev(info,stdev_min,goodcruds_in):
 	return goodcruds
 	
 def makePrunedLabels(file,labeled_image,ltotal,info,goodlabels):
-	print "remaking labeled image after pruning"
+	print "remaking %d labeled image after pruning" % len(goodlabels)
 	imageshape=numarray.shape(labeled_image)
 	goodinfo=""
 	new_labeled_image=numarray.zeros(imageshape,numarray.Int8)
+	if len(goodlabels)==0:
+		return new_labeled_image,len(goodlabels),goodinfo
 	base=numarray.ones(imageshape)
 	for i,l1 in enumerate(goodlabels):
 		l=l1+1
@@ -402,9 +403,12 @@ def makePrunedLabels(file,labeled_image,ltotal,info,goodlabels):
 	return new_labeled_image,len(goodlabels),goodinfo
 
 def makePrunedPolygons(file,gpolygons,imageshape,info,goodlabels):
-	print "remaking polygons after pruning"
+	print "remaking %d polygons after pruning" % len(goodlabels)
 	goodpolygons=[]
 	goodinfo=""
+	if len(goodlabels)==0:
+		new_labeled_image=numarray.zeros(imageshape,numarray.Int8)
+		return new_labeled_image,len(goodlabels),goodinfo
 	for l1 in goodlabels:
 		l=l1+1
 		goodcrudline=file+".mrc "+str(int(info[l][4][1]))+" "+str(int(info[l][4][0]))+" "+str(info[l][0])+" "+str(info[l][1])+" "+str(info[l][2])+" "+str(info[l][3])+"\n"
@@ -595,6 +599,7 @@ def findCrud(params,file):
 				if (test):
 					temp_cruds,temp_clabels,goodinfo=makePrunedLabels(file,cruds,clabels,allinfo,goodcruds)
 					testlog=outputImage(temp_cruds,'crud_labela','Area pruned labeled image',testlog)
+					print temp_clabels,clabels
 
 			if (len(goodcruds)>0):
 				#pruning by standard deviation in the cruds
@@ -608,11 +613,13 @@ def findCrud(params,file):
 
 			if test and (not do_cv or stdev_t > 0):
 				cruds,clabels,crudinfo=temp_cruds,temp_clabels,goodinfo
+				goodcruds=range(clabels)
 
-			if do_convex_hulls or do_cv and stdev_t < 0.01:
-				cruds,clabels,crudinfo=makePrunedPolygons(file,gpolygons,shape,allinfo,goodcruds)
-			else:
-				cruds,clabels,crudinfo=makePrunedLabels(file,cruds,clabels,allinfo,goodcruds)
+			if not test:
+				if do_convex_hulls or do_cv and stdev_t < 0.01:
+					cruds,clabels,crudinfo=makePrunedPolygons(file,gpolygons,shape,allinfo,goodcruds)
+				else:
+					cruds,clabels,crudinfo=makePrunedLabels(file,cruds,clabels,allinfo,goodcruds)
 
 #		create edge image of the cruds for display
 		if (clabels >0):
@@ -624,7 +631,8 @@ def findCrud(params,file):
 			crudedges,testlog=findEdgeSobel(equalcruds,1,0.5,1.0,False,testlog)
 			masklabel=1-ma.getmask(crudedges)
 		else:
-			masklabel=numarray.ones(numarray.shape(image))
+			masklabel=numarray.ones(shape)
+			equalcruds=numarray.zeros(shape)
 		superimage=image*masklabel
 	
 	testlog=outputImage(superimage,'output','Final Crud w/ image',testlog)
@@ -642,3 +650,43 @@ def findCrud(params,file):
 	
 	return equalcruds
 		
+def piksNotInCrud(params,mask,piklines):
+	bin = int(params["bin"])
+	shape = numarray.shape(mask)
+	print shape
+	piklinesNotInCrud=[]
+	for pikline in piklines:
+		bits=pikline.split(' ')
+		pik=(int(bits[1]),int(bits[2]))
+		binpik = (int(pik[0]/bin),int(pik[1]/bin))
+		if binpik[0] in range(0,shape[0]) and binpik[1] in range(0,shape[1]):
+			if mask[binpik]==0:
+				piklinesNotInCrud.append(pikline)
+	return piklinesNotInCrud
+	
+def readPiksFile(file,extra=''):
+	#print " ... reading Pik file: ",file
+	f=open(file+extra, 'r')
+	#00000000 1 2 3333 44444 5555555555 666666666 777777777
+	#filename x y mean stdev corr_coeff peak_size templ_num angle moment
+	piks = []
+	piklines = []
+	for line in f:
+		if(line[0] != "#"):
+			line.strip()
+			piklines.append(line)
+	return piklines
+	
+def writePiksFile(file,extra='',piklines=[]):
+	pikstring=''.join(piklines)
+	f=open(file+extra, 'w')
+	f.write(pikstring)
+	
+def removeCrudPiks(params,file):
+	print "Start Removing Piks in Cruds"
+	pikfile = "pikfiles/"+file+".a.pik"
+	piklines = readPiksFile(pikfile)
+	crudmask=findCrud(params,file)
+	print "Removing Bad Picks"
+	piklinesgood = piksNotInCrud(params,crudmask,piklines)
+	writePiksFile(pikfile,'.nocrud',piklinesgood)
