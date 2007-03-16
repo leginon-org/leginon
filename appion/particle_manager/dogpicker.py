@@ -12,6 +12,7 @@ from selexonFunctions2 import *
 import apLoop
 import apParam
 
+data.holdImages(False)
 
 def modifyDefaultParams(params):
 	#params={}
@@ -31,13 +32,11 @@ def modifyDefaultParams(params):
 	return params
 
 def dogHelp():
-	print"""
-
-dogpicker.py dbimages=<session>,<preset> diam=<particle_pixels> bin=<binning> range=<number_of_sizes> mint=<minimum_threshold_sigma> maxt=<maximum_threshold_sigma> id=<runid> [commit]
-
-"""
-	sys.exit()
-	return()
+	print "dogpicker.py dbimages=<session>,<preset> diam=<particle_pixels> bin=<binning>"+\
+		" range=<number_of_sizes> mint=<minimum_threshold_sigma> maxt=<maximum_threshold_sigma>"+\
+		" id=<runid> [commit]"
+	sys.exit(1)
+	return
 
 def parseDogInput(args,params):
 
@@ -88,7 +87,9 @@ def runDogDetection(imagename, params):
 	maxtreshold    = params['maxt']
 	bin            = params['bin']
 
+	sys.stderr.write(" ... running dog picker")
 	peaks = libcv2.dogDetector(image,bin,estimated_size,search_range,sampling,mintreshold,maxtreshold)
+	print " ... done"
 
 	return peaks
 
@@ -125,16 +126,21 @@ if __name__ == '__main__':
 			continue
 
 		peaks = runDogDetection(imagename, params)
-		
-		expid = int(img['session'].dbid)
-		legimgid = int(img.dbid)
-		legpresetid =int(img['preset'].dbid)
-		
+
 		if peaks is None:
 			continue
 		
+		numpeaks = (peaks.shape)[0]
+		stats['lastpeaks'] = numpeaks
+		stats['peaksum']   = stats['peaksum'] + numpeaks
+		stats['peaksumsq'] = stats['peaksumsq'] + numpeaks**2
+
+		expid = int(img['session'].dbid)
+		legimgid = int(img.dbid)
+		legpresetid =int(img['preset'].dbid)
+
 		if params['commit']:
-			print "Inserting picks into database"
+			print " ... inserting picks into database"
 			imgq = particleData.image()
 			imgq['dbemdata|SessionData|session'] = expid
 			imgq['dbemdata|AcquisitionImageData|image'] = legimgid
@@ -174,5 +180,6 @@ if __name__ == '__main__':
 			
 		apLoop.printSummary(stats, params)
 
-		print imagename + ' is done'
+		#print imagename + ' is done'
 		apLoop.writeDoneDict(donedict,params,imagename)
+	apLoop.completeLoop(stats)

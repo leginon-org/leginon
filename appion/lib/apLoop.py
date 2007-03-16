@@ -123,8 +123,10 @@ def printSummary(stats,params):
 		print "\n\tSUMMARY:"
 	_printLine()
 	if(stats['lastpeaks'] != None):
-		print "\tPEAKS:    \t",numpeaks,"peaks"
+		print "\tPEAKS:    \t",stats['lastpeaks'],"peaks"
 		if(count > 1):
+			peaksum   = stats['peaksum']
+			peaksumsq = stats['peaksumsq']
 			peakstdev = math.sqrt(float(count*peaksumsq - peaksum**2) / float(count*(count-1)))
 			print "\tAVG PEAKS:\t",round(float(peaksum)/float(count),1),"+/-",\
 				round(peakstdev,1),"peaks"
@@ -152,6 +154,16 @@ def printSummary(stats,params):
 
 def _printLine():
 	print "\t------------------------------------------"
+
+def completeLoop(stats):
+	ttotal= time.time()-stats["startTime"]
+	print "COMPLETE LOOP:\t",_timeString(ttotal),"for",stats["count"],"images"
+	print "end run"
+	print "====================================================="
+	print "====================================================="
+	print "====================================================="
+	print "====================================================="
+	print ""
 
 def _timeString(avg,stdev=0):
 	""" 

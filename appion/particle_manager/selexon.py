@@ -146,6 +146,7 @@ if __name__ == '__main__':
 			if params['method'] == "experimental":
 				#Finds peaks as well:
 				numpeaks = runCrossCorr(params,imgname)
+				stats['lastpeaks'] = numpeaks
 				stats['peaksum']   = stats['peaksum'] + numpeaks
 				stats['peaksumsq'] = stats['peaksumsq'] + numpeaks**2
 			else:
@@ -162,6 +163,7 @@ if __name__ == '__main__':
 				print "skipping findpeaks..."
 			else:
 				numpeaks = findPeaks2(params,imgname)
+				stats['lastpeaks'] = numpeaks
 				stats['peaksum']   = stats['peaksum'] + numpeaks
 				stats['peaksumsq'] = stats['peaksumsq'] + numpeaks**2
 
@@ -234,12 +236,5 @@ if __name__ == '__main__':
 			os.remove(scdwnname)
 			i=i+1
 			
-	ttotal= "%.2f" % float(time.time()-stats["startTime"])
-	print "COMPLETE LOOP:\t",ttotal,"seconds for",count-1,"images"
-	print "end run"
-	print "====================================================="
-	print "====================================================="
-	print "====================================================="
-	print "====================================================="
-	print ""
+	apLoop.completeLoop(stats)
 
