@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.60 $
- *	@version $Id: leginon.inc,v 1.60 2006-10-11 22:27:33 suloway Exp $
+ *	@version $Revision: 1.61 $
+ *	@version $Id: leginon.inc,v 1.61 2007-03-16 18:01:12 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -354,7 +354,7 @@ class leginondata {
 		$sqljoinstr=implode(', ',$sqljoin);
 		$q='
 		select '.$sqlselectstr.'
-		from AcquisitionImageData a , PixelSizeCalibrationData pi 
+		from (AcquisitionImageData a , PixelSizeCalibrationData pi) 
 			left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) 
 			left join CameraEMData c on (a.`REF|CameraEMData|camera`=c.`DEF_id`)
 		'
@@ -670,7 +670,7 @@ class leginondata {
 			."mcal.`ARRAY|matrix|2_2` as `a22`,"
 			."mcal.`type` as `type`,"
 			."atan2(mcal.`ARRAY|matrix|1_1`, mcal.`ARRAY|matrix|2_1`) as angle "
-			."from AcquisitionImageData a, MatrixCalibrationData mcal "
+			."from (AcquisitionImageData a, MatrixCalibrationData mcal) "
 			."left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) "
 			."left join CameraEMData c on (a.`REF|CameraEMData|camera`=c.`DEF_id`) "
 			."where "
@@ -843,7 +843,6 @@ class leginondata {
 			."on (pp.DEF_id=parent.`REF|PresetData|preset`) "
 			."left join ScopeEMData pscope on (pscope.`DEF_id`=parent.`REF|ScopeEMData|scope`) "
 			."left join SessionData ps1 on (ps1.`DEF_id`=parent.`REF|SessionData|session`) "
-			#."left join SessionData ps2 on (ps2.`DEF_id`=ppi.`REF|SessionData|session`) "
 			."cross join PixelSizeCalibrationData ppi on "
 			."(pscope.`REF|InstrumentData|tem`= ppi.`REF|InstrumentData|tem` and "
 			."pscope.magnification = ppi.magnification and "
@@ -1577,7 +1576,7 @@ class leginondata {
 		."t.`version` as `target version`, "
 		."sum(time_to_sec((DATE_SUB(d2.`DEF_timestamp`, INTERVAL "
 		."date_format(d1.`DEF_timestamp`, '%T') HOUR_SECOND)))) as `total` "
-		."from DriftData d1 , DriftData d2 "
+		."from (DriftData d1 , DriftData d2) "
 		."left join AcquisitionImageTargetData as t  "
 		."on (t.`DEF_id` = d1.`REF|AcquisitionImageTargetData|target`)  "
 		."where "
