@@ -231,7 +231,7 @@ if __name__ == '__main__':
 			os.remove(scdwnname)
 			i=i+1
 			
-	ttotal= "%.2f" % float(time.time()-twhole)
+	ttotal= "%.2f" % float(time.time()-params["startTime"])
 	print "COMPLETE LOOP:\t",ttotal,"seconds for",count-1,"images"
 	print "end run"
 	print "====================================================="
