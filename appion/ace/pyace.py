@@ -4,36 +4,40 @@ import os, sys
 import cPickle
 import pymat
 import time
-from aceFunctions import *
+import aceFunctions as ace
+import apParam
+#from aceFunctions import *
 
 			
 if __name__ == '__main__':
+	apParam.writeFunctionLog(sys.argv,".pyacelog")
 
-	writePyAceLog(sys.argv)
 	#parse input and set up output dirs and params dictionary
-	params=parseInput(sys.argv)
-	params=getOutDirs(params)
-	params=getOutTextFile(params)
-	mkTempDir(params['tempdir'])
+	params = apParam.createDefaultParams(function=sys.argv[0])
+	params = apParam.parseCommandLineInput(sys.argv,params)
+	#params=ace.parseInput(sys.argv)
+	params=ace.getOutDirs(params)
+	params=ace.getOutTextFile(params)
+	ace.mkTempDir(params['tempdir'])
 
 	#start connection to matlab	
 	print "Connecting to matlab"
 	matlab=pymat.open()
 	
 	#write ace config file to temp directory
-	setAceConfig(matlab,params)
+	ace.setAceConfig(matlab,params)
 	
 	#get dictionary of completed images
-	(params, donedict)=getDoneDict(params)
+	(params, donedict)=ace.getDoneDict(params)
 	
 	#get image data objects from Leg. database
-#	if params['dbimages'] == 'TRUE' and not params['reprocess']:
-	if params['dbimages'] == 'TRUE':
-		images=getImagesFromDB(params['session'],params['preset'])
+#	if params['dbimages'] == True and not params['reprocess']:
+	if params['dbimages'] == True:
+		images=ace.getImagesFromDB(params['sessionname'],params['preset'])
 	elif params['alldbimages']:
-		images=getAllImagesFromDB(params['session'])
+		images=ace.getAllImagesFromDB(params['sessionname'])
 #	else:
-#		images=getImagesToReprocess(params)
+#		images=ace.getImagesToReprocess(params)
 	
 	notdone=True
 	while notdone:
@@ -44,27 +48,28 @@ if __name__ == '__main__':
 				continue
 			
 			#if continue option is true, check to see if image has already been processed
-			doneCheck(donedict,img['filename'])
-			if params['continue']=='TRUE':
+			ace.doneCheck(donedict,img['filename'])
+			if params['continue']==True:
 				if donedict[img['filename']]:
 					print img['filename'], 'already processed. To process again, remove "continue" option.'
 					continue
 			
 			#if reprocess option is specified, skip over images with confidence better than specified
 			if params['reprocess']:
-				ctfparams=getCTFParamsForImage(img)
+				ctfparams=ace.getCTFParamsForImage(img)
 				reprocess=True
 				if ctfparams:
 					for ctfvalue in ctfparams:
-						if ctfvalue['confidence'] > params['reprocess'] or ctfvalue['confidence_d'] > params['reprocess']:
+						if(ctfvalue['confidence'] > params['reprocess'] or \
+							ctfvalue['confidence_d'] > params['reprocess']):
 							reprocess=False
 					if reprocess:
 						print "Reprocessing", img['filename']
 					else:
 						print "Skipping", img['filename']
 						#write results to donedict
-						donedict[img['filename']]=True
-						writeDoneDict(donedict,params)
+						ace.donedict[img['filename']]=True
+						ace.writeDoneDict(donedict,params)
 						continue
 				else:
 					print img['filename'],'not processed yet. Will process with current ACE parameters.'
@@ -73,23 +78,23 @@ if __name__ == '__main__':
 			#do this for every image because pixel size can be different
 			scopeparams={}
 			scopeparams['kv']=img['scope']['high tension']/1000
-			scopeparams['apix']=getPixelSize(img)
+			scopeparams['apix']=ace.getPixelSize(img)
 			scopeparams['cs']=params['cs']
 			scopeparams['tempdir']=params['tempdir']
-			setScopeParams(matlab,scopeparams)
+			ace.setScopeParams(matlab,scopeparams)
 			
 			#run ace
-			runAce(matlab,img,params)
+			ace.runAce(matlab,img,params)
 			
 			#write results to donedict
 			donedict[img['filename']]=True
-			writeDoneDict(donedict,params)
+			ace.writeDoneDict(donedict,params)
 			
-		if params['dbimages']=='TRUE' and not params['reprocess']:
+		if params['dbimages']==True and params['reprocess']==False:
 			notdone=True
 			print "Waiting ten minutes for new images"
 			time.sleep(600)
-			images=getImagesFromDB(params['session'],params['preset'])
+			images=ace.getImagesFromDB(params['sessionname'],params['preset'])
 		else:
 			notdone=False
 				

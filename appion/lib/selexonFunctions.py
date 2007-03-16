@@ -317,7 +317,7 @@ def parseSelexonInput(args,params):
 		elif (elements[0]=='dbimages'):
 			dbinfo=elements[1].split(',')
 			if len(dbinfo) == 2:
-				params['sessionname']=dbinfo[0]
+				params['session']=dbinfo[0]
 				params['preset']=dbinfo[1]
 				params["dbimages"]=True
 				params["continue"]=True # continue should be on for dbimages option
@@ -326,7 +326,7 @@ def parseSelexonInput(args,params):
 					"parameters (ex: \'07feb13a,en\')\n"
 				sys.exit(1)
 		elif (elements[0]=='alldbimages'):
-			params['sessionname']=elements[1]
+			params['session']=elements[1]
 			params['alldbimages']=True
 		elif arg=='commit':
 			params['commit']=True

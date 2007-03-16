@@ -12,9 +12,19 @@ partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
 projdb=dbdatakeeper.DBDataKeeper(db='project')
 data.holdImages(False)
 
-def createDefaultParams():
+def createDefaultParams(function=None):
 	# create default values for parameters
 	params={}
+	if(function != None):
+		function = os.path.basename(function)
+		function = function.replace(".py","")
+		print "FUNCTION:",function
+		params['doneDictName'] = "."+str(function)+"donedict"
+		params['function']=function
+	else:
+		params['function']="generic"
+		params['doneDictName'] = ".functiondonedict"
+#selexon parameters
 	params["mrcfileroot"]=''
 	params["template"]=''
 	params["templatelist"]=[]
@@ -40,6 +50,7 @@ def createDefaultParams():
 	params["multiple_range"]=False
 	params["dbimages"]=False
 	params["alldbimages"]=False
+	params["sessionname"]=None
 	params["session"]=None
 	params["preset"]=None
 	params["runid"]='run1'
@@ -66,7 +77,31 @@ def createDefaultParams():
 	params["no_length_prune"]=False
 	params["stdev"]=0
 	params["test"]=False
-	params['doneDictName'] = ".selexondone"
+
+#ACE parameters:
+	params['edgethcarbon']=0.8
+	params['edgethice']=0.6
+	params['pfcarbon']=0.9
+	params['pfice']=0.3
+	params['overlap']=2
+	params['fieldsize']=512
+	params['resamplefr']=1
+	params['drange']=0
+	params['dbimages']='FALSE'
+	params['alldbimages']=False
+	params['preset']=None
+	params['tempdir']='/tmp/'
+	params['medium']='carbon'
+	params['cs']=2.0
+	params['outdir']=None
+	params['runid']='run1'
+	params['display']=1
+	params['stig']=0
+	params['continue']='FALSE'
+	params['nominal']=None
+	params['commit']=False
+	params['reprocess']=None
+
 	return params
 
 def createDefaultStats():
@@ -87,11 +122,21 @@ def createDefaultStats():
 	stats['lastimageskipped'] = False
 	return stats
 
+def writeFunctionLog(commandline, file=".functionlog"):
+	f=open(file,'a')
+	out=""
+	for n in commandline:
+		out=out+n+" "
+	f.write(out)
+	f.write("\n")
+	f.close()
+
 def getOutDirs(params):
+	sessionq=data.SessionData(name=params['sessionname'])
 	#sessionq=data.SessionData(name=params['session']['name'])
-	#sessiondata=db.query(sessionq)
-	#impath=sessiondata[0]['image path']
-	#params['imgdir']=impath+'/'
+	sessiondata=db.query(sessionq)
+	impath=sessiondata[0]['image path']
+	params['imgdir']=impath+'/'
 
 	if params['outdir']:
 		pass
@@ -122,6 +167,8 @@ def parseCommandLineInput(args,params):
 	lastarg=1
 
 	# save the input parameters into the "params" dictionary
+
+###	SELEXON PARAMETERS
 
 	# first get all images
 	mrcfileroot=[]
@@ -202,22 +249,7 @@ def parseCommandLineInput(args,params):
 			params['templateIds']=templatestring
 		elif (elements[0]=='outdir'):
 			params['outdir']=elements[1]
-		elif (elements[0]=='dbimages'):
-			dbinfo=elements[1].split(',')
-			if len(dbinfo) == 2:
-				params['sessionname']=dbinfo[0]
-				params['preset']=dbinfo[1]
-				params["dbimages"]=True
-				params["continue"]=True # continue should be on for dbimages option
-			else:
-				print "\nERROR: dbimages must include both \'session\' and \'preset\'"+\
-					"parameters (ex: \'07feb13a,en\')\n"
-				sys.exit(1)
-		elif (elements[0]=='alldbimages'):
-			params['sessionname']=elements[1]
-			params['alldbimages']=True
-		elif arg=='commit':
-			params['commit']=True
+
 		elif arg=='defocpair':
 			params['defocpair']=True
 		elif arg=='shiftonly':
@@ -245,9 +277,93 @@ def parseCommandLineInput(args,params):
 			params["no_length_prune"]=True
 		elif (arg=='test'):
 			params["test"]=True
+
+###	ACE PARAMETERS
+
+		elif (elements[0]=='edgethcarbon'):
+			params["edgethcarbon"]=float(elements[1])
+		elif (elements[0]=='edgethice'):
+			params["edgethice"]=float(elements[1])
+		elif (elements[0]=='pfcarbon'):
+			params["pfcarbon"]=float(elements[1])
+		elif (elements[0]=='pfice'):
+			params["pfice"]=float(elements[1])
+		elif (elements[0]=='overlap'):
+			params["overlap"]=int(elements[1])
+		elif (elements[0]=='fieldsize'):
+			params["fieldsize"]=int(elements[1])
+		elif (elements[0]=='resamplefr'):
+			params["resamplefr"]=float(elements[1])
+		elif (elements[0]=='drange'):
+			drange=int(elements[1])
+			if drange == 1 or drange== 0:
+				params["drange"]=drange
+			else:
+				print "Error: drange should only be 0 or 1"
+				sys.exit()
+
+		elif (elements[0]=='tempdir'):
+			params['tempdir']=elements[1]
+		elif (elements[0]=='medium'):
+			medium=elements[1]
+			if medium=='carbon' or medium=='ice':
+				params['medium']=medium
+			else:
+				print "medium can only be 'carbon' or 'ice'"
+				sys.exit()
+		elif (elements[0]=='cs'):
+			params['cs']=float(elements[1])
+		elif (elements[0]=='outdir'):
+			params['outdir']=elements[1]
+		elif (elements[0]=='runid'):
+			params['runid']=elements[1]
+		elif (elements[0]=='display'):
+			display=int(elements[1])
+			if display==0 or display==1:
+				params['display']=display
+			else:
+				print "display must be 0 or 1"
+				sys.exit()		
+		elif (elements[0]=='stig'):
+			stig=int(elements[1])
+			if stig==0 or stig==1:
+				params['stig']=stig
+			else:
+				print "stig must be 0 or 1"
+				sys.exit()
+
+		elif (elements[0]=='nominal'):
+			params['nominal']=float(elements[1])
+
+		elif (elements[0]=='reprocess'):
+			params['reprocess']=float(elements[1])
+
+
+### GENERAL PARAMETERS
+		elif arg=='commit':
+			params['commit']=True
+			params['display']=1
+		elif arg=='continue':
+			params['continue']=True
+		elif (elements[0]=='dbimages'):
+			dbinfo=elements[1].split(',')
+			if len(dbinfo) == 2:
+				params['sessionname']=dbinfo[0]
+				params['preset']=dbinfo[1]
+				params["dbimages"]=True
+				params["continue"]=True # continue should be on for dbimages option
+			else:
+				print "\nERROR: dbimages must include both \'sessionname\' and \'preset\'"+\
+					"parameters (ex: \'07feb13a,en\')\n"
+				sys.exit(1)
+		elif (elements[0]=='alldbimages'):
+			params['sessionname']=elements[1]
+			params['alldbimages']=True
 		else:
 			print "\nERROR: undefined parameter \'"+arg+"\'\n"
 			sys.exit(1)
+
+	return params
 
 def checkParamConflicts(params):
 	if not params['templateIds'] and not params['apix']:

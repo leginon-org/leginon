@@ -16,23 +16,21 @@ import apCrud
 
 data.holdImages(False)
 
-imagesskipped=False
-
 if __name__ == '__main__':
-
 	# record command line
-	writeSelexLog(sys.argv)
+	apParam.writeFunctionLog(sys.argv,".selexonlog")
 
 	print " ... checking parameters"
 	# create params dictionary & set defaults
-	params=apParam.createDefaultParams()
-	stats =apParam.createDefaultStats()
+	params = apParam.createDefaultParams(function=sys.argv[0])
+	stats  = apParam.createDefaultStats()
 
 	# parse command line input
 	apParam.parseCommandLineInput(sys.argv,params)
 
 	# if shiftonly is specified, make defocpair true
 	if params['shiftonly']:
+		print "write me a different program for shiftonly"
 		params['defocpair']=True
 
 	# check to make sure that incompatible parameters are not set
@@ -201,7 +199,7 @@ if __name__ == '__main__':
 				pik2Box(params,imgname)
 		
 			# find defocus pair if defocpair is specified
-			if params['defocpair']:
+			if params['defocpair'] == True:
 				sibling=getDefocusPair(img)
 				if sibling:
 					peak=getShift(img,sibling)
@@ -209,9 +207,9 @@ if __name__ == '__main__':
 					if params['commit']:
 						insertShift(img,sibling,peak)
 			
-			if params['commit']:
+			if params['commit'] == True:
 				expid=int(img['session'].dbid)
-				insertParticlePicks(params,img,expid)
+				sf1.insertParticlePicks(params,img,expid)
 
 			# write results to dictionary
 			apLoop.writeDoneDict(donedict,params,imgname)

@@ -51,9 +51,9 @@ def createDefaults():
 	params['fieldsize']=512
 	params['resamplefr']=1
 	params['drange']=0
-	params['dbimages']='FALSE'
+	params['dbimages']=False
 	params['alldbimages']=False
-	params['session']=None
+	params['sessionname']=None
 	params['preset']=None
 	params['tempdir']='./temp/'
 	params['medium']='carbon'
@@ -62,9 +62,9 @@ def createDefaults():
 	params['runid']='run1'
 	params['display']=1
 	params['stig']=0
-	params['continue']='FALSE'
+	params['continue']=False
 	params['nominal']=None
-	params['commit']='FALSE'
+	params['commit']=False
 	params['reprocess']=None
 
 	return(params)
@@ -102,15 +102,15 @@ def parseInput(args):
 		elif (elements[0]=='dbimages'):
 			dbinfo=elements[1].split(',')
 			if len(dbinfo)==2:
-				params['session']=dbinfo[0]
+				params['sessionname']=dbinfo[0]
 				params['preset']=dbinfo[1]
-				params['dbimages']='TRUE'
-				params['continue']='TRUE'
+				params['dbimages']=True
+				params['continue']=True
 			else:
-				print "dbimages must include both session and preset parameters"
+				print "dbimages must include both sessionname and preset parameters"
 				sys.exit()
 		elif (elements[0]=='alldbimages'):
-			params['session']=elements[1]
+			params['sessionname']=elements[1]
 			params['alldbimages']=True
 		elif (elements[0]=='tempdir'):
 			params['tempdir']=elements[1]
@@ -142,11 +142,11 @@ def parseInput(args):
 				print "stig must be 0 or 1"
 				sys.exit()
 		elif arg=='continue':
-			params['continue']='TRUE'
+			params['continue']=True
 		elif (elements[0]=='nominal'):
 			params['nominal']=float(elements[1])
 		elif arg=='commit':
-			params['commit']='TRUE'
+			params['commit']=True
 			params['display']=1
 		elif (elements[0]=='reprocess'):
 			params['reprocess']=float(elements[1])
@@ -179,7 +179,7 @@ def getAllImagesFromDB(session):
 	return (imagelist)
 	
 def getImagesToReprocess(params):
-	session=params['session']
+	session=params['sessionname']
 	preset=params['preset']
 	threshold=params['reprocess']
 	images=getImagesFromDB(session,preset)
@@ -305,7 +305,7 @@ def runAce(matlab,img,params):
 	pymat.eval(matlab,("dforig = %e;" % nominal))
 
 	expid=int(img['session'].dbid)
-	if params['commit']=='TRUE':
+	if params['commit']==True:
 		#insert ace params into dbctfdata.ace_params table in db
 		insertAceParams(params,expid)
 
@@ -342,7 +342,7 @@ def runAce(matlab,img,params):
 		pymat.eval(matlab,("imwrite(im2,'%s');" % (opimfile2)))
 
 		#insert ctf params into dbctfdata.ctf table in db
-		if (params['commit']=='TRUE'):
+		if (params['commit']==True):
 			insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfile2)
 
 	return
@@ -469,9 +469,10 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfil
 	return
 
 def getOutDirs(params):
-	sessionq=data.SessionData(name=params['session'])
+	sessionq=data.SessionData(name=params['sessionname'])
 	sessiondata=db.query(sessionq)
 	impath=sessiondata[0]['image path']
+	print impath,sessiondata,sessionq
 	params['imgdir']=impath+'/'
 
 	if params['outdir']:
@@ -499,7 +500,7 @@ def getOutDirs(params):
 	return(params)
 
 def getOutTextFile(params):
-	session=params['session']
+	session=params['sessionname']
 	rundir=params['rundir']
 	outtextfile=os.path.join(rundir,(session+'.txt'))
 	params['outtextfile']=outtextfile
