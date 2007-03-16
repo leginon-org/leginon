@@ -4,6 +4,13 @@ import os
 import time
 import mem
 import re
+import data
+import dbdatakeeper
+
+db=dbdatakeeper.DBDataKeeper()
+partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
+projdb=dbdatakeeper.DBDataKeeper(db='project')
+data.holdImages(False)
 
 def createDefaultParams():
 	# create default values for parameters
@@ -79,6 +86,32 @@ def createDefaultStats():
 	stats['waittime'] = 0
 	stats['lastimageskipped'] = False
 	return stats
+
+def getOutDirs(params):
+	#sessionq=data.SessionData(name=params['session']['name'])
+	#sessiondata=db.query(sessionq)
+	#impath=sessiondata[0]['image path']
+	#params['imgdir']=impath+'/'
+
+	if params['outdir']:
+		pass
+	else:
+		outdir=os.path.split(impath)[0]
+		outdir=os.path.join(outdir,'extract/')
+		params['outdir']=outdir
+
+	params['rundir']=os.path.join(params['outdir'],params['runid'])
+	
+	if os.path.exists(params['rundir']):
+		print " !!! WARNING: run directory for \'"+str(params['runid'])+"\' already exists.\n"
+		if params["continue"]==False:
+			print " !!! WARNING: continue option is OFF if you WILL overwrite previous run."
+			time.sleep(10)
+	else:
+		os.makedirs(params['rundir'])
+
+	return(params)
+
 
 def parseCommandLineInput(args,params):
 	# check that there are enough input parameters

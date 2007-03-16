@@ -8,6 +8,8 @@ import time
 #import mem
 import apLoop
 import apParam
+import selexonFunctions  as sf1
+import selexonFunctions2 as sf2
 from selexonFunctions import *
 from selexonFunctions2 import *
 import apCrud
@@ -57,7 +59,8 @@ if __name__ == '__main__':
 		params['session']=images[0]['session']
 	stats['imagecount']=len(images)
 
-	getOutDirs(params)
+	#apParam.getOutDirs(params)
+	sf1.getOutDirs(params)
 
 	# if templateIds specified, create temporary template files in this directory & rescale
 	print " ... getting templates"
@@ -167,8 +170,7 @@ if __name__ == '__main__':
 			if numpeaks == 0 and not os.path.exists("pikfiles/"+imgname+".a.pik"):
 				print "no particles found in \'"+imgname+".mrc\'"
 				# write results to dictionary
-				donedict[imgname]=True
-				writeDoneDict(donedict, params)
+				apLoop.writeDoneDict(donedict,params,imgname)
 				continue
 
 			# run the crud finder on selected particles if specified
@@ -182,8 +184,7 @@ if __name__ == '__main__':
 				if not (os.path.exists("pikfiles/"+imgname+".a.pik.nocrud")):
 					print "no particles left after crudfinder in \'"+imgname+".mrc\'"
  					# write results to dictionary
-					donedict[imgname]=True
-					writeDoneDict(donedict)
+					apLoop.writeDoneDict(donedict,params,imgname)
 					continue
 
 			#CREATE JPG of selected particles if not created by crudfinder

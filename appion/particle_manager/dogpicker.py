@@ -5,14 +5,17 @@ import data
 import time
 import libcv2
 import Mrc
+import selexonFunctions  as sf1
+import selexonFunctions2 as sf2
 from selexonFunctions  import *
 from selexonFunctions2 import *
+import apLoop
+import apParam
 
-donename = '.doneimages.py'
 
-def createDogDefaults():
-	
-	params={}
+def modifyDefaultParams(params):
+	#params={}
+	params["ourdir"]="/tmp"
 	params["apix"]=1
 	params["diam"]=0
 	params["bin"]=4
@@ -24,7 +27,7 @@ def createDogDefaults():
 	params["preset"]=None
 	params["id"]='picka_'
 	params['commit']=False
-	
+	params['doneDictName'] = ".doneimages"
 	return params
 
 def dogHelp():
@@ -56,6 +59,8 @@ def parseDogInput(args,params):
 			params["maxt"]=float(elements[1])
 		elif (elements[0]=='id'):
 			params["id"]=elements[1]
+		elif (elements[0]=='outdir'):
+			params['outdir']=elements[1]
 		elif (elements[0]=='dbimages'):
 			dbinfo=elements[1].split(',')
 			if len(dbinfo) == 2:
@@ -70,33 +75,11 @@ def parseDogInput(args,params):
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
 
+def runDogDetection(imagename, params):
+	#imgpath = img['session']['image path'] + '/' + imagename + '.mrc'
+	#image = Mrc.mrc_to_numeric(imgpath)
+	image = sf1.getImageData(imagename)['image']
 
-def getDoneDict(donename):
-	if os.path.exists(donename):
-		f=open(donename,'r')
-		donedict=cPickle.load(f)
-		f.close()
-		return donedict
-	else:
-		donedict={}
-		return (donedict)
-
-def writeDoneDict(donedict,donename):
-	f=open(donename,'w')
-	cPickle.dump(donedict,f)
-	f.close()
-	
-
-
-if __name__ == '__main__':
-
-	params=createDogDefaults()
-	
-	if len(sys.argv) < 2:
-		dogHelp()
-	else:
-		parseDogInput(sys.argv,params)
-	
 	scale          = params['apix']
 	estimated_size = params['diam']/2
 	search_range   = params['range']
@@ -104,28 +87,44 @@ if __name__ == '__main__':
 	mintreshold    = params['mint']
 	maxtreshold    = params['maxt']
 	bin            = params['bin']
+
+	peaks = libcv2.dogDetector(image,bin,estimated_size,search_range,sampling,mintreshold,maxtreshold)
+
+	return peaks
+
+if __name__ == '__main__':
+
+	params=apParam.createDefaultParams()
+	params=modifyDefaultParams(params)
+	stats=apParam.createDefaultStats()
+
+	if len(sys.argv) < 2:
+		dogHelp()
+	else:
+		parseDogInput(sys.argv,params)
 	
+	apParam.getOutDirs(params)
+
 	#estimated_size = estimated_size / ( scale * bin )
 	#search_range   =  search_range  / ( scale * bin )
 	
-	images=getImagesFromDB(params['sessionname'],params['preset'])
+	images=sf1.getImagesFromDB(params['sessionname'],params['preset'])
+	stats['imagecount']=len(images)
 
 	params['session']=images[0]['session']
 	
-	donedict=getDoneDict(donename)
+	donedict=apLoop.readDoneDict(params)
 
 	for img in images:
 		
 		imagename = img['filename']
-		doneCheck(donedict,imagename)
-		if donedict[imagename]: 
-			print 'skipping' + imagename
+
+		stats['imagesleft'] = stats['imagecount'] - stats['count']
+		#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
+		if( apLoop.startLoop(img, donedict, stats, params)==False ):
 			continue
-		
-		imgpath = img['session']['image path'] + '/' + imagename + '.mrc'
-		image = Mrc.mrc_to_numeric(imgpath)
-		
-		peaks = libcv2.dogDetector(image,bin,estimated_size,search_range,sampling,mintreshold,maxtreshold)
+
+		peaks = runDogDetection(imagename, params)
 		
 		expid = int(img['session'].dbid)
 		legimgid = int(img.dbid)
@@ -173,7 +172,7 @@ if __name__ == '__main__':
 				particle['correlation'] = sca
 				partdb.insert(particle)
 			
-			
+		apLoop.printSummary(stats, params)
+
 		print imagename + ' is done'
-		donedict[imagename] = True
-		writeDoneDict(donedict,donename)
+		apLoop.writeDoneDict(donedict,params,imagename)
