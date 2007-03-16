@@ -859,7 +859,31 @@ def writeSelexLog(commandline, file=".selexonlog"):
 	f.write("\n")
 	f.close()
 
+def getDoneDict(selexondonename):
+	if os.path.exists(selexondonename):
+		# unpickle previously modified dictionary
+		f=open(selexondonename,'r')
+		donedict=cPickle.load(f)
+		f.close()
+	else:
+		#set up dictionary
+		donedict={}
+	return (donedict)
 
+def writeDoneDict(donedict,selexondonename):
+	f=open(selexondonename,'w')
+	cPickle.dump(donedict,f)
+	f.close()
+
+def doneCheck(donedict,im):
+	# check to see if image has been processed yet and
+	# append dictionary if it hasn't
+	# this may not be the best way to do this
+	if donedict.has_key(im):
+		pass
+	else:
+		donedict[im]=None
+	return
 
 def getImageData(imagename):
 	# get image data object from database
