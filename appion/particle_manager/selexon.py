@@ -23,10 +23,11 @@ if __name__ == '__main__':
 
 	print " ... checking parameters"
 	# create params dictionary & set defaults
-	params=apParam.createDefaults()
+	params=apParam.createDefaultParams()
+	stats =apParam.createDefaultStats()
 
 	# parse command line input
-	parseSelexonInput(sys.argv,params)
+	apParam.parseCommandLineInput(sys.argv,params)
 
 	# if shiftonly is specified, make defocpair true
 	if params['shiftonly']:
@@ -54,7 +55,7 @@ if __name__ == '__main__':
 			imageresult=db.query(imageq, readimages=False)
 			images=images+imageresult
 		params['session']=images[0]['session']
-	params['imagecount']=len(images)
+	stats['imagecount']=len(images)
 
 	getOutDirs(params)
 
@@ -132,18 +133,18 @@ if __name__ == '__main__':
 		while images:
 			img = images.pop(0)
 			imgname=img['filename']
-			params['imagesleft'] = len(images)
+			stats['imagesleft'] = len(images)
 
 			#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
-			if( apLoop.startLoop(img, donedict, params)==False ):
+			if( apLoop.startLoop(img, donedict, stats, params)==False ):
 				continue
 
 			# run FindEM
 			if params['method'] == "experimental":
 				#Finds peaks as well:
 				numpeaks = runCrossCorr(params,imgname)
-				params['peaksum']   = params['peaksum'] + numpeaks
-				params['peaksumsq'] = params['peaksumsq'] + numpeaks**2
+				stats['peaksum']   = stats['peaksum'] + numpeaks
+				stats['peaksumsq'] = stats['peaksumsq'] + numpeaks**2
 			else:
 #				tmpRemoveCrud(params,imgname)
 				dwnsizeImg(params,imgname)
@@ -158,8 +159,8 @@ if __name__ == '__main__':
 				print "skipping findpeaks..."
 			else:
 				numpeaks = findPeaks2(params,imgname)
-				params['peaksum']   = params['peaksum'] + numpeaks
-				params['peaksumsq'] = params['peaksumsq'] + numpeaks**2
+				stats['peaksum']   = stats['peaksum'] + numpeaks
+				stats['peaksumsq'] = stats['peaksumsq'] + numpeaks**2
 
 			# if no particles were found, skip rest and go to next image
 			#if not (os.path.exists("pikfiles/"+imgname+".a.pik")):
@@ -167,7 +168,7 @@ if __name__ == '__main__':
 				print "no particles found in \'"+imgname+".mrc\'"
 				# write results to dictionary
 				donedict[imgname]=True
-				writeDoneDict(donedict,params)
+				writeDoneDict(donedict, params)
 				continue
 
 			# run the crud finder on selected particles if specified
@@ -211,12 +212,12 @@ if __name__ == '__main__':
 			# write results to dictionary
 			apLoop.writeDoneDict(donedict,params,imgname)
 
-			tdiff = time.time()-params['beginLoopTime']
+			tdiff = time.time()-stats['beginLoopTime']
 			if(params["continue"]==False or tdiff > 0.3):
-				apLoop.printSummary(params)
+				apLoop.printSummary(stats, params)
 			#END LOOP OVER IMAGES
 
-		notdone = apLoop.waitForMoreImages(params)
+		notdone = apLoop.waitForMoreImages(stats, params)
 		#END NOTDONE LOOP
 
 	# remove temporary templates if getting images from db
@@ -231,7 +232,7 @@ if __name__ == '__main__':
 			os.remove(scdwnname)
 			i=i+1
 			
-	ttotal= "%.2f" % float(time.time()-params["startTime"])
+	ttotal= "%.2f" % float(time.time()-stats["startTime"])
 	print "COMPLETE LOOP:\t",ttotal,"seconds for",count-1,"images"
 	print "end run"
 	print "====================================================="
