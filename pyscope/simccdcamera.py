@@ -96,7 +96,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
     def getCameraSize(self):
         return copy.copy(self.camera_size)
 
-    def getImage(self):
+    def _getImage(self):
         if not self.validateGeometry():
             raise ValueError('invalid image geometry')
 

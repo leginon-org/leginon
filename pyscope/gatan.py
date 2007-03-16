@@ -101,7 +101,7 @@ class Gatan(ccdcamera.CCDCamera):
             raise ValueError('invalid exposure type')
         self.exposuretype = value
 
-    def getImage(self):
+    def _getImage(self):
         try:
             self.camera.Binning = self.binning['x']
             self.camera.CameraLeft = self.offset['x']

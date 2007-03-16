@@ -323,7 +323,7 @@ class Tietz(object):
 			raise ValueError('invalid exposure type')
 		self.exposuretype = value
 
-	def getImage(self):
+	def _getImage(self):
 		# {'type': numarray.ArrayType}
 		# 0 uses internal flash signal
 		# 1 uses internal exposure signal (PVCam and PXL only)

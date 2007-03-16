@@ -4,18 +4,26 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyScope/ccdcamera.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-02-01 21:55:07 $
-# $Author: suloway $
+# $Date: 2007-03-16 22:04:18 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
+
+import time
+import threading
 
 class GeometryError(Exception):
 	pass
 
 class CCDCamera(object):
 	name = 'CCD Camera'
+
+	def __init__(self):
+		self.buffer = {}
+		self.buffer_ready = {}
+		self.bufferlock = threading.Lock()
 
 	def validateGeometry(self, geometry=None):
 		if geometry is None:
@@ -92,7 +100,42 @@ class CCDCamera(object):
 	def getCameraSize(self):
 		raise NotImplementedError
 
-	def getImage(self):
+	def getImage(self, bgreadout=False):
+		if bgreadout:
+			return self.backgroundReadout()
+		else:
+			return self._getImage()
+
+	def backgroundReadout(self):
+		name = str(time.time())
+		self.buffer_ready[name] = threading.Event()
+		threading.Thread(target=self.getImageToBuffer, args=(name,)).run()
+		t = 1.0 + self.getExposureTime() / 1000.0
+		## wait for t or getImage to be done, which ever is first
+		self.buffer_ready[name].wait(t)
+		return name
+
+	def getImageToBuffer(self, name):
+		image = self._getImage()
+		self.bufferlock.acquire()
+		self.buffer[name] = image
+		self.bufferlock.release()
+		self.buffer_ready[name].set()
+
+	def getBuffer(self, name, block=False):
+		if block:
+			self.buffer_ready[name].wait()
+		self.bufferlock.acquire()
+		if name in self.buffer:
+			image = self.buffer[name]
+			del self.buffer[name]
+			del self.buffer_ready[name]
+		else:	
+			image = None
+		self.bufferlock.release()
+		return image
+
+	def _getImage(self):
 		raise NotImplementedError
 
 	def getRetractable(self):
