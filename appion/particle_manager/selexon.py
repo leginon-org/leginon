@@ -57,8 +57,8 @@ if __name__ == '__main__':
 		params['session']=images[0]['session']
 	stats['imagecount']=len(images)
 
-	#apParam.getOutDirs(params)
-	sf1.getOutDirs(params)
+	apParam.createOutputDirs(params)
+	#sf1.getOutDirs(params)
 
 	# if templateIds specified, create temporary template files in this directory & rescale
 	print " ... getting templates"

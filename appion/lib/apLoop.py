@@ -89,9 +89,9 @@ def startLoop(img,donedict,stats,params):
 	params['apix']=sf1.getPixelSize(img)
 
 	# skip if image doesn't exist:
-	#if not os.path.isfile(params['imgdir']+img['filename']+'.mrc'):
-	#	print " !!! "+img['filename']+".mrc not found, skipping"
-	#	return False
+	if not os.path.isfile(params['imgdir']+img['filename']+'.mrc'):
+		print " !!! "+img['filename']+".mrc not found, skipping"
+		return False
 
 	# if continue option is true, check to see if image has already been processed
 	imgname=img['filename']
@@ -118,7 +118,7 @@ def printSummary(stats,params):
 	count = stats['count']
 	#if(count != stats['lastcount']):
 	if(params['method'] != None):
-		print "\n\tSUMMARY: using",params['method'],"method"
+		print "\n\tSUMMARY: using",params['method'],"method for",params['function']
 	else:
 		print "\n\tSUMMARY:"
 	_printLine()

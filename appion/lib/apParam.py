@@ -24,59 +24,49 @@ def createDefaultParams(function=None):
 	else:
 		params['function']="generic"
 		params['doneDictName'] = ".functiondonedict"
-#selexon parameters
-	params["mrcfileroot"]=''
-	params["template"]=''
-	params["templatelist"]=[]
-	params["apix"]=None
-	params["diam"]=0
-	params["bin"]=4
-	params["startang"]=0
-	params["endang"]=10
-	params["incrang"]=20
-	params["thresh"]=0.5
-	params["autopik"]=0
-	params["lp"]=30
-	params["hp"]=600
-	params["box"]=0
-	params["crud"]=False
-	params["cdiam"]=0
-	params["cblur"]=3.5
-	params["clo"]=0.6
-	params["chi"]=0.95
-	params["cstd"]=1
-	params["crudonly"]=False
-	params["continue"]=False
-	params["multiple_range"]=False
-	params["dbimages"]=False
-	params["alldbimages"]=False
-	params["sessionname"]=None
-	params["session"]=None
-	params["preset"]=None
-	params["runid"]='run1'
-	params["commit"]=False
-	params["defocpair"]=False
-	params["abspath"]=os.path.abspath('.')+'/'
-	params["shiftonly"]=False
-	params["templateIds"]=''
-	params["ogTmpltInfo"]=[]
-	params["scaledapix"]={}
-	params["outdir"]=None
-	params['description']=None
-	params['scale']=1
-	params['projectId']=None
-	params['prtltype']=None
+
+### SELEXON PARAMETERS
+	params['mrcfileroot']=''
+	params['template']=''
+	params['templatelist']=[]
+	params['startang']=0
+	params['endang']=10
+	params['incrang']=20
+	params['thresh']=0.5
+	params['autopik']=0
+	params['lp']=30
+	params['hp']=600
+	params['box']=0
 	params['method']="updated"
 	params['overlapmult']=1.5
 	params['maxpeaks']=1500
-	params["cschi"]=1
-	params["csclo"]=0
-	params["convolve"]=0
-	params["no_hull"]=False
-	params["cv"]=False
-	params["no_length_prune"]=False
-	params["stdev"]=0
-	params["test"]=False
+	params['defocpair']=False
+	params['abspath']=os.path.abspath('.')+'/'
+	params['shiftonly']=False
+	params['templateIds']=''
+
+### CRUD PARAMETERS
+	params['crud']=False
+	params['cdiam']=0
+	params['cblur']=3.5
+	params['clo']=0.6
+	params['chi']=0.95
+	params['cstd']=1
+	params['crudonly']=False
+	params['multiple_range']=False
+	params['ogTmpltInfo']=[]
+	params['scaledapix']={}
+	params['scale']=1
+	params['projectId']=None
+	params['prtltype']=None
+	params['cschi']=1
+	params['csclo']=0
+	params['convolve']=0
+	params['no_hull']=False
+	params['cv']=False
+	params['no_length_prune']=False
+	params['stdev']=0
+	params['test']=False
 
 #ACE parameters:
 	params['edgethcarbon']=0.8
@@ -87,26 +77,41 @@ def createDefaultParams(function=None):
 	params['fieldsize']=512
 	params['resamplefr']=1
 	params['drange']=0
-	params['dbimages']='FALSE'
-	params['alldbimages']=False
-	params['preset']=None
-	params['tempdir']='/tmp/'
-	params['medium']='carbon'
+	params['tempdir']="/tmp/"
+	params['medium']="carbon"
 	params['cs']=2.0
-	params['outdir']=None
-	params['runid']='run1'
 	params['display']=1
 	params['stig']=0
-	params['continue']='FALSE'
 	params['nominal']=None
-	params['commit']=False
 	params['reprocess']=None
+
+### DOG PARAMETERS
+	params["sizerange"]=0
+	params["numslices"]=1
+	params["minthresh"]=3
+	params["maxthresh"]=7
+	params["id"]='picka_'
+
+### COMMON PARAMETERS
+	params["outdir"]="/tmp"
+	params['sessionname']=None
+	params['session']=None
+	params['preset']=None
+	params['runid']="run1"
+	params['dbimages']=False
+	params['alldbimages']=False
+	params['apix']=None
+	params['diam']=0
+	params['bin']=4
+	params['continue']=False
+	params['commit']=False
+	params['description']=None
 
 	return params
 
 def createDefaultStats():
 	stats={}
-	stats["startTime"]=time.time()
+	stats['startTime']=time.time()
 	stats['count']  = 1
 	stats['skipcount'] = 1
 	stats['lastcount'] = 0
@@ -131,7 +136,7 @@ def writeFunctionLog(commandline, file=".functionlog"):
 	f.write("\n")
 	f.close()
 
-def getOutDirs(params):
+def createOutputDirs(params):
 	sessionq=data.SessionData(name=params['sessionname'])
 	#sessionq=data.SessionData(name=params['session']['name'])
 	sessiondata=db.query(sessionq)
@@ -142,20 +147,30 @@ def getOutDirs(params):
 		pass
 	else:
 		outdir=os.path.split(impath)[0]
-		outdir=os.path.join(outdir,'extract/')
+		outdir=os.path.join(outdir,params['function']+"/") #'extract/')
 		params['outdir']=outdir
 
 	params['rundir']=os.path.join(params['outdir'],params['runid'])
-	
+	print " ... run directory defined as:",params['rundir']
+	params['matdir']=os.path.join(params['rundir'],"matfiles")
+	params['opimagedir']=os.path.join(params['rundir'],"opimages")
+
 	if os.path.exists(params['rundir']):
 		print " !!! WARNING: run directory for \'"+str(params['runid'])+"\' already exists."
-		if params["continue"]==False:
+		if params['continue']==False:
 			print " !!! WARNING: continue option is OFF. you WILL overwrite previous run."
 			time.sleep(10)
+		#else:
+			#if(params['function'] == "pyace"):
+				#os.makedirs(params['matdir'])
+				#os.makedirs(params['opimagedir'])
 	else:
 		os.makedirs(params['rundir'])
+		if(params['function'] == "pyace"):
+			os.makedirs(params['matdir'])
+			os.makedirs(params['opimagedir'])
 
-	return(params)
+	return params
 
 
 def parseCommandLineInput(args,params):
@@ -189,12 +204,6 @@ def parseCommandLineInput(args,params):
 		elements=arg.split('=')
 		if (elements[0]=='template'):
 			params['template']=elements[1]
-		elif (elements[0]=='apix'):
-			params['apix']=float(elements[1])
-		elif (elements[0]=='diam'):
-			params['diam']=float(elements[1])
-		elif (elements[0]=='bin'):
-			params['bin']=int(elements[1])
 		elif (elements[0]=='range'):
 			angs=elements[1].split(',')
 			if (len(angs)==3):
@@ -216,40 +225,33 @@ def parseCommandLineInput(args,params):
  				print "\nERROR: \'range\' must include 3 angle parameters: start, stop, & increment\n"
 				sys.exit(1)
 		elif (elements[0]=='thresh'):
-			params["thresh"]=float(elements[1])
+			params['thresh']=float(elements[1])
 		elif (elements[0]=='autopik'):
-			params["autopik"]=float(elements[1])
+			params['autopik']=float(elements[1])
 		elif (elements[0]=='lp'):
-			params["lp"]=float(elements[1])
+			params['lp']=float(elements[1])
 		elif (elements[0]=='hp'):
-			params["hp"]=float(elements[1])
+			params['hp']=float(elements[1])
 		elif (elements[0]=='box'):
-			params["box"]=int(elements[1])
+			params['box']=int(elements[1])
 		elif (arg=='crud'):
-			params["crud"]=True
+			params['crud']=True
 		elif (elements[0]=='cruddiam'):
-			params["crud"]=True
-			params["cdiam"]=float(elements[1])
+			params['crud']=True
+			params['cdiam']=float(elements[1])
 		elif (elements[0]=='crudblur'):
-			params["cblur"]=float(elements[1])
+			params['cblur']=float(elements[1])
 		elif (elements[0]=='crudlo'):
-			params["clo"]=float(elements[1])
+			params['clo']=float(elements[1])
 		elif (elements[0]=='crudhi'):
-			params["chi"]=float(elements[1])
+			params['chi']=float(elements[1])
 		elif (elements[0]=='crudstd'):
-			params["cstd"]=float(elements[1])
-		elif (elements[0]=='runid'):
-			params["runid"]=elements[1]
+			params['cstd']=float(elements[1])
 		elif (arg=='crudonly'):
-			params["crudonly"]=True
-		elif (arg=='continue'):
-			params["continue"]=True
+			params['crudonly']=True
 		elif (elements[0]=='templateIds'):
 			templatestring=elements[1].split(',')
 			params['templateIds']=templatestring
-		elif (elements[0]=='outdir'):
-			params['outdir']=elements[1]
-
 		elif arg=='defocpair':
 			params['defocpair']=True
 		elif arg=='shiftonly':
@@ -261,43 +263,43 @@ def parseCommandLineInput(args,params):
 		elif (elements[0]=='maxpeaks'):
 			params['maxpeaks']=int(elements[1])
 		elif (elements[0]=='crudschi'):
-			params["cschi"]=float(elements[1])
+			params['cschi']=float(elements[1])
 		elif (elements[0]=='crudsclo'):
-			params["csclo"]=float(elements[1])
+			params['csclo']=float(elements[1])
 		elif (elements[0]=='convolve'):
-			params["convolve"]=float(elements[1])
+			params['convolve']=float(elements[1])
 		elif (elements[0]=='stdev'):
-			params["stdev"]=float(elements[1])
+			params['stdev']=float(elements[1])
 		elif (arg=='no_hull'):
-			params["no_hull"]=True
+			params['no_hull']=True
 		elif (arg=='cv'):
-			params["cv"]=True
-			params["no_hull"]=True
+			params['cv']=True
+			params['no_hull']=True
 		elif (arg=='no_length_prune'):
-			params["no_length_prune"]=True
+			params['no_length_prune']=True
 		elif (arg=='test'):
-			params["test"]=True
+			params['test']=True
 
 ###	ACE PARAMETERS
 
 		elif (elements[0]=='edgethcarbon'):
-			params["edgethcarbon"]=float(elements[1])
+			params['edgethcarbon']=float(elements[1])
 		elif (elements[0]=='edgethice'):
-			params["edgethice"]=float(elements[1])
+			params['edgethice']=float(elements[1])
 		elif (elements[0]=='pfcarbon'):
-			params["pfcarbon"]=float(elements[1])
+			params['pfcarbon']=float(elements[1])
 		elif (elements[0]=='pfice'):
-			params["pfice"]=float(elements[1])
+			params['pfice']=float(elements[1])
 		elif (elements[0]=='overlap'):
-			params["overlap"]=int(elements[1])
+			params['overlap']=int(elements[1])
 		elif (elements[0]=='fieldsize'):
-			params["fieldsize"]=int(elements[1])
+			params['fieldsize']=int(elements[1])
 		elif (elements[0]=='resamplefr'):
-			params["resamplefr"]=float(elements[1])
+			params['resamplefr']=float(elements[1])
 		elif (elements[0]=='drange'):
 			drange=int(elements[1])
 			if drange == 1 or drange== 0:
-				params["drange"]=drange
+				params['drange']=drange
 			else:
 				print "Error: drange should only be 0 or 1"
 				sys.exit()
@@ -310,13 +312,9 @@ def parseCommandLineInput(args,params):
 				params['medium']=medium
 			else:
 				print "medium can only be 'carbon' or 'ice'"
-				sys.exit()
+				sys.exit(1)
 		elif (elements[0]=='cs'):
 			params['cs']=float(elements[1])
-		elif (elements[0]=='outdir'):
-			params['outdir']=elements[1]
-		elif (elements[0]=='runid'):
-			params['runid']=elements[1]
 		elif (elements[0]=='display'):
 			display=int(elements[1])
 			if display==0 or display==1:
@@ -338,8 +336,30 @@ def parseCommandLineInput(args,params):
 		elif (elements[0]=='reprocess'):
 			params['reprocess']=float(elements[1])
 
+### DOG PICKER PARAMS
+
+		elif (elements[0]=='range'):
+			params['sizerange']=float(elements[1])
+		elif (elements[0]=='numslices'):
+			params['numslices']=float(elements[1])
+		elif (elements[0]=='minthresh'):
+			params['minthresh']=float(elements[1])
+		elif (elements[0]=='maxthresh'):
+			params['maxthresh']=float(elements[1])
+		elif (elements[0]=='id'):
+			params['id']=elements[1]
 
 ### GENERAL PARAMETERS
+		elif (elements[0]=='outdir'):
+			params['outdir']=elements[1]
+		elif (elements[0]=='runid'):
+			params['runid']=elements[1]
+		elif (elements[0]=='apix'):
+			params['apix']=float(elements[1])
+		elif (elements[0]=='diam'):
+			params['diam']=float(elements[1])
+		elif (elements[0]=='bin'):
+			params['bin']=int(elements[1])
 		elif arg=='commit':
 			params['commit']=True
 			params['display']=1
@@ -350,8 +370,8 @@ def parseCommandLineInput(args,params):
 			if len(dbinfo) == 2:
 				params['sessionname']=dbinfo[0]
 				params['preset']=dbinfo[1]
-				params["dbimages"]=True
-				params["continue"]=True # continue should be on for dbimages option
+				params['dbimages']=True
+				params['continue']=True # continue should be on for dbimages option
 			else:
 				print "\nERROR: dbimages must include both \'sessionname\' and \'preset\'"+\
 					"parameters (ex: \'07feb13a,en\')\n"
@@ -362,6 +382,10 @@ def parseCommandLineInput(args,params):
 		else:
 			print "\nERROR: undefined parameter \'"+arg+"\'\n"
 			sys.exit(1)
+
+	if(params['apix'] != None and params['diam'] > 0):
+		params['pixdiam'] = params['diam']/params['apix']
+		params['binpixdiam'] = params['diam']/params['apix']/params['bin']
 
 	return params
 
@@ -375,13 +399,13 @@ def checkParamConflicts(params):
 	if params['crudonly']==True and params['shiftonly']==True:
 		print "\nERROR: crudonly and shiftonly can not be specified at the same time\n"
 		sys.exit(1)
-	if (params["thresh"]==0 and params["autopik"]==0):
+	if (params['thresh']==0 and params['autopik']==0):
 		print "\nERROR: neither manual threshold or autopik parameters are set, please set one.\n"
 		sys.exit(1)
-	if (params["diam"]==0):
+	if (params['diam']==0):
 		print "\nERROR: please input the diameter of your particle\n"
 		sys.exit(1)
-	if len(params["mrcfileroot"]) > 0 and params["dbimages"]==True:
+	if len(params['mrcfileroot']) > 0 and params['dbimages']==True:
 		print params['imagecount']
 		print "\nERROR: dbimages can not be specified if particular images have been specified\n"
 		sys.exit(1)

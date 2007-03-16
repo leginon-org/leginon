@@ -195,7 +195,7 @@ def getImagesToReprocess(params):
 				print imagename, 'has confidence and confidence_d <', threshold
 				imagelist.append(n)
 		else:
-			print imagename, 'not processed yet. Will process now with current ACE parameters.'
+			#print imagename, 'not processed yet. Will process now with current ACE parameters.'
 			imagelist.append(n)
 	return (imagelist)
 
@@ -321,12 +321,17 @@ def runAce(matlab,img,params):
 	pymat.eval(matlab,savematcommand)
 	ctfparams=pymat.get(matlab,'ctfparams')
 	if (params['stig']==0):
-		print "Nominal Defocus Confidence1 Confidence2"
-		print ('%1.3f   %1.3f   %1.3f       %1.3f' % (float(-nominal*1e6), float(ctfparams[0]*1e6), ctfparams[16], ctfparams[17]))
+		print " +---------+---------+-------+-------+ "
+		print " | Nominal | Defocus | Conf1 | Conf2 | "
+		print(" | %1.3f   |  %1.3f  | %1.3f | %1.3f | " % \
+			(float(-nominal*1e6), float(ctfparams[0]*1e6), ctfparams[16], ctfparams[17]))
+		print " +---------+---------+-------+-------+ "
 	else:
-		print "Nominal Defocus1 Defocus2 Confidence1 Confidence2"
-		print ('%1.3f   %1.3f   %1.3f       %1.3f       %1.3f' % (float(-nominal*1e6), float(ctfparams[0]*1e6), float(ctfparams[1]*1e6), ctfparams[16], ctfparams[17]))
-
+		print " +---------+----------+----------+-------+-------+ "
+		print " | Nominal | Defocus1 | Defocus2 | Conf1 | Conf2 | "
+		print(" |  %1.3f  |   %1.3f  |  %1.3f   | %1.3f | %1.3f | " % \
+			(float(-nominal*1e6), float(ctfparams[0]*1e6), float(ctfparams[1]*1e6), ctfparams[16], ctfparams[17]))
+		print " +---------+----------+----------+-------+-------+ "
 	#display must be on to be able to commit ctf results to db 	
 	if (params['display']):
 		imfile1=params['tempdir']+'im1.png'
