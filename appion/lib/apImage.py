@@ -67,6 +67,25 @@ def planeRegression(img):
 	return newarray
 
 
+def imageToArray(im, convertType='UInt8'):
+    """
+    Convert PIL image to Numarray array
+    copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
+    """
+    if im.mode == "L":
+        a = numarray.fromstring(im.tostring(), numarray.UInt8)
+        a = numarray.reshape(a, (im.size[1], im.size[0]))
+        #a.shape = (im.size[1], im.size[0], 1)  # alternate way
+    elif (im.mode=='RGB'):
+        a = numarray.fromstring(im.tostring(), numarray.UInt8)
+        a.shape = (im.size[1], im.size[0], 3)
+    else:
+        raise ValueError, im.mode+" mode not considered"
+
+    if convertType == 'Float32':
+        a = a.astype(numarray.Float32)
+    return a
+
 ######################################################################
 # Convexhull related functions Starts
 ######################################################################
@@ -98,7 +117,7 @@ def _myDet(p, q, r):
 
 
 def _isRightTurn((p, q, r)):
-	"Do the vectors pq:qr form a right turn, or not?"
+	"""Do the vectors pq:qr form a right turn, or not?"""
 
 	assert p != q and q != r and p != r
 			
@@ -108,7 +127,7 @@ def _isRightTurn((p, q, r)):
 		return 0
 
 def _isRightTurnOrColinear((p, q, r)):
-	"Do the vectors pq:qr form a right turn, or not?"
+	"""Do the vectors pq:qr form a right turn, or not?"""
 	assert p != q and q != r and p != r
 	if _myDet(p, q, r) < 0:
 		return 1
@@ -121,8 +140,8 @@ def _isRightTurnOrColinear((p, q, r)):
 			else:
 				return 0
 
-def _isPointInPolygon(r, P0):
-	"Is point r inside a given polygon P?"
+def isPointInPolygon(r, P0):
+	"""Is point r inside or on the edge of a given polygon P?"""
 	# We assume the polygon is a list of points, listed clockwise!
 	P=list(P0)
 	if (P[0] !=P[-1]):
@@ -135,7 +154,7 @@ def _isPointInPolygon(r, P0):
 	return 1 # It's within or on!
 
 def _isPointOnlyInPolygon(r, P0):
-	"Is point r inside a given polygon P?"
+	"""Is point r inside a given polygon P?"""
 	# We assume the polygon is a list of points, listed clockwise!
 	P=list(P0)
 	if (P[0] !=P[-1]):
@@ -151,7 +170,7 @@ def _isPointOnlyInPolygon(r, P0):
 	return 1 # It's within!
 
 def convexHull(P):
-	"Calculate the convex hull of a set of points."
+	"""Calculate the convex hull of a set of points."""
 
 	# Get a local list copy of the points and sort them lexically.
 	points = map(None, P)

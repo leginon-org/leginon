@@ -13,34 +13,15 @@ import imagefun
 import numextension
 import polygon
 import libCV
-from selexonFunctions2 import *
+import selexonFunctions2
 
 
-def image2array(im, convertType='UInt8'):
-    """
-    Convert PIL image to Numarray array
-    copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
-    """
-    if im.mode == "L":
-        a = numarray.fromstring(im.tostring(), numarray.UInt8)
-        a = numarray.reshape(a, (im.size[1], im.size[0]))
-        #a.shape = (im.size[1], im.size[0], 1)  # alternate way
-    elif (im.mode=='RGB'):
-        a = numarray.fromstring(im.tostring(), numarray.UInt8)
-        a.shape = (im.size[1], im.size[0], 3)
-    else:
-        raise ValueError, im.mode+" mode not considered"
-
-    if convertType == 'Float32':
-        a = a.astype(numarray.Float32)
-    return a
-
-def prepimage(image,cutoff=5.0):
+def prepImage(image,cutoff=5.0):
 	shape=numarray.shape(image)
-	garea,gavg,gstdev=masked_stats(image)
+	garea,gavg,gstdev=maskImageStats(image)
 	print 'image mean= %.1f stdev= %.1f' %(gavg,gstdev)
 	cleanimage=ma.masked_outside(image,gavg-cutoff*gstdev,gavg+cutoff*gstdev)
-	carea,cavg,cstdev=masked_stats(cleanimage)
+	carea,cavg,cstdev=maskImageStats(cleanimage)
 	
 	image=cleanimage.filled(cavg)
 	return image
@@ -55,23 +36,7 @@ def medium(image):
 	botquad=image1d[size/4]
 	return medium,topquad,botquad
 
-def outputimage_mrc(array,name,description,testlog):
-	width=25
-	if testlog[0]:
-		mrcname="tests/%02d%s.mrc" %(testlog[1],name)
-		space=(width-len(mrcname))*' '
-		testlog[2]+= "%s:%s%s\n" % (mrcname,space,description)
-		testlog[1] += 1
-		if array.type()==numarray.Bool:
-			array=array.astype(numarray.Int8)
-		if array.type()==numarray.UInt8:
-			array=array.astype(numarray.Int16)
-		if array.type()==numarray.Int64:
-			array=array.astype(numarray.Int32)
-		Mrc.numeric_to_mrc(array,mrcname)
-	return testlog
-
-def outputimage(array,name,description,testlog):
+def outputImage(array,name,description,testlog):
 	width=25
 	if testlog[0]:
 		jpgname="tests/%02d%s.jpg" %(testlog[1],name)
@@ -89,86 +54,46 @@ def outputimage(array,name,description,testlog):
 		array=array.astype(numarray.Int16)
 	if array.type()==numarray.Int64:
 		array=array.astype(numarray.Int32)
-	array = whiteNormalizeImage(array)
-	PILimage = array2image(array)
+	array = selexonFunctions2.whiteNormalizeImage(array)
+	PILimage = selexonFunctions2.array2image(array)
 	PILimage.save(jpgname, "JPEG", quality=95)
 	return testlog
 
-def find_edge_sobel(image,sigma,amin,amax,output,testlog):
+def findEdgeSobel(image,sigma,amin,amax,output,testlog):
 	if (output):
-		testlog=outputimage(image,'input','input image',testlog)
+		testlog=outputImage(image,'input','input image',testlog)
 	if (sigma > 0):
 		smooth=nd.gaussian_filter(image,sigma)
 		if (output):
-			testlog=outputimage(smooth,'smooth','filtered image',testlog)
+			testlog=outputImage(smooth,'smooth','filtered image',testlog)
 	else:
 		smooth=image
 
 	edges=nd.generic_gradient_magnitude(smooth, derivative=nd.sobel)
 	if (output):
-		testlog=outputimage(edges,'edge','edge image',testlog)
+		testlog=outputImage(edges,'edge','edge image',testlog)
 
 	edgemax=edges.max()
 	tedges=ma.masked_inside(edges,edgemax*amin,edgemax*amax)
 	return tedges,testlog
 
-def find_edge_canny(image,sigma,amin,amax,output,testlog):
+def findEdgeCanny(image,sigma,amin,amax,output,testlog):
 
 	tedges,gradient,testlog = canny(image,sigma,5,True,amin,amax,testlog)
-# nonmaximawindow and hysteresis are parameters only for canny_squarefinder2)	
 
 	if (output):
-		testlog=outputimage(gradient,'grad','gradient magnitude image',testlog)
+		testlog=outputImage(gradient,'grad','gradient magnitude image',testlog)
 	
 	return tedges,testlog
 
-def canny_squarefinder2(image, sigma=1.8, nonmaximawindow=5, hysteresis=True, tlow=0.3, thigh=0.9,testlog=None):
-# This is taken from squarefinder2.py in pyleginon. The nonmaximasuppress and
-#hysteresisthresholding are not as good as the one from viewit
-	gaussianimage = nd.gaussian_filter(image,sigma,mode='reflect')
-	if True:
-		testlog=outputimage(gaussianimage,'smooth','smooth image',testlog)
-	gradient_col = nd.sobel(gaussianimage,axis=-1)
-	gradient_row = nd.sobel(gaussianimage,axis=0)
-	
-#The three methods of obtaining gradient magnitude gave the same result
-#	gradient_mag=nd.generic_gradient_magnitude(gaussianimage,derivative=nd.sobel)
-#	gradient_mag=nd.gaussian_gradient_magnitude(image,sigma)
-	dummy,gradient_mag,testlog=canny(image, sigma, nonmaximawindow, hysteresis, tlow, thigh,testlog)
-
-	directionimage= ma.filled(ma.arctan2(gradient_row,gradient_col))
-	
-	nm_mag = gradient_mag
-
-	numextension.nonmaximasuppress(nm_mag, directionimage, nonmaximawindow)
-
-	if hysteresis:
-		totaledge = nd.sum(numarray.where(nm_mag > 0,1,0))
-		highcount = int(totaledge * thigh + 0.5)
-		histo_width = nm_mag.max()
-		bin = int(histo_width)
-		hist = nd.histogram(nm_mag,1,histo_width,bin)
-		r=0
-		numedges = hist[0]
-		while numedges < highcount and r < bin-1 :
-			r += 1
-			numedges +=hist[r]
-			
-		highthreshold = r*(histo_width/bin)
-		lowthreshold = int(highthreshold*tlow + 0.5)
-		print highcount,highthreshold,lowthreshold
-		edgeimage = numextension.hysteresisthreshold(nm_mag,
-			lowthreshold, highthreshold)
-		edges = ma.masked_greater(edgeimage,0,1)
-	return edges, directionimage,testlog
-
 def canny(image, sigma=1.8, nonmaximawindow=7, hysteresis=True, tlow=0.3, thigh=0.9,testlog=None):
+	print numarray.shape(image),sigma,tlow,thigh
 	edgeimage,grad_mag = numextension.cannyedge(image,sigma,tlow,thigh)
 	edges = ma.masked_less(edgeimage,100,0)
 	return edges, grad_mag,testlog
 	
 
-def fill_mask(mask_image,iteration):
+def fillMask(mask_image,iteration):
 	base=nd.generate_binary_structure(2,2)
 	mask_image=nd.binary_dilation(mask_image,structure=base,iterations=iteration)
 	base=nd.generate_binary_structure(2,1)
@@ -176,8 +101,9 @@ def fill_mask(mask_image,iteration):
 	return mask_image
 	
 
-def makedisk(radius):
+def makeDisk(radius):
 	#make  disk mask
+	#This is copied from jahcfinderback.py and should be organized properly in pyleginon
 	radius=int(radius)
 	cutoff=[0.0,0.0]
 	diskimageshape=(2*radius,2*radius)
@@ -197,7 +123,7 @@ def makedisk(radius):
 	disk = numarray.fromfunction(circle,diskimageshape)
 	return disk
 
-def masked_stats(mimage):
+def maskImageStats(mimage):
 	n=ma.count(mimage)
 	mimagesq=mimage*mimage
 	sum1=ma.sum(mimage)
@@ -211,9 +137,9 @@ def masked_stats(mimage):
 		stdev=2e20
 	return n,avg,stdev
 
-def convolve_disk(bimage,radius,convolve_t,testlog):
+def convolveDisk(bimage,radius,convolve_t,testlog):
 	#make  disk binaray image
-	disk = makedisk(radius)
+	disk = makeDisk(radius)
 	diskshape=numarray.shape(disk)
 
 	# convolve
@@ -227,16 +153,16 @@ def convolve_disk(bimage,radius,convolve_t,testlog):
 	c.setImage(disk)
 	c.setKernel(disk)
 	cref=c.convolve()
-	testlog=outputimage(cmask,'maskc','Convolved filled edge mask',testlog)
+	testlog=outputImage(cmask,'maskc','Convolved filled edge mask',testlog)
 	
 	# Thresholding to binary mask
 	cmax=cref.max()*convolve_t
 	masked_cmask=ma.masked_greater(cmask,cmax)
 	mask=ma.getmask(masked_cmask)
-	testlog=outputimage(mask,'maskct','Thresholded Convolved mask',testlog)
+	testlog=outputImage(mask,'maskct','Thresholded Convolved mask',testlog)
 	return mask,testlog
 		
-def find_convex_hulls_from_points(points):
+def findConvexHullsFromPoints(points):
 	polygons=[]
 	if (len(points) >3):
 		polygon=apImage.convexHull(points)
@@ -245,7 +171,7 @@ def find_convex_hulls_from_points(points):
 		polygon=points
 	return polygon		
 
-def one_obj_bimage_to_gpoints(bimage):
+def oneObjToGlobalPoints(bimage):
 	cruds,clabels=nd.label(bimage)
 	crud_objs=nd.find_objects(cruds,max_label=clabels)
 	l=0
@@ -259,35 +185,22 @@ def one_obj_bimage_to_gpoints(bimage):
 				gpoints.append((x+starts[0],y+starts[1]))
 	return gpoints
 
-def find_convex_hulls_from_labeled_image(bimage,cruds,clabels):
+def findConvexHullsFromLabeledImage(bimage,cruds,clabels):
 	gpolygons=[]
 	# individual crud is masked to avoid problem of overlapped of crud_obj slices
 	for l in range(1,clabels+1):
 		region=ma.masked_outside(cruds,l,l)
 		mask=1-ma.getmask(region)
-		gpoints=one_obj_bimage_to_gpoints(mask)
-		gpolygon=find_convex_hulls_from_points(gpoints)
+		gpoints=oneObjToGlobalPoints(mask)
+		gpolygon=findConvexHullsFromPoints(gpoints)
 		gpolygons.append(gpolygon)
 	return gpolygons
 		
-def plot_polygons(shape,gpolygons):
-	zeros=numarray.zeros(shape,type=numarray.Int8)
-	img=Image.new('L',shape)
-	draw=ImageDraw.Draw(img)
-	for p in gpolygons:
-		if len(p) > 2:
-			draw.polygon(p,fill=1)	  
-	seq=list(img.getdata())
-	polygon_image=numarray.array(seq)
-	polygon_image=numarray.reshape(polygon_image,shape)
-	polygon_image=numarray.transpose(polygon_image)
-	return polygon_image
-
-def do_points_overlap(p1,p2):
+def doPointsOverlap(p1,p2):
 	is_overlapped=False
 	if len(p2) >= 2:
 		for point in p1:
-			overlapped=_isPointInPolygon(point,p2)
+			overlapped=apImage.isPointInPolygon(point,p2)
 			if overlapped==1:
 				return True
 	else:
@@ -296,7 +209,7 @@ def do_points_overlap(p1,p2):
 				return True
 	if len(p1) >= 2:
 		for point in p2:
-			overlapped=_isPointInPolygon(point,p1)
+			overlapped=apImage.isPointInPolygon(point,p1)
 			if overlapped==1:
 				return True
 	else:
@@ -305,25 +218,25 @@ def do_points_overlap(p1,p2):
 				return True
 	return False
 
-def include_one_in_another(p1,p2):
+def includOneInAnother(p1,p2):
 	for point in p1:
 		if point not in p2:
 			p2.append(point)
 	return p2
 
-def merge_polygon_points(points):
+def mergePolygonPoints(points):
 	p1=0
 	result=list(points)
 	while p1 in range(len(result)):
 		p2=p1+1
 		has_overlap=False
 		while p2 in range(len(result)):
-			overlap=do_points_overlap(points[p1],points[p2])
+			overlap=doPointsOverlap(points[p1],points[p2])
 			if not overlap:
 				p2=p2+1
 			else:
 
-				points[p2]=include_one_in_another(points[p1],points[p2])
+				points[p2]=includOneInAnother(points[p1],points[p2])
 				has_overlap=True
 				p2=p2+1
 
@@ -340,11 +253,11 @@ def merge_polygon_points(points):
 			if point not in checked:
 				checked.append(point)
 		points[p]=checked
-		new_polygon=find_convex_hulls_from_points(points[p])
+		new_polygon=findConvexHullsFromPoints(points[p])
 		result[p]=new_polygon
 	return result		  
 
-def make_global_polygons(shape,crud_objs,polygons):
+def makeGlobalPolygons(shape,crud_objs,polygons):
 	gpolygons=[]
 	ltotal=len(crud_objs)
 	for l in range(ltotal):
@@ -356,7 +269,7 @@ def make_global_polygons(shape,crud_objs,polygons):
 		gpolygons.append(gpoints)
 	return gpolygons
 
-def make_local_polygons(gpolygons):
+def makeLocalPolygons(gpolygons):
 	crud_objs=[]
 	polygons=[]
 	for l in range(len(gpolygons)):
@@ -376,37 +289,30 @@ def make_local_polygons(gpolygons):
 		polygons.append(points)
 	return crud_objs,polygons
 
-def merge_polygons(shape,crud_objs,polygons):
-	gpolygons=make_global_polygons(shape,crud_objs,polygons)
-	gpolygons=merge_polygon_points(gpolygons)
-	new_crud_objs,new_polygons=make_local_polygons(gpolygons)
-	return new_crud_objs,new_polygons	
-
-
-def convex_hull_union(bimage,cruds,clabels,testlog):
+def convexHullUnion(bimage,cruds,clabels,testlog):
 	shape=numarray.shape(bimage)
-	gpolygons=find_convex_hulls_from_labeled_image(bimage,cruds,clabels)
+	gpolygons=findConvexHullsFromLabeledImage(bimage,cruds,clabels)
 	print "made %d convex hulls" % len(gpolygons)
 	
-	gpolygons=merge_polygon_points(gpolygons)
+	gpolygons=mergePolygonPoints(gpolygons)
 	print "merge to %d convex hulls" % len(gpolygons)
 
 	#fill polygons and make a labeled image
-	polygon_image=plot_polygons(shape,gpolygons)
+	polygon_image=polygon.plotPolygons(shape,gpolygons)
 	cruds,clabels=nd.label(polygon_image)
 
-	testlog=outputimage(cruds,'crud_labelp','Convex hull union labeled polygons',testlog)
+	testlog=outputImage(cruds,'crud_labelp','Convex hull union labeled polygons',testlog)
 	return cruds,clabels,gpolygons,testlog
 	
-def get_labeled_info(image,alledgemask,labeled_image,ltotal,fast,testlog):
+def getLabeledInfo(image,alledgemask,labeled_image,ltotal,fast,testlog):
 	print "getting crud info"
 	info={}
 	imageshape=numarray.shape(labeled_image)
 	if not fast:
-		edgeimage,testlog=find_edge_sobel(alledgemask,0,-1,0.0,False,testlog)
+		edgeimage,testlog=findEdgeSobel(alledgemask,0,-1,0.0,False,testlog)
 		mask=1-ma.getmask(edgeimage)
 		mask=nd.binary_dilation(mask,iterations=1)
-		testlog=outputimage(mask,'labeledge','Edges of the image labels',testlog)
+		testlog=outputImage(mask,'labeledge','Edges of the image labels',testlog)
 	else:
 		objs = nd.find_objects(labeled_image)
 	ones=numarray.ones(imageshape)
@@ -431,7 +337,7 @@ def get_labeled_info(image,alledgemask,labeled_image,ltotal,fast,testlog):
 		info[l]=(area,avg,stdev,length,center)
 	return info,testlog 
 
-def get_polygon_info(polygons,testlog):
+def getPolygonInfo(polygons,testlog):
 	print "get polygon info"
 	polygons_arrays = polygon.polygons_tuples2arrays(polygons)
 	info={}
@@ -444,7 +350,7 @@ def get_polygon_info(polygons,testlog):
 		info[l+1]=(area,avg,stdev,length,center)
 	return info,testlog 
 		
-def prune_by_length(info,length_min,length_max,goodcruds_in):
+def pruneByLength(info,length_min,length_max,goodcruds_in):
 	print "pruning by edge length"
 	goodcruds=[]
 	for l in range(1,len(info)+1):
@@ -456,7 +362,7 @@ def prune_by_length(info,length_min,length_max,goodcruds_in):
 	return goodcruds
 
 
-def prune_by_area(info,area_min,area_max,goodcruds_in):
+def pruneByArea(info,area_min,area_max,goodcruds_in):
 	print "pruning by area"
 	goodcruds=[]
 	for l in range(1,len(info)+1):
@@ -467,7 +373,7 @@ def prune_by_area(info,area_min,area_max,goodcruds_in):
 	print "pruned to %d region" %len(goodcruds)
 	return goodcruds
 
-def prune_by_stdev(info,stdev_min,goodcruds_in):
+def pruneByStdev(info,stdev_min,goodcruds_in):
 	print "pruning by stdev"
 	goodcruds=[]
 	for l in range(1,len(info)+1):
@@ -478,7 +384,7 @@ def prune_by_stdev(info,stdev_min,goodcruds_in):
 	print "pruned to %d region" %len(goodcruds)
 	return goodcruds
 	
-def make_pruned_labels(file,labeled_image,ltotal,info,goodlabels):
+def makePrunedLabels(file,labeled_image,ltotal,info,goodlabels):
 	print "remaking labeled image after pruning"
 	imageshape=numarray.shape(labeled_image)
 	goodinfo=""
@@ -495,7 +401,7 @@ def make_pruned_labels(file,labeled_image,ltotal,info,goodlabels):
 		goodinfo=goodinfo+goodcrudline
 	return new_labeled_image,len(goodlabels),goodinfo
 
-def make_pruned_polygons(file,gpolygons,imageshape,info,goodlabels):
+def makePrunedPolygons(file,gpolygons,imageshape,info,goodlabels):
 	print "remaking polygons after pruning"
 	goodpolygons=[]
 	goodinfo=""
@@ -504,7 +410,7 @@ def make_pruned_polygons(file,gpolygons,imageshape,info,goodlabels):
 		goodcrudline=file+".mrc "+str(int(info[l][4][1]))+" "+str(int(info[l][4][0]))+" "+str(info[l][0])+" "+str(info[l][1])+" "+str(info[l][2])+" "+str(info[l][3])+"\n"
 		goodinfo=goodinfo+goodcrudline
 		goodpolygons.append(gpolygons[l1])
-	cruds = polygon.plot_polygons(imageshape,goodpolygons)
+	cruds = polygon.plotPolygons(imageshape,goodpolygons)
 	return cruds,len(goodpolygons),goodinfo
 
 
@@ -535,7 +441,7 @@ def reduceRegions(regions,velimit):
 	return regionarrays
 	
 
-def findCrud2(params,file):
+def findCrud(params,file):
 	filelog="\nTEST OUTPUT IMAGES\n----------------------------------------\n"
 	# create "jpgs" directory if doesn't exist
 	if not (os.path.exists("jpgs")):
@@ -595,8 +501,8 @@ def findCrud2(params,file):
 
 	cutoff=8.0
 	# remove spikes in the image first
-	image=prepimage(image,cutoff)
-	garea,gavg,gstdev=masked_stats(image)
+	image=prepImage(image,cutoff)
+	garea,gavg,gstdev=maskImageStats(image)
 
 	if (scale_high == 1):
 		high=high_tn
@@ -620,13 +526,13 @@ def findCrud2(params,file):
 	print 'scaled crudhi= %.4f crudlo= %.4f' %(high,low)
 
 	if (test):
-		testlog=outputimage(image,'input','input image',testlog)
+		testlog=outputImage(image,'input','input image',testlog)
 
 	#binary edge
 	if convolve_t < 0.001:
-		edgeimage,testlog=find_edge_canny(image,sigma,low,high,True,testlog)
+		edgeimage,testlog=findEdgeCanny(image,sigma,low,high,True,testlog)
 	else:
-		edgeimage,testlog=find_edge_sobel(image,sigma,low,high,True,testlog)
+		edgeimage,testlog=findEdgeSobel(image,sigma,low,high,True,testlog)
 
 	nedge=ma.count(edgeimage)
 	# If the area not within the threshold is too large or zero, no further calculation is necessary
@@ -636,34 +542,34 @@ def findCrud2(params,file):
 	else:
 		mask=ma.getmask(edgeimage)
 		maskedimage=ma.masked_array(image,mask=mask,fill_value=0)
-		testlog=outputimage(mask,'mask','Thresholded edge binary image mask',testlog)
+		testlog=outputImage(mask,'mask','Thresholded edge binary image mask',testlog)
 
 		#fill
 		iteration=3
-		mask=fill_mask(mask,iteration)
-		testlog=outputimage(mask,'maskf','Hole filled edge mask',testlog)
+		mask=fillMask(mask,iteration)
+		testlog=outputImage(mask,'maskf','Hole filled edge mask',testlog)
 
 		if (convolve_t > 0):
 			#convolve with the disk image of the particle
-			mask,testlog=convolve_disk(mask,pradius,convolve_t,testlog)
+			mask,testlog=convolveDisk(mask,pradius,convolve_t,testlog)
 		
 
 		#segmentation
 		
 		cruds,clabels=nd.label(mask)
 		print "starting with",clabels, "cruds"
-		testlog=outputimage(cruds,'crud_label','Segmented labeled image',testlog)
+		testlog=outputImage(cruds,'crud_label','Segmented labeled image',testlog)
 
 		#pruning by length of the perimeters of the labeled regions.
 		if (do_prune_by_length):
-			allinfo,testlog=get_labeled_info(image,mask,cruds,clabels,True,testlog)
+			allinfo,testlog=getLabeledInfo(image,mask,cruds,clabels,True,testlog)
 			goodcruds=range(clabels)
-			goodcruds=prune_by_length(allinfo,list_t,garea*0.5,goodcruds)
-			cruds,clabels,goodinfo=make_pruned_labels(file,cruds,clabels,allinfo,goodcruds)
+			goodcruds=pruneByLength(allinfo,list_t,garea*0.5,goodcruds)
+			cruds,clabels,goodinfo=makePrunedLabels(file,cruds,clabels,allinfo,goodcruds)
 		
 		#create convex hulls and merge overlapped or inside cruds
 		if do_convex_hulls:
-			cruds,clabels,gpolygons,testlog=convex_hull_union(mask,cruds,clabels,testlog)
+			cruds,clabels,gpolygons,testlog=convexHullUnion(mask,cruds,clabels,testlog)
 		else:
 			if do_cv:
 				regions,dummyimage=libCV.FindRegions(mask,area_t,0.5,1,0,1,0)
@@ -674,39 +580,39 @@ def findCrud2(params,file):
 			testlog[0]=False
 			if do_convex_hulls or do_cv:
 				if stdev_t < 0.001:
-					allinfo,testlog=get_polygon_info(gpolygons,testlog)
+					allinfo,testlog=getPolygonInfo(gpolygons,testlog)
 				else:
-					mask = polygon.plot_polygons(shape,gpolygons)
+					mask = polygon.plotPolygons(shape,gpolygons)
 					cruds,clabels=nd.label(mask)
-					allinfo,testlog=get_labeled_info(image,mask,cruds,clabels,False,testlog)
+					allinfo,testlog=getLabeledInfo(image,mask,cruds,clabels,False,testlog)
 			else:				
-				allinfo,testlog=get_labeled_info(image,mask,cruds,clabels,False,testlog)
+				allinfo,testlog=getLabeledInfo(image,mask,cruds,clabels,False,testlog)
 			testlog[0]=test
 			goodcruds=range(clabels)
 			if not do_cv:
 				#pruning by area as in selexon
-				goodcruds=prune_by_area(allinfo,area_t,garea*0.5,goodcruds)
+				goodcruds=pruneByArea(allinfo,area_t,garea*0.5,goodcruds)
 				if (test):
-					temp_cruds,temp_clabels,goodinfo=make_pruned_labels(file,cruds,clabels,allinfo,goodcruds)
-					testlog=outputimage(temp_cruds,'crud_labela','Area pruned labeled image',testlog)
+					temp_cruds,temp_clabels,goodinfo=makePrunedLabels(file,cruds,clabels,allinfo,goodcruds)
+					testlog=outputImage(temp_cruds,'crud_labela','Area pruned labeled image',testlog)
 
 			if (len(goodcruds)>0):
 				#pruning by standard deviation in the cruds
 				if (stdev_t > 0):
 					stdev_limit=stdev_t*gstdev
-					goodcruds=prune_by_stdev(allinfo,stdev_limit,goodcruds)
+					goodcruds=pruneByStdev(allinfo,stdev_limit,goodcruds)
 
 					if (test):
-						temp_cruds,temp_clabels,goodinfo=make_pruned_labels(file,cruds,clabels,allinfo,goodcruds)
-						testlog=outputimage(temp_cruds,'crud_labels','Stdev pruned labeled image',testlog)
+						temp_cruds,temp_clabels,goodinfo=makePrunedLabels(file,cruds,clabels,allinfo,goodcruds)
+						testlog=outputImage(temp_cruds,'crud_labels','Stdev pruned labeled image',testlog)
 
 			if test and (not do_cv or stdev_t > 0):
 				cruds,clabels,crudinfo=temp_cruds,temp_clabels,goodinfo
 
 			if do_convex_hulls or do_cv and stdev_t < 0.01:
-				cruds,clabels,crudinfo=make_pruned_polygons(file,gpolygons,shape,allinfo,goodcruds)
+				cruds,clabels,crudinfo=makePrunedPolygons(file,gpolygons,shape,allinfo,goodcruds)
 			else:
-				cruds,clabels,crudinfo=make_pruned_labels(file,cruds,clabels,allinfo,goodcruds)
+				cruds,clabels,crudinfo=makePrunedLabels(file,cruds,clabels,allinfo,goodcruds)
 
 #		create edge image of the cruds for display
 		if (clabels >0):
@@ -714,21 +620,21 @@ def findCrud2(params,file):
 			equalcruds=ma.masked_greater_equal(int32cruds,1)
 			equalcruds=equalcruds.filled(100)
 			if (test):
-				testlog=outputimage(equalcruds,'finalcruds','Final Crud image',testlog)
-			crudedges,testlog=find_edge_sobel(equalcruds,1,0.5,1.0,False,testlog)
+				testlog=outputImage(equalcruds,'finalcruds','Final Crud image',testlog)
+			crudedges,testlog=findEdgeSobel(equalcruds,1,0.5,1.0,False,testlog)
 			masklabel=1-ma.getmask(crudedges)
 		else:
 			masklabel=numarray.ones(numarray.shape(image))
 		superimage=image*masklabel
 	
-	testlog=outputimage(superimage,'output','Final Crud w/ image',testlog)
+	testlog=outputImage(superimage,'output','Final Crud w/ image',testlog)
 	
 	if (test):
 		print testlog[2]
 	
 	testlog[0]=False
 	testlog[1]=-1
-	testlog=outputimage(superimage,file,'Final Crud w/ image',testlog)
+	testlog=outputImage(superimage,file,'Final Crud w/ image',testlog)
 	
 	crudfile=open("crudfiles/"+file+".crud",'w')
 	crudfile.write(crudinfo+"\n")
