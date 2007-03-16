@@ -1,5 +1,7 @@
-#!/usr/bin/env python
+#crud functions called by crudFinder.py
+
 import apImage
+import apConvexHull
 import os,sys
 import math
 import numarray
@@ -164,7 +166,7 @@ def convolveDisk(bimage,radius,convolve_t,testlog):
 def findConvexHullsFromPoints(points):
 	polygons=[]
 	if (len(points) >3):
-		polygon=apImage.convexHull(points)
+		polygon=apConvexHull.convexHull(points)
 		polygon=list(polygon)
 	else:
 		polygon=points
@@ -199,7 +201,7 @@ def doPointsOverlap(p1,p2):
 	is_overlapped=False
 	if len(p2) >= 2:
 		for point in p1:
-			overlapped=apImage.isPointInPolygon(point,p2)
+			overlapped=apConvexHull.isPointInPolygon(point,p2)
 			if overlapped==1:
 				return True
 	else:
@@ -208,7 +210,7 @@ def doPointsOverlap(p1,p2):
 				return True
 	if len(p1) >= 2:
 		for point in p2:
-			overlapped=apImage.isPointInPolygon(point,p1)
+			overlapped=apConvexHull.isPointInPolygon(point,p1)
 			if overlapped==1:
 				return True
 	else:
