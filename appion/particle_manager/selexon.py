@@ -4,44 +4,23 @@
 
 import os, re, sys
 import data
-import time
 #import mem
 import apLoop
 import apParam
 import apDatabase
 import selexonFunctions  as sf1
 import selexonFunctions2 as sf2
-#from selexonFunctions import *
-#from selexonFunctions2 import *
 import apCrud
 
 data.holdImages(False)
 
 if __name__ == '__main__':
-	# record command line
-	apParam.writeFunctionLog(sys.argv,file=".selexonlog")
-
-	print " ... checking parameters"
-	# create params dictionary & set defaults
-	params = apParam.createDefaultParams(function=sys.argv[0])
-	stats  = apParam.createDefaultStats()
-
-	# parse command line input
-	apParam.parseCommandLineInput(sys.argv,params)
+	(images,params,stats,donedict) = apLoop.startNewAppionFunction(sys.argv)
 
 	# if shiftonly is specified, make defocpair true
 	if params['shiftonly']:
 		print "write me a different program for shiftonly"
 		params['defocpair']=True
-
-	# check to make sure that incompatible parameters are not set
-	apParam.checkParamConflicts(params)
-	
-	# get list of input images, since wildcards are supported
-	images = apDatabase.getAllImages(params,stats)
-
-	apParam.createOutputDirs(params)
-	apParam.writeFunctionLog(sys.argv,params=params)
 
 	# if templateIds specified, create temporary template files in this directory & rescale
 	print " ... getting templates"
@@ -83,11 +62,8 @@ if __name__ == '__main__':
 			os.mkdir("crudfiles")
 		for img in images:
 			imgname=img['filename']
-			tstart=time.time()
 			#findCrud(params,imgname)
 			apCrud.findCrud(params,imgname)
-			tend=time.time()
-			print "CRUD FINDING TIME",tend-tstart
 		sys.exit(1)
         
 	# check to see if user only wants to find shifts
@@ -157,9 +133,7 @@ if __name__ == '__main__':
 			if (params["crud"]==True):
 				if not (os.path.exists("crudfiles")):
 					os.mkdir("crudfiles")
-				t1=time.time()
 				apCrud.removCrudPiks(params,imgname)
-				tfindCrud= "%.2f" % float(time.time()-t1)
 				# if crudfinder removes all the particles, go to next image
 				if not (os.path.exists("pikfiles/"+imgname+".a.pik.nocrud")):
 					print "no particles left after crudfinder in \'"+imgname+".mrc\'"
@@ -194,9 +168,7 @@ if __name__ == '__main__':
 			# write results to dictionary
 			apLoop.writeDoneDict(donedict,params,imgname)
 
-			tdiff = time.time()-stats['beginLoopTime']
-			if(params["continue"]==False or tdiff > 0.3):
-				apLoop.printSummary(stats, params)
+			apLoop.printSummary(stats, params)
 			#END LOOP OVER IMAGES
 
 		notdone = apLoop.waitForMoreImages(stats, params)

@@ -1,11 +1,11 @@
 #Part of the new pyappion
 
-import os
+import os,sys,re
 import time
 import mem
-import re
 import data
 import dbdatakeeper
+import selexonFunctions  as sf1
 
 ### TEMPORARY, PLEASE MAKE IT SO NOT REQUIRED HERE
 db=dbdatakeeper.DBDataKeeper()
@@ -110,6 +110,8 @@ def createDefaultParams(function=None):
 	params['opimagedir']=None
 	params['doneDictName']=None
 	params['functionLog']=None
+	params['pixdiam']=None
+	params['binpixdiam']=None
 
 	return params
 
@@ -179,9 +181,9 @@ def createOutputDirs(params):
 	return params
 
 def checkParamConflicts(params):
-	if not params['templateIds'] and not params['apix']:
-		print "\nERROR: if not using templateIds, you must enter a template pixel size\n"
-		sys.exit(1)
+	#if not params['templateIds'] and not params['apix']:
+	#	print "\nERROR: if not using templateIds, you must enter a template pixel size\n"
+	#	sys.exit(1)
 	if params['templateIds'] and params['template']:
 		print "\nERROR: Both template database IDs and mrc file templates are specified,\nChoose only one\n"
 		sys.exit(1)
@@ -191,7 +193,7 @@ def checkParamConflicts(params):
 	if (params['thresh']==0 and params['autopik']==0):
 		print "\nERROR: neither manual threshold or autopik parameters are set, please set one.\n"
 		sys.exit(1)
-	if (params['diam']==0):
+	if ((params['function'] == "selexon" or params['function'] == "crudFinder") and params['diam']==0):
 		print "\nERROR: please input the diameter of your particle\n"
 		sys.exit(1)
 	if len(params['mrcfileroot']) > 0 and params['dbimages']==True:
@@ -209,7 +211,7 @@ def parseCommandLineInput(args,params):
 	# check that there are enough input parameters
 	if (len(args)<2 or args[1]=='help' or args[1]=='--help' \
 		or args[1]=='-h' or args[1]=='-help') :
-		printSelexonHelp()
+		sf1.printSelexonHelp()
 
 	lastarg=1
 

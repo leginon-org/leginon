@@ -5,8 +5,24 @@ import cPickle
 import time
 import math
 import selexonFunctions  as sf1
-import selexonFunctions2 as sf2
+#import selexonFunctions2 as sf2
+import apParam,apDatabase
 
+def startNewAppionFunction(args):
+	"""
+	Starts a new function and gets all the parameters
+	"""
+	params   = apParam.createDefaultParams(function=sys.argv[0])
+	stats    = apParam.createDefaultStats()
+	apParam.parseCommandLineInput(sys.argv,params)
+	apParam.checkParamConflicts(params)
+	images   = apDatabase.getAllImages(params,stats)
+	apParam.createOutputDirs(params)
+	apParam.writeFunctionLog(args,file="."+params['function']+"log")
+	apParam.writeFunctionLog(sys.argv,params=params)
+	donedict = readDoneDict(params)
+
+	return (images,params,stats,donedict)
 
 def waitForMoreImages(stats,params):
 	if params["dbimages"]==False:
@@ -118,42 +134,43 @@ def printSummary(stats,params):
 	print summary statistics
 	"""
 	tdiff = time.time()-stats['beginLoopTime']
-	count = stats['count']
-	#if(count != stats['lastcount']):
-	if(params['method'] != None):
-		print "\n\tSUMMARY: using",params['method'],"method for",params['function']
-	else:
-		print "\n\tSUMMARY:"
-	_printLine()
-	if(stats['lastpeaks'] != None):
-		print "\tPEAKS:    \t",stats['lastpeaks'],"peaks"
-		if(count > 1):
-			peaksum   = stats['peaksum']
-			peaksumsq = stats['peaksumsq']
-			peakstdev = math.sqrt(float(count*peaksumsq - peaksum**2) / float(count*(count-1)))
-			print "\tAVG PEAKS:\t",round(float(peaksum)/float(count),1),"+/-",\
-				round(peakstdev,1),"peaks"
-			print "\t(- TOTAL:",peaksum,"peaks for",count,"images -)"
-		_printLine()
-
-	print "\tTIME:     \t",_timeString(tdiff)
-	stats['timesum'] = stats['timesum'] + tdiff
-	stats['timesumsq'] = stats['timesumsq'] + (tdiff**2)
-	timesum = stats['timesum']
-	timesumsq = stats['timesumsq']
-	if(count > 1):
-		timeavg = float(timesum)/float(count)
-		timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
-		timeremain = (float(timeavg)+float(timestdev))*stats['imagesleft']
-		print "\tAVG TIME: \t",_timeString(timeavg,timestdev)
-		#print "\t(- TOTAL:",_timeString(timesum)," -)"
-		if(stats['imagesleft'] > 0):
-			print "\t(- REMAINING TIME:",_timeString(timeremain),"for",stats['imagesleft'],"images -)"
+	if(params["continue"]==False or tdiff > 0.3):
+		count = stats['count']
+		#if(count != stats['lastcount']):
+		if(params['method'] != None):
+			print "\n\tSUMMARY: using",params['method'],"method for",params['function']
 		else:
-			print "\t(- LAST IMAGE -)"
-	#print "\tMEM: ",(mem.used()-startmem)/1024,"M (",(mem.used()-startmem)/(1024*count),"M)"
-	stats['count'] = stats['count'] + 1
-	_printLine()
+			print "\n\tSUMMARY:"
+		_printLine()
+		if(stats['lastpeaks'] != None):
+			print "\tPEAKS:    \t",stats['lastpeaks'],"peaks"
+			if(count > 1):
+				peaksum   = stats['peaksum']
+				peaksumsq = stats['peaksumsq']
+				peakstdev = math.sqrt(float(count*peaksumsq - peaksum**2) / float(count*(count-1)))
+				print "\tAVG PEAKS:\t",round(float(peaksum)/float(count),1),"+/-",\
+					round(peakstdev,1),"peaks"
+				print "\t(- TOTAL:",peaksum,"peaks for",count,"images -)"
+			_printLine()
+
+		print "\tTIME:     \t",_timeString(tdiff)
+		stats['timesum'] = stats['timesum'] + tdiff
+		stats['timesumsq'] = stats['timesumsq'] + (tdiff**2)
+		timesum = stats['timesum']
+		timesumsq = stats['timesumsq']
+		if(count > 1):
+			timeavg = float(timesum)/float(count)
+			timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
+			timeremain = (float(timeavg)+float(timestdev))*stats['imagesleft']
+			print "\tAVG TIME: \t",_timeString(timeavg,timestdev)
+			#print "\t(- TOTAL:",_timeString(timesum)," -)"
+			if(stats['imagesleft'] > 0):
+				print "\t(- REMAINING TIME:",_timeString(timeremain),"for",stats['imagesleft'],"images -)"
+			else:
+				print "\t(- LAST IMAGE -)"
+		#print "\tMEM: ",(mem.used()-startmem)/1024,"M (",(mem.used()-startmem)/(1024*count),"M)"
+		stats['count'] = stats['count'] + 1
+		_printLine()
 
 def _printLine():
 	print "\t------------------------------------------"

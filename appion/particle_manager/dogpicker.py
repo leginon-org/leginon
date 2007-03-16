@@ -14,19 +14,13 @@ import apDatabase
 data.holdImages(False)
 
 if __name__ == '__main__':
-
-	apParam.writeFunctionLog(sys.argv,file=".dogpickerlog")
-	params = apParam.createDefaultParams(function=sys.argv[0])
-	params = apDog.modifyDefaultParams(params)
-	stats  = apParam.createDefaultStats()
-	apParam.parseCommandLineInput(sys.argv,params)
 	if len(sys.argv) < 2:
 		apDog.dogHelp()
 		sys.exit(1)
-	apParam.createOutputDirs(params)
-	apParam.writeFunctionLog(sys.argv,params=params)
-	images = apDatabase.getAllImages(params,stats)
-	donedict=apLoop.readDoneDict(params)
+
+	(images,params,stats,donedict) = apLoop.startNewAppionFunction(sys.argv)
+
+	#params = apDog.modifyDefaultParams(params)
 
 	notdone = True
 	while notdone:

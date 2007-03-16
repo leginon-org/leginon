@@ -15,15 +15,7 @@ import data
 data.holdImages(False)
 			
 if __name__ == '__main__':
-	apParam.writeFunctionLog(sys.argv,file=".pyacelog")
-
-	#parse input and set up output dirs and params dictionary
-	params = apParam.createDefaultParams(function=sys.argv[0])
-	params = apParam.parseCommandLineInput(sys.argv,params)
-	apParam.createOutputDirs(params)
-	apParam.writeFunctionLog(sys.argv,params=params)
-	stats  = apParam.createDefaultStats()
-
+	(images,params,stats,donedict) = apLoop.startNewAppionFunction(sys.argv)
 
 	ace.mkTempDir(params['tempdir'])
 
@@ -34,12 +26,6 @@ if __name__ == '__main__':
 
 	#write ace config file to temp directory
 	ace.setAceConfig(matlab,params)
-	
-	#get dictionary of completed images
-	donedict = apLoop.readDoneDict(params)
-	
-	#get image data objects from Leg. database
-	images = apDatabase.getAllImages(params,stats)
 
 	notdone=True
 	while notdone:
@@ -50,7 +36,6 @@ if __name__ == '__main__':
 			#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
 			if( apLoop.startLoop(img, donedict, stats, params)==False ):
 				continue
-			
 			
 			#if reprocess option is specified, skip over images with confidence better than specified
 			if params['reprocess']:
@@ -83,7 +68,7 @@ if __name__ == '__main__':
 ### RUN ACE
 			apCtf.runAce(matlab,img,params)
 ### END RUN ACE
-		
+
 			apLoop.printSummary(stats, params)
 
 			apLoop.writeDoneDict(donedict,params,imagename)

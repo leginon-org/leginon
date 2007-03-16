@@ -63,13 +63,13 @@ def _printResults(params,nominal,ctfparams):
 		print " | Nominal | Defocus | Conf1 | Conf2 | TotConf | "
 		print(" | %1.3f   |  %1.3f  | %1.3f | %1.3f |  %1.3f  | " % \
 			( float(-nominal*1e6), float(ctfparams[0]*1e6), float(ctfparams[16]),\
-			float(ctfparams[17]), float(ctfparams[16])*float(ctfparams[17]) ))
+			float(ctfparams[17]), float(ctfparams[16])*abs(float(ctfparams[17])) ))
 		print " +---------+---------+-------+-------+---------+ "
 	else:
 		print " +---------+----------+----------+-------+-------+---------+ "
 		print " | Nominal | Defocus1 | Defocus2 | Conf1 | Conf2 | TotConf | "
 		print(" |  %1.3f  |   %1.3f  |  %1.3f   | %1.3f | %1.3f |  %1.3f  | " % \
 			( float(-nominal*1e6), float(ctfparams[0]*1e6), float(ctfparams[1]*1e6),\
-			float(ctfparams[16]), float(ctfparams[17]), float(ctfparams[16])*float(ctfparams[17]) ))
+			float(ctfparams[16]), float(ctfparams[17]), float(ctfparams[16])*abs(float(ctfparams[17])) ))
 		print " +---------+----------+----------+-------+-------+---------+ "
 	return

@@ -6,20 +6,6 @@ import libcv2
 import selexonFunctions  as sf1
 #import selexonFunctions2 as sf2
 
-def modifyDefaultParams(params):
-	#params={}
-	params["outdir"]="/tmp"
-	params["apix"]=1
-	params["diam"]=0
-	params["bin"]=4
-	params["sizerange"]=0
-	params["numslices"]=1
-	params["minthresh"]=3
-	params["maxthresh"]=7
-	params["id"]='picka_'
-	params['doneDictName'] = ".dogdonedict"
-	return params
-
 def dogHelp():
 	print "dogpicker.py dbimages=<session>,<preset> diam=<particle_pixels> bin=<binning>"+\
 		" range=<number_of_sizes> mint=<minimum_threshold_sigma> maxt=<maximum_threshold_sigma>"+\
@@ -37,7 +23,10 @@ def runDogDetection(imagename, params):
 	#image = Mrc.mrc_to_numeric(imgpath)
 	image = sf1.getImageData(imagename)['image']
 	scale          = params['apix']
-	binpixrad      = params['binpixdiam']/2
+	if(params['binpixdiam'] != None):
+		binpixrad      = params['binpixdiam']/2
+	else:
+		binpixrad      = params['diam']*params['apix']/float(params['bin'])/2.0
 	search_range   = params['sizerange']
 	sampling       = params['numslices']
 	mintreshold    = params['minthresh']
