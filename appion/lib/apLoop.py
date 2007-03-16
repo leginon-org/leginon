@@ -14,7 +14,7 @@ def waitForMoreImages(stats,params):
 		return False
 	if(stats['skipcount'] > 0):
 		print ""
-		print " !!! Images already processed and were therefore skipped (total",skipcount,"skipped)."
+		print " !!! Images already processed and were therefore skipped (total",stats['skipcount'],"skipped)."
 		print " !!! to them process again, remove \'continue\' option and run selexon again."
 		stats['skipcount'] = 0
 	print "\nAll images processed. Waiting ten minutes for new images (waited",\
