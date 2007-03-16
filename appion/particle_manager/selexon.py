@@ -208,6 +208,7 @@ if __name__ == '__main__':
 						insertShift(img,sibling,peak)
 			
 			if params['commit']:
+				expid=int(img['session'].dbid)
 				insertParticlePicks(params,img,expid)
 
 			# write results to dictionary
