@@ -10,7 +10,7 @@ import apLoop
 import apParam
 from selexonFunctions import *
 from selexonFunctions2 import *
-from crudFinderFunctions2 import *
+import apCrud
 
 data.holdImages(False)
 
@@ -103,7 +103,7 @@ if __name__ == '__main__':
 			imgname=img['filename']
 			tstart=time.time()
 			#findCrud(params,imgname)
-			findCrud2(params,imgname)
+			apCrud.findCrud(params,imgname)
 			tend=time.time()
 			print "CRUD FINDING TIME",tend-tstart
 		sys.exit(1)
