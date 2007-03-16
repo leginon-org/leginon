@@ -62,7 +62,7 @@ if __name__ == '__main__':
 	print " ... getting templates"
 	if params['templateIds']:
 		# get the first image's pixel size:
-		params['apix']=getPixelSize(images[0])
+		params['apix'] = getPixelSize(images[0])
 		params['template']='originalTemporaryTemplate'
 		# move to run directory
 		os.chdir(params['rundir'])
@@ -81,9 +81,6 @@ if __name__ == '__main__':
 			dwnsizeTemplate(params,tmplt)
 		print " ... downsize & filtered "+str(len(params['templatelist']))+ \
 			" file(s) with root \""+params["template"]+"\""
-			
-	# unpickle dictionary of previously processed images
-	donedict=apLoop.readDoneDict(params)
 
 	if (params["crud"]==True or params['method'] == "classic"):
 		createImageLinks(images)
@@ -117,7 +114,7 @@ if __name__ == '__main__':
 				recordShift(params,img,sibling,peak)
 				if params['commit']:
 					insertShift(img,sibling,peak)
-		sys.exit()	
+		sys.exit(1)	
 	
 	# create directory to contain the 'pik' files
 	if not (os.path.exists("pikfiles")):
@@ -126,38 +123,34 @@ if __name__ == '__main__':
 	#Write log to rundir
 	writeSelexLog(sys.argv,file="selexon.log")
 
+	# unpickle dictionary of previously processed images
+	donedict = apLoop.readDoneDict(params)
+
 	# run selexon
 	notdone=True
-	twhole=time.time()
-	count  = 1
-	skipcount = 1
-	lastcount = 0
-	#startmem = mem.used()
-	peaksum = 0
-	peaksumsq = 0
-	timesum = 0
-	timesumsq = 0
-	params['waittime'] = 0
-	params['lastimageskipped'] = False
 	while notdone:
 		while images:
 			img = images.pop(0)
 			imgname=img['filename']
-			if(apLoop.startLoop(img,donedict,params) ==False):
+			params['imagesleft'] = len(images)
+
+			#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
+			if( apLoop.startLoop(img, donedict, params)==False ):
 				continue
 
 			# run FindEM
 			if params['method'] == "experimental":
 				#Finds peaks as well:
 				numpeaks = runCrossCorr(params,imgname)
-				peaksum = peaksum + numpeaks
-				peaksumsq = peaksumsq + numpeaks**2
+				params['peaksum']   = params['peaksum'] + numpeaks
+				params['peaksumsq'] = params['peaksumsq'] + numpeaks**2
 			else:
 #				tmpRemoveCrud(params,imgname)
 				dwnsizeImg(params,imgname)
 #				runFindEM(params,imgname)
 				threadFindEM(params,imgname)
 
+			#FIND PEAKS
 			if params['method'] == "classic":
 				findPeaks(params,imgname)
 				numpeaks = 0
@@ -165,11 +158,12 @@ if __name__ == '__main__':
 				print "skipping findpeaks..."
 			else:
 				numpeaks = findPeaks2(params,imgname)
-				peaksum = peaksum + numpeaks
-				peaksumsq = peaksumsq + numpeaks**2
+				params['peaksum']   = params['peaksum'] + numpeaks
+				params['peaksumsq'] = params['peaksumsq'] + numpeaks**2
 
 			# if no particles were found, skip rest and go to next image
-			if not (os.path.exists("pikfiles/"+imgname+".a.pik")):
+			#if not (os.path.exists("pikfiles/"+imgname+".a.pik")):
+			if numpeaks == 0 and not os.path.exists("pikfiles/"+imgname+".a.pik"):
 				print "no particles found in \'"+imgname+".mrc\'"
 				# write results to dictionary
 				donedict[imgname]=True
@@ -191,7 +185,7 @@ if __name__ == '__main__':
 					writeDoneDict(donedict)
 					continue
 
-			# create jpg of selected particles if not created by crudfinder
+			#CREATE JPG of selected particles if not created by crudfinder
 			if (params["crud"]==False):
 				if params['method'] == "classic":
 					createJPG(params,imgname)
@@ -215,31 +209,15 @@ if __name__ == '__main__':
 				insertParticlePicks(params,img,expid)
 
 			# write results to dictionary
- 			donedict[imgname]=True
-			apLoop.writeDoneDict(donedict,params)
+			apLoop.writeDoneDict(donedict,params,imgname)
 
+			tdiff = time.time()-params['beginLoopTime']
 			if(params["continue"]==False or tdiff > 0.3):
 				apLoop.printSummary(params)
+			#END LOOP OVER IMAGES
 
-		if params["dbimages"]==True:
-			notdone=True
-			if(params['skipcount'] > 0):
-				print ""
-				print " !!! Images already processed and were therefore skipped (total",skipcount,"skipped)."
-				print " !!! to them process again, remove \'continue\' option and run selexon again."
-				params['skipcount'] = 0
-			print "\nAll images processed. Waiting ten minutes for new images (waited",\
-				params['waittime'],"min so far)."
-			time.sleep(600)
-			params['waittime'] = params['waittime'] + 10
-			images=getImagesFromDB(params['session']['name'],params['preset'])
-			if (params["crud"]==True or params['method'] == "classic"):
-				createImageLinks(images)
-			if(params['waittime'] > 120):
-				print "Waited longer than two hours, so I am quitting"
-				notdone=False
-		else:
-			notdone=False
+		notdone = apLoop.waitForMoreImages(params)
+		#END NOTDONE LOOP
 
 	# remove temporary templates if getting images from db
 	if params['templateIds']:

@@ -58,7 +58,6 @@ def createDefaults():
 	params["no_length_prune"]=False
 	params["stdev"]=0
 	params["test"]=False
-
 	notdone=True
 	params["startTime"]=time.time()
 	params['count']  = 1
@@ -67,6 +66,7 @@ def createDefaults():
 	params['startmem'] = mem.used()
 	params['peaksum'] = 0
 	params['lastpeaks'] = None
+	params['imagesleft'] = 1
 	params['peaksumsq'] = 0
 	params['timesum'] = 0
 	params['timesumsq'] = 0

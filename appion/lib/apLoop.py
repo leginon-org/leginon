@@ -4,28 +4,30 @@ import os
 import cPickle
 import time
 import math
+import sys
 import selexonFunctions  as sf1
 import selexonFunctions2 as sf2
 
-def _alreadyProcessed(donedict,imgname,params):
-	""" 
-	checks to see if image (imgname) has been done already
-	"""
-	if (params["continue"]==True):
-		if donedict[imgname]:
-			if(params['lastimageskipped']==False):
-				sys.stderr.write("skipping images")
-			else:
-				sys.stderr.write(".")
-			params['lastimageskipped']=True
-			params['skipcount'] = params['skipcount'] + 1
-			return True
-		else:
-			params['waittime'] = 0
-			if(params['lastimageskipped']==True):
-				print " skipped",params['skipcount'],"images so far"
-			params['lastimageskipped']=False
-	return False
+
+def waitForMoreImages(params):
+	if params["dbimages"]==False:
+		return False
+	if(params['skipcount'] > 0):
+		print ""
+		print " !!! Images already processed and were therefore skipped (total",skipcount,"skipped)."
+		print " !!! to them process again, remove \'continue\' option and run selexon again."
+		params['skipcount'] = 0
+	print "\nAll images processed. Waiting ten minutes for new images (waited",\
+		params['waittime'],"min so far)."
+	time.sleep(600)
+	params['waittime'] = params['waittime'] + 10
+	newimages = sf1.getImagesFromDB(params['session']['name'],params['preset'])
+	if(params["crud"]==True or params['method'] == "classic"):
+		sf1.createImageLinks(images)
+	if(params['waittime'] > 120):
+		print "Waited longer than two hours, so I am quitting"
+		return False
+	return True
 
 
 def readDoneDict(params):
@@ -41,16 +43,41 @@ def readDoneDict(params):
 	return (donedict)
 
 
-def writeDoneDict(donedict,params):
+def writeDoneDict(donedict,params,imgname=None):
+	if imgname != None:
+	 	donedict[imgname]=True
 	doneDictName = params['doneDictName']
 	f=open(doneDictName,'w')
 	cPickle.dump(donedict,f)
 	f.close()
 
 
+def _alreadyProcessed(donedict, imgname, params):
+	""" 
+	checks to see if image (imgname) has been done already
+	"""
+	if (params["continue"]==True):
+		if donedict.has_key(imgname):
+			if(params['lastimageskipped']==False):
+				sys.stderr.write("skipping images")
+			else:
+				sys.stderr.write(".")
+			params['lastimageskipped']=True
+			params['skipcount'] = params['skipcount'] + 1
+			return True
+		else:
+			donedict[imgname]=None
+			params['waittime'] = 0
+			if(params['lastimageskipped']==True):
+				print " skipped",params['skipcount'],"images so far"
+			params['lastimageskipped']=False
+			return False
+	return False
+
 def startLoop(img,donedict,params):
 	"""
 	initilizes several parameter for a new image
+	and checks if it is okay to start processing image
 	"""
 	if(params['lastcount'] != params['count']):
 		print "\nStarting new image",params['count'],"( skipped:",params['skipcount'],\
@@ -67,7 +94,7 @@ def startLoop(img,donedict,params):
 
 	# if continue option is true, check to see if image has already been processed
 	imgname=img['filename']
-	if(_alreadyProcessed(donedict,imgname,params)==True):
+	if(_alreadyProcessed(donedict,img['filename'],params)==True):
 		return False
 
 	# insert selexon params into dbparticledata.selectionParams table
@@ -82,7 +109,6 @@ def startLoop(img,donedict,params):
 	params['beginLoopTime'] = time.time()
 	return True
 
-
 def printSummary(params):
 	"""
 	print summary statistics
@@ -91,7 +117,7 @@ def printSummary(params):
 	count = params['count']
 	#if(count != params['lastcount']):
 	if(params['method'] != None):
-		print "\n\tSUMMARY: using the",params['method'],"method"
+		print "\n\tSUMMARY: using",params['method'],"method"
 	else:
 		print "\n\tSUMMARY:"
 	_printLine()
@@ -115,7 +141,10 @@ def printSummary(params):
 		timeremain = (float(timeavg)+float(timestdev))*params['imagesleft']
 		print "\tAVG TIME: \t",_timeString(timeavg,timestdev)
 		#print "\t(- TOTAL:",_timeString(timesum)," -)"
-		print "\t(- REMAINING TIME:",_timeString(timeremain),"for",params['imagesleft'],"images -)"
+		if(params['imagesleft'] > 0):
+			print "\t(- REMAINING TIME:",_timeString(timeremain),"for",params['imagesleft'],"images -)"
+		else:
+			print "\t(- LAST IMAGE -)"
 	#print "\tMEM: ",(mem.used()-startmem)/1024,"M (",(mem.used()-startmem)/(1024*count),"M)"
 	params['count'] = params['count'] + 1
 	_printLine()
