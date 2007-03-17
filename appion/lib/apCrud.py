@@ -17,7 +17,7 @@ import polygon
 import libCV
 import selexonFunctions2
 import string
-
+import operator
 
 def prepImage(image,cutoff=5.0):
 	shape=numarray.shape(image)
@@ -57,7 +57,8 @@ def outputImage(array,name,description,testlog):
 		array=array.astype(numarray.Int16)
 	if array.type()==numarray.Int64:
 		array=array.astype(numarray.Int32)
-	array = selexonFunctions2.whiteNormalizeImage(array)
+	if array.max()-array.min() >0.1:
+		array = selexonFunctions2.whiteNormalizeImage(array)
 	PILimage = selexonFunctions2.array2image(array)
 	PILimage.save(jpgname, "JPEG", quality=95)
 	return testlog
@@ -80,19 +81,17 @@ def findEdgeSobel(image,sigma,amin,amax,output,testlog):
 
 def findEdgeCanny(image,sigma,amin,amax,output,testlog):
 
-	tedges,gradient,testlog = canny(image,sigma,5,True,amin,amax,testlog)
+	tedges,gradient = canny(image,sigma,5,True,amin,amax)
 
 	if (output):
 		testlog=outputImage(gradient,'grad','gradient magnitude image',testlog)
 	
 	return tedges,testlog
 
-def canny(image, sigma=1.8, nonmaximawindow=7, hysteresis=True, tlow=0.3, thigh=0.9,testlog=None):
-	print numarray.shape(image),sigma,tlow,thigh
+def canny(image, sigma=1.8, nonmaximawindow=7, hysteresis=True, tlow=0.3, thigh=0.9):
 	edgeimage,grad_mag = numextension.cannyedge(image,sigma,tlow,thigh)
 	edges = ma.masked_less(edgeimage,100,0)
-	return edges, grad_mag,testlog
-	
+	return edges, grad_mag
 
 def fillMask(mask_image,iteration):
 	base=nd.generate_binary_structure(2,2)
@@ -197,65 +196,32 @@ def findConvexHullsFromLabeledImage(bimage,cruds,clabels):
 		gpolygons.append(gpolygon)
 	return gpolygons
 		
-def doPointsOverlap(p1,p2):
-	is_overlapped=False
-	if len(p2) >= 2:
-		for point in p1:
-			overlapped=apConvexHull.isPointInPolygon(point,p2)
-			if overlapped==1:
-				return True
-	else:
-		for point in p1:
-			if point==p2[0]:
-				return True
-	if len(p1) >= 2:
-		for point in p2:
-			overlapped=apConvexHull.isPointInPolygon(point,p1)
-			if overlapped==1:
-				return True
-	else:
-		for point in p2:
-			if point==p1[0]:
-				return True
-	return False
-
-def includOneInAnother(p1,p2):
-	p2set = set(p2)
-	p12set = p2set.union(p1)
-	p12 = list(p12set)
-	return p12
-
-def mergePolygonPoints(points):
+def mergePolygonPoints(polygons):
 	p1=0
-	result=list(points)
+	result=list(polygons)
 	while p1 in range(len(result)):
 		p2=p1+1
 		has_overlap=False
+		polygon1=polygons[p1]
 		while p2 in range(len(result)):
-			overlap=doPointsOverlap(points[p1],points[p2])
-			if not overlap:
-				p2=p2+1
-			else:
-
-				points[p2]=includOneInAnother(points[p1],points[p2])
+			polygon2=polygons[p2]
+			overlapped_points=polygon.pointsInPolygon(polygon1,polygon2)
+			if len(overlapped_points) > 0:
+				polygons[p2].extend(polygon1)
 				has_overlap=True
-				p2=p2+1
+			p2=p2+1
 
 		if has_overlap==False:
-			results=list(points)
 			p1=p1+1
 		else:
-			points.pop(p1)
-			result=list(points)
+			polygons.pop(p1)
+		result=list(polygons)
 	#create new convex hulls
 	for p in range(len(result)):
-		checked=[]
-		for point in points[p]:
-			if point not in checked:
-				checked.append(point)
-		points[p]=checked
-		new_polygon=findConvexHullsFromPoints(points[p])
+		pointset = list(set(polygons[p]))
+		new_polygon=findConvexHullsFromPoints(pointset)
 		result[p]=new_polygon
+
 	return result		  
 
 def makeGlobalPolygons(shape,crud_objs,polygons):
@@ -292,11 +258,12 @@ def makeLocalPolygons(gpolygons):
 
 def convexHullUnion(bimage,cruds,clabels,testlog):
 	shape=numarray.shape(bimage)
+	print "making convex hulls"
 	gpolygons=findConvexHullsFromLabeledImage(bimage,cruds,clabels)
-	print "made %d convex hulls" % len(gpolygons)
 	
+	print "merging from %d convex hulls" % len(gpolygons)
 	gpolygons=mergePolygonPoints(gpolygons)
-	print "merge to %d convex hulls" % len(gpolygons)
+	print "merged to %d convex hulls" % len(gpolygons)
 
 	#fill polygons and make a labeled image
 	polygon_image=polygon.plotPolygons(shape,gpolygons)
@@ -387,22 +354,41 @@ def pruneByStdev(info,stdev_min,goodcruds_in):
 	
 def makePrunedLabels(file,labeled_image,ltotal,info,goodlabels):
 	print "remaking %d labeled image after pruning" % len(goodlabels)
-	imageshape=numarray.shape(labeled_image)
+
+	new_labeled_image = makeImageFromLabels(labeled_image,ltotal,goodlabels)
+
 	goodinfo=""
-	new_labeled_image=numarray.zeros(imageshape,numarray.Int8)
-	if len(goodlabels)==0:
-		return new_labeled_image,len(goodlabels),goodinfo
-	base=numarray.ones(imageshape)
 	for i,l1 in enumerate(goodlabels):
-		l=l1+1
-		region=ma.masked_outside(labeled_image,l,l)
-		region=region/l+i
-		one_region=region.filled(0)
-		new_labeled_image=new_labeled_image+one_region
 		# output: centerx centery area average stdev length
+		l=l1+1
 		goodcrudline=file+".mrc "+str(int(info[l][4][1]))+" "+str(int(info[l][4][0]))+" "+str(info[l][0])+" "+str(info[l][1])+" "+str(info[l][2])+" "+str(info[l][3])+"\n"
 		goodinfo=goodinfo+goodcrudline
+
 	return new_labeled_image,len(goodlabels),goodinfo
+
+def makeImageFromLabels(labeled_image,ltotal,goodlabels):
+	imageshape=numarray.shape(labeled_image)
+	if len(goodlabels)==0:
+		return new_labeled_image
+	else:
+		if len(goodlabels)==ltotal:
+			return labeled_image
+	if len(goodlabels)*2 < ltotal:
+		new_labeled_image=numarray.zeros(imageshape,numarray.Int8)
+		for i,l1 in enumerate(goodlabels):
+			l=l1+1
+			region=numarray.where(labeled_image==l,1,0)
+			numarray.putmask(new_labeled_image,region,i+1)
+	else:
+		tmp_labeled_image=labeled_image
+		badset=set(range(ltotal))
+		badset=badset.difference(set(goodlabels))
+		for i,l1 in enumerate(badset):
+			l=l1+1
+			region=numarray.where(labeled_image==l,1,0)
+			numarray.putmask(tmp_labeled_image,region,i+1)
+		new_labeled_image,resultlabels = nd.label(tmp_labeled_image)
+	return new_labeled_image
 
 def makePrunedPolygons(file,gpolygons,imageshape,info,goodlabels):
 	print "remaking %d polygons after pruning" % len(goodlabels)
@@ -494,10 +480,8 @@ def findCrud(params,file):
 	am = 3.0
 	
 	list_t=pm*3.14159*cdiam
-#	list_t=pm*3.14159*cdiam/4	#old selexon.py values--not correct-cdiam scaled in tcl script and python script
 	pradius = diam/2.0	
 	cradius=cdiam/2.0
-#	cradius=cdiam/2.0/4	#old selexon.py values--not correct-cdiam scaled in tcl script and python script
 	area_t=am*3.1415926*cradius*cradius
 	crudinfo=""
 		
@@ -601,7 +585,6 @@ def findCrud(params,file):
 				if (test):
 					temp_cruds,temp_clabels,goodinfo=makePrunedLabels(file,cruds,clabels,allinfo,goodcruds)
 					testlog=outputImage(temp_cruds,'crud_labela','Area pruned labeled image',testlog)
-					print temp_clabels,clabels
 
 			if (len(goodcruds)>0):
 				#pruning by standard deviation in the cruds
