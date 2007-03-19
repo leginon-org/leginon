@@ -1,0 +1,5 @@
+to install type:
+	python ./setup.py install
+with root priviledges or type:
+	sudo python ./setup.py install
+
