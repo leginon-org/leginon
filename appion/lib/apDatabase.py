@@ -40,7 +40,7 @@ def _getSpecificImagesFromDB(params):
 
 def _getImagesFromDB(session,preset):
 	# returns list of image names from DB
-	sys.stderr.write("Querying database for images from session, "+session+"... ")
+	sys.stderr.write("Querying database for preset '"+preset+"' images from session '"+session+"' ... ")
 	sessionq = data.SessionData(name=session)
 	presetq=data.PresetData(name=preset)
 	imageq=data.AcquisitionImageData()
@@ -59,7 +59,7 @@ def _getImagesFromDB(session,preset):
 
 def _getAllImagesFromDB(session):
 	# returns list of image data based on session name
-	sys.stderr.write("Querying database for images ... ")
+	sys.stderr.write("Querying database for all images from session '"+session+"' ... ")
 	sessionq= data.SessionData(name=session)
 	imageq=data.AcquisitionImageData()
 	imageq['session']=sessionq

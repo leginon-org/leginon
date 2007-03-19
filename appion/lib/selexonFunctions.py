@@ -19,6 +19,7 @@ import time
 import numarray
 import numarray.convolve as convolve
 import numarray.nd_image as nd_image
+import apLoop
 
 db=dbdatakeeper.DBDataKeeper()
 partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
@@ -403,7 +404,8 @@ def runFindEM(params,file):
 		fin.close()
 
 		if (not os.path.exists(cccfile)):
-			print "\nERROR: findem.exe did not run or crashed. Did you source useappion.sh?\n"
+			print "\nERROR: findem.exe did not run or crashed.\b"
+			print apLoop.color("Did you source useappion.sh?\n","red")
 			sys.exit(1)
 
 		classavg+=1

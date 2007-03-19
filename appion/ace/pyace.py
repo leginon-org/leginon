@@ -15,6 +15,12 @@ import data
 data.holdImages(False)
 			
 if __name__ == '__main__':
+	pyacepath = os.path.join(os.getcwd(),"pyace.py")
+	if(not os.path.exists(pyacepath)):
+		print "\nERROR: 'pyace.py' needs to be run in the same directory as"+\
+			"all of its matlab files\n"
+		sys.exit(1)
+
 	(images,params,stats,donedict) = apLoop.startNewAppionFunction(sys.argv)
 
 	ace.mkTempDir(params['tempdir'])

@@ -4,9 +4,11 @@ import os,sys
 import cPickle
 import time
 import math
+import types
 import selexonFunctions  as sf1
 #import selexonFunctions2 as sf2
-import apParam,apDatabase
+import apParam
+import apDatabase
 
 def startNewAppionFunction(args):
 	"""
@@ -210,3 +212,60 @@ def _timeString(avg,stdev=0):
 		else:
 			timestr = str(int(avg/3600.0))+" hrs "+str(int((avg/3600.0-int(avg/3600.0))*60.0+0.5))+" min"
 	return str(timestr)
+
+
+
+
+def color(text, fg, bg=None):
+	"""Return colored text.
+
+	Uses terminal color codes; set avk_util.enable_color to 0 to
+	return plain un-colored text. If fg is a tuple, it's assumed to
+	be (fg, bg). Both colors may be 'None'.
+
+	"""
+
+	colors = {
+		"black" :"30",
+		"red"   :"31",
+		"green" :"32",
+		"brown" :"33",
+		"blue"  :"34",
+		"purple":"35",
+		"cyan"  :"36",
+		"lgray" :"37",
+		"gray"  :"1;30",
+		"lred"  :"1;31",
+		"lgreen":"1;32",
+		"yellow":"1;33",
+		"lblue" :"1;34",
+		"pink"  :"1;35",
+		"lcyan" :"1;36",
+		"white" :"1;37"
+	}
+
+	if type(fg) in (types.TupleType, types.ListType):
+		fg, bg = fg
+	if not fg:
+		return text
+	opencol = "\033["
+	closecol = "m"
+	clear = opencol + "0" + closecol
+	xterm = 0
+	if os.environ["TERM"] == "xterm": 
+		xterm = 1
+	b = ''
+	# In xterm, brown comes out as yellow..
+	if xterm and fg == "yellow": 
+		fg = "brown"
+	f = opencol + colors[fg] + closecol
+	if bg:
+		if bg == "yellow" and xterm: 
+			bg = "brown"
+		try: 
+			b = colors[bg].replace('3', '4', 1)
+			b = opencol + b + closecol
+		except KeyError: 
+			pass
+	return "%s%s%s%s" % (b, f, text, clear)
+

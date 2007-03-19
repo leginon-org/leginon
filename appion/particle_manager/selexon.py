@@ -106,8 +106,10 @@ if __name__ == '__main__':
 			else:
 #				sf2.tmpRemoveCrud(params,imgname)
 				sf1.dwnsizeImg(params,imgname)
-#				sf1.runFindEM(params,imgname)
-				sf2.threadFindEM(params,imgname)
+				if(os.getloadavg() > 3.1):
+					sf1.runFindEM(params,imgname)
+				else:
+					sf2.threadFindEM(params,imgname)
 
 			#FIND PEAKS
 			if params['method'] == "classic":

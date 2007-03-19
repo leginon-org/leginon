@@ -2,6 +2,7 @@
 
 import pymat
 import os,re,sys
+import apLoop
 
 def runAce(matlab,img,params):
 	imgpath=img['session']['image path']
@@ -57,19 +58,91 @@ def runAce(matlab,img,params):
 	return
 
 def _printResults(params,nominal,ctfparams):
-	
+	nom1 = float(-nominal*1e6)
+	defoc1 = float(ctfparams[0]*1e6)
 	if (params['stig']==0):
-		print " +---------+---------+-------+-------+---------+ "
-		print " | Nominal | Defocus | Conf1 | Conf2 | TotConf | "
-		print(" | %1.3f   |  %1.3f  | %1.3f | %1.3f |  %1.3f  | " % \
-			( float(-nominal*1e6), float(ctfparams[0]*1e6), float(ctfparams[16]),\
-			float(ctfparams[17]), float(ctfparams[16])*abs(float(ctfparams[17])) ))
-		print " +---------+---------+-------+-------+---------+ "
+		defoc2 = float(ctfparams[0]*1e6)
 	else:
-		print " +---------+----------+----------+-------+-------+---------+ "
-		print " | Nominal | Defocus1 | Defocus2 | Conf1 | Conf2 | TotConf | "
-		print(" |  %1.3f  |   %1.3f  |  %1.3f   | %1.3f | %1.3f |  %1.3f  | " % \
-			( float(-nominal*1e6), float(ctfparams[0]*1e6), float(ctfparams[1]*1e6),\
-			float(ctfparams[16]), float(ctfparams[17]), float(ctfparams[16])*abs(float(ctfparams[17])) ))
-		print " +---------+----------+----------+-------+-------+---------+ "
+		defoc2=None
+	conf1 = float(ctfparams[16])
+	conf2 = float(ctfparams[17])
+	totconf = float(ctfparams[16])*abs(float(ctfparams[17]))
+	pererror = (nom1-defoc1)/defoc1*100.0
+	if (params['stig']==0):
+		labellist = ["Nominal","Defocus","Conf1","Conf2","TotConf",]
+		numlist = [nom1,defoc1,conf1,conf2,totconf,]
+		typelist = [0,0,1,1,1,]
+		_printWindow(labellist,numlist,typelist)
+	else:
+		labellist = ["Nominal","Defocus1","Defocus2","Conf1","Conf2","TotConf",]
+		numlist = [nom1,defoc1,defoc2,conf1,conf2,totconf,]
+		typelist = [0,0,0,1,1,1,]
+		_printWindow(labellist,numlist,typelist)
 	return
+
+def _printWindow(labellist,numlist,typelist):
+	if len(labellist) != len(numlist) or len(typelist) != len(numlist):
+		print "\nERROR: in _printWindow() list lengths are off"
+		print len(labellist)," != ",len(numlist)," != ",len(typelist)
+		sys.exit(1)
+	print _headerStr(labellist)
+	labelstr = " "
+	for lab in labellist:
+		labelstr += "| "+lab+" "
+		if len(lab) < 5:
+			for i in range(5-len(lab)):
+				labelstr += " "
+	print labelstr+"|"
+
+	datastr = " "
+	for i in range(len(labellist)):
+		datastr += "| "
+		if typelist[i] == 1:
+			numstr = _colorNum(numlist[i])
+		else:
+			numstr = "%1.3f" % numlist[i]
+		pad = len(labellist[i])-5
+		if pad % 2 == 1:
+			datastr += " "
+			pad -= 1
+		pad/=2
+		if(pad > 0):
+			for i in range(pad):
+				datastr += " "
+		datastr += numstr
+		if(pad > 0):
+			for i in range(pad):
+				datastr += " "
+		datastr += " "
+	print datastr+"|"
+
+	print _headerStr(labellist)
+
+	
+def _headerStr(labellist):
+	headstr = " "
+	for lab in labellist:
+		headstr += "+"
+		leng = len(lab)
+		if leng < 5: leng = 5
+		for i in range(leng+2):
+			headstr += "-"
+	headstr += "+"
+	return headstr
+
+def _colorNum(num,green=0.8,red=0.3):
+	if(num == None):
+		return None
+	elif(num > green and num <= 1):
+		numstr = "%1.3f" % num
+		return apLoop.color(numstr,"green")
+	elif(num < red and num >= 0):
+		numstr = "%1.3f" % num
+		return apLoop.color(numstr,"red")
+	else:
+		numstr = "%1.3f" % num
+		return numstr
+
+
+
+
