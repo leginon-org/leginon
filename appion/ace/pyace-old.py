@@ -27,8 +27,8 @@ if __name__ == '__main__':
 	(params, donedict)=getDoneDict(params)
 	
 	#get image data objects from Leg. database
-#	if params['dbimages'] == 'TRUE' and not params['reprocess']:
-	if params['dbimages'] == 'TRUE':
+#	if params['dbimages'] == True and not params['reprocess']:
+	if params['dbimages'] == True:
 		images=getImagesFromDB(params['session'],params['preset'])
 	elif params['alldbimages']:
 		images=getAllImagesFromDB(params['session'])
@@ -45,7 +45,7 @@ if __name__ == '__main__':
 			
 			#if continue option is true, check to see if image has already been processed
 			doneCheck(donedict,img['filename'])
-			if params['continue']=='TRUE':
+			if params['continue']== True:
 				if donedict[img['filename']]:
 					print img['filename'], 'already processed. To process again, remove "continue" option.'
 					continue
@@ -85,7 +85,7 @@ if __name__ == '__main__':
 			donedict[img['filename']]=True
 			writeDoneDict(donedict,params)
 			
-		if params['dbimages']=='TRUE' and not params['reprocess']:
+		if params['dbimages']== True and not params['reprocess']:
 			notdone=True
 			print "Waiting ten minutes for new images"
 			time.sleep(600)
