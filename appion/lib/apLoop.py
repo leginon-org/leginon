@@ -5,7 +5,7 @@ import cPickle
 import time
 import math
 import types
-import selexonFunctions  as sf1
+#import selexonFunctions  as sf1
 #import selexonFunctions2 as sf2
 import apParam
 import apDatabase
@@ -46,9 +46,10 @@ def waitForMoreImages(stats,params):
 		stats['waittime'],"min so far)."
 	time.sleep(600)
 	stats['waittime'] = stats['waittime'] + 10
-	newimages = sf1.getImagesFromDB(params['session']['name'],params['preset'])
-	if(params["crud"]==True or params['method'] == "classic"):
-		sf1.createImageLinks(images)
+	newimages = apDatabase.getAllImages(params,stats)
+	#newimages = apDatabase.getImagesFromDB(params['session']['name'],params['preset'])
+	#if(params["crud"]==True or params['method'] == "classic"):
+		#sf1.createImageLinks(images)
 	if(stats['waittime'] > 120):
 		print "Waited longer than two hours, so I am quitting"
 		return False

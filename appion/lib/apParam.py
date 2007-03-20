@@ -92,6 +92,9 @@ def createDefaultParams(function=None):
 	params["maxthresh"]=7
 	params["id"]='picka_'
 
+### MAKE STACK PARAMETERS
+	params['selexonId']=None
+
 ### COMMON PARAMETERS
 	params['sessionname']=None
 	params['session']=None
@@ -238,6 +241,8 @@ def parseCommandLineInput(args,params):
 	# next get all selection parameters
 	for arg in args[lastarg:]:
 		elements=arg.split('=')
+		elements[0] = elements[0].lower()
+		print elements
 		if (elements[0]=='template'):
 			params['template']=elements[1]
 		elif (elements[0]=='range'):
@@ -285,7 +290,7 @@ def parseCommandLineInput(args,params):
 			params['cstd']=float(elements[1])
 		elif (arg=='crudonly'):
 			params['crudonly']=True
-		elif (elements[0]=='templateIds'):
+		elif (elements[0]=='templateids'):
 			templatestring=elements[1].split(',')
 			params['templateIds']=templatestring
 		elif arg=='defocpair':
@@ -371,6 +376,10 @@ def parseCommandLineInput(args,params):
 
 		elif (elements[0]=='reprocess'):
 			params['reprocess']=float(elements[1])
+
+### MAKE STACK PARAMS
+		elif (elements[0]=='prtlrunid'):
+			params["selexonId"]=int(elements[1])
 
 ### DOG PICKER PARAMS
 

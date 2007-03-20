@@ -9,8 +9,8 @@ import dbdatakeeper
 import particleData
 
 partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
-acedb=dbdatakeeper.DBDataKeeper(db='dbctfdata')
-db=dbdatakeeper.DBDataKeeper(db='dbemdata')
+acedb =dbdatakeeper.DBDataKeeper(db='dbctfdata')
+db    =dbdatakeeper.DBDataKeeper(db='dbemdata')
 
 def printHelp():
 	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected or inspectfile=<file>] [bin=<n>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n>\n [limit=<n>] [defocpair=<preset>]"

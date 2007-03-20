@@ -1,12 +1,15 @@
 #!/usr/bin/python -O
 
-import os, re, sys
+import sys
+sys.stderr.write("loading modules...")
+import os, re
 import data
 import time
 import random
 import apLoop,apParam,apDatabase
 import apTilt
 import selexonFunctions  as sf1
+sys.stderr.write("done\n")
 
 data.holdImages(False)
 
@@ -35,10 +38,7 @@ if __name__ == '__main__':
 				stats['notpair']+=1
 			if len(pair) == 2:
 				img1,img2 = pair
-				print dir(img1)
-				print dir(img1['image'])
-				image = sf1.getImageData(img1)['image']
-				sys.exit(1)
+				#image = sf1.getImageData(img1)['image']
 				imgname1=img1['filename']
 				imgname2=img2['filename']
 				stats['imagesleft'] = len(imagepairs)-stats['count']-stats['notpair']

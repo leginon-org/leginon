@@ -3,7 +3,7 @@
 import sys
 import data
 import dbdatakeeper
-import selexonFunctions  as sf1
+#import selexonFunctions  as sf1
 
 data.holdImages(False)
 db=dbdatakeeper.DBDataKeeper()

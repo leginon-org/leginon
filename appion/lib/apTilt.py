@@ -4,7 +4,7 @@ import sys
 import time
 import random
 import math
-import apImage
+import apImage,apParticle
 import libCV
 import numarray
 import numarray.nd_image as nd_image
@@ -16,16 +16,43 @@ def process(img1,img2,params):
 	apix = params['apix']
 	print "sleeping ",r
 	time.sleep(r)
-	imgdata1 = apImage.preProcessImage(img1['image'],bin=4,lowpass=10,apix=apix)
-	imgdata2 = apImage.preProcessImage(img2['image'],bin=4,lowpass=10,apix=apix)
-	trans,shift,prob1 = _compareImages(imgdata1,imgdata2)
+	box=128
+
+
+	blank1 = numarray.zeros(img1['image'].shape)
+	particles,shift = apParticle.getParticles(img1,params)
+	print "found",len(particles),"particles for image1"
+	for prtl in particles:
+		x0=int(prtl['xcoord']-(box/2)-shift['shiftx']+0.5)
+		y0=int(prtl['ycoord']-(box/2)-shift['shifty']+0.5)
+		blank1[x0][y0] = 1
+	blank1 = apImage.preProcessImage(blank1,bin=4,lowpass=400,apix=apix)
+	apImage.arrayToJpeg(blank1,"blank1.jpg")
+
+	blank2 = numarray.zeros(img2['image'].shape)
+	particles,shift = apParticle.getParticles(img2,params)
+	print "found",len(particles),"particles for image2"
+	for prtl in particles:
+		x0=int(prtl['xcoord']-(box/2)-shift['shiftx']+0.5)
+		y0=int(prtl['ycoord']-(box/2)-shift['shifty']+0.5)
+		blank2[x0][y0] = 1
+	blank2 = apImage.preProcessImage(blank2,bin=4,lowpass=400,apix=apix)
+	apImage.arrayToJpeg(blank2,"blank2.jpg")
+
+
+	#blank1 = apImage.lowPassFilter(blank1,apix=1.0,bin=1,radius=10.0)
+
+
+	#imgdata1 = apImage.preProcessImage(blank1['image'],bin=4,lowpass=10,apix=apix)
+	#imgdata2 = apImage.preProcessImage(img2['image'],bin=4,lowpass=10,apix=apix)
+	trans,shift,prob1 = _compareImages(blank1,blank2)
 	print trans
 	print shift
 	print "prob1=",round(prob1,6)
 	tilt,twist,prob2 = _matrixToEulers(trans)
 	matrix  = _rotMatrixDeg(tilt,twist)
 	print "tilt=",round(tilt,2),"twist=",round(twist,6),"\nprob2=",round(prob2,6)
-	prob3 = _makeOutput(imgdata1,imgdata2,trans,matrix,shift)
+	prob3 = _makeOutput(blank1,blank2,trans,matrix,shift)
 	print "prob3=",round(prob3,6)
 	time.sleep(r)
 	sys.exit(1)
@@ -69,7 +96,7 @@ def _makeOutput(img1,img2,trans,matrix,shift):
 
 def _compareImages(img1,img2):
 	minsize  = 50
-	maxsize  = 2500
+	maxsize  = 250000
 	blur     = 0
 	sharp    = 0
 	whtonblk = True
@@ -77,7 +104,7 @@ def _compareImages(img1,img2):
 
 	bigtrans1  = libCV.MatchImages(img1, img2, minsize, maxsize,\
 		blur, sharp, whtonblk, blkonwht)
-	bigtrans2 = libCV.MatchImages(img1, img2, 250, maxsize,\
+	bigtrans2 = libCV.MatchImages(img1, img2, 100, maxsize,\
 		blur, sharp, whtonblk, blkonwht)
 
 	bigtrans = (bigtrans1 + bigtrans2) / 2.0
@@ -98,8 +125,8 @@ def _rotMatrixRad(tilt,twist):
 	sintwist = math.sin(twist)
 	tiltmat  = numarray.array([[ 1.0, 0.0 ], [ 0.0, math.cos(tilt) ]])
 	twistmat = numarray.array([[ costwist, -sintwist ], [ sintwist, costwist ]])
-	return numarray.matrixmultiply(tiltmat,twistmat)
-	#return numarray.matrixmultiply(twistmat,tiltmat)
+	#return numarray.matrixmultiply(tiltmat,twistmat)
+	return numarray.matrixmultiply(twistmat,tiltmat)
 
 def _rotMatrixDeg(tilt,twist):
 	tilt2 = tilt/180.0*math.pi
@@ -108,8 +135,8 @@ def _rotMatrixDeg(tilt,twist):
 	sintwist = math.sin(twist2)
 	tiltmat  = numarray.array([[ 1.0, 0.0 ], [ 0.0, math.cos(tilt2) ]])
 	twistmat = numarray.array([[ costwist, -sintwist ], [ sintwist, costwist ]])
-	return numarray.matrixmultiply(tiltmat,twistmat)
-	#return numarray.matrixmultiply(twistmat,tiltmat)
+	#return numarray.matrixmultiply(tiltmat,twistmat)
+	return numarray.matrixmultiply(twistmat,tiltmat)
 
 def _matrixToEulers(trans, tilt0=15.0, twist0=0.0):
 	x0 = numarray.array([tilt0,twist0])*math.pi/180.0
