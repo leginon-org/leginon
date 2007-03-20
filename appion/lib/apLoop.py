@@ -128,13 +128,8 @@ def startLoop(img,donedict,stats,params):
 	if(_alreadyProcessed(donedict,img['filename'],stats,params)==True):
 		return False
 
-	# insert selexon params into dbparticledata.selectionParams table
-	expid=int(img['session'].dbid)
-	if params['commit']==True:
-		sf1.insertSelexonParams(params,expid)
-
 	# match the original template pixel size to the img pixel size
-	if params['templateIds']:
+	if params['function'] == "selexon" and params['templateIds']:
 		sf1.rescaleTemplates(img,params)
 			
 	stats['beginLoopTime'] = time.time()

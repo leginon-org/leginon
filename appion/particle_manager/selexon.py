@@ -166,6 +166,7 @@ if __name__ == '__main__':
 			if params['commit'] == True:
 				expid=int(img['session'].dbid)
 				sf1.insertParticlePicks(params,img,expid)
+				sf1.insertSelexonParams(params,expid)
 
 			# write results to dictionary
 			apLoop.writeDoneDict(donedict,params,imgname)
