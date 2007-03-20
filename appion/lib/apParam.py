@@ -105,6 +105,7 @@ def createDefaultParams(function=None):
 	params['continue']=False
 	params['commit']=False
 	params['description']=None
+	params['outdir']=None
 	params['rundir']=None
 	params['matdir']=None
 	params['opimagedir']=None
