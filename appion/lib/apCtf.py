@@ -55,7 +55,7 @@ def runAce(matlab,img,params):
 
 		#insert ctf params into dbctfdata.ctf table in db
 		if (params['commit']==True):
-			insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfile2)
+			af.insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfile2)
 	return
 
 def _printResults(params,nominal,ctfparams):
