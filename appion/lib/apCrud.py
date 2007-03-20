@@ -311,8 +311,12 @@ def getPolygonInfo(polygons,testlog):
 	info={}
 	for l,p in enumerate(polygons_arrays):
 		length = 2*(p[:,0].max()-p[:,0].min())+2*(p[:,1].max()-p[:,1].min())
-		area = polygon.getPolygonArea(p)
-		center = polygon.getPolygonCenter(p)
+		if len(p) >=3:
+			area = polygon.getPolygonArea(p)
+			center = polygon.getPolygonCenter(p)
+		else:
+			area = length
+			center = ((p[:,0].max()+p[:,0].min())/2,(p[:,1].max()+p[:,1].min())/2)
 		avg = 100
 		stdev = 2
 		info[l+1]=(area,avg,stdev,length,center)
@@ -354,7 +358,6 @@ def pruneByStdev(info,stdev_min,goodcruds_in):
 	
 def makePrunedLabels(file,labeled_image,ltotal,info,goodlabels):
 	print "remaking %d labeled image after pruning" % len(goodlabels)
-
 	new_labeled_image = makeImageFromLabels(labeled_image,ltotal,goodlabels)
 
 	goodinfo=""
@@ -386,7 +389,7 @@ def makeImageFromLabels(labeled_image,ltotal,goodlabels):
 		for i,l1 in enumerate(badset):
 			l=l1+1
 			region=numarray.where(labeled_image==l,1,0)
-			numarray.putmask(tmp_labeled_image,region,i+1)
+			numarray.putmask(tmp_labeled_image,region,0)
 		new_labeled_image,resultlabels = nd.label(tmp_labeled_image)
 	return new_labeled_image
 
@@ -484,7 +487,6 @@ def findCrud(params,file):
 	cradius=cdiam/2.0
 	area_t=am*3.1415926*cradius*cradius
 	crudinfo=""
-		
 	image=Mrc.mrc_to_numeric(file+".mrc")
 	image=imagefun.bin(image,bin)
 	shape=numarray.shape(image)
