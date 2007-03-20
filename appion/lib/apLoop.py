@@ -14,14 +14,22 @@ def startNewAppionFunction(args):
 	"""
 	Starts a new function and gets all the parameters
 	"""
+### setup default params: output directory, etc.
 	params   = apParam.createDefaultParams(function=sys.argv[0])
+### setup default stats: timing variables, etc.
 	stats    = apParam.createDefaultStats()
+### parse command line options: diam, apix, etc.
 	apParam.parseCommandLineInput(sys.argv,params)
+### check for conflicts in params
 	apParam.checkParamConflicts(params)
+### get images from database
 	images   = apDatabase.getAllImages(params,stats)
+### create output directories
 	apParam.createOutputDirs(params)
+### write log of command line options
 	apParam.writeFunctionLog(args,file="."+params['function']+"log")
 	apParam.writeFunctionLog(sys.argv,params=params)
+### read/create dictionary to keep track of processed images
 	donedict = readDoneDict(params)
 
 	return (images,params,stats,donedict)

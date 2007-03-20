@@ -9,8 +9,8 @@ import ctfData
 import dbdatakeeper
 import curses
 
-db=dbdatakeeper.DBDataKeeper()
-acedb=dbdatakeeper.DBDataKeeper(db='dbctfdata')
+db = dbdatakeeper.DBDataKeeper()
+acedb = dbdatakeeper.DBDataKeeper(db='dbctfdata')
 acedonename='.acedone.py'
 
 def printHelp():
@@ -201,10 +201,10 @@ def getImagesToReprocess(params):
 	return (imagelist)
 
 def getCTFParamsForImage(imagedata):
-	imagename=imagedata['filename']+'.mrc'
-	ctfq=ctfData.ctf()
-	imq=ctfData.image(imagename=imagename)
-	ctfq['imageId']=imq
+	imagename = imagedata['filename']+'.mrc'
+	ctfq = ctfData.ctf()
+	imq  = ctfData.image(imagename=imagename)
+	ctfq['imageId'] = imq
 	return(acedb.query(ctfq))
 	
 def getPixelSize(imagedata):

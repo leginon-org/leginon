@@ -75,7 +75,7 @@ def process_image(imagefile,params):
 	pixrad  = int(math.ceil(diam/apix/2.0/float(bin)))
 
 	#READ IMAGES
-	image = sf1.getImageData(imagefile) ['image']
+	image = sf1.getImageData(imagefile)['image']
 	#image = Mrc.mrc_to_numeric(imagefile)
 
 	#BIN IMAGES

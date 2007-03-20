@@ -3,8 +3,11 @@
 import sys
 import libcv2
 #import Mrc
-import selexonFunctions  as sf1
+#import selexonFunctions  as sf1
 #import selexonFunctions2 as sf2
+import apDatabase
+import particleData
+import dbdatakeeper
 
 def dogHelp():
 	print "dogpicker.py dbimages=<session>,<preset> diam=<particle_pixels> bin=<binning>"+\
@@ -18,10 +21,10 @@ def parseDogInput(args,params):
 		elements=arg.split('=')
 
 
-def runDogDetection(imagename, params):
+def runDogDetector(imagename, params):
 	#imgpath = img['session']['image path'] + '/' + imagename + '.mrc'
 	#image = Mrc.mrc_to_numeric(imgpath)
-	image = sf1.getImageData(imagename)['image']
+	image = apDatabase.getImageData(imagename)['image']
 	scale          = params['apix']
 	if(params['binpixdiam'] != None):
 		binpixrad      = params['binpixdiam']/2
@@ -38,3 +41,49 @@ def runDogDetection(imagename, params):
 	print " ... done"
 
 	return peaks
+
+def insertDogPicksIntoDB(img,params):
+	partdb = dbdatakeeper.DBDataKeeper(db='dbparticledata')
+	sessionid = int(img['session'].dbid)
+	imageid = int(img.dbid)
+	presetid =int(img['preset'].dbid)
+
+	print " ... inserting picks into database"
+	imgq = particleData.image()
+	imgq['dbemdata|SessionData|session'] = sessionid
+	imgq['dbemdata|AcquisitionImageData|image'] = imageid
+	imgq['dbemdata|PresetData|preset'] = presetid
+	imgids = partdb.query(imgq,results=1)
+	
+	# failed, try again
+	if not (imgids):
+		partdb.insert(imgq)
+		imgq = None
+		imgq = particleData.image()
+		imgq['dbemdata|SessionData|session']=sessionid
+		imgq['dbemdata|AcquisitionImageData|image']=imageid
+		imgq['dbemdata|PresetData|preset']=presetid
+		imgids=partdb.query(imgq, results=1)
+
+	#double fail
+	if not (imgids):
+		return
+		
+	for i in range(peaks.shape[0]):
+		row = peaks[i,0] * bin
+		col = peaks[i,1] * bin
+		sca = peaks[i,2]
+
+		runq = particleData.run()
+		runq['name'] = params['id']+'_'+str(sca)
+		runq['dbemdata|SessionData|session'] = sessionid
+
+		particle = particleData.particle()
+		particle['runId'] = runq
+		particle['imageId'] = imgids[0]
+		particle['selectionId'] = None
+		particle['xcoord'] = col
+		particle['ycoord'] = row
+		particle['slicenum'] = sca
+		particle['correlation'] = sca
+		partdb.insert(particle)

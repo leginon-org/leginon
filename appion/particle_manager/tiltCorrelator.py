@@ -3,6 +3,7 @@
 import os, re, sys
 import data
 import time
+import random
 import apLoop,apParam,apDatabase
 import apTilt
 import selexonFunctions  as sf1
@@ -25,34 +26,35 @@ if __name__ == '__main__':
 			imagepairs[key] = [image]
 	del images
 
-	for key,pair in imagepairs.items():
-		if len(pair) == 1:
-			print 'One image: %s' % (pair[0]['filename'],)
-		elif len(pair) > 2:
-			print 'Too many:'
-			for im in pair:
-				print '  ', im['filename']
-		else:
-			print 'Pair:'
-			for im in pair:
-				print '  ', im['filename']
-
+	#print random.shuffle(imagepairs)
 	notdone=True
 	while notdone:
-		while imagepairs:
-			img = images.pop(0)
-			imgname=img['filename']
-			stats['imagesleft'] = len(images)
+		for key,pair in imagepairs.items():
+			if len(pair) == 1 or len(pair) > 2:
+				print "\nERROR:",pair[0]['filename'],"is not a pair of images"
+				stats['notpair']+=1
+			if len(pair) == 2:
+				img1,img2 = pair
+				print dir(img1)
+				print dir(img1['image'])
+				image = sf1.getImageData(img1)['image']
+				sys.exit(1)
+				imgname1=img1['filename']
+				imgname2=img2['filename']
+				stats['imagesleft'] = len(imagepairs)-stats['count']-stats['notpair']
 
-			#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
-			if apLoop.startLoop(img, donedict, stats, params) == False:
-				continue
+				#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
+				if apLoop.startLoop(img1, donedict, stats, params) == False:
+					continue
 
-			apCrud.findCrud(params,imgname)
+				#PROCESS PAIR
+				print "PROCESSING\n\t",imgname1,"\n\t",imgname2
+				apTilt.process(img1,img2,params)
 
-			apLoop.writeDoneDict(donedict,params,imgname)
-			apLoop.printSummary(stats, params)
-			#END LOOP OVER IMAGES
+				apLoop.writeDoneDict(donedict,params,imgname1)
+				apLoop.writeDoneDict(donedict,params,imgname2)
+				apLoop.printSummary(stats, params)
+				#END LOOP OVER IMAGES
 		notdone = apLoop.waitForMoreImages(stats, params)
 		#END NOTDONE LOOP	
 	apLoop.completeLoop(stats)

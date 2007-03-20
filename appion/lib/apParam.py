@@ -132,6 +132,7 @@ def createDefaultStats():
 	stats['skipcount'] = 0
 	stats['waittime'] = 0
 	stats['lastimageskipped'] = False
+	stats['notpair'] = 0
 	return stats
 
 def writeFunctionLog(commandline, params=None, file=None):
@@ -386,9 +387,10 @@ def parseCommandLineInput(args,params):
 
 ### GENERAL PARAMETERS
 		elif (elements[0]=='outdir'):
-			params['outdir']=elements[1]
-			if(params['outdir'][0] != "/"):
-				params['outdir'] = os.path.join(os.getcwd(),params['outdir'])
+			params['outdir']=os.path.abspath(elements[1])
+			#if(params['outdir'][0] != "/"):
+			#	params['outdir'] = os.path.join(os.getcwd(),params['outdir'])
+			#	params['outdir'] = os.path.abspath(params['outdir'])
 		elif (elements[0]=='runid'):
 			params['runid']=elements[1]
 		elif (elements[0]=='apix'):

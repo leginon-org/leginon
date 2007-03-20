@@ -8,6 +8,7 @@ import selexonFunctions  as sf1
 data.holdImages(False)
 db=dbdatakeeper.DBDataKeeper()
 partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
+acedb =dbdatakeeper.DBDataKeeper(db='dbctfdata')
 projdb=dbdatakeeper.DBDataKeeper(db='project')
 
 def getAllImages(params,stats):
@@ -28,8 +29,8 @@ def _getSpecificImagesFromDB(params):
 	if not params['mrcfileroot']:
 		print "\nERROR: no files specified\n"
 		sys.exit(1)
-	sys.stderr.write("Querying database for specific images ... ")
 	imglist=params["mrcfileroot"]
+	sys.stderr.write("Querying database for "+str(len(imglist))+" specific images ... ")
 	images=[]
 	for img in imglist:
 		imageq      = data.AcquisitionImageData(filename=img)
@@ -67,4 +68,13 @@ def _getAllImagesFromDB(session):
 	print "found",len(imagelist)
 	return imagelist
 
-
+def getImageData(imagename):
+	# get image data object from database
+	imagedataq = data.AcquisitionImageData(filename=imagename)
+	imagedata = db.query(imagedataq, results=1, readimages=False)
+	#imagedata[0].holdimages=False
+	if imagedata:
+		return imagedata[0]
+	else:
+		print "\nERROR: Image", imagename,"not found in database\n"
+		sys.exit(1)
