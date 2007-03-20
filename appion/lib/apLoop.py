@@ -5,7 +5,7 @@ import cPickle
 import time
 import math
 import types
-import selexonFunctions  as sf1
+#import selexonFunctions  as sf1
 #import selexonFunctions2 as sf2
 import apParam
 import apDatabase
@@ -129,8 +129,7 @@ def startLoop(img,donedict,stats,params):
 		return False
 
 	# match the original template pixel size to the img pixel size
-	if params['function'] == "selexon" and params['templateIds']:
-		sf1.rescaleTemplates(img,params)
+
 			
 	stats['beginLoopTime'] = time.time()
 	return True

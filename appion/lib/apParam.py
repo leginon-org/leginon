@@ -259,7 +259,7 @@ def parseCommandLineInput(args,params):
 	for arg in args[lastarg:]:
 		elements=arg.split('=')
 		elements[0] = elements[0].lower()
-		print elements
+		#print elements
 		if (elements[0]=='template'):
 			params['template']=elements[1]
 		elif (elements[0]=='range'):

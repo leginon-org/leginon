@@ -3,6 +3,8 @@
 import pymat
 import os,re,sys
 import aceFunctions as af
+import ctfData
+#import apDatabase
 import apLoop
 
 def runAce(matlab,img,params):

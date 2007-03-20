@@ -5,11 +5,20 @@
 # see http://ami.scripps.edu/software/leginon-license
  
 import data
-import dbdatakeeper
+#import dbdatakeeper
 
-db=dbdatakeeper.DBDataKeeper(db='dbctfdata')
+#acedb=dbdatakeeper.DBDataKeeper(db='dbctfdata')
 
 class run(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('dbemdata|SessionData|session', int),
+			('name', str), 
+		)
+	typemap = classmethod(typemap)
+data.run=run
+
+class acerun(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
 			('dbemdata|SessionData|session', int),

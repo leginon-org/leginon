@@ -95,6 +95,8 @@ if __name__ == '__main__':
 			#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
 			if( apLoop.startLoop(img, donedict, stats, params)==False ):
 				continue
+			if params['function'] == "selexon" and params['templateIds']:
+				sf1.rescaleTemplates(img,params)
 
 			# run FindEM
 			if params['method'] == "experimental":
