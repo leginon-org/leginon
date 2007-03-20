@@ -46,7 +46,6 @@ def waitForMoreImages(stats,params):
 		stats['waittime'],"min so far)."
 	time.sleep(600)
 	stats['waittime'] = stats['waittime'] + 10
-	newimages = apDatabase.getAllImages(params,stats)
 	#newimages = apDatabase.getImagesFromDB(params['session']['name'],params['preset'])
 	#if(params["crud"]==True or params['method'] == "classic"):
 		#sf1.createImageLinks(images)
@@ -58,7 +57,7 @@ def waitForMoreImages(stats,params):
 
 def readDoneDict(params):
 	doneDictName = params['doneDictName']
-	if os.path.exists(doneDictName):
+	if os.path.isfile(doneDictName):
 		# unpickle previously modified dictionary
 		f = open(doneDictName,'r')
 		donedict=cPickle.load(f)

@@ -177,6 +177,7 @@ if __name__ == '__main__':
 			#END LOOP OVER IMAGES
 
 		notdone = apLoop.waitForMoreImages(stats, params)
+		images = apDatabase.getAllImages(params,stats)
 		#END NOTDONE LOOP
 
 	# remove temporary templates if getting images from db

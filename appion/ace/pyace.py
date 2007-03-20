@@ -79,6 +79,7 @@ if __name__ == '__main__':
 
 			apLoop.writeDoneDict(donedict,params,imagename)
 		notdone = apLoop.waitForMoreImages(stats, params)
+		images = apDatabase.getAllImages(params,stats)
 	pymat.close(matlab)
 	apLoop.completeLoop(stats)		
 			
