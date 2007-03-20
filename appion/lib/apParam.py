@@ -212,6 +212,21 @@ def checkParamConflicts(params):
 		print "\nERROR: alldbimages can not be specified if particular images have been specified\n"
 		sys.exit(1)
 
+def getPixelSize(img):
+	# use image data object to get pixel size
+	# multiplies by binning and also by 1e10 to return image pixel size in angstroms
+	pixelsizeq=data.PixelSizeCalibrationData()
+	pixelsizeq['magnification']=img['scope']['magnification']
+	pixelsizeq['tem']=img['scope']['tem']
+	pixelsizeq['ccdcamera'] = img['camera']['ccdcamera']
+	pixelsizedata=db.query(pixelsizeq, results=1)
+	
+	binning=img['camera']['binning']['x']
+	pixelsize=pixelsizedata[0]['pixelsize'] * binning
+	
+	return(pixelsize*1e10)
+
+
 def parseCommandLineInput(args,params):
 	# check that there are enough input parameters
 	if (len(args)<2 or args[1]=='help' or args[1]=='--help' \
