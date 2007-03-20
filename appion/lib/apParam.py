@@ -5,7 +5,7 @@ import time
 import mem
 import data
 import dbdatakeeper
-import selexonFunctions  as sf1
+#import selexonFunctions  as sf1
 
 ### TEMPORARY, PLEASE MAKE IT SO NOT REQUIRED HERE
 db=dbdatakeeper.DBDataKeeper()
@@ -216,7 +216,9 @@ def parseCommandLineInput(args,params):
 	# check that there are enough input parameters
 	if (len(args)<2 or args[1]=='help' or args[1]=='--help' \
 		or args[1]=='-h' or args[1]=='-help') :
-		sf1.printSelexonHelp()
+		print "help"
+		sys.exit(1)
+		#sf1.printSelexonHelp()
 
 	lastarg=1
 
