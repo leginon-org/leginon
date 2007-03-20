@@ -2,6 +2,7 @@
 
 import pymat
 import os,re,sys
+import aceFunctions as af
 import apLoop
 
 def runAce(matlab,img,params):
@@ -19,7 +20,7 @@ def runAce(matlab,img,params):
 	expid=int(img['session'].dbid)
 	if params['commit']==True:
 		#insert ace params into dbctfdata.ace_params table in db
-		insertAceParams(params,expid)
+		af.insertAceParams(params,expid)
 
 	acecommand=("ctfparams = ace('%s','%s',%d,%d,'%s',%e,'%s');" % \
 		( imgpath, params['outtextfile'], params['display'], params['stig'],\
