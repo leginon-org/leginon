@@ -69,17 +69,23 @@ def _printResults(params,nominal,ctfparams):
 		defoc2=None
 	conf1 = float(ctfparams[16])
 	conf2 = float(ctfparams[17])
-	totconf = float(ctfparams[16])*abs(float(ctfparams[17]))
-	pererror = (nom1-defoc1)/defoc1*100.0
+
+	if(conf1 > 0 and conf2 > 0):
+		totconf = math.sqrt(conf1*conf2)
+	else:
+		totconf = 0.0
 	if (params['stig']==0):
-		labellist = ["Nominal","Defocus","Conf1","Conf2","TotConf",]
-		numlist = [nom1,defoc1,conf1,conf2,totconf,]
-		typelist = [0,0,1,1,1,]
+		pererror = (nom1-defoc1)/defoc1*100.0
+		labellist = ["Nominal","Defocus","PerErr","Conf1","Conf2","TotConf",]
+		numlist = [nom1,defoc1,pererr,conf1,conf2,totconf,]
+		typelist = [0,0,0,1,1,1,]
 		_printWindow(labellist,numlist,typelist)
 	else:
-		labellist = ["Nominal","Defocus1","Defocus2","Conf1","Conf2","TotConf",]
-		numlist = [nom1,defoc1,defoc2,conf1,conf2,totconf,]
-		typelist = [0,0,0,1,1,1,]
+		avgdefoc = (defoc1+defoc2)/2.0
+		pererror = (nom1-avgdefoc)/avgdefoc*100.0
+		labellist = ["Nominal","Defocus1","Defocus2","PerErr","Conf1","Conf2","TotConf",]
+		numlist = [nom1,defoc1,defoc2,pererr,conf1,conf2,totconf,]
+		typelist = [0,0,0,0,1,1,1,]
 		_printWindow(labellist,numlist,typelist)
 	return
 
@@ -133,7 +139,7 @@ def _headerStr(labellist):
 	headstr += "+"
 	return headstr
 
-def _colorNum(num,green=0.8,red=0.3):
+def _colorNum(num,green=0.8,red=0.5):
 	if(num == None):
 		return None
 	elif(num > green and num <= 1):
