@@ -87,10 +87,12 @@ if __name__ == '__main__':
 	# run selexon
 	notdone=True
 	while notdone:
-		while images:
-			img = images.pop(0)
+		#while images:
+		for img in images:
+			#img = images.pop(0)
 			imgname=img['filename']
-			stats['imagesleft'] = len(images)
+			#stats['imagesleft'] = len(images)
+			stats['imagesleft'] = stats['imagecount'] - stats['count']
 
 			#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
 			if( apLoop.startLoop(img, donedict, stats, params)==False ):
