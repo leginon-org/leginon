@@ -44,9 +44,9 @@ def waitForMoreImages(stats,params):
 		stats['skipcount'] = 0
 	print "\nAll images processed. Waiting ten minutes for new images (waited",\
 		stats['waittime'],"min so far)."
-	for i in range(60):
-		time.sleep(10)
-		#print a dot every 10 seconds
+	for i in range(20):
+		time.sleep(30)
+		#print a dot every 30 seconds
 		sys.stderr.write(".")
 	print ""
 	stats['waittime'] = stats['waittime'] + 10
@@ -186,7 +186,7 @@ def _printLine():
 def completeLoop(stats):
 	ttotal= time.time()-stats["startTime"]
 	print "COMPLETE LOOP:\t",_timeString(ttotal),"for",stats["count"]-1,"images"
-	print "end run"
+	print "ended run at ",time.strftime("%a, %d %b %Y %H:%M:%S")
 	print "====================================================="
 	print "====================================================="
 	print "====================================================="
