@@ -44,7 +44,11 @@ def waitForMoreImages(stats,params):
 		stats['skipcount'] = 0
 	print "\nAll images processed. Waiting ten minutes for new images (waited",\
 		stats['waittime'],"min so far)."
-	time.sleep(600)
+	for i in range(20):
+		time.sleep(30)
+		#print a dot every 30 seconds
+		sys.stderr.write(".")
+	print ""
 	stats['waittime'] = stats['waittime'] + 10
 	#newimages = apDatabase.getImagesFromDB(params['session']['name'],params['preset'])
 	#if(params["crud"]==True or params['method'] == "classic"):
