@@ -234,19 +234,21 @@ if ($ctf->hasCtfData($sessionId)) {
 	$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
 	$fields = array('defocus1', 'confidence', 'confidence_d');
 	$bestctf = $ctf->getBestStats($fields, $sessionId, $minconf);
-	foreach($bestctf as $field=>$data) {
-		foreach($data as $k=>$v) {
-			$preset = $bestctf[$field][$k]['name'];
-			$cdf = '<a href="ctfgraph.php?&hg=1&Id='.$sessionId.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'">'
-				.'<img border="0" src="ctfgraph.php?w=150&hg=1&Id='.$sessionId.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'"></a>';
-			$bestctf[$field][$k]['img'] = $cdf;
+	if ($bestctf) {
+	        foreach($bestctf as $field=>$data) {
+		        foreach($data as $k=>$v) {
+			        $preset = $bestctf[$field][$k]['name'];
+				$cdf = '<a href="ctfgraph.php?&hg=1&Id='.$sessionId.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'">'
+				  .'<img border="0" src="ctfgraph.php?w=150&hg=1&Id='.$sessionId.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'"></a>';
+				$bestctf[$field][$k]['img'] = $cdf;
+			}
 		}
+		echo '<a href="showctfdata.php?Id='.$sessionId.''.$urlmconf.'&vd=1">[data]</a>';
+		echo '<a href="showctfdata.php?Id='.$sessionId.''.$urlmconf.'&vs=1">[sql]</a>';
+		$display_keys = array ( 'name', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
+		echo display_stats($bestctf, $display_keys);
 	}
-	echo '<a href="showctfdata.php?Id='.$sessionId.''.$urlmconf.'&vd=1">[data]</a>';
-	echo '<a href="showctfdata.php?Id='.$sessionId.''.$urlmconf.'&vs=1">[sql]</a>';
-	$display_keys = array ( 'name', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
-	echo display_stats($bestctf, $display_keys);
-	
+	else echo "Database Error";
 }
 else {
         echo "no CTF information available";
