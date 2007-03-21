@@ -44,9 +44,9 @@ def waitForMoreImages(stats,params):
 		stats['skipcount'] = 0
 	print "\nAll images processed. Waiting ten minutes for new images (waited",\
 		stats['waittime'],"min so far)."
-	for i in range(20):
-		time.sleep(30)
-		#print a dot every 30 seconds
+	for i in range(60):
+		time.sleep(10)
+		#print a dot every 10 seconds
 		sys.stderr.write(".")
 	print ""
 	stats['waittime'] = stats['waittime'] + 10

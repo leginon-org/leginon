@@ -109,8 +109,6 @@ def _printWindow(labellist,numlist,typelist):
 		datastr += "| "
 		if typelist[i] == 1:
 			numstr = _colorNum(numlist[i])
-		elif typelist[i] == 2:
-			numstr = "%2.2f" % numlist[i]
 		else:
 			numstr = "%1.3f" % numlist[i]
 		pad = len(labellist[i])-5
