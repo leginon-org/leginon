@@ -4,6 +4,7 @@ import pymat
 import os,re,sys
 import aceFunctions as af
 import ctfData
+import math
 #import apDatabase
 import apLoop
 
