@@ -15,8 +15,6 @@ import imagefun
 import numextension
 import polygon
 import libCV
-import selexonFunctions2
-import string
 import operator
 
 def prepImage(image,cutoff=5.0):
@@ -51,16 +49,7 @@ def outputImage(array,name,description,testlog):
 			jpgname="jpgs/%s.crud.jpg" %(name,)
 		else:
 			return testlog
-	if array.type()==numarray.Bool:
-		array=array.astype(numarray.Int8)
-	if array.type()==numarray.UInt8:
-		array=array.astype(numarray.Int16)
-	if array.type()==numarray.Int64:
-		array=array.astype(numarray.Int32)
-	if array.max()-array.min() >0.1:
-		array = selexonFunctions2.whiteNormalizeImage(array)
-	PILimage = selexonFunctions2.array2image(array)
-	PILimage.save(jpgname, "JPEG", quality=95)
+	apImage.arrayToJpeg(array,jpgname)
 	return testlog
 
 def findEdgeSobel(image,sigma,amin,amax,output,testlog):
@@ -185,7 +174,7 @@ def oneObjToGlobalPoints(bimage):
 				gpoints.append((x+starts[0],y+starts[1]))
 	return gpoints
 
-def findConvexHullsFromLabeledImage(bimage,cruds,clabels):
+def findConvexHullsFromLabeledImage(cruds,clabels):
 	gpolygons=[]
 	# individual crud is masked to avoid problem of overlapped of crud_obj slices
 	for l in range(1,clabels+1):
@@ -256,10 +245,10 @@ def makeLocalPolygons(gpolygons):
 		polygons.append(points)
 	return crud_objs,polygons
 
-def convexHullUnion(bimage,cruds,clabels,testlog):
-	shape=numarray.shape(bimage)
+def convexHullUnion(cruds,clabels,testlog):
+	shape=numarray.shape(cruds)
 	print "making convex hulls"
-	gpolygons=findConvexHullsFromLabeledImage(bimage,cruds,clabels)
+	gpolygons=findConvexHullsFromLabeledImage(cruds,clabels)
 	
 	print "merging from %d convex hulls" % len(gpolygons)
 	gpolygons=mergePolygonPoints(gpolygons)
@@ -371,13 +360,13 @@ def makePrunedLabels(file,labeled_image,ltotal,info,goodlabels):
 
 def makeImageFromLabels(labeled_image,ltotal,goodlabels):
 	imageshape=numarray.shape(labeled_image)
+	new_labeled_image=numarray.zeros(imageshape,numarray.Int8)
 	if len(goodlabels)==0:
 		return new_labeled_image
 	else:
 		if len(goodlabels)==ltotal:
 			return labeled_image
 	if len(goodlabels)*2 < ltotal:
-		new_labeled_image=numarray.zeros(imageshape,numarray.Int8)
 		for i,l1 in enumerate(goodlabels):
 			l=l1+1
 			region=numarray.where(labeled_image==l,1,0)
@@ -434,7 +423,6 @@ def reduceRegions(regions,velimit):
 			regionellipses.append(regionellipse)
 					
 	return regionarrays
-	
 
 def findCrud(params,file):
 	filelog="\nTEST OUTPUT IMAGES\n----------------------------------------\n"
@@ -537,7 +525,7 @@ def findCrud(params,file):
 		testlog=outputImage(mask,'mask','Thresholded edge binary image mask',testlog)
 
 		#fill
-		iteration=3
+		iteration=3		
 		mask=fillMask(mask,iteration)
 		testlog=outputImage(mask,'maskf','Hole filled edge mask',testlog)
 
@@ -561,11 +549,11 @@ def findCrud(params,file):
 		
 		#create convex hulls and merge overlapped or inside cruds
 		if do_convex_hulls:
-			cruds,clabels,gpolygons,testlog=convexHullUnion(mask,cruds,clabels,testlog)
+			cruds,clabels,gpolygons,testlog=convexHullUnion(cruds,clabels,testlog)
 		else:
 			if do_cv:
-				regions,dummyimage=libCV.FindRegions(mask,area_t,0.5,1,0,1,0)
-				gpolygons = reduceRegions(regions,60)
+				regions,dummyimage=libCV.FindRegions(mask,area_t,0.2,1,0,1,0)
+				gpolygons = reduceRegions(regions,160)
 				clabels = len(gpolygons)
 
 		if (clabels > 0):
@@ -601,6 +589,9 @@ def findCrud(params,file):
 			if test and (not do_cv or stdev_t > 0):
 				cruds,clabels,crudinfo=temp_cruds,temp_clabels,goodinfo
 				goodcruds=range(clabels)
+			else:
+				if do_cv:
+					cruds,clabels,crudinfo=makePrunedPolygons(file,gpolygons,shape,allinfo,goodcruds)
 
 			if not test:
 				if do_convex_hulls or do_cv and stdev_t < 0.01:
@@ -640,7 +631,6 @@ def findCrud(params,file):
 def piksNotInCrud(params,mask,piklines):
 	bin = int(params["bin"])
 	shape = numarray.shape(mask)
-	print shape
 	piklinesNotInCrud=[]
 	for pikline in piklines:
 		bits=pikline.split(' ')
