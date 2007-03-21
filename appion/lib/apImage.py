@@ -151,7 +151,8 @@ def imageToArray(im, convertType='UInt8'):
     return a
 
 def arrayToJpeg(numer,filename):
-	numer = _normalizeImage(numer)
+	if numer.max()-numer.min() >0.1:
+		numer = _normalizeImage(numer)
 	image = _arrayToImage(numer)
 	print " ... writing JPEG: ",filename
 	image.save(filename, "JPEG", quality=85)
@@ -190,12 +191,13 @@ def _arrayToImage(a):
     Converts array object (numarray) to image object (PIL).
     """
     h, w = a.shape[:2]
+    boolean = numarray.Bool
     int32 = numarray.Int32
     uint32 = numarray.UInt32
     float32 = numarray.Float32
     float64 = numarray.Float64
 
-    if a.type()==int32 or a.type()==uint32 or a.type()==float32 or a.type()==float64:
+    if a.type()==boolean or a.type()==int32 or a.type()==uint32 or a.type()==float32 or a.type()==float64:
         a = a.astype(numarray.UInt8) # convert to 8-bit
     if len(a.shape)==3:
         if a.shape[2]==3:  # a.shape == (y, x, 3)
