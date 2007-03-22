@@ -229,11 +229,11 @@ def getPixelSize(img):
 
 def parseCommandLineInput(args,params):
 	# check that there are enough input parameters
+	fname = params['function']+".py"
+	print "find help at for",fname,"at:"
+	print "  http://ami.scripps.edu/wiki/index.php/"+fname
 	if (len(args)<2 or args[1]=='help' or args[1]=='--help' \
 		or args[1]=='-h' or args[1]=='-help'):
-		fname = params['function']+".py"
-		print "find help at for",fname,"at:"
-		print "\t http://ami.scripps.edu/wiki/index.php/"+fname
 		sys.exit(1)
 		#sf1.printSelexonHelp()
 
@@ -259,10 +259,16 @@ def parseCommandLineInput(args,params):
 
 	# next get all selection parameters
 	for arg in args[lastarg:]:
+
 		elements=arg.split('=')
 		elements[0] = elements[0].lower()
 		#print elements
-		if (elements[0]=='template'):
+		if (elements[0]=='help' or elements[0]=='--help' \
+			or elements[0]=='-h' or elements[0]=='-help'):
+			#print "find help at for",fname,"at:"
+			#print "  http://ami.scripps.edu/wiki/index.php/"+fname
+			sys.exit(1)
+		elif (elements[0]=='template'):
 			params['template']=elements[1]
 		elif (elements[0]=='range'):
 			angs=elements[1].split(',')
