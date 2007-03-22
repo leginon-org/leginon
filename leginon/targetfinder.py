@@ -285,7 +285,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		'calibration parameter': 'stage position',
 		'scale image': True,
 		'scale size': 512,
-		'mosaic image on tile change': True,
+		'create on tile change': 'all',
 		'watchdone': False,
 		'targetpreset': None,
 		'lpf': {
@@ -356,6 +356,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			# HACK: TargetListDone indicates that all grid images are
 			# acquired could probably figure this out with a little
 			# research instead of a user setting
+			self.logger.info('source done')
 			self.imagesourcedone.set()
 
 	def getTargetDataList(self, typename):
@@ -411,7 +412,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.targetmap = {}
 		self.mosaic.clear()
 		self.targetlist = None
-		if self.settings['mosaic image on tile change']:
+		if self.settings['create on tile change'] in ('all', 'final'):
 			self.clearMosaicImage()
 
 	def addTile(self, imagedata):
@@ -576,8 +577,13 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.publish(tiledata, database=True)
 		self.logger.debug('published MosaicTileData')
 		self.addTile(imagedata)
-		if self.settings['mosaic image on tile change']:
+		createwhen = self.settings['create on tile change']
+		if createwhen == 'all':
 			self.createMosaicImage()
+		elif createwhen == 'final':
+			self.imagesourcedone.wait(0.5)
+			if self.imagesourcedone.isSet():
+				self.createMosaicImage()
 		self.logger.debug('Image data processed')
 
 	def hasMosaicImage(self):
@@ -648,7 +654,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.addTile(imagedata)
 		self.reference_target = self.getReferenceTarget()
 		self.logger.info('Mosaic loaded (%i of %i images loaded successfully)' % (i+1, ntotal))
-		if self.settings['mosaic image on tile change']:
+		if self.settings['create on tile change'] in ('all', 'final'):
 			self.createMosaicImage()
 
 	def targetToMosaic(self, tile, targetdata):

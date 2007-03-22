@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.29 $
+# $Revision: 1.30 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-02-07 00:48:37 $
-# $Author: acheng $
+# $Date: 2007-03-22 22:46:21 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -172,8 +172,7 @@ class MosaicSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['calibration parameter'] = Choice(self, -1, choices=choices)
 		self.widgets['scale image'] = wx.CheckBox(self, -1, 'Scale image to')
 		self.widgets['scale size'] = IntEntry(self, -1, min=1, chars=4)
-		self.widgets['mosaic image on tile change'] = wx.CheckBox(self, -1,
-																	'Create mosaic image when tile list changes')
+		self.widgets['create on tile change'] = Choice(self, -1, choices=['all', 'final', 'none'])
 
 		self.bcreate = wx.Button(self, -1, 'Create')
 		self.bsave = wx.Button(self, -1, 'Save')
@@ -198,11 +197,16 @@ class MosaicSettingsDialog(gui.wx.Settings.Dialog):
 		szb.Add(self.bcreate, (0, 1), (1, 1), wx.ALIGN_CENTER)
 		szb.Add(self.bsave, (0, 2), (1, 1), wx.ALIGN_CENTER)
 
+		szc = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Auto create mosaic for new tiles')
+		szc.Add(label, (0, 0), (1, 1))
+		szc.Add(self.widgets['create on tile change'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(szp, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szs, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['mosaic image on tile change'], (2, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szc, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szb, (3, 0), (1, 1), wx.ALIGN_CENTER)
 
 		sb = wx.StaticBox(self, -1, 'Mosaics')
