@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.244 $
+# $Revision: 1.245 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-03-06 19:39:05 $
+# $Date: 2007-03-22 23:14:05 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -134,7 +134,7 @@ class PresetsClient(object):
 		optionally send a target to the scope as well
 		'''
 		if not presetname:
-			self.logger.error('Invalid preset name')
+			self.node.logger.error('Invalid preset name')
 			return
 		evt = event.ChangePresetEvent()
 		evt['name'] = presetname
