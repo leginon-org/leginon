@@ -984,7 +984,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				sectionimage, nsection,sectionellipses = self.regionsByLabel(self.mosaicimage,mint,maxt,minsizepixels,maxsizepixels)
 				self.logger.info('use sectionimage for rastering and found %d good sections' %nsection)
 		else:
-			sectionimage = polygon.plot_polygons(imshape,sectionarrays)
+			sectionimage = polygon.plotPolygons(imshape,sectionarrays)
 			nonmissingregion = numarray.where(self.mosaicimage==0,0,1)
 			sectionimage = sectionimage*nonmissingregion
 		

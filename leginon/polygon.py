@@ -90,7 +90,7 @@ def polygons_arrays2tuples(polygons_arrays):
 		polygons_tuples.append(polygon_tuples)
 	return polygons_tuples	
 
-def plot_polygons(shape,polygons):
+def plotPolygons(shape,polygons):
 	# Input 'polygons' is a list of polygon vertices array
 	zeros=numarray.zeros(shape,type=numarray.Int8)
 	img=Image.new('L',shape)
