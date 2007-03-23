@@ -850,8 +850,6 @@ int PDist( Point p, int l, int r ) {
 
 void PolygonACD( Polygon poly, float treshold, PStack stack ) {
 	
-	libCV_debug = 1;
-	
 	PolygonVertexClean( poly);
 	
 	fprintf(stderr,"Polygon Cleaned\n");

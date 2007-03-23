@@ -11,15 +11,12 @@
 int main (int argc, char **argv) {
 	
 	srand(time(NULL));
-	libCV_debug = 0;
 	
 	int i, j, k;
 	float minSize = 10000, maxSize = 1.0, minPeriod = 0.1, minStable = 0.1;
 
 	PStack im2Regions = NewPStack(100);
 
-	float t0 = CPUTIME;
-	
 	Image im2 = ReadPGMFile(argv[1]);
 	Image out = ConvertImage1(CopyImage(im2));
 	fprintf(stderr,"Read in image %s with dimensions %d %d\n",argv[1],im2->rows,im2->cols);
@@ -36,7 +33,7 @@ int main (int argc, char **argv) {
 		}
 	}
 	
-	Region cc = im2Regions->items[k];
+	Region cc = im2Regions->items[i];
 	//DrawPolygon(cc->border,out,PIX3(0,255,0));
 	for(i=0;i<dc->stacksize;i++) {
 		Polygon border = dc->items[i];

@@ -3,9 +3,6 @@
 #define libCV_util 1
 
 #include <sys/time.h>
-#ifdef HAS_RUSAGE
-#include <sys/resource.h>
-#endif
 #include <sys/types.h>
 #include <time.h>
 #include <stdlib.h>
@@ -26,9 +23,6 @@
 #endif
 #define BOUND(x,y,z)	MAX(x,MIN(y,z))
 #define SIGN(a,b)	((b) >= 0.0 ? ABS(a) : -ABS(a))
-#ifdef HAS_RUSAGE
-#define CPUTIME		(getrusage(RUSAGE_SELF,&ruse),ruse.ru_utime.tv_sec+ruse.ru_stime.tv_sec+1e-6*(ruse.ru_utime.tv_usec+ruse.ru_stime.tv_usec))
-#endif
 
 #define TRUE	1
 #define FALSE	0
@@ -39,11 +33,6 @@
 #define MACHEPS	2.22045e-16
 #define NaN	-91919191
 
-char libCV_debug;
-#ifdef HAS_RUSAGE
-struct rusage ruse;
-#endif
-
 void FatalError(char *fmt, ...);
 void Debug(int lvl, char *fmt, ...);
 float RandomNumber(float min, float max);
@@ -51,7 +40,6 @@ float *CreateGaussianKernel( int ksize, float sigma );
 int FastLineIntegrate(int x0, int y0, int x1, int y1, int *pixels, int maxcol);
 float LargestValue( float *array, int l, int r );
 float SmallestValue( float *array, int l, int r );
-void Time( float *time );
 void CreateDirectAffineTransform( float x1, float y1, float x2, float y2, float x3, float y3, float u1, float v1, float u2, float v2, float u3, float v3, double **TR,
 double **IT );
 void ISplint( int *v, float *v2, int n, float x, float *val );

@@ -402,23 +402,6 @@ Image GaussianBlurImage( Image im, float sigma ) {
 	
 }
 
-void SplineImage( Image im, float **v2 ) {
-	int j;
-	for (j=0;j<im->rows;j++) ISpline(im->pixels[j],im->cols,v2[j]);
-}
-
-int SplintImage( Image im, float **v2, float row, float col ) {
-	int j;
-	float *ytmp, *yytmp, val;
-	ytmp  = malloc(sizeof(float)*im->cols);
-	yytmp = malloc(sizeof(float)*im->cols);
-	for (j=0;j<im->rows;j++) ISplint(im->pixels[j],v2[j],im->cols,col,&yytmp[j]);
-	FSpline(yytmp,im->rows,ytmp);
-	FSplint(yytmp,ytmp,im->rows,row,&val);
-	free(ytmp); free(yytmp);
-	return val+0.5;
-}
-
 void WrapGaussianBlur1D( float *line, int l, int r, float sigma ) {
 	
 	int i, k;
