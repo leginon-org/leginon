@@ -78,7 +78,6 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		filename = '.'.join(filename.split('.')[:-1])
 		q = data.AcquisitionImageData(filename=filename)
 		results = self.research(datainstance=q)
-		print 'len', len(results)
 		if not results:
 			return None
 		imagedata = results[0]
@@ -286,7 +285,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		'scale image': True,
 		'scale size': 512,
 		'create on tile change': 'all',
-		'watchdone': False,
+		'autofinder': False,
 		'targetpreset': None,
 		'lpf': {
 			'on': True,
@@ -331,7 +330,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.mosaicimagedata = None
 		self.convolver = convolver.Convolver()
 		self.currentposition = []
-		self.imagesourcedone = threading.Event()
+		self.mosaiccreated = threading.Event()
 		self.presetsclient = presets.PresetsClient(self)
 
 		self.mosaic.setCalibrationClient(self.calclients[parameter])
@@ -352,12 +351,14 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
-		if self.settings['watchdone']:
-			# HACK: TargetListDone indicates that all grid images are
-			# acquired could probably figure this out with a little
-			# research instead of a user setting
-			self.logger.info('source done')
-			self.imagesourcedone.set()
+		if self.settings['create on tile change'] == 'final':
+			self.logger.debug('create final')
+			self.createMosaicImage()
+			self.logger.debug('done create final')
+		if self.settings['autofinder']:
+			self.logger.debug('auto target finder')
+			self.autoTargetFinder()
+			self.logger.debug('done auto target finder')
 
 	def getTargetDataList(self, typename):
 		displayedtargetdata = {}
@@ -384,18 +385,22 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def submitTargets(self):
 		self.userpause.set()
-		if self.settings['watchdone']:
+		if self.settings['autofinder']:
 			return
+
+		if self.targetlist is None:
+			self.targetlist = self.newTargetList()
+			self.publish(self.targetlist, database=True, dbforce=True)
+
 		self.logger.info('Submitting targets...')
 		self.getTargetDataList('acquisition')
 		self.getTargetDataList('focus')
-		if self.targetlist is not None:
-			try:
-				self.publish(self.targetlist, pubevent=True)
-			except node.PublishError, e:
-				self.logger.error('Submitting acquisition targets failed')
-			else:
-				self.logger.info('Acquisition targets submitted')
+		try:
+			self.publish(self.targetlist, pubevent=True)
+		except node.PublishError, e:
+			self.logger.error('Submitting acquisition targets failed')
+		else:
+			self.logger.info('Acquisition targets submitted')
 
 		reference_target = self.getDisplayedReferenceTarget()
 		if reference_target is not None:
@@ -577,13 +582,12 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.publish(tiledata, database=True)
 		self.logger.debug('published MosaicTileData')
 		self.addTile(imagedata)
-		createwhen = self.settings['create on tile change']
-		if createwhen == 'all':
+
+		if self.settings['create on tile change'] == 'all':
+			self.logger.debug('create all')
 			self.createMosaicImage()
-		elif createwhen == 'final':
-			self.imagesourcedone.wait(0.5)
-			if self.imagesourcedone.isSet():
-				self.createMosaicImage()
+			self.logger.debug('done create all')
+
 		self.logger.debug('Image data processed')
 
 	def hasMosaicImage(self):
@@ -688,9 +692,11 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def mosaicToTarget(self, typename, row, col):
 		imagedata, drow, dcol = self._mosaicToTarget(row, col)
 		### create a new target list if we don't have one already
+		'''
 		if self.targetlist is None:
 			self.targetlist = self.newTargetList()
 			self.publish(self.targetlist, database=True, dbforce=True)
+		'''
 		targetdata = self.newTargetForTile(imagedata, drow, dcol, type=typename, list=self.targetlist)
 		## can we do dbforce here?  it might speed it up
 		self.publish(targetdata, database=True)
@@ -711,14 +717,14 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 		self.logger.info('Displaying mosaic image')
 		self.setImage(self.mosaicimage, 'Image')
+		self.logger.info('image displayed, displaying targets...')
 		## imagedata would be full mosaic image
 		#self.clickimage.imagedata = None
 		self.displayTargets()
+		self.logger.info('targets displayed, setting region []...')
 		self.setTargets([], 'region')
+		self.logger.info('did that')
 		self.beep()
-		## if all images are now in mosaic, then do processing
-		if self.imagesourcedone.isSet():
-			self.autoTargetFinder()
 
 	def clearMosaicImage(self):
 		self.setImage(None, 'Image')
@@ -1047,10 +1053,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				mint2a = avgt-(maxt2-mint)*tissuecontrast/2
 				maxt2a = avgt+(maxt2-mint)*tissuecontrast/2
 				m = numarray.clip(self.mosaicimage, mint2a, maxt2a)
-				print mint2a,maxt2a,minsize,maxsize
 				regions,image = libCV.FindRegions(m, minsize, maxsize, 0, 0, white_on_black,black_on_white)
 				regionarrays,regionellipses,displaypoints = self.reduceRegions(regions,[1.0,self.settings['axis ratio']],velimit,sectionimage)
-				print regionarrays
 				minsize = stepscale*minsize
 				maxt2 = maxt2-stepscale*bkgrndstddev*tissuecontrast
 				if minsize*mosaicarea < 4:
@@ -1092,21 +1096,16 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		mag2 = imagedata['scope']['magnification']
 		bin2 = imagedata['camera']['binning']['x']
 
-		print 'p2p', tem, cam, ht, mag1, mag2, p1
 		p2 = self.calclients['modeled stage position'].pixelToPixel(tem, cam, ht, mag1, mag2, p1)
-		print 'P2', p2
 		# bin
 		p2 = p2[0]/float(bin2), p2[1]/float(bin2)
-		print 'bin', p2
 		# atlas scaling
 		atlasscale = self.mosaic.scale
 		p2 = atlasscale*p2[0], atlasscale*p2[1]
-		print 'atlas', p2
 		# overlap
 		overlap = self.settings['raster overlap']
 		overlapscale = 1.0 - overlap/100.0
 		p2 = overlapscale*p2[0], overlapscale*p2[1]
-		print 'overlap', p2
 		
 		spacing = numarray.hypot(*p2)
 		angle = numarray.arctan2(*p2)
@@ -1292,8 +1291,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.logger.info(message)
 
 	def autoTargetFinder(self):
-		self.imagesourcedone.clear()
-
 		self.logger.info('Finding regions...')
 		self.findRegions()
 		self.logger.info('Filling regions with raster...')

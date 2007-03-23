@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.30 $
+# $Revision: 1.31 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-03-22 22:46:21 $
+# $Date: 2007-03-23 22:40:57 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -258,8 +258,8 @@ class RegionSettingsDialog(gui.wx.Settings.Dialog):
 
 		szoptions = wx.GridBagSizer(5, 5)
 
-		self.widgets['watchdone'] = wx.CheckBox(self, -1, 'Run auto targeting when image source is finished')
-		szoptions.Add(self.widgets['watchdone'], (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['autofinder'] = wx.CheckBox(self, -1, 'Enable auto targeting')
+		szoptions.Add(self.widgets['autofinder'], (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
 		choices = ['Limit by Sections','Sections Only','Tissue only','Regions from Centers']
 		self.widgets['find section options'] = Choice(self, -1, choices=choices)
