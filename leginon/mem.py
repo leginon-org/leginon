@@ -40,5 +40,30 @@ def used():
 	used = meminfo['MemTotal'] - meminfo['MemFree']
 	return used
 
+def free():
+	meminfo = meminfo2dict()
+	free = meminfo['MemFree']
+	return free
+
+def total():
+	meminfo = meminfo2dict()
+	total = meminfo['MemTotal']
+	return total
+
+def swapused():
+	meminfo = meminfo2dict()
+	used = meminfo['SwapTotal'] - meminfo['SwapFree']
+	return used
+
+def swapfree():
+	meminfo = meminfo2dict()
+	free = meminfo['SwapFree']
+	return free
+
+def swaptotal():
+	meminfo = meminfo2dict()
+	total = meminfo['SwapTotal']
+	return total
+
 if __name__ == '__main__':
 	print used()
