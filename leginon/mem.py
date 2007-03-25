@@ -18,7 +18,7 @@ def meminfo2dict():
 		info[key] = value
 	return info
 
-def stats(meminfo):
+def stats(meminfo=meminfo2dict()):
 	total = meminfo['MemTotal']
 	free = meminfo['MemFree']
 	used = total - free
