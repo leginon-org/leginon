@@ -158,12 +158,22 @@ def arrayToJpeg(numer,filename):
 	image.save(filename, "JPEG", quality=85)
 	return
 
-def _blackNormalizeImage(a, stdevLimit=5.0):
+def arrayToPng(numer,filename):
+	if numer.max()-numer.min() >0.1:
+		numer = _normalizeImage(numer)
+	image = _arrayToImage(numer)
+	print " ... writing Png: ",filename
+	image.save(filename, "PNG")
+	return
+
+def _maxNormalizeImage(a, stdevLimit=3.0):
+	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 55.0,maxlevel=200.0)
+def _blackNormalizeImage(a, stdevLimit=3.0):
 	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 0.0,maxlevel=200.0)	
-def _whiteNormalizeImage(a, stdevLimit=5.0):
+def _whiteNormalizeImage(a, stdevLimit=3.0):
 	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel=55.0,maxlevel=255.0)	
 
-def _normalizeImage(a,stdevLimit=5.0,minlevel=0.0,maxlevel=255.0):
+def _normalizeImage(a,stdevLimit=3.0,minlevel=0.0,maxlevel=255.0):
 	"""	
 	Normalizes numarray to fit into an image format
 	that is values between 0 (minlevel) and 255 (maxlevel).
