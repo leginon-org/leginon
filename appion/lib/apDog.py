@@ -1,25 +1,13 @@
 #Part of the new pyappion
 
 import sys
-import libcv2
-#import Mrc
-#import selexonFunctions  as sf1
-#import selexonFunctions2 as sf2
-import apDatabase
+import apDatabase,apDisplay
 import particleData
 import dbdatakeeper
-
-def dogHelp():
-	print "dogpicker.py dbimages=<session>,<preset> diam=<particle_pixels> bin=<binning>"+\
-		" range=<number_of_sizes> mint=<minimum_threshold_sigma> maxt=<maximum_threshold_sigma>"+\
-		" id=<runid> [commit]"
-	sys.exit(1)
-	return
-
-def parseDogInput(args,params):
-	for arg in args[1:]:
-		elements=arg.split('=')
-
+try:
+	import libcv2
+except:
+	apDisplay.printError("cannot import libcv2, use a different machine")
 
 def runDogDetector(imagename, params):
 	#imgpath = img['session']['image path'] + '/' + imagename + '.mrc'

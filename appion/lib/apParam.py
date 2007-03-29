@@ -84,6 +84,8 @@ def createDefaultParams(function=None):
 	params['stig']=0
 	params['nominal']=None
 	params['reprocess']=None
+	params['matdir']=None
+	params['opimagedir']=None
 
 ### DOG PARAMETERS
 	params["sizerange"]=0
@@ -110,8 +112,6 @@ def createDefaultParams(function=None):
 	params['description']=None
 	params['outdir']=None
 	params['rundir']=None
-	params['matdir']=None
-	params['opimagedir']=None
 	params['doneDictName']=None
 	params['functionLog']=None
 	params['pixdiam']=None
@@ -211,20 +211,6 @@ def checkParamConflicts(params):
 	if len(params['mrcfileroot']) > 0 and params['alldbimages']:
 		print "\nERROR: alldbimages can not be specified if particular images have been specified\n"
 		sys.exit(1)
-
-def getPixelSize(img):
-	# use image data object to get pixel size
-	# multiplies by binning and also by 1e10 to return image pixel size in angstroms
-	pixelsizeq=data.PixelSizeCalibrationData()
-	pixelsizeq['magnification']=img['scope']['magnification']
-	pixelsizeq['tem']=img['scope']['tem']
-	pixelsizeq['ccdcamera'] = img['camera']['ccdcamera']
-	pixelsizedata=db.query(pixelsizeq, results=1)
-	
-	binning=img['camera']['binning']['x']
-	pixelsize=pixelsizedata[0]['pixelsize'] * binning
-	
-	return(pixelsize*1e10)
 
 
 def parseCommandLineInput(args,params):
@@ -403,7 +389,7 @@ def parseCommandLineInput(args,params):
 			params['reprocess']=float(elements[1])
 
 ### MAKE STACK PARAMS
-		elif (elements[0]=='prtlrunid'):
+		elif (elements[0]=='prtlrunid' or elements[0]=='selexonid'):
 			params["selexonId"]=int(elements[1])
 
 ### DOG PICKER PARAMS
