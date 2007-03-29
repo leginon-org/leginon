@@ -338,7 +338,7 @@ def _distsqmat(r0,shape):
 	dx, dy = indices[0]-r0[0],indices[1]-r0[1]
 	return (dx**2+dy**2)
 
-def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0, maxmoment=2.5, method="central"):
+def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0, maxmoment=None, method="central"):
 	shape = image.shape
 
 	### create copy of mask since it will be modified now
@@ -363,7 +363,7 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 		if blob['n'] < minblobsize:
 			toosmall += 1
 			continue
-		if blob['moment'] >= maxmoment:
+		if maxmoment is not None and blob['moment'] >= maxmoment:
 			toooblong += 1
 			continue
 		fakeblobs.append(fakeblob)
