@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<selexon>
+ <range>
+	<alias>range1</alias>
+ </range>
+ <range1>
+	<name>template rotation range 1</name>
+	<default>0,360,15</default>
+	<description>Range of rotations for template 1</description>
+	<type>list,float</type>
+	<range>0,360</range>
+ </range1>
+ <range2>
+	<name>template rotation range 2</name>
+	<default></default>
+	<description>Range of rotations for template 2</description>
+	<type>list,float</type>
+	<example>0,360,15</example>
+	<range>0,360</range>
+ </range2> 
+ <range3>
+	<name>template rotation range 3</name>
+	<default></default>
+	<description>Range of rotations for template 3</description>
+	<type>list,float</type>
+	<example>0,360,15</example>
+	<range>0,360</range>
+ </range3>
+ <maxpeaks>
+	<name>maximum number of peaks</name>
+	<description>Maximum number of peaks (particles) per image</description>
+	<type>integer</type>
+	<default>1500</default>
+	<range>1,10000</range>
+ </maxpeaks>
+ <overlapmult>
+	<name>overlap distance multiple</name>
+	<description>Distance multiple for two peaks (particles) to overlap</description>
+	<type>float</type>
+	<default>1.5</default>
+	<range>0,10</range>
+ </overlapmult>
+ <diam>
+	<required>True</required>
+ </diam>
+ <bin>
+	<required>True</required>
+ </bin>
+ <apix>
+	<required>True</required>
+ </apix>
+ <templateids>
+	<name>template id numbers</name>
+	<description>Id numbers for templates used</description>
+	<type>list,integer</type>
+	<default></default>
+	<range>1,1000</range>
+	<required>True</required>
+ </templateids>
+</selexon>

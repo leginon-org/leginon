@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="us-ascii"?>
 <allappion>
  <outdir>
-	<name>Output directory</name>
+	<name>output directory</name>
 	<default></default>
 	<description>Output directory for storing output files</description>
 	<type>path</type>
+	<example>/ami/data##/project/appion/session/function</example>
+	<required>True</required>
+	<database>True</database>
  </outdir>
  <dbimages>
 	<name>database images</name>
 	<default></default>
 	<description>SessionId and preset from Leginon</description>
-	<type>string</type>
-	<regex>[a-z0-9]+,[a-z0-9]+</regex>
+	<type>list,string</type>
+	<example>07mar21a,en</example>
+	<regex>[a-z0-9]+</regex>
  </dbimages>
  <runid>
 	<name>run id</name>
@@ -22,32 +26,36 @@
  <alldbimages>
 	<name>database images</name>
 	<default></default>
-	<description>SessionId and preset from Leginon</description>
+	<description>SessionId from Leginon</description>
+	<example>06nov09d</example>
 	<type>string</type>
 	<regex>[a-z0-9]+</regex>
  </alldbimages>
  <apix>
 	<name>apix</name>
-	<default>1.0</default>
+	<default></default>
+	<database>True</database>
+	<required>True</required>
 	<description>Angstroms per pixel</description>
 	<type>float</type>
  </apix>
  <diam>
 	<name>diam</name>
-	<default>0</default>
-	<description>Particle diameter in pixels</description>
-	<type>integer</type>
+	<default></default>
+	<description>Particle diameter in angstroms</description>
+	<type>float</type>
+	<range>1,1500</range>
  </diam>
  <bin>
 	<name>binning</name>
-	<default>1</default>
-	<description>Bin size for images (power of 2)</description>
+	<default>4</default>
+	<description>Bin size for images (must be power of 2)</description>
 	<type>integer</type>
-	<example>1,2,4,8,16</example>
+	<list>1,2,4,8,16,32,64</list>
  </bin>
  <continue>
 	<name>continue</name>
-	<default>False</default>
+	<default>True</default>
 	<description>Continue from previous location</description>
 	<type>boolean</type>
  </continue>
@@ -58,39 +66,44 @@
 	<type>boolean</type>
  </commit>
  <description>
-	<name>commit</name>
-	<default>False</default>
+	<name>description</name>
+	<default></default>
 	<description>Description of processing run</description>
 	<type>string</type>
  </description>
  <rundir>
-	<name>Run directory</name>
+	<name>run directory</name>
 	<default></default>
 	<description>Run directory for storing all files</description>
 	<type>path</type>
+	<modify>False</modify>
  </rundir>
  <donedictname>
 	<name>done dictionary name</name>
 	<default></default>
 	<description>Name of file for keeping tracking of previously processed files</description>
 	<type>path</type>
+	<modify>False</modify>
  </donedictname>
  <functionlog>
 	<name>function log name</name>
 	<default></default>
 	<description>Name of file for logging command line parameters</description>
 	<type>path</type>
+	<modify>False</modify>
  </functionlog>
  <pixdiam>
 	<name>pixel diameter</name>
-	<default>1.0</default>
+	<default></default>
 	<description>Diameter of particle in pixels (unbinned)</description>
-	<type>calc</type>
+	<type>float</type>
+	<modify>False</modify>
  </pixdiam>
  <binpixdiam>
 	<name>pixel diameter</name>
-	<default>1.0</default>
+	<default></default>
 	<description>Binned diameter of particle in pixels</description>
-	<type>calc</type>
+	<type>float</type>
+	<modify>False</modify>
  </binpixdiam>
 </allappion>
