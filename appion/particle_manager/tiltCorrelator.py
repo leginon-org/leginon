@@ -6,9 +6,8 @@ import os, re
 import data
 import time
 import random
-import apLoop,apParam,apDatabase
+import apLoop
 import apTilt
-import selexonFunctions  as sf1
 sys.stderr.write("done\n")
 
 data.holdImages(False)
@@ -30,6 +29,7 @@ if __name__ == '__main__':
 	del images
 
 	#print random.shuffle(imagepairs)
+	#print (imagepairs.items())[0]
 	notdone=True
 	while notdone:
 		for key,pair in imagepairs.items():
@@ -38,7 +38,6 @@ if __name__ == '__main__':
 				stats['notpair']+=1
 			if len(pair) == 2:
 				img1,img2 = pair
-				#image = sf1.getImageData(img1)['image']
 				imgname1=img1['filename']
 				imgname2=img2['filename']
 				stats['imagesleft'] = len(imagepairs)-stats['count']-stats['notpair']
@@ -55,6 +54,6 @@ if __name__ == '__main__':
 				apLoop.writeDoneDict(donedict,params,imgname2)
 				apLoop.printSummary(stats, params)
 				#END LOOP OVER IMAGES
-		notdone = apLoop.waitForMoreImages(stats, params)
+		notdone,images = apLoop.waitForMoreImages(stats, params)
 		#END NOTDONE LOOP	
 	apLoop.completeLoop(stats)
