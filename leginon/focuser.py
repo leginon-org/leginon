@@ -377,7 +377,7 @@ class Focuser(acquisition.Acquisition):
 		return status
 
 	def alignRotationCenter(self, defocus1, defocus2):
-		bt = self.btcalclient.measureRotationCenter(defocus1, defocus2, target=None, correlation_type=None, settle=0.5)
+		bt = self.btcalclient.measureRotationCenter(defocus1, defocus2, correlation_type=None, settle=0.5)
 		self.logger.info('Misalignment correction: %.4f, %.4f' % (bt['x'],bt['y'],))
 		oldbt = self.instrument.tem.BeamTilt
 		self.logger.info('Old beam tilt: %.4f, %.4f' % (oldbt['x'],oldbt['y'],))
