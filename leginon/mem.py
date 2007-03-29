@@ -40,9 +40,14 @@ def used():
 	used = meminfo['MemTotal'] - meminfo['MemFree']
 	return used
 
+def active():
+	meminfo = meminfo2dict()
+	used = meminfo['MemTotal'] - meminfo['MemFree'] - meminfo['Cached']
+	return used
+
 def free():
 	meminfo = meminfo2dict()
-	free = meminfo['MemFree']
+	free = meminfo['MemFree'] + meminfo['Cached']
 	return free
 
 def total():
