@@ -118,7 +118,7 @@ def startLoop(img,donedict,stats,params):
 		stats['lastcount'] = stats['count']
 
 	# get the image's pixel size:
-	params['apix']=apParam.getPixelSize(img)
+	params['apix']=apDatabase.getPixelSize(img)
 
 	# skip if image doesn't exist:
 	imagepath = params['imgdir']+img['filename']+'.mrc'

@@ -80,4 +80,16 @@ def getImageData(imagename):
 		print "\nERROR: Image", imagename,"not found in database\n"
 		sys.exit(1)
 
-
+def getPixelSize(img):
+	# use image data object to get pixel size
+	# multiplies by binning and also by 1e10 to return image pixel size in angstroms
+	pixelsizeq=data.PixelSizeCalibrationData()
+	pixelsizeq['magnification']=img['scope']['magnification']
+	pixelsizeq['tem']=img['scope']['tem']
+	pixelsizeq['ccdcamera'] = img['camera']['ccdcamera']
+	pixelsizedata=db.query(pixelsizeq, results=1)
+	
+	binning=img['camera']['binning']['x']
+	pixelsize=pixelsizedata[0]['pixelsize'] * binning
+	
+	return(pixelsize*1e10)
