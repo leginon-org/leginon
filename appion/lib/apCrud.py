@@ -1,5 +1,6 @@
-#crud functions called by crudFinder.py
+#region finding functions called by makeMask.py
 
+import apDatabase
 import apImage
 import apConvexHull
 import os,sys
@@ -15,7 +16,6 @@ import imagefun
 import numextension
 import polygon
 import libCV
-import operator
 
 def prepImage(image,cutoff=5.0):
 	shape=numarray.shape(image)
@@ -45,10 +45,7 @@ def outputImage(array,name,description,testlog):
 		testlog[2]+= "%s:%s%s\n" % (jpgname,space,description)
 		testlog[1] += 1
 	else:
-		if testlog[1] == -1:
-			jpgname="jpgs/%s.crud.jpg" %(name,)
-		else:
-			return testlog
+		return testlog
 	apImage.arrayToJpeg(array,jpgname)
 	return testlog
 
@@ -161,24 +158,24 @@ def findConvexHullsFromPoints(points):
 	return polygon		
 
 def oneObjToGlobalPoints(bimage):
-	cruds,clabels=nd.label(bimage)
-	crud_objs=nd.find_objects(cruds,max_label=clabels)
+	regions,clabels=nd.label(bimage)
+	region_objs=nd.find_objects(regions,max_label=clabels)
 	l=0
-	one_crud=bimage[crud_objs[l]]
-	starts=(crud_objs[l][0].start,crud_objs[l][1].start)
-	crud_dim=numarray.shape(one_crud)
+	one_region=bimage[region_objs[l]]
+	starts=(region_objs[l][0].start,region_objs[l][1].start)
+	region_dim=numarray.shape(one_region)
 	gpoints=[]
-	for x in range(crud_dim[0]):
-		for y in range(crud_dim[1]):
-			if one_crud[x][y]:
+	for x in range(region_dim[0]):
+		for y in range(region_dim[1]):
+			if one_region[x][y]:
 				gpoints.append((x+starts[0],y+starts[1]))
 	return gpoints
 
-def findConvexHullsFromLabeledImage(cruds,clabels):
+def findConvexHullsFromLabeledImage(regions,clabels):
 	gpolygons=[]
-	# individual crud is masked to avoid problem of overlapped of crud_obj slices
+	# individual region is masked to avoid problem of overlapped of region_obj slices
 	for l in range(1,clabels+1):
-		region=ma.masked_outside(cruds,l,l)
+		region=ma.masked_outside(regions,l,l)
 		mask=1-ma.getmask(region)
 		gpoints=oneObjToGlobalPoints(mask)
 		gpolygon=findConvexHullsFromPoints(gpoints)
@@ -213,150 +210,206 @@ def mergePolygonPoints(polygons):
 
 	return result		  
 
-def makeGlobalPolygons(shape,crud_objs,polygons):
+def convexHullUnion(regions,clabels,testlog):
+	shape=numarray.shape(regions)
 	gpolygons=[]
-	ltotal=len(crud_objs)
-	for l in range(ltotal):
-		starts=(crud_objs[l][0].start,crud_objs[l][1].start)
-		gpoints=[]
-		for point in polygons[l]:
-			gpoint=(point[0]+starts[0],point[1]+starts[1])
-			gpoints.append(gpoint)
-		gpolygons.append(gpoints)
-	return gpolygons
-
-def makeLocalPolygons(gpolygons):
-	crud_objs=[]
-	polygons=[]
-	for l in range(len(gpolygons)):
-		xs=[]
-		ys=[]
-		points=[]
-		for point in gpolygons[l]:
-			xs.append(point[0])
-			ys.append(point[1])
-		xs.sort()
-		ys.sort()
-		crud_obj=(slice(xs[0],xs[-1]+1),slice(ys[0],ys[-1]+1))
-		crud_objs.append(crud_obj)
-		for point in gpolygons[l]:
-			point=(point[0]-xs[0],point[1]-ys[0])
-			points.append(point)
-		polygons.append(points)
-	return crud_objs,polygons
-
-def convexHullUnion(cruds,clabels,testlog):
-	shape=numarray.shape(cruds)
 	print "making convex hulls"
-	gpolygons=findConvexHullsFromLabeledImage(cruds,clabels)
+	while clabels != len(gpolygons):
+		gpolygons=findConvexHullsFromLabeledImage(regions,clabels)
 	
-	print "merging from %d convex hulls" % len(gpolygons)
-	gpolygons=mergePolygonPoints(gpolygons)
-	print "merged to %d convex hulls" % len(gpolygons)
+		print "merging from %d convex hulls" % len(gpolygons)
+		gpolygons=mergePolygonPoints(gpolygons)
+		print "merged to %d convex hulls" % len(gpolygons)
 
-	#fill polygons and make a labeled image
-	polygon_image=polygon.plotPolygons(shape,gpolygons)
-	cruds,clabels=nd.label(polygon_image)
+		#fill polygons and make a labeled image
+		polygon_image=polygon.plotPolygons(shape,gpolygons)
+		regions,clabels=nd.label(polygon_image)
+		if clabels !=len(gpolygons):
+			print "some polygons just touched, REDO!!"
 
-	testlog=outputImage(cruds,'crud_labelp','Convex hull union labeled polygons',testlog)
-	return cruds,clabels,gpolygons,testlog
+	testlog=outputImage(regions,'region_labelp','Convex hull union labeled polygons',testlog)
+	return regions,clabels,gpolygons,testlog
 	
-def getLabeledInfo(image,alledgemask,labeled_image,ltotal,fast,testlog):
-	print "getting crud info"
+
+def getRealLabeledMeanStdev(image,labeled_image,indices,info):
+	print "Getting real mean and stdev"
+	mean=nd.mean(image,labels=labeled_image,index=indices)
+	stdev=nd.standard_deviation(image,labels=labeled_image,index=indices)
+	ll=0
+	try:
+		len(mean)
+	except:
+		mean=[mean]
+		stdev=[stdev]
+		try:
+			len(indices)
+		except:
+			indices=[indices]
+	try:
+		info.keys()
+	except:
+		offset=1
+	else:
+		offset=0
+	for l in indices:
+		info[l-offset][1]=mean[ll]
+		info[l-offset][2]=stdev[ll]
+		ll += 1
+	return info
+	
+def getRealLabeledPerimeter(image,edge_mask,labeled_image,indices,info,testlog):
+	print "Getting real perimeter length"
+	edgeimage,testlog=findEdgeSobel(edge_mask,0,0.5,1.0,False,testlog)
+	mask=ma.getmask(edgeimage)
+	length=nd.sum(mask,labels=labeled_image,index=indices)
+
+	ll=0
+	try:
+		len(length)
+	except:
+		length=[length]
+		try:
+			len(indices)
+		except:
+			indices=[indices]
+	try:
+		info.keys()
+	except:
+		offset=1
+	else:
+		offset=0
+	for l in indices:
+		info[l-offset][3]=length[ll]
+		ll += 1
+	return info	
+
+def getRealLabeledAreaCenter(image,labeled_image,indices,info):
+	print "Getting real area and center"
+	shape=numarray.shape(image)
+	ones=numarray.ones(shape)
+	area=nd.sum(ones,labels=labeled_image,index=indices)
+	center=nd.center_of_mass(ones,labels=labeled_image,index=indices)
+
+	ll=0
+	try:
+		len(area)
+	except:
+		area=[area]
+		center=[center]
+		try:
+			len(indices)
+		except:
+			indices=[indices]
+	try:
+		info.keys()
+	except:
+		offset=1
+	else:
+		offset=0
+	for l in indices:
+		info[l-offset][0]=area[ll]
+		info[l-offset][4]=center[ll]
+		ll += 1
+	return info	
+
+def makeDefaultInfo(ltotal):
 	info={}
+	# info[l]=[area,avg,stdev,length,center]
+	for l in range(1,ltotal+1):
+		info[l]=[None,None,None,None,(None,None)]
+	return info
+
+def getLabeledInfo(image,alledgemask,labeled_image,indices,fast,info,testlog):
+	try:
+		ltotal=len(indices)
+	except:
+		ltotal=1
+		
+	print "getting region info"
+	if len(info) != ltotal:
+		info=makeDefaultInfo(ltotal)	
+	
 	imageshape=numarray.shape(labeled_image)
 	if not fast:
-		edgeimage,testlog=findEdgeSobel(alledgemask,0,-1,0.0,False,testlog)
-		mask=1-ma.getmask(edgeimage)
-		mask=nd.binary_dilation(mask,iterations=1)
-		testlog=outputImage(mask,'labeledge','Edges of the image labels',testlog)
+		if (info[1][3] is None):
+			info=getRealLabeledPerimeter(image,alledgemask,labeled_image,indices,info,testlog)
+		if (info[1][1] is None):
+			info=getRealLabeledMeanStdev(image,labeled_image,indices,info)
+		if (info[1][0] is None):
+			info=getRealLabeledAreaCenter(image,labeled_image,indices,info)
 	else:
 		objs = nd.find_objects(labeled_image)
-	ones=numarray.ones(imageshape)
-	# individual crud is masked to avoid problem of overlapped of crud_obj slices
-	avgall = nd.mean(image)
-	for l in range(1,ltotal+1):
-		if not fast:
-			length=nd.sum(mask,labels=labeled_image,index=l)
-			area=nd.sum(ones,labels=labeled_image,index=l)
-			avg=nd.mean(image,labels=labeled_image,index=l)
-			stdev=nd.standard_deviation(image,labels=labeled_image,index=l)
-			center=nd.center_of_mass(ones,labels=labeled_image,index=l)
-		else:
-			lengths = []
-			lengths.append(objs[l-1][0].stop - objs[l-1][0].start)
-			lengths.append(objs[l-1][1].stop - objs[l-1][1].start)
-			length = 2*(lengths[0]+lengths[1])
-			area = lengths[0]*lengths[1]
-			avg = avgall
-			stdev = 2
-			center=(imageshape[0]/2,imageshape[1]/2)
-		info[l]=(area,avg,stdev,length,center)
-	return info,testlog 
+		for l in indices:
+			## use the bounding box perimeter as fast perimeter estimate
+			## objs does not include the background
+			lengthRow=(objs[l-1][0].stop - objs[l-1][0].start)
+			lengthCol=(objs[l-1][1].stop - objs[l-1][1].start)
+			info[l][3] = 2*(lengthRow+lengthCol)
+	return info,testlog
 
-def getPolygonInfo(polygons,testlog):
-	print "get polygon info"
+def getPolygonInfo(polygons,info,testlog):
+	print "get polygon area and center info"
+	if len(info) != len(polygons):
+		info=makeDefaultInfo(len(polygons))	
 	polygons_arrays = polygon.polygons_tuples2arrays(polygons)
-	info={}
 	for l,p in enumerate(polygons_arrays):
 		length = 2*(p[:,0].max()-p[:,0].min())+2*(p[:,1].max()-p[:,1].min())
 		if len(p) >=3:
 			area = polygon.getPolygonArea(p)
 			center = polygon.getPolygonCenter(p)
 		else:
+			## only a line
 			area = length
 			center = ((p[:,0].max()+p[:,0].min())/2,(p[:,1].max()+p[:,1].min())/2)
-		avg = 100
-		stdev = 2
-		info[l+1]=(area,avg,stdev,length,center)
-	return info,testlog 
+		info[l+1][0]=area
+		info[l+1][4]=center
+	return info,testlog
 		
-def pruneByLength(info,length_min,length_max,goodcruds_in):
+def pruneByLength(info,length_min,length_max,goodregions_in):
 	print "pruning by edge length"
-	goodcruds=[]
+	goodregions=[]
 	for l in range(1,len(info)+1):
 		length=info[l][3]
 		if (length > length_min and length < length_max):
-			if l-1 in goodcruds_in:
-				goodcruds.append(l-1)
-	print "pruned to %d region" %len(goodcruds)
-	return goodcruds
+			if l-1 in goodregions_in:
+				goodregions.append(l-1)
+	print "pruned to %d region" %len(goodregions)
+	return goodregions
 
 
-def pruneByArea(info,area_min,area_max,goodcruds_in):
+def pruneByArea(info,area_min,area_max,goodregions_in):
 	print "pruning by area"
-	goodcruds=[]
+	goodregions=[]
 	for l in range(1,len(info)+1):
 		area=info[l][0]
 		if (area > area_min and area < area_max):
-			if l-1 in goodcruds_in:
-				goodcruds.append(l-1)
-	print "pruned to %d region" %len(goodcruds)
-	return goodcruds
+			if l-1 in goodregions_in:
+				goodregions.append(l-1)
+	print "pruned to %d region" %len(goodregions)
+	return goodregions
 
-def pruneByStdev(info,stdev_min,goodcruds_in):
+def pruneByStdev(info,stdev_min,goodregions_in):
 	print "pruning by stdev"
-	goodcruds=[]
+	goodregions=[]
 	for l in range(1,len(info)+1):
 		stdev=info[l][2]
 		if (stdev > stdev_min):
-			if l-1 in goodcruds_in:
-				goodcruds.append(l-1)
-	print "pruned to %d region" %len(goodcruds)
-	return goodcruds
+			if l-1 in goodregions_in:
+				goodregions.append(l-1)
+	print "pruned to %d region" %len(goodregions)
+	return goodregions
 	
-def makePrunedLabels(file,labeled_image,ltotal,info,goodlabels):
+def makePrunedLabels(imagename,labeled_image,ltotal,info,goodlabels):
 	print "remaking %d labeled image after pruning" % len(goodlabels)
 	new_labeled_image = makeImageFromLabels(labeled_image,ltotal,goodlabels)
 
-	goodinfo=""
+	goodinfos=[]
 	for i,l1 in enumerate(goodlabels):
 		# output: centerx centery area average stdev length
 		l=l1+1
-		goodcrudline=file+".mrc "+str(int(info[l][4][1]))+" "+str(int(info[l][4][0]))+" "+str(info[l][0])+" "+str(info[l][1])+" "+str(info[l][2])+" "+str(info[l][3])+"\n"
-		goodinfo=goodinfo+goodcrudline
+		goodinfos.append(info[l])
 
-	return new_labeled_image,len(goodlabels),goodinfo
+	return new_labeled_image,len(goodlabels),goodinfos
 
 def makeImageFromLabels(labeled_image,ltotal,goodlabels):
 	imageshape=numarray.shape(labeled_image)
@@ -380,23 +433,73 @@ def makeImageFromLabels(labeled_image,ltotal,goodlabels):
 			region=numarray.where(labeled_image==l,1,0)
 			numarray.putmask(tmp_labeled_image,region,0)
 		new_labeled_image,resultlabels = nd.label(tmp_labeled_image)
+		print 'makeImageFromLabels', len(goodlabels),resultlabels
 	return new_labeled_image
 
-def makePrunedPolygons(file,gpolygons,imageshape,info,goodlabels):
+def makePrunedPolygons(imagename,gpolygons,imageshape,info,goodlabels):
 	print "remaking %d polygons after pruning" % len(goodlabels)
 	goodpolygons=[]
-	goodinfo=""
+	goodinfos=[]
 	if len(goodlabels)==0:
 		new_labeled_image=numarray.zeros(imageshape,numarray.Int8)
-		return new_labeled_image,len(goodlabels),goodinfo
+		return new_labeled_image,len(goodlabels),goodinfos
 	for l1 in goodlabels:
 		l=l1+1
-		goodcrudline=file+".mrc "+str(int(info[l][4][1]))+" "+str(int(info[l][4][0]))+" "+str(info[l][0])+" "+str(info[l][1])+" "+str(info[l][2])+" "+str(info[l][3])+"\n"
-		goodinfo=goodinfo+goodcrudline
+		goodinfos.append(info[l])
 		goodpolygons.append(gpolygons[l1])
-	cruds = polygon.plotPolygons(imageshape,goodpolygons)
-	return cruds,len(goodpolygons),goodinfo
+	equalregions = polygon.plotPolygons(imageshape,goodpolygons)
+	regions,clabels=nd.label(equalregions)
+	if clabels != len(goodpolygons):
+		print "ERROR: making %d labeled region from %d good polygons" % (clabels,len(goodpolygons))
+	return regions,len(goodpolygons),goodinfos
 
+def writeRegionInfo(imagename,path,infos):
+	# infos is a list of information or a dictionary using non-zero index as keys
+	# area,avg,stdev,length,(centerRow,centerColumn)
+	if len(infos)==0:
+		return
+	regionlines=""
+	try:
+		infos.keys()
+	except:
+		offset=0
+	else:
+		offset=1
+	for l1 in range(0,len(infos)):
+		
+		l=l1+offset
+		info=infos[l]
+		regionline=" %s.mrc %d %d %.1f %.1f %.1f %d\n" %(imagename,int(info[4][1]),int(info[4][0]),info[0],info[1],info[2],int(info[3]))
+		regionlines=regionlines+regionline
+	regionfile=open(path+imagename+".region",'w')
+	regionfile.write(regionlines+"\n")
+	regionfile.close()
+
+def writeRegionInfoToDB(imagename,infos):
+	# infos is a list of information or a dictionary using non-zero index as keys
+	# area,avg,stdev,length,(centerRow,centerColumn)
+	if len(infos)==0:
+		return
+	regionlines=""
+	try:
+		infos.keys()
+	except:
+		offset=0
+	else:
+		offset=1
+	for l1 in range(0,len(infos)):
+		
+		l=l1+offset
+		info=infos[l]
+#		"READY FOR DATABASE INSERT HERE
+
+def writeMaskImage(imagename,path,mask):
+	# remove old mask file if it exists
+	maskfile=path+"/"+imagename+"_mask.png"
+	if (os.path.exists(maskfile)):
+		os.remove(maskfile)
+	if mask is not None:
+		apImage.arrayToPng(mask,maskfile)
 
 def reduceRegions(regions,velimit):
 	regionarrays = []
@@ -424,15 +527,22 @@ def reduceRegions(regions,velimit):
 					
 	return regionarrays
 
-def findCrud(params,file):
+def makeMask(params,imagename):
 	filelog="\nTEST OUTPUT IMAGES\n----------------------------------------\n"
-	# create "jpgs" directory if doesn't exist
-	if not (os.path.exists("jpgs")):
-		os.mkdir("jpgs")
+	print "Processing %s.mrc" % (imagename,)
+	run_dir=params["outdir"]+"/"+params["runid"]+"/"
+	# create "run" directory if doesn't exist
+	if not (os.path.exists(run_dir)):
+		os.mkdir(run_dir)
 
-	# remove crud info file if it exists
-	if (os.path.exists("crudfiles/"+file+".crud")):
-		os.remove("crudfiles/"+file+".crud")
+	# create "regioninfo" directory if doesn't exist
+	info_dir=run_dir+"/regions/"
+	if not (os.path.exists(info_dir)):
+		os.mkdir(info_dir)
+
+	# remove region info file if it exists
+	if (os.path.exists(info_dir+imagename+".region")):
+		os.remove(info_dir+imagename+".region")
 	
 	
 	bin=int(params["bin"])
@@ -467,22 +577,28 @@ def findCrud(params,file):
 		else:
 			os.mkdir("tests")
 
-	pm = 2.0
-	am = 3.0
+# selexon factors to expand the threshold
+#	pm = 2.0
+#	am = 3.0
+# new values so that cdiam makes physical sense
+	pm = 0.667
+	am = 1.0
 	
 	list_t=pm*3.14159*cdiam
 	pradius = diam/2.0	
 	cradius=cdiam/2.0
 	area_t=am*3.1415926*cradius*cradius
-	crudinfo=""
-	image=Mrc.mrc_to_numeric(file+".mrc")
+	regioninfo=""
+#	image=Mrc.mrc_to_numeric(imagename+".mrc")
+	image = apDatabase.getImageData(imagename)['image']
 	image=imagefun.bin(image,bin)
 	shape=numarray.shape(image)
-
 	cutoff=8.0
 	# remove spikes in the image first
 	image=prepImage(image,cutoff)
 	garea,gavg,gstdev=maskImageStats(image)
+	allinfos={}
+	regioninfos=[]
 
 	if (scale_high == 1):
 		high=high_tn
@@ -503,7 +619,7 @@ def findCrud(params,file):
 				low=(low_tn-1.0)*delta_stdev/delta_scale+1.0
 				high=(high_tn-1.0)*delta_stdev/delta_scale+1.0
 
-	print 'scaled crudhi= %.4f crudlo= %.4f' %(high,low)
+	print 'scaled regionhi= %.4f regionlo= %.4f' %(high,low)
 
 	if (test):
 		testlog=outputImage(image,'input','input image',testlog)
@@ -518,7 +634,7 @@ def findCrud(params,file):
 	# If the area not within the threshold is too large or zero, no further calculation is necessary
 	if (nedge <image.size()*0.1 or nedge ==image.size()):
 		superimage=image
-		crudinfo=""
+		regioninfo=""
 	else:
 		mask=ma.getmask(edgeimage)
 		maskedimage=ma.masked_array(image,mask=mask,fill_value=0)
@@ -536,110 +652,118 @@ def findCrud(params,file):
 
 		#segmentation
 		
-		cruds,clabels=nd.label(mask)
-		print "starting with",clabels, "cruds"
-		testlog=outputImage(cruds,'crud_label','Segmented labeled image',testlog)
+		labeled_regions,clabels=nd.label(mask)
+		print "starting with",clabels, "regions"
+		testlog=outputImage(labeled_regions,'region_label','Segmented labeled image',testlog)
 
 		#pruning by length of the perimeters of the labeled regions.
 		if (do_prune_by_length):
-			allinfo,testlog=getLabeledInfo(image,mask,cruds,clabels,True,testlog)
-			goodcruds=range(clabels)
-			goodcruds=pruneByLength(allinfo,list_t,garea*0.5,goodcruds)
-			cruds,clabels,goodinfo=makePrunedLabels(file,cruds,clabels,allinfo,goodcruds)
+			allinfos,testlog=getLabeledInfo(image,mask,labeled_regions,range(1,clabels+1),True,allinfos,testlog)
+			goodregions=range(clabels)
+			goodregions=pruneByLength(allinfos,list_t,garea*0.5,goodregions)
+			labeled_regions,clabels,goodinfo=makePrunedLabels(imagename,labeled_regions,clabels,allinfos,goodregions)
 		
-		#create convex hulls and merge overlapped or inside cruds
+		#create convex hulls and merge overlapped or inside regions
 		if do_convex_hulls:
-			cruds,clabels,gpolygons,testlog=convexHullUnion(cruds,clabels,testlog)
+			labeled_regions,clabels,gpolygons,testlog=convexHullUnion(labeled_regions,clabels,testlog)
+				
 		else:
 			if do_cv:
-				regions,dummyimage=libCV.FindRegions(mask,area_t,0.2,1,0,1,0)
-				gpolygons = reduceRegions(regions,160)
+				polygonregions,dummyimage=libCV.FindRegions(mask,area_t,0.2,1,0,1,0)
+				gpolygons = reduceRegions(polygonregions,100)
 				clabels = len(gpolygons)
+				goodareas = range(clabels)
 
 		if (clabels > 0):
 			testlog[0]=False
 			if do_convex_hulls or do_cv:
 				if stdev_t < 0.001:
-					allinfo,testlog=getPolygonInfo(gpolygons,testlog)
+					allinfos,testlog=getPolygonInfo(gpolygons,allinfos,testlog)
 				else:
 					mask = polygon.plotPolygons(shape,gpolygons)
-					cruds,clabels=nd.label(mask)
-					allinfo,testlog=getLabeledInfo(image,mask,cruds,clabels,False,testlog)
+					labeled_regions,clabels=nd.label(mask)
+					allinfos,testlog=getLabeledInfo(image,mask,labeled_regions,range(1,clabels+1),False,{},testlog)
 			else:				
-				allinfo,testlog=getLabeledInfo(image,mask,cruds,clabels,False,testlog)
+				allinfos,testlog=getLabeledInfo(image,mask,labeled_regions,range(1,clabels+1),False,allinfos,testlog)
+			saved_labeled_regions=labeled_regions
+			saved_clabels=clabels
 			testlog[0]=test
-			goodcruds=range(clabels)
+			goodregions=range(clabels)
 			if not do_cv:
 				#pruning by area as in selexon
-				goodcruds=pruneByArea(allinfo,area_t,garea*0.5,goodcruds)
-				if (test):
-					temp_cruds,temp_clabels,goodinfo=makePrunedLabels(file,cruds,clabels,allinfo,goodcruds)
-					testlog=outputImage(temp_cruds,'crud_labela','Area pruned labeled image',testlog)
+				goodareas=pruneByArea(allinfos,area_t,garea*0.5,goodregions)
+				goodregions=goodareas
 
-			if (len(goodcruds)>0):
-				#pruning by standard deviation in the cruds
+			if (len(goodregions)>0):
+				#pruning by standard deviation in the regions
 				if (stdev_t > 0):
 					stdev_limit=stdev_t*gstdev
-					goodcruds=pruneByStdev(allinfo,stdev_limit,goodcruds)
+					goodstdevs=pruneByStdev(allinfos,stdev_limit,goodareas)
+					goodregions=goodstdevs
 
-					if (test):
-						temp_cruds,temp_clabels,goodinfo=makePrunedLabels(file,cruds,clabels,allinfo,goodcruds)
-						testlog=outputImage(temp_cruds,'crud_labels','Stdev pruned labeled image',testlog)
-
-			if test and (not do_cv or stdev_t > 0):
-				cruds,clabels,crudinfo=temp_cruds,temp_clabels,goodinfo
-				goodcruds=range(clabels)
+			if do_convex_hulls or do_cv and stdev_t < 0.01:
+				labeled_regions,clabels,regioninfos=makePrunedPolygons(imagename,gpolygons,shape,allinfos,goodregions)
 			else:
-				if do_cv:
-					cruds,clabels,crudinfo=makePrunedPolygons(file,gpolygons,shape,allinfo,goodcruds)
+				labeled_regions,clabels,regioninfos=makePrunedLabels(imagename,labeled_regions,clabels,allinfos,goodregions)
 
-			if not test:
-				if do_convex_hulls or do_cv and stdev_t < 0.01:
-					cruds,clabels,crudinfo=makePrunedPolygons(file,gpolygons,shape,allinfo,goodcruds)
-				else:
-					cruds,clabels,crudinfo=makePrunedLabels(file,cruds,clabels,allinfo,goodcruds)
-
-#		create edge image of the cruds for display
+			
+#		create final region mask
 		if (clabels >0):
-			int32cruds=cruds.astype(numarray.Int32)
-			equalcruds=ma.masked_greater_equal(int32cruds,1)
-			equalcruds=equalcruds.filled(100)
-			if (test):
-				testlog=outputImage(equalcruds,'finalcruds','Final Crud image',testlog)
-			crudedges,testlog=findEdgeSobel(equalcruds,1,0.5,1.0,False,testlog)
-			masklabel=1-ma.getmask(crudedges)
+			int32regions=labeled_regions.astype(numarray.Int32)
+			equalregions=ma.masked_greater_equal(int32regions,1)
+			equalregions=equalregions.filled(1)
+			regioninfos,testlog=getLabeledInfo(image,equalregions,labeled_regions,range(1,clabels+1),False,regioninfos,testlog)
+			
 		else:
-			masklabel=numarray.ones(shape)
-			equalcruds=numarray.zeros(shape)
-		superimage=image*masklabel
+			equalregions=None
 	
-	testlog=outputImage(superimage,'output','Final Crud w/ image',testlog)
+		if test:
+			try:
+				good=len(goodareas)
+			except:
+				good=0
+			if (good > 0):
+				temp_regions,temp_clabels,goodinfos=makePrunedLabels(imagename,saved_labeled_regions,saved_clabels,allinfos,goodareas)
+				testlog=outputImage(temp_regions,'region_labela','Area pruned labeled image',testlog)
+
+			try:
+				good=len(goodstdevs)
+			except:
+				good=0
+			if (good>0):
+				temp_regions,temp_clabels,goodinfos=makePrunedLabels(imagename,saved_labeled_regions,saved_clabels,allinfos,goodstdevs)
+				testlog=outputImage(temp_regions,'region_labels','Stdev pruned labeled image',testlog)
+			
+			if (clabels>0):
+				testlog=outputImage(equalregions,'finalregions','Final Mask image',testlog)
+				regionedges,testlog=findEdgeSobel(equalregions,0,0.5,1.0,False,testlog)
+				masklabel=1-ma.getmask(regionedges)
+			else:
+				masklabel=numarray.ones(shape)
+			superimage=image*masklabel
+			testlog=outputImage(superimage,'output','Final Mask w/ image',testlog)
+			print testlog[2]
 	
-	if (test):
-		print testlog[2]
+			writeRegionInfo(imagename,info_dir,regioninfos)
 	
-	testlog[0]=False
-	testlog[1]=-1
-	testlog=outputImage(superimage,file,'Final Crud w/ image',testlog)
+	if not test:
+		writeRegionInfoToDB(imagename,regioninfos)
+		writeMaskImage(imagename,run_dir,equalregions)
 	
-	crudfile=open("crudfiles/"+file+".crud",'w')
-	crudfile.write(crudinfo+"\n")
-	crudfile.close()
-	
-	return equalcruds
-		
-def piksNotInCrud(params,mask,piklines):
+	return equalregions
+
+def piksNotInMask(params,mask,piklines):
 	bin = int(params["bin"])
 	shape = numarray.shape(mask)
-	piklinesNotInCrud=[]
+	piklinesNotInMask=[]
 	for pikline in piklines:
 		bits=pikline.split(' ')
 		pik=(int(bits[1]),int(bits[2]))
 		binpik = (int(pik[0]/bin),int(pik[1]/bin))
 		if binpik[0] in range(0,shape[0]) and binpik[1] in range(0,shape[1]):
 			if mask[binpik]==0:
-				piklinesNotInCrud.append(pikline)
-	return piklinesNotInCrud
+				piklinesNotInMask.append(pikline)
+	return piklinesNotInMask
 	
 def readPiksFile(file,extra=''):
 	#print " ... reading Pik file: ",file
@@ -659,11 +783,11 @@ def writePiksFile(file,extra='',piklines=[]):
 	f=open(file+extra, 'w')
 	f.write(pikstring)
 	
-def removeCrudPiks(params,file):
-	print "Start Removing Piks in Cruds"
+def removeMaskedPiks(params,file):
+	print "Start Removing Piks in Masks"
 	pikfile = "pikfiles/"+file+".a.pik"
 	piklines = readPiksFile(pikfile)
-	crudmask=findCrud(params,file)
+	regionmask=makeMask(params,file)
 	print "Removing Bad Picks"
-	piklinesgood = piksNotInCrud(params,crudmask,piklines)
-	writePiksFile(pikfile,'.nocrud',piklinesgood)
+	piklinesgood = piksNotInMask(params,regionmask,piklines)
+	writePiksFile(pikfile,'.nonmask',piklinesgood)
