@@ -20,6 +20,23 @@ class crud(data.Data):
 	typemap = classmethod(typemap)
 data.crud=crud
 
+class maskRegion(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('mask', makeMaskParams),
+			('imageId', image),
+			('x', int),
+			('y', int),
+			('area', float),
+			('perimeter', float),
+			('mean', float),
+			('stdev', float),
+			('keep', bool),
+			
+		)
+	typemap = classmethod(typemap)
+data.maskRegion=maskRegion
+
 class image(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
@@ -109,6 +126,26 @@ class templateRun(data.Data):
 		)
 	typemap = classmethod(typemap)
 data.templateRun=templateRun
+
+class makeMaskParams(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('dbemdata|SessionData|session', int),
+			('featureType', str),
+			('edgeType',int),
+			('diam', int),
+			('bin', int),
+			('regionDiameter', int),
+			('edgeBlur', float),
+			('edgeLow', float),
+			('edgeHigh', float),
+			('regionStd', float),
+			('convolve', float),
+			('convexHull', bool),
+			('libcvFindRegion', bool),
+		)
+	typemap = classmethod(typemap)
+data.makeMaskParams=makeMaskParams
 
 class stackParams(data.Data):
 	def typemap(cls):
