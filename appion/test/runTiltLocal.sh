@@ -2,7 +2,7 @@
 
 rm -f `find .. -name "*.py[oc]"`
 rm -f `find .. -name "*~"`
-rm -fr tiltlocal1 tiltlocal2
+rm -fr icetiltslocal negtiltslocal
 
 ./tiltCorrelator.py \
   07feb02b_a_00006gr_00019sq_v01_00002sq_00_00004en_00.mrc \
@@ -13,8 +13,8 @@ rm -fr tiltlocal1 tiltlocal2
   07feb02b_a_00006gr_00019sq_v01_00002sq_01_00005en_01.mrc \
   07feb02b_a_00006gr_00019sq_v01_00002sq_01_00006en_01.mrc \
   07feb02b_a_00006gr_00019sq_v01_00002sq_01_00007en_01.mrc \
-  outdir=tiltlocal1 diam=140 \
-  runid=icetilts prtlrunid=96 commit
+  outdir=. diam=140 \
+  runid=icetiltslocal prtlrunid=96 commit
 
 ./tiltCorrelator.py \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00004en_00.mrc  \
@@ -29,5 +29,5 @@ rm -fr tiltlocal1 tiltlocal2
   07jan05b_00012gr_00001sq_v01_00002sq_01_00007en_01.mrc  \
   07jan05b_00012gr_00001sq_v01_00002sq_01_00008en_01.mrc  \
   07jan05b_00012gr_00001sq_v01_00002sq_01_00009en_01.mrc  \
-  outdir=tiltlocal2 diam=140 \
-  runid=negtilts prtlrunId=59 commit
+  outdir=. diam=140 \
+  runid=negtiltslocal prtlrunId=59 commit
