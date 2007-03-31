@@ -13,7 +13,7 @@ sys.stderr.write("done\n")
 data.holdImages(False)
 
 if __name__ == '__main__':
-	(images,params,stats,donedict) = apLoop.startNewAppionFunction(sys.argv)
+	(images,stats,params,donedict) = apLoop.startNewAppionFunction(sys.argv)
 
 	#TAKE ALL IMAGES AND SORT THEM INTO PAIRS
 	imagepairs = {}

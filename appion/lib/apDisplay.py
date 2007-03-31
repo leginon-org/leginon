@@ -10,7 +10,7 @@ def printMsg(text):
 	print " ... "+text
 
 def printError(text):
-	raise color("\nFATAL ERROR: "+text+"\n","red")
+	raise color("\n *** FATAL ERROR ***\n\t"+text+"\n","red")
 
 
 def timeString(avg,stdev=0):
@@ -113,10 +113,10 @@ def _colorProb(num,red=0.50,green=0.80):
 		return None
 	elif(num > green and num <= 1):
 		numstr = "%1.3f" % num
-		return apLoop.color(numstr,"green")
+		return color(numstr,"green")
 	elif(num < red and num >= 0):
 		numstr = "%1.3f" % num
-		return apLoop.color(numstr,"red")
+		return color(numstr,"red")
 	else:
 		numstr = "%1.3f" % num
 		return numstr
