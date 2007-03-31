@@ -4,7 +4,7 @@ rm -f `find .. -name "*.py[oc]"`
 rm -f `find .. -name "*~"`
 rm -fr icetiltslocal negtiltslocal
 
-./tiltCorrelator.py \
+tiltCorrelator.py \
   07feb02b_a_00006gr_00019sq_v01_00002sq_00_00004en_00.mrc \
   07feb02b_a_00006gr_00019sq_v01_00002sq_00_00005en_00.mrc \
   07feb02b_a_00006gr_00019sq_v01_00002sq_00_00006en_00.mrc \
@@ -16,7 +16,7 @@ rm -fr icetiltslocal negtiltslocal
   outdir=. diam=140 \
   runid=icetiltslocal prtlrunid=96 commit
 
-./tiltCorrelator.py \
+tiltCorrelator.py \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00004en_00.mrc  \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00005en_00.mrc  \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00006en_00.mrc  \

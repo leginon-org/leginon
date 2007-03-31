@@ -5,12 +5,12 @@ rm -f `find .. -name "*~"`
 rm -fr icetiltsdb negtiltsdb
 
 
-./tiltCorrelator.py \
+tiltCorrelator.py \
   dbimages=07feb02b,en \
   outdir=. diam=140 \
   runid=icetiltsdb prtlrunid=96 commit
 
-./tiltCorrelator2.py \
+tiltCorrelator2.py \
   dbimages=07jan05b,en  \
   outdir=. diam=140 \
   runid=negtiltsdb prtlrunId=59 commit

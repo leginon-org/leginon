@@ -106,4 +106,10 @@
 	<type>float</type>
 	<modify>False</modify>
  </binpixdiam>
+ <limit>
+	<name>image processing limit</name>
+	<default></default>
+	<description>Limit the number of images to process</description>
+	<type>integer</type>
+ </limit>
 </allappion>

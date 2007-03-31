@@ -5,7 +5,7 @@ rm -f `find .. -name "*~"`
 rm -fr selexlocal
 
 
-./selexon.py \
+selexon.py \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00002en_00.mrc \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00003en_00.mrc \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00004en_00.mrc \
