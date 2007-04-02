@@ -724,7 +724,7 @@ def findCrud(params,file):
 	reject=line[1]
 	print "crudfinder rejected",reject,"particles"
 	f.close()
-		return
+	return
 
 def getImgSize(fname):
 	# get image size (in pixels) of the given mrc file
@@ -1276,10 +1276,10 @@ def insertParticlePicks(params,img,expid,manual=False):
 		legpresetid =int(img['preset'].dbid)
 
 	imgname=img['filename']
-		imgq = particleData.image()
-		imgq['dbemdata|SessionData|session']=expid
-		imgq['dbemdata|AcquisitionImageData|image']=legimgid
-		imgq['dbemdata|PresetData|preset']=legpresetid
+	imgq = particleData.image()
+	imgq['dbemdata|SessionData|session']=expid
+	imgq['dbemdata|AcquisitionImageData|image']=legimgid
+	imgq['dbemdata|PresetData|preset']=legpresetid
 	imgids=partdb.query(imgq, results=1)
 
 	# if no image entry, make one
