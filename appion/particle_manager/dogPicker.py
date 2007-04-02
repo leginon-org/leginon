@@ -1,27 +1,11 @@
 #!/usr/bin/python -O
 
 import sys
-import data
-import particleData
-#import selexonFunctions  as sf1
-#import selexonFunctions2 as sf2
-#from selexonFunctions  import *
-#from selexonFunctions2 import *
 import apLoop
-import apParam
 import apDog
-import apDatabase
-
-data.holdImages(False)
-
+	
 if __name__ == '__main__':
-	if len(sys.argv) < 2:
-		apDog.dogHelp()
-		sys.exit(1)
-
-	(images,params,stats,donedict) = apLoop.startNewAppionFunction(sys.argv)
-
-	#params = apDog.modifyDefaultParams(params)
+	(images,stats,params,donedict) = apLoop.startNewAppionFunction(sys.argv)
 
 	notdone = True
 	while notdone:
@@ -44,14 +28,11 @@ if __name__ == '__main__':
 			stats['peaksum']   = stats['peaksum'] + numpeaks
 			stats['peaksumsq'] = stats['peaksumsq'] + numpeaks**2
 
-
-
 			if params['commit']:
-				insertDogPicksIntoDB(img,params)
+				apDog.insertDogPicksIntoDB(img, peaks, params)
 				
 			apLoop.printSummary(stats, params)
 
 			apLoop.writeDoneDict(donedict,params,imagename)
-		notdone = apLoop.waitForMoreImages(stats, params)
-		images = apDatabase.getAllImages(params,stats)
+		notdone,images = apLoop.waitForMoreImages(stats, params)
 	apLoop.completeLoop(stats)

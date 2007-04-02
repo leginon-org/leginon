@@ -6,8 +6,6 @@ import os, re, sys
 import data
 #import mem
 import apLoop
-import apParam
-import apDatabase
 import selexonFunctions  as sf1
 import selexonFunctions2 as sf2
 import apCrud
@@ -15,11 +13,11 @@ import apCrud
 data.holdImages(False)
 
 if __name__ == '__main__':
-	(images,params,stats,donedict) = apLoop.startNewAppionFunction(sys.argv)
+	(images,stats,params,donedict) = apLoop.startNewAppionFunction(sys.argv)
 
 	# if shiftonly is specified, make defocpair true
-	if params['shiftonly']:
-		print "write me a different program for shiftonly"
+	if 'shiftonly' in params and params['shiftonly'] == True:
+		print "PLEASE: Write me a different program for 'shiftonly'"
 		params['defocpair']=True
 
 	# if templateIds specified, create temporary template files in this directory & rescale
@@ -92,7 +90,6 @@ if __name__ == '__main__':
 			#img = images.pop(0)
 			imgname=img['filename']
 			#stats['imagesleft'] = len(images)
-			stats['imagesleft'] = stats['imagecount'] - stats['count']
 
 			#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
 			if( apLoop.startLoop(img, donedict, stats, params)==False ):
@@ -169,8 +166,9 @@ if __name__ == '__main__':
 			
 			if params['commit'] == True:
 				expid=int(img['session'].dbid)
-				sf1.insertParticlePicks(params,img,expid)
 				sf1.insertSelexonParams(params,expid)
+				sf1.insertParticlePicks(params,img,expid)
+
 
 			# write results to dictionary
 			apLoop.writeDoneDict(donedict,params,imgname)
@@ -178,8 +176,7 @@ if __name__ == '__main__':
 			apLoop.printSummary(stats, params)
 			#END LOOP OVER IMAGES
 
-		notdone = apLoop.waitForMoreImages(stats, params)
-		images = apDatabase.getAllImages(params,stats)
+		notdone,images = apLoop.waitForMoreImages(stats, params)
 		#END NOTDONE LOOP
 
 	# remove temporary templates if getting images from db

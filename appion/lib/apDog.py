@@ -30,11 +30,12 @@ def runDogDetector(imagename, params):
 
 	return peaks
 
-def insertDogPicksIntoDB(img,params):
+def insertDogPicksIntoDB(img, peaks, params):
 	partdb = dbdatakeeper.DBDataKeeper(db='dbparticledata')
 	sessionid = int(img['session'].dbid)
 	imageid = int(img.dbid)
 	presetid =int(img['preset'].dbid)
+	bin = params['bin']
 
 	print " ... inserting picks into database"
 	imgq = particleData.image()
@@ -43,7 +44,7 @@ def insertDogPicksIntoDB(img,params):
 	imgq['dbemdata|PresetData|preset'] = presetid
 	imgids = partdb.query(imgq,results=1)
 	
-	# failed, try again
+	# failed, create new entry
 	if not (imgids):
 		partdb.insert(imgq)
 		imgq = None
@@ -72,6 +73,6 @@ def insertDogPicksIntoDB(img,params):
 		particle['selectionId'] = None
 		particle['xcoord'] = col
 		particle['ycoord'] = row
-		particle['slicenum'] = sca
+		#particle['slicenum'] = sca
 		particle['correlation'] = sca
 		partdb.insert(particle)

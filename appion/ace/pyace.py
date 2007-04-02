@@ -2,36 +2,41 @@
 
 import os, sys
 import cPickle
-import pymat
 import time
-import aceFunctions as ace
+#import aceFunctions as af
 import apParam
 import apLoop
-import apDatabase
+import apDatabase,apDisplay
 import apCtf
 import data
-#from aceFunctions import *
+try:
+	import pymat
+except:
+	apDisplay.printError("MATLAB connection failed! try typing 'usematlab73'")
 
 data.holdImages(False)
-			
+		
 if __name__ == '__main__':
+	#check directory location
 	pyacepath = os.path.join(os.getcwd(),"pyace.py")
 	if(not os.path.exists(pyacepath)):
-		print "\nERROR: 'pyace.py' needs to be run in the same directory as"+\
-			"all of its matlab files\n"
-		sys.exit(1)
-
-	(images,params,stats,donedict) = apLoop.startNewAppionFunction(sys.argv)
-
-	ace.mkTempDir(params['tempdir'])
+		apDisplay.printWarning("'pyace.py' usually needs to be run in the same directory as "+\
+			"all of its matlab files")
 
 	#start connection to matlab	
 	sys.stderr.write("Connecting to matlab ... ")
-	matlab=pymat.open()
-	sys.stderr.write("done\n")
+	try:
+		matlab=pymat.open()
+	except:
+		apDisplay.printError("MATLAB failed to open.\n\tCheck your environmental variables:"+\
+			"\n\t\tPATH, MATLAB, MATLABPATH, and LD_LIBRARY_PATH")
+
+	(images,stats,params,donedict) = apLoop.startNewAppionFunction(sys.argv)
+
+	apCtf.mkTempDir(params['tempdir'])
 
 	#write ace config file to temp directory
-	ace.setAceConfig(matlab,params)
+	apCtf.setAceConfig(matlab,params)
 
 	notdone=True
 	while notdone:
@@ -43,19 +48,20 @@ if __name__ == '__main__':
 			if( apLoop.startLoop(img, donedict, stats, params)==False ):
 				continue
 			
+			# NEED TO MAKE THIS MORE GENERAL
 			#if reprocess option is specified, skip over images with confidence better than specified
 			if params['reprocess']:
-				ctfparams=ace.getCTFParamsForImage(img)
+				ctfparams=apCtf.getCTFParamsForImage(img)
 				reprocess=True
 				if ctfparams:
 					for ctfvalue in ctfparams:
 						if(ctfvalue['confidence'] > params['reprocess'] or \
 							ctfvalue['confidence_d'] > params['reprocess']):
 							reprocess=False
-					if reprocess:
-						print "Reprocessing", img['filename']
+					if reprocess != None:
+						print " ... reprocessing", apDisplay.shortenImageName(imagename)
 					else:
-						print "Skipping", img['filename']
+						print " ... skipping", apDisplay.shortenImageName(imagename)
 						#write results to donedict
 						apLoop.writeDoneDict(donedict,params,imagename)
 						continue
@@ -66,10 +72,10 @@ if __name__ == '__main__':
 			#do this for every image because pixel size can be different
 			scopeparams={}
 			scopeparams['kv']=img['scope']['high tension']/1000
-			scopeparams['apix']=ace.getPixelSize(img)
+			scopeparams['apix']=apDatabase.getPixelSize(img)
 			scopeparams['cs']=params['cs']
 			scopeparams['tempdir']=params['tempdir']
-			ace.setScopeParams(matlab,scopeparams)
+			apCtf.setScopeParams(matlab,scopeparams)
 			
 ### RUN ACE
 			apCtf.runAce(matlab,img,params)
@@ -78,8 +84,7 @@ if __name__ == '__main__':
 			apLoop.printSummary(stats, params)
 
 			apLoop.writeDoneDict(donedict,params,imagename)
-		notdone = apLoop.waitForMoreImages(stats, params)
-		images = apDatabase.getAllImages(params,stats)
+		notdone,images = apLoop.waitForMoreImages(stats, params)
 	pymat.close(matlab)
 	apLoop.completeLoop(stats)		
 			

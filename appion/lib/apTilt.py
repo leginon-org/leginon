@@ -4,7 +4,7 @@ import sys,os,re
 import time
 import random
 import math
-import apImage,apParticle,apInfo
+import apImage,apParticle,apDatabase,apDisplay
 import libCV
 import apLoop
 import numarray
@@ -18,8 +18,8 @@ def process(img1,img2,params):
 	name = re.sub("0[01]_000(?P<id>[0-9][0-9]en)_0[01]","\g<id>",name)
 	name = re.sub("_0+","_",name)
 	name = re.sub("_v0[0-9]","",name)
-	tilt1 = apInfo.getTiltAngle(img1,params)
-	tilt2 = apInfo.getTiltAngle(img2,params)
+	tilt1 = apDatabase.getTiltAngle(img1,params)
+	tilt2 = apDatabase.getTiltAngle(img2,params)
 	dtilt = abs(tilt1 - tilt2)
 	#print "TILT1=",tilt1
 	#print "TILT2=",tilt2
@@ -64,7 +64,7 @@ def process(img1,img2,params):
 
 	prob7 = 1.0-(numpart1**-1.0 + numpart2**-1.0)*5.0
 	if(prob7 < 0): prob7 = 0
-	print "*** number particles (7)=",_colorNum(prob7)
+	print "*** number particles (7)=",apDisplay.colorProb(prob7)
 
 	#blank1 = apImage.lowPassFilter(blank1,apix=1.0,bin=1,radius=10.0)
 
@@ -74,8 +74,8 @@ def process(img1,img2,params):
 	trans,shift,prob1,prob8 = _compareImages(blank1,blank2,dtilt,params['binpixdiam'])
 	print "TRANS=\n",numarray.around(trans,3)
 	print "SHIFT=",numarray.around(shift,3)
-	print "*** separa libcv prob(1)=",_colorNum(prob1)
-	print "*** good libcv r prob(8)=",_colorNum(prob8)
+	print "*** separa libcv prob(1)=",apDisplay.colorProb(prob1)
+	print "*** good libcv r prob(8)=",apDisplay.colorProb(prob8)
 	tilt,twist,scale,prob2 = _matrixToEulers(trans)
 	perdiff = abs(abs(tilt)-dtilt)/dtilt
 	prob5 = math.exp(-1.0*perdiff)
@@ -84,16 +84,16 @@ def process(img1,img2,params):
 	matrix  = _rotMatrixDeg(tilt,twist,scale)
 	print "tilt=",round(tilt,2),"("+\
 		str(round(dtilt,1))+") twist=",round(twist,6)," scale=",round(scale,6)
-	print "*** correct tilt prob(5)=",_colorNum(prob5)
-	print "*** corrct twist prob(6)=",_colorNum(prob6)
-	print "*** matrix fit prob (2) =",_colorNum(prob2)
+	print "*** correct tilt prob(5)=",apDisplay.colorProb(prob5)
+	print "*** corrct twist prob(6)=",apDisplay.colorProb(prob6)
+	print "*** matrix fit prob (2) =",apDisplay.colorProb(prob2)
 	prob3,prob4 = _makeOutput(blank1,blank2,trans,matrix,shift,name)
-	print "*** better align prob(3)=",_colorNum(prob3)
-	print "*** good overlap prob(4)=",_colorNum(prob4)
+	print "*** better align prob(3)=",apDisplay.colorProb(prob3)
+	print "*** good overlap prob(4)=",apDisplay.colorProb(prob4)
 
 	totprob = prob1*prob2*prob3*prob4*prob5*prob6*prob7*prob8
 	totprob = math.sqrt(totprob)
-	print "\nTOTAL PROB = ",_colorNum(totprob)
+	print "\nTOTAL PROB = ",apDisplay.colorProb(totprob)
 	#time.sleep(r)
 	outfile=params['runid']+".dat"
 	f = open(outfile,"a")
@@ -171,14 +171,14 @@ def _compareImages(img1,img2,tiltangle,binpixdiam):
 
 	tprob1 = math.exp(-1.0*nd_image.sum(abs(bigtrans1[:2,:2]-goodMat))**2)
 	print numarray.around(bigtrans1,5)
-	print "*** good libcvr prob(8a)=",_colorNum(tprob1)
+	print "*** good libcvr prob(8a)=",apDisplay.colorProb(tprob1)
 
 	bigtrans2 = libCV.MatchImages(2.0*img1b, 2.0*img2b, 2*minsize, maxsize,\
 		blur, sharp, whtonblk, blkonwht) #, tiltangle)
 
 	tprob2 = math.exp(-1.0*nd_image.sum(abs(bigtrans2[:2,:2]-goodMat))**2)
 	print numarray.around(bigtrans2,5)
-	print "*** good libcvr prob(8b)=",_colorNum(tprob2)
+	print "*** good libcvr prob(8b)=",apDisplay.colorProb(tprob2)
 
 	if tprob1 > tprob2 + 0.3 or tprob2 < 1e-4:
 		print "1>2:",tprob1," > ",tprob2
@@ -235,16 +235,3 @@ def _matrixToEulers(trans, tilt0=15.0, twist0=0.0, scale0=1.0):
 	err = _diffMatrix(x1,trans[0],trans[1])
 	prob = math.exp(-1.0*math.sqrt(abs(err)))**2
 	return tilt,twist,scale,prob
-	
-def _colorNum(num,green=0.8,red=0.5):
-	if(num == None):
-		return None
-	elif(num > green and num <= 1):
-		numstr = "%1.3f" % num
-		return apLoop.color(numstr,"green")
-	elif(num < red and num >= 0):
-		numstr = "%1.3f" % num
-		return apLoop.color(numstr,"red")
-	else:
-		numstr = "%1.3f" % num
-		return apLoop.color(numstr,"brown")

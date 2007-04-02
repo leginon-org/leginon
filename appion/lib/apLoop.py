@@ -8,7 +8,12 @@ import types
 #import selexonFunctions  as sf1
 #import selexonFunctions2 as sf2
 import apParam
-import apDatabase
+import apDatabase,apDisplay
+try:
+	import mem
+except:
+	apDisplay.printError("Please load 'usepythoncvs' for CVS leginon code, which includes 'mem.py'")
+
 
 def startNewAppionFunction(args):
 	"""
@@ -23,7 +28,7 @@ def startNewAppionFunction(args):
 ### check for conflicts in params
 	apParam.checkParamConflicts(params)
 ### get images from database
-	images   = apDatabase.getAllImages(params,stats)
+	images   = apDatabase.getAllImages(stats,params)
 ### create output directories
 	apParam.createOutputDirs(params)
 ### write log of command line options
@@ -32,11 +37,11 @@ def startNewAppionFunction(args):
 ### read/create dictionary to keep track of processed images
 	donedict = readDoneDict(params)
 
-	return (images,params,stats,donedict)
+	return (images,stats,params,donedict)
 
 def waitForMoreImages(stats,params):
 	if params["dbimages"]==False:
-		return False
+		return False,None
 	if(stats['skipcount'] > 0):
 		print ""
 		print " !!! Images already processed and were therefore skipped (total",stats['skipcount'],"skipped)."
@@ -55,9 +60,12 @@ def waitForMoreImages(stats,params):
 		#sf1.createImageLinks(images)
 	if(stats['waittime'] > 120):
 		print "Waited longer than two hours, so I am quitting"
-		return False
-	return True
+		return False,None
+	images = apDatabase.getAllImages(stats,params)
+	return True,images
 
+def getAllImages(stats,params):
+	return apDatabase.getAllImages(stats,params)
 
 def readDoneDict(params):
 	doneDictName = params['doneDictName']
@@ -66,12 +74,12 @@ def readDoneDict(params):
 		f = open(doneDictName,'r')
 		donedict=cPickle.load(f)
 		f.close()
-		print " ... reading old done dictionary:",doneDictName,
-		print " ... found",len(donedict),"entries"
+		print " ... reading old done dictionary:\n\t",doneDictName
+		print " ... found",len(donedict),"dictionary entries"
 	else:
 		#set up dictionary
 		donedict={}
-		print " ... creating new done dictionary:",doneDictName
+		print " ... creating new done dictionary:\n\t",doneDictName
 	return donedict
 
 
@@ -106,19 +114,64 @@ def _alreadyProcessed(donedict, imgname, stats, params):
 			return False
 	return False
 
+def checkMemLeak(stats):
+	### Memory leak code:
+	stats['memlist'].append(mem.active())
+	memfree = mem.free()
+	swapfree = mem.swapfree()
+	minavailmem = 64*1024; # 64 MB, size of one image
+	if(memfree < minavailmem):
+		apDisplay.printError("Memory is low ("+str(int(memfree/1024))+"MB): there is probably a memory leak")
+
+	if(stats['count'] > 5):
+		memlist = stats['memlist']
+		n       = len(memlist)
+		gain    = (memlist[n-1] - memlist[0])/1024.0
+		sumx    = n*(n-1.0)/2.0
+		sumxsq  = n*(n-1.0)*(2.0*n-1.0)/6.0
+		sumy = 0.0; sumxy = 0.0; sumysq = 0.0
+		for i in range(n):
+			value  = float(memlist[i])/1024.0
+			sumxy  += float(i)*value
+			sumy   += value
+			sumysq += value**2
+		###
+		stdx  = math.sqrt(n*sumxsq - sumx**2)
+		stdy  = math.sqrt(n*sumysq - sumy**2)
+		rho   = float(n*sumxy - sumx*sumy)/float(stdx*stdy)
+		slope = float(n*sumxy - sumx*sumy)/float(n*sumxsq - sumx*sumx)
+		memleak = rho*slope
+		###
+		if(slope > 0 and memleak > 32 and gain > 128): 
+			printError("Memory leak of "+str(round(memleak,2))+"MB")
+		elif(memleak > 16):
+			print apDisplay.color(" ... substantial memory leak "+str(round(memleak,2))+"MB","brown"),\
+				"(",n,round(slope,5),round(rho,5),round(gain,2),")"
+		
+
 def startLoop(img,donedict,stats,params):
 	"""
-	initilizes several parameter for a new image
+	initilizes several parameters for a new image
 	and checks if it is okay to start processing image
 	"""
+
+	#calc images left
+	stats['imagesleft'] = stats['imagecount'] - stats['count']
+
+	#only if an image was processed
 	if(stats['lastcount'] != stats['count']):
 		remainImg = stats['imagecount']-stats['count']-stats['skipcount']
-		print "\nStarting new image",stats['count'],"( skipped:",stats['skipcount'],\
-			", remain:",remainImg,")"
+		print "\nStarting new image",stats['count'],"( skip:",stats['skipcount'],\
+			", left:",remainImg,")",apDisplay.shortenImageName(img['filename'])
 		stats['lastcount'] = stats['count']
+		checkMemLeak(stats)
 
-	# get the image's pixel size:
+	# get the next image pixel size:
 	params['apix']=apDatabase.getPixelSize(img)
+
+	#import pprint
+	#pprint.pprint( img['scope'] )
+	#sys.exit(1)
 
 	# skip if image doesn't exist:
 	imagepath = params['imgdir']+img['filename']+'.mrc'
@@ -133,8 +186,10 @@ def startLoop(img,donedict,stats,params):
 
 	# match the original template pixel size to the img pixel size
 
-			
 	stats['beginLoopTime'] = time.time()
+
+	print " ... processing "+apDisplay.shortenImageName(imgname)
+
 	return True
 
 def printSummary(stats,params):
@@ -161,7 +216,7 @@ def printSummary(stats,params):
 				print "\t(- TOTAL:",peaksum,"peaks for",count,"images -)"
 			_printLine()
 
-		print "\tTIME:     \t",_timeString(tdiff)
+		print "\tTIME:     \t",apDisplay.timeString(tdiff)
 		stats['timesum'] = stats['timesum'] + tdiff
 		stats['timesumsq'] = stats['timesumsq'] + (tdiff**2)
 		timesum = stats['timesum']
@@ -170,13 +225,13 @@ def printSummary(stats,params):
 			timeavg = float(timesum)/float(count)
 			timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
 			timeremain = (float(timeavg)+float(timestdev))*stats['imagesleft']
-			print "\tAVG TIME: \t",_timeString(timeavg,timestdev)
-			#print "\t(- TOTAL:",_timeString(timesum)," -)"
+			print "\tAVG TIME: \t",apDisplay.timeString(timeavg,timestdev)
+			#print "\t(- TOTAL:",apDisplay.timeString(timesum)," -)"
 			if(stats['imagesleft'] > 0):
-				print "\t(- REMAINING TIME:",_timeString(timeremain),"for",stats['imagesleft'],"images -)"
+				print "\t(- REMAINING TIME:",apDisplay.timeString(timeremain),"for",stats['imagesleft'],"images -)"
 			else:
 				print "\t(- LAST IMAGE -)"
-		#print "\tMEM: ",(mem.used()-startmem)/1024,"M (",(mem.used()-startmem)/(1024*count),"M)"
+		#print "\tMEM: ",(mem.active()-startmem)/1024,"M (",(mem.active()-startmem)/(1024*count),"M)"
 		stats['count'] = stats['count'] + 1
 		_printLine()
 
@@ -185,7 +240,7 @@ def _printLine():
 
 def completeLoop(stats):
 	ttotal= time.time()-stats["startTime"]
-	print "COMPLETE LOOP:\t",_timeString(ttotal),"for",stats["count"]-1,"images"
+	print "COMPLETE LOOP:\t",apDisplay.timeString(ttotal),"for",stats["count"]-1,"images"
 	print "ended run at ",time.strftime("%a, %d %b %Y %H:%M:%S")
 	print "====================================================="
 	print "====================================================="
@@ -193,85 +248,8 @@ def completeLoop(stats):
 	print "====================================================="
 	print ""
 
-def _timeString(avg,stdev=0):
-	""" 
-	returns a string with the length of time scaled for clarity
-	"""
-	avg = float(avg)
-	stdev = float(stdev)
-	#less than 90 seconds
-	if avg < 90.0:
-		if stdev > 0.0:
-			timestr = str(round(avg,2))+" +/- "+str(round(stdev,2))+" sec"
-		else:
-			timestr = str(round(avg,2))+" sec"
-	#less than 90 minutes
-	elif avg < 5400.0:
-		if stdev > 0.0:
-			timestr = str(round(avg/60.0,2))+" +/- "+str(round(stdev/60.0,2))+" min"
-		else:
-			timestr = str(int(avg/60.0))+" min "+str(int((avg/60.0-int(avg/60.0))*60.0+0.5))+" sec"
-	#more than 1.5 hours
-	else:
-		if stdev > 0.0:
-			timestr = str(round(avg/3600.0,2))+" +/- "+str(round(stdev/3600.0,2))+" hrs"
-		else:
-			timestr = str(int(avg/3600.0))+" hrs "+str(int((avg/3600.0-int(avg/3600.0))*60.0+0.5))+" min"
-	return str(timestr)
 
 
 
 
-def color(text, fg, bg=None):
-	"""Return colored text.
-
-	Uses terminal color codes; set avk_util.enable_color to 0 to
-	return plain un-colored text. If fg is a tuple, it's assumed to
-	be (fg, bg). Both colors may be 'None'.
-
-	"""
-
-	colors = {
-		"black" :"30",
-		"red"   :"31",
-		"green" :"32",
-		"brown" :"33",
-		"blue"  :"34",
-		"purple":"35",
-		"cyan"  :"36",
-		"lgray" :"37",
-		"gray"  :"1;30",
-		"lred"  :"1;31",
-		"lgreen":"1;32",
-		"yellow":"1;33",
-		"lblue" :"1;34",
-		"pink"  :"1;35",
-		"lcyan" :"1;36",
-		"white" :"1;37"
-	}
-
-	if type(fg) in (types.TupleType, types.ListType):
-		fg, bg = fg
-	if not fg:
-		return text
-	opencol = "\033["
-	closecol = "m"
-	clear = opencol + "0" + closecol
-	xterm = 0
-	if os.environ["TERM"] == "xterm": 
-		xterm = 1
-	b = ''
-	# In xterm, brown comes out as yellow..
-	if xterm and fg == "yellow": 
-		fg = "brown"
-	f = opencol + colors[fg] + closecol
-	if bg:
-		if bg == "yellow" and xterm: 
-			bg = "brown"
-		try: 
-			b = colors[bg].replace('3', '4', 1)
-			b = opencol + b + closecol
-		except KeyError: 
-			pass
-	return "%s%s%s%s" % (b, f, text, clear)
 

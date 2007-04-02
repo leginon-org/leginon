@@ -1,6 +1,7 @@
 
 import math
 import os
+import re
 import types
 
 def printWarning(text):
@@ -11,6 +12,17 @@ def printMsg(text):
 
 def printError(text):
 	raise color("\n *** FATAL ERROR ***\n\t"+text+"\n","red")
+
+def shortenImageName(imgname):
+	#remove the version tags
+	shortimgname = re.sub("_v[0-9][0-9]","",imgname)
+	#remove extra leading zeros, but leave one
+	shortimgname = re.sub("_00+(?P<num>0[^0])","_\g<num>",shortimgname)
+	#remove double underscores
+	shortimgname = re.sub("__","_",shortimgname)
+	#remove orphaned underscores
+	shortimgname = re.sub("_+$","",shortimgname)
+	return shortimgname
 
 
 def timeString(avg,stdev=0):
@@ -57,7 +69,7 @@ def printDataBox(labellist,numlist,typelist):
 	for i in range(len(labellist)):
 		datastr += "| "
 		if typelist[i] == 1:
-			numstr = _colorProb(numlist[i])
+			numstr = colorProb(numlist[i])
 		elif numlist[i] < 0:
 			numstr = "%2.2f" % numlist[i]
 		else:
@@ -108,7 +120,7 @@ def leftPadString(s,n=10):
 		s = " "+s
 	return s
 
-def _colorProb(num,red=0.50,green=0.80):
+def colorProb(num,red=0.50,green=0.80):
 	if(num == None):
 		return None
 	elif(num > green and num <= 1):

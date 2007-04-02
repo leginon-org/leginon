@@ -10,7 +10,7 @@ import apCrud
 data.holdImages(False)
 
 if __name__ == '__main__':
-	(images,params,stats,donedict) = apLoop.startNewAppionFunction(sys.argv)
+	(images,stats,params,donedict) = apLoop.startNewAppionFunction(sys.argv)
 	
 	notdone=True
 	while notdone:
@@ -28,6 +28,6 @@ if __name__ == '__main__':
 			apLoop.writeDoneDict(donedict,params,imgname)
 			apLoop.printSummary(stats, params)
 			#END LOOP OVER IMAGES
-		notdone = apLoop.waitForMoreImages(stats, params)
+		notdone,images = apLoop.waitForMoreImages(stats, params)
 		#END NOTDONE LOOP	
 	apLoop.completeLoop(stats)

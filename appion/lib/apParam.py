@@ -2,9 +2,12 @@
 
 import os,sys,re
 import time
-import mem
 import data
 import dbdatakeeper
+try:
+	import mem
+except:
+	apDisplay.printError("Please load 'usepythoncvs' for CVS leginon code, which includes 'mem.py'")
 #import selexonFunctions  as sf1
 
 ### TEMPORARY, PLEASE MAKE IT SO NOT REQUIRED HERE
@@ -26,7 +29,6 @@ def createDefaultParams(function=None):
 		params['function']="generic"
 
 ### SELEXON PARAMETERS
-	params['mrcfileroot']=''
 	params['template']=''
 	params['templatelist']=[]
 	params['startang']=0
@@ -42,7 +44,6 @@ def createDefaultParams(function=None):
 	params['maxpeaks']=1500
 	params['defocpair']=False
 	params['abspath']=os.path.abspath('.')+'/'
-	params['shiftonly']=False
 	params['templateIds']=''
 
 ### CRUD PARAMETERS
@@ -97,7 +98,11 @@ def createDefaultParams(function=None):
 ### MAKE STACK PARAMETERS
 	params['selexonId']=None
 
+### DEFOCUS SHIFT
+	params['shiftonly']=False
+
 ### COMMON PARAMETERS
+	params['mrcfileroot']=None
 	params['sessionname']=None
 	params['session']=None
 	params['preset']=None
@@ -125,7 +130,7 @@ def createDefaultStats():
 	stats['count']  = 1
 	stats['skipcount'] = 1
 	stats['lastcount'] = 0
-	stats['startmem'] = mem.used()
+	stats['startmem'] = mem.active()
 	stats['peaksum'] = 0
 	stats['lastpeaks'] = None
 	stats['imagesleft'] = 1
@@ -136,6 +141,7 @@ def createDefaultStats():
 	stats['waittime'] = 0
 	stats['lastimageskipped'] = False
 	stats['notpair'] = 0
+	stats['memlist'] = [mem.active()]
 	return stats
 
 def writeFunctionLog(commandline, params=None, file=None):
@@ -233,7 +239,7 @@ def parseCommandLineInput(args,params):
 	mrcfileroot=[]
 	for arg in args[lastarg:]:
 		# gather all input files into mrcfileroot list
-		if '=' in  arg:
+		if '=' in arg:
 			break
 		elif (arg=='crudonly' or arg=='crud'):
 			break
@@ -357,7 +363,7 @@ def parseCommandLineInput(args,params):
 				sys.exit()
 
 		elif (elements[0]=='tempdir'):
-			params['tempdir']=elements[1]
+			params['tempdir']=os.path.abspath(elements[1]+"/")
 		elif (elements[0]=='medium'):
 			medium=elements[1]
 			if medium=='carbon' or medium=='ice':
@@ -463,5 +469,9 @@ def parseCommandLineInput(args,params):
 	if(params['apix'] != None and params['diam'] > 0):
 		params['pixdiam'] = params['diam']/params['apix']
 		params['binpixdiam'] = params['diam']/params['apix']/params['bin']
+
+	if('debug' in params and params['debug'] == True):
+		import pprint
+		pprint.pprint(params)
 
 	return params

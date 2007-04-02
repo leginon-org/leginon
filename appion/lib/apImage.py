@@ -152,7 +152,7 @@ def imageToArray(im, convertType='UInt8'):
 
 def arrayToJpeg(numer,filename):
 	if numer.max()-numer.min() >0.1:
-		numer = _normalizeImage(numer)
+		numer = _maxNormalizeImage(numer)
 	image = _arrayToImage(numer)
 	print " ... writing JPEG: ",filename
 	image.save(filename, "JPEG", quality=85)
@@ -160,39 +160,48 @@ def arrayToJpeg(numer,filename):
 
 def arrayToPng(numer,filename):
 	if numer.max()-numer.min() >0.1:
-		numer = _normalizeImage(numer)
+		numer = _maxNormalizeImage(numer)
 	image = _arrayToImage(numer)
 	print " ... writing Png: ",filename
 	image.save(filename, "PNG")
 	return
 
 def _maxNormalizeImage(a, stdevLimit=3.0):
-	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 55.0,maxlevel=200.0)
+	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 25.0,maxlevel=230.0,trim=0.1)
 def _blackNormalizeImage(a, stdevLimit=3.0):
 	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 0.0,maxlevel=200.0)	
 def _whiteNormalizeImage(a, stdevLimit=3.0):
-	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel=55.0,maxlevel=255.0)	
+	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel=55.0,maxlevel=255.0,trim=0.0)	
 
-def _normalizeImage(a,stdevLimit=3.0,minlevel=0.0,maxlevel=255.0):
+def _normalizeImage(img,stdevLimit=3.0,minlevel=0.0,maxlevel=255.0):
 	"""	
 	Normalizes numarray to fit into an image format
 	that is values between 0 (minlevel) and 255 (maxlevel).
 	"""
- 	imrange = maxlevel - minlevel
-	avg1=nd_image.mean(a)
-	stdev1=nd_image.standard_deviation(a)
+	if trim > 0.0:
+		xcut1 = img.shape[0]*trim
+		ycut2 = img.shape[1]*trim
+		xcut1 = img.shape[0]*(1.0-trim)
+		ycut2 = img.shape[1]*(1.0-trim)
+		mid = img[xcut1:xcut2,ycut1,ycut2]
+	else:
+		mid = img
 
-	min1=nd_image.minimum(a)
+ 	imrange = maxlevel - minlevel
+	avg1=nd_image.mean(mid)
+	stdev1=nd_image.standard_deviation(mid)
+
+	min1=nd_image.minimum(mid)
 	if(min1 < avg1-stdevLimit*stdev1):
 		min1 = avg1-stdevLimit*stdev1
 
-	max1=nd_image.maximum(a)
+	max1=nd_image.maximum(mid)
 	if(max1 > avg1+stdevLimit*stdev1):
 		max1 = avg1+stdevLimit*stdev1
 
-	a = (a - min1)/(max1 - min1)*imrange + minlevel
-	a = numarray.where(a > maxlevel,255.0,a)
-	a = numarray.where(a < minlevel,0.0,a)
+	img = (img - min1)/(max1 - min1)*imrange + minlevel
+	img = numarray.where(img > maxlevel,255.0,img)
+	img = numarray.where(img < minlevel,0.0,  img)
 
 	return a
 
