@@ -15,8 +15,11 @@ except:
 	apDisplay.printError("MATLAB connection failed! try typing 'usematlab73'")
 
 data.holdImages(False)
-		
+
+
+
 if __name__ == '__main__':
+
 	#check directory location
 	pyacepath = os.path.join(os.getcwd(),"pyace.py")
 	if(not os.path.exists(pyacepath)):
@@ -24,7 +27,7 @@ if __name__ == '__main__':
 			"all of its matlab files")
 
 	#start connection to matlab	
-	sys.stderr.write("Connecting to matlab ... ")
+	print "Connecting to matlab ... "
 	try:
 		matlab=pymat.open()
 	except:

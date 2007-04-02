@@ -114,6 +114,7 @@ def _alreadyProcessed(donedict, imgname, stats, params):
 			return False
 	return False
 
+
 def checkMemLeak(stats):
 	### Memory leak code:
 	stats['memlist'].append(mem.active())

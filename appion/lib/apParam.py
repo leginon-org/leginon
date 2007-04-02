@@ -4,6 +4,8 @@ import os,sys,re
 import time
 import data
 import dbdatakeeper
+import apVersion
+import apDisplay
 try:
 	import mem
 except:
@@ -12,8 +14,6 @@ except:
 
 ### TEMPORARY, PLEASE MAKE IT SO NOT REQUIRED HERE
 db=dbdatakeeper.DBDataKeeper()
-partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
-projdb=dbdatakeeper.DBDataKeeper(db='project')
 data.holdImages(False)
 
 def createDefaultParams(function=None):
@@ -21,12 +21,17 @@ def createDefaultParams(function=None):
 	params={}
 
 	if(function != None):
-		function = os.path.basename(function)
-		function = function.replace(".py","")
-		print "FUNCTION:",function
-		params['function']=function
+		version,datestamp = apVersion.getVersion(function)
+		functionpath = os.path.abspath(function)
+		functionname = os.path.basename(function)
+		functionname = functionname.replace(".py","")
+		print "FUNCTION:",apDisplay.color(functionpath,"cyan"),\
+			"v",version,"from",datestamp
+		params['function']=functionname
+		params['version'] =version
 	else:
 		params['function']="generic"
+		params['version'] =None
 
 ### SELEXON PARAMETERS
 	params['template']=''
