@@ -185,7 +185,7 @@ def parseUploadInput(args,params):
 		else:
 			print "\nERROR: undefined parameter \'"+arg+"\'\n"
 			sys.exit(1)
-        
+
 def parsePrtlUploadInput(args,params):
 	# check that there are enough input parameters
 	if (len(args)<2 or args[1]=='help') :
@@ -225,7 +225,7 @@ def parsePrtlUploadInput(args,params):
 		else:
 			print "\nERROR: undefined parameter \'"+arg+"\'\n"
 			sys.exit(1)
-        
+
 def parseSelexonInput(args,params):
 	# check that there are enough input parameters
 	if (len(args)<2 or args[1]=='help' or args[1]=='--help' \
@@ -361,7 +361,7 @@ def parseSelexonInput(args,params):
 		else:
 			print "\nERROR: undefined parameter \'"+arg+"\'\n"
 			sys.exit(1)
-        
+
 def runFindEM(params,file):
 	# run FindEM
 	tmplt=params["template"]
@@ -410,7 +410,7 @@ def runFindEM(params,file):
 
 		classavg+=1
 	return
-        
+
 def getProjectId(params):
 	projectdata=project.ProjectData()
 	projects=projectdata.getProjectExperiments()
@@ -468,7 +468,7 @@ def findPeaks(params,file):
 		i+=1
 	if (os.path.exists("pikfiles/"+file+".a.pik")):
 		os.remove("pikfiles/"+file+".a.pik")
-        
+
 	cmdlist=[]
 	cmdlist.append("#!/usr/bin/env viewit\n")
 	cmdlist.append("source $env(SELEXON_PATH)/graphics.tcl\n")
@@ -540,7 +540,7 @@ def createJPG(params,img):
 	# create "jpgs" directory if doesn't exist
 	if not (os.path.exists("jpgs")):
 		os.mkdir("jpgs")
-    
+
 	scale=str(params["bin"])
 	file=img
 	size=str(int(params["diam"]/30)) #size of cross to draw
@@ -572,14 +572,14 @@ def createJPG(params,img):
 	cmdlist.append("    -oformat JPEG -o \"jpgs/$filename.prtl.jpg\"\n}\n")
 	cmdlist.append("  set filename [array nextelement particles $searchid]\n}\n")
 	cmdlist.append("array donesearch particles $searchid\nexit\n")
-    
+
 	tclfile=open(tmpfile.name,'w')
 	tclfile.writelines(cmdlist)
 	tclfile.close()
 	f=os.popen('viewit '+tmpfile.name)
 	result=f.readlines()
 	f.close()
-    
+
 def findCrud(params,file):
 	# run the crud finder
 	tmpfile=tempfile.NamedTemporaryFile()
@@ -587,7 +587,7 @@ def findCrud(params,file):
 	# create "jpgs" directory if doesn't exist
 	if not (os.path.exists("jpgs")):
 		os.mkdir("jpgs")
-    
+
 	# remove crud pik file if it exists
 	if (os.path.exists("pikfiles/"+file+".a.pik.nocrud")):
 		os.remove("pikfiles/"+file+".a.pik.nocrud")
@@ -724,7 +724,7 @@ def findCrud(params,file):
 	reject=line[1]
 	print "crudfinder rejected",reject,"particles"
 	f.close()
-        return
+		return
 
 def getImgSize(fname):
 	# get image size (in pixels) of the given mrc file
@@ -745,7 +745,7 @@ def checkTemplates(params,upload=None):
 
 	name=params["template"]
 	stop=0 
-    
+
 	# count number of template images.
 	# if a template image exists with no number after it
 	# counter will assume that there is only one template
@@ -809,7 +809,7 @@ def binImg(img,binning):
 	#bin image using leginon imagefun library
 	#img must be a numarray image
 	return imagefun.bin(img,binning)
-   
+
 def filterImg(img,apix,res):
 	# low pass filter image to res resolution
 	if res==0:
@@ -822,7 +822,7 @@ def filterImg(img,apix,res):
 		kernel=convolver.gaussian_kernel(sigma)
 		#Mrc.numeric_to_mrc(kernel,'kernel.mrc')
 	return(c.convolve(image=img,kernel=kernel))
-    
+
 def pik2Box(params,file):
 	box=params["box"]
 
@@ -830,7 +830,7 @@ def pik2Box(params,file):
 		fname="pikfiles/"+file+".a.pik.nocrud"
 	else:
 		fname="pikfiles/"+file+".a.pik"
-        
+
 	# read through the pik file
 	pfile=open(fname,"r")
 	piklist=[]
@@ -1006,7 +1006,7 @@ def scaleandclip(fname,scalefactor,newfname):
 		edgeavg = (leftedgeavg + rightedgeavg + topedgeavg + bottomedgeavg)/4.0
 		#PAD IMAGE
 		scaledimg = convolve.iraf_frame.frame(scaledimg, padshape, mode="constant", cval=edgeavg)
-        	#WHY ARE WE USING EMAN???
+		#WHY ARE WE USING EMAN???
 		#os.system("proc2d "+newfname+" "+newfname+" clip="+str(padsize)+\
 			#","+str(padsize)+" edgenorm")
 	Mrc.numeric_to_mrc(scaledimg,newfname)
@@ -1270,22 +1270,22 @@ def insertParticlePicks(params,img,expid,manual=False):
 	selexonq=particleData.selectionParams(runId=runq)
 	selexonresult=partdb.query(selexonq, results=1)
 
-        legimgid=int(img.dbid)
-        legpresetid=None
+	legimgid=int(img.dbid)
+	legpresetid=None
 	if img['preset']:
 		legpresetid =int(img['preset'].dbid)
 
 	imgname=img['filename']
-        imgq = particleData.image()
-        imgq['dbemdata|SessionData|session']=expid
-        imgq['dbemdata|AcquisitionImageData|image']=legimgid
-        imgq['dbemdata|PresetData|preset']=legpresetid
+		imgq = particleData.image()
+		imgq['dbemdata|SessionData|session']=expid
+		imgq['dbemdata|AcquisitionImageData|image']=legimgid
+		imgq['dbemdata|PresetData|preset']=legpresetid
 	imgids=partdb.query(imgq, results=1)
 
-        # if no image entry, make one
-        if not (imgids):
+	# if no image entry, make one
+	if not (imgids):
 		print "Inserting image entry for",imgname
-                partdb.insert(imgq)
+		partdb.insert(imgq)
 		imgq=None
 		imgq = particleData.image()
 		imgq['dbemdata|SessionData|session']=expid
@@ -1297,7 +1297,7 @@ def insertParticlePicks(params,img,expid,manual=False):
 	print "Inserting",imgname,"particles into Database..."
 
 	
-      	# first open pik file, or create a temporary one if uploading a box file
+	# first open pik file, or create a temporary one if uploading a box file
 	if (manual==True and params['prtltype']=='box'):
 		fname="temporaryPikFileForUpload.pik"
 
@@ -1328,7 +1328,7 @@ def insertParticlePicks(params,img,expid,manual=False):
 			fname="pikfiles/"+imgname+".a.pik.nocrud"
 		else:
 			fname="pikfiles/"+imgname+".a.pik"
-        
+
 	# read through the pik file
 	pfile=open(fname,"r")
 	piklist=[]
