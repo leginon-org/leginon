@@ -227,7 +227,7 @@ def checkParamConflicts(params):
 def parseCommandLineInput(args,params):
 	# check that there are enough input parameters
 	fname = params['function']+".py"
-	print "find help at for",fname,"at:"
+	print "find additional help at for",fname,"at:"
 	print "  http://ami.scripps.edu/wiki/index.php/"+fname
 	if (len(args)<2 or args[1]=='help' or args[1]=='--help' \
 		or args[1]=='-h' or args[1]=='-help'):

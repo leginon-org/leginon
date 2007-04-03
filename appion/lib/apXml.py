@@ -1,4 +1,4 @@
-import cElementTree as ElementTree
+import cElementTree
 import sys
 import apDisplay
 
@@ -21,7 +21,7 @@ class XmlListConfig(list):
 class XmlDictConfig(dict):
     """
     Example usage:
-    >>> tree = ElementTree.parse('your_file.xml')
+    >>> tree = cElementTree.parse('your_file.xml')
     >>> root = tree.getroot()
     >>> xmldict = XmlDictConfig(root)
     And then use xmldict for what it is... a dict.
@@ -57,23 +57,68 @@ class XmlDictConfig(dict):
             else:
                 self.update({element.tag.lower(): element.text})
 
+def readTwoXmlFiles(file1,file2):
+	tree     = cElementTree.parse(file1)
+	treeroot = tree.getroot()
+	xmldict  = XmlDictConfig(treeroot)
+
+	tree     = cElementTree.parse(file2)
+	treeroot = tree.getroot()
+	xmldict2 = XmlDictConfig(treeroot)
+
+	xmldict = overWriteDict(xmldict,xmldict2)
+
+	for p in xmldict2:
+		if p in xmldict:
+			xmldict[p].update(xmldict2[p])
+		else:
+			xmldict[p] = xmldict2[p]
+
+	return updateXmlDict(xmldict)
+
+
+def overWriteDict(dict1,dict2):
+	for p in dict2:
+		if p in dict1:
+			print p,dict1[p],dict2[p]
+			dict1[p].update(dict2[p])
+		else:
+			dict1[p] = dict2[p]
+	return dict1
+
+def generateParams(xmldict):
+	params = {}
+	for p in xmldict:
+		if 'default' in xmldict[p]:
+			params[p] = xmldict[p]['default']
+		else:
+			params[p] = None
+	return params
+
+def checkParamDict(paramdict,xmldict):
+	for p in paramdict:
+		if 'type' in xmldict[p]:
+			cmddict[p] = _convertParamToType(paramdict[p],xmldict[p]['type'])
+		if 'limits' in xmldict[p]:
+			minval,maxval = re.split(",",xmldict[p]['limits'])
+			if paramdict[p] < minval:
+				apDisplay.printError("parameter"paramdict[p]+
+
+
+def _convertParamToType(val,vtype):
+		if vtype[:3].lower() == "int":
+			return int(val)
+		elif vtype.lower() == "float":
+			return round(float(val),8)
+		elif vtype[:4].lower() == "bool":
+			return str2bool(val)
+		else: # you are a string
+			return val
+
 def updateXmlDict(dict):
 	for param in dict.keys():
 		if(dict[param].has_key('default') and dict[param]['default'] != None):
-			#print param
-			vtype = dict[param]['type']
-			if vtype[:3].lower() == "int":
-				dict[param]['default'] = int(dict[param]['default'])
-				#print "  int=",int(dict[param]['default'])
-			elif vtype.lower() == "float":
-				dict[param]['default'] = float(dict[param]['default'])
-				#print "  float=",float(dict[param]['default'])
-			elif vtype[:4].lower() == "bool":
-				dict[param]['default'] = str2bool(dict[param]['default'])
-				#print "  bool=",str2bool(dict[param]['default'])
-			else: # you are a string
-				dict[param]['default']
-				#print "  str= '"+dict[param]['default']+"'"
+			dict[param]['default'] = _convertParamToType(dict[param]['default'],dict[param]['type'])
 	return dict
 
 def str2bool(string):

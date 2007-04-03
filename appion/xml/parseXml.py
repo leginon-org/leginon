@@ -1,25 +1,50 @@
 #!/usr/bin/python -O
 
+import sys,re
 import apXml
 import pprint
+import optparse
+import apDisplay
 
 if __name__ == "__main__":
-	function = "selexon"
-	tree      = apXml.ElementTree.parse('allappion.xml')
-	treeroot  = tree.getroot()
-	xmldict   = apXml.XmlDictConfig(treeroot)
 
-	tree     = apXml.ElementTree.parse(function+".xml")
-	treeroot = tree.getroot()
-	xmldict2 = apXml.XmlDictConfig(treeroot)
+	function  = "pyace"
 
-	for p in xmldict2:
-		if p in xmldict:
-			xmldict[p].update(xmldict2[p])
+	xmldict = apXml.readTwoXmlFiles("allappion.xml",function+".xml")
+
+	params = apXml.generateParams(xmldict)
+
+	cmddict = {}
+	for arg in sys.argv[1:]:
+		arg = arg.strip()
+		if arg[-4:] == ".mrc":
+			print "loaded MRC file:",apDisplay.shortenImageName(arg)
+		elif '=' in arg:
+			param,value = arg.split('=')
+			param = param.lower()
+			if param in xmldict:
+				print param,"=",value
+				cmddict[param] = value
+			else:
+				apDisplay.printError("'"+param+"' is not a valid commandline option")
 		else:
-			xmldict[p] = xmldict2[p]
+			if arg in ('help','-h','--help'):
+				apXml.printHelp(xmldict)
+			elif arg in xmldict:
+				print arg,"=",True
+				cmddict[arg] = True
+			else:
+				apDisplay.printError("'"+arg+"' is NOT a valid argument")
 
-	xmldict   = apXml.updateXmlDict(xmldict)
+	pprint.pprint(cmddict)
+	cmddict = apXml.checkCmdDict(cmddict,xmldict)
+	pprint.pprint(cmddict)
 
-	apXml.printHelp(xmldict)
+	pprint.pprint(params)
+	apXml.overWriteDict(params,cmddict)
+	pprint.pprint(params)
+
 	#pprint.pprint(xmldict)
+	#apXml.printHelp(xmldict)
+
+

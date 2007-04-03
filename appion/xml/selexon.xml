@@ -8,7 +8,7 @@
 	<default>0,360,15</default>
 	<description>Range of rotations for template 1</description>
 	<type>list,float</type>
-	<range>0,360</range>
+	<limits>0,360</limits>
  </range1>
  <range2>
 	<name>template rotation range 2</name>
@@ -16,7 +16,7 @@
 	<description>Range of rotations for template 2</description>
 	<type>list,float</type>
 	<example>0,360,15</example>
-	<range>0,360</range>
+	<limits>0,360</limits>
  </range2> 
  <range3>
 	<name>template rotation range 3</name>
@@ -24,21 +24,31 @@
 	<description>Range of rotations for template 3</description>
 	<type>list,float</type>
 	<example>0,360,15</example>
-	<range>0,360</range>
+	<limits>0,360</limits>
  </range3>
  <maxpeaks>
 	<name>maximum number of peaks</name>
 	<description>Maximum number of peaks (particles) per image</description>
 	<type>integer</type>
 	<default>1500</default>
-	<range>1,10000</range>
+	<limits>1,10000</limits>
  </maxpeaks>
+ <lowpass>
+	<name>lowpass filter</name>
+	<description>Low pass filter radius in Angstoms</description>
+	<type>float</type>
+	<default>0</default>
+	<limits>0,1000</limits>
+ </lowpass>
+ <lp>
+	<alias>lowpass</alias>
+ </lp>
  <overlapmult>
 	<name>overlap distance multiple</name>
 	<description>Distance multiple for two peaks (particles) to overlap</description>
 	<type>float</type>
 	<default>1.5</default>
-	<range>0,10</range>
+	<limits>0,10</limits>
  </overlapmult>
  <diam>
 	<required>True</required>
@@ -54,7 +64,7 @@
 	<description>Id numbers for templates used</description>
 	<type>list,integer</type>
 	<default></default>
-	<range>1,1000</range>
+	<limits>1,1000</limits>
 	<required>True</required>
  </templateids>
 </selexon>

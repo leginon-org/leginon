@@ -1284,7 +1284,7 @@ def insertParticlePicks(params,img,expid,manual=False):
 
 	# if no image entry, make one
 	if not (imgids):
-		print "Inserting image entry for",imgname
+		print " ... creating new entry for",apDisplay.shortenImageName(imgname)
 		partdb.insert(imgq)
 		imgq=None
 		imgq = particleData.image()
@@ -1294,7 +1294,7 @@ def insertParticlePicks(params,img,expid,manual=False):
 		imgids=partdb.query(imgq, results=1)
 
 	# WRITE PARTICLES TO DATABASE
-	print "Inserting",imgname,"particles into Database..."
+	print "Inserting particles into database for",apDisplay.shortenImageName(imgname),"..."
 
 	
 	# first open pik file, or create a temporary one if uploading a box file

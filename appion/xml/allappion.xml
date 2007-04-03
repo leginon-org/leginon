@@ -98,6 +98,7 @@
 	<description>Diameter of particle in pixels (unbinned)</description>
 	<type>float</type>
 	<modify>False</modify>
+	<paramcalc>diam/apix</paramcalc>
  </pixdiam>
  <binpixdiam>
 	<name>pixel diameter</name>
@@ -105,6 +106,7 @@
 	<description>Binned diameter of particle in pixels</description>
 	<type>float</type>
 	<modify>False</modify>
+	<paramcalc>diam/apix/bin</paramcalc>
  </binpixdiam>
  <limit>
 	<name>image processing limit</name>
@@ -112,4 +114,12 @@
 	<description>Limit the number of images to process</description>
 	<type>integer</type>
  </limit>
+ <abspath>
+	<name>image processing limit</name>
+	<default></default>
+	<description>Limit the number of images to process</description>
+	<type>integer</type>
+	<modify>False</modify>
+	<pyfunction>os.path.abspath('.')+'/'</pyfunction>
+ </abspath>
 </allappion>
