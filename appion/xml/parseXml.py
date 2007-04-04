@@ -36,13 +36,13 @@ if __name__ == "__main__":
 			else:
 				apDisplay.printError("'"+arg+"' is NOT a valid argument")
 
-	pprint.pprint(cmddict)
-	cmddict = apXml.checkCmdDict(cmddict,xmldict)
-	pprint.pprint(cmddict)
+	apXml.fancyPrintDict(cmddict)
+	cmddict = apXml.checkParamDict(cmddict,xmldict)
+	apXml.fancyPrintDict(cmddict)
 
-	pprint.pprint(params)
+	apXml.fancyPrintDict(params)
 	apXml.overWriteDict(params,cmddict)
-	pprint.pprint(params)
+	apXml.fancyPrintDict(params)
 
 	#pprint.pprint(xmldict)
 	#apXml.printHelp(xmldict)

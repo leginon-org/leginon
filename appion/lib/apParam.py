@@ -177,9 +177,9 @@ def createOutputDirs(params):
 		params['outdir']=outdir
 
 	if os.path.exists(params['rundir']):
-		print " !!! WARNING: run directory for \'"+str(params['runid'])+"\' already exists."
+		apDisplay.printWarning("run directory for \'"+str(params['runid'])+"\' already exists.")
 		if params['continue']==False:
-			print " !!! WARNING: continue option is OFF. you WILL overwrite previous run."
+			apDisplay.printWarning("continue option is OFF. you WILL overwrite previous run.")
 			time.sleep(10)
 		#else:
 			#if(params['function'] == "pyace"):

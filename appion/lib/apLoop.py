@@ -230,8 +230,6 @@ def printSummary(stats,params):
 			#print "\t(- TOTAL:",apDisplay.timeString(timesum)," -)"
 			if(stats['imagesleft'] > 0):
 				print "\t(- REMAINING TIME:",apDisplay.timeString(timeremain),"for",stats['imagesleft'],"images -)"
-			else:
-				print "\t(- LAST IMAGE -)"
 		#print "\tMEM: ",(mem.active()-startmem)/1024,"M (",(mem.active()-startmem)/(1024*count),"M)"
 		stats['count'] = stats['count'] + 1
 		_printLine()
@@ -241,8 +239,9 @@ def _printLine():
 
 def completeLoop(stats):
 	ttotal= time.time()-stats["startTime"]
-	print "COMPLETE LOOP:\t",apDisplay.timeString(ttotal),"for",stats["count"]-1,"images"
-	print "ended run at ",time.strftime("%a, %d %b %Y %H:%M:%S")
+	print apDisplay.color("COMPLETE LOOP:\t"+apDisplay.timeString(ttotal)+\
+		" for "+str(stats["count"]-1)+" images","green")
+	print "ended ",time.strftime("%a, %d %b %Y %H:%M:%S")
 	print "====================================================="
 	print "====================================================="
 	print "====================================================="

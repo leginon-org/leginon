@@ -84,6 +84,7 @@ def getTiltAngle(img,params):
 def getPixelSize(img):
 	# use image data object to get pixel size
 	# multiplies by binning and also by 1e10 to return image pixel size in angstroms
+	# shouldn't have to lookup db already should exist in imgdict
 	pixelsizeq=data.PixelSizeCalibrationData()
 	pixelsizeq['magnification']=img['scope']['magnification']
 	pixelsizeq['tem']=img['scope']['tem']
@@ -94,3 +95,17 @@ def getPixelSize(img):
 	pixelsize=pixelsizedata[0]['pixelsize'] * binning
 	
 	return(pixelsize*1e10)
+
+def getImgSize(img):
+	if 'image' in img:
+		return (img['image'].shape)[1]
+	fname = img['filename']
+	# get image size (in pixels) of the given mrc file
+	imageq=data.AcquisitionImageData(filename=fname)
+	imagedata=db.query(imageq, results=1, readimages=False)
+	if imagedata:
+		size=int(imagedata[0]['camera']['dimension']['y'])
+		return(size)
+	else:
+		apDisplay.printError("Image "+fname+" not found in database\n")
+	return(size)

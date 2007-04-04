@@ -4,6 +4,7 @@ import particleData
 import dbdatakeeper
 import data
 
+
 def getParticles(img,params):
 	imq=particleData.image()
 	imq['dbemdata|AcquisitionImageData|image']=img.dbid
@@ -15,6 +16,7 @@ def getParticles(img,params):
 	particles=partdb.query(prtlq)
 	shift={'shiftx':0, 'shifty':0}
 	return particles,shift
+
 
 def insertParticlePicks(params,img,expid,manual=False):
 	runq=particleData.run()

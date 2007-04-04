@@ -9,3 +9,5 @@ setenv FINDEM_EXE ${APPIONDIR}/particle_manager/findem.exe
 setenv MATLABPATH ${MATLABPATH}:${APPIONDIR}/ace
 
 #setenv FINDEM_EXE /ami/sw/packages/FindEM/FindEM_SB
+#setenv SELEXON_PATH /ami/sw/packages/selexon
+

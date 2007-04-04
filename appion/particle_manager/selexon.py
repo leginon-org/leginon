@@ -2,13 +2,20 @@
 # Python wrapper for the selexon program
 # Will by default create a "jpgs" directory and save jpg images of selections & crudfinder results
 
-import os, re, sys
+#pythonlib
+import os, sys
+#leginon
 import data
-#import mem
-import apLoop
+#appion-old
 import selexonFunctions  as sf1
 import selexonFunctions2 as sf2
+#appion
+import apLoop
 import apCrud
+import apDatabase
+import apDefocalPairs
+import apFindEM
+import apViewIt
 
 data.holdImages(False)
 
@@ -24,7 +31,7 @@ if __name__ == '__main__':
 	print " ... getting templates"
 	if params['templateIds']:
 		# get the first image's pixel size:
-		params['apix'] = sf1.getPixelSize(images[0])
+		params['apix'] = apDatabase.getPixelSize(images[0])
 		params['template']='originalTemporaryTemplate'
 		# move to run directory
 		os.chdir(params['rundir'])
@@ -45,34 +52,34 @@ if __name__ == '__main__':
 			" file(s) with root \""+params["template"]+"\""
 
 	if (params["crud"]==True or params['method'] == "classic"):
-		sf1.createImageLinks(images)
+		apViewIt.createImageLinks(images)
 	
 	# check to see if user only wants to run the crud finder
 	if (params["crudonly"]==True):
-		if (params["crud"]==True and params["cdiam"]==0):
-			print "\nERROR: both \"crud\" and \"crudonly\" are set, choose one or the other.\n"
-			sys.exit(1)
-		if (params["diam"]==0): # diameter must be set
-			print "\nERROR: please input the diameter of your particle\n\n"
-			sys.exit(1)
+		apDisplay.printError("'crudonly' no longer supported please run 'crudFinder.py'")
+		#if (params["crud"]==True and params["cdiam"]==0):
+		#	apDisplay.printError("both \"crud\" and \"crudonly\" are set, choose one or the other.\n")
+		#if (params["diam"]==0): # diameter must be set
+		#	apDisplay.printError("please input the diameter of your particle")
 		# create directory to contain the 'crud' files
-		if not (os.path.exists("crudfiles")):
-			os.mkdir("crudfiles")
-		for img in images:
-			imgname=img['filename']
-			#findCrud(params,imgname)
-			apCrud.findCrud(params,imgname)
-		sys.exit(1)
+		#if not (os.path.exists("crudfiles")):
+		#	os.mkdir("crudfiles")
+		#for img in images:
+		#	imgname=img['filename']
+		#	#findCrud(params,imgname)
+		#	apCrud.findCrud(params,imgname)
+		#sys.exit(1)
         
 	# check to see if user only wants to find shifts
 	if params['shiftonly']:
+		apDisplay.printWarning("please make a new shiftonly script")
 		for img in images:
-			sibling=sf1.getDefocusPair(img)
+			sibling=apDefocalPairs.getDefocusPair(img)
 			if sibling:
-				peak=sf1.getShift(img,sibling)
-				sf1.recordShift(params,img,sibling,peak)
+				peak=apDefocalPairs.getShift(img,sibling)
+				apDefocalPairs.recordShift(params,img,sibling,peak)
 				if params['commit']:
-					sf1.insertShift(img,sibling,peak)
+					apDefocalPairs.insertShift(img,sibling,peak)
 		sys.exit(1)	
 	
 	# create directory to contain the 'pik' files
@@ -108,13 +115,13 @@ if __name__ == '__main__':
 #				sf2.tmpRemoveCrud(params,imgname)
 				sf1.dwnsizeImg(params,imgname)
 				if(os.getloadavg() > 3.1):
-					sf1.runFindEM(params,imgname)
+					apFindEM.runFindEM(params,imgname)
 				else:
-					sf2.threadFindEM(params,imgname)
+					apFindEM.threadFindEM(params,imgname)
 
 			#FIND PEAKS
 			if params['method'] == "classic":
-				sf1.findPeaks(params,imgname)
+				apViewIt.findPeaks(params,img)
 				numpeaks = 0
 			elif params['method'] == "experimental":
 				print "skipping findpeaks..."
@@ -147,7 +154,7 @@ if __name__ == '__main__':
 			#CREATE JPG of selected particles if not created by crudfinder
 			if (params["crud"]==False):
 				if params['method'] == "classic":
-					sf1.createJPG(params,imgname)
+					apViewIt.createJPG(params,img)
 				else:
 					sf2.createJPG2(params,imgname)
 
@@ -157,15 +164,17 @@ if __name__ == '__main__':
 		
 			# find defocus pair if defocpair is specified
 			if params['defocpair'] == True:
-				sibling=sf1.getDefocusPair(img)
+				apDisplay.printWarning("please make a new defocpair script")
+				sibling=apDefocalPairs.getDefocusPair(img)
 				if sibling:
-					peak=sf1.getShift(img,sibling)
-					sf1.recordShift(params,img,sibling,peak)
+					peak=apDefocalPairs.getShift(img,sibling)
+					apDefocalPairs.recordShift(params,img,sibling,peak)
 					if params['commit']:
-						sf1.insertShift(img,sibling,peak)
+						apDefocalPairs.insertShift(img,sibling,peak)
 			
 			if params['commit'] == True:
 				expid=int(img['session'].dbid)
+				#SELEXON MUST COME FIRST
 				sf1.insertSelexonParams(params,expid)
 				sf1.insertParticlePicks(params,img,expid)
 

@@ -31,8 +31,12 @@ if __name__ == '__main__':
 	try:
 		matlab=pymat.open()
 	except:
-		apDisplay.printError("MATLAB failed to open.\n\tCheck your environmental variables:"+\
-			"\n\t\tPATH, MATLAB, MATLABPATH, and LD_LIBRARY_PATH")
+		apDisplay.printError("MATLAB failed to open.\n\tCheck your environmental variables:\n"+\
+			"\t\tPATH /ami/sw/packages/matlab73/bin:/home/vossman/pyappion/ace:/usr/bin:/bin \n"+\
+			"\t\tMATLAB /ami/sw/packages/matlab73 \n"+\
+			"\t\tMATLABPATH /home/vossman/pyappion/ace \n"+\
+			"\t\tLD_LIBRARY_PATH /ami/sw/packages/matlab73/bin/glnx86 \n"+\
+			"\tusually the PATH is the problem move matlab73/bin to the end")
 
 	(images,stats,params,donedict) = apLoop.startNewAppionFunction(sys.argv)
 

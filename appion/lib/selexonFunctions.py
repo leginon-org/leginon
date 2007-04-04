@@ -1,9 +1,17 @@
 #!/usr/bin/python -O
 # Python functions for selexon.py
 
+#python lib
 import os, re, sys
-import tempfile
 import cPickle
+import math
+import string
+import time
+#numarray
+import numarray
+import numarray.convolve as convolve
+import numarray.nd_image as nd_image
+#leginon
 import data
 import dbdatakeeper
 import convolver
@@ -11,15 +19,10 @@ import Mrc
 import imagefun
 import peakfinder
 import correlator
-import math
-import particleData
 import project
-import string
-import time
-import numarray
-import numarray.convolve as convolve
-import numarray.nd_image as nd_image
-import apLoop
+#appion
+import particleData
+import apDisplay
 
 db=dbdatakeeper.DBDataKeeper()
 partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
@@ -183,8 +186,7 @@ def parseUploadInput(args,params):
 		elif (elements[0]=='description'):
 			params['description']=elements[1]
 		else:
-			print "\nERROR: undefined parameter \'"+arg+"\'\n"
-			sys.exit(1)
+			apDisplay.printError("undefined parameter \'"+arg+"\'\n")
 
 def parsePrtlUploadInput(args,params):
 	# check that there are enough input parameters
@@ -208,8 +210,7 @@ def parsePrtlUploadInput(args,params):
 				params['extension']=string.join(splitfname[1:],'.')
 				params['prtltype']=splitfname[-1]
 			else:
-				print ("\nERROR: file \'%s\' does not exist \n" % boxfile)
-				sys.exit()
+				apDisplay.printError("file \'"+boxfile+"\' does not exist \n")
 		lastarg+=1
 	params["imgs"]=mrcfileroot
 
@@ -223,8 +224,7 @@ def parsePrtlUploadInput(args,params):
 		elif (elements[0]=='diam'):
 			params['diam']=int(elements[1])
 		else:
-			print "\nERROR: undefined parameter \'"+arg+"\'\n"
-			sys.exit(1)
+			apDisplay.printError("undefined parameter \'"+arg+"\'\n")
 
 def parseSelexonInput(args,params):
 	# check that there are enough input parameters
@@ -268,8 +268,7 @@ def parseSelexonInput(args,params):
 				params['endang']=int(angs[1])
 				params['incrang']=int(angs[2])
 			else:
-				print "\nERROR: \'range\' must include 3 angle parameters: start, stop, & increment\n"
-				sys.exit(1)
+				apDisplay.printError("\'range\' must include 3 angle parameters: start, stop, & increment\n")
 		elif (re.match('range\d+',elements[0])):
 			num=elements[0][-1]
 			angs=elements[1].split(',')
@@ -279,8 +278,7 @@ def parseSelexonInput(args,params):
 				params['incrang'+num]=int(angs[2])
 				params['multiple_range']=True
 			else:
- 				print "\nERROR: \'range\' must include 3 angle parameters: start, stop, & increment\n"
-				sys.exit(1)
+ 				apDisplay.printError("\'range\' must include 3 angle parameters: start, stop, & increment\n")
 		elif (elements[0]=='thresh'):
 			params["thresh"]=float(elements[1])
 		elif (elements[0]=='autopik'):
@@ -323,9 +321,8 @@ def parseSelexonInput(args,params):
 				params["dbimages"]=True
 				params["continue"]=True # continue should be on for dbimages option
 			else:
-				print "\nERROR: dbimages must include both \'session\' and \'preset\'"+\
-					"parameters (ex: \'07feb13a,en\')\n"
-				sys.exit(1)
+				apDisplay.printError("dbimages must include both \'session\' and \'preset\'"+\
+					"parameters (ex: \'07feb13a,en\')\n")
 		elif (elements[0]=='alldbimages'):
 			params['session']=elements[1]
 			params['alldbimages']=True
@@ -359,57 +356,10 @@ def parseSelexonInput(args,params):
 		elif (arg=='test'):
 			params["test"]=True
 		else:
-			print "\nERROR: undefined parameter \'"+arg+"\'\n"
-			sys.exit(1)
+			apDisplay.printError("undefined parameter \'"+arg+"\'\n")
 
 def runFindEM(params,file):
-	# run FindEM
-	tmplt=params["template"]
-	numcls=len(params['templatelist'])
-	pixdwn=str(params["apix"]*params["bin"])
-	d=str(params["diam"])
-	if (params["multiple_range"]==False):
-		strt=str(params["startang"])
-		end=str(params["endang"])
-		incr=str(params["incrang"])
-	bw=str(int((1.5 * params["diam"]/params["apix"]/params["bin"])/2))
-
-	classavg=1
-	while classavg<=len(params['templatelist']):
-		# first remove the existing cccmaxmap** file
-		cccfile="cccmaxmap%i00.mrc" %classavg
-		if (os.path.exists(cccfile)):
-			os.remove(cccfile)
-
-		if (params["multiple_range"]==True):
-			strt=str(params["startang"+str(classavg)])
-			end=str(params["endang"+str(classavg)])
-			incr=str(params["incrang"+str(classavg)])
-		fin='';
-		#fin=os.popen('${FINDEM_PATH}/FindEM_SB','w')
-		fin=os.popen('${FINDEM_EXE}','w')
-		fin.write(file+".dwn.mrc\n")
-		if (len(params['templatelist'])==1 and not params['templateIds']):
-			fin.write(tmplt+".dwn.mrc\n")
-		else:
-			fin.write(tmplt+str(classavg)+".dwn.mrc\n")
-		fin.write("-200.0\n")
-		fin.write(pixdwn+"\n")
-		fin.write(d+"\n")
-		fin.write(str(classavg)+"00\n")
-		fin.write(strt+','+end+','+incr+"\n")
-		fin.write(bw+"\n")
-		print "running findem.exe"
-		fin.flush
-		fin.close()
-
-		if (not os.path.exists(cccfile)):
-			print "\nERROR: findem.exe did not run or crashed.\b"
-			print apLoop.color("Did you source useappion.sh?\n","red")
-			sys.exit(1)
-
-		classavg+=1
-	return
+	apDisplay.printError("this FindEM function no longer exists here")
 
 def getProjectId(params):
 	projectdata=project.ProjectData()
@@ -418,8 +368,7 @@ def getProjectId(params):
 		if i['name']==params['session']:
 			params['projectId']=i['projectId']
 	if not params['projectId']:
-		print "\nERROR: no project associated with this session\n"
-		sys.exit()
+		apDisplay.printError("no project associated with this session\n")
 	return
 	
 def getOutDirs(params):
@@ -447,284 +396,17 @@ def getOutDirs(params):
 
 	return(params)
 
+def createImageLinks(imagelist):
+	apDisplay.printError("this ViewIt function no longer exists here")
+
 def findPeaks(params,file):
-	# create tcl script to process the cccmaxmap***.mrc images & find peaks
-	tmpfile=tempfile.NamedTemporaryFile()
-	imgsize=int(getImgSize(file))
-	wsize=str(int(1.5 * params["diam"]/params["apix"]/params["bin"]))
-	clsnum=str(len(params['templatelist']))
-	cutoff=str(params["thresh"])
-	scale=str(params["bin"])
-	sz=str(imgsize/params["bin"])
-	min_thresh="0.2"
-
-	# remove existing *.pik files
-	i=1
-	while i<=int(clsnum):
-		fname="pikfiles/%s.%i.pik" % (file,i)
-		if (os.path.exists(fname)):
-			os.remove(fname)
-			print "removed existing file:",fname
-		i+=1
-	if (os.path.exists("pikfiles/"+file+".a.pik")):
-		os.remove("pikfiles/"+file+".a.pik")
-
-	cmdlist=[]
-	cmdlist.append("#!/usr/bin/env viewit\n")
-	cmdlist.append("source $env(SELEXON_PATH)/graphics.tcl\n")
-	cmdlist.append("source $env(SELEXON_PATH)/io_subs.tcl\n")
-	cmdlist.append("-iformat MRC\nif { "+clsnum+" > 1} {\n")
-	cmdlist.append("  for {set x 1 } { $x <= "+clsnum+" } {incr x } {\n")
-	cmdlist.append("    -i cccmaxmap${x}00.mrc -collapse\n")
-	# run auto threshold if no threshold is set
-	if (params["thresh"]==0):
-		autop=str(params["autopik"])
-		# set number of bins for histogram
-		nbins=str(int(params["autopik"]/20))
-		cmdlist.append("    set peaks [-zhimg_peak BYNUMBER "+autop+" "+wsize+" ]\n")
-		cmdlist.append("    set peak_hist [-zhptls_hist "+nbins+"]\n")
-		cmdlist.append("    set threshold [-zhhist_thresh  BYZHU 0.02]\n")
-		cmdlist.append("    if { $threshold < "+min_thresh+" } {\n")
-		cmdlist.append("      set threshold "+min_thresh+"}\n")
-		cmdlist.append("    set final_peaks [list]\n")
-		cmdlist.append("    for {set y 0} {$y < [llength $peaks] } {incr y } {\n")
-		cmdlist.append("      set apick [lindex $peaks $y]\n")
-		cmdlist.append("      if { [lindex $apick 3] > $threshold } {")
-		cmdlist.append("        lappend final_peaks $apick} }\n")
-		cmdlist.append("    write_picks "+file+".mrc $final_peaks "+scale+" pikfiles/"+file+".$x.pik\n}\n}\n")
-	else:
-		cmdlist.append("    set peaks [-zhimg_peak BYVALUE "+cutoff+" "+wsize+" ]\n")
-		cmdlist.append("    write_picks "+file+".mrc $peaks "+scale+" pikfiles/"+file+".$x.pik\n}\n}\n")
-
-	cmdlist.append("-dim 2 "+sz+" "+sz+" -unif -1.0\n")
-	cmdlist.append("-store cccmaxmap_max\n")
-	cmdlist.append("for {set x 1 } { $x <= "+clsnum+" } {incr x } {\n")
-	cmdlist.append("  -i cccmaxmap${x}00.mrc -collapse\n")
-	cmdlist.append("  -store cccmaxmap\n")
-	cmdlist.append("  -load ss1 cccmaxmap_max\n")
-	cmdlist.append("  -load ss2 cccmaxmap\n")
-	cmdlist.append("  -zhreg_max\n")
-	cmdlist.append("  -store cccmaxmap_max ss1\n}\n")
-	cmdlist.append("-load ss1 cccmaxmap_max\n")
-	if (params["thresh"]==0):
-		cmdlist.append("set peaks [-zhimg_peak BYNUMBER "+autop+" "+wsize+"]\n")
-		cmdlist.append("set peak_hist [-zhptls_hist "+nbins+"]\n")
-		cmdlist.append("set threshold [-zhhist_thresh  BYZHU 0.02]\n")
-		cmdlist.append("if { $threshold < "+min_thresh+"} {\n")
-		cmdlist.append("  set threshold "+min_thresh+"}\n")
-		cmdlist.append("for {set x 0} {$x < [llength $peaks] } {incr x } {\n")
-		cmdlist.append("  set apick [lindex $peaks $x]\n")
-		cmdlist.append("  if { [lindex $apick 3] > $threshold } {")
-		cmdlist.append("    lappend final_peaks $apick} }\n")
-		cmdlist.append("write_picks "+file+".mrc $final_peaks "+scale+" pikfiles/"+file+".a.pik\n")
-	else:
-		cmdlist.append("set peaks [-zhimg_peak BYVALUE "+cutoff+" "+wsize+"]\n")
-		cmdlist.append("puts \"$peaks\"\n")
-		cmdlist.append("write_picks "+file+".mrc $peaks "+scale+" pikfiles/"+file+".a.pik\nexit\n")
-
-	tclfile=open(tmpfile.name,'w')
-	tclfile.writelines(cmdlist)
-	tclfile.close()
-	f=os.popen('viewit '+tmpfile.name)
-	result=f.readlines()
-	if (params["thresh"]!=0):
-		line=result[-2].split()
-		peaks=line[0]
-		print peaks,"peaks were extracted"
-	f.close()
+	apDisplay.printError("this ViewIt function no longer exists here")
 
 def createJPG(params,img):
-	# create a jpg image to visualize the final list of targetted particles
-	tmpfile=tempfile.NamedTemporaryFile()
-
-	# create "jpgs" directory if doesn't exist
-	if not (os.path.exists("jpgs")):
-		os.mkdir("jpgs")
-
-	scale=str(params["bin"])
-	file=img
-	size=str(int(params["diam"]/30)) #size of cross to draw
-
-	cmdlist=[]
-	cmdlist.append("#!/usr/bin/env viewit\n")
-	cmdlist.append("source $env(SELEXON_PATH)/graphics.tcl\n")
-	cmdlist.append("source $env(SELEXON_PATH)/io_subs.tcl\n")
-	cmdlist.append("set pick [read_list pikfiles/"+file+".a.pik]\n")
-	cmdlist.append("set num_picks [llength $pick]\n")
-	cmdlist.append("for {set x 0} {$x < $num_picks} {incr x} {\n")
-	cmdlist.append("  set apick [lindex $pick $x]\n")
-	cmdlist.append("  set filename [lindex $apick 0]\n")
-	cmdlist.append("  set xcord    [expr round ([lindex $apick 1]/"+scale+")]\n")
-	cmdlist.append("  set ycord    [expr round ([lindex $apick 2]/"+scale+")]\n")
-	cmdlist.append("  lappend particles($filename) [list $filename $xcord $ycord]\n}\n")
-	cmdlist.append("set thickness 2\n")
-	cmdlist.append("set pixel_value 255\n")
-	cmdlist.append("set searchid [array startsearch particles ]\n")
-	cmdlist.append("set filename [array nextelement particles $searchid]\n")
-	cmdlist.append('while { $filename != ""} {\n');
-	cmdlist.append("  set particles_list $particles($filename)\n")
-	cmdlist.append("  if { [llength pikfiles/"+file+".a.pik] > 0 } {\n")
-	cmdlist.append("    -iformat MRC -i [file join . $filename] -collapse\n")
-	cmdlist.append("    set x "+scale+"\n")
-	cmdlist.append("    while { $x > 1} {\n-scale 0.5 0.5\nset x [expr $x / 2]\n}\n")
-	cmdlist.append("    -linscl 0 255\n")
-	cmdlist.append("    draw_points $particles_list 0 "+size+" $thickness $pixel_value\n")
-	cmdlist.append("    -oformat JPEG -o \"jpgs/$filename.prtl.jpg\"\n}\n")
-	cmdlist.append("  set filename [array nextelement particles $searchid]\n}\n")
-	cmdlist.append("array donesearch particles $searchid\nexit\n")
-
-	tclfile=open(tmpfile.name,'w')
-	tclfile.writelines(cmdlist)
-	tclfile.close()
-	f=os.popen('viewit '+tmpfile.name)
-	result=f.readlines()
-	f.close()
+	apDisplay.printError("this ViewIt function no longer exists here")
 
 def findCrud(params,file):
-	# run the crud finder
-	tmpfile=tempfile.NamedTemporaryFile()
-
-	# create "jpgs" directory if doesn't exist
-	if not (os.path.exists("jpgs")):
-		os.mkdir("jpgs")
-
-	# remove crud pik file if it exists
-	if (os.path.exists("pikfiles/"+file+".a.pik.nocrud")):
-		os.remove("pikfiles/"+file+".a.pik.nocrud")
-
-	# remove crud info file if it exists
-	if (os.path.exists("crudfiles/"+file+".crud")):
-		os.remove("crudfiles/"+file+".crud")
-
-	diam=str(params["diam"]/4)
-	cdiam=str(params["cdiam"]/4)
-	if (params["cdiam"]==0):
-		cdiam=diam
-	scale=str(params["bin"])
-	size=str(int(params["diam"]/30)) #size of cross to draw    
-	sigma=str(params["cblur"]) # blur amount for edge detection
-	low_tn=float(params["clo"]) # low threshold for edge detection
-	high_tn=float(params["chi"]) # upper threshold for edge detection
-	standard=float(params["cstd"]) # lower threshold for full scale edge detection
-	pm="2.0"
-	am="3.0" 
-
-	# scale the edge detection limit if the image standard deviation is lower than the standard
-	# This creates an edge detection less sensitive to noises in mostly empty images
-	image=Mrc.mrc_to_numeric(file+".mrc")
-	imean=imagefun.mean(image)
-	istdev=imagefun.stdev(image,known_mean=imean)
-	print imean,istdev
-	low_tns=low_tn/(istdev/standard)
-	high_tns=high_tn/(istdev/standard)
-	if (low_tns > 1.0):
-		low_tns=1.0
-	if (low_tns < low_tn):
-		low_tns=low_tn
-	if (high_tns > 1.0):
-		high_tns=1.0
-	if (high_tns < high_tn):
-		high_tns=high_tn
-	high_t=str(high_tns)
-	low_t=str(low_tns)
-	print high_tns,low_tns
-
-
-
-	cmdlist=[]
-	cmdlist.append("#!/usr/bin/env viewit\n")
-	cmdlist.append("source $env(SELEXON_PATH)/io_subs.tcl\n")
-	cmdlist.append("source $env(SELEXON_PATH)/image_subs.tcl\n")
-	if (params["crudonly"]==False):
-		cmdlist.append("set x 0\n")
-		cmdlist.append("set currentfile \"not_a_valid_file\"\n")
-		cmdlist.append("set fp [open pikfiles/"+file+".a.pik r]\n")
-		cmdlist.append("while {[gets $fp apick ] >= 0} {\n")
-		cmdlist.append("  set xcenter    [expr [lindex $apick 1] / "+scale+"]\n")
-		cmdlist.append("  set ycenter    [expr [lindex $apick 2] / "+scale+"]\n")
-		cmdlist.append("  if { [string compare $currentfile "+file+".mrc] != 0 } {\n")
-		cmdlist.append("    if { [string compare $currentfile \"not_a_valid_file\"] != 0 } {\n")
-		cmdlist.append("      -load ss1 outlined_img\n")
-		cmdlist.append("      -oformat JPEG -o \"jpgs/"+file+".a.pik.nocrud.jpg\"}\n")
-	cmdlist.append("    -iformat MRC -i [file join . "+file+".mrc] -collapse\n")
-	cmdlist.append("    set x "+scale+"\n")
-	if (params["bin"]>1):
-		cmdlist.append("    -store orig_img ss1\n")
-		cmdlist.append("    while { $x > 1} {\n")
-		cmdlist.append("      -scale 0.5 0.5\n")
-		cmdlist.append("      set x [expr $x / 2]\n")
-		cmdlist.append("    }\n")    
-	cmdlist.append("    -store scaled_img ss1\n")
-	cmdlist.append("    set imgheight [get_rows]\n")
-	cmdlist.append("    set imgwidth  [get_cols]\n")
-	cmdlist.append("    puts \"image size is now scaled to $imgheight X $imgwidth\"\n")
-	cmdlist.append("    set list_t [expr round ("+pm+" * 3.1415926 * "+cdiam+" / "+scale+")]\n")
-	cmdlist.append("    set radius [expr "+cdiam+" / 2.0 / "+scale+"]\n")
-	cmdlist.append("    set area_t  [expr round("+am+" * 3.1415926 * $radius * $radius)]\n")
-	cmdlist.append("    puts \"binned radius is $radius, binned list_t = $list_t, binned area_t = $area_t\"\n")
-	cmdlist.append("    set iter 3\n")
-	cmdlist.append("    -zhcanny_edge "+sigma+" "+low_t+" "+high_t+" tmp.mrc\n")
-	cmdlist.append("    -zhimg_dila $iter\n")
-	cmdlist.append("    -zhimg_eros $iter\n")
-	cmdlist.append("    -zhimg_label\n")
-	cmdlist.append("    -zhprun_lpl LENGTH $list_t\n")
-	cmdlist.append("    -zhmerge_plgn INSIDE\n")
-	cmdlist.append("    -zhptls_chull\n")
-	cmdlist.append("    -zhprun_plgn BYSIZE $area_t\n")
-	cmdlist.append("    -zhmerge_plgn CONVEXHULL\n")
-	cmdlist.append("    set zmet [-zhlpl_attr]\n")
-	cmdlist.append("    set currentfile "+file+".mrc\n")
-	cmdlist.append("    set fic [open crudfiles/"+file+".crud w+]\n")
-	cmdlist.append("    puts $fic $zmet\n")
-	cmdlist.append("    close $fic\n")
-	cmdlist.append("    -store convex_hulls ss1\n")
-	cmdlist.append("    set line_width 2\n")
-	cmdlist.append("    set line_intensity 0\n")
-	cmdlist.append("    -xchg\n")
-	cmdlist.append("    -load ss1 scaled_img\n")
-	cmdlist.append("    -linscl 0 255\n")
-	cmdlist.append("    -xchg\n")
-	cmdlist.append("    -zhsuper_plgn $line_width $line_intensity 1\n")
-	cmdlist.append("    -xchg\n")
-	cmdlist.append("    -store outlined_img ss1\n")
-	cmdlist.append("    -load ss1 convex_hulls\n")
-	if (params["crudonly"]==False):
-		cmdlist.append("    set currentfile "+file+".mrc\n")
-		cmdlist.append("  } else {\n")
-		cmdlist.append("    -load ss1 convex_hulls}\n")
-		cmdlist.append("  set st [-zhinsd_plgn $xcenter $ycenter]\n")
-		cmdlist.append("  if {[string equal $st \"o\" ]} {\n")
-		cmdlist.append("    set fid [open pikfiles/"+file+".a.pik.nocrud a+]\n")
-		cmdlist.append("    puts $fid $apick\n")
-		cmdlist.append("    close $fid\n")
-		cmdlist.append("  } else {\n")
-		cmdlist.append("    puts \"reject $apick because st = $st\"\n")
-		cmdlist.append("    incr x}\n")
-	cmdlist.append("  set thickness 2\n")
-	cmdlist.append("  set pixel_value 255\n")
-	cmdlist.append("  -load ss1 outlined_img\n")
-	if (params["crudonly"]==False):
-		cmdlist.append("  -zhsuper_prtl 0 $xcenter $ycenter "+size+" $thickness $pixel_value\n")
-	cmdlist.append("  -store outlined_img ss1\n")
-	if (params["crudonly"]==False):
-		cmdlist.append("}\n")
-		cmdlist.append("close $fp\n")
-	cmdlist.append("-load ss1 outlined_img\n")
-	cmdlist.append("-oformat JPEG -o \"jpgs/"+file+".a.pik.nocrud.jpg\"\n")
-	if (params["crudonly"]==False):
-		cmdlist.append("puts \"$x particles rejected due to being inside a crud.\"\n")
-	cmdlist.append("exit\n")
-
-	tclfile=open(tmpfile.name,'w')
-	tclfile.writelines(cmdlist)
-	tclfile.close()
-	f=os.popen('viewit '+tmpfile.name)
-	result=f.readlines()
-	line=result[-2].split()
-	reject=line[1]
-	print "crudfinder rejected",reject,"particles"
-	f.close()
-	return
+	apDisplay.printError("this ViewIt function no longer exists here")
 
 def getImgSize(fname):
 	# get image size (in pixels) of the given mrc file
@@ -734,8 +416,7 @@ def getImgSize(fname):
 		size=int(imagedata[0]['camera']['dimension']['y'])
 		return(size)
 	else:
-		print "\nERROR: Image",fname,"not found in database\n"
-		sys.exit(1)
+		apDisplay.printError("Image "+fname+" not found in database\n")
 	return(size)
 
 def checkTemplates(params,upload=None):
@@ -753,8 +434,7 @@ def checkTemplates(params,upload=None):
 	while (stop==0):
 		if (os.path.exists(name+'.mrc') and os.path.exists(name+str(n+1)+'.mrc')):
 			# templates not following naming scheme
-			print "ERROR: Both",name+".mrc and",name+str(n+1)+".mrc exist\n"
-			sys.exit(1)
+			apDisplay.printError("Both "+name+".mrc and "+name+str(n+1)+".mrc exist\n")
 		if (os.path.exists(name+'.mrc')):
 			params['templatelist'].append(name+'.mrc')
 			n+=1
@@ -766,8 +446,7 @@ def checkTemplates(params,upload=None):
 			stop=1
 
 	if not params['templatelist']:
-		print "\nERROR: There are no template images found with basename \'"+name+"\'\n"
-		sys.exit(1)
+		apDisplay.printError("There are no template images found with basename \'"+name+"\'\n")
 
 	return(params)
 
@@ -788,11 +467,9 @@ def dwnsizeTemplate(params,filename):
 	im=Mrc.mrc_to_numeric(filename)
 	boxsize=im.shape
 	if ((boxsize[0]/bin)%2!=0):
-		print "\nERROR: binned image must be divisible by 2\n"
-		sys.exit(1)
+		apDisplay.printError("binned image must be divisible by 2\n")
 	if (boxsize[0]%bin!=0):
-		print "\nERROR: box size not divisible by binning factor\n"
-		sys.exit(1)
+		apDisplay.printError("box size not divisible by binning factor\n")
 	#print " ... downsizing", filename
 	im=binImg(im,bin)
 	#print " ... filtering",filename
@@ -895,8 +572,7 @@ def getImageData(imagename):
 	if imagedata:
 		return imagedata[0]
 	else:
-		print "\nERROR: Image", imagename,"not found in database\n"
-		sys.exit(1)
+		apDisplay.printError("Image"+imagename+"not found in database\n")
 
 def getPixelSize(img):
 	# use image data object to get pixel size
@@ -939,16 +615,7 @@ def getAllImagesFromDB(session):
 	imagelist=db.query(imageq, readimages=False)
 	return (imagelist)
 	
-def createImageLinks(imagelist):
-	# make a link to all images in list if they are not already in curr dir
-	for n in imagelist:
-		imagename=n['filename']
-		imgpath=n['session']['image path'] + '/' + imagename + '.mrc'
-		if not os.path.exists((imagename + '.mrc')):
-			command=('ln -s %s .' %  imgpath)
-			print command
-			os.system(command)
-	return
+
 
 def getDBTemplates(params):
 	tmptmplt=params['template']
@@ -957,8 +624,7 @@ def getDBTemplates(params):
 		# find templateImage row
 		tmpltinfo=partdb.direct_query(data.templateImage, tid)
 		if not (tmpltinfo):
-			print "\nERROR: TemplateId",tid,"not found in database.  Use 'uploadTemplate.py'\n"
-			sys.exit(1)
+			apDisplay.printError("TemplateId "+str(tid)+" not found in database.  Use 'uploadTemplate.py'\n")
 		fname=tmpltinfo['templatepath']
 		apix=tmpltinfo['apix']
 		# store row data in params dictionary
@@ -988,7 +654,7 @@ def rescaleTemplates(img,params):
 def scaleandclip(fname,scalefactor,newfname):
 	image=Mrc.mrc_to_numeric(fname)
 	if(image.shape[0] != image.shape[1]):
-		print "WARNING: template is NOT square, this may cause errors"
+		apDisplay.printWarning("template is NOT square, this may cause errors")
 	boxsz=image.shape
 	scaledimg=imagefun.scale(image,scalefactor)
 
@@ -1012,90 +678,19 @@ def scaleandclip(fname,scalefactor,newfname):
 	Mrc.numeric_to_mrc(scaledimg,newfname)
 
 def getDefocusPair(imagedata):
-	target=imagedata['target']
-	qtarget=data.AcquisitionImageTargetData()
-	qtarget['image'] = target['image']
-	qtarget['number'] = target['number']
-	qsibling=data.AcquisitionImageData(target=qtarget)
-	origid=imagedata.dbid
-	allsiblings = db.query(qsibling, readimages=False)	
-	if len(allsiblings) > 1:
-		#could be multiple siblings but we are taking only the most recent
-		#this may be bad way of doing things
-		for sib in allsiblings:
-			if sib.dbid == origid:
-				pass
-			else:
-				defocpair=sib
-				#defocpair.holdimages=False
-				break
-	else:
-		defocpair=None
-	return(defocpair)
+	apDisplay.printError("this DefocusPair function no longer exists here")
 
 def getShift(imagedata1,imagedata2):
-	#assumes images are square.
-	print "Finding shift between", imagedata1['filename'], 'and', imagedata2['filename']
-	dimension1=imagedata1['camera']['dimension']['x']
-	binning1=imagedata1['camera']['binning']['x']
-	dimension2=imagedata2['camera']['dimension']['x']
-	binning2=imagedata2['camera']['binning']['x']
-	finalsize=512
-	#test to make sure images are at same mag
-	if imagedata1['scope']['magnification']!=imagedata2['scope']['magnification']:
-		print "Warning: Defocus pairs are at different magnifications, so shift can't be calculated."
-		peak=None
-	#test to see if images capture the same area
-	elif (dimension1 * binning1) != (dimension2 * binning2):
-		print "Warning: Defocus pairs do not capture the same imaging area, so shift can't be calculated."
-		peak=None
-	#images must not be less than finalsize (currently 512) pixels. This is arbitrary but for good reason
-	elif dimension1 < finalsize or dimension2 < finalsize:
-		print "Warning: Images must be greater than", finalsize, "to calculate shift."
-		peak=None
-	else:
-		shrinkfactor1=dimension1/finalsize
-		shrinkfactor2=dimension2/finalsize
-		binned1=binImg(imagedata1['image'],shrinkfactor1)
-		binned2=binImg(imagedata2['image'],shrinkfactor2)
-		pc=correlator.phase_correlate(binned1,binned2,zero=True)
-		#Mrc.numeric_to_mrc(pc,'pc.mrc')
-		peak=findSubpixelPeak(pc, lpf=1.5) # this is a temp fix. When jim fixes peakfinder, this should be peakfinder.findSubpixelPeak
-		subpixpeak=peak['subpixel peak']
-		#find shift relative to origin
-		shift=correlator.wrap_coord(subpixpeak,pc.shape)
-		peak['scalefactor']=dimension2/float(dimension1)
-		peak['shift']=(shift[0]*shrinkfactor1,shift[1]*shrinkfactor1)
-	return(peak)
+	apDisplay.printError("this DefocusPair function no longer exists here")
 
 def findSubpixelPeak(image, npix=5, guess=None, limit=None, lpf=None):
-	#this is a temporary fix while Jim fixes peakfinder
-	pf=peakfinder.PeakFinder(lpf=lpf)
-	pf.subpixelPeak(newimage=image, npix=npix, guess=guess, limit=limit)
-	return pf.getResults()
+	apDisplay.printError("this DefocusPair function no longer exists here")
 
 def recordShift(params,img,sibling,peak):
-	filename=params['session']['name']+'.shift.txt'
-	f=open(filename,'a')
-	f.write('%s\t%s\t%f\t%f\t%f\t%f\n' % (img['filename'],sibling['filename'],peak['shift'][1],peak['shift'][0],peak['scalefactor'],peak['subpixel peak value']))
-	f.close()
-	return()
+	apDisplay.printError("this DefocusPair function no longer exists here")
 
 def insertShift(img,sibling,peak):
-	shiftq=particleData.shift()
-	shiftq['dbemdata|AcquisitionImageData|image1']=img.dbid
-	shiftdata=partdb.query(shiftq)
-	if shiftdata:
-		print "Warning: Shift values already in database"
-	else:
-		shiftq['dbemdata|AcquisitionImageData|image2']=sibling.dbid
-		shiftq['shiftx']=peak['shift'][1]
-		shiftq['shifty']=peak['shift'][0]
-		shiftq['scale']=peak['scalefactor']
-		shiftq['correlation']=peak['subpixel peak value']
-		print 'Inserting shift beteween', img['filename'], 'and', sibling['filename'], 'into database'
-		partdb.insert(shiftq)
-	return()
+	apDisplay.printError("this DefocusPair function no longer exists here")
 
 def insertManualParams(params,expid):
 	runq=particleData.run()
@@ -1172,9 +767,8 @@ def insertSelexonParams(params,expid):
 		selexonparams=partresults[0]
 		# make sure that using same number of templates
 		if len(params['templatelist'])!=len(tmpltresults):
-			print "\nERROR: All parameters for a selexon run must be identical!"
-			print "You do not have the same number of templates as your last run"
-			sys.exit(1)
+			apDisplay.printError("All parameters for a selexon run must be identical!"+\
+				"You do not have the same number of templates as your last run")
 		# param check if using multiple ranges for templates
 		if (params['multiple_range']==True):
 			# check that all ranges have same values as previous run
@@ -1197,17 +791,15 @@ def insertSelexonParams(params,expid):
 				if (tmpltNameResult[0]['range_start']!=strt or
 				    tmpltNameResult[0]['range_end']!=end or
 				    tmpltNameResult[0]['range_incr']!=incr):
-					print "\nERROR: All parameters for a selexon run must be identical!"
-					print "Template search ranges are not the same as your last run"
-					sys.exit(1)
+					apDisplay.printError("All parameters for a selexon run must be identical!"+\
+						"Template search ranges are not the same as your last run")
 		# param check for single range
 		else:
 			if (tmpltresults[0]['range_start']!=params["startang"] or
 			    tmpltresults[0]['range_end']!=params["endang"] or
 			    tmpltresults[0]['range_incr']!=params["incrang"]):
-				print "\nERROR: All parameters for a selexon run must be identical!"
-				print "Template search ranges are not the same as your last run"
-				sys.exit(1)
+				apDisplay.printError("All parameters for a selexon run must be identical!"+\
+					"Template search ranges are not the same as your last run")
  		if (selexonparams['diam']!=params['diam'] or
 		    selexonparams['bin']!=params['bin'] or
 		    selexonparams['manual_thresh']!=params['thresh'] or
@@ -1219,9 +811,8 @@ def insertSelexonParams(params,expid):
 		    selexonparams['crud_low']!=params['clo'] or
 		    selexonparams['crud_high']!=params['chi'] or
 		    selexonparams['crud_std']!=params['cstd']):
-			print "\nERROR: All parameters for a selexon run must be identical!"
-			print "please check your parameter settings."
- 			sys.exit(1)
+			apDisplay.printError("All parameters for a selexon run must be identical!"+\
+				"please check your parameter settings.")
 	return
 
 def insertTemplateRun(params,runq,imgname,strt,end,incr):
@@ -1236,8 +827,7 @@ def insertTemplateRun(params,runq,imgname,strt,end,incr):
 
 	# if no templates in the database, exit
 	if not (templateId):
-		print "\nERROR: Template",imgname,"not found in database. Use preptemplate"
-		sys.exit(1)
+		apDisplay.printError("Template '"+imgname+"' not found in database. Use preptemplate")
 	templateq['templateId']=templateId
 	templateq['runId']=runq
 	templateq['range_start']=float(strt)

@@ -1,6 +1,7 @@
 import cElementTree
 import sys
 import apDisplay
+import re
 
 class XmlListConfig(list):
     def __init__(self, aList):
@@ -78,19 +79,21 @@ def readTwoXmlFiles(file1,file2):
 
 
 def overWriteDict(dict1,dict2):
-	for p in dict2:
-		if p in dict1:
-			print p,dict1[p],dict2[p]
-			dict1[p].update(dict2[p])
-		else:
+	if len(dict2) > 0:
+		for p in dict2:
+			#if p in dict1:
+				#print p,dict1[p],dict2[p]
+				#dict1[p] = dict2[p]
 			dict1[p] = dict2[p]
 	return dict1
 
 def generateParams(xmldict):
 	params = {}
 	for p in xmldict:
-		if 'default' in xmldict[p]:
-			params[p] = xmldict[p]['default']
+		if 'default' in xmldict[p] and xmldict[p]['default'] != None:
+			value = xmldict[p]['default']
+			vtype = xmldict[p]['type']
+			params[p] = _convertParamToType(value,vtype)
 		else:
 			params[p] = None
 	return params
@@ -98,22 +101,29 @@ def generateParams(xmldict):
 def checkParamDict(paramdict,xmldict):
 	for p in paramdict:
 		if 'type' in xmldict[p]:
-			cmddict[p] = _convertParamToType(paramdict[p],xmldict[p]['type'])
+			paramdict[p] = _convertParamToType(paramdict[p], xmldict[p]['type'])
 		if 'limits' in xmldict[p]:
 			minval,maxval = re.split(",",xmldict[p]['limits'])
-			if paramdict[p] < minval:
-				apDisplay.printError("parameter"paramdict[p]+
-
+			if paramdict[p] < float(minval):
+				apDisplay.printError("parameter "+p+" is less than minimum allowed value: "+\
+					str(paramdict[p])+"<"+str(minval))
+			elif paramdict[p] > float(maxval):
+				apDisplay.printError("parameter "+p+" is greater than maximum allowed value: "+\
+					str(paramdict[p])+">"+str(maxval))
+	return paramdict
 
 def _convertParamToType(val,vtype):
 		if vtype[:3].lower() == "int":
 			return int(val)
 		elif vtype.lower() == "float":
-			return round(float(val),8)
+			return float(val)
 		elif vtype[:4].lower() == "bool":
 			return str2bool(val)
-		else: # you are a string
+		elif vtype[:3].lower() == "str" or vtype[:4].lower() == "path":
 			return val
+		else:
+			apDisplay.printError("unknown type (type='"+vtype+"') in XML file")
+
 
 def updateXmlDict(dict):
 	for param in dict.keys():
@@ -122,7 +132,9 @@ def updateXmlDict(dict):
 	return dict
 
 def str2bool(string):
-	if string[:1].lower() == 'f' or string[:1].lower() == 'n':
+	if string == True:
+		return True
+	if string == False or string[:1].lower() == 'f' or string[:1].lower() == 'n':
 		return False
 	else:
 		return True
@@ -161,4 +173,16 @@ def printHelp(dict):
 			print outstr
 	sys.exit(1)
 
+
+def fancyPrintDict(pdict):
+	pkeys = pdict.keys()
+	pkeys.sort()
+	maxlen = 0
+	print "----------"
+	for p in pkeys:
+		if len(p) > maxlen: maxlen = len(p)
+	for p in pkeys:
+		print " ",apDisplay.rightPadString(p+":",maxlen+2),\
+			apDisplay.colorType(pdict[p])
+	print "----------"
 

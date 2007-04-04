@@ -120,6 +120,21 @@ def leftPadString(s,n=10):
 		s = " "+s
 	return s
 
+def colorType(val):
+	if val == None:
+		return color("None","red")
+	elif val == True:
+		return color("True","purple")
+	elif val == False:
+		return color("False","purple")
+	elif type(val) == type(0.33):
+		return color(val,"cyan")
+	elif type(val) == type(512):
+		return color(val,"green")
+	elif type(val) == type("hello"):
+		return color("'"+val+"'","brown")	
+	return val
+
 def colorProb(num,red=0.50,green=0.80):
 	if(num == None):
 		return None

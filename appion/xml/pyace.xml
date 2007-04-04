@@ -2,42 +2,42 @@
 <pyace>
  <edgethcarbon>
 	<name>edge threshold</name>
-	<default>0.8</default>
+	<default>0.80</default>
 	<description>Threshold for edge detection with 'medium=carbon'</description>
 	<type>float</type>
 	<limits>0.0,1.0</limits>
  </edgethcarbon>
  <edgethice>
 	<name>edge threshold</name>
-	<default>0.6</default>
+	<default>0.60</default>
 	<description>Threshold for edge detection with 'medium=ice'</description>
 	<type>float</type>
 	<limits>0.0,1.0</limits>
  </edgethice>
  <pfcarbon>
 	<name>power factor</name>
-	<default>0.9</default>
+	<default>0.90</default>
 	<description>Power factor that determines the location of the upper cutoff frequency with 'medium=carbon'</description>
 	<type>float</type>
 	<limits>0.0,1.0</limits>
  </pfcarbon>
  <pfice>
 	<name>power factor</name>
-	<default>0.3</default>
+	<default>0.30</default>
 	<description>Power factor that determines the location of the upper cutoff frequency with 'medium=ice'</description>
 	<type>float</type>
 	<limits>0.0,1.0</limits>
  </pfice>
  <overlap>
 	<name>overlap</name>
-	<default>2</default>
+	<default>2.0</default>
 	<description>Overlap of subimages for determining power spectrum</description>
 	<type>float</type>
 	<required>True</required>
  </overlap>
  <fieldsize>
 	<name>field size</name>
-	<default>512</default>
+	<default>512.0</default>
 	<description>Field size of subimages for determining power spectrum</description>
 	<type>float</type>
 	<required>True</required>
