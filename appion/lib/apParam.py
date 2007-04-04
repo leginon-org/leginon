@@ -153,7 +153,7 @@ def writeFunctionLog(commandline, params=None, file=None):
 	if(file==None and params!=None and params['functionLog']!=None):
 		file = params['functionLog']
 	else:
-		file = ".functionlog"
+		file = "function.log"
 	f=open(file,'aw')
 	out=""
 	for n in commandline:
@@ -468,7 +468,7 @@ def parseCommandLineInput(args,params):
 	params['matdir']=os.path.join(params['rundir'],"matfiles")
 	params['opimagedir']=os.path.join(params['rundir'],"opimages")
 	params['doneDictName']=os.path.join(params['rundir'],"."+params['function']+"donedict")
-	params['functionLog']=os.path.join(params['rundir'],"."+params['function']+"log")
+	params['functionLog']=os.path.join(params['rundir'],params['function']+".log")
 	print " ... run directory defined as:",params['rundir']
 
 	if(params['apix'] != None and params['diam'] > 0):
