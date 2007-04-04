@@ -173,17 +173,17 @@ def _blackNormalizeImage(a, stdevLimit=3.0):
 def _whiteNormalizeImage(a, stdevLimit=3.0):
 	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel=55.0,maxlevel=255.0,trim=0.0)	
 
-def _normalizeImage(img,stdevLimit=3.0,minlevel=0.0,maxlevel=255.0):
+def _normalizeImage(img,stdevLimit=3.0,minlevel=0.0,maxlevel=255.0,trim=0.0):
 	"""	
 	Normalizes numarray to fit into an image format
 	that is values between 0 (minlevel) and 255 (maxlevel).
 	"""
 	if trim > 0.0:
-		xcut1 = img.shape[0]*trim
-		ycut2 = img.shape[1]*trim
-		xcut1 = img.shape[0]*(1.0-trim)
-		ycut2 = img.shape[1]*(1.0-trim)
-		mid = img[xcut1:xcut2,ycut1,ycut2]
+		xcut1 = int(img.shape[0]*trim)
+		ycut1 = int(img.shape[1]*trim)
+		xcut2 = int(img.shape[0]*(1.0-trim))
+		ycut2 = int(img.shape[1]*(1.0-trim))
+		mid = img[xcut1:xcut2,ycut1:ycut2]
 	else:
 		mid = img
 
@@ -203,7 +203,7 @@ def _normalizeImage(img,stdevLimit=3.0,minlevel=0.0,maxlevel=255.0):
 	img = numarray.where(img > maxlevel,255.0,img)
 	img = numarray.where(img < minlevel,0.0,  img)
 
-	return a
+	return img
 
 def _arrayToImage(a):
     """
