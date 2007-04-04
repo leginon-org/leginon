@@ -123,6 +123,15 @@ class Manager(node.Node):
 			except Exception, e:
 				self.logger.warning('Failed to add launcher: %s' % e)
 
+	def getSessionByName(self, name):
+		qsession = data.SessionData(name=name)
+		sessions = self.research(qsession, results=1)
+		if sessions:
+			session = sessions[0]
+		else:
+			session = None
+		return session
+
 	def onAddLauncherPanel(self, l):
 		evt = gui.wx.Manager.AddLauncherPanelEvent(l)
 		self.frame.GetEventHandler().AddPendingEvent(evt)

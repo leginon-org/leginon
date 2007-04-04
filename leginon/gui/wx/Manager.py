@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Manager.py,v $
-# $Revision: 1.30 $
+# $Revision: 1.31 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-26 21:56:28 $
-# $Author: suloway $
+# $Date: 2007-04-04 23:17:16 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -101,7 +101,8 @@ class AddLauncherPanelEvent(wx.PyEvent):
 		self.launcher = launcher
 
 class App(wx.App):
-	def __init__(self, session, tcpport=None, **kwargs):
+	def __init__(self, session, tcpport=None, options=None, **kwargs):
+		self.options = options
 		self.session = session
 		self.tcpport = tcpport
 		self.kwargs = kwargs
@@ -124,14 +125,39 @@ class App(wx.App):
 
 		self.manager.frame = Frame(self.manager)
 		self.SetTopWindow(self.manager.frame)
-		setup = gui.wx.SetupWizard.SetupWizard(self.manager)
+
 		self.manager.frame.Show(True)
 
-		if not setup.run():
+		session = None
+		clients = ()
+
+		### try to get session from command line
+		if self.options is not None:
+			if hasattr(self.options, 'session'):
+				if self.options.session:
+					name = self.options.session
+					session = self.manager.getSessionByName(name)
+			if hasattr(self.options, 'clients'):
+				if self.options.clients:
+					clients = self.options.clients.split(',')
+
+		### try to get session from setup wizard
+		if session is None:
+			setup = gui.wx.SetupWizard.SetupWizard(self.manager)
+			if setup.run():
+				session = setup.session
+				clients = setup.clients
+			else:
+				session = None
+				clients = None
+
+		if session is None:
 			self.manager.exit()
 			self.manager.frame.Close()
 			self.abort = True
-			return True
+		else:
+			self.manager.frame.SetTitle('Leginon:  %s' % (session['name'],))
+			self.manager.run(session, clients)
 
 		return True
 

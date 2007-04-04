@@ -17,12 +17,13 @@ warnings.filterwarnings('ignore', module='sqldb')
 warnings.filterwarnings('ignore', module='sqldict')
 warnings.filterwarnings('ignore', module='sqlexpr')
 
-def start():
-	m = gui.wx.Manager.App(None)
+def start(options=None):
+	m = gui.wx.Manager.App(None, options=options)
 	if not m.abort:
 		m.MainLoop()
 	data.datamanager.exit()
 
 if __name__ == '__main__':
-	start()
+	import legoptparse
+	start(legoptparse.options)
 

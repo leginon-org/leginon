@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SetupWizard.py,v $
-# $Revision: 1.21 $
+# $Revision: 1.22 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-12-05 22:28:24 $
+# $Date: 2007-04-04 23:17:16 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -592,7 +592,6 @@ class SetupWizard(wx.wizard.Wizard):
 		else:
 			result = self.RunWizard(self.userpage)
 		if result and self.session is not None:
-			self.manager.run(self.session, self.clients)
 			return True
 		return False
 
