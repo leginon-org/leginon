@@ -2,6 +2,7 @@
 
 import apDatabase
 import apImage
+import apParticle
 import apConvexHull
 import os,sys
 import math
@@ -16,6 +17,7 @@ import imagefun
 import numextension
 import polygon
 import libCV
+
 
 def prepImage(image,cutoff=5.0):
 	shape=numarray.shape(image)
@@ -475,9 +477,10 @@ def writeRegionInfo(imagename,path,infos):
 	regionfile.write(regionlines+"\n")
 	regionfile.close()
 
-def writeRegionInfoToDB(imagename,infos):
+def writeRegionInfoToDB(maskrun,img,expid,infos):
 	# infos is a list of information or a dictionary using non-zero index as keys
 	# area,avg,stdev,length,(centerRow,centerColumn)
+	imgids=apParticle.getDBparticledataImage(img,expid)
 	if len(infos)==0:
 		return
 	regionlines=""
@@ -491,7 +494,7 @@ def writeRegionInfoToDB(imagename,infos):
 		
 		l=l1+offset
 		info=infos[l]
-#		"READY FOR DATABASE INSERT HERE
+		apParticle.insertMaskRegion(maskrun,imgids[0],info)
 
 def writeMaskImage(imagename,path,mask):
 	# remove old mask file if it exists
@@ -530,21 +533,7 @@ def reduceRegions(regions,velimit):
 def makeMask(params,imagename):
 	filelog="\nTEST OUTPUT IMAGES\n----------------------------------------\n"
 	print "Processing %s.mrc" % (imagename,)
-	run_dir=params["outdir"]+"/"+params["runid"]+"/"
-	# create "run" directory if doesn't exist
-	if not (os.path.exists(run_dir)):
-		os.mkdir(run_dir)
-
-	# create "regioninfo" directory if doesn't exist
-	info_dir=run_dir+"/regions/"
-	if not (os.path.exists(info_dir)):
-		os.mkdir(info_dir)
-
-	# remove region info file if it exists
-	if (os.path.exists(info_dir+imagename+".region")):
-		os.remove(info_dir+imagename+".region")
-	
-	
+		
 	bin=int(params["bin"])
 	apix=float(params["apix"])
 	scale=bin*apix
@@ -743,14 +732,40 @@ def makeMask(params,imagename):
 			superimage=image*masklabel
 			testlog=outputImage(superimage,'output','Final Mask w/ image',testlog)
 			print testlog[2]
-	
-			writeRegionInfo(imagename,info_dir,regioninfos)
-	
-	if not test:
-		writeRegionInfoToDB(imagename,regioninfos)
-		writeMaskImage(imagename,run_dir,equalregions)
-	
-	return equalregions
+			
+	return equalregions,regioninfos
+
+def modifyParams(params):
+	if params['masktype']=='crud':
+		params['convolve']=0.0
+		params['no_hull']=False
+		params['cv']=False
+		params['no_length_prune']=False
+
+	else:
+		if params['masktype']=='aggr':
+			print "----Aggregate Mask by Convolution of Particles with Disk at Particle Size----"
+			if float(params['binpixdiam']) < 20 :
+				print "----Particle too small, Probably Won't Work----"
+			else:
+				if float(params['convolve'])<=0.0:
+					print "----Convolution Threshold not set, Won't Work----"
+					sys.exit()
+			
+			params['no_hull']=True
+			params['cv']=False
+			params['no_length_prune']=False
+			if params['stdev']==0.0:
+				params['stdev']=1.0
+		else:
+			if params['masktype']=='edge':
+				params['convolve']=0.0
+				params['no_hull']=True
+				params['cv']=True
+				params['no_length_prune']=False
+	if params['test']==True:
+		params['commit']=False
+	return params	
 
 def piksNotInMask(params,mask,piklines):
 	bin = int(params["bin"])
