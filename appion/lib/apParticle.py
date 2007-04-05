@@ -17,16 +17,12 @@ def getParticles(img,params):
 	shift={'shiftx':0, 'shifty':0}
 	return particles,shift
 
-
-def insertParticlePicks(params,img,expid,manual=False):
-	runq=particleData.run()
-	runq['name']=params['runid']
-	runq['dbemdata|SessionData|session']=expid
-	runids=partdb.query(runq, results=1)
-
-	# get corresponding selectionParams entry
-	selexonq = particleData.selectionParams(runId=runq)
-	selexonresult = partdb.query(selexonq, results=1)
+def getDBparticledataImage(img,expid):
+	'''
+	This function queries and creates, if not found, dpparticledata.image data
+	using dbemdata.AcquisitionImageData image name
+	'''
+	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
 
         legimgid=int(img.dbid)
         legpresetid=None
@@ -50,6 +46,20 @@ def insertParticlePicks(params,img,expid,manual=False):
 		imgq['dbemdata|AcquisitionImageData|image']=legimgid
 		imgq['dbemdata|PresetData|preset']=legpresetid
 		imgids=partdb.query(imgq, results=1)
+
+	return imgids
+
+def insertParticlePicks(params,img,expid,manual=False):
+	runq=particleData.run()
+	runq['name']=params['runid']
+	runq['dbemdata|SessionData|session']=expid
+	runids=partdb.query(runq, results=1)
+
+	# get corresponding selectionParams entry
+	selexonq = particleData.selectionParams(runId=runq)
+	selexonresult = partdb.query(selexonq, results=1)
+
+        imgids=getDBparticledataImage(img,expid)
 
 	# WRITE PARTICLES TO DATABASE
 	print "Inserting",imgname,"particles into Database..."
@@ -108,5 +118,61 @@ def insertParticlePicks(params,img,expid,manual=False):
 			if not (presult):
 				partdb.insert(particlesq)
 	pfile.close()
+	
+	return
+
+def insertMakeMaskParams(params):
+	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
+	maskPq=particleData.makeMaskParams()
+	
+	maskPq['dbemdata|SessionData|session']=params['session'].dbid
+	maskPq['mask path']=params['rundir']
+	maskPq['name']=params['runid']
+	maskPq['mask type']=params['masktype']
+	maskPq['pdiam']=params['diam']
+	maskPq['region diameter']=params['cdiam']
+	maskPq['edge blur']=params['cblur']
+	maskPq['edge low']=params['clo']
+	maskPq['edge high']=params['chi']
+	maskPq['region std']=params['stdev']
+	maskPq['convolve']=params['convolve']
+	maskPq['convex hull']=not params['no_hull']
+	maskPq['libcv']=params['cv']
+
+	result=partdb.query(maskPq)
+	if not (result):
+		partdb.insert(maskPq)
+		result=partdb.query(maskPq)
+	return result
+	
+def getMaskParamsByName(params):
+	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
+	maskPq=particleData.makMaskParams()
+	maskPq['name']=params['runid']
+	maskPq['dbemdata|SessionData|session']=params['session'].dbid
+
+	# get corresponding makeMaskParams entry
+	result = partdb.query(maskPq, results=1)
+	
+	return result  
+	
+		
+def insertMaskRegion(maskrun,img,regionInfo):
+	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
+	maskRq=particleData.maskRegion()
+		
+	maskRq['mask']=maskrun
+	maskRq['imageId']=img
+	maskRq['x']=regionInfo[4][1]
+	maskRq['y']=regionInfo[4][0]
+	maskRq['area']=regionInfo[0]
+	maskRq['perimeter']=regionInfo[3]
+	maskRq['mean']=regionInfo[1]
+	maskRq['stdev']=regionInfo[2]
+	maskRq['keep']=None
+
+	result=partdb.query(maskRq)
+	if not (result):
+		partdb.insert(maskRq)
 	
 	return
