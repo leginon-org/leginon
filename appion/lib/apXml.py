@@ -59,6 +59,9 @@ class XmlDictConfig(dict):
                 self.update({element.tag.lower(): element.text})
 
 def readTwoXmlFiles(file1,file2):
+	"""
+	reads two XML files and creates a dictionary
+	"""
 	tree     = cElementTree.parse(file1)
 	treeroot = tree.getroot()
 	xmldict  = XmlDictConfig(treeroot)
@@ -69,16 +72,13 @@ def readTwoXmlFiles(file1,file2):
 
 	xmldict = overWriteDict(xmldict,xmldict2)
 
-	for p in xmldict2:
-		if p in xmldict:
-			xmldict[p].update(xmldict2[p])
-		else:
-			xmldict[p] = xmldict2[p]
-
 	return updateXmlDict(xmldict)
 
 
 def overWriteDict(dict1,dict2):
+	"""
+	merges dict2 into dict1 by inserting and overwriting values
+	"""
 	if len(dict2) > 0:
 		for p in dict2:
 			#if p in dict1:
@@ -88,6 +88,9 @@ def overWriteDict(dict1,dict2):
 	return dict1
 
 def generateParams(xmldict):
+	"""
+	generated the parameter dictionary based on the default values
+	"""
 	params = {}
 	for p in xmldict:
 		if 'default' in xmldict[p] and xmldict[p]['default'] != None:
@@ -99,6 +102,9 @@ def generateParams(xmldict):
 	return params
 
 def checkParamDict(paramdict,xmldict):
+	"""
+	checks the parameter dictionary for type,limits, and conflict
+	"""
 	for p in paramdict:
 		if 'type' in xmldict[p]:
 			paramdict[p] = _convertParamToType(paramdict[p], xmldict[p]['type'])
@@ -113,25 +119,34 @@ def checkParamDict(paramdict,xmldict):
 	return paramdict
 
 def _convertParamToType(val,vtype):
-		if vtype[:3].lower() == "int":
-			return int(val)
-		elif vtype.lower() == "float":
-			return float(val)
-		elif vtype[:4].lower() == "bool":
-			return str2bool(val)
-		elif vtype[:3].lower() == "str" or vtype[:4].lower() == "path":
-			return val
-		else:
-			apDisplay.printError("unknown type (type='"+vtype+"') in XML file")
+	"""
+	converts a value (val) into a type (vtype)
+	"""
+	if vtype[:3].lower() == "int":
+		return int(val)
+	elif vtype.lower() == "float":
+		return float(val)
+	elif vtype[:4].lower() == "bool":
+		return str2bool(val)
+	elif vtype[:3].lower() == "str" or vtype[:4].lower() == "path":
+		return val
+	else:
+		apDisplay.printError("unknown type (type='"+vtype+"') in XML file")
 
 
 def updateXmlDict(dict):
+	"""
+	converts all xml parameters into their desired type
+	"""
 	for param in dict.keys():
 		if(dict[param].has_key('default') and dict[param]['default'] != None):
 			dict[param]['default'] = _convertParamToType(dict[param]['default'],dict[param]['type'])
 	return dict
 
 def str2bool(string):
+	"""
+	converts a string into a bool
+	""" 
 	if string == True:
 		return True
 	if string == False or string[:1].lower() == 'f' or string[:1].lower() == 'n':
@@ -140,6 +155,9 @@ def str2bool(string):
 		return True
 
 def printHelp(dict):
+	"""
+	print out help info for a function with XML file
+	"""
 	paramlist = dict.keys()
 	paramlist.sort()
 	maxlen = 0
@@ -175,6 +193,9 @@ def printHelp(dict):
 
 
 def fancyPrintDict(pdict):
+	"""
+	prints out two levels of a dictionary
+	"""
 	pkeys = pdict.keys()
 	pkeys.sort()
 	maxlen = 0

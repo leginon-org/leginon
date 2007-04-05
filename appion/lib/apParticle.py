@@ -6,6 +6,10 @@ import data
 
 
 def getParticles(img,params):
+	"""
+	returns paticles (as a list of dicts) for a given image
+	ex: particles[0]['xcoord'] is the xcoord of particle 0
+	"""
 	imq=particleData.image()
 	imq['dbemdata|AcquisitionImageData|image']=img.dbid
 	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
@@ -18,10 +22,10 @@ def getParticles(img,params):
 	return particles,shift
 
 def getDBparticledataImage(img,expid):
-	'''
+	"""
 	This function queries and creates, if not found, dpparticledata.image data
 	using dbemdata.AcquisitionImageData image name
-	'''
+	"""
 	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
 
         legimgid=int(img.dbid)
@@ -50,6 +54,9 @@ def getDBparticledataImage(img,expid):
 	return imgids
 
 def insertParticlePicks(params,img,expid,manual=False):
+	"""
+	takes an image dict (img) and inserts particles into DB from pik file
+	"""
 	runq=particleData.run()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid

@@ -40,6 +40,9 @@ def startNewAppionFunction(args):
 	return (images,stats,params,donedict)
 
 def waitForMoreImages(stats,params):
+	"""
+	pauses 10 mins and then checks for more images to process
+	"""
 	if params["dbimages"]==False:
 		return False,None
 	if(stats['skipcount'] > 0):
@@ -65,9 +68,15 @@ def waitForMoreImages(stats,params):
 	return True,images
 
 def getAllImages(stats,params):
+	"""
+	depricated: get images from database
+	"""
 	return apDatabase.getAllImages(stats,params)
 
 def readDoneDict(params):
+	"""
+	reads or creates a done dictionary
+	"""
 	doneDictName = params['doneDictName']
 	if os.path.isfile(doneDictName):
 		# unpickle previously modified dictionary
@@ -84,6 +93,9 @@ def readDoneDict(params):
 
 
 def writeDoneDict(donedict,params,imgname=None):
+	"""
+	write finished image (imgname) to done dictionary
+	"""
 	if imgname != None:
 	 	donedict[imgname]=True
 	doneDictName = params['doneDictName']
@@ -116,6 +128,9 @@ def _alreadyProcessed(donedict, imgname, stats, params):
 
 
 def checkMemLeak(stats):
+	"""
+	unnecessary code for determining if the program is eating memory over time
+	"""
 	### Memory leak code:
 	stats['memlist'].append(mem.active())
 	memfree = mem.free()
@@ -155,7 +170,6 @@ def startLoop(img,donedict,stats,params):
 	initilizes several parameters for a new image
 	and checks if it is okay to start processing image
 	"""
-
 	#calc images left
 	stats['imagesleft'] = stats['imagecount'] - stats['count']
 
@@ -195,7 +209,7 @@ def startLoop(img,donedict,stats,params):
 
 def printSummary(stats,params):
 	"""
-	print summary statistics
+	print summary statistics on last image
 	"""
 	tdiff = time.time()-stats['beginLoopTime']
 	if(params["continue"]==False or tdiff > 0.3):
@@ -238,6 +252,9 @@ def _printLine():
 	print "\t------------------------------------------"
 
 def completeLoop(stats):
+	"""
+	program has finished print final stats
+	"""
 	ttotal= time.time()-stats["startTime"]
 	print apDisplay.color("COMPLETE LOOP:\t"+apDisplay.timeString(ttotal)+\
 		" for "+str(stats["count"]-1)+" images","green")

@@ -108,6 +108,9 @@ def process(img1,img2,params):
 	#sys.exit(1)
 
 def _makeOutput(img1,img2,trans,matrix,shift,name):
+	"""
+	create JPEG output for two images (img1, img2) and trnasformation matrices
+	"""
 	invtrans  = linear_algebra.inverse(trans)
 	invmatrix = linear_algebra.inverse(matrix)
 	output1   = nd_image.affine_transform(img2, trans,    offset= shift, mode='constant', cval=0.0)
@@ -151,6 +154,9 @@ def _makeOutput(img1,img2,trans,matrix,shift,name):
 	return math.sqrt(rhoDiff),prob4
 
 def _compareImages(img1,img2,tiltangle,binpixdiam):
+	"""
+	takes two images (img1, img2) and finds trnasformation matrix
+	"""
 	if binpixdiam != None:
 		minsize = binpixdiam**2/4.0
 	else:
@@ -199,12 +205,10 @@ def _compareImages(img1,img2,tiltangle,binpixdiam):
 	shift    = bigtrans[2,:2]
 	return trans,shift,prob,fprob
 
-def _diffMatrix(x,t0,t1):
-	trans = numarray.array( [ [t0[0], t0[1]], [t1[0], t1[1]] ] )
-	matrix = _rotMatrixRad(x[0],x[1],x[2])
-	return nd_image.mean((matrix-trans)**2)
-	
 def _rotMatrixRad(tilt,twist=0.0,scale=1.0):
+	"""
+	creates the tilt rotation matrix with radians
+	"""
 	costwist = math.cos(twist)
 	sintwist = math.sin(twist)
 	tiltmat  = numarray.array([[ 1.0, 0.0 ], [ 0.0, math.cos(tilt) ]])
@@ -214,18 +218,18 @@ def _rotMatrixRad(tilt,twist=0.0,scale=1.0):
 	return numarray.matrixmultiply(numarray.matrixmultiply(twistmat,tiltmat),scalemat)
 
 def _rotMatrixDeg(tilt,twist=0.0,scale=1.0):
+	"""
+	creates the tilt rotation matrix with degrees
+	"""
 	tilt2 = tilt/180.0*math.pi
 	twist2 = twist/180.0*math.pi
-	costwist = math.cos(twist2)
-	sintwist = math.sin(twist2)
-	tiltmat  = numarray.array([[ 1.0, 0.0 ], [ 0.0, math.cos(tilt2) ]])
-	twistmat = numarray.array([[ costwist, -sintwist ], [ sintwist, costwist ]])
-	scalemat = numarray.array([[ scale, 0.0 ], [ 0.0, scale ]])
-	#return numarray.matrixmultiply(tiltmat,twistmat)
-#	return numarray.matrixmultiply(twistmat,tiltmat,scalemat)
-	return numarray.matrixmultiply(numarray.matrixmultiply(twistmat,tiltmat),scalemat)
+	return _rotMatrixRad(tilt2,twist2,scale)
+
 
 def _matrixToEulers(trans, tilt0=15.0, twist0=0.0, scale0=1.0):
+	"""
+	given a matrix (trans), find the tilt, twist, and scale of that matrix
+	"""
 	x0 = numarray.array([tilt0*math.pi/180.0,twist0*math.pi/180.0,scale0])
 	#trans = array([[1.00297072, -7.02714670e-03],[-9.42688432e-04, 0.966770461]])
 	x1 = optimize.fmin(_diffMatrix,x0,args=(trans),xtol=0.001,ftol=0.1,maxiter=2000)
@@ -235,3 +239,8 @@ def _matrixToEulers(trans, tilt0=15.0, twist0=0.0, scale0=1.0):
 	err = _diffMatrix(x1,trans[0],trans[1])
 	prob = math.exp(-1.0*math.sqrt(abs(err)))**2
 	return tilt,twist,scale,prob
+
+def _diffMatrix(x,t0,t1):
+	trans = numarray.array( [ [t0[0], t0[1]], [t1[0], t1[1]] ] )
+	matrix = _rotMatrixRad(x[0],x[1],x[2])
+	return nd_image.mean((matrix-trans)**2)

@@ -9,6 +9,9 @@
 import os.path
 
 def getVersion(arg):
+	"""
+	gets the version of arg (assuming CVS)
+	"""
 	functionname = os.path.basename(arg)
 	functpath    = getInstalledLocation(arg)
 	entriesfile  = os.path.join(functpath,"CVS/Entries")
@@ -21,7 +24,9 @@ def getVersion(arg):
 	return ""
 
 def getInstalledLocation(arg):
-	'''where is this module located'''
+	"""
+	gets the installed location of arg
+	"""
 	# full path of this module
 	fullmod = os.path.abspath(arg)
 	# just the directory

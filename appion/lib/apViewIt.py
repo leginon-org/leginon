@@ -10,7 +10,9 @@ import Mrc
 import apDatabase
 
 def createImageLinks(imagelist):
-	"make a link to all images in list if they are not already in curr dir"
+	"""
+	make a link to all images in list if they are not already in curr dir
+	"""
 	for n in imagelist:
 		imagename=n['filename']
 		imgpath=n['session']['image path'] + '/' + imagename + '.mrc'
@@ -21,7 +23,9 @@ def createImageLinks(imagelist):
 	return
 
 def createJPG(params,img):
-	"create a jpg image to visualize the final list of targetted particles"
+	"""
+	create a jpg image to visualize the final list of targetted particles
+	"""
 	tmpfile = tempfile.NamedTemporaryFile()
 
 	# create "jpgs" directory if doesn't exist
@@ -69,7 +73,9 @@ def createJPG(params,img):
 
 
 def findCrud(params,img):
-	"run the viewit crud finder"
+	"""
+	run the viewit crud finder
+	"""
 	file = img['filename']
 	tmpfile=tempfile.NamedTemporaryFile()
 
@@ -216,7 +222,9 @@ def findCrud(params,img):
 	return
 
 def findPeaks(params,img):
-	"create tcl script to process the cccmaxmap***.mrc images & find peaks"
+	"""
+	create tcl script to process the cccmaxmap***.mrc images & find peaks
+	"""
 	file = img['filename']
 	tmpfile=tempfile.NamedTemporaryFile()
 	imgsize=int(apDatabase.getImgSize(img))

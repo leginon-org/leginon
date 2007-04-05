@@ -5,15 +5,27 @@ import re
 import types
 
 def printWarning(text):
+	"""
+	standardized warning message
+	"""
 	print color(" !!! WARNING: "+text,"brown")
 
 def printMsg(text):
+	"""
+	standardized log message
+	"""
 	print " ... "+text
 
 def printError(text):
+	"""
+	standardized error message
+	"""
 	raise color("\n *** FATAL ERROR ***\n\t"+text+"\n","red")
 
 def shortenImageName(imgname):
+	"""
+	takes a long image name and truncates it for display purpose
+	"""
 	#remove the version tags
 	shortimgname = re.sub("_v[0-9][0-9]","",imgname)
 	#remove extra leading zeros, but leave one
@@ -52,6 +64,9 @@ def timeString(avg,stdev=0):
 	return str(timestr)
 
 def printDataBox(labellist,numlist,typelist):
+	"""
+	prints a data box, used in pyace
+	"""
 	if len(labellist) != len(numlist) or len(typelist) != len(numlist):
 		print "\nERROR: in _printWindow() list lengths are off"
 		print len(labellist)," != ",len(numlist)," != ",len(typelist)
@@ -121,6 +136,9 @@ def leftPadString(s,n=10):
 	return s
 
 def colorType(val):
+	"""
+	colors a value based on type
+	"""
 	if val == None:
 		return color("None","red")
 	elif val == True:
@@ -136,6 +154,9 @@ def colorType(val):
 	return val
 
 def colorProb(num,red=0.50,green=0.80):
+	"""
+	colors a probability based on score
+	"""
 	if(num == None):
 		return None
 	elif(num > green and num <= 1):
@@ -150,13 +171,10 @@ def colorProb(num,red=0.50,green=0.80):
 
 def color(text, fg, bg=None):
 	"""Return colored text.
-
 	Uses terminal color codes; set avk_util.enable_color to 0 to
 	return plain un-colored text. If fg is a tuple, it's assumed to
 	be (fg, bg). Both colors may be 'None'.
-
 	"""
-
 	colors = {
 		"black" :"30",
 		"red"   :"31",

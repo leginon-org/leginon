@@ -9,6 +9,9 @@ import numarray.nd_image as nd_image
 import numarray.linear_algebra as linear_algebra
 
 def preProcessImage(img,bin=1,apix=1.0,lowpass=0.0,planeReg=True):
+	"""
+	standard processing for an image
+	"""
 	img = binImg(img,bin)
 	if planeReg:
 		img = planeRegression(img)
@@ -26,7 +29,7 @@ def binImg(img,bin=1):
 		return img
 
 def filterImg(img,apix=1.0,bin=1,radius=0.0):
-	#TEMPORARY ALIAS
+	#TEMPORARY ALIAS FOR lowPassFilter
 	return lowPassFilter(img,apix,bin,rad)
 
 def lowPassFilter(img,apix=1.0,bin=1,radius=0.0):
@@ -46,6 +49,7 @@ def lowPassFilter(img,apix=1.0,bin=1,radius=0.0):
 def planeRegression(img):
 	"""
 	performs a two-dimensional linear regression and subtracts it from an image
+	essentially a fast high pass filter
 	"""
 	#print " ... calculate 2d linear regression"
 	if ( (img.shape)[0] != (img.shape)[1] ):
@@ -80,6 +84,9 @@ def planeRegression(img):
 	return newarray
 
 def normRange(img):
+	"""
+	normalize the range of an image between 0 and 1
+	"""
 	min1=nd_image.minimum(img)
 	max1=nd_image.maximum(img)
 	if min1 == max1:
@@ -87,6 +94,9 @@ def normRange(img):
 	return (img - min1)/(max1 - min1)
 
 def normStdev(img):
+	"""
+	normalize an image to mean = 0 and stddev = 1.0
+	"""
 	avg1=nd_image.mean(img)
 	std1=nd_image.standard_deviation(img)
 	if std1 == 0:
@@ -94,6 +104,9 @@ def normStdev(img):
 	return (img - avg1)/std1
 
 def normStdevMask(img,mask):
+	"""
+	normalize an image with mean = 0 and stddev = 1.0 only inside a mask
+	"""
 	n1     = nd_image.sum(mask)
 	if n1 == 0:
 		return img
@@ -107,6 +120,9 @@ def normStdevMask(img,mask):
 #########################################################
 
 def correlationCoefficient(x,y,mask=None):
+	"""
+	calcualate the correlation coefficient of two numarrays
+	"""
 	if x.shape != y.shape:
 		print "ERROR: images are not the same shape"
 		return 0.0
@@ -130,6 +146,8 @@ def correlationCoefficient(x,y,mask=None):
 	return sm/tot
 
 #########################################################
+# PIL to numarray conversions
+#########################################################
 
 def imageToArray(im, convertType='UInt8'):
     """
@@ -149,61 +167,6 @@ def imageToArray(im, convertType='UInt8'):
     if convertType == 'Float32':
         a = a.astype(numarray.Float32)
     return a
-
-def arrayToJpeg(numer,filename):
-	if numer.max()-numer.min() >0.1:
-		numer = _maxNormalizeImage(numer)
-	image = _arrayToImage(numer)
-	print " ... writing JPEG: ",filename
-	image.save(filename, "JPEG", quality=85)
-	return
-
-def arrayToPng(numer,filename):
-	if numer.max()-numer.min() >0.1:
-		numer = _maxNormalizeImage(numer)
-	image = _arrayToImage(numer)
-	print " ... writing Png: ",filename
-	image.save(filename, "PNG")
-	return
-
-def _maxNormalizeImage(a, stdevLimit=3.0):
-	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 25.0,maxlevel=230.0,trim=0.1)
-def _blackNormalizeImage(a, stdevLimit=3.0):
-	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 0.0,maxlevel=200.0)	
-def _whiteNormalizeImage(a, stdevLimit=3.0):
-	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel=55.0,maxlevel=255.0,trim=0.0)	
-
-def _normalizeImage(img,stdevLimit=3.0,minlevel=0.0,maxlevel=255.0,trim=0.0):
-	"""	
-	Normalizes numarray to fit into an image format
-	that is values between 0 (minlevel) and 255 (maxlevel).
-	"""
-	if trim > 0.0:
-		xcut1 = int(img.shape[0]*trim)
-		ycut1 = int(img.shape[1]*trim)
-		xcut2 = int(img.shape[0]*(1.0-trim))
-		ycut2 = int(img.shape[1]*(1.0-trim))
-		mid = img[xcut1:xcut2,ycut1:ycut2]
-	else:
-		mid = img
-
- 	imrange = maxlevel - minlevel
-	avg1=nd_image.mean(mid)
-	stdev1=nd_image.standard_deviation(mid)
-
-	min1=nd_image.minimum(mid)
-	if(min1 < avg1-stdevLimit*stdev1):
-		min1 = avg1-stdevLimit*stdev1
-
-	max1=nd_image.maximum(mid)
-	if(max1 > avg1+stdevLimit*stdev1):
-		max1 = avg1+stdevLimit*stdev1
-
-	img = (img - min1)/(max1 - min1)*imrange + minlevel
-	img = numarray.where(img > maxlevel,255.0,img)
-	img = numarray.where(img < minlevel,0.0,  img)
-
-	return img
 
 def _arrayToImage(a):
     """
@@ -230,3 +193,109 @@ def _arrayToImage(a):
         return Image.fromstring("L", (w, h), a.tostring())
     else:
         raise ValueError, "unsupported image mode"
+
+def arrayToJpeg(numer,filename):
+	"""
+	takes a numarray and writes a JPEG
+	best for micrographs and photographs
+	"""
+	numer = _maxNormalizeImage(numer)
+	image = _arrayToImage(numer)
+	print " ... writing JPEG: ",filename
+	image.save(filename, "JPEG", quality=85)
+	return
+
+def arrayToPng(numer,filename):
+	"""
+	takes a numarray and writes a PNG
+	best for masks and line art
+	"""
+	numer = _maxNormalizeImage(numer)
+	image = _arrayToImage(numer)
+	print " ... writing Png: ",filename
+	image.save(filename, "PNG")
+	return
+
+#########################################################
+# statistics of images
+#########################################################
+
+def _maxNormalizeImage(a, stdevLimit=2.0):
+	"""	
+	Normalizes numarray to fit into an image format,
+	but maximizes the contrast
+	"""
+	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 25.0,maxlevel=230.0,trim=0.1)
+def _blackNormalizeImage(a, stdevLimit=3.0):
+	"""	
+	Normalizes numarray to fit into an image format,
+	but makes it a darker than normal
+	"""
+	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 0.0,maxlevel=200.0)	
+def _whiteNormalizeImage(a, stdevLimit=3.0):
+	"""	
+	Normalizes numarray to fit into an image format,
+	but makes it a lighter than normal
+	"""
+	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel=55.0,maxlevel=255.0,trim=0.0)	
+
+def _normalizeImage(img,stdevLimit=3.0,minlevel=0.0,maxlevel=255.0,trim=0.0):
+	"""	
+	Normalizes numarray to fit into an image format
+	that is values between 0 (minlevel) and 255 (maxlevel).
+	"""
+	if trim > 0.0:
+		xcut1 = int(img.shape[0]*trim)
+		ycut1 = int(img.shape[1]*trim)
+		xcut2 = int(img.shape[0]*(1.0-trim))
+		ycut2 = int(img.shape[1]*(1.0-trim))
+		mid = img[xcut1:xcut2,ycut1:ycut2]
+	else:
+		mid = img
+
+ 	imrange = maxlevel - minlevel
+
+	#GET IMAGE STATS
+	avg1,stdev1,min1,max1 = getImageInfo(mid)
+
+	#IF MIN/MAX are too high set them to smaller values
+	if(min1 < avg1-stdevLimit*stdev1):
+		min1 = avg1-stdevLimit*stdev1
+	if(max1 > avg1+stdevLimit*stdev1):
+		max1 = avg1+stdevLimit*stdev1
+
+	if min1 == max1:
+		#case of image == constant
+		return img - min1
+
+	img = (img - min1)/(max1 - min1)*imrange + minlevel
+	img = numarray.where(img > maxlevel,255.0,img)
+	img = numarray.where(img < minlevel,0.0,  img)
+
+	return img
+
+def getImageInfo(im):
+	"""
+	prints out image information good for debugging
+	"""
+	avg1=nd_image.mean(im)
+	stdev1=nd_image.standard_deviation(im)
+	min1=nd_image.minimum(im)
+	max1=nd_image.maximum(im)
+
+	return avg1,stdev1,min1,max1
+
+def printImageInfo(im):
+	"""
+	prints out image information good for debugging
+	"""
+	#print " ... size: ",im.shape
+	#print " ... sum:  ",im.sum()
+	avg1,stdev1,min1,max1 = getImageInfo(im)
+
+	print " ... avg:  ",round(avg1,6),"+-",round(stdev1,6)
+	print " ... range:",round(min1,6),"<>",round(max1,6)
+
+	return avg1,stdev1,min1,max1
+
+
