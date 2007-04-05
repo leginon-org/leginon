@@ -51,27 +51,31 @@ def createDefaultParams(function=None):
 	params['abspath']=os.path.abspath('.')+'/'
 	params['templateIds']=''
 
-### CRUD PARAMETERS
+### selexonFunctions.py PARAMETERS ONLY
+	params['ogTmpltInfo']=[]
 	params['crud']=False
+	params['crudonly']=False
+	params['multiple_range']=False
+	params['projectId']=None
+	
+### PARTICLE INSERTION PARAMETERS
+	params['scale']=1
+	params['scaledapix']={}
+
+### CRUD PARAMETERS
+	params['masktype']='custom'
 	params['cdiam']=0
 	params['cblur']=3.5
 	params['clo']=0.6
 	params['chi']=0.95
-	params['cstd']=1
-	params['crudonly']=False
-	params['multiple_range']=False
-	params['ogTmpltInfo']=[]
-	params['scaledapix']={}
-	params['scale']=1
-	params['projectId']=None
-	params['prtltype']=None
-	params['cschi']=1
-	params['csclo']=0
-	params['convolve']=0
+	params['cstd']=1.0
+	params['cschi']=1.0
+	params['csclo']=0.0
+	params['convolve']=0.0
 	params['no_hull']=False
 	params['cv']=False
 	params['no_length_prune']=False
-	params['stdev']=0
+	params['stdev']=0.0
 	params['test']=False
 
 #ACE parameters:
