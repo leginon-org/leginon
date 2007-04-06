@@ -322,22 +322,36 @@ def makeDefaultInfo(ltotal):
 	return info
 
 def getLabeledInfo(image,alledgemask,labeled_image,indices,fast,info,testlog):
+	'''
+	indices can be either a list of at least two integers
+	or one integer.
+	The input info can be a dictionary with first object key=1
+	or a list with first object index=0
+	'''
 	try:
 		ltotal=len(indices)
 	except:
 		ltotal=1
 		
 	print "getting region info"
+	
 	if len(info) != ltotal:
 		info=makeDefaultInfo(ltotal)	
 	
+	try:
+		info.keys()
+	except:
+		offset=1
+	else:
+		offset=0
+
 	imageshape=numarray.shape(labeled_image)
 	if not fast:
-		if (info[1][3] is None):
+		if (info[1-offset][3] is None):
 			info=getRealLabeledPerimeter(image,alledgemask,labeled_image,indices,info,testlog)
-		if (info[1][1] is None):
+		if (info[1-offset][1] is None):
 			info=getRealLabeledMeanStdev(image,labeled_image,indices,info)
-		if (info[1][0] is None):
+		if (info[1-offset][0] is None):
 			info=getRealLabeledAreaCenter(image,labeled_image,indices,info)
 	else:
 		objs = nd.find_objects(labeled_image)
@@ -502,7 +516,7 @@ def writeMaskImage(imagename,path,mask):
 	if (os.path.exists(maskfile)):
 		os.remove(maskfile)
 	if mask is not None:
-		apImage.arrayToPng(mask,maskfile)
+		apImage.arrayMaskToPngAlpha(mask,maskfile)
 
 def reduceRegions(regions,velimit):
 	regionarrays = []
@@ -529,6 +543,12 @@ def reduceRegions(regions,velimit):
 			regionellipses.append(regionellipse)
 					
 	return regionarrays
+	
+def getBmaskFromLabeled(labeled_regions):
+	int32regions=labeled_regions.astype(numarray.Int32)
+	masked_image=ma.masked_greater_equal(int32regions,1)
+	bmask=masked_image.filled(1)
+	return bmask
 
 def makeMask(params,imagename):
 	filelog="\nTEST OUTPUT IMAGES\n----------------------------------------\n"
@@ -683,6 +703,20 @@ def makeMask(params,imagename):
 				goodareas=pruneByArea(allinfos,area_t,garea*0.5,goodregions)
 				goodregions=goodareas
 
+			try:
+				good=len(goodareas)
+			except:
+				good=0
+			if (good > 0):
+				temp_regions,temp_clabels,goodinfos=makePrunedLabels(imagename,saved_labeled_regions,saved_clabels,allinfos,goodareas)
+				testlog=outputImage(temp_regions,'region_labela','Area pruned labeled image',testlog)
+
+
+
+
+
+			################STANDARD DEVIATION PRUNING##########################
+
 			if (len(goodregions)>0):
 				#pruning by standard deviation in the regions
 				if (stdev_t > 0):
@@ -690,23 +724,36 @@ def makeMask(params,imagename):
 					goodstdevs=pruneByStdev(allinfos,stdev_limit,goodareas)
 					goodregions=goodstdevs
 
+			try:
+				good=len(goodstdevs)
+			except:
+				good=0
+			if (good>0):
+				temp_regions,temp_clabels,goodinfos=makePrunedLabels(imagename,saved_labeled_regions,saved_clabels,allinfos,goodstdevs)
+				testlog=outputImage(temp_regions,'region_labels','Stdev pruned labeled image',testlog)
+
+
+			################REBUILD##########################
 			if do_convex_hulls or do_cv and stdev_t < 0.01:
 				labeled_regions,clabels,regioninfos=makePrunedPolygons(imagename,gpolygons,shape,allinfos,goodregions)
+				if params['masktype']=='edge':
+					#convolve with the disk image of the particle
+					equalregions=getBmaskFromLabeled(labeled_regions)
+					labeled_regions,testlog=convolveDisk(equalregions,pradius,0.01,testlog)
+
 			else:
 				labeled_regions,clabels,regioninfos=makePrunedLabels(imagename,labeled_regions,clabels,allinfos,goodregions)
 
 			
 #		create final region mask
-		if (clabels >0):
-			int32regions=labeled_regions.astype(numarray.Int32)
-			equalregions=ma.masked_greater_equal(int32regions,1)
-			equalregions=equalregions.filled(1)
+			equalregions=getBmaskFromLabeled(labeled_regions)
 			regioninfos,testlog=getLabeledInfo(image,equalregions,labeled_regions,range(1,clabels+1),False,regioninfos,testlog)
 			
 		else:
 			equalregions=None
 	
 		if test:
+			'''
 			try:
 				good=len(goodareas)
 			except:
@@ -722,7 +769,7 @@ def makeMask(params,imagename):
 			if (good>0):
 				temp_regions,temp_clabels,goodinfos=makePrunedLabels(imagename,saved_labeled_regions,saved_clabels,allinfos,goodstdevs)
 				testlog=outputImage(temp_regions,'region_labels','Stdev pruned labeled image',testlog)
-			
+			'''
 			if (clabels>0):
 				testlog=outputImage(equalregions,'finalregions','Final Mask image',testlog)
 				regionedges,testlog=findEdgeSobel(equalregions,0,0.5,1.0,False,testlog)
