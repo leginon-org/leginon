@@ -8,6 +8,7 @@ import numarray
 import numarray.nd_image as nd_image
 import numarray.linear_algebra as linear_algebra
 
+
 def preProcessImage(img,bin=1,apix=1.0,lowpass=0.0,planeReg=True):
 	"""
 	standard processing for an image
@@ -16,6 +17,29 @@ def preProcessImage(img,bin=1,apix=1.0,lowpass=0.0,planeReg=True):
 	if planeReg:
 		img = planeRegression(img)
 	img = lowPassFilter(img,apix,bin,lowpass)
+	img = 255.0*(normRange(img)+1.0e-7)
+	return img
+
+def preProcessImageParams(img, params, planeReg=True):
+	"""
+	standard processing for an image
+	"""
+	apix = params['apix']
+	#BINNING
+	if 'bin' in params:
+		bin = params['bin']
+		img = binImg(img,bin)
+	else:
+		bin = 1
+	#LOWPASS
+	if 'lowpass' in params:
+		lowpass = params['lowpass']
+		img = lowPassFilter(img,apix,bin,lowpass)
+	else:
+		lowpass = 0
+	#HIGHPASS
+	if planeReg:
+		img = planeRegression(img)
 	img = 255.0*(normRange(img)+1.0e-7)
 	return img
 
@@ -216,6 +240,18 @@ def _arrayToImage(a):
         return Image.fromstring("L", (w, h), a.tostring())
     else:
         raise ValueError, "unsupported image mode"
+
+def arrayToImage(numer,normalize=True):
+	"""
+	takes a numarray and writes a JPEG
+	best for micrographs and photographs
+	"""
+	if normalize:
+		numer = _maxNormalizeImage(numer)
+	else:
+		numer = numer*255
+	image = _arrayToImage(numer)
+	return image
 
 
 def arrayToJpeg(numer,filename,normalize=True):

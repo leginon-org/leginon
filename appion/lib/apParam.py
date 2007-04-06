@@ -408,7 +408,7 @@ def parseCommandLineInput(args,params):
 
 ### DOG PICKER PARAMS
 
-		elif (elements[0]=='range'):
+		elif (elements[0]=='sizerange'):
 			params['sizerange']=float(elements[1])
 		elif (elements[0]=='numslices'):
 			params['numslices']=float(elements[1])

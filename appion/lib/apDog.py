@@ -30,6 +30,21 @@ def runDogDetector(imagename, params):
 
 	return peaks
 
+def convertDogPeaks(peaks,params):
+	bin = params['bin']
+	dictpeaks = []
+	peak = {}
+	for i in range(peaks.shape[0]):
+		row = peaks[i,0] * bin
+		col = peaks[i,1] * bin
+		sca = peaks[i,2]
+		peak['xcoord'] = col
+		peak['ycoord'] = row
+		peak['size']   = sca
+		dictpeaks.append(peak.copy())
+
+	return dictpeaks
+
 def insertDogPicksIntoDB(img, peaks, params):
 	partdb = dbdatakeeper.DBDataKeeper(db='dbparticledata')
 	sessionid = int(img['session'].dbid)

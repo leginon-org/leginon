@@ -3,6 +3,7 @@
 import sys
 import apLoop
 import apDog
+import apParticle
 	
 if __name__ == '__main__':
 	(images,stats,params,donedict) = apLoop.startNewAppionFunction(sys.argv)
@@ -27,6 +28,9 @@ if __name__ == '__main__':
 			stats['lastpeaks'] = numpeaks
 			stats['peaksum']   = stats['peaksum'] + numpeaks
 			stats['peaksumsq'] = stats['peaksumsq'] + numpeaks**2
+
+			dictpeaks = apDog.convertDogPeaks(peaks,params)
+			apParticle.createPeakJpeg(img,dictpeaks,params)
 
 			if params['commit']:
 				apDog.insertDogPicksIntoDB(img, peaks, params)
