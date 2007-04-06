@@ -16,7 +16,7 @@ tiltCorrelator.py \
   outdir=. diam=140 \
   runid=icetiltslocal prtlrunid=96 commit
 
-tiltCorrelator.py \
+tiltCorrelator2.py \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00004en_00.mrc  \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00005en_00.mrc  \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00006en_00.mrc  \

@@ -14,63 +14,29 @@ import numarray.random_array as random_array
 import scipy.optimize as optimize
 
 def process(img1,img2,params):
-	name =os.path.join("jpgs",os.path.basename(img1['filename']))
-	name = re.sub("0[01]_000(?P<id>[0-9][0-9]en)_0[01]","\g<id>",name)
-	name = re.sub("_0+","_",name)
-	name = re.sub("_v0[0-9]","",name)
+	name = os.path.join("jpgs",apDisplay.shortenImageName(img1['filename']))
+	#name = re.sub("0[01]_000(?P<id>[0-9][0-9]en)_0[01]","\g<id>",name)
+	#name = re.sub("_0+","_",name)
+	#name = re.sub("_v0[0-9]","",name)
 	tilt1 = apDatabase.getTiltAngle(img1,params)
 	tilt2 = apDatabase.getTiltAngle(img2,params)
 	dtilt = abs(tilt1 - tilt2)
-	#print "TILT1=",tilt1
-	#print "TILT2=",tilt2
 	print "total tilt angle=",round(dtilt,4)
-	r = random.uniform(0,0.5)
 	apix = params['apix']
-	#print "sleeping ",r
-	#time.sleep(r)
-	noise = 0.0
-	immult = 1.5
 
-	blank1 = numarray.zeros(img1['image'].shape)
-	particles,shift = apParticle.getParticles(img1,params)
-	numpart1 = len(particles)
-	if numpart1 == 0:
-		return
-	print "found",numpart1,"particles for image1"
-	for prtl in particles:
-		x0=int(prtl['ycoord']+0.5)
-		y0=int(prtl['xcoord']+0.5)
-		blank1[x0][y0] = 2.0*prtl['correlation']
-	blank1 = apImage.preProcessImage(blank1,bin=4,lowpass=params['diam'],apix=apix)
-	#apImage.arrayToJpeg(blank1,name+"-realblank1.jpg")
-	blank1 += immult*apImage.preProcessImage(img1['image'],bin=4,lowpass=40,apix=apix)
-	blank1 += random_array.uniform(0.0, noise, shape=blank1.shape)
+	#blankblank1 = _createParticleHalos(img1,params)
+	blank1 = _doG(img1,params)
 	apImage.arrayToJpeg(blank1,name+"-blank1.jpg")
 
-	blank2 = numarray.zeros(img2['image'].shape)
-	particles,shift = apParticle.getParticles(img2,params)
-	numpart2 = len(particles)
-	if numpart2 == 0:
-		return
-	print "found",numpart2,"particles for image2"
-	for prtl in particles:
-		x0=int(prtl['ycoord']+0.5)
-		y0=int(prtl['xcoord']+0.5)
-		blank2[x0][y0] = 2.0*prtl['correlation']
-	blank2 = apImage.preProcessImage(blank2,bin=4,lowpass=params['diam'],apix=apix)
-	blank2 += immult*apImage.preProcessImage(img2['image'],bin=4,lowpass=40,apix=apix)
-	blank2 += random_array.uniform(0.0, noise, shape=blank2.shape)
+	#blank2 = _createParticleHalos(img2,params)
+	blank2 = _doG(img2,params)
 	apImage.arrayToJpeg(blank2,name+"-blank2.jpg")
 
-	prob7 = 1.0-(numpart1**-1.0 + numpart2**-1.0)*5.0
-	if(prob7 < 0): prob7 = 0
-	print "*** number particles (7)=",apDisplay.colorProb(prob7)
+	prob7 = 1.0
+	#prob7 = 1.0-(numpart1**-1.0 + numpart2**-1.0)*5.0
+	#if(prob7 < 0): prob7 = 0
+	#print "*** number particles (7)=",apDisplay.colorProb(prob7)
 
-	#blank1 = apImage.lowPassFilter(blank1,apix=1.0,bin=1,radius=10.0)
-
-
-	#imgdata1 = apImage.preProcessImage(blank1['image'],bin=4,lowpass=10,apix=apix)
-	#imgdata2 = apImage.preProcessImage(img2['image'],bin=4,lowpass=10,apix=apix)
 	trans,shift,prob1,prob8 = _compareImages(blank1,blank2,dtilt,params['binpixdiam'])
 	print "TRANS=\n",numarray.around(trans,3)
 	print "SHIFT=",numarray.around(shift,3)
@@ -106,6 +72,34 @@ def process(img1,img2,params):
 	f.write("\n")
 	f.close()
 	#sys.exit(1)
+
+def _doG(img,params):
+	apix = params['apix']
+	diam = params['diam']
+	bin = params['bin']
+	dogimg = apImage.preProcessImage(img['image'],bin=bin,lowpass=diam/10.0,apix=apix)
+	dogimg = apImage.diffOfGauss(dogimg,apix=apix,bin=bin,diam=diam)
+	return dogimg
+
+def _createParticleHalos(img,params):
+	immult = 1.5
+	noise = 0.0
+	blank = numarray.zeros(img['image'].shape)
+	particles,shift = apParticle.getParticles(img,params)
+	numpart = len(particles)
+	if numpart == 0:
+		return
+	print "found",numpart,"particles for image",apDisplay.shortenImageName(img['filename'])
+	for prtl in particles:
+		x0=int(prtl['ycoord']+0.5)
+		y0=int(prtl['xcoord']+0.5)
+		blank[x0][y0] = 2.0*prtl['correlation']
+	blank = apImage.preProcessImage(blank,bin=4,lowpass=params['diam'],apix=params['apix'])
+	blank += immult*apImage.preProcessImage(img['image'],bin=4,lowpass=40,apix=apix)
+	if noise > 0:
+		blank += random_array.uniform(0.0, noise, shape=blank.shape)
+	return blank
+
 
 def _makeOutput(img1,img2,trans,matrix,shift,name):
 	"""
