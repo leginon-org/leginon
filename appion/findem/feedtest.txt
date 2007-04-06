@@ -1,7 +1,7 @@
 07jan05b_12gr_02en_00.dwn.mrc
 grostain3.dwn.mrc
 -200.0
-11.4
+22.8
 140
 1
 0,179,20

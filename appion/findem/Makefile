@@ -58,5 +58,5 @@ distclean:
 
 test:	$(BINPATH)/findem.exe
 	$(BINPATH)/findem.exe < feedtest.txt
-	echo ""; md5sum cccmaxmap001.mrc; echo "aa2c8ecc53b0bb0f3f837095cf6446c3"; echo "the above MD5SUMs should match"; echo ""
+	echo ""; md5sum cccmaxmap001.mrc; echo "3dc23350d337ba98836507798562d33e"; echo "the above MD5SUMs should match"; echo ""
 	rm -fv cccmaxmap001.mrc
