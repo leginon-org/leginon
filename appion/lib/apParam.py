@@ -301,21 +301,6 @@ def parseCommandLineInput(args,params):
 			params['hp']=float(elements[1])
 		elif (elements[0]=='box'):
 			params['box']=int(elements[1])
-		elif (arg=='crud'):
-			params['crud']=True
-		elif (elements[0]=='cruddiam'):
-			params['crud']=True
-			params['cdiam']=float(elements[1])
-		elif (elements[0]=='crudblur'):
-			params['cblur']=float(elements[1])
-		elif (elements[0]=='crudlo'):
-			params['clo']=float(elements[1])
-		elif (elements[0]=='crudhi'):
-			params['chi']=float(elements[1])
-		elif (elements[0]=='crudstd'):
-			params['cstd']=float(elements[1])
-		elif (arg=='crudonly'):
-			params['crudonly']=True
 		elif (elements[0]=='templateids'):
 			templatestring=elements[1].split(',')
 			params['templateIds']=templatestring
@@ -329,6 +314,20 @@ def parseCommandLineInput(args,params):
 			params['overlapmult']=float(elements[1])
 		elif (elements[0]=='maxpeaks'):
 			params['maxpeaks']=int(elements[1])
+
+###	MAKEMASK ONLY PARAMETERS
+		elif (elements[0]=='masktype'):
+			params['masktype']=elements[1]
+		elif (elements[0]=='cruddiam'):
+			params['cdiam']=float(elements[1])
+		elif (elements[0]=='crudblur'):
+			params['cblur']=float(elements[1])
+		elif (elements[0]=='crudlo'):
+			params['clo']=float(elements[1])
+		elif (elements[0]=='crudhi'):
+			params['chi']=float(elements[1])
+		elif (elements[0]=='crudstd'):
+			params['cstd']=float(elements[1])
 		elif (elements[0]=='crudschi'):
 			params['cschi']=float(elements[1])
 		elif (elements[0]=='crudsclo'):
