@@ -46,6 +46,26 @@ def lowPassFilter(img,apix=1.0,bin=1,radius=0.0):
 	c=convolver.Convolver()
 	return(c.convolve(image=img,kernel=kernel))
 
+
+def diffOfGauss(img,apix,bin,diam,k=1.01):
+	"""
+	given bin, apix and diam of particle perform a difference of Gaussian
+	about the size of that particle
+	k := sloppiness coefficient
+	"""
+	if diam == 0:
+		apDisplay.printError("difference of Gaussian; radius = 0")
+	pixrad = float(diam/apix/float(bin)/2.0)
+	kfact = math.sqrt( (k**2 - 1.0) / (2.0 * k**2 * math.log(k)) )
+	sigma1 = kfact * pixrad
+	sigma2 = k * sigma1
+	kernel1 = convolver.gaussian_kernel(sigma1)
+	kernel2 = convolver.gaussian_kernel(sigma2)
+	c=convolver.Convolver()
+	img1 = c.convolve(image=img,kernel=kernel1)
+	img2 = c.convolve(image=img,kernel=kernel2)
+	return img1-img2
+
 def planeRegression(img):
 	"""
 	performs a two-dimensional linear regression and subtracts it from an image
@@ -197,39 +217,40 @@ def _arrayToImage(a):
     else:
         raise ValueError, "unsupported image mode"
 
-def arrayToJpeg(numer,filename):
-	if numer.max()-numer.min() > 1:
-		numer = _maxNormalizeImage(numer)
-	else:
-		if numer.max()>0 and numer.min()==0:
-			numer = numer*255
+
+def arrayToJpeg(numer,filename,normalize=True):
 	"""
 	takes a numarray and writes a JPEG
 	best for micrographs and photographs
 	"""
+	if normalize:
+		numer = _maxNormalizeImage(numer)
+	else:
+		numer = numer*255
 	image = _arrayToImage(numer)
 	print " ... writing JPEG: ",filename
 	image.save(filename, "JPEG", quality=85)
 	return
 
-def arrayToPng(numer,filename):
-	if numer.max()-numer.min() > 1:
-		numer = _maxNormalizeImage(numer)
-	else:
-		if numer.max()>0 and numer.min()==0:
-			numer = numer*255
+def arrayToPng(numer,filename,normalize=True):
 	"""
 	takes a numarray and writes a PNG
 	best for masks and line art
 	"""
+	if normalize:
+		numer = _maxNormalizeImage(numer)
+	else:
+		numer = numer*255
 	image = _arrayToImage(numer)
 	print " ... writing Png: ",filename
 	image.save(filename, "PNG")
 	return
 
 def arrayMaskToPngAlpha(numer,filename):
-	''' Create PNG file of a mask(array with only 0 and 1) that uses the values in
-	the alpha channel for transparency'''
+	""" 
+	Create PNG file of a binary mask (array with only 0 and 1) 
+	that uses the values in the alpha channel for transparency
+	"""
 	alpha=int(0.4*255)
 	numera = numer*alpha
 	numerones=numarray.ones(numarray.shape(numer))*255
@@ -242,8 +263,6 @@ def arrayMaskToPngAlpha(numer,filename):
 	image.save(filename, "PNG")
 	return
 
-def _maxNormalizeImage(a, stdevLimit=3.0):
-
 #########################################################
 # statistics of images
 #########################################################
@@ -253,8 +272,8 @@ def _maxNormalizeImage(a, stdevLimit=2.0):
 	Normalizes numarray to fit into an image format,
 	but maximizes the contrast
 	"""
->>>>>>> 1.11
 	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 25.0,maxlevel=230.0,trim=0.1)
+
 def _blackNormalizeImage(a, stdevLimit=3.0):
 	"""	
 	Normalizes numarray to fit into an image format,
@@ -296,6 +315,10 @@ def _normalizeImage(img,stdevLimit=3.0,minlevel=0.0,maxlevel=255.0,trim=0.0):
 	if min1 == max1:
 		#case of image == constant
 		return img - min1
+
+	if abs(min1) < 0.01 and abs(max1 - 1.0) < 0.01:
+		#we have a mask-like object
+		return img * 255
 
 	img = (img - min1)/(max1 - min1)*imrange + minlevel
 	img = numarray.where(img > maxlevel,255.0,img)
