@@ -161,6 +161,9 @@ def imageToArray(im, convertType='UInt8'):
     elif (im.mode=='RGB'):
         a = numarray.fromstring(im.tostring(), numarray.UInt8)
         a.shape = (im.size[1], im.size[0], 3)
+    elif (im.mode=='RGBA'):
+        a = numarray.fromstring(im.tostring(), numarray.UInt8)
+        a.shape = (im.size[1], im.size[0], 4)
     else:
         raise ValueError, im.mode+" mode not considered"
 
@@ -195,26 +198,51 @@ def _arrayToImage(a):
         raise ValueError, "unsupported image mode"
 
 def arrayToJpeg(numer,filename):
+	if numer.max()-numer.min() > 1:
+		numer = _maxNormalizeImage(numer)
+	else:
+		if numer.max()>0 and numer.min()==0:
+			numer = numer*255
 	"""
 	takes a numarray and writes a JPEG
 	best for micrographs and photographs
 	"""
-	numer = _maxNormalizeImage(numer)
 	image = _arrayToImage(numer)
 	print " ... writing JPEG: ",filename
 	image.save(filename, "JPEG", quality=85)
 	return
 
 def arrayToPng(numer,filename):
+	if numer.max()-numer.min() > 1:
+		numer = _maxNormalizeImage(numer)
+	else:
+		if numer.max()>0 and numer.min()==0:
+			numer = numer*255
 	"""
 	takes a numarray and writes a PNG
 	best for masks and line art
 	"""
-	numer = _maxNormalizeImage(numer)
 	image = _arrayToImage(numer)
 	print " ... writing Png: ",filename
 	image.save(filename, "PNG")
 	return
+
+def arrayMaskToPngAlpha(numer,filename):
+	''' Create PNG file of a mask(array with only 0 and 1) that uses the values in
+	the alpha channel for transparency'''
+	alpha=int(0.4*255)
+	numera = numer*alpha
+	numerones=numarray.ones(numarray.shape(numer))*255
+	imagedummy = _arrayToImage(numerones)
+	
+	alphachannel = _arrayToImage(numera)
+	image = imagedummy.convert('RGBA')
+	image.putalpha(alphachannel)
+	print " ... writing Png: ",filename
+	image.save(filename, "PNG")
+	return
+
+def _maxNormalizeImage(a, stdevLimit=3.0):
 
 #########################################################
 # statistics of images
@@ -225,6 +253,7 @@ def _maxNormalizeImage(a, stdevLimit=2.0):
 	Normalizes numarray to fit into an image format,
 	but maximizes the contrast
 	"""
+>>>>>>> 1.11
 	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 25.0,maxlevel=230.0,trim=0.1)
 def _blackNormalizeImage(a, stdevLimit=3.0):
 	"""	
