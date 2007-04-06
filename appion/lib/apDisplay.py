@@ -218,3 +218,20 @@ def color(text, fg, bg=None):
 		except KeyError: 
 			pass
 	return "%s%s%s%s" % (b, f, text, clear)
+
+def matlabError():
+	env = {}
+	env['PATH'] = "/ami/sw/packages/matlab73/bin:/home/$USER/pyappion/ace:/bin:/usr/bin"
+	env['MATLAB'] = "/ami/sw/packages/matlab73"
+	env['MATLABPATH'] = "/home/$USER/pyappion/ace"
+	env['PYTHONPATH'] = "/home/$USER/pyleginon:/home/$USER/pyappion/lib:/ami/sw/32-pythonhome/lib/python2.4/site-packages"
+	env['LD_LIBRARY_PATH'] = "/ami/sw/packages/matlab73/bin/glnx86:/lib:/usr/lib"
+	env['LM_LICENSE_FILE'] = "/ami/sw/packages/matlab/etc/license.dat"
+	print "MATLAB failed to open.\n\tCheck your environmental variables:"
+	if os.path.basename(os.environ.get("SHELL")) == "bash":
+		for var in env.keys():
+			print "\t  export "+var+"="+env[var]
+	else:
+		for var in env.keys():
+			print "\t  setenv "+var+" "+env[var]
+	print "\tusually the PATH is the problem move matlab73/bin to the end"

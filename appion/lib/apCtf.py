@@ -9,7 +9,8 @@ import dbdatakeeper
 try:
 	import pymat
 except:
-	apDisplay.printError("MATLAB connection failed! try typing 'usematlab73'")
+	apDisplay.matlabError()
+	apDisplay.printError("")
 
 acedb  = dbdatakeeper.DBDataKeeper(db='dbctfdata')
 
