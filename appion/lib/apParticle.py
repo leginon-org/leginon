@@ -12,9 +12,10 @@ def getParticles(img,params):
 	returns paticles (as a list of dicts) for a given image
 	ex: particles[0]['xcoord'] is the xcoord of particle 0
 	"""
+	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
+
 	imq=particleData.image()
 	imq['dbemdata|AcquisitionImageData|image']=img.dbid
-	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
 
 	selexonrun=partdb.direct_query(data.run,params['selexonId'])
 	prtlq=particleData.particle(imageId=imq,runId=selexonrun)
@@ -59,6 +60,9 @@ def insertParticlePicks(params,img,expid,manual=False):
 	"""
 	takes an image dict (img) and inserts particles into DB from pik file
 	"""
+	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
+	particlesq=particleData.particle()
+	
 	runq=particleData.run()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
@@ -115,7 +119,6 @@ def insertParticlePicks(params,img,expid,manual=False):
 			ycenter=int(elements[2])
 			corr=float(elements[3])
 
-			particlesq=particleData.particle()
 			particlesq['runId']=runq
 			particlesq['imageId']=imgids[0]
 			particlesq['selectionId']=selexonresult[0]
@@ -151,12 +154,12 @@ def insertMakeMaskParams(params):
 	result=partdb.query(maskPq)
 	if not (result):
 		partdb.insert(maskPq)
-		result=partdb.query(maskPq)
+		result=[maskPq.dbid]
 	return result
-	
+
 def getMaskParamsByName(params):
 	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
-	maskPq=particleData.makMaskParams()
+	maskPq=particleData.makeMaskParams()
 	maskPq['name']=params['runid']
 	maskPq['dbemdata|SessionData|session']=params['session'].dbid
 
@@ -166,12 +169,12 @@ def getMaskParamsByName(params):
 	return result  
 	
 		
-def insertMaskRegion(maskrun,img,regionInfo):
+def insertMaskRegion(maskrun,partdbimg,regionInfo):
 	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
 	maskRq=particleData.maskRegion()
 		
 	maskRq['mask']=maskrun
-	maskRq['imageId']=img
+	maskRq['imageId']=partdbimg
 	maskRq['x']=regionInfo[4][1]
 	maskRq['y']=regionInfo[4][0]
 	maskRq['area']=regionInfo[0]
@@ -186,6 +189,16 @@ def insertMaskRegion(maskrun,img,regionInfo):
 	
 	return
 
+def getMaskRegions(maskrun,img):
+	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
+	maskRq=particleData.maskRegion()
+
+	maskRq['mask']=maskrun
+	maskRq['imageId']=img
+	
+	results=partdb.query(maskRq)
+	
+	return results	
 
 def createPeakJpeg(img,peaks,params):
 	#Does NOT use viewit
