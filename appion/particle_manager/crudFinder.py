@@ -23,8 +23,7 @@ if __name__ == '__main__':
 		maskruns=[]
 		# Insertion is repeated until the query result is not empty
 		# This is necessary because insertion can be slow
-		while len(maskruns) == 0:
-			maskruns=apParticle.insertMakeMaskParams(params)
+		maskruns=apParticle.insertMakeMaskParams(params)
 		maskrun=maskruns[0]
 	else:
 		# create "regioninfo" directory if doesn't exist
@@ -36,7 +35,7 @@ if __name__ == '__main__':
 		if (os.path.exists(info_dir+"*.region")):
 			os.remove(info_dir+"*.region")
 	
-	notdone=True
+	notdone=False
 	while notdone:
 		while images:
 			img = images.pop(0)
