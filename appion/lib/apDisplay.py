@@ -167,7 +167,7 @@ def colorProb(num,red=0.50,green=0.80):
 		return color(numstr,"red")
 	else:
 		numstr = "%1.3f" % num
-		return numstr
+		return color(numstr,"brown")
 
 def color(text, fg, bg=None):
 	"""Return colored text.

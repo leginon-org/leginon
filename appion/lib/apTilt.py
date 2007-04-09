@@ -4,7 +4,7 @@ import sys,os,re
 import time
 import random
 import math
-import apImage,apParticle,apDatabase,apDisplay
+import apImage,apParticle,apDatabase,apDisplay,apCorrelate
 import libCV
 import apLoop
 import numarray
@@ -12,9 +12,13 @@ import numarray.nd_image as nd_image
 import numarray.linear_algebra as linear_algebra
 import numarray.random_array as random_array
 import scipy.optimize as optimize
+import correlator
+import peakfinder
 
 def process(img1,img2,params):
-	name = os.path.join("jpgs",apDisplay.shortenImageName(img1['filename']))
+	jpgdir = os.path.join(params['rundir'],"jpgs")
+	os.makedirs(jpgdir,0777)
+	name = os.path.join(jpgdir,apDisplay.shortenImageName(img1['filename']))
 	#name = re.sub("0[01]_000(?P<id>[0-9][0-9]en)_0[01]","\g<id>",name)
 	#name = re.sub("_0+","_",name)
 	#name = re.sub("_v0[0-9]","",name)
@@ -22,20 +26,18 @@ def process(img1,img2,params):
 	tilt2 = apDatabase.getTiltAngle(img2,params)
 	dtilt = abs(tilt1 - tilt2)
 	print "total tilt angle=",round(dtilt,4)
-	apix = params['apix']
 
-	#blankblank1 = _createParticleHalos(img1,params)
-	blank1 = _doG(img1,params)
+	#blank1,numpart1 = _createParticleHalos(img1,params)
+	blank1 = _doG(img1, params)
 	apImage.arrayToJpeg(blank1,name+"-blank1.jpg")
 
-	#blank2 = _createParticleHalos(img2,params)
-	blank2 = _doG(img2,params)
+	#blank2,numpart2 = _createParticleHalos(img2,params)
+	blank2 = _doG(img2, params)
 	apImage.arrayToJpeg(blank2,name+"-blank2.jpg")
 
-	prob7 = 1.0
-	#prob7 = 1.0-(numpart1**-1.0 + numpart2**-1.0)*5.0
-	#if(prob7 < 0): prob7 = 0
-	#print "*** number particles (7)=",apDisplay.colorProb(prob7)
+	_getTiltedShift(blank1,tilt1,blank2,tilt2,name,params)
+	sys.exit(1)
+
 
 	trans,shift,prob1,prob8 = _compareImages(blank1,blank2,dtilt,params['binpixdiam'])
 	print "TRANS=\n",numarray.around(trans,3)
@@ -73,13 +75,67 @@ def process(img1,img2,params):
 	f.close()
 	#sys.exit(1)
 
+def findSubpixelPeak(image, npix=5, guess=None, limit=None, lpf=None):
+	#this is a temporary fix while Jim fixes peakfinder
+	pf=peakfinder.PeakFinder(lpf=lpf)
+	pf.subpixelPeak(newimage=image, npix=npix, guess=guess, limit=limit)
+	return pf.getResults()
+
+
+def _getTiltedShift(img1,tilt1,img2,tilt2,name,params):
+	apix = params['apix']
+	diam = params['diam']
+	bin = params['bin']
+	avgtilt = (tilt1 + tilt2)/2.0
+	trans1 = _rotMatrixDeg(avgtilt-tilt1)
+	trans2 = _rotMatrixDeg(avgtilt-tilt2)
+	print trans1
+	print trans2
+	untilt1 = nd_image.affine_transform(img1, trans1, mode='constant', cval=0.0)
+	untilt2 = nd_image.affine_transform(img2, trans2, mode='constant', cval=0.0)
+	apImage.arrayToJpeg(untilt1, name+"-untilt1.jpg")
+	apImage.arrayToJpeg(untilt2, name+"-untilt2.jpg")
+
+	cc=correlator.cross_correlate(untilt1,untilt2)
+	cc = apImage.preProcessImage(cc,bin=1,lowpass=diam/10.0,apix=apix*bin)
+	cc = apImage.normStdev(cc)
+	#apImage.printImageInfo(cc)
+	cc = numarray.where(cc<2.0,3.0,cc)
+	apImage.arrayToJpeg(cc, name+"-cc.jpg")
+	peakcc=findSubpixelPeak(cc, lpf=5) # this is a temp fix.
+	subpixpeakcc=peakcc['subpixel peak']
+	shiftcc=correlator.wrap_coord(subpixpeakcc,cc.shape)
+	print shiftcc
+
+	#pc = correlator.phase_correlate(untilt1,untilt2,zero=True)
+	pc = apCorrelate.phaseCorrelate(untilt1,untilt2)
+	pc = apImage.preProcessImage(pc,bin=1,lowpass=diam/10.0,apix=apix*bin)
+	pc = apImage.normStdev(pc)
+	#apImage.printImageInfo(pc)
+	pc = numarray.where(pc<2.0,3.0,pc)
+	apImage.arrayToJpeg(pc, name+"-pc.jpg")
+	#peakpc=findSubpixelPeak(pc, lpf=5) # this is a temp fix.  
+	#subpixpeakpc=peakpc['subpixel peak']
+	#shiftpc=correlator.wrap_coord(subpixpeakpc,pc.shape)
+	#print shiftpc
+
+	apImage.arrayToJpeg(cc*pc, name+"-mult.jpg")
+
+	shift = numarray.array((shiftcc[0],shiftcc[1]))
+	untilt1 = nd_image.affine_transform(img1, trans1, offset=shift, mode='constant', cval=0.0)
+	untilt2 = nd_image.affine_transform(img2, trans2, offset=-1*shift,  mode='constant', cval=0.0)
+	apImage.arrayToJpeg(untilt1, name+"-fixtilt1.jpg")
+	apImage.arrayToJpeg(untilt2, name+"-fixtilt2.jpg")
+	return shiftcc
+
 def _doG(img,params):
 	apix = params['apix']
 	diam = params['diam']
 	bin = params['bin']
 	dogimg = apImage.preProcessImage(img['image'],bin=bin,lowpass=diam/10.0,apix=apix)
-	dogimg = apImage.diffOfGauss(dogimg,apix=apix,bin=bin,diam=diam)
+	dogimg = apImage.diffOfGauss(dogimg,apix=apix,bin=bin,diam=diam,k=2.0)
 	return dogimg
+
 
 def _createParticleHalos(img,params):
 	immult = 1.5
@@ -98,8 +154,7 @@ def _createParticleHalos(img,params):
 	blank += immult*apImage.preProcessImage(img['image'],bin=4,lowpass=40,apix=apix)
 	if noise > 0:
 		blank += random_array.uniform(0.0, noise, shape=blank.shape)
-	return blank
-
+	return blank,numpart
 
 def _makeOutput(img1,img2,trans,matrix,shift,name):
 	"""
@@ -206,6 +261,11 @@ def _rotMatrixRad(tilt,twist=0.0,scale=1.0):
 	costwist = math.cos(twist)
 	sintwist = math.sin(twist)
 	tiltmat  = numarray.array([[ 1.0, 0.0 ], [ 0.0, math.cos(tilt) ]])
+	if tilt < 0:
+		print "expanding image"
+		tiltmat = linear_algebra.inverse(tiltmat)
+	else:
+		print "compressing image"
 	twistmat = numarray.array([[ costwist, -sintwist ], [ sintwist, costwist ]])
 	scalemat = numarray.array([[ scale, 0.0 ], [ 0.0, scale ]])
 	#return numarray.matrixmultiply(tiltmat,twistmat)

@@ -1,11 +1,17 @@
 #!/usr/bin/python -O
 
-import sys
+import sys,os
 import apLoop
 import apDog
 import apParticle
-	
+import apDisplay
+
 if __name__ == '__main__':
+
+	if not os.path.isfile("pcavects.txt"):
+		apDisplay.printError("dogPicker.py requires the file 'pcavects.txt'\n"+
+			"\tto be in the directory where you run the script")
+
 	(images,stats,params,donedict) = apLoop.startNewAppionFunction(sys.argv)
 
 	notdone = True
