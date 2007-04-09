@@ -11,12 +11,8 @@
 import convolver
 import imagefun
 
-try:
-	import numarray as Numeric
-	from numarray.linear_algebra import linear_least_squares
-except:
-	import Numeric
-	from LinearAlgebra import linear_least_squares
+import numarray
+from numarray.linear_algebra import linear_least_squares
 
 class FindPeakError(Exception):
 	pass
@@ -75,7 +71,7 @@ class PeakFinder(object):
 				cropcenter = None
 				im = self.image
 
-			peak = Numeric.argmax(im.flat)
+			peak = numarray.argmax(im.flat)
 			peakvalue = im.flat[peak]
 			rows,cols = im.shape
 			peakrow = peak / cols
@@ -102,16 +98,16 @@ class PeakFinder(object):
 
 	def quadFitPeak(self, numarray):
 		'''
-		fit 2d quadratic to a Numeric array which should
+		fit 2d quadratic to a numarray array which should
 		contain a peak.
 		Returns the peak coordinates, and the peak value
 		'''
 		rows,cols = numarray.shape
 
 		## create design matrix and vector
-		dm = Numeric.zeros(rows * cols * 5, Numeric.Float32)
+		dm = numarray.zeros(rows * cols * 5, numarray.Float32)
 		dm.shape = (rows * cols, 5)
-		v = Numeric.zeros((rows * cols,), Numeric.Float32)
+		v = numarray.zeros((rows * cols,), numarray.Float32)
 
 		i = 0
 		for row in range(rows):
@@ -182,7 +178,7 @@ def findSubpixelPeak(image, npix=5, guess=None, limit=None, lpf=None):
 	return pf.getResults()
 
 if __name__ == '__main__':
-	im = Numeric.array(
+	im = numarray.array(
 		[[1,1,1],
 		[1,3,2],
 		[1,1,1]]
