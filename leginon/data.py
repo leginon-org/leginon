@@ -1506,6 +1506,7 @@ class FocuserResultData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('target', AcquisitionImageTargetData),
+			('preset', PresetData),
 			('defocus', float),
 			('stigx', float),
 			('stigy', float),

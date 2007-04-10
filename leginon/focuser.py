@@ -398,6 +398,7 @@ class Focuser(acquisition.Acquisition):
 	def processFocusSetting(self, setting, emtarget=None):
 		resultdata = data.FocuserResultData(session=self.session)
 		resultdata['target'] = emtarget['target']
+		resultdata['preset'] = emtarget['preset']
 		resultdata['method'] = setting['focus method']
 		status = 'unknown'
 		preset_name = setting['preset name']
