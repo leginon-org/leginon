@@ -76,6 +76,8 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 			self.logger.info('Filter input: %d' % (len(oldtargets),))
 			newtargets = self.filterTargets(oldtargets)
 			self.logger.info('Filter output: %d' % (len(newtargets),))
+			self.markTargetsDone(oldtargets)
+			self.logger.info('Original targets marked done.')
 			newtargetlistdata = self.newTargetList()
 			newtargetlistdata.update(targetlistdata)
 			self.publish(newtargetlistdata, database=True, dbforce=True)
