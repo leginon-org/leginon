@@ -16,7 +16,6 @@ import numarray.convolve as convolve
 import numarray.fft as fft
 import numarray.random_array as random_array
 import numarray.linear_algebra as linear_algebra
-import threading
 import selexonFunctions as sf1
 #import numextension
 #import mem

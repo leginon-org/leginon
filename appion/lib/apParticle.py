@@ -251,12 +251,10 @@ def drawPeaks(peaks,draw,bin,pixrad,circmult=1.0,numcircs=2,circshape="circle"):
 
 	#00000000 1 2 3333 44444 5555555555 666666666 777777777
 	#filename x y mean stdev corr_coeff peak_size templ_num angle moment
-	psm1 = ps - 1
 	for p in peaks:
 		x1=float(p['xcoord'])/float(bin)
 		y1=float(p['ycoord'])/float(bin)
 
-		coord2=(x1-psm1, y1-psm1, x1+psm1, y1+psm1)
 		if 'template' in p:
 			#GET templ_num
 			num = int(p['template'])%12

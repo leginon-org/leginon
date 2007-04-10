@@ -166,6 +166,14 @@ def writeFunctionLog(commandline, params=None, file=None):
 	f.write("\n")
 	f.close()
 
+def createDirectory(path, mode=0777):
+	if os.path.exists(path):
+		apDisplay.printWarning("directory \'"+path+"\' already exists.")
+		return False
+	os.makedirs(path,mode)
+	return True
+
+
 def createOutputDirs(params):
 	sessionq=data.SessionData(name=params['sessionname'])
 	#sessionq=data.SessionData(name=params['session']['name'])
@@ -180,20 +188,13 @@ def createOutputDirs(params):
 		outdir=os.path.join(outdir,params['function']+"/") #'extract/')
 		params['outdir']=outdir
 
-	if os.path.exists(params['rundir']):
-		apDisplay.printWarning("run directory for \'"+str(params['runid'])+"\' already exists.")
-		if params['continue']==False:
-			apDisplay.printWarning("continue option is OFF. you WILL overwrite previous run.")
-			time.sleep(10)
-		#else:
-			#if(params['function'] == "pyace"):
-				#os.makedirs(params['matdir'],0777)
-				#os.makedirs(params['opimagedir'],0777)
-	else:
-		os.makedirs(params['rundir'],0777)
-		if(params['function'] == "pyace"):
-			os.makedirs(params['matdir'],0777)
-			os.makedirs(params['opimagedir'],0777)
+	if not createDirectory(params['rundir']) and params['continue']==False:
+		apDisplay.printWarning("continue option is OFF. you WILL overwrite previous run.")
+		time.sleep(10)
+
+	if(params['function'] == "pyace"):
+		createDirectory(params['matdir'])
+		createDirectory(params['opimagedir'])
 
 	if(params['sessionname'] != None):
 		params['outtextfile']=os.path.join(params['rundir'],(params['sessionname']+'.txt'))

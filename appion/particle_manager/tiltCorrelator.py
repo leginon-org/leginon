@@ -8,6 +8,7 @@ import time
 import random
 import apLoop
 import apTilt
+import apDisplay
 sys.stderr.write("done\n")
 
 data.holdImages(False)
@@ -34,7 +35,7 @@ if __name__ == '__main__':
 	while notdone:
 		for key,pair in imagepairs.items():
 			if len(pair) == 1 or len(pair) > 2:
-				print "\nERROR:",pair[0]['filename'],"is not a pair of images"
+				apDisplay.printWarning(apDisplay.short(pair[0]['filename'])+" is not a pair of images")
 				stats['notpair']+=1
 			if len(pair) == 2:
 				img1,img2 = pair
@@ -47,7 +48,7 @@ if __name__ == '__main__':
 					continue
 
 				#PROCESS PAIR
-				print "PROCESSING\n\t",imgname1,"\n\t",imgname2
+				print "PROCESSING\n\t",apDisplay.short(imgname1),"\n\t",apDisplay.short(imgname2)
 				apTilt.process(img1,img2,params)
 
 				apLoop.writeDoneDict(donedict,params,imgname1)

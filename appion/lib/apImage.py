@@ -4,6 +4,7 @@ import math
 import imagefun
 import convolver
 import Image
+import ImageDraw
 import numarray
 import numarray.nd_image as nd_image
 import numarray.linear_algebra as linear_algebra
@@ -338,19 +339,32 @@ def _whiteNormalizeImage(a, stdevLimit=3.0):
 	"""
 	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel=55.0,maxlevel=255.0,trim=0.0)	
 
+def cutEdges(img,trim=0.1):
+	"""
+	cut the edges of an image off by trim percent
+	0.0 < trim < 1.0
+	"""
+	if trim >= 100.0 or trim < 0.0:
+		apDisplay.printError("trim ("+str(trim)+") is out of range in cutEdges")
+	elif trim >= 1.0:
+		trim = trim/100.0
+	elif trim == 0:
+		return img
+	sidetrim = trim/2.0
+	xcut1 = int(img.shape[0]*sidetrim)
+	ycut1 = int(img.shape[1]*sidetrim)
+	xcut2 = int(img.shape[0]*(1.0-sidetrim))
+	ycut2 = int(img.shape[1]*(1.0-sidetrim))
+	mid = img[xcut1:xcut2,ycut1:ycut2].copy()
+
+	return mid
+
 def _normalizeImage(img,stdevLimit=3.0,minlevel=0.0,maxlevel=255.0,trim=0.0):
 	"""	
 	Normalizes numarray to fit into an image format
 	that is values between 0 (minlevel) and 255 (maxlevel).
 	"""
-	if trim > 0.0:
-		xcut1 = int(img.shape[0]*trim)
-		ycut1 = int(img.shape[1]*trim)
-		xcut2 = int(img.shape[0]*(1.0-trim))
-		ycut2 = int(img.shape[1]*(1.0-trim))
-		mid = img[xcut1:xcut2,ycut1:ycut2]
-	else:
-		mid = img
+	mid = cutEdges(img,trim)
 
  	imrange = maxlevel - minlevel
 
@@ -401,4 +415,59 @@ def printImageInfo(im):
 
 	return avg1,stdev1,min1,max1
 
+def arrayToJpegPlusPeak(numer,outfile,peak,normalize=True):
+	"""
+	takes a numarray and writes a JPEG
+	best for micrographs and photographs
+	"""
+	if normalize:
+		numer = _maxNormalizeImage(numer)
+	else:
+		numer = numer*255
+	image = _arrayToImage(numer)
+	image = image.convert("RGB")
 
+	draw = ImageDraw.Draw(image)
+
+	for i in range(2):
+		if peak[i] < 0:
+			peak[i] = (numer.shape)[i] + peak[i]
+		elif peak[i] > (numer.shape)[i]:
+			peak[i] = peak[i] - (numer.shape)[i]
+	drawPeak(peak, draw)
+
+	print " ... writing JPEG: ",outfile
+	image.save(outfile, "JPEG", quality=85)
+
+	return
+
+def drawPeak(peak, draw, rad=10.0, color0="red", numshapes=4, shape="circle"):
+	"""	
+	Draws a shape around a peak
+	"""
+
+	mycolors = { 
+		"red":		"#ff4040",
+		"green":	"#3df23d",
+		"blue":		"#3d3df2",
+		"yellow":	"#f2f23d",
+		"cyan":		"#3df2f2",
+		"magenta":	"#f23df2",
+		"orange":	"#f2973d",
+		"teal":		"#3df297",
+		"purple":	"#973df2",
+		"lime":		"#97f23d",
+		"skyblue":	"#3d97f2",
+		"pink":		"#f23d97", 
+	}
+	row1=float(peak[0])
+	col1=float(peak[1])
+	#Draw (numcircs) circles of size (circmult*pixrad)
+	for count in range(numshapes):
+		trad = rad + count
+		coord=(col1-trad, row1-trad, col1+trad, row1+trad)
+		if(shape == "square"):
+			draw.rectangle(coord,outline=mycolors[color0])
+		else:
+			draw.ellipse(coord,outline=mycolors[color0])
+	return

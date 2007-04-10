@@ -24,18 +24,27 @@ def printError(text):
 
 def shortenImageName(imgname):
 	"""
-	takes a long image name and truncates it for display purpose
+	takes a long imagename and truncates it for display purposes
 	"""
+	shortimgname = imgname
+	#remove the altas name
+	shortimgname = re.sub("^(?P<ses>[0-9][0-9][a-z][a-z][a-z][0-9][0-9][a-z])_.+(?P<gr>0[^0]gr)",
+		"\g<ses>_\g<gr>",shortimgname)
 	#remove the version tags
-	shortimgname = re.sub("_v[0-9][0-9]","",imgname)
+	shortimgname = re.sub("_v[0-9][0-9]","",shortimgname)
 	#remove extra leading zeros, but leave one
 	shortimgname = re.sub("_00+(?P<num>0[^0])","_\g<num>",shortimgname)
+	#first RCT id, keep second
+	shortimgname = re.sub("_[0-9][0-9]_(?P<en>[0-9]+en)","_\g<en>",shortimgname)
 	#remove double underscores
 	shortimgname = re.sub("__","_",shortimgname)
 	#remove orphaned underscores
 	shortimgname = re.sub("_+$","",shortimgname)
 	return shortimgname
 
+def short(imgname):
+	# ALIAS to shortenImageName
+	return shortenImageName(imgname)
 
 def timeString(avg,stdev=0):
 	""" 

@@ -1,5 +1,12 @@
 #Future home of cross-correlation functions
 
+import numarray
+import numarray.nd_image as nd_image
+import numarray.convolve as convolve
+import numarray.fft as fft
+import numarray.random_array as random_array
+import numarray.linear_algebra as linear_algebra
+
 def runCrossCorr(params,file):
 	# Run Neil's version of FindEM
 	#imagefile = file+".mrc"
@@ -310,7 +317,9 @@ def phaseCorrelate(image, template):
 
 	#NORMALIZE CC TO GET PC
 	print "d"
-	phasefft = newfft / numarray.absolute(newfft)
+	absfft = numarray.absolute(newfft.copy())
+	phasefft = numarray.where(absfft>0, newfft/absfft, 0)
+	#phasefft = newfft / numarray.absolute(newfft)
 	del newfft
 	print "d"
 
