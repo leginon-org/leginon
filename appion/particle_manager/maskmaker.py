@@ -6,13 +6,19 @@ import sys
 import os
 import data
 import apLoop
-import apCrud
+import apCrudFinder
 import apParticle
 import particleData
+import apDatabase
+import numarray
+import apImage
+import numarray.ma as ma
+import imagenode
 
-class MaskMaker:
+class MaskMaker(imagenode.ImageNode):
 	settingsclase = particleData.MaskMakerSettingsData
-	defaultsettings = {
+	defaultsettings = dict(imagenode.ImageNode.defaultsettings)
+	defaultsettings.update({
 		'masktype':'custom',
 		'cdiam':0,
 		'cblur':3.5,
@@ -27,37 +33,52 @@ class MaskMaker:
 		'no_length_prune':False,
 		'stdev':0.0,
 		'test':False
-	}
+	})
 	def __init__(self):
-		self.settings = {}
+		imagenode.ImageNode.__init__
+		self.functionname = 'mask'
+		self.resulttypes = ['region']
 		print "started"
 	
-	def prepImage(image,cutoff=5.0):
-		shape=numarray.shape(image)
-		garea,gavg,gstdev=maskImageStats(image)
-		print 'image mean= %.1f stdev= %.1f' %(gavg,gstdev)
-		cleanimage=ma.masked_outside(image,gavg-cutoff*gstdev,gavg+cutoff*gstdev)
-		carea,cavg,cstdev=maskImageStats(cleanimage)
-	
-		image=cleanimage.filled(cavg)
-		return image
-		
-	def getImage(self,imgname,binning):
-		image = apDatabase.getImageData(imagename)['image']
-		image=imagefun.bin(image,bin)
-		shape=numarray.shape(image)
-		cutoff=8.0
-		# remove spikes in the image first
-		image=self.prepImage(image,cutoff)
-		return image	
-	
+	def modifyParams(self,params):
+		if params['masktype']=='crud':
+			params['convolve']=0.0
+			params['no_hull']=False
+			params['cv']=False
+			params['no_length_prune']=False
+
+		else:
+			if params['masktype']=='aggr':
+				print "----Aggregate Mask by Convolution of Particles with Disk at Particle Size----"
+				if float(params['binpixdiam']) < 20 :
+					print "----Particle too small, Probably Won't Work----"
+				else:
+					if float(params['convolve'])<=0.0:
+						print "----Convolution Threshold not set, Won't Work----"
+						sys.exit()
+			
+				params['no_hull']=True
+				params['cv']=False
+				params['no_length_prune']=False
+				if params['stdev']==0.0:
+					params['stdev']=1.0
+			else:
+				if params['masktype']=='edge':
+					params['convolve']=0.0
+					params['no_hull']=True
+					params['cv']=True
+					params['no_length_prune']=False
+		if params['test']==True:
+			params['commit']=False
+		return params	
+
 	def makeMask(self,params,image):
 		shape = numarray.shape(image)
 		mask = numarray.zeros(shape)
-		regioninfos = []
-		return mask, regioninfos	
+		regioninfos = [[10,20,30,40,(50,60)],]
+		return regioninfos, mask	
 
-	def writeRegionInfo(self,imagename,path,infos):
+	def writeResultsToFile(self,imagename,infos,path,resulttype='region'):
 		# infos is a list of information or a dictionary using non-zero index as keys
 		# area,avg,stdev,length,(centerRow,centerColumn)
 		if len(infos)==0:
@@ -75,12 +96,12 @@ class MaskMaker:
 			info=infos[l]
 			regionline=" %s.mrc %d %d %.1f %.1f %.1f %d\n" %(imagename,int(info[4][1]),int(info[4][0]),info[0],info[1],info[2],int(info[3]))
 			regionlines=regionlines+regionline
-		regionfile=open(path+imagename+".region",'w')
+		regionfile=open(path+"/"+imagename+".region",'w')
 		regionfile.write(regionlines+"\n")
 		regionfile.close()
 
 	
-	def writeRegionInfoToDB(self,maskrun,img,expid,infos):
+	def writeResultsToDB(self,img,expid,maskrun,infos):
 		# infos is a list of information or a dictionary using non-zero index as keys
 		# area,avg,stdev,length,(centerRow,centerColumn)
 		imgids=apParticle.getDBparticledataImage(img,expid)
@@ -99,69 +120,28 @@ class MaskMaker:
 			info=infos[l]
 			apParticle.insertMaskRegion(maskrun,imgids[0],info)
 
-	def writeMaskImage(self,imagename,path,mask):
-		# remove old mask file if it exists
+	def writeResultImageToFile(self,imagename,path,mask):
 		maskfile=path+"/"+imagename+"_mask.png"
 		if (os.path.exists(maskfile)):
 			os.remove(maskfile)
-		if mask is not None:
-			apImage.arrayMaskToPngAlpha(mask,maskfile)
-
-	def start(self,argvlist):
-		data.holdImages(False)
-		print argvlist
-		(images,stats,params,donedict) = apLoop.startNewAppionFunction(argvlist)
-		params=apCrud.modifyParams(params)
-		run_dir=params["outdir"]+"/"+params["runid"]+"/"
-		# create "run" directory if doesn't exist
-		if not (os.path.exists(run_dir)):
-			os.mkdir(run_dir)
-
-		if params['commit']:
-			maskruns=[]
-			# Insertion is repeated until the query result is not empty
-			# This is necessary because insertion can be slow
-			maskruns=apParticle.insertMakeMaskParams(params)
-			maskrun=maskruns[0]
+		apImage.arrayMaskToPngAlpha(mask,maskfile)
+			
+	def outputTestImage(self,array,name,description,testlog):
+		width=25
+		if testlog[0]:
+			jpgname="tests/%02d%s.jpg" %(testlog[1],name)
+			space=(width-len(jpgname))*' '
+			testlog[2]+= "%s:%s%s\n" % (jpgname,space,description)
+			testlog[1] += 1
 		else:
-			# create "regioninfo" directory if doesn't exist
-			info_dir=run_dir+"/regions/"
-			if not (os.path.exists(info_dir)):
-				os.mkdir(info_dir)
+			return testlog
+		apImage.arrayToJpeg(array,jpgname)
+		return testlog
 
-			# remove region info file if it exists
-			if (os.path.exists(info_dir+"*.region")):
-				os.remove(info_dir+"*.region")
-	
-		notdone=False
-		while notdone:
-			while images:
-				img = images.pop(0)
-				imgname=img['filename']
-				stats['imagesleft'] = len(images)
+	def function(self,params,binnedimage):
+		results,resultimage = apCrudFinder.makeMask(params,binnedimage)
+		return results,resultimage
 
-				#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
-				if( apLoop.startLoop(img, donedict, stats, params)==False ):
-					continue
-				image = self.getImage(imgname,params['bin'])
-				mask,regioninfos=self.makeMask(params,image)
-				if params['commit']:
-					self.writeRegionInfoToDB(maskrun,img,params['session'].dbid,regioninfos)
-				else:
-					# remove region info file if it exists
-					if (os.path.exists(info_dir+imgname+".region")):
-						os.remove(info_dir+imgname+".region")
-					self.writeRegionInfo(imgname,info_dir,regioninfos)
-				if not params['test']:
-					self.writeMaskImage(imgname,run_dir,mask)
-					
-				#NEED TO DO SOMETHING ELSE IF particles ARE ALREADY IN DATABASE
-				apLoop.writeDoneDict(donedict,params,imgname)
-				apLoop.printSummary(stats, params)
-				#END LOOP OVER IMAGES
-			notdone,images = apLoop.waitForMoreImages(stats, params)
-			#END NOTDONE LOOP	
-		apLoop.completeLoop(stats)
 
 if __name__ == '__main__':
 	print sys.argv
