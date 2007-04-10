@@ -7,6 +7,7 @@ import Image
 import numarray
 import numarray.nd_image as nd_image
 import numarray.linear_algebra as linear_algebra
+import numarray.ma as ma
 
 
 def preProcessImage(img,bin=1,apix=1.0,lowpass=0.0,planeReg=True):
@@ -126,6 +127,20 @@ def planeRegression(img):
 	newarray = img - xarray*resvec[0] - yarray*resvec[1] - resvec[2]
 	del img,xarray,yarray,resvec
 	return newarray
+
+def maskImageStats(mimage):
+	n=ma.count(mimage)
+	mimagesq=mimage*mimage
+	sum1=ma.sum(mimage)
+	sum2=ma.sum(sum1)
+	sumsq1=ma.sum(mimagesq)
+	sumsq2=ma.sum(sumsq1)
+	avg=sum2/n
+	if (n > 1):
+		stdev=math.sqrt((sumsq2-sum2*sum2/n)/(n-1))
+	else:
+		stdev=2e20
+	return n,avg,stdev
 
 def normRange(img):
 	"""
