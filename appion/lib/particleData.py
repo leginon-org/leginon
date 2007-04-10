@@ -169,6 +169,27 @@ class stackParams(data.Data):
 	typemap = classmethod(typemap)
 data.stackParams=stackParams
 
+class MaskMakerSettingsData(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('dbemdata|SessionData|session', int),
+			('mask path', str),
+			('name', str),
+			('bin', int),
+			('mask type', str),
+			('pdiam', int),
+			('region diameter', int),
+			('edge blur', float),
+			('edge low', float),
+			('edge high', float),
+			('region std', float),
+			('convolve', float),
+			('convex hull', bool),
+			('libcv', bool),
+		)
+	typemap = classmethod(typemap)
+data.makeMaskParams=makeMaskParams
+
 class stackParticles(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
