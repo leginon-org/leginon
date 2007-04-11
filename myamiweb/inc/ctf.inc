@@ -159,7 +159,6 @@ class ctfdata {
 			."		i.`dbemdata|AcquisitionImageData|image`, "
 			."		i.`DEF_id`, "
 			."		p.`name`, "
-			."		i.`dbemdata|AcquisitionImageData|image`, "
 			."		i.`dbemdata|ScopeEMData|defocus`, "
 			."		c.`defocus1`, c.`defocus2`, c.`defocusinit`, c.`angle_astigmatism`, "
 			."		c.`noise1`, c.`noise2`, c.`noise3`, c.`noise4`, "
