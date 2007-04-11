@@ -166,6 +166,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.presetsclient = presets.PresetsClient(self)
 		self.navclient = navigator.NavigatorClient(self)
 		self.doneevents = {}
+		self.onTarget = False
 		self.imagelistdata = None
 		self.simloopstop = threading.Event()
 		self.received_image_drift = threading.Event()
@@ -260,6 +261,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				return 'repeat'
 
 		ret = 'ok'
+		self.onTarget = False
 		for newpresetname in presetnames:
 			if self.alreadyAcquired(targetdata, newpresetname):
 				continue
@@ -479,13 +481,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.logger.warning('Navigator cannot be used for image shift, using Presets Manager instead')
 				movefunction = 'presets manager'
 			self.setStatus('waiting')
-			if movefunction == 'presets manager':
-				self.presetsclient.toScope(presetname, emtarget)
-			elif movefunction == 'navigator':
+			if movefunction == 'navigator' and not self.onTarget:
 				if targetdata['type'] != 'simulated':
 					precision = self.settings['move precision']
 					self.navclient.moveToTarget(targetdata, movetype, precision)
-				self.presetsclient.toScope(presetname, None)
+					emtarget = None
+			self.presetsclient.toScope(presetname, emtarget)
+			self.onTarget = True
 			self.setStatus('processing')
 
 	def acquireCCD(self, presetdata, emtarget=None):
