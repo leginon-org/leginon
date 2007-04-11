@@ -197,6 +197,14 @@ class particledata {
 		return $r[0]['num'];
 	}    
 
+        function getStackIdFromReconId ($reconId) {
+	        $q= "SELECT * "
+		   ."FROM `reconRun` "
+		  ."WHERE `DEF_id` = '$reconId'";
+		$r = $this->mysql->getSQLResult($q);
+	        return $r[0]['REF|stackParams|stackId'];
+	}    
+
         function getPixelSizeFromStackId($stackId) {
 	        $q= "SELECT `REF|InstrumentData|tem` t, magnification m, `REF|InstrumentData|ccdcamera` c, a.`DEF_timestamp` time "
                    ."FROM stackParticles sp "
