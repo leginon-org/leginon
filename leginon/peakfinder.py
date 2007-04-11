@@ -96,14 +96,14 @@ class PeakFinder(object):
 
 		return self.results['pixel peak']
 
-	def quadFitPeak(self, numarray):
+	def quadFitPeak(self, array):
 		'''
 		fit 2d quadratic to a numarray array which should
 		contain a peak.
 		Returns the peak coordinates, and the peak value
 		'''
-		rows,cols = numarray.shape
-
+		rows,cols = array.shape
+		
 		## create design matrix and vector
 		dm = numarray.zeros(rows * cols * 5, numarray.Float32)
 		dm.shape = (rows * cols, 5)
@@ -113,7 +113,7 @@ class PeakFinder(object):
 		for row in range(rows):
 			for col in range(cols):
 				dm[i] = (row**2, row, col**2, col, 1)
-				v[i] = numarray[row,col]
+				v[i] = array[row,col]
 				i += 1
 
 		## fit quadratic
