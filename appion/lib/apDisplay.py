@@ -72,14 +72,14 @@ def timeString(avg,stdev=0):
 			timestr = str(int(avg/3600.0))+" hrs "+str(int((avg/3600.0-int(avg/3600.0))*60.0+0.5))+" min"
 	return str(timestr)
 
-def printDataBox(labellist,numlist,typelist):
+def printDataBox(labellist,numlist,typelist=None):
 	"""
 	prints a data box, used in pyace
 	"""
-	if len(labellist) != len(numlist) or len(typelist) != len(numlist):
-		print "\nERROR: in _printWindow() list lengths are off"
+	if( len(labellist) != len(numlist) 
+	 or ( typelist!=None and len(typelist) != len(numlist) ) ):
 		print len(labellist)," != ",len(numlist)," != ",len(typelist)
-		sys.exit(1)
+		printError("printDataBox() list lengths are off")
 	print _headerStr(labellist)
 	labelstr = " "
 	for lab in labellist:
@@ -92,7 +92,7 @@ def printDataBox(labellist,numlist,typelist):
 	datastr = " "
 	for i in range(len(labellist)):
 		datastr += "| "
-		if typelist[i] == 1:
+		if typelist==None or typelist[i] == 1:
 			numstr = colorProb(numlist[i])
 		elif numlist[i] < 0:
 			numstr = "%2.2f" % numlist[i]

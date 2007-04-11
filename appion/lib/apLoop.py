@@ -171,13 +171,12 @@ def startLoop(img,donedict,stats,params):
 	and checks if it is okay to start processing image
 	"""
 	#calc images left
-	stats['imagesleft'] = stats['imagecount'] - stats['count']
+	stats['imagesleft'] = stats['imagecount'] - stats['count'] - stats['skipcount']
 
 	#only if an image was processed
 	if(stats['lastcount'] != stats['count']):
-		remainImg = stats['imagecount']-stats['count']-stats['skipcount']
 		print "\nStarting new image",stats['count'],"( skip:",stats['skipcount'],\
-			", left:",remainImg,")",apDisplay.shortenImageName(img['filename'])
+			", left:",stats['imagesleft'],")",apDisplay.shortenImageName(img['filename'])
 		stats['lastcount'] = stats['count']
 		checkMemLeak(stats)
 

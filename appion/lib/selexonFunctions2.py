@@ -60,8 +60,6 @@ def runCrossCorr(params,file):
 	
 	numpeaks = mergePikFiles(file,blobs,params)
 
-	del blobs
-
 	return numpeaks
 
 #########################################################
@@ -389,7 +387,6 @@ def findPeaks2(params,file):
 	del ccmaxmap
 
 	numpeaks = mergePikFiles(file,blobs,params)
-	del blobs
 
 	return numpeaks
 

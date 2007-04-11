@@ -66,8 +66,11 @@ def lowPassFilter(img,apix=1.0,bin=1,radius=0.0):
 		print " ... skipping low pass filter"
 		return(img)
 	else:
-		print " ... performing low pass filter"
 		sigma=float(radius)/apix/3.0/float(bin)
+		if(sigma > 10):
+			print " ... performing BIG low pass filter"
+		else:
+			print " ... performing low pass filter"
 		kernel=convolver.gaussian_kernel(sigma)
 	c=convolver.Convolver()
 	return(c.convolve(image=img,kernel=kernel))
@@ -128,20 +131,6 @@ def planeRegression(img):
 	newarray = img - xarray*resvec[0] - yarray*resvec[1] - resvec[2]
 	del img,xarray,yarray,resvec
 	return newarray
-
-def maskImageStats(mimage):
-	n=ma.count(mimage)
-	mimagesq=mimage*mimage
-	sum1=ma.sum(mimage)
-	sum2=ma.sum(sum1)
-	sumsq1=ma.sum(mimagesq)
-	sumsq2=ma.sum(sumsq1)
-	avg=sum2/n
-	if (n > 1):
-		stdev=math.sqrt((sumsq2-sum2*sum2/n)/(n-1))
-	else:
-		stdev=2e20
-	return n,avg,stdev
 
 def normRange(img):
 	"""
@@ -391,6 +380,21 @@ def _normalizeImage(img,stdevLimit=3.0,minlevel=0.0,maxlevel=255.0,trim=0.0):
 
 	return img
 
+
+def maskImageStats(mimage):
+	n=ma.count(mimage)
+	mimagesq=mimage*mimage
+	sum1=ma.sum(mimage)
+	sum2=ma.sum(sum1)
+	sumsq1=ma.sum(mimagesq)
+	sumsq2=ma.sum(sumsq1)
+	avg=sum2/n
+	if (n > 1):
+		stdev=math.sqrt((sumsq2-sum2*sum2/n)/(n-1))
+	else:
+		stdev=2e20
+	return n,avg,stdev
+
 def getImageInfo(im):
 	"""
 	prints out image information good for debugging
@@ -415,7 +419,7 @@ def printImageInfo(im):
 
 	return avg1,stdev1,min1,max1
 
-def arrayToJpegPlusPeak(numer,outfile,peak,normalize=True):
+def arrayToJpegPlusPeak(numer,outfile,peak=None,normalize=True):
 	"""
 	takes a numarray and writes a JPEG
 	best for micrographs and photographs
@@ -427,21 +431,22 @@ def arrayToJpegPlusPeak(numer,outfile,peak,normalize=True):
 	image = _arrayToImage(numer)
 	image = image.convert("RGB")
 
-	draw = ImageDraw.Draw(image)
-
-	for i in range(2):
-		if peak[i] < 0:
-			peak[i] = (numer.shape)[i] + peak[i]
-		elif peak[i] > (numer.shape)[i]:
-			peak[i] = peak[i] - (numer.shape)[i]
-	drawPeak(peak, draw)
+	if peak != None:
+		draw = ImageDraw.Draw(image)
+		peak2 = peak.copy()
+		for i in range(2):
+			if peak[i] < 0:
+				peak2[i] = (numer.shape)[i] + peak[i]
+			elif peak[i] > (numer.shape)[i]:
+				peak2[i] = peak[i] - (numer.shape)[i]
+		drawPeak(peak2, draw, numer.shape)
 
 	print " ... writing JPEG: ",outfile
 	image.save(outfile, "JPEG", quality=85)
 
 	return
 
-def drawPeak(peak, draw, rad=10.0, color0="red", numshapes=4, shape="circle"):
+def drawPeak(peak, draw, imshape, rad=10.0, color0="red", numshapes=4, shape="circle"):
 	"""	
 	Draws a shape around a peak
 	"""
@@ -460,14 +465,18 @@ def drawPeak(peak, draw, rad=10.0, color0="red", numshapes=4, shape="circle"):
 		"skyblue":	"#3d97f2",
 		"pink":		"#f23d97", 
 	}
-	row1=float(peak[0])
-	col1=float(peak[1])
+	row1=float(peak[1])
+	col1=float(peak[0])
 	#Draw (numcircs) circles of size (circmult*pixrad)
 	for count in range(numshapes):
 		trad = rad + count
-		coord=(col1-trad, row1-trad, col1+trad, row1+trad)
+		coord=(row1-trad, col1-trad, row1+trad, col1+trad)
 		if(shape == "square"):
 			draw.rectangle(coord,outline=mycolors[color0])
 		else:
 			draw.ellipse(coord,outline=mycolors[color0])
+	updown    = (0, imshape[1]/2, imshape[0], imshape[1]/2)
+	leftright = (imshape[0]/2, 0, imshape[0]/2, imshape[1])
+	draw.line(updown,   fill=mycolors['blue'])
+	draw.line(leftright,fill=mycolors['blue'])
 	return

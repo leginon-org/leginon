@@ -2,7 +2,7 @@
 
 rm -f `find .. -name "*.py[oc]"`
 rm -f `find .. -name "*~"`
-rm -fr icetiltsdb negtiltsdb
+#rm -fr icetiltsdb negtiltsdb
 
 
 tiltCorrelator.py \
@@ -10,7 +10,7 @@ tiltCorrelator.py \
   outdir=. diam=140 bin=4 \
   runid=icetiltsdb prtlrunid=96 commit
 
-tiltCorrelator2.py \
+tiltCorrelator.py \
   dbimages=07jan05b,en  \
   outdir=. diam=140 bin=4 \
   runid=negtiltsdb prtlrunId=59 commit
