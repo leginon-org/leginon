@@ -26,7 +26,6 @@ def gaussfit(im):
 	result = result[0]
 
 	residuals = gaussfit_residuals(im, result)
-	print 'STDEV', residuals.std()
 	chisquare = numpy.sum(residuals**2)
 
 	return result, residuals, chisquare
