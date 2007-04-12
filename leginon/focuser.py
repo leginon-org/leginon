@@ -387,7 +387,7 @@ class Focuser(acquisition.Acquisition):
 
 	def measureTiltAxis(self, atilt):
 		atilt = atilt * 3.14159 / 180.0
-		im0, pixelshift = self.stagetiltcalclient.measureTiltAxisLocation(atilt, correlation_type='cross')
+		im0, pixelshift = self.stagetiltcalclient.measureTiltAxisLocation(atilt, correlation_type='phase')
 
 		oldscope = im0['scope']
 		newscope = self.imageshiftcalclient.transform(pixelshift, oldscope, im0['camera'])
