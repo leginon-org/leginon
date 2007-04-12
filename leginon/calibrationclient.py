@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.199 $
+# $Revision: 1.200 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-03-13 23:21:34 $
+# $Date: 2007-04-12 20:57:23 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -1038,6 +1038,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		self.displayCorrelation(pc)
 
 		peak01 = peakfinder.findSubpixelPeak(pc)
+		peak01 = peak01['subpixel peak']
 		shift01 = correlator.wrap_coord(peak01, pc.shape)
 		self.displayPeak(peak01)
 
