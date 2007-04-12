@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.200 $
+# $Revision: 1.201 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-12 20:57:23 $
+# $Date: 2007-04-12 21:05:57 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -1049,6 +1049,10 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		newscope = self.transform(pixelshift, imagedata0['scope'], imagedata0['camera'])
 		## only want the y offset (distance from tilt axis)
 		deltay = newscope['stage position']['y'] - imagedata0['scope']['stage position']['y']
+
+		axisoffset = data.StageTiltAxisOffsetData(offset=deltay)
+		self.node.publish(axisoffset, database=True, dbforce=True)
+
 		self.node.logger.info('stage delta y: %s' % (deltay,))
 		shift = {'x':0, 'y':deltay}
 		position = dict(imagedata0['scope']['stage position'])

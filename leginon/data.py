@@ -2415,3 +2415,10 @@ class TimerData(InSessionData):
 			('diff', float),
 		)
 	typemap = classmethod(typemap)
+
+class StageTiltAxisOffsetData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('offset', float),
+		)
+	typemap = classmethod(typemap)
