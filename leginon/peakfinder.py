@@ -13,6 +13,7 @@ import imagefun
 
 import numarray
 from numarray.linear_algebra import linear_least_squares
+import gaussfit
 
 class FindPeakError(Exception):
 	pass
@@ -96,14 +97,18 @@ class PeakFinder(object):
 
 		return self.results['pixel peak']
 
-	def quadFitPeak(self, array):
+	def gaussFitPeak(self, a):
+		sol = gaussfit.gaussfit(a)
+		return {'row': sol[0][3], 'col': sol[0][4], 'minsum': sol[2], 'coeffs': sol[0], 'value':None }
+
+	def quadFitPeak(self, a):
 		'''
 		fit 2d quadratic to a numarray array which should
 		contain a peak.
 		Returns the peak coordinates, and the peak value
 		'''
-		rows,cols = array.shape
-		
+		rows,cols = a.shape
+
 		## create design matrix and vector
 		dm = numarray.zeros(rows * cols * 5, numarray.Float32)
 		dm.shape = (rows * cols, 5)
@@ -113,7 +118,7 @@ class PeakFinder(object):
 		for row in range(rows):
 			for col in range(cols):
 				dm[i] = (row**2, row, col**2, col, 1)
-				v[i] = array[row,col]
+				v[i] = a[row,col]
 				i += 1
 
 		## fit quadratic
@@ -131,7 +136,7 @@ class PeakFinder(object):
 		## find peak value
 		peak = coeffs[0] * row0**2 + coeffs[1] * row0 + coeffs[2] * col0**2 + coeffs[3] * col0 + coeffs[4]
 
-		return {'row': row0, 'col': col0, 'value': peak, 'minsum': minsum}
+		return {'row': row0, 'col': col0, 'value': peak, 'minsum': minsum, 'coeffs': coeffs}
 
 	def subpixelPeak(self, newimage=None, npix=5, guess=None, limit=None):
 		'''
@@ -150,7 +155,8 @@ class PeakFinder(object):
 		roi = imagefun.crop_at(self.image, (peakrow,peakcol), (npix,npix))
 
 		## fit a quadratic to it and find the subpixel peak
-		roipeak = self.quadFitPeak(roi)
+		#roipeak = self.quadFitPeak(roi)
+		roipeak = self.gaussFitPeak(roi)
 		srow = peakrow + roipeak['row'] - npix/2
 		scol = peakcol + roipeak['col'] - npix/2
 		peakvalue = roipeak['value']
@@ -160,6 +166,7 @@ class PeakFinder(object):
 		self.results['subpixel peak'] = subpixelpeak
 		self.results['subpixel peak value'] = peakvalue
 		self.results['minsum'] = peakminsum
+		self.results['coeffs'] = roipeak['coeffs']
 		return subpixelpeak
 	
 	def clearBuffer(self):
@@ -177,16 +184,38 @@ def findSubpixelPeak(image, npix=5, guess=None, limit=None, lpf=None):
 	pf.subpixelPeak(newimage=image, npix=npix, guess=guess, limit=limit)
 	return pf.getResults()
 
-if __name__ == '__main__':
+def test1():
 	im = numarray.array(
 		[[1,1,1],
 		[1,3,2],
 		[1,1,1]]
 		)
-
-	p = PeakFinder()
+	p = PeakFinder(lpf=None)
 	p.setImage(im)
 	p.pixelPeak()
-	p.subpixelPeak()
+	p.subpixelPeak(npix=3)
 	res = p.getResults()
 	print 'results', res
+
+def test2(mrc1, mrc2):
+	import Mrc
+	import correlator
+	cor = correlator.Correlator()
+	im1 = Mrc.mrc_to_numeric(mrc1)
+	im2 = Mrc.mrc_to_numeric(mrc2)
+
+	'''
+	im1 = im1[:512,:512]
+	im2 = im2[200:712,200:712]
+	'''
+
+	cor.insertImage(im1)
+	cor.insertImage(im2)
+	pc = cor.phaseCorrelate()
+	Mrc.numeric_to_mrc(pc, 'pc.mrc')
+	print findSubpixelPeak(pc, npix=7, lpf=1.0)
+
+if __name__ == '__main__':
+	import sys
+	test1()
+	#test2(sys.argv[1], sys.argv[2])
