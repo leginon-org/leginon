@@ -78,7 +78,7 @@ void RegionsToSIFTDescriptors( PStack regions, PStack descriptors, int pb, int o
 	
 	for (k=0;k<regions->stacksize;k++) {
 		Region region = regions->items[k];
-		RegionToPatch(region,region->image,patch,1);
+		RegionToPatch(region,region->image,patch,2.5);
 		DeterminePatchOrientations(patch,orientations);
 		while ( !FStackEmpty(orientations) ) {
 			float orientation = PopFStack(orientations);
