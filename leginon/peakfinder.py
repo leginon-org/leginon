@@ -12,6 +12,7 @@ import convolver
 import imagefun
 
 import numarray
+import numarray.nd_image as nd_image
 from numarray.linear_algebra import linear_least_squares
 import gaussfit
 
@@ -46,7 +47,7 @@ class PeakFinder(object):
 		return self.results
 
 	def pixelPeak(self, newimage=None, guess=None, limit=None):
-		'''
+		"""
 		guess = where to center your search for the peak (row,col)
 		limit = shape of the search box (with guess at the center)
 		Setting guess and limit can serve two purposes:
@@ -59,7 +60,7 @@ class PeakFinder(object):
 				of (-10,-10) and a relatively small limit box.
 				The (500,500) peak will be found, but it will be returned
 				as (-12,-12).
-		'''
+		"""
 		if newimage is not None:
 			self.setImage(newimage)
 
@@ -94,6 +95,16 @@ class PeakFinder(object):
 			else:
 				unsignedc = peakcol
 			self.results['unsigned pixel peak'] = unsignedr,unsignedc
+
+			#NEIL's SNR calculation
+			self.results['noise']  = nd_image.standard_deviation(im)
+			self.results['mean']   = nd_image.mean(im)
+			self.results['signal'] = self.results['pixel peak value'] - self.results['mean']
+			if self.results['noise'] != self.results['noise'] and self.results['noise'] != 0.0:
+				self.results['snr'] = self.results['signal'] / self.results['noise']
+			else:
+				self.results['snr'] = self.results['pixel peak value']
+			#print self.results['noise'],self.results['mean'],self.results['signal'],self.results['snr']
 
 		return self.results['pixel peak']
 
@@ -167,6 +178,14 @@ class PeakFinder(object):
 		self.results['subpixel peak value'] = peakvalue
 		self.results['minsum'] = peakminsum
 		self.results['coeffs'] = roipeak['coeffs']
+
+		#NEIL's SNR calculation
+		#self.results['signal'] = self.results['subpixel peak value'] - self.results['mean']
+		#if self.results['noise'] != self.results['noise'] and self.results['noise'] != 0.0:
+		#	self.results['snr'] = self.results['signal'] / self.results['noise']
+		#else:
+		#	self.results['snr'] = self.results['subpixel peak value']
+
 		return subpixelpeak
 	
 	def clearBuffer(self):

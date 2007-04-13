@@ -232,10 +232,27 @@ def highest_peaks(blobs, n):
 	"""
 	filter out no more than n blobs that have the highest mean
 	"""
-	
 	## sort blobs based on mean
 	def blob_compare(x,y):
 		if float(x.stats['mean']) < float(y.stats['mean']): return 1
+		else: return -1
+	sortedblobs = list(blobs)
+	sortedblobs.sort(blob_compare)
+	sortedblobs = sortedblobs[:n]
+	## make new list of blobs that have the highest mean
+	newblobs = []
+	for blob in blobs:
+		if blob in sortedblobs:
+			newblobs.append(blob)
+	return newblobs
+
+def biggest_peaks(blobs, n):
+	"""
+	filter out no more than n blobs that have the biggest size
+	"""
+	## sort blobs based on mean
+	def blob_compare(x,y):
+		if float(x.stats['n']) < float(y.stats['n']): return 1
 		else: return -1
 	sortedblobs = list(blobs)
 	sortedblobs.sort(blob_compare)
@@ -368,12 +385,14 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 			continue
 		fakeblobs.append(fakeblob)
 
-	#print " ... blob summary:",len(fakeblobs),"total:",toobig,"toobig:",toosmall,"toosmall:",toooblong,"toooblong"
+	print " ... blob summary:",len(fakeblobs),"total /",toobig,"toobig /",toosmall,"toosmall /",toooblong,"toooblong"
 
 	## limit to maxblobs
 	if (maxblobs is not None) and (len(blobs) > maxblobs):
 		if(method == "highest"):
 			blobs = highest_peaks(fakeblobs, int(maxblobs))
+		elif(method == "biggest"):
+			blobs = biggest_peaks(fakeblobs, int(maxblobs))
 		else:
 			blobs = near_center(shape, fakeblobs, maxblobs)
 	else:

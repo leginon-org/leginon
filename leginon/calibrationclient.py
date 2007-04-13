@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.202 $
+# $Revision: 1.203 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-13 21:30:40 $
-# $Author: pulokas $
+# $Date: 2007-04-13 23:40:53 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -1000,10 +1000,11 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		z = y / 2.0 / math.sin(tilt_value)
 		return z
 
-	def measureTiltAxisLocation(self, tilt_value, update, correlation_type=None):
-		'''
+	def measureTiltAxisLocation(self, tilt_value, update, snrcut=2.5, correlation_type=None, tilttwice=False):
+		"""
 		measure position on image of tilt axis
-		'''
+		"""
+		#neil changes here
 		orig_a = self.instrument.tem.StagePosition['a']
 
 		state0 = data.ScopeEMData()
@@ -1015,12 +1016,14 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 
 		self.node.logger.info('acquiring tilt=0')
 		self.instrument.setData(state0)
+		time.sleep(0.5)
 		imagedata0 = self.instrument.getData(data.CorrectedCameraImageData)
 		im0 = imagedata0['image']
 		self.displayImage(im0)
 
 		self.node.logger.info('acquiring tilt=%s' % (-tilt_value,))
 		self.instrument.setData(state1)
+		time.sleep(0.5)
 		imagedata1 = self.instrument.getData(data.CorrectedCameraImageData)
 		self.stagetiltcorrector.undo_tilt(imagedata1)
 		im1 = imagedata1['image']
@@ -1044,6 +1047,17 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 
 		pixelshift = {'row':shift01[0], 'col':shift01[1]}
 		self.node.logger.info('measured pixel shift: %s' % (pixelshift,))
+
+		## check whether it worked
+		keepvalue = True
+		if 'snr' in peak01:
+			snr = peak01['snr']
+			self.node.logger.info('snr: %s' % (snr,))
+			if snr > snrcut:
+				keepvalue = True
+			else:
+				keepvalue = False
+				return imagedata0, pixelshift
 
 		## convert pixel shift into stage movement
 		newscope = self.transform(pixelshift, imagedata0['scope'], imagedata0['camera'])

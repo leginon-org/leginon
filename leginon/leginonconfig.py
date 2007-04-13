@@ -9,6 +9,7 @@
 import errno
 import os
 import ConfigParser
+import sys
 
 logevents = False
 
@@ -65,11 +66,11 @@ config_locations = [
 	os.path.join(HOME, 'leginon.cfg'),
 ]
 configfiles = configparser.read(config_locations)
-'''
-print 'Leginon config files used: '
+
+sys.stderr.write("Leginon config files used: ")
 for configfile in configfiles:
-	print '   %s' % (configfile,)
-'''
+	sys.stderr.write(str(configfile)+" ")
+sys.stderr.write("\n")
 
 # Database sections
 dbsections = []
