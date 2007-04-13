@@ -135,8 +135,10 @@ class RCTAcquisition(acquisition.Acquisition):
 				self.checkDrift(presetname, emtarget, threshold)
 
 			## mark focus target done if already focused
+			'''
 			if focused:
 				self.focusDone(tiltedtargetlist)
+			'''
 
 			acquisition.Acquisition.processTargetList(self, tiltedtargetlist)
 			focused = True

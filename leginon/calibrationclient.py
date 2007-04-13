@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.201 $
+# $Revision: 1.202 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-12 21:05:57 $
+# $Date: 2007-04-13 21:30:40 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -1000,7 +1000,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		z = y / 2.0 / math.sin(tilt_value)
 		return z
 
-	def measureTiltAxisLocation(self, tilt_value, correlation_type=None):
+	def measureTiltAxisLocation(self, tilt_value, update, correlation_type=None):
 		'''
 		measure position on image of tilt axis
 		'''
@@ -1049,11 +1049,25 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		newscope = self.transform(pixelshift, imagedata0['scope'], imagedata0['camera'])
 		## only want the y offset (distance from tilt axis)
 		deltay = newscope['stage position']['y'] - imagedata0['scope']['stage position']['y']
+		## scale correlation shift to the axis offset
+		scale = 1.0 / numarray.tan(tilt_value/2.0) / numarray.tan(tilt_value)
+		deltay *= scale
 
-		axisoffset = data.StageTiltAxisOffsetData(offset=deltay)
+		tem = self.instrument.getTEMData()
+		ccdcamera = self.instrument.getCCDCameraData()
+
+		axisoffset = data.StageTiltAxisOffsetData(offset=deltay,tem=tem,ccdcamera=ccdcamera)
+
+		if update:
+			q = data.StageTiltAxisOffsetData(tem=tem,ccdcamera=ccdcamera)
+			offsets = self.node.research(q, results=1)
+			if offsets:
+				axisoffset['offset'] += offsets[0]['offset']
+
 		self.node.publish(axisoffset, database=True, dbforce=True)
 
 		self.node.logger.info('stage delta y: %s' % (deltay,))
+
 		shift = {'x':0, 'y':deltay}
 		position = dict(imagedata0['scope']['stage position'])
 		position['x'] += shift['x']
@@ -1061,9 +1075,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		pixelshift = self.itransform(position, imagedata0['scope'], imagedata0['camera'])
 		self.node.logger.info('pixelshift for delta y: %s' % (pixelshift,))
 
-		# after drawing lots triangles, you get this equation:
-		scale = 1.0 / numarray.tan(tilt_value/2.0) / numarray.tan(tilt_value)
-		pixelshift = {'row':scale*pixelshift['row'], 'col':scale*pixelshift['col']}
+		pixelshift = {'row':pixelshift['row'], 'col':pixelshift['col']}
 		self.node.logger.info('pixelshift from axis: %s' % (pixelshift,))
 
 		return imagedata0, pixelshift

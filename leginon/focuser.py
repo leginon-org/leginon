@@ -385,9 +385,9 @@ class Focuser(acquisition.Acquisition):
 		self.instrument.tem.BeamTilt = newbt
 		self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
 
-	def measureTiltAxis(self, atilt):
+	def measureTiltAxis(self, atilt, update=False):
 		atilt = atilt * 3.14159 / 180.0
-		im0, pixelshift = self.stagetiltcalclient.measureTiltAxisLocation(atilt, correlation_type='phase')
+		im0, pixelshift = self.stagetiltcalclient.measureTiltAxisLocation(atilt, update, correlation_type='phase')
 
 		oldscope = im0['scope']
 		newscope = self.imageshiftcalclient.transform(pixelshift, oldscope, im0['camera'])

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.72 $
+# $Revision: 1.73 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-03-05 21:27:49 $
+# $Date: 2007-04-13 21:30:41 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -807,6 +807,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['optimize cycle'] = wx.CheckBox(self, -1,
 																									'Optimize preset cycle')
 		self.widgets['mag only'] = wx.CheckBox(self, -1, 'Cycle magnification only')
+		self.widgets['apply offset'] = wx.CheckBox(self, -1, 'Apply stage tilt axis offset to all image shifts')
 
 		szpausetime = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Pause')
@@ -825,6 +826,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['optimize cycle'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['mag only'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['apply offset'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sb = wx.StaticBox(self, -1, 'Preset Management')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)

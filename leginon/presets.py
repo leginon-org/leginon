@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.245 $
+# $Revision: 1.246 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-03-22 23:14:05 $
+# $Date: 2007-04-13 21:30:41 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -209,6 +209,7 @@ class PresetsManager(node.Node):
 		'cycle': True,
 		'optimize cycle': True,
 		'mag only': True,
+		'apply offset': False,
 	}
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.MeasureDoseEvent]
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent]
@@ -431,6 +432,34 @@ class PresetsManager(node.Node):
 		self.setOrder()
 		self.panel.presetsEvent()
 
+	def getOffsetImageShift(self, presetdata):
+		q = data.StageTiltAxisOffsetData(tem=presetdata['tem'],ccdcamera=presetdata['ccdcamera'])
+		offsets = self.research(q, results=1)
+
+		if not offsets:
+			self.logger.warning('No stage axis offset has been saved, not applying offset')
+			return presetdata['image shift']
+
+		## convert stage offset to pixel offset
+		stagey = offsets[0]['offset']
+
+		fakescope = data.ScopeEMData()
+		fakescope.friendly_update(presetdata)
+		fakecam = data.CameraEMData()
+		fakecam.friendly_update(presetdata)
+
+		fakescope['stage position'] = {'x':0, 'y':0}
+		fakescope['high tension'] = self.instrument.tem.HighTension
+
+		position = {'x':0, 'y':-stagey}
+		pixelshift = self.calclients['stage'].itransform(position, fakescope, fakecam)
+
+		## convert pixel shift to image shift
+		newscope = self.calclients['image'].transform(pixelshift, fakescope, fakecam)
+		ishift = newscope['image shift']
+		self.logger.info('calculated image shift to center tilt axis: %s' % (ishift,))
+		return ishift
+
 	def toScope(self, pname, magonly=False, outputevent=True, final=False):
 		'''
 		'''
@@ -464,6 +493,8 @@ class PresetsManager(node.Node):
 			cameradata = None
 		else:
 			scopedata.friendly_update(presetdata)
+			if self.settings['apply offset']:
+				scopedata['image shift'] = self.getOffsetImageShift(presetdata)
 			cameradata.friendly_update(presetdata)
 			if not final:
 				cameradata['energy filter'] = None
@@ -1069,13 +1100,21 @@ class PresetsManager(node.Node):
 				if key not in ('x','y'):
 					del mystage[key]
 
+		## offset image shift to center stage tilt axis
+		if self.settings['apply offset']:
+			newimageshift = self.getOffsetImageShift(newpreset)
+			oldimageshift = self.getOffsetImageShift(oldpreset)
+		else:
+			newimageshift = newpreset['image shift']
+			oldimageshift = oldpreset['image shift']
+
 		## this assumes that image shift is preserved through a mag change
 		## although this may not always be true.  In particular, I think
 		## that LM and M/SA mag ranges have different image shift coord systems
-		myimage['x'] -= oldpreset['image shift']['x']
-		myimage['x'] += newpreset['image shift']['x']
-		myimage['y'] -= oldpreset['image shift']['y']
-		myimage['y'] += newpreset['image shift']['y']
+		myimage['x'] -= oldimageshift['x']
+		myimage['x'] += newimageshift['x']
+		myimage['y'] -= oldimageshift['y']
+		myimage['y'] += newimageshift['y']
 
 		mybeam['x'] -= oldpreset['beam shift']['x']
 		mybeam['x'] += newpreset['beam shift']['x']

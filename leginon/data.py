@@ -1776,6 +1776,7 @@ class PresetsManagerSettingsData(SettingsData):
 			('cycle', bool),
 			('optimize cycle', bool),
 			('mag only', bool),
+			('apply offset', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -2425,9 +2426,9 @@ class TimerData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
-class StageTiltAxisOffsetData(InSessionData):
+class StageTiltAxisOffsetData(CalibrationData):
 	def typemap(cls):
-		return InSessionData.typemap() + (
+		return CalibrationData.typemap() + (
 			('offset', float),
 		)
 	typemap = classmethod(typemap)

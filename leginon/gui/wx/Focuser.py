@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.41 $
+# $Revision: 1.42 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-03-15 01:05:48 $
+# $Date: 2007-04-13 21:30:41 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -186,11 +186,11 @@ class MeasureTiltAxisDialog(wx.Dialog):
 
 		wx.Dialog.__init__(self, parent, -1, 'Measure Stage Tilt Axis Location')
 
-		self.measure = wx.Button(self, -1, 'Measure')
-		self.Bind(wx.EVT_BUTTON, self.onMeasureButton, self.measure)
+		self.measureinit = wx.Button(self, -1, 'Initial Offset')
+		self.Bind(wx.EVT_BUTTON, self.onMeasureButtonInit, self.measureinit)
 
-		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.measure, (0, 0), (1, 1), wx.EXPAND)
+		self.measureupdate = wx.Button(self, -1, 'Update Offset')
+		self.Bind(wx.EVT_BUTTON, self.onMeasureButtonUpdate, self.measureupdate)
 
 		sbsz = wx.GridBagSizer(5, 5)
 
@@ -200,14 +200,21 @@ class MeasureTiltAxisDialog(wx.Dialog):
 		sbsz.Add(self.tiltvalue, (0,1), (1,1))
 
 		self.sizer = wx.GridBagSizer(5, 5)
-		self.sizer.Add(sbsz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
-		self.sizer.Add(self.measure, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
+		self.sizer.Add(sbsz, (0, 0), (1, 2), wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(self.measureinit, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
+		self.sizer.Add(self.measureupdate, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
 
 		self.SetSizerAndFit(self.sizer)
 
-	def onMeasureButton(self, evt):
+	def onMeasureButtonInit(self, evt):
 		atilt = self.tiltvalue.GetValue()
-		threading.Thread(target=self.node.measureTiltAxis, args=(atilt,)).start()
+		update = False
+		threading.Thread(target=self.node.measureTiltAxis, args=(atilt,update)).start()
+
+	def onMeasureButtonUpdate(self, evt):
+		atilt = self.tiltvalue.GetValue()
+		update = True
+		threading.Thread(target=self.node.measureTiltAxis, args=(atilt,update)).start()
 
 class AlignRotationCenterDialog(wx.Dialog):
 	def __init__(self, parent):
