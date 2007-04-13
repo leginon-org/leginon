@@ -134,3 +134,7 @@ type: Pipeline
 [RasterTargetFilter]
 module: rastertargetfilter
 type: Pipeline
+
+[ClickTargetTransformer]
+module: clicktargettransformer
+type: Utility
