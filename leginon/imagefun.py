@@ -385,7 +385,7 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 			continue
 		fakeblobs.append(fakeblob)
 
-	print " ... blob summary:",len(fakeblobs),"total /",toobig,"toobig /",toosmall,"toosmall /",toooblong,"toooblong"
+	#print " ... blob summary:",len(fakeblobs),"total /",toobig,"toobig /",toosmall,"toosmall /",toooblong,"toooblong"
 
 	## limit to maxblobs
 	if (maxblobs is not None) and (len(blobs) > maxblobs):
