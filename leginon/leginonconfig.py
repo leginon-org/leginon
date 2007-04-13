@@ -67,10 +67,10 @@ config_locations = [
 ]
 configfiles = configparser.read(config_locations)
 
-sys.stderr.write("Leginon config files used: ")
+#sys.stderr.write("Leginon config files used: ")
 for configfile in configfiles:
-	sys.stderr.write(str(configfile)+" ")
-sys.stderr.write("\n")
+	#sys.stderr.write(str(configfile)+" ")
+#sys.stderr.write("\n")
 
 # Database sections
 dbsections = []
