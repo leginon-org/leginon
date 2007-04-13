@@ -51,7 +51,8 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		self.childpreset = self.settings['child preset']
 		childpresetq = data.PresetData(session=self.session,name=self.childpreset)
 		q = data.AcquisitionImageData(session=self.session,preset=childpresetq)
-		self.images = self.research(datainstance=q, readimages=False)
+		images = self.research(datainstance=q, readimages=False)
+		self.imageids = [image.dbid for image in images]
 
 		if not self.images:
 			self.logger.error('No %s images in session' % (self.childpreset,))
@@ -190,10 +191,10 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 				
 	def onNext(self):
 		self.advance = True
-		if not self.images:
+		if not self.imageids:
 			self.getImageList()
 			self.currentindex =  -1
-		if self.currentindex < len(self.images)-1:
+		if self.currentindex < len(self.imageids)-1:
 			if self.childpreset != self.settings['child preset'] or self.ancestorpreset != self.settings['ancestor preset']:
 				self.childpreset = self.settings['child preset']
 				self.ancestorpreset = self.settings['ancestor preset']
@@ -207,9 +208,9 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 
 	def onPrevious(self):
 		self.advance = False
-		if not self.images:
+		if not self.imageids:
 			self.getImageList()
-			self.currentindex = len(self.images)
+			self.currentindex = len(self.imageids)
 			return
 		if self.currentindex > 0:
 			if self.childpreset != self.settings['child preset'] or self.ancestorpreset != self.settings['ancestor preset']:
@@ -224,9 +225,9 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 			self.logger.info('Beginning reached.')
 
 	def onEnd(self):
-		if not self.images:
+		if not self.imageids:
 			self.getImageList()
-		self.currentindex = len(self.images)
+		self.currentindex = len(self.imageids)
 		self.onPrevious()
 				
 	def displayImage(self,imagedata,imagetype):
@@ -316,7 +317,8 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		pass
 			
 	def displayCurrent(self):
-		self.childimagedata = self.images[self.currentindex]
+		id = self.imageids[self.currentindex]
+		self.childimagedata = self.researchDBID(data.AcquisitionImageData, id)
 		self.ancestorimagedata = self.getAncestor()
 		if self.ancestorimagedata is None:
 			# No ancestor of the same insertion found
