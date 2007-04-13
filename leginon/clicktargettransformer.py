@@ -23,6 +23,7 @@ import caltransformer
 
 import gui.wx.ClickTargetTransformer
 
+
 class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 	panelclass = gui.wx.ClickTargetTransformer.Panel
 	eventoutputs = targetfinder.TargetFinder.eventoutputs
@@ -52,14 +53,21 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		childpresetq = data.PresetData(session=self.session,name=self.childpreset)
 		q = data.AcquisitionImageData(session=self.session,preset=childpresetq)
 		images = self.research(datainstance=q, readimages=False)
-		self.imageids = [image.dbid for image in images]
 
-		if not self.images:
+		self.imageids = []
+		for image in images:
+			anc = self.getAncestor(image)
+			if anc is not None:
+				self.imageids.append((image.dbid,anc.dbid))
+
+		if not self.imageids:
 			self.logger.error('No %s images in session' % (self.childpreset,))
 
-	def getAncestor(self):
-		childimagedata=self.childimagedata
-		presetq = data.PresetData(session=self.session,name=self.ancestorpreset)
+		self.currentindex = None
+
+	def OLDgetAncestor(self, childimagedata):
+		ancpreset =  self.settings['ancestor preset']
+		presetq = data.PresetData(session=self.session,name=ancpreset)
 		
 		childimagetargetdata = self.researchDBID(data.AcquisitionImageTargetData,childimagedata['target'].dbid,readimages=False)
 		parentimagedata = childimagetargetdata['image']
@@ -75,6 +83,27 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 					return None
 
 		return None
+
+	def getAncestor(self, childimagedata):
+		ancpreset =  self.settings['ancestor preset']
+
+		# get parent image
+		try:
+			parentimagedata = childimagedata['target']['image']
+		except
+			parentimagedata = None
+
+		# no parent image
+		if parentimagedata is None:
+			return None
+
+		# if preset and grid match, this is a winner
+		if parentimagedata['preset']['name'] == ancpreset:
+			if parentimagedata['grid'].dbid == childimagedata['grid'].dbid:
+				return parentimagedata
+
+		# no match, but need to search deeper
+		return self.getAncestor(parentimagedata)
 
 	def transformTargets(self,im1,im2,targets):
 		shape = {}
@@ -188,55 +217,49 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 	def onBegin(self):
 		self.currentindex = -1
 		self.onNext()
-				
+
+	def checkNewSettings():
+		if self.childpreset != self.settings['child preset'] or self.ancestorpreset != self.settings['ancestor preset']:
+			self.childpreset = self.settings['child preset']
+			self.ancestorpreset = self.settings['ancestor preset']
+			return True
+		return False
+
 	def onNext(self):
-		self.advance = True
-		if not self.imageids:
+		## first click, load image list
+		if not self.imageids or self.checkNewSettings():
 			self.getImageList()
-			self.currentindex =  -1
+			self.currentindex = -1
+
 		if self.currentindex < len(self.imageids)-1:
-			if self.childpreset != self.settings['child preset'] or self.ancestorpreset != self.settings['ancestor preset']:
-				self.childpreset = self.settings['child preset']
-				self.ancestorpreset = self.settings['ancestor preset']
-				self.getImageList()
-				return
-			else:
-				self.currentindex += 1
-				self.displayCurrent()
+			self.currentindex += 1
+			self.displayCurrent()
 		else:
 			self.logger.info('End reached.')
 
 	def onPrevious(self):
-		self.advance = False
-		if not self.imageids:
+		## first click, load image list
+		if not self.imageids or self.checkNewSettings():
 			self.getImageList()
 			self.currentindex = len(self.imageids)
-			return
+
 		if self.currentindex > 0:
-			if self.childpreset != self.settings['child preset'] or self.ancestorpreset != self.settings['ancestor preset']:
-				self.childpreset = self.settings['child preset']
-				self.ancestorpreset = self.settings['ancestor preset']
-				self.getImageList()
-				return
-			else:
-				self.currentindex -= 1
-				self.displayCurrent()
+			self.currentindex -= 1
+			self.displayCurrent()
 		else:
 			self.logger.info('Beginning reached.')
 
 	def onEnd(self):
-		if not self.imageids:
+		if not self.imageids or self.checkNewSettings():
 			self.getImageList()
 		self.currentindex = len(self.imageids)
 		self.onPrevious()
-				
+
 	def displayImage(self,imagedata,imagetype):
 		currentname = imagedata['filename']
 		currentdbid = imagedata.dbid
 		self.logger.info('Displaying %s, %s' % (currentname,self.currentindex))
-		imarray = self.researchDBID(data.AcquisitionImageData,currentdbid,readimages=True)['image']
-		self.setImage(imarray, imagetype)
-		return imarray
+		self.setImage(imagedata['image'], imagetype)
 		
 	def processImageData(self, imagedata):
 		'''
@@ -317,16 +340,9 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		pass
 			
 	def displayCurrent(self):
-		id = self.imageids[self.currentindex]
-		self.childimagedata = self.researchDBID(data.AcquisitionImageData, id)
-		self.ancestorimagedata = self.getAncestor()
-		if self.ancestorimagedata is None:
-			# No ancestor of the same insertion found
-			if self.advance:
-				self.onNext()
-			else:
-				self.onPrevious()
-		else:
-			self.displayImage(self.childimagedata,'Image')
-			self.displayImage(self.ancestorimagedata,'Ancestor')
-			self.processImageData(self.ancestorimagedata)
+		child,ancestor = self.imageids[self.currentindex]
+		self.childimagedata = self.researchDBID(data.AcquisitionImageData, child)
+		self.ancestorimagedata = self.researchDBID(data.AcquisitionImageData, ancestor)
+		self.displayImage(self.childimagedata,'Image')
+		self.displayImage(self.ancestorimagedata,'Ancestor')
+		self.processImageData(self.ancestorimagedata)
