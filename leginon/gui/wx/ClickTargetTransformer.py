@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ClickTargetTransformer.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-10 22:21:40 $
+# $Date: 2007-04-13 03:00:34 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -31,12 +31,18 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
 
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_BEGIN,
+													'begin',
+													shortHelpString='To Beginning')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PREVIOUS,
 													'up',
 													shortHelpString='Previous')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_NEXT,
 													'down',
 													shortHelpString='Next')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_END,
+													'end',
+													shortHelpString='To End')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
 													'play',
 													shortHelpString='Transform')
@@ -67,16 +73,24 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, display=True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
-		self.imagepanel.addTargetTool('Done', wx.RED, display=True)
+		self.imagepanel.addTargetTool('transformed', wx.RED, display=True)
+		self.imagepanel.selectiontool.setDisplayed('transformed', True)
+
+		self.imagepanel.setTargets('acquisition', [])
+		self.imagepanel.setTargets('focus', [])
 
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
 
 
 	def onNodeInitialized(self):
+		self.toolbar.Bind(wx.EVT_TOOL, self.onBeginTool,
+											id=gui.wx.ToolBar.ID_BEGIN)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onNextTool,
 											id=gui.wx.ToolBar.ID_NEXT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPreviousTool,
 											id=gui.wx.ToolBar.ID_PREVIOUS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onEndTool,
+											id=gui.wx.ToolBar.ID_END)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onTransformTool,
 											id=gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onClearTool,
@@ -95,11 +109,18 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 	def onClearTool(self, evt):
 		self.node.onClear()
 
+	def onBeginTool(self, evt):
+		self.node.onBegin()
+
+
 	def onNextTool(self, evt):
 		self.node.onNext()
 
 	def onPreviousTool(self, evt):
 		self.node.onPrevious()
+
+	def onEndTool(self, evt):
+		self.node.onEnd()
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -109,13 +130,17 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		#self.widgets['image directory'] = filebrowse.FileBrowseButton(self, -1)
 		presets = self.node.presetsclient.getPresetNames()
+		label = wx.StaticText(self, -1, 'Transform From:')
 		self.widgets['child preset'] = PresetChoice(self, -1)
 		self.widgets['child preset'].setChoices(presets)
+		sz.Add(label, (0, 0), (1, 1))
 		sz.Add(self.widgets['child preset'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 
+		label = wx.StaticText(self, -1, 'Transform To:')
 		self.widgets['ancestor preset'] = PresetChoice(self, -1)
 		self.widgets['ancestor preset'].setChoices(presets)
+		sz.Add(label, (1, 0), (1, 1))
 		sz.Add(self.widgets['ancestor preset'], (1, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 

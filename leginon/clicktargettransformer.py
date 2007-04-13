@@ -17,28 +17,32 @@ import os
 import Image
 import numarray
 import imagefun
-import dbdatakeeper
+#import dbdatakeeper
+import threading
+import caltransformer
+
+import gui.wx.ClickTargetTransformer
 
 class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 	panelclass = gui.wx.ClickTargetTransformer.Panel
+	eventoutputs = targetfinder.TargetFinder.eventoutputs
 	settingsclass = data.ClickTargetTransformerSettingsData
 	defaultsettings = {
 		'child preset': 'sq',
 		'ancestor preset': 'gr',
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
-		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+ 		targetfinder.ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
+		self.userpause = threading.Event()
 
-		self.results = {}
-		self.currentname = None
 		self.currentindex = None
 		self.images = []
-		self.oldformat = None
-		self.oldimagedir = None
 
 		self.presetsclient = presets.PresetsClient(self)
 		self.childpreset = self.settings['child preset']
 		self.ancestorpreset = self.settings['ancestor preset']
+		self.targetnames = ['acquisition','focus']
+		self.displayedtargetnames = self.targetnames+['transformed']
 
 		
 		self.start()
@@ -49,14 +53,11 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		q = data.AcquisitionImageData(session=self.session,preset=childpresetq)
 		self.images = self.research(datainstance=q, readimages=False)
 
-		if self.images:
-			self.currentindex = 0
-			self.displayCurrent()
-		else:
+		if not self.images:
 			self.logger.error('No %s images in session' % (self.childpreset,))
 
 	def getAncestor(self):
-		childimagedata=self.images[self.currentindex]
+		childimagedata=self.childimagedata
 		presetq = data.PresetData(session=self.session,name=self.ancestorpreset)
 		
 		childimagetargetdata = self.researchDBID(data.AcquisitionImageTargetData,childimagedata['target'].dbid,readimages=False)
@@ -67,23 +68,131 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 				childimagetargetdata = self.researchDBID(data.AcquisitionImageTargetData,childimagedata['target'].dbid,readimages=False)
 				parentimagedata = childimagetargetdata['image']
 			else:
-				return parentimagedata
-		return parentimagedata
+				if parentimagedata['grid'].dbid == self.childimagedata['grid'].dbid:
+					return parentimagedata
+				else:
+					return None
 
+		return None
+
+	def transformTargets(self,im1,im2,targets):
+		shape = {}
+
+		lastnumber = self.lastTargetNumber(image=im1,
+																				session=self.session)
+		number = lastnumber + 1
+		for type in self.targetnames:
+			for targetdata in targets:
+				if targetdata['type'] == type:
+					drow = targetdata['delta row']
+					dcol = targetdata['delta column']
+
+					targetdata = self.newTargetForImage(im1, drow, dcol, type='transformed', list=self.childtargetlist, number=number)
+					self.publish(targetdata, database=True)
+					number += 1
+
+		shape['im1'] = im1['image'].shape		
+		im1scope = im1['scope']
+		im1camera = im1['camera']
+		im1trans = caltransformer.getTransformer(im1scope['tem'], im1camera['ccdcamera'], im1scope['high tension'], im1scope['magnification'], im1.timestamp)
+		
+		im2scope = im2['scope']
+		im2camera = im2['camera']
+		im2trans = caltransformer.getTransformer(im2scope['tem'], im2camera['ccdcamera'], im2scope['high tension'], im2scope['magnification'], im2.timestamp)
+
+		newtargets = []
+		shape['im2'] = im2['image'].shape
+		lastnumber = self.lastTargetNumber(image=im2,
+																				session=self.session)
+		newtargets = []
+		number = lastnumber + 1
+
+		for type in self.targetnames:
+			for targetdata in targets:
+				if targetdata['type'] == type:
+					drow = targetdata['delta row']
+					dcol = targetdata['delta column']
+					pixvect = {'row':drow,'col':dcol}
+					
+					## get stage position of target on first image
+					bin = im1camera['binning']
+					stage0 = im1scope['stage position']
+					stage = im1trans.transform(pixvect, stage0, bin)
+
+					## get pixel position of stage position on second image
+					bin = im2camera['binning']
+					stage0 = im2scope['stage position']
+					pix = im2trans.itransform(stage, stage0, bin)
+
+					drow =  pix['row']
+					dcol =  pix['col']
+
+					targetdata = self.newTargetForImage(im2, drow, dcol, type=type, list=self.targetlist, number=number)
+					self.publish(targetdata, database=True)
+					newtargets.append(targetdata)
+					number += 1
+
+		return newtargets
+
+	def getTargets(self, imagedata, typename, targetlist):
+		targets = []
+		imagetargets = self.panel.getTargetPositions(typename)
+		if not imagetargets:
+			return targets
+		imagearray = imagedata['image']
+		lastnumber = self.lastTargetNumber(image=imagedata,
+																				session=self.session)
+		number = lastnumber + 1
+		for imagetarget in imagetargets:
+			column, row = imagetarget
+			drow = row - imagearray.shape[0]/2
+			dcol = column - imagearray.shape[1]/2
+
+			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist, number=number)
+			
+			targets.append(targetdata)
+			number += 1
+		return targets
+
+	def childTargetsOnAncestor(self,childtargets):
+		childtargetsonancestor = []
+		for target in childtargets:
+			drowchild = target['delta row']
+			dcolchild = target['delta column']
+
+			childshape = self.childimagedata['image'].shape
+			ancestorshape = self.ancestorimagedata['image'].shape
+			drowancestor = target['delta row'] + childshape[0]/2 - ancestorshape[0]/2
+			dcolancestor = target['delta column'] + childshape[1]/2 - ancestorshape[1]/2
+			targetdata = self.newTargetForImage(self.ancestorimagedata, drowancestor, dcolancestor, type='transformed', list=None, number=1)
+			childtargetsonancestor.append(targetdata)
+		return childtargetsonancestor
+	
 	def onTransform(self):
-		self.displayAncestor()
-		self.onNext()
+		childtargets = []
+		for typename in self.targetnames:
+			childtargets.extend(self.getTargets(self.childimagedata, typename,None))
+		newtargets = self.transformTargets(self.childimagedata,self.ancestorimagedata,childtargets)
+
+		childtargetsonancestor = self.childTargetsOnAncestor(childtargets)
+					
+		alltargets = newtargets	+ childtargetsonancestor
+			
+		self.displayTargets(self.ancestorimagedata,alltargets,self.displayedtargetnames)
 
 	def onClear(self):
-		self.readResults()
-		self.results[self.currentname] = 'reject'
-		self.writeResults()
+		targets2keep = self.getTargets(self.ancestorimagedata,'transformed',None)
+		self.displayTargets(self.ancestorimagedata,targets2keep,self.displayedtargetnames)
+		
+	def onBegin(self):
+		self.currentindex = -1
 		self.onNext()
-
+				
 	def onNext(self):
+		self.advance = True
 		if not self.images:
 			self.getImageList()
-			return
+			self.currentindex =  -1
 		if self.currentindex < len(self.images)-1:
 			if self.childpreset != self.settings['child preset'] or self.ancestorpreset != self.settings['ancestor preset']:
 				self.childpreset = self.settings['child preset']
@@ -97,6 +206,11 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 			self.logger.info('End reached.')
 
 	def onPrevious(self):
+		self.advance = False
+		if not self.images:
+			self.getImageList()
+			self.currentindex = len(self.images)
+			return
 		if self.currentindex > 0:
 			if self.childpreset != self.settings['child preset'] or self.ancestorpreset != self.settings['ancestor preset']:
 				self.childpreset = self.settings['child preset']
@@ -109,94 +223,108 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		else:
 			self.logger.info('Beginning reached.')
 
-	def displayChild(self):
-		self.currentname = self.images[self.currentindex]['filename']
-		currentdbid = self.images[self.currentindex].dbid
-		if self.currentname in self.results:
-			result = self.results[self.currentname]
-		else:
-			result = 'None'
-		self.logger.info('Displaying %s, %s' % (self.currentname,result))
+	def onEnd(self):
+		if not self.images:
+			self.getImageList()
+		self.currentindex = len(self.images)
+		self.onPrevious()
+				
+	def displayImage(self,imagedata,imagetype):
+		currentname = imagedata['filename']
+		currentdbid = imagedata.dbid
+		self.logger.info('Displaying %s, %s' % (currentname,self.currentindex))
 		imarray = self.researchDBID(data.AcquisitionImageData,currentdbid,readimages=True)['image']
-		self.setImage(imarray, 'Image')
+		self.setImage(imarray, imagetype)
 		return imarray
 		
-	def displayAncestor(self):
-		ancestorimagedata = self.getAncestor()
-		if ancestorimagedata is None:
-			self.logger.warning('No Ancestor found')
-			imarray = None
-		else:
-			self.logger.info('Displaying %s' % (ancestorimagedata['filename']))
-			imarray = self.researchDBID(data.AcquisitionImageData,ancestorimagedata.dbid,readimages=True)['image']
-			self.setImage(imarray, 'Ancestor')
-		return imarray
-		
-	def displayCurrent(self):
-		self.displayChild()
-		self.displayAncestor()
+	def processImageData(self, imagedata):
+		'''
+		Gets and publishes target information of specified image data.
+		'''
+		# check if there is already a target list for this image
+		# exclude sublists (like rejected target lists)
+		#Ancestor
+		previoustargets = []
+		for targettype in self.targetnames:
+			previoustargets.extend(self.researchTargets(image=imagedata, type=targettype))
+			
+		#Child
+		previoustransformedtargets = []
+		previoustransformedtargets.extend(self.researchTargets(image=self.childimagedata, type='transformed'))
+		previoustargets.extend(self.childTargetsOnAncestor(previoustransformedtargets))
+			
+		self.displayTargets(imagedata,previoustargets, self.displayedtargetnames)
 
-	def readResults(self):
-		dir = self.settings['image directory']
-		outputfile = self.settings['outputfile']
-		outputfile = os.path.join(dir,outputfile)
-		try:
-			f = open(outputfile)
-		except IOError:
-			self.results = {}
+		# create new target list
+		self.targetlist = self.newTargetList(image=imagedata, queue=False)
+		self.childtargetlist = self.newTargetList(image=self.childimagedata, queue=False)
+
+		## if queue is turned on, do not notify other nodes of each target list publish
+#		if self.settings['queue']:
+#			pubevent = False
+#		else:
+#			pubevent = True
+#		self.publish(targetlist, database=db, pubevent=pubevent)
+#		self.logger.debug('Published targetlist %s' % (self.targetlist.dbid,))
+
+#		if self.settings['wait for done'] and not self.settings['queue']:
+#			self.makeTargetListEvent(targetlist)
+#			self.setStatus('waiting')
+#			self.waitForTargetListDone()
+#			self.setStatus('processing')
+
+	def displayTargets(self,imdata,targetdatalist,displayedtargetnames):
+		if imdata is None:
 			return
-		lines = f.readlines()
-		f.close()
-		self.results = {}
-		for line in lines:
-			key,value = line.split()
-			self.results[key] = value
+		self.logger.info('Displaying targets...')
+		donetargets = []
+		self.displayedtargetdata = {}
+		targets = {}
+		shape = imdata['image'].shape
 
-	def writeResults(self):
-		dir = self.settings['image directory']
-		outputfile = self.settings['outputfile']
-		outputfile = os.path.join(dir,outputfile)
-		f = open(outputfile, 'w')
-		for key,value in self.results.items():
-			line = '%s\t%s\n' % (key,value)
-			f.write(line)
-		f.close()
+		for type in displayedtargetnames:
+			targets[type] = []
+			for targetdata in targetdatalist:
+				if targetdata['type'] == type:
+					drow = targetdata['delta row']
+					dcol = targetdata['delta column']
+					vcoord = dcol+shape[1]/2,drow+shape[0]/2
+					if vcoord not in self.displayedtargetdata:
+						self.displayedtargetdata[vcoord] = []
+					if targetdata['status'] in ('done', 'aborted'):
+						donetargets.append(vcoord)
+						self.displayedtargetdata[vcoord].append(targetdata)
+					elif targetdata['status'] in ('new','processing'):
+						targets[type].append(vcoord)
+						self.displayedtargetdata[vcoord].append(targetdata)
+					else:
+						# other status ignored (mainly NULL)
+						pass
+			self.setTargets(targets[type], type)
 
-	def readMRC(self, filename):
-		return Mrc.mrc_to_numeric(filename)
-
-	def readJPG(self, filename):
-		i = Image.open(filename)
-		i.load()
-		i = self.imageToArray(i)
-		return i
-
-	def readPNG(self, filename):
-		i = Image.open(filename)
-		i.load()
-		i = self.imageToArray(i)
-		return i
-
-	def imageToArray(self, im, convertType='UInt8'):
-		"""
-		Convert PIL image to Numarray array
-		copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
-		"""
-		if im.mode == "L":
-			a = numarray.fromstring(im.tostring(), numarray.UInt8)
-			a = numarray.reshape(a, (im.size[1], im.size[0]))
-			#a.shape = (im.size[1], im.size[0], 1)  # alternate way
-		elif (im.mode=='RGB'):
-			a = numarray.fromstring(im.tostring(), numarray.UInt8)
-			a.shape = (im.size[1], im.size[0], 3)
-		elif (im.mode=='RGBA'):
-			atmp = numarray.fromstring(im.tostring(), numarray.UInt8)
-			atmp.shape = (im.size[1], im.size[0], 4)
-			a = atmp[:,:,3]
+		n = 0
+		for type in ('acquisition','focus'):
+			n += len(targets[type])
+		if 'transformed' in targets.keys():
+			ntransformed = len(targets['transformed'])
 		else:
-			raise ValueError, im.mode+" mode not considered"
-
-		if convertType == 'Float32':
-			a = a.astype(numarray.Float32)
-		return a
-
+			ntransformed = 0
+		self.logger.info('displayed %s targets (%s transformed)' % (n, ntransformed))
+		return n
+	
+	def findTargets(self, imdata, targetlist):
+		pass
+			
+	def displayCurrent(self):
+		self.childimagedata = self.images[self.currentindex]
+		self.ancestorimagedata = self.getAncestor()
+		if self.ancestorimagedata is None:
+			# No ancestor of the same insertion found
+			if self.advance:
+				self.onNext()
+			else:
+				self.onPrevious()
+		else:
+			self.displayImage(self.childimagedata,'Image')
+			self.displayImage(self.ancestorimagedata,'Ancestor')
+			self.processImageData(self.ancestorimagedata)

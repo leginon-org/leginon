@@ -2391,8 +2391,17 @@ class ImageAssessorSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
 			('format', str),
+			('type', str),
 			('image directory', str),
 			('outputfile', str),
+		)
+	typemap = classmethod(typemap)
+
+class ClickTargetTransformerSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('child preset', str),
+			('ancestor preset', str),
 		)
 	typemap = classmethod(typemap)
 
