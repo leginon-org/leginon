@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.50 $
+# $Revision: 1.51 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-12-05 22:28:41 $
-# $Author: pulokas $
+# $Date: 2007-04-13 03:01:26 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -224,7 +224,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 			self.imagepanel.setTargets('Bad Pixels', [])
 			self.stbadrowscount.SetLabel('0')
 			self.stbadcolumnscount.SetLabel('0')
-			self.stbadpixelsscount.SetLabel('0')
+			self.stbadpixelscount.SetLabel('0')
 		else:
 			self.plan.update(plan)
 			self.imagepanel.setTargets('Bad Pixels', self.plan['pixels'])
