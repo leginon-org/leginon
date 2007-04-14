@@ -60,25 +60,6 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 
 		self.currentindex = None
 
-	def OLDgetAncestor(self, childimagedata):
-		ancpreset =  self.settings['ancestor preset']
-		presetq = data.PresetData(session=self.session,name=ancpreset)
-		
-		childimagetargetdata = self.researchDBID(data.AcquisitionImageTargetData,childimagedata['target'].dbid,readimages=False)
-		parentimagedata = childimagetargetdata['image']
-		while parentimagedata is not None:
-			if parentimagedata['preset']['name'] != self.settings['ancestor preset']:
-				childimagedata = parentimagedata.copy()
-				childimagetargetdata = self.researchDBID(data.AcquisitionImageTargetData,childimagedata['target'].dbid,readimages=False)
-				parentimagedata = childimagetargetdata['image']
-			else:
-				if parentimagedata['grid'].dbid == self.childimagedata['grid'].dbid:
-					return parentimagedata
-				else:
-					return None
-
-		return None
-
 	def getAncestor(self, childimagedata):
 		ancpreset =  self.settings['ancestor preset']
 
