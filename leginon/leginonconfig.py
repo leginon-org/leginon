@@ -68,7 +68,7 @@ config_locations = [
 configfiles = configparser.read(config_locations)
 
 #sys.stderr.write("Leginon config files used: ")
-for configfile in configfiles:
+#for configfile in configfiles:
 	#sys.stderr.write(str(configfile)+" ")
 #sys.stderr.write("\n")
 
