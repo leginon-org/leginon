@@ -44,7 +44,7 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		self.ancestorpreset = self.settings['ancestor preset']
 		self.targetnames = ['acquisition','focus']
 		self.displayedtargetnames = self.targetnames+['transformed']
-
+		self.imageids = None
 		
 		self.start()
 
@@ -58,6 +58,7 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		for image in images:
 			anc = self.getAncestor(image)
 			if anc is not None:
+				print image.dbid,anc.dbid
 				self.imageids.append((image.dbid,anc.dbid))
 
 		if not self.imageids:
@@ -90,7 +91,7 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		# get parent image
 		try:
 			parentimagedata = childimagedata['target']['image']
-		except
+		except:
 			parentimagedata = None
 
 		# no parent image
@@ -218,7 +219,7 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		self.currentindex = -1
 		self.onNext()
 
-	def checkNewSettings():
+	def checkNewSettings(self):
 		if self.childpreset != self.settings['child preset'] or self.ancestorpreset != self.settings['ancestor preset']:
 			self.childpreset = self.settings['child preset']
 			self.ancestorpreset = self.settings['ancestor preset']
