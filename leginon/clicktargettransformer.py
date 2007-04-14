@@ -10,13 +10,8 @@ import data
 import targetfinder
 import presets
 import event
-import Mrc
 import node
 import gui.wx.ClickTargetTransformer
-import os
-import Image
-import numarray
-import imagefun
 #import dbdatakeeper
 import threading
 import caltransformer
@@ -37,7 +32,6 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		self.userpause = threading.Event()
 
 		self.currentindex = None
-		self.images = []
 
 		self.presetsclient = presets.PresetsClient(self)
 		self.childpreset = self.settings['child preset']
@@ -45,7 +39,7 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		self.targetnames = ['acquisition','focus']
 		self.displayedtargetnames = self.targetnames+['transformed']
 		self.imageids = None
-		
+
 		self.start()
 
 	def getImageList(self):
