@@ -30,12 +30,12 @@ def process(img1,img2,params):
 
 	doG1 = _doG(img1, params)
 	halos1, particles = _createParticleHalos(img1,params)
-	halodoG1 = apImage.normRange(doG1) + apImage.normRange(halos1)
+	halodoG1 = apImage.normStdev(doG1) + apImage.normStdev(halos1)
 	#apImage.arrayToJpeg(doG1,name+"-doG1.jpg")
 
 	doG2 = _doG(img2, params)
 	halos2, particles = _createParticleHalos(img2,params)
-	halodoG2 = apImage.normRange(doG2) + apImage.normRange(halos2)
+	halodoG2 = apImage.normStdev(doG2) + apImage.normStdev(halos2)
 	#apImage.arrayToJpeg(doG2,name+"-doG2.jpg")
 
 	shift, prob1 = _getTiltedShift(doG1,tilt1,doG2,tilt2,name,params)
@@ -150,27 +150,42 @@ def _getTiltedShift(img1,tilt1,img2,tilt2,name,params):
 	return shift, shiftprob
 
 def getBestShift(shift1,shift2,shift3,err=10.0):
-	diff = numarray.zeros((4,4),type=Float64)
-	good = numarray.zeros((3),type=Float64)
-	diff[1,2] = nd_image.sum((shift1-shift2)**2)
-	diff[1,3] = nd_image.sum((shift1-shift3)**2)
-	diff[2,3] = nd_image.sum((shift2-shift3)**2)
-	diff[2,1] = diff[1,2]
-	diff[3,1] = diff[1,3]
-	diff[3,2] = diff[2,3]
-	print diff[1,2],diff[1,3],diff[2,3]
+	diff = numarray.zeros((4,4),typecode=numarray.Float64)
+	shifts = numarray.array(([shift1,shift2,shift3,[0,0],]))
+	good = numarray.zeros((4),typecode=numarray.Float64)
+
 	for i in range(3):
 		score = 0
 		for j in range(3):
-			if diff[i+1,j+1] < err: score += 1
-		if score >= 2:
-			good[i] = 1
+			if i != j:
+				diff[i,j] = nd_image.sum((shifts[i]-shifts[j])**2)
+				good[i] += 1.0/(diff[i,j] + 0.5)
+
+	shift = numarray.zeros((2),typecode=numarray.Float64)
+	count = 0.0
+
+	for d in diff[0,1],diff[0,2],diff[1,2]:
+		if d < 5:
+			sys.stderr.write(str(d)+" ")
+		elif d < 50:
+			sys.stderr.write(apDisplay.color(str(d),"brown")+" ")
 		else:
-			good[i] = 0
-	for i in range(3):
-		if good[i]:
-			print "shift",i+1,"is good"
-	sys.exit(1)
+			sys.stderr.write(apDisplay.color(str(d),"red")+" ")
+	print ""
+	#push slightly towards zero for low prob situations
+	shifts[3] = numarray.array(([0,0]))
+	good[3] = 1.0e-3
+	for i in range(4):
+		shift += shifts[i]*good[i]
+		count += good[i]
+		print "shift",i,shift/count,shifts[i],good[i]
+	shift = shift/count
+	prob  = (count/12.0)**(0.20)+0.3
+	if prob > 1: prob = 1.0
+	print shift, count, prob
+
+	return shift, prob
+
 	if diff12 <= err and diff13 <= err and diff23 <= err:
 		return (shift1+shift2+shift3)/3.0, 1.0
 	elif diff12 <= err and diff13 > err and diff23 > err:
@@ -256,6 +271,7 @@ def _makeOutput(img1,img2,tilt,twist,scale,shift,name):
 	"""
 	model2 = _tiltImg1ToImg2(img1,tilt,twist,scale,shift)
 	model1 = _tiltImg2ToImg1(img2,tilt,twist,scale,shift)
+	shift2 = _tiltImg2ToImg1(img2,0.0,0.0,1.0,shift)
 	mmask1   = model1 != 0.0
 	mmask2   = model2 != 0.0
 	overlap1 = float(nd_image.sum(mmask1))/float(mmask1.shape[0]*mmask1.shape[1])
@@ -264,7 +280,7 @@ def _makeOutput(img1,img2,tilt,twist,scale,shift,name):
 		prob4 = math.sqrt(overlap1*overlap2)
 	else:
 		prob4 = 0.0
-	rho0    = apImage.correlationCoefficient(img1,img2)
+	rho0    = apImage.correlationCoefficient(img1,shift2)
 	rhoMod1 = apImage.correlationCoefficient(img1,model1,mmask1)
 	rhoMod2 = apImage.correlationCoefficient(img2,model2,mmask2)
 	#print "rho0    =",rho0
@@ -410,31 +426,41 @@ def _optimizeTiltByCorrCoeff(img1, img2, tilt0, shift0):
 	"""
 	given two images; find the tilt, twist, and scale of that matrix
 	"""
+	#initial guesses all zero
+	x0 = numarray.zeros(5,typecode=numarray.Float64)
+
+### FIRST PASS
+	"""
 	smimg1 = apImage.binImg(img1,4)
 	smimg1 = apImage.cutEdges(smimg1,0.1)
 	smimg2 = apImage.binImg(img2,4)
 	smimg2 = apImage.cutEdges(smimg2,0.1)
-	#initial guesses all zero
-	x0 = numarray.zeros(5,typecode=numarray.Float64)
 	print "optimizing angles and shift..."
 	x1 = optimize.fmin(_diffImage, x0, args=(tilt0, shift0, smimg1, smimg2), 
-	 xtol=0.0001, ftol=0.00001, maxiter=2500, disp=1)
+	 xtol=0.1, ftol=0.000001, maxiter=2500, disp=1)
 	tilt,twist,scale,shift = _x1ToParams(x1,tilt0,shift0)
 	print tilt,twist,scale,shift
+	"""
+
+### SECOND PASS
 	smimg1 = apImage.binImg(img1,2)
 	smimg1 = apImage.cutEdges(smimg1,0.1)
 	smimg2 = apImage.binImg(img2,2)
 	smimg2 = apImage.cutEdges(smimg2,0.1)
+	print "optimizing angles and shift..."
+	t0 = time.time()
 	x1 = optimize.fmin(_diffImage, x0, args=(tilt0, shift0, smimg1, smimg2), 
-	 xtol=0.001, ftol=0.00001, maxiter=250, disp=1)
+	 xtol=0.01, ftol=0.00001, maxiter=2500, disp=1)
 	tilt,twist,scale,shift = _x1ToParams(x1,tilt0,shift0)
-	print tilt,twist,scale,shift
+	print tilt,twist,scale,shift,round((time.time()-t0)/60.0,4),"min"
+
+### SUMMARIZE
 	err = _diffImage(x1, tilt, shift, img1, img2)
 	prob = 1.0
 	return tilt,twist,scale,shift,prob
 
 def _x1ToParams(x1,tilt0,shift0):
-	x2 = x1*100
+	x2 = x1*100.0
 	tilt  = x2[0] + tilt0
 	twist = x2[1]
 	scale = x2[2] + 1.0
@@ -444,6 +470,51 @@ def _x1ToParams(x1,tilt0,shift0):
 def _diffImage(x1,tilt0,shift0,img1,img2):
 	tilt,twist,scale,shift = _x1ToParams(x1,tilt0,shift0)
 	img2rot = _tiltImg2ToImg1(img2,tilt,twist,scale,shift)
+	correlation = apImage.correlationCoefficient(img1,img2rot)
+	#print apDisplay.color(str(-1.0*correlation),"green")
+	if correlation <= 0:
+		return -1.0*correlation
+	return -1.0*math.sqrt(correlation)
+
+#####################################################
+
+def _optimizeTiltByTransMatrix(img1, img2, tilt0, shift0):
+	"""
+	given two images; find the tilt, twist, and scale of that matrix
+	"""
+	smimg1 = apImage.binImg(img1,4)
+	smimg1 = apImage.cutEdges(smimg1,0.1)
+	smimg2 = apImage.binImg(img2,4)
+	smimg2 = apImage.cutEdges(smimg2,0.1)
+	#initial guesses all zero
+	x0 = numarray.zeros(6,typecode=numarray.Float64)
+	print "optimizing angles and shift..."
+	x1 = optimize.fmin(_diffImageMatrix, x0, args=(tilt0, shift0, smimg1, smimg2), 
+	 xtol=0.0001, ftol=0.00001, maxiter=2500, disp=1)
+	trans,shift = _x1ToParamsMartix(x1,tilt0,shift0)
+	print trans,shift
+	smimg1 = apImage.binImg(img1,2)
+	smimg1 = apImage.cutEdges(smimg1,0.1)
+	smimg2 = apImage.binImg(img2,2)
+	smimg2 = apImage.cutEdges(smimg2,0.1)
+	x1 = optimize.fmin(_diffImageMatrix, x0, args=(tilt0, shift0, smimg1, smimg2), 
+	 xtol=0.001, ftol=0.00001, maxiter=250, disp=1)
+	trans,shift = _x1ToParamsMartix(x1,tilt0,shift0)
+	print trans,shift
+	err = _diffImageMatrix(x1, tilt, shift, img1, img2)
+	prob = 1.0
+	return trans,shift,prob
+
+def _x1ToParamsMatrix(x1,tilt0,shift0):
+	x2 = x1*100
+	costilt = math.cos(tilt0*math.pi/180.0)
+	trans = numarray.array(([x2[0]+1.0,x2[1],],[x2[2]+costilt,x2[3],]))
+	shift = numarray.array((x2[4],x2[5])) + shift0
+	return trans,shift
+
+def _diffImageMatrix(x1,tilt0,shift0,img1,img2):
+	trans,shift = _x1ToParamsMatrix(x1,tilt0,shift0)
+	img2rot = nd_image.affine_transform(img2, trans, offset=-1.0*shift, mode='constant', cval=0.0)
 	correlation = apImage.correlationCoefficient(img1,img2rot)
 	#sys.stderr.write(str(round(correlation,4))+" ")
 	if correlation <= 0:

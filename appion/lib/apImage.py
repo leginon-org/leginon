@@ -93,7 +93,7 @@ def diffOfGauss(img,apix,bin,diam,k=1.01):
 	c=convolver.Convolver()
 	img1 = c.convolve(image=img,kernel=kernel1)
 	img2 = c.convolve(image=img,kernel=kernel2)
-	return img1-img2
+	return img2-img1
 
 def planeRegression(img):
 	"""
@@ -173,12 +173,10 @@ def correlationCoefficient(x,y,mask=None):
 	calcualate the correlation coefficient of two numarrays
 	"""
 	if x.shape != y.shape:
-		print "ERROR: images are not the same shape"
-		return 0.0
+		apDisplay.printError("images are not the same shape in correlation calc")
 	if mask != None:
 		if x.shape != mask.shape:
-			print "ERROR: mask is not the same shape as images"
-			return 0.0
+			apDisplay.printError("mask is not the same shape as images in correlation calc")
 		tot = nd_image.sum(mask)
 		if tot == 0:
 			return 0.0
@@ -189,6 +187,27 @@ def correlationCoefficient(x,y,mask=None):
 		x = normStdev(x)
 		y = normStdev(y)
 	z = x*y
+	if mask != None:
+		z = z*mask
+	sm  = nd_image.sum(z)
+	return sm/tot
+
+def rmsd(x,y,mask=None):
+	if x.shape != y.shape:
+		apDisplay.printError("images are not the same shape in rmsd calc")
+	if mask != None:
+		if x.shape != mask.shape:
+			apDisplay.printError("mask is not the same shape as images in rmsd calc")
+		tot = nd_image.sum(mask)
+		if tot == 0:
+			return 0.0
+		x = normStdevMask(x,mask)
+		y = normStdevMask(y,mask)
+	else:
+		tot = float(x.shape[0]*x.shape[1])
+		x = normStdev(x)
+		y = normStdev(y)
+	z = (x-y)**2
 	if mask != None:
 		z = z*mask
 	sm  = nd_image.sum(z)
