@@ -252,6 +252,7 @@ function createSelexonForm($extra=false, $title='PySelexon Launcher', $heading='
 	$presets=$sessiondata['presets'];
 	if (!empty($sessioninfo)) {
 	        $sessionpath=$sessioninfo['Image path'];
+		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
 		$sessionpath=ereg_replace("rawdata","extract/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}
@@ -502,8 +503,9 @@ function runSelexon() {
 
 	if ($testimage) {
 	        $command.="source /ami/sw/ami.csh;";
-		$command.="source /ami/sw/share/python/usepython.csh common32;";
+		$command.="source /ami/sw/share/python/usepython.csh cvs32;";
 		$command.="source /home/$user/pyappion/useappion.csh;";
+		$command.="usepythoncvs;";
 	}
 	$command.="selexon.py ";
 	if ($testimage) $command.="$testimage ";
@@ -533,7 +535,8 @@ function runSelexon() {
 	writeTop("PySelexon Results","PySelexon Results");
 
 	if ($testimage) {
-	        $jpgimg=$outdir.$runid."/jpgs/".$testimage.".prtl.jpg";
+	        $testjpg=ereg_replace(".mrc","",$testimage);
+	        $jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
 		$ccclist=array();
 		$i=1;
 		foreach ($templates as $tmplt) {
