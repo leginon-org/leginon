@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SetupWizard.py,v $
-# $Revision: 1.24 $
+# $Revision: 1.25 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-16 18:12:07 $
+# $Date: 2007-04-16 18:30:54 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -749,7 +749,7 @@ class Setup(object):
 
 	def getRecentClients(self):
 		try:
-			results = self.research(data.ConnectToClientsData(), results=100)
+			results = self.research(data.ConnectToClientsData(), results=500)
 		except IndexError:
 			results = []
 		clients = {}
