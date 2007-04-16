@@ -4,13 +4,14 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SetupWizard.py,v $
-# $Revision: 1.25 $
+# $Revision: 1.26 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-16 18:30:54 $
+# $Date: 2007-04-16 18:56:49 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
+import sys
 import data
 import icons
 import leginonconfig
@@ -138,6 +139,23 @@ class SessionTypePage(WizardPage):
 
 		sizer.Add(wx.StaticText(self, -1,
 									'then press the "Next" button to continue.'), (3, 0), (1, 2))
+		label = wx.StaticText(self, -1, '''NOTE:
+You can skip the entire setup wizard if you want to continue
+a previous session.  Start leginon with the -s and -c options:
+
+     %s -s <session> -c <clients>
+
+Examples:
+
+     %s -s 07apr16b -c tecnai2
+         (restart session 07apr16b, connect to tecnai2)
+     %s -s 07apr16b -c tecnai2,somehost
+         (restart session 07apr16b, connect to clients tecnai2 and somehost)
+
+Starting Leginon this way will instantly connect to the clients,
+so be sure the clients are running before starting Leginon.
+''' % (sys.argv[0], sys.argv[0], sys.argv[0]))
+		sizer.Add(label, (5, 0), (1, 2))
 
 		pagesizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		pagesizer.AddGrowableRow(0)
