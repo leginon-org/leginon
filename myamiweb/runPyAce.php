@@ -36,6 +36,7 @@ $presets = $leginondata->getTruePresets($sessionId);
 
 if (!empty($sessioninfo)) {
 	$sessionpath=$sessioninfo['Image path'];
+	$sessionpath=ereg_replace("leginon","appion",$sessionpath);
 	$sessionpath=ereg_replace("rawdata","ctf_ace/",$sessionpath);
 	$sessionname=$sessioninfo['Name'];
 }
@@ -211,6 +212,7 @@ else {
 	$presets=$sessiondata['presets'];
 	if (!empty($sessioninfo)) {
 	        $sessionpath=$sessioninfo['Image path'];
+		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
 		$sessionpath=ereg_replace("rawdata","ctf_ace/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}
