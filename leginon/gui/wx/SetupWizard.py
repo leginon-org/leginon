@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SetupWizard.py,v $
-# $Revision: 1.23 $
+# $Revision: 1.24 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-13 18:20:22 $
+# $Date: 2007-04-16 18:12:07 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -94,6 +94,9 @@ class UserPage(WizardPage):
 		else:
 			name = evt.GetString()
 		userdata = self.users[name]
+		sd = self.GetParent().setup.getSettings(userdata)
+		self.GetParent().setSettings(sd)
+
 		self.names, self.sessions = self.GetParent().setup.getSessions(userdata)
 
 		parent = self.GetParent()
@@ -102,8 +105,6 @@ class UserPage(WizardPage):
 		parent.sessionselectpage.setSessionNames(self.names)
 
 		# update database values
-		sd = self.GetParent().setup.getSettings(userdata)
-		self.GetParent().setSettings(sd)
 		session = parent.sessionselectpage.getSelectedSession()
 		parent.sessionselectpage.updateText(session['name'])
 
