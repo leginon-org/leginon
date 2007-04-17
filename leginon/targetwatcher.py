@@ -89,12 +89,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		#ignored = []
 
 		for target in targetlist:
-			im = target['image']
-			if im is not None:
-				imageid = target['image'].dbid
-			else:
-				imageid = None
-			self.logger.debug('IMAGEID ' + str(imageid))
 			if target['status'] in ('done', 'aborted'):
 				completed_targets.append(target)
 			elif target['type'] == self.settings['process target type']:
