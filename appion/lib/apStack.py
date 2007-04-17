@@ -7,6 +7,7 @@ import data
 import ctfData
 import dbdatakeeper
 import particleData
+import apParam
 
 partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
 acedb =dbdatakeeper.DBDataKeeper(db='dbctfdata')
@@ -149,9 +150,7 @@ def batchBox(params, img):
 	output=os.path.join(params["outdir"],(img['filename']+'.hed'))
 
 	# create output directory if it does not exist
-	if not os.path.exists(params["outdir"]):
-		print "creating directory:",params['outdir']
-		os.makedirs(params['outdir'])
+	apParam.createDirectory(params["outdir"])
            
 	# if getting particles from database, a temporary
 	# box file will be created

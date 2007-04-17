@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-
-
 import sys
+import os
+import apDisplay
 
 class AppionLoop(object):
 	def __init__(self):
@@ -12,12 +12,15 @@ class AppionLoop(object):
 		self.stats    = {}
 		self.donedict = {}
 
+		self.start()
+
 	def start(self):
 		"""
 		Starts a new function and gets all the parameters
 		"""
 		#set the name of the function; needed for param setup
 		self.setFunctionName(sys.argv[0])
+		print self.functionname
 
 		### setup default params: output directory, etc.
 		self.createDefaultParams()
@@ -27,12 +30,6 @@ class AppionLoop(object):
 
 		### parse command line options: diam, apix, etc.
 		self.parseCommandLineInput(sys.argv)
-
-		### check for conflicts in params
-		#self.checkParamConflicts()
-
-		### get images from database
-		self.getAllImages()
 
 		### create output directories
 		#self.createOutputDirs()
@@ -49,13 +46,35 @@ class AppionLoop(object):
 
 	def createDefaultStats(self):
 		import time
-		self.stats['starttime'] = time.time()
+		try:
+			import mem
+		except:
+			apDisplay.printError("Please load 'usepythoncvs' for CVS leginon code, which includes 'mem.py'")
+		stats={}
+		stats['startTime']=time.time()
+		stats['count']  = 1
+		stats['skipcount'] = 1
+		stats['lastcount'] = 0
+		stats['startmem'] = mem.active()
+		stats['peaksum'] = 0
+		stats['lastpeaks'] = None
+		stats['imagesleft'] = 1
+		stats['peaksumsq'] = 0
+		stats['timesum'] = 0
+		stats['timesumsq'] = 0
+		stats['skipcount'] = 0
+		stats['waittime'] = 0
+		stats['lastimageskipped'] = False
+		stats['notpair'] = 0
+		stats['memlist'] = [mem.active()]
+		return stats
 
 	def parseCommandLineInput(self, args):
 		self.params['functionname'] = self.functionname
+		#self.checkParamConflicts()
 
 	def writeFunctionLog(self, args):
-		file = os.path.join(params['rundir'],self.functionname+".log")
+		file = os.path.join(self.params['rundir'],self.functionname+".log")
 		out=""
 		for arg in args:
 			out += arg+" "
@@ -86,6 +105,9 @@ class AppionLoop(object):
 		"""
 		processes all images
 		"""
+		### get images from database
+		self.getAllImages()
+		### start the loop
 		notdone=True
 		while notdone:
 			for img in self.images:

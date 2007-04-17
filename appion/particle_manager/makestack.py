@@ -320,7 +320,7 @@ def batchBox(params, img):
 	# create output directory if it does not exist
 	if not os.path.exists(params["outdir"]):
 		print "creating directory:",params['outdir']
-		os.makedirs(params['outdir'])
+		os.makedirs(params['outdir'],0777)
            
 	# if getting particles from database, a temporary
 	# box file will be created

@@ -392,7 +392,7 @@ def getOutDirs(params):
 			print " !!! WARNING: continue option is OFF if you WILL overwrite previous run."
 			time.sleep(10)
 	else:
-		os.makedirs(params['rundir'])
+		os.makedirs(params['rundir'],0777)
 
 	return(params)
 
