@@ -105,12 +105,13 @@ class DriftManager(watcher.Watcher):
 		# what if preset mag changed ???
 
 		## acquire new image using different correction channel
+		correct = im['corrected']
 		chan = im['correction channel']
 		if chan in (None, 0):
 			newchan = 1
 		else:
 			newchan = 0
-		newcamim = self.acquireImage(channel=newchan)
+		newcamim = self.acquireImage(channel=newchan, correct=correct)
 
 		## store new version of image to database
 		newim = self.newImageVersion(im, newcamim)
@@ -231,10 +232,13 @@ class DriftManager(watcher.Watcher):
 		self.logger.info('DriftManager done monitoring drift')
 		self.setStatus('idle')
 
-	def acquireImage(self, channel=0):
+	def acquireImage(self, channel=0, correct=True):
 		self.startTimer('drift acquire')
 		self.instrument.setCorrectionChannel(channel)
-		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+		if correct:
+			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+		else:
+			imagedata = self.instrument.getData(data.CameraImageData)
 		if imagedata is not None:
 			self.setImage(imagedata['image'], 'Image')
 		self.stopTimer('drift acquire')
