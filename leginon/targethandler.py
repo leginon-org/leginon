@@ -47,11 +47,16 @@ class TargetHandler(object):
 		have = {}
 		for target in targets:
 			targetnum = target['number']
-			if 'image' in target and target['image'] is not None:
-				imageid = target['image'].dbid
-			else:
-				imageid = None
-			key = (imageid, targetnum)
+			parentnum = None
+
+			parentim = target.special_getitem('image', dereference=False)
+			if parentim is not None:
+				parentim = parentim.dbid
+				parentim = self.researchDBID(data.AcquisitionImageData, parentim, readimages=False)
+				if parentim['target'] is not None:
+					parentnum = target['image']['target']['number']
+
+			key = (parentnum, targetnum)
 			if key not in have:
 				have[key] = target
 		havelist = have.values()
