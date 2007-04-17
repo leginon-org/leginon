@@ -631,7 +631,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.driftimagedone.clear()
 		self.publish(driftdata, pubevent=True, database=True, dbforce=True)
 		self.reportStatus('acquisition', 'Waiting for DriftManager to check drift...')
-		#self.driftimagedone.wait()
+		self.driftimagedone.wait()
 		self.driftdone.wait()
 		return self.driftresult
 
