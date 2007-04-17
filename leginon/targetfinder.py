@@ -143,6 +143,29 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.publish(targetdata, database=True)
 			number += 1
 
+	def displayPreviousTargets(self, targetlistdata):
+		targets = self.researchTargets(list=targetlistdata)
+		done = []
+		acq = []
+		foc = []
+		halfrows = targetlistdata['image']['camera']['dimension']['y'] / 2
+		halfcols = targetlistdata['image']['camera']['dimension']['x'] / 2
+		for target in targets:
+			drow = target['delta row']
+			dcol = target['delta column']
+			x = dcol + halfcols
+			y = drow + halfrows
+			disptarget = x,y
+			if target['status'] in ('done', 'aborted'):
+				done.append(disptarget)
+			elif target['type'] == 'acquisition':
+				acq.append(disptarget)
+			elif target['type'] == 'focus':
+				foc.append(disptarget)
+		self.setTargets(acq, 'acquisition', block=True)
+		self.setTargets(foc, 'focus', block=True)
+		self.setTargets(done, 'done', block=True)
+
 	def processImageData(self, imagedata):
 		'''
 		Gets and publishes target information of specified image data.
@@ -165,13 +188,15 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			# I hope you can only have one target list on an image, right?
 			targetlist = previouslists[0]
 			db = False
-			self.logger.info('Already processed this image... republishing')
+			self.logger.info('Existing target list on this image...')
+			self.displayPreviousTargets(targetlist)
 		else:
 			# no previous list, so create one and fill it with targets
 			targetlist = self.newTargetList(image=imagedata, queue=self.settings['queue'])
-			self.findTargets(imagedata, targetlist)
-			self.logger.debug('Publishing targetlist...')
 			db = True
+
+		self.findTargets(imagedata, targetlist)
+		self.logger.debug('Publishing targetlist...')
 
 		## if queue is turned on, do not notify other nodes of each target list publish
 		if self.settings['queue']:

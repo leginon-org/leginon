@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.23 $
+# $Revision: 1.24 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-04 21:05:47 $
+# $Date: 2007-04-17 23:18:13 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -31,7 +31,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTargetTool('Raster', wx.Color(0, 255, 255),
 																	settings=True)
-		self.imagepanel.addTargetTool('Polygon Vertices', wx.Color(255,0,0),
+		self.imagepanel.addTargetTool('Polygon Vertices', wx.Color(255,255,0),
 																	settings=True, target=True)
 		self.imagepanel.selectiontool.setDisplayed('Polygon Vertices', True)
 		self.imagepanel.setTargets('Polygon Vertices', [])
@@ -43,6 +43,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True,
 																	settings=True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
+		self.imagepanel.addTargetTool('done', wx.RED)
+		self.imagepanel.selectiontool.setDisplayed('done', True)
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableCol(0)
 		self.szmain.AddGrowableRow(1)

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleFinder.py,v $
-# $Revision: 1.43 $
+# $Revision: 1.44 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-06-13 19:02:43 $
+# $Date: 2007-04-17 23:18:12 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -44,6 +44,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True,
 																	settings=True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
+		self.imagepanel.addTargetTool('done', wx.RED)
+		self.imagepanel.selectiontool.setDisplayed('done', True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
 
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/JAHCFinder.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-06-27 20:53:10 $
+# $Date: 2007-04-17 23:18:13 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -42,8 +42,10 @@ class Panel(gui.wx.TargetFinder.Panel):
 																	settings=True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True,
 																	settings=True)
+		self.imagepanel.addTargetTool('done', wx.RED)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
+		self.imagepanel.selectiontool.setDisplayed('done', True)
 
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableRow(1)
