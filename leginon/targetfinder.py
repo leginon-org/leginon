@@ -151,8 +151,16 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			return
 
 		# check if there is already a target list for this image
+		# or any other versions of this image (all from same target/preset)
 		# exclude sublists (like rejected target lists)
-		previouslists = self.researchTargetLists(image=imagedata, sublist=False)
+		qtarget = imagedata['target']
+		try:
+			pname = imagedata['preset']['name']
+			qpreset = data.PresetData(name=pname)
+		except:
+			qpreset = None
+		qimage = data.AcquisitionImageData(target=qtarget, preset=qpreset)
+		previouslists = self.researchTargetLists(image=qimage, sublist=False)
 		if previouslists:
 			# I hope you can only have one target list on an image, right?
 			targetlist = previouslists[0]
