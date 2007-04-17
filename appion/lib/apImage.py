@@ -193,14 +193,13 @@ def correlationCoefficient(x,y,mask=None):
 	return sm/tot
 
 def rmsd(x,y,mask=None):
-	if x.shape != y.shape:
-		apDisplay.printError("images are not the same shape in rmsd calc")
+	return math.sqrt(msd(x,y,mask=mask))
+
+def msd(x,y,mask=None):
 	if mask != None:
-		if x.shape != mask.shape:
-			apDisplay.printError("mask is not the same shape as images in rmsd calc")
-		tot = nd_image.sum(mask)
+		tot = float(nd_image.sum(mask))
 		if tot == 0:
-			return 0.0
+			return 1.0e13
 		x = normStdevMask(x,mask)
 		y = normStdevMask(y,mask)
 	else:

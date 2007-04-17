@@ -145,6 +145,8 @@ def parseInput(args):
 			params["phaseflip"]=True
 		elif (arg=='noinvert'):
 			params["noinvert"]=True
+		elif (arg=='invert'):
+			params["noinvert"]=False
 		elif (arg=='spider'):
 			params["spider"]=True
 		elif (arg=='commit'):
