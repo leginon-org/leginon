@@ -5,7 +5,7 @@ import time
 import random
 import math
 import apImage,apParticle,apDatabase,apDisplay,apCorrelate,apParam
-import libCV
+#import libCV
 import apLoop
 import numarray
 import numarray.nd_image as nd_image
@@ -435,7 +435,7 @@ def _x1ToParams(x1,tilt0,shift0,bin):
 	tilt  = x2[0] + tilt0
 	twist = x2[1]
 	scale = x2[2]/10.0 + 1.0
-	shift = numarray.array((x2[3]*10.0,x2[4])) + shift0/float(bin)
+	shift = (numarray.array((x2[3]*10.0,x2[4])) + shift0)/float(bin)
 	return tilt,twist,scale,shift
 
 def _corrImages(x1,tilt0,shift0,img1,img2,bin):
