@@ -43,6 +43,7 @@ class AppionLoop(object):
 
 	def createDefaultParams(self):
 		self.params['functionname'] = self.functionname
+		print "opening XML parameter file:",self.functionname+".xml"
 
 	def createDefaultStats(self):
 		import time
@@ -127,14 +128,14 @@ class AppionLoop(object):
 		self.finishLoop(stats)
 
 	def getAllImages(self):
+		#import apDatabase
+		#self.images = getAllImages(self.stats,self.params)
 		import data
 		import dbdatakeeper
 		p = data.PresetData(name='en')
 		q = data.AcquisitionImageData(preset = p)
 		legdb = dbdatakeeper.DBDataKeeper()
 		self.images = legdb.query(q, readimages=False, results=50)
-		#import pprint
-		#pprint.pprint(self.images[0])
 		print 'LEN', len(self.images)
 
 	def writeDoneDict(self, imgname):
