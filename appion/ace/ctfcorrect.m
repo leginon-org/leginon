@@ -1,4 +1,4 @@
-function im = ctfcorrect(im,ctfparams,scopeparams,phaseonly); 
+function ctfcorrect(impath, matfile, tempdir, ctdimpath, outimagedir, imgname); 
 % DESCRIPTION: 
 %     CTF correction based on parameters estimated by ACE. 
 %
@@ -18,19 +18,26 @@ function im = ctfcorrect(im,ctfparams,scopeparams,phaseonly);
 %
 % Copyright 2004-2005 Satya P. Mallick 
 
-if(nargin<4) 
-  phaseonly = 0; 
-end 
+
+phaseonly = 1; 
+
+
+im = readmrc(impath);
+% h=figure('Visible', 'Off'); imshow(double(im),[]); title('Orig im');
+% saveas(h,strcat(outimagedir, '/', imgname, '_origIm.png'));
+% close all;
 
 display = 0; 
 [imwidth imheight] = size(im); 
 
-
+load(sprintf('%s', matfile), 'ctfparams', 'scopeparams');
 defoci = ctfparams(1:2); 
-A  = ctfparams(3); 
-ast_ang = pi/2+ctfparams(4); 
-envp = ctfparams(9:12); 
-noisep = ctfparams(5:8); 
+ast_ang = pi/2+ctfparams(5); 
+
+% load(sprintf('%s/scopeparams.mat',tempdir));
+% V = V*1e3;
+% Cs = Cs*1e-3;
+% Ca = Ca*1e-10;
 
 V = scopeparams(1)*1e3; 
 Cs = scopeparams(2)*1e-3; 
@@ -39,10 +46,8 @@ Ca = scopeparams(3)*1e-10;
 if(mod(imwidth,2)==0)
  zro = imwidth/2+0.5; 
 else 
-  zro = ceil(imwidth/2) 
+  zro = ceil(imwidth/2);
 end 
-
-
 
 defocus_mean = (defoci(1)+defoci(2))/2; 
 defocus_dev = abs(defoci(1)-defoci(2))/2; 
@@ -52,14 +57,46 @@ lambda = getlambda(V);
 s = s-zro; 
 gmma = gmma-zro; 
 
-s =  sqrt((s.^2 + gmma.^2))./(imwidth*Ca);
-gmma = defocus_mean + defocus_dev*cos(2*(atan(j./i)-ast_ang)); 
+a = atan2(s,gmma);
+s =  sqrt((s.^2 + gmma.^2));
+gmma = defocus_mean + defocus_dev*cos(2*(a+ast_ang)); 
+s = s./(imwidth*Ca);
 gmma = squeeze(getgamma(s,gmma,Cs,lambda)); 
+
+
 if(phaseonly)
 gmma(rem(gmma,2*pi)>pi)=-1;
 gmma(gmma~=-1)=1;
+
+%h=figure('Visible', 'Off'); imshow(double(gmma),[]); title('gmma');
+%saveas(h,strcat(outimagedir, '/', imgname, '_ctf.png'));
+%close all;
+
+%im = medfilt2(im);
 im = fftshift(fft2(im));  
-im = real(ifft2(ifftshift((gmma.*im)))); 
+
+% h=figure('Visible', 'Off'); imshow(log(abs(im)),[]); title('im after fftshit');
+% saveas(h,strcat(outimagedir, '/', imgname, '_im.png'));
+% close all;
+
+flipInd = find(gmma==-1);
+y = im(flipInd);y=y';
+im(flipInd)=y;
+
+% h=figure('Visible', 'Off'); imshow(log(abs(im)),[]); title('gmma.*im');
+% saveas(h,strcat(outimagedir, '/', imgname, '_gmmaXim.png'));
+% close all;
+
+im = abs(ifft2(ifftshift(im))); 
+
+%h=figure('Visible', 'Off'); imshow(double(im),[]); title('Corrected im');
+%saveas(h,strcat(outimagedir, '/', imgname, '_crtdIm.png'));
+%close all;
+
+%h=figure('Visible', 'Off'); imshow(log(abs(fftshift(fft2(im)))),[]); title('FFT after correcting');
+%saveas(h,strcat(outimagedir, '/', imgname, '_fftPstCrn.png'));
+%close all;
+
 else 
 ii = sqrt(1-A^2)*sin(gmma)+A*cos(gmma);
 gmma = exp(2*(noisep(1)+ noisep(2).*sqrt(s) + noisep(3).*s + noisep(4).*s.^2));
@@ -71,6 +108,4 @@ im = fftshift(fft2(im));
 im = real(ifft2(ifftshift(( gmma.*im)))); 
 end 
 
-
-
-
+writemrc(im, ctdimpath, 'float');

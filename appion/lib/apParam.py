@@ -1,5 +1,4 @@
 #Part of the new pyappion
-
 import os,sys,re
 import time
 import data
@@ -195,6 +194,10 @@ def createOutputDirs(params):
 	if(params['function'] == "pyace"):
 		createDirectory(params['matdir'])
 		createDirectory(params['opimagedir'])
+
+	if (params['function'] == "pyaceCorrect"):
+		createDirectory(params['correctedimdir'])
+		#createDirectory(params['ctdIntmdImDir'])
 
 	if(params['sessionname'] != None):
 		params['outtextfile']=os.path.join(params['rundir'],(params['sessionname']+'.txt'))
@@ -471,6 +474,8 @@ def parseCommandLineInput(args,params):
 	params['rundir']=os.path.join(params['outdir'],params['runid'])
 	params['matdir']=os.path.join(params['rundir'],"matfiles")
 	params['opimagedir']=os.path.join(params['rundir'],"opimages")
+	params['correctedimdir']=os.path.join(params['rundir'],"ctdimages")
+	#params['ctdIntmdImDir']=os.path.join(params['rundir'],"ctdIntmdImages")
 	params['doneDictName']=os.path.join(params['rundir'],"."+params['function']+"donedict")
 	params['functionLog']=os.path.join(params['rundir'],params['function']+".log")
 	print " ... run directory defined as:",params['rundir']

@@ -80,7 +80,10 @@ if __name__ == '__main__':
 			apCtf.setScopeParams(matlab,scopeparams)
 			
 ### RUN ACE
-			apCtf.runAce(matlab,img,params)
+			if params['stig']==1:
+				apCtf.runAceAstig(matlab,img,params)
+			else:
+				apCtf.runAce(matlab,img,params)
 ### END RUN ACE
 
 			apLoop.printSummary(stats, params)

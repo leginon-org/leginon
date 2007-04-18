@@ -45,6 +45,6 @@ if __name__ == "__main__":
 	apXml.fancyPrintDict(params)
 
 	#pprint.pprint(xmldict)
-	#apXml.printHelp(xmldict)
+	apXml.printHelp(xmldict)
 
 
