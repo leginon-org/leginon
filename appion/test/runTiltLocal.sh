@@ -1,7 +1,6 @@
 #!/bin/bash
 
 rm -f `find .. -name "*.py[oc]"`
-rm -f `find .. -name "*~"`
 rm -fr icetiltslocal negtiltslocal
 
 tiltCorrelator.py \

@@ -1,7 +1,6 @@
 #!/bin/sh
 
 rm -f `find .. -name "*.py[oc]"`
-rm -f `find .. -name "*~"`
 rm -fr acedb
 
 pyace.py runid=acedb dbimages=07mar09b,en edgethcarbon=0.8 edgethice=0.6 pfcarbon=0.9 pfice=0.3 \

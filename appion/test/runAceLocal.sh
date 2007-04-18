@@ -1,7 +1,6 @@
 #!/bin/sh
 
 rm -f `find .. -name "*.py[oc]"`
-rm -f `find .. -name "*~"`
 rm -fr acelocal
 
 ../ace/pyace.py \
