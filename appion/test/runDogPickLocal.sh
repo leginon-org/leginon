@@ -1,7 +1,7 @@
 #!/bin/sh
 
-rm -f `find .. -name "*.py[oc]"`
-rm -fr doglocal
+rm -fv `find .. -name "*.py[oc]"`
+rm -frv doglocal
 
 dogPicker.py \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00002en_00.mrc \

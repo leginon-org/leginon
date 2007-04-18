@@ -1,7 +1,7 @@
 #!/bin/bash
 
-rm -f `find .. -name "*.py[oc]"`
-#rm -fr icetiltsdb negtiltsdb
+rm -fv `find .. -name "*.py[oc]"`
+#rm -frv icetiltsdb negtiltsdb
 
 
 tiltCorrelator.py \

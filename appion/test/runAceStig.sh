@@ -1,7 +1,7 @@
 #!/bin/sh
 
-rm -f `find .. -name "*.py[oc]"`
-rm -fr acelocal
+rm -fv `find .. -name "*.py[oc]"`
+rm -frv acelocal
 
 ../ace/pyace.py \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00002en_00.mrc \

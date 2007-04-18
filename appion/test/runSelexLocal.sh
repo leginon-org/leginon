@@ -1,7 +1,7 @@
 #!/bin/bash
 
-rm -f `find .. -name "*.py[oc]"`
-rm -fr selexlocal
+rm -fv `find .. -name "*.py[oc]"`
+rm -frv selexlocal
 
 
 selexon.py \

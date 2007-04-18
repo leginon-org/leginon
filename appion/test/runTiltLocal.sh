@@ -1,7 +1,7 @@
 #!/bin/bash
 
-rm -f `find .. -name "*.py[oc]"`
-rm -fr icetiltslocal negtiltslocal
+rm -fv `find .. -name "*.py[oc]"`
+rm -frv icetiltslocal negtiltslocal
 
 tiltCorrelator.py \
   07feb02b_a_00006gr_00019sq_v01_00002sq_00_00004en_00.mrc \
