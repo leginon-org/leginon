@@ -7,24 +7,9 @@
 import data
 import dbdatakeeper
 
-db=dbdatakeeper.DBDataKeeper(db='dbparticledata')
+db=dbdatakeeper.DBDataKeeper(db='dbappiondata')
 
-]class ApMaskRegionData(data.Data):
-	def typemap(cls):
-		return data.Data.typemap() + (
-			('mask', makeMaskParams),
-			('imageId', image),
-			('x', int),
-			('y', int),
-			('area', int),
-			('perimeter', int),
-			('mean', float),
-			('stdev', float),
-			('keep', bool),
-			
-		)
-	typemap = classmethod(typemap)
-data.ApMaskRegionData=ApMaskRegionData
+### Particle Selection Tables
 
 class ApParticleData(data.Data):
 	def typemap(cls):
@@ -68,19 +53,6 @@ class ApSelectionParamsData(data.Data):
 	typemap = classmethod(typemap)
 data.ApSelectionParamsData=ApSelectionParamsData
 
-class ApShiftData(data.Data):
-	def typemap(cls):
-		return data.Data.typemap() + (
-			('dbemdata|AcquisitionImageData|image1', int),
-			('dbemdata|AcquisitionImageData|image2', int),
-			('shiftx', float),
-			('shifty', float),
-			('correlation', float),
-			('scale', float),
-		)
-	typemap = classmethod(typemap)
-data.ApShiftData=ApShiftData
-
 class ApTemplateImageData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
@@ -105,47 +77,42 @@ class ApTemplateRunData(data.Data):
 	typemap = classmethod(typemap)
 data.ApTemplateRunData=ApTemplateRunData
 
-class ApMakeMaskParamsData(data.Data):
-	def typemap(cls):
-		return data.Data.typemap() + (
-			('dbemdata|SessionData|session', int),
-			('mask path', str),
-			('name', str),
-			('bin', int),
-			('mask type', str),
-			('pdiam', int),
-			('region diameter', int),
-			('edge blur', float),
-			('edge low', float),
-			('edge high', float),
-			('region std', float),
-			('convolve', float),
-			('convex hull', bool),
-			('libcv', bool),
-		)
-	typemap = classmethod(typemap)
-data.ApMakeMaskParamsData=ApMakeMaskParamsData
 
-class ApStackParamsData(data.Data):
+
+### Shift Table(s)
+
+class ApShiftData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('stackPath', str),
-			('name' , str),
-			('description', str),
-			('boxSize', int),
-			('bin', int),
-			('phaseFlipped', bool),
-			('aceCutoff', float),
-			('selexonCutoff', float),
-			('checkCrud', bool),
-			('checkImage', bool),
-			('minDefocus', float),
-			('maxDefocus', float),
-			('fileType', str),
-			('inverted', bool),
+			('dbemdata|AcquisitionImageData|image1', int),
+			('dbemdata|AcquisitionImageData|image2', int),
+			('shiftx', float),
+			('shifty', float),
+			('correlation', float),
+			('scale', float),
 		)
 	typemap = classmethod(typemap)
-data.ApStackParamsData=ApStackParamsData
+data.ApShiftData=ApShiftData
+
+
+### Crud/Mask Tables 
+
+class ApMaskRegionData(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('mask', makeMaskParams),
+			('imageId', image),
+			('x', int),
+			('y', int),
+			('area', int),
+			('perimeter', int),
+			('mean', float),
+			('stdev', float),
+			('keep', bool),
+			
+		)
+	typemap = classmethod(typemap)
+data.ApMaskRegionData=ApMaskRegionData
 
 class ApMaskMakerSettingsData(data.Data):
 	def typemap(cls):
@@ -167,6 +134,30 @@ class ApMaskMakerSettingsData(data.Data):
 		)
 	typemap = classmethod(typemap)
 data.ApMaskMakerSettingsData=ApMaskMakerSettingsData
+
+
+### Stack Tables
+
+class ApStackParamsData(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('stackPath', str),
+			('name' , str),
+			('description', str),
+			('boxSize', int),
+			('bin', int),
+			('phaseFlipped', bool),
+			('aceCutoff', float),
+			('selexonCutoff', float),
+			('checkCrud', bool),
+			('checkImage', bool),
+			('minDefocus', float),
+			('maxDefocus', float),
+			('fileType', str),
+			('inverted', bool),
+		)
+	typemap = classmethod(typemap)
+data.ApStackParamsData=ApStackParamsData
 
 class ApStackParticlesData(data.Data):
 	def typemap(cls):
@@ -278,6 +269,9 @@ class ApParticleClassificationData(data.Data):
 	typemap = classmethod(typemap)
 data.ApParticleClassificationData=ApParticleClassificationData
 
+
+### ACE/CTF Tables
+
 class ApAceRunData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
@@ -338,15 +332,3 @@ class ApCtfData(data.Data):
 		)
 	typemap = classmethod(typemap)
 data.ApCtfData=ApCtfData
-
-class ApCtfBlobData(data.Data):
-	def typemap(cls):
-		return data.Data.typemap() + (
-			('ctfId', ctf),
-			('imageId', image),
-			('blobgraph1', float),
-			('blobgraph2', float),
-		)
-	typemap = classmethod(typemap)
-data.ApCtfBlobData=ApCtfBlobData
-
