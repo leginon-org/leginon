@@ -15,7 +15,7 @@ class ApParticleData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
 			('runId', run),
-			('imageId', image),
+			('imageId', int),
 			('selectionId', selectionParams),
 			('xcoord', int),
 			('ycoord', int),
@@ -101,7 +101,7 @@ class ApMaskRegionData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
 			('mask', makeMaskParams),
-			('imageId', image),
+			('imageId', int),
 			('x', int),
 			('y', int),
 			('area', int),
@@ -307,7 +307,7 @@ class ApCtfData(data.Data):
 		return data.Data.typemap() + (
 			('runId', run),
 			('aceId', ace_params),
-			('imageId', image),
+			('imageId', int),
 			('defocus1', float),
 			('defocus2', float), 
 			('defocusinit', float), 
