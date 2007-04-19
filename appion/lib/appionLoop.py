@@ -3,18 +3,10 @@
 import sys
 import os
 import apDisplay
+import re
 
 class AppionLoop(object):
 	def __init__(self):
-		self.functionname = None
-		self.images   = None
-		self.params   = {}
-		self.stats    = {}
-		self.donedict = {}
-
-		self.start()
-
-	def start(self):
 		"""
 		Starts a new function and gets all the parameters
 		"""
@@ -41,11 +33,26 @@ class AppionLoop(object):
 		#self.readDoneDict()
 
 
+	def setFunctionName(self, arg):
+		self.functionname = os.path.basename(arg.strip())
+		self.functionname = re.sub(".[a-z]+$","",self.functionname)
+
 	def createDefaultParams(self):
+		self.params = {}
 		self.params['functionname'] = self.functionname
-		print "opening XML parameter file:",self.functionname+".xml"
+
+		self.params['rundir'] = "."
+		self.params['appionhome'] = os.environ.get("APPIONHOME")
+		print "APPION home defined as:",self.params['appionhome']
+		self.params['method'] = "updated"
+		self.params['xmlglobfile'] = os.path.join(self.params['appionhome'],"xml","allappion.xml")
+		print "XML global parameter file:",self.params['xmlglobfile']
+		self.params['xmlfuncfile'] = os.path.join(self.params['appionhome'],"xml",self.functionname+".xml")
+		print "XML function parameter file:",self.params['xmlfuncfile']
+
 
 	def createDefaultStats(self):
+		self.stats = {}
 		import time
 		try:
 			import mem
@@ -120,10 +127,10 @@ class AppionLoop(object):
 				self.processImage(img)
 				### FINISH with custom functions
  
-	 			self.writeDoneDict(donedict, params, img['filename'])
-				self.printSummary(stats, params)
+	 			self.writeDoneDict(self.donedict, self.params, img['filename'])
+				self.printSummary(self.stats, self.params)
 				#END LOOP OVER IMAGES
-			notdone = self.waitForMoreImages(stats, params)
+			notdone = self.waitForMoreImages(self.stats, self.params)
 			#END NOTDONE LOOP
 		self.finishLoop(stats)
 
@@ -156,8 +163,6 @@ class AppionLoop(object):
 	def finishLoop(self, stats):
 		return
 
-	def setFunctionName(self, arg):
-		self.functionname = arg
 
 	def processImage(self, img):
 		raise NotImplementedError()

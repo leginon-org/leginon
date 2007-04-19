@@ -494,7 +494,8 @@ def filterImg(img,apix,res):
 		return(img)
 	else:
 		print " ... performing low pass filter"
-		c=convolver.Convolver()
+		c = convolver.Convolver()
+		print "classed"
 		sigma=(res/apix)/3.0
 		kernel=convolver.gaussian_kernel(sigma)
 		#Mrc.numeric_to_mrc(kernel,'kernel.mrc')
@@ -646,7 +647,7 @@ def rescaleTemplates(img,params):
 			print "rescaling template",str(i),":",tmplt['apix'],"->",params['apix']
 			scalefactor=tmplt['apix']/params['apix']
 			scaleandclip(ogtmpltname,(scalefactor,scalefactor),newtmpltname)
-			params['scaledapix'][i]=params['apix']
+			params['scaledapix'][i] = params['apix']
 			dwnsizeTemplate(params,newtmpltname)
 		i+=1
 	return
