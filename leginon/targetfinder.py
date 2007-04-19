@@ -131,8 +131,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if not imagetargets:
 			return
 		imagearray = imagedata['image']
-		lastnumber = self.lastTargetNumber(image=imagedata,
-																				session=self.session)
+		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 		number = lastnumber + 1
 		for imagetarget in imagetargets:
 			column, row = imagetarget

@@ -14,7 +14,7 @@ import imagefun
 import numarray
 import numarray.nd_image as nd_image
 from numarray.linear_algebra import linear_least_squares
-import gaussfit
+#import gaussfit
 
 class FindPeakError(Exception):
 	pass
@@ -107,10 +107,11 @@ class PeakFinder(object):
 			#print self.results['noise'],self.results['mean'],self.results['signal'],self.results['snr']
 
 		return self.results['pixel peak']
-
+	"""
 	def gaussFitPeak(self, a):
 		sol = gaussfit.gaussfit(a)
 		return {'row': sol[0][3], 'col': sol[0][4], 'minsum': sol[2], 'coeffs': sol[0], 'value':None }
+	"""
 
 	def quadFitPeak(self, a):
 		'''
@@ -166,8 +167,8 @@ class PeakFinder(object):
 		roi = imagefun.crop_at(self.image, (peakrow,peakcol), (npix,npix))
 
 		## fit a quadratic to it and find the subpixel peak
-		#roipeak = self.quadFitPeak(roi)
-		roipeak = self.gaussFitPeak(roi)
+		roipeak = self.quadFitPeak(roi)
+		#roipeak = self.gaussFitPeak(roi)
 		srow = peakrow + roipeak['row'] - npix/2
 		scol = peakcol + roipeak['col'] - npix/2
 		peakvalue = roipeak['value']

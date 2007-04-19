@@ -107,9 +107,9 @@ module: tomography
 type: Pipeline
 package: tomography
 
-#[RCTAcquisition]
-#module: rctacquisition 
-#type: Pipeline
+[RCTAcquisition]
+module: rctacquisition 
+type: Pipeline
 
 [ImageAssessor]
 module: imageassessor
