@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ClickTargetTransformer.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-13 03:00:34 $
+# $Date: 2007-04-19 18:41:34 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -43,6 +43,9 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_END,
 													'end',
 													shortHelpString='To End')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET,
+													'simulatetarget',
+													shortHelpString='Jump')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
 													'play',
 													shortHelpString='Transform')
@@ -91,6 +94,8 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 											id=gui.wx.ToolBar.ID_PREVIOUS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEndTool,
 											id=gui.wx.ToolBar.ID_END)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onJumpTool,
+											id=gui.wx.ToolBar.ID_SIMULATE_TARGET)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onTransformTool,
 											id=gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onClearTool,
@@ -101,6 +106,7 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
+		self.setNodeSettings()
 		dialog.Destroy()
 
 	def onTransformTool(self, evt):
@@ -112,7 +118,6 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 	def onBeginTool(self, evt):
 		self.node.onBegin()
 
-
 	def onNextTool(self, evt):
 		self.node.onNext()
 
@@ -121,6 +126,9 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 
 	def onEndTool(self, evt):
 		self.node.onEnd()
+
+	def onJumpTool(self, evt):
+		self.node.onJump()
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -144,7 +152,11 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['ancestor preset'], (1, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 
-
+		self.widgets['jump filename'] = Entry(self, -1, chars=12)
+		label = wx.StaticText(self, -1, 'Image to Jump to:')
+		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['jump filename'], (2, 1), (1, 1),
+										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		sb = wx.StaticBox(self, -1, 'Settings')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)

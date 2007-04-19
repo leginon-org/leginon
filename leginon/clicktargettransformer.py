@@ -26,6 +26,7 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 	defaultsettings = {
 		'child preset': 'sq',
 		'ancestor preset': 'gr',
+		'jump filename': '',
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
  		targetfinder.ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -193,6 +194,25 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 	def onBegin(self):
 		self.currentindex = -1
 		self.onNext()
+
+	def onJump(self):
+		imagename = self.settings['jump filename'].split('.mrc')[0]
+		q = data.AcquisitionImageData(session=self.session,filename=imagename)
+		images = self.research(datainstance=q, readimages=False)
+		foundid = None
+		for i,ids in enumerate(self.imageids):
+			if foundid is None:
+				try:
+					foundid = list(ids).index(images[0].dbid)
+				except:
+					foundid = None
+			else:
+				self.currentindex = i
+				break
+		if foundid is None:
+			self.logger.warning('image %s not found in the child/ancestor pairs' % (imagename))
+		else:	
+			self.onPrevious()
 
 	def checkNewSettings(self):
 		if self.childpreset != self.settings['child preset'] or self.ancestorpreset != self.settings['ancestor preset']:
