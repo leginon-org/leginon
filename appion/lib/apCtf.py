@@ -69,22 +69,41 @@ def runAceAstig(matlab,img,params):
 	else:
 		nominal=img['scope']['defocus']
 	
-	pymat.eval(matlab,("dforig = %e;" % nominal))
-
 	expid=int(img['session'].dbid)
 	if params['commit']==True:
 		#insert ace params into dbctfdata.ace_params table in db
 		insertAceParams(params,expid)
 
-	acecommand=("measureAstigmatism('%s', '%s','%s','%s', '%s', %d,%d,'%s',%e,'%s', %f);" % \
+	acecommand=("ctfparams = measureAstigmatism('%s', '%s','%s','%s', '%s', %d,%d,'%s',%e,'%s', %f);" % \
 		( imgname, imgpath, params['outtextfile'], params['opimagedir'], params['matdir'], params['display'], params['stig'],\
-		params['medium'], -nominal, params['tempdir'], params['resamplefr'] ))
+		params['medium'], -nominal, params['tempdir']+"/", params['resamplefr'] ))
 
 	shortimgname = re.sub("_0*","_",imgname)
 	shortimgname = re.sub("_v0[0-9]","",shortimgname)
 	print " ... processing, estimating astigmatism", shortimgname
 	pymat.eval(matlab,acecommand)
 	print "done"
+	
+	ctfparams=pymat.get(matlab,'ctfparams')
+	
+	matfile = os.path.join(params['matdir'],imgname+'.mrc.mat')
+	
+	#display must be on to be able to commit ctf results to db 	
+	if (params['display']):
+		imfile1=os.path.join(params['tempdir'],'im1.png')
+		imfile2=os.path.join(params['tempdir'],'im2.png')
+		opimfile1=os.path.join(params['opimagedir'],imgname+'.mrc1.png')
+		opimfile2=os.path.join(params['opimagedir'],imgname+'.mrc2.png')
+		pymat.eval(matlab,"im1 = imread('"+imfile1+"');")
+		pymat.eval(matlab,"im2 = imread('"+imfile2+"');")
+		pymat.eval(matlab,"imwrite(im1,'"+opimfile1+"');")
+		pymat.eval(matlab,"imwrite(im2,'"+opimfile2+"');")
+		#insert ctf params into dbctfdata.ctf table in db
+		if (params['commit']==True):
+			insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfile2)
+	
+	return
+
 	
 def runAceDrift(matlab,img,params):
 	imgpath=img['session']['image path']
@@ -104,7 +123,7 @@ def runAceDrift(matlab,img,params):
 	#pdb.set_trace()
 	acecommand=("measureAnisotropy('%s','%s',%d,'%s',%e,'%s','%s','%s', '%s');" % \
 		( imgpath, params['outtextfile'], params['display'],\
-		params['medium'], -nominal, params['tempdir'], params['opimagedir'], params['matdir'], imgname))
+		params['medium'], -nominal, params['tempdir']+"/", params['opimagedir'], params['matdir'], imgname))
 		
 	#~ acecommand=("mnUpCut = measureDrift('%s','%s',%d,%d,'%s',%e,'%s');" % \
 		#~ ( imgpath, params['outtextfile'], params['display'], params['stig'],\
@@ -128,12 +147,7 @@ def runAceCorrect(matlab,img,params):
 	ctdimname = imgname+'.mrc.ctf_ph'
 	ctdimpath = os.path.join(params['correctedimdir'],ctdimname)
 
-	#~ expid=int(img['session'].dbid)
-	#~ if params['commit']==True:
-		#~ #insert ace params into dbctfdata.ace_params table in db
-		#~ af.insertAceParams(params,expid)
-	acecorrectcommand=("ctfcorrect('%s','%s','%s','%s','%s', '%s');" % (imgpath, matfile, params['tempdir'], ctdimpath, params['ctdIntmdImDir'], imgname))
-	#pdb.set_trace()
+	acecorrectcommand=("ctfcorrect('%s','%s','%s','%s','%s', '%s');" % (imgpath, matfile, params['tempdir']+"/", ctdimpath, params['ctdIntmdImDir'], imgname))
 
 	shortimgname = re.sub("_0*","_",imgname)
 	shortimgname = re.sub("_v0[0-9]","",shortimgname)
