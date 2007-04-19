@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RobotAtlasTargetFinder.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-05-11 21:39:26 $
-# $Author: dfellman $
+# $Date: 2007-04-19 21:58:18 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -27,6 +27,7 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT,
 													'play',
 													shortHelpString='Submit Targets')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT, 'stop', shortHelpString='Abort this grid insertion')
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_REFRESH, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
 		self.toolbar.Realize()
@@ -99,8 +100,11 @@ class Panel(gui.wx.Node.Panel):
 											id=gui.wx.ToolBar.ID_REFRESH)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitTargets,
 											id=gui.wx.ToolBar.ID_SUBMIT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onAbort,
+											id=gui.wx.ToolBar.ID_ABORT)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_REFRESH, True)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, True)
 		self.listbox.Enable(True)
 		self.Bind(wx.EVT_LISTBOX, self.onAtlasListBox)
 		self.onGetAtlases()
@@ -124,6 +128,9 @@ class Panel(gui.wx.Node.Panel):
 	def onSubmitTargets(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
 		threading.Thread(target=self.node.submitTargets).start()
+
+	def onAbort(self, evt):
+		self.node.abortInsertion()
 
 if __name__ == '__main__':
 	class App(wx.App):

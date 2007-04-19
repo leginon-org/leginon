@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.20 $
+# $Revision: 1.21 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-11 23:03:21 $
-# $Author: acheng $
+# $Date: 2007-04-19 21:58:18 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -235,6 +235,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
 		self.presetsclient = presets.PresetsClient(self)
+		self.abortevent = threading.Event()
 
 		calibrationclients = {
 			'image shift': calibrationclient.ImageShiftCalibrationClient,
@@ -634,6 +635,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			rotation, scale, shift, rsvalue, value = transform
 			matrix, imatrix = align.getMatrices(rotation, scale)
 
+			self.abortevent.clear()
 			for image in targetimages:
 				# get the targets adjusted for error in the initial transform
 				targets = self.getTargets(image, center,
@@ -654,9 +656,9 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 					self.publish(targetdata, database=True, dbforce=True)
 					targetdatalist.append((originaltargetdata, targetdata))
 
-
 				self.makeTargetListEvent(targetlist)
 				self.publish(targetlist, pubevent=True)
+
 				self.waitForTargetListDone()
 
 				for originaltargetdata, targetdata in targetdatalist:
@@ -675,7 +677,14 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				if insertion == self.insertion:
 					self.updateAtlasViewTargets()
 
+				## check for abort
+				if self.abortevent.isSet():
+					break
+
 		self.unloadGrid(grid)
+
+	def abortInsertion(self):
+		self.abortevent.set()
 
 	def getLastGridInsertion(self, gridid):
 		initializer = {}
