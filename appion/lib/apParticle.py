@@ -7,13 +7,14 @@ import os
 import apImage
 import ImageDraw
 
+partdb=dbdatakeeper.DBDataKeeper(db='dbappiondata')
+
 def getParticles(img,params):
 	"""
 	returns paticles (as a list of dicts) for a given image
 	ex: particles[0]['xcoord'] is the xcoord of particle 0
 	"""
-	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
-
+	
 	imq=particleData.image()
 	imq['dbemdata|AcquisitionImageData|image']=img.dbid
 
@@ -29,7 +30,6 @@ def getDBparticledataImage(img,expid):
 	This function queries and creates, if not found, dpparticledata.image data
 	using dbemdata.AcquisitionImageData image name
 	"""
-	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
 
         legimgid=int(img.dbid)
         legpresetid=None
@@ -60,7 +60,6 @@ def insertParticlePicks(params,img,expid,manual=False):
 	"""
 	takes an image dict (img) and inserts particles into DB from pik file
 	"""
-	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
 	particlesq=particleData.particle()
 	
 	runq=particleData.run()
@@ -134,7 +133,6 @@ def insertParticlePicks(params,img,expid,manual=False):
 	return
 
 def insertMakeMaskParams(params):
-	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
 	maskPq=particleData.makeMaskParams()
 	
 	maskPq['dbemdata|SessionData|session']=params['session'].dbid
@@ -158,7 +156,6 @@ def insertMakeMaskParams(params):
 	return result
 
 def getMaskParamsByName(params):
-	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
 	maskPq=particleData.makeMaskParams()
 	maskPq['name']=params['runid']
 	maskPq['dbemdata|SessionData|session']=params['session'].dbid
@@ -170,7 +167,6 @@ def getMaskParamsByName(params):
 	
 		
 def insertMaskRegion(maskrun,partdbimg,regionInfo):
-	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
 	maskRq=particleData.maskRegion()
 		
 	maskRq['mask']=maskrun
@@ -190,7 +186,6 @@ def insertMaskRegion(maskrun,partdbimg,regionInfo):
 	return
 
 def getMaskRegions(maskrun,img):
-	partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
 	maskRq=particleData.maskRegion()
 
 	maskRq['mask']=maskrun
