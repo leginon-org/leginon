@@ -2404,6 +2404,7 @@ class ClickTargetTransformerSettingsData(SettingsData):
 		return SettingsData.typemap() + (
 			('child preset', str),
 			('ancestor preset', str),
+			('jump filename', str),
 		)
 	typemap = classmethod(typemap)
 
