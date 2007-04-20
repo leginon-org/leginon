@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.21 $
+# $Revision: 1.22 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-19 21:58:18 $
-# $Author: pulokas $
+# $Date: 2007-04-20 00:37:24 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -25,6 +25,7 @@ import project
 import calibrationclient
 import targethandler
 import gui.wx.RobotAtlasTargetFinder
+import libCV
 
 class TargetError(Exception):
 	pass
@@ -529,6 +530,33 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 		return result, centerimagedata2
 
+	def getTransform_sift(self, centerimagedata1, griddata2):
+		# Not yet working
+		griddata1 = centerimagedata1['grid']
+		result = self.loadTransform(griddata1, griddata2)
+		if result is None:
+			centerimagedata2 = self.reacquireImage(centerimagedata1,
+																							griddata=griddata2)
+			image1 = centerimagedata1['image']
+			image2 = centerimagedata2['image']
+			self.logger.info('Calculating main transform...')
+			resultold = align.findRotationScaleTranslation(image1, image2)
+			resultmatrix = libCV.MatchImages(image1, image2,0.00015,0.9,0.0,0.0,1,1)
+			# The following conversion may be incorrect
+			rotation = math.atan2(resultmatrix[(0,1)],resultmatrix[(1,1)])
+			scale = 1
+			shift = (resultmatrix[(0,0)],resultmatrix[(1,0)])
+			result = rotation,scale,shift,1,1
+			self.saveTransform(result, griddata1, griddata2)
+		else:
+			self.logger.info('Loading main transform...')
+		rotation, scale, shift, rsvalue, value = result
+		rsm = 'Rotation: %g, scale: %g, peak value: %g' % (rotation, scale, rsvalue)
+		tm = 'shift: (%g, %g), peak value: %g' % (shift + (value,))
+		self.logger.info(rsm + ', ' + tm)
+
+		return result, centerimagedata2
+
 	def saveTransform(self, result, griddata1, griddata2):
 		rotation, scale, shift, rsvalue, value = result
 		transformdata = data.LogPolarGridTransformData()
@@ -558,7 +586,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		return rotation, scale, shift, rsvalue, value
 
 	def getTargets(self, image, center,
-									matrix, rotation, scale, shift, centerimagedata, griddata):
+									matrix, rotation, scale, centershift, centerimagedata, griddata):
 		targets = []
 		targetdatalist = list(image.targetdatalist)
 		for targetdata in targetdatalist:
@@ -576,9 +604,9 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 			# transform target to where it should be for the current position
 			# based on the transform of the center image
-			#target2 = numarray.matrixmultiply(matrix, target2) + shift
+			#target2 = numarray.matrixmultiply(matrix, target2) + centershift
 			# ???
-			target2 = numarray.matrixmultiply(matrix, target2) - shift
+			target2 = numarray.matrixmultiply(matrix, target2) - centershift
 
 			# acquire where the target should be centered
 			imagedata = self.reacquireImage(centerimagedata,
