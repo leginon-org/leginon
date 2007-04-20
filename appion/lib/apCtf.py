@@ -78,9 +78,7 @@ def runAceAstig(matlab,img,params):
 		( imgname, imgpath, params['outtextfile'], params['opimagedir'], params['matdir'], params['display'], params['stig'],\
 		params['medium'], -nominal, params['tempdir']+"/", params['resamplefr'] ))
 
-	shortimgname = re.sub("_0*","_",imgname)
-	shortimgname = re.sub("_v0[0-9]","",shortimgname)
-	print " ... processing, estimating astigmatism", shortimgname
+	print " ... processing, estimating astigmatism", apDisplay.shortenImageName(imgname)
 	pymat.eval(matlab,acecommand)
 	print "done"
 	
@@ -129,9 +127,7 @@ def runAceDrift(matlab,img,params):
 		#~ ( imgpath, params['outtextfile'], params['display'], params['stig'],\
 		#~ params['medium'], -nominal, params['tempdir']))
 		
-	shortimgname = re.sub("_0*","_",imgname)
-	shortimgname = re.sub("_v0[0-9]","",shortimgname)
-	print " ... processing", shortimgname
+	print " ... processing", apDisplay.shortenImageName(imgname)
 	pymat.eval(matlab,acecommand)
 	print "done"	
 
@@ -149,9 +145,7 @@ def runAceCorrect(matlab,img,params):
 
 	acecorrectcommand=("ctfcorrect('%s','%s','%s','%s','%s', '%s');" % (imgpath, matfile, params['tempdir']+"/", ctdimpath, params['ctdIntmdImDir'], imgname))
 
-	shortimgname = re.sub("_0*","_",imgname)
-	shortimgname = re.sub("_v0[0-9]","",shortimgname)
-	print " ... processing", shortimgname
+	print " ... processing", apDisplay.shortenImageName(imgname)
 	pymat.eval(matlab,acecorrectcommand)
 	print "done"
 
