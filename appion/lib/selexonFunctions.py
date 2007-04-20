@@ -270,7 +270,7 @@ def parseSelexonInput(args,params):
 			else:
 				apDisplay.printError("\'range\' must include 3 angle parameters: start, stop, & increment\n")
 		elif (re.match('range\d+',elements[0])):
-			num=elements[0][-1]
+			num = re.sub("range(?P<num>[0-9]+)","\g<num>",elements[0])
 			angs=elements[1].split(',')
 			if (len(angs)==3):
 				params['startang'+num]=int(angs[0])
