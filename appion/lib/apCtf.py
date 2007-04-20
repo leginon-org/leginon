@@ -30,16 +30,23 @@ def runAce(matlab,img,params):
 		#insert ace params into dbctfdata.ace_params table in db
 		insertAceParams(params,expid)
 
-	plist = (imgpath, params['outtextfile'], params['display'], params['stig'],\
-		params['medium'], -nominal, params['tempdir']+"/")
-	acecmd = makeMatlabCmd("ctfparams = ace(",");",plist)
+	if params['stig']==0:
+		plist = (imgpath, params['outtextfile'], params['display'], params['stig'],\
+			params['medium'], -nominal, params['tempdir']+"/")
+		acecmd = makeMatlabCmd("ctfparams = ace(",");",plist)
+	else:
+		plist = (imgname, imgpath, params['outtextfile'], params['opimagedir'], \
+			params['matdir'], params['display'], params['stig'],\
+			params['medium'], -nominal, params['tempdir']+"/", params['resamplefr'])
+		acecmd = makeMatlabCmd("ctfparams = measureAstigmatism(",");",plist)
 
 	pymat.eval(matlab,acecmd)
 	print apDisplay.color(" done","brown")
 
 	matfile = os.path.join(params['matdir'],imgname+'.mrc.mat')
-	savematcmd = "save('"+str(matfile)+"','ctfparams','scopeparams','dforig');"
-	pymat.eval(matlab,savematcmd)
+	if params['stig']==0:
+		savematcmd = "save('"+str(matfile)+"','ctfparams','scopeparams','dforig');"
+		pymat.eval(matlab,savematcmd)
 
 	ctfparams=pymat.get(matlab,'ctfparams')
 	printResults(params,nominal,ctfparams)
@@ -59,50 +66,6 @@ def runAce(matlab,img,params):
 			insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfile2)
 	return
 
-def runAceAstig(matlab,img,params):
-	imgpath=img['session']['image path']
-	imgname=img['filename']
-	imgpath=imgpath + '/' + imgname + '.mrc'
-	
-	if params['nominal']:
-		nominal=params['nominal']
-	else:
-		nominal=img['scope']['defocus']
-	
-	expid=int(img['session'].dbid)
-	if params['commit']==True:
-		#insert ace params into dbctfdata.ace_params table in db
-		insertAceParams(params,expid)
-
-	acecommand=("ctfparams = measureAstigmatism('%s', '%s','%s','%s', '%s', %d,%d,'%s',%e,'%s', %f);" % \
-		( imgname, imgpath, params['outtextfile'], params['opimagedir'], params['matdir'], params['display'], params['stig'],\
-		params['medium'], -nominal, params['tempdir']+"/", params['resamplefr'] ))
-
-	print " ... processing, estimating astigmatism", apDisplay.shortenImageName(imgname)
-	pymat.eval(matlab,acecommand)
-	print "done"
-	
-	ctfparams=pymat.get(matlab,'ctfparams')
-	
-	matfile = os.path.join(params['matdir'],imgname+'.mrc.mat')
-	
-	#display must be on to be able to commit ctf results to db 	
-	if (params['display']):
-		imfile1=os.path.join(params['tempdir'],'im1.png')
-		imfile2=os.path.join(params['tempdir'],'im2.png')
-		opimfile1=os.path.join(params['opimagedir'],imgname+'.mrc1.png')
-		opimfile2=os.path.join(params['opimagedir'],imgname+'.mrc2.png')
-		pymat.eval(matlab,"im1 = imread('"+imfile1+"');")
-		pymat.eval(matlab,"im2 = imread('"+imfile2+"');")
-		pymat.eval(matlab,"imwrite(im1,'"+opimfile1+"');")
-		pymat.eval(matlab,"imwrite(im2,'"+opimfile2+"');")
-		#insert ctf params into dbctfdata.ctf table in db
-		if (params['commit']==True):
-			insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfile2)
-	
-	return
-
-	
 def runAceDrift(matlab,img,params):
 	imgpath=img['session']['image path']
 	imgname=img['filename']
@@ -154,8 +117,8 @@ def runAceCorrect(matlab,img,params):
 def printResults(params,nominal,ctfparams):
 	nom1 = float(-nominal*1e6)
 	defoc1 = float(ctfparams[0]*1e6)
-	if (params['stig']==0):
-		defoc2 = float(ctfparams[0]*1e6)
+	if (params['stig']==1):
+		defoc2 = float(ctfparams[1]*1e6)
 	else:
 		defoc2=None
 	conf1 = float(ctfparams[16])
