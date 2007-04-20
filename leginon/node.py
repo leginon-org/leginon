@@ -350,10 +350,7 @@ class Node(object):
 		### publish event
 		if pubevent:
 			if pubeventclass is None:
-				if isinstance(idata, data.DataHandler):
-					dataclass = idata.dataclass
-				else:
-					dataclass = idata.__class__
+				dataclass = idata.__class__
 				try:
 					eventclass = event.publish_events[dataclass]
 				except KeyError:
