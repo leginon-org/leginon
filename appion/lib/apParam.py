@@ -32,6 +32,27 @@ def createDefaultParams(function=None):
 		params['function']="generic"
 		params['version'] =None
 
+### COMMON PARAMETERS
+	params['mrcfileroot']=None
+	params['sessionname']=None
+	params['session']=None
+	params['preset']=None
+	params['runid']="run1"
+	params['dbimages']=False
+	params['alldbimages']=False
+	params['apix']=None
+	params['diam']=0
+	params['bin']=4
+	params['continue']=False
+	params['commit']=False
+	params['description']=None
+	params['outdir']=None
+	params['rundir']=None
+	params['doneDictName']=None
+	params['functionLog']=None
+	params['pixdiam']=None
+	params['binpixdiam']=None
+
 ### SELEXON PARAMETERS
 	params['template']=''
 	params['templatelist']=[]
@@ -86,7 +107,7 @@ def createDefaultParams(function=None):
 	params['fieldsize']=512
 	params['resamplefr']=1
 	params['drange']=0
-	params['tempdir']="/tmp/"
+	params['tempdir']=None
 	params['medium']="carbon"
 	params['cs']=2.0
 	params['display']=1
@@ -108,27 +129,6 @@ def createDefaultParams(function=None):
 
 ### DEFOCUS SHIFT
 	params['shiftonly']=False
-
-### COMMON PARAMETERS
-	params['mrcfileroot']=None
-	params['sessionname']=None
-	params['session']=None
-	params['preset']=None
-	params['runid']="run1"
-	params['dbimages']=False
-	params['alldbimages']=False
-	params['apix']=None
-	params['diam']=0
-	params['bin']=4
-	params['continue']=False
-	params['commit']=False
-	params['description']=None
-	params['outdir']=None
-	params['rundir']=None
-	params['doneDictName']=None
-	params['functionLog']=None
-	params['pixdiam']=None
-	params['binpixdiam']=None
 
 	return params
 
@@ -476,6 +476,8 @@ def parseCommandLineInput(args,params):
 	params['opimagedir']=os.path.join(params['rundir'],"opimages")
 	params['correctedimdir']=os.path.join(params['rundir'],"ctdimages")
 	#params['ctdIntmdImDir']=os.path.join(params['rundir'],"ctdIntmdImages")
+	if params['tempdir'] == None:
+		params['tempdir']=os.path.join(params['rundir'],"tmp")
 	params['doneDictName']=os.path.join(params['rundir'],"."+params['function']+"donedict")
 	params['functionLog']=os.path.join(params['rundir'],params['function']+".log")
 	print " ... run directory defined as:",params['rundir']
