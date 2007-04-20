@@ -2,8 +2,9 @@
 
 import sys
 import os
-import apDisplay
 import re
+import apDisplay
+import apXml
 
 class AppionLoop(object):
 	def __init__(self):
@@ -12,7 +13,6 @@ class AppionLoop(object):
 		"""
 		#set the name of the function; needed for param setup
 		self.setFunctionName(sys.argv[0])
-		print self.functionname
 
 		### setup default params: output directory, etc.
 		self.createDefaultParams()
@@ -45,11 +45,11 @@ class AppionLoop(object):
 		self.params['appionhome'] = os.environ.get("APPIONHOME")
 		print "APPION home defined as:",self.params['appionhome']
 		self.params['method'] = "updated"
-		self.params['xmlglobfile'] = os.path.join(self.params['appionhome'],"xml","allappion.xml")
+		self.params['xmlglobfile'] = os.path.join(self.params['appionhome'],"xml","allAppion.xml")
 		print "XML global parameter file:",self.params['xmlglobfile']
 		self.params['xmlfuncfile'] = os.path.join(self.params['appionhome'],"xml",self.functionname+".xml")
 		print "XML function parameter file:",self.params['xmlfuncfile']
-
+		self.params = apXml.readTwoXmlFiles(self.params['xmlglobfile'], self.params['xmlfuncfile'])
 
 	def createDefaultStats(self):
 		self.stats = {}
@@ -109,7 +109,7 @@ class AppionLoop(object):
 			self.donedict = {}
 			print " ... creating new done dictionary:\n\t",doneDictName
 
-	def loop(self):
+	def run(self):
 		"""
 		processes all images
 		"""
@@ -118,16 +118,16 @@ class AppionLoop(object):
 		### start the loop
 		notdone=True
 		while notdone:
-			for img in self.images:
+			for imgdict in self.imgtree:
 				#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
-				if self.alreadyProcessed(img):
+				if self.alreadyProcessed(imgdict):
 					continue
  
 				### START any custom functions HERE:
-				self.processImage(img)
+				self.processImage(imgdict)
 				### FINISH with custom functions
  
-	 			self.writeDoneDict(self.donedict, self.params, img['filename'])
+	 			self.writeDoneDict(self.donedict, self.params, imgdict['filename'])
 				self.printSummary(self.stats, self.params)
 				#END LOOP OVER IMAGES
 			notdone = self.waitForMoreImages(self.stats, self.params)
@@ -136,19 +136,19 @@ class AppionLoop(object):
 
 	def getAllImages(self):
 		#import apDatabase
-		#self.images = getAllImages(self.stats,self.params)
+		#self.imgtree = getAllImages(self.stats,self.params)
 		import data
 		import dbdatakeeper
 		p = data.PresetData(name='en')
 		q = data.AcquisitionImageData(preset = p)
 		legdb = dbdatakeeper.DBDataKeeper()
-		self.images = legdb.query(q, readimages=False, results=50)
-		print 'LEN', len(self.images)
+		self.imgtree = legdb.query(q, readimages=False, results=50)
+		#print 'LEN', len(self.imgtree)
 
 	def writeDoneDict(self, imgname):
 		return
 
-	def alreadyProcessed(self, img):
+	def alreadyProcessed(self, imgdict):
 		return False
 
 	def printSummary(self):
@@ -163,14 +163,13 @@ class AppionLoop(object):
 	def finishLoop(self, stats):
 		return
 
-
-	def processImage(self, img):
+	def processImage(self, imgdict):
 		raise NotImplementedError()
 
 class BinLoop(AppionLoop):
-	def processImage(self, img):
+	def processImage(self, imgdict):
 		import imagefun
-		imagefun.bin(img['image'], 2)
+		imagefun.bin(imgdict['image'], 2)
 
 if __name__ == '__main__':
 	print "__init__"

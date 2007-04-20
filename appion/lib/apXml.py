@@ -96,7 +96,8 @@ def generateParams(xmldict):
 		if 'default' in xmldict[p] and xmldict[p]['default'] != None:
 			value = xmldict[p]['default']
 			vtype = xmldict[p]['type']
-			params[p] = _convertParamToType(value,vtype)
+			nargs = xmldict[p]['nargs']
+			params[p] = _convertParamToType(value,vtype,nargs)
 		else:
 			params[p] = None
 	return params
@@ -107,7 +108,7 @@ def checkParamDict(paramdict,xmldict):
 	"""
 	for p in paramdict:
 		if 'type' in xmldict[p]:
-			paramdict[p] = _convertParamToType(paramdict[p], xmldict[p]['type'])
+			paramdict[p] = _convertParamToType(paramdict[p], xmldict[p]['type'], xmldict[p]['nargs'])
 		if 'limits' in xmldict[p]:
 			minval,maxval = re.split(",",xmldict[p]['limits'])
 			if paramdict[p] < float(minval):
@@ -118,10 +119,29 @@ def checkParamDict(paramdict,xmldict):
 					str(paramdict[p])+">"+str(maxval))
 	return paramdict
 
-def _convertParamToType(val,vtype):
+def _convertParamToType(val,vtype,nargs=None):
 	"""
 	converts a value (val) into a type (vtype)
 	"""
+	if vtype[:3].lower() == "int":
+		return int(val)
+	elif vtype.lower() == "float":
+		return float(val)
+	elif vtype[:4].lower() == "bool":
+		return str2bool(val)
+	elif vtype[:3].lower() == "str" or vtype[:4].lower() == "path":
+		return val
+	else:
+		apDisplay.printError("unknown type (type='"+vtype+"') in XML file")
+
+def _convertParamToType2(val,param,dict):
+	"""
+	converts a value (val) into a type (vtype)
+	"""
+	if 'type' in dict[param]:
+		vtype = dict[param]['type']
+	if 'nargs' in dict[param]:
+		nargs = dict[param]['nargs']
 	if vtype[:3].lower() == "int":
 		return int(val)
 	elif vtype.lower() == "float":
@@ -140,7 +160,7 @@ def updateXmlDict(dict):
 	"""
 	for param in dict.keys():
 		if(dict[param].has_key('default') and dict[param]['default'] != None):
-			dict[param]['default'] = _convertParamToType(dict[param]['default'],dict[param]['type'])
+			dict[param]['default'] = _convertParamToType(dict[param]['default'],dict[param]['type'],dict[param]['nargs'])
 	return dict
 
 def str2bool(string):
