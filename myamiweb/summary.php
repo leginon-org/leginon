@@ -272,7 +272,7 @@ if ($particle->hasParticleData($sessionId)) {
 	     <INPUT TYPE='CHECKBOX' name='onlyinspected' $inspectcheck onclick='javascript:document.prtl.submit()'>Don't use particles from discarded images<BR>
 	     <INPUT CLASS='field' NAME='mselex' TYPE='text' size='5' VALUE='$mselexval'>Minimum correlation value
 	     </form>\n";
-	$numinspected=$particle->getNumInspectedImgs($sessionId);
+	$numinspected=$particle->getNumAssessedImages($sessionId);
 	echo"Inpected images: $numinspected\n";
 	$display_keys = array ( 'totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev', 'img');
 	$particleruns=$particle->getParticleRunIds($sessionId);

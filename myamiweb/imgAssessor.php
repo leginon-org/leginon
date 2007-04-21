@@ -71,7 +71,8 @@ if ($imgdir) {
 		// get all files in directory
 		$ext=$_POST['imgtype'];
 		while ($filename=readdir($pathdir)) {
-		        if (preg_match('`\.'.$ext.'$`i',$filename)) $files[]=$filename;
+		        if ($filename == '.' || $filename == '..') continue;
+			if (preg_match('`\.'.$ext.'$`i',$filename)) $files[]=$filename;
 		}
 		closedir($pathdir);
 		if ($files) {
@@ -194,8 +195,8 @@ function displayImage($_POST,$files,$imgdir,$leginondata){
 function getImageStatus($imgname,$leginondata,$particledata) {
 	// get the status of the image index
 	$imgbase=split("\.",$imgname);
-	$imgbase=$imgbase[0];
-	$statdata['id']=$leginondata->getId(array('filename'=>$imgbase),'AcquisitionImageData','DEF_id');
+	$imgbase=$imgbase[0].".mrc";
+	$statdata['id']=$leginondata->getId(array('MRC|image'=>$imgbase),'AcquisitionImageData','DEF_id');
 	$statdata['status']=$particledata->getKeepStatus($statdata['id']);
 	$statdata['name']=$imgname;
 	return $statdata;

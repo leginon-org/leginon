@@ -102,6 +102,7 @@ if ($sessionId) {
   $prtlruns=count($prtlrunIds);
 
   // --- Get Micrograph Assessment Data
+  $totimgs = $particle->getNumImgsFromSessionId($sessionId);
   $assessedimgs = $particle->getNumAssessedImages($sessionId);
   
   // --- Get Stack Data
@@ -164,7 +165,7 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
     if ($assessedimgs==0) {echo "none";}
-    else {echo "$assessedimgs assessed";}
+    else {echo "$assessedimgs/$totimgs assessed";}
     echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>

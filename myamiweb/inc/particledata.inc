@@ -69,15 +69,6 @@ class particledata {
 		$this->mysql->SQLUpdate('image',$data,$where); 
 	}
 
-        function getNumAssessedImages($sessionId) {
-		$q = "select count(DEF_id) as num "
-			."from `image` where "
-		        ."`keep` IS NOT NULL "
-             	        ."AND `dbemdata|SessionData|session` = '$sessionId' ";
-		list($r) = $this->mysql->getSQLResult($q);
-		return $r['num'];
-	}
-
 	function getSelectionParams($runId) {
 		$q = "select s.*, r.name, r.`dbemdata|SessionData|session` "
 			."from selectionParams s "
@@ -141,13 +132,21 @@ class particledata {
 		return $r[0]['num'];
 	}
 
-        function getNumInspectedImgs($sessionId){
-		$q="select count(*) as `num` "
-		        ."FROM image "
-		        ."WHERE keep IS NOT NULL AND "
-		        ."`dbemdata|SessionData|session`='$sessionId'";
+        function getNumImgsFromSessionId($sessionId){
+	        $q="SELECT count(*) as num "
+		   . "FROM `image` "
+		   . "WHERE `dbemdata|SessionData|session`='$sessionId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0]['num'];
+	}
+
+        function getNumAssessedImages($sessionId) {
+		$q = "select count(DEF_id) as num "
+			."from `image` where "
+		        ."`keep` IS NOT NULL "
+             	        ."AND `dbemdata|SessionData|session` = '$sessionId' ";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['num'];
 	}
 
 	function getLastParticleRun ($sessionId) {
