@@ -59,6 +59,8 @@ startOrientn = 0;
 ctfparams(1)=z_major;
 ctfparams(2)=z_minor;
 ctfparams(5)=-ang*pi/180;
+ctfparams(17) = mean(confArr);
+ctfparams(18) = mean(conf_dArr);
 
 load(strcat(tempdir,'scopeparams.mat'));
 scopeparams = [V Cs Ca];
