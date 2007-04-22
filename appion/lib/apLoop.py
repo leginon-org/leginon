@@ -4,7 +4,6 @@ import os,sys
 import cPickle
 import time
 import math
-import types
 #import selexonFunctions  as sf1
 #import selexonFunctions2 as sf2
 import apParam

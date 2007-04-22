@@ -122,4 +122,10 @@
 	<modify>False</modify>
 	<pyfunction>os.path.abspath('.')+'/'</pyfunction>
  </abspath>
+  <nowait>
+	<name>do not wait for more images</name>
+	<default>False</default>
+	<description>do not wait for more images after finishing all images</description>
+	<type>boolean</type>
+ </nowait>
 </allappion>
