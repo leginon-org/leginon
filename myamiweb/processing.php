@@ -43,6 +43,7 @@ $currentproject=$sessiondata['currentproject'];
 
 // Set colors for unprocessed & finished steps:
 $nonecolor='#FFFFCC';
+$progcolor='#CCFFFF';
 $donecolor='#CCFFCC';
 $donepic='img/greengo.gif';
 $nonepic='/phpMyAdmin/themes/original/img/b_drop.png';
@@ -158,20 +159,24 @@ if ($sessionId) {
   </TR>
   <TR>\n";
   if ($assessedimgs==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
-  else {$bgcolor=$donecolor;$gifimg=$donepic;}
+  else {
+    if ($assessedimgs < $totimgs) {$bgcolor=$progcolor;$gifimg=$donepic;}
+    else {$bgcolor=$donecolor;$gifimg=$donepic;}
+  }
   echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
     <TD BGCOLOR='$bgcolor'>
     <B>Micrograph Assessment</B>
     </TD>
-    <TD BGCOLOR='$bgcolor'>\n";
-    if ($assessedimgs==0) {echo "none";}
-    else {echo "$assessedimgs/$totimgs assessed";}
-    echo"
+    <TD BGCOLOR='$bgcolor'>
+    $assessedimgs/$totimgs assessed
     </TD>
     <TD BGCOLOR='$bgcolor'>
     <A HREF='imgAssessor.php?expId=$sessionId'>";
     if ($assessedimgs==0) {echo "Begin Assessment";}
-    else {echo "Continue Assessment";}
+    else {
+      if ($assessedimgs < $totimgs) echo "Continue Assessment";
+      else echo "Redo Assessment";
+    }
     echo"</A>
     </TD>
   </TR>
