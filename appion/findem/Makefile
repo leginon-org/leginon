@@ -48,15 +48,17 @@ gen:	clean unix.for diskio.for ccplib.for subs.for parser.for symlib.for library
 
 clean:
 	echo ""
-	rm -f *~ *.mod
-	#rm -f *.o *.a
+	rm -fv *~ *.mod
+	#rm -fv *.o *.a
+	rm -fv cccmaxmap001.mrc
 
 distclean:
-	rm -f *.o *~ *.mod
-	rm -f $(LIBS) $(LPATH)/a.out 
-	#rm -f $(BINPATH)/findem.exe findem.exe 
+	rm -fv *.o *~ *.mod
+	rm -fv $(LIBS) $(LPATH)/a.out 
+	#rm -fv $(BINPATH)/findem.exe findem.exe 
+	rm -fv cccmaxmap001.mrc
 
 test:	$(BINPATH)/findem.exe
-	$(BINPATH)/findem.exe < feedtest.txt
-	echo ""; md5sum cccmaxmap001.mrc; echo "3dc23350d337ba98836507798562d33e"; echo "the above MD5SUMs should match"; echo ""
 	rm -fv cccmaxmap001.mrc
+	$(BINPATH)/findem.exe < feedtest.txt
+	echo ""; md5sum cccmaxmap001.mrc; echo "2a2f0482ab92e4b9cc9b5990c7a7de42"; echo "the above MD5SUMs should match"; echo ""

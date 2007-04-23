@@ -66,7 +66,7 @@ program main
 	real scale1,scale2,scalestep
 	parameter (scale1=1.0, scale2=1.15,scalestep=1.0)
 	character*80 imagefile,templatefile,relaxfile,angmapname,cccmaxmap,blank
-	real sampling,real_sampling,resmin,resmax,defocus,downsize,thresh,bord
+	real sampling,real_sampling,resmin,resmax,defocus,downsize,thresh
 	real diameter, rot_matrix(2,2)
 	integer iteration, search_radius, numrot
 
@@ -74,7 +74,7 @@ program main
 	real ang,ccc,min1,max1
 	real ccc_max,w_max,p_max,x_max,y_max,radius
 	character*3 num
-	integer runcode,pixrad
+	integer runcode,pixrad,bord
 	integer nxft,nyft,pxft,pyft,nxyft
 ! 	integer next_ft_size
 	real avg,stdev
@@ -106,18 +106,18 @@ program main
 	PRINT*,"X ... part diam:",diameter
 
 	!write (6,*) '>>> enter a runcode '
-	read(5,*)  runcode
+	read (5,*)  runcode
 	!write (6,*) runcode
 	PRINT*,"X ... runcode:  ",runcode
 
 	!write (6,*) '>>> enter angle start, limit, stepsize '
-	read(5,*) angstart,anglimit,angstepsize
+	read (5,*) angstart,anglimit,angstepsize
 	!write(6,*) angstart,anglimit,angstepsize
 	PRINT*,"X ... angles:   ",angstart,anglimit,angstepsize
 
 	!write (6,*) '>>> enter border size '
-	read*, bord
-	!PRINT*,"border:   ",angstart,anglimit,angstepsize
+	read (5,*), bord
+	PRINT*,"X ... border:   ",bord
 
 	radius=diameter/2
 
@@ -229,9 +229,10 @@ program main
 	CALL imageinfo(maxmap,nxft,nyft)
 	!PRINT*,maxmap(511,511),maxmap(512,512),maxmap(513,513)
 
-	pixrad = int(diameter/2.0/sampling)+1
-	pixrad = px/2
-	CALL removeborder(maxmap,nx,ny,pixrad)
+	!pixrad = int(diameter/2.0/sampling)+1
+	!pixrad = px/2
+	!CALL removeborder(maxmap,nx,ny,pixrad)
+	CALL removeborder(maxmap,nx,ny,bord)
 
 	!PRINT*,""
 	!PRINT*,'writing file now...  ',cccmaxmap

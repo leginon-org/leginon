@@ -28,7 +28,7 @@ def shortenImageName(imgname):
 	"""
 	shortimgname = imgname
 	#remove the altas name
-	shortimgname = re.sub("^(?P<ses>[0-9][0-9][a-z][a-z][a-z][0-9][0-9][a-z])_.+(?P<gr>0[^0]gr)",
+	shortimgname = re.sub("^(?P<ses>[0-9][0-9][a-z][a-z][a-z][0-9][0-9][^_]+)_.+(?P<gr>0[^0]gr)",
 		"\g<ses>_\g<gr>",shortimgname)
 	#remove the version tags
 	shortimgname = re.sub("_v[0-9][0-9]","",shortimgname)

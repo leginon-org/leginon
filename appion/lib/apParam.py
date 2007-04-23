@@ -184,6 +184,7 @@ def createOutputDirs(params):
 		pass
 	else:
 		outdir=os.path.split(impath)[0]
+		re.sub("leginon","appion",outdir) 
 		outdir=os.path.join(outdir,params['function']+"/") #'extract/')
 		params['outdir']=outdir
 
@@ -261,6 +262,11 @@ def parseCommandLineInput(args,params):
 			mrcfileroot.append(os.path.splitext(mrcfile)[0])
 		lastarg+=1
 	params['mrcfileroot']=mrcfileroot
+	if(len(params['mrcfileroot']) > 0):
+		filename = params['mrcfileroot'][0]
+		sessionname = re.sub("^(?P<ses>[0-9]+[a-z]+[0-9]+[^_]+)_.+$", "\g<ses>", filename)
+		params['sessionname'] = sessionname
+		apDisplay.printMsg("used regex to get sessionname, '"+params['sessionname']+"'")
 
 	# next get all selection parameters
 	for arg in args[lastarg:]:
