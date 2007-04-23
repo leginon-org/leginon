@@ -48,7 +48,8 @@ def runFindEM(params,file):
 		fin.close()
 
 		if (not os.path.exists(cccfile)):
-			apDisplay.printError("findem.exe did not run or crashed.\nDid you source useappion.sh?")
+			apDisplay.printError("findem.exe did not run or crashed.\n"+
+				"Did you source useappion.sh?")
 
 		classavg+=1
 	#return Mrc.Mrc_to_numeric("cccmaxmap%i00.mrc")

@@ -52,6 +52,7 @@ def createDefaultParams(function=None):
 	params['functionLog']=None
 	params['pixdiam']=None
 	params['binpixdiam']=None
+	params['abspath']=os.path.abspath('.')+'/'
 
 ### SELEXON PARAMETERS
 	params['template']=''
@@ -68,7 +69,6 @@ def createDefaultParams(function=None):
 	params['overlapmult']=1.5
 	params['maxpeaks']=1500
 	params['defocpair']=False
-	params['abspath']=os.path.abspath('.')+'/'
 	params['templateIds']=''
 
 ### selexonFunctions.py PARAMETERS ONLY
@@ -207,30 +207,22 @@ def createOutputDirs(params):
 
 def checkParamConflicts(params):
 	#if not params['templateIds'] and not params['apix']:
-	#	print "\nERROR: if not using templateIds, you must enter a template pixel size\n"
-	#	sys.exit(1)
+	#	apDisplay.printError("if not using templateIds, you must enter a template pixel size")
 	if params['templateIds'] and params['template']:
-		print "\nERROR: Both template database IDs and mrc file templates are specified,\nChoose only one\n"
-		sys.exit(1)
+		apDisplay.printError("Both template database IDs and mrc file templates are specified,\nChoose only one")
 	if params['crudonly']==True and params['shiftonly']==True:
-		print "\nERROR: crudonly and shiftonly can not be specified at the same time\n"
-		sys.exit(1)
+		apDisplay.printError("crudonly and shiftonly can not be specified at the same time")
 	if (params['thresh']==0 and params['autopik']==0):
-		print "\nERROR: neither manual threshold or autopik parameters are set, please set one.\n"
-		sys.exit(1)
+		apDisplay.printError("neither manual threshold or autopik parameters are set, please set one.")
 	if ((params['function'] == "selexon" or params['function'] == "crudFinder") and params['diam']==0):
-		print "\nERROR: please input the diameter of your particle\n"
-		sys.exit(1)
+		apDisplay.printError("please input the diameter of your particle")
 	if len(params['mrcfileroot']) > 0 and params['dbimages']==True:
 		print params['imagecount']
-		print "\nERROR: dbimages can not be specified if particular images have been specified\n"
-		sys.exit(1)
+		apDisplay.printError("dbimages can not be specified if particular images have been specified")
 	if params['alldbimages'] and params['dbimages']==True:
-		print "\nERROR: dbimages and alldbimages can not be specified at the same time\n"
-		sys.exit(1)
+		apDisplay.printError("dbimages and alldbimages can not be specified at the same time")
 	if len(params['mrcfileroot']) > 0 and params['alldbimages']:
-		print "\nERROR: alldbimages can not be specified if particular images have been specified\n"
-		sys.exit(1)
+		apDisplay.printError("alldbimages can not be specified if particular images have been specified")
 
 
 def parseCommandLineInput(args,params):

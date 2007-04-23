@@ -27,22 +27,22 @@ class AppionLoop(object):
 		self.setFunctionName()
 
 		### setup default params: output directory, etc.
-		self.createDefaultParams()
+		self._createDefaultParams()
 
 		### setup default stats: timing variables, etc.
-		self.createDefaultStats()
+		self._createDefaultStats()
 
 		### parse command line options: diam, apix, etc.
-		self.parseCommandLineInput(sys.argv)
+		self._parseCommandLineInput(sys.argv)
 
 		### create output directories
-		#self.createOutputDirs()
+		#self._createOutputDirs()
 
 		### write log of command line options
-		self.writeFunctionLog(sys.argv)
+		self._writeFunctionLog(sys.argv)
 
 		### read/create dictionary to keep track of processed images
-		#self.readDoneDict()
+		#self._readDoneDict()
 
 	def run(self):
 		"""
@@ -95,7 +95,19 @@ class AppionLoop(object):
 		"""
 		raise NotImplementedError()
 
-	def specialParamConflicts():
+	def specialDefaultParams(self):
+		"""
+		put in any additional default parameters
+		"""
+		return
+
+	def specialParseParams(self):
+		"""
+		put in any additional parameters to parse
+		"""
+		return
+
+	def specialParamConflicts(self):
 		"""
 		put in any additional conflicting parameters
 		"""
@@ -105,25 +117,61 @@ class AppionLoop(object):
 	#### ITEMS BELOW ARE NOT USUALLY OVERWRITTEN ####
 	#################################################
 
-	def checkParamConflicts():
+	def checkParamConflicts(self):
 		"""
 		put in any conflicting parameters
 		"""
-		return
+		if len(params['mrcfileroot']) > 0 and params['dbimages']==True:
+			apDisplay.printError("dbimages can not be specified if particular images have been specified")
+		if params['alldbimages'] and params['dbimages']==True:
+			apDisplay.printError("dbimages and alldbimages can not be specified at the same time")
+		if len(params['mrcfileroot']) > 0 and params['alldbimages']:
+			apDisplay.printError("alldbimages can not be specified if particular images have been specified")
+		### get custom params conflicts
+		self.specialParamConflicts()
 
 	def _createDefaultParams(self):
+		### new system, global params
 		self.params = {}
 		self.params['functionname'] = self.functionname
-
 		self.params['rundir'] = "."
 		self.params['appionhome'] = os.environ.get('APPIONHOME')
+		if self.params['appionhome'] == None:
+			apDisplay.printError("environmental variable, APPIONHOME, is not defined.\n"+
+				"Did you source useappion.sh?")
 		print "APPION home defined as:",self.params['appionhome']
 		self.params['method'] = "updated"
+		"""
+		### XML parameters
 		self.params['xmlglobfile'] = os.path.join(self.params['appionhome'],"xml","allAppion.xml")
 		print "XML global parameter file:",self.params['xmlglobfile']
 		self.params['xmlfuncfile'] = os.path.join(self.params['appionhome'],"xml",self.functionname+".xml")
 		print "XML function parameter file:",self.params['xmlfuncfile']
 		self.params = apXml.readTwoXmlFiles(self.params['xmlglobfile'], self.params['xmlfuncfile'])
+		"""
+		### classic methods
+		self.params['mrcfileroot']=None
+		self.params['sessionname']=None
+		self.params['session']=None
+		self.params['preset']=None
+		self.params['runid']="run1"
+		self.params['dbimages']=False
+		self.params['alldbimages']=False
+		self.params['apix']=None
+		self.params['diam']=0
+		self.params['bin']=4
+		self.params['continue']=False
+		self.params['commit']=False
+		self.params['description']=None
+		self.params['outdir']=None
+		self.params['rundir']=None
+		self.params['doneDictName']=None
+		self.params['functionLog']=None
+		self.params['pixdiam']=None
+		self.params['binpixdiam']=None
+		self.params['abspath']=os.path.abspath('.')+'/'
+		### get custom default params
+		self.specialDefaultParams()
 
 	def _createDefaultStats(self):
 		self.stats = {}
@@ -146,7 +194,8 @@ class AppionLoop(object):
 
 	def _parseCommandLineInput(self, args):
 		self.params['functionname'] = self.functionname
-		#self.checkParamConflicts()
+
+		self.checkParamConflicts()
 
 	def _writeFunctionLog(self, args):
 		file = os.path.join(self.params['rundir'],self.functionname+".log")
