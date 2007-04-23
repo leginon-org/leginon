@@ -71,6 +71,10 @@ class AppionLoop(object):
 		self.finishLoop()
 
 	def setFunctionName(self, arg=None):
+		"""
+		Sets the name of the function
+		by default takes the first variable in the argument
+		"""
 		if arg == None:
 			arg = sys.argv[0]
 		self.functionname = os.path.basename(arg.strip())
@@ -78,17 +82,34 @@ class AppionLoop(object):
 		self.functionname = re.sub("\.[a-zA-Z]+$","",self.functionname)
 
 	def reprocessImage(self, imgdict):
+		"""
+		Returns True if an image should be reprocess
+		e.g. a confidence less than 80%
+		"""
 		return False
 
 	def processImage(self, imgdict):
+		"""
+		this is the main component of the script
+		where all the processing is done
+		"""
 		raise NotImplementedError()
 
-	def checkParamConflicts():
+	def specialParamConflicts():
+		"""
+		put in any additional conflicting parameters
+		"""
 		return
 
 	#################################################
 	#### ITEMS BELOW ARE NOT USUALLY OVERWRITTEN ####
 	#################################################
+
+	def checkParamConflicts():
+		"""
+		put in any conflicting parameters
+		"""
+		return
 
 	def _createDefaultParams(self):
 		self.params = {}
@@ -171,7 +192,6 @@ class AppionLoop(object):
 			return False
 		os.makedirs(path,mode)
 		return True
-
 
 	def _getAllImages(self):
 		#import apDatabase
