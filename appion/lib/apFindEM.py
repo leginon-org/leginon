@@ -16,7 +16,7 @@ def runFindEM(params,file):
 		strt=str(params["startang"])
 		end=str(params["endang"])
 		incr=str(params["incrang"])
-	bw=str(int((1.5 * params["diam"]/params["apix"]/params["bin"])/2))
+	bw=str(int((params["diam"]/params["apix"]/params["bin"])/2)+1)
 
 	classavg=1
 	while classavg<=len(params['templatelist']):
@@ -83,7 +83,7 @@ def threadFindEM(params,file):
 		strt=str(params["startang"])
 		end=str(params["endang"])
 		incr=str(params["incrang"])
-	bw=str(int((1.5 * params["diam"]/params["apix"]/params["bin"])/2))
+	bw=str(int((params["diam"]/params["apix"]/params["bin"])/2)+1)
 	joblist = []
 
 	classavg=1
