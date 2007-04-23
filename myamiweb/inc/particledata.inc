@@ -245,7 +245,7 @@ class particledata {
 			$html .= "<tr>";
 			$numptl=$particlestats['totparticles'];
 			$numimg=$particlestats['num'];
-			$ppimg = ($numimg > 0) ? (int)($numptl/$numimg) : 0;
+			$ppimg = ($numimg > 0) ? (sprintf("%.1f", $numptl/$numimg)) : 0;
 			$particlestats['numimgs']=$numimg.'<BR>('.$ppimg.' prtl/img)';
 			$particlestats['img'] = '<a href="particlegraph.php?hg=1&run='.$runId.'">'
 			        .'<img border="0" '
@@ -256,8 +256,9 @@ class particledata {
 			$r0 = $r[0];
 			$html .= '<td><a href="particlerunreport.php?rId='.$runId.'">'.$r0[name].'</a></td>';
 			foreach($display_keys as $field) {
-			        if (eregi('^min|^max|^avg|^stddev', $particlestats[$field])) $data=format_sci_number($data,4);
-				$html .= "<td> $particlestats[$field] </td> \n";
+			        $data=$particlestats[$field];
+				if (eregi('^min|^max|^avg|^stddev', $field)) $data=format_sci_number($data,4);
+				$html .= "<td> $data </td> \n";
 			}
 			$html .= "</tr>\n";
 		}
