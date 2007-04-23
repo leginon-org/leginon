@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.61 $
- *	@version $Id: leginon.inc,v 1.61 2007-03-16 18:01:12 dfellman Exp $
+ *	@version $Revision: 1.62 $
+ *	@version $Id: leginon.inc,v 1.62 2007-04-23 18:57:53 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -45,7 +45,8 @@ class leginondata {
 
 	function leginondata() {
 		$this->mysql = &new mysql(DB_HOST, DB_USER, DB_PASS, DB);
-		$this->viewer_tables();
+		if ($this->mysql->checkDBConnection())
+			$this->viewer_tables();
 	}
 
 	function viewer_tables() {
@@ -65,7 +66,21 @@ class leginondata {
 		.'KEY `imageId` (`imageId`)'
 		.');';
 		if (!$this->mysql->SQLTableExists($comment_tbl_name)) 
-			$this->mysql->SQLQuery($comment_tbl_def);
+			$this->mysql->SQLquery($comment_tbl_def);
+		$update_tbl_name = 'viewer_update';
+		$update_tbl_def  = ''
+		.'CREATE TABLE `'.$update_tbl_name.'` ('
+		.'`id` int(11) NOT NULL auto_increment,'
+		.'`timestamp` timestamp(14) NOT NULL,'
+		.'`status` enum(\'N\',\'Y\') NOT NULL default \'N\','
+		.'`name` text NOT NULL,'
+		.'`update` text NOT NULL,'
+		.'PRIMARY KEY  (`id`),'
+		.'KEY `timestamp` (`timestamp`)'
+		.');';
+		$update_tbl_name = 'viewer_update';
+		if (!$this->mysql->SQLTableExists($update_tbl_name)) 
+			$this->mysql->SQLquery($update_tbl_def);
 
 	}
 
@@ -125,19 +140,29 @@ class leginondata {
 
 		}
 
-		$q="select distinct(s.DEF_id) as `id`, ".$selectcomment." as `name`, s.Name as `name_org` "
-		."from SessionData s "
-		."left join AcquisitionImageData a on (s.`DEF_id` = a.`REF|SessionData|Session`) "
-		."where a.`REF|SessionData|Session` <> 'NULL' "
+		$q="select s.DEF_id as `id`, ".$selectcomment." as `name`, s.Name as `name_org` "
+		."from AcquisitionImageData a "
+		."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) "
+		."where a.`REF|SessionData|Session` IS NOT NULL "
 		.$wherelike
+		."group by a.`REF|SessionData|Session` "
 		."order by s.DEF_timestamp DESC ";
 
 		return $this->mysql->getSQLResult($q);
 	}
 
 	function getSessionInfo($name) {
-		$sqlwhere = (is_numeric($name)) ? "where s.`DEF_id`='$name' " 
-				: "where s.`Name` like '$name' ";
+
+		if (!is_array($name)) {
+			$name = array($name);
+		}
+		foreach ($name as $n) {
+			if (is_numeric($n))
+				$ids[] = "s.`DEF_id`='$n'";
+			else
+				$ids[] = "s.`Name` like '$n'";
+		}
+		$sqlwhere = "where (".join(" OR ", $ids).")";
 
 		$q="select "
 		."s.`DEF_id` as SessionId, "
@@ -152,6 +177,8 @@ class leginondata {
 		."s.`Image path`, "
 		."concat(i.name,' - ',ic.name) as Instrument, "
 		."sc.`REF|InstrumentData|tem`  as `InstrumentId`, "
+		."c.`REF|InstrumentData|ccdcamera`  as `CameraId`, "
+		."u.`DEF_id` as userId, "
 		."u.`full name` as User "
 		."from `SessionData` s "
 		."left join UserData u on (u.`DEF_id`=s.`REF|UserData|user`) "
@@ -389,13 +416,6 @@ class leginondata {
 		return $r;
 	}
 
-	function formatPath($path) {
-	# temporary here
-		$npath = ereg_replace('[\\]','/',$path);
-		$npath = ereg("/$", $npath) ? $npath : $npath."/";
-		return $npath;
-	}
-
 	function getLastFilenameId($sessionId) {
 		$q = "select `DEF_id` as `id` from AcquisitionImageData "
 			." where `REF|SessionData|session`='$sessionId' "
@@ -410,7 +430,7 @@ class leginondata {
 		    ." where `DEF_id`='$sessionId' ";
 		$Rpath=$this->mysql->SQLQuery($q);
 		$path = mysql_fetch_array($Rpath);
-		return $this->formatPath($path['path']);
+		return formatPath($path['path']);
 	}
 
 	function getImagePathFromImageId($imageId) {
@@ -418,6 +438,39 @@ class leginondata {
 			."where `DEF_id`=$imageId";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $this->getImagePath($r['sessionId']);
+	}
+
+	function getPolarTransformInfo($imageId) {
+	}
+
+	function getLogPolarTransformImageRef($imageId) {
+		$q="SELECT "
+		."`a`.`DEF_id`, `a`.`filename`, `g`.`grid ID`, `g`.`insertion`, `t`.`number` "
+		."FROM "
+		."`AcquisitionImageData` AS `a` "
+		."LEFT JOIN `GridData` AS `g` ON (`g`.`DEF_id`=`a`.`REF|GridData|grid`) "
+		."LEFT JOIN `PresetData` AS `p` ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
+		."LEFT JOIN `AcquisitionImageTargetData` AS `t` ON "
+		."(`t`.`DEF_id`=`a`.`REF|AcquisitionImageTargetData|target`) "
+		."WHERE `a`.`DEF_id`=".$imageId;
+		list($r) = $this->mysql->getSQLResult($q);
+		$gridId = $r['grid ID'];
+		$insertion = $r['insertion'];
+		
+		$q="SELECT "
+		."`a`.`DEF_id` as `id`, `a`.`filename`, `g`.`grid ID`, `g`.`insertion`, `t`.`number` "
+		."FROM "
+		."`AcquisitionImageData` AS `a` "
+		."LEFT JOIN `GridData` AS `g` ON (`g`.`DEF_id`=`a`.`REF|GridData|grid`) "
+		."LEFT JOIN `PresetData` AS `p` ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
+		."LEFT JOIN `AcquisitionImageTargetData` AS `t` ON "
+		."(`t`.`DEF_id`=`a`.`REF|AcquisitionImageTargetData|target`) "
+		."WHERE `g`.`grid ID`=".$gridId." AND "
+		."`t`.`number`=0 AND "
+		."`g`.`insertion`>$insertion";
+		list($r) = $this->mysql->getSQLResult($q);
+		$id = $r[id];
+		return $id;
 	}
 
 	function findField($name) {
@@ -664,6 +717,9 @@ class leginondata {
 
 	function getImageMatrixCalibration($imgId, $type='image shift') {
 		$q = "select "
+			."mcal.`DEF_id`, "
+			."mcal.`DEF_timestamp`, "
+			."a.`DEF_timestamp`, "
 			."mcal.`ARRAY|matrix|1_1` as `a11`,"
 			."mcal.`ARRAY|matrix|1_2` as `a12`,"
 			."mcal.`ARRAY|matrix|2_1` as `a21`,"
@@ -686,7 +742,8 @@ class leginondata {
 			."and "
 			."mcal.`DEF_timestamp` < a.`DEF_timestamp` "
 			."and "
-			."a.`DEF_id` ='".$imgId."' "; 
+			."a.`DEF_id` ='".$imgId."' " 
+			."order by mcal.`DEF_id` desc limit 1";
 
 		$Rparent = $this->mysql->SQLQuery($q);
 		$parent = mysql_fetch_array($Rparent);
@@ -831,6 +888,8 @@ class leginondata {
 			."floor(parenttarget.`delta row`+cp.`SUBD|dimension|y`/2) as targety, "
 			."((c.`SUBD|binning|y`*c.`SUBD|dimension|x`*pi.pixelsize) /  "
 			."(cp.`SUBD|binning|y`* ppi.pixelsize)) as targetdim, "
+			."((c.`SUBD|binning|y`* pi.pixelsize) /  "
+			."(cp.`SUBD|binning|y`* ppi.pixelsize)) as pixelsizeratio, "
 			."((c.`SUBD|binning|y`* sqrt(c.`SUBD|dimension|x`*c.`SUBD|dimension|x`  "
 			."+ c.`SUBD|dimension|y`*c.`SUBD|dimension|y`) * pi.pixelsize) /  "
 			."(cp.`SUBD|binning|y`* ppi.pixelsize)) as targetdiam,  "
@@ -1430,7 +1489,8 @@ class leginondata {
 		$app = new XMLApplicationImport($filename);
 		$sqldef = $app->getSQLDefinitionQueries();
 		$fieldtypes = $app->getFieldTypes();
-		$this->mysql->SQLAlterTables($sqldef, $fieldtypes);
+		if ($this->mysql->checkDBConnection())
+			$this->mysql->SQLAlterTables($sqldef, $fieldtypes);
 	}
 
 	function importCalibrations($xmldata, $scopeId, $cameraId) {
@@ -1652,7 +1712,67 @@ class leginondata {
 			where m.label='$label' and m.axis='$axis'";
 		return $this->mysql->getSQLResult($q);
 	}
+	
+	function getRelatedIceThicknessFromSession($sessionId, $preset) {
+		$q="SELECT "
+		."`a`.`MRC|image` as `image`, "
+		."`a`.`DEF_id` as imageId, "
+		."`hstats`.`mean`, `hstats`.`thickness-mean`, `hstats`.`stdev`, "
+		."parent.`MRC|image` as `parent_image`, "
+		."`parent`.`DEF_id` as parentId, "
+		."`hstatsp`.`mean` as `parent_mean`, `hstatsp`.`thickness-mean` as `parent_thickness-mean`, `hstatsp`.`stdev` as `parent_stdev` "
+		."FROM "
+		."`AcquisitionImageData` AS `a` "
+		."LEFT JOIN `AcquisitionImageTargetData` AS `target` "
+		."ON (`target`.DEF_id = `a`.`REF|AcquisitionImageTargetData|target`) "
+		."LEFT JOIN `AcquisitionImageData` AS `parent` "
+		."ON (`parent`.`DEF_id`=`target`.`REF|AcquisitionImageData|image`) "
+		."LEFT JOIN `HoleFinderPrefsData` AS `h` "
+		."ON (`a`.`DEF_id`=`h`.`REF|AcquisitionImageData|image`) "
+		."LEFT JOIN `HoleStatsData` AS `hstats` "
+		."ON (`h`.`DEF_id`=`hstats`.`REF|HoleFinderPrefsData|prefs`) "
+		."LEFT JOIN `HoleFinderPrefsData` AS `hp` "
+		."ON (`parent`.`DEF_id`=`hp`.`REF|AcquisitionImageData|image`) "
+		."LEFT JOIN `HoleStatsData` AS `hstatsp` "
+		."ON (`hp`.`DEF_id`=`hstatsp`.`REF|HoleFinderPrefsData|prefs`) "
+		."LEFT JOIN `AcquisitionImageTargetData` AS `target_parent` "
+		."ON (`parent`.`DEF_id`=`target_parent`.`REF|AcquisitionImageData|image` AND `target_parent`.`number`=`target`.`number` AND `target_parent`.`status`='done') "
+		."left join CameraEMData cpp "
+		."on (target_parent.`REF|CameraEMData|camera`=cpp.`DEF_id`) "
+		."LEFT JOIN `PresetData` AS `p` "
+		."ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
+		."WHERE "
+		."`a`.`REF|SessionData|session` = '$sessionId' "
+		."AND `p`.`name` ='".$preset."' "
+		."AND `hstats`.`mean` IS NOT NULL "
+		."AND ABS(floor(target_parent.`delta column`+cpp.`SUBD|dimension|x`/2)-`hstatsp`.`column`) < 2 "
+		."AND ABS(floor(target_parent.`delta row`+cpp.`SUBD|dimension|y`/2)-`hstatsp`.`row`) < 2 "
+		."group by a.DEF_id";
+		return $this->mysql->getSQLResult($q);
+	}
 
+	function getIceThicknessFromImage($imageId) {
+		$q="SELECT DISTINCT"
+			."`h`.`DEF_id`, `h`.`DEF_timestamp`, "
+			."`h`.`stats-radius`, `h`.`edge-threshold`, "
+			."`h`.`REF|AcquisitionImageData|image`, `h`.`ice-zero-thickness`, "
+			."`h`.`edge-lpf-size`, `h`.`threshold-value`, "
+			."`h`.`edge-filter-type`, `h`.`lattice-tolerance`, "
+			."`h`.`ice-min-thickness`, `h`.`lattice-spacing`, "
+			."`h`.`ice-max-stdev`, `h`.`ice-max-thickness`, "
+			."`hstats`.`column`, `hstats`.`stdev`, "
+			."`hstats`.`mean`, `hstats`.`thickness-mean`, "
+			."`hstats`.`REF|HoleFinderPrefsData|prefs`, `hstats`.`row` "
+			."FROM "
+			."`HoleFinderPrefsData` AS `h` "
+			."LEFT JOIN `HoleStatsData` AS `hstats` "
+			."ON (`h`.`DEF_id`=`hstats`.`REF|HoleFinderPrefsData|prefs`) "
+			."LEFT JOIN `AcquisitionImageData` AS `a` "
+			."ON (`a`.`DEF_id`=`h`.`REF|AcquisitionImageData|image`) "
+			."WHERE "
+			."`h`.`REF|AcquisitionImageData|image` = '$imageId' ";
+		return $this->mysql->getSQLResult($q);
+	}
 
 	function getIceThicknessPresets($sessionId) {
 		$q="SELECT DISTINCT"
@@ -1907,9 +2027,52 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function getLoggerData($where=array(), $order="", $limit="" ) {
+		$field = array ('DEF_id', 'DEF_timestamp','name', 'thread', 'created', 'process', 'module', 'filename', 'levelno', 'pathname', 'lineno', 'message', 'levelname');
+		$field = array ('levelname', 'DEF_timestamp','name', 'message' );
+		$parameters['field'] = $field;
+		$parameters['table'] = 'LoggerRecordData';
+		$parameters['where'] = $where;
+		$parameters['order'] = $order;
+		$parameters['limit'] = $limit;
+
+		return $this->mysql->getData($parameters);
+	}
+
 
 }
 
+class MessageLog {
+
+	var $levels = array('ERROR', 'WARNING', 'INFO');
+	var $icons = array('ERROR'=>"error.png", 'WARNING'=>"warning.png", 'INFO'=>"info.png");
+	var $icon_path = "img/";
+
+	function MessageLog($data) {
+		$this->data = $data;
+		$content = '<table border="0" cellpadding="1" cellspacing="1">';
+		foreach ($data as $row) {
+			$content .= "<tr>\n";
+			foreach($row as $k=>$v) {
+				if ($k=='levelname')
+					$v = "<img src='{$this->icon_path}".$this->icons[$v]."'>";
+				$content .= "<td>$v</td>";	
+			}
+			$content .= "</tr>\n";
+		}
+			$content .= "</table>\n";
+		$this->content = $content;
+	}
+
+	function display() {
+		$html = display_table($title, $this->content);
+		return $html;
+	}
+
+
+	// level Time Message
+
+}
 
 $leginondata = new leginondata();
 
