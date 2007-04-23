@@ -281,6 +281,8 @@ class viewer {
 		}
 		$init .= 'function updateviews() { '.$this->crlf;
 		$init .= 'setimgId();'.$this->crlf;
+		if ($this->displaytargetstats)
+			$init .= 'getTargetStats();'.$this->crlf;
 		foreach ($this->views as $v) {
 			$name = $v->getName();
 			$init .= '	newfile("'.$name.'");'.$this->crlf;
@@ -330,6 +332,7 @@ class viewer {
 		}
 		if ($this->addcommentbox) {
 			$display .= '<td>';
+			$display .='<div id="commentboxdiv" style="position:relative; border: 1px #696969 solid" >';
 			$display .= '
  <table border="0" cellpadding="3" >
   <tr valign="top" width=50>
@@ -350,6 +353,12 @@ class viewer {
   </tr>
  </table>
 ';
+			$display .= '</div>';
+			$display .= '</td>';
+		}
+		if ($this->displaytargetstats) {
+			$display .= '<td>';
+			$display .='<div id="targetstats" style="position:relative; width:150px; border: 1px #696969 solid" >Targets:</div>';
 			$display .= '</td>';
 		}
 		if ($this->addloicontrol || $this->addcommentbox || $this->addplaybackcontrol) 
@@ -373,7 +382,7 @@ class viewer {
 			$display .= $this->addfilesel;
 			$display .= '</td>';
 		}
-		$display .= '<td>';
+		$display .= '<td valign="top">';
 		$display .= '<table border="0"><tr>';
 		$viewoff = array();
 		foreach ($this->views as $v) {
