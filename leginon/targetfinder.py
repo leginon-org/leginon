@@ -193,6 +193,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			# no previous list, so create one and fill it with targets
 			targetlist = self.newTargetList(image=imagedata, queue=self.settings['queue'])
 			db = True
+			self.setTargets([], 'acquisition', block=True)
+			self.setTargets([], 'focus', block=True)
 
 		self.findTargets(imagedata, targetlist)
 		self.logger.debug('Publishing targetlist...')
