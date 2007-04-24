@@ -318,31 +318,48 @@ class _Table:
 		unless force is true. The function returns the last inserted row
 		id for a new insert or an existing primary key."""
 		c = self.cursor()
-		nullfields = []
-		equalpairs = []
-		for key,value in v[0].items():
-			if key[:3] == 'MRC':
-				continue
-			key = sqlexpr.Field(self.table, key)
-			if value is None:
-				nullfields.append((key, value))
-			else:
-				equalpairs.append((key, value))
 
-		whereFormat = sqlexpr.AND_EQUAL(equalpairs)
-		whereFormatNULL = sqlexpr.AND_IS(nullfields)
 
-		if whereFormatNULL:
-			if whereFormat:
-				whereFormat = sqlexpr.AND(whereFormatNULL,whereFormat)
-			else:
-				whereFormat = whereFormatNULL
+		result = None
 
-		qsel = sqlexpr.SelectAll(self.table, where=whereFormat).sqlRepr()
-		## print qsel
-		c.execute(qsel)
-		result=c.fetchone()
-		if result is not None and not force:
+		if not force:
+			nullfields = []
+			equalpairs = []
+			for key,value in v[0].items():
+				if key[:3] == 'MRC':
+					continue
+				key = sqlexpr.Field(self.table, key)
+				if value is None:
+					nullfields.append((key, value))
+				else:
+					equalpairs.append((key, value))
+
+			whereFormat = sqlexpr.AND_EQUAL(equalpairs)
+			whereFormatNULL = sqlexpr.AND_IS(nullfields)
+
+			if whereFormatNULL:
+				if whereFormat:
+					whereFormat = sqlexpr.AND(whereFormatNULL,whereFormat)
+				else:
+					whereFormat = whereFormatNULL
+
+			qsel = sqlexpr.SelectAll(self.table, where=whereFormat).sqlRepr()
+			## print qsel
+			c.execute(qsel)
+			result=c.fetchone()
+
+		if force or not result:
+			q = sqlexpr.Insert(self.table, v).sqlRepr()
+			c.execute(q)
+			## try the new lastrowid attribute first,
+			## then try the old insert_id() method
+			try:
+				insert_id = c.lastrowid
+			except:
+				insert_id = c.insert_id()
+			return insert_id
+
+		else:
 			try:
 				return result['DEF_id']
 			except KeyError:
@@ -358,16 +375,6 @@ class _Table:
 					return result[prikeyfield]
 				else:
 					raise KeyError('No Primary Key found')
-		else:
-			q = sqlexpr.Insert(self.table, v).sqlRepr()
-			c.execute(q)
-			## try the new lastrowid attribute first,
-			## then try the old insert_id() method
-			try:
-				insert_id = c.lastrowid
-			except:
-				insert_id = c.insert_id()
-			return insert_id
 
 	def update(self, v, WHERE=''):
 		"""Like select(), only it does an UPDATE. It is not usually
