@@ -2,13 +2,15 @@
 
 import sys
 import data
-import dbdatakeeper
+#import dbdatakeeper
+import apDB
 import apLoop,apDisplay
 import time,math
 #import selexonFunctions  as sf1
 
 data.holdImages(False)
-db     = dbdatakeeper.DBDataKeeper()
+db = apDB.db
+#db     = dbdatakeeper.DBDataKeeper()
 #partdb = dbdatakeeper.DBDataKeeper(db='dbparticledata')
 #acedb  = dbdatakeeper.DBDataKeeper(db='dbctfdata')
 #projdb = dbdatakeeper.DBDataKeeper(db='project')

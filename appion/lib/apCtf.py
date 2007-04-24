@@ -2,17 +2,18 @@
 
 import os,re,sys
 #import aceFunctions as af
-import ctfData
+import appionData
 import math
 import apLoop,apDisplay
-import dbdatakeeper
+import apDB
+#import dbdatakeeper
 try:
 	import pymat
 except:
 	apDisplay.matlabError()
 	apDisplay.printError("")
 
-acedb  = dbdatakeeper.DBDataKeeper(db='dbctfdata')
+acedb  = apDB.apdb
 
 def runAce(matlab,img,params):
 	imgname = img['filename']
@@ -145,7 +146,7 @@ def printResults(params,nominal,ctfparams):
 
 
 def insertAceParams(params,expid):
-	runq=ctfData.run()
+	runq=appionData.ApAceRunData()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
 	runids=acedb.query(runq, results=1)
@@ -157,8 +158,8 @@ def insertAceParams(params,expid):
 	# if no run entry exists, insert new run entry into run.dbctfdata
 	# then create a new ace_param entry
 	if not(runids):
-		aceparams=ctfData.ace_params()
-		aceparams['runId']=runq
+		aceparams=appionData.ApAceParamsData()
+		aceparams['run']=runq
 
 		copyparamlist = ('display','stig','medium','edgethcarbon','edgethice',\
 			'pfcarbon','pfice','overlap','fieldsize','resamplefr','drange',\
@@ -176,7 +177,7 @@ def insertAceParams(params,expid):
 	# if continuing a previous run, make sure that all the current
 	# parameters are the same as the previous
 	else:
-		aceq=ctfData.ace_params(runId=runq)
+		aceq=appionData.ApAceParamsData(runId=runq)
 		aceresults=acedb.query(aceq, results=1)
 		acelist=aceresults[0]
 		mustretain = ('display','stig','medium','edgethcarbon','edgethice',\

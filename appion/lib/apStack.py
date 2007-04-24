@@ -5,13 +5,18 @@ import os, re, sys, math
 import string
 import data
 import ctfData
-import dbdatakeeper
+#import dbdatakeeper
 import particleData
 import apParam
+import apDB
 
-partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
-acedb =dbdatakeeper.DBDataKeeper(db='dbctfdata')
-db    =dbdatakeeper.DBDataKeeper(db='dbemdata')
+#partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
+#acedb =dbdatakeeper.DBDataKeeper(db='dbctfdata')
+#db    =dbdatakeeper.DBDataKeeper(db='dbemdata')
+partdb = apDB.apdb
+acedb = apDB.apdb
+db = apDB.db
+
 
 def getFilePath(img):
 	session=img.split('_')[0] # get session from beginning of file name

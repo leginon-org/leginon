@@ -13,7 +13,6 @@ import numarray.convolve as convolve
 import numarray.nd_image as nd_image
 #leginon
 import data
-import dbdatakeeper
 import convolver
 import Mrc
 import imagefun
@@ -21,12 +20,15 @@ import peakfinder
 import correlator
 import project
 #appion
-import particleData
+#import particleData
+import appionData
 import apDisplay
+import apDB
 
-db=dbdatakeeper.DBDataKeeper()
-partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
-projdb=dbdatakeeper.DBDataKeeper(db='project')
+db = apDB.db
+partdb = apDB.apdb
+projdb = apDB.projdb
+
 
 def createDefaults():
 	# create default values for parameters
@@ -623,10 +625,10 @@ def getDBTemplates(params):
 	i=1
 	for tid in params['templateIds']:
 		# find templateImage row
-		tmpltinfo=partdb.direct_query(data.templateImage, tid)
+		tmpltinfo=partdb.direct_query(data.ApTemplateImageData, tid)
 		if not (tmpltinfo):
 			apDisplay.printError("TemplateId "+str(tid)+" not found in database.  Use 'uploadTemplate.py'\n")
-		fname=tmpltinfo['templatepath']
+		fname=os.path.join(tmpltinfo['templatepath'],tmpltinfo['templatename'])
 		apix=tmpltinfo['apix']
 		# store row data in params dictionary
 		params['ogTmpltInfo'].append(tmpltinfo)
@@ -694,7 +696,7 @@ def insertShift(img,sibling,peak):
 	apDisplay.printError("this DefocusPair function no longer exists here")
 
 def insertManualParams(params,expid):
-	runq=particleData.run()
+	runq=appionData.ApSelectionRunData()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
 	
@@ -704,15 +706,177 @@ def insertManualParams(params,expid):
  	# then create a new selexonParam entry
  	if not(runids):
 		print "inserting manual runId into database"
- 		manparams=particleData.selectionParams()
- 		manparams['runId']=runq
+ 		manparams=appionData.ApSelectionParamsData()
+ 		manparams['ApSelectionRunData']=runq
  		manparams['diam']=params['diam']
  		partdb.insert(runq)
  	       	partdb.insert(manparams)
-	
+
 def insertSelexonParams(params,expid):
 
-	runq=particleData.run()
+	runq=appionData.ApSelectionRunData()
+	runq['name']=params['runid']
+	runq['dbemdata|SessionData|session']=expid
+	
+	runids=partdb.query(runq, results=1)
+
+ 	# if no run entry exists, insert new run entry into run.dbparticledata
+ 	# then create a new selexonParam entry
+ 	if not(runids):
+		selexonparamsdata=_checkForIdenticalParams(params)
+		templaterundata=_checkForIdenticalTemplate(params)
+		runq['ApSelectionParamsData']=selexonparamsdata
+		runq['ApTemplateRunData']=templaterundata
+		partdb.insert(runq)
+ 	# if continuing a previous run, make sure that all the current
+ 	# parameters are the same as the previous
+ 	else:
+		_checkRunParams(params,runq)
+
+	return
+
+def _checkForIdenticalParams(params)
+	selexonparamsq=appionData.ApSelectionParamsData()
+ 	selexonparamsq['diam']=params['diam']
+ 	selexonparamsq['bin']=params['bin']
+ 	selexonparamsq['manual_thresh']=params['thresh']
+ 	selexonparamsq['auto_thresh']=params['autopik']
+ 	selexonparamsq['lp_filt']=params['lp']
+ 	selexonparamsq['hp_filt']=params['hp']
+ 	selexonparamsq['crud_diameter']=params['cdiam']
+ 	selexonparamsq['crud_blur']=params['cblur']
+ 	selexonparamsq['crud_low']=params['clo']
+ 	selexonparamsq['crud_high']=params['chi']
+ 	selexonparamsq['crud_std']=params['cstd']
+	selexonparamsdata=partdb.query(selexonparamsq, results=1)
+	
+	if selexonparamsdata:
+		return(selexonparamsdata)
+	else:
+		partdb.insert(selexonparamsq)
+		selexonparamsdata=partdb.query(selexonparamsq, results=1)
+		return(selexonparamsdata)
+		
+def _checkForIdenticalTemplate(params):
+
+	tid=params['templateIds'][0]
+	templateimage=partdb.direct_query(data.ApTemplateImageData,tid)
+
+	templaterunq=appionData.ApTemplateRunData()
+	templaterunq['template']=templateimage
+	templaterunq['range_start']=params['startang']
+	templaterunq['range_end']=params['endang']
+	templaterunq['range_incr']=params['incrang']
+	templaterundata=partdb.query(templaterunq,results=1)
+	
+	if templaterundata:
+		return(templaterundata)
+	else
+		partdb.insert(templaterunq)
+		templaterundata=partdb.query(templaterunq)
+		return(templaterundata)
+"""	
+	if len(params['templatelist'])==1:
+		if params['templateIds']:
+			imgname=params['templateIds'][0]
+		else:
+			imgname=params['abspath']+params['template']+'.mrc'
+		insertTemplateRun(params,runq,imgname,params['startang'],params['endang'],params['incrang'])
+	else:
+		### loop through all templates and insert params for each
+		for i in range(1,len(params['templatelist'])+1):
+			if params['templateIds']:
+				imgname=params['templateIds'][i-1]
+			else:
+				imgname=params['abspath']+params['template']+str(i)+'.mrc'
+			if (params["multiple_range"]==True):
+				strt=params["startang"+str(i)]
+				end=params["endang"+str(i)]
+				incr=params["incrang"+str(i)]
+				insertTemplateRun(params,runq,imgname,strt,end,incr)
+			else:
+				insertTemplateRun(params,runq,imgname,params['startang'],params['endang'],params['incrang'])
+
+	templateq=appionData.ApTemplateRunData()
+	templateq['run']=runq
+
+	if params['templateIds']:
+		templateId=partdb.direct_query(data.ApTemplateImageData,imgname)
+	else:
+		templateImgq=appionData.ApTemplateImageData(templatepath=imgname)
+		templateId=partdb.query(templateImgq,results=1)[0]
+
+	# if no templates in the database, exit
+	if not (templateId):
+		apDisplay.printError("Template '"+imgname+"' not found in database. Use preptemplate")
+	templateq['template']=templateId
+	templateq['run']=runq
+	templateq['range_start']=float(strt)
+	templateq['range_end']=float(end)
+	templateq['range_incr']=float(incr)
+	partdb.insert(templateq)
+"""
+	
+
+def _checkRunParams(params,runq):
+	# get existing selexon parameters from previous run
+	partq=appionData.ApSelectionParamsData(run=runq)
+	tmpltq=appionData.ApTemplateRunData(run=runq)
+	partresults=partdb.query(partq, results=1)
+	tmpltresults=partdb.query(tmpltq)
+	selexonparams=partresults[0]
+	# make sure that using same number of templates
+	if len(params['templatelist'])!=len(tmpltresults):
+		apDisplay.printError("All parameters for a selexon run must be identical!"+\
+			"You do not have the same number of templates as your last run")
+	# param check if using multiple ranges for templates
+	if (params['multiple_range']==True):
+		# check that all ranges have same values as previous run
+		for i in range(0,len(params['templatelist'])):
+			if params['templateIds']:
+				tmpltimgq=partdb.direct_query(data.ApTemplateImageData,params['templateIds'][i])
+			else:
+				tmpltimgq=appionData.ApTemplateImageData()
+				tmpltimgq['templatepath']=params['abspath']
+				tmpltimgq['templatename']=params['template']+str(i+1)+'.mrc'
+
+			tmpltrunq=appionData.ApTemplateRunData()
+			tmpltrunq['run']=runq
+			tmpltrunq['template']=tmpltimgq
+			tmpltNameResult=partdb.query(tmpltrunq,results=1)
+			strt=params["startang"+str(i+1)]
+			end=params["endang"+str(i+1)]
+			incr=params["incrang"+str(i+1)]
+			if (tmpltNameResult[0]['range_start']!=strt or
+				tmpltNameResult[0]['range_end']!=end or
+				tmpltNameResult[0]['range_incr']!=incr):
+				apDisplay.printError("All parameters for a selexon run must be identical!"+\
+					"Template search ranges are not the same as your last run")
+	# param check for single range
+	else:
+		if (tmpltresults[0]['range_start']!=params["startang"] or
+			tmpltresults[0]['range_end']!=params["endang"] or
+			tmpltresults[0]['range_incr']!=params["incrang"]):
+			apDisplay.printError("All parameters for a selexon run must be identical!"+\
+				"Template search ranges are not the same as your last run")
+		if (selexonparams['diam']!=params['diam'] or
+			selexonparams['bin']!=params['bin'] or
+			selexonparams['manual_thresh']!=params['thresh'] or
+			selexonparams['auto_thresh']!=params['autopik'] or
+			selexonparams['lp_filt']!=params['lp'] or
+			selexonparams['hp_filt']!=params['hp'] or
+			selexonparams['crud_diameter']!=params['cdiam'] or
+			selexonparams['crud_blur']!=params['cblur'] or
+			selexonparams['crud_low']!=params['clo'] or
+			selexonparams['crud_high']!=params['chi'] or
+			selexonparams['crud_std']!=params['cstd']):
+			apDisplay.printError("All parameters for a selexon run must be identical!"+\
+				"please check your parameter settings.")
+
+"""	
+def insertSelexonParams(params,expid):
+
+	runq=appionData.ApSelectionRunData()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
 	
@@ -740,8 +904,8 @@ def insertSelexonParams(params,expid):
 					insertTemplateRun(params,runq,imgname,strt,end,incr)
 				else:
 					insertTemplateRun(params,runq,imgname,params['startang'],params['endang'],params['incrang'])
- 		selexonparams=particleData.selectionParams()
- 		selexonparams['runId']=runq
+ 		selexonparams=appionData.ApSelectionParamsData()
+ 		selexonparams['run']=runq
  		selexonparams['diam']=params['diam']
  		selexonparams['bin']=params['bin']
  		selexonparams['manual_thresh']=params['thresh']
@@ -760,8 +924,8 @@ def insertSelexonParams(params,expid):
  	# parameters are the same as the previous
  	else:
 		# get existing selexon parameters from previous run
- 		partq=particleData.selectionParams(runId=runq)
-		tmpltq=particleData.templateRun(runId=runq)
+ 		partq=appionData.ApSelectionParamsData(run=runq)
+		tmpltq=appionData.ApTemplateRunData(run=runq)
 
  		partresults=partdb.query(partq, results=1)
 		tmpltresults=partdb.query(tmpltq)
@@ -775,15 +939,16 @@ def insertSelexonParams(params,expid):
 			# check that all ranges have same values as previous run
 			for i in range(0,len(params['templatelist'])):
 				if params['templateIds']:
-					tmpltimgq=partdb.direct_query(data.templateImage,params['templateIds'][i])
+					tmpltimgq=partdb.direct_query(data.ApTemplateImageData,params['templateIds'][i])
 				else:
-					tmpltimgq=particleData.templateImage()
-					tmpltimgq['templatepath']=params['abspath']+params['template']+str(i+1)+'.mrc'
+					tmpltimgq=appionData.ApTemplateImageData()
+					tmpltimgq['templatepath']=params['abspath']
+					tmpltimgq['templatename']=params['template']+str(i+1)+'.mrc'
 
-				tmpltrunq=particleData.templateRun()
+				tmpltrunq=appionData.ApTemplateRunData()
 
-				tmpltrunq['runId']=runq
-				tmpltrunq['templateId']=tmpltimgq
+				tmpltrunq['run']=runq
+				tmpltrunq['template']=tmpltimgq
 
 				tmpltNameResult=partdb.query(tmpltrunq,results=1)
 				strt=params["startang"+str(i+1)]
@@ -815,31 +980,35 @@ def insertSelexonParams(params,expid):
 			apDisplay.printError("All parameters for a selexon run must be identical!"+\
 				"please check your parameter settings.")
 	return
+"""
 
+"""
 def insertTemplateRun(params,runq,imgname,strt,end,incr):
-	templateq=particleData.templateRun()
-	templateq['runId']=runq
+	templateq=appionData.ApTemplateRunData()
+	templateq['run']=runq
 
 	if params['templateIds']:
-		templateId=partdb.direct_query(data.templateImage,imgname)
+		templateId=partdb.direct_query(data.ApTemplateImageData,imgname)
 	else:
-		templateImgq=particleData.templateImage(templatepath=imgname)
+		templateImgq=appionData.ApTemplateImageData(templatepath=imgname)
 		templateId=partdb.query(templateImgq,results=1)[0]
 
 	# if no templates in the database, exit
 	if not (templateId):
 		apDisplay.printError("Template '"+imgname+"' not found in database. Use preptemplate")
-	templateq['templateId']=templateId
-	templateq['runId']=runq
+	templateq['template']=templateId
+	templateq['run']=runq
 	templateq['range_start']=float(strt)
 	templateq['range_end']=float(end)
 	templateq['range_incr']=float(incr)
 	partdb.insert(templateq)
+"""
 
 def insertTemplateImage(params):
 	for name in params['templatelist']:
-		templateq=particleData.templateImage()
-		templateq['templatepath']=params['abspath']+name
+		templateq=appionData.ApTemplateImageData()
+		templateq['templatepath']=params['abspath']
+		templateq['templatename']=name
 		templateId=partdb.query(templateq, results=1)
 	        #insert template to database if doesn't exist
 		if not (templateId):
@@ -847,42 +1016,25 @@ def insertTemplateImage(params):
 			templateq['apix']=params['apix']
 			templateq['diam']=params['diam']
 			templateq['description']=params['description']
-			templateq['project|projects|projectId']=params['projectId']
+			templateq['project|projects|project']=params['projectId']
 			partdb.insert(templateq)
+		else:
+			print "Warning: template already in database."
+			print "Not reinserting"
 	return
 
 def insertParticlePicks(params,img,expid,manual=False):
-	runq=particleData.run()
+	runq=appionData.ApSelectionRunData()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
 	runids=partdb.query(runq, results=1)
-
-	# get corresponding selectionParams entry
-	selexonq=particleData.selectionParams(runId=runq)
-	selexonresult=partdb.query(selexonq, results=1)
 
 	legimgid=int(img.dbid)
 	legpresetid=None
 	if img['preset']:
 		legpresetid =int(img['preset'].dbid)
 
-	imgname=img['filename']
-	imgq = particleData.image()
-	imgq['dbemdata|SessionData|session']=expid
-	imgq['dbemdata|AcquisitionImageData|image']=legimgid
-	imgq['dbemdata|PresetData|preset']=legpresetid
-	imgids=partdb.query(imgq, results=1)
-
-	# if no image entry, make one
-	if not (imgids):
-		print " ... creating new entry for",apDisplay.shortenImageName(imgname)
-		partdb.insert(imgq)
-		imgq=None
-		imgq = particleData.image()
-		imgq['dbemdata|SessionData|session']=expid
-		imgq['dbemdata|AcquisitionImageData|image']=legimgid
-		imgq['dbemdata|PresetData|preset']=legpresetid
-		imgids=partdb.query(imgq, results=1)
+	imgname=img['filename'] 
 
 	# WRITE PARTICLES TO DATABASE
 	print "Inserting particles into database for",apDisplay.shortenImageName(imgname),"..."
@@ -930,10 +1082,9 @@ def insertParticlePicks(params,img,expid,manual=False):
 			ycenter=int(elements[2])
 			corr=float(elements[3])
 
-			particlesq=particleData.particle()
-			particlesq['runId']=runq
-			particlesq['imageId']=imgids[0]
-			particlesq['selectionId']=selexonresult[0]
+			particlesq=appionData.ApParticleData()
+			particlesq['run']=runq
+			particlesq['dbemdata|AcquisitionImageData|image']=legimgid
 			particlesq['xcoord']=xcenter
 			particlesq['ycoord']=ycenter
 			particlesq['correlation']=corr

@@ -1,7 +1,7 @@
 #!/bin/csh
 
 setenv APPIONDIR /home/`whoami`/pyappion
-setenv PYTHONPATH ${PYTHONPATH}:${APPIONDIR}/lib
+setenv PYTHONPATH ${APPIONDIR}/lib:${PYTHONPATH}
 setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/ami/sw/lib
 pathmgr -var PATH promote $APPIONDIR/particle_manager
 pathmgr -var PATH promote $APPIONDIR/ace

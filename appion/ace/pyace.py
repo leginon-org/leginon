@@ -8,14 +8,11 @@ import apParam
 import apLoop
 import apDatabase,apDisplay
 import apCtf
-import data
 try:
 	import pymat
 except:
 	apDisplay.matlabError()
 	apDisplay.printError("")
-
-data.holdImages(False)
 
 if __name__ == '__main__':
 

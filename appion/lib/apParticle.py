@@ -1,13 +1,15 @@
 #Part of the new pyappion
 
 import particleData
-import dbdatakeeper
+#import dbdatakeeper
 import data
 import os
 import apImage
 import ImageDraw
+import apDB
 
-partdb=dbdatakeeper.DBDataKeeper(db='dbappiondata')
+#partdb=dbdatakeeper.DBDataKeeper(db='dbappiondata')
+partdb = apDB.apdb
 
 def getParticles(img,params):
 	"""

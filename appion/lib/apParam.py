@@ -2,7 +2,8 @@
 import os,sys,re
 import time
 import data
-import dbdatakeeper
+#import dbdatakeeper
+import apDB
 import apVersion
 import apDisplay
 try:
@@ -11,8 +12,8 @@ except:
 	apDisplay.printError("Please load 'usepythoncvs' for CVS leginon code, which includes 'mem.py'")
 #import selexonFunctions  as sf1
 
-### TEMPORARY, PLEASE MAKE IT SO NOT REQUIRED HERE
-db=dbdatakeeper.DBDataKeeper()
+#db=dbdatakeeper.DBDataKeeper()
+db=apDB.db
 data.holdImages(False)
 
 def createDefaultParams(function=None):

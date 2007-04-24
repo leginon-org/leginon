@@ -5,7 +5,7 @@ import os, re, sys
 import tempfile
 import cPickle
 import data
-import dbdatakeeper
+#import dbdatakeeper
 import convolver
 import Mrc
 import numarray.nd_image
@@ -15,9 +15,12 @@ import correlator
 import math
 import string
 import particleData
+import apDB
 
-db=dbdatakeeper.DBDataKeeper()
-partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
+#db=dbdatakeeper.DBDataKeeper()
+#partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
+db = apDB.db
+partdb = apDB.apdb
 
 def createDefaults():
 	# create default values for parameters

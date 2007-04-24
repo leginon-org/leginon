@@ -5,18 +5,14 @@
 # see http://ami.scripps.edu/software/leginon-license
  
 import data
-import dbdatakeeper
-
-db=dbdatakeeper.DBDataKeeper(db='dbappiondata')
 
 ### Particle Selection Tables
 
 class ApParticleData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('runId', run),
-			('imageId', int),
-			('selectionId', selectionParams),
+			('run', ApSelectionRunData),
+			('dbemdata|AcquisitionImageData|image', int),
 			('xcoord', int),
 			('ycoord', int),
 			('correlation', float),
@@ -28,6 +24,8 @@ data.ApParticleData=ApParticleData
 class ApSelectionRunData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
+			('params', ApSelectionParamsData)
+			('templaterun', ApTemplateRunData)
 			('dbemdata|SessionData|session', int),
 			('name', str), 
 		)
@@ -37,7 +35,6 @@ data.ApSelectionRunData=ApSelectionRunData
 class ApSelectionParamsData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('runId', run),
 			('diam', int),
 			('bin', int),
 			('manual_thresh', float),
@@ -56,8 +53,9 @@ data.ApSelectionParamsData=ApSelectionParamsData
 class ApTemplateImageData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('project|projects|projectId', int),
+			('project|projects|project', int),
 			('templatepath', str),
+			('templatename', str),
 			('apix', float),
 			('diam', int),
 			('description', str),
@@ -68,8 +66,7 @@ data.ApTemplateImageData=ApTemplateImageData
 class ApTemplateRunData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('templateId', templateImage),
-			('runId', run),
+			('template', ApTemplateImageData),
 			('range_start', int),
 			('range_end', int),
 			('range_incr', int),
@@ -81,7 +78,7 @@ data.ApTemplateRunData=ApTemplateRunData
 
 ### Shift Table(s)
 
-class ApShiftData(data.Data):
+class ApImageTransformationData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
 			('dbemdata|AcquisitionImageData|image1', int),
@@ -90,9 +87,11 @@ class ApShiftData(data.Data):
 			('shifty', float),
 			('correlation', float),
 			('scale', float),
+			('inplane_rotation', float),
+			('tilt', float),
 		)
 	typemap = classmethod(typemap)
-data.ApShiftData=ApShiftData
+data.ApImageTransformationData=ApImageTransformationData
 
 
 ### Crud/Mask Tables 
@@ -100,8 +99,8 @@ data.ApShiftData=ApShiftData
 class ApMaskRegionData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('mask', makeMaskParams),
-			('imageId', int),
+			('mask', ApMaskMakerSettingsData),
+			('image', int),
 			('x', int),
 			('y', int),
 			('area', int),
@@ -163,8 +162,8 @@ class ApStackParticlesData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
 			('particleNumber', int),
-			('stackId', stackParams),
-			('particleId', particle),
+			('stack', ApStackParamsData),
+			('particle', ApParticleData),
 	        )
 	typemap = classmethod(typemap)
 data.ApStackParticlesData = ApStackParticlesData
@@ -175,8 +174,8 @@ class ApReconRunData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
 			('name', str),
-			('stackId', stackParams),
-			('initialModelId', initialModel),
+			('stack', ApStackParamsData),
+			('initialModel', ApInitialModelData),
 			('path', str),
 			('package', str),
 		)
@@ -188,7 +187,7 @@ class ApInitialModelData(data.Data):
 		return data.Data.typemap() + (
 			('path', str),
 			('name', str),
-			('symmetryId', symmetry),
+			('symmetry', ApSymmetryData),
 			('pixelsize', float),
 			('boxsize', int),
 			('description', str),
@@ -208,10 +207,10 @@ data.ApSymmetryData=ApSymmetryData
 class ApRefinementData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('reconRunId', reconRun),
-			('refinementParamsId', refinementParams),
+			('reconRun', reconRun),
+			('refinementParams', ApRefinementParamsData),
 			('iteration', int),
-			('resolutionId', resolution),
+			('resolution', resolution),
 			('classAverage', str),
 			('classVariance', str),
 			('numClassAvg', int),
@@ -254,8 +253,8 @@ data.ApResolutionData=ApResolutionData
 class ApParticleClassificationData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('refinementId', refinement),
-			('particleId', particle),
+			('refinement', ApRefinementData),
+			('particle', ApParticleData),
 			('classnumber', int),
 			('euler1', float),
 			('euler2', float),
@@ -284,7 +283,7 @@ data.ApAceRunData=ApAceRunData
 class ApAceParamsData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('runId', run),
+			('run', ApAceRunData),
 			('display', int), 
 			('stig', int),
 			('medium', str),
@@ -305,9 +304,9 @@ data.ApAceParamsData=ApAceParamsData
 class ApCtfData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('runId', run),
-			('aceId', ace_params),
-			('imageId', int),
+			('run', ApAceRunData),
+			('ace', ApAceParamsData),
+			('image', int),
 			('defocus1', float),
 			('defocus2', float), 
 			('defocusinit', float), 

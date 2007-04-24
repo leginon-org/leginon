@@ -2,7 +2,6 @@
 # Python script to upload a template to the database, and prepare images for import
 
 import os, re, sys
-import data
 import time
 from selexonFunctions import *
 

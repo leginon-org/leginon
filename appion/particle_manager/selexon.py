@@ -16,6 +16,7 @@ import apDatabase
 import apDefocalPairs
 import apFindEM
 import apViewIt
+import apDisplay
 
 data.holdImages(False)
 
