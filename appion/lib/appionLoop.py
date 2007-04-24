@@ -11,7 +11,6 @@ import cPickle
 import apDisplay
 import apDatabase
 import apXml
-import apDB
 #leginon
 try:
 	import mem
@@ -252,7 +251,7 @@ class AppionLoop(object):
 		### BEGIN HACK
 
 		import data
-		import dbdatakeeper
+		import apDB
 		p = data.PresetData(name='en')
 		q = data.AcquisitionImageData(preset = p)
 		legdb=apDB.db
