@@ -6,6 +6,7 @@ import data
 import apDB
 import apVersion
 import apDisplay
+import apDatabase
 try:
 	import mem
 except:
@@ -175,20 +176,6 @@ def createDirectory(path, mode=0777):
 
 
 def createOutputDirs(params):
-	sessionq=data.SessionData(name=params['sessionname'])
-	#sessionq=data.SessionData(name=params['session']['name'])
-	sessiondata=db.query(sessionq)
-	impath=sessiondata[0]['image path']
-	params['imgdir']=impath+'/'
-
-	if params['outdir']:
-		pass
-	else:
-		outdir=os.path.split(impath)[0]
-		re.sub("leginon","appion",outdir) 
-		outdir=os.path.join(outdir,params['function']+"/") #'extract/')
-		params['outdir']=outdir
-
 	if not createDirectory(params['rundir']) and params['continue']==False:
 		apDisplay.printWarning("continue option is OFF. you WILL overwrite previous run.")
 		time.sleep(10)
@@ -236,7 +223,7 @@ def parseCommandLineInput(args,params):
 		sys.exit(1)
 		#sf1.printSelexonHelp()
 
-	lastarg=1
+
 
 	# save the input parameters into the "params" dictionary
 
@@ -244,6 +231,7 @@ def parseCommandLineInput(args,params):
 
 	# first get all images
 	mrcfileroot=[]
+	lastarg=1
 	for arg in args[lastarg:]:
 		# gather all input files into mrcfileroot list
 		if '=' in arg:
@@ -256,10 +244,11 @@ def parseCommandLineInput(args,params):
 		lastarg+=1
 	params['mrcfileroot']=mrcfileroot
 	if(len(params['mrcfileroot']) > 0):
-		filename = params['mrcfileroot'][0]
-		sessionname = re.sub("^(?P<ses>[0-9]+[a-z]+[0-9]+[^_]+)_.+$", "\g<ses>", filename)
+		imgname = params['mrcfileroot'][0]
+		sessionname = apDatabase.getSessionName(imgname)
+		#sessionname = re.sub("^(?P<ses>[0-9]+[a-z]+[0-9]+[^_]+)_.+$", "\g<ses>", imgname)
 		params['sessionname'] = sessionname
-		apDisplay.printMsg("used regex to get sessionname, '"+params['sessionname']+"'")
+		apDisplay.printMsg("SESSIONNAME:\t'"+params['sessionname']+"'")
 
 	# next get all selection parameters
 	for arg in args[lastarg:]:

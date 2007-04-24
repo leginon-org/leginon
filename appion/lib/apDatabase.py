@@ -1,12 +1,17 @@
 #Part of the new pyappion
 
+#pythonlib
 import sys
+import os
+import time
+import math
+#leginon
 import data
-#import dbdatakeeper
+#appion
 import apDB
-import apLoop,apDisplay
-import time,math
-#import selexonFunctions  as sf1
+import apLoop
+import apDisplay
+
 
 data.holdImages(False)
 db = apDB.db
@@ -18,84 +23,126 @@ db = apDB.db
 def getAllImages(stats,params):
 	startt = time.time()
 	if 'dbimages' in params and params['dbimages']==True:
-		images = _getImagesFromDB(params['sessionname'],params['preset'])
+		imgtree = getImagesFromDB(params['sessionname'],params['preset'])
 	elif 'alldbimages' in params and  params['alldbimages']==True:
-		images = _getAllImagesFromDB(params['sessionname'])
+		imgtree = getAllImagesFromDB(params['sessionname'])
 	elif 'mrcfileroot' in params and len(params['mrcfileroot']) > 0:
-		images = _getSpecificImagesFromDB(params)
-		params['sessionname']=images[0]['session']['name']
+		imgtree = getSpecificImagesFromDB(params["mrcfileroot"])
+		params['sessionname']=imgtree[0]['session']['name']
 	else:
 		print len(params['mrcfileroot']),params['alldbimages'],params['dbimages'],params['mrcfileroot']
 		apDisplay.printError("no files specified")
-	params['session']=images[0]['session']
-	stats['imagecount']=len(images)
-	print " ... found",len(images),"in",apDisplay.timeString(time.time()-startt)
-	return images
+	params['session']=imgtree[0]['session']
+	stats['imagecount']=len(imgtree)
+	print " ... found",stats['imagecount'],"in",apDisplay.timeString(time.time()-startt)
+	return imgtree
 
-def _getSpecificImagesFromDB(params):
-	imglist=params["mrcfileroot"]
+def getSpecificImagesFromDB(imglist):
 	print "Querying database for "+str(len(imglist))+" specific images ... "
-	images=[]
-	for img in imglist:
-		imageq      = data.AcquisitionImageData(filename=img)
-		imageresult = db.query(imageq, readimages=False)
-		images      = images+imageresult
+	imgtree=[]
+	for imgname in imglist:
+		imgquery = data.AcquisitionImageData(filename=imgname)
+		imgres   = db.query(imgquery, readimages=False, results=1)
+		imgtree.append(imgres[0])
+	return imgtree
 
-	return images
-
-def _getImagesFromDB(session,preset):
-	# returns list of image names from DB
+def getImagesFromDB(session,preset):
+	"""
+	returns list of image names from DB
+	"""
 	apDisplay.printMsg("Querying database for preset '"+preset+"' images from session '"+session+"' ... ")
 	sessionq = data.SessionData(name=session)
 	presetq=data.PresetData(name=preset)
-	imageq=data.AcquisitionImageData()
-	imageq['preset'] = presetq
-	imageq['session'] = sessionq
-	imagelist=db.query(imageq, readimages=False)
+	imgquery = data.AcquisitionImageData()
+	imgquery['preset']  = presetq
+	imgquery['session'] = sessionq
+	imgtree = db.query(imgquery, readimages=False)
 	"""
 	loop through images and make data.holdimages false 	 
 	this makes it so that data.py doesn't hold images in memory 	 
 	solves a bug where processing quits after a dozen or so images
 	"""
-	#for img in imagelist: 	 
+	#for img in imgtree: 	 
 		#img.holdimages=False
 	return imagelist
 
-def _getAllImagesFromDB(session):
-	# returns list of image data based on session name
+def getAllImagesFromDB(session):
+	"""
+	returns list of image data based on session name
+	"""
 	apDisplay.printMsg("Querying database for all images from session '"+session+"' ... ")
 	sessionq= data.SessionData(name=session)
-	imageq=data.AcquisitionImageData()
-	imageq['session']=sessionq
-	imagelist=db.query(imageq, readimages=False)
-	return imagelist
+	imgquery = data.AcquisitionImageData()
+	imgquery['session'] = sessionq
+	imgtree = db.query(imageq, readimages=False)
+	return imgtree
 
-def getImageData(imagename):
-	# get image data object from database
-	imagedataq = data.AcquisitionImageData(filename=imagename)
-	imagedata  = db.query(imagedataq, results=1, readimages=False)
-	#imagedata[0].holdimages=False
-	if imagedata:
-		return imagedata[0]
+def getDBTemplates(params):
+	tmptmplt=params['template']
+	i=1
+	for tid in params['templateIds']:
+		# find templateImage row
+		tmpltinfo = apDB.apdb.direct_query(data.ApTemplateImageData, tid)
+		if not (tmpltinfo):
+			apDisplay.printError("TemplateId "+str(tid)+" not found in database. Use 'uploadTemplate.py'\n")
+		fname = os.path.join(tmpltinfo['templatepath'],tmpltinfo['templatename'])
+		apix = tmpltinfo['apix']
+		# store row data in params dictionary
+		params['ogTmpltInfo'].append(tmpltinfo)
+		# copy file to current directory
+		print "getting image:", fname
+		tmplname = os.path.join(params['rundir'],tmptmplt+str(i)+".mrc")
+		shutil.copy(fname, tmplname)
+		#os.system("cp "+fname+" "+tmptmplt+str(i)+".mrc")
+		params['scaledapix'][i] = 0
+		i+=1
+	return
+
+def getImageData(imgname):
+	"""
+	get image data object from database
+	"""
+	imgquery = data.AcquisitionImageData(filename=imgname)
+	imgtree  = db.query(imgquery, results=1, readimages=False)
+	if imgtree:
+		#imgtree[0].holdimages=False
+		return imgtree[0]
 	else:
-		apDisplay.printError("Image "+imagename+" not found in database\n")
+		apDisplay.printError("Image "+imgname+" not found in database\n")
+
+def getImgDir(sessionname):
+	sessionq = data.SessionData(name=sessionname)
+	sessiondata = db.query(sessionq)
+	imgdir = os.path.abspath(sessiondata[0]['image path'])
+	return imgdir
+
+def getSessionName(imgname):
+	"""
+	get session name from database
+	"""
+	imgquery = data.AcquisitionImageData(filename=imgname)
+	imgtree  = db.query(imgquery, results=1, readimages=False)
+	if 'session' in imgtree[0]:
+		return imgtree[0]['session']['name']
+	else:
+		apDisplay.printError("Image "+imgname+" not found in database\n")
 
 def getTiltAngle(img,params):
 	return img['scope']['stage position']['a']*180.0/math.pi
 
-def getPixelSize(img):
-	# use image data object to get pixel size
-	# multiplies by binning and also by 1e10 to return image pixel size in angstroms
-	# shouldn't have to lookup db already should exist in imgdict
+def getPixelSize(imgdict):
+	"""
+	use image data object to get pixel size
+	multiplies by binning and also by 1e10 to return image pixel size in angstroms
+	shouldn't have to lookup db already should exist in imgdict
+	"""
 	pixelsizeq=data.PixelSizeCalibrationData()
-	pixelsizeq['magnification']=img['scope']['magnification']
-	pixelsizeq['tem']=img['scope']['tem']
-	pixelsizeq['ccdcamera'] = img['camera']['ccdcamera']
+	pixelsizeq['magnification']=imgdict['scope']['magnification']
+	pixelsizeq['tem']=imgdict['scope']['tem']
+	pixelsizeq['ccdcamera'] = imgdict['camera']['ccdcamera']
 	pixelsizedata=db.query(pixelsizeq, results=1)
-	
-	binning=img['camera']['binning']['x']
+	binning=imgdict['camera']['binning']['x']
 	pixelsize=pixelsizedata[0]['pixelsize'] * binning
-	
 	return(pixelsize*1e10)
 
 def getImgSize(img):

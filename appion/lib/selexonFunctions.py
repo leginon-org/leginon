@@ -735,7 +735,7 @@ def insertSelexonParams(params,expid):
 
 	return
 
-def _checkForIdenticalParams(params)
+def _checkForIdenticalParams(params):
 	selexonparamsq=appionData.ApSelectionParamsData()
  	selexonparamsq['diam']=params['diam']
  	selexonparamsq['bin']=params['bin']
@@ -771,7 +771,7 @@ def _checkForIdenticalTemplate(params):
 	
 	if templaterundata:
 		return(templaterundata)
-	else
+	else:
 		partdb.insert(templaterunq)
 		templaterundata=partdb.query(templaterunq)
 		return(templaterundata)

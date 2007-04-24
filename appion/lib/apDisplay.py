@@ -20,13 +20,15 @@ def printError(text):
 	"""
 	standardized error message
 	"""
-	raise color("\n *** FATAL ERROR ***\n\t"+text+"\n","red")
+	raise color("\n *** FATAL ERROR ***\n"+text+"\n","red")
 
 def shortenImageName(imgname):
 	"""
 	takes a long imagename and truncates it for display purposes
 	"""
 	shortimgname = imgname
+	#remove path
+	shortimgname = os.path.basename(shortimgname)
 	#remove the altas name
 	shortimgname = re.sub("^(?P<ses>[0-9][0-9][a-z][a-z][a-z][0-9][0-9][^_]+)_.+(?P<gr>0[^0]gr)",
 		"\g<ses>_\g<gr>",shortimgname)

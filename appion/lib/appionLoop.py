@@ -29,46 +29,50 @@ class AppionLoop(object):
 		### setup default params: output directory, etc.
 		self._createDefaultParams()
 
+		### parse command line options: diam, apix, etc.
+		self._parseCommandLineInput(sys.argv[1:])
+
+		### check for conflicts
+		self._checkParamConflicts()
+
 		### setup default stats: timing variables, etc.
 		self._createDefaultStats()
 
-		### parse command line options: diam, apix, etc.
-		self._parseCommandLineInput(sys.argv)
-
 		### create output directories
-		#self._createOutputDirs()
+		self._createOutputDirs()
 
 		### write log of command line options
 		self._writeFunctionLog(sys.argv)
 
 		### read/create dictionary to keep track of processed images
-		#self._readDoneDict()
+		self._readDoneDict()
 
 	def run(self):
 		"""
 		processes all images
 		"""
 		### get images from database
-		self.getAllImages()
-		#self.removeProcessedImages()
+		self._getAllImages()
+		self._removeProcessedImages()
+		self.preLoopFunctions()
 		### start the loop
 		notdone=True
 		while notdone:
 			for imgdict in self.imgtree:
 				#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
-				if self.alreadyProcessed(imgdict):
+				if not self._startLoop(imgdict):
 					continue
- 
+
 				### START any custom functions HERE:
 				self.processImage(imgdict)
 				### FINISH with custom functions
  
-	 			self.writeDoneDict(imgdict['filename'])
-				self.printSummary()
+	 			self._writeDoneDict(imgdict['filename'])
+				self._printSummary()
 				#END LOOP OVER IMAGES
-			notdone = self.waitForMoreImages()
+			notdone = self._waitForMoreImages()
 			#END NOTDONE LOOP
-		self.finishLoop()
+		self._finishLoop()
 
 	def setFunctionName(self, arg=None):
 		"""
@@ -79,7 +83,9 @@ class AppionLoop(object):
 			arg = sys.argv[0]
 		self.functionname = os.path.basename(arg.strip())
 		#remove all letters after a dot, e.g. "func.py" -> "func"
-		self.functionname = re.sub("\.[a-zA-Z]+$","",self.functionname)
+		self.functionname = os.path.splitext(self.functionname)[0]
+		#self.functionname = re.sub("\.[a-zA-Z]+$","",self.functionname)
+		apDisplay.printMsg("FUNCTION:\t"+self.functionname)
 
 	def reprocessImage(self, imgdict):
 		"""
@@ -87,6 +93,12 @@ class AppionLoop(object):
 		e.g. a confidence less than 80%
 		"""
 		return False
+
+	def preLoopFunctions(self):
+		"""
+		do something before starting the loop
+		"""
+		return
 
 	def processImage(self, imgdict):
 		"""
@@ -101,7 +113,7 @@ class AppionLoop(object):
 		"""
 		return
 
-	def specialParseParams(self):
+	def specialParseParams(self, args):
 		"""
 		put in any additional parameters to parse
 		"""
@@ -113,22 +125,44 @@ class AppionLoop(object):
 		"""
 		return
 
+	def specialCreateOutputDirs(self):
+		"""
+		put in any additional directories to create
+		"""
+		return	
+
 	#################################################
 	#### ITEMS BELOW ARE NOT USUALLY OVERWRITTEN ####
 	#################################################
 
-	def checkParamConflicts(self):
+	def _createOutputDirs(self):
+		"""
+		create rundir
+		"""
+		if not self._createDirectory(self.params['rundir']) and self.params['continue']==False:
+			apDisplay.printWarning("continue option is OFF. you WILL overwrite previous run.")
+			time.sleep(10)
+
+		print "creating special output directories"
+		self.specialCreateOutputDirs()
+
+	def _checkParamConflicts(self):
 		"""
 		put in any conflicting parameters
 		"""
-		if len(params['mrcfileroot']) > 0 and params['dbimages']==True:
+		if len(self.params['mrcfileroot']) > 0 and self.params['dbimages']==True:
 			apDisplay.printError("dbimages can not be specified if particular images have been specified")
-		if params['alldbimages'] and params['dbimages']==True:
+		if self.params['alldbimages'] and self.params['dbimages']==True:
 			apDisplay.printError("dbimages and alldbimages can not be specified at the same time")
-		if len(params['mrcfileroot']) > 0 and params['alldbimages']:
+		if len(self.params['mrcfileroot']) > 0 and self.params['alldbimages']:
 			apDisplay.printError("alldbimages can not be specified if particular images have been specified")
-		### get custom params conflicts
+
+		print "checking special param conflicts"
 		self.specialParamConflicts()
+
+	def _printHelp(self):
+		#apXml.printHelp()
+		return
 
 	def _createDefaultParams(self):
 		### new system, global params
@@ -139,7 +173,7 @@ class AppionLoop(object):
 		if self.params['appionhome'] == None:
 			apDisplay.printError("environmental variable, APPIONHOME, is not defined.\n"+
 				"Did you source useappion.sh?")
-		print "APPION home defined as:",self.params['appionhome']
+		apDisplay.printMsg("APPIONHOME:\t"+self.params['appionhome'])
 		self.params['method'] = "updated"
 		"""
 		### XML parameters
@@ -150,7 +184,7 @@ class AppionLoop(object):
 		self.params = apXml.readTwoXmlFiles(self.params['xmlglobfile'], self.params['xmlfuncfile'])
 		"""
 		### classic methods
-		self.params['mrcfileroot']=None
+		self.params['mrcfileroot']=[]
 		self.params['sessionname']=None
 		self.params['session']=None
 		self.params['preset']=None
@@ -169,7 +203,8 @@ class AppionLoop(object):
 		self.params['functionLog']=None
 		self.params['pixdiam']=None
 		self.params['binpixdiam']=None
-		self.params['abspath']=os.path.abspath('.')+'/'
+		self.params['nowait']=False
+		self.params['abspath']=os.path.abspath('.')
 		### get custom default params
 		self.specialDefaultParams()
 
@@ -193,12 +228,93 @@ class AppionLoop(object):
 		self.stats['memlist'] = [mem.active()]
 
 	def _parseCommandLineInput(self, args):
+		mrcfileroot = []
 		self.params['functionname'] = self.functionname
+		i = 0
+		while i < len(args):
+			arg = args[i]
+			if '.mrc' in arg and not '=' in arg:
+				# add file to mrc file list minus the '.mrc' part
+				mrcfile = os.path.splitext(arg)[0]
+				mrcfileroot.append(mrcfile)
+				# remove file from list of args and backup in loop
+				del args[i]
+				i -= 1
+			i += 1
 
-		self.checkParamConflicts()
+		self.params['mrcfileroot']=mrcfileroot
+		if(len(self.params['mrcfileroot']) > 0):
+			imgname = self.params['mrcfileroot'][0]
+			sessionname = apDatabase.getSessionName(imgname)
+			#sessionname = re.sub("^(?P<ses>[0-9]+[a-z]+[0-9]+[^_]+)_.+$", "\g<ses>", imgname)
+			self.params['sessionname'] = sessionname
+			apDisplay.printMsg("SESSIONNAME:\t'"+self.params['sessionname']+"'")
+
+		newargs = []
+		for arg in args:
+			elements=arg.split('=')
+			elements[0] = elements[0].lower()
+			if (elements[0]=='outdir'):
+				self.params['outdir']=os.path.abspath(elements[1])
+				#if(self.params['outdir'][0] != "/"):
+				#	self.params['outdir'] = os.path.join(os.getcwd(),self.params['outdir'])
+				#	self.params['outdir'] = os.path.abspath(self.params['outdir'])
+			elif (elements[0]=='runid'):
+				self.params['runid']=elements[1]
+			elif (elements[0]=='apix'):
+				self.params['apix']=float(elements[1])
+			elif (elements[0]=='diam'):
+				self.params['diam']=float(elements[1])
+			elif (elements[0]=='bin'):
+				self.params['bin']=int(elements[1])
+			elif arg=='commit':
+				self.params['commit']=True
+				self.params['display']=1
+			elif arg=='continue':
+				self.params['continue']=True
+			elif (elements[0]=='dbimages'):
+				dbinfo=elements[1].split(',')
+				if len(dbinfo) == 2:
+					self.params['sessionname']=dbinfo[0]
+					self.params['preset']=dbinfo[1]
+					self.params['dbimages']=True
+					self.params['continue']=True # continue should be on for dbimages option
+				else:
+					print "\nERROR: dbimages must include both \'sessionname\' and \'preset\'"+\
+						"parameters (ex: \'07feb13a,en\')\n"
+					sys.exit(1)
+			elif (elements[0]=='alldbimages'):
+				self.params['sessionname']=elements[1]
+				self.params['alldbimages']=True
+			else:
+				newargs.append(arg)
+
+		print "parsing special parameters"
+		self.specialParseParams(args)
+
+		self.params['imgdir'] = apDatabase.getImgDir(self.params['sessionname'])
+
+		if self.params['outdir']:
+			pass
+		else:
+			#go down one directory from img path i.e. remove 'rawdata'
+			outdir = os.path.split(self.params['imgdir'])[0]
+			#change leginon to appion
+			outdir = re.sub('leginon','appion',outdir)
+			#add the function name
+			self.params['outdir'] = os.path.join(outdir, self.functionname)
+
+		self.params['rundir'] = os.path.join(self.params['outdir'], self.params['runid'])
+		apDisplay.printMsg("RUNDIR:\t "+self.params['rundir'])
+
+		self.params['doneDictName']= os.path.join(self.params['rundir'], "."+self.functionname+"donedict")
+
+		if(self.params['apix'] != None and self.params['diam'] > 0):
+			self.params['pixdiam']    = self.params['diam']/self.params['apix']
+			self.params['binpixdiam'] = self.params['diam']/self.params['apix']/float(self.params['bin'])
 
 	def _writeFunctionLog(self, args):
-		file = os.path.join(self.params['rundir'],self.functionname+".log")
+		file = os.path.join(self.params['rundir'], self.functionname+".log")
 		out=""
 		for arg in args:
 			out += arg+" "
@@ -207,22 +323,28 @@ class AppionLoop(object):
 		f.write("\n")
 		f.close()
 
-	def _readDoneDict():
+	def _readDoneDict(self):
 		"""
 		reads or creates a done dictionary
 		"""
 		doneDictName = self.params['doneDictName']
 		if os.path.isfile(doneDictName):
-			print " ... reading old done dictionary:\n\t",doneDictName
+			apDisplay.printMsg("reading old done dictionary:\n"+doneDictName)
 			# unpickle previously modified dictionary
 			f = open(doneDictName,'r')
 			self.donedict = cPickle.load(f)
 			f.close()
-			print " ... found",len(donedict),"dictionary entries"
+			if 'commit' in self.donedict  and not self.donedict['commit'] and self.params['commit']:
+				apDisplay.printWarning("'commit' flag was changed, creating new done dictionary")
+				self.donedict = {}
+				self.donedict['commit'] = self.params['commit']
+			else:
+				apDisplay.printMsg("found "+str(len(self.donedict))+" dictionary entries")
 		else:
 			#set up dictionary
 			self.donedict = {}
-			print " ... creating new done dictionary:\n\t",doneDictName
+			self.donedict['commit'] = self.params['commit']
+			apDisplay.printMsg("creating new done dictionary:\n"+doneDictName)
 
 	def _writeDoneDict(self, imgname=None):
 		"""
@@ -230,43 +352,41 @@ class AppionLoop(object):
 		"""
 		if imgname != None:
 			self.donedict[imgname]=True
+		self.donedict['commit'] = self.params['commit']
 		doneDictName = self.params['doneDictName']
 		f = open(doneDictName, 'w', 0666)
 		cPickle.dump(self.donedict, f)
 		f.close()
 
-	def _createDirectory(path, mode=0777):
+	def _createDirectory(self, path, warning=True, mode=0777):
 		if os.path.exists(path):
-			apDisplay.printWarning("directory \'"+path+"\' already exists.")
+			if warning:
+				apDisplay.printWarning("directory \'"+path+"\' already exists.")
 			return False
 		os.makedirs(path,mode)
 		return True
 
 	def _getAllImages(self):
-		""" self.imgtree = apDatabase.getAllImages(self.stats, self.params) """
-		### SCOTT: 
-		###  this is just a testing hack and I plan to remove when it is working
-		###  this function will become only the above line
-		
-		### BEGIN HACK
+		startt = time.time()
+		if 'dbimages' in self.params and self.params['dbimages']==True:
+			self.imgtree = apDatabase.getImagesFromDB(self.params['sessionname'], self.params['preset'])
+		elif 'alldbimages' in self.params and self.params['alldbimages']==True:
+			self.imgtree = apDatabase.getAllImagesFromDB(self.params['sessionname'])
+		elif 'mrcfileroot' in self.params and len(self.params['mrcfileroot']) > 0:
+			self.imgtree = apDatabase.getSpecificImagesFromDB(self.params["mrcfileroot"])
+		else:
+			print len(self.params['mrcfileroot']),self.params['alldbimages'],self.params['dbimages'],self.params['mrcfileroot']
+			apDisplay.printError("no files specified")
+		self.params['session']   = self.imgtree[0]['session']
+		self.stats['imagecount'] = len(self.imgtree)
+		self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
+		print " ... found",self.stats['imagecount'],"in",apDisplay.timeString(time.time()-startt)
 
-		import data
-		import apDB
-		p = data.PresetData(name='en')
-		q = data.AcquisitionImageData(preset = p)
-		legdb=apDB.db
-		self.imgtree = legdb.query(q, readimages=False, results=50)
-		#import operator
-		#self.imgtree.sort(key=operator.itemgetter('imgname'))
-		#print 'LEN', len(self.imgtree)
-
-		### END HACK
-
-	def _alreadyProcessed(self, imgname):
+	def _alreadyProcessed(self, imgdict):
 		""" 
 		checks to see if image (imgname) has been done already
 		"""
-		
+		imgname = imgdict['filename']
 		if self.params["continue"]:
 			if imgname in self.donedict:
 				if not self.stats['lastimageskipped']:
@@ -285,18 +405,50 @@ class AppionLoop(object):
 				return False
 		return False
 
+	def _startLoop(self, imgdict):
+		"""
+		initilizes several parameters for a new image
+		and checks if it is okay to start processing image
+		"""
+		#calc images left
+		self.stats['imagesleft'] = self.stats['imagecount'] - self.stats['count'] - self.stats['skipcount']
+
+		#only if an image was processed
+		if(self.stats['lastcount'] != self.stats['count']):
+			print "\nStarting new image", self.stats['count'], "( skip:",self.stats['skipcount'],\
+				", left:", self.stats['imagesleft'],")", apDisplay.short(imgdict['filename'])
+			self.stats['lastcount'] = self.stats['count']
+			self._checkMemLeak()
+
+		# get the next image pixel size:
+		self.params['apix'] = apDatabase.getPixelSize(imgdict)
+
+		# skip if image doesn't exist:
+		imgpath = os.path.join(self.params['imgdir'],imgdict['filename']+'.mrc')
+		if not os.path.isfile(imgpath):
+			print " !!!",imgpath,"not found, skipping"
+			return False
+
+		# if continue option is true, check to see if image has already been processed
+		if self._alreadyProcessed(imgdict):
+			return False
+
+		self.stats['startloop'] = time.time()
+		apDisplay.printMsg("processing "+apDisplay.shortenImageName(imgdict['filename']))
+		return True
+
 	def _printSummary(self):
 		"""
 		print summary statistics on last image
 		"""
 		### THIS NEEDS TO BECOME MUCH MORE GENERAL, e.g. Peaks
-		tdiff = time.time()-self.stats['beginLoopTime']
+		tdiff = time.time()-self.stats['startloop']
 		if not self.params["continue"] or tdiff > 0.3:
 			count = self.stats['count']
 			#if(count != self.stats['lastcount']):
 			if(self.params['method'] != None):
 				print "\n\tSUMMARY: using", self.params['method'], "method for",\
-					self.params['function']
+					self.functionname
 			else:
 				print "\n\tSUMMARY:"
 			_printLine()
@@ -366,13 +518,14 @@ class AppionLoop(object):
 					"(",n,round(slope,5),round(rho,5),round(gain,2),")"
 
 	def _removeProcessedImages(self):
-		newimgtree = []
-		for imgdict in self.imgtree:
-			imgname = imgdict['filename']
-			if not _alreadyProcessed(imgname) or _reprocessImage(imgdict):
-				#add imgdict to new imgtree
-				newimgtree.append(imgdict)
-		self.imgtree = newimgtree
+		i = 0
+		while i < len(self.imgtree):
+			imgdict = self.imgtree[i]
+			if self._alreadyProcessed(imgdict) and not self._reprocessImage(imgdict):
+				apDisplay.printMsg("skipping image "+apDisplay.short(imgdict['filename']))
+				del self.imgtree[i]
+				i -= 1
+			i += 1
 
 	def _printLine():
 		print "\t------------------------------------------"
@@ -381,7 +534,7 @@ class AppionLoop(object):
 		"""
 		pauses 10 mins and then checks for more images to process
 		"""
-		if params['nowait']:
+		if self.params['nowait']:
 			return False,None
 		if not self.params["dbimages"]:
 			return False,None

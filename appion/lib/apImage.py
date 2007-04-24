@@ -1,17 +1,29 @@
 #Part of the new pyappion
 
+#pythonlib
 import math
-import imagefun
-import convolver
+#PIL
 import Image
 import ImageDraw
+#numarray
 import numarray
 import numarray.nd_image as nd_image
 import numarray.linear_algebra as linear_algebra
 import numarray.ma as ma
+#leginon
+import Mrc
+import imagefun
+import convolver
+#appion
+import apDisplay
 
+def preProcessImageParams(img, params):
+	"""
+	standard processing for an image, given the params dict
+	"""
+	return preProcessImage(img, params['bin'], params['apix'], params['lp'])
 
-def preProcessImage(img,bin=1,apix=1.0,lowpass=0.0,planeReg=True):
+def preProcessImage(img, bin=1, apix=1.0, lowpass=0.0, planeReg=True):
 	"""
 	standard processing for an image
 	"""
@@ -276,6 +288,13 @@ def arrayToImage(numer,normalize=True):
 	image = _arrayToImage(numer)
 	return image
 
+def arrayToMrc(numer,filename):
+	"""
+	takes a numarray and writes a Mrc
+	"""
+	apDisplay.printMsg("writing MRC: "+apDisplay.short(filename))
+	Mrc.numeric_to_mrc(numer,filename)
+	return
 
 def arrayToJpeg(numer,filename,normalize=True):
 	"""
@@ -287,7 +306,7 @@ def arrayToJpeg(numer,filename,normalize=True):
 	else:
 		numer = numer*255
 	image = _arrayToImage(numer)
-	print " ... writing JPEG: ",filename
+	apDisplay.printMsg("writing JPEG: "+apDisplay.short(filename))
 	image.save(filename, "JPEG", quality=85)
 	return
 
@@ -301,7 +320,7 @@ def arrayToPng(numer,filename,normalize=True):
 	else:
 		numer = numer*255
 	image = _arrayToImage(numer)
-	print " ... writing Png: ",filename
+	apDisplay.printMsg("writing PNG: "+apDisplay.short(filename))
 	image.save(filename, "PNG")
 	return
 

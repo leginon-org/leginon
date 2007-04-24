@@ -1,31 +1,46 @@
 #!/usr/bin/python -O
 
 #pythonlib
-import os, sys
+import os
+import sys
+import re
 #appion
 import appionLoop
 import apFindEM
 import apImage
 import apDisplay
+import apTemplate
+import apDatabase
+#legacy
+import selexonFunctions2 as sf2
 
 class TemplateCorrelationLoop(appionLoop.AppionLoop):
 	def processImage(self, imgdict):
-		import pprint
-		pprint.pprint(imgdict)
-		print imgdict['image']
 		imgname = imgdict['filename']
 		### RUN FindEM
-		if self.params['method'] == "experimental":
+		if 'method' in self.params and self.params['method'] == "experimental":
 			numpeaks = sf2.runCrossCorr(params,imgname)
 			sf2.createJPG2(params,imgname)
 		else:
-			smimgname = self.processAndSaveImage(imgdict)
-			if(os.getloadavg() > 3.1):
-				ccmaxmaps = apFindEM.runFindEM(self.params, smimgname)
-			else:
-				ccmaxmaps = apFindEM.threadFindEM(self.params, smimgname)
-			numpeaks = sf2.findPeaks2(params,imgname)
-			sf2.createJPG2(params,imgname)
+			print "PROCESSING"
+			smimgname = self._processAndSaveImage(imgdict)
+			print "FINDEM"
+			ccmaplist = apFindEM.runFindEM(self.params, smimgname)
+			print "NUMPEAKS"
+			numpeaks = sf2.findPeaks2(self.params, imgname)
+			print "CREATEJPG"
+			sf2.createJPG2(self.params,imgname)
+
+	def preLoopFunctions(self):
+		print " ... getting templates"
+		if self.params['templateIds']:
+			self.params['template']='originalTemporaryTemplate'
+			# get the templates from the database
+			apDatabase.getDBTemplates(self.params)
+			# scale them to the appropriate pixel size
+			apTemplate.rescaleTemplates(self.params)
+			# set the template name to the copied file names
+			self.params['template']='scaledTemporaryTemplate'
 
 	def specialDefaultParams(self):
 		self.params['template']=''
@@ -43,24 +58,83 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 		self.params['maxpeaks']=1500
 		self.params['defocpair']=False
 		self.params['templateIds']=''
+		self.params['multiple_range']=True
+
+
+	def specialCreateOutputDirs(self):
+		self._createDirectory(os.path.join(self.params['rundir'],"pikfiles"),warning=False)
+		self._createDirectory(os.path.join(self.params['rundir'],"jpgs"),warning=False)
+		self._createDirectory(os.path.join(self.params['rundir'],"ccmaxmaps"),warning=False)
 
 	def specialParseParams(self,args):
-		return
+		for arg in args:
+			elements=arg.split('=')
+			elements[0] = elements[0].lower()
+			#print elements
+			if (elements[0]=='help' or elements[0]=='--help' \
+				or elements[0]=='-h' or elements[0]=='-help'):
+				sys.exit(1)
+			elif (elements[0]=='template'):
+				self.params['template']=elements[1]
+			elif (elements[0]=='range'):
+				angs=elements[1].split(',')
+				if (len(angs)==3):
+					self.params['startang']=int(angs[0])
+					self.params['endang']=int(angs[1])
+					self.params['incrang']=int(angs[2])
+				else:
+					print "\nERROR: \'range\' must include 3 angle parameters: start, stop, & increment\n"
+					sys.exit(1)
+			elif (re.match('range\d+',elements[0])):
+				num = re.sub("range(?P<num>[0-9]+)","\g<num>",elements[0])
+				#num=elements[0][-1]
+				angs=elements[1].split(',')
+				if (len(angs)==3):
+					self.params['startang'+num]=int(angs[0])
+					self.params['endang'+num]=int(angs[1])
+					self.params['incrang'+num]=int(angs[2])
+					self.params['multiple_range']=True
+				else:
+	 				print "\nERROR: \'range\' must include 3 angle parameters: start, stop, & increment\n"
+					sys.exit(1)
+			elif (elements[0]=='thresh'):
+				self.params['thresh']=float(elements[1])
+			elif (elements[0]=='autopik'):
+				self.params['autopik']=float(elements[1])
+			elif (elements[0]=='lp'):
+				self.params['lp']=float(elements[1])
+			elif (elements[0]=='hp'):
+				self.params['hp']=float(elements[1])
+			elif (elements[0]=='box'):
+				self.params['box']=int(elements[1])
+			elif (elements[0]=='templateids'):
+				templatestring=elements[1].split(',')
+				self.params['templateIds']=templatestring
+			elif arg=='defocpair':
+				self.params['defocpair']=True
+			elif arg=='shiftonly':
+				self.params['shiftonly']=True
+			elif (elements[0]=='method'):
+				self.params['method']=str(elements[1])
+			elif (elements[0]=='overlapmult'):
+				self.params['overlapmult']=float(elements[1])
+			elif (elements[0]=='maxpeaks'):
+				self.params['maxpeaks']=int(elements[1])
 
 	def specialParamConflicts(self):
-		if not params['templateIds'] and not params['apix']:
+		if not self.params['templateIds'] and not self.params['apix']:
 			apDisplay.printError("if not using templateIds, you must enter a template pixel size")
-		if params['templateIds'] and params['template']:
+		if self.params['templateIds'] and self.params['template']:
 			apDisplay.printError("Both template database IDs and mrc file templates are specified,\nChoose only one")
-		if (params['thresh']==0 and params['autopik']==0):
+		if (self.params['thresh']==0 and self.params['autopik']==0):
 			apDisplay.printError("neither manual threshold or autopik parameters are set, please set one.")
-		if not 'diam' in params or params['diam']==0:
+		if not 'diam' in self.params or self.params['diam']==0:
 			apDisplay.printError("please input the diameter of your particle")
 
 	def _processAndSaveImage(self, imgdict):
-		imgdata = apImage.preProcessImage(imgdict['image'],self.params)
+		imgdata = apImage.preProcessImageParams(imgdict['image'], self.params)
 		smimgname = os.path.join(self.params['rundir'],imgdict['filename']+".dwn.mrc")
-		Mrc.numeric_to_mrc(imgdata, smimgname)
+		apImage.arrayToMrc(imgdata, smimgname)
 		return os.path.basename(smimgname)
 
 

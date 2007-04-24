@@ -16,7 +16,8 @@ import numarray.convolve as convolve
 import numarray.fft as fft
 import numarray.random_array as random_array
 import numarray.linear_algebra as linear_algebra
-import selexonFunctions as sf1
+import apDatabase
+#import selexonFunctions as sf1
 #import numextension
 #import mem
 
@@ -72,7 +73,7 @@ def process_image(imagefile,params):
 	pixrad  = int(math.ceil(diam/apix/2.0/float(bin)))
 
 	#READ IMAGES
-	image = sf1.getImageData(imagefile)['image']
+	image = apDatabase.getImageData(imagefile)['image']
 	#image = Mrc.mrc_to_numeric(imagefile)
 
 	#BIN IMAGES
@@ -111,7 +112,7 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 
 	#PROCESS TEMPLATE
 	template = Mrc.mrc_to_numeric(templfile)
-	#image = sf1.getImageData(imagefile)['image']
+	#image = apDatabase.getImageData(imagefile)['image']
 	templatebin = bin_img(template,bin) #FAKE FOR SIZING
 	template = normRange(template)-0.5
 
@@ -330,7 +331,7 @@ def tmpRemoveCrud(params,imagefile):
 	#READ IMAGES
 	#imagefile=imagefile+'.mrc'
 	#image = Mrc.mrc_to_numeric(imagefile)
-	image = sf1.getImageData(imagefile)['image']
+	image = apDatabase.getImageData(imagefile)['image']
 
 	#BIN IMAGES
 	image    = bin_img(image,bin)
@@ -383,8 +384,6 @@ def findPeaks2(params,file):
 		infile="cccmaxmap"+str(i+1)+"00.mrc"
 		ccmaxmap = Mrc.mrc_to_numeric(infile)
 		blobs.append(findPeaksInMap(ccmaxmap,file,i+1,params))
-
-	del ccmaxmap
 
 	numpeaks = mergePikFiles(file,blobs,params)
 
@@ -571,7 +570,7 @@ def calc_corrcoeffs(blobs,imfile,bin,template,tmplmask,anglemap):
 	print "Processing correlation coefficients"
 	t1 = time.time()
 	#image    = Mrc.mrc_to_numeric(imfile+".mrc")
-	image = sf1.getImageData(imfile)['image'] 
+	image = apDatabase.getImageData(imfile)['image'] 
 	image    = bin_img(image,2)
 	tmplmask = bin_img(tmplmask,2)
 	tx = (template.shape)[0]/4
@@ -788,7 +787,7 @@ def createJPG2(params,file):
 	#print "Reading MRC: ",mrcfile
 	#mrcfile = file+".mrc"
 	#numer = Mrc.mrc_to_numeric(mrcfile)
-	numer = sf1.getImageData(file)['image']
+	numer = apDatabase.getImageData(file)['image']
 	numer = bin_img(numer,bin)
 	numer = filterImg(numer,apix,bin,params["lp"])
 	#numer = PlaneRegression(numer,bin)
