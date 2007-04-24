@@ -11,7 +11,6 @@ try:
 	import pymat
 except:
 	apDisplay.matlabError()
-	apDisplay.printError("")
 
 acedb  = apDB.apdb
 
@@ -193,7 +192,7 @@ def insertAceParams(params,expid):
 	return
 
 def insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfile2):
-	runq=ctfData.run()
+	runq=appionData.ApAceRunData()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
 
@@ -208,7 +207,7 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfil
 		
 	dforig=img['scope']['defocus']
 
-	procimgq = ctfData.image(imagename=imgname + '.mrc')
+	procimgq = appionData.image(imagename=imgname + '.mrc')
 	procimgq['dbemdata|SessionData|session']=expid
 	procimgq['dbemdata|AcquisitionImageData|image']=legimgid
 	procimgq['dbemdata|PresetData|preset']=legpresetid
@@ -222,7 +221,7 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfil
 
 	print "Committing ctf parameters for",apDisplay.shortenImageName(imgname), "to database."
 
-	ctfq=ctfData.ctf()
+	ctfq=appionData.ctf()
 	ctfq['runId']=runq
 	ctfq['aceId']=acevals[0]
 	ctfq['imageId']=procimgq
@@ -236,7 +235,7 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfil
 		ctfq[ ctfparamlist[i] ] = ctfparams[i]
 
 	if ctfq['defocus1']==-1:
-		ctf_failedq=ctfData.ctf(runId=runq, aceId=acevals[0], imageId=procimgq,\
+		ctf_failedq=appionData.ctf(runId=runq, aceId=acevals[0], imageId=procimgq,\
 			mat_file=ctfq['mat_file'], graph1=ctfq['graph1'], graph2=ctfq['graph2'])
 		acedb.insert(ctf_failedq)
 	else:
@@ -272,8 +271,8 @@ def setScopeParams(matlab,params):
 
 def getCTFParamsForImage(imagedata):
 	imagename = imagedata['filename']+'.mrc'
-	ctfq = ctfData.ctf()
-	imq  = ctfData.image(imagename=imagename)
+	ctfq = appionData.ctf()
+	imq  = appionData.image(imagename=imagename)
 	ctfq['imageId'] = imq
 	return(acedb.query(ctfq))
 

@@ -238,11 +238,13 @@ def matlabError():
 	env['PYTHONPATH'] = "/home/$USER/pyleginon:/home/$USER/pyappion/lib:/ami/sw/32-pythonhome/lib/python2.4/site-packages"
 	env['LD_LIBRARY_PATH'] = "/ami/sw/packages/matlab73/bin/glnx86:/lib:/usr/lib"
 	env['LM_LICENSE_FILE'] = "/ami/sw/packages/matlab/etc/license.dat"
-	print "MATLAB failed to open.\n\tCheck your environmental variables:"
+	print color("MATLAB failed to open.\n\tCheck your environmental variables:","red")
 	if os.path.basename(os.environ.get("SHELL")) == "bash":
 		for var in env.keys():
-			print "\t  export "+var+"="+env[var]
+			print color("\t  export "+var+"="+env[var],"red")
 	else:
 		for var in env.keys():
-			print "\t  setenv "+var+" "+env[var]
+			print color("\t  setenv "+var+" "+env[var],"red")
 	print "\tusually the PATH is the problem move matlab73/bin to the end"
+	sys.exit(1)
+
