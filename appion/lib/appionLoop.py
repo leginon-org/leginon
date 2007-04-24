@@ -11,21 +11,14 @@ import cPickle
 import apDisplay
 import apDatabase
 import apXml
-<<<<<<< appionLoop.py
-import data
 import apDB
-
-legdb=apDB.db
-
-=======
 #leginon
 try:
 	import mem
 except:
 	apDisplay.printError("Please load 'usepythoncvs' for CVS leginon code,"
 		+" which includes 'mem.py'")
-			
->>>>>>> 1.7
+
 class AppionLoop(object):
 	def __init__(self):
 		"""
@@ -251,23 +244,24 @@ class AppionLoop(object):
 		return True
 
 	def _getAllImages(self):
-		#import apDatabase
-<<<<<<< appionLoop.py
-		#self.imgtree = getAllImages(self.stats,self.params)
-		#import data
-		#import dbdatakeeper
-=======
-		#self.imgtree = getAllImages(self.stats, self.params)
-		#import operator
-		#self.imgtree.sort(key=operator.itemgetter('imgname'))
+		""" self.imgtree = apDatabase.getAllImages(self.stats, self.params) """
+		### SCOTT: 
+		###  this is just a testing hack and I plan to remove when it is working
+		###  this function will become only the above line
+		
+		### BEGIN HACK
+
 		import data
 		import dbdatakeeper
->>>>>>> 1.7
 		p = data.PresetData(name='en')
 		q = data.AcquisitionImageData(preset = p)
-		#legdb = dbdatakeeper.DBDataKeeper()
+		legdb=apDB.db
 		self.imgtree = legdb.query(q, readimages=False, results=50)
+		#import operator
+		#self.imgtree.sort(key=operator.itemgetter('imgname'))
 		#print 'LEN', len(self.imgtree)
+
+		### END HACK
 
 	def _alreadyProcessed(self, imgname):
 		""" 
