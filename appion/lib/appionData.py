@@ -16,7 +16,6 @@ class ApParticleData(data.Data):
 			('xcoord', int),
 			('ycoord', int),
 			('correlation', float),
-			('insidecrud', int),
 		)
 	typemap = classmethod(typemap)
 data.ApParticleData=ApParticleData
