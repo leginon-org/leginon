@@ -54,7 +54,6 @@ class ImageNode:
 	def prepImage(self,image,cutoff=5.0):
 		shape=numarray.shape(image)
 		garea,gavg,gstdev=apImage.maskImageStats(image)
-		print 'image mean= %.1f stdev= %.1f' %(gavg,gstdev)
 		cleanimage=ma.masked_outside(image,gavg-cutoff*gstdev,gavg+cutoff*gstdev)
 		carea,cavg,cstdev=apImage.maskImageStats(cleanimage)
 		image.shape = shape
@@ -140,8 +139,8 @@ class ImageNode:
 		return [pikresults,ccimage]
 
 	def writeResultsToDB(self,idata):
-		result=self.partdb.query(idata)
-		self.partdb.insert(idata)
+		for q in idata:
+			self.partdb.insert(q)
 		return
 		
 	def writeResultsToFile(self,idata,path,resulttype,result_ext):
@@ -164,12 +163,13 @@ class ImageNode:
 				for info in idata:
 					resultline = ''
 					for infokey in self.resultkeys[resulttype]:
-						if infokey == 'dbemdata|AcquisitionImageData|image':
-							info[infokey]=imagename
 						try:
 							result = info[infokey].dbid
 						except:
 							result = info[infokey]
+
+						if infokey == 'dbemdata|AcquisitionImageData|image':
+							result=imagename
 						try:
 							resultline += str(result) + '\t'
 						except:
@@ -198,9 +198,10 @@ class ImageNode:
 		else:
 			rundata = self.insertFunctionRunDummy(params)
 			
-			# create "result" directory if doesn't exist
-			result_dirs ={}
-			for resulttype in self.resulttypes:
+		# create "result" directory if doesn't exist
+		result_dirs ={}
+		for resulttype in self.resulttypes:
+			if resulttype in self.filesavetypes.keys() or (resulttype in self.dbsavetypes.keys() and params['commit'] == False):
 				result_dir=run_dir+"/"+resulttype+"s"
 				if not (os.path.exists(result_dir)):
 					os.mkdir(result_dir)
@@ -209,7 +210,8 @@ class ImageNode:
 				if not params['continue'] and os.path.exists(result_dir+"/*"):
 					os.remove(result_dir+"/*")
 				result_dirs[resulttype]=result_dir
-
+			else:
+				result_dirs[resulttype]=None
 		notdone=True
 		while notdone:
 			while images:
