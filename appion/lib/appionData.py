@@ -24,8 +24,8 @@ data.ApParticleData=ApParticleData
 class ApSelectionRunData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('params', ApSelectionParamsData)
-			('templaterun', ApTemplateRunData)
+			('params', ApSelectionParamsData),
+			('templaterun', ApTemplateRunData),
 			('dbemdata|SessionData|session', int),
 			('name', str), 
 		)
@@ -41,11 +41,6 @@ class ApSelectionParamsData(data.Data):
 			('auto_thresh', int),
 			('lp_filt', int),
 			('hp_filt', int),
-			('crud_diameter', int),
-			('crud_blur', float),
-			('crud_low', float),
-			('crud_high', float),
-			('crud_std', float),
 		)
 	typemap = classmethod(typemap)
 data.ApSelectionParamsData=ApSelectionParamsData
@@ -94,30 +89,38 @@ class ApImageTransformationData(data.Data):
 data.ApImageTransformationData=ApImageTransformationData
 
 
-### Crud/Mask Tables 
+### Mask Tables 
+
+class ApMaskMakerRunData(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('params', ApMaskMakerParamsData),
+			('dbemdata|SessionData|session', int),
+			('name', str), 
+			('path', str),
+		)
+	typemap = classmethod(typemap)
+data.ApMaskMakerRunData=ApMaskMakerRunData
 
 class ApMaskRegionData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('mask', ApMaskMakerSettingsData),
-			('image', int),
+			('maskrun', ApMaskMakerRunData),
+			('dbemdata|AcquisitionImageData|image', int),
 			('x', int),
 			('y', int),
 			('area', int),
 			('perimeter', int),
 			('mean', float),
 			('stdev', float),
-			('keep', bool),
 			
 		)
 	typemap = classmethod(typemap)
 data.ApMaskRegionData=ApMaskRegionData
 
-class ApMaskMakerSettingsData(data.Data):
+class ApMaskMakerParamsData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('dbemdata|SessionData|session', int),
-			('mask path', str),
 			('name', str),
 			('bin', int),
 			('mask type', str),
@@ -132,7 +135,7 @@ class ApMaskMakerSettingsData(data.Data):
 			('libcv', bool),
 		)
 	typemap = classmethod(typemap)
-data.ApMaskMakerSettingsData=ApMaskMakerSettingsData
+data.ApMaskMakerParamsData=ApMaskMakerParamsData
 
 
 ### Stack Tables
@@ -331,3 +334,25 @@ class ApCtfData(data.Data):
 		)
 	typemap = classmethod(typemap)
 data.ApCtfData=ApCtfData
+
+class ApTestParamsData(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('name', str),
+			('bin', int),
+			('param1', int), 
+			('param2', int), 
+		)
+	typemap = classmethod(typemap)
+data.ApTestParamsData=ApTestParamsData
+
+class ApTestRunData(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('params', ApTestParamsData),
+			('dbemdata|SessionData|session', int),
+			('name', str), 
+			('path', str),
+		)
+	typemap = classmethod(typemap)
+data.ApTestRunData=ApTestRunData
