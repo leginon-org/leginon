@@ -18,6 +18,7 @@ import os
 import re
 import calibrationclient
 import copy
+import arraystats
 
 class AcquireError(Exception):
 	pass
