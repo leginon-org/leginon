@@ -277,6 +277,7 @@ data.ApParticleClassificationData=ApParticleClassificationData
 class ApAceRunData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
+			('aceparams', ApAceParamsData),
 			('dbemdata|SessionData|session', int),
 			('name', str), 
 		)
@@ -286,7 +287,6 @@ data.ApAceRunData=ApAceRunData
 class ApAceParamsData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('run', ApAceRunData),
 			('display', int), 
 			('stig', int),
 			('medium', str),
@@ -308,7 +308,6 @@ class ApCtfData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
 			('run', ApAceRunData),
-			('ace', ApAceParamsData),
 			('image', int),
 			('defocus1', float),
 			('defocus2', float), 
