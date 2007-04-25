@@ -7,6 +7,7 @@ import os
 import apImage
 import ImageDraw
 import apDB
+import appionData
 
 #partdb=dbdatakeeper.DBDataKeeper(db='dbappiondata')
 partdb = apDB.apdb
@@ -27,7 +28,7 @@ def getParticles(img,params):
 	shift={'shiftx':0, 'shifty':0}
 	return particles,shift
 
-def getDBparticledataImage(img,expid):
+def getDBparticledataImage(imgdata,expid):
 	"""
 	This function queries and creates, if not found, dpparticledata.image data
 	using dbemdata.AcquisitionImageData image name
@@ -36,17 +37,17 @@ def getDBparticledataImage(img,expid):
         legimgid=int(img.dbid)
         legpresetid=None
 	if img['preset']:
-		legpresetid =int(img['preset'].dbid)
+		legpresetid =int(imgdata['preset'].dbid)
 
 	imgname=img['filename']
         imgq = particleData.image()
         imgq['dbemdata|SessionData|session']=expid
         imgq['dbemdata|AcquisitionImageData|image']=legimgid
         imgq['dbemdata|PresetData|preset']=legpresetid
-	imgids=partdb.query(imgq, results=1)
+	pdimgData=partdb.query(imgq, results=1)
 
         # if no image entry, make one
-        if not (imgids):
+        if not (pdimgData):
 		print "Inserting image entry for",imgname
                 partdb.insert(imgq)
 		imgq=None
@@ -54,9 +55,17 @@ def getDBparticledataImage(img,expid):
 		imgq['dbemdata|SessionData|session']=expid
 		imgq['dbemdata|AcquisitionImageData|image']=legimgid
 		imgq['dbemdata|PresetData|preset']=legpresetid
-		imgids=partdb.query(imgq, results=1)
+		pdimgData=partdb.query(imgq, results=1)
 
-	return imgids
+	return pdimgData
+
+def getDBparticledataImage(imgdata,expid):
+	"""
+	This function is a dummy now that the output imgdata since we removed
+	the image table in dbappiondata
+	"""
+	return imgdata
+	
 
 def insertParticlePicks(params,img,expid,manual=False):
 	"""
@@ -73,7 +82,7 @@ def insertParticlePicks(params,img,expid,manual=False):
 	selexonq = particleData.selectionParams(runId=runq)
 	selexonresult = partdb.query(selexonq, results=1)
 
-        imgids=getDBparticledataImage(img,expid)
+        pdimgData=getDBparticledataImage(img,expid)
 
 	# WRITE PARTICLES TO DATABASE
 	print "Inserting",imgname,"particles into Database..."
@@ -134,12 +143,11 @@ def insertParticlePicks(params,img,expid,manual=False):
 	
 	return
 
-def insertMakeMaskParams(params):
-	maskPq=particleData.makeMaskParams()
+def insertMaskMakerParams(params):
+	maskPq=appionData.ApMaskMakerParamsData()
 	
-	maskPq['dbemdata|SessionData|session']=params['session'].dbid
-	maskPq['mask path']=params['rundir']
-	maskPq['name']=params['runid']
+#	maskPq['name']=params['runid']????
+	maskPq['bin']=params['bin']
 	maskPq['mask type']=params['masktype']
 	maskPq['pdiam']=params['diam']
 	maskPq['region diameter']=params['cdiam']
@@ -151,47 +159,60 @@ def insertMakeMaskParams(params):
 	maskPq['convex hull']=not params['no_hull']
 	maskPq['libcv']=params['cv']
 
-	result=partdb.query(maskPq)
-	if not (result):
-		partdb.insert(maskPq)
-		result=[maskPq.dbid]
-	return result
+	partdb.insert(maskPq)
+		
+	return maskPq
 
-def getMaskParamsByName(params):
-	maskPq=particleData.makeMaskParams()
-	maskPq['name']=params['runid']
-	maskPq['dbemdata|SessionData|session']=params['session'].dbid
+def insertMaskRun(params):
 
+	maskRq=appionData.ApMaskMakerRunData()
+	maskRq['dbemdata|SessionData|session']=params['session'].dbid
+	maskRq['path']=params['rundir']
+	maskRq['name']=params['runid']
+	maskRq['params']=insertMaskMakerParams(params)
+
+	partdb.insert(maskRq)
+
+	return maskRq
+
+def getMaskParamsByRunName(params):
+	maskRq=appionData.ApMaskRegionData()
+	maskRq['name']=params['runid']
+	maskRq['dbemdata|SessionData|session']=params['session'].dbid
 	# get corresponding makeMaskParams entry
-	result = partdb.query(maskPq, results=1)
-	
-	return result  
+	result = partdb.query(maskRq, results=1)
+		
+	return result['params']
 	
 		
-def insertMaskRegion(maskrun,partdbimg,regionInfo):
-	maskRq=particleData.maskRegion()
-		
-	maskRq['mask']=maskrun
-	maskRq['imageId']=partdbimg
-	maskRq['x']=regionInfo[4][1]
-	maskRq['y']=regionInfo[4][0]
-	maskRq['area']=regionInfo[0]
-	maskRq['perimeter']=regionInfo[3]
-	maskRq['mean']=regionInfo[1]
-	maskRq['stdev']=regionInfo[2]
-	maskRq['keep']=None
+def insertMaskRegion(rundata,imgdata,regionInfo):
 
+	maskRq = createMaskRegionData(rundata,imgdata,regionInfo)
 	result=partdb.query(maskRq)
 	if not (result):
 		partdb.insert(maskRq)
 	
 	return
 
-def getMaskRegions(maskrun,img):
-	maskRq=particleData.maskRegion()
+def createMaskRegionData(rundata,imgdata,regionInfo):
+	maskRq=appionData.ApMaskRegionData()
+
+	maskRq['maskrun']=rundata
+	maskRq['dbemdata|AcquisitionImageData|image']=imgdata.dbid
+	maskRq['x']=regionInfo[4][1]
+	maskRq['y']=regionInfo[4][0]
+	maskRq['area']=regionInfo[0]
+	maskRq['perimeter']=regionInfo[3]
+	maskRq['mean']=regionInfo[1]
+	maskRq['stdev']=regionInfo[2]
+
+	return maskRq
+
+def getMaskRegions(maskrun,imgid):
+	maskRq=appionData.ApMaskRegionData()
 
 	maskRq['mask']=maskrun
-	maskRq['imageId']=img
+	maskRq['imageId']=imgid
 	
 	results=partdb.query(maskRq)
 	
@@ -272,4 +293,3 @@ def drawPeaks(peaks,draw,bin,pixrad,circmult=1.0,numcircs=2,circshape="circle"):
 			count = count + 1
 
 	return 
-
