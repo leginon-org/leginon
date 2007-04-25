@@ -163,6 +163,7 @@ def parseLogFile(params):
 				elif elements[0]=='refine':
 					iteration['refine']=True
 			params['iterations'].append(iteration)
+	lines.close()
 				
 def insertReconRun(params):
 	runq=particleData.reconRun()
@@ -252,12 +253,39 @@ def insertIteration(params):
 				result=partdb.query(resq, results=1)
 			resolutionId=result[0]
 		
+		# get number of class averages and # kept
+		refinefile=params['dir']+'refine'+iteration['num']+'.txt'
+		f=open(refinefile,'r')
+		numclasses=None
+		numclasseskept=None
+		for line in f:
+			line=string.rstrip(line)
+			if re.search("used", line):
+				bits=line.split(' ')
+				classes=bits[-2].split('/')
+				numclasses=classes[1]
+				numclasseskept=classes[0]
+		f.close()
+
+		# count # particles thrown out
+		badprtls=0
+      		f=open(params['dir']+'particle.log','r')
+		for line in f:
+			line=string.rstrip(line)
+			if re.search("X\t\d+\t\d+",line):
+				bits=line.split('\t')
+				if iteration['num']==bits[-1]:
+					badprtls+=1	
+				
 		# insert refinement results
 		refineq=particleData.refinement()
 		refineq['reconRunId']=params['reconRun']
 		refineq['refinementParamsId']=refineParams
 		refineq['iteration']=iteration['num']
 		refineq['resolutionId']=resolutionId
+		refineq['numClassAvg']=numclasses
+		refineq['numClassAvgKept']=numclasseskept
+		refineq['numBadParticles']=badprtls
 		classavg='classes.'+iteration['num']+'.img'
 		classvar='classes.'+iteration['num']+'.var.img'
 		volumeSnapshot='threed.'+iteration['num']+'a.png'
@@ -303,6 +331,7 @@ def calcRes(fscfile, model):
 
 			res=boxsize*apix/intfsc
 			return res
+	f.close()
 	return
 	
 def writeReconLog(commandline):

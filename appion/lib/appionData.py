@@ -11,7 +11,7 @@ import data
 class ApParticleData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('run', ApSelectionRunData),
+			('selectionrun', ApSelectionRunData),
 			('dbemdata|AcquisitionImageData|image', int),
 			('xcoord', int),
 			('ycoord', int),
@@ -306,7 +306,7 @@ data.ApAceParamsData=ApAceParamsData
 class ApCtfData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('run', ApAceRunData),
+			('acerun', ApAceRunData),
 			('image', int),
 			('defocus1', float),
 			('defocus2', float), 
