@@ -8,15 +8,15 @@ import data
 import apLoop
 import apCrudFinder
 import apParticle
-import particleData
+import appionData
 import apDatabase
 import numarray
 import apImage
 import numarray.ma as ma
 import imagenode
+import apDB
 
 class MaskMaker(imagenode.ImageNode):
-	settingsclase = particleData.MaskMakerSettingsData
 	defaultsettings = dict(imagenode.ImageNode.defaultsettings)
 	defaultsettings.update({
 		'masktype':'custom',
@@ -36,9 +36,24 @@ class MaskMaker(imagenode.ImageNode):
 	})
 	def __init__(self):
 		imagenode.ImageNode.__init__
+		''' Why do I need to do the following lines?
+			Something is not right
+		''' 
+		self.partdb=apDB.apdb
+		self.db=apDB.db
+		self.dbsavetypes = {'pik':'txt','region':'txt'}	#possible resulttypes that commit to db and their file extension
+		self.filesavetypes = {'mask':'png','ccmap':'jpg','test':'jpg'}	#possible resulttypes never comit to db and their file extension
+		
 		self.functionname = 'mask'
-		self.resulttypes = ['region']
-		print "started"
+		self.resulttypes = ['region','mask']
+
+		regionData = appionData.ApMaskRegionData()
+		regionkeys = regionData.keys()
+		regionkeys.sort()
+		newregionkeys = list(regionkeys.pop(regionkeys.index('dbemdata|AcquisitionImageData|image')))
+		newregionkeys.extend(regionkeys)
+
+		self.resulttkeys = {'region':newregionkeys,'mask':None}
 	
 	def modifyParams(self,params):
 		if params['masktype']=='crud':
@@ -72,13 +87,36 @@ class MaskMaker(imagenode.ImageNode):
 			params['commit']=False
 		return params	
 
+
+
+	def insertFunctionParamsDummy(self):
+		print self.defaultsettings
+		paramdata = apParticle.insertMaskMakerParams(self.defaultsettings)
+		return paramdata
+
+	def insertFunctionRun(self,params):
+
+		rundata = apParticle.insertMaskRun(params)		
+		return rundata
+
+	def insertFunctionRunDummy(self,params):
+		
+		testRdata = appionData.ApMaskMakerRunData()
+		testRdata['dbemdata|SessionData|session'] = 0
+		testRdata['path'] = ''
+		testRdata['name'] = 'dummy'
+		testRdata['params'] = self.insertFunctionParamsDummy()		
+
+		self.partdb.insert(testRdata)
+		
+		return testRdata
 	def makeMask(self,params,image):
 		shape = numarray.shape(image)
 		mask = numarray.zeros(shape)
 		regioninfos = [[10,20,30,40,(50,60)],]
 		return regioninfos, mask	
 
-	def writeResultsToFile(self,imagename,infos,path,resulttype='region'):
+	def writeResultsToFile_old(self,imagename,infos,path,resulttype='region'):
 		# infos is a list of information or a dictionary using non-zero index as keys
 		# area,avg,stdev,length,(centerRow,centerColumn)
 		if len(infos)==0:
@@ -101,10 +139,9 @@ class MaskMaker(imagenode.ImageNode):
 		regionfile.close()
 
 	
-	def writeResultsToDB(self,img,expid,maskrun,infos):
+	def getResults(self,rundata,imgdata,infos):
 		# infos is a list of information or a dictionary using non-zero index as keys
 		# area,avg,stdev,length,(centerRow,centerColumn)
-		imgids=apParticle.getDBparticledataImage(img,expid)
 		if len(infos)==0:
 			return
 		regionlines=""
@@ -114,18 +151,15 @@ class MaskMaker(imagenode.ImageNode):
 			offset=0
 		else:
 			offset=1
+		qs = []
 		for l1 in range(0,len(infos)):
 		
 			l=l1+offset
 			info=infos[l]
-			apParticle.insertMaskRegion(maskrun,imgids[0],info)
+			q = apParticle.createMaskRegionData(rundata,imgdata,info)
+			qs.append(q)
+		return qs
 
-	def writeResultImageToFile(self,imagename,path,mask):
-		maskfile=path+"/"+imagename+"_mask.png"
-		if (os.path.exists(maskfile)):
-			os.remove(maskfile)
-		apImage.arrayMaskToPngAlpha(mask,maskfile)
-			
 	def outputTestImage(self,array,name,description,testlog):
 		width=25
 		if testlog[0]:
@@ -138,9 +172,11 @@ class MaskMaker(imagenode.ImageNode):
 		apImage.arrayToJpeg(array,jpgname)
 		return testlog
 
-	def function(self,params,binnedimage):
-		results,resultimage = apCrudFinder.makeMask(params,binnedimage)
-		return results,resultimage
+	def function(self,params,rundata,imgdata,binnedimage):
+#		regions,mask = apCrudFinder.makeMask(params,binnedimage)
+		regions,mask = self.makeMask(params,binnedimage)
+		regionsData = self.getResults(rundata,imgdata,regions)
+		return [regionsData,mask]
 
 
 if __name__ == '__main__':
