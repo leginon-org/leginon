@@ -64,7 +64,7 @@ def getImagesFromDB(session,preset):
 	"""
 	#for img in imgtree: 	 
 		#img.holdimages=False
-	return imagelist
+	return imgtree
 
 def getAllImagesFromDB(session):
 	"""
