@@ -307,7 +307,7 @@ class ApCtfData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
 			('acerun', ApAceRunData),
-			('image', int),
+			('dbemdata|AcquisitionImageData|image', int),
 			('defocus1', float),
 			('defocus2', float), 
 			('defocusinit', float), 
