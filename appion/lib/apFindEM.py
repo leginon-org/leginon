@@ -3,6 +3,7 @@
 import os
 import threading
 import apDisplay
+import apImage
 
 #########################################################
 
@@ -26,59 +27,28 @@ def runFindEM(params, imgname, thread=False):
 	to get cross-correlation maps
 	"""
 	os.chdir(params['rundir'])
-	tmplt=params["template"]
-	numcls=len(params['templatelist'])
-	pixdwn=str(params["apix"]*params["bin"])
-	d=str(params["diam"])
-	if (params["multiple_range"]==False):
-		strt=str(params["startang"])
-		end=str(params["endang"])
-		incr=str(params["incrang"])
-	border=str(int((params["diam"]/params["apix"]/params["bin"])/2)+1)
 	joblist = []
+	ccmaplist = []
 
 	if len(params['templatelist']) < 1:
 		apDisplay.printError("templatelist == 0; there are no templates")
 
 	for i in range(len(params['templatelist'])):
 		classavg = i + 1
-		#OUTPUT
-		cccfile="./cccmaxmap%i00.mrc" % classavg
-		if (os.path.exists(cccfile)):
-			os.remove(cccfile)
 
-		#IMAGE INFO
-		if (params['multiple_range']==True):
-			strt=str(params["startang"+str(classavg)])
-			end=str(params["endang"+str(classavg)])
-			incr=str(params["incrang"+str(classavg)])
-		dwnimgname = imgname+".dwn.mrc"
-		if not os.path.isfile(dwnimgname):
-			apDisplay.printError("image file, "+dwnimgname+" was not found")
-		else:
-			print "image file, "+dwnimgname
-		feed = dwnimgname+"\n"
+		#DETERMINE OUTPUT FILE NAME
+		#CHANGE THIS TO BE 00%i in future
+		#numstr = "%03d" % classavg
+		numstr = str(classavg%10)+"00\n"
+		ccmapfile="./cccmaxmap"+numstr+".mrc"
+		if (os.path.exists(ccmapfile)):
+			os.remove(ccmapfile)
 
-		#TEMPLATE INFO
-		if (len(params['templatelist'])==1 and not params['templateIds']):
-			tmplname = tmplt+".dwn.mrc\n"
-		else:
-			tmplname = tmplt+str(classavg)+".dwn.mrc\n"
-		if not os.path.isfile(tmplname):
-			apDisplay.printError("template file, "+tmplname+" was not found")
-		else:
-			print "template file, "+tmplname
-		feed = feed+tmplname
-		#DUMMY VARIABLE
-		feed = feed+"-200.0\n"+pixdwn+"\n"+d+"\n"
-		#RUN ID FOR OUTPUT FILENAME
-		feed = feed+str(classavg)+"00\n"
-		#ROTATION PARAMETERS
-		feed = feed+strt+','+end+','+incr+"\n"
-		#BORDER SIZE
-		feed = feed+border+"\n"
+		#GET FINDEM RUN COMMANDS
+		feed = findEMString(classavg, imgname, ccmapfile, params)
 
 		#RUN THE PROGRAM
+		apDisplay.printMsg("running findem.exe")
 		if thread == True:
 			current = findemjob(feed)
 			joblist.append(current)
@@ -87,14 +57,72 @@ def runFindEM(params, imgname, thread=False):
 			fin=''
 			fin=os.popen('${FINDEM_EXE}','w')
 			fin.write(feed)
-			print "running findem.exe"
 			fin.flush
-			fin.close()	
+			fin.close()
 
-		if not os.path.exists(cccfile):
+		#READ OUTPUT FILE
+		if not os.path.exists(ccmapfile):
 			apDisplay.printError("findem.exe did not run or crashed.\n"+
 				"Did you source useappion.sh?")
+		else:
+			ccmaxmap = apImage.mrcToArray(ccmapfile)
+			ccmaplist.append(ccmaxmap)
 
-	for job in joblist:
-		job.join()
-	return []
+	if thread == True:
+		for job in joblist:
+			job.join()
+	return ccmaplist
+
+
+def findEMString(classavg,imgname,ccmapfile, params):
+
+	#IMAGE INFO
+	dwnimgname = imgname+".dwn.mrc"
+	if not os.path.isfile(dwnimgname):
+		apDisplay.printError("image file, "+dwnimgname+" was not found")
+	else:
+		print "image file, "+dwnimgname
+	feed = dwnimgname+"\n"
+
+	#TEMPLATE INFO
+	tmpltroot = params["template"]
+	if (len(params['templatelist'])==1 and not params['templateIds']):
+		tmplname = tmpltroot+".dwn.mrc\n"
+	else:
+		tmplname = tmpltroot+str(classavg)+".dwn.mrc\n"
+	if not os.path.isfile(tmplname):
+		apDisplay.printError("template file, "+tmplname+" was not found")
+	else:
+		print "template file, "+tmplname
+	feed += tmplname
+
+	#DUMMY VARIABLE; DOES NOTHING
+	feed += "-200.0\n"
+
+	#BINNED APIX
+	feed += str(params["apix"]*params["bin"])+"\n"
+
+	#PARTICLE DIAMETER
+	feed += str(params["diam"])+"\n"
+
+	#RUN ID FOR OUTPUT FILENAME
+	#numstr = "%03d" % classav
+	numstr = str(classavg%10)+"00\n"
+	feed += numstr
+
+	#ROTATION PARAMETERS
+	if params['multiple_range'] == True:
+		strt = str(params["startang"+str(classavg)])
+		end  = str(params["endang"+str(classavg)])
+		incr = str(params["incrang"+str(classavg)])
+	else:
+		strt = str(params["startang"])
+		end  = str(params["endang"])
+		incr = str(params["incrang"])
+	feed += strt+','+end+','+incr+"\n"
+
+	#BORDER WIDTH
+	borderwidth = str(int((params["diam"]/params["apix"]/params["bin"])/2)+1)
+	feed += borderwidth+"\n"
+	
+	return feed
