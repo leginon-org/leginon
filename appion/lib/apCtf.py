@@ -154,7 +154,6 @@ def insertAceParams(params,expid):
 		if p in params:
 			aceparamq[p] = params[p]
 	# if nominal df is set, save override df to database, else don't set
-	dfnom='None'
 	if params['nominal']:
 		dfnom=-params['nominal']
 		aceparamq['df_override']=dfnom
@@ -179,7 +178,7 @@ def insertAceParams(params,expid):
 	# if continuing a previous run, make sure that all the current
 	# parameters are the same as the previous
 	else:
-		if not (runids[0]['aceparams']==aceparams):
+		if not (runids[0]['aceparams']==aceparams[0]):
 			apDisplay.printError("All parameters for a single ACE run must be identical! \n"+\
 					     "please check your parameter settings.")
 	return
@@ -189,10 +188,8 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfil
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
 
-	# get corresponding ace_params entry
-	aceq=ctfData.ace_params(runId=runq)
-	acevals=acedb.query(aceq, results=1)
-
+	acerun=acedb.query(runq,results=1)
+	
 	legimgid=int(img.dbid)
 	legpresetid=None
 	if img['preset']:		
@@ -200,24 +197,11 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfil
 		
 	dforig=img['scope']['defocus']
 
-	procimgq = appionData.image(imagename=imgname + '.mrc')
-	procimgq['dbemdata|SessionData|session']=expid
-	procimgq['dbemdata|AcquisitionImageData|image']=legimgid
-	procimgq['dbemdata|PresetData|preset']=legpresetid
-	procimgq['dbemdata|ScopeEMData|defocus']=dforig
-
-	imgids=acedb.query(procimgq)
-
-	# if no image entry, make one
-	if not (imgids):
-		acedb.insert(procimgq)
-
 	print "Committing ctf parameters for",apDisplay.shortenImageName(imgname), "to database."
 
-	ctfq=appionData.ctf()
-	ctfq['runId']=runq
-	ctfq['aceId']=acevals[0]
-	ctfq['imageId']=procimgq
+	ctfq=appionData.ApCtfData()
+	ctfq['acerun']=acerun[0]
+	ctfq['dbemdata|AcquisitionImageData|image']=legimgid
 	ctfq['graph1']=opimfile1
 	ctfq['graph2']=opimfile2
 	ctfq['mat_file']=matfile
