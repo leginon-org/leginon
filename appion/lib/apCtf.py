@@ -129,14 +129,16 @@ def printResults(params,nominal,ctfparams):
 	else:
 		totconf = 0.0
 	if (params['stig']==0):
-		pererror = (nom1-defoc1)/defoc1
+		if nom1 != 0: pererror = (nom1-defoc1)/nom1
+		else: pererror = 1.0
 		labellist = ["Nominal","Defocus","PerErr","Conf1","Conf2","TotConf",]
 		numlist = [nom1,defoc1,pererror,conf1,conf2,totconf,]
 		typelist = [0,0,0,1,1,1,]
 		apDisplay.printDataBox(labellist,numlist,typelist)
 	else:
 		avgdefoc = (defoc1+defoc2)/2.0
-		pererror = (nom1-avgdefoc)/avgdefoc
+		if nom1 != 0: pererror = (nom1-avgdefoc)/nom1
+		else: pererror = 1.0
 		labellist = ["Nominal","Defocus1","Defocus2","PerErr","Conf1","Conf2","TotConf",]
 		numlist = [nom1,defoc1,defoc2,pererror,conf1,conf2,totconf,]
 		typelist = [0,0,0,0,1,1,1,]
