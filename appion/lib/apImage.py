@@ -288,6 +288,14 @@ def arrayToImage(numer,normalize=True):
 	image = _arrayToImage(numer)
 	return image
 
+def mrcToArray(filename):
+	"""
+	takes a numarray and writes a Mrc
+	"""
+	apDisplay.printMsg("reading MRC: "+apDisplay.short(filename))
+	array = Mrc.mrc_to_numeric(filename)
+	return array
+
 def arrayToMrc(numer,filename):
 	"""
 	takes a numarray and writes a Mrc
