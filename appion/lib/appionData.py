@@ -326,8 +326,10 @@ class ApCtfData(data.Data):
 			('snr', float), 
 			('confidence', float), 
 			('confidence_d', float), 
+			('graphpath', str),
 			('graph1', str),
 			('graph2', str),
+			('matpath', str),
 			('mat_file', str),
 		)
 	typemap = classmethod(typemap)

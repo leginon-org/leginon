@@ -43,9 +43,9 @@ def runAce(matlab,img,params):
 	pymat.eval(matlab,acecmd)
 	print apDisplay.color(" done","brown")
 
-	matfile = os.path.join(params['matdir'],imgname+'.mrc.mat')
+	matfile = imgname+'.mrc.mat'
 	if params['stig']==0:
-		savematcmd = "save('"+str(matfile)+"','ctfparams','scopeparams','dforig');"
+		savematcmd = "save('"+os.path.join(params['matdir'],matfile)+"','ctfparams','scopeparams','dforig');"
 		pymat.eval(matlab,savematcmd)
 
 	ctfparams=pymat.get(matlab,'ctfparams')
@@ -55,12 +55,12 @@ def runAce(matlab,img,params):
 	if (params['display']):
 		imfile1=os.path.join(params['tempdir'],'im1.png')
 		imfile2=os.path.join(params['tempdir'],'im2.png')
-		opimfile1=os.path.join(params['opimagedir'],imgname+'.mrc1.png')
-		opimfile2=os.path.join(params['opimagedir'],imgname+'.mrc2.png')
+		opimfile1=imgname+'.mrc1.png'
+		opimfile2=imgname+'.mrc2.png'
 		pymat.eval(matlab,"im1 = imread('"+imfile1+"');")
 		pymat.eval(matlab,"im2 = imread('"+imfile2+"');")
-		pymat.eval(matlab,"imwrite(im1,'"+opimfile1+"');")
-		pymat.eval(matlab,"imwrite(im2,'"+opimfile2+"');")
+		pymat.eval(matlab,"imwrite(im1,'"+os.path.join(params['opimagedir'],opimfile1)+"');")
+		pymat.eval(matlab,"imwrite(im2,'"+os.path.join(params['opimagedir'],opimfile2)+"');")
 		#insert ctf params into dbctfdata.ctf table in db
 		if (params['commit']==True):
 			insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfile2)
@@ -201,11 +201,21 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfil
 
 	print "Committing ctf parameters for",apDisplay.shortenImageName(imgname), "to database."
 
+	# make sure the directory paths have '/' at end
+	graphpath=params['opimagedir']
+	matpath=params['matdir']
+	if not(graphpath[-1]=='/'):
+		graphpath=graphpath+'/'
+	if not(matpath[-1]=='/'):
+		matpath=matpath+'/'
+
 	ctfq=appionData.ApCtfData()
 	ctfq['acerun']=acerun[0]
 	ctfq['dbemdata|AcquisitionImageData|image']=legimgid
+	ctfq['graphpath']=graphpath
 	ctfq['graph1']=opimfile1
 	ctfq['graph2']=opimfile2
+	ctfq['matpath']=matpath
 	ctfq['mat_file']=matfile
 	ctfparamlist = ('defocus1','defocus2','defocusinit','amplitude_contrast','angle_astigmatism',\
 		'noise1','noise2','noise3','noise4','envelope1','envelope2','envelope3','envelope4',\
