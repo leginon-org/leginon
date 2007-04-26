@@ -65,14 +65,19 @@ class AppionLoop(object):
 
 				### START any custom functions HERE:
 				self.processImage(imgdict)
+ 				if self.params['commit'] == True:
+					self.commitToDatabase(imgdict)
 				### FINISH with custom functions
- 
+
 	 			self._writeDoneDict(imgdict['filename'])
 				self._printSummary()
 				#END LOOP OVER IMAGES
 			notdone = self._waitForMoreImages()
 			#END NOTDONE LOOP
 		self._finishLoop()
+
+	def commitToDatabase(self, imgdict):
+		return
 
 	def setFunctionName(self, arg=None):
 		"""
@@ -206,6 +211,7 @@ class AppionLoop(object):
 		self.params['nowait']=False
 		self.params['abspath']=os.path.abspath('.')
 		### get custom default params
+		apDisplay.printMsg("creating special parameter defaults")
 		self.specialDefaultParams()
 
 	def _createDefaultStats(self):
@@ -289,7 +295,7 @@ class AppionLoop(object):
 			else:
 				newargs.append(arg)
 
-		print "parsing special parameters"
+		apDisplay.printMsg("parsing special parameters")
 		self.specialParseParams(args)
 
 		self.params['imgdir'] = apDatabase.getImgDir(self.params['sessionname'])

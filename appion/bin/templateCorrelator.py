@@ -12,6 +12,7 @@ import apDisplay
 import apTemplate
 import apDatabase
 #legacy
+import selexonFunctions  as sf1
 import selexonFunctions2 as sf2
 
 class TemplateCorrelationLoop(appionLoop.AppionLoop):
@@ -25,11 +26,16 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 			print "PROCESSING"
 			smimgname = self._processAndSaveImage(imgdict)
 			print "FINDEM"
-			ccmaplist = apFindEM.runFindEM(self.params, smimgname)
-			print "NUMPEAKS"
-			numpeaks = sf2.findPeaks2(self.params, imgname)
+			self.ccmaplist = apFindEM.runFindEM(self.params, smimgname)
+			print "FINDPEAKS"
+			self.peaklist  = apParticle.findPeaks(self.params, ccmaplist, imgname)
 			print "CREATEJPG"
 			sf2.createJPG2(self.params,imgname)
+
+	def commitToDatabase(self, imgdict):
+		expid=int(img['session'].dbid)
+		sf1.insertSelexonParams(params,expid)
+		sf1.insertParticlePicks(params,img,expid)
 
 	def preLoopFunctions(self):
 		print " ... getting templates"
