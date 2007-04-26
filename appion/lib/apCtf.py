@@ -145,50 +145,43 @@ def printResults(params,nominal,ctfparams):
 
 
 def insertAceParams(params,expid):
-	runq=appionData.ApAceRunData()
-	runq['name']=params['runid']
-	runq['dbemdata|SessionData|session']=expid
-	runids=acedb.query(runq, results=1)
-
+	# first create an aceparam object
+	aceparamq=appionData.ApAceParamsData()
+	copyparamlist = ('display','stig','medium','edgethcarbon','edgethice',\
+			 'pfcarbon','pfice','overlap','fieldsize','resamplefr','drange',\
+			 'reprocess')
+	for p in copyparamlist:
+		if p in params:
+			aceparamq[p] = params[p]
+	# if nominal df is set, save override df to database, else don't set
 	dfnom='None'
 	if params['nominal']:
 		dfnom=-params['nominal']
-		
-	# if no run entry exists, insert new run entry into run.dbctfdata
-	# then create a new ace_param entry
-	if not(runids):
-		aceparams=appionData.ApAceParamsData()
-		aceparams['run']=runq
+		aceparamq['df_override']=dfnom
+	aceparams=acedb.query(aceparamq, results=1)
 
-		copyparamlist = ('display','stig','medium','edgethcarbon','edgethice',\
-			'pfcarbon','pfice','overlap','fieldsize','resamplefr','drange',\
-			'reprocess')
-		for p in copyparamlist:
-			if p in params:
-				aceparams[p] = params[p]
-		# if nominal df is set, save override df to database, else don't set
-		if params['nominal']:
-			aceparams['df_override']=dfnom
+	# create an acerun object
+	runq=appionData.ApAceRunData()
+	runq['name']=params['runid']
+	runq['dbemdata|SessionData|session']=expid
+	# see if acerun already exists in the database
+	runids=acedb.query(runq, results=1)
+
+	# if no run entry exists, insert new run entry into run.dbctfdata
+	if not(runids):
+		runq['aceparams']=aceparamq
+		# if ace params don't exist in table, insert into DB
+		if not (aceparams):
+			acedb.insert(aceparamq)
 
 		acedb.insert(runq)
-	       	acedb.insert(aceparams)
-		
+
 	# if continuing a previous run, make sure that all the current
 	# parameters are the same as the previous
 	else:
-		aceq=appionData.ApAceParamsData(runId=runq)
-		aceresults=acedb.query(aceq, results=1)
-		acelist=aceresults[0]
-		mustretain = ('display','stig','medium','edgethcarbon','edgethice',\
-			'pfcarbon','pfice','overlap','fieldsize','resamplefr','drange',\
-			'reprocess')
-		for p in mustretain:
-			if acelist[p] != params[p]:
-				apDisplay.printError("All parameters for a single ACE run must be identical! \n"+\
-					"please check your parameter settings.")
-		if (str(acelist['df_override'])!=str(dfnom)):
+		if not (runids[0]['aceparams']==aceparams):
 			apDisplay.printError("All parameters for a single ACE run must be identical! \n"+\
-					"please check your parameter settings.")
+					     "please check your parameter settings.")
 	return
 
 def insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfile2):
