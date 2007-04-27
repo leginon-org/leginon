@@ -17,24 +17,26 @@ import convolver
 #appion
 import apDisplay
 
-def preProcessImageParams(img, params):
+def preProcessImageParams(imgdata, params, planeReg=True):
 	"""
 	standard processing for an image, given the params dict
 	"""
-	return preProcessImage(img, params['bin'], params['apix'], params['lp'])
+	return preProcessImage(imgdata, params['bin'], params['apix'], params['lp'])
 
-def preProcessImage(img, bin=1, apix=1.0, lowpass=0.0, planeReg=True):
+def preProcessImage(imgdata, bin=1, apix=1.0, lowpass=0.0, planeReg=True):
 	"""
 	standard processing for an image
 	"""
-	img = binImg(img,bin)
+	simgdata = imgdata.copy()
+	simgdata = binImg(simgdata,bin)
 	if planeReg:
-		img = planeRegression(img)
-	img = lowPassFilter(img,apix,bin,lowpass)
-	img = 255.0*(normRange(img)+1.0e-7)
-	return img
+		simgdata = planeRegression(simgdata)
+	simgdata = lowPassFilter(simgdata,apix,bin,lowpass)
+	simgdata = 255.0*(normRange(simgdata)+1.0e-7)
+	return simgdata
 
-def preProcessImageParams(img, params, planeReg=True):
+
+def preProcessImageParams2(img, params, planeReg=True):
 	"""
 	standard processing for an image
 	"""
@@ -66,9 +68,9 @@ def binImg(img,bin=1):
 	else:
 		return img
 
-def filterImg(img,apix=1.0,bin=1,radius=0.0):
+def filterImg(imgdata,apix,rad,bin=1):
 	#TEMPORARY ALIAS FOR lowPassFilter
-	return lowPassFilter(img,apix,bin,rad)
+	return lowPassFilter(imgdata,apix=apix,bin=1,radius=rad)
 
 def lowPassFilter(img,apix=1.0,bin=1,radius=0.0):
 	"""
@@ -177,6 +179,27 @@ def normStdevMask(img,mask):
 	std1   = math.sqrt((sumsq1 - sum1*sum1/n1)/(n1-1))
 	std2   = nd_image.standard_deviation(img)
 	return (img - avg1) / std1
+
+def scaleImage(imgdata, scale):
+	"""
+	scale an image
+	"""
+	if scale == 1.0:
+		return array
+	return numarray.nd_image.zoom(imgdata, scale, order=1)
+
+def meanEdgeValue(imgdata, w=0):
+		"""
+		get the average values for the edges of width = w
+		"""
+		xmax = imgdata.shape[0]
+		ymax = imgdata.shape[1]
+		leftEdgeAvg   = nd_image.mean(imgdata[0:xmax,      0:w])
+		rightEdgeAvg  = nd_image.mean(imgdata[0:xmax,      ymax-w:ymax])
+		topEdgeAvg    = nd_image.mean(imgdata[0:w,         0:ymax])
+		bottomEdgeAvg = nd_image.mean(imgdata[xmax-w:xmax, 0:ymax])
+		edgeAvg       = (leftEdgeAvg + rightEdgeAvg + topEdgeAvg + bottomEdgeAvg)/4.0
+		return edgeAvg
 
 #########################################################
 

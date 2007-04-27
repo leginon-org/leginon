@@ -65,6 +65,8 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 		self.params['defocpair']=False
 		self.params['templateIds']=''
 		self.params['multiple_range']=True
+		self.params["ogTmpltInfo"]=[]
+		self.params["scaledapix"]={}
 
 
 	def specialCreateOutputDirs(self):

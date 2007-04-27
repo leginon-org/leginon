@@ -17,6 +17,7 @@ import apDefocalPairs
 import apFindEM
 import apViewIt
 import apDisplay
+import apTemplate
 
 data.holdImages(False)
 
@@ -37,18 +38,18 @@ if __name__ == '__main__':
 		# move to run directory
 		os.chdir(params['rundir'])
 		# get the templates from the database
-		sf1.getDBTemplates(params)
+		apDatabase.getDBTemplates(params)
 		# scale them to the appropriate pixel size
-		sf1.rescaleTemplates(images[0],params)
+		apTemplate.rescaleTemplates(params)
 		# set the template name to the copied file names
 		params['template']='scaledTemporaryTemplate'
 		
 	# find the number of template files
 	if params["crudonly"]==False:
-		sf1.checkTemplates(params)
+		apTemplate.checkTemplates(params)
 		# go through the template mrc files and downsize & filter them
 		for tmplt in params['templatelist']:
-			sf1.dwnsizeTemplate(params,tmplt)
+			apTemplate.downSizeTemplate(tmplt, params)
 		print " ... downsize & filtered "+str(len(params['templatelist']))+ \
 			" file(s) with root \""+params["template"]+"\""
 
@@ -94,16 +95,17 @@ if __name__ == '__main__':
 	notdone=True
 	while notdone:
 		#while images:
-		for img in images:
+		for imgdict in images:
 			#img = images.pop(0)
-			imgname=img['filename']
+			imgname = imgdict['filename']
 			#stats['imagesleft'] = len(images)
 
 			#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
-			if( apLoop.startLoop(img, donedict, stats, params)==False ):
+			if( apLoop.startLoop(imgdict, donedict, stats, params)==False ):
 				continue
 			if params['function'] == "selexon" and params['templateIds']:
-				sf1.rescaleTemplates(img,params)
+				apTemplate.rescaleTemplates(params)
+				#SHOULD ONLY DO ABOVE IF APIX CHANGES
 
 			# run FindEM
 			if params['method'] == "experimental":
@@ -114,12 +116,12 @@ if __name__ == '__main__':
 				stats['peaksumsq'] = stats['peaksumsq'] + numpeaks**2
 			else:
 #				sf2.tmpRemoveCrud(params,imgname)
-				sf1.dwnsizeImg(params,imgname)
-				apFindEM.runFindEM(params,imgname)
+				sf1.dwnsizeImg(params, imgname)
+				apFindEM.runFindEM(params, imgname)
 
 			#FIND PEAKS
 			if params['method'] == "classic":
-				apViewIt.findPeaks(params,img)
+				apViewIt.findPeaks(params, imgdict)
 				numpeaks = 0
 			elif params['method'] == "experimental":
 				print "skipping findpeaks..."
@@ -152,7 +154,7 @@ if __name__ == '__main__':
 			#CREATE JPG of selected particles if not created by crudfinder
 			if (params["crud"]==False):
 				if params['method'] == "classic":
-					apViewIt.createJPG(params,img)
+					apViewIt.createJPG(params,imgdict)
 				else:
 					sf2.createJPG2(params,imgname)
 
@@ -163,19 +165,18 @@ if __name__ == '__main__':
 			# find defocus pair if defocpair is specified
 			if params['defocpair'] == True:
 				apDisplay.printWarning("please make a new defocpair script")
-				sibling=apDefocalPairs.getDefocusPair(img)
+				sibling=apDefocalPairs.getDefocusPair(imgdict)
 				if sibling:
-					peak=apDefocalPairs.getShift(img,sibling)
-					apDefocalPairs.recordShift(params,img,sibling,peak)
+					peak=apDefocalPairs.getShift(imgdict,sibling)
+					apDefocalPairs.recordShift(params,imgdict,sibling,peak)
 					if params['commit']:
-						apDefocalPairs.insertShift(img,sibling,peak)
+						apDefocalPairs.insertShift(imgdict,sibling,peak)
 			
 			if params['commit'] == True:
-				expid=int(img['session'].dbid)
+				expid=int(imgdict['session'].dbid)
 				#SELEXON MUST COME FIRST
 				sf1.insertSelexonParams(params,expid)
-				sf1.insertParticlePicks(params,img,expid)
-
+				sf1.insertParticlePicks(params,imgdict,expid)
 
 			# write results to dictionary
 			apLoop.writeDoneDict(donedict,params,imgname)

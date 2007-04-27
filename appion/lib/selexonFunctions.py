@@ -24,6 +24,8 @@ import project
 import appionData
 import apDisplay
 import apDB
+import apTemplate
+import apImage
 
 db = apDB.db
 partdb = apDB.apdb
@@ -31,6 +33,7 @@ projdb = apDB.projdb
 
 
 def createDefaults():
+	apDisplay.printWarning("this apParam function should not be in use")
 	# create default values for parameters
 	params={}
 	params["mrcfileroot"]=''
@@ -84,7 +87,6 @@ def createDefaults():
 	params["no_length_prune"]=False
 	params["stdev"]=0
 	params["test"]=False
-
 	return params
 
 def printUploadHelp():
@@ -229,6 +231,8 @@ def parsePrtlUploadInput(args,params):
 			apDisplay.printError("undefined parameter \'"+arg+"\'\n")
 
 def parseSelexonInput(args,params):
+	apDisplay.printError("this apParam function is no longer in use")
+	"""
 	# check that there are enough input parameters
 	if (len(args)<2 or args[1]=='help' or args[1]=='--help' \
 		or args[1]=='-h' or args[1]=='-help') :
@@ -359,6 +363,7 @@ def parseSelexonInput(args,params):
 			params["test"]=True
 		else:
 			apDisplay.printError("undefined parameter \'"+arg+"\'\n")
+	"""
 
 def runFindEM(params,file):
 	apDisplay.printError("this FindEM function no longer exists here")
@@ -422,86 +427,29 @@ def getImgSize(fname):
 	return(size)
 
 def checkTemplates(params,upload=None):
-	# determine number of template files
-	# if using 'preptemplate' option, will count number of '.mrc' files
-	# otherwise, will count the number of '.dwn.mrc' files
+	apDisplay.printWarning("this apTemplate function no longer exists here")
+	return apTemplate.checkTemplates(params, upload=upload)
 
-	name=params["template"]
-	stop=0 
-
-	# count number of template images.
-	# if a template image exists with no number after it
-	# counter will assume that there is only one template
-	n=0
-	while (stop==0):
-		if (os.path.exists(name+'.mrc') and os.path.exists(name+str(n+1)+'.mrc')):
-			# templates not following naming scheme
-			apDisplay.printError("Both "+name+".mrc and "+name+str(n+1)+".mrc exist\n")
-		if (os.path.exists(name+'.mrc')):
-			params['templatelist'].append(name+'.mrc')
-			n+=1
-			stop=1
-		elif (os.path.exists(name+str(n+1)+'.mrc')):
-			params['templatelist'].append(name+str(n+1)+'.mrc')
-			n+=1
-		else:
-			stop=1
-
-	if not params['templatelist']:
-		apDisplay.printError("There are no template images found with basename \'"+name+"\'\n")
-
-	return(params)
-
-def dwnsizeImg(params,img):
+def dwnsizeImg(params, imgname):
 	#downsize and filter leginon image
-	imagedata=getImageData(img)    
-	bin=params['bin']
-	im=binImg(imagedata['image'],bin)
-	apix=params['apix']*bin
-	im=filterImg(im,apix,params['lp'])
-
-	Mrc.numeric_to_mrc(im,(img+'.dwn.mrc'))
+	imgdata = getImageData(imgname)['image']
+	imgdata = apImage.preProcessImageParams(imgdata,params)
+	filename = os.path.join(params['rundir'],imgname+'.dwn.mrc')
+	apImage.arrayToMrc(imgdata, filename)
 	return
 
 def dwnsizeTemplate(params,filename):
-	#downsize and filter arbitary MRC template image
-	bin=params['bin']
-	im=Mrc.mrc_to_numeric(filename)
-	boxsize=im.shape
-	if ((boxsize[0]/bin)%2!=0):
-		apDisplay.printError("binned image must be divisible by 2\n")
-	if (boxsize[0]%bin!=0):
-		apDisplay.printError("box size not divisible by binning factor\n")
-	#print " ... downsizing", filename
-	im=binImg(im,bin)
-	#print " ... filtering",filename
-	apix=params['apix']*bin
-	im=filterImg(im,apix,params['lp'])
-
-	#replace extension with .dwn.mrc
-	ext=re.compile('\.mrc$')
-	filename=ext.sub('.dwn.mrc',filename)
-	Mrc.numeric_to_mrc(im,(filename))
+	apDisplay.printWarning("this apTemplate function no longer exists here")
+	apTemplate.dwnsizeTemplate(filename, params)
 	return
 
 def binImg(img,binning):
-	#bin image using leginon imagefun library
-	#img must be a numarray image
-	return imagefun.bin(img,binning)
+	apDisplay.printWarning("this apImage function no longer exists here")
+	return apImage.binImg(img,binning)
 
 def filterImg(img,apix,res):
-	# low pass filter image to res resolution
-	if res==0:
-		print " ... skipping low pass filter"
-		return(img)
-	else:
-		print " ... performing low pass filter"
-		c = convolver.Convolver()
-		print "classed"
-		sigma=(res/apix)/3.0
-		kernel=convolver.gaussian_kernel(sigma)
-		#Mrc.numeric_to_mrc(kernel,'kernel.mrc')
-	return(c.convolve(image=img,kernel=kernel))
+	apDisplay.printWarning("this apImage function no longer exists here")
+	return apImage.filterImg(img,apix,res)
 
 def pik2Box(params,file):
 	box=params["box"]
@@ -617,8 +565,6 @@ def getAllImagesFromDB(session):
 	imageq['session']=sessionq
 	imagelist=db.query(imageq, readimages=False)
 	return (imagelist)
-	
-
 
 def getDBTemplates(params):
 	tmptmplt=params['template']
@@ -640,45 +586,15 @@ def getDBTemplates(params):
 	return
 
 def rescaleTemplates(img,params):
-	i=1
-	for tmplt in params['ogTmpltInfo']:
-		ogtmpltname="originalTemporaryTemplate"+str(i)+".mrc"
-		newtmpltname="scaledTemporaryTemplate"+str(i)+".mrc"
-		
-		if params['apix']!=params['scaledapix'][i]:
-			print "rescaling template",str(i),":",tmplt['apix'],"->",params['apix']
-			scalefactor=tmplt['apix']/params['apix']
-			scaleandclip(ogtmpltname,(scalefactor,scalefactor),newtmpltname)
-			params['scaledapix'][i] = params['apix']
-			dwnsizeTemplate(params,newtmpltname)
-		i+=1
+	#why is img passed? It is not used.
+	apDisplay.printWarning("this apTemplate function no longer exists here")
+	apTemplate.rescaleTemplates(params)
 	return
 	
 def scaleandclip(fname,scalefactor,newfname):
-	image=Mrc.mrc_to_numeric(fname)
-	if(image.shape[0] != image.shape[1]):
-		apDisplay.printWarning("template is NOT square, this may cause errors")
-	boxsz=image.shape
-	scaledimg=imagefun.scale(image,scalefactor)
-
-	scboxsz=scaledimg.shape[1]
-	#make sure the box size is divisible by 16
-	if (scboxsz%16!=0):
-		padsize=int(math.ceil(float(scboxsz)/16)*16)
-		padshape = numarray.array([padsize,padsize])
-		print " ... changing box size from",scboxsz,"to",padsize
-		#GET AVERAGE VALUE OF EDGES
-		leftedgeavg = nd_image.mean(scaledimg[0:scboxsz, 0:0])
-		rightedgeavg = nd_image.mean(scaledimg[0:scboxsz, scboxsz:scboxsz])
-		topedgeavg = nd_image.mean(scaledimg[0:0, 0:scboxsz])
-		bottomedgeavg = nd_image.mean(scaledimg[scboxsz:scboxsz, 0:scboxsz])
-		edgeavg = (leftedgeavg + rightedgeavg + topedgeavg + bottomedgeavg)/4.0
-		#PAD IMAGE
-		scaledimg = convolve.iraf_frame.frame(scaledimg, padshape, mode="constant", cval=edgeavg)
-		#WHY ARE WE USING EMAN???
-		#os.system("proc2d "+newfname+" "+newfname+" clip="+str(padsize)+\
-			#","+str(padsize)+" edgenorm")
-	Mrc.numeric_to_mrc(scaledimg,newfname)
+	apDisplay.printWarning("this apTemplate function no longer exists here")
+	apTemplate.scaleAndClipTemplate(fname,scalefactor,newfname)
+	return
 
 def getDefocusPair(imagedata):
 	apDisplay.printError("this DefocusPair function no longer exists here")

@@ -5,17 +5,18 @@ import os, re, sys
 import data
 import time
 from selexonFunctions import *
+import selexonFunctions as sf1
 
 if __name__ == '__main__':
 	# record command line
-	writeSelexLog(sys.argv)
+	sf1.writeSelexLog(sys.argv)
 
 	# create params dictionary & set defaults
-	params=createDefaults()
+	params = sf1.createDefaults()
 	params['runid']="manual1"
 
 	# parse command line input
-	parsePrtlUploadInput(sys.argv,params)
+	sf1.parsePrtlUploadInput(sys.argv,params)
 
 	# check to make sure that incompatible parameters are not set
 	if (params["diam"]==0):
@@ -46,7 +47,7 @@ if __name__ == '__main__':
 
 		# insert selexon params into dbparticledata.selectionParams table
 		expid=int(img['session'].dbid)
-		insertManualParams(params,expid)
-		insertParticlePicks(params,img,expid,manual=True)
+		sf1.insertManualParams(params,expid)
+		sf1.insertParticlePicks(params,img,expid,manual=True)
 			
 
