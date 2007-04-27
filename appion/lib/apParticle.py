@@ -11,6 +11,7 @@ import appionData
 
 #partdb=dbdatakeeper.DBDataKeeper(db='dbappiondata')
 partdb = apDB.apdb
+leginondb = apDB.db
 
 def getParticles(img,params):
 	"""
@@ -143,13 +144,15 @@ def insertParticlePicks(params,img,expid,manual=False):
 	
 	return
 
-def getMaskParamsByRunName(params):
-	maskRq=appionData.ApMaskRegionData()
-	maskRq['name']=params['runid']
-	maskRq['dbemdata|SessionData|session']=params['session'].dbid
+def getMaskParamsByRunName(name,sessionname):
+	sessionq = data.SessionData(name=sessionname)
+	sessiondata = leginondb.query(sessionq)[0]
+	sessionid = sessiondata.dbid
+	maskRq=appionData.ApMaskMakerRunData()
+	maskRq['name']=name
+	maskRq['dbemdata|SessionData|session']=sessionid
 	# get corresponding makeMaskParams entry
-	result = partdb.query(maskRq, results=1)
-		
+	result = partdb.query(maskRq)[0]
 	return result['params']
 	
 		
