@@ -40,6 +40,11 @@ class MaskMaker(imagenode.ImageNode):
 		self.functionname = 'mask'
 		self.resulttypes = ['region','mask']
 
+		# Two options for creating resultkeys of dbsavetype result: (1) get from db and sort (2) define directly
+		# option (1) Pro: don't have to decide which goes first. Con:may not in any logical order and is sensitive to name change
+		# option (2) Pro: can be made logical and gives a record stays the same if name changed. Con: need to define for the function and change if more or less results are outputted
+		
+		# Option (1) is shown here
 		regionData = appionData.ApMaskRegionData()
 		regionkeys = regionData.keys()
 		regionkeys.sort()
@@ -81,32 +86,36 @@ class MaskMaker(imagenode.ImageNode):
 		return params	
 
 
+	def insertFunctionParams(self,params):
+		maskPdata=appionData.ApMaskMakerParamsData()
+	
+		maskPdata['bin']=params['bin']
+		maskPdata['mask type']=params['masktype']
+		maskPdata['pdiam']=params['diam']
+		maskPdata['region diameter']=params['cdiam']
+		maskPdata['edge blur']=params['cblur']
+		maskPdata['edge low']=params['clo']
+		maskPdata['edge high']=params['chi']
+		maskPdata['region std']=params['stdev']
+		maskPdata['convolve']=params['convolve']
+		maskPdata['convex hull']=not params['no_hull']
+		maskPdata['libcv']=params['cv']
 
-	def insertFunctionParamsDummy(self):
-		paramdata = apParticle.insertMaskMakerParams(self.defaultsettings)
-		return paramdata
+		partdb.insert(maskPdata)
+		
+		return maskPq
 
 	def insertFunctionRun(self,params):
 
-		rundata = apParticle.insertMaskRun(params)		
-		return rundata
+		maskRdata=appionData.ApMaskMakerRunData()
+		maskRdata['dbemdata|SessionData|session']=params['session'].dbid
+		maskRdata['path']=params['rundir']
+		maskRdata['name']=params['runid']
+		maskRdata['params']=self.insertFunctionParams(params)
 
-	def insertFunctionRunDummy(self,params):
-		
-		testRdata = appionData.ApMaskMakerRunData()
-		testRdata['dbemdata|SessionData|session'] = 0
-		testRdata['path'] = ''
-		testRdata['name'] = 'dummy'
-		testRdata['params'] = self.insertFunctionParamsDummy()		
+		partdb.insert(maskRdata)
 
-		self.partdb.insert(testRdata)
-		
-		return testRdata
-	def makeMask(self,params,image):
-		shape = numarray.shape(image)
-		mask = numarray.zeros(shape)
-		regioninfos = [[10,20,30,40,(50,60)],]
-		return regioninfos, mask	
+		return maskRdata
 
 	def getResults(self,rundata,imgdata,infos):
 		# infos is a list of information or a dictionary using non-zero index as keys
@@ -129,21 +138,8 @@ class MaskMaker(imagenode.ImageNode):
 			qs.append(q)
 		return qs
 
-	def outputTestImage(self,array,name,description,testlog):
-		width=25
-		if testlog[0]:
-			jpgname="tests/%02d%s.jpg" %(testlog[1],name)
-			space=(width-len(jpgname))*' '
-			testlog[2]+= "%s:%s%s\n" % (jpgname,space,description)
-			testlog[1] += 1
-		else:
-			return testlog
-		apImage.arrayToJpeg(array,jpgname)
-		return testlog
-
 	def function(self,params,rundata,imgdata,binnedimage):
 		regions,mask = apCrudFinder.makeMask(params,binnedimage)
-#		regions,mask = self.makeMask(params,binnedimage)
 		regionsData = self.getResults(rundata,imgdata,regions)
 		return [regionsData,mask]
 

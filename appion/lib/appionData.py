@@ -121,7 +121,6 @@ data.ApMaskRegionData=ApMaskRegionData
 class ApMaskMakerParamsData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('name', str),
 			('bin', int),
 			('mask type', str),
 			('pdiam', int),
@@ -339,10 +338,7 @@ data.ApCtfData=ApCtfData
 class ApTestParamsData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('name', str),
 			('bin', int),
-			('param1', int), 
-			('param2', int), 
 		)
 	typemap = classmethod(typemap)
 data.ApTestParamsData=ApTestParamsData
@@ -357,3 +353,14 @@ class ApTestRunData(data.Data):
 		)
 	typemap = classmethod(typemap)
 data.ApTestRunData=ApTestRunData
+
+class ApTestResultData(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('testrun', ApTestRunData),
+			('dbemdata|AcquisitionImageData|image', int),
+			('x', float), 
+			('y', float),
+		)
+	typemap = classmethod(typemap)
+data.ApTestResultData=ApTestResultData

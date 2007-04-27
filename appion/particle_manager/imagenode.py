@@ -15,13 +15,14 @@ import appionData
 
 class ImageNode:
 	defaultsettings = {}
-	# These are just a copy from Leginon, They are not called in the class anywhere yet.
+	# These are default parameters that are used to create the default database run and parameter
+	# entries
 	defaultsettings.update({
 		'mrcfileroot':None,
 		'sessionname':None,
 		'session':None,
 		'preset':None,
-		'runid':"run1",
+		'runid':"dummy",
 		'dbimages':False,
 		'alldbimages':False,
 		'apix':None,
@@ -41,14 +42,19 @@ class ImageNode:
 		self.partdb=apDB.apdb
 		self.db=apDB.db
 		self.settings = {}
-		self.dbsavetypes = {'pik':'txt','region':'txt'}	#possible resulttypes that commit to db and their file extension
-		self.filesavetypes = {'mask':'png','ccmap':'jpg','test':'jpg'}	#possible resulttypes never comit to db and their file extension
-		self.functionname = ""
-		self.resulttypes = []
-		self.resultkeys = {}
+		self.dbsavetypes = {'pik':'txt','region':'txt'}	#possible resulttypes that commit to db and their file extension if saved to file
+		self.filesavetypes = {'mask':'png','ccmap':'jpg','test':'jpg'}	#possible resulttypes never commited to db and their file extension
+
+		# redefine the followings for the actual function in the subclass
+		# in this test function, it output two results. 'pik' is saved to db if commited and has four columns of entry. 'cc' is a jpg file
+		# that is always saved in the run directory
+		self.functionname = "test"
+		self.resulttypes = ('pik','cc')
+		self.resultkeys = {'pik':['dbemdata|AcquisitionImageData|image','testrun','x','y'],'cc':None}
 		
 	
 	def modifyParams(self,params):
+		# This can go in apLoop.py as specialParamConclicts()
 		return params
 		
 	def prepImage(self,image,cutoff=5.0):
@@ -71,25 +77,10 @@ class ImageNode:
 		image=self.prepImage(image,cutoff)
 		return image	
 	
-	def insertFunctionParams(self):
+	def insertFunctionParams(self,params):
 		testPdata = appionData.ApTestParamsData()
-		testPdata.update({
-		'name': 'testparam',
-		'bin': 4,
-		'param1': 1,
-		'param2': 2,
-		})
-		self.partdb.insert(testPdata)
-		return testPdata
-
-	def insertFunctionParamsDummy(self):
-		testPdata = appionData.ApTestParamsData()
-		testPdata.update({
-		'name': 'testparam',
-		'bin': 4,
-		'param1': 1,
-		'param2': 2,
-		})
+		testPdata['bin']=params['bin']
+		
 		self.partdb.insert(testPdata)
 		return testPdata
 
@@ -101,37 +92,27 @@ class ImageNode:
 		print sessiondata.dbid
 		rundata['dbemdata|SessionData|session'] = sessiondata.dbid
 		rundata['path'] = params['outdir']
-		rundata['params'] = self.insertFunctionParams()		
+		rundata['params'] = self.insertFunctionParams(params)		
 
 		self.partdb.insert(rundata)
 		
 		return rundata
 		
-	def insertFunctionRunDummy(self,params):
-
-		''' A dummy run and parameters are inserted into the database
-		the first time when the user does not want to commit the data.
-		The later non-commit run won't insert because the values will
-		be identical.
-		
-		This way the result object would be uniform
-		'''
-		
-		testRdata = appionData.ApTestRunData()
-		testRdata['name'] = 'dummy'
-		testRdata['dbemdata|SessionData|session'] = 0
-		testRdata['path'] = ''
-		testRdata['params'] = self.insertFunctionParams()		
-
-		self.partdb.insert(testRdata)
-		
-		return testRdata
-		
 	def function(self,params,rundata,imgdata,binnedimage):	
-		self.resulttypes = ['pik','cc']
-		self.resultkeys = {'pik':['dbemdata|AcquisitionImageData|image','run','x','y'],'cc':None}
 		
-		pikresults=[{'dbemdata|AcquisitionImageData|image':imgdata.dbid,'run':'test1','x':0.2,'y':1},{'dbemdata|AcquisitionImageData|image':imgdata.dbid,'run':'test2','x':5.2,'y':4}]
+		def createResultData(rundata,imgdata,info):
+			testresultdata=appionData.ApTestResultData()
+			testresultdata['testrun']=rundata
+			testresultdata['dbemdata|AcquisitionImageData|image']=imgdata.dbid
+			testresultdata['x']=info[0]
+			testresultdata['y']=info[1]
+			
+			return testresultdata
+			
+		infos = [(0.2,1*params['bin']),(0.5,2.2*params['bin'])]
+		pikresults = []
+		for info in infos:
+			pikresults.append(createResultData(rundata,imgdata,info))
 		
 		shape = numarray.shape(binnedimage)
 		ccimage = numarray.zeros(shape)
@@ -156,18 +137,20 @@ class ImageNode:
 			if result_ext == 'jpg':
 				print "need your idea here, I don't know what you want"	
 			else:
-		# As an example, results is a list of several dictionary of of information that would be inserted into the database if commited
-		# For example: [{runname:'text1',x:0.5,y:1,3},{runname:'text2',x:2.5,y:3,3}]
+			# As an example, results is a list of several dictionary of of information that would be inserted into the database if commited
+			# For example: [{'dbemdata|AcquisitionImageData|image': imagedata,run:rundata,'x':0.5,'y':1,3},{'run':rundata,'x':2.5,'y':3,3}]
 				resultfile=open(filename,'w')
 				resultlines=[]
 				for info in idata:
 					resultline = ''
 					for infokey in self.resultkeys[resulttype]:
 						try:
+							# For data object, save in file as its dbid
 							result = info[infokey].dbid
 						except:
 							result = info[infokey]
 
+						# For image, save in file as its filename
 						if infokey == 'dbemdata|AcquisitionImageData|image':
 							result=imagename
 						try:
@@ -179,6 +162,7 @@ class ImageNode:
 				resultfile.write(resultlinestxt)
 				resultfile.close()
 		
+
 	def start(self,argvlist):
 		functionname = self.functionname
 		data.holdImages(False)
@@ -196,7 +180,7 @@ class ImageNode:
 			rundata = self.insertFunctionRun(params)
 		
 		else:
-			rundata = self.insertFunctionRunDummy(params)
+			rundata = self.insertFunctionRun(self.defaultsettings)
 			
 		# create "result" directory if doesn't exist
 		result_dirs ={}
@@ -224,6 +208,7 @@ class ImageNode:
 					continue
 				image = self.getImage(imgname,params['bin'])
 
+				#IMPORTANT: the output results need to match the exact sequence in self.resulttypes
 				results=self.function(params,rundata,imgdata,image)
 				
 				i =0
@@ -254,6 +239,4 @@ class ImageNode:
 if __name__ == '__main__':
 	function = ImageNode()
 	function.functionname = "test"
-	function.resulttypes = ['pik','cc']
-	function.resultkeys = {'pik':['dbemdata|AcquisitionImageData|image','run','x','y'],'cc':None}
 	function.start(sys.argv)

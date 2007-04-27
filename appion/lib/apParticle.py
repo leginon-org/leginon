@@ -143,38 +143,6 @@ def insertParticlePicks(params,img,expid,manual=False):
 	
 	return
 
-def insertMaskMakerParams(params):
-	maskPq=appionData.ApMaskMakerParamsData()
-	
-#	maskPq['name']=params['runid']????
-	maskPq['bin']=params['bin']
-	maskPq['mask type']=params['masktype']
-	maskPq['pdiam']=params['diam']
-	maskPq['region diameter']=params['cdiam']
-	maskPq['edge blur']=params['cblur']
-	maskPq['edge low']=params['clo']
-	maskPq['edge high']=params['chi']
-	maskPq['region std']=params['stdev']
-	maskPq['convolve']=params['convolve']
-	maskPq['convex hull']=not params['no_hull']
-	maskPq['libcv']=params['cv']
-
-	partdb.insert(maskPq)
-		
-	return maskPq
-
-def insertMaskRun(params):
-
-	maskRq=appionData.ApMaskMakerRunData()
-	maskRq['dbemdata|SessionData|session']=params['session'].dbid
-	maskRq['path']=params['rundir']
-	maskRq['name']=params['runid']
-	maskRq['params']=insertMaskMakerParams(params)
-
-	partdb.insert(maskRq)
-
-	return maskRq
-
 def getMaskParamsByRunName(params):
 	maskRq=appionData.ApMaskRegionData()
 	maskRq['name']=params['runid']
