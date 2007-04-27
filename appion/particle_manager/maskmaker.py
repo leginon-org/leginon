@@ -101,19 +101,19 @@ class MaskMaker(imagenode.ImageNode):
 		maskPdata['convex hull']=not params['no_hull']
 		maskPdata['libcv']=params['cv']
 
-		partdb.insert(maskPdata)
+		self.partdb.insert(maskPdata)
 		
-		return maskPq
+		return maskPdata
 
 	def insertFunctionRun(self,params):
 
 		maskRdata=appionData.ApMaskMakerRunData()
-		maskRdata['dbemdata|SessionData|session']=params['session'].dbid
+		maskRdata['dbemdata|SessionData|session'] = params['session'].dbid
 		maskRdata['path']=params['rundir']
 		maskRdata['name']=params['runid']
 		maskRdata['params']=self.insertFunctionParams(params)
 
-		partdb.insert(maskRdata)
+		self.partdb.insert(maskRdata)
 
 		return maskRdata
 
@@ -141,7 +141,7 @@ class MaskMaker(imagenode.ImageNode):
 	def function(self,params,rundata,imgdata,binnedimage):
 		regions,mask = apCrudFinder.makeMask(params,binnedimage)
 		regionsData = self.getResults(rundata,imgdata,regions)
-		return [regionsData,mask]
+		return {'region':regionsData,'mask':mask}
 
 
 if __name__ == '__main__':

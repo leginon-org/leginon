@@ -20,7 +20,7 @@ class ImageNode:
 	defaultsettings.update({
 		'mrcfileroot':None,
 		'sessionname':None,
-		'session':None,
+		'session':data.SessionData(name='dummy'),
 		'preset':None,
 		'runid':"dummy",
 		'dbimages':False,
@@ -43,7 +43,7 @@ class ImageNode:
 		self.db=apDB.db
 		self.settings = {}
 		self.dbsavetypes = {'pik':'txt','region':'txt'}	#possible resulttypes that commit to db and their file extension if saved to file
-		self.filesavetypes = {'mask':'png','ccmap':'jpg','test':'jpg'}	#possible resulttypes never commited to db and their file extension
+		self.filesavetypes = {'mask':'png','cc':'jpg','test':'jpg'}	#possible resulttypes never commited to db and their file extension
 
 		# redefine the followings for the actual function in the subclass
 		# in this test function, it output two results. 'pik' is saved to db if commited and has four columns of entry. 'cc' is a jpg file
@@ -88,9 +88,7 @@ class ImageNode:
 
 		rundata = appionData.ApTestRunData()
 		rundata['name'] = params['runid']
-		sessiondata = data.SessionData(name=params['session'])
-		print sessiondata.dbid
-		rundata['dbemdata|SessionData|session'] = sessiondata.dbid
+		rundata['dbemdata|SessionData|session'] = params['session'].dbid
 		rundata['path'] = params['outdir']
 		rundata['params'] = self.insertFunctionParams(params)		
 
@@ -117,50 +115,54 @@ class ImageNode:
 		shape = numarray.shape(binnedimage)
 		ccimage = numarray.zeros(shape)
 		
-		return [pikresults,ccimage]
+		return {'pik':pikresults,'cc':ccimage}
 
 	def writeResultsToDB(self,idata):
+		if idata is None:
+			return
 		for q in idata:
 			self.partdb.insert(q)
 		return
 		
-	def writeResultsToFile(self,idata,path,resulttype,result_ext):
-		imageid = idata[0]['dbemdata|AcquisitionImageData|image']
-		imagedata = self.db.direct_query(data.AcquisitionImageData, imageid, False)
-		imagename = imagedata['filename']
+	def writeResultsToFile(self,imagename,idata,path,resulttype,result_ext):
 		
 		filename = path+"/"+imagename+"_"+resulttype+"."+result_ext
-		print filename
-		if result_ext == 'png':
-			apImage.arrayMaskToPngAlpha(image,filename)
+		if os.path.exists(filename):
+			os.remove(filename)
+		if idata is None:
+			return
 		else:
-			if result_ext == 'jpg':
-				print "need your idea here, I don't know what you want"	
+			print filename
+			if result_ext == 'png':
+				apImage.arrayMaskToPngAlpha(idata,filename)
 			else:
-			# As an example, results is a list of several dictionary of of information that would be inserted into the database if commited
-			# For example: [{'dbemdata|AcquisitionImageData|image': imagedata,run:rundata,'x':0.5,'y':1,3},{'run':rundata,'x':2.5,'y':3,3}]
-				resultfile=open(filename,'w')
-				resultlines=[]
-				for info in idata:
-					resultline = ''
-					for infokey in self.resultkeys[resulttype]:
-						try:
-							# For data object, save in file as its dbid
-							result = info[infokey].dbid
-						except:
-							result = info[infokey]
+				if result_ext == 'jpg':
+					arrayToJpeg(idata,filename,normalize=True)	
+				else:
+				# As an example, results is a list of several dictionary of of information that would be inserted into the database if commited
+				# For example: [{'dbemdata|AcquisitionImageData|image': imagedata,run:rundata,'x':0.5,'y':1,3},{'run':rundata,'x':2.5,'y':3,3}]
+					resultfile=open(filename,'w')
+					resultlines=[]
+					for info in idata:
+						resultline = ''
+						for infokey in self.resultkeys[resulttype]:
+							try:
+								# For data object, save in file as its dbid
+								result = info[infokey].dbid
+							except:
+								result = info[infokey]
 
-						# For image, save in file as its filename
-						if infokey == 'dbemdata|AcquisitionImageData|image':
-							result=imagename
-						try:
-							resultline += str(result) + '\t'
-						except:
-							resultline += '\t'
-					resultlines.append(resultline)
-				resultlinestxt = '\n'.join(resultlines) +"\n"
-				resultfile.write(resultlinestxt)
-				resultfile.close()
+							# For image, save in file as its filename
+							if infokey == 'dbemdata|AcquisitionImageData|image':
+								result=imagename
+							try:
+								resultline += str(result) + '\t'
+							except:
+								resultline += '\t'
+						resultlines.append(resultline)
+					resultlinestxt = '\n'.join(resultlines) +"\n"
+					resultfile.write(resultlinestxt)
+					resultfile.close()
 		
 
 	def start(self,argvlist):
@@ -173,8 +175,7 @@ class ImageNode:
 		if not (os.path.exists(run_dir)):
 			os.mkdir(run_dir)
 
-		expid = data.SessionData(name=params['session']).dbid
-		print expid
+		expid = params['session'].dbid
 		
 		if params['commit']:
 			rundata = self.insertFunctionRun(params)
@@ -186,13 +187,14 @@ class ImageNode:
 		result_dirs ={}
 		for resulttype in self.resulttypes:
 			if resulttype in self.filesavetypes.keys() or (resulttype in self.dbsavetypes.keys() and params['commit'] == False):
-				result_dir=run_dir+"/"+resulttype+"s"
+				result_dir=run_dir+resulttype+"s"
 				if not (os.path.exists(result_dir)):
 					os.mkdir(result_dir)
 
 				# remove result file if it exists
 				if not params['continue'] and os.path.exists(result_dir+"/*"):
 					os.remove(result_dir+"/*")
+				
 				result_dirs[resulttype]=result_dir
 			else:
 				result_dirs[resulttype]=None
@@ -208,26 +210,29 @@ class ImageNode:
 					continue
 				image = self.getImage(imgname,params['bin'])
 
-				#IMPORTANT: the output results need to match the exact sequence in self.resulttypes
 				results=self.function(params,rundata,imgdata,image)
 				
-				i =0
 				resulttypes = self.resulttypes
 				for resulttype in resulttypes:
-					resultData = results[i]
+					try:
+						resultData = results[resulttype]
+					except KeyError:
+						print "EMPTY %s RESULT" % resulttype
 					result_dir=result_dirs[resulttype]
-					if resultData is not None:
-						if resulttype in self.dbsavetypes.keys():
-							result_ext = self.dbsavetypes[resulttype]
-							if params['commit']:
-								self.writeResultsToDB(resultData)
-							else:
-								self.writeResultsToFile(resultData,result_dir,resulttype,result_ext)
-					else:
-						for resulttype in self.filesavetypes.keys():
-							result_ext = self.filesavetypes[resulttype]
-							self.writeResultsToFile(resultData,result_dir,resulttype,result_ext)
 					
+					if resulttype in self.dbsavetypes.keys():
+						result_ext = self.dbsavetypes[resulttype]
+						if params['commit']:
+							self.writeResultsToDB(resultData)
+						else:
+							self.writeResultsToFile(imgname,resultData,result_dir,resulttype,result_ext)
+					else:
+						if resulttype in self.filesavetypes.keys():
+							result_ext = self.filesavetypes[resulttype]
+							self.writeResultsToFile(imgname,resultData,result_dir,resulttype,result_ext)
+						else:
+							print "RESULT %s NOT SAVED IN ANY WAY" % resulttype
+						
 				#NEED TO DO SOMETHING ELSE IF RESULTS ARE ALREADY IN DATABASE
 				apLoop.writeDoneDict(donedict,params,imgname)
 				apLoop.printSummary(stats, params)
