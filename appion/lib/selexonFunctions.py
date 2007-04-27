@@ -722,11 +722,11 @@ def insertSelexonParams(params,expid):
  	selexonparamsq['auto_thresh']=params['autopik']
  	selexonparamsq['lp_filt']=params['lp']
  	selexonparamsq['hp_filt']=params['hp']
- 	selexonparamsq['crud_diameter']=params['cdiam']
- 	selexonparamsq['crud_blur']=params['cblur']
- 	selexonparamsq['crud_low']=params['clo']
- 	selexonparamsq['crud_high']=params['chi']
- 	selexonparamsq['crud_std']=params['cstd']
+ 	#selexonparamsq['crud_diameter']=params['cdiam']
+ 	#selexonparamsq['crud_blur']=params['cblur']
+ 	#selexonparamsq['crud_low']=params['clo']
+ 	#selexonparamsq['crud_high']=params['chi']
+ 	#selexonparamsq['crud_std']=params['cstd']
 	selexonparamsdata=partdb.query(selexonparamsq, results=1)
 	
 	### query for identical run name ###

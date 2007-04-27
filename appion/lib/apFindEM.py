@@ -4,6 +4,7 @@ import os
 import threading
 import apDisplay
 import apImage
+import sys
 
 #########################################################
 
@@ -39,8 +40,8 @@ def runFindEM(params, imgname, thread=False):
 		#DETERMINE OUTPUT FILE NAME
 		#CHANGE THIS TO BE 00%i in future
 		#numstr = "%03d" % classavg
-		numstr = str(classavg%10)+"00\n"
-		ccmapfile="./cccmaxmap"+numstr+".mrc"
+		numstr = str(classavg%10)+"00"
+		ccmapfile="cccmaxmap"+numstr+".mrc"
 		if (os.path.exists(ccmapfile)):
 			os.remove(ccmapfile)
 
@@ -87,14 +88,15 @@ def findEMString(classavg,imgname,ccmapfile, params):
 	#TEMPLATE INFO
 	tmpltroot = params["template"]
 	if (len(params['templatelist'])==1 and not params['templateIds']):
-		tmplname = tmpltroot+".dwn.mrc\n"
+		tmplname = tmpltroot+".dwn.mrc"
 	else:
-		tmplname = tmpltroot+str(classavg)+".dwn.mrc\n"
-	if not os.path.isfile(tmplname):
+		tmplname = tmpltroot+str(classavg)+".dwn.mrc"
+
+	if not os.path.exists(tmplname.strip()):
 		apDisplay.printError("template file, "+tmplname+" was not found")
 	else:
 		print "template file, "+tmplname
-	feed += tmplname
+	feed += tmplname + "\n"
 
 	#DUMMY VARIABLE; DOES NOTHING
 	feed += "-200.0\n"
@@ -124,5 +126,5 @@ def findEMString(classavg,imgname,ccmapfile, params):
 	#BORDER WIDTH
 	borderwidth = str(int((params["diam"]/params["apix"]/params["bin"])/2)+1)
 	feed += borderwidth+"\n"
-	
+
 	return feed
