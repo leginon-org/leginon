@@ -403,6 +403,12 @@ function formatHtmlRow($k, $v) {
 		.$v.'</td></tr>'."\n";
 }
 
+function formatPath($path) {
+	$npath = ereg_replace('[\\]','/',$path);
+	$npath = ereg("/$", $npath) ? $npath : $npath."/";
+	return $npath;
+}
+
 function dumpData($data, $keys="") {
 	if (!is_array($data))
 		return;
@@ -478,4 +484,18 @@ function getPathFromString($str) {
 	return implode('/',$parts);
 }
 
+function ls($dir, $filter="") {
+	$files = array();
+	if (!$filter)
+		$filter=".*";
+	if ($dh = opendir($dir)) {
+    while (($file = readdir($dh)) !== false) {
+     if (ereg($filter,$file)) {
+			 $files[]=$file;
+     }
+		}
+		closedir($dh);
+	}
+	return $files;
+}
 ?>
