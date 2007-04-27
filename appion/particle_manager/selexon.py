@@ -117,7 +117,7 @@ if __name__ == '__main__':
 			else:
 #				sf2.tmpRemoveCrud(params,imgname)
 				sf1.dwnsizeImg(params, imgname)
-				apFindEM.runFindEM(params, imgname)
+				apFindEM.runFindEM(imgname, params)
 
 			#FIND PEAKS
 			if params['method'] == "classic":

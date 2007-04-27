@@ -78,25 +78,26 @@ def checkTemplates(params, upload=None):
 	# determine number of template files
 	# if using 'preptemplate' option, will count number of '.mrc' files
 	# otherwise, will count the number of '.dwn.mrc' files
-	name=params["template"]
-	stop=0 
+	name = os.path.join(params['rundir'], params['template'])
+	params['templatelist'] = []
+	stop = False
 	# count number of template images.
 	# if a template image exists with no number after it
 	# counter will assume that there is only one template
 	n=0
-	while (stop==0):
+	while not stop:
 		if (os.path.isfile(name+'.mrc') and os.path.isfile(name+str(n+1)+'.mrc')):
 			# templates not following naming scheme
 			apDisplay.printError("Both "+name+".mrc and "+name+str(n+1)+".mrc exist\n")
 		if (os.path.isfile(name+'.mrc')):
 			params['templatelist'].append(name+'.mrc')
 			n+=1
-			stop=1
+			stop=True
 		elif (os.path.isfile(name+str(n+1)+'.mrc')):
 			params['templatelist'].append(name+str(n+1)+'.mrc')
 			n+=1
 		else:
-			stop=1
+			stop=True
 
 	if not params['templatelist']:
 		apDisplay.printError("There are no template images found with basename \'"+name+"\'\n")

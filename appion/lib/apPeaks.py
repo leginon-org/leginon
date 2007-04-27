@@ -1,12 +1,14 @@
 
 import os
+import math
 import apImage
 import apDisplay
 import ImageDraw
+import numarray
+import imagefun
 
 
-
-def findPeaks(ccmaplist, imgdict, params):
+def findPeaks(imgdict, ccmaplist, params):
 	numtempl =    len(params['templatelist'])
 	bin =         int(params["bin"])
 	diam =        float(params["diam"])
@@ -16,14 +18,14 @@ def findPeaks(ccmaplist, imgdict, params):
 	count = 0
 	for ccmap in ccmaplist:
 		count += 1
-		blobtree = findPeaksInMap(ccmaxmap, imgdict, count, params)
+		blobtree = findPeaksInMap(ccmap, imgdict, count, params)
 		blobtreelist.append(blobtree)
 
 	blobtree = mergeBlobTrees(imgdict,blobtreelist,params)
 
 	return blobtree
 
-def findPeaksInMap(ccmaxmap, imgdict, num, params):
+def findPeaksInMap(ccmap, imgdict, num, params):
 	threshold = float(params["thresh"])
 	bin =       int(params["bin"])
 	diam =      float(params["diam"])
@@ -36,35 +38,43 @@ def findPeaksInMap(ccmaxmap, imgdict, num, params):
 	maxsize =   int(round(math.pi*(apix*diam/float(bin))**2/4.0,0))+1
 
 	#VARY PEAKS FROM STATS
-	varyThreshold(ccmaxmap, threshold, maxsize)
+	varyThreshold(ccmap, threshold, maxsize)
 	#GET FINAL PEAKS
-	blobs,percentcov = findBlobs(ccmaxmap, threshold, maxsize=maxsize)
+	blobtree, percentcov = findBlobs(ccmap, threshold, maxsize=maxsize)
 
 	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize,maxmoment,method)
-	print "Template "+str(num)+": Found",len(blobs),"peaks ("+\
+	print "Template "+str(num)+": Found",len(blobtree),"peaks ("+\
 		str(percentcov)+"% coverage)"
 	if(percentcov > 10):
 		apDisplay.printWarning("thresholding covers more than 10% of image")
 
 	cutoff = olapmult*pixrad	#1.5x particle radius in pixels
-	removeOverlappingBlobs(blobs, cutoff)
+	removeOverlappingBlobs(blobtree, cutoff)
 
-	def blob_compare(x,y):
-		if float(x.stats['mean']) < float(y.stats['mean']):
-			return 1
-		else:
-			return -1
-
-	if(len(blobs) > maxblobs):
+	if(len(blobtree) > maxblobs):
 		apDisplay.printWarning("more than maxpeaks ("+str(maxblobs)+" peaks), selecting only top peaks")
-		blobs.sort(blob_compare)
-		blobs = blobs[0:maxblobs]
+		blobtree.sort(_blobCompare)
+		blobtree = blobtree[0:maxblobs]
+	else:
+		blobtree.sort(_blobCompare)
 
-	blobs.sort(blob_compare)
+	if not (os.path.exists("ccmaxmaps")):
+		os.mkdir("ccmaxmaps")
 
-	drawBlobs(ccmaxmap,blobs,imgname,num,bin,pixrad)
+	image = apImage.arrayToImage(ccmap)
+	draw = ImageDraw.Draw(image)
+	drawBlobsBW(blobtree, draw, bin, pixrad)
+	outfile="ccmaxmaps/"+file+".ccmaxmap"+str(num)+".jpg"
+	print " ... writing JPEG: ",outfile
+	image.save(outfile, "JPEG", quality=90)
 
 	return blobs
+
+def _blobCompare(x,y):
+	if float(x.stats['mean']) < float(y.stats['mean']):
+		return 1
+	else:
+		return -1
 
 def mergeBlobTrees(imgdict, blobtreelist, params):
 	print "Merging individual template peaks into one set"
@@ -74,8 +84,6 @@ def mergeBlobTrees(imgdict, blobtreelist, params):
 	olapmult =    float(params["overlapmult"])
 	pixrad =      diam/apix/2.0/float(bin)
 	imgname =     imgdict['filename']
-
-
 
 	#PUT ALL THE BLOBS IN ONE ARRAY
 	allblobtree = []
@@ -103,7 +111,7 @@ def removeOverlappingBlobs(blobtree, cutoff):
 	cutsq = cutoff**2+1
 
 	initblobs = len(blobtree)
-	blobtree.sort(blob_compare)
+	blobtree.sort(_blobCompare)
 	i=0
 	while i < len(blobtree):
 		j=0
@@ -118,7 +126,7 @@ def removeOverlappingBlobs(blobtree, cutoff):
 	postblobs = len(blobtree)
 	apDisplay.printMsg("kept"+str(postblobs)+" non-overlapping particles of "+str(initblobs)+" total particles")
 
-	return blobs
+	return blobtree
 
 def blobDistSq(x,y):
 	row1 = x.stats['center'][0]
@@ -127,10 +135,10 @@ def blobDistSq(x,y):
 	col2 = y.stats['center'][1]
 	return (row1-row2)**2+(col1-col2)**2
 
-def varyThreshold(ccmaxmap, threshold, maxsize):
-	for i in numarray.array([-0.05,-0.01,0.00,0.01,0.05]):
+def varyThreshold(ccmap, threshold, maxsize):
+	for i in numarray.array([-0.05,-0.02,0.00,0.02,0.05]):
 		thresh      = threshold + float(i)
-		blobs,percentcov = findBlobs(ccmaxmap, thresh, maxsize=maxsize)
+		blobs,percentcov = findBlobs(ccmap, thresh, maxsize=maxsize)
 		tstr  = "%.2f" % thresh
 		lbstr = "%4d" % len(blobs)
 		pcstr = "%.2f" % percentcov
@@ -141,12 +149,13 @@ def varyThreshold(ccmaxmap, threshold, maxsize):
 			print " ...      varying threshold: "+tstr+" gives "+lbstr+" peaks ("+\
 				pcstr+"% coverage )"
 
-def findBlobs(ccmaxmap, thresh, maxsize=500, minsize=2, maxblobs=1500, border=6, maxmoment=5.0, elim= "highest"):
-	totalarea = (ccmaxmap.shape)[0]**2
-	ccthreshmap = imagefun.threshold(ccmaxmap, thresh)
+def findBlobs(ccmap, thresh, maxsize=500, minsize=2, maxblobs=1500, border=6, maxmoment=5.0, elim= "highest"):
+	totalarea = (ccmap.shape)[0]**2
+	ccthreshmap = imagefun.threshold(ccmap, thresh)
 	percentcov  =  round(100.0*float(ccthreshmap.sum())/float(totalarea),2)
-	blobs = imagefun.find_blobs(ccmaxmap, ccthreshmap, border, maxblobs*4,
-		maxblobsize, minsize, maxmoment, elim)
+	blobs = imagefun.find_blobs(ccmap, ccthreshmap, border, maxblobs*4,
+		maxsize, minsize, maxmoment, elim)
+	return blobs,percentcov
 
 def blobTreeToPikFile(blobtree, outfile):
 	outfile="pikfiles/"+imgname+"."+str(num)+".pik"
@@ -177,7 +186,7 @@ def blobTreeToPikFile(blobtree, outfile):
 		f.write(str(out)+"\n")
 	f.close()
 
-def createPeakJpeg(img, peaktree, params):
+def createPeakJpeg(imgdict, peaktree, params):
 	count =   len(params['templatelist'])
 	bin =     int(params["bin"])/2
 	diam =    float(params["diam"])
@@ -188,9 +197,9 @@ def createPeakJpeg(img, peaktree, params):
 
 	jpegdir = os.path.join(params['rundir'],"jpgs")
 	if not (os.path.exists(jpegdir)):
-		os.mkdir(jpegdir)
+		os.mkdir(jpegdir,0777)
 
-	numer = apImage.preProcessImageParams(img['image'],params)
+	numer = apImage.preProcessImageParams(imgdict['image'],params)
 	image = apImage.arrayToImage(numer)
 	image = image.convert("RGB")
 
@@ -207,7 +216,7 @@ def createPeakJpeg(img, peaktree, params):
 
 	return
 
-def drawBlobs(blobtree, draw,bin,pixrad,circmult=1.0,numcircs=2,circshape="circle"):
+def drawBlobs(blobtree, draw, bin, pixrad, circmult=1.0, numcircs=2, circshape="circle"):
 	"""	
 	Takes peak list and draw circles around all the peaks
 	"""
@@ -248,3 +257,33 @@ def drawBlobs(blobtree, draw,bin,pixrad,circmult=1.0,numcircs=2,circshape="circl
 			count = count + 1
 
 	return 
+
+def drawBlobsBW(blobtree, draw, bin, pixrad)
+def drawCCMaxMapBlobs(ccmaxmap,blobs,file,num,bin,pixrad):
+
+
+	ps=float(pixrad) #1x particle radius
+	psp = ps+1
+	psn = ps-1
+	for blobdict in blobtree:
+		x1 = float(blobdict['xcoord'])
+		y1 = float(blobdict['ycoord'])
+		m1 = float(blobdict['moment'])
+		if(m1 < 2.2):
+			coord=(x1-ps, y1-ps, x1+ps, y1+ps)
+			draw.ellipse(coord,outline="white")
+			coord=(x1-psp, y1-psp, x1+psp, y1+psp)
+			draw.ellipse(coord,outline="black")
+			coord=(x1-psn, y1-psn, x1+psn, y1+psn)
+			draw.ellipse(coord,outline="black")
+		else:
+			coord=(x1-ps, y1-ps, x1+ps, y1+ps)
+			draw.rectangle(coord,outline="white")
+			coord=(x1-psp, y1-psp, x1+psp, y1+psp)
+			draw.rectangle(coord,outline="black")
+			coord=(x1-psn, y1-psn, x1+psn, y1+psn)
+			draw.rectangle(coord,outline="black")
+		#draw.ellipse(coord,outline="white")
+
+
+	return

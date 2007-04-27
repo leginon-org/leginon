@@ -22,7 +22,7 @@ class findemjob(threading.Thread):
 
 #########################################################
 
-def runFindEM(params, imgname, thread=False):
+def runFindEM(imgname, params, thread=False):
 	"""
 	runs a separate thread of findem.exe for each template 
 	to get cross-correlation maps
@@ -75,10 +75,10 @@ def runFindEM(params, imgname, thread=False):
 	return ccmaplist
 
 
-def findEMString(classavg,imgname,ccmapfile, params):
+def findEMString(classavg, imgname, ccmapfile, params):
 
 	#IMAGE INFO
-	dwnimgname = imgname+".dwn.mrc"
+	dwnimgname = os.path.splitext(imgname)[0]+".dwn.mrc"
 	if not os.path.isfile(dwnimgname):
 		apDisplay.printError("image file, "+dwnimgname+" was not found")
 	else:

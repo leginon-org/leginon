@@ -433,8 +433,8 @@ def checkTemplates(params,upload=None):
 def dwnsizeImg(params, imgname):
 	#downsize and filter leginon image
 	imgdata = getImageData(imgname)['image']
-	imgdata = apImage.preProcessImageParams(imgdata,params)
-	filename = os.path.join(params['rundir'],imgname+'.dwn.mrc')
+	imgdata = apImage.preProcessImageParams(imgdata, params)
+	filename = os.path.join(params['rundir'], imgname+'.dwn.mrc')
 	apImage.arrayToMrc(imgdata, filename)
 	return
 

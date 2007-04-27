@@ -11,6 +11,7 @@ import apImage
 import apDisplay
 import apTemplate
 import apDatabase
+import apPeaks
 #legacy
 import selexonFunctions  as sf1
 import selexonFunctions2 as sf2
@@ -18,19 +19,21 @@ import selexonFunctions2 as sf2
 class TemplateCorrelationLoop(appionLoop.AppionLoop):
 	def processImage(self, imgdict):
 		imgname = imgdict['filename']
+		apTemplate.rescaleTemplates(self.params)
 		### RUN FindEM
 		if 'method' in self.params and self.params['method'] == "experimental":
 			numpeaks = sf2.runCrossCorr(params,imgname)
 			sf2.createJPG2(params,imgname)
 		else:
 			print "PROCESSING"
-			smimgname = self._processAndSaveImage(imgdict)
+			self._processAndSaveImage(imgdict)
 			print "FINDEM"
-			self.ccmaplist = apFindEM.runFindEM(self.params, smimgname)
+			self.ccmaplist = apFindEM.runFindEM(imgname, self.params)
 			print "FINDPEAKS"
-			self.peaklist  = apParticle.findPeaks(self.params, ccmaplist, imgname)
+			self.peaktree  = apPeaks.findPeaks(imgdict, self.ccmaplist, self.params)
 			print "CREATEJPG"
-			sf2.createJPG2(self.params,imgname)
+			apPeaks.createPeakJpeg(imgdict, self.peaktree, self.params)
+			#sf2.createJPG2(self.params,imgname)
 
 	def commitToDatabase(self, imgdict):
 		expid=int(img['session'].dbid)
@@ -47,6 +50,12 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 			apTemplate.rescaleTemplates(self.params)
 			# set the template name to the copied file names
 			self.params['template']='scaledTemporaryTemplate'
+		apTemplate.checkTemplates(self.params)
+		# go through the template mrc files and downsize & filter them
+		for tmplt in self.params['templatelist']:
+			apTemplate.downSizeTemplate(tmplt, self.params)
+		print " ... downsize & filtered "+str(len(self.params['templatelist']))+ \
+			" file(s) with root \""+self.params["template"]+"\""
 
 	def specialDefaultParams(self):
 		self.params['template']=''
@@ -64,7 +73,7 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 		self.params['maxpeaks']=1500
 		self.params['defocpair']=False
 		self.params['templateIds']=''
-		self.params['multiple_range']=True
+		self.params['multiple_range']=False
 		self.params["ogTmpltInfo"]=[]
 		self.params["scaledapix"]={}
 
@@ -143,7 +152,6 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 		imgdata = apImage.preProcessImageParams(imgdict['image'], self.params)
 		smimgname = os.path.join(self.params['rundir'],imgdict['filename']+".dwn.mrc")
 		apImage.arrayToMrc(imgdata, smimgname)
-		return os.path.basename(smimgname)
 
 
 if __name__ == '__main__':
