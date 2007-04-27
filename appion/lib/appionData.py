@@ -61,6 +61,7 @@ class ApTemplateRunData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
 			('template', ApTemplateImageData),
+			('selectionrun', ApSelectionRunData),
 			('range_start', int),
 			('range_end', int),
 			('range_incr', int),
