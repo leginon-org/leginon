@@ -5,6 +5,7 @@ import sys
 import os
 import time
 import math
+import shutil
 #leginon
 import data
 #appion
@@ -85,7 +86,7 @@ def getDBTemplates(params):
 		tmpltinfo = apDB.apdb.direct_query(data.ApTemplateImageData, tid)
 		if not (tmpltinfo):
 			apDisplay.printError("TemplateId "+str(tid)+" not found in database. Use 'uploadTemplate.py'\n")
-		fname = os.path.join(tmpltinfo['templatepath'],tmpltinfo['templatename'])
+		fname = os.path.join(tmpltinfo['templatepath'], tmpltinfo['templatename'])
 		apix = tmpltinfo['apix']
 		# store row data in params dictionary
 		params['ogTmpltInfo'].append(tmpltinfo)
