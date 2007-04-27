@@ -738,7 +738,7 @@ def insertSelexonParams(params,expid):
 	
  	# if no run entry exists, insert new run entry into dbappiondata
  	if not(runids):
-		runq['ApSelectionParamsData']=selexonparamsq
+		runq['params']=selexonparamsq
 		if not selexonparamsdata:
 			partdb.insert(selexonparamsq)
 		partdb.insert(runq)
@@ -749,15 +749,15 @@ def insertSelexonParams(params,expid):
 	# if continuing a previous run, make sure that all the current
  	# parameters are the same as the previous
  	else:
-		if runids[0]['params']!=selexonparamsdata:
-			apDisplay.printError("All parameters for a single ACE run must be identical! \n"+\
+		if runids[0]['params']!=selexonparamsdata[0]:
+			apDisplay.printError("All parameters for a single selexon run must be identical! \n"+\
 					     "please check your parameter settings.")
 		_checkTemplateParams(params,runq)
 
 	return
 
 def _checkTemplateParams(params,runq):
-	templaterunq=appionData.ApTemplateRunData(run=runq)
+	templaterunq=appionData.ApTemplateRunData(selectionrun=runq)
 	templaterundata=partdb.query(templaterunq)
 	#make sure of using same number of templates
 	if len(params['templateIds'])!=len(templaterundata):
@@ -773,12 +773,12 @@ def _checkTemplateParams(params,runq):
 			incr=params["incrang"+str(n+1)]
 			tmpltimagedata=partdb.direct_query(data.ApTemplateImageData,params['templateIds'][n])
 			tmpltrunq=appionData.ApTemplateRunData()
-			tmpltrunq['run']=runq
+			tmpltrunq['selectionrun']=runq
 			tmpltrunq['template']=tmpltimagedata
-			tmpltrundata=appionData.query(tmpltrunq,results=1)
-			if (tmpltrundata[n]['range_start']!=strt or
-				tmpltrundata[n]['range_end']!=end or
-				tmpltrundata[n]['range_incr']!=incr):
+			tmpltrundata=partdb.query(tmpltrunq,results=1)
+			if (tmpltrundata[0]['range_start']!=strt or
+				tmpltrundata[0]['range_end']!=end or
+				tmpltrundata[0]['range_incr']!=incr):
 				apDisplay.printError("All parameters for a selexon run must be identical!"+\
 					"Template search ranges are not the same as your last run")
 	else:
@@ -905,7 +905,7 @@ def insertTemplateRun(params,runq,templatenum):
 	tid=params['templateIds'][templatenum]
 	templateimagedata=partdb.direct_query(data.ApTemplateImageData,tid)
 	# if no templates in the database, exit
-	if not (templateId):
+	if not (templateimagedata):
 		apDisplay.printError("Template '"+tid+"' not found in database. Use uploadTemplates.py")
 
 	if params['multiple_range']:
@@ -918,13 +918,12 @@ def insertTemplateRun(params,runq,templatenum):
 		incr=params['incrang']
 	
 	templaterunq=appionData.ApTemplateRunData()
-	templaterunq['run']=runq	
-	templateq['template']=templateimagedata
-	templateq['run']=runq
-	templateq['range_start']=float(strt)
-	templateq['range_end']=float(end)
-	templateq['range_incr']=float(incr)
-	partdb.insert(templateq)
+	templaterunq['selectionrun']=runq	
+	templaterunq['template']=templateimagedata
+	templaterunq['range_start']=float(strt)
+	templaterunq['range_end']=float(end)
+	templaterunq['range_incr']=float(incr)
+	partdb.insert(templaterunq)
 	return
 
 def insertTemplateImage(params):
@@ -1006,7 +1005,7 @@ def insertParticlePicks(params,img,expid,manual=False):
 			corr=float(elements[3])
 
 			particlesq=appionData.ApParticleData()
-			particlesq['run']=runq
+			particlesq['selectionrun']=runids[0]
 			particlesq['dbemdata|AcquisitionImageData|image']=legimgid
 			particlesq['xcoord']=xcenter
 			particlesq['ycoord']=ycenter

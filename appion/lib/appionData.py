@@ -24,7 +24,6 @@ class ApSelectionRunData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
 			('params', ApSelectionParamsData),
-			('templaterun', ApTemplateRunData),
 			('dbemdata|SessionData|session', int),
 			('name', str), 
 		)
