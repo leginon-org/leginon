@@ -13,14 +13,14 @@ import appionData
 partdb = apDB.apdb
 leginondb = apDB.db
 
-def getParticles(img,params):
+def getParticles(imgdict,params):
 	"""
 	returns paticles (as a list of dicts) for a given image
 	ex: particles[0]['xcoord'] is the xcoord of particle 0
 	"""
 	
 	imq=particleData.image()
-	imq['dbemdata|AcquisitionImageData|image']=img.dbid
+	imq['dbemdata|AcquisitionImageData|image']=imgdict.dbid
 
 	selexonrun=partdb.direct_query(data.run,params['selexonId'])
 	prtlq=particleData.particle(imageId=imq,runId=selexonrun)
@@ -29,28 +29,28 @@ def getParticles(img,params):
 	shift={'shiftx':0, 'shifty':0}
 	return particles,shift
 
-def getDBparticledataImage(imgdata,expid):
+def getDBparticledataImage(imgdict, expid):
 	"""
 	This function queries and creates, if not found, dpparticledata.image data
 	using dbemdata.AcquisitionImageData image name
 	"""
 
-        legimgid=int(img.dbid)
-        legpresetid=None
-	if img['preset']:
-		legpresetid =int(imgdata['preset'].dbid)
+	legimgid=int(imgdict.dbid)
+	legpresetid=None
+	if 'preset' in imgdict and imgdict['preset']:
+		legpresetid =int(imgdict['preset'].dbid)
 
-	imgname=img['filename']
-        imgq = particleData.image()
-        imgq['dbemdata|SessionData|session']=expid
-        imgq['dbemdata|AcquisitionImageData|image']=legimgid
-        imgq['dbemdata|PresetData|preset']=legpresetid
+	imgname = imgdict['filename']
+	imgq = particleData.image()
+	imgq['dbemdata|SessionData|session']=expid
+	imgq['dbemdata|AcquisitionImageData|image']=legimgid
+	imgq['dbemdata|PresetData|preset']=legpresetid
 	pdimgData=partdb.query(imgq, results=1)
 
-        # if no image entry, make one
-        if not (pdimgData):
-		print "Inserting image entry for",imgname
-                partdb.insert(imgq)
+	# if no image entry, make one
+	if not (pdimgData):
+		print "Inserting image entry for",apDisplay.short(imgname)
+		partdb.insert(imgq)
 		imgq=None
 		imgq = particleData.image()
 		imgq['dbemdata|SessionData|session']=expid
@@ -60,20 +60,52 @@ def getDBparticledataImage(imgdata,expid):
 
 	return pdimgData
 
-def getDBparticledataImage(imgdata,expid):
+def getDBparticledataImage(imgdict,expid):
 	"""
-	This function is a dummy now that the output imgdata since we removed
+	This function is a dummy now that the output imgdict since we removed
 	the image table in dbappiondata
 	"""
-	return imgdata
+	return imgdict
 	
 
-def insertParticlePicks(params,img,expid,manual=False):
+def insertParticlePeaks(peaktree, imgdict, expid, params):
 	"""
-	takes an image dict (img) and inserts particles into DB from pik file
+	takes an image dict (imgdict) and inserts particles into DB from pik file
+	"""
+	particlesq = particleData.particle()
+	imgname = imgdict['filename']
+
+	runq=particleData.run()
+	runq['name']=params['runid']
+	runq['dbemdata|SessionData|session']=expid
+	runids=partdb.query(runq, results=1)
+
+	### GET CORRESPONDING SELECTIONPARAMS ENTRY
+	selexonq = particleData.selectionParams(runId=runq)
+	selexonresult = partdb.query(selexonq, results=1)
+
+	pdimgData=getDBparticledataImage(imgdict,expid)
+
+	### WRITE PARTICLES TO DATABASE
+	for peakdict in peaktree:
+		particlesq['runId']       = runq
+		particlesq['imageId']     = imgids[0]
+		particlesq['selectionId'] = selexonresult[0]
+		for key in peakdict.keys():
+			particlesq[key] = peakdict[key]
+		### INSERT VALUES
+		presult = partdb.query(particlesq)
+		if not (presult):
+			partdb.insert(particlesq)
+	return
+
+def insertParticlePicks(params,imgdict,expid,manual=False):
+	"""
+	takes an image dict (imgdict) and inserts particles into DB from pik file
 	"""
 	particlesq=particleData.particle()
-	
+	imgname = imgdict['filename']
+
 	runq=particleData.run()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
@@ -83,12 +115,12 @@ def insertParticlePicks(params,img,expid,manual=False):
 	selexonq = particleData.selectionParams(runId=runq)
 	selexonresult = partdb.query(selexonq, results=1)
 
-        pdimgData=getDBparticledataImage(img,expid)
+	pdimgData = getDBparticledataImage(imgdict,expid)
 
 	# WRITE PARTICLES TO DATABASE
-	print "Inserting",imgname,"particles into Database..."
+	print "Inserting",apDisplay.short(imgname),"particles into Database..."
 
-      	# first open pik file, or create a temporary one if uploading a box file
+	# first open pik file, or create a temporary one if uploading a box file
 	if (manual==True and params['prtltype']=='box'):
 		fname="temporaryPikFileForUpload.pik"
 
@@ -119,10 +151,9 @@ def insertParticlePicks(params,img,expid,manual=False):
 			fname="pikfiles/"+imgname+".a.pik.nocrud"
 		else:
 			fname="pikfiles/"+imgname+".a.pik"
-        
+ 
 	# read through the pik file
 	pfile=open(fname,"r")
-	piklist=[]
 	for line in pfile:
 		if(line[0] != "#"):
 			elements=line.split(' ')
