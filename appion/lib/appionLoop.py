@@ -457,7 +457,7 @@ class AppionLoop(object):
 					self.functionname
 			else:
 				print "\n\tSUMMARY:"
-			_printLine()
+			self._printLine()
 			if(self.stats['lastpeaks'] != None):
 				print "\tPEAKS:    \t",self.stats['lastpeaks'],"peaks"
 				if(count > 1):
@@ -467,7 +467,7 @@ class AppionLoop(object):
 					print "\tAVG PEAKS:\t",round(float(peaksum)/float(count),1),"+/-",\
 						round(peakstdev,1),"peaks"
 					print "\t(- TOTAL:",peaksum,"peaks for",count,"images -)"
-				_printLine()
+				self._printLine()
 	
 			print "\tTIME:     \t",apDisplay.timeString(tdiff)
 			self.stats['timesum'] = self.stats['timesum'] + tdiff
@@ -484,7 +484,7 @@ class AppionLoop(object):
 					print "\t(- REMAINING TIME:",apDisplay.timeString(timeremain),"for",self.stats['imagesleft'],"images -)"
 			#print "\tMEM: ",(mem.active()-startmem)/1024,"M (",(mem.active()-startmem)/(1024*count),"M)"
 			self.stats['count'] = self.stats['count'] + 1
-			_printLine()
+			self._printLine()
 
 	def _checkMemLeak(self):
 		"""
@@ -533,7 +533,7 @@ class AppionLoop(object):
 				i -= 1
 			i += 1
 
-	def _printLine():
+	def _printLine(self):
 		print "\t------------------------------------------"
 
 	def _waitForMoreImages(self):
