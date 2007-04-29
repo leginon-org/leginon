@@ -10,6 +10,7 @@ import numarray.image
 import numarray.nd_image as nd_image
 import fftengine
 import numextension
+import math
 
 ffteng = fftengine.fftEngine()
 
@@ -344,7 +345,7 @@ def moment_of_inertia(input, labels, index = None):
 def _moment(subimage):
 	if(subimage.shape[0]+subimage.shape[1] < 4):
 		return 1.0
-	twopi = 2*3.1415926535898
+	twopi = 2*math.pi
 	r0 = nd_image.center_of_mass(subimage)
 	sqmat = _distsqmat(r0,subimage.shape)
 	moi = nd_image.sum(subimage*sqmat)/(nd_image.sum(subimage)**2)*twopi
