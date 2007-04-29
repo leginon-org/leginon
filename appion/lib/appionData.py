@@ -16,6 +16,10 @@ class ApParticleData(data.Data):
 			('xcoord', int),
 			('ycoord', int),
 			('correlation', float),
+			('template', ApTemplateImageData),
+			('peakmoment', float),
+			('peakstddev', float),
+			('peakarea', int),
 		)
 	typemap = classmethod(typemap)
 data.ApParticleData=ApParticleData
