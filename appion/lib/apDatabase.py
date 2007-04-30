@@ -86,15 +86,18 @@ def getDBTemplates(params):
 		tmpltinfo = apDB.apdb.direct_query(data.ApTemplateImageData, tid)
 		if not (tmpltinfo):
 			apDisplay.printError("TemplateId "+str(tid)+" not found in database. Use 'uploadTemplate.py'\n")
-		fname = os.path.join(tmpltinfo['templatepath'], tmpltinfo['templatename'])
 		apix = tmpltinfo['apix']
 		# store row data in params dictionary
 		params['ogTmpltInfo'].append(tmpltinfo)
+
 		# copy file to current directory
-		print "getting image:", fname
-		tmplname = os.path.join(params['rundir'],tmptmplt+str(i)+".mrc")
-		shutil.copy(fname, tmplname)
-		#os.system("cp "+fname+" "+tmptmplt+str(i)+".mrc")
+		origtmplpath = os.path.join(tmpltinfo['templatepath'], tmpltinfo['templatename'])
+		if os.path.isfile(origtmplpath):
+			print "getting image:", origtmplpath
+			newtmplpath = os.path.join(params['rundir'],tmptmplt+str(i)+".mrc")
+			shutil.copy(origtmplpath, newtmplpath)
+		else:
+			apDisplay.printError("Template file not found: "+origtmplpath)
 		params['scaledapix'][i] = 0
 		i+=1
 	return
