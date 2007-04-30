@@ -212,11 +212,11 @@ def findPeak(image, mask, maxblobs=1, maxsize=5000, minsize=10):
 # Image manipulations
 #####################################################
 
-def _doG(img,params):
+def _doG(imgdict,params):
 	apix = params['apix']
 	diam = params['diam']
 	bin = params['bin']
-	dogimg = apImage.preProcessImage(img['image'],bin=bin,lowpass=diam/10.0,apix=apix)
+	dogimg = apImage.preProcessImage(imgdict['image'], lowpass=diam/10.0, params=params)
 	dogimg = apImage.diffOfGauss(dogimg,apix=apix,bin=bin,diam=diam,k=2.0)
 	return dogimg
 
@@ -234,8 +234,8 @@ def _createParticleHalos(img,params):
 		x0=int(prtl['ycoord']+0.5)
 		y0=int(prtl['xcoord']+0.5)
 		halos[x0][y0] = 2.0*prtl['correlation']
-	halos = apImage.preProcessImage(halos,bin=4,lowpass=params['diam'],apix=params['apix'])
-	#halos += immult*apImage.preProcessImage(img['image'],bin=4,lowpass=40,apix=params['apix'])
+	halos = apImage.preProcessImage(halos, bin=4, lowpass=params['diam'], apix=params['apix'])
+	#halos += immult*apImage.preProcessImage(img['image'], bin=4, lowpass=40, apix=params['apix'])
 	#if noise > 0:
 	#	halos += random_array.uniform(0.0, noise, shape=halos.shape)
 	return halos,particles

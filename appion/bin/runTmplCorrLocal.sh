@@ -2,7 +2,7 @@
 
 rm -fv `find .. -name "*.py[oc]"`
 rm -fv `find . -name "*~"`
-rm -frv selexlocal
+rm -frv tmplcorrlocal
 
 
 ./templateCorrelator.py \
@@ -11,6 +11,6 @@ rm -frv selexlocal
   07jan05b_00012gr_00001sq_v01_00002sq_00_00004en_00.mrc \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00005en_00.mrc \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00006en_00.mrc \
-  range=0,180,235 templateIds=57 \
+  range1=0,180,20 templateIds=57 \
   diam=140 lp=0 bin=8 overlapmult=2 \
-  runid=tmplcorrlocal thresh=0.40 method=updated outdir=.
+  runid=tmplcorrlocal thresh=0.50 method=updated outdir=.

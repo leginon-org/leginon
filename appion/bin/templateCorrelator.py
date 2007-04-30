@@ -12,11 +12,15 @@ import apDisplay
 import apTemplate
 import apDatabase
 import apPeaks
+import apParticle
 #legacy
 import selexonFunctions  as sf1
 import selexonFunctions2 as sf2
 
 class TemplateCorrelationLoop(appionLoop.AppionLoop):
+	def preLoopFunctions(self):
+		apTemplate.getTemplates(self.params)
+
 	def processImage(self, imgdict):
 		imgname = imgdict['filename']
 		apTemplate.rescaleTemplates(self.params)
@@ -36,26 +40,9 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 			#sf2.createJPG2(self.params,imgname)
 
 	def commitToDatabase(self, imgdict):
-		expid=int(img['session'].dbid)
-		sf1.insertSelexonParams(params,expid)
-		sf1.insertParticlePicks(params,img,expid)
-
-	def preLoopFunctions(self):
-		print " ... getting templates"
-		if self.params['templateIds']:
-			self.params['template']='originalTemporaryTemplate'
-			# get the templates from the database
-			apDatabase.getDBTemplates(self.params)
-			# scale them to the appropriate pixel size
-			apTemplate.rescaleTemplates(self.params)
-			# set the template name to the copied file names
-			self.params['template']='scaledTemporaryTemplate'
-		apTemplate.checkTemplates(self.params)
-		# go through the template mrc files and downsize & filter them
-		for tmplt in self.params['templatelist']:
-			apTemplate.downSizeTemplate(tmplt, self.params)
-		print " ... downsize & filtered "+str(len(self.params['templatelist']))+ \
-			" file(s) with root \""+self.params["template"]+"\""
+		expid = int(imgdict['session'].dbid)
+		sf1.insertSelexonParams(self.params, expid)
+		apParticle.insertParticlePeaks(self.peaktree, imgdict, expid, self.params)
 
 	def specialDefaultParams(self):
 		self.params['template']=''
@@ -149,7 +136,7 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 			apDisplay.printError("please input the diameter of your particle")
 
 	def _processAndSaveImage(self, imgdict):
-		imgdata = apImage.preProcessImageParams(imgdict['image'], self.params)
+		imgdata = apImage.preProcessImage(imgdict['image'], params=self.params)
 		smimgname = os.path.join(self.params['rundir'],imgdict['filename']+".dwn.mrc")
 		apImage.arrayToMrc(imgdata, smimgname)
 
