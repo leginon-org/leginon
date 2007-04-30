@@ -15,7 +15,8 @@ import apDisplay
 
 
 data.holdImages(False)
-db = apDB.db
+leginondb = apDB.db
+appiondb = apDB.apdb
 #db     = dbdatakeeper.DBDataKeeper()
 #partdb = dbdatakeeper.DBDataKeeper(db='dbparticledata')
 #acedb  = dbdatakeeper.DBDataKeeper(db='dbctfdata')
@@ -43,7 +44,7 @@ def getSpecificImagesFromDB(imglist):
 	imgtree=[]
 	for imgname in imglist:
 		imgquery = data.AcquisitionImageData(filename=imgname)
-		imgres   = db.query(imgquery, readimages=False, results=1)
+		imgres   = leginondb.query(imgquery, readimages=False, results=1)
 		imgtree.append(imgres[0])
 	return imgtree
 
@@ -57,7 +58,7 @@ def getImagesFromDB(session,preset):
 	imgquery = data.AcquisitionImageData()
 	imgquery['preset']  = presetq
 	imgquery['session'] = sessionq
-	imgtree = db.query(imgquery, readimages=False)
+	imgtree = leginondb.query(imgquery, readimages=False)
 	"""
 	loop through images and make data.holdimages false 	 
 	this makes it so that data.py doesn't hold images in memory 	 
@@ -75,7 +76,7 @@ def getAllImagesFromDB(session):
 	sessionq= data.SessionData(name=session)
 	imgquery = data.AcquisitionImageData()
 	imgquery['session'] = sessionq
-	imgtree = db.query(imageq, readimages=False)
+	imgtree = leginondb.query(imageq, readimages=False)
 	return imgtree
 
 def getDBTemplates(params):
@@ -83,7 +84,7 @@ def getDBTemplates(params):
 	i=1
 	for tid in params['templateIds']:
 		# find templateImage row
-		tmpltinfo = apDB.apdb.direct_query(data.ApTemplateImageData, tid)
+		tmpltinfo = appiondb.direct_query(data.ApTemplateImageData, tid)
 		if not (tmpltinfo):
 			apDisplay.printError("TemplateId "+str(tid)+" not found in database. Use 'uploadTemplate.py'\n")
 		apix = tmpltinfo['apix']
@@ -102,12 +103,30 @@ def getDBTemplates(params):
 		i+=1
 	return
 
+	tmptmplt=params['template']
+	i=1
+	for tid in params['templateIds']:
+		# find templateImage row
+		tmpltinfo=appiondb.direct_query(data.ApTemplateImageData, tid)
+		if not (tmpltinfo):
+			apDisplay.printError("TemplateId "+str(tid)+" not found in database.  Use 'uploadTemplate.py'\n")
+		fname=os.path.join(tmpltinfo['templatepath'],tmpltinfo['templatename'])
+		apix=tmpltinfo['apix']
+		# store row data in params dictionary
+		params['ogTmpltInfo'].append(tmpltinfo)
+		# copy file to current directory
+		print "getting image:",fname
+		os.system("cp "+fname+" "+tmptmplt+str(i)+".mrc")
+		params['scaledapix'][i]=0
+		i+=1
+	return
+
 def getImageData(imgname):
 	"""
 	get image data object from database
 	"""
 	imgquery = data.AcquisitionImageData(filename=imgname)
-	imgtree  = db.query(imgquery, results=1, readimages=False)
+	imgtree  = leginondb.query(imgquery, results=1, readimages=False)
 	if imgtree:
 		#imgtree[0].holdimages=False
 		return imgtree[0]
@@ -116,7 +135,7 @@ def getImageData(imgname):
 
 def getImgDir(sessionname):
 	sessionq = data.SessionData(name=sessionname)
-	sessiondata = db.query(sessionq)
+	sessiondata = leginondb.query(sessionq)
 	imgdir = os.path.abspath(sessiondata[0]['image path'])
 	return imgdir
 
@@ -125,7 +144,7 @@ def getSessionName(imgname):
 	get session name from database
 	"""
 	imgquery = data.AcquisitionImageData(filename=imgname)
-	imgtree  = db.query(imgquery, results=1, readimages=False)
+	imgtree  = leginondb.query(imgquery, results=1, readimages=False)
 	if 'session' in imgtree[0]:
 		return imgtree[0]['session']['name']
 	else:
@@ -144,7 +163,7 @@ def getPixelSize(imgdict):
 	pixelsizeq['magnification']=imgdict['scope']['magnification']
 	pixelsizeq['tem']=imgdict['scope']['tem']
 	pixelsizeq['ccdcamera'] = imgdict['camera']['ccdcamera']
-	pixelsizedata=db.query(pixelsizeq, results=1)
+	pixelsizedata=leginondb.query(pixelsizeq, results=1)
 	binning=imgdict['camera']['binning']['x']
 	pixelsize=pixelsizedata[0]['pixelsize'] * binning
 	return(pixelsize*1e10)
@@ -155,7 +174,7 @@ def getImgSize(img):
 	fname = img['filename']
 	# get image size (in pixels) of the given mrc file
 	imageq=data.AcquisitionImageData(filename=fname)
-	imagedata=db.query(imageq, results=1, readimages=False)
+	imagedata=leginondb.query(imageq, results=1, readimages=False)
 	if imagedata:
 		size=int(imagedata[0]['camera']['dimension']['y'])
 		return(size)

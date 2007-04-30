@@ -26,6 +26,8 @@ import apDisplay
 import apDB
 import apTemplate
 import apImage
+import apDatabase
+import apParticle
 
 db = apDB.db
 partdb = apDB.apdb
@@ -430,9 +432,10 @@ def checkTemplates(params,upload=None):
 	apDisplay.printWarning("this apTemplate function no longer exists here")
 	return apTemplate.checkTemplates(params, upload=upload)
 
-def dwnsizeImg(params, imgname):
+def dwnsizeImg(params, imgdict):
 	#downsize and filter leginon image
-	imgdata = getImageData(imgname)['image']
+	imgname = imgdict['filename']
+	imgdata = imgdict['image']
 	imgdata = apImage.preProcessImage(imgdata, params=params)
 	filename = os.path.join(params['rundir'], imgname+'.dwn.mrc')
 	apImage.arrayToMrc(imgdata, filename)
@@ -452,33 +455,8 @@ def filterImg(img,apix,res):
 	return apImage.filterImg(img,apix,res)
 
 def pik2Box(params,file):
-	box=params["box"]
-
-	if (params["crud"]==True):
-		fname="pikfiles/"+file+".a.pik.nocrud"
-	else:
-		fname="pikfiles/"+file+".a.pik"
-
-	# read through the pik file
-	pfile=open(fname,"r")
-	piklist=[]
-	for line in pfile:
-		elements=line.split(' ')
-		xcenter=int(elements[1])
-		ycenter=int(elements[2])
-		xcoord=xcenter - (box/2)
-		ycoord=ycenter - (box/2)
-		if (xcoord>0 and ycoord>0):
-			piklist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
-	pfile.close()
-
-	# write to the box file
-	bfile=open(file+".box","w")
-	bfile.writelines(piklist)
-	bfile.close()
-
-	print "results written to \'"+file+".box\'"
-	return
+	apDisplay.printWarning("this apParticle function pik2Box no longer exists here")
+	return apParticle.pik2Box(params,file)
 
 def writeSelexLog(commandline, file=".selexonlog"):
 	f=open(file,'a')
@@ -490,100 +468,33 @@ def writeSelexLog(commandline, file=".selexonlog"):
 	f.close()
 
 def getDoneDict(selexondonename):
-	if os.path.exists(selexondonename):
-		# unpickle previously modified dictionary
-		f=open(selexondonename,'r')
-		donedict=cPickle.load(f)
-		f.close()
-	else:
-		#set up dictionary
-		donedict={}
-	return (donedict)
+	apDisplay.printError("this apLoop function no longer exists here")
 
 def writeDoneDict(donedict,selexondonename):
-	f=open(selexondonename,'w')
-	cPickle.dump(donedict,f)
-	f.close()
+	apDisplay.printError("this apLoop function no longer exists here")
 
 def doneCheck(donedict,im):
-	# check to see if image has been processed yet and
-	# append dictionary if it hasn't
-	# this may not be the best way to do this
-	if donedict.has_key(im):
-		pass
-	else:
-		donedict[im]=None
-	return
+	apDisplay.printError("this apLoop function no longer exists here")
 
-def getImageData(imagename):
-	# get image data object from database
-	imagedataq = data.AcquisitionImageData(filename=imagename)
-	imagedata = db.query(imagedataq, results=1, readimages=False)
-	#imagedata[0].holdimages=False
-	if imagedata:
-		return imagedata[0]
-	else:
-		apDisplay.printError("Image"+imagename+"not found in database\n")
+def getImageData(imgname):
+	apDisplay.printWarning("this apDatabase function getImageData no longer exists here")
+	return apDatabase.getImageData(imgname)
 
-def getPixelSize(img):
-	# use image data object to get pixel size
-	# multiplies by binning and also by 1e10 to return image pixel size in angstroms
-	pixelsizeq=data.PixelSizeCalibrationData()
-	pixelsizeq['magnification']=img['scope']['magnification']
-	pixelsizeq['tem']=img['scope']['tem']
-	pixelsizeq['ccdcamera'] = img['camera']['ccdcamera']
-	pixelsizedata=db.query(pixelsizeq, results=1)
-	
-	binning=img['camera']['binning']['x']
-	pixelsize=pixelsizedata[0]['pixelsize'] * binning
-	
-	return(pixelsize*1e10)
+def getPixelSize(imgdict):
+	apDisplay.printWarning("this apDatabase function getPixelSize no longer exists here")
+	return apDatabase.getPixelSize(imgdict)
 
-def getImagesFromDB(session,preset):
-	# returns list of image names from DB
-	print "Querying database for images"
-	sessionq = data.SessionData(name=session)
-	presetq=data.PresetData(name=preset)
-	imageq=data.AcquisitionImageData()
-	imageq['preset'] = presetq
-	imageq['session'] = sessionq
-	# readimages=False to keep db from returning actual image
-	# readimages=True could be used for doing processing w/i this script
-	imagelist=db.query(imageq, readimages=False)
-	#loop through images and make data.holdimages false 	 
-	#this makes it so that data.py doesn't hold images in memory 	 
-	#solves a bug where selexon quits after a dozen or so images 	 
-	#for img in imagelist: 	 
-		#img.holdimages=False
-	return (imagelist)
+def getImagesFromDB(session, preset):
+	apDisplay.printWarning("this apDatabase function getImagesFromDB no longer exists here")
+	return apDatabase.getImagesFromDB(session, preset)
 
 def getAllImagesFromDB(session):
-	# returns list of image data based on session name
-	print "Querying database for images"
-	sessionq= data.SessionData(name=session)
-	imageq=data.AcquisitionImageData()
-	imageq['session']=sessionq
-	imagelist=db.query(imageq, readimages=False)
-	return (imagelist)
+	apDisplay.printWarning("this apDatabase function getAllImagesFromDB no longer exists here")
+	return apDatabase.getAllImagesFromDB(session)
 
 def getDBTemplates(params):
-	tmptmplt=params['template']
-	i=1
-	for tid in params['templateIds']:
-		# find templateImage row
-		tmpltinfo=partdb.direct_query(data.ApTemplateImageData, tid)
-		if not (tmpltinfo):
-			apDisplay.printError("TemplateId "+str(tid)+" not found in database.  Use 'uploadTemplate.py'\n")
-		fname=os.path.join(tmpltinfo['templatepath'],tmpltinfo['templatename'])
-		apix=tmpltinfo['apix']
-		# store row data in params dictionary
-		params['ogTmpltInfo'].append(tmpltinfo)
-		# copy file to current directory
-		print "getting image:",fname
-		os.system("cp "+fname+" "+tmptmplt+str(i)+".mrc")
-		params['scaledapix'][i]=0
-		i+=1
-	return
+	apDisplay.printWarning("this apDatabase function getDBTemplates no longer exists here")
+	apDatabase.getDBTemplates(params)
 
 def rescaleTemplates(img,params):
 	#why is img passed? It is not used.
@@ -861,75 +772,6 @@ def insertTemplateImage(params):
 			print "Not reinserting"
 	return
 
-def insertParticlePicks(params,img,expid,manual=False):
-	runq=appionData.ApSelectionRunData()
-	runq['name']=params['runid']
-	runq['dbemdata|SessionData|session']=expid
-	runids=partdb.query(runq, results=1)
-
-	legimgid=int(img.dbid)
-	legpresetid=None
-	if img['preset']:
-		legpresetid =int(img['preset'].dbid)
-
-	imgname=img['filename'] 
-
-	# WRITE PARTICLES TO DATABASE
-	print "Inserting particles into database for",apDisplay.shortenImageName(imgname),"..."
-
-	
-	# first open pik file, or create a temporary one if uploading a box file
-	if (manual==True and params['prtltype']=='box'):
-		fname="temporaryPikFileForUpload.pik"
-
-		# read through the pik file
-		boxfile=open(imgname+".box","r")
-		piklist=[]
-		for line in boxfile:
-			elements=line.split('\t')
-			xcoord=int(elements[0])
-			ycoord=int(elements[1])
-			xbox=int(elements[2])
-			ybox=int(elements[3])
-			xcenter=(xcoord + (xbox/2))*params['scale']
-			ycenter=(ycoord + (ybox/2))*params['scale']
-			if (xcenter < 4096 and ycenter < 4096):
-				piklist.append(imgname+" "+str(xcenter)+" "+str(ycenter)+" 1.0\n")			
-		boxfile.close()
-
-		# write to the pik file
-		pfile=open(fname,"w")
-		pfile.writelines(piklist)
-		pfile.close()
-		
-	elif (manual==True and params['prtltype']=='pik'):
-		fname=imgname+"."+params['extension']
-	else:
-		if (params["crud"]==True):
-			fname="pikfiles/"+imgname+".a.pik.nocrud"
-		else:
-			fname="pikfiles/"+imgname+".a.pik"
-
-	# read through the pik file
-	pfile=open(fname,"r")
-	piklist=[]
-	for line in pfile:
-		if(line[0] != "#"):
-			elements=line.split(' ')
-			xcenter=int(elements[1])
-			ycenter=int(elements[2])
-			corr=float(elements[3])
-
-			particlesq=appionData.ApParticleData()
-			particlesq['selectionrun']=runids[0]
-			particlesq['dbemdata|AcquisitionImageData|image']=legimgid
-			particlesq['xcoord']=xcenter
-			particlesq['ycoord']=ycenter
-			particlesq['correlation']=corr
-
-			presult=partdb.query(particlesq)
-			if not (presult):
-				partdb.insert(particlesq)
-	pfile.close()
-	
-	return
+def insertParticlePicks(params,imgdict,expid,manual=False):
+	apDisplay.printWarning("this apParticle function insertParticlePicks no longer exists here")
+	apParticle.insertParticlePicks(params,imgdict,expid,manual)

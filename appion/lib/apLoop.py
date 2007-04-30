@@ -7,7 +7,8 @@ import math
 #import selexonFunctions  as sf1
 #import selexonFunctions2 as sf2
 import apParam
-import apDatabase,apDisplay
+import apDatabase
+import apDisplay
 try:
 	import mem
 except:

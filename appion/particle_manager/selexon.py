@@ -18,6 +18,7 @@ import apFindEM
 import apViewIt
 import apDisplay
 import apTemplate
+import apParticle
 
 data.holdImages(False)
 
@@ -116,7 +117,7 @@ if __name__ == '__main__':
 				stats['peaksumsq'] = stats['peaksumsq'] + numpeaks**2
 			else:
 #				sf2.tmpRemoveCrud(params,imgname)
-				sf1.dwnsizeImg(params, imgname)
+				sf1.dwnsizeImg(params, imgdict)
 				apFindEM.runFindEM(imgname, params)
 
 			#FIND PEAKS
@@ -176,7 +177,7 @@ if __name__ == '__main__':
 				expid=int(imgdict['session'].dbid)
 				#SELEXON MUST COME FIRST
 				sf1.insertSelexonParams(params,expid)
-				sf1.insertParticlePicks(params,imgdict,expid)
+				apParticle.insertParticlePicks(params,imgdict,expid)
 
 			# write results to dictionary
 			apLoop.writeDoneDict(donedict,params,imgname)
