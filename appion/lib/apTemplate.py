@@ -40,7 +40,7 @@ def rescaleTemplates(params):
 
 		if params['apix'] != params['scaledapix'][i]:
 			print "rescaling template",str(i),":",tmplt['apix'],"->",params['apix']
-			scalefactor = tmplt['apix']/params['apix']
+			scalefactor = tmplt['apix'] / params['apix']
 			scaleAndClipTemplate(ogtmpltname,(scalefactor,scalefactor),newtmpltname)
 			params['scaledapix'][i] = params['apix']
 			downSizeTemplate(newtmpltname, params)

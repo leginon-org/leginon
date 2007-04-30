@@ -29,10 +29,8 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 			numpeaks = sf2.runCrossCorr(params,imgname)
 			sf2.createJPG2(params,imgname)
 		else:
-			print "PROCESSING"
-			self._processAndSaveImage(imgdict)
 			print "FINDEM"
-			self.ccmaplist = apFindEM.runFindEM(imgname, self.params)
+			self.ccmaplist = apFindEM.runFindEM(imgdict, self.params)
 			print "FINDPEAKS"
 			self.peaktree  = apPeaks.findPeaks(imgdict, self.ccmaplist, self.params)
 			print "CREATEJPG"
@@ -134,11 +132,6 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 			apDisplay.printError("neither manual threshold or autopik parameters are set, please set one.")
 		if not 'diam' in self.params or self.params['diam']==0:
 			apDisplay.printError("please input the diameter of your particle")
-
-	def _processAndSaveImage(self, imgdict):
-		imgdata = apImage.preProcessImage(imgdict['image'], params=self.params)
-		smimgname = os.path.join(self.params['rundir'],imgdict['filename']+".dwn.mrc")
-		apImage.arrayToMrc(imgdata, smimgname)
 
 
 if __name__ == '__main__':

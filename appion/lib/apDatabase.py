@@ -34,7 +34,10 @@ def getAllImages(stats,params):
 	else:
 		print len(params['mrcfileroot']),params['alldbimages'],params['dbimages'],params['mrcfileroot']
 		apDisplay.printError("no files specified")
-	params['session']=imgtree[0]['session']
+	if imgtree is None or len(imgtree) < 1:
+		apDisplay.printError("did not find any images") 
+	params['session'] = imgtree[0]['session']
+	params['apix'] = getPixelSize(imgtree[0])
 	stats['imagecount']=len(imgtree)
 	print " ... found",stats['imagecount'],"in",apDisplay.timeString(time.time()-startt)
 	return imgtree
@@ -168,10 +171,11 @@ def getPixelSize(imgdict):
 	pixelsize=pixelsizedata[0]['pixelsize'] * binning
 	return(pixelsize*1e10)
 
-def getImgSize(img):
-	if 'image' in img:
-		return (img['image'].shape)[1]
-	fname = img['filename']
+def getImgSize(imgdict):
+	### SHOULD BE A DIRECT QUERY
+	if 'image' in imgdict:
+		return (imgdict['image'].shape)[1]
+	fname = imgdict['filename']
 	# get image size (in pixels) of the given mrc file
 	imageq=data.AcquisitionImageData(filename=fname)
 	imagedata=leginondb.query(imageq, results=1, readimages=False)
@@ -180,4 +184,15 @@ def getImgSize(img):
 		return(size)
 	else:
 		apDisplay.printError("Image "+fname+" not found in database\n")
+	return(size)
+
+def getImgSizeFromName(imgname):
+	# get image size (in pixels) of the given mrc file
+	imageq=data.AcquisitionImageData(filename=imgname)
+	imagedata=leginondb.query(imageq, results=1, readimages=False)
+	if imagedata:
+		size=int(imagedata[0]['camera']['dimension']['y'])
+		return(size)
+	else:
+		apDisplay.printError("Image "+imgname+" not found in database\n")
 	return(size)

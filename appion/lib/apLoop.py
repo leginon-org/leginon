@@ -165,7 +165,7 @@ def checkMemLeak(stats):
 				"(",n,round(slope,5),round(rho,5),round(gain,2),")"
 		
 
-def startLoop(img,donedict,stats,params):
+def startLoop(imgdict,donedict,stats,params):
 	"""
 	initilizes several parameters for a new image
 	and checks if it is okay to start processing image
@@ -176,26 +176,23 @@ def startLoop(img,donedict,stats,params):
 	#only if an image was processed
 	if(stats['lastcount'] != stats['count']):
 		print "\nStarting new image",stats['count'],"( skip:",stats['skipcount'],\
-			", left:",stats['imagesleft'],")",apDisplay.shortenImageName(img['filename'])
+			", left:",stats['imagesleft'],")",apDisplay.shortenImageName(imgdict['filename'])
 		stats['lastcount'] = stats['count']
 		checkMemLeak(stats)
 
 	# get the next image pixel size:
-	params['apix']=apDatabase.getPixelSize(img)
+	params['apix'] = apDatabase.getPixelSize(imgdict)
 
-	#import pprint
-	#pprint.pprint( img['scope'] )
-	#sys.exit(1)
 
 	# skip if image doesn't exist:
-	imagepath = params['imgdir']+img['filename']+'.mrc'
+	imagepath = params['imgdir']+imgdict['filename']+'.mrc'
 	if not os.path.isfile(imagepath):
 		print " !!!",imagepath,"not found, skipping"
 		return False
 
 	# if continue option is true, check to see if image has already been processed
-	imgname=img['filename']
-	if(_alreadyProcessed(donedict,img['filename'],stats,params)==True):
+	imgname=imgdict['filename']
+	if(_alreadyProcessed(donedict,imgdict['filename'],stats,params)==True):
 		return False
 
 	# match the original template pixel size to the img pixel size

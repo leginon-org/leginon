@@ -167,9 +167,10 @@ def writeFunctionLog(commandline, params=None, file=None):
 	f.write("\n")
 	f.close()
 
-def createDirectory(path, mode=0777):
-	if os.path.exists(path):
-		apDisplay.printWarning("directory \'"+path+"\' already exists.")
+def createDirectory(path, mode=0777, warning=True):
+	if os.path.isdir(path):
+		if warning is True:
+			apDisplay.printWarning("directory \'"+path+"\' already exists.")
 		return False
 	os.makedirs(path,mode)
 	return True

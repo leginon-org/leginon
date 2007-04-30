@@ -390,7 +390,7 @@ def getOutDirs(params):
 		pass
 	else:
 		outdir=os.path.split(impath)[0]
-		outdir=os.path.join(outdir,'extract/')
+		outdir=os.path.join(outdir,'selexon/')
 		params['outdir']=outdir
 
 	params['rundir']=os.path.join(params['outdir'],params['runid'])
@@ -417,28 +417,17 @@ def createJPG(params,img):
 def findCrud(params,file):
 	apDisplay.printError("this ViewIt function no longer exists here")
 
-def getImgSize(fname):
-	# get image size (in pixels) of the given mrc file
-	imageq=data.AcquisitionImageData(filename=fname)
-	imagedata=db.query(imageq, results=1, readimages=False)
-	if imagedata:
-		size=int(imagedata[0]['camera']['dimension']['y'])
-		return(size)
-	else:
-		apDisplay.printError("Image "+fname+" not found in database\n")
-	return(size)
+def getImgSize(imgname):
+	apDisplay.printWarning("this apDatabase function getImagesFromDB no longer exists here")
+	return apDatabase.getImgSizeFromName(imgname)
 
 def checkTemplates(params,upload=None):
 	apDisplay.printWarning("this apTemplate function no longer exists here")
 	return apTemplate.checkTemplates(params, upload=upload)
 
 def dwnsizeImg(params, imgdict):
-	#downsize and filter leginon image
-	imgname = imgdict['filename']
-	imgdata = imgdict['image']
-	imgdata = apImage.preProcessImage(imgdata, params=params)
-	filename = os.path.join(params['rundir'], imgname+'.dwn.mrc')
-	apImage.arrayToMrc(imgdata, filename)
+	apDisplay.printWarning("this apFindEM function no longer exists here")
+	apFindEM.processAndSaveImage(imgdict, params)
 	return
 
 def dwnsizeTemplate(params,filename):
@@ -459,13 +448,7 @@ def pik2Box(params,file):
 	return apParticle.pik2Box(params,file)
 
 def writeSelexLog(commandline, file=".selexonlog"):
-	f=open(file,'a')
-	out=""
-	for n in commandline:
-		out=out+n+" "
-	f.write(out)
-	f.write("\n")
-	f.close()
+	apDisplay.printError("this apParam function no longer exists here")
 
 def getDoneDict(selexondonename):
 	apDisplay.printError("this apLoop function no longer exists here")

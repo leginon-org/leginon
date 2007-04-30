@@ -9,6 +9,7 @@ import ImageDraw
 #appion
 import apImage
 import apDisplay
+import apParam
 #leginon
 import imagefun
 
@@ -34,7 +35,7 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params):
 	olapmult =  float(params["overlapmult"])
 	maxpeaks =  int(params["maxpeaks"])
 	imgname =   imgdict['filename']
-	binpixrad =    diam/apix/2.0/float(bin)
+	binpixrad = diam/apix/2.0/float(bin)
 	tmpldbid =  params['ogTmpltInfo'][tmplnum-1].dbid
 
 	#MAXPEAKSIZE ==> 1x AREA OF PARTICLE
@@ -74,6 +75,8 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params):
 	print " ... writing JPEG: ",outfile
 	image.save(outfile, "JPEG", quality=90)
 
+	peakTreeToPikFile(peaktree, imgname, tmplnum, params['rundir'])
+
 	return peaktree
 
 
@@ -101,7 +104,7 @@ def mergePeakTrees(imgdict, peaktreelist, params):
 			if peakdict in mergepeaktree:
 				bestpeaktree.append(peakdict)
 
-	peakTreeToPikFile(bestpeaktree, imgname, 'a')
+	peakTreeToPikFile(bestpeaktree, imgname, 'a', params['rundir'])
 
 	return bestpeaktree
 
@@ -183,9 +186,11 @@ def findBlobs(ccmap, thresh, maxsize=500, minsize=2, maxpeaks=1500, border=6, ma
 		maxsize, minsize, maxmoment, elim)
 	return blobtree, percentcov
 
-def peakTreeToPikFile(peaktree, imgname, tmplnum):
-	outfile="pikfiles/"+imgname+"."+str(tmplnum)+".pik"
-	if (os.path.exists(outfile)):
+def peakTreeToPikFile(peaktree, imgname, tmpl, rundir="."):
+	outpath = os.path.join(rundir, "pikfiles")
+	apParam.createDirectory(outpath, warning=False)
+	outfile = os.path.join(outpath, imgname+"."+str(tmpl)+".pik")
+	if (os.path.isfile(outfile)):
 		os.remove(outfile)
 		print " ... removed existing file:", outfile
 	#WRITE PIK FILE
@@ -202,7 +207,10 @@ def peakTreeToPikFile(peaktree, imgname, tmplnum):
 		mean_str = "%.4f" % peakdict['correlation']
 		std_str = "%.4f" % peakdict['peakstddev']
 		mom_str = "%.4f" % peakdict['peakmoment']
-		tmplnum = peakdict['template']
+		if 'template' in peakdict:
+			tmplnum = peakdict['template']
+		else:
+			tmplnum = tmpl
 		#filename x y mean stdev corr_coeff peak_size templ_num angle moment
 		out = imgname+".mrc "+str(int(col))+" "+str(int(row))+ \
 			" "+mean_str+" "+std_str+" "+str(rho)+" "+str(int(size))+ \

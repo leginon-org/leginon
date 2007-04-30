@@ -1,10 +1,12 @@
 #FindEM specific options that will be depricated in the future
 
+#pythonlib
 import os
 import threading
+import sys
+#appion
 import apDisplay
 import apImage
-import sys
 
 #########################################################
 
@@ -22,14 +24,17 @@ class findemjob(threading.Thread):
 
 #########################################################
 
-def runFindEM(imgname, params, thread=False):
+def runFindEM(imgdict, params, thread=False):
 	"""
 	runs a separate thread of findem.exe for each template 
 	to get cross-correlation maps
 	"""
+	imgname = imgdict['filename']
 	os.chdir(params['rundir'])
 	joblist = []
 	ccmaplist = []
+
+	processAndSaveImage(imgdict, params)
 
 	if len(params['templatelist']) < 1:
 		apDisplay.printError("templatelist == 0; there are no templates")
@@ -128,6 +133,14 @@ def findEMString(classavg, imgname, ccmapfile, params):
 	feed += borderwidth+"\n"
 
 	return feed
+
+def processAndSaveImage(imgdict, params):
+	#downsize and filter leginon image
+	imgdata = apImage.preProcessImage(imgdict['image'], params=params)
+	imgpath = os.path.join(params['rundir'], imgdict['filename']+".dwn.mrc")
+	apImage.arrayToMrc(imgdata, imgpath)
+	return
+
 
 def getFindEMPath():
 	findempath = os.environ.get('FINDEM_EXE')
