@@ -53,11 +53,11 @@ class AppionLoop(object):
 		"""
 		### get images from database
 		self._getAllImages()
-		self._removeProcessedImages()
 		self.preLoopFunctions()
 		### start the loop
 		notdone=True
 		while notdone:
+			self._removeProcessedImages()
 			for imgdict in self.imgtree:
 				#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
 				if not self._startLoop(imgdict):
@@ -136,6 +136,12 @@ class AppionLoop(object):
 		"""
 		return	
 
+	def specialPrintHelp(self):
+		"""
+		put in the help message to print
+		"""
+		return
+
 	#################################################
 	#### ITEMS BELOW ARE NOT USUALLY OVERWRITTEN ####
 	#################################################
@@ -166,25 +172,39 @@ class AppionLoop(object):
 		self.specialParamConflicts()
 
 	def _printHelp(self):
+		self.specialPrintHelp()
 		#apXml.printHelp()
 		return
+
+	def _getAppionDir(self):
+		self.params['appiondir'] = os.environ.get('APPIONDIR')
+		if self.params['appiondir'] is None:
+			user = os.environ.get('USER')
+			trypath = "/home/"+user+"/pyappion"
+		 	if os.path.isdir(trypath):
+				self.params['appiondir'] = trypath
+		if self.params['appiondir'] is None:
+			trypath = "/ami/sw/packages/pyappion"
+		 	if os.path.isdir(trypath):
+				self.params['appiondir'] = trypath
+		if self.params['appiondir'] is None:
+			apDisplay.printError("environmental variable, APPIONDIR, is not defined.\n"+
+				"Did you source useappion.sh?")
+		apDisplay.printMsg("APPIONDIR:\t"+self.params['appiondir'])
+		return self.params['appiondir']
 
 	def _createDefaultParams(self):
 		### new system, global params
 		self.params = {}
 		self.params['functionname'] = self.functionname
 		self.params['rundir'] = "."
-		self.params['appionhome'] = os.environ.get('APPIONHOME')
-		if self.params['appionhome'] == None:
-			apDisplay.printError("environmental variable, APPIONHOME, is not defined.\n"+
-				"Did you source useappion.sh?")
-		apDisplay.printMsg("APPIONHOME:\t"+self.params['appionhome'])
+		self._getAppionDir()
 		self.params['method'] = "updated"
 		"""
 		### XML parameters
-		self.params['xmlglobfile'] = os.path.join(self.params['appionhome'],"xml","allAppion.xml")
+		self.params['xmlglobfile'] = os.path.join(self.params['appiondir'],"xml","allAppion.xml")
 		print "XML global parameter file:",self.params['xmlglobfile']
-		self.params['xmlfuncfile'] = os.path.join(self.params['appionhome'],"xml",self.functionname+".xml")
+		self.params['xmlfuncfile'] = os.path.join(self.params['appiondir'],"xml",self.functionname+".xml")
 		print "XML function parameter file:",self.params['xmlfuncfile']
 		self.params = apXml.readTwoXmlFiles(self.params['xmlglobfile'], self.params['xmlfuncfile'])
 		"""
@@ -313,7 +333,7 @@ class AppionLoop(object):
 		self.params['rundir'] = os.path.join(self.params['outdir'], self.params['runid'])
 		apDisplay.printMsg("RUNDIR:\t "+self.params['rundir'])
 
-		self.params['doneDictName']= os.path.join(self.params['rundir'], "."+self.functionname+"donedict")
+		self.params['doneDictName'] = os.path.join(self.params['rundir'] , "."+self.functionname+"donedict")
 
 		if(self.params['apix'] != None and self.params['diam'] > 0):
 			self.params['pixdiam']    = self.params['diam']/self.params['apix']
@@ -334,7 +354,7 @@ class AppionLoop(object):
 		reads or creates a done dictionary
 		"""
 		doneDictName = self.params['doneDictName']
-		if os.path.isfile(doneDictName):
+		if os.path.isfile(doneDictName) and self.params['continue'] == True:
 			apDisplay.printMsg("reading old done dictionary:\n"+doneDictName)
 			# unpickle previously modified dictionary
 			f = open(doneDictName,'r')
@@ -393,22 +413,21 @@ class AppionLoop(object):
 		checks to see if image (imgname) has been done already
 		"""
 		imgname = imgdict['filename']
-		if self.params["continue"]:
-			if imgname in self.donedict:
-				if not self.stats['lastimageskipped']:
-					sys.stderr.write("skipping images")
-				else:
-					sys.stderr.write(".")
-				self.stats['lastimageskipped'] = True
-				self.stats['skipcount'] += 1
-				return True
+		if imgname in self.donedict:
+			if not self.stats['lastimageskipped']:
+				sys.stderr.write("skipping images")
 			else:
-				self.donedict[imgname]=None
-				self.stats['waittime'] = 0
-				if self.stats['lastimageskipped']:
-					print "\nskipped",self.stats['skipcount'],"images so far"
-				self.stats['lastimageskipped']=False
-				return False
+				sys.stderr.write(".")
+			self.stats['lastimageskipped'] = True
+			self.stats['skipcount'] += 1
+			return True
+		else:
+			self.donedict[imgname]=None
+			self.stats['waittime'] = 0
+			if self.stats['lastimageskipped']:
+				print "\nskipped",self.stats['skipcount'],"images so far"
+			self.stats['lastimageskipped']=False
+			return False
 		return False
 
 	def _startLoop(self, imgdict):
@@ -419,7 +438,7 @@ class AppionLoop(object):
 		#calc images left
 		self.stats['imagesleft'] = self.stats['imagecount'] - self.stats['count'] - self.stats['skipcount']
 
-		#only if an image was processed
+		#only if an image was processed last
 		if(self.stats['lastcount'] != self.stats['count']):
 			print "\nStarting new image", self.stats['count'], "( skip:",self.stats['skipcount'],\
 				", left:", self.stats['imagesleft'],")", apDisplay.short(imgdict['filename'])
@@ -432,12 +451,12 @@ class AppionLoop(object):
 		# skip if image doesn't exist:
 		imgpath = os.path.join(self.params['imgdir'],imgdict['filename']+'.mrc')
 		if not os.path.isfile(imgpath):
-			print " !!!",imgpath,"not found, skipping"
+			apDisplay.printWarning(imgpath+" not found, skipping")
 			return False
 
-		# if continue option is true, check to see if image has already been processed
-		if self._alreadyProcessed(imgdict):
-			return False
+		# check to see if image has already been processed
+		#if self._alreadyProcessed(imgdict):
+		#	return False
 
 		self.stats['startloop'] = time.time()
 		apDisplay.printMsg("processing "+apDisplay.shortenImageName(imgdict['filename']))
@@ -449,7 +468,7 @@ class AppionLoop(object):
 		"""
 		### THIS NEEDS TO BECOME MUCH MORE GENERAL, e.g. Peaks
 		tdiff = time.time()-self.stats['startloop']
-		if not self.params["continue"] or tdiff > 0.3:
+		if not self.params['continue'] or tdiff > 0.3:
 			count = self.stats['count']
 			#if(count != self.stats['lastcount']):
 			if(self.params['method'] != None):
@@ -524,13 +543,17 @@ class AppionLoop(object):
 					"(",n,round(slope,5),round(rho,5),round(gain,2),")"
 
 	def _removeProcessedImages(self):
+		startlen = len(self.imgtree)
 		i = 0
 		while i < len(self.imgtree):
 			imgdict = self.imgtree[i]
-			if self._alreadyProcessed(imgdict) and not self._reprocessImage(imgdict):
-				apDisplay.printMsg("skipping image "+apDisplay.short(imgdict['filename']))
-				del self.imgtree[i]
-				i -= 1
+			if self._alreadyProcessed(imgdict):
+				if self.reprocessImage(imgdict):
+					apDisplay.printMsg("reprocessing image "+apDisplay.short(imgdict['filename']))
+				else:
+					apDisplay.printMsg("skipping image "+apDisplay.short(imgdict['filename']))
+					del self.imgtree[i]
+					i -= 1
 			i += 1
 
 	def _printLine(self):
@@ -540,16 +563,24 @@ class AppionLoop(object):
 		"""
 		pauses 10 mins and then checks for more images to process
 		"""
-		if self.params['nowait']:
-			return False,None
-		if not self.params["dbimages"]:
-			return False,None
+		#SKIP MESSAGE
 		if(self.stats['skipcount'] > 0):
-			print ""
-			print " !!! Images already processed and were therefore skipped (total",\
-				self.stats['skipcount'],"skipped)."
-			print " !!! to them process again, remove \'continue\' option and run selexon again."
+			apDisplay.printWarning("Images already processed and were therefore skipped (total "+\
+				str(self.stats['skipcount'])+" skipped).")
+			apDisplay.printMsg("to them process again, remove \'continue\' option and run selexon again.")
 			self.stats['skipcount'] = 0
+
+		#SHOULD IT WAIT?
+		if self.params['nowait']:
+			return False
+		if not self.params["dbimages"]:
+			return False
+		self.stats['waittime'] = self.stats['waittime'] + 10
+		if(self.stats['waittime'] > 120):
+			print "Waited longer than two hours, so I am quitting"
+			return False
+
+		#WAIT
 		print "\nAll images processed. Waiting ten minutes for new images (waited",\
 			self.stats['waittime'],"min so far)."
 		for i in range(20):
@@ -557,12 +588,10 @@ class AppionLoop(object):
 			#print a dot every 30 seconds
 			sys.stderr.write(".")
 		print ""
-		self.stats['waittime'] = self.stats['waittime'] + 10
-		if(self.stats['waittime'] > 120):
-			print "Waited longer than two hours, so I am quitting"
-			return False,None
-		images = apDatabase.getAllImages(self.stats, self.params)
-		return True,images
+
+		#GET NEW IMAGES
+		self.imgtree = self.getAllImages()
+		return True
 
 	def _finishLoop(self):
 		"""
