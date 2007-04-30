@@ -321,6 +321,7 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 						# other status ignored (mainly NULL)
 						pass
 			self.setTargets(targets[type], type)
+		self.setTargets(donetargets,'done')
 
 		n = 0
 		for type in ('acquisition','focus'):

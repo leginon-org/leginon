@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ClickTargetTransformer.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-19 18:41:34 $
+# $Date: 2007-04-30 20:03:35 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -76,11 +76,14 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, display=True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
-		self.imagepanel.addTargetTool('transformed', wx.RED, display=True)
+		self.imagepanel.addTargetTool('done', wx.RED, display=True)
+		self.imagepanel.selectiontool.setDisplayed('done', True)
+		self.imagepanel.addTargetTool('transformed', wx.Color(255, 0, 255), display=True)
 		self.imagepanel.selectiontool.setDisplayed('transformed', True)
 
 		self.imagepanel.setTargets('acquisition', [])
 		self.imagepanel.setTargets('focus', [])
+		self.imagepanel.setTargets('done', [])
 
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
 
@@ -106,7 +109,6 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
-		self.setNodeSettings()
 		dialog.Destroy()
 
 	def onTransformTool(self, evt):
