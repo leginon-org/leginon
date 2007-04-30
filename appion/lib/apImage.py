@@ -17,13 +17,7 @@ import convolver
 #appion
 import apDisplay
 
-def preProcessImageParams(imgdata, params, planeReg=True):
-	"""
-	standard processing for an image, given the params dict
-	"""
-	return preProcessImage(imgdata, params['bin'], params['apix'], params['lp'])
-
-def preProcessImage(imgdata, bin=1, apix=1.0, lowpass=0.0, planeReg=True):
+def _processImage(imgdata, bin=1, apix=1.0, lowpass=0.0, planeReg=True):
 	"""
 	standard processing for an image
 	"""
@@ -36,28 +30,34 @@ def preProcessImage(imgdata, bin=1, apix=1.0, lowpass=0.0, planeReg=True):
 	return simgdata
 
 
-def preProcessImageParams2(img, params, planeReg=True):
+def preProcessImage(imgdata, bin=None, apix=None, lowpass=None, planeReg=True, params={}):
 	"""
 	standard processing for an image
 	"""
-	apix = params['apix']
 	#BINNING
-	if 'bin' in params:
-		bin = params['bin']
-		img = binImg(img,bin)
-	else:
-		bin = 1
-	#LOWPASS
-	if 'lowpass' in params:
-		lowpass = params['lowpass']
-		img = lowPassFilter(img,apix,bin,lowpass)
-	else:
-		lowpass = 0
-	#HIGHPASS
-	if planeReg:
-		img = planeRegression(img)
-	img = 255.0*(normRange(img)+1.0e-7)
-	return img
+	if bin is None:
+		if 'bin' in params:
+			bin = params['bin']
+		else:
+			apDisplay.printWarning("'bin' is not defined in preProcessImage")
+			bin = 1
+	#ANGSTROMS PER PIXEL
+	if apix is None:
+		if 'apix' in params:
+			apix = params['apix']
+		else:
+			apDisplay.printError("'apix' is not defined in preProcessImage")
+	#LOW PASS FILTER
+	if lowpass is None:
+		if 'lowpass' in params:
+			lowpass = params['lowpass']
+		elif 'lp' in params:
+			lowpass = params['lp']
+		else:
+			lowpass = 0
+			apDisplay.printWarning("'lowpass' is not defined in preProcessImage")
+	#HIGH PASS FILTER => PLANE REGRESSION
+	return _processImage(imgdata, bin, apix, lowpass, planeReg)
 
 def binImg(img,bin=1):
 	"""
