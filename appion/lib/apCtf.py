@@ -1,12 +1,15 @@
 #Part of the new pyappion
 
-import os,re,sys
-#import aceFunctions as af
-import appionData
+#pythonlib
+import os
+import re
+import sys
 import math
-import apLoop,apDisplay
+#appion
+import appionData
+import apLoop
+import apDisplay
 import apDB
-#import dbdatakeeper
 try:
 	import pymat
 except:
@@ -14,18 +17,18 @@ except:
 
 acedb  = apDB.apdb
 
-def runAce(matlab,img,params):
-	imgname = img['filename']
-	imgpath = os.path.join(img['session']['image path'], imgname+'.mrc')
+def runAce(matlab,imgdict,params):
+	imgname = imgdict['filename']
+	imgpath = os.path.join(imgdict['session']['image path'], imgname+'.mrc')
 
 	if params['nominal']:
 		nominal=params['nominal']
 	else:
-		nominal=img['scope']['defocus']
+		nominal=imgdict['scope']['defocus']
 	
 	pymat.eval(matlab,("dforig = %e;" % nominal))
 
-	expid=int(img['session'].dbid)
+	expid=int(imgdict['session'].dbid)
 	if params['commit']==True:
 		#insert ace params into dbctfdata.ace_params table in db
 		insertAceParams(params,expid)
@@ -66,17 +69,16 @@ def runAce(matlab,img,params):
 			insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfile2)
 	return
 
-def runAceDrift(matlab,img,params):
-	imgpath=img['session']['image path']
-	imgname=img['filename']
-	imgpath=imgpath + '/' + imgname + '.mrc'
+def runAceDrift(matlab,imgdict,params):
+	imgname = imgdict['filename']
+	imgpath = os.path.join(imgdict['session']['image path'], imgname+'.mrc')
 	
 	if params['nominal']:
 		nominal=params['nominal']
 	else:
-		nominal=img['scope']['defocus']
+		nominal=imgdict['scope']['defocus']
 	
-	expid=int(img['session'].dbid)
+	expid=int(imgdict['session'].dbid)
 	if params['commit']==True:
 		#insert ace params into dbctfdata.ace_params table in db
 		insertAceParams(params,expid)
@@ -94,10 +96,9 @@ def runAceDrift(matlab,img,params):
 	pymat.eval(matlab,acecommand)
 	print "done"	
 
-def runAceCorrect(matlab,img,params):
-	imgpath=img['session']['image path']
-	imgname=img['filename']
-	imgpath=imgpath + '/' + imgname + '.mrc'
+def runAceCorrect(matlab,imgdict,params):
+	imgname = imgdict['filename']
+	imgpath = os.path.join(imgdict['session']['image path'], imgname+'.mrc')
 	
 	matname=imgname+'.mrc.mat'
 	matfile=os.path.join(params['matdir'],matname)
@@ -185,7 +186,7 @@ def insertAceParams(params,expid):
 					     "please check your parameter settings.")
 	return
 
-def insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfile2):
+def insertCtfParams(imgdict,params,imgname,matfile,expid,ctfparams,opimfile1,opimfile2):
 	runq=appionData.ApAceRunData()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
@@ -194,10 +195,10 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfil
 	
 	legimgid=int(img.dbid)
 	legpresetid=None
-	if img['preset']:		
-		legpresetid =int(img['preset'].dbid)
+	if imgdict['preset']:		
+		legpresetid =int(imgdict['preset'].dbid)
 		
-	dforig=img['scope']['defocus']
+	dforig=imgdict['scope']['defocus']
 
 	print "Committing ctf parameters for",apDisplay.shortenImageName(imgname), "to database."
 
@@ -224,7 +225,7 @@ def insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfil
 		ctfq[ ctfparamlist[i] ] = ctfparams[i]
 
 	if ctfq['defocus1']==-1:
-		ctf_failedq=appionData.ctf(runId=runq, aceId=acevals[0], imageId=procimgq,\
+		ctf_failedq=appionData.ApCtfData(runId=runq, aceId=acevals[0], imageId=procimgq,\
 			mat_file=ctfq['mat_file'], graph1=ctfq['graph1'], graph2=ctfq['graph2'])
 		acedb.insert(ctf_failedq)
 	else:
@@ -258,11 +259,10 @@ def setScopeParams(matlab,params):
 		apDisplay.printError("Temp directory, '"+params['tempdir']+"' not present.")
 	return
 
-def getCTFParamsForImage(imagedata):
-	imagename = imagedata['filename']+'.mrc'
-	ctfq = appionData.ctf()
-	imq  = appionData.image(imagename=imagename)
-	ctfq['imageId'] = imq
+def getCTFParamsForImage(imgdict):
+	ctfq = appionData.ApCtfData()
+	imgid  = imgdict.dbid
+	ctfq['dbemdata|AcquisitionImageData|image'] = imgid
 	return(acedb.query(ctfq))
 
 def setAceConfig(matlab,params):
