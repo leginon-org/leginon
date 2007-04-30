@@ -14,7 +14,7 @@ class findemjob(threading.Thread):
       self.feed = feed
    def run(self):
 		fin=''
-		fin=os.popen('${FINDEM_EXE}','w')
+		fin=os.popen( getFindEMPath(), 'w')
 		fin.write(self.feed)
 		print "running findem.exe"
 		fin.flush
@@ -56,7 +56,7 @@ def runFindEM(imgname, params, thread=False):
 			current.start()
 		else:
 			fin=''
-			fin=os.popen('${FINDEM_EXE}','w')
+			fin=os.popen( getFindEMPath(), 'w')
 			fin.write(feed)
 			fin.flush
 			fin.close()
@@ -82,7 +82,7 @@ def findEMString(classavg, imgname, ccmapfile, params):
 	if not os.path.isfile(dwnimgname):
 		apDisplay.printError("image file, "+dwnimgname+" was not found")
 	else:
-		print "image file, "+dwnimgname
+		print "image file, "+apDisplay.short(dwnimgname)
 	feed = dwnimgname+"\n"
 
 	#TEMPLATE INFO
@@ -128,3 +128,24 @@ def findEMString(classavg, imgname, ccmapfile, params):
 	feed += borderwidth+"\n"
 
 	return feed
+
+def getFindEMPath():
+	findempath = os.environ.get('FINDEM_EXE')
+	if findempath is None and os.environ.get('APPIONDIR') is not None:
+		appiondir = os.environ.get('APPIONDIR')
+		trypath = os.path.join(appiondir,"/particle_manager/findem.exe")
+	 	if os.path.isfile(trypath):
+			findempath = trypath
+	if findempath is None:
+		user = os.environ.get('USER')
+		trypath = "/home/"+user+"/pyappion/particle_manager/findem.exe"
+	 	if os.path.isfile(trypath):
+			findempath = trypath
+	if findempath is None:
+		trypath = "/ami/sw/packages/pyappion/particle_manager/findem.exe"
+	 	if os.path.isfile(trypath):
+			findempath = trypath
+	if findempath is None:
+		apDisplay.printError("findem.exe was not found.\n"+
+			"Did you source useappion.sh?")
+	return findempath
