@@ -91,7 +91,8 @@ def insertParticlePeaks(peaktree, imgdict, expid, params):
 		particlesq['runId']       = runq
 		particlesq['imageId']     = imgids[0]
 		particlesq['selectionId'] = selexonresult[0]
-		for key in peakdict.keys():
+		# use an update function???, maybe best not to
+		for key in 'xcoord','ycoord','correlation','peakmoment','peakstddev','peakarea','template':
 			particlesq[key] = peakdict[key]
 		### INSERT VALUES
 		presult = partdb.query(particlesq)
