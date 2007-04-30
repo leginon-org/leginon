@@ -89,7 +89,7 @@ def insertParticlePeaks(peaktree, imgdict, expid, params):
 	### WRITE PARTICLES TO DATABASE
 	for peakdict in peaktree:
 		particlesq['runId']       = runq
-		particlesq['imageId']     = imgids[0]
+		particlesq['imageId']     = imgdict.dbid
 		particlesq['selectionId'] = selexonresult[0]
 		# use an update function???, maybe best not to
 		for key in 'xcoord','ycoord','correlation','peakmoment','peakstddev','peakarea','template':
@@ -163,7 +163,7 @@ def insertParticlePicks(params,imgdict,expid,manual=False):
 			corr=float(elements[3])
 
 			particlesq['runId']=runq
-			particlesq['imageId']=imgids[0]
+			particlesq['imageId']= imgdict.dbid
 			particlesq['selectionId']=selexonresult[0]
 			particlesq['xcoord']=xcenter
 			particlesq['ycoord']=ycenter
