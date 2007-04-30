@@ -10,15 +10,33 @@ import numarray.convolve as convolve
 #appion
 import apImage
 import apDisplay
+import apDatabase
+
+def getTemplates(params):
+	print " ... getting templates"
+	if params['templateIds']:
+		params['template'] = 'originalTemporaryTemplate'
+		# get the templates from the database
+		apDatabase.getDBTemplates(params)
+		# scale them to the appropriate pixel size
+		rescaleTemplates(params)
+		# set the template name to the copied file names
+		params['template']='scaledTemporaryTemplate'
+	checkTemplates(params)
+	# go through the template mrc files and downsize & filter them
+	for tmplt in params['templatelist']:
+		downSizeTemplate(tmplt, params)
+	print " ... downsize & filtered "+str(len(params['templatelist']))+ \
+		" file(s) with root \""+params["template"]+"\""
 
 def rescaleTemplates(params):
 	i=1
 	#removePreviousTemplates(params)
 	for tmplt in params['ogTmpltInfo']:
 		ogtmpltname  = "originalTemporaryTemplate"+str(i)+".mrc"
-		ogtmpltname  = os.path.join(params['rundir'],ogtmpltname)
+		ogtmpltname  = os.path.join(params['rundir'], ogtmpltname)
 		newtmpltname = "scaledTemporaryTemplate"+str(i)+".mrc"
-		newtmpltname = os.path.join(params['rundir'],newtmpltname)
+		newtmpltname = os.path.join(params['rundir'], newtmpltname)
 
 		if params['apix'] != params['scaledapix'][i]:
 			print "rescaling template",str(i),":",tmplt['apix'],"->",params['apix']
@@ -66,7 +84,7 @@ def downSizeTemplate(filename, params):
 		apDisplay.printError("binned image must be divisible by 2")
 	if boxsize[0] % bin != 0:
 		apDisplay.printError("box size not divisible by binning factor")
-	imgdata = apImage.preProcessImage(imgdata, bin=params['bin'], apix=params['apix'], lowpass=params['lp'], planeReg=False)
+	imgdata = apImage.preProcessImage(imgdata, params=params, planeReg=False)
 
 	#replace extension with .dwn.mrc
 	ext=re.compile('\.mrc$')
