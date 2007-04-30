@@ -34,6 +34,9 @@ def findMax(image):
 
 def findPeak(image):
 	i, j, value = findMax(image)
+	if (i,j) == (0,0):
+		image[(0,0)]=image.min()
+		i,j,value = findMax(image)
 	if i > image.shape[0]/2.0:
 		i -= image.shape[0]
 	if j > image.shape[1]/2.0:
