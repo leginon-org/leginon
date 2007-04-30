@@ -1,9 +1,15 @@
+
+#pythonlib
 import os
 import math
+import numarray
+#PIL
+import Image
+import ImageDraw
+#appion
 import apImage
 import apDisplay
-import ImageDraw
-import numarray
+#leginon
 import imagefun
 
 
@@ -28,7 +34,9 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params):
 	olapmult =  float(params["overlapmult"])
 	maxpeaks =  int(params["maxpeaks"])
 	imgname =   imgdict['filename']
-	pixrad =    diam/apix/2.0/float(bin)
+	binpixrad =    diam/apix/2.0/float(bin)
+	tmpldbid =  params['ogTmpltInfo'][tmplnum-1].dbid
+
 	#MAXPEAKSIZE ==> 1x AREA OF PARTICLE
 	maxsize =   int(round(math.pi*(apix*diam/float(bin))**2/4.0,0))+1
 
@@ -36,14 +44,13 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params):
 	varyThreshold(ccmap, threshold, maxsize)
 	#GET FINAL PEAKS
 	blobtree, percentcov = findBlobs(ccmap, threshold, maxsize=maxsize, maxpeaks=maxpeaks)
-	peaktree = convertBlobsToPeaks(blobtree, tmplnum, bin)
-
+	peaktree = convertBlobsToPeaks(blobtree, tmpldbid, tmplnum, bin)
 	print "Template "+str(tmplnum)+": Found",len(peaktree),"peaks ("+\
 		str(percentcov)+"% coverage)"
 	if(percentcov > 10):
 		apDisplay.printWarning("thresholding covers more than 10% of image; you should increase the threshold")
 
-	cutoff = olapmult*pixrad	#1.5x particle radius in pixels
+	cutoff = olapmult*binpixrad #1.5x particle radius in pixels
 	removeOverlappingPeaks(peaktree, cutoff)
 
 	if(len(peaktree) > maxpeaks):
@@ -57,8 +64,12 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params):
 		os.mkdir("ccmaxmaps")
 
 	image = apImage.arrayToImage(ccmap)
-	draw = ImageDraw.Draw(image)
-	drawPeaksBW(peaktree, draw, bin, pixrad)
+	image = image.convert("RGB")
+	image2 = image.copy()
+	draw = ImageDraw.Draw(image2)
+	drawPeaks(peaktree, draw, bin, binpixrad, fill=True)
+	image = Image.blend(image, image2, 0.3) 
+
 	outfile = "ccmaxmaps/"+imgname+".ccmaxmap"+str(tmplnum)+".jpg"
 	print " ... writing JPEG: ",outfile
 	image.save(outfile, "JPEG", quality=90)
@@ -72,7 +83,7 @@ def mergePeakTrees(imgdict, peaktreelist, params):
 	diam =        float(params["diam"])
 	apix =        float(params["apix"])
 	olapmult =    float(params["overlapmult"])
-	pixrad =      diam/apix/2.0/float(bin)
+	binpixrad =   diam/apix/2.0/float(bin)
 	imgname =     imgdict['filename']
 
 	#PUT ALL THE PEAKS IN ONE ARRAY
@@ -81,7 +92,7 @@ def mergePeakTrees(imgdict, peaktreelist, params):
 		mergepeaktree.extend(peaktree)
 
 	#REMOVE OVERLAPPING PEAKS
-	cutoff   = olapmult*pixrad	#1.5x particle radius in pixels
+	cutoff   = olapmult*binpixrad	#1.5x particle radius in pixels
 	mergepeaktree = removeOverlappingPeaks(mergepeaktree, cutoff)
 
 	bestpeaktree = []
@@ -128,7 +139,7 @@ def peakDistSq(a,b):
 	col1 = a['xcoord']
 	row2 = b['ycoord']
 	col2 = b['xcoord']
-	return (row1-row2)**2+(col1-col2)**2
+	return (row1-row2)**2 + (col1-col2)**2
 
 def varyThreshold(ccmap, threshold, maxsize):
 	for i in numarray.array([-0.05,-0.02,0.00,0.02,0.05]):
@@ -144,17 +155,19 @@ def varyThreshold(ccmap, threshold, maxsize):
 			print " ...      varying threshold: "+tstr+" gives "+lbstr+" peaks ("+\
 				pcstr+"% coverage )"
 
-def convertBlobsToPeaks(blobtree, tmplnum, bin):
+def convertBlobsToPeaks(blobtree, tmpldbid, tmplnum, bin):
 	peaktree = []
+	print "TEMPLATE DBID:",tmpldbid
 	for blobclass in blobtree:
 		peakdict = {}
-		peakdict['ycoord']      = blobclass.stats['center'][0]*bin
-		peakdict['xcoord']      = blobclass.stats['center'][1]*bin
+		peakdict['ycoord']      = float(blobclass.stats['center'][0]*float(bin))
+		peakdict['xcoord']      = float(blobclass.stats['center'][1]*float(bin))
 		peakdict['correlation'] = blobclass.stats['mean']
 		peakdict['peakmoment']  = blobclass.stats['moment']
 		peakdict['peakstddev']  = blobclass.stats['stddev']
 		peakdict['peakarea']    = blobclass.stats['n']
-		peakdict['template']    = tmplnum
+		peakdict['tmplnum']     = tmplnum
+		peakdict['template']    = tmpldbid
 		peaktree.append(peakdict)
 	return peaktree
 
@@ -163,6 +176,9 @@ def findBlobs(ccmap, thresh, maxsize=500, minsize=2, maxpeaks=1500, border=6, ma
 	ccthreshmap = imagefun.threshold(ccmap, thresh)
 	percentcov  =  round(100.0*float(ccthreshmap.sum())/float(totalarea),2)
 	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize,maxmoment,method)
+	if percentcov > 15:
+		apDisplay.printWarning("too much coverage in threshold: "+str(percentcov))
+		return [],percentcov
 	blobtree = imagefun.find_blobs(ccmap, ccthreshmap, border, maxpeaks*4,
 		maxsize, minsize, maxmoment, elim)
 	return blobtree, percentcov
@@ -201,31 +217,30 @@ def createPeakJpeg(imgdict, peaktree, params):
 	apix =    float(params["apix"])
 	if bin < 1: 
 		bin = 1
-	pixrad  = diam/apix/2.0/float(bin)
+	binpixrad  = diam/apix/2.0/float(bin)
 	imgname = imgdict['filename']
 
 	jpegdir = os.path.join(params['rundir'],"jpgs")
 	if not (os.path.exists(jpegdir)):
 		os.mkdir(jpegdir,0777)
 
-	numer = apImage.preProcessImageParams(imgdict['image'],params)
+	numer = apImage.preProcessImage(imgdict['image'], bin=bin, params=params)
 	image = apImage.arrayToImage(numer)
 	image = image.convert("RGB")
 
-	draw = ImageDraw.Draw(image)
-
-	drawPeaks(peaktree, draw, bin, pixrad)
-
+	image2 = image.copy()
+	draw = ImageDraw.Draw(image2)
+	drawPeaks(peaktree, draw, bin, binpixrad)
 	outfile = os.path.join(jpegdir,imgname+".prtl.jpg")
 	print " ... writing JPEG: ",outfile
-
+	image = Image.blend(image, image2, 0.9) 
 	image.save(outfile, "JPEG", quality=95)
 
 	del image,numer,draw
 
 	return
 
-def drawPeaks(peaktree, draw, bin, pixrad, circmult=1.0, numcircs=2, circshape="circle"):
+def drawPeaks(peaktree, draw, bin, binpixrad, circmult=1.0, numcircs=None, circshape="circle", fill=False):
 	"""	
 	Takes peak list and draw circles around all the peaks
 	"""
@@ -238,57 +253,42 @@ def drawPeaks(peaktree, draw, bin, pixrad, circmult=1.0, numcircs=2, circshape="
 	Order: 	Red, Green, Blue, Yellow, Cyan, Magenta,
 		Orange, Teal, Purple, Lime-Green, Sky-Blue, Pink
 	"""
-	ps=float(circmult*pixrad) #1.5x particle radius
+	if numcircs is None and fill is False:
+		print "BINPEAKRAD",binpixrad/8.0
+		numcircs = int( round(binpixrad/8.0,0) )+1
+	elif fill is True:
+		numcircs = 1
+	#CIRCLE SIZE:
+	ps=float(circmult*binpixrad) #1.5x particle radius
 
 	#00000000 1 2 3333 44444 5555555555 666666666 777777777
 	#filename x y mean stdev corr_coeff peak_size templ_num angle moment
 	for peakdict in peaktree:
 		x1=float(peakdict['xcoord'])/float(bin)
 		y1=float(peakdict['ycoord'])/float(bin)
-
-		if 'template' in peakdict:
+		if 'tmplnum' in peakdict:
 			#GET templ_num
+			num = int(peakdict['tmplnum'])%12
+		elif 'template' in peakdict:
+			#GET templ_dbid
 			num = int(peakdict['template'])%12
 		elif 'peakarea' in peakdict and peakdict['peakarea'] != 0:
 			#GET templ_num
 			num = int(peakdict['peakarea']*255)%12
 		else:
 			num = 0
-		#Draw (numcircs) circles of size (circmult*pixrad)
-		count = 0
-		while(count < numcircs):
+		#Draw (numcircs) circles of size (circmult*binpixrad)
+		for count in range(numcircs):
 			tps = ps + count
-			coord=(x1-tps, y1-tps, x1+tps, y1+tps)
-			if(circshape == "square"):
-				draw.rectangle(coord,outline=circle_colors[num])
+			coord = (x1-tps, y1-tps, x1+tps, y1+tps)
+			if circshape is "square":
+				if fill is True:
+					draw.rectangle(coord,fill=circle_colors[num])
+				else:
+					draw.rectangle(coord,outline=circle_colors[num])
 			else:
-				draw.ellipse(coord,outline=circle_colors[num])
-			count = count + 1
-
+				if fill is True:
+					draw.ellipse(coord,fill=circle_colors[num])
+				else:
+					draw.ellipse(coord,outline=circle_colors[num])
 	return 
-
-def drawPeaksBW(peaktree, draw, bin, pixrad):
-	ps=float(pixrad) #1x particle radius
-	psp = ps+1
-	psn = ps-1
-	for peakdict in peaktree:
-		x1 = float(peakdict['xcoord'])
-		y1 = float(peakdict['ycoord'])
-		m1 = float(peakdict['peakmoment'])
-		if(m1 < 2.2):
-			coord=(x1-ps, y1-ps, x1+ps, y1+ps)
-			draw.ellipse(coord,outline="white")
-			coord=(x1-psp, y1-psp, x1+psp, y1+psp)
-			draw.ellipse(coord,outline="black")
-			coord=(x1-psn, y1-psn, x1+psn, y1+psn)
-			draw.ellipse(coord,outline="black")
-		else:
-			coord=(x1-ps, y1-ps, x1+ps, y1+ps)
-			draw.rectangle(coord,outline="white")
-			coord=(x1-psp, y1-psp, x1+psp, y1+psp)
-			draw.rectangle(coord,outline="black")
-			coord=(x1-psn, y1-psn, x1+psn, y1+psn)
-			draw.rectangle(coord,outline="black")
-		#draw.ellipse(coord,outline="white")
-
-	return
