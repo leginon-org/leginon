@@ -77,8 +77,10 @@ if __name__ == '__main__':
 			apCtf.setScopeParams(matlab,scopeparams)
 			
 ### RUN ACE
-			apCtf.runAce(matlab,img,params)
+			ctfparams = apCtf.runAce(matlab,img,params)
 ### END RUN ACE
+			if params['commit'] is True:
+				apCtf.commitAceParamToDatabase(img, ctfparams, params)
 
 			apLoop.printSummary(stats, params)
 

@@ -15,7 +15,6 @@ import apPeaks
 import apParticle
 #legacy
 import selexonFunctions  as sf1
-import selexonFunctions2 as sf2
 
 class TemplateCorrelationLoop(appionLoop.AppionLoop):
 	def preLoopFunctions(self):
@@ -26,8 +25,9 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 		apTemplate.rescaleTemplates(self.params)
 		### RUN FindEM
 		if 'method' in self.params and self.params['method'] == "experimental":
-			numpeaks = sf2.runCrossCorr(params,imgname)
-			sf2.createJPG2(params,imgname)
+			#numpeaks = sf2.runCrossCorr(params,imgname)
+			#sf2.createJPG2(params,imgname)
+			sys.exit(1)
 		else:
 			print "FINDEM"
 			self.ccmaplist = apFindEM.runFindEM(imgdict, self.params)
@@ -35,7 +35,9 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 			self.peaktree  = apPeaks.findPeaks(imgdict, self.ccmaplist, self.params)
 			print "CREATEJPG"
 			apPeaks.createPeakJpeg(imgdict, self.peaktree, self.params)
-			#sf2.createJPG2(self.params,imgname)
+
+	def postLoopFunctions(self):
+		return
 
 	def commitToDatabase(self, imgdict):
 		expid = int(imgdict['session'].dbid)

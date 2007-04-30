@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import math
+import shutil
 #appion
 import appionData
 import apLoop
@@ -46,28 +47,33 @@ def runAce(matlab,imgdict,params):
 	pymat.eval(matlab,acecmd)
 	print apDisplay.color(" done","brown")
 
-	matfile = imgname+'.mrc.mat'
+	matfile = os.path.join(params['matdir'], imgname+".mrc.mat")
 	if params['stig']==0:
-		savematcmd = "save('"+os.path.join(params['matdir'],matfile)+"','ctfparams','scopeparams','dforig');"
+		savematcmd = "save('"+matfile+"','ctfparams','scopeparams', 'dforig');"
 		pymat.eval(matlab,savematcmd)
 
-	ctfparams=pymat.get(matlab,'ctfparams')
+	ctfparams=pymat.get(matlab, 'ctfparams')
 	printResults(params,nominal,ctfparams)
 
-	#display must be on to be able to commit ctf results to db 	
-	if (params['display']):
-		imfile1=os.path.join(params['tempdir'],'im1.png')
-		imfile2=os.path.join(params['tempdir'],'im2.png')
-		opimfile1=imgname+'.mrc1.png'
-		opimfile2=imgname+'.mrc2.png'
-		pymat.eval(matlab,"im1 = imread('"+imfile1+"');")
-		pymat.eval(matlab,"im2 = imread('"+imfile2+"');")
-		pymat.eval(matlab,"imwrite(im1,'"+os.path.join(params['opimagedir'],opimfile1)+"');")
-		pymat.eval(matlab,"imwrite(im2,'"+os.path.join(params['opimagedir'],opimfile2)+"');")
-		#insert ctf params into dbctfdata.ctf table in db
-		if (params['commit']==True):
-			insertCtfParams(img,params,imgname,matfile,expid,ctfparams,opimfile1,opimfile2)
-	return
+	return ctfparams
+
+def commitAceParamToDatabase(imgdict, ctfparams, params):
+	expid = int(imgdict['session'].dbid)
+	imgname = imgdict['filename']
+	matfile = os.path.join(params['matdir'], imgname+".mrc.mat")
+
+	imfile1=os.path.join(params['tempdir'], "im1.png")
+	imfile2=os.path.join(params['tempdir'], "im2.png")
+	opimfile1=os.path.join(params['opimagedir'], imgname+".mrc1.png")
+	opimfile2=os.path.join(params['opimagedir'], imgname+".mrc2.png")
+	shutil.copy(imfile1,opimfile1)
+	shutil.copy(imfile2,opimfile2)
+	#pymat.eval(matlab,"im1 = imread('"+imfile1+"');")
+	#pymat.eval(matlab,"im2 = imread('"+imfile2+"');")
+	#pymat.eval(matlab,"imwrite(im1,'"+opimfile1+"');")
+	#pymat.eval(matlab,"imwrite(im2,'"+opimfile2+"');")
+
+	insertCtfParams(imgdict, params, matfile, expid, ctfparams, opimfile1, opimfile2)
 
 def runAceDrift(matlab,imgdict,params):
 	imgname = imgdict['filename']
@@ -186,21 +192,21 @@ def insertAceParams(params,expid):
 					     "please check your parameter settings.")
 	return
 
-def insertCtfParams(imgdict,params,imgname,matfile,expid,ctfparams,opimfile1,opimfile2):
+def insertCtfParams(imgdict,params,matfile,expid,ctfparams,opimfile1,opimfile2):
 	runq=appionData.ApAceRunData()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
 
 	acerun=acedb.query(runq,results=1)
 	
-	legimgid=int(img.dbid)
+	legimgid=int(imgdict.dbid)
 	legpresetid=None
 	if imgdict['preset']:		
 		legpresetid =int(imgdict['preset'].dbid)
 		
 	dforig=imgdict['scope']['defocus']
 
-	print "Committing ctf parameters for",apDisplay.shortenImageName(imgname), "to database."
+	print "Committing ctf parameters for",apDisplay.short(imgdict['filename']), "to database."
 
 	# make sure the directory paths have '/' at end
 	graphpath=params['opimagedir']

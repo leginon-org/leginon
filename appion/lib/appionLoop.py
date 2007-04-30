@@ -74,6 +74,7 @@ class AppionLoop(object):
 				#END LOOP OVER IMAGES
 			notdone = self._waitForMoreImages()
 			#END NOTDONE LOOP
+		self.postLoopFunctions()
 		self._finishLoop()
 
 	def commitToDatabase(self, imgdict):
@@ -102,6 +103,12 @@ class AppionLoop(object):
 	def preLoopFunctions(self):
 		"""
 		do something before starting the loop
+		"""
+		return
+
+	def postLoopFunctions(self):
+		"""
+		do something after finishing the loop
 		"""
 		return
 
