@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.44 $
+# $Revision: 1.45 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-01 18:21:48 $
+# $Date: 2007-05-01 19:01:03 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -15,7 +15,7 @@ import threading
 import sys
 import wx
 from gui.wx.Choice import Choice
-from gui.wx.Entry import FloatEntry, EVT_ENTRY
+from gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
 from gui.wx.Presets import EditPresetOrder
 import gui.wx.Acquisition
 import gui.wx.Dialog
