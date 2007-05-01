@@ -285,7 +285,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		imagedata = data.AcquisitionImageData(initializer=imageold, preset=image0['preset'], label=self.name, target=image0['target'], list=None, emtarget=image0['emtarget'], version=0, tiltnumber=self.tiltnumber)
 		self.setTargets([], 'Peak')
 		self.publishDisplayWait(imagedata)
-		
+
 		self.logger.info('Final Matrix: %s' % (runningresult,))
 		return (runningresult, imagedata)
 
@@ -317,7 +317,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		extend Acquisition.moveAndPreset because additionally we need to
 		return to the same defocus as the other images in the tilt series
 		'''
-		Acquisition.moveAndPreset(self, presetdata, emtarget)
+		acquisition.Acquisition.moveAndPreset(self, presetdata, emtarget)
 		targetdata = emtarget['target']
 		tiltseries,defocus = self.getTiltSeries(targetdata)
 		if tiltseries is None:
