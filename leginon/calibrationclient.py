@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.204 $
+# $Revision: 1.205 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-01 18:21:48 $
+# $Date: 2007-05-01 22:33:30 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -1002,6 +1002,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 
 	def measureTiltAxisLocation(self, tilt_value, update, snrcut=2.5, correlation_type=None, tilttwice=False, medfilt=3):
 		"""
+		irint 'onMeasure', update
 		measure position on image of tilt axis
 		"""
 		#neil changes here
@@ -1043,6 +1044,9 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		self.displayCorrelation(pc)
 
 		peak01 = peakfinder.findSubpixelPeak(pc)
+		snr = None
+		if 'snr' in peak01:
+			snr = peak01['snr']
 		peak01 = peak01['subpixel peak']
 		shift01 = correlator.wrap_coord(peak01, pc.shape)
 		self.displayPeak(peak01)
@@ -1052,8 +1056,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 
 		## check whether it worked
 		keepvalue = True
-		if 'snr' in peak01:
-			snr = peak01['snr']
+		if snr is not None:
 			self.node.logger.info('snr: %s' % (snr,))
 			if snr > snrcut:
 				keepvalue = True

@@ -100,7 +100,7 @@ class PeakFinder(object):
 			self.results['noise']  = nd_image.standard_deviation(im)
 			self.results['mean']   = nd_image.mean(im)
 			self.results['signal'] = self.results['pixel peak value'] - self.results['mean']
-			if self.results['noise'] != self.results['noise'] and self.results['noise'] != 0.0:
+			if self.results['noise'] == self.results['noise'] and self.results['noise'] != 0.0:
 				self.results['snr'] = self.results['signal'] / self.results['noise']
 			else:
 				self.results['snr'] = self.results['pixel peak value']

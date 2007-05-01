@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.46 $
+# $Revision: 1.47 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-01 20:09:19 $
+# $Date: 2007-05-01 22:33:30 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -225,9 +225,9 @@ class MeasureTiltAxisDialog(wx.Dialog):
 		sbsz.Add(self.crosscorr, (4,2), (1,1))
 
 		self.measurecancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
-		self.measureinit = wx.Button(self,  wx.ID_OK, 'Initial Offset')
+		self.measureinit = wx.Button(self,  -1, 'Initial Offset')
 		self.Bind(wx.EVT_BUTTON, self.onMeasureButtonInit, self.measureinit)
-		self.measureupdate = wx.Button(self,  wx.ID_OK, 'Update Offset')
+		self.measureupdate = wx.Button(self,  -1, 'Update Offset')
 		self.Bind(wx.EVT_BUTTON, self.onMeasureButtonUpdate, self.measureupdate)
 
 		self.sizer = wx.GridBagSizer(5, 5)
