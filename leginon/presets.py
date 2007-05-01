@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.246 $
+# $Revision: 1.247 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-13 21:30:41 $
+# $Date: 2007-05-01 21:26:23 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -631,6 +631,13 @@ class PresetsManager(node.Node):
 
 		# update old preset or create new one
 		if name in self.presets.keys():
+			if self.settings['apply offset']: 
+				self.logger.info('removing tilt axis offset from image shift before saving to preset')
+				oldpreset = self.presets[name]
+				oldimageshift = oldpreset['image shift']
+				oldiswithoffset = self.getOffsetImageShift(oldpreset)
+				newparams['image shift']['x'] -= (oldiswithoffset['x']-oldimageshift['x'])
+				newparams['image shift']['y'] -= (oldiswithoffset['y']-oldimageshift['y'])
 			newpreset = self.updatePreset(name, newparams)
 		elif parameters is not None:
 			raise ValueError
