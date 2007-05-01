@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.45 $
+# $Revision: 1.46 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-01 19:01:03 $
+# $Date: 2007-05-01 20:09:19 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -204,10 +204,10 @@ class MeasureTiltAxisDialog(wx.Dialog):
 		sbsz.Add(label2, (1,2), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, "Median filter: ")
-		self.medianvalue = IntEntry(self, -1, allownone=False, chars=5, value='3')
+		self.medfiltvalue = IntEntry(self, -1, allownone=False, chars=5, value='3')
 		label2 = wx.StaticText(self, -1, " pixels")
 		sbsz.Add(label, (2,0), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(self.medianvalue, (2,1), (1,1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(self.medfiltvalue, (2,1), (1,1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
 		sbsz.Add(label2, (2,2), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, "Number tilts: ")
