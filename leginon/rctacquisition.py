@@ -72,9 +72,11 @@ class RCTAcquisition(acquisition.Acquisition):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
 		self.tiltnumber = 0
+		self.tiltseries = None
 
 	def setImageFilename(self, imagedata):
 		setImageFilename(imagedata, tiltnumber=self.tiltnumber)
+		imagedata['tilt series'] = self.tiltseries
 
 	def processTargetList(self, tilt0targetlist):
 		'''
@@ -289,6 +291,42 @@ class RCTAcquisition(acquisition.Acquisition):
 
 	def alreadyAcquired(self, target, presetname):
 		return False
+
+	def getTiltSeries(self, targetdata):
+		'''
+		targetdata argument is target about to be acquired.  Find the tilt
+		series that this new image will belong to if it exists, otherwise
+		create a new tilt series.
+		'''
+		commontarget = targetdata['image']['target']
+		targetnumber = targetdata['number']
+		qimage1 = data.AcquisitionImageData(target=commontarget)
+		qtarget = data.AcquisitionImageTargetData(image=qimage1, number=targetnumber)
+		qimage2 = data.AcquisitionImageData(target=qtarget)
+		images = self.research(qimage2, readimages=False)
+		if images:
+			tiltseries = images[0]['tilt series']
+			defocus = images[0]['scope']['defocus']
+		else:
+			tiltseries = None
+			defocus = None
+		return tiltseries, defocus
+
+	def moveAndPreset(self, presetdata, emtarget):
+		'''
+		extend Acquisition.moveAndPreset because additionally we need to
+		return to the same defocus as the other images in the tilt series
+		'''
+		Acquisition.moveAndPreset(self, presetdata, emtarget)
+		targetdata = emtarget['target']
+		tiltseries,defocus = self.getTiltSeries(targetdata)
+		if tiltseries is None:
+			self.tiltseries = data.TiltSeriesData()
+			self.publish(self.tiltseries, database=True, dbforce=True)
+		else:
+			self.tiltseries = tiltseries
+			self.logger.info('using defocus of first tilt at this target')
+			self.instrument.tem.Defocus = defocus
 
 	def testAcquire(self):
 		im = self.acquireImage()
