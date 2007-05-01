@@ -367,3 +367,24 @@ class ApTestResultData(data.Data):
 		)
 	typemap = classmethod(typemap)
 data.ApTestResultData=ApTestResultData
+
+### Assessment tables ###
+
+class ApAssessmentRunData(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('dbemdata|SessionData|session',int),
+			('name',str),
+		)
+	typemap = classmethod(typemap)
+data.ApAssessmentRunData=ApAssessmentRunData
+
+class ApAssessmentData(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('assessmentrun', ApAssessmentRunData),
+			('dbemdata|AcquisitionImageData|image', int),
+			('selectionkeep', int),
+		)
+	typemap = classmethod(typemap)
+data.ApAssessmentData=ApAssessmentData
