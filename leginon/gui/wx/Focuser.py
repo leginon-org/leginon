@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.43 $
+# $Revision: 1.44 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-13 23:40:54 $
+# $Date: 2007-05-01 18:21:48 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -203,19 +203,26 @@ class MeasureTiltAxisDialog(wx.Dialog):
 		sbsz.Add(self.snrvalue, (1,1), (1,1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
 		sbsz.Add(label2, (1,2), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
+		label = wx.StaticText(self, -1, "Median filter: ")
+		self.medianvalue = IntEntry(self, -1, allownone=False, chars=5, value='3')
+		label2 = wx.StaticText(self, -1, " pixels")
+		sbsz.Add(label, (2,0), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(self.medianvalue, (2,1), (1,1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(label2, (2,2), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+
 		label = wx.StaticText(self, -1, "Number tilts: ")
 		self.onetilt = wx.RadioButton(self, -1, "Once", style=wx.RB_GROUP|wx.ALIGN_CENTER_VERTICAL)
 		self.twotilt = wx.RadioButton(self, -1, "Twice", style=wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(label, (2,0), (1,1))
-		sbsz.Add(self.onetilt, (2,1), (1,1))
-		sbsz.Add(self.twotilt, (2,2), (1,1))
+		sbsz.Add(label, (3,0), (1,1))
+		sbsz.Add(self.onetilt, (3,1), (1,1))
+		sbsz.Add(self.twotilt, (3,2), (1,1))
 
 		label = wx.StaticText(self, -1, "Correlation: ")
 		self.phasecorr = wx.RadioButton(self, -1, "Phase", style=wx.RB_GROUP|wx.ALIGN_CENTER_VERTICAL)
 		self.crosscorr = wx.RadioButton(self, -1, "Cross", style=wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(label, (3,0), (1,1))
-		sbsz.Add(self.phasecorr, (3,1), (1,1))
-		sbsz.Add(self.crosscorr, (3,2), (1,1))
+		sbsz.Add(label, (4,0), (1,1))
+		sbsz.Add(self.phasecorr, (4,1), (1,1))
+		sbsz.Add(self.crosscorr, (4,2), (1,1))
 
 		self.measurecancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
 		self.measureinit = wx.Button(self,  wx.ID_OK, 'Initial Offset')
@@ -240,13 +247,14 @@ class MeasureTiltAxisDialog(wx.Dialog):
 	def onMeasure(self, evt, update):
 		atilt = self.tiltvalue.GetValue()
 		asnr  = self.snrvalue.GetValue()
+		amedfilt  = self.medfiltvalue.GetValue()
 		if(self.crosscorr.GetValue() and not self.phasecorr.GetValue()):
 			acorr = 'cross'
 		else:  acorr = 'phase'
 		if(self.twotilt.GetValue() and not self.onetilt.GetValue()):
 			atilttwice = True
 		else:  atilttwice = False
-		threading.Thread(target=self.node.measureTiltAxis, args=(atilt,update,asnr,acorr,atilttwice)).start()
+		threading.Thread(target=self.node.measureTiltAxis, args=(atilt,update,asnr,acorr,atilttwice,amedfilt)).start()
 
 class AlignRotationCenterDialog(wx.Dialog):
 	def __init__(self, parent):

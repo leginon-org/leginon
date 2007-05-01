@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.203 $
+# $Revision: 1.204 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-13 23:40:53 $
+# $Date: 2007-05-01 18:21:48 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -1000,7 +1000,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		z = y / 2.0 / math.sin(tilt_value)
 		return z
 
-	def measureTiltAxisLocation(self, tilt_value, update, snrcut=2.5, correlation_type=None, tilttwice=False):
+	def measureTiltAxisLocation(self, tilt_value, update, snrcut=2.5, correlation_type=None, tilttwice=False, medfilt=3):
 		"""
 		measure position on image of tilt axis
 		"""
@@ -1036,8 +1036,10 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		self.correlator.setImage(1, im1)
 		if correlation_type == 'phase':
 			pc = self.correlator.phaseCorrelate()
+			pc = numarray.nd_image.median_filter(pc, size=medfilt)
 		else:
 			pc = self.correlator.crossCorrelate()
+		
 		self.displayCorrelation(pc)
 
 		peak01 = peakfinder.findSubpixelPeak(pc)
