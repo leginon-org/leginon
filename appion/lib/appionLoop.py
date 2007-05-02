@@ -10,7 +10,7 @@ import cPickle
 #appion
 import apDisplay
 import apDatabase
-import apXml
+#import apXml
 #leginon
 try:
 	import mem
