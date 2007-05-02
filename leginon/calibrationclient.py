@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.205 $
+# $Revision: 1.206 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-01 22:33:30 $
+# $Date: 2007-05-02 01:14:04 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -1000,7 +1000,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		z = y / 2.0 / math.sin(tilt_value)
 		return z
 
-	def measureTiltAxisLocation(self, tilt_value, update, snrcut=2.5, correlation_type=None, tilttwice=False, medfilt=3):
+	def measureTiltAxisLocation(self, tilt_value, update, snrcut=10.0, correlation_type=None, tilttwice=False, medfilt=3):
 		"""
 		irint 'onMeasure', update
 		measure position on image of tilt axis
@@ -1055,13 +1055,11 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		self.node.logger.info('measured pixel shift: %s' % (pixelshift,))
 
 		## check whether it worked
-		keepvalue = True
 		if snr is not None:
-			self.node.logger.info('snr: %s' % (snr,))
-			if snr > snrcut:
-				keepvalue = True
-			else:
-				keepvalue = False
+			self.node.logger.info('snr: %s' % (round(snr,2),))
+			if snr < snrcut:
+				#wasn't a good enough fit
+				self.node.logger.error("image correction failed, snr below cutoff")
 				return imagedata0, pixelshift
 
 		## convert pixel shift into stage movement

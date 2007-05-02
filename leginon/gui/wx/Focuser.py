@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.47 $
+# $Revision: 1.48 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-01 22:33:30 $
+# $Date: 2007-05-02 01:14:04 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -190,14 +190,14 @@ class MeasureTiltAxisDialog(wx.Dialog):
 		sbsz = wx.GridBagSizer(5,5)
 
 		label = wx.StaticText(self, -1, "Tilt angle: ")
-		self.tiltvalue = FloatEntry(self, -1, allownone=False, chars=5, value='30.0')
+		self.tiltvalue = FloatEntry(self, -1, allownone=False, chars=5, value='15.0')
 		label2 = wx.StaticText(self, -1, " degrees")
 		sbsz.Add(label, (0,0), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		sbsz.Add(self.tiltvalue, (0,1), (1,1), wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
 		sbsz.Add(label2, (0,2), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, "SNR cutoff: ")
-		self.snrvalue = FloatEntry(self, -1, allownone=False, chars=5, value='2.5')
+		self.snrvalue = FloatEntry(self, -1, allownone=False, chars=5, value='10.0')
 		label2 = wx.StaticText(self, -1, " levels")
 		sbsz.Add(label, (1,0), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		sbsz.Add(self.snrvalue, (1,1), (1,1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
