@@ -268,7 +268,7 @@ def getAceValues(params,imgdict):
 				params['conf_d']=bestctfp['confidence_d']
 				params['conf']=bestctfp['confidence']
 			else:
-				print "Warning: Astigmatism was estimated for ", imgdict['name'], ". Defocus estimate may be incorrect"
+				print "Warning: Astigmatism was estimated for ", imgdict['filename'], ". Defocus estimate may be incorrect"
 				params['hasace']=True
 				params['df']=( (bestctfp['defocus1'] + bestctfp['defocus2'])/2 )*-1e6
 				params['conf_d']=bestctfp['confidence_d']
