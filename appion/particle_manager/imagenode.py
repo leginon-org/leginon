@@ -2,13 +2,10 @@
 import sys
 import os
 import data
-import dbdatakeeper
 import numarray
 import numarray.ma as ma
 import apLoop
 import apImage
-import apDatabase
-import apParticle
 import imagefun
 import apDB
 import appionData
@@ -54,28 +51,28 @@ class ImageNode:
 		
 	
 	def modifyParams(self,params):
-		# This can go in apLoop.py as specialParamConclicts()
+		# This can go in apLoop.py as specialParamConflicts()
 		return params
 		
-	def prepImage(self,image,cutoff=5.0):
-		shape=numarray.shape(image)
-		garea,gavg,gstdev=apImage.maskImageStats(image)
-		cleanimage=ma.masked_outside(image,gavg-cutoff*gstdev,gavg+cutoff*gstdev)
-		carea,cavg,cstdev=apImage.maskImageStats(cleanimage)
-		image.shape = shape
-		image.mean = cavg
-		image.stdev = cstdev
-		image=cleanimage.filled(cavg)
-		return image
+	def prepImage(self,imgarray,cutoff=5.0):
+		shape=numarray.shape(imgarray)
+		garea,gavg,gstdev=apImage.maskImageStats(imgarray)
+		cleanimgarray=ma.masked_outside(imgarray,gavg-cutoff*gstdev,gavg+cutoff*gstdev)
+		carea,cavg,cstdev=apImage.maskImageStats(cleanimgarray)
+		imgarray.shape = shape
+		imgarray.mean = cavg
+		imgarray.stdev = cstdev
+		imgarray=cleanimgarray.filled(cavg)
+		return imgarray
 		
-	def getImage(self,imgname,binning):
-		image = apDatabase.getImageData(imgname)['image']
-		image=imagefun.bin(image,binning)
-		shape=numarray.shape(image)
+	def getImage(self,imgdata,binning):
+		imgarray = imgdata['image']
+		imgarray=imagefun.bin(imgarray,binning)
+		shape=numarray.shape(imgarray)
 		cutoff=8.0
 		# remove spikes in the image first
-		image=self.prepImage(image,cutoff)
-		return image	
+		imgarray=self.prepImage(imgarray,cutoff)
+		return imgarray	
 	
 	def insertFunctionParams(self,params):
 		testPdata = appionData.ApTestParamsData()
@@ -96,7 +93,7 @@ class ImageNode:
 		
 		return rundata
 		
-	def function(self,params,rundata,imgdata,binnedimage):	
+	def function(self,params,rundata,imgdata,binnedimgarray):	
 		
 		def createResultData(rundata,imgdata,info):
 			testresultdata=appionData.ApTestResultData()
@@ -112,10 +109,10 @@ class ImageNode:
 		for info in infos:
 			pikresults.append(createResultData(rundata,imgdata,info))
 		
-		shape = numarray.shape(binnedimage)
-		ccimage = numarray.zeros(shape)
+		shape = numarray.shape(binnedimgarray)
+		ccimgarray = numarray.zeros(shape)
 		
-		return {'pik':pikresults,'cc':ccimage}
+		return {'pik':pikresults,'cc':ccimgarray}
 
 	def writeResultsToDB(self,idata):
 		if idata is None:
@@ -125,7 +122,6 @@ class ImageNode:
 		return
 		
 	def writeResultsToFile(self,imagename,idata,path,resulttype,result_ext):
-		
 		filename = path+"/"+imagename+"_"+resulttype+"."+result_ext
 		if os.path.exists(filename):
 			os.remove(filename)
@@ -137,7 +133,7 @@ class ImageNode:
 				apImage.arrayMaskToPngAlpha(idata,filename)
 			else:
 				if result_ext == 'jpg':
-					arrayToJpeg(idata,filename,normalize=True)	
+					apImage.arrayToJpeg(idata,filename,normalize=True)	
 				else:
 				# As an example, results is a list of several dictionary of of information that would be inserted into the database if commited
 				# For example: [{'dbemdata|AcquisitionImageData|image': imagedata,run:rundata,'x':0.5,'y':1,3},{'run':rundata,'x':2.5,'y':3,3}]
@@ -168,7 +164,7 @@ class ImageNode:
 	def start(self,argvlist):
 		functionname = self.functionname
 		data.holdImages(False)
-		(images,stats,params,donedict) = apLoop.startNewAppionFunction(argvlist)
+		(imgtree,stats,params,donedict) = apLoop.startNewAppionFunction(argvlist)
 		params=self.modifyParams(params)
 		run_dir=params["outdir"]+"/"+params["runid"]+"/"
 		# create "run" directory if doesn't exist
@@ -200,15 +196,15 @@ class ImageNode:
 				result_dirs[resulttype]=None
 		notdone=True
 		while notdone:
-			while images:
-				imgdata = images.pop(0)
+			while imgtree:
+				imgdata = imgtree.pop(0)
 				imgname=imgdata['filename']
-				stats['imagesleft'] = len(images)
+				stats['imagesleft'] = len(imgtree)
 
 				#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
 				if( apLoop.startLoop(imgdata, donedict, stats, params)==False ):
 					continue
-				image = self.getImage(imgname,params['bin'])
+				image = self.getImage(imgdata,params['bin'])
 
 				results=self.function(params,rundata,imgdata,image)
 				
@@ -237,7 +233,7 @@ class ImageNode:
 				apLoop.writeDoneDict(donedict,params,imgname)
 				apLoop.printSummary(stats, params)
 				#END LOOP OVER IMAGES
-			notdone,images = apLoop.waitForMoreImages(stats, params)
+			notdone,imgtree = apLoop.waitForMoreImages(stats, params)
 			#END NOTDONE LOOP	
 		apLoop.completeLoop(stats)
 

@@ -138,10 +138,10 @@ class MaskMaker(imagenode.ImageNode):
 			qs.append(q)
 		return qs
 
-	def function(self,params,rundata,imgdata,binnedimage):
-		regions,mask = apCrudFinder.makeMask(params,binnedimage)
-		regionsData = self.getResults(rundata,imgdata,regions)
-		return {'region':regionsData,'mask':mask}
+	def function(self,params,rundata,imgdata,binnedimgarray):
+		regions,maskarray = apCrudFinder.makeMask(params,binnedimgarray)
+		regionTree = self.getResults(rundata,imgdata,regions)
+		return {'region':regionTree,'mask':maskarray}
 
 
 if __name__ == '__main__':
