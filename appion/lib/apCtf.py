@@ -18,7 +18,7 @@ except:
 
 acedb  = apDB.apdb
 
-def runAce(matlab,imgdict,params):
+def runAce(matlab, imgdict, params):
 	imgname = imgdict['filename']
 	imgpath = os.path.join(imgdict['session']['image path'], imgname+'.mrc')
 
@@ -29,7 +29,7 @@ def runAce(matlab,imgdict,params):
 	
 	pymat.eval(matlab,("dforig = %e;" % nominal))
 
-	expid=int(imgdict['session'].dbid)
+	expid = int(imgdict['session'].dbid)
 	if params['commit']==True:
 		#insert ace params into dbctfdata.ace_params table in db
 		insertAceParams(params,expid)
@@ -57,21 +57,26 @@ def runAce(matlab,imgdict,params):
 
 	return ctfparams
 
-def commitAceParamToDatabase(matlab, imgdict, ctfparams, params):
+def commitAceParamToDatabase(imgdict, matlab, ctfparams, params):
 	expid = int(imgdict['session'].dbid)
 	imgname = imgdict['filename']
 	matfile = imgname+".mrc.mat"
+	#matfilepath = os.path.join(params['matdir'], matfile)
 
 	imfile1=os.path.join(params['tempdir'], "im1.png")
 	imfile2=os.path.join(params['tempdir'], "im2.png")
+	#MATLAB NEEDS PATH BUT DATABASE NEEDS FILENAME
 	opimfile1=imgname+".mrc1.png"
 	opimfile2=imgname+".mrc2.png"
-	#shutil.copy(imfile1,opimfile1)
-	#shutil.copy(imfile2,opimfile2)
-	pymat.eval(matlab,"im1 = imread('"+imfile1+"');")
-	pymat.eval(matlab,"im2 = imread('"+imfile2+"');")
-	pymat.eval(matlab,"imwrite(im1,'"+opimfile1+"');")
-	pymat.eval(matlab,"imwrite(im2,'"+opimfile2+"');")
+	opimfilepath1 = os.path.join(params['opimagedir'],opimfile1)
+	opimfilepath2 = os.path.join(params['opimagedir'],opimfile2)
+
+	shutil.copy(imfile1, opimfilepath1)
+	shutil.copy(imfile2, opimfilepath2)
+	#pymat.eval(matlab,"im1 = imread('"+imfile1+"');")
+	#pymat.eval(matlab,"im2 = imread('"+imfile2+"');")
+	#pymat.eval(matlab,"imwrite(im1,'"+opimfilepath1+"');")
+	#pymat.eval(matlab,"imwrite(im2,'"+opimfilepath2+"');")
 
 	insertCtfParams(imgdict, params, matfile, expid, ctfparams, opimfile1, opimfile2)
 

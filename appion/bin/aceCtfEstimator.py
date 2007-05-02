@@ -64,7 +64,7 @@ class aceCtfEstimatorLoop(appionLoop.AppionLoop):
 		self.ctfparams = apCtf.runAce(self.matlab, imgdict, self.params)
 
 	def commitToDatabase(self, imgdict):
-		apCtf.commitAceParamToDatabase(imgdict, self.ctfparams, self.params)
+		apCtf.commitAceParamToDatabase(imgdict, self.matlab, self.ctfparams, self.params)
 
 	def specialDefaultParams(self):
 		self.params['edgethcarbon']=0.8
