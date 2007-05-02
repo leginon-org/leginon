@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.48 $
+# $Revision: 1.49 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-02 01:14:04 $
+# $Date: 2007-05-02 22:16:58 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -189,40 +189,45 @@ class MeasureTiltAxisDialog(wx.Dialog):
 
 		sbsz = wx.GridBagSizer(5,5)
 
+		row = int(0)
 		label = wx.StaticText(self, -1, "Tilt angle: ")
 		self.tiltvalue = FloatEntry(self, -1, allownone=False, chars=5, value='15.0')
 		label2 = wx.StaticText(self, -1, " degrees")
-		sbsz.Add(label, (0,0), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(self.tiltvalue, (0,1), (1,1), wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(label2, (0,2), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(label, (row,0), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(self.tiltvalue, (row,1), (1,1), wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(label2, (row,2), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
+		row += 1
+		self.tilttwice = wx.CheckBox(self, -1, "Tilt both directions")
+		sbsz.Add(self.tilttwice, (row,0), (1,3), wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
+
+		row += 1
+		label = wx.StaticText(self, -1, "Average ")
+		label2 = wx.StaticText(self, -1, " tilts")
+		self.numtilts = IntEntry(self, -1, allownone=False, chars=1, value='1')
+		sbsz.Add(label, (row,0), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(self.numtilts, (row,1), (1,1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(label2, (row,2), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+
+		row += 1
 		label = wx.StaticText(self, -1, "SNR cutoff: ")
 		self.snrvalue = FloatEntry(self, -1, allownone=False, chars=5, value='10.0')
 		label2 = wx.StaticText(self, -1, " levels")
-		sbsz.Add(label, (1,0), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(self.snrvalue, (1,1), (1,1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(label2, (1,2), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(label, (row,0), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(self.snrvalue, (row,1), (1,1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(label2, (row,2), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
-		label = wx.StaticText(self, -1, "Median filter: ")
-		self.medfiltvalue = IntEntry(self, -1, allownone=False, chars=5, value='3')
-		label2 = wx.StaticText(self, -1, " pixels")
-		sbsz.Add(label, (2,0), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(self.medfiltvalue, (2,1), (1,1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(label2, (2,2), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-
-		label = wx.StaticText(self, -1, "Number tilts: ")
-		self.onetilt = wx.RadioButton(self, -1, "Once", style=wx.RB_GROUP|wx.ALIGN_CENTER_VERTICAL)
-		self.twotilt = wx.RadioButton(self, -1, "Twice", style=wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(label, (3,0), (1,1))
-		sbsz.Add(self.onetilt, (3,1), (1,1))
-		sbsz.Add(self.twotilt, (3,2), (1,1))
-
+		row += 1
 		label = wx.StaticText(self, -1, "Correlation: ")
 		self.phasecorr = wx.RadioButton(self, -1, "Phase", style=wx.RB_GROUP|wx.ALIGN_CENTER_VERTICAL)
 		self.crosscorr = wx.RadioButton(self, -1, "Cross", style=wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(label, (4,0), (1,1))
-		sbsz.Add(self.phasecorr, (4,1), (1,1))
-		sbsz.Add(self.crosscorr, (4,2), (1,1))
+		sbsz.Add(label, (row,0), (1,1))
+		sbsz.Add(self.phasecorr, (row,1), (1,1))
+		sbsz.Add(self.crosscorr, (row,2), (1,1))
+
+		row += 1
+		self.medfilt = wx.CheckBox(self, -1, "Median filter phase correlation")
+		sbsz.Add(self.medfilt, (row,0), (1,3), wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
 
 		self.measurecancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
 		self.measureinit = wx.Button(self,  -1, 'Initial Offset')
@@ -239,22 +244,30 @@ class MeasureTiltAxisDialog(wx.Dialog):
 		self.SetSizerAndFit(self.sizer)
 
 	def onMeasureButtonInit(self, evt):
+		self.node.logger.info('Obtain new beam tilt axis')
 		self.onMeasure(evt, update=False)
 
 	def onMeasureButtonUpdate(self, evt):
+		self.node.logger.info('Updating beam tilt axis')
 		self.onMeasure(evt, update=True)
 
 	def onMeasure(self, evt, update):
+		self.Close()
 		atilt = self.tiltvalue.GetValue()
 		asnr  = self.snrvalue.GetValue()
-		amedfilt  = self.medfiltvalue.GetValue()
+		if asnr <= 0:
+			self.node.logger.error('SNR cannot be less than or equal to zero')	
+			return
+		amedfilt = self.medfilt.GetValue()
+		anumtilts = self.numtilts.GetValue()
 		if(self.crosscorr.GetValue() and not self.phasecorr.GetValue()):
 			acorr = 'cross'
-		else:  acorr = 'phase'
-		if(self.twotilt.GetValue() and not self.onetilt.GetValue()):
-			atilttwice = True
-		else:  atilttwice = False
-		threading.Thread(target=self.node.measureTiltAxis, args=(atilt,update,asnr,acorr,atilttwice,amedfilt)).start()
+		else:
+			acorr = 'phase'
+		atilttwice = self.tilttwice.GetValue()
+		#RUN THE Measurement
+		threading.Thread(target=self.node.measureTiltAxis, args=(atilt, anumtilts,
+		  atilttwice, update, asnr, acorr, amedfilt)).start()
 
 class AlignRotationCenterDialog(wx.Dialog):
 	def __init__(self, parent):
@@ -286,6 +299,7 @@ class AlignRotationCenterDialog(wx.Dialog):
 		self.SetSizerAndFit(self.sizer)
 
 	def onMeasureButton(self, evt):
+		self.Close()
 		d1 = self.d1value.GetValue()
 		d2 = self.d2value.GetValue()
 		self.EndModal(wx.ID_OK)

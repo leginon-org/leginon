@@ -11,6 +11,7 @@ import calibrationclient
 import threading
 import event
 import time
+import math
 import imagefun
 try:
 	import numarray as Numeric
@@ -385,11 +386,12 @@ class Focuser(acquisition.Acquisition):
 		self.instrument.tem.BeamTilt = newbt
 		self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
 
-	def measureTiltAxis(self, atilt, update=False, asnr=10.0, acorr='phase', atilttwice=False, amedfilt=3):
-		atilt = atilt * 3.14159 / 180.0
+	def measureTiltAxis(self, atilt, anumtilts=1, atilttwice=False, update=False, asnr=10.0,
+	  acorr='phase', amedfilt=False):
 
-		im0, pixelshift = self.stagetiltcalclient.measureTiltAxisLocation(atilt, update, snrcut=asnr, 
-			correlation_type=acorr, tilttwice=atilttwice, medfilt=amedfilt)
+		atiltrad = atilt * math.pi / 180.0
+		im0, pixelshift = self.stagetiltcalclient.measureTiltAxisLocation(tilt_value=atiltrad, numtilts=anumtilts,
+		  tilttwice=atilttwice, update=update, snrcut=asnr, correlation_type=acorr, medfilt=amedfilt)
 
 		oldscope = im0['scope']
 		newscope = self.imageshiftcalclient.transform(pixelshift, oldscope, im0['camera'])

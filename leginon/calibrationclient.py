@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.206 $
+# $Revision: 1.207 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-02 01:14:04 $
+# $Date: 2007-05-02 22:16:58 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -1000,67 +1000,56 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		z = y / 2.0 / math.sin(tilt_value)
 		return z
 
-	def measureTiltAxisLocation(self, tilt_value, update, snrcut=10.0, correlation_type=None, tilttwice=False, medfilt=3):
+	def measureTiltAxisLocation(self, tilt_value=0.26, numtilts=1, tilttwice=False,
+	  update=False, snrcut=10.0, correlation_type='phase', medfilt=False):
 		"""
 		irint 'onMeasure', update
 		measure position on image of tilt axis
+		tilt_value is in radians
 		"""
-		#neil changes here
-		orig_a = self.instrument.tem.StagePosition['a']
 
-		state0 = data.ScopeEMData()
-		state1 = data.ScopeEMData()
-		state2 = data.ScopeEMData()
-		state0['stage position'] = {'a':0}
-		state1['stage position'] = {'a':-tilt_value}
-		state2['stage position'] = {'a':tilt_value}
+		### BEGIN TILTING
 
-		self.node.logger.info('acquiring tilt=0')
-		self.instrument.setData(state0)
-		time.sleep(0.5)
-		imagedata0 = self.instrument.getData(data.CorrectedCameraImageData)
-		im0 = imagedata0['image']
-		self.displayImage(im0)
+		# need to do something with this data
+		pixelshiftree = []
+		for i in range(numtilts):
+			#get first image
+			imagedata0, ps = self._getPeakFromTiltStates(tilt0imagedata=None, 
+			  tilt1=-tilt_value, medfilt=medfilt, snrcut=snrcut)
+			if ps['snr'] > snrcut:
+				pixelshiftree.append(ps)
 
-		self.node.logger.info('acquiring tilt=%s' % (-tilt_value,))
-		self.instrument.setData(state1)
-		time.sleep(0.5)
-		imagedata1 = self.instrument.getData(data.CorrectedCameraImageData)
-		self.stagetiltcorrector.undo_tilt(imagedata1)
-		im1 = imagedata1['image']
-		self.displayImage(im1)
-
-		self.instrument.tem.StagePosition = {'a':orig_a}
-
-		self.node.logger.info('correlating')
-		self.correlator.setImage(0, im0)
-		self.correlator.setImage(1, im1)
-		if correlation_type == 'phase':
-			pc = self.correlator.phaseCorrelate()
-			pc = numarray.nd_image.median_filter(pc, size=medfilt)
-		else:
-			pc = self.correlator.crossCorrelate()
+			if tilttwice is True:
+				#get second image
+				imagedata0, ps = self._getPeakFromTiltStates(tilt0imagedata=imagedata0, 
+				  tilt1=tilt_value, medfilt=medfilt, snrcut=snrcut)
+				if ps['snr'] > snrcut:
+					pixelshiftree.append(ps)
 		
-		self.displayCorrelation(pc)
+		### END TILTING; BEGIN ASSESSMENT
 
-		peak01 = peakfinder.findSubpixelPeak(pc)
-		snr = None
-		if 'snr' in peak01:
-			snr = peak01['snr']
-		peak01 = peak01['subpixel peak']
-		shift01 = correlator.wrap_coord(peak01, pc.shape)
-		self.displayPeak(peak01)
+		pixelshift = {'row':0.0, 'col':0.0, 'snr': snr}
+		if len(pixelshiftree) < 1:
+			#wasn't a good enough fit
+			self.node.logger.error("image correction failed, snr below cutoff")
+			return imagedata0, pixelshift
+		else:
+			self.node.logger.info("averaging %s measurements for final value" % (len(pixelshiftree)))
 
-		pixelshift = {'row':shift01[0], 'col':shift01[1]}
-		self.node.logger.info('measured pixel shift: %s' % (pixelshift,))
-
-		## check whether it worked
-		if snr is not None:
-			self.node.logger.info('snr: %s' % (round(snr,2),))
-			if snr < snrcut:
-				#wasn't a good enough fit
-				self.node.logger.error("image correction failed, snr below cutoff")
-				return imagedata0, pixelshift
+		snrtotal = 0.0
+		rowtotal = 0.0
+		coltotal = 0.0
+		for ps in pixelshiftree:
+			snrtotal += ps['snr']
+			rowtotal += ps['row']*ps['snr']
+			coltotal += ps['col']*ps['snr']
+		pixelshift = {
+			'row':rowtotal/snrtotal,
+			'col':coltotal/snrtotal,
+			'snr':snrtotal/float(len(pixelshiftree))
+		}
+		
+		### END ASSESSMENT; BEGIN CORRECTION
 
 		## convert pixel shift into stage movement
 		newscope = self.transform(pixelshift, imagedata0['scope'], imagedata0['camera'])
@@ -1094,6 +1083,72 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 
 		pixelshift = {'row':pixelshift['row'], 'col':pixelshift['col']}
 		self.node.logger.info('pixelshift from axis: %s' % (pixelshift,))
+
+		return imagedata0, pixelshift
+
+
+	def _getPeakFromTiltStates(self, tilt0imagedata=None, tilt1=0.26, medfilt=True, snrcut=10.0):
+		orig_a = self.instrument.tem.StagePosition['a']
+		state0 = data.ScopeEMData()
+		state1 = data.ScopeEMData()
+		state0['stage position'] = {'a':0.0}
+		state1['stage position'] = {'a':tilt1}
+		tilt1deg = round(-tilt_value*180.0/math.pi,4)
+
+		if tilt0imagedata is None:
+			self.node.logger.info('acquiring tilt=0 degrees')
+			self.instrument.setData(state0)
+			time.sleep(0.5)
+			imagedata0 = self.instrument.getData(data.CorrectedCameraImageData)
+			im0 = imagedata0['image']
+			self.displayImage(im0)
+		else:
+			imagedata0 = tilt0imagedata
+			im0 = imagedata0['image']
+			self.displayImage(im0)
+
+		self.node.logger.info('acquiring tilt=%s degrees' % (tilt1deg))
+		self.instrument.setData(state1)
+		time.sleep(0.5)
+		imagedata1 = self.instrument.getData(data.CorrectedCameraImageData)
+		self.stagetiltcorrector.undo_tilt(imagedata1)
+		im1 = imagedata1['image']
+		self.displayImage(im1)
+
+		### RETURN SCOPE TO ORIGINAL STATE
+		self.instrument.tem.StagePosition = {'a':orig_a}
+
+		self.node.logger.info('correlating images for tilt %s' % (tilt1deg))
+		self.correlator.setImage(0, im0)
+		self.correlator.setImage(1, im1)
+		if correlation_type is 'phase':
+			pc = self.correlator.phaseCorrelate()
+			if medfilt is True:
+				pc = numarray.nd_image.median_filter(pc, size=3)
+		else:
+			pc = self.correlator.crossCorrelate()
+		self.displayCorrelation(pc)
+
+		peak01 = peakfinder.findSubpixelPeak(pc)
+		snr = 1.0
+		if 'snr' in peak01:
+			snr = peak01['snr']
+			if snr < snrcut:
+				#wasn't a good enough fit
+				self.node.logger.warning("beam tilt axis measurement failed, snr below cutoff; "+
+				  "continuing for rest of images")
+
+		## translate peak into image shift coordinates
+		peak01a = peak01['subpixel peak']
+		if tilt1 > 0:
+			shift01 = correlator.wrap_coord(-1.0*peak01a, pc.shape)
+		else:
+			shift01 = correlator.wrap_coord(peak01a, pc.shape)
+		self.displayPeak(peak01a)
+
+		pixelshift = {'row':shift01[0], 'col':shift01[1], 'snr': snr}
+		self.node.logger.info("measured pixel shift: %s, %s" % (pixelshift['row'], pixelshift['col']))
+		self.node.logger.info("signal-to-noise ratio: %s" % (round(snr,2),))
 
 		return imagedata0, pixelshift
 

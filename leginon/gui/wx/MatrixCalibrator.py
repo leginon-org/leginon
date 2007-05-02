@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MatrixCalibrator.py,v $
-# $Revision: 1.12 $
+# $Revision: 1.13 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-10-05 17:38:11 $
-# $Author: pulokas $
+# $Date: 2007-05-02 22:16:57 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -120,20 +120,14 @@ class MatrixSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
 
-		self.widgets['%s tolerance' % self.parameter] = FloatEntry(self, -1,
-																																chars=9)
-		self.widgets['%s shift fraction' % self.parameter] = FloatEntry(self, -1,
-																																		chars=9)
-		self.widgets['%s n average' % self.parameter] = IntEntry(self, -1, min=1,
-																															chars=2)
+		self.widgets['%s tolerance' % self.parameter] = FloatEntry(self, -1, chars=9)
+		self.widgets['%s shift fraction' % self.parameter] = FloatEntry(self, -1, chars=9)
+		self.widgets['%s n average' % self.parameter] = IntEntry(self, -1, min=1, chars=2)
 		self.widgets['%s interval' % self.parameter] = FloatEntry(self, -1, chars=9)
-		self.widgets['%s current as base' % self.parameter] = wx.CheckBox(self, -1,
-																		'Use current position as starting point')
+		self.widgets['%s current as base' % self.parameter] = wx.CheckBox(self, -1, 'Use current position as starting point')
 		self.widgets['%s base' % self.parameter] = {}
-		self.widgets['%s base' % self.parameter]['x'] = FloatEntry(self, -1,
-																																chars=9)
-		self.widgets['%s base' % self.parameter]['y'] = FloatEntry(self, -1,
-																																chars=9)
+		self.widgets['%s base' % self.parameter]['x'] = FloatEntry(self, -1, chars=9)
+		self.widgets['%s base' % self.parameter]['y'] = FloatEntry(self, -1, chars=9)
 
 		szbase = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'x')
@@ -217,7 +211,7 @@ class EditMatrixDialog(gui.wx.Dialog.Dialog):
 			self.matrix = self.getMatrix()
 		except ValueError:
 			dialog = wx.MessageDialog(self, 'Invalid calibration values',
-																'Error', wx.OK|wx.ICON_ERROR)
+				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 		else:
