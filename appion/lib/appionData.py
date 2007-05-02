@@ -167,7 +167,7 @@ class ApStackParticlesData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
 			('particleNumber', int),
-			('stack', ApStackParamsData),
+			('stackparams', ApStackParamsData),
 			('particle', ApParticleData),
 	        )
 	typemap = classmethod(typemap)

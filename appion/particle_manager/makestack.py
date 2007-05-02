@@ -11,9 +11,7 @@ import apDisplay
 import apDB
 
 db     = apDB.db
-partdb = apDB.apdb
-projdb = apDB.projdb
-acedb  = apDB.apdb
+apdb = apDB.apdb
 
 def printHelp():
 	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected or inspectfile=<file>] [bin=<n>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n>\n [limit=<n>] [defocpair=<preset>]"
@@ -212,23 +210,31 @@ def checkInspectFile(imgdict):
 		return (True)
 	return (False)
 
+
 def checkInspectDB(imgdict):
-	imq=particleData.image()
-	imq['dbemdata|AcquisitionImageData|image']=imgdict.dbid
-	imgresult=partdb.query(imq, results=1)
-	if imgresult:
-		if imgresult[0]['keep']==True:
-			return(True)
-	return(False)
+	##### this function should be modified in the future to allow for a particular assessment run ####
+	aq=appionData.ApAssessmentData()
+	aq['dbemdata|AcquisitionImageData|image']=imgdict.dbid
+	adata=apdb.query(aq)	
+
+	keep=False
+	if adata:
+		#check results of only most recent run
+		if adata[0]['selectionkeep']==True:
+			keep=True
+	return(keep)
 
 def checkPairInspectDB(imgdict,params):
-	imq=particleData.image()
-	imq['dbemdata|AcquisitionImageData|image']=params['sibpairs'][imgdict.dbid]
-	imgresult=partdb.query(imq, results=1)
-	if imgresult:
-		if imgresult[0]['keep']==True:
-			return(True)
-	return(False)
+	aq=appionData.ApAssessmentData()
+	aq['dbemdata|AcquisitionImageData|image']=params['sibpairs'][imgdict.dbid]
+	adata=apdb.query(aq)	
+
+	keep=False
+	if adata:
+		#check results of only most recent run
+		if adata[0]['selectionkeep']==True:
+			keep=True
+	return(keep)
 
 def getAceValues(params,imgdict):
 	# if already got ace values in a previous step,
@@ -236,21 +242,11 @@ def getAceValues(params,imgdict):
 	if params['hasace']==True:
 		return
 	else:
-		filename=imgdict['filename']+'.mrc'
-
-		imq=appionData.image(imagename=filename)
-		imparams=acedb.query(imq)
-
-		runq=appionData.run()
-		aceq=appionData.ace_params()
-
-		ctfq=appionData.ctf()
-		ctfq['imageId']=imq
-		ctfq['runId']=runq
-		ctfq['aceId']=aceq
+		ctfq=appionData.ApCtfData()
+		ctfq['dbemdata|AcquisitionImageData|image']=imgdict.dbid
 		
-		ctfparams=acedb.query(ctfq)
-
+		ctfparams=apdb.query(ctfq)
+		
 		# if ctf data exist for filename
 		if ctfparams:
 			conf_best=0
@@ -258,25 +254,26 @@ def getAceValues(params,imgdict):
 
 			# loop through each of the ace runs & get the params with highest confidence value
 			for ctfp in ctfparams:
-				if (ctfp['aceId']['stig']==0):
-					conf1=ctfp['confidence']
-					conf2=ctfp['confidence_d']
-					if conf_best < conf1 :
-						conf_best=conf1
-						params['hasace']=True
-						params['df']=(ctfp['defocus1'])*-1e6
-						params['conf_d']=ctfp['confidence_d']
-						params['conf']=ctfp['confidence']
-					if conf_best < conf2 :
-						conf_best=conf2
-						params['hasace']=True
-						params['df']=(ctfp['defocus1'])*-1e6
-						params['conf_d']=ctfp['confidence_d']
-						params['conf']=ctfp['confidence']
-				else:
-					print "Skipping ace run:", filename, ": ", ctfp['runId']['name'], "because astigmatism was turned on"
-					params['hasace']=False
-		# set db data back to particle
+				conf1=ctfp['confidence']
+				conf2=ctfp['confidence_d']
+				if conf_best < conf1 :
+					conf_best=conf1
+					bestctfp=ctfp
+				if conf_best < conf2 :
+					conf_best=conf2
+					bestctfp=ctfp
+			if bestctfp['acerun']['aceparams']['stig']==0:
+				params['hasace']=True
+				params['df']=(bestctfp['defocus1'])*-1e6
+				params['conf_d']=bestctfp['confidence_d']
+				params['conf']=bestctfp['confidence']
+			else:
+				print "Warning: Astigmatism was estimated for ", imgdict['name'], ". Defocus estimate may be incorrect"
+				params['hasace']=True
+				params['df']=( (bestctfp['defocus1'] + bestctfp['defocus2'])/2 )*-1e6
+				params['conf_d']=bestctfp['confidence_d']
+				params['conf']=bestctfp['confidence']
+
 
         return
             
@@ -362,27 +359,25 @@ def batchBox(params, imgdict):
 		return(0)		
 
 def getParticles(imgdict):
-	imq=appionData.image()
-	imq['dbemdata|AcquisitionImageData|image']=imgdict.dbid
-	selexonrun=partdb.direct_query(data.run,params['selexonId'])
-	
-	prtlq=appionData.particle(imageId=imq,runId=selexonrun)
-	particles=partdb.query(prtlq)
+	selexonrun=apdb.direct_query(data.ApSelectionRunData,params['selexonId'])
+	prtlq=appionData.ApParticleData()
+	prtlq['dbemdata|AcquisitionImageData|image']=imgdict.dbid
+	prtlq['selectionrun']=selexonrun
+	particles=apdb.query(prtlq)
 	shift={'shiftx':0, 'shifty':0}
 	return(particles,shift)
 		
 def getDefocPairParticles(imgdict, params):
-	imq=appionData.image()
 	print "finding pair for", apDisplay.short(imgdict['filename'])
-	imq['dbemdata|AcquisitionImageData|image']=params['sibpairs'][imgdict.dbid]
-	selexonrun=partdb.direct_query(data.run,params['selexonId'])
+	selexonrun=apdb.direct_query(data.ApSelectionRunData,params['selexonId'])
+	prtlq=appionData.ApParticleData()
+	prtlq['dbemdata|AcquisitionImageData|image']=params['sibpairs'][imgdict.dbid]
+	prtlq['selectionrun']=selexonrun
+	particles=apdb.query(prtlq)
 	
-	prtlq=appionData.particle(imageId=imq,runId=selexonrun)
-	particles=partdb.query(prtlq)
-	
-	shiftq=appionData.shift()
+	shiftq=appionData.ApImageTransformationData()
 	shiftq['dbemdata|AcquisitionImageData|image1']=params['sibpairs'][imgdict.dbid]
-	shiftdata=partdb.query(shiftq,readimages=False)[0]
+	shiftdata=apdb.query(shiftq,readimages=False)[0]
 	shiftx=shiftdata['shiftx']*shiftdata['scale']
 	shifty=shiftdata['shifty']*shiftdata['scale']
 	shift={}
@@ -422,14 +417,14 @@ def saveParticles(particles,shift,dbbox,params,imgdict):
 		if (xcoord>0 and xcoord+box <= imgxy['x'] and ycoord>0 and ycoord+box <= imgxy['y']):
 			plist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
 			if params['commit']:
-				stackpq=appionData.stackParticles()
-				stackpq['stackId']=params['stackId']
-				stackpq['particleId']=prtl
-				stackres=partdb.query(stackpq)
+				stackpq=appionData.ApStackParticlesData()
+				stackpq['stackparams']=params['stackId']
+				stackpq['particle']=prtl
+				stackres=apdb.query(stackpq)
 				if not stackres:
 					params['particleNumber']=params['particleNumber']+1
 					stackpq['particleNumber']=params['particleNumber']
-					partdb.insert(stackpq)
+					apdb.insert(stackpq)
 		else:
 			eliminated+=1
 	if eliminated>0:
@@ -520,7 +515,7 @@ def getImgsFromSelexonId(params):
 	print "finding Leginon Images that have particles for selexon run:", params['selexonId']
 
 	# get selection run id
-	selexonrun=partdb.direct_query(data.run,params['selexonId'])
+	selexonrun=apdb.direct_query(data.ApSelectionRunData,params['selexonId'])
 	if not (selexonrun):
 		print "\nError: specified runId '"+str(params['selexonId'])+"' not in database\n"
 		sys.exit()
@@ -537,18 +532,19 @@ def getImgsFromSelexonId(params):
 	# for every image, find corresponding image entry in the particle database
 	dbimglist=[]
 	for img in dbimginfo:
-		pimgq=appionData.image()
+		pimgq=appionData.ApParticleData()
 		pimgq['dbemdata|AcquisitionImageData|image']=img.dbid
-		pimg=partdb.query(pimgq)
+		pimgq['selectionrun']=selexonrun
+		pimg=apdb.query(pimgq)
 		if pimg:
 			dbimglist.append(img)
 	return (dbimglist)
 
 def getImgsDefocPairFromSelexonId(params):
-	print "finding Leginon image defocus pairs that have particles for selexon run:", params['selexonId']
+	print "finding Leginon Images that have particles for selexon run:", params['selexonId']
 
 	# get selection run id
-	selexonrun=partdb.direct_query(data.run,params['selexonId'])
+	selexonrun=apdb.direct_query(data.ApSelectionRunData,params['selexonId'])
 	if not (selexonrun):
 		print "\nError: specified runId '"+str(params['selexonId'])+"' not in database\n"
 		sys.exit()
@@ -562,17 +558,18 @@ def getImgsDefocPairFromSelexonId(params):
 		print "\nError: no images associated with this runId\n"
 		sys.exit()
 
-	# for every image, find corresponding image entry in the shift table
+	# for every image, find corresponding image entry in the particle database
 	dbimglist=[]
 	params['sibpairs']={}
 	for img in dbimginfo:
-		pimgq=appionData.image()
+		pimgq=appionData.ApParticleData()
 		pimgq['dbemdata|AcquisitionImageData|image']=img.dbid
-		pimg=partdb.query(pimgq)
+		pimgq['selectionrun']=selexonrun
+		pimg=apdb.query(pimgq)
 		if pimg:
-			simgq=appionData.shift()
+			simgq=appionData.ApImageTransformationData()
 			simgq['dbemdata|AcquisitionImageData|image1']=img.dbid
-			simgdata=partdb.query(simgq,readimages=False)
+			simgdata=apdb.query(simgq,readimages=False)
 			if simgdata:
 				simg=simgdata[0]
 				siblingimage=db.direct_query(data.AcquisitionImageData,simg['dbemdata|AcquisitionImageData|image2'],readimages=False)
@@ -595,11 +592,11 @@ def insertStackParams(params):
 		inverted=True
 
 	# get stack parameters if they already exist in table
-	stparamq=appionData.stackParams()
+	stparamq=appionData.ApStackParamsData()
 	stparamq['stackPath']=params['outdir']
 	stparamq['name']=params['single']
 
-	stackparams=partdb.query(stparamq,results=1)
+	stackparams=apdb.query(stparamq,results=1)
 
 	# if not in the database, insert new stack parameters
 	if not stackparams:
@@ -622,9 +619,8 @@ def insertStackParams(params):
 			stparamq['minDefocus']=params['mindefocus']
 		if params['maxdefocus']:
 			stparamq['maxDefocus']=params['maxdefocus']
-       		partdb.insert(stparamq)
-		stp=appionData.stackParams(stackPath=params['outdir'],name=params['single'])
-		stackparams=partdb.query(stp,results=1)[0]
+       		apdb.insert(stparamq)
+		stackparams=stparamq
 	else:
 		stackparams=stackparams[0]
 		if (stackparams['description']!=params['description'] or

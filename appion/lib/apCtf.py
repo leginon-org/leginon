@@ -57,21 +57,21 @@ def runAce(matlab,imgdict,params):
 
 	return ctfparams
 
-def commitAceParamToDatabase(imgdict, ctfparams, params):
+def commitAceParamToDatabase(matlab, imgdict, ctfparams, params):
 	expid = int(imgdict['session'].dbid)
 	imgname = imgdict['filename']
-	matfile = os.path.join(params['matdir'], imgname+".mrc.mat")
+	matfile = imgname+".mrc.mat"
 
 	imfile1=os.path.join(params['tempdir'], "im1.png")
 	imfile2=os.path.join(params['tempdir'], "im2.png")
-	opimfile1=os.path.join(params['opimagedir'], imgname+".mrc1.png")
-	opimfile2=os.path.join(params['opimagedir'], imgname+".mrc2.png")
-	shutil.copy(imfile1,opimfile1)
-	shutil.copy(imfile2,opimfile2)
-	#pymat.eval(matlab,"im1 = imread('"+imfile1+"');")
-	#pymat.eval(matlab,"im2 = imread('"+imfile2+"');")
-	#pymat.eval(matlab,"imwrite(im1,'"+opimfile1+"');")
-	#pymat.eval(matlab,"imwrite(im2,'"+opimfile2+"');")
+	opimfile1=imgname+".mrc1.png"
+	opimfile2=imgname+".mrc2.png"
+	#shutil.copy(imfile1,opimfile1)
+	#shutil.copy(imfile2,opimfile2)
+	pymat.eval(matlab,"im1 = imread('"+imfile1+"');")
+	pymat.eval(matlab,"im2 = imread('"+imfile2+"');")
+	pymat.eval(matlab,"imwrite(im1,'"+opimfile1+"');")
+	pymat.eval(matlab,"imwrite(im2,'"+opimfile2+"');")
 
 	insertCtfParams(imgdict, params, matfile, expid, ctfparams, opimfile1, opimfile2)
 
