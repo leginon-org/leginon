@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.207 $
+# $Revision: 1.208 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-02 22:16:58 $
+# $Date: 2007-05-03 00:56:46 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -1015,7 +1015,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		for i in range(numtilts):
 			#get first image
 			imagedata0, ps = self._getPeakFromTiltStates(tilt0imagedata=None, 
-			  tilt1=-tilt_value, medfilt=medfilt, snrcut=snrcut)
+			  tilt1=-tilt_value, medfilt=medfilt, snrcut=snrcut, correlation_type=correlation_type)
 			if ps['snr'] > snrcut:
 				pixelshiftree.append(ps)
 
@@ -1028,7 +1028,6 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		
 		### END TILTING; BEGIN ASSESSMENT
 
-		pixelshift = {'row':0.0, 'col':0.0, 'snr': snr}
 		if len(pixelshiftree) < 1:
 			#wasn't a good enough fit
 			self.node.logger.error("image correction failed, snr below cutoff")
@@ -1043,11 +1042,14 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 			snrtotal += ps['snr']
 			rowtotal += ps['row']*ps['snr']
 			coltotal += ps['col']*ps['snr']
+			self.node.logger.info("measured pixel shift: %s, %s" % (ps['row'], ps['col']))
+
 		pixelshift = {
 			'row':rowtotal/snrtotal,
 			'col':coltotal/snrtotal,
 			'snr':snrtotal/float(len(pixelshiftree))
 		}
+		self.node.logger.info("final pixel shift: %s, %s" % (pixelshift['row'], pixelshift['col']))
 		
 		### END ASSESSMENT; BEGIN CORRECTION
 
@@ -1087,13 +1089,13 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		return imagedata0, pixelshift
 
 
-	def _getPeakFromTiltStates(self, tilt0imagedata=None, tilt1=0.26, medfilt=True, snrcut=10.0):
+	def _getPeakFromTiltStates(self, tilt0imagedata=None, tilt1=0.26, medfilt=True, snrcut=10.0, correlation_type='phase'):
 		orig_a = self.instrument.tem.StagePosition['a']
 		state0 = data.ScopeEMData()
 		state1 = data.ScopeEMData()
 		state0['stage position'] = {'a':0.0}
 		state1['stage position'] = {'a':tilt1}
-		tilt1deg = round(-tilt_value*180.0/math.pi,4)
+		tilt1deg = round(-tilt1*180.0/math.pi,4)
 
 		if tilt0imagedata is None:
 			self.node.logger.info('acquiring tilt=0 degrees')
@@ -1140,13 +1142,13 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 
 		## translate peak into image shift coordinates
 		peak01a = peak01['subpixel peak']
-		if tilt1 > 0:
-			shift01 = correlator.wrap_coord(-1.0*peak01a, pc.shape)
-		else:
-			shift01 = correlator.wrap_coord(peak01a, pc.shape)
+		shift01 = correlator.wrap_coord(peak01a, pc.shape)
 		self.displayPeak(peak01a)
+		if tilt1 > 0:
+			pixelshift = {'row':-1.0*shift01[0], 'col':-1.0*shift01[1], 'snr':snr }
+		else:
+			pixelshift = {'row':shift01[0], 'col':shift01[1], 'snr':snr }
 
-		pixelshift = {'row':shift01[0], 'col':shift01[1], 'snr': snr}
 		self.node.logger.info("measured pixel shift: %s, %s" % (pixelshift['row'], pixelshift['col']))
 		self.node.logger.info("signal-to-noise ratio: %s" % (round(snr,2),))
 

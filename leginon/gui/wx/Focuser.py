@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.50 $
+# $Revision: 1.51 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-03 00:14:36 $
+# $Date: 2007-05-03 00:56:46 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -267,8 +267,7 @@ class MeasureTiltAxisDialog(wx.Dialog):
 			acorr = 'phase'
 		atilttwice = self.tilttwice.GetValue()
 		#RUN THE Measurement
-		threading.Thread(target=self.node.measureTiltAxis, args=(atilt, anumtilts,
-		  atilttwice, update, asnr, acorr, amedfilt)).start()
+		threading.Thread(target=self.node.measureTiltAxis, args=(atilt, anumtilts, atilttwice, update, asnr, acorr, amedfilt)).start()
 
 class AlignRotationCenterDialog(wx.Dialog):
 	def __init__(self, parent):
