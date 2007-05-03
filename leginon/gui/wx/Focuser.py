@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.49 $
+# $Revision: 1.50 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-02 22:16:58 $
+# $Date: 2007-05-03 00:14:36 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -227,6 +227,7 @@ class MeasureTiltAxisDialog(wx.Dialog):
 
 		row += 1
 		self.medfilt = wx.CheckBox(self, -1, "Median filter phase correlation")
+		self.medfilt.SetValue(True)
 		sbsz.Add(self.medfilt, (row,0), (1,3), wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
 
 		self.measurecancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
