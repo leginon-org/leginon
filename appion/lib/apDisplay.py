@@ -236,16 +236,18 @@ def matlabError():
 	env['PATH'] = "/ami/sw/packages/matlab73/bin:/home/$USER/pyappion/ace:/bin:/usr/bin"
 	env['MATLAB'] = "/ami/sw/packages/matlab73"
 	env['MATLABPATH'] = "/home/$USER/pyappion/ace"
-	env['PYTHONPATH'] = "/home/$USER/pyleginon:/home/$USER/pyappion/lib:/ami/sw/32-pythonhome/lib/python2.4/site-packages"
+	env['PYTHONHOME'] = "/ami/sw/32-pythonhome"
+	env['PYTHONPATH'] = "/home/$USER/pyleginon:/home/$USER/pyappion/lib"
+	#:/ami/sw/32-pythonhome/lib/python2.4/site-packages"
 	env['LD_LIBRARY_PATH'] = "/ami/sw/packages/matlab73/bin/glnx86:/lib:/usr/lib"
 	env['LM_LICENSE_FILE'] = "/ami/sw/packages/matlab/etc/license.dat"
-	print color("MATLAB failed to open.\n\tCheck your environmental variables:","red")
+	print color("MATLAB failed to open.\nCheck your environmental variables:","red")
 	if os.path.basename(os.environ.get("SHELL")) == "bash":
 		for var in env.keys():
-			print color("\t  export "+var+"="+env[var],"red")
+			print color(" export "+var+"="+env[var],"red")
 	else:
 		for var in env.keys():
-			print color("\t  setenv "+var+" "+env[var],"red")
-	print "\tusually the PATH is the problem move matlab73/bin to the end"
+			print color(" setenv "+var+" "+env[var],"red")
+	print "sometimes the PATH is the problem move matlab73/bin to the end"
 	sys.exit(1)
 
