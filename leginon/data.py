@@ -1211,6 +1211,8 @@ class ImageData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('image', newdict.MRCArrayType),
+			('pixeltype', str),
+			('pixels', int),
 			('label', str),
 			('filename', str),
 			('list', ImageListData),
