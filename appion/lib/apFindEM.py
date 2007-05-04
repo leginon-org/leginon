@@ -134,11 +134,11 @@ def findEMString(classavg, imgname, ccmapfile, params):
 
 	return feed
 
-def processAndSaveImage(imgdict, params):
+def processAndSaveImage(imgdata, params):
 	#downsize and filter leginon image
-	imgdata = apImage.preProcessImage(imgdict['image'], params=params)
-	imgpath = os.path.join(params['rundir'], imgdict['filename']+".dwn.mrc")
-	apImage.arrayToMrc(imgdata, imgpath)
+	imgarray = apImage.preProcessImage(imgdata['image'], params=params)
+	imgpath = os.path.join(params['rundir'], imgdata['filename']+".dwn.mrc")
+	apImage.arrayToMrc(imgarray, imgpath)
 	return
 
 

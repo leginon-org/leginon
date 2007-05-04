@@ -20,8 +20,8 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 	def preLoopFunctions(self):
 		apTemplate.getTemplates(self.params)
 
-	def processImage(self, imgdict):
-		imgname = imgdict['filename']
+	def processImage(self, imgdata):
+		imgname = imgdata['filename']
 		apTemplate.rescaleTemplates(self.params)
 		### RUN FindEM
 		if 'method' in self.params and self.params['method'] == "experimental":
@@ -30,19 +30,19 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 			sys.exit(1)
 		else:
 			print "FINDEM"
-			self.ccmaplist = apFindEM.runFindEM(imgdict, self.params)
+			self.ccmaplist = apFindEM.runFindEM(imgdata, self.params)
 			print "FINDPEAKS"
-			self.peaktree  = apPeaks.findPeaks(imgdict, self.ccmaplist, self.params)
+			self.peaktree  = apPeaks.findPeaks(imgdata, self.ccmaplist, self.params)
 			print "CREATEJPG"
-			apPeaks.createPeakJpeg(imgdict, self.peaktree, self.params)
+			apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)
 
 	def postLoopFunctions(self):
 		return
 
-	def commitToDatabase(self, imgdict):
-		expid = int(imgdict['session'].dbid)
+	def commitToDatabase(self, imgdata):
+		expid = int(imgdata['session'].dbid)
 		sf1.insertSelexonParams(self.params, expid)
-		apParticle.insertParticlePeaks(self.peaktree, imgdict, expid, self.params)
+		apParticle.insertParticlePeaks(self.peaktree, imgdata, expid, self.params)
 
 	def specialDefaultParams(self):
 		self.params['template']=''
@@ -86,9 +86,11 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 					self.params['startang']=int(angs[0])
 					self.params['endang']=int(angs[1])
 					self.params['incrang']=int(angs[2])
+					self.params['startang1']=int(angs[0])
+					self.params['endang1']=int(angs[1])
+					self.params['incrang1']=int(angs[2])
 				else:
-					print "\nERROR: \'range\' must include 3 angle parameters: start, stop, & increment\n"
-					sys.exit(1)
+					apDisplay.printError("'range' must include 3 angle parameters: start, stop, & increment")
 			elif (re.match('range\d+',elements[0])):
 				num = re.sub("range(?P<num>[0-9]+)","\g<num>",elements[0])
 				#num=elements[0][-1]
@@ -99,8 +101,7 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 					self.params['incrang'+num]=int(angs[2])
 					self.params['multiple_range']=True
 				else:
-	 				print "\nERROR: \'range\' must include 3 angle parameters: start, stop, & increment\n"
-					sys.exit(1)
+	 				apDisplay.printError("'range' must include 3 angle parameters: start, stop, & increment")
 			elif (elements[0]=='thresh'):
 				self.params['thresh']=float(elements[1])
 			elif (elements[0]=='autopik'):
