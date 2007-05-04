@@ -2,6 +2,7 @@
 
 #pythonlib
 import math
+import time
 #PIL
 import Image
 import ImageDraw
@@ -17,36 +18,37 @@ import convolver
 #appion
 import apDisplay
 
-def _processImage(imgdata, bin=1, apix=1.0, lowpass=0.0, planeReg=True):
+def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, planeReg=True):
 	"""
 	standard processing for an image
 	"""
-	simgdata = imgdata.copy()
-	simgdata = binImg(simgdata,bin)
+	simgarray = imgarray.copy()
+	simgarray = binImg(simgarray,bin)
 	if planeReg:
-		simgdata = planeRegression(simgdata)
-	simgdata = lowPassFilter(simgdata,apix,bin,lowpass)
-	simgdata = 255.0*(normRange(simgdata)+1.0e-7)
-	return simgdata
+		simgarray = planeRegression(simgarray)
+	simgarray = lowPassFilter(simgarray,apix,bin,lowpass)
+	simgarray = 255.0*(normRange(simgarray)+1.0e-7)
+	return simgarray
 
 
-def preProcessImage(imgdata, bin=None, apix=None, lowpass=None, planeReg=True, params={}):
+def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=True, params={}):
 	"""
 	standard processing for an image
 	"""
+	startt = time.time()
 	#BINNING
 	if bin is None:
 		if 'bin' in params:
 			bin = params['bin']
 		else:
-			apDisplay.printWarning("'bin' is not defined in preProcessImage")
+			apDisplay.printWarning("'bin' is not defined in preProcessImage()")
 			bin = 1
 	#ANGSTROMS PER PIXEL
 	if apix is None:
 		if 'apix' in params:
 			apix = params['apix']
 		else:
-			apDisplay.printError("'apix' is not defined in preProcessImage")
+			apDisplay.printError("'apix' is not defined in preProcessImage()")
 	#LOW PASS FILTER
 	if lowpass is None:
 		if 'lowpass' in params:
@@ -55,30 +57,32 @@ def preProcessImage(imgdata, bin=None, apix=None, lowpass=None, planeReg=True, p
 			lowpass = params['lp']
 		else:
 			lowpass = 0
-			apDisplay.printWarning("'lowpass' is not defined in preProcessImage")
+			apDisplay.printWarning("'lowpass' is not defined in preProcessImage()")
 	#HIGH PASS FILTER => PLANE REGRESSION
-	return _processImage(imgdata, bin, apix, lowpass, planeReg)
+	result = _processImage(imgarray, bin, apix, lowpass, planeReg)
+	apDisplay.printMsg("filtered image in "+apDisplay.timeString(startt-time.time()))
+	return result
 
-def binImg(img,bin=1):
+def binImg(imgarray,bin=1):
 	"""
 	returns a binned image
 	"""
 	if bin > 1:
-		return imagefun.bin(img,bin)
+		return imagefun.bin(imgarray,bin)
 	else:
-		return img
+		return imgarray
 
-def filterImg(imgdata,apix,rad,bin=1):
+def filterImg(imgarray,apix,rad,bin=1):
 	#TEMPORARY ALIAS FOR lowPassFilter
-	return lowPassFilter(imgdata,apix=apix,bin=1,radius=rad)
+	return lowPassFilter(imgarray,apix=apix,bin=1,radius=rad)
 
-def lowPassFilter(img,apix=1.0,bin=1,radius=0.0):
+def lowPassFilter(imgarray,apix=1.0,bin=1,radius=0.0):
 	"""
 	low pass filter image to radius resolution
 	"""
 	if radius==0:
 		print " ... skipping low pass filter"
-		return(img)
+		return(imgarray)
 	else:
 		sigma=float(radius)/apix/3.0/float(bin)
 		if(sigma > 10):
@@ -87,10 +91,16 @@ def lowPassFilter(img,apix=1.0,bin=1,radius=0.0):
 			print " ... performing low pass filter"
 		kernel=convolver.gaussian_kernel(sigma)
 	c=convolver.Convolver()
-	return(c.convolve(image=img,kernel=kernel))
+	return(c.convolve(image=imgarray,kernel=kernel))
 
 
-def diffOfGauss(img,apix,bin,diam,k=1.01):
+def diffOfGaussParam(imgarray, params, k=1.2):
+	apix = params['apix']
+	bin = params['bin']
+	diam = params['diam']
+	return diffOfGauss(imgarray, apix, bin, diam, k=k)
+
+def diffOfGauss(imgarray, apix, bin, diam, k=1.2):
 	"""
 	given bin, apix and diam of particle perform a difference of Gaussian
 	about the size of that particle
@@ -105,36 +115,36 @@ def diffOfGauss(img,apix,bin,diam,k=1.01):
 	kernel1 = convolver.gaussian_kernel(sigma1)
 	kernel2 = convolver.gaussian_kernel(sigma2)
 	c=convolver.Convolver()
-	img1 = c.convolve(image=img,kernel=kernel1)
-	img2 = c.convolve(image=img,kernel=kernel2)
-	return img2-img1
+	imgarray1 = c.convolve(image=imgarray,kernel=kernel1)
+	imgarray2 = c.convolve(image=imgarray,kernel=kernel2)
+	return imgarray2-imgarray1
 
-def planeRegression(img):
+def planeRegression(imgarray):
 	"""
 	performs a two-dimensional linear regression and subtracts it from an image
 	essentially a fast high pass filter
 	"""
 	#print " ... calculate 2d linear regression"
-	if ( (img.shape)[0] != (img.shape)[1] ):
+	if ( (imgarray.shape)[0] != (imgarray.shape)[1] ):
 		print "Array is NOT square"
 		sys.exit(1)
-	size = (img.shape)[0]
-	count = float((img.shape)[0]*(img.shape)[1])
+	size = (imgarray.shape)[0]
+	count = float((imgarray.shape)[0]*(imgarray.shape)[1])
 	def retx(y,x):
 		return x
 	def rety(y,x):
 		return y	
-	xarray = numarray.fromfunction(retx, img.shape)
-	yarray = numarray.fromfunction(rety, img.shape)
+	xarray = numarray.fromfunction(retx, imgarray.shape)
+	yarray = numarray.fromfunction(rety, imgarray.shape)
 	xsum = float(xarray.sum())
 	xsumsq = float((xarray*xarray).sum())
 	ysum = xsum
 	ysumsq = xsumsq
 	xysum = float((xarray*yarray).sum())
-	xzsum = float((xarray*img).sum())
-	yzsum = float((yarray*img).sum())
-	zsum = img.sum()
-	zsumsq = (img*img).sum()
+	xzsum = float((xarray*imgarray).sum())
+	yzsum = float((yarray*imgarray).sum())
+	zsum = imgarray.sum()
+	zsumsq = (imgarray*imgarray).sum()
 	xarray = xarray.astype(numarray.Float64)
 	yarray = yarray.astype(numarray.Float64)
 	leftmat = numarray.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]] )
@@ -142,29 +152,51 @@ def planeRegression(img):
 	resvec = linear_algebra.solve_linear_equations(leftmat,rightmat)
 	print " ... plane_regress: x-slope:",round(resvec[0]*size,5),\
 		", y-slope:",round(resvec[1]*size,5),", xy-intercept:",round(resvec[2],5)
-	newarray = img - xarray*resvec[0] - yarray*resvec[1] - resvec[2]
-	del img,xarray,yarray,resvec
+	newarray = imgarray - xarray*resvec[0] - yarray*resvec[1] - resvec[2]
+	del imgarray,xarray,yarray,resvec
 	return newarray
 
-def normRange(img):
+def normRange(imgarray):
 	"""
 	normalize the range of an image between 0 and 1
 	"""
-	min1=nd_image.minimum(img)
-	max1=nd_image.maximum(img)
+	min1=nd_image.minimum(imgarray)
+	max1=nd_image.maximum(imgarray)
 	if min1 == max1:
-		return img - min1
-	return (img - min1)/(max1 - min1)
+		return imgarray - min1
+	return (imgarray - min1)/(max1 - min1)
 
-def normStdev(img):
+def normRangeMed(imgarray, size=5):
 	"""
 	normalize an image to mean = 0 and stddev = 1.0
 	"""
-	avg1=nd_image.mean(img)
-	std1=nd_image.standard_deviation(img)
+	medimgarray = nd_image.median_filter(imgarray, size=size)
+	min1 = nd_image.minimum(medimgarray)
+	max1 = nd_image.maximum(medimgarray)
+	if min1 == max1:
+		return imgarray - min1
+	return (imgarray - min1)/(max1 - min1)
+
+def normStdev(imgarray):
+	"""
+	normalize an image to mean = 0 and stddev = 1.0
+	"""
+	avg1=nd_image.mean(imgarray)
+	std1=nd_image.standard_deviation(imgarray)
 	if std1 == 0:
-		return img - avg1
-	return (img - avg1)/std1
+		return imgarray - avg1
+	return (imgarray - avg1)/std1
+
+def normStdevMed(imgarray, size=3):
+	"""
+	normalize an image to mean = 0 and stddev = 1.0
+	"""
+	medimgarray = nd_image.median_filter(imgarray, size=size)
+	avg1=nd_image.mean(medimgarray)
+	std1=nd_image.standard_deviation(medimgarray)
+	if std1 == 0:
+		return imgarray - avg1
+	return (imgarray - avg1)/std1
 
 def normStdevMask(img,mask):
 	"""
@@ -352,6 +384,18 @@ def arrayToPng(numer,filename,normalize=True):
 		numer = numer*255
 	image = _arrayToImage(numer)
 	apDisplay.printMsg("writing PNG: "+apDisplay.short(filename))
+	image.save(filename, "PNG")
+	return
+
+def arrayMaskToPng(numer, filename):
+	"""
+	takes a numarray and writes a PNG
+	best for masks and line art
+	"""
+	image = _arrayToImage(numer)
+	#next line requires data be zero or one
+	image = image.convert('1')
+	apDisplay.printMsg("writing PNG mask: "+apDisplay.short(filename))
 	image.save(filename, "PNG")
 	return
 

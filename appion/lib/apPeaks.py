@@ -6,6 +6,7 @@ import numarray
 #PIL
 import Image
 import ImageDraw
+import ImageOps
 #appion
 import apImage
 import apDisplay
@@ -14,20 +15,20 @@ import apParam
 import imagefun
 
 
-def findPeaks(imgdict, ccmaplist, params):
+def findPeaks(imgdict, ccmaplist, params, maptype="ccmaxmap"):
 
 	peaktreelist = []
 	count = 0
 	for ccmap in ccmaplist:
 		count += 1
-		peaktree = findPeaksInMap(ccmap, imgdict, count, params)
+		peaktree = findPeaksInMap(ccmap, imgdict, count, params, maptype)
 		peaktreelist.append(peaktree)
 
 	peaktree = mergePeakTrees(imgdict, peaktreelist, params)
 
 	return peaktree
 
-def findPeaksInMap(ccmap, imgdict, tmplnum, params):
+def findPeaksInMap(ccmap, imgdict, tmplnum, params, maptype):
 	threshold = float(params["thresh"])
 	bin =       int(params["bin"])
 	diam =      float(params["diam"])
@@ -36,15 +37,19 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params):
 	maxpeaks =  int(params["maxpeaks"])
 	imgname =   imgdict['filename']
 	binpixrad = diam/apix/2.0/float(bin)
-	tmpldbid =  params['ogTmpltInfo'][tmplnum-1].dbid
+	if 'ogTmpltInfo' in params:
+		tmpldbid =  params['ogTmpltInfo'][tmplnum-1].dbid
+	else:
+		tmpldbid = None
+	mapdir = os.path.join(params['rundir'],maptype+"s")
 
 	#MAXPEAKSIZE ==> 1x AREA OF PARTICLE
-	maxsize =   int(round(math.pi*(apix*diam/float(bin))**2/4.0,0))+1
+	maxsize =   int(round(math.pi*(binpixrad**2),0))+1
 
 	#VARY PEAKS FROM STATS
 	varyThreshold(ccmap, threshold, maxsize)
 	#GET FINAL PEAKS
-	blobtree, percentcov = findBlobs(ccmap, threshold, maxsize=maxsize, maxpeaks=maxpeaks)
+	blobtree, percentcov = findBlobs(ccmap, threshold, maxsize=maxsize, maxpeaks=maxpeaks, summary=True)
 	peaktree = convertBlobsToPeaks(blobtree, tmpldbid, tmplnum, bin)
 	print "Template "+str(tmplnum)+": Found",len(peaktree),"peaks ("+\
 		str(percentcov)+"% coverage)"
@@ -61,17 +66,26 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params):
 	else:
 		peaktree.sort(_peakCompare)
 
-	if not (os.path.exists("ccmaxmaps")):
-		os.mkdir("ccmaxmaps")
+	apParam.createDirectory(mapdir, warning=False)
 
 	image = apImage.arrayToImage(ccmap)
 	image = image.convert("RGB")
+
+	### color stuff below threshold
+	#threshmap = imagefun.threshold(ccmap, threshold)
+	#filtmap = numarray.where(threshmap > 0, -3.0, ccmap)
+	#imagefilt = apImage.arrayToImage(filtmap)
+	#imagefilt = imagefilt.convert("RGB")
+	#imagefilt = ImageOps.colorize(imagefilt, "black", "green")
+	#image = Image.blend(image, imagefilt, 0.2) 
+
+	### color peaks in map
 	image2 = image.copy()
 	draw = ImageDraw.Draw(image2)
 	drawPeaks(peaktree, draw, bin, binpixrad, fill=True)
 	image = Image.blend(image, image2, 0.3) 
 
-	outfile = "ccmaxmaps/"+imgname+".ccmaxmap"+str(tmplnum)+".jpg"
+	outfile = os.path.join(mapdir, imgname+"."+maptype+str(tmplnum)+".jpg")
 	print " ... writing JPEG: ",outfile
 	image.save(outfile, "JPEG", quality=90)
 
@@ -160,7 +174,8 @@ def varyThreshold(ccmap, threshold, maxsize):
 
 def convertBlobsToPeaks(blobtree, tmpldbid, tmplnum, bin):
 	peaktree = []
-	print "TEMPLATE DBID:",tmpldbid
+	if tmpldbid is not None:
+		print "TEMPLATE DBID:",tmpldbid
 	for blobclass in blobtree:
 		peakdict = {}
 		peakdict['ycoord']      = float(blobclass.stats['center'][0]*float(bin))
@@ -174,7 +189,11 @@ def convertBlobsToPeaks(blobtree, tmpldbid, tmplnum, bin):
 		peaktree.append(peakdict)
 	return peaktree
 
-def findBlobs(ccmap, thresh, maxsize=500, minsize=2, maxpeaks=1500, border=6, maxmoment=5.0, elim= "highest"):
+def findBlobs(ccmap, thresh, maxsize=500, minsize=1, maxpeaks=1500, border=10, 
+	  maxmoment=4.0, elim= "highest", summary=False):
+	"""
+	calls leginon's find_blobs
+	"""
 	totalarea = (ccmap.shape)[0]**2
 	ccthreshmap = imagefun.threshold(ccmap, thresh)
 	percentcov  =  round(100.0*float(ccthreshmap.sum())/float(totalarea),2)
@@ -183,7 +202,7 @@ def findBlobs(ccmap, thresh, maxsize=500, minsize=2, maxpeaks=1500, border=6, ma
 		apDisplay.printWarning("too much coverage in threshold: "+str(percentcov))
 		return [],percentcov
 	blobtree = imagefun.find_blobs(ccmap, ccthreshmap, border, maxpeaks*4,
-		maxsize, minsize, maxmoment, elim)
+		maxsize, minsize, maxmoment, elim, summary)
 	return blobtree, percentcov
 
 def peakTreeToPikFile(peaktree, imgname, tmpl, rundir="."):
@@ -218,22 +237,23 @@ def peakTreeToPikFile(peaktree, imgname, tmpl, rundir="."):
 		f.write(str(out)+"\n")
 	f.close()
 
-def createPeakJpeg(imgdict, peaktree, params):
-	count =   len(params['templatelist'])
+def createPeakJpeg(imgdata, peaktree, params):
+	if 'templatelist' in params:
+		count =   len(params['templatelist'])
+	else: count = 1
 	bin =     int(params["bin"])/2
 	diam =    float(params["diam"])
 	apix =    float(params["apix"])
 	if bin < 1: 
 		bin = 1
 	binpixrad  = diam/apix/2.0/float(bin)
-	imgname = imgdict['filename']
+	imgname = imgdata['filename']
 
 	jpegdir = os.path.join(params['rundir'],"jpgs")
-	if not (os.path.exists(jpegdir)):
-		os.mkdir(jpegdir,0777)
+	apParam.createDirectory(jpegdir, warning=False)
 
-	numer = apImage.preProcessImage(imgdict['image'], bin=bin, params=params)
-	image = apImage.arrayToImage(numer)
+	imgarray = apImage.preProcessImage(imgdata['image'], bin=bin, params=params)
+	image = apImage.arrayToImage(imgarray)
 	image = image.convert("RGB")
 
 	image2 = image.copy()
@@ -243,8 +263,6 @@ def createPeakJpeg(imgdict, peaktree, params):
 	print " ... writing JPEG: ",outfile
 	image = Image.blend(image, image2, 0.9) 
 	image.save(outfile, "JPEG", quality=95)
-
-	del image,numer,draw
 
 	return
 
@@ -274,10 +292,10 @@ def drawPeaks(peaktree, draw, bin, binpixrad, circmult=1.0, numcircs=None, circs
 	for peakdict in peaktree:
 		x1=float(peakdict['xcoord'])/float(bin)
 		y1=float(peakdict['ycoord'])/float(bin)
-		if 'tmplnum' in peakdict:
+		if 'tmplnum' in peakdict and peakdict['tmplnum'] is not None:
 			#GET templ_num
-			num = int(peakdict['tmplnum'])%12
-		elif 'template' in peakdict:
+			num = int(peakdict['tmplnum']-1)%12
+		elif 'template' in peakdict and peakdict['template'] is not None:
 			#GET templ_dbid
 			num = int(peakdict['template'])%12
 		elif 'peakarea' in peakdict and peakdict['peakarea'] != 0:
