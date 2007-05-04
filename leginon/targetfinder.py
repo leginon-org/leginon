@@ -1103,7 +1103,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.regionarrays = regionarrays
 		self.regionellipses = regionellipses
 
-		self.setTargets(displaypoints, 'region', block=False)
+		self.setTargets(displaypoints, 'region', block=True)
 			
 	def clearRegions(self):
 		imshape = self.mosaicimage.shape
@@ -1112,7 +1112,12 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.clearTargets('region')
 
 	def autoSpacingAngle(self):
-		imagedata = self.imagemap[self.imagemap.keys()[0]]
+		try:
+			imagedata = self.imagemap[self.imagemap.keys()[0]]
+		except IndexError:
+			self.logger.warning('need displayed atlas to calculate the spacing and angle')
+			return self.settings['raster spacing'],self.settings['raster angle']
+
 		tem = imagedata['scope']['tem']
 		cam = imagedata['camera']['ccdcamera']
 		ht = imagedata['scope']['high tension']
@@ -1194,7 +1199,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 		## this block will reduce the number of raster points
 		if self.regionarrays:
-			print 'original raster', len(rasterpoints)
 			region = self.regionarrays[0]
 			gmin0 = gmax0 = region[0][0]
 			gmin1 = gmax1 = region[0][1]
@@ -1221,7 +1225,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 					if gmin1 < rasterpoint[1] < gmax1:
 						newrasterpoints.append(rasterpoint)
 			rasterpoints = newrasterpoints
-			print 'reduced raster', len(rasterpoints)
 
 		#for region in self.regionarrays:
 		for region in self.regionarrays:
@@ -1231,7 +1234,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			fullrasterset = fullrasterset.union(fillraster)
 
 			leftovers = list(set(rasterpoints).difference(fillraster))
-			print 'leftover raster', len(leftovers)
 			if len(region) > 1:
 				distances = polygon.distancePointsToPolygon(leftovers, region)
 			else:
@@ -1265,8 +1267,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		center = middleregion[0],middleregion[1]
 		
 		focusdisplay = self.transpose_points([center])
-		print 'display'
-		self.setTargets(focusdisplay, 'focus', block=True)				
+		self.setTargets(focusdisplay, 'focus', block=True)
 
 	def findSquares(self):
 		if self.mosaicimagedata is None:
