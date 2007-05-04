@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.31 $
+# $Revision: 1.32 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-03-23 22:40:57 $
-# $Author: pulokas $
+# $Date: 2007-05-04 23:12:44 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -69,7 +69,14 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 		#self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, False)
 
 	def onSubmitTool(self, evt):
+		threading.Thread(target=self._onSubmitTool, args=(evt,)).start()
+
+	def _onSubmitTool(self, evt):
 		'''overriding so that submit button stays enabled'''
+		if self.node.settings['find section options'] == 'Regions from Centers':
+			manualacq = self.getTargetPositions('acquisition')
+			if len(manualacq) == 0:
+				self.node.autoTargetFinder()
 		gui.wx.ClickTargetFinder.Panel.onSubmitTool(self, evt)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
 
