@@ -88,6 +88,7 @@ $ctf_display_fields = array (
 	'confidence_d',
 	'graph1',
 	'graph2',
+	'graphpath',
 );
 
 ?>
@@ -323,14 +324,18 @@ if (!empty($ctfdata)) {
 			$display = format_micro_number($v);
 		elseif ($v-floor($v)) 
 			$display = format_sci_number($v,4,2);
+		elseif ($k=='graphpath')
+			$graphpath=$v;
 		elseif ($k=='graph1')
-		        $graph1=$v;
+			$graph1name=$v;
 		elseif ($k=='graph2')
-		        $graph2=$v;
+			$graph2name=$v;
 		else
 			$display = $v;
 		echo formatHtmlRow($k,$display);
 	}
+	$graph1=$graphpath."/".$graph1name;
+	$graph2=$graphpath."/".$graph2name;
 	echo "<TR>";
 	echo "<TD ALIGN='LEFT'>\n";
 	echo "<A HREF='loadimg.php?filename=$graph1'>\n";

@@ -1,7 +1,7 @@
 <?php
 /**
- *	@version $Revision: 1.31 $
- *	@version $Id: image.inc,v 1.31 2006-12-04 21:37:30 glander Exp $
+ *	@version $Revision: 1.32 $
+ *	@version $Id: image.inc,v 1.32 2007-05-05 03:06:06 sstagg Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -294,6 +294,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				$col = imagecolorallocatehex($img,$selcolor);
 				$dbp = new particledata();
 				$particles = $dbp->getParticlesFromSelectionId($selectionId, $filename);
+				exit;
 				foreach ($particles as $particle) {
 					$tsize = 100*$scalefactor/$binning;
 					$cx = $particle['Xcoord']/$binning*$scalefactor;
@@ -325,6 +326,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				$col = imagecolorallocate($img, 255,255,255);
 				$apix = $imginfo[pixelsize]*1e10;
 				$diam = $diam*$scalefactor/$binning/$apix;
+				if (is_array($particledata))
 				foreach ($particledata as $particle) {
 					$cx = $particle['xcoord']/$binning*$scalefactor;
 					$cy = $particle['ycoord']/$binning*$scalefactor;

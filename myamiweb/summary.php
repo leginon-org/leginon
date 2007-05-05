@@ -234,6 +234,7 @@ if ($ctf->hasCtfData($sessionId)) {
 	$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
 	$fields = array('defocus1', 'confidence', 'confidence_d');
 	$bestctf = $ctf->getBestStats($fields, $sessionId, $minconf);
+	
 	if ($bestctf) {
 	        foreach($bestctf as $field=>$data) {
 		        foreach($data as $k=>$v) {

@@ -58,7 +58,7 @@ function createTemplateForm() {
 		$numtemplates=count($templateData);
 		foreach($templateData as $templateinfo) { 
 		        if (is_array($templateinfo)) {
-			        $filename=$templateinfo[templatepath];
+			        $filename=$templateinfo[templatepath] ."/".$templateinfo[templatename];
 				$checkboxname='template'.$i;
 				// create the javascript functions to enable the templates
 				$javafunctions.="function enable".$checkboxname."() {
@@ -173,7 +173,7 @@ function createSelexonForm($extra=false, $title='PySelexon Launcher', $heading='
 			$templateList.=$i.":".$templateId.",";
 			$templateInfo=$particle->getTemplatesFromId($templateId);
 			$tmpltrows=$templateInfo[0];
-			$filename=$tmpltrows[templatepath];
+			$filename=$tmpltrows[templatepath]."/".$tmpltrows[templatename];
 			$templateTable.="<TD VALIGN='TOP'><IMG SRC='loadimg.php?filename=$filename&rescale=True' WIDTH='200'><BR>\n";
 			if (!$start && !$end && !$incr) $templateTable.="<B>no rotation</B>\n";
 			elseif ($start=='' || !$end || !$incr) {

@@ -19,7 +19,7 @@ class particledata {
 
 	var $crlf = "\n";
 
-	function particledata() {
+	function particledata () {
 		$this->mysql = new mysql(
 					PARTICLE_DB_HOST,
 					PARTICLE_DB_USER,
@@ -27,73 +27,87 @@ class particledata {
 					PARTICLE_DB);
 	}
 	
-	function getTemplatesFromProject($projectId) {
+	function getTemplatesFromProject ($projectId) {
 		$q="select * "
-			."from `templateImage` where `project|projects|projectId`='$projectId'";
+			."from `ApTemplateImageData` where `project|projects|projectId`='$projectId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
 	
 	function getTemplatesFromId ($templateId) {
 		$q = "select * " 
-			."from templateImage where `DEF_id` = '$templateId' ";
+			."from ApTemplateImageData where `DEF_id` = '$templateId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
 
 	function getParticlesFromImageId ($runId, $imageId){
-		$q = "select p.xcoord, p.ycoord, p.correlation, p.insidecrud "
-			."from particle p "
-			."left join image i "
-			."on (i.`DEF_id` = p.`REF|image|imageId` ) "
-			."where p.`REF|run|runId` = '$runId' "
-			."and i.`dbemdata|AcquisitionImageData|image` = '$imageId' ";
+		$q = "select p.xcoord, p.ycoord, p.correlation "
+			."from ApParticleData p "
+			."where p.`REF|ApSelectionRunData|selectionrun` = '$runId' "
+			."and p.`dbemdata|AcquisitionImageData|image` = '$imageId' ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
 	
-        function getKeepStatus($imageId){
+	function getLastAssessmentRun ($sessionId){
+		$q = "select max(DEF_id) as runId "
+			." from ApAssessmentRunData where `dbemdata|SessionData|session` = '$sessionId'";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r[runId]; 
+	}
+	
+	function getAssessmentRunIds ($sessionId) {
+		$q = "select * "
+			."from ApAssessmentRun where `dbemdata|SessionData|session` = '$sessionId'";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+        function getKeepStatus ($imageId,$runId){
 	        // returns a boolean value, 0 if rejected, 1 if keeping,
 	        // null if no status in database
-                $q = "select keep "
-		        ."from image "
-		        ."where `dbemdata|AcquisitionImageData|image` = '$imageId' ";
+ 		$q = "select * "
+		        ."from ApAssessmentData "
+		        ."where `dbemdata|AcquisitionImageData|image` = '$imageId' "
+			."and `REF|ApAssessmentRunData|assessmentrun` = '$runId' ";
 		list($r)=$this->mysql->getSQLResult($q);
-		return $r['keep'];
+		return $r['selectionkeep'];
 	}
 
-        function updateKeepStatus($imageId,$value){
+        function updateKeepStatus ($imageId,$runId,$value){
 	        // update image status : 0 if rejected, 1 if keeping,
-          	$data = array('keep'=>$value);
+          	$data = array('selectionkeep'=>$value);
 	        $where = array('dbemdata|AcquisitionImageData|image'=>$imageId);
-		$this->mysql->SQLUpdate('image',$data,$where); 
+		$where['REF|ApAssessmentRunData|assessmentrun']=$runId;
+		$this->mysql->SQLUpdate('ApAssessmentData',$data,$where); 
 	}
 
-	function getSelectionParams($runId) {
+	function getSelectionParams ($runId) {
 		$q = "select s.*, r.name, r.`dbemdata|SessionData|session` "
-			."from selectionParams s "
-			."left join run r on (s.`REF|run|runId` = r.`DEF_id`) "
-			."where s.`REF|run|runId` = '$runId' ";
+			."from ApSelectionParamsData s "
+			."left join ApSelectionRunData r on (s.`DEF_id` = r.`REF|ApSelectionParamsData|params`) "
+			."where r.`DEF_id` = '$runId' ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
 	
-	function getTemplateRunParams($runId) {
-		$q = "select i.DEF_id as id, i.templatepath as path, i.apix, i.description, "
+	function getTemplateRunParams ($runId) {
+		$q = "select i.DEF_id as id, i.templatepath as path, i.templatename as tname, i.apix, i.description, "
 			."t.range_start, t.range_end, t.range_incr, "
 			."r.name "
-			."from templateRun t "
-			."left join templateImage i on (t.`REF|templateImage|templateId`=i.`DEF_id`) "
-			."left join run r on (t.`REF|run|runId` = r.`DEF_id`) "
-			."where t.`REF|run|runId` = '$runId' ";
+			."from ApTemplateRunData t "
+			."left join ApTemplateImageData i on (t.`REF|ApTemplateImageData|template`=i.`DEF_id`) "
+			."left join ApSelectionRunData r on (t.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
+			."where t.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
 		
-	function getParticles($runId) {
-		$q="select p.DEF_id, p.xcoord, p.ycoord, p.correlation, p.insidecrud "
-			."from particle p "
-			."where p.`REF|run|runId` = '$runId' "; 
+	function getParticles ($runId) {
+		$q="select p.DEF_id, p.xcoord, p.ycoord, p.correlation "
+			."from ApParticleData p "
+			."where p.`REF|ApSelectionRunData|selectionrun` = '$runId' "; 
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
@@ -105,60 +119,67 @@ class particledata {
 	
 	function getStats ($runId, $inspect=False, $selexval=False){
 		$q="select count(p.`DEF_id`) as `totparticles`, "
-		        ."count(distinct p.`REF|image|imageId`) as num, "
+		        ."count(distinct p.`dbemdata|AcquisitionImageData|image`) as num, "
 			."min(p.correlation) as `min`, "
 			."max(p.correlation) as `max`, "
 			."avg(p.correlation) as `avg`, "
 			."stddev(p.correlation) as `stddev` "
-		        ."from particle p ";
+		        ."from ApParticleData p ";
+		// use the latest inspection value. This should be changed later 
 		if ($inspect) {
-		        $q.= "left join image i "
-			    ."on (i.`DEF_id` = p.`REF|image|imageId`) ";
+		        $q.= "left join ApAssessmentData ad "
+				."on (ad.`dbemdata|AcquisitionImageData|image` = p.`dbemdata|AcquisitionImageData|image`) ";
 		}
 		$q.="WHERE ";
-		if ($inspect) $q.="i.keep=1 AND ";
+		if ($inspect) {
+			$q.= "ad.`DEF_id`=(select max(ad2.`DEF_id`) from ApAssessmentData ad2 where ad2.`dbemdata|AcquisitionImageData|image` = ad.`dbemdata|AcquisitionImageData|image`) "
+				."and ad.selectionkeep=1 AND ";
+		}
 		if ($selexval) $q.="p.`correlation`>='$selexval' AND ";
-		$q.="p.`REF|run|runId` = '$runId' ";
+		$q.="p.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 			
 	}
 	
-        function getNumImgs($runId){
-	        $q="SELECT count(distinct `REF|image|imageId`) as num "
-		   . "FROM `particle` "
-		   . "WHERE `REF|run|runId`='$runId' ";
+        function getNumImgs ($runId){
+	        $q="SELECT count(distinct `dbemdata|AcquisitionImageData|image`) as num "
+		   . "FROM `ApParticleData` "
+		   . "WHERE `REF|ApSelectionRunData|selectionrun`='$runId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0]['num'];
 	}
 
-        function getNumImgsFromSessionId($sessionId){
-	        $q="SELECT count(*) as num "
-		   . "FROM `image` "
-		   . "WHERE `dbemdata|SessionData|session`='$sessionId' ";
+        function getNumImgsFromSessionId ($sessionId){
+	        $q="SELECT count(distinct `dbemdata|AcquisitionImageData|image`) as num "
+		   . "FROM `ApParticleData` p "
+		   . "left join `ApSelectionRunData` r on (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
+		   . "WHERE r.`dbemdata|SessionData|session`='$sessionId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0]['num'];
 	}
 
-        function getNumAssessedImages($sessionId) {
+        function getNumAssessedImages ($sessionId) {
+		$rid = $this->getLastAssessmentRun($sessionId);
 		$q = "select count(DEF_id) as num "
-			."from `image` where "
-		        ."`keep` IS NOT NULL "
-             	        ."AND `dbemdata|SessionData|session` = '$sessionId' ";
+			."from `ApAssessmentData` where "
+		        ."`selectionkeep` IS NOT NULL "
+ 			."and `REF|ApAssessmentRunData|assessmentrun` = '$rid'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r['num'];
 	}
-
+	
+	
 	function getLastParticleRun ($sessionId) {
 		$q = "select max(DEF_id) as runId "
-			."from `run` where `dbemdata|SessionData|session` = '$sessionId'";
+			."from `ApSelectionRunData` where `dbemdata|SessionData|session` = '$sessionId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r[runId];
 	}
 	
 	function getParticleRunIds ($sessionId) {
 		$q = "select * "
-			."from `run` where `dbemdata|SessionData|session` = '$sessionId'";
+			."from `ApSelectionRunData` where `dbemdata|SessionData|session` = '$sessionId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
@@ -169,10 +190,10 @@ class particledata {
 		if (!is_array($runids)) return;
 		foreach ($runids as $runid) {
 		        $run=$runid['DEF_id'];
-			$q = "select distinct(`REF|stackParams|stackId`) as stackid "
-			    ."from `stackParticles` sp left join particle p on "
-			    ."(p.`DEF_id` = sp.`REF|particle|particleId`) "
-			    ."WHERE `REF|run|runId` ='$run'";
+			$q = "select distinct(`REF|ApStackParamsData|stackparams`) as stackid "
+			    ."from `ApStackParticlesData` sp left join ApParticleData p on "
+			    ."(p.`DEF_id` = sp.`REF|ApParticleData|particle`) "
+			    ."WHERE `REF|ApSelectionRunData|selectionrun` ='$run'";
 			$r = $this->mysql->getSQLResult($q);
 			if (is_array($r[0]))
 			        array_push($stackidlist,$r[0]['stackid']);
@@ -182,7 +203,7 @@ class particledata {
 
         function getStackParams ($stackId) {
 	        $q = "SELECT * "
-		    ."FROM `stackParams` "
+		    ."FROM `ApStackParamsData` "
 		  ."WHERE `DEF_id` = '$stackId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
@@ -190,12 +211,13 @@ class particledata {
 
         function getNumStackParticles ($stackId) {
 	        $q= "SELECT count(*) as num "
-		   ."FROM `stackParticles` "
-		   ."WHERE `REF|stackParams|stackId` = '$stackId'";
+		   ."FROM `ApStackParticlesData` "
+		   ."WHERE `REF|ApStackParamsData|stackparams` = '$stackId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0]['num'];
 	}    
 
+	//////// fix me ////////
         function getStackIdFromReconId ($reconId) {
 	        $q= "SELECT * "
 		   ."FROM `reconRun` "
@@ -204,14 +226,13 @@ class particledata {
 	        return $r[0]['REF|stackParams|stackId'];
 	}    
 
-        function getPixelSizeFromStackId($stackId) {
+        function getPixelSizeFromStackId ($stackId) {
 	        $q= "SELECT `REF|InstrumentData|tem` t, magnification m, `REF|InstrumentData|ccdcamera` c, a.`DEF_timestamp` time "
-                   ."FROM stackParticles sp "
-                   ."left join particle p on (p.`DEF_id`=sp.`REF|particle|particleId`) "
-                   ."left join image i on (i.`DEF_id`=p.`REF|image|imageId`) "
-                   ."left join dbemdata.AcquisitionImageData a on (a.`DEF_id`=i.`dbemdata|AcquisitionImageData|image`) "
+                   ."FROM ApStackParticlesData sp "
+                   ."left join ApParticleData p on (p.`DEF_id`=sp.`REF|ApParticleData|particle`) "
+                   ."left join dbemdata.AcquisitionImageData a on (a.`DEF_id`=p.`dbemdata|AcquisitionImageData|image`) "
                    ."left join dbemdata.PresetData pd on (a.`REF|PresetData|preset`=pd.`DEF_id`) "
-                   ."WHERE sp.`REF|stackParams|stackId`='$stackId' "
+                   ."WHERE sp.`REF|ApStackParamsData|stackparams`='$stackId' "
                    ."GROUP BY `REF|InstrumentData|tem`";
 		$r = $this->mysql->getSQLResult($q);
 		if (is_array($r[0])) {
@@ -229,7 +250,8 @@ class particledata {
 		}
 		else return;
 	}
-	function displayParticleStats($particleruns, $display_keys, $inspect=False, $selexval=False) {
+
+	function displayParticleStats ($particleruns, $display_keys, $inspect=False, $selexval=False) {
 		if (!is_array($particleruns))
 			return ;
 		$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
@@ -251,7 +273,7 @@ class particledata {
 			        .'<img border="0" '
 			        .'src="particlegraph.php?w=150&hg=1&run='
 				.$runId.'"></a>';
-			$q = "select name from `run` where `DEF_id` = $runId";
+			$q = "select name from `ApSelectionRunData` where `DEF_id` = $runId";
 			$r = $this->mysql->getSQLResult($q);
 			$r0 = $r[0];
 			$html .= '<td><a href="particlerunreport.php?rId='.$runId.'">'.$r0[name].'</a></td>';
@@ -266,6 +288,8 @@ class particledata {
 		return $html;
 	}
 
+
+////// fix all of these ////////
 #---------RECONSTRUCTION FUNCTIONS---------------#
 
 	function getReconIds ($stackId) {
@@ -282,21 +306,21 @@ class particledata {
 		return $r[0];
 	}
 
-        function getSymInfo($symId){
+        function getSymInfo ($symId){
 	        $q = "SELECT * "
 		    ."FROM `symmetry` WHERE `DEF_id` = '$symId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
 
-        function getResolutionInfo($resId) {
+        function getResolutionInfo ($resId) {
 	        $q = "SELECT * "
 		   ."FROM `resolution` WHERE `DEF_id` = '$resId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
 		
-        function getIterationInfo($reconId) {
+        function getIterationInfo ($reconId) {
 	        $q = "SELECT * "
 		    ."FROM `refinement` r "
 		    ."LEFT JOIN `refinementParams` p "

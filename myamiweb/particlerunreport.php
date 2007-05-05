@@ -31,7 +31,7 @@ echo "<h4>Template images and parameters</h4>\n";
 echo "<table>";
 echo "<tr>";
 foreach($templateparams as $template){
-	$templatepath=$template[path];
+	$templatepath=$template[path]."/".$template[tname];
 	echo '<td>';
 		echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>";
 		echo "<tr>\n";
@@ -52,7 +52,7 @@ echo "</table>";
 //Report selection run parameters
 echo "<h4>Selection parameters</h4>";
 echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
-$selection_fields = array( 'REF|run|runId', 'diam', 'bin', 'manual_thresh', 'auto_thresh', 'lp_filt', 'hp_filt', 'crud_diameter', 'crud_blur', 'crud_low', 'crud_high', 'crud_std');
+$selection_fields = array( 'diam', 'bin', 'manual_thresh', 'auto_thresh', 'lp_filt', 'hp_filt');
 foreach($selection_fields as $key) {
 	echo "<tr>\n";
 		echo "<td><span class='datafield0'>$key</span></td>";

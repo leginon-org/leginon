@@ -6,7 +6,7 @@ $ctf = new ctfdata();
 
 $defaultId= 1766;
 $sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
-$ace_params_fields = array ('REF|run|runId', 'display', 'stig', 'medium', 'df_override', 'edgethcarbon', 'edgethice', 'pfcarbon', 'pfice', 'overlap', 'fieldsize', 'resamplefr', 'drange', 'reprocess' );
+$ace_params_fields = array ('acerun', 'display', 'stig', 'medium', 'df_override', 'edgethcarbon', 'edgethice', 'pfcarbon', 'pfice', 'overlap', 'fieldsize', 'resamplefr', 'drange', 'reprocess' );
 
 
 	

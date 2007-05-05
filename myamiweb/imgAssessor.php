@@ -92,7 +92,7 @@ echo"</FORM>\n";
 writeBottom();
 
 
-function displayImage($_POST,$files,$imgdir,$leginondata){
+function displayImage ($_POST,$files,$imgdir,$leginondata){
         $particledata=new particledata();
 
         $numfiles=count($files);
@@ -192,12 +192,12 @@ function displayImage($_POST,$files,$imgdir,$leginondata){
 	echo"<IMG SRC='loadimg.php?filename=$imgfull&scale=$imgrescl'><P>\n";
 }
 
-function getImageStatus($imgname,$leginondata,$particledata) {
+function getImageStatus ($imgname,$leginondata,$particledata,$assessmentrid) {
 	// get the status of the image index
 	$imgbase=split("\.",$imgname);
 	$imgbase=$imgbase[0].".mrc";
 	$statdata['id']=$leginondata->getId(array('MRC|image'=>$imgbase),'AcquisitionImageData','DEF_id');
-	$statdata['status']=$particledata->getKeepStatus($statdata['id']);
+	$statdata['status']=$particledata->getKeepStatus($statdata['id'],$assessmentrid);
 	$statdata['name']=$imgname;
 	return $statdata;
 }

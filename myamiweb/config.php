@@ -7,10 +7,10 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  *
  * $Source: /ami/sw/cvsroot/dbem/config.php,v $
- * $Revision: 1.23 $
+ * $Revision: 1.24 $
  * $Name: not supported by cvs2svn $
- * $Date: 2006-12-07 22:42:49 $
- * $Author: glander $
+ * $Date: 2007-05-05 03:06:06 $
+ * $Author: sstagg $
  * $State: Exp $
  * $Locker:  $
  *
@@ -38,19 +38,19 @@ $PROJECT_DB = "project";
 $PARTICLE_DB_HOST = "cronus4";
 $PARTICLE_DB_USER = "usr_object";
 $PARTICLE_DB_PASS = "";
-$PARTICLE_DB = "dbparticledata";
+$PARTICLE_DB = "dbappiondata";
 
 // --- CTF database
 $PROCESSING_DB_HOST = "cronus4";
 $PROCESSING_DB_USER = "usr_object";
 $PROCESSING_DB_PASS = "";
-$PROCESSING_DB = "dbctfdata";
+$PROCESSING_DB = "dbappiondata";
 
 // --- Reconstruction Database
 $RECON_DB_HOST = "cronus4";
 $RECON_DB_USER = "usr_object";
 $RECON_DB_PASS = "";
-$RECON_DB = "dbrecondata";
+$RECON_DB = "dbappiondata";
 
 // --- Set Default table definition
 

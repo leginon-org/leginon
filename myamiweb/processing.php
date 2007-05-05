@@ -103,7 +103,7 @@ if ($sessionId) {
   $prtlruns=count($prtlrunIds);
 
   // --- Get Micrograph Assessment Data
-  $totimgs = $particle->getNumImgsFromSessionId($sessionId);
+  //$totimgs = $particle->getNumImgsFromSessionId($sessionId);
   $assessedimgs = $particle->getNumAssessedImages($sessionId);
   
   // --- Get Stack Data
@@ -168,7 +168,7 @@ if ($sessionId) {
     <B>Micrograph Assessment</B>
     </TD>
     <TD BGCOLOR='$bgcolor'>
-    $assessedimgs/$totimgs assessed
+    $assessedimgs assessed
     </TD>
     <TD BGCOLOR='$bgcolor'>
     <A HREF='imgAssessor.php?expId=$sessionId'>";
