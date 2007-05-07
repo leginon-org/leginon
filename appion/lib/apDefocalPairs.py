@@ -6,12 +6,10 @@ import data
 import correlator
 import appionData
 import apDB
-import selexonFunctions as sf1
-
-#db=dbdatakeeper.DBDataKeeper()
-#partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
-db=apDB.db
-partdb=apDB.apdb
+import apImage
+#import selexonFunctions as sf1
+leginondb = apDB.db
+appiondb  = apDB.apdb
 
 def findSubpixelPeak(image, npix=5, guess=None, limit=None, lpf=None):
 	#this is a temporary fix while Jim fixes peakfinder
@@ -26,7 +24,7 @@ def getDefocusPair(imagedata):
 	qtarget['number'] = target['number']
 	qsibling=data.AcquisitionImageData(target=qtarget)
 	origid=imagedata.dbid
-	allsiblings = db.query(qsibling, readimages=False)	
+	allsiblings = leginondb.query(qsibling, readimages=False)	
 	if len(allsiblings) > 1:
 		#could be multiple siblings but we are taking only the most recent
 		#this may be bad way of doing things
@@ -64,8 +62,8 @@ def getShift(imagedata1,imagedata2):
 	else:
 		shrinkfactor1=dimension1/finalsize
 		shrinkfactor2=dimension2/finalsize
-		binned1=sf1.binImg(imagedata1['image'],shrinkfactor1)
-		binned2=sf1.binImg(imagedata2['image'],shrinkfactor2)
+		binned1=apImage.binImg(imagedata1['image'],shrinkfactor1)
+		binned2=apImage.binImg(imagedata2['image'],shrinkfactor2)
 		pc=correlator.phase_correlate(binned1,binned2,zero=True)
 		#Mrc.numeric_to_mrc(pc,'pc.mrc')
 		peak=findSubpixelPeak(pc, lpf=1.5) # this is a temp fix. 
@@ -87,7 +85,7 @@ def recordShift(params,img,sibling,peak):
 def insertShift(img,sibling,peak):
 	shiftq=appionData.ApImageTransformationData()
 	shiftq['dbemdata|AcquisitionImageData|image1']=img.dbid
-	shiftdata=partdb.query(shiftq)
+	shiftdata=appiondb.query(shiftq)
 	if shiftdata:
 		print "Warning: Shift values already in database"
 	else:
@@ -97,5 +95,5 @@ def insertShift(img,sibling,peak):
 		shiftq['scale']=peak['scalefactor']
 		shiftq['correlation']=peak['subpixel peak value']
 		print 'Inserting shift beteween', img['filename'], 'and', sibling['filename'], 'into database'
-		partdb.insert(shiftq)
+		appiondb.insert(shiftq)
 	return()

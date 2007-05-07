@@ -1,6 +1,7 @@
 #!/usr/bin/python -O
 
-import sys,os
+import sys
+import os
 import apLoop
 import apDog
 import apPeaks

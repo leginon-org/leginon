@@ -17,6 +17,7 @@ import numarray.fft as fft
 import numarray.random_array as random_array
 import numarray.linear_algebra as linear_algebra
 import apDatabase
+import apImage
 #import selexonFunctions as sf1
 #import numextension
 #import mem
@@ -342,7 +343,7 @@ def tmpRemoveCrud(params,imagefile):
 #	image    = normStdev(image)
 
 	#LOW PASS FILTER
-	image    = selexonFunctions.filterImg(image,apix*float(bin),lowpass)
+	image    = apImage.filterImg(image,apix*float(bin),lowpass)
 
 	#BLACK OUT DARK AREAS, LESS THAN 2 STDEVS
 	image = removeCrud(image,imagefile,-1.0,params)

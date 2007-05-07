@@ -14,7 +14,7 @@ import apDatabase
 import apPeaks
 import apParticle
 #legacy
-import selexonFunctions  as sf1
+#import selexonFunctions  as sf1
 
 class TemplateCorrelationLoop(appionLoop.AppionLoop):
 	def preLoopFunctions(self):
@@ -41,7 +41,7 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 
 	def commitToDatabase(self, imgdata):
 		expid = int(imgdata['session'].dbid)
-		sf1.insertSelexonParams(self.params, expid)
+		apParticle.insertSelexonParams(self.params, expid)
 		apParticle.insertParticlePeaks(self.peaktree, imgdata, expid, self.params)
 
 	def specialDefaultParams(self):
