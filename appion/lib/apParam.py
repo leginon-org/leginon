@@ -172,7 +172,10 @@ def createDirectory(path, mode=0777, warning=True):
 		if warning is True:
 			apDisplay.printWarning("directory \'"+path+"\' already exists.")
 		return False
-	os.makedirs(path,mode)
+	try:
+		os.makedirs(path,mode)
+	except:
+		apDisplay.printError("Could not create directory, '"+path+"'\nCheck the folder write permissions")
 	return True
 
 
