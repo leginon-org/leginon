@@ -10,7 +10,7 @@ import cPickle
 #appion
 import apDisplay
 import apDatabase
-#import apXml
+import apXml
 #leginon
 try:
 	import mem
@@ -143,11 +143,6 @@ class AppionLoop(object):
 		"""
 		return	
 
-	def specialPrintHelp(self):
-		"""
-		put in the help message to print
-		"""
-		return
 
 	#################################################
 	#### ITEMS BELOW ARE NOT USUALLY OVERWRITTEN ####
@@ -177,11 +172,6 @@ class AppionLoop(object):
 
 		print "checking special param conflicts"
 		self.specialParamConflicts()
-
-	def _printHelp(self):
-		self.specialPrintHelp()
-		#apXml.printHelp()
-		return
 
 	def _getAppionDir(self):
 		self.params['appiondir'] = os.environ.get('APPIONDIR')
@@ -273,6 +263,11 @@ class AppionLoop(object):
 				# remove file from list of args and backup in loop
 				del args[i]
 				i -= 1
+			elif ('help' in arg and not '=' in arg) or arg == 'h' or arg == '-h':
+				allxml = os.path.join(self.params['appiondir'],"xml/allAppion.xml")
+				funcxml = os.path.join(self.params['appiondir'],"xml",self.functionname+".xml")
+				xmldict = apXml.readTwoXmlFiles(allxml, funcxml)
+				apXml.printHelp(xmldict)
 			i += 1
 
 		self.params['mrcfileroot']=mrcfileroot
@@ -287,6 +282,7 @@ class AppionLoop(object):
 		for arg in args:
 			elements=arg.split('=')
 			elements[0] = elements[0].lower()
+			#if (elements[0] is 'help' or elements[0] is '--help' or elements[0] is '-h'):
 			if (elements[0]=='outdir'):
 				self.params['outdir']=os.path.abspath(elements[1])
 				#if(self.params['outdir'][0] != "/"):
