@@ -1,90 +1,77 @@
-import cElementTree
 import sys
 import apDisplay
 import re
+import xml.dom.minidom
 
-class XmlListConfig(list):
-    def __init__(self, aList):
-        for element in aList:
-            if element:
-                # treat like dict
-                if len(element) == 1 or element[0].tag != element[1].tag:
-                    self.append(XmlDictConfig(element))
-                # treat like list
-                elif element[0].tag == element[1].tag:
-                    self.append(XmlListConfig(element))
-            elif element.text:
-                text = element.text.strip()
-                if text:
-                    self.append(text)
+#taken from http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/409899
+#Title: xmlreader2
+#Submitter: Peter Neish (other recipes) 
+#HEAVILY modified by Neil
 
+def nodeToDict(node):
+	"""
+	nodeToDic() scans through the children of node and makes a
+	dictionary from the content.
+	two cases are differentiated:
+	- if the node contains no other nodes, it is a text-node
+	  and {nodeName:text} is merged into the dictionary.
+	- else, nodeToDic() will call itself recursively on
+	  the children nodes.
+	Duplicate entries are overwritten
+	"""
+	xmldict = {}
+	for n in node.childNodes:
+		if n.nodeType != n.ELEMENT_NODE:
+			continue
+		text = False
+		if len(n.childNodes) == 1 and n.childNodes[0].nodeType == n.TEXT_NODE:
+			text = str(n.childNodes[0].nodeValue)
+			if len(text) > 0:
+				xmldict.update({str(n.nodeName): text})
+			else:
+				xmldict.update({str(n.nodeName): None})
+		elif len(n.childNodes) > 0:
+			xmldict.update({str(n.nodeName): nodeToDict(n)})
+	return xmldict
 
-class XmlDictConfig(dict):
-    """
-    Example usage:
-    >>> tree = cElementTree.parse('your_file.xml')
-    >>> root = tree.getroot()
-    >>> xmldict = XmlDictConfig(root)
-    And then use xmldict for what it is... a dict.
-    """
-    def __init__(self, parent_element):
-        if parent_element.items():
-            self.update(dict(parent_element.items()))
-        for element in parent_element:
-            if element:
-                # treat like dict - we assume that if the first two tags
-                # in a series are different, then they are all different.
-                if len(element) == 1 or element[0].tag != element[1].tag:
-                    aDict = XmlDictConfig(element)
-                # treat like list - we assume that if the first two tags
-                # in a series are the same, then the rest are the same.
-                else:
-                    # here, we put the list in dictionary; the key is the
-                    # tag name the list elements all share in common, and
-                    # the value is the list itself 
-                    aDict = {element[0].tag.lower(): XmlListConfig(element)}
-                # if the tag has attributes, add those to the dict
-                if element.items():
-                    aDict.update(dict(element.items()))
-                self.update({element.tag.lower(): aDict})
-            # this assumes that if you've got an attribute in a tag,
-            # you won't be having any text. This may or may not be a 
-            # good idea -- time will tell. It works for the way we are
-            # currently doing XML configuration files...
-            elif element.items():
-                self.update({element.tag.lower(): dict(element.items())})
-            # finally, if there are no child tags and no attributes, extract
-            # the text
-            else:
-                self.update({element.tag.lower(): element.text})
+def readConfig(filename):
+	dom = xml.dom.minidom.parse(filename)
+	xmldict = nodeToDict(dom.childNodes[0])
+	return xmldict
+
+### END BORROWED CODE
 
 def readTwoXmlFiles(file1,file2):
 	"""
 	reads two XML files and creates a dictionary
 	"""
-	tree     = cElementTree.parse(file1)
-	treeroot = tree.getroot()
-	xmldict  = XmlDictConfig(treeroot)
-
-	tree     = cElementTree.parse(file2)
-	treeroot = tree.getroot()
-	xmldict2 = XmlDictConfig(treeroot)
-
+	xmldict  = readConfig(file1)
+	xmldict2 = readConfig(file2)
 	xmldict = overWriteDict(xmldict,xmldict2)
 
-	return updateXmlDict(xmldict)
+	fillMissingInfo(xmldict)
+	updateXmlDict(xmldict)
+
+	return xmldict
 
 
-def overWriteDict(dict1,dict2):
+def fillMissingInfo(xmldict):
+	xmldict.copy()
+	for p in xmldict:
+		if not 'nargs' in xmldict[p]:
+			xmldict[p]['nargs'] = 1
+	return
+
+def overWriteDict(dict1, dict2):
 	"""
 	merges dict2 into dict1 by inserting and overwriting values
 	"""
 	if len(dict2) > 0:
 		for p in dict2:
-			#if p in dict1:
-				#print p,dict1[p],dict2[p]
-				#dict1[p] = dict2[p]
-			dict1[p] = dict2[p]
+			if p in dict1:
+				dict1[p].update(dict2[p])
+			else:
+				dict1[p] = dict2[p]
 	return dict1
 
 def generateParams(xmldict):
@@ -97,18 +84,20 @@ def generateParams(xmldict):
 			value = xmldict[p]['default']
 			vtype = xmldict[p]['type']
 			nargs = xmldict[p]['nargs']
-			params[p] = _convertParamToType(value,vtype,nargs)
+			params[p] = _convertParamToType(value, vtype, nargs)
 		else:
 			params[p] = None
 	return params
 
 def checkParamDict(paramdict,xmldict):
 	"""
-	checks the parameter dictionary for type,limits, and conflict
+	checks the parameter dictionary for type, limits, and conflicts
 	"""
 	for p in paramdict:
-		if 'type' in xmldict[p]:
+		if 'type' in xmldict[p] and 'nargs' in xmldict[p]:
 			paramdict[p] = _convertParamToType(paramdict[p], xmldict[p]['type'], xmldict[p]['nargs'])
+		elif 'type' in xmldict[p]:
+			paramdict[p] = _convertParamToType(paramdict[p], xmldict[p]['type'])
 		if 'limits' in xmldict[p]:
 			minval,maxval = re.split(",",xmldict[p]['limits'])
 			if paramdict[p] < float(minval):
@@ -119,68 +108,53 @@ def checkParamDict(paramdict,xmldict):
 					str(paramdict[p])+">"+str(maxval))
 	return paramdict
 
-def _convertParamListToType(val,vtype,nargs=None):
+def _convertParamToType(val, vtype, nargs=None):
 	"""
 	converts a value (val) into a type (vtype)
 	"""
-	if 'type' in dict[param]:
-		vtype = dict[param]['type']
-	if 'nargs' in dict[param]:
-		nargs = dict[param]['nargs']
-	if vtype[:3].lower() == "int":
-		return int(val)
-	elif vtype.lower() == "float":
-		return float(val)
-	elif vtype[:4].lower() == "bool":
-		return str2bool(val)
-	elif vtype[:3].lower() == "str" or vtype[:4].lower() == "path":
+	if val is None:
 		return val
+	if nargs is None or nargs == 1:
+		if vtype[:3].lower() == "int":
+			return int(val)
+		elif vtype.lower() == "float":
+			return float(val)
+		elif vtype[:4].lower() == "bool":
+			return str2bool(val)
+		elif vtype[:3].lower() == "str" or vtype[:4].lower() == "path":
+			return val
+		else:
+			apDisplay.printError("unknown type (type='"+vtype+"') in XML file")
 	else:
-		apDisplay.printError("unknown type (type='"+vtype+"') in XML file")
+		vallist = val.split(',')
+		if vtype[:3].lower() == "int":
+			for i in range(len(vallist)):
+				vallist[i] = int(vallist[i])
+			return vallist
+		elif vtype.lower() == "float":
+			for i in range(len(vallist)):
+				vallist[i] = float(vallist[i])
+			return vallist
+		elif vtype[:4].lower() == "bool":
+			for i in range(len(vallist)):
+				vallist[i] = str2bool(vallist[i])
+			return vallist
+		elif vtype[:3].lower() == "str" or vtype[:4].lower() == "path":
+			for i in range(len(vallist)):
+				vallist[i] = str(vallist[i])
+			return vallist
+		else:
+			apDisplay.printError("unknown type (type='"+vtype+"') in XML file")
+	return
 
-def _convertParamToType(val,vtype,nargs=None):
-	"""
-	converts a value (val) into a type (vtype)
-	"""
-	if vtype[:3].lower() == "int":
-		return int(val)
-	elif vtype.lower() == "float":
-		return float(val)
-	elif vtype[:4].lower() == "bool":
-		return str2bool(val)
-	elif vtype[:3].lower() == "str" or vtype[:4].lower() == "path":
-		return val
-	else:
-		apDisplay.printError("unknown type (type='"+vtype+"') in XML file")
-
-def _convertParamToType2(val,param,dict):
-	"""
-	converts a value (val) into a type (vtype)
-	"""
-	if 'type' in dict[param]:
-		vtype = dict[param]['type']
-	if 'nargs' in dict[param]:
-		nargs = dict[param]['nargs']
-	if vtype[:3].lower() == "int":
-		return int(val)
-	elif vtype.lower() == "float":
-		return float(val)
-	elif vtype[:4].lower() == "bool":
-		return str2bool(val)
-	elif vtype[:3].lower() == "str" or vtype[:4].lower() == "path":
-		return val
-	else:
-		apDisplay.printError("unknown type (type='"+vtype+"') in XML file")
-
-
-def updateXmlDict(dict):
+def updateXmlDict(xmldict):
 	"""
 	converts all xml parameters into their desired type
 	"""
-	for param in dict.keys():
-		if(dict[param].has_key('default') and dict[param]['default'] != None):
-			dict[param]['default'] = _convertParamToType(dict[param]['default'],dict[param]['type'],dict[param]['nargs'])
-	return dict
+	for param in xmldict.keys():
+		if('default' in xmldict[param] and xmldict[param]['default'] != None):
+			xmldict[param]['default'] = _convertParamToType(xmldict[param]['default'], xmldict[param]['type'], xmldict[param]['nargs'])
+	return xmldict
 
 def str2bool(string):
 	"""
@@ -193,40 +167,45 @@ def str2bool(string):
 	else:
 		return True
 
-def printHelp(dict):
+def printHelp(xmldict):
 	"""
 	print out help info for a function with XML file
 	"""
-	paramlist = dict.keys()
+	paramlist = xmldict.keys()
 	paramlist.sort()
 	maxlen = 0
 	maxlentype = 0
 	for param in paramlist:
 		if len(param) > maxlen: 
 			maxlen = len(param)
-		if 'type' in dict[param] and len(dict[param]['type']) > maxlentype: 
-			maxlentype = len(dict[param]['type'])
+		if 'type' in xmldict[param] and len(xmldict[param]['type']) > maxlentype: 
+			maxlentype = len(xmldict[param]['type'])
 	for param in paramlist:
-		if not 'alias' in dict[param] and \
-			(not 'modify' in dict[param] or str2bool(dict[param]['modify']) == True):
+		if not 'alias' in xmldict[param] and \
+			(not 'modify' in xmldict[param] or str2bool(xmldict[param]['modify']) == True):
 			outstr = " "
 			outstr += apDisplay.color(apDisplay.rightPadString(param,maxlen),"green")
 			outstr += " :"
-
-			if 'type' in dict[param] and dict[param]['type'] != None:
-				outstr += " ("+apDisplay.rightPadString(dict[param]['type']+")",maxlentype+1)
+			if 'type' in xmldict[param] and xmldict[param]['type'] != None:
+				outstr += " ("+apDisplay.rightPadString(xmldict[param]['type']+")",maxlentype+1)
 				outstr += " :"
-			if 'required' in dict[param] and str2bool(dict[param]['required']) == True:
-				outstr += apDisplay.color(" REQUIRED","red")
-			if 'description' in dict[param] and dict[param]['description'] != None:
-				outstr += " "+dict[param]['description']
-			elif dict[param].has_key('name') and dict[param]['name'] != None:
-				outstr += dict[param]['name']
-			if dict[param].has_key('default') and dict[param]['default'] != None:
-				outstr += apDisplay.color(" (default: "+str(dict[param]['default'])+")","cyan")
-			if dict[param].has_key('example') and dict[param]['example'] != None:
-				outstr += " (example: "+str(dict[param]['example'])+")"
-
+			if 'required' in xmldict[param] and str2bool(xmldict[param]['required']) == True:
+				outstr += apDisplay.color(" REQ","red")
+			if 'description' in xmldict[param] and xmldict[param]['description'] != None:
+				outstr += " "+xmldict[param]['description']
+			elif 'name' in xmldict[param] and xmldict[param]['name'] != None:
+				outstr += xmldict[param]['name']
+			if 'default' in xmldict[param] and xmldict[param]['default'] != None:
+				if 'nargs' in xmldict[param] and xmldict[param]['nargs'] is not None and xmldict[param]['nargs'] > 1:
+					defstr = " (default: "
+					for i in range(len(xmldict[param]['default'])):
+						defstr += str(xmldict[param]['default'][i])+","
+					defstr = defstr[:-1]+")"
+					outstr += apDisplay.color(defstr,"cyan")
+				else:
+					outstr += apDisplay.color(" (default: "+str(xmldict[param]['default'])+")","cyan")
+			if 'example' in xmldict[param] and xmldict[param]['example'] != None:
+				outstr += " (example: "+str(xmldict[param]['example'])+")"
 			print outstr
 	sys.exit(1)
 

@@ -7,7 +7,7 @@
 	<name>template rotation range 1</name>
 	<default>0,360,15</default>
 	<description>Range of rotations for template 1</description>
-	<type>float</type>
+	<type>int</type>
 	<nargs>3</nargs>
 	<limits>0,360</limits>
  </range1>
@@ -15,7 +15,7 @@
 	<name>template rotation range 2</name>
 	<default></default>
 	<description>Range of rotations for template 2</description>
-	<type>float</type>
+	<type>int</type>
 	<nargs>3</nargs>
 	<example>0,360,15</example>
 	<limits>0,360</limits>
@@ -24,7 +24,7 @@
 	<name>template rotation range 3</name>
 	<default></default>
 	<description>Range of rotations for template 3</description>
-	<type>float</type>
+	<type>int</type>
 	<nargs>3</nargs>
 	<example>0,360,15</example>
 	<limits>0,360</limits>

@@ -8,9 +8,9 @@ import apDisplay
 
 if __name__ == "__main__":
 
-	function  = "pyace"
+	function  = "aceCtfEstimator"
 
-	xmldict = apXml.readTwoXmlFiles("allappion.xml",function+".xml")
+	xmldict = apXml.readTwoXmlFiles("allAppion.xml",function+".xml")
 
 	params = apXml.generateParams(xmldict)
 
