@@ -8,7 +8,7 @@ import math
 import shutil
 #appion
 import appionData
-import apLoop
+import apParam
 import apDisplay
 import apDB
 try:
@@ -211,12 +211,8 @@ def insertCtfParams(imgdict,params,matfile,expid,ctfparams,opimfile1,opimfile2):
 	print "Committing ctf parameters for",apDisplay.short(imgdict['filename']), "to database."
 
 	# make sure the directory paths have '/' at end
-	graphpath=params['opimagedir']
-	matpath=params['matdir']
-	if not(graphpath[-1]=='/'):
-		graphpath=graphpath+'/'
-	if not(matpath[-1]=='/'):
-		matpath=matpath+'/'
+	graphpath = os.path.normpath(params['opimagedir'])+"/"
+	matpath   = os.path.normpath(params['matdir'])+"/"
 
 	ctfq=appionData.ApCtfData()
 	ctfq['acerun']=acerun[0]
@@ -242,20 +238,11 @@ def insertCtfParams(imgdict,params,matfile,expid,ctfparams,opimfile1,opimfile2):
 	return
 
 def mkTempDir(temppath):
-	if os.path.exists(temppath):
-		apDisplay.printWarning("temporary directory, '"+temppath+"' already exists\n")
-	else:
-		try:
-			os.makedirs(temppath,0777)
-		except:
-			apDisplay.printError("Could not create temp directory, '"+
-				temppath+"'\nCheck the folder write permissions")
-
-	return
+	return apParam.createDirectory(temppath)
 
 def setScopeParams(matlab,params):
 	tempdir = params['tempdir']+"/"
-	if os.path.exists(tempdir):
+	if os.path.isdir(tempdir):
 		plist = (params['kv'],params['cs'],params['apix'],tempdir)
 		acecmd1 = makeMatlabCmd("setscopeparams(",");",plist)
 		pymat.eval(matlab,acecmd1)
@@ -275,7 +262,7 @@ def getCTFParamsForImage(imgdict):
 
 def setAceConfig(matlab,params):
 	tempdir=params['tempdir']+"/"
-	if os.path.exists(tempdir):
+	if os.path.isdir(tempdir):
 		pymat.eval(matlab, "edgethcarbon="+str(params['edgethcarbon'])+";")
 		pymat.eval(matlab, "edgethice="+str(params['edgethice'])+";")
 		pymat.eval(matlab, "pfcarbon="+str(params['pfcarbon'])+";")
@@ -291,6 +278,33 @@ def setAceConfig(matlab,params):
 		pymat.eval(matlab,acecmd)
 	else:
 		apDisplay.printError("Temp directory, '"+tempdir+"' not present.")
+	return
+
+def checkMatlabPath(params=None):
+	if os.environ.get("MATLABPATH") is None:
+		#TRY LOCAL DIRECTORY FIRST
+		matlabpath = os.path.abspath(".")
+		if os.path.isfile(os.path.join(matlabpath,"ace.m")):
+			updateMatlabPath(matlabpath)
+			return
+		#TRY APPIONDIR/ace
+		if params is not None and 'appiondir' in params:
+			matlabpath = os.path.join(params['appiondir'],"ace")
+			if os.path.isdir(matlabpath) and os.path.isfile(os.path.join(matlabpath,"ace.m")):
+				updateMatlabPath(matlabpath)
+				return
+		#TRY global install
+		matlabpath = "/ami/sw/packages/pyappion/ace"
+		if os.path.isdir(matlabpath) and os.path.isfile(os.path.join(matlabpath,"ace.m")):
+			updateMatlabPath(matlabpath)
+			return
+		apDisplay.matlabError()
+
+def updateMatlabPath(matlabpath):
+	data1 = os.environ.copy()
+	data1['MATLABPATH'] =  matlabpath
+	os.environ.update(data1)
+	#os.environ.get('MATLABPATH')
 	return
 
 def makeMatlabCmd(header,footer,plist):
