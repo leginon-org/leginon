@@ -356,9 +356,13 @@ def _distsqmat(r0,shape):
 	dx, dy = indices[0]-r0[0],indices[1]-r0[1]
 	return (dx**2+dy**2)
 
-def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0, maxmoment=None, method="central"):
-	shape = image.shape
+def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0, 
+	  maxmoment=None, method="central", summary=False):
+	"""
+	find blobs with particular features in a map
+	"""
 
+	shape = image.shape
 	### create copy of mask since it will be modified now
 	tmpmask = numarray.array(mask, numarray.Int32)
 	## zero out tmpmask outside of border
@@ -386,7 +390,8 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 			continue
 		fakeblobs.append(fakeblob)
 
-	#print " ... blob summary:",len(fakeblobs),"total /",toobig,"toobig /",toosmall,"toosmall /",toooblong,"toooblong"
+	if summary is True:
+		print "BLOB summary:",len(fakeblobs),"total /",toobig,"toobig /",toosmall,"toosmall /",toooblong,"toooblong"
 
 	## limit to maxblobs
 	if (maxblobs is not None) and (len(blobs) > maxblobs):
