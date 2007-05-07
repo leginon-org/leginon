@@ -21,8 +21,9 @@ except:
 
 class aceCtfEstimatorLoop(appionLoop.AppionLoop):
 	def preLoopFunctions(self):
-		pyacepath = os.path.join(os.getcwd(), "pyace.py")
-		if(not os.path.isfile(pyacepath)):
+		apCtf.checkMatlabPath(self.params)
+		acepath = os.path.join(os.getcwd(), "aceCtfEstimator.py")
+		if(not os.path.isfile(acepath)):
 			apDisplay.printWarning("'aceCtfEstimator.py' usually needs to be run in the same directory as "+\
 				"all of its matlab files")
 		print "Connecting to matlab ... "

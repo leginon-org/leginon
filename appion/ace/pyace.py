@@ -19,6 +19,7 @@ if __name__ == '__main__':
 	apDisplay.printWarning("Please use 'pyappion/bin/aceCtfEstimator.py' to correct CTF")
 
 	#check directory location
+	apCtf.checkMatlabPath()
 	pyacepath = os.path.join(os.getcwd(),"pyace.py")
 	if(not os.path.exists(pyacepath)):
 		apDisplay.printWarning("'pyace.py' usually needs to be run in the same directory as "+\
