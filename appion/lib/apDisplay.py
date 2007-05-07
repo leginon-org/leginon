@@ -235,10 +235,13 @@ def matlabError():
 	env = {}
 	env['PATH'] = "/ami/sw/packages/matlab73/bin:/home/$USER/pyappion/ace:/bin:/usr/bin"
 	env['MATLAB'] = "/ami/sw/packages/matlab73"
-	env['MATLABPATH'] = "/home/$USER/pyappion/ace"
-	env['PYTHONHOME'] = "/ami/sw/32-pythonhome"
-	env['PYTHONPATH'] = "/home/$USER/pyleginon:/home/$USER/pyappion/lib"
-	#:/ami/sw/32-pythonhome/lib/python2.4/site-packages"
+	if os.environ.get("APPIONDIR") is not None:
+		env['MATLABPATH'] = os.path.join(os.environ.get("APPIONDIR"),"ace")
+	else:
+		env['MATLABPATH'] = "/home/$USER/pyappion/ace"
+	env['PYTHONPATH'] = "/home/$USER/pyleginon:/home/$USER/pyappion/lib:/ami/sw/32-pythonhome/lib/python2.4/site-packages"
+	if os.path.isdir("/usr/lib/python2.4/site-packages"):
+		env['PYTHONPATH'] = "/usr/lib/python2.4/site-packages:" + env['PYTHONPATH']
 	env['LD_LIBRARY_PATH'] = "/ami/sw/packages/matlab73/bin/glnx86:/lib:/usr/lib"
 	env['LM_LICENSE_FILE'] = "/ami/sw/packages/matlab/etc/license.dat"
 	print color("MATLAB failed to open.\nCheck your environmental variables:","red")
