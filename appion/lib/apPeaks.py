@@ -36,6 +36,7 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params, maptype):
 	olapmult =  float(params["overlapmult"])
 	maxpeaks =  int(params["maxpeaks"])
 	imgname =   imgdict['filename']
+	pixrad =    diam/apix/2.0
 	binpixrad = diam/apix/2.0/float(bin)
 	if 'ogTmpltInfo' in params:
 		tmpldbid =  params['ogTmpltInfo'][tmplnum-1].dbid
@@ -56,7 +57,7 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params, maptype):
 	if(percentcov > 10):
 		apDisplay.printWarning("thresholding covers more than 10% of image; you should increase the threshold")
 
-	cutoff = olapmult*binpixrad #1.5x particle radius in pixels
+	cutoff = olapmult*pixrad #1.5x particle radius in pixels
 	removeOverlappingPeaks(peaktree, cutoff)
 
 	if(len(peaktree) > maxpeaks):
@@ -100,6 +101,7 @@ def mergePeakTrees(imgdict, peaktreelist, params):
 	diam =        float(params["diam"])
 	apix =        float(params["apix"])
 	olapmult =    float(params["overlapmult"])
+	pixrad =      diam/apix/2.0
 	binpixrad =   diam/apix/2.0/float(bin)
 	imgname =     imgdict['filename']
 
@@ -109,7 +111,7 @@ def mergePeakTrees(imgdict, peaktreelist, params):
 		mergepeaktree.extend(peaktree)
 
 	#REMOVE OVERLAPPING PEAKS
-	cutoff   = olapmult*binpixrad	#1.5x particle radius in pixels
+	cutoff   = olapmult*pixrad	#1.5x particle radius in pixels
 	mergepeaktree = removeOverlappingPeaks(mergepeaktree, cutoff)
 
 	bestpeaktree = []
@@ -125,7 +127,7 @@ def mergePeakTrees(imgdict, peaktreelist, params):
 def removeOverlappingPeaks(peaktree, cutoff):
 	#distance in pixels for two peaks to be too close together
 	print " ... overlap distance cutoff:",round(cutoff,1),"pixels"
-	cutsq = cutoff**2+1
+	cutsq = cutoff**2 + 1
 
 	initpeaks = len(peaktree)
 	peaktree.sort(_peakCompare)
