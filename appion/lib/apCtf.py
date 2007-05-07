@@ -167,32 +167,29 @@ def insertAceParams(params,expid):
 	for p in copyparamlist:
 		if p in params:
 			aceparamq[p] = params[p]
+			
 	# if nominal df is set, save override df to database, else don't set
 	if params['nominal']:
 		dfnom=-params['nominal']
 		aceparamq['df_override']=dfnom
-	aceparams=acedb.query(aceparamq, results=1)
-
+	
 	# create an acerun object
 	runq=appionData.ApAceRunData()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
+
 	# see if acerun already exists in the database
 	runids=acedb.query(runq, results=1)
 
 	# if no run entry exists, insert new run entry into run.dbctfdata
 	if not(runids):
 		runq['aceparams']=aceparamq
-		# if ace params don't exist in table, insert into DB
-		if not (aceparams):
-			acedb.insert(aceparamq)
-
 		acedb.insert(runq)
 
 	# if continuing a previous run, make sure that all the current
 	# parameters are the same as the previous
 	else:
-		if not (runids[0]['aceparams']==aceparams[0]):
+		if not (runids[0]['aceparams']==aceparamq):
 			apDisplay.printError("All parameters for a single ACE run must be identical! \n"+\
 					     "please check your parameter settings.")
 	return
