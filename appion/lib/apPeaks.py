@@ -201,8 +201,12 @@ def findBlobs(ccmap, thresh, maxsize=500, minsize=1, maxpeaks=1500, border=10,
 	if percentcov > 15:
 		apDisplay.printWarning("too much coverage in threshold: "+str(percentcov))
 		return [],percentcov
-	blobtree = imagefun.find_blobs(ccmap, ccthreshmap, border, maxpeaks*4,
-		maxsize, minsize, maxmoment, elim, summary)
+	try:
+		blobtree = imagefun.find_blobs(ccmap, ccthreshmap, border, maxpeaks*4,
+		  maxsize, minsize, maxmoment, elim, summary)
+	except:
+		blobtree = imagefun.find_blobs(ccmap, ccthreshmap, border, maxpeaks*4,
+		  maxsize, minsize, maxmoment, elim)
 	return blobtree, percentcov
 
 def peakTreeToPikFile(peaktree, imgname, tmpl, rundir="."):
