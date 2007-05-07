@@ -11,6 +11,8 @@ import numarray.convolve as convolve
 import apImage
 import apDisplay
 import apDatabase
+import apDB
+import appionData
 
 def getTemplates(params):
 	print " ... getting templates"
@@ -121,3 +123,80 @@ def checkTemplates(params, upload=None):
 		apDisplay.printError("There are no template images found with basename \'"+name+"\'\n")
 
 	return(params)
+
+def insertTemplateRun(params,runq,templatenum):
+
+	tid=params['templateIds'][templatenum]
+	templateimagedata=apDB.apdb.direct_query(appionData.ApTemplateImageData,tid)
+	# if no templates in the database, exit
+	if not (templateimagedata):
+		apDisplay.printError("Template '"+tid+"' not found in database. Use uploadTemplates.py")
+
+	if params['multiple_range']:
+		strt=params["startang"+str(templatenum+1)]
+		end=params["endang"+str(templatenum+1)]
+		incr=params["incrang"+str(templatenum+1)]
+	else:
+		strt=params['startang']
+		end=params['endang']
+		incr=params['incrang']
+	
+	templaterunq=appionData.ApTemplateRunData()
+	templaterunq['selectionrun']=runq	
+	templaterunq['template']=templateimagedata
+	templaterunq['range_start']=float(strt)
+	templaterunq['range_end']=float(end)
+	templaterunq['range_incr']=float(incr)
+	apDB.apdb.insert(templaterunq)
+	return
+
+def insertTemplateImage(params):
+	for name in params['templatelist']:
+		templateq=appionData.ApTemplateImageData()
+		templateq['templatepath']=params['abspath']
+		templateq['templatename']=name
+		templateId=apDB.apdb.query(templateq, results=1)
+	        #insert template to database if doesn't exist
+		if not (templateId):
+			print "Inserting",name,"into the template database"
+			templateq['apix']=params['apix']
+			templateq['diam']=params['diam']
+			templateq['description']=params['description']
+			templateq['project|projects|project']=params['projectId']
+			apDB.apdb.insert(templateq)
+		else:
+			print "Warning: template already in database."
+			print "Not reinserting"
+	return
+
+def checkTemplateParams(params, runq):
+	templaterunq=appionData.ApTemplateRunData(selectionrun=runq)
+	templaterundata=apDB.apdb.query(templaterunq)
+	#make sure of using same number of templates
+	if len(params['templateIds'])!=len(templaterundata):
+		apDisplay.printError("All parameters for a selexon run must be identical!"+\
+			"You do not have the same number of templates as your last run")
+	# check all templates
+
+	if params['multiple_range']:
+		for n in range(0,len(params['templateIds'])):
+			strt=params["startang"+str(n+1)]
+			end=params["endang"+str(n+1)]
+			incr=params["incrang"+str(n+1)]
+			tmpltimagedata=apDB.apdb.direct_query(appionData.ApTemplateImageData,params['templateIds'][n])
+			tmpltrunq=appionData.ApTemplateRunData()
+			tmpltrunq['selectionrun']=runq
+			tmpltrunq['template']=tmpltimagedata
+			tmpltrundata=apDB.apdb.query(tmpltrunq,results=1)
+			if (tmpltrundata[0]['range_start']!=strt or
+				tmpltrundata[0]['range_end']!=end or
+				tmpltrundata[0]['range_incr']!=incr):
+				apDisplay.printError("All parameters for a selexon run must be identical!"+\
+					"Template search ranges are not the same as your last run")
+	else:
+		if (templaterundata[0]['range_start']!=params['startang'] or
+			templaterundata[0]['range_end']!=params['endang'] or
+			templaterundata[0]['range_incr']!=params['incrang']):
+			apDisplay.printError("All parameters for a selexon run must be identical!"+\
+				"Template search ranges are not the same as your last run")
+	return

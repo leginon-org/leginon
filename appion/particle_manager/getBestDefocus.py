@@ -2,12 +2,12 @@
 
 import sys
 import os
-import data
-import ctfData
-import dbdatakeeper
-import aceFunctions
+import apCtf
+import apDatabase
+import apDB
 
-ctfdb=dbdatakeeper.DBDataKeeper(db='dbctfdata')
+ctfdb= apDB.apdb
+
 
 def printHelp():
 	print "\nUsage: getBestDefocus.py dbimages=<session>,<preset> outfile=<filename>"
@@ -58,10 +58,10 @@ if __name__ == '__main__':
 		print "\nERROR: Please specify outfile=<filename>\n"
 		sys.exit()
 	
-	images=aceFunctions.getImagesFromDB(params['session'],params['preset'])
+	images=apDatabase.getImagesFromDB(params['session'],params['preset'])
 	f=open(params['outfile'],'w')
 	for img in images:
-		ctfparams=aceFunctions.getCTFParamsForImage(img)
+		ctfparams=apCtf.getCTFParamsForImage(img)
 		bestconf=ctfparams[0]['confidence']
 		bestconfd=ctfparams[0]['confidence_d']
 		bestctf=ctfparams[0]

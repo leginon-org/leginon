@@ -1,53 +1,50 @@
 #! /usr/bin/env python
 # Upload pik or box files to the database
 
-import os, re, sys
+import os
+import sys
 import data
 import time
-from selexonFunctions import *
-import selexonFunctions as sf1
+#import selexonFunctions as sf1
+import apUpload
+import apParam
+import apDisplay
+import apDatabase
 
 if __name__ == '__main__':
 	# record command line
-	sf1.writeSelexLog(sys.argv)
+	apParam.writeFunctionLog(sys.argv)
 
 	# create params dictionary & set defaults
-	params = sf1.createDefaults()
-	params['runid']="manual1"
+	params = apUpload.createDefaults()
+	params['runid'] = "manual1"
 
 	# parse command line input
-	sf1.parsePrtlUploadInput(sys.argv,params)
+	apUpload.parsePrtlUploadInput(sys.argv,params)
 
 	# check to make sure that incompatible parameters are not set
-	if (params["diam"]==0):
-		print "\nERROR: please input the diameter of your particle (for display purposes only)\n\n"
-		sys.exit(1)
+	if params['diam'] is None or params['diam']==0:
+		apDisplay.printError("please input the diameter of your particle (for display purposes only)")
 	
 	# get list of input images, since wildcards are supported
-	if not params['imgs']:
-		print "\nERROR: enter picked particle files\n"
-		sys.exit()
-	imglist=params["imgs"]
-	images=[]
+	if params['imgs'] is None:
+		apDisplay.printError("please enter the image names with picked particle files")
+	imglist = params["imgs"]
 
 	print "getting image data from database:"
-	totimgs=len(imglist)
-	i=1
-	for img in imglist:
-		print "image",i,"of",totimgs,":",img
-		imageq=data.AcquisitionImageData(filename=img)
-		imageresult=db.query(imageq, readimages=False)
-		images=images+imageresult
-		i+=1
-	params['session']=images[0]['session']['name']
+	totimgs = len(imglist)
+	imgtree = []
+	for i in range(len(imglist)):
+		imgname = imglist[i]
+		print "image",i,"of",totimgs,":",apDisplay.short(imgname)
+		imgdata = apDatabase.getImageData(imgname)
+		imgtree.extend(imgdata)
+	params['session'] = images[0]['session']['name']
 
 	# upload Particles
-	while images:
-		img = images.pop(0)
-
-		# insert selexon params into dbparticledata.selectionParams table
-		expid=int(img['session'].dbid)
-		sf1.insertManualParams(params,expid)
-		sf1.insertParticlePicks(params,img,expid,manual=True)
-			
+	for imgdata in imgtree:
+		# insert selexon params into dbappiondata.selectionParams table
+		expid = int(imgdata['session'].dbid)
+		apUpload.insertManualParams(params,expid)
+		apParticle.insertParticlePicks(params, imgdata, expid, manual=True)
 

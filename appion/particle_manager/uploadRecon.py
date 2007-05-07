@@ -1,48 +1,47 @@
 #! /usr/bin/env python
 # Upload pik or box files to the database
 
-import os, re, sys
-import data
-from reconFunctions import *
+import sys
+import os
+import apParam
+import apDisplay
+#from reconFunctions import *
+import reconFunctions as rf
 
 if __name__ == '__main__':
 	# record command line
-	writeReconLog(sys.argv)
+	apParam.writeFunctionLog(sys.argv)
 
 	# create params dictionary & set defaults
-	params=createDefaults()
+	params = rf.createDefaults()
 
 	# parse command line input
-	parseInput(sys.argv,params)
+	rf.parseInput(sys.argv, params)
 
 	# check to make sure that necessary parameters are set
-	if not params['stackid']:
-		print "\nERROR: enter a stack id\n"
-		sys.exit()
-      	if not params['modelid']:
-		print "\nERROR: enter a starting model id\n"
-		sys.exit()
-	if not(os.path.exists(params['dir'])):
-		print "\nERROR: directory does not exist\n"
-		sys.exit()	        
-	if not(os.path.exists(params['dir']+'.emanlog')):
-		print "\nERROR: directory does not contain EMAN log file\n"
-		sys.exit()	        
+	if params['stackid'] is None:
+		apDisplay.printError("enter a stack id")
+	if params['modelid'] is None:
+		apDisplay.printError("enter a starting model id")
+	if not os.path.isdir(params['dir']):
+		apDisplay.printError("directory does not exist")
+	if not os.path.isfile(os.path.join(params['dir'],'.emanlog')):
+		apDisplay.printError("directory does not contain EMAN log file")
 
 	# make sure that the stack & model IDs exist in database
-	checkStackId(params)
-	checkModelId(params)
+	rf.checkStackId(params)
+	rf.checkModelId(params)
 
 	# parse out the refinement parameters from the log file
-	parseLogFile(params)
+	rf.parseLogFile(params)
 
 	# get a list of the files in the directory
-	listFiles(params)
+	rf.listFiles(params)
 	
 	# create a reconRun entry in the database
-	insertReconRun(params)
+	rf.insertReconRun(params)
 
 	# insert the Iteration info
-	insertIteration(params)
+	rf.insertIteration(params)
 	
 

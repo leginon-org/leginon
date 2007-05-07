@@ -7,8 +7,8 @@ import os, sys
 #leginon
 import data
 #appion-old
-import selexonFunctions  as sf1
-import selexonFunctions2 as sf2
+#import selexonFunctions  as sf1
+#import selexonFunctions2 as sf2
 #appion
 import apLoop
 import apCrud
@@ -116,7 +116,7 @@ if __name__ == '__main__':
 			if params['commit'] is True:
 				expid=int(imgdict['session'].dbid)
 				#SELEXON MUST COME FIRST
-				sf1.insertSelexonParams(params,expid)
+				apParticle.insertSelexonParams(params,expid)
 				if params['method'] == "classic":
 					apParticle.insertParticlePicks(params,imgdict,expid)
 				else:
