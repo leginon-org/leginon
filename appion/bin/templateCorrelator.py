@@ -75,10 +75,7 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 			elements=arg.split('=')
 			elements[0] = elements[0].lower()
 			#print elements
-			if (elements[0]=='help' or elements[0]=='--help' \
-				or elements[0]=='-h' or elements[0]=='-help'):
-				sys.exit(1)
-			elif (elements[0]=='template'):
+			if (elements[0]=='template'):
 				self.params['template']=elements[1]
 			elif (elements[0]=='range'):
 				angs=elements[1].split(',')
@@ -135,7 +132,6 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 			apDisplay.printError("neither manual threshold or autopik parameters are set, please set one.")
 		if not 'diam' in self.params or self.params['diam']==0:
 			apDisplay.printError("please input the diameter of your particle")
-
 
 if __name__ == '__main__':
 	imgLoop = TemplateCorrelationLoop()
