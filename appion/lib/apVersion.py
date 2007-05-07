@@ -6,7 +6,7 @@
 #/dogPicker.py/1.3/Mon Apr  2 21:28:18 2007//
 #/selexon.py/1.95/Mon Apr  2 21:34:56 2007//
 
-import os.path
+import os
 
 def getVersion(arg):
 	"""
