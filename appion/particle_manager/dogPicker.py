@@ -8,6 +8,8 @@ import apDisplay
 
 if __name__ == '__main__':
 
+	apDisplay.printWarning("Please use 'pyappion/bin/basicDogPicker.py' to use dogpicker")
+
 	if not os.path.isfile("pcavects.txt"):
 		apDisplay.printError("dogPicker.py requires the file 'pcavects.txt'\n"+
 			"\tto be in the directory where you run the script")

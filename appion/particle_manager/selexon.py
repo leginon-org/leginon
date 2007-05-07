@@ -22,6 +22,8 @@ import apParticle
 import apPeaks
 
 if __name__ == '__main__':
+	apDisplay.printWarning("Please use 'pyappion/bin/templateCorrelator.py' to use selexon")
+
 	(imgtree, stats, params, donedict) = apLoop.startNewAppionFunction(sys.argv)
 
 	# if shiftonly is specified, make defocpair true
