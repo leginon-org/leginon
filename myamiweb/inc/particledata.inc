@@ -7,13 +7,12 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require_once('config.php');
 require_once('inc/mysql.inc');
 
 define(PARTICLE_DB_HOST, $PARTICLE_DB_HOST);
 define(PARTICLE_DB_USER, $PARTICLE_DB_USER);
 define(PARTICLE_DB_PASS, $PARTICLE_DB_PASS);
-define(PARTICLE_DB, $PARTICLE_DB);
+define(PARTICLE_DB, "dbappiondata");
 
 class particledata {
 
@@ -42,7 +41,8 @@ class particledata {
 	}
 
 	function getParticlesFromImageId ($runId, $imageId){
-		$q = "select p.xcoord, p.ycoord, p.correlation "
+		$q = "select p.DEF_id as id, "
+			."p.xcoord, p.ycoord, p.correlation "
 			."from ApParticleData p "
 			."where p.`REF|ApSelectionRunData|selectionrun` = '$runId' "
 			."and p.`dbemdata|AcquisitionImageData|image` = '$imageId' ";
@@ -64,7 +64,7 @@ class particledata {
 		return $r;
 	}
 
-        function getKeepStatus ($imageId,$runId){
+  function getKeepStatus ($imageId,$runId){
 	        // returns a boolean value, 0 if rejected, 1 if keeping,
 	        // null if no status in database
  		$q = "select * "
@@ -142,16 +142,16 @@ class particledata {
 			
 	}
 	
-        function getNumImgs ($runId){
-	        $q="SELECT count(distinct `dbemdata|AcquisitionImageData|image`) as num "
+  function getNumImgs ($runId){
+			$q="SELECT count(distinct `dbemdata|AcquisitionImageData|image`) as num "
 		   . "FROM `ApParticleData` "
 		   . "WHERE `REF|ApSelectionRunData|selectionrun`='$runId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0]['num'];
 	}
 
-        function getNumImgsFromSessionId ($sessionId){
-	        $q="SELECT count(distinct `dbemdata|AcquisitionImageData|image`) as num "
+  function getNumImgsFromSessionId ($sessionId){
+		$q="SELECT count(distinct `dbemdata|AcquisitionImageData|image`) as num "
 		   . "FROM `ApParticleData` p "
 		   . "left join `ApSelectionRunData` r on (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
 		   . "WHERE r.`dbemdata|SessionData|session`='$sessionId' ";
@@ -159,7 +159,7 @@ class particledata {
 		return $r[0]['num'];
 	}
 
-        function getNumAssessedImages ($sessionId) {
+	function getNumAssessedImages ($sessionId) {
 		$rid = $this->getLastAssessmentRun($sessionId);
 		$q = "select count(DEF_id) as num "
 			."from `ApAssessmentData` where "
@@ -169,11 +169,11 @@ class particledata {
 		return $r['num'];
 	}
 	
-	
 	function getLastParticleRun ($sessionId) {
 		$q = "select max(DEF_id) as runId "
 			."from `ApSelectionRunData` where `dbemdata|SessionData|session` = '$sessionId'";
 		list($r) = $this->mysql->getSQLResult($q);
+		echo $this->mysql->getError();
 		return $r[runId];
 	}
 	
