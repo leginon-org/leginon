@@ -73,26 +73,26 @@ class AppionLoop(object):
 		notdone=True
 		while notdone:
 			self._removeProcessedImages()
-			for imgdict in self.imgtree:
+			for imgdata in self.imgtree:
 				#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
-				if not self._startLoop(imgdict):
+				if not self._startLoop(imgdata):
 					continue
 
 				### START any custom functions HERE:
-				results = self.processImage(imgdict)
+				results = self.processImage(imgdata)
 
 				### WRITE db data
  				if self.params['commit'] == True:
 					if results is None:
-						self.commitToDatabase(imgdict)
+						self.commitToDatabase(imgdata)
 					else:
-						self.commitToDatabase(imgdict,results)
+						self.commitToDatabase(imgdata,results)
 				else:
-					self.writeResultsToFiles(imgdict,results)
+					self.writeResultsToFiles(imgdata,results)
 				
 				### FINISH with custom functions
 
-	 			self._writeDoneDict(imgdict['filename'])
+	 			self._writeDoneDict(imgdata['filename'])
 				self._printSummary()
 				#END LOOP OVER IMAGES
 			notdone = self._waitForMoreImages()
@@ -107,7 +107,8 @@ class AppionLoop(object):
 			if len(results) > 0:
 				resulttypes = results.keys()
 				for resulttype in resulttypes:
-					self._writDataToDB(result)
+					result = results[resulttype]
+					self._writeDataToDB(result)
 
 	def writeResultsToFiles(self, imgdict,results=None):
 		if results is None:
@@ -118,19 +119,19 @@ class AppionLoop(object):
 				for resulttype in resulttypes:
 					result = results[resulttype]
 					try:
-						resultkeys = self.resultkeys(resulttype)
+						resultkeys = self.resultkeys[resulttype]
 					except:
                 				try:
-							resultkeys = results[resulttype].keys()
+							resultkeystmp = results[resulttype].keys()
 						except:
-							resultkeys = results[resulttype][0].keys()
-						resultkeys.sort()
-                				newresultkeys = [resultkeys.pop(resultkeys.index('dbemdata|AcquisitionImageData|image'))]
-               					newresultkeys.extend(resultkeys)
+							resultkeystmp = results[resulttype][0].keys()
+						resultkeystmp.sort()
+                				resultkeys = [resultkeystmp.pop(resultkeys.index('dbemdata|AcquisitionImageData|image'))]
+               					resultkeys.extend(resultkeystmp)
 					path = self.result_dirs[resulttype]
 					imgname = imgdict['filename']
 					filename = imgdict['filename']+"_"+resulttype+".db"
-					self._writeDataToFile(result,newresultkeys,path,imgname,filename)
+					self._writeDataToFile(result,resultkeys,path,imgname,filename)
 
 	def setFunctionName(self, arg=None):
 		"""
@@ -146,7 +147,7 @@ class AppionLoop(object):
 		apDisplay.printMsg("FUNCTION:\t"+self.functionname)
 
 	def setFunctionResultKeys(self):
-		self.resulttypes = ()
+		self.resultkeys = {}
 			
 	def reprocessImage(self, imgdict):
 		"""
@@ -222,7 +223,8 @@ class AppionLoop(object):
 		if not self._createDirectory(self.params['rundir']) and self.params['continue']==False:
 			apDisplay.printWarning("continue option is OFF. you WILL overwrite previous run.")
 			time.sleep(10)
-		self._createResultDirectory(self.params['rundir'])
+
+		self.result_dirs={}
 		
 		print "creating special output directories"
 		self.specialCreateOutputDirs()
@@ -512,23 +514,6 @@ class AppionLoop(object):
 		cPickle.dump(self.donedict, f)
 		f.close()
 
-	def _createResultDirectory(self,path,mode=0777):
-		# create "result" directory if doesn't exist
-		result_dirs ={}
-		for resulttype in self.resulttypes:
-			if self.params['commit'] == False:
-				result_dir = os.path.join(path,resulttype+"s")
-				self._createDirectory(result_dir,warning=False)
-
-				# remove result file if it exists
-				if not self.params['continue'] and os.path.exists(result_dir+"/*"):
-					os.remove(result_dir+"/*")
-				
-				result_dirs[resulttype]=result_dir
-			else:
-				result_dirs[resulttype]=None
-		self.result_dirs = result_dirs
-	
 	def _createDirectory(self, path, warning=True, mode=0777):
 		if os.path.exists(path):
 			if warning:
