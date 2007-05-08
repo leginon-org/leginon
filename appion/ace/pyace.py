@@ -60,7 +60,7 @@ if __name__ == '__main__':
 						if(ctfvalue['confidence'] > params['reprocess'] or \
 							ctfvalue['confidence_d'] > params['reprocess']):
 							reprocess=False
-					if reprocess != None:
+					if reprocess:
 						print " ... reprocessing", apDisplay.shortenImageName(imagename)
 					else:
 						print " ... skipping", apDisplay.shortenImageName(imagename)
