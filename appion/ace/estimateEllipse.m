@@ -140,9 +140,9 @@ quiver(imwidth/2,imwidth/2,-sqrt(1/k1)*sin(pi*ang/180),-sqrt(1/k1)*cos(pi*ang/18
 quiver(imwidth/2,imwidth/2,sqrt(1/k1)*sin(pi*ang/180),sqrt(1/k1)*cos(pi*ang/180)); 
 quiver(imwidth/2,imwidth/2,sqrt(1/k2)*sin(pi*(ang+90)/180),sqrt(1/k2)*cos(pi*(ang+90)/180)); 
 quiver(imwidth/2,imwidth/2, -sqrt(1/k2)*sin(pi*(ang+90)/180),-sqrt(1/k2)*cos(pi*(ang+90)/180)); 
-title('Ellipse fit for astigmatism estimation');
-saveas(h,strcat(tempdir, 'im1.png'));
-
+title('Ellipse fit based on sector approach','Fontsize',12,'Fontweight','b');
+print(strcat('-f',num2str(h)),'-dpng','-r75',strcat(tempdir,'im1.png'));  
+%saveas(h,strcat(tempdir, 'im1.png'));
 
 close(h);
 clear ctf2d;
