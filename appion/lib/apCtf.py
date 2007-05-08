@@ -225,15 +225,14 @@ def insertCtfParams(imgdict,params,matfile,expid,ctfparams,opimfile1,opimfile2):
 	ctfparamlist = ('defocus1','defocus2','defocusinit','amplitude_contrast','angle_astigmatism',\
 		'noise1','noise2','noise3','noise4','envelope1','envelope2','envelope3','envelope4',\
 		'lowercutoff','uppercutoff','snr','confidence','confidence_d')
-	for i in range(len(ctfparamlist)):
-		ctfq[ ctfparamlist[i] ] = ctfparams[i]
+	
+	# test for failed ACE estimation
+	# only set params if ACE was successfull
+	if ctfparams[0] != -1 :
+		for i in range(len(ctfparamlist)):
+			ctfq[ ctfparamlist[i] ] = ctfparams[i]
 
-	if ctfq['defocus1']==-1:
-		ctf_failedq=appionData.ApCtfData(runId=runq, aceId=acevals[0], imageId=procimgq,\
-			mat_file=ctfq['mat_file'], graph1=ctfq['graph1'], graph2=ctfq['graph2'])
-		acedb.insert(ctf_failedq)
-	else:
-		acedb.insert(ctfq)
+	acedb.insert(ctfq)
 	
 	return
 
