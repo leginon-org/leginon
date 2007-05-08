@@ -10,8 +10,11 @@ import cPickle
 #appion
 import apDisplay
 import apDatabase
+import apDB
+import apImage
 import apXml
 #leginon
+import data
 try:
 	import mem
 except:
@@ -19,12 +22,19 @@ except:
 		+" which includes 'mem.py'")
 
 class AppionLoop(object):
+	partdb=apDB.apdb
+	db=apDB.db
+
 	def __init__(self):
 		"""
 		Starts a new function and gets all the parameters
 		"""
+				
 		#set the name of the function; needed for param setup
 		self.setFunctionName()
+
+		#set the resulttypes and resultkeys of the function; needed for param setup
+		self.setFunctionResultKeys()
 
 		### setup default params: output directory, etc.
 		self._createDefaultParams()
@@ -34,6 +44,9 @@ class AppionLoop(object):
 
 		### check for conflicts
 		self._checkParamConflicts()
+
+		### insert run and parameters
+		self._setRunAndParameters(self.params)
 
 		### setup default stats: timing variables, etc.
 		self._createDefaultStats()
@@ -46,6 +59,8 @@ class AppionLoop(object):
 
 		### read/create dictionary to keep track of processed images
 		self._readDoneDict()
+
+		###A insert run and param to db
 
 	def run(self):
 		"""
@@ -64,9 +79,17 @@ class AppionLoop(object):
 					continue
 
 				### START any custom functions HERE:
-				self.processImage(imgdict)
+				results = self.processImage(imgdict)
+
+				### WRITE db data
  				if self.params['commit'] == True:
-					self.commitToDatabase(imgdict)
+					if results is None:
+						self.commitToDatabase(imgdict)
+					else:
+						self.commitToDatabase(imgdict,results)
+				else:
+					self.writeResultsToFiles(imgdict,results)
+				
 				### FINISH with custom functions
 
 	 			self._writeDoneDict(imgdict['filename'])
@@ -77,8 +100,37 @@ class AppionLoop(object):
 		self.postLoopFunctions()
 		self._finishLoop()
 
-	def commitToDatabase(self, imgdict):
-		return
+	def commitToDatabase(self, imgdict,results=None):
+		if results is None:
+			return
+		else:
+			if len(results) > 0:
+				resulttypes = results.keys()
+				for resulttype in resulttypes:
+					self._writDataToDB(result)
+
+	def writeResultsToFiles(self, imgdict,results=None):
+		if results is None:
+			return
+		else:
+			if len(results) > 0:
+				resulttypes = results.keys()
+				for resulttype in resulttypes:
+					result = results[resulttype]
+					try:
+						resultkeys = self.resultkeys(resulttype)
+					except:
+                				try:
+							resultkeys = results[resulttype].keys()
+						except:
+							resultkeys = results[resulttype][0].keys()
+						resultkeys.sort()
+                				newresultkeys = [resultkeys.pop(resultkeys.index('dbemdata|AcquisitionImageData|image'))]
+               					newresultkeys.extend(resultkeys)
+					path = self.result_dirs[resulttype]
+					imgname = imgdict['filename']
+					filename = imgdict['filename']+"_"+resulttype+".db"
+					self._writeDataToFile(result,newresultkeys,path,imgname,filename)
 
 	def setFunctionName(self, arg=None):
 		"""
@@ -93,6 +145,9 @@ class AppionLoop(object):
 		#self.functionname = re.sub("\.[a-zA-Z]+$","",self.functionname)
 		apDisplay.printMsg("FUNCTION:\t"+self.functionname)
 
+	def setFunctionResultKeys(self):
+		self.resulttypes = ()
+			
 	def reprocessImage(self, imgdict):
 		"""
 		Returns True if an image should be reprocess
@@ -143,6 +198,18 @@ class AppionLoop(object):
 		"""
 		return	
 
+	def insertFunctionRun(self,params):
+		"""
+		put in run and param insertion to db here
+		"""
+		self.rundata = {}
+		return	
+
+	def insertPreLoopFunctionRun(self,rundata,params):
+		"""
+		put in run and param insertion to db here
+		"""
+		return	
 
 	#################################################
 	#### ITEMS BELOW ARE NOT USUALLY OVERWRITTEN ####
@@ -155,7 +222,8 @@ class AppionLoop(object):
 		if not self._createDirectory(self.params['rundir']) and self.params['continue']==False:
 			apDisplay.printWarning("continue option is OFF. you WILL overwrite previous run.")
 			time.sleep(10)
-
+		self._createResultDirectory(self.params['rundir'])
+		
 		print "creating special output directories"
 		self.specialCreateOutputDirs()
 
@@ -208,9 +276,9 @@ class AppionLoop(object):
 		### classic methods
 		self.params['mrcfileroot']=[]
 		self.params['sessionname']=None
-		self.params['session']=None
+		self.params['session']=data.SessionData(name='dummy'),
 		self.params['preset']=None
-		self.params['runid']="run1"
+		self.params['runid']="dummy"
 		self.params['dbimages']=False
 		self.params['alldbimages']=False
 		self.params['apix']=None
@@ -230,6 +298,11 @@ class AppionLoop(object):
 		### get custom default params
 		apDisplay.printMsg("creating special parameter defaults")
 		self.specialDefaultParams()
+		### save default params separately for file saving
+		self.defaultparams = self.params.copy()
+
+		### revert default runid params to run1 as in previous
+		self.params['runid']="run1"
 
 	def _createDefaultStats(self):
 		self.stats = {}
@@ -352,6 +425,58 @@ class AppionLoop(object):
 		f.write("\n")
 		f.close()
 
+	def _setRunAndParameters(self,params):
+		if params['commit']:
+			rundata = self.insertFunctionRun(params)
+			self.insertPreLoopFunctionRun(rundata,params)
+		
+		else:
+			rundata = self.insertFunctionRun(self.defaultparams)
+			self.insertPreLoopFunctionRun(rundata,self.defaultparams)
+		self.rundata = rundata
+	
+
+	def _writeDataToDB(self,idata):
+		if idata is None:
+			return
+		for q in idata:
+			self.partdb.insert(q)
+		return
+		
+	def _writeDataToFile(self,idata,resultkeys,path,imgname,filename):
+		''' This is used to write a list of db data that normally goes into the	database
+		'''
+		filepathname = path+'/'+filename
+		if os.path.exists(filepathname):
+			os.remove(filepathname)
+		if idata is None:
+			return
+		resultfile=open(filepathname,'w')
+		resultlines=[]
+		for info in idata:
+			resultline = ''
+			for infokey in resultkeys:
+				try:
+					# For data object, save in file as its dbid
+					result = info[infokey].dbid
+				except:
+					result = info[infokey]
+
+				# For image, save in file as its filename
+				if infokey == 'dbemdata|AcquisitionImageData|image':
+					result=imgname
+
+				# Separate the results by tabs
+				try:
+					resultline += str(result) + '\t'
+				except:
+					resultline += '\t'
+			resultlines.append(resultline)
+		resultlinestxt = '\n'.join(resultlines) +"\n"
+		resultfile.write(resultlinestxt)
+		resultfile.close()
+		
+
 	def _readDoneDict(self):
 		"""
 		reads or creates a done dictionary
@@ -387,12 +512,30 @@ class AppionLoop(object):
 		cPickle.dump(self.donedict, f)
 		f.close()
 
+	def _createResultDirectory(self,path,mode=0777):
+		# create "result" directory if doesn't exist
+		result_dirs ={}
+		for resulttype in self.resulttypes:
+			if self.params['commit'] == False:
+				result_dir = os.path.join(path,resulttype+"s")
+				self._createDirectory(result_dir,warning=False)
+
+				# remove result file if it exists
+				if not self.params['continue'] and os.path.exists(result_dir+"/*"):
+					os.remove(result_dir+"/*")
+				
+				result_dirs[resulttype]=result_dir
+			else:
+				result_dirs[resulttype]=None
+		self.result_dirs = result_dirs
+	
 	def _createDirectory(self, path, warning=True, mode=0777):
 		if os.path.exists(path):
 			if warning:
 				apDisplay.printWarning("directory \'"+path+"\' already exists.")
 			return False
 		os.makedirs(path,mode)
+	
 		return True
 
 	def _getAllImages(self):
@@ -618,7 +761,5 @@ class BinLoop(AppionLoop):
 if __name__ == '__main__':
 	print "__init__"
 	imageiter = BinLoop()
-	print "start"
-	imageiter.start()
-	print "loop"
-	imageiter.loop()
+	print "run"
+	imageiter.run()
