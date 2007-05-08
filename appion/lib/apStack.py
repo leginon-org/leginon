@@ -4,10 +4,8 @@
 import os, re, sys, math
 import string
 import data
-import ctfData
-#import dbdatakeeper
-import particleData
 import apParam
+import appionData
 import apDB
 
 #partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')

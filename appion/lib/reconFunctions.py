@@ -5,7 +5,6 @@ import os, re, sys
 import tempfile
 import cPickle
 import data
-#import dbdatakeeper
 import convolver
 import Mrc
 import numarray.nd_image
@@ -14,7 +13,7 @@ import peakfinder
 import correlator
 import math
 import string
-import particleData
+import appionData
 import apDB
 
 #db=dbdatakeeper.DBDataKeeper()

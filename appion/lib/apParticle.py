@@ -5,7 +5,6 @@
 import os
 #leginon
 import data
-import particleData
 #appion
 import apDB
 import appionData
@@ -13,7 +12,6 @@ import apImage
 import apDisplay
 import apTemplate
 
-#partdb = apDB.apdb
 appiondb = apDB.apdb
 leginondb = apDB.db
 

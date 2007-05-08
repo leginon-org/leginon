@@ -1,7 +1,6 @@
 #!/usr/bin/python -O
 # Python functions for selexon.py
 
-#import particleData
 import apDisplay
 import apTemplate
 import apImage

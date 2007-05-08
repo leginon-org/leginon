@@ -5,8 +5,6 @@ import os, re, sys, math
 import string
 import data
 import appionData
-#import ctfData
-#import particleData
 import apDisplay
 import apDB
 
