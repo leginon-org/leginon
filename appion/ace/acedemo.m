@@ -476,7 +476,11 @@ fprintf('Processing: Start\n');
 for i=1:length(list_index) 
   
     filename = cell2mat(list(list_index(i)));
-    ctfparams = ace(strcat(dirname,filename),outfile,1,stig,medium,dforig,tempdir); 
+    if stig
+        ctfparams = measureAstigmatism(strrep(filename, '.mrc', ''), strcat(dirname,filename),outfile, opimages, matfiles, 1,stig,medium,dforig,tempdir, resamplefr); 
+    else
+        ctfparams = ace(strcat(dirname,filename),outfile,1,stig,medium,dforig,tempdir); 
+    end
     
     im1 = imread(strcat(tempdir,'im1.png'));
     im2 = imread(strcat(tempdir,'im2.png')); 
