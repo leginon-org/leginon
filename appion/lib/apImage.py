@@ -217,7 +217,7 @@ def scaleImage(imgdata, scale):
 	scale an image
 	"""
 	if scale == 1.0:
-		return array
+		return imgdata
 	return numarray.nd_image.zoom(imgdata, scale, order=1)
 
 def meanEdgeValue(imgdata, w=0):
@@ -355,7 +355,7 @@ def arrayToMrc(numer,filename):
 	"""
 	takes a numarray and writes a Mrc
 	"""
-	apDisplay.printMsg("writing MRC: "+apDisplay.short(filename))
+	apDisplay.printMsg("writing MRC: "+apDisplay.short(filename)+" size"+str(numer.shape))
 	Mrc.numeric_to_mrc(numer,filename)
 	return
 
