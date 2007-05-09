@@ -39,10 +39,7 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 			apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)
 
 		if self.params['defocpair'] is True:
-			self.sibling = apDefocalPairs.getDefocusPair(imgdata)
-			if self.sibling:
-				self.shiftpeak = apDefocalPairs.getShift(imgdata, self.sibling)
-				apDefocalPairs.recordShift(self.params, imgdata, self.sibling, self.shiftpeak)
+			self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata)
 
 	def postLoopFunctions(self):
 		return
