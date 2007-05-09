@@ -13,7 +13,9 @@ import apTemplate
 import apDatabase
 import apPeaks
 import apParticle
+import apDefocalPairs
 #legacy
+#import apViewIt
 #import selexonFunctions  as sf1
 
 class TemplateCorrelationLoop(appionLoop.AppionLoop):
@@ -36,6 +38,12 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 			print "CREATEJPG"
 			apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)
 
+		if self.params['defocpair'] is True:
+			self.sibling = apDefocalPairs.getDefocusPair(imgdata)
+			if self.sibling:
+				self.shiftpeak = apDefocalPairs.getShift(imgdata, self.sibling)
+				apDefocalPairs.recordShift(self.params, imgdata, self.sibling, self.shiftpeak)
+
 	def postLoopFunctions(self):
 		return
 
@@ -43,6 +51,8 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 		expid = int(imgdata['session'].dbid)
 		apParticle.insertSelexonParams(self.params, expid)
 		apParticle.insertParticlePeaks(self.peaktree, imgdata, expid, self.params)
+		if self.params['defocpair'] is True:
+			apDefocalPairs.insertShift(imgdata, self.sibling, self.shiftpeak)
 
 	def specialDefaultParams(self):
 		self.params['template']=''
