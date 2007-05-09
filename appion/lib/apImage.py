@@ -343,23 +343,25 @@ def arrayToImage(numer,normalize=True):
 	image = _arrayToImage(numer)
 	return image
 
-def mrcToArray(filename):
+def mrcToArray(filename,msg=True):
 	"""
 	takes a numarray and writes a Mrc
 	"""
-	apDisplay.printMsg("reading MRC: "+apDisplay.short(filename))
+	if msg is True:
+		apDisplay.printMsg("reading MRC: "+apDisplay.short(filename))
 	array = Mrc.mrc_to_numeric(filename)
 	return array
 
-def arrayToMrc(numer,filename):
+def arrayToMrc(numer,filename,msg=True):
 	"""
 	takes a numarray and writes a Mrc
 	"""
-	apDisplay.printMsg("writing MRC: "+apDisplay.short(filename)+" size"+str(numer.shape))
+	if msg is True:
+		apDisplay.printMsg("writing MRC: "+apDisplay.short(filename)+" size:"+str(numer.shape))
 	Mrc.numeric_to_mrc(numer,filename)
 	return
 
-def arrayToJpeg(numer,filename,normalize=True):
+def arrayToJpeg(numer,filename,normalize=True, msg=True):
 	"""
 	takes a numarray and writes a JPEG
 	best for micrographs and photographs
@@ -369,11 +371,12 @@ def arrayToJpeg(numer,filename,normalize=True):
 	else:
 		numer = numer*255
 	image = _arrayToImage(numer)
-	apDisplay.printMsg("writing JPEG: "+apDisplay.short(filename))
+	if msg is True:
+		apDisplay.printMsg("writing JPEG: "+apDisplay.short(filename))
 	image.save(filename, "JPEG", quality=85)
 	return
 
-def arrayToPng(numer,filename,normalize=True):
+def arrayToPng(numer,filename,normalize=True, msg=True):
 	"""
 	takes a numarray and writes a PNG
 	best for masks and line art
@@ -383,11 +386,12 @@ def arrayToPng(numer,filename,normalize=True):
 	else:
 		numer = numer*255
 	image = _arrayToImage(numer)
-	apDisplay.printMsg("writing PNG: "+apDisplay.short(filename))
+	if msg is True:
+		apDisplay.printMsg("writing PNG: "+apDisplay.short(filename))
 	image.save(filename, "PNG")
 	return
 
-def arrayMaskToPng(numer, filename):
+def arrayMaskToPng(numer, filename, msg=True):
 	"""
 	takes a numarray and writes a PNG
 	best for masks and line art
@@ -395,11 +399,12 @@ def arrayMaskToPng(numer, filename):
 	image = _arrayToImage(numer)
 	#next line requires data be zero or one
 	image = image.convert('1')
-	apDisplay.printMsg("writing PNG mask: "+apDisplay.short(filename))
+	if msg is True:
+		apDisplay.printMsg("writing PNG mask: "+apDisplay.short(filename))
 	image.save(filename, "PNG")
 	return
 
-def arrayMaskToPngAlpha(numer,filename):
+def arrayMaskToPngAlpha(numer,filename, msg=True):
 	""" 
 	Create PNG file of a binary mask (array with only 0 and 1) 
 	that uses the values in the alpha channel for transparency
@@ -412,7 +417,8 @@ def arrayMaskToPngAlpha(numer,filename):
 	alphachannel = _arrayToImage(numera)
 	image = imagedummy.convert('RGBA')
 	image.putalpha(alphachannel)
-	print " ... writing Png: ",filename
+	if msg is True:
+		apDisplay.printMsg("writing alpha channel PNG mask: "+apDisplay.short(filename))
 	image.save(filename, "PNG")
 	return
 
