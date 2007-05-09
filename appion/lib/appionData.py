@@ -116,6 +116,7 @@ class ApMaskRegionData(data.Data):
 			('perimeter', int),
 			('mean', float),
 			('stdev', float),
+			('label', int),
 			
 		)
 	typemap = classmethod(typemap)
@@ -388,3 +389,23 @@ class ApAssessmentData(data.Data):
 		)
 	typemap = classmethod(typemap)
 data.ApAssessmentData=ApAssessmentData
+
+class ApMaskAssessmentRunData(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('dbemdata|SessionData|session',int),
+			('maskrun',ApMaskMakerRunData),
+			('name',str),
+		)
+	typemap = classmethod(typemap)
+data.ApMaskAssessmentRunData=ApMaskAssessmentRunData
+
+class ApMaskAssessmentData(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('run', ApMaskAssessmentRunData),
+			('region', ApMaskRegionData),
+			('keep', int),
+		)
+	typemap = classmethod(typemap)
+data.ApMaskAssessmentData=ApMaskAssessmentData

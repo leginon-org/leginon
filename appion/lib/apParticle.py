@@ -189,8 +189,8 @@ def getMaskParamsByRunName(name,sessionname):
 	maskRq['name']=name
 	maskRq['dbemdata|SessionData|session']=sessionid
 	# get corresponding makeMaskParams entry
-	result = appiondb.query(maskRq)[0]
-	return result['params']
+	result = appiondb.query(maskRq)
+	return result[0],result[0]['params']
 	
 		
 def insertMaskRegion(rundata,imgdata,regionInfo):
@@ -213,18 +213,50 @@ def createMaskRegionData(rundata,imgdata,regionInfo):
 	maskRq['perimeter']=regionInfo[3]
 	maskRq['mean']=regionInfo[1]
 	maskRq['stdev']=regionInfo[2]
+	maskRq['label']=regionInfo[5]
 
 	return maskRq
 
 def getMaskRegions(maskrun,imgid):
 	maskRq=appionData.ApMaskRegionData()
 
-	maskRq['mask']=maskrun
-	maskRq['imageId']=imgid
+	maskRq['maskrun']=maskrun
+	maskRq['dbemdata|AcquisitionImageData|image']=imgid
 	
 	results=appiondb.query(maskRq)
 	
-	return results	
+	return results
+
+def insertMaskAssessmentRun(sessiondata,maskrundata,name):
+	assessRdata=appionData.ApMaskAssessmentRunData()
+	assessRdata['dbemdata|SessionData|session'] = sessiondata.dbid
+	assessRdata['maskrun'] = maskrundata
+	assessRdata['name'] = name
+
+	result=appiondb.query(assessRdata)
+	if not (result):
+		appiondb.insert(assessRdata)
+		exist = False
+	else:
+		exist = True
+
+	return assessRdata,exist
+	
+def insertMaskAssessment(rundata,regiondata,keep):
+
+	assessMq = createMaskAssessmentData(rundata,regiondata,keep)
+	appiondb.insert(assessMq,force=True)
+	
+	return
+
+def createMaskAssessmentData(rundata,regiondata,keep):
+	assessMq=appionData.ApMaskAssessmentData()
+	
+	assessMq['run']=rundata
+	assessMq['region']=regiondata
+	assessMq['keep']=keep
+
+	return assessMq
 
 def pik2Box(params,file):
 	box=params["box"]
@@ -288,3 +320,9 @@ def insertSelexonParams(params,expid):
 					     "please check your parameter settings.")
 		apTemplate.checkTemplateParams(params,runq)
 	return
+
+if __name__ == '__main__':
+	name = 'test2'
+	sessionname = '07jan05b'
+	params = getMaskParamsByRunName(name,sessionname)
+	print params
