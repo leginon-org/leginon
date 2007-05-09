@@ -16,12 +16,12 @@ require ('inc/processing.inc');
   
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
-	runSelexon();
+	runTemplateCorrelator();
 }
 
 // CREATE FORM PAGE
 elseif ($_POST['templates']) {
-	createSelexonForm();
+	createTCForm();
 }
 
 // MAKE THE TEMPLATE SELECTION FORM
@@ -109,7 +109,7 @@ function createTemplateForm() {
 	}
 	$javafunctions.="<script src='js/viewer.js'></script>\n";
 
-	writeTop("PySelexon Launcher","Automated Particle Selection with PySelexon",$javafunctions);
+	writeTop("Template Correlator Launcher","Automated Particle Selection with Template Correlator",$javafunctions);
 	echo"
   <FORM NAME='viewerform' method='POST' ACTION='$formAction'>
   <B>Select Project:</B><BR>
@@ -134,7 +134,7 @@ function createTemplateForm() {
 	echo"</FORM>\n";
 }
 
-function createSelexonForm($extra=false, $title='PySelexon Launcher', $heading='Automated Particle Selection with PySelexon') {
+function createTCForm($extra=false, $title='Template Correlator Launcher', $heading='Automated Particle Selection with Template Correlator') {
         // check if coming directly from a session
         $expId = $_GET['expId'];
 	if ($expId) {
@@ -147,7 +147,7 @@ function createSelexonForm($extra=false, $title='PySelexon Launcher', $heading='
 	}
 	$projectId=$_POST['projectId'];
 
-	// --- find hosts to run SELEXON
+	// --- find hosts to run Template Correlator
 	$hosts=getHosts();
 	$users[]="glander";
  
@@ -232,7 +232,7 @@ function createSelexonForm($extra=false, $title='PySelexon Launcher', $heading='
                          var newwindow=window.open('','name','height=150,width=300');
                          newwindow.document.write('<HTML><BODY>');
                          if (infoname=='runid'){
-                                 newwindow.document.write('Specifies the name associated with the Selexon results unique to the specified session and parameters.        An attempt to use the same run name for a session using different Selexon parameters will result in an error.');
+                                 newwindow.document.write('Specifies the name associated with the Template Correlator results unique to the specified session and parameters.        An attempt to use the same run name for a session using different Template Correlator parameters will result in an error.');
                          }
                          newwindow.document.write('</BODY></HTML>');
                          newwindow.document.close();
@@ -271,9 +271,10 @@ function createSelexonForm($extra=false, $title='PySelexon Launcher', $heading='
         $lpval = ($_POST['lp']) ? $_POST['lp'] : '30';
         $hpval = ($_POST['hp']) ? $_POST['hp'] : '600';
         $binval = ($_POST['bin']) ? $_POST['bin'] : '4';
+	$manualval = ($_POST['thresh']) ? $_POST['thresh'] : '0.5';
         if ($_POST['threshcheck']=='auto') {
                 $pikval = $_POST['autopik'];
-                $manualval = '0.4';
+#                $manualval = '0.5';
                 $autocheck='CHECKED';
                 $manualcheck='';
                 $autodisable='';
@@ -281,7 +282,7 @@ function createSelexonForm($extra=false, $title='PySelexon Launcher', $heading='
         }
         else {
                 $pikval = '100';
-                $manualval = $_POST['thresh'];
+#                $manualval = $_POST['thresh'];
                 $autocheck='';
                 $manualcheck='CHECKED';
                 $autodisable='DISABLED';
@@ -299,7 +300,7 @@ function createSelexonForm($extra=false, $title='PySelexon Launcher', $heading='
                 <TABLE CELLPADDING='5' BORDER='0'>
                 <TR>
                         <TD VALIGN='TOP'>
-                        <A HREF=\"javascript:infopopup('runid')\"><B>Selexon Run Name:</B></A>
+                        <A HREF=\"javascript:infopopup('runid')\"><B>Run Name:</B></A>
                         <INPUT TYPE='text' NAME='runid' VALUE='$runidval'>
                         <HR>
                         </TD>
@@ -401,8 +402,8 @@ function createSelexonForm($extra=false, $title='PySelexon Launcher', $heading='
         echo"
                 </select>
                 <BR>
-                <input type='submit' name='process' value='Run Selexon'><BR>
-                <FONT COLOR='RED'>Submission will NOT run Selexon, only output a command that you can copy and paste into a unix shell</FONT>
+                <input type='submit' name='process' value='Run Correlator'><BR>
+                <FONT COLOR='RED'>Submission will NOT run Template Correlator, only output a command that you can copy and paste into a unix shell</FONT>
                 </TD>
         </TR>
         </TABLE>
@@ -412,7 +413,7 @@ function createSelexonForm($extra=false, $title='PySelexon Launcher', $heading='
         <B>Using Templates:</B>
         <TABLE><TR>
                 <TD>\n";
-        // Display the templates that will be used for selexon
+        // Display the templates that will be used for Template Correlator
         echo "<INPUT TYPE='hidden' NAME='templateList' VALUE='$templateList'>\n";
         echo "<INPUT TYPE='hidden' NAME='templates' VALUE='continue'>\n";
         echo "<INPUT TYPE='hidden' NAME='numtemplates' VALUE='$numtemplates'>\n";
@@ -429,13 +430,13 @@ function createSelexonForm($extra=false, $title='PySelexon Launcher', $heading='
 	writeBottom();
 }
 
-function runSelexon() {
+function runTemplateCorrelator() {
         $host = $_POST['host'];
 	$user = $_POST['user'];
  
 	//make sure a session was selected
 	if (!$_POST[outdir]) {
-	        createSelexonForm("<B>ERROR:</B> Select an experiment session");
+	        createTCForm("<B>ERROR:</B> Select an experiment session");
 		exit;
 	}
 	$outdir=$_POST[outdir];
@@ -473,7 +474,7 @@ function runSelexon() {
 	$commit = ($_POST[commit]=="on") ? "1" : "0";
 	$diam = $_POST[diam];
 	if (!$diam) {
-	        createSelexonForm("<B>ERROR:</B> Specify a particle diameter");
+	        createTCForm("<B>ERROR:</B> Specify a particle diameter");
 		exit;
 	}
 	$lp = $_POST[lp];
@@ -482,21 +483,21 @@ function runSelexon() {
 	if ($_POST[threshcheck]=="auto") $autopik=$_POST[autopik];
 	elseif ($_POST[threshcheck]=="manual") $thresh=$_POST[thresh];
 	if (!$autopik && !$thresh) {
-	        createSelexonForm("<B>ERROR:</B> No thresholding value was entered");
+	        createTCForm("<B>ERROR:</B> No thresholding value was entered");
 		exit;
 	}
 
 	if ($_POST['testimage']=="on") {
 	        if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
 		else {
-		        createSelexonForm("<B>ERROR:</B> Specify an mrc file to test these parameters");
+		        createTCForm("<B>ERROR:</B> Specify an mrc file to test these parameters");
 			exit;
 		}
 	}
 	elseif ($_POST['sessionname']) {
 	        if ($_POST['preset']) $dbimages=$_POST[sessionname].",".$_POST[preset];
 		else {
-		        createSelexonForm("<B>ERROR:</B> Select an image preset for template matching");
+		        createTCForm("<B>ERROR:</B> Select an image preset for template matching");
 			exit;
 		}
 	}
@@ -504,10 +505,8 @@ function runSelexon() {
 	if ($testimage) {
 	        $command.="source /ami/sw/ami.csh;";
 		$command.="source /ami/sw/share/python/usepython.csh cvs32;";
-		$command.="source /home/$user/pyappion/useappion.csh;";
-		$command.="usepythoncvs;";
 	}
-	$command.="selexon.py ";
+	$command.="templateCorrelator.py ";
 	if ($testimage) $command.="$testimage ";
 	else $command.="dbimages=$dbimages ";
 	$command.="templateIds=$templateIds ";
@@ -527,12 +526,13 @@ function runSelexon() {
 	if ($continue==1) $command.=" continue";
 	if ($commit==1) $command.=" commit";
 
-	$cmd = "exec ssh $user@$host '$command > selexonlog.txt &'";
+	$cmd = "exec ssh $user@$host '$command > templateCorrelatorLog.txt &'";
+#	echo $cmd;
 	if ($testimage) {
 	        exec($cmd ,$result);
 	}
 
-	writeTop("PySelexon Results","PySelexon Results");
+	writeTop("Particle Selection Results","Particle Selection Results");
 
 	if ($testimage) {
 	        $testjpg=ereg_replace(".mrc","",$testimage);
@@ -540,12 +540,12 @@ function runSelexon() {
 		$ccclist=array();
 		$i=1;
 		foreach ($templates as $tmplt) {
-		        $cccimg=$outdir.$runid."/cccmaxmap".$i."00.mrc";
+   		        $cccimg=$outdir.$runid."/ccmaxmaps/".$testjpg.".ccmaxmap".$i.".jpg";
 		        $ccclist[]=$cccimg;
 			$i++;
 		}
 		$images=writeTestResults($jpgimg,$ccclist);
-		createSelexonForm($images,'PySelexon Results','');
+		createTCForm($images,'Particle Selection Results','');
 		exit;
 	}
 
@@ -553,7 +553,7 @@ function runSelexon() {
   <P>
   <TABLE WIDTH='600'>
   <TR><TD COLSPAN='2'>
-  <B>Selexon Command:</B><BR>
+  <B>Template Correlator Command:</B><BR>
   $command<HR>
   </TD></TR>
   <TR><TD>outdir</TD><TD>$outdir</TD></TR>
@@ -581,7 +581,7 @@ function runSelexon() {
 function writeTestResults($jpg,$ccclist){
         echo"<CENTER>\n";
         echo"<A HREF='loadimg.php?filename=$jpg&scale=0.8'>\n";
-        echo"<IMG SRC='loadimg.php?filename=$jpg&scale=0.35'></A>\n";
+        echo"<IMG SRC='loadimg.php?filename=$jpg&scale=0.175'></A>\n";
 	if (count($ccclist)>1) echo "<BR>\n";
 	foreach ($ccclist as $ccc){
 	        echo"<A HREF='loadimg.php?filename=$ccc&scale=0.8'>\n";
