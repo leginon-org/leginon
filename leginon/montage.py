@@ -110,7 +110,7 @@ class MontageImage(Image):
 		for stage in stagepositions:
 			# find pixel position in global space
 			stagepos = {'x':stage[0], 'y':stage[1]}
-			pixels = self.trans.itransform(stagepos, self.stage, self.bin)
+			pixels = self.trans.itransform(stagepos, self.stage, self.bin,True)
 			rows.append(pixels['row'])
 			cols.append(pixels['col'])
 		rowmin = min(rows)
@@ -181,6 +181,7 @@ class MontageImage(Image):
 		## affine transform matrix is input matrix
 		atmatrix = numarray.matrixmultiply(binmatrix, input.trans.matrix)
 		atmatrix = numarray.matrixmultiply(self.outputmatrix, atmatrix)
+
 		## affine_transform function requires the inverse matrix
 		atmatrix = numarray.linear_algebra.inverse(atmatrix)
 
@@ -190,11 +191,9 @@ class MontageImage(Image):
 		else:
 			instage = input.trans.transform(target, input.stage, input.bin)
 
-		pixels = self.trans.itransform(instage, self.stage, self.bin)
-		pixels = (pixels['row'],pixels['col'])
-		shift = pixels[0], pixels[1]
+		pixels = self.trans.itransform(instage, self.stage, self.bin, True)
+		shift = [pixels['row'],pixels['col']]
 		offset = affine.affine_transform_offset(input.shape, self.shape, atmatrix, shift)
-
 		if target is None:
 			## affine transform into temporary output
 			output = numarray.zeros(self.shape, numarray.Float32)
@@ -398,7 +397,7 @@ def createTiles(inputs, tiledict, tilesize, row1=None, row2=None, col1=None, col
 
 if __name__ == '__main__':
 	from optparse import OptionParser
-	import stitchparser
+#	import stitchparser
 	import profile
 	
 	parser = OptionParser()
