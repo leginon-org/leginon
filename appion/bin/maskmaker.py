@@ -19,7 +19,7 @@ import imagefun
 class MaskMaker(appionLoop.AppionLoop):
 
 	def setFunctionResultKeys(self):
-		self.resultkeys = {'region':['dbemdata|AcquisitionImageData|image','maskrun','x','y','area','perimeter','mean','stdev']}
+		self.resultkeys = {'region':['dbemdata|AcquisitionImageData|image','maskrun','x','y','area','perimeter','mean','stdev','label'],}
 		
 	def specialDefaultParams(self):
 		self.params['masktype']='custom'
@@ -129,15 +129,14 @@ class MaskMaker(appionLoop.AppionLoop):
 	
 	def insertFunctionRun(self,params):
 		maskRdata=appionData.ApMaskMakerRunData()
-		maskRdata['dbemdata|SessionData|session'] = params['session'][0].dbid
+		maskRdata['dbemdata|SessionData|session'] = params['session'].dbid
 		maskRdata['path']=params['rundir']
 		maskRdata['name']=params['runid']
 		maskRdata['params']=self.insertFunctionParams(params)
-
 		self.partdb.insert(maskRdata)
 
 		return maskRdata
-
+		
 	def getResults(self,rundata,imgdata,infos):
 		# infos is a list of information or a dictionary using non-zero index as keys
 		# area,avg,stdev,length,(centerRow,centerColumn)
@@ -155,6 +154,7 @@ class MaskMaker(appionLoop.AppionLoop):
 		
 			l=l1+offset
 			info=infos[l]
+			info.append(l+1)
 			q = apParticle.createMaskRegionData(rundata,imgdata,info)
 			qs.append(q)
 		return qs
