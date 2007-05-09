@@ -5,7 +5,7 @@
 import sys
 import os
 import data
-import apLoop
+import appionLoop
 import apCrudFinder
 import apParticle
 import appionData
@@ -13,47 +13,32 @@ import apDatabase
 import numarray
 import apImage
 import numarray.ma as ma
-import imagenode
 import apDB
+import imagefun
 
-class MaskMaker(imagenode.ImageNode):
-	defaultsettings = dict(imagenode.ImageNode.defaultsettings)
-	defaultsettings.update({
-		'masktype':'custom',
-		'cdiam':0,
-		'cblur':3.5,
-		'clo':0.6,
-		'chi':0.95,
-		'cstd':1.0,
-		'cschi':1.0,
-		'csclo':0.0,
-		'convolve':0.0,
-		'no_hull':False,
-		'cv':False,
-		'no_length_prune':False,
-		'stdev':0.0,
-		'test':False
-	})
-	def __init__(self):
-		imagenode.ImageNode.__init__(self)
+class MaskMaker(appionLoop.AppionLoop):
+
+	def setFunctionResultKeys(self):
+		self.resultkeys = {'region':['dbemdata|AcquisitionImageData|image','maskrun','x','y','area','perimeter','mean','stdev']}
 		
-		self.functionname = 'mask'
-		self.resulttypes = ['region','mask']
+	def specialDefaultParams(self):
+		self.params['masktype']='custom'
+		self.params['cdiam']=0
+		self.params['cblur']=3.5
+		self.params['clo']=0.6
+		self.params['chi']=0.95
+		self.params['cstd']=1.0
+		self.params['cschi']=1.0
+		self.params['csclo']=0.0
+		self.params['convolve']=0.0
+		self.params['no_hull']=False
+		self.params['cv']=False
+		self.params['no_length_prune']=False
+		self.params['stdev']=0.0
+		self.params['test']=False
 
-		# Two options for creating resultkeys of dbsavetype result: (1) get from db and sort (2) define directly
-		# option (1) Pro: don't have to decide which goes first. Con:may not in any logical order and is sensitive to name change
-		# option (2) Pro: can be made logical and gives a record stays the same if name changed. Con: need to define for the function and change if more or less results are outputted
-		
-		# Option (1) is shown here
-		regionData = appionData.ApMaskRegionData()
-		regionkeys = regionData.keys()
-		regionkeys.sort()
-		newregionkeys = [regionkeys.pop(regionkeys.index('dbemdata|AcquisitionImageData|image'))]
-		newregionkeys.extend(regionkeys)
-
-		self.resultkeys = {'region':newregionkeys,'mask':None}
-	
-	def modifyParams(self,params):
+	def specialParamConflicts(self):
+		params = self.params
 		if params['masktype']=='crud':
 			params['convolve']=0.0
 			params['no_hull']=False
@@ -83,7 +68,7 @@ class MaskMaker(imagenode.ImageNode):
 					params['no_length_prune']=False
 		if params['test']==True:
 			params['commit']=False
-		return params	
+		self.params = params
 
 
 	def insertFunctionParams(self,params):
@@ -105,10 +90,46 @@ class MaskMaker(imagenode.ImageNode):
 		
 		return maskPdata
 
+	def specialParseParams(self,args):
+		params = self.params
+		for arg in args:
+			elements=arg.split('=')
+			elements[0] = elements[0].lower()
+			if (elements[0]=='masktype'):
+				params['masktype']=elements[1]
+			elif (elements[0]=='cruddiam'):
+				params['cdiam']=float(elements[1])
+			elif (elements[0]=='crudblur'):
+				params['cblur']=float(elements[1])
+			elif (elements[0]=='crudlo'):
+				params['clo']=float(elements[1])
+			elif (elements[0]=='crudhi'):
+				params['chi']=float(elements[1])
+			elif (elements[0]=='crudstd'):
+				params['cstd']=float(elements[1])
+			elif (elements[0]=='crudschi'):
+				params['cschi']=float(elements[1])
+			elif (elements[0]=='crudsclo'):
+				params['csclo']=float(elements[1])
+			elif (elements[0]=='convolve'):
+				params['convolve']=float(elements[1])
+			elif (elements[0]=='stdev'):
+				params['stdev']=float(elements[1])
+			elif (arg=='no_hull'):
+				params['no_hull']=True
+			elif (arg=='cv'):
+				params['cv']=True
+				params['no_hull']=True
+			elif (arg=='no_length_prune'):
+				params['no_length_prune']=True
+			elif (arg=='test'):
+				params['test']=True
+				
+		self.params = params
+	
 	def insertFunctionRun(self,params):
-
 		maskRdata=appionData.ApMaskMakerRunData()
-		maskRdata['dbemdata|SessionData|session'] = params['session'].dbid
+		maskRdata['dbemdata|SessionData|session'] = params['session'][0].dbid
 		maskRdata['path']=params['rundir']
 		maskRdata['name']=params['runid']
 		maskRdata['params']=self.insertFunctionParams(params)
@@ -138,6 +159,41 @@ class MaskMaker(imagenode.ImageNode):
 			qs.append(q)
 		return qs
 
+	def specialCreateOutputDirs(self):
+		self._createDirectory(os.path.join(self.params['rundir'],"masks"),warning=False)
+		regionpath = os.path.join(self.params['rundir'],"regions")
+		self._createDirectory(regionpath,warning=False)
+		self.result_dirs = {'region':regionpath}
+
+	def processImage(self,imgdata):
+		image = self.getImage(imgdata,self.params['bin'])
+		results=self.function(self.params,self.rundata,imgdata,image)
+		mask = results.pop('mask')
+		filepathname = self.params['rundir']+"/masks/"+imgdata['filename']+"_mask.png"
+		apImage.arrayMaskToPngAlpha(mask,filepathname)
+		return results
+		
+
+	def prepImage(self,imgarray,cutoff=5.0):
+		shape=numarray.shape(imgarray)
+		garea,gavg,gstdev=apImage.maskImageStats(imgarray)
+		cleanimgarray=ma.masked_outside(imgarray,gavg-cutoff*gstdev,gavg+cutoff*gstdev)
+		carea,cavg,cstdev=apImage.maskImageStats(cleanimgarray)
+		imgarray.shape = shape
+		imgarray.mean = cavg
+		imgarray.stdev = cstdev
+		imgarray=cleanimgarray.filled(cavg)
+		return imgarray
+		
+	def getImage(self,imgdata,binning):
+		imgarray = imgdata['image']
+		imgarray=imagefun.bin(imgarray,binning)
+		shape=numarray.shape(imgarray)
+		cutoff=8.0
+		# remove spikes in the image first
+		imgarray=self.prepImage(imgarray,cutoff)
+		return imgarray	
+	
 	def function(self,params,rundata,imgdata,binnedimgarray):
 		regions,maskarray = apCrudFinder.makeMask(params,binnedimgarray)
 		regionTree = self.getResults(rundata,imgdata,regions)
@@ -145,6 +201,5 @@ class MaskMaker(imagenode.ImageNode):
 
 
 if __name__ == '__main__':
-	print sys.argv
 	function = MaskMaker()
-	function.start(sys.argv)
+	function.run()
