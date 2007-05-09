@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetFinder.py,v $
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-08-22 21:00:08 $
-# $Author: suloway $
+# $Date: 2007-05-09 05:07:43 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -67,6 +67,9 @@ class Panel(gui.wx.Node.Panel):
 
 	def getTargetPositions(self, typename):
 		return self.imagepanel.getTargetPositions(typename)
+
+	def getTargets(self, typename):
+		return self.imagepanel.getTargets(typename)
 
 	def onSettingsTool(self, evt):
 		dialog = self.SettingsDialog(self)
