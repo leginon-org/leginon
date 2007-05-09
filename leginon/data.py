@@ -2398,6 +2398,7 @@ class ImageAssessorSettingsData(SettingsData):
 			('type', str),
 			('image directory', str),
 			('outputfile', str),
+			('run', str),
 		)
 	typemap = classmethod(typemap)
 

@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageAssessor.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-07-18 16:44:14 $
-# $Author: glander $
+# $Date: 2007-05-09 05:05:05 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -19,9 +19,9 @@ import gui.wx.ToolBar
 import wx.lib.filebrowsebutton as filebrowse
 import gui.wx.Choice
 
-class Panel(gui.wx.Node.Panel):
+class Panel(gui.wx.TargetFinder.Panel):
 	icon = 'check'
-	imagepanelclass = gui.wx.ImageViewer.ImagePanel
+	imagepanelclass = gui.wx.ImageViewer.TargetImagePanel
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
@@ -57,6 +57,14 @@ class Panel(gui.wx.Node.Panel):
 		self.imagepanel = self.imagepanelclass(self, -1)
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
+
+		self.imagepanel.addTypeTool('Mask', display=True)
+		self.imagepanel.selectiontool.setDisplayed('Mask', True)
+
+		self.imagepanel.addTargetTool('Regions', wx.Color(0, 255, 255), target=True, display=True)
+		self.imagepanel.selectiontool.setDisplayed('Regions', True)
+		self.imagepanel.setTargets('Regions', [])
+
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
 
 	def onNodeInitialized(self):
@@ -109,6 +117,11 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['outputfile'] = Entry(self, -1)
 		sz.Add(label, (2, 0), (1, 1))
 		sz.Add(self.widgets['outputfile'], (2, 1), (1, 1))
+
+		label = wx.StaticText(self, -1, 'Run Name:')
+		self.widgets['run'] = Entry(self, -1)
+		sz.Add(label, (2, 0), (1, 1))
+		sz.Add(self.widgets['run'], (2, 1), (1, 1))
 
 
 		sb = wx.StaticBox(self, -1, 'Settings')

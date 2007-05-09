@@ -7,6 +7,7 @@
 #
 
 import data
+import targetfinder
 import event
 import Mrc
 import node
@@ -14,14 +15,21 @@ import gui.wx.ImageAssessor
 import os
 import Image
 import numarray
+import imagefun
+try:
+	import apAssessor
+except ImportError:
+	pass
 
-class ImageAssessor(node.Node):
+class ImageAssessor(targetfinder.ClickTargetFinder):
 	panelclass = gui.wx.ImageAssessor.Panel
 	settingsclass = data.ImageAssessorSettingsData
 	defaultsettings = {
 		'image directory': '',
 		'outputfile': '',
 		'format': 'jpg',
+		'type': 'mask',
+		'run': 'test',
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
@@ -39,6 +47,11 @@ class ImageAssessor(node.Node):
 		dir = self.settings['image directory']
 		files = os.listdir(dir)
 		format = self.settings['format']
+		type = self.settings['type']
+		assessrunname = self.settings['run']
+		
+		if type =='mask':
+			format = 'png'
 		self.files = []
 		for file in files:
 			ext = file.split('.')[-1]
@@ -48,24 +61,44 @@ class ImageAssessor(node.Node):
 				self.files.append(file)
 			if format == 'png' and ext in ('png','PNG'):
 				self.files.append(file)
+		if type =='mask':
+			self.maskrundata,self.maskparamsdata = apAssessor.getMaskRunInfo(dir,files[0])
+			self.assessrundata,exist = apAssessor.insertMaskAssessmentRun(self.session,self.maskrundata,assessrunname)
+			if exist:
+				self.logger.warning('Run exists, will overwrite')
 		if self.files:
 			self.readResults()
 			self.currentindex = 0
 			self.displayCurrent()
 		else:
 			self.logger.error('No %s files in directory' % (format,))
+			
 
 	def onKeep(self):
-		self.readResults()
-		self.results[self.currentname] = 'keep'
-		self.writeResults()
+		type = self.settings['type']
+		if type =='mask':
+			keeplist = []
+			keeptargets = self.panel.getTargets('Regions')
+			for target in keeptargets:
+				keeplist.append(target.stats['Label'])
+			apAssessor.saveAssessmentFromTargets(self.maskrundata,self.assessrundata,self.imgdata,keeplist)
+		else:
+			self.readResults()
+			self.results[self.currentname] = 'keep'
+			self.writeResults()
+
 		self.onNext()
 
 	def onReject(self):
-		self.readResults()
-		self.results[self.currentname] = 'reject'
-		self.writeResults()
-		self.onNext()
+		type = self.settings['type']
+		if type =='mask':
+			keeplist = []
+			apAssessor.saveAssessmentFromTargets(self.maskrundata,self.assessrundata,self.imgdata,keeplist)
+		else:
+			self.readResults()
+			self.results[self.currentname] = 'reject'
+			self.writeResults()
+			self.onNext()
 
 	def onNext(self):
 		format = self.settings['format']
@@ -104,8 +137,34 @@ class ImageAssessor(node.Node):
 			imarray = self.readJPG(fullname)
 		if format == 'png':
 			imarray = self.readPNG(fullname)
-		self.setImage(imarray, 'Image')
+			if self.currentname.find('_mask') > -1:
+				alpha = 0.5
+				parentimg,imgdata = self.readMaskParent()
+				maskshape = numarray.shape(imarray)
+				print self.maskrundata
 
+				targets = apAssessor.getRegionsAsTargets(self.maskrundata,maskshape,imgdata)
+				self.alltargets = targets[:]
+				self.setTargets(targets, 'Regions')
+				
+				binning = numarray.shape(parentimg)[0]/numarray.shape(imarray)[0]
+				parentimg=imagefun.bin(parentimg,binning)
+				overlay=parentimg+imarray*alpha*(parentimg.max()-parentimg.min())/imarray.max()
+				self.setImage(overlay, 'Mask')
+				imarray=parentimg
+		self.setImage(imarray, 'Image')
+		self.imgdata = imgdata
+		return imgdata
+
+	def readMaskParent(self):
+		parent=self.currentname.replace('_mask.png','')
+#		parent=parent.replace('.jpg','.mrc')
+#		parent=parent.replace('.png','.mrc')
+		imageq=data.AcquisitionImageData(filename=parent)
+		imagedata=self.research(imageq, results=1, readimages=False)
+		imarray=imagedata[0]['image']
+		return imarray,imagedata[0]
+		
 	def readResults(self):
 		dir = self.settings['image directory']
 		outputfile = self.settings['outputfile']
@@ -138,10 +197,35 @@ class ImageAssessor(node.Node):
 	def readJPG(self, filename):
 		i = Image.open(filename)
 		i.load()
+		i = self.imageToArray(i)
 		return i
 
 	def readPNG(self, filename):
 		i = Image.open(filename)
 		i.load()
+		i = self.imageToArray(i)
 		return i
+
+	def imageToArray(self, im, convertType='UInt8'):
+		"""
+		Convert PIL image to Numarray array
+		copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
+		"""
+		if im.mode == "L":
+			a = numarray.fromstring(im.tostring(), numarray.UInt8)
+			a = numarray.reshape(a, (im.size[1], im.size[0]))
+			#a.shape = (im.size[1], im.size[0], 1)  # alternate way
+		elif (im.mode=='RGB'):
+			a = numarray.fromstring(im.tostring(), numarray.UInt8)
+			a.shape = (im.size[1], im.size[0], 3)
+		elif (im.mode=='RGBA'):
+			atmp = numarray.fromstring(im.tostring(), numarray.UInt8)
+			atmp.shape = (im.size[1], im.size[0], 4)
+			a = atmp[:,:,3]
+		else:
+			raise ValueError, im.mode+" mode not considered"
+
+		if convertType == 'Float32':
+			a = a.astype(numarray.Float32)
+		return a
 
