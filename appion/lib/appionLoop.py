@@ -393,6 +393,9 @@ class AppionLoop(object):
 			else:
 				newargs.append(arg)
 
+		sessionq=data.SessionData(name=self.params['sessionname'])
+		self.params['session']=self.db.query(sessionq)[0]
+
 		apDisplay.printMsg("parsing special parameters")
 		self.specialParseParams(args)
 
