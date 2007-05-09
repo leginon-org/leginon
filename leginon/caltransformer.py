@@ -49,11 +49,28 @@ class Transformer(object):
 				((xscale * numarray.sin(xang) , xscale * numarray.cos(xang)),
 				(yscale * numarray.sin(yang) , yscale * numarray.cos(yang))), numarray.Float32
 			)
+
 		rot = self.rotationMatrix(self.rotation)
 		self.matrix = numarray.matrixmultiply(self.matrix, rot)
 		self.imatrix = numarray.linear_algebra.inverse(self.matrix)
 
-	def itransform(self, position, stage0, bin):
+	def createExtraMatrix(self):
+		xscale = 0.96
+		yscale = 1.0
+		xang = 1.5708
+		yang = -0.12
+		matrix = numarray.array(
+			((xscale * numarray.sin(xang) , xscale * numarray.cos(xang)),
+			(yscale * numarray.sin(yang) , yscale * numarray.cos(yang))), numarray.Float32
+		)
+
+		rot = self.rotationMatrix(self.rotation)
+		matrix = numarray.matrixmultiply(matrix, rot)
+		imatrix = numarray.linear_algebra.inverse(matrix)
+		
+		return matrix
+
+	def itransform(self, position, stage0, bin,extra=False):
 		'''
 		Calculate a pixel offset from the center of an image that
 		corresponds to the given real world position.
@@ -73,7 +90,12 @@ class Transformer(object):
 			dgx = self.xmod.integrate(gx0,gx1)
 			dgy = self.ymod.integrate(gy0,gy1)
 		## rotate/scale
-		drow,dcol = -numarray.matrixmultiply(self.imatrix, (dgx,dgy))
+		if not extra:
+			drow,dcol = -numarray.matrixmultiply(self.imatrix, (dgx,dgy))
+		else:
+			newmatrix = -numarray.matrixmultiply(self.imatrix, (dgx,dgy))
+			extramatrix = self.createExtraMatrix()
+			drow,dcol = numarray.matrixmultiply(newmatrix,extramatrix)
 
 		pixelshift = {'row': drow/biny, 'col': dcol/binx}
 		return pixelshift
