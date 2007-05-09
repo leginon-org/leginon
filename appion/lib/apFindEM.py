@@ -67,7 +67,7 @@ def runFindEM(imgdict, params, thread=False):
 			fin.close()
 
 		#READ OUTPUT FILE
-		if not os.path.exists(ccmapfile):
+		if not os.path.isfile(ccmapfile):
 			apDisplay.printError("findem.exe did not run or crashed.\n"+
 				"Did you source useappion.sh?")
 		else:
@@ -140,7 +140,6 @@ def processAndSaveImage(imgdata, params):
 	imgpath = os.path.join(params['rundir'], imgdata['filename']+".dwn.mrc")
 	apImage.arrayToMrc(imgarray, imgpath)
 	return
-
 
 def getFindEMPath():
 	findempath = os.environ.get('FINDEM_EXE')
