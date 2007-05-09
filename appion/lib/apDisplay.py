@@ -214,8 +214,10 @@ def color(text, fg, bg=None):
 	closecol = "m"
 	clear = opencol + "0" + closecol
 	xterm = 0
-	if os.environ["TERM"] == "xterm": 
-		xterm = 1
+	if os.environ.get("TERM") is not None and os.environ.get("TERM") == "xterm": 
+		xterm = True
+	else:
+		xterm = False
 	b = ''
 	# In xterm, brown comes out as yellow..
 	if xterm and fg == "yellow": 
