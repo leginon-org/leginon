@@ -23,13 +23,13 @@ def getTemplates(params):
 		# scale them to the appropriate pixel size
 		rescaleTemplates(params)
 		# set the template name to the copied file names
-		params['template']='scaledTemporaryTemplate'
+		params['template'] = 'scaledTemporaryTemplate'
 	checkTemplates(params)
 	# go through the template mrc files and downsize & filter them
-	for tmplt in params['templatelist']:
-		downSizeTemplate(tmplt, params)
-	print " ... downsize & filtered "+str(len(params['templatelist']))+ \
-		" file(s) with root \""+params["template"]+"\""
+	#for tmplt in params['templatelist']:
+	#	downSizeTemplate(tmplt, params)
+	apDisplay.printMsg("downsize & filtered "+str(len(params['templatelist']))+ \
+		" file(s) with root \""+params["template"]+"\"")
 
 def rescaleTemplates(params):
 	i=1
@@ -43,7 +43,7 @@ def rescaleTemplates(params):
 		if params['apix'] != params['scaledapix'][i]:
 			print "rescaling template",str(i),":",tmplt['apix'],"->",params['apix']
 			scalefactor = tmplt['apix'] / params['apix']
-			scaleAndClipTemplate(ogtmpltname,(scalefactor,scalefactor),newtmpltname)
+			scaleAndClipTemplate(ogtmpltname, scalefactor, newtmpltname)
 			params['scaledapix'][i] = params['apix']
 			downSizeTemplate(newtmpltname, params)
 		i+=1
@@ -61,9 +61,7 @@ def scaleAndClipTemplate(filename, scalefactor, newfilename):
 	imgdata = apImage.mrcToArray(filename)
 	if(imgdata.shape[0] != imgdata.shape[1]):
 		apDisplay.printWarning("template is NOT square, this may cause errors")
-
 	scaledimgdata = apImage.scaleImage(imgdata, scalefactor)
-
 	origsize  = scaledimgdata.shape[1]
 	#make sure the box size is divisible by 16
 	if (origsize % 16 != 0):
@@ -91,6 +89,9 @@ def downSizeTemplate(filename, params):
 	#replace extension with .dwn.mrc
 	ext=re.compile('\.mrc$')
 	filename=ext.sub('.dwn.mrc', filename)
+	if imgdata.shape[0] < 20:
+		apDisplay.printWarning("template is only "+str(imgdata.shape[0])+" pixels wide\n"+\
+		  " and may only correlation noise in the image")
 	apImage.arrayToMrc(imgdata, filename)
 	return
 
