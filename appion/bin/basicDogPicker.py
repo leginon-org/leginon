@@ -13,7 +13,7 @@ import apDatabase
 import apPeaks
 import apParticle
 #legacy
-import selexonFunctions  as sf1
+#import selexonFunctions  as sf1
 
 class basicDogPicker(appionLoop.AppionLoop):
 	def setProcessingDirName(self):

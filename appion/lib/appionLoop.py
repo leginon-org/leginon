@@ -504,7 +504,7 @@ class AppionLoop(object):
 			f = open(doneDictName,'r')
 			self.donedict = cPickle.load(f)
 			f.close()
-			if 'commit' in self.donedict  and not self.donedict['commit'] and self.params['commit']:
+			if 'commit' in self.donedict  and self.donedict['commit'] != self.params['commit']:
 				apDisplay.printWarning("'commit' flag was changed, creating new done dictionary")
 				self.donedict = {}
 				self.donedict['commit'] = self.params['commit']
@@ -521,7 +521,7 @@ class AppionLoop(object):
 		write finished image (imgname) to done dictionary
 		"""
 		if imgname != None:
-			self.donedict[imgname]=True
+			self.donedict[imgname] = True
 		self.donedict['commit'] = self.params['commit']
 		doneDictName = self.params['doneDictName']
 		f = open(doneDictName, 'w', 0666)
@@ -533,8 +533,10 @@ class AppionLoop(object):
 			if warning:
 				apDisplay.printWarning("directory \'"+path+"\' already exists.")
 			return False
-		os.makedirs(path,mode)
-	
+		try:
+			os.makedirs(path, mode)
+		except:
+			apDisplay.printError("could not create directory \'"+path+"\'\ncheck permissions.")
 		return True
 
 	def _getAllImages(self):

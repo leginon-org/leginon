@@ -3,6 +3,7 @@
 import os
 import math
 import numarray
+import numarray.nd_image as nd_image
 #PIL
 import Image
 import ImageDraw
@@ -258,7 +259,8 @@ def createPeakJpeg(imgdata, peaktree, params):
 	jpegdir = os.path.join(params['rundir'],"jpgs")
 	apParam.createDirectory(jpegdir, warning=False)
 
-	imgarray = apImage.preProcessImage(imgdata['image'], bin=bin, params=params)
+	imgarray = nd_image.median_filter(imgdata['image'], size=3)
+	imgarray = apImage.preProcessImage(imgarray, bin=bin, params=params)
 	image = apImage.arrayToImage(imgarray)
 	image = image.convert("RGB")
 

@@ -60,7 +60,7 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=True, 
 			apDisplay.printWarning("'lowpass' is not defined in preProcessImage()")
 	#HIGH PASS FILTER => PLANE REGRESSION
 	result = _processImage(imgarray, bin, apix, lowpass, planeReg)
-	apDisplay.printMsg("filtered image in "+apDisplay.timeString(startt-time.time()))
+	apDisplay.printMsg("filtered image in "+apDisplay.timeString(time.time()-startt))
 	return result
 
 def binImg(imgarray,bin=1):
