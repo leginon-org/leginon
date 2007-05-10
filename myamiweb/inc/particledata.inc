@@ -7,12 +7,13 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
+require_once('config.php');
 require_once('inc/mysql.inc');
 
 define(PARTICLE_DB_HOST, $PARTICLE_DB_HOST);
 define(PARTICLE_DB_USER, $PARTICLE_DB_USER);
 define(PARTICLE_DB_PASS, $PARTICLE_DB_PASS);
-define(PARTICLE_DB, "dbappiondata");
+define(PARTICLE_DB, $PARTICLE_DB);
 
 class particledata {
 
@@ -61,24 +62,25 @@ class particledata {
 		$q = "select * "
 			."from ApAssessmentRun where `dbemdata|SessionData|session` = '$sessionId'";
 		list($r) = $this->mysql->getSQLResult($q);
+		print_r($r);
 		return $r;
 	}
 
-  function getKeepStatus ($imageId,$runId){
-	        // returns a boolean value, 0 if rejected, 1 if keeping,
-	        // null if no status in database
- 		$q = "select * "
-		        ."from ApAssessmentData "
-		        ."where `dbemdata|AcquisitionImageData|image` = '$imageId' "
+	function getKeepStatus ($imageId,$runId){
+		// returns a boolean value, 0 if rejected, 1 if keeping,
+		// null if no status in database
+		$q = "select * "
+			."from dbappiondata.ApAssessmentData "
+			."where `dbemdata|AcquisitionImageData|image` = '$imageId' "
 			."and `REF|ApAssessmentRunData|assessmentrun` = '$runId' ";
 		list($r)=$this->mysql->getSQLResult($q);
 		return $r['selectionkeep'];
 	}
 
-        function updateKeepStatus ($imageId,$runId,$value){
-	        // update image status : 0 if rejected, 1 if keeping,
-          	$data = array('selectionkeep'=>$value);
-	        $where = array('dbemdata|AcquisitionImageData|image'=>$imageId);
+	function updateKeepStatus ($imageId,$runId,$value){
+		// update image status : 0 if rejected, 1 if keeping,
+		$data = array('selectionkeep'=>$value);
+		$where = array('dbemdata|AcquisitionImageData|image'=>$imageId);
 		$where['REF|ApAssessmentRunData|assessmentrun']=$runId;
 		$this->mysql->SQLUpdate('ApAssessmentData',$data,$where); 
 	}
@@ -142,19 +144,19 @@ class particledata {
 			
 	}
 	
-  function getNumImgs ($runId){
-			$q="SELECT count(distinct `dbemdata|AcquisitionImageData|image`) as num "
-		   . "FROM `ApParticleData` "
-		   . "WHERE `REF|ApSelectionRunData|selectionrun`='$runId' ";
+	function getNumImgs ($runId){
+		$q="SELECT count(distinct `dbemdata|AcquisitionImageData|image`) as num "
+			. "FROM `ApParticleData` "
+			. "WHERE `REF|ApSelectionRunData|selectionrun`='$runId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0]['num'];
 	}
 
-  function getNumImgsFromSessionId ($sessionId){
+	function getNumImgsFromSessionId ($sessionId){
 		$q="SELECT count(distinct `dbemdata|AcquisitionImageData|image`) as num "
-		   . "FROM `ApParticleData` p "
-		   . "left join `ApSelectionRunData` r on (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
-		   . "WHERE r.`dbemdata|SessionData|session`='$sessionId' ";
+			. "FROM `ApParticleData` p "
+			. "left join `ApSelectionRunData` r on (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
+			. "WHERE r.`dbemdata|SessionData|session`='$sessionId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0]['num'];
 	}

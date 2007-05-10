@@ -14,6 +14,8 @@ require ('inc/viewer.inc');
 require ('inc/processing.inc');
 require ('inc/leginon.inc');
 
+$particledata=new particledata();
+
 // check if coming directly from a session
 $expId=$_GET['expId'];
 if ($expId) {
@@ -25,6 +27,21 @@ else {
 	$formAction=$_SERVER['PHP_SELF'];	
 }
 $projectId=$_POST['projectId'];
+
+/////////// temporary fix for new database //////////////
+
+$hasassrun=($particledata->getLastAssessmentRun($expId)) ? true : false;
+if ($hasassrun){
+	$assessmentrid=$particledata->getLastAssessmentRun($sessionId);
+}
+else {
+	$assrundata['name']='run1';
+	$assrundata['dbemdata|SessionData|session']=$expId;
+	$particledata->mysql->SQLInsert('ApAssessmentRunData',$assrundata);
+	$assessmentrid=$particledata->getLastAssessmentRun($sessionId);
+}
+
+////////////////////////////////////////////////////////
 
 $imgtypes=array('jpg','png','mrc','dwn.mrc');
 
@@ -78,7 +95,7 @@ if ($imgdir) {
 		if ($files) {
 		        $skipcheck=($_POST['skipdone']=='on') ? 'CHECKED' : '';
 		        echo "<INPUT TYPE='CHECKBOX' NAME='skipdone' $skipcheck>Skip assessed images<BR>\n"; 
-			displayImage($_POST,$files,$imgdir,$leginondata);
+			displayImage($_POST,$files,$imgdir,$leginondata,$particledata,$assessmentrid);
 		}
 		else echo"<HR><FONT COLOR='RED'>No files found in this directory with extension: $ext</FONT>\n";
 	}
@@ -92,8 +109,7 @@ echo"</FORM>\n";
 writeBottom();
 
 
-function displayImage ($_POST,$files,$imgdir,$leginondata){
-        $particledata=new particledata();
+function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessmentrid){
 
         $numfiles=count($files);
 	$imlst=$_POST['imagelist'];
@@ -107,7 +123,7 @@ function displayImage ($_POST,$files,$imgdir,$leginondata){
 		// make sure it's within range
 		if ($imgindx < 0) $imgindx=0;
 		elseif ($imgindx > $numfiles-1) $imgindx=$numfiles-1;
-		$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata);
+		$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
 	}
 	// otherwise, increment or decrement the displayed image
 	else {
@@ -117,10 +133,10 @@ function displayImage ($_POST,$files,$imgdir,$leginondata){
 				if ($imgindx < 0) {
 				        echo "<FONT COLOR='RED'> At beginning of image list</FONT><BR>\n";
 					$imgindx=0;
-					$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata);
+					$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
 					break;
 				}
-				$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata);
+				$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
 				if ($_POST['skipdone']=='on') {
 				        if ($statdata['status']=='0' || $statdata['status']=='1') $found='FALSE';
 					else $found='TRUE';
@@ -129,17 +145,17 @@ function displayImage ($_POST,$files,$imgdir,$leginondata){
 			}
 		}
 		elseif ($imlst=='Next' || $imlst=='Keep' || $imlst=='Remove') {
-		        if($imlst=='Keep') $particledata->updateKeepStatus($_POST['imageid'],'1');
-			if($imlst=='Remove') $particledata->updateKeepStatus($_POST['imageid'],'0');
+		        if($imlst=='Keep') $particledata->updateKeepStatus($_POST['imageid'],$assessmentrid,'1');
+			if($imlst=='Remove') $particledata->updateKeepStatus($_POST['imageid'],$assessmentrid,'0');
 		        while ($found!='TRUE') {
 			        $imgindx++;
 				if ($imgindx > $numfiles-1) {
 				        echo "<FONT COLOR='RED'> At end of image list</FONT><BR>\n";
 					$imgindx=$numfiles-1;
-					$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata);
+					$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
 					break;
 				}
-				$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata);
+				$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
 				if ($_POST['skipdone']=='on') {
 				        if ($statdata['status']=='0' || $statdata['status']=='1') $found='FALSE';
 					else $found='TRUE';
@@ -150,7 +166,7 @@ function displayImage ($_POST,$files,$imgdir,$leginondata){
 		else {
 		        if ($imlst=='First') $imgindx=0;
 			elseif ($imlst=='Last') $imgindx=$numfiles-1;
-			$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata);
+			$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
 		}
 	}
 
@@ -194,6 +210,9 @@ function displayImage ($_POST,$files,$imgdir,$leginondata){
 
 function getImageStatus ($imgname,$leginondata,$particledata,$assessmentrid) {
 	// get the status of the image index
+	$assessmentrid=52;
+	//$particledata2=new particledata();
+	
 	$imgbase=split("\.",$imgname);
 	$imgbase=$imgbase[0].".mrc";
 	$statdata['id']=$leginondata->getId(array('MRC|image'=>$imgbase),'AcquisitionImageData','DEF_id');
