@@ -29,9 +29,10 @@ class AppionLoop(object):
 		"""
 		Starts a new function and gets all the parameters
 		"""
-				
+
 		#set the name of the function; needed for param setup
 		self.setFunctionName()
+		self.setProcessingDirName()
 
 		#set the resulttypes and resultkeys of the function; needed for param setup
 		self.setFunctionResultKeys()
@@ -84,9 +85,9 @@ class AppionLoop(object):
 				### WRITE db data
  				if self.params['commit'] == True:
 					self.commitToDatabase(imgdata)
-					self.commitResultsToDatabase(imgdata,results)
+					self.commitResultsToDatabase(imgdata, results)
 				else:
-					self.writeResultsToFiles(imgdata,results)
+					self.writeResultsToFiles(imgdata, results)
 				
 				### FINISH with custom functions
 
