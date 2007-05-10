@@ -101,33 +101,6 @@ class AppionLoop(object):
 	def commitToDatabase(self, imgdict):
 		return
 
-
-	def commitResultsToDatabase(self, imgdict, results):
-		if results is not None and len(results) > 0:
-			resulttypes = results.keys()
-			for resulttype in resulttypes:
-				result = results[resulttype]
-				self._writeDataToDB(result)
-
-	def writeResultsToFiles(self, imgdict,results=None):
-		if results is not None and len(results) > 0:
-			for resulttype in results.keys():
-				result = results[resulttype]
-				try:
-					resultkeys = self.resultkeys[resulttype]
-				except:
-            		try:
-						resultkeystmp = results[resulttype].keys()
-					except:
-						resultkeystmp = results[resulttype][0].keys()
-					resultkeystmp.sort()
-            		resultkeys = [resultkeystmp.pop(resultkeys.index('dbemdata|AcquisitionImageData|image'))]
-            		resultkeys.extend(resultkeystmp)
-				path = self.result_dirs[resulttype]
-				imgname = imgdict['filename']
-				filename = imgdict['filename']+"_"+resulttype+".db"
-				self._writeDataToFile(result,resultkeys,path,imgname,filename)
-
 	def setFunctionName(self, arg=None):
 		"""
 		Sets the name of the function
@@ -213,6 +186,33 @@ class AppionLoop(object):
 	#################################################
 	#### ITEMS BELOW ARE NOT USUALLY OVERWRITTEN ####
 	#################################################
+
+
+	def commitResultsToDatabase(self, imgdict, results):
+		if results is not None and len(results) > 0:
+			resulttypes = results.keys()
+			for resulttype in resulttypes:
+				result = results[resulttype]
+				self._writeDataToDB(result)
+
+	def writeResultsToFiles(self, imgdict,results=None):
+		if results is not None and len(results) > 0:
+			for resulttype in results.keys():
+				result = results[resulttype]
+				try:
+					resultkeys = self.resultkeys[resulttype]
+				except:
+            		try:
+						resultkeystmp = results[resulttype].keys()
+					except:
+						resultkeystmp = results[resulttype][0].keys()
+					resultkeystmp.sort()
+            		resultkeys = [resultkeystmp.pop(resultkeys.index('dbemdata|AcquisitionImageData|image'))]
+            		resultkeys.extend(resultkeystmp)
+				path = self.result_dirs[resulttype]
+				imgname = imgdict['filename']
+				filename = imgdict['filename']+"_"+resulttype+".db"
+				self._writeDataToFile(result,resultkeys,path,imgname,filename)
 
 	def _createOutputDirs(self):
 		"""
