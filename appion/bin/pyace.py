@@ -20,6 +20,9 @@ except:
 	apDisplay.matlabError()
 
 class aceCtfEstimatorLoop(appionLoop.AppionLoop):
+	def setProcessingDirName(self):
+		self.processdirname = "ace"
+
 	def preLoopFunctions(self):
 		apCtf.checkMatlabPath(self.params)
 		acepath = os.path.join(os.getcwd(), "aceCtfEstimator.py")

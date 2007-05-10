@@ -17,6 +17,8 @@ import apDB
 import imagefun
 
 class MaskMaker(appionLoop.AppionLoop):
+	def setProcessingDirName(self):
+		self.processdirname = "makemask"
 
 	def setFunctionResultKeys(self):
 		self.resultkeys = {'region':['dbemdata|AcquisitionImageData|image','maskrun','x','y','area','perimeter','mean','stdev','label'],}

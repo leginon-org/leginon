@@ -19,6 +19,9 @@ import apDefocalPairs
 #import selexonFunctions  as sf1
 
 class TemplateCorrelationLoop(appionLoop.AppionLoop):
+	def setProcessingDirName(self):
+		self.processdirname = "extract"
+
 	def preLoopFunctions(self):
 		apTemplate.getTemplates(self.params)
 

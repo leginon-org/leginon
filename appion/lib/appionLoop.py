@@ -146,6 +146,9 @@ class AppionLoop(object):
 		#self.functionname = re.sub("\.[a-zA-Z]+$","",self.functionname)
 		apDisplay.printMsg("FUNCTION:\t"+self.functionname)
 
+	def setProcessingDirName(self):
+		self.processdirname = self.functionname
+
 	def setFunctionResultKeys(self):
 		self.resultkeys = {}
 			
@@ -287,6 +290,7 @@ class AppionLoop(object):
 		self.params['diam']=0
 		self.params['bin']=4
 		self.params['continue']=False
+		self.params['nocontinue']=True
 		self.params['commit']=False
 		self.params['description']=None
 		self.params['outdir']=None
@@ -359,7 +363,7 @@ class AppionLoop(object):
 			elements[0] = elements[0].lower()
 			#if (elements[0] is 'help' or elements[0] is '--help' or elements[0] is '-h'):
 			if (elements[0]=='outdir'):
-				self.params['outdir']=os.path.abspath(elements[1])
+				self.params['outdir'] = os.path.abspath(elements[1])
 				#if(self.params['outdir'][0] != "/"):
 				#	self.params['outdir'] = os.path.join(os.getcwd(),self.params['outdir'])
 				#	self.params['outdir'] = os.path.abspath(self.params['outdir'])
@@ -376,15 +380,19 @@ class AppionLoop(object):
 				self.params['display']=1
 			elif arg=='continue':
 				self.params['continue']=True
+			elif arg=='nocontinue':
+				self.params['nocontinue']=True
 			elif (elements[0]=='dbimages'):
 				dbinfo=elements[1].split(',')
 				if len(dbinfo) == 2:
 					self.params['sessionname']=dbinfo[0]
 					self.params['preset']=dbinfo[1]
 					self.params['dbimages']=True
-					self.params['continue']=True # continue should be on for dbimages option
+					if self.params['nocontinue'] is not True:
+						# continue should be on for dbimages option
+						self.params['continue']=True 
 				else:
-					print "\nERROR: dbimages must include both \'sessionname\' and \'preset\'"+\
+					apDisplay.printError("dbimages must include both \'sessionname\' and \'preset\'"+\
 						"parameters (ex: \'07feb13a,en\')\n"
 					sys.exit(1)
 			elif (elements[0]=='alldbimages'):
@@ -409,7 +417,10 @@ class AppionLoop(object):
 			#change leginon to appion
 			outdir = re.sub('leginon','appion',outdir)
 			#add the function name
-			self.params['outdir'] = os.path.join(outdir, self.functionname)
+			if self.processdirname is not None:
+				self.params['outdir'] = os.path.join(outdir, self.processdirname)
+			else:
+				self.params['outdir'] = os.path.join(outdir, self.functionname)
 
 		self.params['rundir'] = os.path.join(self.params['outdir'], self.params['runid'])
 		apDisplay.printMsg("RUNDIR:\t "+self.params['rundir'])

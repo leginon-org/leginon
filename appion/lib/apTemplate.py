@@ -5,6 +5,7 @@ import os
 import shutil
 import math
 import re
+import time
 import numarray
 import numarray.convolve as convolve
 #appion
@@ -92,6 +93,7 @@ def downSizeTemplate(filename, params):
 	if imgdata.shape[0] < 20:
 		apDisplay.printWarning("template is only "+str(imgdata.shape[0])+" pixels wide\n"+\
 		  " and may only correlation noise in the image")
+	time.sleep(5)
 	apImage.arrayToMrc(imgdata, filename)
 	return
 
@@ -166,8 +168,7 @@ def insertTemplateImage(params):
 			templateq['project|projects|project']=params['projectId']
 			apDB.apdb.insert(templateq)
 		else:
-			print "Warning: template already in database."
-			print "Not reinserting"
+			apDisplay.printWarning("template already in database.\nNot reinserting")
 	return
 
 def checkTemplateParams(params, runq):

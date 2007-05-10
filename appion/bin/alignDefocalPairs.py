@@ -22,6 +22,9 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 	def processImage(self, imgdata):
 		self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata)
 
+	def setProcessingDirName(self):
+		self.processdirname = "defocalpairs"
+
 	def commitToDatabase(self, imgdata):
 		apDefocalPairs.insertShift(imgdata, self.sibling, self.shiftpeak)
 

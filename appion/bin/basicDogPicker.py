@@ -16,8 +16,8 @@ import apParticle
 import selexonFunctions  as sf1
 
 class basicDogPicker(appionLoop.AppionLoop):
-	def preLoopFunctions(self):
-		return
+	def setProcessingDirName(self):
+		self.processdirname = "extract"
 
 	def processImage(self, imgdata):
 		print "PRE-FILTER IMAGE"
@@ -31,9 +31,6 @@ class basicDogPicker(appionLoop.AppionLoop):
 		self.peaktree  = apPeaks.findPeaks(imgdata, self.dogmaplist, self.params, maptype="dogmap")
 		print "CREATEJPG"
 		apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)
-
-	def postLoopFunctions(self):
-		return
 
 	def commitToDatabase(self, imgdata):
 		#expid = int(imgdata['session'].dbid)
