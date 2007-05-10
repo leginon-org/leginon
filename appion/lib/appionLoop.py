@@ -296,6 +296,7 @@ class AppionLoop(object):
 		self.params['pixdiam']=None
 		self.params['binpixdiam']=None
 		self.params['nowait']=False
+		self.params['shuffle']=False
 		self.params['abspath']=os.path.abspath('.')
 		### get custom default params
 		apDisplay.printMsg("creating special parameter defaults")
@@ -374,6 +375,8 @@ class AppionLoop(object):
 			elif arg=='commit':
 				self.params['commit']=True
 				self.params['display']=1
+			elif arg=='shuffle':
+				self.params['shuffle']=True
 			elif arg=='continue':
 				self.params['continue']=True
 			elif arg=='nocontinue':
@@ -427,6 +430,15 @@ class AppionLoop(object):
 			self.params['pixdiam']    = self.params['diam']/self.params['apix']
 			self.params['binpixdiam'] = self.params['diam']/self.params['apix']/float(self.params['bin'])
 
+	def _shuffleTree(tree):
+		oldtree = tree
+		newtree = []
+		while len(oldtree) > 0:
+			j = int(len(oldtree)*random.random())
+			newtree.append(oldtree[j])
+			del oldtree[j]
+		return newtree
+
 	def _writeFunctionLog(self, args):
 		file = os.path.join(self.params['rundir'], self.functionname+".log")
 		out=""
@@ -447,7 +459,6 @@ class AppionLoop(object):
 			self.insertPreLoopFunctionRun(rundata,self.defaultparams)
 		self.rundata = rundata
 	
-
 	def _writeDataToDB(self,idata):
 		if idata is None:
 			return
@@ -488,7 +499,6 @@ class AppionLoop(object):
 		resultfile.write(resultlinestxt)
 		resultfile.close()
 		
-
 	def _readDoneDict(self):
 		"""
 		reads or creates a done dictionary
@@ -544,11 +554,14 @@ class AppionLoop(object):
 		elif 'mrcfileroot' in self.params and len(self.params['mrcfileroot']) > 0:
 			self.imgtree = apDatabase.getSpecificImagesFromDB(self.params["mrcfileroot"])
 		else:
-			print len(self.params['mrcfileroot']),self.params['alldbimages'],self.params['dbimages'],self.params['mrcfileroot']
+			print len(self.params['mrcfileroot']), self.params['mrcfileroot']
+			print self.params['alldbimages'], self.params['dbimages']
 			apDisplay.printError("no files specified")
 		self.params['session']   = self.imgtree[0]['session']
 		self.stats['imagecount'] = len(self.imgtree)
 		self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
+		if self.params['shuffle'] is True:
+			self.imgtree = _shuffleTree(self.imgtree)
 		print " ... found",self.stats['imagecount'],"in",apDisplay.timeString(time.time()-startt)
 
 	def _alreadyProcessed(self, imgdata):
