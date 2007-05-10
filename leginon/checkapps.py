@@ -7,10 +7,11 @@ import newdict
 import getpass
 import sets
 
-days = int(sys.argv[1])
+#days = int(sys.argv[1])
 
 user = raw_input('User: ')
 passwd = getpass.getpass()
+days = int(raw_input('Days: '))
 db = dbdatakeeper.DBDataKeeper(user=user,passwd=passwd)
 
 ## make set of all application names
