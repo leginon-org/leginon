@@ -6,9 +6,11 @@ import string
 import data
 import appionData
 import apDisplay
+import apParticle
+import apParam
 import apDB
 
-db     = apDB.db
+db   = apDB.db
 apdb = apDB.apdb
 
 def printHelp():
@@ -47,9 +49,8 @@ def printHelp():
 	print "                       For example if your selexon run picked ef images and you specify 'defocpair'"
 	print "                       makestack will get the particles from the en images"
 	print "\n"
-
 	sys.exit(1)
-    
+
 def createDefaults():
 	# create default values for parameters
 	params={}
@@ -179,7 +180,7 @@ def parseInput(args):
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
 	return params
-    
+
 def getFilePath(imgdict):
 	session=imgdict.split('_')[0] # get session from beginning of file name
 	f=os.popen('dbemgetpath %s' % session)
@@ -266,30 +267,14 @@ def getAceValues(params,imgdict):
 				params['conf_d']=bestctfp['confidence_d']
 				params['conf']=bestctfp['confidence']
 			else:
-				print "Warning: Astigmatism was estimated for ", imgdict['filename'], ". Defocus estimate may be incorrect"
+				apDisplay.printWarning("Astigmatism was estimated for "+apDisplay.short(imgdict['filename'])+\
+				 ". Defocus estimate may be incorrect")
 				params['hasace']=True
 				params['df']=( (bestctfp['defocus1'] + bestctfp['defocus2'])/2 )*-1e6
 				params['conf_d']=bestctfp['confidence_d']
 				params['conf']=bestctfp['confidence']
+	return
 
-
-        return
-            
-def getPixelSize(imagedata):
-	# use image data object to get pixel size
-	# multiplies by binning and also by 1e10 to return image pixel size in angstroms
-	pixelsizeq=data.PixelSizeCalibrationData()
-	pixelsizeq['magnification']=imagedata['scope']['magnification']
-	pixelsizeq['tem']=imagedata['scope']['tem']
-	pixelsizeq['ccdcamera'] = imagedata['camera']['ccdcamera']
-	pixelsizedata=db.query(pixelsizeq, results=1)
-	
-	binning=imagedata['camera']['binning']['x']
-	pixelsize=pixelsizedata[0]['pixelsize'] * binning
-	
-	return(pixelsize*1e10)
-
-        
 def checkAce():
 	conf_d=params["conf_d"]
 	conf=params["conf"]
@@ -304,20 +289,16 @@ def batchBox(params, imgdict):
 	print "\nprocessing:",apDisplay.short(imgname)
 	input=os.path.join(params["filepath"],(imgname+'.mrc'))
 	output=os.path.join(params["outdir"],(imgname+'.hed'))
+	apParam.createDirectory(params["outdir"])
 
-	# create output directory if it does not exist
-	if not os.path.exists(params["outdir"]):
-		print "creating directory:",params['outdir']
-		os.makedirs(params['outdir'],0777)
-           
 	# if getting particles from database, a temporary
 	# box file will be created
 	if params['selexonId']:
 		dbbox=os.path.join(params['outdir'],"temporaryParticlesFromDB.box")
 		if params['defocpair']:
-			particles,shift=getDefocPairParticles(imgdict,params)
+			particles,shift=apParticle.getDefocPairParticles(imgdict,params)
 		else:
-			particles,shift=getParticles(imgdict)
+			particles,shift=apParticle.getParticles(imgdict, params['selexonId'])
 		if len(particles)>0:			
 			###apply limits
 			if params['selexonmin'] or params['selexonmax']:
@@ -354,35 +335,7 @@ def batchBox(params, imgdict):
 		f.close()
 		return(nptcls)
 	else:
-		return(0)		
-
-def getParticles(imgdict):
-	selexonrun=apdb.direct_query(data.ApSelectionRunData,params['selexonId'])
-	prtlq=appionData.ApParticleData()
-	prtlq['dbemdata|AcquisitionImageData|image']=imgdict.dbid
-	prtlq['selectionrun']=selexonrun
-	particles=apdb.query(prtlq)
-	shift={'shiftx':0, 'shifty':0}
-	return(particles,shift)
-		
-def getDefocPairParticles(imgdict, params):
-	print "finding pair for", apDisplay.short(imgdict['filename'])
-	selexonrun=apdb.direct_query(data.ApSelectionRunData,params['selexonId'])
-	prtlq=appionData.ApParticleData()
-	prtlq['dbemdata|AcquisitionImageData|image']=params['sibpairs'][imgdict.dbid]
-	prtlq['selectionrun']=selexonrun
-	particles=apdb.query(prtlq)
-	
-	shiftq=appionData.ApImageTransformationData()
-	shiftq['dbemdata|AcquisitionImageData|image1']=params['sibpairs'][imgdict.dbid]
-	shiftdata=apdb.query(shiftq,readimages=False)[0]
-	shiftx=shiftdata['shiftx']*shiftdata['scale']
-	shifty=shiftdata['shifty']*shiftdata['scale']
-	shift={}
-	shift['shiftx']=shiftx
-	shift['shifty']=shifty
-	print "shifting particles by", shiftx, shifty
-	return(particles,shift)
+		return(0)
 
 def eliminateMinMaxCCParticles(particles,params):
 	newparticles=[]
@@ -443,7 +396,7 @@ def phaseFlip(params,imgdict):
 
 	f=os.popen(cmd)
 	f.close()
-    
+
 def singleStack(params,imgdict):
 	imgname = imgdict['filename']
  	if (params["phaseflip"]==True):
@@ -451,13 +404,10 @@ def singleStack(params,imgdict):
 	else:
 		input=os.path.join(params["outdir"],(imgname+'.hed'))
 	output=os.path.join(params["outdir"],params["single"])
-    
-	singlepath=os.path.split(output)[0]
 
-	# create output directory if it does not exist
-	if (not os.path.exists(singlepath)):
-		os.mkdir(singlepath)
-           
+	singlepath=os.path.split(output)[0]
+	apParam.createDirectory(singlepath)
+
 	cmd="proc2d %s %s norm=0.0,1.0" %(input, output)
 
 	# bin images is specified
@@ -471,7 +421,7 @@ def singleStack(params,imgdict):
 	# if specified, create spider stack
 	if (params["spider"]==True):
 		cmd=cmd+" spiderswap"
-    
+
  	print "writing to: %s" %output
 	# run proc2d & get number of particles
 	f=os.popen(cmd)
@@ -617,24 +567,23 @@ def insertStackParams(params):
 			stparamq['minDefocus']=params['mindefocus']
 		if params['maxdefocus']:
 			stparamq['maxDefocus']=params['maxdefocus']
-       		apdb.insert(stparamq)
+			apdb.insert(stparamq)
 		stackparams=stparamq
 	else:
 		stackparams=stackparams[0]
 		if (stackparams['description']!=params['description'] or
-		    stackparams['boxSize']!=params['boxsize'] or
-		    stackparams['bin']!=params['bin'] or
-		    stackparams['phaseFlipped']!=params['phaseflip'] or
-		    stackparams['aceCutoff']!=params['ace'] or
-		    stackparams['selexonCutoff']!=params['selexonmin'] or
-		    stackparams['checkImage']!=params['inspected'] or
-		    stackparams['minDefocus']!=params['mindefocus'] or
-		    stackparams['maxDefocus']!=params['maxdefocus'] or
-		    stackparams['fileType']!=fileType or
-		    stackparams['inverted']!=inverted):
-			print "ERROR: All parameters for a particular stack must be identical!"
-			print "please check your parameter settings."
-			sys.exit()
+			stackparams['boxSize']!=params['boxsize'] or
+			stackparams['bin']!=params['bin'] or
+			stackparams['phaseFlipped']!=params['phaseflip'] or
+			stackparams['aceCutoff']!=params['ace'] or
+			stackparams['selexonCutoff']!=params['selexonmin'] or
+			stackparams['checkImage']!=params['inspected'] or
+			stackparams['minDefocus']!=params['mindefocus'] or
+			stackparams['maxDefocus']!=params['maxdefocus'] or
+			stackparams['fileType']!=fileType or
+			stackparams['inverted']!=inverted):
+			apDisplay.printError("All parameters for a particular stack must be identical!"+\
+			  "\nplease check your parameter settings.")
 	# get the stack Id
 	params['stackId']=stackparams
 
@@ -674,20 +623,20 @@ if __name__ == '__main__':
 		if (params['commit']==True):
 			insertStackParams(params)
 		if (params["spider"]==True):
-			if (os.path.exists(stackfile+".spi")):
+			if (os.path.isfile(stackfile+".spi")):
 				os.remove(stackfile+".spi")
-    		if (os.path.exists(stackfile+".hed")):
+			if (os.path.isfile(stackfile+".hed")):
 			os.remove(stackfile+".hed")
-		if (os.path.exists(stackfile+".img")):
+		if (os.path.isfile(stackfile+".img")):
 			os.remove(stackfile+".img")
 			
 		# set up counter for particle log
 		p_logfile=os.path.join(params["outdir"],'.particlelog')
 
- 		if (os.path.exists(p_logfile)):
+ 		if (os.path.isfile(p_logfile)):
 			os.remove(p_logfile)
 		params["particle"]=0
-            
+
 	# get images from database if using a selexon runId
 	if params['selexonId']:
 		if params['defocpair']:
@@ -698,8 +647,7 @@ if __name__ == '__main__':
 	# get list of input images, since wildcards are supported
 	else:
 		if not params['imgs']:
-			print "\nERROR: enter particle images to box or use a particles selection runId\n"
-			sys.exit()
+			apDisplay.printError("enter particle images to box or use a particles selection runId")
 		imglist=params["imgs"]
 		images=[]
 		for img in imglist:
@@ -715,7 +663,7 @@ if __name__ == '__main__':
 	for imgdict in images:
 		#img = images.pop(0)
 				
-		params['apix']=getPixelSize(imgdict)
+		params['apix']=apDatabase.getPixelSize(imgdict)
 
  		# get session ID
 		params['session']=imgdict['session']['name']
@@ -725,9 +673,9 @@ if __name__ == '__main__':
 		# first remove any existing boxed files
 		stackfile=os.path.join(params["outdir"],imgname)
 	
-		if (os.path.exists(stackfile+".hed") or os.path.exists(stackfile+".img")):
-			os.remove(stackfile+".hed")
-			os.remove(stackfile+".img")
+		for ext in ("hed", "img"):
+			if os.path.isfile(stackfile+"."+ext):
+				os.remove(stackfile+"."+ext)
 
 		params["hasace"]=False
 
@@ -775,10 +723,10 @@ if __name__ == '__main__':
 					
 		# box the particles
 		totptcls+=batchBox(params,imgdict)
-		if not(os.path.exists(os.path.join(params["outdir"],(imgname+".hed")))):
-			print "no particles were boxed from "+imgname+".mrc"
+		if not os.path.isfile(os.path.join(params["outdir"],imgname+".hed")):
+			apDisplay.printWarning("no particles were boxed from "+apDisplay.short(imgname))
 			continue
-        
+
 		# phase flip boxed particles if requested
 		if params["phaseflip"]:
 			getAceValues(params,imgdict) # find ace values in database
@@ -789,7 +737,6 @@ if __name__ == '__main__':
 		# add boxed particles to a single stack
 		if params["single"]:
 			singleStack(params,imgdict)
-		
 		
 		# limit total particles if limit is specified
 		print "Total particles =",totptcls
