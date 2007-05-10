@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.32 $
+# $Revision: 1.33 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-04 23:12:44 $
+# $Date: 2007-05-10 01:01:38 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -73,11 +73,14 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 
 	def _onSubmitTool(self, evt):
 		'''overriding so that submit button stays enabled'''
+		autofind = False
 		if self.node.settings['find section options'] == 'Regions from Centers':
 			manualacq = self.getTargetPositions('acquisition')
 			if len(manualacq) == 0:
 				self.node.autoTargetFinder()
-		gui.wx.ClickTargetFinder.Panel.onSubmitTool(self, evt)
+				autofind = True
+		if not autofind:
+			gui.wx.ClickTargetFinder.Panel.onSubmitTool(self, evt)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
 
 	def onTargetsSubmitted(self, evt):
@@ -322,14 +325,6 @@ class RegionSettingsDialog(gui.wx.Settings.Dialog):
 		szsections.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szsections.Add(self.widgets['adjust section area'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-#		label = wx.StaticText(self, -1, 'Single Section Axis Ratio')
-#		self.widgets['section axis ratio'] = FloatEntry(self, -1, chars=8)
-#		szsections.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-#		szsections.Add(self.widgets['section axis ratio'], (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-#		self.widgets['section display'] = wx.CheckBox(self, -1, 'Display the found sections')
-#		szsections.Add(self.widgets['section display'], (5, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-
 		szbutton = wx.GridBagSizer(7, 7)
 		self.bclear = wx.Button(self, -1, 'Clear Regions')
 		szbutton.Add(self.bclear, (0, 0), (1, 1),
@@ -348,8 +343,8 @@ class RegionSettingsDialog(gui.wx.Settings.Dialog):
 
 	def onTestButton(self, evt):
 		self.setNodeSettings()
-		self.node.findRegions()
-
+		threading.Thread(target=self.node.findRegions).start()
+		
 	def onClearButton(self, evt):
 		self.setNodeSettings()
 		self.node.clearRegions()
