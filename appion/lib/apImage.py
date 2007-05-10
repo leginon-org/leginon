@@ -72,26 +72,29 @@ def binImg(imgarray,bin=1):
 	else:
 		return imgarray
 
-def filterImg(imgarray,apix,rad,bin=1):
+def filterImg(imgarray,apix=1.0,rad=0.0,bin=1):
 	#TEMPORARY ALIAS FOR lowPassFilter
 	return lowPassFilter(imgarray,apix=apix,bin=1,radius=rad)
 
-def lowPassFilter(imgarray,apix=1.0,bin=1,radius=0.0):
+def lowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0):
 	"""
 	low pass filter image to radius resolution
 	"""
-	if radius==0:
+	if radius == 0:
 		print " ... skipping low pass filter"
 		return(imgarray)
-	else:
-		sigma=float(radius)/apix/3.0/float(bin)
+	sigma=float(radius/apix/float(bin))
+	try:
+		return nd_image.gaussian_filter(imgarray, sigma=sigma)
+	except:
 		if(sigma > 10):
-			print " ... performing BIG low pass filter"
+			print " ... performing BIG and SLOW low pass filter"
 		else:
-			print " ... performing low pass filter"
-		kernel=convolver.gaussian_kernel(sigma)
-	c=convolver.Convolver()
-	return(c.convolve(image=imgarray,kernel=kernel))
+			print " ... performing leginon low pass filter"
+		#why you need to divide by three is beyond me, but you do here and not above
+		kernel=convolver.gaussian_kernel(sigma/3.0)
+		c=convolver.Convolver()
+		return c.convolve(image=imgarray, kernel=kernel)
 
 
 def diffOfGaussParam(imgarray, params, k=1.2):
@@ -221,17 +224,25 @@ def scaleImage(imgdata, scale):
 	return numarray.nd_image.zoom(imgdata, scale, order=1)
 
 def meanEdgeValue(imgdata, w=0):
-		"""
-		get the average values for the edges of width = w
-		"""
-		xmax = imgdata.shape[0]
-		ymax = imgdata.shape[1]
-		leftEdgeAvg   = nd_image.mean(imgdata[0:xmax,      0:w])
-		rightEdgeAvg  = nd_image.mean(imgdata[0:xmax,      ymax-w:ymax])
-		topEdgeAvg    = nd_image.mean(imgdata[0:w,         0:ymax])
-		bottomEdgeAvg = nd_image.mean(imgdata[xmax-w:xmax, 0:ymax])
-		edgeAvg       = (leftEdgeAvg + rightEdgeAvg + topEdgeAvg + bottomEdgeAvg)/4.0
-		return edgeAvg
+	"""
+	get the average values for the edges of width = w pixels
+	"""
+	xmax = imgdata.shape[0]
+	ymax = imgdata.shape[1]
+	leftEdgeAvg   = nd_image.mean(imgdata[0:xmax,      0:w])
+	rightEdgeAvg  = nd_image.mean(imgdata[0:xmax,      ymax-w:ymax])
+	topEdgeAvg    = nd_image.mean(imgdata[0:w,         0:ymax])
+	bottomEdgeAvg = nd_image.mean(imgdata[xmax-w:xmax, 0:ymax])
+	edgeAvg       = (leftEdgeAvg + rightEdgeAvg + topEdgeAvg + bottomEdgeAvg)/4.0
+	return edgeAvg
+
+def centralMean(imgarray, trim=0.1):
+	"""
+	get the average values for the edges of trim = x percent
+	"""	
+	a = cutEdges(imgarray,trim=trim)
+	return nd_image.mean(a)
+
 
 #########################################################
 
