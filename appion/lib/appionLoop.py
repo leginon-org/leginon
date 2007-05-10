@@ -99,7 +99,7 @@ class AppionLoop(object):
 		self.postLoopFunctions()
 		self._finishLoop()
 
-	def commitToDatabase(self, imgdict):
+	def commitToDatabase(self, imgdata):
 		return
 
 	def setFunctionName(self, arg=None):
@@ -121,7 +121,7 @@ class AppionLoop(object):
 	def setFunctionResultKeys(self):
 		self.resultkeys = {}
 			
-	def reprocessImage(self, imgdict):
+	def reprocessImage(self, imgdata):
 		"""
 		Returns True if an image should be reprocess
 		e.g. a confidence less than 80%
@@ -140,7 +140,7 @@ class AppionLoop(object):
 		"""
 		return
 
-	def processImage(self, imgdict):
+	def processImage(self, imgdata):
 		"""
 		this is the main component of the script
 		where all the processing is done
@@ -189,14 +189,14 @@ class AppionLoop(object):
 	#################################################
 
 
-	def commitResultsToDatabase(self, imgdict, results):
+	def commitResultsToDatabase(self, imgdata, results):
 		if results is not None and len(results) > 0:
 			resulttypes = results.keys()
 			for resulttype in resulttypes:
 				result = results[resulttype]
 				self._writeDataToDB(result)
 
-	def writeResultsToFiles(self, imgdict,results=None):
+	def writeResultsToFiles(self, imgdata,results=None):
 		if results is not None and len(results) > 0:
 			for resulttype in results.keys():
 				result = results[resulttype]
@@ -211,8 +211,8 @@ class AppionLoop(object):
             		resultkeys = [resultkeystmp.pop(resultkeys.index('dbemdata|AcquisitionImageData|image'))]
             		resultkeys.extend(resultkeystmp)
 				path = self.result_dirs[resulttype]
-				imgname = imgdict['filename']
-				filename = imgdict['filename']+"_"+resulttype+".db"
+				imgname = imgdata['filename']
+				filename = imgname+"_"+resulttype+".db"
 				self._writeDataToFile(result,resultkeys,path,imgname,filename)
 
 	def _createOutputDirs(self):
@@ -455,7 +455,7 @@ class AppionLoop(object):
 			self.appiondb.insert(q)
 		return
 		
-	def _writeDataToFile(self,idata,resultkeys,path,imgname,filename):
+	def _writeDataToFile(self,idata,resultkeys,path,imgname, filename):
 		''' This is used to write a list of db data that normally goes into the	database
 		'''
 		filepathname = path+'/'+filename
@@ -551,11 +551,11 @@ class AppionLoop(object):
 		self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
 		print " ... found",self.stats['imagecount'],"in",apDisplay.timeString(time.time()-startt)
 
-	def _alreadyProcessed(self, imgdict):
+	def _alreadyProcessed(self, imgdata):
 		""" 
 		checks to see if image (imgname) has been done already
 		"""
-		imgname = imgdict['filename']
+		imgname = imgdata['filename']
 		if imgname in self.donedict:
 			if not self.stats['lastimageskipped']:
 				sys.stderr.write("skipping images")
@@ -565,7 +565,6 @@ class AppionLoop(object):
 			self.stats['skipcount'] += 1
 			return True
 		else:
-			self.donedict[imgname]=None
 			self.stats['waittime'] = 0
 			if self.stats['lastimageskipped']:
 				print "\nskipped",self.stats['skipcount'],"images so far"
@@ -573,7 +572,7 @@ class AppionLoop(object):
 			return False
 		return False
 
-	def _startLoop(self, imgdict):
+	def _startLoop(self, imgdata):
 		"""
 		initilizes several parameters for a new image
 		and checks if it is okay to start processing image
@@ -584,25 +583,25 @@ class AppionLoop(object):
 		#only if an image was processed last
 		if(self.stats['lastcount'] != self.stats['count']):
 			print "\nStarting new image", self.stats['count'], "( skip:",self.stats['skipcount'],\
-				", left:", self.stats['imagesleft'],")", apDisplay.short(imgdict['filename'])
+				", left:", self.stats['imagesleft'],")", apDisplay.short(imgdata['filename'])
 			self.stats['lastcount'] = self.stats['count']
 			self._checkMemLeak()
 
 		# get the next image pixel size:
-		self.params['apix'] = apDatabase.getPixelSize(imgdict)
+		self.params['apix'] = apDatabase.getPixelSize(imgdata)
 
 		# skip if image doesn't exist:
-		imgpath = os.path.join(self.params['imgdir'],imgdict['filename']+'.mrc')
+		imgpath = os.path.join(self.params['imgdir'],imgdata['filename']+'.mrc')
 		if not os.path.isfile(imgpath):
 			apDisplay.printWarning(imgpath+" not found, skipping")
 			return False
 
 		# check to see if image has already been processed
-		#if self._alreadyProcessed(imgdict):
+		#if self._alreadyProcessed(imgdata):
 		#	return False
 
 		self.stats['startloop'] = time.time()
-		apDisplay.printMsg("processing "+apDisplay.shortenImageName(imgdict['filename']))
+		apDisplay.printMsg("processing "+apDisplay.shortenImageName(imgdata['filename']))
 		return True
 
 	def _printSummary(self):
@@ -689,12 +688,12 @@ class AppionLoop(object):
 		startlen = len(self.imgtree)
 		i = 0
 		while i < len(self.imgtree):
-			imgdict = self.imgtree[i]
-			if self._alreadyProcessed(imgdict):
-				if self.reprocessImage(imgdict):
-					apDisplay.printMsg("reprocessing image "+apDisplay.short(imgdict['filename']))
+			imgdata = self.imgtree[i]
+			if self._alreadyProcessed(imgdata):
+				if self.reprocessImage(imgdata):
+					apDisplay.printMsg("reprocessing image "+apDisplay.short(imgdata['filename']))
 				else:
-					apDisplay.printMsg("skipping image "+apDisplay.short(imgdict['filename']))
+					apDisplay.printMsg("skipping image "+apDisplay.short(imgdata['filename']))
 					del self.imgtree[i]
 					i -= 1
 			i += 1
