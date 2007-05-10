@@ -9,7 +9,7 @@ try:
 except:
 	apDisplay.printError("cannot import libcv2, use a different machine")
 
-partdb = apDB.apdb
+appiondb = apDB.apdb
 
 def runDogDetector(imagename, params):
 	#imgpath = img['session']['image path'] + '/' + imagename + '.mrc'
@@ -47,6 +47,33 @@ def convertDogPeaks(peaks,params):
 
 	return dictpeaks
 
+def insertDogParams(params, expid):
+	### query for identical params ###
+	selexonparamsq=appionData.ApSelectionParamsData()
+ 	selexonparamsq['diam']=params['diam']
+ 	selexonparamsq['bin']=params['bin']
+ 	selexonparamsq['manual_thresh']=params['thresh']
+ 	selexonparamsq['auto_thresh']=None
+ 	selexonparamsq['lp_filt']=params['lp']
+ 	selexonparamsq['hp_filt']=None
+	selexonparamsdata=appiondb.query(selexonparamsq, results=1)
+
+	### query for identical run name ###
+	runq=appionData.ApSelectionRunData()
+	runq['name']=params['runid']
+	runq['dbemdata|SessionData|session']=expid
+
+	runids=appiondb.query(runq, results=1)
+
+ 	# if no run entry exists, insert new run entry into dbappiondata
+ 	if not(runids):
+		runq['params']=selexonparamsq
+		if not selexonparamsdata:
+			appiondb.insert(selexonparamsq)
+		appiondb.insert(runq)
+	return
+
+
 def insertDogPicksIntoDB(img, peaks, params):
 	sessionid = int(img['session'].dbid)
 	imageid = int(img.dbid)
@@ -72,4 +99,4 @@ def insertDogPicksIntoDB(img, peaks, params):
 		particle['ycoord'] = row
 		#particle['slicenum'] = sca
 		particle['correlation'] = sca
-		partdb.insert(particle)
+		appiondb.insert(particle)

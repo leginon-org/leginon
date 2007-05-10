@@ -419,14 +419,15 @@ def _optimizeTiltByCorrCoeff(img1, img2, tilt0, shift0):
 	"""
 
 ### SECOND PASS
-	localbin = 4
+	localbin = 2
 	smimg1 = apImage.binImg(img1,localbin)
 	smimg1 = apImage.cutEdges(smimg1,0.05)
 	smimg2 = apImage.binImg(img2,localbin)
 	smimg2 = apImage.cutEdges(smimg2,0.05)
 	print "optimizing angles and shift..."
 	t0 = time.time()
-	x1 = optimize.fmin(_rmsdImages, x0, args=(tilt0, shift0/2.0, smimg1, smimg2, localbin), 
+	print "BEFORE=",_rmsdImages(numarray.zeros(6,typecode=numarray.Float64),tilt0,shift0,smimg1, smimg2, localbin)
+	x1 = optimize.fmin(_sumImageMult, x0, args=(tilt0, shift0/2.0, smimg1, smimg2, localbin), 
 	 xtol=0.01, ftol=0.00001, maxiter=500, disp=1)
 	tilt,twist1,twist2,scale,shift = _x1ToParams(x1,tilt0,shift0,1)
 	print tilt,twist1,twist2,scale,shift,apDisplay.timeString(time.time()-t0)
@@ -455,6 +456,12 @@ def _corrImages(x1,tilt0,shift0,img1,img2,bin):
 	if correlation <= 0:
 		return -1.0*correlation
 	return -1.0*math.sqrt(correlation)
+
+def _sumImageMult(x1,tilt0,shift0,img1,img2,bin):
+	img1rot = _tiltImg1ToImg2(img1,tilt/2.0,twist2)
+	img2rot = _tiltImg2ToImg1(img2,tilt/2.0,twist1,scale,shift)
+	mask = (img2rot != 0.0) * (img1rot != 0.0)
+	-1.0*nd_image.mean(img1rot*img2rot*mask)
 
 def _rmsdImages(x1,tilt0,shift0,img1,img2,bin):
 	tilt,twist1,twist2,scale,shift = _x1ToParams(x1,tilt0,shift0,bin)

@@ -33,13 +33,14 @@ class basicDogPicker(appionLoop.AppionLoop):
 		apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)
 
 	def commitToDatabase(self, imgdata):
-		#expid = int(imgdata['session'].dbid)
-		#apDog.insertDogParams(self.params, expid)
-		#apParticle.insertParticlePeaks(self.peaktree, imgdata, expid, self.params)
+		expid = int(imgdata['session'].dbid)
+		apDog.insertDogParams(self.params, expid)
+		apParticle.insertParticlePeaks(self.peaktree, imgdata, expid, self.params)
 		return
 
 	def specialDefaultParams(self):
 		self.params['thresh']=0.5
+		self.params['maxthresh']=2.5
 		self.params['lp']=0
 		self.params['overlapmult']=1.5
 		self.params['maxpeaks']=1500
@@ -61,6 +62,8 @@ class basicDogPicker(appionLoop.AppionLoop):
 				self.params['thresh']= float(elements[1])
 			elif (elements[0]=='lp'):
 				self.params['lp']= float(elements[1])
+			elif (elements[0]=='maxthresh'):
+				self.params['maxthresh']= float(elements[1])
 			elif (elements[0]=='overlapmult'):
 				self.params['overlapmult']= float(elements[1])
 			elif (elements[0]=='maxpeaks'):
