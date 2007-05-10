@@ -79,10 +79,21 @@ class particledata {
 
 	function updateKeepStatus ($imageId,$runId,$value){
 		// update image status : 0 if rejected, 1 if keeping,
-		$data = array('selectionkeep'=>$value);
-		$where = array('dbemdata|AcquisitionImageData|image'=>$imageId);
-		$where['REF|ApAssessmentRunData|assessmentrun']=$runId;
-		$this->mysql->SQLUpdate('ApAssessmentData',$data,$where); 
+
+		$exists=($this->getKeepStatus($imageId,$runId)) ? true : false;
+
+		if ($exists) {
+			$data = array('selectionkeep'=>$value);
+			$where = array('dbemdata|AcquisitionImageData|image'=>$imageId);
+			$where['REF|ApAssessmentRunData|assessmentrun']=$runId;
+			$this->mysql->SQLUpdate('ApAssessmentData',$data,$where); 			
+		}
+		else {
+			$data['selectionkeep']=$value;
+			$data['dbemdata|AcquisitionImageData|image']=$imageId;
+			$data['REF|ApAssessmentRunData|assessmentrun']=$runId;
+			$this->mysql->SQLInsert('ApAssessmentData',$data);
+		}
 	}
 
 	function getSelectionParams ($runId) {

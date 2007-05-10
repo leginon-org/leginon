@@ -210,7 +210,6 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 
 function getImageStatus ($imgname,$leginondata,$particledata,$assessmentrid) {
 	// get the status of the image index
-	$assessmentrid=52;
 	//$particledata2=new particledata();
 	
 	$imgbase=split("\.",$imgname);
