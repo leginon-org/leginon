@@ -22,8 +22,8 @@ except:
 		+" which includes 'mem.py'")
 
 class AppionLoop(object):
-	partdb=apDB.apdb
-	db=apDB.db
+	appiondb  = apDB.apdb
+	leginondb = apDB.db
 
 	def __init__(self):
 		"""
@@ -83,10 +83,8 @@ class AppionLoop(object):
 
 				### WRITE db data
  				if self.params['commit'] == True:
-					if results is None:
-						self.commitToDatabase(imgdata)
-					else:
-						self.commitToDatabase(imgdata,results)
+					self.commitToDatabase(imgdata)
+					self.commitResultsToDatabase(imgdata,results)
 				else:
 					self.writeResultsToFiles(imgdata,results)
 				
@@ -100,38 +98,35 @@ class AppionLoop(object):
 		self.postLoopFunctions()
 		self._finishLoop()
 
-	def commitToDatabase(self, imgdict,results=None):
-		if results is None:
-			return
-		else:
-			if len(results) > 0:
-				resulttypes = results.keys()
-				for resulttype in resulttypes:
-					result = results[resulttype]
-					self._writeDataToDB(result)
+	def commitToDatabase(self, imgdict):
+		return
+
+
+	def commitResultsToDatabase(self, imgdict, results):
+		if results is not None and len(results) > 0:
+			resulttypes = results.keys()
+			for resulttype in resulttypes:
+				result = results[resulttype]
+				self._writeDataToDB(result)
 
 	def writeResultsToFiles(self, imgdict,results=None):
-		if results is None:
-			return
-		else:
-			if len(results) > 0:
-				resulttypes = results.keys()
-				for resulttype in resulttypes:
-					result = results[resulttype]
-					try:
-						resultkeys = self.resultkeys[resulttype]
+		if results is not None and len(results) > 0:
+			for resulttype in results.keys():
+				result = results[resulttype]
+				try:
+					resultkeys = self.resultkeys[resulttype]
+				except:
+            		try:
+						resultkeystmp = results[resulttype].keys()
 					except:
-                				try:
-							resultkeystmp = results[resulttype].keys()
-						except:
-							resultkeystmp = results[resulttype][0].keys()
-						resultkeystmp.sort()
-                				resultkeys = [resultkeystmp.pop(resultkeys.index('dbemdata|AcquisitionImageData|image'))]
-               					resultkeys.extend(resultkeystmp)
-					path = self.result_dirs[resulttype]
-					imgname = imgdict['filename']
-					filename = imgdict['filename']+"_"+resulttype+".db"
-					self._writeDataToFile(result,resultkeys,path,imgname,filename)
+						resultkeystmp = results[resulttype][0].keys()
+					resultkeystmp.sort()
+            		resultkeys = [resultkeystmp.pop(resultkeys.index('dbemdata|AcquisitionImageData|image'))]
+            		resultkeys.extend(resultkeystmp)
+				path = self.result_dirs[resulttype]
+				imgname = imgdict['filename']
+				filename = imgdict['filename']+"_"+resulttype+".db"
+				self._writeDataToFile(result,resultkeys,path,imgname,filename)
 
 	def setFunctionName(self, arg=None):
 		"""
@@ -402,7 +397,7 @@ class AppionLoop(object):
 				newargs.append(arg)
 
 		sessionq=data.SessionData(name=self.params['sessionname'])
-		self.params['session']=self.db.query(sessionq)[0]
+		self.params['session']=self.leginon.query(sessionq)[0]
 
 		apDisplay.printMsg("parsing special parameters")
 		self.specialParseParams(args)
@@ -456,7 +451,7 @@ class AppionLoop(object):
 		if idata is None:
 			return
 		for q in idata:
-			self.partdb.insert(q)
+			self.appiondb.insert(q)
 		return
 		
 	def _writeDataToFile(self,idata,resultkeys,path,imgname,filename):
