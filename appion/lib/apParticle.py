@@ -15,22 +15,38 @@ import apTemplate
 appiondb = apDB.apdb
 leginondb = apDB.db
 
-
-def getParticles(imgdict,params):
+def getParticles(imgdict, selexonId):
 	"""
 	returns paticles (as a list of dicts) for a given image
 	ex: particles[0]['xcoord'] is the xcoord of particle 0
 	"""
-	
-	imq=particleData.image()
-	imq['dbemdata|AcquisitionImageData|image']=imgdict.dbid
-
-	selexonrun=appiondb.direct_query(data.run,params['selexonId'])
-	prtlq=particleData.particle(imageId=imq,runId=selexonrun)
-
+	selexonrun=appiondb.direct_query(data.ApSelectionRunData, selexonId)
+	prtlq=appionData.ApParticleData()
+	prtlq['dbemdata|AcquisitionImageData|image']=imgdict.dbid
+	prtlq['selectionrun']=selexonrun
 	particles=appiondb.query(prtlq)
 	shift={'shiftx':0, 'shifty':0}
-	return particles,shift
+	return(particles,shift)
+
+def getDefocPairParticles(imgdict, params):
+	print "finding pair for", apDisplay.short(imgdict['filename'])
+	selexonrun=apdb.direct_query(data.ApSelectionRunData,params['selexonId'])
+	prtlq=appionData.ApParticleData()
+	prtlq['dbemdata|AcquisitionImageData|image']=params['sibpairs'][imgdict.dbid]
+	prtlq['selectionrun']=selexonrun
+	particles=apdb.query(prtlq)
+	
+	shiftq=appionData.ApImageTransformationData()
+	shiftq['dbemdata|AcquisitionImageData|image1']=params['sibpairs'][imgdict.dbid]
+	shiftdata=apdb.query(shiftq,readimages=False)[0]
+	shiftx=shiftdata['shiftx']*shiftdata['scale']
+	shifty=shiftdata['shifty']*shiftdata['scale']
+	shift={}
+	shift['shiftx']=shiftx
+	shift['shifty']=shifty
+	print "shifting particles by", shiftx, shifty
+	return(particles,shift)
+
 
 def getDBparticledataImage(imgdict, expid):
 	"""
