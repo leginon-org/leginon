@@ -1,23 +1,50 @@
 #!/usr/bin/env python
 '''
 MRC I/O functions:
-	write(a, filename, header=None)
-	read(filename)
-	mmap(filename)
+	Note:
+		Only 2-D MRC is supported.
+		Complex data is not yet supported.
+
+  write(a, filename, header=None)
+    Write your numpy ndarray object to an MRC file.
+		  a - the numpy ndarray object
+      filename - the filename you want to write to
+      header - (optional) dictionary of additional header information
+
+  read(filename)
+		Read MRC file into a numpy ndarray object.
+      filename - the MRC filename
+
+  mmap(filename)  
+    Open MRC as a memory mapped file.  This is the most efficient way
+    to read data if you only need to access part of a large MRC file.
+    Only the parts you actually access are read from the disk into memory.
+			filename - the MRC filename
+
+  numarray_read(filename)
+    convenience function if you want your array returned as numarray instead.
+  numarray_write(a, filename, header=None)
+    convenience function if you want to write a numarray array instead.
 '''
 
 import numpy
 import struct
 import sys
 import weakref
+import arraystats
 
 #### for numarray compatibility
 import numarray
+def numarray_read(filename):
+	a1 = read(filename)
+	a2 = numarray.array(a1)
+	return a1
+def numarray_write(a, filename, header=None):
+	a2 = numpy.asarray(a)
+	write(a2, filename, header)
 
 
-
-
-## MRC supported types
+## mapping of MRC mode to numpy dtype string
 mrc2numpy = {
 	0: 'uint8',
 	1: 'int16',
@@ -26,7 +53,7 @@ mrc2numpy = {
 	6: 'uint16',
 }
 
-## bytes per element
+## mapping of MRC mode to number of bytes per element
 mrcitemsize = {
 	0: 1,
 	1: 2,
@@ -35,6 +62,7 @@ mrcitemsize = {
 	6: 2,
 }
 
+## mapping of numpy dtype string to MRC mode
 numpy2mrc = {
 	'uint8': 0,
 	'bool': 0,
@@ -111,7 +139,7 @@ def newHeader(shape, mode):
 	header['origin_x'] = nx / 2.0 
 	header['origin_y'] = ny / 2.0
 	header['origin_z'] = nz / 2.0
-	header['identstr'] = 'MAP'
+	header['identstr'] = 'MAP '
 	header['machstamp'] = 'DA'
 	header['rms'] = 0
 	header['nlabl'] = 0
@@ -249,11 +277,18 @@ def write(a, filename, header=None):
 	filename = filename of MRC
 	header (optional) = dictionary of header parameters
 	'''
+	stats = arraystats.all(a)
 	a = asMRCtype(a)
 	mode = numpy2mrc[str(a.dtype)]
 	h = newHeader(a.shape, mode)
 	if header is not None:
 		h.update(header)
+
+	h['amin'] = stats['min']
+	h['amax'] = stats['max']
+	h['amean'] = stats['mean']
+	h['rms'] = stats['std']
+
 	f = open(filename, 'w')
 	writeHeader(h, f)
 	writeData(a, f)
