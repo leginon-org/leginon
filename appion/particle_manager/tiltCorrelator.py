@@ -2,19 +2,29 @@
 
 import sys
 sys.stderr.write("loading modules...")
-import os, re
+import os
+import re
 import data
 import time
 import random
 import apLoop
 import apTilt
 import apDisplay
+import apParticle
 sys.stderr.write("done\n")
 
-data.holdImages(False)
+def shuffleTree(tree):
+	oldtree = tree
+	newtree = []
+	while len(oldtree) > 0:
+		j = int(len(oldtree)*random.random())
+		newtree.append(oldtree[j])
+		del oldtree[j]
+	return newtree
 
 if __name__ == '__main__':
 	(images,stats,params,donedict) = apLoop.startNewAppionFunction(sys.argv)
+	images = shuffleTree(images)
 
 	#TAKE ALL IMAGES AND SORT THEM INTO PAIRS
 	imagepairs = {}
@@ -27,10 +37,12 @@ if __name__ == '__main__':
 			imagepairs[key].append(image)
 		else:
 			imagepairs[key] = [image]
-	del images
 
 	#print random.shuffle(imagepairs)
 	#print (imagepairs.items())[0]
+	if params['selexonId'] is None:
+		params['selexonId'] = apParticle.guessParticlesForSession(images[0]['session'].dbid)
+	del images
 	notdone=True
 	while notdone:
 		for key,pair in imagepairs.items():

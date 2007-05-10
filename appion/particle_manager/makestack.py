@@ -601,6 +601,9 @@ if __name__ == '__main__':
 		print "\nERROR: Stack must have a description\n"
 		sys.exit()
 		
+	if params['selexonId'] is None:
+		params['selexonId'] = apParticle.guessParticlesForSession(sessionname=params['sessionname'])
+
 	# if a runId is specified, outdir will have a subdirectory named runId
 	if params['runid']:
 		params['outdir']=os.path.join(params['outdir'],params['runid'])
@@ -655,6 +658,7 @@ if __name__ == '__main__':
 			imageresult=db.query(imageq, readimages=False)
 			images=images+imageresult
 		params['session']=images[0]['session']['name']
+		params['sessionname']=images[0]['session']['name']
 			
 	# box particles
 	# if any restrictions are set, check the image
@@ -666,7 +670,8 @@ if __name__ == '__main__':
 		params['apix']=apDatabase.getPixelSize(imgdict)
 
  		# get session ID
-		params['session']=imgdict['session']['name']
+		params['session']=images[0]['session']['name']
+		params['sessionname']=imgdict['session']['name']
 		params['filepath']=imgdict['session']['image path']
 		imgname = imgdict['filename']
 

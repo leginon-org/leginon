@@ -22,7 +22,7 @@ appiondb = apDB.apdb
 #acedb  = dbdatakeeper.DBDataKeeper(db='dbctfdata')
 #projdb = dbdatakeeper.DBDataKeeper(db='project')
 
-def getAllImages(stats,params):
+def getAllImages(stats, params):
 	startt = time.time()
 	if 'dbimages' in params and params['dbimages']==True:
 		imgtree = getImagesFromDB(params['sessionname'],params['preset'])
@@ -50,6 +50,8 @@ def getSpecificImagesFromDB(imglist):
 		imgres   = leginondb.query(imgquery, readimages=False, results=1)
 		imgtree.append(imgres[0])
 	return imgtree
+
+
 
 def getImagesFromDB(session,preset):
 	"""
@@ -81,6 +83,13 @@ def getAllImagesFromDB(session):
 	imgquery['session'] = sessionq
 	imgtree = leginondb.query(imageq, readimages=False)
 	return imgtree
+
+def getExpIdFromSessionName(sessionname):
+	sessionq = data.SessionData(name=sessionname)
+	imgquery = data.AcquisitionImageData()
+	imgquery['session'] = sessionq
+	imgtree = leginondb.query(imageq, readimages=False, limit=1)
+	return imgtree[0].dbid
 
 def getDBTemplates(params):
 	tmptmplt=params['template']

@@ -3,6 +3,8 @@
 #pythonlib
 
 import os
+import sys
+import time
 #leginon
 import data
 #appion
@@ -15,30 +17,55 @@ import apTemplate
 appiondb = apDB.apdb
 leginondb = apDB.db
 
-def getParticles(imgdict, selexonId):
+def guessParticlesForSession(expid=None, sessionname=None):
+	if expid is None and sessionname is not None:
+		expid = apDatabase.getExpIdFromSessionName(sessionname)
+	if expid is None:
+		apDisplay.printError("Unknown expId is guessParticlesForSession")
+	apDisplay.printMsg("getting most complete particle picking run from DB")
+	#sessionq = data.SessionData(name=sessionname)
+	#sessiondata = leginondb.query(sessionq)
+	#print sessiondata[0]
+
+	selectionq = appionData.ApSelectionRunData()
+	#should be 4348
+	selectionq['dbemdata|SessionData|session'] = expid
+	selectiondata = appiondb.query(selectionq)
+	if len(selectiondata) == 1:
+		apDisplay.printMsg("automatically selected only particle run: '"+selectiondata[0]['name']+"'")
+		return selectiondata[0].dbid
+	elif len(selectiondata) == 0:
+		apDisplay.printError("Could not find any particle runs\nGo back and pick some particles")
+	else:
+		apDisplay.printMsg("found "+str(len(selectiondata))+" particle run(s) for this session")
+		for selectionrun in selectiondata:
+			apDisplay.printMsg(selectionrun['name']+" runId="+selectionrun.dbid)
+		apDisplay.printError("Please select one of the above runids")
+
+def getParticles(imgdata, selectionRunId):
 	"""
 	returns paticles (as a list of dicts) for a given image
 	ex: particles[0]['xcoord'] is the xcoord of particle 0
 	"""
-	selexonrun=appiondb.direct_query(data.ApSelectionRunData, selexonId)
-	prtlq=appionData.ApParticleData()
-	prtlq['dbemdata|AcquisitionImageData|image']=imgdict.dbid
-	prtlq['selectionrun']=selexonrun
-	particles=appiondb.query(prtlq)
+	selexonrun = appiondb.direct_query(data.ApSelectionRunData, selectionRunId)
+	prtlq = appionData.ApParticleData()
+	prtlq['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
+	prtlq['selectionrun'] = selexonrun
+	particles = appiondb.query(prtlq)
 	shift={'shiftx':0, 'shifty':0}
 	return(particles,shift)
 
 def getDefocPairParticles(imgdict, params):
 	print "finding pair for", apDisplay.short(imgdict['filename'])
-	selexonrun=apdb.direct_query(data.ApSelectionRunData,params['selexonId'])
+	selexonrun=appiondb.direct_query(data.ApSelectionRunData,params['selexonId'])
 	prtlq=appionData.ApParticleData()
-	prtlq['dbemdata|AcquisitionImageData|image']=params['sibpairs'][imgdict.dbid]
-	prtlq['selectionrun']=selexonrun
-	particles=apdb.query(prtlq)
+	prtlq['dbemdata|AcquisitionImageData|image'] = params['sibpairs'][imgdict.dbid]
+	prtlq['selectionrun'] = selexonrun
+	particles=appiondb.query(prtlq)
 	
 	shiftq=appionData.ApImageTransformationData()
-	shiftq['dbemdata|AcquisitionImageData|image1']=params['sibpairs'][imgdict.dbid]
-	shiftdata=apdb.query(shiftq,readimages=False)[0]
+	shiftq['dbemdata|AcquisitionImageData|image1'] = params['sibpairs'][imgdict.dbid]
+	shiftdata=appiondb.query(shiftq,readimages=False)[0]
 	shiftx=shiftdata['shiftx']*shiftdata['scale']
 	shifty=shiftdata['shifty']*shiftdata['scale']
 	shift={}
@@ -61,7 +88,7 @@ def getDBparticledataImage(imgdict, expid):
 
 	imgname = imgdict['filename']
 	imgq = particleData.image()
-	imgq['dbemdata|SessionData|session']=expid
+	imgq['dbemdata|SessionData|session'] = expid
 	imgq['dbemdata|AcquisitionImageData|image']=legimgid
 	imgq['dbemdata|PresetData|preset']=legpresetid
 	pdimgData=appiondb.query(imgq, results=1)

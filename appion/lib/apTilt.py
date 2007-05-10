@@ -35,12 +35,12 @@ def process(img1,img2,params):
 
 	doG1 = _doG(img1, params)
 	halos1, particles = _createParticleHalos(img1,params)
-	halodoG1 = apImage.normStdev(doG1) + apImage.normStdev(halos1)
+	halodoG1 = 0.25*apImage.normStdev(doG1) + apImage.normStdev(halos1)
 	#apImage.arrayToJpeg(doG1,name+"-doG1.jpg")
 
 	doG2 = _doG(img2, params)
 	halos2, particles = _createParticleHalos(img2,params)
-	halodoG2 = apImage.normStdev(doG2) + apImage.normStdev(halos2)
+	halodoG2 = 0.25*apImage.normStdev(doG2) + apImage.normStdev(halos2)
 	#apImage.arrayToJpeg(doG2,name+"-doG2.jpg")
 
 	shift0, prob1 = _getTiltedShift(doG1,tilt1,doG2,tilt2,name,params)
@@ -82,7 +82,7 @@ def process(img1,img2,params):
 	f.write(shortname+" \t"+str(round(totprob,4)))
 	for p in prob1,prob3,prob4,prob5,prob6,prob7:
 		f.write("\t"+str(round(p,4)))
-	f.write("\ttilt ="+str(round(tilt,4)))
+	f.write("\ttilt="+str(round(tilt,4)))
 	f.write("\ttwist1="+str(round(twist1,4)))
 	f.write("\ttwist2="+str(round(twist2,4)))
 	f.write("\tscale="+str(round(scale,4)))
