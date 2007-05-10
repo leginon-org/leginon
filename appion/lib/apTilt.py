@@ -4,7 +4,12 @@ import sys,os,re
 import time
 import random
 import math
-import apImage,apParticle,apDatabase,apDisplay,apCorrelate,apParam
+import apImage
+import apParticle
+import apDatabase
+import apDisplay
+import apCorrelate
+import apParam
 #import libCV
 import apLoop
 import numarray
@@ -48,22 +53,22 @@ def process(img1,img2,params):
 	#print "*** good libcv r prob(8)=",apDisplay.colorProb(prob8)
 	#tilt,twist,scale,prob2 = _matrixToEulers(trans)
 
-	tilt,twist,scale,shift,prob2 = _optimizeTiltByCorrCoeff(halodoG1,halodoG2,dtilt,shift0)
+	tilt,twist1,twist2,scale,shift,prob2 = _optimizeTiltByCorrCoeff(halodoG1,halodoG2,dtilt,shift0)
 	perdiff = abs(abs(tilt)-dtilt)/dtilt
 	prob5 = math.exp(-1.0*perdiff)
-	prob6 = math.exp(-1.0*abs(twist))
+	prob6 = math.exp(-1.0*(abs(twist1)+abs(twist2)))
 	prob7 = math.exp(-1.0*abs(scale-1.0))
 
-	matrix  = _rotMatrixDeg(tilt,twist,scale)
+	matrix  = _rotMatrixDeg(tilt,twist1,scale)
 	print "tilt=",round(tilt,2),"("+\
-		str(round(dtilt,1))+") twist=",round(twist,6)," scale=",round(scale,6)
+		str(round(dtilt,1))+") twist=",round(twist1,6),"twist2=",round(twist2,6)," scale=",round(scale,6)
 	print "shift=",numarray.around(shift,3)
 	print "*** correct tilt prob(5)=",apDisplay.colorProb(prob5)
 	print "*** corrct twist prob(6)=",apDisplay.colorProb(prob6)
 	print "*** optimization prob(2)=",apDisplay.colorProb(prob2)
 	#prob3,prob4 = _makeOutput(doG1,doG2,tilt,twist,scale,shift,name+"doG")
 	#prob3,prob4 = _makeOutput(halos1,halos2,tilt,twist,scale,shift,name+"halo")
-	prob3,prob4 = _makeOutput(halodoG1,halodoG2,tilt,twist,scale,shift,dtilt,shift0,name+"halodoG")
+	prob3,prob4 = _makeOutput(halodoG1,halodoG2,tilt,twist1,twist2,scale,shift,dtilt,shift0,name+"halodoG")
 	print "*** better align prob(3)=",apDisplay.colorProb(prob3)
 	print "*** good overlap prob(4)=",apDisplay.colorProb(prob4)
 
@@ -78,7 +83,8 @@ def process(img1,img2,params):
 	for p in prob1,prob3,prob4,prob5,prob6,prob7:
 		f.write("\t"+str(round(p,4)))
 	f.write("\ttilt ="+str(round(tilt,4)))
-	f.write("\ttwist="+str(round(twist,4)))
+	f.write("\ttwist1="+str(round(twist1,4)))
+	f.write("\ttwist2="+str(round(twist2,4)))
 	f.write("\tscale="+str(round(scale,4)))
 	f.write("\tshift="+str(numarray.around(shift,4)))
 	f.write("\n")
@@ -224,7 +230,7 @@ def _createParticleHalos(img,params):
 	immult = 1.5
 	noise = 0.0
 	halos = numarray.zeros(img['image'].shape)
-	particles,shift = apParticle.getParticles(img,params)
+	particles,shift = apParticle.getParticles(img, params['selexonId'])
 	numpart = len(particles)
 	print "found",numpart,"particles for image",apDisplay.shortenImageName(img['filename'])
 	if numpart == 0:
@@ -245,12 +251,12 @@ def _createParticleHalos(img,params):
 # Output some informational images
 #####################################################
 
-def _makeOutput(img1,img2,tilt,twist,scale,shift,tilt0,shift0,name):
+def _makeOutput(img1,img2,tilt,twist1,twist2,scale,shift,tilt0,shift0,name):
 	"""
 	create JPEG output for two images (img1, img2) and trnasformation matrices
 	"""
-	model1 = _tiltImg1ToImg2(img1,tilt/2.0)
-	model2 = _tiltImg2ToImg1(img2,tilt/2.0,twist,scale,shift)
+	model1 = _tiltImg1ToImg2(img1,tilt/2.0,twist2)
+	model2 = _tiltImg2ToImg1(img2,tilt/2.0,twist1,scale,shift)
 	shift2 = _tiltImg2ToImg1(img2,tilt0/2.0,0.0,1.0,shift0)
 	mask   = (model1 != 0.0) * (model2 != 0.0)
 	overlap = float(nd_image.sum(mask))/float(mask.shape[0]*mask.shape[1])
@@ -397,7 +403,7 @@ def _optimizeTiltByCorrCoeff(img1, img2, tilt0, shift0):
 	given two images; find the tilt, twist, and scale of that matrix
 	"""
 	#initial guesses all zero
-	x0 = numarray.zeros(5,typecode=numarray.Float64)
+	x0 = numarray.zeros(6,typecode=numarray.Float64)
 
 ### FIRST PASS
 	"""
@@ -408,7 +414,7 @@ def _optimizeTiltByCorrCoeff(img1, img2, tilt0, shift0):
 	print "optimizing angles and shift..."
 	x1 = optimize.fmin(_corrImages, x0, args=(tilt0, shift0, smimg1, smimg2), 
 	 xtol=0.1, ftol=0.000001, maxiter=2500, disp=1)
-	tilt,twist,scale,shift = _x1ToParams(x1,tilt0,shift0)
+	tilt,twist1,twist2,scale,shift = _x1ToParams(x1,tilt0,shift0)
 	print tilt,twist,scale,shift
 	"""
 
@@ -422,26 +428,27 @@ def _optimizeTiltByCorrCoeff(img1, img2, tilt0, shift0):
 	t0 = time.time()
 	x1 = optimize.fmin(_rmsdImages, x0, args=(tilt0, shift0/2.0, smimg1, smimg2, localbin), 
 	 xtol=0.01, ftol=0.00001, maxiter=500, disp=1)
-	tilt,twist,scale,shift = _x1ToParams(x1,tilt0,shift0,1)
-	print tilt,twist,scale,shift,round((time.time()-t0)/60.0,4),"min"
+	tilt,twist1,twist2,scale,shift = _x1ToParams(x1,tilt0,shift0,1)
+	print tilt,twist1,twist2,scale,shift,apDisplay.timeString(time.time()-t0)
 
 ### SUMMARIZE
 	#err = _rmsdImages(x1, tilt, shift, img1, img2)
 	prob = 1.0
-	return tilt,twist,scale,shift,prob
+	return tilt,twist1,twist2,scale,shift,prob
 
 def _x1ToParams(x1,tilt0,shift0,bin):
 	x2 = x1*10.0
 	tilt  = x2[0] + tilt0
-	twist = x2[1]
-	scale = x2[2]/10.0 + 1.0
-	shift = (numarray.array((x2[3]*10.0,x2[4])) + shift0)/float(bin)
-	return tilt,twist,scale,shift
+	twist1 = x2[1]
+	twist2 = x2[2]
+	scale = x2[3]/10.0 + 1.0
+	shift = (numarray.array((x2[4]*10.0,x2[5])) + shift0)/float(bin)
+	return tilt,twist1,twist2,scale,shift
 
 def _corrImages(x1,tilt0,shift0,img1,img2,bin):
-	tilt,twist,scale,shift = _x1ToParams(x1,tilt0,shift0,bin)
-	img1rot = _tiltImg1ToImg2(img1,tilt/2.0)
-	img2rot = _tiltImg2ToImg1(img2,tilt/2.0,twist,scale,shift)
+	tilt,twist1,twist2,scale,shift = _x1ToParams(x1,tilt0,shift0,bin)
+	img1rot = _tiltImg1ToImg2(img1,tilt/2.0,twist2)
+	img2rot = _tiltImg2ToImg1(img2,tilt/2.0,twist1,scale,shift)
 	mask = (img2rot != 0.0)
 	correlation = apImage.correlationCoefficient(img1,img2rot,mask)
 	#print apDisplay.color(str(-1.0*correlation),"green")
@@ -450,9 +457,9 @@ def _corrImages(x1,tilt0,shift0,img1,img2,bin):
 	return -1.0*math.sqrt(correlation)
 
 def _rmsdImages(x1,tilt0,shift0,img1,img2,bin):
-	tilt,twist,scale,shift = _x1ToParams(x1,tilt0,shift0,bin)
-	img1rot = _tiltImg1ToImg2(img1,tilt/2.0)
-	img2rot = _tiltImg2ToImg1(img2,tilt/2.0,twist,scale,shift)
+	tilt,twist1,twist2,scale,shift = _x1ToParams(x1,tilt0,shift0,bin)
+	img1rot = _tiltImg1ToImg2(img1,tilt/2.0,twist2)
+	img2rot = _tiltImg2ToImg1(img2,tilt/2.0,twist1,scale,shift)
 	mask = (img2rot != 0.0) * (img1rot != 0.0)
 	msd = apImage.msd(img1rot,img2rot,mask)
 	#apImage.arrayToJpeg(img1rot,str(int(msd*100))+"smimg1.jpg")
