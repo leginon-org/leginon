@@ -203,13 +203,13 @@ class AppionLoop(object):
 				try:
 					resultkeys = self.resultkeys[resulttype]
 				except:
-            		try:
+					try:
 						resultkeystmp = results[resulttype].keys()
 					except:
 						resultkeystmp = results[resulttype][0].keys()
 					resultkeystmp.sort()
-            		resultkeys = [resultkeystmp.pop(resultkeys.index('dbemdata|AcquisitionImageData|image'))]
-            		resultkeys.extend(resultkeystmp)
+					resultkeys = [resultkeystmp.pop(resultkeys.index('dbemdata|AcquisitionImageData|image'))]
+					resultkeys.extend(resultkeystmp)
 				path = self.result_dirs[resulttype]
 				imgname = imgdata['filename']
 				filename = imgname+"_"+resulttype+".db"
@@ -310,7 +310,7 @@ class AppionLoop(object):
 	def _createDefaultStats(self):
 		self.stats = {}
 		self.stats['startTime']=time.time()
-		self.stats['count']  = 1
+		self.stats['count'] = 1
 		self.stats['skipcount'] = 1
 		self.stats['lastcount'] = 0
 		self.stats['startmem'] = mem.active()
@@ -392,8 +392,7 @@ class AppionLoop(object):
 						self.params['continue']=True 
 				else:
 					apDisplay.printError("dbimages must include both \'sessionname\' and \'preset\'"+\
-						"parameters (ex: \'07feb13a,en\')\n"
-					sys.exit(1)
+						"parameters (ex: \'07feb13a,en\')\n")
 			elif (elements[0]=='alldbimages'):
 				self.params['sessionname']=elements[1]
 				self.params['alldbimages']=True
@@ -401,7 +400,7 @@ class AppionLoop(object):
 				newargs.append(arg)
 
 		sessionq=data.SessionData(name=self.params['sessionname'])
-		self.params['session']=self.leginon.query(sessionq)[0]
+		self.params['session']=self.leginondb.query(sessionq)[0]
 
 		apDisplay.printMsg("parsing special parameters")
 		self.specialParseParams(args)
