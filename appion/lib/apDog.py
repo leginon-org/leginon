@@ -49,13 +49,15 @@ def convertDogPeaks(peaks,params):
 
 def insertDogParams(params, expid):
 	### query for identical params ###
-	selexonparamsq=appionData.ApSelectionParamsData()
+	selexonparamsq=appionData.ApDogParamsData()
  	selexonparamsq['diam']=params['diam']
  	selexonparamsq['bin']=params['bin']
- 	selexonparamsq['manual_thresh']=params['thresh']
- 	selexonparamsq['auto_thresh']=None
+ 	selexonparamsq['threshold']=params['thresh']
+ 	selexonparamsq['max_threshold']=params['maxthresh']
  	selexonparamsq['lp_filt']=params['lp']
  	selexonparamsq['hp_filt']=None
+ 	selexonparamsq['invert']=params['invert']
+ 	selexonparamsq['max_peaks']=params['maxpeaks']
 	selexonparamsdata=appiondb.query(selexonparamsq, results=1)
 
 	### query for identical run name ###
@@ -67,7 +69,7 @@ def insertDogParams(params, expid):
 
  	# if no run entry exists, insert new run entry into dbappiondata
  	if not(runids):
-		runq['params']=selexonparamsq
+		runq['dogparams']=selexonparamsq
 		if not selexonparamsdata:
 			appiondb.insert(selexonparamsq)
 		appiondb.insert(runq)

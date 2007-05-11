@@ -28,6 +28,7 @@ class ApSelectionRunData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
 			('params', ApSelectionParamsData),
+			('dogparams', ApDogParamsData),
 			('dbemdata|SessionData|session', int),
 			('name', str), 
 		)
@@ -43,9 +44,26 @@ class ApSelectionParamsData(data.Data):
 			('auto_thresh', int),
 			('lp_filt', int),
 			('hp_filt', int),
+			('max_peaks', int),
 		)
 	typemap = classmethod(typemap)
 data.ApSelectionParamsData=ApSelectionParamsData
+
+class ApDogParamsData(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('diam', int),
+			('bin', int),
+			('threshold', float),
+			('max_threshold', float),
+			('invert', int),
+			('lp_filt', int),
+			('hp_filt', int),
+			('max_peaks', int),			
+		)
+	typemap = classmethod(typemap)
+data.ApDogParamsData=ApDogParamsData
+
 
 class ApTemplateImageData(data.Data):
 	def typemap(cls):

@@ -12,6 +12,7 @@ import apTemplate
 import apDatabase
 import apPeaks
 import apParticle
+import apDog
 #legacy
 #import selexonFunctions  as sf1
 

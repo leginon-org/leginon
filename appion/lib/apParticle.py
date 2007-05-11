@@ -146,7 +146,7 @@ def insertParticlePeaks(peaktree, imgdict, expid, params):
 				particlesq[key] = peakdict[key]
 		### INSERT VALUES
 		presult = appiondb.query(particlesq)
-		if not presult and 'peakarea' in particlesq and particlesq['peakarea'] is not None and articlesq['peakarea'] > 0:
+		if not presult and 'peakarea' in particlesq and particlesq['peakarea'] is not None and particlesq['peakarea'] > 0:
 			appiondb.insert(particlesq)
 	return
 
