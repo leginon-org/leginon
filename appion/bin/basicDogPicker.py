@@ -24,6 +24,8 @@ class basicDogPicker(appionLoop.AppionLoop):
 		imgarray = imgdata['image']
 		imgarray = apImage.preProcessImage(imgarray, params=self.params)
 		print "DOG FILTER"
+		if self.params['invert']:
+			imgarray=apImage.invertImage(imgarray)
 		imgarray = apImage.diffOfGaussParam(imgarray, self.params)
 		imgarray = apImage.normStdev(imgarray)/4.0
 		self.dogmaplist = [imgarray,]
@@ -44,6 +46,7 @@ class basicDogPicker(appionLoop.AppionLoop):
 		self.params['lp']=0
 		self.params['overlapmult']=1.5
 		self.params['maxpeaks']=1500
+		self.params['invert']=False
 
 	def specialCreateOutputDirs(self):
 		self._createDirectory(os.path.join(self.params['rundir'],"pikfiles"),warning=False)
@@ -68,6 +71,11 @@ class basicDogPicker(appionLoop.AppionLoop):
 				self.params['overlapmult']= float(elements[1])
 			elif (elements[0]=='maxpeaks'):
 				self.params['maxpeaks']= int(elements[1])
+			elif (elements[0]=='invert'):
+				self.params['invert']=True
+			else:
+				print elements[0], "is not recognized as a valid parameter"
+				sys.exit()
 
 	def specialParamConflicts(self):
 		if not 'diam' in self.params or self.params['diam']==0:
