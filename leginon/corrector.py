@@ -19,7 +19,7 @@ import gui.wx.Corrector
 import remotecall
 import instrument
 import sys
-import arraystats
+from pyami import arraystats
 
 class CameraError(Exception):
 	pass

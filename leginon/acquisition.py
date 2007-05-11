@@ -25,7 +25,7 @@ import gui.wx.Presets
 import newdict
 import navigator
 import numarray
-import arraystats
+from pyami import arraystats
 
 class NoMoveCalibration(Exception):
 	pass

@@ -18,7 +18,7 @@ import os
 import re
 import calibrationclient
 import copy
-import arraystats
+from pyami import arraystats
 
 class AcquireError(Exception):
 	pass

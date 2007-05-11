@@ -16,7 +16,7 @@ import array
 import struct
 import sys
 import cStringIO
-import arraystats
+from pyami import arraystats
 
 ## MRC supported types
 mrcmode_type = {
