@@ -24,7 +24,7 @@ import imagefun
 def process(img1,img2,params):
 
 	jpgdir = os.path.join(params['rundir'],"jpgs")
-	apParam.createDirectory(jpgdir)
+	apParam.createDirectory(jpgdir, warning=False)
 
 	shortname = apDisplay.shortenImageName(img1['filename'])
 	name = os.path.join(jpgdir,shortname)
@@ -35,12 +35,12 @@ def process(img1,img2,params):
 
 	doG1 = _doG(img1, params)
 	halos1, particles = _createParticleHalos(img1,params)
-	halodoG1 = 0.25*apImage.normStdev(doG1) + apImage.normStdev(halos1)
+	halodoG1 = 0.75*apImage.normStdev(doG1) + apImage.normStdev(halos1)
 	#apImage.arrayToJpeg(doG1,name+"-doG1.jpg")
 
 	doG2 = _doG(img2, params)
 	halos2, particles = _createParticleHalos(img2,params)
-	halodoG2 = 0.25*apImage.normStdev(doG2) + apImage.normStdev(halos2)
+	halodoG2 = 0.75*apImage.normStdev(doG2) + apImage.normStdev(halos2)
 	#apImage.arrayToJpeg(doG2,name+"-doG2.jpg")
 
 	shift0, prob1 = _getTiltedShift(doG1,tilt1,doG2,tilt2,name,params)
@@ -419,17 +419,26 @@ def _optimizeTiltByCorrCoeff(img1, img2, tilt0, shift0):
 	"""
 
 ### SECOND PASS
-	localbin = 2
+	localbin = 4
 	smimg1 = apImage.binImg(img1,localbin)
 	smimg1 = apImage.cutEdges(smimg1,0.05)
 	smimg2 = apImage.binImg(img2,localbin)
 	smimg2 = apImage.cutEdges(smimg2,0.05)
 	print "optimizing angles and shift..."
 	t0 = time.time()
-	print "BEFORE=",_rmsdImages(numarray.zeros(6,typecode=numarray.Float64),tilt0,shift0,smimg1, smimg2, localbin)
-	x1 = optimize.fmin(_sumImageMult, x0, args=(tilt0, shift0/2.0, smimg1, smimg2, localbin), 
+	before = _rmsdImages(x0,tilt0,shift0,smimg1, smimg2, localbin)
+	before2 = _corrImages(x0,tilt0,shift0,smimg1, smimg2, localbin)
+	x1 = optimize.fmin(_rmsdImages, x0, args=(tilt0, shift0, smimg1, smimg2, localbin), 
 	 xtol=0.01, ftol=0.00001, maxiter=500, disp=1)
-	tilt,twist1,twist2,scale,shift = _x1ToParams(x1,tilt0,shift0,1)
+	after = _rmsdImages(x1,tilt0,shift0,smimg1, smimg2, localbin)
+	after2 = _corrImages(x1,tilt0,shift0,smimg1, smimg2, localbin)
+	print "BEFORE=",before,before2
+	print "AFTER=",after,after2
+	if after < before:
+		x0 = x1
+	else:
+		apDisplay.printWarning("optimization failed; rmsd got worse")
+	tilt,twist1,twist2,scale,shift = _x1ToParams(x0,tilt0,shift0,1)
 	print tilt,twist1,twist2,scale,shift,apDisplay.timeString(time.time()-t0)
 
 ### SUMMARIZE
@@ -438,11 +447,12 @@ def _optimizeTiltByCorrCoeff(img1, img2, tilt0, shift0):
 	return tilt,twist1,twist2,scale,shift,prob
 
 def _x1ToParams(x1,tilt0,shift0,bin):
-	x2 = x1*10.0
+	x2 = x1*1.0
 	tilt  = x2[0] + tilt0
 	twist1 = x2[1]
 	twist2 = x2[2]
-	scale = x2[3]/10.0 + 1.0
+	#scale = x2[3]/10.0 + 1.0
+	scale = 1.0
 	shift = (numarray.array((x2[4]*10.0,x2[5])) + shift0)/float(bin)
 	return tilt,twist1,twist2,scale,shift
 
@@ -470,6 +480,7 @@ def _rmsdImages(x1,tilt0,shift0,img1,img2,bin):
 	img2rot = _tiltImg2ToImg1(img2,tilt/2.0,twist1,scale,shift)
 	mask = (img2rot != 0.0) * (img1rot != 0.0)
 	msd = apImage.msd(img1rot,img2rot,mask)
+	print apDisplay.color(str(msd),"red"),tilt,twist1,twist2,scale,shift
 	#apImage.arrayToJpeg(img1rot,str(int(msd*100))+"smimg1.jpg")
 	#apImage.arrayToJpeg(img2rot,str(int(msd*100))+"smimg2.jpg")
 	#print msd,tilt,twist,scale,shift
