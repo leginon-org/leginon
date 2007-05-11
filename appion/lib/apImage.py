@@ -441,6 +441,13 @@ def arrayMaskToPngAlpha(numer,filename, msg=True):
 		apDisplay.printMsg("writing alpha channel PNG mask: "+apDisplay.short(filename))
 	image.save(filename, "PNG")
 	return
+	
+def PngAlphaToBinarryArray(filename):
+	alphaarray = readPNG(filename)
+	print alphaarray.max(),alphaarray.min(),
+	masked_alphaarray = ma.masked_greater_equal(alphaarray,50)
+	bmask = masked_alphaarray.filled(1)
+	return alphaarray
 
 #########################################################
 # statistics of images
@@ -619,40 +626,41 @@ def drawPeak(peak, draw, imshape, rad=10.0, color0="red", numshapes=4, shape="ci
 	draw.line(leftright,fill=mycolors['blue'])
 	return
 
-	def readMRC(self, filename):
-		return Mrc.mrc_to_numeric(filename)
+def readMRC(filename):
+	return Mrc.mrc_to_numeric(filename)
 
-	def readJPG(self, filename):
-		i = Image.open(filename)
-		i.load()
-		i = self.imageToArray(i)
-		return i
+def readJPG(filename):
+	i = Image.open(filename)
+	i.load()
+	i = imageToArray(i)
+	return i
 
-	def readPNG(self, filename):
-		i = Image.open(filename)
-		i.load()
-		i = self.imageToArray(i)
-		return i
+def readPNG(filename):
+	i = Image.open(filename)
+	i.load()
+	i = imageToArray(i)
+	return i
 
-	def imageToArray(self, im, convertType='UInt8'):
-		"""
-		Convert PIL image to Numarray array
-		copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
-		"""
-		if im.mode == "L":
-			a = numarray.fromstring(im.tostring(), numarray.UInt8)
-			a = numarray.reshape(a, (im.size[1], im.size[0]))
-			#a.shape = (im.size[1], im.size[0], 1)  # alternate way
-		elif (im.mode=='RGB'):
-			a = numarray.fromstring(im.tostring(), numarray.UInt8)
-			a.shape = (im.size[1], im.size[0], 3)
-		elif (im.mode=='RGBA'):
-			atmp = numarray.fromstring(im.tostring(), numarray.UInt8)
-			atmp.shape = (im.size[1], im.size[0], 4)
-			a = atmp[:,:,3]
-		else:
-			raise ValueError, im.mode+" mode not considered"
+def imageToArray(im, convertType='UInt8'):
+	"""
+	Convert PIL image to Numarray array
+	copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
+	"""
+	if im.mode == "L":
+		a = numarray.fromstring(im.tostring(), numarray.UInt8)
+		a = numarray.reshape(a, (im.size[1], im.size[0]))
+		#a.shape = (im.size[1], im.size[0], 1)  # alternate way
+	elif (im.mode=='RGB'):
+		a = numarray.fromstring(im.tostring(), numarray.UInt8)
+		a.shape = (im.size[1], im.size[0], 3)
+	elif (im.mode=='RGBA'):
+		print "here"
+		atmp = numarray.fromstring(im.tostring(), numarray.UInt8)
+		atmp.shape = (im.size[1], im.size[0], 4)
+		a = atmp[:,:,3]
+	else:
+		raise ValueError, im.mode+" mode not considered"
 
-		if convertType == 'Float32':
-			a = a.astype(numarray.Float32)
-		return a
+	if convertType == 'Float32':
+		a = a.astype(numarray.Float32)
+	return a

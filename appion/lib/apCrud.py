@@ -719,9 +719,12 @@ def piksNotInMask(maskbin,mask,piklines):
 		bits=pikline.split(' ')
 		pik=(int(bits[1]),int(bits[2]))
 		binpik = (int(pik[0]/maskbin),int(pik[1]/maskbin))
+		print binpik
 		if binpik[0] in range(0,shape[0]) and binpik[1] in range(0,shape[1]):
 			if mask[binpik]==0:
 				piklinesNotInMask.append(pikline)
+			else:
+				print "reject"
 	return piklinesNotInMask
 	
 def readPiksFile(file,extra=''):
@@ -754,7 +757,7 @@ def removeMaskedPiks(params,file):
 	
 def makeKeepMask(maskarray,keeplist):
 	labeled_maskarray,countlabels=nd.label(maskarray)
-	labeled_maskarray = makeImageFromLabels(labeled_maskarray,countlabels,keeplist):
+	labeled_maskarray = makeImageFromLabels(labeled_maskarray,countlabels,keeplist)
 	maskarray=getBmaskFromLabeled(labeled_maskarray)
 	return maskarray
 
@@ -763,5 +766,5 @@ def removeMaskedPiklines(piklines,maskarray,maskbin,keeplist):
 	maskarray = makeKeepMask(maskarray,keeplist)
 	print "Removing Bad Picks"
 	piklines = piksNotInMask(maskbin,maskarray,piklines)
-	return piklines	
+	return piklines,maskarray	
 	
