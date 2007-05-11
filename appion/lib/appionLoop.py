@@ -387,17 +387,20 @@ class AppionLoop(object):
 					self.params['sessionname']=dbinfo[0]
 					self.params['preset']=dbinfo[1]
 					self.params['dbimages']=True
-					if self.params['nocontinue'] is not True:
-						# continue should be on for dbimages option
-						self.params['continue']=True 
 				else:
 					apDisplay.printError("dbimages must include both \'sessionname\' and \'preset\'"+\
 						"parameters (ex: \'07feb13a,en\')\n")
 			elif (elements[0]=='alldbimages'):
 				self.params['sessionname']=elements[1]
 				self.params['alldbimages']=True
+
 			else:
 				newargs.append(arg)
+
+		if self.params['nocontinue'] is not True:
+			if self.params['alldbimages'] is True or self.params['dbimages'] is True:
+				# continue should be on for dbimages option
+				self.params['continue']=True 
 
 		sessionq=data.SessionData(name=self.params['sessionname'])
 		self.params['session']=self.leginondb.query(sessionq)[0]
