@@ -17,7 +17,7 @@ rm -frv icetiltslocal negtiltslocal
   07feb02b_a_00006gr_00019sq_v01_00002sq_01_00008en_01.mrc \
   07feb02b_a_00006gr_00019sq_v01_00002sq_01_00009en_01.mrc \
   outdir=. diam=140 \
-  runid=icetiltslocal prtlrunid=96 commit
+  runid=icetiltslocal 
 
 tiltCorrelator2.py \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00004en_00.mrc  \
