@@ -50,9 +50,9 @@ class basicDogPicker(appionLoop.AppionLoop):
 		self._createDirectory(os.path.join(self.params['rundir'],"jpgs"),warning=False)
 		self._createDirectory(os.path.join(self.params['rundir'],"dogmaps"),warning=False)
 
-	def specialParseParams(self,args):
+	def specialParseParams(self, args):
 		for arg in args:
-			elements=arg.split('=')
+			elements = arg.split('=')
 			elements[0] = elements[0].lower()
 			#print elements
 			if (elements[0]=='help' or elements[0]=='--help' \

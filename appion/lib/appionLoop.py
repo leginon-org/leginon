@@ -403,7 +403,7 @@ class AppionLoop(object):
 		self.params['session']=self.leginondb.query(sessionq)[0]
 
 		apDisplay.printMsg("parsing special parameters")
-		self.specialParseParams(args)
+		self.specialParseParams(newargs)
 
 		self.params['imgdir'] = apDatabase.getImgDir(self.params['sessionname'])
 
