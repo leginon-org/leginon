@@ -289,7 +289,7 @@ def batchBox(params, imgdict):
 	print "\nprocessing:",apDisplay.short(imgname)
 	input=os.path.join(params["filepath"],(imgname+'.mrc'))
 	output=os.path.join(params["outdir"],(imgname+'.hed'))
-	apParam.createDirectory(params["outdir"])
+	apParam.createDirectory(params["outdir"], warning=False)
 
 	# if getting particles from database, a temporary
 	# box file will be created
