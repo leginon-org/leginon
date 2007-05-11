@@ -138,7 +138,7 @@ def insertParticlePeaks(peaktree, imgdict, expid, params):
 		particlesq = appionData.ApParticleData()
 		particlesq['selectionrun'] = runids[0]
 		particlesq['dbemdata|AcquisitionImageData|image'] = legimgid
-		if 'template' in peakdict:
+		if 'template' in peakdict and peakdict['template'] is not None:
 			particlesq['template'] = getTemplateDBInfo(peakdict['template'])
 		# use an update function???, maybe best not to
 		for key in 'xcoord','ycoord','correlation','peakmoment','peakstddev','peakarea':
