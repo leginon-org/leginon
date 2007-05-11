@@ -628,7 +628,7 @@ if __name__ == '__main__':
 		if (params["spider"]==True):
 			if (os.path.isfile(stackfile+".spi")):
 				os.remove(stackfile+".spi")
-			if (os.path.isfile(stackfile+".hed")):
+		if (os.path.isfile(stackfile+".hed")):
 			os.remove(stackfile+".hed")
 		if (os.path.isfile(stackfile+".img")):
 			os.remove(stackfile+".img")
