@@ -42,6 +42,7 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params, maptype):
 	if 'ogTmpltInfo' in params:
 		tmpldbid =  params['ogTmpltInfo'][tmplnum-1].dbid
 	else:
+		#dogpicker
 		tmpldbid = None
 	mapdir = os.path.join(params['rundir'],maptype+"s")
 
