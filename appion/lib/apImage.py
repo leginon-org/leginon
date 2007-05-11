@@ -72,6 +72,12 @@ def binImg(imgarray,bin=1):
 	else:
 		return imgarray
 
+def invertImage(imgarray):
+	"""
+	returns a contrast inverted image
+	"""
+	return(-1*imgarray)
+
 def filterImg(imgarray,apix=1.0,rad=0.0,bin=1):
 	#TEMPORARY ALIAS FOR lowPassFilter
 	return lowPassFilter(imgarray,apix=apix,bin=1,radius=rad)
