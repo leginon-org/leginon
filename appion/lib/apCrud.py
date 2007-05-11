@@ -1,10 +1,8 @@
 #region finding functions called by makeMask.py
 
-import apDatabase
-import apImage
-import apParticle
 import apConvexHull
-import os,sys
+import apImage
+import os
 import math
 import numarray
 import numarray.ma as ma
@@ -19,27 +17,8 @@ import polygon
 import libCV
 
 
-def prepImage(image,cutoff=5.0):
-	shape=numarray.shape(image)
-	garea,gavg,gstdev=maskImageStats(image)
-	print 'image mean= %.1f stdev= %.1f' %(gavg,gstdev)
-	cleanimage=ma.masked_outside(image,gavg-cutoff*gstdev,gavg+cutoff*gstdev)
-	carea,cavg,cstdev=maskImageStats(cleanimage)
-	
-	image=cleanimage.filled(cavg)
-	return image
 
-
-def medium(image):
-	size=image.size()
-	image1d=numarray.reshape(image,(image.size()))
-	image1d.sort()
-	medium=image1d[size/2]
-	topquad=image1d[size*3/4]
-	botquad=image1d[size/4]
-	return medium,topquad,botquad
-
-def outputImage(array,name,description,testlog):
+def outputTestImage(array,name,description,testlog):
 	width=25
 	if testlog[0]:
 		jpgname="tests/%02d%s.jpg" %(testlog[1],name)
@@ -51,17 +30,26 @@ def outputImage(array,name,description,testlog):
 	apImage.arrayToJpeg(array,jpgname)
 	return testlog
 
+def medium(image):
+	size=image.size()
+	image1d=numarray.reshape(image,(image.size()))
+	image1d.sort()
+	medium=image1d[size/2]
+	topquad=image1d[size*3/4]
+	botquad=image1d[size/4]
+	return medium,topquad,botquad
+
 def findEdgeSobel(image,sigma,amin,amax,output,testlog):
 	if (sigma > 0):
 		smooth=nd.gaussian_filter(image,sigma)
 		if (output):
-			testlog=outputImage(smooth,'smooth','filtered image',testlog)
+			testlog=outputTestImage(smooth,'smooth','filtered image',testlog)
 	else:
 		smooth=image
 
 	edges=nd.generic_gradient_magnitude(smooth, derivative=nd.sobel)
 	if (output):
-		testlog=outputImage(edges,'edge','edge image',testlog)
+		testlog=outputTestImage(edges,'edge','edge image',testlog)
 
 	edgemax=edges.max()
 	tedges=ma.masked_inside(edges,edgemax*amin,edgemax*amax)
@@ -72,7 +60,7 @@ def findEdgeCanny(image,sigma,amin,amax,output,testlog):
 	tedges,gradient = canny(image,sigma,5,True,amin,amax)
 
 	if (output):
-		testlog=outputImage(gradient,'grad','gradient magnitude image',testlog)
+		testlog=outputTestImage(gradient,'grad','gradient magnitude image',testlog)
 	
 	return tedges,testlog
 
@@ -141,13 +129,13 @@ def convolveDisk(bimage,radius,convolve_t,testlog):
 	c.setImage(disk)
 	c.setKernel(disk)
 	cref=c.convolve()
-	testlog=outputImage(cmask,'maskc','Convolved filled edge mask',testlog)
+	testlog=outputTestImage(cmask,'maskc','Convolved filled edge mask',testlog)
 	
 	# Thresholding to binary mask
 	cmax=cref.max()*convolve_t
 	masked_cmask=ma.masked_greater(cmask,cmax)
 	mask=ma.getmask(masked_cmask)
-	testlog=outputImage(mask,'maskct','Thresholded Convolved mask',testlog)
+	testlog=outputTestImage(mask,'maskct','Thresholded Convolved mask',testlog)
 	return mask,testlog
 		
 def findConvexHullsFromPoints(points):
@@ -229,7 +217,7 @@ def convexHullUnion(regions,clabels,testlog):
 		if clabels !=len(gpolygons):
 			print "some polygons just touched, REDO!!"
 
-	testlog=outputImage(regions,'region_labelp','Convex hull union labeled polygons',testlog)
+	testlog=outputTestImage(regions,'region_labelp','Convex hull union labeled polygons',testlog)
 	return regions,clabels,gpolygons,testlog
 	
 
@@ -328,6 +316,8 @@ def getLabeledInfo(image,alledgemask,labeled_image,indices,fast,info,testlog):
 	The input info can be a dictionary with first object key=1
 	or a list with first object index=0
 	'''
+	if labeled_image.max() == 0:
+		return info,testlog
 	try:
 		ltotal=len(indices)
 	except:
@@ -415,7 +405,7 @@ def pruneByStdev(info,stdev_min,goodregions_in):
 	print "pruned to %d region" %len(goodregions)
 	return goodregions
 	
-def makePrunedLabels(imagename,labeled_image,ltotal,info,goodlabels):
+def makePrunedLabels(labeled_image,ltotal,info,goodlabels):
 	print "remaking %d labeled image after pruning" % len(goodlabels)
 	new_labeled_image = makeImageFromLabels(labeled_image,ltotal,goodlabels)
 
@@ -452,7 +442,7 @@ def makeImageFromLabels(labeled_image,ltotal,goodlabels):
 		print 'makeImageFromLabels', len(goodlabels),resultlabels
 	return new_labeled_image
 
-def makePrunedPolygons(imagename,gpolygons,imageshape,info,goodlabels):
+def makePrunedPolygons(gpolygons,imageshape,info,goodlabels):
 	print "remaking %d polygons after pruning" % len(goodlabels)
 	goodpolygons=[]
 	goodinfos=[]
@@ -468,55 +458,6 @@ def makePrunedPolygons(imagename,gpolygons,imageshape,info,goodlabels):
 	if clabels != len(goodpolygons):
 		print "ERROR: making %d labeled region from %d good polygons" % (clabels,len(goodpolygons))
 	return regions,len(goodpolygons),goodinfos
-
-def writeRegionInfo(imagename,path,infos):
-	# infos is a list of information or a dictionary using non-zero index as keys
-	# area,avg,stdev,length,(centerRow,centerColumn)
-	if len(infos)==0:
-		return
-	regionlines=""
-	try:
-		infos.keys()
-	except:
-		offset=0
-	else:
-		offset=1
-	for l1 in range(0,len(infos)):
-		
-		l=l1+offset
-		info=infos[l]
-		regionline=" %s.mrc %d %d %.1f %.1f %.1f %d\n" %(imagename,int(info[4][1]),int(info[4][0]),info[0],info[1],info[2],int(info[3]))
-		regionlines=regionlines+regionline
-	regionfile=open(path+imagename+".region",'w')
-	regionfile.write(regionlines+"\n")
-	regionfile.close()
-
-def writeRegionInfoToDB(maskrun,img,expid,infos):
-	# infos is a list of information or a dictionary using non-zero index as keys
-	# area,avg,stdev,length,(centerRow,centerColumn)
-	imgids=apParticle.getDBparticledataImage(img,expid)
-	if len(infos)==0:
-		return
-	regionlines=""
-	try:
-		infos.keys()
-	except:
-		offset=0
-	else:
-		offset=1
-	for l1 in range(0,len(infos)):
-		
-		l=l1+offset
-		info=infos[l]
-		apParticle.insertMaskRegion(maskrun,imgids[0],info)
-
-def writeMaskImage(imagename,path,mask):
-	# remove old mask file if it exists
-	maskfile=path+"/"+imagename+"_mask.png"
-	if (os.path.exists(maskfile)):
-		os.remove(maskfile)
-	if mask is not None:
-		apImage.arrayMaskToPngAlpha(mask,maskfile)
 
 def reduceRegions(regions,velimit):
 	regionarrays = []
@@ -550,9 +491,9 @@ def getBmaskFromLabeled(labeled_regions):
 	bmask=masked_image.filled(1)
 	return bmask
 
-def makeMask(params,imagename):
+def makeMask(params,image):
 	filelog="\nTEST OUTPUT IMAGES\n----------------------------------------\n"
-	print "Processing %s.mrc" % (imagename,)
+	print "Processing"
 		
 	bin=int(params["bin"])
 	apix=float(params["apix"])
@@ -586,10 +527,7 @@ def makeMask(params,imagename):
 		else:
 			os.mkdir("tests")
 
-# selexon factors to expand the threshold
-#	pm = 2.0
-#	am = 3.0
-# new values so that cdiam makes physical sense
+	#factors to optimize the threshold
 	pm = 0.667
 	am = 1.0
 	
@@ -598,14 +536,6 @@ def makeMask(params,imagename):
 	cradius=cdiam/2.0
 	area_t=am*3.1415926*cradius*cradius
 	regioninfo=""
-#	image=Mrc.mrc_to_numeric(imagename+".mrc")
-	image = apDatabase.getImageData(imagename)['image']
-	image=imagefun.bin(image,bin)
-	shape=numarray.shape(image)
-	cutoff=8.0
-	# remove spikes in the image first
-	image=prepImage(image,cutoff)
-	garea,gavg,gstdev=maskImageStats(image)
 	allinfos={}
 	regioninfos=[]
 
@@ -631,7 +561,7 @@ def makeMask(params,imagename):
 	print 'scaled regionhi= %.4f regionlo= %.4f' %(high,low)
 
 	if (test):
-		testlog=outputImage(image,'input','input image',testlog)
+		testlog=outputTestImage(image,'input','input image',testlog)
 
 	#binary edge
 	if convolve_t < 0.001:
@@ -647,12 +577,12 @@ def makeMask(params,imagename):
 	else:
 		mask=ma.getmask(edgeimage)
 		maskedimage=ma.masked_array(image,mask=mask,fill_value=0)
-		testlog=outputImage(mask,'mask','Thresholded edge binary image mask',testlog)
+		testlog=outputTestImage(mask,'mask','Thresholded edge binary image mask',testlog)
 
 		#fill
 		iteration=3		
 		mask=fillMask(mask,iteration)
-		testlog=outputImage(mask,'maskf','Hole filled edge mask',testlog)
+		testlog=outputTestImage(mask,'maskf','Hole filled edge mask',testlog)
 
 		if (convolve_t > 0):
 			#convolve with the disk image of the particle
@@ -663,14 +593,14 @@ def makeMask(params,imagename):
 		
 		labeled_regions,clabels=nd.label(mask)
 		print "starting with",clabels, "regions"
-		testlog=outputImage(labeled_regions,'region_label','Segmented labeled image',testlog)
+		testlog=outputTestImage(labeled_regions,'region_label','Segmented labeled image',testlog)
 
 		#pruning by length of the perimeters of the labeled regions.
 		if (do_prune_by_length):
 			allinfos,testlog=getLabeledInfo(image,mask,labeled_regions,range(1,clabels+1),True,allinfos,testlog)
 			goodregions=range(clabels)
-			goodregions=pruneByLength(allinfos,list_t,garea*0.5,goodregions)
-			labeled_regions,clabels,goodinfo=makePrunedLabels(imagename,labeled_regions,clabels,allinfos,goodregions)
+			goodregions=pruneByLength(allinfos,list_t,image.size()*0.5,goodregions)
+			labeled_regions,clabels,goodinfo=makePrunedLabels(labeled_regions,clabels,allinfos,goodregions)
 		
 		#create convex hulls and merge overlapped or inside regions
 		if do_convex_hulls:
@@ -689,7 +619,7 @@ def makeMask(params,imagename):
 				if stdev_t < 0.001:
 					allinfos,testlog=getPolygonInfo(gpolygons,allinfos,testlog)
 				else:
-					mask = polygon.plotPolygons(shape,gpolygons)
+					mask = polygon.plotPolygons(image.shape,gpolygons)
 					labeled_regions,clabels=nd.label(mask)
 					allinfos,testlog=getLabeledInfo(image,mask,labeled_regions,range(1,clabels+1),False,{},testlog)
 			else:				
@@ -700,7 +630,7 @@ def makeMask(params,imagename):
 			goodregions=range(clabels)
 			if not do_cv:
 				#pruning by area as in selexon
-				goodareas=pruneByArea(allinfos,area_t,garea*0.5,goodregions)
+				goodareas=pruneByArea(allinfos,area_t,image.size()*0.5,goodregions)
 				goodregions=goodareas
 
 			try:
@@ -708,8 +638,8 @@ def makeMask(params,imagename):
 			except:
 				good=0
 			if (good > 0):
-				temp_regions,temp_clabels,goodinfos=makePrunedLabels(imagename,saved_labeled_regions,saved_clabels,allinfos,goodareas)
-				testlog=outputImage(temp_regions,'region_labela','Area pruned labeled image',testlog)
+				temp_regions,temp_clabels,goodinfos=makePrunedLabels(saved_labeled_regions,saved_clabels,allinfos,goodareas)
+				testlog=outputTestImage(temp_regions,'region_labela','Area pruned labeled image',testlog)
 
 
 
@@ -720,7 +650,7 @@ def makeMask(params,imagename):
 			if (len(goodregions)>0):
 				#pruning by standard deviation in the regions
 				if (stdev_t > 0):
-					stdev_limit=stdev_t*gstdev
+					stdev_limit=stdev_t*image.stdev
 					goodstdevs=pruneByStdev(allinfos,stdev_limit,goodareas)
 					goodregions=goodstdevs
 
@@ -729,20 +659,20 @@ def makeMask(params,imagename):
 			except:
 				good=0
 			if (good>0):
-				temp_regions,temp_clabels,goodinfos=makePrunedLabels(imagename,saved_labeled_regions,saved_clabels,allinfos,goodstdevs)
-				testlog=outputImage(temp_regions,'region_labels','Stdev pruned labeled image',testlog)
+				temp_regions,temp_clabels,goodinfos=makePrunedLabels(saved_labeled_regions,saved_clabels,allinfos,goodstdevs)
+				testlog=outputTestImage(temp_regions,'region_labels','Stdev pruned labeled image',testlog)
 
 
 			################REBUILD##########################
 			if do_convex_hulls or do_cv and stdev_t < 0.01:
-				labeled_regions,clabels,regioninfos=makePrunedPolygons(imagename,gpolygons,shape,allinfos,goodregions)
+				labeled_regions,clabels,regioninfos=makePrunedPolygons(gpolygons,image.shape,allinfos,goodregions)
 				if params['masktype']=='edge':
 					#convolve with the disk image of the particle
 					equalregions=getBmaskFromLabeled(labeled_regions)
 					labeled_regions,testlog=convolveDisk(equalregions,pradius,0.01,testlog)
 
 			else:
-				labeled_regions,clabels,regioninfos=makePrunedLabels(imagename,labeled_regions,clabels,allinfos,goodregions)
+				labeled_regions,clabels,regioninfos=makePrunedLabels(labeled_regions,clabels,allinfos,goodregions)
 
 			
 #		create final region mask
@@ -759,69 +689,36 @@ def makeMask(params,imagename):
 			except:
 				good=0
 			if (good > 0):
-				temp_regions,temp_clabels,goodinfos=makePrunedLabels(imagename,saved_labeled_regions,saved_clabels,allinfos,goodareas)
-				testlog=outputImage(temp_regions,'region_labela','Area pruned labeled image',testlog)
+				temp_regions,temp_clabels,goodinfos=makePrunedLabels(saved_labeled_regions,saved_clabels,allinfos,goodareas)
+				testlog=outputTestImage(temp_regions,'region_labela','Area pruned labeled image',testlog)
 
 			try:
 				good=len(goodstdevs)
 			except:
 				good=0
 			if (good>0):
-				temp_regions,temp_clabels,goodinfos=makePrunedLabels(imagename,saved_labeled_regions,saved_clabels,allinfos,goodstdevs)
-				testlog=outputImage(temp_regions,'region_labels','Stdev pruned labeled image',testlog)
+				temp_regions,temp_clabels,goodinfos=makePrunedLabels(saved_labeled_regions,saved_clabels,allinfos,goodstdevs)
+				testlog=outputTestImage(temp_regions,'region_labels','Stdev pruned labeled image',testlog)
 			'''
 			if (clabels>0):
-				testlog=outputImage(equalregions,'finalregions','Final Mask image',testlog)
+				testlog=outputTestImage(equalregions,'finalregions','Final Mask image',testlog)
 				regionedges,testlog=findEdgeSobel(equalregions,0,0.5,1.0,False,testlog)
 				masklabel=1-ma.getmask(regionedges)
 			else:
-				masklabel=numarray.ones(shape)
+				masklabel=numarray.ones(image.shape)
 			superimage=image*masklabel
-			testlog=outputImage(superimage,'output','Final Mask w/ image',testlog)
+			testlog=outputTestImage(superimage,'output','Final Mask w/ image',testlog)
 			print testlog[2]
 			
-	return equalregions,regioninfos
+	return regioninfos,equalregions,
 
-def modifyParams(params):
-	if params['masktype']=='crud':
-		params['convolve']=0.0
-		params['no_hull']=False
-		params['cv']=False
-		params['no_length_prune']=False
-
-	else:
-		if params['masktype']=='aggr':
-			print "----Aggregate Mask by Convolution of Particles with Disk at Particle Size----"
-			if float(params['binpixdiam']) < 20 :
-				print "----Particle too small, Probably Won't Work----"
-			else:
-				if float(params['convolve'])<=0.0:
-					print "----Convolution Threshold not set, Won't Work----"
-					sys.exit()
-			
-			params['no_hull']=True
-			params['cv']=False
-			params['no_length_prune']=False
-			if params['stdev']==0.0:
-				params['stdev']=1.0
-		else:
-			if params['masktype']=='edge':
-				params['convolve']=0.0
-				params['no_hull']=True
-				params['cv']=True
-				params['no_length_prune']=False
-	if params['test']==True:
-		params['commit']=False
-	return params	
-
-def piksNotInMask(params,mask,piklines):
-	bin = int(params["bin"])
+def piksNotInMask(maskbin,mask,piklines):
 	shape = numarray.shape(mask)
 	piklinesNotInMask=[]
 	for pikline in piklines:
 		bits=pikline.split(' ')
 		pik=(int(bits[1]),int(bits[2]))
-		binpik = (int(pik[0]/bin),int(pik[1]/bin))
+		binpik = (int(pik[0]/maskbin),int(pik[1]/maskbin))
 		if binpik[0] in range(0,shape[0]) and binpik[1] in range(0,shape[1]):
 			if mask[binpik]==0:
 				piklinesNotInMask.append(pikline)
@@ -851,5 +748,20 @@ def removeMaskedPiks(params,file):
 	piklines = readPiksFile(pikfile)
 	regionmask=makeMask(params,file)
 	print "Removing Bad Picks"
-	piklinesgood = piksNotInMask(params,regionmask,piklines)
+	maskbin = params['bin']
+	piklinesgood = piksNotInMask(maskbin,regionmask,piklines)
 	writePiksFile(pikfile,'.nonmask',piklinesgood)
+	
+def makeKeepMask(maskarray,keeplist):
+	labeled_maskarray,countlabels=nd.label(maskarray)
+	labeled_maskarray = makeImageFromLabels(labeled_maskarray,countlabels,keeplist):
+	maskarray=getBmaskFromLabeled(labeled_maskarray)
+	return maskarray
+
+def removeMaskedPiklines(piklines,maskarray,maskbin,keeplist):
+	print "Create good mask array"
+	maskarray = makeKeepMask(maskarray,keeplist)
+	print "Removing Bad Picks"
+	piklines = piksNotInMask(maskbin,maskarray,piklines)
+	return piklines	
+	
