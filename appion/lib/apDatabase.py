@@ -17,10 +17,6 @@ import apDisplay
 data.holdImages(False)
 leginondb = apDB.db
 appiondb = apDB.apdb
-#db     = dbdatakeeper.DBDataKeeper()
-#partdb = dbdatakeeper.DBDataKeeper(db='dbparticledata')
-#acedb  = dbdatakeeper.DBDataKeeper(db='dbctfdata')
-#projdb = dbdatakeeper.DBDataKeeper(db='project')
 
 def getAllImages(stats, params):
 	startt = time.time()
@@ -81,7 +77,7 @@ def getAllImagesFromDB(session):
 	sessionq= data.SessionData(name=session)
 	imgquery = data.AcquisitionImageData()
 	imgquery['session'] = sessionq
-	imgtree = leginondb.query(imageq, readimages=False)
+	imgtree = leginondb.query(imgquery, readimages=False)
 	return imgtree
 
 def getExpIdFromSessionName(sessionname):
