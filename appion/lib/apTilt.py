@@ -458,6 +458,7 @@ def _corrImages(x1,tilt0,shift0,img1,img2,bin):
 	return -1.0*math.sqrt(correlation)
 
 def _sumImageMult(x1,tilt0,shift0,img1,img2,bin):
+	tilt,twist1,twist2,scale,shift = _x1ToParams(x1,tilt0,shift0,bin)
 	img1rot = _tiltImg1ToImg2(img1,tilt/2.0,twist2)
 	img2rot = _tiltImg2ToImg1(img2,tilt/2.0,twist1,scale,shift)
 	mask = (img2rot != 0.0) * (img1rot != 0.0)
