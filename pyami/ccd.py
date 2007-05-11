@@ -6,23 +6,26 @@ Classes for managing image corrections (bias, flat, dark) on CCD images
 '''
 #### ready for numpy
 import numpy
-numfloat = numpy.float
+numfloat = numpy.float32
 imagemean = numpy.mean
 imagestd = numpy.std
 randomarray = numpy.random
 def arange(n, type):
 	return numarray.arange(n, dtype=type)
+median = numpy.median
 '''
 import numarray
 numpy = numarray
-numfloat = numarray.Float
+numfloat = numarray.Float32
 import numarray.nd_image
 imagemean = numarray.nd_image.mean
 imagestd = numarray.nd_image.standard_deviation
 import numarray.random_array as randomarray
 def arange(n, type):
 	return numarray.arange(n, type=type)
+from numarray.image import median
 
+debug = False
 
 class Accumulator(object):
 	'''
@@ -36,17 +39,48 @@ class Accumulator(object):
 		std()   (calculated when called, if not calculated yet)
 	Initialize the Accumulator with std=True if you want std() to be available.
 	'''
-	def __init__(self, std=False):
-		self.reset(std)
+	def __init__(self, std=False, medsize=0):
+		self.reset(std, medsize)
 
-	def reset(self, calcstd=False):
+	def reset(self, calcstd=False, medsize=0):
 		self.__n = 0
 		self.__mean = None
 		self.__sum2 = None
 		self.__std = None
 		self.__calcstd = calcstd
+		self.__medbuffer = []
+		self.__medsize = medsize
+		self.lock = False
+
+	def resetMedian(self):
+		self.__medbuffer = []
+		self.lock = True
+
+	def insertMedian(self, image):
+		if debug:
+			print 'inserting into median buffer'
+		if len(self.__medbuffer) == self.__medsize:
+			del self.__medbuffer[0]
+
+		self.__medbuffer.append(image)
+
+		if len(self.__medbuffer) == self.__medsize:
+			if debug:
+				print 'calculating median'
+			return median(self.__medbuffer)
+		else:
+			return None
 
 	def insert(self, x):
+		if self.lock:
+			raise RuntimeError('Median buffer was reset.  Reset the Accumulator before insert')
+		if self.__medsize:
+			x = self.insertMedian(x)
+		if x is None:
+			return
+
+		if debug:
+			print 'doing calculations'
 		self.__std = None
 		self.__n += 1
 		if self.__n == 1:
@@ -58,6 +92,8 @@ class Accumulator(object):
 			self.__mean = self.__mean + delta / self.__n
 			if self.__calcstd:
 				self.__sum2 = self.__sum2 + delta * (x - self.__mean)
+		if debug:
+			print 'done calculations'
 
 	def mean(self):
 		return self.__mean
@@ -125,16 +161,16 @@ class CorrectorBase(object):
 		return output
 
 
-class CorrectionManager(CorrectorBase):
+class Corrector(CorrectorBase):
 	'''
 	Implements two methods for creating correction images:
 		1. Simply setting the image
 		2. Incrementally combining by inserting images one by one
 	'''
-	def __init__(self):
-		self.__accbias = Accumulator()
-		self.__accdark = Accumulator()
-		self.__accflat = Accumulator()
+	def __init__(self, medsize=3):
+		self.__accbias = Accumulator(medsize=medsize)
+		self.__accdark = Accumulator(medsize=medsize)
+		self.__accflat = Accumulator(medsize=medsize)
 
 	def reset(self):
 		self.__accbias.reset()
@@ -176,10 +212,11 @@ class CorrectionManager(CorrectorBase):
 
 	def insertDark(self, dark, exptime):
 		dark = self.correctBias(dark)
+		import arraystats
 		dark = dark/exptime
 		self.__accdark.insert(dark)
 
-	def insertFlat(self, bright, exptime):
+	def insertBright(self, bright, exptime):
 		bright = self.correctBias(bright)
 		bright = self.correctDark(bright, exptime)
 		avg = bright.mean()
@@ -195,7 +232,7 @@ if __name__ == '__main__':
 
 	shape = 512,512
 
-	c = CorrectionManager()
+	c = Corrector()
 
 	# fake bias image
 	biases = [randomImage(shape, 400, 40) for i in range(10)]
@@ -221,7 +258,7 @@ if __name__ == '__main__':
 	flat = flat / flat.mean()
 	flats = [bias + exptime * dark + exptime * 1000 * flat for exptime in exptimes]
 	for flat,exptime in zip(flats,exptimes):
-		c.insertFlat(flat, exptime)
+		c.insertBright(flat, exptime)
 
 	# fake raw image
 	im = randomImage(shape, 5000, 100)
