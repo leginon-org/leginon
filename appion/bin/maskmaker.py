@@ -1,12 +1,11 @@
 #!/usr/bin/python -O
-# Python wrapper for the selexon program
-# Will by default create a "jpgs" directory and save jpg images of selections & crudfinder results
+# Will by create a "masks" directory and save png images of the mask
 
 import sys
 import os
 import data
 import appionLoop
-import apCrudFinder
+import apCrud
 import apParticle
 import appionData
 import apDatabase
@@ -197,7 +196,7 @@ class MaskMaker(appionLoop.AppionLoop):
 		return imgarray	
 	
 	def function(self,params,rundata,imgdata,binnedimgarray):
-		regions,maskarray = apCrudFinder.makeMask(params,binnedimgarray)
+		regions,maskarray = apCrud.makeMask(params,binnedimgarray)
 		regionTree = self.getResults(rundata,imgdata,regions)
 		return {'region':regionTree,'mask':maskarray}
 
