@@ -4,10 +4,6 @@ import sys
 import apDatabase,apDisplay
 import apDB
 import appionData
-try:
-	import libcv2
-except:
-	apDisplay.printError("cannot import libcv2, use a different machine")
 
 appiondb = apDB.apdb
 
@@ -27,6 +23,10 @@ def runDogDetector(imagename, params):
 	bin            = params['bin']
 
 	sys.stderr.write(" ... running dog picker")
+	try:
+		import libcv2
+	except:
+		apDisplay.printError("cannot import libcv2, use a different machine")
 	peaks = libcv2.dogDetector(image,bin,binpixrad,search_range,sampling,mintreshold,maxtreshold)
 	print " ... done"
 
