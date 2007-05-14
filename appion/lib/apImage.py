@@ -18,12 +18,14 @@ import convolver
 #appion
 import apDisplay
 
-def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, planeReg=True):
+def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, planeReg=True, medFilt=False):
 	"""
 	standard processing for an image
 	"""
 	simgarray = imgarray.copy()
 	simgarray = binImg(simgarray,bin)
+	if medFilt is True:
+		simgarray = nd_image.median_filter(simgarray, size=3)
 	if planeReg:
 		simgarray = planeRegression(simgarray)
 	simgarray = lowPassFilter(simgarray,apix,bin,lowpass)
@@ -31,7 +33,7 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, planeReg=True):
 	return simgarray
 
 
-def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=True, params={}):
+def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=True, medFilt=False, params={}):
 	"""
 	standard processing for an image
 	"""
@@ -59,7 +61,7 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=True, 
 			lowpass = 0
 			apDisplay.printWarning("'lowpass' is not defined in preProcessImage()")
 	#HIGH PASS FILTER => PLANE REGRESSION
-	result = _processImage(imgarray, bin, apix, lowpass, planeReg)
+	result = _processImage(imgarray, bin, apix, lowpass, planeReg, medFilt)
 	apDisplay.printMsg("filtered image in "+apDisplay.timeString(time.time()-startt))
 	return result
 
