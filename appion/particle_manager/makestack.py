@@ -407,7 +407,7 @@ def singleStack(params,imgdict):
 	output=os.path.join(params["outdir"],params["single"])
 
 	singlepath=os.path.split(output)[0]
-	apParam.createDirectory(singlepath)
+	apParam.createDirectory(singlepath, warning=False)
 
 	cmd="proc2d %s %s norm=0.0,1.0" %(input, output)
 
