@@ -331,7 +331,7 @@ def batchBox(params, imgdict):
 		else: 
 	 		cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(input, dbbox, output)
 	
-		print "boxing particles"
+		print "boxing",nptcls,"particles"
 		f=os.popen(cmd)
 		f.close()
 		return(nptcls)
@@ -353,7 +353,7 @@ def eliminateMinMaxCCParticles(particles,params):
 			newparticles.append(prtl)
 		else:
 			eliminated+=1
-	print eliminated,"particles eliminated due to selexonmin or selexonmax"
+	print eliminated,"particle(s) eliminated due to selexonmin or selexonmax"
 	return(newparticles)
 
 def saveParticles(particles,shift,dbbox,params,imgdict):
@@ -380,7 +380,7 @@ def saveParticles(particles,shift,dbbox,params,imgdict):
 		else:
 			eliminated+=1
 	if eliminated>0:
-		print eliminated, "particles eliminated because out of bounds"
+		print eliminated, "particle(s) eliminated because out of bounds"
 	#write boxfile
 	boxfile=open(dbbox,'w')
 	boxfile.writelines(plist)
@@ -393,7 +393,7 @@ def phaseFlip(params,imgdict):
 
 	cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" %(input,\
 	  output,params["df"],params["kv"],params["apix"])
-	print "phaseflipping particles"
+	print "phaseflipping particles with defocus",round(params["df"],3),"microns"
 
 	f=os.popen(cmd)
 	f.close()
@@ -461,13 +461,12 @@ def writeBoxLog(commandline):
 # since we're using a batchboxer approach, we must first get a list of
 # images that contain particles
 def getImgsFromSelexonId(params):
-	print "finding Leginon Images that have particles for selexon run:", params['selexonId']
+	print "Finding Leginon images that have particles for selection run:", params['selexonId']
 
 	# get selection run id
 	selexonrun=apdb.direct_query(data.ApSelectionRunData,params['selexonId'])
 	if not (selexonrun):
-		print "\nError: specified runId '"+str(params['selexonId'])+"' not in database\n"
-		sys.exit()
+		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' not in database")
 	
 	# from id get the session
 	sessionid=db.direct_query(data.SessionData,selexonrun['dbemdata|SessionData|session'])
