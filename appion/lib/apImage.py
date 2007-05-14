@@ -18,7 +18,7 @@ import convolver
 #appion
 import apDisplay
 
-def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, planeReg=True, medFilt=False):
+def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, planeReg=True, medFilt=False):
 	"""
 	standard processing for an image
 	"""
@@ -29,11 +29,12 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, planeReg=True, medFilt
 	if planeReg:
 		simgarray = planeRegression(simgarray)
 	simgarray = lowPassFilter(simgarray,apix,bin,lowpass)
+	simgarray = highPassFilter(simgarray,apix,bin,highpass)
 	simgarray = 255.0*(normRange(simgarray)+1.0e-7)
 	return simgarray
 
 
-def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=True, medFilt=False, params={}):
+def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=True, medFilt=False, highpass=None, params={}):
 	"""
 	standard processing for an image
 	"""
@@ -60,8 +61,16 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=True, 
 		else:
 			lowpass = 0
 			apDisplay.printWarning("'lowpass' is not defined in preProcessImage()")
+	if highpass is None:
+		if 'highpass' in params:
+			highpass = params['highpass']
+		elif 'hp' in params:
+			highpass = params['hp']
+		else:
+			highpass = 0
+			apDisplay.printWarning("'highpass' is not defined in preProcessImage()")
 	#HIGH PASS FILTER => PLANE REGRESSION
-	result = _processImage(imgarray, bin, apix, lowpass, planeReg, medFilt)
+	result = _processImage(imgarray, bin, apix, lowpass, highpass, planeReg, medFilt)
 	apDisplay.printMsg("filtered image in "+apDisplay.timeString(time.time()-startt))
 	return result
 
@@ -104,6 +113,22 @@ def lowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0):
 		c=convolver.Convolver()
 		return c.convolve(image=imgarray, kernel=kernel)
 
+def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8):
+	"""
+	high pass filter image to radius resolution
+	"""
+	if radius == 0:
+		print " ... skipping high pass filter"
+		return(imgarray)
+	bimgarray = binImg(imgarray, localbin)
+	sigma=float(radius/apix/float(bin*localbin))
+	try:
+		filtimg = nd_image.gaussian_filter(bimgarray, sigma=sigma)
+	except:
+		apDisplay.printWarning("High Pass Filter failed")
+		return imgarray
+	expandimg = scaleImage(filtimg,localbin)
+	return imgarray - expandimg
 
 def diffOfGaussParam(imgarray, params, k=1.2):
 	apix = params['apix']
