@@ -260,7 +260,7 @@ def createPeakJpeg(imgdata, peaktree, params):
 	jpegdir = os.path.join(params['rundir'],"jpgs")
 	apParam.createDirectory(jpegdir, warning=False)
 
-	#imgarray = nd_image.median_filter(imgdata['image'], size=3)
+	imgarray = imgdata['image']
 	imgarray = apImage.preProcessImage(imgarray, bin=bin, params=params)
 	image = apImage.arrayToImage(imgarray)
 	image = image.convert("RGB")
