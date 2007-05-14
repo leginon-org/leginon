@@ -245,8 +245,9 @@ def writeHeader(header, fobj):
 
 def writeData(a, fobj):
 	'''
-	Write the numpy ndarray object to a file object.  This assumes that the
-	header has already been written and fobj points to immediately
+Write the numpy ndarray object to a file object.  This assumes that the
+header has already been written and fobj points to immediately after the
+header.
 	'''
 	if sys.byteorder != 'little':
 		narray = narray.byteswapped()
@@ -255,8 +256,8 @@ def writeData(a, fobj):
 
 def asMRCtype(a):
 	'''
-	If necessary, convert a numpy ndarray to type that is compatible
-	with MRC.
+If necessary, convert a numpy ndarray to type that is compatible
+with MRC.
 	'''
 	if not isinstance(a, numpy.ndarray):
 		raise TypeError('Value must be a numpy array')
@@ -272,10 +273,10 @@ def asMRCtype(a):
 
 def write(a, filename, header=None):
 	'''
-	Write ndarray to a file
-	a = numpy ndarray to be written
-	filename = filename of MRC
-	header (optional) = dictionary of header parameters
+Write ndarray to a file
+a = numpy ndarray to be written
+filename = filename of MRC
+header (optional) = dictionary of header parameters
 	'''
 	stats = arraystats.all(a)
 	a = asMRCtype(a)
@@ -296,7 +297,7 @@ def write(a, filename, header=None):
 
 def read(filename):
 	'''
-	Read the MRC file given by filename, return numpy ndarray object
+Read the MRC file given by filename, return numpy ndarray object
 	'''
 	f = open(filename)
 	readHeader
@@ -310,8 +311,8 @@ mmaps = weakref.WeakValueDictionary()
 
 def mmap(filename):
 	'''
-	Open filename as a memory mapped MRC file.  The returned object is
-	a numpy ndarray object wrapped around the memory mapped file.
+Open filename as a memory mapped MRC file.  The returned object is
+a numpy ndarray object wrapped around the memory mapped file.
 	'''
 	mrc = numpy.memmap(name=filename, mode='r')
 

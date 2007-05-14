@@ -3,41 +3,63 @@
 Classes for managing image corrections (bias, flat, dark) on CCD images
 '''
 
-'''
-#### ready for numpy
-import numpy
-numfloat = numpy.float32
-imagemean = numpy.mean
-imagestd = numpy.std
-randomarray = numpy.random
-def arange(n, type):
-	return numarray.arange(n, dtype=type)
-median = numpy.median
-'''
-import numarray
-numpy = numarray
-numfloat = numarray.Float32
-import numarray.nd_image
-imagemean = numarray.nd_image.mean
-imagestd = numarray.nd_image.standard_deviation
-import numarray.random_array as randomarray
-def arange(n, type):
-	return numarray.arange(n, type=type)
-from numarray.image import median
+### specify which array package to use:
+arraypackage = 'numarray'
+#arraypackage = 'numpy'
 
+### turn debugging output on/off
 debug = False
+
+if arraypackage == 'numpy':
+	import numpy
+	numfloat = numpy.float32
+	imagemean = numpy.mean
+	imagestd = numpy.std
+	randomarray = numpy.random
+	def arange(n, type):
+		return numarray.arange(n, dtype=type)
+	median = numpy.median
+
+if arraypackage == 'numarray':
+	import numarray
+	numpy = numarray
+	numfloat = numarray.Float32
+	import numarray.nd_image
+	imagemean = numarray.nd_image.mean
+	imagestd = numarray.nd_image.standard_deviation
+	import numarray.random_array as randomarray
+	def arange(n, type):
+		return numarray.arange(n, type=type)
+	from numarray.image import median
+
 
 class Accumulator(object):
 	'''
-	A stack accumulator object keeps track of the mean image
-	on a sequence of images without having to keep that series of images
-	in memory.  The stats are updated whenever a new image is inserted
-	into the series.
+An Accumulator object keeps track of the mean image
+on a sequence of images without having to keep that series of images
+in memory.  The stats are updated whenever a new image is inserted
+into the series.
 
-	Available stats:
-		mean()  (calculated during each insert)
-		std()   (calculated when called, if not calculated yet)
-	Initialize the Accumulator with std=True if you want std() to be available.
+Usage:
+    a = Accumulator()
+      by default, the accumulator is only calculating the mean image,
+      not the standard deviation.  If you want to be able to get the
+      standard deviation image, then create your object like this:
+    a = Accumulator(std=True)
+		
+    a = Accumulator(medsize=???)
+      medsize is the size of the median image buffer.  This is an
+      experimental technique of avoiding outlier pixels from
+      cosmic rays or whatever.  
+
+a = Accumulator(std=True)
+
+Available methods on you accumulator object:
+    mean() - this returns the combined mean of the series
+    std() - returns the combined standard deviation of the series
+             (only available if accumulator was initialized with std=True)
+    reset() - resets the accumulator, as if it was just initialized
+
 	'''
 	def __init__(self, std=False, medsize=0):
 		self.reset(std, medsize)
@@ -123,9 +145,12 @@ def testAccumulator():
 
 class CorrectorBase(object):
 	'''
-	Base class for Corrector
-	Subclasses must implement the bias, dark, and flat methods to 
-	return the images used for the correction.
+Base class for Corrector.  This defines how to do the image corrections,
+like bias correction, dark correction, flat correction, but does not
+define how to create the bias, dark, and flat images.
+You should create a subclass that defines the methods bias(), dark(), 
+and flat() to return the image.  For instance, these methods could
+read the image from a database.
 	'''
 	def bias(self):
 		raise NotImplementedError('bias method needs to return a bias image')
@@ -163,9 +188,25 @@ class CorrectorBase(object):
 
 class Corrector(CorrectorBase):
 	'''
-	Implements two methods for creating correction images:
-		1. Simply setting the image
-		2. Incrementally combining by inserting images one by one
+Implements two methods for creating correction images:
+   1. Simply setting the image using setBias, setDark, setFlat.
+       Use this if you have already created the images and just
+       want to use them in this Corrector object.
+   2. Incrementally combining by inserting raw images one by one.
+      This uses the Accumulator class.  You can feed it raw images
+      using insertBias, insertDark, insertBright.  These only take
+      raw images, and will do the appropriate normalizations before feeding
+      to the Accumulator.   This means, you do not feed a normalized flat
+      image to the insertBright method, just give it a raw bright image.
+			Similarly, only give insertDark a raw dark image, not one that
+      is already divided by the exposure time.
+
+      You can only use insertDark if you already have created a bias image,
+      because internally, it will subtract the bias before adding it to the
+      average image.
+
+      You can only use insertBright if you already have a bias and dark image,
+      because it needs to subtract them before calculating the average image.
 	'''
 	def __init__(self, medsize=3):
 		self.__accbias = Accumulator(medsize=medsize)
@@ -212,7 +253,6 @@ class Corrector(CorrectorBase):
 
 	def insertDark(self, dark, exptime):
 		dark = self.correctBias(dark)
-		import arraystats
 		dark = dark/exptime
 		self.__accdark.insert(dark)
 
