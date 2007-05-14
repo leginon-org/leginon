@@ -130,6 +130,9 @@ def insertParticlePeaks(peaktree, imgdict, expid, params):
 	runq['dbemdata|SessionData|session'] = expid
 	runids=appiondb.query(runq, results=1)
 
+	if not runids:
+		apDisplay.printError("could not find runid in database")
+
 	# WRITE PARTICLES TO DATABASE
 	print "Inserting particles into database for",apDisplay.shortenImageName(imgname),"..."
 
@@ -146,7 +149,11 @@ def insertParticlePeaks(peaktree, imgdict, expid, params):
 				particlesq[key] = peakdict[key]
 		### INSERT VALUES
 		presult = appiondb.query(particlesq)
-		if not presult and 'peakarea' in particlesq and particlesq['peakarea'] is not None and particlesq['peakarea'] > 0:
+		if 'peakarea' in particlesq and particlesq['peakarea'] is not None and particlesq['peakarea'] > 0:
+			peakhasarea = True
+		else:
+			peakhasarea = False
+		if not presult and peakhasarea is True:
 			appiondb.insert(particlesq)
 	return
 

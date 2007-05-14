@@ -1,7 +1,8 @@
 #Part of the new pyappion
 
 import sys
-import apDatabase,apDisplay
+import apDatabase
+import apDisplay
 import apDB
 import appionData
 
@@ -49,7 +50,7 @@ def convertDogPeaks(peaks,params):
 
 def insertDogParams(params, expid):
 	### query for identical params ###
-	selexonparamsq=appionData.ApDogParamsData()
+	selexonparamsq = appionData.ApDogParamsData()
  	selexonparamsq['diam']=params['diam']
  	selexonparamsq['bin']=params['bin']
  	selexonparamsq['threshold']=params['thresh']
@@ -58,7 +59,7 @@ def insertDogParams(params, expid):
  	selexonparamsq['hp_filt']=None
  	selexonparamsq['invert']=params['invert']
  	selexonparamsq['max_peaks']=params['maxpeaks']
-	selexonparamsdata=appiondb.query(selexonparamsq, results=1)
+	selexonparamsdata = appiondb.query(selexonparamsq, results=1)
 
 	### query for identical run name ###
 	runq=appionData.ApSelectionRunData()
@@ -68,11 +69,13 @@ def insertDogParams(params, expid):
 	runids=appiondb.query(runq, results=1)
 
  	# if no run entry exists, insert new run entry into dbappiondata
- 	if not(runids):
-		runq['dogparams']=selexonparamsq
+ 	if not runids:
+		apDisplay.printMsg("Inserting new runId into database")
+		runq['dogparams'] = selexonparamsq
 		if not selexonparamsdata:
 			appiondb.insert(selexonparamsq)
 		appiondb.insert(runq)
+
 	return
 
 
