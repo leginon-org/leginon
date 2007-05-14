@@ -282,8 +282,8 @@ def checkAce():
 	thresh=params["ace"]
 	# if either conf_d or confidence are above threshold, use this image
 	if (conf_d>=thresh or conf>=thresh):
-		return 'TRUE'
-	return 'FALSE'
+		return True
+	return False
 
 def batchBox(params, imgdict):
 	imgname = imgdict['filename']
@@ -388,8 +388,8 @@ def saveParticles(particles,shift,dbbox,params,imgdict):
 	
 def phaseFlip(params,imgdict):
 	imgname = imgdict['filename']
-	input=os.path.join(params["outdir"],(imgname+'.hed'))
-	output=os.path.join(params["outdir"],(imgname+'.ctf.hed'))
+	input=os.path.join(params["outdir"],imgname+'.hed')
+	output=os.path.join(params["outdir"],imgname+'.ctf.hed')
 
 	cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" %(input,\
 	  output,params["df"],params["kv"],params["apix"])
@@ -400,30 +400,30 @@ def phaseFlip(params,imgdict):
 
 def singleStack(params,imgdict):
 	imgname = imgdict['filename']
- 	if (params["phaseflip"]==True):
-		input=os.path.join(params["outdir"],(imgname+'.ctf.hed'))
+ 	if params['phaseflip'] is True:
+		input = os.path.join(params["outdir"], imgname+'.ctf.hed')
 	else:
-		input=os.path.join(params["outdir"],(imgname+'.hed'))
-	output=os.path.join(params["outdir"],params["single"])
+		input = os.path.join(params["outdir"], imgname+'.hed')
+	output = os.path.join(params["outdir"], params["single"])
 
-	singlepath=os.path.split(output)[0]
+	singlepath = os.path.split(output)[0]
 	apParam.createDirectory(singlepath, warning=False)
 
 	cmd="proc2d %s %s norm=0.0,1.0" %(input, output)
 
 	# bin images is specified
 	if params['bin']:
-		cmd=cmd+" shrink=%i" %params['bin']
+		cmd += " shrink="+str(params['bin'])
 		
 	# unless specified, invert the images
-	if (params["noinvert"]==False):
-		cmd=cmd+" invert"
+	if params['noinvert'] is False:
+		cmd += " invert"
 
 	# if specified, create spider stack
-	if (params["spider"]==True):
-		cmd=cmd+" spiderswap"
+	if params['spider'] is True:
+		cmd += " spiderswap"
 
- 	print "writing to: %s" %output
+ 	print "appending particles to: ",output
 	# run proc2d & get number of particles
 	f=os.popen(cmd)
  	lines=f.readlines()
@@ -434,26 +434,26 @@ def singleStack(params,imgdict):
 			count=int(words[-2])
 
 	# create particle log file
-	f=open(singlepath+'/.particlelog','a')
-	out=''
+	partlogfile = os.path.join(singlepath, ".particlelog")
+	f = open(partlogfile, 'a')
 	for n in range(count-params["particle"]):
 		particlenum=str(1+n+params["particle"])
-		line=str(particlenum)+'\t'+os.path.join(params['filepath'],imgname+".mrc")
+		line = str(particlenum)+'\t'+os.path.join(params['filepath'], imgname+".mrc")
 		f.write(line+"\n")
 	f.close()
-	params["particle"]=count
+	params["particle"] = count
 	
-	os.remove(os.path.join(params["outdir"],(imgname+".hed")))
-	os.remove(os.path.join(params["outdir"],(imgname+".img")))
-	if (params["phaseflip"]==True):
-		os.remove(os.path.join(params["outdir"],(imgname+".ctf.hed")))
-		os.remove(os.path.join(params["outdir"],(imgname+".ctf.img")))
+	os.remove(os.path.join(params["outdir"], imgname+".hed"))
+	os.remove(os.path.join(params["outdir"], imgname+".img"))
+	if params['phaseflip'] is True:
+		os.remove(os.path.join(params["outdir"], imgname+".ctf.hed"))
+		os.remove(os.path.join(params["outdir"], imgname+".ctf.img"))
 
 def writeBoxLog(commandline):
 	f=open('.makestacklog','a')
 	out=""
-	for n in commandline:
-		out=out+n+" "
+	for arg in commandline:
+		out += arg+" "
 	f.write(out)
 	f.write("\n")
 	f.close()
@@ -520,9 +520,9 @@ def getImgsDefocPairFromSelexonId(params):
 			simgdata=apdb.query(simgq,readimages=False)
 			if simgdata:
 				simg=simgdata[0]
-				siblingimage=db.direct_query(data.AcquisitionImageData,simg['dbemdata|AcquisitionImageData|image2'],readimages=False)
+				siblingimage=db.direct_query(data.AcquisitionImageData,simg['dbemdata|AcquisitionImageData|image2'], readimages=False)
 				#create a dictionary for keeping the dbids of image pairs so we don't have to query later
-				params['sibpairs'][simg['dbemdata|AcquisitionImageData|image2']]=simg['dbemdata|AcquisitionImageData|image1']
+				params['sibpairs'][simg['dbemdata|AcquisitionImageData|image2']] = simg['dbemdata|AcquisitionImageData|image1']
 				dbimglist.append(siblingimage)
 			else:
 				print "Warning: No shift data for ",img['filename']
@@ -598,43 +598,40 @@ if __name__ == '__main__':
 
 	# stack must have a description
 	if not params['description']:
-		print "\nERROR: Stack must have a description\n"
-		sys.exit()
+		apDisplay.printError("Stack must have a description")
 		
 	if params['selexonId'] is None:
 		params['selexonId'] = apParticle.guessParticlesForSession(sessionname=params['sessionname'])
 
 	# if a runId is specified, outdir will have a subdirectory named runId
 	if params['runid']:
-		params['outdir']=os.path.join(params['outdir'],params['runid'])
+		params['outdir']=os.path.join(params['outdir'], params['runid'])
+		#params['rundir']=os.path.join(params['outdir'], params['runid'])
 
 	# if saving to the database, stack must be a single file
 	if params['commit'] and not params['single']:
-		print "\nERROR: When committing to database, stack must be a single file."
-		print "use the single=filename option"
-		sys.exit()
+		apDisplay.printError("When committing to database, stack must be a single file.\n"+\
+			"use the 'single=<filename>' option")
 
 	# if getting particles from db or committing, a box size must be set
 	if (params['commit'] or params['selexonId']) and not params['boxsize']:
-		print "\nERROR: specify a box size\n"
-		sys.exit()
+		apDisplay.printError("Specify a box size")
 
 	# if making a single stack, remove existing stack if exists
 	if params["single"]:
-		stackfile=os.path.join(params["outdir"],os.path.splitext(params["single"])[0])
+		stackfile=os.path.join(params["outdir"], os.path.splitext(params["single"])[0])
 		# if saving to the database, store the stack parameters
-		if (params['commit']==True):
-			insertStackParams(params)
-		if (params["spider"]==True):
-			if (os.path.isfile(stackfile+".spi")):
-				os.remove(stackfile+".spi")
+		if params['commit']is True:
+			insertStackParams(params):
+		if params["spider"] is True and os.path.isfile(stackfile+".spi"):
+			os.remove(stackfile+".spi")
 		if (os.path.isfile(stackfile+".hed")):
 			os.remove(stackfile+".hed")
 		if (os.path.isfile(stackfile+".img")):
 			os.remove(stackfile+".img")
 			
 		# set up counter for particle log
-		p_logfile=os.path.join(params["outdir"],'.particlelog')
+		p_logfile=os.path.join(params["outdir"], ".particlelog")
 
  		if (os.path.isfile(p_logfile)):
 			os.remove(p_logfile)
@@ -667,7 +664,7 @@ if __name__ == '__main__':
 	for imgdict in images:
 		#img = images.pop(0)
 				
-		params['apix']=apDatabase.getPixelSize(imgdict)
+		params['apix'] = apDatabase.getPixelSize(imgdict)
 
  		# get session ID
 		params['session']=images[0]['session']['name']
@@ -687,29 +684,29 @@ if __name__ == '__main__':
 		# check if the image has inspected, in file or in database
 		if params["inspectfile"]:
 			goodimg=checkInspectFile(imgdict)
-			if not goodimg:
+			if goodimg is False:
 				print imgname+".mrc has been rejected in manual inspection file"
 				continue
 
 		if params["inspected"]:
 			if params['defocpair']:
-				goodimg=checkPairInspectDB(imgdict,params)
+				goodimg = checkPairInspectDB(imgdict, params)
 			else:
-				goodimg=checkInspectDB(imgdict)
-			if not goodimg:
+				goodimg = checkInspectDB(imgdict)
+			if goodimg is False:
 				print imgname+".mrc has been rejected by manual inspection"
 				continue
 		
 		# check that ACE estimation is above confidence threshold
  		if params["ace"]:
 			# find ace values in database
- 			getAceValues(params,imgdict)
-			if (params["hasace"]==False): 
+ 			getAceValues(params, imgdict)
+			if params["hasace"] is False: 
 				print imgname+".mrc has no ACE values"
 				continue
 			# if has ace values, see if above threshold
-			goodimg=checkAce()
-			if (goodimg=='FALSE'):
+			goodimg = checkAce()
+			if goodimg is False:
 				print imgname+".mrc is below ACE threshold"
 				continue
 
@@ -744,12 +741,13 @@ if __name__ == '__main__':
 			singleStack(params,imgdict)
 		
 		# limit total particles if limit is specified
-		print "Total particles =",totptcls
+		print "Total particles so far =",totptcls
 		if params['limit']:
 			if totptcls>params['limit']:
 				break
-				
-		if os.path.exists(os.path.join(params['outdir'],'temporaryParticlesFromDB.box')):
-			os.remove(os.path.join(params['outdir'],'temporaryParticlesFromDB.box'))
+
+		tmpboxfile = os.path.join(params['outdir'], "temporaryParticlesFromDB.box")
+		if os.path.isfile(tmpboxfile):
+			os.remove(tmpboxfile)
 
 	print "Done!"
