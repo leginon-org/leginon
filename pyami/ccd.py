@@ -32,6 +32,8 @@ if arraypackage == 'numarray':
 		return numarray.arange(n, type=type)
 	from numarray.image import median
 
+class CorrectorError(RuntimeError):
+	pass
 
 class Accumulator(object):
 	'''
@@ -208,7 +210,7 @@ Implements two methods for creating correction images:
       You can only use insertBright if you already have a bias and dark image,
       because it needs to subtract them before calculating the average image.
 	'''
-	def __init__(self, medsize=3):
+	def __init__(self, medsize=0):
 		self.__accbias = Accumulator(medsize=medsize)
 		self.__accdark = Accumulator(medsize=medsize)
 		self.__accflat = Accumulator(medsize=medsize)
