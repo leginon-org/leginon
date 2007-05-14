@@ -21,6 +21,8 @@ def querymodel(axis, hostname, label=None):
 	if not model:
 		return None
 	model = model[0]
+	print 'MODEL', model.timestamp
+	print model
 	model['a'].shape = (-1,)
 	model['b'].shape = (-1,)
 	mod = gonmodel.GonModel()
@@ -31,11 +33,17 @@ def querymodelmag(axis, label, hostname):
 	tem = data.InstrumentData(hostname=hostname)
 	sm = data.StageModelMagCalibrationData(axis=axis, label=label, tem=tem)
 	magcal = db.query(sm, results=1)
-	mean = magcal[0]['mean']
+	magcal = magcal[0]
+	print 'MAGCAL', magcal.timestamp
+	print magcal
+	mean = magcal['mean']
 	return 1.0 / mean
 
 def normalizepoints(points, a0):
-	return map(lambda x: (x[0],x[1]/a0), points)
+	return map(lambda x: (x[0],x[1]/a0/0.95), points)
+
+def normalizemodel(points, a0):
+	return map(lambda x: (x[0],x[1]*a0*0.95), points)
 
 def querypoints(axis, label, hostname):
 	tem = data.InstrumentData(hostname=hostname)
@@ -63,7 +71,8 @@ def modelpoints(model, xrange, step):
 	#x = tuple(x)
 	y = map(model.eval, x)
 	#y = map(lambda x: model.a0 * x, y)
-	return zip(x,y)
+	points = zip(x,y)
+	return points
 
 class MyFrame(wx.Frame):
 	def __init__(self):
@@ -118,6 +127,7 @@ for label in labels:
 	modelmag = querymodelmag(axis, label, insthost)
 	points = normalizepoints(points, modelmag)
 	model = querymodel(axis, insthost, label=label)
+	model.a0 = modelmag
 	drawargs.append((points,model))
 
 app = MyApp(0)
