@@ -33,6 +33,7 @@ class AppionLoop(object):
 		#set the name of the function; needed for param setup
 		self.setFunctionName()
 		self.setProcessingDirName()
+		self._parsePythonPath()
 
 		#set the resulttypes and resultkeys of the function; needed for param setup
 		self.setFunctionResultKeys()
@@ -763,6 +764,21 @@ class AppionLoop(object):
 		print "====================================================="
 		print "====================================================="
 		print ""
+
+	def _parsePythonPath(self):
+		pythonpath = os.environ.get("PYTHONPATH")
+		paths = pythonpath.split(":")
+		leginons = []
+		appions = []
+		for p in paths:
+			if "appion" in p:
+				appions.append(p)
+			if "leginon" in p:
+				leginons.append(p)
+		if len(appions) > 1:
+			apDisplay.printWarning("There is more than one appion directory in your PYTHONPATH")
+		if len(leginons) > 1:
+			apDisplay.printWarning("There is more than one appion directory in your PYTHONPATH")
 
 class BinLoop(AppionLoop):
 	def processImage(self, imgdict):
