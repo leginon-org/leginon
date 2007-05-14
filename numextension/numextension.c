@@ -157,6 +157,90 @@ int despike_FLOAT(float *array, int rows, int cols, int statswidth, float ztest)
 	return spikes;
 }
 
+static PyObject * gaussian_nd( PyObject *self, PyObject *args) {
+	
+	PyArrayObject *input_image, *output_image;
+	float sigma = 1.0;
+	
+	if ( !PyArg_ParseTuple(args, "Of", &input_image, &sigma) ) return NULL;
+	
+	int krad = sigma * 4;
+	krad = MAX(krad,2);
+	
+	
+
+	float *kernel = malloc(sizeof(float)*krad);
+	float two_s2  = 1.0 / ( sigma * sigma * 2 );
+	float norm    = 1.0 / ( sigma * sqrt( 2 * M_PI ) );
+	
+	int d, k, i, r;
+	
+	for (i=0;i<krad;i++) kernel[i] = norm * exp( -i*i*two_s2 );
+	
+	int   ndim = input_image->nd;
+	int * dims = input_image->dimensions;
+	int   size = NA_elements(input_image);
+	
+	output_image = NA_vNewArray(NULL, tFloat32, ndim, dims);
+	
+	fprintf(stderr,"Blurring matrix with %d dimensions :",ndim);
+	for(d=0;d<ndim;d++) fprintf(stderr,"%d.",dims[d]);
+	fprintf(stderr," with sigma %f\n",sigma);
+
+	float * tmp_pixels = malloc(sizeof(float)*size);
+	float * inp_pixels = (float *)input_image->data;
+	float * out_pixels = (float *)output_image->data;
+	
+	memcpy(out_pixels,inp_pixels,sizeof(float)*size);
+
+	float *x1 = out_pixels;
+	float *x2 = tmp_pixels;
+	float *x3 = NULL;
+
+	for(d=0;d<ndim;d++) {
+		
+		// The number of elements in each 1d vector along dimensions d, and the number of such vectors
+		// which is equal to the total number of elements divided by the current dimension length.
+		int cols = dims[d];
+		int rots = size / dims[d];
+		
+		// Handy dandy border values (out of range comparisons) used in the MIN, MAX functions below.  
+		int minb = 0;
+		int maxb = cols - 1;
+
+		int t = 0, x = 0;
+		
+		// Convolve 1d kernel with 1d vector replicating border pixels.  Write the results along the slowest
+		// array dimensions (effectively rotating the array so the next 1d pass will go along the next dimension
+
+		for(k=0;k<size;k+=cols) {
+			for(r=0;r<cols;r++) {
+				float sum = x1[k+r] * kernel[0];
+				for(i=1;i<krad;i++) {
+					int pix1 = MAX(minb,r-i) + k;
+					int pix2 = MIN(maxb,r+i) + k;
+					sum += ( x1[pix1] + x1[pix2] ) * kernel[i];
+				}
+				x2[t] = sum;
+				if ( (t += rots) >= size ) t = ++x;
+			}
+		}
+		
+		x3 = x1;
+		x1 = x2;
+		x2 = x3;
+		
+	}
+	
+	if ( x1 != out_pixels ) memcpy(out_pixels,tmp_pixels,size*sizeof(float));
+	
+	free(kernel);
+	free(tmp_pixels);
+	
+	return (PyObject *)output_image; 
+
+} 
+
 static PyObject *
 despike(PyObject *self, PyObject *args)
 {
@@ -900,6 +984,9 @@ static struct PyMethodDef numeric_methods[] = {
 
 // should find a way to do this using numarray
 	{"despike", despike, METH_VARARGS},
+	
+// craig's fast multi-dimensional gaussian blur
+	{"gaussian",gaussian_nd,METH_VARARGS},
 
 // used by Leginon.squarefinder2.py
 	{"nonmaximasuppress", nonmaximasuppress, METH_VARARGS},
