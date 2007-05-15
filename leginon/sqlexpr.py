@@ -49,6 +49,7 @@ except ImportError:
 	origISOStr = None
 	DateTimeType = None
 
+import data
 import re
 import string
 import sqldict
@@ -738,20 +739,19 @@ def whereFormat(in_dict):
 	alias = in_dict['alias']
 	wherelist = []
 	for key, value in whereDict.items():
-		if type(value) in [tuple, list]:
-			key = sqldict.seq2sqlColumn(key)
-		elif type(value) is bool:
-			value = int(value)
-		elif isinstance(value,newdict.AnyObject):
-			key = sqldict.object2sqlColumn(key)
-			value = cPickle.dumps(value.o, cPickle.HIGHEST_PROTOCOL)
-		evalue = str(value)
 		if key=="DEF_timelimit":
-		#	For MySQL 4.1.1 or greater
-		#	sqlwhere = ''' %s.%s >= ADDTIME(NOW(), '%s') ''' % (backquote(alias), backquote('DEF_timestamp'), evalue)
-			sqlwhere = ''' %s.%s >= DATE_ADD(now(), INTERVAL '%s' DAY_SECOND) ''' % (backquote(alias), backquote('DEF_timestamp'), evalue)
+			sqlwhere = ''' %s.%s >= DATE_ADD(now(), INTERVAL '%s' DAY_SECOND) ''' % (backquote(alias), backquote('DEF_timestamp'), value)
 		else:
+			if type(value) in [tuple, list]:
+				key = sqldict.seq2sqlColumn(key)
+			elif type(value) is bool:
+				value = int(value)
+			elif isinstance(value,newdict.AnyObject):
+				key = sqldict.object2sqlColumn(key)
+				value = cPickle.dumps(value.o, cPickle.HIGHEST_PROTOCOL)
+			evalue = str(value)
 			sqlwhere = ''' %s.%s="%s" ''' % (backquote(alias), backquote(key), evalue)
+
 		wherelist.append(sqlwhere)
 	wherestr = ' AND '.join(wherelist)
 	return wherestr
