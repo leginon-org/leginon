@@ -1092,6 +1092,7 @@ class MatrixCalibrationData(MagDependentCalibrationData):
 		return MagDependentCalibrationData.typemap() + (
 			('type', str),
 			('matrix', newdict.DatabaseArrayType),
+			('previous', MatrixCalibrationData),
 		)
 	typemap = classmethod(typemap)
 
