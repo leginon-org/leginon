@@ -1005,6 +1005,12 @@ def queryFormatOptimized(in_dict,tableselect):
 		j = value['join']
 		r = value['root']
 		w = value['where']
+		nullfields = {}
+		for wkey,wvalue in w.items():
+			if wvalue is None:
+				nullfields[wkey] = wvalue
+		for nullfield in nullfields:
+			del w[nullfield]
 
 		if r:
 			sqlfrom = sqlexpr.fromFormat(c,a)
@@ -1037,6 +1043,11 @@ def queryFormatOptimized(in_dict,tableselect):
 			sqlexprstr = sqlexpr.whereFormat(value)
 			if sqlexprstr:
 				sqlwhere.append(sqlexprstr)
+
+		if nullfields:
+			sqlexprstrnull = sqlexpr.AND_IS(nullfields)
+			if sqlexprstrnull:
+				sqlwhere.append(sqlexprstrnull)
 
 	if not tableselect in optimizedjoinlist:
 		optimizedjoinlist.append(tableselect)
