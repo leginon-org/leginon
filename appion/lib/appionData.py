@@ -209,6 +209,7 @@ data.ApReconRunData=ApReconRunData
 class ApInitialModelData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
+			('project|projects|project', int),
 			('path', str),
 			('name', str),
 			('symmetry', ApSymmetryData),
