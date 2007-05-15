@@ -162,7 +162,8 @@ class DBDataKeeper(object):
 			for key,value in mydata.items(dereference=False):
 				if value is None:
 					pass
-
+				elif value is data.NULL:
+					wheredict[key] = None
 				elif isinstance(value, (data.Data, data.DataReference)):
 					stuff = self.qid(value)
 					joindict[key] = stuff['id']
