@@ -1,5 +1,6 @@
 #include "csift.h"
 #include "geometry.h"
+#include "pcavects.h"
 
 FVec GenerateOrientationHistogram( Image patch );
 void FindDominantOrientations( FVec hist, float peak, FStack orientations );
@@ -175,7 +176,6 @@ float *GLOHDescriptorFromPatch( Image patch, int pb, int ob ) {
 }	
 	
 float *PCADescriptorFromPatch( Image patch ) {
-	
 	#define PatchSize  41
 	#define PatchLength (PatchSize * PatchSize)
 	#define GPLEN ((PatchSize - 2) * (PatchSize - 2) * 2)
@@ -185,12 +185,14 @@ float *PCADescriptorFromPatch( Image patch ) {
 
 	float *kv = malloc(sizeof(float)*PatchLength*2);
 	
+	/*
 	int i, j;
 	static float *avgs= NULL, **eigs;
 	if ( avgs == NULL ) {
 		float val;
+		fprintf(stderr, "Attepting to open any pcavects.txt file!\n");
 		FILE *pcaf = fopen("pcavects.txt", "rb");
-		if ( pcaf == NULL ) {fprintf(stderr,"No valid pcavects.txt file!\n");return NULL;}
+		if ( pcaf == NULL ) { fprintf(stderr,"No valid pcavects.txt file!\n"); return NULL; }
 		avgs = malloc(sizeof(float)*GPLEN);
 		eigs = AllocFMatrix(EPCALEN,GPLEN,0,0);
 		for (i=0;i<GPLEN;++i) {
@@ -205,6 +207,7 @@ float *PCADescriptorFromPatch( Image patch ) {
 		}
 		fclose(pcaf);
 	}
+	*/
 	
 	int count=0, **p1 = patch->pixels, row, col;
 	for (row=1;row<PatchSize-1;++row) {
@@ -228,7 +231,8 @@ float *PCADescriptorFromPatch( Image patch ) {
 	for (count=0;count<GPLEN;++count) kv[count] -= avgs[count];
 	for (count=0;count<EPCALEN;++count) {
 		kpdescriptor[count] = 0;
-		for (row=0;row<GPLEN;++row) kpdescriptor[count] += eigs[count][row]*kv[row];
+		for (row=0;row<GPLEN;++row) kpdescriptor[count] += eigs[row][count]*kv[row];
+		//for (row=0;row<GPLEN;++row) kpdescriptor[count] += eigs[count][row]*kv[row];
 	}
 	
 	return kpdescriptor;
