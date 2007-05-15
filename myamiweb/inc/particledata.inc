@@ -97,11 +97,29 @@ class particledata {
 	}
 
 	function getSelectionParams ($runId) {
-		$q = "select s.*, r.name, r.`dbemdata|SessionData|session` "
-			."from ApSelectionParamsData s "
-			."left join ApSelectionRunData r on (s.`DEF_id` = r.`REF|ApSelectionParamsData|params`) "
-			."where r.`DEF_id` = '$runId' ";
+		$q = "select * from ApSelectionRunData "
+			." where `DEF_id` = '$runId' ";
+		list($r)=$this->mysql->getSQLResult($q);
+		
+		//print_r ($r);
+		//echo $r['REF|ApSelectionParamsData|params'];
+		$q = "select s.*, r.name, r.`dbemdata|SessionData|session` ";
+	
+		if ($r['REF|ApSelectionParamsData|params']) {
+			$selectionparamid=$r['REF|ApSelectionParamsData|params'];
+			$q .= "from ApSelectionParamsData s "
+			 	."left join ApSelectionRunData r on (s.`DEF_id` = r.`REF|ApSelectionParamsData|params`) ";
+		}
+		elseif ($r['REF|ApDogParamsData|dogparams']) {
+			$dogparamid=$r['REF|ApDogParamsData|dogparams'];
+			$q .= "from ApDogParamsData s "
+				."left join ApSelectionRunData r on (s.`DEF_id` = r.`REF|ApDogParamsData|dogparams`) ";
+		}
+		
+			$q .= "where r.`DEF_id` = '$runId' ";
+		//echo $q;
 		$r=$this->mysql->getSQLResult($q);
+		//print_r ($r);
 		return $r;
 	}
 	
