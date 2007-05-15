@@ -4,10 +4,11 @@ import os
 import apDisplay
 import appionData
 import apDB
+import Mrc
 
 appiondb = apDB.apdb
 
-def printUploadHelp():
+def printTmpltUploadHelp():
 	print "\nUsage:\nuploadTemplate.py template=<name> apix=<pixel> session=<session> [commit]\n"
 	print "selexon template=groEL apix=1.63 session=06nov10a commit\n"
 	print "template=<name>      : name should not have the extension, or number."
@@ -28,10 +29,15 @@ def printPrtlUploadHelp():
 	print "\n"
 	sys.exit(1)
 
-def parseUploadInput(args,params):
+def printModelUploadHelp():
+	print "\nUsage:\nuploadModel.py <filename> session=<session> symmetry=<sym id> apix=<pixel> description=<\"text\">\n"
+	print "uploadModel.py /ami/data99/lambda.mrc symmetry=1 apix=2.02 description=\"lambda in EMAN orientation\"\n"
+	sys.exit(1)
+	
+def parseTmpltUploadInput(args,params):
 	# check that there are enough input parameters
 	if (len(args)<2 or args[1]=='help') :
-		printUploadHelp()
+		printTmpltUploadHelp()
 	# save the input parameters into the "params" dictionary
 	for arg in args[1:]:
 		elements=arg.split('=')
@@ -78,12 +84,36 @@ def parsePrtlUploadInput(args,params):
 		if (elements[0]=='scale'):
 			params['scale']=int(elements[1])
 		elif (elements[0]=='runid'):
-			params["runid"]=elements[1]
+			params['runid']=elements[1]
 		elif (elements[0]=='diam'):
 			params['diam']=int(elements[1])
 		else:
 			apDisplay.printError("undefined parameter \'"+arg+"\'\n")
 
+def parseModelUploadInput(args,params):
+	# check that there are enough input parameters
+	if (len(args)<2 or args[1]=='help') :
+		printModelUploadHelp()
+	# get MRC file
+	mrcfile=args[1]
+	if (os.path.isfile(mrcfile)):
+		(params["path"], params["name"]) = os.path.split(mrcfile)
+	else:
+		apDisplay.printError("file '"+mrcfile+"' does not exist\n")
+	# save the input parameters into the "params" dictionary
+	for arg in args[2:]:
+		elements=arg.split('=')
+		if (elements[0]=='apix'):
+			params['apix']=float(elements[1])
+		elif (elements[0]=='session'):
+			params['session']=elements[1]
+		elif (elements[0]=='symmetry'):
+			params['sym']=int(elements[1])
+		elif (elements[0]=='description'):
+			params['description']=elements[1]
+		else:
+			apDisplay.printError("undefined parameter \'"+arg+"\'\n")
+	
 def createDefaults():
 	params={}
 	params['apix']=None
@@ -95,6 +125,7 @@ def createDefaults():
 	params['runid']=None
 	params['imgs']=None
 	params['scale']=None
+	params['sym']=None
 	return params
 
 def getProjectId(params):
@@ -124,3 +155,26 @@ def insertManualParams(params,expid):
  		manparams['diam']=params['diam']
  		appiondb.insert(runq)
  	       	appiondb.insert(manparams)
+
+def getModelDimensions(mrcfile):
+	print "calculating dimensions..."
+	vol=Mrc.mrc_to_numeric(mrcfile)
+	(x,y,z)=vol.shape
+	if x!=y!=z:
+		apDisplay.printError("starting model is not a cube")
+	return x
+	
+def insertModel(params):
+	print "inserting into database"
+	symid=apDB.apdb.direct_query(appionData.ApSymmetryData,params['sym'])
+	if not symid:
+		apDisplay.printError("no symmetry associated with this id\n")		
+	modq=appionData.ApInitialModelData()
+	modq['project|projects|project']=params['projectId']
+	modq['path']=params['path']
+	modq['name']=params['path']
+	modq['symmetry']=symid
+	modq['pixelsize']=params['apix']
+	modq['boxsize']=params['box']
+	modq['description']=params['description']
+	appiondb.insert(modq)
