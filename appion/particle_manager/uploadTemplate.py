@@ -14,7 +14,7 @@ if __name__ == '__main__':
 	params = apUpload.createDefaults()
 
 	# parse command line input
-	apUpload.parseUploadInput(sys.argv, params)
+	apUpload.parseTmpltUploadInput(sys.argv, params)
 	apParam.writeFunctionLog(sys.argv)
 
 	# make sure the necessary parameters are set
@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
 	# insert templates to database
 	apUpload.getProjectId(params)
-	apUpload.insertTemplateImage(params)
+	apTemplate.insertTemplateImage(params)
 
 	
 	
