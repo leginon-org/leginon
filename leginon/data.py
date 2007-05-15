@@ -762,12 +762,9 @@ class DataHandler(object):
 		return 0
 
 ## for queries, setting item to None will ignore item in query
-## setting item to NULL(dataclass) will only return results where the item
+## setting item to NULL will only return results where the item
 ## is specifically NULL in the database
-def NULL(dataclass):
-	d = dataclass()
-	d.setPersistent(0)
-	return d
+NULL = newdict.NULL
 
 '''
 ## How to define a new leginon data type:

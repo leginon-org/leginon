@@ -98,6 +98,10 @@ validators = {}
 def registerValidator(type, validator):
 	validators[type] = validator
 
+class DBNull(object):
+	pass
+NULL = DBNull()
+
 ## types of items are set by subclassing and setting typemap
 class TypedDict(OrderedDict):
 	def typemap(cls):
@@ -120,7 +124,7 @@ class TypedDict(OrderedDict):
 		## validate key, new keys not allowed
 		t = self.__types[key]
 		## validate value	
-		if value is not None:
+		if (value is not None) and (value is not NULL):
 			try:
 				validator = validators[t]
 			except KeyError:
