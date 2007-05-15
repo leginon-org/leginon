@@ -437,17 +437,24 @@ class Corrector(node.Node):
 		self.startTimer('acquireCorrectedImageData')
 		self.setStatus('processing')
 		errstr = 'Acquisition of corrected image failed: %s'
-		self.startTimer('instument.getData')
-		try:
-			imagedata = self.instrument.getData(data.CameraImageData, ccdcameraname=ccdcameraname)
-		except Exception, e:
-			self.logger.warning(errstr % 'unable to access instrument')
-			self.setStatus('idle')
-			self.logger.warning('Retrying...')
-			# ...
-			self.stopTimer('instument.getData')
-			return self.acquireCorrectedImageData(ccdcameraname=ccdcameraname)
-		self.stopTimer('instument.getData')
+		tries = 10
+		sucess = False
+		for i in range(tries):
+			try:
+				self.startTimer('instument.getData')
+				imagedata = self.instrument.getData(data.CameraImageData, ccdcameraname=ccdcameraname)
+				self.stopTimer('instument.getData')
+				success = True
+				break
+			except Exception, e:
+				raise
+				self.logger.warning(errstr % 'unable to access instrument')
+				if i == tries-1:
+					self.setStatus('idle')
+					return None
+				else:
+					self.logger.warning('Retrying...')
+
 		numimage = imagedata['image']
 		camdata = imagedata['camera']
 		scopedata = imagedata['scope']
