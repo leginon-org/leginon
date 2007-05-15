@@ -48,8 +48,8 @@ class aceCtfEstimatorLoop(appionLoop.AppionLoop):
 		if self.params['reprocess'] is None:
 			return False
 		self.ctfparams = apCtf.getCTFParamsForImage(imgdict)
-		if ctfparams:
-			for ctfvalue in ctfparams:
+		if self.ctfparams is not None:
+			for ctfvalue in self.ctfparams:
 				if(ctfvalue['confidence'] > params['reprocess'] or
 				  ctfvalue['confidence_d'] > params['reprocess']):
 					return False
