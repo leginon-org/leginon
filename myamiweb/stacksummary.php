@@ -42,13 +42,13 @@ $particle = new particledata();
 # find each stack entry in database
 $stackIds = $particle->getStackIds($sessionId);
 foreach ($stackIds as $stackid) {
-        echo divtitle("Stack Id: $stackid");
+        echo divtitle("Stack Id: $stackid[stackid]");
 	echo "<table border='0'>\n";
 	# get list of stack parameters from database
-        $s=$particle->getStackParams($stackid);
-	$nump=commafy($particle->getNumStackParticles($stackid));
+        $s=$particle->getStackParams($stackid[stackid]);
+	$nump=commafy($particle->getNumStackParticles($stackid[stackid]));
 	# get pixel size of stack
-	$apix=($particle->getPixelSizeFromStackId($stackid))*1e10;
+	$apix=($particle->getPixelSizeFromStackId($stackid[stackid]))*1e10;
 	$apix=($s['bin']) ? $apix*$s['bin'] : $apix;
 	$apix.=" A/pixel";
 

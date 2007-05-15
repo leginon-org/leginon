@@ -50,8 +50,8 @@ if ($stackruns>0){
 	        $html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
         }
         foreach ($stackIds as $stackid) {
-                $stackcount=$particle->getNumStackParticles($stackid);
-		$reconIds = $particle->getReconIds($stackid);
+                $stackcount=$particle->getNumStackParticles($stackid[stackid]);
+		$reconIds = $particle->getReconIds($stackid[stackid]);
 		foreach ($reconIds as $reconid) {
 		        $stmodel = $particle->getInitModelInfo($reconid['REF|initialModel|initialModelId']);
 			$sym = $particle->getSymInfo($stmodel['REF|symmetry|symmetryId']);

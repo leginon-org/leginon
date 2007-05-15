@@ -216,20 +216,16 @@ class particledata {
 	}
 
 	function getStackIds ($sessionId) {
-	        $runids=$this->getParticleRunIds($sessionId);
-		$stackidlist=array();
-		if (!is_array($runids)) return;
-		foreach ($runids as $runid) {
-		        $run=$runid['DEF_id'];
-			$q = "select distinct(`REF|ApStackParamsData|stackparams`) as stackid "
-			    ."from `ApStackParticlesData` sp left join ApParticleData p on "
-			    ."(p.`DEF_id` = sp.`REF|ApParticleData|particle`) "
-			    ."WHERE `REF|ApSelectionRunData|selectionrun` ='$run'";
-			$r = $this->mysql->getSQLResult($q);
-			if (is_array($r[0]))
-			        array_push($stackidlist,$r[0]['stackid']);
-		}
-		return $stackidlist;
+		$q = "select distinct(`REF|ApStackParamsData|stackparams`) as stackid "
+			."from `ApStackParticlesData` sp "
+			."left join ApParticleData p on (p.`DEF_id` = sp.`REF|ApParticleData|particle`) "
+			."left join ApSelectionRunData r on  (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id` ) " 
+			."where r.`dbemdata|SessionData|session` = '$sessionId'";
+		$r = $this->mysql->getSQLResult($q);
+		//if (is_array($r[0]))
+		//	array_push($stackidlist,$r[0]['stackid']);
+		//return $stackidlist;
+		return $r;
 	}
 
         function getStackParams ($stackId) {
