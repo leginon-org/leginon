@@ -15,7 +15,7 @@ db   = apDB.db
 apdb = apDB.apdb
 
 def printHelp():
-	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected or inspectfile=<file>] [bin=<n>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n>\n [limit=<n>] [defocpair=<preset>]"
+	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected or inspectfile=<file>] [bin=<n>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n> [limit=<n>] [defocpair=<preset>]\n"
 	print "Examples:\nmakestack.py extract/001ma.box single=stacks/start.hed ace=0.8 boxsize=180 inspected"
 	print "makestack.py extract/*.box outdir=stacks/noctf/ ace=0.8 boxsize=180\n"
 	print "* Supports wildcards - By default a stack file of the same name as the box file"
