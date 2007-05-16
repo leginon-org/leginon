@@ -232,10 +232,10 @@ data.ApSymmetryData=ApSymmetryData
 class ApRefinementData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('reconRun', reconRun),
+			('reconRun', ApReconRunData),
 			('refinementParams', ApRefinementParamsData),
 			('iteration', int),
-			('resolution', resolution),
+			('resolution', ApResolutionData),
 			('classAverage', str),
 			('classVariance', str),
 			('numClassAvg', int),

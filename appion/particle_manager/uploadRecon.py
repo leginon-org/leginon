@@ -5,7 +5,6 @@ import sys
 import os
 import apParam
 import apDisplay
-#from reconFunctions import *
 import reconFunctions as rf
 
 if __name__ == '__main__':

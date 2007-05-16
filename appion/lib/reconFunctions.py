@@ -16,8 +16,6 @@ import string
 import appionData
 import apDB
 
-#db=dbdatakeeper.DBDataKeeper()
-#partdb=dbdatakeeper.DBDataKeeper(db='dbparticledata')
 db = apDB.db
 partdb = apDB.apdb
 
@@ -99,7 +97,7 @@ def parseInput(args,params):
 			sys.exit(1)
         
 def checkStackId(params):
-	stackinfo=partdb.direct_query(data.stackParams, params['stackid'])
+	stackinfo=partdb.direct_query(data.ApStackParamsData, params['stackid'])
 	if not stackinfo:
 		print "\nERROR: Stack ID",params['stackid'],"does not exist in the database"
 		sys.exit()
@@ -109,13 +107,13 @@ def checkStackId(params):
 	return
 	
 def checkModelId(params):
-	modelinfo=partdb.direct_query(data.initialModel, params['modelid'])
+	modelinfo=partdb.direct_query(data.ApInitialModelData, params['modelid'])
 	if not modelinfo:
 		print "\nERROR: Initial model ID",params['modelid'],"does not exist in the database"
 		sys.exit()
 	else:
 		params['model']=modelinfo
-		print "Initial Model:",modelinfo['path']+modelinfo['name']
+		print "Initial Model:",os.path.join(modelinfo['path'],modelinfo['name'])
 	return
 
 def listFiles(params):
@@ -165,10 +163,10 @@ def parseLogFile(params):
 	lines.close()
 				
 def insertReconRun(params):
-	runq=particleData.reconRun()
+	runq=appionData.ApReconRunData()
 	runq['name']=params['runid']
-	runq['stackId']=params['stack']
-	runq['initialModelId']=params['model']
+	runq['stack']=params['stack']
+	runq['initialModel']=params['model']
 	runq['package']=params['package']
 	runq['path']=params['dir']
 	result=partdb.query(runq, results=1)
@@ -183,10 +181,10 @@ def insertReconRun(params):
 		print "inserting reconstruction run into database"
 		partdb.insert(runq)
 
-		runq=particleData.reconRun()
+		runq=appionData.ApReconRunData()
 		runq['name']=params['runid']
-		runq['stackId']=params['stack']
-		runq['initialModelId']=params['model']
+		runq['stack']=params['stack']
+		runq['initialModel']=params['model']
 		runq['package']=params['package']
 		runq['path']=params['dir']
 		result=partdb.query(runq, results=1)
@@ -198,7 +196,7 @@ def insertReconRun(params):
 
 def insertIteration(params):
 	for iteration in params['iterations']:
-		refineparamsq=particleData.refinementParams()
+		refineparamsq=appionData.ApRefinementParamsData()
 		refineparamsq['angIncr']=iteration['angIncr']
 		refineparamsq['mask']=iteration['mask']
 		refineparamsq['imask']=iteration['imask']
@@ -216,7 +214,7 @@ def insertIteration(params):
 		# insert unique iteration parameters
 		if not result:
 			partdb.insert(refineparamsq)
-			refineparamsq=particleData.refinementParams()
+			refineparamsq=appionData.ApRefinementParamsData()
 			refineparamsq['angIncr']=iteration['angIncr']
 			refineparamsq['mask']=iteration['mask']
 			refineparamsq['imask']=iteration['imask']
@@ -239,7 +237,7 @@ def insertIteration(params):
 			#fsc file with path:
 			fscfile=params['dir']+fsc
 
-			resq=particleData.resolution()
+			resq=appionData.ApResolutionData()
 			resq['fscfile']=fscfile
 			result=partdb.query(resq)
 			if not result:
@@ -247,7 +245,7 @@ def insertIteration(params):
 				halfres=calcRes(fscfile, params['model'])
 				resq['half']=halfres
 				partdb.insert(resq)
-				resq=particleData.resolution()
+				resq=appionData.ApResolutionData()
 				resq['fscfile']=fscfile
 				result=partdb.query(resq, results=1)
 			resolutionId=result[0]
@@ -277,11 +275,11 @@ def insertIteration(params):
 					badprtls+=1	
 				
 		# insert refinement results
-		refineq=particleData.refinement()
-		refineq['reconRunId']=params['reconRun']
-		refineq['refinementParamsId']=refineParams
+		refineq=appionData.ApRefinementData()
+		refineq['reconRun']=params['reconRun']
+		refineq['refinementParams']=refineParams
 		refineq['iteration']=iteration['num']
-		refineq['resolutionId']=resolutionId
+		refineq['resolution']=resolutionId
 		refineq['numClassAvg']=numclasses
 		refineq['numClassAvgKept']=numclasseskept
 		refineq['numBadParticles']=badprtls

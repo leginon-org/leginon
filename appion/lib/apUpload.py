@@ -172,7 +172,7 @@ def insertModel(params):
 	modq=appionData.ApInitialModelData()
 	modq['project|projects|project']=params['projectId']
 	modq['path']=params['path']
-	modq['name']=params['path']
+	modq['name']=params['name']
 	modq['symmetry']=symid
 	modq['pixelsize']=params['apix']
 	modq['boxsize']=params['box']
