@@ -321,3 +321,43 @@ def makeMatlabCmd(header,footer,plist):
 	cmd = cmd[:(n-1)]
 	cmd += footer
 	return cmd
+
+def getAceValues(imgdata, params):
+	# if already got ace values in a previous step,
+	# don't do all this over again.
+	if params['hasace'] is True:
+		return
+	else:
+		ctfq = appionData.ApCtfData()
+		ctfq['dbemdata|AcquisitionImageData|image']= imgdata.dbid
+		
+		ctfparams=apdb.query(ctfq)
+		
+		# if ctf data exist for filename
+		if ctfparams is not None:
+			conf_best=0
+			params['kv']=(imgdata['scope']['high tension'])/1000
+
+			# loop through each of the ace runs & get the params with highest confidence value
+			for ctfp in ctfparams:
+				conf1=ctfp['confidence']
+				conf2=ctfp['confidence_d']
+				if conf_best < conf1 :
+					conf_best=conf1
+					bestctfp=ctfp
+				if conf_best < conf2 :
+					conf_best=conf2
+					bestctfp=ctfp
+			if bestctfp['acerun']['aceparams']['stig']==0:
+				params['hasace']=True
+				params['df']=(bestctfp['defocus1'])*-1e6
+				params['conf_d']=bestctfp['confidence_d']
+				params['conf']=bestctfp['confidence']
+			else:
+				apDisplay.printWarning("Astigmatism was estimated for "+apDisplay.short(imgdict['filename'])+\
+				 ". Defocus estimate may be incorrect")
+				params['hasace']=True
+				params['df']=( (bestctfp['defocus1'] + bestctfp['defocus2'])/2 )*-1e6
+				params['conf_d']=bestctfp['confidence_d']
+				params['conf']=bestctfp['confidence']
+	return

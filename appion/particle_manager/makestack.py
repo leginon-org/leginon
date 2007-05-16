@@ -10,6 +10,7 @@ import apParticle
 import apParam
 import apDB
 import apDatabase
+import apCtf
 
 db   = apDB.db
 apdb = apDB.apdb
@@ -235,46 +236,6 @@ def checkPairInspectDB(imgdict,params):
 		if adata[0]['selectionkeep']==True:
 			keep=True
 	return(keep)
-
-def getAceValues(params,imgdict):
-	# if already got ace values in a previous step,
-	# don't do all this over again.
-	if params['hasace']==True:
-		return
-	else:
-		ctfq=appionData.ApCtfData()
-		ctfq['dbemdata|AcquisitionImageData|image']=imgdict.dbid
-		
-		ctfparams=apdb.query(ctfq)
-		
-		# if ctf data exist for filename
-		if ctfparams:
-			conf_best=0
-			params['kv']=(imgdict['scope']['high tension'])/1000
-
-			# loop through each of the ace runs & get the params with highest confidence value
-			for ctfp in ctfparams:
-				conf1=ctfp['confidence']
-				conf2=ctfp['confidence_d']
-				if conf_best < conf1 :
-					conf_best=conf1
-					bestctfp=ctfp
-				if conf_best < conf2 :
-					conf_best=conf2
-					bestctfp=ctfp
-			if bestctfp['acerun']['aceparams']['stig']==0:
-				params['hasace']=True
-				params['df']=(bestctfp['defocus1'])*-1e6
-				params['conf_d']=bestctfp['confidence_d']
-				params['conf']=bestctfp['confidence']
-			else:
-				apDisplay.printWarning("Astigmatism was estimated for "+apDisplay.short(imgdict['filename'])+\
-				 ". Defocus estimate may be incorrect")
-				params['hasace']=True
-				params['df']=( (bestctfp['defocus1'] + bestctfp['defocus2'])/2 )*-1e6
-				params['conf_d']=bestctfp['confidence_d']
-				params['conf']=bestctfp['confidence']
-	return
 
 def checkAce():
 	conf_d=params["conf_d"]
@@ -700,7 +661,7 @@ if __name__ == '__main__':
 		# check that ACE estimation is above confidence threshold
  		if params["ace"]:
 			# find ace values in database
- 			getAceValues(params, imgdict)
+ 			apCtf.getAceValues(imgdict, params)
 			if params["hasace"] is False: 
 				print imgname+".mrc has no ACE values"
 				continue
@@ -712,7 +673,7 @@ if __name__ == '__main__':
 
 		# skip micrograph that have defocus above or below min/max defocus levels
 		if params['mindefocus']:
-			getAceValues(params,imgdict) # find ace values in database
+			apCtf.getAceValues(imgdict, params) # find ace values in database
 			print params['mindefocus'],params['df']
 			if params['df'] > params['mindefocus']:
 				print imgname+".mrc rejected because defocus(",params['df'],") is less than specified in mindefocus (",params['mindefocus'],")"
@@ -732,7 +693,7 @@ if __name__ == '__main__':
 
 		# phase flip boxed particles if requested
 		if params["phaseflip"]:
-			getAceValues(params,imgdict) # find ace values in database
+			apCtf.getAceValues(imgdict, params) # find ace values in database
 			if params["hasace"] is False: 
 				print imgname+".mrc has no ACE values. \nSkipping addition to single stack"
 				continue
