@@ -189,7 +189,10 @@ def insertAceParams(params,expid):
 	# if continuing a previous run, make sure that all the current
 	# parameters are the same as the previous
 	else:
-		if not (runids[0]['aceparams']==aceparamq):
+		if not (runids[0]['aceparams'] == aceparamq):
+			for i in runids[0]['aceparams']:
+				if runids[0]['aceparams'][i] != aceparamq[i]:
+					apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
 			apDisplay.printError("All parameters for a single ACE run must be identical! \n"+\
 					     "please check your parameter settings.")
 	return
