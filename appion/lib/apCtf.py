@@ -36,7 +36,7 @@ def runAce(matlab, imgdict, params):
 				" for -1.2 microns NOT:"+str(nominal))
 
 	#Neil's Hack
-	#resamplefr_override = round(1.2*(math.sqrt(abs(nominal*1.0e6)+1.0)-1.0),3)
+	#resamplefr_override = round(2.0*(math.sqrt(abs(nominal*1.0e6)+1.0)-1.0),3)
 	#print "resamplefr_override=",resamplefr_override
 	#pymat.eval(matlab, "resamplefr="+str(resamplefr_override)+";")
 
@@ -58,7 +58,6 @@ def runAce(matlab, imgdict, params):
 		acecmd = makeMatlabCmd("ctfparams = measureAstigmatism(",");",plist)
 
 	pymat.eval(matlab,acecmd)
-	print apDisplay.color(" done","brown")
 
 	matfile = os.path.join(params['matdir'], imgname+".mrc.mat")
 	if params['stig']==0:
@@ -118,7 +117,6 @@ def runAceDrift(matlab,imgdict,params):
 		
 	print " ... processing", apDisplay.shortenImageName(imgname)
 	pymat.eval(matlab,acecommand)
-	print "done"	
 
 def runAceCorrect(matlab,imgdict,params):
 	imgname = imgdict['filename']
@@ -135,7 +133,6 @@ def runAceCorrect(matlab,imgdict,params):
 
 	print " ... processing", apDisplay.shortenImageName(imgname)
 	pymat.eval(matlab,acecorrectcommand)
-	print "done"
 
 	return
 
@@ -366,8 +363,8 @@ def getAceValues(imgdata, params):
 		str(round(bestconf,4))+", defocus1="+str(round(abs(bestctfp['defocus1']*1.0e6),4))+\
 		" microns, and stig="+str(bestctfp['acerun']['aceparams']['stig'])
 	if bestctfp['acerun']['aceparams']['stig'] == 1:
-		apDisplay.printWarning("Astigmatism was estimated for "+apDisplay.short(imgdata['filename'])+\
-		 ". Defocus estimate may be incorrect")
+		apDisplay.printWarning("astigmatism was estimated for "+apDisplay.short(imgdata['filename'])+\
+		 " and average defocus estimate may be incorrect")
 		params['hasace'] = True
 		avgdf = (bestctfp['defocus1'] + bestctfp['defocus2'])/2.0
 		params['df']     = avgdf*-1.0e6
