@@ -722,7 +722,8 @@ class AppionLoop(object):
 				del self.imgtree[i]
 				i -= 1	
 			i += 1
-		print "\nskipped",self.stats['skipcount'],"images so far"
+		sys.stderr.write("\n")
+		apDisplay.printWarning("skipped "+str(self.stats['skipcount'])+" of "+str(startlen)+" images")
 
 	def _printLine(self):
 		print "\t------------------------------------------"
