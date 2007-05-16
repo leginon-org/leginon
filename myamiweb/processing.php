@@ -210,7 +210,7 @@ if ($sessionId) {
     echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>
-    <A HREF='submitrecon.php?expId=$sessionId'>";
+    <A HREF='emanJobGen.php?expId=$sessionId'>";
     if ($reconruns==0) {echo "Begin Reconstruction";}
     else {echo "Continue Reconstruction";}
     echo"</A>

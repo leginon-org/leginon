@@ -38,14 +38,14 @@ $display_keys = array ( 'iteration', 'ang incr', 'resolution', 'fsc', 'classes',
 foreach($display_keys as $key) {
         $html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
 }
-echo "Stack: $stackparams[stackPath]$stackparams[name]<BR>Particles: $stackparticles<BR>";
+echo "Stack: $stackparams[stackPath]/$stackparams[name]<BR>Particles: $stackparticles<BR>";
 $iterations = $particle->getIterationInfo($reconId);
 foreach ($iterations as $iteration){
-        $res = $particle->getResolutionInfo($iteration['REF|resolution|resolutionId']);
+        $res = $particle->getResolutionInfo($iteration['REF|ApResolutionData|resolution']);
 	$fscfile = $res['fscfile'];
 	$halfres = sprintf("%.2f",$res['half']);
 	$halfres = ($halfres==0) ? $halfres='None' : $halfres;
-	$numparticles=$stackparticles-$iteration[numBadParticles];
+	$numparticles=$stackparticles-$iteration['numBadParticles'];
 	$html .= "<TR>\n";
 	$html .= "<TD>$iteration[iteration]</TD>\n";
 	$html .= "<TD>$iteration[angIncr]</TD>\n";

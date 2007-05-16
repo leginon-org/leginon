@@ -247,10 +247,10 @@ class particledata {
 	//////// fix me ////////
         function getStackIdFromReconId ($reconId) {
 	        $q= "SELECT * "
-		   ."FROM `reconRun` "
+		   ."FROM `ApReconRunData` "
 		  ."WHERE `DEF_id` = '$reconId'";
 		$r = $this->mysql->getSQLResult($q);
-	        return $r[0]['REF|stackParams|stackId'];
+	        return $r[0]['REF|ApStackParamsData|stack'];
 	}    
 
         function getPixelSizeFromStackId ($stackId) {
@@ -316,43 +316,42 @@ class particledata {
 	}
 
 
-////// fix all of these ////////
 #---------RECONSTRUCTION FUNCTIONS---------------#
 
 	function getReconIds ($stackId) {
 		$q = "select * "
-			."from `reconRun` where `REF|stackParams|stackId` = '$stackId'";
+			."from `ApReconRunData` where `REF|ApStackParamsData|stack` = '$stackId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
 
         function getInitModelInfo ($modelId) {
 	        $q = "SELECT * "
-		    ."FROM `initialModel` WHERE `DEF_id` = '$modelId'";
+		    ."FROM `ApInitialModelData` WHERE `DEF_id` = '$modelId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
 
         function getSymInfo ($symId){
 	        $q = "SELECT * "
-		    ."FROM `symmetry` WHERE `DEF_id` = '$symId'";
+		    ."FROM `ApSymmetryData` WHERE `DEF_id` = '$symId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
 
         function getResolutionInfo ($resId) {
 	        $q = "SELECT * "
-		   ."FROM `resolution` WHERE `DEF_id` = '$resId'";
+		   ."FROM `ApResolutionData` WHERE `DEF_id` = '$resId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
 		
         function getIterationInfo ($reconId) {
 	        $q = "SELECT * "
-		    ."FROM `refinement` r "
-		    ."LEFT JOIN `refinementParams` p "
-		    ."ON (r.`REF|refinementParams|refinementParamsId` = p.`DEF_id`) "
-		    ."WHERE r.`REF|reconRun|reconRunId` = '$reconId' ";
+		    ."FROM `ApRefinementData` r "
+		    ."LEFT JOIN `ApRefinementParamsData` p "
+		    ."ON (r.`REF|ApRefinementParamsData|refinementParams` = p.`DEF_id`) "
+		    ."WHERE r.`REF|ApReconRunData|reconRun` = '$reconId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
