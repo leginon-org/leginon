@@ -640,7 +640,8 @@ if __name__ == '__main__':
 			if os.path.isfile(stackfile+"."+ext):
 				os.remove(stackfile+"."+ext)
 
-		params["hasace"]=False
+		#this is the thing the resets the ACE lookup
+		params["hasace"] = False
 
 		# check if the image has inspected, in file or in database
 		if params["inspectfile"]:

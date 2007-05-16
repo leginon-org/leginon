@@ -16,15 +16,18 @@ try:
 except:
 	apDisplay.matlabError()
 
-acedb  = apDB.apdb
+appiondb = apDB.apdb
 
 def runAce(matlab, imgdict, params):
 	imgname = imgdict['filename']
 	imgpath = os.path.join(imgdict['session']['image path'], imgname+'.mrc')
 
-	if params['nominal']:
+	nominal = None
+	if params['nominal'] is not None:
 		nominal=params['nominal']
-	else:
+	elif params['useestnominal'] is True:
+		nominal=getAceValues(imgdict, params)
+	if nominal is None:
 		nominal=imgdict['scope']['defocus']
 	
 	pymat.eval(matlab,("dforig = %e;" % nominal))
@@ -179,12 +182,12 @@ def insertAceParams(params,expid):
 	runq['dbemdata|SessionData|session']=expid
 
 	# see if acerun already exists in the database
-	runids=acedb.query(runq, results=1)
+	runids=appiondb.query(runq, results=1)
 
 	# if no run entry exists, insert new run entry into run.dbctfdata
 	if not(runids):
 		runq['aceparams']=aceparamq
-		acedb.insert(runq)
+		appiondb.insert(runq)
 
 	# if continuing a previous run, make sure that all the current
 	# parameters are the same as the previous
@@ -202,7 +205,7 @@ def insertCtfParams(imgdict,params,matfile,expid,ctfparams,opimfile1,opimfile2):
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
 
-	acerun=acedb.query(runq,results=1)
+	acerun=appiondb.query(runq,results=1)
 	
 	legimgid=int(imgdict.dbid)
 	legpresetid=None
@@ -235,7 +238,7 @@ def insertCtfParams(imgdict,params,matfile,expid,ctfparams,opimfile1,opimfile2):
 		for i in range(len(ctfparamlist)):
 			ctfq[ ctfparamlist[i] ] = ctfparams[i]
 
-	acedb.insert(ctfq)
+	appiondb.insert(ctfq)
 	
 	return
 
@@ -256,11 +259,7 @@ def setScopeParams(matlab,params):
 		apDisplay.printError("Temp directory, '"+params['tempdir']+"' not present.")
 	return
 
-def getCTFParamsForImage(imgdict):
-	ctfq = appionData.ApCtfData()
-	imgid  = imgdict.dbid
-	ctfq['dbemdata|AcquisitionImageData|image'] = imgid
-	return(acedb.query(ctfq))
+
 
 def setAceConfig(matlab,params):
 	tempdir=params['tempdir']+"/"
@@ -322,42 +321,51 @@ def makeMatlabCmd(header,footer,plist):
 	cmd += footer
 	return cmd
 
+def getCTFParamsForImage(imgdata):
+	ctfq = appionData.ApCtfData()
+	ctfq['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
+	ctfparams = appiondb.query(ctfq)
+	return ctfparams
+
 def getAceValues(imgdata, params):
 	# if already got ace values in a previous step,
 	# don't do all this over again.
 	if params['hasace'] is True:
-		return
-	else:
-		ctfq = appionData.ApCtfData()
-		ctfq['dbemdata|AcquisitionImageData|image']= imgdata.dbid
-		
-		ctfparams=apdb.query(ctfq)
-		
-		# if ctf data exist for filename
-		if ctfparams is not None:
-			conf_best=0
-			params['kv']=(imgdata['scope']['high tension'])/1000
+		return None
 
-			# loop through each of the ace runs & get the params with highest confidence value
-			for ctfp in ctfparams:
-				conf1=ctfp['confidence']
-				conf2=ctfp['confidence_d']
-				if conf_best < conf1 :
-					conf_best=conf1
-					bestctfp=ctfp
-				if conf_best < conf2 :
-					conf_best=conf2
-					bestctfp=ctfp
-			if bestctfp['acerun']['aceparams']['stig']==0:
-				params['hasace']=True
-				params['df']=(bestctfp['defocus1'])*-1e6
-				params['conf_d']=bestctfp['confidence_d']
-				params['conf']=bestctfp['confidence']
-			else:
-				apDisplay.printWarning("Astigmatism was estimated for "+apDisplay.short(imgdict['filename'])+\
-				 ". Defocus estimate may be incorrect")
-				params['hasace']=True
-				params['df']=( (bestctfp['defocus1'] + bestctfp['defocus2'])/2 )*-1e6
-				params['conf_d']=bestctfp['confidence_d']
-				params['conf']=bestctfp['confidence']
-	return
+	ctfq = appionData.ApCtfData()
+	ctfq['dbemdata|AcquisitionImageData|image']= imgdata.dbid
+	ctfparams = appiondb.query(ctfq)
+	
+	if ctfparams is None:
+		return None
+
+	params['kv']=(imgdata['scope']['high tension'])/1000
+
+	# loop through each of the ace runs & get the params with highest confidence value
+	bestconf = 0.0
+	for ctfp in ctfparams:
+		conf1 = ctfp['confidence']
+		conf2 = ctfp['confidence_d']
+		conf = max(conf1,conf2)
+		if conf > bestconf:
+			bestconf = conf
+			bestctfp = ctfp
+
+	if bestctfp['acerun']['aceparams']['stig'] == 1:
+		apDisplay.printWarning("Astigmatism was estimated for "+apDisplay.short(imgdict['filename'])+\
+		 ". Defocus estimate may be incorrect")
+		params['hasace'] = True
+		avgdf = (bestctfp['defocus1'] + bestctfp['defocus2'])/2.0
+		params['df']     = avgdf*-1.0e6
+		params['conf_d'] = bestctfp['confidence_d']
+		params['conf']   = bestctfp['confidence']
+		return avgdf
+	else:
+		params['hasace'] = True
+		params['df']     = bestctfp['defocus1']*-1.0e6
+		params['conf_d'] = bestctfp['confidence_d']
+		params['conf']   = bestctfp['confidence']
+		return bestctfp['defocus1']
+
+	return True

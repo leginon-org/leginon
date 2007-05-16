@@ -93,6 +93,7 @@ class aceLoop(appionLoop.AppionLoop):
 		self.params['reprocess']=None
 		self.params['matdir']=None
 		self.params['opimagedir']=None
+		self.params['useestnominal']=False
 
 	def specialCreateOutputDirs(self):
 		self.params['matdir']         = os.path.join(self.params['rundir'],"matfiles")
@@ -156,6 +157,8 @@ class aceLoop(appionLoop.AppionLoop):
 				self.params['nominal']=float(elements[1])
 			elif (elements[0]=='reprocess'):
 				self.params['reprocess']=float(elements[1])
+			elif (elements[0]=='useestnominal'):
+				self.params['useestnominal']=True
 
 	def specialParamConflicts(self):
 		if self.params['nominal'] > 0 or self.params['nominal'] < -15e-6:
