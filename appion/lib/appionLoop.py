@@ -6,6 +6,7 @@ import os
 import re
 import time
 import math
+import random
 import cPickle
 #appion
 import apDisplay
@@ -437,7 +438,7 @@ class AppionLoop(object):
 			self.params['pixdiam']    = self.params['diam']/self.params['apix']
 			self.params['binpixdiam'] = self.params['diam']/self.params['apix']/float(self.params['bin'])
 
-	def _shuffleTree(tree):
+	def _shuffleTree(self, tree):
 		oldtree = tree
 		newtree = []
 		while len(oldtree) > 0:
@@ -568,7 +569,7 @@ class AppionLoop(object):
 		self.stats['imagecount'] = len(self.imgtree)
 		self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
 		if self.params['shuffle'] is True:
-			self.imgtree = _shuffleTree(self.imgtree)
+			self.imgtree = self._shuffleTree(self.imgtree)
 		print " ... found",self.stats['imagecount'],"in",apDisplay.timeString(time.time()-startt)
 
 	def _alreadyProcessed(self, imgdata):
