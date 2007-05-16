@@ -89,6 +89,8 @@ class AppionLoop(object):
 					self.commitToDatabase(imgdata)
 					self.commitResultsToDatabase(imgdata, results)
 				else:
+					apDisplay.printWarning("not committing results to database, all data will be lost")
+					apDisplay.printMsg("to preserve data start script over and add 'commit' flag")
 					self.writeResultsToFiles(imgdata, results)
 				
 				### FINISH with custom functions
@@ -622,7 +624,10 @@ class AppionLoop(object):
 		#	return False
 
 		self.stats['startloop'] = time.time()
-		apDisplay.printMsg("processing "+apDisplay.shortenImageName(imgdata['filename']))
+		if self.reprocessImage(imgdata) is True:
+			apDisplay.printMsg("reprocessing "+apDisplay.shortenImageName(imgdata['filename']))
+		else:
+			apDisplay.printMsg("processing "+apDisplay.shortenImageName(imgdata['filename']))
 		return True
 
 	def _printSummary(self):
@@ -734,9 +739,10 @@ class AppionLoop(object):
 				del self.imgtree[i]
 				i -= 1	
 			i += 1
-		sys.stderr.write("\n")
-		apDisplay.printWarning("skipped "+str(self.stats['skipcount'])+" of "+str(startlen)+" images ("+\
-			str(reproccount)+" above reprocess cutoff and "+str(donecount)+" in donedict)")
+		if self.stats['skipcount'] > 0:
+			sys.stderr.write("\n")
+			apDisplay.printWarning("skipped "+str(self.stats['skipcount'])+" of "+str(startlen)+" images ("+\
+				str(reproccount)+" not reprocess and "+str(donecount)+" in donedict)")
 
 	def _printLine(self):
 		print "\t------------------------------------------"
@@ -801,8 +807,10 @@ class AppionLoop(object):
 				leginons.append(p)
 		if len(appions) > 1:
 			apDisplay.printWarning("There is more than one appion directory in your PYTHONPATH")
+			print appions
 		if len(leginons) > 1:
-			apDisplay.printWarning("There is more than one appion directory in your PYTHONPATH")
+			apDisplay.printWarning("There is more than one leginon directory in your PYTHONPATH")
+			print leginons
 
 class BinLoop(AppionLoop):
 	def processImage(self, imgdict):
