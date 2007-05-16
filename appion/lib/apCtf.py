@@ -35,18 +35,19 @@ def runAce(matlab, imgdict, params):
 			apDisplay.printWarning("Nominal should be of the form nominal=-1.2e-6"+\
 				" for -1.2 microns NOT:"+str(nominal))
 
-	pymat.eval(matlab,("dforig = %e;" % nominal))
-
 	#Neil's Hack
-	#resamplefr_override = 2.0*(math.sqrt(abs(nominal*1.0e6)+1.0)-1.0)
-	#print "resamplefr_override=",resamplefr_override
+	resamplefr_override = round(2.0*math.sqrt(abs(nominal*1.0e6)),3)
+	print "resamplefr_override=",resamplefr_override
+	pymat.eval(matlab, "resamplefr="+str(resamplefr_override)+";")
+
+	pymat.eval(matlab,("dforig = %e;" % nominal))
 
 	expid = int(imgdict['session'].dbid)
 	if params['commit'] is True:
 		#insert ace params into dbctfdata.ace_params table in db
 		insertAceParams(params,expid)
 
-	if params['stig']==0:
+	if params['stig'] == 0:
 		plist = (imgpath, params['outtextfile'], params['display'], params['stig'],\
 			params['medium'], -nominal, params['tempdir']+"/")
 		acecmd = makeMatlabCmd("ctfparams = ace(",");",plist)
@@ -285,7 +286,7 @@ def setAceConfig(matlab,params):
 		aceconfig=os.path.join(tempdir,"aceconfig.mat")
 		acecmd = "save('"+aceconfig+"','edgethcarbon','edgethice','pfcarbon','pfice',"+\
 			"'overlap','fieldsize','resamplefr','drange');"
-		pymat.eval(matlab,acecmd)
+		pymat.eval(matlab, acecmd)
 	else:
 		apDisplay.printError("Temp directory, '"+tempdir+"' not present.")
 	return
