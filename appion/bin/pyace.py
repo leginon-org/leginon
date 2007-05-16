@@ -42,11 +42,14 @@ class aceCtfEstimatorLoop(appionLoop.AppionLoop):
 
 	def reprocessImage(self, imgdict):
 		"""
-		Returns True if an image should be reprocess
+		Returns 
+		True, if an image should be reprocessed
+		False, if an image was processed and should NOT be reprocessed
+		None, if image has not yet been processed 
 		e.g. a confidence less than 80%
 		"""
 		if self.params['reprocess'] is None:
-			return False
+			return None
 		self.ctfparams = apCtf.getCTFParamsForImage(imgdict)
 		if self.ctfparams is not None:
 			for ctfvalue in self.ctfparams:
@@ -55,7 +58,8 @@ class aceCtfEstimatorLoop(appionLoop.AppionLoop):
 					return False
 				else:
 					apDisplay.printMsg("reprocessing "+apDisplay.short(imgdict['filename']))
-		return True
+					return True
+		return None
 
 	def processImage(self, imgdict):
 		scopeparams={}

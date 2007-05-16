@@ -124,10 +124,13 @@ class AppionLoop(object):
 			
 	def reprocessImage(self, imgdata):
 		"""
-		Returns True if an image should be reprocess
+		Returns 
+		True, if an image should be reprocessed
+		False, if an image was processed and should NOT be reprocessed
+		None, if image has not yet been processed 
 		e.g. a confidence less than 80%
 		"""
-		return False
+		return None
 
 	def preLoopFunctions(self):
 		"""
@@ -378,6 +381,8 @@ class AppionLoop(object):
 				self.params['display']=1
 			elif arg=='shuffle':
 				self.params['shuffle']=True
+			elif arg=='nowait':
+				self.params['nowait']=True
 			elif arg=='continue':
 				self.params['continue']=True
 			elif arg=='nocontinue':
@@ -706,12 +711,16 @@ class AppionLoop(object):
 		while i < len(self.imgtree):
 			imgdata = self.imgtree[i]
 			if self._alreadyProcessed(imgdata):
-				if self.reprocessImage(imgdata):
+				if self.reprocessImage(imgdata) is True:
 					apDisplay.printMsg("reprocessing image "+apDisplay.short(imgdata['filename']))
 				else:
 					apDisplay.printMsg("skipping image "+apDisplay.short(imgdata['filename']))
 					del self.imgtree[i]
 					i -= 1
+			elif self.reprocessImage(imgdata) is False:
+					apDisplay.printMsg("NOT reprocessing image "+apDisplay.short(imgdata['filename']))
+					del self.imgtree[i]
+					i -= 1		
 			i += 1
 
 	def _printLine(self):
@@ -729,7 +738,7 @@ class AppionLoop(object):
 			self.stats['skipcount'] = 0
 
 		#SHOULD IT WAIT?
-		if self.params['nowait']:
+		if self.params['nowait'] is True:
 			return False
 		if not self.params["dbimages"]:
 			return False
