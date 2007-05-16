@@ -161,7 +161,7 @@ class aceLoop(appionLoop.AppionLoop):
 				self.params['useestnominal']=True
 
 	def specialParamConflicts(self):
-		if self.params['nominal'] > 0 or self.params['nominal'] < -15e-6:
+		if self.params['nominal'] is not None and self.params['nominal'] > 0 or self.params['nominal'] < -15e-6:
 			apDisplay.printError("Nominal should be of the form nominal=-1.2e-6 for -1.2 microns")
 		return
 
