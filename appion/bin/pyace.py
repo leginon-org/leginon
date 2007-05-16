@@ -158,6 +158,8 @@ class aceLoop(appionLoop.AppionLoop):
 				self.params['reprocess']=float(elements[1])
 
 	def specialParamConflicts(self):
+		if self.params['nominal'] > 0 or self.params['nominal'] < -15e-6:
+			apDisplay.printError("Nominal should be of the form nominal=-1.2e-6 for -1.2 microns")
 		return
 
 
