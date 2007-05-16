@@ -171,15 +171,21 @@ def colorProb(num,red=0.50,green=0.80):
 	"""
 	if(num == None):
 		return None
-	elif(num > green and num <= 1):
+	elif(num >= green and num <= 1):
 		numstr = "%1.3f" % num
 		return color(numstr,"green")
 	elif(num < red and num >= 0):
 		numstr = "%1.3f" % num
 		return color(numstr,"red")
-	else:
+	elif num >= red and num < green:
 		numstr = "%1.3f" % num
 		return color(numstr,"brown")
+	elif num < 0:
+		numstr = "%2.2f" % num
+		return color(numstr,"purple")		
+	else:
+		numstr = "%2.2f" % num
+		return color(numstr,"blue")
 
 def color(text, fg, bg=None):
 	"""Return colored text.

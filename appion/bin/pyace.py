@@ -19,16 +19,16 @@ try:
 except:
 	apDisplay.matlabError()
 
-class aceCtfEstimatorLoop(appionLoop.AppionLoop):
+class aceLoop(appionLoop.AppionLoop):
 	def setProcessingDirName(self):
 		self.processdirname = "ace"
 
 	def preLoopFunctions(self):
 		apCtf.checkMatlabPath(self.params)
-		acepath = os.path.join(os.getcwd(), "aceCtfEstimator.py")
-		if(not os.path.isfile(acepath)):
-			apDisplay.printWarning("'aceCtfEstimator.py' usually needs to be run in the same directory as "+\
-				"all of its matlab files")
+		acepath = os.path.join(os.getcwd(), self.functionname+".py")
+		if not os.path.isfile(acepath):
+			apDisplay.printWarning("'"+self.functionname+".py' usually needs to be run in the "+\
+				"same directory as all of its matlab files")
 		print "Connecting to matlab ... "
 		try:
 			self.matlab = pymat.open()
@@ -40,7 +40,7 @@ class aceCtfEstimatorLoop(appionLoop.AppionLoop):
 	def postLoopFunctions(self):
 		pymat.close(self.matlab)
 
-	def reprocessImage(self, imgdict):
+	def reprocessImage(self, imgdata):
 		"""
 		Returns 
 		True, if an image should be reprocessed
@@ -50,29 +50,30 @@ class aceCtfEstimatorLoop(appionLoop.AppionLoop):
 		"""
 		if self.params['reprocess'] is None:
 			return None
-		self.ctfparams = apCtf.getCTFParamsForImage(imgdict)
-		if self.ctfparams is not None:
-			for ctfvalue in self.ctfparams:
-				if(ctfvalue['confidence'] > self.params['reprocess'] or
-				  ctfvalue['confidence_d'] > self.params['reprocess']):
-					return False
-				else:
-					apDisplay.printMsg("reprocessing "+apDisplay.short(imgdict['filename']))
-					return True
-		return None
+		self.ctfparams = apCtf.getCTFParamsForImage(imgdata)
+		if self.ctfparams is None:
+			return None
+		for ctfvalue in self.ctfparams:
+			if(ctfvalue['confidence'] > self.params['reprocess'] or
+			  ctfvalue['confidence_d'] > self.params['reprocess']):
+				return False
+			else:
+				#apDisplay.printMsg("reprocessing "+apDisplay.short(imgdata['filename']))
+				return True
 
-	def processImage(self, imgdict):
+
+	def processImage(self, imgdata):
 		scopeparams={}
-		scopeparams['kv']      = imgdict['scope']['high tension']/1000
-		scopeparams['apix']    = apDatabase.getPixelSize(imgdict)
+		scopeparams['kv']      = imgdata['scope']['high tension']/1000
+		scopeparams['apix']    = apDatabase.getPixelSize(imgdata)
 		scopeparams['cs']      = self.params['cs']
 		scopeparams['tempdir'] = self.params['tempdir']
 		apCtf.setScopeParams(self.matlab, scopeparams)
 		### RUN ACE
-		self.ctfparams = apCtf.runAce(self.matlab, imgdict, self.params)
+		self.ctfparams = apCtf.runAce(self.matlab, imgdata, self.params)
 
-	def commitToDatabase(self, imgdict):
-		apCtf.commitAceParamToDatabase(imgdict, self.matlab, self.ctfparams, self.params)
+	def commitToDatabase(self, imgdata):
+		apCtf.commitAceParamToDatabase(imgdata, self.matlab, self.ctfparams, self.params)
 
 	def specialDefaultParams(self):
 		self.params['edgethcarbon']=0.8
@@ -161,6 +162,6 @@ class aceCtfEstimatorLoop(appionLoop.AppionLoop):
 
 
 if __name__ == '__main__':
-	imgLoop = aceCtfEstimatorLoop()
+	imgLoop = aceLoop()
 	imgLoop.run()
 

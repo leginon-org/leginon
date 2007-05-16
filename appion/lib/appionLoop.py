@@ -710,17 +710,17 @@ class AppionLoop(object):
 		i = 0
 		while i < len(self.imgtree):
 			imgdata = self.imgtree[i]
-			if self._alreadyProcessed(imgdata):
-				if self.reprocessImage(imgdata) is True:
-					apDisplay.printMsg("reprocessing image "+apDisplay.short(imgdata['filename']))
+			imgname = imgdata['filename']
+			if imgname in self.donedict or self.reprocessImage(imgdata) is False:
+				self._writeDoneDict(imgname)
+				if not self.stats['lastimageskipped']:
+					sys.stderr.write("skipping images")
 				else:
-					apDisplay.printMsg("skipping image "+apDisplay.short(imgdata['filename']))
-					del self.imgtree[i]
-					i -= 1
-			elif self.reprocessImage(imgdata) is False:
-					apDisplay.printMsg("NOT reprocessing image "+apDisplay.short(imgdata['filename']))
-					del self.imgtree[i]
-					i -= 1		
+					sys.stderr.write(".")
+				self.stats['lastimageskipped'] = True
+				self.stats['skipcount'] += 1
+				del self.imgtree[i]
+				i -= 1	
 			i += 1
 
 	def _printLine(self):
