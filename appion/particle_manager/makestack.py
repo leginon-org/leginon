@@ -622,7 +622,7 @@ if __name__ == '__main__':
 		stackfile=os.path.join(params["outdir"], os.path.splitext(params["single"])[0])
 		# if saving to the database, store the stack parameters
 		if params['commit']is True:
-			insertStackParams(params):
+			insertStackParams(params)
 		if params["spider"] is True and os.path.isfile(stackfile+".spi"):
 			os.remove(stackfile+".spi")
 		if (os.path.isfile(stackfile+".hed")):
@@ -725,6 +725,7 @@ if __name__ == '__main__':
 					
 		# box the particles
 		totptcls+=batchBox(params,imgdict)
+		
 		if not os.path.isfile(os.path.join(params["outdir"],imgname+".hed")):
 			apDisplay.printWarning("no particles were boxed from "+apDisplay.short(imgname))
 			continue
@@ -732,10 +733,11 @@ if __name__ == '__main__':
 		# phase flip boxed particles if requested
 		if params["phaseflip"]:
 			getAceValues(params,imgdict) # find ace values in database
-			if (params["hasace"]==False): 
-				print imgname+".mrc has no ACE values"
+			if params["hasace"] is False: 
+				print imgname+".mrc has no ACE values. \nSkipping addition to single stack"
 				continue
 			phaseFlip(params,imgdict) # phase flip stack file
+		
 		# add boxed particles to a single stack
 		if params["single"]:
 			singleStack(params,imgdict)

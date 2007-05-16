@@ -34,6 +34,7 @@ class basicDogPicker(appionLoop.AppionLoop):
 		self.peaktree  = apPeaks.findPeaks(imgdata, self.dogmaplist, self.params, maptype="dogmap")
 		print "CREATEJPG"
 		apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)
+		
 
 	def commitToDatabase(self, imgdata):
 		expid = int(imgdata['session'].dbid)
