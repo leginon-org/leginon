@@ -36,9 +36,9 @@ def runAce(matlab, imgdict, params):
 				" for -1.2 microns NOT:"+str(nominal))
 
 	#Neil's Hack
-	resamplefr_override = round(2.0*math.sqrt(abs(nominal*1.0e6)),3)
-	print "resamplefr_override=",resamplefr_override
-	pymat.eval(matlab, "resamplefr="+str(resamplefr_override)+";")
+	#resamplefr_override = round(1.2*(math.sqrt(abs(nominal*1.0e6)+1.0)-1.0),3)
+	#print "resamplefr_override=",resamplefr_override
+	#pymat.eval(matlab, "resamplefr="+str(resamplefr_override)+";")
 
 	pymat.eval(matlab,("dforig = %e;" % nominal))
 
