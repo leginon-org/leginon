@@ -26,14 +26,23 @@ def runAce(matlab, imgdict, params):
 	if params['nominal'] is not None:
 		nominal=params['nominal']
 	elif params['useestnominal'] is True:
+		params['hasace'] = False
 		nominal=getAceValues(imgdict, params)
 	if nominal is None:
 		nominal=imgdict['scope']['defocus']
-	
+
+	if nominal is None or nominal > 0 or nominal < -15e-6:
+			apDisplay.printWarning("Nominal should be of the form nominal=-1.2e-6"+\
+				" for -1.2 microns NOT:"+str(nominal))
+
 	pymat.eval(matlab,("dforig = %e;" % nominal))
 
+	#Neil's Hack
+	#resamplefr_override = 2.0 * math.sqrt(abs(nominal*1.0e6))
+	#print resamplefr_override
+
 	expid = int(imgdict['session'].dbid)
-	if params['commit']==True:
+	if params['commit'] is True:
 		#insert ace params into dbctfdata.ace_params table in db
 		insertAceParams(params,expid)
 
@@ -330,7 +339,7 @@ def getCTFParamsForImage(imgdata):
 def getAceValues(imgdata, params):
 	# if already got ace values in a previous step,
 	# don't do all this over again.
-	if params['hasace'] is True:
+	if 'hasace' in params and params['hasace'] is True:
 		return None
 
 	ctfq = appionData.ApCtfData()
@@ -352,6 +361,9 @@ def getAceValues(imgdata, params):
 			bestconf = conf
 			bestctfp = ctfp
 
+	print "selected parameters from ace run: '"+bestctfp['acerun']['name']+"', confidence="+\
+		str(round(bestconf,3))+", defocus="str(round(abs(bestctfp['defocus1']*1.0e6),3))+\
+		" microns, and stig=",bestctfp['acerun']['aceparams']['stig']
 	if bestctfp['acerun']['aceparams']['stig'] == 1:
 		apDisplay.printWarning("Astigmatism was estimated for "+apDisplay.short(imgdict['filename'])+\
 		 ". Defocus estimate may be incorrect")
@@ -360,12 +372,12 @@ def getAceValues(imgdata, params):
 		params['df']     = avgdf*-1.0e6
 		params['conf_d'] = bestctfp['confidence_d']
 		params['conf']   = bestctfp['confidence']
-		return avgdf
+		return -avgdf
 	else:
 		params['hasace'] = True
 		params['df']     = bestctfp['defocus1']*-1.0e6
 		params['conf_d'] = bestctfp['confidence_d']
 		params['conf']   = bestctfp['confidence']
-		return bestctfp['defocus1']
+		return -bestctfp['defocus1']
 
 	return True
