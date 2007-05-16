@@ -315,7 +315,6 @@ class AppionLoop(object):
 		self.stats = {}
 		self.stats['startTime']=time.time()
 		self.stats['count'] = 1
-		self.stats['skipcount'] = 1
 		self.stats['lastcount'] = 0
 		self.stats['startmem'] = mem.active()
 		self.stats['peaksum'] = 0
@@ -708,11 +707,23 @@ class AppionLoop(object):
 	def _removeProcessedImages(self):
 		startlen = len(self.imgtree)
 		i = 0
+		donecount = 0
+		reproccount = 0
 		while i < len(self.imgtree):
 			imgdata = self.imgtree[i]
 			imgname = imgdata['filename']
-			if imgname in self.donedict or self.reprocessImage(imgdata) is False:
+			skip = False
+
+			if imgname in self.donedict:
+				donecount += 1
+				skip = True
+
+			if self.reprocessImage(imgdata) is False:
 				self._writeDoneDict(imgname)
+				reproccount += 1
+				skip = True
+
+			if skip is True:
 				if not self.stats['lastimageskipped']:
 					sys.stderr.write("skipping images")
 				else:
@@ -723,7 +734,8 @@ class AppionLoop(object):
 				i -= 1	
 			i += 1
 		sys.stderr.write("\n")
-		apDisplay.printWarning("skipped "+str(self.stats['skipcount'])+" of "+str(startlen)+" images")
+		apDisplay.printWarning("skipped "+str(self.stats['skipcount'])+" of "+str(startlen)+" images ("+\
+			str(reproccount)+" above reprocess cutoff and "+str(donecount)+" in donedict)")
 
 	def _printLine(self):
 		print "\t------------------------------------------"
