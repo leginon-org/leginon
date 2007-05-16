@@ -362,7 +362,7 @@ def getAceValues(imgdata, params):
 			bestctfp = ctfp
 
 	print "selected parameters from ace run: '"+bestctfp['acerun']['name']+"', confidence="+\
-		str(round(bestconf,3))+", defocus="str(round(abs(bestctfp['defocus1']*1.0e6),3))+\
+		str(round(bestconf,3))+", defocus="+str(round(abs(bestctfp['defocus1']*1.0e6),3))+\
 		" microns, and stig=",bestctfp['acerun']['aceparams']['stig']
 	if bestctfp['acerun']['aceparams']['stig'] == 1:
 		apDisplay.printWarning("Astigmatism was estimated for "+apDisplay.short(imgdict['filename'])+\
