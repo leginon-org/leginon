@@ -38,8 +38,8 @@ def runAce(matlab, imgdict, params):
 	pymat.eval(matlab,("dforig = %e;" % nominal))
 
 	#Neil's Hack
-	#resamplefr_override = 2.0 * math.sqrt(abs(nominal*1.0e6))
-	#print resamplefr_override
+	#resamplefr_override = 2.0*(math.sqrt(abs(nominal*1.0e6)+1.0)-1.0)
+	#print "resamplefr_override=",resamplefr_override
 
 	expid = int(imgdict['session'].dbid)
 	if params['commit'] is True:
@@ -362,10 +362,10 @@ def getAceValues(imgdata, params):
 			bestctfp = ctfp
 
 	print "selected parameters from ace run: '"+bestctfp['acerun']['name']+"', confidence="+\
-		str(round(bestconf,3))+", defocus="+str(round(abs(bestctfp['defocus1']*1.0e6),3))+\
-		" microns, and stig=",bestctfp['acerun']['aceparams']['stig']
+		str(round(bestconf,4))+", defocus1="+str(round(abs(bestctfp['defocus1']*1.0e6),4))+\
+		" microns, and stig="+str(bestctfp['acerun']['aceparams']['stig'])
 	if bestctfp['acerun']['aceparams']['stig'] == 1:
-		apDisplay.printWarning("Astigmatism was estimated for "+apDisplay.short(imgdict['filename'])+\
+		apDisplay.printWarning("Astigmatism was estimated for "+apDisplay.short(imgdata['filename'])+\
 		 ". Defocus estimate may be incorrect")
 		params['hasace'] = True
 		avgdf = (bestctfp['defocus1'] + bestctfp['defocus2'])/2.0
