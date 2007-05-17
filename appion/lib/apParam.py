@@ -1,5 +1,7 @@
 #Part of the new pyappion
-import os,sys,re
+import os
+import sys
+import re
 import time
 import data
 #import dbdatakeeper
@@ -56,23 +58,6 @@ def createDefaultParams(function=None):
 	params['binpixdiam']=None
 	params['abspath']=os.path.abspath('.')+'/'
 
-### SELEXON PARAMETERS
-	params['template']=''
-	params['templatelist']=[]
-	params['startang']=0
-	params['endang']=10
-	params['incrang']=20
-	params['thresh']=0.5
-	params['autopik']=0
-	params['lp']=30
-	params['hp']=600
-	params['box']=0
-	params['method']="updated"
-	params['overlapmult']=1.5
-	params['maxpeaks']=1500
-	params['defocpair']=False
-	params['templateIds']=''
-
 ### selexonFunctions.py PARAMETERS ONLY
 	params['ogTmpltInfo']=[]
 	params['crud']=False
@@ -126,12 +111,6 @@ def createDefaultParams(function=None):
 	params["maxthresh"]=7
 	params["id"]='picka_'
 
-### MAKE STACK PARAMETERS
-	params['selexonId']=None
-
-### DEFOCUS SHIFT
-	params['shiftonly']=False
-
 	return params
 
 def createDefaultStats():
@@ -173,11 +152,28 @@ def createDirectory(path, mode=0777, warning=True):
 			apDisplay.printWarning("directory \'"+path+"\' already exists.")
 		return False
 	try:
-		os.makedirs(path,mode)
+		#os.makedirs(path, mode=mode)
+		makedirs(path, mode=mode)
 	except:
 		apDisplay.printError("Could not create directory, '"+path+"'\nCheck the folder write permissions")
 	return True
 
+def makedirs(name, mode=0777):
+	"""
+	Works like mkdir, except that any intermediate path segment (not
+	just the rightmost) will be created if it does not exist.  This is
+	recursive.
+	"""
+	head, tail = os.path.split(name)
+	if not tail:
+		head, tail = os.path.split(head)
+	if head and tail and not os.path.exists(head):
+		makedirs(head, mode)
+		if tail == curdir:
+			return
+	os.mkdir(name, mode)
+	os.chmod(name, mode)
+	return
 
 def createOutputDirs(params):
 	if not createDirectory(params['rundir']) and params['continue']==False:
@@ -200,14 +196,6 @@ def createOutputDirs(params):
 def checkParamConflicts(params):
 	#if not params['templateIds'] and not params['apix']:
 	#	apDisplay.printError("if not using templateIds, you must enter a template pixel size")
-	if params['templateIds'] and params['template']:
-		apDisplay.printError("Both template database IDs and mrc file templates are specified,\nChoose only one")
-	if params['crudonly']==True and params['shiftonly']==True:
-		apDisplay.printError("crudonly and shiftonly can not be specified at the same time")
-	if (params['thresh']==0 and params['autopik']==0):
-		apDisplay.printError("neither manual threshold or autopik parameters are set, please set one.")
-	if ((params['function'] == "selexon" or params['function'] == "crudFinder") and params['diam']==0):
-		apDisplay.printError("please input the diameter of your particle")
 	if len(params['mrcfileroot']) > 0 and params['dbimages']==True:
 		print params['imagecount']
 		apDisplay.printError("dbimages can not be specified if particular images have been specified")
@@ -226,8 +214,6 @@ def parseCommandLineInput(args,params):
 		or args[1]=='-h' or args[1]=='-help'):
 		sys.exit(1)
 		#sf1.printSelexonHelp()
-
-
 
 	# save the input parameters into the "params" dictionary
 
@@ -398,10 +384,6 @@ def parseCommandLineInput(args,params):
 
 		elif (elements[0]=='reprocess'):
 			params['reprocess']=float(elements[1])
-
-### MAKE STACK PARAMS
-		elif (elements[0]=='prtlrunid' or elements[0]=='selexonid'):
-			params["selexonId"]=int(elements[1])
 
 ### DOG PICKER PARAMS
 
