@@ -4,7 +4,7 @@ import time
 import sys
 import SocketServer
 import socket
-import correlator
+from pyami import correlator
 
 '''
 try:

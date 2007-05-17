@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/intensitycalibrator.py,v $
-# $Revision: 1.8 $
+# $Revision: 1.9 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-12-08 22:56:40 $
+# $Date: 2007-05-17 20:06:11 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -17,7 +17,7 @@ import calibrator
 import calibrationclient
 import data
 import gui.wx.IntensityCalibrator
-import imagefun
+from pyami import imagefun
 
 class Abort(Exception):
 	pass

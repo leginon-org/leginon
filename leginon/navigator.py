@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
-# $Revision: 1.117 $
+# $Revision: 1.118 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-02-16 21:19:11 $
+# $Date: 2007-05-17 20:06:12 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -16,14 +16,12 @@ import event
 import data
 import time
 import calibrationclient
-import correlator
-import peakfinder
+from pyami import correlator, peakfinder, imagefun
 import math
 import gui.wx.Navigator
 import newdict
 import instrument
 import presets
-import imagefun
 import types
 
 class NavigatorClient(object):

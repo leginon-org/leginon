@@ -184,7 +184,7 @@ if __name__=='__main__':
 	import Mrc
 	import timer
 	import holefinderback
-	import imagefun
+	from pyami import imagefun
 
 	def edges(image):
 		hf = holefinderback.HoleFinder()

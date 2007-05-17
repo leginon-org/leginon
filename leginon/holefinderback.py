@@ -11,12 +11,9 @@
 import numarray
 import numarray.nd_image
 import Mrc
-import imagefun
-import peakfinder
-import convolver
+from pyami import imagefun, peakfinder, convolver, correlator
 import ice
 import lattice
-import correlator
 
 class CircleMaskCreator(object):
 	def __init__(self):

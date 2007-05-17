@@ -2,7 +2,7 @@ try:
 	import numarray as Numeric
 except:
 	import Numeric
-import imagefun
+from pyami import imagefun
 
 min_intensity = 0.000001
 inf = 1e300

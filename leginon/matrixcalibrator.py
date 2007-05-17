@@ -7,9 +7,7 @@
 #
 import calibrator
 import event, data
-import fftengine
-import correlator
-import peakfinder
+from pyami import fftengine, correlator, peakfinder
 import sys
 import time
 import calibrationclient

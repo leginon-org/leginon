@@ -17,10 +17,7 @@ except:
 	import Numeric
 	import LinearAlgebra
 import Mrc
-import imagefun
-import correlator
-import peakfinder
-import convolver
+from pyami import imagefun, correlator, peakfinder, convolver
 import ice
 
 class CircleMaskCreator(object):

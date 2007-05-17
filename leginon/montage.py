@@ -21,7 +21,7 @@ import sys
 import newdict
 import cPickle
 import os.path
-import affine
+from pyami import affine
 import caltransformer
 
 dbdk = dbdatakeeper.DBDataKeeper()

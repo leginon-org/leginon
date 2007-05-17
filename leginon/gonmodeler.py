@@ -7,8 +7,7 @@
 #
 import node
 import data
-import correlator
-import peakfinder
+from pyami import correlator, peakfinder
 import event
 import time
 import timer

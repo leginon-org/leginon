@@ -17,7 +17,7 @@ except:
 import math
 import sys
 import time
-import imagefun
+from pyami import imagefun
 
 ## (Numeric typcode,size) => (PIL mode,  PIL rawmode)
 ntype_itype = {

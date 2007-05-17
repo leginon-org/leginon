@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.208 $
+# $Revision: 1.209 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-03 00:56:46 $
-# $Author: vossman $
+# $Date: 2007-05-17 20:06:08 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -15,13 +15,11 @@ import node, data, event
 import numarray
 import numarray.linear_algebra
 import math
-import correlator
-import peakfinder
+from pyami import correlator, imagefun, peakfinder
 import time
 import sys
 import threading
 import gonmodel
-import imagefun
 import tiltcorrector
 
 class Drifting(Exception):

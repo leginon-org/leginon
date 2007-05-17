@@ -1,6 +1,5 @@
 import math
-import correlator
-import peakfinder
+from pyami import correlator, peakfinder
 import numarray
 import scipy.ndimage
 

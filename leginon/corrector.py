@@ -11,7 +11,6 @@
 import copy
 import data
 import event
-import imagefun
 import node
 import numarray
 import threading
@@ -19,7 +18,7 @@ import gui.wx.Corrector
 import remotecall
 import instrument
 import sys
-from pyami import arraystats
+from pyami import arraystats, imagefun
 
 class CameraError(Exception):
 	pass

@@ -10,8 +10,7 @@
 
 import watcher
 import event, data
-import correlator
-import peakfinder
+from pyami import correlator, peakfinder
 import calibrationclient
 try:
 	import numarray as Numeric

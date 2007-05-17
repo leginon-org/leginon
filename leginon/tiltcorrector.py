@@ -15,11 +15,9 @@ on a tilted stage so that they appear to be untilted.
 import numarray
 import numarray.nd_image
 import numarray.linear_algebra
-import imagefun
+from pyami import imagefun, convolver, affine
 import math
 import data
-import convolver
-import affine
 
 ## defocus calibration matrix format:
 ##   x-row  y-row

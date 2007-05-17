@@ -6,7 +6,6 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import convolver
 import data
 try:
 	import numarray as Numeric
@@ -16,7 +15,7 @@ except:
 	import Numeric
 	import FFT
 	import MLab
-import imagefun
+from pyami import convolver, imagefun
 import Mrc
 import numextension
 import random

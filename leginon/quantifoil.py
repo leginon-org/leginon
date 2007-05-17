@@ -8,15 +8,11 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import imagefun
+from pyami import convolver, peakfinder, fftengine, correlator, imagefun
 import Mrc
 import Numeric
 import holefinderback
-import convolver
-import peakfinder
-import fftengine
 import os
-import correlator
 
 ffteng = fftengine.fftEngine()
 

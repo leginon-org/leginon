@@ -16,8 +16,7 @@ import Mrc
 import threading
 import node
 import targethandler
-import convolver
-import imagefun
+from pyami import convolver, imagefun
 import numarray
 import numarray.ma as ma
 import numarray.nd_image as nd

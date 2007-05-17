@@ -19,13 +19,12 @@ import copy
 import threading
 import node
 import instrument
-import imagefun
 import gui.wx.Acquisition
 import gui.wx.Presets
 import newdict
 import navigator
 import numarray
-from pyami import arraystats
+from pyami import arraystats, imagefun
 
 class NoMoveCalibration(Exception):
 	pass

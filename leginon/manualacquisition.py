@@ -7,7 +7,6 @@
 #
 
 import data
-import imagefun
 import node
 import project
 import threading
@@ -18,7 +17,7 @@ import os
 import re
 import calibrationclient
 import copy
-from pyami import arraystats
+from pyami import arraystats, imagefun
 
 class AcquireError(Exception):
 	pass

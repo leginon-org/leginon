@@ -15,7 +15,7 @@ import gui.wx.ImageAssessor
 import os
 import Image
 import numarray
-import imagefun
+from pyami import imagefun
 try:
 	import apAssessor
 except ImportError:

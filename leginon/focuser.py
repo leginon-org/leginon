@@ -12,7 +12,7 @@ import threading
 import event
 import time
 import math
-import imagefun
+from pyami import imagefun
 try:
 	import numarray as Numeric
 except:

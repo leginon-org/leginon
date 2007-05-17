@@ -8,9 +8,8 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import convolver
 import data
-import imagefun
+from pyami import imagefun, convolver
 import Mrc
 try:
 	import numarray as Numeric

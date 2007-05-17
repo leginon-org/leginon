@@ -14,7 +14,7 @@ import Mrc
 import threading
 import ice
 import numarray
-import imagefun
+from pyami import imagefun
 import gui.wx.RasterFinder
 import polygon
 

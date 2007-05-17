@@ -6,10 +6,8 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 import numarray
-import correlator
-import peakfinder
+from pyami import correlator, peakfinder, imagefun
 import math
-import imagefun
 import data
 
 class Tile(object):
