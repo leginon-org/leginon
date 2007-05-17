@@ -148,16 +148,22 @@ def insertParticlePeaks(peaktree, imgdict, expid, params):
 		for key in 'xcoord','ycoord','correlation','peakmoment','peakstddev','peakarea':
 			if key in peakdict and peakdict[key] is not None:
 				particlesq[key] = peakdict[key]
-		### INSERT VALUES
-		presult = appiondb.query(particlesq)
-		if 'peakarea' in particlesq and particlesq['peakarea'] is not None and particlesq['peakarea'] > 0:
+
+		if 'peakarea' in peakdict and peakdict['peakarea'] is not None and peakdict['peakarea'] > 0:
 			peakhasarea = True
 		else:
-			apDisplay.printWarning("peak has no area")
+			#apDisplay.printWarning("peak has no area")
 			peakhasarea = False
-		if not presult and peakhasarea is True:
-			count+=1
-			appiondb.insert(particlesq)
+
+		if 'correlation' in peakdict and peakdict['correlation'] is not None and peakdict['correlation'] > 1:
+			apDisplay.printWarning("peak has correlation greater than 1.0")
+
+		### INSERT VALUES
+		if peakhasarea is True:
+			presult = appiondb.query(particlesq)
+			if not presult:
+				count+=1
+				appiondb.insert(particlesq)
 	apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree))+" peaks into database")
 	return
 
