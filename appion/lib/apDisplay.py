@@ -9,18 +9,27 @@ def printWarning(text):
 	"""
 	standardized warning message
 	"""
+	f = open("function.out","a")
+	f.write(" !!! WARNING: "+text)
+	f.close()
 	print color(" !!! WARNING: "+text,"brown")
 
 def printMsg(text):
 	"""
 	standardized log message
 	"""
+	f = open("function.out","a")
+	f.write(" ... "+text)
+	f.close()
 	print " ... "+text
 
 def printError(text):
 	"""
 	standardized error message
 	"""
+	f = open("function.out","a")
+	f.write(" *** ERROR: "+text)
+	f.close()
 	raise color("\n *** FATAL ERROR ***\n"+text+"\n","red")
 
 def shortenImageName(imgname):
