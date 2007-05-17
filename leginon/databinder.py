@@ -7,7 +7,7 @@
 #
 
 import Queue
-import newdict
+from pyami import ordereddict
 import threading
 import datatransport
 import data
@@ -24,7 +24,7 @@ class DataBinder(object):
 		## because there may be more than one function for every 
 		## data class
 		self.threaded = threaded
-		self.bindings = newdict.OrderedDict()
+		self.bindings = ordereddict.OrderedDict()
 		self.remotecallobjects = {}
 
 		## a queue to hold incoming data, and a thread

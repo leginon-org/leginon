@@ -21,10 +21,9 @@ import node
 import instrument
 import gui.wx.Acquisition
 import gui.wx.Presets
-import newdict
 import navigator
 import numarray
-from pyami import arraystats, imagefun
+from pyami import arraystats, imagefun, ordereddict
 
 class NoMoveCalibration(Exception):
 	pass
@@ -156,7 +155,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.driftimagedone = threading.Event()
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
 
-		self.calclients = newdict.OrderedDict()
+		self.calclients = ordereddict.OrderedDict()
 		self.calclients['image shift'] = calibrationclient.ImageShiftCalibrationClient(self)
 		self.calclients['stage position'] = calibrationclient.StageCalibrationClient(self)
 		self.calclients['modeled stage position'] = calibrationclient.ModeledStageCalibrationClient(self)

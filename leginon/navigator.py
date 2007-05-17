@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
-# $Revision: 1.118 $
+# $Revision: 1.119 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-17 20:06:12 $
+# $Date: 2007-05-17 21:46:12 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -16,10 +16,9 @@ import event
 import data
 import time
 import calibrationclient
-from pyami import correlator, peakfinder, imagefun
+from pyami import correlator, peakfinder, imagefun, ordereddict
 import math
 import gui.wx.Navigator
-import newdict
 import instrument
 import presets
 import types
@@ -77,7 +76,7 @@ class Navigator(node.Node):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.instrument = instrument.Proxy(self.objectservice, self.session,
 																				self.panel)
-		self.calclients = newdict.OrderedDict()
+		self.calclients = ordereddict.OrderedDict()
 		self.calclients['image shift'] = calibrationclient.ImageShiftCalibrationClient(self)
 		self.calclients['stage position'] = calibrationclient.StageCalibrationClient(self)
 		self.calclients['modeled stage position'] = calibrationclient.ModeledStageCalibrationClient(self)

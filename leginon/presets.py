@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.247 $
+# $Revision: 1.248 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-01 21:26:23 $
+# $Date: 2007-05-17 21:46:13 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -21,7 +21,7 @@ import copy
 import threading
 import time
 import unique
-import newdict
+from pyami import ordereddict
 import gui.wx.PresetsManager
 import instrument
 import random
@@ -103,7 +103,7 @@ class PresetsClient(object):
 		## sort by number (maybe name if old, non-numbered data)
 		keys = pdict.keys()
 		keys.sort()
-		namedict = newdict.OrderedDict()
+		namedict = ordereddict.OrderedDict()
 		for key in keys:
 			p = pdict[key]
 			namedict[p['name']] = p
@@ -235,7 +235,7 @@ class PresetsManager(node.Node):
 
 		self.currentselection = None
 		self.currentpreset = None
-		self.presets = newdict.OrderedDict()
+		self.presets = ordereddict.OrderedDict()
 		self.selectedsessionpresets = None
 
 		# HACK: fix me
@@ -341,7 +341,7 @@ class PresetsManager(node.Node):
 		an identical set for this session
 		'''
 		## make new presets with this session
-		#self.presets = newdict.OrderedDict()
+		#self.presets = ordereddict.OrderedDict()
 		for name, preset in pdict.items():
 			if not name:
 				continue
@@ -374,7 +374,7 @@ class PresetsManager(node.Node):
 		if names is None:
 			names = self.presets.keys()
 
-		d = newdict.OrderedDict()
+		d = ordereddict.OrderedDict()
 		number = 0
 		for name in names:
 			p = self.presets[name]

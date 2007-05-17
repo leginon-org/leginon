@@ -12,7 +12,7 @@ import data
 import targetfinder
 import jahcfinderback
 import Mrc
-import newdict
+from pyami import ordereddict
 import threading
 import ice
 import instrument
@@ -153,7 +153,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 			target = {}
 			target['x'] = blob.stats['center'][1]
 			target['y'] = blob.stats['center'][0]
-			target['stats'] = newdict.OrderedDict()
+			target['stats'] = ordereddict.OrderedDict()
 			target['stats']['Size'] = blob.stats['n']
 			target['stats']['Mean'] = blob.stats['mean']
 			target['stats']['Std. Dev.'] = blob.stats['stddev']
@@ -184,7 +184,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 			target = {}
 			target['x'] = hole.stats['center'][1]
 			target['y'] = hole.stats['center'][0]
-			target['stats'] = newdict.OrderedDict()
+			target['stats'] = ordereddict.OrderedDict()
 			target['stats']['Mean Intensity'] = mean
 			target['stats']['Mean Thickness'] = tmean
 			target['stats']['S.D. Intensity'] = std

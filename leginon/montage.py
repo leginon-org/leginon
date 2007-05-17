@@ -18,7 +18,7 @@ import polygon
 import raster
 import time
 import sys
-import newdict
+from pyami import ordereddict
 import cPickle
 import os.path
 from pyami import affine
@@ -137,7 +137,7 @@ class MontageImage(Image):
 		centerpixel = rowsize/2.0-0.5, colsize/2.0-0.5
 		firstpixel = tilesize/2.0-0.5
 		rowi = 0
-		tiles = newdict.OrderedDict()
+		tiles = ordereddict.OrderedDict()
 		for row in numarray.arange(firstpixel, rowsize, tilesize):
 			coli = 0
 			for col in numarray.arange(firstpixel, colsize, tilesize):

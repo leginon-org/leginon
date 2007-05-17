@@ -20,7 +20,7 @@ import node
 import threading
 import logging
 import copy
-import newdict
+from pyami import ordereddict
 import socket
 from wx import PyDeadObjectError
 import gui.wx.Manager
@@ -669,7 +669,7 @@ class Manager(node.Node):
 				apps[appname] = app
 		appnames = apps.keys()
 		appnames.sort()
-		orderedapps = newdict.OrderedDict()
+		orderedapps = ordereddict.OrderedDict()
 		for appname in appnames:
 			orderedapps[appname] = apps[appname]
 		return orderedapps

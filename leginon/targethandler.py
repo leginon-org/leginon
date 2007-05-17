@@ -2,7 +2,7 @@
 import data
 import event
 import threading
-import newdict
+from pyami import ordereddict
 
 target_types = ('acquisition', 'focus', 'preview')
 
@@ -82,9 +82,9 @@ class TargetHandler(object):
 			dequeuedquery = data.DequeuedImageTargetListData(queue=queuedata)
 			dequeuedlists = self.research(datainstance=dequeuedquery)
 			keys = [targetlist.dbid for targetlist in targetlists]
-			active = newdict.OrderedDict(zip(keys,targetlists))
+			active = ordereddict.OrderedDict(zip(keys,targetlists))
 			keys = [dequeuedlist.special_getitem('list', dereference=False).dbid for dequeuedlist in dequeuedlists]
-			done = newdict.OrderedDict(zip(keys,keys))
+			done = ordereddict.OrderedDict(zip(keys,keys))
 			for id in done:
 				del active[id]
 			return active.values()
