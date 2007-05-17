@@ -11,7 +11,6 @@
 import data
 import event
 import watcher
-import newdict
 
 class ImageWatcher(watcher.Watcher):
 	eventinputs = watcher.Watcher.eventinputs + [event.ImagePublishEvent,

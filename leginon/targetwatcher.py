@@ -14,7 +14,6 @@ import threading
 import targethandler
 import node
 import player
-import newdict
 
 class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	'''

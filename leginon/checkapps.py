@@ -3,7 +3,6 @@
 import dbdatakeeper
 import data
 import sys
-import newdict
 import getpass
 import sets
 
