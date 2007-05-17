@@ -8,7 +8,7 @@
 
 # defines the Event and EventHandler classes
 
-import data
+import sinedon.data
 import copy
 
 def eventClasses():
@@ -24,21 +24,21 @@ def eventClasses():
 				eventclasses[name] = value
 	return eventclasses
 
-class Event(data.Data):
+class Event(sinedon.data.Data):
 	def __init__(self, initializer=None, **kwargs):
 		data.Data.__init__(self, initializer, **kwargs)
 
 	def typemap(cls):
-		return data.Data.typemap() + (
+		return sinedon.data.Data.typemap() + (
 			('node', str),
 			('confirm', tuple),
 			('destination', str),
 		)
 	typemap = classmethod(typemap)
 
-class EventLog(data.Data):
+class EventLog(sinedon.data.Data):
 	def typemap(cls):
-		return data.Data.typemap() + (
+		return sinedon.data.Data.typemap() + (
 			('eventclass', str),
 			('status', str),
 		)
@@ -115,7 +115,7 @@ class GridInsertedEvent(NotificationEvent):
 	'Event indicating a grid has been inserted'
 	def typemap(cls):
 		return NotificationEvent.typemap() + (
-			('grid', data.GridData),
+			('grid', leginondata.GridData),
 		)
 	typemap = classmethod(typemap)
 
@@ -123,7 +123,7 @@ class GridExtractedEvent(NotificationEvent):
 	'Event indicating a grid has been extracted'
 	def typemap(cls):
 		return NotificationEvent.typemap() + (
-			('grid', data.GridData),
+			('grid', leginondata.GridData),
 		)
 	typemap = classmethod(typemap)
 
@@ -151,33 +151,33 @@ class ConfirmationEvent(NotificationEvent):
 	typemap = classmethod(typemap)
 
 class QueuePublishEvent(PublishEvent):
-	dataclass = data.QueueData
+	dataclass = leginondata.QueueData
 
 class ReferenceTargetPublishEvent(PublishEvent):
-	dataclass = data.ReferenceTargetData
+	dataclass = leginondata.ReferenceTargetData
 
 class AlignZeroLossPeakPublishEvent(PublishEvent):
-	dataclass = data.AlignZeroLossPeakData
+	dataclass = leginondata.AlignZeroLossPeakData
 
 class MeasureDosePublishEvent(PublishEvent):
-	dataclass = data.MeasureDoseData
+	dataclass = leginondata.MeasureDoseData
 
 class AcquisitionImageDriftPublishEvent(PublishEvent):
-	dataclass = data.AcquisitionImageDriftData
+	dataclass = leginondata.AcquisitionImageDriftData
 
 class NeedTargetShiftEvent(NotificationEvent):
 	'''notify DriftManager that I want to know image drift for target update'''
 	def typemap(cls):
 		return NotificationEvent.typemap() + (
-			('image', data.AcquisitionImageData),
+			('image', leginondata.AcquisitionImageData),
 		)
 	typemap = classmethod(typemap)
 
 class DriftMonitorRequestEvent(PublishEvent):
-	dataclass = data.DriftMonitorRequestData
+	dataclass = leginondata.DriftMonitorRequestData
 
 class DriftMonitorResultEvent(PublishEvent):
-	dataclass = data.DriftMonitorResultData
+	dataclass = leginondata.DriftMonitorResultData
 
 class NodeOrderEvent(Event):
 	'ControlEvent sent to a NodeLauncher specifying a node to launch'
@@ -189,59 +189,59 @@ class NodeOrderEvent(Event):
 
 class NodeClassesPublishEvent(PublishEvent):
 	'Event indicating launcher published new list of node classes'
-	dataclass = data.NodeClassesData
+	dataclass = leginondata.NodeClassesData
 
 class ImagePublishEvent(PublishEvent):
 	'Event indicating image was published'
-	dataclass = data.ImageData
+	dataclass = leginondata.ImageData
 
 class CameraImagePublishEvent(ImagePublishEvent):
 	'Event indicating camera image was published'
-	dataclass = data.CameraImageData
+	dataclass = leginondata.CameraImageData
 
 class CorrectedCameraImagePublishEvent(CameraImagePublishEvent):
 	'Event indicating camera image was published'
-	dataclass = data.CorrectedCameraImageData
+	dataclass = leginondata.CorrectedCameraImageData
 
 class PresetImagePublishEvent(CameraImagePublishEvent):
 	'Event indicating preset camera image was published'
-	dataclass = data.PresetImageData
+	dataclass = leginondata.PresetImageData
 
 class AcquisitionImagePublishEvent(PresetImagePublishEvent):
-	dataclass = data.AcquisitionImageData
+	dataclass = leginondata.AcquisitionImageData
 
 class FilmPublishEvent(AcquisitionImagePublishEvent):
-	dataclass = data.FilmData
+	dataclass = leginondata.FilmData
 
 class CorrectorImagePublishEvent(CameraImagePublishEvent):
-	dataclass = data.CorrectorImageData
+	dataclass = leginondata.CorrectorImageData
 
 class DarkImagePublishEvent(CorrectorImagePublishEvent):
-	dataclass = data.DarkImageData
+	dataclass = leginondata.DarkImageData
 
 class BrightImagePublishEvent(CorrectorImagePublishEvent):
-	dataclass = data.BrightImageData
+	dataclass = leginondata.BrightImageData
 
 class NormImagePublishEvent(CorrectorImagePublishEvent):
-	dataclass = data.NormImageData
+	dataclass = leginondata.NormImageData
 
 class ImageTargetListPublishEvent(PublishEvent):
-	dataclass = data.ImageTargetListData
+	dataclass = leginondata.ImageTargetListData
 
 class ImageListPublishEvent(PublishEvent):
-	dataclass = data.ImageListData
+	dataclass = leginondata.ImageListData
 
 class ScopeEMPublishEvent(PublishEvent):
-	dataclass = data.ScopeEMData
+	dataclass = leginondata.ScopeEMData
 
 class CameraEMPublishEvent(PublishEvent):
-	dataclass = data.CameraEMData
+	dataclass = leginondata.CameraEMData
 
 class CameraImageEMPublishEvent(PublishEvent):
-	dataclass = data.CameraEMData
+	dataclass = leginondata.CameraEMData
 
 class PresetPublishEvent(PublishEvent):
-	dataclass = data.PresetData
+	dataclass = leginondata.PresetData
 
 class ControlEvent(Event):
 	'Event that passes a value with it'
@@ -255,7 +255,7 @@ class SetManagerEvent(ControlEvent):
 	def typemap(cls):
 		return ControlEvent.typemap() + (
 			('location', dict),
-			('session', data.SessionData),
+			('session', leginondata.SessionData),
 		)
 	typemap = classmethod(typemap)
 
@@ -264,7 +264,7 @@ class CreateNodeEvent(ControlEvent):
 	def typemap(cls):
 		return ControlEvent.typemap() + (
 			('targetclass', str),
-			('session', data.SessionData),
+			('session', leginondata.SessionData),
 			('manager location', dict),
 		)
 	typemap = classmethod(typemap)
@@ -294,7 +294,7 @@ class QueueGridsEvent(ControlEvent):
 class GridLoadedEvent(NotificationEvent):
 	def typemap(cls):
 		return ControlEvent.typemap() + (
-			('grid', data.GridData),
+			('grid', leginondata.GridData),
 			('request node', str),
 			('status', str),
 		)
@@ -319,7 +319,7 @@ class MakeTargetListEvent(ControlEvent):
 	'Event telling target maker to make a target list'
 	def typemap(cls):
 		return ControlEvent.typemap() + (
-			('grid', data.GridData),
+			('grid', leginondata.GridData),
 		)
 	typemap = classmethod(typemap)
 
@@ -345,7 +345,7 @@ class ChangePresetEvent(Event):
 	def typemap(cls):
 		return Event.typemap() + (
 			('name', str),
-			('emtarget', data.EMTargetData),
+			('emtarget', leginondata.EMTargetData),
 			('key', str),
 		)
 	typemap = classmethod(typemap)
@@ -354,7 +354,7 @@ class PresetChangedEvent(Event):
 	def typemap(cls):
 		return Event.typemap() + (
 			('name', str),
-			('preset', data.PresetData),
+			('preset', leginondata.PresetData),
 		)
 	typemap = classmethod(typemap)
 
@@ -368,10 +368,10 @@ class SetEMEvent(PublishEvent):
 	pass
 
 class SetScopeEvent(SetEMEvent):
-	dataclass = data.ScopeEMData
+	dataclass = leginondata.ScopeEMData
 
 class SetCameraEvent(SetEMEvent):
-	dataclass = data.CameraEMData
+	dataclass = leginondata.CameraEMData
 
 class DeviceLockEvent(ControlEvent):
 	pass
@@ -380,19 +380,19 @@ class DeviceUnlockEvent(ControlEvent):
 	pass
 
 class DeviceGetPublishEvent(PublishEvent):
-	dataclass = data.DeviceGetData
+	dataclass = leginondata.DeviceGetData
 
 class MoveToTargetEvent(Event):
 	def typemap(cls):
 		return Event.typemap() + (
-			('target', data.AcquisitionImageTargetData),
+			('target', leginondata.AcquisitionImageTargetData),
 			('movetype', str),
 			('move precision', float),
 		)
 	typemap = classmethod(typemap)
 
 class DevicePublishEvent(PublishEvent):
-	dataclass = data.DeviceData
+	dataclass = leginondata.DeviceData
 	def typemap(cls):
 		return PublishEvent.typemap() + (
 			('get data ID', tuple),
