@@ -1,5 +1,5 @@
 #include <Python.h>
-#include <numarray/libnumarray.h>
+#include <numpy/arrayobject.h>
 #include <math.h>
 #include "imgbase.h"
 #include "edge.h"
@@ -16,6 +16,11 @@
 #define M_SQRT2 1.41421356237309504880
 #endif
 
+#undef MIN
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#undef MAX
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+
 
 /******************************************
  statistical functions
@@ -31,8 +36,8 @@ element
 static PyObject *
 minmax(PyObject *self, PyObject *args)
 {
-	PyObject *input;
-	PyArrayObject *inputarray;
+	PyObject *input, *inputarray;
+	PyArray_Descr *inputdesc;
 	float *iter;
 	float minresult, maxresult;
 	int i;
@@ -42,15 +47,16 @@ minmax(PyObject *self, PyObject *args)
 		return NULL;
 
 	/* create proper PyArrayObjects from input source */
-	inputarray = NA_InputArray(input, tFloat32, NUM_C_ARRAY);
+	inputdesc = PyArray_DescrNewFromType(NPY_FLOAT32);
+	inputarray = PyArray_FromAny(input, inputdesc, 0, 0, NPY_CARRAY|NPY_FORCECAST, NULL);
 	if (inputarray == NULL) {
 		Py_XDECREF(inputarray);
 		return NULL;
 	}
 
-	len = NA_elements(inputarray);
+	len = PyArray_SIZE(inputarray);
 
-	iter = (float *)inputarray->data;
+	iter = (float *)PyArray_DATA(inputarray);
 	if(len % 2) {
 		/* odd length:  initial min and max are first element */
 		minresult = maxresult = *iter;
@@ -159,15 +165,13 @@ int despike_FLOAT(float *array, int rows, int cols, int statswidth, float ztest)
 
 static PyObject * gaussian_nd( PyObject *self, PyObject *args) {
 	
-	PyArrayObject *input_image, *output_image;
+	PyObject *input_image, *output_image;
 	float sigma = 1.0;
 	
 	if ( !PyArg_ParseTuple(args, "Of", &input_image, &sigma) ) return NULL;
 	
 	int krad = sigma * 4;
 	krad = MAX(krad,2);
-	
-	
 
 	float *kernel = malloc(sizeof(float)*krad);
 	float two_s2  = 1.0 / ( sigma * sigma * 2 );
@@ -177,19 +181,19 @@ static PyObject * gaussian_nd( PyObject *self, PyObject *args) {
 	
 	for (i=0;i<krad;i++) kernel[i] = norm * exp( -i*i*two_s2 );
 	
-	int   ndim = input_image->nd;
-	int * dims = input_image->dimensions;
-	int   size = NA_elements(input_image);
+	int   ndim = PyArray_NDIM(input_image);
+	npy_intp *dims = PyArray_DIMS(input_image);
+	int   size = PyArray_SIZE(input_image);
 	
-	output_image = NA_vNewArray(NULL, tFloat32, ndim, dims);
+	output_image = PyArray_SimpleNew(ndim, dims, NPY_FLOAT32);
 	
 	fprintf(stderr,"Blurring matrix with %d dimensions :",ndim);
-	for(d=0;d<ndim;d++) fprintf(stderr,"%d.",dims[d]);
+	for(d=0;d<ndim;d++) fprintf(stderr,"%d.",(int)dims[d]);
 	fprintf(stderr," with sigma %f\n",sigma);
 
 	float * tmp_pixels = malloc(sizeof(float)*size);
-	float * inp_pixels = (float *)input_image->data;
-	float * out_pixels = (float *)output_image->data;
+	float * inp_pixels = (float *)PyArray_DATA(input_image);
+	float * out_pixels = (float *)PyArray_DATA(output_image);
 	
 	memcpy(out_pixels,inp_pixels,sizeof(float)*size);
 
@@ -237,39 +241,41 @@ static PyObject * gaussian_nd( PyObject *self, PyObject *args) {
 	free(kernel);
 	free(tmp_pixels);
 	
-	return (PyObject *)output_image; 
+	return output_image; 
 
 } 
 
 static PyObject *
 despike(PyObject *self, PyObject *args)
 {
-	PyArrayObject *image, *floatimage;
+	PyObject *image, *floatimage;
 	int rows, cols, size, debug;
 	float ztest;
 	int spikes;
 	float ppm;
+	PyArray_Descr *desc;
 
 	if (!PyArg_ParseTuple(args, "Oifi", &image, &size, &ztest, &debug))
 		return NULL;
 
 	/* must be 2-d array */
-	if (image->nd != 2) {
+	if (PyArray_NDIM(image) != 2) {
 		PyErr_SetString(PyExc_ValueError, "image array must be two-dimensional");
 		return NULL;
 	}
 
 	/* create an array object copy of input data */
-	floatimage = NA_IoArray(image, tFloat32, NUM_C_ARRAY);
+	desc = PyArray_DescrNewFromType(NPY_FLOAT32);
+	floatimage = PyArray_FromAny(image, desc, 0, 0, NPY_UPDATEIFCOPY | NPY_FORCECAST | NPY_CARRAY, NULL);
 	if (floatimage == NULL) {
 		Py_XDECREF(floatimage);
 		return NULL;
 	}
 
-	rows = floatimage->dimensions[0];
-	cols = floatimage->dimensions[1];
+	rows = PyArray_DIMS(floatimage)[0];
+	cols = PyArray_DIMS(floatimage)[1];
 
-	spikes = despike_FLOAT((float *)(floatimage->data), rows, cols, size, ztest);
+	spikes = despike_FLOAT((float *)PyArray_DATA(floatimage), rows, cols, size, ztest);
 	ppm = 1000000.0 * spikes / (rows * cols);
 	if(debug) printf("spikes: %d, ppm: %.1f\n", spikes, ppm);
 
@@ -281,26 +287,28 @@ despike(PyObject *self, PyObject *args)
 static PyObject *
 bin(PyObject *self, PyObject *args)
 {
-	PyArrayObject *image, *floatimage, *result;
-	int binsize, rows, cols, newdims[2];
+	PyObject *image, *floatimage, *result;
+	int binsize, rows, cols;
+	npy_intp newdims[2];
 	float *original, *resultrow, *resultpixel;
 	int i, j, ib, jb;
 	int resrows, rescols, n;
 	char errstr[80];
 	unsigned long reslen;
+	PyArray_Descr *desc;
 
 	if (!PyArg_ParseTuple(args, "Oi", &image, &binsize))
 		return NULL;
 
 	/* must be 2-d array */
-	if (image->nd != 2) {
+	if (PyArray_NDIM(image) != 2) {
 		PyErr_SetString(PyExc_ValueError, "image array must be two-dimensional");
 		return NULL;
 	}
 
 	/* must be able to be binned by requested amount */
-	rows = image->dimensions[0];
-	cols = image->dimensions[1];
+	rows = PyArray_DIMS(image)[0];
+	cols = PyArray_DIMS(image)[1];
 	if ((rows%binsize) || (cols%binsize) ) {
 		sprintf(errstr, "image dimensions %d,%d do not allow binning by %d", rows,cols,binsize);
 		PyErr_SetString(PyExc_ValueError, errstr);
@@ -308,7 +316,8 @@ bin(PyObject *self, PyObject *args)
 	}
 
 	/* create a contiguous float image from input image */
-	floatimage = NA_InputArray(image, tFloat32, NUM_C_ARRAY);
+	desc = PyArray_DescrNewFromType(NPY_FLOAT32);
+	floatimage = PyArray_FromAny(image, desc, 0, 0, NPY_CARRAY | NPY_FORCECAST, NULL);
 	if (floatimage == NULL) return NULL;
 
 
@@ -317,19 +326,19 @@ bin(PyObject *self, PyObject *args)
 	rescols = cols / binsize;
 	newdims[0] = resrows;
 	newdims[1] = rescols;
-	result = NA_vNewArray(NULL, tFloat32, 2, newdims);
-	reslen = NA_elements(result);
+	result = PyArray_SimpleNew(2, newdims, NPY_FLOAT32);
+	reslen = PyArray_SIZE(result);
 
 	/* zero the result */
-	resultpixel = (float *)result->data;
+	resultpixel = (float *)PyArray_DATA(result);
 	for(i=0; i<reslen; i++) {
 		*resultpixel = 0.0;
 		resultpixel++;
 	}
 
 	/* calc sum of the bins */
-	resultpixel = resultrow = (float *)result->data;
-	original = (float *)floatimage->data;
+	resultpixel = resultrow = (float *)PyArray_DATA(result);
+	original = (float *)PyArray_DATA(floatimage);
 	for(i=0; i<resrows; i++) {
 		for(ib=0;ib<binsize;ib++) {
 			resultpixel=resultrow;
@@ -345,7 +354,7 @@ bin(PyObject *self, PyObject *args)
 	}
 
 	/* calc mean of the bins */
-	resultpixel = (float *)result->data;
+	resultpixel = (float *)PyArray_DATA(result);
 	n = binsize * binsize;
 	for(i=0; i<reslen; i++) {
 		*resultpixel /= n;
@@ -354,40 +363,43 @@ bin(PyObject *self, PyObject *args)
 
 	Py_DECREF(floatimage);
 
-	return (PyObject *)result;
+	return result;
 }
 
 static PyObject *nonmaximasuppress(PyObject *self, PyObject *args) {
 	PyObject *input, *gradient;
-	PyArrayObject *inputarray, *gradientarray;
+	PyObject *inputarray, *gradientarray;
 	int window = 7;
 	int i, j, k;
 	double m, theta, sintheta, costheta;
+	PyArray_Descr *desc;
 
 	if(!PyArg_ParseTuple(args, "OO|i", &input, &gradient, &window))
 		return NULL;
 
-	inputarray = NA_InputArray(input, tFloat64, NUM_C_ARRAY|NUM_COPY);
-	gradientarray = NA_InputArray(gradient, tFloat64, NUM_C_ARRAY|NUM_COPY);
+	desc = PyArray_DescrNewFromType(NPY_FLOAT64);
+	inputarray = PyArray_FromAny(input, desc, 0, 0, NPY_UPDATEIFCOPY | NPY_FORCECAST | NPY_CARRAY, NULL);
+	desc = PyArray_DescrNewFromType(NPY_FLOAT64);
+	gradientarray = PyArray_FromAny(gradient, desc, 0, 0, NPY_UPDATEIFCOPY | NPY_FORCECAST | NPY_CARRAY, NULL);
 
-	for(i = 0; i < inputarray->nd; i++)
-		if(inputarray->dimensions[i] != gradientarray->dimensions[i])
+	for(i = 0; i < PyArray_NDIM(inputarray); i++)
+		if(PyArray_DIMS(inputarray)[i] != PyArray_DIMS(gradientarray)[i])
 			return NULL;
 
-	for(i = window/2; i < inputarray->dimensions[0] - window/2; i++) {
-		for(j = window/2; j < inputarray->dimensions[1] - window/2; j++) {
-			m = *(double *)(inputarray->data + i*inputarray->strides[0]
-																				+ j*inputarray->strides[1]);
-			theta = *(double *)(gradientarray->data + i*gradientarray->strides[0]
-																							+ j*gradientarray->strides[1]);
+	for(i = window/2; i < PyArray_DIMS(inputarray)[0] - window/2; i++) {
+		for(j = window/2; j < PyArray_DIMS(inputarray)[1] - window/2; j++) {
+			m = *(double *)(PyArray_DATA(inputarray) + i*PyArray_STRIDES(inputarray)[0]
+																				+ j*PyArray_STRIDES(inputarray)[1]);
+			theta = *(double *)(PyArray_DATA(gradientarray) + i*PyArray_STRIDES(gradientarray)[0]
+																							+ j*PyArray_STRIDES(gradientarray)[1]);
 			sintheta = sin(theta);
 			costheta = cos(theta);
 			for(k = -window/2; k <= window/2; k++) {
-				if(m < *(double *)(inputarray->data
-													+ (i + (int)(k*sintheta + 0.5))*inputarray->strides[0]
-													+ (j + (int)(k*costheta + 0.5))*inputarray->strides[1]))
-					*(double *)(inputarray->data + i*inputarray->strides[0]
-																				+ j*inputarray->strides[1]) = 0.0;
+				if(m < *(double *)(PyArray_DATA(inputarray)
+													+ (i + (int)(k*sintheta + 0.5))*PyArray_STRIDES(inputarray)[0]
+													+ (j + (int)(k*costheta + 0.5))*PyArray_STRIDES(inputarray)[1]))
+					*(double *)(PyArray_DATA(inputarray) + i*PyArray_STRIDES(inputarray)[0]
+																				+ j*PyArray_STRIDES(inputarray)[1]) = 0.0;
 			}
 		}
 	}
@@ -398,31 +410,33 @@ static PyObject *nonmaximasuppress(PyObject *self, PyObject *args) {
 
 static PyObject *hysteresisthreshold(PyObject *self, PyObject *args) {
 	PyObject *input;
-	PyArrayObject *inputarray, *outputarray;
+	PyObject *inputarray, *outputarray;
 	int i, j, k, l;
 	float lowthreshold, highthreshold;
+	PyArray_Descr *desc;
 
 	if(!PyArg_ParseTuple(args, "Off", &input, &lowthreshold, &highthreshold))
 		return NULL;
 
-	inputarray = NA_InputArray(input, tFloat64, NUM_C_ARRAY|NUM_COPY);
-	outputarray = NA_vNewArray(NULL, tInt32, 2, inputarray->dimensions);
+	desc = PyArray_DescrNewFromType(NPY_FLOAT64);
+	inputarray = PyArray_FromAny(input, desc, 0, 0, NPY_CARRAY | NPY_FORCECAST, NULL);
+	outputarray = PyArray_SimpleNew(2, PyArray_DIMS(inputarray), NPY_FLOAT32);
 
-	for(i = 1; i < inputarray->dimensions[0] - 1; i++) {
-		for(j = 1; j < inputarray->dimensions[1] - 1; j++) {
-			if(*(double *)(inputarray->data + i*inputarray->strides[0]
-											+ j*inputarray->strides[1]) >= highthreshold) {
-				*(int *)(outputarray->data + i*outputarray->strides[0]
-																		+ j*outputarray->strides[1]) = 1;
+	for(i = 1; i < PyArray_DIMS(inputarray)[0] - 1; i++) {
+		for(j = 1; j < PyArray_DIMS(inputarray)[1] - 1; j++) {
+			if(*(double *)(PyArray_DATA(inputarray) + i*PyArray_STRIDES(inputarray)[0]
+											+ j*PyArray_STRIDES(inputarray)[1]) >= highthreshold) {
+				*(int *)(PyArray_DATA(outputarray) + i*PyArray_STRIDES(outputarray)[0]
+																		+ j*PyArray_STRIDES(outputarray)[1]) = 1;
 				for(k = -1; k <= 1; k++) {
 					for(l = -1; l <= 1; l++) {
 						if(k == 0 && l == 0)
 							continue;
-						if(*(double *)(inputarray->data
-													+ (i + k)*inputarray->strides[0]
-													+ (j + l)*inputarray->strides[1]) >= lowthreshold) {
-							*(int *)(outputarray->data + (i + k)*outputarray->strides[0]
-																				+ (j + l)*outputarray->strides[1]) = 1;
+						if(*(double *)(PyArray_DATA(inputarray)
+													+ (i + k)*PyArray_STRIDES(inputarray)[0]
+													+ (j + l)*PyArray_STRIDES(inputarray)[1]) >= lowthreshold) {
+							*(int *)(PyArray_DATA(outputarray) + (i + k)*PyArray_STRIDES(outputarray)[0]
+																				+ (j + l)*PyArray_STRIDES(outputarray)[1]) = 1;
 						}
 					}
 				}
@@ -430,49 +444,47 @@ static PyObject *hysteresisthreshold(PyObject *self, PyObject *args) {
 		}
 	}
 	Py_DECREF(inputarray);
-	return (PyObject *)outputarray;
+	return outputarray;
 }
 
 static PyObject *houghline(PyObject *self, PyObject *args) {
 	PyObject *input, *gradient = NULL;
-	PyArrayObject *inputarray, *gradientarray = NULL, *hough;
-	int dimensions[3];
-	int n, nd;
-	int i, j, k, kmin, kmax, r, direction=0;
+	PyObject *inputarray, *gradientarray = NULL, *hough;
+	npy_intp dimensions[3];
+	int n, i, j, k, kmin, kmax, r, direction=0;
 	double rtheta;
 	double gradientvalue;
 	int ntheta = 90;
 	float gradient_tolerance = M_PI/180.0, rscale = 1.0;
+	PyArray_Descr *desc;
 
 	if(!PyArg_ParseTuple(args, "O|Ofif", &input, &gradient, &gradient_tolerance,
 																				&ntheta, &rscale))
 		return NULL;
 
-	inputarray = NA_InputArray(input, tFloat64, NUM_C_ARRAY|NUM_COPY);
+	desc = PyArray_DescrNewFromType(NPY_FLOAT64);
+	inputarray = PyArray_FromAny(input, desc, 0, 0, NPY_CARRAY | NPY_FORCECAST, NULL);
 	if(gradient != NULL)
-		gradientarray = NA_InputArray(gradient, tFloat64, NUM_C_ARRAY|NUM_COPY);
+		desc = PyArray_DescrNewFromType(NPY_FLOAT64);
+		gradientarray = PyArray_FromAny(gradient, desc, 0, 0, NPY_CARRAY | NPY_FORCECAST, NULL);
 
-	if(inputarray->dimensions[0] != inputarray->dimensions[1])
+	if(PyArray_DIMS(inputarray)[0] != PyArray_DIMS(inputarray)[1])
 		return NULL;
 
-	n = inputarray->dimensions[0];
+	n = PyArray_DIMS(inputarray)[0];
 
 	dimensions[0] = (int)ceil(M_SQRT2*n) * rscale;
 	dimensions[1] = ntheta;
 	dimensions[2] = 2;
-	if(gradientarray == NULL)
-		nd = 2;
-	else
-		nd = 3;
-	hough = NA_vNewArray(NULL, tFloat64, 3, dimensions);
+	hough = PyArray_SimpleNew(3, dimensions, NPY_FLOAT64);
 
-	for(i = 0; i < inputarray->dimensions[0]; i++)
-		for(j = 0; j < inputarray->dimensions[1]; j++)
-			if(((double *)inputarray->data)[j * (i + 1)] > 0.0) {
+	for(i = 0; i < PyArray_DIMS(inputarray)[0]; i++)
+		for(j = 0; j < PyArray_DIMS(inputarray)[1]; j++)
+			if(((double *)PyArray_DATA(inputarray))[j * (i + 1)] > 0.0) {
 				if(gradientarray != NULL) {
-					gradientvalue = *(double *)(gradientarray->data
-																			+ i*gradientarray->strides[0]
-																			+ j*gradientarray->strides[1]);
+					gradientvalue = *(double *)(PyArray_DATA(gradientarray)
+																			+ i*PyArray_STRIDES(gradientarray)[0]
+																			+ j*PyArray_STRIDES(gradientarray)[1]);
 					while(gradientvalue < 0.0)
 						gradientvalue += 2.0*M_PI;
 					while(gradientvalue >= 2.0*M_PI)
@@ -498,11 +510,11 @@ static PyObject *houghline(PyObject *self, PyObject *args) {
 				for(k = kmin; k < kmax; k++) {
 					rtheta = (k*M_PI_2)/ntheta;
 					r = (int)((abs(j*cos(rtheta)) + i*sin(rtheta))*rscale + 0.5);
-					*(double *)(hough->data + r*hough->strides[0]
-											+ k*hough->strides[1]
-											+ direction*hough->strides[2]) +=
-									*(double *)(inputarray->data + i*inputarray->strides[0]
-															+ j*inputarray->strides[1]);
+					*(double *)(PyArray_DATA(hough) + r*PyArray_STRIDES(hough)[0]
+											+ k*PyArray_STRIDES(hough)[1]
+											+ direction*PyArray_STRIDES(hough)[2]) +=
+									*(double *)(PyArray_DATA(inputarray) + i*PyArray_STRIDES(inputarray)[0]
+															+ j*PyArray_STRIDES(inputarray)[1]);
 				}
 			}
 	Py_DECREF(inputarray);
@@ -513,13 +525,14 @@ static PyObject *houghline(PyObject *self, PyObject *args) {
 
 static PyObject *rgbstring(PyObject *self, PyObject *args) {
 	PyObject *input, *output, *colormap = NULL, *values = NULL, *cvalue = NULL;
-	PyArrayObject *inputarray;
+	PyObject *inputarray;
 	int i, j, size;
 	float frommin, frommax, fromrange, scale, value;
 	unsigned char *index;
 	int scaledvalue;
 	float colors = 255.0;
 	unsigned char *rgb = NULL;
+	PyArray_Descr *desc;
 
 	if(!PyArg_ParseTuple(args, "Off|O", &input, &frommin, &frommax, &colormap))
 		return NULL;
@@ -536,7 +549,8 @@ static PyObject *rgbstring(PyObject *self, PyObject *args) {
 		}
 	}
 
-	inputarray = NA_InputArray(input, tFloat32, NUM_C_ARRAY|NUM_COPY);
+	desc = PyArray_DescrNewFromType(NPY_FLOAT32);
+	inputarray = PyArray_FromAny(input, desc, 0, 0, NPY_CARRAY | NPY_FORCECAST, NULL);
 
 	fromrange = frommax - frommin;
 	if(fromrange == 0.0)
@@ -544,13 +558,13 @@ static PyObject *rgbstring(PyObject *self, PyObject *args) {
 	else
 		scale = (float)colors/fromrange;
 
-	size = inputarray->dimensions[0]*inputarray->dimensions[1]*3;
+	size = PyArray_DIMS(inputarray)[0]*PyArray_DIMS(inputarray)[1]*3;
 	output = PyString_FromStringAndSize(NULL, size);
 	index = (unsigned char *)PyString_AsString(output);
-	for(i = 0; i < inputarray->dimensions[0]; i++) {
-		for(j = 0; j < inputarray->dimensions[1]; j++) {
-			value = *(float *)(inputarray->data
-												+ i*inputarray->strides[0] + j*inputarray->strides[1]);
+	for(i = 0; i < PyArray_DIMS(inputarray)[0]; i++) {
+		for(j = 0; j < PyArray_DIMS(inputarray)[1]; j++) {
+			value = *(float *)(PyArray_DATA(inputarray)
+												+ i*PyArray_STRIDES(inputarray)[0] + j*PyArray_STRIDES(inputarray)[1]);
 			
 			if(value <= frommin) {
 				scaledvalue = 0;
@@ -581,8 +595,9 @@ static PyObject *rgbstring(PyObject *self, PyObject *args) {
 
 static PyObject *hanning(PyObject *self, PyObject *args, PyObject *kwargs) {
 	int m, n;
+	npy_intp dims[2];
 	float a = 0.5, b;
-	PyArrayObject *result;
+	PyObject *result;
 	int i, j;
 
 	static char *kwlist[] = {"m", "n", "a", NULL};
@@ -590,43 +605,51 @@ static PyObject *hanning(PyObject *self, PyObject *args, PyObject *kwargs) {
 	if(!PyArg_ParseTupleAndKeywords(args, kwargs, "ii|f", kwlist, &m, &n, &a))
 		return NULL;
 
-	if(!(result = NA_NewArray(NULL, tFloat32, 2, m, n)))
+	dims[0] = m;
+	dims[1] = n;
+
+	result = PyArray_SimpleNew(2, dims, NPY_FLOAT32);
+	if(!result)
 		return NULL;
 
 	b = 1 - a;
 
 	for(i = 0; i < m; i++) {
 		for(j = 0; j < n; j++) {
-			((float *)result->data)[i*n + j] = 
+			((float *)PyArray_DATA(result))[i*n + j] = 
 				(float)(a - b*cos(2.0*M_PI*((float)i)/((float)(m - 1))))
 								*(a - b*cos(2.0*M_PI*((float)j)/((float)(n - 1))));
 		}
 	}
 
-	return (PyObject *)result;
+	return result;
 }
 
 static PyObject *highpass(PyObject *self, PyObject *args) {
 	int m, n;
-	PyArrayObject *result;
+	PyObject *result;
 	int i, j;
 	float x;
+	npy_intp dims[2];
 
 	if(!PyArg_ParseTuple(args, "ii", &m, &n))
 		return NULL;
 
-	if(!(result = NA_NewArray(NULL, tFloat32, 2, m, n)))
+	dims[0] = m;
+	dims[1] = n;
+	result = PyArray_SimpleNew(2, dims, NPY_FLOAT32);
+	if(!result)
 		return NULL;
 
 	for(i = 0; i < m; i++) {
 		for(j = 0; j < n; j++) {
 			x = cos(M_PI*((((float)i)/((float)m)) - 0.5))
 						*cos(M_PI*((((float)j)/(2.0*((float)n)))));
-			((float *)result->data)[i*n + j] = (float)((1.0 - x)*(2.0 - x));
+			((float *)PyArray_DATA(result))[i*n + j] = (float)((1.0 - x)*(2.0 - x));
 		}
 	}
 
-	return (PyObject *)result;
+	return result;
 }
 
 static PyObject *logpolar(PyObject *self, PyObject *args) {
@@ -636,27 +659,30 @@ static PyObject *logpolar(PyObject *self, PyObject *args) {
 	double maxr;
 	double mintheta, maxtheta;
 	double base, phiscale;
-	PyArrayObject *iarray, *oarray;
+	PyObject *iarray, *oarray;
 	int i, j, logrho, phi;
 	double r, logr, theta, x, y;
 	float *a, *c;
 	int size, index;
+	PyArray_Descr *desc;
+	npy_intp dims[2];
 
 	if(!PyArg_ParseTuple(args, "Oiiddddd", &input, &phis, &logrhos,
 																	&(center[0]), &(center[1]),
 																	&maxr, &mintheta, &maxtheta))
 		return NULL;
 
-	iarray = NA_InputArray(input, tFloat32, NUM_C_ARRAY);
+	desc = PyArray_DescrNewFromType(NPY_FLOAT32);
+	iarray = PyArray_FromAny(input, desc, 0, 0, NPY_CARRAY | NPY_FORCECAST, NULL);
 
 	/*
-	center[0] = (double)iarray->dimensions[0]/2.0;
-	center[1] = (double)iarray->dimensions[1]/2.0;
+	center[0] = (double)PyArray_DIMS(iarray)[0]/2.0;
+	center[1] = (double)PyArray_DIMS(iarray)[1]/2.0;
 	
-	if(iarray->dimensions[0]/2 < iarray->dimensions[1])
-		maxr = (double)iarray->dimensions[0]/2.0;
+	if(PyArray_DIMS(iarray)[0]/2 < PyArray_DIMS(iarray)[1])
+		maxr = (double)PyArray_DIMS(iarray)[0]/2.0;
 	else
-		maxr = (double)iarray->dimensions[1]/2.0;
+		maxr = (double)PyArray_DIMS(iarray)[1]/2.0;
 	*/
 
 	base = pow(maxr + 1.0, 1.0/logrhos);
@@ -669,8 +695,8 @@ static PyObject *logpolar(PyObject *self, PyObject *args) {
 	memset((void *)c, 0, logrhos*phis*sizeof(float));
 
 	size = logrhos*phis;
-	for(i = 0; i < iarray->dimensions[0]; i++) {
-		for(j = 0; j < iarray->dimensions[1]; j++) {
+	for(i = 0; i < PyArray_DIMS(iarray)[0]; i++) {
+		for(j = 0; j < PyArray_DIMS(iarray)[1]; j++) {
 			x = j + 0.5 - center[1];
 			y = i + 0.5 - center[0];
 			logr = log(sqrt(x*x + y*y) + 1.0)/log(base);
@@ -679,19 +705,22 @@ static PyObject *logpolar(PyObject *self, PyObject *args) {
 			phi = (int)((theta - mintheta)*phiscale + 0.5);
 			index = logrho*phis + phi;
 			if((index >= 0) && (index < size)) {
-				a[index] += ((float *)iarray->data)[i*iarray->dimensions[1] + j];
+				a[index] += ((float *)PyArray_DATA(iarray))[i*PyArray_DIMS(iarray)[1] + j];
 				c[index] += 1;
 			}
 		}
 	}
 
-	if(!(oarray = NA_NewArray(NULL, tFloat32, 2, logrhos, phis)))
+	dims[0] = logrhos;
+	dims[1] = phis;
+	oarray = PyArray_SimpleNew(2, dims, NPY_FLOAT32);
+	if(!oarray)
 		return NULL;
 
 	for(logrho = 0; logrho < logrhos; logrho++) {
 		for(phi = 0; phi < phis; phi++) {
 			if(c[logrho*phis + phi] > 0) {
-				((float *)oarray->data)[logrho*oarray->dimensions[1] + phi] =
+				((float *)PyArray_DATA(oarray))[logrho*PyArray_DIMS(oarray)[1] + phi] =
 															a[logrho*phis + phi]/(float)c[logrho*phis + phi];
 			} else {
 				logr = (double)logrho + 0.5;
@@ -701,10 +730,10 @@ static PyObject *logpolar(PyObject *self, PyObject *args) {
 				y = r*sin(theta);
 				i = (int)(y - 0.5 + center[0] + 0.5);
 				j = (int)(x - 0.5 + center[1] + 0.5);
-				if((i >= 0) && (i < iarray->dimensions[0])
-						&& (j >= 0) && (j < iarray->dimensions[1])) {
-					((float *)oarray->data)[logrho*oarray->dimensions[1] + phi] =
-													((float *)iarray->data)[i*iarray->dimensions[1] + j];
+				if((i >= 0) && (i < PyArray_DIMS(iarray)[0])
+						&& (j >= 0) && (j < PyArray_DIMS(iarray)[1])) {
+					((float *)PyArray_DATA(oarray))[logrho*PyArray_DIMS(oarray)[1] + phi] =
+													((float *)PyArray_DATA(iarray))[i*PyArray_DIMS(iarray)[1] + j];
 				}
 			}
 		}
@@ -923,49 +952,41 @@ void float_to_ubyte( float* image, int nsize, unsigned char* outimg, int scale_f
 
 PyObject *cannyedge(PyObject *self, PyObject *args) {
 	PyObject *input;
-	PyArrayObject *inputarray=NULL, *outputarraym=NULL, *outputarray=NULL;
-	int i, j;
-        unsigned pos, nelements;
+	PyObject *inputarray=NULL, *outputarraym=NULL, *outputarray=NULL;
+	int i;
+	unsigned nelements;
 	float sigma, tlow, thigh;
-        unsigned char *image=NULL;
-        short int *magnitude=NULL;
-        unsigned char *edge=NULL;
+	unsigned char *image=NULL;
+	short int *magnitude=NULL;
+	unsigned char *edge=NULL;
 
 	if(!PyArg_ParseTuple(args, "Offf", &input, &sigma, &tlow, &thigh))
            return NULL;
 
-	inputarray = NA_InputArray(input, tFloat32, NUM_C_ARRAY|NUM_COPY);
-        if (inputarray == NULL || inputarray->nd != 2) {
+	inputarray = PyArray_FromAny(input, PyArray_DescrNewFromType(NPY_FLOAT32), 0, 0, NPY_CARRAY | NPY_FORCECAST, NULL);
+        if (inputarray == NULL || PyArray_NDIM(inputarray) != 2) {
            PyErr_SetString(PyExc_ValueError, "failed to accept a 2-D array of type FLOAT.\n");
            return NULL;
         }
         
         nelements =  1;
-        for (i=0; i< inputarray->nd; i++)
-            nelements *= inputarray->dimensions[i];
+        for (i=0; i< PyArray_NDIM(inputarray); i++)
+            nelements *= PyArray_DIMS(inputarray)[i];
         image = (unsigned char *)malloc(nelements);
         if (image == NULL) {
            PyErr_SetString(PyExc_ValueError, "failed to allocate a array of unsigned char.\n");
            return NULL;
         }
 
-        float_to_ubyte((float *)inputarray->data, nelements, image, DO_SCALE);
-        canny(image, inputarray->dimensions[0], inputarray->dimensions[1], sigma, tlow, thigh, &magnitude, &edge, NULL);
+        float_to_ubyte((float *)PyArray_DATA(inputarray), nelements, image, DO_SCALE);
+        canny(image, PyArray_DIMS(inputarray)[0], PyArray_DIMS(inputarray)[1], sigma, tlow, thigh, &magnitude, &edge, NULL);
         if (edge == NULL) {
            PyErr_SetString(PyExc_ValueError, "failed to generate canny edge of unsigned char.\n");
            return NULL;
         }
-/*
-	outputarray = (PyArrayObject *)PyArray_FromDims(inputarray->nd, inputarray->dimensions, PyArray_UBYTE);
-        pos = 0;
-	for (i = 0; i < inputarray->dimensions[0]; i++) 
-            for (j = 0; j < inputarray->dimensions[1]; j++, pos++)
-		*(unsigned char *)(outputarray->data + i*outputarray->strides[0] + j*outputarray->strides[1]) = edge[pos];
-        if (edge !=NULL) free(edge);
-*/
         if (image !=NULL) free(image);
-	outputarraym = NA_vNewArray(magnitude, tInt16, inputarray->nd, inputarray->dimensions); 
-	outputarray = NA_vNewArray(edge, tUInt8, inputarray->nd, inputarray->dimensions); 
+	outputarraym = PyArray_SimpleNewFromData(PyArray_NDIM(inputarray), PyArray_DIMS(inputarray), NPY_INT16, magnitude);
+	outputarray = PyArray_SimpleNewFromData(PyArray_NDIM(inputarray), PyArray_DIMS(inputarray), NPY_UINT8, edge);
 	Py_DECREF(inputarray);
 
 	//return (PyObject *)outputarray;
@@ -1018,6 +1039,6 @@ static struct PyMethodDef numeric_methods[] = {
 void initnumextension()
 {
 	(void) Py_InitModule("numextension", numeric_methods);
-	import_libnumarray()
+	import_array();
 }
 
