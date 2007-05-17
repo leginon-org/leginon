@@ -59,9 +59,9 @@ def getPolygonCenter(polygon):
 
 if __name__ == '__main__':
 	if 0:
-		import Mrc
+		from pyami import mrc
 		im = filledPolygon((256,256), ((20,20), (40,40), (20,40),(40,20)))
-		Mrc.numeric_to_mrc(im.astype(numarray.Int16), 'test.mrc')
+		mrc.write(im.astype(numarray.Int16), 'test.mrc')
 
 	if 1:
 		pointsInPolygon( ((1,1),(2,2),(2,3),(3,2),(3,3),(8,8),(12,12)), ((2,2),(2,10),(10,10),(10,2)))

@@ -11,7 +11,6 @@
 import data
 import targetfinder
 import jahcfinderback
-import Mrc
 from pyami import ordereddict
 import threading
 import ice

@@ -10,7 +10,6 @@
 
 import data
 import targetfinder
-import Mrc
 import threading
 import ice
 import numarray

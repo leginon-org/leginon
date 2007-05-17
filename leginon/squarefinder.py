@@ -9,8 +9,7 @@
 #
 
 import data
-from pyami import imagefun, convolver
-import Mrc
+from pyami import imagefun, convolver, mrc
 try:
 	import numarray as Numeric
 except:
@@ -377,7 +376,7 @@ class SquareFinder(targetfinder.TargetFinder):
 		if filename is None:
 			filename = self.filename.get()
 		try:
-			self.pluginpipeline.process(Image(Mrc.mrc_to_numeric(filename)))
+			self.pluginpipeline.process(Image(mrc.read(filename)))
 		except IOError:
 			self.logger.error('Load file "%s" failed' % filename)
 

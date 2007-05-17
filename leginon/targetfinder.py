@@ -12,11 +12,10 @@ import event
 import instrument
 import imagewatcher
 import mosaic
-import Mrc
 import threading
 import node
 import targethandler
-from pyami import convolver, imagefun
+from pyami import convolver, imagefun, mrc
 import numarray
 import numarray.ma as ma
 import numarray.nd_image as nd
@@ -61,7 +60,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		imagedata = self.getImageFromDB(filename)
 		if imagedata is None:
 			try:
-				orig = Mrc.mrc_to_numeric(filename)
+				orig = mrc.read(filename)
 			except Exception, e:
 				self.logger.exception('Read image failed: %s' % e[-1])
 				return

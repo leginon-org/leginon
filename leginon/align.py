@@ -167,7 +167,7 @@ def findTranslation(image1, image2):
 	return findPeak(pc)
 
 if __name__ == '__main__':
-	import Mrc
+	from pyami import mrc
 	import sys
 	import time
 
@@ -180,8 +180,8 @@ if __name__ == '__main__':
 		for j in [4]:
 			f1 = '04dec17b_000%d_0000%dgr.mrc' % (749 + i, j + 1)
 			f2 = '05jan20a_000%d_0000%dgr.mrc' % (749 + i, j + 1)
-			image1 = Mrc.mrc_to_numeric(f1)
-			image2 = Mrc.mrc_to_numeric(f2)
+			image1 = mrc.read(f1)
+			image2 = mrc.read(f2)
 			#image2 = rotateScaleOffset(image1, 0.0, 1.0, (0.0, 0.0))
 
 			'''

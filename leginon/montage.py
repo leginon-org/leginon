@@ -7,8 +7,6 @@ offset means:
 	coordinate of input that corresponds to 0,0 in output
 '''
 
-import Mrc
-import Mrcmm
 import numarray
 import numarray.nd_image
 import numarray.linear_algebra
@@ -18,7 +16,7 @@ import polygon
 import raster
 import time
 import sys
-from pyami import ordereddict
+from pyami import ordereddict, mrc
 import cPickle
 import os.path
 from pyami import affine
@@ -28,7 +26,7 @@ dbdk = dbdatakeeper.DBDataKeeper()
 
 def memmapMRC(fileref):
 	fullname = os.path.join(fileref.path, fileref.filename)
-	im = Mrcmm.mrc_to_numeric(fullname)
+	im = mrc.mmap(fullname)
 	return im
 
 class Image(object):
@@ -333,7 +331,7 @@ def createSingleImage(inputimages, globaloutput, outfilename, outformat):
 		print 'T', target
 		markTarget(globaloutput.image, target)
 	'''
-	Mrc.numeric_to_mrc(globaloutput.image, outfilename)
+	mrc.write(globaloutput.image, outfilename)
 
 def createTiles(inputs, tiledict, tilesize, row1=None, row2=None, col1=None, col2=None):
 	blank = numarray.zeros((tilesize,tilesize), numarray.Float32)
@@ -370,7 +368,7 @@ def createTiles(inputs, tiledict, tilesize, row1=None, row2=None, col1=None, col
 			f.write('%d\t%d\t%e\t%e\n' % (r,c,x,y))
 			f.close()
 	
-			Mrc.numeric_to_mrc(outim, '%d_%d.mrc' % tileindex)
+			mrc.write(outim, '%d_%d.mrc' % tileindex)
 	
 			'''
 			jpeg.save(output.image, clip[0], clip[1], '%d_%d.jpg' % tileindex, 90)

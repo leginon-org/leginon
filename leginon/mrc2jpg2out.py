@@ -12,7 +12,7 @@ try:
 	import numarray as Numeric
 except:
 	import Numeric
-import Mrc
+from pyami import mrc, arraystats
 import Image
 import re
 import sys
@@ -98,26 +98,12 @@ def Numeric_to_Image(numarray, clip, outputsize=None):
 	return image
 
 def read_mrc(filename):
-	# read header, data
-	f = open(filename, 'rb')
-	hdr = Mrc.MrcHeader(f)
-	dat = Mrc.MrcData()
-	dat.useheader(hdr)
-	dat.fromfile(f)
-	f.close()
-	## make info dict
+	a = mrc.read(filename)
 	info = {}
-	info['array'] = dat.toNumeric()
-	if dat.min==0 and dat.max==0:
-		#search min max	
-		newmin = Numeric.argmin(Numeric.ravel(info['array']))
-		info['min'] = Numeric.ravel(info['array'])[newmin]
-		newmax = Numeric.argmax(Numeric.ravel(info['array']))
-		info['max'] = Numeric.ravel(info['array'])[newmax]
-	else:
-		info['min'] = dat.min
-		info['max'] = dat.max
-
+	info['array'] = a
+	stats = arraystats.all(a)
+	info['min'] = stats['min']
+	info['max'] = stats['max']
 	return info
 
 def write_jpeg(pil_image, filename=None, quality=100):

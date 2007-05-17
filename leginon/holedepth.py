@@ -12,8 +12,7 @@ import data
 import targetfinder
 import holefinder
 import holedepthback
-import Mrc
-from pyami import ordereddict
+from pyami import ordereddict, mrc
 import threading
 import ice
 import instrument
@@ -73,7 +72,7 @@ class HoleDepth(holefinder.HoleFinder):
 		imagedata = self.getImageFromDB(filename)
 		if imagedata is None:
 			try:
-				orig = Mrc.mrc_to_numeric(filename)
+				orig = mrc.read(filename)
 				self.logger.exception('Read image not in session')
 			except Exception, e:
 				self.logger.exception('Read image failed: %s' % e[-1])

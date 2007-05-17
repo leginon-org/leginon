@@ -5,7 +5,7 @@ import node
 import dbdatakeeper
 import data
 import sys
-import Mrc
+from pyami import mrc
 import calibrationclient
 import os.path
 
@@ -36,5 +36,5 @@ mosaicimage = m.getMosaicImage(None)
 
 n.exit()
 
-Mrc.numeric_to_mrc(mosaicimage, 'mosaic.mrc')
+mrc.write(mosaicimage, 'mosaic.mrc')
 

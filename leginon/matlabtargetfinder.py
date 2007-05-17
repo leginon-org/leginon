@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/matlabtargetfinder.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-19 19:51:24 $
-# $Author: acheng $
+# $Date: 2007-05-17 22:03:47 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -15,7 +15,7 @@ import numarray
 import os.path
 import threading
 import data
-import Mrc
+from pyami import mrc
 import targetfinder
 import gui.wx.MatlabTargetFinder
 try:
@@ -41,7 +41,7 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 		self.start()
 
 	def readImage(self, filename):
-		image = Mrc.mrc_to_numeric(filename)
+		image = mrc.read(filename)
 		self.setImage(image, 'Image')
 
 	def matlabFindTargets(self):
@@ -101,7 +101,7 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 		self.settings['user check'] = False
 		filename = self.settings['test image']
 		try:
-			image = Mrc.mrcstr_to_numeric(open(filename, 'rb').read())
+			image = mrc.read(filename)
 		except:
 			self.logger.error('Failed to load test image')
 			raise

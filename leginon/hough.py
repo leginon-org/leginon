@@ -181,10 +181,9 @@ def houghCircle(image, threshold, radiusrange=None):
 if __name__=='__main__':
 	from wxPython.wx import *
 	import gui.wx.ImageViewer
-	import Mrc
 	import timer
 	import holefinderback
-	from pyami import imagefun
+	from pyami import imagefun, mrc
 
 	def edges(image):
 		hf = holefinderback.HoleFinder()
@@ -199,7 +198,7 @@ if __name__=='__main__':
 		hf.find_edges()
 		return hf['edges']
 
-	image = Mrc.mrc_to_numeric('hftest.mrc')
+	image = mrc.read('hftest.mrc')
 
 	t = timer.Timer()
 

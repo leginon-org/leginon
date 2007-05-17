@@ -9,13 +9,12 @@
 import data
 import targetfinder
 import event
-import Mrc
 import node
 import gui.wx.ImageAssessor
 import os
 import Image
 import numarray
-from pyami import imagefun
+from pyami import imagefun, mrc
 try:
 	import apAssessor
 except ImportError:
@@ -192,7 +191,7 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 		f.close()
 
 	def readMRC(self, filename):
-		return Mrc.mrc_to_numeric(filename)
+		return mrc.read(filename)
 
 	def readJPG(self, filename):
 		i = Image.open(filename)

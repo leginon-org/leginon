@@ -8,8 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-from pyami import convolver, peakfinder, fftengine, correlator, imagefun
-import Mrc
+from pyami import convolver, peakfinder, fftengine, correlator, imagefun, mrc
 import Numeric
 import holefinderback
 import os
@@ -66,7 +65,7 @@ def save_mrc(image, filename):
 		print 'saving ', filename
 		p = 'qimages'
 		f = os.path.join(p, filename)
-		Mrc.numeric_to_mrc(image, f)
+		mrc.write(image, f)
 
 import timer
 
@@ -157,14 +156,14 @@ class QuantifoilSolver(object):
 			p = int(round(point[0])),int(round(point[1]))
 			lat_im[p] = 1.0
 		lat_fft = ffteng.transform(lat_im)
-		Mrc.numeric_to_mrc(lat_im, 'lat_im.mrc')
+		mrc.write(lat_im, 'lat_im.mrc')
 
 		## create ring image
 		minrad = radius - thickness / 2.0
 		maxrad = radius + thickness / 2.0
 		cir_im = circle_template(shape, minrad, maxrad)
 		cir_fft = ffteng.transform(cir_im)
-		Mrc.numeric_to_mrc(cir_im, 'cir_im.mrc')
+		mrc.write(cir_im, 'cir_im.mrc')
 
 		## convolve
 		temp_fft = Numeric.multiply(lat_fft, cir_fft)
@@ -296,7 +295,7 @@ if __name__ == '__main__':
 
 	qs = QuantifoilSolver()
 
-	square = Mrc.mrc_to_numeric(filename)
+	square = mrc.read(filename)
 	#crop1 = (256,256,1024-256,1024-256)
 	#crop1 = (0,0,1024,1024)
 	crop1 = None

@@ -9,7 +9,6 @@
 import data
 import event
 import imagewatcher
-import Mrc
 import threading
 import node
 import imagefun

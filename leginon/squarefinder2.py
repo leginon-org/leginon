@@ -15,8 +15,7 @@ except:
 	import Numeric
 	import FFT
 	import MLab
-from pyami import convolver, imagefun
-import Mrc
+from pyami import convolver, imagefun, mrc
 import numextension
 import random
 import targetfinder
@@ -433,7 +432,7 @@ class SquareFinder2(targetfinder.TargetFinder):
 		if filename is None:
 			filename = self.filename.get()
 		try:
-			self.pluginpipeline.process(Image(Mrc.mrc_to_numeric(filename)))
+			self.pluginpipeline.process(Image(mrc.read(filename)))
 		except IOError:
 			self.messagelog.error('Load file "%s" failed' % filename)
 

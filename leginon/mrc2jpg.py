@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import Mrc
+from pyami import mrc
 import Image
 import NumericImage
 import re
@@ -21,7 +21,7 @@ Convert MRC -> JPEG
 def mrc2jpeg(filename, quality=100):
 	'Convert MRC -> JPEG [quality]'
 	nfile = re.sub('\.mrc$','.jpg',file)
-	ndata = Mrc.mrc_to_numeric(file)
+	ndata = mrc.read(file)
 	num_img = NumericImage.NumericImage(ndata)
 	num_img.jpeg(nfile, quality)
 	

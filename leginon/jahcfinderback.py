@@ -10,8 +10,7 @@
 
 import numarray
 import numarray.nd_image
-import Mrc
-from pyami import imagefun, peakfinder, convolver, correlator
+from pyami import imagefun, peakfinder, convolver, correlator, mrc
 import ice
 import lattice
 
@@ -162,7 +161,7 @@ class HoleFinder(object):
 	def read_hole_template(self, filename):
 		if filename in hole_template_files:
 			return hole_template_files[filename]
-		im = Mrc.mrc_to_numeric(filename)
+		im = mrc.read(filename)
 		hole_template_files[filename] = im
 		return im
 
@@ -195,7 +194,7 @@ class HoleFinder(object):
 		template = template.astype(numarray.Float32)
 		self.__update_result('template', template)
 		if self.save_mrc:
-			Mrc.numeric_to_mrc(template, 'template.mrc')
+			mrc.write(template, 'template.mrc')
 
 	def configure_correlation(self, cortype=None, corfilt=None):
 		if cortype is not None:
@@ -223,7 +222,7 @@ class HoleFinder(object):
 			cc = self.convolver.convolve(image=cc)
 		self.__update_result('correlation', cc)
 		if self.save_mrc:
-			Mrc.numeric_to_mrc(cc, 'correlation.mrc')
+			mrc.write(cc, 'correlation.mrc')
 
 	def configure_threshold(self, threshold=None, threshold_method=None):
 		if threshold is not None:
@@ -251,7 +250,7 @@ class HoleFinder(object):
 		t = imagefun.threshold(cc, thresh)
 		self.__update_result('threshold', t)
 		if self.save_mrc:
-			Mrc.numeric_to_mrc(t, 'threshold.mrc')
+			mrc.write(t, 'threshold.mrc')
 
 	def configure_blobs(self, border=None, maxblobs=None, maxblobsize=None):
 		if border is not None:
@@ -350,7 +349,7 @@ class HoleFinder(object):
 			imagefun.mark_image(im, coord, value)
 		self.__update_result('markedholes', im)
 		if self.save_mrc:
-			Mrc.numeric_to_mrc(im, 'markedholes.mrc')
+			mrc.write(im, 'markedholes.mrc')
 
 	def get_hole_stats(self, image, coord, radius):
 		## select the region of interest
@@ -364,11 +363,11 @@ class HoleFinder(object):
 
 		subimage = image[rmin:rmax+1, cmin:cmax+1]
 		if self.save_mrc:
-			Mrc.numeric_to_mrc(subimage, 'hole.mrc')
+			mrc.write(subimage, 'hole.mrc')
 		center = subimage.shape[0]/2.0, subimage.shape[1]/2.0
 		mask = self.circle.get(subimage.shape, center, 0, radius)
 		if self.save_mrc:
-			Mrc.numeric_to_mrc(mask, 'holemask.mrc')
+			mrc.write(mask, 'holemask.mrc')
 		im = numarray.ravel(subimage)
 		mask = numarray.ravel(mask)
 		roi = numarray.compress(mask, im)
@@ -451,10 +450,10 @@ class HoleFinder(object):
 		#self.calc_ice()
 
 if __name__ == '__main__':
-	import Mrc
+	import mrc
 	#hf = HoleFinder(9,1.4)
 	hf = HoleFinder()
-	hf['original'] = Mrc.mrc_to_numeric('03sep16a/03sep16a.001.mrc')
+	hf['original'] = mrc.read('03sep16a/03sep16a.001.mrc')
 	hf.threshold = 1.6
 	hf.configure_template(min_radius=23, max_radius=29)
 	hf.configure_lattice(tolerance=0.08, spacing=122)
