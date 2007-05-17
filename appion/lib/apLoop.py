@@ -127,44 +127,6 @@ def _alreadyProcessed(donedict, imgname, stats, params):
 	return False
 
 
-def checkMemLeak(stats):
-	"""
-	unnecessary code for determining if the program is eating memory over time
-	"""
-	### Memory leak code:
-	stats['memlist'].append(mem.active())
-	memfree = mem.free()
-	swapfree = mem.swapfree()
-	minavailmem = 64*1024; # 64 MB, size of one image
-	if(memfree < minavailmem):
-		apDisplay.printError("Memory is low ("+str(int(memfree/1024))+"MB): there is probably a memory leak")
-
-	if(stats['count'] > 5):
-		memlist = stats['memlist']
-		n       = len(memlist)
-		gain    = (memlist[n-1] - memlist[0])/1024.0
-		sumx    = n*(n-1.0)/2.0
-		sumxsq  = n*(n-1.0)*(2.0*n-1.0)/6.0
-		sumy = 0.0; sumxy = 0.0; sumysq = 0.0
-		for i in range(n):
-			value  = float(memlist[i])/1024.0
-			sumxy  += float(i)*value
-			sumy   += value
-			sumysq += value**2
-		###
-		stdx  = math.sqrt(n*sumxsq - sumx**2)
-		stdy  = math.sqrt(n*sumysq - sumy**2)
-		rho   = float(n*sumxy - sumx*sumy)/float(stdx*stdy)
-		slope = float(n*sumxy - sumx*sumy)/float(n*sumxsq - sumx*sumx)
-		memleak = rho*slope
-		###
-		if(slope > 0 and memleak > 32 and gain > 128): 
-			printError("Memory leak of "+str(round(memleak,2))+"MB")
-		elif(memleak > 16):
-			print apDisplay.color(" ... substantial memory leak "+str(round(memleak,2))+"MB","brown"),\
-				"(",n,round(slope,5),round(rho,5),round(gain,2),")"
-		
-
 def startLoop(imgdict,donedict,stats,params):
 	"""
 	initilizes several parameters for a new image
@@ -178,7 +140,6 @@ def startLoop(imgdict,donedict,stats,params):
 		print "\nStarting new image",stats['count'],"( skip:",stats['skipcount'],\
 			", left:",stats['imagesleft'],")",apDisplay.shortenImageName(imgdict['filename'])
 		stats['lastcount'] = stats['count']
-		checkMemLeak(stats)
 
 	# get the next image pixel size:
 	params['apix'] = apDatabase.getPixelSize(imgdict)
