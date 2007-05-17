@@ -415,11 +415,11 @@ class ScrolledWindow(OffsetWindow):
 
 if __name__ == '__main__':
 	import sys
-	import Mrc
+	from pyami import mrc
 	import numarray
 
 	def wxBitmapFromMRC(filename, min=None, max=None, color=False):
-		n = Mrc.mrcstr_to_numeric(open(filename, 'rb').read())
+		n = mrc.read(filename)
 		return wxBitmapFromNumarray(n, min, max, color)
 
 	def onLeftUp(evt):

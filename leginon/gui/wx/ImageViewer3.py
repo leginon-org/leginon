@@ -551,7 +551,7 @@ class Viewer(wx.Panel):
 
 if __name__ == '__main__':
     import sys
-    import Mrc
+    from pyami import mrc
 
     filename = sys.argv[1]
 
@@ -566,7 +566,7 @@ if __name__ == '__main__':
 
     app = MyApp(0)
 
-    array = Mrc.mrcstr_to_numeric(open(filename, 'rb').read())
+    array = mrc.read(filename)
     app.panel.setNumarray(array)
     app.MainLoop()
 

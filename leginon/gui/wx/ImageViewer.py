@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.51 $
+# $Revision: 1.52 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-03-14 20:36:21 $
+# $Date: 2007-05-17 22:13:51 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -23,7 +23,7 @@
 #
 
 import cStringIO
-import Mrc
+from pyami import mrc
 import math
 try:
 	import numarray as Numeric
@@ -851,9 +851,6 @@ class ImagePanel(wx.Panel):
 		self.setBuffer()
 		self.panel.Scroll(0, 0)
 		self.UpdateDrawing()
-
-	def setImageFromMrcString(self, imagestring):
-		self.setImage(Mrc.mrcstr_to_numeric(imagestring))
 
 	def setImageFromPILString(self, imagestring):
 		buffer = cStringIO.StringIO(pilimage)
@@ -1785,8 +1782,7 @@ if __name__ == '__main__':
 	if filename is None:
 		app.panel.setImage(None)
 	elif filename[-4:] == '.mrc':
-		#app.panel.setImageFromMrcString(
-		image = Mrc.mrcstr_to_numeric(open(filename, 'rb').read())
+		image = mrc.read(filename)
 		app.panel.setImage(image)
 	else:
 		app.panel.setImage(Image.open(filename))
