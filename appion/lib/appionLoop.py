@@ -14,6 +14,7 @@ import apDatabase
 import apDB
 import apImage
 import apXml
+import apParam
 #leginon
 import data
 try:
@@ -545,15 +546,7 @@ class AppionLoop(object):
 		f.close()
 
 	def _createDirectory(self, path, warning=True, mode=0777):
-		if os.path.exists(path):
-			if warning:
-				apDisplay.printWarning("directory \'"+path+"\' already exists.")
-			return False
-		try:
-			os.makedirs(path, mode)
-		except:
-			apDisplay.printError("could not create directory \'"+path+"\'\ncheck permissions.")
-		return True
+		return apParam.createDirectory(path, warning=warning, mode=mode)
 
 	def _getAllImages(self):
 		startt = time.time()
