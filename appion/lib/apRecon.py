@@ -15,6 +15,7 @@ import math
 import string
 import appionData
 import apDB
+import EMAN
 
 db = apDB.db
 partdb = apDB.apdb
@@ -162,6 +163,27 @@ def parseLogFile(params):
 			params['iterations'].append(iteration)
 	lines.close()
 				
+def getClassInfo(classes):
+	classes='/ami/data09/leginon/06nov29a/recon/t7/r01/classes.10.img'
+	# read a classes.*.img file, get # of images
+	imgnum, imgtype = EMAN.fileCount(classes)
+	img = EMAN.EMData()
+	img.readImage(classes, 0, 1)
+
+	# for projection images, get eulers
+	projeulers=[]
+	for i in range(imgnum):
+		img.readImage(classes, i, 1)
+		e = img.getEuler()
+		alt = e.thetaMRC()*180./math.pi
+		az = e.phiMRC()*180./math.pi
+		phi = e.omegaMRC()*180./math.pi
+		eulers=[alt,az,phi]
+		print i,eulers
+		if i%2==0:
+			projeulers.append(eulers)
+	return projeulers
+
 def insertReconRun(params):
 	runq=appionData.ApReconRunData()
 	runq['name']=params['runid']
@@ -213,7 +235,7 @@ def insertIteration(params):
 
 		# insert unique iteration parameters
 		if not result:
-			partdb.insert(refineparamsq)
+#			partdb.insert(refineparamsq)
 			refineparamsq=appionData.ApRefinementParamsData()
 			refineparamsq['angIncr']=iteration['angIncr']
 			refineparamsq['mask']=iteration['mask']
@@ -244,25 +266,29 @@ def insertIteration(params):
 				# calculate the resolution:
 				halfres=calcRes(fscfile, params['model'])
 				resq['half']=halfres
-				partdb.insert(resq)
+#				partdb.insert(resq)
 				resq=appionData.ApResolutionData()
 				resq['fscfile']=fscfile
 				result=partdb.query(resq, results=1)
 			resolutionId=result[0]
 		
 		# get number of class averages and # kept
-		refinefile=params['dir']+'refine'+iteration['num']+'.txt'
-		f=open(refinefile,'r')
-		numclasses=None
-		numclasseskept=None
-		for line in f:
-			line=string.rstrip(line)
-			if re.search("used", line):
-				bits=line.split(' ')
-				classes=bits[-2].split('/')
-				numclasses=classes[1]
-				numclasseskept=classes[0]
-		f.close()
+		classavg='classes.'+iteration['num']+'.img'
+		params['eulers']=getClassInfo(os.path.join(params['dir'],classavg))
+		
+
+#		refinefile=params['dir']+'refine'+iteration['num']+'.txt'
+#		f=open(refinefile,'r')
+#		numclasses=None
+#		numclasseskept=None
+#		for line in f:
+#			line=string.rstrip(line)
+#			if re.search("used", line):
+#				bits=line.split(' ')
+#				classes=bits[-2].split('/')
+#				numclasses=classes[1]
+#				numclasseskept=classes[0]
+#		f.close()
 
 		# count # particles thrown out
 		badprtls=0
@@ -283,7 +309,6 @@ def insertIteration(params):
 		refineq['numClassAvg']=numclasses
 		refineq['numClassAvgKept']=numclasseskept
 		refineq['numBadParticles']=badprtls
-		classavg='classes.'+iteration['num']+'.img'
 		classvar='classes.'+iteration['num']+'.var.img'
 		volumeSnapshot='threed.'+iteration['num']+'a.png'
 		volumeDensity='threed.'+iteration['num']+'a.mrc'
