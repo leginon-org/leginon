@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import dbdatakeeper
-import data
+import leginondata
 import MySQLdb
 import sys
 import getpass
@@ -20,10 +20,10 @@ appids = []
 evtids = []
 nodids = []
 
-db = dbdatakeeper.DBDataKeeper()
+db = leginondata.db
 
 for delapp in delapps:
-	qapp = data.ApplicationData(name=delapp)
+	qapp = leginondata.ApplicationData(name=delapp)
 	apps = db.query(qapp)
 	appids.extend([a.dbid for a in apps])
 

@@ -10,8 +10,7 @@ offset means:
 import numarray
 import numarray.nd_image
 import numarray.linear_algebra
-import dbdatakeeper
-import data
+import leginondata
 import polygon
 import raster
 import time
@@ -22,7 +21,7 @@ import os.path
 from pyami import affine
 import caltransformer
 
-dbdk = dbdatakeeper.DBDataKeeper()
+dbdk = leginondata.db
 
 def memmapMRC(fileref):
 	fullname = os.path.join(fileref.path, fileref.filename)
@@ -31,8 +30,8 @@ def memmapMRC(fileref):
 
 class Image(object):
 	def __init__(self, scope, camera, timestamp, fileref=None, rotation=0.0):
-		self.scope = data.ScopeEMData(initializer=scope)
-		self.camera = data.CameraEMData(initializer=camera)
+		self.scope = leginondata.ScopeEMData(initializer=scope)
+		self.camera = leginondata.CameraEMData(initializer=camera)
 		self.shape = self.camera['dimension']['y'], self.camera['dimension']['x']
 		self.fileref = fileref
 		self.timestamp = timestamp
@@ -141,9 +140,9 @@ class MontageImage(Image):
 			for col in numarray.arange(firstpixel, colsize, tilesize):
 				pixel = {'row':row-centerpixel[0], 'col':col-centerpixel[1]}
 				newstage = self.trans.transform(pixel, self.stage, self.bin)
-				tilescope = data.ScopeEMData(initializer=self.scope)
+				tilescope = leginondata.ScopeEMData(initializer=self.scope)
 				tilescope['stage position'] = newstage
-				tilecamera = data.CameraEMData(initializer=self.camera)
+				tilecamera = leginondata.CameraEMData(initializer=self.camera)
 				tilecamera['dimension'] = {'x':tilesize, 'y':tilesize}
 				args = tilescope, tilecamera, self.timestamp
 				kwargs = {'rotation': self.rotation}
@@ -215,7 +214,7 @@ class MontageImage(Image):
 def getImageData(filename_or_id):
 	print 'getImageData(%s)' % (filename_or_id,)
 	if isinstance(filename_or_id, basestring):
-		q = data.AcquisitionImageData(filename=filename_or_id)
+		q = leginondata.AcquisitionImageData(filename=filename_or_id)
 		images = dbdk.query(q, readimages=False, results=1)
 		if images:
 			return images[0]
@@ -289,8 +288,8 @@ def readInputs(cachefile):
 def createGlobalOutput(imdata, angle=0.0, bin=1):
 	print 'creating global image space'
 	timestamp = imdata.timestamp
-	scope = data.ScopeEMData(initializer=imdata['scope'])
-	camera = data.CameraEMData(initializer=imdata['camera'])
+	scope = leginondata.ScopeEMData(initializer=imdata['scope'])
+	camera = leginondata.CameraEMData(initializer=imdata['camera'])
 	binning = {'x':camera['binning']['x']*bin, 'y':camera['binning']['y']*bin}
 	camera['binning'] = binning
 	globaloutput = MontageImage(scope, camera, timestamp, rotation=angle)
@@ -524,12 +523,12 @@ if __name__ == '__main__':
 	max = None
 	mean = None
 	std = None
-	q = data.AcquisitionImageStatsData(image=images[0])
+	q = leginondata.AcquisitionImageStatsData(image=images[0])
 	stats = db.query(q, results=1)[0]
 	sum = stats['mean']
 	std = stats['stdev']
 	for im in images[1:]:
-		q = data.AcquisitionImageStatsData(image=im)
+		q = leginondata.AcquisitionImageStatsData(image=im)
 		stats = db.query(q, results=1)[0]
 		if stats['stdev'] > std:
 			std = stats['stdev']

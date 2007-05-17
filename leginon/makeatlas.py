@@ -2,8 +2,7 @@
 
 import mosaic
 import node
-import dbdatakeeper
-import data
+import leginondata
 import sys
 from pyami import mrc
 import calibrationclient
@@ -11,9 +10,9 @@ import os.path
 
 filenames = sys.argv[1:]
 
-db = dbdatakeeper.DBDataKeeper()
+db = leginondata.db
 
-ses = data.SessionData()
+ses = leginondata.SessionData()
 
 n = node.Node('asdf',ses)
 n.instrument = None
@@ -24,7 +23,7 @@ m = mosaic.EMMosaic(c)
 for filename in filenames:
 	print 'FILE', filename
 	qfilename = os.path.split(filename)[-1][:-4]
-	imquery = data.AcquisitionImageData(filename=qfilename)
+	imquery = leginondata.AcquisitionImageData(filename=qfilename)
 	images = db.query(imquery, results=1)
 	if not images:
 		print '** file not in db **'

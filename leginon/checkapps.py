@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
 import dbdatakeeper
-import data
+import leginondata
 import sys
 import getpass
 import sets
 
 days = int(raw_input('Days: '))
-db = dbdatakeeper.DBDataKeeper()
+db = leginondata.db
 
 ## make set of all application names
-appquery = data.ApplicationData()
+appquery = leginondata.ApplicationData()
 apps = db.query(appquery)
 print 'APPS', len(apps)
 allapps = sets.Set()
@@ -25,7 +25,7 @@ for app in apps:
 print 'ALL', len(allapps)
 
 ## make set off apps launched in last n days
-launchquery = data.LaunchedApplicationData()
+launchquery = leginondata.LaunchedApplicationData()
 timelimit = '-%d 0:0:0' % (days,)
 launchedapps = db.query(launchquery, timelimit=timelimit)
 recentapps = []

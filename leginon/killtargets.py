@@ -6,13 +6,12 @@ if len(sys.argv) != 2:
 	print '%s %s' % (sys.argv[0], 'session_name')
 	sys.exit(1)
 
-import data
-import dbdatakeeper
-db = dbdatakeeper.DBDataKeeper()
+import leginondata
+db = leginondata.db
 
 # look up session with name given by user
 session_name = sys.argv[1]
-sessiondata = data.SessionData(name=session_name)
+sessiondata = leginondata.SessionData(name=session_name)
 sessions = db.query(sessiondata)
 if not sessions:
 	print 'No session named %s' % (session_name,)
@@ -32,7 +31,7 @@ if response != 'ok':
 	sys.exit(1)
 
 # find targets in this session
-targetdata = data.AcquisitionImageTargetData(session=sessiondata)
+targetdata = leginondata.AcquisitionImageTargetData(session=sessiondata)
 targets = db.query(targetdata)
 
 print 'Found %d target records.  Searching for targets not done...' % (len(targets),)
@@ -91,7 +90,7 @@ if response != 'done':
 	sys.exit(1)
 
 for target in notdonedata.values():
-	newtarget = data.AcquisitionImageTargetData(initializer=target)
+	newtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 	newtarget['status'] = 'done'
 	db.insert(newtarget)
 

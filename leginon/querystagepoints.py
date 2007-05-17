@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-import data
-import dbdatakeeper
+import leginondata
 import sys
 
 label = sys.argv[1]
-db = dbdatakeeper.DBDataKeeper()
+db = leginondata.db
 
-sm = data.StageMeasurementData(label=label, axis='x')
+sm = leginondata.StageMeasurementData(label=label, axis='x')
 points = db.query(sm)
 for point in points:
 	print '%(label)s	%(magnification)s	%(axis)s	%(x)s	%(y)s	%(delta)s	%(imagex)s	%(imagey)s' % point

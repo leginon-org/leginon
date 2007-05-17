@@ -6,17 +6,16 @@ if len(sys.argv) < 3:
 
 import wx
 import wx.lib.plot
-from dbdatakeeper import DBDataKeeper
-import data
+import leginondata
 import math
 import gonmodel
 import numarray
 
-db = DBDataKeeper()
+db = leginondata.db
 
 def querymodel(axis, hostname, label=None):
-	tem = data.InstrumentData(hostname=hostname)
-	sm = data.StageModelCalibrationData(axis=axis, tem=tem, label=label)
+	tem = leginondata.InstrumentData(hostname=hostname)
+	sm = leginondata.StageModelCalibrationData(axis=axis, tem=tem, label=label)
 	model = db.query(sm, results=1)
 	if not model:
 		return None
@@ -30,8 +29,8 @@ def querymodel(axis, hostname, label=None):
 	return mod
 
 def querymodelmag(axis, label, hostname):
-	tem = data.InstrumentData(hostname=hostname)
-	sm = data.StageModelMagCalibrationData(axis=axis, label=label, tem=tem)
+	tem = leginondata.InstrumentData(hostname=hostname)
+	sm = leginondata.StageModelMagCalibrationData(axis=axis, label=label, tem=tem)
 	magcal = db.query(sm, results=1)
 	magcal = magcal[0]
 	print 'MAGCAL', magcal.timestamp
@@ -46,8 +45,8 @@ def normalizemodel(points, a0):
 	return map(lambda x: (x[0],x[1]*a0*0.95), points)
 
 def querypoints(axis, label, hostname):
-	tem = data.InstrumentData(hostname=hostname)
-	sm = data.StageMeasurementData(label=label, axis=axis, tem=tem)
+	tem = leginondata.InstrumentData(hostname=hostname)
+	sm = leginondata.StageMeasurementData(label=label, axis=axis, tem=tem)
 	points = db.query(sm)
 	xy = []
 	for point in points:

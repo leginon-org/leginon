@@ -7,9 +7,14 @@
 import leginonconfig
 import sinedon.newdict
 import sinedon.data
+import sinedon.dbdatakeeper
+import sinedon.dbconfig
 import os
 
 Data = sinedon.data.Data
+
+dbconf = sinedon.dbconfig.getConfig(__name__)
+db = sinedon.dbdatakeeper.DBDataKeeper(**dbconf)
 
 class GroupData(Data):
 	def typemap(cls):

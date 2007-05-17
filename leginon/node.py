@@ -7,10 +7,9 @@
 #
 #
 
-import data
+import leginondata
 from databinder import DataBinder
 import datatransport
-from dbdatakeeper import DBDataKeeper
 import event
 import logging
 import threading
@@ -64,7 +63,7 @@ class Node(object):
 
 		self.managerclient = None
 
-		if session is None or isinstance(session, data.SessionData):
+		if session is None or isinstance(session, leginondata.SessionData):
 			self.session = session
 		else:
 			raise TypeError('session must be of proper type')
@@ -78,9 +77,7 @@ class Node(object):
 		else:
 			self.databinder = otherdatabinder
 		if otherdbdatakeeper is None:
-			name = DBDataKeeper.__name__
-			dbdatakeeperlogger = gui.wx.Logging.getNodeChildLogger(name, self)
-			self.dbdatakeeper = DBDataKeeper(dbdatakeeperlogger)
+			self.dbdatakeeper = leginondata.db
 		else:
 			self.dbdatakeeper = otherdbdatakeeper
 
@@ -112,7 +109,7 @@ class Node(object):
 		# load the requested user settings
 		if user is None:
 			user = self.session['user']
-		qsession = data.SessionData(initializer={'user': user})
+		qsession = leginondata.SessionData(initializer={'user': user})
 		qdata = self.settingsclass(initializer={'session': qsession,
 																						'name': self.name})
 		settings = self.research(qdata, results=1)
@@ -160,7 +157,7 @@ class Node(object):
 
 	def logToDB(self, record):
 		'''insertes a logger record into the DB'''
-		record_data = data.LoggerRecordData(session=self.session)
+		record_data = leginondata.LoggerRecordData(session=self.session)
 		for atr in ('name','levelno','levelname','pathname','filename','module','lineno','created','thread','process','message','exc_info'):
 			record_data[atr] = getattr(record,atr)
 		self.publish(record_data, database=True, dbforce=True)
@@ -422,7 +419,7 @@ class Node(object):
 
 	def declareDrift(self, type):
 		## declare drift manually
-		declared = data.DriftDeclaredData()
+		declared = leginondata.DriftDeclaredData()
 		declared['system time'] = self.instrument.tem.SystemTime
 		declared['type'] = type
 		declared['session'] = self.session
@@ -434,7 +431,7 @@ class Node(object):
 	def storeTime(self, label, type):
 		key = self.timerKey(label)
 
-		t = data.TimerData()
+		t = leginondata.TimerData()
 		t['session'] = self.session
 		t['node'] = self.name
 		t['t'] = time.time()

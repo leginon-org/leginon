@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import data
+import leginondata
 import event
 import threading
 from pyami import ordereddict
@@ -38,7 +38,7 @@ class TargetHandler(object):
 		Get a list of all targets that match the specified keywords.
 		Only get most recent versions of each
 		'''
-		targetquery = data.AcquisitionImageTargetData(**kwargs)
+		targetquery = leginondata.AcquisitionImageTargetData(**kwargs)
 		targets = self.research(datainstance=targetquery)
 
 		## now filter out only the latest versions
@@ -75,11 +75,11 @@ class TargetHandler(object):
 			get a list of all active (not done) target lists in the queue
 			'''
 			# get targetlists relating to this queue
-			tarlistquery = data.ImageTargetListData(queue=queuedata)
+			tarlistquery = leginondata.ImageTargetListData(queue=queuedata)
 			targetlists = self.research(datainstance=tarlistquery)
 			# need FIFO queue (query returns LIFO)
 			targetlists.reverse()
-			dequeuedquery = data.DequeuedImageTargetListData(queue=queuedata)
+			dequeuedquery = leginondata.DequeuedImageTargetListData(queue=queuedata)
 			dequeuedlists = self.research(datainstance=dequeuedquery)
 			keys = [targetlist.dbid for targetlist in targetlists]
 			active = ordereddict.OrderedDict(zip(keys,targetlists))
@@ -116,7 +116,7 @@ class TargetHandler(object):
 						continue
 					else:
 						self.player.play()
-				donetargetlist = data.DequeuedImageTargetListData(session=self.session, list=targetlist, queue=self.targetlistqueue)
+				donetargetlist = leginondata.DequeuedImageTargetListData(session=self.session, list=targetlist, queue=self.targetlistqueue)
 				self.publish(donetargetlist, database=True)
 			self.player.play()
 
@@ -125,7 +125,7 @@ class TargetHandler(object):
 		# get info on each target list
 
 	def researchTargetLists(self, **kwargs):
-		targetlist = data.ImageTargetListData(session=self.session, **kwargs)
+		targetlist = leginondata.ImageTargetListData(session=self.session, **kwargs)
 		targetlists = self.research(datainstance=targetlist)
 		return targetlists
 
@@ -152,7 +152,7 @@ class TargetHandler(object):
 			queuedata = self.getQueue()
 		else:
 			queuedata = None
-		listdata = data.ImageTargetListData(session=self.session, label=label, mosaic=mosaic, image=image, queue=queuedata, sublist=sublist)
+		listdata = leginondata.ImageTargetListData(session=self.session, label=label, mosaic=mosaic, image=image, queue=queuedata, sublist=sublist)
 		return listdata
 
 	def getQueue(self, label=None):
@@ -160,18 +160,18 @@ class TargetHandler(object):
 			return self.targetlistqueue
 		if label is None:
 			label = self.name
-		queuequery = data.QueueData(session=self.session, label=label)
+		queuequery = leginondata.QueueData(session=self.session, label=label)
 		queues = self.research(datainstance=queuequery)
 		if queues:
 			self.targetlistqueue = queues[0]
 		else:
-			newqueue = data.QueueData(session=self.session, label=label)
+			newqueue = leginondata.QueueData(session=self.session, label=label)
 			self.publish(newqueue, database=True)
 			self.targetlistqueue = newqueue
 		return self.targetlistqueue
 
 	def newReferenceTarget(self, image_data, drow, dcol):
-		target_data = data.ReferenceTargetData()
+		target_data = leginondata.ReferenceTargetData()
 		target_data['image'] = image_data
 		target_data['scope'] = image_data['scope']
 		target_data['camera'] = image_data['camera']
@@ -186,7 +186,7 @@ class TargetHandler(object):
 		'''
 		create new AcquistionImageTargetData and fill in all fields
 		'''
-		targetdata = data.AcquisitionImageTargetData(initializer=kwargs)
+		targetdata = leginondata.AcquisitionImageTargetData(initializer=kwargs)
 		targetdata['delta row'] = drow
 		targetdata['delta column'] = dcol
 		if 'session' not in kwargs:
@@ -223,9 +223,9 @@ class TargetHandler(object):
 		return targetdata
 
 	def lastTargetNumberOnMosaic(self, imagelist):
-		qimagedata = data.AcquisitionImageData()
+		qimagedata = leginondata.AcquisitionImageData()
 		qimagedata['list'] = imagelist
-		targetquery = data.AcquisitionImageTargetData(image=qimagedata, status='new')
+		targetquery = leginondata.AcquisitionImageTargetData(image=qimagedata, status='new')
 		targets = self.research(datainstance=targetquery, results=1)
 		if targets:
 			for target in targets:
@@ -255,7 +255,7 @@ class TargetHandler(object):
 		return newtarget
 
 	def getReferenceTarget(self):
-		target_data = data.ReferenceTargetData()
+		target_data = leginondata.ReferenceTargetData()
 		target_data['session'] = self.session
 		try:
 			return self.research(target_data, results=1)[-1]
@@ -264,7 +264,7 @@ class TargetHandler(object):
 
 	def markTargetsDone(self, targets):
 		for target in targets:
-			done_target = data.AcquisitionImageTargetData(initializer=target, status='done')
+			done_target = leginondata.AcquisitionImageTargetData(initializer=target, status='done')
 			self.publish(done_target, database=True)
 
 class TargetWaitHandler(TargetHandler):
@@ -289,7 +289,7 @@ class TargetWaitHandler(TargetHandler):
 
 	def makeTargetListEvent(self, targetlistdata):
 		'''
-		Creates a threading event to be waited on for target list data.
+		Creates a threading event to be waited on for target list leginondata.
 		'''
 		tlistid = targetlistdata.dmid
 		self.targetlistevents[tlistid] = {}
@@ -324,17 +324,16 @@ class TargetWaitHandler(TargetHandler):
 
 if __name__ == '__main__':
 	import node
-	import dbdatakeeper
 
 	class TestNode(node.Node, TargetHandler):
 		pass
 		def __init__(self, id, session=None, managerlocation=None):
 			node.Node.__init__(self, id, session, managerlocation)
 
-	db = dbdatakeeper.DBDataKeeper()
+	db = leginondata.db
 	t = TestNode('testnode')
 
-	s = data.SessionData(name='04may26a')
+	s = leginondata.SessionData(name='04may26a')
 	s = db.query(s, results=1)
 	s = s[0]
 	print 's', s

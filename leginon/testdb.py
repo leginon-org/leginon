@@ -8,20 +8,19 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 import sys
-import data
-import dbdatakeeper
+import leginondata
 import sqldb
 import numarray
 
  #initializer = {'name': 'voici'}
 initializer = {'name': 'Session Test 2' }
-session = data.SessionData(initializer=initializer)
+session = leginondata.SessionData(initializer=initializer)
 
 a = numarray.array((1,2,3,4,5,6,))
 a.shape = 2,3
 
 initializer = {'matrix': a}
-db = dbdatakeeper.DBDataKeeper()
+db = leginondata.db
 #r=db.diffData(session)
 # r=db.insert(data.MatrixCalibrationData(initializer=initializer))
 # r=db.query(data.MatrixCalibrationData(), results=1)

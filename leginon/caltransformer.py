@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import numarray
 import numarray.linear_algebra
-import dbdatakeeper
-import data
+from sinedon.dbdatakeeper import DBDataKeeper
+import leginondata
 import gonmodel
 
-dbdk = dbdatakeeper.DBDataKeeper()
+dbdk = leginondata.db
 
 stagetransformers = {}
 def getTransformer(tem, ccd, ht, mag, timestamp, rotation=0.0):
@@ -122,7 +122,7 @@ class Transformer(object):
 		return {'x':gx0+dgx, 'y':gy0+dgy}
 		
 	def getMagCal(self, tem, ccd, axis, ht, mag, timestamp):
-		qinst = data.StageModelMagCalibrationData(magnification=mag, axis=axis)
+		qinst = leginondata.StageModelMagCalibrationData(magnification=mag, axis=axis)
 		qinst['high tension'] = ht
 		qinst['tem'] = tem
 		qinst['ccdcamera'] = ccd
@@ -145,7 +145,7 @@ class Transformer(object):
 		return caldata
 	
 	def getModelCal(self, tem, ccd, axis, timestamp):
-		qinst = data.StageModelCalibrationData(axis=axis)
+		qinst = leginondata.StageModelCalibrationData(axis=axis)
 		qinst['tem'] = tem
 		qinst['ccdcamera'] = ccd
 		caldatalist = dbdk.query(qinst)
@@ -174,7 +174,7 @@ class Transformer(object):
 		return mod
 
 	def getMatrixCal(self, tem, ccd, ht, mag, timestamp, type):
-		qinst = data.MatrixCalibrationData(type=type, magnification=mag)
+		qinst = leginondata.MatrixCalibrationData(type=type, magnification=mag)
 		qinst['high tension'] = ht
 		qinst['tem'] = tem
 		qinst['ccdcamera'] = ccd
@@ -199,7 +199,7 @@ class Transformer(object):
 def test():
 	import datetime
 	# hole transformer
-	qhole = data.AcquisitionImageData(filename='07mar29b_00010gr_00012sq_v02_00011hl')
+	qhole = leginondata.AcquisitionImageData(filename='07mar29b_00010gr_00012sq_v02_00011hl')
 	images = dbdk.query(qhole, readimages=False)
 	im = images[0]
 	hlscope = im['scope']
@@ -207,7 +207,7 @@ def test():
 	hltrans = getTransformer(hlscope['tem'], hlcamera['ccdcamera'], hlscope['high tension'], hlscope['magnification'], im.timestamp)
 
 	# square transformer
-	qsq = data.AcquisitionImageData(filename='07mar29b_00010gr_00012sq')
+	qsq = leginondata.AcquisitionImageData(filename='07mar29b_00010gr_00012sq')
 	images = dbdk.query(qsq, readimages=False)
 	im= images[0]
 	sqscope = im['scope']
