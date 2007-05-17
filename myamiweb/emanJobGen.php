@@ -180,24 +180,25 @@ Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50>
 }
 
 function writeJobFile () {
+        echo "<PRE>\n";
         $dmfpath=$_POST['dmfpath'];
 	// make sure dmf store dir ends with '/'
 	if (substr($dmfpath,-1,1)!='/') $dmfpath.='/';
-        if ($_POST['jobname']) echo "# ".$_POST['jobname']."<P>\n";
-        echo "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."<BR>\n";
-	echo "#PBS -l walltime=".$_POST['walltime'].":00:00<BR>\n";
-	echo "#PBS -l cput=".$_POST['cput'].":00:00<BR>\n";
-	echo "#PBS -m e<BR>\n";
-	echo "#PBS -r n<BR>\n";
-	echo "<P>cd \$PBSREMOTEDIR\n";
+        if ($_POST['jobname']) echo "# ".$_POST['jobname']."\n";
+        echo "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
+	echo "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
+	echo "#PBS -l cput=".$_POST['cput'].":00:00\n";
+	echo "#PBS -m e\n";
+	echo "#PBS -r n\n";
+	echo "\ncd \$PBSREMOTEDIR\n";
 	// get file name, strip extension
 	$ext=strrchr($_POST['dmfstack'],'.');
 	$stackname=substr($_POST['dmfstack'],0,-strlen($ext));
-	echo "<P>dmf get $dmfpath".$_POST['dmfmod']." threed.0a.mrc<BR>\n";
-	echo "dmf get $dmfpath$stackname.hed start.hed<BR>\n";
-	echo "dmf get $dmfpath$stackname.img start.img<BR>\n";
-	echo "<P>foreach i (`sort -u \$PBS_NODEFILE`)<BR>\n";
-	echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;echo 'rsh 1 ".$_POST['rprocs']."' \$i \$PBSREMOTEDIR >> .mparm<BR>\n";
+	echo "\ndmf get $dmfpath".$_POST['dmfmod']." threed.0a.mrc\n";
+	echo "dmf get $dmfpath$stackname.hed start.hed\n";
+	echo "dmf get $dmfpath$stackname.img start.img\n";
+	echo "\nforeach i (`sort -u \$PBS_NODEFILE`)\n";
+	echo "        echo 'rsh 1 ".$_POST['rprocs']."' \$i \$PBSREMOTEDIR >> .mparm\n";
 	echo "end\n";
 	$procs=$_POST['nodes']*$_POST['rprocs'];
         $numiters=$_POST['numiters'];
@@ -219,7 +220,7 @@ function writeJobFile () {
 		$pad=intval($_POST['box']*1.25);
 		// make sure $pad value is even int
 		$pad = ($pad%2==1) ? $pad+=1 : $pad;
-		$line="<P>refine $i proc=$procs ang=$ang pad=$pad";
+		$line="\nrefine $i proc=$procs ang=$ang pad=$pad";
 		if ($mask) $line.=" mask=$mask";
 		if ($imask) $line.=" imask=$imask";
 		if ($sym) $line.=" sym=$sym";
@@ -232,8 +233,8 @@ function writeJobFile () {
 		if ($phasecls=='on') $line.=" phasecls";
 		if ($refine=='on') $line.=" refine";
 		if ($goodbad=='on') $line.=" goodbad";
-		$line.=" > refine".$i.".txt<BR>";
-		$line.="getProjEulers.py proj.img proj.$i.txt<BR>";
+		$line.=" > refine".$i.".txt\n";
+		$line.="getProjEulers.py proj.img proj.$i.txt\n";
 		if ($eotest=='on') {
 		        $line.="eotest proc=$procs pad=$pad";
 			if ($mask) $line.=" mask=$mask";
@@ -245,18 +246,19 @@ function writeJobFile () {
 			if ($median=='on') $line.=" median";
 			if ($phasecls=='on') $line.=" phasecls";
 			if ($refine=='on') $line.=" refine";
-			$line.=" > eotest".$i.".txt<BR>";
-			$line.="mv fsc.eotest fsc.eotest".$i."<BR>";
-			$line.="getRes.pl >> resolution.txt<BR>";
+			$line.=" > eotest".$i.".txt\n";
+			$line.="mv fsc.eotest fsc.eotest".$i."\n";
+			$line.="getRes.pl >> resolution.txt\n";
 		}
-		$line.="rm cls*.lst<BR>";
+		$line.="rm cls*.lst\n";
 		echo $line;
 	}
 	if ($_POST['dmfstore']=='on') {
-		echo "<P>tar -cvzf model.tar.gz threed.*a.mrc<BR>\n";
-		echo "dmf put model.tar.gz $dmfpath<BR>\n";
-		echo "<P>tar -cvzf results.tar.gz fsc* tcls* refine.* particle.* classes.* proj.* sym.* .emanlog *txt<BR>\n";
+		echo "\ntar -cvzf model.tar.gz threed.*a.mrc\n";
+		echo "dmf put model.tar.gz $dmfpath\n";
+		echo "\ntar -cvzf results.tar.gz fsc* tcls* refine.* particle.* classes.* proj.* sym.* .emanlog *txt\n";
 		echo "dmf put results.tar.gz $dmfpath\n";
 	} 
+	echo "</PRE>\n";
 	exit;
 }
