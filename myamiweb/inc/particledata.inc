@@ -29,7 +29,7 @@ class particledata {
 	
 	function getTemplatesFromProject ($projectId) {
 		$q="select * "
-			."from `ApTemplateImageData` where `project|projects|projectId`='$projectId'";
+			."from `ApTemplateImageData` where `project|projects|project`='$projectId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}

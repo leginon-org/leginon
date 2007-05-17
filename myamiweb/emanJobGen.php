@@ -22,6 +22,7 @@ if ($_POST['write']) {
         if ($_POST['cput'] > 240) jobForm("ERROR: Max CPU time is 240");
         if (!$_POST['rprocs']) jobForm("ERROR: No refinement ppn specified, setting default=4");
         if ($_POST['rprocs'] > $_POST['ppn']) jobForm("ERROR: Asking to refine on more processors than available");
+	if (!$_POST['dmfpath'] > $_
         if (!$_POST['dmfmod']) jobForm("ERROR: No starting model");
 	if (!$_POST['dmfstack']) jobForm("ERROR: No stack file");
 	if (!$_POST['box']) jobForm("ERROR: No box size");
@@ -43,7 +44,7 @@ function jobForm($extra=false) {
 	$walltime = ($_POST['walltime']) ? $_POST['walltime'] : 240;
 	$cput = ($_POST['cput']) ? $_POST['cput'] : 240;
 	$dmfstack = ($_POST['dmfstack']) ? $_POST['dmfstack'] : '';
-	$dmfstore = ($_POST['dmfstore']) ? $_POST['dmfstore'] : '';
+	$dmfpath = ($_POST['dmfpath']) ? $_POST['dmfpath'] : '';
 	$dmfmod = ($_POST['dmfmod']) ? $_POST['dmfmod'] : '';
 	$numiters= ($_POST['numiters']) ? $_POST['numiters'] : 1;
 
@@ -85,6 +86,10 @@ Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50>
 <BR>
 <TABLE CLASS='tableborder'>
   <TR>
+    <TD>DMF Directory:</TD>
+    <TD><INPUT TYPE='text' NAME='dmfpath' VALUE='$dmfpath' SIZE='50'></TD>
+  </TR>
+  <TR>
     <TD>DMF Starting Model (mrc):</TD>
     <TD><INPUT TYPE='text' NAME='dmfmod' VALUE='$dmfmod' SIZE='50'></TD>
   </TR>
@@ -92,9 +97,6 @@ Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50>
     <TD>DMF Stack (img or hed):</TD>
     <TD><INPUT TYPE='text' NAME='dmfstack' VALUE='$dmfstack' SIZE='50'></TD>
   </TR>
-  <TR>
-    <TD>DMF Store Directory:</TD>
-    <TD><INPUT TYPE='text' NAME='dmfstore' VALUE='$dmfstore' SIZE='50'></TD>
   <TR>
     <TD>Box Size (pixels):</TD>
     <TD><INPUT TYPE='text' NAME='box' VALUE='$box' SIZE='5'></TD>
@@ -170,7 +172,7 @@ Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50>
 }
 
 function writeJobFile () {
-        $dmfstore=$_POST['dmfstore'];
+        $dmfpath=$_POST['dmfpath'];
         if ($_POST['jobname']) echo "# ".$_POST['jobname']."<P>\n";
         echo "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."<BR>\n";
 	echo "#PBS -l walltime=".$_POST['walltime'].":00:00<BR>\n";
@@ -238,9 +240,9 @@ function writeJobFile () {
 		$line.="rm cls*.lst<BR>";
 		echo $line;
 	}
-	if ($dmfstore) {
+	if ($_POST['dmfstore']=='on') {
 	        // make sure dmf store dir ends with '/'
-	        if (substr($dmfstore,-1,1)!='/') $dmfstore.='/';
+	        if (substr($dmfpath,-1,1)!='/') $dmfpath.='/';
 		echo "<P>tar -cvzf model.tar.gz threed.*a.mrc<BR>\n";
 		echo "dmf put model.tar.gz $dmfstore<BR>\n";
 		echo "<P>tar -cvzf results.tar.gz fsc* tcls* refine.* particle.* classes.* proj.* sym.* .emanlog *txt<BR>\n";

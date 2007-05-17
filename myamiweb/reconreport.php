@@ -51,7 +51,7 @@ foreach ($iterations as $iteration){
 	$html .= "<TD>$iteration[angIncr]</TD>\n";
 	$html .= "<TD>$halfres</TD>\n";
 	if ($halfres!='None')
-	        $html .= "<TD><A HREF='fscplot.php?fscfile=$fscfile&width=800&height=600&apix=$apix'&box=$boxsz><IMG SRC='fscplot.php?fscfile=$fscfile&width=100&height=80&nomargin=TRUE'>\n";
+	        $html .= "<TD><A HREF='fscplot.php?fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz'><IMG SRC='fscplot.php?fscfile=$fscfile&width=100&height=80&nomargin=TRUE'>\n";
 	else $html .= "<TD>-</TD>\n";
 	$html .= "<TD>$iteration[numClassAvgKept]/$iteration[numClassAvg]</TD>\n";
 	$html .= "<TD>$numparticles</TD>\n";
