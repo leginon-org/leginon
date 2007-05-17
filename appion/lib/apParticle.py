@@ -142,9 +142,10 @@ def insertParticlePeaks(peaktree, imgdict, expid, params):
 		particlesq = appionData.ApParticleData()
 		particlesq['selectionrun'] = runids[0]
 		particlesq['dbemdata|AcquisitionImageData|image'] = legimgid
+
 		if 'template' in peakdict and peakdict['template'] is not None:
 			particlesq['template'] = getTemplateDBInfo(peakdict['template'])
-		# use an update function???, maybe best not to
+
 		for key in 'xcoord','ycoord','correlation','peakmoment','peakstddev','peakarea':
 			if key in peakdict and peakdict[key] is not None:
 				particlesq[key] = peakdict[key]
@@ -152,11 +153,11 @@ def insertParticlePeaks(peaktree, imgdict, expid, params):
 		if 'peakarea' in peakdict and peakdict['peakarea'] is not None and peakdict['peakarea'] > 0:
 			peakhasarea = True
 		else:
-			#apDisplay.printWarning("peak has no area")
+			apDisplay.printWarning("peak has no area")
 			peakhasarea = False
 
-		if 'correlation' in peakdict and peakdict['correlation'] is not None and peakdict['correlation'] > 1:
-			apDisplay.printWarning("peak has correlation greater than 1.0")
+		if 'correlation' in peakdict and peakdict['correlation'] is not None and peakdict['correlation'] > 2:
+			apDisplay.printWarning("peak has correlation greater than 2.0")
 
 		### INSERT VALUES
 		if peakhasarea is True:
