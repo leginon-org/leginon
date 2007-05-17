@@ -145,12 +145,16 @@ def getFindEMPath():
 	findempath = os.environ.get('FINDEM_EXE')
 	if findempath is None and os.environ.get('APPIONDIR') is not None:
 		appiondir = os.environ.get('APPIONDIR')
-		trypath = os.path.join(appiondir,"/particle_manager/findem.exe")
+		trypath = os.path.join(appiondir,"/bin/findem.exe")
 	 	if os.path.isfile(trypath):
 			findempath = trypath
 	if findempath is None:
 		user = os.environ.get('USER')
-		trypath = "/home/"+user+"/pyappion/particle_manager/findem.exe"
+		trypath = "/home/"+user+"/pyappion/bin/findem.exe"
+	 	if os.path.isfile(trypath):
+			findempath = trypath
+	if findempath is None:
+		trypath = "/ami/sw/packages/pyappion/bin/findem.exe"
 	 	if os.path.isfile(trypath):
 			findempath = trypath
 	if findempath is None:
