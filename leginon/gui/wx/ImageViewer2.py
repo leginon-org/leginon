@@ -1,5 +1,5 @@
 import math
-import arraystats
+from pyami import arraystats
 import wx
 import time
 

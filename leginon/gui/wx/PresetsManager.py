@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.73 $
+# $Revision: 1.74 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-13 21:30:41 $
+# $Date: 2007-05-17 22:52:27 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -14,7 +14,7 @@
 import copy
 import data
 import instrument
-import newdict
+from pyami.ordereddict import OrderedDict
 import threading
 import wx
 from gui.wx.Entry import IntEntry, FloatEntry, EVT_ENTRY
@@ -1003,7 +1003,7 @@ class ImportDialog(wx.Dialog):
 		agestr = '-%d 0:0:0' % (days,)
 		pquery = data.PresetData(tem=tem, ccdcamera=ccd)
 		presets = self.node.research(pquery, timelimit=agestr)
-		self.sessiondict = newdict.OrderedDict()
+		self.sessiondict = OrderedDict()
 		for p in presets:
 			sname = p['session']['name']
 			if sname:
@@ -1042,7 +1042,7 @@ class ImportDialog(wx.Dialog):
 
 	def onImport(self, evt):
 		self.bimport.Enable(False)
-		presets = newdict.OrderedDict()
+		presets = OrderedDict()
 		selections = self.lbpresets.GetSelections()
 		for i in selections:
 			name = self.lbpresets.GetString(i)

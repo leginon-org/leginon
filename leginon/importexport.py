@@ -11,7 +11,7 @@ importexport: this Module allows to Import/Export Leginon II applications
 """
 from xml.parsers.expat import ExpatError
 import xml.dom.minidom as dom
-import sqldb
+from sinedon import sqldb
 import re
 
 class ApplicationImportError(Exception):

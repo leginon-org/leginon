@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.52 $
+# $Revision: 1.53 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-17 22:13:51 $
+# $Date: 2007-05-17 22:52:27 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -23,7 +23,7 @@
 #
 
 import cStringIO
-from pyami import mrc
+from pyami import mrc, arraystats
 import math
 try:
 	import numarray as Numeric
@@ -33,7 +33,6 @@ import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
 import NumericImage
 import Image
-import arraystats
 import icons
 import numextension
 from gui.wx.Entry import FloatEntry, EVT_ENTRY

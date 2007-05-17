@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.248 $
+# $Revision: 1.249 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-17 21:46:13 $
+# $Date: 2007-05-17 22:52:26 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -16,7 +16,6 @@ import calibrationclient
 import data
 import datatransport
 import event
-import dbdatakeeper
 import copy
 import threading
 import time

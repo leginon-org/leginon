@@ -8,7 +8,7 @@
 import data
 import node
 import gui.wx.IntensityMonitor
-import imagefun
+from pyami import imagefun
 import time
 import threading
 import instrument

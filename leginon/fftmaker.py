@@ -11,7 +11,7 @@ import event
 import imagewatcher
 import threading
 import node
-import imagefun
+from pyami import imagefun
 import gui.wx.FFTMaker
 
 class FFTMaker(imagewatcher.ImageWatcher):
