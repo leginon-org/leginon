@@ -124,6 +124,8 @@ def createDefaults():
 	params['session']=None
 	params['runid']=None
 	params['imgs']=None
+	params['rundir']=None
+	params['abspath']=os.path.abspath('.')+'/'
 	params['scale']=None
 	params['sym']=None
 	return params

@@ -101,7 +101,10 @@ def checkTemplates(params, upload=None):
 	# determine number of template files
 	# if using 'preptemplate' option, will count number of '.mrc' files
 	# otherwise, will count the number of '.dwn.mrc' files
-	name = os.path.join(params['rundir'], params['template'])
+	if (params['rundir']):
+		name = os.path.join(params['rundir'], params['template'])
+	else:
+		name = params['template']
 	params['templatelist'] = []
 	stop = False
 	# count number of template images.
