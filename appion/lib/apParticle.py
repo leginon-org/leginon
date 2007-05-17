@@ -153,6 +153,7 @@ def insertParticlePeaks(peaktree, imgdict, expid, params):
 		if 'peakarea' in particlesq and particlesq['peakarea'] is not None and particlesq['peakarea'] > 0:
 			peakhasarea = True
 		else:
+			apDisplay.printWarning("peak has no area")
 			peakhasarea = False
 		if not presult and peakhasarea is True:
 			count+=1
@@ -161,6 +162,7 @@ def insertParticlePeaks(peaktree, imgdict, expid, params):
 	return
 
 def insertParticlePicks(params,imgdict,expid,manual=False):
+	sys.exit(1)
 	#INFO
 	legimgid=int(imgdict.dbid)
 	imgname=imgdict['filename'] 

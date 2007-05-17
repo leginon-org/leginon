@@ -142,7 +142,10 @@ def processAndSaveImage(imgdata, params):
 	return
 
 def getFindEMPath():
-	findempath = os.environ.get('FINDEM_EXE')
+	findempath = None
+	trypath = os.environ.get('FINDEM_EXE')
+ 	if os.path.isfile(trypath):
+		findempath = trypath
 	if findempath is None and os.environ.get('APPIONDIR') is not None:
 		appiondir = os.environ.get('APPIONDIR')
 		trypath = os.path.join(appiondir,"/bin/findem.exe")
