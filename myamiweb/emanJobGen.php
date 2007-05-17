@@ -22,7 +22,7 @@ if ($_POST['write']) {
         if ($_POST['cput'] > 240) jobForm("ERROR: Max CPU time is 240");
         if (!$_POST['rprocs']) jobForm("ERROR: No refinement ppn specified, setting default=4");
         if ($_POST['rprocs'] > $_POST['ppn']) jobForm("ERROR: Asking to refine on more processors than available");
-	if (!$_POST['dmfpath'] > $_
+	if (!$_POST['dmfpath']) jobForm("ERROR: No DMF path specified");
         if (!$_POST['dmfmod']) jobForm("ERROR: No starting model");
 	if (!$_POST['dmfstack']) jobForm("ERROR: No stack file");
 	if (!$_POST['box']) jobForm("ERROR: No box size");
@@ -46,6 +46,7 @@ function jobForm($extra=false) {
 	$dmfstack = ($_POST['dmfstack']) ? $_POST['dmfstack'] : '';
 	$dmfpath = ($_POST['dmfpath']) ? $_POST['dmfpath'] : '';
 	$dmfmod = ($_POST['dmfmod']) ? $_POST['dmfmod'] : '';
+	$dmfstorech = ($_POST['dmfstore']=='on') ? 'CHECKED' : '';
 	$numiters= ($_POST['numiters']) ? $_POST['numiters'] : 1;
 
 	if ($_POST['duplicate']) {
@@ -90,12 +91,16 @@ Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50>
     <TD><INPUT TYPE='text' NAME='dmfpath' VALUE='$dmfpath' SIZE='50'></TD>
   </TR>
   <TR>
-    <TD>DMF Starting Model (mrc):</TD>
+    <TD>Starting Model (mrc):</TD>
     <TD><INPUT TYPE='text' NAME='dmfmod' VALUE='$dmfmod' SIZE='50'></TD>
   </TR>
   <TR>
-    <TD>DMF Stack (img or hed):</TD>
+    <TD>Stack (img or hed):</TD>
     <TD><INPUT TYPE='text' NAME='dmfstack' VALUE='$dmfstack' SIZE='50'></TD>
+  </TR>
+  <TR>
+    <TD>Save results to DMF</TD>
+    <TD><INPUT TYPE='checkbox' NAME='dmfstore' $dmfstorech></TD>
   </TR>
   <TR>
     <TD>Box Size (pixels):</TD>
@@ -111,26 +116,29 @@ Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50>
 		$classkeepn="classkeep".$i;
 		$classitern="classiter".$i;
 		$filt3dn="filt3d".$i;
+		$shrinkn="shrink".$i;
 		$mediann="median".$i;
 		$phaseclsn="phasecls".$i;
 		$refinen="refine".$i;
 		$goodbadn="goodbad".$i;
 		$eotestn="eotest".$i;
 	
-		$ang=($i==$numiters) ? $_POST["ang".$j] : $_POST[$angn];
-		$mask=($i==$numiters) ? $_POST["mask".$j] : $_POST[$maskn];
-		$imask=($i==$numiters) ? $_POST["imask".$j] : $_POST[$imaskn];
-		$sym=($i==$numiters) ? $_POST["sym".$j] : $_POST[$symn];
-		$hard=($i==$numiters) ? $_POST["hard".$j] : $_POST[$hardn];
-		$classkeep=($i==$numiters) ? $_POST["classkeep".$j] : $_POST[$classkeepn];
-		$classiter=($i==$numiters) ? $_POST["classiter".$j] : $_POST[$classitern];
-		$filt3d=($i==$numiters) ? $_POST["filt3d".$j] : $_POST[$filt3dn];
-		if ($i==$numiters) {
-		       $median=($_POST["median".$j]=='on') ? 'CHECKED' : '';
-		       $phasecls=($_POST["phasecls".$j]=='on') ? 'CHECKED' : '';
-		       $refine=($_POST["refine".$j]=='on') ? 'CHECKED' : '';
-		       $goodbad=($_POST["goodbad".$j]=='on') ? 'CHECKED' : '';
-		       $eotest=($_POST["eotest".$j]=='on') ? 'CHECKED' : '';
+		$ang=($i>$j) ? $_POST["ang".($i-1)] : $_POST[$angn];
+		$mask=($i>$j) ? $_POST["mask".($i-1)] : $_POST[$maskn];
+		$imask=($i>$j) ? $_POST["imask".($i-1)] : $_POST[$imaskn];
+		$sym=($i>$j) ? $_POST["sym".($i-1)] : $_POST[$symn];
+		$hard=($i>$j) ? $_POST["hard".($i-1)] : $_POST[$hardn];
+		$classkeep=($i>$j) ? $_POST["classkeep".($i-1)] : $_POST[$classkeepn];
+		$classiter=($i>$j) ? $_POST["classiter".($i-1)] : $_POST[$classitern];
+		$filt3d=($i>$j) ? $_POST["filt3d".($i-1)] : $_POST[$filt3dn];
+		$shrink=($i>$j) ? $_POST["shrink".($i-1)] : $_POST[$shrinkn];
+
+		if ($i>$j) {
+		       $median=($_POST["median".($i-1)]=='on') ? 'CHECKED' : '';
+		       $phasecls=($_POST["phasecls".($i-1)]=='on') ? 'CHECKED' : '';
+		       $refine=($_POST["refine".($i-1)]=='on') ? 'CHECKED' : '';
+		       $goodbad=($_POST["goodbad".($i-1)]=='on') ? 'CHECKED' : '';
+		       $eotest=($_POST["eotest".($i-1)]=='on') ? 'CHECKED' : '';
 		}
 		else {
 		       $median=($_POST[$mediann]=='on') ? 'CHECKED' : '';
@@ -173,6 +181,8 @@ Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50>
 
 function writeJobFile () {
         $dmfpath=$_POST['dmfpath'];
+	// make sure dmf store dir ends with '/'
+	if (substr($dmfpath,-1,1)!='/') $dmfpath.='/';
         if ($_POST['jobname']) echo "# ".$_POST['jobname']."<P>\n";
         echo "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."<BR>\n";
 	echo "#PBS -l walltime=".$_POST['walltime'].":00:00<BR>\n";
@@ -183,9 +193,9 @@ function writeJobFile () {
 	// get file name, strip extension
 	$ext=strrchr($_POST['dmfstack'],'.');
 	$stackname=substr($_POST['dmfstack'],0,-strlen($ext));
-	echo "<P>dmf get ".$_POST['dmfmod']." threed.0a.mrc<BR>\n";
-	echo "dmf get $stackname.hed start.hed<BR>\n";
-	echo "dmf get $stackname.img start.img<BR>\n";
+	echo "<P>dmf get $dmfpath".$_POST['dmfmod']." threed.0a.mrc<BR>\n";
+	echo "dmf get $dmfpath$stackname.hed start.hed<BR>\n";
+	echo "dmf get $dmfpath$stackname.img start.img<BR>\n";
 	echo "<P>foreach i (`sort -u \$PBS_NODEFILE`)<BR>\n";
 	echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;echo 'rsh 1 ".$_POST['rprocs']."' \$i \$PBSREMOTEDIR >> .mparm<BR>\n";
 	echo "end\n";
@@ -223,6 +233,7 @@ function writeJobFile () {
 		if ($refine=='on') $line.=" refine";
 		if ($goodbad=='on') $line.=" goodbad";
 		$line.=" > refine".$i.".txt<BR>";
+		$line.="getProjEulers.py proj.img proj.$i.txt<BR>";
 		if ($eotest=='on') {
 		        $line.="eotest proc=$procs pad=$pad";
 			if ($mask) $line.=" mask=$mask";
@@ -236,17 +247,16 @@ function writeJobFile () {
 			if ($refine=='on') $line.=" refine";
 			$line.=" > eotest".$i.".txt<BR>";
 			$line.="mv fsc.eotest fsc.eotest".$i."<BR>";
+			$line.="getRes.pl >> resolution.txt<BR>";
 		}
 		$line.="rm cls*.lst<BR>";
 		echo $line;
 	}
 	if ($_POST['dmfstore']=='on') {
-	        // make sure dmf store dir ends with '/'
-	        if (substr($dmfpath,-1,1)!='/') $dmfpath.='/';
 		echo "<P>tar -cvzf model.tar.gz threed.*a.mrc<BR>\n";
-		echo "dmf put model.tar.gz $dmfstore<BR>\n";
+		echo "dmf put model.tar.gz $dmfpath<BR>\n";
 		echo "<P>tar -cvzf results.tar.gz fsc* tcls* refine.* particle.* classes.* proj.* sym.* .emanlog *txt<BR>\n";
-		echo "dmf put results.tar.gz $dmfstore\n";
+		echo "dmf put results.tar.gz $dmfpath\n";
 	} 
 	exit;
 }
