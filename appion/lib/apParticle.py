@@ -137,6 +137,7 @@ def insertParticlePeaks(peaktree, imgdict, expid, params):
 	print "Inserting particles into database for",apDisplay.shortenImageName(imgname),"..."
 
 	### WRITE PARTICLES TO DATABASE
+	count = 0
 	for peakdict in peaktree:
 		particlesq = appionData.ApParticleData()
 		particlesq['selectionrun'] = runids[0]
@@ -154,7 +155,9 @@ def insertParticlePeaks(peaktree, imgdict, expid, params):
 		else:
 			peakhasarea = False
 		if not presult and peakhasarea is True:
+			count+=1
 			appiondb.insert(particlesq)
+	apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree))+" peaks into database")
 	return
 
 def insertParticlePicks(params,imgdict,expid,manual=False):
