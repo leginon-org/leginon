@@ -5,6 +5,7 @@ import leginondata
 import MySQLdb
 import sys
 import getpass
+import sinedon
 
 try:
 	f = open('delapps')
@@ -20,7 +21,7 @@ appids = []
 evtids = []
 nodids = []
 
-db = leginondata.db
+db = sinedon.getConnection('leginondata')
 
 for delapp in delapps:
 	qapp = leginondata.ApplicationData(name=delapp)

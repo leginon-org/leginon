@@ -7,6 +7,7 @@
 #
 #
 
+import sinedon
 import leginondata
 from databinder import DataBinder
 import datatransport
@@ -77,7 +78,7 @@ class Node(object):
 		else:
 			self.databinder = otherdatabinder
 		if otherdbdatakeeper is None:
-			self.dbdatakeeper = leginondata.db
+			self.dbdatakeeper = sinedon.getConnection('leginondata')
 		else:
 			self.dbdatakeeper = otherdbdatakeeper
 

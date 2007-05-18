@@ -3,8 +3,9 @@ import numarray
 import numarray.linear_algebra
 import leginondata
 import gonmodel
+import sinedon
 
-dbdk = leginondata.db
+dbdk = sinedon.getConnection('leginondata')
 
 stagetransformers = {}
 def getTransformer(tem, ccd, ht, mag, timestamp, rotation=0.0):

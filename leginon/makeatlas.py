@@ -7,10 +7,11 @@ import sys
 from pyami import mrc
 import calibrationclient
 import os.path
+import sinedon
 
 filenames = sys.argv[1:]
 
-db = leginondata.db
+db = sinedon.getConnection('leginondata')
 
 ses = leginondata.SessionData()
 

@@ -5,9 +5,10 @@ import leginondata
 import sys
 import getpass
 import sets
+import sinedon
 
 days = int(raw_input('Days: '))
-db = leginondata.db
+db = sinedon.getConnection('leginondata')
 
 ## make set of all application names
 appquery = leginondata.ApplicationData()
