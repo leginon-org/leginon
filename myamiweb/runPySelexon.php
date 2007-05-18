@@ -13,6 +13,7 @@ require ('inc/particledata.inc');
 require ('inc/project.inc');
 require ('inc/viewer.inc');
 require ('inc/processing.inc');
+require ('inc/ssh.inc');
   
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -149,7 +150,6 @@ function createTCForm($extra=false, $title='Template Correlator Launcher', $head
 
 	// --- find hosts to run Template Correlator
 	$hosts=getHosts();
-	$users[]="glander";
  
 	$numtemplates=$_POST[numtemplates];
 	$templateForm='';
@@ -394,11 +394,9 @@ function createTCForm($extra=false, $title='Template Correlator Launcher', $head
                 echo "<option $s >$host</option>\n";
         }
         echo "</select>
-        User: <select name='user'>\n";
-        foreach($users as $user) {
-                $s = ($_POST['user']==$user) ? 'selected' : '';
-                echo "<option $s >$user</option>\n";
-        }
+        <BR>
+        User: <INPUT TYPE='text' name='user' value=".$_POST['user'].">
+        Password: <INPUT TYPE='password' name='password' value=".$_POST['password'].">\n";
         echo"
                 </select>
                 <BR>
@@ -433,7 +431,11 @@ function createTCForm($extra=false, $title='Template Correlator Launcher', $head
 function runTemplateCorrelator() {
         $host = $_POST['host'];
 	$user = $_POST['user'];
- 
+	$password = $_POST['password'];
+	if (!($user && $password)) {
+	        createTCForm("<B>ERROR:</B> Enter a user name and password");
+	}
+
 	//make sure a session was selected
 	if (!$_POST[outdir]) {
 	        createTCForm("<B>ERROR:</B> Select an experiment session");
@@ -526,10 +528,10 @@ function runTemplateCorrelator() {
 	if ($continue==1) $command.=" continue";
 	if ($commit==1) $command.=" commit";
 
-	$cmd = "exec ssh $user@$host '$command > templateCorrelatorLog.txt &'";
-#	echo $cmd;
+	$cmd = "$command > templateCorrelatorLog.txt";
+	echo $cmd;
 	if ($testimage) {
-	        exec($cmd ,$result);
+	        $result=exec_over_ssh($host, $user, $password, $cmd, True);
 	}
 
 	writeTop("Particle Selection Results","Particle Selection Results");
