@@ -1452,25 +1452,6 @@ class RobotSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class Request(type):
-	def __new__(cls, dataclass):
-		return type.__new__(cls, 'Request' + dataclass.__name__, (Data,),
-												{'datamanager': datamanager})
-
-	def _typePair(cls, typepair):
-		if issubclass(typepair[1], Data):
-			t = Request(typepair[1])
-		else:
-			t = bool
-		return (typepair[0], t)
-
-	def __init__(cls, dataclass):
-		cls._typemap = map(cls._typePair, dataclass.typemap())
-		cls._dataclass = dataclass
-		cls.typemap = classmethod(lambda cls: cls._typemap)
-		super(Request, cls).__init__('Request' + dataclass.__name__, (Data,),
-																	{'datamanager': datamanager})
-
 class LoggerRecordData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
