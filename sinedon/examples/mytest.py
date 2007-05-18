@@ -16,7 +16,7 @@ print conf2
 
 ### Assuming that if I log in to one of those databases, I can access the
 ### other, I only need to connect to one of them.
-db = sinedon.DB(**conf1)
+db = sinedon.getConnection('mydata1')
 
 def insertTest():
 	# create instance of TData with a reference to an instance of AsdfData
