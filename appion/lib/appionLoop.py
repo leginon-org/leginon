@@ -35,13 +35,18 @@ class AppionLoop(object):
 		#set the name of the function; needed for param setup
 		self.setFunctionName()
 		self.setProcessingDirName()
-		self._parsePythonPath()
 
 		#set the resulttypes and resultkeys of the function; needed for param setup
 		self.setFunctionResultKeys()
 
 		### setup default params: output directory, etc.
 		self._createDefaultParams()
+
+		#check if user wants to print help message
+		self._checkForHelpCall(sys.argv[1:])
+
+		#check for duplicate paths in environmental variables
+		self._parsePythonPath()
 
 		### parse command line options: diam, apix, etc.
 		self._parseCommandLineInput(sys.argv[1:])
@@ -98,6 +103,13 @@ class AppionLoop(object):
 
 	 			self._writeDoneDict(imgdata['filename'])
 				self._printSummary()
+
+				if self.stats['count'] > self.params['limit']:
+					apDisplay.printWarning("reached image limit of "+str(self.params['limit'])+"; now stopping")
+					self.imgtree = None
+					self.params['nowait'] = True
+					break
+
 				#END LOOP OVER IMAGES
 			notdone = self._waitForMoreImages()
 			#END NOTDONE LOOP
@@ -233,7 +245,7 @@ class AppionLoop(object):
 
 		self.result_dirs={}
 		
-		print "creating special output directories"
+		apDisplay.printMsg("creating special output directories")
 		self.specialCreateOutputDirs()
 
 	def _checkParamConflicts(self):
@@ -247,7 +259,7 @@ class AppionLoop(object):
 		if len(self.params['mrcfileroot']) > 0 and self.params['alldbimages']:
 			apDisplay.printError("alldbimages can not be specified if particular images have been specified")
 
-		print "checking special param conflicts"
+		apDisplay.printMsg("checking special param conflicts")
 		self.specialParamConflicts()
 
 	def _getAppionDir(self):
@@ -304,6 +316,7 @@ class AppionLoop(object):
 		self.params['pixdiam']=None
 		self.params['binpixdiam']=None
 		self.params['nowait']=False
+		self.params['limit']=None
 		self.params['shuffle']=False
 		self.params['abspath']=os.path.abspath('.')
 		### get custom default params
@@ -333,6 +346,20 @@ class AppionLoop(object):
 		self.stats['notpair'] = 0
 		self.stats['memlist'] = [mem.active()]
 
+	def _checkForHelpCall(self, args):
+		if len(args) < 1:
+			self._runHelp()
+		for arg in args:
+			if ('help' in arg and not '=' in arg) or arg == 'h' or arg == '-h':
+				self._runHelp()
+
+	def _runHelp(self):
+		allxml  = os.path.join(self.params['appiondir'],"xml/allAppion.xml")
+		funcxml = os.path.join(self.params['appiondir'],"xml",self.functionname+".xml")
+		xmldict = apXml.readTwoXmlFiles(allxml, funcxml)
+		apXml.printHelp(xmldict)
+		sys.exit(1)
+
 	def _parseCommandLineInput(self, args):
 		mrcfileroot = []
 		self.params['functionname'] = self.functionname
@@ -346,11 +373,6 @@ class AppionLoop(object):
 				# remove file from list of args and backup in loop
 				del args[i]
 				i -= 1
-			elif ('help' in arg and not '=' in arg) or arg == 'h' or arg == '-h':
-				allxml = os.path.join(self.params['appiondir'],"xml/allAppion.xml")
-				funcxml = os.path.join(self.params['appiondir'],"xml",self.functionname+".xml")
-				xmldict = apXml.readTwoXmlFiles(allxml, funcxml)
-				apXml.printHelp(xmldict)
 			i += 1
 
 		self.params['mrcfileroot']=mrcfileroot
@@ -386,6 +408,8 @@ class AppionLoop(object):
 				self.params['shuffle']=True
 			elif arg=='nowait':
 				self.params['nowait']=True
+			elif (elements[0]=='limit'):
+				self.params['limit']=int(elements[1])
 			elif arg=='continue':
 				self.params['continue']=True
 			elif arg=='nocontinue':
@@ -565,7 +589,7 @@ class AppionLoop(object):
 		self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
 		if self.params['shuffle'] is True:
 			self.imgtree = self._shuffleTree(self.imgtree)
-		print " ... found",self.stats['imagecount'],"in",apDisplay.timeString(time.time()-startt)
+		apDisplay.printMsg("found "+str(self.stats['imagecount'])+" in "+apDisplay.timeString(time.time()-startt))
 
 	def _alreadyProcessed(self, imgdata):
 		""" 
@@ -583,7 +607,7 @@ class AppionLoop(object):
 		else:
 			self.stats['waittime'] = 0
 			if self.stats['lastimageskipped']:
-				print "\nskipped",self.stats['skipcount'],"images so far"
+				apDisplay.printMsg("\nskipped"+str(self.stats['skipcount'])+" images so far")
 			self.stats['lastimageskipped']=False
 			return False
 		return False
@@ -599,7 +623,7 @@ class AppionLoop(object):
 		#only if an image was processed last
 		if(self.stats['lastcount'] != self.stats['count']):
 			print "\nStarting new image", self.stats['count'], "( skip:",self.stats['skipcount'],\
-				", left:", self.stats['imagesleft'],")", apDisplay.short(imgdata['filename'])
+				", remain:", self.stats['imagesleft'],")", apDisplay.short(imgdata['filename'])
 			self.stats['lastcount'] = self.stats['count']
 			self._checkMemLeak()
 
@@ -663,7 +687,7 @@ class AppionLoop(object):
 				if(self.stats['imagesleft'] > 0):
 					print "\t(- REMAINING TIME:",apDisplay.timeString(timeremain),"for",self.stats['imagesleft'],"images -)"
 			#print "\tMEM: ",(mem.active()-startmem)/1024,"M (",(mem.active()-startmem)/(1024*count),"M)"
-			self.stats['count'] = self.stats['count'] + 1
+			self.stats['count'] += 1
 			self._printLine()
 
 	def _checkMemLeak(self):
@@ -700,8 +724,8 @@ class AppionLoop(object):
 			if(slope > 0 and memleak > 32 and gain > 128): 
 				printError("Memory leak of "+str(round(memleak,2))+"MB")
 			elif(memleak > 16):
-				print apDisplay.color(" ... substantial memory leak "+str(round(memleak,2))+"MB","brown"),\
-					"(",n,round(slope,5),round(rho,5),round(gain,2),")"
+				apDisplay.printWarning("substantial memory leak "+str(round(memleak,2))+"MB")
+				print "(",str(n),round(slope,5),round(rho,5),round(gain,2),")"
 
 	def _removeProcessedImages(self):
 		startlen = len(self.imgtree)
@@ -758,7 +782,7 @@ class AppionLoop(object):
 			return False
 		self.stats['waittime'] = self.stats['waittime'] + 10
 		if(self.stats['waittime'] > 120):
-			print "Waited longer than two hours, so I am quitting"
+			apDisplay.printWarning("waited longer than two hours for new images with no results, so I am quitting")
 			return False
 
 		#WAIT
