@@ -13,9 +13,6 @@ import os
 
 Data = sinedon.data.Data
 
-dbconf = sinedon.dbconfig.getConfig(__name__)
-db = sinedon.dbdatakeeper.DBDataKeeper(**dbconf)
-
 class GroupData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
