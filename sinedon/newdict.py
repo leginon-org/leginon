@@ -43,12 +43,10 @@ def registerValidator(type, validator):
 
 ## types of items are set by subclassing and setting typemap
 class TypedDict(OrderedDict):
-	def typemap(cls):
-		return ()
-	typemap = classmethod(typemap)
+	typemap = ()
 
 	def __init__(self, initializer={}):
-		self.__types = OrderedDict(self.typemap())
+		self.__types = OrderedDict(self.typemap)
 		for t in self.__types.values():
 			if t not in validators and not hasattr(t, 'validator'):
 				raise RuntimeError('no validator for type %s' % (t,))

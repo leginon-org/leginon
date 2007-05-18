@@ -1427,7 +1427,7 @@ def dataSQLColumns(data_instance):
 			'Index': ['DEF_timestamp']
 	})
 
-	type_dict = dict(data_instance.typemap())
+	type_dict = dict(data_instance.typemap)
 
 	for key, value in data_instance.items():
 		try:

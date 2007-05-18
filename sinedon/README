@@ -1,0 +1,4 @@
+To install, run this as root:
+	python setup.py install
+
+See examples directory for some examples of how to use sinedon.
