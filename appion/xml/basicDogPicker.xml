@@ -1,34 +1,5 @@
 <?xml version="1.0" encoding="us-ascii"?>
 <selexon>
- <range>
-	<alias>range1</alias>
- </range>
- <range1>
-	<name>template rotation range 1</name>
-	<default>0,360,15</default>
-	<description>Range of rotations for template 1</description>
-	<type>int</type>
-	<nargs>3</nargs>
-	<limits>0,360</limits>
- </range1>
- <range2>
-	<name>template rotation range 2</name>
-	<default></default>
-	<description>Range of rotations for template 2</description>
-	<type>int</type>
-	<nargs>3</nargs>
-	<example>0,360,15</example>
-	<limits>0,360</limits>
- </range2> 
- <range3>
-	<name>template rotation range 3</name>
-	<default></default>
-	<description>Range of rotations for template 3</description>
-	<type>int</type>
-	<nargs>3</nargs>
-	<example>0,360,15</example>
-	<limits>0,360</limits>
- </range3>
  <maxpeaks>
 	<name>maximum number of peaks</name>
 	<description>Maximum number of peaks (particles) per image</description>
@@ -60,6 +31,19 @@
 	<default>0.5</default>
 	<limits>0,5</limits>
  </thresh>
+ <maxthresh>
+	<name>maximum threshold cutoff</name>
+	<description>Maximum threshold to get peaks from dogmap</description>
+	<type>float</type>
+	<default>5.0</default>
+	<limits>0,5</limits>
+ </maxthresh>
+ <invert>
+	<name>invert dogmaps</name>
+	<description>Inverts the dogmap for reverse contrast images</description>
+	<type>boolean</type>
+	<default>False</default>
+ </invert>
  <diam>
 	<required>True</required>
  </diam>
@@ -69,13 +53,4 @@
  <apix>
 	<required>True</required>
  </apix>
- <templateids>
-	<name>template id numbers</name>
-	<description>Id numbers for templates used</description>
-	<type>integer</type>
-	<nargs>2</nargs>
-	<default></default>
-	<limits>1,1000</limits>
-	<required>True</required>
- </templateids>
 </selexon>

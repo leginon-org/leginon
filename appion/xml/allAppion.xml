@@ -78,54 +78,28 @@
 	<type>path</type>
 	<modify>False</modify>
  </rundir>
- <donedictname>
-	<name>done dictionary name</name>
-	<default></default>
-	<description>Name of file for keeping tracking of previously processed files</description>
-	<type>path</type>
-	<modify>False</modify>
- </donedictname>
- <functionlog>
-	<name>function log name</name>
-	<default></default>
-	<description>Name of file for logging command line parameters</description>
-	<type>path</type>
-	<modify>False</modify>
- </functionlog>
- <pixdiam>
-	<name>pixel diameter</name>
-	<default></default>
-	<description>Diameter of particle in pixels (unbinned)</description>
-	<type>float</type>
-	<modify>False</modify>
-	<paramcalc>diam/apix</paramcalc>
- </pixdiam>
- <binpixdiam>
-	<name>pixel diameter</name>
-	<default></default>
-	<description>Binned diameter of particle in pixels</description>
-	<type>float</type>
-	<modify>False</modify>
-	<paramcalc>diam/apix/bin</paramcalc>
- </binpixdiam>
  <limit>
 	<name>image processing limit</name>
 	<default></default>
 	<description>Limit the number of images to process</description>
 	<type>integer</type>
  </limit>
- <abspath>
-	<name>image processing limit</name>
-	<default></default>
-	<description>Limit the number of images to process</description>
-	<type>integer</type>
-	<modify>False</modify>
-	<pyfunction>os.path.abspath('.')+'/'</pyfunction>
- </abspath>
   <nowait>
 	<name>do not wait for more images</name>
 	<default>False</default>
 	<description>Do not wait for more images after finishing all images</description>
 	<type>boolean</type>
  </nowait>
+  <shuffle>
+	<name>shuffle images</name>
+	<default>False</default>
+	<description>Shuffle the order of the images, do not process them in order</description>
+	<type>boolean</type>
+ </shuffle>
+ <nocontinue>
+	<name>do not continue</name>
+	<default>True</default>
+	<description>Overrides 'continue' and does not start from beginning</description>
+	<type>boolean</type>
+ </nocontinue>
 </allappion>
