@@ -104,7 +104,7 @@ class AppionLoop(object):
 	 			self._writeDoneDict(imgdata['filename'])
 				self._printSummary()
 
-				if self.stats['count'] > self.params['limit']:
+				if self.params['limit'] is not None and self.stats['count'] > self.params['limit']:
 					apDisplay.printWarning("reached image limit of "+str(self.params['limit'])+"; now stopping")
 					self.imgtree = None
 					self.params['nowait'] = True
