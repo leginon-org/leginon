@@ -2,3 +2,26 @@ To install, run this as root:
 	python setup.py install
 
 See examples directory for some examples of how to use sinedon.
+
+Here is a brief introduction:
+
+Config File:
+Sinedon can be given default database connection parameters in a config
+file called sinedon.cfg which should be in your home directory or in the
+current directory where you run your python script from.  See the example
+config file: examples/sinedon.cfg.
+
+Defining Python classes that will map to database tables:
+You must create a Python module that will map to a MySQL database.
+In the module, you will define a class for each table in your database.
+These classes must be subclasses of sindedon.Data.  See examples/mydata1.py
+and examples/mydata2.py for an example of such a module.
+
+Connecting to the database through Sinedon:
+First, the database connection parameters must be configured, either through
+a config file as mentioned above, or at runtime using sinedon.setConfig().
+For example:  sinedon.setConfig('mymodule', host='myhost', passwd=...)
+will create a mapping between the module 'mymodule.py' and the database
+given by the connection parameters.
+Once the mapping is configured, you can connect as follows:
+db = sinedon.getConnection('mymodule')
