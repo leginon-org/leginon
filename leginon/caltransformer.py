@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import numarray
 import numarray.linear_algebra
-from sinedon.dbdatakeeper import DBDataKeeper
 import leginondata
 import gonmodel
 

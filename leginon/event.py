@@ -27,7 +27,7 @@ def eventClasses():
 
 class Event(sinedon.data.Data):
 	def __init__(self, initializer=None, **kwargs):
-		data.Data.__init__(self, initializer, **kwargs)
+		sinedon.data.Data.__init__(self, initializer, **kwargs)
 
 	def typemap(cls):
 		return sinedon.data.Data.typemap() + (
