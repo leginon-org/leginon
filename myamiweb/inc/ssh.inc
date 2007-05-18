@@ -9,7 +9,7 @@
 
 function exec_over_ssh($host, $username, $password, $command, $result=false, $port=22) {
 	$connection = ssh2_connect($host, $port);
-	if (!@ssh2_auth_password($connection, $username, $password)) 
+	if (!@ssh2_auth_password($connection, $username, $password)) {
 		die('Authentication Failed...');
 	}
 
