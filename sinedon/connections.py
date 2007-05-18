@@ -7,6 +7,8 @@ def tail(modulename):
 	return modulename.split('.')[-1]
 
 def getConnection(modulename):
+	if not isinstance(modulename, str):
+		modulename = modulename.__name__
 	modulename = tail(modulename)
 	if modulename not in connections:
 		connectedconf = None
