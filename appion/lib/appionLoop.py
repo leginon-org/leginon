@@ -179,7 +179,7 @@ class AppionLoop(object):
 		"""
 		return	
 
-	def insertFunctionRun(self,params):
+	def insertFunctionRun(self):
 		"""
 		put in run and param insertion to db here
 		"""
@@ -462,11 +462,11 @@ class AppionLoop(object):
 
 	def _setRunAndParameters(self,params):
 		if params['commit']:
-			rundata = self.insertFunctionRun(params)
+			rundata = self.insertFunctionRun()
 			self.insertPreLoopFunctionRun(rundata,params)
 		
 		else:
-			rundata = self.insertFunctionRun(self.defaultparams)
+			rundata = self.insertFunctionRun()
 			self.insertPreLoopFunctionRun(rundata,self.defaultparams)
 		self.rundata = rundata
 	

@@ -197,7 +197,7 @@ def printHelp(xmldict):
 			if 'description' in xmldict[param] and xmldict[param]['description'] != None:
 				outstr += " "+xmldict[param]['description']
 			elif 'name' in xmldict[param] and xmldict[param]['name'] != None:
-				outstr += xmldict[param]['name']
+				outstr += " "+xmldict[param]['name']
 			if 'default' in xmldict[param] and xmldict[param]['default'] != None:
 				if 'nargs' in xmldict[param] and xmldict[param]['nargs'] is not None and xmldict[param]['nargs'] > 1:
 					defstr = " (default: "

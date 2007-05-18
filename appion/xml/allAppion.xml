@@ -84,7 +84,7 @@
  <nocontinue>
 	<name>do not continue</name>
 	<default>True</default>
-	<description>Overrides 'continue' and does not start from beginning</description>
+	<description>Overrides 'continue', removes donedict and starts from beginning</description>
 	<type>boolean</type>
  </nocontinue>
 </allappion>

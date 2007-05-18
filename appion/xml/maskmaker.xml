@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<maskmaker>
+ <masktype>
+	<name>type of mask to make</name>
+	<description></description>
+	<type>string</type>
+	<default>custom</default>
+	<list>custom,crud,aggr,edge</list>
+ </masktype>
+ <cruddiam>
+	<name>region diameter</name>
+	<description></description>
+	<type>float</type>
+	<default>0</default>
+	<limits>0,1</limits>
+ </cruddiam>
+ <crudblur>
+	<name>edge blur</name>
+	<description></description>
+	<type>float</type>
+	<default>3.5</default>
+	<limits>0,1</limits>
+ </crudblur>
+ <crudlo>
+	<name>edge low</name>
+	<description></description>
+	<type>float</type>
+	<default>0.6</default>
+	<limits>0,1</limits>
+ </crudlo>
+ <crudhi>
+	<name>edge high</name>
+	<description></description>
+	<type>float</type>
+	<default>0.95</default>
+	<limits>0,1</limits>
+ </crudhi>
+ <crudstd>
+	<name></name>
+	<description></description>
+	<type>float</type>
+	<default>1.0</default>
+	<limits>0,1</limits>
+ </crudstd>
+ <crudschi>
+	<name></name>
+	<description></description>
+	<type>float</type>
+	<default>1.0</default>
+	<limits>0,1</limits>
+ </crudschi>
+ <crudsclo>
+	<name></name>
+	<description></description>
+	<type>float</type>
+	<default>0.0</default>
+	<limits>0,1</limits>
+ </crudsclo>
+ <convolve>
+	<name>convolve</name>
+	<description></description>
+	<type>float</type>
+	<default>0.0</default>
+	<limits></limits>
+ </convolve>
+ <stdev>
+	<name>region standard deviation</name>
+	<description></description>
+	<type>float</type>
+	<default>0.0</default>
+	<limits></limits>
+ </stdev>
+ <no_hull>
+	<name>no convex hull</name>
+	<description></description>
+	<type>boolean</type>
+	<default>False</default>
+ </no_hull>
+ <cv>
+	<name>use libcv</name>
+	<description></description>
+	<type>boolean</type>
+	<default>False</default>
+ </cv>
+ <no_length_prune>
+	<name>no length prune</name>
+	<description></description>
+	<type>boolean</type>
+	<default>False</default>
+ </no_length_prune>
+ <test>
+	<name></name>
+	<description></description>
+	<type>boolean</type>
+	<default>False</default>
+ </test>
+</maskmaker>
