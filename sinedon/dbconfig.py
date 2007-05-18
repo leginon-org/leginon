@@ -51,9 +51,9 @@ for section in configs:
 
 def getConfig(modulename):
 	'''
-	return the named configuration dict
+	return a copy of the named configuration dict
 	'''
-	return configs[modulename]
+	return dict(configs[modulename])
 
 def setConfig(modulename, **kwargs):
 	'''
