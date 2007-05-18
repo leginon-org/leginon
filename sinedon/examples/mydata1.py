@@ -11,18 +11,24 @@ referencing between two different databases, see mydata2.py.
 import sinedon
 
 class AsdfData(sinedon.Data):
-	typemap = sinedon.Data.typemap + (
+	def typemap(cls):
+		return sinedon.Data.typemap() + (
 		('aaaa', str),
 		('bbbb', str),
 	)
+	typemap = classmethod(typemap)
 
 class TData(sinedon.Data):
-	typemap = sinedon.Data.typemap + (
+	def typemap(cls):
+		return sinedon.Data.typemap() + (
 		('ttt', str),
 		('asdf', AsdfData),
 	)
+	typemap = classmethod(typemap)
 
 class SData(TData):
-	typemap = TData.typemap + (
+	def typemap(cls):
+		return TData.typemap() + (
 		('sss', str),
 	)
+	typemap = classmethod(typemap)

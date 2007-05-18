@@ -373,7 +373,7 @@ def data2dict(idata, noNone=False, dereference=False):
 
 def dict2data(d, datatype):
 	instance = datatype()
-	for key, subtype in datatype.typemap:
+	for key, subtype in datatype.typemap():
 		if d is None:
 			continue
 		try:
