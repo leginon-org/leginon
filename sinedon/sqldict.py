@@ -153,10 +153,7 @@ import copy
 import sqldb
 import string
 import re
-try:
-		import numarray as Numeric
-except:
-		import Numeric
+import numpy
 import MySQLdb.cursors
 from types import *
 import data
@@ -1138,7 +1135,7 @@ def dict2matrix(in_dict):
 	size  = shape[0]*shape[1]
 
 	# Build the matrix
-	matrix = Numeric.zeros(shape, Numeric.Float64)
+	matrix = numpy.zeros(shape, numpy.float64)
 	for m in in_dict:
 		i=eval(re.findall('\d+',m)[0])-1
 		j=eval(re.findall('\d+',m)[1])-1
@@ -1149,7 +1146,7 @@ def dict2matrix(in_dict):
 def matrix2dict(matrix, name=None):
 	"""
 	This function returns a dictionary which represents a matrix.
-	matrix must be at least 2x1 or 1x2 Numeric arrays.
+	matrix must be at least 2x1 or 1x2 numpy arrays.
 
 	 _		      _
 	|		        |
@@ -1171,7 +1168,7 @@ def matrix2dict(matrix, name=None):
 		if not (matrix.shape >= (1, 1) and len(matrix.shape) > 1):
 			raise ValueError("Wrong shape: must be at least 2x1 or 1x2")
 	except AttributeError:
-		raise TypeError("Must be Numeric array") 
+		raise TypeError("Must be numpy array") 
 	d={}
 	i=0
 	for row in matrix:
@@ -1370,7 +1367,7 @@ def keyMRC(name):
 
 def saveMRC(object, name, path, filename, thumb=False):
 	"""
-	Save Numeric array to MRC file and replace it with filename
+	Save numpy array to MRC file and replace it with filename
 	"""
 	d={}
 	k = keyMRC(name)

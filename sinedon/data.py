@@ -4,7 +4,7 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 
-import numarray
+import numpy
 import newdict
 import warnings
 import types
@@ -14,6 +14,7 @@ import copy
 import tcptransport
 import weakref
 import os
+import connections
 
 class DataError(Exception):
 	pass
@@ -175,8 +176,8 @@ class DataManager(object):
 	def getDataFromDB(self, dataclass, dbid, **kwargs):
 		self.dblock.acquire()
 		try:
-			dbmodule = __import__(dataclass.__module__)
-			db = dbmodule.db
+			dbmodulename = dataclass.__module__
+			db = connections.getConnection(dbmodulename)
 
 			### try to get data from dbcache before doing query
 			try:
@@ -574,8 +575,9 @@ class Data(newdict.TypedDict):
 		If the value for this item is an image array,
 		replace it with the file reference to save memory.
 		'''
+		raise NotImplementedError('disabled until figure out numpy get/set attr')
 		value = self.special_getitem(key, dereference=False)
-		if type(value) is numarray.ArrayType:
+		if type(value) is numpy.ndarray:
 			if hasattr(value, 'fileref'):
 				self.__setitem__(key, value.fileref, force=True)
 			else:
@@ -619,8 +621,8 @@ class Data(newdict.TypedDict):
 		if value is None:
 			## there is only one None object
 			return 0
-		elif type(value) is numarray.ArrayType:
-			return value.size() * value.itemsize()
+		elif type(value) is numpy.ndarray:
+			return value.size * value.itemsize
 		else:
 			## this is my stupid estimate of size for other objects
 			## We could also check for int, str, float, etc.
@@ -644,7 +646,7 @@ class Data(newdict.TypedDict):
 		self._reference.sync(self)
 
 	def nstr(self, value):
-		if type(value) is numarray.ArrayType:
+		if type(value) is numpy.ndarray:
 			shape = value.shape
 			if max(shape) > 2:
 				s = 'array(shape: %s, type: %s)' % (shape,value.type())

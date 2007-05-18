@@ -17,6 +17,9 @@ config_locations = [
 configparser = ConfigParser.SafeConfigParser()
 configfiles = configparser.read(config_locations)
 
+def tail(modulename):
+	return modulename.split('.')[-1]
+
 def printConfigFiles():
 	'''
 	print config files loaded for debugging purposes
@@ -53,6 +56,7 @@ def getConfig(modulename):
 	'''
 	return a copy of the named configuration dict
 	'''
+	modulename = tail(modulename)
 	return dict(configs[modulename])
 
 def setConfig(modulename, **kwargs):
@@ -62,6 +66,7 @@ def setConfig(modulename, **kwargs):
 	If config does not exist, it will be initialized to the global params,
 	then any specified parameters will be overwritten.
 	'''
+	modulename = tail(modulename)
 	if modulename not in configs:
 		configs[modulename] = dict(globals)
 	configs[modulename].update(kwargs)

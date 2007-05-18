@@ -12,3 +12,4 @@ from data import Data
 from dbdatakeeper import DBDataKeeper
 DB = DBDataKeeper
 from dbconfig import getConfig, setConfig
+from connections import getConnection

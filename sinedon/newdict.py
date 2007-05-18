@@ -1,4 +1,4 @@
-import numarray
+import numpy
 import os
 from pyami.ordereddict import OrderedDict
 
@@ -26,7 +26,8 @@ class FileReference(object):
 		#print 'reading image', self.filename
 		fullname = os.path.join(self.path, self.filename)
 		self.data = self.loader(fullname)
-		self.data.fileref = self
+		# disable until figure out numpy get/set attr
+		#self.data.fileref = self
 		return self.data
 
 	def setPath(self, path):
@@ -103,26 +104,25 @@ class AnyObject(object):
 registerValidator(AnyObject, AnyObject)
 
 ## ArrayType was previously not hashable, but seems to be now
-class MRCArrayType(numarray.ArrayType):
+class MRCArrayType(numpy.ndarray):
 	pass
-class DatabaseArrayType(numarray.ArrayType):
+class DatabaseArrayType(numpy.ndarray):
 	pass
 
 ### and here's the validator for it
 def validateArrayType(obj):
 	'''
-	if obj is a numarray array or a FileReference, then return obj
+	if obj is a ndarray or a FileReference, then return obj
 	else raise excpetion.
 	'''
 	if isinstance(obj, FileReference):
 		return obj
 
-	### if it's a numarray array, it should have the type() attribute
-	try:
-		obj.type
-	except AttributeError:
-		raise TypeError()
-	return obj
+	### if it's a numpy array, it should have the type() attribute
+	if isinstance(obj, numpy.ndarray):
+		return obj
+
+	raise TypeError()
 
 registerValidator(MRCArrayType, validateArrayType)
 registerValidator(DatabaseArrayType, validateArrayType)
