@@ -3,24 +3,24 @@
 
 import sys
 import os
-import data
+import numarray
+import numarray.ma as ma
+#appion
 import appionLoop
+import apImage
 import apCrud
 import apParticle
 import appionData
 import apDatabase
-import numarray
-import apImage
-import numarray.ma as ma
-import apDB
-import imagefun
+import apDisplay
 
 class MaskMaker(appionLoop.AppionLoop):
 	def setProcessingDirName(self):
 		self.processdirname = "makemask"
 
 	def setFunctionResultKeys(self):
-		self.resultkeys = {'region':['dbemdata|AcquisitionImageData|image','maskrun','x','y','area','perimeter','mean','stdev','label'],}
+		self.resultkeys = {'region':['dbemdata|AcquisitionImageData|image', 'maskrun', 'x', 'y',
+			 'area', 'perimeter', 'mean', 'stdev', 'label' ],}
 		
 	def specialDefaultParams(self):
 		self.params['masktype']='custom'
@@ -39,37 +39,27 @@ class MaskMaker(appionLoop.AppionLoop):
 		self.params['test']=False
 
 	def specialParamConflicts(self):
-		params = self.params
-		if params['masktype']=='crud':
-			params['convolve']=0.0
-			params['no_hull']=False
-			params['cv']=False
-			params['no_length_prune']=False
-
-		else:
-			if params['masktype']=='aggr':
-				print "----Aggregate Mask by Convolution of Particles with Disk at Particle Size----"
-				if float(params['binpixdiam']) < 20 :
-					print "----Particle too small, Probably Won't Work----"
-				else:
-					if float(params['convolve'])<=0.0:
-						print "----Convolution Threshold not set, Won't Work----"
-						sys.exit()
-			
-				params['no_hull']=True
-				params['cv']=False
-				params['no_length_prune']=False
-				if params['stdev']==0.0:
-					params['stdev']=1.0
-			else:
-				if params['masktype']=='edge':
-					params['convolve']=0.0
-					params['no_hull']=True
-					params['cv']=True
-					params['no_length_prune']=False
-		if params['test']==True:
-			params['commit']=False
-		self.params = params
+		if self.params['masktype']=='crud':
+			self.params['convolve']=0.0
+			self.params['no_hull']=False
+			self.params['cv']=False
+			self.params['no_length_prune']=False
+		elif self.params['masktype']=='aggr':
+			apDisplay.printMsg("Aggregate Mask by Convolution of Particles with Disk at Particle Size")
+			if float(self.params['binpixdiam']) < 20 :
+				apDisplay.printWarning("Particle too small, Probably Won't Work")
+			elif float(self.params['convolve'])<=0.0:
+				apDisplay.printError("Convolution Threshold not set, Won't Work")
+			self.params['no_hull']=True
+			self.params['cv']=False
+			self.params['no_length_prune']=False
+			if self.params['stdev']==0.0:
+				self.params['stdev']=1.0
+		elif self.params['masktype']=='edge':
+			self.params['convolve']=0.0
+			self.params['no_hull']=True
+			self.params['cv']=True
+			self.params['no_length_prune']=False
 
 
 	def insertFunctionParams(self,params):
@@ -87,54 +77,56 @@ class MaskMaker(appionLoop.AppionLoop):
 		maskPdata['convex hull']=not params['no_hull']
 		maskPdata['libcv']=params['cv']
 
-		self.partdb.insert(maskPdata)
+		self.appiondb.insert(maskPdata)
 		
 		return maskPdata
 
-	def specialParseParams(self,args):
-		params = self.params
+	def specialParseParams(self, args):
 		for arg in args:
 			elements=arg.split('=')
 			elements[0] = elements[0].lower()
 			if (elements[0]=='masktype'):
-				params['masktype']=elements[1]
+				self.params['masktype']=elements[1]
 			elif (elements[0]=='cruddiam'):
-				params['cdiam']=float(elements[1])
+				self.params['cdiam']=float(elements[1])
 			elif (elements[0]=='crudblur'):
-				params['cblur']=float(elements[1])
+				self.params['cblur']=float(elements[1])
 			elif (elements[0]=='crudlo'):
-				params['clo']=float(elements[1])
+				self.params['clo']=float(elements[1])
 			elif (elements[0]=='crudhi'):
-				params['chi']=float(elements[1])
+				self.params['chi']=float(elements[1])
 			elif (elements[0]=='crudstd'):
-				params['cstd']=float(elements[1])
+				self.params['cstd']=float(elements[1])
 			elif (elements[0]=='crudschi'):
-				params['cschi']=float(elements[1])
+				self.params['cschi']=float(elements[1])
 			elif (elements[0]=='crudsclo'):
-				params['csclo']=float(elements[1])
+				self.params['csclo']=float(elements[1])
 			elif (elements[0]=='convolve'):
-				params['convolve']=float(elements[1])
+				self.params['convolve']=float(elements[1])
 			elif (elements[0]=='stdev'):
-				params['stdev']=float(elements[1])
+				self.params['stdev']=float(elements[1])
 			elif (arg=='no_hull'):
-				params['no_hull']=True
+				self.params['no_hull']=True
 			elif (arg=='cv'):
-				params['cv']=True
-				params['no_hull']=True
+				self.params['cv']=True
+				self.params['no_hull']=True
 			elif (arg=='no_length_prune'):
-				params['no_length_prune']=True
+				self.params['no_length_prune']=True
 			elif (arg=='test'):
-				params['test']=True
-				
-		self.params = params
+				self.params['test']=True
+		if self.params['test']==True:
+			self.params['commit']=False			
 	
-	def insertFunctionRun(self,params):
+	def insertFunctionRun(self):
+		params = self.params
+		if params is None:
+			params = self.defaultparams
 		maskRdata=appionData.ApMaskMakerRunData()
 		maskRdata['dbemdata|SessionData|session'] = params['session'].dbid
 		maskRdata['path']=params['rundir']
 		maskRdata['name']=params['runid']
 		maskRdata['params']=self.insertFunctionParams(params)
-		self.partdb.insert(maskRdata)
+		self.appiondb.insert(maskRdata)
 
 		return maskRdata
 		
@@ -168,10 +160,10 @@ class MaskMaker(appionLoop.AppionLoop):
 
 	def processImage(self,imgdata):
 		image = self.getImage(imgdata,self.params['bin'])
-		results=self.function(self.params,self.rundata,imgdata,image)
+		results=self.function(self.rundata, imgdata, image)
 		mask = results.pop('mask')
-		filepathname = self.params['rundir']+"/masks/"+imgdata['filename']+"_mask.png"
-		apImage.arrayMaskToPngAlpha(mask,filepathname)
+		filepathname = os.path.join(self.params['rundir'],"masks",imgdata['filename']+"_mask.png")
+		apImage.arrayMaskToPngAlpha(mask, filepathname)
 		return results
 		
 
@@ -188,16 +180,16 @@ class MaskMaker(appionLoop.AppionLoop):
 		
 	def getImage(self,imgdata,binning):
 		imgarray = imgdata['image']
-		imgarray=imagefun.bin(imgarray,binning)
+		imgarray = apImage.binImg(imgarray, binning)
 		shape=numarray.shape(imgarray)
 		cutoff=8.0
 		# remove spikes in the image first
 		imgarray=self.prepImage(imgarray,cutoff)
 		return imgarray	
 	
-	def function(self,params,rundata,imgdata,binnedimgarray):
-		regions,maskarray = apCrud.makeMask(params,binnedimgarray)
-		regionTree = self.getResults(rundata,imgdata,regions)
+	def function(self,rundata, imgdata, binnedimgarray):
+		regions,maskarray = apCrud.makeMask(self.params, binnedimgarray)
+		regionTree = self.getResults(rundata, imgdata, regions)
 		return {'region':regionTree,'mask':maskarray}
 
 
