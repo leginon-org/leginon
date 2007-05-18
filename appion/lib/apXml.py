@@ -126,7 +126,10 @@ def _convertParamToType(val, vtype, nargs=None):
 		else:
 			apDisplay.printError("unknown type (type='"+vtype+"') in XML file")
 	else:
-		vallist = val.split(',')
+		if type(val) != type([]):
+			vallist = val.split(',')
+		else:
+			vallist = val
 		if vtype[:3].lower() == "int":
 			for i in range(len(vallist)):
 				vallist[i] = int(vallist[i])

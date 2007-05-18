@@ -50,7 +50,4 @@
  <bin>
 	<required>True</required>
  </bin>
- <apix>
-	<required>True</required>
- </apix>
 </selexon>

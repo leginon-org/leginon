@@ -6,7 +6,6 @@
 	<description>Output directory for storing output files</description>
 	<type>path</type>
 	<example>/ami/data##/project/appion/session/function</example>
-	<required>True</required>
 	<database>True</database>
  </outdir>
  <dbimages>
@@ -22,6 +21,7 @@
 	<default>run1</default>
 	<description>Name of run id</description>
 	<type>string</type>
+	<required>True</required>
  </runid>
  <alldbimages>
 	<name>database images</name>
@@ -31,14 +31,6 @@
 	<type>string</type>
 	<regex>[a-z0-9]+</regex>
  </alldbimages>
- <apix>
-	<name>apix</name>
-	<default></default>
-	<database>True</database>
-	<required>True</required>
-	<description>Angstroms per pixel</description>
-	<type>float</type>
- </apix>
  <diam>
 	<name>diam</name>
 	<default></default>
@@ -71,13 +63,6 @@
 	<description>Description of processing run</description>
 	<type>string</type>
  </description>
- <rundir>
-	<name>run directory</name>
-	<default></default>
-	<description>Run directory for storing all files</description>
-	<type>path</type>
-	<modify>False</modify>
- </rundir>
  <limit>
 	<name>image processing limit</name>
 	<default></default>

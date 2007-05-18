@@ -61,21 +61,19 @@
 	<limits>0,5</limits>
  </thresh>
  <diam>
+	<description>Particle diameter in angstroms used for masking template</description>
 	<required>True</required>
  </diam>
  <bin>
 	<required>True</required>
  </bin>
- <apix>
-	<required>True</required>
- </apix>
  <templateids>
 	<name>template id numbers</name>
 	<description>Id numbers for templates used</description>
 	<type>integer</type>
 	<nargs>2</nargs>
 	<default></default>
-	<limits>1,1000</limits>
+	<limits>1,1000000</limits>
 	<required>True</required>
  </templateids>
 </selexon>
