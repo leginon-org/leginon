@@ -378,6 +378,10 @@ def insertSelexonParams(params,expid):
  	# parameters are the same as the previous
  	else:
 		if not selexonparamsdata or runids[0]['params'] != selexonparamsdata[0]:
+			if selexonparamsdata:
+				for i in selexonparamsdata[0]:
+					if selexonparamsdata[0][i] != runids[0]['params'][i]:
+						apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
 			apDisplay.printError("All parameters for a single selexon run must be identical! \n"+\
 					     "please check your parameter settings.")
 		apTemplate.checkTemplateParams(params,runq)
