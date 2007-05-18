@@ -355,14 +355,14 @@ def insertSelexonParams(params,expid):
  	selexonparamsq['auto_thresh']=params['autopik']
  	selexonparamsq['lp_filt']=params['lp']
  	selexonparamsq['hp_filt']=params['hp']
-	selexonparamsdata=appiondb.query(selexonparamsq, results=1)
+	selexonparamsdata = appiondb.query(selexonparamsq, results=1)
 
 	### query for identical run name ###
-	runq=appionData.ApSelectionRunData()
+	runq = appionData.ApSelectionRunData()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
 
-	runids=appiondb.query(runq, results=1)
+	runids = appiondb.query(runq, results=1)
 
  	# if no run entry exists, insert new run entry into dbappiondata
  	if not(runids):
@@ -377,7 +377,7 @@ def insertSelexonParams(params,expid):
 	# if continuing a previous run, make sure that all the current
  	# parameters are the same as the previous
  	else:
-		if runids[0]['params']!=selexonparamsdata[0]:
+		if not selexonparamsdata or runids[0]['params'] != selexonparamsdata[0]:
 			apDisplay.printError("All parameters for a single selexon run must be identical! \n"+\
 					     "please check your parameter settings.")
 		apTemplate.checkTemplateParams(params,runq)
