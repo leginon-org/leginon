@@ -102,13 +102,12 @@ def lowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0):
 		return(imgarray)
 	sigma=float(radius/apix/float(bin))
 	try:
-		return nd_image.gaussian_filter(imgarray, sigma=sigma)
+		return nd_image.gaussian_filter(imgarray, sigma=sigma/3.0)
 	except:
 		if(sigma > 10):
 			print " ... performing BIG and SLOW low pass filter"
 		else:
 			print " ... performing leginon low pass filter"
-		#why you need to divide by three is beyond me, but you do here and not above
 		kernel=convolver.gaussian_kernel(sigma/3.0)
 		c=convolver.Convolver()
 		return c.convolve(image=imgarray, kernel=kernel)
