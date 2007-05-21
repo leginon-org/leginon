@@ -17,10 +17,6 @@ import gonmodel
 import string
 import math
 import calibrator
-try:
-	import numarray as Numeric
-except:
-	import Numeric
 import gui.wx.GonModeler
 
 class GonModeler(calibrator.Calibrator):

@@ -12,10 +12,7 @@ import watcher
 import event, data
 from pyami import correlator, peakfinder
 import calibrationclient
-try:
-	import numarray as Numeric
-except:
-	import Numeric
+import math
 import time
 import threading
 import presets
@@ -297,7 +294,7 @@ class DriftManager(watcher.Watcher):
 			peak = self.peakfinder.subpixelPeak(newimage=pc)
 			self.stopTimer('drift peak')
 			rows,cols = self.peak2shift(peak, pc.shape)
-			dist = Numeric.hypot(rows,cols)
+			dist = math.hypot(rows,cols)
 
 			self.setImage(pc, 'Correlation')
 			self.setTargets([(peak[1],peak[0])], 'Peak')
@@ -379,7 +376,7 @@ class DriftManager(watcher.Watcher):
 		pc = self.correlator.phaseCorrelate()
 		peak = self.peakfinder.subpixelPeak(newimage=pc)
 		rows,cols = self.peak2shift(peak, pc.shape)
-		dist = Numeric.hypot(rows,cols)
+		dist = math.hypot(rows,cols)
 
 		self.setImage(pc, 'Correlation')
 		self.setTargets([(peak[1],peak[0])], 'Peak')

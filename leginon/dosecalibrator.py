@@ -9,10 +9,6 @@ import calibrator
 import calibrationclient
 import event, data
 import node
-try:
-	import numarray as Numeric
-except:
-	import Numeric
 import gui.wx.DoseCalibrator
 import time
 from wx import CallAfter
