@@ -294,7 +294,6 @@ class ScalePopupWindow(wx.PopupTransientWindow, ScaleMixIn):
 
 if __name__ == '__main__':
 	import sys
-	import numarray
 
 	class MyApp(wx.App):
 		def OnInit(self):
