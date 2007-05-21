@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
-import numarray
-from numarray.linear_algebra import solve_linear_equations, inverse
-import math
+import numpy
 
 class Lattice(object):
 	def __init__(self, firstpoint, spacing, tolerance):
@@ -45,17 +43,17 @@ class Lattice(object):
 			## check if spacing is within tolerance
 			v0 = secondpoint[0] - self.center[0]
 			v1 = secondpoint[1] - self.center[1]
-			dist = numarray.hypot(v0,v1)
+			dist = numpy.hypot(v0,v1)
 			nf = dist / self.spacing
 			n = int(round(nf))
 			if n == 0:
 				## we can only have one point at (0,0)
 				return
-			err = numarray.absolute(nf - n)
+			err = numpy.absolute(nf - n)
 			if err < self.tolerance:
 				point = (n,0)
-				m = numarray.array(((v0/n, v1/n),(v1/n, -v0/n)), numarray.Float32)
-				tmatrix = inverse(m)
+				m = numpy.array(((v0/n, v1/n),(v1/n, -v0/n)), numpy.float32)
+				tmatrix = numpy.linalg.inv(m)
 				self.t00 = tmatrix[0,0]
 				self.t01 = tmatrix[0,1]
 				self.t10 = tmatrix[1,0]
@@ -84,7 +82,7 @@ class Lattice(object):
 		cint1 = round(c1)
 		err0 = c0 - cint0
 		err1 = c1 - cint1
-		err = math.sqrt(err0*err0+err1*err1)
+		err = numpy.sqrt(err0*err0+err1*err1)
 
 		if err < self.tolerance:
 			## if already have point at this lattice point,
@@ -125,7 +123,7 @@ def pointsToLattice(points, spacing, tolerance):
 
 
 if __name__ == '__main__':
-	from numarray.random_array import randint
+	from numpy.random import randint
 	import profile
 	import pickle
 

@@ -8,10 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-try:
-	import numarray as Numeric
-except:
-	import Numeric
+import numpy
 from pyami import mrc, arraystats
 import Image
 import re
@@ -39,8 +36,8 @@ def linearscale(input, boundfrom, boundto):
 
 	## prepare for fast math
 	rangefrom = float(maxfrom - minfrom)
-	rangeto = Numeric.array((maxto - minto)).astype('f')
-	minfrom = Numeric.array(minfrom).astype('f')
+	rangeto = numpy.array((maxto - minto)).astype('f')
+	minfrom = numpy.array(minfrom).astype('f')
 
 	# this is a hack to prevent zero division
 	# is there a better way to do this with some sort of 
@@ -64,22 +61,22 @@ def resize(pil_image, size):
 		new_image = pil_image
 	return new_image
 
-## (Numeric typcode,size) => (PIL mode,  PIL rawmode)
+## (numpy typcode,size) => (PIL mode,  PIL rawmode)
 ntype_itype = {
-	(Numeric.UInt8,1) : ('L','L'),
-	(Numeric.Int16,2) : ('I','I;16NS'),
-	(Numeric.Int,2) : ('I','I;16NS'),
-	(Numeric.Int,4) : ('I','I;32NS'),
-	(Numeric.Int32,4) : ('I','I;32NS'),
-	(Numeric.Float,4) : ('F','F;32NF'),
-	(Numeric.Float,8) : ('F','F;64NF'),
-	(Numeric.Float32,4) : ('F','F;32NF'),
-	(Numeric.Float64,8) : ('F','F;64NF')
+	(numpy.uint8,1) : ('L','L'),
+	(numpy.int16,2) : ('I','I;16NS'),
+	(numpy.int,2) : ('I','I;16NS'),
+	(numpy.int,4) : ('I','I;32NS'),
+	(numpy.int32,4) : ('I','I;32NS'),
+	(numpy.float,4) : ('F','F;32NF'),
+	(numpy.float,8) : ('F','F;64NF'),
+	(numpy.float32,4) : ('F','F;32NF'),
+	(numpy.float64,8) : ('F','F;64NF')
 	}
 
-def Numeric_to_Image(numarray, clip, outputsize=None):
+def numpy_to_Image(numarray, clip, outputsize=None):
 	"""
-	generates the PIL Image representation of this Numeric array
+	generates the PIL Image representation of this numpy array
 	"""
 	## scale everything between clip[0] and clip[1] to (0,255)
 	final = linearscale(numarray, clip, (0,255))
@@ -127,7 +124,7 @@ def mrc2jpg2out(mrc_filename, clip=None, quality=100, newsize=None):
 	if clip is None:
 		clip = (datamin,datamax)
 
-	img = Numeric_to_Image(ndata, clip, newsize)
+	img = numpy_to_Image(ndata, clip, newsize)
 	write_jpeg(img, None, quality)
 
 if __name__ == '__main__':

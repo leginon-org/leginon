@@ -4,14 +4,14 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/intensitycalibrator.py,v $
-# $Revision: 1.9 $
+# $Revision: 1.10 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-17 20:06:11 $
+# $Date: 2007-05-21 23:08:38 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
-import numarray
+import numpy
 import threading
 import calibrator
 import calibrationclient
@@ -49,7 +49,7 @@ class IntensityCalibrator(calibrator.Calibrator):
 		incr = self.settings['increment']
 		label = self.settings['label']
 
-		for i in numarray.arange(minint, maxint, incr):
+		for i in numpy.arange(minint, maxint, incr):
 			self.instrument.tem.Intensity = i
 			imdata = self.acquire(i)
 			stats = self.calcStats(imdata)

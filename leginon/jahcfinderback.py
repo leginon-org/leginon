@@ -8,8 +8,8 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import numarray
-import numarray.nd_image
+import numpy
+import scipy.ndimage
 from pyami import imagefun, peakfinder, convolver, correlator, mrc
 import ice
 import lattice
@@ -48,12 +48,12 @@ class CircleMaskCreator(object):
 		maxradsq = maxradius*maxradius
 		def circle(indices0,indices1):
 			## this shifts and wraps the indices
-			i0 = numarray.where(indices0<cutoff[0], indices0-center[0]+lshift[0], indices0-center[0]+gshift[0])
-			i1 = numarray.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[0]+gshift[1])
+			i0 = numpy.where(indices0<cutoff[0], indices0-center[0]+lshift[0], indices0-center[0]+gshift[0])
+			i1 = numpy.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[0]+gshift[1])
 			rsq = i0*i0+i1*i1
-			c = numarray.where((rsq>=minradsq)&(rsq<=maxradsq), 1.0, 0.0)
-			return c.astype(numarray.Int8)
-		temp = numarray.fromfunction(circle, shape)
+			c = numpy.where((rsq>=minradsq)&(rsq<=maxradsq), 1.0, 0.0)
+			return c.astype(numpy.int8)
+		temp = numpy.fromfunction(circle, shape)
 		self.masks[key] = temp
 		return temp
 
@@ -182,16 +182,16 @@ class HoleFinder(object):
 		diameter = self.template_config['template diameter']
 		scale = float(diameter) / filediameter
 
-		im2 = numarray.nd_image.zoom(tempim, scale)
+		im2 = scipy.ndimage.zoom(tempim, scale)
 		origshape = im2.shape
 		edgevalue = im2[0,0]
-		template = edgevalue * numarray.ones(shape, im2.type())
+		template = edgevalue * numpy.ones(shape, im2.dtype)
 		offset = ( (shape[0]-origshape[0])/2, (shape[1]-origshape[1])/2 )
 		template[offset[0]:offset[0]+origshape[0], offset[1]:offset[1]+origshape[1]] = im2
 		shift = (shape[0]/2, shape[1]/2)
-		template = numarray.nd_image.shift(template, shift, mode='wrap')
+		template = scipy.ndimage.shift(template, shift, mode='wrap')
 
-		template = template.astype(numarray.Float32)
+		template = template.astype(numpy.float32)
 		self.__update_result('template', template)
 		if self.save_mrc:
 			mrc.write(template, 'template.mrc')
@@ -368,9 +368,9 @@ class HoleFinder(object):
 		mask = self.circle.get(subimage.shape, center, 0, radius)
 		if self.save_mrc:
 			mrc.write(mask, 'holemask.mrc')
-		im = numarray.ravel(subimage)
-		mask = numarray.ravel(mask)
-		roi = numarray.compress(mask, im)
+		im = numpy.ravel(subimage)
+		mask = numpy.ravel(mask)
+		roi = numpy.compress(mask, im)
 		mean = imagefun.mean(roi)
 		std = imagefun.stdev(roi)
 		n = len(roi)

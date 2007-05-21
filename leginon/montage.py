@@ -7,9 +7,8 @@ offset means:
 	coordinate of input that corresponds to 0,0 in output
 '''
 
-import numarray
-import numarray.nd_image
-import numarray.linear_algebra
+import numpy
+import scipy.ndimage
 import leginondata
 import polygon
 import raster
@@ -71,14 +70,14 @@ class Image(object):
 	def calculateMaxDist(self):
 		self.maxdist = 0.0
 		for corner in self.stagecorners:
-			dist = numarray.hypot(self.scope['stage position']['x']-corner[0], self.scope['stage position']['y']-corner[1])
+			dist = numpy.hypot(self.scope['stage position']['x']-corner[0], self.scope['stage position']['y']-corner[1])
 			if dist > self.maxdist:	
 				self.maxdist = 1.1 * dist
 
 	def isClose(self, other):
 		xdist = other.stagex - self.stagex
 		ydist = other.stagey - self.stagey
-		dist = numarray.hypot(xdist,ydist)
+		dist = numpy.hypot(xdist,ydist)
 		if dist > (self.maxdist + other.maxdist):
 			return False
 		else:
@@ -126,8 +125,8 @@ class MontageImage(Image):
 
 	def calculateTiles(self, tilesize):
 		## figure out the final shape of global space
-		rowsize = int(numarray.ceil(float(self.shape[0])/tilesize) * tilesize)
-		colsize = int(numarray.ceil(float(self.shape[1])/tilesize) * tilesize)
+		rowsize = int(numpy.ceil(float(self.shape[0])/tilesize) * tilesize)
+		colsize = int(numpy.ceil(float(self.shape[1])/tilesize) * tilesize)
 
 		## make list of stage center for each tile
 		print 'calculating tile positions...'
@@ -135,9 +134,9 @@ class MontageImage(Image):
 		firstpixel = tilesize/2.0-0.5
 		rowi = 0
 		tiles = ordereddict.OrderedDict()
-		for row in numarray.arange(firstpixel, rowsize, tilesize):
+		for row in numpy.arange(firstpixel, rowsize, tilesize):
 			coli = 0
-			for col in numarray.arange(firstpixel, colsize, tilesize):
+			for col in numpy.arange(firstpixel, colsize, tilesize):
 				pixel = {'row':row-centerpixel[0], 'col':col-centerpixel[1]}
 				newstage = self.trans.transform(pixel, self.stage, self.bin)
 				tilescope = leginondata.ScopeEMData(initializer=self.scope)
@@ -173,14 +172,14 @@ class MontageImage(Image):
 		## differnce in binning requires scaling
 		## assume equal x and y binning
 		binscale = float(input.binx) / self.binx
-		binmatrix = binscale * numarray.identity(2)
+		binmatrix = binscale * numpy.identity(2)
 
 		## affine transform matrix is input matrix
-		atmatrix = numarray.matrixmultiply(binmatrix, input.trans.matrix)
-		atmatrix = numarray.matrixmultiply(self.outputmatrix, atmatrix)
+		atmatrix = numpy.dot(binmatrix, input.trans.matrix)
+		atmatrix = numpy.dot(self.outputmatrix, atmatrix)
 
 		## affine_transform function requires the inverse matrix
-		atmatrix = numarray.linear_algebra.inverse(atmatrix)
+		atmatrix = numpy.linalg.inv(atmatrix)
 
 		## calculate offset position
 		if target is None:
@@ -193,18 +192,18 @@ class MontageImage(Image):
 		offset = affine.affine_transform_offset(input.shape, self.shape, atmatrix, shift)
 		if target is None:
 			## affine transform into temporary output
-			output = numarray.zeros(self.shape, numarray.Float32)
+			output = numpy.zeros(self.shape, numpy.float32)
 
 			inputarray = memmapMRC(input.fileref)
 
 			#inputarray = splines.filter(input.fileref.filename, inputarray)
-			numarray.nd_image.affine_transform(inputarray, atmatrix, offset=offset, output=output, output_shape=self.shape, mode='constant', cval=0.0, order=splineorder, prefilter=False)
+			scipy.ndimage.affine_transform(inputarray, atmatrix, offset=offset, output=output, output_shape=self.shape, mode='constant', cval=0.0, order=splineorder, prefilter=False)
 
 			if self.image is None:
-				self.image = numarray.zeros(self.shape, numarray.Float32)
+				self.image = numpy.zeros(self.shape, numpy.float32)
 
 			## copy temporary into final
-			numarray.putmask(self.image, output, output)
+			numpy.putmask(self.image, output, output)
 			self.inserted += 1
 		else:
 			pix = self.shape[0]/2.0+shift[0],self.shape[1]/2.0+shift[1]
@@ -260,8 +259,8 @@ def longEdgeAngle(left_target, right_target, output):
 	horizx = output.stagecorners[1][0] - output.stagecorners[0][0]
 	horizy = output.stagecorners[1][1] - output.stagecorners[0][1]
 
-	edgeangle = numarray.arctan2(edgevecty, edgevectx)
-	horizangle = numarray.arctan2(horizy, horizx)
+	edgeangle = numpy.arctan2(edgevecty, edgevectx)
+	horizangle = numpy.arctan2(horizy, horizx)
 	
 	return edgeangle - horizangle
 
@@ -333,7 +332,7 @@ def createSingleImage(inputimages, globaloutput, outfilename, outformat):
 	mrc.write(globaloutput.image, outfilename)
 
 def createTiles(inputs, tiledict, tilesize, row1=None, row2=None, col1=None, col2=None):
-	blank = numarray.zeros((tilesize,tilesize), numarray.Float32)
+	blank = numpy.zeros((tilesize,tilesize), numpy.float32)
 
 	if None in (row1,row2,col1,col2):
 		tileindices = tiledict.keys()

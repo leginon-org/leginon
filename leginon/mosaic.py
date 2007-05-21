@@ -5,7 +5,7 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-import numarray
+import numpy
 from pyami import correlator, peakfinder, imagefun
 import math
 import data
@@ -74,7 +74,7 @@ class Mosaic(object):
 		return {'min': (int(round(mosaicmin[0])), int(round(mosaicmin[1]))), 
 						'max': (int(round(mosaicmax[0])), int(round(mosaicmax[1])))}
 
-	def getMosaicImage(self, maxdimension=None, numtype=numarray.UInt16):
+	def getMosaicImage(self, maxdimension=None, numtype=numpy.uint16):
 		if not self.tiles:
 			return None
 		bbox = self.getMosaicImageBoundaries()
@@ -90,12 +90,12 @@ class Mosaic(object):
 					scale = newscale
 
 			for i, value in enumerate(imageshape):
-				imageshape[i] = int(numarray.ceil(scale*value))
-#				scaleoffset[i] = int(numarray.floor((maxdimension - imageshape[i])/2.0))
+				imageshape[i] = int(numpy.ceil(scale*value))
+#				scaleoffset[i] = int(numpy.floor((maxdimension - imageshape[i])/2.0))
 
 		if self.tiles:
-			numtype = self.tiles[0].image.type()
-		mosaicimage = numarray.zeros(imageshape, numtype)
+			numtype = self.tiles[0].image.dtype
+		mosaicimage = numpy.zeros(imageshape, numtype)
 		for tile in self.tiles:
 			position = self.getTilePosition(tile)
 			shape = self.getTileShape(tile)
@@ -104,7 +104,7 @@ class Mosaic(object):
 									int(round(offset[1] * scale + scaleoffset[1])))
 
 			image = imagefun.scale(tile.image, scale)
-			image = numarray.asarray(image, numtype)
+			image = numpy.asarray(image, numtype)
 			mosaicimage[offset[0]:offset[0] + image.shape[0],
 									offset[1]:offset[1] + image.shape[1]] = image
 		self.scale = scale
@@ -138,7 +138,7 @@ class Mosaic(object):
 		if unwrappedshift[0] != wrappedshift[0] \
 											and unwrappedshift[1] != wrappedshift[1]:
 			# holds peak values for the four cases for comparison at the end
-			peakmatrix = numarray.zeros((2,2), numarray.Float32)
+			peakmatrix = numpy.zeros((2,2), numpy.float32)
 
 			# tests if both unwrapped shift values are valid
 			peakmatrix[0, 0] = self.getPeak(
@@ -441,14 +441,14 @@ class EMMosaic(object):
 			scale = float(maxdimension-1) / float(maxdim)
 		self.scale = scale
 
-		numtype = self.tiles[0].image.type()
+		numtype = self.tiles[0].image.dtype
 
 		### find shape of final mosaic
 		### optimize me
 		maxrow = maxcol = 0
 		for tile in self.tiles:
 			scaled_tile = imagefun.scale(tile.image, scale)
-			scaled_tile = numarray.asarray(scaled_tile, numtype)
+			scaled_tile = numpy.asarray(scaled_tile, numtype)
 			scaled_shape = scaled_tile.shape
 			scaled_pos = self.scaled(tile.corner_pos)
 			rowslice1 = scaled_pos[0],scaled_pos[0]+scaled_shape[0]
@@ -462,12 +462,12 @@ class EMMosaic(object):
 		mshape = (maxrow,maxcol)
 
 		### create mosaic image
-		mosaicimage = numarray.zeros(mshape, numtype)
+		mosaicimage = numpy.zeros(mshape, numtype)
 
 		### scale and insert tiles
 		for tile in self.tiles:
 			scaled_tile = imagefun.scale(tile.image, scale)
-			scaled_tile = numarray.asarray(scaled_tile, numtype)
+			scaled_tile = numpy.asarray(scaled_tile, numtype)
 			scaled_shape = scaled_tile.shape
 			scaled_pos = self.scaled(tile.corner_pos)
 			rowslice = slice(scaled_pos[0],scaled_pos[0]+scaled_shape[0])
@@ -479,7 +479,7 @@ class EMMosaic(object):
 		tilepos = tile.center_pos
 		rdist = tilepos[0] - row
 		cdist = tilepos[1] - col
-		dist = numarray.hypot(rdist, cdist)
+		dist = numpy.hypot(rdist, cdist)
 		return dist
 
 	def getNearestTile(self, row, col):

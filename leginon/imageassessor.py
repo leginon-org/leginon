@@ -13,7 +13,7 @@ import node
 import gui.wx.ImageAssessor
 import os
 import Image
-import numarray
+import numpy
 from pyami import imagefun, mrc
 try:
 	import apAssessor
@@ -139,14 +139,14 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 			if self.currentname.find('_mask') > -1:
 				alpha = 0.5
 				parentimg,imgdata = self.readMaskParent()
-				maskshape = numarray.shape(imarray)
+				maskshape = imarray.shape
 				print self.maskrundata
 
 				targets = apAssessor.getRegionsAsTargets(self.maskrundata,maskshape,imgdata)
 				self.alltargets = targets[:]
 				self.setTargets(targets, 'Regions')
 				
-				binning = numarray.shape(parentimg)[0]/numarray.shape(imarray)[0]
+				binning = parentimg.shape[0]/imarray.shape[0]
 				parentimg=imagefun.bin(parentimg,binning)
 				overlay=parentimg+imarray*alpha*(parentimg.max()-parentimg.min())/imarray.max()
 				self.setImage(overlay, 'Mask')
@@ -211,20 +211,20 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 		copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
 		"""
 		if im.mode == "L":
-			a = numarray.fromstring(im.tostring(), numarray.UInt8)
-			a = numarray.reshape(a, (im.size[1], im.size[0]))
+			a = numpy.fromstring(im.tostring(), numpy.uint8)
+			a = numpy.reshape(a, (im.size[1], im.size[0]))
 			#a.shape = (im.size[1], im.size[0], 1)  # alternate way
 		elif (im.mode=='RGB'):
-			a = numarray.fromstring(im.tostring(), numarray.UInt8)
+			a = numpy.fromstring(im.tostring(), numpy.uint8)
 			a.shape = (im.size[1], im.size[0], 3)
 		elif (im.mode=='RGBA'):
-			atmp = numarray.fromstring(im.tostring(), numarray.UInt8)
+			atmp = numpy.fromstring(im.tostring(), numpy.uint8)
 			atmp.shape = (im.size[1], im.size[0], 4)
 			a = atmp[:,:,3]
 		else:
 			raise ValueError, im.mode+" mode not considered"
 
 		if convertType == 'Float32':
-			a = a.astype(numarray.Float32)
+			a = a.astype(numpy.float32)
 		return a
 
