@@ -524,6 +524,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def acquire(self, presetdata, emtarget=None, attempt=None):
 		self.moveAndPreset(presetdata, emtarget)
 
+		pausetime = self.settings['pause time']
+		self.startTimer('pause')
+		time.sleep(pausetime)
+		self.stopTimer('pause')
+
 		## pre-exposure
 		pretime = presetdata['pre exposure']
 		if pretime:
