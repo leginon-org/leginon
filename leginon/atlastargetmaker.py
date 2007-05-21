@@ -7,7 +7,6 @@
 #
 
 import math
-import numarray
 import calibrationclient
 import data
 import event
