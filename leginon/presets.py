@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.249 $
+# $Revision: 1.250 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-17 22:52:26 $
+# $Date: 2007-05-21 23:33:08 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -24,11 +24,6 @@ from pyami import ordereddict
 import gui.wx.PresetsManager
 import instrument
 import random
-
-try:
-	import numarray as Numeric
-except:
-	import Numeric
 
 class PresetChangeError(Exception):
 	pass
