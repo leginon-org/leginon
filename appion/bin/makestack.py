@@ -300,17 +300,17 @@ def batchBox(params, imgdict):
 		return(0)
 
 def eliminateMinMaxCCParticles(particles,params):
-	newparticles=[]
-	eliminated=0
+	newparticles = []
+	eliminated = 0
 	for prtl in particles:
 		if params['selexonmin'] and prtl['correlation'] < params['selexonmin']:
-				eliminated += 1
+			eliminated += 1
 		elif params['selexonmax'] and prtl['correlation'] > params['selexonmax']:
-				eliminated += 1
+			eliminated += 1
 		else:
 			newparticles.append(prtl)
 	print eliminated,"particle(s) eliminated due to selexonmin or selexonmax"
-	return(newparticles)
+	return newparticles
 
 def saveParticles(particles,shift,dbbox,params,imgdict):
 	imgname = imgdict['filename']
