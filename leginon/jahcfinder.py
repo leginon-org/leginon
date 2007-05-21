@@ -16,10 +16,7 @@ import threading
 import ice
 import instrument
 import os.path
-try:
-	import numarray as Numeric
-except:
-	import Numeric
+import math
 import gui.wx.JAHCFinder
 import version
 
@@ -282,10 +279,10 @@ class JAHCFinder(targetfinder.TargetFinder):
 		## if there are bad holes, use one
 		if bad:
 			point = bad[0]
-			closest_dist = Numeric.hypot(point[0]-cx,point[1]-cy)
+			closest_dist = math.hypot(point[0]-cx,point[1]-cy)
 			closest_point = point
 			for point in bad:
-				dist = Numeric.hypot(point[0]-cx,point[1]-cy)
+				dist = math.hypot(point[0]-cx,point[1]-cy)
 				if dist < closest_dist:
 					closest_dist = dist
 					closest_point = point
@@ -293,10 +290,10 @@ class JAHCFinder(targetfinder.TargetFinder):
 
 		## now use a good hole for focus
 		point = good[0]
-		closest_dist = Numeric.hypot(point[0]-cx,point[1]-cy)
+		closest_dist = math.hypot(point[0]-cx,point[1]-cy)
 		closest_point = point
 		for point in good:
-			dist = Numeric.hypot(point[0]-cx,point[1]-cy)
+			dist = math.hypot(point[0]-cx,point[1]-cy)
 			if dist < closest_dist:
 				closest_dist = dist
 				closest_point = point

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import libCV
-import numarray
 import threading
 import time
 import subprocess
@@ -58,9 +57,6 @@ if __name__ == '__main__':
 
 	astr = sys.stdin.read()
 	a = cPickle.loads(astr)
-	'''
-	a = numarray.array(((0,0),(0,1),(1,1),(1,0)))
-	'''
 
 	result = libCV.PolygonACD(a, value)
 	#result = Test(a, value)

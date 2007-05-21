@@ -4,14 +4,13 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/matlabtargetfinder.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-17 22:03:47 $
+# $Date: 2007-05-21 23:17:17 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
-import numarray
 import os.path
 import threading
 import data

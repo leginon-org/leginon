@@ -11,10 +11,6 @@ from pyami import fftengine, correlator, peakfinder
 import sys
 import time
 import calibrationclient
-try:
-	import numarray as Numeric
-except:
-	import Numeric
 import threading
 import node
 import data
