@@ -5,32 +5,15 @@
 #			 For terms of the license agreement
 #			 see	http://ami.scripps.edu/software/leginon-license
 #
-import numarray
-import numarray.image
-import numarray.nd_image as nd_image
+
+import numpy
+import scipy.ndimage
 import fftengine
 import numextension
 import math
+import arraystats
 
 ffteng = fftengine.fftEngine()
-
-## These following stats functions have been replaced by they
-## arraystats module
-def stdev(inputarray, known_mean=None):
-	return nd_image.standard_deviation(inputarray)
-
-def mean(inputarray):
-	return nd_image.mean(inputarray)
-
-def min(inputarray):
-	f = numarray.ravel(inputarray)
-	i = numarray.argmin(f)
-	return float(f[i])
-
-def max(inputarray):
-	f = numarray.ravel(inputarray)
-	i = numarray.argmax(f)
-	return float(f[i])
 
 ### wrap some functions that are in numextension
 def minmax(image):
@@ -51,76 +34,54 @@ def despike(image, size=11, sigma=3.5, debug=0):
 	numextension.despike(image, size, sigma, debug)
 
 def medianSeries(series):
-	return numarray.image.median(series)
+	return numpy.median(series)
 
 def averageSeries(series):
-	return numarray.image.average(series)
+	return numpy.mean(series, 0)
 
-def scale(array, scale):
+def scale(a, scale):
 	if scale == 1.0:
-		return array
-	return numarray.nd_image.zoom(array, scale, order=1)
+		return a
+	return scipy.ndimage.zoom(a, scale, order=1)
 
 def linearscale(input, boundfrom, boundto, extrema=None):
 	"""
 	Rescale the data in the range 'boundfrom' to the range 'boundto'.
 	"""
 
-	### check args
-	if len(input) < 1:
-		return input
-	if len(boundfrom) != 2:
-		raise ValueError, 'boundfrom must be length 2'
-	if len(boundto) != 2:
-		raise ValueError, 'boundto must be length 2'
-
 	minfrom,maxfrom = boundfrom
 	minto,maxto = boundto
+	if minfrom == maxfrom:
+		raise RuntimeError('Invalid range: %s' % (boundfrom,))
 
 	### default from bounds are min,max of the input
 	if minfrom is None:
 		if extrema:
 			minfrom = extrema[0]
 		else:
-			minfrom = numarray.argmin(numarray.ravel(input))
-			minfrom = numarray.ravel(input)[minfrom]
+			minfrom = arraystats.min(input)
 	if maxfrom is None:
 		if extrema:
 			maxfrom = extrema[1]
 		else:
-			maxfrom = numarray.argmax(numarray.ravel(input))
-			maxfrom = numarray.ravel(input)[maxfrom]
+			maxfrom = arraystats.max(input)
 
-	## prepare for fast math
-	## with numarray, this is not necessary anymore
-	#rangefrom = numarray.array((maxfrom - minfrom)).astype('f')
-	#rangeto = numarray.array((maxto - minto)).astype('f')
-	#minfrom = numarray.array(minfrom).astype('f')
 	rangefrom = maxfrom - minfrom
 	rangeto = maxto - minto
 
-	# this is a hack to prevent zero division
-	# is there a better way to do this with some sort of 
-	# float limits module rather than hard coding 1e-99?
-	if not rangefrom:
-		rangefrom = 1e-99
-
-	#output = (input - minfrom) * rangeto / rangefrom
 	scale = float(rangeto) / rangefrom
 	offset = minfrom * scale
 	output = input * scale - offset
 
 	return output
 
-# resize and rotate filters:	NEAREST, BILINEAR, BICUBIC
-
-def power(numericarray, mask_radius=1.0, thresh=3):
-	fft = ffteng.transform(numericarray)
-	pow = numarray.absolute(fft)
+def power(a, mask_radius=1.0, thresh=3):
+	fft = ffteng.transform(a)
+	pow = numpy.absolute(fft)
 	try:
-		pow = numarray.log(pow)
+		pow = numpy.log(pow)
 	except OverflowError:
-		pow = numarray.log(pow+1e-20)
+		pow = numpy.log(pow+1e-20)
 
 	pow = shuffle(pow)
 
@@ -128,11 +89,11 @@ def power(numericarray, mask_radius=1.0, thresh=3):
 	if mask_radius:
 					center_mask(pow, mask_radius)
 
-	m = mean(pow)
-	s = stdev(pow, known_mean=m)
-	minval = numarray.array(m-thresh*s, numarray.Float32)
-	maxval = numarray.array(m+thresh*s, numarray.Float32)
-	pow = numarray.clip(pow, minval, maxval)
+	m = arraystats.mean(pow)
+	s = arraystats.std(pow)
+	minval = m-thresh*s
+	maxval = m+thresh*s
+	pow = numpy.clip(pow, minval, maxval)
 
 	return pow
 
@@ -142,76 +103,76 @@ def filled_circle(shape, radius):
 	def func(i0, i1):
 		ii0 = i0 - center[0]
 		ii1 = i1 - center[1]
-		rr2 = numarray.power(ii0,2) + numarray.power(ii1,2)
-		c = numarray.where(rr2<r2, 0.0, 1.0)
+		rr2 = ii0**2 + ii1**2
+		c = numpy.where(rr2<r2, 0.0, 1.0)
 		return c
-	return numarray.fromfunction(func, shape)
+	return numpy.fromfunction(func, shape)
 
-def center_mask(numericarray, mask_radius):
-	shape = numericarray.shape
+def center_mask(a, mask_radius):
+	shape = a.shape
 	center = shape[0]/2, shape[1]/2
-	center_square = numericarray[center[0]-mask_radius:center[0]+mask_radius, center[1]-mask_radius:center[1]+mask_radius]
-	m = mean(numericarray)
+	center_square = a[center[0]-mask_radius:center[0]+mask_radius, center[1]-mask_radius:center[1]+mask_radius]
+	m = mean(a)
 	cs_shape = center_square.shape
 	cs_center = cs_shape[0]/2, cs_shape[1]/2
 	circ = filled_circle(cs_shape,mask_radius)
-	center_square[:] = center_square * circ.astype(center_square.type())
+	center_square[:] = center_square * circ.astype(center_square.dtype)
 
-def shuffle(narray):
+def shuffle(a):
 	'''
 	take a half fft/power spectrum centered at 0,0
 	and convert to full fft/power centered at center of image
 	'''
-	oldr,oldc = narray.shape
+	oldr,oldc = a.shape
 	r,c = newshape = oldr, (oldc-1)*2
 
 	## create new full size array 
-	new = numarray.zeros(newshape, narray.type())
+	new = numpy.zeros(newshape, a.dtype)
 
 	## fill in right half
-	new[r/2:,c/2:] = narray[:r/2,1:]
-	new[:r/2,c/2:] = narray[r/2:,1:]
+	new[r/2:,c/2:] = a[:r/2,1:]
+	new[:r/2,c/2:] = a[r/2:,1:]
 
 	## fill in left half
-	reverserows = -numarray.arrayrange(r) - 1
-	reversecols = -numarray.arrayrange(c/2) - 1
-	new[:,:c/2] = numarray.take(new[:,c/2:], reverserows, 0)
-	new[:,:c/2] = numarray.take(new[:,:c/2], reversecols, 1)
+	reverserows = -numpy.arange(r) - 1
+	reversecols = -numpy.arange(c/2) - 1
+	new[:,:c/2] = numpy.take(new[:,c/2:], reverserows, 0)
+	new[:,:c/2] = numpy.take(new[:,:c/2], reversecols, 1)
 
 	return new
 
-def swap(numericarray):
-	rows,cols = numericarray.shape
-	newarray = numarray.zeros(numericarray.shape, numericarray.type())
-	newarray[:rows/2] = numericarray[rows/2:]
-	newarray[rows/2:] = numericarray[:rows/2]
-	return newarray
+def swap(a):
+	rows,cols = a.shape
+	b = numpy.zeros(a.shape, a.dtype)
+	b[:rows/2] = a[rows/2:]
+	b[rows/2:] = a[:rows/2]
+	return b
 
-def swap_row_halves(numericarray):
-	rows,cols = numericarray.shape
-	newarray = numarray.zeros(numericarray.shape, numericarray.type())
-	newarray[:rows/2] = numericarray[rows/2:]
-	newarray[rows/2:] = numericarray[:rows/2]
-	return newarray
+def swap_row_halves(a):
+	rows,cols = a.shape
+	b = numpy.zeros(a.shape, a.dtype)
+	b[:rows/2] = a[rows/2:]
+	b[rows/2:] = a[:rows/2]
+	return b
 
-def swap_col_halves(numericarray):
-	rows,cols = numericarray.shape
-	newarray = numarray.zeros(numericarray.shape, numericarray.type())
-	newarray[:,:cols/2] = numericarray[:,cols/2:]
-	newarray[:,cols/2:] = numericarray[:,:cols/2]
-	return newarray
+def swap_col_halves(a):
+	rows,cols = a.shape
+	b = numpy.zeros(a.shape, a.dtype)
+	b[:,:cols/2] = a[:,cols/2:]
+	b[:,cols/2:] = a[:,:cols/2]
+	return b
 
-def swap_quadrants(numericarray):
-	newarray = swap_row_halves(numericarray)
-	newarray = swap_col_halves(newarray)
-	return newarray
+def swap_quadrants(a):
+	b = swap_row_halves(a)
+	b = swap_col_halves(b)
+	return b
 
 def pad(im, value=None):
-	# maybe use numarray.concatenate instead?
+	# maybe use numpy.concatenate instead?
 	if value is None:
-		value = mean(im)
+		value = arraystats.mean(im)
 	padshape = im.shape[0]*2, im.shape[1]*2
-	paddedimage = value * numarray.ones(padshape, im.type())
+	paddedimage = value * numpy.ones(padshape, im.dtype)
 	paddedimage[:im.shape[0], :im.shape[1]] = im
 	return paddedimage
 
@@ -275,7 +236,7 @@ def near_center(shape, blobs, n):
 	distmap = {}
 	for blob in blobs:
 		center = blob.stats['center']
-		distance = numarray.hypot(center[0]-imcenter[0],center[1]-imcenter[1])
+		distance = numpy.hypot(center[0]-imcenter[0],center[1]-imcenter[1])
 		distmap[blob] = distance
 	## sort blobs based on distance
 	def dist_cmp(x,y):
@@ -290,11 +251,11 @@ def near_center(shape, blobs, n):
 			newblobs.append(blob)
 	return newblobs
 
-## using nd_image to find blobs
-labelstruct = numarray.array(((1,1,1),(1,1,1),(1,1,1)))
-def numarrayblobs(im,mask):
-	labels,n = nd_image.label(mask, labelstruct)
-	## too bad nd_image module is inconsistent with what is returned from
+## using scipy.ndimage to find blobs
+labelstruct = numpy.ones((3,3))
+def scipyblobs(im,mask):
+	labels,n = scipy.ndimage.label(mask, labelstruct)
+	## too bad ndimage module is inconsistent with what is returned from
 	## the following functions.  Sometiems a list, sometimes a single value...
 	if n==0:
 		centers = []
@@ -302,17 +263,17 @@ def numarrayblobs(im,mask):
 		stds = []
 		means = []
 	else:
-		centers = nd_image.center_of_mass(im,labels,range(1,n+1))
-		sizes = nd_image.histogram(labels,1,n+1,n)
-		stds = nd_image.standard_deviation(im,labels,range(1,n+1))
-		means = nd_image.mean(im,labels,range(1,n+1))
+		centers = scipy.ndimage.center_of_mass(im,labels,range(1,n+1))
+		sizes = scipy.ndimage.histogram(labels,1,n+1,n)
+		stds = scipy.ndimage.standard_deviation(im,labels,range(1,n+1))
+		means = scipy.ndimage.mean(im,labels,range(1,n+1))
 		moments = moment_of_inertia(im,labels,range(1,n+1))
 		if n==1:
 			centers = [centers]
 			stds = [stds]
 			means = [means]
 		else:
-			centers = map(numarray.array, centers)
+			centers = map(numpy.array, centers)
 
 	blobs = []
 	for i in range(n):
@@ -327,15 +288,13 @@ def moment_of_inertia(input, labels, index = None):
 	label numbers of the objects to be measured. If index is None, all
 	values are used where labels is larger than zero.
 	"""
-	input = numarray.asarray(input)
-	if isinstance(input.type(), numarray.ComplexType):
-		raise TypeError, 'Complex type not supported'
+	input = numpy.asarray(input)
 	if labels == None:
 		raise RuntimeError, 'labels are needed'
 	if labels.shape != input.shape:
 		raise RuntimeError, 'input and labels shape are not equal'
 	moments = []
-	for label in nd_image.find_objects(labels):
+	for label in scipy.ndimage.find_objects(labels):
 		submask = input[label].copy()
 		moment = _moment(submask)
 		moments.append(moment)
@@ -346,13 +305,13 @@ def _moment(subimage):
 	if(subimage.shape[0]+subimage.shape[1] < 4):
 		return 1.0
 	twopi = 2*math.pi
-	r0 = nd_image.center_of_mass(subimage)
+	r0 = scipy.ndimage.center_of_mass(subimage)
 	sqmat = _distsqmat(r0,subimage.shape)
-	moi = nd_image.sum(subimage*sqmat)/(nd_image.sum(subimage)**2)*twopi
+	moi = scipy.ndimage.sum(subimage*sqmat)/(scipy.ndimage.sum(subimage)**2)*twopi
 	return moi
 
 def _distsqmat(r0,shape):
-	indices = numarray.indices(shape)
+	indices = numpy.indices(shape)
 	dx, dy = indices[0]-r0[0],indices[1]-r0[1]
 	return (dx**2+dy**2)
 
@@ -364,7 +323,7 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 
 	shape = image.shape
 	### create copy of mask since it will be modified now
-	tmpmask = numarray.array(mask, numarray.Int32)
+	tmpmask = numpy.array(mask, numpy.int32)
 	## zero out tmpmask outside of border
 	if border:
 		tmpmask[:border] = 0
@@ -372,7 +331,7 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 		tmpmask[:,:border] = 0
 		tmpmask[:,-border:] = 0
 
-	blobs = numarrayblobs(image,tmpmask)
+	blobs = scipyblobs(image,tmpmask)
 	fakeblobs = []
 	toobig = 0
 	toosmall = 0
@@ -424,15 +383,14 @@ def bin(image, binning):
 def bin2(a, factor):
 	'''
 	This is based on: http://scipy.org/Cookbook/Rebinning
-	This version is modified to use numarray instead of numpy.
-	It is also simplified to the case of a 2D array with the same
+	It is simplified to the case of a 2D array with the same
 	binning factor in both dimensions.
 	'''
 	oldshape = a.shape
-	newshape = numarray.asarray(oldshape)/factor
+	newshape = numpy.asarray(oldshape)/factor
 	tmpshape = (newshape[0], factor, newshape[1], factor)
 	f = factor * factor
-	binned = numarray.sum(numarray.sum(numarray.reshape(a, tmpshape), 1), 2) / f
+	binned = numpy.sum(numpy.sum(numpy.reshape(a, tmpshape), 1), 2) / f
 	return binned
 
 def crop_at(im, center, shape, mode='wrap', cval=None):
@@ -448,9 +406,9 @@ def crop_at(im, center, shape, mode='wrap', cval=None):
 	croppedcenter = shape[0]/2.0 - 0.5, shape[1]/2.0 - 0.5
 	shift = croppedcenter[0]-center[0], croppedcenter[1]-center[1]
 	if mode == 'constant':
-		shifted = nd_image.shift(im, shift, mode=mode, cval=cval)
+		shifted = scipy.ndimage.shift(im, shift, mode=mode, cval=cval)
 	else:
-		shifted = nd_image.shift(im, shift, mode=mode)
+		shifted = scipy.ndimage.shift(im, shift, mode=mode)
 	cropped = shifted[:shape[0], :shape[1]]
 	return cropped
 
@@ -460,6 +418,6 @@ def threshold(a, limit):
 	return a >= limit
 
 def zscore(image):
-	m = mean(image)
-	s = stdev(image, known_mean=m)
+	m = arraystats.mean(image)
+	s = arraystats.std(image)
 	return (image - m) / s
