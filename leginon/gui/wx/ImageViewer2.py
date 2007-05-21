@@ -416,7 +416,6 @@ class ScrolledWindow(OffsetWindow):
 if __name__ == '__main__':
 	import sys
 	from pyami import mrc
-	import numarray
 
 	def wxBitmapFromMRC(filename, min=None, max=None, color=False):
 		n = mrc.read(filename)
@@ -466,10 +465,10 @@ if __name__ == '__main__':
 
 	app = MyApp(0)
 	if filename is None:
-		import numarray
-		n = numarray.zeros((2048, 2048))
-		n[:1024, :1024] = numarray.ones((1024, 1024))
-		n[1024:, 1024:] = numarray.ones((1024, 1024))
+		import numpy
+		n = numpy.zeros((2048, 2048))
+		n[:1024, :1024] = numpy.ones((1024, 1024))
+		n[1024:, 1024:] = numpy.ones((1024, 1024))
 		app.panel.setBitmap(wxBitmapFromNumarray(n))
 	else:
 		app.panel.setBitmap(wxBitmapFromMRC(filename, color=True))

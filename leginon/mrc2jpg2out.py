@@ -80,7 +80,7 @@ def numpy_to_Image(numarray, clip, outputsize=None):
 	"""
 	## scale everything between clip[0] and clip[1] to (0,255)
 	final = linearscale(numarray, clip, (0,255))
-	type = final.type()
+	type = final.dtype
 	h,w = final.shape
 	imsize = w,h
 	itemsize = final.itemsize()

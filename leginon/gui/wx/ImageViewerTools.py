@@ -231,16 +231,16 @@ class ValueScaleBitmap(wx.StaticBitmap):
 		width, height = self.GetSize()
 		types = [type(i) for i in self.fromrange]
 		if float in types:
-			arraytype = numarray.Float
+			arraytype = numpy.float
 		elif int in types:
-			arraytype = numarray.Int
+			arraytype = numpy.int
 		else:
 			raise TypeError
 
-		array = numarray.arange(width, type=numarray.Float, shape=(1, width))
+		array = numpy.arange(width, type=numpy.float, shape=(1, width))
 		array *= float(self.extrema[1] - self.extrema[0])/(width - 1)
 		array += self.extrema[0]
-		array = numarray.asarray(array, arraytype)
+		array = numpy.asarray(array, arraytype)
 		array = array.repeat(height)
 
 		bitmap = numarrayimage.numarray2wxBitmap(array, fromrange=self.fromrange)

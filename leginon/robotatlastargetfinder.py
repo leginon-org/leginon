@@ -4,16 +4,16 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.22 $
+# $Revision: 1.23 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-20 00:37:24 $
-# $Author: acheng $
+# $Date: 2007-05-21 23:40:50 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
 import math
-import numarray
-import numarray.nd_image
+import numpy
+import scipy.ndimage
 import threading
 import align
 import data
@@ -412,7 +412,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		if self.insertion is None:
 			self.setImage(None, 'Image')
 			return
-		atlasimage = numarray.zeros(self.insertion.shape, numarray.Float32)
+		atlasimage = numpy.zeros(self.insertion.shape, numpy.float32)
 		for image in self.insertion.images:
 			atlasimage[image.location[0][0]:image.location[0][1],
 								image.location[1][0]:image.location[1][1]] = image.data['image']
@@ -604,9 +604,9 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 			# transform target to where it should be for the current position
 			# based on the transform of the center image
-			#target2 = numarray.matrixmultiply(matrix, target2) + centershift
+			#target2 = numpy.dot(matrix, target2) + centershift
 			# ???
-			target2 = numarray.matrixmultiply(matrix, target2) - centershift
+			target2 = numpy.dot(matrix, target2) - centershift
 
 			# acquire where the target should be centered
 			imagedata = self.reacquireImage(centerimagedata,
@@ -615,19 +615,19 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 			image1 = image.data['image']
 			shift = -target1[0], -target1[1]
-			image1 = numarray.nd_image.shift(image1, shift)
+			image1 = scipy.ndimage.shift(image1, shift)
 			shape = image1.shape
 			image1 = align.rotateScaleOffset(image1, rotation, scale, (0.0, 0.0),
 																				shape=(shape[0]/2, shape[1]/2))
 
-			i = numarray.zeros(shape, image1.type())
+			i = numpy.zeros(shape, image1.dtype)
 			o = int(round(shape[0]/4.0)), int(round(shape[1]/4.0))
 			i[o[0]:o[0]+image1.shape[0], o[1]:o[1]+image1.shape[1]] = image1
 			image1 = i
 
 			image2 = imagedata['image']
 			shape = image2.shape
-			i = numarray.zeros(image2.shape, image2.type())
+			i = numpy.zeros(image2.shape, image2.dtype)
 			o = int(round(shape[0]/4.0)), int(round(shape[1]/4.0))
 			i[o[0]:-o[0], o[1]:-o[1]] = image2[o[0]:-o[0], o[1]:-o[1]]
 			image2 = i
@@ -637,7 +637,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			m = 'Shift: (%g, %g), peak value: %g'
 			self.logger.info(m % (shift + (value,)))
 			target = -shift[0], -shift[1]
-			#target = numarray.matrixmultiply(matrix, target)
+			#target = numpy.dot(matrix, target)
 
 			targets.append((targetdata, target, imagedata))
 

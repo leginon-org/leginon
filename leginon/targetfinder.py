@@ -16,9 +16,8 @@ import threading
 import node
 import targethandler
 from pyami import convolver, imagefun, mrc
-import numarray
-import numarray.ma as ma
-import numarray.nd_image as nd
+import numpy
+import scipy.ndimage as nd
 import gui.wx.TargetFinder
 import gui.wx.ClickTargetFinder
 import gui.wx.MosaicClickTargetFinder
@@ -835,14 +834,14 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 		sigma = 3.0
 		smooth=nd.gaussian_filter(image,sigma)
-		masked_region = ma.masked_inside(smooth,mint,maxt)
+		masked_region = numpy.ma.masked_inside(smooth,mint,maxt)
 		regionimage = masked_region.mask()
 		base=nd.generate_binary_structure(2,2)
 		iteration = 3
 		regionimage=nd.binary_erosion(regionimage,structure=base,iterations=iteration)
 		regionlabel,nlabels = nd.label(regionimage)
 
-		ones = numarray.ones(imshape)
+		ones = numpy.ones(imshape)
 		if nlabels > 0:
 			regionareas = nd.sum(ones,regionlabel,range(1,nlabels+1))
 		else:
@@ -851,13 +850,13 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			regionareas = [regionareas]
 
 		ngoodregion = 0
-		newregionimage = numarray.zeros(imshape)
+		newregionimage = numpy.zeros(imshape)
 		for i, area in enumerate(regionareas):
 			if area < minsize*0.2 or area > maxsize:
 				continue
 			else:
 				ngoodregion += 1
-				newregionimage += numarray.where(regionlabel==(i+1),1,0)
+				newregionimage += numpy.where(regionlabel==(i+1),1,0)
 
 #		finalregionimage=nd.binary_fill_holes(newregionimage,structure=base)
 		finalregionimage = newregionimage
@@ -875,7 +874,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def regionsFromCenters(self,centers,maxsize):	
 		halfedge = math.sqrt(maxsize)/(2*(1+math.sqrt(2.0)))
 		halfbox = math.sqrt(maxsize)/2
-		regionimage = numarray.zeros(self.mosaicimage.shape)
+		regionimage = numpy.zeros(self.mosaicimage.shape)
 		regionarrays=[]
 		for center in centers:
 			polygon = [
@@ -888,7 +887,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 					[center[0]-halfbox,center[1]+halfedge],
 					[center[0]-halfbox,center[1]-halfedge]
 				]
-			regionarray = numarray.array(polygon,numarray.Float32)
+			regionarray = numpy.array(polygon,numpy.float32)
 			regionarrays.append(regionarray)
 		return regionarrays
 		
@@ -896,7 +895,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		imshape = self.mosaicimage.shape
 		self.regionarrays = []
 		self.regionellipses = []
-		self.regionimage = numarray.zeros(imshape)
+		self.regionimage = numpy.zeros(imshape)
 		maxsize = self.settings['max region area']
 		minsize = self.settings['min region area']
 		onesectionarea1 = self.settings['section area']
@@ -960,7 +959,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		print "-------------"
 		
 		# get background stats
-		background = numarray.where(self.mosaicimage>maxt,1,0)
+		background = numpy.where(self.mosaicimage>maxt,1,0)
 		backgroundlabel,nlabels = nd.label(background)
 		bkgrndmean = nd.mean(self.mosaicimage,labels=backgroundlabel)
 		bkgrndstddev = nd.standard_deviation(self.mosaicimage,labels=backgroundlabel)
@@ -979,7 +978,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		sectionarrays = []
 		sectionellipses = []
 		
-#		Find Section with simple thresholding and Label in numarray.nd_image for now until
+#		Find Section with simple thresholding and Label in scipy.ndimage for now until
 #		better segamentation is available for sections that connects to the edge
 
 #		if limitbysection or sectiononly:
@@ -1001,7 +1000,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				count += 1
 				minsize1 = onesectionmin
 				maxsize1 = multisections
-				m = numarray.clip(self.mosaicimage, mint, maxt1)
+				m = numpy.clip(self.mosaicimage, mint, maxt1)
 				regions,image = libCV.FindRegions(m, minsize1, maxsize1, 0, 0, False,True)
 				sectionarrays,sectionellipses,sectiondisplaypoints = self.reduceRegions(regions,axisratiolimits,velimit,None)
 				minsize1 = stepscale*onesectionmin
@@ -1012,7 +1011,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		if len(sectiondisplaypoints) == 0:
 			if uselibCV and (not limitbysection):
 				# rough section by threshold only
-				masked_section = ma.masked_inside(self.mosaicimage,mint,maxt)
+				masked_section = numpy.ma.masked_inside(self.mosaicimage,mint,maxt)
 				sectionimage = masked_section.mask()
 				nlabel = 1
 			else:
@@ -1023,7 +1022,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				self.logger.info('use sectionimage for rastering and found %d good sections' %nsection)
 		else:
 			sectionimage = polygon.plotPolygons(imshape,sectionarrays)
-			nonmissingregion = numarray.where(self.mosaicimage==0,0,1)
+			nonmissingregion = numpy.where(self.mosaicimage==0,0,1)
 			sectionimage = sectionimage*nonmissingregion
 		
 		# get section stats
@@ -1084,7 +1083,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				avgt = (mint+maxt2)/2
 				mint2a = avgt-(maxt2-mint)*tissuecontrast/2
 				maxt2a = avgt+(maxt2-mint)*tissuecontrast/2
-				m = numarray.clip(self.mosaicimage, mint2a, maxt2a)
+				m = numpy.clip(self.mosaicimage, mint2a, maxt2a)
 				regions,image = libCV.FindRegions(m, minsize, maxsize, 0, 0, white_on_black,black_on_white)
 				regionarrays,regionellipses,displaypoints = self.reduceRegions(regions,[1.0,self.settings['axis ratio']],velimit,sectionimage)
 				minsize = stepscale*minsize
@@ -1144,8 +1143,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		overlapscale = 1.0 - overlap/100.0
 		p2 = overlapscale*p2[0], overlapscale*p2[1]
 		
-		spacing = numarray.hypot(*p2)
-		angle = numarray.arctan2(*p2)
+		spacing = numpy.hypot(*p2)
+		angle = numpy.arctan2(*p2)
 		angle = math.degrees(angle)
 		return spacing,angle
 
@@ -1168,7 +1167,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			manualregion = self.panel.getTargetPositions('region')
 			if manualregion:
 				manualregion = self.transpose_points(manualregion)
-				manualregionarray = numarray.array(manualregion)
+				manualregionarray = numpy.array(manualregion)
 				self.regionarrays = [manualregionarray]
 
 		if len(self.regionarrays) > 0:
@@ -1238,11 +1237,11 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			# handle the case for one point in the region
 				regionlist = region.tolist()
 				regionlist =[(regionlist[0][0],regionlist[0][1]),(regionlist[0][0]+1,regionlist[0][1]+1)]
-				newregion = numarray.array(regionlist)
+				newregion = numpy.array(regionlist)
 				distances = polygon.distancePointsToPolygon(leftovers, newregion)
 				
 			isnear = distances < spacing
-			#nearraster = numarray.compress(distances<spacing, rasterpoints)
+			#nearraster = numpy.compress(distances<spacing, rasterpoints)
 			nearraster = []
 			for i, point in enumerate(leftovers):
 				if isnear[i]:

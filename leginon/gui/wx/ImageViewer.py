@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.53 $
+# $Revision: 1.54 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-17 22:52:27 $
+# $Date: 2007-05-21 23:54:24 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -25,10 +25,7 @@
 import cStringIO
 from pyami import mrc, arraystats
 import math
-try:
-	import numarray as Numeric
-except:
-	import Numeric
+import numpy
 import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
 import NumericImage
@@ -667,7 +664,7 @@ class ImagePanel(wx.Panel):
 		'''
 		Set the internal wx.Bitmap to current Numeric image
 		'''
-		if isinstance(self.imagedata, Numeric.ArrayType):
+		if isinstance(self.imagedata, numpy.ndarray):
 			clip = self.contrasttool.getRange()
 			wximage = wx.EmptyImage(self.imagedata.shape[1], self.imagedata.shape[0])
 			if self.colormap is None:
@@ -760,7 +757,7 @@ class ImagePanel(wx.Panel):
 		#self.setImage(imagedata, **kwargs)
 
 	def setImage(self, imagedata):
-		if isinstance(imagedata, Numeric.ArrayType):
+		if isinstance(imagedata, numpy.ndarray):
 			self.setNumericImage(imagedata)
 		elif isinstance(imagedata, Image.Image):
 			self.setPILImage(imagedata)
@@ -813,8 +810,8 @@ class ImagePanel(wx.Panel):
 		scroll, and refresh the screen.
 		'''
 
-		if not isinstance(numericimage, Numeric.ArrayType):
-			raise TypeError('Numeric image must be of Numeric.ArrayType')
+		if not isinstance(numericimage, numpy.ndarray):
+			raise TypeError('image must be numpy.ndarray')
 
 		center = self.getScrolledCenter()
 
@@ -896,7 +893,7 @@ class ImagePanel(wx.Panel):
 		if x < 0 or y < 0:
 			return None
 		try:
-			if isinstance(self.imagedata, Numeric.ArrayType):
+			if isinstance(self.imagedata, numpy.ndarray):
 				return self.imagedata[y, x]
 			elif isinstance(self.imagedata, Image.Image):
 				return self.imagedata.getpixel((x, y))

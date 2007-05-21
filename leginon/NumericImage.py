@@ -10,32 +10,29 @@
 
 from wx import EmptyImage
 import Image
-try:
-	import numarray as Numeric
-except:
-	import Numeric
+import numpy
 import math
 import sys
 import time
 from pyami import imagefun
 
-## (Numeric typcode,size) => (PIL mode,  PIL rawmode)
+## (numpy dtype,size) => (PIL mode,  PIL rawmode)
 ntype_itype = {
-	(Numeric.UInt8,1) : ('L','L'),
-	(Numeric.Int16,2) : ('I','I;16NS'),
-	(Numeric.Int,2) : ('I','I;16NS'),
-	(Numeric.Int,4) : ('I','I;32NS'),
-	(Numeric.Int32,4) : ('I','I;32NS'),
-	(Numeric.Float,4) : ('F','F;32NF'),
-	(Numeric.Float,8) : ('F','F;64NF'),
-	(Numeric.Float32,4) : ('F','F;32NF'),
-	(Numeric.Float64,8) : ('F','F;64NF')
+	(numpy.uint8,1) : ('L','L'),
+	(numpy.int16,2) : ('I','I;16NS'),
+	(numpy.int,2) : ('I','I;16NS'),
+	(numpy.int,4) : ('I','I;32NS'),
+	(numpy.int32,4) : ('I','I;32NS'),
+	(numpy.float,4) : ('F','F;32NF'),
+	(numpy.float,8) : ('F','F;64NF'),
+	(numpy.float32,4) : ('F','F;32NF'),
+	(numpy.float64,8) : ('F','F;64NF')
 	}
 
-def Numeric2PILImage(numericarray, scale=False):
+def numpy2PILImage(numericarray, scale=False):
 	if scale:
-		numericarray = imagefun.linearscale(numericarray, (None, None), (0, 255)).astype(Numeric.UInt8)
-	type = numericarray.type()
+		numericarray = imagefun.linearscale(numericarray, (None, None), (0, 255)).astype(numpy.uint8)
+	type = numericarray.dtype
 	h, w = numericarray.shape
 	imsize = w, h
 	itemsize = numericarray.itemsize()
@@ -44,8 +41,8 @@ def Numeric2PILImage(numericarray, scale=False):
 	nstr = numericarray.tostring()
 	return Image.fromstring(immode, imsize, nstr, 'raw', rawmode, 0, 1)
 
-def Numeric2wxImage(numericarray):
-	image = Numeric2PILImage(numericarray)
+def numpy2wxImage(numericarray):
+	image = numpy2PILImage(numericarray)
 	wximage = EmptyImage(image.size[0], image.size[1])
 	wximage.SetData(image.convert('RGB').tostring())
 	return wximage
@@ -64,7 +61,7 @@ def resize(pil_image, size):
 
 class NumericImage:
 	"""
-	NumericImage couples a Numeric array with a PIL Image instance.
+	NumericImage couples a numpy array with a PIL Image instance.
 	"""
 	def __init__(self, orig_array, clip=(None,None), output_size=None):
 		self.transform = {'clip':clip, 'output_size':output_size}
@@ -78,21 +75,21 @@ class NumericImage:
 	def __use_numeric(self, num_data):
 		shape = num_data.shape
 		if len(shape) != 2:
-			raise RuntimeError, 'orig_array must be 2-D Numeric array'
+			raise RuntimeError, 'orig_array must be 2-D numpy array'
 		## experimenting with clipping to eliminate infinity
-		#self.orig_array = Numeric.clip(num_data, -10000, 10000)
+		#self.orig_array = numpy.clip(num_data, -10000, 10000)
 		self.orig_array = num_data
 
-		h,w = shape  # transpose Numeric array
+		h,w = shape  # transpose numpy array
 		self.orig_size = w,h
 
 		### if output size and clip are not set, use defaults
 		if not self.transform['output_size']:
 			self.transform['output_size'] = self.orig_size
 
-		flat = Numeric.ravel(self.orig_array)
-		extmin = Numeric.argmin(flat)
-		extmax = Numeric.argmax(flat)
+		flat = numpy.ravel(self.orig_array)
+		extmin = numpy.argmin(flat)
+		extmax = numpy.argmax(flat)
 		minval = flat[extmin]
 		maxval = flat[extmax]
 		self.extrema = (minval, maxval)
@@ -123,12 +120,12 @@ class NumericImage:
 
 	def update_image(self):
 		"""
-		generates the PIL Image representation of this Numeric array
+		generates the PIL Image representation of this numpy array
 		"""
 
 		clip = self.transform['clip']
 		final = imagefun.linearscale(self.orig_array, clip, (0,255), self.extrema)
-		type = final.type()
+		type = final.dtype
 		h,w = final.shape
 		imsize = w,h
 		itemsize = final.itemsize()
@@ -196,12 +193,12 @@ class NumericImage:
                 i = Image.open(filename)
                 i.load()
                 s = i.tostring()
-                n = Numeric.fromstring(s, '1')
+                n = numpy.fromstring(s, '1')
                 n.shape = i.size
                 self.__use_numeric(n)
 
 if __name__ == '__main__':
-	from Numeric import *
+	from numpy import *
 
 	a = array([5,6,7,8,9], Float)
 	print 'a', a

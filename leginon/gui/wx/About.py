@@ -4,17 +4,17 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/About.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-02-17 18:13:58 $
-# $Author: suloway $
+# $Date: 2007-05-21 23:50:17 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
 import gui.wx.Dialog
 import sys
 import wx
-import numarray
+import numpy
 import _mysql
 import Image
 import version
@@ -69,10 +69,10 @@ class Dialog(gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, v)
 		sz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		label = wx.StaticText(self, -1, 'numarray:')
+		label = wx.StaticText(self, -1, 'numpy:')
 		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		try:
-			v = numarray.__version__
+			v = numpy.__version__
 		except:
 			v = 'Unknown'
 		label = wx.StaticText(self, -1, v)

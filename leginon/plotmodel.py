@@ -9,7 +9,7 @@ import wx.lib.plot
 import leginondata
 import math
 import gonmodel
-import numarray
+import numpy
 
 db = leginondata.db
 
@@ -66,7 +66,7 @@ def findrange(xy):
 	return ((minx,maxx), (miny,maxy))
 
 def modelpoints(model, xrange, step):
-	x = numarray.arange(xrange[0], xrange[1], step)
+	x = numpy.arange(xrange[0], xrange[1], step)
 	#x = tuple(x)
 	y = map(model.eval, x)
 	#y = map(lambda x: model.a0 * x, y)

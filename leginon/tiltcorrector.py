@@ -12,9 +12,8 @@ The VirtualStageTilter class is used to stretch images that were acquired
 on a tilted stage so that they appear to be untilted.
 '''
 
-import numarray
-import numarray.nd_image
-import numarray.linear_algebra
+import numpy
+import scipy.ndimage
 from pyami import imagefun, convolver, affine
 import math
 import data
@@ -58,13 +57,13 @@ class TiltCorrector(object):
 		btc = kcx * btxy[0] + kcy * btxy[1]
 	
 		## create transform matrix
-		mat = numarray.zeros((2,2), numarray.Float32)
-		mat[0,0] = 1 - btr * numarray.sin(tiltaxis)*numarray.sin(alpha)
-		mat[0,1] =     btr * numarray.cos(tiltaxis)*numarray.sin(alpha)
-		mat[1,0] =    -btc * numarray.sin(tiltaxis)*numarray.sin(alpha)
-		mat[1,1] = 1 + btc * numarray.cos(tiltaxis)*numarray.sin(alpha)
+		mat = numpy.zeros((2,2), numpy.float32)
+		mat[0,0] = 1 - btr * numpy.sin(tiltaxis)*numpy.sin(alpha)
+		mat[0,1] =     btr * numpy.cos(tiltaxis)*numpy.sin(alpha)
+		mat[1,0] =    -btc * numpy.sin(tiltaxis)*numpy.sin(alpha)
+		mat[1,1] = 1 + btc * numpy.cos(tiltaxis)*numpy.sin(alpha)
 		## inverted to calculate input coord from output coord
-		mat = numarray.linear_algebra.inverse(mat)
+		mat = numpy.linalg.inv(mat)
 		return mat
 	
 	def getMatrix(self, tem, cam, ht, mag, type):
@@ -111,9 +110,9 @@ class TiltCorrector(object):
 		newshift = dict(shift)
 		vect = (newshift['x'], newshift['y'])
 		matrix = self.getImageShiftMatrix(tem, cam, ht, mag)
-		matrix = numarray.linear_algebra.inverse(matrix)
+		matrix = numpy.linalg.inv(matrix)
 
-		pixvect = numarray.matrixmultiply(matrix, vect)
+		pixvect = numpy.dot(matrix, vect)
 		pixvect = pixvect / (biny, binx)
 		return {'row':pixvect[0], 'col':pixvect[1]}
 
@@ -170,7 +169,7 @@ class TiltCorrector(object):
 		pixelshift = (pixelshift['row'], pixelshift['col'])
 		offset = affine.affine_transform_offset(im.shape, im.shape, mat, pixelshift)
 		mean=self.edge_mean(im)
-		im2 = numarray.nd_image.affine_transform(im, mat, offset=offset, mode='constant', cval=mean)
+		im2 = scipy.ndimage.affine_transform(im, mat, offset=offset, mode='constant', cval=mean)
 
 		#im2 = self.filter.convolve(im2)
 		imagedata['image'] = im2
@@ -193,7 +192,7 @@ class VirtualStageTilter(object):
 		intermediate step of creating some fake points like this.
 		'''
 		det = 1.0/(u1*(v2-v3)-v1*(u2-u3)+(u2*v3-u3*v2))
-		IT = numarray.zeros((3,3), numarray.Float32)
+		IT = numpy.zeros((3,3), numpy.float32)
 		IT[0][0] = ((v2-v3)*x1+(v3-v1)*x2+(v1-v2)*x3)*det
 		IT[0][1] = ((v2-v3)*y1+(v3-v1)*y2+(v1-v2)*y3)*det
 		IT[0][2] = 0
@@ -210,7 +209,7 @@ class VirtualStageTilter(object):
 		create an affine transform matrix that will simulate a stage tilt
 		'''
 		## calculate stretch factor due to alpha tilt
-		stretch = 1.0 / numarray.cos(alpha)
+		stretch = 1.0 / numpy.cos(alpha)
 
 		## calculate angle of tiltaxis with respect to image row axis
 		tiltaxis = math.atan2(stagematrix[1,0],stagematrix[0,0])
@@ -226,13 +225,13 @@ class VirtualStageTilter(object):
 		mat = it[:2,:2]
 
 		## inverted to calculate input coord from output coord
-		#mat = numarray.linear_algebra.inverse(mat)
+		#mat = numpy.linalg.inv(mat)
 		return mat
 
 	def stageToPixel(self, matrix, x, y):
-		inverse_matrix = numarray.linear_algebra.inverse(matrix)
-		position_vector = numarray.array((x, y))
-		pixel = numarray.matrixmultiply(inverse_matrix, position_vector)
+		inverse_matrix = numpy.linalg.inv(matrix)
+		position_vector = numpy.array((x, y))
+		pixel = numpy.dot(inverse_matrix, position_vector)
 		return pixel
 	
 	## calculation of offset for affine transform
@@ -241,14 +240,14 @@ class VirtualStageTilter(object):
 		calculation of affine transform offset
 		for now we assume center of image
 		'''
-		carray = numarray.array(shape, numarray.Float32)
+		carray = numpy.array(shape, numpy.float32)
 		carray.shape = (2,)
 		carray = carray / 2.0
 
 		carray = carray + imageshift
 
-		carray2 = numarray.matrixmultiply(affine_matrix, carray)
-		imageshift2 = numarray.matrixmultiply(affine_matrix, carray)
+		carray2 = numpy.dot(affine_matrix, carray)
+		imageshift2 = numpy.dot(affine_matrix, carray)
 
 		offset = carray - carray2
 		return offset
@@ -289,9 +288,9 @@ class VirtualStageTilter(object):
 		newshift = dict(shift)
 		vect = (newshift['x'], newshift['y'])
 		matrix = self.getImageShiftMatrix(tem, cam, ht, mag)
-		matrix = numarray.linear_algebra.inverse(matrix)
+		matrix = numpy.linalg.inv(matrix)
 
-		pixvect = numarray.matrixmultiply(matrix, vect)
+		pixvect = numpy.dot(matrix, vect)
 		pixvect = pixvect / (biny, binx)
 		return {'row':pixvect[0], 'col':pixvect[1]}
 
@@ -330,7 +329,7 @@ class VirtualStageTilter(object):
 		pixelshift = (0.0, 0.0)
 		offset = self.affine_transform_offset(im.shape, mat, pixelshift)
 		mean=self.edge_mean(im)
-		im2 = numarray.nd_image.affine_transform(im, mat, offset=offset, mode='constant', cval=mean)
+		im2 = scipy.ndimage.affine_transform(im, mat, offset=offset, mode='constant', cval=mean)
 
 		#im2 = self.filter.convolve(im2)
 		imagedata['image'] = im2

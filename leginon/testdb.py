@@ -10,13 +10,13 @@
 import sys
 import leginondata
 import sqldb
-import numarray
+import numpy
 
  #initializer = {'name': 'voici'}
 initializer = {'name': 'Session Test 2' }
 session = leginondata.SessionData(initializer=initializer)
 
-a = numarray.array((1,2,3,4,5,6,))
+a = numpy.array((1,2,3,4,5,6,))
 a.shape = 2,3
 
 initializer = {'matrix': a}

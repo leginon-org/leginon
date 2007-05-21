@@ -12,7 +12,7 @@ import data
 import targetfinder
 import threading
 import ice
-import numarray
+import numpy
 from pyami import imagefun
 import gui.wx.RasterFinder
 import polygon
@@ -80,8 +80,8 @@ class RasterFinder(targetfinder.TargetFinder):
 			r = rlayer * spacing
 			for clayer in range(-limit, limit+1):
 				c = clayer * spacing
-				rr = -1 * c * numarray.sin(radians) + r * numarray.cos(radians)
-				cc =  c * numarray.cos(radians) + r * numarray.sin(radians)
+				rr = -1 * c * numpy.sin(radians) + r * numpy.cos(radians)
+				cc =  c * numpy.cos(radians) + r * numpy.sin(radians)
 				rr = int(rr + rcenter)
 				cc = int(cc + ccenter)
 				if rr < 0 or rr >= imageshape[0]: continue
@@ -129,7 +129,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		if cmax >= image.shape[1]:  cmax = image.shape[1]-1
 
 		subimage = image[rmin:rmax+1, cmin:cmax+1]
-		roi = numarray.ravel(subimage)
+		roi = numpy.ravel(subimage)
 		mean = imagefun.mean(roi)
 		std = imagefun.stdev(roi, known_mean=mean)
 		n = len(roi)

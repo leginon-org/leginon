@@ -9,9 +9,8 @@ import data
 import acquisition
 import gui.wx.RCTAcquisition
 import libCV
-import numarray
-import numarray.nd_image
-pi = numarray.pi
+import numpy
+pi = numpy.pi
 
 def setImageFilename(imagedata, tiltnumber=None):
 		acquisition.setImageFilename(imagedata)
@@ -167,8 +166,8 @@ class RCTAcquisition(acquisition.Acquisition):
 	def transformPoints(self, matrix, points):
 		newpoints = []
 		for point in points:
-			v = numarray.array((point[0],point[1],1))
-			new0,new1,one = numarray.matrixmultiply(v, matrix)
+			v = numpy.array((point[0],point[1],1))
+			new0,new1,one = numpy.dot(v, matrix)
 			newpoints.append((new0,new1))
 		return newpoints
 
@@ -241,9 +240,9 @@ class RCTAcquisition(acquisition.Acquisition):
 		## loop through tilts
 		imageold = image0
 		#sigma = self.settings['sigma']
-		#arrayold = numarray.nd_image.gaussian_filter(imageold['image'], sigma)
+		#arrayold = scipy.ndimage.gaussian_filter(imageold['image'], sigma)
 		arrayold = imageold['image']
-		runningresult = numarray.identity(3, numarray.Float64)
+		runningresult = numpy.identity(3, numpy.float64)
 		for tilt in tilts:
 			self.logger.info('Tilt: %s' % (degrees(tilt),))
 			self.instrument.tem.StagePosition = {'a': tilt}
@@ -252,7 +251,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			print 'acquire intertilt'
 			dataclass = data.CorrectedCameraImageData
 			imagenew = self.instrument.getData(dataclass)
-			#arraynew = numarray.nd_image.gaussian_filter(imagenew['image'], sigma)
+			#arraynew = scipy.ndimage.gaussian_filter(imagenew['image'], sigma)
 			arraynew = imagenew['image']
 			self.setImage(imagenew['image'], 'Image')
 			self.setTargets([], 'Peak')
@@ -267,7 +266,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			print 'Craig stuff done'
 			self.logger.info('Matrix: %s' % (result,))
 
-			runningresult = numarray.matrixmultiply(runningresult, result)
+			runningresult = numpy.dot(runningresult, result)
 
 			self.transformTargets(runningresult, tilt0targets)
 
@@ -335,7 +334,7 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		# filter
 		#sigma = self.settings['sigma']
-		#im = numarray.nd_image.gaussian_filter(im, sigma)
+		#im = scipy.ndimage.gaussian_filter(im, sigma)
 
 		self.setImage(im)
 

@@ -1,22 +1,21 @@
 '''
 convenience functions for raster of points
 '''
-import numarray
-import numarray.linear_algebra
+import numpy
 
 def createRaster(shape, spacing, angle, indices=False, limit=None):
 	'''
 	raster across entire image
 	'''
-	co = spacing * numarray.cos(angle)
-	si = spacing * numarray.sin(angle)
-	E = numarray.array(((co,si),(-si,co)), numarray.Float32)
-	Einv = numarray.linear_algebra.inverse(E)
+	co = spacing * numpy.cos(angle)
+	si = spacing * numpy.sin(angle)
+	E = numpy.array(((co,si),(-si,co)), numpy.float32)
+	Einv = numpy.linalg.inv(E)
 
 	## define a range for the raster
 	corners = []
 	for p in ((0,shape[1]),(shape[0],0),shape):
-		i,j = numarray.matrixmultiply(Einv, numarray.array(p, numarray.Float32))
+		i,j = numpy.dot(Einv, numpy.array(p, numpy.float32))
 		i = int(i)
 		j = int(j)
 		corners.append((i,j))
@@ -37,7 +36,7 @@ def createRaster(shape, spacing, angle, indices=False, limit=None):
 	ind = []
 	for i in range(mini,maxi+1):
 		for j in range(minj,maxj+1):
-			p = numarray.matrixmultiply(E, numarray.array((i,j), numarray.Float32))
+			p = numpy.dot(E, numpy.array((i,j), numpy.float32))
 			if (0 <= p[0] < shape[0]) and (0 <= p[1] < shape[1]):
 				rasterpoints.append(tuple(p))
 				ind.append((i,j))
@@ -49,7 +48,7 @@ def createRaster(shape, spacing, angle, indices=False, limit=None):
 
 
 def createIndices(shape):
-	ind = numarray.indices(shape, numarray.Float32)
+	ind = numpy.indices(shape, numpy.float32)
 	center0 = shape[0] / 2.0 - 0.5
 	center1 = shape[1] / 2.0 - 0.5
 	ind[0] = ind[0] - center0
@@ -61,10 +60,10 @@ def createRaster2(spacing, angle, limit):
 	'''
 	raster across entire image
 	'''
-	co = spacing * numarray.cos(angle)
-	si = spacing * numarray.sin(angle)
-	E = numarray.array(((co,si),(-si,co)), numarray.Float32)
-	Einv = numarray.linear_algebra.inverse(E)
+	co = spacing * numpy.cos(angle)
+	si = spacing * numpy.sin(angle)
+	E = numpy.array(((co,si),(-si,co)), numpy.float32)
+	Einv = numpy.linalg.inv(E)
 
 	# create full raster over whole image
 	rasterpoints = []
@@ -74,7 +73,7 @@ def createRaster2(spacing, angle, limit):
 	ind = createIndices(shape)
 
 	for i in ind:
-		p = numarray.matrixmultiply(E, numarray.array(i, numarray.Float32))
+		p = numpy.dot(E, numpy.array(i, numpy.float32))
 		rasterpoints.append(tuple(p))
 
 	return rasterpoints

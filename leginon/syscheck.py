@@ -105,30 +105,9 @@ else:
 		print '        *** FAILED (at least %s required)' % (minstr,)
 
 ######################################################################
-## numarray
-######################################################################
-minnumver = (1, 1)
-minstr = '.'.join(map(str, minnumver))
-print '--------------------------------------------------------------'
-print 'numarray:'
-print '    importing numarray module...'
-try:
-	import numarray
-except ImportError:
-	print '    *** Failed to import numarray.  Install numarray version %s or greater' % (minstr,)
-else:
-	mystr = numarray.__version__
-	mynumver = map(int, mystr.split('.'))
-	print '    numarray version: %s' % (mystr,)
-	if versionAtLeast(mynumver, minnumver):
-		print '        OK (at least %s required)' % (minstr ,)
-	else:
-		print '        *** FAILED (at least %s required)' % (minstr,)
-
-######################################################################
 ## numpy
 ######################################################################
-testednumpy = ('1.0b5',)
+testednumpy = ('1.0.2',)
 print '--------------------------------------------------------------'
 print 'numpy:'
 print '    importing numpy module...'

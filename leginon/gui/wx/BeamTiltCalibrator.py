@@ -4,16 +4,16 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/BeamTiltCalibrator.py,v $
-# $Revision: 1.23 $
+# $Revision: 1.24 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-03-14 18:54:25 $
+# $Date: 2007-05-21 23:50:44 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
 import threading
 import wx
-import numarray
+import numpy
 import gui.wx.Calibrator
 import gui.wx.MatrixCalibrator
 import gui.wx.Dialog
@@ -488,7 +488,7 @@ class EditFocusCalibrationDialog(gui.wx.MatrixCalibrator.EditMatrixDialog):
 if __name__ == '__main__':
 	app = wx.PySimpleApp()
 	app.frame = wx.Frame(None, -1, 'Matrix Calibration Test')
-	matrix = numarray.zeros((2, 2))
+	matrix = numpy.zeros((2, 2))
 	rotation_center = {'x': 0, 'y': 0}
 	eucentric_focus = 0
 	app.dialog = EditFocusCalibrationDialog(app.frame, matrix, rotation_center, eucentric_focus, 'Test Edit Dialog')
