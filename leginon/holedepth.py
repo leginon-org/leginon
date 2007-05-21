@@ -18,10 +18,6 @@ import ice
 import instrument
 import os.path
 import calibrationclient as calclient
-try:
-	import numarray as Numeric
-except:
-	import Numeric
 import gui.wx.HoleDepth
 
 class HoleDepth(holefinder.HoleFinder):

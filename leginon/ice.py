@@ -1,8 +1,4 @@
-try:
-	import numarray as Numeric
-except:
-	import Numeric
-from pyami import imagefun
+import math
 
 min_intensity = 0.000001
 inf = 1e300
@@ -15,20 +11,20 @@ class IceCalculator(object):
 		self.i0 = i0
 
 	def get_intensity(self, thickness):
-		return self.i0 / Numeric.exp(thickness)
+		return self.i0 / math.exp(thickness)
 
 	def get_thickness(self, intensity):
 		if intensity > self.i0:
 			intensity = self.i0
 		if intensity < min_intensity:
 			intensity = min_intensity
-		return Numeric.log(self.i0 / intensity)
+		return math.log(self.i0 / intensity)
 
 	def get_stdev_thickness(self, stdev_intensity, mean_intensity):
 		if stdev_intensity >= mean_intensity:
 			std = inf
 		else:
-			std = Numeric.log(mean_intensity / (mean_intensity-stdev_intensity))
+			std = math.log(mean_intensity / (mean_intensity-stdev_intensity))
 		return std
 
 	def get_stdev_intensity(self, stdev_thickness, mean_thickness):
