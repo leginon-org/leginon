@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/python -O
 # Will create a stack file based on a set of input parameters using EMAN's batchboxer
 
 import os, re, sys, math
