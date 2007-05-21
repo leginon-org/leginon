@@ -341,8 +341,7 @@ class GonModel:
 
 if __name__ == '__main__':
 	mymod = GonModel()
-	import numarray
-	import numarray.random_array as rand
+	import numpy.random as rand
 	a = rand.random((1,12))
 	b = rand.random((1,12))
 	d = {

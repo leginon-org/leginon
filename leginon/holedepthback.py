@@ -10,12 +10,7 @@
 
 # this is python Numeric version of -radial_image (mon_radial_image)
 
-try:
-	import numarray as Numeric
-	import numarray.linear_algebra as LinearAlgebra
-except:
-	import Numeric
-	import LinearAlgebra
+import numpy
 from pyami import imagefun, correlator, peakfinder, convolver, mrc
 import ice
 
@@ -50,12 +45,12 @@ class CircleMaskCreator(object):
 		maxradsq = maxradius*maxradius
 		def circle(indices0,indices1):
 			## this shifts and wraps the indices
-			i0 = Numeric.where(indices0<cutoff[0], indices0-center[0]+lshift[0], indices0-center[0]+gshift[0])
-			i1 = Numeric.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[0]+gshift[1])
+			i0 = numpy.where(indices0<cutoff[0], indices0-center[0]+lshift[0], indices0-center[0]+gshift[0])
+			i1 = numpy.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[0]+gshift[1])
 			rsq = i0*i0+i1*i1
-			c = Numeric.where((rsq>=minradsq)&(rsq<=maxradsq), 1.0, 0.0)
-			return c.astype(Numeric.Int8)
-		temp = Numeric.fromfunction(circle, shape)
+			c = numpy.where((rsq>=minradsq)&(rsq<=maxradsq), 1.0, 0.0)
+			return c.astype(numpy.int8)
+		temp = numpy.fromfunction(circle, shape)
 		self.masks[key] = temp
 		return temp
 
@@ -91,14 +86,14 @@ class OvalMaskCreator(object):
 	
 		def oval(indices0,indices1):
 			## this shifts and wraps the indices
-			i0 = Numeric.where(indices0<cutoff[0], indices0-center[0]+lshift[0], indices0-center[0]+gshift[0])
-			i1 = Numeric.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[0]+gshift[1])
-			j0 = i0*Numeric.cos(tltaxis)+i1*Numeric.sin(tltaxis)
-			j1 = -i0*Numeric.sin(tltaxis)+i1*Numeric.cos(tltaxis)
-			rsq = j0*j0+j1*j1/(Numeric.cos(angle)*Numeric.cos(angle))
-			c = Numeric.where((rsq>=minradsq)&(rsq<=maxradsq), 1.0, 0.0)
-			return c.astype(Numeric.Int8)
-		temp = Numeric.fromfunction(oval, shape)
+			i0 = numpy.where(indices0<cutoff[0], indices0-center[0]+lshift[0], indices0-center[0]+gshift[0])
+			i1 = numpy.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[0]+gshift[1])
+			j0 = i0*numpy.cos(tltaxis)+i1*numpy.sin(tltaxis)
+			j1 = -i0*numpy.sin(tltaxis)+i1*numpy.cos(tltaxis)
+			rsq = j0*j0+j1*j1/(numpy.cos(angle)*numpy.cos(angle))
+			c = numpy.where((rsq>=minradsq)&(rsq<=maxradsq), 1.0, 0.0)
+			return c.astype(numpy.int8)
+		temp = numpy.fromfunction(oval, shape)
 		self.masks[key] = temp
 		return temp
 
@@ -245,7 +240,7 @@ class HoleFinder(object):
 			kernel2 = convolver.sobel_col_kernel
 			edger = self.edgefinder.convolve(kernel=kernel1)
 			edgec = self.edgefinder.convolve(kernel=kernel2)
-			edges = Numeric.hypot(edger,edgec)
+			edges = numpy.hypot(edger,edgec)
 			## zero the image edge effects
 			edges[:n] = 0
 			edges[:,:n] = 0
@@ -255,7 +250,7 @@ class HoleFinder(object):
 			raise RuntimeError('no such filter type: %s' % (filt,))
 
 		if ab and edgesflag:
-			edges = Numeric.absolute(edges)
+			edges = numpy.absolute(edges)
 
 		if edgethresh and edgesflag:
 			edges = imagefun.threshold(edges, edgethresh)
@@ -288,14 +283,14 @@ class HoleFinder(object):
 		shape = self.__results[fromimage].shape
 		center = (0,0)
 		ring_list = self.template_config['ring_list']
-		template = Numeric.zeros(shape, Numeric.Int8)
+		template = numpy.zeros(shape, numpy.int8)
 		tilt_axis = self.template_config['tilt_axis']
 		tltangle = self.template_config['tilt_angle']
-		tltaxis=(tilt_axis*Numeric.pi/180)
+		tltaxis=(tilt_axis*numpy.pi/180)
 		for ring in ring_list:
 			temp = self.oval.get(shape, center, ring[0], ring[1],tltangle,tltaxis)
 			template = template | temp
-		template = template.astype(Numeric.Float32)
+		template = template.astype(numpy.float32)
 		#template = imagefun.zscore(template)
 		self.__update_result('template', template)
 		if self.save_mrc:
@@ -321,7 +316,7 @@ class HoleFinder(object):
 			cc = correlator.phase_correlate(edges, template, zero=False)
 		else:
 			raise RuntimeError('bad correlation type: %s' % (cortype,))
-		cc = Numeric.absolute(cc)
+		cc = numpy.absolute(cc)
 
 		if corfilt is not None:
 			kernel = convolver.gaussian_kernel(*corfilt)
@@ -404,7 +399,7 @@ class HoleFinder(object):
 		binnedpixel=self.dist_config['binned_pixel']
 		tiltangle = self.template_config['tilt_angle']
 		tilt_axis = self.template_config['tilt_axis']
-		tiltaxis=(tilt_axis*Numeric.pi/180)
+		tiltaxis=(tilt_axis*numpy.pi/180)
 		for blob in self.__results['blobs']:
 			blobcoord.append(blob.stats['center'])
 			blobnumber = blobnumber+1
@@ -420,9 +415,9 @@ class HoleFinder(object):
 		else:
 			blobdx=blobcoord[0][0]-blobcoord[1][0]
 			blobdy=blobcoord[0][1]-blobcoord[1][1]
-			blobdist = Numeric.sqrt(blobdx**2+blobdy**2)
-			blobtilt = -Numeric.arctan(float(blobdx)/blobdy)
-		holedepth['depth'] = binnedpixel*blobdist/Numeric.abs(Numeric.sin(tiltangle))
+			blobdist = numpy.sqrt(blobdx**2+blobdy**2)
+			blobtilt = -numpy.arctan(float(blobdx)/blobdy)
+		holedepth['depth'] = binnedpixel*blobdist/numpy.abs(numpy.sin(tiltangle))
 		holedepth['tilt'] = blobtilt
 		return holedepth
 
@@ -495,9 +490,9 @@ class HoleFinder(object):
 		mask = self.circle.get(subimage.shape, center, 0, radius)
 		if self.save_mrc:
 			mrc.write(mask, 'holemask.mrc')
-		im = Numeric.ravel(subimage)
-		mask = Numeric.ravel(mask)
-		roi = Numeric.compress(mask, im)
+		im = numpy.ravel(subimage)
+		mask = numpy.ravel(mask)
+		roi = numpy.compress(mask, im)
 		mean = imagefun.mean(roi)
 		std = imagefun.stdev(roi)
 		n = len(roi)

@@ -8,9 +8,9 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import numarray
-import numarray.nd_image
-from pyami import imagefun, peakfinder, convolver, correlator, mrc
+import numpy
+import scipy.ndimage
+from pyami import imagefun, peakfinder, convolver, correlator, mrc, arraystats
 import ice
 import lattice
 
@@ -45,12 +45,12 @@ class CircleMaskCreator(object):
 		maxradsq = maxradius*maxradius
 		def circle(indices0,indices1):
 			## this shifts and wraps the indices
-			i0 = numarray.where(indices0<cutoff[0], indices0-center[0]+lshift[0], indices0-center[0]+gshift[0])
-			i1 = numarray.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[0]+gshift[1])
+			i0 = numpy.where(indices0<cutoff[0], indices0-center[0]+lshift[0], indices0-center[0]+gshift[0])
+			i1 = numpy.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[0]+gshift[1])
 			rsq = i0*i0+i1*i1
-			c = numarray.where((rsq>=minradsq)&(rsq<=maxradsq), 1.0, 0.0)
-			return c.astype(numarray.Int8)
-		temp = numarray.fromfunction(circle, shape)
+			c = numpy.where((rsq>=minradsq)&(rsq<=maxradsq), 1.0, 0.0)
+			return c.astype(numpy.int8)
+		temp = numpy.fromfunction(circle, shape)
 		self.masks[key] = temp
 		return temp
 
@@ -173,10 +173,10 @@ class HoleFinder(object):
 		sigma = self.edges_config['lpsig']
 		edgethresh = self.edges_config['thresh']
 
-		smooth = numarray.nd_image.gaussian_filter(sourceim, sigma)
+		smooth = scipy.ndimage.gaussian_filter(sourceim, sigma)
 		mrc.write(smooth, 'smooth.mrc')
 
-		edges = numarray.nd_image.generic_gradient_magnitude(smooth, derivative=numarray.nd_image.sobel)
+		edges = scipy.ndimage.generic_gradient_magnitude(smooth, derivative=scipy.ndimage.sobel)
 
 		if edgethresh:
 			edges = imagefun.threshold(edges, edgethresh)
@@ -205,11 +205,11 @@ class HoleFinder(object):
 		shape = self.__results[fromimage].shape
 		center = (0,0)
 		ring_list = self.template_config['ring_list']
-		template = numarray.zeros(shape, numarray.Int8)
+		template = numpy.zeros(shape, numpy.int8)
 		for ring in ring_list:
 			temp = self.circle.get(shape, center, ring[0], ring[1])
 			template = template | temp
-		template = template.astype(numarray.Float32)
+		template = template.astype(numpy.float32)
 		self.__update_result('template', template)
 		if self.save_mrc:
 			mrc.write(template, 'template.mrc')
@@ -233,7 +233,7 @@ class HoleFinder(object):
 			cc = correlator.phase_correlate(edges, template, zero=False)
 		else:
 			raise RuntimeError('bad correlation type: %s' % (cortype,))
-		cc = numarray.absolute(cc)
+		cc = numpy.absolute(cc)
 
 		if corfilt is not None:
 			kernel = convolver.gaussian_kernel(*corfilt)
@@ -255,8 +255,8 @@ class HoleFinder(object):
 			raise RuntimeError('need correlation image to threshold')
 		self.configure_threshold(threshold)
 		cc = self.__results['correlation']
-		mean = imagefun.mean(cc)
-		std = imagefun.stdev(cc)
+		mean = arraystats.mean(cc)
+		std = arraystats.std(cc)
 		thresh = mean + self.threshold * std
 		t = imagefun.threshold(cc, thresh)
 		self.__update_result('threshold', t)
@@ -379,11 +379,11 @@ class HoleFinder(object):
 		mask = self.circle.get(subimage.shape, center, 0, radius)
 		if self.save_mrc:
 			mrc.write(mask, 'holemask.mrc')
-		im = numarray.ravel(subimage)
-		mask = numarray.ravel(mask)
-		roi = numarray.compress(mask, im)
-		mean = imagefun.mean(roi)
-		std = imagefun.stdev(roi)
+		im = numpy.ravel(subimage)
+		mask = numpy.ravel(mask)
+		roi = numpy.compress(mask, im)
+		mean = arraystats.mean(roi)
+		std = arraystats.std(roi)
 		n = len(roi)
 		return {'mean':mean, 'std': std, 'n':n}
 
