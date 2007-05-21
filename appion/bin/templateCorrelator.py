@@ -62,8 +62,9 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 		self.params['incrang']=20
 		self.params['thresh']=0.5
 		self.params['autopik']=0
-		self.params['lp']=30
-		self.params['hp']=600
+		self.params['lp']=30.0
+		self.params['hp']=0.0
+		self.params['maxsize']=1.0
 		self.params['box']=0
 		self.params['method']="updated"
 		self.params['overlapmult']=1.5
@@ -117,6 +118,8 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 				self.params['lp']=float(elements[1])
 			elif (elements[0]=='hp'):
 				self.params['hp']=float(elements[1])
+			elif (elements[0]=='maxsize'):
+				self.params['maxsize']=float(elements[1])
 			elif (elements[0]=='box'):
 				self.params['box']=int(elements[1])
 			elif (elements[0]=='templateids'):
@@ -142,6 +145,8 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 			apDisplay.printError("neither manual threshold or autopik parameters are set, please set one.")
 		if not 'diam' in self.params or self.params['diam']==0:
 			apDisplay.printError("please input the diameter of your particle")
+		if self.params['autopik'] != 0:
+			apDisplay.printError("autopik is currently not supported")
 
 if __name__ == '__main__':
 	imgLoop = TemplateCorrelationLoop()

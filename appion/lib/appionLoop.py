@@ -308,6 +308,7 @@ class AppionLoop(object):
 		self.params['continue']=False
 		self.params['nocontinue']=True
 		self.params['commit']=False
+		self.params['background']=False
 		self.params['description']=None
 		self.params['outdir']=None
 		self.params['rundir']=None
@@ -412,6 +413,8 @@ class AppionLoop(object):
 				self.params['limit']=int(elements[1])
 			elif arg=='continue':
 				self.params['continue']=True
+			elif arg=='background':
+				self.params['background']=True
 			elif arg=='nocontinue':
 				self.params['nocontinue']=True
 			elif (elements[0]=='dbimages'):

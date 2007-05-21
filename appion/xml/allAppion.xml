@@ -57,6 +57,12 @@
 	<description>Commit results to database</description>
 	<type>boolean</type>
  </commit>
+ <background>
+	<name>background run</name>
+	<default>False</default>
+	<description>Run appion in background mode, no extra features that slow things down</description>
+	<type>boolean</type>
+ </background>
  <description>
 	<name>description</name>
 	<default></default>

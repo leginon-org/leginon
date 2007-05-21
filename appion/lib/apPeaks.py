@@ -36,6 +36,7 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params, maptype):
 	apix =      float(params["apix"])
 	olapmult =  float(params["overlapmult"])
 	maxpeaks =  int(params["maxpeaks"])
+	maxsizemult = float(params["maxsize"])
 	imgname =   imgdict['filename']
 	pixrad =    diam/apix/2.0
 	binpixrad = diam/apix/2.0/float(bin)
@@ -47,10 +48,12 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params, maptype):
 	mapdir = os.path.join(params['rundir'],maptype+"s")
 
 	#MAXPEAKSIZE ==> 1x AREA OF PARTICLE
-	maxsize =   int(round(math.pi*(binpixrad**2),0))+1
+	partarea = 4*math.pi*(binpixrad**2)
+	maxsize = int(round(maxsizemult*partarea,0))+1
 
 	#VARY PEAKS FROM STATS
-	varyThreshold(ccmap, threshold, maxsize)
+	if params['background'] is False:
+		varyThreshold(ccmap, threshold, maxsize)
 	#GET FINAL PEAKS
 	blobtree, percentcov = findBlobs(ccmap, threshold, maxsize=maxsize, maxpeaks=maxpeaks, summary=True)
 	peaktree = convertBlobsToPeaks(blobtree, tmpldbid, tmplnum, bin)
@@ -249,11 +252,11 @@ def createPeakJpeg(imgdata, peaktree, params):
 	if 'templatelist' in params:
 		count =   len(params['templatelist'])
 	else: count = 1
-	bin =     int(params["bin"])/2
+	bin =     int(params["bin"])
 	diam =    float(params["diam"])
 	apix =    float(params["apix"])
-	if bin < 1: 
-		bin = 1
+	#bin /= 2
+	#if bin < 1: bin = 1
 	binpixrad  = diam/apix/2.0/float(bin)
 	imgname = imgdata['filename']
 
@@ -269,7 +272,7 @@ def createPeakJpeg(imgdata, peaktree, params):
 	draw = ImageDraw.Draw(image2)
 	drawPeaks(peaktree, draw, bin, binpixrad)
 	outfile = os.path.join(jpegdir,imgname+".prtl.jpg")
-	print " ... writing JPEG: ",outfile
+	print " ... writing peak JPEG: ",outfile
 	image = Image.blend(image, image2, 0.9) 
 	image.save(outfile, "JPEG", quality=95)
 
