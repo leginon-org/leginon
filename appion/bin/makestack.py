@@ -303,17 +303,12 @@ def eliminateMinMaxCCParticles(particles,params):
 	newparticles=[]
 	eliminated=0
 	for prtl in particles:
-		keep=False
-		if params['selexonmin']:
-			if params['selexonmin']<prtl['correlation']:
-				keep=True
-		if params['selexonmax']:
-			if params['selexonmax']>prtl['correlation']:
-				keep=True
-		if keep:
-			newparticles.append(prtl)
+		if params['selexonmin'] and prtl['correlation'] < params['selexonmin']:
+				eliminated += 1
+		elif params['selexonmax'] and prtl['correlation'] > params['selexonmax']:
+				eliminated += 1
 		else:
-			eliminated+=1
+			newparticles.append(prtl)
 	print eliminated,"particle(s) eliminated due to selexonmin or selexonmax"
 	return(newparticles)
 
