@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-import numarray
-import numarray.linear_algebra
+import numpy
 import leginondata
 import gonmodel
 import sinedon
@@ -29,11 +28,11 @@ class Transformer(object):
 		self.createMatrix()
 
 	def rotationMatrix(self, angle):
-		mat = numarray.array(
+		mat = numpy.array(
 			(
-				(numarray.cos(angle),-numarray.sin(angle)),
-				(numarray.sin(angle), numarray.cos(angle))
-			), numarray.Float32
+				(numpy.cos(angle),-numpy.sin(angle)),
+				(numpy.sin(angle), numpy.cos(angle))
+			), numpy.float32
 		)
 		return mat
 
@@ -45,28 +44,28 @@ class Transformer(object):
 			yscale = self.ymag['mean']
 			xang = self.xmag['angle']
 			yang = self.ymag['angle']
-			self.matrix = numarray.array(
-				((xscale * numarray.sin(xang) , xscale * numarray.cos(xang)),
-				(yscale * numarray.sin(yang) , yscale * numarray.cos(yang))), numarray.Float32
+			self.matrix = numpy.array(
+				((xscale * numpy.sin(xang) , xscale * numpy.cos(xang)),
+				(yscale * numpy.sin(yang) , yscale * numpy.cos(yang))), numpy.float32
 			)
 
 		rot = self.rotationMatrix(self.rotation)
-		self.matrix = numarray.matrixmultiply(self.matrix, rot)
-		self.imatrix = numarray.linear_algebra.inverse(self.matrix)
+		self.matrix = numpy.dot(self.matrix, rot)
+		self.imatrix = numpy.linalg.inv(self.matrix)
 
 	def createExtraMatrix(self):
 		xscale = 0.96
 		yscale = 1.0
 		xang = 1.5708
 		yang = -0.12
-		matrix = numarray.array(
-			((xscale * numarray.sin(xang) , xscale * numarray.cos(xang)),
-			(yscale * numarray.sin(yang) , yscale * numarray.cos(yang))), numarray.Float32
+		matrix = numpy.array(
+			((xscale * numpy.sin(xang) , xscale * numpy.cos(xang)),
+			(yscale * numpy.sin(yang) , yscale * numpy.cos(yang))), numpy.float32
 		)
 
 		rot = self.rotationMatrix(self.rotation)
-		matrix = numarray.matrixmultiply(matrix, rot)
-		imatrix = numarray.linear_algebra.inverse(matrix)
+		matrix = numpy.dot(matrix, rot)
+		imatrix = numpy.linalg.inv(matrix)
 		
 		return matrix
 
@@ -91,11 +90,11 @@ class Transformer(object):
 			dgy = self.ymod.integrate(gy0,gy1)
 		## rotate/scale
 		if not extra:
-			drow,dcol = -numarray.matrixmultiply(self.imatrix, (dgx,dgy))
+			drow,dcol = -numpy.dot(self.imatrix, (dgx,dgy))
 		else:
-			newmatrix = -numarray.matrixmultiply(self.imatrix, (dgx,dgy))
+			newmatrix = -numpy.dot(self.imatrix, (dgx,dgy))
 			extramatrix = self.createExtraMatrix()
-			drow,dcol = numarray.matrixmultiply(newmatrix,extramatrix)
+			drow,dcol = numpy.dot(newmatrix,extramatrix)
 
 		pixelshift = {'row': drow/biny, 'col': dcol/binx}
 		return pixelshift
@@ -113,7 +112,7 @@ class Transformer(object):
 		pixrow = pixvect['row'] * biny
 		pixcol = pixvect['col'] * binx
 	
-		dgx,dgy = -numarray.matrixmultiply(self.matrix, (pixrow,pixcol))
+		dgx,dgy = -numpy.dot(self.matrix, (pixrow,pixcol))
 
 		if None not in (self.xmod, self.ymod):
 			dgx = self.xmod.predict(gx0,dgx)
@@ -167,8 +166,8 @@ class Transformer(object):
 		caldata2 = {}
 		caldata2['axis'] = caldata['axis']
 		caldata2['period'] = caldata['period']
-		caldata2['a'] = numarray.ravel(caldata['a']).copy()
-		caldata2['b'] = numarray.ravel(caldata['b']).copy()
+		caldata2['a'] = numpy.ravel(caldata['a']).copy()
+		caldata2['b'] = numpy.ravel(caldata['b']).copy()
 		mod = gonmodel.GonModel()
 		mod.fromDict(caldata2)
 		return mod

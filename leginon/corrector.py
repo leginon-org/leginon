@@ -12,7 +12,7 @@ import copy
 import data
 import event
 import node
-import numarray
+import numpy
 import threading
 import gui.wx.Corrector
 import remotecall
@@ -180,7 +180,7 @@ class Corrector(node.Node):
 		if image is None:
 			self.setImage(None)
 		else:
-			self.setImage(numarray.asarray(image, numarray.Float32))
+			self.setImage(numpy.asarray(image, numpy.float32))
 		self.stopTimer('Corrector.displayImage')
 
 	def retrievePlan(self, ccdcamera, corstate):
@@ -246,7 +246,7 @@ class Corrector(node.Node):
 			raise RuntimeError('invalid setting "%s" for combine method' % (combine,))
 
 		## make if float so we can do float math later
-		ref = numarray.asarray(ref, numarray.Float32)
+		ref = numpy.asarray(ref, numpy.float32)
 
 		corstate = data.CorrectorCamstateData()
 		geometry = self.instrument.ccdcamera.Geometry
@@ -360,7 +360,7 @@ class Corrector(node.Node):
 		ref = self.researchRef(camstate, type, ccdcameraname, scopedata, channel)
 		if ref:
 			## make it float to do float math later
-			image = numarray.asarray(ref['image'], numarray.Float32)
+			image = numpy.asarray(ref['image'], numpy.float32)
 			self.ref_cache[key] = image
 		else:
 			image = None
@@ -421,14 +421,14 @@ class Corrector(node.Node):
 				return
 
 		norm = bright - dark
-		norm = numarray.asarray(norm, numarray.Float32)
+		norm = numpy.asarray(norm, numpy.float32)
 
 		## there may be a better normavg than this
 		normavg = arraystats.mean(norm)
 
 		# division may result infinity or zero division
 		# so make sure there are no zeros in norm
-		norm = numarray.clip(norm, 0.001, sys.maxint)
+		norm = numpy.clip(norm, 0.001, sys.maxint)
 		norm = normavg / norm
 		self.storeRef('norm', norm, corstate, scopedata, channel)
 
@@ -493,7 +493,7 @@ class Corrector(node.Node):
 			clipped = normalized
 		else:
 			self.startTimer('clip')
-			clipped = numarray.clip(normalized, clipmin, clipmax)
+			clipped = numpy.clip(normalized, clipmin, clipmax)
 			self.stopTimer('clip')
 
 		if self.settings['despike']:
@@ -506,7 +506,7 @@ class Corrector(node.Node):
 			self.logger.debug('Despiked')
 
 		self.startTimer('asarray')
-		final = numarray.asarray(clipped, numarray.Float32)
+		final = numpy.asarray(clipped, numpy.float32)
 		self.stopTimer('asarray')
 		return final
 

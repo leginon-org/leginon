@@ -9,12 +9,7 @@
 #
 
 import math, string
-try:
-	import numarray as Numeric
-	import numarray.linear_algebra as LinearAlgebra
-except:
-	import Numeric
-	import LinearAlgebra
+import numpy
 import shelve
 
 class GonData:
@@ -73,9 +68,9 @@ class GonData:
 
 	def process_data(self, datapoints):
 		datalen = len(datapoints)
-		self.gonpos = Numeric.zeros(datalen,Numeric.Float32)
-		self.othergonpos = Numeric.zeros(datalen,Numeric.Float32)
-		self.pixpertick = Numeric.zeros(datalen,Numeric.Float32)
+		self.gonpos = numpy.zeros(datalen, numpy.float32)
+		self.othergonpos = numpy.zeros(datalen, numpy.float32)
+		self.pixpertick = numpy.zeros(datalen, numpy.float32)
 
 		#self.angle = float(headlines[3][0])
 
@@ -145,8 +140,8 @@ class GonModel:
 		return result
 
 	def eval_int(self, pos):
-		a = self.ai * Numeric.sin(self.xia * pos)
-		b = self.bi * Numeric.cos(self.xib * pos)
+		a = self.ai * numpy.sin(self.xia * pos)
+		b = self.bi * numpy.cos(self.xib * pos)
 		result = pos + a.sum() - b.sum()
 		return result
 
@@ -224,26 +219,26 @@ class GonModel:
 		self.period = d['period']
 
 		a = self.removeTrailingZeros(d['a'])
-		self.a = Numeric.array(a, Numeric.Float32)
+		self.a = numpy.array(a, numpy.float32)
 		self.a = self.a.flat
 
 		b = self.removeTrailingZeros(d['b'])
-		self.b = Numeric.array(b, Numeric.Float32)
+		self.b = numpy.array(b, numpy.float32)
 		self.b = self.b.flat
 
-		k = 2.0 * Numeric.pi / self.period
+		k = 2.0 * numpy.pi / self.period
 
-		i = Numeric.arange(1,len(self.a)+1, 1, Numeric.Float32)
+		i = numpy.arange(1,len(self.a)+1, 1, numpy.float32)
 		self.ai = self.a / k / i
 		self.xia = i * k
 
-		i = Numeric.arange(1,len(self.b)+1, 1, Numeric.Float32)
+		i = numpy.arange(1,len(self.b)+1, 1, numpy.float32)
 		self.bi = self.b / k / i
 		self.xib = i * k
 
 	def design_matrix(self, gondata, terms, period):
 		ma = 2 * terms + 1
-		a = Numeric.zeros((gondata.ndata, ma),Numeric.Float32)
+		a = numpy.zeros((gondata.ndata, ma), numpy.float32)
 
 		k = 2.0 * math.pi / period
 		
@@ -291,9 +286,9 @@ class GonModel:
 			incp = (maxp - minp) / search_periods
 			print 'current precision:', incp
 			## this loop searches for the best period in the current range
-			for period in Numeric.arrayrange(minp, maxp+incp, incp):
+			for period in numpy.arange(minp, maxp+incp, incp):
 				a = self.design_matrix(gondata,terms,period)
-				x,resids,rank,s = LinearAlgebra.linear_least_squares(a,b)
+				x,resids,rank,s = numpy.linalg.lstsq(a,b)
 				try:
 					resids0 = resids[0]
 				except IndexError:
@@ -317,11 +312,11 @@ class GonModel:
 		print '  resids:  ', best_resids
 
 		if terms:
-			self.a = Numeric.zeros(terms)
-			self.b = Numeric.zeros(terms)
+			self.a = numpy.zeros(terms)
+			self.b = numpy.zeros(terms)
 		else:
-			self.a = Numeric.zeros(1)
-			self.b = Numeric.zeros(1)
+			self.a = numpy.zeros(1)
+			self.b = numpy.zeros(1)
 		for i in range(terms):
 			self.a[i] = best_x[2*i+1]
 			self.b[i] = best_x[2*i+2]

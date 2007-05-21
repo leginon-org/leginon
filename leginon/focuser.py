@@ -13,10 +13,7 @@ import event
 import time
 import math
 from pyami import imagefun
-try:
-	import numarray as Numeric
-except:
-	import Numeric
+import numpy
 import copy
 import gui.wx.Focuser
 import player
@@ -550,8 +547,8 @@ class Focuser(acquisition.Acquisition):
 				continue
 			self.manualchecklock.release()
 			pow = imagefun.power(imarray, self.maskradius)
-			self.man_power = pow.astype(Numeric.Float32)
-			self.man_image = imarray.astype(Numeric.Float32)
+			self.man_power = pow.astype(numpy.float32)
+			self.man_image = imarray.astype(numpy.float32)
 			self.panel.setManualImage(self.man_image, 'Image')
 			self.panel.setManualImage(self.man_power, 'Power')
 		self.onManualCheckDone()
@@ -676,7 +673,7 @@ class Focuser(acquisition.Acquisition):
 		else:
 			alpha = stage['a']
 
-		deltaz = delta * Numeric.cos(alpha)
+		deltaz = delta * numpy.cos(alpha)
 		newz = stage['z'] + deltaz
 		self.logger.info('Correcting stage Z by %s (defocus change %s at alpha %s)' % (deltaz,delta,alpha))
 		self.instrument.tem.StagePosition = {'z': newz}

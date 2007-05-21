@@ -4,16 +4,16 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.209 $
+# $Revision: 1.210 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-17 20:06:08 $
+# $Date: 2007-05-21 22:23:28 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
 import node, data, event
-import numarray
-import numarray.linear_algebra
+import numpy
+import scipy.ndimage
 import math
 from pyami import correlator, imagefun, peakfinder
 import time
@@ -391,13 +391,13 @@ class MatrixCalibrationClient(CalibrationClient):
 			tem = self.instrument.getTEMData()
 		if ccdcamera is None:
 			ccdcamera = self.instrument.getCCDCameraData()
-		newmatrix = numarray.array(matrix, numarray.Float64)
+		newmatrix = numpy.array(matrix, numpy.float64)
 		caldata = data.MatrixCalibrationData(session=self.node.session, magnification=mag, type=type, matrix=matrix, tem=tem, ccdcamera=ccdcamera)
 		caldata['high tension'] = ht
 		self.node.publish(caldata, database=True, dbforce=True)
 
 	def getMatrixAngles(self, matrix):
-		matrix = numarray.linear_algebra.inverse(matrix)
+		matrix = numpy.linalg.inv(matrix)
 		x_shift_row = matrix[0, 0]
 		x_shift_col = matrix[1, 0]
 		y_shift_row = matrix[0, 1]
@@ -626,12 +626,12 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		'''
 		This solves Equation 10 from Koster paper
 		 F,A,B are the defocus, stigx, and stigy calibration matrices
-		   (all must be 2x2 numarray arrays)
+		   (all must be 2x2 numpy arrays)
 		 d1,d2 are displacements resulting from beam tilts t1,t2
-		   (all must be 2x1 numarray arrays)
+		   (all must be 2x1 numpy arrays)
 		'''
 
-		v = numarray.array(shifts, numarray.Float64).flat
+		v = numpy.array(shifts, numpy.float64).ravel()
 
 		matrices = []
 		for matrix in (F,A,B):
@@ -640,16 +640,17 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		mt = []
 		for tilt in tilts:
-			t = numarray.array(tilt, shape=(2,1))
+			t = numpy.array(tilt)
+			t.shape=(2,1)
 			mm = []
 			for matrix in matrices:
-				m = numarray.matrixmultiply(matrix, t)
+				m = numpy.dot(matrix, t)
 				mm.append(m)
-			m = numarray.concatenate(mm, 1)
+			m = numpy.concatenate(mm, 1)
 			mt.append(m)
-		M = numarray.concatenate(mt, 0)
+		M = numpy.concatenate(mt, 0)
 
-		solution = numarray.linear_algebra.linear_least_squares(M, v)
+		solution = numpy.linalg.lstsq(M, v)
 
 		result = {'defocus': solution[0][0], 'min': float(solution[1][0])}
 		if len(solution[0]) == 3:
@@ -663,9 +664,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 	def solveDefocus(self, F, d, t, tiltaxis):
 		if tiltaxis == 'x':
-			ft = t * numarray.hypot(*F[:,0])
+			ft = t * numpy.hypot(*F[:,0])
 		else:
-			ft = t * numarray.hypot(*F[:,1])
+			ft = t * numpy.hypot(*F[:,1])
 		print 'FT', ft
 		f = d / ft
 		return f
@@ -679,8 +680,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		f1, f2 are two defoci used to measure displacement d (row,col)
 		'''
 		a = (f2-f1) * F
-		b = numarray.array(d, numarray.Float)
-		tiltx,tilty = numarray.linear_algebra.solve_linear_equations(a,b)
+		b = numpy.array(d, numpy.float)
+		tiltx,tilty = numpy.linalg.solve(a,b)
 		return tiltx,tilty
 
 	def eq11(self, shifts, parameters, beam_tilt):
@@ -692,7 +693,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		  parameters - value of microscope parameters causing shifts
 		  beam_tilt - value of the induced beam tilt
 		'''
-		shift = numarray.zeros((2,), numarray.Float)
+		shift = numpy.zeros((2,), numpy.float)
 		shift[0] = shifts[1]['row'] - shifts[0]['row']
 		shift[1] = shifts[1]['col'] - shifts[0]['col']
 
@@ -750,7 +751,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		try:
 			bt0 = btorig['x'], btorig['y']
 			## tilt x makes first column, tilt y makes second column
-			matrix = numarray.zeros((2,2), numarray.Float32)
+			matrix = numpy.zeros((2,2), numpy.float32)
 			for axisn, axisname in ((0,'x'),(1,'y')):
 				## misalign + then -
 				dc = {}
@@ -771,7 +772,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 						pixelshift = shiftinfo['pixel shift']
 						displace[tsign] = pixelshift['row'],pixelshift['col']
 					## calculate displacemnt diff
-					dc[msign] = numarray.subtract(displace[-1],displace[1])
+					dc[msign] = numpy.subtract(displace[-1],displace[1])
 				## calculate matrix column
 				matrix[:,axisn] = (dc[-1]-dc[1]) / 2.0 / m
 		finally:
@@ -811,8 +812,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			self.setBeamTilt(btorig)
 
 		## calculate displacemnt diff
-		dc = numarray.subtract(displace[-1],displace[1])
-		cftilt = numarray.linear_algebra.solve_linear_equations(cmatrix, dc)
+		dc = numpy.subtract(displace[-1],displace[1])
+		cftilt = numpy.linalg.solve(cmatrix, dc)
 		return cftilt
 
 class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
@@ -834,8 +835,8 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		xcol = measurement['x']['col']
 		yrow = measurement['y']['row']
 		ycol = measurement['y']['col']
-		matrix = numarray.array([[xrow,yrow],[xcol,ycol]],numarray.Float)
-		matrix = numarray.linear_algebra.inverse(matrix)
+		matrix = numpy.array([[xrow,yrow],[xcol,ycol]],numpy.float)
+		matrix = numpy.linalg.inv(matrix)
 		return matrix
 
 	def transform(self, pixelshift, scope, camera):
@@ -855,9 +856,9 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 
 		pixrow = pixelshift['row'] * biny
 		pixcol = pixelshift['col'] * binx
-		pixvect = numarray.array((pixrow, pixcol))
+		pixvect = numpy.array((pixrow, pixcol))
 
-		change = numarray.matrixmultiply(matrix, pixvect)
+		change = numpy.dot(matrix, pixvect)
 		changex = change[0]
 		changey = change[1]
 
@@ -865,7 +866,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		if par == 'stage position':
 			if 'a' in scope[par] and scope[par]['a'] is not None:
 				alpha = scope[par]['a']
-				changey = changey / numarray.cos(alpha)
+				changey = changey / numpy.cos(alpha)
 
 		new = data.ScopeEMData(initializer=scope)
 		## make a copy of this since it will be modified
@@ -884,7 +885,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 			scope['magnification'],
 		)
 		matrix = self.retrieveMatrix(*args)
-		inverse_matrix = numarray.linear_algebra.inverse(matrix)
+		inverse_matrix = numpy.linalg.inv(matrix)
 
 		shift = dict(position)
 		shift['x'] -= scope[parameter]['x']
@@ -894,10 +895,10 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		if parameter == 'stage position':
 			if 'a' in scope[parameter] and scope[parameter]['a'] is not None:
 				alpha = scope[parameter]['a']
-				shift['y'] = shift['y']*numarray.cos(alpha)
+				shift['y'] = shift['y']*numpy.cos(alpha)
 
-		shift_vector = numarray.array((shift['x'], shift['y']))
-		pixel = numarray.matrixmultiply(inverse_matrix, shift_vector)
+		shift_vector = numpy.array((shift['x'], shift['y']))
+		pixel = numpy.dot(inverse_matrix, shift_vector)
 
 		pixel_shift = {
 			'row': pixel[0]/camera['binning']['y'],
@@ -949,10 +950,10 @@ class StageCalibrationClient(SimpleMatrixCalibrationClient):
 		par = self.parameter()
 		matrix1 = self.retrieveMatrix(tem, ccdcamera, par, ht, mag1)
 		matrix2 = self.retrieveMatrix(tem, ccdcamera, par, ht, mag2)
-		matrix2inv = numarray.linear_algebra.inverse(matrix2)
-		p1 = numarray.array(p1)
-		stagepos = numarray.matrixmultiply(matrix1, p1)
-		p2 = numarray.matrixmultiply(matrix2inv, stagepos)
+		matrix2inv = numpy.linalg.inv(matrix2)
+		p1 = numpy.array(p1)
+		stagepos = numpy.dot(matrix1, p1)
+		p2 = numpy.dot(matrix2inv, stagepos)
 		return p2
 
 class StageTiltCalibrationClient(StageCalibrationClient):
@@ -1056,7 +1057,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		## only want the y offset (distance from tilt axis)
 		deltay = newscope['stage position']['y'] - imagedata0['scope']['stage position']['y']
 		## scale correlation shift to the axis offset
-		scale = 1.0 / numarray.tan(tilt_value/2.0) / numarray.tan(tilt_value)
+		scale = 1.0 / numpy.tan(tilt_value/2.0) / numpy.tan(tilt_value)
 		deltay *= scale
 
 		tem = self.instrument.getTEMData()
@@ -1124,7 +1125,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		if correlation_type is 'phase':
 			pc = self.correlator.phaseCorrelate()
 			if medfilt is True:
-				pc = numarray.nd_image.median_filter(pc, size=3)
+				pc = scipy.ndimage.median_filter(pc, size=3)
 		else:
 			pc = self.correlator.crossCorrelate()
 		self.displayCorrelation(pc)
@@ -1244,7 +1245,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 			
 		means = [caldatax['mean'],caldatay['mean']]
 		angles = [caldatax['angle'],caldatay['angle']]
-		matrix = numarray.ones((2,2), numarray.Float64)
+		matrix = numpy.ones((2,2), numpy.float64)
 		matrix[0, 0]=means[0]*math.sin(angles[0])
 		matrix[1, 0]=means[0]*math.cos(angles[0])
 		matrix[0, 1]=means[1]*math.sin(angles[1])
@@ -1296,8 +1297,8 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 			caldata2 = {}
 			caldata2['axis'] = caldata['axis']
 			caldata2['period'] = caldata['period']
-			caldata2['a'] = numarray.ravel(caldata['a']).copy()
-			caldata2['b'] = numarray.ravel(caldata['b']).copy()
+			caldata2['a'] = numpy.ravel(caldata['a']).copy()
+			caldata2['b'] = numpy.ravel(caldata['b']).copy()
 			return caldata2
 
 	def timeModelCalibration(self, tem, cam, axis):
@@ -1466,7 +1467,7 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 		### take into account effect of alpha tilt on Y stage pos
 		if 'a' in curstage and curstage['a'] is not None:
 			alpha = curstage['a']
-			delta['y'] = delta['y'] / numarray.cos(alpha)
+			delta['y'] = delta['y'] / numpy.cos(alpha)
 
 		newscope = data.ScopeEMData(initializer=scope)
 		newscope['stage position'] = dict(scope['stage position'])
@@ -1505,9 +1506,9 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 		gonx = gonx / modavgx
 		gony = gony / modavgy
 
-		m = numarray.array(((numarray.cos(anglex),numarray.sin(anglex)),(numarray.cos(angley),numarray.sin(angley))), numarray.Float32)
-		minv = numarray.linear_algebra.inverse(m)
-		ix,iy = numarray.matrixmultiply(minv, (gonx,gony))
+		m = numpy.array(((numpy.cos(anglex),numpy.sin(anglex)),(numpy.cos(angley),numpy.sin(angley))), numpy.float32)
+		minv = numpy.linalg.inv(m)
+		ix,iy = numpy.dot(minv, (gonx,gony))
 
 		return iy,ix
 
