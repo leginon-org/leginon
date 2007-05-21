@@ -22,7 +22,7 @@ import instrument
 import gui.wx.Acquisition
 import gui.wx.Presets
 import navigator
-import numarray
+import numpy
 from pyami import arraystats, imagefun, ordereddict
 
 class NoMoveCalibration(Exception):
@@ -183,7 +183,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		driftresult = ev['data']
 		status = driftresult['status']
 		final = driftresult['final']
-		drift = numarray.hypot(final['rowmeters'],final['colmeters']) / final['interval']
+		drift = numpy.hypot(final['rowmeters'],final['colmeters']) / final['interval']
 		self.reportStatus('acquisition', 'Received drift result status "%s", final drift: %.3e' % (status, drift))
 		self.driftresult = driftresult
 		self.driftdone.set()
@@ -391,7 +391,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 						self.logger.error(message)
 						raise NoMoveCalibration(message)
 					ydiff = tmpscope['stage position']['y'] - targetscope['stage position']['y']
-					zdiff = ydiff * numarray.sin(targetscope['stage position']['a'])
+					zdiff = ydiff * numpy.sin(targetscope['stage position']['a'])
 	
 			### check if stage position is valid
 			if newscope['stage position']:
@@ -574,7 +574,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if self.settings['display image']:
 			self.reportStatus('output', 'Displaying image...')
 			self.startTimer('display')
-			self.setImage(numarray.asarray(imagedata['image'], numarray.Float32), 'Image')
+			self.setImage(numpy.asarray(imagedata['image'], numpy.float32), 'Image')
 			self.stopTimer('display')
 			self.reportStatus('output', 'Image displayed')
 
@@ -688,7 +688,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				pass
 			else:
 				imagedata.__setitem__('image', num, force=True)
-			self.setImage(numarray.asarray(imagedata['image'], numarray.Float32), 'Image')
+			self.setImage(numpy.asarray(imagedata['image'], numpy.float32), 'Image')
 
 	def adjustTargetForDrift(self, oldtarget, force=False, drifted=False):
 		if oldtarget['image'] is None:
