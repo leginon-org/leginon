@@ -1,14 +1,11 @@
 import math
-import numarray
-import numarray.fft
-import numarray.linear_algebra
-import numarray.mlab
-import numarray.nd_image
+import numpy
+import scipy.ndimage
 import numextension
 
 def swapQuadrants(image):
 	rows, columns = image.shape
-	swap = numarray.zeros(image.shape, image.type())
+	swap = numpy.zeros(image.shape, image.dtype)
 	swap[rows/2:] = image[:rows/2]
 	swap[:rows/2] = image[rows/2:]
 	return swap
@@ -18,19 +15,19 @@ def phaseCorrelate(image1, image2, fft=False):
 		fft1 = image1
 		fft2 = image2
 	else:
-		fft1 = numarray.fft.real_fft2d(image1)
-		fft2 = numarray.fft.real_fft2d(image2)
+		fft1 = numpy.fft.rfft2(image1)
+		fft2 = numpy.fft.rfft2(image2)
 	xc = fft1*fft2.conjugate() + 1e-16
-	pc = xc/numarray.absolute(xc)
-	pc = numarray.fft.inverse_real_fft2d(pc)
+	pc = xc/numpy.absolute(xc)
+	pc = numpy.fft.irfft2(pc)
 	return pc
 
 def findMax(image):
 	columns = image.shape[1]
-	i = numarray.argmax(image.flat)
+	i = numpy.argmax(image.ravel())
 	row = i / columns
 	column = i % columns
-	return row, column, image.flat[i]
+	return row, column, image.ravel()[i]
 
 def findPeak(image):
 	i, j, value = findMax(image)
@@ -54,12 +51,12 @@ def findRotationScale(image1, image2, window=None, highpass=None):
 	image2 = image2 * window
 
 	s = None
-	image1 = swapQuadrants(numarray.fft.real_fft2d(image1, s=s))
-	image2 = swapQuadrants(numarray.fft.real_fft2d(image2, s=s))
+	image1 = swapQuadrants(numpy.fft.rfft2(image1, s=s))
+	image2 = swapQuadrants(numpy.fft.rfft2(image2, s=s))
 	shape = image1.shape
 
-	image1 = numarray.absolute(image1)
-	image2 = numarray.absolute(image2)
+	image1 = numpy.absolute(image1)
+	image2 = numpy.absolute(image2)
 
 	if highpass is None:
 		highpass = numextension.highpass(*shape)
@@ -98,16 +95,16 @@ def findRotationScaleTranslation(image1, image2, window=None, highpass=None):
 	r = rotateScaleOffset(image2, -rotation, 1.0/scale, (0.0, 0.0), shape)
 
 	o = ((shape[0] - image1.shape[0])/2, (shape[1] - image1.shape[1])/2)
-	i = numarray.zeros(shape, image1.type())
+	i = numpy.zeros(shape, image1.dtype)
 	i[o[0]:o[0] + image1.shape[0], o[1]:o[1] + image1.shape[1]] = image1
 
-	fft1 = numarray.fft.real_fft2d(i)
-	fft2 = numarray.fft.real_fft2d(r)
+	fft1 = numpy.fft.rfft2(i)
+	fft2 = numpy.fft.rfft2(r)
 	pc = phaseCorrelate(fft1, fft2, fft=True)
 	peak, value = findPeak(pc)
 
-	r180 = numarray.mlab.rot90(numarray.mlab.rot90(r))
-	fft2 = numarray.fft.real_fft2d(r180)
+	r180 = numpy.rot90(numpy.rot90(r))
+	fft2 = numpy.fft.rfft2(r180)
 	pc = phaseCorrelate(fft1, fft2, fft=True)
 	peak180, value180 = findPeak(pc)
 
@@ -117,34 +114,32 @@ def findRotationScaleTranslation(image1, image2, window=None, highpass=None):
 		rotation = (rotation + 180.0) % 360.0
 		r = r180
 
-	#images = i - numarray.nd_image.shift(r, peak)
-
-	return rotation, scale, peak, rsvalue, value#, images
+	return rotation, scale, peak, rsvalue, value
 
 def getMatrices(rotation, scale):
-	mrotation = numarray.identity(2, numarray.Float)
+	mrotation = numpy.identity(2, numpy.float)
 	mrotation[0, 0] = math.cos(math.radians(rotation))
 	mrotation[0, 1] = math.sin(math.radians(rotation))
 	mrotation[1, 0] = -math.sin(math.radians(rotation))
 	mrotation[1, 1] = math.cos(math.radians(rotation))
 
-	mscale = numarray.identity(2, numarray.Float)
+	mscale = numpy.identity(2, numpy.float)
 	mscale[0, 0] = scale
 	mscale[1, 1] = scale
 
-	m = numarray.identity(2, numarray.Float)
-	m = numarray.matrixmultiply(mrotation, m)
-	m = numarray.matrixmultiply(mscale, m)
+	m = numpy.identity(2, numpy.float)
+	m = numpy.dot(mrotation, m)
+	m = numpy.dot(mscale, m)
 
-	imrotation = numarray.transpose(mrotation)
+	imrotation = numpy.transpose(mrotation)
 
-	imscale = numarray.identity(2, numarray.Float)
+	imscale = numpy.identity(2, numpy.float)
 	imscale[0, 0] = 1.0/mscale[0, 0]
 	imscale[1, 1] = 1.0/mscale[1, 1]
 
-	im = numarray.identity(2, numarray.Float)
-	im = numarray.matrixmultiply(imscale, im)
-	im = numarray.matrixmultiply(imrotation, im)
+	im = numpy.identity(2, numpy.float)
+	im = numpy.dot(imscale, im)
+	im = numpy.dot(imrotation, im)
 
 	return m, im
 
@@ -154,13 +149,13 @@ def rotateScaleOffset(image, rotation, scale, offset, shape=None):
 	if shape is None:
 		shape = image.shape
 
-	o = numarray.zeros((2,), numarray.Float)
+	o = numpy.zeros((2,), numpy.float)
 	o = (offset[0] - image.shape[0]/2.0, offset[1] - image.shape[1]/2.0)
-	o = numarray.matrixmultiply(im, o)
+	o = numpy.dot(im, o)
 	o = (-(o[0] + shape[0]/2.0), -(o[1] + shape[1]/2.0))
-	o = numarray.matrixmultiply(m, o)
+	o = numpy.dot(m, o)
 
-	return numarray.nd_image.affine_transform(image, m, o, shape)
+	return scipy.ndimage.affine_transform(image, m, o, shape)
 
 def findTranslation(image1, image2):
 	pc = phaseCorrelate(image1, image2)

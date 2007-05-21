@@ -4,14 +4,14 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/beamtiltcalibrator.py,v $
-# $Revision: 1.80 $
+# $Revision: 1.81 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-03-13 20:07:44 $
+# $Date: 2007-05-21 22:12:30 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
-import numarray
+import numpy
 import threading
 import calibrator
 import calibrationclient
@@ -131,7 +131,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		axes = ('x', 'y')
 		states = ({'defocus': defocii[0]}, {'defocus': defocii[1]})
-		matrix = numarray.identity(2, numarray.Float)
+		matrix = numpy.identity(2, numpy.float)
 		for i, axis in enumerate(axes):
 			self.logger.info('Calibrating on %s-axis...' % axis)
 			args = (axis, beam_tilt, states)
@@ -196,7 +196,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 				s = data.ScopeEMData(stigmator={'objective': v})
 				states.append(s)
 
-			matrix = numarray.identity(2, numarray.Float)
+			matrix = numpy.identity(2, numpy.float)
 			for i, tilt_axis in enumerate(axes):
 				self.logger.info('Calibrating on %s-axis...' % tilt_axis)
 				args = (tilt_axis, beam_tilt, states)
