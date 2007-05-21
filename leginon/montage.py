@@ -20,7 +20,7 @@ import os.path
 from pyami import affine
 import caltransformer
 
-dbdk = leginondata.db
+dbdk = sinedon.getConnection('leginondata')
 
 def memmapMRC(fileref):
 	fullname = os.path.join(fileref.path, fileref.filename)
