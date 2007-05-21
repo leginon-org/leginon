@@ -12,7 +12,7 @@ do
 	fi
 done
 
-for i in `find /ami/sw/packages/pyappion -type f | egrep -v "(CVS|old|\.pyc|\.pyo)"`
+for i in `find /ami/sw/packages/pyappion -type f | egrep -v "(CVS|old|\.pyo)"`
 do
 	j=`echo $i | sed 's/^\/ami\/sw\/packages\/pyappion/./'`
         if [ -f $j ]
