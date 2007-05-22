@@ -1,5 +1,5 @@
 #include <Python.h>
-#include <numarray/libnumarray.h>
+#include <numpy/arrayobject.h>
 #include <PythonCOM.h>
 
 #define _WIN32_DCOM
@@ -82,32 +82,32 @@ static PyObject *call(PyObject *self, PyObject *args) {
 
 	switch(vartype) {
 		case VT_I2:
-			type = tInt16;
+			type = NPY_INT16;
 			break;
 		case VT_I4:
-			type = tInt32;
+			type = NPY_INT32;
 			break;
 		case VT_R4:
-			type = tFloat32;
+			type = NPY_FLOAT32;
 			break;
 		case VT_R8:
-			type = tFloat64;
+			type = NPY_FLOAT64;
 			break;
 		default:
 			PyErr_SetString(PyExc_RuntimeError, "Invalid image type");
 			return NULL;
 	}
 
-	dims = new int[psaImage->cDims];
+	dims = new npy_intp[psaImage->cDims];
 	for(int i = 0; i < psaImage->cDims; i++)
-		dims[i] = (int)psaImage->rgsabound[i].cElements;
+		dims[i] = (npy_intp)psaImage->rgsabound[i].cElements;
 
-	result = NA_vNewArray(pbuffer, type, psaImage->cDims, dims);
+	result = PyArray_SimpleNewFromData(psaImage->cDims, dims, type, pbuffer)
 	SafeArrayUnaccessData(psaImage);
 	SafeArrayDestroy(psaImage);
 	delete dims;
 
-	return (PyObject *)result;
+	return result;
 }
 
 static struct PyMethodDef methods[] = {
