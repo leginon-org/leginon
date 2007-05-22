@@ -11,7 +11,7 @@
 # this is python Numeric version of -radial_image (mon_radial_image)
 
 import numpy
-from pyami import imagefun, correlator, peakfinder, convolver, mrc
+from pyami import imagefun, correlator, peakfinder, convolver, mrc, arraystats
 import ice
 
 class CircleMaskCreator(object):
@@ -465,7 +465,7 @@ class HoleFinder(object):
 			raise RuntimeError('need original image and holes before marking holes')
 		image = self.__results['original']
 		im = image.copy()
-		value = imagefun.min(im)
+		value = arraystats.min(im)
 		for hole in self.__results['holes']:
 			coord = hole.stats['center']
 			imagefun.mark_image(im, coord, value)
@@ -493,8 +493,8 @@ class HoleFinder(object):
 		im = numpy.ravel(subimage)
 		mask = numpy.ravel(mask)
 		roi = numpy.compress(mask, im)
-		mean = imagefun.mean(roi)
-		std = imagefun.stdev(roi)
+		mean = arraystats.mean(roi)
+		std = arraystats.std(roi)
 		n = len(roi)
 		return {'mean':mean, 'std': std, 'n':n}
 

@@ -8,7 +8,7 @@
 import data
 import node
 import gui.wx.IntensityMonitor
-from pyami import imagefun
+from pyami import arraystats
 import time
 import threading
 import instrument
@@ -78,9 +78,13 @@ class IntensityMonitor(node.Node):
 
 	def publishStats(self, imagedata):
 		im = imagedata['image']
-		mn,mx = imagefun.minmax(im)
-		mean = imagefun.mean(im)
-		std = imagefun.stdev(im, mean)
+
+		stats = arraystats.all(im)
+		mn = stats['min']
+		mx = stats['max']
+		mean = stats['mean']
+		std = stats['std']
+
 		statsdata = data.CameraImageStatsData()
 		statsdata['min'] = mn
 		statsdata['max'] = mx

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/calibrationclient.py,v $
-# $Revision: 1.210 $
+# $Revision: 1.211 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-21 22:23:28 $
+# $Date: 2007-05-22 19:21:07 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -15,7 +15,7 @@ import node, data, event
 import numpy
 import scipy.ndimage
 import math
-from pyami import correlator, imagefun, peakfinder
+from pyami import correlator, peakfinder, arraystats
 import time
 import sys
 import threading
@@ -253,7 +253,7 @@ class DoseCalibrationClient(CalibrationClient):
 		self.node.logger.info('CCD Camera magnification %.1f' % camera_mag)
 		exposure_time = imagedata['camera']['exposure time'] / 1000.0
 		binning = imagedata['camera']['binning']['x']
-		mean_counts = imagefun.mean(imagedata['image']) / (binning**2)
+		mean_counts = arraystats.mean(imagedata['image']) / (binning**2)
 		return self.sensitivity(dose_rate, camera_mag, camera_pixel_size,
 														exposure_time, mean_counts)
 
@@ -277,7 +277,7 @@ class DoseCalibrationClient(CalibrationClient):
 		numdata = imagedata['image']
 		sensitivity = self.retrieveSensitivity(ht, tem, ccdcamera)
 		self.node.logger.debug('Sensitivity %.2f' % sensitivity)
-		mean_counts = imagefun.mean(numdata) / (binning**2)
+		mean_counts = arraystats.mean(numdata) / (binning**2)
 		self.node.logger.debug('Mean counts %.1f' % mean_counts)
 		totaldose = mean_counts / specimen_pixel_size**2 / sensitivity
 		return totaldose

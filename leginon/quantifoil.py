@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-from pyami import convolver, peakfinder, fftengine, correlator, imagefun, mrc
+from pyami import convolver, peakfinder, fftengine, correlator, imagefun, mrc, arraystats
 import Numeric
 import holefinderback
 import os
@@ -273,8 +273,8 @@ class QuantifoilSolver(object):
 		im = Numeric.ravel(subimage)
 		mask = Numeric.ravel(mask)
 		roi = Numeric.compress(mask, im)
-		mean = imagefun.mean(roi)
-		std = imagefun.stdev(roi)
+		mean = arraystats.mean(roi)
+		std = arraystats.std(roi)
 		n = len(roi)
 		return {'mean':mean, 'std': std, 'n':n}
 

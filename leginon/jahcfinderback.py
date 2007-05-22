@@ -10,7 +10,7 @@
 
 import numpy
 import scipy.ndimage
-from pyami import imagefun, peakfinder, convolver, correlator, mrc
+from pyami import imagefun, peakfinder, convolver, correlator, mrc, arraystats
 import ice
 import lattice
 
@@ -241,8 +241,8 @@ class HoleFinder(object):
 
 		meth = self.threshold_method
 		if meth == "Threshold = mean + A * stdev":
-			mean = imagefun.mean(cc)
-			std = imagefun.stdev(cc)
+			mean = arraystats.mean(cc)
+			std = arraystats.std(cc)
 			thresh = mean + self.threshold * std
 		elif meth == "Threshold = A":
 			thresh = self.threshold
@@ -343,7 +343,7 @@ class HoleFinder(object):
 			raise RuntimeError('need original image and holes before marking holes')
 		image = self.__results['original']
 		im = image.copy()
-		value = imagefun.min(im)
+		value = arraystats.min(im)
 		for hole in self.__results['holes']:
 			coord = hole.stats['center']
 			imagefun.mark_image(im, coord, value)
@@ -371,8 +371,8 @@ class HoleFinder(object):
 		im = numpy.ravel(subimage)
 		mask = numpy.ravel(mask)
 		roi = numpy.compress(mask, im)
-		mean = imagefun.mean(roi)
-		std = imagefun.stdev(roi)
+		mean = arraystats.mean(roi)
+		std = arraystats.std(roi)
 		n = len(roi)
 		return {'mean':mean, 'std': std, 'n':n}
 

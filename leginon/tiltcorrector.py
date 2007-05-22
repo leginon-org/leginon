@@ -14,7 +14,7 @@ on a tilted stage so that they appear to be untilted.
 
 import numpy
 import scipy.ndimage
-from pyami import imagefun, convolver, affine
+from pyami import arraystats, convolver, affine
 import math
 import data
 
@@ -117,10 +117,10 @@ class TiltCorrector(object):
 		return {'row':pixvect[0], 'col':pixvect[1]}
 
 	def edge_mean(self, im):
-		m1 = imagefun.mean(im[0])
-		m2 = imagefun.mean(im[-1])
-		m3 = imagefun.mean(im[:,0])
-		m4 = imagefun.mean(im[:,-1])
+		m1 = arraystats.mean(im[0])
+		m2 = arraystats.mean(im[-1])
+		m3 = arraystats.mean(im[:,0])
+		m4 = arraystats.mean(im[:,-1])
 		m = (m1+m2+m3+m4) / 4.0
 		return m
 	
@@ -295,10 +295,10 @@ class VirtualStageTilter(object):
 		return {'row':pixvect[0], 'col':pixvect[1]}
 
 	def edge_mean(self, im):
-		m1 = imagefun.mean(im[0])
-		m2 = imagefun.mean(im[-1])
-		m3 = imagefun.mean(im[:,0])
-		m4 = imagefun.mean(im[:,-1])
+		m1 = arraystats.mean(im[0])
+		m2 = arraystats.mean(im[-1])
+		m3 = arraystats.mean(im[:,0])
+		m4 = arraystats.mean(im[:,-1])
 		m = (m1+m2+m3+m4) / 4.0
 		return m
 	

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/intensitycalibrator.py,v $
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-21 23:08:38 $
+# $Date: 2007-05-22 19:21:07 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -17,7 +17,7 @@ import calibrator
 import calibrationclient
 import data
 import gui.wx.IntensityCalibrator
-from pyami import imagefun
+from pyami import arraystats
 
 class Abort(Exception):
 	pass
@@ -61,12 +61,12 @@ class IntensityCalibrator(calibrator.Calibrator):
 		# start with a spread beam
 		self.instrument.tem.Intensity = 0.8
 		imdata0 = self.acquire()
-		mean0 = imagefun.mean(imdata0['image'])
+		mean0 = arraystats.mean(imdata0['image'])
 		
 		# test if we can even see the beam
 		self.instrument.tem.Intensity = 0.7
 		imdata1 = self.acquire()
-		mean1 = imagefun.mean(imdata1['image'])
+		mean1 = arraystats.mean(imdata1['image'])
 
 		print 'mean0,mean1', mean0, mean1
 
@@ -81,8 +81,8 @@ class IntensityCalibrator(calibrator.Calibrator):
 
 	def calcStats(self, imdata):
 		stats = {}
-		stats['mean'] = imagefun.mean(imdata['image'])
-		stats['stdev'] = imagefun.stdev(imdata['image'])
+		stats['mean'] = arraystats.mean(imdata['image'])
+		stats['stdev'] = arraystats.std(imdata['image'])
 		return stats
 
 	def storeIntensityMeasurement(self, label, intensity, stats):

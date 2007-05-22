@@ -13,7 +13,7 @@ import targetfinder
 import threading
 import ice
 import numpy
-from pyami import imagefun
+from pyami import arraystats
 import gui.wx.RasterFinder
 import polygon
 
@@ -130,8 +130,8 @@ class RasterFinder(targetfinder.TargetFinder):
 
 		subimage = image[rmin:rmax+1, cmin:cmax+1]
 		roi = numpy.ravel(subimage)
-		mean = imagefun.mean(roi)
-		std = imagefun.stdev(roi, known_mean=mean)
+		mean = arraystats.mean(roi)
+		std = arraystats.std(roi)
 		n = len(roi)
 		stats = {'mean':mean, 'std': std, 'n':n}
 		return stats

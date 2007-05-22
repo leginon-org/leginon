@@ -15,7 +15,7 @@ except:
 	import Numeric
 	import FFT
 	import MLab
-from pyami import convolver, imagefun, mrc
+from pyami import convolver, arraystats, mrc
 import numextension
 import random
 import targetfinder
@@ -39,8 +39,8 @@ def canny(image, sigma=1.8, nonmaximawindow=7, hysteresis=True):
 	numextension.nonmaximasuppress(edgeimage, gradientimage, nonmaximawindow)
 
 	if hysteresis:
-		mean = imagefun.mean(edgeimage)
-		stdev = imagefun.stdev(edgeimage, known_mean=mean)
+		mean = arraystats.mean(edgeimage)
+		stdev = arraystats.std(edgeimage)
 		lowthreshold = mean + stdev
 		highthreshold = 2*lowthreshold
 		edgeimage = numextension.hysteresisthreshold(edgeimage,
@@ -370,7 +370,6 @@ class HoughSquareFinderPlugin(Plugin):
 						
 						for c in range(int(round(low)), int(round(high))):
 							values.append(input.image[r, c])
-							#imagefun.mark_image(input.image, (r, c), 50000.0, 5)
 	
 					output.squares.append(HoughSquareData(square, center, values))
 		return output

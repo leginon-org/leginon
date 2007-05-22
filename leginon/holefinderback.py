@@ -354,7 +354,7 @@ class HoleFinder(object):
 			raise RuntimeError('need original image and holes before marking holes')
 		image = self.__results['original']
 		im = image.copy()
-		value = imagefun.min(im)
+		value = arraystats.min(im)
 		for hole in self.__results['holes']:
 			coord = hole.stats['center']
 			imagefun.mark_image(im, coord, value)

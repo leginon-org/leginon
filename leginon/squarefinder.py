@@ -9,11 +9,7 @@
 #
 
 import data
-from pyami import imagefun, convolver, mrc
-try:
-	import numarray as Numeric
-except:
-	import Numeric
+from pyami import imagefun, convolver, mrc, arraystats
 import random
 import targetfinder
 import threading
@@ -176,8 +172,8 @@ class ThresholdPlugin(Plugin):
 	outputclass = MaskedImage
 
 	def _process(self, input):
-		min = imagefun.min(input.image)
-		max = imagefun.max(input.image)
+		min = arraystats.min(input.image)
+		max = arraystats.max(input.image)
 		cutoff = (max - min) / self.cutoff.get()
 		return self.outputclass(input.image,
 														imagefun.threshold(input.image, cutoff))
