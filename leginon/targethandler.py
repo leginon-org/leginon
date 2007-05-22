@@ -52,7 +52,7 @@ class TargetHandler(object):
 			parentim = target.special_getitem('image', dereference=False)
 			if parentim is not None:
 				parentim = parentim.dbid
-				parentim = self.researchDBID(data.AcquisitionImageData, parentim, readimages=False)
+				parentim = self.researchDBID(leginondata.AcquisitionImageData, parentim, readimages=False)
 				if parentim['target'] is not None:
 					parentnum = target['image']['target']['number']
 
@@ -248,7 +248,7 @@ class TargetHandler(object):
 
 	def newSimulatedTarget(self, preset=None):
 		## current state of TEM
-		scopedata = self.instrument.getData(data.ScopeEMData)
+		scopedata = self.instrument.getData(leginondata.ScopeEMData)
 		lastnumber = self.lastTargetNumber(session=self.session, type='simulated')
 		nextnumber = lastnumber + 1
 		newtarget = self.newTarget(drow=0, dcol=0, number=nextnumber, type='simulated', scope=scopedata, preset=preset)
@@ -324,13 +324,14 @@ class TargetWaitHandler(TargetHandler):
 
 if __name__ == '__main__':
 	import node
+	import sinedon
 
 	class TestNode(node.Node, TargetHandler):
 		pass
 		def __init__(self, id, session=None, managerlocation=None):
 			node.Node.__init__(self, id, session, managerlocation)
 
-	db = leginondata.db
+	db = sinedon.getConnection('leginondata')
 	t = TestNode('testnode')
 
 	s = leginondata.SessionData(name='04may26a')
@@ -338,7 +339,7 @@ if __name__ == '__main__':
 	s = s[0]
 	print 's', s
 
-	im = db.direct_query(data.AcquisitionImageData, 49780)
+	im = db.direct_query(leginondata.AcquisitionImageData, 49780)
 	print 'DONE DIRECT', im.dmid
 	tar = t.researchTargets(session=s, image=im)
 	print 'LEN', len(tar)
