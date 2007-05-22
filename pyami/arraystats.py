@@ -8,6 +8,7 @@ array values have changed, and you want to recalculate the statistic,
 then you must specify force=True.
 '''
 
+import weakattr
 import numarray
 import numarray.nd_image
 import numpy
@@ -110,16 +111,28 @@ def calc_stat(a, stat, force=False):
 	else:
 		return results[stat]
 
+def getCachedStats(a):
+	try:
+		return a.stats
+	except AttributeError:
+		return weakattr.get(a, 'stats')
+
+def setCachedStats(a, stats):
+	try:
+		a.stats = stats
+	except AttributeError:
+		weakattr.set(a, 'stats', stats)
+
 def getCachedStat(a, stat):
-	return a.stats[stat]
+	return getCachedStats(a)[stat]
 
 def setCachedStat(a, stat, value):
-	if not hasattr(a, 'stats'):
-		try:
-			a.stats = {}
-		except:
-			return
-	a.stats[stat] = value
+	try:
+		stats = getCachedStats(a)
+	except:
+		stats = {}
+		setCachedStats(a, stats)
+	stats[stat] = value
 
 if __name__ == '__main__':
 	debug = True
