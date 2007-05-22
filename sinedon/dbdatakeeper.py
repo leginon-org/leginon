@@ -134,8 +134,6 @@ class DBDataKeeper(object):
 		'''
 		function that should be called in data.accumulateData
 		'''
-		if not isinstance(mydata, data.Data):
-			print 'mydata', mydata
 		stuff = self.qid(mydata)
 		classname = mydata.__class__.__name__
 		myalias = classname + str(stuff['id'])
