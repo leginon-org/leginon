@@ -66,9 +66,9 @@ class DBDataKeeper(object):
 		if self.logger is not None:
 			self.logger.info('query %s' % idata)
 		self.lock.acquire()
-		args = (idata,)
-		kwargs = {'readimages': readimages, 'timelimit': timelimit, 'limit': results}
 		try:
+			args = (idata,)
+			kwargs = {'readimages': readimages, 'timelimit': timelimit, 'limit': results}
 			while True:
 				try:
 					result = self._query(*args, **kwargs)
