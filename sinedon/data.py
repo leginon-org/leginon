@@ -62,7 +62,7 @@ class DataManager(object):
 		self.db = {}
 		### maybe dblock will fix some suspicious errors comming
 		### from database access
-		self.dblock = threading.RLock()
+		self.dbcachelock = threading.RLock()
 		self.location = None
 		self.server = None
 
@@ -173,31 +173,35 @@ class DataManager(object):
 		finally:
 			self.lock.release()
 
-	def getDataFromDB(self, dataclass, dbid, **kwargs):
-		self.dblock.acquire()
+	def getDataFromDBCache(self, dataclass, dbid):
+		self.dbcachelock.acquire()
 		try:
-			dbmodulename = dataclass.__module__
-			db = connections.getConnection(dbmodulename)
-
-			### try to get data from dbcache before doing query
-			try:
-				dat = self.dbcache[dataclass, dbid]
-			except KeyError:
-				dat = db.direct_query(dataclass, dbid, **kwargs)
-			return dat
+			dat = self.dbcache[dataclass, dbid]
 		finally:
-			self.dblock.release()
+			self.dbcachelock.release()
+		return dat
+
+	def getDataFromDB(self, dataclass, dbid, **kwargs):
+		dbmodulename = dataclass.__module__
+		db = connections.getConnection(dbmodulename)
+
+		### try to get data from dbcache before doing query
+		try:
+			dat = self.getDataFromDBCache(dataclass, dbid)
+		except KeyError:
+			dat = db.direct_query(dataclass, dbid, **kwargs)
+		return dat
 
 	def setPersistent(self, datainstance):
 		if datainstance is None or datainstance.dbid is None:
 			return
 		dbid = datainstance.dbid
 		dataclass = datainstance.__class__
-		self.dblock.acquire()
+		self.dbcachelock.acquire()
 		try:
 			self.dbcache[dataclass, dbid] = datainstance
 		finally:
-			self.dblock.release()
+			self.dbcachelock.release()
 
 	def getRemoteData(self, datareference):
 		dmid = datareference.dmid
