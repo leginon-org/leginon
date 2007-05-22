@@ -1,4 +1,4 @@
-import numarray
+import numpy
 import wx
 import numarrayimage
 import gui.wx.ImageViewerEvents as Events

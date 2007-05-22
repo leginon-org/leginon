@@ -1,6 +1,6 @@
 import math
 from pyami import correlator, peakfinder
-import numarray
+import numpy
 import scipy.ndimage
 
 def hanning(size):
@@ -8,10 +8,10 @@ def hanning(size):
     def function(m, n):
         m = abs(m - (size - 1)/2.0) - ((size + 1)/2.0 - border)
         n = abs(n - (size - 1)/2.0) - ((size + 1)/2.0 - border)
-        v = numarray.where(m > n, m, n)
-        v = numarray.where(v > 0, v, 0)
-        return 0.5*(1 - numarray.cos(numarray.pi*v/border - numarray.pi))
-    return numarray.fromfunction(function, (size, size))
+        v = numpy.where(m > n, m, n)
+        v = numpy.where(v > 0, v, 0)
+        return 0.5*(1 - numpy.cos(numpy.pi*v/border - numpy.pi))
+    return numpy.fromfunction(function, (size, size))
 
 class Correlator(object):
     def __init__(self, tilt_axis, correlation_binning=2):
@@ -65,7 +65,7 @@ class Correlator(object):
         if len(image.shape) != 2 or image.shape[0] != image.shape[1]:
             raise ValueError
 
-        padded_image = numarray.zeros(image.shape, image.type())
+        padded_image = numpy.zeros(image.shape, image.dtype)
         image = scipy.ndimage.zoom(image, 1.0/self.correlation_binning)
 
         mean = image.mean()
@@ -108,27 +108,26 @@ class Correlator(object):
         return shift
 
 if __name__ == '__main__':
-#    import numarray.random_array
+#    import numpy.random
 #    _correlator = Correlator(None, None)
 #
 #    size = 16
 #
 #    offset = (400 + 64, 400 + 64)
-#    image = numarray.random_array.random((512, 512))
+#    image = numpy.random.random((512, 512))
 #    image[offset[0]:offset[0] + size, offset[1]:offset[1] + size] += 16
 #    _correlator.correlate(image, None)
 #
 #    offset = (50 + 64, 50 + 64)
-#    image = numarray.random_array.random((512, 512))
+#    image = numpy.random.random((512, 512))
 #    image[offset[0]:offset[0] + size, offset[1]:offset[1] + size] += 16
 #    _correlator.correlate(image, None)
 #
 #    print _correlator.getShift(True)
 
-    import Mrc
-    import numarray
+    from pyami import mrc
 
     window = hanning(1024)
 
-    Mrc.numeric_to_mrc(window, 'foo.mrc')
+    mrc.write(window, 'foo.mrc')
 

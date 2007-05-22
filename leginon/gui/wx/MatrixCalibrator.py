@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MatrixCalibrator.py,v $
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-02 22:16:57 $
-# $Author: vossman $
+# $Date: 2007-05-21 23:55:48 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -21,7 +21,7 @@ import gui.wx.Dialog
 import gui.wx.ImageViewer
 import gui.wx.Settings
 import gui.wx.ToolBar
-import numarray
+import numpy
 import math
 
 def capitalize(string):
@@ -222,7 +222,7 @@ class EditMatrixDialog(gui.wx.Dialog.Dialog):
 			shape = (2, 2)
 		else:
 			shape = self.matrix.shape
-		matrix = numarray.zeros(shape, numarray.Float64)
+		matrix = numpy.zeros(shape, numpy.float64)
 		for row in range(shape[0]):
 			for column in range(shape[1]):
 				value = self.floatentries[row][column].GetValue()
@@ -312,9 +312,9 @@ class PixelToPixelDialog(gui.wx.Dialog.Dialog):
 		self.len2.SetLabel(str(n))
 
 	def angle_len(self, vect):
-		angle = numarray.arctan2(*tuple(vect))
+		angle = numpy.arctan2(*tuple(vect))
 		angle = math.degrees(angle)
-		len = numarray.hypot(*tuple(vect))
+		len = numpy.hypot(*tuple(vect))
 		return angle, len
 
 if __name__ == '__main__':
@@ -322,7 +322,7 @@ if __name__ == '__main__':
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Matrix Calibration Test')
 			#panel = Panel(frame, 'Test')
-			matrix = numarray.zeros((2, 2))
+			matrix = numpy.zeros((2, 2))
 			dialog = EditMatrixDialog(frame, matrix, 'Test Edit Dialog')
 			dialog.Show()
 			frame.Fit()

@@ -3,7 +3,7 @@ import time
 import data
 import tiltcorrelator
 import tiltseries
-import numarray
+import numpy
 
 class Abort(Exception):
     pass
@@ -225,7 +225,7 @@ class Collection(object):
             image_mean = image_data['image'].mean()
             if self.settings['integer']:
                 intscale = self.settings['intscale']
-                image_data['image'] = numarray.around(image_data['image']*intscale).astype(numarray.Int16)
+                image_data['image'] = numpy.around(image_data['image']*intscale).astype(numpy.int16)
                 image_mean *= intscale
 
             image = image_data['image']
