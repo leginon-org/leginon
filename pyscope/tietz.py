@@ -8,7 +8,7 @@
 
 #import array
 import ccdcamera
-import numarray
+import numpy
 import sys
 import threading
 
@@ -160,7 +160,7 @@ class Tietz(object):
 			raise NotImplementedError('Tietz virtual class')
 
 		#self.arraytypecode = 'H'
-		self.imagetype = numarray.UInt16
+		self.imagetype = numpy.uint16
 		self.bytesperpixel = 2
 
 		self.binning = {'x': 1, 'y': 1}
@@ -324,7 +324,7 @@ class Tietz(object):
 		self.exposuretype = value
 
 	def _getImage(self):
-		# {'type': numarray.ArrayType}
+		# {'type': numpy.ndarray}
 		# 0 uses internal flash signal
 		# 1 uses internal exposure signal (PVCam and PXL only)
 		# shutter_mode = 1
@@ -380,9 +380,9 @@ class Tietz(object):
 		imagesize = self.bytesperpixel*dimension['x']*dimension['y']
 
 		map = mmapfile.mmapfile('', self.mmname, imagesize)
-		#na = numarray.array(array.array(self.arraytypecode, map.read(imagesize)),
+		#na = numpy.array(array.array(self.arraytypecode, map.read(imagesize)),
 		#										self.imagetype)
-		na = numarray.fromstring(map.read(imagesize), self.imagetype)
+		na = numpy.fromstring(map.read(imagesize), self.imagetype)
 		map.close()
 		na.shape = (dimension['y'], dimension['x'])
 		return na
