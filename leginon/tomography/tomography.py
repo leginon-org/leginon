@@ -1,5 +1,4 @@
 import math
-import numarray
 import threading
 import calibrationclient
 import data
