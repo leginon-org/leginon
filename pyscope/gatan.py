@@ -7,7 +7,6 @@
 #
 
 import ccdcamera
-import numarray
 import sys
 
 try:
