@@ -15,6 +15,7 @@ import tcptransport
 import weakref
 import os
 import connections
+from pyami import weakattr
 
 class DataError(Exception):
 	pass
@@ -582,10 +583,14 @@ class Data(newdict.TypedDict):
 		raise NotImplementedError('disabled until figure out numpy get/set attr')
 		value = self.special_getitem(key, dereference=False)
 		if type(value) is numpy.ndarray:
-			if hasattr(value, 'fileref'):
-				self.__setitem__(key, value.fileref, force=True)
-			else:
-				self.__setitem__(key, None)
+			try:
+				fileref = value.fileref
+			except:
+				try:
+					fileref = weakattr.get(value, 'fileref')
+				except:
+					fileref = None
+			self.__setitem__(key, fileref, force=True)
 
 	def __getitem__(self, key):
 		return self.special_getitem(key, dereference=True)

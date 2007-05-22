@@ -1,6 +1,7 @@
 import numpy
 import os
-from pyami.ordereddict import OrderedDict
+from pyami.ordereddict import OrderedDict 
+from pyami import weakattr
 
 class FileReference(object):
 	'''
@@ -26,8 +27,11 @@ class FileReference(object):
 		#print 'reading image', self.filename
 		fullname = os.path.join(self.path, self.filename)
 		self.data = self.loader(fullname)
-		# disable until figure out numpy get/set attr
-		#self.data.fileref = self
+		try:
+			self.data.fileref = self
+		except:
+			# numpy does not allow setattr...
+			weakattr.set(self.data, 'fileref', self)
 		return self.data
 
 	def setPath(self, path):
@@ -122,7 +126,7 @@ def validateArrayType(obj):
 	if isinstance(obj, numpy.ndarray):
 		return obj
 
-	raise TypeError()
+	raise TypeError(type(obj))
 
 registerValidator(MRCArrayType, validateArrayType)
 registerValidator(DatabaseArrayType, validateArrayType)

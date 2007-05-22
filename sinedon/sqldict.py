@@ -162,6 +162,7 @@ import pyami.mrc
 import os
 import dbconfig
 import cPickle
+from pyami import weakattr
 
 class SQLDict(object):
 
@@ -1381,7 +1382,11 @@ def saveMRC(object, name, path, filename, thumb=False):
 		pyami.mrc.write(object, fullname)
 		fileref = newdict.FileReference(filename, pyami.mrc.read)
 		fileref.setPath(path)
-		object.fileref = fileref
+		try:
+			object.fileref = fileref
+		except:
+			# numpy does not allow setattr
+			weakattr.set(object, 'fileref', fileref)
 
 	d[k] = filename
 	return d
