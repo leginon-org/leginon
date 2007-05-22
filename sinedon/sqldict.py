@@ -549,7 +549,8 @@ class _multipleQueries:
 			cursor.close()
 			cursorresults[qikey] = cursorresult
 
-		return self._joinData(cursorresults)
+		a = self._joinData(cursorresults)
+		return a
 
 	def uniqueFilter(self, results, key):
 		if not results or key is None:
