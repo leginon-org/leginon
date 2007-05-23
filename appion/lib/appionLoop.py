@@ -263,21 +263,26 @@ class AppionLoop(object):
 		self.specialParamConflicts()
 
 	def _getAppionDir(self):
-		self.params['appiondir'] = os.environ.get('APPIONDIR')
-		if self.params['appiondir'] is None:
-			user = os.environ.get('USER')
-			trypath = "/home/"+user+"/pyappion"
-		 	if os.path.isdir(trypath):
-				self.params['appiondir'] = trypath
-		if self.params['appiondir'] is None:
-			trypath = "/ami/sw/packages/pyappion"
-		 	if os.path.isdir(trypath):
-				self.params['appiondir'] = trypath
-		if self.params['appiondir'] is None:
-			apDisplay.printError("environmental variable, APPIONDIR, is not defined.\n"+
-				"Did you source useappion.sh?")
-		apDisplay.printMsg("APPIONDIR:\t"+self.params['appiondir'])
-		return self.params['appiondir']
+		self.params['appiondir'] = None
+
+		trypath = os.environ.get('APPIONDIR')
+		if os.path.isdir(trypath):
+			self.params['appiondir'] = trypath
+			return self.params['appiondir']
+
+		user = os.environ.get('USER')
+		trypath = "/home/"+user+"/pyappion"
+	 	if os.path.isdir(trypath):
+			self.params['appiondir'] = trypath
+			return self.params['appiondir']
+
+		trypath = "/ami/sw/packages/pyappion"
+	 	if os.path.isdir(trypath):
+			self.params['appiondir'] = trypath
+			return self.params['appiondir']
+
+		apDisplay.printError("environmental variable, APPIONDIR, is not defined.\n"+
+			"Did you source useappion.sh?")
 
 	def _createDefaultParams(self):
 		### new system, global params
