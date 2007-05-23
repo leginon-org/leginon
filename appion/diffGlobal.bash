@@ -5,8 +5,8 @@ for i in `find . -type f | egrep -v "(CVS|old)"`
 do
 	if [ -f /ami/sw/packages/pyappion/$i ]
 	then
-		#echo $i
-		diff --brief /ami/sw/packages/pyappion/$i $i
+		echo $i > /dev/null
+		#diff --brief /ami/sw/packages/pyappion/$i $i
 	else
 		echo MISSING $i
 	fi

@@ -1,9 +1,12 @@
 #!/bin/bash
 
 rm -fv `find .. -name "*.py[oc]"`
-rm -frv icetiltslocal negtiltslocal
+runid1=icetiltslocal
+runid2=negtiltslocal
+rm -frv ${runid1} ${runid2}
 
-../particle_manager/tiltCorrelator.py \
+reset
+../bin/tiltCorrelator.py \
   07feb02b_a_00006gr_00019sq_v01_00002sq_00_00004en_00.mrc \
   07feb02b_a_00006gr_00019sq_v01_00002sq_00_00005en_00.mrc \
   07feb02b_a_00006gr_00019sq_v01_00002sq_00_00006en_00.mrc \
@@ -16,10 +19,11 @@ rm -frv icetiltslocal negtiltslocal
   07feb02b_a_00006gr_00019sq_v01_00002sq_01_00007en_01.mrc \
   07feb02b_a_00006gr_00019sq_v01_00002sq_01_00008en_01.mrc \
   07feb02b_a_00006gr_00019sq_v01_00002sq_01_00009en_01.mrc \
-  outdir=. diam=140 \
-  runid=icetiltslocal 
+  outdir=. diam=140 prtlrunId=90 \
+  runid=${runid1} 
 
-tiltCorrelator2.py \
+clear
+../bin/tiltCorrelator2.py \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00004en_00.mrc  \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00005en_00.mrc  \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00006en_00.mrc  \
@@ -33,4 +37,4 @@ tiltCorrelator2.py \
   07jan05b_00012gr_00001sq_v01_00002sq_01_00008en_01.mrc  \
   07jan05b_00012gr_00001sq_v01_00002sq_01_00009en_01.mrc  \
   outdir=. diam=140 \
-  runid=negtiltslocal prtlrunId=59 commit
+  runid=${runid2} prtlrunId=53

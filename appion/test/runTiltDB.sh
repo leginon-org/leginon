@@ -1,16 +1,20 @@
 #!/bin/bash
 
 rm -fv `find .. -name "*.py[oc]"`
-#rm -frv icetiltsdb negtiltsdb
 
+runid1=icetiltsdb
+runid2=negtiltsdb
+rm -frv ${runid1} ${runid2}
 
-../particle_manager/tiltCorrelator.py \
+reset
+../bin/tiltCorrelator.py \
   dbimages=07feb02b,en \
   outdir=. diam=140 bin=4 \
-  runid=icetiltsdb commit
+  runid=${runid1} prtlrunId=90
 
-tiltCorrelator2.py \
+clear
+../bin/tiltCorrelator2.py \
   dbimages=07jan05b,en  \
   outdir=. diam=140 bin=4 \
-  runid=negtiltsdb prtlrunId=59 commit
+  runid=${runid2} prtlrunId=53 
 
