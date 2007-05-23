@@ -106,9 +106,6 @@ class AppionLoop(object):
 
 				if self.params['limit'] is not None and self.stats['count'] > self.params['limit']:
 					apDisplay.printWarning("reached image limit of "+str(self.params['limit'])+"; now stopping")
-					self.imgtree = None
-					self.params['nowait'] = True
-					break
 
 				#END LOOP OVER IMAGES
 			notdone = self._waitForMoreImages()
@@ -593,10 +590,17 @@ class AppionLoop(object):
 			print self.params['alldbimages'], self.params['dbimages']
 			apDisplay.printError("no files specified")
 		self.params['session']   = self.imgtree[0]['session']
-		self.stats['imagecount'] = len(self.imgtree)
+
 		self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
 		if self.params['shuffle'] is True:
 			self.imgtree = self._shuffleTree(self.imgtree)
+			apDisplay.printMsg("shuffling images")
+		if self.params['limit'] is not None:
+			lim = int(self.params['limit'])
+			self.imgtree = self.imgtree[:lim]
+			self.params['nowait'] = True
+			apDisplay.printMsg("limiting number of images to "+str(lim))
+		self.stats['imagecount'] = len(self.imgtree)
 		apDisplay.printMsg("found "+str(self.stats['imagecount'])+" in "+apDisplay.timeString(time.time()-startt))
 
 	def _alreadyProcessed(self, imgdata):
