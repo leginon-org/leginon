@@ -16,7 +16,7 @@ import apTilt
 #legacy
 #import selexonFunctions  as sf1
 
-class basicDogPicker(appionLoop.AppionLoop):
+class tiltAligner(appionLoop.AppionLoop):
 	def setProcessingDirName(self):
 		self.processdirname = "extract"
 
@@ -42,10 +42,9 @@ class basicDogPicker(appionLoop.AppionLoop):
 		return
 
 	def specialDefaultParams(self):
-		self.params['thresh']=0.5
 		self.params['lp']=0
-		self.params['overlapmult']=1.5
-		self.params['maxpeaks']=1500
+		self.params['hp']=0
+		self.params['prtlrunid']=1.5
 
 	def specialCreateOutputDirs(self):
 		self._createDirectory(os.path.join(self.params['rundir'],"ccmaps"),warning=False)
@@ -57,24 +56,20 @@ class basicDogPicker(appionLoop.AppionLoop):
 			elements=arg.split('=')
 			elements[0] = elements[0].lower()
 			#print elements
-			if (elements[0]=='help' or elements[0]=='--help' \
-				or elements[0]=='-h' or elements[0]=='-help'):
-				sys.exit(1)
-			elif (elements[0]=='thresh'):
-				self.params['thresh']= float(elements[1])
-			elif (elements[0]=='lp'):
+			if (elements[0]=='lp'):
 				self.params['lp']= float(elements[1])
-			elif (elements[0]=='overlapmult'):
-				self.params['overlapmult']= float(elements[1])
-			elif (elements[0]=='maxpeaks'):
-				self.params['maxpeaks']= int(elements[1])
+			elif (elements[0]=='hp'):
+				self.params['hp']= float(elements[1])
+			elif (elements[0]=='prtlrunid'):
+				self.params['selexonId']= int(elements[1])
 
 	def specialParamConflicts(self):
 		if not 'diam' in self.params or self.params['diam']==0:
 			apDisplay.printError("please input the diameter of your particle")
-
+		if params['selexonId'] is None:
+			params['selexonId'] = apParticle.guessParticlesForSession(images[0]['session'].dbid)
 
 if __name__ == '__main__':
-	imgLoop = basicDogPicker()
+	imgLoop = tiltAligner()
 	imgLoop.run()
 

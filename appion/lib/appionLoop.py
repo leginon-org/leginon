@@ -415,7 +415,7 @@ class AppionLoop(object):
 				self.params['limit']=int(elements[1])
 			elif arg=='continue':
 				self.params['continue']=True
-			elif arg=='background':
+			elif arg=='background' or arg=='bg':
 				self.params['background']=True
 			elif arg=='nocontinue':
 				self.params['nocontinue']=True
@@ -595,13 +595,14 @@ class AppionLoop(object):
 		if self.params['shuffle'] is True:
 			self.imgtree = self._shuffleTree(self.imgtree)
 			apDisplay.printMsg("shuffling images")
+		precount = len(self.imgtree)
+		apDisplay.printMsg("found "+str(precount)+" in "+apDisplay.timeString(time.time()-startt))
 		if self.params['limit'] is not None:
 			lim = int(self.params['limit'])
 			self.imgtree = self.imgtree[:lim]
 			self.params['nowait'] = True
 			apDisplay.printMsg("limiting number of images to "+str(lim))
 		self.stats['imagecount'] = len(self.imgtree)
-		apDisplay.printMsg("found "+str(self.stats['imagecount'])+" in "+apDisplay.timeString(time.time()-startt))
 
 	def _alreadyProcessed(self, imgdata):
 		""" 
