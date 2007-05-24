@@ -171,12 +171,9 @@ def makedirs(name, mode=0777):
 		makedirs(head, mode)
 		if tail == curdir:
 			return
-	os.mkdir(name, mode)
-	try:
+	if not os.path.isdir(name):
+		os.mkdir(name, mode)
 		os.chmod(name, mode)
-	except:
-		null = None
-		#sys.stderr.write("!")
 	return
 
 def createOutputDirs(params):
