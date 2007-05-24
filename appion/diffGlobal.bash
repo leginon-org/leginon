@@ -18,7 +18,7 @@ do
         if [ -f $j ]
         then
                 #echo $i
-                diff --brief $i $j
+                diff --brief $j $i
         else
                 echo EXTRA $i
         fi

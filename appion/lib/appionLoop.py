@@ -735,7 +735,7 @@ class AppionLoop(object):
 			memleak = rho*slope
 			###
 			if(slope > 0 and memleak > 32 and gain > 128): 
-				printError("Memory leak of "+str(round(memleak,2))+"MB")
+				apDisplay.printError("Memory leak of "+str(round(memleak,2))+"MB")
 			elif(memleak > 16):
 				apDisplay.printWarning("substantial memory leak "+str(round(memleak,2))+"MB")
 				print "(",str(n),round(slope,5),round(rho,5),round(gain,2),")"
