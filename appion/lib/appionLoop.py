@@ -308,7 +308,7 @@ class AppionLoop(object):
 		self.params['diam']=0
 		self.params['bin']=4
 		self.params['continue']=False
-		self.params['nocontinue']=True
+		self.params['nocontinue']=False
 		self.params['commit']=False
 		self.params['background']=False
 		self.params['description']=None
