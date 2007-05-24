@@ -26,6 +26,7 @@ if ($_POST['write']) {
         if (!$_POST['dmfmod']) jobForm("ERROR: No starting model");
 	if (!$_POST['dmfstack']) jobForm("ERROR: No stack file");
 	if (!$_POST['box']) jobForm("ERROR: No box size");
+	if (!$_POST['apix']) jobForm("ERROR: No pixel size");
 	for ($i=1; $i<=$_POST['numiters']; $i++) {
 	        if (!$_POST['ang'.$i]) jobForm("ERROR: no angular increment set for iteration $i");
 	}
@@ -41,6 +42,7 @@ function jobForm($extra=false) {
 	$ppn = ($_POST['ppn']) ? $_POST['ppn'] : 4;
 	$rprocs = ($_POST['rprocs']) ? $_POST['rprocs'] : 4;
 	$box = ($_POST['box']) ? $_POST['box'] : '';
+	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
 	$walltime = ($_POST['walltime']) ? $_POST['walltime'] : 240;
 	$cput = ($_POST['cput']) ? $_POST['cput'] : 240;
 	$dmfstack = ($_POST['dmfstack']) ? $_POST['dmfstack'] : '';
@@ -101,6 +103,10 @@ Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50>
   <TR>
     <TD>Save results to DMF</TD>
     <TD><INPUT TYPE='checkbox' NAME='dmfstore' $dmfstorech></TD>
+  </TR>
+  <TR>
+    <TD>Pixel Size:</TD>
+    <TD><INPUT TYPE='text' NAME='apix' VALUE='$apix' SIZE='5'></TD>
   </TR>
   <TR>
     <TD>Box Size (pixels):</TD>
@@ -202,6 +208,10 @@ function writeJobFile () {
 	echo "end\n";
 	$procs=$_POST['nodes']*$_POST['rprocs'];
         $numiters=$_POST['numiters'];
+	$apix=$_POST["apix"];
+	$pad=intval($_POST['box']*1.25);
+	// make sure $pad value is even int
+	$pad = ($pad%2==1) ? $pad+=1 : $pad;
 	for ($i=1; $i<=$numiters; $i++) {
 	        $ang=$_POST["ang".$i];
 		$mask=$_POST["mask".$i];
@@ -217,9 +227,6 @@ function writeJobFile () {
 		$refine=$_POST["refine".$i];
 		$goodbad=$_POST["goodbad".$i];
 		$eotest=$_POST["eotest".$i];
-		$pad=intval($_POST['box']*1.25);
-		// make sure $pad value is even int
-		$pad = ($pad%2==1) ? $pad+=1 : $pad;
 		$line="\nrefine $i proc=$procs ang=$ang pad=$pad";
 		if ($mask) $line.=" mask=$mask";
 		if ($imask) $line.=" imask=$imask";
@@ -248,7 +255,7 @@ function writeJobFile () {
 			if ($refine=='on') $line.=" refine";
 			$line.=" > eotest".$i.".txt\n";
 			$line.="mv fsc.eotest fsc.eotest".$i."\n";
-			$line.="getRes.pl >> resolution.txt\n";
+			$line.="getRes.pl >> resolution.txt ".$i." ".$_POST['box']." ".$apix."\n";
 		}
 		$line.="rm cls*.lst\n";
 		echo $line;
