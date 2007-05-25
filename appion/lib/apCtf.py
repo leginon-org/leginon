@@ -358,10 +358,13 @@ def getAceValues(imgdata, params):
 		if conf > bestconf:
 			bestconf = conf
 			bestctfp = ctfp
-
-	print "selected parameters from ace run: '"+bestctfp['acerun']['name']+"', confidence="+\
-		str(round(bestconf,4))+", defocus1="+str(round(abs(bestctfp['defocus1']*1.0e6),4))+\
-		" microns, and stig="+str(bestctfp['acerun']['aceparams']['stig'])
+			
+	#### the following was confusing for makestack, so I commented it out #######
+	
+	#print "selected parameters from ace run: '"+bestctfp['acerun']['name']+"', confidence="+\
+	#	str(round(bestconf,4))+", defocus1="+str(round(abs(bestctfp['defocus1']*1.0e6),4))+\
+	#	" microns, and stig="+str(bestctfp['acerun']['aceparams']['stig'])
+	
 	if bestctfp['acerun']['aceparams']['stig'] == 1:
 		apDisplay.printWarning("astigmatism was estimated for "+apDisplay.short(imgdata['filename'])+\
 		 " and average defocus estimate may be incorrect")
