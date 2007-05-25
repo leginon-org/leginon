@@ -251,7 +251,6 @@ function writeJobFile () {
 			if ($classkeep) $line.=" classkeep=$classkeep";
 			if ($classiter) $line.=" classiter=$classiter";
 			if ($median=='on') $line.=" median";
-			if ($phasecls=='on') $line.=" phasecls";
 			if ($refine=='on') $line.=" refine";
 			$line.=" > eotest".$i.".txt\n";
 			$line.="mv fsc.eotest fsc.eotest".$i."\n";
