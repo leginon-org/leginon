@@ -128,6 +128,7 @@ Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50>
 		$refinen="refine".$i;
 		$goodbadn="goodbad".$i;
 		$eotestn="eotest".$i;
+		$corann="coran".$i;
 	
 		$ang=($i>$j) ? $_POST["ang".($i-1)] : $_POST[$angn];
 		$mask=($i>$j) ? $_POST["mask".($i-1)] : $_POST[$maskn];
@@ -145,6 +146,7 @@ Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50>
 		       $refine=($_POST["refine".($i-1)]=='on') ? 'CHECKED' : '';
 		       $goodbad=($_POST["goodbad".($i-1)]=='on') ? 'CHECKED' : '';
 		       $eotest=($_POST["eotest".($i-1)]=='on') ? 'CHECKED' : '';
+		       $coran=($_POST["coran".($i-1)]=='on') ? 'CHECKED' : '';
 		}
 		else {
 		       $median=($_POST[$mediann]=='on') ? 'CHECKED' : '';
@@ -152,6 +154,7 @@ Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50>
 		       $refine=($_POST[$refinen]=='on') ? 'CHECKED' : '';
 		       $goodbad=($_POST[$goodbadn]=='on') ? 'CHECKED' : '';
 		       $eotest=($_POST[$eotestn]=='on') ? 'CHECKED' : '';
+		       $coran=($_POST[$corann]=='on') ? 'CHECKED' : '';
 		}
 		$bgcolor="#E8E8E8";
 		echo"
@@ -174,7 +177,8 @@ Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50>
     <TD BGCOLOR='$bgcolor'><INPUT TYPE='checkbox' NAME='$refinen' $refine>refine</TD>
     <TD BGCOLOR='$bgcolor'><INPUT TYPE='checkbox' NAME='$goodbadn' $goodbad>goodbad</TD>
     <TD BGCOLOR='$bgcolor'><INPUT TYPE='checkbox' NAME='$eotestn' $eotest>eotest</TD>
-    <TD BGCOLOR='$bgcolor' ALIGN='CENTER' COLSPAN='2'><INPUT TYPE='SUBMIT' NAME='duplicate' VALUE='Duplicate Row $i'></TD>
+    <TD BGCOLOR='$bgcolor'><INPUT TYPE='checkbox' NAME='$corann' $coran>coran</TD>
+    <TD BGCOLOR='$bgcolor' ALIGN='CENTER'><INPUT TYPE='SUBMIT' NAME='duplicate' VALUE='Duplicate Row $i'></TD>
   </TR>
 </TABLE>\n";
 	}
@@ -227,6 +231,7 @@ function writeJobFile () {
 		$refine=$_POST["refine".$i];
 		$goodbad=$_POST["goodbad".$i];
 		$eotest=$_POST["eotest".$i];
+		$coran=$_POST["coran".$i];
 		$line="\nrefine $i proc=$procs ang=$ang pad=$pad";
 		if ($mask) $line.=" mask=$mask";
 		if ($imask) $line.=" imask=$imask";
@@ -253,9 +258,10 @@ function writeJobFile () {
 			if ($median=='on') $line.=" median";
 			if ($refine=='on') $line.=" refine";
 			$line.=" > eotest".$i.".txt\n";
-			$line.="mv fsc.eotest fsc.eotest".$i."\n";
-			$line.="getRes.pl >> resolution.txt ".$i." ".$_POST['box']." ".$apix."\n";
+			$line.="mv fsc.eotest fsc.eotest.".$i."\n";
+			$line.="getRes.pl >> resolution.txt $i ".$_POST['box']." $apix\n";
 		}
+		if ($coran=='on') $line .="coran_for_cls2.py mask=$mask proc=$procs iter=$i sym=$sym hard=$hard\n";
 		$line.="rm cls*.lst\n";
 		echo $line;
 	}
