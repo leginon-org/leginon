@@ -129,7 +129,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
         $selexcheck = ($_POST['selexcheck']=='on') ? 'CHECKED' : '';
         $selexdisable = ($_POST['selexcheck']=='on') ? '' : 'DISABLED';
         // density check
-        $invcheck = ($_POST['density']=='invert') ? 'CHECKED' : '';
+	// set to checked by default
+        	$invcheck = ($_POST['density']=='invert' || !$_POST['process']) ? 'CHECKED' : '';
         echo"
         <P>
         <TABLE BORDER=0 CLASS=tableborder>
