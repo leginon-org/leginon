@@ -64,6 +64,13 @@ class aceLoop(appionLoop.AppionLoop):
 
 
 	def processImage(self, imgdata):
+		# RESTART MATLAB EVERY 500 IMAGES OR IT RUNS OUT OF MEMORY
+		if self.stats['count'] % 500 == 0:
+			apDisplay.printWarning("processed 500 images. restarting matlab...")
+			pymat.close(self.matlab)
+			time.sleep(5)
+			self.matlab = pymat.open()
+
 		scopeparams = {
 			'kv':      imgdata['scope']['high tension']/1000,
 			'apix':    apDatabase.getPixelSize(imgdata),
@@ -74,12 +81,6 @@ class aceLoop(appionLoop.AppionLoop):
 		### RUN ACE
 		self.ctfparams = apCtf.runAce(self.matlab, imgdata, self.params)
 
-		# RESTART MATLAB EVERY 500 IMAGES OR IT RUNS OUT OF MEMORY
-		if self.stats['count'] % 500 == 0:
-			apDisplay.printWarning("processed 500 images. restarting matlab...")
-			pymat.close(self.matlab)
-			time.sleep(5)
-			self.matlab = pymat.open()
 
 	def commitToDatabase(self, imgdata):
 		apCtf.commitAceParamToDatabase(imgdata, self.matlab, self.ctfparams, self.params)
