@@ -32,6 +32,7 @@ class aceLoop(appionLoop.AppionLoop):
 		print "Connecting to matlab ... "
 		try:
 			self.matlab = pymat.open()
+			#self.matlab = pymat.open('matlab -nodisplay')
 		except:
 			apDisplay.matlabError()
 		apCtf.mkTempDir(self.params['tempdir'])
@@ -63,14 +64,22 @@ class aceLoop(appionLoop.AppionLoop):
 
 
 	def processImage(self, imgdata):
-		scopeparams={}
-		scopeparams['kv']      = imgdata['scope']['high tension']/1000
-		scopeparams['apix']    = apDatabase.getPixelSize(imgdata)
-		scopeparams['cs']      = self.params['cs']
-		scopeparams['tempdir'] = self.params['tempdir']
+		scopeparams = {
+			'kv':      imgdata['scope']['high tension']/1000,
+			'apix':    apDatabase.getPixelSize(imgdata),
+			'cs':      self.params['cs'],
+			'tempdir': self.params['tempdir'],
+		}
 		apCtf.setScopeParams(self.matlab, scopeparams)
 		### RUN ACE
 		self.ctfparams = apCtf.runAce(self.matlab, imgdata, self.params)
+
+		# RESTART MATLAB EVERY 500 IMAGES OR IT RUNS OUT OF MEMORY
+		if self.stats['count'] % 500 == 0:
+			apDisplay.printWarning("processed 500 images. restarting matlab...")
+			pymat.close(self.matlab)
+			time.sleep(5)
+			self.matlab = pymat.open()
 
 	def commitToDatabase(self, imgdata):
 		apCtf.commitAceParamToDatabase(imgdata, self.matlab, self.ctfparams, self.params)
