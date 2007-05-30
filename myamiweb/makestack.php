@@ -129,8 +129,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
         $selexcheck = ($_POST['selexcheck']=='on') ? 'CHECKED' : '';
         $selexdisable = ($_POST['selexcheck']=='on') ? '' : 'DISABLED';
         // density check
-        $wbcheck = ($_POST['density']=='invert') ? '' : 'CHECKED';
-        $bwcheck = ($_POST['density']=='invert') ? 'CHECKED' : '';
+        $invcheck = ($_POST['density']=='invert') ? 'CHECKED' : '';
         echo"
         <P>
         <TABLE BORDER=0 CLASS=tableborder>
@@ -192,10 +191,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
         <TR>
                 <TD VALIGN='TOP'>
                 <B>Density:</B><BR>
-                <INPUT TYPE='radio' NAME='density' $wbcheck VALUE=''>
-                Light Density on Dark Background<BR>
-                <INPUT TYPE='radio' NAME='density' $bwcheck VALUE='invert'>
-                Dark Density on Light Background<BR>
+                <INPUT TYPE='checkbox' NAME='density' $invcheck VALUE='invert'>
+                Invert image density<BR>
                 </TD>
         </TR>
         <TR>
@@ -353,7 +350,7 @@ function runMakestack() {
                 exit;
         }
         
-        $invert = ($_POST['density']=='invert') ? 'invert' : '';
+        $invert = ($_POST['density']=='invert') ? '' : 'noinvert';
         $phaseflip = ($_POST['phaseflip']=='on') ? 'phaseflip' : '';
         $inspected = ($_POST['inspected']=='on') ? 'inspected' : '';
         $commit = ($_POST['commit']=="on") ? 'commit' : '';
@@ -409,7 +406,7 @@ function runMakestack() {
         $command.="runid=$runid ";
         $command.="outdir=$outdir ";
         $command.="prtlrunId=$prtlrunId ";
-        if ($invert) $command.="invert ";
+        if ($invert) $command.="noinvert ";
         if ($phaseflip) $command.="phaseflip ";
         if ($inspected) $command.="inspected ";
         if ($commit) $command.="commit ";
