@@ -47,6 +47,7 @@ def printHelp():
 	print "limit=<n>            : stop boxing particles after total particles gets above limit (no limits by default)"
 	print "                     : Example <limit=10000>"
 	print "commit               : store particles to database"
+	print "nonorm               : do not normalize images"
 	print "defocpair            : Get particle coords for the focal pair of the image that was picked in runid"
 	print "                       For example if your selexon run picked ef images and you specify 'defocpair'"
 	print "                       makestack will get the particles from the en images"
@@ -74,6 +75,7 @@ def createDefaults():
 	params['maxdefocus']=None
 	params['description']=None
 	params['selexonId']=None
+	params['normalize']=True
 	params['selexonmin']=None
 	params['selexonmax']=None
 	params['commit']=False
@@ -143,6 +145,8 @@ def parseInput(args):
 			params['bin']=int(elements[1])
 		elif (arg=='inspected'):
 			params["inspected"]=True
+		elif (arg=='nonorm'):
+			params['normalize']=False
 		elif (arg=='phaseflip'):
 			params["phaseflip"]=True
 		elif (arg=='noinvert'):
@@ -365,7 +369,10 @@ def singleStack(params,imgdict):
 	singlepath = os.path.split(output)[0]
 	apParam.createDirectory(singlepath, warning=False)
 
-	cmd="proc2d %s %s norm=0.0,1.0" %(input, output)
+	if params['normalize'] is False:
+		cmd="proc2d %s %s" %(input, output)
+	else:
+		cmd="proc2d %s %s norm=0.0,1.0" %(input, output)
 
 	# bin images is specified
 	if params['bin']:
