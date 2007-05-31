@@ -244,21 +244,20 @@ static PyObject *PyMatchImages(PyObject *self, PyObject *args) {
 	PStack im2desc = NewPStack(100);
 	PStack matches = NewPStack(100);
 	
-	fprintf(stderr,"Image 1:  ");
+	//fprintf(stderr,"Image 1:  ");
 	FindMSERegions(im1,im1keys,minSize,maxSize,blur,sharpen,U,D);
-	fprintf(stderr,"Keypoints: %d  ",im1keys->stacksize);
+	//fprintf(stderr,"Keypoints: %d  ",im1keys->stacksize);
 	RegionsToSIFTDescriptors(im1keys,im1desc,4,8,41);
-
-	fprintf(stderr,"Descriptors: %d\n",im1desc->stacksize);
-
+	//fprintf(stderr,"Descriptors: %d\n",im1desc->stacksize);
+	fprintf(stderr,"Image 1: keypoints: %d; descriptors: %d\n",im1keys->stacksize,im1desc->stacksize);
 	
-	fprintf(stderr,"Image 2:  ");
+	//fprintf(stderr,"Image 2:  ");
 	FindMSERegions(im2,im2keys,minSize,maxSize,blur,sharpen,U,D);
-	fprintf(stderr,"Keypoints: %d  ",im2keys->stacksize);
+	//fprintf(stderr,"Keypoints: %d  ",im2keys->stacksize);
 	RegionsToSIFTDescriptors(im2keys,im2desc,4,8,41);
+	//fprintf(stderr,"Descriptors: %d\n",im2desc->stacksize);
+	fprintf(stderr,"Image 2: keypoints: %d; descriptors: %d\n",im2keys->stacksize,im2desc->stacksize);
 
-	fprintf(stderr,"Descriptors: %d\n",im2desc->stacksize);
-	
 	double **transform = AllocDMatrix(3,3,0,0);
 	FindMatches(im1desc,im2desc,matches,20);
 	ScreenMatches(matches,transform);
