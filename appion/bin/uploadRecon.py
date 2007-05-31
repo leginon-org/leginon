@@ -31,6 +31,9 @@ if __name__ == '__main__':
 	apRecon.checkStackId(params)
 	apRecon.checkModelId(params)
 
+	# create directory for extracting data
+	apParam.createDirectory(params['tmpdir'], warning=True)
+	
 	# parse out the refinement parameters from the log file
 	apRecon.parseLogFile(params)
 
