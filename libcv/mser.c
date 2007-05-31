@@ -23,18 +23,18 @@ char FindMSERegions( Image image, PStack regions, float minSize, float maxSize, 
 	
 	if ( !ImageIsGood(image) || !PStackGood(regions) ) return FALSE;
 	
-	fprintf(stderr,"Filtering image\n");
+	//fprintf(stderr,"Filtering image\n");
 	
 	EnhanceImage(image,0,255,0.01,0.01);
 	GaussianBlurImage(image,blur);
 	UnsharpMaskImage(image,sharpen);
 	
-	fprintf(stderr,"Creating MSERArray\n");
+	//fprintf(stderr,"Creating MSERArray\n");
 	MSERArray ma = ImageToMSERArray(image);
 	if ( minSize <= 1.0 ) minSize = minSize*ma->size;
 	if ( maxSize <= 1.0 ) maxSize = maxSize*ma->size;
 	
-	fprintf(stderr,"Min / Max region sizes %d - %d pixels\n",(int)minSize,(int)maxSize); 
+	//fprintf(stderr," ... Min / Max region sizes %d - %d pixels\n",(int)minSize,(int)maxSize); 
 	
 	void **sizes = malloc(sizeof(void **)*ma->size);
 	int k; for (k=0;k<ma->size;k++) sizes[k] = NULL;
@@ -150,8 +150,8 @@ void EvaluateStableRegions( MSERArray ma, void **tSizes, PStack regions) {
 		tSizes[i] = NULL;
 	}
 	
-	fprintf(stderr,"Mean stability : %d  ", minStable);
-	fprintf(stderr,"Mean period : %d\n", minPeriod);
+	//fprintf(stderr,"Mean stability : %d  ", minStable);
+	//fprintf(stderr,"Mean period : %d\n", minPeriod);
 	
 	free(hist);
 	
