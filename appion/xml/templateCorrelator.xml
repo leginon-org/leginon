@@ -60,7 +60,7 @@
 	<name>overlap distance multiple</name>
 	<description>Distance multiple for two peaks (particles) to overlap</description>
 	<type>float</type>
-	<default>1.5</default>
+	<default>1.0</default>
 	<limits>0,10</limits>
  </overlapmult>
  <thresh>

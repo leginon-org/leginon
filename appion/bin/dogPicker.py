@@ -48,7 +48,7 @@ class basicDogPicker(appionLoop.AppionLoop):
 		self.params['lp']=0.0
 		self.params['hp']=600.0
 		self.params['maxsize']=1.0
-		self.params['overlapmult']=1.5
+		self.params['overlapmult']=1.0
 		self.params['maxpeaks']=1500
 		self.params['invert']=False
 
