@@ -612,7 +612,9 @@ class AppionLoop(object):
 		imgname = imgdata['filename']
 		if imgname in self.donedict:
 			if not self.stats['lastimageskipped']:
-				sys.stderr.write("skipping images")
+				sys.stderr.write("skipping images\n")
+			elif self.stats['skipcount'] % 80 == 0:
+				sys.stderr.write(".\n")
 			else:
 				sys.stderr.write(".")
 			self.stats['lastimageskipped'] = True
@@ -756,20 +758,22 @@ class AppionLoop(object):
 				donecount += 1
 				skip = True
 
-			if self.reprocessImage(imgdata) is False:
+			elif self.reprocessImage(imgdata) is False:
 				self._writeDoneDict(imgname)
 				reproccount += 1
 				skip = True
 
 			if skip is True:
 				if not self.stats['lastimageskipped']:
-					sys.stderr.write("skipping images")
+					sys.stderr.write("skipping images\n")
+				elif self.stats['skipcount'] % 80 == 0:
+					sys.stderr.write(".\n")
 				else:
 					sys.stderr.write(".")
 				self.stats['lastimageskipped'] = True
 				self.stats['skipcount'] += 1
 				del self.imgtree[i]
-				i -= 1	
+				i -= 1
 			i += 1
 		if self.stats['skipcount'] > 0:
 			sys.stderr.write("\n")
