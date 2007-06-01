@@ -135,25 +135,26 @@ def removeOverlappingPeaks(peaktree, cutoff):
 	cutsq = cutoff**2 + 1
 
 	initpeaks = len(peaktree)
+	#orders peaks from smallest to biggest
 	peaktree.sort(_peakCompare)
 	i=0
 	while i < len(peaktree):
-		j=0
-		while j < i:
+		j = i+1
+		while j < len(peaktree):
 			distsq = peakDistSq(peaktree[i], peaktree[j])
 			if(distsq < cutsq):
 				del peaktree[i]
-				i=i-1
-				j=j-1
-			j=j+1
-		i=i+1
+				i -= 1
+				j -= 1
+			j += 1
+		i += 1
 	postpeaks = len(peaktree)
 	apDisplay.printMsg("kept "+str(postpeaks)+" non-overlapping peaks of "+str(initpeaks)+" total peaks")
 
 	return peaktree
 
 def _peakCompare(a, b):
-	if float(a['correlation']) < float(b['correlation']):
+	if float(a['correlation']) > float(b['correlation']):
 		return 1
 	else:
 		return -1
