@@ -185,10 +185,10 @@ if reclim < 20000:
 	sys.setrecursionlimit(20000)
 
 class Blob(object):
-	def __init__(self, image, mask, n, center, mean, stddev, moment):
+	def __init__(self, image, mask, n, center, mean, stddev, moment, maxpos):
 		self.image = image
 		self.mask = mask
-		self.stats = {"center":center, "n":n, "mean":mean, "stddev":stddev, "size":0, "moment":moment}
+		self.stats = {"center":center, "n":n, "mean":mean, "stddev":stddev, "size":0, "moment":moment, "maximum_position":maxpos}
 
 def highest_peaks(blobs, n):
 	"""
@@ -268,6 +268,7 @@ def scipyblobs(im,mask):
 		stds = scipy.ndimage.standard_deviation(im,labels,range(1,n+1))
 		means = scipy.ndimage.mean(im,labels,range(1,n+1))
 		moments = moment_of_inertia(im,labels,range(1,n+1))
+		maxpos = scipy.ndimage.maximum_position(im,labels,range(1,n+1))
 		if n==1:
 			centers = [centers]
 			stds = [stds]
@@ -277,7 +278,7 @@ def scipyblobs(im,mask):
 
 	blobs = []
 	for i in range(n):
-		blobs.append({'center':centers[i], 'n':sizes[i], 'mean':means[i],'stddev':stds[i],'moment':moments[i]})
+		blobs.append({'center':centers[i], 'n':sizes[i], 'mean':means[i],'stddev':stds[i],'moment':moments[i], 'maximum_position':maxpos})
 	return blobs
 
 def moment_of_inertia(input, labels, index = None):
@@ -315,8 +316,7 @@ def _distsqmat(r0,shape):
 	dx, dy = indices[0]-r0[0],indices[1]-r0[1]
 	return (dx**2+dy**2)
 
-def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0, 
-	  maxmoment=None, method="central", summary=False):
+def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0, maxmoment=None, method="central", summary=False):
 	"""
 	find blobs with particular features in a map
 	"""
@@ -337,7 +337,7 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize
 	toosmall = 0
 	toooblong = 0
 	for blob in blobs:
-		fakeblob = Blob(image, mask, blob['n'], blob['center'], blob['mean'], blob['stddev'], blob['moment'])
+		fakeblob = Blob(image, mask, blob['n'], blob['center'], blob['mean'], blob['stddev'], blob['moment'], blob['maximum_position'])
 		if blob['n'] >= maxblobsize:
 			toobig += 1
 			continue
