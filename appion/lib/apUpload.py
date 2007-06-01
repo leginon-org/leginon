@@ -97,7 +97,9 @@ def parseModelUploadInput(args,params):
 	# get MRC file
 	mrcfile=args[1]
 	if (os.path.isfile(mrcfile)):
-		(params["path"], params["name"]) = os.path.split(mrcfile)
+		(params["filepath"], params["name"]) = os.path.split(mrcfile)
+		if not params['filepath']:
+			params['path']=params['abspath']
 	else:
 		apDisplay.printError("file '"+mrcfile+"' does not exist\n")
 	# save the input parameters into the "params" dictionary
@@ -125,7 +127,7 @@ def createDefaults():
 	params['runid']=None
 	params['imgs']=None
 	params['rundir']=None
-	params['abspath']=os.path.abspath('.')+'/'
+	params['abspath']=os.path.abspath('.')
 	params['scale']=None
 	params['sym']=None
 	return params

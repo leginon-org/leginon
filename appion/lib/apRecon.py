@@ -16,6 +16,7 @@ import string
 import appionData
 import apDB
 import EMAN
+import tarfile
 
 db = apDB.db
 partdb = apDB.apdb
@@ -26,13 +27,14 @@ def createDefaults():
 	params['runid']='recon1'
 	params['stackid']=None
 	params['modelid']=None
-	params['dir']=os.path.abspath('.')+'/'
+	params['path']=os.path.abspath('.')
 	params['volumes']=[]
 	params['classavgs']=[]
 	params['classvars']=[]
 	params['iterations']=[]
 	params['fscs']=[]
 	params['package']='EMAN'
+	params['tmpdir']='./temp'
 	return params
 
 def createModelDefaults():
@@ -61,7 +63,7 @@ def defineIteration():
 	return iteration
 	
 def printHelp():
-	print "\nUsage:\nuploadRecon.py stackid=<n> modelid=<n> [package=<packagename>] [dir=/path/to/directory]\n"
+	print "\nUsage:\nuploadRecon.py stackid=<n> modelid=<n> [package=<packagename>] [dir=/path/to/directory] [tmpdir=/path/to/dir]\n"
 	print "Example: uploadRecon.py stackid=23 modelid=20 package=EMAN\n"
 	print "runid=<name>         : name assigned to this reconstruction"
 	print "stackid=<n>          : stack Id in the database"
@@ -69,6 +71,8 @@ def printHelp():
 	print "package=<package>    : reconstruction package used (EMAN by default)"
 	print "dir=<path>           : directory containing the results of the reconstruction"
 	print "                       (current dir is default)"
+	print "tmpdir=<path>        : directory to which tmp data is extracted"
+	print "                       (./temp is default)"
 	print "\n"
 
 	sys.exit(1)
@@ -90,9 +94,9 @@ def parseInput(args,params):
 		elif (elements[0]=='package'):
 			params['package']=int(elements[1])
 		elif (elements[0]=='dir'):
-			params['dir']=elements[1]
-			if not(params['dir'][-1]=='/'):
-				params['dir']=params['dir']+'/'
+			params['path']=elements[1]
+			if (params['path'][-1]=='/'):
+				params['path']=params['path'][:-1]
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
@@ -118,7 +122,7 @@ def checkModelId(params):
 	return
 
 def listFiles(params):
-	for f in os.listdir(params['dir']):
+	for f in os.listdir(params['path']):
 		if re.match("threed\.\d+a\.mrc",f):
 			params['volumes'].append(f)
 		if re.match("classes\.\d+\.img",f):
@@ -128,7 +132,7 @@ def listFiles(params):
 			
 def parseLogFile(params):
 	# parse out the refine command from the .emanlog to get the parameters for each iteration
-	logfile=params['dir']+'.emanlog'
+	logfile=os.path.join(params['path'],'.emanlog')
 	print "parsing eman log file:",logfile
 	lines=open(logfile,'r')
 	for line in lines:
@@ -163,8 +167,24 @@ def parseLogFile(params):
 			params['iterations'].append(iteration)
 	lines.close()
 				
+def getEulersFromProj(params,iter):
+	# get Eulers from the projection file
+	eulers=[]
+	projfile="proj."+iter+".txt"
+	projfile=os.path.join(params['path'],projfile)
+	print "reading file, "+projfile
+	if not os.path.exists:
+		apDisplay.printError("no projection file found for iteration "+iter)
+	f = open(projfile,'r')
+	for line in f:
+		line=line[:-1] # remove newline at end
+		i=line.split()
+		angles=[i[1],i[2],i[3]]
+		eulers.append(angles)
+	f.close()
+	return eulers
+	
 def getClassInfo(classes):
-	classes='/ami/data09/leginon/06nov29a/recon/t7/r01/classes.10.img'
 	# read a classes.*.img file, get # of images
 	imgnum, imgtype = EMAN.fileCount(classes)
 	img = EMAN.EMData()
@@ -179,18 +199,17 @@ def getClassInfo(classes):
 		az = e.phiMRC()*180./math.pi
 		phi = e.omegaMRC()*180./math.pi
 		eulers=[alt,az,phi]
-		print i,eulers
 		if i%2==0:
 			projeulers.append(eulers)
 	return projeulers
 
-def insertReconRun(params):
-	runq=appionData.ApReconRunData()
+def insertRefinementRun(params):
+	runq=appionData.ApRefinementRunData()
 	runq['name']=params['runid']
 	runq['stack']=params['stack']
 	runq['initialModel']=params['model']
 	runq['package']=params['package']
-	runq['path']=params['dir']
+	runq['path']=params['path']
 	result=partdb.query(runq, results=1)
 
 ## 	if result:
@@ -203,18 +222,37 @@ def insertReconRun(params):
 		print "inserting reconstruction run into database"
 		partdb.insert(runq)
 
-		runq=appionData.ApReconRunData()
+		runq=appionData.ApRefinementRunData()
 		runq['name']=params['runid']
 		runq['stack']=params['stack']
 		runq['initialModel']=params['model']
 		runq['package']=params['package']
-		runq['path']=params['dir']
+		runq['path']=params['path']
 		result=partdb.query(runq, results=1)
 		
 	# save run entry in the parameters
-	params['reconRun']=result[0]
+	params['refinementRun']=result[0]
 
 	return
+
+def insertResolutionData(params,iteration):
+	fsc='fsc.eotest.'+iteration['num']
+	if fsc in params['fscs']:
+		resq=appionData.ApResolutionData()
+
+		#fsc file with path:
+		fscfile=os.path.join(params['path'],fsc)
+
+		# calculate the resolution:
+		halfres=calcRes(fscfile, params['model'])
+
+		# save to database
+		resq['half']=halfres
+		resq['fscfile']=fsc
+
+		partdb.insert(resq)
+
+		return resq
 
 def insertIteration(params):
 	for iteration in params['iterations']:
@@ -235,7 +273,7 @@ def insertIteration(params):
 
 		# insert unique iteration parameters
 		if not result:
-#			partdb.insert(refineparamsq)
+			partdb.insert(refineparamsq)
 			refineparamsq=appionData.ApRefinementParamsData()
 			refineparamsq['angIncr']=iteration['angIncr']
 			refineparamsq['mask']=iteration['mask']
@@ -254,75 +292,122 @@ def insertIteration(params):
 		refineParams=result[0]
 
 		# insert resolution data
-		fsc='fsc.eotest.'+iteration['num']
-		if fsc in params['fscs']:
-			#fsc file with path:
-			fscfile=params['dir']+fsc
+		resData=insertResolutionData(params,iteration)
 
-			resq=appionData.ApResolutionData()
-			resq['fscfile']=fscfile
-			result=partdb.query(resq)
-			if not result:
-				# calculate the resolution:
-				halfres=calcRes(fscfile, params['model'])
-				resq['half']=halfres
-#				partdb.insert(resq)
-				resq=appionData.ApResolutionData()
-				resq['fscfile']=fscfile
-				result=partdb.query(resq, results=1)
-			resolutionId=result[0]
-		
-		# get number of class averages and # kept
 		classavg='classes.'+iteration['num']+'.img'
-		params['eulers']=getClassInfo(os.path.join(params['dir'],classavg))
-		
-
-#		refinefile=params['dir']+'refine'+iteration['num']+'.txt'
-#		f=open(refinefile,'r')
-#		numclasses=None
-#		numclasseskept=None
-#		for line in f:
-#			line=string.rstrip(line)
-#			if re.search("used", line):
-#				bits=line.split(' ')
-#				classes=bits[-2].split('/')
-#				numclasses=classes[1]
-#				numclasseskept=classes[0]
-#		f.close()
-
-		# count # particles thrown out
-		badprtls=0
-      		f=open(params['dir']+'particle.log','r')
-		for line in f:
-			line=string.rstrip(line)
-			if re.search("X\t\d+\t\d+",line):
-				bits=line.split('\t')
-				if iteration['num']==bits[-1]:
-					badprtls+=1	
 				
 		# insert refinement results
 		refineq=appionData.ApRefinementData()
-		refineq['reconRun']=params['reconRun']
+		refineq['refinementRun']=params['refinementRun']
 		refineq['refinementParams']=refineParams
 		refineq['iteration']=iteration['num']
-		refineq['resolution']=resolutionId
-		refineq['numClassAvg']=numclasses
-		refineq['numClassAvgKept']=numclasseskept
-		refineq['numBadParticles']=badprtls
+		refineq['resolution']=resData
 		classvar='classes.'+iteration['num']+'.var.img'
 		volumeSnapshot='threed.'+iteration['num']+'a.png'
 		volumeDensity='threed.'+iteration['num']+'a.mrc'
 		if classavg in params['classavgs']:
-			refineq['classAverage']=params['dir']+classavg
+			refineq['classAverage']=classavg
 		if classvar in params['classvars']:
-			refineq['classVariance']=params['dir']+classvar
+			refineq['classVariance']=classvar
 		if volumeDensity in params['volumes']:
-			refineq['volumeSnapshot']=params['dir']+volumeSnapshot
-			refineq['volumeDensity']=params['dir']+volumeDensity
+			refineq['volumeSnapshot']=volumeSnapshot
+			refineq['volumeDensity']=volumeDensity
 		result=partdb.query(refineq, results=1)
 		if not result:
 			partdb.insert(refineq)
 	
+		# get projections eulers for iteration:
+		eulers=getEulersFromProj(params,iteration['num'])
+		
+		# get # of class averages and # kept
+#		params['eulers']=getClassInfo(os.path.join(params['path'],classavg))
+
+                # get list of bad particles for this iteration
+		plogf=os.path.join(params['path'],"particle.log")
+		if not os.path.exists(plogf):
+			apDisplay.printError("no particle.log file found")
+		f=open(plogf,'r')
+		badprtls=[]
+		n=str(int(iteration['num'])+1)
+		for line in f:
+			line=string.rstrip(line)
+			if re.search("X\t\d+\t"+iteration['num']+"$",line):
+				bits=line.split()
+				badprtls.append(bits[1])
+			# break out of into the next iteration
+			elif re.search("X\t\d+\t"+n+"$",line):
+				break
+		
+		# expand cls.*.tar into temp file
+		clsf=os.path.join(params['path'],"cls."+iteration['num']+".tar")
+		print "reading",clsf
+		clstar=tarfile.open(clsf)
+		clslist=clstar.getmembers()
+		clsnames=clstar.getnames()
+		print "extracting",clsf,"into temp directory"
+		for clsfile in clslist:
+			clstar.extract(clsfile,params['tmpdir'])
+		clstar.close()
+
+		prtlaliq=appionData.ApParticleClassificationData()
+		for cls in clsnames:
+			clsfilename=os.path.join(params['tmpdir'],cls)
+			f=open(clsfilename)
+
+			# get the corresponding proj number & eulers from filename
+			replace=re.compile('\D')
+			projnum=int(replace.sub('',cls))
+
+			eulq=appionData.ApEulerData()
+			eulq['euler1']=eulers[projnum][0]
+			eulq['euler2']=eulers[projnum][1]
+			eulq['euler3']=eulers[projnum][2]
+
+			print "\tinserting",(len(f.readlines())-2),"particles from class",(projnum+1),"/",len(clsnames)
+			f.close()
+			
+			# for each cls file get alignments for particles
+			f=open(clsfilename)
+			for line in f:
+				# skip line if not a particle
+				if re.search("start",line):
+					prtlaliq=appionData.ApParticleClassificationData()
+
+					# gather alignment data from line
+					ali=line.split()
+					prtlnum=int(ali[0])
+
+					# check if bad particle
+					if str(prtlnum) in badprtls:
+						prtlaliq['thrown_out']=True
+
+					prtlnum+=1 # offset for EMAN
+					qualf=float(ali[2].strip(','))
+					other=ali[3].split(',')
+					rot=float(other[0])*180./math.pi
+					shx=float(other[1])
+					shy=float(other[2])
+					mirror=int(other[3])
+
+					# find particle in stack database
+					stackpq=appionData.ApStackParticlesData()
+					stackpq['stackparams']=params['stack']
+					stackpq['particleNumber']=prtlnum
+					stackp=partdb.query(stackpq, results=1)[0]
+
+					if not stackp:
+						apDisplay.printError("particle "+prtlnum+" not in stack")
+						
+					# insert classification info
+					prtlaliq['refinement']=refineq
+					prtlaliq['particle']=stackpq
+					prtlaliq['eulers']=eulq
+					prtlaliq['shiftx']=shx
+					prtlaliq['shifty']=shy
+					prtlaliq['inplane_rotation']=rot
+					prtlaliq['quality_factor']=qualf
+					partdb.insert(prtlaliq)
+			f.close()
 	return
 
 def calcRes(fscfile, model):

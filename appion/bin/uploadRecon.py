@@ -22,9 +22,9 @@ if __name__ == '__main__':
 		apDisplay.printError("enter a stack id")
 	if params['modelid'] is None:
 		apDisplay.printError("enter a starting model id")
-	if not os.path.isdir(params['dir']):
+	if not os.path.exists(params['path']):
 		apDisplay.printError("directory does not exist")
-	if not os.path.isfile(os.path.join(params['dir'],'.emanlog')):
+	if not os.path.exists(os.path.join(params['path'],'.emanlog')):
 		apDisplay.printError("directory does not contain EMAN log file")
 
 	# make sure that the stack & model IDs exist in database
@@ -40,8 +40,8 @@ if __name__ == '__main__':
 	# get a list of the files in the directory
 	apRecon.listFiles(params)
 	
-	# create a reconRun entry in the database
-	apRecon.insertReconRun(params)
+	# create a refinementRun entry in the database
+	apRecon.insertRefinementRun(params)
 
 	# insert the Iteration info
 	apRecon.insertIteration(params)

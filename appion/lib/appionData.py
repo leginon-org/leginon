@@ -194,7 +194,7 @@ data.ApStackParticlesData = ApStackParticlesData
 
 ### Reconstruction Tables ###
 
-class ApReconRunData(data.Data):
+class ApRefinementRunData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
 			('name', str),
@@ -204,7 +204,7 @@ class ApReconRunData(data.Data):
 			('package', str),
 		)
 	typemap = classmethod(typemap)
-data.ApReconRunData=ApReconRunData
+data.ApRefinementRunData=ApRefinementRunData
 
 class ApInitialModelData(data.Data):
 	def typemap(cls):
@@ -232,15 +232,12 @@ data.ApSymmetryData=ApSymmetryData
 class ApRefinementData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('reconRun', ApReconRunData),
+			('refinementRun', ApRefinementRunData),
 			('refinementParams', ApRefinementParamsData),
 			('iteration', int),
 			('resolution', ApResolutionData),
 			('classAverage', str),
 			('classVariance', str),
-			('numClassAvg', int),
-			('numClassAvgKept', int),
-			('numBadParticles', int),
 			('volumeSnapshot', str),
 			('volumeDensity',str),
 		)
@@ -279,11 +276,8 @@ class ApParticleClassificationData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
 			('refinement', ApRefinementData),
-			('particle', ApParticleData),
-			('classnumber', int),
-			('euler1', float),
-			('euler2', float),
-			('euler3', float),
+			('particle', ApStackParticlesData),
+			('eulers', ApEulerData),
 			('shiftx', float),
 			('shifty', float),
 			('inplane_rotation', float),
@@ -293,7 +287,16 @@ class ApParticleClassificationData(data.Data):
 	typemap = classmethod(typemap)
 data.ApParticleClassificationData=ApParticleClassificationData
 
-
+class ApEulerData(data.Data):
+	def typemap(cls):
+		return data.Data.typemap() + (
+			('euler1', float),
+			('euler2', float),
+			('euler3', float),
+	        )
+	typemap = classmethod(typemap)
+data.ApEulerData=ApEulerData
+	
 ### ACE/CTF Tables
 
 class ApAceRunData(data.Data):
