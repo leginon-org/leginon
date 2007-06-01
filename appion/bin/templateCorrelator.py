@@ -67,7 +67,7 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 		self.params['maxsize']=1.0
 		self.params['box']=0
 		self.params['method']="updated"
-		self.params['overlapmult']=1.0
+		self.params['overlapmult']=1.5
 		self.params['maxpeaks']=1500
 		self.params['defocpair']=False
 		self.params['templateIds']=''
