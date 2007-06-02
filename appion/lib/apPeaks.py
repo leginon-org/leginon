@@ -145,7 +145,7 @@ def removeOverlappingPeaks(peaktree, cutoff):
 			if(distsq < cutsq):
 				del peaktree[i]
 				i -= 1
-				j -= 1
+				j = len(peaktree)
 			j += 1
 		i += 1
 	postpeaks = len(peaktree)

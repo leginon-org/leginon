@@ -814,7 +814,7 @@ class AppionLoop(object):
 		print ""
 
 		#GET NEW IMAGES
-		self.imgtree = self.getAllImages()
+		self.imgtree = self._getAllImages()
 		return True
 
 	def _finishLoop(self):
