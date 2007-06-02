@@ -83,6 +83,7 @@ class AppionLoop(object):
 		while notdone:
 			self._removeProcessedImages()
 			for imgdata in self.imgtree:
+
 				#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
 				if not self._startLoop(imgdata):
 					continue
@@ -657,6 +658,7 @@ class AppionLoop(object):
 		#	return False
 
 		self.stats['startloop'] = time.time()
+		self.stats['waittime'] = 0
 		if self.reprocessImage(imgdata) is True:
 			apDisplay.printMsg("reprocessing "+apDisplay.shortenImageName(imgdata['filename']))
 		else:
@@ -797,7 +799,7 @@ class AppionLoop(object):
 		#SHOULD IT WAIT?
 		if self.params['nowait'] is True:
 			return False
-		if not self.params["dbimages"]:
+		if not self.params["dbimages"] or not self.params["alldbimages"]:
 			return False
 		self.stats['waittime'] = self.stats['waittime'] + 10
 		if(self.stats['waittime'] > 120):
