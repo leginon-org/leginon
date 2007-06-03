@@ -799,14 +799,14 @@ class AppionLoop(object):
 		#SHOULD IT WAIT?
 		if self.params['nowait'] is True:
 			return False
-		if not self.params["dbimages"] or not self.params["alldbimages"]:
-			return False
-		self.stats['waittime'] = self.stats['waittime'] + 10
-		if(self.stats['waittime'] > 120):
-			apDisplay.printWarning("waited longer than two hours for new images with no results, so I am quitting")
+		if len(self.params["mrcfileroot"]) > 0:
 			return False
 
 		#WAIT
+		self.stats['waittime'] += 10
+		if(self.stats['waittime'] > 120):
+			apDisplay.printWarning("waited longer than two hours for new images with no results, so I am quitting")
+			return False
 		print "\nAll images processed. Waiting ten minutes for new images (waited",\
 			self.stats['waittime'],"min so far)."
 		for i in range(20):
