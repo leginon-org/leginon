@@ -12,7 +12,7 @@ import data
 import apDB
 import apLoop
 import apDisplay
-
+import appionData
 
 data.holdImages(False)
 leginondb = apDB.db
@@ -46,8 +46,6 @@ def getSpecificImagesFromDB(imglist):
 		imgres   = leginondb.query(imgquery, readimages=False, results=1)
 		imgtree.append(imgres[0])
 	return imgtree
-
-
 
 def getImagesFromDB(session,preset):
 	"""
@@ -201,3 +199,23 @@ def getImgSizeFromName(imgname):
 	else:
 		apDisplay.printError("Image "+imgname+" not found in database\n")
 	return(size)
+
+def getImgAssessmentStatus(imgdata):
+	"""
+	gets the assessment status (keep/reject) from the last assessment run
+		keep = True
+		reject = False 
+		unassessed = None
+	"""
+	### this function should be modified in the future to allow for a particular assessment run
+	assessquery = appionData.ApAssessmentData()
+	assessquery['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
+	assessdata = appiondb.query(assessquery)	
+
+	if assessdata:
+		#check results of only most recent run
+		if assessdata[0]['selectionkeep'] == 1:
+			return True
+		elif assessdata[0]['selectionkeep'] == 0:
+			return False
+	return None

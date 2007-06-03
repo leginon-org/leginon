@@ -216,18 +216,11 @@ def checkInspectFile(imgdict):
 	return (False)
 
 
-def checkInspectDB(imgdict):
-	##### this function should be modified in the future to allow for a particular assessment run ####
-	aq=appionData.ApAssessmentData()
-	aq['dbemdata|AcquisitionImageData|image']=imgdict.dbid
-	adata=apdb.query(aq)	
-
-	keep=False
-	if adata:
-		#check results of only most recent run
-		if adata[0]['selectionkeep']==True:
-			keep=True
-	return(keep)
+def checkInspectDB(imgdata):
+	keep = apDatabase.getImgAssessmentStatus(imgdata)
+	if keep is True:
+		return True
+	return False
 
 def checkPairInspectDB(imgdict,params):
 	aq=appionData.ApAssessmentData()

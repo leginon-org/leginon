@@ -81,6 +81,12 @@
 	<description>Do not wait for more images after finishing all images</description>
 	<type>boolean</type>
  </nowait>
+  <norejects>
+	<name>skip rejects</name>
+	<default>False</default>
+	<description>Skip images that have been assessed as rejects</description>
+	<type>boolean</type>
+ </norejects>
   <shuffle>
 	<name>shuffle images</name>
 	<default>False</default>

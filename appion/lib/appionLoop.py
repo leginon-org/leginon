@@ -320,6 +320,7 @@ class AppionLoop(object):
 		self.params['pixdiam']=None
 		self.params['binpixdiam']=None
 		self.params['nowait']=False
+		self.params['norejects']=None
 		self.params['limit']=None
 		self.params['shuffle']=False
 		self.params['abspath']=os.path.abspath('.')
@@ -413,6 +414,8 @@ class AppionLoop(object):
 				self.params['shuffle']=True
 			elif arg=='nowait':
 				self.params['nowait']=True
+			elif arg=='norejects':
+				self.params['norejects']=True
 			elif (elements[0]=='limit'):
 				self.params['limit']=int(elements[1])
 			elif arg=='continue':
@@ -509,8 +512,9 @@ class AppionLoop(object):
 		return
 		
 	def _writeDataToFile(self,idata,resultkeys,path,imgname, filename):
-		''' This is used to write a list of db data that normally goes into the	database
-		'''
+		"""
+		This is used to write a list of db data that normally goes into thedatabase
+		"""
 		filepathname = path+'/'+filename
 		if os.path.exists(filepathname):
 			os.remove(filepathname)
@@ -751,6 +755,7 @@ class AppionLoop(object):
 		i = 0
 		donecount = 0
 		reproccount = 0
+		rejectcount = 0
 		while i < len(self.imgtree):
 			imgdata = self.imgtree[i]
 			imgname = imgdata['filename']
@@ -763,6 +768,11 @@ class AppionLoop(object):
 			elif self.reprocessImage(imgdata) is False:
 				self._writeDoneDict(imgname)
 				reproccount += 1
+				skip = True
+
+			elif self.params['norejects'] is True and apDatabase.getImgAssessmentStatus(imgdata) is False:
+				self._writeDoneDict(imgname)
+				rejectcount += 1
 				skip = True
 
 			if skip is True:
@@ -779,8 +789,9 @@ class AppionLoop(object):
 			i += 1
 		if self.stats['skipcount'] > 0:
 			sys.stderr.write("\n")
-			apDisplay.printWarning("skipped "+str(self.stats['skipcount'])+" of "+str(startlen)+" images ("+\
-				str(reproccount)+" not reprocess and "+str(donecount)+" in donedict)")
+			apDisplay.printWarning("skipped "+str(self.stats['skipcount'])+" of "+str(startlen)+" images")
+			apDisplay.printMsg("("+str(reproccount)+" pass reprocess criteria | "+str(rejectcount)+\
+				" rejected | "+str(donecount)+" in donedict)")
 
 	def _printLine(self):
 		print "\t------------------------------------------"
