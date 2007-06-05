@@ -400,6 +400,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher', $head
         echo"
                 </select>
                 <BR>
+                <input type='submit' name='process' value='Just Show Command'>
                 <input type='submit' name='process' value='Run Correlator'><BR>
                 <FONT COLOR='RED'>Submission will NOT run Template Correlator, only output a command that you can copy and paste into a unix shell</FONT>
                 </TD>
@@ -504,7 +505,7 @@ function runTemplateCorrelator() {
 		}
 	}
 
-	if ($testimage) {
+	if ($testimage && $_POST['process']=="Run Correlator") {
 	        $command.="source /ami/sw/ami.csh;";
 		$command.="source /ami/sw/share/python/usepython.csh cvs32;";
 	}
@@ -529,8 +530,8 @@ function runTemplateCorrelator() {
 	if ($commit==1) $command.=" commit";
 
 	$cmd = "$command > templateCorrelatorLog.txt";
-	echo $cmd;
-	if ($testimage) {
+	echo $command;
+	if ($testimage && $_POST['process']=="Run Correlator") {
 	        $result=exec_over_ssh($host, $user, $password, $cmd, True);
 	}
 
