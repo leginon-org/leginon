@@ -21,6 +21,7 @@ MRC I/O functions:
     convenience function if you want your array returned as numarray instead.
   numarray_write(a, filename, header=None)
     convenience function if you want to write a numarray array instead.
+
 '''
 
 import numpy
