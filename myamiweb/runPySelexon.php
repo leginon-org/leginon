@@ -433,7 +433,7 @@ function runTemplateCorrelator() {
         $host = $_POST['host'];
 	$user = $_POST['user'];
 	$password = $_POST['password'];
-	if (!($user && $password)) {
+	if ($_POST['process']=="Run Correlator" && !($user && $password)) {
 	        createTCForm("<B>ERROR:</B> Enter a user name and password");
 	}
 
