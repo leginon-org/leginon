@@ -80,10 +80,8 @@ def getAllImagesFromDB(session):
 
 def getExpIdFromSessionName(sessionname):
 	sessionq = data.SessionData(name=sessionname)
-	imgquery = data.AcquisitionImageData()
-	imgquery['session'] = sessionq
-	imgtree = leginondb.query(imageq, readimages=False, limit=1)
-	return imgtree[0].dbid
+	sessioninfo = leginondb.query(sessionq, readimages=False, results=1)
+	return sessioninfo[0].dbid
 
 def getDBTemplates(params):
 	tmptmplt=params['template']
