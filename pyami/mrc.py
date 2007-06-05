@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 '''
 MRC I/O functions:
-	Note:
-		Only 2-D MRC is supported.
-		Complex data is not yet supported.
-
   write(a, filename, header=None)
     Write your numpy ndarray object to an MRC file.
 		  a - the numpy ndarray object
@@ -28,10 +24,9 @@ MRC I/O functions:
 '''
 
 import numpy
-import struct
 import sys
-import weakref
 import arraystats
+import weakattr
 
 #### for numarray compatibility
 import numarray
@@ -43,216 +38,317 @@ def numarray_write(a, filename, header=None):
 	a2 = numpy.asarray(a)
 	write(a2, filename, header)
 
-
-## mapping of MRC mode to numpy dtype string
+## mapping of MRC mode to numpy type
 mrc2numpy = {
-	0: 'uint8',
-	1: 'int16',
-	2: 'float32',
-#	3: 'complex',
-	6: 'uint16',
+	0: numpy.uint8,
+	1: numpy.int16,
+	2: numpy.float32,
+#	3:  complex made of two int16.  No such thing in numpy
+#     however, we could manually build a complex array by reading two
+#     int16 arrays somehow.
+	4: numpy.complex64,
+
+	6: numpy.uint16,    # according to UCSF
 }
 
-## mapping of MRC mode to number of bytes per element
-mrcitemsize = {
-	0: 1,
-	1: 2,
-	2: 4,
-#	3: 8,,
-	6: 2,
-}
-
-## mapping of numpy dtype string to MRC mode
+## mapping of numpy type to MRC mode
 numpy2mrc = {
-	'uint8': 0,
-	'bool': 0,
+	## convert these to int8
+	numpy.uint8: 0,
+	numpy.bool: 0,
 
-	'int16': 1,
-	'int8': 1,
+	## convert these to int16
+	numpy.int16: 1,
+	numpy.int8: 1,
 
-	'float32': 2,
-	'float64': 2,
-	'int32': 2,
-	'int': 2,
+	## convert these to float32
+	numpy.float32: 2,
+	numpy.float64: 2,
+	numpy.int32: 2,
+	numpy.int: 2,
 
-#	'complex': 3,
-#	'complex': 3,
+	## convert these to complex64
+	numpy.complex: 4,
+	numpy.complex64: 4,
+	numpy.complex128: 4,
 
-	'uint16': 6,
+	## convert these to uint16
+	numpy.uint16: 6,
 }
 
-def readData(fobj, mrcmode, shape):
-	'''
-	Read data portion of MRC file from the file object fobj.
-	Both mrcmode and shape have been determined from the MRC header.
-	fobj already points to beginning of data, not header.
-	Returns a new numpy ndarray object.
-	'''
-	try:
-		elementsize = mrcitemsize[mrcmode]
-	except KeyError:
-		print 'Unknown MRC mode', mrcmode
-		raise
-	nelements = 1
-	for x in shape:
-		nelements *= x
-	numtype = mrc2numpy[mrcmode]
-	data = fobj.read(nelements * elementsize)
-	narray = numpy.fromstring(data, numtype)
-	if sys.byteorder != 'little':
-		narray = narray.byteswapped()
-	narray.shape = shape
-	return narray
+## structure of the image 2000 MRC header
+## This is a sequence of fields where each field is defined by a sequence:
+##  (name, type, default, length)
+##    length is only necessary for strings
+##    type can be one of: 'int32', 'float32', 'string'
+header_fields = (
+	('nx', 'int32'),
+	('ny', 'int32'),
+	('nz', 'int32'),
+	('mode', 'int32'),
+	('nxstart', 'int32'),
+	('nystart', 'int32'),
+	('nzstart', 'int32'),
+	('mx', 'int32'),
+	('my', 'int32'),
+	('mz', 'int32'),
+	('xlen', 'float32'),
+	('ylen', 'float32'),
+	('zlen', 'float32'),
+	('alpha', 'float32'),
+	('beta', 'float32'),
+	('gamma', 'float32'),
+	('mapc', 'int32'),
+	('mapr', 'int32'),
+	('maps', 'int32'),
+	('amin', 'float32'),
+	('amax', 'float32'),
+	('amean', 'float32'),
+	('ispg', 'int32'),
+	('nsymbt', 'int32'),
+	('extra', 'string', 100),
+	('xorigin', 'float32'),
+	('yorigin', 'float32'),
+	('zorigin', 'float32'),
+	('map', 'string', 4),
+	('byteorder', 'int32'),
+	('rms', 'float32'),
+	('nlabels', 'int32'),
+	('label0', 'string', 80),
+	('label1', 'string', 80),
+	('label2', 'string', 80),
+	('label3', 'string', 80),
+	('label4', 'string', 80),
+	('label5', 'string', 80),
+	('label6', 'string', 80),
+	('label7', 'string', 80),
+	('label8', 'string', 80),
+	('label9', 'string', 80),
+)
 
-def newHeader(shape, mode):
+def printHeader(headerdict):
+	for field in header_fields:
+		name = field[0]
+		value = headerdict[name]
+		print '%-10s:  %s' % (name, value)
+
+def zeros(n):
 	'''
-	Creates a new MRC header dictionary.
-	Shape and MRC mode must be specified.
-	Everything else is filled in with defaults.
+Create n bytes of data initialized to zeros, returned as a python string.
+	'''
+	a = numpy.zeros(n, dtype=int8dtype)
+	return a.tostring()
+
+def newHeader():
+	'''
+Return a new initialized header dictionary.
+All fields are initialized to zeros.
 	'''
 	header = {}
-	nx = shape[1]
-	ny = shape[0]
-	nz = 1
-	header['nx'] = shape[1]
-	header['ny'] = shape[0]
-	header['nz'] = 1
-	header['mode'] = mode
-	header['nxstart'] = 0
-	header['nystart'] = 0
-	header['nzstart'] = 0
-	header['mx'] = nx
-	header['my'] = ny
-	header['mz'] = nz
-	header['xlen'] = nx
-	header['ylen'] = ny
-	header['zlen'] = nz
+	for field in header_fields:
+		name = field[0]
+		type = field[1]
+		if type == 'string':
+			length = field[2]
+			header[name] = zeros(length)
+		else:
+			header[name] = 0
+	return header
+
+intbyteorder = {
+	0x11110000: 'big',
+	0x44440000: 'little'
+}
+byteorderint = {
+	'big': 0x11110000,
+	'little': 0x44440000
+}
+
+def isSwapped(headerbytes):
+	'''
+Detect byte order (endianness) of MRC file based on one or more tests on
+the header data.
+	'''
+	### check for a valid machine stamp in header, with or without byteswap
+	stampswapped = None
+	machstamp = headerbytes[212:216]
+	machstamp = numpy.fromstring(machstamp, dtype='Int32', count=1)
+	machstampint = machstamp[0]
+	if machstampint in intbyteorder:
+		stampswapped = False
+	else:
+		machstamp = machstamp.byteswap()
+		machstampint = machstamp[0]
+		if machstampint in intbyteorder:
+			stampswapped = True
+
+	### check for valid mode, with or without byteswap
+	mode = headerbytes[12:16]
+	mode = numpy.fromstring(mode, dtype='Int32', count=1)
+	modeint = mode[0]
+	modeswapped = None
+	if modeint in mrc2numpy:
+		modeswapped = False
+	else:
+		mode = mode.byteswap()
+		modeint = mode[0]
+		if modeint in mrc2numpy:
+			modeswapped = True
+
+	### final verdict on whether it is swapped
+	if stampswapped is None:
+		swapped = modeswapped
+	elif modeswapped is None:
+		swapped = stampswapped
+	elif modeswapped == stampswapped:
+		swapped = modeswapped
+	else:
+		swapped = None
+	return swapped
+
+def parseHeader(headerbytes):
+	'''
+Parse the 1024 byte MRC header into a header dictionary.
+	'''
+	## header is comprised of Int32, Float32, and text labels.
+	itype = numpy.dtype('Int32')
+	ftype = numpy.dtype('Float32')
+
+	## check if data needs to be byte swapped
+	swapped = isSwapped(headerbytes)
+	if swapped:
+		itype = itype.newbyteorder()
+		ftype = ftype.newbyteorder()
+
+	## Convert 1k header into both floats and ints to make it easy
+	## to extract all the info.
+	## Only convert first 224 bytes into numbers because the
+	## remainder of data are text labels
+	headerarray = {}
+	headerarray['float32'] = numpy.fromstring(headerbytes, dtype=ftype, count=224)
+	headerarray['int32'] = numpy.fromstring(headerbytes, dtype=itype, count=224)
+
+	## fill in header dictionary with all the info
+	newheader = {}
+	pos = 0
+	for field in header_fields:
+		name = field[0]
+		type = field[1]
+		if type == 'string':
+			length = field[2]
+			newheader[name] = headerbytes[pos:pos+length]
+		else:
+			length = 4
+			word = pos/4
+			newheader[name] = headerarray[type][word]
+		pos += length
+
+	## Save some numpy specific info (not directly related to MRC).
+	## numpy dtype added to header dict because it includes both the
+	## basic type (from MRC "mode") and also the byte order, which has
+	## been determined independent from the byte order designation in the
+	## header, which may be invalid.  This allows the data to be read
+	## properly.  Also figure out the numpy shape of the data from dimensions.
+	dtype = numpy.dtype(mrc2numpy[newheader['mode']])
+	if swapped:
+		dtype = dtype.newbyteorder()
+	newheader['dtype'] = dtype
+	if newheader['nz'] > 1:
+		## 3D data
+		shape = (newheader['nz'], newheader['ny'], newheader['nx'])
+	elif newheader['ny'] > 1:
+		## 2D data
+		shape = (newheader['ny'], newheader['nx'])
+	else:
+		## 1D data
+		shape = (newheader['nx'],)
+	newheader['shape'] = shape
+
+	return newheader
+
+def updateHeaderDefaults(header):
 	header['alpha'] = 90
 	header['beta'] = 90
 	header['gamma'] = 90
 	header['mapc'] = 1
 	header['mapr'] = 2
 	header['maps'] = 3
-	header['amin'] = 0
-	header['amax'] = 0
-	header['amean'] = 0
-	header['origin_x'] = nx / 2.0 
-	header['origin_y'] = ny / 2.0
-	header['origin_z'] = nz / 2.0
-	header['identstr'] = 'MAP '
-	header['machstamp'] = 'DA'
-	header['rms'] = 0
-	header['nlabl'] = 0
-	return header
+	header['map'] = 'MAP '
+	header['byteorder'] = byteorderint[sys.byteorder]
 
-def readHeader(fobj):
+def updateHeaderUsingArray(header, a):
 	'''
-	Read the MRC header from the file object fobj.  fobj must point
-	to the beginning of the MRC file.  The header is returned as a 
-	dictionary.
+	Fills in values of MRC header dictionary using the given array.
 	'''
-	headstr = fobj.read(1024)
-	header = {}
-	## first chunk includes nx,ny,nz,type
-	chunk = headstr[:16]
-	nx,ny,nz,mode = struct.unpack('<4i', chunk)
+	ndims = len(a.shape)
+	nx = a.shape[-1]
+	ny = nz = 1
+	if ndims > 1:
+		ny = a.shape[-2]
+		if ndims > 2:
+			nz = a.shape[-3]
 	header['nx'] = nx
 	header['ny'] = ny
 	header['nz'] = nz
-	header['mode'] = mode 
 
-	chunk = headstr[16:40]
-	nxstart,nystart,nzstart,mx,my,mz = struct.unpack('<6i', chunk)
-	header['nxstart'] = nxstart
-	header['nystart'] = nystart
-	header['nzstart'] = nzstart
-	header['mx'] = mx
-	header['my'] = my
-	header['mz'] = mz
+	mode = numpy2mrc[a.dtype.type]
+	header['mode'] = mode
 
-	chunk = headstr[40:64]
-	xlen,ylen,zlen,alpha,beta,gamma = struct.unpack('<6f', chunk)
-	header['xlen'] = xlen
-	header['ylen'] = ylen
-	header['zlen'] = zlen
-	header['alpha'] = alpha
-	header['beta'] = beta
-	header['gamma'] = gamma
+	header['mx'] = nx
+	header['my'] = ny
+	header['mz'] = nz
+	header['xlen'] = nx
+	header['ylen'] = ny
+	header['zlen'] = nz
 
-	chunk = headstr[64:88]
-	mapc,mapr,maps,amin,amax,amean = struct.unpack('<3i 3f', chunk)
-	header['mapc'] = mapc
-	header['mapr'] = mapr
-	header['maps'] = maps
-	header['amin'] = amin
-	header['amax'] = amax
-	header['amean'] = amean
+	stats = arraystats.all(a)
+	header['amin'] = stats['min']
+	header['amax'] = stats['max']
+	header['amean'] = stats['mean']
+	header['rms'] = stats['std']
 
-	## Origin, File identifier ('MAP ') & machine stamp ('DA')
-	chunk = headstr[196:214]
-	ox,oy,oz,identstr,machstamp = struct.unpack('<3f 4s 2s', chunk)
-	header['origin_x'] = ox
-	header['origin_y'] = oy
-	header['origin_z'] = oz
-	header['identstr'] = identstr
-	header['machstamp'] = machstamp
+	header['xorigin'] = nx / 2.0 
+	header['yorigin'] = ny / 2.0
+	header['zorigin'] = nz / 2.0
 
-	# Density standard deviation
-	chunk = headstr[216:220]
-	header['rms'] = struct.unpack('1f', chunk)[0]
 
-	# Number of labels and labels themselves ignored for now
-	return header
-
-def writeHeader(header, fobj):
+int32dtype = numpy.dtype('Int32')
+float32dtype = numpy.dtype('Float32')
+int8dtype = numpy.dtype('Int8')
+def valueToFloat(value):
 	'''
-	Giving an MRC header in the form of a dictionary, write it to
-	the file object fobj.
+return the string representation of a float value
 	'''
-	#### create a struct format string
-	# first 28 byte chunk includes nx,ny,nz,mode,n[xyz]start
-	dims = '<7i '
-	# Then m[xyz] and [xyz]len,(both essentially n[xyz] again),
-	# followed by alpha,beta,gamma, followed by map[crs]:
-	mxyz = '3i 3f 3f 3i'
-	# then min/max/mean
-	stats = '3f '
-	pad1 = '108x '
-	# Origin, file identifier, machine stamp
-	origin = '3f '
-	ident =  '4s '
-	stamp = '2s '
-	pad2 = '2x '
-	rms = '1f '
-	## already done 16 + 60 + 12 + 120 + 12 = 220 bytes
-	## pad the rest 1024 - 220 = 804
-	pad3 = '804x'
-
-	fmtstr = dims + mxyz + stats + pad1 + origin + ident + stamp + pad2 + rms + pad3
-
-	headstr = struct.pack(fmtstr, 
-		header['nx'], header['ny'], header['nz'], header['mode'], 
-		header['nxstart'], header['nystart'], header['nzstart'], 
-		header['mx'], header['my'], header['mz'],
-		header['xlen'], header['ylen'], header['zlen'],
-		header['alpha'], header['beta'], header['gamma'],
-		header['mapc'], header['mapr'], header['maps'],
-		header['amin'], header['amax'], header['amean'],
-		header['origin_x'], header['origin_y'], header['origin_z'],
-		header['identstr'], header['machstamp'], header['rms'] )
-
-	fobj.write(headstr)
-
-def writeData(a, fobj):
+	a = numpy.array(value, dtype=float32dtype)
+	return a.tostring()
+def valueToInt(value):
 	'''
-Write the numpy ndarray object to a file object.  This assumes that the
-header has already been written and fobj points to immediately after the
-header.
+return the string representation of an int value
 	'''
-	if sys.byteorder != 'little':
-		narray = narray.byteswapped()
-	data = a.tostring()
-	fobj.write(data)
+	a = numpy.array(value, dtype=int32dtype)
+	return a.tostring()
+
+def makeHeaderData(h):
+	'''
+Create a 1024 byte header string from a header dictionary.
+	'''
+	fields = []
+	for field in header_fields:
+		name = field[0]
+		type = field[1]
+		if type == 'string':
+			length = field[2]
+			s = h[name]
+			nzeros = length - len(s)
+			fullfield = s + zeros(nzeros)
+			fields.append(fullfield)
+		elif type == 'int32':
+			fields.append(valueToInt(h[name]))
+		elif type == 'float32':
+			fields.append(valueToFloat(h[name]))
+
+	headerbytes = ''.join(fields)
+	return headerbytes
 
 def asMRCtype(a):
 	'''
@@ -262,14 +358,27 @@ with MRC.
 	if not isinstance(a, numpy.ndarray):
 		raise TypeError('Value must be a numpy array')
 
-	t = str(a.dtype)
+	t = a.dtype.type
 	if t in numpy2mrc:
 		numtype = t
 	else:
 		raise TypeError('Invalid Numeric array type for MRC conversion: %s' % (t,))
-	numtype = mrc2numpy[numpy2mrc[numtype]]
-	narray = a.astype(numtype)
+	dtype = numpy.dtype(mrc2numpy[numpy2mrc[numtype]])
+	narray = numpy.asarray(a, dtype=dtype)
 	return narray
+
+def readDataFromFile(fobj, headerdict):
+	'''
+	Read data portion of MRC file from the file object fobj.
+	Both mrcmode and shape have been determined from the MRC header.
+	fobj already points to beginning of data, not header.
+	Returns a new numpy ndarray object.
+	'''
+	shape = headerdict['shape']
+	datalen = reduce(numpy.multiply, shape)
+	a = numpy.fromfile(fobj, dtype=headerdict['dtype'], count=datalen)
+	a.shape = shape
+	return a
 
 def write(a, filename, header=None):
 	'''
@@ -277,78 +386,74 @@ Write ndarray to a file
 a = numpy ndarray to be written
 filename = filename of MRC
 header (optional) = dictionary of header parameters
+Always saves in the native byte order.
 	'''
-	stats = arraystats.all(a)
-	a = asMRCtype(a)
-	mode = numpy2mrc[str(a.dtype)]
-	h = newHeader(a.shape, mode)
+
+	h = newHeader()
+	updateHeaderDefaults(h)
+	updateHeaderUsingArray(h, a)
+
 	if header is not None:
 		h.update(header)
 
-	h['amin'] = stats['min']
-	h['amax'] = stats['max']
-	h['amean'] = stats['mean']
-	h['rms'] = stats['std']
-
-	f = open(filename, 'w')
-	writeHeader(h, f)
-	writeData(a, f)
+	headerbytes = makeHeaderData(h)
+	print 'LEN HEADER', len(headerbytes)
+	# make sure array is in native byte order
+	if not a.dtype.isnative:
+		a = a.byteswap()
+	f = open(filename, 'wb')
+	f.write(headerbytes)
+	a.tofile(f)
 	f.close()
 
 def read(filename):
 	'''
 Read the MRC file given by filename, return numpy ndarray object
 	'''
-	f = open(filename)
-	readHeader
-	h = readHeader(f)
-	mode = h['mode']
-	shape = h['ny'], h['nx']
-	a = readData(f, mode, shape)
+	f = open(filename, 'rb')
+	headerbytes = f.read(1024)
+	headerdict = parseHeader(headerbytes)
+	a = readDataFromFile(f, headerdict)
+
+	## store keep header with image
+	setHeader(a, headerdict)
+
 	return a
 
-mmaps = weakref.WeakValueDictionary()
+def setHeader(a, headerdict):
+	'''
+Attach an MRC header to the array.
+	'''
+	weakattr.set(a, 'mrcheader', headerdict)
+
+def getHeader(a):
+	'''
+Return the MRC header for the array, if it has one.
+	'''
+	return weakattr.get(a, 'mrcheader')
 
 def mmap(filename):
 	'''
 Open filename as a memory mapped MRC file.  The returned object is
 a numpy ndarray object wrapped around the memory mapped file.
 	'''
-	mrc = numpy.memmap(name=filename, mode='r')
+	## read only the header and parse it
+	f = open(filename, 'rb')
+	headerbytes = f.read(1024)
+	f.close()
+	headerdict = parseHeader(headerbytes)
 
-	# get dimensions of image from header
-	mrcdims_slice = mrc[:12]
-	mrcdims = numpy.ndarray(buffer=mrcdims_slice, shape=(3,), dtype=numpy.int32)
-	c,r,s = mrcdims
-	if s < 2:
-		numshape = r,c
-	else:
-		numshape = s,r,c
-	
-	# get data type from header
-	mrctype_slice = mrc[12:16]
-	mrctype = numpy.ndarray(buffer=mrctype_slice, shape=(1,), dtype=numpy.int32)
-	mrctype = mrctype[0]
-	numtype = mrc2numpy[mrctype]
-	
-	## !!! assuming this is 2-D MRC only
-	mrcdata_slice = mrc[1024:]
-	mrcdata = numpy.ndarray(buffer=mrcdata_slice, shape=numshape, dtype=numtype)
-	# hold reference to open memmap so it doesn't close
-	mmaps[mrc] = mrcdata
+	## open memory mapped file
+	mrcdata = numpy.memmap(filename, dtype=headerdict['dtype'], mode='r', offset=1024, shape=headerdict['shape'], order='C')
+	## attach header to the array
+	setHeader(mrcdata, headerdict)
 	return mrcdata
 
 
 if __name__ == '__main__':
 	infilename = sys.argv[1]
-	outfilename = sys.argv[2]
-
-	a = read(infilename)
-	a = a.astype(numpy.uint16)
-	h = {}
-	h['amean'] = a.mean()
-	h['amin'] = a.min()
-	h['amax'] = a.max()
-	h['rms'] = a.std()
-	write(a, outfilename, header=h)
-
+	f = open(infilename)
+	h = f.read(1024)
+	f.close()
+	h = parseHeader(h)
+	printHeader(h)
