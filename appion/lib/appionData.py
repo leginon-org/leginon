@@ -247,12 +247,12 @@ data.ApRefinementData=ApRefinementData
 class ApRefinementParamsData(data.Data):
 	def typemap(cls):
 		return data.Data.typemap() + (
-			('angIncr', float),
+			('ang', float),
 			('mask', int),
 			('imask', int),
 			('lpfilter', int),
 			('hpfilter', int),
-			('fourier_padding', int),
+			('pad', int),
 			('EMAN_hard', int),
 			('EMAN_classkeep', float),
 			('EMAN_classiter', int),
@@ -282,7 +282,7 @@ class ApParticleClassificationData(data.Data):
 			('shifty', float),
 			('inplane_rotation', float),
 			('quality_factor', float),
-			('thrown_out',int),
+			('thrown_out',bool),
 		)
 	typemap = classmethod(typemap)
 data.ApParticleClassificationData=ApParticleClassificationData

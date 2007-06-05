@@ -48,7 +48,7 @@ def createModelDefaults():
 def defineIteration():
 	iteration={}
 	iteration['num']=None
-	iteration['angIncr']=None
+	iteration['ang']=None
 	iteration['mask']=None
 	iteration['imask']=None
 	iteration['lpfilter']=None
@@ -145,7 +145,7 @@ def parseLogFile(params):
 			for p in emanparams:
 				elements=p.split('=')
 				if elements[0]=='ang':
-					iteration['angIncr']=float(elements[1])
+					iteration['ang']=float(elements[1])
 				elif elements[0]=='mask':
 					iteration['mask']=int(elements[1])
 				elif elements[0]=='imask':
@@ -257,12 +257,12 @@ def insertResolutionData(params,iteration):
 def insertIteration(params):
 	for iteration in params['iterations']:
 		refineparamsq=appionData.ApRefinementParamsData()
-		refineparamsq['angIncr']=iteration['angIncr']
+		refineparamsq['ang']=iteration['ang']
 		refineparamsq['mask']=iteration['mask']
 		refineparamsq['imask']=iteration['imask']
 		refineparamsq['lpfilter']=iteration['lpfilter']
 		refineparamsq['hpfilter']=iteration['hpfilter']
-		refineparamsq['fourier_padding']=iteration['pad']
+		refineparamsq['pad']=iteration['pad']
 		refineparamsq['EMAN_hard']=iteration['hard']
 		refineparamsq['EMAN_classkeep']=iteration['classkeep']
 		refineparamsq['EMAN_classiter']=iteration['classiter']
@@ -275,12 +275,12 @@ def insertIteration(params):
 		if not result:
 			partdb.insert(refineparamsq)
 			refineparamsq=appionData.ApRefinementParamsData()
-			refineparamsq['angIncr']=iteration['angIncr']
+			refineparamsq['ang']=iteration['ang']
 			refineparamsq['mask']=iteration['mask']
 			refineparamsq['imask']=iteration['imask']
 			refineparamsq['lpfilter']=iteration['lpfilter']
 			refineparamsq['hpfilter']=iteration['hpfilter']
-			refineparamsq['fourier_padding']=iteration['pad']
+			refineparamsq['pad']=iteration['pad']
 			refineparamsq['EMAN_hard']=iteration['hard']
 			refineparamsq['EMAN_classkeep']=iteration['classkeep']
 			refineparamsq['EMAN_classiter']=iteration['classiter']
@@ -400,7 +400,7 @@ def insertIteration(params):
 						
 					# insert classification info
 					prtlaliq['refinement']=refineq
-					prtlaliq['particle']=stackpq
+					prtlaliq['particle']=stackp
 					prtlaliq['eulers']=eulq
 					prtlaliq['shiftx']=shx
 					prtlaliq['shifty']=shy
