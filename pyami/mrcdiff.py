@@ -4,17 +4,18 @@ import sys
 import mrc
 
 f1 = open(sys.argv[1])
-h1 = mrc.readHeader(f1)
+headerbytes = f1.read(1024)
 f1.close()
+h1 = mrc.parseHeader(headerbytes)
 
 f2 = open(sys.argv[2])
-h2 = mrc.readHeader(f2)
+headerbytes = f2.read(1024)
 f2.close()
+h2 = mrc.parseHeader(headerbytes)
 
 for key in h1:
 	if h1[key] != h2[key]:
 		print '%s:   %s -> %s' % (key, h1[key], h2[key])
-
 
 f1 = open(sys.argv[1])
 f2 = open(sys.argv[2])
