@@ -14,7 +14,7 @@ import apDisplay
 leginondb = apDB.db
 appiondb  = apDB.apdb
 
-def getShiftFromImage(imgdata):
+def getShiftFromImage(imgdata, params):
 	sibling = getDefocusPair(imgdata)
 	if sibling:
 		shiftpeak = getShift(imgdata, sibling)
