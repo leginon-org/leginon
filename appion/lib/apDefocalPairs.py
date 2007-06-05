@@ -15,11 +15,11 @@ leginondb = apDB.db
 appiondb  = apDB.apdb
 
 def getShiftFromImage(imgdata):
-	self.sibling = getDefocusPair(imgdata)
-	if self.sibling:
-		self.shiftpeak = getShift(imgdata, self.sibling)
-		recordShift(self.params, imgdata, self.sibling, self.shiftpeak)
-	return self.sibling, self.shiftpeak
+	sibling = getDefocusPair(imgdata)
+	if sibling:
+		shiftpeak = getShift(imgdata, sibling)
+		recordShift(params, imgdata, sibling, shiftpeak)
+	return sibling, shiftpeak
 
 def getDefocusPair(imgdata):
 	target=imgdata['target']
