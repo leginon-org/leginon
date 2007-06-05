@@ -1,5 +1,5 @@
 #!/bin/bash
-
+ 
 ./clean.sh
 for i in `find . -type f | egrep -v "(CVS|old)"`
 do
