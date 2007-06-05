@@ -11,6 +11,7 @@ import data
 import apDB
 import appionData
 import apImage
+import apDatabase
 import apDisplay
 import apTemplate
 
@@ -22,13 +23,12 @@ def guessParticlesForSession(expid=None, sessionname=None):
 		expid = apDatabase.getExpIdFromSessionName(sessionname)
 	if expid is None:
 		apDisplay.printError("Unknown expId is guessParticlesForSession")
-	apDisplay.printMsg("getting most complete particle picking run from DB")
+	apDisplay.printMsg("getting most complete particle picking run from DB for session "+sessionname)
 	#sessionq = data.SessionData(name=sessionname)
 	#sessiondata = leginondb.query(sessionq)
 	#print sessiondata[0]
 
 	selectionq = appionData.ApSelectionRunData()
-	#should be 4348
 	selectionq['dbemdata|SessionData|session'] = expid
 	selectiondata = appiondb.query(selectionq)
 	if len(selectiondata) == 1:
