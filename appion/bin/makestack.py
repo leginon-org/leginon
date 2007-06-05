@@ -1,9 +1,16 @@
 #!/usr/bin/python -O
 # Will create a stack file based on a set of input parameters using EMAN's batchboxer
 
-import os, re, sys, math
+#pythonlib
+import os
+import re
+import sys 
+import math
 import string
+import time
+#leginon
 import data
+#appion
 import appionData
 import apDisplay
 import apParticle
@@ -47,7 +54,9 @@ def printHelp():
 	print "limit=<n>            : stop boxing particles after total particles gets above limit (no limits by default)"
 	print "                     : Example <limit=10000>"
 	print "commit               : store particles to database"
+	print "sessionnanme         : name of the session (example: 07jul01c)"
 	print "nonorm               : do not normalize images"
+	print "medium               : medium of images, carbon or ice (sets noinvert)"
 	print "defocpair            : Get particle coords for the focal pair of the image that was picked in runid"
 	print "                       For example if your selexon run picked ef images and you specify 'defocpair'"
 	print "                       makestack will get the particles from the en images"
@@ -75,11 +84,13 @@ def createDefaults():
 	params['maxdefocus']=None
 	params['description']=None
 	params['selexonId']=None
+	params['sessionnanme']=None
+	params['medium']=True
 	params['normalize']=True
 	params['selexonmin']=None
 	params['selexonmax']=None
 	params['commit']=False
-	params['outdir']=os.path.abspath('.')+'/'
+	params['outdir']=None
 	params['particleNumber']=0
 	params['bin']=None
 	params['limit']=None
@@ -88,11 +99,8 @@ def createDefaults():
 
 def parseInput(args):
 	# check that there are enough input parameters
-	if (len(args)<2 or args[1]=='help') :
+	if (len(args)<2 or args[1] == 'help') :
 		printHelp()
-
-	# create params dictionary & set defaults
-	params=createDefaults()
 
 	lastarg=1
 
@@ -118,15 +126,7 @@ def parseInput(args):
 	for arg in args[lastarg:]:
 		elements=arg.split('=')
 		if (elements[0]=='outdir'):
-			outputdir=elements[1]
-			# if user has not specified a full path:
-			if not outputdir[0]=='/':
-				params['outdir']=os.path.join(params['outdir'],outputdir)
-			else:
-				params['outdir']=outputdir
-			# make sure the directory path has '/' at end
-			if not(params["outdir"][-1]=='/'):
-				params["outdir"]=params["outdir"]+'/'
+			params['outdir'] = os.path.abspath(elements[1])
 		elif (elements[0]=='runid'):
 			params["runid"]=elements[1]
 		elif (elements[0]=='single'):
@@ -141,8 +141,12 @@ def parseInput(args):
 			params["boxsize"]=int(elements[1])
 		elif (elements[0]=='inspectfile'):
 			params["inspectfile"]=elements[1]
+		elif (elements[0]=='medium'):
+			params["medium"]=elements[1]
 		elif (elements[0]=='bin'):
 			params['bin']=int(elements[1])
+		elif (elements[0]=='sessionname'):
+			params['sessionname']=elements[1]
 		elif (arg=='inspected'):
 			params["inspected"]=True
 		elif (arg=='nonorm'):
@@ -186,6 +190,18 @@ def parseInput(args):
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
 	return params
+
+def checkParamConflicts(params):
+	if params['medium'] != "carbon" and params['medium'] != "ice":
+		apDisplay.printError("medium must be either 'carbon' or 'ice'")
+	# if saving to the database, stack must be a single file
+	if params['commit'] and not params['single']:
+		apDisplay.printError("When committing to database, stack must be a single file.\n"+\
+			"use the 'single=<filename>' option")
+	# if getting particles from db or committing, a box size must be set
+	if (params['commit'] or params['selexonId']) and not params['boxsize']:
+		apDisplay.printError("Specify a box size")
+	return
 
 def getFilePath(imgdict):
 	session=imgdict.split('_')[0] # get session from beginning of file name
@@ -246,14 +262,14 @@ def checkAce():
 def batchBox(params, imgdict):
 	imgname = imgdict['filename']
 	print "\nprocessing:",apDisplay.short(imgname)
-	input=os.path.join(params["filepath"],(imgname+'.mrc'))
-	output=os.path.join(params["outdir"],(imgname+'.hed'))
+	input  = os.path.join(params["filepath"], imgname+".mrc")
+	output = os.path.join(params["outdir"], imgname+".hed")
 	apParam.createDirectory(params["outdir"], warning=False)
 
 	# if getting particles from database, a temporary
 	# box file will be created
 	if params['selexonId']:
-		dbbox=os.path.join(params['outdir'],"temporaryParticlesFromDB.box")
+		dbbox=os.path.join(params['outdir'], "temporaryParticlesFromDB.box")
 		if params['defocpair']:
 			particles,shift=apParticle.getDefocPairParticles(imgdict,params)
 		else:
@@ -341,8 +357,8 @@ def saveParticles(particles,shift,dbbox,params,imgdict):
 	
 def phaseFlip(params,imgdict):
 	imgname = imgdict['filename']
-	input=os.path.join(params["outdir"],imgname+'.hed')
-	output=os.path.join(params["outdir"],imgname+'.ctf.hed')
+	input=os.path.join(params["outdir"], imgname+".hed")
+	output=os.path.join(params["outdir"], imgname+".ctf.hed")
 
 	cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" %(input,\
 	  output,params["df"],params["kv"],params["apix"])
@@ -417,21 +433,20 @@ def writeBoxLog(commandline):
 # since we're using a batchboxer approach, we must first get a list of
 # images that contain particles
 def getImgsFromSelexonId(params):
-	print "Finding Leginon images that have particles for selection run:", params['selexonId']
+	print "Finding images that have particles for selection run: id="+str(params['selexonId'])
 
 	# get selection run id
 	selexonrun=apdb.direct_query(data.ApSelectionRunData,params['selexonId'])
 	if not (selexonrun):
-		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' not in database")
+		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' is not in database")
 	
 	# from id get the session
-	sessionid=db.direct_query(data.SessionData,selexonrun['dbemdata|SessionData|session'])
+	sessionid=db.direct_query(data.SessionData, selexonrun['dbemdata|SessionData|session'])
 	# get all images from session
 	dbimgq=data.AcquisitionImageData(session=sessionid)
-	dbimginfo=db.query(dbimgq,readimages=False)
+	dbimginfo=db.query(dbimgq, readimages=False)
 	if not (dbimginfo):
-		print "\nError: no images associated with this runId\n"
-		sys.exit()
+		apDisplay.printError("no images associated with this runId")
 
 	# for every image, find corresponding image entry in the particle database
 	dbimglist=[]
@@ -497,7 +512,7 @@ def insertStackParams(params):
 
 	# get stack parameters if they already exist in table
 	stparamq=appionData.ApStackParamsData()
-	stparamq['stackPath']=params['outdir']
+	stparamq['stackPath'] = params['outdir']
 	stparamq['name']=params['single']
 
 	stackparams=apdb.query(stparamq,results=1)
@@ -549,8 +564,13 @@ if __name__ == '__main__':
 	# record command line
 	writeBoxLog(sys.argv)
 
+	# create params dictionary & set defaults
+	params = createDefaults()
+
 	# parse command line input
 	params = parseInput(sys.argv)
+
+	checkParamConflicts()
 
 	# stack must have a description
 	if not params['description']:
@@ -559,19 +579,27 @@ if __name__ == '__main__':
 	if params['selexonId'] is None:
 		params['selexonId'] = apParticle.guessParticlesForSession(sessionname=params['sessionname'])
 
+	# get images from database if using a selexon runId
+	if params['selexonId']:
+		if params['defocpair']:
+			images = getImgsDefocPairFromSelexonId(params)
+		else:
+			images = getImgsFromSelexonId(params)
+
 	# if a runId is specified, outdir will have a subdirectory named runId
 	if params['runid']:
-		params['outdir']=os.path.join(params['outdir'], params['runid'])
-		#params['rundir']=os.path.join(params['outdir'], params['runid'])
+		if params['outdir'] is None:
+			#/ami/data##/appion/session/stacks/run#
+			params['imgdir'] = apDatabase.getImgDir(params['sessionname'])
+			outdir = os.path.split(params['imgdir'])[0]
+			#change leginon to appion
+			outdir = re.sub('leginon','appion',outdir)
+			params['outdir'] = os.path.join(outdir, "stacks")
+		params['outdir'] = os.path.join(params['outdir'], params['runid'])
+		apDisplay.printMsg("output directory: "+params['outdir'])
+		#params['rundir'] = os.path.join(params['outdir'], params['runid'])
 
-	# if saving to the database, stack must be a single file
-	if params['commit'] and not params['single']:
-		apDisplay.printError("When committing to database, stack must be a single file.\n"+\
-			"use the 'single=<filename>' option")
 
-	# if getting particles from db or committing, a box size must be set
-	if (params['commit'] or params['selexonId']) and not params['boxsize']:
-		apDisplay.printError("Specify a box size")
 
 	# if making a single stack, remove existing stack if exists
 	if params["single"]:
@@ -593,12 +621,7 @@ if __name__ == '__main__':
 			os.remove(p_logfile)
 		params["particle"]=0
 
-	# get images from database if using a selexon runId
-	if params['selexonId']:
-		if params['defocpair']:
-			images=getImgsDefocPairFromSelexonId(params)
-		else:
-			images=getImgsFromSelexonId(params)
+
 		
 	# get list of input images, since wildcards are supported
 	else:
@@ -629,7 +652,7 @@ if __name__ == '__main__':
 		imgname = imgdict['filename']
 
 		# first remove any existing boxed files
-		stackfile=os.path.join(params["outdir"],imgname)
+		stackfile=os.path.join(params["outdir"], imgname)
 	
 		for ext in ("hed", "img"):
 			if os.path.isfile(stackfile+"."+ext):
@@ -683,7 +706,7 @@ if __name__ == '__main__':
 		# box the particles
 		totptcls+=batchBox(params,imgdict)
 		
-		if not os.path.isfile(os.path.join(params["outdir"],imgname+".hed")):
+		if not os.path.isfile(os.path.join(params["outdir"], imgname+".hed")):
 			apDisplay.printWarning("no particles were boxed from "+apDisplay.short(imgname))
 			continue
 
