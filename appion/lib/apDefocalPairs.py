@@ -64,8 +64,9 @@ def getShift(imgdata1 ,imgdata2):
 	else:
 		shrinkfactor1=dimension1/finalsize
 		shrinkfactor2=dimension2/finalsize
-		binned1=apImage.binImg(imgdata1['image'], shrinkfactor1)
-		binned2=apImage.binImg(imgdata2['image'], shrinkfactor2)
+		binned1 = apImage.binImg(imgdata1['image'], shrinkfactor1)
+		binned2 = apImage.binImg(imgdata2['image'], shrinkfactor2)
+		pc=correlator.phase_correlate(binned1,binned2,zero=True)
 		peak = peakfinder.findSubpixelPeak(pc, lpf=1.5) # this is a temp fix. 
 		subpixpeak = peak['subpixel peak']
 		shift=correlator.wrap_coord(subpixpeak,pc.shape)
