@@ -39,7 +39,6 @@ $sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 $particle = new particledata();
 $stackIds = $particle->getStackIds($sessionId);
 $stackruns=count($stackIds);
-
 // --- Get Reconstruction Data
 echo"<P>\n";
 if ($stackruns>0){ 
@@ -50,8 +49,8 @@ if ($stackruns>0){
 	        $html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
         }
         foreach ($stackIds as $stackid) {
-                $stackcount=$particle->getNumStackParticles($stackid[stackid]);
-		$reconIds = $particle->getReconIds($stackid[stackid]);
+                $stackcount=$particle->getNumStackParticles($stackid);
+		$reconIds = $particle->getReconIds($stackid);
 		foreach ($reconIds as $reconid) {
 		        $stmodel = $particle->getInitModelInfo($reconid['REF|ApInitialModelData|initialModel']);
 			$sym = $particle->getSymInfo($stmodel['REF|ApSymmetryData|symmetry']);
