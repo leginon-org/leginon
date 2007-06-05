@@ -64,7 +64,7 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params, maptype):
 
 	cutoff = olapmult*pixrad #1.5x particle radius in pixels
 	if params["maxthresh"] is not None:
-		peaktree = maxThreshPeak(peaktree, float(params["maxthresh"]))
+		peaktree = maxThreshPeaks(peaktree, float(params["maxthresh"]))
 	removeOverlappingPeaks(peaktree, cutoff)
 
 	if(len(peaktree) > maxpeaks):
