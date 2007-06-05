@@ -61,6 +61,7 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 		self.params['endang']=10
 		self.params['incrang']=20
 		self.params['thresh']=0.5
+		self.params['maxthresh']=2.5
 		self.params['autopik']=0
 		self.params['lp']=30.0
 		self.params['hp']=0.0
