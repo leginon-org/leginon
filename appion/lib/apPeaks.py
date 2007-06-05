@@ -63,6 +63,8 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params, maptype):
 		apDisplay.printWarning("thresholding covers more than 10% of image; you should increase the threshold")
 
 	cutoff = olapmult*pixrad #1.5x particle radius in pixels
+	if params["maxthresh"] is not None:
+		peaktree = maxThreshPeak(peaktree, float(params["maxthresh"]))
 	removeOverlappingPeaks(peaktree, cutoff)
 
 	if(len(peaktree) > maxpeaks):
@@ -99,6 +101,13 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params, maptype):
 
 	return peaktree
 
+
+def maxThreshPeaks(peaktree, maxthresh):
+	newpeaktree = []
+	for i in range(len(peaktree)):
+		if peaktree[i]['correlation'] < maxthresh:
+			newpeaktree.append(peaktree[i])
+	return newpeaktree
 
 def mergePeakTrees(imgdict, peaktreelist, params):
 	print "Merging individual template peaks into one set"
