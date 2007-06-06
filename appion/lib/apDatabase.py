@@ -79,9 +79,13 @@ def getAllImagesFromDB(session):
 	return imgtree
 
 def getExpIdFromSessionName(sessionname):
+	apDisplay.printMsg("looking up session, "+sessionname)
 	sessionq = data.SessionData(name=sessionname)
 	sessioninfo = leginondb.query(sessionq, readimages=False, results=1)
-	return sessioninfo[0].dbid
+	if sessioninfo:
+		return sessioninfo[0].dbid
+	else:
+		apDisplay.printError("could not find session, "+sessionname)
 
 def getDBTemplates(params):
 	tmptmplt=params['template']
