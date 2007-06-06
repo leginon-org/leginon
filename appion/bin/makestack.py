@@ -570,7 +570,7 @@ if __name__ == '__main__':
 	# parse command line input
 	params = parseInput(sys.argv)
 
-	checkParamConflicts()
+	checkParamConflicts(params)
 
 	# stack must have a description
 	if not params['description']:

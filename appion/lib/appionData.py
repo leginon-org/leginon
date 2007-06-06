@@ -238,7 +238,6 @@ class ApRefinementData(data.Data):
 			('resolution', ApResolutionData),
 			('classAverage', str),
 			('classVariance', str),
-			('volumeSnapshot', str),
 			('volumeDensity',str),
 		)
 	typemap = classmethod(typemap)

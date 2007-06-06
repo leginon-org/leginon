@@ -303,14 +303,12 @@ def insertIteration(params):
 		refineq['iteration']=iteration['num']
 		refineq['resolution']=resData
 		classvar='classes.'+iteration['num']+'.var.img'
-		volumeSnapshot='threed.'+iteration['num']+'a.png'
 		volumeDensity='threed.'+iteration['num']+'a.mrc'
 		if classavg in params['classavgs']:
 			refineq['classAverage']=classavg
 		if classvar in params['classvars']:
 			refineq['classVariance']=classvar
 		if volumeDensity in params['volumes']:
-			refineq['volumeSnapshot']=volumeSnapshot
 			refineq['volumeDensity']=volumeDensity
 		result=partdb.query(refineq, results=1)
 		if not result:
