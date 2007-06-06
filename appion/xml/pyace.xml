@@ -81,6 +81,12 @@
 	<description>Switch to determine whether astigmatism will be estimated</description>
 	<type>boolean</type>
  </stig>
+ <newnominal>
+	<name>auto-override nominal defocus</name>
+	<default>False</default>
+	<description>Nominal will be automatically overrided by best previous ACE value</description>
+	<type>boolean</type>
+ </newnominal>
  <nominal>
 	<name>override nominal defocus</name>
 	<default></default>
