@@ -78,12 +78,16 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
           }
           function enableselex(){
             if (document.viewerform.selexcheck.checked){
-              document.viewerform.selexon.disabled=false;
-              document.viewerform.selexon.value='';
+              document.viewerform.selexonmin.disabled=false;
+              document.viewerform.selexonmin.value='';
+              document.viewerform.selexonmax.disabled=false;
+              document.viewerform.selexonmax.value='';
             }
             else {
-              document.viewerform.selexon.disabled=true;
-              document.viewerform.selexon.value='0.5';
+              document.viewerform.selexonmin.disabled=true;
+              document.viewerform.selexonmin.value='0.5';
+              document.viewerform.selexonmax.disabled=true;
+              document.viewerform.selexonmax.value='1.0';
             }
           }
           </SCRIPT>\n";
@@ -125,12 +129,14 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
         $acecheck = ($_POST['acecheck']=='on') ? 'CHECKED' : '';
         $acedisable = ($_POST['acecheck']=='on') ? '' : 'DISABLED';
         // selexon check params
-        $selexval = ($_POST['selexcheck']=='on') ? $_POST['selexon'] : '0.5';
+        $selexminval = ($_POST['selexcheck']=='on') ? $_POST['selexonmin'] : '0.5';
+        $selexmaxval = ($_POST['selexcheck']=='on') ? $_POST['selexonmax'] : '1.0';
         $selexcheck = ($_POST['selexcheck']=='on') ? 'CHECKED' : '';
         $selexdisable = ($_POST['selexcheck']=='on') ? '' : 'DISABLED';
-        // density check
-	// set to checked by default
-        	$invcheck = ($_POST['density']=='invert' || !$_POST['process']) ? 'CHECKED' : '';
+        // density check (checked by default)
+	$invcheck = ($_POST['density']=='invert' || !$_POST['process']) ? 'CHECKED' : '';
+	// normalization check (checked by default)
+        $normcheck = ($_POST['normalize']=='on' || !$_POST['process']) ? 'CHECKED' : '';
         echo"
         <P>
         <TABLE BORDER=0 CLASS=tableborder>
@@ -197,7 +203,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
                 </TD>
         </TR>
         <TR>
-                <TD>\n";
+                <TD>
+                <INPUT TYPE='checkbox' NAME='normalize' $normcheck>
+                Normalize Stack Particles<BR>\n";
         if ($ctfdata) echo"<INPUT TYPE='checkbox' NAME='phaseflip' $phasecheck>\nPhaseflip Images<BR>";
         echo"
                 <INPUT TYPE='checkbox' NAME='inspected' $inspectcheck>
@@ -260,8 +268,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
                 <TD>
                 <INPUT TYPE='checkbox' NAME='selexcheck' onclick='enableselex(this)' $selexcheck>
                 Particle Correlation Cutoff<BR>
-                Use Values Above:<INPUT TYPE='text' NAME='selexon' $selexdisable VALUE='$selexval' SIZE='4'>
-                (between 0.0 - 1.0)
+                (between 0.0 - 1.0)<BR>
+                Use Values Above:<INPUT TYPE='text' NAME='selexonmin' $selexdisable VALUE='$selexminval' SIZE='4'><BR>
+                Use Values Below:<INPUT TYPE='text' NAME='selexonmax' $selexdisable VALUE='$selexmaxval' SIZE='4'>
                 </TD>
         </TR>\n";
         }	
@@ -319,6 +328,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
         </FORM>
         </CENTER>\n";
 	writeBottom();
+	exit;
 }
 
 function runMakestack() {
@@ -330,67 +340,48 @@ function runMakestack() {
 
         //make sure a session was selected
         $description=$_POST['description'];
-        if (!$description) {
-                createMakestackForm("<B>ERROR:</B> Enter a brief description of the stack");
-                exit;
-        }
+        if (!$description) createMakestackForm("<B>ERROR:</B> Enter a brief description of the stack");
 
         //make sure a session was selected
         $outdir=$_POST['outdir'];
-        if (!$outdir) {
-                createMakestackForm("<B>ERROR:</B> Select an experiment session");
-                exit;
-        }
+        if (!$outdir) createMakestackForm("<B>ERROR:</B> Select an experiment session");
+
         // make sure outdir ends with '/'
         if (substr($outdir,-1,1)!='/') $outdir.='/';
 
         // get selexon runId
         $prtlrunId=$_POST['prtlrunId'];
-        if (!$prtlrunId) {
-                createMakestackForm("<B>ERROR:</B> No particle coordinates in the database");
-                exit;
-        }
+        if (!$prtlrunId) createMakestackForm("<B>ERROR:</B> No particle coordinates in the database");
         
         $invert = ($_POST['density']=='invert') ? '' : 'noinvert';
+        $normalize = ($_POST['normalize']=='on') ? '' : 'nonorm';
         $phaseflip = ($_POST['phaseflip']=='on') ? 'phaseflip' : '';
         $inspected = ($_POST['inspected']=='on') ? 'inspected' : '';
         $commit = ($_POST['commit']=="on") ? 'commit' : '';
+
 	// binning amount
 	$bin=$_POST['bin'];
 	if ($bin) {
-	        if (!is_numeric($bin)) {
-		        createMakestackForm("<B>ERROR:</B> Binning amount must be 2, 4, 8, 16, 32...");
-			exit;
-		}
+	        if (!is_numeric($bin)) createMakestackForm("<B>ERROR:</B> Binning amount must be 2, 4, 8, 16, 32...");
 	}
 
         // box size
         $boxsize = $_POST['boxsize'];
-        if (!$boxsize) {
-                createMakestackForm("<B>ERROR:</B> Specify a box size");
-                exit;
-        }
-        if (!is_numeric($boxsize)) {
-                createMakestackForm("<B>ERROR:</B> Box size must be an integer");
-                exit;
-        }
+        if (!$boxsize) createMakestackForm("<B>ERROR:</B> Specify a box size");
+        if (!is_numeric($boxsize)) createMakestackForm("<B>ERROR:</B> Box size must be an integer");
 
         // ace cutoff
         if ($_POST['acecheck']=='on') {
                 $ace=$_POST['ace'];
-                if ($ace > 1 || $ace < 0 || !$ace) {
-                        createMakestackForm("<B>ERROR:</B> Ace cutoff must be between 0 & 1");
-                        exit;
-                }
+                if ($ace > 1 || $ace < 0 || !$ace) createMakestackForm("<B>ERROR:</B> Ace cutoff must be between 0 & 1");
         }
 
         // selexon cutoff
         if ($_POST['selexcheck']=='on') {
-                $selexon=$_POST['selexon'];
-                if ($selexon > 1 || $selexon < 0 || !$selexon) {
-                        createMakestackForm("<B>ERROR:</B> Selexon cutoff must be between 0 & 1");
-                        exit;
-                }
+                $selexonmin=$_POST['selexonmin'];
+                $selexonmax=$_POST['selexonmax'];
+                if ($selexonmin > 1 || $selexonmin < 0) createMakestackForm("<B>ERROR:</B> Selexon Min cutoff must be between 0 & 1");
+                if ($selexonmax > 1 || $selexonmax < 0) createMakestackForm("<B>ERROR:</B> Selexon Max cutoff must be between 0 & 1");
         }
 
         // check defocus cutoffs
@@ -408,13 +399,15 @@ function runMakestack() {
         $command.="outdir=$outdir ";
         $command.="prtlrunId=$prtlrunId ";
         if ($invert) $command.="noinvert ";
+        if ($normalize) $command.="nonorm ";
         if ($phaseflip) $command.="phaseflip ";
         if ($inspected) $command.="inspected ";
         if ($commit) $command.="commit ";
         $command.="boxsize=$boxsize ";
 	if ($bin) $command.="bin=$bin ";
         if ($ace) $command.="ace=$ace ";
-        if ($selexon) $command.="selexonmin=$selexon ";
+        if ($selexonmin) $command.="selexonmin=$selexonmin ";
+        if ($selexonmax) $command.="selexonmax=$selexonmax ";
         if ($dfmin) $command.="mindefocus=$dfmin ";
         if ($dfmax) $command.="maxdefocus=$dfmax ";
         if ($fileformat) $command.="spider ";
@@ -438,13 +431,15 @@ function runMakestack() {
         <TR><TD>description</TD><TD>$description</TD></TR>
         <TR><TD>selexonId</TD><TD>$prtlrunId</TD></TR>
         <TR><TD>invert</TD><TD>$invert</TD></TR>
+        <TR><TD>nonorm</TD><TD>$nonorm</TD></TR>
         <TR><TD>phaseflip</TD><TD>$phaseflip</TD></TR>
         <TR><TD>inspected</TD><TD>$inspected</TD></TR>
         <TR><TD>commit</TD><TD>$commit</TD></TR>
         <TR><TD>box size</TD><TD>$boxsize</TD></TR>
         <TR><TD>binning</TD><TD>$bin</TD></TR>
         <TR><TD>ace cutoff</TD><TD>$ace</TD></TR>
-        <TR><TD>selexon cutoff</TD><TD>$selexon</TD></TR>
+        <TR><TD>selexonmin cutoff</TD><TD>$selexonmin</TD></TR>
+        <TR><TD>selexonmax cutoff</TD><TD>$selexonmax</TD></TR>
         <TR><TD>minimum defocus</TD><TD>$dfmin</TD></TR>
         <TR><TD>maximum defocus</TD><TD>$dfmax</TD></TR>
         <TR><TD>spider</TD><TD>$fileformat</TD></TR>
