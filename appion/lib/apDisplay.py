@@ -15,7 +15,7 @@ def printWarning(text):
 		f.close()
 	except:
 		print "write error"
-	print color(" !!! WARNING: "+text,"brown")
+	print colorString(" !!! WARNING: "+text,"brown")
 
 def printMsg(text):
 	"""
@@ -39,7 +39,20 @@ def printError(text):
 		f.close()
 	except:
 		print "write error"
-	raise color("\n *** FATAL ERROR ***\n"+text+"\n","red")
+	raise colorString("\n *** FATAL ERROR ***\n"+text+"\n","red")
+
+def printColor(text, colorstr):
+	"""
+	standardized log message
+	"""
+	try:
+		f = open("function.out","a")
+		f.write(" ... "+text+"\n")
+		f.close()
+	except:
+		print "write error"
+	print colorString(text, colorstr)
+	
 
 def shortenImageName(imgname):
 	"""
@@ -170,17 +183,17 @@ def colorType(val):
 	colors a value based on type
 	"""
 	if val == None:
-		return color("None","red")
+		return colorString("None","red")
 	elif val == True:
-		return color("True","purple")
+		return colorString("True","purple")
 	elif val == False:
-		return color("False","purple")
+		return colorString("False","purple")
 	elif type(val) == type(0.33):
-		return color(val,"cyan")
+		return colorString(val,"cyan")
 	elif type(val) == type(512):
-		return color(val,"green")
+		return colorString(val,"green")
 	elif type(val) == type("hello"):
-		return color("'"+val+"'","brown")	
+		return colorString("'"+val+"'","brown")	
 	return val
 
 def colorProb(num,red=0.50,green=0.80):
@@ -191,21 +204,24 @@ def colorProb(num,red=0.50,green=0.80):
 		return None
 	elif(num >= green and num <= 1):
 		numstr = "%1.3f" % num
-		return color(numstr,"green")
+		return colorString(numstr,"green")
 	elif(num < red and num >= 0):
 		numstr = "%1.3f" % num
-		return color(numstr,"red")
+		return colorString(numstr,"red")
 	elif num >= red and num < green:
 		numstr = "%1.3f" % num
-		return color(numstr,"brown")
+		return colorString(numstr,"brown")
 	elif num < 0:
 		numstr = "%2.2f" % num
-		return color(numstr,"purple")		
+		return colorString(numstr,"purple")		
 	else:
 		numstr = "%2.2f" % num
-		return color(numstr,"blue")
+		return colorString(numstr,"blue")
 
 def color(text, fg, bg=None):
+	return colorString(text, fg, bg)
+
+def colorString(text, fg, bg=None):
 	"""Return colored text.
 	Uses terminal color codes; set avk_util.enable_color to 0 to
 	return plain un-colored text. If fg is a tuple, it's assumed to
@@ -270,13 +286,13 @@ def matlabError():
 		env['PYTHONPATH'] = "/usr/lib/python2.4/site-packages:" + env['PYTHONPATH']
 	env['LD_LIBRARY_PATH'] = "/ami/sw/packages/matlab73/bin/glnx86:/lib:/usr/lib"
 	env['LM_LICENSE_FILE'] = "/ami/sw/packages/matlab/etc/license.dat"
-	print color("MATLAB failed to open.\nCheck your environmental variables:","red")
+	print colorString("MATLAB failed to open.\nCheck your environmental variables:","red")
 	if os.path.basename(os.environ.get("SHELL")) == "bash":
 		for var in env.keys():
-			print color(" export "+var+"="+env[var],"red")
+			print colorString(" export "+var+"="+env[var],"red")
 	else:
 		for var in env.keys():
-			print color(" setenv "+var+" "+env[var],"red")
+			print colorString(" setenv "+var+" "+env[var],"red")
 	print "sometimes the PATH is the problem move matlab73/bin to the end"
 	sys.exit(1)
 
