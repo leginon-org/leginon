@@ -334,32 +334,31 @@ def getCTFParamsForImage(imgdata):
 	ctfparams = appiondb.query(ctfq)
 	return ctfparams
 
-def getAceValues(imgdata, params):
-	# if already got ace values in a previous step,
-	# don't do all this over again.
-	if 'hasace' in params and params['hasace'] is True:
-		return None
-
-	ctfq = appionData.ApCtfData()
-	ctfq['dbemdata|AcquisitionImageData|image']= imgdata.dbid
-	ctfparams = appiondb.query(ctfq)
-	
+def getBestCtfParams(ctfparams):
 	if ctfparams is None:
-		return None
-
-	params['kv']=(imgdata['scope']['high tension'])/1000
-
-	# loop through each of the ace runs & get the params with highest confidence value
+		return None, None
 	bestconf = 0.0
 	bestctfp = None
 	for ctfp in ctfparams:
 		conf1 = ctfp['confidence']
 		conf2 = ctfp['confidence_d']
-		conf = max(conf1,conf2)
-		if conf is not None and conf > bestconf:
-			bestconf = conf
-			bestctfp = ctfp
-	
+		if conf1 > 0 and conf2 > 0:
+			#conf = max(conf1,conf2)
+			conf = math.sqrt(conf1*conf2)
+			if conf > bestconf:
+				bestconf = conf
+				bestctfp = ctfp
+	return bestctfp, bestconf
+
+def getAceValues(imgdata, params):
+	# if already got ace values in a previous step,
+	# don't do all this over again.
+	if 'hasace' in params and params['hasace'] is True:
+		return None
+	params['kv']=(imgdata['scope']['high tension'])/1000
+
+	ctfparams = getCTFParamsForImage(imgdata)
+	bestctfp, bestconf = getBestCtfParams(ctfparams)
 	if bestctfp is None:
 		return None
 

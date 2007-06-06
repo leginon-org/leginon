@@ -4,6 +4,7 @@
 import os
 import sys
 import re
+import math
 import cPickle
 import time
 #appion
@@ -51,16 +52,15 @@ class aceLoop(appionLoop.AppionLoop):
 		"""
 		if self.params['reprocess'] is None:
 			return None
-		self.ctfparams = apCtf.getCTFParamsForImage(imgdata)
-		if self.ctfparams is None:
+		ctfparams = apCtf.getCTFParamsForImage(imgdata)
+		ctfvalue, conf = apCtf.getBestCtfParams(ctfparams)
+		if ctfvalue is None:
 			return None
-		for ctfvalue in self.ctfparams:
-			if(ctfvalue['confidence'] > self.params['reprocess'] or
-			  ctfvalue['confidence_d'] > self.params['reprocess']):
-				return False
-			else:
-				#apDisplay.printMsg("reprocessing "+apDisplay.short(imgdata['filename']))
-				return True
+
+		if conf > self.params['reprocess']:
+			return False
+		else:
+			return True
 
 
 	def processImage(self, imgdata):
