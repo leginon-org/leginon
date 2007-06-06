@@ -54,7 +54,7 @@ def printHelp():
 	print "limit=<n>            : stop boxing particles after total particles gets above limit (no limits by default)"
 	print "                     : Example <limit=10000>"
 	print "commit               : store particles to database"
-	print "sessionnanme         : name of the session (example: 07jul01c)"
+	print "sessionname         : name of the session (example: 07jul01c)"
 	print "nonorm               : do not normalize images"
 	print "medium               : medium of images, carbon or ice (sets noinvert)"
 	print "defocpair            : Get particle coords for the focal pair of the image that was picked in runid"
@@ -85,7 +85,7 @@ def createDefaults():
 	params['description']=None
 	params['selexonId']=None
 	params['sessionnanme']=None
-	params['medium']=True
+	params['medium']=None
 	params['normalize']=True
 	params['selexonmin']=None
 	params['selexonmax']=None
@@ -192,7 +192,7 @@ def parseInput(args):
 	return params
 
 def checkParamConflicts(params):
-	if params['medium'] != "carbon" and params['medium'] != "ice":
+	if params['medium'] != "carbon" and params['medium'] != "ice" and params['medium'] != None:
 		apDisplay.printError("medium must be either 'carbon' or 'ice'")
 	# if saving to the database, stack must be a single file
 	if params['commit'] and not params['single']:
