@@ -13,6 +13,7 @@ import apImage
 import apDisplay
 import apDatabase
 import apCtf
+import apMatlab
 #import apParam
 #import apLoop
 try:
@@ -25,7 +26,7 @@ class aceLoop(appionLoop.AppionLoop):
 		self.processdirname = "ace"
 
 	def preLoopFunctions(self):
-		apCtf.checkMatlabPath(self.params)
+		apMatlab.checkMatlabPath(self.params)
 		acepath = os.path.join(os.getcwd(), self.functionname+".py")
 		if not os.path.isfile(acepath):
 			apDisplay.printWarning("'"+self.functionname+".py' usually needs to be run in the "+\
@@ -37,7 +38,7 @@ class aceLoop(appionLoop.AppionLoop):
 		except:
 			apDisplay.matlabError()
 		apCtf.mkTempDir(self.params['tempdir'])
-		apCtf.setAceConfig(self.matlab, self.params)
+		apMatlab.setAceConfig(self.matlab, self.params)
 
 	def postLoopFunctions(self):
 		pymat.close(self.matlab)
@@ -52,8 +53,7 @@ class aceLoop(appionLoop.AppionLoop):
 		"""
 		if self.params['reprocess'] is None:
 			return None
-		ctfparams = apCtf.getCTFParamsForImage(imgdata)
-		ctfvalue, conf = apCtf.getBestCtfParams(ctfparams)
+		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
 		if ctfvalue is None:
 			return None
 
@@ -61,7 +61,6 @@ class aceLoop(appionLoop.AppionLoop):
 			return False
 		else:
 			return True
-
 
 	def processImage(self, imgdata):
 		# RESTART MATLAB EVERY 500 IMAGES OR IT RUNS OUT OF MEMORY
@@ -77,13 +76,15 @@ class aceLoop(appionLoop.AppionLoop):
 			'cs':      self.params['cs'],
 			'tempdir': self.params['tempdir'],
 		}
-		apCtf.setScopeParams(self.matlab, scopeparams)
+		apMatlab.setScopeParams(self.matlab, scopeparams)
 		### RUN ACE
-		self.ctfparams = apCtf.runAce(self.matlab, imgdata, self.params)
+		self.ctfvalue = apMatlab.runAce(self.matlab, imgdata, self.params)
 
 
 	def commitToDatabase(self, imgdata):
-		apCtf.commitAceParamToDatabase(imgdata, self.matlab, self.ctfparams, self.params)
+		expid = int(imgdata['session'].dbid)
+		apCtf.insertAceParams(self.params, expid)
+		apCtf.commitCtfValueToDatabase(imgdata, self.matlab, self.ctfvalue, self.params)
 
 	def specialDefaultParams(self):
 		self.params['edgethcarbon']=0.8
@@ -103,7 +104,7 @@ class aceLoop(appionLoop.AppionLoop):
 		self.params['reprocess']=None
 		self.params['matdir']=None
 		self.params['opimagedir']=None
-		self.params['useestnominal']=False
+		self.params['newnominal']=False
 
 	def specialCreateOutputDirs(self):
 		self.params['matdir']         = os.path.join(self.params['rundir'],"matfiles")
@@ -167,8 +168,8 @@ class aceLoop(appionLoop.AppionLoop):
 				self.params['nominal']=float(elements[1])
 			elif (elements[0]=='reprocess'):
 				self.params['reprocess']=float(elements[1])
-			elif (elements[0]=='useestnominal'):
-				self.params['useestnominal']=True
+			elif (elements[0]=='newnominal'):
+				self.params['newnominal']=True
 
 	def specialParamConflicts(self):
 		if self.params['nominal'] is not None and (self.params['nominal'] > 0 or self.params['nominal'] < -15e-6):

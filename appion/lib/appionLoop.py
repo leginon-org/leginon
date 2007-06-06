@@ -81,7 +81,6 @@ class AppionLoop(object):
 		### start the loop
 		notdone=True
 		while notdone:
-			self._removeProcessedImages()
 			for imgdata in self.imgtree:
 
 				#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
@@ -595,19 +594,28 @@ class AppionLoop(object):
 			print len(self.params['mrcfileroot']), self.params['mrcfileroot']
 			print self.params['alldbimages'], self.params['dbimages']
 			apDisplay.printError("no files specified")
-		self.params['session']   = self.imgtree[0]['session']
-
+		self.params['session'] = self.imgtree[0]['session']
 		self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
+		precount = len(self.imgtree)
+		apDisplay.printMsg("found "+str(precount)+" in "+apDisplay.timeString(time.time()-startt))
+
+		### REMOVE PROCESSED IMAGES
+		apDisplay.printMsg("remove processed images")
+		self._removeProcessedImages()
+
+		### SHUFFLE
 		if self.params['shuffle'] is True:
 			self.imgtree = self._shuffleTree(self.imgtree)
 			apDisplay.printMsg("shuffling images")
-		precount = len(self.imgtree)
-		apDisplay.printMsg("found "+str(precount)+" in "+apDisplay.timeString(time.time()-startt))
+
+		### LIMIT NUMBER
 		if self.params['limit'] is not None:
 			lim = int(self.params['limit'])
-			self.imgtree = self.imgtree[:lim]
+			if len(self.imgtree) > lim:
+				apDisplay.printMsg("limiting number of images to "+str(lim))
+				self.imgtree = self.imgtree[:lim]
 			self.params['nowait'] = True
-			apDisplay.printMsg("limiting number of images to "+str(lim))
+			
 		self.stats['imagecount'] = len(self.imgtree)
 
 	def _alreadyProcessed(self, imgdata):
@@ -639,7 +647,7 @@ class AppionLoop(object):
 		and checks if it is okay to start processing image
 		"""
 		#calc images left
-		self.stats['imagesleft'] = self.stats['imagecount'] - self.stats['count'] - self.stats['skipcount']
+		self.stats['imagesleft'] = self.stats['imagecount'] - self.stats['count']
 
 		#only if an image was processed last
 		if(self.stats['lastcount'] != self.stats['count']):
@@ -673,6 +681,11 @@ class AppionLoop(object):
 		"""
 		print summary statistics on last image
 		"""
+		### COP OUT
+		if self.params['background'] is True:
+			self.stats['count'] += 1
+			return
+
 		### THIS NEEDS TO BECOME MUCH MORE GENERAL, e.g. Peaks
 		tdiff = time.time()-self.stats['startloop']
 		if not self.params['continue'] or tdiff > 0.3:
@@ -752,12 +765,12 @@ class AppionLoop(object):
 
 	def _removeProcessedImages(self):
 		startlen = len(self.imgtree)
-		i = 0
 		donecount = 0
 		reproccount = 0
 		rejectcount = 0
-		while i < len(self.imgtree):
-			imgdata = self.imgtree[i]
+		self.stats['skipcount'] = 0
+		newimgtree = []
+		for imgdata in self.imgtree:
 			imgname = imgdata['filename']
 			skip = False
 
@@ -776,22 +789,21 @@ class AppionLoop(object):
 				skip = True
 
 			if skip is True:
-				if not self.stats['lastimageskipped']:
+				if self.stats['skipcount'] == 0:
 					sys.stderr.write("skipping images\n")
 				elif self.stats['skipcount'] % 80 == 0:
 					sys.stderr.write(".\n")
 				else:
 					sys.stderr.write(".")
-				self.stats['lastimageskipped'] = True
 				self.stats['skipcount'] += 1
-				del self.imgtree[i]
-				i -= 1
-			i += 1
+			else:
+				newimgtree.append(imgdata)
 		if self.stats['skipcount'] > 0:
+			self.imgtree = newimgtree
 			sys.stderr.write("\n")
 			apDisplay.printWarning("skipped "+str(self.stats['skipcount'])+" of "+str(startlen)+" images")
-			apDisplay.printMsg("("+str(reproccount)+" pass reprocess criteria | "+str(rejectcount)+\
-				" rejected | "+str(donecount)+" in donedict)")
+			apDisplay.printMsg("( "+str(reproccount)+" pass reprocess criteria | "+str(rejectcount)+\
+				" rejected | "+str(donecount)+" in donedict )")
 
 	def _printLine(self):
 		print "\t------------------------------------------"

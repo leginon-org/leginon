@@ -74,7 +74,6 @@ def createDefaults():
 	params["inspected"]=None
 	params['inspectfile']=None
 	params["phaseflip"]=False
-	params["hasace"]=False
 	params["apix"]=0
 	params["kv"]=0
 	params["noinvert"]=False
@@ -250,18 +249,9 @@ def checkPairInspectDB(imgdict,params):
 			keep=True
 	return(keep)
 
-def checkAce():
-	conf_d=params["conf_d"]
-	conf=params["conf"]
-	thresh=params["ace"]
-	# if either conf_d or confidence are above threshold, use this image
-	if (conf_d>=thresh or conf>=thresh):
-		return True
-	return False
-
 def batchBox(params, imgdict):
 	imgname = imgdict['filename']
-	print "\nprocessing:",apDisplay.short(imgname)
+	print "processing:",apDisplay.short(imgname)
 	input  = os.path.join(params["filepath"], imgname+".mrc")
 	output = os.path.join(params["outdir"], imgname+".hed")
 	apParam.createDirectory(params["outdir"], warning=False)
@@ -305,7 +295,7 @@ def batchBox(params, imgdict):
 		else: 
 	 		cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(input, dbbox, output)
 	
-		print "boxing",nptcls,"particles"
+		apDisplay.printMsg("boxing "+str(nptcls)+" particles")
 		f=os.popen(cmd)
 		f.close()
 		return(nptcls)
@@ -322,7 +312,8 @@ def eliminateMinMaxCCParticles(particles,params):
 			eliminated += 1
 		else:
 			newparticles.append(prtl)
-	print eliminated,"particle(s) eliminated due to selexonmin or selexonmax"
+	if eliminated > 0:
+		apDisplay.printMsg(str(eliminated)+" particle(s) eliminated due to min or max correlation cutoff")
 	return newparticles
 
 def saveParticles(particles,shift,dbbox,params,imgdict):
@@ -348,21 +339,24 @@ def saveParticles(particles,shift,dbbox,params,imgdict):
 					apdb.insert(stackpq)
 		else:
 			eliminated+=1
-	if eliminated>0:
-		print eliminated, "particle(s) eliminated because out of bounds"
+	if eliminated > 0:
+		apDisplay.printMsg(str(eliminated)+" particle(s) eliminated because out of bounds")
 	#write boxfile
 	boxfile=open(dbbox,'w')
 	boxfile.writelines(plist)
 	boxfile.close()
 	
-def phaseFlip(params,imgdict):
-	imgname = imgdict['filename']
-	input=os.path.join(params["outdir"], imgname+".hed")
-	output=os.path.join(params["outdir"], imgname+".ctf.hed")
+def phaseFlip(imgdata, params):
+	imgname = imgdata['filename']
+	infile  = os.path.join(params['outdir'], imgname+".hed")
+	outfile = os.path.join(params['outdir'], imgname+".ctf.hed")
+	voltage = (imgdata['scope']['high tension'])/1000
+	apix    = apDatabase.getPixelSize(imgdata)
+	defocus = -1.0e6 * apCtf.getBestDefocusForImage(imgdata)
 
-	cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" %(input,\
-	  output,params["df"],params["kv"],params["apix"])
-	print "phaseflipping particles with defocus",round(params["df"],3),"microns"
+	cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" % ( infile,\
+	  outfile, defocus, voltage, apix)
+	apDisplay.printMsg("phaseflipping particles with defocus "+str(round(defocus,3))+" microns")
 
 	f=os.popen(cmd)
 	f.close()
@@ -395,7 +389,7 @@ def singleStack(params,imgdict):
 	if params['spider'] is True:
 		cmd += " spiderswap"
 
- 	print "appending particles to: ",output
+ 	apDisplay.printMsg("appending particles to stack: "+output)
 	# run proc2d & get number of particles
 	f=os.popen(cmd)
  	lines=f.readlines()
@@ -433,40 +427,42 @@ def writeBoxLog(commandline):
 # since we're using a batchboxer approach, we must first get a list of
 # images that contain particles
 def getImgsFromSelexonId(params):
+	startt = time.time()
 	print "Finding images that have particles for selection run: id="+str(params['selexonId'])
 
 	# get selection run id
-	selexonrun=apdb.direct_query(data.ApSelectionRunData,params['selexonId'])
+	selexonrun=apdb.direct_query(data.ApSelectionRunData, params['selexonId'])
 	if not (selexonrun):
 		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' is not in database")
 	
 	# from id get the session
-	sessionid=db.direct_query(data.SessionData, selexonrun['dbemdata|SessionData|session'])
+	sessionid = db.direct_query(data.SessionData, selexonrun['dbemdata|SessionData|session'])
 	# get all images from session
-	dbimgq=data.AcquisitionImageData(session=sessionid)
-	dbimginfo=db.query(dbimgq, readimages=False)
+	dbimgq = data.AcquisitionImageData(session=sessionid)
+	dbimginfo = db.query(dbimgq, readimages=False)
 	if not (dbimginfo):
 		apDisplay.printError("no images associated with this runId")
 
 	# for every image, find corresponding image entry in the particle database
 	dbimglist=[]
 	for img in dbimginfo:
-		pimgq=appionData.ApParticleData()
-		pimgq['dbemdata|AcquisitionImageData|image']=img.dbid
-		pimgq['selectionrun']=selexonrun
-		pimg=apdb.query(pimgq)
+		pimgq = appionData.ApParticleData()
+		pimgq['dbemdata|AcquisitionImageData|image'] = img.dbid
+		pimgq['selectionrun'] = selexonrun
+		pimg = apdb.query(pimgq, results=1)
 		if pimg:
 			dbimglist.append(img)
+	apDisplay.printMsg("completed in "+apDisplay.timeString(time.time()-startt))
 	return (dbimglist)
 
 def getImgsDefocPairFromSelexonId(params):
-	print "finding Leginon Images that have particles for selexon run:", params['selexonId']
+	startt = time.time()
+	print "Finding images that have particles for selexon run:", params['selexonId']
 
 	# get selection run id
 	selexonrun=apdb.direct_query(data.ApSelectionRunData,params['selexonId'])
 	if not (selexonrun):
-		print "\nError: specified runId '"+str(params['selexonId'])+"' not in database\n"
-		sys.exit()
+		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' not in database")
 	
 	# from id get the session
 	sessionid=db.direct_query(data.SessionData,selexonrun['dbemdata|SessionData|session'])
@@ -474,8 +470,7 @@ def getImgsDefocPairFromSelexonId(params):
 	dbimgq=data.AcquisitionImageData(session=sessionid)
 	dbimginfo=db.query(dbimgq,readimages=False)
 	if not (dbimginfo):
-		print "\nError: no images associated with this runId\n"
-		sys.exit()
+		apDisplay.printError("no images associated with this runId")
 
 	# for every image, find corresponding image entry in the particle database
 	dbimglist=[]
@@ -496,7 +491,8 @@ def getImgsDefocPairFromSelexonId(params):
 				params['sibpairs'][simg['dbemdata|AcquisitionImageData|image2']] = simg['dbemdata|AcquisitionImageData|image1']
 				dbimglist.append(siblingimage)
 			else:
-				print "Warning: No shift data for ",img['filename']
+				apDisplay.printWarning("no shift data for "+apDisplay.short(img['filename']))
+	apDisplay.printMsg("completed in "+apDisplay.timeString(time.time()-startt))
 	return (dbimglist)
 
 def insertStackParams(params):
@@ -558,6 +554,50 @@ def insertStackParams(params):
 	# get the stack Id
 	params['stackId']=stackparams
 
+
+def rejectImage(imgdata, params):
+	shortname = apDisplay.short(imgdata['filename'])
+
+	### check if the image has inspected, in file or in database
+	if params["inspectfile"] and checkInspectFile(imgdict) is False:
+		apDisplay.printColor(shortname+".mrc has been rejected in manual inspection file\n","cyan")
+		return False
+	if params["inspected"]:
+		if params['defocpair'] and checkPairInspectDB(imgdict, params) is False:
+			apDisplay.printColor(shortname+".mrc has been rejected by manual defocpair inspection\n","cyan")
+			return False
+		elif checkInspectDB(imgdict) is False:
+			apDisplay.printColor(shortname+".mrc has been rejected by manual inspection\n","cyan")
+			return False
+
+	### Get CTF values
+	ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
+ 	if ctfvalue is None:
+		if params["ace"] or params['mindefocus'] or params['maxdefocus'] or params['phaseflip']:
+			apDisplay.printColor(shortname+".mrc was rejected because it has no ACE values\n","cyan")
+			return False
+		else:
+			apDisplay.printWarning(shortname+".mrc has no ACE values")
+			return True
+	apCtf.ctfValuesToParams(ctfvalue, params)
+
+	### check that ACE estimation is above confidence threshold
+	if params["ace"] and conf < params["ace"]:
+			apDisplay.printColor(shortname+".mrc is below ACE threshold (conf="+str(round(conf,3))+")\n","cyan")
+			return False
+
+	### skip micrograph that have defocus above or below min & max defocus levels
+	if params['mindefocus'] and params['df'] > params['mindefocus']:
+		apDisplay.printColor(shortname+".mrc rejected because defocus ("+str(round(params['df'],3))+\
+			") is less than specified in mindefocus ("+str(params['mindefocus'])+")\n","cyan")
+		return False
+	if params['maxdefocus'] and params['df'] < params['maxdefocus']:
+		apDisplay.printColor(shortname+".mrc rejected because defocus ("+str(round(params['df'],3))+\
+			") is greater than specified in maxdefocus ("+str(params['maxdefocus'])+")\n","cyan")
+		return False
+
+	return True
+
 #-----------------------------------------------------------------------
 
 if __name__ == '__main__':
@@ -599,8 +639,6 @@ if __name__ == '__main__':
 		apDisplay.printMsg("output directory: "+params['outdir'])
 		#params['rundir'] = os.path.join(params['outdir'], params['runid'])
 
-
-
 	# if making a single stack, remove existing stack if exists
 	if params["single"]:
 		stackfile=os.path.join(params["outdir"], os.path.splitext(params["single"])[0])
@@ -620,8 +658,6 @@ if __name__ == '__main__':
  		if (os.path.isfile(p_logfile)):
 			os.remove(p_logfile)
 		params["particle"]=0
-
-
 		
 	# get list of input images, since wildcards are supported
 	else:
@@ -630,9 +666,9 @@ if __name__ == '__main__':
 		imglist=params["imgs"]
 		images=[]
 		for img in imglist:
-			imageq=data.AcquisitionImageData(filename=img)
-			imageresult=db.query(imageq, readimages=False)
-			images=images+imageresult
+			imageq = data.AcquisitionImageData(filename=img)
+			imageresult = db.query(imageq, readimages=False)
+			images = images+imageresult
 		params['session']=images[0]['session']['name']
 		params['sessionname']=images[0]['session']['name']
 			
@@ -641,91 +677,41 @@ if __name__ == '__main__':
 	totptcls=0
 	#while images:
 	for imgdict in images:
-		#img = images.pop(0)
-				
-		params['apix'] = apDatabase.getPixelSize(imgdict)
-
  		# get session ID
-		params['session']=images[0]['session']['name']
-		params['sessionname']=imgdict['session']['name']
-		params['filepath']=imgdict['session']['image path']
+		params['session'] = images[0]['session']['name']
+		params['sessionname'] = imgdict['session']['name']
+		params['filepath'] = imgdict['session']['image path']
 		imgname = imgdict['filename']
 
 		# first remove any existing boxed files
-		stackfile=os.path.join(params["outdir"], imgname)
-	
+		stackfile = os.path.join(params["outdir"], imgname)
 		for ext in ("hed", "img"):
 			if os.path.isfile(stackfile+"."+ext):
 				os.remove(stackfile+"."+ext)
 
-		#this is the thing the resets the ACE lookup
-		params["hasace"] = False
+		keepimage = rejectImage(imgdict, params)
+		if keepimage is False:
+			continue
 
-		# check if the image has inspected, in file or in database
-		if params["inspectfile"]:
-			goodimg=checkInspectFile(imgdict)
-			if goodimg is False:
-				print imgname+".mrc has been rejected in manual inspection file"
-				continue
-
-		if params["inspected"]:
-			if params['defocpair']:
-				goodimg = checkPairInspectDB(imgdict, params)
-			else:
-				goodimg = checkInspectDB(imgdict)
-			if goodimg is False:
-				print imgname+".mrc has been rejected by manual inspection"
-				continue
-		
-		# check that ACE estimation is above confidence threshold
- 		if params["ace"]:
-			# find ace values in database
- 			apCtf.getAceValues(imgdict, params)
-			if params["hasace"] is False: 
-				print imgname+".mrc has no ACE values"
-				continue
-			# if has ace values, see if above threshold
-			goodimg = checkAce()
-			if goodimg is False:
-				print imgname+".mrc is below ACE threshold"
-				continue
-
-		# skip micrograph that have defocus above or below min/max defocus levels
-		if params['mindefocus']:
-			apCtf.getAceValues(imgdict, params) # find ace values in database
-			print params['mindefocus'],params['df']
-			if params['df'] > params['mindefocus']:
-				print imgname+".mrc rejected because defocus(",params['df'],") is less than specified in mindefocus (",params['mindefocus'],")"
-				continue
-	
-		if params['maxdefocus']:
-			if params['df'] < params['maxdefocus']:
-				print imgname+".mrc rejected because defocus(",params['df'],") greater than specified in maxdefocus (",params['maxdefocus'],")"
-				continue
-					
 		# box the particles
-		totptcls+=batchBox(params,imgdict)
+		totptcls += batchBox(params,imgdict)
 		
 		if not os.path.isfile(os.path.join(params["outdir"], imgname+".hed")):
-			apDisplay.printWarning("no particles were boxed from "+apDisplay.short(imgname))
+			apDisplay.printWarning("no particles were boxed from "+apDisplay.short(imgname)+"\n")
 			continue
 
 		# phase flip boxed particles if requested
 		if params["phaseflip"]:
-			apCtf.getAceValues(imgdict, params) # find ace values in database
-			if params["hasace"] is False: 
-				print imgname+".mrc has no ACE values. \nSkipping addition to single stack"
-				continue
-			phaseFlip(params,imgdict) # phase flip stack file
+			phaseFlip(imgdict, params) # phase flip stack file
 		
 		# add boxed particles to a single stack
 		if params["single"]:
-			singleStack(params,imgdict)
+			singleStack(params, imgdict)
 		
 		# limit total particles if limit is specified
-		print "Total particles so far =",totptcls
+		print str(totptcls)+" total particles so far\n"
 		if params['limit']:
-			if totptcls>params['limit']:
+			if totptcls > params['limit']:
 				break
 
 		tmpboxfile = os.path.join(params['outdir'], "temporaryParticlesFromDB.box")
