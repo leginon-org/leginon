@@ -47,7 +47,7 @@ def getSpecificImagesFromDB(imglist):
 		imgtree.append(imgres[0])
 	return imgtree
 
-def getImagesFromDB(session,preset):
+def getImagesFromDB(session, preset):
 	"""
 	returns list of image names from DB
 	"""
