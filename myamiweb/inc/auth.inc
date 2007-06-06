@@ -24,7 +24,7 @@ class authlib extends config_class {
 
 		if (!$username || !$password || !$password2 || !$name ) {
 
-			return $this->error[14];
+			return $this->error['fields_empty'];
 
 		}
 
@@ -32,55 +32,55 @@ class authlib extends config_class {
 
 			if (!eregi("^[a-z ]+$", $name)) {
 
-				return $this->error[8];
+				return $this->error['name_invalid'];
 
 			}
 
 			if (!eregi("^([a-z0-9]+)([._-]([a-z0-9]+))*[@]([a-z0-9]+)([._-]([a-z0-9]+))*[.]([a-z0-9]){2}([a-z0-9])?$", $email)) {
 
-				return $this->error[4];
+				return $this->error['email_invalid'];
 
 			}
 
 			if (strlen($username) < 3) {
 
-				return $this->error[1];
+				return $this->error['username_short'];
 
 			}
 
 			if (strlen($username) > 20) {
 
-				return $this->error[2];
+				return $this->error['username_long'];
 
 			}
 
 			if (!ereg("^[[:alnum:]_-]+$", $username)) {
 
-				return $this->error[3];
+				return $this->error['username_invalid'];
 
 			}
 
 			if ($password != $password2) {
 
-				return $this->error[0];
+				return $this->error['passwd_not_match'];
 
 			}
 
 			if (strlen($password) < 3) {
 
-				return $this->error[5];
+				return $this->error['passwd_short'];
 
 			}
 
 			if (strlen($password) > 20) {
 
-				return $this->error[6];
+				return $this->error['passwd_long'];
 
 			}
 
 			if (!ereg("^[[:alnum:]_-]+$", $password)) {
 
-				return $this->error[7];
+				return $this->error['passwd_invalid'];
 
 			}
 
@@ -94,7 +94,7 @@ class authlib extends config_class {
 
 				mysql_close();
 
-				return $this->error[12];
+				return $this->error['username_exists'];
 
 			}
 
@@ -105,7 +105,7 @@ class authlib extends config_class {
 
 				mysql_close();
 
-				return $this->error[13];
+				return $this->error['username_email_exists'];
 
 			}
 
@@ -117,7 +117,7 @@ class authlib extends config_class {
 
 			if (!$is_success) {
 
-				return $this->error[16];
+				return $this->error['database_error'];
 
 			}
 
@@ -142,15 +142,13 @@ class authlib extends config_class {
 
 		if (!$username || !$password) {
 
-                        return $this->error[14];
+			return $this->error['fields_empty'];
 
-		}
-
-		else {
+		} else {
 
 			if (!eregi("^[[:alnum:]_-]+$", $username)) {
 
-				return $this->error[3];
+				return $this->error['username_invalid'];
 
 			}
 
