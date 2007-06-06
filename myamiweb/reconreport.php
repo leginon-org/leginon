@@ -66,7 +66,7 @@ $boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $st
 
 $html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 $html .= "<TR>\n";
-$display_keys = array ( 'iteration', 'ang incr', 'resolution', 'fsc', 'classes', '# particles', 'density');
+$display_keys = array ( 'iteration', 'ang incr', 'resolution', 'fsc', 'classes', '# particles', 'density','snapshot');
 foreach($display_keys as $key) {
         $html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
 }
@@ -80,6 +80,17 @@ echo "Particles: $stackparticles<BR>\n";
 echo "Initial Model: $initmodel[path]/$initmodel[name]<BR>\n";
 
 $iterations = $particle->getIterationInfo($reconId);
+
+# get list of png files in directory
+$pngfiles=array();
+$refinedir = opendir($refinerun['path']);
+while ($f = readdir($refinedir)) {
+        if (eregi('\.png$',$f)) {
+	        $pngfiles[] = $f;
+	}
+}
+
+# show info for each iteration
 foreach ($iterations as $iteration){
         $refinementData=$particle->getRefinementData($refinerun['DEF_id'], $iteration['iteration']);
 	$numclasses=$particle->getNumClasses($refinementData['DEF_id']);
@@ -107,6 +118,14 @@ foreach ($iterations as $iteration){
 	$html .= "<TD><A TARGET='blank' HREF='classinfo.php?refinement=$refinementData[DEF_id]&w=800&h=600'>$numclasses</A></TD>\n";
 	$html .= "<TD>$prtlsused</TD>\n";
 	$html .= "<TD>$iteration[volumeDensity]</TD>\n";
+	$html .= "<TD>\n";
+	foreach ($pngfiles as $snapshot) {
+	        if (eregi($iteration['volumeDensity'],$snapshot)) {
+		        $snapfile = $refinerun['path'].'/'.$snapshot;
+			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+		}
+	}
+	$html .= "</TD>\n";
 	$html .= "</TR>\n";
 }
 $html.="</TABLE>\n";

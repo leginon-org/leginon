@@ -111,9 +111,11 @@ if ($sessionId) {
   $stackruns=count($stackIds);
 
   // --- Get Reconstruction Data
-  foreach ($stackIds as $stackid) {
-          $reconIds = $particle->getReconIds($stackid);
-	  $reconruns+=count($reconIds);
+  if ($stackruns>0) {
+          foreach ($stackIds as $stackid) {
+	          $reconIds = $particle->getReconIds($stackid);
+		  $reconruns+=count($reconIds);
+	  }
   }
 
   echo"
