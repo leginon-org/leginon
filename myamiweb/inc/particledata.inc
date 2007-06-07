@@ -81,7 +81,6 @@ class particledata {
 		// update image status : 0 if rejected, 1 if keeping,
 
 		$exists=($this->getKeepStatus($imageId,$runId)) ? true : false;
-
 		if ($exists) {
 			$data = array('selectionkeep'=>$value);
 			$where = array('dbemdata|AcquisitionImageData|image'=>$imageId);
@@ -150,7 +149,7 @@ class particledata {
 	
 	function getStats ($runId, $inspect=False, $selexval=False){
 		$q="select count(p.`DEF_id`) as `totparticles`, "
-		        ."count(distinct p.`dbemdata|AcquisitionImageData|image`) as num, "
+			."count(distinct p.`dbemdata|AcquisitionImageData|image`) as num, "
 			."min(p.correlation) as `min`, "
 			."max(p.correlation) as `max`, "
 			."avg(p.correlation) as `avg`, "
@@ -325,73 +324,73 @@ class particledata {
 		return $r;
 	} 
 
-        function getRefinementRunInfo($refinementRun) {
-	        $q = "select * "
-		    ."FROM `ApRefinementRunData` WHERE `DEF_id` = '$refinementRun' ";
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0];
+	function getRefinementRunInfo($refinementRun) {
+		$q = "select * "
+				."FROM `ApRefinementRunData` WHERE `DEF_id` = '$refinementRun' ";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
 	}
 
-        function getInitModelInfo ($modelId) {
-	        $q = "SELECT * "
-		    ."FROM `ApInitialModelData` WHERE `DEF_id` = '$modelId'";
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0];
+	function getInitModelInfo ($modelId) {
+		$q = "SELECT * "
+				."FROM `ApInitialModelData` WHERE `DEF_id` = '$modelId'";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
 	}
 
-        function getSymInfo ($symId){
-	        $q = "SELECT * "
-		    ."FROM `ApSymmetryData` WHERE `DEF_id` = '$symId'";
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0];
+  function getSymInfo ($symId){
+	  $q = "SELECT * "
+				."FROM `ApSymmetryData` WHERE `DEF_id` = '$symId'";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
 	}
 
-        function getResolutionInfo ($resId) {
-	        $q = "SELECT * "
-		   ."FROM `ApResolutionData` WHERE `DEF_id` = '$resId'";
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0];
+	function getResolutionInfo ($resId) {
+		$q = "SELECT * "
+			 ."FROM `ApResolutionData` WHERE `DEF_id` = '$resId'";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
 	}
 		
-        function getIterationInfo ($reconId) {
-	        $q = "SELECT * "
-		    ."FROM `ApRefinementData` r "
-		    ."LEFT JOIN `ApRefinementParamsData` p "
-		    ."ON (r.`REF|ApRefinementParamsData|refinementParams` = p.`DEF_id`) "
-		    ."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconId' ";
+	function getIterationInfo ($reconId) {
+		$q = "SELECT * "
+			."FROM `ApRefinementData` r "
+			."LEFT JOIN `ApRefinementParamsData` p "
+			."ON (r.`REF|ApRefinementParamsData|refinementParams` = p.`DEF_id`) "
+			."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
 
-        function getRefinementData ($refinementRun,$iteration) {
-	        $q = "SELECT DEF_id "
-		    ."FROM `ApRefinementData` "
-		    ."WHERE `REF|ApRefinementRunData|refinementRun` = $refinementRun "
-		    ."AND `iteration` = $iteration";
+	function getRefinementData ($refinementRun,$iteration) {
+		$q = "SELECT DEF_id "
+			."FROM `ApRefinementData` "
+			."WHERE `REF|ApRefinementRunData|refinementRun` = $refinementRun "
+			."AND `iteration` = $iteration";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
 
-        function getNumBadParticles ($refinementDataId) {
-	        $q = "SELECT count(*) as num "
-		    ."FROM `ApParticleClassificationData` "
-		    ."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
+	function getNumBadParticles ($refinementDataId) {
+		$q = "SELECT count(*) as num "
+				."FROM `ApParticleClassificationData` "
+				."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
 		    ."AND `thrown_out` = 1";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0]['num'];
 	}
 
-        function getNumClasses ($refinementDataId) {
-	        $q = "SELECT count(distinct(`REF|ApEulerData|eulers`)) as num "
-		    ."FROM `ApParticleClassificationData` "
+	function getNumClasses ($refinementDataId) {
+		$q = "SELECT count(distinct(`REF|ApEulerData|eulers`)) as num "
+				."FROM `ApParticleClassificationData` "
 		    ."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0]['num'];
 	}
 
-        function getEulerIds ($refinementDataId) {
-	        $q = "SELECT distinct(`REF|ApEulerData|eulers`) as eulers "
-	            ."FROM `ApParticleClassificationData` "
+	function getEulerIds ($refinementDataId) {
+		$q = "SELECT distinct(`REF|ApEulerData|eulers`) as eulers "
+				."FROM `ApParticleClassificationData` "
 		    ."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
@@ -405,8 +404,8 @@ class particledata {
 		return $r;
 	}
 
-        function getNumInClass ($refinementDataId,$eulerId) {
-	        $q = "SELECT count(*) as num "
+	function getNumInClass ($refinementDataId,$eulerId) {
+		$q = "SELECT count(*) as num "
 		  ."FROM `ApParticleClassificationData` "
 		  ."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
 		  ."AND `REF|ApEulerData|eulers` = $eulerId";
@@ -414,45 +413,59 @@ class particledata {
 		return $r[0]['num'];
 	}
 
-        function getEulerAngles ($eulerId) {
-	        $q = "SELECT * "
-		  ."FROM `ApEulerData` "
-		  ."WHERE `DEF_id` = $eulerId";
+  function getEulerAngles ($eulerId) {
+		$q = "SELECT * "
+			."FROM `ApEulerData` "
+			."WHERE `DEF_id` = $eulerId";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
 
-        function getCommonParticles ($refine1, $refine2) {
-	        # compare 2 iterations, get all the particles that were used in both
-	        # reconstructions (ignore those that were thrown out) and return the eulers"
-	        $q = "SELECT cls1.`REF|ApStackParticlesData|particle` as prtl, "
-                    ."cls1.`REF|ApEulerData|eulers` as euler1, "
-                    ."cls2.`REF|ApEulerData|eulers` as euler2, "
-                    ."cls1.`shiftx` as shiftx1, "
-                    ."cls2.`shiftx` as shiftx2, "
-                    ."cls1.`shifty` as shifty1, "
-                    ."cls2.`shifty` as shifty2, "
-                    ."cls1.`inplane_rotation` as rot1, "
-                    ."cls2.`inplane_rotation` as rot2, "
-                    ."cls1.`quality_factor` as qf1, "
-                    ."cls2.`quality_factor` as qf2 "
-		    ."FROM `ApParticleClassificationData` as cls1, "
-		    ."`ApParticleClassificationData` as cls2 "
-		    ."WHERE cls1.`REF|ApRefinementData|refinement`=$refine1 "
-		    ."AND cls2.`REF|ApRefinementData|refinement`=$refine2 "
-		    ."AND cls1.`REF|ApStackParticlesData|particle`=cls2.`REF|ApStackParticlesData|particle` "
-		    ."AND cls1.`thrown_out` is NULL AND cls2.`thrown_out` is NULL "
-		    ."ORDER by prtl";
+	function getCommonParticles ($refine1, $refine2) {
+		# compare 2 iterations, get all the particles that were used in both
+		# reconstructions (ignore those that were thrown out) and return the eulers"
+		$q = "SELECT cls1.`REF|ApStackParticlesData|particle` as prtl, "
+				."spd.particleNumber, "
+				."euler1.euler1 as euler1_1, "
+				."euler1.euler2 as euler1_2, "
+				."euler1.euler3 as euler1_3, "
+				."euler2.euler1 as euler2_1, "
+				."euler2.euler2 as euler2_2, "
+				."euler2.euler3 as euler2_3, "
+				."cls1.`shiftx` as shiftx1, "
+				."cls2.`shiftx` as shiftx2, "
+				."cls1.`shifty` as shifty1, "
+				."cls2.`shifty` as shifty2, "
+				."cls1.`inplane_rotation` as rot1, "
+				."cls2.`inplane_rotation` as rot2, "
+				."cls1.`quality_factor` as qf1, "
+				."cls2.`quality_factor` as qf2 "
+				."FROM (`ApParticleClassificationData` as cls1) "
+				."LEFT JOIN ( "
+				." `ApParticleClassificationData` as cls2, "
+				." `ApStackParticlesData` as spd, "
+				." `ApEulerData` euler1, `ApEulerData` euler2) "
+				."ON ( "
+				."cls1.`REF|ApStackParticlesData|particle`=cls2.`REF|ApStackParticlesData|particle` "
+				."AND spd.DEF_id=cls1.`REF|ApStackParticlesData|particle` "
+				."AND cls1.`thrown_out` is NULL AND cls2.`thrown_out` is NULL "
+				."AND euler1.DEF_id=cls1.`REF|ApEulerData|eulers` "
+				."AND euler2.DEF_id=cls2.`REF|ApEulerData|eulers` "
+				.") "
+				."WHERE (cls1.`REF|ApRefinementData|refinement`=$refine1 "
+				."AND cls2.`REF|ApRefinementData|refinement`=$refine2 "
+				.") "
+				."ORDER by prtl";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
-        }
-
-        function getStackParticleNum ($particleId) {
-	        $q = "SELECT particleNumber "
-		    ."FROM `ApStackParticlesData` "
-		    ."WHERE `DEF_id` = $particleId";
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0]['particleNumber'];
 	}
+
+	function getStackParticleNum ($particleId) {
+	        $q = "SELECT particleNumber "
+					."FROM `ApStackParticlesData` "
+					."WHERE `DEF_id` = $particleId";
+					list($r) = $this->mysql->getSQLResult($q);
+					return $r['particleNumber'];
+		}
 }
 ?>
