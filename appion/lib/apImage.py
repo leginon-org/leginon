@@ -17,6 +17,10 @@ import imagefun
 import convolver
 #appion
 import apDisplay
+import data
+import apDB
+
+db=apDB.db
 
 def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, planeReg=True, medFilt=False):
 	"""
@@ -690,3 +694,60 @@ def imageToArray(im, convertType='UInt8'):
 	if convertType == 'Float32':
 		a = a.astype(numarray.Float32)
 	return a
+
+
+
+
+
+
+cache = {}
+def camkey(camstate):
+	return camstate['dimension']['x'], camstate['binning']['x'], camstate['offset']['x']
+
+def getDarkNorm(sessionname, cameraconfig):
+	'''
+	return the most recent dark and norm image from the given session
+	'''
+	camquery = data.CorrectorCamstateData()
+	try:
+		camquery['dimension'] = cameraconfig['dimension']
+	except:
+		pass
+	try:
+		camquery['binning'] = cameraconfig['binning']
+	except:
+		pass
+	try:
+		camquery['offset'] = cameraconfig['offset']
+	except:
+		pass
+	#print 'CAMQUERY', camquery
+	key = camkey(camquery) 
+	if key in cache:
+		print 'using cache'
+		return cache[key]
+	
+	print 'querying dark,norm'
+	sessionquery = data.SessionData(name=sessionname)
+	darkquery = data.DarkImageData(session=sessionquery, camstate=camquery)
+	#print 'DARKQUERY', darkquery
+	normquery = data.NormImageData(session=sessionquery, camstate=camquery)
+	darkdata = db.query(darkquery, results=1)
+	dark = darkdata[0]['image']
+	#print darkdata[0]
+	normdata = db.query(normquery, results=1)
+	norm = normdata[0]['image']
+	result = dark,norm
+	cache[key] = result
+	return result
+
+def old_correct(input, dark, norm):
+	'''
+Correct an image using the old method:
+	- no bias correction
+	- dark correction is not time dependent
+	'''
+	corrected = norm * (input - dark)
+	return corrected
+
+

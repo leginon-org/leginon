@@ -273,8 +273,14 @@ def createPeakJpeg(imgdata, peaktree, params):
 	jpegdir = os.path.join(params['rundir'],"jpgs")
 	apParam.createDirectory(jpegdir, warning=False)
 
-	imgarray = imgdata['image']
-	imgarray = apImage.preProcessImage(imgarray, bin=bin, planeReg=False, medFilt=True, params=params)
+	if params['uncorrected']:
+		camera = imgdata['camera']
+		dark,norm = apImage.getDarkNorm(params['sessionname'], camera)
+		imgarray=apImage.old_correct(imgdata['image'],dark,norm)
+		imgarray=apImage.preProcessImage(imgarray,params=params)
+	else:
+		imgarray = imgdata['image']
+		imgarray = apImage.preProcessImage(imgarray, bin=bin, planeReg=False, medFilt=True, params=params)
 	image = apImage.arrayToImage(imgarray)
 	image = image.convert("RGB")
 
