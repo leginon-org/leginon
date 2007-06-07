@@ -225,7 +225,7 @@ class particledata {
 		//if (is_array($r[0]))
 		//	array_push($stackidlist,$r[0]['stackid']);
 		//return $stackidlist;
-		return $r[0];
+		return $r;
 	}
 
         function getStackParams ($stackId) {
