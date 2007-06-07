@@ -56,9 +56,4 @@ foreach ($commonprtls as $prtl) {
         
 header("Content-type: text/plain");
 echo $data;
-$end=getmicrotime();
-echo "time b: ".$begin;
-echo "time e: ".$end;
-echo "\n";
-echo "time: ".($end-$begin);
 ?>
