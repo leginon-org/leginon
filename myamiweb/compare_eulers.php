@@ -19,12 +19,14 @@ $iter1 = $_REQUEST['iter1'];
 $iter2 = $_REQUEST['iter2'];
 $comp_param = $_REQUEST['comp_param'];
 
+// --- force download --- //
+$download=1;
+
 if (!$_REQUEST) {
 	// --- testing values --- //
 	$comp_param = "Eulers";
 	$iter1 = 1;
 	$iter2 = 2;
-	$compare = $compare;
 	$reconId = 1;
 }
 
@@ -55,5 +57,13 @@ foreach ($commonprtls as $prtl) {
 }
         
 header("Content-type: text/plain");
+if ($download) {
+	$filename="compare_".$comp_param."_iter".$iter1."_iter".$iter2.".txt";
+	header("Content-Type: application/octet-stream");
+	header("Content-Type: application/force-download");
+	header("Content-Type: application/download");
+	header("Content-Length: ".strlen($data));
+	header("Content-Disposition: attachment; filename=".$filename);
+}
 echo $data;
 ?>
