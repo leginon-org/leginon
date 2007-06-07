@@ -483,7 +483,7 @@ def PngAlphaToBinarryArray(filename):
 # statistics of images
 #########################################################
 
-def _maxNormalizeImage(a, stdevLimit=2.0):
+def _maxNormalizeImage(a, stdevLimit=3.0):
 	"""	
 	Normalizes numarray to fit into an image format,
 	but maximizes the contrast
