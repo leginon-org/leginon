@@ -588,12 +588,12 @@ def rejectImage(imgdata, params):
 
 	### skip micrograph that have defocus above or below min & max defocus levels
 	if params['mindefocus'] and params['df'] > params['mindefocus']:
-		apDisplay.printColor(shortname+".mrc rejected because defocus ("+str(round(params['df'],3))+\
-			") is less than specified in mindefocus ("+str(params['mindefocus'])+")\n","cyan")
+		apDisplay.printColor(shortname+".mrc defocus ("+str(round(params['df'],3))+\
+			") is less than mindefocus ("+str(params['mindefocus'])+")\n","cyan")
 		return False
 	if params['maxdefocus'] and params['df'] < params['maxdefocus']:
-		apDisplay.printColor(shortname+".mrc rejected because defocus ("+str(round(params['df'],3))+\
-			") is greater than specified in maxdefocus ("+str(params['maxdefocus'])+")\n","cyan")
+		apDisplay.printColor(shortname+".mrc defocus ("+str(round(params['df'],3))+\
+			") is greater than maxdefocus ("+str(params['maxdefocus'])+")\n","cyan")
 		return False
 
 	return True
@@ -675,8 +675,10 @@ if __name__ == '__main__':
 	# box particles
 	# if any restrictions are set, check the image
 	totptcls=0
+	count = 0
 	#while images:
 	for imgdict in images:
+		count += 1
  		# get session ID
 		params['session'] = images[0]['session']['name']
 		params['sessionname'] = imgdict['session']['name']
@@ -709,7 +711,9 @@ if __name__ == '__main__':
 			singleStack(params, imgdict)
 		
 		# limit total particles if limit is specified
-		print str(totptcls)+" total particles so far\n"
+		expectedptcles = str(int(float(totptcls)/float(count)*float(len(images))))
+		print str(totptcls)+" total particles so far ("+str(len(images)-count)+" images remain; expect "+\
+			expectedptcles+" particles)\n"
 		if params['limit']:
 			if totptcls > params['limit']:
 				break
@@ -717,5 +721,6 @@ if __name__ == '__main__':
 		tmpboxfile = os.path.join(params['outdir'], "temporaryParticlesFromDB.box")
 		if os.path.isfile(tmpboxfile):
 			os.remove(tmpboxfile)
+
 
 	print "Done!"
