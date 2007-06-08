@@ -317,6 +317,7 @@ class AppionLoop(object):
 		self.params['doneDictName']=None
 		self.params['functionLog']=None
 		self.params['pixdiam']=None
+		self.params['uncorrected']=None
 		self.params['binpixdiam']=None
 		self.params['nowait']=False
 		self.params['norejects']=None
