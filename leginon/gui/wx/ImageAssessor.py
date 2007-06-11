@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageAssessor.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-09 05:05:05 $
+# $Date: 2007-06-11 20:59:13 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -120,8 +120,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		label = wx.StaticText(self, -1, 'Run Name:')
 		self.widgets['run'] = Entry(self, -1)
-		sz.Add(label, (2, 0), (1, 1))
-		sz.Add(self.widgets['run'], (2, 1), (1, 1))
+		sz.Add(label, (3, 0), (1, 1))
+		sz.Add(self.widgets['run'], (3, 1), (1, 1))
 
 
 		sb = wx.StaticBox(self, -1, 'Settings')
