@@ -4,14 +4,13 @@ import apConvexHull
 import apImage
 import os
 import math
-import numarray
-import numarray.ma as ma
-import numarray.nd_image as nd
-import Mrc
-import convolver
+import numpy
+ma = numpy.ma
+import scipy.ndimage as nd
+import pyami.convolver as convolver
 import Image
 import ImageDraw
-import imagefun
+import pyami.imagefun as imagefun
 import numextension
 import polygon
 import libCV
@@ -31,8 +30,8 @@ def outputTestImage(array,name,description,testlog):
 	return testlog
 
 def medium(image):
-	size=image.size()
-	image1d=numarray.reshape(image,(image.size()))
+	size=image.size
+	image1d=numpy.reshape(image,(image.size))
 	image1d.sort()
 	medium=image1d[size/2]
 	topquad=image1d[size*3/4]
@@ -91,12 +90,12 @@ def makeDisk(radius):
 	
 	def circle(indices0,indices1):
 		## this shifts and wraps the indices
-		i0 = numarray.where(indices0<cutoff[0], indices0-center[0]+lshift[0], indices0-center[0]+gshift[0])
-		i1 = numarray.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[1]+gshift[1])
+		i0 = numpy.where(indices0<cutoff[0], indices0-center[0]+lshift[0], indices0-center[0]+gshift[0])
+		i1 = numpy.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[1]+gshift[1])
 		rsq = i0*i0+i1*i1
-		c = numarray.where((rsq>=minradsq)&(rsq<=maxradsq), 1, 0)
-		return c.astype(numarray.Int8)
-	disk = numarray.fromfunction(circle,diskimageshape)
+		c = numpy.where((rsq>=minradsq)&(rsq<=maxradsq), 1, 0)
+		return c.astype(numpy.int8)
+	disk = numpy.fromfunction(circle,diskimageshape)
 	return disk
 
 def maskImageStats(mimage):
@@ -116,7 +115,7 @@ def maskImageStats(mimage):
 def convolveDisk(bimage,radius,convolve_t,testlog):
 	#make  disk binaray image
 	disk = makeDisk(radius)
-	diskshape=numarray.shape(disk)
+	diskshape=numpy.shape(disk)
 
 	# convolve
 	c=convolver.Convolver()
@@ -153,7 +152,7 @@ def oneObjToGlobalPoints(bimage):
 	l=0
 	one_region=bimage[region_objs[l]]
 	starts=(region_objs[l][0].start,region_objs[l][1].start)
-	region_dim=numarray.shape(one_region)
+	region_dim=numpy.shape(one_region)
 	gpoints=[]
 	for x in range(region_dim[0]):
 		for y in range(region_dim[1]):
@@ -201,7 +200,7 @@ def mergePolygonPoints(polygons):
 	return result		  
 
 def convexHullUnion(regions,clabels,testlog):
-	shape=numarray.shape(regions)
+	shape=numpy.shape(regions)
 	gpolygons=[]
 	print "making convex hulls"
 	while clabels != len(gpolygons):
@@ -275,8 +274,8 @@ def getRealLabeledPerimeter(image,edge_mask,labeled_image,indices,info,testlog):
 
 def getRealLabeledAreaCenter(image,labeled_image,indices,info):
 	print "Getting real area and center"
-	shape=numarray.shape(image)
-	ones=numarray.ones(shape)
+	shape=numpy.shape(image)
+	ones=numpy.ones(shape)
 	area=nd.sum(ones,labels=labeled_image,index=indices)
 	center=nd.center_of_mass(ones,labels=labeled_image,index=indices)
 
@@ -335,7 +334,7 @@ def getLabeledInfo(image,alledgemask,labeled_image,indices,fast,info,testlog):
 	else:
 		offset=0
 
-	imageshape=numarray.shape(labeled_image)
+	imageshape=numpy.shape(labeled_image)
 	if not fast:
 		if (info[1-offset][3] is None):
 			info=getRealLabeledPerimeter(image,alledgemask,labeled_image,indices,info,testlog)
@@ -418,8 +417,8 @@ def makePrunedLabels(labeled_image,ltotal,info,goodlabels):
 	return new_labeled_image,len(goodlabels),goodinfos
 
 def makeImageFromLabels(labeled_image,ltotal,goodlabels):
-	imageshape=numarray.shape(labeled_image)
-	new_labeled_image=numarray.zeros(imageshape,numarray.Int8)
+	imageshape=numpy.shape(labeled_image)
+	new_labeled_image=numpy.zeros(imageshape,numpy.int8)
 	if len(goodlabels)==0:
 		return new_labeled_image
 	else:
@@ -428,16 +427,16 @@ def makeImageFromLabels(labeled_image,ltotal,goodlabels):
 	if len(goodlabels)*2 < ltotal:
 		for i,l1 in enumerate(goodlabels):
 			l=l1+1
-			region=numarray.where(labeled_image==l,1,0)
-			numarray.putmask(new_labeled_image,region,i+1)
+			region=numpy.where(labeled_image==l,1,0)
+			numpy.putmask(new_labeled_image,region,i+1)
 	else:
 		tmp_labeled_image=labeled_image
 		badset=set(range(ltotal))
 		badset=badset.difference(set(goodlabels))
 		for i,l1 in enumerate(badset):
 			l=l1+1
-			region=numarray.where(labeled_image==l,1,0)
-			numarray.putmask(tmp_labeled_image,region,0)
+			region=numpy.where(labeled_image==l,1,0)
+			numpy.putmask(tmp_labeled_image,region,0)
 		new_labeled_image,resultlabels = nd.label(tmp_labeled_image)
 		print 'makeImageFromLabels', len(goodlabels),resultlabels
 	return new_labeled_image
@@ -447,7 +446,7 @@ def makePrunedPolygons(gpolygons,imageshape,info,goodlabels):
 	goodpolygons=[]
 	goodinfos=[]
 	if len(goodlabels)==0:
-		new_labeled_image=numarray.zeros(imageshape,numarray.Int8)
+		new_labeled_image=numpy.zeros(imageshape,numpy.int8)
 		return new_labeled_image,len(goodlabels),goodinfos
 	for l1 in goodlabels:
 		l=l1+1
@@ -486,7 +485,7 @@ def reduceRegions(regions,velimit):
 	return regionarrays
 	
 def getBmaskFromLabeled(labeled_regions):
-	int32regions=labeled_regions.astype(numarray.Int32)
+	int32regions=labeled_regions.astype(numpy.int32)
 	masked_image=ma.masked_greater_equal(int32regions,1)
 	bmask=masked_image.filled(1)
 	return bmask
@@ -571,7 +570,7 @@ def makeMask(params,image):
 
 	nedge=ma.count(edgeimage)
 	# If the area not within the threshold is too large or zero, no further calculation is necessary
-	if (nedge <image.size()*0.1 or nedge ==image.size()):
+	if (nedge <image.size*0.1 or nedge ==image.size):
 		superimage=image
 		regioninfo=""
 	else:
@@ -599,7 +598,7 @@ def makeMask(params,image):
 		if (do_prune_by_length):
 			allinfos,testlog=getLabeledInfo(image,mask,labeled_regions,range(1,clabels+1),True,allinfos,testlog)
 			goodregions=range(clabels)
-			goodregions=pruneByLength(allinfos,list_t,image.size()*0.5,goodregions)
+			goodregions=pruneByLength(allinfos,list_t,image.size*0.5,goodregions)
 			labeled_regions,clabels,goodinfo=makePrunedLabels(labeled_regions,clabels,allinfos,goodregions)
 		
 		#create convex hulls and merge overlapped or inside regions
@@ -630,7 +629,7 @@ def makeMask(params,image):
 			goodregions=range(clabels)
 			if not do_cv:
 				#pruning by area as in selexon
-				goodareas=pruneByArea(allinfos,area_t,image.size()*0.5,goodregions)
+				goodareas=pruneByArea(allinfos,area_t,image.size*0.5,goodregions)
 				goodregions=goodareas
 
 			try:
@@ -705,7 +704,7 @@ def makeMask(params,image):
 				regionedges,testlog=findEdgeSobel(equalregions,0,0.5,1.0,False,testlog)
 				masklabel=1-ma.getmask(regionedges)
 			else:
-				masklabel=numarray.ones(image.shape)
+				masklabel=numpy.ones(image.shape)
 			superimage=image*masklabel
 			testlog=outputTestImage(superimage,'output','Final Mask w/ image',testlog)
 			print testlog[2]
@@ -713,7 +712,7 @@ def makeMask(params,image):
 	return regioninfos,equalregions,
 
 def piksNotInMask(maskbin,mask,piklines):
-	shape = numarray.shape(mask)
+	shape = numpy.shape(mask)
 	piklinesNotInMask=[]
 	for pikline in piklines:
 		bits=pikline.split(' ')
