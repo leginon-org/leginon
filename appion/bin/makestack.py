@@ -711,7 +711,7 @@ if __name__ == '__main__':
 			singleStack(params, imgdict)
 		
 		# limit total particles if limit is specified
-		expectedptcles = str(int(float(totptcls)/float(count)*float(len(images))))
+		expectedptcles = str(int(float(totptcls)/float(count)*len(images)))
 		print str(totptcls)+" total particles so far ("+str(len(images)-count)+" images remain; expect "+\
 			expectedptcles+" particles)\n"
 		if params['limit']:
