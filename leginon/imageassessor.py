@@ -16,8 +16,8 @@ import Image
 import numpy
 from pyami import imagefun, mrc
 try:
-	import apAssessor
-except ImportError:
+	import apMask
+except:
 	pass
 
 class ImageAssessor(targetfinder.ClickTargetFinder):
@@ -61,8 +61,8 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 			if format == 'png' and ext in ('png','PNG'):
 				self.files.append(file)
 		if type =='mask':
-			self.maskrundata,self.maskparamsdata = apAssessor.getMaskRunInfo(dir,files[0])
-			self.assessrundata,exist = apAssessor.insertMaskAssessmentRun(self.session,self.maskrundata,assessrunname)
+			self.maskrundata,self.maskparamsdata = apMask.getMaskRunInfo(dir,files[0])
+			self.assessrundata,exist = apMask.insertMaskAssessmentRun(self.session,self.maskrundata,assessrunname)
 			if exist:
 				self.logger.warning('Run exists, will overwrite')
 		if self.files:
@@ -80,7 +80,7 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 			keeptargets = self.panel.getTargets('Regions')
 			for target in keeptargets:
 				keeplist.append(target.stats['Label'])
-			apAssessor.saveAssessmentFromTargets(self.maskrundata,self.assessrundata,self.imgdata,keeplist)
+			apMask.saveAssessmentFromTargets(self.maskrundata,self.assessrundata,self.imgdata,keeplist)
 		else:
 			self.readResults()
 			self.results[self.currentname] = 'keep'
@@ -92,7 +92,7 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 		type = self.settings['type']
 		if type =='mask':
 			keeplist = []
-			apAssessor.saveAssessmentFromTargets(self.maskrundata,self.assessrundata,self.imgdata,keeplist)
+			apMask.saveAssessmentFromTargets(self.maskrundata,self.assessrundata,self.imgdata,keeplist)
 		else:
 			self.readResults()
 			self.results[self.currentname] = 'reject'
@@ -140,9 +140,8 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 				alpha = 0.5
 				parentimg,imgdata = self.readMaskParent()
 				maskshape = imarray.shape
-				print self.maskrundata
 
-				targets = apAssessor.getRegionsAsTargets(self.maskrundata,maskshape,imgdata)
+				targets = apMask.getRegionsAsTargets(self.maskrundata,maskshape,imgdata)
 				self.alltargets = targets[:]
 				self.setTargets(targets, 'Regions')
 				
