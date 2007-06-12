@@ -180,7 +180,7 @@ class ApStackParamsData(data.Data):
 			('inverted', bool),
 		)
 	typemap = classmethod(typemap)
-data.ApStackParamsData=ApStackParamsData
+data.ApStackParamsData = ApStackParamsData
 
 class ApStackParticlesData(data.Data):
 	def typemap(cls):

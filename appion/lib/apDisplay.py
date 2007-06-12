@@ -182,11 +182,11 @@ def colorType(val):
 	"""
 	colors a value based on type
 	"""
-	if val == None:
+	if val is None:
 		return colorString("None","red")
-	elif val == True:
+	elif val is True:
 		return colorString("True","purple")
-	elif val == False:
+	elif val is False:
 		return colorString("False","purple")
 	elif type(val) == type(0.33):
 		return colorString(val,"cyan")
