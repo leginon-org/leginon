@@ -658,7 +658,7 @@ class Data(newdict.TypedDict):
 		if type(value) is numpy.ndarray:
 			shape = value.shape
 			if max(shape) > 2:
-				s = 'array(shape: %s, type: %s)' % (shape,value.type())
+				s = 'array(shape: %s, type: %s)' % (shape,value.dtype)
 				return s
 		return str(value)
 
