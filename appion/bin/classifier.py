@@ -23,7 +23,7 @@ def defaults():
 	params['stackname']=None
 	params['session']=None
 	params['stackid']=None
-	params['diam']=0
+	params['diam']=None
 	params['bin']=1
 	params['lp']=0
 	params['outdir']=None
@@ -94,6 +94,11 @@ def getStackInfo(params):
 	#get the particle normal params
 	partdata = appiondb.direct_query(appionData.ApParticleData, stackpartdata['particle'].dbid)
 
+	if partdata['selectionrun']['params'] is not None:
+		selectdata = appiondb.direct_query(appionData.ApSelectionParamsData, partdata['selectionrun']['params'].dbid)
+	elif partdata['selectionrun']['dogparams'] is not None:
+		selectdata = appiondb.direct_query(appionData.ApDogParamsData, partdata['selectionrun']['dogparams'].dbid)
+
 	#get image params of the particle
 	imgdata = leginondb.direct_query(data.AcquisitionImageData, partdata['dbemdata|AcquisitionImageData|image'])
 
@@ -109,9 +114,22 @@ def getStackInfo(params):
 	params['stacktype'] = stackdata['fileType']
 	params['boxsize'] = stackdata['boxSize']
 
+	if 'diam' in selectdata:
+		if params['diam'] is None:
+			apDisplay.printWarning("particle diameter not specified using value from database")
+			params['diam'] = selectdata['diam']
+		if params['mask'] is None:
+			apDisplay.printWarning("mask diameter not specified using value from database")
+			params['mask'] = selectdata['diam']
+
+	if params['lp'] == 0 and 'lp_filt' in selectdata:
+		apDisplay.printWarning("lowpass not specified using value from database")
+		params['lp'] = selectdata['lp_filt']
+
 	#apXml.fancyPrintDict(stackdata)
 	#apXml.fancyPrintDict(stackpartdata)
 	#apXml.fancyPrintDict(partdata)
+	#apXml.fancyPrintDict(selectdata)
 	#apXml.fancyPrintDict(imgdata)
 
 def createSpiderFile(params):
@@ -134,7 +152,10 @@ def createSpiderFile(params):
 		emancmd += "lp="+str(params['lp'])+" "
 	emancmd += "first=1 last="+str(params['numparticles'])+" "
 	emancmd += "spiderswap "
+	starttime = time.time()
+	apDisplay.printColor("Running stack conversion this can take awhile","cyan")
 	executeEmanCmd(emancmd, verbose=True)
+	apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime),"cyan")
 	return
 
 def averageTemplate(params):
@@ -204,7 +225,9 @@ def createSpiderBatchFile(params):
 				pixdiam = int(float(params['diam'])/params['apix'])
 				outf.write(spiderline(97,pixdiam,"expected diameter of particle (in pixels)"))		
 			elif thr == "x96":
-				outf.write(spiderline(96,5,"first ring radii"))
+				firstring = params['lp']
+				if firstring < 5: firstring = 5
+				outf.write(spiderline(96,firstring,"first ring radii"))
 			elif thr == "x95":
 				lastring = params['boxsize']/2 - 2
 				outf.write(spiderline(95,lastring,"last ring radii"))
@@ -227,7 +250,7 @@ def spiderline(num, value, comment):
 	sys.stderr.write(line)
 	return line
 
-def runSpiderClass(params reclass=False):
+def runSpiderClass(params, reclass=False):
 	spidercmd = "spider bat/spi @noref_align3"
 	if reclass is False:
 		apDisplay.printColor("Running spider this can take awhile","cyan")
@@ -251,18 +274,24 @@ def classHistogram(params):
 	lendict = {}
 	maxval = 0
 	minval = params['numparticles']
-	print "\nClass Histogram"
+
 	for f in files:
 		inf = open(f, "r")
-		count = -1
+		count = -1.0
 		for line in inf:
-			count += 1
+			count += 1.0
 		inf.close()
 		lendict[f] = count
 		if count > maxval: maxval = count
 		if count < minval: minval = count
-	width = min(maxval,60)
-	factor = maxval/float(width)
+
+	width = 60.0
+	if maxval < width:
+		factor = 1.0
+	else:
+		factor = width/maxval
+
+	print "\nClass Histogram"
 	for f in files:
 		short = os.path.basename(f)
 		short = re.sub("clhc_cls","",short)
@@ -271,7 +300,7 @@ def classHistogram(params):
 		numpoints = int(lendict[f]*factor)
 		for i in range(numpoints):
 			sys.stderr.write("*")
-		sys.stderr.write(" "+str(lendict[f])+"\n")
+		sys.stderr.write(" "+str(int(lendict[f]))+"\n")
 
 if __name__ == "__main__":
 	params = defaults()
@@ -287,5 +316,9 @@ if __name__ == "__main__":
 		createSpiderBatchFile(params)
 		runSpiderClass(params)
 	else:
+		apDisplay.printWarning("particles were already aligned for this runid, only redoing k-means") 
+		createSpiderBatchFile(params)
 		runSpiderClass(params, reclass=True)
 	classHistogram(params)
+
+	apDisplay.printMsg("classfile located at:\n"+os.path.join(params['rundir'],"classes_avg.spi"))
