@@ -317,7 +317,7 @@ class AppionLoop(object):
 		self.params['doneDictName']=None
 		self.params['functionLog']=None
 		self.params['pixdiam']=None
-		self.params['uncorrected']=None
+		self.params['uncorrected']=False
 		self.params['binpixdiam']=None
 		self.params['nowait']=False
 		self.params['norejects']=None
@@ -424,6 +424,8 @@ class AppionLoop(object):
 				self.params['background']=True
 			elif arg=='nocontinue':
 				self.params['nocontinue']=True
+			elif arg=='uncorrected' or arg=='raw':
+				self.params['uncorrected']=True
 			elif (elements[0]=='dbimages'):
 				dbinfo=elements[1].split(',')
 				if len(dbinfo) == 2:

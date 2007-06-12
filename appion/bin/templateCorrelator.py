@@ -137,8 +137,7 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 				self.params['overlapmult']=float(elements[1])
 			elif (elements[0]=='maxpeaks'):
 				self.params['maxpeaks']=int(elements[1])
-			elif arg=='uncorrected':
-				self.params['uncorrected']=True
+
 
 	def specialParamConflicts(self):
 		if not self.params['templateIds'] and not self.params['apix']:
