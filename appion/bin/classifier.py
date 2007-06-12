@@ -15,6 +15,7 @@ import apDatabase
 import appionData
 leginondb = apDB.db
 appiondb = apDB.apdb
+functionname = "classifier"
 
 def defaults():
 	params = {}
@@ -32,7 +33,43 @@ def defaults():
 
 	return params
 
+def getAppionDir(params):
+	params['appiondir'] = None
+
+	trypath = os.environ.get('APPIONDIR')
+	if os.path.isdir(trypath):
+		params['appiondir'] = trypath
+		return params['appiondir']
+
+	user = os.environ.get('USER')
+	trypath = "/home/"+user+"/pyappion"
+ 	if os.path.isdir(trypath):
+		params['appiondir'] = trypath
+		return params['appiondir']
+
+	trypath = "/ami/sw/packages/pyappion"
+ 	if os.path.isdir(trypath):
+		params['appiondir'] = trypath
+		return params['appiondir']
+
+	apDisplay.printError("environmental variable, APPIONDIR, is not defined.\n"+
+		"Did you source useappion.sh?")
+
+def runHelp(params):
+	funcxml = os.path.join(params['appiondir'],"xml",functionname+".xml")
+	xmldict = apXml.readOneXmlFile(funcxml)
+	apXml.printHelp(xmldict)
+	sys.exit(1)
+
+def checkForHelpCall(args, params):
+	if len(args) < 1:
+		runHelp(params)
+	for arg in args:
+		if ('help' in arg and not '=' in arg) or arg == 'h' or arg == '-h':
+			runHelp(params)
+
 def cmdline(args, params):
+	checkForHelpCall(args, params)
 	for arg in args:
 		elem = arg.split("=")
 		if elem[0] == "numpart":
@@ -55,6 +92,10 @@ def cmdline(args, params):
 			params['runid'] = elem[1]
 		elif elem[0] == "outdir":
 			params['outdir'] = elem[1]
+		elif arg == "commit":
+			params['commit'] = True
+		elif elem[0] == "description":
+			params['description'] = elem[1]
 		else:
 			apDisplay.printError("Unknown command: "+arg)
 
@@ -225,8 +266,10 @@ def createSpiderBatchFile(params):
 				pixdiam = int(float(params['diam'])/params['apix'])
 				outf.write(spiderline(97,pixdiam,"expected diameter of particle (in pixels)"))		
 			elif thr == "x96":
-				firstring = params['lp']
-				if firstring < 5: firstring = 5
+				if params['lp'] != 0:
+					firstring = int(float(params['lp'])/params['apix'])
+				else: 
+					firstring = int(max(params['boxsize']/16-2,1))
 				outf.write(spiderline(96,firstring,"first ring radii"))
 			elif thr == "x95":
 				lastring = params['boxsize']/2 - 2
@@ -304,6 +347,7 @@ def classHistogram(params):
 
 if __name__ == "__main__":
 	params = defaults()
+	getAppionDir(params)
 	cmdline(sys.argv[1:], params)
 	conflicts(params)
 	
