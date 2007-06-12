@@ -83,7 +83,7 @@ def sqlRepr(obj):
 		return repr(int(obj))
 	elif t is type(0L) or t is type(1):
 		return repr(int(obj))
-	elif t is type(1.0):
+	elif issubclass(t, float):
 		return repr(obj)
 	elif DateTimeType is not None and t is DateTimeType:
 		return "'%s'" % isoStr(obj)

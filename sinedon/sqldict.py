@@ -1344,7 +1344,7 @@ def _sqltype(t):
 	"""
 	if t is str:
 		return "TEXT"
-	elif t is float:
+	elif issubclass(t, float):
 		return "DOUBLE"
 	elif t in (int,long):
 		return "INT(20)"
