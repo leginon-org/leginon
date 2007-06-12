@@ -2,9 +2,13 @@
 
 import sys
 import os
+import re
 import time
+import glob
+import shutil
 import data
 import apXml
+import apParam
 import apDisplay
 import apDB
 import apDatabase
@@ -43,7 +47,7 @@ def cmdline(args, params):
 			params['stackid'] = int(elem[1])
 		elif elem[0] == "lp":
 			params['lp'] = int(elem[1])
-		elif elem[0] == "mask":
+		elif elem[0] == "maskdiam":
 			params['mask'] = int(elem[1])
 		elif elem[0] == "diam":
 			params['diam'] = float(elem[1])
@@ -57,6 +61,8 @@ def cmdline(args, params):
 def conflicts(params):
 	if params['runid'] is None:
 		apDisplay.printError("Please provide a runid, example: runid=class1")
+	if params['stackid'] is None:
+		apDisplay.printError("Please provide a stackid from database, example: stackid=15")
 	return
 
 def getStackId(params):
@@ -95,12 +101,13 @@ def getStackInfo(params):
 	params['session'] = imgdata['session']
 	if stackdata['bin'] is not None:
 		params['bin'] = stackdata['bin']
-	params['apix'] = apDatabase.getPixelSize(imgdata)	
+	params['apix'] = apDatabase.getPixelSize(imgdata)*params['bin']
 	params['stackpath'] = os.path.abspath(stackdata['stackPath'])
 	if params['outdir'] is None:
 		params['outdir'] = params['stackpath']
 	params['stackfile'] = os.path.join(params['stackpath'],stackdata['name'])
 	params['stacktype'] = stackdata['fileType']
+	params['boxsize'] = stackdata['boxSize']
 
 	#apXml.fancyPrintDict(stackdata)
 	#apXml.fancyPrintDict(stackpartdata)
@@ -115,13 +122,19 @@ def createSpiderFile(params):
 	if not os.path.isfile(params['stackfile']):
 		apDisplay.printError("stackfile does not exist: "+params['stackfile'])
 	emancmd += params['stackfile']+" "
-	emancmd += "startswapnorm.spi "
+
+	outfile = "startswapnorm.spi"
+	if os.path.isfile(outfile):
+		apDisplay.printWarning(outfile+" already exists; removing it")
+		time.sleep(2)
+		os.remove(outfile)
+	emancmd += outfile+" "
 	emancmd += "apix="+str(params['apix'])+" "
 	if params['lp'] > 0:
 		emancmd += "lp="+str(params['lp'])+" "
 	emancmd += "first=1 last="+str(params['numparticles'])+" "
 	emancmd += "spiderswap "
-	executeEmanCmd(emancmd)
+	executeEmanCmd(emancmd, verbose=True)
 	return
 
 def averageTemplate(params):
@@ -132,14 +145,133 @@ def averageTemplate(params):
 	executeEmanCmd(emancmd)
 	emancmd  = "proc2d template.mrc template.mrc center"
 	executeEmanCmd(emancmd)
-	emancmd  = "proc2d template.mrc template.mrc mask="+str(params['mask'])
+	pixrad = int(float(params['mask'])/params['apix']/2.0)
+	apDisplay.printMsg("using mask radius of "+str(pixrad)+" pixels ("+str(params['mask'])+" angstroms)")
+	emancmd  = "proc2d template.mrc template.mrc mask="+str(pixrad)
+	executeEmanCmd(emancmd)
+	outfile = "template.spi"
+	if os.path.isfile(outfile):
+		apDisplay.printWarning(outfile+" already exists; removing it")
+		time.sleep(2)
+		os.remove(outfile)
+	emancmd  = "proc2d template.mrc template.spi spiderswap"
 	executeEmanCmd(emancmd)
 
 	time.sleep(2)
 	return
 
-def executeEmanCmd(emancmd):
-	print emancmd
+def executeEmanCmd(emancmd, verbose=False):
+	sys.stderr.write("EMAN: "+emancmd+"\n")
+	try:
+		if verbose is False:
+			os.popen(emancmd)
+		else:
+			os.system(emancmd)
+	except:
+		apDisplay.printError("could not run eman command: "+emancmd)
+
+def createOutDir(params):
+	params['rundir'] = os.path.join(params['outdir'], params['runid'])
+	apDisplay.printMsg("creating run directory: "+params['rundir'])
+	apParam.createDirectory(params['rundir'])
+	os.chdir(params['rundir'])
+
+def createSpiderBatchFile(params):
+
+	scriptfile = "/ami/data07/recon_scripts/spider_scripts/norefali_3.bat"
+	if not os.path.isfile(scriptfile):
+		apDisplay.printError("could not find spider script: "+scriptfile)
+	inf = open(scriptfile, "r")
+
+	outfile = "noref_align3.bat"
+	if os.path.isfile(outfile):
+		apDisplay.printWarning(outfile+" already exists; removing it")
+		time.sleep(2)
+		os.remove(outfile)
+	outf = open(outfile, "w")
+
+	notdone = True
+	for line in inf:
+		if notdone is False:
+			outf.write(line)
+		else:
+			thr = line[:3]
+			if thr == "x99":
+				outf.write(spiderline(99,params['numparticles'],"number of particles in stack"))
+			elif thr == "x98":
+				outf.write(spiderline(98,params['boxsize'],"box size"))
+			elif thr == "x97":
+				pixdiam = int(float(params['diam'])/params['apix'])
+				outf.write(spiderline(97,pixdiam,"expected diameter of particle (in pixels)"))		
+			elif thr == "x96":
+				outf.write(spiderline(96,5,"first ring radii"))
+			elif thr == "x95":
+				lastring = params['boxsize']/2 - 2
+				outf.write(spiderline(95,lastring,"last ring radii"))
+			elif thr == "x94":
+				pixrad = int(float(params['mask'])/params['apix']/2.0)
+				outf.write(spiderline(94,pixrad,"mask radius (in pixels)"))
+			elif thr == "x93":
+				outf.write(spiderline(93,params['numclasses'],"num classes (will get as close as possible)"))
+			elif thr == "x92":
+				outf.write(spiderline(92,10,"additive constant for hierarchical clustering"))
+				notdone = False
+			else:
+				outf.write(line)
+
+def spiderline(num, value, comment):
+	line = "x"+str(num)+"="+str(value)+" "
+	while len(line) < 11:
+		line += " "
+	line += "; "+comment+"\n"
+	sys.stderr.write(line)
+	return line
+
+def runSpiderClass(params reclass=False):
+	spidercmd = "spider bat/spi @noref_align3"
+	if reclass is False:
+		apDisplay.printColor("Running spider this can take awhile","cyan")
+	starttime = time.time()
+	executeSpiderCmd(spidercmd)
+	apDisplay.printColor("finished spider in "+apDisplay.timeString(time.time()-starttime),"cyan")
+
+def executeSpiderCmd(spidercmd, verbose=True):
+	sys.stderr.write("SPIDER: "+spidercmd+"\n")
+	try:
+		if verbose is False:
+			os.popen(spidercmd)
+		else:
+			os.system(spidercmd)
+	except:
+		apDisplay.printError("could not run spider command: "+spidercmd)
+
+def classHistogram(params):
+	search = os.path.join(params['rundir'], "classes/clhc*.spi")
+	files = glob.glob(search)
+	lendict = {}
+	maxval = 0
+	minval = params['numparticles']
+	print "\nClass Histogram"
+	for f in files:
+		inf = open(f, "r")
+		count = -1
+		for line in inf:
+			count += 1
+		inf.close()
+		lendict[f] = count
+		if count > maxval: maxval = count
+		if count < minval: minval = count
+	width = min(maxval,60)
+	factor = maxval/float(width)
+	for f in files:
+		short = os.path.basename(f)
+		short = re.sub("clhc_cls","",short)
+		short = re.sub(".spi","",short)
+		sys.stderr.write(short+" ")
+		numpoints = int(lendict[f]*factor)
+		for i in range(numpoints):
+			sys.stderr.write("*")
+		sys.stderr.write(" "+str(lendict[f])+"\n")
 
 if __name__ == "__main__":
 	params = defaults()
@@ -147,7 +279,13 @@ if __name__ == "__main__":
 	conflicts(params)
 	
 	getStackInfo(params)
-	os.chdir(params['outdir'])
-	createSpiderFile(params)
-	averageTemplate(params)
+	createOutDir(params)
 	
+	if not os.path.isfile(os.path.join(params['rundir'], "classes_avg.spi")):
+		createSpiderFile(params)
+		averageTemplate(params)
+		createSpiderBatchFile(params)
+		runSpiderClass(params)
+	else:
+		runSpiderClass(params, reclass=True)
+	classHistogram(params)
