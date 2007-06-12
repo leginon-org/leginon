@@ -319,6 +319,8 @@ if __name__ == "__main__":
 		apDisplay.printWarning("particles were already aligned for this runid, only redoing k-means") 
 		createSpiderBatchFile(params)
 		runSpiderClass(params, reclass=True)
-	classHistogram(params)
+
+	if params['numclasses'] < 80:
+		classHistogram(params)
 
 	apDisplay.printMsg("classfile located at:\n"+os.path.join(params['rundir'],"classes_avg.spi"))
