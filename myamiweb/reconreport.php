@@ -89,6 +89,7 @@ while ($f = readdir($refinedir)) {
 	        $pngfiles[] = $f;
 	}
 }
+sort($pngfiles);
 
 # show info for each iteration
 foreach ($iterations as $iteration){

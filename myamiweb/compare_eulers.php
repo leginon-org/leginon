@@ -41,8 +41,8 @@ $nl="\n";
 foreach ($commonprtls as $prtl) {
 	$data .= $prtl['particleNumber']." ";
 	if ($comp_param=='Eulers') {
-		$data .= $prtl['euler1_1'].$sep.$prtl['euler1_2'].$sep.$prtl['euler1_3'].$sep;
-		$data .= $prtl['euler2_1'].$sep.$prtl['euler2_2'].$sep.$prtl['euler2_3'].$nl;
+		$data .= $prtl['euler1_1'].$sep.$prtl['euler1_2'].$sep.$prtl['rot1'].$sep;
+		$data .= $prtl['euler2_1'].$sep.$prtl['euler2_2'].$sep.$prtl['rot2'].$nl;
 	}
 	elseif ($comp_param=='Inplane Rotation') {
 		$data .= $prtl['rot1'].$sep.$prtl['rot2'].$nl;
