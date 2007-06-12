@@ -9,9 +9,12 @@ def insidePolygon(points, polygon):
 	return numextension.pointsInPolygon(points, polygon)
 
 def filledPolygon(shape, vertices):
-	points = numpy.array(numpy.transpose(numpy.indices(shape), (1,2,0)), shape=(-1,2))
+	points = numpy.array(numpy.transpose(numpy.indices(shape), (1,2,0)))
+	points.shape=(-1,2)
 	inside = insidePolygon(points, vertices)
-	return numpy.array(inside, shape=shape)
+	final = numpy.array(inside)
+	final.shape = shape
+	return final
 
 def pointsInPolygon(inputpoints, vertices):
 	inside = insidePolygon(inputpoints, vertices)
