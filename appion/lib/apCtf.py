@@ -201,18 +201,18 @@ def getBestCtfValueForImage(imgdata):
 
 def ctfValuesToParams(ctfvalue, params):
 	if ctfvalue['acerun']['aceparams']['stig'] == 1:
-		apDisplay.printWarning("astigmatism was estimated for "+apDisplay.short(imgdata['filename'])+\
+		apDisplay.printWarning("astigmatism was estimated for this image"+\
 		 " and average defocus estimate may be incorrect")
 		params['hasace'] = True
 		avgdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
 		params['df']     = avgdf*1.0e6
 		params['conf_d'] = ctfvalue['confidence_d']
 		params['conf']   = ctfvalue['confidence']
-		return -avgdf
+		return avgdf
 	else:
 		params['hasace'] = True
 		params['df']     = ctfvalue['defocus1']*1.0e6
 		params['conf_d'] = ctfvalue['confidence_d']
 		params['conf']   = ctfvalue['confidence']
-		return -ctfvalue['defocus1']
+		return ctfvalue['defocus1']
 	return None

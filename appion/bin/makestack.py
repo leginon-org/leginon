@@ -356,9 +356,9 @@ def phaseFlip(imgdata, params):
 
 	if defocus > 0:
 		apDisplay.printError("defocus is positive "+str(defocus)+" for image "+shortname)
-	if defocus < -1.0e3:
+	elif defocus < -1.0e3:
 		apDisplay.printError("defocus is very big "+str(defocus)+" for image "+shortname)
-	if defocus < -1.0e-3:
+	elif defocus > -1.0e-3:
 		apDisplay.printError("defocus is very small "+str(defocus)+" for image "+shortname)
 
 	cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" % ( infile,\
