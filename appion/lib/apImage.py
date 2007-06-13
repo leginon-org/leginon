@@ -198,7 +198,7 @@ def planeRegression(imgarray):
 	yarray = yarray.astype(numpy.float64)
 	leftmat = numpy.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]] )
 	rightmat = numpy.array( [xzsum, yzsum, zsum] )
-	resvec = linear_algebra.solve_linear_equations(leftmat,rightmat)
+	resvec = linear_algebra.solve(leftmat,rightmat)
 	print " ... plane_regress: x-slope:",round(resvec[0]*size,5),\
 		", y-slope:",round(resvec[1]*size,5),", xy-intercept:",round(resvec[2],5)
 	newarray = imgarray - xarray*resvec[0] - yarray*resvec[1] - resvec[2]
@@ -408,7 +408,7 @@ def mrcToArray(filename,msg=True):
 	"""
 	if msg is True:
 		apDisplay.printMsg("reading MRC: "+apDisplay.short(filename))
-	array = mrc.mrc_to_numeric(filename)
+	array = mrc.read(filename)
 	return array
 
 def arrayToMrc(numer,filename,msg=True):
@@ -417,7 +417,7 @@ def arrayToMrc(numer,filename,msg=True):
 	"""
 	if msg is True:
 		apDisplay.printMsg("writing MRC: "+apDisplay.short(filename)+" size:"+str(numer.shape))
-	mrc.numeric_to_mrc(numer,filename)
+	mrc.write(numer,filename)
 	return
 
 def arrayToJpeg(numer,filename,normalize=True, msg=True):
@@ -666,7 +666,7 @@ def drawPeak(peak, draw, imshape, rad=10.0, color0="red", numshapes=4, shape="ci
 	return
 
 def readMRC(filename):
-	return mrc.mrc_to_numeric(filename)
+	return mrc.read(filename)
 
 def readJPG(filename):
 	i = Image.open(filename)
