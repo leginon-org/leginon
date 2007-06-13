@@ -1,25 +1,62 @@
-import sinedon.data as data
-import newdict
-import apImage
+#pythonlib
 import os
+#sinedon
+import sinedon.data as data
+import sinedon.newdict as newdict
+#leginon
+import leginondata
+#appion
+import apImage
 import appionData
 import apDB
 import apCrud
 
+leginondb = apDB.db
 appiondb = apDB.apdb
 
-def getMaskParamsByRunName(name,sessionname):
-	sessionq = data.SessionData(name=sessionname)
-	sessiondata = leginondb.query(sessionq)[0]
-	sessionid = sessiondata.dbid
+def getMaskParamsByRunName(name,sessiondata):
 	maskRq=appionData.ApMaskMakerRunData()
 	maskRq['name']=name
-	maskRq['dbemdata|SessionData|session']=sessionid
+	maskRq['session']=sessiondata
 	# get corresponding makeMaskParams entry
 	result = appiondb.query(maskRq)
-	return result[0],result[0]['params']
+	if len(result) > 0:
+		return result[0],result[0]['params']
+	else:
+		return None,None
 	
+def getSessionDataByName(name):
+	sessionq = leginondata.SessionData(name=name)
+	sessiondata = leginondb.query(sessionq)[0]
+	return sessiondata
+			
+def insertManualMaskParams(bin):
+	maskPdata=appionData.ApMaskMakerParamsData()
+	
+	maskPdata['bin']=bin
+	maskPdata['mask type']='manual'
+
+	appiondb.insert(maskPdata)
 		
+	return maskPdata
+
+def insertManualMaskRun(sessiondata,path,name,bin):
+	paramdata=insertManualMaskParams(bin)
+	maskRdata=createMaskMakerRun(sessiondata,path,name,paramdata)
+
+	appiondb.insert(maskRdata)
+
+	return maskRdata
+		
+def createMaskMakerRun(sessiondata,path,name,paramdata):
+	maskRdata=appionData.ApMaskMakerRunData()
+	maskRdata['session'] = sessiondata
+	maskRdata['path']=path
+	maskRdata['name']=name
+	maskRdata['params']=paramdata
+
+	return maskRdata
+	
 def insertMaskRegion(rundata,imgdata,regionInfo):
 
 	maskRq = createMaskRegionData(rundata,imgdata,regionInfo)
@@ -33,7 +70,7 @@ def createMaskRegionData(rundata,imgdata,regionInfo):
 	maskRq=appionData.ApMaskRegionData()
 
 	maskRq['maskrun']=rundata
-	maskRq['dbemdata|AcquisitionImageData|image']=imgdata.dbid
+	maskRq['image']=imgdata
 	maskRq['x']=regionInfo[4][1]
 	maskRq['y']=regionInfo[4][0]
 	maskRq['area']=regionInfo[0]
@@ -44,11 +81,11 @@ def createMaskRegionData(rundata,imgdata,regionInfo):
 
 	return maskRq
 
-def getMaskRegions(maskrun,imgid):
+def getMaskRegions(maskrun,imgdata):
 	maskRq=appionData.ApMaskRegionData()
 
 	maskRq['maskrun']=maskrun
-	maskRq['dbemdata|AcquisitionImageData|image']=imgid
+	maskRq['image']=imgdata
 	
 	results=appiondb.query(maskRq)
 	
@@ -56,7 +93,7 @@ def getMaskRegions(maskrun,imgid):
 
 def insertMaskAssessmentRun(sessiondata,maskrundata,name):
 	assessRdata=appionData.ApMaskAssessmentRunData()
-	assessRdata['dbemdata|SessionData|session'] = sessiondata.dbid
+	assessRdata['session'] = sessiondata
 	assessRdata['maskrun'] = maskrundata
 	assessRdata['name'] = name
 
@@ -87,7 +124,7 @@ def createMaskAssessmentData(rundata,regiondata,keep):
 	
 def getMaskAssessRunData(sessiondata,maskassessname):
 	query = appionData.ApMaskAssessmentRunData()
-	query['dbemdata|SessionData|session'] = sessiondata.dbid
+	query['session'] = sessiondata
 	query['name'] = maskassessname
 	results = appiondb.query(query)
 	
@@ -112,12 +149,13 @@ def getMaskArray(maskrundata,imgdata):
 def getMaskRunInfo(maskpath,maskfilename):
 	parent=maskfilename.replace('_mask.png','')
 	sessionname=maskfilename.split('_')[0]
+	sessiondata= getSessionDataByName(sessionname)
 	maskrun=maskpath.split('/')[-2]
-	maskrundata,maskparamsdata=getMaskParamsByRunName(maskrun,sessionname)
+	maskrundata,maskparamsdata=getMaskParamsByRunName(maskrun,sessiondata)
 	return maskrundata,maskparamsdata
 
 def getRegionsAsTargets(maskrun,maskshape,imgdata):
-	regiondata = getMaskRegions(maskrun,imgdata.dbid)
+	regiondata = getMaskRegions(maskrun,imgdata)
 	halfrow=maskshape[0]/2
 	halfcol=maskshape[1]/2
 	targets = []
@@ -133,13 +171,8 @@ def getRegionsAsTargets(maskrun,maskshape,imgdata):
 		targets.append(target)
 	return targets
 
-def insertMaskAssessmentRun(sessiondata,maskrundata,name):
-	assessRdata=insertMaskAssessmentRun(sessiondata,maskrundata,name)
-
-	return assessRdata
-
 def saveAssessmentFromTargets(maskrun,assessrun,imgdata,keeplist):
-	regiontree = getMaskRegions(maskrun,imgdata.dbid)
+	regiontree = getMaskRegions(maskrun,imgdata)
 	for regiondata in regiontree:
 		if regiondata['label'] in keeplist:
 			insertMaskAssessment(assessrun,regiondata,True)
@@ -153,7 +186,7 @@ def getRegionKeepList(assessrundata,maskregiondata):
 	for regiondata in maskregiondata:
 		assessquery['region'] = regiondata
 		assessdata = appiondb.query(assessquery,results=1)
-		if assessdata[0]['keep'] == 0:
+		if assessdata[0]['keep'] == 1:
 			keeplist.append(regiondata['label'])
 	keeplist.sort()
 	return keeplist
@@ -165,21 +198,30 @@ def makeInspectedMask(sessiondata,maskassessname,imgdata):
 	
 	maskrundata = assessrundata['maskrun']
 	
-	maskregiondata = getMaskRegions(maskrundata,imgdata.dbid)
+	maskbin = maskrundata['params']['bin']
+	
+	maskregiondata = getMaskRegions(maskrundata,imgdata)
+	
+	if len(maskregiondata) == 0:
+		return None,maskbin
 	
 	keeplist = getRegionKeepList(assessrundata,maskregiondata)
 	
+	if len(keeplist) == 0:
+		return None,maskbin
+		
 	maskarray = getMaskArray(maskrundata,imgdata)
 	
 	maskarray = apCrud.makeKeepMask(maskarray,keeplist)
 	
-	return maskarray
+	return maskarray,maskbin
 	
 				
 
 
 if __name__ == '__main__':
 	maskpath='/home/acheng/testcrud/test'
-	maskfilename='07jan05b_00018gr_00021sq_v01_00002sq_01_00033en_01_mask.png'
-
-	getMaskRunInfo(maskpath,maskfilename)
+	maskfilename='07apr11anchitest_GridID00752_Insertion014_00001gr_00004hl_mask.png'
+	sessiondata = getSessionDataByName('07apr11anchitest')
+	rundata,paramdata = getMaskParamsByRunName('test',sessiondata)
+	print rundata,paramdata
