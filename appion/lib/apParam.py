@@ -136,10 +136,11 @@ def createDefaultStats():
 def writeFunctionLog(commandline, params=None, logfile=None):
 	if logfile is not None:
 		pass
-	if params is not None and params['functionLog'] is not None:
+	elif params is not None and params['functionLog'] is not None:
 		logfile = params['functionLog']
 	else:
 		logfile = "function.log"
+	apDisplay.printMsg("writing function log to: "+logfile)
 	f=open(logfile,'aw')
 	out=""
 	for n in commandline:
