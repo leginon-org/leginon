@@ -4,7 +4,11 @@ import os
 import apDisplay
 import appionData
 import apDB
-import Mrc
+try:
+	import pyami.mrc as mrc
+except:
+	import Mrc as mrc
+
 
 appiondb = apDB.apdb
 
@@ -162,7 +166,7 @@ def insertManualParams(params,expid):
 
 def getModelDimensions(mrcfile):
 	print "calculating dimensions..."
-	vol=Mrc.mrc_to_numeric(mrcfile)
+	vol=mrc.read(mrcfile)
 	(x,y,z)=vol.shape
 	if x!=y!=z:
 		apDisplay.printError("starting model is not a cube")

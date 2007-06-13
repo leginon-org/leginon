@@ -267,7 +267,7 @@ def scaleImage(imgdata, scale):
 	"""
 	if scale == 1.0:
 		return imgdata
-	return numpy.nd_image.zoom(imgdata, scale, order=1)
+	return nd_image.zoom(imgdata, scale, order=1)
 
 def meanEdgeValue(imgdata, w=0):
 	"""

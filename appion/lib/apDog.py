@@ -10,7 +10,7 @@ appiondb = apDB.apdb
 
 def runDogDetector(imagename, params):
 	#imgpath = img['session']['image path'] + '/' + imagename + '.mrc'
-	#image = Mrc.mrc_to_numeric(imgpath)
+	#image = mrc.read(imgpath)
 	image = apDatabase.getImageData(imagename)['image']
 	scale          = params['apix']
 	if(params['binpixdiam'] != None):

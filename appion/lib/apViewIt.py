@@ -6,6 +6,13 @@ import tempfile
 #leginon
 import imagefun
 import Mrc
+#pyami
+try:
+	import pyami.mrc as mrc
+	import pyami.imagefun as imagefun
+except:
+	import Mrc as mrc
+	import imagefun
 #appion
 import apDatabase
 
@@ -106,7 +113,7 @@ def findCrud(params,img):
 
 	# scale the edge detection limit if the image standard deviation is lower than the standard
 	# This creates an edge detection less sensitive to noises in mostly empty images
-	image=Mrc.mrc_to_numeric(file+".mrc")
+	image=mrc.read(file+".mrc")
 	imean=imagefun.mean(image)
 	istdev=imagefun.stdev(image,known_mean=imean)
 	print imean,istdev
