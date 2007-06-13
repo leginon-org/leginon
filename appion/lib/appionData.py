@@ -4,19 +4,13 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
  
-try:
-	import sinedon.data
-	import leginondata
-	Data = sinedon.data.Data
-except:	
-	import data as leginondata
-	Data = data.Data
+import data
 
 ### Particle Selection Tables
 
-class ApParticleData(Data):
+class ApParticleData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('selectionrun', ApSelectionRunData),
 			('dbemdata|AcquisitionImageData|image', int),
 			('xcoord', int),
@@ -28,22 +22,22 @@ class ApParticleData(Data):
 			('peakarea', int),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApParticleData=ApParticleData
+data.ApParticleData=ApParticleData
 
-class ApSelectionRunData(Data):
+class ApSelectionRunData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('params', ApSelectionParamsData),
 			('dogparams', ApDogParamsData),
 			('dbemdata|SessionData|session', int),
 			('name', str), 
 		)
 	typemap = classmethod(typemap)
-leginondata.ApSelectionRunData=ApSelectionRunData
+data.ApSelectionRunData=ApSelectionRunData
 
-class ApSelectionParamsData(Data):
+class ApSelectionParamsData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('diam', int),
 			('bin', int),
 			('manual_thresh', float),
@@ -53,11 +47,11 @@ class ApSelectionParamsData(Data):
 			('max_peaks', int),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApSelectionParamsData=ApSelectionParamsData
+data.ApSelectionParamsData=ApSelectionParamsData
 
-class ApDogParamsData(Data):
+class ApDogParamsData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('diam', int),
 			('bin', int),
 			('threshold', float),
@@ -68,12 +62,12 @@ class ApDogParamsData(Data):
 			('max_peaks', int),			
 		)
 	typemap = classmethod(typemap)
-leginondata.ApDogParamsData=ApDogParamsData
+data.ApDogParamsData=ApDogParamsData
 
 
-class ApTemplateImageData(Data):
+class ApTemplateImageData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('project|projects|project', int),
 			('templatepath', str),
 			('templatename', str),
@@ -82,11 +76,11 @@ class ApTemplateImageData(Data):
 			('description', str),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApTemplateImageData=ApTemplateImageData
+data.ApTemplateImageData=ApTemplateImageData
 
-class ApTemplateRunData(Data):
+class ApTemplateRunData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('template', ApTemplateImageData),
 			('selectionrun', ApSelectionRunData),
 			('range_start', int),
@@ -94,15 +88,15 @@ class ApTemplateRunData(Data):
 			('range_incr', int),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApTemplateRunData=ApTemplateRunData
+data.ApTemplateRunData=ApTemplateRunData
 
 
 
 ### Shift Table(s)
 
-class ApImageTransformationData(Data):
+class ApImageTransformationData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('dbemdata|AcquisitionImageData|image1', int),
 			('dbemdata|AcquisitionImageData|image2', int),
 			('shiftx', float),
@@ -113,26 +107,27 @@ class ApImageTransformationData(Data):
 			('tilt', float),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApImageTransformationData=ApImageTransformationData
+data.ApImageTransformationData=ApImageTransformationData
 
 
 ### Mask Tables 
 
-class ApMaskMakerRunData(Data):
+class ApMaskMakerRunData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('params', ApMaskMakerParamsData),
-			('session', leginondata.SessionData),
+			('dbemdata|SessionData|session', int),
 			('name', str), 
 			('path', str),
 		)
 	typemap = classmethod(typemap)
+data.ApMaskMakerRunData=ApMaskMakerRunData
 
-class ApMaskRegionData(Data):
+class ApMaskRegionData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('maskrun', ApMaskMakerRunData),
-			('image', leginondata.AcquisitionImageData),
+			('dbemdata|AcquisitionImageData|image', int),
 			('x', int),
 			('y', int),
 			('area', int),
@@ -143,10 +138,11 @@ class ApMaskRegionData(Data):
 			
 		)
 	typemap = classmethod(typemap)
+data.ApMaskRegionData=ApMaskRegionData
 
-class ApMaskMakerParamsData(Data):
+class ApMaskMakerParamsData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('bin', int),
 			('mask type', str),
 			('pdiam', int),
@@ -160,12 +156,14 @@ class ApMaskMakerParamsData(Data):
 			('libcv', bool),
 		)
 	typemap = classmethod(typemap)
+data.ApMaskMakerParamsData=ApMaskMakerParamsData
+
 
 ### Stack Tables
 
-class ApStackParamsData(Data):
+class ApStackParamsData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('stackPath', str),
 			('name' , str),
 			('description', str),
@@ -182,24 +180,23 @@ class ApStackParamsData(Data):
 			('inverted', bool),
 		)
 	typemap = classmethod(typemap)
+data.ApStackParamsData = ApStackParamsData
 
-leginondata.ApStackParamsData=ApStackParamsData
-
-class ApStackParticlesData(Data):
+class ApStackParticlesData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('particleNumber', int),
 			('stackparams', ApStackParamsData),
 			('particle', ApParticleData),
 	        )
 	typemap = classmethod(typemap)
-leginondata.ApStackParticlesData = ApStackParticlesData
+data.ApStackParticlesData = ApStackParticlesData
 
 ### Reconstruction Tables ###
 
-class ApRefinementRunData(Data):
+class ApRefinementRunData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('name', str),
 			('stack', ApStackParamsData),
 			('initialModel', ApInitialModelData),
@@ -207,11 +204,11 @@ class ApRefinementRunData(Data):
 			('package', str),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApRefinementRunData=ApRefinementRunData
+data.ApRefinementRunData=ApRefinementRunData
 
-class ApInitialModelData(Data):
+class ApInitialModelData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('project|projects|project', int),
 			('path', str),
 			('name', str),
@@ -221,20 +218,20 @@ class ApInitialModelData(Data):
 			('description', str),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApInitialModelData=ApInitialModelData
+data.ApInitialModelData=ApInitialModelData
 
-class ApSymmetryData(Data):
+class ApSymmetryData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('symmetry', str),
 			('description', str),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApSymmetryData=ApSymmetryData
+data.ApSymmetryData=ApSymmetryData
 
-class ApRefinementData(Data):
+class ApRefinementData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('refinementRun', ApRefinementRunData),
 			('refinementParams', ApRefinementParamsData),
 			('iteration', int),
@@ -244,11 +241,11 @@ class ApRefinementData(Data):
 			('volumeDensity',str),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApRefinementData=ApRefinementData
+data.ApRefinementData=ApRefinementData
 
-class ApRefinementParamsData(Data):
+class ApRefinementParamsData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('ang', float),
 			('mask', int),
 			('imask', int),
@@ -263,20 +260,20 @@ class ApRefinementParamsData(Data):
 			('EMAN_refine', bool),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApRefinementParamsData=ApRefinementParamsData
+data.ApRefinementParamsData=ApRefinementParamsData
 
-class ApResolutionData(Data):
+class ApResolutionData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('fscfile', str),
 			('half', float),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApResolutionData=ApResolutionData
+data.ApResolutionData=ApResolutionData
 
-class ApParticleClassificationData(Data):
+class ApParticleClassificationData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('refinement', ApRefinementData),
 			('particle', ApStackParticlesData),
 			('eulers', ApEulerData),
@@ -287,33 +284,33 @@ class ApParticleClassificationData(Data):
 			('thrown_out',bool),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApParticleClassificationData=ApParticleClassificationData
+data.ApParticleClassificationData=ApParticleClassificationData
 
-class ApEulerData(Data):
+class ApEulerData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('euler1', float),
 			('euler2', float),
 			('euler3', float),
 	        )
 	typemap = classmethod(typemap)
-leginondata.ApEulerData=ApEulerData
+data.ApEulerData=ApEulerData
 	
 ### ACE/CTF Tables
 
-class ApAceRunData(Data):
+class ApAceRunData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('aceparams', ApAceParamsData),
 			('dbemdata|SessionData|session', int),
 			('name', str), 
 		)
 	typemap = classmethod(typemap)
-leginondata.ApAceRunData=ApAceRunData
+data.ApAceRunData=ApAceRunData
 
-class ApAceParamsData(Data):
+class ApAceParamsData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('display', int), 
 			('stig', int),
 			('medium', str),
@@ -329,11 +326,11 @@ class ApAceParamsData(Data):
 			('reprocess', float),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApAceParamsData=ApAceParamsData
+data.ApAceParamsData=ApAceParamsData
 
-class ApCtfData(Data):
+class ApCtfData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('acerun', ApAceRunData),
 			('dbemdata|AcquisitionImageData|image', int),
 			('defocus1', float),
@@ -361,73 +358,75 @@ class ApCtfData(Data):
 			('mat_file', str),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApCtfData=ApCtfData
+data.ApCtfData=ApCtfData
 
-class ApTestParamsData(Data):
+class ApTestParamsData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('bin', int),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApTestParamsData=ApTestParamsData
+data.ApTestParamsData=ApTestParamsData
 
-class ApTestRunData(Data):
+class ApTestRunData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('params', ApTestParamsData),
 			('dbemdata|SessionData|session', int),
 			('name', str), 
 			('path', str),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApTestRunData=ApTestRunData
+data.ApTestRunData=ApTestRunData
 
-class ApTestResultData(Data):
+class ApTestResultData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('testrun', ApTestRunData),
 			('dbemdata|AcquisitionImageData|image', int),
 			('x', float), 
 			('y', float),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApTestResultData=ApTestResultData
+data.ApTestResultData=ApTestResultData
 
 ### Assessment tables ###
 
-class ApAssessmentRunData(Data):
+class ApAssessmentRunData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('dbemdata|SessionData|session',int),
 			('name',str),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApAssessmentRunData=ApAssessmentRunData
+data.ApAssessmentRunData=ApAssessmentRunData
 
-class ApAssessmentData(Data):
+class ApAssessmentData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('assessmentrun', ApAssessmentRunData),
 			('dbemdata|AcquisitionImageData|image', int),
 			('selectionkeep', int),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApAssessmentData=ApAssessmentData
+data.ApAssessmentData=ApAssessmentData
 
-class ApMaskAssessmentRunData(Data):
+class ApMaskAssessmentRunData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
-			('session',leginondata.SessionData),
+		return data.Data.typemap() + (
+			('dbemdata|SessionData|session',int),
 			('maskrun',ApMaskMakerRunData),
 			('name',str),
 		)
 	typemap = classmethod(typemap)
+data.ApMaskAssessmentRunData=ApMaskAssessmentRunData
 
-class ApMaskAssessmentData(Data):
+class ApMaskAssessmentData(data.Data):
 	def typemap(cls):
-		return Data.typemap() + (
+		return data.Data.typemap() + (
 			('run', ApMaskAssessmentRunData),
 			('region', ApMaskRegionData),
 			('keep', int),
 		)
 	typemap = classmethod(typemap)
+data.ApMaskAssessmentData=ApMaskAssessmentData
