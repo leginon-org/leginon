@@ -254,7 +254,6 @@ def batchBox(params, imgdict):
 	print "processing:",apDisplay.short(imgname)
 	input  = os.path.join(params["filepath"], imgname+".mrc")
 	output = os.path.join(params["outdir"], imgname+".hed")
-	apParam.createDirectory(params["outdir"], warning=False)
 
 	# if getting particles from database, a temporary
 	# box file will be created
@@ -376,9 +375,6 @@ def singleStack(params,imgdict):
 		input = os.path.join(params["outdir"], imgname+'.hed')
 	output = os.path.join(params["outdir"], params["single"])
 
-	singlepath = os.path.split(output)[0]
-	apParam.createDirectory(singlepath, warning=False)
-
 	if params['normalize'] is False:
 		cmd="proc2d %s %s" %(input, output)
 	else:
@@ -407,7 +403,7 @@ def singleStack(params,imgdict):
 			count=int(words[-2])
 
 	# create particle log file
-	partlogfile = os.path.join(singlepath, ".particlelog")
+	partlogfile = os.path.join(params["outdir"], ".particlelog")
 	f = open(partlogfile, 'a')
 	for n in range(count-params["particle"]):
 		particlenum=str(1+n+params["particle"])
@@ -636,6 +632,7 @@ if __name__ == '__main__':
 		params['outdir'] = os.path.join(params['outdir'], params['runid'])
 		apDisplay.printMsg("output directory: "+params['outdir'])
 		#params['rundir'] = os.path.join(params['outdir'], params['runid'])
+	apParam.createDirectory(params["outdir"])
 	logfile = os.path.join(params['outdir'], "makestack.log")
 	apParam.writeFunctionLog(sys.argv, logfile=logfile)
 
