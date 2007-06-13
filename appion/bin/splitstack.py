@@ -6,7 +6,6 @@ import os
 import sys
 import random
 import EMAN
-import data
 import math
 import apStack
 

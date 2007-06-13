@@ -15,13 +15,22 @@ import apDB
 import apImage
 import apXml
 import apParam
-#leginon
-import data
 try:
-	import mem
+#leginon
+	import leginondata
 except:
-	apDisplay.printError("Please load 'usepythoncvs' for CVS leginon code,"
-		+" which includes 'mem.py'")
+	import data as leginondata
+	print "sinedon not available, use old data.py"
+
+try:
+	import pyami.mem as mem
+except:
+	print "pyami not available, use mem.py in old Leginon"
+	try:
+		import mem
+	except:
+		apDisplay.printError("Please load 'usepythoncvs' for CVS leginon code,"
+			+" which includes 'mem.py'")
 
 class AppionLoop(object):
 	appiondb  = apDB.apdb
@@ -299,7 +308,7 @@ class AppionLoop(object):
 		### classic methods
 		self.params['mrcfileroot']=[]
 		self.params['sessionname']=None
-		self.params['session']=data.SessionData(name='dummy'),
+		self.params['session']=leginondata.SessionData(name='dummy'),
 		self.params['preset']=None
 		self.params['runid']="dummy"
 		self.params['dbimages']=False
@@ -447,7 +456,7 @@ class AppionLoop(object):
 				# continue should be on for dbimages option
 				self.params['continue']=True 
 
-		sessionq=data.SessionData(name=self.params['sessionname'])
+		sessionq=leginondata.SessionData(name=self.params['sessionname'])
 		self.params['session']=self.leginondb.query(sessionq)[0]
 
 		apDisplay.printMsg("parsing special parameters")

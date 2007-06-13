@@ -1,10 +1,21 @@
 #Defocus pair functions
 
 import numarray
+try:
+#sinedon
+	import sinedon.data as data
+#pyami
+	import pyami.peakfinder as peakfinder
+	import pyami.correlator as correlator
 #leginon
-import peakfinder
-import data
-import correlator
+	import leginondata
+except:
+	import data
+	import data as leginondata
+	import peakfinder
+	import correlator
+	print "sinedon/pyami not available"
+
 #appion
 import appionData
 import apDB

@@ -3,7 +3,6 @@
 
 import os
 import sys
-import data
 import time
 #import selexonFunctions as sf1
 import apUpload

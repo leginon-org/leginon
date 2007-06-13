@@ -3,14 +3,13 @@ import os
 import sys
 import re
 import time
-import data
-#import dbdatakeeper
+import sinedon.data as data
 import apDB
 import apVersion
 import apDisplay
 import apDatabase
 try:
-	import mem
+	import pyami.mem as mem
 except:
 	apDisplay.printError("Please load 'usepythoncvs' for CVS leginon code, which includes 'mem.py'")
 #import selexonFunctions  as sf1

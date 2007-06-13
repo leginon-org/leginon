@@ -1,5 +1,6 @@
 #pythonlib
 import os
+import numpy
 #sinedon
 import sinedon.data as data
 import sinedon.newdict as newdict
@@ -10,7 +11,7 @@ import apImage
 import appionData
 import apDB
 import apCrud
-
+import apDatabase
 leginondb = apDB.db
 appiondb = apDB.apdb
 
@@ -26,8 +27,7 @@ def getMaskParamsByRunName(name,sessiondata):
 		return None,None
 	
 def getSessionDataByName(name):
-	sessionq = leginondata.SessionData(name=name)
-	sessiondata = leginondb.query(sessionq)[0]
+	sessiondata = apDatabase.getSessionDataFromSessionName(name)
 	return sessiondata
 			
 def insertManualMaskParams(bin):
@@ -91,11 +91,21 @@ def getMaskRegions(maskrun,imgdata):
 	
 	return results
 
+def getAllMaskRegionsByAssessment(assessrun,imgdata):
+	maskRq=appionData.ApMaskRegionData()
+
+	maskRq['maskrun']=maskrun
+	maskRq['image']=imgdata
+	
+	results=appiondb.query(maskRq)
+	
+	return results
+
 def insertMaskAssessmentRun(sessiondata,maskrundata,name):
 	assessRdata=appionData.ApMaskAssessmentRunData()
 	assessRdata['session'] = sessiondata
-	assessRdata['maskrun'] = maskrundata
 	assessRdata['name'] = name
+	assessRdata['maskrun'] = maskrundata
 
 	result=appiondb.query(assessRdata)
 	if not (result):
@@ -194,27 +204,34 @@ def getRegionKeepList(assessrundata,maskregiondata):
 
 def makeInspectedMask(sessiondata,maskassessname,imgdata):
 
-	assessrundata = getMaskAssessRunData(sessiondata,maskassessname)[0]
-	
-	maskrundata = assessrundata['maskrun']
-	
-	maskbin = maskrundata['params']['bin']
-	
-	maskregiondata = getMaskRegions(maskrundata,imgdata)
-	
-	if len(maskregiondata) == 0:
-		return None,maskbin
-	
-	keeplist = getRegionKeepList(assessrundata,maskregiondata)
-	
-	if len(keeplist) == 0:
-		return None,maskbin
+	assessruntree = getMaskAssessRunData(sessiondata,maskassessname)
 		
-	maskarray = getMaskArray(maskrundata,imgdata)
+	for assessrundata in assessruntree:
+		maskrundata = assessrundata['maskrun']
 	
-	maskarray = apCrud.makeKeepMask(maskarray,keeplist)
+		maskbin = maskrundata['params']['bin']
 	
-	return maskarray,maskbin
+		maskregiondata = getMaskRegions(maskrundata,imgdata)
+	
+		if len(maskregiondata) == 0:
+			continue
+	
+		keeplist = getRegionKeepList(assessrundata,maskregiondata)
+	
+		if len(keeplist) == 0:
+			continue
+		
+		maskarray = getMaskArray(maskrundata,imgdata)
+		maskarray = apCrud.makeKeepMask(maskarray,keeplist)
+		try:
+			allmaskarray = allmaskarray+maskarray
+		except:
+			allmaskarray = maskarray
+	
+	allmaskarray = numpy.where(allmaskarray==0,0,1)
+	apImage.arrayToJpeg(allmaskarray,'test.jpg')
+	
+	return allmaskarray,maskbin
 	
 				
 

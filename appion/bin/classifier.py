@@ -6,7 +6,11 @@ import re
 import time
 import glob
 import shutil
-import data
+#leginon
+	import leginondata
+except:
+	import data as leginondata
+	print "sinedon not available, use old data.py"
 import apXml
 import apParam
 import apDisplay
@@ -141,7 +145,7 @@ def getStackInfo(params):
 		selectdata = appiondb.direct_query(appionData.ApDogParamsData, partdata['selectionrun']['dogparams'].dbid)
 
 	#get image params of the particle
-	imgdata = leginondb.direct_query(data.AcquisitionImageData, partdata['dbemdata|AcquisitionImageData|image'])
+	imgdata = leginondb.direct_query(leginondata.AcquisitionImageData, partdata['dbemdata|AcquisitionImageData|image'])
 
 	#set the parameters	
 	params['session'] = imgdata['session']

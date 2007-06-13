@@ -8,8 +8,16 @@ import sys
 import math
 import string
 import time
+#sinedon
+try:
+	import sinedon.data as data
+except:
+	import data
 #leginon
-import data
+try:
+	import leginondata
+except:
+	import data as leginondata
 #appion
 import appionData
 import apDisplay
@@ -18,6 +26,7 @@ import apParam
 import apDB
 import apDatabase
 import apCtf
+import apMask
 import apImage
 
 db   = apDB.db
@@ -90,6 +99,7 @@ def createDefaults():
 	params['normalize']=True
 	params['selexonmin']=None
 	params['selexonmax']=None
+	params['inspectmask']=None
 	params['commit']=False
 	params['outdir']=None
 	params['particleNumber']=0
@@ -139,6 +149,8 @@ def parseInput(args):
 			params["selexonmin"]=float(elements[1])
 		elif (elements[0]=='selexonmax'):
 			params["selexonmax"]=float(elements[1])
+		elif (elements[0]=='maskassess'):
+			params["inspectmask"]=elements[1]
 		elif (elements[0]=='boxsize'):
 			params["boxsize"]=int(elements[1])
 		elif (elements[0]=='inspectfile'):
@@ -282,6 +294,10 @@ def batchBox(params, imgdict):
 			if params['selexonmin'] or params['selexonmax']:
 				particles=eliminateMinMaxCCParticles(particles,params)
 			
+			###apply masks
+			if params['inspectmask']:
+				particles=eliminateMaskedParticles(particles,params,imgdict)
+			
 			###save particles
 			if len(particles)>0:
 				hasparticles=True
@@ -314,6 +330,24 @@ def batchBox(params, imgdict):
 		return(nptcls)
 	else:
 		return(0)
+
+	
+def eliminateMaskedParticles(particles,params,imgdata):
+	newparticles = []
+	eliminated = 0
+	sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
+	maskimg,maskbin = apMask.makeInspectedMask(sessiondata,params['inspectmask'],imgdata)
+	if maskimg is not None:
+		for prtl in particles:
+			binnedcoord = (int(prtl['ycoord']/maskbin),int(prtl['xcoord']/maskbin))
+			if maskimg[binnedcoord] != 0:
+				eliminated += 1
+			else:
+				newparticles.append(prtl)
+		print eliminated,"particle(s) eliminated due to masking"
+	else:
+		newparticles = particles
+	return newparticles
 
 def eliminateMinMaxCCParticles(particles,params):
 	newparticles = []
@@ -439,15 +473,17 @@ def getImgsFromSelexonId(params):
 	print "Finding images that have particles for selection run: id="+str(params['selexonId'])
 
 	# get selection run id
-	selexonrun=apdb.direct_query(data.ApSelectionRunData, params['selexonId'])
+	selexonrun=apdb.direct_query(appionData.ApSelectionRunData, params['selexonId'])
 	if not (selexonrun):
 		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' is not in database")
 	
 	# from id get the session
-	sessionid = db.direct_query(data.SessionData, selexonrun['dbemdata|SessionData|session'])
+	sessionid=db.direct_query(leginondata.SessionData, selexonrun['dbemdata|SessionData|session'])
+
 	# get all images from session
-	dbimgq = data.AcquisitionImageData(session=sessionid)
-	dbimginfo = db.query(dbimgq, readimages=False)
+	dbimgq=leginondata.AcquisitionImageData(session=sessionid)
+	dbimginfo=db.query(dbimgq, readimages=False)
+
 	if not (dbimginfo):
 		apDisplay.printError("no images associated with this runId")
 
@@ -468,14 +504,14 @@ def getImgsDefocPairFromSelexonId(params):
 	print "Finding images that have particles for selexon run:", params['selexonId']
 
 	# get selection run id
-	selexonrun=apdb.direct_query(data.ApSelectionRunData,params['selexonId'])
+	selexonrun=apdb.direct_query(appionData.ApSelectionRunData,params['selexonId'])
 	if not (selexonrun):
 		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' not in database")
 	
 	# from id get the session
-	sessionid=db.direct_query(data.SessionData,selexonrun['dbemdata|SessionData|session'])
+	sessionid=db.direct_query(leginondata.SessionData,selexonrun['dbemdata|SessionData|session'])
 	# get all images from session
-	dbimgq=data.AcquisitionImageData(session=sessionid)
+	dbimgq=leginondata.AcquisitionImageData(session=sessionid)
 	dbimginfo=db.query(dbimgq,readimages=False)
 	if not (dbimginfo):
 		apDisplay.printError("no images associated with this runId")
@@ -494,7 +530,7 @@ def getImgsDefocPairFromSelexonId(params):
 			simgdata=apdb.query(simgq,readimages=False)
 			if simgdata:
 				simg=simgdata[0]
-				siblingimage=db.direct_query(data.AcquisitionImageData,simg['dbemdata|AcquisitionImageData|image2'], readimages=False)
+				siblingimage=db.direct_query(leginondata.AcquisitionImageData,simg['dbemdata|AcquisitionImageData|image2'], readimages=False)
 				#create a dictionary for keeping the dbids of image pairs so we don't have to query later
 				params['sibpairs'][simg['dbemdata|AcquisitionImageData|image2']] = simg['dbemdata|AcquisitionImageData|image1']
 				dbimglist.append(siblingimage)
@@ -676,9 +712,10 @@ if __name__ == '__main__':
 		imglist=params["imgs"]
 		images=[]
 		for img in imglist:
-			imageq = data.AcquisitionImageData(filename=img)
-			imageresult = db.query(imageq, readimages=False)
-			images = images+imageresult
+			imageq=leginondata.AcquisitionImageData(filename=img)
+			imageresult=db.query(imageq, readimages=False)
+			images=images+imageresult
+
 		params['session']=images[0]['session']['name']
 		params['sessionname']=images[0]['session']['name']
 			

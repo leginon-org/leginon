@@ -10,7 +10,7 @@ import apParam
 import apDatabase
 import apDisplay
 try:
-	import mem
+	import pyami.mem as mem
 except:
 	apDisplay.printError("Please load 'usepythoncvs' for CVS leginon code, which includes 'mem.py'")
 

@@ -1,8 +1,7 @@
 #Part of the new appion
 
-import data
-import dbdatakeeper
+import sinedon
 
-db     = dbdatakeeper.DBDataKeeper()
-apdb   = dbdatakeeper.DBDataKeeper(db='dbappiondata')
-projdb = dbdatakeeper.DBDataKeeper(db='project')
+db     = sinedon.getConnection('leginondata')
+apdb   = sinedon.getConnection('appionData')
+projdb = sinedon.getConnection('projectData')

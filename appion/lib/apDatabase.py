@@ -6,8 +6,15 @@ import os
 import time
 import math
 import shutil
+try:
+#sinedon
+	import sinedon.data as data
 #leginon
-import data
+	import leginondata
+except:
+	import data
+	import data as leginondata
+	print "sinedon not available, use old data.py"
 #appion
 import apDB
 import apLoop
@@ -42,7 +49,7 @@ def getSpecificImagesFromDB(imglist):
 	print "Querying database for "+str(len(imglist))+" specific images ... "
 	imgtree=[]
 	for imgname in imglist:
-		imgquery = data.AcquisitionImageData(filename=imgname)
+		imgquery = leginondata.AcquisitionImageData(filename=imgname)
 		imgres   = leginondb.query(imgquery, readimages=False, results=1)
 		imgtree.append(imgres[0])
 	return imgtree
@@ -52,9 +59,9 @@ def getImagesFromDB(session, preset):
 	returns list of image names from DB
 	"""
 	apDisplay.printMsg("Querying database for preset '"+preset+"' images from session '"+session+"' ... ")
-	sessionq = data.SessionData(name=session)
-	presetq=data.PresetData(name=preset)
-	imgquery = data.AcquisitionImageData()
+	sessionq = leginondata.SessionData(name=session)
+	presetq=leginondata.PresetData(name=preset)
+	imgquery = leginondata.AcquisitionImageData()
 	imgquery['preset']  = presetq
 	imgquery['session'] = sessionq
 	imgtree = leginondb.query(imgquery, readimages=False)
@@ -72,18 +79,27 @@ def getAllImagesFromDB(session):
 	returns list of image data based on session name
 	"""
 	apDisplay.printMsg("Querying database for all images from session '"+session+"' ... ")
-	sessionq= data.SessionData(name=session)
-	imgquery = data.AcquisitionImageData()
+	sessionq= leginondata.SessionData(name=session)
+	imgquery = leginondata.AcquisitionImageData()
 	imgquery['session'] = sessionq
 	imgtree = leginondb.query(imgquery, readimages=False)
 	return imgtree
 
 def getExpIdFromSessionName(sessionname):
 	apDisplay.printMsg("looking up session, "+sessionname)
-	sessionq = data.SessionData(name=sessionname)
+	sessionq = leginondata.SessionData(name=sessionname)
 	sessioninfo = leginondb.query(sessionq, readimages=False, results=1)
 	if sessioninfo:
 		return sessioninfo[0].dbid
+	else:
+		apDisplay.printError("could not find session, "+sessionname)
+
+def getSessionDataFromSessionName(sessionname):
+	apDisplay.printMsg("looking up session, "+sessionname)
+	sessionq = leginondata.SessionData(name=sessionname)
+	sessioninfo = leginondb.query(sessionq, readimages=False, results=1)
+	if sessioninfo:
+		return sessioninfo[0]
 	else:
 		apDisplay.printError("could not find session, "+sessionname)
 
@@ -92,7 +108,7 @@ def getDBTemplates(params):
 	i=1
 	for tid in params['templateIds']:
 		# find templateImage row
-		tmpltinfo = appiondb.direct_query(data.ApTemplateImageData, tid)
+		tmpltinfo = appiondb.direct_query(appionData.ApTemplateImageData, tid)
 		if not (tmpltinfo):
 			apDisplay.printError("TemplateId "+str(tid)+" not found in database. Use 'uploadTemplate.py'\n")
 		apix = tmpltinfo['apix']
@@ -115,7 +131,7 @@ def getDBTemplates(params):
 	i=1
 	for tid in params['templateIds']:
 		# find templateImage row
-		tmpltinfo=appiondb.direct_query(data.ApTemplateImageData, tid)
+		tmpltinfo=appiondb.direct_query(appionData.ApTemplateImageData, tid)
 		if not (tmpltinfo):
 			apDisplay.printError("TemplateId "+str(tid)+" not found in database.  Use 'uploadTemplate.py'\n")
 		fname=os.path.join(tmpltinfo['templatepath'],tmpltinfo['templatename'])
@@ -133,7 +149,7 @@ def getImageData(imgname):
 	"""
 	get image data object from database
 	"""
-	imgquery = data.AcquisitionImageData(filename=imgname)
+	imgquery = leginondata.AcquisitionImageData(filename=imgname)
 	imgtree  = leginondb.query(imgquery, results=1, readimages=False)
 	if imgtree:
 		#imgtree[0].holdimages=False
@@ -142,7 +158,7 @@ def getImageData(imgname):
 		apDisplay.printError("Image "+imgname+" not found in database\n")
 
 def getImgDir(sessionname):
-	sessionq = data.SessionData(name=sessionname)
+	sessionq = leginondata.SessionData(name=sessionname)
 	sessiondata = leginondb.query(sessionq)
 	imgdir = os.path.abspath(sessiondata[0]['image path'])
 	return imgdir
@@ -151,7 +167,7 @@ def getSessionName(imgname):
 	"""
 	get session name from database
 	"""
-	imgquery = data.AcquisitionImageData(filename=imgname)
+	imgquery = leginondata.AcquisitionImageData(filename=imgname)
 	imgtree  = leginondb.query(imgquery, results=1, readimages=False)
 	if 'session' in imgtree[0]:
 		return imgtree[0]['session']['name']
@@ -167,7 +183,7 @@ def getPixelSize(imgdict):
 	multiplies by binning and also by 1e10 to return image pixel size in angstroms
 	shouldn't have to lookup db already should exist in imgdict
 	"""
-	pixelsizeq=data.PixelSizeCalibrationData()
+	pixelsizeq=leginondata.PixelSizeCalibrationData()
 	pixelsizeq['magnification']=imgdict['scope']['magnification']
 	pixelsizeq['tem']=imgdict['scope']['tem']
 	pixelsizeq['ccdcamera'] = imgdict['camera']['ccdcamera']
@@ -182,7 +198,7 @@ def getImgSize(imgdict):
 		return (imgdict['image'].shape)[1]
 	fname = imgdict['filename']
 	# get image size (in pixels) of the given mrc file
-	imageq=data.AcquisitionImageData(filename=fname)
+	imageq=leginondata.AcquisitionImageData(filename=fname)
 	imagedata=leginondb.query(imageq, results=1, readimages=False)
 	if imagedata:
 		size=int(imagedata[0]['camera']['dimension']['y'])
@@ -193,7 +209,7 @@ def getImgSize(imgdict):
 
 def getImgSizeFromName(imgname):
 	# get image size (in pixels) of the given mrc file
-	imageq=data.AcquisitionImageData(filename=imgname)
+	imageq=leginondata.AcquisitionImageData(filename=imgname)
 	imagedata=leginondb.query(imageq, results=1, readimages=False)
 	if imagedata:
 		size=int(imagedata[0]['camera']['dimension']['y'])

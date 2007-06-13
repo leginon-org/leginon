@@ -4,7 +4,13 @@
 
 import sys
 import os
-import data
+try:
+#sinedon
+	import sinedon.data as data
+except:
+	import data
+	print "sinedon not available, use old data.py"
+#appion
 import apLoop
 import apCrud
 import apParticle

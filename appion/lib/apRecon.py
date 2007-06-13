@@ -4,7 +4,7 @@
 import os, re, sys
 import tempfile
 import cPickle
-import data
+import sinedon.data as data
 import convolver
 import Mrc
 import numarray.nd_image
@@ -110,7 +110,7 @@ def parseInput(args,params):
 			sys.exit(1)
         
 def checkStackId(params):
-	stackinfo=partdb.direct_query(data.ApStackParamsData, params['stackid'])
+	stackinfo=partdb.direct_query(appionData.ApStackParamsData, params['stackid'])
 	if not stackinfo:
 		print "\nERROR: Stack ID",params['stackid'],"does not exist in the database"
 		sys.exit()
@@ -120,7 +120,7 @@ def checkStackId(params):
 	return
 	
 def checkModelId(params):
-	modelinfo=partdb.direct_query(data.ApInitialModelData, params['modelid'])
+	modelinfo=partdb.direct_query(appionData.ApInitialModelData, params['modelid'])
 	if not modelinfo:
 		print "\nERROR: Initial model ID",params['modelid'],"does not exist in the database"
 		sys.exit()

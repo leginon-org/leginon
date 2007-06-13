@@ -7,9 +7,9 @@ import sys
 import time
 #leginon
 try:
-	import sinedon.data as data
+	import leginondata
 except ImportError:
-	import data
+	import data as leginondata
 #appion
 import apDB
 import appionData
@@ -27,7 +27,7 @@ def guessParticlesForSession(expid=None, sessionname=None):
 	if expid is None:
 		apDisplay.printError("Unknown expId is guessParticlesForSession")
 	apDisplay.printMsg("getting most complete particle picking run from DB for session "+sessionname)
-	#sessionq = data.SessionData(name=sessionname)
+	#sessionq = leginondata.SessionData(name=sessionname)
 	#sessiondata = leginondb.query(sessionq)
 	#print sessiondata[0]
 
@@ -50,7 +50,7 @@ def getParticles(imgdata, selectionRunId):
 	returns paticles (as a list of dicts) for a given image
 	ex: particles[0]['xcoord'] is the xcoord of particle 0
 	"""
-	selexonrun = appiondb.direct_query(data.ApSelectionRunData, selectionRunId)
+	selexonrun = appiondb.direct_query(appionData.ApSelectionRunData, selectionRunId)
 	prtlq = appionData.ApParticleData()
 	prtlq['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
 	prtlq['selectionrun'] = selexonrun
@@ -60,7 +60,7 @@ def getParticles(imgdata, selectionRunId):
 
 def getDefocPairParticles(imgdict, params):
 	print "finding pair for", apDisplay.short(imgdict['filename'])
-	selexonrun=appiondb.direct_query(data.ApSelectionRunData,params['selexonId'])
+	selexonrun=appiondb.direct_query(appionData.ApSelectionRunData,params['selexonId'])
 	prtlq=appionData.ApParticleData()
 	prtlq['dbemdata|AcquisitionImageData|image'] = params['sibpairs'][imgdict.dbid]
 	prtlq['selectionrun'] = selexonrun
@@ -117,7 +117,7 @@ def getDBparticledataImage(imgdict,expid):
 	return imgdict
 
 def getTemplateDBInfo(tmpldbid):
-	return appiondb.direct_query(data.ApTemplateImageData, tmpldbid)
+	return appiondb.direct_query(appionData.ApTemplateImageData, tmpldbid)
 
 def insertParticlePeaks(peaktree, imgdict, expid, params):
 	"""
@@ -316,5 +316,5 @@ def insertSelexonParams(params,expid):
 if __name__ == '__main__':
 	name = 'test2'
 	sessionname = '07jan05b'
-	params = getMaskParamsByRunName(name,sessionname)
+	params = 'test'
 	print params

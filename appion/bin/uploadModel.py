@@ -3,7 +3,6 @@
 
 import os
 import sys
-import data
 import time
 import apUpload
 import apParam

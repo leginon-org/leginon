@@ -6,18 +6,25 @@ import time
 #PIL
 import Image
 import ImageDraw
-#numarray
-import numarray
-import numarray.nd_image as nd_image
-import numarray.linear_algebra as linear_algebra
-import numarray.ma as ma
-#leginon
-import Mrc
-import imagefun
-import convolver
+#numpy
+import numpy
+import scipy.ndimage as nd_image
+linear_algebra = numpy.linalg
+ma = numpy.ma
+#pyami
+try:
+	import pyami.mrc as mrc
+	import pyami.imagefun as imagefun
+	import pyami.convolver as convolver
+	import leginondata
+except:
+	import Mrc as mrc
+	import imagefun
+	import convolver
+	import data as leginondata
+
 #appion
 import apDisplay
-import data
 import apDB
 
 db=apDB.db
@@ -176,8 +183,8 @@ def planeRegression(imgarray):
 		return x
 	def rety(y,x):
 		return y	
-	xarray = numarray.fromfunction(retx, imgarray.shape)
-	yarray = numarray.fromfunction(rety, imgarray.shape)
+	xarray = numpy.fromfunction(retx, imgarray.shape)
+	yarray = numpy.fromfunction(rety, imgarray.shape)
 	xsum = float(xarray.sum())
 	xsumsq = float((xarray*xarray).sum())
 	ysum = xsum
@@ -187,10 +194,10 @@ def planeRegression(imgarray):
 	yzsum = float((yarray*imgarray).sum())
 	zsum = imgarray.sum()
 	zsumsq = (imgarray*imgarray).sum()
-	xarray = xarray.astype(numarray.Float64)
-	yarray = yarray.astype(numarray.Float64)
-	leftmat = numarray.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]] )
-	rightmat = numarray.array( [xzsum, yzsum, zsum] )
+	xarray = xarray.astype(numpy.float64)
+	yarray = yarray.astype(numpy.float64)
+	leftmat = numpy.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]] )
+	rightmat = numpy.array( [xzsum, yzsum, zsum] )
 	resvec = linear_algebra.solve_linear_equations(leftmat,rightmat)
 	print " ... plane_regress: x-slope:",round(resvec[0]*size,5),\
 		", y-slope:",round(resvec[1]*size,5),", xy-intercept:",round(resvec[2],5)
@@ -260,7 +267,7 @@ def scaleImage(imgdata, scale):
 	"""
 	if scale == 1.0:
 		return imgdata
-	return numarray.nd_image.zoom(imgdata, scale, order=1)
+	return numpy.nd_image.zoom(imgdata, scale, order=1)
 
 def meanEdgeValue(imgdata, w=0):
 	"""
@@ -287,7 +294,7 @@ def centralMean(imgarray, trim=0.1):
 
 def correlationCoefficient(x,y,mask=None):
 	"""
-	calcualate the correlation coefficient of two numarrays
+	calcualate the correlation coefficient of two numpys
 	"""
 	if x.shape != y.shape:
 		apDisplay.printError("images are not the same shape in correlation calc")
@@ -330,60 +337,62 @@ def msd(x,y,mask=None):
 	return sm/tot
 
 #########################################################
-# PIL to numarray conversions
+# PIL to numpy conversions
 #########################################################
 
-def imageToArray(im, convertType='UInt8'):
-    """
-    Convert PIL image to Numarray array
-    copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
-    """
-    if im.mode == "L":
-        a = numarray.fromstring(im.tostring(), numarray.UInt8)
-        a = numarray.reshape(a, (im.size[1], im.size[0]))
-        #a.shape = (im.size[1], im.size[0], 1)  # alternate way
-    elif (im.mode=='RGB'):
-        a = numarray.fromstring(im.tostring(), numarray.UInt8)
-        a.shape = (im.size[1], im.size[0], 3)
-    elif (im.mode=='RGBA'):
-        a = numarray.fromstring(im.tostring(), numarray.UInt8)
-        a.shape = (im.size[1], im.size[0], 4)
-    else:
-        raise ValueError, im.mode+" mode not considered"
+def imageToArray(im, convertType='uint8'):
+	"""
+	Convert PIL image to numpy array
+	copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
+	"""
+	if im.mode == "L":
+		a = numpy.fromstring(im.tostring(), numpy.uint8)
+		a = numpy.reshape(a, (im.size[1], im.size[0]))
+		#a.shape = (im.size[1], im.size[0], 1)  # alternate way
+	elif (im.mode=='RGB'):
+		a = numpy.fromstring(im.tostring(), numpy.uint8)
+		a.shape = (im.size[1], im.size[0], 3)
+	elif (im.mode=='RGBA'):
+		a = numpy.fromstring(im.tostring(), numpy.uint8)
+		a.shape = (im.size[1], im.size[0], 4)
+	else:
+		raise ValueError, im.mode+" mode not considered"
 
-    if convertType == 'Float32':
-        a = a.astype(numarray.Float32)
-    return a
+	if convertType == 'float32':
+		a = a.astype(numpy.float32)
+	return a
 
 def _arrayToImage(a):
-    """
-    Converts array object (numarray) to image object (PIL).
-    """
-    h, w = a.shape[:2]
-    boolean = numarray.Bool
-    int32 = numarray.Int32
-    uint32 = numarray.UInt32
-    float32 = numarray.Float32
-    float64 = numarray.Float64
+	"""
+	Converts array object (numpy) to image object (PIL).
+	"""
+	h, w = a.shape[:2]
+	boolean = numpy.bool_
+	int32 = numpy.int32
+	uint32 = numpy.uint32
+	float32 = numpy.float32
+	float64 = numpy.float64
 
-    if a.type()==boolean or a.type()==int32 or a.type()==uint32 or a.type()==float32 or a.type()==float64:
-        a = a.astype(numarray.UInt8) # convert to 8-bit
-    if len(a.shape)==3:
-        if a.shape[2]==3:  # a.shape == (y, x, 3)
-            r = Image.fromstring("L", (w, h), a[:,:,0].tostring())
-            g = Image.fromstring("L", (w, h), a[:,:,1].tostring())
-            b = Image.fromstring("L", (w, h), a[:,:,2].tostring())
-            return Image.merge("RGB", (r,g,b))
-        elif a.shape[2]==1:  # a.shape == (y, x, 1)
-            return Image.fromstring("L", (w, h), a.tostring())
-    elif len(a.shape)==2:  # a.shape == (y, x)
-        return Image.fromstring("L", (w, h), a.tostring())
-    else:
-        raise ValueError, "unsupported image mode"
+
+	if a.dtype==boolean or a.dtype==int32 or a.dtype==uint32 or a.dtype==float32 or a.dtype==float64:
+		a = a.astype(numpy.uint8) # convert to 8-bit
+
+	if len(a.shape)==3:
+		if a.shape[2]==3:  # a.shape == (y, x, 3)
+			r = Image.fromstring("L", (w, h), a[:,:,0].tostring())
+			g = Image.fromstring("L", (w, h), a[:,:,1].tostring())
+			b = Image.fromstring("L", (w, h), a[:,:,2].tostring())
+			return Image.merge("RGB", (r,g,b))
+		elif a.shape[2]==1:  # a.shape == (y, x, 1)
+			return Image.fromstring("L", (w, h), a.tostring())
+	elif len(a.shape)==2:  # a.shape == (y, x)
+		return Image.fromstring("L", (w, h), a.tostring())
+	else:
+		raise ValueError, "unsupported image mode"
 
 def arrayToImage(numer,normalize=True):
 	"""
-	takes a numarray and writes a JPEG
+	takes a numpy and writes a JPEG
 	best for micrographs and photographs
 	"""
 	if normalize:
@@ -395,25 +404,25 @@ def arrayToImage(numer,normalize=True):
 
 def mrcToArray(filename,msg=True):
 	"""
-	takes a numarray and writes a Mrc
+	takes a numpy and writes a Mrc
 	"""
 	if msg is True:
 		apDisplay.printMsg("reading MRC: "+apDisplay.short(filename))
-	array = Mrc.mrc_to_numeric(filename)
+	array = mrc.mrc_to_numeric(filename)
 	return array
 
 def arrayToMrc(numer,filename,msg=True):
 	"""
-	takes a numarray and writes a Mrc
+	takes a numpy and writes a Mrc
 	"""
 	if msg is True:
 		apDisplay.printMsg("writing MRC: "+apDisplay.short(filename)+" size:"+str(numer.shape))
-	Mrc.numeric_to_mrc(numer,filename)
+	mrc.numeric_to_mrc(numer,filename)
 	return
 
 def arrayToJpeg(numer,filename,normalize=True, msg=True):
 	"""
-	takes a numarray and writes a JPEG
+	takes a numpy and writes a JPEG
 	best for micrographs and photographs
 	"""
 	if normalize:
@@ -428,7 +437,7 @@ def arrayToJpeg(numer,filename,normalize=True, msg=True):
 
 def arrayToPng(numer,filename,normalize=True, msg=True):
 	"""
-	takes a numarray and writes a PNG
+	takes a numpy and writes a PNG
 	best for masks and line art
 	"""
 	if normalize:
@@ -443,7 +452,7 @@ def arrayToPng(numer,filename,normalize=True, msg=True):
 
 def arrayMaskToPng(numer, filename, msg=True):
 	"""
-	takes a numarray and writes a PNG
+	takes a numpy and writes a PNG
 	best for masks and line art
 	"""
 	image = _arrayToImage(numer)
@@ -461,10 +470,11 @@ def arrayMaskToPngAlpha(numer,filename, msg=True):
 	"""
 	alpha=int(0.4*255)
 	numera = numer*alpha
-	numerones=numarray.ones(numarray.shape(numer))*255
+	numerones=numpy.ones(numpy.shape(numer))*255
 	imagedummy = _arrayToImage(numerones)
 	
 	alphachannel = _arrayToImage(numera)
+
 	image = imagedummy.convert('RGBA')
 	image.putalpha(alphachannel)
 	if msg is True:
@@ -474,7 +484,6 @@ def arrayMaskToPngAlpha(numer,filename, msg=True):
 	
 def PngAlphaToBinarryArray(filename):
 	alphaarray = readPNG(filename)
-	print alphaarray.max(),alphaarray.min(),
 	masked_alphaarray = ma.masked_greater_equal(alphaarray,50)
 	bmask = masked_alphaarray.filled(1)
 	return alphaarray
@@ -485,20 +494,20 @@ def PngAlphaToBinarryArray(filename):
 
 def _maxNormalizeImage(a, stdevLimit=3.0):
 	"""	
-	Normalizes numarray to fit into an image format,
+	Normalizes numpy to fit into an image format,
 	but maximizes the contrast
 	"""
 	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 25.0,maxlevel=230.0,trim=0.1)
 
 def _blackNormalizeImage(a, stdevLimit=3.0):
 	"""	
-	Normalizes numarray to fit into an image format,
+	Normalizes numpy to fit into an image format,
 	but makes it a darker than normal
 	"""
 	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 0.0,maxlevel=200.0)	
 def _whiteNormalizeImage(a, stdevLimit=3.0):
 	"""	
-	Normalizes numarray to fit into an image format,
+	Normalizes numpy to fit into an image format,
 	but makes it a lighter than normal
 	"""
 	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel=55.0,maxlevel=255.0,trim=0.0)	
@@ -525,7 +534,7 @@ def cutEdges(img,trim=0.1):
 
 def _normalizeImage(img,stdevLimit=3.0,minlevel=0.0,maxlevel=255.0,trim=0.0):
 	"""	
-	Normalizes numarray to fit into an image format
+	Normalizes numpy to fit into an image format
 	that is values between 0 (minlevel) and 255 (maxlevel).
 	"""
 	mid = cutEdges(img,trim)
@@ -550,8 +559,8 @@ def _normalizeImage(img,stdevLimit=3.0,minlevel=0.0,maxlevel=255.0,trim=0.0):
 		return img * 255
 
 	img = (img - min1)/(max1 - min1)*imrange + minlevel
-	img = numarray.where(img > maxlevel,255.0,img)
-	img = numarray.where(img < minlevel,0.0,  img)
+	img = numpy.where(img > maxlevel,255.0,img)
+	img = numpy.where(img < minlevel,0.0,  img)
 
 	return img
 
@@ -596,7 +605,7 @@ def printImageInfo(im):
 
 def arrayToJpegPlusPeak(numer,outfile,peak=None,normalize=True):
 	"""
-	takes a numarray and writes a JPEG
+	takes a numpy and writes a JPEG
 	best for micrographs and photographs
 	"""
 	if normalize:
@@ -657,7 +666,7 @@ def drawPeak(peak, draw, imshape, rad=10.0, color0="red", numshapes=4, shape="ci
 	return
 
 def readMRC(filename):
-	return Mrc.mrc_to_numeric(filename)
+	return mrc.mrc_to_numeric(filename)
 
 def readJPG(filename):
 	i = Image.open(filename)
@@ -671,28 +680,27 @@ def readPNG(filename):
 	i = imageToArray(i)
 	return i
 
-def imageToArray(im, convertType='UInt8'):
+def imageToArray(im, convertType='uint8'):
 	"""
-	Convert PIL image to Numarray array
+	Convert PIL image to numpy array
 	copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
 	"""
 	if im.mode == "L":
-		a = numarray.fromstring(im.tostring(), numarray.UInt8)
-		a = numarray.reshape(a, (im.size[1], im.size[0]))
+		a = numpy.fromstring(im.tostring(), numpy.uint8)
+		a = numpy.reshape(a, (im.size[1], im.size[0]))
 		#a.shape = (im.size[1], im.size[0], 1)  # alternate way
 	elif (im.mode=='RGB'):
-		a = numarray.fromstring(im.tostring(), numarray.UInt8)
+		a = numpy.fromstring(im.tostring(), numpy.uint8)
 		a.shape = (im.size[1], im.size[0], 3)
 	elif (im.mode=='RGBA'):
-		print "here"
-		atmp = numarray.fromstring(im.tostring(), numarray.UInt8)
+		atmp = numpy.fromstring(im.tostring(), numpy.uint8)
 		atmp.shape = (im.size[1], im.size[0], 4)
 		a = atmp[:,:,3]
 	else:
 		raise ValueError, im.mode+" mode not considered"
 
-	if convertType == 'Float32':
-		a = a.astype(numarray.Float32)
+	if convertType == 'float32':
+		a = a.astype(numpy.float32)
 	return a
 
 
@@ -708,7 +716,7 @@ def getDarkNorm(sessionname, cameraconfig):
 	'''
 	return the most recent dark and norm image from the given session
 	'''
-	camquery = data.CorrectorCamstateData()
+	camquery = leginondata.CorrectorCamstateData()
 	try:
 		camquery['dimension'] = cameraconfig['dimension']
 	except:
@@ -728,10 +736,10 @@ def getDarkNorm(sessionname, cameraconfig):
 		return cache[key]
 	
 	print 'querying dark,norm'
-	sessionquery = data.SessionData(name=sessionname)
-	darkquery = data.DarkImageData(session=sessionquery, camstate=camquery)
+	sessionquery = leginondata.SessionData(name=sessionname)
+	darkquery = leginondata.DarkImageData(session=sessionquery, camstate=camquery)
 	#print 'DARKQUERY', darkquery
-	normquery = data.NormImageData(session=sessionquery, camstate=camquery)
+	normquery = leginondata.NormImageData(session=sessionquery, camstate=camquery)
 	darkdata = db.query(darkquery, results=1)
 	dark = darkdata[0]['image']
 	#print darkdata[0]

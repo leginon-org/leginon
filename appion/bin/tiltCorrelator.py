@@ -4,7 +4,6 @@ import sys
 sys.stderr.write("loading modules...")
 import os
 import re
-import data
 import time
 import random
 import apLoop
