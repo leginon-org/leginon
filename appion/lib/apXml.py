@@ -41,6 +41,17 @@ def readConfig(filename):
 
 ### END BORROWED CODE
 
+def readOneXmlFile(file1):
+	"""
+	reads two XML files and creates a dictionary
+	"""
+	xmldict  = readConfig(file1)
+
+	fillMissingInfo(xmldict)
+	updateXmlDict(xmldict)
+
+	return xmldict
+
 def readTwoXmlFiles(file1,file2):
 	"""
 	reads two XML files and creates a dictionary

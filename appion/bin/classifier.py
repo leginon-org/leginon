@@ -296,7 +296,9 @@ def spiderline(num, value, comment):
 def runSpiderClass(params, reclass=False):
 	spidercmd = "spider bat/spi @noref_align3"
 	if reclass is False:
-		apDisplay.printColor("Running spider this can take awhile","cyan")
+		esttime = 3*60*(params['numparticles']/500)**2
+		apDisplay.printColor("Running spider this can take awhile, estimated time: "+\
+			apDisplay.timeString(esttime),"cyan")
 	starttime = time.time()
 	executeSpiderCmd(spidercmd)
 	apDisplay.printColor("finished spider in "+apDisplay.timeString(time.time()-starttime),"cyan")

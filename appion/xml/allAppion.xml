@@ -5,7 +5,7 @@
 	<default></default>
 	<description>Output directory for storing output files</description>
 	<type>path</type>
-	<example>/ami/data##/project/appion/session/function</example>
+	<default>/ami/data##/appion/session/function</default>
 	<database>True</database>
  </outdir>
  <dbimages>
