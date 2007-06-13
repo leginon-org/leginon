@@ -236,6 +236,7 @@ def createOutDir(params):
 	params['rundir'] = os.path.join(params['outdir'], params['runid'])
 	apDisplay.printMsg("creating run directory: "+params['rundir'])
 	apParam.createDirectory(params['rundir'])
+	apParam.writeFunctionLog(sys.argv, logfile=os.path.join(params['rundir'],"classifier.log")
 	os.chdir(params['rundir'])
 
 def createSpiderBatchFile(params):
@@ -355,7 +356,7 @@ if __name__ == "__main__":
 	
 	getStackInfo(params)
 	createOutDir(params)
-	
+
 	if not os.path.isfile(os.path.join(params['rundir'], "classes_avg.spi")):
 		createSpiderFile(params)
 		averageTemplate(params)
