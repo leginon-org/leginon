@@ -3,13 +3,13 @@
 
 import sys
 import os
-import numarray
-import numarray.ma as ma
+import numpy
+ma = numpy.ma
 #appion
 import appionLoop
 import apImage
 import apCrud
-import apParticle
+import apMask
 import appionData
 import apDatabase
 import apDisplay
@@ -19,7 +19,7 @@ class MaskMaker(appionLoop.AppionLoop):
 		self.processdirname = "makemask"
 
 	def setFunctionResultKeys(self):
-		self.resultkeys = {'region':['dbemdata|AcquisitionImageData|image', 'maskrun', 'x', 'y',
+		self.resultkeys = {'region':['image', 'maskrun', 'x', 'y',
 			 'area', 'perimeter', 'mean', 'stdev', 'label' ],}
 		
 	def specialDefaultParams(self):
@@ -121,11 +121,8 @@ class MaskMaker(appionLoop.AppionLoop):
 		params = self.params
 		if params is None:
 			params = self.defaultparams
-		maskRdata=appionData.ApMaskMakerRunData()
-		maskRdata['dbemdata|SessionData|session'] = params['session'].dbid
-		maskRdata['path']=params['rundir']
-		maskRdata['name']=params['runid']
-		maskRdata['params']=self.insertFunctionParams(params)
+		paramdata =self.insertFunctionParams(params)
+		maskRdata=apMask.createMaskMakerRun(params['session'],params['rundir'],params['runid'],paramdata)
 		self.appiondb.insert(maskRdata)
 
 		return maskRdata
@@ -147,8 +144,8 @@ class MaskMaker(appionLoop.AppionLoop):
 		
 			l=l1+offset
 			info=infos[l]
-			info.append(l+1)
-			q = apParticle.createMaskRegionData(rundata,imgdata,info)
+			info.append(l1+1)
+			q = apMask.createMaskRegionData(rundata,imgdata,info)
 			qs.append(q)
 		return qs
 
@@ -168,20 +165,18 @@ class MaskMaker(appionLoop.AppionLoop):
 		
 
 	def prepImage(self,imgarray,cutoff=5.0):
-		shape=numarray.shape(imgarray)
+		shape=numpy.shape(imgarray)
 		garea,gavg,gstdev=apImage.maskImageStats(imgarray)
 		cleanimgarray=ma.masked_outside(imgarray,gavg-cutoff*gstdev,gavg+cutoff*gstdev)
 		carea,cavg,cstdev=apImage.maskImageStats(cleanimgarray)
 		imgarray.shape = shape
-		imgarray.mean = cavg
-		imgarray.stdev = cstdev
 		imgarray=cleanimgarray.filled(cavg)
 		return imgarray
 		
 	def getImage(self,imgdata,binning):
 		imgarray = imgdata['image']
 		imgarray = apImage.binImg(imgarray, binning)
-		shape=numarray.shape(imgarray)
+		shape=numpy.shape(imgarray)
 		cutoff=8.0
 		# remove spikes in the image first
 		imgarray=self.prepImage(imgarray,cutoff)
