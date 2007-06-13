@@ -44,6 +44,6 @@ if __name__ == '__main__':
 	apRecon.insertRefinementRun(params)
 
 	# insert the Iteration info
-	apRecon.insertIteration(params)
+	for iteration in params['iterations']:
+		apRecon.insertIteration(iteration,params)
 	
-

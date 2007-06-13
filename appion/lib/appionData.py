@@ -281,6 +281,7 @@ class ApParticleClassificationData(data.Data):
 			('shifty', float),
 			('inplane_rotation', float),
 			('quality_factor', float),
+			('mirror', bool),
 			('thrown_out',bool),
 		)
 	typemap = classmethod(typemap)
