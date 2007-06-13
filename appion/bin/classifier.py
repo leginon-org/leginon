@@ -240,8 +240,8 @@ def createOutDir(params):
 	os.chdir(params['rundir'])
 
 def createSpiderBatchFile(params):
-	scriptfile = os.path.join(params['appiondir'],"lib/norefalign.bat")
-	#scriptfile = "/ami/data07/recon_scripts/spider_scripts/norefali_3.bat"
+	#scriptfile = os.path.join(params['appiondir'],"lib/norefalign.bat")
+	scriptfile = "/ami/data07/recon_scripts/spider_scripts/norefali_3.bat"
 	if not os.path.isfile(scriptfile):
 		apDisplay.printError("could not find spider script: "+scriptfile)
 	inf = open(scriptfile, "r")
