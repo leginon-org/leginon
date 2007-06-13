@@ -245,7 +245,7 @@ def createSpiderBatchFile(params):
 		apDisplay.printError("could not find spider script: "+scriptfile)
 	inf = open(scriptfile, "r")
 
-	outfile = "noref_align3.bat"
+	outfile = "norefalign_edit.bat"
 	if os.path.isfile(outfile):
 		apDisplay.printWarning(outfile+" already exists; removing it")
 		time.sleep(2)
@@ -294,7 +294,7 @@ def spiderline(num, value, comment):
 	return line
 
 def runSpiderClass(params, reclass=False):
-	spidercmd = "spider bat/spi @noref_align3"
+	spidercmd = "spider bat/spi @norefalign_edit"
 	if reclass is False:
 		esttime = 3*60*(params['numparticles']/500)**2
 		apDisplay.printColor("Running spider this can take awhile, estimated time: "+\
