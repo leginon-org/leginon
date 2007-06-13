@@ -205,14 +205,14 @@ def ctfValuesToParams(ctfvalue, params):
 		 " and average defocus estimate may be incorrect")
 		params['hasace'] = True
 		avgdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
-		params['df']     = avgdf*1.0e6
+		params['df']     = avgdf*-1.0e6
 		params['conf_d'] = ctfvalue['confidence_d']
 		params['conf']   = ctfvalue['confidence']
-		return avgdf
+		return -avgdf
 	else:
 		params['hasace'] = True
-		params['df']     = ctfvalue['defocus1']*1.0e6
+		params['df']     = ctfvalue['defocus1']*-1.0e6
 		params['conf_d'] = ctfvalue['confidence_d']
 		params['conf']   = ctfvalue['confidence']
-		return ctfvalue['defocus1']
+		return -ctfvalue['defocus1']
 	return None
