@@ -698,7 +698,7 @@ def imageToArray(im, convertType='UInt8'):
 
 
 
-
+### flatfield correction functions
 
 cache = {}
 def camkey(camstate):
@@ -743,7 +743,7 @@ def getDarkNorm(sessionname, cameraconfig):
 
 def old_correct(input, dark, norm):
 	'''
-Correct an image using the old method:
+	Correct an image using the old method:
 	- no bias correction
 	- dark correction is not time dependent
 	'''

@@ -12,6 +12,7 @@ import apParam
 import apDisplay
 import apDB
 import apCtf
+import apImage
 try:
 	import pymat
 except:
@@ -19,17 +20,28 @@ except:
 
 appiondb = apDB.apdb
 
-def runAce(matlab, imgdict, params):
-	imgname = imgdict['filename']
-	imgpath = os.path.join(imgdict['session']['image path'], imgname+'.mrc')
+def runAce(matlab, imgdata, params):
+	imgname = imgdata['filename']
+	
+	if params['uncorrected']:
+		tmpname='temporaryCorrectedImage.mrc'
+		camera = imgdata['camera']
+		dark,norm = apImage.getDarkNorm(params['sessionname'], camera)
+		imgarray=apImage.old_correct(imgdata['image'],dark,norm)
+		imgpath= os.path.join(params['rundir'],tmpname)
+		apImage.arrayToMrc(imgarray,imgpath)
+		print "processing", imgpath
+		
+	else:	
+		imgpath = os.path.join(imgdata['session']['image path'], imgname+'.mrc')
 
 	nominal = None
 	if params['nominal'] is not None:
 		nominal=params['nominal']
 	elif params['newnominal'] is True:
-		nominal = apCtf.getBestDefocusForImage(imgdict)
+		nominal = apCtf.getBestDefocusForImage(imgdata)
 	if nominal is None:
-		nominal = imgdict['scope']['defocus']
+		nominal = imgdata['scope']['defocus']
 
 	if nominal is None or nominal > 0 or nominal < -15e-6:
 			apDisplay.printWarning("Nominal should be of the form nominal=-1.2e-6"+\

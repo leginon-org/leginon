@@ -18,6 +18,7 @@ import apParam
 import apDB
 import apDatabase
 import apCtf
+import apImage
 
 db   = apDB.db
 apdb = apDB.apdb
@@ -54,12 +55,13 @@ def printHelp():
 	print "limit=<n>            : stop boxing particles after total particles gets above limit (no limits by default)"
 	print "                     : Example <limit=10000>"
 	print "commit               : store particles to database"
-	print "sessionname         : name of the session (example: 07jul01c)"
+	print "sessionname          : name of the session (example: 07jul01c)"
 	print "nonorm               : do not normalize images"
 	print "medium               : medium of images, carbon or ice (sets noinvert)"
 	print "defocpair            : Get particle coords for the focal pair of the image that was picked in runid"
 	print "                       For example if your selexon run picked ef images and you specify 'defocpair'"
 	print "                       makestack will get the particles from the en images"
+	print "uncorrected          : "
 	print "\n"
 	sys.exit(1)
 
@@ -94,6 +96,7 @@ def createDefaults():
 	params['bin']=None
 	params['limit']=None
 	params['defocpair']=False
+	params['uncorrected']=False
 	return params
 
 def parseInput(args):
@@ -185,6 +188,8 @@ def parseInput(args):
 			params['limit']=int(elements[1])
 		elif arg=='defocpair':
 			params['defocpair']=True
+		elif arg=='uncorrected':
+			params['uncorrected']=True
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
@@ -252,7 +257,16 @@ def checkPairInspectDB(imgdict,params):
 def batchBox(params, imgdict):
 	imgname = imgdict['filename']
 	print "processing:",apDisplay.short(imgname)
-	input  = os.path.join(params["filepath"], imgname+".mrc")
+	if params['uncorrected']:
+		tmpname='temporaryCorrectedImage.mrc'
+		camera = imgdict['camera']
+		dark,norm = apImage.getDarkNorm(params['sessionname'], camera)
+		imgarray=apImage.old_correct(imgdict['image'],dark,norm)
+		input= os.path.join(params['outdir'],tmpname)
+		apImage.arrayToMrc(imgarray,input)
+		print "processing", input		
+	else:
+		input  = os.path.join(params["filepath"], imgname+".mrc")
 	output = os.path.join(params["outdir"], imgname+".hed")
 
 	# if getting particles from database, a temporary
@@ -634,7 +648,6 @@ if __name__ == '__main__':
 		#params['rundir'] = os.path.join(params['outdir'], params['runid'])
 	apParam.createDirectory(params["outdir"])
 	logfile = os.path.join(params['outdir'], "makestack.log")
-	apParam.writeFunctionLog(sys.argv, logfile=logfile)
 
 	# if making a single stack, remove existing stack if exists
 	if params["single"]:
