@@ -133,12 +133,14 @@ def createDefaultStats():
 	stats['memlist'] = [mem.active()]
 	return stats
 
-def writeFunctionLog(commandline, params=None, file=None):
-	if(file==None and params!=None and params['functionLog']!=None):
-		file = params['functionLog']
+def writeFunctionLog(commandline, params=None, logfile=None):
+	if logfile is not None:
+		pass
+	if params is not None and params['functionLog'] is not None:
+		logfile = params['functionLog']
 	else:
-		file = "function.log"
-	f=open(file,'aw')
+		logfile = "function.log"
+	f=open(logfile,'aw')
 	out=""
 	for n in commandline:
 		out=out+n+" "

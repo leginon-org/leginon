@@ -32,8 +32,8 @@ def startNewAppionFunction(args):
 ### create output directories
 	apParam.createOutputDirs(params)
 ### write log of command line options
-	apParam.writeFunctionLog(args,file="."+params['function']+"log")
-	apParam.writeFunctionLog(sys.argv,params=params)
+	apParam.writeFunctionLog(args, logfile="."+params['function']+"log")
+	apParam.writeFunctionLog(sys.argv, params=params)
 ### read/create dictionary to keep track of processed images
 	donedict = readDoneDict(params)
 

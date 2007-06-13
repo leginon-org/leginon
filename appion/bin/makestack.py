@@ -422,15 +422,6 @@ def singleStack(params,imgdict):
 		os.remove(os.path.join(params["outdir"], imgname+".ctf.hed"))
 		os.remove(os.path.join(params["outdir"], imgname+".ctf.img"))
 
-def writeBoxLog(commandline):
-	f=open('.makestacklog','a')
-	out=""
-	for arg in commandline:
-		out += arg+" "
-	f.write(out)
-	f.write("\n")
-	f.close()
-
 # since we're using a batchboxer approach, we must first get a list of
 # images that contain particles
 def getImgsFromSelexonId(params):
@@ -609,7 +600,7 @@ def rejectImage(imgdata, params):
 
 if __name__ == '__main__':
 	# record command line
-	writeBoxLog(sys.argv)
+	apParam.writeFunctionLog(sys.argv, logfile=".makestacklog")
 
 	# create params dictionary & set defaults
 	params = createDefaults()
@@ -645,6 +636,8 @@ if __name__ == '__main__':
 		params['outdir'] = os.path.join(params['outdir'], params['runid'])
 		apDisplay.printMsg("output directory: "+params['outdir'])
 		#params['rundir'] = os.path.join(params['outdir'], params['runid'])
+	logfile = os.path.join(params['outdir'], "makestack.log")
+	apParam.writeFunctionLog(sys.argv, logfile=logfile)
 
 	# if making a single stack, remove existing stack if exists
 	if params["single"]:
