@@ -352,7 +352,14 @@ def phaseFlip(imgdata, params):
 	outfile = os.path.join(params['outdir'], imgname+".ctf.hed")
 	voltage = (imgdata['scope']['high tension'])/1000
 	apix    = apDatabase.getPixelSize(imgdata)
-	defocus = -1.0e6 * apCtf.getBestDefocusForImage(imgdata)
+	defocus = 1.0e6 * apCtf.getBestDefocusForImage(imgdata)
+
+	if defocus > 0:
+		apDisplay.printError("defocus is positive "+str(defocus)+" for image "+shortname)
+	if defocus < -1.0e3:
+		apDisplay.printError("defocus is very big "+str(defocus)+" for image "+shortname)
+	if defocus < -1.0e-3:
+		apDisplay.printError("defocus is very small "+str(defocus)+" for image "+shortname)
 
 	cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" % ( infile,\
 	  outfile, defocus, voltage, apix)
@@ -707,9 +714,6 @@ if __name__ == '__main__':
 
 		# phase flip boxed particles if requested
 		if params["phaseflip"]:
-			df = params['df']
-			if df > 0:
-				apDisplay.printWarning("defocus is positive "+str(df)+" for image "+shortname)
 			phaseFlip(imgdict, params) # phase flip stack file
 		
 		# add boxed particles to a single stack
