@@ -191,7 +191,7 @@ def createSpiderFile(params):
 	emancmd += "apix="+str(params['apix'])+" "
 	if params['lp'] > 0:
 		emancmd += "lp="+str(params['lp'])+" "
-	emancmd += "first=1 last="+str(params['numparticles'])+" "
+	emancmd += "last="+str(params['numparticles'])+" "
 	emancmd += "spiderswap "
 	starttime = time.time()
 	apDisplay.printColor("Running stack conversion this can take awhile","cyan")
