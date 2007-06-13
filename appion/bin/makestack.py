@@ -692,6 +692,9 @@ if __name__ == '__main__':
 				os.remove(stackfile+"."+ext)
 
 		keepimage = rejectImage(imgdict, params)
+
+
+
 		if keepimage is False:
 			continue
 
@@ -704,6 +707,9 @@ if __name__ == '__main__':
 
 		# phase flip boxed particles if requested
 		if params["phaseflip"]:
+			df = params['df']
+			if df > 0:
+				apDisplay.printWarning("defocus is positive "+str(df)+" for image "+shortname)
 			phaseFlip(imgdict, params) # phase flip stack file
 		
 		# add boxed particles to a single stack
