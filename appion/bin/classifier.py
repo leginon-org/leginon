@@ -236,7 +236,7 @@ def createOutDir(params):
 	params['rundir'] = os.path.join(params['outdir'], params['runid'])
 	apDisplay.printMsg("creating run directory: "+params['rundir'])
 	apParam.createDirectory(params['rundir'])
-	apParam.writeFunctionLog(sys.argv, logfile=os.path.join(params['rundir'],"classifier.log")
+	apParam.writeFunctionLog(sys.argv, logfile=os.path.join(params['rundir'],"classifier.log"))
 	os.chdir(params['rundir'])
 
 def createSpiderBatchFile(params):
