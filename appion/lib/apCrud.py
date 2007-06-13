@@ -1,3 +1,4 @@
+#!/usr/bin/python -O
 #region finding functions called by makeMask.py
 
 import apConvexHull
@@ -417,6 +418,7 @@ def makePrunedLabels(labeled_image,ltotal,info,goodlabels):
 	return new_labeled_image,len(goodlabels),goodinfos
 
 def makeImageFromLabels(labeled_image,ltotal,goodlabels):
+	# goodlabels starts from 0
 	imageshape=numpy.shape(labeled_image)
 	new_labeled_image=numpy.zeros(imageshape,numpy.int8)
 	if len(goodlabels)==0:
@@ -438,9 +440,8 @@ def makeImageFromLabels(labeled_image,ltotal,goodlabels):
 			region=numpy.where(labeled_image==l,1,0)
 			numpy.putmask(tmp_labeled_image,region,0)
 		new_labeled_image,resultlabels = nd.label(tmp_labeled_image)
-		print 'makeImageFromLabels', len(goodlabels),resultlabels
 	return new_labeled_image
-
+	
 def makePrunedPolygons(gpolygons,imageshape,info,goodlabels):
 	print "remaking %d polygons after pruning" % len(goodlabels)
 	goodpolygons=[]
@@ -754,9 +755,10 @@ def removeMaskedPiks(params,file):
 	piklinesgood = piksNotInMask(maskbin,regionmask,piklines)
 	writePiksFile(pikfile,'.nonmask',piklinesgood)
 	
-def makeKeepMask(maskarray,keeplist):
+def makeKeepMask(maskarray,keeplist1):
 	labeled_maskarray,countlabels=nd.label(maskarray)
-	labeled_maskarray = makeImageFromLabels(labeled_maskarray,countlabels,keeplist)
+	keeplist0 = map((lambda x: x-1),keeplist1)
+	labeled_maskarray = makeImageFromLabels(labeled_maskarray,countlabels,keeplist0)
 	maskarray=getBmaskFromLabeled(labeled_maskarray)
 	return maskarray
 
@@ -766,4 +768,14 @@ def removeMaskedPiklines(piklines,maskarray,maskbin,keeplist):
 	print "Removing Bad Picks"
 	piklines = piksNotInMask(maskbin,maskarray,piklines)
 	return piklines,maskarray	
+	
+if __name__ == '__main__':
+	maskfile = '/home/acheng/testcrud/07jan05b/testa/masks/07jan05b_00018gr_00022sq_v01_00002sq_00_00002en_00_mask.png'
+	mask = apImage.PngAlphaToBinarryArray(maskfile)
+	labeled_image,ltotal = nd.label(mask)
+	print ltotal
+	goodlabels1 = [1]
+	keeplist0 = map((lambda x: x-1),goodlabels1)
+	goodmask = makeImageFromLabels(labeled_image,ltotal,keeplist0)
+	apImage.arrayToJpeg(goodmask,'test.jpg')
 	
