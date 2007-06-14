@@ -228,7 +228,7 @@ def getImgAssessmentStatus(imgdata):
 	### this function should be modified in the future to allow for a particular assessment run
 	assessquery = appionData.ApAssessmentData()
 	assessquery['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
-	assessdata = appiondb.query(assessquery)	
+	assessdata = appiondb.query(assessquery)
 
 	if assessdata:
 		#check results of only most recent run
