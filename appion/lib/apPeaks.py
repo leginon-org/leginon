@@ -113,6 +113,7 @@ def mergePeakTrees(imgdict, peaktreelist, params):
 	bin =         int(params["bin"])
 	diam =        float(params["diam"])
 	apix =        float(params["apix"])
+	maxpeaks =    int(params["maxpeaks"])
 	olapmult =    float(params["overlapmult"])
 	pixrad =      diam/apix/2.0
 	binpixrad =   diam/apix/2.0/float(bin)
