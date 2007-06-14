@@ -6,8 +6,8 @@ import shutil
 import math
 import re
 import time
-import numarray
-import numarray.convolve as convolve
+import numpy
+#import numarray.convolve as convolve
 #appion
 import apImage
 import apDisplay
@@ -68,9 +68,9 @@ def scaleAndClipTemplate(filename, scalefactor, newfilename):
 	if (origsize % 16 != 0):
 		edgeavg = apImage.meanEdgeValue(scaledimgdata)
 		padsize  = int(math.ceil(float(origsize)/16)*16)
-		padshape = numarray.array([padsize,padsize])
+		padshape = numpy.array([padsize,padsize])
 		apDisplay.printMsg("changing box size from "+str(origsize)+" to "+str(padsize))
-		scaledimgdata = convolve.iraf_frame.frame(scaledimgdata, padshape, mode="constant", cval=edgeavg)
+		scaledimgdata = apImage.frame_constant(scaledimgdata, padshape, cval=edgeavg)
 		#WHY ARE WE USING EMAN???
 		#os.system("proc2d "+newfilename+" "+newfilename+" clip="+str(padsize)+\
 			#","+str(padsize)+" edgenorm")

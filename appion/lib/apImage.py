@@ -777,7 +777,7 @@ def frame_constant(a, shape, cval=0):
 
 	"""
 	
-	b = numpy.zeros(shape, typecode=a.type())
+	b = numpy.zeros(shape, dtype=a.dtype)
 	delta = (numpy.array(b.shape) - numpy.array(a.shape))
 	dy = delta[0] // 2
 	dx = delta[1] // 2
