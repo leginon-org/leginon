@@ -8,15 +8,15 @@ import Image
 import ImageDraw
 #numpy
 import numpy
-import scipy.ndimage as nd_image
-linear_algebra = numpy.linalg
-ma = numpy.ma
+from scipy import ndimage
+from numpy import linalg
+from numpy import ma
 #pyami
 import apDisplay
 try:
-	import pyami.mrc as mrc
-	import pyami.imagefun as imagefun
-	import pyami.convolver as convolver
+	from pyami import mrc
+	from pyami import imagefun
+	from pyami import convolver
 	import leginondata
 except:
 	apDisplay.printError("pymai is required, type 'usepythoncvs'")
@@ -33,7 +33,7 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, planeReg
 	simgarray = imgarray.copy()
 	simgarray = binImg(simgarray,bin)
 	if medFilt is True:
-		simgarray = nd_image.median_filter(simgarray, size=3)
+		simgarray = ndimage.median_filter(simgarray, size=3)
 	if planeReg:
 		simgarray = planeRegression(simgarray)
 	simgarray = lowPassFilter(simgarray,apix,bin,lowpass)
@@ -115,7 +115,7 @@ def lowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0):
 		return(imgarray)
 	sigma=float(radius/apix/float(bin))
 	try:
-		return nd_image.gaussian_filter(imgarray, sigma=sigma/3.0)
+		return ndimage.gaussian_filter(imgarray, sigma=sigma/3.0)
 	except:
 		if(sigma > 10):
 			print " ... performing BIG and SLOW low pass filter"
@@ -135,7 +135,7 @@ def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8):
 	bimgarray = binImg(imgarray, localbin)
 	sigma=float(radius/apix/float(bin*localbin))
 	try:
-		filtimg = nd_image.gaussian_filter(bimgarray, sigma=sigma)
+		filtimg = ndimage.gaussian_filter(bimgarray, sigma=sigma)
 	except:
 		apDisplay.printWarning("High Pass Filter failed")
 		return imgarray
@@ -161,8 +161,8 @@ def diffOfGauss(imgarray, apix, bin, diam, k=1.2):
 	sigma1 = kfact * pixrad
 	#sigma2 = k * sigma1
 	sigmaD = math.sqrt(k*k-1.0)
-	imgarray1 = nd_image.gaussian_filter(imgarray, sigma=sigma1)
-	imgarray2 = nd_image.gaussian_filter(imgarray1, sigma=sigmaD)
+	imgarray1 = ndimage.gaussian_filter(imgarray, sigma=sigma1)
+	imgarray2 = ndimage.gaussian_filter(imgarray1, sigma=sigmaD)
 	#kernel1 = convolver.gaussian_kernel(sigma1)
 	#kernel2 = convolver.gaussian_kernel(sigmaD)
 	#c=convolver.Convolver()
@@ -200,7 +200,7 @@ def planeRegression(imgarray):
 	yarray = yarray.astype(numpy.float64)
 	leftmat = numpy.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]] )
 	rightmat = numpy.array( [xzsum, yzsum, zsum] )
-	resvec = linear_algebra.solve(leftmat,rightmat)
+	resvec = linalg.solve(leftmat,rightmat)
 	print " ... plane_regress: x-slope:",round(resvec[0]*size,5),\
 		", y-slope:",round(resvec[1]*size,5),", xy-intercept:",round(resvec[2],5)
 	newarray = imgarray - xarray*resvec[0] - yarray*resvec[1] - resvec[2]
@@ -211,8 +211,8 @@ def normRange(imgarray):
 	"""
 	normalize the range of an image between 0 and 1
 	"""
-	min1=nd_image.minimum(imgarray)
-	max1=nd_image.maximum(imgarray)
+	min1=ndimage.minimum(imgarray)
+	max1=ndimage.maximum(imgarray)
 	if min1 == max1:
 		return imgarray - min1
 	return (imgarray - min1)/(max1 - min1)
@@ -221,9 +221,9 @@ def normRangeMed(imgarray, size=5):
 	"""
 	normalize an image to mean = 0 and stddev = 1.0
 	"""
-	medimgarray = nd_image.median_filter(imgarray, size=size)
-	min1 = nd_image.minimum(medimgarray)
-	max1 = nd_image.maximum(medimgarray)
+	medimgarray = ndimage.median_filter(imgarray, size=size)
+	min1 = ndimage.minimum(medimgarray)
+	max1 = ndimage.maximum(medimgarray)
 	if min1 == max1:
 		return imgarray - min1
 	return (imgarray - min1)/(max1 - min1)
@@ -232,8 +232,8 @@ def normStdev(imgarray):
 	"""
 	normalize an image to mean = 0 and stddev = 1.0
 	"""
-	avg1=nd_image.mean(imgarray)
-	std1=nd_image.standard_deviation(imgarray)
+	avg1=ndimage.mean(imgarray)
+	std1=ndimage.standard_deviation(imgarray)
 	if std1 == 0:
 		return imgarray - avg1
 	return (imgarray - avg1)/std1
@@ -242,9 +242,9 @@ def normStdevMed(imgarray, size=3):
 	"""
 	normalize an image to mean = 0 and stddev = 1.0
 	"""
-	medimgarray = nd_image.median_filter(imgarray, size=size)
-	avg1=nd_image.mean(medimgarray)
-	std1=nd_image.standard_deviation(medimgarray)
+	medimgarray = ndimage.median_filter(imgarray, size=size)
+	avg1=ndimage.mean(medimgarray)
+	std1=ndimage.standard_deviation(medimgarray)
 	if std1 == 0:
 		return imgarray - avg1
 	return (imgarray - avg1)/std1
@@ -253,14 +253,14 @@ def normStdevMask(img,mask):
 	"""
 	normalize an image with mean = 0 and stddev = 1.0 only inside a mask
 	"""
-	n1	 = nd_image.sum(mask)
+	n1	 = ndimage.sum(mask)
 	if n1 == 0:
 		return img
-	sum1   = nd_image.sum(img*mask)
-	sumsq1 = nd_image.sum(img*img*mask)
+	sum1   = ndimage.sum(img*mask)
+	sumsq1 = ndimage.sum(img*img*mask)
 	avg1   = sum1/n1
 	std1   = math.sqrt((sumsq1 - sum1*sum1/n1)/(n1-1))
-	std2   = nd_image.standard_deviation(img)
+	std2   = ndimage.standard_deviation(img)
 	return (img - avg1) / std1
 
 def scaleImage(imgdata, scale):
@@ -269,7 +269,7 @@ def scaleImage(imgdata, scale):
 	"""
 	if scale == 1.0:
 		return imgdata
-	return nd_image.zoom(imgdata, scale, order=1)
+	return ndimage.zoom(imgdata, scale, order=1)
 
 def meanEdgeValue(imgdata, w=0):
 	"""
@@ -277,10 +277,10 @@ def meanEdgeValue(imgdata, w=0):
 	"""
 	xmax = imgdata.shape[0]
 	ymax = imgdata.shape[1]
-	leftEdgeAvg   = nd_image.mean(imgdata[0:xmax,      0:w])
-	rightEdgeAvg  = nd_image.mean(imgdata[0:xmax,      ymax-w:ymax])
-	topEdgeAvg    = nd_image.mean(imgdata[0:w,         0:ymax])
-	bottomEdgeAvg = nd_image.mean(imgdata[xmax-w:xmax, 0:ymax])
+	leftEdgeAvg   = ndimage.mean(imgdata[0:xmax,      0:w])
+	rightEdgeAvg  = ndimage.mean(imgdata[0:xmax,      ymax-w:ymax])
+	topEdgeAvg    = ndimage.mean(imgdata[0:w,         0:ymax])
+	bottomEdgeAvg = ndimage.mean(imgdata[xmax-w:xmax, 0:ymax])
 	edgeAvg       = (leftEdgeAvg + rightEdgeAvg + topEdgeAvg + bottomEdgeAvg)/4.0
 	return edgeAvg
 
@@ -289,7 +289,7 @@ def centralMean(imgarray, trim=0.1):
 	get the average values for the edges of trim = x percent
 	"""	
 	a = cutEdges(imgarray,trim=trim)
-	return nd_image.mean(a)
+	return ndimage.mean(a)
 
 
 #########################################################
@@ -303,7 +303,7 @@ def correlationCoefficient(x,y,mask=None):
 	if mask != None:
 		if x.shape != mask.shape:
 			apDisplay.printError("mask is not the same shape as images in correlation calc")
-		tot = nd_image.sum(mask)
+		tot = ndimage.sum(mask)
 		if tot == 0:
 			return 0.0
 		x = normStdevMask(x,mask)
@@ -315,7 +315,7 @@ def correlationCoefficient(x,y,mask=None):
 	z = x*y
 	if mask != None:
 		z = z*mask
-	sm  = nd_image.sum(z)
+	sm  = ndimage.sum(z)
 	return sm/tot
 
 def rmsd(x,y,mask=None):
@@ -323,7 +323,7 @@ def rmsd(x,y,mask=None):
 
 def msd(x,y,mask=None):
 	if mask != None:
-		tot = float(nd_image.sum(mask))
+		tot = float(ndimage.sum(mask))
 		if tot == 0:
 			return 1.0e13
 		x = normStdevMask(x,mask)
@@ -335,7 +335,7 @@ def msd(x,y,mask=None):
 	z = (x-y)**2
 	if mask != None:
 		z = z*mask
-	sm  = nd_image.sum(z)
+	sm  = ndimage.sum(z)
 	return sm/tot
 
 #########################################################
@@ -418,7 +418,7 @@ def arrayToMrc(numer, filename, msg=True):
 	"""
 	takes a numpy and writes a Mrc
 	"""
-	numer = numpy.asarray(numer, dtype=numpy.float32)
+	#numer = numpy.asarray(numer, dtype=numpy.float32)
 	if msg is True:
 		apDisplay.printMsg("writing MRC: "+apDisplay.short(filename)+\
 			" size:"+str(numer.shape)+" dtype:"+str(numer.dtype))
@@ -588,10 +588,10 @@ def getImageInfo(im):
 	"""
 	prints out image information good for debugging
 	"""
-	avg1=nd_image.mean(im)
-	stdev1=nd_image.standard_deviation(im)
-	min1=nd_image.minimum(im)
-	max1=nd_image.maximum(im)
+	avg1=ndimage.mean(im)
+	stdev1=ndimage.standard_deviation(im)
+	min1=ndimage.minimum(im)
+	max1=ndimage.maximum(im)
 
 	return avg1,stdev1,min1,max1
 
