@@ -181,10 +181,10 @@ C*IMSUBS2000.FOR*********************************************************
 !C*** tests over, read machine stamp
 !C*************************************************
         call qrarch(j,53,ireslt)
-	if(ireslt .eq. 0) then
-	 write(6,'(/''!!! Warning - no machine stamp in file : '',a)') 
-     *   (name(1:numchars(name)))
-	end if
+	!Cif(ireslt .eq. 0) then
+	!C write(6,'(/''!!! Warning - no machine stamp in file : '',a)') 
+   !C  *   (name(1:numchars(name)))
+	!Cend if
 !C***************************************************************************
 !C***   Setting mode type to byte for compatibility with previous VMS version
 !C***************************************************************************
