@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import numarray
+import numpy
 import fftengine
 import imagefun
 
@@ -101,7 +101,7 @@ class Correlator(object):
 				fft1 = self.fftengine.transform(im1)
 			self.setFFT(1, fft1)
 
-		ccfft = numarray.multiply(numarray.conjugate(fft0), fft1)
+		ccfft = numpy.multiply(numpy.conjugate(fft0), fft1)
 		self.results['cross correlation fft'] = ccfft
 		return ccfft
 	
@@ -126,7 +126,7 @@ class Correlator(object):
 			self.crossCorrelationFFT()
 			ccfft = self.results['cross correlation fft']
 
-			pcfft = ccfft / numarray.absolute(ccfft)
+			pcfft = ccfft / numpy.absolute(ccfft)
 			self.results['phase correlation fft'] = pcfft
 			pc = self.fftengine.itransform(pcfft)
 			if zero:

@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import numarray
+import numpy
 import fftengine
 
 class Convolver(object):
@@ -16,8 +16,8 @@ class Convolver(object):
 	Provides an efficent convolution calculator.
 
 	Create an instance with two optional arguments:
-	     'kernel':  a convolution kernel as a 2-d numarray array
-	     'image':  the subject image as a 2-d numarray array
+	     'kernel':  a convolution kernel as a 2-d numpy array
+	     'image':  the subject image as a 2-d numpy array
 	These values can also be set later using the setKernel and 
 	setImage methods.  The convolution is executed using the method
 	'convolve', which takes the same two optional arguments.
@@ -50,7 +50,7 @@ class Convolver(object):
 			self.setImage(image)
 		
 	def setKernel(self, kernel):
-		self.kernel = numarray.asarray(kernel, numarray.Float32)
+		self.kernel = numpy.asarray(kernel, numpy.float32)
 		self.kernel_fft = {}
 
 	def setImage(self, image):
@@ -64,10 +64,10 @@ class Convolver(object):
 		if self.shape in self.kernel_fft:
 			return self.kernel_fft[self.shape]
 
-		kim = numarray.zeros(self.shape, numarray.Float32)
+		kim = numpy.zeros(self.shape, numpy.float32)
 		### center the kernel at 0,0 in the image
 		k = self.kernel
-		kind = numarray.indices(k.shape)
+		kind = numpy.indices(k.shape)
 		krows = kind[0]
 		kcols = kind[1]
 		kr,kc = self.kernel.shape
@@ -98,7 +98,7 @@ class Convolver(object):
 			imfft = self.result_fft
 
 		kfft = self.makeKernelFFT()
-		self.result_fft = numarray.multiply(kfft, imfft)
+		self.result_fft = numpy.multiply(kfft, imfft)
 		result = self.fftengine.itransform(self.result_fft)
 
 		# what to do with border?
@@ -117,11 +117,11 @@ class Convolver(object):
 ########
 
 #### 3x3 Laplacian
-laplacian_kernel3 = numarray.array((0,-1,0,-1,4,-1,0,-1,0), numarray.Float32)
+laplacian_kernel3 = numpy.array((0,-1,0,-1,4,-1,0,-1,0), numpy.float32)
 laplacian_kernel3.shape = (3,3)
 
 #### 5x5 Laplacian
-laplacian_kernel5 = -numarray.ones((5,5), numarray.Float32)
+laplacian_kernel5 = -numpy.ones((5,5), numpy.float32)
 laplacian_kernel5[2,2] = 24.0
 
 #### Gaussian
@@ -132,19 +132,19 @@ def gaussian_kernel(sigma):
 	if sigma < 0.1:
 		## sigma is very small and probably shouldn't be doing this at all
 		## so just make delta function
-		return numarray.ones((1,1), numarray.Float32)
+		return numpy.ones((1,1), numpy.float32)
 	half = int(5 * sigma)
 	n = 2 * half + 1
-	k1 = 1.0 / (2.0 * numarray.pi * sigma**2)
+	k1 = 1.0 / (2.0 * numpy.pi * sigma**2)
 	def i(rows,cols):
-		rows = numarray.asarray(rows, numarray.Float32)
-		cols = numarray.asarray(cols, numarray.Float32)
+		rows = numpy.asarray(rows, numpy.float32)
+		cols = numpy.asarray(cols, numpy.float32)
 		rows = rows - half
 		cols = cols - half
-		k2 = numarray.exp(-(rows**2+cols**2) / 2.0 / sigma**2)
+		k2 = numpy.exp(-(rows**2+cols**2) / 2.0 / sigma**2)
 		return k1 * k2
-	k = numarray.fromfunction(i, (n,n))
-	k = numarray.asarray(k, numarray.Float32)
+	k = numpy.fromfunction(i, (n,n))
+	k = numpy.asarray(k, numpy.float32)
 	return k
 
 #### Laplacian of Gaussian
@@ -154,11 +154,11 @@ def laplacian_of_gaussian_kernel(n, sigma):
 	half = (n - 1) / 2
 	def func(x,y):
 		f1 = (x**2 + y**2) / 2.0 / sigma**2
-		f2 = -1.0 / numarray.pi / (sigma**4)
+		f2 = -1.0 / numpy.pi / (sigma**4)
 		f3 = 1 - f1
-		f4 = numarray.exp(-f1)
+		f4 = numpy.exp(-f1)
 		return f2 * f3 * f4
-	k = numarray.zeros((n,n), numarray.Float32)
+	k = numpy.zeros((n,n), numpy.float32)
 	for row in range(n):
 		x = row - half
 		for col in range(n):
@@ -167,11 +167,11 @@ def laplacian_of_gaussian_kernel(n, sigma):
 	return k
 
 #### Sobel Row Derivative
-sobel_row_kernel = numarray.array((1,2,1,0,0,0,-1,-2,-1), numarray.Float32)
+sobel_row_kernel = numpy.array((1,2,1,0,0,0,-1,-2,-1), numpy.float32)
 sobel_row_kernel.shape = (3,3)
 
 #### Sobel Column Derivative
-sobel_col_kernel = numarray.array((1,0,-1,2,0,-2,1,0,-1), numarray.Float32)
+sobel_col_kernel = numpy.array((1,0,-1,2,0,-2,1,0,-1), numpy.float32)
 sobel_col_kernel.shape = (3,3)
 
 
@@ -182,9 +182,9 @@ if __name__ == '__main__':
 
 	filename = sys.argv[1]
 
-	sobel_row = numarray.array((1,2,1,0,0,0,-1,-2,-1), numarray.Float32)
+	sobel_row = numpy.array((1,2,1,0,0,0,-1,-2,-1), numpy.float32)
 	sobel_row.shape = (3,3)
-	sobel_col = numarray.array((1,0,-1,2,0,-2,1,0,-1), numarray.Float32)
+	sobel_col = numpy.array((1,0,-1,2,0,-2,1,0,-1), numpy.float32)
 	sobel_col.shape = (3,3)
 	gauss = imagefun.gaussian_kernel(1.6)
 
@@ -196,5 +196,5 @@ if __name__ == '__main__':
 	s = c.convolve(kernel=gauss)
 	r = c.convolve(kernel=sobel_row, image=s)
 	c = c.convolve(kernel=sobel_col, image=s)
-	edge = numarray.sqrt(r**2 + c**2)
+	edge = numpy.sqrt(r**2 + c**2)
 	Mrc.numeric_to_mrc(edge, 'edge.mrc')
