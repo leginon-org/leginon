@@ -22,7 +22,6 @@ except:
 	import imagefun
 	import convolver
 	import data as leginondata
-
 #appion
 import apDisplay
 import apDB
@@ -251,7 +250,7 @@ def normStdevMask(img,mask):
 	"""
 	normalize an image with mean = 0 and stddev = 1.0 only inside a mask
 	"""
-	n1     = nd_image.sum(mask)
+	n1	 = nd_image.sum(mask)
 	if n1 == 0:
 		return img
 	sum1   = nd_image.sum(img*mask)
@@ -409,6 +408,7 @@ def mrcToArray(filename,msg=True):
 	if msg is True:
 		apDisplay.printMsg("reading MRC: "+apDisplay.short(filename))
 	array = mrc.read(filename)
+
 	return array
 
 def arrayToMrc(numer,filename,msg=True):
@@ -758,4 +758,39 @@ def old_correct(input, dark, norm):
 	corrected = norm * (input - dark)
 	return corrected
 
+def frame_constant(a, shape, cval=0):
+	"""
+	frame_nearest creates an oversized copy of 'a' with new 'shape'
+	and the contents of 'a' in the center.  The boundary pixels are
+	copied from the nearest edge pixel in 'a'.
 
+	>>> a = num.arange(16, shape=(4,4))
+	>>> frame_constant(a, (8,8), cval=42)
+	array([[42, 42, 42, 42, 42, 42, 42, 42],
+		   [42, 42, 42, 42, 42, 42, 42, 42],
+		   [42, 42,  0,  1,  2,  3, 42, 42],
+		   [42, 42,  4,  5,  6,  7, 42, 42],
+		   [42, 42,  8,  9, 10, 11, 42, 42],
+		   [42, 42, 12, 13, 14, 15, 42, 42],
+		   [42, 42, 42, 42, 42, 42, 42, 42],
+		   [42, 42, 42, 42, 42, 42, 42, 42]])
+
+	"""
+	
+	b = numpy.zeros(shape, typecode=a.type())
+	delta = (numpy.array(b.shape) - numpy.array(a.shape))
+	dy = delta[0] // 2
+	dx = delta[1] // 2
+	my = a.shape[0] + dy
+	mx = a.shape[1] + dx
+	
+	b[dy:my, dx:mx] = a			 # center
+	b[:dy,dx:mx]  = cval			 # top
+	b[my:,dx:mx]  = cval			 # bottom
+	b[dy:my, :dx] = cval			 # left
+	b[dy:my, mx:] = cval			 # right
+	b[:dy, :dx]   = cval			 # topleft
+	b[:dy, mx:]   = cval			 # topright
+	b[my:, :dx]   = cval			 # bottomleft
+	b[my:, mx:]   = cval			 # bottomright
+	return b
