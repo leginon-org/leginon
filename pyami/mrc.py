@@ -398,7 +398,10 @@ Always saves in the native byte order.
 		h.update(header)
 
 	headerbytes = makeHeaderData(h)
-	print 'LEN HEADER', len(headerbytes)
+
+	# make sure array is right type for MRC
+	a = asMRCtype(a)
+
 	# make sure array is in native byte order
 	if not a.dtype.isnative:
 		a = a.byteswap()
