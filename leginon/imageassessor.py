@@ -6,7 +6,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import data
+import leginondata
 import targetfinder
 import event
 import node
@@ -15,19 +15,14 @@ import os
 import Image
 import numpy
 from pyami import imagefun, mrc
-try:
-	import apMask
-except:
-	pass
 
 class ImageAssessor(targetfinder.ClickTargetFinder):
 	panelclass = gui.wx.ImageAssessor.Panel
-	settingsclass = data.ImageAssessorSettingsData
+	settingsclass = leginondata.ImageAssessorSettingsData
 	defaultsettings = {
 		'image directory': '',
 		'outputfile': '',
 		'format': 'jpg',
-		'type': 'mask',
 		'run': 'test',
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -38,19 +33,25 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 		self.currentindex = None
 		self.files = []
 		self.oldformat = None
+		self.oldrunname = None
 		self.oldimagedir = None
 
 		self.start()
 
+	def checkSettingsChange(self):
+		if self.oldformat != self.settings['format'] or self.oldrunname != self.settings['run'] or self.oldimagedir != self.settings['image directory']:
+			self.oldformat = self.settings['format']
+			self.oldrunname = self.settings['run']
+			self.oldimagedir = self.settings['image directory']
+			return True
+		else:
+			return False			
+	
 	def getImageList(self):
 		dir = self.settings['image directory']
 		files = os.listdir(dir)
 		format = self.settings['format']
-		type = self.settings['type']
-		assessrunname = self.settings['run']
-		
-		if type =='mask':
-			format = 'png'
+
 		self.files = []
 		for file in files:
 			ext = file.split('.')[-1]
@@ -60,11 +61,6 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 				self.files.append(file)
 			if format == 'png' and ext in ('png','PNG'):
 				self.files.append(file)
-		if type =='mask':
-			self.maskrundata,self.maskparamsdata = apMask.getMaskRunInfo(dir,files[0])
-			self.assessrundata,exist = apMask.insertMaskAssessmentRun(self.session,self.maskrundata,assessrunname)
-			if exist:
-				self.logger.warning('Run exists, will overwrite')
 		if self.files:
 			self.readResults()
 			self.currentindex = 0
@@ -74,38 +70,22 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 			
 
 	def onKeep(self):
-		type = self.settings['type']
-		if type =='mask':
-			keeplist = []
-			keeptargets = self.panel.getTargets('Regions')
-			for target in keeptargets:
-				keeplist.append(target.stats['Label'])
-			apMask.saveAssessmentFromTargets(self.maskrundata,self.assessrundata,self.imgdata,keeplist)
-		else:
-			self.readResults()
-			self.results[self.currentname] = 'keep'
-			self.writeResults()
+		self.readResults()
+		self.results[self.currentname] = 'keep'
+		self.writeResults()
 
 		self.onNext()
 
 	def onReject(self):
-		type = self.settings['type']
-		if type =='mask':
-			keeplist = []
-			apMask.saveAssessmentFromTargets(self.maskrundata,self.assessrundata,self.imgdata,keeplist)
-		else:
-			self.readResults()
-			self.results[self.currentname] = 'reject'
-			self.writeResults()
-			self.onNext()
+		self.readResults()
+		self.results[self.currentname] = 'reject'
+		self.writeResults()
+		self.onNext()
 
 	def onNext(self):
-		format = self.settings['format']
-		imagedir = self.settings['image directory']
-		if not self.files or format != self.oldformat or imagedir != self.oldimagedir:
+		settingchanged = self.checkSettingsChange()
+		if not self.files or settingchanged:
 			self.getImageList()
-			self.oldformat = format
-			self.oldimagedir = imagedir
 			return
 		if self.currentindex < len(self.files)-1:
 			self.currentindex += 1
@@ -114,6 +94,7 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 			self.logger.info('End reached.')
 
 	def onPrevious(self):
+		settingchanged = self.checkSettingsChange()
 		if self.currentindex > 0:
 			self.currentindex -= 1
 			self.displayCurrent()
@@ -136,32 +117,16 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 			imarray = self.readJPG(fullname)
 		if format == 'png':
 			imarray = self.readPNG(fullname)
-			if self.currentname.find('_mask') > -1:
-				alpha = 0.5
-				parentimg,imgdata = self.readMaskParent()
-				maskshape = imarray.shape
-
-				targets = apMask.getRegionsAsTargets(self.maskrundata,maskshape,imgdata)
-				self.alltargets = targets[:]
-				self.setTargets(targets, 'Regions')
-				
-				binning = parentimg.shape[0]/imarray.shape[0]
-				parentimg=imagefun.bin(parentimg,binning)
-				overlay=parentimg+imarray*alpha*(parentimg.max()-parentimg.min())/imarray.max()
-				self.setImage(overlay, 'Mask')
-				imarray=parentimg
+		self.setImage(imarray, 'Mask')
 		self.setImage(imarray, 'Image')
-		self.imgdata = imgdata
-		return imgdata
-
-	def readMaskParent(self):
-		parent=self.currentname.replace('_mask.png','')
-#		parent=parent.replace('.jpg','.mrc')
-#		parent=parent.replace('.png','.mrc')
-		imageq=data.AcquisitionImageData(filename=parent)
-		imagedata=self.research(imageq, results=1, readimages=False)
-		imarray=imagedata[0]['image']
-		return imarray,imagedata[0]
+		return None
+		
+	def overlayshadow(self,shadowimg,parentimg,alpha=0.5):
+		binning = parentimg.shape[0]/shadowimg.shape[0]
+		if binning != 1:
+			parentimg=imagefun.bin(parentimg,binning)
+		overlay=parentimg+shadowimg*alpha*(parentimg.max()-parentimg.min())/max(shadowimg.max(),1)
+		return overlay,parentimg
 		
 	def readResults(self):
 		dir = self.settings['image directory']

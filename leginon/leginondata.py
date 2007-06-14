@@ -1595,6 +1595,24 @@ class ImageAssessorSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class MaskAssessorSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('run', str),
+			('mask run', str),
+		)
+	typemap = classmethod(typemap)
+
+class ClickMaskMakerSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('preset', str),
+			('bin', int),
+			('run', str),
+			('path', str),
+		)
+	typemap = classmethod(typemap)
+
 class ClickTargetTransformerSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
