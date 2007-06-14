@@ -6,11 +6,7 @@ import re
 import time
 import glob
 import shutil
-#leginon
-	import leginondata
-except:
-	import data as leginondata
-	print "sinedon not available, use old data.py"
+import leginondata
 import apXml
 import apParam
 import apDisplay
