@@ -84,7 +84,7 @@ int readMRCHeader(FILE *pFMRC, MRCHeader *pMRCHeader);
 #define NUM_I5_HEADER_ENTRIES 256
 #define SIZEOF_I5_HEADER SIZEOF_I5_HEADER_ENTRY * NUM_I5_HEADER_ENTRIES
 
-typedef struct Imagic5HeadStruct {
+typedef struct Imagic5HeadStructOld {
 	int imn; // image location number (1,2,3,...)  
 	int ifol; // number of images following (0,1,,...) important in first location  
 	int ierror; //error code for this image during IMAGIC-5 run  
@@ -180,6 +180,71 @@ typedef struct Imagic5HeadStruct {
 	float coosmsa[69]; //COOSMSA  co-ordinates of "image" along factorial axis number 1 through 69 (maximum possible). 
 	float eigval;  //eigenvalues if the "images" represent eigenimages (eigenvalue #1 into loc#1 etc.)  
 	char history[228]; //coded history of image (228 characters)  
+} Imagic5HeaderOld;
+
+typedef struct Imagic5HeaderStruct {
+
+		int imgnum;             // image number, [1,n]
+		int count;              // total number of images - 1 (only first image), [0,n-1]
+		int error;              // Error code for this image
+		int headrec;            // # of header records/image (always 1)
+		int mday;               // image creation time
+		int month;
+		int year;
+		int hour;
+		int minute;
+		int sec;
+		int reals;              // image size in reals
+		int pixels;             // image size in pixels
+		int ny;                 // # of lines / image
+		int nx;                 // # of pixels / line
+		char type[4];           // PACK, INTG, REAL, COMP, RECO
+		int ixold;              // Top left X-coord. in image before windowing 
+		int iyold;              // Top left Y-coord. in image before windowing 
+		float avdens;           // average density
+		float sigma;            // deviation of density
+		float varia;            // variance of density
+		float oldav;            // old average density
+		float max;              // max density
+		float min;              // min density
+		int complex;            // not used
+		float cellx;            // not used
+		float celly;            // not used
+		float cellz;            // not used
+		float cella1;           // not used
+		float cella2;           // not used
+		char label[80];         // image id string
+		int space[8];
+		float mrc1[4];
+		int mrc2;
+		int space2[7];
+		int lbuf;               // effective buffer len = nx
+		int inn;                // lines in buffer = 1
+		int iblp;               // buffer lines/image = ny
+		int ifb;                // 1st line in buf = 0
+		int lbr;                // last buf line read = -1
+		int lbw;                // last buf line written = 0
+		int lastlr;             // last line called for read = -1
+		int lastlw;             // last line called for write = 1
+		int ncflag;             // decode to complex = 0
+		int num;                // file number = 40 (?)
+		int nhalf;              // leff/2
+		int ibsd;               // record size for r/w (words) = nx*2
+		int ihfl;               // file # = 8
+		int lcbr;               // lin count read buf = -1
+		int lcbw;               // lin count wr buf = 1
+		int imstr;              // calc stat on rd = -1
+		int imstw;              // calc stat on wr = -1
+		int istart;             // begin line in buf = 1
+		int iend;               // end line in buf = nx
+		int leff;               // eff line len = nx
+		int linbuf;             // line len (16 bit) nx *2
+		int ntotbuf;            // total buf in pgm = -1
+		int space3[5];
+		int icstart;            // complex line start = 1
+		int icend;              // complex line end = nx/2
+		int rdonly;             // read only = 0
+		int misc[157];          // Remainder of header (EMAN1 specific settings not supported)
 } Imagic5Header;
 
 typedef struct Imagic5Struct {
@@ -188,7 +253,13 @@ typedef struct Imagic5Struct {
 	unsigned int uCount;
 } Imagic5;
 
+typedef Imagic5 * Imagic5Ptr;
 int loadImagic5(char *pszName, Imagic5 *pImagic5);
+int loadImagic5Header(char *pszFilename, Imagic5Header *pHeader, int img_num);
+int loadImagic5At(char *pszHedName, char *pszImgName, int img_num, Imagic5 *pImagic5);
+void *readImagic5Images(FILE *pFImage, Imagic5 *pImagic5);
+void *readImagic5ImagesAt(FILE *pFImage, int img_num, Imagic5 *pImagic5);
+void freeImagic5(Imagic5 *pImagic5);
 
 #ifdef __cplusplus
 }

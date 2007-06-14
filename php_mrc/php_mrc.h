@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.h,v 1.14 2007-02-05 23:46:49 dfellman Exp $ 
+  $Id: php_mrc.h,v 1.15 2007-06-14 17:45:44 dfellman Exp $ 
 */
 
 /**
@@ -92,11 +92,18 @@ ZEND_FUNCTION(mrcupdateheader);
 ZEND_FUNCTION(mrcset);
 ZEND_FUNCTION(mrchistogram);
 ZEND_FUNCTION(mrcdestroy);
+ZEND_FUNCTION(imagicinfo);
+ZEND_FUNCTION(imagicread);
 
 static void _mrc_header_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRCHeader *pmrch);
 static void _mrc_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRC *pmrc);
 static void _mrc_image_create_from_string(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRC *pmrc);
 static void _mrc_header_data(INTERNAL_FUNCTION_PARAMETERS,  MRC *pmrc);
+static void _imagic_(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRCHeader *pmrch);
+static void _imagic_header_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, Imagic5Header *pimagich, int img_num);
+static void _imagic_header_data(INTERNAL_FUNCTION_PARAMETERS,  Imagic5Header imagich);
+static void _imagic_header_data_old(INTERNAL_FUNCTION_PARAMETERS,  Imagic5HeaderOld imagich);
+static void _imagic_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **heddata, zval **imgdata, int img_num, Imagic5 *pImagic5);
 
 /* 
   	Declare any global variables you may need between the BEGIN

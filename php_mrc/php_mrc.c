@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.24 2007-02-06 18:04:30 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.25 2007-06-14 17:45:43 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -66,6 +66,8 @@ function_entry mrc_functions[] = {
 	ZEND_FE(mrcset, NULL)
 	ZEND_FE(mrchistogram, NULL)
 	ZEND_FE(mrcdestroy, NULL)
+	ZEND_FE(imagicinfo, NULL)
+	ZEND_FE(imagicread, NULL)
 	{NULL, NULL, NULL}	/* Must be the last line in mrc_functions[] */
 };
 
@@ -120,6 +122,11 @@ static void php_mrc_init_globals(zend_mrc_globals *mrc_globals)
 static void php_free_mrc(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 {
 	mrc_destroy((MRCPtr)rsrc->ptr);
+}
+
+static void php_free_imagic(zend_rsrc_list_entry *rsrc TSRMLS_DC)
+{
+	freeImagic5((Imagic5Ptr)rsrc->ptr);
 }
 
 
@@ -1254,6 +1261,292 @@ ZEND_FUNCTION(mrcdestroy)
 	zend_list_delete(Z_LVAL_PP(MRCD));
 
 	RETURN_TRUE;
+}
+
+/**
+ * retrieve Imagic5 header information from .hed file, URL or a String, as a PHP associative array.
+ *
+ * Description: array imagicinfo(string filename)
+ */
+ZEND_FUNCTION(imagicinfo)
+{
+	zval **data, **IMGNUM;
+	Imagic5Header header;
+	MRC	*pmrc;
+	MRCPtr pmrc_dst;
+	int	argc = ZEND_NUM_ARGS();
+	int	img_num = 0;
+
+	if (argc > 2 ) 
+	{
+		ZEND_WRONG_PARAM_COUNT();
+	} 
+
+	zend_get_parameters_ex(argc, &data, &IMGNUM);
+
+	if (argc == 2)
+	{
+		convert_to_long_ex(IMGNUM);
+		img_num = Z_LVAL_PP(IMGNUM);
+	}
+
+	_imagic_header_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, &header, img_num);
+	_imagic_header_data(INTERNAL_FUNCTION_PARAM_PASSTHRU, header);
+
+}
+
+/** 
+ * read imagic5 file format
+ * retrieve an image from a imagic5 stack as a MRC resource
+ *
+ * Description:
+ * resource imagicread(string filename [, int img_num ])
+ */
+ZEND_FUNCTION(imagicread)
+{
+
+	zval **heddata, **imgdata, **IMGNUM;
+	Imagic5 *pImagic5;
+	MRC *pmrc;
+	MRCPtr pmrc_dst;
+	int argc = ZEND_NUM_ARGS();
+	int	img_num = 0;
+	int dstW, dstH;
+
+	if (argc < 2 || argc > 3 ) 
+	{
+		ZEND_WRONG_PARAM_COUNT();
+	} 
+
+	zend_get_parameters_ex(argc, &heddata, &imgdata, &IMGNUM);
+
+	if (argc == 3)
+	{
+		convert_to_long_ex(IMGNUM);
+		img_num = Z_LVAL_PP(IMGNUM);
+	}
+
+
+	_imagic_image_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, heddata, imgdata, img_num, pImagic5);
+	dstW = pImagic5->pHeaders[0].nx;
+	dstH = pImagic5->pHeaders[0].ny;
+
+	pmrc_dst = (MRCPtr)mrc_create(dstW, dstH);
+	pmrc_dst->header.amin=pImagic5->pHeaders[0].min;
+	pmrc_dst->header.amax=pImagic5->pHeaders[0].max;
+	pmrc_dst->header.amean=pImagic5->pHeaders[0].avdens;
+	pmrc_dst->header.rms=pImagic5->pHeaders[0].sigma;
+	pmrc_dst->pbyData=pImagic5->pbyData;
+
+
+	ZEND_REGISTER_RESOURCE(return_value, pmrc_dst, le_mrc);
+
+}
+
+/**
+ * static void _imagic_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **heddata, zval **imgdata, Imagic5 *pimagic)
+ */
+static void _imagic_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **heddata, zval **imgdata, int img_num, Imagic5 *pImagic5) {
+
+	char *pthedname, *ptimgname;
+	convert_to_string_ex(heddata);
+	convert_to_string_ex(imgdata);
+	pthedname = (char *)((*heddata)->value.str.val);
+	ptimgname = (char *)((*imgdata)->value.str.val);
+	if(loadImagic5At(pthedname, ptimgname, img_num, pImagic5)==-1) {
+				zend_error(E_ERROR, "%s(): %s : No such file or directory ", 
+				get_active_function_name(TSRMLS_C),pthedname);
+				zend_error(E_ERROR, "%s(): %s : No such file or directory ", 
+				get_active_function_name(TSRMLS_C),ptimgname);
+	}
+	
+}
+
+
+/**
+ * static void _imagic_header_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, Imagic5Header *pimagich, int img_num)
+ */
+static void _imagic_header_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, Imagic5Header *pimagich, int img_num) {
+	char *ptfile;
+	convert_to_string_ex(data);
+	ptfile = (char *)((*data)->value.str.val);
+	if(loadImagic5Header(ptfile, pimagich, img_num)==-1) {
+				zend_error(E_ERROR, "%s(): %s : No such file or directory ", 
+				get_active_function_name(TSRMLS_C),ptfile);
+	}
+}
+
+
+/**
+ * static void _imagic_header_data(INTERNAL_FUNCTION_PARAMETERS,  Imagic5Header imagich)
+ */
+static void _imagic_header_data(INTERNAL_FUNCTION_PARAMETERS,  Imagic5Header imagich) {
+	
+	char *key;
+	int i;
+	pval *arr_mrc1;
+	pval *arr_space;
+	pval *arr_space2;
+	pval *arr_space3;
+	pval *arr_misc;
+
+	array_init(return_value);
+	key = "imgnum";
+	add_assoc_long(return_value, key,imagich.imgnum);
+	key = "count";
+	add_assoc_long(return_value, key,imagich.count);
+	key = "error";
+	add_assoc_long(return_value, key,imagich.error);
+	key = "headrec";
+	add_assoc_long(return_value, key,imagich.headrec);
+	key = "mday";
+	add_assoc_long(return_value, key,imagich.mday);
+	key = "month";
+	add_assoc_long(return_value, key,imagich.month);
+	key = "year";
+	add_assoc_long(return_value, key,imagich.year);
+	key = "hour";
+	add_assoc_long(return_value, key,imagich.hour);
+	key = "minute";
+	add_assoc_long(return_value, key,imagich.minute);
+	key = "sec";
+	add_assoc_long(return_value, key,imagich.sec);
+	key = "reals";
+	add_assoc_long(return_value, key,imagich.reals);
+	key = "pixels";
+	add_assoc_long(return_value, key,imagich.pixels);
+	key = "ny";
+	add_assoc_long(return_value, key,imagich.ny);
+	key = "nx";
+	add_assoc_long(return_value, key,imagich.nx);
+	key = "type";
+	add_assoc_string(return_value, key, imagich.type,1);
+	key = "ixold";
+	add_assoc_long(return_value, key,imagich.ixold);
+	key = "iyold";
+	add_assoc_long(return_value, key,imagich.iyold);
+	key = "avdens";
+	add_assoc_double(return_value, key,imagich.avdens);
+	key = "sigma";
+	add_assoc_double(return_value, key,imagich.sigma);
+	key = "varia";
+	add_assoc_double(return_value, key,imagich.varia);
+	key = "oldav";
+	add_assoc_double(return_value, key,imagich.oldav);
+	key = "max";
+	add_assoc_double(return_value, key,imagich.max);
+	key = "min";
+	add_assoc_double(return_value, key,imagich.min);
+	key = "complex";
+	add_assoc_long(return_value, key,imagich.complex);
+	key = "cellx";
+	add_assoc_double(return_value, key,imagich.cellx);
+	key = "celly";
+	add_assoc_double(return_value, key,imagich.celly);
+	key = "cellz";
+	add_assoc_double(return_value, key,imagich.cellz);
+	key = "cella1";
+	add_assoc_double(return_value, key,imagich.cella1);
+	key = "cella2";
+	add_assoc_double(return_value, key,imagich.cella2);
+	key = "label";
+	add_assoc_string(return_value, key, imagich.label, 1);
+
+	key = "space";
+	MAKE_STD_ZVAL(arr_space);
+	array_init(arr_space);
+	for (i=0; i<8; i++) {
+		add_next_index_long(arr_space, imagich.space[i]);
+	}
+  zend_hash_update(Z_ARRVAL_P(return_value), key, strlen(key)+1, &arr_space, sizeof(arr_space), NULL);
+
+	key = "mrc1";
+	MAKE_STD_ZVAL(arr_mrc1);
+	array_init(arr_mrc1);
+	for (i=0; i<4; i++) {
+		add_next_index_double(arr_mrc1, imagich.mrc1[i]);
+	}
+  zend_hash_update(Z_ARRVAL_P(return_value), key, strlen(key)+1, &arr_mrc1, sizeof(arr_mrc1), NULL);
+
+	key = "mrc2";
+	add_assoc_long(return_value, key,imagich.mrc2);
+
+	key = "space2";
+	MAKE_STD_ZVAL(arr_space2);
+	array_init(arr_space2);
+	for (i=0; i<7; i++) {
+		add_next_index_long(arr_space2, imagich.space2[i]);
+	}
+  zend_hash_update(Z_ARRVAL_P(return_value), key, strlen(key)+1, &arr_space2, sizeof(arr_space2), NULL);
+
+	key = "lbuf";
+	add_assoc_long(return_value, key,imagich.lbuf);
+	key = "inn";
+	add_assoc_long(return_value, key,imagich.inn);
+	key = "iblp";
+	add_assoc_long(return_value, key,imagich.iblp);
+	key = "ifb";
+	add_assoc_long(return_value, key,imagich.ifb);
+	key = "lbr";
+	add_assoc_long(return_value, key,imagich.lbr);
+	key = "lbw";
+	add_assoc_long(return_value, key,imagich.lbw);
+	key = "lastlr";
+	add_assoc_long(return_value, key,imagich.lastlr);
+	key = "lastlw";
+	add_assoc_long(return_value, key,imagich.lastlw);
+	key = "ncflag";
+	add_assoc_long(return_value, key,imagich.ncflag);
+	key = "num";
+	add_assoc_long(return_value, key,imagich.num);
+	key = "nhalf";
+	add_assoc_long(return_value, key,imagich.nhalf);
+	key = "ibsd";
+	add_assoc_long(return_value, key,imagich.ibsd);
+	key = "ihfl";
+	add_assoc_long(return_value, key,imagich.ihfl);
+	key = "lcbr";
+	add_assoc_long(return_value, key,imagich.lcbr);
+	key = "lcbw";
+	add_assoc_long(return_value, key,imagich.lcbw);
+	key = "imstr";
+	add_assoc_long(return_value, key,imagich.imstr);
+	key = "imstw";
+	add_assoc_long(return_value, key,imagich.imstw);
+	key = "istart";
+	add_assoc_long(return_value, key,imagich.istart);
+	key = "iend";
+	add_assoc_long(return_value, key,imagich.iend);
+	key = "leff";
+	add_assoc_long(return_value, key,imagich.leff);
+	key = "linbuf";
+	add_assoc_long(return_value, key,imagich.linbuf);
+	key = "ntotbuf";
+	add_assoc_long(return_value, key,imagich.ntotbuf);
+
+	key = "space3";
+	MAKE_STD_ZVAL(arr_space3);
+	array_init(arr_space3);
+	for (i=0; i<5; i++) {
+		add_next_index_long(arr_space3, imagich.space3[i]);
+	}
+  zend_hash_update(Z_ARRVAL_P(return_value), key, strlen(key)+1, &arr_space3, sizeof(arr_space3), NULL);
+
+	key = "icstart";
+	add_assoc_long(return_value, key,imagich.icstart);
+	key = "icend";
+	add_assoc_long(return_value, key,imagich.icend);
+	key = "rdonly";
+	add_assoc_long(return_value, key,imagich.rdonly);
+
+	key="misc";
+	MAKE_STD_ZVAL(arr_misc);
+	array_init(arr_misc);
+	for (i=0; i<157; i++) {
+		add_next_index_long(arr_misc, imagich.misc[i]);
+	}
+  zend_hash_update(Z_ARRVAL_P(return_value), key, strlen(key)+1, &arr_misc, sizeof(arr_misc), NULL);
+
 }
 
 /**
