@@ -564,6 +564,7 @@ def insertStackParams(params):
 		stparamq['boxSize']=params['boxsize']
 		stparamq['fileType']=fileType
 		stparamq['inverted']=inverted
+		stparamq['normalized']=params['normalize']
 		if params['bin']:
 			stparamq['bin']=params['bin']
 		if params['phaseflip']==True:
@@ -571,7 +572,9 @@ def insertStackParams(params):
 		if params['ace']:
 			stparamq['aceCutoff']=params['ace']
 		if params['selexonmin']:
-			stparamq['selexonCutoff']=params['selexonmin']
+			stparamq['correlationMin']=params['selexonmin']
+		if params['selexonmax']:
+			stparamq['correlationMax']=params['selexonmax']
 		if params['inspected']:
 			stparamq['checkImage']=True
 		if params['mindefocus']:
@@ -587,12 +590,14 @@ def insertStackParams(params):
 			stackparams['bin']!=params['bin'] or
 			stackparams['phaseFlipped']!=params['phaseflip'] or
 			stackparams['aceCutoff']!=params['ace'] or
-			stackparams['selexonCutoff']!=params['selexonmin'] or
+			stackparams['correlationMin']!=params['selexonmin'] or
+			stackparams['correlationMax']!=params['selexonmax'] or
 			stackparams['checkImage']!=params['inspected'] or
 			stackparams['minDefocus']!=params['mindefocus'] or
 			stackparams['maxDefocus']!=params['maxdefocus'] or
 			stackparams['fileType']!=fileType or
-			stackparams['inverted']!=inverted):
+			stackparams['inverted']!=inverted or
+			stackparams['normalized']!=params['normalize']):
 			apDisplay.printError("All parameters for a particular stack must be identical!"+\
 			  "\nplease check your parameter settings.")
 	# get the stack Id
@@ -616,6 +621,7 @@ def rejectImage(imgdata, params):
 
 	### Get CTF values
 	ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
+	
  	if ctfvalue is None:
 		if params["ace"] or params['mindefocus'] or params['maxdefocus'] or params['phaseflip']:
 			apDisplay.printColor(shortname+".mrc was rejected because it has no ACE values\n","cyan")
@@ -629,6 +635,7 @@ def rejectImage(imgdata, params):
 	if params["ace"] and conf < params["ace"]:
 			apDisplay.printColor(shortname+".mrc is below ACE threshold (conf="+str(round(conf,3))+")\n","cyan")
 			return False
+	print conf,"is above",params['ace']
 
 	### skip micrograph that have defocus above or below min & max defocus levels
 	if params['mindefocus'] and params['df'] > params['mindefocus']:

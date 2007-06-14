@@ -173,13 +173,15 @@ class ApStackParamsData(Data):
 			('bin', int),
 			('phaseFlipped', bool),
 			('aceCutoff', float),
-			('selexonCutoff', float),
+			('correlationMin', float),
+			('correlationMax', float),
 			('checkCrud', bool),
 			('checkImage', bool),
 			('minDefocus', float),
 			('maxDefocus', float),
 			('fileType', str),
 			('inverted', bool),
+			('normalized', bool),
 		)
 	typemap = classmethod(typemap)
 
