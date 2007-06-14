@@ -15,6 +15,7 @@
 	<type>list,string</type>
 	<example>07mar21a,en</example>
 	<regex>[a-z0-9]+</regex>
+	<required>True</required>
  </dbimages>
  <runid>
 	<name>run id</name>

@@ -33,20 +33,19 @@
 	<default>2.0</default>
 	<description>Overlap of subimages for determining power spectrum</description>
 	<type>float</type>
-	<required>True</required>
  </overlap>
  <fieldsize>
 	<name>field size</name>
 	<default>512.0</default>
 	<description>Field size of subimages for determining power spectrum</description>
 	<type>float</type>
-	<required>True</required>
  </fieldsize>
  <resamplefr>
 	<name>resample frequency</name>
 	<default>1.5</default>
 	<description>Resample value: increase if images have high defocus or small pixel size</description>
 	<type>float</type>
+	<required>True</required>
  </resamplefr>
  <drange>
 	<name>dynamic range compression</name>
@@ -67,7 +66,6 @@
 	<default>2.0</default>
 	<description>Spherical abberation</description>
 	<type>float</type>
-	<required>True</required>
  </cs>
  <display>
 	<name>display output</name>
@@ -109,5 +107,14 @@
 	<description>Temporary directory to hold intermediate files</description>
 	<type>path</type>
  </tempdir>
+ <bin>
+	<modify>False</modify>
+ </bin>
+ <diam>
+	<modify>False</modify>
+ </diam>
+ <lp>
+	<modify>False</modify>
+ </lp>
 </pyace>
 	
