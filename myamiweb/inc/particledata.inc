@@ -215,11 +215,11 @@ class particledata {
 	}
 
 	function getStackIds ($sessionId) {
-		$q = "select spar.stackid "
+	        $q = "select spar.stackid "
 				."from ("
-				."select `REF|ApParticleData|particle` as stackid, `REF|ApStackParamsData|stackparams` "
+				."select `REF|ApParticleData|particle` as pid, `REF|ApStackParamsData|stackparams` as stackid "
 				."from ApStackParticlesData group by `REF|ApStackParamsData|stackparams`) spar "
-				."left join ApParticleData p on (p.`DEF_id` = spar.stackid) "
+				."left join ApParticleData p on (p.`DEF_id` = spar.pid) "
 				."left join ApSelectionRunData r on  (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id` ) "
 				."where r.`dbemdata|SessionData|session` = '$sessionId'";
 		$r = $this->mysql->getSQLResult($q);

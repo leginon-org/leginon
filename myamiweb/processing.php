@@ -114,7 +114,9 @@ if ($sessionId) {
   if ($stackruns>0) {
           foreach ($stackIds as $stackid) {
 	          $reconIds = $particle->getReconIds($stackid['stackid']);
-		  $reconruns+=count($reconIds);
+		  if ($reconIds) {
+		          $reconruns+=count($reconIds);
+		  }
 	  }
   }
 
