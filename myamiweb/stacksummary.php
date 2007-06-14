@@ -65,10 +65,12 @@ foreach ($stackIds as $stackid) {
 	$display_keys['box size']=$boxsz;
 	$display_keys['pixel size']=$apix;
 	$display_keys['phase flipped']=$pflip;
-	if ($s['selexonCutoff']) $display_keys['selexon min']=$s['selexonCutoff'];
+	if ($s['correlationMin']) $display_keys['correlation min']=$s['correlationMin'];
+	if ($s['correlationMax']) $display_keys['correlation max']=$s['correlationMax'];
 	if ($s['minDefocus']) $display_keys['min defocus']=$s['minDefocus'];
 	if ($s['maxDefocus']) $display_keys['max defocus']=$s['maxDefocus'];
 	$display_keys['density']=($s['inverted']==1) ? 'light on dark background':'dark on light background';
+	$display_keys['normalization']=($s['normalized']==1) ? 'On':'Off';
 	$display_keys['file type']=$s['fileType'];
 	foreach($display_keys as $k=>$v) {
 	        echo formatHtmlRow($k,$v);
