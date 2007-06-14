@@ -1,6 +1,6 @@
 #Defocus pair functions
 
-import numarray
+import numpy
 try:
 #sinedon
 	import sinedon.data as data
@@ -82,7 +82,7 @@ def getShift(imgdata1 ,imgdata2):
 		subpixpeak = peak['subpixel peak']
 		shift=correlator.wrap_coord(subpixpeak,pc.shape)
 		peak['scalefactor']=dimension2/float(dimension1)
-		peak['shift']= numarray.array((shift[0]*shrinkfactor1, shift[1]*shrinkfactor1))
+		peak['shift']= numpy.array((shift[0]*shrinkfactor1, shift[1]*shrinkfactor1))
 	return peak
 
 def recordShift(params,img,sibling,peak):

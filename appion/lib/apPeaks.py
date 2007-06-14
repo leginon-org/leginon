@@ -2,8 +2,7 @@
 #pythonlib
 import os
 import math
-import numarray
-import numarray.nd_image as nd_image
+import numpy
 #PIL
 import Image
 import ImageDraw
@@ -81,7 +80,7 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params, maptype):
 
 	### color stuff below threshold
 	#threshmap = imagefun.threshold(ccmap, threshold)
-	#filtmap = numarray.where(threshmap > 0, -3.0, ccmap)
+	#filtmap = numpy.where(threshmap > 0, -3.0, ccmap)
 	#imagefilt = apImage.arrayToImage(filtmap)
 	#imagefilt = imagefilt.convert("RGB")
 	#imagefilt = ImageOps.colorize(imagefilt, "black", "green")
@@ -176,7 +175,7 @@ def peakDistSq(a,b):
 	return (row1-row2)**2 + (col1-col2)**2
 
 def varyThreshold(ccmap, threshold, maxsize):
-	for i in numarray.array([-0.05,-0.02,0.00,0.02,0.05]):
+	for i in numpy.array([-0.05,-0.02,0.00,0.02,0.05]):
 		thresh      = threshold + float(i)
 		blobtree, percentcov = findBlobs(ccmap, thresh, maxsize=maxsize)
 		tstr  = "%.2f" % thresh

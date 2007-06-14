@@ -16,26 +16,18 @@ import numarray
 import numarray.nd_image as nd_image
 import numarray.linear_algebra as linear_algebra
 import numarray.random_array as random_array
+import scipy.optimize as optimiz
 
 try:
-	import numpy
-	lenear_algebra = numpy.linalg
-	random_array = numpy.random
-	import scipyndimage as nd_image
-	import scipy.optimize as optimize
 	import pyami.correlator as correlator
 	import pyami.peakfinder as peakfinder
 	import pyami.imagefun as imagefun
 except:
-	import numarray
-	import numarray.nd_image as nd_image
-	import numarray.linear_algebra as linear_algebra
-	import numarray.random_array as random_array
 	import correlator
 	import peakfinder
 	import imagefun
 
-	apDisplay.printError("Could not find pyami or scipy/numpy")
+	apDisplay.printError("Could not find pyami")
 	
 
 
