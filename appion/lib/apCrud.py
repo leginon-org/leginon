@@ -8,10 +8,12 @@ import math
 import numpy
 ma = numpy.ma
 import scipy.ndimage as nd
-import pyami.convolver as convolver
+try:
+	from pyami import convolver
+except ImportError:
+	import convolver
 import Image
 import ImageDraw
-import pyami.imagefun as imagefun
 import numextension
 import polygon
 import libCV
