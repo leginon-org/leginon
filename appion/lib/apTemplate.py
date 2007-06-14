@@ -44,9 +44,9 @@ def rescaleTemplates(params):
 		if params['apix'] != params['scaledapix'][i]:
 			print "rescaling template",str(i),":",tmplt['apix'],"->",params['apix']
 			scalefactor = tmplt['apix'] / params['apix']
-			scaleAndClipTemplate(ogtmpltname, scalefactor, newtmpltname)
+			imgdata = scaleAndClipTemplate(ogtmpltname, scalefactor, newtmpltname)
 			params['scaledapix'][i] = params['apix']
-			downSizeTemplate(newtmpltname, params)
+			downSizeTemplate(imgdata, newtmpltname, params)
 		i+=1
 	return
 
@@ -74,19 +74,20 @@ def scaleAndClipTemplate(filename, scalefactor, newfilename):
 		#WHY ARE WE USING EMAN???
 		#os.system("proc2d "+newfilename+" "+newfilename+" clip="+str(padsize)+\
 			#","+str(padsize)+" edgenorm")
-	apImage.arrayToMrc(scaledimgdata, newfilename)
+	apImage.arrayToMrc(scaledimgdata, newfilename, msg=False)
+	return scaledimgdata
 
-def downSizeTemplate(filename, params):
+def downSizeTemplate(imgdata, filename, params):
 	#downsize and filter arbitary MRC template image
 	bin = params['bin']
-	imgdata = apImage.mrcToArray(filename)
+	#imgdata = apImage.mrcToArray(filename)
 	boxsize = imgdata.shape
+	
 	if (boxsize[0]/bin) % 2 !=0:
 		apDisplay.printError("binned image must be divisible by 2")
 	if boxsize[0] % bin != 0:
 		apDisplay.printError("box size not divisible by binning factor")
 	imgdata = apImage.preProcessImage(imgdata, params=params, highpass=0, planeReg=False)
-
 	#replace extension with .dwn.mrc
 	ext=re.compile('\.mrc$')
 	filename=ext.sub('.dwn.mrc', filename)
@@ -94,7 +95,7 @@ def downSizeTemplate(filename, params):
 		apDisplay.printWarning("template is only "+str(imgdata.shape[0])+" pixels wide\n"+\
 		  " and may only correlation noise in the image")
 	time.sleep(5)
-	apImage.arrayToMrc(imgdata, filename)
+	apImage.arrayToMrc(imgdata, filename, msg=False)
 	return
 
 def checkTemplates(params, upload=None):

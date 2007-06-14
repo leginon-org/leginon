@@ -12,18 +12,16 @@ import scipy.ndimage as nd_image
 linear_algebra = numpy.linalg
 ma = numpy.ma
 #pyami
+import apDisplay
 try:
 	import pyami.mrc as mrc
 	import pyami.imagefun as imagefun
 	import pyami.convolver as convolver
 	import leginondata
 except:
-	import Mrc as mrc
-	import imagefun
-	import convolver
-	import data as leginondata
+	apDisplay.printError("pymai is required, type 'usepythoncvs'")
 #appion
-import apDisplay
+
 import apDB
 
 db=apDB.db
@@ -44,7 +42,7 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, planeReg
 	return simgarray
 
 
-def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=True, medFilt=False, highpass=None, params={}):
+def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=True, medFilt=False, highpass=None, correct=False, params={}):
 	"""
 	standard processing for an image
 	"""
@@ -71,6 +69,7 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=True, 
 		else:
 			lowpass = 0
 			apDisplay.printWarning("'lowpass' is not defined in preProcessImage()")
+	#HIGH PASS FILTER
 	if highpass is None:
 		if 'highpass' in params:
 			highpass = params['highpass']
@@ -89,7 +88,11 @@ def binImg(imgarray,bin=1):
 	returns a binned image
 	"""
 	if bin > 1:
-		return imagefun.bin(imgarray,bin)
+		newarray = imagefun.bin(imgarray, bin)
+		mindim = min(newarray.shape)
+		if mindim < 1:
+			apDisplay.printError("problem in numextension bin, return null array")
+		return newarray
 	else:
 		return imgarray
 
@@ -401,7 +404,7 @@ def arrayToImage(numer,normalize=True):
 	image = _arrayToImage(numer)
 	return image
 
-def mrcToArray(filename,msg=True):
+def mrcToArray(filename, msg=True):
 	"""
 	takes a numpy and writes a Mrc
 	"""
@@ -411,13 +414,13 @@ def mrcToArray(filename,msg=True):
 
 	return array
 
-def arrayToMrc(numer,filename,msg=True):
+def arrayToMrc(numer, filename, msg=True):
 	"""
 	takes a numpy and writes a Mrc
 	"""
 	if msg is True:
 		apDisplay.printMsg("writing MRC: "+apDisplay.short(filename)+" size:"+str(numer.shape))
-	mrc.write(numer,filename)
+	mrc.write(numer, filename)
 	return
 
 def arrayToJpeg(numer,filename,normalize=True, msg=True):
