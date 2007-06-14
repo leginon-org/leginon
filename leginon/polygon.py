@@ -18,9 +18,17 @@ def filledPolygon(shape, vertices):
 
 def pointsInPolygon(inputpoints, vertices):
 	inside = insidePolygon(inputpoints, vertices)
+
+	#temporary fix for compress change in numpy
+	inside2 = []
+	for i in inside:
+		inside2.append(i)
+		inside2.append(i)
 	outputpoints = numpy.compress(inside, inputpoints)
-	outputpoints = map(tuple, outputpoints)
-	return outputpoints
+	outputpoints2=[]
+	for i in range(0,len(outputpoints)/2):
+		outputpoints2.append((outputpoints[2*i],outputpoints[2*i+1]))
+	return outputpoints2
 
 def polygonSegments(polygon):
 	a = numpy.transpose(polygon)
