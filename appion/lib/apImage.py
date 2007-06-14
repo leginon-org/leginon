@@ -419,7 +419,6 @@ def arrayToMrc(numer, filename, msg=True):
 	takes a numpy and writes a Mrc
 	"""
 	numer = numpy.asarray(numer, dtype=numpy.float32)
-	print numer
 	if msg is True:
 		apDisplay.printMsg("writing MRC: "+apDisplay.short(filename)+\
 			" size:"+str(numer.shape)+" dtype:"+str(numer.dtype))
