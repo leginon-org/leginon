@@ -6,12 +6,12 @@
 MD ; verbose off in spider log file
 VB OFF
 
-x99=3706  ; number of particles in stack
+x99=3000  ; number of particles in stack
 x98=128   ; box size
 x97=45    ; expected diameter of particle (in pixels)
 x96=5     ; first ring radii
-x95=60    ; last ring radii
-x94=50    ; mask radius
+x95=62    ; last ring radii
+x94=50    ; mask radius (in pixels)
 x93=40    ; desired # of classes (will get as close to this # as possible)
 x92=10    ; additive constant for hierarchical clustering
 
@@ -32,6 +32,8 @@ FR G ; where to write class lists
 FR G ; where to write alignment data
 [ali]alignment/
 
+FR G ; where to write coran data
+[corandir]coran/
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; skip over previously done sections ;;
@@ -46,9 +48,9 @@ CP
 [tmplt]@1
 _9
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; First do the reference-free alignment on the raw data ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; REFERENCE-FREE ALIGNMENT                                                ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 VM
 echo "Performing reference-free alignment"
@@ -109,8 +111,6 @@ DE
 _9 
 
 VM
-echo "Performing hierarchical clustering"
-VM
 echo "  making template file"
 
 MO      ; make mask template
@@ -119,17 +119,28 @@ x98,x98 ; box size
 c       ; circle
 x94     ; radius of mask
 
-VM
-echo "  doing correspondence analysis"
 
-CA S           ; do correspondence analysis
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; CORRESPONDENCE ANALYSIS                                                 ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+VM
+echo "Performing correspondence analysis (long wait)"
+
+VM
+rm -rf coran
+VM
+mkdir coran
+
+
+CA S            ; do correspondence analysis
 [aligned]@***** ; aligned stack
-1-x99          ; particles to use
-_9             ; mask file
-20             ; number of factors to be used
-C              ; Coran analysis
-x92            ; additive constant (since coran can't have negative values)
-[ali]coran     ; output file prefix
+1-x99           ; particles to use
+_9              ; mask file
+20              ; number of factors to be used
+C               ; Coran analysis
+x92             ; additive constant (since coran can't have negative values)
+[ali]coran      ; output file prefix
 
 DO LB14 x11=1,20
 	CA SRE
@@ -138,6 +149,14 @@ DO LB14 x11=1,20
 	[ali]sre@{***x11}
 LB14
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; CLUSTERING                                                              ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+VM
+echo "Performing hierarchical clustering"
 VM
 echo "  clustering..."
 
@@ -159,8 +178,6 @@ Y              ; save dendogram doc file
 
 LB11
 
-VM
-echo "Creating classes"
 VM
 echo "  determining threshold cutoff for number of classes"
 
@@ -201,13 +218,10 @@ tmpclhc_classes
 
 VM
 rm -rf classes
-
 VM
 rm -f classes_avg.spi
-
 VM
-rm -r classes_var.spi
-
+rm -f classes_var.spi
 VM
 mkdir classes
 
