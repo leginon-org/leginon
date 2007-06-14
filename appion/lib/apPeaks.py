@@ -133,6 +133,10 @@ def mergePeakTrees(imgdict, peaktreelist, params):
 			if peakdict in mergepeaktree:
 				bestpeaktree.append(peakdict)
 
+	if(len(bestpeaktree) > maxpeaks):
+		apDisplay.printWarning("more than maxpeaks ("+str(maxpeaks)+" peaks), selecting only top peaks")
+		bestpeaktree = bestpeaktree[0:maxpeaks]
+
 	peakTreeToPikFile(bestpeaktree, imgname, 'a', params['rundir'])
 
 	return bestpeaktree
