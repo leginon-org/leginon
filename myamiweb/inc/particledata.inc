@@ -215,44 +215,43 @@ class particledata {
 	}
 
 	function getStackIds ($sessionId) {
-		$q = "select distinct(`REF|ApStackParamsData|stackparams`) as stackid "
-			."from `ApStackParticlesData` sp "
-			."left join ApParticleData p on (p.`DEF_id` = sp.`REF|ApParticleData|particle`) "
-			."left join ApSelectionRunData r on  (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id` ) " 
-			."where r.`dbemdata|SessionData|session` = '$sessionId'";
+		$q = "select spar.stackid "
+				."from ("
+				."select `REF|ApParticleData|particle` as stackid, `REF|ApStackParamsData|stackparams` "
+				."from ApStackParticlesData group by `REF|ApStackParamsData|stackparams`) spar "
+				."left join ApParticleData p on (p.`DEF_id` = spar.stackid) "
+				."left join ApSelectionRunData r on  (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id` ) "
+				."where r.`dbemdata|SessionData|session` = '$sessionId'";
 		$r = $this->mysql->getSQLResult($q);
-		//if (is_array($r[0]))
-		//	array_push($stackidlist,$r[0]['stackid']);
-		//return $stackidlist;
 		return $r;
 	}
 
-        function getStackParams ($stackId) {
-	        $q = "SELECT * "
-		    ."FROM `ApStackParamsData` "
-		  ."WHERE `DEF_id` = '$stackId'";
+	function getStackParams ($stackId) {
+		$q = "SELECT * "
+			."FROM `ApStackParamsData` "
+			."WHERE `DEF_id` = '$stackId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
 
-        function getNumStackParticles ($stackId) {
-	        $q= "SELECT count(*) as num "
-		   ."FROM `ApStackParticlesData` "
-		   ."WHERE `REF|ApStackParamsData|stackparams` = '$stackId'";
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0]['num'];
+	function getNumStackParticles ($stackId) {
+		$q= "SELECT count(*) as num "
+			."FROM `ApStackParticlesData` "
+			."WHERE `REF|ApStackParamsData|stackparams` = '$stackId'";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['num'];
 	}    
 
 	//////// fix me ////////
-        function getStackIdFromReconId ($reconId) {
-	        $q= "SELECT * "
-		   ."FROM `ApRefinementRunData` "
-		  ."WHERE `DEF_id` = '$reconId'";
-		$r = $this->mysql->getSQLResult($q);
-	        return $r[0]['REF|ApStackParamsData|stack'];
+  function getStackIdFromReconId ($reconId) {
+		$q= "SELECT * "
+			."FROM `ApRefinementRunData` "
+			."WHERE `DEF_id` = '$reconId'";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['REF|ApStackParamsData|stack'];
 	}    
 
-        function getPixelSizeFromStackId ($stackId) {
+  function getPixelSizeFromStackId ($stackId) {
 	        $q= "SELECT `REF|InstrumentData|tem` t, magnification m, `REF|InstrumentData|ccdcamera` c, a.`DEF_timestamp` time "
                    ."FROM ApStackParticlesData sp "
                    ."left join ApParticleData p on (p.`DEF_id`=sp.`REF|ApParticleData|particle`) "
@@ -396,10 +395,10 @@ class particledata {
 		return $r;
 	}
 
-        function getParticleEuler ($refinementDataId) {
-	        $q = "SELECT distinct(`REF|ApEulerData|eulers`) as eulers "
-	            ."FROM `ApParticleClassificationData` "
-		    ."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' ";
+	function getParticleEuler ($refinementDataId) {
+		$q = "SELECT distinct(`REF|ApEulerData|eulers`) as eulers "
+			."FROM `ApParticleClassificationData` "
+			."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
