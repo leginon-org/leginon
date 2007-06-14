@@ -3,7 +3,7 @@ f77=g77
 cc=gcc
 ar=ar cr
 LPATH=.
-BINPATH=../particle_manager
+BINPATH=../bin
 FFLAGS=-O3 -Wall -w -fno-second-underscore -mtune=pentium3 -mcpu=pentium3
 CFLAGS=-O3 -Wall -mtune=pentium3 -mcpu=pentium3
 LIBS=$(LPATH)/imlib2k.a $(LPATH)/ifftlib.a $(LPATH)/genlib.a $(LPATH)/misclib.a $(LPATH)/plot2klib.a
