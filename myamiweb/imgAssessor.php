@@ -56,6 +56,7 @@ $sessioninfo=$sessiondata['info'];
 $presets=$sessiondata['presets'];
 if (!empty($sessioninfo)) {
         $sessionpath=$sessioninfo['Image path'];
+	$sessionpath=ereg_replace("leginon","appion",$sessionpath);
 	$sessionpath=ereg_replace("rawdata","extract/",$sessionpath);
 	$sessionname=$sessioninfo['Name'];
 }
