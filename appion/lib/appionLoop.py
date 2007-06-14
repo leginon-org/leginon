@@ -887,7 +887,7 @@ class AppionLoop(object):
 
 class BinLoop(AppionLoop):
 	def processImage(self, imgdict):
-		import imagefun
+		import pyami.imagefun as imagefun
 		imagefun.bin(imgdict['image'], 2)
 
 if __name__ == '__main__':

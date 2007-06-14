@@ -4,13 +4,6 @@
 import os, re, sys
 import tempfile
 import cPickle
-import sinedon.data as data
-import convolver
-import Mrc
-import numarray.nd_image
-import imagefun
-import peakfinder
-import correlator
 import math
 import string
 import appionData

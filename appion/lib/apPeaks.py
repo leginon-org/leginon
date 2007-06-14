@@ -13,7 +13,7 @@ import apImage
 import apDisplay
 import apParam
 #leginon
-import imagefun
+import pyami.imagefun as imagefun
 
 
 def findPeaks(imgdict, ccmaplist, params, maptype="ccmaxmap"):
