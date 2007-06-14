@@ -8,7 +8,7 @@ VB OFF
 
 x99=3706  ; number of particles in stack
 x98=128   ; box size
-x97=45   ; expected diameter of particle (in pixels)
+x97=45    ; expected diameter of particle (in pixels)
 x96=5     ; first ring radii
 x95=60    ; last ring radii
 x94=50    ; mask radius
@@ -161,6 +161,7 @@ LB11
 
 VM
 echo "Creating classes"
+VM
 echo "  determining threshold cutoff for number of classes"
 
 x20 = 0.5   ; initial threshold cutoff
