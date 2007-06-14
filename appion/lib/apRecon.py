@@ -219,21 +219,27 @@ def renderSnapshots(density,res,initmodel,contour,zoom):
 	#low pass filter the volume to .6 * reported res
 	filtres = 0.6*res
 	cmd = ('proc3d %s %s apix=%.3f lp=%.2f' % (density, tmpf, apix, filtres))
+	print cmd
 	os.system(cmd)
 	rendercmd = ('chimera ~/pyappion/lib/apChimSnapshot.py %s %s %s %.3f %.3f' % (tmpf, density, sym, contour, zoom))
-	
+	print rendercmd
 	os.system(rendercmd)
 	os.remove(tmpf)
 
-	if sym == 'Icosahedral':	       
-		# create mrc of central slice for viruses
-		tmphed = density + '.hed'
-		hedcmd = ('proc3d %s %s' % (density,tmphed))
-		os.system(hedcmd)
-		pngslice = density + '.slice.png'
-		slicecmd = ('proc2d %s %s first=%i last=%i' % (tmphed, pngslice, halfbox, halfbox))
-		os.system(slicecmd)
-		os.remove(tmphed)
+	# create mrc of central slice for viruses
+	tmphed = density + '.hed'
+	tmpimg = density + '.img'
+	hedcmd = ('proc3d %s %s' % (density,tmphed))
+	if sym != 'Icosahedral':
+		hedcmd = hedcmd + " rot=90"
+	print hedcmd
+	os.system(hedcmd)
+	pngslice = density + '.slice.png'
+	slicecmd = ('proc2d %s %s first=%i last=%i' % (tmphed, pngslice, halfbox, halfbox))
+	print slicecmd
+	os.system(slicecmd)
+	os.remove(tmphed)
+	os.remove(tmpimg)
 	return
 	
 def insertRefinementRun(params):
