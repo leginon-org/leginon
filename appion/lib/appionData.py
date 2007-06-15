@@ -163,12 +163,20 @@ class ApMaskMakerParamsData(Data):
 
 ### Stack Tables
 
-class ApStackParamsData(Data):
+class ApStackRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('stackPath', str),
 			('name' , str),
 			('description', str),
+			('stackParams', ApStackParamsData),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApStackRunData=ApStackRunData
+
+class ApStackParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
 			('boxSize', int),
 			('bin', int),
 			('phaseFlipped', bool),
@@ -184,14 +192,22 @@ class ApStackParamsData(Data):
 			('normalized', bool),
 		)
 	typemap = classmethod(typemap)
-
 leginondata.ApStackParamsData=ApStackParamsData
+
+class ApStackSessionData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('stackRun', ApStackRunData),
+			('dbemdata|SessionData|session', int),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApStackSessionData=ApStackSessionData
 
 class ApStackParticlesData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('particleNumber', int),
-			('stackparams', ApStackParamsData),
+			('stackRun', ApStackRunData),
 			('particle', ApParticleData),
 	        )
 	typemap = classmethod(typemap)

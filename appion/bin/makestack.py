@@ -77,28 +77,28 @@ def printHelp():
 def createDefaults():
 	# create default values for parameters
 	params={}
-	params["imgs"]=''
-	params["runid"]=None
-	params["single"]=None
-	params["ace"]=None
-	params["boxsize"]=None
-	params["inspected"]=None
+	params['imgs']=''
+	params['runid']=None
+	params['single']=None
+	params['aceCutoff']=None
+	params['boxSize']=None
+	params['checkImage']=None
 	params['inspectfile']=None
-	params["phaseflip"]=False
-	params["apix"]=0
-	params["kv"]=0
-	params["noinvert"]=False
-	params["spider"]=False
-	params["df"]=0.0
-	params['mindefocus']=None
-	params['maxdefocus']=None
+	params['phaseFlipped']=False
+	params['apix']=0
+	params['kv']=0
+	params['inverted']=True
+	params['spider']=False
+	params['df']=0.0
+	params['minDefocus']=None
+	params['maxDefocus']=None
 	params['description']=None
 	params['selexonId']=None
 	params['sessionnanme']=None
 	params['medium']=None
-	params['normalize']=True
-	params['selexonmin']=None
-	params['selexonmax']=None
+	params['normalized']=True
+	params['correlationMin']=None
+	params['correlationMax']=None
 	params['inspectmask']=None
 	params['commit']=False
 	params['outdir']=None
@@ -107,6 +107,7 @@ def createDefaults():
 	params['limit']=None
 	params['defocpair']=False
 	params['uncorrected']=False
+	params['fileType']='imagic'
 	return params
 
 def parseInput(args):
@@ -122,7 +123,7 @@ def parseInput(args):
 		# gather all input files into mrcfileroot list
 		if '=' in  arg:
 			break
-		elif (arg=='phaseflip' or arg=='commit' or arg=='noinvert' or arg=='spider'):
+		elif (arg=='phaseflip' or arg=='commit' or arg=='inverted' or arg=='spider'):
 			break
 		else:
 			boxfile=arg
@@ -132,7 +133,7 @@ def parseInput(args):
 				print ("file '%s' does not exist \n" % boxfile)
 				sys.exit()
 		lastarg+=1
-	params["imgs"]=mrcfileroot
+	params['imgs']=mrcfileroot
 
 	# next get all selection parameters
 	for arg in args[lastarg:]:
@@ -140,39 +141,40 @@ def parseInput(args):
 		if (elements[0]=='outdir'):
 			params['outdir'] = os.path.abspath(elements[1])
 		elif (elements[0]=='runid'):
-			params["runid"]=elements[1]
+			params['runid']=elements[1]
 		elif (elements[0]=='single'):
-			params["single"]=elements[1]
+			params['single']=elements[1]
 		elif (elements[0]=='ace'):
-			params["ace"]=float(elements[1])
+			params['aceCutoff']=float(elements[1])
 		elif (elements[0]=='selexonmin'):
-			params["selexonmin"]=float(elements[1])
+			params['correlationMin']=float(elements[1])
 		elif (elements[0]=='selexonmax'):
-			params["selexonmax"]=float(elements[1])
+			params['correlationMax']=float(elements[1])
 		elif (elements[0]=='maskassess'):
-			params["inspectmask"]=elements[1]
+			params['inspectmask']=elements[1]
 		elif (elements[0]=='boxsize'):
-			params["boxsize"]=int(elements[1])
+			params['boxSize']=int(elements[1])
 		elif (elements[0]=='inspectfile'):
-			params["inspectfile"]=elements[1]
+			params['inspectfile']=elements[1]
 		elif (elements[0]=='medium'):
-			params["medium"]=elements[1]
+			params['medium']=elements[1]
 		elif (elements[0]=='bin'):
 			params['bin']=int(elements[1])
 		elif (elements[0]=='sessionname'):
 			params['sessionname']=elements[1]
 		elif (arg=='inspected'):
-			params["inspected"]=True
+			params['checkImage']=True
 		elif (arg=='nonorm'):
-			params['normalize']=False
+			params['normalized']=False
 		elif (arg=='phaseflip'):
-			params["phaseflip"]=True
+			params['phaseFlipped']=True
 		elif (arg=='noinvert'):
-			params["noinvert"]=True
+			params['inverted']=False
 		elif (arg=='invert'):
-			params["noinvert"]=False
+			params['inverted']=True
 		elif (arg=='spider'):
-			params["spider"]=True
+			params['spider']=True
+			params['fileType']='spider'
 		elif (arg=='commit'):
 			params['commit']=True
 			# if commit is set, must have a runid:
@@ -184,18 +186,18 @@ def parseInput(args):
 				print "mindefocus must be negative and specified in meters"
 				sys.exit()
 			else:
-				params['mindefocus']=mindf*1e6
+				params['minDefocus']=mindf*1e6
 		elif (elements[0]=='maxdefocus'):
 			maxdf=float(elements[1])
 			if maxdf > 0:
 				print "maxdefocus must be negative and specified in meters" 
 				sys.exit()
 			else:
-				params['maxdefocus']=maxdf*1e6
+				params['maxDefocus']=maxdf*1e6
 		elif (elements[0]=='description'):
-			params["description"]=elements[1]
+			params['description']=elements[1]
 		elif (elements[0]=='prtlrunId'):
-			params["selexonId"]=int(elements[1])
+			params['selexonId']=int(elements[1])
 		elif elements[0]=='limit':
 			params['limit']=int(elements[1])
 		elif arg=='defocpair':
@@ -215,7 +217,7 @@ def checkParamConflicts(params):
 		apDisplay.printError("When committing to database, stack must be a single file.\n"+\
 			"use the 'single=<filename>' option")
 	# if getting particles from db or committing, a box size must be set
-	if (params['commit'] or params['selexonId']) and not params['boxsize']:
+	if (params['commit'] or params['selexonId']) and not params['boxSize']:
 		apDisplay.printError("Specify a box size")
 	return
 
@@ -234,7 +236,7 @@ def getFilePath(imgdict):
 
 def checkInspectFile(imgdict):
 	filename=imgdict['filename']+'.mrc'
-	f=open(params["inspectfile"],'r')
+	f=open(params['inspectfile'],'r')
 	results=f.readlines()
 	status=''
 	for line in results:
@@ -278,8 +280,8 @@ def batchBox(params, imgdict):
 		apImage.arrayToMrc(imgarray,input)
 		print "processing", input		
 	else:
-		input  = os.path.join(params["filepath"], imgname+".mrc")
-	output = os.path.join(params["outdir"], imgname+".hed")
+		input  = os.path.join(params['filepath'], imgname+".mrc")
+	output = os.path.join(params['outdir'], imgname+".hed")
 
 	# if getting particles from database, a temporary
 	# box file will be created
@@ -291,7 +293,7 @@ def batchBox(params, imgdict):
 			particles,shift=apParticle.getParticles(imgdict, params['selexonId'])
 		if len(particles)>0:			
 			###apply limits
-			if params['selexonmin'] or params['selexonmax']:
+			if params['correlationMin'] or params['correlationMax']:
 				particles=eliminateMinMaxCCParticles(particles,params)
 			
 			###apply masks
@@ -317,10 +319,10 @@ def batchBox(params, imgdict):
 		f.close
 		nptcls=len(lines)
 		# write batchboxer command
-		if params["selexonId"]:
-			cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(input, dbbox, output, params["boxsize"])
-		elif params["boxsize"]:
-			cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i insideonly" %(input, dbbox, output, params["boxsize"])
+		if params['selexonId']:
+			cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(input, dbbox, output, params['boxSize'])
+		elif params['boxSize']:
+			cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i insideonly" %(input, dbbox, output, params['boxSize'])
 		else: 
 	 		cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(input, dbbox, output)
 	
@@ -353,9 +355,9 @@ def eliminateMinMaxCCParticles(particles,params):
 	newparticles = []
 	eliminated = 0
 	for prtl in particles:
-		if params['selexonmin'] and prtl['correlation'] < params['selexonmin']:
+		if params['correlationMin'] and prtl['correlation'] < params['correlationMin']:
 			eliminated += 1
-		elif params['selexonmax'] and prtl['correlation'] > params['selexonmax']:
+		elif params['correlationMax'] and prtl['correlation'] > params['correlationMax']:
 			eliminated += 1
 		else:
 			newparticles.append(prtl)
@@ -366,7 +368,7 @@ def eliminateMinMaxCCParticles(particles,params):
 def saveParticles(particles,shift,dbbox,params,imgdict):
 	imgname = imgdict['filename']
 	plist=[]
-	box=params['boxsize']
+	box=params['boxSize']
 	imgxy=imgdict['camera']['dimension']
 	eliminated=0
 	for prtl in particles:
@@ -377,7 +379,7 @@ def saveParticles(particles,shift,dbbox,params,imgdict):
 			plist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
 			if params['commit']:
 				stackpq=appionData.ApStackParticlesData()
-				stackpq['stackparams']=params['stackId']
+				stackpq['stackRun']=params['stackId']
 				stackpq['particle']=prtl
 				stackres=apdb.query(stackpq)
 				if not stackres:
@@ -417,13 +419,13 @@ def phaseFlip(imgdata, params):
 
 def singleStack(params,imgdict):
 	imgname = imgdict['filename']
- 	if params['phaseflip'] is True:
-		input = os.path.join(params["outdir"], imgname+'.ctf.hed')
+ 	if params['phaseFlipped'] is True:
+		input = os.path.join(params['outdir'], imgname+'.ctf.hed')
 	else:
-		input = os.path.join(params["outdir"], imgname+'.hed')
-	output = os.path.join(params["outdir"], params["single"])
+		input = os.path.join(params['outdir'], imgname+'.hed')
+	output = os.path.join(params['outdir'], params['single'])
 
-	if params['normalize'] is False:
+	if params['normalized'] is False:
 		cmd="proc2d %s %s" %(input, output)
 	else:
 		cmd="proc2d %s %s norm=0.0,1.0" %(input, output)
@@ -433,7 +435,7 @@ def singleStack(params,imgdict):
 		cmd += " shrink="+str(params['bin'])
 		
 	# unless specified, invert the images
-	if params['noinvert'] is False:
+	if params['inverted'] is True:
 		cmd += " invert"
 
 	# if specified, create spider stack
@@ -451,20 +453,20 @@ def singleStack(params,imgdict):
 			count=int(words[-2])
 
 	# create particle log file
-	partlogfile = os.path.join(params["outdir"], ".particlelog")
+	partlogfile = os.path.join(params['outdir'], ".particlelog")
 	f = open(partlogfile, 'a')
-	for n in range(count-params["particle"]):
-		particlenum=str(1+n+params["particle"])
+	for n in range(count-params['particle']):
+		particlenum=str(1+n+params['particle'])
 		line = str(particlenum)+'\t'+os.path.join(params['filepath'], imgname+".mrc")
 		f.write(line+"\n")
 	f.close()
-	params["particle"] = count
+	params['particle'] = count
 	
-	os.remove(os.path.join(params["outdir"], imgname+".hed"))
-	os.remove(os.path.join(params["outdir"], imgname+".img"))
-	if params['phaseflip'] is True:
-		os.remove(os.path.join(params["outdir"], imgname+".ctf.hed"))
-		os.remove(os.path.join(params["outdir"], imgname+".ctf.img"))
+	os.remove(os.path.join(params['outdir'], imgname+".hed"))
+	os.remove(os.path.join(params['outdir'], imgname+".img"))
+	if params['phaseFlipped'] is True:
+		os.remove(os.path.join(params['outdir'], imgname+".ctf.hed"))
+		os.remove(os.path.join(params['outdir'], imgname+".ctf.img"))
 
 # since we're using a batchboxer approach, we must first get a list of
 # images that contain particles
@@ -540,78 +542,49 @@ def getImgsDefocPairFromSelexonId(params):
 	return (dbimglist)
 
 def insertStackParams(params):
-	if params['spider']==True:
-		fileType='spider'
-	else:
-		fileType='imagic'
-
-	if params['noinvert']==True:
-		inverted=None
-	else:
-		inverted=True
-
-	# get stack parameters if they already exist in table
 	stparamq=appionData.ApStackParamsData()
-	stparamq['stackPath'] = params['outdir']
-	stparamq['name']=params['single']
+	paramlist = ('boxSize','bin','phaseFlipped','aceCutoff','correlationMin','correlationMax','checkCrud','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized')
 
-	stackparams=apdb.query(stparamq,results=1)
+	for p in paramlist:
+		if p in params:
+			stparamq[p] = params[p]
+			
+	# create a stackRun object
+	runq = appionData.ApStackRunData()
+	runq['stackPath'] = params['outdir']
+	runq['name']=params['single']
+
+        # see if stackRun already exists in the database
+	runids = apdb.query(runq, results=1)
 
 	# if not in the database, insert new stack parameters
-	if not stackparams:
+	if not runids:
 		print "Inserting stack parameters into DB"
-		stparamq['description']=params['description']
-		stparamq['boxSize']=params['boxsize']
-		stparamq['fileType']=fileType
-		stparamq['inverted']=inverted
-		stparamq['normalized']=params['normalize']
-		if params['bin']:
-			stparamq['bin']=params['bin']
-		if params['phaseflip']==True:
-			stparamq['phaseFlipped']=True
-		if params['ace']:
-			stparamq['aceCutoff']=params['ace']
-		if params['selexonmin']:
-			stparamq['correlationMin']=params['selexonmin']
-		if params['selexonmax']:
-			stparamq['correlationMax']=params['selexonmax']
-		if params['inspected']:
-			stparamq['checkImage']=True
-		if params['mindefocus']:
-			stparamq['minDefocus']=params['mindefocus']
-		if params['maxdefocus']:
-			stparamq['maxDefocus']=params['maxdefocus']
-			apdb.insert(stparamq)
-		stackparams=stparamq
-	else:
-		stackparams=stackparams[0]
-		if (stackparams['description']!=params['description'] or
-			stackparams['boxSize']!=params['boxsize'] or
-			stackparams['bin']!=params['bin'] or
-			stackparams['phaseFlipped']!=params['phaseflip'] or
-			stackparams['aceCutoff']!=params['ace'] or
-			stackparams['correlationMin']!=params['selexonmin'] or
-			stackparams['correlationMax']!=params['selexonmax'] or
-			stackparams['checkImage']!=params['inspected'] or
-			stackparams['minDefocus']!=params['mindefocus'] or
-			stackparams['maxDefocus']!=params['maxdefocus'] or
-			stackparams['fileType']!=fileType or
-			stackparams['inverted']!=inverted or
-			stackparams['normalized']!=params['normalize']):
-			apDisplay.printError("All parameters for a particular stack must be identical!"+\
-			  "\nplease check your parameter settings.")
-	# get the stack Id
-	params['stackId']=stackparams
+		runq['description'] = params['description']
+		runq['stackParams'] = stparamq
+		apdb.insert(runq)
 
+	# else if stack already exists, check that params are the same
+	else:
+		runq['description'] = params['description']
+		runq['stackParams'] = stparamq
+		if not (runids[0]['stackParams'] == stparamq):
+			for i in runids[0]['stackParams']:
+				if runids[0]['stackParams'][i] != stparamq[i]:
+					apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
+			apDisplay.printError("All parameters for a particular stack must be identical! \n"+\
+					     "please check your parameter settings.")
+	# get the stack Id
+	params['stackId']=runq
 
 def rejectImage(imgdata, params):
 	shortname = apDisplay.short(imgdata['filename'])
 
 	### check if the image has inspected, in file or in database
-	if params["inspectfile"] and checkInspectFile(imgdict) is False:
+	if params['inspectfile'] and checkInspectFile(imgdict) is False:
 		apDisplay.printColor(shortname+".mrc has been rejected in manual inspection file\n","cyan")
 		return False
-	if params["inspected"]:
+	if params['checkImage']:
 		if params['defocpair'] and checkPairInspectDB(imgdict, params) is False:
 			apDisplay.printColor(shortname+".mrc has been rejected by manual defocpair inspection\n","cyan")
 			return False
@@ -623,7 +596,7 @@ def rejectImage(imgdata, params):
 	ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
 	
  	if ctfvalue is None:
-		if params["ace"] or params['mindefocus'] or params['maxdefocus'] or params['phaseflip']:
+		if params['aceCutoff'] or params['minDefocus'] or params['maxDefocus'] or params['phaseFlipped']:
 			apDisplay.printColor(shortname+".mrc was rejected because it has no ACE values\n","cyan")
 			return False
 		else:
@@ -632,20 +605,18 @@ def rejectImage(imgdata, params):
 	apCtf.ctfValuesToParams(ctfvalue, params)
 
 	### check that ACE estimation is above confidence threshold
-	if params["ace"] and conf < params["ace"]:
+	if params['aceCutoff'] and conf < params['aceCutoff']:
 			apDisplay.printColor(shortname+".mrc is below ACE threshold (conf="+str(round(conf,3))+")\n","cyan")
 			return False
-	elif params['ace']:
-		apDisplay.printMsg(str(round(conf,3))+" is above ace cutoff, "+str(params['ace']))
 
 	### skip micrograph that have defocus above or below min & max defocus levels
-	if params['mindefocus'] and params['df'] > params['mindefocus']:
+	if params['minDefocus'] and params['df'] > params['minDefocus']:
 		apDisplay.printColor(shortname+".mrc defocus ("+str(round(params['df'],3))+\
-			") is less than mindefocus ("+str(params['mindefocus'])+")\n","cyan")
+			") is less than mindefocus ("+str(params['minDefocus'])+")\n","cyan")
 		return False
-	if params['maxdefocus'] and params['df'] < params['maxdefocus']:
+	if params['maxDefocus'] and params['df'] < params['maxDefocus']:
 		apDisplay.printColor(shortname+".mrc defocus ("+str(round(params['df'],3))+\
-			") is greater than maxdefocus ("+str(params['maxdefocus'])+")\n","cyan")
+			") is greater than maxdefocus ("+str(params['maxDefocus'])+")\n","cyan")
 		return False
 
 	return True
@@ -690,16 +661,16 @@ if __name__ == '__main__':
 		params['outdir'] = os.path.join(params['outdir'], params['runid'])
 		apDisplay.printMsg("output directory: "+params['outdir'])
 		#params['rundir'] = os.path.join(params['outdir'], params['runid'])
-	apParam.createDirectory(params["outdir"])
+	apParam.createDirectory(params['outdir'])
 	logfile = os.path.join(params['outdir'], "makestack.log")
 
 	# if making a single stack, remove existing stack if exists
-	if params["single"]:
-		stackfile=os.path.join(params["outdir"], os.path.splitext(params["single"])[0])
+	if params['single']:
+		stackfile=os.path.join(params['outdir'], os.path.splitext(params['single'])[0])
 		# if saving to the database, store the stack parameters
 		if params['commit']is True:
 			insertStackParams(params)
-		if params["spider"] is True and os.path.isfile(stackfile+".spi"):
+		if params['spider'] is True and os.path.isfile(stackfile+".spi"):
 			os.remove(stackfile+".spi")
 		if (os.path.isfile(stackfile+".hed")):
 			os.remove(stackfile+".hed")
@@ -707,17 +678,17 @@ if __name__ == '__main__':
 			os.remove(stackfile+".img")
 			
 		# set up counter for particle log
-		p_logfile=os.path.join(params["outdir"], ".particlelog")
+		p_logfile=os.path.join(params['outdir'], ".particlelog")
 
  		if (os.path.isfile(p_logfile)):
 			os.remove(p_logfile)
-		params["particle"]=0
+		params['particle']=0
 		
 	# get list of input images, since wildcards are supported
 	else:
 		if not params['imgs']:
 			apDisplay.printError("enter particle images to box or use a particles selection runId")
-		imglist=params["imgs"]
+		imglist=params['imgs']
 		images=[]
 		for img in imglist:
 			imageq=leginondata.AcquisitionImageData(filename=img)
@@ -741,7 +712,7 @@ if __name__ == '__main__':
 		imgname = imgdict['filename']
 
 		# first remove any existing boxed files
-		stackfile = os.path.join(params["outdir"], imgname)
+		stackfile = os.path.join(params['outdir'], imgname)
 		for ext in ("hed", "img"):
 			if os.path.isfile(stackfile+"."+ext):
 				os.remove(stackfile+"."+ext)
@@ -756,16 +727,16 @@ if __name__ == '__main__':
 		# box the particles
 		totptcls += batchBox(params,imgdict)
 		
-		if not os.path.isfile(os.path.join(params["outdir"], imgname+".hed")):
+		if not os.path.isfile(os.path.join(params['outdir'], imgname+".hed")):
 			apDisplay.printWarning("no particles were boxed from "+apDisplay.short(imgname)+"\n")
 			continue
 
 		# phase flip boxed particles if requested
-		if params["phaseflip"]:
+		if params['phaseFlipped']:
 			phaseFlip(imgdict, params) # phase flip stack file
 		
 		# add boxed particles to a single stack
-		if params["single"]:
+		if params['single']:
 			singleStack(params, imgdict)
 		
 		# limit total particles if limit is specified
