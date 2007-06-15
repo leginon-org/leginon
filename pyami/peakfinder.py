@@ -135,7 +135,7 @@ class PeakFinder(object):
 		## fit quadratic
 		fit = linear_least_squares(dm, v)
 		coeffs = fit[0]
-		minsum = fit[1][0]
+		minsum = fit[1]
 
 		## find root
 		try:
