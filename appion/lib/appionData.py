@@ -219,7 +219,7 @@ class ApRefinementRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('name', str),
-			('stack', ApStackParamsData),
+			('stack', ApStackRunData),
 			('initialModel', ApInitialModelData),
 			('path', str),
 			('package', str),
