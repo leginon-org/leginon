@@ -217,8 +217,8 @@ class particledata {
 	function getStackIds ($sessionId) {
 	        $q = "select spar.stackid "
 				."from ("
-				."select `REF|ApParticleData|particle` as pid, `REF|ApStackParamsData|stackparams` as stackid "
-				."from ApStackParticlesData group by `REF|ApStackParamsData|stackparams`) spar "
+				."select `REF|ApParticleData|particle` as pid, `REF|ApStackRunData|stackRun` as stackid "
+				."from ApStackParticlesData group by `REF|ApStackRunData|stackRun`) spar "
 				."left join ApParticleData p on (p.`DEF_id` = spar.pid) "
 				."left join ApSelectionRunData r on  (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id` ) "
 				."where r.`dbemdata|SessionData|session` = '$sessionId'";
@@ -228,8 +228,9 @@ class particledata {
 
 	function getStackParams ($stackId) {
 		$q = "SELECT * "
-			."FROM `ApStackParamsData` "
-			."WHERE `DEF_id` = '$stackId'";
+			."FROM `ApStackParamsData` p "
+		        ."LEFT JOIN `ApStackRunData` r on (p.`DEF_id` = r.`REF|ApStackParamsData|stackParams`) "
+			."WHERE r.`DEF_id` = '$stackId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
@@ -237,7 +238,7 @@ class particledata {
 	function getNumStackParticles ($stackId) {
 		$q= "SELECT count(*) as num "
 			."FROM `ApStackParticlesData` "
-			."WHERE `REF|ApStackParamsData|stackparams` = '$stackId'";
+			."WHERE `REF|ApStackRunData|stackRun` = '$stackId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r['num'];
 	}    
