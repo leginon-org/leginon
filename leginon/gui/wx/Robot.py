@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Robot.py,v $
-# $Revision: 1.15 $
+# $Revision: 1.16 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-03-10 02:59:41 $
+# $Date: 2007-06-15 02:30:31 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -16,6 +16,7 @@ import gui.wx.Events
 import gui.wx.Icons
 import gui.wx.Node
 import gui.wx.ToolBar
+import gui.wx.Settings
 import Queue
 import threading
 import wx
