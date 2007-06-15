@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.54 $
+# $Revision: 1.55 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-21 23:54:24 $
+# $Date: 2007-06-15 21:01:18 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -30,6 +30,7 @@ import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
 import NumericImage
 import Image
+from pyami import arraystats
 import icons
 import numextension
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
