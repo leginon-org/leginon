@@ -27,7 +27,7 @@ if($projectdb) {
 ?>
 <html>
 <head>
-<title><?php echo $title; ?> summary</title>
+<title><?=$title; ?> summary</title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 <STYLE type="text/css">
 DIV.comment_section { text-align: justify; 
@@ -81,19 +81,48 @@ if (!empty($sessioninfo)) {
 }
 echo "</td>";
 $summary = $leginondata->getSummary($expId);
+$timingstats = $leginondata->getTimingStats($expId);
+$tot_time=0;
+foreach ($timingstats as $t) {
+	$images_time[$t['name']]=$t['time'];
+	$images_mean[$t['name']]=$t['mean'];
+	$images_stdev[$t['name']]=$t['stdev'];
+	$images_min[$t['name']]=$t['min'];
+	$images_max[$t['name']]=$t['max'];
+	$tot_time += $t['time_in_sec'];
+}
 if (!empty($summary)) {
+	$summary_fields[]="Preset label";
+	$summary_fields[]="#images";
+	if (!empty($images_time)) {
+		$summary_fields[]="time";
+		$summary_fields[]="min";
+		$summary_fields[]="max";
+		$summary_fields[]="mean";
+		$summary_fields[]="stdev";
+	}
+	foreach($summary_fields as $s_f) {
+		$table_head.="<th>$s_f</th>";
+	}
 	echo "<td>";
 	echo divtitle("Images Acquired");
-	echo "<table border='0'>\n";
-	echo "<tr>"
-		."<th>Preset label</th><th> # images</th>"
-		."</tr>";
+	echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
+	echo "<tr >". $table_head."</tr>";
 	foreach($summary as $s) {
-		echo formatHtmlRow($s['name'], $s['nb']);
-		$tot_imgs += $s[nb];
+		echo formatHtmlRow($s['name'], $s['nb'],
+				$images_time[$s['name']],
+				$images_min[$s['name']],
+				$images_max[$s['name']],
+				$images_mean[$s['name']],
+				$images_stdev[$s['name']]);
+		$tot_imgs += $s['nb'];
 	}
 	echo "</table>\n";
 	echo "<p>Total images:<b>$tot_imgs</b>";
+	if ($tot_time)
+		echo " time:<b>".sec2time($tot_time)."</b>";
+	echo divtitle("Timing");
+	echo "<a href='timing.php?Id=$expId'>Timing report &raquo;</a>";
 	echo "</td>";
 	
 }

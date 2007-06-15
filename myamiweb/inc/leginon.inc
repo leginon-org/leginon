@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.62 $
- *	@version $Id: leginon.inc,v 1.62 2007-04-23 18:57:53 dfellman Exp $
+ *	@version $Revision: 1.63 $
+ *	@version $Id: leginon.inc,v 1.63 2007-06-15 18:11:23 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -1816,6 +1816,115 @@ class leginondata {
 		."ON (`a`.`DEF_id`=`s`.`REF|AcquisitionImageData|image`) "
 		.$prejoin
 		.$sqlwhere ;
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getSiblingsFromPreset($sessionId, $preset="") {
+		if($preset) {
+			$sqlpreset="AND `p`.name='$preset' ";
+		}
+		$q="select a.`DEF_id` as id FROM"
+		."`AcquisitionImageData` AS `a` "
+		."LEFT JOIN `PresetData` AS `p` "
+		."ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
+		."WHERE `a`.`REF|SessionData|session`=$sessionId "
+		.$sqlpreset." limit 1";
+		list($r) = $this->mysql->getSQLResult($q);
+		$imageId = $r['id'];
+		return $this->getSiblings($imageId);
+	}
+
+	function getSiblings($imageId) {
+		$sqlwhere="WHERE a.`DEF_id`=$imageId";
+		$q="SELECT "
+		."`a`.`DEF_id` as a_id, "
+		."`p`.`DEF_id` as a_presetId, "
+		."`p`.`name` as a_preset, "
+		."`sibling`.`DEF_id` as s_id, "
+		."`s_p`.`DEF_id` as s_presetId, "
+		."`s_p`.`name` as s_preset "
+		."FROM "
+		."`AcquisitionImageData` AS `a` "
+		."LEFT JOIN `PresetData` AS `p` "
+		."ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
+		."LEFT JOIN `AcquisitionImageTargetData` AS `t` "
+		."ON (`t`.`DEF_id`=`a`.`REF|AcquisitionImageTargetData|target`) "
+		."LEFT JOIN AcquisitionImageData AS `sibling` "
+		."ON (`sibling`.`REF|AcquisitionImageTargetData|target`=`t`.`DEF_id`) "
+		."LEFT JOIN `PresetData` AS `s_p` "
+		."ON (`s_p`.`DEF_id`=`sibling`.`REF|PresetData|preset`) "
+		.$sqlwhere ;
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getTimingStats($sessionId, $preset="") {
+			$sub_q=$this->getTiming($sessionId, $preset="", true);
+			$q="select "
+				."f.name, count(f.name) as nb, "
+				."sum(f.acquisitiontime) as time_in_sec, "
+				."sec_to_time(sum(f.acquisitiontime)) as time, "
+				."min(f.acquisitiontime) as min, "
+				."max(f.acquisitiontime) as max, "
+				."avg(f.acquisitiontime) as mean, "
+				."stddev(f.acquisitiontime) as stdev "
+				."from ($sub_q) f "
+				."group by name ";
+			return $this->mysql->getSQLResult($q);
+	}
+
+	function getTiming($sessionId, $preset="", $getquery=false) {
+		$datatype=($preset) ? array($preset):$this->getDatatypes($sessionId);
+		foreach ($datatype as $preset) {
+			$siblings=$this->getSiblingsfrompreset($sessionId, $preset);
+			$presetorder=array();
+			if ($siblings)
+			foreach($siblings as $sibling) {
+				$presetorder[]=$sibling['s_preset'];
+			}
+			$key = array_search($preset, $presetorder);
+			$key -=1;
+			if ($key<0)
+				$key=0;
+			$sibling=$siblings[$key];
+			$sqlsiblings[]="(`p`.`name` = '".$preset."' AND `s_p`.`name` = '".$sibling['s_preset']."')";
+		}
+
+			$where[] = "`a`.`REF|SessionData|session` = $sessionId";
+			$where[] = "`sibling`.`version`=0 ";
+			$where[] = "`a`.`version`=0 ";
+			$where[] = "(".join(" OR ", $sqlsiblings).")";
+			// --- quick hack for Square preset --- //
+			if ($preset=="sq")
+				$where[] = "`a`.`label`='Square' ";
+
+		if ($preset) {
+			$preselect = ", `p`.`name`, `p`.`magnification`";
+			$prejoin = "LEFT JOIN `PresetData` AS `p` ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`)";
+			$prejoin .= "LEFT JOIN `PresetData` AS `s_p` ON (`s_p`.`DEF_id`=`sibling`.`REF|PresetData|preset`)";
+		}
+
+		if ($where)
+			$sqlwhere = "WHERE ".implode(' AND ', $where);
+
+		$sqldiff_a = "TIME_TO_SEC(TIMEDIFF(`a`.`DEF_timestamp`,`t`.`DEF_timestamp`))";
+		$sqldiff_s = "TIME_TO_SEC(TIMEDIFF(`sibling`.`DEF_timestamp`,`t`.`DEF_timestamp`))";
+		$q="SELECT "
+		."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) as `unix_timestamp`, "
+		."`a`.`DEF_timestamp` as `timestamp`, "
+		."`a`.`filename` as `filename`, "
+		."if (($sqldiff_a-$sqldiff_s)>0, $sqldiff_a-$sqldiff_s, $sqldiff_a) as acquisitiontime"
+		.$preselect 
+		."FROM "
+		."`AcquisitionImageData` AS `a` "
+		."LEFT JOIN `AcquisitionImageTargetData` AS `t` "
+		."ON (`t`.`DEF_id`=`a`.`REF|AcquisitionImageTargetData|target`) "
+		."LEFT JOIN AcquisitionImageData AS `sibling` "
+		."ON (`sibling`.`REF|AcquisitionImageTargetData|target`=`t`.`DEF_id`) "
+		.$prejoin
+		.$sqlwhere; 
+		if ($getquery)
+			return $q;
+
 		return $this->mysql->getSQLResult($q);
 	}
 

@@ -396,6 +396,16 @@ function format_nano_number($data) {
 	return number_format(($data/1e-9), 4,'.','').' nm';
 }
 
+function sec2time($second) {
+	$h=floor($second/3600);
+	$m=floor(($second-$h*3600)/60);
+	$s=$second-$h*3600-$m*60;
+	$s=str_pad($s, 2, "0", STR_PAD_LEFT);
+	$m=str_pad($m, 2, "0", STR_PAD_LEFT);
+	$time="$h:$m:$s";
+	return $time;
+}
+
 function formatHtmlRow($k, $v) {
 	if($k) $k .= ":";
 	return '<tr><td><span class="datafield0">'
