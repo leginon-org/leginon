@@ -663,6 +663,7 @@ if __name__ == '__main__':
 		#params['rundir'] = os.path.join(params['outdir'], params['runid'])
 	apParam.createDirectory(params['outdir'])
 	logfile = os.path.join(params['outdir'], "makestack.log")
+	apParam.writeFunctionLog(sys.argv, logfile=logfile)
 
 	# if making a single stack, remove existing stack if exists
 	if params['single']:
