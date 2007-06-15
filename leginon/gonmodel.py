@@ -210,7 +210,7 @@ class GonModel:
 	def removeTrailingZeros(self, seq):
 		n = len(seq)
 		for i in range(n-1,-1,-1):
-			if seq[i]:
+			if not numpy.isnan(seq[i]) and seq[i]:
 				break
 		return seq[:i+1]
 
@@ -220,11 +220,11 @@ class GonModel:
 
 		a = self.removeTrailingZeros(d['a'])
 		self.a = numpy.array(a, numpy.float32)
-		self.a = self.a.flat
+		self.a = self.a.ravel()
 
 		b = self.removeTrailingZeros(d['b'])
 		self.b = numpy.array(b, numpy.float32)
-		self.b = self.b.flat
+		self.b = self.b.ravel()
 
 		k = 2.0 * numpy.pi / self.period
 
