@@ -312,7 +312,6 @@ def drawPeaks(peaktree, draw, bin, binpixrad, circmult=1.0, numcircs=None, circs
 		Orange, Teal, Purple, Lime-Green, Sky-Blue, Pink
 	"""
 	if numcircs is None and fill is False:
-		print "BINPEAKRAD",binpixrad/8.0
 		numcircs = int( round(binpixrad/8.0,0) )+1
 	elif fill is True:
 		numcircs = 1

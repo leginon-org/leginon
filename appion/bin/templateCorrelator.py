@@ -34,11 +34,8 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 			#sf2.createJPG2(params,imgname)
 			sys.exit(1)
 		else:
-			print "FINDEM"
 			self.ccmaplist = apFindEM.runFindEM(imgdata, self.params)
-			print "FINDPEAKS"
 			self.peaktree  = apPeaks.findPeaks(imgdata, self.ccmaplist, self.params)
-			print "CREATEJPG"
 			apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)
 
 		if self.params['defocpair'] is True:
