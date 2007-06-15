@@ -2,8 +2,6 @@
 
 import scipy.fftpack
 import scipy.__config__
-if not scipy.__config__.get_info('fftw3_info'):
-	raise ImportError
 
 def real_fft2d(*args, **kwargs):
 	return scipy.fftpack.fft2(*args, **kwargs)
@@ -41,20 +39,6 @@ class _fftEngine(object):
 
 	def _itransform(self, image):
 		raise NotImplementedError()
-
-
-### this attempts to use fftw single and double
-### if that fails, it will use scipy
-fftw_mods = []
-
-try:
-	import fftw.single
-	fftw_mods.append(fftw.single)
-	import fftw.double
-	fftw_mods.append(fftw.double)
-except ImportError:
-	pass
-	#print 'could not import fftw modules'
 
 
 class fftEngine(_fftEngine):
