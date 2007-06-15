@@ -635,7 +635,8 @@ def rejectImage(imgdata, params):
 	if params["ace"] and conf < params["ace"]:
 			apDisplay.printColor(shortname+".mrc is below ACE threshold (conf="+str(round(conf,3))+")\n","cyan")
 			return False
-	print conf,"is above",params['ace']
+	elif params['ace']:
+		apDisplay.printMsg(str(round(conf,3))+" is above ace cutoff, "+str(params['ace']))
 
 	### skip micrograph that have defocus above or below min & max defocus levels
 	if params['mindefocus'] and params['df'] > params['mindefocus']:
