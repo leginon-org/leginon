@@ -269,7 +269,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher', $head
         $commitcheck = ($_POST['commit']=='on') ? 'CHECKED' : '';
         $diamval = ($_POST['diam']) ? "VALUE='".$_POST['diam']."'" : ''; 
         $lpval = ($_POST['lp']) ? $_POST['lp'] : '30';
-        $hpval = ($_POST['hp']) ? $_POST['hp'] : '600';
+        $hpval = ($_POST['hp']) ? $_POST['hp'] : '0';
         $binval = ($_POST['bin']) ? $_POST['bin'] : '4';
 	$manualval = ($_POST['thresh']) ? $_POST['thresh'] : '0.5';
         if ($_POST['threshcheck']=='auto') {
