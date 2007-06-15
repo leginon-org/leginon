@@ -1425,6 +1425,7 @@ class ManualAcquisitionSettingsData(SettingsData):
 			('defocus1', float),
 			('defocus2switch', bool),
 			('defocus2', float),
+			('dark', bool),
 		)
 	typemap = classmethod(typemap)
 

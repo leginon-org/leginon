@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.24 $
+# $Revision: 1.25 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-05-10 22:55:26 $
+# $Date: 2007-06-15 21:01:55 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -297,6 +297,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['image label'], (5, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		sz.AddGrowableCol(1)
+		self.widgets['dark'] = wx.CheckBox(self, -1, 'Dark Exposure')
+		sz.Add(self.widgets['dark'], (6,0), (1,1))
 
 		szdefocus= wx.GridBagSizer(5, 5)
 		self.widgets['defocus1switch'] = wx.CheckBox(self, -1, 'Defocus 1')
@@ -311,11 +313,12 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sbszdefocus = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszdefocus.Add(szdefocus, 1, wx.EXPAND|wx.ALL, 5)
 
+
 		sb = wx.StaticBox(self, -1, 'Acquisition')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
-		return [sbsz, sbszscreen, sbszlowdose, sbszdefocus]
+		return [sbsz, sbszscreen, sbszlowdose, sbszdefocus, ]
 
 if __name__ == '__main__':
 	class App(wx.App):

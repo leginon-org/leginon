@@ -39,6 +39,7 @@ class ManualAcquisition(node.Node):
 		'defocus1': 0.0,
 		'defocus2switch': False,
 		'defocus2': 0.0,
+		'dark': False,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.loopstop = threading.Event()
@@ -80,6 +81,10 @@ class ManualAcquisition(node.Node):
 			prefix = 'un'
 		self.logger.info('Acquiring %scorrected image...' % prefix)
 		self.instrument.ccdcamera.Settings = self.settings['camera settings']
+		if self.settings['dark']:
+			self.instrument.ccdcamera.ExposureType = 'dark'
+		else:
+			self.instrument.ccdcamera.ExposureType = 'normal'
 		if self.settings['save image']:
 			try:
 				if correct:
