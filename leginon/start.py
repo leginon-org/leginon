@@ -8,7 +8,7 @@
 #	see  http://ami.scripps.edu/software/leginon-license
 #
 
-import data
+import sinedon.data as data
 import gui.wx.Manager
 
 # TODO: handle better
