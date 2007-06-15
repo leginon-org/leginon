@@ -449,8 +449,8 @@ class Focuser(acquisition.Acquisition):
 
 			#### change to melt preset
 			meltpresetname = self.settings['melt preset']
-			p = self.presetsclient.getCurrentPreset()['name']
-			if p != meltpresetname:
+			p = self.presetsclient.getCurrentPreset()
+			if p is None or p['name'] != meltpresetname:
 				self.presetsclient.toScope(meltpresetname, emtarget)
 			self.logger.info('melt preset: %s' % (meltpresetname,))
 
