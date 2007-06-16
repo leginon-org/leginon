@@ -27,13 +27,20 @@ class MaskAssessor(imageassessor.ImageAssessor):
 	defaultsettings = {
 		'mask run': 'test',
 		'run': 'test',
+		'jump filename': '',
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+
+		self.currentindex = None
+		self.files = []
 		self.maskdir = None
 		self.maskrundata = None
 		self.oldrun = None
 		self.oldmaskname = None
-		imageassessor.ImageAssessor.__init__(self, id, session, managerlocation, **kwargs)
+		self.fileext = ''
+
+		self.start()
 
 	def checkSettingsChange(self):
 		if self.oldrun != self.settings['run'] or self.oldmaskname != self.settings['mask run']:
@@ -52,15 +59,15 @@ class MaskAssessor(imageassessor.ImageAssessor):
 		
 		self.files = []
 		for file in files:
-			self.files.append(file)
+			ext = file.split('.')[-1]
+			if format == 'png' and ext in ('png','PNG'):
+				self.files.append(file)
 
-		self.maskrundata,self.maskparamsdata = apMask.getMaskRunInfo(self.maskdir,files[0])
 		self.assessrundata,exist = apMask.insertMaskAssessmentRun(self.session,self.maskrundata,assessrunname)
 		if exist:
 			self.logger.warning('Assessor Run exists, will overwrite')
 		if self.files:
-			self.currentindex = 0
-			self.displayCurrent()
+			pass
 		else:
 			self.logger.error('No %s files in directory' % (format,))
 			
@@ -84,19 +91,16 @@ class MaskAssessor(imageassessor.ImageAssessor):
 
 
 	def displayCurrent(self):
-		self.currentname = self.files[self.currentindex]
-		if self.currentname in self.results:
-			result = self.results[self.currentname]
-		else:
-			result = 'None'
-		self.logger.info('Displaying %s, %s' % (self.currentname,result))
+		currentname = self.files[self.currentindex]
+
+		self.logger.info('Displaying %s' % (currentname))
 		dir = self.maskdir
-		fullname = os.path.join(dir, self.currentname)
+		fullname = os.path.join(dir, currentname)
 
 		imarray = self.readPNG(fullname)
-		if self.currentname.find('_mask') > -1:
+		if currentname.find('_mask') > -1:
 			alpha = 0.5
-			parentimg,imgdata = self.readParent()
+			parentimg,imgdata = self.readParent(currentname)
 			maskshape = imarray.shape
 
 			targets = apMask.getRegionsAsTargets(self.maskrundata,maskshape,imgdata)
@@ -111,9 +115,13 @@ class MaskAssessor(imageassessor.ImageAssessor):
 		self.setImage(imarray, 'Image')
 		self.imgdata = imgdata
 		return imgdata
+		
+	def getMaskRunNames(self):
+		names = apMask.getMaskMakerRunNamesFromSession(self.session)		
+		return names
 
-	def readParent(self):
-		parent=self.currentname.replace('_mask.png','')
+	def readParent(self,maskfilename):
+		parent=maskfilename.replace('_mask.png','')
 		imageq=leginondata.AcquisitionImageData(filename=parent)
 		imagedata=self.research(imageq, results=1, readimages=False)
 		imarray=imagedata[0]['image']

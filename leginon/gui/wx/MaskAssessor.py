@@ -3,8 +3,8 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageAssessor.py,v $
-# $Revision: 1.5 $
+# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MaskAssessor.py,v $
+# $Revision: 1.1 $
 # $Name: not supported by cvs2svn $
 # $Date: 2007-06-16 00:49:54 $
 # $Author: acheng $
@@ -14,12 +14,13 @@
 import wx
 from gui.wx.Entry import Entry
 import gui.wx.Node
+import gui.wx.ImageAssessor
 import gui.wx.Settings
 import gui.wx.ToolBar
 import wx.lib.filebrowsebutton as filebrowse
-import gui.wx.Choice
+from gui.wx.Choice import Choice
 
-class Panel(gui.wx.TargetFinder.Panel):
+class Panel(gui.wx.ImageAssessor.Panel):
 	icon = 'check'
 	imagepanelclass = gui.wx.ImageViewer.TargetImagePanel
 	def __init__(self, parent, name):
@@ -49,10 +50,10 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
 													'play',
-													shortHelpString='Keep')
+													shortHelpString='Save Current Assessment')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_STOP,
 													'stop',
-													shortHelpString='Reject')
+													shortHelpString='Reject All Regions')
 
 		self.toolbar.Realize()
 
@@ -78,49 +79,11 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
 
-	def onNodeInitialized(self):
-		self.toolbar.Bind(wx.EVT_TOOL, self.onBeginTool,
-											id=gui.wx.ToolBar.ID_BEGIN)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onNextTool,
-											id=gui.wx.ToolBar.ID_NEXT)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onPreviousTool,
-											id=gui.wx.ToolBar.ID_PREVIOUS)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onEndTool,
-											id=gui.wx.ToolBar.ID_END)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onJumpTool,
-											id=gui.wx.ToolBar.ID_SIMULATE_TARGET)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onKeepTool,
-											id=gui.wx.ToolBar.ID_PLAY)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onRejectTool,
-											id=gui.wx.ToolBar.ID_STOP)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
-
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onKeepTool(self, evt):
-		self.node.onKeep()
-
-	def onRejectTool(self, evt):
-		self.node.onReject()
-
-	def onBeginTool(self, evt):
-		self.node.onBegin()
-
-	def onNextTool(self, evt):
-		self.node.onNext()
-
-	def onPreviousTool(self, evt):
-		self.node.onPrevious()
-
-	def onEndTool(self, evt):
-		self.node.onEnd()
-
-	def onJumpTool(self, evt):
-		self.node.onJump()
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -128,31 +91,22 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		sz = wx.GridBagSizer(5, 10)
 
-		#self.widgets['image directory'] = filebrowse.FileBrowseButton(self, -1)
-		label = wx.StaticText(self, -1, 'Image Directory:')
-		self.widgets['image directory'] = Entry(self, -1)
+
+		label = wx.StaticText(self, -1, 'Mask Run Name:')
+		masknames = self.node.getMaskRunNames()
+		self.widgets['mask run'] = Choice(self, -1, choices=masknames)
 		sz.Add(label, (0, 0), (1, 1))
-		sz.Add(self.widgets['image directory'], (0, 1), (1, 1))
+		sz.Add(self.widgets['mask run'], (0, 1), (1, 1))
 
-		label = wx.StaticText(self, -1, 'Image Format:')
-		self.widgets['format'] = gui.wx.Choice.Choice(self, -1, choices=['mrc','jpg','png'])
-		sz.Add(label, (1, 0), (1, 1))
-		sz.Add(self.widgets['format'], (1, 1), (1, 1))
-
-		label = wx.StaticText(self, -1, 'Output Filename:')
-		self.widgets['outputfile'] = Entry(self, -1)
-		sz.Add(label, (2, 0), (1, 1))
-		sz.Add(self.widgets['outputfile'], (2, 1), (1, 1))
-
-		label = wx.StaticText(self, -1, 'Run Name:')
+		label = wx.StaticText(self, -1, 'Assessor Run Name:')
 		self.widgets['run'] = Entry(self, -1)
-		sz.Add(label, (3, 0), (1, 1))
-		sz.Add(self.widgets['run'], (3, 1), (1, 1))
+		sz.Add(label, (1, 0), (1, 1))
+		sz.Add(self.widgets['run'], (1, 1), (1, 1))
 
 		self.widgets['jump filename'] = Entry(self, -1, chars=12)
 		label = wx.StaticText(self, -1, 'Image to Jump to:')
-		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['jump filename'], (4, 1), (1, 1),
+		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['jump filename'], (2, 1), (1, 1),
 										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		sb = wx.StaticBox(self, -1, 'Settings')
@@ -164,7 +118,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
-			frame = wx.Frame(None, -1, 'FFT Maker Test')
+			frame = wx.Frame(None, -1, 'MaskAssessor Test')
 			panel = Panel(frame, 'Test')
 			frame.Fit()
 			self.SetTopWindow(frame)

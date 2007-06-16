@@ -1593,6 +1593,7 @@ class ImageAssessorSettingsData(SettingsData):
 			('image directory', str),
 			('outputfile', str),
 			('run', str),
+			('jump filename', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1601,6 +1602,7 @@ class MaskAssessorSettingsData(SettingsData):
 		return SettingsData.typemap() + (
 			('run', str),
 			('mask run', str),
+			('jump filename', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1611,6 +1613,7 @@ class ClickMaskMakerSettingsData(SettingsData):
 			('bin', int),
 			('run', str),
 			('path', str),
+			('jump filename', str),
 		)
 	typemap = classmethod(typemap)
 

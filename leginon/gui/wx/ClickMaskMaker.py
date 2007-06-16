@@ -3,8 +3,8 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageAssessor.py,v $
-# $Revision: 1.5 $
+# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ClickMaskMaker.py,v $
+# $Revision: 1.1 $
 # $Name: not supported by cvs2svn $
 # $Date: 2007-06-16 00:49:54 $
 # $Author: acheng $
@@ -12,14 +12,15 @@
 # $Locker:  $
 
 import wx
-from gui.wx.Entry import Entry
+from gui.wx.Entry import Entry,IntEntry
 import gui.wx.Node
+import gui.wx.ImageAssessor
 import gui.wx.Settings
 import gui.wx.ToolBar
 import wx.lib.filebrowsebutton as filebrowse
 import gui.wx.Choice
 
-class Panel(gui.wx.TargetFinder.Panel):
+class Panel(gui.wx.ImageAssessor.Panel):
 	icon = 'check'
 	imagepanelclass = gui.wx.ImageViewer.TargetImagePanel
 	def __init__(self, parent, name):
@@ -46,6 +47,9 @@ class Panel(gui.wx.TargetFinder.Panel):
 													'simulatetarget',
 													shortHelpString='Jump')
 		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLUS, 						'plus',
+													shortHelpString='Add Region')
+		self.toolbar.AddSeparator()
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
 													'play',
@@ -62,6 +66,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.SetSizer(self.szmain)
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
+		
 
 	def addImagePanel(self):
 		# image
@@ -89,6 +94,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 											id=gui.wx.ToolBar.ID_END)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onJumpTool,
 											id=gui.wx.ToolBar.ID_SIMULATE_TARGET)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onAddTool,
+											id=gui.wx.ToolBar.ID_PLUS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onKeepTool,
 											id=gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRejectTool,
@@ -101,26 +108,9 @@ class Panel(gui.wx.TargetFinder.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onKeepTool(self, evt):
-		self.node.onKeep()
+	def onAddTool(self, evt):
+		self.node.onAdd()
 
-	def onRejectTool(self, evt):
-		self.node.onReject()
-
-	def onBeginTool(self, evt):
-		self.node.onBegin()
-
-	def onNextTool(self, evt):
-		self.node.onNext()
-
-	def onPreviousTool(self, evt):
-		self.node.onPrevious()
-
-	def onEndTool(self, evt):
-		self.node.onEnd()
-
-	def onJumpTool(self, evt):
-		self.node.onJump()
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -128,26 +118,26 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		sz = wx.GridBagSizer(5, 10)
 
-		#self.widgets['image directory'] = filebrowse.FileBrowseButton(self, -1)
-		label = wx.StaticText(self, -1, 'Image Directory:')
-		self.widgets['image directory'] = Entry(self, -1)
+
+		label = wx.StaticText(self, -1, 'Preset Name:')
+		self.widgets['preset'] = Entry(self, -1)
 		sz.Add(label, (0, 0), (1, 1))
-		sz.Add(self.widgets['image directory'], (0, 1), (1, 1))
+		sz.Add(self.widgets['preset'], (0, 1), (1, 1))
 
-		label = wx.StaticText(self, -1, 'Image Format:')
-		self.widgets['format'] = gui.wx.Choice.Choice(self, -1, choices=['mrc','jpg','png'])
+		label = wx.StaticText(self, -1, 'Binning:')
+		self.widgets['bin'] = IntEntry(self, -1, min=1, chars=4)
 		sz.Add(label, (1, 0), (1, 1))
-		sz.Add(self.widgets['format'], (1, 1), (1, 1))
+		sz.Add(self.widgets['bin'], (1, 1), (1, 1))
 
-		label = wx.StaticText(self, -1, 'Output Filename:')
-		self.widgets['outputfile'] = Entry(self, -1)
-		sz.Add(label, (2, 0), (1, 1))
-		sz.Add(self.widgets['outputfile'], (2, 1), (1, 1))
-
-		label = wx.StaticText(self, -1, 'Run Name:')
+		label = wx.StaticText(self, -1, 'Mask Run Name:')
 		self.widgets['run'] = Entry(self, -1)
+		sz.Add(label, (2, 0), (1, 1))
+		sz.Add(self.widgets['run'], (2, 1), (1, 1))
+
+		label = wx.StaticText(self, -1, 'Mask Run Path:')
+		self.widgets['path'] = Entry(self, -1)
 		sz.Add(label, (3, 0), (1, 1))
-		sz.Add(self.widgets['run'], (3, 1), (1, 1))
+		sz.Add(self.widgets['path'], (3, 1), (1, 1))
 
 		self.widgets['jump filename'] = Entry(self, -1, chars=12)
 		label = wx.StaticText(self, -1, 'Image to Jump to:')
@@ -164,7 +154,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
-			frame = wx.Frame(None, -1, 'FFT Maker Test')
+			frame = wx.Frame(None, -1, 'MaskAssessor Test')
 			panel = Panel(frame, 'Test')
 			frame.Fit()
 			self.SetTopWindow(frame)

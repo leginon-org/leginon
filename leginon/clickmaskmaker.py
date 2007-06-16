@@ -34,14 +34,21 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 		'preset': 'en',
 		'bin': 2,
 		'path': None,
+		'jump filename': '',
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+
+		self.currentindex = None
+		self.files = []
 		self.maskdir = None
 		self.maskrundata = None
 		self.oldpreset = None
 		self.oldrunname = None
 		self.oldrundir = None
-		imageassessor.ImageAssessor.__init__(self, id, session, managerlocation, **kwargs)
+		self.fileext = ''
+
+		self.start()
 		
 
 	def makeRecursivePath(self,path):
@@ -65,6 +72,7 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 			self.oldpreset = self.settings['preset']
 			self.oldrunname = self.settings['run']
 			self.oldrundir = self.settings['path']
+			self.files = []
 			return True
 		else:
 			return False			
@@ -80,9 +88,7 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 		self.bin = self.settings['bin']
 
 		presetq = leginondata.PresetData(session=self.session,name=preset)
-#		q = leginondata.AcquisitionImageData(session=self.session,preset=presetq)
-		#testing
-		q = leginondata.AcquisitionImageData(session=self.session,filename='07jan05b_00018gr_00022sq_v01_00002sq_00_00002en_00')
+		q = leginondata.AcquisitionImageData(session=self.session,preset=presetq)
 		self.images = self.research(datainstance=q, readimages=False)
 		
 		self.files = map((lambda x: x['filename']),self.images)
@@ -156,8 +162,7 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 	def displayCurrent(self):
 		self.clearTargets('Regions')
 		imgdata = self.images[self.currentindex]
-		self.currentname = imgdata['filename']
-		currentname = self.currentname
+		currentname = imgdata['filename']
 		self.logger.info('Displaying %s' % (currentname))
 
 		dir = self.parentdir
@@ -205,11 +210,3 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 		self.setImage(overlay, 'Mask')
 		self.clearTargets('Regions')
 		
-				
-	
-	def readParent(self):
-		parent=self.currentname.replace('_mask.png','')
-		imageq=leginondata.AcquisitionImageData(filename=parent)
-		imagedata=self.research(imageq, results=1, readimages=False)
-		imarray=imagedata[0]['image']
-		return imarray,imagedata[0]

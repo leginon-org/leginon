@@ -24,6 +24,7 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 		'outputfile': '',
 		'format': 'jpg',
 		'run': 'test',
+		'jump filename': '',
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
@@ -35,6 +36,7 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 		self.oldformat = None
 		self.oldrunname = None
 		self.oldimagedir = None
+		self.fileext = ''
 
 		self.start()
 
@@ -63,8 +65,6 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 				self.files.append(file)
 		if self.files:
 			self.readResults()
-			self.currentindex = 0
-			self.displayCurrent()
 		else:
 			self.logger.error('No %s files in directory' % (format,))
 			
@@ -82,11 +82,16 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 		self.writeResults()
 		self.onNext()
 
+	def onBegin(self):
+		settingchanged = self.checkSettingsChange()
+		self.currentindex = -1
+		self.onNext()
+
 	def onNext(self):
 		settingchanged = self.checkSettingsChange()
-		if not self.files or settingchanged:
+		if (not self.files) or settingchanged:
 			self.getImageList()
-			return
+			self.currentindex = -1
 		if self.currentindex < len(self.files)-1:
 			self.currentindex += 1
 			self.displayCurrent()
@@ -95,11 +100,40 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 
 	def onPrevious(self):
 		settingchanged = self.checkSettingsChange()
+		if (not self.files) or settingchanged:
+			self.getImageList()
+			self.currentindex = len(self.files)
 		if self.currentindex > 0:
 			self.currentindex -= 1
 			self.displayCurrent()
 		else:
 			self.logger.info('Beginning reached.')
+
+	def onEnd(self):
+		settingchanged = self.checkSettingsChange()
+		if not self.files or settingchanged:
+			self.getImageList()
+		self.currentindex = len(self.files)
+		self.onPrevious()
+
+	def onJump(self):
+		settingchanged = self.checkSettingsChange()
+		if not self.files or settingchanged:
+			self.getImageList()
+			self.currentindex = 0
+		files = self.files
+		found = False
+		if self.fileext != '':
+			imagename = self.settings['jump filename'].split(self.fileext)[0]
+		else:
+			imagename = self.settings['jump filename']
+		try:
+			foundindex = files.index(imagename)
+			self.currentindex = foundindex
+		except ValueError:
+			self.logger.warning('image %s not found' % (imagename))
+		self.displayCurrent()
+			
 
 	def displayCurrent(self):
 		self.currentname = self.files[self.currentindex]
@@ -165,7 +199,10 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 
 	def readPNG(self, filename):
 		i = Image.open(filename)
-		i.load()
+		try:
+			i.load()
+		except:
+			self.logger.error('PIL 1.1.5 can not load PNG on 64 bit machine')
 		i = self.imageToArray(i)
 		return i
 
