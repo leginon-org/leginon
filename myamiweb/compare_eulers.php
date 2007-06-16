@@ -18,9 +18,7 @@ $reconId = $_REQUEST['reconId'];
 $iter1 = $_REQUEST['iter1'];
 $iter2 = $_REQUEST['iter2'];
 $comp_param = $_REQUEST['comp_param'];
-
-// --- force download --- //
-$download=1;
+$download= $_REQUEST['dwd'];
 
 if (!$_REQUEST) {
 	// --- testing values --- //

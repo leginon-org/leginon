@@ -135,24 +135,26 @@ $html.="</TABLE>\n";
 
 echo "<P><FORM NAME='compareparticles' METHOD='POST' ACTION='compare_eulers.php'>
 Compare Iterations:
-<SELECT NAME='comp_param'>\n";
-echo "<OPTION>Eulers</OPTION>\n";
-echo "<OPTION>Inplane Rotation</OPTION>\n";
-echo "<OPTION>Shifts</OPTION>\n";
-echo "<OPTION>Quality Factor</OPTION>\n";
-echo "</SELECT>\n";
-echo "Iteration 1: <SELECT NAME='iter1'>\n";
+<select name='comp_param'>\n";
+echo "<option>Eulers</option>\n";
+echo "<option>Inplane rotation</option>\n";
+echo "<option>Shifts</option>\n";
+echo "<option>Quality Factor</option>\n";
+echo "</select>\n";
+echo "Iteration 1: <select name='iter1'>\n";
 foreach ($iterations as $iteration){
-        echo "<OPTION>$iteration[iteration]</OPTION>\n";
+        echo "<option>$iteration[iteration]</option>\n";
 }
-echo "</SELECT>\n";
-echo "Iteration 2: <SELECT NAME='iter2'>\n";
+echo "</select>\n";
+echo "Iteration 2: <select name='iter2'>\n";
 foreach ($iterations as $iteration){
-        echo "<OPTION>$iteration[iteration]</OPTION>\n";
+        echo "<option>$iteration[iteration]</option>\n";
 }
-echo "</SELECT>\n";
-echo "<BR><INPUT TYPE='SUBMIT' NAME='compare' VALUE='compare'>\n";
-echo "<INPUT TYPE='HIDDEN' NAME='reconId' VALUE='$reconId'>\n";
+echo "</select>\n";
+echo "<br />";
+echo "download: <input type='checkbox' name='dwd' >\n";
+echo "<input type='submit' name='compare' value='compare'>\n";
+echo "<input type='hidden' name='reconId' value='$reconId'>\n";
 echo "</FORM>\n";
 
 echo $html;
