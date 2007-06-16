@@ -331,7 +331,7 @@ def insertIteration(iteration,params):
 	if not result:
 		partdb.insert(refineq)
 
-	renderSnapshots(volumeDensity,resData['half'],params['model'],params['contour'],params['zoom'])
+#	renderSnapshots(volumeDensity,resData['half'],params['model'],params['contour'],params['zoom'])
 		
 	# get projections eulers for iteration:
 	iteration['eulers']=getEulersFromProj(params,iteration['num'])
@@ -354,7 +354,7 @@ def insertIteration(iteration,params):
 		# break out of into the next iteration
 	        elif re.search("X\t\d+\t"+n+"$",line):
 			break
-		
+       	f.close()
 	# expand cls.*.tar into temp file
 	clsf=os.path.join(params['path'],"cls."+iteration['num']+".tar")
 	print "reading",clsf
@@ -372,6 +372,12 @@ def insertIteration(iteration,params):
 	prtlaliq=appionData.ApParticleClassificationData()
 	for cls in clsnames:
 		insertParticleClassificationData(params,cls,iteration,refineq)
+	del prtlaliq
+	del refineparamsq
+	del iteration
+	del refineq
+	del clsnames
+
 	return
 
 def insertParticleClassificationData(params,cls,iteration,refineq):
@@ -405,33 +411,33 @@ def insertParticleClassificationData(params,cls,iteration,refineq):
 			if str(prtlnum) in iteration['badprtls']:
 				prtlaliq['thrown_out']=True
 
-				prtlnum+=1 # offset for EMAN
-				qualf=float(ali[2].strip(','))
-				other=ali[3].split(',')
-				rot=float(other[0])*180./math.pi
-				shx=float(other[1])
-				shy=float(other[2])
-				if (other[3]=='1') :
-					prtlaliq['mirror']=True
+			prtlnum+=1 # offset for EMAN
+			qualf=float(ali[2].strip(','))
+			other=ali[3].split(',')
+			rot=float(other[0])*180./math.pi
+			shx=float(other[1])
+			shy=float(other[2])
+			if (other[3]=='1') :
+				prtlaliq['mirror']=True
 
-				# find particle in stack database
-				stackpq=appionData.ApStackParticlesData()
-				stackpq['stackRun']=params['stack']
-				stackpq['particleNumber']=prtlnum
-				stackp=partdb.query(stackpq, results=1)[0]
+			# find particle in stack database
+			stackpq=appionData.ApStackParticlesData()
+			stackpq['stackRun']=params['stack']
+			stackpq['particleNumber']=prtlnum
+			stackp=partdb.query(stackpq, results=1)[0]
 
-				if not stackp:
-					apDisplay.printError("particle "+prtlnum+" not in stack")
-						
-				# insert classification info
-				prtlaliq['refinement']=refineq
-				prtlaliq['particle']=stackp
-				prtlaliq['eulers']=eulq
-				prtlaliq['shiftx']=shx
-				prtlaliq['shifty']=shy
-				prtlaliq['inplane_rotation']=rot
-				prtlaliq['quality_factor']=qualf
-				partdb.insert(prtlaliq)
+			if not stackp:
+				apDisplay.printError("particle "+prtlnum+" not in stack")
+				
+			# insert classification info
+			prtlaliq['refinement']=refineq
+			prtlaliq['particle']=stackp
+			prtlaliq['eulers']=eulq
+			prtlaliq['shiftx']=shx
+			prtlaliq['shifty']=shy
+			prtlaliq['inplane_rotation']=rot
+			prtlaliq['quality_factor']=qualf
+			partdb.insert(prtlaliq)
 	f.close()
 	return
 
