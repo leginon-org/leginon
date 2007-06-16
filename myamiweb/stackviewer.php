@@ -122,10 +122,12 @@ echo "stack: $file_hed";
 echo "<br \>";
 echo "#images: $n_images";
 echo "<br \>";
+$lastimg=($_POST['endimg']) ? $_POST['endimg'] : 20;
+echo $lastimg;
 ?>
 
 from: <input id="startimg" type="text" alt="Start" value="0" size="10">
-to: <input id="endimg" type="text" alt="End" value="<?=$n_images?>" size="10">
+to: <input id="endimg" type="text" alt="End" value="<?=$lastimg?>" size="10">
 binning: <select id="binning">
 		<option value="1">1</option>
 		<option value="2">2</option>

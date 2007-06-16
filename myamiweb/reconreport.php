@@ -116,7 +116,9 @@ foreach ($iterations as $iteration){
 	if ($halfres!='None')
 	        $html .= "<TD><A HREF='fscplot.php?fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz'><IMG SRC='fscplot.php?fscfile=$fscfile&width=100&height=80&nomargin=TRUE'>\n";
 	else $html .= "<TD>-</TD>\n";
-	$html .= "<TD><A TARGET='blank' HREF='classinfo.php?refinement=$refinementData[DEF_id]&w=800&h=600'>$numclasses</A></TD>\n";
+	$clsavg = $refinerun['path'].'/'.$iteration['classAverage'];
+	$html .= "<TD><A TARGET='black' HREF='viewstack.php?file=$clsavg'>$numclasses</A></TD>\n";
+#	$html .= "<TD><A TARGET='blank' HREF='classinfo.php?refinement=$refinementData[DEF_id]&w=800&h=600'>$numclasses</A></TD>\n";
 	$html .= "<TD>$prtlsused</TD>\n";
 	$html .= "<TD>$iteration[volumeDensity]</TD>\n";
 	$html .= "<TD>\n";
