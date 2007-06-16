@@ -103,7 +103,7 @@ def parseInput(args,params):
 			sys.exit(1)
         
 def checkStackId(params):
-	stackinfo=partdb.direct_query(appionData.ApStackParamsData, params['stackid'])
+	stackinfo=partdb.direct_query(appionData.ApStackRunData, params['stackid'])
 	if not stackinfo:
 		print "\nERROR: Stack ID",params['stackid'],"does not exist in the database"
 		sys.exit()
@@ -416,7 +416,7 @@ def insertParticleClassificationData(params,cls,iteration,refineq):
 
 				# find particle in stack database
 				stackpq=appionData.ApStackParticlesData()
-				stackpq['stackparams']=params['stack']
+				stackpq['stackRun']=params['stack']
 				stackpq['particleNumber']=prtlnum
 				stackp=partdb.query(stackpq, results=1)[0]
 

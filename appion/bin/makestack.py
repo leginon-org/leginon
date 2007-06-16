@@ -480,10 +480,10 @@ def getImgsFromSelexonId(params):
 		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' is not in database")
 	
 	# from id get the session
-	sessionid=db.direct_query(leginondata.SessionData, selexonrun['dbemdata|SessionData|session'])
+	params['sessionid']=db.direct_query(leginondata.SessionData, selexonrun['dbemdata|SessionData|session'])
 
 	# get all images from session
-	dbimgq=leginondata.AcquisitionImageData(session=sessionid)
+	dbimgq=leginondata.AcquisitionImageData(session=params['sessionid'])
 	dbimginfo=db.query(dbimgq, readimages=False)
 
 	if not (dbimginfo):
@@ -511,9 +511,10 @@ def getImgsDefocPairFromSelexonId(params):
 		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' not in database")
 	
 	# from id get the session
-	sessionid=db.direct_query(leginondata.SessionData,selexonrun['dbemdata|SessionData|session'])
+	params['sessionid']=db.direct_query(leginondata.SessionData,selexonrun['dbemdata|SessionData|session'])
+
 	# get all images from session
-	dbimgq=leginondata.AcquisitionImageData(session=sessionid)
+	dbimgq=leginondata.AcquisitionImageData(session=params['sessionid'])
 	dbimginfo=db.query(dbimgq,readimages=False)
 	if not (dbimginfo):
 		apDisplay.printError("no images associated with this runId")
@@ -577,6 +578,13 @@ def insertStackParams(params):
 	# get the stack Id
 	params['stackId']=runq
 
+def insertStackSession(params):
+	# for each stack being input, insert the session info into the stacksession table
+	sessionq=appionData.ApStackSessionData()
+	sessionq['stackRun']=params['stackId']
+	sessionq['dbemdata|SessionData|session']=params['sessionid'].dbid
+	apdb.insert(sessionq)
+	
 def rejectImage(imgdata, params):
 	shortname = apDisplay.short(imgdata['filename'])
 
@@ -671,6 +679,7 @@ if __name__ == '__main__':
 		# if saving to the database, store the stack parameters
 		if params['commit']is True:
 			insertStackParams(params)
+			insertStackSession(params)
 		if params['spider'] is True and os.path.isfile(stackfile+".spi"):
 			os.remove(stackfile+".spi")
 		if (os.path.isfile(stackfile+".hed")):
