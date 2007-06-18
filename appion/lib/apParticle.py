@@ -42,7 +42,7 @@ def guessParticlesForSession(expid=None, sessionname=None):
 	else:
 		apDisplay.printMsg("found "+str(len(selectiondata))+" particle run(s) for this session")
 		for selectionrun in selectiondata:
-			apDisplay.printMsg(selectionrun['name']+" runId="+selectionrun.dbid)
+			apDisplay.printColor(selectionrun['name']+":\t prtlrunId="+str(selectionrun.dbid),"cyan")
 		apDisplay.printError("Please select one of the above runids")
 
 def getParticles(imgdata, selectionRunId):
