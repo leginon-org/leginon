@@ -496,14 +496,8 @@ class AppionLoop(object):
 		return newtree
 
 	def _writeFunctionLog(self, args):
-		file = os.path.join(self.params['rundir'], self.functionname+".log")
-		out=""
-		for arg in args:
-			out += arg+" "
-		f=open(file,'aw')
-		f.write(out)
-		f.write("\n")
-		f.close()
+		logfile = os.path.join(self.params['rundir'], self.functionname+".log")
+		apParam.writeFunctionLog(args, logfile=logfile)
 
 	def _setRunAndParameters(self,params):
 		if params['commit']:
