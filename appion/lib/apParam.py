@@ -140,12 +140,14 @@ def writeFunctionLog(commandline, params=None, logfile=None):
 	else:
 		logfile = "function.log"
 	apDisplay.printMsg("writing function log to: "+logfile)
-	f=open(logfile,'aw')
+	#WRITE INFO
+	timestamp = "["+time.asctime()+"]\n"
 	out=""
-	for n in commandline:
-		out=out+n+" "
-	f.write(out)
-	f.write("\n")
+	for arg in commandline:
+		out += arg+" "
+	f=open(logfile,'aw')
+	f.write(timestamp)
+	f.write(out+"\n")
 	f.close()
 
 def createDirectory(path, mode=0777, warning=True):
