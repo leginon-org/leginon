@@ -185,8 +185,6 @@ def getStackInfo(params):
 		params['lp'] = selectdata['lp_filt']
 
 
-
-
 def createSpiderFile(params):
 	"""
 	takes the stack file and create a spider file ready for processing
