@@ -8,6 +8,7 @@
 
 import ccdcamera
 import sys
+import numpy
 
 try:
     import pythoncom
@@ -101,6 +102,9 @@ class Gatan(ccdcamera.CCDCamera):
         self.exposuretype = value
 
     def _getImage(self):
+        return numpy.array(self.__getImage())
+
+    def __getImage(self):
         try:
             self.camera.Binning = self.binning['x']
             self.camera.CameraLeft = self.offset['x']
