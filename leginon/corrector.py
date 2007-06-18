@@ -153,6 +153,7 @@ class Corrector(node.Node):
 			image = self.instrument.ccdcamera.Image
 			self.stopTimer('get image')
 		except Exception, e:
+                        raise
 			self.logger.exception('Raw acquisition failed: %s' % e)
 		else:
 			self.displayImage(image)
