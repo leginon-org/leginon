@@ -31,7 +31,7 @@
  </lp>
  <bin>
 	<name>binning</name>
-	<default>4</default>
+	<default>1</default>
 	<description>Bin size for images (must be power of 2)</description>
 	<type>integer</type>
 	<list>1,2,4,8,16,32,64</list>

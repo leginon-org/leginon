@@ -130,7 +130,8 @@ def getStackInfo(params):
 	stackrundata = appiondb.direct_query(appionData.ApStackRunData, params['stackid'])
 
 	#get stack param data
-	stackparamdata = appiondb.direct_query(appionData.ApStackParamsData, stackrundata['stackParams'])
+	stackparamdata = stackrundata['stackParams']
+	#stackparamdata = appiondb.direct_query(appionData.ApStackParamsData, stackrundata['stackParams'].dbid)
 
 	#get only one stack particle params
 	stackpartq = appionData.ApStackParticlesData()
@@ -138,15 +139,26 @@ def getStackInfo(params):
 	stackpartdata = appiondb.query(stackpartq, results=1)[0]
 	
 	#get that particle's normal params
-	partdata = appiondb.direct_query(appionData.ApParticleData, stackpartdata['particle'].dbid)
+	partdata = stackpartdata['particle']
+	#partdata = appiondb.direct_query(appionData.ApParticleData, stackpartdata['particle'].dbid)
 
 	if partdata['selectionrun']['params'] is not None:
-		selectdata = appiondb.direct_query(appionData.ApSelectionParamsData, partdata['selectionrun']['params'].dbid)
+		selectdata = partdata['selectionrun']['params']
+		#selectdata = appiondb.direct_query(appionData.ApSelectionParamsData, partdata['selectionrun']['params'].dbid)
 	elif partdata['selectionrun']['dogparams'] is not None:
-		selectdata = appiondb.direct_query(appionData.ApDogParamsData, partdata['selectionrun']['dogparams'].dbid)
+		selectdata = partdata['selectionrun']['dogparams']
+		#selectdata = appiondb.direct_query(appionData.ApDogParamsData, partdata['selectionrun']['dogparams'].dbid)
 
 	#get image params of the particle
 	imgdata = leginondb.direct_query(leginondata.AcquisitionImageData, partdata['dbemdata|AcquisitionImageData|image'])
+
+	#apXml.fancyPrintDict(stackrundata)
+	#apXml.fancyPrintDict(stackparamdata)
+	#apXml.fancyPrintDict(stackpartdata)
+	#apXml.fancyPrintDict(partdata)
+	#apXml.fancyPrintDict(selectdata)
+	#apXml.fancyPrintDict(imgdata)
+	#sys.exit(1)
 
 	#set the parameters	
 	params['session']   = imgdata['session']
@@ -172,12 +184,8 @@ def getStackInfo(params):
 		apDisplay.printWarning("lowpass not specified using value from database for 'first ring diam'")
 		params['lp'] = selectdata['lp_filt']
 
-	#apXml.fancyPrintDict(stackrundata)
-	#apXml.fancyPrintDict(stackparamdata)
-	#apXml.fancyPrintDict(stackpartdata)
-	#apXml.fancyPrintDict(partdata)
-	#apXml.fancyPrintDict(selectdata)
-	#apXml.fancyPrintDict(imgdata)
+
+
 
 def createSpiderFile(params):
 	"""
