@@ -30,6 +30,8 @@ def defaults():
 	params['outdir']=None
 	params['mask']=None
 	params['runid']=None
+	params['description']=None
+	params['commit']=False
 
 	return params
 
@@ -125,14 +127,17 @@ def getStackId(params):
 
 def getStackInfo(params):
 	#get the stack params
-	stackdata = appiondb.direct_query(appionData.ApStackParamsData, params['stackid'])
+	stackrundata = appiondb.direct_query(appionData.ApStackRunData, params['stackid'])
 
-	#get a stack particle params
+	#get stack param data
+	stackparamdata = appiondb.direct_query(appionData.ApStackParamsData, stackrundata['stackParams'])
+
+	#get only one stack particle params
 	stackpartq = appionData.ApStackParticlesData()
-	stackpartq['stackparams'] = stackdata
+	stackpartq['stackRun'] = stackrundata
 	stackpartdata = appiondb.query(stackpartq, results=1)[0]
 	
-	#get the particle normal params
+	#get that particle's normal params
 	partdata = appiondb.direct_query(appionData.ApParticleData, stackpartdata['particle'].dbid)
 
 	if partdata['selectionrun']['params'] is not None:
@@ -144,16 +149,16 @@ def getStackInfo(params):
 	imgdata = leginondb.direct_query(leginondata.AcquisitionImageData, partdata['dbemdata|AcquisitionImageData|image'])
 
 	#set the parameters	
-	params['session'] = imgdata['session']
-	if stackdata['bin'] is not None:
-		params['bin'] = stackdata['bin']
-	params['apix'] = apDatabase.getPixelSize(imgdata)*params['bin']
-	params['stackpath'] = os.path.abspath(stackdata['stackPath'])
+	params['session']   = imgdata['session']
+	if stackparamdata['bin'] is not None:
+		params['bin']    = stackparamdata['bin']
+	params['apix']      = apDatabase.getPixelSize(imgdata)*params['bin']
+	params['stackpath'] = os.path.abspath(stackrundata['stackPath'])
 	if params['outdir'] is None:
 		params['outdir'] = params['stackpath']
-	params['stackfile'] = os.path.join(params['stackpath'],stackdata['name'])
-	params['stacktype'] = stackdata['fileType']
-	params['boxsize'] = stackdata['boxSize']
+	params['stackfile'] = os.path.join(params['stackpath'],stackrundata['name'])
+	params['stacktype'] = stackparamdata['fileType']
+	params['boxsize']   = stackparamdata['boxSize']
 
 	if 'diam' in selectdata:
 		if params['diam'] is None:
@@ -164,10 +169,11 @@ def getStackInfo(params):
 			params['mask'] = selectdata['diam']
 
 	if params['lp'] == 0 and 'lp_filt' in selectdata:
-		apDisplay.printWarning("lowpass not specified using value from database")
+		apDisplay.printWarning("lowpass not specified using value from database for 'first ring diam'")
 		params['lp'] = selectdata['lp_filt']
 
-	#apXml.fancyPrintDict(stackdata)
+	#apXml.fancyPrintDict(stackrundata)
+	#apXml.fancyPrintDict(stackparamdata)
 	#apXml.fancyPrintDict(stackpartdata)
 	#apXml.fancyPrintDict(partdata)
 	#apXml.fancyPrintDict(selectdata)
