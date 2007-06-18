@@ -123,7 +123,7 @@ def parseInput(args):
 		# gather all input files into mrcfileroot list
 		if '=' in  arg:
 			break
-		elif (arg=='phaseflip' or arg=='commit' or arg=='inverted' or arg=='spider'):
+		elif (arg=='phaseflip' or arg=='commit' or 'invert' in arg or arg=='spider'):
 			break
 		else:
 			boxfile=arg
@@ -544,7 +544,8 @@ def getImgsDefocPairFromSelexonId(params):
 
 def insertStackParams(params):
 	stparamq=appionData.ApStackParamsData()
-	paramlist = ('boxSize','bin','phaseFlipped','aceCutoff','correlationMin','correlationMax','checkCrud','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized')
+	paramlist = ('boxSize','bin','phaseFlipped','aceCutoff','correlationMin','correlationMax',
+		'checkCrud','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized')
 
 	for p in paramlist:
 		if p in params:
@@ -553,7 +554,7 @@ def insertStackParams(params):
 	# create a stackRun object
 	runq = appionData.ApStackRunData()
 	runq['stackPath'] = params['outdir']
-	runq['name']=params['single']
+	runq['name'] = params['single']
 
         # see if stackRun already exists in the database
 	runids = apdb.query(runq, results=1)
@@ -582,7 +583,7 @@ def insertStackSession(params):
 	# for each stack being input, insert the session info into the stacksession table
 	sessionq=appionData.ApStackSessionData()
 	sessionq['stackRun']=params['stackId']
-	sessionq['dbemdata|SessionData|session']=params['sessionid'].dbid
+	sessionq['dbemdata|SessionData|session'] = params['sessionid'].dbid
 	apdb.insert(sessionq)
 	
 def rejectImage(imgdata, params):
@@ -628,6 +629,15 @@ def rejectImage(imgdata, params):
 		return False
 
 	return True
+
+def getStackId(params):
+	# create a stackRun object
+	stackrunq = appionData.ApStackRunData()
+	stackrunq['stackPath'] = params['outdir']
+	stackrunq['name'] = params['single']
+
+	stackrunqdata = apdb.query(stackrunq, results=1)[0]
+	apDisplay.printMsg("created stack with stackid="+str(stackrunqdata.dbid))
 
 #-----------------------------------------------------------------------
 
@@ -761,5 +771,5 @@ if __name__ == '__main__':
 		if os.path.isfile(tmpboxfile):
 			os.remove(tmpboxfile)
 
-
+	getStackId(params)
 	print "Done!"
