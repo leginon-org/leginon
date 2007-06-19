@@ -50,6 +50,7 @@ def printHelp():
 	print "boxsize=<n>          : Make stacks with this box size (unbinned)"
 	print "inspected            : Use only manually inspected images from database"
 	print "inspectfile=<file>   : Text file containing results of manually checked images"
+	print "maskassess=<name>    : If specified, masks accepted by the MaskAssessment run name is used to exclude area"
 	print "phaseflip            : Stack will be phase flipped using best ACE value in database"
 	print "bin=<n>              : final images will be binned by this amount"
 	print "noinvert             : If writing to a single stack, images will NOT be inverted"
