@@ -214,7 +214,17 @@ class particledata {
 		return $r;
 	}
 
-	function getStackIds ($sessionId) {
+  function getStackIds ($sessionId) {
+    $q = "SELECT r.`REF|ApStackData|stack` as stackid "
+        ."FROM ApRunsInStackData as r "
+        ."LEFT JOIN ApStackRunData as s ON "
+        ."(r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
+        ."WHERE s.`dbemdata|SessionData|session` = '$sessionId'"; 
+    $r = $this->mysql->getSQLResult($q);
+    return $r;
+  }
+   
+	function getStackIdsOld ($sessionId) {
 	        $q = "select spar.stackid "
 				."from ("
 				."select `REF|ApParticleData|particle` as pid, `REF|ApStackRunData|stackRun` as stackid "
@@ -228,9 +238,14 @@ class particledata {
 
 	function getStackParams ($stackId) {
 		$q = "SELECT * "
-			."FROM `ApStackParamsData` p "
-		        ."LEFT JOIN `ApStackRunData` r on (p.`DEF_id` = r.`REF|ApStackParamsData|stackParams`) "
-			."WHERE r.`DEF_id` = '$stackId'";
+		    ."FROM ApRunsInStackData as r "
+		    ."LEFT JOIN ApStackRunData as s "
+		    ."ON (r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
+		    ."LEFT JOIN ApStackData as sd "
+		    ."ON (r.`REF|ApStackData|stack`=sd.`DEF_id`) "
+		    ."LEFT JOIN `ApStackParamsData` p "
+		    ."ON (p.`DEF_id` = s.`REF|ApStackParamsData|stackParams`) "
+		    ."WHERE r.`REF|ApStackData|stack` = '$stackId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
@@ -238,7 +253,7 @@ class particledata {
 	function getNumStackParticles ($stackId) {
 		$q= "SELECT count(*) as num "
 			."FROM `ApStackParticlesData` "
-			."WHERE `REF|ApStackRunData|stackRun` = '$stackId'";
+			."WHERE `REF|ApStackData|stack` = '$stackId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r['num'];
 	}    
@@ -249,7 +264,7 @@ class particledata {
 			."FROM `ApRefinementRunData` "
 			."WHERE `DEF_id` = '$reconId'";
 		list($r) = $this->mysql->getSQLResult($q);
-		return $r['REF|ApStackRunData|stack'];
+		return $r['REF|ApStackData|stack'];
 	}    
 
   function getPixelSizeFromStackId ($stackId) {
@@ -258,7 +273,7 @@ class particledata {
                    ."left join ApParticleData p on (p.`DEF_id`=sp.`REF|ApParticleData|particle`) "
                    ."left join dbemdata.AcquisitionImageData a on (a.`DEF_id`=p.`dbemdata|AcquisitionImageData|image`) "
                    ."left join dbemdata.PresetData pd on (a.`REF|PresetData|preset`=pd.`DEF_id`) "
-                   ."WHERE sp.`REF|ApStackRunData|stackRun`='$stackId' "
+                   ."WHERE sp.`REF|ApStackData|stack`='$stackId' "
                    ."GROUP BY `REF|InstrumentData|tem`";
 		$r = $this->mysql->getSQLResult($q);
 		if (is_array($r[0])) {
@@ -319,7 +334,7 @@ class particledata {
 
 	function getReconIds ($stackId) {
 		$q = "select * "
-			."from `ApRefinementRunData` where `REF|ApStackRunData|stack` = '$stackId'";
+			."from `ApRefinementRunData` where `REF|ApStackData|stack` = '$stackId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	} 

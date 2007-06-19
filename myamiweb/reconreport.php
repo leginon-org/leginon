@@ -66,7 +66,7 @@ $boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $st
 
 $html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 $html .= "<TR>\n";
-$display_keys = array ( 'iteration', 'ang incr', 'resolution', 'fsc', 'classes', '# particles', 'density','snapshot');
+$display_keys = array ( 'iteration', 'ang incr', 'resolution', 'fsc', 'classes', 'distr', '# particles', 'density','snapshot');
 foreach($display_keys as $key) {
         $html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
 }
@@ -118,8 +118,8 @@ foreach ($iterations as $iteration){
 	        $html .= "<TD><A HREF='fscplot.php?fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz'><IMG SRC='fscplot.php?fscfile=$fscfile&width=100&height=80&nomargin=TRUE'>\n";
 	else $html .= "<TD>-</TD>\n";
 	$clsavg = $refinerun['path'].'/'.$iteration['classAverage'];
-	$html .= "<TD><A TARGET='stackview' HREF='viewstack.php?file=$clsavg'>$numclasses</A></TD>\n";
-#	$html .= "<TD><A TARGET='blank' HREF='classinfo.php?refinement=$refinementData[DEF_id]&w=800&h=600'>$numclasses</A></TD>\n";
+	$html .= "<TD><A TARGET='stackview' HREF='viewstack.php?file=$clsavg'>$iteration[classAverage]</A></TD>\n";
+	$html .= "<TD><A TARGET='blank' HREF='classinfo.php?refinement=$refinementData[DEF_id]&w=800&h=600'>$numclasses</A></TD>\n";
 	$html .= "<TD>$prtlsused</TD>\n";
 	$html .= "<TD>$iteration[volumeDensity]</TD>\n";
 	$html .= "<TD>\n";
