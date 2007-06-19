@@ -164,6 +164,15 @@ def getMaskRunInfo(maskpath,maskfilename):
 	maskrundata,maskparamsdata=getMaskParamsByRunName(maskrun,sessiondata)
 	return maskrundata,maskparamsdata
 
+def getMaskMakerRunNamesFromSession(sessiondata):
+	query = appionData.ApMaskMakerRunData(session=sessiondata)
+	results = appiondb.query(query)
+	
+	if not results:
+		return []
+	masknames = map((lambda x:x['name']),results)
+	return masknames
+	
 def getRegionsAsTargets(maskrun,maskshape,imgdata):
 	regiondata = getMaskRegions(maskrun,imgdata)
 	halfrow=maskshape[0]/2
@@ -229,7 +238,7 @@ def makeInspectedMask(sessiondata,maskassessname,imgdata):
 			allmaskarray = maskarray
 	
 	allmaskarray = numpy.where(allmaskarray==0,0,1)
-	apImage.arrayToJpeg(allmaskarray,'test.jpg')
+#	apImage.arrayToJpeg(allmaskarray,'test.jpg')
 	
 	return allmaskarray,maskbin
 	
