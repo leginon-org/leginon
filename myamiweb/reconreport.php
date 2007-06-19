@@ -93,6 +93,7 @@ while ($f = readdir($refinedir)) {
 sort($pngfiles);
 
 # show info for each iteration
+sort($iterations);
 foreach ($iterations as $iteration){
         $refinementData=$particle->getRefinementData($refinerun['DEF_id'], $iteration['iteration']);
 	$numclasses=$particle->getNumClasses($refinementData['DEF_id']);
