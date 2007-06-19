@@ -163,13 +163,31 @@ class ApMaskMakerParamsData(Data):
 
 ### Stack Tables
 
-class ApStackRunData(Data):
+class ApStackData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('stackPath', str),
 			('name' , str),
 			('description', str),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApStackData=ApStackData
+
+class ApRunsInStackData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('stack', ApStackData),
+			('stackRun' , ApStackRunData),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApRunsInStackData=ApRunsInStackData
+
+class ApStackRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('stackRunName', str),
 			('stackParams', ApStackParamsData),
+			('dbemdata|SessionData|session', int),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApStackRunData=ApStackRunData
@@ -194,24 +212,17 @@ class ApStackParamsData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApStackParamsData=ApStackParamsData
 
-class ApStackSessionData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
-			('stackRun', ApStackRunData),
-			('dbemdata|SessionData|session', int),
-		)
-	typemap = classmethod(typemap)
-leginondata.ApStackSessionData=ApStackSessionData
-
 class ApStackParticlesData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('particleNumber', int),
+			('stack', ApStackData),
 			('stackRun', ApStackRunData),
 			('particle', ApParticleData),
 	        )
 	typemap = classmethod(typemap)
 leginondata.ApStackParticlesData = ApStackParticlesData
+
 
 ### Reconstruction Tables ###
 

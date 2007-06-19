@@ -379,7 +379,8 @@ def saveParticles(particles,shift,dbbox,params,imgdict):
 			plist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
 			if params['commit']:
 				stackpq=appionData.ApStackParticlesData()
-				stackpq['stackRun']=params['stackId']
+				stackpq['stack']=params['stackId']
+				stackpq['stackRun']=params['stackRun']
 				stackpq['particle']=prtl
 				stackres=apdb.query(stackpq)
 				if not stackres:
@@ -542,7 +543,8 @@ def getImgsDefocPairFromSelexonId(params):
 	apDisplay.printMsg("completed in "+apDisplay.timeString(time.time()-startt))
 	return (dbimglist)
 
-def insertStackParams(params):
+
+def insertStackRun(params):
 	stparamq=appionData.ApStackParamsData()
 	paramlist = ('boxSize','bin','phaseFlipped','aceCutoff','correlationMin','correlationMax',
 		'checkCrud','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized')
@@ -551,41 +553,56 @@ def insertStackParams(params):
 		if p in params:
 			stparamq[p] = params[p]
 			
+	# create a stack object
+	stackq = appionData.ApStackData()
+	stackq['stackPath'] = params['outdir']
+	stackq['name'] = params['single']
+
 	# create a stackRun object
 	runq = appionData.ApStackRunData()
-	runq['stackPath'] = params['outdir']
-	runq['name'] = params['single']
+	runq['stackRunName'] = params['runid']
+	runq['dbemdata|SessionData|session'] = params['sessionid'].dbid
 
-        # see if stackRun already exists in the database
+        # see if stack already exists in the database (just checking path)
+	stacks = apdb.query(stackq, results=1)
+
+	stackq['description'] = params['description']
+	
+	# create runinstack object
+	rinstackq = appionData.ApRunsInStackData()
+	rinstackq['stack']=stackq
+	rinstackq['stackRun']=runq
+
 	runids = apdb.query(runq, results=1)
+	runq['stackParams'] = stparamq
 
-	# if not in the database, insert new stack parameters
-	if not runids:
-		print "Inserting stack parameters into DB"
-		runq['description'] = params['description']
-		runq['stackParams'] = stparamq
-		apdb.insert(runq)
-
-	# else if stack already exists, check that params are the same
+	# if not in the database, make sure run doesn't already exist
+	if not stacks:
+		if not runids:
+			print "Inserting stack parameters into DB"
+			apdb.insert(rinstackq)
+		else:
+			apDisplay.printError("Run name '"+params['runid']+"' already in the database")
+	
+	# if it's in the database, make sure that all other
+	# parameters are the same, since stack will be re-written
 	else:
-		runq['description'] = params['description']
-		runq['stackParams'] = stparamq
-		if not (runids[0]['stackParams'] == stparamq):
-			for i in runids[0]['stackParams']:
-				if runids[0]['stackParams'][i] != stparamq[i]:
+		# make sure description is the same:
+		if stacks[0]['description']!=params['description']:
+			apDisplay.printError("Stack description is not the same!")
+		# make sure the the run is the same:
+		rinstack = apdb.query(rinstackq, results=1)
+		if rinstack[0]['stackRun']['stackParams'] != stparamq:
+			for i in rinstack[0]['stackRun']['stackParams']:
+				if rinstack[0]['stackRun']['stackParams'][i] != stparamq[i]:
 					apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
 			apDisplay.printError("All parameters for a particular stack must be identical! \n"+\
 					     "please check your parameter settings.")
-	# get the stack Id
-	params['stackId']=runq
 
-def insertStackSession(params):
-	# for each stack being input, insert the session info into the stacksession table
-	sessionq=appionData.ApStackSessionData()
-	sessionq['stackRun']=params['stackId']
-	sessionq['dbemdata|SessionData|session'] = params['sessionid'].dbid
-	apdb.insert(sessionq)
-	
+	# get the stack Id
+	params['stackId']=stackq
+	params['stackRun']=runq
+
 def rejectImage(imgdata, params):
 	shortname = apDisplay.short(imgdata['filename'])
 
@@ -632,12 +649,12 @@ def rejectImage(imgdata, params):
 
 def getStackId(params):
 	# create a stackRun object
-	stackrunq = appionData.ApStackRunData()
-	stackrunq['stackPath'] = params['outdir']
-	stackrunq['name'] = params['single']
+	stackq = appionData.ApStackData()
+	stackq['stackPath'] = params['outdir']
+	stackq['name'] = params['single']
 
-	stackrunqdata = apdb.query(stackrunq, results=1)[0]
-	apDisplay.printMsg("created stack with stackid="+str(stackrunqdata.dbid))
+	stackdata = apdb.query(stackq, results=1)[0]
+	apDisplay.printMsg("created stack with stackid="+str(stackdata.dbid))
 
 #-----------------------------------------------------------------------
 
@@ -688,8 +705,7 @@ if __name__ == '__main__':
 		stackfile=os.path.join(params['outdir'], os.path.splitext(params['single'])[0])
 		# if saving to the database, store the stack parameters
 		if params['commit']is True:
-			insertStackParams(params)
-			insertStackSession(params)
+			insertStackRun(params)
 		if params['spider'] is True and os.path.isfile(stackfile+".spi"):
 			os.remove(stackfile+".spi")
 		if (os.path.isfile(stackfile+".hed")):
