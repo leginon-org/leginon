@@ -95,7 +95,7 @@ def createDefaults():
 	params['maxDefocus']=None
 	params['description']=None
 	params['selexonId']=None
-	params['sessionnanme']=None
+	params['sessionname']=None
 	params['medium']=None
 	params['normalized']=True
 	params['correlationMin']=None
@@ -675,7 +675,7 @@ if __name__ == '__main__':
 	if not params['description']:
 		apDisplay.printError("Stack must have a description")
 		
-	if params['selexonId'] is None:
+	if params['selexonId'] is None and params['sessionname'] is not None:
 		params['selexonId'] = apParticle.guessParticlesForSession(sessionname=params['sessionname'])
 
 	# get images from database if using a selexon runId
