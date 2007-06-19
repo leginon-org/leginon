@@ -86,7 +86,7 @@ class Focuser(acquisition.Acquisition):
 		self.deltaz = 0.0
 
 	def researchFocusSequence(self):
-		user_data = data.UserData(initializer=self.session['user'].toDict())
+		user_data = self.session['user']
 		initializer = {
 			'session': data.SessionData(user=user_data),
 			'node name': self.name,
