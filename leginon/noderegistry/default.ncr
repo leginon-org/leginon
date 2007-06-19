@@ -138,3 +138,12 @@ type: Pipeline
 [ClickTargetTransformer]
 module: clicktargettransformer
 type: Utility
+
+[ClickMaskMaker]
+module: clickmaskmaker
+type: Utility
+
+[MaskAssessor]
+module: maskassessor
+type: Utility
+
