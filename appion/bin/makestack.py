@@ -385,7 +385,7 @@ def saveParticles(particles,shift,dbbox,params,imgdict):
 				stackpq['particle']=prtl
 				stackres=apdb.query(stackpq)
 				if not stackres:
-					params['particleNumber']=params['particleNumber']+1
+					params['particleNumber'] += 1
 					stackpq['particleNumber']=params['particleNumber']
 					apdb.insert(stackpq)
 		else:
