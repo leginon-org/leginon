@@ -72,28 +72,27 @@ def isoStr(val):
 		return val[:val.find('+')]
 
 def sqlRepr(obj):
-	t = type(obj)
 	if isinstance(obj, SQLExpression):
 		return obj.sqlRepr()
 	elif isinstance(obj, basestring):
 		for orig, repl in sqlStringReplace:
 			obj = str(obj.replace(orig, repl))
 		return "'%s'" % obj
-	elif t is bool:
+	elif isinstance(obj, bool):
 		return repr(int(obj))
-	elif t is type(0L) or t is type(1):
+	elif isinstance(obj, (int,long)):
 		return repr(int(obj))
-	elif issubclass(t, float):
+	elif isinstance(obj, float):
 		return repr(obj)
-	elif DateTimeType is not None and t is DateTimeType:
+	elif DateTimeType is not None and isinstance(obj, DateTimeType):
 		return "'%s'" % isoStr(obj)
 	elif obj is None:
 		return "NULL"
-	elif t is type(()) or t is type([]):
+	elif isinstance(obj, (tuple, list)):
 		return "(%s)" % ", ".join(map(sqlRepr, obj))
 	else:
 		raise ValueError, "Unknown SQL builtin type: %s for %s" % \
-			  (t, repr(obj))
+			  (type(obj), obj)
 
 
 ########################################
