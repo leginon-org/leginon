@@ -102,7 +102,7 @@ def createDefaults():
 	params['correlationMax']=None
 	params['inspectmask']=None
 	params['commit']=False
-	params['outdir']=None
+	params['outdir']=os.path.abspath(".")
 	params['particleNumber']=0
 	params['bin']=None
 	params['limit']=None
