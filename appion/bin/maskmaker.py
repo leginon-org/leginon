@@ -118,11 +118,17 @@ class MaskMaker(appionLoop.AppionLoop):
 			self.params['commit']=False			
 	
 	def insertFunctionRun(self):
-		params = self.params
-		if params is None:
-			params = self.defaultparams
+		if self.params is None:
+			params = self.defaultparams.copy()
+		if self.params['commit']:
+			params = self.params.copy()
+			sessiondata = params['session']
+		else:
+			params = self.defaultparams.copy()
+			sessiondata = None
+			
 		paramdata =self.insertFunctionParams(params)
-		maskRdata=apMask.createMaskMakerRun(params['session'],params['rundir'],params['runid'],paramdata)
+		maskRdata=apMask.createMaskMakerRun(sessiondata,params['rundir'],params['runid'],paramdata)
 		self.appiondb.insert(maskRdata)
 
 		return maskRdata
