@@ -254,7 +254,7 @@ def getRealLabeledPerimeter(image,edge_mask,labeled_image,indices,info,testlog):
 	edgeimage,testlog=findEdgeSobel(edge_mask,0,0.5,1.0,False,testlog)
 	mask=ma.getmask(edgeimage)
 	length=nd.sum(mask,labels=labeled_image,index=indices)
-
+		
 	ll=0
 	try:
 		len(length)
@@ -459,6 +459,7 @@ def makePrunedPolygons(gpolygons,imageshape,info,goodlabels):
 	regions,clabels=nd.label(equalregions)
 	if clabels != len(goodpolygons):
 		print "ERROR: making %d labeled region from %d good polygons" % (clabels,len(goodpolygons))
+		return regions,clabels,[]
 	return regions,len(goodpolygons),goodinfos
 
 def reduceRegions(regions,velimit):
@@ -597,6 +598,7 @@ def makeMask(params,image):
 		print "starting with",clabels, "regions"
 		testlog=outputTestImage(labeled_regions,'region_label','Segmented labeled image',testlog)
 
+		################PERIMETER PRUNING##########################
 		#pruning by length of the perimeters of the labeled regions.
 		if (do_prune_by_length):
 			allinfos,testlog=getLabeledInfo(image,mask,labeled_regions,range(1,clabels+1),True,allinfos,testlog)
@@ -608,16 +610,19 @@ def makeMask(params,image):
 		if do_convex_hulls:
 			labeled_regions,clabels,gpolygons,testlog=convexHullUnion(labeled_regions,clabels,testlog)
 				
-		else:
-			if do_cv:
-				polygonregions,dummyimage=libCV.FindRegions(mask,area_t,0.2,1,0,1,0)
-				gpolygons = reduceRegions(polygonregions,100)
-				clabels = len(gpolygons)
-				goodareas = range(clabels)
+		if do_cv:
+			polygonregions,dummyimage=libCV.FindRegions(mask,area_t,0.2,1,0,1,0)
+			gpolygons = reduceRegions(polygonregions,100)
+			# libCV.findregion sometimes produces regions of negative area and cause problems in later labeling
+			# Therefore, it is converted into equal intensity region image (mask).
+			mask = polygon.plotPolygons(image.shape,gpolygons)
+			labeled_regions,clabels=nd.label(mask)
+			allinfos ={}
 
 		if (clabels > 0):
 			testlog[0]=False
-			if do_convex_hulls or do_cv:
+			if do_convex_hulls:
+				# Regions are polygon vertices
 				if stdev_t < 0.001:
 					allinfos,testlog=getPolygonInfo(gpolygons,allinfos,testlog)
 				else:
@@ -625,20 +630,24 @@ def makeMask(params,image):
 					labeled_regions,clabels=nd.label(mask)
 					allinfos,testlog=getLabeledInfo(image,mask,labeled_regions,range(1,clabels+1),False,{},testlog)
 			else:				
+				# Regions are non-zero subimages
 				allinfos,testlog=getLabeledInfo(image,mask,labeled_regions,range(1,clabels+1),False,allinfos,testlog)
 			saved_labeled_regions=labeled_regions
 			saved_clabels=clabels
 			testlog[0]=test
 			goodregions=range(clabels)
-			if not do_cv:
-				#pruning by area as in selexon
-				goodareas=pruneByArea(allinfos,area_t,image.size*0.5,goodregions)
-				goodregions=goodareas
+
+			################AREA PRUNING##########################
+
+			#pruning by area as in selexon
+			goodareas=pruneByArea(allinfos,area_t,image.size*0.5,goodregions)
+			goodregions=goodareas
 
 			try:
 				good=len(goodareas)
 			except:
 				good=0
+				
 			if (good > 0):
 				temp_regions,temp_clabels,goodinfos=makePrunedLabels(saved_labeled_regions,saved_clabels,allinfos,goodareas)
 				testlog=outputTestImage(temp_regions,'region_labela','Area pruned labeled image',testlog)
@@ -660,13 +669,14 @@ def makeMask(params,image):
 				good=len(goodstdevs)
 			except:
 				good=0
+				
 			if (good>0):
 				temp_regions,temp_clabels,goodinfos=makePrunedLabels(saved_labeled_regions,saved_clabels,allinfos,goodstdevs)
 				testlog=outputTestImage(temp_regions,'region_labels','Stdev pruned labeled image',testlog)
 
 
 			################REBUILD##########################
-			if do_convex_hulls or do_cv and stdev_t < 0.01:
+			if do_convex_hulls and stdev_t < 0.01:
 				labeled_regions,clabels,regioninfos=makePrunedPolygons(gpolygons,image.shape,allinfos,goodregions)
 				if params['masktype']=='edge':
 					#convolve with the disk image of the particle
@@ -685,23 +695,6 @@ def makeMask(params,image):
 			equalregions=None
 	
 		if test:
-			'''
-			try:
-				good=len(goodareas)
-			except:
-				good=0
-			if (good > 0):
-				temp_regions,temp_clabels,goodinfos=makePrunedLabels(saved_labeled_regions,saved_clabels,allinfos,goodareas)
-				testlog=outputTestImage(temp_regions,'region_labela','Area pruned labeled image',testlog)
-
-			try:
-				good=len(goodstdevs)
-			except:
-				good=0
-			if (good>0):
-				temp_regions,temp_clabels,goodinfos=makePrunedLabels(saved_labeled_regions,saved_clabels,allinfos,goodstdevs)
-				testlog=outputTestImage(temp_regions,'region_labels','Stdev pruned labeled image',testlog)
-			'''
 			if (clabels>0):
 				testlog=outputTestImage(equalregions,'finalregions','Final Mask image',testlog)
 				regionedges,testlog=findEdgeSobel(equalregions,0,0.5,1.0,False,testlog)
@@ -714,62 +707,12 @@ def makeMask(params,image):
 			
 	return regioninfos,equalregions,
 
-def piksNotInMask(maskbin,mask,piklines):
-	shape = numpy.shape(mask)
-	piklinesNotInMask=[]
-	for pikline in piklines:
-		bits=pikline.split(' ')
-		pik=(int(bits[1]),int(bits[2]))
-		binpik = (int(pik[0]/maskbin),int(pik[1]/maskbin))
-		print binpik
-		if binpik[0] in range(0,shape[0]) and binpik[1] in range(0,shape[1]):
-			if mask[binpik]==0:
-				piklinesNotInMask.append(pikline)
-			else:
-				print "reject"
-	return piklinesNotInMask
-	
-def readPiksFile(file,extra=''):
-	#print " ... reading Pik file: ",file
-	f=open(file+extra, 'r')
-	#00000000 1 2 3333 44444 5555555555 666666666 777777777
-	#filename x y mean stdev corr_coeff peak_size templ_num angle moment
-	piks = []
-	piklines = []
-	for line in f:
-		if(line[0] != "#"):
-			line.strip()
-			piklines.append(line)
-	return piklines
-	
-def writePiksFile(file,extra='',piklines=[]):
-	pikstring=''.join(piklines)
-	f=open(file+extra, 'w')
-	f.write(pikstring)
-	
-def removeMaskedPiks(params,file):
-	print "Start Removing Piks in Masks"
-	pikfile = "pikfiles/"+file+".a.pik"
-	piklines = readPiksFile(pikfile)
-	regionmask=makeMask(params,file)
-	print "Removing Bad Picks"
-	maskbin = params['bin']
-	piklinesgood = piksNotInMask(maskbin,regionmask,piklines)
-	writePiksFile(pikfile,'.nonmask',piklinesgood)
-	
 def makeKeepMask(maskarray,keeplist1):
 	labeled_maskarray,countlabels=nd.label(maskarray)
 	keeplist0 = map((lambda x: x-1),keeplist1)
 	labeled_maskarray = makeImageFromLabels(labeled_maskarray,countlabels,keeplist0)
 	maskarray=getBmaskFromLabeled(labeled_maskarray)
 	return maskarray
-
-def removeMaskedPiklines(piklines,maskarray,maskbin,keeplist):
-	print "Create good mask array"
-	maskarray = makeKeepMask(maskarray,keeplist)
-	print "Removing Bad Picks"
-	piklines = piksNotInMask(maskbin,maskarray,piklines)
-	return piklines,maskarray	
 	
 if __name__ == '__main__':
 	maskfile = '/home/acheng/testcrud/07jan05b/testa/masks/07jan05b_00018gr_00022sq_v01_00002sq_00_00002en_00_mask.png'
