@@ -654,8 +654,11 @@ def getStackId(params):
 	stackq['stackPath'] = params['outdir']
 	stackq['name'] = params['single']
 
-	stackdata = apdb.query(stackq, results=1)[0]
-	apDisplay.printMsg("created stack with stackid="+str(stackdata.dbid))
+	try:
+		stackdata = apdb.query(stackq, results=1)[0]
+		apDisplay.printMsg("created stack with stackdbid="+str(stackdata.dbid))
+	except:
+		apDisplay.printMsg("created stack has no stackdbid")
 
 #-----------------------------------------------------------------------
 
