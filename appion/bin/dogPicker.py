@@ -39,7 +39,9 @@ class basicDogPicker(appionLoop.AppionLoop):
 	def commitToDatabase(self, imgdata):
 		expid = int(imgdata['session'].dbid)
 		apDog.insertDogParams(self.params, expid)
+#		apDog.insertDogParamsREFLEGINON(self.params, imgdata['session'])
 		apParticle.insertParticlePeaks(self.peaktree, imgdata, expid, self.params)
+#		apParticle.insertParticlePeaksREFLEGINON(self.peaktree, imgdata, self.params)
 		return
 
 	def specialDefaultParams(self):

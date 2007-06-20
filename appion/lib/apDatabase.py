@@ -237,3 +237,23 @@ def getImgAssessmentStatus(imgdata):
 		elif assessdata[0]['selectionkeep'] == 0:
 			return False
 	return None
+
+def getImgAssessmentStatusREFLEGINON(imgdata):
+	"""
+	gets the assessment status (keep/reject) from the last assessment run
+		keep = True
+		reject = False 
+		unassessed = None
+	"""
+	### this function should be modified in the future to allow for a particular assessment run
+	assessquery = appionData.ApAssessmentData()
+	assessquery['image'] = imgdata
+	assessdata = appiondb.query(assessquery)
+
+	if assessdata:
+		#check results of only most recent run
+		if assessdata[0]['selectionkeep'] == 1:
+			return True
+		elif assessdata[0]['selectionkeep'] == 0:
+			return False
+	return None

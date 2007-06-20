@@ -47,9 +47,12 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 	def commitToDatabase(self, imgdata):
 		expid = int(imgdata['session'].dbid)
 		apParticle.insertSelexonParams(self.params, expid)
+#		apParticle.insertSelexonParamsREFLEGINON(self.params, imgdata['session'])
 		apParticle.insertParticlePeaks(self.peaktree, imgdata, expid, self.params)
+#		apParticle.insertParticlePeaksREFLEGINON(self.peaktree, imgdata, self.params)
 		if self.params['defocpair'] is True:
 			apDefocalPairs.insertShift(imgdata, self.sibling, self.shiftpeak)
+#			apDefocalPairs.insertShiftREFLEGINON(imgdata, self.sibling, self.shiftpeak)
 
 	def specialDefaultParams(self):
 		self.params['template']=''

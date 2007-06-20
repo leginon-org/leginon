@@ -41,6 +41,7 @@ if __name__ == '__main__':
 	#print (imagepairs.items())[0]
 	if params['selexonId'] is None:
 		params['selexonId'] = apParticle.guessParticlesForSession(images[0]['session'].dbid)
+#		params['selexonId'] = apParticle.guessParticlesForSessionREFLEGINON(images[0]['session'])
 	del images
 	notdone=True
 	while notdone:

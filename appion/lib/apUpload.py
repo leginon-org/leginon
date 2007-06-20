@@ -164,6 +164,23 @@ def insertManualParams(params,expid):
  		appiondb.insert(runq)
  	       	appiondb.insert(manparams)
 
+def insertManualParamsREFLEGINON(params,sessiondata):
+	runq=appionData.ApSelectionRunData()
+	runq['name']=params['runid']
+	runq['session']=sessiondata
+
+	runids=appiondb.query(runq, results=1)
+
+ 	# if no run entry exists, insert new run entry into run.dbparticledata
+ 	# then create a new selexonParam entry
+ 	if not(runids):
+		print "inserting manual runId into database"
+ 		manparams=appionData.ApSelectionParamsData()
+ 		manparams['ApSelectionRunData']=runq
+ 		manparams['diam']=params['diam']
+ 		appiondb.insert(runq)
+ 	       	appiondb.insert(manparams)
+
 def getModelDimensions(mrcfile):
 	print "calculating dimensions..."
 	vol=mrc.read(mrcfile)

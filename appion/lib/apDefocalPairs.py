@@ -107,3 +107,19 @@ def insertShift(img,sibling,peak):
 		print 'Inserting shift beteween', img['filename'], 'and', sibling['filename'], 'into database'
 		appiondb.insert(shiftq)
 	return()
+
+def insertShiftREFLEGINON(imgdata,sibling,peak):
+	shiftq=appionData.ApImageTransformationData()
+	shiftq['image1']=imgdata
+	shiftdata=appiondb.query(shiftq)
+	if shiftdata:
+		print "Warning: Shift values already in database"
+	else:
+		shiftq['image2']=sibling
+		shiftq['shiftx']=peak['shift'][1]
+		shiftq['shifty']=peak['shift'][0]
+		shiftq['scale']=peak['scalefactor']
+		shiftq['correlation']=peak['subpixel peak value']
+		print 'Inserting shift beteween', img['filename'], 'and', sibling['filename'], 'into database'
+		appiondb.insert(shiftq)
+	return()

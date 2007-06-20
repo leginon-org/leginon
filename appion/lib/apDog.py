@@ -78,6 +78,36 @@ def insertDogParams(params, expid):
 
 	return
 
+def insertDogParamsREFLEGINON(params, sessiondata):
+	### query for identical params ###
+	selexonparamsq = appionData.ApDogParamsData()
+ 	selexonparamsq['diam']=params['diam']
+ 	selexonparamsq['bin']=params['bin']
+ 	selexonparamsq['threshold']=params['thresh']
+ 	selexonparamsq['max_threshold']=params['maxthresh']
+ 	selexonparamsq['lp_filt']=params['lp']
+ 	selexonparamsq['hp_filt']=None
+ 	selexonparamsq['invert']=params['invert']
+ 	selexonparamsq['max_peaks']=params['maxpeaks']
+	selexonparamsdata = appiondb.query(selexonparamsq, results=1)
+
+	### query for identical run name ###
+	runq=appionData.ApSelectionRunData()
+	runq['name']=params['runid']
+	runq['session']=sessiondata
+
+	runids=appiondb.query(runq, results=1)
+
+ 	# if no run entry exists, insert new run entry into dbappiondata
+ 	if not runids:
+		apDisplay.printMsg("Inserting new runId into database")
+		runq['dogparams'] = selexonparamsq
+		if not selexonparamsdata:
+			appiondb.insert(selexonparamsq)
+		appiondb.insert(runq)
+
+	return
+
 
 def insertDogPicksIntoDB(img, peaks, params):
 	sessionid = int(img['session'].dbid)
@@ -105,3 +135,7 @@ def insertDogPicksIntoDB(img, peaks, params):
 		#particle['slicenum'] = sca
 		particle['correlation'] = sca
 		appiondb.insert(particle)
+
+def insertDogPicksIntoDBREFLEGINON(imgdata, peaks, params):
+	print "OLD FUNCTION"
+	return

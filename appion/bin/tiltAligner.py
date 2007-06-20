@@ -38,7 +38,9 @@ class tiltAligner(appionLoop.AppionLoop):
 	def commitToDatabase(self, imgdata):
 		#expid = int(imgdata['session'].dbid)
 		#apDog.insertDogParams(self.params, expid)
+		#apDog.insertDogParamsREFLEGINON(self.params, imgdata['session'])
 		#apParticle.insertParticlePeaks(self.peaktree, imgdata, expid, self.params)
+		#apParticle.insertParticlePeaksREFLEGINON(self.peaktree, imgdata, self.params)
 		return
 
 	def specialDefaultParams(self):
@@ -68,6 +70,7 @@ class tiltAligner(appionLoop.AppionLoop):
 			apDisplay.printError("please input the diameter of your particle")
 		if params['selexonId'] is None:
 			params['selexonId'] = apParticle.guessParticlesForSession(images[0]['session'].dbid)
+#			params['selexonId'] = apParticle.guessParticlesForSessionREFLEGINON(images[0]['session'])
 
 if __name__ == '__main__':
 	imgLoop = tiltAligner()

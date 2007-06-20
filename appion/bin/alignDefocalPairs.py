@@ -27,6 +27,7 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 
 	def commitToDatabase(self, imgdata):
 		apDefocalPairs.insertShift(imgdata, self.sibling, self.shiftpeak)
+#		apDefocalPairs.insertShiftREFLEGINON(imgdata, self.sibling, self.shiftpeak)
 
 	def specialDefaultParams(self):
 		self.params['lp']=30
