@@ -78,7 +78,7 @@ def printHelp():
 def createDefaults():
 	# create default values for parameters
 	params={}
-	params['imgs']=''
+	params['imgs']=[]
 	params['runid']=None
 	params['single']=None
 	params['aceCutoff']=None
@@ -728,9 +728,9 @@ if __name__ == '__main__':
 		imglist=params['imgs']
 		images=[]
 		for img in imglist:
-			imageq=leginondata.AcquisitionImageData(filename=img)
-			imageresult=db.query(imageq, readimages=False)
-			images=images+imageresult
+			imageq = leginondata.AcquisitionImageData(filename=img)
+			imageresult = db.query(imageq, readimages=False)
+			images += imageresult
 
 		params['session']=images[0]['session']['name']
 		params['sessionname']=images[0]['session']['name']
