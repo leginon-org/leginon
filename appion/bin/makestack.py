@@ -399,11 +399,9 @@ def saveParticles(particles,shift,dbbox,params,imgdict):
 				stackpq['stack']=params['stackId']
 				stackpq['stackRun']=params['stackRun']
 				stackpq['particle']=prtl
-				stackres=apdb.query(stackpq)
-				if not stackres:
-					params['particleNumber'] += 1
-					stackpq['particleNumber']=params['particleNumber']
-					apdb.insert(stackpq)
+				params['particleNumber'] += 1
+				stackpq['particleNumber']=params['particleNumber']
+				apdb.insert(stackpq)
 		else:
 			eliminated+=1
 	if eliminated > 0:
@@ -643,6 +641,8 @@ def insertStackRun(params):
 		if p in params:
 			stparamq[p] = params[p]
 			
+	paramslist=apdb.query(stparamq,results=1)
+
 	# create a stack object
 	stackq = appionData.ApStackData()
 	stackq['stackPath'] = params['outdir']
@@ -658,13 +658,13 @@ def insertStackRun(params):
 
 	stackq['description'] = params['description']
 	
+	runids = apdb.query(runq, results=1)
+	runq['stackParams'] = paramslist[0]
+
 	# create runinstack object
 	rinstackq = appionData.ApRunsInStackData()
 	rinstackq['stack']=stackq
 	rinstackq['stackRun']=runq
-
-	runids = apdb.query(runq, results=1)
-	runq['stackParams'] = stparamq
 
 	# if not in the database, make sure run doesn't already exist
 	if not stacks:
@@ -682,13 +682,17 @@ def insertStackRun(params):
 			apDisplay.printError("Stack description is not the same!")
 		# make sure the the run is the same:
 		rinstack = apdb.query(rinstackq, results=1)
-		if rinstack[0]['stackRun']['stackParams'] != stparamq:
-			for i in rinstack[0]['stackRun']['stackParams']:
-				if rinstack[0]['stackRun']['stackParams'][i] != stparamq[i]:
-					apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
+		if rinstack:
+			if rinstack[0]['stackRun']['stackParams'] != stparamq:
+				for i in rinstack[0]['stackRun']['stackParams']:
+					if rinstack[0]['stackRun']['stackParams'][i] != stparamq[i]:
+						apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
+				apDisplay.printError("All parameters for a particular stack must be identical! \n"+\
+						     "please check your parameter settings.")
+		else:
 			apDisplay.printError("All parameters for a particular stack must be identical! \n"+\
 					     "please check your parameter settings.")
-
+			
 	# get the stack Id
 	params['stackId']=stackq
 	params['stackRun']=runq
