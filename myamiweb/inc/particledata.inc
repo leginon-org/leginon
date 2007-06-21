@@ -353,8 +353,8 @@ class particledata {
 		return $r;
 	}
 
-  function getSymInfo ($symId){
-	  $q = "SELECT * "
+	function getSymInfo ($symId){
+	$q = "SELECT * "
 				."FROM `ApSymmetryData` WHERE `DEF_id` = '$symId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r;
@@ -365,6 +365,17 @@ class particledata {
 			 ."FROM `ApResolutionData` WHERE `DEF_id` = '$resId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r;
+	}
+	
+	function getHighestResForRecon ($reconid) {
+		$q = "SELECT * " 
+			."FROM `ApRefinementData` r "
+			."LEFT JOIN `ApResolutionData` res "
+			."ON (r.`REF|ApResolutionData|resolution` = res.`DEF_id`) "
+			."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconid' "
+			."ORDER by res.half ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
 	}
 		
 	function getIterationInfo ($reconId) {
