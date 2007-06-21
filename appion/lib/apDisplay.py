@@ -15,7 +15,7 @@ def printWarning(text):
 		f.close()
 	except:
 		print "write error"
-	print colorString(" !!! WARNING: "+text,"brown")
+	print colorString("\a !!! WARNING: "+text,"brown")
 
 def printMsg(text):
 	"""
@@ -39,7 +39,7 @@ def printError(text):
 		f.close()
 	except:
 		print "write error"
-	raise colorString("\n *** FATAL ERROR ***\n"+text+"\n\a","red")
+	raise colorString("\a\n *** FATAL ERROR ***\n"+text+"\n\a","red")
 
 def printColor(text, colorstr):
 	"""
