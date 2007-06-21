@@ -752,6 +752,7 @@ def getDarkNorm(sessionname, cameraconfig):
 	norm = normdata[0]['image']
 	result = dark,norm
 	cache[key] = result
+
 	return result
 
 def old_correct(input, dark, norm):

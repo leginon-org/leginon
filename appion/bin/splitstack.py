@@ -58,7 +58,7 @@ def checkParams(params):
 
 def printHelp():
 	print "Usage:"
-	print "splitstack.py stackid=<DEF_id> [nptcls=<n> logsplit] stackname=<stackfile> [commit] outdir=<path>"
+	print "splitstack.py stackid=<DEF_id> [nptcls=<n> logsplit=<start>,<divisions>] stackname=<stackfile> [commit] outdir=<path>"
 	sys.exit()
 	
 def getNPtcls(stackname):
@@ -78,7 +78,7 @@ def makeRandomLst(nptcls,stackdata,params):
 	random.shuffle(allparticles)
 	particles=allparticles[0:nptcls]
 	particles.sort()
-	origpath=os.path.join(stackdata[0]['stackparams']['stackPath'],stackdata[0]['stackparams']['name'])
+	origpath=os.path.join(stackdata[0]['stack']['stackPath'],stackdata[0]['stack']['name'])
 	for particle in particles:
 		f.write('%d\t%s\n' % (particle, origpath))
 	f.close()
@@ -97,11 +97,11 @@ def makeNewStack(lstfile,newstackname):
 	return
 	
 def checkForPreviousStack(stackpath, stackname):
-	stackparamsq=appionData.ApStackParamsData()
-	stackparamsq['stackPath']=stackpath
-	stackparamsq['name']=stackname
-	stackparamsdata=apdb.query(stackparamsq)
-	if stackparamsdata:
+	stackq=appionData.ApStackData()
+	stackq['stackPath']=stackpath
+	stackq['name']=stackname
+	stackdata=apdb.query(stackq)
+	if stackdata:
 		print "A stack with path",stackpath, "and name ", stackname, "already exists."
 		print "Exiting."
 		sys.exit()
@@ -113,22 +113,26 @@ def commitSplitStack(params, stackdata, lstfile):
 	lines=f.readlines()
 	f.close()
 	
-	stackparamsdata=stackdata[0]['stackparams']
-
-	newstackparamsq=appionData.ApStackParamsData()
-	for key in newstackparamsq.keys():
-		if key not in ['stackPath', 'name','description']:
-			newstackparamsq[key]=stackdata[0]['stackparams'][key]
-	newstackparamsq['stackPath']=os.getcwd()
-	newstackparamsq['name']=params['stackname']
-	newstackparamsq['description']=params['description']
-	newstackparamsdata=apdb.query(newstackparamsq)
+	#create new stack data
+	stackq=appionData.ApStackData()
+	stackq['stackPath']=os.getcwd()
+	stackq['name']=params['stackname']
+	stackq['description']=params['description']
+	stackdata=apdb.query(stackq, results=1)
 	
-	#paranoid double check for previous stacks
-	if newstackparamsdata:
+	
+	if stackdata:
 		print "A stack with these parameters already exists"
 		return
-		
+	else:
+		apdb.insert(stackq)
+		runs_in_stack=apStack.getRunsInStack(params['stackid'])
+		for run in runs_in_stack:
+			newrunsq=appionData.ApRunsInStackData()
+			newrunsq['stack']=stackq
+			newrunsq['stackRun']=run['stackRun']
+			apdb.insert(newrunsq)
+			
 	newparticlenumber=1
 	for n in lines:
 		words=n.split()
@@ -138,17 +142,16 @@ def commitSplitStack(params, stackdata, lstfile):
 		newparticle+=1
 		
 		# Find corresponding particle in old stack
-		stackparticleq=appionData.ApStackParticlesData()
-		stackparticleq['stackparams']=stackparamsdata
-		stackparticleq['particleNumber']=newparticle
-		stackparticledata=apdb.query(stackparticleq, results=1)
+		origstackparticledata=apStack.getStackParticle(params['stackid'],newparticle)
+
 		#print stackparticledata
 		# Insert particles
 		
 		newstackq=appionData.ApStackParticlesData()
-		newstackq['stackparams']=newstackparamsq
 		newstackq['particleNumber']=newparticlenumber
-		newstackq['particle']=stackparticledata[0]['particle']
+		newstackq['stack']=stackq
+		newstackq['stackRun']=origstackparticledata['stackRun']
+		newstackq['particle']=origstackparticledata['particle']
 		#print newstackq
 		apdb.insert(newstackq)
 		newparticlenumber+=1

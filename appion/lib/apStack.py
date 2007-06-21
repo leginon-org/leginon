@@ -9,8 +9,26 @@ apdb=apDB.apdb
 
 def getStackFromId(stackid):
 	print "Getting particles for stack", stackid
-	stackparamsdata=apdb.direct_query(appionData.ApStackParamsData, stackid)
+	stackdata=apdb.direct_query(appionData.ApStackData, stackid)
 	stackq=appionData.ApStackParticlesData()
-	stackq['stackparams']=stackparamsdata
+	stackq['stack']=stackdata
 	stackdata=apdb.query(stackq)
 	return(stackdata)
+
+def getStackParticle(stackid, particlenumber):
+	stackdata=apdb.direct_query(appionData.ApStackData, stackid)
+	stackparticleq=appionData.ApStackParticlesData()
+	stackparticleq['stack']=stackdata
+	stackparticleq['particleNumber']=particlenumber
+	stackparticledata=apdb.query(stackparticleq)
+	if len(stackparticledata) > 1:
+		print "There's a problem with this stack. More than one particle with the same number."
+		sys.exit()
+	return(stackparticledata[0])
+
+def getRunsInStack(stackid):
+	stackdata=apdb.direct_query(appionData.ApStackData, stackid)
+	runsinstackq=appionData.ApRunsInStackData()
+	runsinstackq['stack']=stackdata
+	runsinstackdata=apdb.query(runsinstackq)
+	return(runsinstackdata)
