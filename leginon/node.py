@@ -431,6 +431,8 @@ class Node(object):
 		return self.name, label
 
 	def storeTime(self, label, type):
+		## disabled for now
+		return
 		key = self.timerKey(label)
 
 		t = leginondata.TimerData()
