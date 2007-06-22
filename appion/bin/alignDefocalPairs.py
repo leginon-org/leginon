@@ -20,7 +20,7 @@ import apDefocalPairs
 
 class TemplateCorrelationLoop(appionLoop.AppionLoop):
 	def processImage(self, imgdata):
-		self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata)
+		self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params)
 
 	def setProcessingDirName(self):
 		self.processdirname = "defocalpairs"
