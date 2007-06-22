@@ -281,7 +281,6 @@ def insertParticlePeaksREFLEGINON(peaktree, imgdict, params):
 	return
 
 def insertParticlePicks(params,imgdict,expid,manual=False):
-	sys.exit(1)
 	#INFO
 	legimgid=int(imgdict.dbid)
 	imgname=imgdict['filename'] 
@@ -381,6 +380,8 @@ def convertBoxToPikFile(imgname,params):
 		apDisplay.printError("manual box file, "+boxfilename+" does not exist")
 
 	# read through the pik file
+	if not params['scale']:
+		params['scale']=1
 	boxfile = open(boxfilename, "r")
 	piklist=[]
 	for line in boxfile:

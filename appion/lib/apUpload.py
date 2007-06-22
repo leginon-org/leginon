@@ -4,6 +4,7 @@ import os
 import apDisplay
 import appionData
 import apDB
+import string
 try:
 	import pyami.mrc as mrc
 except:
@@ -130,7 +131,7 @@ def createDefaults():
 	params['session']=None
 	params['runid']=None
 	params['imgs']=None
-	params['rundir']=None
+	params['rundir']=os.path.abspath('.')
 	params['abspath']=os.path.abspath('.')
 	params['scale']=None
 	params['sym']=None
@@ -152,18 +153,20 @@ def insertManualParams(params,expid):
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
 
+	manparams=appionData.ApSelectionParamsData()
+	manparams['diam']=params['diam']
+
 	runids=appiondb.query(runq, results=1)
 
  	# if no run entry exists, insert new run entry into run.dbparticledata
  	# then create a new selexonParam entry
- 	if not(runids):
+ 	if not runids:
 		print "inserting manual runId into database"
- 		manparams=appionData.ApSelectionParamsData()
- 		manparams['ApSelectionRunData']=runq
- 		manparams['diam']=params['diam']
+		runq['params']=manparams
  		appiondb.insert(runq)
- 	       	appiondb.insert(manparams)
-
+	elif runids[0]['params'] != manparams:
+		apDisplay.printError("upload parameters not the same as last run - check diameter")
+		
 def insertManualParamsREFLEGINON(params,sessiondata):
 	runq=appionData.ApSelectionRunData()
 	runq['name']=params['runid']

@@ -9,6 +9,7 @@ import apUpload
 import apParam
 import apDisplay
 import apDatabase
+import apParticle
 
 if __name__ == '__main__':
 	# record command line
@@ -35,10 +36,10 @@ if __name__ == '__main__':
 	imgtree = []
 	for i in range(len(imglist)):
 		imgname = imglist[i]
-		print "image",i,"of",totimgs,":",apDisplay.short(imgname)
+		print "image",i+1,"of",totimgs,":",apDisplay.short(imgname)
 		imgdata = apDatabase.getImageData(imgname)
-		imgtree.extend(imgdata)
-	params['session'] = images[0]['session']['name']
+		imgtree.append(imgdata)
+	params['session'] = imgdata['session']['name']
 
 	# upload Particles
 	for imgdata in imgtree:
