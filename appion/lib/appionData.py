@@ -230,7 +230,7 @@ class ApRefinementRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('name', str),
-			('stack', ApStackRunData),
+			('stack', ApStackData),
 			('initialModel', ApInitialModelData),
 			('path', str),
 			('package', str),
@@ -329,6 +329,16 @@ class ApEulerData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApEulerData=ApEulerData
 	
+class ApFSCData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('refinementData', ApRefinementData),
+			('pix', int),
+			('value', float),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApFSCData=ApFSCData
+
 ### ACE/CTF Tables
 
 class ApAceRunData(Data):
