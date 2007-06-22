@@ -770,7 +770,7 @@ def rejectImage(imgdata, params):
 		if params['defocpair'] and checkPairInspectDB(imgdict, params) is False:
 			apDisplay.printColor(shortname+".mrc has been rejected by manual defocpair inspection\n","cyan")
 			return False
-		elif checkInspectDB(imgdict) is False:
+		elif not params['defocpair'] and checkInspectDB(imgdict) is False:
 			apDisplay.printColor(shortname+".mrc has been rejected by manual inspection\n","cyan")
 			return False
 
