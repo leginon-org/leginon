@@ -659,8 +659,10 @@ def insertStackRun(params):
 	stackq['description'] = params['description']
 	
 	runids = apdb.query(runq, results=1)
-	runq['stackParams'] = paramslist[0]
-
+	if paramslist:
+		runq['stackParams'] = paramslist[0]
+	else:
+		runq['stackParams'] = stparamq
 	# create runinstack object
 	rinstackq = appionData.ApRunsInStackData()
 	rinstackq['stack']=stackq
