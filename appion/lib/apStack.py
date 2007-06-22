@@ -12,7 +12,12 @@ def getStackFromId(stackid):
 	stackdata=apdb.direct_query(appionData.ApStackData, stackid)
 	stackq=appionData.ApStackParticlesData()
 	stackq['stack']=stackdata
-	stackdata=apdb.query(stackq)
+	stackparticledata=apdb.query(stackq)
+	return(stackparticledata)
+
+def getOnlyStackData(stackid):
+	print "Getting stack data for stack", stackid
+	stackdata=apdb.direct_query(appionData.ApStackData,stackid)
 	return(stackdata)
 
 def getStackParticle(stackid, particlenumber):
