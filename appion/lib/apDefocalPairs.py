@@ -34,10 +34,10 @@ def getShiftFromImage(imgdata, params):
 
 def getDefocusPair(imgdata):
 	target=imgdata['target']
-	qtarget=data.AcquisitionImageTargetData()
+	qtarget=leginondata.AcquisitionImageTargetData()
 	qtarget['image'] = target['image']
 	qtarget['number'] = target['number']
-	qsibling=data.AcquisitionImageData(target=qtarget)
+	qsibling=leginondata.AcquisitionImageData(target=qtarget)
 	origid=imgdata.dbid
 	allsiblings = leginondb.query(qsibling, readimages=False)	
 	if len(allsiblings) > 1:
@@ -78,6 +78,7 @@ def getShift(imgdata1 ,imgdata2):
 		binned1 = apImage.binImg(imgdata1['image'], shrinkfactor1)
 		binned2 = apImage.binImg(imgdata2['image'], shrinkfactor2)
 		pc=correlator.phase_correlate(binned1,binned2,zero=True)
+		#apImage.arrayToMrc(pc,imgdata1['filename']+'.corr.mrc')
 		peak = peakfinder.findSubpixelPeak(pc, lpf=1.5) # this is a temp fix. 
 		subpixpeak = peak['subpixel peak']
 		shift=correlator.wrap_coord(subpixpeak,pc.shape)
