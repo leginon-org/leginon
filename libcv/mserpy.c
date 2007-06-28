@@ -131,13 +131,12 @@ static PyObject *PyDOG(PyObject *self, PyObject *args) {
 	fprintf(stderr,"Binning: %d   Range: %d-%d,%d\n",bin,start,end,sampling);
 	fprintf(stderr,"Output: %d   Scale Stable:  %d\n",debug,stable);
 	
-	PyArrayObject *temp = NA_InputArray(image,tFloat32,NUM_C_ARRAY);
-	int c, cols = temp->dimensions[0];
-	int r, rows = temp->dimensions[1];
+	int c, cols = PyArray_DIMS(image)[0];
+	int r, rows = PyArray_DIMS(image)[1];
 	int max = rows*cols;
 	float *p1 = malloc(sizeof(tFloat32)*max);
-	memcpy(p1,NA_OFFSETDATA(temp),sizeof(tFloat32)*max);
-	Py_XDECREF(temp);
+	memcpy(p1,PyArray_DATA(image),max*sizeof(tFloat32));
+
 	
 	BinFMatrix(p1,rows,cols,bin);
 	rows /= bin;
@@ -370,15 +369,15 @@ static Polygon PyArrayToPolygon( PyObject *object ) {
 	
 static Image PyArrayToImage( PyObject *image ) {
 	
-	PyArrayObject *temp = NA_InputArray(image,tInt32,NUM_C_ARRAY);
+	int maxrow = PyArray_DIMS(image)[0];
+	int maxcol = PyArray_DIMS(image)[1];
 	
-	int maxrow = temp->dimensions[0];
-	int maxcol = temp->dimensions[1];
+	float *input = PyArray_DATA(image);
 	
 	Image newImage = CreateImage(maxrow,maxcol);
-	memcpy(newImage->pixels[0],NA_OFFSETDATA(temp),sizeof(tInt32)*maxrow*maxcol);
 	
-	Py_XDECREF( temp );
+	int k;
+	for (k=0;k<maxrow*maxcol;k++) newImage->pixels[k] = input[k];
 	
 	return newImage;
 	
