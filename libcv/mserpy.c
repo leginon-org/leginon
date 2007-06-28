@@ -132,8 +132,9 @@ static PyObject *PyDOG(PyObject *self, PyObject *args) {
 	fprintf(stderr,"Binning: %d   Range: %d-%d,%d\n",bin,start,end,sampling);
 	fprintf(stderr,"Output: %d   Scale Stable:  %d\n",debug,stable);
 	
-	int c, cols = PyArray_DIMS(image)[0];
-	int r, rows = PyArray_DIMS(image)[1];
+	int *dims = PyArray_DIMS(image);
+	int c, cols = dims[0];
+	int r, rows = dims[1];
 	int max = rows*cols;
 	float *p1 = malloc(sizeof(tFloat32)*max);
 	memcpy(p1,PyArray_DATA(image),max*sizeof(tFloat32));
@@ -370,8 +371,8 @@ static Polygon PyArrayToPolygon( PyObject *object ) {
 	
 static Image PyArrayToImage( PyObject *image ) {
 	
-	int maxrow = PyArray_DIMS(image)[0];
-	int maxcol = PyArray_DIMS(image)[1];
+	int maxrow = ((int *)PyArray_DIMS(image))[0];
+	int maxcol = ((int *)PyArray_DIMS(image))[1];
 	
 	float *input = PyArray_DATA(image);
 	
