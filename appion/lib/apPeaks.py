@@ -65,7 +65,12 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params, maptype):
 	if params["maxthresh"] is not None:
 		peaktree = maxThreshPeaks(peaktree, float(params["maxthresh"]))
 	removeOverlappingPeaks(peaktree, cutoff)
-
+	
+	if maptype=='dogmap':
+		#remove peaks from areas near the border of the image
+		#only do this for dogmaps because findem already eliminates border pix from cccmaxmaps
+		peaktree=removeBorderPeaks(peaktree,diam,imgdict['camera']['dimension']['x'],imgdict['camera']['dimension']['y'])
+		
 	if(len(peaktree) > maxpeaks):
 		apDisplay.printWarning("more than maxpeaks ("+str(maxpeaks)+" peaks), selecting only top peaks")
 		peaktree.sort(_peakCompare)
@@ -166,6 +171,20 @@ def removeOverlappingPeaks(peaktree, cutoff):
 
 	return peaktree
 
+def removeBorderPeaks(peaktree, diam, xdim, ydim):
+	#remove peaks that are less than 1/2 diam from a border
+	r=diam/2
+	xymin=r
+	xmax=xdim-r
+	ymax=ydim-r
+	newpeaktree=[]
+	for peak in peaktree:
+		x=peak['xcoord']
+		y=peak['ycoord']
+		if x>xymin and y>xymin and x<xmax and y<ymax:
+			newpeaktree.append(peak)
+	return newpeaktree
+	
 def _peakCompare(a, b):
 	if float(a['correlation']) > float(b['correlation']):
 		return 1
