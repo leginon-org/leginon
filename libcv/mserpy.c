@@ -1,5 +1,6 @@
 #include <Python.h>
 #include <numarray/libnumarray.h>
+#include <numpy/arrayobject.h>
 #include "geometry.h"
 #include "util.h"
 #include "image.h"
