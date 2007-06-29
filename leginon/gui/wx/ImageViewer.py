@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.55 $
+# $Revision: 1.56 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-06-15 21:01:18 $
+# $Date: 2007-06-29 23:28:46 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -1780,7 +1780,7 @@ if __name__ == '__main__':
 		app.panel.setImage(None)
 	elif filename[-4:] == '.mrc':
 		image = mrc.read(filename)
-		app.panel.setImage(image)
+		app.panel.setImage(image.astype(numpy.float32))
 	else:
 		app.panel.setImage(Image.open(filename))
 	app.MainLoop()
