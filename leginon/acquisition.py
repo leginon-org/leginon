@@ -282,7 +282,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 			### acquire film or CCD
 			self.startTimer('acquire')
-			ret = self.acquire(presetdata, emtarget, attempt=attempt)
+			ret = self.acquire(presetdata, emtarget, attempt=attempt, target=targetdata)
 			self.stopTimer('acquire')
 			# in these cases, return immediately
 			if ret in ('aborted', 'repeat'):
@@ -521,7 +521,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(imagedata['camera'], database=True)
 		return imagedata
 
-	def acquire(self, presetdata, emtarget=None, attempt=None):
+	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		self.moveAndPreset(presetdata, emtarget)
 
 		pausetime = self.settings['pause time']

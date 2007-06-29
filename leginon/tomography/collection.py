@@ -133,6 +133,7 @@ class Collection(object):
         except Exception, e:
             self.logger.error('Failed to remove backlash: %s.' % e)
             self.finalize()
+            raise
             raise Fail
 
         self.checkAbort()

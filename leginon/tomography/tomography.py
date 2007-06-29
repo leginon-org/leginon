@@ -160,7 +160,9 @@ class Tomography(acquisition.Acquisition):
         self.logger.error('Film acquisition not currently supported.')
         return
 
-    def acquire(self, presetdata, target=None, emtarget=None, attempt=None):
+    def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
+        self.moveAndPreset(presetdata, emtarget)
+
         try:
             calibrations = self.getCalibrations()
         except CalibrationError, e:
@@ -386,14 +388,13 @@ class Tomography(acquisition.Acquisition):
 
     def measureDefocus(self):
         beam_tilt = 0.01
-        publish_images = False
-        drift_threshold = None
         stig = False
-        target = None
         correct_tilt = True
         correlation_type = 'phase'
         settle = 0.5
-        args = (beam_tilt, publish_images, drift_threshold, stig, target, correct_tilt, correlation_type, settle)
+        image0 = None
+
+        args = (beam_tilt, stig, correct_tilt, correlation_type, settle, image0)
         try:
             result = self.calclients['beam tilt'].measureDefocusStig(*args)
         except calibrationclient.NoMatrixCalibrationError, e:

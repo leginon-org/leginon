@@ -54,10 +54,10 @@ class Viewer(wx.Panel):
         if index is None:
             for v in self.viewers:
                 v.targetsplugin.clearTargets()
-                v.setNumarray(None)
+                v.setNumpy(None)
         else:
             self.viewers[index].targetsplugin.clearTargets()
-            self.viewers[index].setNumarray(None)
+            self.viewers[index].setNumpy(None)
 
     def setImage(self, *args, **kwargs):
         evt = ImageEvent('_setImage', args, kwargs)
@@ -65,7 +65,7 @@ class Viewer(wx.Panel):
 
     def _setImage(self, index, image, shift=None):
         self.viewers[index].targetsplugin.clearTargets()
-        self.viewers[index].setNumarray(image)
+        self.viewers[index].setNumpy(image)
         if image is not None and shift is not None:
             x, y = shift
             x += image.shape[1]/2
@@ -74,7 +74,7 @@ class Viewer(wx.Panel):
 
     def _setShift(self, index, shift, center=True):
         self.viewers[index].targetsplugin.clearTargets()
-        image = self.viewers[index].getNumarray()
+        image = self.viewers[index].getNumpy()
         if image is None or shift is None:
             return
         x, y = shift
@@ -102,15 +102,15 @@ class Viewer(wx.Panel):
         self.GetEventHandler().AddPendingEvent(evt)
 
     def _addImage(self, image, foo=None):
-        image1 = self.imageviewer1.getNumarray()
-        image2 = self.imageviewer2.getNumarray()
+        image1 = self.imageviewer1.getNumpy()
+        image2 = self.imageviewer2.getNumpy()
         if image1 is None:
-            self.imageviewer1.setNumarray(image)
+            self.imageviewer1.setNumpy(image)
         elif image2 is None:
-            self.imageviewer2.setNumarray(image)
+            self.imageviewer2.setNumpy(image)
         else:
-            self.imageviewer1.setNumarray(image2)
-            self.imageviewer2.setNumarray(image)
+            self.imageviewer1.setNumpy(image2)
+            self.imageviewer2.setNumpy(image)
 
 if __name__ == '__main__':
     class MyApp(wx.App):
