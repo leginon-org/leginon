@@ -14,7 +14,7 @@ def hanning(size):
     return numpy.fromfunction(function, (size, size))
 
 class Correlator(object):
-    def __init__(self, tilt_axis, correlation_binning=2):
+    def __init__(self, tilt_axis, correlation_binning=1):
         self.correlation = correlator.Correlator()
         self.peakfinder = peakfinder.PeakFinder()
         self.reset()
@@ -61,12 +61,11 @@ class Correlator(object):
         image[:rows/2, columns/2:] = swap
 
     def correlate(self, image, tilt, channel=None):
-        # pad for now (not enough time to not be lazy)
         if len(image.shape) != 2 or image.shape[0] != image.shape[1]:
             raise ValueError
 
-        padded_image = numpy.zeros(image.shape, image.dtype)
-        image = scipy.ndimage.zoom(image, 1.0/self.correlation_binning)
+        if self.correlation_binning != 1:
+            image = scipy.ndimage.zoom(image, 1.0/self.correlation_binning)
 
         mean = image.mean()
         image -= mean
@@ -75,11 +74,7 @@ class Correlator(object):
             self.hanning = hanning(image.shape[0])
         image *= self.hanning
 
-        row = (padded_image.shape[0] - image.shape[0])/2
-        column = (padded_image.shape[1] - image.shape[1])/2
-        padded_image[row:row + image.shape[0],
-                     column:column + image.shape[1]] = image
-        self.correlation.insertImage(padded_image)
+        self.correlation.insertImage(image)
         self.channel = channel
         try:
             pc = self.correlation.phaseCorrelate()
@@ -108,26 +103,20 @@ class Correlator(object):
         return shift
 
 if __name__ == '__main__':
-#    import numpy.random
-#    _correlator = Correlator(None, None)
-#
-#    size = 16
-#
-#    offset = (400 + 64, 400 + 64)
-#    image = numpy.random.random((512, 512))
-#    image[offset[0]:offset[0] + size, offset[1]:offset[1] + size] += 16
-#    _correlator.correlate(image, None)
-#
-#    offset = (50 + 64, 50 + 64)
-#    image = numpy.random.random((512, 512))
-#    image[offset[0]:offset[0] + size, offset[1]:offset[1] + size] += 16
-#    _correlator.correlate(image, None)
-#
-#    print _correlator.getShift(True)
+    import numpy.random
+    _correlator = Correlator(None, 2)
 
-    from pyami import mrc
+    size = 16
 
-    window = hanning(1024)
+    offset = (400 + 64, 400 + 64)
+    image = numpy.random.random((4096, 4096))
+    image[offset[0]:offset[0] + size, offset[1]:offset[1] + size] += 16
+    _correlator.correlate(image, None)
 
-    mrc.write(window, 'foo.mrc')
+    offset = (50 + 64, 50 + 64)
+    image = numpy.random.random((4096, 4096))
+    image[offset[0]:offset[0] + size, offset[1]:offset[1] + size] += 16
+    _correlator.correlate(image, None)
+
+    print _correlator.getShift(True)
 

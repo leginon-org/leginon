@@ -65,7 +65,7 @@ class Collection(object):
                                                  self.target, self.emtarget)
         self.tilt_series.save()
 
-        self.correlator = tiltcorrelator.Correlator(self.theta)
+        self.correlator = tiltcorrelator.Correlator(self.theta, 6)
         #self.settings['xcf bin']
 
         if self.settings['run buffer cycle']:
