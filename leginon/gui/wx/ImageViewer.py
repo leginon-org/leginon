@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.56 $
+# $Revision: 1.57 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-06-29 23:28:46 $
+# $Date: 2007-06-30 01:10:37 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -1746,6 +1746,20 @@ class ClickAndTargetImagePanel(TargetImagePanel):
 	def onImageClickDone(self, evt):
 		self.clicktool.onImageClickDone(evt)
 
+class TargetOutputPanel(TargetImagePanel):
+	def __init__(self, parent, id, callback=None, tool=True):
+		TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool)
+
+		self.quit = wx.Button(self, -1, 'Quit')
+		self.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
+		self.sizer.Add(self.quit, (0, 0), (1, 1), wx.EXPAND)
+
+	def onQuit(self, evt):
+		targets = self.getTargets('Target Practice')
+		for target in targets:
+			print '%s\t%s' % (target.x, target.y)
+		wx.Exit()
+
 if __name__ == '__main__':
 	import sys
 
@@ -1765,9 +1779,10 @@ if __name__ == '__main__':
 #			self.panel.Bind(EVT_IMAGE_CLICKED,
 #							lambda e: self.panel.setImage(self.panel.imagedata))
 
-			self.panel = TargetImagePanel(frame, -1)
+			#self.panel = TargetImagePanel(frame, -1)
+			self.panel = TargetOutputPanel(frame, -1)
 			self.panel.addTypeTool('Target Practice', toolclass=TargetTypeTool, display=wx.RED, target=True)
-			self.panel.setTargets('Target Practice', [(100, 100)])
+			self.panel.setTargets('Target Practice', [])
 
 			self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)
 			frame.SetSizerAndFit(self.sizer)
