@@ -67,7 +67,7 @@ module: acquisition
 type: Pipeline
 
 [MosaicClickTargetFinder]
-module: targetfinder
+module: mosaictargetfinder
 type: Pipeline
 
 [Focuser]
@@ -138,6 +138,10 @@ type: Pipeline
 [ClickTargetTransformer]
 module: clicktargettransformer
 type: Utility
+
+[MosaicSectionFinder]
+module: mosaicsectionfinder
+type: Pipeline
 
 [ClickMaskMaker]
 module: clickmaskmaker
