@@ -201,7 +201,7 @@ class Robot(node.Node):
 		gridid = ievent['grid ID']
 		self._handleQueueGrid(nodename, gridid)
 
-	def _handleQueueGrid(self, nodename, gridid):
+	def REAL_handleQueueGrid(self, nodename, gridid):
 		evt = event.GridLoadedEvent()
 		evt['request node'] = nodename
 		evt['grid'] = data.GridData(initializer={'grid ID': gridid})
@@ -227,6 +227,27 @@ class Robot(node.Node):
 		else:
 			evt['status'] = 'failed'
 		evt['grid'] = request.griddata
+
+		self.outputEvent(evt)
+
+	def _handleQueueGrid(self, nodename, gridid):
+		evt = event.GridLoadedEvent()
+		evt['request node'] = nodename
+		evt['grid'] = data.GridData(initializer={'grid ID': gridid})
+
+		number = self.getGridNumber(gridid)
+		if number is None:
+			evt['status'] = 'invalid'
+			self.outputEvent(evt)
+			return
+
+		if self.queue.empty() and not self.startevent.isSet():
+			self.logger.info('Grid load request has been made'
+												+ ', press \'Start\' button to begin processing')
+			self.setStatus('user input')
+
+		request = GridRequest(number, gridid, nodename)
+		evt['status'] = 'failed'
 
 		self.outputEvent(evt)
 
