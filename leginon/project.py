@@ -35,7 +35,7 @@ class GridBox(sqldict.ObjectBuilder):
 
 class Grid(sqldict.ObjectBuilder):
 	table = 'grids'
-	columns = ['gridId', 'label', 'specimenId', 'number', 'boxId']
+	columns = ['gridId', 'label', 'specimenId', 'number', 'boxId','preparation','concentration','fraction','note','sort']
 
 class GridLocation(sqldict.ObjectBuilder):
 	table = 'gridlocations'
