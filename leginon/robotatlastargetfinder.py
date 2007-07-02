@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.23 $
+# $Revision: 1.24 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-21 23:40:50 $
-# $Author: pulokas $
+# $Date: 2007-07-02 19:19:08 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -290,8 +290,32 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			self.logger.warning('Grid %s not in current tray' % label)
 		elif status == 'failed':
 			self.logger.warning('Robot failed to load grid %s' % label)
+			self.abortGridTargets(evt['grid'])
 		else:
 			self.logger.warning('Unknown status for grid %s' % label)
+			
+	def abortGridTargets(self,griddata):
+		self.updateAtlasTargets()
+		grid = self.grids.getGridByID(griddata['grid ID'])
+		for insertion in grid.insertions:
+
+			targetimages = []
+			for image in insertion.images:
+				if image.hasTargets():
+					targetimages.append(image)
+			if not targetimages:
+				continue
+		for image in targetimages:
+			targets = []
+			targetdatalist = list(image.targetdatalist)
+			for targetdata in targetdatalist:
+				if targetdata['status'] == 'new':
+					targetdata = image.updateTargetStatus(targetdata, 'aborted')
+				elif targetdata['status'] == 'processing':
+					targetdata = image.updateTargetStatus(targetdata, 'aborted')
+				else:
+					continue
+		self.updateAtlasTargets()
 
 	def getAtlases(self):
 		self.insertion = None
