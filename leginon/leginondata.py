@@ -1253,6 +1253,16 @@ class MosaicClickTargetFinderSettingsData(ClickTargetFinderSettingsData,
 			('scale image', bool),
 			('scale size', int),
 			('create on tile change', str),
+		)
+		return typemap
+	typemap = classmethod(typemap)
+
+class MosaicSectionFinderSettingsData(ClickTargetFinderSettingsData,
+																					SquareFinderSettingsData):
+	def typemap(cls):
+		typemap = MosaicClickTargetFinderSettingsData.typemap()
+		typemap += (
+			('autofinder', bool),
 			('min region area', float),
 			('max region area', float),
 			('axis ratio', float),
@@ -1267,7 +1277,6 @@ class MosaicClickTargetFinderSettingsData(ClickTargetFinderSettingsData,
 			('section display', bool),
 			('raster spacing', float),
 			('raster angle', float),
-			('autofinder', bool),
 			('targetpreset', str),
 			('raster overlap', float),
 			('black on white', bool),
