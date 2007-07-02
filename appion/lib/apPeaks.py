@@ -58,8 +58,8 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params, maptype):
 	peaktree = convertBlobsToPeaks(blobtree, tmpldbid, tmplnum, bin)
 	print "Template "+str(tmplnum)+": Found",len(peaktree),"peaks ("+\
 		str(percentcov)+"% coverage)"
-	if(percentcov > 10):
-		apDisplay.printWarning("thresholding covers more than 10% of image; you should increase the threshold")
+	if(percentcov > 25):
+		apDisplay.printWarning("thresholding covers more than 25% of image; you should increase the threshold")
 
 	cutoff = olapmult*pixrad #1.5x particle radius in pixels
 	if params["maxthresh"] is not None:
