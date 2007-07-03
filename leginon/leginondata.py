@@ -1661,3 +1661,16 @@ class StageTiltAxisOffsetData(CalibrationData):
 			('offset', float),
 		)
 	typemap = classmethod(typemap)
+
+class ManualImageLoaderSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('camera settings', CameraSettingsData),
+			('correct image', bool),
+			('save image', bool),
+			('defocus', float),
+			('image directory', str),
+			('jump filename', str),
+		)
+	typemap = classmethod(typemap)
+
