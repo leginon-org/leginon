@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.24 $
+# $Revision: 1.25 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-07-02 19:19:08 $
+# $Date: 2007-07-04 01:07:58 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -753,7 +753,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 	def reacquireImage(self, imagedata, test=False, target=None, griddata=None):
 		presetname = imagedata['preset']['name']
-		self.logger.info('DEBUG: preset name: %s' % (presetname, ))
+		self.logger.debug('preset name: %s' % (presetname, ))
 		presetdata = self.presetsclient.getPresetFromDB(presetname)
 
 		try:
@@ -810,7 +810,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			targetdata['number'] = max([r['number'] for r in self.research(query)])+1
 		except ValueError:
 			targetdata['number'] = 0
-		self.logger.info('DEBUG: new number: %s' % (targetdata['number'], ))
+		self.logger.debug('new number: %s' % (targetdata['number'], ))
 
 		targetdata['preset'] = presetdata
 		targetdata['grid'] = griddata
@@ -847,7 +847,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		imagedata2['label'] = self.name
 		imagedata2['grid'] = griddata
 		self.setImageFilename(imagedata2)
-		self.logger.info('DEBUG: new filename: %s' % (imagedata2['filename'], ))
+		self.logger.debug('new filename: %s' % (imagedata2['filename'], ))
 
 		self.publish(imagedata2, pubevent=True, database=True)
 
