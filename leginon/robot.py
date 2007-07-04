@@ -88,6 +88,9 @@ class GridQueueEmpty(GridException):
 class GridLoadError(GridException):
 	pass
 
+class GridLoadFromTrayError(GridException):
+	pass
+
 class GridUnloadError(GridException):
 	pass
 
@@ -161,6 +164,7 @@ class Robot(node.Node):
 
 		self.emailclient = emailnotification.EmailClient(self)
 		self.simulate = False
+		self.startnowait = False
 
 		self.traysFromDB()
 
@@ -192,64 +196,31 @@ class Robot(node.Node):
 		self.usercontinue.set()
 
 	def handleQueueGrids(self, ievent):
+		'''
+		Handle queue of grids from another node.
+		Wait for user to click start before inserting into the queue.
+		'''
+
+		# wait for user to start
+		self.logger.info('Grid load request has been made' + ', press \'Start\' button to begin processing')
+		self.setStatus('user input')
+		self.startevent.clear()
+		self.startevent.wait()
+
 		nodename = ievent['node']
+		# insert all the grids before handling them
 		for gridid in ievent['grid IDs']:
-			self._handleQueueGrid(nodename, gridid)
-
+			number = self.getGridNumber(gridid)
+			request = GridRequest(number, gridid, nodename)
+			self.queue.put(request)
+		self.startnowait = True
+		self._queueHandler()
+		
 	def handleQueueGrid(self, ievent):
-		nodename = ievent['node']
-		gridid = ievent['grid ID']
-		self._handleQueueGrid(nodename, gridid)
-
-	def REAL_handleQueueGrid(self, nodename, gridid):
-		evt = event.GridLoadedEvent()
-		evt['request node'] = nodename
-		evt['grid'] = data.GridData(initializer={'grid ID': gridid})
-
-		number = self.getGridNumber(gridid)
-		if number is None:
-			evt['status'] = 'invalid'
-			self.outputEvent(evt)
-			return
-
-		if self.queue.empty() and not self.startevent.isSet():
-			self.logger.info('Grid load request has been made'
-												+ ', press \'Start\' button to begin processing')
-			self.setStatus('user input')
-
-		request = GridRequest(number, gridid, nodename)
-		self.queue.put(request)
-
-		request.event.wait()
-
-		if request.loaded:
-			evt['status'] = 'ok'
-		else:
-			evt['status'] = 'failed'
-		evt['grid'] = request.griddata
-
-		self.outputEvent(evt)
-
-	def _handleQueueGrid(self, nodename, gridid):
-		evt = event.GridLoadedEvent()
-		evt['request node'] = nodename
-		evt['grid'] = data.GridData(initializer={'grid ID': gridid})
-
-		number = self.getGridNumber(gridid)
-		if number is None:
-			evt['status'] = 'invalid'
-			self.outputEvent(evt)
-			return
-
-		if self.queue.empty() and not self.startevent.isSet():
-			self.logger.info('Grid load request has been made'
-												+ ', press \'Start\' button to begin processing')
-			self.setStatus('user input')
-
-		request = GridRequest(number, gridid, nodename)
-		evt['status'] = 'failed'
-
-		self.outputEvent(evt)
+		newevent = {}
+		newevent['node'] = ievent['node']
+		newevent['grid IDs'] = [ievent['grid ID'],]
+		self.handleQueueGrids(newevent)
 
 	def handleUnloadGrid(self, evt):
 		gridid = evt['grid ID']
@@ -281,11 +252,17 @@ class Robot(node.Node):
 		self.communication.Signal11 = int(self.settings['grid clear wait'])
 
 		while True:
-			self.startevent.clear()
-			self.startevent.wait()
+			### need to wait if something goes wrong
+			if not self.startnowait:
+				self.usercontinue.clear()
+				self.usercontinue.wait()
+
 			if self.exitevent.isSet():
 				break
+
 			while True:
+
+
 				try:
 					request = self.queue.get(block=False)
 					if isinstance(request, ExitRequest):
@@ -293,7 +270,21 @@ class Robot(node.Node):
 				except Queue.Empty:
 					request = self.getUserGridRequest()
 					if request is None:
+						self.startnowait = False
 						break
+
+				gridid = request.gridid
+				evt = event.GridLoadedEvent()
+				evt['request node'] = request.node
+				evt['grid'] = data.GridData(initializer={'grid ID': gridid})
+				evt['status'] = 'failed'
+				gridnumber = request.number
+				
+				self.selectGrid(gridnumber)
+				if gridnumber is None:
+					evt['status'] = 'invalid'
+					self.outputEvent(evt)
+					return
 
 				if self.settings['simulate']:
 					self.communication = TestCommunication()
@@ -301,7 +292,6 @@ class Robot(node.Node):
 					self.communication = communication_good
 					
 				self.setStatus('processing')
-				gridnumber = request.number
 				self.selectGrid(gridnumber)
 				self.logger.info('grid selected')
 				self.gridnumber = gridnumber
@@ -312,15 +302,28 @@ class Robot(node.Node):
 					self.gridnumber = None
 					continue
 
+				except GridLoadFromTrayError:
+					self.gridnumber = None
+					self.startnowait = True
+					self.outputEvent(evt)
+					request.event.set()
+					continue
+
 				self.setStatus('idle')
+
+				evt['grid'] = griddata
 
 				if griddata is None:
 					break
 
+				self.startnowait = False
 				if hasattr(request, 'loaded'):
-					request.loaded = True
+					evt['status'] = 'ok'
 				if hasattr(request, 'griddata'):
 					request.griddata = griddata
+
+
+				self.outputEvent(evt)
 				request.event.set()
 
 				self.extractcondition.acquire()
@@ -709,7 +712,7 @@ class Robot(node.Node):
 			if self.communication.Signal8:
 				self.logger.warning('Robot failed to extract grid from tray')
 				self.communication.Signal8 = 0
-				raise GridLoadError
+				raise GridLoadFromTrayError
 			time.sleep(0.5)
 		self.communication.Signal0 = 0
 		self.logger.info('Robot is ready for insertion')
