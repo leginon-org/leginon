@@ -114,6 +114,11 @@ class particledata {
 			$q .= "from ApDogParamsData s "
 				."left join ApSelectionRunData r on (s.`DEF_id` = r.`REF|ApDogParamsData|dogparams`) ";
 		}
+		elseif ($r['REF|ApManualParamsData|manparams']) {
+			$manparamid=$r['REF|ApManualParamsData|manparams'];
+			$q .= "from ApManualParamsData s "
+				."left join ApSelectionRunData r on (s.`DEF_id` = r.`REF|ApManualParamsData|manparams`) ";
+		}
 		
 			$q .= "where r.`DEF_id` = '$runId' ";
 		//echo $q;
