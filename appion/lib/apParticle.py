@@ -82,6 +82,22 @@ def getParticles(imgdata, selectionRunId):
 	shift={'shiftx':0, 'shifty':0}
 	return(particles,shift)
 
+def getParticlesForImageFromRunName(imgdata,runname):
+	"""
+	returns particles for a given image and selection run name
+	"""
+	srunq=appionData.ApSelectionRunData()
+	srunq['name']=runname
+	srunq['dbemdata|SessionData|session']=imgdata['session'].dbid
+	
+	ptclq=appionData.ApParticleData()
+	ptclq['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
+	ptclq['selectionrun']=srunq
+	
+	ptcldata = appiondb.query(ptclq)
+	return ptcldata
+	
+	
 def getParticlesREFLEGINON(imgdata, selectionRunId):
 	"""
 	returns paticles (as a list of dicts) for a given image
@@ -460,6 +476,9 @@ def insertSelexonParams(params,expid):
  	# parameters are the same as the previous
  	else:
 		if not selexonparamsdata or runids[0]['params'] != selexonparamsdata[0]:
+			print runids[0]['params']
+			print selexonparamsq
+			print selexonparamsdata[0]
 			if selexonparamsdata:
 				for i in selexonparamsdata[0]:
 					if selexonparamsdata[0][i] != runids[0]['params'][i]:

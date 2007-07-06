@@ -35,6 +35,7 @@ class ApSelectionRunData(Data):
 		return Data.typemap() + (
 			('params', ApSelectionParamsData),
 			('dogparams', ApDogParamsData),
+			('manparams', ApManualParamsData),
 			('dbemdata|SessionData|session', int),
 			('name', str), 
 		)
@@ -96,6 +97,16 @@ class ApTemplateRunData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApTemplateRunData=ApTemplateRunData
 
+class ApManualParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('diam', int),
+			('bin', int),
+			('lp_filt', int),
+			('hp_filt', int),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApManualParamsData=ApManualParamsData
 
 
 ### Shift Table(s)
