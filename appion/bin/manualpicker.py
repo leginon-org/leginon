@@ -16,7 +16,7 @@ def runManualPicker(imgname,params):
 	#use ImageViewer to pick particles
 	#this is a total hack but an idea that can be expanded on
 	imgpath=os.path.join(params['rundir'],imgname)
-	commandlst=['ImageViewer.py',imgpath]
+	commandlst=['ApImageViewer.py',imgpath]
 	manpicker=subprocess.Popen(commandlst,stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 	outstring=manpicker.stdout.read()
 	words=outstring.split()
