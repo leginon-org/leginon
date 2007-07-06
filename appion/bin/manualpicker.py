@@ -96,7 +96,8 @@ class manualPicker(appionLoop.AppionLoop):
 			processAndSaveAllImages(self.params)
 	
 	def processImage(self, imgdata):
-		#apFindEM.processAndSaveImage(imgdata, params=self.params)
+		if not self.params['dbimages']:
+			apFindEM.processAndSaveImage(imgdata, params=self.params)
 		self.peaktree  = runManualPicker(imgdata['filename']+'.dwn.mrc',self.params)
 
 	def commitToDatabase(self, imgdata):
