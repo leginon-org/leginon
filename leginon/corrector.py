@@ -13,12 +13,14 @@ import data
 import event
 import node
 import numpy
+ma = numpy.ma
 import threading
 import gui.wx.Corrector
 import remotecall
 import instrument
 import sys
 from pyami import arraystats, imagefun
+import polygon
 
 class CameraError(Exception):
 	pass
@@ -75,6 +77,7 @@ class Corrector(node.Node):
 		self.ref_cache = {}
 		self.plan = None
 		self.channel = 0
+		self.corimagedata = None
 
 		self.instrument = instrument.Proxy(self.objectservice,
 																				self.session,
@@ -175,6 +178,25 @@ class Corrector(node.Node):
 				self.displayImage(image)
 		self.panel.acquisitionDone()
 		self.stopTimer('acquireCorrected')
+
+	def modifyNorm(self):
+		self.startTimer('modifyNorm')
+                try:
+			imagedata = self.corimagedata
+			camdata = imagedata['camera']
+			scopedata = imagedata['scope']
+			ccdcamera = camdata['ccdcamera']
+                        ccdcameraname = self.instrument.getCCDCameraName()
+			corstate = data.CorrectorCamstateData()
+			corstate['dimension'] = camdata['dimension']
+			corstate['offset'] = camdata['offset']
+			corstate['binning'] = camdata['binning']
+
+                        self.modifyByMask(self.maskimg, ccdcameraname, corstate, scopedata)
+		except Exception, e:
+			self.logger.exception('Modify normalization image failed: %s' % e)
+		self.stopTimer('modifyNorm')
+		self.maskimg = numpy.zeros(self.maskimg.shape)
 
 	def displayImage(self, image):
 		self.startTimer('Corrector.displayImage')
@@ -434,6 +456,7 @@ class Corrector(node.Node):
 		self.storeRef('norm', norm, corstate, scopedata, channel)
 
 	def acquireCorrectedImageData(self, ccdcameraname=None):
+		self.setTargets([], 'Regions', block=False)
 		self.startTimer('acquireCorrectedImageData')
 		self.setStatus('processing')
 		errstr = 'Acquisition of corrected image failed: %s'
@@ -471,7 +494,36 @@ class Corrector(node.Node):
 		newdata['correction channel'] = self.channel
 		self.setStatus('idle')
 		self.stopTimer('acquireCorrectedImageData')
+		
+		self.corimagedata = imagedata
+		
+		self.maskimg = numpy.zeros(numimage.shape)
 		return newdata
+
+        def modifyByMask(self,mask, ccdcameraname, camstate, scopedata):
+		for channel in range(0,self.settings['channels']):
+			## use reference image from database
+                        ref = self.researchRef(camstate, 'norm', ccdcameraname, scopedata, channel)
+			if ref:
+                                ## make it float to do float math later
+                                norm = numpy.asarray(ref['image'], numpy.float32)
+                        else:
+                                self.logger.warning('No normalized image for normalization calculations')
+                                return
+                        if norm.shape != mask.shape:
+                                self.logger.warning('Wrong mask dimension for channel %d' %channel)
+                        else:
+                                mean = arraystats.mean(norm)
+                                maskedimage=ma.masked_array(norm,mask=mask)
+				diff = 1.0/maskedimage
+				mean = diff.mean().tolist()
+                                newnorm = maskedimage.filled(fill_value = 1.0/mean)
+				try:
+                                	self.storeRef('norm', newnorm, camstate, scopedata, channel)
+                                	self.logger.info('Saved modified norm image for channel %d' %channel)
+				except:
+					pass
+		return
 
 	def correct(self, ccdcamera, original, camstate, scopedata):
 		'''
@@ -654,3 +706,18 @@ class Corrector(node.Node):
 		if i == tries-1:
 			self.logger.info('Failed to find target mean after %s tries' % (tries,))
 
+
+	def onAdd(self):
+		vertices = []
+		dir(self)
+		vertices = self.panel.imagepanel.getTargetPositions('Regions')
+		def reversexy(coord):
+			clist=list(coord)
+			clist.reverse()
+			return tuple(clist)
+		vertices = map(reversexy,vertices)
+		polygonimg = polygon.filledPolygon(self.maskimg.shape,vertices)
+		type(polygonimg)
+		self.maskimg = self.maskimg + polygonimg
+		self.maskimg = numpy.where(self.maskimg==0,0,1)
+		self.setTargets([], 'Regions', block=False)

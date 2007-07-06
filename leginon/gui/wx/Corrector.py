@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.51 $
+# $Revision: 1.52 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-13 03:01:26 $
+# $Date: 2007-07-06 23:42:44 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -133,6 +133,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_ACQUIRE,
 													'acquire',
 													shortHelpString='Acquire')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLUS,'plus',shortHelpString='Add Region')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,'play',shortHelpString='play')
 		self.toolbar.Realize()
 
 		# settings
@@ -164,6 +166,10 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.imagepanel.addTargetTool('Bad Pixels', wx.Color(255, 0, 0), target=True, shape='.')
 		self.imagepanel.selectiontool.setDisplayed('Bad Pixels', True)
 		self.imagepanel.setTargets('Bad Pixels', [])
+		self.imagepanel.addTargetTool('Regions', wx.Color(0, 255, 255), target=True, display=True)
+		self.imagepanel.selectiontool.setDisplayed('Regions', True)
+		self.imagepanel.setTargets('Regions', [])
+
 		self.szmain.Add(self.imagepanel, (0, 1), (2, 1), wx.EXPAND)
 
 		self.szmain.AddGrowableRow(1)
@@ -179,6 +185,12 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 											id=gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool,
 											id=gui.wx.ToolBar.ID_ACQUIRE)
+
+		self.toolbar.Bind(wx.EVT_TOOL, self.onAddTool,
+											id=gui.wx.ToolBar.ID_PLUS)
+
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
+											id=gui.wx.ToolBar.ID_PLAY)
 
 		self.settingsdialog = SettingsDialog(self)
 
@@ -217,6 +229,12 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	def onAcquisitionDone(self, evt):
 		self._acquisitionEnable(True)
 
+        def onAddTool(self, evt):
+                self.node.onAdd()
+
+        def onPlayTool(self, evt):
+                self.node.modifyNorm()
+                
 	def setPlan(self, plan):
 		if not hasattr(self, 'plan'):
 			self.plan = {}
