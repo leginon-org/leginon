@@ -235,8 +235,8 @@ function createClassifierForm($extra=false, $title='Classifier.py Launcher', $he
 	echo"
           </select>
           <BR>
-          <input type='submit' name='process' value='Create Stack'><BR>
-          <FONT COLOR='RED'>Submission will NOT create a stack, only output a command that you can copy and paste into a unix shell</FONT>
+          <input type='submit' name='process' value='Create Class'><BR>
+          <FONT COLOR='RED'>Submission will NOT start classification, only output a command that you can copy and paste into a unix shell</FONT>
           </TD>
         </TR>
         </TABLE>
