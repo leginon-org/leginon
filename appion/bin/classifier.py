@@ -127,7 +127,17 @@ def getStackId(params):
 
 def getStackInfo(params):
 	#get the stack params
-	stackrundata = appiondb.direct_query(appionData.ApStackRunData, params['stackid'])
+	print "getting stack parameters for stackid=",params['stackid']
+	stackdata = appiondb.direct_query(appionData.ApStackData, params['stackid'])
+
+	#get stack runsinstack data
+	stackrunsinq = appionData.ApRunsInStackData()
+	stackrunsinq['stack'] = stackdata
+	stackrunsindata = appiondb.query(stackrunsinq, results=1)[0]
+
+	#get stack run data
+	stackrundata = stackrunsindata['stackRun']
+	#stackrundata = appiondb.direct_query(appionData.ApStackRunData, stackrunsindata['stackRun'])
 
 	#get stack param data
 	stackparamdata = stackrundata['stackParams']
@@ -165,10 +175,10 @@ def getStackInfo(params):
 	if stackparamdata['bin'] is not None:
 		params['bin']    = stackparamdata['bin']
 	params['apix']      = apDatabase.getPixelSize(imgdata)*params['bin']
-	params['stackpath'] = os.path.abspath(stackrundata['stackPath'])
+	params['stackpath'] = os.path.abspath(stackdata['stackPath'])
 	if params['outdir'] is None:
 		params['outdir'] = params['stackpath']
-	params['stackfile'] = os.path.join(params['stackpath'],stackrundata['name'])
+	params['stackfile'] = os.path.join(params['stackpath'],stackdata['name'])
 	params['stacktype'] = stackparamdata['fileType']
 	params['boxsize']   = stackparamdata['boxSize']
 
