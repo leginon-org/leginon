@@ -280,6 +280,10 @@ function runClassifier() {
         if ($numpart > 5000 || $numpart < 10) createClassifierForm("<B>ERROR:</B> Number of particles must be between 10 & 5000");
         if ($numclass > 300 || $numclass < 1) createClassifierForm("<B>ERROR:</B> Number of classes must be between 1 & 300");
 
+	     $particle = new particledata();
+        $totprtls=$particle->getNumStackParticles($stackid);
+        if ($numpart > $totprtls) createClassifierForm("<B>ERROR:</B> Number of particles to classify ($numpart) must be less than the number of particles in the stack ($totprtls)");
+
         $fileformat = ($_POST['fileformat']=='spider') ? 'spider' : '';
 
 //        $command ="source /ami/sw/ami.csh;";
