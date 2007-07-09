@@ -12,6 +12,7 @@ import apParam
 import apDisplay
 import apDB
 import apDatabase
+import apStack
 import appionData
 leginondb = apDB.db
 appiondb = apDB.apdb
@@ -127,37 +128,17 @@ def getStackId(params):
 
 def getStackInfo(params):
 	#get the stack params
-	print "getting stack parameters for stackid=",params['stackid']
-	stackdata = appiondb.direct_query(appionData.ApStackData, params['stackid'])
+	stackpartdata = apStack.getStackParticle(params['stackid'], 1)
 
-	#get stack runsinstack data
-	stackrunsinq = appionData.ApRunsInStackData()
-	stackrunsinq['stack'] = stackdata
-	stackrunsindata = appiondb.query(stackrunsinq, results=1)[0]
-
-	#get stack run data
-	stackrundata = stackrunsindata['stackRun']
-	#stackrundata = appiondb.direct_query(appionData.ApStackRunData, stackrunsindata['stackRun'])
-
-	#get stack param data
-	stackparamdata = stackrundata['stackParams']
-	#stackparamdata = appiondb.direct_query(appionData.ApStackParamsData, stackrundata['stackParams'].dbid)
-
-	#get only one stack particle params
-	stackpartq = appionData.ApStackParticlesData()
-	stackpartq['stackRun'] = stackrundata
-	stackpartdata = appiondb.query(stackpartq, results=1)[0]
-	
-	#get that particle's normal params
+	#separate out data
+	stackdata = stackpartdata['stack']
+	stackrundata = stackpartdata['stackRun']
+	stackparamdata = stackpartdata['stackParams']
 	partdata = stackpartdata['particle']
-	#partdata = appiondb.direct_query(appionData.ApParticleData, stackpartdata['particle'].dbid)
-
 	if partdata['selectionrun']['params'] is not None:
 		selectdata = partdata['selectionrun']['params']
-		#selectdata = appiondb.direct_query(appionData.ApSelectionParamsData, partdata['selectionrun']['params'].dbid)
 	elif partdata['selectionrun']['dogparams'] is not None:
 		selectdata = partdata['selectionrun']['dogparams']
-		#selectdata = appiondb.direct_query(appionData.ApDogParamsData, partdata['selectionrun']['dogparams'].dbid)
 
 	#get image params of the particle
 	imgdata = leginondb.direct_query(leginondata.AcquisitionImageData, partdata['dbemdata|AcquisitionImageData|image'])
