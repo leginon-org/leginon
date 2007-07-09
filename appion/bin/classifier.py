@@ -161,7 +161,7 @@ def getStackInfo(params):
 		params['outdir'] = params['stackpath']
 	params['stackfile'] = os.path.join(params['stackpath'],stackdata['name'])
 	params['stacktype'] = stackparamdata['fileType']
-	params['boxsize']   = stackparamdata['boxSize']
+	params['boxsize']   = int(stackparamdata['boxSize']/params['bin'])
 
 	if 'diam' in selectdata:
 		if params['diam'] is None:
@@ -360,7 +360,8 @@ if __name__ == "__main__":
 	getStackInfo(params)
 	createOutDir(params)
 
-	if not os.path.isfile(os.path.join(params['rundir'], "classes_avg.spi")):
+	classfile = os.path.join(params['rundir'], "classes_avg.spi")
+	if not os.path.isfile(classfile):
 		createSpiderFile(params)
 		averageTemplate(params)
 		createSpiderBatchFile(params)
@@ -373,4 +374,7 @@ if __name__ == "__main__":
 	if params['numclasses'] < 80:
 		classHistogram(params)
 
-	apDisplay.printMsg("classfile located at:\n"+os.path.join(params['rundir'],"classes_avg.spi"))
+	if os.path.isfile(classfile):
+		apDisplay.printMsg("classfile located at:\n"+classfile)
+	else:
+		apDisplay.printError("failed to write classfile, "+classfile)
