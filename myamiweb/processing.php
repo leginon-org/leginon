@@ -110,6 +110,10 @@ if ($sessionId) {
   $stackIds = $particle->getStackIds($sessionId);
   $stackruns=count($stackIds);
 
+  // --- Get Class Data
+  //$classIds = $particle->getClassIds($sessionId);
+  //$classruns=count($classIds);
+
   // --- Get Reconstruction Data
   if ($stackruns>0) {
           foreach ($stackIds as $stackid) {
@@ -199,6 +203,24 @@ if ($sessionId) {
     <TD BGCOLOR='$bgcolor'>
     <A HREF='makestack.php?expId=$sessionId'>";
     echo"Create New Stack</A>
+    </TD>
+  </TR>
+  <TR>\n";
+  if ($classruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
+  else {$bgcolor=$donecolor;$gifimg=$donepic;}
+  echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
+    <TD BGCOLOR='$bgcolor'>
+    <B>2D Classifications</B>
+    </TD>
+    <TD BGCOLOR='$bgcolor'>\n";
+    echo"<I>unavailable</I>\n";
+    //if ($classruns==0) {echo "none";}
+    //else {echo "<A HREF='classsummary.php?expId=$sessionId'>$classruns completed<A>";}
+    echo"
+    </TD>
+    <TD BGCOLOR='$bgcolor'>
+    <A HREF='classifier.php?expId=$sessionId'>";
+    echo"Create New Classification</A>
     </TD>
   </TR>
   <TR>\n";
