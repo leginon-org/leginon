@@ -133,7 +133,7 @@ def getStackInfo(params):
 	#separate out data
 	stackdata = stackpartdata['stack']
 	stackrundata = stackpartdata['stackRun']
-	stackparamdata = stackpartdata['stackParams']
+	stackparamdata = stackrundata['stackParams']
 	partdata = stackpartdata['particle']
 	if partdata['selectionrun']['params'] is not None:
 		selectdata = partdata['selectionrun']['params']
