@@ -1,5 +1,4 @@
 #include <Python.h>
-#include <numarray/libnumarray.h>
 #include <numpy/arrayobject.h>
 #include "geometry.h"
 #include "util.h"
@@ -13,7 +12,6 @@ Image FMatrixToImage( float *data, int rows, int cols );
 static Image PyArrayToImage( PyObject *object );
 static PyObject *ImageToPyArray( Image image );
 float *GaussianBlurF( float *p1, int rows, int cols, float sigma );
-static PyObject *FArrayToPyArray( FArray array );
 int IsMinPeak( float *p1, int r, int c, float cur );
 static PyObject *RegionToPyObject( Region r );
 float *SubtractF( float *p1, float *p2, int size );
@@ -115,111 +113,6 @@ void BinFMatrix( float *A, int rows, int cols, int bin ) {
 
 }
 
-static PyObject *PyDOG(PyObject *self, PyObject *args) {
-	
-	PyObject *image;
-	int bin       = 4;
-	int start     = 2;
-	int end       = 10000;
-	int sampling  = 5;
-	float minT    = 0;
-	float maxT    = 0;
-	char stable   = FALSE;
-	char debug    = FALSE;
-	
-	if ( !PyArg_ParseTuple(args,"Oiiiiffbb",&image,&bin,&start,&end,&sampling,&minT,&maxT,&stable,&debug) ) return NULL;
-	
-	fprintf(stderr,"Binning: %d   Range: %d-%d,%d\n",bin,start,end,sampling);
-	fprintf(stderr,"Output: %d   Scale Stable:  %d\n",debug,stable);
-	
-	int *dims = PyArray_DIMS(image);
-	int c, cols = dims[0];
-	int r, rows = dims[1];
-	int max = rows*cols;
-	float *p1 = malloc(sizeof(tFloat32)*max);
-	memcpy(p1,PyArray_DATA(image),max*sizeof(tFloat32));
-
-	
-	BinFMatrix(p1,rows,cols,bin);
-	rows /= bin;
-	cols /= bin;
-	
-	max = rows*cols;
-	
-	int k; char name[256];
-
-	for (k=0;k<max;k++) p1[k] *= -1;
-	float *bak = malloc(sizeof(float)*max);
-	for(k=0;k<max;k++) bak[k] = p1[k];
-
-	float sigmaInterval = pow(2.0,1.0/sampling);
-	float sigmaStep = sqrt(sigmaInterval-1.0);
-	float sigma = start;
-	
-	int levels = end;
-	float **scaleSpace = malloc(sizeof(float *)*levels);
-	
-	float blurs[levels];
-	for (k=0;k<levels;k++) {
-		blurs[k] = sigma*sigmaStep;
-		sigma *= sigmaInterval;
-	}
-	fprintf(stderr,"Building ScaleSpace...");
-	for (k=0;k<levels;k++) {
-		float *p2 = GaussianBlurF(p1,rows,cols,blurs[k]);
-		SubtractF(p1,p2,max);
-		scaleSpace[k] = p1;
-		p1 = p2;
-	}
-	fprintf(stderr,"DONE\n");
-	
-	int count = 0; Image im2 = NULL;
-	FArray peaks = NewFArray(0,0,3,100);
-	
-	fprintf(stderr,"Scanning scalespace...");
-	for (k=1;k<levels-1;k++) {
-		if ( debug ) {
-			im2 = FMatrixToImage(bak,rows,cols);
-			sprintf(name,"V%03d.pgm",k);
-		}
-		float *l1 = scaleSpace[k];
-		float *l2 = scaleSpace[k-1];
-		float *l3 = scaleSpace[k+1];
-		for (r=1;r<rows-1;r++) {
-			for (c=1;c<cols-1;c++) {
-				float val = l1[r*cols+c];
-				if ( val < minT ) continue;
-				if ( val > maxT ) continue;
-				if ( !IsMinPeak(l1,r*cols+c,cols,val) ) continue;
-				if ( stable && l2[r*cols+c] >= val ) continue;
-				if ( stable && l3[r*cols+c] >= val ) continue;
-				SetFArray(peaks,0,count,r);
-				SetFArray(peaks,1,count,c);
-				SetFArray(peaks,2,count,val);
-				SetFArray(peaks,3,count,k);
-				if ( debug ) {
-					Ellipse newEllipse = NewEllipse(r,c,blurs[k]*3,blurs[k]*3,0);
-					DrawEllipse(newEllipse,im2,255);
-					free(newEllipse);
-				}
-				count++;
-			}
-		}
-		if ( debug ) {
-			WritePGM(name,im2);
-			FreeImage(im2);
-		}
-	}
-	fprintf(stderr,"DONE\n");
-	if ( debug ) fprintf(stderr,"Output images written\n");
-	
-	for(k=0;k<levels;k++) free(scaleSpace[k]);
-	free(scaleSpace);
-	
-	return FArrayToPyArray(peaks);
-	
-}
-
 Image FMatrixToImage( float *data, int rows, int cols ) {
 	int r;
 	Image im1 = CreateImage(rows,cols);
@@ -266,7 +159,10 @@ static PyObject *PyMatchImages(PyObject *self, PyObject *args) {
 	FreeImage(im1);
 	FreeImage(im2);
 	
-	PyObject *pytransform = (PyObject *)NA_NewArray((void *)transform[0],tFloat64, 2, 3, 3);
+	npy_intp dimensions[2];
+	dimensions[0] = 3;
+	dimensions[1] = 3;
+	PyObject *pytransform = PyArray_SimpleNewFromData( 2, dimensions, NPY_DOUBLE, transform[0] );
 	FreeDMatrix(transform,0,0);
 	
 	return pytransform;
@@ -301,39 +197,6 @@ static PyObject *PyFindRegions( PyObject *self, PyObject *args ) {
 	
 }
  
-static PyObject *PyPolygonACD( PyObject *self, PyObject *args ) {
-	
-	PyObject *vertices; float treshold = 0.1;
-	if ( !PyArg_ParseTuple(args,"Of", &vertices, &treshold) ) return Py_None;
-	
-	Polygon poly = PyArrayToPolygon( vertices );
-	
-	Image out = CreateImage(1024,1024); DrawPolygon(poly,out,255); WritePPM("sect.ppm",out);
-	
-	fprintf(stderr,"Performing Decomposition\n");
-	PStack decomp = NewPStack(10);
-	PolygonACD( poly, treshold, decomp );
-	FreePolygon( poly );
-	
-	fprintf(stderr,"Decomposed into %d pieces\n",decomp->stacksize);
-	
-	PyObject *polygonDecomposition = PyList_New(0);
-	
-	while ( !PStackIsEmpty(decomp) ) {
-		poly = PopPStack(decomp);
-		PyList_Append( polygonDecomposition, (PyObject *)PolygonToPyArray(poly) );
-		DrawPolygon(poly,out,RandomColor(200));
-		FreePolygon(poly);
-	}
-	
-	FreePStack(decomp);
-	
-	WritePPM("sect.ppm",out); FreeImage(out);
-	
-	return polygonDecomposition;
-	
-}
-
 static PyObject *PyPolygonVE( PyObject *self, PyObject *args ) {
 	
 	PyObject *vertices; float treshold = 0.1;
@@ -349,68 +212,87 @@ static PyObject *PyPolygonVE( PyObject *self, PyObject *args ) {
 	
 static Polygon PyArrayToPolygon( PyObject *object ) {
 	
-	PyArrayObject *vertices = NA_InputArray(object,tFloat32,NUM_C_ARRAY);
-
-	int i, size = vertices->dimensions[1];
+	Polygon poly = NULL;
 	
-	float *x = NA_OFFSETDATA(vertices);
+	PyObject *vertices = PyArray_FROM_OTF(object,NPY_FLOAT,NPY_IN_ARRAY);
+	
+	if ( PyArray_NDIM(vertices) < 2 ) goto fail;
+	
+	int i, size = PyArray_DIM(vertices,1);
+	
+	float *x = (float *)PyArray_DATA(vertices);
 	float *y = x + size;
 	
-	Polygon poly = NewPolygon(size);
+	poly = NewPolygon(size);
+	if ( poly == NULL ) goto fail;
+	
 	Point p = poly->vertices;
+	poly->numberOfVertices = size;
 	
 	for (i=0;i<size;i++) { p[i].x = x[i]; p[i].y = y[i]; } 
 	
-	Py_XDECREF( vertices );
+	fail:
 	
-	poly->numberOfVertices = size;
-	
+	Py_DECREF(vertices);
 	return poly;
+	
+}
 
+static PyObject *PyPolygonACD( PyObject *self, PyObject *args ) {
+	// Just a placeholder for now
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 	
 static Image PyArrayToImage( PyObject *image ) {
 	
-	int maxrow = ((int *)PyArray_DIMS(image))[0];
-	int maxcol = ((int *)PyArray_DIMS(image))[1];
+	Image newImage = NULL;
 	
-	float *input = PyArray_DATA(image);
+	PyObject * py_array = PyArray_FROM_OTF(image,NPY_INT,NPY_IN_ARRAY);
+
+	if ( PyArray_NDIM(py_array) != 2 ) goto fail;
 	
-	Image newImage = CreateImage(maxrow,maxcol);
+	int rows = PyArray_DIM(py_array,0);
+	int cols = PyArray_DIM(py_array,1);
+	
+	newImage = CreateImage(rows,cols);
+	if ( newImage == NULL ) goto fail;
+	
+	int   *input = (int *)PyArray_DATA(py_array);
+	int  *output = newImage->pixels[0];
+	
+	if ( input == NULL || output == NULL ) goto fail;
 	
 	int k;
-	for (k=0;k<maxrow*maxcol;k++) newImage->pixels[k] = input[k];
+	for (k=0;k<rows*cols;k++) output[k] = input[k];
 	
+	Py_DECREF(py_array);
 	return newImage;
+	
+	fail:
+	Py_DECREF(py_array);
+	FreeImage(newImage);
+	return NULL;
 	
 }	
 
 static PyObject *ImageToPyArray( Image image ) {
-	int maxrow = image->rows;
-	int maxcol = image->cols;
-	PyObject *temp = (PyObject *)NA_NewArray(image->pixels[0], tInt32, 2, maxrow, maxcol );
-	return temp;
-}
-
-static PyObject *FArrayToPyArray( FArray array ) {
 	
-	int rows = FArrayRows(array);
-	int cols = FArrayCols(array);
+	if ( image == NULL ) goto fail;
 	
-	float *buffer = malloc(sizeof(tFloat32)*rows*cols);
-	float **values = array->values;
+	npy_intp dimensions[2];
+	dimensions[0] = image->rows;
+	dimensions[1] = image->cols;
+	void * pixels = image->pixels[0];
+	if ( pixels == NULL ) goto fail;
 	
-	int row, col, count = 0;
-	for (row=array->minrow;row<=array->maxrow;row++) {
-		for (col=array->mincol;col<=array->maxcol;col++) {
-			buffer[count++] = values[row][col];
-	}}
+	PyObject *array = PyArray_SimpleNewFromData( 2, dimensions, NPY_INT, pixels );
+	return array;
 	
-	PyObject *pyarray = (PyObject *)NA_NewArray(buffer, tFloat32, 2, rows, cols );
+	fail:
 	
-	free(buffer);
-
-	return pyarray;
+	Py_INCREF(Py_None);
+	return Py_None;
 	
 }
 
@@ -431,31 +313,45 @@ static PyObject *RegionToPyObject( Region r ) {
 
 static PyObject *PolygonToPyArray( Polygon poly ) {
 	
-	if ( poly == NULL ) return Py_None;
+	float *data = NULL;
+	
+	if ( poly == NULL ) goto fail;
+
 	int i, size = poly->numberOfVertices;
-	if ( size == 0 ) return Py_None;
+	if ( size == 0 ) goto fail;
+	
 	Point v = poly->vertices;
 	
-	float *x = malloc(sizeof(float)*size*2);
-	float *y = x + size;
+	data = malloc(sizeof(float)*size*2);
+	if ( data == NULL ) goto fail;
+	
+	float *x = data;
+	float *y = data + size;
 	
 	for (i=0;i<size;i++) { x[i] = v[i].x; y[i] = v[i].y; }
 	
-	return (PyObject *)NA_NewArray(x,tFloat32,2,2,size);
+	npy_intp dimensions[2];
+	dimensions[0] = 2;
+	dimensions[1] = size;
+	
+	return PyArray_SimpleNewFromData( 2, dimensions, NPY_FLOAT, x );
+	
+	fail:
+	if (data) free(data);
+	Py_INCREF(Py_None);
+	return Py_None;
 	
 }
 	
 static PyMethodDef libCVMethods[] = {
 	{"MatchImages", PyMatchImages, METH_VARARGS, "BLANK"},
 	{"FindRegions", PyFindRegions, METH_VARARGS, "BLANK"},
-	{"PolygonACD", PyPolygonACD, METH_VARARGS, "BLANK"},
 	{"PolygonVE", PyPolygonVE, METH_VARARGS, "BLANK"},
-	{"DOG", PyDOG, METH_VARARGS, "BLANK"},
 	{NULL, NULL}
 };
 
-void initlibCV() {
+PyMODINIT_FUNC initlibCV() {
 	(void) Py_InitModule("libCV", libCVMethods);
-	import_libnumarray()
+	import_array()
 }
 

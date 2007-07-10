@@ -826,7 +826,6 @@ float PointToLineDistance( float x1, float y1, float x2, float y2, float x3, flo
 	return area2 / dist1;
 }
 
-static int count = 0;
 char BoundTest( int l, int k, int r );
 int **ConvexHull2D2( Polygon poly );
 
@@ -855,7 +854,8 @@ void PolygonACD( Polygon poly, float treshold, PStack stack ) {
 	fprintf(stderr,"Polygon Cleaned\n");
 	
 	int *sT = ConvexHull2D3( poly );
-	int size = sT[0], i;
+	
+	sT[0] = 0;
 	
 	fprintf(stderr,"Convex Hull Found\n");
 	
