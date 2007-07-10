@@ -174,9 +174,11 @@ static PyObject *PyFindRegions( PyObject *self, PyObject *args ) {
 	PyObject *oim1;
 	float minSize = 0.002, maxSize = 0.9, blur = 0.0, sharpen = 0.0;
 	int U = TRUE, D = TRUE;
-	if (!PyArg_ParseTuple(args, "Offffii", &oim1, &minSize, &maxSize, &blur, &sharpen, &U, &D)) return NULL;
+	if (!PyArg_ParseTuple(args, "Offffii", &oim1, &minSize, &maxSize, &blur, &sharpen, &U, &D)) goto fail;
 	
 	Image im1 = PyArrayToImage( oim1 );
+	
+	fprintf(stderr,"Converted from NumPy Array\n");
 	
 	PStack regions = NewPStack(1000);
 	FindMSERegions(im1,regions,minSize,maxSize,blur,sharpen,U,D);
@@ -194,6 +196,10 @@ static PyObject *PyFindRegions( PyObject *self, PyObject *args ) {
 	FreeImage(im1);
 	
 	return Py_BuildValue("OO", regionList, Py_None);
+	
+	fail:
+	Py_INCREF(Py_None);
+	return Py_None;
 	
 }
  
@@ -214,7 +220,8 @@ static Polygon PyArrayToPolygon( PyObject *object ) {
 	
 	Polygon poly = NULL;
 	
-	PyObject *vertices = PyArray_FROM_OTF(object,NPY_FLOAT,NPY_IN_ARRAY);
+	PyObject *vertices = PyArray_FROM_OTF(object,NPY_FLOAT,NPY_IN_ARRAY|NPY_FORCECAST);
+	if ( vertices == NULL ) goto fail;
 	
 	if ( PyArray_NDIM(vertices) < 2 ) goto fail;
 	
@@ -248,30 +255,32 @@ static Image PyArrayToImage( PyObject *image ) {
 	
 	Image newImage = NULL;
 	
-	PyObject * py_array = PyArray_FROM_OTF(image,NPY_INT,NPY_IN_ARRAY);
+	PyObject * py_array = PyArray_FROM_OTF(image,NPY_INT,NPY_IN_ARRAY|NPY_FORCECAST);
+	if ( py_array == NULL ) goto fail;
+	
+	if ( PyArray_NDIM(image) != 2 ) goto fail;
+	
+	int rows = PyArray_DIM(image,0);
+	int cols = PyArray_DIM(image,1);
 
-	if ( PyArray_NDIM(py_array) != 2 ) goto fail;
-	
-	int rows = PyArray_DIM(py_array,0);
-	int cols = PyArray_DIM(py_array,1);
-	
 	newImage = CreateImage(rows,cols);
 	if ( newImage == NULL ) goto fail;
 	
-	int   *input = (int *)PyArray_DATA(py_array);
+	int   *input = (int *)PyArray_DATA(image);
 	int  *output = newImage->pixels[0];
 	
 	if ( input == NULL || output == NULL ) goto fail;
 	
-	int k;
-	for (k=0;k<rows*cols;k++) output[k] = input[k];
+	memcpy(output,input,sizeof(int)*rows*cols);
 	
 	Py_DECREF(py_array);
+	
 	return newImage;
 	
 	fail:
-	Py_DECREF(py_array);
+	fprintf(stderr,"Conversion from NumPy failed\n");
 	FreeImage(newImage);
+	Py_DECREF(py_array);
 	return NULL;
 	
 }	
