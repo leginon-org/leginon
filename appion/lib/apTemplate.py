@@ -106,6 +106,12 @@ def checkTemplates(params, upload=None):
 		name = os.path.join(params['rundir'], params['template'])
 	else:
 		name = params['template']
+		
+	### this is sort of bad coding, should change later
+	if upload:
+		name = params['template']
+	###
+		
 	params['templatelist'] = []
 	stop = False
 	# count number of template images.

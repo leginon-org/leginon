@@ -14,12 +14,12 @@ except:
 appiondb = apDB.apdb
 
 def printTmpltUploadHelp():
-	print "\nUsage:\nuploadTemplate.py template=<name> apix=<pixel> session=<session> [commit]\n"
-	print "selexon template=groEL apix=1.63 session=06nov10a commit\n"
+	print "\nUsage:\nuploadTemplate.py template=<name> apix=<pixel> session=<session> diam=<n> description=<'text'>\n"
+	print "uploadTemplate.py template=groEL apix=1.63 session=06nov10a diam=140 description='groel templates'\n"
 	print "template=<name>      : name should not have the extension, or number."
 	print "                       groEL1.mrc, groEL2.mrc would be simply \"template=groEL\""
-	print "apix=<pixel>         : angstroms per pixel (unbinned)"
-	print "diam=<n>             : approximate diameter of particle (in Angstroms, unbinned)"
+	print "apix=<pixel>         : angstroms per pixel of the template images"
+	print "diam=<n>             : approximate diameter of particle (in Angstroms)"
 	print "session=<sessionId>  : session name associated with template (i.e. 06mar12a)"
 	print "description=\"text\"   : description of the template - must be in quotes"
 	print "\n"
