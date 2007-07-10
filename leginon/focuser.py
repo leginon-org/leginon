@@ -425,7 +425,7 @@ class Focuser(acquisition.Acquisition):
 
 		return status
 
-	def acquire(self, presetdata, emtarget=None, attempt=None):
+	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		'''
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we do autofocus
