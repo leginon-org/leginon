@@ -23,7 +23,7 @@ class basicDogPicker(appionLoop.AppionLoop):
 	def processImage(self, imgdata):
 		print "PRE-FILTER IMAGE"
 		imgarray = imgdata['image']
-		imgarray = apImage.preProcessImage(imgarray, params=self.params)
+		imgarray = apImage.preProcessImage(imgarray, params=self.params, lowpass=0)
 		print "DOG FILTER"
 		if self.params['invert']:
 			imgarray=apImage.invertImage(imgarray)
