@@ -12,7 +12,7 @@ except:
 	import data as leginondata
 	Data = data.Data
 
-### Particle Selection Tables
+### Particle selection tables ###
 
 class ApParticleData(Data):
 	def typemap(cls):
@@ -71,6 +71,18 @@ class ApDogParamsData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApDogParamsData=ApDogParamsData
 
+class ApManualParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('diam', int),
+			('bin', int),
+			('lp_filt', int),
+			('hp_filt', int),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApManualParamsData=ApManualParamsData
+
+### Template tables ###
 
 class ApTemplateImageData(Data):
 	def typemap(cls):
@@ -97,19 +109,7 @@ class ApTemplateRunData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApTemplateRunData=ApTemplateRunData
 
-class ApManualParamsData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
-			('diam', int),
-			('bin', int),
-			('lp_filt', int),
-			('hp_filt', int),
-		)
-	typemap = classmethod(typemap)
-leginondata.ApManualParamsData=ApManualParamsData
-
-
-### Shift Table(s)
+### Transformation/shift tables ###
 
 class ApImageTransformationData(Data):
 	def typemap(cls):
@@ -126,8 +126,7 @@ class ApImageTransformationData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApImageTransformationData=ApImageTransformationData
 
-
-### Mask Tables 
+### Mask tables ###
 
 class ApMaskMakerRunData(Data):
 	def typemap(cls):
@@ -172,7 +171,7 @@ class ApMaskMakerParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
-### Stack Tables
+### Stack tables ###
 
 class ApStackData(Data):
 	def typemap(cls):
@@ -234,8 +233,71 @@ class ApStackParticlesData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApStackParticlesData = ApStackParticlesData
 
+### Reference-free Classification tables ###
 
-### Reconstruction Tables ###
+class ApNoRefRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+#			('stack', ApStackData), #Redundant
+			('norefParams', ApNoRefParamsData),
+			('norefPath', str),
+			('description', str),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApNoRefRunData=ApNoRefRunData
+
+class ApNoRefParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('particle_diam', float),
+			('mask_diam', float),
+			('lp_filt', int),
+#			('num_particles', int), #Redundant?
+#			('norefalign_method', str),
+#			('pca_method', str),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApNoRefParamsData=ApNoRefParamsData
+
+class ApNoRefAlignParticlesData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('class', ApNoRefClassParticlesData),
+			('particle', ApStackParticlesData),
+			('shiftx', float),
+			('shifty', float),
+			('inplane_rotation', float),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApNoRefAlignParticlesData=ApNoRefAlignParticlesData
+
+#class ApNoRefEigenVectorData(Data):
+#class ApNoRefEigenValueParticlesData(Data):
+
+class ApNoRefClassRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('norefRun', ApNoRefRunData),
+			('classRunName', str),
+			('num_classes', int),
+#			('cluster_method', str),
+			('classFile', str),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApNoRefClassRunData=ApNoRefClassRunData
+
+class ApNoRefClassParticlesData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('classRun', ApNoRefClassRunData),
+			('particle', ApNoRefAlignParticlesData),
+			('classNumber', int),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApNoRefClassParticlesData=ApNoRefClassParticlesData
+
+### Reconstruction tables ###
 
 class ApRefinementRunData(Data):
 	def typemap(cls):
@@ -350,7 +412,7 @@ class ApFSCData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApFSCData=ApFSCData
 
-### ACE/CTF Tables
+### ACE/CTF tables ###
 
 class ApAceRunData(Data):
 	def typemap(cls):
@@ -413,6 +475,8 @@ class ApCtfData(Data):
 		)
 	typemap = classmethod(typemap)
 leginondata.ApCtfData=ApCtfData
+
+### Testing tables ###
 
 class ApTestParamsData(Data):
 	def typemap(cls):
