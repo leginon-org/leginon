@@ -70,27 +70,55 @@ $display_keys = array ( 'iteration', 'ang incr', 'resolution', 'fsc', 'classes',
 foreach($display_keys as $key) {
         $html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
 }
+$html .= "</TR>\n";
 
 $refinerun=$particle->getRefinementRunInfo($reconId);
 $initmodel=$particle->getInitModelInfo($refinerun['REF|ApInitialModelData|initialModel']);
 
 $stackfile=$stackparams['stackPath']."/".$stackparams['name'];
+$initmodelname=$initmodel['name'];
+
 echo "Stack: <A TARGET='stackview' HREF='viewstack.php?file=$stackfile'>$stackfile</A><BR>\n";
 echo "Reconstruction path: $refinerun[path]/<BR>\n";
 echo "Particles: $stackparticles<BR>\n";
-echo "Initial Model: $initmodel[path]/$initmodel[name]<BR>\n";
+echo "Initial Model: $initmodel[path]/$initmodelname<BR>\n";
 
 $iterations = $particle->getIterationInfo($reconId);
+
+# get starting model png files
+$initpngs = array();
+$initdir = opendir($initmodel['path']);
+while ($f = readdir($initdir)){
+  if (eregi($initmodelname.'.*\.png$',$f)) {
+    $initpngs[] = $f;
+  }
+}
+sort($initpngs);
 
 # get list of png files in directory
 $pngfiles=array();
 $refinedir = opendir($refinerun['path']);
 while ($f = readdir($refinedir)) {
-        if (eregi('\.png$',$f)) {
-	        $pngfiles[] = $f;
-	}
+  if (eregi('\.png$',$f)) {
+    $pngfiles[] = $f;
+  }
 }
 sort($pngfiles);
+
+# display starting model
+$html .= "<TR>\n";
+foreach ($display_keys as $p) {
+  $html .= "<TD>";
+  if ($p == 'iteration') $html .= "0";
+  elseif ($p == 'snapshot') {
+    foreach ($initpngs as $snapshot) {
+      $snapfile = $initmodel['path'].'/'.$snapshot;
+      $html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+    }
+  }
+  $html .= "</TD>";
+}
+$html .= "</TR>\n";
 
 # show info for each iteration
 sort($iterations);
