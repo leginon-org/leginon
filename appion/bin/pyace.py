@@ -28,9 +28,9 @@ class aceLoop(appionLoop.AppionLoop):
 	def preLoopFunctions(self):
 		apMatlab.checkMatlabPath(self.params)
 		acepath = os.path.join(os.getcwd(), self.functionname+".py")
-		if not os.path.isfile(acepath):
-			apDisplay.printWarning("'"+self.functionname+".py' usually needs to be run in the "+\
-				"same directory as all of its matlab files")
+		#if not os.path.isfile(acepath):
+		#	apDisplay.printWarning("'"+self.functionname+".py' usually needs to be run in the "+\
+		#		"same directory as all of its matlab files")
 		print "Connecting to matlab ... "
 		try:
 			self.matlab = pymat.open()

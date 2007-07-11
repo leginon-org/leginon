@@ -269,7 +269,7 @@ def getBestDefocusForImage(imgdata, display=False):
 	if display is True:
 		print "Best ACE run info: '"+ctfvalue['acerun']['name']+"', confidence="+\
 			str(round(conf,4))+", defocus="+str(round(-1.0*abs(ctfvalue['defocus1']*1.0e6),4))+\
-			" microns"
+			" microns, resamplefr="+str(ctfvalue['acerun']['aceparams']['resamplefr'])
 
 	return -ctfvalue['defocus1']
 
