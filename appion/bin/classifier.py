@@ -141,7 +141,8 @@ def getStackInfo(params):
 		selectdata = partdata['selectionrun']['dogparams']
 
 	#get image params of the particle
-	imgdata = leginondb.direct_query(leginondata.AcquisitionImageData, partdata['dbemdata|AcquisitionImageData|image'])
+	imgdata = leginondb.direct_query(leginondata.AcquisitionImageData,
+		partdata['dbemdata|AcquisitionImageData|image'], readimages=False)
 
 	#apXml.fancyPrintDict(stackrundata)
 	#apXml.fancyPrintDict(stackparamdata)
