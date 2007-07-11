@@ -11,6 +11,7 @@ import appionData
 import apParam
 import apDisplay
 import apDB
+import apDatabase
 
 appiondb = apDB.apdb
 
@@ -252,7 +253,7 @@ def insertCtfValueREFLEGINON(imgdata, params, matfile, ctfvalue, opimfile1, opim
 def mkTempDir(temppath):
 	return apParam.createDirectory(temppath)
 
-def getBestDefocusForImage(imgdata):
+def getBestDefocusForImage(imgdata, display=False):
 	"""
 	takes an image and get the best defocus for that image
 	"""
@@ -263,6 +264,13 @@ def getBestDefocusForImage(imgdata):
 		 " and average defocus estimate may be incorrect")
 		avgdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
 		return -avgdf
+
+	#### the following was confusing for makestack, so I commented it out #######
+	if display is True:
+		print "Best ACE run info: '"+ctfvalue['acerun']['name']+"', confidence="+\
+			str(round(conf,4))+", defocus="+str(round(-1.0*abs(ctfvalue['defocus1']*1.0e6),4))+\
+			" microns"
+
 	return -ctfvalue['defocus1']
 
 def getBestCtfValueForImage(imgdata):
@@ -290,11 +298,6 @@ def getBestCtfValueForImage(imgdata):
 			if conf > bestconf:
 				bestconf = conf
 				bestctfvalue = ctfvalue
-
-	#### the following was confusing for makestack, so I commented it out #######
-	#print "best ace run info: '"+bestctfp['acerun']['name']+"', confidence="+\
-	#	str(round(bestconf,4))+", defocus1="+str(round(abs(bestctfp['defocus1']*1.0e6),4))+\
-	#	" microns, and stig="+str(bestctfp['acerun']['aceparams']['stig'])
 
 	return bestctfvalue, bestconf
 
@@ -324,11 +327,6 @@ def getBestCtfValueForImageREFLEGINON(imgdata):
 				bestconf = conf
 				bestctfvalue = ctfvalue
 
-	#### the following was confusing for makestack, so I commented it out #######
-	#print "best ace run info: '"+bestctfp['acerun']['name']+"', confidence="+\
-	#	str(round(bestconf,4))+", defocus1="+str(round(abs(bestctfp['defocus1']*1.0e6),4))+\
-	#	" microns, and stig="+str(bestctfp['acerun']['aceparams']['stig'])
-
 	return bestctfvalue, bestconf
 
 def ctfValuesToParams(ctfvalue, params):
@@ -348,3 +346,75 @@ def ctfValuesToParams(ctfvalue, params):
 		params['conf']   = ctfvalue['confidence']
 		return -ctfvalue['defocus1']
 	return None
+
+
+def printCtfSummary(params):
+	"""
+	prints a histogram of the best ctfvalues for the session
+	"""
+	sys.stderr.write("processing CTF histogram...\n")
+	### get all images
+	imgtree = apDatabase.getAllImages({}, params)
+
+	### get best ctf values for each image
+	ctfhistconf = []
+	ctfhistval = []
+	for imgdata in imgtree:
+		if params['norejects'] is True and apDatabase.getImgAssessmentStatus(imgdata) is False:
+			continue
+
+		ctfq = appionData.ApCtfData()
+		ctfq['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
+		ctfvalues = appiondb.query(ctfq)
+
+		### check if it has values
+		if ctfvalues is None:
+			continue
+
+		### find the best values
+		bestconf = 0.0
+		bestctfvalue = None
+		for ctfvalue in ctfvalues:
+			conf1 = ctfvalue['confidence']
+			conf2 = ctfvalue['confidence_d']
+			if conf1 > 0 and conf2 > 0:
+				#conf = max(conf1,conf2)
+				conf = math.sqrt(conf1*conf2)
+				if conf > bestconf:
+					bestconf = conf
+					bestctfvalue = ctfvalue
+		ctfhistconf.append(bestconf)
+		ctfhistval.append(bestctfvalue)
+
+	ctfhistconf.sort()
+	confhist = {}
+	yspan = 20.0
+	minconf = ctfhistconf[0]
+	maxconf = ctfhistconf[len(ctfhistconf)-1]
+	maxcount = 0
+	for conf in ctfhistconf:
+		c2 = round(conf*yspan,0)/yspan
+		if c2 in confhist:
+			confhist[c2] += 1
+			if confhist[c2] > maxcount:
+				maxcount = confhist[c2]
+		else:
+			confhist[c2] = 1
+	if maxcount > 70:
+		scale = 70.0/float(maxcount)
+		sys.stderr.write(" * = "+str(round(scale,1))+" images\n")
+	else:
+		scale = 1.0
+
+	sys.stderr.write("Confidence histogram:\n")
+	for i in range(int(yspan+1)):
+		j = float(i)/yspan
+		if j < minconf-1.0/yspan:
+			continue
+		jstr = "%1.2f" % j
+		jstr = apDisplay.rightPadString(jstr,5)
+		sys.stderr.write(jstr+"> ")
+		if j in confhist:
+			for k in range(int(confhist[j]*scale)):
+				sys.stderr.write("*")
+		sys.stderr.write("\n")

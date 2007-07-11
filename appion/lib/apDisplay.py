@@ -39,7 +39,7 @@ def printError(text):
 		f.close()
 	except:
 		print "write error"
-	raise colorString("\n *** FATAL ERROR ***\n"+text+"\n","red")
+	raise colorString("\n *** FATAL ERROR ***\n"+text+"\n\a","red")
 
 def printColor(text, colorstr):
 	"""
@@ -163,15 +163,16 @@ def _headerStr(labellist):
 
 def rightPadString(s,n=10):
 	n = int(n)
+	s = str(s)
 	if(len(s) > n):
 		return s[:n]
 	while(len(s) < n):
 		s += " "
 	return s
 
-
 def leftPadString(s,n=10):
 	n = int(n)
+	s = str(s)
 	if(len(s) > n):
 		return s[:n]
 	while(len(s) < n):

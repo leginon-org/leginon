@@ -26,14 +26,14 @@ import apDB
 
 db=apDB.db
 
-def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, planeReg=True, medFilt=False):
+def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, planeReg=True, median=0):
 	"""
 	standard processing for an image
 	"""
 	simgarray = imgarray.copy()
 	simgarray = binImg(simgarray,bin)
-	if medFilt is True:
-		simgarray = ndimage.median_filter(simgarray, size=3)
+	if median > 0:
+		simgarray = ndimage.median_filter(simgarray, size=median)
 	if planeReg:
 		simgarray = planeRegression(simgarray)
 	simgarray = lowPassFilter(simgarray,apix,bin,lowpass)
@@ -42,7 +42,8 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, planeReg
 	return simgarray
 
 
-def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=True, medFilt=False, highpass=None, correct=False, params={}):
+def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=True, 
+		median=None, highpass=None, correct=False, params={}):
 	"""
 	standard processing for an image
 	"""
@@ -69,6 +70,13 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=True, 
 		else:
 			lowpass = 0
 			apDisplay.printWarning("'lowpass' is not defined in preProcessImage()")
+	#MEDIAN FILTER
+	if median is None:
+		if 'median' in params:
+			median = params['median']
+		else:
+			median = 0
+			apDisplay.printWarning("'median' is not defined in preProcessImage()")
 	#HIGH PASS FILTER
 	if highpass is None:
 		if 'highpass' in params:
@@ -79,7 +87,7 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=True, 
 			highpass = 0
 			apDisplay.printWarning("'highpass' is not defined in preProcessImage()")
 	#HIGH PASS FILTER => PLANE REGRESSION
-	result = _processImage(imgarray, bin, apix, lowpass, highpass, planeReg, medFilt)
+	result = _processImage(imgarray, bin, apix, lowpass, highpass, planeReg, median)
 	apDisplay.printMsg("filtered image in "+apDisplay.timeString(time.time()-startt))
 	return result
 

@@ -315,6 +315,7 @@ class AppionLoop(object):
 		self.params['alldbimages']=False
 		self.params['apix']=None
 		self.params['diam']=0
+		self.params['median']=0
 		self.params['bin']=4
 		self.params['continue']=False
 		self.params['nocontinue']=False
@@ -416,6 +417,8 @@ class AppionLoop(object):
 				self.params['diam']=float(elements[1])
 			elif (elements[0]=='bin'):
 				self.params['bin']=int(elements[1])
+			elif (elements[0]=='median'):
+				self.params['median']=int(elements[1])
 			elif arg=='commit':
 				self.params['commit']=True
 				self.params['display']=1
@@ -855,8 +858,10 @@ class AppionLoop(object):
 		ttotal= time.time()-self.stats["startTime"]
 		print apDisplay.color("COMPLETE LOOP:\t"+apDisplay.timeString(ttotal)+\
 			" for "+str(self.stats["count"]-1)+" images","green")
+		#for i in range(5):
+		#	sys.stderr.write("\a")
+		#	time.sleep(0.3)
 		print "ended ",time.strftime("%a, %d %b %Y %H:%M:%S")
-		print "====================================================="
 		print "====================================================="
 		print "====================================================="
 		print "====================================================="

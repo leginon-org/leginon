@@ -42,6 +42,7 @@ class aceLoop(appionLoop.AppionLoop):
 
 	def postLoopFunctions(self):
 		pymat.close(self.matlab)
+		apCtf.printCtfSummary(self.params)
 
 	def reprocessImage(self, imgdata):
 		"""
