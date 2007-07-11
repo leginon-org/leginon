@@ -406,6 +406,16 @@ def printCtfSummary(params):
 	else:
 		scale = 1.0
 
+	colorstr = {}
+	for i in range(int(yspan+1)):
+		j = float(i)/yspan
+		if j < 0.5:
+			colorstr[j] = "red"
+		elif j < 0.8:
+			colorstr[j] = "yellow"
+		else:
+			colorstr[j] = "green"
+
 	sys.stderr.write("Confidence histogram:\n")
 	for i in range(int(yspan+1)):
 		j = float(i)/yspan
@@ -416,5 +426,5 @@ def printCtfSummary(params):
 		sys.stderr.write(jstr+"> ")
 		if j in confhist:
 			for k in range(int(confhist[j]*scale)):
-				sys.stderr.write("*")
+				sys.stderr.write(apDisplay.color("*",colorstr[j]))
 		sys.stderr.write("\n")
