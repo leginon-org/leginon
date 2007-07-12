@@ -104,9 +104,13 @@ def cmdline(args, params):
 
 def conflicts(params):
 	if params['runid'] is None:
-		apDisplay.printError("Please provide a runid, example: runid=class1")
+		apDisplay.printError("Please provide a runid, example: runid=run1")
 	if params['stackid'] is None:
 		apDisplay.printError("Please provide a stackid from database, example: stackid=15")
+	if params['numclasses'] > 999:
+		apDisplay.printError("The number of classes is too large (> 999), please provide a smaller number")
+	if params['numparticles'] > 9999:
+		apDisplay.printError("The number of particles is too large (> 9999), please provide a smaller number")
 	return
 
 def getStackId(params):
@@ -163,6 +167,7 @@ def getStackInfo(params):
 	params['stackfile'] = os.path.join(params['stackpath'],stackdata['name'])
 	params['stacktype'] = stackparamdata['fileType']
 	params['boxsize']   = int(stackparamdata['boxSize']/params['bin'])
+	params['classfile'] = "classes_avg%03d" % params['numclasses']
 
 	if 'diam' in selectdata:
 		if params['diam'] is None:
@@ -307,6 +312,8 @@ def runSpiderClass(params, reclass=False):
 	starttime = time.time()
 	executeSpiderCmd(spidercmd)
 	apDisplay.printColor("finished spider in "+apDisplay.timeString(time.time()-starttime),"cyan")
+	shutil.copy(os.path.join(params['rundir'],"classes_avg.spi"),
+		os.path.join(params['rundir'],params['classfile']+".spi") )
 
 def executeSpiderCmd(spidercmd, verbose=True):
 	sys.stderr.write("SPIDER: "+spidercmd+"\n")
@@ -352,6 +359,64 @@ def classHistogram(params):
 			sys.stderr.write("*")
 		sys.stderr.write(" "+str(int(lendict[f]))+"\n")
 
+def insertNoRefRun(params):
+	# create a norefParam object
+	paramq = appionData.ApNoRefParamsData()
+	paramq['particle_diam'] = params['diam']
+	paramq['mask_diam'] = params['mask']
+	paramq['lp_filt'] = params['lp']
+	paramsdata = appiondb.query(paramq, results=1)
+
+	### create a norefRun object
+	runq = appionData.ApNoRefRunData()
+	runq['name'] = params['runid']
+	runq['norefPath'] = params['outdir']
+	runq['stack'] = appiondb.direct_query(appionData.ApStackData, params['stackid'])
+	# ... stackId, runId and norefPath make the norefRun unique:
+	uniquerun = appiondb.query(runq, results=1)
+	# ... continue filling non-unique variables:
+	runq['description'] = params['description']
+
+	if paramsdata:
+		runq['norefParams'] = paramsdata
+	else:
+		runq['norefParams'] = paramq
+	# ... check if params associated with unique norefRun are consistent:
+	if uniquerun:
+		for i in runq:
+			if uniquerun[0][i] != runq[i]:
+				apDisplay.printError("Run name '"+params['runid']+"' for stackid="+\
+					str(params['stackid'])+"\nis already in the database with different parameter: "+str(i))
+
+	### create a classRun object
+	classq = appionData.ApNoRefClassRunData()
+	classq['num_classes'] = params['numclasses']
+	norefrun = appiondb.query(runq, results=1)
+	if norefrun:
+		classq['norefRun'] = norefrun
+	else:
+		classq['norefRun'] = runq
+	# ... numclasses and norefRun make the class unique:
+	uniqueclass = appiondb.query(runq, results=1)
+	# ... continue filling non-unique variables:
+	classq['classFile'] = params['classfile']
+	# ... check if params associated with unique classRun are consistent:
+	if uniqueclass:
+		for i in classq:
+			if uniqueclass[0][i] != classq[i]:
+				apDisplay.printError("NoRefRun name '"+params['runid']+"' for numclasses="+\
+					str(params['numclasses'])+"\nis already in the database with different parameter: "+str(i))
+
+	classdata = appiondb.query(classq, results=1)
+
+	norefrun = appiondb.query(runq, results=1)
+	if not classdata:
+		# ideal case nothing pre-exists
+		apDisplay.printMsg("inserting noref run parameters into database")
+		appiondb.insert(classq)
+
+	return
+
 if __name__ == "__main__":
 	params = defaults()
 	getAppionDir(params)
@@ -361,6 +426,9 @@ if __name__ == "__main__":
 	getStackInfo(params)
 	createOutDir(params)
 
+	if params['commit']is True:
+		insertNoRefRun(params)
+
 	classfile = os.path.join(params['rundir'], "classes_avg.spi")
 	if not os.path.isfile(classfile):
 		createSpiderFile(params)
@@ -368,13 +436,15 @@ if __name__ == "__main__":
 		createSpiderBatchFile(params)
 		runSpiderClass(params)
 	else:
-		apDisplay.printWarning("particles were already aligned for this runid, only redoing k-means") 
+		apDisplay.printWarning("particles were already aligned for this runid, only redoing clustering") 
 		createSpiderBatchFile(params)
 		runSpiderClass(params, reclass=True)
 
-	if params['numclasses'] < 80:
+
+	if params['numclasses'] <= 80:
 		classHistogram(params)
 
+	classfile = os.path.join(params['rundir'],params['classfile']+".spi")
 	if os.path.isfile(classfile):
 		apDisplay.printMsg("classfile located at:\n"+classfile)
 	else:

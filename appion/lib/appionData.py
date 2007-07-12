@@ -239,7 +239,7 @@ class ApNoRefRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('name', str),
-#			('stack', ApStackData), #Redundant
+			('stack', ApStackData), #Redundant
 			('norefParams', ApNoRefParamsData),
 			('norefPath', str),
 			('description', str),
@@ -263,8 +263,8 @@ leginondata.ApNoRefParamsData=ApNoRefParamsData
 class ApNoRefAlignParticlesData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('class', ApNoRefClassParticlesData),
-			('particle', ApStackParticlesData),
+			('norefRun', ApNoRefRunData),
+			('stack_particle', ApStackParticlesData),
 			('shiftx', float),
 			('shifty', float),
 			('inplane_rotation', float),
@@ -279,9 +279,9 @@ class ApNoRefClassRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('norefRun', ApNoRefRunData),
-			('classRunName', str),
 			('num_classes', int),
 #			('cluster_method', str),
+#			('classParams', ApNoRefClassParamData),
 			('classFile', str),
 		)
 	typemap = classmethod(typemap)
@@ -291,7 +291,7 @@ class ApNoRefClassParticlesData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('classRun', ApNoRefClassRunData),
-			('particle', ApNoRefAlignParticlesData),
+			('noref_particle', ApNoRefAlignParticlesData),
 			('classNumber', int),
 		)
 	typemap = classmethod(typemap)
