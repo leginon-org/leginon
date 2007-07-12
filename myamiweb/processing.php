@@ -111,8 +111,8 @@ if ($sessionId) {
   $stackruns=count($stackIds);
 
   // --- Get Class Data
-  //$classIds = $particle->getClassIds($sessionId);
-  //$classruns=count($classIds);
+  $norefIds = $particle->getNoRefIds($sessionId);
+  $norefruns=count($norefIds);
 
   // --- Get Reconstruction Data
   if ($stackruns>0) {
@@ -206,16 +206,15 @@ if ($sessionId) {
     </TD>
   </TR>
   <TR>\n";
-  if ($classruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
+  if ($norefruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
   else {$bgcolor=$donecolor;$gifimg=$donepic;}
   echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
     <TD BGCOLOR='$bgcolor'>
-    <B>2D Classifications</B>
+    <B>Reference-free Classification</B>
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
-    echo"<I>unavailable</I>\n";
-    //if ($classruns==0) {echo "none";}
-    //else {echo "<A HREF='classsummary.php?expId=$sessionId'>$classruns completed<A>";}
+    if ($norefruns==0) {echo "none";}
+    else {echo "<A HREF='norefsummary.php?expId=$sessionId'>$norefruns completed<A>";}
     echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>

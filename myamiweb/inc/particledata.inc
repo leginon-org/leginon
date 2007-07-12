@@ -229,6 +229,16 @@ class particledata {
     return $r;
   }
    
+  function getNoRefIds ($sessionId) {
+    $q = "SELECT r.`REF|ApNoRefRunData|stack` as stackid "
+        ."FROM ApRunsInStackData as r "
+        ."LEFT JOIN ApStackRunData as s ON "
+        ."(r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
+        ."WHERE s.`dbemdata|SessionData|session` = '$sessionId'"; 
+    $r = $this->mysql->getSQLResult($q);
+    return $r;
+  }
+
 	function getStackIdsOld ($sessionId) {
 	        $q = "select spar.stackid "
 				."from ("

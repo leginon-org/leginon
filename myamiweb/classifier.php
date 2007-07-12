@@ -106,7 +106,7 @@ function createClassifierForm($extra=false, $title='Classifier.py Launcher', $he
         if (!empty($sessioninfo)) {
                 $sessionpath=$sessioninfo['Image path'];
                 $sessionpath=ereg_replace("leginon","appion",$sessionpath);
-                $sessionpath=ereg_replace("rawdata","classes/",$sessionpath);
+                $sessionpath=ereg_replace("rawdata","noref/",$sessionpath);
                 $sessionname=$sessioninfo['Name'];
         }
 
@@ -119,6 +119,9 @@ function createClassifierForm($extra=false, $title='Classifier.py Launcher', $he
         // classifier params
         $numclass = 40;
         $numpart = 3000;
+        $lp = 10;
+        $partdiam = 150;
+        $maskdiam = 200;
         echo"
         <P>
         <TABLE BORDER=0 CLASS=tableborder>
@@ -131,12 +134,12 @@ function createClassifierForm($extra=false, $title='Classifier.py Launcher', $he
                         <INPUT TYPE='text' NAME='runid' VALUE='$runidval'>
                         </TD>
                 </TR>\n";
-                //echo"<TR>
-                //        <TD VALIGN='TOP'>
-                //        <B>Class Description:</B><BR>
-                //        <TEXTAREA NAME='description' ROWS='3' COLS='36'>$rundescrval</TEXTAREA>
-                //        </TD>
-                //</TR>\n";
+                echo"<TR>
+                        <TD VALIGN='TOP'>
+                        <B>Class Description:</B><BR>
+                        <TEXTAREA NAME='description' ROWS='3' COLS='36'>$rundescrval</TEXTAREA>
+                        </TD>
+                </TR>\n";
                 echo"<TR>
                         <TD VALIGN='TOP'>         
                         <B>Output Directory:</B><BR>
@@ -174,8 +177,8 @@ function createClassifierForm($extra=false, $title='Classifier.py Launcher', $he
         </TR>
         <TR>
                 <TD VALIGN='TOP'>
-                <INPUT TYPE='checkbox' NAME='commit' $commitcheck DISABLED>
-                <FONT COLOR='gray'>Commit to Database</FONT><BR>
+                <INPUT TYPE='checkbox' NAME='commit' $commitcheck>
+                Commit to Database<BR>
                 </TD>
         </TR>\n";
         //echo"<TR>
@@ -209,7 +212,7 @@ function createClassifierForm($extra=false, $title='Classifier.py Launcher', $he
                 Number of Classes to Make<BR>
                 <INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>
                 Number of Particles to Use<BR>
-                <FONT COLOR=#DD0000>WARNING: more than 3000 particles can takes days to process<BR>
+                <FONT COLOR=#DD0000>WARNING: more than 3000 particles can forever to process<BR>
         </TR>\n";
         echo"
                 </SELECT>
@@ -258,26 +261,22 @@ function runClassifier() {
         $lp=$_POST['lp'];
 
         //make sure a session was selected
-        //$description=$_POST['description'];
-        //if (!$description) createClassifierForm("<B>ERROR:</B> Enter a brief description of the stack");
+        $description=$_POST['description'];
+        if (!$description) createClassifierForm("<B>ERROR:</B> Enter a brief description of the class");
 
-        //make sure a session was selected
-        //$outdir=$_POST['outdir'];
-        //if (!$outdir) createClassifierForm("<B>ERROR:</B> Select an experiment session");
+        //make sure a stack was selected
+        $stackid=$_POST['stackid'];
+        if (!$stackid) createClassifierForm("<B>ERROR:</B> No stack selected");
 
         // make sure outdir ends with '/'
         if (substr($outdir,-1,1)!='/') $outdir.='/';
 
-        // get selexon runId
-        //$prtlrunId=$_POST['prtlrunId'];
-        //if (!$prtlrunId) createClassifierForm("<B>ERROR:</B> No particle coordinates in the database");
-        
         $commit = ($_POST['commit']=="on") ? 'commit' : '';
 
         // classification
         $numclass=$_POST['numclass'];
         $numpart=$_POST['numpart'];
-        if ($numpart > 5000 || $numpart < 10) createClassifierForm("<B>ERROR:</B> Number of particles must be between 10 & 5000");
+        if ($numpart > 6000 || $numpart < 10) createClassifierForm("<B>ERROR:</B> Number of particles must be between 10 & 6000");
         if ($numclass > 300 || $numclass < 1) createClassifierForm("<B>ERROR:</B> Number of classes must be between 1 & 300");
 
 	     $particle = new particledata();
@@ -300,7 +299,7 @@ function runClassifier() {
         if ($partdiam) $command.="diam=$partdiam ";
         if ($maskdiam) $command.="maskdiam=$maskdiam ";
         //if ($fileformat) $command.="spider ";
-        //$command.="description=\"$description\"";
+        $command.="description=\"$description\"";
 
         $cmd = "exec ssh $user@$host '$command > classifierlog.txt &'";
 //        exec($cmd ,$result);
