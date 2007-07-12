@@ -389,11 +389,11 @@ def saveParticles(particles,shift,dbbox,params,imgdict):
 	imgxy=imgdict['camera']['dimension']
 	eliminated=0
 	for prtl in particles:
-		# save the particles to the database
 		xcoord=int(math.floor(prtl['xcoord']-(box/2)-shift['shiftx']+0.5))
 		ycoord=int(math.floor(prtl['ycoord']-(box/2)-shift['shifty']+0.5))
 		if (xcoord>0 and xcoord+box <= imgxy['x'] and ycoord>0 and ycoord+box <= imgxy['y']):
 			plist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
+			# save the particles to the database
 			if params['commit']:
 				stackpq=appionData.ApStackParticlesData()
 				stackpq['stack']=params['stackId']
