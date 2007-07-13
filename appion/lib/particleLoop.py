@@ -12,20 +12,72 @@ import apTemplate
 import apDatabase
 import apPeaks
 import apParticle
+import apDefocalPairs
+import apXml
 #legacy
 #import selexonFunctions  as sf1
 
-class basicDogPicker(appionLoop.AppionLoop):
+class ParticleLoop(appionLoop.AppionLoop):
 	def setProcessingDirName(self):
 		self.processdirname = "extract"
 
+	def particleDefaultParams(self):
+		"""
+		put in any additional default parameters
+		"""
+		return
+
+	def particleParseParams(self, args):
+		"""
+		put in any additional parameters to parse
+		"""
+		return
+
+	def particleParamConflicts(self):
+		"""
+		put in any additional conflicting parameters
+		"""
+		return
+
+	def particleCreateOutputDirs(self):
+		"""
+		put in any additional directories to create
+		"""
+		return
+
+	def processImage(self, imgdata):
+		#creates self.peaktree
+		self.peaktree = self.particleProcessImage(imgdata)
+
+		apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)
+		if self.params['defocpair'] is True:
+			self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params)
+
 	def commitToDatabase(self, imgdata):
+		#commit picker specific params
+		self.particleCommitToDatabase(imgdata)
+
 		expid = int(imgdata['session'].dbid)
-		self.commitParamsToDatabase(imgdata, expid)
-#		self.commitParamsToDatabase(imgdata, expid)??? NOT FOUND
 		apParticle.insertParticlePeaks(self.peaktree, imgdata, expid, self.params)
 #		apParticle.insertParticlePeaksREFLEGINON(self.peaktree, imgdata, self.params)
-		return
+		if self.params['defocpair'] is True:
+			apDefocalPairs.insertShift(imgdata, self.sibling, self.shiftpeak)
+#			apDefocalPairs.insertShiftREFLEGINON(imgdata, self.sibling, self.shiftpeak)
+
+
+	def _runHelp(self):
+		#OVERRIDE appionLoop help()
+		allxml  = os.path.join(self.params['appiondir'],"xml/allAppion.xml")
+		partxml = os.path.join(self.params['appiondir'],"xml/allParticle.xml")
+		funcxml = os.path.join(self.params['appiondir'],"xml",self.functionname+".xml")
+		xmldict = apXml.readOneXmlFile(allxml)
+		xmldict = apXml.overWriteDict(xmldict, apXml.readOneXmlFile(partxml))
+		xmldict = apXml.overWriteDict(xmldict, apXml.readOneXmlFile(funcxml))
+		apXml.printHelp(xmldict)
+		sys.exit(1)
+
+	def setProcessingDirName(self):
+		self.processdirname = "extract"
 
 	def specialDefaultParams(self):
 		self.params['thresh']=0.5
@@ -36,13 +88,27 @@ class basicDogPicker(appionLoop.AppionLoop):
 		self.params['overlapmult']=1.5
 		self.params['maxpeaks']=1500
 		self.params['invert']=False
+		self.params['mapdir']="maps"
+		self.params['diam']=0
+		self.params['median']=0
+		self.params['bin']=4
+		self.params['pixdiam']=None
+		self.params['binpixdiam']=None
+		self.params['autopik']=0
+		self.params['box']=0
+		self.params['defocpair']=False
+		self.particleDefaultParams()
 
 	def specialCreateOutputDirs(self):
 		self._createDirectory(os.path.join(self.params['rundir'],"pikfiles"),warning=False)
 		self._createDirectory(os.path.join(self.params['rundir'],"jpgs"),warning=False)
-		self._createDirectory(os.path.join(self.params['rundir'],"maps"),warning=False)
+		self._createDirectory(os.path.join(self.params['rundir'],self.params['mapdir']),warning=False)
+
+		apDisplay.printMsg("creating particle output directories")
+		self.particleCreateOutputDirs()
 
 	def specialParseParams(self, args):
+		newargs = []
 		for arg in args:
 			elements = arg.split('=')
 			elements[0] = elements[0].lower()
@@ -66,13 +132,41 @@ class basicDogPicker(appionLoop.AppionLoop):
 				self.params['maxpeaks']= int(elements[1])
 			elif (elements[0]=='invert'):
 				self.params['invert']=True
+			elif (elements[0]=='diam'):
+				self.params['diam']=float(elements[1])
+			elif (elements[0]=='bin'):
+				self.params['bin']=int(elements[1])
+			elif (elements[0]=='median'):
+				self.params['median']=int(elements[1])
+			elif arg=='defocpair':
+				self.params['defocpair']=True
+			elif arg=='shiftonly':
+				self.params['shiftonly']=True
+			elif (elements[0]=='box'):
+				self.params['box']=int(elements[1])
 			else:
-				print elements[0], "is not recognized as a valid parameter"
-				sys.exit()
+				newargs.append(arg)
+
+		if len(newargs) > 0:
+			apDisplay.printMsg("parsing particle parameters")
+			self.particleParseParams(newargs)
+
+		if(self.params['apix'] != None and self.params['diam'] > 0):
+			self.params['pixdiam']    = self.params['diam']/self.params['apix']
+			self.params['binpixdiam'] = self.params['diam']/self.params['apix']/float(self.params['bin'])
 
 	def specialParamConflicts(self):
 		if not 'diam' in self.params or self.params['diam']==0:
 			apDisplay.printError("please input the diameter of your particle")
+		if (self.params['thresh']==0 and self.params['autopik']==0):
+			apDisplay.printError("neither manual threshold or autopik parameters are set, please set one.")
+		if not 'diam' in self.params or self.params['diam']==0:
+			apDisplay.printError("please input the diameter of your particle")
+		if self.params['autopik'] != 0:
+			apDisplay.printError("autopik is currently not supported")
+
+		apDisplay.printMsg("checking particle param conflicts")
+		self.particleParamConflicts()
 
 
 if __name__ == '__main__':
