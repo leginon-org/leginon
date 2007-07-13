@@ -359,7 +359,7 @@ def classHistogram(params):
 			sys.stderr.write("*")
 		sys.stderr.write(" "+str(int(lendict[f]))+"\n")
 
-def insertNoRefRun(params):
+def insertNoRefRun(params, insert=False):
 	# create a norefParam object
 	paramq = appionData.ApNoRefParamsData()
 	paramq['particle_diam'] = params['diam']
@@ -410,7 +410,7 @@ def insertNoRefRun(params):
 	classdata = appiondb.query(classq, results=1)
 
 	norefrun = appiondb.query(runq, results=1)
-	if not classdata:
+	if not classdata and insert is True:
 		# ideal case nothing pre-exists
 		apDisplay.printMsg("inserting noref run parameters into database")
 		appiondb.insert(classq)
@@ -427,7 +427,7 @@ if __name__ == "__main__":
 	createOutDir(params)
 
 	if params['commit']is True:
-		insertNoRefRun(params)
+		insertNoRefRun(params, insert=False)
 
 	classfile = os.path.join(params['rundir'], "classes_avg.spi")
 	if not os.path.isfile(classfile):
@@ -440,12 +440,14 @@ if __name__ == "__main__":
 		createSpiderBatchFile(params)
 		runSpiderClass(params, reclass=True)
 
+	classfile = os.path.join(params['rundir'],params['classfile']+".spi")
+	if not os.path.isfile(classfile):
+		apDisplay.printError("failed to write classfile, "+classfile)
 
+	#convertClassfileToImagic(classfile)
+
+	if params['commit']is True:
+		insertNoRefRun(params, insert=True)
 	if params['numclasses'] <= 80:
 		classHistogram(params)
-
-	classfile = os.path.join(params['rundir'],params['classfile']+".spi")
-	if os.path.isfile(classfile):
-		apDisplay.printMsg("classfile located at:\n"+classfile)
-	else:
-		apDisplay.printError("failed to write classfile, "+classfile)
+	apDisplay.printMsg("SUCCESS: classfile located at:\n"+classfile)
