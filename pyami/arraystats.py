@@ -9,8 +9,12 @@ then you must specify force=True.
 '''
 
 import weakattr
-import numarray
-import numarray.nd_image
+try:
+	import numarray
+	import numarray.nd_image
+except:
+	numarray = None
+
 import numpy
 if not hasattr(numpy, 'min'):
 	numpy.min = numpy.minimum
@@ -39,22 +43,28 @@ def all(a, force=False):
 	return calc_stat(a, 'all', force)
 
 
-def numarray_min(inputarray):
-	'''
-	faster than numarray.nd_image.min
-	'''
-	f = numarray.ravel(inputarray)
-	i = numarray.argmin(f)
-	return float(f[i])
+if numarray is None:
+	def notimplemented(inputarray):
+		raise NotImplementedError('numarray not available')
+	numarray_min = numarray_max = numarray_mean = numarray_std = notimplemented
+else:
+	numarray_mean = numarray.nd_image.mean
+	numarray_std = numarray.nd_image.standard_deviation
+	def numarray_min(inputarray):
+		'''
+		faster than numarray.nd_image.min
+		'''
+		f = numarray.ravel(inputarray)
+		i = numarray.argmin(f)
+		return float(f[i])
 
-def numarray_max(inputarray):
-	'''
-	faster than numarray.nd_image.max
-	'''
-	f = numarray.ravel(inputarray)
-	i = numarray.argmax(f)
-	return float(f[i])
-
+	def numarray_max(inputarray):
+		'''
+		faster than numarray.nd_image.max
+		'''
+		f = numarray.ravel(inputarray)
+		i = numarray.argmax(f)
+		return float(f[i])
 
 statnames = ('min','max','mean','std')
 stat_functions = {
@@ -68,8 +78,8 @@ stat_functions = {
 	'numarray': {
 		'min': numarray_min,
 		'max': numarray_max,
-		'mean': numarray.nd_image.mean,
-		'std': numarray.nd_image.standard_deviation,
+		'mean': numarray_mean,
+		'std': numarray_std,
 	}
 }
 
@@ -96,7 +106,7 @@ def calc_stat(a, stat, force=False):
 	dprint('calculating: %s' % (need,))
 
 	## calculate the rest
-	if isinstance(a, numarray.ArrayType):
+	if numarray and isinstance(a, numarray.ArrayType):
 		module = 'numarray'
 	else:
 		## numpy.ndarray and other sequences
@@ -104,7 +114,10 @@ def calc_stat(a, stat, force=False):
 	for statname in need:
 		value = stat_functions[module][statname](a)
 		results[statname] = value
-		setCachedStat(a, statname, value)
+		try:
+			setCachedStat(a, statname, value)
+		except:
+			pass
 
 	if stat == 'all':
 		return results
