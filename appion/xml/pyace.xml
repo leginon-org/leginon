@@ -107,14 +107,5 @@
 	<description>Temporary directory to hold intermediate files</description>
 	<type>path</type>
  </tempdir>
- <bin>
-	<modify>False</modify>
- </bin>
- <diam>
-	<modify>False</modify>
- </diam>
- <lp>
-	<modify>False</modify>
- </lp>
 </pyace>
 	

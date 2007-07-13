@@ -1,69 +1,9 @@
 <?xml version="1.0" encoding="us-ascii"?>
-<selexon>
- <maxpeaks>
-	<name>maximum number of peaks</name>
-	<description>Maximum number of peaks (particles) per image</description>
-	<type>integer</type>
-	<default>1500</default>
-	<limits>1,10000</limits>
- </maxpeaks>
- <lp>
-	<name>lowpass filter</name>
-	<description>Low pass filter radius in Angstoms</description>
-	<type>float</type>
-	<default>0</default>
-	<limits>0,100</limits>
- </lp>
- <lowpass>
-	<alias>lp</alias>
- </lowpass>
- <hp>
-	<name>highpass filter</name>
-	<description>High pass filter radius in Angstoms</description>
-	<type>float</type>
-	<default>0.0</default>
-	<limits>0,10000</limits>
- </hp>
- <highpass>
-	<alias>hp</alias>
- </highpass>
- <overlapmult>
-	<name>overlap distance multiple</name>
-	<description>Distance multiple for two peaks (particles) to overlap</description>
-	<type>float</type>
-	<default>1.5</default>
-	<limits>0,10</limits>
- </overlapmult>
- <thresh>
-	<name>threshold cutoff</name>
-	<description>Threshold to get peaks from dogmap</description>
-	<type>float</type>
-	<default>0.5</default>
-	<limits>0,5</limits>
- </thresh>
- <maxsize>
-	<name>maximum size of a particle</name>
-	<description>Maximum size of a particle, defined as: maxsize * (4 pi radius^2)</description>
-	<type>float</type>
-	<default>1.0</default>
- </maxsize>
- <maxthresh>
-	<name>maximum threshold cutoff</name>
-	<description>Maximum threshold to get peaks from dogmap</description>
-	<type>float</type>
-	<default>5.0</default>
-	<limits>0,5</limits>
- </maxthresh>
+<dogpicker>
  <invert>
 	<name>invert dogmaps</name>
 	<description>Inverts the dogmap for reverse contrast images</description>
 	<type>boolean</type>
 	<default>False</default>
  </invert>
- <diam>
-	<required>True</required>
- </diam>
- <bin>
-	<required>True</required>
- </bin>
-</selexon>
+</dogpicker>

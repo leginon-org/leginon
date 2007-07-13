@@ -32,26 +32,6 @@
 	<type>string</type>
 	<regex>[a-z0-9]+</regex>
  </alldbimages>
- <diam>
-	<name>diam</name>
-	<default></default>
-	<description>Particle diameter in angstroms</description>
-	<type>float</type>
-	<range>1,1500</range>
- </diam>
- <bin>
-	<name>binning</name>
-	<default>4</default>
-	<description>Bin size for images (must be power of 2)</description>
-	<type>integer</type>
-	<list>1,2,4,8,16,32,64</list>
- </bin>
- <median>
-	<name>median filter</name>
-	<default>0</default>
-	<description>Median filter for images</description>
-	<type>integer</type>
- </median>
  <continue>
 	<name>continue</name>
 	<default>True</default>

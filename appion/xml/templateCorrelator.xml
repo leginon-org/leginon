@@ -29,60 +29,6 @@
 	<example>0,360,15</example>
 	<limits>0,360</limits>
  </range3>
- <maxpeaks>
-	<name>maximum number of peaks</name>
-	<description>Maximum number of peaks (particles) per image</description>
-	<type>integer</type>
-	<default>1500</default>
-	<limits>1,10000</limits>
- </maxpeaks>
- <lp>
-	<name>lowpass filter</name>
-	<description>Low pass filter radius in Angstoms</description>
-	<type>float</type>
-	<default>0</default>
-	<limits>0,100</limits>
- </lp>
- <lowpass>
-	<alias>lp</alias>
- </lowpass>
- <hp>
-	<name>highpass filter</name>
-	<description>High pass filter radius in Angstoms</description>
-	<type>float</type>
-	<default>0.0</default>
-	<limits>0,10000</limits>
- </hp>
- <highpass>
-	<alias>hp</alias>
- </highpass>
- <overlapmult>
-	<name>overlap distance multiple</name>
-	<description>Distance multiple for two peaks (particles) to overlap</description>
-	<type>float</type>
-	<default>1.5</default>
-	<limits>0,10</limits>
- </overlapmult>
- <thresh>
-	<name>threshold cutoff</name>
-	<description>Threshold to get peaks from ccmaxmap</description>
-	<type>float</type>
-	<default>0.5</default>
-	<limits>0,5</limits>
- </thresh>
- <maxsize>
-	<name>maximum size of a particle</name>
-	<description>Maximum size of a particle, defined as: maxsize * (4 pi radius^2)</description>
-	<type>float</type>
-	<default>1.0</default>
- </maxsize>
- <diam>
-	<description>Particle diameter in angstroms used for masking template</description>
-	<required>True</required>
- </diam>
- <bin>
-	<required>True</required>
- </bin>
  <templateids>
 	<name>template id numbers</name>
 	<description>Id numbers for templates used</description>
@@ -92,4 +38,7 @@
 	<limits>1,1000000</limits>
 	<required>True</required>
  </templateids>
+ <diam>
+	<description>Particle diameter in angstroms used for masking template</description>
+ </diam>
 </selexon>

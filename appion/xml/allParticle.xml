@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<allparticle>
+ <diam>
+	<name>diam</name>
+	<default></default>
+	<description>Particle diameter in angstroms</description>
+	<type>float</type>
+	<range>1,1500</range>
+	<required>True</required>
+ </diam>
+ <bin>
+	<name>binning</name>
+	<default>4</default>
+	<description>Bin size for images (must be power of 2)</description>
+	<type>integer</type>
+	<required>True</required>
+	<list>1,2,4,8,16,32,64</list>
+ </bin>
+ <median>
+	<name>median filter</name>
+	<default>0</default>
+	<description>Median filter for images</description>
+	<type>integer</type>
+ </median>
+ <maxpeaks>
+	<name>maximum number of peaks</name>
+	<description>Maximum number of peaks (particles) per image</description>
+	<type>integer</type>
+	<default>1500</default>
+	<limits>1,10000</limits>
+ </maxpeaks>
+ <lp>
+	<name>lowpass filter</name>
+	<description>Low pass filter radius in Angstoms</description>
+	<type>float</type>
+	<default>0</default>
+	<limits>0,100</limits>
+ </lp>
+ <lowpass>
+	<alias>lp</alias>
+ </lowpass>
+ <hp>
+	<name>highpass filter</name>
+	<description>High pass filter radius in Angstoms</description>
+	<type>float</type>
+	<default>0.0</default>
+	<limits>0,10000</limits>
+ </hp>
+ <highpass>
+	<alias>hp</alias>
+ </highpass>
+ <overlapmult>
+	<name>overlap distance multiple</name>
+	<description>Distance multiple for two peaks (particles) to overlap</description>
+	<type>float</type>
+	<default>1.5</default>
+	<limits>0,10</limits>
+ </overlapmult>
+ <thresh>
+	<name>threshold cutoff</name>
+	<description>Threshold to get peaks from ccmaxmap</description>
+	<type>float</type>
+	<default>0.5</default>
+	<limits>0,5</limits>
+ </thresh>
+ <maxsize>
+	<name>maximum size of a particle</name>
+	<description>Maximum size of a particle, defined as: maxsize * (4 pi radius^2)</description>
+	<type>float</type>
+	<default>1.0</default>
+ </maxsize>
+ <maxthresh>
+	<name>maximum threshold cutoff</name>
+	<description>Maximum threshold to get peaks from dogmap</description>
+	<type>float</type>
+	<default>5.0</default>
+	<limits>0,5</limits>
+ </maxthresh>
+</allparticle>

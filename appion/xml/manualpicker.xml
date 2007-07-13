@@ -1,26 +1,18 @@
 <?xml version="1.0" encoding="us-ascii"?>
-<selexon>
- <lp>
-	<name>lowpass filter</name>
-	<description>Low pass filter radius in Angstoms</description>
-	<type>float</type>
-	<default>0</default>
-	<limits>0,100</limits>
- </lp>
- <lowpass>
-	<alias>lp</alias>
- </lowpass>
- <hp>
-	<name>highpass filter</name>
-	<description>High pass filter radius in Angstoms</description>
-	<type>float</type>
-	<default>0.0</default>
-	<limits>0,10000</limits>
- </hp>
- <highpass>
-	<alias>hp</alias>
- </highpass>
- <bin>
-	<required>True</required>
- </bin>
-</selexon>
+<manualpicker>
+ <overlapmult>
+	<modify>False</modify>
+ </overlapmult>
+ <thresh>
+	<modify>False</modify>
+ </thresh>
+ <maxsize>
+	<modify>False</modify>
+ </maxsize>
+ <maxthresh>
+	<modify>False</modify>
+ </maxthresh>
+ <maxpeaks>
+	<modify>False</modify>
+ </maxpeaks>
+</manualpicker>
