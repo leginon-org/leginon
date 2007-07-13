@@ -30,14 +30,18 @@ import arraystats
 import weakattr
 
 #### for numarray compatibility
-import numarray
-def numarray_read(filename):
-	a1 = read(filename)
-	a2 = numarray.array(a1)
-	return a1
-def numarray_write(a, filename, header=None):
-	a2 = numpy.asarray(a)
-	write(a2, filename, header)
+try:
+	import numarray
+except:
+	numarray = None
+if numarray is not None:
+	def numarray_read(filename):
+		a1 = read(filename)
+		a2 = numarray.array(a1)
+		return a1
+	def numarray_write(a, filename, header=None):
+		a2 = numpy.asarray(a)
+		write(a2, filename, header)
 
 ## mapping of MRC mode to numpy type
 mrc2numpy = {
