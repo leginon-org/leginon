@@ -314,9 +314,6 @@ class AppionLoop(object):
 		self.params['dbimages']=False
 		self.params['alldbimages']=False
 		self.params['apix']=None
-		self.params['diam']=0
-		self.params['median']=0
-		self.params['bin']=4
 		self.params['continue']=False
 		self.params['nocontinue']=False
 		self.params['commit']=False
@@ -326,9 +323,7 @@ class AppionLoop(object):
 		self.params['rundir']=None
 		self.params['doneDictName']=None
 		self.params['functionLog']=None
-		self.params['pixdiam']=None
 		self.params['uncorrected']=False
-		self.params['binpixdiam']=None
 		self.params['nowait']=False
 		self.params['norejects']=None
 		self.params['limit']=None
@@ -413,12 +408,6 @@ class AppionLoop(object):
 				self.params['runid']=elements[1]
 			elif (elements[0]=='apix'):
 				self.params['apix']=float(elements[1])
-			elif (elements[0]=='diam'):
-				self.params['diam']=float(elements[1])
-			elif (elements[0]=='bin'):
-				self.params['bin']=int(elements[1])
-			elif (elements[0]=='median'):
-				self.params['median']=int(elements[1])
 			elif arg=='commit':
 				self.params['commit']=True
 				self.params['display']=1
@@ -462,8 +451,9 @@ class AppionLoop(object):
 		sessionq=leginondata.SessionData(name=self.params['sessionname'])
 		self.params['session']=self.leginondb.query(sessionq)[0]
 
-		apDisplay.printMsg("parsing special parameters")
-		self.specialParseParams(newargs)
+		if len(newargs) > 0:
+			apDisplay.printMsg("parsing special parameters")
+			self.specialParseParams(newargs)
 
 		self.params['imgdir'] = apDatabase.getImgDir(self.params['sessionname'])
 
@@ -484,10 +474,6 @@ class AppionLoop(object):
 		apDisplay.printMsg("RUNDIR:\t "+self.params['rundir'])
 
 		self.params['doneDictName'] = os.path.join(self.params['rundir'] , "."+self.functionname+"donedict")
-
-		if(self.params['apix'] != None and self.params['diam'] > 0):
-			self.params['pixdiam']    = self.params['diam']/self.params['apix']
-			self.params['binpixdiam'] = self.params['diam']/self.params['apix']/float(self.params['bin'])
 
 	def _shuffleTree(self, tree):
 		oldtree = tree
