@@ -137,8 +137,11 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 
 	def submitTargets(self):
 		self.userpause.set()
-		if self.settings['autofinder']:
-			return
+		try:
+			if self.settings['autofinder']:
+				return
+		except:
+			pass
 
 		if self.targetlist is None:
 			self.targetlist = self.newTargetList()
