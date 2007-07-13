@@ -7,6 +7,6 @@ rm -frv ${runid}
 reset
 ../bin/dogPicker.py \
   dbimages=07mar09b,en diam=225 bin=8 \
-  outdir=. runid=${runid} \
-  background limit=10
+  outdir=. runid=${runid} maxpeaks=50 \
+  background limit=10 
   #numslices=2 sizerange=1

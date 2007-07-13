@@ -12,5 +12,5 @@ reset
   07jan05b_00012gr_00001sq_v01_00002sq_00_00004en_00.mrc \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00005en_00.mrc \
   07jan05b_00012gr_00001sq_v01_00002sq_00_00006en_00.mrc \
-  diam=140 lp=0 bin=8 overlapmult=2 \
-  runid=${runid} thresh=0.60 outdir=. background
+  diam=140 lp=0 bin=8 overlapmult=2 maxpeaks=50 \
+  runid=doglocal thresh=0.60 outdir=. background
