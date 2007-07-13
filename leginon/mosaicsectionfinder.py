@@ -118,11 +118,11 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 #						self.logger.info('Region %d has %d points' % (i, regionarray.shape[1]))
 						## reduce to 20 points
 						regionarray = libCV.PolygonVE(regionarray, velimit)
-						regionarray.transpose()
-						regionarrays.append(regionarray)
+						rregionarray = regionarray.transpose()
+						regionarrays.append(rregionarray)
 						regionellipses.append(regionellipse)
 					
-						regiondisplaypoints = self.transpose_points(regionarray)
+						regiondisplaypoints = self.transpose_points(rregionarray)
 						displaypoints.extend(regiondisplaypoints)				
 						regionphi = regionpolygon[4]
 						#print regionrow,regioncol,regionaxismajor,regionaxisminor,regionphi
@@ -298,6 +298,7 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 
 			while len(sectionarrays) == 0 and maxt1 < mosaicmax:
 				count += 1
+				regions = None
 				minsize1 = onesectionmin
 				maxsize1 = multisections
 				m = numpy.clip(self.mosaicimage, mint, maxt1)
