@@ -141,8 +141,12 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>
     <A HREF='runPySelexon.php?expId=$sessionId'>";
-    if ($prtlruns==0) {echo "Begin Picking";}
-    else {echo "Continue Picking";}
+    if ($prtlruns==0) {echo "Begin Template Picking";}
+    else {echo "Continue Template Picking";}
+    echo"</A><BR>
+    <A HREF='runDogPicker.php?expId=$sessionId'>";
+    if ($prtlruns==0) {echo "Begin DoG Picking";}
+    else {echo "Continue DoG Picking";}
     echo"</A>
     </TD>
   </TR>
