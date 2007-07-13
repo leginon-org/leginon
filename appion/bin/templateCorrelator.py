@@ -5,7 +5,7 @@ import os
 import sys
 import re
 #appion
-import appionLoop
+import particleLoop
 import apFindEM
 import apImage
 import apDisplay
@@ -13,76 +13,46 @@ import apTemplate
 import apDatabase
 import apPeaks
 import apParticle
-import apDefocalPairs
 #legacy
 #import apViewIt
 #import selexonFunctions  as sf1
 
-class TemplateCorrelationLoop(appionLoop.AppionLoop):
-	def setProcessingDirName(self):
-		self.processdirname = "extract"
+class TemplateCorrelationLoop(particleLoop.ParticleLoop):
 
 	def preLoopFunctions(self):
 		apTemplate.getTemplates(self.params)
 
-	def processImage(self, imgdata):
+	def particleProcessImage(self, imgdata):
 		imgname = imgdata['filename']
 		apTemplate.rescaleTemplates(self.params)
 		### RUN FindEM
 		if 'method' in self.params and self.params['method'] == "experimental":
-			#numpeaks = sf2.runCrossCorr(params,imgname)
-			#sf2.createJPG2(params,imgname)
+			#ccmaplist = sf2.runCrossCorr(params,imgname)
+			#peaktree  = apPeaks.findPeaks(imgdata, ccmaplist, self.params)
 			sys.exit(1)
 		else:
-			self.ccmaplist = apFindEM.runFindEM(imgdata, self.params)
-			self.peaktree  = apPeaks.findPeaks(imgdata, self.ccmaplist, self.params)
-			apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)
+			ccmaplist = apFindEM.runFindEM(imgdata, self.params)
+			peaktree  = apPeaks.findPeaks(imgdata, ccmaplist, self.params)
+		return peaktree
 
-		if self.params['defocpair'] is True:
-			self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params)
-
-	def postLoopFunctions(self):
-		return
-
-	def commitToDatabase(self, imgdata):
+	def particleCommitToDatabase(self, imgdata):
 		expid = int(imgdata['session'].dbid)
 		apParticle.insertSelexonParams(self.params, expid)
 #		apParticle.insertSelexonParamsREFLEGINON(self.params, imgdata['session'])
-		apParticle.insertParticlePeaks(self.peaktree, imgdata, expid, self.params)
-#		apParticle.insertParticlePeaksREFLEGINON(self.peaktree, imgdata, self.params)
-		if self.params['defocpair'] is True:
-			apDefocalPairs.insertShift(imgdata, self.sibling, self.shiftpeak)
-#			apDefocalPairs.insertShiftREFLEGINON(imgdata, self.sibling, self.shiftpeak)
 
-	def specialDefaultParams(self):
+	def particleDefaultParams(self):
 		self.params['template']=''
 		self.params['templatelist']=[]
 		self.params['startang']=0
 		self.params['endang']=10
 		self.params['incrang']=20
-		self.params['thresh']=0.5
-		self.params['maxthresh']=2.5
-		self.params['autopik']=0
-		self.params['lp']=30.0
-		self.params['hp']=0.0
-		self.params['maxsize']=1.0
-		self.params['box']=0
-		self.params['method']="updated"
-		self.params['overlapmult']=1.5
-		self.params['maxpeaks']=1500
-		self.params['defocpair']=False
 		self.params['templateIds']=''
 		self.params['multiple_range']=False
 		self.params["ogTmpltInfo"]=[]
+		self.params['mapdir']="ccmaxmaps"
 		self.params["scaledapix"]={}
 
-
-	def specialCreateOutputDirs(self):
-		self._createDirectory(os.path.join(self.params['rundir'],"pikfiles"),warning=False)
-		self._createDirectory(os.path.join(self.params['rundir'],"jpgs"),warning=False)
-		self._createDirectory(os.path.join(self.params['rundir'],"ccmaxmaps"),warning=False)
-
-	def specialParseParams(self,args):
+	def particleParseParams(self,args):
 		for arg in args:
 			elements=arg.split('=')
 			elements[0] = elements[0].lower()
@@ -111,44 +81,19 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 					self.params['multiple_range']=True
 				else:
 	 				apDisplay.printError("'range' must include 3 angle parameters: start, stop, & increment")
-			elif (elements[0]=='thresh'):
-				self.params['thresh']=float(elements[1])
-			elif (elements[0]=='autopik'):
-				self.params['autopik']=float(elements[1])
-			elif (elements[0]=='lp'):
-				self.params['lp']=float(elements[1])
-			elif (elements[0]=='hp'):
-				self.params['hp']=float(elements[1])
-			elif (elements[0]=='maxsize'):
-				self.params['maxsize']=float(elements[1])
-			elif (elements[0]=='box'):
-				self.params['box']=int(elements[1])
 			elif (elements[0]=='templateids'):
 				templatestring=elements[1].split(',')
 				self.params['templateIds']=templatestring
-			elif arg=='defocpair':
-				self.params['defocpair']=True
-			elif arg=='shiftonly':
-				self.params['shiftonly']=True
 			elif (elements[0]=='method'):
 				self.params['method']=str(elements[1])
-			elif (elements[0]=='overlapmult'):
-				self.params['overlapmult']=float(elements[1])
-			elif (elements[0]=='maxpeaks'):
-				self.params['maxpeaks']=int(elements[1])
+			else:
+				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
-
-	def specialParamConflicts(self):
+	def particleParamConflicts(self):
 		if not self.params['templateIds'] and not self.params['apix']:
 			apDisplay.printError("if not using templateIds, you must enter a template pixel size")
 		if self.params['templateIds'] and self.params['template']:
 			apDisplay.printError("Both template database IDs and mrc file templates are specified,\nChoose only one")
-		if (self.params['thresh']==0 and self.params['autopik']==0):
-			apDisplay.printError("neither manual threshold or autopik parameters are set, please set one.")
-		if not 'diam' in self.params or self.params['diam']==0:
-			apDisplay.printError("please input the diameter of your particle")
-		if self.params['autopik'] != 0:
-			apDisplay.printError("autopik is currently not supported")
 
 if __name__ == '__main__':
 	imgLoop = TemplateCorrelationLoop()
