@@ -54,23 +54,3 @@ class fftEngine(_fftEngine):
 		im = inverse_real_fft2d(fftim)
 		return im
 
-if __name__ == '__main__':
-	import Mrc
-	import imagefun
-
-	def stats(im):
-		print '   MEAN', imagefun.mean(im)
-		print '   STD', imagefun.stdev(im)
-		print '   MIN', imagefun.min(im)
-		print '   MAX', imagefun.max(im)
-
-	print 'reading'
-	im = Mrc.mrc_to_numeric('../test_images/spiketest.mrc')
-	print 'IM TYPE', im.type()
-	stats(im)
-	ffteng = fftEngine()
-	fft = ffteng.transform(im)
-	print 'FFT TYPE', fft.type()
-	ifft = ffteng.itransform(fft)
-	print 'IFFT TYPE', ifft.type()
-	stats(ifft)
