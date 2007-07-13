@@ -14,7 +14,8 @@ require ('inc/project.inc');
 require ('inc/viewer.inc');
 require ('inc/processing.inc');
 require ('inc/ssh.inc');
-  
+require ('inc/appionloop.inc');
+ 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
 	runTemplateCorrelator();
@@ -56,7 +57,9 @@ function createTemplateForm() {
 	        $i=1;
 		$javafunctions="<SCRIPT LANGUAGE='JavaScript'>\n";
 		$templatetable="<TABLE BORDER='1' CELLPADDING='5' WIDTH='600'>\n";
+		$templatetable.="<style type='text/css'><!-- input { font-size: 14px; } --></style>";
 		$numtemplates=count($templateData);
+
 		foreach($templateData as $templateinfo) { 
 		        if (is_array($templateinfo)) {
 			        $filename=$templateinfo[templatepath] ."/".$templateinfo[templatename];
@@ -125,6 +128,9 @@ function createTemplateForm() {
   <P>\n";
 	if ($templatetable) {
 	        echo"
+    <CENTER>
+    <INPUT TYPE='submit' NAME='templates' value='Use These Templates'>
+    </CENTER>\n
     $templatetable
     <CENTER>
     <INPUT TYPE='hidden' NAME='numtemplates' value='$numtemplates'>
@@ -335,11 +341,10 @@ function createTCForm($extra=false, $title='Template Correlator Launcher', $head
                         <INPUT TYPE='checkbox' NAME='defocpair' $defocpaircheck>
                         Calculate Shifts for Defocal Pairs<BR>
                         <INPUT TYPE='checkbox' NAME='shiftonly' $shiftonlycheck>
-                        ONLY Calculate Shifts for Pairs<BR>
-                        <INPUT TYPE='checkbox' NAME='cont' $contcheck>
-                        Continue<BR>
-                        <INPUT TYPE='checkbox' NAME='commit' $commitcheck>
-                        Commit to Database<BR>
+                        ONLY Calculate Shifts for Pairs<BR>";
+        createAppionLoopTable();
+        echo"
+
                         </TD>
                 </TR>
                 </TABLE>
@@ -526,8 +531,7 @@ function runTemplateCorrelator() {
 	if ($thresh) $command.=" thresh=$thresh";
 	if ($shiftonly==1) $command.=" shiftonly";
 	if ($defocpair==1) $command.=" defocpair";
-	if ($continue==1) $command.=" continue";
-	if ($commit==1) $command.=" commit";
+	$command .= parseAppionLoopParams($_POST);
 
 	$cmd = "$command > templateCorrelatorLog.txt";
 	echo $command;

@@ -12,6 +12,7 @@ require ('inc/leginon.inc');
 require ('inc/project.inc');
 require ('inc/viewer.inc');
 require ('inc/processing.inc');
+require ('inc/appionloop.inc');
 
 $expId = $_GET[expId];
 $phpself=$_SERVER['PHP_SELF'];
@@ -109,9 +110,8 @@ if ($_POST['process']) {
 	$command.="display=$display ";
 	$command.="stig=$stig";
 	if ($nominal) $command.=" nominal=$nominal";
-	if ($continue==1) $command.=" continue";
-	if ($commit==1) $command.=" commit";
 	if ($reprocess) $command.=" reprocess=$reprocess";
+	$command .= parseAppionLoopParams($_POST);
 
 	$cmd = "exec ssh $user@$host '$command > acelog.txt &'";
 	//	exec($cmd ,$result);
@@ -269,11 +269,9 @@ else {
             <INPUT TYPE='checkbox' NAME='stig'>
             Estimate Astigmatism<BR>
             <INPUT TYPE='checkbox' NAME='display' CHECKED>
-            Write Result Images<BR>
-            <INPUT TYPE='checkbox' NAME='cont'>
-            Continue<BR>
-            <INPUT TYPE='checkbox' NAME='commit'>
-            Commit to Database<BR>
+            Write Result Images<BR>";
+	createAppionLoopTable();
+	echo"
             </TD>
           </TABLE>
           </TD>
