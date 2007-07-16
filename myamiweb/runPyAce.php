@@ -227,7 +227,7 @@ else {
         <TR>
           <TD VALIGN='TOP'>
             <A HREF=\"javascript:infopopup('runid')\"><B>Ace Run Name:</B></A>
-            <INPUT TYPE='text' NAME='runid' VALUE='run1'><BR>
+            <INPUT TYPE='text' NAME='runid' VALUE='acerun1'><BR>
             <BR>
 
 				&nbsp;&nbsp;&nbsp;Output Directory<BR>
