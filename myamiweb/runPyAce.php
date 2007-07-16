@@ -140,10 +140,9 @@ if ($_POST['process']) {
         <TR><TD>outdir</TD><TD>$outdir</TD></TR>
         <TR><TD>display</TD><TD>$display</TD></TR>
         <TR><TD>stig</TD><TD>$stig</TD></TR>\n";
+	appionLoopSummaryTable();
 	if ($nominal=="db value" OR $nominal=="") echo "<TR><TD>nominal</TD><TD><I>NULL</I></TD></TR>\n";
 	else echo "<TR><TD>nominal</TD><TD>$nominal</TD></TR>\n";
-	echo "<TR><TD>continue</TD><TD>$continue</TD></TR>
-        <TR><TD>commit</TD><TD>$commit</TD></TR>\n";
 	if ($reprocess) echo "<TR><TD>reprocess</TD><TD>$reprocess</TD></TR>\n";
 	else echo "<TR><TD>reprocess</TD><TD><I>NULL</I></TD></TR>\n";
 	echo "</TABLE>\n";
@@ -152,6 +151,7 @@ if ($_POST['process']) {
 
 // CREATE FORM PAGE
 else {
+   $presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
         $javafunctions="
 	<script src='js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
@@ -176,7 +176,7 @@ else {
 			 }
 		}
 		function infopopup(infoname){
-			 var newwindow=window.open('','name','height=150,width=300');
+			 var newwindow=window.open('','name','height=250,width=400');
 			 newwindow.document.write('<HTML><BODY>');
 			 if (infoname=='runid'){
 			    newwindow.document.write('Specifies the name associated with the ACE results unique to the specified session and parameters.  An attempt to use the same run name for a session using different ACE parameters will result in an error.');
@@ -191,7 +191,7 @@ else {
 			    newwindow.document.write('Use in cases where the signal to noise ratio is so high that the edge detection is incorrect.');
 			 }
 			 if (infoname=='resamplefr'){
-			    newwindow.document.write('Sets the sampling size of the CTF.  At high defoci or at higher magnifications, the first thon rings may be so close to the origin that they are not processed by ACE. In these cases raise the resampling value (2.0 works well in these cases).');
+			    newwindow.document.write('Sets the sampling size of the CTF.  At high defoci or at higher magnifications, the first thon rings may be so close to the origin that they are not processed by ACE. In these cases raise the resampling value (2.0 works well in these cases).<BR><BR><TABLE><TR><TD COLSPAN=2>typical values for defocus/apix</TD></TR><TR><TD>0.5</TD><TD>1.2</TD></TR><TR><TD>1.0</TD><TD>1.5</TD></TR><TR><TD>1.5</TD><TD>1.6</TD></TR><TR><TD>2.0</TD><TD>1.8</TD></TR><TR><TD>3.0</TD><TD>2.2</TD></TR><TR><TD>4.0</TD><TD>2.7</TD></TR></TABLE><BR>For example, with defocus = 2.0 (-2.0x10<SUP>-6</SUP> m) and apix (&Aring;/pixel) = 1.63<BR>then defocus/apix = 1.22 and you should use resamplefr=1.6<BR>(as long as its close it should work.)');
 			 }
 			 if (infoname=='overlap'){
 			    newwindow.document.write('During processing, micrographs are cut into a series of smaller images and averaged together to increase the signal to noise ratio. This value (n) will result in successive images having an overlap of (1-n)*field size. Increase in cases of very low signal to noise ratio.');
@@ -204,6 +204,7 @@ else {
 		}
 
 	</SCRIPT>\n";
+	appionLoopJavaCommands();
 	writeTop("PyACE Launcher","Automated CTF Estimation With PyACE",$javafunctions);
 	echo"
         <FORM NAME='viewerform' method='POST' action='$phpself'>\n";
@@ -219,74 +220,64 @@ else {
 	
 	echo"
         <P>
-        <TABLE BORDER=0 CLASS=tableborder>
+        <TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
         <TR>
           <TD VALIGN='TOP'>
-          <TABLE CELLPADDING='5' BORDER='0'>
-          <TR>
-            <TD COLSPAN='2' VALIGN='TOP'>
             <A HREF=\"javascript:infopopup('runid')\"><B>Ace Run Name:</B></A>
-            <INPUT TYPE='text' NAME='runid' VALUE='run1'>
-            <HR>
-            </TD>
-          </TR>
-          <TR>
-            <TD VALIGN='TOP' COLSPAN='2'>   
-            <B>Files:</B><BR>
-            <INPUT TYPE='text' NAME='outdir' VALUE='$sessionpath'>
-            Output Directory<BR>
-            <INPUT TYPE='text' NAME='tempdir' VALUE='./temp/'>
-            Temp Directory
-            </TD>
-          </TR>
-          <TR>
-            <TD ALIGN='RIGHT'>
-            <B>Preset</B>
-            </TD>
-            <TD>
-            <SELECT NAME='preset'>\n";
+            <INPUT TYPE='text' NAME='runid' VALUE='run1'><BR>
+            <BR>
 
-	foreach ($presets as $preset) {
-	        echo "<OPTION VALUE='$preset' ";
-		// make en selected by default
-		if ($preset=='en') echo "SELECTED";
-		echo ">$preset</OPTION>\n";
-	}
+				&nbsp;&nbsp;&nbsp;Output Directory<BR>
+            <INPUT TYPE='text' NAME='outdir' VALUE='$sessionpath' SIZE='45'><BR>
+            &nbsp;&nbsp;&nbsp;Temporary Directory<BR>
+            <INPUT TYPE='text' NAME='tempdir' VALUE='./temp/' SIZE='45'><BR>
+            <BR>";
+   if ($presets) {
+            echo"<B>Preset</B>\n<SELECT NAME='preset'>\n";
+            foreach ($presets as $preset) {
+                  echo "<OPTION VALUE='$preset' ";
+                  // make en selected by default
+                  if ($preset==$presetval) echo "SELECTED";
+                  echo ">$preset</OPTION>\n";
+            }
+            echo"</SELECT><BR>
+            <BR>";
+   } else {
+            echo"<FONT COLOR='RED'><B>No Presets for this Session</B></FONT><BR>
+            <BR>\n";
+   }
 	echo"
-        </SELECT>
-            </TD>
-          </TR>
-          <TR>
-            <TD ALIGN='RIGHT'>
-            <B>Medium:</B>
-            </TD>
-            <TD>
-            <INPUT TYPE='radio' NAME='medium' VALUE='carbon'>carbon<BR>
-            <INPUT TYPE='radio' NAME='medium' VALUE='ice' checked>ice
-            </TD>
-          </TR>
-            <TD COLSPAN='2'>
-            <INPUT TYPE='checkbox' NAME='stig'>
-            Estimate Astigmatism<BR>
             <INPUT TYPE='checkbox' NAME='display' CHECKED>
-            Write Result Images<BR>";
+            Write Result Images<BR>
+            <BR>";
 	createAppionLoopTable();
 	echo"
-            </TD>
-          </TABLE>
           </TD>
           <TD CLASS='tablebg'>
-          <TABLE CELLPADDING='5' BORDER='0'>
-          <TR>
+
+            <B>Medium:</B><BR>
+            <INPUT TYPE='radio' NAME='medium' VALUE='carbon'>&nbsp;carbon&nbsp;&nbsp;
+            <INPUT TYPE='radio' NAME='medium' VALUE='ice' checked>&nbsp;ice<BR>
+            <BR>
+
+            <B>Astigmatism:</B><BR>
+            <INPUT TYPE='checkbox' NAME='stig'>
+            Estimate Astigmatism <FONT SIZE=-2><I>(experimental)</I></FONT><BR>
+            <BR>
+
+          <TABLE CELLSPACING=0 CELLPADDING=2><TR>
+
             <TD VALIGN='TOP'>
             <A HREF=\"javascript:infopopup('edgethresh')\"><B>Edge Thresholds:</B></A><BR>
             <INPUT TYPE='text' NAME='edgethcarbon' VALUE='0.8' SIZE='4'>
             Carbon<BR>
             <INPUT TYPE='text' NAME='edgethice' VALUE='0.6' SIZE='4'>
-            Ice<BR>
-            <INPUT TYPE='checkbox' NAME='drange'>
-            <A HREF=\"javascript:infopopup('drange')\">Compress Dynamic Range</A>
+            Ice
             </TD>
+
+            <TD VALIGN='CENTER'>&nbsp;</TD>
+            <TD VALIGN='CENTER'>&nbsp;</TD>
+
             <TD VALIGN='TOP'>
             <A HREF=\"javascript:infopopup('pfact')\"><B>Power Factors:</B></A><BR>
             <INPUT TYPE='text' NAME='pfcarbon' VALUE='0.9' SIZE='4'>
@@ -294,34 +285,38 @@ else {
             <INPUT TYPE='text' NAME='pfice' VALUE='0.3' SIZE='4'>
             Ice
             </TD>
-          </TR>
-          <TR>
-            <TD COLSPAN='2'>
+
+          </TR></TABLE><BR>
+
+            <INPUT TYPE='text' NAME='resamplefr' VALUE='1.5' size='4'>
+            <A HREF=\"javascript:infopopup('resamplefr')\">Resampling Frequency</A><BR>
+
             <INPUT TYPE='text' NAME='overlap' VALUE='2' SIZE='4'>
             <A HREF=\"javascript:infopopup('overlap')\">Averaging Overlap</A><BR>
+
             <INPUT TYPE='text' NAME='fieldsize' VALUE='512' size='4'>
             <A HREF=\"javascript:infopopup('field')\">Field Size</A><BR>
-            <INPUT TYPE='text' NAME='resamplefr' VALUE='1' size='4'>
-            <A HREF=\"javascript:infopopup('resamplefr')\">Resampling Frequency</A>
-            </TD>
-          </TR>
-          <TR>
-            <TD COLSPAN='2'>
+
             <INPUT TYPE='text' NAME='cs' VALUE='2.0' SIZE='4'>
             Spherical Aberration<BR>
-            <P>
+
+            <INPUT TYPE='checkbox' NAME='drange'>
+            <A HREF=\"javascript:infopopup('drange')\">Compress Dynamic Range</A><BR>
+            <BR>
+
             <INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)'>
             Reprocess Below Confidence Value<BR>
             Set Value:<INPUT TYPE='text' NAME='reprocess' DISABLED VALUE='0.8' SIZE='4'>
-            (between 0.0 - 1.0)
-            <P>
+            <FONT SIZE=-2><I>(between 0.0 - 1.0)</I></FONT><BR>
+            <BR>
+
             <INPUT TYPE='checkbox' NAME='nominalcheck' onclick='enabledf(this)'>
             Override Nominal Defocus<BR>
             Set Defocus:<INPUT TYPE='text' NAME='nominal' DISABLED VALUE='db value' SIZE='8'>
-            meters (i.e. -2.0e-6)
-            </TD>
-          </TR>
-          </TABLE>
+            <FONT SIZE=-2><I>(in meters, i.e. <B>-2.0e-6</B>)</I></FONT><BR>
+            <INPUT TYPE='checkbox' NAME='newnominal'>
+            Use Previously ACE Estimated Defocus
+
           </TD>
         </TR>
         <TR>
@@ -366,5 +361,6 @@ function getdata($str_field, $str_data) {
 	}
 	return $result;
 }
+
 
 ?>

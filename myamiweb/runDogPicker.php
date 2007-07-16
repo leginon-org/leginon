@@ -69,15 +69,6 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	// Set any existing parameters in form
 	$runidval = ($_POST['runid']) ? $_POST['runid'] : 'run1';
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
-	$defocpaircheck = ($_POST['defocpair']=='on') ? 'CHECKED' : '';
-	$contcheck = ($_POST['cont']=='on') ? 'CHECKED' : '';
-	$commitcheck = ($_POST['commit']=='on') ? 'CHECKED' : '';
-	$diamval = ($_POST['diam']) ? "VALUE='".$_POST['diam']."'" : ''; 
-	$lpval = ($_POST['lp']) ? $_POST['lp'] : '0';
-	$hpval = ($_POST['hp']) ? $_POST['hp'] : '600';
-	$binval = ($_POST['bin']) ? $_POST['bin'] : '4';
-	$thresh = ($_POST['thresh']) ? $_POST['thresh'] : '0.7';
-	$maxthresh = ($_POST['maxthresh']) ? $_POST['maxthresh'] : '1.5';
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
 	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
@@ -117,28 +108,21 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
                          newwindow.document.close();
                  }
         </SCRIPT>\n";
+	appionLoopJavaCommands();
+   particleLoopJavaCommands();
 
 	echo"
 	<P>
-	<TABLE BORDER=0 CLASS=tableborder>
+	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
 		<TD VALIGN='TOP'>
-		<TABLE CELLPADDING='5' BORDER='0'>
-		<TR>
-			<TD VALIGN='TOP'>
-			<A HREF=\"javascript:infopopup('runid')\"><B>Run Name:</B></A>
-			<INPUT TYPE='text' NAME='runid' VALUE='$runidval'>
-			<HR>
-			</TD>
-		</TR>
-		<TR>
-			<TD VALIGN='TOP'>	 
-			<B>Output Directory:</B><BR>
-			<INPUT TYPE='text' NAME='outdir' VALUE='$sessionpathval' SIZE='38'>
-			</TD>
-		</TR>
-		<TR>
-			<TD>\n";
+		<A HREF=\"javascript:infopopup('runid')\"><B>Run Name:</B></A>
+		<INPUT TYPE='text' NAME='runid' VALUE='$runidval'><BR>
+		<BR>
+
+		<B>Output Directory:</B><BR>
+		<INPUT TYPE='text' NAME='outdir' VALUE='$sessionpathval' SIZE='45'><BR>
+		<BR>\n";
 	if ($presets) {
 		echo"<B>Preset</B>\n<SELECT NAME='preset'>\n";
 		foreach ($presets as $preset) {
@@ -147,50 +131,22 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 			if ($preset==$presetval) echo "SELECTED";
 			echo ">$preset</OPTION>\n";
 		}
-	}
-	else {
+		echo"</SELECT>";
+	} else {
 		echo"<FONT COLOR='RED'><B>No Presets for this Session</B></FONT>\n";
 	}
-	echo"
-			</TD>
-		</TR>
-		<TR>
-			<TD VALIGN='TOP'>
-	";
 	createAppionLoopTable();
 	echo"
-			</TD>
-		</TR>
-		</TABLE>
 		<TD CLASS='tablebg'>
-		<TABLE CELLPADDING='5' BORDER='0'>
-		<TR>
-			<TD VALIGN='TOP' COLSPAN=2>
-			<INPUT TYPE='text' NAME='diam' SIZE='5' $diamval>
-			Particle Diameter (in Angstroms)
-			</TD>
-		</TR>
-		<TR>
-			<TD VALIGN='TOP' COLSPAN=2>
-			<B>Filter Values:</B></A><BR>
-			<INPUT TYPE='text' NAME='lp' VALUE='$lpval' SIZE='4'>
-			Low Pass<BR>
-			<INPUT TYPE='text' NAME='hp' VALUE='$hpval' SIZE='4'>
-			High Pass<BR>
-			<INPUT TYPE='text' NAME='bin' VALUE='$binval' SIZE='4'>
-			Binning<BR>
-		</TR>
-		<TR>
-			<TD>Min Threshold</TD>
-			<TD><INPUT TYPE='text' NAME='thresh' VALUE='$thresh' SIZE='4'>
-			(0.0 - 3.0)</TD>
-		</TR>
-		<TR>
-			<TD>Max Threshold</TD>
-			<TD><INPUT TYPE='text' NAME='maxthresh' VALUE='$maxthresh' SIZE='4'>
-			(1.0 - 5.0)</TD>
-		</TR>
-		</TABLE>
+		<B>Particle Diameter:</B><BR>
+		<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>&nbsp;
+		Particle diameter for filtering <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
+		<BR><BR>";
+	createParticleLoopTable(0.7, 1.5);
+	echo "
+		<B>DogPicker specific:</B><BR>
+		<INPUT TYPE='checkbox' NAME='invert' $invert>&nbsp;
+		Invert image density<BR>
 		</TD>
 	</TR>
 	<TR>
@@ -251,15 +207,12 @@ function runDogPicker() {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$runid=$_POST[runid];
   
-	$defocpair= ($_POST[defocpair]=="on") ? "1" : "0";
 	$diam = $_POST[diam];
 	if (!$diam) {
 		createDogPickerForm("<B>ERROR:</B> Specify a particle diameter");
 		exit;
 	}
-	$lp = $_POST[lp];
-	$hp = $_POST[hp];
-	$bin = $_POST[bin];
+
 	$thresh = $_POST[thresh];
 	if (!$thresh) {
 		createDogPickerForm("<B>ERROR:</B> No thresholding value was entered");
@@ -291,13 +244,8 @@ function runDogPicker() {
 	$command.="runid=$runid ";
 	$command.="outdir=$outdir ";
 	$command.="diam=$diam ";
-	$command.="lp=$lp ";
-	$command.="hp=$hp ";
-	$command.="bin=$bin";
-	if ($thresh) $command.=" thresh=$thresh";
-	if ($maxthresh) $command.=" maxthresh=$maxthresh";
-	if ($defocpair==1) $command.=" defocpair";
 	$command .= parseAppionLoopParams($_POST);
+	$command .= parseParticleLoopParams($_POST);
 
 	$cmd = "$command > dogPickerLog.txt";
 	echo $command;
@@ -329,15 +277,10 @@ function runDogPicker() {
 	echo"<TR><TD>runid</TD><TD>$runid</TD></TR>
   <TR><TD>testimage</TD><TD>$testimage</TD></TR>
   <TR><TD>dbimages</TD><TD>$dbimages</TD></TR>
-  <TR><TD>diameter</TD><TD>$diam</TD></TR>
-  <TR><TD>lp</TD><TD>$lp</TD></TR>
-  <TR><TD>hp</TD><TD>$hp</TD></TR>
-  <TR><TD>bin</TD><TD>$bin</TD></TR>\n";
-	echo"<TR><TD>manualthresh</TD><TD>$thresh</TD></TR>\n";
-	echo"<TR><TD>defocuspair</TD><TD>$defocpair</TD></TR>
-  <TR><TD>continue</TD><TD>$continue</TD></TR>
-  <TR><TD>commit</TD><TD>$commit</TD></TR>
-  </TABLE>\n";
+  <TR><TD>diameter</TD><TD>$diam</TD></TR>";
+	appionLoopSummaryTable();
+	particleLoopSummaryTable();
+	echo"</TABLE>\n";
 	writeBottom();
 }
 
