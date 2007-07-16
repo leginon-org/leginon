@@ -80,6 +80,7 @@ if ($_POST['process']) {
 	$nominal=$_POST[nominal];
 	$reprocess=$_POST[reprocess];
 	$display = ($_POST[display]=="on") ? "1" : '0';
+	$newnominal = ($_POST[newnominal]=="on") ? "1" : '0';
 	$drange = ($_POST[drange]=="on") ? "1" : '0';
 	$stig = ($_POST[stig]=="on") ? "1" : '0';
 	$continue = ($_POST[cont]=="on") ? "1" : '0';
@@ -111,6 +112,7 @@ if ($_POST['process']) {
 	$command.="stig=$stig";
 	if ($nominal) $command.=" nominal=$nominal";
 	if ($reprocess) $command.=" reprocess=$reprocess";
+	if ($newnominal) $command.=" newnominal";
 	$command .= parseAppionLoopParams($_POST);
 
 	$cmd = "exec ssh $user@$host '$command > acelog.txt &'";
@@ -145,6 +147,7 @@ if ($_POST['process']) {
 	else echo "<TR><TD>nominal</TD><TD>$nominal</TD></TR>\n";
 	if ($reprocess) echo "<TR><TD>reprocess</TD><TD>$reprocess</TD></TR>\n";
 	else echo "<TR><TD>reprocess</TD><TD><I>NULL</I></TD></TR>\n";
+	echo "<TR><TD>newnominal</TD><TD>$newnominal</TD></TR>\n";
 	echo "</TABLE>\n";
 	writeBottom();
 }
