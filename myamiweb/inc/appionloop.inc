@@ -243,7 +243,7 @@ Calculate shifts for defocal pairs</A><BR>
 Maximum peak area multiple</A><BR>
 <INPUT TYPE='text' NAME='overlapmult' VALUE='$overlapmult' SIZE='4'>&nbsp;
 <A HREF=\"javascript:particleinfopopup('overlapmult')\">
-Peak overlap multiple multiple</A><BR>
+Minimum peak overlap distance multiple</A><BR>
 <BR>
 ";
 	echo "<!-- END Particle Loop Param -->";
