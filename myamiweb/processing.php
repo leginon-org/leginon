@@ -111,8 +111,9 @@ if ($sessionId) {
   $stackruns=count($stackIds);
 
   // --- Get Class Data
-  $norefIds = $particle->getNoRefIds($sessionId);
-  $norefruns=count($norefIds);
+  //$norefIds = $particle->getNoRefIds($sessionId);
+  //$norefruns=count($norefIds);
+  $norefruns=0;
 
   // --- Get Reconstruction Data
   if ($stackruns>0) {
