@@ -112,7 +112,7 @@ function appionLoopSummaryTable () {
 	$shuffle = ($_POST[shuffle]=="on") ? "1" : "0";
 	$limit = $_POST[limit];
 	$apcontinue = $_POST[apcontinue];
-	$commit = $_POST[commit];
+	$commit = ($_POST[commit]=="on") ? "1" : "0";
 
 	echo "<TR><TD>norejects</TD><TD>$norejects</TD></TR>\n";
 	echo "<TR><TD>nowait</TD><TD>$nowait</TD></TR>\n";
