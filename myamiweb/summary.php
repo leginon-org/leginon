@@ -303,7 +303,9 @@ if ($particle->hasParticleData($sessionId)) {
 	     <INPUT CLASS='field' NAME='mselex' TYPE='text' size='5' VALUE='$mselexval'>Minimum correlation value
 	     </form>\n";
 	$numinspected=$particle->getNumAssessedImages($sessionId);
-	echo"Inpected images: $numinspected\n";
+	echo"Inpected images: $numinspected, ";
+	if ($numinspected>0)
+		echo'<a href="showinspectdata.php?Id='.$sessionId.'&vd=1">[inspected data]</a>'."\n";
 	$display_keys = array ( 'totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev', 'img');
 	$particleruns=$particle->getParticleRunIds($sessionId);
 	echo $particle->displayParticleStats($particleruns, $display_keys, $inspectcheck, $mselexval);

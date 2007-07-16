@@ -94,6 +94,17 @@ class particledata {
 			$this->mysql->SQLInsert('ApAssessmentData',$data);
 		}
 	}
+	
+	function getAssessmentDataForRun ($runId){
+		$q = "select i.filename, a.selectionkeep as keep "
+			."from ApAssessmentData a "
+			."left join dbemdata.AcquisitionImageData i "
+			."on (a.`dbemdata|AcquisitionImageData|image` = i.`DEF_id`) "
+			."where a.`REF|ApAssessmentRunData|assessmentrun` = '$runId' ";
+		//echo "$q";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;	
+	}
 
 	function getSelectionParams ($runId) {
 		$q = "select * from ApSelectionRunData "
