@@ -6,7 +6,6 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import data
 import targetfinder
 import presets
 import event
@@ -18,11 +17,12 @@ import caltransformer
 
 import gui.wx.ClickTargetTransformer
 
+import leginondata
 
 class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 	panelclass = gui.wx.ClickTargetTransformer.Panel
 	eventoutputs = targetfinder.TargetFinder.eventoutputs
-	settingsclass = data.ClickTargetTransformerSettingsData
+	settingsclass = leginondata.ClickTargetTransformerSettingsData
 	defaultsettings = {
 		'child preset': 'sq',
 		'ancestor preset': 'gr',
@@ -45,15 +45,13 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 
 	def getImageList(self):
 		self.childpreset = self.settings['child preset']
-		childpresetq = data.PresetData(session=self.session,name=self.childpreset)
-		q = data.AcquisitionImageData(session=self.session,preset=childpresetq)
+		childpresetq = leginondata.PresetData(session=self.session,name=self.childpreset)
+		q = leginondata.AcquisitionImageData(session=self.session,preset=childpresetq)
 		images = self.research(datainstance=q, readimages=False)
-
 		self.imageids = []
 		for image in images:
 			anc = self.getAncestor(image)
 			if anc is not None:
-				print image.dbid,anc.dbid
 				self.imageids.append((image.dbid,anc.dbid))
 
 		if not self.imageids:
@@ -63,10 +61,11 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 
 	def getAncestor(self, childimagedata):
 		ancpreset =  self.settings['ancestor preset']
-
+		target = childimagedata['target']
+		imageref = target.special_getitem('image',dereference = False)
 		# get parent image
 		try:
-			parentimagedata = childimagedata['target']['image']
+			parentimagedata = self.dbdatakeeper.direct_query(leginondata.AcquisitionImageData,imageref.dbid, readimages = False)
 		except:
 			parentimagedata = None
 
