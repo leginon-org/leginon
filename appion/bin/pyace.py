@@ -176,6 +176,8 @@ class aceLoop(appionLoop.AppionLoop):
 				self.params['newnominal']=True
 			elif arg == 'uncorrected':
 				self.params['uncorrected']=True
+			else:
+				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
 	def specialParamConflicts(self):
 		if self.params['nominal'] is not None and (self.params['nominal'] > 0 or self.params['nominal'] < -15e-6):
