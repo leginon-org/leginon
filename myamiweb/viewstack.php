@@ -113,7 +113,8 @@ echo "stack: $file_hed";
 echo "<br \>";
 echo "#images: $n_images";
 echo "<br \>";
-$lastimg=($_POST['endimg']) ? $_POST['endimg'] : 20;
+$defendimg = ($_GET['endimg']) ? $_GET['endimg'] : (($n_images > 20) ? 20 : $n_images-1);
+$lastimg=($_POST['endimg']) ? $_POST['endimg'] : $defendimg;
 ?>
 
 from: <input id="startimg" type="text" alt="Start" value="0" size="10">
