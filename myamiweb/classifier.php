@@ -45,6 +45,8 @@ function createClassifierForm($extra=false, $title='Classifier.py Launcher', $he
 	$ctfdata=$ctf->hasCtfData($sessionId);
 	$prtlrunIds = $particle->getParticleRunIds($sessionId);
 	$stackIds = $particle->getStackIds($sessionId);
+   $norefIds = $particle->getNoRefIds($sessionId);
+   $norefruns=count($norefIds);
 
 	// --- find hosts to run classifier.py
 	$hosts=getHosts();
@@ -111,7 +113,7 @@ function createClassifierForm($extra=false, $title='Classifier.py Launcher', $he
         }
 
         // Set any existing parameters in form
-        $runidval = ($_POST['runid']) ? $_POST['runid'] : 'class1';
+        $runidval = ($_POST['runid']) ? $_POST['runid'] : 'class'.($norefruns+1);
         $rundescrval = $_POST['description'];
         $stackidval = $_POST['stackid'];
         $sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
@@ -290,16 +292,16 @@ function runClassifier() {
 //        $command.="source /home/$user/pyappion/useappion.csh;";
         $command.="classifier.py ";
         $command.="runid=$runid ";
-        $command.="outdir=$outdir ";
         $command.="stackid=$stackid ";
-        if ($commit) $command.="commit ";
-        $command.="numpart=$numpart ";
-        $command.="numclass=$numclass ";
-        $command.="lp=$lp ";
         if ($partdiam) $command.="diam=$partdiam ";
         if ($maskdiam) $command.="maskdiam=$maskdiam ";
-        //if ($fileformat) $command.="spider ";
+        $command.="outdir=$outdir ";
         $command.="description=\"$description\"";
+        $command.="lp=$lp ";
+        //if ($fileformat) $command.="spider ";
+        $command.="numpart=$numpart ";
+        $command.="numclass=$numclass ";
+        if ($commit) $command.="commit ";
 
         $cmd = "exec ssh $user@$host '$command > classifierlog.txt &'";
 //        exec($cmd ,$result);
