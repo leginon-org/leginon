@@ -54,8 +54,7 @@ class manualPicker(particleLoop.ParticleLoop):
 
 	def processAndSaveAllImages(self):
 		print "Pre-processing images before picking"
-		imgtree = apDatabase.getImagesFromDB(self.params['sessionname'], self.params['preset'])
-		for imgdata in imgtree:
+		for imgdata in self.imgtree:
 			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
 			if os.path.isfile(imgpath):
 				print "already processed: ",apDisplay.short(imgdata['filename'])
