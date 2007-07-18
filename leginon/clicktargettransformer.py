@@ -196,7 +196,7 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 
 	def onJump(self):
 		imagename = self.settings['jump filename'].split('.mrc')[0]
-		q = data.AcquisitionImageData(session=self.session,filename=imagename)
+		q = leginondata.AcquisitionImageData(session=self.session,filename=imagename)
 		images = self.research(datainstance=q, readimages=False)
 		foundid = None
 		for i,ids in enumerate(self.imageids):
@@ -337,8 +337,8 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 			
 	def displayCurrent(self):
 		child,ancestor = self.imageids[self.currentindex]
-		self.childimagedata = self.researchDBID(data.AcquisitionImageData, child)
-		self.ancestorimagedata = self.researchDBID(data.AcquisitionImageData, ancestor)
+		self.childimagedata = self.researchDBID(leginondata.AcquisitionImageData, child)
+		self.ancestorimagedata = self.researchDBID(leginondata.AcquisitionImageData, ancestor)
 		self.displayImage(self.childimagedata,'Image')
 		self.displayImage(self.ancestorimagedata,'Ancestor')
 		self.processImageData(self.ancestorimagedata)
