@@ -464,6 +464,7 @@ if __name__ == "__main__":
 
 	convertClassfileToImagic(params)
 
+	classfile = os.path.join(params['rundir'],params['classfile']+".hed")
 	if params['commit']is True:
 		insertNoRefRun(params, insert=True)
 	if params['numclasses'] <= 80:
