@@ -225,10 +225,14 @@ if ($sessionId) {
     else {echo "<A HREF='norefsummary.php?expId=$sessionId'>$norefruns completed<A>";}
     echo"
     </TD>
-    <TD BGCOLOR='$bgcolor'>
-    <A HREF='classifier.php?expId=$sessionId'>";
-    echo"Create New Classification</A>
-    </TD>
+    <TD BGCOLOR='$bgcolor'>";
+    if ($stackruns > 0) {
+      echo"<A HREF='classifier.php?expId=$sessionId'>
+      Create New Classification</A>";
+    } else {
+      echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";
+    }
+    echo"</TD>
   </TR>
   <TR>\n";
   if ($reconruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
