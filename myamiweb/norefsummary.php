@@ -45,15 +45,30 @@ $norefIds = $particle->getNoRefIds($sessionId);
 $norefruns=count($norefIds);
 
 foreach ($norefIds as $norefid) {
-	echo divtitle("NoRef Id: $norefid[DEF_id]");
 	//print_r ($norefid);
-	echo "<table border='0' >\n";
-	# get list of noref parameters from database
-        $s=$particle->getNoRefParams($norefid['DEF_id']);
+	echo divtitle("NoRef Id: $norefid[DEF_id]");
 
-        foreach($s as $k=>$v) {
-                echo formatHtmlRow($k,$v);
-        }
+	# get list of noref parameters from database
+	$s = $particle->getNoRefParams($norefid['DEF_id']);
+
+	echo "<table border='0' >\n";
+	foreach($s as $k=>$v) {
+		echo formatHtmlRow($k,$v);
+	}
+
+	$norefpath = $s[norefPath].$s[name]."/";
+
+	$classIds = $particle->getNoRefClassRuns($norefid['DEF_id']);
+	$classnum = count($classIds);
+	foreach ($classIds as $classid) {
+		echo "<tr><td bgcolor='#ffcccc' colspan=2>Class Average: $classid[DEF_id]</td></tr>";
+		//echo "<tr><td bgcolor='#ff4444'>"; print_r ($classid); echo "</td></tr>";
+		foreach($classid as $k=>$v) {
+			echo formatHtmlRow($k,$v);
+		}
+		$classfile = $norefpath.$classid[classFile].".img";
+		echo "<tr><td><a href='viewstack.php?file=$classfile'>View Class Averages</a></tr></td>";
+	}
 /*
 	$display_keys['description']=$s['description'];
 	$display_keys['path']=$s['norefPath'];
