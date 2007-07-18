@@ -391,7 +391,7 @@ def insertNoRefRun(params, insert=False):
 	runq['description'] = params['description']
 
 	if paramsdata:
-		runq['norefParams'] = paramsdata
+		runq['norefParams'] = paramsdata[0]
 	else:
 		runq['norefParams'] = paramq
 	# ... check if params associated with unique norefRun are consistent:
@@ -400,22 +400,27 @@ def insertNoRefRun(params, insert=False):
 			if uniquerun[0][i] != runq[i]:
 				apDisplay.printError("Run name '"+params['runid']+"' for stackid="+\
 					str(params['stackid'])+"\nis already in the database with different parameter: "+str(i))
+	else:
+		apDisplay.printWarning("Run name '"+params['runid']+"' already exists")
 
 	### create a classRun object
 	classq = appionData.ApNoRefClassRunData()
 	classq['num_classes'] = params['numclasses']
 	norefrun = appiondb.query(runq, results=1)
 	if norefrun:
-		classq['norefRun'] = norefrun
+		classq['norefRun'] = norefrun[0]
 	else:
 		classq['norefRun'] = runq
 	# ... numclasses and norefRun make the class unique:
-	uniqueclass = appiondb.query(runq, results=1)
+	uniqueclass = appiondb.query(classq, results=1)
 	# ... continue filling non-unique variables:
 	classq['classFile'] = params['classfile']
 	# ... check if params associated with unique classRun are consistent:
 	if uniqueclass:
 		for i in classq:
+			print i
+			apXml.fancyPrintDict(uniqueclass[0])
+			apXml.fancyPrintDict(classq)
 			if uniqueclass[0][i] != classq[i]:
 				apDisplay.printError("NoRefRun name '"+params['runid']+"' for numclasses="+\
 					str(params['numclasses'])+"\nis already in the database with different parameter: "+str(i))
