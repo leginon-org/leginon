@@ -48,6 +48,7 @@ class ParticleLoop(appionLoop.AppionLoop):
 	def processImage(self, imgdata):
 		#creates self.peaktree
 		self.peaktree = self.particleProcessImage(imgdata)
+		self.stats['lastpeaks'] = len(self.peaktree)
 
 		apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)
 		if self.params['defocpair'] is True:

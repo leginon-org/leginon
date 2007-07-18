@@ -696,6 +696,8 @@ class AppionLoop(object):
 				print "\n\tSUMMARY:"
 			self._printLine()
 			if(self.stats['lastpeaks'] != None):
+				self.stats['peaksum'] += self.stats['lastpeaks']
+				self.stats['peaksumsq'] += self.stats['lastpeaks']**2
 				print "\tPEAKS:    \t",self.stats['lastpeaks'],"peaks"
 				if(count > 1):
 					peaksum   = self.stats['peaksum']
