@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MaskAssessor.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-06-16 00:49:54 $
+# $Date: 2007-07-18 00:22:42 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -100,13 +100,16 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		label = wx.StaticText(self, -1, 'Assessor Run Name:')
 		self.widgets['run'] = Entry(self, -1)
-		sz.Add(label, (1, 0), (1, 1))
-		sz.Add(self.widgets['run'], (1, 1), (1, 1))
+		sz.Add(label, (1, 1), (1, 1))
+		sz.Add(self.widgets['run'], (1, 2), (1, 1))
+
+		self.widgets['continueon'] = wx.CheckBox(self, -1,'Continue')
+		sz.Add(self.widgets['continueon'], (2, 0), (1, 1))
 
 		self.widgets['jump filename'] = Entry(self, -1, chars=12)
 		label = wx.StaticText(self, -1, 'Image to Jump to:')
-		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['jump filename'], (2, 1), (1, 1),
+		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['jump filename'], (3, 1), (1, 1),
 										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		sb = wx.StaticBox(self, -1, 'Settings')

@@ -37,8 +37,10 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 		self.oldrunname = None
 		self.oldimagedir = None
 		self.fileext = ''
-
-		self.start()
+		self.forward = True
+		
+		if self.__class__ == ImageAssessor:
+			self.start()
 
 	def checkSettingsChange(self):
 		if self.oldformat != self.settings['format'] or self.oldrunname != self.settings['run'] or self.oldimagedir != self.settings['image directory']:
@@ -73,14 +75,14 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 		self.readResults()
 		self.results[self.currentname] = 'keep'
 		self.writeResults()
+		self.continueOn()
 
-		self.onNext()
 
 	def onReject(self):
 		self.readResults()
 		self.results[self.currentname] = 'reject'
 		self.writeResults()
-		self.onNext()
+		self.continueOn()
 
 	def onBegin(self):
 		settingchanged = self.checkSettingsChange()
@@ -88,6 +90,7 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 		self.onNext()
 
 	def onNext(self):
+		self.forward = True
 		settingchanged = self.checkSettingsChange()
 		if (not self.files) or settingchanged:
 			self.getImageList()
@@ -99,6 +102,7 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 			self.logger.info('End reached.')
 
 	def onPrevious(self):
+		self.forward = False
 		settingchanged = self.checkSettingsChange()
 		if (not self.files) or settingchanged:
 			self.getImageList()
@@ -133,7 +137,12 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 		except ValueError:
 			self.logger.warning('image %s not found' % (imagename))
 		self.displayCurrent()
-			
+		
+	def continueOn(self):
+		if self.forward:
+			self.onNext()
+		else:
+			self.onPrevious()
 
 	def displayCurrent(self):
 		self.currentname = self.files[self.currentindex]
@@ -153,7 +162,6 @@ class ImageAssessor(targetfinder.ClickTargetFinder):
 			imarray = self.readPNG(fullname)
 		self.setImage(imarray, 'Mask')
 		self.setImage(imarray, 'Image')
-		return None
 		
 	def overlayshadow(self,shadowimg,parentimg,alpha=0.5):
 		binning = parentimg.shape[0]/shadowimg.shape[0]

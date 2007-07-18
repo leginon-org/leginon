@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ClickMaskMaker.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-06-16 00:49:54 $
+# $Date: 2007-07-18 00:22:42 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -134,15 +134,18 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(label, (2, 0), (1, 1))
 		sz.Add(self.widgets['run'], (2, 1), (1, 1))
 
+		self.widgets['continueon'] = wx.CheckBox(self, -1,'Continue')
+		sz.Add(self.widgets['continueon'], (3, 0), (1, 1))
+
 		label = wx.StaticText(self, -1, 'Mask Run Path:')
 		self.widgets['path'] = Entry(self, -1)
-		sz.Add(label, (3, 0), (1, 1))
-		sz.Add(self.widgets['path'], (3, 1), (1, 1))
+		sz.Add(label, (4, 0), (1, 1))
+		sz.Add(self.widgets['path'], (4, 1), (1, 1))
 
 		self.widgets['jump filename'] = Entry(self, -1, chars=12)
 		label = wx.StaticText(self, -1, 'Image to Jump to:')
-		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['jump filename'], (4, 1), (1, 1),
+		sz.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['jump filename'], (5, 1), (1, 1),
 										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		sb = wx.StaticBox(self, -1, 'Settings')

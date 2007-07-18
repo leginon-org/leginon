@@ -35,20 +35,20 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 		'bin': 2,
 		'path': None,
 		'jump filename': '',
+		'continueon': True,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
-		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+		imageassessor.ImageAssessor.__init__(self, id, session, managerlocation, **kwargs)
 
-		self.currentindex = None
-		self.files = []
 		self.maskdir = None
 		self.maskrundata = None
 		self.oldpreset = None
-		self.oldrunname = None
 		self.oldrundir = None
-		self.fileext = ''
+		self.oldcontinueon = None
+		self.fileext = '.mrc'
 
-		self.start()
+		if self.__class__ == ClickMaskMaker:
+			self.start()
 		
 
 	def makeRecursivePath(self,path):
@@ -68,54 +68,88 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 			os.mkdir(newpath)
 
 	def checkSettingsChange(self):
-		if self.oldpreset != self.settings['preset'] or self.oldrunname != self.settings['run'] or self.oldrundir != self.settings['path']:
+		if self.oldpreset != self.settings['preset'] or self.oldrunname != self.settings['run'] or self.oldrundir != self.settings['path'] or self.oldcontinueon != self.settings['continueon']:
 			self.oldpreset = self.settings['preset']
 			self.oldrunname = self.settings['run']
 			self.oldrundir = self.settings['path']
+			self.oldcontinueon = self.settings['continueon']
 			self.files = []
 			return True
 		else:
 			return False			
 	
+	def handleDefaultPath(self,maskname):
+		imagepathlist = self.parentdir.split('/')
+		try:
+			leginonpathindex = imagepathlist.index('leginon')
+			rawpathindex = imagepathlist.index('rawdata')
+			imagepathlist[leginonpathindex]='appion'
+			imagepathlist[rawpathindex]='mask'
+			imagepathlist.append(maskname)
+			rundir = '/'.join(imagepathlist)
+			rundir = '/'.join(imagepathlist)
+		except:
+			self.logger.warning('not a default leginon path, must specify')
+			rundir = os.path.join('./',maskname)
+		return rundir
 	
 	def getImageList(self):
 
 		preset = self.settings['preset']
 		self.parentdir = self.session['image path']
 		maskname = self.settings['run']
-		maskdir = self.settings['path']
+		if self.settings['path'] is None or self.settings['path'] == '':
+			rundir = self.handleDefaultPath(maskname)			
+		else:
+			rundir = os.path.join(self.settings['path'],maskname)
 		
+		self.logger.info('mask run dir %s' % rundir)
 		self.bin = self.settings['bin']
 
 		presetq = leginondata.PresetData(session=self.session,name=preset)
 		q = leginondata.AcquisitionImageData(session=self.session,preset=presetq)
-		self.images = self.research(datainstance=q, readimages=False)
+		allimages = self.research(datainstance=q, readimages=False)
 		
-		self.files = map((lambda x: x['filename']),self.images)
-
 		self.maskrundata,self.maskparamsdata = apMask.getMaskParamsByRunName(maskname,self.session)
 		
-		try:
-			self.makeRecursivePath(maskdir)
-		except:
-			self.logger.warning('can not create run directory')
-		
+
 		if not self.maskrundata:
-			apMask.insertManualMaskRun(self.session,maskdir,maskname,self.bin)
+			apMask.insertManualMaskRun(self.session,rundir,maskname,self.bin)
 			self.maskrundata,self.maskparamsdata = apMask.getMaskParamsByRunName(maskname,self.session)
-				
+			self.images = allimages	
+			try:
+				maskdir=os.path.join(rundir,"masks")	
+				self.makeRecursivePath(maskdir)
+			except:
+				self.logger.warning('can not create mask directory')
+		
 		else:
-			self.logger.warning('Mask Run exists, will overwrite')
+			if self.settings['continueon']:
+				mode = 'continue'
+			else:
+				mode = 'overwrite empty masks'
+			self.logger.warning('Mask Run exists, will %s' % (mode,))
 			savedbin = self.maskparamsdata['bin']
 			if self.bin !=savedbin:
 				self.logger.warning('Change binning to that of the saved %s',(savedbin,))
 				self.bin = savedbin
+			savedrundir = self.maskrundata['path']
+			if rundir !=savedrundir:
+				self.logger.warning('Change mask run path to that of the saved %s',(savedrundir,))
+				rundir = savedrundir
 
+			if mode == 'continue':
+				self.images = []
+				for imgdata in allimages:
+					regions = apMask.getMaskRegions(self.maskrundata,imgdata)
+					maskfile = os.path.join(rundir,"masks",imgdata['filename']+'_mask.png')
+					if len(regions) == 0 and not os.path.exists(maskfile):
+						self.images.append(imgdata)
+			else:
+				self.images = allimages
+		
 		self.maskdir=os.path.join(self.maskrundata['path'],"masks")	
-		try:
-			self.makeRecursivePath(self.maskdir)
-		except:
-			self.logger.warning('can not create mask directory')
+		self.files = map((lambda x: x['filename']),self.images)
 
 		if self.images:
 			self.currentindex = 0
@@ -150,13 +184,13 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 		self.insertResults(self.maskrundata,imgdata,infos)		
 		apImage.arrayMaskToPngAlpha(mask, os.path.join(self.maskdir,maskfilename))		
 		
-		self.onNext()
+		self.continueOn()
 
 	def onReject(self):
 		
 		self.maskimg = numpy.zeros(self.maskshape)
 		self.setImage(self.binnedparentimg, 'Mask')
-		self.onNext()
+		self.continueOn()
 			
 			
 	def displayCurrent(self):
@@ -175,8 +209,11 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 		maskshape = (parentimg.shape[0]/self.bin,parentimg.shape[1]/self.bin)
 		if os.path.exists(fullname):
 			imarray = self.readPNG(fullname)
-			self.logger.warning('mask exists, cannot override')
-			self.maskexist = True
+			if imarray.max() > 0:
+				self.logger.warning('mask exists, cannot override')
+				self.maskexist = True
+			else:
+				self.maskexist = False
 		else:
 			imarray = numpy.zeros(maskshape)
 			self.maskexist = False
@@ -190,7 +227,6 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 		self.maskimg = imarray
 		self.binnedparentimg = binnedparent
 		self.imgdata = imgdata
-		return imgdata
 		
 	def onAdd(self):
 		if self.maskexist:
