@@ -653,6 +653,9 @@ class AppionLoop(object):
 
 		# get the next image pixel size:
 		self.params['apix'] = apDatabase.getPixelSize(imgdata)
+		if self.params['apix'] != None and ('diam' in self.params and self.params['diam'] > 0):
+			self.params['pixdiam']    = self.params['diam']/self.params['apix']
+			self.params['binpixdiam'] = self.params['diam']/self.params['apix']/float(self.params['bin'])
 
 		# skip if image doesn't exist:
 		imgpath = os.path.join(self.params['imgdir'],imgdata['filename']+'.mrc')
