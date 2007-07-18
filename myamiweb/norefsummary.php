@@ -61,13 +61,17 @@ foreach ($norefIds as $norefid) {
 	$classIds = $particle->getNoRefClassRuns($norefid['DEF_id']);
 	$classnum = count($classIds);
 	foreach ($classIds as $classid) {
-		echo "<tr><td bgcolor='#ffcccc' colspan=2>Class Average: $classid[DEF_id]</td></tr>";
+		$classfile = $norefpath.$classid[classFile].".img";
+		$endimg = $classid[num_classes]-1;
+		echo "
+		<tr><td bgcolor='#ffcccc' colspan=2>
+			Class Average: $classid[DEF_id]&nbsp;&nbsp;&nbsp;
+			<a href='viewstack.php?file=$classfile&endimg=$endimg'>View Class Averages</a>
+		</td></tr>";
 		//echo "<tr><td bgcolor='#ff4444'>"; print_r ($classid); echo "</td></tr>";
 		foreach($classid as $k=>$v) {
 			echo formatHtmlRow($k,$v);
 		}
-		$classfile = $norefpath.$classid[classFile].".img";
-		echo "<tr><td><a href='viewstack.php?file=$classfile'>View Class Averages</a></tr></td>";
 	}
 /*
 	$display_keys['description']=$s['description'];
