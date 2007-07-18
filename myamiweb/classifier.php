@@ -57,7 +57,7 @@ function createClassifierForm($extra=false, $title='Classifier.py Launcher', $he
 	// --- make list of file formats
 	$fileformats=array('imagic','spider');
 	
-	$javascript="<script src='js/viewer.js'></script>"
+	$javascript="<script src='js/viewer.js'></script>";
 
 	writeTop($title,$heading,$javascript);
 	// write out errors, if any came up:
