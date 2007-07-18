@@ -64,7 +64,6 @@ class ParticleLoop(appionLoop.AppionLoop):
 			apDefocalPairs.insertShift(imgdata, self.sibling, self.shiftpeak)
 #			apDefocalPairs.insertShiftREFLEGINON(imgdata, self.sibling, self.shiftpeak)
 
-
 	def _runHelp(self):
 		#OVERRIDE appionLoop help()
 		allxml  = os.path.join(self.params['appiondir'],"xml/allAppion.xml")
@@ -151,19 +150,14 @@ class ParticleLoop(appionLoop.AppionLoop):
 			apDisplay.printMsg("parsing particle parameters")
 			self.particleParseParams(newargs)
 
-		if(self.params['apix'] != None and self.params['diam'] > 0):
-			self.params['pixdiam']    = self.params['diam']/self.params['apix']
-			self.params['binpixdiam'] = self.params['diam']/self.params['apix']/float(self.params['bin'])
-
 	def specialParamConflicts(self):
-		if not 'diam' in self.params or self.params['diam']==0:
-			apDisplay.printError("please input the diameter of your particle")
-		if (self.params['thresh']==0 and self.params['autopik']==0):
-			apDisplay.printError("neither manual threshold or autopik parameters are set, please set one.")
-		if not 'diam' in self.params or self.params['diam']==0:
-			apDisplay.printError("please input the diameter of your particle")
-		if self.params['autopik'] != 0:
-			apDisplay.printError("autopik is currently not supported")
+		if self.functionname != "manualpicker":
+			if self.params['diam']==0:
+				apDisplay.printError("please input the diameter of your particle")
+			if self.params['autopik'] != 0:
+				apDisplay.printError("autopik is currently not supported")
+			if self.params['thresh']==0 and self.params['autopik']==0:
+				apDisplay.printError("neither manual threshold or autopik parameters are set, please set one.")
 
 		apDisplay.printMsg("checking particle param conflicts")
 		self.particleParamConflicts()
