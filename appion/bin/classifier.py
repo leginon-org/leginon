@@ -143,6 +143,11 @@ def getStackInfo(params):
 		selectdata = partdata['selectionrun']['params']
 	elif partdata['selectionrun']['dogparams'] is not None:
 		selectdata = partdata['selectionrun']['dogparams']
+	elif partdata['selectionrun']['manparams'] is not None:
+		selectdata = partdata['selectionrun']['manparams']
+	else:
+		apDisplay.printWarning("Failed to get particle selection params")
+		selectdata = {}
 
 	#get image params of the particle
 	imgdata = leginondb.direct_query(leginondata.AcquisitionImageData,
