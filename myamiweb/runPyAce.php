@@ -13,6 +13,7 @@ require ('inc/project.inc');
 require ('inc/viewer.inc');
 require ('inc/processing.inc');
 require ('inc/appionloop.inc');
+require ('inc/ctf.inc');
 
 $expId = $_GET[expId];
 $phpself=$_SERVER['PHP_SELF'];
@@ -220,14 +221,16 @@ else {
 		$sessionpath=ereg_replace("rawdata","pyAce/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}
-	
+	$ctf = new ctfdata();
+	$ctfruns = count($ctf->getCtfRunIds($sessionId));
+	$defrunid = 'acerun'.($ctfruns+1);
 	echo"
         <P>
         <TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
         <TR>
           <TD VALIGN='TOP'>
             <A HREF=\"javascript:infopopup('runid')\"><B>Ace Run Name:</B></A>
-            <INPUT TYPE='text' NAME='runid' VALUE='acerun1'><BR>
+            <INPUT TYPE='text' NAME='runid' VALUE='$defrunid'><BR>
             <BR>
 
 				&nbsp;&nbsp;&nbsp;Output Directory<BR>
