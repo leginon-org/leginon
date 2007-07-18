@@ -100,7 +100,7 @@ def cmdline(args, params):
 		elif elem[0] == "description":
 			params['description'] = elem[1]
 		else:
-			apDisplay.printError("Unknown command: "+arg)
+			apDisplay.printError(str(elem[0])+" is not recognized as a valid parameter")
 
 def conflicts(params):
 	if params['runid'] is None:
@@ -359,6 +359,14 @@ def classHistogram(params):
 			sys.stderr.write("*")
 		sys.stderr.write(" "+str(int(lendict[f]))+"\n")
 
+def convertClassfileToImagic(params):
+	"""
+	takes the final spider file and converts it to imagic
+	"""
+	classroot = os.path.join(params['rundir'],params['classfile'])
+	emancmd  = "proc2d "+classroot+".spi "+classroot+".hed"
+	executeEmanCmd(emancmd)
+
 def insertNoRefRun(params, insert=False):
 	# create a norefParam object
 	paramq = appionData.ApNoRefParamsData()
@@ -444,7 +452,7 @@ if __name__ == "__main__":
 	if not os.path.isfile(classfile):
 		apDisplay.printError("failed to write classfile, "+classfile)
 
-	#convertClassfileToImagic(classfile)
+	convertClassfileToImagic(params)
 
 	if params['commit']is True:
 		insertNoRefRun(params, insert=True)
