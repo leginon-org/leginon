@@ -113,7 +113,7 @@ function createClassifierForm($extra=false, $title='Classifier.py Launcher', $he
         }
 
         // Set any existing parameters in form
-        $runidval = ($_POST['runid']) ? $_POST['runid'] : 'class'.($norefruns+1);
+        $runidval = ($_POST['runid']) ? $_POST['runid'] : 'noref'.($norefruns+1);
         $rundescrval = $_POST['description'];
         $stackidval = $_POST['stackid'];
         $sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
