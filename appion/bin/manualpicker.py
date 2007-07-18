@@ -9,6 +9,7 @@ import apFindEM
 import appionData
 import apParticle
 import apDatabase
+import apDisplay
 
 class manualPicker(particleLoop.ParticleLoop):
 	def preLoopFunctions(self):
@@ -52,12 +53,12 @@ class manualPicker(particleLoop.ParticleLoop):
 			apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
 	def processAndSaveAllImages(self):
-		print "Preprocessing images before picking"
+		print "Pre-processing images before picking"
 		imgtree = apDatabase.getImagesFromDB(self.params['sessionname'], self.params['preset'])
 		for imgdata in imgtree:
 			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
 			if os.path.isfile(imgpath):
-				print "Skipping",imgdata['filename']
+				print "already processed: ",apDisplay.short(imgdata['filename'])
 			else:
 				apFindEM.processAndSaveImage(imgdata, params=self.params)
 
@@ -70,7 +71,7 @@ class manualPicker(particleLoop.ParticleLoop):
 		manparamsdata = self.appiondb.query(manparamsq, results=1)
 		
 		runq=appionData.ApSelectionRunData()
-		runq['name'] = params['runid']
+		runq['name'] = self.params['runid']
 		runq['dbemdata|SessionData|session'] = expid
 		runids = self.appiondb.query(runq, results=1)
 		
