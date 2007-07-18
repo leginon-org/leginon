@@ -62,16 +62,17 @@ foreach ($norefIds as $norefid) {
 	$classnum = count($classIds);
 	foreach ($classIds as $classid) {
 		$classfile = $norefpath.$classid[classFile].".img";
+		$totimg = $classid[num_classes];
 		$endimg = $classid[num_classes]-1;
 		echo "
 		<tr><td bgcolor='#ffcccc' colspan=2>
-			Class Average: $classid[DEF_id]&nbsp;&nbsp;&nbsp;
+			Averaged into $totimg classes: &nbsp;&nbsp;&nbsp;
 			<a href='viewstack.php?file=$classfile&endimg=$endimg'>View Class Averages</a>
 		</td></tr>";
 		//echo "<tr><td bgcolor='#ff4444'>"; print_r ($classid); echo "</td></tr>";
-		foreach($classid as $k=>$v) {
-			echo formatHtmlRow($k,$v);
-		}
+		//foreach($classid as $k=>$v) {
+		//	echo formatHtmlRow($k,$v);
+		//}
 	}
 /*
 	$display_keys['description']=$s['description'];
