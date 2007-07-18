@@ -45,6 +45,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	$hosts=getHosts();
 
 	$particle=new particleData;
+	$prtlruns = count($particle->getParticleRunIds($sessionId));
    writeTop("DoG Picker Launcher","Automated Particle Selection with DoG Picker",$javafunctions);
 	if ($extra) {
 		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -67,7 +68,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	// if session is changed, change the output directory
 	$sessionpathval=(($_POST['sessionId']==$_POST['lastSessionId'] || $expId) && $_POST['lastSessionId']) ? $_POST['outdir'] : $sessionpath;
 	// Set any existing parameters in form
-	$runidval = ($_POST['runid']) ? $_POST['runid'] : 'dogrun1';
+	$runidval = ($_POST['runid']) ? $_POST['runid'] : 'dogrun'.($prtlruns+1);
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';

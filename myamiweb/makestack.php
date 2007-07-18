@@ -44,6 +44,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$ctf = new ctfdata();
 	$ctfdata=$ctf->hasCtfData($sessionId);
 	$prtlrunIds = $particle->getParticleRunIds($sessionId);
+	$stackruns = count($particle->getStackIds($sessionId));
 
 	// --- find hosts to run makestack.py
 	$hosts=getHosts();
@@ -111,7 +112,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
         // Set any existing parameters in form
         $single = ($_POST['single']) ? $_POST['single'] : 'start.hed';
-        $runidval = ($_POST['runid']) ? $_POST['runid'] : 'stack1';
+        $runidval = ($_POST['runid']) ? $_POST['runid'] : 'stack'.($stackruns+1);
         $rundescrval = $_POST['description'];
         $sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
         $prtlrunval = $_POST['prtlrunId'];
