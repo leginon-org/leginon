@@ -57,44 +57,8 @@ function createClassifierForm($extra=false, $title='Classifier.py Launcher', $he
 	// --- make list of file formats
 	$fileformats=array('imagic','spider');
 	
-	$javascript="<script src='js/viewer.js'></script>
-        <script LANGUAGE='JavaScript'>
-        function enableice(){
-          if (document.viewerform.icecheck.checked){
-              document.viewerform.ice.disabled=false;
-              document.viewerform.ice.value='';
-            }
-            else {
-              document.viewerform.ice.disabled=true;
-              document.viewerform.ice.value='0.8';
-            }
-          }
-          function enableace(){
-            if (document.viewerform.acecheck.checked){
-              document.viewerform.ace.disabled=false;
-              document.viewerform.ace.value='';
-            }
-            else {
-              document.viewerform.ace.disabled=true;
-              document.viewerform.ace.value='0.8';
-            }
-          }
-          function enableselex(){
-            if (document.viewerform.selexcheck.checked){
-              document.viewerform.selexonmin.disabled=false;
-              document.viewerform.selexonmin.value='';
-              document.viewerform.selexonmax.disabled=false;
-              document.viewerform.selexonmax.value='';
-            }
-            else {
-              document.viewerform.selexonmin.disabled=true;
-              document.viewerform.selexonmin.value='0.5';
-              document.viewerform.selexonmax.disabled=true;
-              document.viewerform.selexonmax.value='1.0';
-            }
-          }
-          </SCRIPT>\n";
-	
+	$javascript="<script src='js/viewer.js'></script>"
+
 	writeTop($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
