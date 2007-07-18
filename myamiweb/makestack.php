@@ -116,8 +116,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
         $rundescrval = $_POST['description'];
         $sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
         $prtlrunval = $_POST['prtlrunId'];
-        $phasecheck = ($_POST['phaseflip']=='on') ? 'CHECKED' : '';
-        $inspectcheck = ($_POST['inspected']=='on') ? 'CHECKED' : '';
+        $phasecheck = ($_POST['phaseflip']=='off') ? '' : 'CHECKED';
+        $inspectcheck = ($_POST['inspected']=='off') ? '' : 'CHECKED';
         $commitcheck = ($_POST['commit']=='on') ? 'CHECKED' : '';
         $boxszval = $_POST['boxsize'];
 	$binval=$_POST['bin'];
@@ -126,9 +126,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
         $icecheck = ($_POST['icecheck']=='on') ? 'CHECKED' : '';
         $icedisable = ($_POST['icecheck']=='on') ? '' : 'DISABLED';
         // ace check params
-        $aceval = ($_POST['acecheck']=='on') ? $_POST['ace'] : '0.8';
         $acecheck = ($_POST['acecheck']=='on') ? 'CHECKED' : '';
         $acedisable = ($_POST['acecheck']=='on') ? '' : 'DISABLED';
+        $aceval = ($_POST['acecheck']=='on') ? $_POST['ace'] : '0.8';
         // selexon check params
         $selexminval = ($_POST['selexcheck']=='on') ? $_POST['selexonmin'] : '0.5';
         $selexmaxval = ($_POST['selexcheck']=='on') ? $_POST['selexonmax'] : '1.0';
