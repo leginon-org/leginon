@@ -1,3 +1,4 @@
+
 <?php
 /**
  *	The Leginon software is Copyright 2003 
@@ -36,48 +37,32 @@ echo"<form name='viewerform' method='POST' ACTION='$formAction'>
 $sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 echo "</FORM>\n";
 
-// --- Get Stack Data
+// --- Get NoRef Data
 $particle = new particledata();
 
 # find each noref entry in database
 $norefIds = $particle->getNoRefIds($sessionId);
 $norefruns=count($norefIds);
-if ($norefruns==0) {echo "none<BR>";}
-else {echo "$norefruns completed<BR>";}
+
 foreach ($norefIds as $norefid) {
-   echo divtitle("NoRef Id: $norefid[DEF_id]");
-	echo "<table border='0'>\n";
-	# get list of stack parameters from database
-        $s=$particle->getStackParams($stackid[stackid]);
-	$nump=commafy($particle->getNumStackParticles($stackid[stackid]));
-	# get pixel size of stack
-	$apix=($particle->getPixelSizeFromStackId($stackid[stackid]))*1e10;
-	$apix=($s['bin']) ? $apix*$s['bin'] : $apix;
-	$apix.=" A/pixel";
+	echo divtitle("NoRef Id: $norefid[DEF_id]");
+	//print_r ($norefid);
+	echo "<table border='0' >\n";
+	# get list of noref parameters from database
+        $s=$particle->getNoRefParams($norefid['DEF_id']);
 
-	# get box size
-	$boxsz=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
-	$boxsz.=" pixels";
-
-	$pflip = ($s['phaseFlipped']==1) ? "Yes" : "No";
-	if ($s['aceCutoff']) $pflip.=" (ACE > $s[aceCutoff])";
+        foreach($s as $k=>$v) {
+                echo formatHtmlRow($k,$v);
+        }
+/*
 	$display_keys['description']=$s['description'];
-	$display_keys['# prtls']=$nump;
-	$display_keys['path']=$s['stackPath'];
+	$display_keys['path']=$s['norefPath'];
 	$display_keys['name']=$s['name'];
-	$display_keys['box size']=$boxsz;
-	$display_keys['pixel size']=$apix;
-	$display_keys['phase flipped']=$pflip;
-	if ($s['correlationMin']) $display_keys['correlation min']=$s['correlationMin'];
-	if ($s['correlationMax']) $display_keys['correlation max']=$s['correlationMax'];
-	if ($s['minDefocus']) $display_keys['min defocus']=$s['minDefocus'];
-	if ($s['maxDefocus']) $display_keys['max defocus']=$s['maxDefocus'];
-	$display_keys['density']=($s['inverted']==1) ? 'light on dark background':'dark on light background';
-	$display_keys['normalization']=($s['normalized']==1) ? 'On':'Off';
-	$display_keys['file type']=$s['fileType'];
+	$display_keys['lp filt']=$s['lp_filt'];
 	foreach($display_keys as $k=>$v) {
 	        echo formatHtmlRow($k,$v);
 	}
+*/
 	echo"</TABLE>\n";
 	echo"<P>\n";
 }
