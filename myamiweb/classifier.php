@@ -260,7 +260,7 @@ function runClassifier() {
         if ($partdiam) $command.="diam=$partdiam ";
         if ($maskdiam) $command.="maskdiam=$maskdiam ";
         $command.="outdir=$outdir ";
-        $command.="description=\"$description\"";
+        $command.="description=\"$description\" ";
         $command.="lp=$lp ";
         //if ($fileformat) $command.="spider ";
         $command.="numpart=$numpart ";
