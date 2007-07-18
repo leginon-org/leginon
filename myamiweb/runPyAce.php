@@ -313,6 +313,7 @@ else {
             <FONT SIZE=-2><I>(between 0.0 - 1.0)</I></FONT><BR>
             <BR>
 
+            <B>Nominal override:</B><BR>
             <INPUT TYPE='checkbox' NAME='nominalcheck' onclick='enabledf(this)'>
             Override Nominal Defocus<BR>
             Set Defocus:<INPUT TYPE='text' NAME='nominal' DISABLED VALUE='db value' SIZE='8'>
