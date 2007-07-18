@@ -81,7 +81,7 @@ function createClassifierForm($extra=false, $title='Classifier.py Launcher', $he
         $rundescrval = $_POST['description'];
         $stackidval = $_POST['stackid'];
         $sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-        $commitcheck = ($_POST['commit']=='on') ? 'CHECKED' : '';
+        $commitcheck = ($_POST['commit']=='off') ? '' : 'CHECKED';
         // classifier params
         $numclass = 40;
         $numpart = 3000;
@@ -144,7 +144,7 @@ function createClassifierForm($extra=false, $title='Classifier.py Launcher', $he
         <TR>
                 <TD VALIGN='TOP'>
                 <INPUT TYPE='checkbox' NAME='commit' $commitcheck>
-                Commit to Database<BR>
+                <B>Commit to Database</B><BR>
                 </TD>
         </TR>\n";
         //echo"<TR>
