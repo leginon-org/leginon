@@ -1612,6 +1612,7 @@ class MaskAssessorSettingsData(SettingsData):
 			('run', str),
 			('mask run', str),
 			('jump filename', str),
+			('continueon', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1623,6 +1624,7 @@ class ClickMaskMakerSettingsData(SettingsData):
 			('run', str),
 			('path', str),
 			('jump filename', str),
+			('continueon', bool),
 		)
 	typemap = classmethod(typemap)
 
