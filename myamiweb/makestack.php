@@ -395,7 +395,7 @@ function runMakestack() {
         }
 
         // check defocus cutoffs
-        $dfmin = ($_POST['dfmin']==$_POST['dbmin'] || $_POST['dfmin']<$_POST['dbmin']) ? '' : $_POST['dfmin'];
+        $dfmin = ($_POST['dfmin']==$_POST['dbmin'] || $_POST['dfmin']>$_POST['dbmin']) ? '' : $_POST['dfmin'];
         $dfmax = ($_POST['dfmax']==$_POST['dbmax'] || $_POST['dfmax']<$_POST['dbmax']) ? '' : $_POST['dfmax'];
 
         $fileformat = ($_POST['fileformat']=='spider') ? 'spider' : '';
