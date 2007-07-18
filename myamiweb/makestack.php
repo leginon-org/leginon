@@ -271,7 +271,12 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
                 Particle Correlation Cutoff<BR>
                 (between 0.0 - 1.0)<BR>
                 Use Values Above:<INPUT TYPE='text' NAME='selexonmin' $selexdisable VALUE='$selexminval' SIZE='4'><BR>
-                Use Values Below:<INPUT TYPE='text' NAME='selexonmax' $selexdisable VALUE='$selexmaxval' SIZE='4'>
+                Use Values Below:<INPUT TYPE='text' NAME='selexonmax' $selexdisable VALUE='$selexmaxval' SIZE='4'><BR>
+                <BR>
+                <B>Defocal pairs:</B><BR>
+                <INPUT TYPE='checkbox' NAME='defocpair' $defocpair>&nbsp;
+                Calculate shifts for defocal pairs<BR>
+                <BR>
                 </TD>
         </TR>\n";
         }	
@@ -284,15 +289,18 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
                 // check if user has changed values on submit
                 $minval = ($_POST['dfmin']!=$min && $_POST['dfmin']!='' && $_POST['dfmin']!='-') ? $_POST['dfmin'] : $min;
                 $maxval = ($_POST['dfmax']!=$max && $_POST['dfmax']!='' && $_POST['dfmax']!='-') ? $_POST['dfmax'] : $max;
+                $sessionpath=ereg_replace("E","e",$sessionpath);
+                $minval = ereg_replace("E","e",round($minval,8));
+                $maxval = ereg_replace("E","e",round($maxval,8));
                 echo"
                 <TR>
                         <TD VALIGN='TOP'>
                         <B>Defocus Limits</B><BR>
                         <INPUT TYPE='text' NAME='dfmin' VALUE='$minval' SIZE='25'>
-                        <INPUT TYPE='hidden' NAME='dbmin' VALUE='$min'>
+                        <INPUT TYPE='hidden' NAME='dbmin' VALUE='$minval'>
                         Minimum<BR>
                         <INPUT TYPE='text' NAME='dfmax' VALUE='$maxval' SIZE='25'>
-                        <INPUT TYPE='hidden' NAME='dbmax' VALUE='$max'>
+                        <INPUT TYPE='hidden' NAME='dbmax' VALUE='$maxval'>
                         Maximum
                         </TD>
                 </TR>\n";
@@ -359,12 +367,13 @@ function runMakestack() {
         $phaseflip = ($_POST['phaseflip']=='on') ? 'phaseflip' : '';
         $inspected = ($_POST['inspected']=='on') ? 'inspected' : '';
         $commit = ($_POST['commit']=="on") ? 'commit' : '';
+        $defocpair = ($_POST[defocpair]=="on") ? "1" : "0";
 
 	// binning amount
-	$bin=$_POST['bin'];
-	if ($bin) {
+        $bin=$_POST['bin'];
+        if ($bin) {
 	        if (!is_numeric($bin)) createMakestackForm("<B>ERROR:</B> Binning amount must be 2, 4, 8, 16, 32...");
-	}
+        }
 
         // box size
         $boxsize = $_POST['boxsize'];
@@ -386,8 +395,8 @@ function runMakestack() {
         }
 
         // check defocus cutoffs
-        $dfmin = ($_POST['dfmin']==$_POST['dbmin']) ? '' : $_POST['dfmin'];
-        $dfmax = ($_POST['dfmax']==$_POST['dbmax']) ? '' : $_POST['dfmax'];
+        $dfmin = ($_POST['dfmin']==$_POST['dbmin'] || $_POST['dfmin']<$_POST['dbmin']) ? '' : $_POST['dfmin'];
+        $dfmax = ($_POST['dfmax']==$_POST['dbmax'] || $_POST['dfmax']<$_POST['dbmax']) ? '' : $_POST['dfmax'];
 
         $fileformat = ($_POST['fileformat']=='spider') ? 'spider' : '';
 
@@ -405,8 +414,9 @@ function runMakestack() {
         if ($inspected) $command.="inspected ";
         if ($commit) $command.="commit ";
         $command.="boxsize=$boxsize ";
-	if ($bin) $command.="bin=$bin ";
+        if ($bin) $command.="bin=$bin ";
         if ($ace) $command.="ace=$ace ";
+        if ($defocpair) $command.="defocpair ";
         if ($selexonmin) $command.="selexonmin=$selexonmin ";
         if ($selexonmax) $command.="selexonmax=$selexonmax ";
         if ($dfmin) $command.="mindefocus=$dfmin ";
