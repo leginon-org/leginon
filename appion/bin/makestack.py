@@ -366,6 +366,7 @@ def eliminateMaskedParticles(particles,params,imgdata):
 				newparticles.append(prtl)
 		print eliminated,"particle(s) eliminated due to masking"
 	else:
+		print "no masking"
 		newparticles = particles
 	return newparticles
 

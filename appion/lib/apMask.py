@@ -161,7 +161,6 @@ def getMaskPath(maskrundata):
 
 def getMaskFilename(maskrundata,imagedata):
 	maskpath = getMaskPath(maskrundata)
-	print imagedata
 	maskfile = imagedata['filename']+"_mask.png"
 	return maskfile
 
@@ -254,10 +253,9 @@ def makeInspectedMask(sessiondata,maskassessname,imgdata):
 	
 	allmaskarray = numpy.where(allmaskarray==0,0,1)
 	
-	try:
-		allmaskarray.shape
-	except:
+	if allmaskarray.shape == ():
 		allmaskarray = None
+		print "no mask"
 
 #	apImage.arrayToJpeg(allmaskarray,'test.jpg')
 	
