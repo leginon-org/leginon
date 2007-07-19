@@ -44,6 +44,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$ctf = new ctfdata();
 	$ctfdata=$ctf->hasCtfData($sessionId);
 	$prtlrunIds = $particle->getParticleRunIds($sessionId);
+	$massessrunIds = $particle->getMaskAssessRunIds($sessionId);
 	$stackruns = count($particle->getStackIds($sessionId));
 
 	// --- find hosts to run makestack.py
@@ -116,8 +117,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
         $rundescrval = $_POST['description'];
         $sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
         $prtlrunval = $_POST['prtlrunId'];
-        $phasecheck = ($_POST['phaseflip']=='off') ? '' : 'CHECKED';
-        $inspectcheck = ($_POST['inspected']=='off') ? '' : 'CHECKED';
+        $massessval = $_POST['massessname'];
+        $phasecheck = ($_POST['phaseflip']=='on') ? 'CHECKED' : '';
+        $inspectcheck = ($_POST['inspected']=='on') ? 'CHECKED' : '';
         $commitcheck = ($_POST['commit']=='on') ? 'CHECKED' : '';
         $boxszval = $_POST['boxsize'];
 	$binval=$_POST['bin'];
@@ -196,6 +198,41 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
                 </SELECT>
                 </TD>
         </TR>
+                <TR>
+                        <TD>\n";
+
+        $massessruns=count($massessrunIds);
+	$massessname = '';
+	$massessnames= $particle->getMaskAssessNames($sessionId);
+
+        if (!$massessnames) {
+                echo"<FONT COLOR='RED'><B>No Mask Assessed for this Session</B></FONT>\n";
+        }
+        else {
+                echo "Mask Assessment:
+                <SELECT NAME='massessname'>\n";
+		foreach ($massessnames as $name) {
+			$massessname = $name['name'];
+			$massessruns = $particle->getMaskAssessRunByName($sessionId,$massessname);
+			$totkeeps = 0;
+                	foreach ($massessruns as $massessrun){
+                       		$massessrunId=$massessrun['DEF_id'];
+                        	$massessstats=$particle->getMaskAssessStats($massessrunId);
+                        	$permaskkeeps=commafy($massessstats['totkeeps']);
+				$totkeeps = $totkeeps + $permaskkeeps;
+			}
+                        echo "<OPTION VALUE='$massessname'";
+                       	 // select previously set assessment on resubmit
+                       	if ($massessval==$massessname) echo " SELECTED";
+                        echo">$massessname ($totkeeps keeps)</OPTION>\n";
+                }
+                echo "</SELECT>\n";
+        }
+        echo"
+                </SELECT>
+                </TD>
+        </TR>
+
         <TR>
                 <TD VALIGN='TOP'>
                 <B>Density:</B><BR>
@@ -400,6 +437,10 @@ function runMakestack() {
 
         $fileformat = ($_POST['fileformat']=='spider') ? 'spider' : '';
 
+        // mask assessment
+        $massessname=$_POST['massessname'];
+
+
 //        $command ="source /ami/sw/ami.csh;";
 //        $command.="source /ami/sw/share/python/usepython.csh common32;";
 //        $command.="source /home/$user/pyappion/useappion.csh;";
@@ -412,6 +453,7 @@ function runMakestack() {
         if ($normalize) $command.="nonorm ";
         if ($phaseflip) $command.="phaseflip ";
         if ($inspected) $command.="inspected ";
+        if ($massessname) $command.="maskassess=$massessname ";
         if ($commit) $command.="commit ";
         $command.="boxsize=$boxsize ";
         if ($bin) $command.="bin=$bin ";
@@ -429,6 +471,9 @@ function runMakestack() {
 
         writeTop("Makestack Run","Makestack Params");
 
+        if ($massessname) {
+                echo"<FONT COLOR='RED'><B>Use a 32-bit machine to use the masks</B></FONT>\n";
+        }
         echo"
         <P>
         <TABLE WIDTH='600' BORDER='1'>
@@ -445,6 +490,7 @@ function runMakestack() {
         <TR><TD>nonorm</TD><TD>$nonorm</TD></TR>
         <TR><TD>phaseflip</TD><TD>$phaseflip</TD></TR>
         <TR><TD>inspected</TD><TD>$inspected</TD></TR>
+        <TR><TD>mask assessment</TD><TD>$massessname</TD></TR>
         <TR><TD>commit</TD><TD>$commit</TD></TR>
         <TR><TD>box size</TD><TD>$boxsize</TD></TR>
         <TR><TD>binning</TD><TD>$bin</TD></TR>

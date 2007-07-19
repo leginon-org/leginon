@@ -345,6 +345,168 @@ class particledata {
 		return $html;
 	}
 
+
+	function getMaskMakerRunIds ($sessionId) {
+		$q = "select * "
+			."from `ApMaskMakerRunData` where `REF|leginondata|SessionData|session` = '$sessionId'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getMaskAssessRunIds ($sessionId) {
+		$q = "select * "
+			."from `ApMaskAssessmentRunData` where `REF|leginondata|SessionData|session` = '$sessionId'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function hasMaskMakerData ($sessionId) {
+		$r= ($this->getLastMaskMakerRun($sessionId)) ? true : false;
+		return $r;
+	}
+	
+	function getLastMaskMakerRun ($sessionId) {
+		$q = "select max(DEF_id) as runId "
+			."from `ApMaskMakerRunData` where `REF|leginondata|SessionData|session` = '$sessionId'";
+		list($r) = $this->mysql->getSQLResult($q);
+		echo $this->mysql->getError();
+		return $r[runId];
+	}
+	
+	function getMaskMakerParams ($runId) {
+		$q = "select * from ApMaskMakerRunData "
+			." where `DEF_id` = '$runId' ";
+		list($r)=$this->mysql->getSQLResult($q);
+		
+		//print_r ($r);
+		//echo $r['REF|ApMaskMakerParamsData|params'];
+		$q = "select s.*, r.name, r.`REF|leginondata|SessionData|session` ";
+	
+		if ($r['REF|ApMaskMakerParamsData|params']) {
+			$maskparamid=$r['REF|ApSelectionParamsData|params'];
+			$q .= "from ApMaskMakerParamsData s "
+			 	."left join ApMaskMakerRunData r on (s.`DEF_id` = r.`REF|ApMaskMakerParamsData|params`) ";
+		}
+		
+			$q .= "where r.`DEF_id` = '$runId' ";
+		//echo $q;
+		$r=$this->mysql->getSQLResult($q);
+		//print_r ($r);
+		return $r;
+	}
+	
+	function getMaskRegions ($runId) {
+		$q="select r.DEF_id, r.x, r.y, r.area, r.mean, r.stdev "
+			."from ApMaskRegionData r "
+			."where r.`REF|ApMaskMakerRunData|maskrun` = ".$runId." "; 				$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getMaskRegionStats ($runId, $inspect=False){
+		$q="select count(r.`DEF_id`) as `totregions`, "
+			."count(distinct r.`REF|leginondata|AcquisitionImageData|image`) as num, "
+			."avg(r.area) as `areamean`, "
+			."avg(r.mean) as `Imean`, "
+			."avg(r.stdev) as `Istddev` "
+		        ."from ApMaskRegionData r ";
+		// use the latest inspection value. This should be changed later 
+		if ($inspect) {
+		        $q.= "left join ApAssessmentData ad "
+				."on (ad.`dbemdata|AcquisitionImageData|image` = r.`REF|leginondata|AcquisitionImageData|image`) ";
+		}
+		$q.="WHERE ";
+		if ($inspect) {
+			$q.= "ad.`DEF_id`=(select max(ad2.`DEF_id`) from ApAssessmentData ad2 where ad2.`dbemdata|AcquisitionImageData|image` = ad.`dbemdata|AcquisitionImageData|image`) "
+				."and ad.selectionkeep=1 AND ";
+		}
+		$q.="r.`REF|ApMaskMakerRunData|maskrun` = '$runId' ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+			
+	}
+	
+	function displayMaskRegionStats ($particleruns, $display_keys, $inspect=False, $selexval=False) {
+		if (!is_array($particleruns))
+			return ;
+		$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
+		$html .= "<tr> <td> </td>";
+		foreach($display_keys as $key) {
+			$html .= "<td> <span class='datafield0'>".$key."</span> </td> ";
+		}
+		$html .= "</tr>";
+
+		foreach ($particleruns as $particle) {
+			$runId=$particle['DEF_id'];
+			$regionstats = $this->getMaskRegionStats($runId, $inspect);
+			$html .= "<tr>";
+			$numregn=$regionstats['totregions'];
+			$numimg=$regionstats['num'];
+			$rpimg = ($numimg > 0) ? (sprintf("%.1f", $numregn/$numimg)) : 0;
+			$regionstats['numimgs']=$numimg.'<BR>('.$rpimg.' regions/img)';
+			$regionstats['img'] = '<a href="maskregiongraph.php?hg=1&run='.$runId.'">'
+			        .'<img border="0" '
+			        .'src="maskregiongraph.php?w=150&hg=1&run='
+				.$runId.'"></a>';
+			$q = "select name from `ApMaskMakerRunData` where `DEF_id` = $runId";
+			$r = $this->mysql->getSQLResult($q);
+			$r0 = $r[0];
+			$html .= '<td><a href="maskrunreport.php?rId='.$runId.'">'.$r0[name].'</a></td>';
+			foreach($display_keys as $field) {
+			        $data=$regionstats[$field];
+				if (eregi('^areamean|^Imean|^Istddev', $field)) $data=format_sci_number($data,4);
+				$html .= "<td> $data </td> \n";
+			}
+			$html .= "</tr>\n";
+		}
+		$html .= "</table>\n";
+		return $html;
+	}
+
+	function getMaskAssessRunByName ($sessionId,$name){
+		$q = "select * "
+			."from `ApMaskAssessmentRunData` where "
+			."`REF|leginondata|SessionData|session` = '$sessionId' AND "
+			." `name` = '$name' ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getMaskAssessNames ($sessionId){
+		$q = "select `name` "
+			."from `ApMaskAssessmentRunData` where `REF|leginondata|SessionData|session` = '$sessionId' "			." group by `name` ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getMaskAssessStats ($runId, $inspect=False){
+		$q="select count(m.`keep`) as `totkeeps`, "
+			."count(distinct r.`REF|leginondata|AcquisitionImageData|image`) as num "
+		        ."from ApMaskAssessmentData m "
+			."left join ApMaskRegionData r "
+			." on m.`REF|ApMaskRegionData|region` = r.`DEF_id` ";
+		// use the latest inspection value. This should be changed later 
+		if ($inspect) {
+		        $q.= "left join ApAssessmentData ad "
+				."on (ad.`dbemdata|AcquisitionImageData|image` = r.`REF|leginondata|AcquisitionImageData|image`) ";
+		}
+		$q.="WHERE ";
+		if ($inspect) {
+			$q.= "ad.`DEF_id`=(select max(ad2.`DEF_id`) from ApAssessmentData ad2 where ad2.`dbemdata|AcquisitionImageData|image` = ad.`dbemdata|AcquisitionImageData|image`) "
+				."and ad.selectionkeep=1 AND ";
+		}
+		$q.="m.`REF|ApMaskAssessmentRunData|run` = '$runId' AND "
+			."m.`keep` = 1 ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+			
+	}
+
+
+
+
+
+
+
 #--------- REF-FREE ALIGNMENT FUNCTIONS---------------#
 
  function getNoRefIds ($sessionId) {

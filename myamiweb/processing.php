@@ -102,6 +102,11 @@ if ($sessionId) {
   $prtlrunIds = $particle->getParticleRunIds($sessionId);
   $prtlruns=count($prtlrunIds);
 
+  // --- Get Mask Maker Data
+  $particle = new particledata();
+  $maskrunIds = $particle->getMaskMakerRunIds($sessionId);
+  $maskruns=count($maskrunIds);
+
   // --- Get Micrograph Assessment Data
   //$totimgs = $particle->getNumImgsFromSessionId($sessionId);
   $assessedimgs = $particle->getNumAssessedImages($sessionId);
@@ -193,6 +198,29 @@ if ($sessionId) {
       if ($assessedimgs < $totimgs) echo "Continue Assessment";
       else echo "Redo Assessment";
     }
+    echo"</A>
+    </TD>
+  </TR>
+  <TR>\n";
+  if ($maskruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
+  else {$bgcolor=$donecolor;$gifimg=$donepic;}
+  echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
+    <TD BGCOLOR='$bgcolor'>
+    <B>Region Mask Creation</B>
+    </TD>
+    <TD BGCOLOR='$bgcolor'>\n";
+    if ($maskruns==0) {echo "none";}
+    else {echo "<A HREF='maskreport.php?expId=$sessionId'>$maskruns completed</A>\n";}
+    echo"
+    </TD>
+    <TD BGCOLOR='$bgcolor'>
+    <A HREF='runMaskMaker.php?expId=$sessionId'>";
+    if ($maskruns==0) {echo "Begin Crud Finding";}
+    else {echo "Continue Crud Finding";}
+    echo"</A><BR>
+    <A HREF='manualMaskMaker.php?expId=$sessionId'>";
+    if ($maskruns==0) {echo "Begin Manual Masking";}
+    else {echo "Continue Manual Masking";}
     echo"</A>
     </TD>
   </TR>
