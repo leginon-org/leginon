@@ -117,9 +117,7 @@ def invertImage(imgarray):
 	"""
 	returns a contrast inverted image
 	"""
-	print "inverting image",dir(imgarray)
 	return -1.0*imgarray
-	print "done"
 
 def filterImg(imgarray,apix=1.0,rad=0.0,bin=1):
 	#TEMPORARY ALIAS FOR lowPassFilter
