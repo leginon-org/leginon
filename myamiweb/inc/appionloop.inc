@@ -175,6 +175,9 @@ function particleLoopJavaCommands () {
 			 if (infoname=='overlapmult'){
 			    newwindow.document.write('The overlap multiple specifies the minimum distance allowed between two peaks. If two peaks are closer than overlapmult*particle diameter the only the larger of the two peaks is retained.');
 			 }
+			 if (infoname=='invert'){
+			    newwindow.document.write('Sometimes the template is inverted to the images or dogPicker needs inverted images in this case use the invert flag.');
+			 }
 			 newwindow.document.write('</BODY></HTML>');
 			 newwindow.document.close();
 		}
@@ -241,9 +244,14 @@ Calculate shifts for defocal pairs</A><BR>
 <INPUT TYPE='text' NAME='maxsize' VALUE='$maxsize' SIZE='4'>&nbsp;
 <A HREF=\"javascript:particleinfopopup('maxsize')\">
 Maximum peak area multiple</A><BR>
+
 <INPUT TYPE='text' NAME='overlapmult' VALUE='$overlapmult' SIZE='4'>&nbsp;
 <A HREF=\"javascript:particleinfopopup('overlapmult')\">
 Minimum peak overlap distance multiple</A><BR>
+
+<INPUT TYPE='checkbox' NAME='invert' $invert>&nbsp;
+<A HREF=\"javascript:particleinfopopup('invert')\">
+Invert image density</A><BR>
 <BR>
 ";
 	echo "<!-- END Particle Loop Param -->";
@@ -260,17 +268,20 @@ function parseParticleLoopParams () {
 	$defocpair = ($_POST[defocpair]=="on") ? "1" : "0";
 	$maxsize = $_POST[maxsize];
 	$overlapmult = $_POST[overlapmult];
+	$invert = ($_POST[invert]=="on") ? "1" : "0";
 
-	if ($thresh) $command.=" thresh=$thresh";
-	if ($maxthresh && $maxthresh > 0) $command.=" maxthresh=$maxthresh";
-	if ($maxpeaks && $maxpeaks > 0 && $maxpeaks != 1500) $command.=" maxpeaks=$maxpeaks";
-	if ($lp && $lp > 0) $command.=" lp=$lp";
-	if ($hp && $hp > 0) $command.=" hp=$hp";
-	if ($median && $median > 0) $command.=" median=$median";
-	if ($bin && $bin > 0) $command.=" bin=$bin";
-	if ($defocpair) $command.=" defocpair";
 	if ($maxsize && $maxsize > 0 && $maxsize != 1.0) $command.=" maxsize=$maxsize";
 	if ($overlapmult && $overlapmult > 0 && $overlapmult != 1.5) $command.=" overlapmult=$overlapmult";
+	if ($defocpair) $command.=" defocpair";
+	if ($maxthresh && $maxthresh > 0) $command.=" maxthresh=$maxthresh";
+	if ($maxpeaks && $maxpeaks > 0 && $maxpeaks != 1500) $command.=" maxpeaks=$maxpeaks";
+	if ($invert) $command.=" invert";
+	if ($median && $median > 0) $command.=" median=$median";
+	if ($lp && $lp > 0) $command.=" lp=$lp";
+	if ($hp && $hp > 0) $command.=" hp=$hp";
+	if ($bin && $bin > 0) $command.=" bin=$bin";
+
+	if ($thresh) $command.=" thresh=$thresh";
 
    return $command;
 }
@@ -286,6 +297,7 @@ function particleLoopSummaryTable () {
 	$defocpair = ($_POST[defocpair]=="on") ? "0" : "1";
 	$maxsize = $_POST[maxsize];
 	$overlapmult = $_POST[overlapmult];
+	$invert = ($_POST[invert]=="on") ? "1" : "0";
 
 	echo "<TR><TD>thresh</TD><TD>$thresh</TD></TR>\n";
 	echo "<TR><TD>maxthresh</TD><TD>$maxthresh</TD></TR>\n";
@@ -297,6 +309,7 @@ function particleLoopSummaryTable () {
 	echo "<TR><TD>defocpair</TD><TD>$defocpair</TD></TR>\n";
 	echo "<TR><TD>maxsize</TD><TD>$maxsize</TD></TR>\n";
 	echo "<TR><TD>overlapmult</TD><TD>$overlapmult</TD></TR>\n";
+	echo "<TR><TD>invert</TD><TD>$invert</TD></TR>\n";
 }
 
 ?>

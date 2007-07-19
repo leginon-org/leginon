@@ -145,9 +145,6 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		<BR><BR>";
 	createParticleLoopTable(0.7, 1.5);
 	echo "
-		<B>DogPicker specific:</B><BR>
-		<INPUT TYPE='checkbox' NAME='invert' $invert>&nbsp;
-		Invert image density<BR>
 		</TD>
 	</TR>
 	<TR>
