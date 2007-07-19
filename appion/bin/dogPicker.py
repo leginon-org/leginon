@@ -25,8 +25,6 @@ class dogPicker(particleLoop.ParticleLoop):
 	def particleProcessImage(self, imgdata):
 		imgarray = imgdata['image']
 		imgarray = apImage.preProcessImage(imgarray, params=self.params, lowpass=0)
-		if self.params['invert']:
-			imgarray=apImage.invertImage(imgarray)
 		imgarray = apImage.diffOfGaussParam(imgarray, self.params)
 		imgarray = apImage.normStdev(imgarray)/4.0
 		peaktree  = apPeaks.findPeaks(imgdata, [imgarray,], self.params, maptype="dogmap")
@@ -39,7 +37,6 @@ class dogPicker(particleLoop.ParticleLoop):
 		return
 
 	def particleDefaultParams(self):
-		self.params['invert']=False
 		self.params['mapdir']="dogmaps"
 
 	def particleParseParams(self, args):
