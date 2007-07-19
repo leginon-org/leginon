@@ -87,7 +87,7 @@ def downSizeTemplate(imgdata, filename, params):
 		apDisplay.printError("binned image must be divisible by 2")
 	if boxsize[0] % bin != 0:
 		apDisplay.printError("box size not divisible by binning factor")
-	imgdata = apImage.preProcessImage(imgdata, params=params, highpass=0, planeReg=False)
+	imgdata = apImage.preProcessImage(imgdata, params=params, highpass=0, planeReg=False, invert=False)
 	#replace extension with .dwn.mrc
 	ext=re.compile('\.mrc$')
 	filename=ext.sub('.dwn.mrc', filename)
