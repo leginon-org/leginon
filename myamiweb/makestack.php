@@ -118,8 +118,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
         $sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
         $prtlrunval = $_POST['prtlrunId'];
         $massessval = $_POST['massessname'];
-        $phasecheck = ($_POST['phaseflip']=='on') ? 'CHECKED' : '';
-        $inspectcheck = ($_POST['inspected']=='on') ? 'CHECKED' : '';
+        $phasecheck = ($_POST['phaseflip']=='off') ? '' : 'CHECKED'; 	         
+        $inspectcheck = ($_POST['inspected']=='off') ? '' : 'CHECKED';
         $commitcheck = ($_POST['commit']=='on') ? 'CHECKED' : '';
         $boxszval = $_POST['boxsize'];
 	$binval=$_POST['bin'];
