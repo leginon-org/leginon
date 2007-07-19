@@ -355,6 +355,7 @@ def eliminateMaskedParticles(particles,params,imgdata):
 	newparticles = []
 	eliminated = 0
 	sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
+	imgdata = getDefocPair(imgdata,2)
 	maskimg,maskbin = apMask.makeInspectedMask(sessiondata,params['inspectmask'],imgdata)
 	if maskimg is not None:
 		for prtl in particles:
@@ -547,6 +548,39 @@ def getImgsFromSelexonIdREFLEGINON(params):
 			dbimglist.append(img)
 	apDisplay.printMsg("completed in "+apDisplay.timeString(time.time()-startt))
 	return (dbimglist)
+
+def getDefocPair(imgdata,direction):
+	simgq=appionData.ApImageTransformationData()
+	base = 'dbemdata|AcquisitionImageData|image'
+	direction = str(direction)
+	if direction =='2':
+		sfrom = base + '2'
+		sto = base+ '1'
+	if direction == '1':
+		sfrom = base+ '1'
+		sto = base+ '2'
+	simgq[sfrom]=imgdata.dbid
+	transdata=apdb.query(simgq,readimages=False)
+	simgid = transdata[0][sto]
+	simgdata=db.direct_query(leginondata.AcquisitionImageData,simgid, readimages = False)
+	
+	return simgdata
+
+def getDefocPairRELEGINON(imgdata,direction):
+	simgq=appionData.ApImageTransformationData()
+	base = 'image'
+	direction = str(direction)
+	if direction =='2':
+		sfrom = base + '2'
+		sto = base+ '1'
+	if direction == '1':
+		sfrom = base+ '1'
+		sto = base+ '2'
+	simgq[sfrom]=imgdata.dbid
+	simgdata=apdb.query(simgq,readimages=False)
+	imageref = regiondata.special_getitem('image',dereference = False)
+	imagedata = leginondb.direct_query(leginondata.AcquisitionImageData,imageref.dbid, readimages = False)
+	return simgdata[0][sto]
 
 def getImgsDefocPairFromSelexonId(params):
 	startt = time.time()

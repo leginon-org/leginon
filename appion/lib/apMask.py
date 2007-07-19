@@ -87,19 +87,33 @@ def getMaskRegions(maskrun,imgdata):
 	maskRq['maskrun']=maskrun
 	maskRq['image']=imgdata
 	
-	results=appiondb.query(maskRq)
+	results=appiondb.query(maskRq, readimages=False)
 	
 	return results
 
-def getAllMaskRegionsByAssessment(assessrun,imgdata):
-	maskRq=appionData.ApMaskRegionData()
+def getRegionsByAssessment(assessrun):
+	maskRq=appionData.ApMaskAssessmentData()
 
-	maskRq['maskrun']=maskrun
-	maskRq['image']=imgdata
-	
-	results=appiondb.query(maskRq)
-	
+	maskRq['run']=assessrun
+	results=appiondb.query(maskRq, readimages=False)
+	len(results)
 	return results
+	
+def getAssessedMasks(assessrun,maskrun):
+	regionassesstree = getRegionsByAssessment(assessrun)
+	imagefiles = []
+	for regionassessdata in regionassesstree:
+		regiondata = regionassessdata['region']
+		maskofregion = regiondata['maskrun']
+		if maskofregion.dbid == maskrun.dbid:
+			imageref = regiondata.special_getitem('image',dereference = False)
+			imagedata = leginondb.direct_query(leginondata.AcquisitionImageData,imageref.dbid, readimages = False)
+			imagefile = imagedata['filename']
+			try:
+				imagefiles.index(imagefile)
+			except ValueError:
+				imagefiles.append(imagefile)
+	return map((lambda x: x + '_mask.png'),imagefiles)
 
 def insertMaskAssessmentRun(sessiondata,maskrundata,name):
 	assessRdata=appionData.ApMaskAssessmentRunData()
@@ -147,6 +161,7 @@ def getMaskPath(maskrundata):
 
 def getMaskFilename(maskrundata,imagedata):
 	maskpath = getMaskPath(maskrundata)
+	print imagedata
 	maskfile = imagedata['filename']+"_mask.png"
 	return maskfile
 
@@ -214,14 +229,14 @@ def getRegionKeepList(assessrundata,maskregiondata):
 def makeInspectedMask(sessiondata,maskassessname,imgdata):
 
 	assessruntree = getMaskAssessRunData(sessiondata,maskassessname)
-		
+	
+	allmaskarray = None
 	for assessrundata in assessruntree:
 		maskrundata = assessrundata['maskrun']
 	
 		maskbin = maskrundata['params']['bin']
 	
 		maskregiondata = getMaskRegions(maskrundata,imgdata)
-	
 		if len(maskregiondata) == 0:
 			continue
 	
@@ -238,6 +253,12 @@ def makeInspectedMask(sessiondata,maskassessname,imgdata):
 			allmaskarray = maskarray
 	
 	allmaskarray = numpy.where(allmaskarray==0,0,1)
+	
+	try:
+		allmaskarray.shape
+	except:
+		allmaskarray = None
+
 #	apImage.arrayToJpeg(allmaskarray,'test.jpg')
 	
 	return allmaskarray,maskbin
@@ -246,8 +267,8 @@ def makeInspectedMask(sessiondata,maskassessname,imgdata):
 
 
 if __name__ == '__main__':
-	maskpath='/home/acheng/testcrud/test'
-	maskfilename='07apr11anchitest_GridID00752_Insertion014_00001gr_00004hl_mask.png'
-	sessiondata = getSessionDataByName('07apr11anchitest')
-	rundata,paramdata = getMaskParamsByRunName('test',sessiondata)
-	print rundata,paramdata
+	assessrun = appiondb.direct_query(appionData.ApMaskAssessmentRunData,11)
+	sessiondata = assessrun['session']
+	imgdata = leginondb.direct_query(leginondata.AcquisitionImageData,500659)
+	maskarray,maskbin = makeInspectedMask(sessiondata,'run1',imgdata)
+	maskrun = appiondb.direct_query(appionData.ApMaskMakerRunData,44)
