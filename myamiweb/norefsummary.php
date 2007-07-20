@@ -119,7 +119,6 @@ function reRunClassifier() {
 	$outdir = $r['norefPath'];
 	$stackid = $r['REF|ApStackData|stack'];
 
-
 	$command.="classifier.py ";
 	$command.="runid=$runid ";
 	$command.="stackid=$stackid ";
