@@ -242,10 +242,7 @@ def getMatrix2(eulerdata):
 	
 	return(m)
 
-def calculateDistance(eulerdata1,eulerdata2):
-	m1=getMatrix3(eulerdata1)
-	m2=getMatrix3(eulerdata2)
-	
+def calculateDistance(m1,m2):
 	r=numpy.dot(m1.transpose(),m2)
 	#print r
 	trace=r.trace()
@@ -370,12 +367,21 @@ def removePtclsByErr(nptcls,params):
 	for ptcl in range(1,nptcls+1):
 		eulers=getEulersForParticle(ptcl,params['reconid'])
 		e0=eulers[0]['eulers']
-		errlist=[]
 		distances=numpy.zeros((len(eulers)-1))
 		f.write('%d\t' % ptcl)
 		for n in range(1,len(eulers)):
-			d=calculateDistance(e0,eulers[n]['eulers'])
-			distances[n-1]=d*180/math.pi
+			# first get all equivalent Eulers given symmetry
+			eqEulers=calculateEquivSym(eulers[n]['eulers'])
+
+			# calculate the distances between the original Euler and all the equivalents
+			mat0=getMatrix3(e0)
+			mat1=getMatrix3(eulers[n]['eulers'])
+
+			d=[]
+			for e1 in eqEulers:
+				d.append(calculateDistance(mat0,mat1))
+			mind=min(d)
+			distances[n-1]=mind*180/math.pi
 			f.write('%f\t' % distances[n-1])
 			e0=eulers[n]['eulers']
 			sumerr+=distances[n-1]
@@ -387,6 +393,90 @@ def removePtclsByErr(nptcls,params):
 		#print distances.mean()
 	print total, sumerr/total
 	return total
+
+def calcXRot(a):
+	m=numpy.zeros((3,3))
+	m[0,0]=1
+	m[0,1]=0
+	m[0,2]=0
+	m[1,0]=0
+	m[1,1]=math.cos(a)
+	m[1,2]=-(math.sin(a))
+	m[2,0]=0
+	m[2,1]=math.sin(a)
+	m[2,2]=math.cos(a)
+	return m
+
+def calcYRot(a):
+	m=numpy.zeros((3,3))
+	m[0,0]=math.cos(a)
+	m[0,1]=0
+	m[0,2]=math.sin(a)
+	m[1,0]=0
+	m[1,1]=1
+	m[1,2]=0
+	m[2,0]=-(math.sin(a))
+	m[2,1]=0
+	m[2,2]=math.cos(a)
+	return m
+
+def calcZRot(a):
+	m=numpy.zeros((3,3))
+	m[0,0]=math.cos(a)
+	m[0,1]=-(math.sin(a))
+	m[0,2]=0
+	m[1,0]=math.sin(a)
+	m[1,1]=math.cos(a)
+	m[1,2]=0
+	m[2,0]=0
+	m[2,1]=0
+	m[2,2]=1
+	return m
+
+def calculateEquivSym(eulers):
+	f=open('matrices.txt','w')
+	eqEulers=[]
+	m=getMatrix3(eulers)
+	eqEulers.append(m)
+	# 180 degree rotation around x axis
+	x1 = calcXRot(math.pi)
+	# calculate each of 7 rotations around z axis
+	z1 = calcZRot(2*math.pi/7)
+	z2 = calcZRot(4*math.pi/7)
+	z3 = calcZRot(6*math.pi/7)
+	z4 = calcZRot(8*math.pi/7)
+	z5 = calcZRot(10*math.pi/7)
+	z6 = calcZRot(12*math.pi/7)
+	# combine each of 7 rotations with x axis rotation
+	xz1 = numpy.dot(x1,z1)
+	xz2 = numpy.dot(x1,z2)
+	xz3 = numpy.dot(x1,z3)
+	xz4 = numpy.dot(x1,z4)
+	xz5 = numpy.dot(x1,z5)
+	xz6 = numpy.dot(x1,z6)
+
+	eqEulers.append(numpy.dot(m,x1))
+	eqEulers.append(numpy.dot(m,z1))
+	eqEulers.append(numpy.dot(m,z2))
+	eqEulers.append(numpy.dot(m,z3))
+	eqEulers.append(numpy.dot(m,z4))
+	eqEulers.append(numpy.dot(m,z5))
+	eqEulers.append(numpy.dot(m,z6))
+	eqEulers.append(numpy.dot(m,xz1))
+	eqEulers.append(numpy.dot(m,xz2))
+	eqEulers.append(numpy.dot(m,xz3))
+	eqEulers.append(numpy.dot(m,xz4))
+	eqEulers.append(numpy.dot(m,xz5))
+	eqEulers.append(numpy.dot(m,xz6))
+	n=1
+## 	for e in eqEulers:
+## 		f.write('REMARK 290    SMTRY1  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n, e[0,0], e[0,1], e[0,2]))
+## 		f.write('REMARK 290    SMTRY2  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n, e[1,0], e[1,1], e[1,2]))
+## 		f.write('REMARK 290    SMTRY3  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n, e[2,0], e[2,1], e[2,2]))
+## 		n+=1
+## 	f.close()
+## 	sys.exit()
+	return eqEulers
 
 if __name__=='__main__':
 	
