@@ -109,7 +109,7 @@ def binImg(imgarray,bin=1):
 		mindim = min(newarray.shape)
 		if mindim < 1:
 			apDisplay.printError("problem in numextension bin, return null array")
-		newarray = ndimage.median_filter(newarray, size=0)
+			newarray = ndimage.median_filter(newarray, size=0)
 		return newarray
 	else:
 		return imgarray
