@@ -105,6 +105,23 @@ def cmdline(args, params):
 		else:
 			apDisplay.printError(str(elem[0])+" is not recognized as a valid parameter")
 
+def overridecmd(params):
+	### create a norefRun object
+	runq = appionData.ApNoRefRunData()
+	runq['name'] = params['runid']
+	runq['norefPath'] = params['outdir']
+	runq['stack'] = appiondb.direct_query(appionData.ApStackData, params['stackid'])
+	# ... stackId, runId and norefPath make the norefRun unique:
+	uniquerun = appiondb.query(runq, results=1)[0]
+	# ... continue filling non-unique variables:
+	uniqueparams = uniquerun['norefParams']
+
+	params['numparticles'] = uniqueparams['num_particles']
+	params['lp'] = uniqueparams['lp_filt']
+	params['mask'] = uniqueparams['mask_diam']
+	params['diam'] = uniqueparams['particle_diam']
+	params['description'] = uniquerun['description']
+
 def conflicts(params):
 	if params['runid'] is None:
 		apDisplay.printError("Please provide a runid, example: runid=run1")
@@ -177,7 +194,7 @@ def getStackInfo(params):
 	params['boxsize']   = int(stackparamdata['boxSize']/params['bin'])
 	params['classfile'] = "classes_avg%03d" % params['numclasses']
 
-	if 'diam' in selectdata and not param['classonly']:
+	if 'diam' in selectdata and not params['classonly']:
 		if params['diam'] is None:
 			apDisplay.printWarning("particle diameter not specified using value from database")
 			params['diam'] = selectdata['diam']
@@ -185,7 +202,7 @@ def getStackInfo(params):
 			apDisplay.printWarning("mask diameter not specified using value from database")
 			params['mask'] = selectdata['diam']
 
-	if params['lp'] == 0 and 'lp_filt' in selectdata and not param['classonly']:
+	if params['lp'] == 0 and 'lp_filt' in selectdata and not params['classonly']:
 		apDisplay.printWarning("lowpass not specified using value from database for 'first ring diam'")
 		params['lp'] = selectdata['lp_filt']
 
@@ -378,6 +395,7 @@ def convertClassfileToImagic(params):
 def insertNoRefRun(params, insert=False):
 	# create a norefParam object
 	paramq = appionData.ApNoRefParamsData()
+	paramq['num_particles'] = params['numparticles']
 	paramq['particle_diam'] = params['diam']
 	paramq['mask_diam'] = params['mask']
 	paramq['lp_filt'] = params['lp']
@@ -447,6 +465,8 @@ if __name__ == "__main__":
 	params = defaults()
 	getAppionDir(params)
 	cmdline(sys.argv[1:], params)
+	if params['classonly'] is True:
+		overridecmd(params)
 	conflicts(params)
 	
 	getStackInfo(params)

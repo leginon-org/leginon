@@ -253,7 +253,7 @@ class ApNoRefParamsData(Data):
 			('particle_diam', float),
 			('mask_diam', float),
 			('lp_filt', int),
-#			('num_particles', int), #Redundant?
+			('num_particles', int), #Redundant?
 #			('norefalign_method', str),
 #			('pca_method', str),
 		)
