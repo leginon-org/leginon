@@ -95,7 +95,7 @@ function createClassifierSummary() {
 		}
 		$norefnum = $norefid['DEF_id'];
 		echo "
-		<tr><td bgcolor='#ffcccc' colspan=2>
+		<tr><td bgcolor='#eedddd' colspan=2>
 			Quickly re-average particles into
 			<INPUT TYPE='text' NAME='numclass' VALUE='$numclass' SIZE='4'> classes: &nbsp;&nbsp;&nbsp;
 			<INPUT TYPE='submit' NAME='process' VALUE='Re-average classes'>
