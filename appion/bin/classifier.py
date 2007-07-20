@@ -116,6 +116,9 @@ def overridecmd(params):
 	# ... continue filling non-unique variables:
 	uniqueparams = uniquerun['norefParams']
 
+	if not 'num_particles' in uniqueparams:
+		apDisplay.printError("You're noref classification is too old for automatic numparticles look up\n".\
+			"please provide numpart=#### as the previous run")
 	params['numparticles'] = uniqueparams['num_particles']
 	params['lp'] = uniqueparams['lp_filt']
 	params['mask'] = uniqueparams['mask_diam']
