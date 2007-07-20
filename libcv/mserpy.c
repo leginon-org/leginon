@@ -163,13 +163,10 @@ static PyObject *PyMatchImages(PyObject *self, PyObject *args) {
 	fprintf(stderr,"%2.2f %2.2f %2.2f\n",transform[1][0],transform[1][1],transform[1][2]);
 	fprintf(stderr,"%2.2f %2.2f %2.2f\n",transform[2][0],transform[2][1],transform[2][2]);
 	
-	
 	npy_intp dimensions[2];
 	dimensions[0] = 3;
 	dimensions[1] = 3;
 	PyObject *pytransform = PyArray_SimpleNewFromData( 2, dimensions, NPY_DOUBLE, transform[0] );
-	
-	
 	//FreeDMatrix(transform,0,0);
 	
 	return pytransform;
