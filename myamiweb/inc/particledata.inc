@@ -230,6 +230,8 @@ class particledata {
 		return $r;
 	}
 
+#--------- MAKE STACK FUNCTIONS---------------#
+
   function getStackIds ($sessionId) {
     $q = "SELECT r.`REF|ApStackData|stack` as stackid "
         ."FROM ApRunsInStackData as r "
@@ -345,6 +347,7 @@ class particledata {
 		return $html;
 	}
 
+#--------- MAKE MASK FUNCTIONS---------------#
 
 	function getMaskMakerRunIds ($sessionId) {
 		$q = "select * "
@@ -500,12 +503,6 @@ class particledata {
 		return $r[0];
 			
 	}
-
-
-
-
-
-
 
 #--------- REF-FREE ALIGNMENT FUNCTIONS---------------#
 
