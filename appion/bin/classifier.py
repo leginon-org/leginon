@@ -33,6 +33,7 @@ def defaults():
 	params['runid']=None
 	params['description']=None
 	params['commit']=False
+	params['classonly']=False
 
 	return params
 
@@ -97,6 +98,8 @@ def cmdline(args, params):
 			params['outdir'] = elem[1]
 		elif arg == "commit":
 			params['commit'] = True
+		elif arg == "classonly":
+			params['classonly'] = True
 		elif elem[0] == "description":
 			params['description'] = elem[1]
 		else:
@@ -174,7 +177,7 @@ def getStackInfo(params):
 	params['boxsize']   = int(stackparamdata['boxSize']/params['bin'])
 	params['classfile'] = "classes_avg%03d" % params['numclasses']
 
-	if 'diam' in selectdata:
+	if 'diam' in selectdata and not param['classonly']:
 		if params['diam'] is None:
 			apDisplay.printWarning("particle diameter not specified using value from database")
 			params['diam'] = selectdata['diam']
@@ -182,7 +185,7 @@ def getStackInfo(params):
 			apDisplay.printWarning("mask diameter not specified using value from database")
 			params['mask'] = selectdata['diam']
 
-	if params['lp'] == 0 and 'lp_filt' in selectdata:
+	if params['lp'] == 0 and 'lp_filt' in selectdata and not param['classonly']:
 		apDisplay.printWarning("lowpass not specified using value from database for 'first ring diam'")
 		params['lp'] = selectdata['lp_filt']
 
@@ -395,7 +398,7 @@ def insertNoRefRun(params, insert=False):
 	else:
 		runq['norefParams'] = paramq
 	# ... check if params associated with unique norefRun are consistent:
-	if uniquerun:
+	if uniquerun and not params['classonly']:
 		for i in runq:
 			if uniquerun[0][i] != runq[i]:
 				apDisplay.printError("Run name '"+params['runid']+"' for stackid="+\
@@ -407,10 +410,15 @@ def insertNoRefRun(params, insert=False):
 	classq = appionData.ApNoRefClassRunData()
 	classq['num_classes'] = params['numclasses']
 	norefrun = appiondb.query(runq, results=1)
-	if norefrun:
+	if params['classonly']:
+		classq['norefRun'] = uniquerun[0]
+	elif norefrun:
 		classq['norefRun'] = norefrun[0]
-	else:
+	elif not params['classonly']:
 		classq['norefRun'] = runq
+	else:
+		apDisplay.printError("parameters have changed for run name '"+params['runid']+\
+			"', specify 'classonly' to re-average classes")
 	# ... numclasses and norefRun make the class unique:
 	uniqueclass = appiondb.query(classq, results=1)
 	# ... continue filling non-unique variables:
