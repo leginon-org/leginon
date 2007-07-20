@@ -163,7 +163,7 @@ class DataManager(object):
 		self.lock.acquire()
 		try:
 			for key in self.datadict.keys():
-				if self.size <= self.maxsize:
+				if self.size <= self.maxsize/2:
 					break
 				if not self.limitreached:
 					self.limitreached = True
