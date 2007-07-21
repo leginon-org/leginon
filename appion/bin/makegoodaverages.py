@@ -301,69 +301,30 @@ def getEulersForParticle(particlenum,reconid):
 		#print cls['refinement']['iteration'], cls['eulers']
 	return ptclclassdata
 
-def removePtclsByQualityFactor(particles,params):
+def removePtclsByQualityFactor(particles,cutoff,params):
 	stack=os.path.join(particles[0]['particle']['stack']['stackPath'],particles[0]['particle']['stack']['name'])
 	classes,cstats=determineClasses(particles)
 	
-	print params['nsig']
-	cutoff=cstats['meanquality']+params['nsig']*cstats['stdquality']
-	#cutoff=0
-	print "Cutoff =",cutoff
-
-	classkeys=classes.keys()
-	classkeys.sort()
-	classnum=0
+	rejectlst=[]
 	totalptcls=0
-	high=open("high.lst",'w')
-	high.write("#LST\n")
+	for ptcl in particles:
+		if ptcl['quality_factor'] < cutoff:
+			rejectlst.append(ptcl['particle']['particleNumber'])
+		else:
+			totalptcls+=1
+	return rejectlst, totalptcls
 	
-	low=open("low.lst",'w')
-	low.write("#LST\n")
-	print "Processing class"
-	#loop through classes
-	for key in classkeys:
-		classnum+=1
-		print classnum
-		images=EMAN.EMData()
 
-		#loop through particles in class
-		f=open('tmp.lst','w')
-		f.write('#LST\n')
-		nptcls=0
-		for ptcl in classes[key]['particles']:
-			if ptcl['mirror']:
-				mirror=1
-			else:
-				mirror=0
-			rot=ptcl['inplane_rotation']
-			rot=rot*math.pi/180
-			if ptcl['quality_factor']>cutoff:
-				f.write('%d\t%s\t%f,\t%f,%f,%f,%d\n' % (ptcl['particle']['particleNumber']-1,stack,ptcl['quality_factor'],rot,ptcl['shiftx'],ptcl['shifty'],mirror))
-				totalptcls+=1
-				nptcls+=1
-			else:
-				low.write('%d\t%s\t%f,\t%f,%f,%f,%d\n' % (ptcl['particle']['particleNumber']-1,stack,ptcl['quality_factor'],rot,ptcl['shiftx'],ptcl['shifty'],mirror))
-			if ptcl['quality_factor']>cstats['meanquality']+3*cstats['stdquality']:
-				high.write('%d\t%s\t%f,\t%f,%f,%f,%d\n' % (ptcl['particle']['particleNumber']-1,stack,ptcl['quality_factor'],rot,ptcl['shiftx'],ptcl['shifty'],mirror))
-		f.close()
-		
-		if nptcls<1:
-			continue
-		
-		makeClassAverages('tmp.lst',params['stackname'], classes[key], params)
-		
-		if params['eotest']:
-			makeEvenOddClasses('tmp.lst',params)
-		#break
-	low.close()
-	high.close()
-	return totalptcls
-
-def removePtclsByErr(nptcls,params):
-	errdict={}
+def removePtclsByErr(particles,params):
+	#errdict={}
+	nptcls=len(particles)
+	stack=os.path.join(particles[0]['particle']['stack']['stackPath'],particles[0]['particle']['stack']['name'])
 	sumerr=0
-	total=0
+	totalptcls=0
 	f=open('err.txt','w')
+	rejectlst=[]
+	bad=open('bad.lst','w')
+	bad.write('#LST\n')
 	for ptcl in range(1,nptcls+1):
 		eulers=getEulersForParticle(ptcl,params['reconid'])
 		e0=eulers[0]['eulers']
@@ -385,14 +346,19 @@ def removePtclsByErr(nptcls,params):
 			f.write('%f\t' % distances[n-1])
 			e0=eulers[n]['eulers']
 			sumerr+=distances[n-1]
-			total+=1
+		if numpy.median(distances) > params['avgerr']:
+			bad.write('%d\t%s\n' % (ptcl,stack))
+			rejectlst.append(ptcl)
+		else:
+			totalptcls+=1
 		if not ptcl%100:
 			print "particle",ptcl
-		f.write('%f\t%f\n' % (distances.mean(),distances.std()))
+		f.write('%f\t%f\t%f\n' % (distances.mean(),numpy.median(distances),distances.std()))
 		#print distances
 		#print distances.mean()
-	print total, sumerr/total
-	return total
+	#print total, sumerr/total
+	bad.close()
+	return rejectlst,totalptcls
 
 def calcXRot(a):
 	m=numpy.zeros((3,3))
@@ -433,8 +399,7 @@ def calcZRot(a):
 	m[2,2]=1
 	return m
 
-def calculateEquivSym(eulers):
-	f=open('matrices.txt','w')
+def calculateEquivSym(eulers,symout=False):
 	eqEulers=[]
 	m=getMatrix3(eulers)
 	eqEulers.append(m)
@@ -469,13 +434,14 @@ def calculateEquivSym(eulers):
 	eqEulers.append(numpy.dot(m,xz5))
 	eqEulers.append(numpy.dot(m,xz6))
 	n=1
-## 	for e in eqEulers:
-## 		f.write('REMARK 290    SMTRY1  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n, e[0,0], e[0,1], e[0,2]))
-## 		f.write('REMARK 290    SMTRY2  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n, e[1,0], e[1,1], e[1,2]))
-## 		f.write('REMARK 290    SMTRY3  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n, e[2,0], e[2,1], e[2,2]))
-## 		n+=1
-## 	f.close()
-## 	sys.exit()
+	if symout:
+		f=open('matrices.txt','w')
+ 		for e in eqEulers:
+ 			f.write('REMARK 290    SMTRY1  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n, e[0,0], e[0,1], e[0,2]))
+ 			f.write('REMARK 290    SMTRY2  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n, e[1,0], e[1,1], e[1,2]))
+ 			f.write('REMARK 290    SMTRY3  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n, e[2,0], e[2,1], e[2,2]))
+ 			n+=1
+ 		f.close()
 	return eqEulers
 
 if __name__=='__main__':
@@ -489,12 +455,63 @@ if __name__=='__main__':
 	checkParams(params)
 	
 	particles=getParticleInfo(params['reconid'],params['iter'])
-	
+	stack=os.path.join(particles[0]['particle']['stack']['stackPath'],particles[0]['particle']['stack']['name'])
+	classes,cstats=determineClasses(particles)
+
 	if params['nsig']:
-		totalptcls=removePtclsByQualityFactor(particles,params)
+		rejectlst,totalptcls=removePtclsByQualityFactor(particles,params)
 	elif params['avgerr']:
-		nptcls=len(particles)
-		totalptcls=removePtclsByErr(nptcls,params)
+		rejectlst,totalptcls=removePtclsByErr(particles,params)
+	
+	print params['nsig']
+	cutoff=cstats['meanquality']+params['nsig']*cstats['stdquality']
+	#cutoff=0
+	print "Cutoff =",cutoff
+
+	classkeys=classes.keys()
+	classkeys.sort()
+	classnum=0
+	
+	reject=open('reject.lst','w')
+	reject.write('#LST\n')
+	print "Processing class"
+	#loop through classes
+	for key in classkeys:
+		classnum+=1
+		print classnum
+		images=EMAN.EMData()
+
+		#loop through particles in class
+		f=open('tmp.lst','w')
+		f.write('#LST\n')
+		nptcls=0
+		for ptcl in classes[key]['particles']:
+			if ptcl['mirror']:
+				mirror=1
+			else:
+				mirror=0
+			rot=ptcl['inplane_rotation']
+			rot=rot*math.pi/180
+			if ptcl['particle']['particleNumber'] not in rejectlst:
+				f.write('%d\t%s\t%f,\t%f,%f,%f,%d\n' % (ptcl['particle']['particleNumber']-1,stack,ptcl['quality_factor'],rot,ptcl['shiftx'],ptcl['shifty'],mirror))
+				#totalptcls+=1
+				nptcls+=1
+			else:
+				reject.write('%d\t%s\t%f,\t%f,%f,%f,%d\n' % (ptcl['particle']['particleNumber']-1,stack,ptcl['quality_factor'],rot,ptcl['shiftx'],ptcl['shifty'],mirror))
+			#if ptcl['quality_factor']>cstats['meanquality']+3*cstats['stdquality']:
+			#	high.write('%d\t%s\t%f,\t%f,%f,%f,%d\n' % (ptcl['particle']['particleNumber']-1,stack,ptcl['quality_factor'],rot,ptcl['shiftx'],ptcl['shifty'],mirror))
+		f.close()
+		
+		if nptcls<1:
+			continue
+		
+		makeClassAverages('tmp.lst',params['stackname'], classes[key], params)
+		
+		if params['eotest']:
+			makeEvenOddClasses('tmp.lst',params)
+		#break
+	reject.close()
+	
 	print
 	print "Total particles included =",totalptcls
 	print "Done!"
