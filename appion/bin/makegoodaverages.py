@@ -7,6 +7,7 @@ import os
 import math
 import numpy
 import sys
+import apParam
 
 apdb=apDB.apdb
 
@@ -16,6 +17,7 @@ def createDefaults():
 	params['avgerr']=False
 	params['stackname']='goodavgs.hed'
 	params['eotest'] = False
+	params['functionLog']='makegoodaverages.log'
 	return params
 
 def parseParams(args,params):
@@ -120,7 +122,7 @@ def makeClassAverages(lst, stackname, classdata, params):
 	avg.applyMask(params['mask'],0)
 	avg.writeImage(stackname,-1)
 	
-def makeEvenOddClasses(lst,params):
+def makeEvenOddClasses(lst,classdata,params):
 	f=open(lst,'r')
 	f.readline()
 	lines=f.readlines()
@@ -144,9 +146,9 @@ def makeEvenOddClasses(lst,params):
 	oddstack=os.path.splitext(params['stackname'])[0]+'.odd.hed'
 	
 	if neven>0:
-		makeClassAverages('even.lst',evenstack,params)
+		makeClassAverages('even.lst',evenstack,classdata,params)
 	if nodd>0:
-		makeClassAverages('odd.lst',oddstack,params)
+		makeClassAverages('odd.lst',oddstack,classdata,params)
 
 def getEMANPcmp(ref,img):
 	"""returns EMAN quality factor for pcmp properly scaled"""
@@ -301,30 +303,22 @@ def getEulersForParticle(particlenum,reconid):
 		#print cls['refinement']['iteration'], cls['eulers']
 	return ptclclassdata
 
-def removePtclsByQualityFactor(particles,cutoff,params):
+def removePtclsByQualityFactor(particles,rejectlst,cutoff,params):
 	stack=os.path.join(particles[0]['particle']['stack']['stackPath'],particles[0]['particle']['stack']['name'])
-	classes,cstats=determineClasses(particles)
 	
-	rejectlst=[]
-	totalptcls=0
 	for ptcl in particles:
 		if ptcl['quality_factor'] < cutoff:
 			rejectlst.append(ptcl['particle']['particleNumber'])
-		else:
-			totalptcls+=1
-	return rejectlst, totalptcls
+	return rejectlst
 	
 
-def removePtclsByErr(particles,params):
+def removePtclsByErr(particles,rejectlst,params):
 	#errdict={}
+	print "Finding Euler jumps"
 	nptcls=len(particles)
 	stack=os.path.join(particles[0]['particle']['stack']['stackPath'],particles[0]['particle']['stack']['name'])
 	sumerr=0
-	totalptcls=0
 	f=open('err.txt','w')
-	rejectlst=[]
-	bad=open('bad.lst','w')
-	bad.write('#LST\n')
 	for ptcl in range(1,nptcls+1):
 		eulers=getEulersForParticle(ptcl,params['reconid'])
 		e0=eulers[0]['eulers']
@@ -347,18 +341,13 @@ def removePtclsByErr(particles,params):
 			e0=eulers[n]['eulers']
 			sumerr+=distances[n-1]
 		if numpy.median(distances) > params['avgerr']:
-			bad.write('%d\t%s\n' % (ptcl,stack))
 			rejectlst.append(ptcl)
-		else:
-			totalptcls+=1
 		if not ptcl%100:
 			print "particle",ptcl
 		f.write('%f\t%f\t%f\n' % (distances.mean(),numpy.median(distances),distances.std()))
 		#print distances
 		#print distances.mean()
-	#print total, sumerr/total
-	bad.close()
-	return rejectlst,totalptcls
+	return rejectlst
 
 def calcXRot(a):
 	m=numpy.zeros((3,3))
@@ -454,23 +443,25 @@ if __name__=='__main__':
 	
 	checkParams(params)
 	
+	apParam.writeFunctionLog(sys.argv,params=params)
 	particles=getParticleInfo(params['reconid'],params['iter'])
 	stack=os.path.join(particles[0]['particle']['stack']['stackPath'],particles[0]['particle']['stack']['name'])
 	classes,cstats=determineClasses(particles)
-
-	if params['nsig']:
-		rejectlst,totalptcls=removePtclsByQualityFactor(particles,params)
-	elif params['avgerr']:
-		rejectlst,totalptcls=removePtclsByErr(particles,params)
 	
-	print params['nsig']
-	cutoff=cstats['meanquality']+params['nsig']*cstats['stdquality']
-	#cutoff=0
-	print "Cutoff =",cutoff
+	rejectlst=[]
+	if params['nsig']:
+		cutoff=cstats['meanquality']+params['nsig']*cstats['stdquality']
+		#cutoff=0
+		print "Cutoff =",cutoff
+		rejectlst=removePtclsByQualityFactor(particles,rejectlst,cutoff,params)
+	if params['avgerr']:
+		rejectlst=removePtclsByErr(particles,rejectlst,params)
+	
 
 	classkeys=classes.keys()
 	classkeys.sort()
 	classnum=0
+	totalptcls=0
 	
 	reject=open('reject.lst','w')
 	reject.write('#LST\n')
@@ -494,7 +485,7 @@ if __name__=='__main__':
 			rot=rot*math.pi/180
 			if ptcl['particle']['particleNumber'] not in rejectlst:
 				f.write('%d\t%s\t%f,\t%f,%f,%f,%d\n' % (ptcl['particle']['particleNumber']-1,stack,ptcl['quality_factor'],rot,ptcl['shiftx'],ptcl['shifty'],mirror))
-				#totalptcls+=1
+				totalptcls+=1
 				nptcls+=1
 			else:
 				reject.write('%d\t%s\t%f,\t%f,%f,%f,%d\n' % (ptcl['particle']['particleNumber']-1,stack,ptcl['quality_factor'],rot,ptcl['shiftx'],ptcl['shifty'],mirror))
@@ -508,7 +499,7 @@ if __name__=='__main__':
 		makeClassAverages('tmp.lst',params['stackname'], classes[key], params)
 		
 		if params['eotest']:
-			makeEvenOddClasses('tmp.lst',params)
+			makeEvenOddClasses('tmp.lst',classes[key],params)
 		#break
 	reject.close()
 	
