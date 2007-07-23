@@ -14,7 +14,7 @@ apdb=apDB.apdb
 def createDefaults():
 	params={}
 	params['sigcheck']=False
-	params['errcheck']=False
+	params['jumpcheck']=False
 	params['stackname']='goodavgs.hed'
 	params['eotest'] = False
 	params['rejectlst'] = False
@@ -37,9 +37,9 @@ def parseParams(args,params):
 			params['stackname'] = elements[1]
 		elif elements[0]=='eotest':
 			params['eotest'] = True
-		elif elements[0]=='avgerr':
-			params['errcheck']=True
-			params['avgerr'] = float(elements[1])
+		elif elements[0]=='avgjump':
+			params['jumpcheck']=True
+			params['avgjump'] = float(elements[1])
 		elif elements[0]=='rejectlst':
 			params['rejectlst'] = elements[1]
 		else:
@@ -52,7 +52,7 @@ def checkParams(params):
 
 def printHelp():
 	print "Usage:"
-	print "makegoodaverages.py reconid=<DEF_id> iter=<n> mask=<n> nsig=<n> avgerr=<n> stackname=<stackfile> <eotest>"
+	print "makegoodaverages.py reconid=<DEF_id> iter=<n> mask=<n> nsig=<n> avgjump=<n> stackname=<stackfile> <eotest>"
 	print "---------------------------------------------------------------------------------------------------------"
 	print "reconid         : primary key from db"
 	print "iter            : iteration to process. Eulers to be applied to particles will come from this"
@@ -60,7 +60,7 @@ def printHelp():
 	print "mask            : mask radius in pixels"
 	print "nsig            : number of standard deviations greater than the mean quality factor"
 	print "                  to include"
-	print "avgerr          : throw away ptcls with median euler jumps greater than this"
+	print "avgjump          : throw away ptcls with median euler jumps greater than this"
 	print "rejectlst       : throw away ptcls in the specified text file. One particle per line with particle # from db"
 	print "stackname       : name of the stack to which the averages will be written"
 	print "eotest          : make even and odd averages"
@@ -319,12 +319,12 @@ def removePtclsByQualityFactor(particles,rejectlst,cutoff,params):
 	return rejectlst
 	
 
-def removePtclsByErr(particles,rejectlst,params):
+def removePtclsByJumps(particles,rejectlst,params):
 	#errdict={}
 	print "Finding Euler jumps"
 	nptcls=len(particles)
 	stack=os.path.join(particles[0]['particle']['stack']['stackPath'],particles[0]['particle']['stack']['name'])
-	f=open('err.txt','w')
+	f=open('jumps.txt','w')
 	for ptcl in range(1,nptcls+1):
 		eulers=getEulersForParticle(ptcl,params['reconid'])
 		e0=eulers[0]['eulers']
@@ -345,7 +345,7 @@ def removePtclsByErr(particles,rejectlst,params):
 			distances[n-1]=mind*180/math.pi
 			f.write('%f\t' % distances[n-1])
 			e0=eulers[n]['eulers']
-		if numpy.median(distances) > params['avgerr']:
+		if numpy.median(distances) > params['avgjump']:
 			rejectlst.append(ptcl)
 		if not ptcl%100:
 			print "particle",ptcl
@@ -470,8 +470,8 @@ if __name__=='__main__':
 		#cutoff=0
 		print "Cutoff =",cutoff
 		rejectlst=removePtclsByQualityFactor(particles,rejectlst,cutoff,params)
-	if params['errcheck']:
-		rejectlst=removePtclsByErr(particles,rejectlst,params)
+	if params['jumpcheck']:
+		rejectlst=removePtclsByJumps(particles,rejectlst,params)
 	if params['rejectlst']:
 		rejectlst=removePtclsByLst(rejectlst,params)
 
