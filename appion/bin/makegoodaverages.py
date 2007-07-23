@@ -13,10 +13,11 @@ apdb=apDB.apdb
 
 def createDefaults():
 	params={}
-	params['nsig']=False
-	params['avgerr']=False
+	params['sigcheck']=False
+	params['errcheck']=False
 	params['stackname']='goodavgs.hed'
 	params['eotest'] = False
+	params['rejectlst'] = False
 	params['functionLog']='makegoodaverages.log'
 	return params
 
@@ -30,13 +31,17 @@ def parseParams(args,params):
 		elif elements[0]=='iter':
 			params['iter'] = int(elements[1])
 		elif elements[0]=='nsig':
+			params['sigcheck']=True
 			params['nsig'] = float(elements[1])
 		elif elements[0]=='stackname':
 			params['stackname'] = elements[1]
 		elif elements[0]=='eotest':
 			params['eotest'] = True
 		elif elements[0]=='avgerr':
+			params['errcheck']=True
 			params['avgerr'] = float(elements[1])
+		elif elements[0]=='rejectlst':
+			params['rejectlst'] = elements[1]
 		else:
 			print elements[0], 'is not recognized as a valid parameter'
 			sys.exit()
@@ -47,16 +52,18 @@ def checkParams(params):
 
 def printHelp():
 	print "Usage:"
-	print "makegoodaverages.py reconid=<DEF_id> iter=<n> mask=<n> nsig=<n> stackname=<stackfile> <eotest>"
-	print "--------------------------------------------------------------------------------------"
+	print "makegoodaverages.py reconid=<DEF_id> iter=<n> mask=<n> nsig=<n> avgerr=<n> stackname=<stackfile> <eotest>"
+	print "---------------------------------------------------------------------------------------------------------"
 	print "reconid         : primary key from db"
-	print "iter            : iteration to process"
+	print "iter            : iteration to process. Eulers to be applied to particles will come from this"
+	print "                  iteration"
 	print "mask            : mask radius in pixels"
 	print "nsig            : number of standard deviations greater than the mean quality factor"
 	print "                  to include"
-	print "avgerr          : throw away ptcls with error greater than this"
+	print "avgerr          : throw away ptcls with median euler jumps greater than this"
+	print "rejectlst       : throw away ptcls in the specified text file. One particle per line with particle # from db"
 	print "stackname       : name of the stack to which the averages will be written"
-	print "eotest          : make even and odd volumes"
+	print "eotest          : make even and odd averages"
 	sys.exit()
 
 def getParticleInfo(reconid,iteration):
@@ -317,7 +324,6 @@ def removePtclsByErr(particles,rejectlst,params):
 	print "Finding Euler jumps"
 	nptcls=len(particles)
 	stack=os.path.join(particles[0]['particle']['stack']['stackPath'],particles[0]['particle']['stack']['name'])
-	sumerr=0
 	f=open('err.txt','w')
 	for ptcl in range(1,nptcls+1):
 		eulers=getEulersForParticle(ptcl,params['reconid'])
@@ -339,7 +345,6 @@ def removePtclsByErr(particles,rejectlst,params):
 			distances[n-1]=mind*180/math.pi
 			f.write('%f\t' % distances[n-1])
 			e0=eulers[n]['eulers']
-			sumerr+=distances[n-1]
 		if numpy.median(distances) > params['avgerr']:
 			rejectlst.append(ptcl)
 		if not ptcl%100:
@@ -349,6 +354,17 @@ def removePtclsByErr(particles,rejectlst,params):
 		#print distances.mean()
 	return rejectlst
 
+def removePtclsByLst(rejectlst,params):
+	"""Removes particles by reading a list of particle numbers generated externally. 
+	The only requirements are that the input file has one particle per line and the first piece of data is the particle number from the db"""
+	f=open(params['rejectlst'],'r')
+	lines=f.readlines()
+	f.close()
+	for n in lines:
+		words=n.split()
+		rejectlst.append(int(words[0]))
+	return rejectlst
+	
 def calcXRot(a):
 	m=numpy.zeros((3,3))
 	m[0,0]=1
@@ -449,14 +465,15 @@ if __name__=='__main__':
 	classes,cstats=determineClasses(particles)
 	
 	rejectlst=[]
-	if params['nsig']:
+	if params['sigcheck']:
 		cutoff=cstats['meanquality']+params['nsig']*cstats['stdquality']
 		#cutoff=0
 		print "Cutoff =",cutoff
 		rejectlst=removePtclsByQualityFactor(particles,rejectlst,cutoff,params)
-	if params['avgerr']:
+	if params['errcheck']:
 		rejectlst=removePtclsByErr(particles,rejectlst,params)
-	
+	if params['rejectlst']:
+		rejectlst=removePtclsByLst(rejectlst,params)
 
 	classkeys=classes.keys()
 	classkeys.sort()
