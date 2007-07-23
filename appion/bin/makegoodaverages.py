@@ -296,19 +296,31 @@ def henryMult(m1,m2):
 def getEulersForParticle(particlenum,reconid):
 	"""returns all classdata for a particular particle and refinement"""
 	refinerundata=apdb.direct_query(appionData.ApRefinementRunData, reconid)
+
 	stack=refinerundata['stack']
 	stackparticlesq=appionData.ApStackParticlesData()
 	stackparticlesq['stack']=stack
 	stackparticlesq['particleNumber']=particlenum
 	stackparticlesdata=apdb.query(stackparticlesq)
+	
+	refinementq=appionData.ApRefinementData()
+	refinementq['refinementRun']=refinerundata
+
 	particledata=stackparticlesdata[0]
 	ptclclassq=appionData.ApParticleClassificationData()
 	ptclclassq['particle']=particledata
+	ptclclassq['refinement']=refinementq
 	ptclclassdata=apdb.query(ptclclassq)
 	
 	#for cls in ptclclassdata:
 		#print cls['refinement']['iteration'], cls['eulers']
 	return ptclclassdata
+
+def sortEulers(a, b):
+	if a['refinement']['iteration'] > b['refinement']['iteration']:
+		return 1
+	else:
+		return -1
 
 def removePtclsByQualityFactor(particles,rejectlst,cutoff,params):
 	stack=os.path.join(particles[0]['particle']['stack']['stackPath'],particles[0]['particle']['stack']['name'])
@@ -327,13 +339,13 @@ def removePtclsByJumps(particles,rejectlst,params):
 	f=open('jumps.txt','w')
 	for ptcl in range(1,nptcls+1):
 		eulers=getEulersForParticle(ptcl,params['reconid'])
+		eulers.sort(sortEulers)
 		e0=eulers[0]['eulers']
 		distances=numpy.zeros((len(eulers)-1))
 		f.write('%d\t' % ptcl)
 		for n in range(1,len(eulers)):
 			# first get all equivalent Eulers given symmetry
 			eqEulers=calculateEquivSym(eulers[n]['eulers'])
-
 			# calculate the distances between the original Euler and all the equivalents
 			mat0=getMatrix3(e0)
 			mat1=getMatrix3(eulers[n]['eulers'])
