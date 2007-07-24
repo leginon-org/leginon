@@ -452,7 +452,6 @@ function runTemplateCorrelator() {
 	$command .= parseParticleLoopParams($_POST);
 
 	$cmd = "$command > templateCorrelatorLog.txt";
-	echo $command;
 	if ($testimage && $_POST['process']=="Run Correlator") {
 		$result=exec_over_ssh($host, $user, $password, $cmd, True);
 	}
