@@ -96,7 +96,11 @@ if ($_POST['process']) {
 
 	$command.="pyace.py ";
 	$command.="runid=$runid ";
-	$command.="dbimages=$dbimages ";
+	if ($_POST[preset]) {
+		$command.="dbimages=$dbimages ";
+	} else {
+		$command.="alldbimages=".$_POST['sessionname']." ";
+	}
 	$command.="edgethcarbon=$edgethcarbon ";
 	$command.="edgethice=$edgethice ";
 	$command.="pfcarbon=$pfcarbon ";
