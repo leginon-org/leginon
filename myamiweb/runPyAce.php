@@ -66,7 +66,7 @@ if ($_POST['process']) {
 		exit();
 	}
 	$runid=$_POST[runid];
-   	$dbimages=$_POST['sessionname'].",".$_POST[preset];
+	$dbimages=$_POST['sessionname'].",".$_POST[preset];
 	$edgethcarbon=$_POST[edgethcarbon];
 	$edgethice=$_POST[edgethice];
 	$pfcarbon=$_POST[pfcarbon];
@@ -121,28 +121,28 @@ if ($_POST['process']) {
 
 	writeTop("PyACE Results","PyACE Results");
 	echo"
-        <P>
-        <TABLE WIDTH='600'>
-        <TR><TD COLSPAN='2'>
-        <B>ACE Command:</B><BR>
-        $command<HR>
-        </TD></TR>
-        <TR><TD>runid</TD><TD>$runid</TD></TR>
-        <TR><TD>dbimages</TD><TD>$dbimages</TD></TR>
-        <TR><TD>edgethcarbon</TD><TD>$edgethcarbon</TD></TR>
-        <TR><TD>edgethice</TD><TD>$edgethice</TD></TR>
-        <TR><TD>pfcarbon</TD><TD>$pfcarbon</TD></TR>
-        <TR><TD>pfice</TD><TD>$pfice</TD></TR>
-        <TR><TD>overlap</TD><TD>$overlap</TD></TR>
-        <TR><TD>fieldsize</TD><TD>$fieldsize</TD></TR>
-        <TR><TD>resamplefr</TD><TD>$resamplefr</TD></TR>
-        <TR><TD>tempdir</TD><TD>$tempdir</TD></TR>
-        <TR><TD>medium</TD><TD>$medium</TD></TR>
-        <TR><TD>cs</TD><TD>$cs</TD></TR>
-        <TR><TD>drange</TD><TD>$drange</TD></TR>
-        <TR><TD>outdir</TD><TD>$outdir</TD></TR>
-        <TR><TD>display</TD><TD>$display</TD></TR>
-        <TR><TD>stig</TD><TD>$stig</TD></TR>\n";
+	<P>
+	<TABLE WIDTH='600'>
+	<TR><TD COLSPAN='2'>
+	<B>ACE Command:</B><BR>
+	$command<HR>
+	</TD></TR>
+	<TR><TD>runid</TD><TD>$runid</TD></TR>
+	<TR><TD>dbimages</TD><TD>$dbimages</TD></TR>
+	<TR><TD>edgethcarbon</TD><TD>$edgethcarbon</TD></TR>
+	<TR><TD>edgethice</TD><TD>$edgethice</TD></TR>
+	<TR><TD>pfcarbon</TD><TD>$pfcarbon</TD></TR>
+	<TR><TD>pfice</TD><TD>$pfice</TD></TR>
+	<TR><TD>overlap</TD><TD>$overlap</TD></TR>
+	<TR><TD>fieldsize</TD><TD>$fieldsize</TD></TR>
+	<TR><TD>resamplefr</TD><TD>$resamplefr</TD></TR>
+	<TR><TD>tempdir</TD><TD>$tempdir</TD></TR>
+	<TR><TD>medium</TD><TD>$medium</TD></TR>
+	<TR><TD>cs</TD><TD>$cs</TD></TR>
+	<TR><TD>drange</TD><TD>$drange</TD></TR>
+	<TR><TD>outdir</TD><TD>$outdir</TD></TR>
+	<TR><TD>display</TD><TD>$display</TD></TR>
+	<TR><TD>stig</TD><TD>$stig</TD></TR>\n";
 	appionLoopSummaryTable();
 	if ($nominal=="db value" OR $nominal=="") echo "<TR><TD>nominal</TD><TD><I>NULL</I></TD></TR>\n";
 	else echo "<TR><TD>nominal</TD><TD>$nominal</TD></TR>\n";
@@ -155,8 +155,8 @@ if ($_POST['process']) {
 
 // CREATE FORM PAGE
 else {
-   $presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
-        $javafunctions="
+	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
+	$javafunctions="
 	<script src='js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
 		function enabledf(){
@@ -211,12 +211,12 @@ else {
 	appionLoopJavaCommands();
 	writeTop("PyACE Launcher","Automated CTF Estimation With PyACE",$javafunctions);
 	echo"
-        <FORM NAME='viewerform' method='POST' action='$phpself'>\n";
+	<FORM NAME='viewerform' method='POST' action='$phpself'>\n";
 	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
-        $sessioninfo=$sessiondata['info'];
+	$sessioninfo=$sessiondata['info'];
 	$presets=$sessiondata['presets'];
 	if (!empty($sessioninfo)) {
-	        $sessionpath=$sessioninfo['Image path'];
+		$sessionpath=$sessioninfo['Image path'];
 		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
 		$sessionpath=ereg_replace("rawdata","pyAce/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
@@ -225,130 +225,132 @@ else {
 	$ctfruns = count($ctf->getCtfRunIds($sessionId));
 	$defrunid = 'acerun'.($ctfruns+1);
 	echo"
-        <P>
-        <TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
-        <TR>
-          <TD VALIGN='TOP'>
-            <A HREF=\"javascript:infopopup('runid')\"><B>Ace Run Name:</B></A>
-            <INPUT TYPE='text' NAME='runid' VALUE='$defrunid'><BR>
-            <BR>
+	<P>
+	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
+	<TR>
+	  <TD VALIGN='TOP'>
+	    <A HREF=\"javascript:infopopup('runid')\"><B>Ace Run Name:</B></A>
+	    <INPUT TYPE='text' NAME='runid' VALUE='$defrunid'><BR>
+	    <BR>
 
 				&nbsp;&nbsp;&nbsp;Output Directory<BR>
-            <INPUT TYPE='text' NAME='outdir' VALUE='$sessionpath' SIZE='45'><BR>
-            &nbsp;&nbsp;&nbsp;Temporary Directory<BR>
-            <INPUT TYPE='text' NAME='tempdir' VALUE='./temp/' SIZE='45'><BR>
-            <BR>";
-   if ($presets) {
-            echo"<B>Preset</B>\n<SELECT NAME='preset'>\n";
-            foreach ($presets as $preset) {
-                  echo "<OPTION VALUE='$preset' ";
-                  // make en selected by default
-                  if ($preset==$presetval) echo "SELECTED";
-                  echo ">$preset</OPTION>\n";
-            }
-            echo"</SELECT><BR>
-            <BR>";
-   } else {
-            echo"<FONT COLOR='RED'><B>No Presets for this Session</B></FONT><BR>
-            <BR>\n";
-   }
+	    <INPUT TYPE='text' NAME='outdir' VALUE='$sessionpath' SIZE='45'><BR>
+	    &nbsp;&nbsp;&nbsp;Temporary Directory<BR>
+	    <INPUT TYPE='text' NAME='tempdir' VALUE='./temp/' SIZE='45'><BR>
+	    <BR>";
+	if ($presets) {
+	    echo"<B>Preset</B>\n<SELECT NAME='preset'>\n";
+	    foreach ($presets as $preset) {
+		  echo "<OPTION VALUE='$preset' ";
+		  // make en selected by default
+		  if ($preset==$presetval) echo "SELECTED";
+		  echo ">$preset</OPTION>\n";
+	    }
+	    echo"</SELECT><BR>
+	    <BR>";
+	} else {
+		echo"<FONT COLOR='RED' SIZE=+1><B>No Presets for this Session</B></FONT><BR><BR>\n";
+	}
 	echo"
-            <INPUT TYPE='checkbox' NAME='display' CHECKED>
-            Write Result Images<BR>
-            <BR>";
+	    <INPUT TYPE='checkbox' NAME='display' CHECKED>
+	    Write Result Images<BR>
+	    <BR>";
 	createAppionLoopTable();
 	echo"
-          </TD>
-          <TD CLASS='tablebg'>
+	  </TD>
+	  <TD CLASS='tablebg'>
 
-            <B>Medium:</B><BR>
-            <INPUT TYPE='radio' NAME='medium' VALUE='carbon'>&nbsp;carbon&nbsp;&nbsp;
-            <INPUT TYPE='radio' NAME='medium' VALUE='ice' checked>&nbsp;ice<BR>
-            <BR>
+	    <B>Medium:</B><BR>
+	    <INPUT TYPE='radio' NAME='medium' VALUE='carbon'>&nbsp;carbon&nbsp;&nbsp;
+	    <INPUT TYPE='radio' NAME='medium' VALUE='ice' checked>&nbsp;ice<BR>
+	    <BR>
 
-            <B>Astigmatism:</B><BR>
-            <INPUT TYPE='checkbox' NAME='stig'>
-            Estimate Astigmatism <FONT SIZE=-2><I>(experimental)</I></FONT><BR>
-            <BR>
+	    <B>Astigmatism:</B><BR>
+	    <INPUT TYPE='checkbox' NAME='stig'>
+	    Estimate Astigmatism <FONT SIZE=-2><I>(experimental)</I></FONT><BR>
+	    <BR>
 
-          <TABLE CELLSPACING=0 CELLPADDING=2><TR>
+	  <TABLE CELLSPACING=0 CELLPADDING=2><TR>
 
-            <TD VALIGN='TOP'>
-            <A HREF=\"javascript:infopopup('edgethresh')\"><B>Edge Thresholds:</B></A><BR>
-            <INPUT TYPE='text' NAME='edgethcarbon' VALUE='0.8' SIZE='4'>
-            Carbon<BR>
-            <INPUT TYPE='text' NAME='edgethice' VALUE='0.6' SIZE='4'>
-            Ice
-            </TD>
+	    <TD VALIGN='TOP'>
+	    <A HREF=\"javascript:infopopup('edgethresh')\"><B>Edge Thresholds:</B></A><BR>
+	    <INPUT TYPE='text' NAME='edgethcarbon' VALUE='0.8' SIZE='4'>
+	    Carbon<BR>
+	    <INPUT TYPE='text' NAME='edgethice' VALUE='0.6' SIZE='4'>
+	    Ice
+	    </TD>
 
-            <TD VALIGN='CENTER'>&nbsp;</TD>
-            <TD VALIGN='CENTER'>&nbsp;</TD>
+	    <TD VALIGN='CENTER'>&nbsp;</TD>
+	    <TD VALIGN='CENTER'>&nbsp;</TD>
 
-            <TD VALIGN='TOP'>
-            <A HREF=\"javascript:infopopup('pfact')\"><B>Power Factors:</B></A><BR>
-            <INPUT TYPE='text' NAME='pfcarbon' VALUE='0.9' SIZE='4'>
-            Carbon<BR>
-            <INPUT TYPE='text' NAME='pfice' VALUE='0.3' SIZE='4'>
-            Ice
-            </TD>
+	    <TD VALIGN='TOP'>
+	    <A HREF=\"javascript:infopopup('pfact')\"><B>Power Factors:</B></A><BR>
+	    <INPUT TYPE='text' NAME='pfcarbon' VALUE='0.9' SIZE='4'>
+	    Carbon<BR>
+	    <INPUT TYPE='text' NAME='pfice' VALUE='0.3' SIZE='4'>
+	    Ice
+	    </TD>
 
-          </TR></TABLE><BR>
+	  </TR></TABLE><BR>
 
-            <INPUT TYPE='text' NAME='resamplefr' VALUE='1.5' size='4'>
-            <A HREF=\"javascript:infopopup('resamplefr')\">Resampling Frequency</A><BR>
+	    <INPUT TYPE='text' NAME='resamplefr' VALUE='1.5' size='4'>
+	    <A HREF=\"javascript:infopopup('resamplefr')\">Resampling Frequency</A><BR>
 
-            <INPUT TYPE='text' NAME='overlap' VALUE='2' SIZE='4'>
-            <A HREF=\"javascript:infopopup('overlap')\">Averaging Overlap</A><BR>
+	    <INPUT TYPE='text' NAME='overlap' VALUE='2' SIZE='4'>
+	    <A HREF=\"javascript:infopopup('overlap')\">Averaging Overlap</A><BR>
 
-            <INPUT TYPE='text' NAME='fieldsize' VALUE='512' size='4'>
-            <A HREF=\"javascript:infopopup('field')\">Field Size</A><BR>
+	    <INPUT TYPE='text' NAME='fieldsize' VALUE='512' size='4'>
+	    <A HREF=\"javascript:infopopup('field')\">Field Size</A><BR>
 
-            <INPUT TYPE='text' NAME='cs' VALUE='2.0' SIZE='4'>
-            Spherical Aberration<BR>
+	    <INPUT TYPE='text' NAME='cs' VALUE='2.0' SIZE='4'>
+	    Spherical Aberration<BR>
 
-            <INPUT TYPE='checkbox' NAME='drange'>
-            <A HREF=\"javascript:infopopup('drange')\">Compress Dynamic Range</A><BR>
-            <BR>
+	    <INPUT TYPE='checkbox' NAME='drange'>
+	    <A HREF=\"javascript:infopopup('drange')\">Compress Dynamic Range</A><BR>
+	    <BR>
 
-            <INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)'>
-            Reprocess Below Confidence Value<BR>
-            Set Value:<INPUT TYPE='text' NAME='reprocess' DISABLED VALUE='0.8' SIZE='4'>
-            <FONT SIZE=-2><I>(between 0.0 - 1.0)</I></FONT><BR>
-            <BR>
+	    <INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)'>
+	    Reprocess Below Confidence Value<BR>
+	    Set Value:<INPUT TYPE='text' NAME='reprocess' DISABLED VALUE='0.8' SIZE='4'>
+	    <FONT SIZE=-2><I>(between 0.0 - 1.0)</I></FONT><BR>
+	    <BR>
 
-            <B>Nominal override:</B><BR>
-            <INPUT TYPE='checkbox' NAME='nominalcheck' onclick='enabledf(this)'>
-            Override Nominal Defocus<BR>
-            Set Defocus:<INPUT TYPE='text' NAME='nominal' DISABLED VALUE='db value' SIZE='8'>
-            <FONT SIZE=-2><I>(in meters, i.e. <B>-2.0e-6</B>)</I></FONT><BR>
-            <INPUT TYPE='checkbox' NAME='newnominal'>
-            Use Previously ACE Estimated Defocus
-
-          </TD>
-        </TR>
-        <TR>
-          <TD COLSPAN='2' ALIGN='CENTER'>
-          <HR>
-          Host: <select name='host'>\n";
+	    <B>Nominal override:</B><BR>
+	    <INPUT TYPE='checkbox' NAME='nominalcheck' onclick='enabledf(this)'>
+	    Override Nominal Defocus<BR>
+	    Set Defocus:<INPUT TYPE='text' NAME='nominal' DISABLED VALUE='db value' SIZE='8'>
+	    <FONT SIZE=-2><I>(in meters, i.e. <B>-2.0e-6</B>)</I></FONT><BR>";
+	if ($ctfruns > 0) {
+		echo"
+			<INPUT TYPE='checkbox' NAME='newnominal'>
+	    Use Previously ACE Estimated Defocus";
+	}
+	echo"
+	  </TD>
+	</TR>
+	<TR>
+	  <TD COLSPAN='2' ALIGN='CENTER'>
+	  <HR>
+	  Host: <select name='host'>\n";
 	foreach($hosts_select as $host) {
-	        $s = ($_POST['host']==$host) ? 'selected' : '';
+		$s = ($_POST['host']==$host) ? 'selected' : '';
 		echo "<option $s >$host</option>\n";
 	}
 	echo "</select>\nUser: <select name='user'>\n";
 	foreach($users as $user) {
-	        $s = ($_POST['user']==$user) ? 'selected' : '';
+		$s = ($_POST['user']==$user) ? 'selected' : '';
 		echo "<option $s >$user</option>\n";
 	}
-        echo"</select>
-          <BR>
-          <INPUT TYPE='hidden' name='sessionname' value='$sessionname'>
-          <input type='submit' name='process' value='Run ACE'><BR>
-          <FONT COLOR='RED'>Submission will NOT run ACE, only output a command that you can copy and paste into a unix shell</FONT>
-          </TD>
-        </TR>
-        </TABLE>
-        </FORM>\n";
-        writeBottom();
+	echo"</select>
+	  <BR>
+	  <INPUT TYPE='hidden' name='sessionname' value='$sessionname'>
+	  <input type='submit' name='process' value='Run ACE'><BR>
+	  <FONT COLOR='RED'>Submission will NOT run ACE, only output a command that you can copy and paste into a unix shell</FONT>
+	  </TD>
+	</TR>
+	</TABLE>
+	</FORM>\n";
+	writeBottom();
 }
 
 function getdata($str_field, $str_data) {
