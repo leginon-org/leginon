@@ -60,8 +60,9 @@ foreach ($stackIds as $stackid) {
 	if ($s['aceCutoff']) $pflip.=" (ACE > $s[aceCutoff])";
 	$display_keys['description']=$s['description'];
 	$display_keys['# prtls']=$nump;
+	$stackfile = $s['stackPath']."/".$s['name'];
 	$display_keys['path']=$s['stackPath'];
-	$display_keys['name']=$s['name'];
+	$display_keys['name']="<A TARGET='stackview' HREF='viewstack.php?file=$stackfile'>".$s['name']."</A>";
 	$display_keys['box size']=$boxsz;
 	$display_keys['pixel size']=$apix;
 	$display_keys['phase flipped']=$pflip;
