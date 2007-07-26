@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.63 $
- *	@version $Id: leginon.inc,v 1.63 2007-06-15 18:11:23 dfellman Exp $
+ *	@version $Revision: 1.64 $
+ *	@version $Id: leginon.inc,v 1.64 2007-07-26 19:53:07 vossman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -224,10 +224,12 @@ class leginondata {
 	}
 
 	function getSummary($expId) {
-		$q="select p.name, count(a.`DEF_id`) as nb from AcquisitionImageData a "
-			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
-			." where a.`REF|SessionData|session` = '$expId' "
-			." group by p.name ";
+		$q="SELECT p.name, count(a.`DEF_id`) as nb, p.magnification "
+			." FROM AcquisitionImageData a "
+			." LEFT JOIN PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
+			." WHERE a.`REF|SessionData|session` = '$expId'"
+			." GROUP BY p.name "
+			." ORDER BY p.magnification ";
 		return $this->mysql->getSQLResult($q);
 	}
 
@@ -415,6 +417,7 @@ class leginondata {
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r;
 	}
+
 
 	function getLastFilenameId($sessionId) {
 		$q = "select `DEF_id` as `id` from AcquisitionImageData "

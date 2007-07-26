@@ -413,6 +413,16 @@ function formatHtmlRow($k, $v) {
 		.$v.'</td></tr>'."\n";
 }
 
+function formatArrayHtmlRow($cols) {
+	$row = "<tr>";
+	$i = 0;
+	foreach ($cols as $col) {
+		$row .= "<td>".$col."</td>";
+	}
+	$row .= "</tr>\n";
+	return $row;
+}
+
 function formatPath($path) {
 	$npath = ereg_replace('[\\]','/',$path);
 	$npath = ereg("/$", $npath) ? $npath : $npath."/";

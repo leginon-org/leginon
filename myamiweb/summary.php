@@ -93,6 +93,7 @@ foreach ($timingstats as $t) {
 }
 if (!empty($summary)) {
 	$summary_fields[]="Preset label";
+	$summary_fields[]="mag";
 	$summary_fields[]="#images";
 	if (!empty($images_time)) {
 		$summary_fields[]="time";
@@ -109,12 +110,18 @@ if (!empty($summary)) {
 	echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	echo "<tr >". $table_head."</tr>";
 	foreach($summary as $s) {
-		echo formatHtmlRow($s['name'], $s['nb'],
+		echo formatArrayHtmlRow(
+			array(
+				$s['name'],
+				$s['magnification'],
+				$s['nb'],
 				$images_time[$s['name']],
 				$images_min[$s['name']],
 				$images_max[$s['name']],
 				$images_mean[$s['name']],
-				$images_stdev[$s['name']]);
+				$images_stdev[$s['name']]
+			)
+		);
 		$tot_imgs += $s['nb'];
 	}
 	echo "</table>\n";
