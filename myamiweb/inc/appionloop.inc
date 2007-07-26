@@ -219,19 +219,19 @@ Max number of particles allowed per image</A><BR>
 
 <INPUT TYPE='text' NAME='lp' VALUE='$lp' SIZE='4'>&nbsp;
 <A HREF=\"javascript:particleinfopopup('lp')\">
-Low Pass</A> <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT><BR>
+Low Pass</A> <FONT SIZE=-2><I>(in &Aring;ngstroms; 0 = off)</I></FONT><BR>
 
 <INPUT TYPE='text' NAME='hp' VALUE='$hp' SIZE='4'>&nbsp;
 <A HREF=\"javascript:particleinfopopup('hp')\">
-High Pass</A> <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT><BR>
+High Pass</A> <FONT SIZE=-2><I>(in &Aring;ngstroms; 0 = off)</I></FONT><BR>
 
 <INPUT TYPE='text' NAME='median' VALUE='$median' SIZE='4'>&nbsp;
 <A HREF=\"javascript:particleinfopopup('median')\">
-Median</A> <FONT SIZE=-2><I>(in Pixels)</I></FONT><BR>
+Median</A> <FONT SIZE=-2><I>(in Pixels; 0 = off)</I></FONT><BR>
 
 <INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4'>&nbsp;
 <A HREF=\"javascript:particleinfopopup('bin')\">
-Binning</A><BR>
+Binning</A> <FONT SIZE=-2><I>(power of 2; 1 = off)</I></FONT><BR>
 <BR>
 
 <B>Defocal pairs:</B><BR>
