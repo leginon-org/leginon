@@ -299,7 +299,8 @@ function createTCForm($extra=false, $title='Template Correlator Launcher', $head
 		echo"</SELECT><BR><BR>\n";
 	}
 	else {
-		echo"<FONT COLOR='RED'><B>No Presets for this Session</B></FONT><BR><BR>\n";
+		echo"<INPUT TYPE='hidden' NAME='alldbimages' VALUE=1>\n";
+		echo"<FONT COLOR='RED' SIZE=+1><B>No Presets for this Session</B></FONT><BR><BR>\n";
 	}
 	createAppionLoopTable();
 	echo"
@@ -428,7 +429,7 @@ function runTemplateCorrelator() {
 	}
 	elseif ($_POST['sessionname']) {
 		if ($_POST['preset']) $dbimages=$_POST[sessionname].",".$_POST[preset];
-		else {
+		elseif(!$_POST['alldbimages']) {
 			createTCForm("<B>ERROR:</B> Select an image preset for template matching");
 			exit;
 		}
