@@ -48,9 +48,12 @@ def runAce(matlab, imgdata, params):
 				" for -1.2 microns NOT:"+str(nominal))
 
 	#Neil's Hack
-	#resamplefr_override = round(2.0*(math.sqrt(abs(nominal*1.0e6)+1.0)-1.0),3)
-	#print "resamplefr_override=",resamplefr_override
-	#pymat.eval(matlab, "resamplefr="+str(resamplefr_override)+";")
+	#if 'autosample' in params and params['autosample']:
+	#	x = abs(nominal*1.0e6)
+	#	val = 1.585 + 0.057587 * x - 0.044106 * x**2 + 0.010877 * x**3
+	#	resamplefr_override = round(val,3)
+	#	print "resamplefr_override=",resamplefr_override
+	#	pymat.eval(matlab, "resamplefr="+str(resamplefr_override)+";")
 
 	pymat.eval(matlab,("dforig = %e;" % nominal))
 
