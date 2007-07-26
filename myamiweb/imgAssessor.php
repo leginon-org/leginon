@@ -151,7 +151,7 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 				}
 				$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
 				if ($_POST['skipdone']=='on') {
-				        if ($statdata['status']=='0' || $statdata['status']=='1') $found='FALSE';
+				        if ($statdata['status']=='no' || $statdata['status']=='yes') $found='FALSE';
 					else $found='TRUE';
 				}
 				else break;
@@ -170,7 +170,7 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 				}
 				$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
 				if ($_POST['skipdone']=='on') {
-				        if ($statdata['status']=='0' || $statdata['status']=='1') $found='FALSE';
+				        if ($statdata['status']=='no' || $statdata['status']=='yes') $found='FALSE';
 					else $found='TRUE';
 				}
 				else break;
@@ -197,8 +197,8 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
         echo"Scale Factor:<INPUT TYPE='text' NAME='imgrescale' VALUE='$imgrescl' SIZE='4'>\n";
 	echo"</TD></TR></TABLE>";
 	echo"<BR>$imgname<HR>\n<B>Current Status: ";
-	if ($imgstatus=='0') echo"<FONT COLOR='RED'>REJECT</FONT>";
-	elseif ($imgstatus=='1') echo "<FONT COLOR='GREEN'>KEEP</FONT>";
+	if ($imgstatus=='no') echo"<FONT COLOR='RED'>REJECT</FONT>";
+	elseif ($imgstatus=='yes') echo "<FONT COLOR='GREEN'>KEEP</FONT>";
 	else echo"none";
 	echo "</B>\n";
 

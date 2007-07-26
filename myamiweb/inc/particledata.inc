@@ -74,13 +74,17 @@ class particledata {
 			."where `dbemdata|AcquisitionImageData|image` = '$imageId' "
 			."and `REF|ApAssessmentRunData|assessmentrun` = '$runId' ";
 		list($r)=$this->mysql->getSQLResult($q);
-		return $r['selectionkeep'];
+		if ($r['selectionkeep']==0) $keep='no';
+		elseif ($r['selectionkeep']==1) $keep='yes';
+		return $keep;
+		//		return $r['selectionkeep'];
 	}
 
 	function updateKeepStatus ($imageId,$runId,$value){
 		// update image status : 0 if rejected, 1 if keeping,
 
 		$exists=($this->getKeepStatus($imageId,$runId)) ? true : false;
+		echo "status: $exists<BR>";
 		if ($exists) {
 			$data = array('selectionkeep'=>$value);
 			$where = array('dbemdata|AcquisitionImageData|image'=>$imageId);
