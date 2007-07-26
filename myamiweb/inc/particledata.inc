@@ -74,8 +74,10 @@ class particledata {
 			."where `dbemdata|AcquisitionImageData|image` = '$imageId' "
 			."and `REF|ApAssessmentRunData|assessmentrun` = '$runId' ";
 		list($r)=$this->mysql->getSQLResult($q);
-		if ($r['selectionkeep']==0) $keep='no';
-		elseif ($r['selectionkeep']==1) $keep='yes';
+		if ($r) {
+		  if ($r['selectionkeep']==0) $keep='no';
+		  elseif ($r['selectionkeep']==1) $keep='yes';
+		}
 		return $keep;
 		//		return $r['selectionkeep'];
 	}
