@@ -86,7 +86,6 @@ class particledata {
 		// update image status : 0 if rejected, 1 if keeping,
 
 		$exists=($this->getKeepStatus($imageId,$runId)) ? true : false;
-		echo "status: $exists<BR>";
 		if ($exists) {
 			$data = array('selectionkeep'=>$value);
 			$where = array('dbemdata|AcquisitionImageData|image'=>$imageId);
