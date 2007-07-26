@@ -80,23 +80,35 @@ echo"</TD></TR>\n";
 echo"<TR><TD COLSPAN='2' ALIGN='CENTER'>\n";
 
 $imgdir=$_POST['imgdir'];
+$files = array();
 if ($imgdir) {
 	// make sure imgdir ends with '/'
 	if (substr($imgdir,-1,1)!='/') $imgdir.='/';
         if (file_exists($imgdir)) {
                 // open image directory
                 $pathdir=opendir($imgdir);
-		// get all files in directory
+		// get all files in directory, ordered by time created
 		$ext=$_POST['imgtype'];
+		$i=0;
 		while ($filename=readdir($pathdir)) {
-		        if ($filename == '.' || $filename == '..') continue;
-			if (preg_match('`\.'.$ext.'$`i',$filename)) $files[]=$filename;
+		  if ($filename == '.' || $filename == '..') continue;
+		  if (preg_match('`\.'.$ext.'$`i',$filename)) {
+		    $files[$i][0] = $filename;
+		    $files[$i][1] = filemtime($imgdir.$filename);
+		    $i++;
+		  }
 		}
 		closedir($pathdir);
 		if ($files) {
-		        $skipcheck=($_POST['skipdone']=='on') ? 'CHECKED' : '';
-		        echo "<INPUT TYPE='CHECKBOX' NAME='skipdone' $skipcheck>Skip assessed images<BR>\n"; 
-			displayImage($_POST,$files,$imgdir,$leginondata,$particledata,$assessmentrid);
+		  // sort the files by time
+		  foreach($files as $t) $sortTime[] = $t[1];
+		  array_multisort($sortTime, SORT_ASC, $files);
+		  // save sorted file list
+		  foreach($files as $t) $fileList[] = $t[0];
+		  // display image
+		  $skipcheck=($_POST['skipdone']=='on') ? 'CHECKED' : '';
+		  echo "<INPUT TYPE='CHECKBOX' NAME='skipdone' $skipcheck>Skip assessed images<BR>\n"; 
+		  displayImage($_POST,$fileList,$imgdir,$leginondata,$particledata,$assessmentrid);
 		}
 		else echo"<HR><FONT COLOR='RED'>No files found in this directory with extension: $ext</FONT>\n";
 	}
