@@ -66,9 +66,9 @@ function createClassifierSummary() {
 		$display_keys['description']=$r['description'];
 		$display_keys['time']=$r['DEF_timestamp'];
 		$display_keys['path']=$r['norefPath'];
+		$display_keys['# particles']=$r['num_particles'];
 		$display_keys['lp filt']=$r['lp_filt'];
-		$display_keys['particle diameter']=$r['particle_diam'];
-		$display_keys['mask diameter']=$r['mask_diam'];
+		$display_keys['particle & mask diam']=$r['particle_diam']." / ".$r['mask_diam'];
 		$display_keys['stack run name']=$s['stackRunName'];
 
 		foreach($display_keys as $k=>$v) {
