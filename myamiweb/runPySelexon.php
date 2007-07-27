@@ -366,6 +366,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher', $head
 	writeBottom();
 }
 
+
 function runTemplateCorrelator() {
 	$host = $_POST['host'];
 	$user = $_POST['user'];
@@ -460,6 +461,8 @@ function runTemplateCorrelator() {
 	writeTop("Particle Selection Results","Particle Selection Results");
 
 	if ($testimage) {
+		echo  " <B>Template Correlator Command:</B><BR>
+$command";
 		$testjpg=ereg_replace(".mrc","",$testimage);
 		$jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
 		$ccclist=array();
