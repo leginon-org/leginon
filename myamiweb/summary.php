@@ -81,7 +81,9 @@ if (!empty($sessioninfo)) {
 }
 echo "</td>";
 $summary = $leginondata->getSummary($expId);
+$timingstats2 = $leginondata->getPresetTiming($expId);
 $timingstats = $leginondata->getTimingStats($expId);
+//print_r($timingstats);
 $tot_time=0;
 foreach ($timingstats as $t) {
 	$images_time[$t['name']]=$t['time'];
@@ -92,15 +94,17 @@ foreach ($timingstats as $t) {
 	$tot_time += $t['time_in_sec'];
 }
 if (!empty($summary)) {
-	$summary_fields[]="Preset label";
+	$summary_fields[]="Preset<BR>label";
 	$summary_fields[]="mag";
 	$summary_fields[]="#images";
 	if (!empty($images_time)) {
-		$summary_fields[]="time";
-		$summary_fields[]="min";
-		$summary_fields[]="max";
-		$summary_fields[]="mean";
-		$summary_fields[]="stdev";
+		//$summary_fields[]="time";
+		//$summary_fields[]="min";
+		//$summary_fields[]="max";
+		$summary_fields[]="readout<BR>mean";
+		$summary_fields[]="readout<BR>stdev";
+		$summary_fields[]="between<BR>mean";
+		$summary_fields[]="between<BR>stdev";
 	}
 	foreach($summary_fields as $s_f) {
 		$table_head.="<th>$s_f</th>";
@@ -115,11 +119,13 @@ if (!empty($summary)) {
 				$s['name'],
 				$s['magnification'],
 				$s['nb'],
-				$images_time[$s['name']],
-				$images_min[$s['name']],
-				$images_max[$s['name']],
+				//$images_time[$s['name']],
+				//$images_min[$s['name']],
+				//$images_max[$s['name']],
 				$images_mean[$s['name']],
-				$images_stdev[$s['name']]
+				$images_stdev[$s['name']],
+				$timingstats2[$s['name']]['mean'],
+				$timingstats2[$s['name']]['stdev'],
 			)
 		);
 		$tot_imgs += $s['nb'];

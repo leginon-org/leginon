@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.64 $
- *	@version $Id: leginon.inc,v 1.64 2007-07-26 19:53:07 vossman Exp $
+ *	@version $Revision: 1.65 $
+ *	@version $Id: leginon.inc,v 1.65 2007-07-27 00:33:50 vossman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -1875,6 +1875,90 @@ class leginondata {
 			return $this->mysql->getSQLResult($q);
 	}
 
+	function array_stats($a) {
+		sort($a, SORT_NUMERIC);
+		$min = $a[0];
+		$len = count($a);
+		$max = $a[$len-1];
+		if(($len % 2) == 1) { //$len is odd
+			$median = $a[$len/2];
+		} else { //$len is even
+			$median = ($a[intval($len/2.0-0.5)] + $a[intval($len/2.0+0.5)])/2.0;
+		}
+
+		$sum = 0.0;
+		$sumsq = 0.0;
+		$len = count($a);
+		if($len > 12) {
+			$err = 0.10;
+			$bot = $len*$err;
+			$top = ($len-1.0)*(1.0 - $err);
+		} else {
+			$top = $len-1;
+			$bot = 0;
+		}
+		for ($i = intval($bot); $i < intval($top); $i++) {
+			//echo $a[$i]."<BR>";
+			$sum += $a[$i];
+    		$sumsq += $a[$i]*$a[$i];
+		}
+		$mean = $sum/$len;
+		$var = ($sumsq - $len*$mean*$mean) / ($len-1);
+		$stddev = sqrt($var);
+		//echo "med=$median  max=$max  min=$min  sum=$sum  mean=$mean  len=$len std=$stddev<BR>";
+		$results['median'] = $median;
+		$results['max'] = $max;
+		$results['min'] = $min;
+		$results['mean'] = $mean;
+		$results['stddev'] = $stddev;
+		return $results;
+	}
+
+	function getPresetTiming($sessionId) {
+		$q .= "SELECT ";
+		$q .= "UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `utime`, ";
+		$q .= "`a`.`DEF_timestamp` AS `timestamp`, ";
+		$q .= "`a`.`filename` AS `filename`, ";
+		$q .= "`a`.`version` AS `version`, ";
+		$q .= "`p`.`name`, ";
+		$q .= "`p`.`magnification` ";
+		$q .= "FROM `AcquisitionImageData` AS `a` ";
+		$q .= "LEFT JOIN `PresetData` AS `p` ON (`p`.`DEF_id` = `a`.`REF|PresetData|preset`) ";
+		$q .= "WHERE `a`.`REF|SessionData|session` = $sessionId ";
+		$q .= "AND `a`.`version`=0 ";
+		$q .= "ORDER BY `utime` DESC;";
+		//echo $q."<BR>";
+		$timearray = $this->mysql->getSQLResult($q);
+		//foreach ($timearray as $key) {
+		$len = count($timearray);
+		//echo "len = $len<BR><BR>";
+		for ( $i = 0; $i < $len; $i++) {
+			$j = 1;
+			$preset = $timearray[$i]['name'];
+			while ($i + $j < $len) {
+				if($preset == $timearray[$i+$j]['name']) {
+					$tdiff = $timearray[$i]['utime'] - $timearray[$i+$j]['utime'];
+					$diffarray[$preset][] = $tdiff;
+					//echo "j= $j<BR>";
+					$j = $len;
+				}
+				$j++;
+			}
+		}
+		foreach ($diffarray as $key => $presetarray) {
+			//echo "$key:<BR>";
+			$res1 = $this->array_stats($presetarray);
+			$retarray[$key]['name'] = $key;
+			$retarray[$key]['time'] = round($res1['mean'],3);
+			$retarray[$key]['mean'] = round($res1['mean'],3);
+			$retarray[$key]['stdev'] = round($res1['stddev'],3);
+			$retarray[$key]['median'] = round($res1['median'],3);
+			$retarray[$key]['max'] = round($res1['max'],3);
+			$retarray[$key]['min'] = round($res1['min'],3);
+		}
+		return $retarray;
+	}
+
 	function getTiming($sessionId, $preset="", $getquery=false) {
 		$datatype=($preset) ? array($preset):$this->getDatatypes($sessionId);
 		foreach ($datatype as $preset) {
@@ -1912,10 +1996,10 @@ class leginondata {
 		$sqldiff_a = "TIME_TO_SEC(TIMEDIFF(`a`.`DEF_timestamp`,`t`.`DEF_timestamp`))";
 		$sqldiff_s = "TIME_TO_SEC(TIMEDIFF(`sibling`.`DEF_timestamp`,`t`.`DEF_timestamp`))";
 		$q="SELECT "
-		."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) as `unix_timestamp`, "
-		."`a`.`DEF_timestamp` as `timestamp`, "
-		."`a`.`filename` as `filename`, "
-		."if (($sqldiff_a-$sqldiff_s)>0, $sqldiff_a-$sqldiff_s, $sqldiff_a) as acquisitiontime"
+		."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `unix_timestamp`, "
+		."`a`.`DEF_timestamp` AS `timestamp`, "
+		."`a`.`filename` AS `filename`, "
+		."IF ($sqldiff_a > $sqldiff_s, $sqldiff_a-$sqldiff_s, $sqldiff_a) AS acquisitiontime"
 		.$preselect 
 		."FROM "
 		."`AcquisitionImageData` AS `a` "
@@ -1924,10 +2008,10 @@ class leginondata {
 		."LEFT JOIN AcquisitionImageData AS `sibling` "
 		."ON (`sibling`.`REF|AcquisitionImageTargetData|target`=`t`.`DEF_id`) "
 		.$prejoin
-		.$sqlwhere; 
+		.$sqlwhere;
+
 		if ($getquery)
 			return $q;
-
 		return $this->mysql->getSQLResult($q);
 	}
 
@@ -2033,7 +2117,7 @@ class leginondata {
 	}
 
 	function formatDose(&$dose) {
-		$dose = ($dose) ? number_format(($dose/1e20), 4,'.','').' e¯/Å²' : 'none' ;
+		$dose = ($dose) ? number_format(($dose/1e20), 4,'.','').' e<SUP>&#150;</SUP>/&Aring;<SUP>2</SUP>' : 'none' ;
 		return $dose;
 	}
 
