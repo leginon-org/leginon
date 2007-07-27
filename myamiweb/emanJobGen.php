@@ -29,6 +29,7 @@ if ($_POST['write']) {
 	if (!$_POST['apix']) jobForm("ERROR: No pixel size");
 	for ($i=1; $i<=$_POST['numiters']; $i++) {
 	        if (!$_POST['ang'.$i]) jobForm("ERROR: no angular increment set for iteration $i");
+		if (!$_POST['mask'.$i]) jobForm("ERROR: no mask set for iteration $i");
 	}
         writeJobFile();
 }
