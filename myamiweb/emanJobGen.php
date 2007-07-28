@@ -11,6 +11,7 @@
 require ('inc/processing.inc');
 require ('inc/viewer.inc');
 require ('inc/leginon.inc');
+require ('inc/particledata.inc');
 
 if ($_POST['write']) {
         if (!$_POST['nodes']) jobForm("ERROR: No nodes specified, setting default=4");
@@ -25,8 +26,6 @@ if ($_POST['write']) {
 	if (!$_POST['dmfpath']) jobForm("ERROR: No DMF path specified");
         if (!$_POST['dmfmod']) jobForm("ERROR: No starting model");
 	if (!$_POST['dmfstack']) jobForm("ERROR: No stack file");
-	if (!$_POST['box']) jobForm("ERROR: No box size");
-	if (!$_POST['apix']) jobForm("ERROR: No pixel size");
 	for ($i=1; $i<=$_POST['numiters']; $i++) {
 	        if (!$_POST['ang'.$i]) jobForm("ERROR: no angular increment set for iteration $i");
 		if (!$_POST['mask'.$i]) jobForm("ERROR: no mask set for iteration $i");
@@ -37,36 +36,71 @@ if ($_POST['write']) {
 else jobForm();
 
 function jobForm($extra=false) {
-        $formAction=$_SERVER['PHP_SELF'];
-	$jobname = ($_POST['jobname']) ? $_POST['jobname'] : '';
-	$nodes = ($_POST['nodes']) ? $_POST['nodes'] : 4;
-	$ppn = ($_POST['ppn']) ? $_POST['ppn'] : 4;
-	$rprocs = ($_POST['rprocs']) ? $_POST['rprocs'] : 4;
-	$box = ($_POST['box']) ? $_POST['box'] : '';
-	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
-	$walltime = ($_POST['walltime']) ? $_POST['walltime'] : 240;
-	$cput = ($_POST['cput']) ? $_POST['cput'] : 240;
-	$dmfstack = ($_POST['dmfstack']) ? $_POST['dmfstack'] : '';
-	$dmfpath = ($_POST['dmfpath']) ? $_POST['dmfpath'] : '';
-	$dmfmod = ($_POST['dmfmod']) ? $_POST['dmfmod'] : '';
-	$dmfstorech = ($_POST['dmfstore']=='on') ? 'CHECKED' : '';
-	$numiters= ($_POST['numiters']) ? $_POST['numiters'] : 1;
+  $particle = new particledata();
 
-	if ($_POST['duplicate']) {
-	        $numiters+=1;
-		$newiter=explode(" ",$_POST['duplicate']);
-		$j=$newiter[2];
+  // check if session provided
+  $expId = $_GET['expId'];
+  if ($expId) {
+    $sessionId=$expId;
+    $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+  }
+  else {
+    $sessionId=$_POST['sessionId'];
+    $formAction=$_SERVER['PHP_SELF'];
+  }
+
+  // find each stack entry in database
+  $stackIds = $particle->getStackIds($sessionId);
+  $stackinfo=explode('|--|',$_POST['stackval']);
+  $stackidval=$stackinfo[0];
+  $apix=$stackinfo[1];
+  $box=$stackinfo[2];
+  $jobname = ($_POST['jobname']) ? $_POST['jobname'] : '';
+  $nodes = ($_POST['nodes']) ? $_POST['nodes'] : 4;
+  $ppn = ($_POST['ppn']) ? $_POST['ppn'] : 4;
+  $rprocs = ($_POST['rprocs']) ? $_POST['rprocs'] : 4;
+  $walltime = ($_POST['walltime']) ? $_POST['walltime'] : 240;
+  $cput = ($_POST['cput']) ? $_POST['cput'] : 240;
+  $dmfstack = ($_POST['dmfstack']) ? $_POST['dmfstack'] : '';
+  $dmfpath = ($_POST['dmfpath']) ? $_POST['dmfpath'] : '';
+  $dmfmod = ($_POST['dmfmod']) ? $_POST['dmfmod'] : '';
+  $dmfstorech = ($_POST['dmfstore']=='on') ? 'CHECKED' : '';
+  $numiters= ($_POST['numiters']) ? $_POST['numiters'] : 1;
+  
+  if ($_POST['duplicate']) {
+    $numiters+=1;
+    $newiter=explode(" ",$_POST['duplicate']);
+    $j=$newiter[2];
+  }
+	
+  else $j=$numiters;
+	
+  writeTop("Eman Job Generator","EMAN Job Generator");
+  // write out errors, if any came up:
+  if ($extra) {
+    echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+  }
+  echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formaction'>
+Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50><BR>
+Stack:
+<SELECT NAME='stackval'>\n";
+	foreach ($stackIds as $stackid){
+	  // get stack parameters from database
+	  $s=$particle->getStackParams($stackid['stackid']);
+	  // get number of particles in each stack
+	  $nump=commafy($particle->getNumStackParticles($stackid['stackid']));
+	  // get pixel size of stack
+	  $apix=($particle->getPixelSizeFromStackId($stackid['stackid']))*1e10;
+	  $apix=($s['bin']) ? $apix*$s['bin'] : $apix;
+	  // get box size
+	  $box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
+
+	  echo "<OPTION VALUE='$stackid[stackid]|--|$apix|--|$box'";
+	  // select previously set stack on resubmit
+	  if ($stackid['stackid']==$stackidval) echo " SELECTED";
+	  echo">$stackid[stackid] ($nump particles, $apix A/pix, $box x $box)</OPTION>\n";
 	}
-	
-	else $j=$numiters;
-	
-	writeTop("Eman Job Generator","EMAN Job Generator");
-        // write out errors, if any came up:
-        if ($extra) {
-                echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
-        }
-	echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formaction'>
-Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50>
+	echo "</SELECT>
 <P>
 <TABLE CLASS='tableborder'>
   <TR>
@@ -105,13 +139,6 @@ Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50>
     <TD>Save results to DMF</TD>
     <TD><INPUT TYPE='checkbox' NAME='dmfstore' $dmfstorech></TD>
   </TR>
-  <TR>
-    <TD>Pixel Size:</TD>
-    <TD><INPUT TYPE='text' NAME='apix' VALUE='$apix' SIZE='5'></TD>
-  </TR>
-  <TR>
-    <TD>Box Size (pixels):</TD>
-    <TD><INPUT TYPE='text' NAME='box' VALUE='$box' SIZE='5'></TD>
   </TR>
 </TABLE>\n";
 	for ($i=1; $i<=$numiters; $i++) {
@@ -191,87 +218,97 @@ Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50>
 }
 
 function writeJobFile () {
-        echo "<PRE>\n";
-        $dmfpath=$_POST['dmfpath'];
-	// make sure dmf store dir ends with '/'
-	if (substr($dmfpath,-1,1)!='/') $dmfpath.='/';
-        if ($_POST['jobname']) echo "# ".$_POST['jobname']."\n";
-        echo "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
-	echo "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
-	echo "#PBS -l cput=".$_POST['cput'].":00:00\n";
-	echo "#PBS -m e\n";
-	echo "#PBS -r n\n";
-	echo "\ncd \$PBSREMOTEDIR\n";
-	// get file name, strip extension
-	$ext=strrchr($_POST['dmfstack'],'.');
-	$stackname=substr($_POST['dmfstack'],0,-strlen($ext));
-	echo "\ndmf get $dmfpath".$_POST['dmfmod']." threed.0a.mrc\n";
-	echo "dmf get $dmfpath$stackname.hed start.hed\n";
-	echo "dmf get $dmfpath$stackname.img start.img\n";
-	echo "\nforeach i (`sort -u \$PBS_NODEFILE`)\n";
-	echo "        echo 'rsh 1 ".$_POST['rprocs']."' \$i \$PBSREMOTEDIR >> .mparm\n";
-	echo "end\n";
-	$procs=$_POST['nodes']*$_POST['rprocs'];
-        $numiters=$_POST['numiters'];
-	$apix=$_POST["apix"];
-	$pad=intval($_POST['box']*1.25);
-	// make sure $pad value is even int
-	$pad = ($pad%2==1) ? $pad+=1 : $pad;
-	for ($i=1; $i<=$numiters; $i++) {
-	        $ang=$_POST["ang".$i];
-		$mask=$_POST["mask".$i];
-		$imask=$_POST["imask".$i];
-		$sym=$_POST["sym".$i];
-		$hard=$_POST["hard".$i];
-		$classkeep=$_POST["classkeep".$i];
-		$classiter=$_POST["classiter".$i];
-		$filt3d=$_POST["filt3d".$i];
-		$shrink=$_POST["shrink".$i];
-		$median=$_POST["median".$i];
-		$phasecls=$_POST["phasecls".$i];
-		$refine=$_POST["refine".$i];
-		$goodbad=$_POST["goodbad".$i];
-		$eotest=$_POST["eotest".$i];
-		$coran=$_POST["coran".$i];
-		$line="\nrefine $i proc=$procs ang=$ang pad=$pad";
-		if ($mask) $line.=" mask=$mask";
-		if ($imask) $line.=" imask=$imask";
-		if ($sym) $line.=" sym=$sym";
-		if ($hard) $line.=" hard=$hard";
-		if ($classkeep) $line.=" classkeep=$classkeep";
-		if ($classiter) $line.=" classiter=$classiter";
-		if ($filt3d) $line.=" filt3d=$filt3d";
-		if ($shrink) $line.=" shrink=$shrink";
-		if ($median=='on') $line.=" median";
-		if ($phasecls=='on') $line.=" phasecls";
-		if ($refine=='on') $line.=" refine";
-		if ($goodbad=='on') $line.=" goodbad";
-		$line.=" > refine".$i.".txt\n";
-		$line.="getProjEulers.py proj.img proj.$i.txt\n";
-		if ($eotest=='on') {
-		        $line.="eotest proc=$procs pad=$pad";
-			if ($mask) $line.=" mask=$mask";
-			if ($imask) $line.=" imask=$imask";
-			if ($sym) $line.=" sym=$sym";
-			if ($hard) $line.=" hard=$hard";
-			if ($classkeep) $line.=" classkeep=$classkeep";
-			if ($classiter) $line.=" classiter=$classiter";
-			if ($median=='on') $line.=" median";
-			if ($refine=='on') $line.=" refine";
-			$line.=" > eotest".$i.".txt\n";
-			$line.="mv fsc.eotest fsc.eotest.".$i."\n";
-			$line.="getRes.pl >> resolution.txt $i ".$_POST['box']." $apix\n";
-		}
-		if ($coran=='on') $line .="coran_for_cls2.py mask=$mask proc=$procs iter=$i sym=$sym hard=$hard\n";
-		$line.="rm cls*.lst\n";
-		echo $line;
-	}
-	if ($_POST['dmfstore']=='on') {
-		echo "\ntar -cvzf model.tar.gz threed.*a.mrc\n";
-		echo "dmf put model.tar.gz $dmfpath\n";
-		echo "\ntar -cvzf results.tar.gz fsc* tcls* refine.* particle.* classes.* proj.* sym.* .emanlog *txt\n";
-		echo "dmf put results.tar.gz $dmfpath\n";
-	} 
-	echo "</PRE>\n";
-	exit;
+  // get the stack info (pixel size, box size)
+  $stackinfo=explode('|--|',$_POST['stackval']);
+  $stackidval=$stackinfo[0];
+  $apix=$stackinfo[1];
+  $box=$stackinfo[2];
+  echo "<PRE>\n";
+  $dmfpath=$_POST['dmfpath'];
+  // make sure dmf store dir ends with '/'
+  if (substr($dmfpath,-1,1)!='/') $dmfpath.='/';
+  if ($_POST['jobname']) echo "# ".$_POST['jobname']."\n";
+  echo "# stackId: $stackidval\n";
+  echo "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
+  echo "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
+  echo "#PBS -l cput=".$_POST['cput'].":00:00\n";
+  echo "#PBS -m e\n";
+  echo "#PBS -r n\n";
+  echo "\ncd \$PBSREMOTEDIR\n";
+  // get file name, strip extension
+  $ext=strrchr($_POST['dmfstack'],'.');
+  $stackname=substr($_POST['dmfstack'],0,-strlen($ext));
+  echo "\ndmf get $dmfpath".$_POST['dmfmod']." threed.0a.mrc\n";
+  echo "dmf get $dmfpath$stackname.hed start.hed\n";
+  echo "dmf get $dmfpath$stackname.img start.img\n";
+  echo "\nforeach i (`sort -u \$PBS_NODEFILE`)\n";
+  echo "        echo 'rsh 1 ".$_POST['rprocs']."' \$i \$PBSREMOTEDIR >> .mparm\n";
+  echo "end\n";
+  $procs=$_POST['nodes']*$_POST['rprocs'];
+  $numiters=$_POST['numiters'];
+  $pad=intval($box*1.25);
+  // make sure $pad value is even int
+  $pad = ($pad%2==1) ? $pad+=1 : $pad;
+  for ($i=1; $i<=$numiters; $i++) {
+    $ang=$_POST["ang".$i];
+    $mask=$_POST["mask".$i];
+    $imask=$_POST["imask".$i];
+    $sym=$_POST["sym".$i];
+    $hard=$_POST["hard".$i];
+    $classkeep=$_POST["classkeep".$i];
+    $classiter=$_POST["classiter".$i];
+    $filt3d=$_POST["filt3d".$i];
+    $shrink=$_POST["shrink".$i];
+    $median=$_POST["median".$i];
+    $phasecls=$_POST["phasecls".$i];
+    $refine=$_POST["refine".$i];
+    $goodbad=$_POST["goodbad".$i];
+    $eotest=$_POST["eotest".$i];
+    $coran=$_POST["coran".$i];
+    $line="\nrefine $i proc=$procs ang=$ang pad=$pad";
+    if ($mask) $line.=" mask=$mask";
+    if ($imask) $line.=" imask=$imask";
+    if ($sym) $line.=" sym=$sym";
+    if ($hard) $line.=" hard=$hard";
+    if ($classkeep) $line.=" classkeep=$classkeep";
+    if ($classiter) $line.=" classiter=$classiter";
+    if ($filt3d) $line.=" filt3d=$filt3d";
+    if ($shrink) $line.=" shrink=$shrink";
+    if ($median=='on') $line.=" median";
+    if ($phasecls=='on') $line.=" phasecls";
+    if ($refine=='on') $line.=" refine";
+    if ($goodbad=='on') $line.=" goodbad";
+    $line.=" > refine".$i.".txt\n";
+    $line.="getProjEulers.py proj.img proj.$i.txt\n";
+    if ($eotest=='on') {
+      $line.="eotest proc=$procs pad=$pad";
+      if ($mask) $line.=" mask=$mask";
+      if ($imask) $line.=" imask=$imask";
+      if ($sym) $line.=" sym=$sym";
+      if ($hard) $line.=" hard=$hard";
+      if ($classkeep) $line.=" classkeep=$classkeep";
+      if ($classiter) $line.=" classiter=$classiter";
+      if ($median=='on') $line.=" median";
+      if ($refine=='on') $line.=" refine";
+      $line.=" > eotest".$i.".txt\n";
+      $line.="mv fsc.eotest fsc.eotest.".$i."\n";
+      $line.="getRes.pl >> resolution.txt $i $box $apix\n";
+    }
+    if ($coran=='on') {
+      $line .="coran_for_cls2.py mask=$mask proc=$procs iter=$i";
+      if ($sym) $line .= " sym=$sym";
+      if ($hard) $line .= " hard=$hard";
+      $line .= "\n";
+    }
+    $line.="rm cls*.lst\n";
+    echo $line;
+  }
+  if ($_POST['dmfstore']=='on') {
+    echo "\ntar -cvzf model.tar.gz threed.*a.mrc\n";
+    echo "dmf put model.tar.gz $dmfpath\n";
+    echo "\ntar -cvzf results.tar.gz fsc* tcls* refine.* particle.* classes.* proj.* sym.* .emanlog *txt\n";
+    echo "dmf put results.tar.gz $dmfpath\n";
+  } 
+  echo "</PRE>\n";
+  exit;
 }

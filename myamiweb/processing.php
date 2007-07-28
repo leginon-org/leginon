@@ -274,11 +274,10 @@ if ($sessionId) {
     else {echo "<A HREF='reconsummary.php?expId=$sessionId'>$reconruns completed</A>";}
     echo"
     </TD>
-    <TD BGCOLOR='$bgcolor'>
-    <A HREF='emanJobGen.php?expId=$sessionId'>";
-    if ($reconruns==0) {echo "Begin Reconstruction";}
-    else {echo "Continue Reconstruction";}
-    echo"</A>
+    <TD BGCOLOR='$bgcolor'>\n";
+    if ($stackruns > 0) {echo "<A HREF='emanJobGen.php?expId=$sessionId'>New Reconstruction</A>";}
+    else {echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";}
+    echo"
     </TD>
   </TR>
   </TABLE>
