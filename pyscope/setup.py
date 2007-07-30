@@ -4,14 +4,14 @@ import sys
 
 if sys.platform == 'win32':
 	pl = get_python_lib(True)
-	numsafearray = Extension(
-		'NumSafeArray',
+	numarraysafearray = Extension(
+		'NumarraySafeArray',
 		include_dirs=['%s/win32/include' % pl, '%s/win32com/include' % pl],
 		library_dirs=['%s/win32/libs' % pl, '%s/win32com/libs' % pl],
-		sources=['NumSafeArray/NumSafeArray.cpp']
+		sources=['NumSafeArray/NumarraySafeArray.cpp']
 	)
 	ext_package = 'pyScope'
-	ext_modules = [numsafearray]
+	ext_modules = [numarraysafearray]
 	scripts = ['install-pyscope.py']
 else:
 	ext_package = None
