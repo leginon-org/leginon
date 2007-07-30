@@ -236,11 +236,15 @@ if ($sessionId) {
     else {echo "<A HREF='stacksummary.php?expId=$sessionId'>$stackruns completed<A>";}
     echo"
     </TD>
-    <TD BGCOLOR='$bgcolor'>
-    <A HREF='makestack.php?expId=$sessionId'>";
-    echo"Create New Stack</A>
-    </TD>
-  </TR>
+    <TD BGCOLOR='$bgcolor'>";
+    if ($prtlruns == 0) {
+      echo "<FONT SIZE=-1><I>Pick some particles first</I></FONT>";
+    } elseif ($stackruns == 0) {
+      echo"<A HREF='makestack.php?expId=$sessionId'>Create New Stack</A>";
+    } else {
+      echo"<A HREF='makestack.php?expId=$sessionId'>Create Another Stack</A>";
+    }
+    echo"</TD></TR>
   <TR>\n";
   if ($norefruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
   else {$bgcolor=$donecolor;$gifimg=$donepic;}
@@ -254,11 +258,12 @@ if ($sessionId) {
     echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>";
-    if ($stackruns > 0) {
-      echo"<A HREF='classifier.php?expId=$sessionId'>
-      Create New Classification</A>";
-    } else {
+    if ($stackruns == 0) {
       echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";
+    } elseif ($norefruns == 0) {
+      echo"<A HREF='classifier.php?expId=$sessionId'>Create New Classification</A>";
+    } else {
+      echo"<A HREF='classifier.php?expId=$sessionId'>Continue Classification</A>";
     }
     echo"</TD>
   </TR>
@@ -274,11 +279,15 @@ if ($sessionId) {
     else {echo "<A HREF='reconsummary.php?expId=$sessionId'>$reconruns completed</A>";}
     echo"
     </TD>
-    <TD BGCOLOR='$bgcolor'>\n";
-    if ($stackruns > 0) {echo "<A HREF='emanJobGen.php?expId=$sessionId'>New Reconstruction</A>";}
-    else {echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";}
-    echo"
-    </TD>
+    <TD BGCOLOR='$bgcolor'>";
+    if ($stackruns == 0) {
+      echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";
+    } elseif ($reconruns == 0) {
+      echo"<A HREF='emanJobGen.php.php?expId=$sessionId'>Begin Reconstruction</A>";
+    } else {
+      echo"<A HREF='emanJobGen.php?expId=$sessionId'>Continue Reconstruction</A>";
+    }
+    echo"</TD>
   </TR>
   </TABLE>
   </TD>\n";
