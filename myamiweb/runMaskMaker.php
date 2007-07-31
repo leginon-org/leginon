@@ -72,6 +72,7 @@ function createMaskMakerTable ($cannyminthresh, $cannymaxthresh) {
 	$maxthresh = ($_POST['maxthresh']) ? $_POST['maxthresh'] : $cannymaxthresh;
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '4';
 	$crudstd = ($_POST['crudstd']) ? $_POST['crudstd'] : '';
+	$convolve = ($_POST['convolve']) ? $_POST['convolve'] : '';
 	$masktype = ($_POST['masktype']) ? $_POST['masktype'] : '';
 	$masktypes = array('crud','edge','aggr');
 	$masktypeval = ($_POST['masktype']) ? $_POST['masktype'] : 'crud';
@@ -115,6 +116,10 @@ Binning</A><BR>
 <A HREF=\"javascript:mminfopopup('crudstd')\">
 Standard deviation threshold</A><BR>
 
+<INPUT TYPE='text' NAME='convolve' VALUE='$convolve' SIZE='4'>&nbsp;
+<A HREF=\"javascript:mminfopopup('crudstd')\">
+Convoluted map threshold for aggregate mask (0.0-1.0)</A><BR>
+
 ";
 	echo "<!-- END Mask Maker Param -->";
 };
@@ -126,12 +131,14 @@ function parseMaskMakerParams () {
 	$bin = $_POST[bin];
 	$masktype = ($_POST[masktype]);
 	$crudstd = $_POST[crudstd];
+	$convolve = $_POST[convolve];
 
 	if ($maxthresh && $maxthresh > 0) $command.=" crudhi=$maxthresh";
 	if ($blur && $blur > 0.01) $command.=" crudblur=$blur";
 	if ($minthresh && $minthresh > 0) $command.=" crudlo=$minthresh";
 	if ($crudstd && $crudstd > 0.01 && $crudstd != '') $command.=" crudstd=$crudstd";
 	if ($masktype) $command.=" masktype=$masktype";
+	if ($convolve && $convolve > 0.01 && $convolve != '') $command.=" convolve=$convolve";
 	if ($bin && $bin > 0) $command.=" bin=$bin";
 
    return $command;
@@ -145,6 +152,7 @@ function maskMakerSummaryTable () {
 	$bin = $_POST[bin];
 	$masktype = ($_POST[masktype]);
 	$crudstd = $_POST[crudstd];
+	$convolve = $_POST[convolve];
 
 	echo "<TR><TD>mask type</TD><TD>$masktype</TD></TR>\n";
 	echo "<TR><TD>minthresh</TD><TD>$minthresh</TD></TR>\n";
@@ -152,6 +160,7 @@ function maskMakerSummaryTable () {
 	echo "<TR><TD>bin</TD><TD>$bin</TD></TR>\n";
 	echo "<TR><TD>blur</TD><TD>$blur</TD></TR>\n";
 	echo "<TR><TD>crudstd</TD><TD>$crudstd</TD></TR>\n";
+	echo "<TR><TD>convolve</TD><TD>$convolve</TD></TR>\n";
 }
 
 
@@ -354,6 +363,12 @@ function runMaskMaker() {
 		exit;
 	}
 
+	$convolve = $_POST[convolve];
+	if (!$convolve && $_POST[masktype] == "aggr") {
+		createMMForm("<B>ERROR:</B> Specify a convolution map threshold");
+		exit;
+	}
+
 	$cdiam = $_POST[cdiam];
 	if (!cdiam) {
 		createMMForm("<B>ERROR:</B> No minimal mask region diameter");
@@ -421,6 +436,7 @@ $command<HR>";
 			$images=displayTestResults($testimage,$testdir,$files);
 		} else {
 			echo "<FONT COLOR='RED'><B>NO RESULT YET</B><BR>";
+			echo "<FONT COLOR='RED'><B>Refresh this page when ready</B><BR>";
 		}
 		createMMForm($images,'Particle Selection Results','');
 		exit;
@@ -433,13 +449,8 @@ $command<HR>";
   <B>Mask Maker Command:</B><BR>
   $command<HR>
   </TD></TR>
-  <TR><TD>outdir</TD><TD>$outdir</TD></TR>
-  <TR><TD>templateIds</TD><TD>$templateIds</TD></TR>";
-	foreach ($ranges as $rangenum=>$rangevals) {
-		echo "<TR><TD>$rangenum</TD><TD>$rangevals</TD></TR>\n";
-	}
-	echo"<TR><TD>runid</TD><TD>$runid</TD></TR>
-  <TR><TD>testimage</TD><TD>$testimage</TD></TR>
+  <TR><TD>outdir</TD><TD>$outdir</TD></TR>";
+	echo"<TR><TD>runname</TD><TD>$runid</TD></TR>
   <TR><TD>dbimages</TD><TD>$dbimages</TD></TR>
   <TR><TD>diameter</TD><TD>$diam</TD></TR>";
 	appionLoopSummaryTable();
