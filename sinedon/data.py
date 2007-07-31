@@ -1,4 +1,4 @@
-# COPYRIGHT:
+ COPYRIGHT:
 # The Leginon software is Copyright 2003
 # The Scripps Research Institute, La Jolla, CA
 # For terms of the license agreement
@@ -163,7 +163,7 @@ class DataManager(object):
 		self.lock.acquire()
 		try:
 			for key in self.datadict.keys():
-				if self.size <= self.maxsize/2:
+				if self.size <= self.maxsize:
 					break
 				if not self.limitreached:
 					self.limitreached = True
