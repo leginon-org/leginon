@@ -14,10 +14,10 @@ try:
     import pythoncom
     import pywintypes
     import win32com.client
-    try:
-        import NumSafeArray
-    except ImportError:
-        from pyScope import NumSafeArray
+    #try:
+    #    import NumSafeArray
+    #except ImportError:
+    #    from pyScope import NumSafeArray
 except ImportError:
     pass
 
@@ -102,9 +102,6 @@ class Gatan(ccdcamera.CCDCamera):
         self.exposuretype = value
 
     def _getImage(self):
-        return numpy.array(self.__getImage())
-
-    def __getImage(self):
         try:
             self.camera.Binning = self.binning['x']
             self.camera.CameraLeft = self.offset['x']
@@ -118,17 +115,29 @@ class Gatan(ccdcamera.CCDCamera):
             #if self.getRetractable():
                 if self.getInserted():
                     self.setInserted(False)
-                    image = NumSafeArray.call(self.camera, 'AcquireRawImage')
+
+                    ## without NumSafeArray, we just convert tuple to array
+                    #image = NumSafeArray.call(self.camera, 'AcquireRawImage')
+                    image = self.camera.AcquireRawImage()
+                    image = numpy.array(image)
+
                     self.setInserted(True)
                     return image
             else:
                 exposuretime = self.getExposureTime()
                 self.setExposureTime(0)
-                image = NumSafeArray.call(self.camera, 'AcquireRawImage')
+                ## without NumSafeArray, we just convert tuple to array
+                #image = NumSafeArray.call(self.camera, 'AcquireRawImage')
+                image = self.camera.AcquireRawImage()
+                image = numpy.array(image)
                 self.setExposureTime(exposuretime)
                 return image
         try:
-            return NumSafeArray.call(self.camera, 'AcquireRawImage')
+            ## without NumSafeArray, we just convert tuple to array
+            #image = NumSafeArray.call(self.camera, 'AcquireRawImage')
+            image = self.camera.AcquireRawImage()
+            image = numpy.array(image)
+            return image
         except pywintypes.com_error, e:
             raise ValueError('invalid image dimensions')
 
