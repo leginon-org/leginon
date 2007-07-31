@@ -29,6 +29,7 @@ def createDefaults():
 	params['package']='EMAN'
 	params['tmpdir']='./temp'
 	params['contour']=1.5
+	params['oneiteration']=None
 	params['zoom']=1.75
 	return params
 
@@ -70,6 +71,7 @@ def printHelp():
 	print "                       (./temp is default)"
 	print "contour=<n>          : sigma level at which snapshot of density will be contoured (1.5 by default)"
 	print "zoom=<n>             : zoom factor for snapshot rendering (1.75 by default)"
+	print "oneiteration=<n>     : only upload one iteration"
 	print "\n"
 
 	sys.exit(1)
@@ -98,12 +100,14 @@ def parseInput(args,params):
 			params['contour']=float(elements[1])
 		elif (elements[0]=='zoom'):
 			params['zoom']=float(elements[1])
+		elif (elements[0]=='oneiteration'):
+			params['oneiteration']=int(elements[1])
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
         
 def checkStackId(params):
-	stackinfo=partdb.direct_query(appionData.ApStackRunData, params['stackid'])
+	stackinfo=partdb.direct_query(appionData.ApStackData, params['stackid'])
 	if not stackinfo:
 		print "\nERROR: Stack ID",params['stackid'],"does not exist in the database"
 		sys.exit()
@@ -205,6 +209,9 @@ def getClassInfo(classes):
 	return projeulers
 
 def renderSnapshots(density,res,initmodel,contour,zoom):
+	# if eotest failed, filter to 30 
+	if not res:
+		res=30
 	syms = initmodel['symmetry']['symmetry'].split()
 	sym = syms[0]
 	# strip digits from symmetry
@@ -276,6 +283,7 @@ def insertRefinementRun(params):
 
 def insertResolutionData(params,iteration):
 	fsc='fsc.eotest.'+iteration['num']
+	iteration['fscfile']=fsc
 	if fsc in params['fscs']:
 		resq=appionData.ApResolutionData()
 
@@ -327,14 +335,14 @@ def insertIteration(iteration,params):
 		refineq['classVariance']=classvar
 	if volumeDensity in params['volumes']:
 		refineq['volumeDensity']=volumeDensity
-	result=partdb.query(refineq, results=1)
-	if not result:
-		partdb.insert(refineq)
+	partdb.insert(refineq)
 
-#	renderSnapshots(volumeDensity,resData['half'],params['model'],params['contour'],params['zoom'])
+	insertFSC(iteration['fscfile'],refineq)
+	
+	renderSnapshots(volumeDensity,resData['half'],params['model'],params['contour'],params['zoom'])
 		
 	# get projections eulers for iteration:
-	iteration['eulers']=getEulersFromProj(params,iteration['num'])
+	eulers=getEulersFromProj(params,iteration['num'])	
 	
 	# get # of class averages and # kept
 #      	params['eulers']=getClassInfo(os.path.join(params['path'],classavg))
@@ -344,13 +352,13 @@ def insertIteration(iteration,params):
 	if not os.path.exists(plogf):
 		apDisplay.printError("no particle.log file found")
 	f=open(plogf,'r')
-	iteration['badprtls']=[]
+	badprtls=[]
 	n=str(int(iteration['num'])+1)
 	for line in f:
 		line=string.rstrip(line)
 		if re.search("X\t\d+\t"+iteration['num']+"$",line):
 			bits=line.split()
-			iteration['badprtls'].append(bits[1])
+			badprtls.append(bits[1])
 		# break out of into the next iteration
 	        elif re.search("X\t\d+\t"+n+"$",line):
 			break
@@ -366,21 +374,17 @@ def insertIteration(iteration,params):
 		clstar.extract(clsfile,params['tmpdir'])
 	clstar.close()
 
-	iteration['numclasses']=len(clsnames)
-		
 	# for each class, insert particle alignment info into database
-	prtlaliq=appionData.ApParticleClassificationData()
 	for cls in clsnames:
-		insertParticleClassificationData(params,cls,iteration,refineq)
-	del prtlaliq
-	del refineparamsq
-	del iteration
-	del refineq
-	del clsnames
+		insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refineq,len(clsnames))
 
+	# remove temp directory
+	for file in os.listdir(params['tmpdir']):
+		os.remove(os.path.join(params['tmpdir'],file))
+	os.rmdir(params['tmpdir'])
 	return
 
-def insertParticleClassificationData(params,cls,iteration,refineq):
+def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refineq,numcls):
 	clsfilename=os.path.join(params['tmpdir'],cls)
 	f=open(clsfilename)
 
@@ -389,11 +393,11 @@ def insertParticleClassificationData(params,cls,iteration,refineq):
 	projnum=int(replace.sub('',cls))
 
 	eulq=appionData.ApEulerData()
-	eulq['euler1']=iteration['eulers'][projnum][0]
-	eulq['euler2']=iteration['eulers'][projnum][1]
-	eulq['euler3']=iteration['eulers'][projnum][2]
+	eulq['euler1']=eulers[projnum][0]
+	eulq['euler2']=eulers[projnum][1]
+	eulq['euler3']=eulers[projnum][2]
 
-	print "\tinserting",(len(f.readlines())-2),"particles from class",(projnum+1),"/",iteration['numclasses']
+	print "\tinserting",(len(f.readlines())-2),"particles from class",(projnum+1),"/",numcls
 	f.close()
 			
 	# for each cls file get alignments for particles
@@ -408,7 +412,7 @@ def insertParticleClassificationData(params,cls,iteration,refineq):
 			prtlnum=int(ali[0])
 
 			# check if bad particle
-			if str(prtlnum) in iteration['badprtls']:
+			if str(prtlnum) in badprtls:
 				prtlaliq['thrown_out']=True
 
 			prtlnum+=1 # offset for EMAN
@@ -422,7 +426,7 @@ def insertParticleClassificationData(params,cls,iteration,refineq):
 
 			# find particle in stack database
 			stackpq=appionData.ApStackParticlesData()
-			stackpq['stackRun']=params['stack']
+			stackpq['stack']=params['stack']
 			stackpq['particleNumber']=prtlnum
 			stackp=partdb.query(stackpq, results=1)[0]
 
@@ -456,21 +460,33 @@ def calcRes(fscfile, model):
 		bits=line.split('\t')
 		x=float(bits[0])
 		y=float(bits[1])
-		if float(y)>0.5:
-			lastx=x
-			lasty=y
-		else:
-			# get difference of fsc points
-			diffy=lasty-y
-			# get distance from 0.5
-			distfsc=(0.5-y)/diffy
-			#get interpolated spatial frequency
-			intfsc=x-(distfsc*(x-lastx))
-
-			res=boxsize*apix/intfsc
-			return res
+		if isinstance(y,(int,long,float,complex)):
+			if float(y)>0.5:
+				lastx=x
+				lasty=y
+			else:
+				# get difference of fsc points
+				diffy=lasty-y
+				# get distance from 0.5
+				distfsc=(0.5-y)/diffy
+			        #get interpolated spatial frequency
+				intfsc=x-(distfsc*(x-lastx))
+			
+				res=boxsize*apix/intfsc
+				return res
 	f.close()
 	return
+
+def insertFSC(fscfile,refine):
+	f = open(fscfile,'r')
+	for line in f:
+		fscq=appionData.ApFSCData()
+		fscq['refinementData']=refine
+		line=string.rstrip(line)
+		bits = line.split('\t')
+		fscq['pix']=int(bits[0])
+		fscq['value']=float(bits[1])
+		partdb.insert(fscq)
 	
 def writeReconLog(commandline):
         f=open('.reconlog','a')

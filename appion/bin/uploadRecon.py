@@ -45,5 +45,9 @@ if __name__ == '__main__':
 
 	# insert the Iteration info
 	for iteration in params['iterations']:
+		# if only uploading one iteration, skip to that one
+		if params['oneiteration']:
+			if int(iteration['num'])!=params['oneiteration']:
+				continue
 		apRecon.insertIteration(iteration,params)
-	
+
