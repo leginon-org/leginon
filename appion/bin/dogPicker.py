@@ -43,8 +43,8 @@ class dogPicker(particleLoop.ParticleLoop):
 		for arg in args:
 			elements = arg.split('=')
 			elements[0] = elements[0].lower()
-			if (elements[0]=='invert'):
-				self.params['invert']=True
+			if (elements[0]=='kfactor'):
+				self.params['kfactor']=float(elements[1])
 			else:
 				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 

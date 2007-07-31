@@ -160,10 +160,11 @@ def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8):
 	expandimg = scaleImage(filtimg,localbin)
 	return imgarray - expandimg
 
-def diffOfGaussParam(imgarray, params, k=1.2):
+def diffOfGaussParam(imgarray, params):
 	apix = params['apix']
 	bin = params['bin']
 	diam = params['diam']
+	k = params['kfactor']
 	return diffOfGauss(imgarray, apix, bin, diam, k=k)
 
 def diffOfGauss(imgarray, apix, bin, diam, k=1.2):
