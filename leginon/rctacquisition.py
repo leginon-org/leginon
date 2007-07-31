@@ -10,6 +10,7 @@ import acquisition
 import gui.wx.RCTAcquisition
 import libCV
 import numpy
+from scipy import ndimage
 pi = numpy.pi
 
 def setImageFilename(imagedata, tiltnumber=None):
@@ -241,7 +242,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		imageold = image0
 		#sigma = self.settings['sigma']
 		#arrayold = scipy.ndimage.gaussian_filter(imageold['image'], sigma)
-		arrayold = imageold['image']
+		arrayold = ndimage.median_filter(imageold['image'], size=2)
 		runningresult = numpy.identity(3, numpy.float64)
 		for tilt in tilts:
 			self.logger.info('Tilt: %s' % (degrees(tilt),))
@@ -252,7 +253,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			dataclass = data.CorrectedCameraImageData
 			imagenew = self.instrument.getData(dataclass)
 			#arraynew = scipy.ndimage.gaussian_filter(imagenew['image'], sigma)
-			arraynew = imagenew['image']
+			arraynew = ndimage.median_filter(imagenew['image'], size=2)
 			self.setImage(imagenew['image'], 'Image')
 			self.setTargets([], 'Peak')
 
@@ -263,6 +264,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			blur = self.settings['blur']
 			sharpen = self.settings['sharpen']
 			result = libCV.MatchImages(arrayold, arraynew, minsize, maxsize, blur, sharpen, 1, 1)
+			self.checkLibCVResult(result)
 			print 'Craig stuff done'
 			self.logger.info('Matrix: %s' % (result,))
 
@@ -287,6 +289,17 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		self.logger.info('Final Matrix: %s' % (runningresult,))
 		return (runningresult, imagedata)
+
+	def checkLibCVResult(self, result):
+		if result[0][0] < 0.5:
+			self.logger.error('Bad libCV result in 0,0')
+		if result[0][1] > 0.5:
+			self.logger.error('Bad libCV result in 0,1')
+		if result[1][0] > 0.5:
+			self.logger.error('Bad libCV result in 1,0')
+		if result[1][1] < 0.5:
+			self.logger.error('Bad libCV result in 0,0')
+		return
 
 	def alreadyAcquired(self, target, presetname):
 		return False
