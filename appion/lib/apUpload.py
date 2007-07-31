@@ -35,8 +35,8 @@ def printPrtlUploadHelp():
 	sys.exit(1)
 
 def printModelUploadHelp():
-	print "\nUsage:\nuploadModel.py <filename> session=<session> symmetry=<sym id> apix=<pixel> description=<\"text\">\n"
-	print "uploadModel.py /ami/data99/lambda.mrc symmetry=1 apix=2.02 description=\"lambda in EMAN orientation\"\n"
+	print "\nUsage:\nuploadModel.py <filename> session=<session> symmetry=<sym id> apix=<pixel> [res=<resolution>] [contour=<n>] [zoom=<n>] description=<\"text\">\n"
+	print "uploadModel.py /ami/data99/lambda.mrc symmetry=1 apix=2.02 res=25 description=\"CCMV in EMAN orientation\"\n"
 	sys.exit(1)
 	
 def parseTmpltUploadInput(args,params):
@@ -116,6 +116,12 @@ def parseModelUploadInput(args,params):
 			params['session']=elements[1]
 		elif (elements[0]=='symmetry'):
 			params['sym']=int(elements[1])
+		elif (elements[0]=='res'):
+			params['res']=float(elements[1])
+		elif (elements[0]=='contour'):
+			params['contour']=float(elements[1])
+		elif (elements[0]=='zoom'):
+			params['zoom']=float(elements[1])
 		elif (elements[0]=='description'):
 			params['description']=elements[1]
 		else:
@@ -135,10 +141,12 @@ def createDefaults():
 	params['abspath']=os.path.abspath('.')
 	params['scale']=None
 	params['sym']=None
+	params['res']=None
+	params['contour']=1.5
+	params['zoom']=1.5
 	return params
 
 def getProjectId(params):
-	#THIS LOOKS LIKE A HACK
 	projectdata = project.ProjectData()
 	projects = projectdata.getProjectExperiments()
 	for i in projects.getall():
@@ -197,6 +205,7 @@ def insertModel(params):
 	symid=apDB.apdb.direct_query(appionData.ApSymmetryData,params['sym'])
 	if not symid:
 		apDisplay.printError("no symmetry associated with this id\n")		
+	params['syminfo']=symid
 	modq=appionData.ApInitialModelData()
 	modq['project|projects|project']=params['projectId']
 	modq['path']=params['path']
