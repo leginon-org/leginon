@@ -644,8 +644,9 @@ class Corrector(node.Node):
 		if dark is not None and norm is not None:
 			self.startTimer('norm math')
 			diff = raw - dark
-			## this may result in some infinity values
 			r = diff * norm
+			## remove nan and inf
+			r = numpy.where(numpy.isfinite(r), r, 0)
 			self.stopTimer('norm math')
 			return r
 		else:
