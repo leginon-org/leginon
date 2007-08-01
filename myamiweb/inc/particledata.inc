@@ -708,5 +708,13 @@ class particledata {
 					list($r) = $this->mysql->getSQLResult($q);
 					return $r['particleNumber'];
 		}
+
+  function getMiscInfoFromReconId ($reconid) {
+    $q = "SELECT * "
+        ."FROM `ApMiscData` "
+        ."WHERE `REF|ApRefinementRunData|refinementRun` = $reconid";
+    $r = $this->mysql->getSQLResult($q);
+    return $r;
+  }    
 }
 ?>

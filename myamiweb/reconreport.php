@@ -82,6 +82,8 @@ echo "Stack: <A TARGET='stackview' HREF='viewstack.php?file=$stackfile'>$stackfi
 echo "Reconstruction path: $refinerun[path]/<BR>\n";
 echo "Particles: $stackparticles<BR>\n";
 echo "Initial Model: $initmodel[path]/$initmodelname<BR>\n";
+$misc = $particle->getMiscInfoFromReconId($reconId);
+if ($misc) echo "<A HREF='viewmisc.php?reconId=$reconId'>[Related Images, Movies, etc]</A><BR>\n"; 
 
 $iterations = $particle->getIterationInfo($reconId);
 
