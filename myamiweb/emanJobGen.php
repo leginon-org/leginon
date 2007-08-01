@@ -309,6 +309,7 @@ function writeJobFile () {
     echo "\ntar -cvzf results.tar.gz fsc* tcls* refine.* particle.* classes.* proj.* sym.* .emanlog *txt\n";
     echo "dmf put results.tar.gz $dmfpath\n";
   } 
+  echo "\nexit\n";
   echo "</PRE>\n";
   exit;
 }
