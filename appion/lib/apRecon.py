@@ -225,7 +225,7 @@ def renderSnapshots(density,res,initmodel,contour,zoom):
 
 	#low pass filter the volume to .6 * reported res
 	filtres = 0.6*res
-	cmd = ('proc3d %s %s apix=%.3f lp=%.2f' % (density, tmpf, apix, filtres))
+	cmd = ('proc3d %s %s apix=%.3f lp=%.2f origin=0,0,0' % (density, tmpf, apix, filtres))
 	print cmd
 	os.system(cmd)
 	rendercmd = ('chimera ~/pyappion/lib/apChimSnapshot.py %s %s %s %.3f %.3f' % (tmpf, density, sym, contour, zoom))

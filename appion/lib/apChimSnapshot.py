@@ -55,7 +55,8 @@ def color_surface_radially(surf, center):
 
     from SurfaceColor import color_surface, Radial_Color, Color_Map
     rc = Radial_Color()
-    rc.origin = center
+#    rc.origin = center
+    rc.origin = [0,0,0]
     vertices, triangles = surf.surface_groups()[0].geometry()
     rmin, rmax = rc.value_range(vertices, vertex_xform = None)
     data_values = (.5*rmax, .625*rmax, .75*rmax, .875*rmax, rmax)
