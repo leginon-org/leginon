@@ -38,7 +38,12 @@ def printModelUploadHelp():
 	print "\nUsage:\nuploadModel.py <filename> session=<session> symmetry=<sym id> apix=<pixel> [res=<resolution>] [contour=<n>] [zoom=<n>] description=<\"text\">\n"
 	print "uploadModel.py /ami/data99/lambda.mrc symmetry=1 apix=2.02 res=25 description=\"CCMV in EMAN orientation\"\n"
 	sys.exit(1)
-	
+
+def printMiscUploadHelp():
+	print "\nUsage:\nuploadMisc.py <filename> reconid=<n> description=<\"text\">\n"
+	print "uploadModel.py cpmv_cross_section.png reconid=311 description=\"cpmv cross section with pdb docked in\"\n"
+	sys.exit(1)
+
 def parseTmpltUploadInput(args,params):
 	# check that there are enough input parameters
 	if (len(args)<2 or args[1]=='help') :
@@ -102,8 +107,8 @@ def parseModelUploadInput(args,params):
 	# get MRC file
 	mrcfile=args[1]
 	if (os.path.isfile(mrcfile)):
-		(params["filepath"], params["name"]) = os.path.split(mrcfile)
-		if not params['filepath']:
+		(params['path'], params['name']) = os.path.split(mrcfile)
+		if not params['path']:
 			params['path']=params['abspath']
 	else:
 		apDisplay.printError("file '"+mrcfile+"' does not exist\n")
@@ -127,6 +132,28 @@ def parseModelUploadInput(args,params):
 		else:
 			apDisplay.printError("undefined parameter \'"+arg+"\'\n")
 	
+def parseMiscUploadInput(args,params):
+	# check that there are enough input parameters
+	if (len(args)<2 or args[1]=='help') :
+		printMiscUploadHelp()
+	# get file
+	miscfile=args[1]
+	if (os.path.isfile(miscfile)):
+		(params['path'], params['name']) = os.path.split(miscfile)
+		if not params['path']:
+			params['path']=params['abspath']
+	else:
+		apDisplay.printError("file '"+miscfile+"' does not exist\n")
+	# save the input parameters into the "params" dictionary
+	for arg in args[2:]:
+		elements=arg.split('=')
+		if (elements[0]=='reconid'):
+			params['reconid']=int(elements[1])
+		elif (elements[0]=='description'):
+			params['description']=elements[1]
+		else:
+			apDisplay.printError("undefined parameter \'"+arg+"\'\n")
+	
 def createDefaults():
 	params={}
 	params['apix']=None
@@ -144,6 +171,7 @@ def createDefaults():
 	params['res']=None
 	params['contour']=1.5
 	params['zoom']=1.5
+	params['reconid']=None
 	return params
 
 def getProjectId(params):
@@ -215,3 +243,22 @@ def insertModel(params):
 	modq['boxsize']=params['box']
 	modq['description']=params['description']
 	appiondb.insert(modq)
+
+def checkReconId(params):
+	reconinfo=apDB.apdb.direct_query(appionData.ApRefinementRunData, params['reconid'])
+	if not reconinfo:
+		print "\nERROR: Recon ID",params['reconid'],"does not exist in the database"
+		sys.exit()
+	else:
+		params['recon']=reconinfo
+		print "Associated with",reconinfo['name'],":",reconinfo['path']
+	return
+
+def insertMisc(params):
+	print "inserting into database"
+	miscq=appionData.ApMiscData()
+	miscq['refinementRun']=params['recon']
+	miscq['path']=params['path']
+	miscq['name']=params['name']
+	miscq['description']=params['description']
+	appiondb.insert(miscq)

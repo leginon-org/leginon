@@ -412,6 +412,17 @@ class ApFSCData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApFSCData=ApFSCData
 
+class ApMiscData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('refinementRun', ApRefinementRunData),
+			('path', str),
+			('name', str),
+			('description', str),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApMiscData=ApMiscData
+
 ### ACE/CTF tables ###
 
 class ApAceRunData(Data):
