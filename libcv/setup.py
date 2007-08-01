@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from distutils.core import setup
 from distutils.util import get_platform
 from numpy.distutils.extension import Extension
