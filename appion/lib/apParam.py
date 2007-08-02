@@ -203,7 +203,8 @@ def removefiles(path,patterns):
 	files = allfiles[:]
 	for pattern in patterns:
 		files = filter((lambda x: x.find(pattern)>=0),files)
-	apDisplay.printWarning("d% files will be removed" % len(files))
+	patterns_line = ('","'.join(patterns))
+	apDisplay.printWarning('%d files with the patterns ("%s") will be removed in %s' % (len(files),patterns_line,path))
 	for file in files:
 		fullpath = os.path.join(path,file)
 		try:
