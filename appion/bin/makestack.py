@@ -355,7 +355,8 @@ def eliminateMaskedParticles(particles,params,imgdata):
 	newparticles = []
 	eliminated = 0
 	sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
-	imgdata = getDefocPair(imgdata,2)
+	if params['defocpair']:
+		imgdata = getDefocPair(imgdata,2)
 	maskimg,maskbin = apMask.makeInspectedMask(sessiondata,params['inspectmask'],imgdata)
 	if maskimg is not None:
 		for prtl in particles:
