@@ -30,7 +30,6 @@ class MaskMaker(appionLoop.AppionLoop):
 		self.params['cblur']=3.5
 		self.params['clo']=0.6
 		self.params['chi']=0.95
-		self.params['cstd']=1.0
 		self.params['cschi']=1.0
 		self.params['csclo']=0.0
 		self.params['convolve']=0.0
@@ -99,8 +98,6 @@ class MaskMaker(appionLoop.AppionLoop):
 				self.params['clo']=float(elements[1])
 			elif (elements[0]=='crudhi'):
 				self.params['chi']=float(elements[1])
-			elif (elements[0]=='crudstd'):
-				self.params['cstd']=float(elements[1])
 			elif (elements[0]=='crudschi'):
 				self.params['cschi']=float(elements[1])
 			elif (elements[0]=='crudsclo'):
