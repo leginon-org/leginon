@@ -7,90 +7,92 @@
 	<default>custom</default>
 	<list>custom,crud,aggr,edge</list>
  </masktype>
+ <diam>
+	<name>diam</name>
+	<default></default>
+	<description>Particle diameter in angstroms as reference</description>
+	<type>float</type>
+	<range>1,1500</range>
+	<required>True</required>
+ </diam>
  <cruddiam>
 	<name>region diameter</name>
-	<description></description>
+	<description>Minimal accepted bad region diameter in angstroms</description>
 	<type>float</type>
 	<default>0</default>
 	<limits>0,1</limits>
+	<required>True</required>
  </cruddiam>
  <crudblur>
 	<name>edge blur</name>
-	<description></description>
+	<description>Blurring sigma for smoothing the gradient map</description>
 	<type>float</type>
 	<default>3.5</default>
 	<limits>0,1</limits>
  </crudblur>
  <crudlo>
 	<name>edge low</name>
-	<description></description>
+	<description>Low threshold for edge finding</description>
 	<type>float</type>
 	<default>0.6</default>
 	<limits>0,1</limits>
  </crudlo>
  <crudhi>
 	<name>edge high</name>
-	<description></description>
+	<description>High threshold for edge finding</description>
 	<type>float</type>
 	<default>0.95</default>
 	<limits>0,1</limits>
  </crudhi>
- <crudstd>
-	<name></name>
-	<description></description>
+ <stdev>
+	<name>standard deviation threhold</name>
+	<description>Minimal region intensity stdv relative to that of the map to accept</description>
 	<type>float</type>
 	<default>1.0</default>
 	<limits>0,1</limits>
- </crudstd>
+ </stdev>
  <crudschi>
-	<name></name>
-	<description></description>
+	<name>scaling high threshold</name>
+	<description>Additional scaling for crudhi/crudlo</description>
 	<type>float</type>
 	<default>1.0</default>
 	<limits>0,1</limits>
  </crudschi>
  <crudsclo>
-	<name></name>
-	<description></description>
+	<name>scaling low threshold</name>
+	<description>Additional scaling for crudhi/crudlo</description>
 	<type>float</type>
 	<default>0.0</default>
 	<limits>0,1</limits>
  </crudsclo>
  <convolve>
 	<name>convolve</name>
-	<description></description>
+	<description>Convoluted map threshold (0.0=no convolution applied)</description>
 	<type>float</type>
 	<default>0.0</default>
-	<limits></limits>
+	<limits>0,1</limits>
  </convolve>
- <stdev>
-	<name>region standard deviation</name>
-	<description></description>
-	<type>float</type>
-	<default>0.0</default>
-	<limits></limits>
- </stdev>
  <no_hull>
 	<name>no convex hull</name>
-	<description></description>
+	<description>Skip convex hull creation</description>
 	<type>boolean</type>
 	<default>False</default>
  </no_hull>
  <cv>
 	<name>use libcv</name>
-	<description></description>
+	<description>Use libcv.Findregion for enclosing the regions</description>
 	<type>boolean</type>
 	<default>False</default>
  </cv>
  <no_length_prune>
 	<name>no length prune</name>
-	<description></description>
+	<description>Skip pruning found regions by region perimeter</description>
 	<type>boolean</type>
 	<default>False</default>
  </no_length_prune>
  <test>
 	<name></name>
-	<description></description>
+	<description>Output test images</description>
 	<type>boolean</type>
 	<default>False</default>
  </test>
