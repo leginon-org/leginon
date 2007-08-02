@@ -38,6 +38,7 @@ class dogPicker(particleLoop.ParticleLoop):
 
 	def particleDefaultParams(self):
 		self.params['mapdir']="dogmaps"
+		self.params['kfactor']=1.2
 
 	def particleParseParams(self, args):
 		for arg in args:
