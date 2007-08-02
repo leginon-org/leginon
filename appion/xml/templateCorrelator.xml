@@ -41,4 +41,10 @@
  <diam>
 	<description>Particle diameter in angstroms used for masking template</description>
  </diam>
+ <keepall>
+	<name>keepall</name>
+	<description>Keep all *.dwn.mrc</description>
+	<default>False</default>
+	<type>boolean</type>
+ </keepall>
 </selexon>
