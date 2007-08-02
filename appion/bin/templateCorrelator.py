@@ -13,6 +13,7 @@ import apTemplate
 import apDatabase
 import apPeaks
 import apParticle
+import apParam
 #legacy
 #import apViewIt
 #import selexonFunctions  as sf1
@@ -51,6 +52,7 @@ class TemplateCorrelationLoop(particleLoop.ParticleLoop):
 		self.params["ogTmpltInfo"]=[]
 		self.params['mapdir']="ccmaxmaps"
 		self.params["scaledapix"]={}
+		self.params["keepall"]=False
 
 	def particleParseParams(self,args):
 		for arg in args:
@@ -86,6 +88,8 @@ class TemplateCorrelationLoop(particleLoop.ParticleLoop):
 				self.params['templateIds']=templatestring
 			elif (elements[0]=='method'):
 				self.params['method']=str(elements[1])
+			elif (elements[0]=='keepall'):
+				self.params['keepall']=True
 			else:
 				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
@@ -94,6 +98,11 @@ class TemplateCorrelationLoop(particleLoop.ParticleLoop):
 			apDisplay.printError("if not using templateIds, you must enter a template pixel size")
 		if self.params['templateIds'] and self.params['template']:
 			apDisplay.printError("Both template database IDs and mrc file templates are specified,\nChoose only one")
+
+	def postLoopFunctions(self):
+		if not self.params['keepall']:
+			apParam.removefiles(self.params['rundir'],(self.params['sessionname'],'dwn.mrc'))
+		return
 
 if __name__ == '__main__':
 	imgLoop = TemplateCorrelationLoop()
