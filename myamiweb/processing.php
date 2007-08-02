@@ -283,7 +283,7 @@ if ($sessionId) {
     if ($stackruns == 0) {
       echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";
     } elseif ($reconruns == 0) {
-      echo"<A HREF='emanJobGen.php.php?expId=$sessionId'>Begin Reconstruction</A>";
+      echo"<A HREF='emanJobGen.php?expId=$sessionId'>Begin Reconstruction</A>";
     } else {
       echo"<A HREF='emanJobGen.php?expId=$sessionId'>Continue Reconstruction</A>";
     }
