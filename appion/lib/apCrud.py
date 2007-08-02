@@ -3,13 +3,16 @@
 
 import apConvexHull
 import apImage
+import apDisplay
 import os
+import sys
 import math
 import numpy
 ma = numpy.ma
 import scipy.ndimage as nd
 try:
 	from pyami import convolver
+	from pyami import mrc
 except ImportError:
 	import convolver
 import Image
@@ -84,9 +87,9 @@ def makeDisk(radius):
 	#This is copied from jahcfinderback.py and should be organized properly in pyleginon
 	radius=int(radius)
 	cutoff=[0.0,0.0]
-	diskimageshape=(2*radius,2*radius)
+	diskimageshape=(2*(radius+1),2*(radius+1))
 	center=[radius,radius]
-	lshift=[0.0,0.0]
+	lshift=[diskimageshape[0],diskimageshape[1]]
 	gshift=[0.0,0.0]
 	minradsq=0
 	maxradsq=radius*radius
@@ -96,7 +99,7 @@ def makeDisk(radius):
 		i0 = numpy.where(indices0<cutoff[0], indices0-center[0]+lshift[0], indices0-center[0]+gshift[0])
 		i1 = numpy.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[1]+gshift[1])
 		rsq = i0*i0+i1*i1
-		c = numpy.where((rsq>=minradsq)&(rsq<=maxradsq), 1, 0)
+		c = numpy.where((rsq>=minradsq)&(rsq<=maxradsq), 1.0, 0.0)
 		return c.astype(numpy.int8)
 	disk = numpy.fromfunction(circle,diskimageshape)
 	return disk
@@ -122,15 +125,14 @@ def convolveDisk(bimage,radius,convolve_t,testlog):
 
 	# convolve
 	c=convolver.Convolver()
-	c.setImage(bimage)
+	intimage = bimage.astype(numpy.int8)
 	c.setKernel(disk)
-	cmask=c.convolve()
+	cmask=c.convolve(image=intimage)
 
 	# convolve two disks to get maximum correlation
 	c=convolver.Convolver()
-	c.setImage(disk)
 	c.setKernel(disk)
-	cref=c.convolve()
+	cref=c.convolve(image=disk)
 	testlog=outputTestImage(cmask,'maskc','Convolved filled edge mask',testlog)
 	
 	# Thresholding to binary mask
@@ -482,7 +484,7 @@ def reduceRegions(regions,velimit):
 			regionarray = region['regionBorder']
 			## reduce to 20 points
 			regionarray = libCV.PolygonVE(regionarray, velimit)
-			regionarray.transpose()
+			regionarray = regionarray.transpose()
 			regionarrays.append(regionarray)
 			regionellipses.append(regionellipse)
 					
@@ -504,6 +506,10 @@ def makeMask(params,image):
 
 	diam=float(params["diam"]/scale)
 	cdiam=float(params["cdiam"]/scale)
+
+	if float(diam) < 20 :
+		apDisplay.printWarning("Particle too small, Probably Won't Work")
+
 	if (params["cdiam"]==0):
 		cdiam=diam
 	else:
@@ -589,6 +595,7 @@ def makeMask(params,image):
 
 		if (convolve_t > 0):
 			#convolve with the disk image of the particle
+			print "pradius",pradius
 			mask,testlog=convolveDisk(mask,pradius,convolve_t,testlog)
 		
 
@@ -611,11 +618,17 @@ def makeMask(params,image):
 			labeled_regions,clabels,gpolygons,testlog=convexHullUnion(labeled_regions,clabels,testlog)
 				
 		if do_cv:
-			polygonregions,dummyimage=libCV.FindRegions(mask,area_t,0.2,1,0,1,0)
+			print "libCV FindRegion does not work properly at the moment."
+			print "can not detect carbon edge"
+			sys.exit()
+			testlog=outputTestImage(mask,'cvin','cvin',testlog)
+			mm = mask.astype(numpy.uint8)
+			polygonregions,dummyimage=libCV.FindRegions(mm,area_t,0.2,1,0,1,0)
 			gpolygons = reduceRegions(polygonregions,100)
 			# libCV.findregion sometimes produces regions of negative area and cause problems in later labeling
 			# Therefore, it is converted into equal intensity region image (mask).
 			mask = polygon.plotPolygons(image.shape,gpolygons)
+#			testlog=outputTestImage(mask,'cvout','cvout',testlog)
 			labeled_regions,clabels=nd.label(mask)
 			allinfos ={}
 
