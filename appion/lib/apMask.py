@@ -219,22 +219,33 @@ def getRegionKeepList(assessrundata,maskregiondata):
 	for regiondata in maskregiondata:
 		assessquery['region'] = regiondata
 		assessdata = appiondb.query(assessquery,results=1)
+		if len(assessdata) == 0:
+			continue
 		if assessdata[0]['keep'] == 1:
 			keeplist.append(regiondata['label'])
 	keeplist.sort()
 	return keeplist
 
 
+def getMaskbins(sessiondata,maskassessname):
+	assessruntree = getMaskAssessRunData(sessiondata,maskassessname)
+	
+	allmaskarray = None
+	maskbins = []
+	for i,assessrundata in enumerate(assessruntree):
+		maskrundata = assessrundata['maskrun']
+		maskbins.append(maskrundata['params']['bin'])
+	return maskbins,max(maskbins)
+
 def makeInspectedMask(sessiondata,maskassessname,imgdata):
 
 	assessruntree = getMaskAssessRunData(sessiondata,maskassessname)
 	
+	maskbins,maxbin = getMaskbins(sessiondata,maskassessname)
 	allmaskarray = None
-	for assessrundata in assessruntree:
+	for i,assessrundata in enumerate(assessruntree):
+	
 		maskrundata = assessrundata['maskrun']
-	
-		maskbin = maskrundata['params']['bin']
-	
 		maskregiondata = getMaskRegions(maskrundata,imgdata)
 		if len(maskregiondata) == 0:
 			continue
@@ -246,6 +257,10 @@ def makeInspectedMask(sessiondata,maskassessname,imgdata):
 		
 		maskarray = getMaskArray(maskrundata,imgdata)
 		maskarray = apCrud.makeKeepMask(maskarray,keeplist)
+		extrabin = maxbin/maskbins[i]
+		if extrabin > 1:
+			maskarray = apImage.binImg(maskarray, extrabin)
+			
 		try:
 			allmaskarray = allmaskarray+maskarray
 		except:
@@ -255,11 +270,8 @@ def makeInspectedMask(sessiondata,maskassessname,imgdata):
 	
 	if allmaskarray.shape == ():
 		allmaskarray = None
-		print "no mask"
-
-#	apImage.arrayToJpeg(allmaskarray,'test.jpg')
 	
-	return allmaskarray,maskbin
+	return allmaskarray,maxbin
 	
 				
 
@@ -267,6 +279,7 @@ def makeInspectedMask(sessiondata,maskassessname,imgdata):
 if __name__ == '__main__':
 	assessrun = appiondb.direct_query(appionData.ApMaskAssessmentRunData,11)
 	sessiondata = assessrun['session']
-	imgdata = leginondb.direct_query(leginondata.AcquisitionImageData,500659)
+	imgdata = leginondb.direct_query(leginondata.AcquisitionImageData,500598)
+	print imgdata['filename']
 	maskarray,maskbin = makeInspectedMask(sessiondata,'run1',imgdata)
-	maskrun = appiondb.direct_query(appionData.ApMaskMakerRunData,44)
+#	maskrun = appiondb.direct_query(appionData.ApMaskMakerRunData,44)
