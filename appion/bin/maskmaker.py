@@ -3,6 +3,7 @@
 
 import sys
 import os
+import shutil
 import numpy
 ma = numpy.ma
 #appion
@@ -13,6 +14,7 @@ import apMask
 import appionData
 import apDatabase
 import apDisplay
+import apParam
 
 class MaskMaker(appionLoop.AppionLoop):
 	def setProcessingDirName(self):
@@ -37,6 +39,8 @@ class MaskMaker(appionLoop.AppionLoop):
 		self.params['no_length_prune']=False
 		self.params['stdev']=0.0
 		self.params['test']=False
+		self.params['bin']=4
+		self.params['diam']=0
 
 	def specialParamConflicts(self):
 		if self.params['masktype']=='crud':
@@ -46,9 +50,7 @@ class MaskMaker(appionLoop.AppionLoop):
 			self.params['no_length_prune']=False
 		elif self.params['masktype']=='aggr':
 			apDisplay.printMsg("Aggregate Mask by Convolution of Particles with Disk at Particle Size")
-			if float(self.params['binpixdiam']) < 20 :
-				apDisplay.printWarning("Particle too small, Probably Won't Work")
-			elif float(self.params['convolve'])<=0.0:
+			if float(self.params['convolve'])<=0.0:
 				apDisplay.printError("Convolution Threshold not set, Won't Work")
 			self.params['no_hull']=True
 			self.params['cv']=False
@@ -87,6 +89,8 @@ class MaskMaker(appionLoop.AppionLoop):
 			elements[0] = elements[0].lower()
 			if (elements[0]=='masktype'):
 				self.params['masktype']=elements[1]
+			elif (elements[0]=='diam'):
+				self.params['diam']=float(elements[1])
 			elif (elements[0]=='cruddiam'):
 				self.params['cdiam']=float(elements[1])
 			elif (elements[0]=='crudblur'):
@@ -115,7 +119,7 @@ class MaskMaker(appionLoop.AppionLoop):
 			elif (arg=='test'):
 				self.params['test']=True
 		if self.params['test']==True:
-			self.params['commit']=False			
+			self.params['commit']=False
 	
 	def insertFunctionRun(self):
 		if self.params is None:
@@ -161,12 +165,25 @@ class MaskMaker(appionLoop.AppionLoop):
 		self._createDirectory(regionpath,warning=False)
 		self.result_dirs = {'region':regionpath}
 
+	def postLoopFunctions(self):
+		if self.params['test']:
+			testsavepath=os.path.join(self.params['rundir'],"tests")
+			shutil.rmtree(testsavepath,ignore_errors=True)
+			shutil.copytree("./tests",testsavepath)
+			apParam.removefiles('./tests',('.jpg',))
+			try:
+				os.removedirs('./tests')
+			except:
+				apDisplay.printError('local test directory can not be removed')
+		return
+
 	def processImage(self,imgdata):
 		image = self.getImage(imgdata,self.params['bin'])
 		results=self.function(self.rundata, imgdata, image)
 		mask = results.pop('mask')
 		filepathname = os.path.join(self.params['rundir'],"masks",imgdata['filename']+"_mask.png")
-		apImage.arrayMaskToPngAlpha(mask, filepathname)
+		if mask is not None:
+			apImage.arrayMaskToPngAlpha(mask, filepathname)
 		return results
 		
 
