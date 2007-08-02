@@ -674,7 +674,7 @@ def makeMask(params,image):
 			if (len(goodregions)>0):
 				#pruning by standard deviation in the regions
 				if (stdev_t > 0):
-					stdev_limit=stdev_t*image.stdev
+					stdev_limit=stdev_t*image.std()
 					goodstdevs=pruneByStdev(allinfos,stdev_limit,goodareas)
 					goodregions=goodstdevs
 
@@ -717,7 +717,6 @@ def makeMask(params,image):
 			superimage=image*masklabel
 			testlog=outputTestImage(superimage,'output','Final Mask w/ image',testlog)
 			print testlog[2]
-			
 	return regioninfos,equalregions,
 
 def makeKeepMask(maskarray,keeplist1):
