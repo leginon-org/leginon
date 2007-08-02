@@ -74,7 +74,6 @@ def createDefaultParams(function=None):
 	params['cblur']=3.5
 	params['clo']=0.6
 	params['chi']=0.95
-	params['cstd']=1.0
 	params['cschi']=1.0
 	params['csclo']=0.0
 	params['convolve']=0.0
