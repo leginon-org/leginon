@@ -198,6 +198,21 @@ def createOutputDirs(params):
 
 	return params
 
+def removefiles(path,patterns):
+	allfiles = os.listdir(path)
+	files = allfiles[:]
+	for pattern in patterns:
+		files = filter((lambda x: x.find(pattern)>=0),files)
+	apDisplay.printWarning("d% files will be removed" % len(files))
+	for file in files:
+		fullpath = os.path.join(path,file)
+		try:
+			os.remove(fullpath)
+		except:
+			apDisplay.printError('%s can not be removed' % fullpath)
+
+		
+
 def checkParamConflicts(params):
 	#if not params['templateIds'] and not params['apix']:
 	#	apDisplay.printError("if not using templateIds, you must enter a template pixel size")
