@@ -97,11 +97,14 @@ def recordShift(params,img,sibling,peak):
 	return()
 
 def insertShift(img,sibling,peak):
+	if not sibling or not peak:
+		apDisplay.printWarning("No sibling or peak found. No database insert")
+		return()
 	shiftq=appionData.ApImageTransformationData()
 	shiftq['dbemdata|AcquisitionImageData|image1']=img.dbid
 	shiftdata=appiondb.query(shiftq)
 	if shiftdata:
-		print "Warning: Shift values already in database"
+		apDisplay.Warning("Shift values already in database")
 	else:
 		shiftq['dbemdata|AcquisitionImageData|image2']=sibling.dbid
 		shiftq['shiftx']=peak['shift'][1]
