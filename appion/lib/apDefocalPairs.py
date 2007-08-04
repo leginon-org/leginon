@@ -30,6 +30,9 @@ def getShiftFromImage(imgdata, params):
 	if sibling:
 		shiftpeak = getShift(imgdata, sibling)
 		recordShift(params, imgdata, sibling, shiftpeak)
+	else:
+		apDisplay.printWarning("No sibling found")
+		shiftpeak=None
 	return sibling, shiftpeak
 
 def getDefocusPair(imgdata):
