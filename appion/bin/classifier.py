@@ -279,6 +279,7 @@ def createOutDir(params):
 def createSpiderBatchFile(params):
 	scriptfile = os.path.join(params['appiondir'],"lib/norefalign.bat")
 	#scriptfile = "/ami/data07/recon_scripts/spider_scripts/norefali_3.bat"
+	maskpixrad = int(float(params['mask'])/params['apix']/2.0)
 	if not os.path.isfile(scriptfile):
 		apDisplay.printError("could not find spider script: "+scriptfile)
 	inf = open(scriptfile, "r")
@@ -310,11 +311,11 @@ def createSpiderBatchFile(params):
 					firstring = int(max(params['boxsize']/16-2,1))
 				outf.write(spiderline(96,firstring,"first ring radii"))
 			elif thr == "x95":
-				lastring = params['boxsize']/2 - 2
+				#lastring = params['boxsize']/2 - 2
+				lastring = maskpixrad - 2
 				outf.write(spiderline(95,lastring,"last ring radii"))
 			elif thr == "x94":
-				pixrad = int(float(params['mask'])/params['apix']/2.0)
-				outf.write(spiderline(94,pixrad,"mask radius (in pixels)"))
+				outf.write(spiderline(94,maskpixrad,"mask radius (in pixels)"))
 			elif thr == "x93":
 				outf.write(spiderline(93,params['numclasses'],"num classes (will get as close as possible)"))
 			elif thr == "x92":
