@@ -238,11 +238,12 @@ class particledata {
 #--------- MAKE STACK FUNCTIONS---------------#
 
   function getStackIds ($sessionId) {
-    $q = "SELECT r.`REF|ApStackData|stack` as stackid "
-        ."FROM ApRunsInStackData as r "
-        ."LEFT JOIN ApStackRunData as s ON "
-        ."(r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
-        ."WHERE s.`dbemdata|SessionData|session` = '$sessionId'"; 
+	$q = "SELECT r.`REF|ApStackData|stack` as stackid "
+		."FROM ApRunsInStackData as r "
+		."LEFT JOIN ApStackRunData as s ON "
+		."(r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
+		."WHERE s.`dbemdata|SessionData|session` = '$sessionId'"
+		."ORDER BY stackid DESC";
     $r = $this->mysql->getSQLResult($q);
     return $r;
   }
@@ -512,35 +513,37 @@ class particledata {
 #--------- REF-FREE ALIGNMENT FUNCTIONS---------------#
 
  function getNoRefIds ($sessionId) {
-	$q = "SELECT r.`DEF_id` "
-	."FROM ApNoRefRunData AS r "
-	."LEFT JOIN ApRunsInStackData AS s ON "
-	."(r.`REF|ApStackData|stack`=s.`REF|ApStackData|stack`) "
-	."LEFT JOIN ApStackRunData AS t ON "
-	."(s.`REF|ApStackRunData|stackRun`=t.`DEF_id`) "
-	."WHERE t.`dbemdata|SessionData|session` = '$sessionId'";
+	$q = "SELECT norefrun.`DEF_id` "
+		."FROM ApNoRefRunData AS norefrun "
+		."LEFT JOIN ApRunsInStackData AS stackdata ON "
+		."(norefrun.`REF|ApStackData|stack` = stackdata.`REF|ApStackData|stack`) "
+		."LEFT JOIN ApStackRunData AS stackrun ON "
+		."(stackdata.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id`) "
+		."WHERE stackrun.`dbemdata|SessionData|session` = '$sessionId' "
+		."ORDER BY norefrun.`DEF_id` DESC";
 	$r = $this->mysql->getSQLResult($q);
 	return $r;
  }
 
  function getNoRefParams ($norefId) {
 	$q = "SELECT * "
-	."FROM ApNoRefRunData as r "
-	."LEFT JOIN ApNoRefParamsData as p "
-	."ON (r.`REF|ApNoRefParamsData|norefParams`=p.`DEF_id`) "
-	//."LEFT JOIN ApStackData as sd "
-	//."ON (r.`REF|ApStackData|stack`=sd.`DEF_id`) "
-	//."LEFT JOIN `ApStackParamsData` sp "
-	//."ON (sp.`DEF_id` = s.`REF|ApStackParamsData|stackParams`) "
-	."WHERE r.`DEF_id` = '$norefId'";
+		."FROM ApNoRefRunData as r "
+		."LEFT JOIN ApNoRefParamsData as p "
+		."ON (r.`REF|ApNoRefParamsData|norefParams`=p.`DEF_id`) "
+		//."LEFT JOIN ApStackData as sd "
+		//."ON (r.`REF|ApStackData|stack`=sd.`DEF_id`) "
+		//."LEFT JOIN `ApStackParamsData` sp "
+		//."ON (sp.`DEF_id` = s.`REF|ApStackParamsData|stackParams`) "
+		."WHERE r.`DEF_id` = '$norefId'";
 	$r = $this->mysql->getSQLResult($q);
 	return $r[0];
  }
 
  function getNoRefClassRuns ($norefId) {
 	$q = "SELECT * "
-	."FROM ApNoRefClassRunData as cr "
-	."WHERE cr.`REF|ApNoRefRunData|norefRun` = '$norefId'";
+		."FROM ApNoRefClassRunData as cr "
+		."WHERE cr.`REF|ApNoRefRunData|norefRun` = '$norefId'"
+		."ORDER BY cr.`num_classes`";
 	$r = $this->mysql->getSQLResult($q);
 	return $r;
  }
