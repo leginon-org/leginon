@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.25 2007-06-14 17:45:43 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.26 2007-08-07 21:54:52 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -38,7 +38,6 @@ static int le_mrc;
 function_entry mrc_functions[] = {
 	ZEND_FE(gdimageinfo, NULL)
 	ZEND_FE(imagegaussianfilter, NULL)
-	ZEND_FE(imagelogscale, NULL)
 	ZEND_FE(imagehistogram, NULL)
 #ifdef HAVE_FFTW
 	ZEND_FE(imagefftw, NULL)
@@ -287,32 +286,6 @@ ZEND_FUNCTION(imagegaussianfilter)
 
 	RETURN_TRUE;
 }
-
-
-/**
- * scale an image with log
- *
- * Description:
- * bool imagelogscale ( resource image )
- */
-ZEND_FUNCTION(imagelogscale)
-{
-	zval **imgind;
-	gdImagePtr im_src;
-	int argc = ZEND_NUM_ARGS();
-
-	if (argc != 1 ) 
-	{
-		WRONG_PARAM_COUNT;
-	} 
-	zend_get_parameters_ex(argc, &imgind);
-
-	ZEND_FETCH_RESOURCE(im_src, gdImagePtr, imgind, -1, "Image", le_gd);
-
-	gdLogScale(im_src);
-	RETURN_TRUE;
-}
-
 
 /** imagehistogram(resource image) */
 ZEND_FUNCTION(imagehistogram)

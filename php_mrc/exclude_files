@@ -19,3 +19,5 @@ mrc/config.m4.org
 mrc/config.w32
 mrc/mrc.php
 mrc/testmrc.sh
+mrc/logger.c
+mrc/logger.h
