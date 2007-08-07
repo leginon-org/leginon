@@ -1,0 +1,51 @@
+#!/usr/bin/env python
+
+import mrc
+import jpg
+import os
+import glob
+
+def convert(mrcfilename, jpgfilename=None, clobber=False, verbose=True, **kwargs):
+	'''
+Convert a MRC file to a JPEG file.
+
+Usage:
+	convert(mrcfilename, jpgfilename)
+
+	jpgfilename is optional.  If not specified, it defaults to the
+	original with 'mrc' replaced with 'jpg'.
+
+	Optional arguments can be used to specify details of the JPEG file.
+	See jpg module help for more info.
+	'''
+
+	if jpgfilename is None:
+		jpgfilename = convert_filename(mrcfilename)
+	if os.path.lexists(jpgfilename) and not clobber:
+		return
+	a = mrc.read(mrcfilename)
+	jpg.write(a, jpgfilename, **kwargs)
+	if verbose:
+		print jpgfilename
+
+def convert_filename(mrcfilename):
+	base, ext = os.path.splitext(mrcfilename)
+	if ext.lower() != '.mrc':
+		raise RuntimeError('MRC filename must have .mrc extension')
+	jpgfilename = base + '.jpg'
+	return jpgfilename
+
+
+if __name__ == '__main__':
+	import sys
+	mrcfilename = sys.argv[1]
+
+	if os.path.isdir(sys.argv[1]):
+		## convert whole directory of mrc files
+		globstr = os.path.join(mrcfilename, '*.mrc')
+		mrcfilenames = glob.glob(globstr)
+	else:
+		## convert list of mrc files
+		mrcfilenames = sys.argv[1:]
+	for mrcfilename in mrcfilenames:
+		convert(mrcfilename)
