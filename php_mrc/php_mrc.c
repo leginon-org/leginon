@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.26 2007-08-07 21:54:52 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.27 2007-08-07 23:17:55 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -179,7 +179,7 @@ PHP_MINFO_FUNCTION(mrc)
 {
 	php_info_print_table_start();
 	php_info_print_table_header(2, "mrc support", "enabled");
-	php_info_print_table_row(2, "Version", "1.3");
+	php_info_print_table_row(2, "Version", "1.4");
 #if HAVE_FFTW
 	php_info_print_table_row(2, "FFTW support", "enabled");
 #else
