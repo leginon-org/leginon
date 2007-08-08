@@ -51,6 +51,12 @@ try:
 except:
 	pass
 
+try:
+	import tia
+	register(tia)
+except:
+	pass
+
 import simtem
 register(simtem)
 
