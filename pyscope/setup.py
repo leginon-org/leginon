@@ -21,7 +21,7 @@ else:
 
 setup(
 	name='pyScope',
-	version='1.0.7',
+	version='1.0.8',
 	description='Interface to Electron Microscopes and CCD Cameras',
 	packages=['pyScope'],
 	package_dir={'pyScope': ''},
