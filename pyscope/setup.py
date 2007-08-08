@@ -11,7 +11,7 @@ if sys.platform == 'win32':
 		library_dirs=['%s/win32/libs' % pl, '%s/win32com/libs' % pl],
 		sources=['NumSafeArray/NumpySafeArray.cpp']
 	)
-	ext_modules = [numarraysafearray, numpysafearray]
+	ext_modules = [numpysafearray]
 	ext_package = 'pyScope'
 	scripts = ['install-pyscope.py']
 else:
