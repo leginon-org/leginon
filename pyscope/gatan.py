@@ -14,10 +14,10 @@ try:
     import pythoncom
     import pywintypes
     import win32com.client
-    #try:
-    #    import NumSafeArray
-    #except ImportError:
-    #    from pyScope import NumSafeArray
+    try:
+        import NumpySafeArray
+    except ImportError:
+        from pyScope import NumpySafeArray
 except ImportError:
     pass
 
@@ -116,27 +116,18 @@ class Gatan(ccdcamera.CCDCamera):
                 if self.getInserted():
                     self.setInserted(False)
 
-                    ## without NumSafeArray, we just convert tuple to array
-                    #image = NumSafeArray.call(self.camera, 'AcquireRawImage')
-                    image = self.camera.AcquireRawImage()
-                    image = numpy.array(image)
+                    image = NumpySafeArray.call(self.camera, 'AcquireRawImage')
 
                     self.setInserted(True)
                     return image
             else:
                 exposuretime = self.getExposureTime()
                 self.setExposureTime(0)
-                ## without NumSafeArray, we just convert tuple to array
-                #image = NumSafeArray.call(self.camera, 'AcquireRawImage')
-                image = self.camera.AcquireRawImage()
-                image = numpy.array(image)
+                image = NumpySafeArray.call(self.camera, 'AcquireRawImage')
                 self.setExposureTime(exposuretime)
                 return image
         try:
-            ## without NumSafeArray, we just convert tuple to array
-            #image = NumSafeArray.call(self.camera, 'AcquireRawImage')
-            image = self.camera.AcquireRawImage()
-            image = numpy.array(image)
+            image = NumpySafeArray.call(self.camera, 'AcquireRawImage')
             return image
         except pywintypes.com_error, e:
             raise ValueError('invalid image dimensions')
