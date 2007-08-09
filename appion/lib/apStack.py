@@ -1,4 +1,3 @@
-#! /usr/bin/env python -O
 # stack functions
 
 import os, sys

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Python functions for selexon.py
 
 import os, re, sys
