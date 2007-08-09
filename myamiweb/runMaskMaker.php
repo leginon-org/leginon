@@ -182,7 +182,6 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
  
 
 	$particle=new particleData;
-	$maskruns = count($particle->getMaskMakerRunIds($sessionId));
 	$javascript="
 	<script src='js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
@@ -220,32 +219,19 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 			 newwindow.document.close();
 		 }
 	</SCRIPT>\n";
-	appionLoopJavaCommands();
+	$javascript.=appionLoopJavaCommands();
 	maskMakerJavaCommands();
 	writeTop($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+		echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
 	}
 	echo"
 	<form name='viewerform' method='POST' ACTION='$formAction'>
 	<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
 	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 	$sessioninfo=$sessiondata['info'];
-	$presets=$sessiondata['presets'];
-	if (!empty($sessioninfo)) {
-		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
-		$sessionpath=ereg_replace("rawdata","mask/",$sessionpath);
-		$sessionname=$sessioninfo['Name'];
-	}
 
-
-	// if session is changed, change the output directory
-	$sessionpathval=(($_POST['sessionId']==$_POST['lastSessionId'] || $expId) && $_POST['lastSessionId']) ? $_POST['outdir'] : $sessionpath;
-	// Set any existing parameters in form
-	$runidval = ($_POST['runid']) ? $_POST['runid'] : 'maskrun'.($maskruns+1);
-	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
 	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
@@ -257,29 +243,10 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 	<P>
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
-		<TD VALIGN='TOP'>
-			<A HREF=\"javascript:infopopup('runid')\"><B>Run Name:</B></A>
-			<INPUT TYPE='text' NAME='runid' VALUE='$runidval'><BR>
-			<BR>
-     
-			<B>Output Directory:</B><BR>
-			<INPUT TYPE='text' NAME='outdir' VALUE='$sessionpathval' SIZE='45'><BR>
-			<BR>\n";
-
-	if ($presets) {
-		echo"<B>Preset</B>\n<SELECT NAME='preset'>\n";
-		foreach ($presets as $preset) {
-			echo "<OPTION VALUE='$preset' ";
-			// make en selected by default
-			if ($preset==$presetval) echo "SELECTED";
-			echo ">$preset</OPTION>\n";
-		}
-		echo"</SELECT><BR><BR>\n";
-	}
-	else {
-		echo"<FONT COLOR='RED'><B>No Presets for this Session</B></FONT><BR><BR>\n";
-	}
-	createAppionLoopTable();
+		<TD VALIGN='TOP'>";
+	$maskruns=count($particle->getMaskMakerRunIds($sessionId));
+	$defrunid = ($_POST['runid']) ? $_POST['runid'] : 'maskrun'.($maskruns+1);
+	createAppionLoopTable($sessiondata, $defrunid, "mask");
 	echo"
 		</TD>
 		<TD CLASS='tablebg'>
@@ -329,7 +296,6 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 	</TD>
 	</TR>
 	</TABLE>\n";
-	echo "<INPUT TYPE='hidden' NAME='sessionname' VALUE='$sessionname'>\n";
 	?>
 
 	</CENTER>
@@ -339,24 +305,7 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 }
 function runMaskMaker() {
 	$process = $_POST['process'];
-	$host = $_POST['host'];
-	$user = $_POST['user'];
-	$password = $_POST['password'];
-	if ($_POST['process']=="Run MaskMaker" && !($user && $password)) {
-		createMMForm("<B>ERROR:</B> Enter a user name and password");
-	}
 
-	//make sure a session was selected
-	if (!$_POST[outdir]) {
-		createMMForm("<B>ERROR:</B> Select an experiment session");
-		exit;
-	}
-	$outdir=$_POST[outdir];
-	// make sure outdir ends with '/'
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$runid=$_POST[runid];
-
-  
 	$diam = $_POST[diam];
 	if (!$diam) {
 		createMMForm("<B>ERROR:</B> Specify a particle diameter");
@@ -375,49 +324,43 @@ function runMaskMaker() {
 		exit;
 	}
 
-	if ($_POST['testimage']=="on") {
-		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
-		else {
-			createMMForm("<B>ERROR:</B> Specify an mrc file to test these parameters");
-			exit;
-		}
+	$command="maskmaker.py ";
+	$apcommand = parseAppionLoopParams($_POST);
+	if ($apcommand[0] == "<") {
+		createMMForm($apcommand);
+		exit;
 	}
-	elseif ($_POST['sessionname']) {
-		if ($_POST['preset']) $dbimages=$_POST[sessionname].",".$_POST[preset];
-		else {
-			createMMForm("<B>ERROR:</B> Select an image preset for template matching");
-			exit;
-		}
-	}
-
-	if ($testimage && $_POST['process']=="Run MaskMaker") {
-		$command.="source /ami/sw/ami.csh;";
-		$command.="source /ami/sw/share/python/usepython.csh cvs32;";
-	}
-	$command.="maskmaker.py ";
-	if ($testimage) {
-		$command.="$testimage ";
-		$command.="test ";
-	}
-	else $command.="dbimages=$dbimages ";
-	$command.="runid=$runid ";
-	$command.="outdir=$outdir ";
-	$command .= parseAppionLoopParams($_POST);
-	$command.=" diam=$diam";
-	$command.=" cruddiam=$cdiam";
+	$command .= $apcommand;
+	$command .=" diam=$diam";
+	$command .=" cruddiam=$cdiam";
 	$command .= parseMaskMakerParams($_POST);
 
-	$cmd = "$command > maskMakerLog.txt";
+	if ($_POST['testimage']=="on") {
+		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
+	}
 
 	if ($testimage && $_POST['process']=="Run MaskMaker") {
+		$host = $_POST['host'];
+		$user = $_POST['user'];
+		$password = $_POST['password'];
+		if (!($user && $password)) {
+			createDogPickerForm("<B>ERROR:</B> Enter a user name and password");
+			exit;
+		}
+		$command="source /ami/sw/ami.csh;".$command;
+		$command="source /ami/sw/share/python/usepython.csh cvs32;".$command;
+		$cmd = "$command > maskMakerLog.txt";
 		$result=exec_over_ssh($host, $user, $password, $cmd, True);
 	}
 
 	writeTop("Bad Region Detection Results","Bad Region Detection Results",$javascript);
 
 	if ($testimage) {
-		echo  " <B>MaskMaker Command:</B><BR>
-$command<HR>";
+		$outdir=$_POST[outdir];
+		// make sure outdir ends with '/'
+		if (substr($outdir,-1,1)!='/') $outdir.='/';
+		$runid=$_POST[runid];
+		echo  " <B>MaskMaker Command:</B><BR>$command<HR>";
 		$testjpg=ereg_replace(".mrc","",$testimage);
 		$testdir=$outdir.$runid."/tests/";
         	if (file_exists($testdir)) {
@@ -441,6 +384,7 @@ $command<HR>";
 		createMMForm($images,'Particle Selection Results','');
 		exit;
 	}
+
 
 	echo"
   <P>

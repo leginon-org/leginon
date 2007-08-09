@@ -31,6 +31,14 @@ else {
 	createTemplateForm();
 }
 
+/*
+**
+**
+** TEMPLATE SELECT FORM
+**
+**
+*/
+
 function createTemplateForm() {
 	// check if coming directly from a session
 	$expId = $_GET[expId];
@@ -141,7 +149,17 @@ function createTemplateForm() {
 	echo"</FORM>\n";
 }
 
-function createTCForm($extra=false, $title='Template Correlator Launcher', $heading='Automated Particle Selection with Template Correlator') {
+/*
+**
+**
+** MAIN FORM
+**
+**
+*/
+
+function createTCForm($extra=false, $title='Template Correlator Launcher' , $heading='Automated Particle Selection with Template Correlator' ) {
+
+
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
 	if ($expId) {
@@ -156,7 +174,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher', $head
 
 	// --- find hosts to run Template Correlator
 	$hosts=getHosts();
- 
+
 	$numtemplates=$_POST[numtemplates];
 	$templateForm='';
 	$templateTable="<TABLE CLASS='tableborder'><TR><TD>\n";
@@ -208,7 +226,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher', $head
 		echo "<B>no templates chosen, go back and choose templates</B>\n";
 		exit;
 	}
-	$javascript="
+	$javafunctions="
 	<script src='js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
 		 function enabledtest(){
@@ -221,56 +239,22 @@ function createTCForm($extra=false, $title='Template Correlator Launcher', $head
 				 document.viewerform.testfilename.value='mrc file name';
 			 }
 		 }
-		 function enable(thresh){
-			 if (thresh=='auto') {
-				 document.viewerform.autopik.disabled=false;
-				 document.viewerform.autopik.value='';
-				 document.viewerform.thresh.disabled=true;
-				 document.viewerform.thresh.value='0.4';
-			 }
-			 if (thresh=='manual') {
-				 document.viewerform.thresh.disabled=false;
-				 document.viewerform.thresh.value='';
-				 document.viewerform.autopik.disabled=true;
-				 document.viewerform.autopik.value='100';
-			 }
-		 }
-		 function infopopup(infoname){
-			 var newwindow=window.open('','name','height=150,width=300');
-			 newwindow.document.write('<HTML><BODY>');
-			 if (infoname=='runid'){
-				 newwindow.document.write('Specifies the name associated with the Template Correlator results unique to the specified session and parameters.	An attempt to use the same run name for a session using different Template Correlator parameters will result in an error.');
-			 }
-			 newwindow.document.write('</BODY></HTML>');
-			 newwindow.document.close();
-		 }
 	</SCRIPT>\n";
-	appionLoopJavaCommands();
-   particleLoopJavaCommands();
-	writeTop($title,$heading,$javascript);
+	$javafunctions .= appionLoopJavaCommands();
+	$javafunctions .= particleLoopJavaCommands();
+	writeTop($title,$heading,$javafunctions);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+		echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
 	}
 	echo"
 	<form name='viewerform' method='POST' ACTION='$formAction'>
 	<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
 	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 	$sessioninfo=$sessiondata['info'];
-	$presets=$sessiondata['presets'];
-	if (!empty($sessioninfo)) {
-		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
-		$sessionpath=ereg_replace("rawdata","extract/",$sessionpath);
-		$sessionname=$sessioninfo['Name'];
-	}
 
-
-	// if session is changed, change the output directory
-	$sessionpathval=(($_POST['sessionId']==$_POST['lastSessionId'] || $expId) && $_POST['lastSessionId']) ? $_POST['outdir'] : $sessionpath;
 	// Set any existing parameters in form
-	$runidval = ($_POST['runid']) ? $_POST['runid'] : 'tmplrun'.($prtlruns+1);
-	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
+	$defrunid = ($_POST['runid']) ? $_POST['runid'] : 'tmplrun'.($prtlruns+1);
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
 	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
@@ -279,39 +263,18 @@ function createTCForm($extra=false, $title='Template Correlator Launcher', $head
 	<P>
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
-		<TD VALIGN='TOP'>
-			<A HREF=\"javascript:infopopup('runid')\"><B>Run Name:</B></A>
-			<INPUT TYPE='text' NAME='runid' VALUE='$runidval'><BR>
-			<BR>
-     
-			<B>Output Directory:</B><BR>
-			<INPUT TYPE='text' NAME='outdir' VALUE='$sessionpathval' SIZE='45'><BR>
-			<BR>\n";
-
-	if ($presets) {
-		echo"<B>Preset</B>\n<SELECT NAME='preset'>\n";
-		foreach ($presets as $preset) {
-			echo "<OPTION VALUE='$preset' ";
-			// make en selected by default
-			if ($preset==$presetval) echo "SELECTED";
-			echo ">$preset</OPTION>\n";
-		}
-		echo"</SELECT><BR><BR>\n";
-	}
-	else {
-		echo"<INPUT TYPE='hidden' NAME='alldbimages' VALUE=1>\n";
-		echo"<FONT COLOR='RED' SIZE=+1><B>No Presets for this Session</B></FONT><BR><BR>\n";
-	}
-	createAppionLoopTable();
+		<TD VALIGN='TOP'>";
+	createAppionLoopTable($sessiondata, $defrunid, "extract");
+	$diam = ($_POST['diam']) ? $_POST['diam'] : "";
 	echo"
 		</TD>
 		<TD CLASS='tablebg'>
 			<B>Mask Diameter:</B><BR>
 			<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>&nbsp;
-			Mask diameter for template <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
+			Mask diameter for template(s) <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
 			<BR><BR>";
-		createParticleLoopTable(0.5,"");
-		echo "
+	createParticleLoopTable(0.5,"",$_POST);
+	echo "
 		</TD>
 	</TR>
 	<TR>
@@ -353,7 +316,6 @@ function createTCForm($extra=false, $title='Template Correlator Launcher', $head
 	echo "<INPUT TYPE='hidden' NAME='templateList' VALUE='$templateList'>\n";
 	echo "<INPUT TYPE='hidden' NAME='templates' VALUE='continue'>\n";
 	echo "<INPUT TYPE='hidden' NAME='numtemplates' VALUE='$numtemplates'>\n";
-	echo "<INPUT TYPE='hidden' NAME='sessionname' VALUE='$sessionname'>\n";
 	echo "$templateForm\n";
 	echo "$templateTable\n";
 	?>
@@ -366,25 +328,106 @@ function createTCForm($extra=false, $title='Template Correlator Launcher', $head
 	writeBottom();
 }
 
+/*
+**
+**
+** RUN THE FUNCTION
+**
+**
+*/
 
 function runTemplateCorrelator() {
-	$host = $_POST['host'];
-	$user = $_POST['user'];
-	$password = $_POST['password'];
-	if ($_POST['process']=="Run Correlator" && !($user && $password)) {
-		createTCForm("<B>ERROR:</B> Enter a user name and password");
-	}
+	$command .="templateCorrelator.py ";
+	$command .= templateCommand();
 
-	//make sure a session was selected
-	if (!$_POST[outdir]) {
-		createTCForm("<B>ERROR:</B> Select an experiment session");
+	$apcommand = parseAppionLoopParams($_POST);
+	if ($apcommand[0] == "<") {
+		createTCForm($apcommand);
 		exit;
 	}
-	$outdir=$_POST[outdir];
-	// make sure outdir ends with '/'
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$runid=$_POST[runid];
+	$command .= $apcommand;
 
+	$partcommand = parseParticleLoopParams($_POST);
+	if ($partcommand[0] == "<") {
+		createTCForm($partcommand);
+		exit;
+	}
+	$command .= $partcommand;
+
+	if ($_POST['testimage']=="on") {
+		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
+	}
+
+	if ($testimage && $_POST['process']=="Run Correlator") {
+		$host = $_POST['host'];
+		$user = $_POST['user'];
+		$password = $_POST['password'];
+		if (!($user && $password)) {
+			createTCForm("<B>ERROR:</B> Enter a user name and password");
+			exit;
+		}
+		$prefix =  "source /ami/sw/ami.csh;";
+		$prefix .= "source /ami/sw/share/python/usepython.csh cvs32;";
+		$cmd = "$prefix $command > templateCorrelatorLog.txt";
+		$result=exec_over_ssh($host, $user, $password, $cmd, True);
+	}
+
+	writeTop("Particle Selection Results","Particle Selection Results");
+
+	if ($testimage) {
+		$runid = $_POST[runid];
+		$outdir = $_POST[outdir];
+		if (substr($outdir,-1,1)!='/') $outdir.='/';
+		echo  " <B>Template Correlator Command:</B><BR/>$command";
+		$testjpg=ereg_replace(".mrc","",$testimage);
+		$jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
+		$ccclist=array();
+		$i=1;
+		$templateList=$_POST[templateList];
+		$templates=split(",", $templateList);
+		foreach ($templates as $tmplt) {
+   			$cccimg=$outdir.$runid."/ccmaxmaps/".$testjpg.".ccmaxmap".$i.".jpg";
+			$ccclist[]=$cccimg;
+			$i++;
+		}
+		$images=writeTestResults($jpgimg,$ccclist);
+		createTCForm($images,'Particle Selection Results','');
+		exit;
+	}
+
+	echo"
+	<P>
+	<TABLE WIDTH='600'>
+		<TR><TD COLSPAN='2'>
+		<B>Template Correlator Command:</B><BR>
+		</TD></TR>
+		<TR><TD>outdir</TD><TD>$outdir</TD></TR>
+		<TR><TD>templateIds</TD><TD>$templateIds</TD></TR>";
+/*
+	foreach ($ranges as $rangenum=>$rangevals) {
+		echo "<TR><TD>$rangenum</TD><TD>$rangevals</TD></TR>\n";
+	}
+*/
+	echo"<TR><TD>runid</TD><TD>$runid</TD></TR>
+		<TR><TD>testimage</TD><TD>$testimage</TD></TR>
+		<TR><TD>dbimages</TD><TD>$dbimages</TD></TR>
+		<TR><TD>diameter</TD><TD>$diam</TD></TR>";
+	appionLoopSummaryTable($_POST);
+	particleLoopSummaryTable($_POST);
+	echo"</TABLE>\n";
+	writeBottom();
+}
+
+/*
+**
+**
+** GENERATE COMMANDLINE INFO FOR TEMPLATES
+**
+**
+*/
+
+function templateCommand () {
+	$command = "";
 	// get the list of templates
 	$i=1;
 	$templateList=$_POST[templateList];
@@ -408,96 +451,22 @@ function runTemplateCorrelator() {
 		$i++;
 	}
 	$templateIds=substr($templateIds,0,-1);
-  
-	$diam = $_POST[diam];
-	if (!$diam) {
-		createTCForm("<B>ERROR:</B> Specify a particle diameter");
-		exit;
-	}
 
-	$thresh = $_POST[thresh];
-	if (!$thresh) {
-		createTCForm("<B>ERROR:</B> No thresholding value was entered");
-		exit;
-	}
-
-	if ($_POST['testimage']=="on") {
-		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
-		else {
-			createTCForm("<B>ERROR:</B> Specify an mrc file to test these parameters");
-			exit;
-		}
-	}
-	elseif ($_POST['sessionname']) {
-		if ($_POST['preset']) $dbimages=$_POST[sessionname].",".$_POST[preset];
-		elseif(!$_POST['alldbimages']) {
-			createTCForm("<B>ERROR:</B> Select an image preset for template matching");
-			exit;
-		}
-	}
-
-	if ($testimage && $_POST['process']=="Run Correlator") {
-		$command.="source /ami/sw/ami.csh;";
-		$command.="source /ami/sw/share/python/usepython.csh cvs32;";
-	}
-	$command.="templateCorrelator.py ";
-	if ($testimage) $command.="$testimage ";
-	else $command.="dbimages=$dbimages ";
 	$command.="templateIds=$templateIds ";
 	foreach ($ranges as $rangenum=>$rangevals) {
 		$command.="$rangenum=$rangevals ";
 	}
-	$command.="runid=$runid ";
-	$command.="outdir=$outdir ";
-	$command.="diam=$diam ";
-	$command .= parseAppionLoopParams($_POST);
-	$command .= parseParticleLoopParams($_POST);
 
-	$cmd = "$command > templateCorrelatorLog.txt";
-	if ($testimage && $_POST['process']=="Run Correlator") {
-		$result=exec_over_ssh($host, $user, $password, $cmd, True);
-	}
-
-	writeTop("Particle Selection Results","Particle Selection Results");
-
-	if ($testimage) {
-		echo  " <B>Template Correlator Command:</B><BR>
-$command";
-		$testjpg=ereg_replace(".mrc","",$testimage);
-		$jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
-		$ccclist=array();
-		$i=1;
-		foreach ($templates as $tmplt) {
-   			$cccimg=$outdir.$runid."/ccmaxmaps/".$testjpg.".ccmaxmap".$i.".jpg";
-			$ccclist[]=$cccimg;
-			$i++;
-		}
-		$images=writeTestResults($jpgimg,$ccclist);
-		createTCForm($images,'Particle Selection Results','');
-		exit;
-	}
-
-	echo"
-  <P>
-  <TABLE WIDTH='600'>
-  <TR><TD COLSPAN='2'>
-  <B>Template Correlator Command:</B><BR>
-  $command<HR>
-  </TD></TR>
-  <TR><TD>outdir</TD><TD>$outdir</TD></TR>
-  <TR><TD>templateIds</TD><TD>$templateIds</TD></TR>";
-	foreach ($ranges as $rangenum=>$rangevals) {
-		echo "<TR><TD>$rangenum</TD><TD>$rangevals</TD></TR>\n";
-	}
-	echo"<TR><TD>runid</TD><TD>$runid</TD></TR>
-  <TR><TD>testimage</TD><TD>$testimage</TD></TR>
-  <TR><TD>dbimages</TD><TD>$dbimages</TD></TR>
-  <TR><TD>diameter</TD><TD>$diam</TD></TR>";
-	appionLoopSummaryTable();
-	particleLoopSummaryTable();
-	echo"</TABLE>\n";
-	writeBottom();
+	return $command;
 }
+
+/*
+**
+**
+** TEST RESULTS
+**
+**
+*/
 
 function writeTestResults($jpg,$ccclist){
 	echo"<CENTER>\n";

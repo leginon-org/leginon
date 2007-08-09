@@ -28,7 +28,6 @@ else {
 
 function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $heading='Automated Particle Selection with DoG Picker') {
 
-
 	// check if coming directly from a session
    $expId = $_GET['expId'];
 	if ($expId) {
@@ -42,39 +41,8 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	$projectId=$_POST['projectId'];
 
 	// --- find hosts to run Dog Picker
-	$hosts=getHosts();
 
-	$particle=new particleData;
-	$prtlruns = count($particle->getParticleRunIds($sessionId));
-   writeTop("DoG Picker Launcher","Automated Particle Selection with DoG Picker",$javafunctions);
-	if ($extra) {
-		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
-	}
-	echo"
-	<form name='viewerform' method='POST' ACTION='$formAction'>
-	<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
-
-	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
-	$sessioninfo=$sessiondata['info'];
-	$presets=$sessiondata['presets'];
-	if (!empty($sessioninfo)) {
-		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
-		$sessionpath=ereg_replace("rawdata","extract/",$sessionpath);
-		$sessionname=$sessioninfo['Name'];
-	}
-
-
-	// if session is changed, change the output directory
-	$sessionpathval=(($_POST['sessionId']==$_POST['lastSessionId'] || $expId) && $_POST['lastSessionId']) ? $_POST['outdir'] : $sessionpath;
-	// Set any existing parameters in form
-	$runidval = ($_POST['runid']) ? $_POST['runid'] : 'dogrun'.($prtlruns+1);
-	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
-	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
-	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
-	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
-
-	echo"
+	$javafunctions="
         <script src='js/viewer.js'></script>
         <script LANGUAGE='JavaScript'>
                  function enabledtest(){
@@ -87,56 +55,36 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
                                  document.viewerform.testfilename.value='mrc file name';
                          }
                  }
-                 function enabledcont(val){
-                         if (val==1) {
-                                 document.viewerform.nocontinue.disabled=true;
-                         }	
-                         if (val==2) {
-                                 document.viewerform.apcontinue.disabled=true;
-                         }
-                         else {
-                                 document.viewerform.apcontinue.disabled=false;
-                                 document.viewerform.nocontinue.disabled=false;
-                         }	
-                 }
-                 function infopopup(infoname){
-                         var newwindow=window.open('','name','height=150,width=300');
-                         newwindow.document.write('<HTML><BODY>');
-                         if (infoname=='runid'){
-                                 newwindow.document.write('Specifies the name associated with the Template Correlator results unique to the specified session and parameters.        An attempt to use the same run name for a session using different Template Correlator parameters will result in an error.');
-                         }
-                         newwindow.document.write('</BODY></HTML>');
-                         newwindow.document.close();
-                 }
         </SCRIPT>\n";
-	appionLoopJavaCommands();
-   particleLoopJavaCommands();
+	$javafunctions .= appionLoopJavaCommands();
+	$javafunctions .= particleLoopJavaCommands();
+	writeTop("DoG Picker Launcher","Automated Particle Selection with DoG Picker",$javafunctions);
+
+	if ($extra) {
+		echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
+	}
+	echo"
+	<form name='viewerform' method='POST' ACTION='$formAction'>
+	<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
+
+	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+
+	// Set any existing parameters in form
+	$particle=new particleData;
+	$prtlruns = count($particle->getParticleRunIds($sessionId));
+	$defrunid = ($_POST['runid']) ? $_POST['runid'] : 'dogrun'.($prtlruns+1);
+	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
+	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
+	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
+	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
 
 	echo"
 	<P>
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
-		<TD VALIGN='TOP'>
-		<A HREF=\"javascript:infopopup('runid')\"><B>Run Name:</B></A>
-		<INPUT TYPE='text' NAME='runid' VALUE='$runidval'><BR>
-		<BR>
-
-		<B>Output Directory:</B><BR>
-		<INPUT TYPE='text' NAME='outdir' VALUE='$sessionpathval' SIZE='45'><BR>
-		<BR>\n";
-	if ($presets) {
-		echo"<B>Preset</B>\n<SELECT NAME='preset'>\n";
-		foreach ($presets as $preset) {
-			echo "<OPTION VALUE='$preset' ";
-			// make en selected by default
-			if ($preset==$presetval) echo "SELECTED";
-			echo ">$preset</OPTION>\n";
-		}
-		echo"</SELECT>";
-	} else {
-		echo"<FONT COLOR='RED'><B>No Presets for this Session</B></FONT>\n";
-	}
-	createAppionLoopTable();
+		<TD VALIGN='TOP'>";
+	createAppionLoopTable($sessiondata, $defrunid, "extract");
+	$diam = ($_POST['diam']) ? $_POST['diam'] : "";
 	echo"
 		<TD CLASS='tablebg'>
 		<B>Particle Diameter:</B><BR>
@@ -160,6 +108,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		<TD COLSPAN='2' ALIGN='CENTER'>
 		Host: <select name='host'>\n";
 
+	$hosts=getHosts();
 	foreach($hosts as $host) {
 		$s = ($_POST['host']==$host) ? 'selected' : '';
 		echo "<option $s >$host</option>\n";
@@ -172,110 +121,78 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		</select>
 		<BR>
 		<input type='submit' name='process' value='Just Show Command'>
-		<input type='submit' name='process' value='Run Correlator'><BR>
+		<input type='submit' name='process' value='Run DogPicker'><BR>
 		<FONT COLOR='RED'>Submission will NOT run Dog Picker, only output a command that you can copy and paste into a unix shell</FONT>
 		</TD>
 	</TR>
 	</TABLE>";
-	echo "<INPUT TYPE='hidden' NAME='sessionname' VALUE='$sessionname'>\n";
+	writeBottom();
 	?>
-		</TD>
-	</TR></TABLE>
 
 	</CENTER>
 	</FORM>
 	<?
-	writeBottom();
 }
 
 function runDogPicker() {
-	$host = $_POST['host'];
-	$user = $_POST['user'];
-	$password = $_POST['password'];
-	if ($_POST['process']=="Run Correlator" && !($user && $password)) {
-		createDogPickerForm("<B>ERROR:</B> Enter a user name and password");
-	}
-	//make sure a session was selected
-	if (!$_POST[outdir]) {
-		createDogPickerForm("<B>ERROR:</B> Select an experiment session");
-		exit;
-	}
-	$outdir=$_POST[outdir];
-	// make sure outdir ends with '/'
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$runid=$_POST[runid];
-  
-	$diam = $_POST[diam];
-	if (!$diam) {
-		createDogPickerForm("<B>ERROR:</B> Specify a particle diameter");
-		exit;
-	}
 
-	$thresh = $_POST[thresh];
-	if (!$thresh) {
-		createDogPickerForm("<B>ERROR:</B> No thresholding value was entered");
+	$command.="dogPicker.py ";
+	$apcommand = parseAppionLoopParams($_POST);
+	if ($apcommand[0] == "<") {
+		createDogPickerForm($apcommand);
 		exit;
 	}
+	$command .= $apcommand;
+
+	$partcommand = parseParticleLoopParams($_POST);
+	if ($partcommand[0] == "<") {
+		createDogPickerForm($partcommand);
+		exit;
+	}
+	$command .= $partcommand;
 
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
-		else {
-			createDogPickerForm("<B>ERROR:</B> Specify an mrc file to test these parameters");
-			exit;
-		}
-	}
-	elseif ($_POST['sessionname']) {
-		if ($_POST['preset']) $dbimages=$_POST[sessionname].",".$_POST[preset];
-		else {
-			createDogPickerForm("<B>ERROR:</B> Select an image preset");
-			exit;
-		}
 	}
 
-	if ($testimage && $_POST['process']=="Run Correlator") {
-		$command.="source /ami/sw/ami.csh;";
-		$command.="source /ami/sw/share/python/usepython.csh cvs32;";
-	}
-	$command.="dogPicker.py ";
-	if ($testimage) $command.="$testimage ";
-	else $command.="dbimages=$dbimages ";
-	$command.="runid=$runid ";
-	$command.="outdir=$outdir ";
-	$command.="diam=$diam ";
-	$command .= parseAppionLoopParams($_POST);
-	$command .= parseParticleLoopParams($_POST);
-
-	$cmd = "$command > dogPickerLog.txt";
-	echo $command;
-	if ($testimage && $_POST['process']=="Run DoG Picker") {
+	if ($testimage && $_POST['process']=="Run DogPicker") {
+		$host = $_POST['host'];
+		$user = $_POST['user'];
+		$password = $_POST['password'];
+		if (!($user && $password)) {
+			createDogPickerForm("<B>ERROR:</B> Enter a user name and password");
+			exit;
+		}
+		$prefix =  "source /ami/sw/ami.csh;";
+		$prefix .= "source /ami/sw/share/python/usepython.csh cvs32;";
+		$cmd = "$prefix $command > dogPickerLog.txt";
 		$result=exec_over_ssh($host, $user, $password, $cmd, True);
 	}
 
 	writeTop("Particle Selection Results","Particle Selection Results");
 
 	if ($testimage) {
+		$runid = $_POST[runid];
+		$outdir = $_POST[outdir];
+		if (substr($outdir,-1,1)!='/') $outdir.='/';
+		echo "<B>DogPicker Command:</B><BR>$command";
 		$testjpg=ereg_replace(".mrc","",$testimage);
 		$jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
 		$ccclist=array();
-   	$cccimg=$outdir.$runid."/dogmaps/".$testjpg.".dogmap.jpg";
+		$cccimg=$outdir.$runid."/dogmaps/".$testjpg.".dogmap1.jpg";
 		$ccclist[]=$cccimg;
 		$images=writeTestResults($jpgimg,$ccclist);
-		createDogPickerForm($images,'Particle Selection Results','');
+		createDogPickerForm($images,'Particle Selection Test Results','');
 		exit;
 	}
 
 	echo"
-  <P>
-  <TABLE WIDTH='600'>
-  <TR><TD COLSPAN='2'>
-  <B>Dog Picker Command:</B><BR>
-  $command<HR>
-  </TD></TR>
-  <TR><TD>outdir</TD><TD>$outdir</TD></TR>";
-	echo"<TR><TD>runid</TD><TD>$runid</TD></TR>
-  <TR><TD>testimage</TD><TD>$testimage</TD></TR>
-  <TR><TD>dbimages</TD><TD>$dbimages</TD></TR>
-  <TR><TD>diameter</TD><TD>$diam</TD></TR>";
+		<P>
+		<TABLE WIDTH='600'>
+		<TR><TD COLSPAN='2'>
+		<B>Dog Picker Command:</B><BR>
+		$command<HR>
+		</TD></TR>";
 	appionLoopSummaryTable();
 	particleLoopSummaryTable();
 	echo"</TABLE>\n";
