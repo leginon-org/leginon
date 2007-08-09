@@ -37,6 +37,8 @@ class aceLoop(appionLoop.AppionLoop):
 			#self.matlab = pymat.open('matlab -nodisplay')
 		except:
 			apDisplay.matlabError()
+		if self.params['tempdir'] is None:
+			self.params['tempdir'] = os.path.join(self.params['rundir'],"temp")
 		apCtf.mkTempDir(self.params['tempdir'])
 		apMatlab.setAceConfig(self.matlab, self.params)
 
