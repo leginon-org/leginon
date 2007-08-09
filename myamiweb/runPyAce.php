@@ -14,7 +14,18 @@ require ('inc/viewer.inc');
 require ('inc/processing.inc');
 require ('inc/appionloop.inc');
 require ('inc/ctf.inc');
+//require ('inc/ssh.inc');
 
+// IF VALUES SUBMITTED, EVALUATE DATA
+if ($_POST['process']) {
+	runPyAce();
+}
+// CREATE FORM PAGE
+else {
+	createPyAceForm();
+}
+
+/*
 $expId = $_GET[expId];
 $phpself=$_SERVER['PHP_SELF'];
 
@@ -45,18 +56,16 @@ if (!empty($sessioninfo)) {
 
 // --- find hosts to run ACE
 $path = "/var/lib/wwwrun/.ssh/";
-$known_hosts = $path."known_hosts";
-$hosts = file($known_hosts);
 $result=array();
 foreach($hosts as $host) {
 	list($str) = split(" ", $host); 
 	list($str) = split(",", $str); 
 	$hosts_select[]=$str;
 }
-$users[]="glander";
+*/
 
 // --- parse data and process on submit
-if ($_POST['process']) {
+function runPyAce() {
 	$host = $_POST['host'];
 	$user = $_POST['user'];
 
@@ -158,7 +167,23 @@ if ($_POST['process']) {
 }
 
 // CREATE FORM PAGE
-else {
+function createPyAceForm() {
+	// check if coming directly from a session
+	$expId = $_GET['expId'];
+	if ($expId) {
+		$sessionId=$expId;
+		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+	}
+	else {
+		$sessionId=$_POST['sessionId'];
+		$formAction=$_SERVER['PHP_SELF'];	
+	}
+	$projectId=$_POST['projectId'];
+
+	// --- find hosts to run PyACE
+	$hosts = getHosts();
+	$users[]="glander";
+
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$javafunctions="
 	<script src='js/viewer.js'></script>
@@ -336,7 +361,7 @@ else {
 	  <TD COLSPAN='2' ALIGN='CENTER'>
 	  <HR>
 	  Host: <select name='host'>\n";
-	foreach($hosts_select as $host) {
+	foreach($hosts as $host) {
 		$s = ($_POST['host']==$host) ? 'selected' : '';
 		echo "<option $s >$host</option>\n";
 	}
