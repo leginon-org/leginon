@@ -106,10 +106,10 @@ def binImg(imgarray,bin=1):
 	"""
 	if bin > 1:
 		newarray = imagefun.bin(imgarray, bin)
+		newarray = numpy.asarray(newarray)
 		mindim = min(newarray.shape)
 		if mindim < 1:
 			apDisplay.printError("problem in numextension bin, return null array")
-			newarray = ndimage.median_filter(newarray, size=0)
 		return newarray
 	else:
 		return imgarray
