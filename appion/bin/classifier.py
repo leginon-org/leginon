@@ -425,8 +425,8 @@ def insertNoRefRun(params, insert=False):
 			if uniquerun[0][i] != runq[i]:
 				apDisplay.printError("Run name '"+params['runid']+"' for stackid="+\
 					str(params['stackid'])+"\nis already in the database with different parameter: "+str(i))
-	else:
-		apDisplay.printWarning("Run name '"+params['runid']+"' already exists")
+	#else:
+	#	apDisplay.printWarning("Run name '"+params['runid']+"' already exists in database")
 
 	### create a classRun object
 	classq = appionData.ApNoRefClassRunData()
