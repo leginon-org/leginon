@@ -49,13 +49,13 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname) {
 	echo "<!-- BEGIN Appion Loop Param -->";
 //	prettytable2();
 //	<TR><TD BGCOLOR=#660000 ALIGN=CENTER><FONT COLOR=#DDDDDD>Appion Loop Params</FONT></TD></TR>
-	$norejects = ($_POST[norejects]=="on") ? "0" : "1";
-	$nowait = ($_POST[nowait]=="on") ? "0" : "1";
-	$background = ($_POST[background]=="on") ? "1" : "0";
-	$shuffle = ($_POST[shuffle]=="on") ? "1" : "0";
+	$norejects = ($_POST[norejects]=="on") ? "CHECKED" : "";
+	$nowait = ($_POST[nowait]=="off") ? "" : "CHECKED";
+	$background = ($_POST[background]=="on") ? "CHECKED" : "";
+	$shuffle = ($_POST[shuffle]=="on") ? "CHECKED" : "";
 	$limit = $_POST[limit];
 	$apcontinue = $_POST[apcontinue];
-	$commit = ($_POST[commit]=="on") ? "1" : "0";
+	$commit = ($_POST[commit]=="on") ? "CHECKED" : "";
 
 	if ($_POST[preset]) $dbimages=$_POST[sessionname].",".$_POST[preset];
 	else $alldbimages = $_POST[sessionname];
@@ -105,7 +105,7 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname) {
 <A HREF=\"javascript:appioninfopopup('norejects')\">
 Process rejected images</A><br/>
 
-<INPUT TYPE='checkbox' NAME='nowait' $nowait checked>
+<INPUT TYPE='checkbox' NAME='nowait' $nowait>
 <A HREF=\"javascript:appioninfopopup('nowait')\">
 Wait for more images after finishing</A><br/>
 
@@ -310,8 +310,8 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	$maxpeaksv = ($_POST['maxpeaks']) ? $_POST['maxpeaks'] : '1500';
 	$maxsizev = ($_POST['maxsize']) ? $_POST['maxsize'] : '1.0';
 	$overlapmultv = ($_POST['overlapmult']) ? $_POST['overlapmult'] : '1.5';
-	$invertv = ($_POST['invert']) ? $_POST['invert'] : 'off';
-	$defocpairv = ($_POST['defocpair']) ? $_POST['defocpair'] : 'off';
+	$invertv = ($_POST['invert']=="on") ? "CHECKED" : "";
+	$defocpairv = ($_POST['defocpair']=="on") ? "CHECKED" : "";
 
 	echo "
 <B>Peak thresholds:</B><br/>
@@ -349,7 +349,7 @@ Binning</A> <FONT SIZE=-2><I>(power of 2)</I></FONT><br/>
 <br/>
 
 <B>Defocal pairs:</B><br/>
-<INPUT TYPE='checkbox' NAME='defocpair' VALUE='$defocpairv'>&nbsp;
+<INPUT TYPE='checkbox' NAME='defocpair' $defocpairv>&nbsp;
 <A HREF=\"javascript:particleinfopopup('defocpair')\">
 Calculate shifts for defocal pairs</A><br/>
 <br/>
@@ -363,7 +363,7 @@ Maximum peak area multiple</A><br/>
 <A HREF=\"javascript:particleinfopopup('overlapmult')\">
 Minimum peak overlap distance multiple</A><br/>
 
-<INPUT TYPE='checkbox' NAME='invert' VALUE='$invertv'>&nbsp;
+<INPUT TYPE='checkbox' NAME='invert' $invertv>&nbsp;
 <A HREF=\"javascript:particleinfopopup('invert')\">
 Invert image density</A><br/>
 <br/>

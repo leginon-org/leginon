@@ -396,12 +396,13 @@ function runTemplateCorrelator() {
 	}
 
 	echo"
-	<P>
-	<TABLE WIDTH='600'>
+		<P>
+		<TABLE WIDTH='600'>
 		<TR><TD COLSPAN='2'>
-		<B>Template Correlator Command:</B><BR>
-		</TD></TR>
-		<TR><TD>outdir</TD><TD>$outdir</TD></TR>
+		<B>Dog Picker Command:</B><BR>
+		$command<HR>
+		</TD></TR>";
+	echo"
 		<TR><TD>templateIds</TD><TD>$templateIds</TD></TR>";
 /*
 	foreach ($ranges as $rangenum=>$rangevals) {
