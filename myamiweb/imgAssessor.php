@@ -47,7 +47,6 @@ $imgtypes=array('jpg','png','mrc','dwn.mrc');
 
 $javascript="<script src='js/viewer.js'></script>\n";
 writeTop("Leginon Image Assessor","Image Assessor",$javascript);
-
 echo"<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 echo"<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
 
@@ -63,6 +62,7 @@ if (!empty($sessioninfo)) {
 // if session is changed, change the output directory
 $sessionpathval=(($_POST['sessionId']==$_POST['lastSessionId'] || $expId) && $_POST['lastSessionId']) ? $_POST['imgdir'] : $sessionpath;
 
+echo"<BR><A HREF='processing.php?expId=$sessionId'>[processing page]</A>\n";
 echo"<P>\n";
 echo"<TABLE BORDER=0 CLASS=tableborder WIDTH='600'>\n";
 echo"<TR><TD VALIGN='TOP'>\n";
