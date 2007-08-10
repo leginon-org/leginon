@@ -52,8 +52,10 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname) {
 	$background = ($_POST[background]=="on") ? "CHECKED" : "";
 	$shuffle = ($_POST[shuffle]=="on") ? "CHECKED" : "";
 	$limit = $_POST[limit];
-	$apcontinue = $_POST[apcontinue];
 	$commit = ($_POST[commit]=="on") ? "CHECKED" : "";
+	$apcontinue = $_POST[apcontinue];
+	$apcontinuecheck = ($apcontinue) ? "CHECKED" : "";
+	$apreproccheck = ($apcontinue) ? "" : "CHECKED";
 
 	if ($_POST[preset]) $dbimages=$_POST[sessionname].",".$_POST[preset];
 	else $alldbimages = $_POST[sessionname];
@@ -122,9 +124,9 @@ images<br/>
 
 <A HREF=\"javascript:appioninfopopup('continue')\">
 <I>Continuation:</I></A><br/>
-<INPUT TYPE='radio' NAME='apcontinue' VALUE='1' checked>
+<INPUT TYPE='radio' NAME='apcontinue' VALUE='1' $apcontinuecheck>
 Continue unfinished run <FONT SIZE=-2><I>(default)</I></FONT><br/>
-<INPUT TYPE='radio' NAME='apcontinue' VALUE='0'>
+<INPUT TYPE='radio' NAME='apcontinue' VALUE='0' $apreproccheck>
 Reprocess all images<br/><br/>
 
 <HR style='margin: 1em 1em 1em 0; border: 1px #333333 solid;
