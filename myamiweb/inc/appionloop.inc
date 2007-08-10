@@ -43,14 +43,12 @@ function appioninfopopup(infoname){
 
 }
 
-
-
 function createAppionLoopTable ($sessiondata, $defrunid, $outdirname) {
 	echo "<!-- BEGIN Appion Loop Param -->";
 //	prettytable2();
 //	<TR><TD BGCOLOR=#660000 ALIGN=CENTER><FONT COLOR=#DDDDDD>Appion Loop Params</FONT></TD></TR>
 	$norejects = ($_POST[norejects]=="on") ? "CHECKED" : "";
-	$nowait = ($_POST[nowait]=="off") ? "" : "CHECKED";
+	$nowait = ($_POST[nowait]=="" && $_POST[runid] != "") ? "" : "CHECKED";
 	$background = ($_POST[background]=="on") ? "CHECKED" : "";
 	$shuffle = ($_POST[shuffle]=="on") ? "CHECKED" : "";
 	$limit = $_POST[limit];
