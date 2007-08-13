@@ -39,6 +39,7 @@ class MaskAssessor(imageassessor.ImageAssessor):
 		self.oldrun = None
 		self.oldmaskname = None
 		self.oldcontinueon = None
+		self.keepall = False
 
 		if self.__class__ == MaskAssessor:
 			self.start()
@@ -97,6 +98,16 @@ class MaskAssessor(imageassessor.ImageAssessor):
 
 		self.continueOn()
 
+	def onKeepall(self,targets):
+
+		keeplist = []
+		keeptargets = targets
+		for target in keeptargets:
+			keeplist.append(target['stats']['Label'])
+		apMask.saveAssessmentFromTargets(self.maskrundata,self.assessrundata,self.imgdata,keeplist)
+
+		self.continueOn()
+
 	def onReject(self):
 
 		keeplist = []
@@ -135,7 +146,6 @@ class MaskAssessor(imageassessor.ImageAssessor):
 			maskshape = imarray.shape
 
 			targets = apMask.getRegionsAsTargets(self.maskrundata,maskshape,imgdata)
-			
 			keep = apDatabase.getImgAssessmentStatus(imgdata)
 			if keep == False:
 				self.logger.warning('Rejected Image, Mask Irelavent')
@@ -152,6 +162,8 @@ class MaskAssessor(imageassessor.ImageAssessor):
 			imarray=parentimg
 		self.setImage(imarray, 'Image')
 		self.imgdata = imgdata
+		if self.keepall:
+			self.onKeepall(targets)
 		
 	def getMaskRunNames(self):
 		names = apMask.getMaskMakerRunNamesFromSession(self.session)		
