@@ -334,8 +334,8 @@ function runMaskMaker() {
 	$command .=" diam=$diam";
 	$command .=" cruddiam=$cdiam";
 	$command .= parseMaskMakerParams($_POST);
-
 	if ($_POST['testimage']=="on") {
+		$command .= " test";
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
 	}
 
@@ -354,6 +354,7 @@ function runMaskMaker() {
 	}
 
 	writeTop("Bad Region Detection Results","Bad Region Detection Results",$javascript);
+print_r($_POST);
 
 	if ($testimage) {
 		$outdir=$_POST[outdir];
