@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/beamtiltcalibrator.py,v $
-# $Revision: 1.81 $
+# $Revision: 1.82 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-21 22:12:30 $
+# $Date: 2007-08-13 23:58:28 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -49,6 +49,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			'beam tilt': calibrationclient.BeamTiltCalibrationClient(self),
 			'eucentric focus': calibrationclient.EucentricFocusClient(self),
 		}
+		self.btcalclient = self.calibration_clients['beam tilt']
 
 		self.start()
 
