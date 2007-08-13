@@ -354,7 +354,6 @@ function runMaskMaker() {
 	}
 
 	writeTop("Bad Region Detection Results","Bad Region Detection Results",$javascript);
-print_r($_POST);
 
 	if ($testimage) {
 		$outdir=$_POST[outdir];
