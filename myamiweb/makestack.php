@@ -123,6 +123,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
         $commitcheck = ($_POST['commit']=='on') ? 'CHECKED' : '';
         $boxszval = $_POST['boxsize'];
 	$binval=$_POST['bin'];
+	$plimit = $_POST['plimit'];
         // ice check params
         $iceval = ($_POST['icecheck']=='on') ? $_POST['ice'] : '0.8';
         $icecheck = ($_POST['icecheck']=='on') ? 'CHECKED' : '';
@@ -195,11 +196,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
                 echo "</SELECT>\n";
         }
         echo"
-                </SELECT>
                 </TD>
         </TR>
-                <TR>
-                        <TD>\n";
+        <TR>
+                <TD>\n";
 
         $massessruns=count($massessrunIds);
 	$massessname = '';
@@ -229,10 +229,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
                 echo "</SELECT>\n";
         }
         echo"
-                </SELECT>
                 </TD>
         </TR>
-
         <TR>
                 <TD VALIGN='TOP'>
                 <B>Density:</B><BR>
@@ -261,6 +259,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
                 echo "<OPTION $s >$format</option>\n";
         }
         echo"
+                </SELECT>
+                </TD>
+        </TR>
         </TABLE>
         </TD>
         <TD CLASS='tablebg'>
@@ -313,7 +314,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
                 <B>Defocal pairs:</B><BR>
                 <INPUT TYPE='checkbox' NAME='defocpair' $defocpair>&nbsp;
                 Calculate shifts for defocal pairs<BR>
-                <BR>
                 </TD>
         </TR>\n";
         }	
@@ -343,9 +343,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
                 </TR>\n";
         }
         echo"
-                </SELECT>
-                </TD>
-        </TR>
+        <TR><TD>
+          Limit # of particles to:<INPUT TYPE='text' NAME='plimit' VALUE='$plimit' SIZE='8'>
+        </TD></TR>
         </TABLE>
         </TD>
         </TR>
@@ -441,6 +441,12 @@ function runMakestack() {
         $massessname=$_POST['massessname'];
 
 
+	// limit the number of particles
+        $limit=$_POST['plimit'];
+        if ($limit) {
+	        if (!is_numeric($limit)) createMakestackForm("<B>ERROR:</B> Particle limit must be an integer");
+        }
+
 //        $command ="source /ami/sw/ami.csh;";
 //        $command.="source /ami/sw/share/python/usepython.csh common32;";
 //        $command.="source /home/$user/pyappion/useappion.csh;";
@@ -464,6 +470,7 @@ function runMakestack() {
         if ($dfmin) $command.="mindefocus=$dfmin ";
         if ($dfmax) $command.="maxdefocus=$dfmax ";
         if ($fileformat) $command.="spider ";
+	if ($limit) $command.="limit=$limit ";
         $command.="description=\"$description\"";
 
         $cmd = "exec ssh $user@$host '$command > makestacklog.txt &'";
@@ -499,6 +506,7 @@ function runMakestack() {
         <TR><TD>selexonmax cutoff</TD><TD>$selexonmax</TD></TR>
         <TR><TD>minimum defocus</TD><TD>$dfmin</TD></TR>
         <TR><TD>maximum defocus</TD><TD>$dfmax</TD></TR>
+        <TR><TD>particle limit</TD><TD>$limit</TD></TR>
         <TR><TD>spider</TD><TD>$fileformat</TD></TR>
         </TABLE>\n";
         writeBottom();
