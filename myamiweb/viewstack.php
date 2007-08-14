@@ -86,6 +86,9 @@ function load() {
 	clean()
 	startImg=$('startimg').value
 	endImg=$('endimg').value
+	if (endImg > n_images-1) {
+	  endImg=n_images-1
+	}
 	force=1
 	displaystack(startImg, endImg, force) 
 }
