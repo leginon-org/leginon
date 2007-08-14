@@ -130,7 +130,6 @@ foreach ($iterations as $iteration){
         $res = $particle->getResolutionInfo($iteration['REF|ApResolutionData|resolution']);
 	$fscfile = ($res) ? $refinerun['path'].'/'.$res['fscfile'] : "None" ;
 	$halfres = ($res) ? sprintf("%.2f",$res['half']) : "None" ;
-	$numparticles=$stackparticles-$iteration['numBadParticles'];
 	$badprtls=$particle->getNumBadParticles($refinementData['DEF_id']);
 	$prtlsused=$stackparticles-$badprtls;
 	$html .= "<TR>\n";
@@ -151,7 +150,7 @@ foreach ($iterations as $iteration){
 	$clsavg = $refinerun['path'].'/'.$iteration['classAverage'];
 	$html .= "<TD><A TARGET='stackview' HREF='viewstack.php?file=$clsavg'>$iteration[classAverage]</A></TD>\n";
 	$html .= "<TD><A TARGET='blank' HREF='classinfo.php?refinement=$refinementData[DEF_id]&w=800&h=600'>$numclasses</A></TD>\n";
-	$html .= "<TD>$prtlsused</TD>\n";
+	$html .= "<TD>$prtlsused<BR><A TARGET='stackview' HREF='badprtls.php?refinement=$refinementData[DEF_id]'>[$badprtls bad]</A></TD>\n";
 	$html .= "<TD>$iteration[volumeDensity]</TD>\n";
 	$html .= "<TD>\n";
 	foreach ($pngfiles as $snapshot) {

@@ -572,47 +572,70 @@ class particledata {
 	}
 
 	function getSymInfo ($symId){
-	$q = "SELECT * "
-				."FROM `ApSymmetryData` WHERE `DEF_id` = '$symId'";
-		list($r) = $this->mysql->getSQLResult($q);
-		return $r;
+	  $q = "SELECT * "
+	      ."FROM `ApSymmetryData` WHERE `DEF_id` = '$symId'";
+	  list($r) = $this->mysql->getSQLResult($q);
+	  return $r;
 	}
 
 	function getResolutionInfo ($resId) {
-		$q = "SELECT * "
-			 ."FROM `ApResolutionData` WHERE `DEF_id` = '$resId'";
-		list($r) = $this->mysql->getSQLResult($q);
-		return $r;
+	  $q = "SELECT * "
+	      ."FROM `ApResolutionData` WHERE `DEF_id` = '$resId'";
+	  list($r) = $this->mysql->getSQLResult($q);
+	  return $r;
 	}
 	
 	function getHighestResForRecon ($reconid) {
-		$q = "SELECT * " 
-			."FROM `ApRefinementData` r "
-			."LEFT JOIN `ApResolutionData` res "
-			."ON (r.`REF|ApResolutionData|resolution` = res.`DEF_id`) "
-			."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconid' "
-			."ORDER by res.half ";
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0];
+	  $q = "SELECT * " 
+	      ."FROM `ApRefinementData` r "
+	      ."LEFT JOIN `ApResolutionData` res "
+	      ."ON (r.`REF|ApResolutionData|resolution` = res.`DEF_id`) "
+	      ."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconid' "
+	      ."ORDER by res.half ";
+	  $r = $this->mysql->getSQLResult($q);
+	  return $r[0];
 	}
-		
+
 	function getIterationInfo ($reconId) {
-		$q = "SELECT * "
-			."FROM `ApRefinementData` r "
-			."LEFT JOIN `ApRefinementParamsData` p "
-			."ON (r.`REF|ApRefinementParamsData|refinementParams` = p.`DEF_id`) "
-			."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconId' ";
-		$r = $this->mysql->getSQLResult($q);
-		return $r;
+	  $q = "SELECT * "
+	      ."FROM `ApRefinementData` r "
+	      ."LEFT JOIN `ApRefinementParamsData` p "
+	      ."ON (r.`REF|ApRefinementParamsData|refinementParams` = p.`DEF_id`) "
+	      ."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconId' ";
+	  $r = $this->mysql->getSQLResult($q);
+	  return $r;
 	}
 
 	function getRefinementData ($refinementRun,$iteration) {
-		$q = "SELECT DEF_id "
-			."FROM `ApRefinementData` "
-			."WHERE `REF|ApRefinementRunData|refinementRun` = $refinementRun "
-			."AND `iteration` = $iteration";
+	  $q = "SELECT DEF_id "
+	      ."FROM `ApRefinementData` "
+	      ."WHERE `REF|ApRefinementRunData|refinementRun` = $refinementRun "
+	      ."AND `iteration` = $iteration";
+	  $r = $this->mysql->getSQLResult($q);
+	  return $r[0];
+	}
+
+  function getStackFromRefinement ($refinementDataId) {
+    $q = "SELECT * "
+        ."FROM `ApRefinementData` r "
+        ."LEFT JOIN `ApRefinementRunData` rr "
+        ."ON (r.`REF|ApRefinementRunData|refinementRun` = rr.`DEF_id`) "
+        ."LEFT JOIN `ApStackData` s "
+        ."ON (rr.`REF|ApStackData|stack` = s.`DEF_id`) "
+        ."WHERE r.`DEF_id` = $refinementDataId";
+    $r = $this->mysql->getSQLResult($q);
+    return $r[0];
+  }
+
+	function getBadParticlesInStack ($refinementDataId) {
+		$q = "SELECT particleNumber as p "
+		    ."FROM `ApParticleClassificationData` apcd "
+		    ."LEFT JOIN `ApStackParticlesData` aspd "
+		    ."ON (apcd.`REF|ApStackParticlesData|particle` = aspd.`DEF_id`) "
+		    ."WHERE apcd.`REF|ApRefinementData|refinement` = '$refinementDataId' "
+		    ."AND `thrown_out` = 1";
 		$r = $this->mysql->getSQLResult($q);
-		return $r[0];
+		return $r;
 	}
 
 	function getNumBadParticles ($refinementDataId) {
