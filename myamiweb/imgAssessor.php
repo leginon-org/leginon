@@ -44,6 +44,7 @@ else {
 ////////////////////////////////////////////////////////
 
 $imgtypes=array('jpg','png','mrc','dwn.mrc');
+$presettypes=$leginondata->getAllDatatypes($sessionId);;
 
 $javascript="<script src='js/viewer.js'></script>\n";
 writeTop("Leginon Image Assessor","Image Assessor",$javascript);
@@ -53,6 +54,15 @@ echo"<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
 $sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 $sessioninfo=$sessiondata['info'];
 $presets=$sessiondata['presets'];
+
+//Remove invalid preset types
+foreach (array('all','atlas') as $invalid) {
+	$pkey = array_search($invalid, $presettypes);
+	if ($pkey) {
+		array_splice($presettypes,$pkey,1);
+	}
+}
+
 if (!empty($sessioninfo)) {
         $sessionpath=$sessioninfo['Image path'];
 	$sessionpath=ereg_replace("leginon","appion",$sessionpath);
@@ -76,6 +86,15 @@ foreach ($imgtypes as $type) {
 	echo "<OPTION $s>$type</OPTION>\n";
 }
 echo"</SELECT>\n";
+echo"</TD>";
+echo"<TD VALIGN='TOP'>\n";
+echo"<B>Preset(mrc):</B><BR>\n";
+echo"<SELECT NAME='presettype' onchange='this.form.submit()'>\n";
+foreach ($presettypes as $type) {
+        $s = ($_POST['presettype']==$type) ? 'SELECTED' : '';
+	echo "<OPTION $s>$type</OPTION>\n";
+}
+echo"</SELECT>\n";
 echo"</TD></TR>\n";
 echo"<TR><TD COLSPAN='2' ALIGN='CENTER'>\n";
 
@@ -93,9 +112,11 @@ if ($imgdir) {
 		while ($filename=readdir($pathdir)) {
 		  if ($filename == '.' || $filename == '..') continue;
 		  if (preg_match('`\.'.$ext.'$`i',$filename)) {
-		    $files[$i][0] = $filename;
-		    $files[$i][1] = filemtime($imgdir.$filename);
-		    $i++;
+                    if ($ext != 'mrc' || preg_match('`'.$presettype.'`',$filename)) {
+		      $files[$i][0] = $filename;
+		      $files[$i][1] = filemtime($imgdir.$filename);
+		      $i++;
+                    }
 		  }
 		}
 		closedir($pathdir);
@@ -132,7 +153,12 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 
 	// go directly to a particular image number
 	if ($_POST['imgjump']) {
-	        $imgindx=$_POST['imgjump']-1;
+		$key = array_search($_POST['imgjump'],$files);
+		if ($key) {
+			$imgindx=$key;
+		} else {
+	        	$imgindx=$_POST['imgjump']-1;
+		}
 		// make sure it's within range
 		if ($imgindx < 0) $imgindx=0;
 		elseif ($imgindx > $numfiles-1) $imgindx=$numfiles-1;
