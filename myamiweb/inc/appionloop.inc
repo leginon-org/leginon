@@ -45,8 +45,7 @@ function appioninfopopup(infoname){
 
 function createAppionLoopTable ($sessiondata, $defrunid, $outdirname) {
 	echo "<!-- BEGIN Appion Loop Param -->";
-//	prettytable2();
-//	<TR><TD BGCOLOR=#660000 ALIGN=CENTER><FONT COLOR=#DDDDDD>Appion Loop Params</FONT></TD></TR>
+	echo "SUBMIT: $_POST[process]<BR>\n";
 	$norejects = ($_POST[norejects]=="on") ? "CHECKED" : "";
 	$nowait = ($_POST[nowait]=="" && $_POST[runid] != "") ? "" : "CHECKED";
 	$background = ($_POST[background]=="on") ? "CHECKED" : "";
@@ -54,8 +53,10 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname) {
 	$limit = $_POST[limit];
 	$commit = ($_POST[commit]=="on") ? "CHECKED" : "";
 	$apcontinue = $_POST[apcontinue];
-	$apcontinuecheck = ($apcontinue) ? "CHECKED" : "";
-	$apreproccheck = ($apcontinue) ? "" : "CHECKED";
+	// continue is checkmarked by default
+	echo "APCONT: $apcontinue<BR>\n";
+	$apcontinuecheck = ($apcontinue || !$_POST['process']) ? "CHECKED" : "";
+    	$apreproccheck = (!$apcontinue && $_POST['process']) ? "CHECKED" : "";
 
 	if ($_POST[preset]) $dbimages=$_POST[sessionname].",".$_POST[preset];
 	else $alldbimages = $_POST[sessionname];
@@ -303,10 +304,10 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 //	<TR><TD BGCOLOR=#660000 ALIGN=CENTER><FONT COLOR=#DDDDDD>Appion Loop Params</FONT></TD></TR>
 	$threshv = ($_POST['thresh']) ? $_POST['thresh'] : $defthresh;
 	$maxthreshv = ($_POST['maxthresh']) ? $_POST['maxthresh'] : $defmaxthresh;
-	$lpv = ($_POST['lp']) ? $_POST['lp'] : '5';
-	$hpv = ($_POST['hp']) ? $_POST['hp'] : '600';
+	$lpv = ($_POST['lp'] || $_POST['process']) ? $_POST['lp'] : '5';
+	$hpv = ($_POST['hp'] || $_POST['process']) ? $_POST['hp'] : '600';
 	$binv = ($_POST['bin']) ? $_POST['bin'] : '4';
-	$medianv = ($_POST['median']) ? $_POST['median'] : '2';
+	$medianv = ($_POST['median'] || $_POST['process']) ? $_POST['median'] : '2';
 	$maxpeaksv = ($_POST['maxpeaks']) ? $_POST['maxpeaks'] : '1500';
 	$maxsizev = ($_POST['maxsize']) ? $_POST['maxsize'] : '1.0';
 	$overlapmultv = ($_POST['overlapmult']) ? $_POST['overlapmult'] : '1.5';
