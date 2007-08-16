@@ -51,8 +51,9 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 
 	minfrom,maxfrom = boundfrom
 	minto,maxto = boundto
-	if minfrom == maxfrom:
-		raise RuntimeError('Invalid range: %s' % (boundfrom,))
+	if minfrom is not None and maxfrom is not None:
+		if minfrom == maxfrom:
+			raise RuntimeError('Invalid range: %s' % (boundfrom,))
 
 	### default from bounds are min,max of the input
 	if minfrom is None:
