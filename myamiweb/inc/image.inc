@@ -1,7 +1,7 @@
 <?php
 /**
- *	@version $Revision: 1.32 $
- *	@version $Id: image.inc,v 1.32 2007-05-05 03:06:06 sstagg Exp $
+ *	@version $Revision: 1.33 $
+ *	@version $Id: image.inc,v 1.33 2007-08-16 22:47:18 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -322,10 +322,10 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				$particlerun=$particle->getLastParticleRun($sessionId);
 				$particledata=$particle->getParticlesFromImageId($particlerun, $imageId);
 				list($selectionparams)=$particle->getSelectionParams($particlerun);
-				$diam = $selectionparams[diam];
+				$diam = $selectionparams['diam'];
 				$col = imagecolorallocate($img, 255,255,255);
-				$apix = $imginfo[pixelsize]*1e10;
-				$diam = $diam*$scalefactor/$binning/$apix;
+				$apix = $imginfo['pixelsize']*1e10;
+				$diam = $diam*$scalefactor/$binning/$apix/$imginfo['binning'];
 				if (is_array($particledata))
 				foreach ($particledata as $particle) {
 					$cx = $particle['xcoord']/$binning*$scalefactor;
