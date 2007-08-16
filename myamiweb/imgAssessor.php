@@ -44,7 +44,6 @@ else {
 ////////////////////////////////////////////////////////
 
 $imgtypes=array('jpg','png','mrc','dwn.mrc');
-$presettypes=$leginondata->getAllDatatypes($sessionId);;
 
 $javascript="<script src='js/viewer.js'></script>\n";
 writeTop("Leginon Image Assessor","Image Assessor",$javascript);
@@ -55,13 +54,9 @@ $sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 $sessioninfo=$sessiondata['info'];
 $presets=$sessiondata['presets'];
 
-//Remove invalid preset types
-foreach (array('all','atlas') as $invalid) {
-	$pkey = array_search($invalid, $presettypes);
-	if ($pkey) {
-		array_splice($presettypes,$pkey,1);
-	}
-}
+// add preset choice of all presets
+array_push($presets, 'all');
+asort($presets);
 
 if (!empty($sessioninfo)) {
         $sessionpath=$sessioninfo['Image path'];
@@ -88,9 +83,9 @@ foreach ($imgtypes as $type) {
 echo"</SELECT>\n";
 echo"</TD>";
 echo"<TD VALIGN='TOP'>\n";
-echo"<B>Preset(mrc):</B><BR>\n";
+echo"<B>Preset:</B><BR>\n";
 echo"<SELECT NAME='presettype' onchange='this.form.submit()'>\n";
-foreach ($presettypes as $type) {
+foreach ($presets as $type) {
         $s = ($_POST['presettype']==$type) ? 'SELECTED' : '';
 	echo "<OPTION $s>$type</OPTION>\n";
 }
@@ -100,6 +95,12 @@ echo"<TR><TD COLSPAN='2' ALIGN='CENTER'>\n";
 
 $imgdir=$_POST['imgdir'];
 $files = array();
+$presettype = $_POST['presettype'];
+if ($presettype=='all') {
+	$typematch ='';
+} else {
+	$typematch =$presettype;
+}
 if ($imgdir) {
 	// make sure imgdir ends with '/'
 	if (substr($imgdir,-1,1)!='/') $imgdir.='/';
@@ -112,7 +113,7 @@ if ($imgdir) {
 		while ($filename=readdir($pathdir)) {
 		  if ($filename == '.' || $filename == '..') continue;
 		  if (preg_match('`\.'.$ext.'$`i',$filename)) {
-                    if ($ext != 'mrc' || preg_match('`'.$presettype.'`',$filename)) {
+                    if (preg_match('`'.$typematch.'\.`',$filename)) {
 		      $files[$i][0] = $filename;
 		      $files[$i][1] = filemtime($imgdir.$filename);
 		      $i++;
