@@ -74,8 +74,30 @@ function jobForm($extra=false) {
   }
 	
   else $j=$numiters;
-	
-  writeTop("Eman Job Generator","EMAN Job Generator");
+
+  $javafunc="<SCRIPT LANGUAGE='JavaScript'>
+function displayDMF() {
+  stack = document.emanjob.stackval.value;
+  stackinfo = stack.split('|--|');
+  pathinfo = stackinfo[3].split('/');
+  dpath='';
+  newwindow=window.open('','name','height=250, width=800')
+  newwindow.document.write('<HTML><BODY>')
+  for (i=3; i<pathinfo.length; i++) {
+    dpath=dpath+pathinfo[i]+'/';
+    newwindow.document.write('dmf mkdir '+dpath+'<BR>');
+  }
+  newwindow.document.write('dmf put '+stackinfo[3]+'/'+stackinfo[4]+' '+dpath+stackinfo[4]+'<BR>')
+  if (stackinfo[5]) {
+    newwindow.document.write('dmf put '+stackinfo[3]+'/'+stackinfo[5]+' '+dpath+stackinfo[5]+'<BR>')
+  }
+  newwindow.document.write('</BODY></HTML>');
+  newwindow.document.close();
+  document.emanjob.dmfpath.value=dpath;
+  document.emanjob.dmfstack.value=stackinfo[4];
+}
+</SCRIPT>\n";
+  writeTop("Eman Job Generator","EMAN Job Generator",$javafunc);
   // write out errors, if any came up:
   if ($extra) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -94,13 +116,19 @@ Stack:
 	  $apix=($s['bin']) ? $apix*$s['bin'] : $apix;
 	  // get box size
 	  $box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
-
-	  echo "<OPTION VALUE='$stackid[stackid]|--|$apix|--|$box'";
+	  // get stack path with name
+	  $opvals = "$stackid[stackid]|--|$apix|--|$box|--|$s[stackPath]|--|$s[name]";
+	  // if imagic stack, send both hed & img files for dmf
+	  if (ereg('\.hed', $s['name'])) $opvals.='|--|'.ereg_replace('hed','img',$s['name']);
+	  if (ereg('\.img', $s['name'])) $opvals.='|--|'.ereg_replace('img','hed',$s['name']);
+	  echo "<OPTION VALUE='$opvals'";
 	  // select previously set stack on resubmit
 	  if ($stackid['stackid']==$stackidval) echo " SELECTED";
 	  echo">$stackid[stackid] ($nump particles, $apix A/pix, $box x $box)</OPTION>\n";
 	}
 	echo "</SELECT>
+<P>
+<INPUT TYPE='button' NAME='dmfput' VALUE='Put stack in DMF' onclick='displayDMF()'>
 <P>
 <TABLE CLASS='tableborder'>
   <TR>
@@ -309,7 +337,7 @@ function writeJobFile () {
     echo "\ntar -cvzf results.tar.gz fsc* tcls* refine.* particle.* classes.* proj.* sym.* .emanlog *txt\n";
     echo "dmf put results.tar.gz $dmfpath\n";
   } 
-  echo "\nexit\n";
+  echo "\nexit\n\n";
   echo "</PRE>\n";
   exit;
 }
