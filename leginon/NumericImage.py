@@ -36,8 +36,8 @@ def numpy2PILImage(numericarray, scale=False):
 	h, w = numericarray.shape
 	imsize = w, h
 	itemsize = numericarray.itemsize()
-	immode = ntype_itype[type, itemsize][0]
-	rawmode = ntype_itype[type, itemsize][1]
+	immode = ntype_itype[type.type, itemsize][0]
+	rawmode = ntype_itype[type.type, itemsize][1]
 	nstr = numericarray.tostring()
 	return Image.fromstring(immode, imsize, nstr, 'raw', rawmode, 0, 1)
 
@@ -128,9 +128,9 @@ class NumericImage:
 		type = final.dtype
 		h,w = final.shape
 		imsize = w,h
-		itemsize = final.itemsize()
-		immode = ntype_itype[type,itemsize][0]
-		rawmode = ntype_itype[type,itemsize][1]
+		itemsize = final.itemsize
+		immode = ntype_itype[type.type,itemsize][0]
+		rawmode = ntype_itype[type.type,itemsize][1]
 
 		nstr = final.tostring()
 
