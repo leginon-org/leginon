@@ -360,7 +360,7 @@ def printCtfSummary(params):
 	ctfhistconf = []
 	ctfhistval = []
 	for imgdata in imgtree:
-		if params['norejects'] is True and apDatabase.getImgAssessmentStatus(imgdata) is False:
+		if params['norejects'] is True and apDatabase.getSiblingImgAssessmentStatus(imgdata) is False:
 			continue
 
 		ctfq = appionData.ApCtfData()

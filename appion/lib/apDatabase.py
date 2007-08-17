@@ -20,6 +20,7 @@ import apDB
 import apLoop
 import apDisplay
 import appionData
+import apDefocalPairs
 
 data.holdImages(False)
 leginondb = apDB.db
@@ -217,6 +218,17 @@ def getImgSizeFromName(imgname):
 	else:
 		apDisplay.printError("Image "+imgname+" not found in database\n")
 	return(size)
+
+def getSiblingImgAssessmentStatus(imgdata):
+	status = getImgAssessmentStatus(imgdata)
+	if status:
+		return True
+	siblingimgdata = apDefocalPairs.getDefocusPair(imgdata)
+	if siblingimgdata:
+		status = getImgAssessmentStatus(siblingimgdata)
+
+	return status
+	
 
 def getImgAssessmentStatus(imgdata):
 	"""

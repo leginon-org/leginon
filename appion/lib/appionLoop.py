@@ -783,7 +783,7 @@ class AppionLoop(object):
 				reproccount += 1
 				skip = True
 
-			elif self.params['norejects'] is True and apDatabase.getImgAssessmentStatus(imgdata) is False:
+			elif self.params['norejects'] is True and apDatabase.getSiblingImgAssessmentStatus(imgdata) is False:
 				self._writeDoneDict(imgname)
 				rejectcount += 1
 				skip = True
