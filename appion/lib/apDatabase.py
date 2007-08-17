@@ -221,8 +221,8 @@ def getImgSizeFromName(imgname):
 
 def getSiblingImgAssessmentStatus(imgdata):
 	status = getImgAssessmentStatus(imgdata)
-	if status:
-		return True
+	if status is not None:
+		return status
 	siblingimgdata = apDefocalPairs.getDefocusPair(imgdata)
 	if siblingimgdata:
 		status = getImgAssessmentStatus(siblingimgdata)
