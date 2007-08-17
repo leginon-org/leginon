@@ -90,6 +90,10 @@ class MaskMaker(appionLoop.AppionLoop):
 				self.params['masktype']=elements[1]
 			elif (elements[0]=='diam'):
 				self.params['diam']=float(elements[1])
+			elif (elements[0]=='bin'):
+				self.params['bin']=int(elements[1])
+			elif (elements[0]=='diam'):
+				self.params['diam']=float(elements[1])
 			elif (elements[0]=='cruddiam'):
 				self.params['cdiam']=float(elements[1])
 			elif (elements[0]=='crudblur'):
