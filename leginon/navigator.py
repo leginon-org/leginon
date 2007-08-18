@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
-# $Revision: 1.119 $
+# $Revision: 1.120 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-17 21:46:12 $
-# $Author: pulokas $
+# $Date: 2007-08-18 02:21:49 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -325,7 +325,7 @@ class Navigator(node.Node):
 		try:
 			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		except:
-			self.logger.error(errstr % 'unable to get corrected image')
+			self.logger.error('unable to get corrected image')
 			return
 
 		if imagedata is None:
