@@ -242,6 +242,8 @@ class DriftManager(watcher.Watcher):
 
 	def acquireLoop(self, target=None, threshold=None):
 		## acquire first image
+		# make sure we have waited "pause time" before acquire the first image
+		time.sleep(self.settings['pause time'])
 		corchan = 0
 		imagedata = self.acquireImage(channel=corchan)
 		if imagedata is None:
@@ -269,7 +271,10 @@ class DriftManager(watcher.Watcher):
 			t1 = self.instrument.tem.SystemTime
 			dt = t1 - t0
 			pausetime = self.settings['pause time']
-			if dt < pausetime:
+			# make sure we have waited at least "pause time" before acquire
+			# disabled but use the setting for before the first image.
+#			if dt < pausetime:
+			if False:
 				thispause = pausetime - dt
 				self.startTimer('drift pause')
 				time.sleep(thispause)
