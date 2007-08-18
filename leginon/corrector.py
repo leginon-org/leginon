@@ -77,7 +77,6 @@ class Corrector(node.Node):
 		self.ref_cache = {}
 		self.plan = None
 		self.channel = 0
-		self.corimagedata = None
 
 		self.instrument = instrument.Proxy(self.objectservice,
 																				self.session,
@@ -182,11 +181,9 @@ class Corrector(node.Node):
 	def modifyNorm(self):
 		self.startTimer('modifyNorm')
                 try:
-			imagedata = self.corimagedata
-			camdata = imagedata['camera']
-			scopedata = imagedata['scope']
-			ccdcamera = camdata['ccdcamera']
-                        ccdcameraname = self.instrument.getCCDCameraName()
+			camdata = self.settings['camera settings']
+			scopedata = self.instrument.getData(data.ScopeEMData)
+			ccdcameraname = self.instrument.getCCDCameraName()
 			corstate = data.CorrectorCamstateData()
 			corstate['dimension'] = camdata['dimension']
 			corstate['offset'] = camdata['offset']
@@ -287,6 +284,7 @@ class Corrector(node.Node):
 			self.logger.error('Reference acquisition failed: %s' % e)
 			return None
 
+		self.maskimg = numpy.zeros(ref.shape)
 		return ref
 
 	def researchRef(self, camstate, type, ccdcameraname, scopedata, channel):
@@ -495,8 +493,6 @@ class Corrector(node.Node):
 		self.setStatus('idle')
 		self.stopTimer('acquireCorrectedImageData')
 		
-		self.corimagedata = imagedata
-		
 		self.maskimg = numpy.zeros(numimage.shape)
 		return newdata
 
@@ -508,16 +504,47 @@ class Corrector(node.Node):
                                 ## make it float to do float math later
                                 norm = numpy.asarray(ref['image'], numpy.float32)
                         else:
-                                self.logger.warning('No normalized image for normalization calculations')
+                                self.logger.warning('No normalized image for modifications')
                                 return
-                        if norm.shape != mask.shape:
+
+                        ref = self.researchRef(camstate, 'dark', ccdcameraname, scopedata, channel)
+			if ref:
+                                ## make it float to do float math later
+                                dark = numpy.asarray(ref['image'], numpy.float32)
+                        else:
+                                self.logger.warning('No dark image for modifications')
+                                return
+
+                        ref = self.researchRef(camstate, 'bright', ccdcameraname, scopedata, channel)
+			if ref:
+                                ## make it float to do float math later
+                                bright = numpy.asarray(ref['image'], numpy.float32)
+                        else:
+                                self.logger.warning('No bright image for modifications')
+                                return
+
+                        if dark.shape != mask.shape:
                                 self.logger.warning('Wrong mask dimension for channel %d' %channel)
                         else:
-                                mean = arraystats.mean(norm)
-                                maskedimage=ma.masked_array(norm,mask=mask)
-				diff = 1.0/maskedimage
-				mean = diff.mean().tolist()
-                                newnorm = maskedimage.filled(fill_value = 1.0/mean)
+                                maskedbright=ma.masked_array(bright,mask=mask)
+                                maskeddark=ma.masked_array(dark,mask=mask)
+                                bmean = maskedbright.mean()
+                                dmean = maskeddark.mean()
+                                dstd = maskeddark.std()
+				invmask = numpy.ones(mask.shape)-mask
+				invmaskedbright=ma.masked_array(bright,mask=invmask)
+				clean =	invmaskedbright.filled(fill_value=bmean)
+				newmask = ma.less(clean,dmean+10*dstd)
+
+                                maskednorm=ma.masked_array(norm,mask=newmask)
+                                maskeddark=ma.masked_array(dark,mask=newmask)
+                                maskedbright=ma.masked_array(bright,mask=newmask)
+                                nmean = maskednorm.mean()
+                                bmean = maskedbright.mean()
+                                dmean = maskeddark.mean()
+                                newnorm = maskednorm.filled(fill_value = nmean)
+						
+                                newdark = maskeddark.filled(fill_value = dmean-bmean)
 				try:
                                 	self.storeRef('norm', newnorm, camstate, scopedata, channel)
                                 	self.logger.info('Saved modified norm image for channel %d' %channel)

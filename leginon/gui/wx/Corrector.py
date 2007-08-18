@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.52 $
+# $Revision: 1.53 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-07-06 23:42:44 $
+# $Date: 2007-08-18 02:28:16 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -134,7 +134,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 													'acquire',
 													shortHelpString='Acquire')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLUS,'plus',shortHelpString='Add Region')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,'play',shortHelpString='play')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,'play',shortHelpString='Modify Reference')
 		self.toolbar.Realize()
 
 		# settings
