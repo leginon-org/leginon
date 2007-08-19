@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MaskAssessor.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-07-18 00:22:42 $
+# $Date: 2007-08-19 19:54:48 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -54,6 +54,9 @@ class Panel(gui.wx.ImageAssessor.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_STOP,
 													'stop',
 													shortHelpString='Reject All Regions')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE,
+													'send_queue_out',
+													shortHelpString='Keep All')
 
 		self.toolbar.Realize()
 
@@ -64,6 +67,26 @@ class Panel(gui.wx.ImageAssessor.Panel):
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
+	def onNodeInitialized(self):
+		self.toolbar.Bind(wx.EVT_TOOL, self.onBeginTool,
+											id=gui.wx.ToolBar.ID_BEGIN)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onNextTool,
+											id=gui.wx.ToolBar.ID_NEXT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPreviousTool,
+											id=gui.wx.ToolBar.ID_PREVIOUS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onEndTool,
+											id=gui.wx.ToolBar.ID_END)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onJumpTool,
+											id=gui.wx.ToolBar.ID_SIMULATE_TARGET)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onKeepTool,
+											id=gui.wx.ToolBar.ID_PLAY)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onRejectTool,
+											id=gui.wx.ToolBar.ID_STOP)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+											id=gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onKeepAllTool,
+											id=gui.wx.ToolBar.ID_SUBMIT_QUEUE)
+		
 	def addImagePanel(self):
 		# image
 		self.imagepanel = self.imagepanelclass(self, -1)
@@ -84,6 +107,8 @@ class Panel(gui.wx.ImageAssessor.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
+	def onKeepAllTool(self, evt):
+		self.node.onKeepAll()
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):

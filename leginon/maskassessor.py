@@ -39,7 +39,7 @@ class MaskAssessor(imageassessor.ImageAssessor):
 		self.oldrun = None
 		self.oldmaskname = None
 		self.oldcontinueon = None
-		self.keepall = False
+		self.noreject = True
 
 		if self.__class__ == MaskAssessor:
 			self.start()
@@ -60,11 +60,11 @@ class MaskAssessor(imageassessor.ImageAssessor):
 		format = 'png'
 		assessrunname = self.settings['run']
 		
-		self.files = []
+		goodfiles = []
 		for file in files:
 			ext = file.split('.')[-1]
 			if format == 'png' and ext in ('png','PNG'):
-				self.files.append(file)
+				goodfiles.append(file)
 
 		self.assessrundata,exist = apMask.insertMaskAssessmentRun(self.session,self.maskrundata,assessrunname)
 		if exist:
@@ -77,41 +77,61 @@ class MaskAssessor(imageassessor.ImageAssessor):
 				assessedmaskfiles = apMask.getAssessedMasks(self.assessrundata,self.maskrundata)
 				for assessedmaskfile in assessedmaskfiles:
 					try:
-						aindex = self.files.index(assessedmaskfile)
-						del self.files[aindex]
+						aindex = goodfiles.index(assessedmaskfile)
+						goodfiles[aindex]
 					except ValueError:
 						pass
 		
-		if self.files:
-			pass
+		if goodfiles:
+			goodfiles.sort()
+			self.images=[]
+			self.files=[]
+			for i,filename in enumerate(goodfiles):
+				imgdata = self.readParent(filename)
+				self.images.append(imgdata)
+				self.files.append(filename)
+				if self.noreject and not apDatabase.getImgAssessmentStatus(imgdata):
+					self.files.pop()
+					self.images.pop()
 		else:
 			self.logger.error('No %s files in directory' % (format,))
 			
 
 	def onKeep(self):
-
 		keeplist = []
 		keeptargets = self.panel.getTargets('Regions')
+		imgdata = self.images[self.currentindex]
 		for target in keeptargets:
 			keeplist.append(target.stats['Label'])
-		apMask.saveAssessmentFromTargets(self.maskrundata,self.assessrundata,self.imgdata,keeplist)
+		apMask.saveAssessmentFromTargets(self.maskrundata,self.assessrundata,imgdata,keeplist)
 
 		self.continueOn()
 
-	def onKeepall(self,targets):
+	def onKeepAll(self):
+		self.getImageList()
 
-		keeplist = []
-		keeptargets = targets
-		for target in keeptargets:
-			keeplist.append(target['stats']['Label'])
-		apMask.saveAssessmentFromTargets(self.maskrundata,self.assessrundata,self.imgdata,keeplist)
-
-		self.continueOn()
+		# get maskshape from first mask
+		currentname = self.files[0]
+		dir = self.maskdir
+		fullname = os.path.join(dir, currentname)
+		imarray = self.readPNG(fullname)
+		maskshape = imarray.shape
+		if self.images:
+			for i,imgdata in enumerate(self.images):
+				targets = apMask.getRegionsAsTargets(self.maskrundata,maskshape,imgdata)
+			
+				keeplist = []
+				keeptargets = targets
+				for target in keeptargets:
+					keeplist.append(target['stats']['Label'])
+				apMask.saveAssessmentFromTargets(self.maskrundata,self.assessrundata,imgdata,keeplist)
+			self.logger.info('Keep All Regions of mask run: %s' % (self.maskrundata['name'],))
 
 	def onReject(self):
 
 		keeplist = []
-		apMask.saveAssessmentFromTargets(self.maskrundata,self.assessrundata,self.imgdata,keeplist)
+		imgdata = self.images[self.currentindex]
+		apMask.saveAssessmentFromTargets(self.maskrundata,self.assessrundata,imgdata,keeplist)
 		
 		self.continueOn()
 
@@ -142,7 +162,8 @@ class MaskAssessor(imageassessor.ImageAssessor):
 						self.currentindex -= 1
 		if currentname.find('_mask') > -1:
 			alpha = 0.5
-			parentimg,imgdata = self.readParent(currentname)
+			imgdata = self.images[self.currentindex]
+			parentimg = imgdata['image']
 			maskshape = imarray.shape
 
 			targets = apMask.getRegionsAsTargets(self.maskrundata,maskshape,imgdata)
@@ -161,9 +182,6 @@ class MaskAssessor(imageassessor.ImageAssessor):
 			self.setImage(overlay, 'Mask')
 			imarray=parentimg
 		self.setImage(imarray, 'Image')
-		self.imgdata = imgdata
-		if self.keepall:
-			self.onKeepall(targets)
 		
 	def getMaskRunNames(self):
 		names = apMask.getMaskMakerRunNamesFromSession(self.session)		
@@ -173,5 +191,4 @@ class MaskAssessor(imageassessor.ImageAssessor):
 		parent=maskfilename.replace('_mask.png','')
 		imageq=leginondata.AcquisitionImageData(filename=parent)
 		imagedata=self.research(imageq, results=1, readimages=False)
-		imarray=imagedata[0]['image']
-		return imarray,imagedata[0]
+		return imagedata[0]
