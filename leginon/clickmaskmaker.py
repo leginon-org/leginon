@@ -23,6 +23,7 @@ try:
 	import apMask
 	import apCrud
 	import apImage
+	import apDatabase
 except:
 	pass
 
@@ -46,6 +47,7 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 		self.oldrundir = None
 		self.oldcontinueon = None
 		self.fileext = '.mrc'
+		self.noreject = True
 
 		if self.__class__ == ClickMaskMaker:
 			self.start()
@@ -116,7 +118,7 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 		if not self.maskrundata:
 			apMask.insertManualMaskRun(self.session,rundir,maskname,self.bin)
 			self.maskrundata,self.maskparamsdata = apMask.getMaskParamsByRunName(maskname,self.session)
-			self.images = allimages	
+			images = allimages	
 			try:
 				maskdir=os.path.join(rundir,"masks")	
 				self.makeRecursivePath(maskdir)
@@ -139,24 +141,38 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 				rundir = savedrundir
 
 			if mode == 'continue':
-				self.images = []
+				images = []
 				for imgdata in allimages:
 					regions = apMask.getMaskRegions(self.maskrundata,imgdata)
 					maskfile = os.path.join(rundir,"masks",imgdata['filename']+'_mask.png')
 					if len(regions) == 0 and not os.path.exists(maskfile):
-						self.images.append(imgdata)
+						images.append(imgdata)
 			else:
-				self.images = allimages
-		
+				images = allimages
+			
 		self.maskdir=os.path.join(self.maskrundata['path'],"masks")	
-		self.files = map((lambda x: x['filename']),self.images)
-
-		if self.images:
+		
+		if images:
+			goodfiles = map((lambda x: x['filename']),images)
+			goodfiles.sort()
+			self.images = []
+			self.files = []
+			for i,filename in enumerate(goodfiles):
+				q = leginondata.AcquisitionImageData(session=self.session,filename=filename)
+				imgdatalist = self.research(datainstance=q, readimages=False)
+				if imgdatalist:
+					imgdata = imgdatalist[0]
+					self.images.append(imgdata)
+					self.files.append(filename)
+				if self.noreject and not apDatabase.getImgAssessmentStatus(imgdata):
+					self.files.pop()
+					self.images.pop()
 			self.currentindex = 0
 			self.displayCurrent()
 		else:
 			self.logger.error('No %s files in session' % (preset,))
 			
+	
 	def insertResults(self,rundata,imgdata,infos):
 		offset=1
 		for l1 in range(0,len(infos)):
@@ -195,6 +211,8 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 			
 	def displayCurrent(self):
 		self.clearTargets('Regions')
+		currentname = self.files[self.currentindex]
+		
 		imgdata = self.images[self.currentindex]
 		currentname = imgdata['filename']
 		self.logger.info('Displaying %s' % (currentname))
@@ -226,7 +244,6 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 		self.maskshape = maskshape
 		self.maskimg = imarray
 		self.binnedparentimg = binnedparent
-		self.imgdata = imgdata
 		
 	def onAdd(self):
 		if self.maskexist:
