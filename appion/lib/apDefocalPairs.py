@@ -104,7 +104,7 @@ def insertShift(img,sibling,peak):
 	shiftq['dbemdata|AcquisitionImageData|image1']=img.dbid
 	shiftdata=appiondb.query(shiftq)
 	if shiftdata:
-		apDisplay.Warning("Shift values already in database")
+		apDisplay.printWarning("Shift values already in database")
 	else:
 		shiftq['dbemdata|AcquisitionImageData|image2']=sibling.dbid
 		shiftq['shiftx']=peak['shift'][1]
