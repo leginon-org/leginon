@@ -79,7 +79,7 @@ def getParticles(imgdata, selectionRunId):
 	prtlq['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
 	prtlq['selectionrun'] = selexonrun
 	particles = appiondb.query(prtlq)
-	shift={'shiftx':0, 'shifty':0}
+	shift={'shiftx':0, 'shifty':0,'scale':1}
 	return(particles,shift)
 
 def getParticlesForImageFromRunName(imgdata,runname):
@@ -108,7 +108,7 @@ def getParticlesREFLEGINON(imgdata, selectionRunId):
 	prtlq['image'] = imgdata
 	prtlq['selectionrun'] = selexonrun
 	particles = appiondb.query(prtlq)
-	shift={'shiftx':0, 'shifty':0}
+	shift={'shiftx':0, 'shifty':0,'scale':1}
 	return(particles,shift)
 
 def getDefocPairParticles(imgdict, params):
@@ -122,12 +122,13 @@ def getDefocPairParticles(imgdict, params):
 	shiftq=appionData.ApImageTransformationData()
 	shiftq['dbemdata|AcquisitionImageData|image1'] = params['sibpairs'][imgdict.dbid]
 	shiftdata=appiondb.query(shiftq,readimages=False)[0]
-	shiftx=shiftdata['shiftx']*shiftdata['scale']
-	shifty=shiftdata['shifty']*shiftdata['scale']
+	shiftx=shiftdata['shiftx']
+	shifty=shiftdata['shifty']
 	shift={}
 	shift['shiftx']=shiftx
 	shift['shifty']=shifty
-	print "shifting particles by", shiftx, shifty
+	shift['scale']=shiftdata['scale']
+	print "shifting particles by", shiftx, shifty,shiftdata['scale']
 	return(particles,shift)
 
 def getDefocPairParticlesREFLEGINON(imgdata, params):
@@ -143,12 +144,13 @@ def getDefocPairParticlesREFLEGINON(imgdata, params):
 	shiftq=appionData.ApImageTransformationData()
 	shiftq['image1'] = pairimgdata
 	shiftdata=appiondb.query(shiftq,readimages=False)[0]
-	shiftx=shiftdata['shiftx']*shiftdata['scale']
-	shifty=shiftdata['shifty']*shiftdata['scale']
+	shiftx=shiftdata['shiftx']
+	shifty=shiftdata['shifty']
 	shift={}
 	shift['shiftx']=shiftx
 	shift['shifty']=shifty
-	print "shifting particles by", shiftx, shifty
+	shift['scale']=shiftdata['scale']
+	print "shifting particles by", shiftx, shifty,shiftdata['scale']
 	return(particles,shift)
 
 
