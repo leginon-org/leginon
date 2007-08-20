@@ -254,16 +254,14 @@ def checkInspectFile(imgdict):
 def checkInspectDB(imgdata):
 	keep = apDatabase.getImgAssessmentStatus(imgdata)
 #	keep = apDatabase.getImgAssessmentStatusREFLEGINON(imgdata)
-	if keep is True:
-		return True
-	return False
+	return keep
 
 def checkPairInspectDB(imgdict,params):
 	aq=appionData.ApAssessmentData()
 	aq['dbemdata|AcquisitionImageData|image']=params['sibpairs'][imgdict.dbid]
 	adata=apdb.query(aq)	
 
-	keep=False
+	keep=None
 	if adata:
 		#check results of only most recent run
 		if adata[0]['selectionkeep']==True:
@@ -357,6 +355,7 @@ def eliminateMaskedParticles(particles,params,imgdata):
 	sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
 	if params['defocpair']:
 		imgdata = getDefocPair(imgdata,2)
+		print imgdata.dbid
 	maskimg,maskbin = apMask.makeInspectedMask(sessiondata,params['inspectmask'],imgdata)
 	if maskimg is not None:
 		for prtl in particles:
@@ -391,9 +390,10 @@ def saveParticles(particles,shift,dbbox,params,imgdict):
 	box=params['boxSize']
 	imgxy=imgdict['camera']['dimension']
 	eliminated=0
-	for prtl in particles:
-		xcoord=int(math.floor(prtl['xcoord']-(box/2)-shift['shiftx']+0.5))
-		ycoord=int(math.floor(prtl['ycoord']-(box/2)-shift['shifty']+0.5))
+	for i,prtl in enumerate(particles):
+		xcoord=int(math.floor(shift['scale']*(prtl['xcoord']-shift['shiftx'])-(box/2)+0.5))
+		ycoord=int(math.floor(shift['scale']*(prtl['ycoord']-shift['shifty'])-(box/2)+0.5))
+
 		if (xcoord>0 and xcoord+box <= imgxy['x'] and ycoord>0 and ycoord+box <= imgxy['y']):
 			plist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
 			# save the particles to the database
@@ -599,6 +599,9 @@ def getImgsDefocPairFromSelexonId(params):
 	# get all images from session
 	dbimgq=leginondata.AcquisitionImageData(session=params['sessionid'])
 	dbimginfo=db.query(dbimgq,readimages=False)
+
+#	dbimginfo=[db.direct_query(leginondata.AcquisitionImageData,537916)]
+
 	if not (dbimginfo):
 		apDisplay.printError("no images associated with this runId")
 
@@ -641,6 +644,7 @@ def getImgsDefocPairFromSelexonIdREFLEGINON(params):
 	# get all images from session
 	dbimgq=leginondata.AcquisitionImageData(session=sessiondata)
 	dbimginfo=db.query(dbimgq,readimages=False)
+
 	if not (dbimginfo):
 		apDisplay.printError("no images associated with this runId")
 
@@ -796,17 +800,16 @@ def insertStackRunREFLEGINON(params):
 
 def rejectImage(imgdata, params):
 	shortname = apDisplay.short(imgdata['filename'])
-
 	### check if the image has inspected, in file or in database
-	if params['inspectfile'] and checkInspectFile(imgdict) is False:
+	if params['inspectfile'] and checkInspectFile(imgdata) is False:
 		apDisplay.printColor(shortname+".mrc has been rejected in manual inspection file\n","cyan")
 		return False
 	if params['checkImage']:
 #		if params['defocpair'] and checkPairInspectDBREFLEGINON(imgdict, params) is False:
-		if params['defocpair'] and checkPairInspectDB(imgdict, params) is False:
+		if params['defocpair'] and checkPairInspectDB(imgdata, params) is False:
 			apDisplay.printColor(shortname+".mrc has been rejected by manual defocpair inspection\n","cyan")
 			return False
-		elif not params['defocpair'] and checkInspectDB(imgdict) is False:
+		elif not params['defocpair'] and checkInspectDB(imgdata) is False:
 			apDisplay.printColor(shortname+".mrc has been rejected by manual inspection\n","cyan")
 			return False
 
