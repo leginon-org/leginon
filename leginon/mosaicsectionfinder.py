@@ -533,7 +533,6 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 
 			leftovers = list(set(rasterpoints).difference(fillraster))
 			if len(region) > 1:
-				print region
 				distances = polygon.distancePointsToPolygon(leftovers, region)
 			else:
 			# handle the case for one point in the region

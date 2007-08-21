@@ -54,10 +54,14 @@ class Transformer(object):
 		self.imatrix = numpy.linalg.inv(self.matrix)
 
 	def createExtraMatrix(self):
-		xscale = 0.96
-		yscale = 1.0
+#		xscale = 0.96
+#		yscale = 1.0
+#		xang = 1.5708
+#		yang = -0.12
+		xscale = 0.95
+		yscale = 1.03
 		xang = 1.5708
-		yang = -0.12
+		yang = -0.124
 		matrix = numpy.array(
 			((xscale * numpy.sin(xang) , xscale * numpy.cos(xang)),
 			(yscale * numpy.sin(yang) , yscale * numpy.cos(yang))), numpy.float32
@@ -80,7 +84,6 @@ class Transformer(object):
 		gy1 = position['y']
 		binx = bin['x']
 		biny = bin['y']
-
 		## integrate over model
 		if None in (self.xmod, self.ymod):
 			dgx = gx1 - gx0
