@@ -26,30 +26,48 @@ class TiltTargetPanel(ImageViewer.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True):
 		ImageViewer.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool)
 
-		self.quit = wx.Button(self, -1, 'Next')
-		self.update = wx.Button(self, -1, 'Update')
-		self.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
-		self.Bind(wx.EVT_BUTTON, self.onUpdate, self.update)
 		self.bsizer = wx.GridBagSizer(5,5)
+
+		self.quit = wx.Button(self, -1, 'Next')
+		self.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
 		self.bsizer.Add(self.quit, (0, 0), (1, 1), wx.ALL)
+
+		self.update = wx.Button(self, -1, 'Update')
+		self.Bind(wx.EVT_BUTTON, self.onUpdate, self.update)
 		self.bsizer.Add(self.update, (1, 0), (1, 1), wx.ALL)
+
+		self.fit = wx.Button(self, -1, 'Fit')
+		self.Bind(wx.EVT_BUTTON, self.onFit, self.fit)
+		self.bsizer.Add(self.fit, (0, 1), (1, 1), wx.ALL)
+
+		self.clear = wx.Button(self, -1, 'Clear')
+		self.Bind(wx.EVT_BUTTON, self.onClear, self.clear)
+		self.bsizer.Add(self.clear, (1, 1), (1, 1), wx.ALL)
 
 		self.sizer.Add(self.bsizer, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
 
 	def onQuit(self, evt):
 		print "First"
-		targets = self.getTargets('Particles')
+		targets = self.getTargets('PickedParticles')
 		for target in targets:
 			print '%s\t%s' % (target.x, target.y)
 		print "Second"
-		targets = self.other.getTargets('Particles')
+		targets = self.other.getTargets('PickedParticles')
 		for target in targets:
 			print '%s\t%s' % (target.x, target.y)
 		wx.Exit()
 
 	def onUpdate(self, evt):
-		targets = self.other.getTargets('Particles')
-		self.setTargets('PickedParticles', targets)
+		targets = self.other.getTargets('PickedParticles')
+		self.setTargets('AlignedParticles', targets)
+
+	def onFit(self, evt):
+		targets = self.other.getTargets('PickedParticles')
+		self.setTargets('AlignedParticles', targets)
+
+	def onClear(self, evt):
+		self.setTargets('PickedParticles', [])
+		self.setTargets('AlignedParticles', [])
 
 	def setOtherPanel(self, panel):
 		self.other = panel
@@ -68,16 +86,16 @@ if __name__ == '__main__':
 			self.sizer = wx.GridBagSizer(5,5)
 
 			self.panel = TiltTargetPanel(frame, -1)
-			self.panel.addTargetTool('Particles', color=wx.RED, shape='x', target=True)
-			self.panel.setTargets('Particles', [])
-			self.panel.addTargetTool('PickedParticles', color=wx.BLUE, shape='o', target=False)
+			self.panel.addTargetTool('PickedParticles', color=wx.RED, shape='x', target=True)
 			self.panel.setTargets('PickedParticles', [])
+			self.panel.addTargetTool('AlignedParticles', color=wx.BLUE, shape='o')
+			self.panel.setTargets('AlignedParticles', [])
 
 			self.panel2 = TiltTargetPanel(frame, -1)
-			self.panel2.addTargetTool('Particles', color=wx.BLUE, shape='x', target=True)
-			self.panel2.setTargets('Particles', [])
-			self.panel2.addTargetTool('PickedParticles', color=wx.RED, shape='o', target=False)
+			self.panel2.addTargetTool('PickedParticles', color=wx.BLUE, shape='x', target=True)
 			self.panel2.setTargets('PickedParticles', [])
+			self.panel2.addTargetTool('AlignedParticles', color=wx.RED, shape='o')
+			self.panel2.setTargets('AlignedParticles', [])
 
 			self.panel.setOtherPanel(self.panel2)
 			self.panel2.setOtherPanel(self.panel)
