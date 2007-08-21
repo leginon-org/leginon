@@ -78,7 +78,7 @@ class MaskAssessor(imageassessor.ImageAssessor):
 				for assessedmaskfile in assessedmaskfiles:
 					try:
 						aindex = goodfiles.index(assessedmaskfile)
-						goodfiles[aindex]
+						del goodfiles[aindex]
 					except ValueError:
 						pass
 		
@@ -109,7 +109,7 @@ class MaskAssessor(imageassessor.ImageAssessor):
 
 	def onKeepAll(self):
 		self.getImageList()
-
+		
 		# get maskshape from first mask
 		currentname = self.files[0]
 		dir = self.maskdir
@@ -167,6 +167,8 @@ class MaskAssessor(imageassessor.ImageAssessor):
 			maskshape = imarray.shape
 
 			targets = apMask.getRegionsAsTargets(self.maskrundata,maskshape,imgdata)
+			if targets is None or len(targets)==0:
+				self.logger.warning('No Mask Regions in this Image')
 			keep = apDatabase.getImgAssessmentStatus(imgdata)
 			if keep == False:
 				self.logger.warning('Rejected Image, Mask Irelavent')
