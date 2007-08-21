@@ -471,6 +471,17 @@ class Data(newdict.TypedDict):
 		initializer = dict(self.items(dereference=False)) 	 
 		return (self.__class__, (initializer,), state)
 
+	def insert(self, **kwargs):
+		modulename = self.__module__
+		db = connections.getConnection(modulename)
+		db.insert(self, **kwargs)
+
+	def query(self, **kwargs):
+		modulename = self.__module__
+		db = connections.getConnection(modulename)
+		results = db.query(self, **kwargs)
+		return results
+
 	def update(self, other):
 		'''
 		needs to not dereference
