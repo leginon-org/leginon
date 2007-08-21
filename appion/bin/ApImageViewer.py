@@ -1,7 +1,7 @@
 #!/usr/bin/python -O
 
 import sys
-import ImageViewer
+from gui.wx import ImageViewer
 import wx
 import pyami
 import numpy
@@ -23,11 +23,11 @@ EVT_TARGETING = wx.PyEventBinder(TargetingEventType)
 EVT_SETTINGS = wx.PyEventBinder(SettingsEventType)
 
 
-class TargetOutputPanel(ImageViewer.TargetImagePanel):
+class ManualPickerPanel(ImageViewer.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True):
 		ImageViewer.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool)
 
-		self.quit = wx.Button(self, -1, 'Quit')
+		self.quit = wx.Button(self, -1, 'Next')
 		self.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
 		self.sizer.Add(self.quit, (0, 0), (1, 1), wx.EXPAND)
 
@@ -49,14 +49,7 @@ if __name__ == '__main__':
 			frame = wx.Frame(None, -1, 'Image Viewer')
 			self.sizer = wx.BoxSizer(wx.VERTICAL)
 
-#			self.panel = ImagePanel(frame, -1)
-
-#			self.panel = ClickImagePanel(frame, -1)
-#			self.panel.Bind(EVT_IMAGE_CLICKED,
-#							lambda e: self.panel.setImage(self.panel.imagedata))
-
-			#self.panel = TargetImagePanel(frame, -1)
-			self.panel = TargetOutputPanel(frame, -1)
+			self.panel = ManualPickerPanel(frame, -1)
 			self.panel.addTypeTool('Select Particles', toolclass=ImageViewer.TargetTypeTool, display=wx.RED, target=True)
 			self.panel.setTargets('Select Particles', [])
 
