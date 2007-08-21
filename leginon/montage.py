@@ -17,6 +17,7 @@ import sys
 from pyami import ordereddict, mrc
 import cPickle
 import os.path
+import sinedon
 from pyami import affine
 import caltransformer
 
@@ -394,7 +395,7 @@ def createTiles(inputs, tiledict, tilesize, row1=None, row2=None, col1=None, col
 if __name__ == '__main__':
 	from optparse import OptionParser
 #	import stitchparser
-	import profile
+#	import profile
 	
 	parser = OptionParser()
 
