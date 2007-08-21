@@ -21,7 +21,7 @@ def getConnection(modulename):
 		dbconf = dbconfig.getConfig(modulename)
 	
 		if dbconf != connectedconf:
-			print 'MAKING CONNECTION', modulename, dbconf
+			#print 'MAKING CONNECTION', modulename, dbconf
 			connections[modulename] = {'config': dbconf, 'connection': DB(**dbconf)}
 		connection = connections[modulename]['connection']
 	finally:
