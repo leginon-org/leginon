@@ -1,22 +1,7 @@
 #!/usr/bin/env python
 
-import sinedon
 import mydata1 
 import mydata2
-
-### sinedon.cfg should have defined the connection parameters for mydata1 and
-### mydata2
-conf1 = sinedon.getConfig('mydata1')
-print 'mydata1 config'
-print conf1
-
-conf2 = sinedon.getConfig('mydata2')
-print 'mydata2 config'
-print conf2
-
-### Assuming that if I log in to one of those databases, I can access the
-### other, I only need to connect to one of them.
-db = sinedon.getConnection('mydata1')
 
 def insertTest():
 	# create instance of TData with a reference to an instance of AsdfData
@@ -29,7 +14,7 @@ def insertTest():
 
 	# This single insert should recursively insert a new row into each 
 	# of the four tables
-	db.insert(o)
+	o.insert()
 
 def queryTest():
 	a = mydata1.AsdfData(aaaa='rr')
@@ -38,7 +23,7 @@ def queryTest():
 	s = mydata2.SomeData(name='third')
 	o = mydata2.OtherData(name='jim', abc=s, t=t)
 
-	results = db.query(o)
+	results = o.query()
 	myresult = results[0]
 	print 'QUERY RESULTS'
 	print 'Other', myresult
