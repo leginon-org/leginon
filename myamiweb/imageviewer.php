@@ -68,6 +68,7 @@ viewer_header('image viewer', $javascript, 'initviewer()');
 ?>
 <a class="header" target="summary" href="summary.php?expId=<?php echo $sessionId ?>">[summary]</A>
 <a class="header" target="processing" href="processing.php?expId=<?php echo $sessionId; ?>">[processing]</A>
+<a class="header" target="make jpgs" href="runjpgmaker.php?expId=<?php echo $sessionId; ?>">[make jpgs]</A>
 <?php
 $viewer->display();
 viewer_footer();
