@@ -17,8 +17,9 @@ $colormap = ($_GET['colormap']) ? '&colormap='.$_GET['colormap'] : '';
 $autoscale = ($_GET['autoscale']) ? '&autoscale='.$_GET['autoscale'] : '';
 $quality = ($_GET['t']) ? '&t='.$_GET['t']: '';
 $psel = ($_GET['psel']) ? '&psel='.urlencode($_GET['psel']) : ''; 
+$acepar = ($_GET['g']) ? '&g='.($_GET['g']) : ''; 
 
-$options = $tg.$sb.$minpix.$maxpix.$fft.$filter.$colormap.$autoscale.$psel;
+$options = $tg.$sb.$minpix.$maxpix.$fft.$filter.$colormap.$autoscale.$psel.$acepar;
 
 $filenamewpath = $leginondata->getFilenameFromId($id,true);
 $filename = end(explode("/",$filenamewpath));

@@ -125,9 +125,9 @@ $html .= "</TR>\n";
 # show info for each iteration
 sort($iterations);
 foreach ($iterations as $iteration){
-        $refinementData=$particle->getRefinementData($refinerun['DEF_id'], $iteration['iteration']);
+  $refinementData=$particle->getRefinementData($refinerun['DEF_id'], $iteration['iteration']);
 	$numclasses=$particle->getNumClasses($refinementData['DEF_id']);
-        $res = $particle->getResolutionInfo($iteration['REF|ApResolutionData|resolution']);
+  $res = $particle->getResolutionInfo($iteration['REF|ApResolutionData|resolution']);
 	$fscfile = ($res) ? $refinerun['path'].'/'.$res['fscfile'] : "None" ;
 	$halfres = ($res) ? sprintf("%.2f",$res['half']) : "None" ;
 	$badprtls=$particle->getNumBadParticles($refinementData['DEF_id']);
