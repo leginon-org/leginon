@@ -140,15 +140,17 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 				self.logger.warning('Change mask run path to that of the saved %s',(savedrundir,))
 				rundir = savedrundir
 
-			if mode == 'continue':
-				images = []
-				for imgdata in allimages:
-					regions = apMask.getMaskRegions(self.maskrundata,imgdata)
-					maskfile = os.path.join(rundir,"masks",imgdata['filename']+'_mask.png')
-					if len(regions) == 0 and not os.path.exists(maskfile):
+			images = []
+			for imgdata in allimages:
+				regions = apMask.getMaskRegions(self.maskrundata,imgdata)
+				maskfile = os.path.join(rundir,"masks",imgdata['filename']+'_mask.png')
+				if mode == 'continue':
+					if not os.path.exists(maskfile):
 						images.append(imgdata)
-			else:
-				images = allimages
+				else:
+					if mode == 'overwrite empty masks':
+						if len(regions)==0:
+							images.append(imgdata)
 			
 		self.maskdir=os.path.join(self.maskrundata['path'],"masks")	
 		
@@ -164,9 +166,15 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 					imgdata = imgdatalist[0]
 					self.images.append(imgdata)
 					self.files.append(filename)
-				if self.noreject and not apDatabase.getImgAssessmentStatus(imgdata):
+				status = apDatabase.getImgAssessmentStatus(imgdata)
+				if self.noreject and not status:
 					self.files.pop()
 					self.images.pop()
+		else:
+			self.logger.error('No %s files in session' % (preset,))
+			return
+		
+		if len(self.files) >0:
 			self.currentindex = 0
 			self.displayCurrent()
 		else:
@@ -203,10 +211,9 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 		self.continueOn()
 
 	def onReject(self):
-		
+		# Clear all regions
 		self.maskimg = numpy.zeros(self.maskshape)
 		self.setImage(self.binnedparentimg, 'Mask')
-		self.continueOn()
 			
 			
 	def displayCurrent(self):

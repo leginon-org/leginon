@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ClickMaskMaker.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-07-18 00:22:42 $
+# $Date: 2007-08-22 22:55:07 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -53,10 +53,10 @@ class Panel(gui.wx.ImageAssessor.Panel):
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
 													'play',
-													shortHelpString='Keep')
+													shortHelpString='Save')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_STOP,
 													'stop',
-													shortHelpString='Reject')
+													shortHelpString='Clear')
 
 		self.toolbar.Realize()
 
@@ -134,7 +134,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(label, (2, 0), (1, 1))
 		sz.Add(self.widgets['run'], (2, 1), (1, 1))
 
-		self.widgets['continueon'] = wx.CheckBox(self, -1,'Continue')
+		self.widgets['continueon'] = wx.CheckBox(self, -1,'Not allow overwrite empty masks')
 		sz.Add(self.widgets['continueon'], (3, 0), (1, 1))
 
 		label = wx.StaticText(self, -1, 'Mask Run Path:')
