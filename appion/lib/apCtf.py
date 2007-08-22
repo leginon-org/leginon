@@ -51,12 +51,13 @@ def commitCtfValueToDatabaseREFLEGINON(imgdata, matlab, ctfvalue, params):
 	opimfilepath1 = os.path.join(params['opimagedir'],opimfile1)
 	opimfilepath2 = os.path.join(params['opimagedir'],opimfile2)
 
-	shutil.copy(imfile1, opimfilepath1)
-	shutil.copy(imfile2, opimfilepath2)
-	#pymat.eval(matlab,"im1 = imread('"+imfile1+"');")
-	#pymat.eval(matlab,"im2 = imread('"+imfile2+"');")
-	#pymat.eval(matlab,"imwrite(im1,'"+opimfilepath1+"');")
-	#pymat.eval(matlab,"imwrite(im2,'"+opimfilepath2+"');")
+	#shutil.copy(imfile1, opimfilepath1)
+	#shutil.copy(imfile2, opimfilepath2)
+	#These commands may help to remove extra whitespace
+	pymat.eval(matlab,"im1 = imread('"+imfile1+"');")
+	pymat.eval(matlab,"im2 = imread('"+imfile2+"');")
+	pymat.eval(matlab,"imwrite(im1,'"+opimfilepath1+"');")
+	pymat.eval(matlab,"imwrite(im2,'"+opimfilepath2+"');")
 
 	insertCtfValueREFLEGINON(imgdata, params, matfile, ctfvalue, opimfile1, opimfile2)
 
