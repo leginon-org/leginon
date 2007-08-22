@@ -224,7 +224,7 @@ class iconlink {
 
 class dropdown {
 
-	var $alignment='leftbottom';
+	var $alignment='rightbottom';
 	var $height=80;
 	var $width=80;
 	var $closeval="x";

@@ -246,7 +246,13 @@ function newfile(view){
 	setImageStatus(view);
 
 	if (eval(view+"fft_bt_st")) fft="&fft=1"; else fft="";
-	if (eval(view+"ace_bt_st")) jsimagescriptcur="getaceimg.php"; else jsimagescriptcur="getimg.php";
+	if (eval(view+"ace_bt_st")) {
+		jsimagescriptcur="getaceimg.php"
+		jspresetscriptcur="getacepreset.php"
+	} else { 
+		jsimagescriptcur="getimg.php"
+		jspresetscriptcur="getpreset.php"
+	}
 	if (cacepar = eval("jsaceparam"+view)) ag="&g="+cacepar; else ag="";
 	if (eval(view+"scale_bt_st")) sb="&sb=1"; else sb="";
 	if (eval(view+"target_bt_st")) tg="&tg=1"; else tg="";
