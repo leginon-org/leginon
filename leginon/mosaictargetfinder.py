@@ -251,10 +251,9 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 			return
 		self.logger.info('Displaying targets...')
 		donetargets = []
-		try:
+		if self.__class__ != MosaicClickTargetFinder:
 			self.setTargets([], 'region')
-		except:
-			pass
+
 		self.displayedtargetdata = {}
 		targets = {}
 		for type in ('acquisition','focus'):
