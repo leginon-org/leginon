@@ -549,7 +549,14 @@ class particledata {
  }
 
 #---------RECONSTRUCTION FUNCTIONS---------------#
-
+  
+  function getModelsFromProject ($projectId) {
+    $q="select * "
+      ."from `ApInitialModelData` where `project|projects|project`='$projectId'";
+    $r = $this->mysql->getSQLResult($q);
+    return $r;
+  }
+	
 	function getReconIds ($stackId) {
 		$q = "select * "
 			."from `ApRefinementRunData` where `REF|ApStackData|stack` = '$stackId'";

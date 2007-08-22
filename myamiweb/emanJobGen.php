@@ -12,6 +12,7 @@ require ('inc/processing.inc');
 require ('inc/viewer.inc');
 require ('inc/leginon.inc');
 require ('inc/particledata.inc');
+require ('inc/project.inc');
 
 if ($_POST['write']) {
         if (!$_POST['nodes']) jobForm("ERROR: No nodes specified, setting default=4");
@@ -48,6 +49,10 @@ function jobForm($extra=false) {
     $sessionId=$_POST['sessionId'];
     $formAction=$_SERVER['PHP_SELF'];
   }
+  $projectId=getProjectFromExpId($expId);
+
+  // get initial models associated with project
+  $modeldata=$particle->getModelsFromProject($projectId);
 
   // find each stack entry in database
   $stackIds = $particle->getStackIds($sessionId);
@@ -76,6 +81,45 @@ function jobForm($extra=false) {
   else $j=$numiters;
 
   $javafunc="<SCRIPT LANGUAGE='JavaScript'>
+function displayModelSelector(emanObj){
+  newwindow=window.open('','name','resizable=1,scrollbars=1,height=400,width=600');
+  newwindow.document.write(\"<HTML><HEAD>\");
+  newwindow.document.write(\"<link rel='stylesheet' type='text/css' href='css/viewer.css'>\");
+  newwindow.document.write(\"</HEAD>\");
+  newwindow.document.write(\"<BODY>\");
+  newwindow.document.write(\"<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='2'>\")\n";
+  foreach ($modeldata as $model) {
+    # get list of png files in directory
+    $pngfiles=array();
+    $modeldir= opendir($model['path']);
+    while ($f = readdir($modeldir)) {
+      if (eregi($model['name'].'.*\.png$',$f)) $pngfiles[] = $f;
+    }
+    sort($pngfiles);
+
+    # display starting model
+    $javafunc .= "newwindow.document.write(\"<TR><TD COLSPAN=2>\");\n";
+    foreach ($pngfiles as $snapshot) {
+      $snapfile = $model['path'].'/'.$snapshot;
+      $javafunc .= "newwindow.document.write(\"<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\");\n";
+    }
+    $javafunc .= "newwindow.document.write(\"</TD>\");\n";
+    $javafunc .= "newwindow.document.write(\"</TR>\")\n";
+    $sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
+    $javafunc.="newwindow.document.write(\"<TR><TD COLSPAN=2>$model[description]</TD></TR>\");\n";
+    $javafunc.="newwindow.document.write(\"<TR><TD COLSPAN=2>$model[path]/$model[name]</TD></TR>\");\n";
+    $javafunc.="newwindow.document.write(\"<TR><TD>pixel size:</TD><TD>$model[pixelsize]</TD></TR>\");\n";
+    $javafunc.="newwindow.document.write(\"<TR><TD>box size:</TD><TD>$model[boxsize]</TD></TR>\");\n";
+    $javafunc.="newwindow.document.write(\"<TR><TD>symmetry:</TD><TD>$sym[symmetry]</TD></TR>\");\n";
+    $javafunc.="newwindow.document.write(\"<TR><TD COLSPAN=2 ALIGN=CENTER>\");\n";
+    $javafunc.="newwindow.document.write(\"<INPUT TYPE='button' NAME='modelselect' VALUE='Select Initial Model' onclick='emanObj.document.emanjob.dmfmod.value=3'>\")\n";
+    $javafunc.="newwindow.document.write(\"</TD></TR>\");\n";
+
+  }
+  $javafunc.="newwindow.document.write(\"</TABLE>\")
+  newwindow.document.write(\"</BODY></HTML>\")
+  newwindow.document.close();
+}
 function displayDMF() {
   stack = document.emanjob.stackval.value;
   stackinfo = stack.split('|--|');
@@ -128,6 +172,7 @@ Stack:
 	}
 	echo "</SELECT>
 <P>
+<INPUT TYPE='button' NAME='modelselect' VALUE='Select Initial Model' onclick='displayModelSelector(this)'>
 <INPUT TYPE='button' NAME='dmfput' VALUE='Put stack in DMF' onclick='displayDMF()'>
 <P>
 <TABLE CLASS='tableborder'>
