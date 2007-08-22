@@ -232,8 +232,8 @@ function newfile(view){
 	jsvfile = eval("jsvfile"+view);
 	selpreset = eval("jspreset"+view);
 	if (cbinning = eval("jsbinning"+view)) binning="&binning="+cbinning; else binning="";
-	jsimagescriptcur = eval("jsimagescript"+view);
-	jspresetscriptcur = eval("jspresetscript"+view);
+	jsimagescriptcur = eval("jsimagescript"+view)
+	jspresetscriptcur = eval("jspresetscript"+view)
 	vid = getviewindex(view);
 	
 	if (list = eval("document.viewerform."+view+"pre"))
@@ -246,6 +246,8 @@ function newfile(view){
 	setImageStatus(view);
 
 	if (eval(view+"fft_bt_st")) fft="&fft=1"; else fft="";
+	if (eval(view+"ace_bt_st")) jsimagescriptcur="getaceimg.php"; else jsimagescriptcur="getimg.php";
+	if (cacepar = eval("jsaceparam"+view)) ag="&g="+cacepar; else ag="";
 	if (eval(view+"scale_bt_st")) sb="&sb=1"; else sb="";
 	if (eval(view+"target_bt_st")) tg="&tg=1"; else tg="";
 	if (eval(view+"nptcl_bt_st")) nptcl="&nptcl=1"; else nptcl="";
@@ -262,7 +264,7 @@ function newfile(view){
 		"&preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+autoscale+ptclsel+nptcl;
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+autoscale+ptclsel+nptcl+ag;
 
 	if (options == lastoptions[vid])
 		return;
@@ -292,6 +294,14 @@ function newfile(view){
 	}
 
 	lastoptions[vid] = options;
+}
+
+function setAceParam(view) {
+	if (param = document.getElementById(view+"aceparam")) {
+		vf = param.options[param.selectedIndex].value;
+		eval("jsaceparam"+view+"="+vf);
+		newfile(view)
+	}
 }
 
 function toggleButton(imagename, name) {

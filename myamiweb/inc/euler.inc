@@ -39,6 +39,7 @@
 		$loc = array('x'=>($p[0]*$v[0][0] + $p[1]*$v[0][1] + $p[2]*$v[0][2]),'y'=> ($p[0]*$v[1][0] + $p[1]*$v[1][1] + $p[2]*$v[1][2]), 'z'=>($p[0]*$v[2][0] + $p[1]*$v[2][1] + $p[2]*$v[2][2]));
 		return $loc;//return the point
 	}
+
 	function multiply($a, $b)
 	{
 		for($i = 0; $i<count($a); $i++)
@@ -53,6 +54,7 @@
 		}
 		return $c;
 	}	
+
 	function trace($d)
 	{
 		$sum = 0;
@@ -69,6 +71,7 @@
 				$result[$i][$j] = $d[$j][$i];
 		return $result;
 	}
+
 	function calculateDistance($e1,$e2)
 	{
 		//two matricies to represent the eulers
@@ -132,8 +135,6 @@
 		while($count<count($e1s) && $count<count($e2s))//count is in range of list
 		{
 			$distance = calculateDistance($e1s[$count], $e2s[$count]);
-			if($distance!=3.14159)
-			{
 			if($min>$distance)
 				$min = $distance;
 			if($max<$distance)
@@ -142,18 +143,12 @@
 			$terms = $terms+$distance;
 			$termsSquared = $termsSquared+($distance*$distance);
 			$count++;
-			}
-			else
-			{	
-				$count++;
-				$error++;
-			}
 		}
-		$count = $count-$error;
 		$std = (1.0/$count)*sqrt($count*($termsSquared) - $terms*$terms);
 		$theStats = new Statistics($terms/$count, $std, $min, $max,$errors); 
 		return $theStats;
 	}
+
 	class Statistics
 	{
 		var $myMean = 0;

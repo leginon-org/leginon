@@ -315,7 +315,6 @@ if (!empty($ctfdata)) {
 	echo "<table border='0'>";
 	foreach($ctfdata as $r) {
 	$f++;
-	$blobs = array();
 	$ctfIds[]=$r['ctfId'];
 	foreach($r as $k=>$v) {
 		if (!in_array($k, $ctf_display_fields))
@@ -336,15 +335,15 @@ if (!empty($ctfdata)) {
 	}
 	$graph1=$graphpath."/".$graph1name;
 	$graph2=$graphpath."/".$graph2name;
-	echo "<TR>";
-	echo "<TD ALIGN='LEFT'>\n";
-	echo "<A HREF='loadimg.php?filename=$graph1'>\n";
-	echo "<IMG SRC='loadimg.php?filename=$graph1&scale=0.5'></A></TD>\n";
-        echo "<TD ALIGN='LEFT'>\n";
-	echo "<A HREF='loadimg.php?filename=$graph2'>\n";
-	echo "<IMG SRC='loadimg.php?filename=$graph2&scale=0.4'></A></TD>\n";
-	echo "</TR>\n";
-	echo "<TR><TD colspan=2><HR></TD></TR>";	
+	echo "<tr>";
+	echo "<td align='left'>\n";
+	echo "<a href='loadimg.php?filename=$graph1'>\n";
+	echo "<img src='loadimg.php?filename=$graph1&scale=0.5'></a></td>\n";
+  echo "<td align='left'>\n";
+	echo "<a href='loadimg.php?filename=$graph2'>\n";
+	echo "<img src='loadimg.php?filename=$graph2&scale=0.4'></a></td>\n";
+	echo "</tr>\n";
+	echo "<tr><td colspan=2><hr></td></tr>";	
 	}
 	echo "</table>";
 	

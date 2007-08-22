@@ -115,8 +115,9 @@ if ($g) {
                 imagejpeg($img,'',$quality);
 	imagedestroy($img);
 } else {
-	Header("Content-type: image/x-png");
+	header("Content-type: image/x-png");
 	$blkimg = blankimage();
+	imagepng($blkimg);
 	imagedestroy($blkimg);
 }
 

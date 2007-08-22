@@ -11,6 +11,7 @@ define("USR_BROWSER_AGENT", trim(browser('b')));
 define("USR_PLATFORM_AGENT", trim(browser('p')));
 //--- Detect Browser, Platform
 function browser($n) 
+/* {{{ */
 { 
  global $HTTP_USER_AGENT, $BName, $BVersion, $BPlatform; 
 
@@ -129,6 +130,7 @@ $rval=$BName." ".$BVersion." ".$BPlatform;
 }
 return $rval;
 } 
+/* }}} */
 
 // --- iconlink, a PHP class to display Icons
 
@@ -217,8 +219,59 @@ class iconlink {
 		echo $this->getScript();
 		echo $this->getHtmlTableIcons($this->cols);
 	}
-
 	
+}
+
+class dropdown {
+
+	var $alignment='leftbottom';
+	var $height=80;
+	var $width=80;
+	var $closeval="x";
+
+	function dropdown($menuname, $id="") {
+		$this->menuname=$menuname;
+		$this->menunameid=($id) ? $id : md5($menuname);
+	}
+
+	function setContent($content){
+		$this->html="<a onClick=\"return overlay(this, '".$this->menunameid
+				."', '".$this->alignment."')\">"
+				.$this->menuname."</a>";
+		$this->html.='<div id="'.$this->menunameid.'" '
+			.' style="position:absolute; display:none; '
+			.'border: 1px solid black;'
+			.$this->__dimension()
+			.'background-color: white; padding: 4px">'
+			.$this->__close()
+			.$content
+			.'</div>';
+	}
+
+	function setClose($val) {
+		$this->closeval=$val;
+	}
+
+	function display(){
+		return $this->html;
+	}
+
+	function __dimension() {
+		$dim="";
+		if ($this->height) {
+			$dim.="height:".$this->height."px;";
+		}
+		if ($this->width) {
+			$dim.="width:".$this->width."px;";
+		}
+		return $dim;
+	}
+
+	function __close() {
+			return '<div align="right" ><a href="#" onClick="overlayclose(\''.$this->menunameid.'\'); return false">'
+			.$this->closeval
+			.'</a></div>';
+	}
 }
 
 function divtitle($title) {

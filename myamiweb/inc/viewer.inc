@@ -240,6 +240,7 @@ class viewer {
 	function getJavascript() {
 		$str = '<script src="js/viewer.js"></script>'.$this->crlf;
 		$str .= '<script src="js/button.js"></script>'.$this->crlf;
+		$str .= '<script src="js/dropdiv.js"></script>'.$this->crlf;
 		$str .= '<script>'.$this->crlf;
 		if ($this->sessionId)
 			$str .= 'var jsSessionId = '.$this->sessionId.";".$this->crlf;
@@ -448,6 +449,8 @@ class view {
 		$this->btclose->onToggle($name.'btcloseaction'); 
 		$this->btnptcl = new toggleButton($this->name.'nptcl', 'ptcl');
 		$this->btnptcl->onToggle($name.'btnptclaction');
+		$this->btace = new toggleButton($this->name.'ace', 'ace');
+		$this->btace->onToggle($name.'btaceaction'); 
 
 		$param = "left=0,top=".($this->viewnb*180+20).",height=170,width=370";
 		$url = "ptclsel.php?name=$name&displayname=$this->title";
@@ -459,6 +462,7 @@ class view {
 		$this->displaytargeticon = true;
 		$this->displaynptclicon = true;
 		$this->displayffticon = true;
+		$this->displayaceicon = true;
 		$this->displayinfoicon = true;
 		$this->displayparticleicon = true;
 		$this->displaydownloadicon = true;
@@ -480,6 +484,7 @@ class view {
 		$this->colormap = "0";
 		$this->autoscale = "1";
 		$this->ptclsel = "0";
+		$this->jsacepar= "1";
 		$this->ptclselmemo = $this->name.'psel';
 		$this->qualitymemo = $this->name.'q';
 		$this->binningmemo = $this->name.'b';
@@ -510,6 +515,8 @@ class view {
 			$this->autoscale= $autoscale;
 		if ($btfftstate=$_REQUEST[$this->btfftmemo])
 			$this->btfftstate = $btfftstate;
+		if ($btacestate=$_REQUEST[$this->btacememo])
+			$this->btacestate = $btacestate;
 		if ($bttargetstate=$_REQUEST[$this->bttargetmemo])
 			$this->bttargetstate = $bttargetstate;
 		if ($btnptclstate=$_REQUEST[$this->btnptclmemo])
@@ -665,6 +672,7 @@ class view {
 			.'var jscolormap'.$this->name.'="'.$this->colormap.'";'.$this->crlf
 			.'var jsautoscale'.$this->name.'="'.$this->autoscale.'";'.$this->crlf
 			.'var jsptclsel'.$this->name.'="'.$this->ptclsel.'";'.$this->crlf
+			.'var jsaceparam'.$this->name.'="'.$this->jsacepar.'";'.$this->crlf
 			.'var '.$this->name.'adjw=false;'.$this->crlf
 			.$this->crlf;
 		return $javascript;
@@ -680,9 +688,13 @@ class view {
 			.$this->bttarget->getJavascript()
 			.$this->btnptcl->getJavascript()
 			.$this->btfft->getJavascript()
+			.$this->btace->getJavascript()
 			.$this->btclose->getJavascript()
 			.$this->crlf;
 
+		$javascript .= 'function '.$name.'btaceaction() { '.$this->crlf
+			.'	newfile("'.$this->name.'");'.$this->crlf
+			.'}'.$this->crlf;
 		$javascript .= 'function '.$name.'btfftaction() { '.$this->crlf
 			.'	newfile("'.$this->name.'");'.$this->crlf
 			.'	setImageHistogram("'.$this->name.'");'.$this->crlf
@@ -838,17 +850,40 @@ class view {
 			</td>
 		';
 		}
-		if ($this->displaytargeticon) {
+		if ($this->displayaceicon) {
 			$htmlframe .= '
 				<td width="15">';
-			$htmlframe .= $this->bttarget->display();
-			$htmlframe .= '
-			</td>';
+			$htmlframe .= $this->btace->display();
+			$htmlframe .= '</td><td width="9">';
+			$downimg='<img src="img/menudown1.gif" border="0">';
+			$closedownimg='<img src="img/close_bt_off.gif" border="0">';
+			$acemenu = new dropdown($downimg, $name."ace");
+			$acemenu->closeval=$closedownimg;
+			$acemenu->height="";
+			$acemenu->width="";
+			$aceform='ACE params:<br /><select id="'.$name.'aceparam">';
+			$aceform.="<option value='1'>graph1</option>";
+			$aceform.="<option value='2'>graph2</option>";
+			$aceform.="</select>";
+			$aceform.='<input type="button" value="update" onClick=setAceParam(\''.$name.'\') />';
+			$acemenu->setContent($aceform);
+			$htmlframe.=$acemenu->display();
+		$htmlframe .= '
+			</td>
+		';
 		}
 		if ($this->displaynptclicon) {
 			$htmlframe .= '
 				<td width="15">';
 			$htmlframe .= $this->btnptcl->display();
+			$htmlframe .= '
+			</td>';
+		}
+
+		if ($this->displaytargeticon) {
+			$htmlframe .= '
+				<td width="15">';
+			$htmlframe .= $this->bttarget->display();
 			$htmlframe .= '
 			</td>';
 		}
@@ -977,6 +1012,7 @@ function viewer_header($title="", $javascript="", $onload="") {
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"  "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 	<head>
+		<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 		<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 		<link rel="stylesheet" type="text/css" href="css/view.css">
 		<style>

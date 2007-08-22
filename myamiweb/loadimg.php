@@ -1,15 +1,15 @@
 <?php
 // --- Read an MRC file and display as a PNG
-$filename=$_GET[filename];
-$scale = ($_GET[scale]);
-$rescale = ($_GET[rescale]);
+$filename=$_GET['filename'];
+$scale = ($_GET['scale']);
+$rescale = ($_GET['rescale']);
 
 if (preg_match('`\.mrc$`i',$filename)) {
-        $src_mrc = mrcread($filename);
+	$src_mrc = mrcread($filename);
 	if ($rescale) {
-	        // --- scale image values (not size)
-	        $densitymax=255;
-	        list($pmin, $pmax) = mrcstdevscale($src_mrc, $densitymax);
+		// --- scale image values (not size)
+		$densitymax=255;
+		list($pmin, $pmax) = mrcstdevscale($src_mrc, $densitymax);
 		$image = mrctoimage($src_mrc,$pmin,$pmax);
 	}
 	else $image = mrctoimage($src_mrc);
@@ -18,18 +18,18 @@ if (preg_match('`\.mrc$`i',$filename)) {
 }
 
 elseif (preg_match('`\.jpg$`i',$filename)) {
-        $image = imagecreatefromjpeg($filename);
+	$image = imagecreatefromjpeg($filename);
 }
 
 elseif (preg_match('`\.png$`i',$filename)) {
-        $image = imagecreatefrompng($filename);
+	$image = imagecreatefrompng($filename);
 }
 
 if ($scale){
-        $width=imagesx($image);
+  $width=imagesx($image);
 	$height=imagesy($image);
 
-        $new_width = $width * $scale;
+	$new_width = $width * $scale;
 	$new_height = $height * $scale;
 
 	$image_p = imagecreatetruecolor($new_width, $new_height);
@@ -44,5 +44,5 @@ imagepng($image_p);
 
 // --- destroy resources in memory
 imagedestroy($image_p);
-imagedestory($image);
+imagedestroy($image);
 ?>
