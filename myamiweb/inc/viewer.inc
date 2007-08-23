@@ -614,6 +614,10 @@ class view {
 		$this->displayffticon = $state;
 	}
 
+	function displayACEIcon($state) {
+		$this->displayaceicon = $state;
+	}
+
 	function displayTargetIcon($state) {
 		$this->displaytargeticon = $state;
 	}

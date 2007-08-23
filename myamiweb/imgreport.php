@@ -49,6 +49,8 @@ $view1->displayScaleIcon(true);
 $view1->displayTargetIcon(true);
 $view1->displayAdjustLink(false);
 $view1->displayPresets(false);
+$view1->displayParticleIcon(false);
+$view1->displayAceIcon(false);
 $view1->setFrameColor('#000000');
 $view1->setMenuColor('#ccccff');
 $view1->setSize(256);
@@ -314,8 +316,6 @@ echo divtitle("CTF");
 if (!empty($ctfdata)) {
 	echo "<table border='0'>";
 	foreach($ctfdata as $r) {
-	$f++;
-	$ctfIds[]=$r['ctfId'];
 	foreach($r as $k=>$v) {
 		if (!in_array($k, $ctf_display_fields))
 			continue;	
@@ -324,11 +324,11 @@ if (!empty($ctfdata)) {
 		elseif ($v-floor($v)) 
 			$display = format_sci_number($v,4,2);
 		elseif ($k=='graphpath')
-			$graphpath=$v;
+			$display=$graphpath=$v;
 		elseif ($k=='graph1')
-			$graph1name=$v;
+			$display=$graph1name=$v;
 		elseif ($k=='graph2')
-			$graph2name=$v;
+			$display=$graph2name=$v;
 		else
 			$display = $v;
 		echo formatHtmlRow($k,$display);
