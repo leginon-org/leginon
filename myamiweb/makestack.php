@@ -218,13 +218,14 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
                 	foreach ($massessruns as $massessrun){
                        		$massessrunId=$massessrun['DEF_id'];
                         	$massessstats=$particle->getMaskAssessStats($massessrunId);
-                        	$permaskkeeps=commafy($massessstats['totkeeps']);
+                        	$permaskkeeps=$massessstats['totkeeps'];
 				$totkeeps = $totkeeps + $permaskkeeps;
 			}
                         echo "<OPTION VALUE='$massessname'";
                        	 // select previously set assessment on resubmit
                        	if ($massessval==$massessname) echo " SELECTED";
-                        echo">$massessname ($totkeeps keeps)</OPTION>\n";
+                        $totkeepscm=commafy($totkeeps);
+                        echo">$massessname ($totkeepscm regions)</OPTION>\n";
                 }
                 echo "</SELECT>\n";
         }
