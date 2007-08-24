@@ -16,7 +16,7 @@ import numarray
 import numarray.nd_image as nd_image
 import numarray.linear_algebra as linear_algebra
 import numarray.random_array as random_array
-import scipy.optimize as optimiz
+from scipy import optimize
 
 try:
 	import pyami.correlator as correlator
