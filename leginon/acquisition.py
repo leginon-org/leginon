@@ -510,6 +510,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.stopTimer('acquire getData')
 		if imagedata is None:
 			return 'fail'
+
+		## convert float to uint16
+		imagedata['image'] = imagedata['image'].astype(numpy.uint16)
+
 		## convert CameraImageData to AcquisitionImageData
 		dim = imagedata['camera']['dimension']
 		pixels = dim['x'] * dim['y']
