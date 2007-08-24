@@ -6,6 +6,7 @@ import wx
 import pyami
 import numpy
 import radermacher
+from scipy import optimize
 
 wx.InitAllImageHandlers()
 
@@ -51,11 +52,11 @@ class TiltTargetPanel(ImageViewer.TargetImagePanel):
 		print "First"
 		targets = self.getTargets('PickedParticles')
 		for target in targets:
-			print '%s\t%s' % (target.x, target.y)
+			print '(%d,%d),' % (target.x, target.y)
 		print "Second"
 		targets = self.other.getTargets('PickedParticles')
 		for target in targets:
-			print '%s\t%s' % (target.x, target.y)
+			print '(%d,%d),' % (target.x, target.y)
 		wx.Exit()
 
 	def onUpdate(self, evt):
@@ -81,7 +82,7 @@ class TiltTargetPanel(ImageViewer.TargetImagePanel):
 		for i in a1,a2:
 			j+=1
 			print j,i
-		fit = radermacher.tiltang(a1,a2,5.0)
+		fit = radermacher.tiltang(a1,a2,5000.0)
 		print fit
 
 	def onClear(self, evt):
@@ -143,4 +144,55 @@ if __name__ == '__main__':
 	else:
 		app.panel2.setImage(Image.open(filename2))
 	app.MainLoop()
+
+
+def willsq(a1, a2, theta0, gamma0=0.0, phi0=0.0, shiftx0=0.0, shifty0=0.0):
+	"""
+	given two sets of particles; find the tilt, and twist of them
+	"""	
+	#x0 initial values
+	x0 = numpy.array((
+		theta0 * math.pi/180.0,
+		gamma0 * math.pi/180.0,
+		phi0   * math.pi/180.0,
+		shiftx0,
+		shifty0,
+	))
+	#x1 delta values
+	x1 = numpy.zeros(5, dtype=float32)
+	#xscale scaling values
+	xscale = numpy.ones(5, dtype=float32)
+
+	print "optimizing angles and shift..."
+	x2 = optimize.fmin(_diffParticles, x1, args=(x0, xscale, a1, a2), xtol=0.01, ftol=0.01, maxiter=1000)
+	err = _diffParticles(x2, x0, xscale, a1, a2)
+	print "complete"
+
+	#x3 final values
+	x3 = scaleParams(x2,xscale)+x0
+	theta  = x3[0]*180.0/math.pi
+	gamma  = x3[1]*180.0/math.pi
+	phi    = x3[2]*180.0/math.pi
+	shiftx = x3[3]
+	shifty = x3[4]
+
+	prob = math.exp(-1.0*math.sqrt(abs(err)))**2
+	return theta,gamma,phi,shiftx,shifty,prob
+
+def scaleParams(x1,xscale):
+	nump = len(x1)
+	x2 = numpy.zeros(nump, dtype=float32)
+	for i in range(nump):
+		x2[i] = x1[i]*xscale[i]
+	return x2
+
+def _diffParticles(x1, x0, xscale, a1, a2):
+	x2 = scaleParams(x1,xscale) + x0
+	theta  = x2[0]
+	gamma  = x2[1]
+	phi    = x2[2]
+	shiftx = x2[3]
+	shifty = x2[4]
+
+	return
 
