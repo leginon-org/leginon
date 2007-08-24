@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.52 $
+# $Revision: 1.53 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-03 23:49:33 $
+# $Date: 2007-08-24 21:17:13 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -177,7 +177,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 
 		sb = wx.StaticBox(self, -1, 'Focusing')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sbsz.Add(sizer, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 
 		return sizers + [sbsz]
 
@@ -187,40 +187,40 @@ class MeasureTiltAxisDialog(wx.Dialog):
 
 		wx.Dialog.__init__(self, parent, -1, "Measure Stage Tilt Axis Location")
 
-		sbsz = wx.GridBagSizer(5,5)
+		sbsz = wx.GridBagSizer(3,6)
 
 		row = int(0)
-		label = wx.StaticText(self, -1, "Tilt angle: ")
+		label = wx.StaticText(self, -1, "Tilt angle: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.tiltvalue = FloatEntry(self, -1, allownone=False, chars=5, value='15.0')
-		label2 = wx.StaticText(self, -1, " degrees")
-		sbsz.Add(label, (row,0), (1,1), wx.EXPAND|wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(self.tiltvalue, (row,1), (1,1), wx.EXPAND|wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(label2, (row,2), (1,1), wx.EXPAND|wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		label2 = wx.StaticText(self, -1, " degrees", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(label, (row,0), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(self.tiltvalue, (row,1), (1,1), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(label2, (row,2), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
 		row += 1
 		self.tilttwice = wx.CheckBox(self, -1, "Tilt both directions")
-		sbsz.Add(self.tilttwice, (row,0), (1,3), wx.EXPAND|wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(self.tilttwice, (row,0), (1,3), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
 		row += 1
-		label = wx.StaticText(self, -1, "Average ")
-		label2 = wx.StaticText(self, -1, " tilts")
+		label = wx.StaticText(self, -1, "Average ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		label2 = wx.StaticText(self, -1, " tilts", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.numtilts = IntEntry(self, -1, allownone=False, chars=1, value='1')
-		sbsz.Add(label, (row,0), (1,1), wx.EXPAND|wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(self.numtilts, (row,1), (1,1), wx.EXPAND|wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(label2, (row,2), (1,1), wx.EXPAND|wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(label, (row,0), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(self.numtilts, (row,1), (1,1), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(label2, (row,2), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
 		row += 1
-		label = wx.StaticText(self, -1, "SNR cutoff: ")
+		label = wx.StaticText(self, -1, "SNR cutoff: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.snrvalue = FloatEntry(self, -1, allownone=False, chars=5, value='10.0')
 		label2 = wx.StaticText(self, -1, " levels")
-		sbsz.Add(label, (row,0), (1,1), wx.EXPAND|wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(self.snrvalue, (row,1), (1,1), wx.EXPAND|wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(label2, (row,2), (1,1), wx.EXPAND|wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(label, (row,0), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(self.snrvalue, (row,1), (1,1), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(label2, (row,2), (1,1), wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
 		row += 1
-		label = wx.StaticText(self, -1, "Correlation: ")
-		self.phasecorr = wx.RadioButton(self, -1, "Phase", style=wx.EXPAND|wx.RB_GROUP|wx.ALIGN_CENTER_VERTICAL)
-		self.crosscorr = wx.RadioButton(self, -1, "Cross", style=wx.EXPAND|wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, "Correlation: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.phasecorr = wx.RadioButton(self, -1, "Phase", style=wx.RB_GROUP|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+		self.crosscorr = wx.RadioButton(self, -1, "Cross", style=wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
 		sbsz.Add(label, (row,0), (1,1))
 		sbsz.Add(self.phasecorr, (row,1), (1,1))
 		sbsz.Add(self.crosscorr, (row,2), (1,1))
@@ -228,26 +228,31 @@ class MeasureTiltAxisDialog(wx.Dialog):
 		row += 1
 		self.medfilt = wx.CheckBox(self, -1, "Median filter phase correlation")
 		self.medfilt.SetValue(True)
-		sbsz.Add(self.medfilt, (row,0), (1,3), wx.EXPAND|wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(self.medfilt, (row,0), (1,3), wx.EXPAND|wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
 		self.measurecancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
-		self.measureinit = wx.Button(self,  -1, 'Initial Offset')
+		self.measureinit = wx.Button(self,  -1, 'Initial\nOffset')
 		self.Bind(wx.EVT_BUTTON, self.onMeasureButtonInit, self.measureinit)
-		self.measureupdate = wx.Button(self,  -1, 'Update Offset')
+		self.measureupdate = wx.Button(self,  -1, 'Update\nOffset')
 		self.Bind(wx.EVT_BUTTON, self.onMeasureButtonUpdate, self.measureupdate)
 
 		sb = wx.StaticBox(self, -1, 'Tilt Axis Params')
-		sbsz2 = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sbsz2.Add(sbsz, 0, wx.EXPAND|wx.ALL|wx.ALIGN_CENTER, 5)
+		sbsz2 = wx.StaticBoxSizer(sb, wx.EXPAND|wx.VERTICAL)
+		sbsz2.Add(sbsz, 0, wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5)
 
-		buttonrow = wx.GridBagSizer(5,5)
-		buttonrow.Add(self.measurecancel, (0,0), (1,1), wx.EXPAND|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 10)
-		buttonrow.Add(self.measureinit, (0,1), (1,1), wx.EXPAND|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 10)
-		buttonrow.Add(self.measureupdate, (0,2), (1,1), wx.EXPAND|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 10)
+		buttonrow = wx.GridSizer(1,3)
+		self.measurecancel.SetMinSize((85, 46))
+		self.measureinit.SetMinSize((85, 46))
+		self.measureupdate.SetMinSize((85, 46))
+		buttonrow.Add(self.measurecancel, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+		buttonrow.Add(self.measureinit, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ADJUST_MINSIZE, 0)
+		buttonrow.Add(self.measureupdate, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ADJUST_MINSIZE, 0)
 
-		self.sizer = wx.GridBagSizer(5,5)
-		self.sizer.Add(sbsz2, (0,0), (1,1), wx.EXPAND|wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 10)
-		self.sizer.Add(buttonrow, (1,0), (1,1), wx.EXPAND|wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 10)
+		self.sizer = wx.FlexGridSizer(3,1)
+		sbsz2.SetMinSize((270, 200))
+		self.sizer.Add(sbsz2, 0, wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+		self.sizer.Add((10, 10), 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ADJUST_MINSIZE, 0)
+		self.sizer.Add(buttonrow, 0, wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ADJUST_MINSIZE, 0)
 
 		self.SetSizerAndFit(self.sizer)
 
