@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.74 $
+# $Revision: 1.75 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-17 22:52:27 $
-# $Author: pulokas $
+# $Date: 2007-08-24 21:33:25 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -927,6 +927,7 @@ class ImportDialog(wx.Dialog):
 		self.GetParent().initInstrumentSelection(self.instrumentselection)
 
 		self.session = SessionListCtrl(self)
+		self.session.SetMinSize((100, 150))
 
 		agelab1 = wx.StaticText(self, -1, 'Limit sessions to last')
 		self.ageentry = IntEntry(self, -1, chars=4)
@@ -938,6 +939,7 @@ class ImportDialog(wx.Dialog):
 		self.parameters = Parameters(self)
 
 		self.lbpresets = wx.ListBox(self, -1, style=wx.LB_EXTENDED,size=(80,60))
+		self.lbpresets.SetMinSize((40, 150))
 
 		sz = wx.GridBagSizer(5, 0)
 		sz.Add(self.instrumentselection, (0, 0), (1, 4), wx.EXPAND)
