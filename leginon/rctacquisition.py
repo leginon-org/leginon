@@ -117,6 +117,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			self.instrument.tem.StagePosition = {'a': tilt}
 
 			## drift check
+			#self.declareDrift('rct')
 			try:
 				focustarget = self.getFocusTargets(tiltedtargetlist)[0]
 			except:
@@ -141,8 +142,9 @@ class RCTAcquisition(acquisition.Acquisition):
 			if focused:
 				self.focusDone(tiltedtargetlist)
 			'''
-
+			#self.declaredrifteachtarget = True
 			acquisition.Acquisition.processTargetList(self, tiltedtargetlist)
+			#self.declaredrifteachtarget = False
 			focused = True
 
 		self.logger.info('returning to tilt0')
@@ -240,8 +242,8 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		## loop through tilts
 		imageold = image0
-		#sigma = self.settings['sigma']
-		#arrayold = scipy.ndimage.gaussian_filter(imageold['image'], sigma)
+		sigma = self.settings['sigma']
+		#arrayold = ndimage.gaussian_filter(imageold['image'], sigma)
 		arrayold = ndimage.median_filter(imageold['image'], size=2)
 		runningresult = numpy.identity(3, numpy.float64)
 		for tilt in tilts:
@@ -252,7 +254,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			print 'acquire intertilt'
 			dataclass = data.CorrectedCameraImageData
 			imagenew = self.instrument.getData(dataclass)
-			#arraynew = scipy.ndimage.gaussian_filter(imagenew['image'], sigma)
+			#arraynew = ndimage.gaussian_filter(imagenew['image'], sigma)
 			arraynew = ndimage.median_filter(imagenew['image'], size=2)
 			self.setImage(imagenew['image'], 'Image')
 			self.setTargets([], 'Peak')

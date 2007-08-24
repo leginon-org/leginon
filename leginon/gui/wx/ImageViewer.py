@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.58 $
+# $Revision: 1.59 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-21 22:57:51 $
+# $Date: 2007-08-24 21:38:01 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -189,7 +189,7 @@ def targetBitmap_point(color):
 	return bitmap
 
 def targetBitmap_plus(color):
-	penwidth = 1
+	penwidth = 2
 	length = 15
 	bitmap = wx.EmptyBitmap(length, length)
 	dc = wx.MemoryDC()
