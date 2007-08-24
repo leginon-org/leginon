@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.53 $
+# $Revision: 1.54 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-24 21:17:13 $
+# $Date: 2007-08-24 23:39:05 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -238,7 +238,7 @@ class MeasureTiltAxisDialog(wx.Dialog):
 
 		sb = wx.StaticBox(self, -1, 'Tilt Axis Params')
 		sbsz2 = wx.StaticBoxSizer(sb, wx.EXPAND|wx.VERTICAL)
-		sbsz2.Add(sbsz, 0, wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5)
+		sbsz2.Add(sbsz, 0, wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
 
 		buttonrow = wx.GridSizer(1,3)
 		self.measurecancel.SetMinSize((85, 46))
@@ -250,9 +250,9 @@ class MeasureTiltAxisDialog(wx.Dialog):
 
 		self.sizer = wx.FlexGridSizer(3,1)
 		sbsz2.SetMinSize((270, 200))
-		self.sizer.Add(sbsz2, 0, wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
-		self.sizer.Add((10, 10), 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ADJUST_MINSIZE, 0)
-		self.sizer.Add(buttonrow, 0, wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ADJUST_MINSIZE, 0)
+		self.sizer.Add(sbsz2, 0, wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		#self.sizer.Add((10, 10), 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ADJUST_MINSIZE|wx.ALL, 3)
+		self.sizer.Add(buttonrow, 0, wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ADJUST_MINSIZE|wx.ALL, 3)
 
 		self.SetSizerAndFit(self.sizer)
 
