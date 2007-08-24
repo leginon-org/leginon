@@ -1309,6 +1309,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('adjust for drift', bool),
 			('mover', str),
 			('move precision', float),
+			('save integer', bool),
 		)
 	typemap = classmethod(typemap)
 

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.40 $
+# $Revision: 1.41 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-17 22:25:24 $
+# $Date: 2007-08-24 20:59:05 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -67,6 +67,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		# misc. checkboxes
 		self.widgets['correct image'] = wx.CheckBox(self, -1, 'Correct image')
+		self.widgets['save integer'] = wx.CheckBox(self, -1, 'Float->Integer')
 #		self.widgets['display image'] = wx.CheckBox(self, -1, 'Display image')
 		self.widgets['save image'] = wx.CheckBox(self, -1, 'Save image to database')
 		self.widgets['wait for process'] = wx.CheckBox(self, -1,
@@ -150,10 +151,12 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['correct image'], (6, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sbszsim, (7,0), (3,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szmover, (7,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szmoveprec, (8,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sz_target_type, (9,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['save integer'], (7, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sbszsim, (8,0), (3,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szmover, (9,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szmoveprec, (9,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_target_type, (10,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(szduplicate, (5, 1), (1, 1),
 #						wx.ALIGN_CENTER_VERTICAL)
 #		sz.AddGrowableRow(6)

@@ -126,6 +126,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'mover': 'presets manager',
 		'move precision': 0.0,
 		'process target type': 'acquisition',
+		'save integer': False,
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
@@ -512,7 +513,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			return 'fail'
 
 		## convert float to uint16
-		imagedata['image'] = imagedata['image'].astype(numpy.uint16)
+		if self.settings['save integer']:
+			imagedata['image'] = numpy.asarray(imagedata['image'], numpy.uint16)
 
 		## convert CameraImageData to AcquisitionImageData
 		dim = imagedata['camera']['dimension']
