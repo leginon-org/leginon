@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ClickMaskMaker.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-22 22:55:07 $
+# $Date: 2007-08-27 22:11:42 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -134,7 +134,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(label, (2, 0), (1, 1))
 		sz.Add(self.widgets['run'], (2, 1), (1, 1))
 
-		self.widgets['continueon'] = wx.CheckBox(self, -1,'Not allow overwrite empty masks')
+		self.widgets['continueon'] = wx.CheckBox(self, -1,'empty-mask-overwrite Not Allowed')
 		sz.Add(self.widgets['continueon'], (3, 0), (1, 1))
 
 		label = wx.StaticText(self, -1, 'Mask Run Path:')
