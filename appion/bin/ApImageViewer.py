@@ -27,16 +27,44 @@ class ManualPickerPanel(ImageViewer.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True):
 		ImageViewer.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool)
 
-		self.quit = wx.Button(self, -1, 'Next')
+	def openImageFile(self, filename):
+		self.filename = filename
+		if filename is None:
+			self.setImage(None)
+		elif filename[-4:] == '.mrc':
+			image = pyami.mrc.read(filename)
+			self.setImage(image.astype(numpy.float32))
+		else:
+			self.setImage(Image.open(filename))
+
+class MyApp(wx.App):
+	def OnInit(self):
+		self.frame = wx.Frame(None, -1, 'Image Viewer')
+		self.sizer = wx.FlexGridSizer(2,1)
+
+		self.panel = ManualPickerPanel(self.frame, -1)
+		self.panel.addTypeTool('Select Particles', toolclass=ImageViewer.TargetTypeTool, display=wx.RED, target=True)
+		self.panel.setTargets('Select Particles', [])
+		self.panel.SetMinSize((300,300))
+		self.sizer.Add(self.panel, 1, wx.EXPAND)
+
+		self.quit = wx.Button(self.frame, -1, 'Next')
+		self.quit.SetMinSize((200,40))
 		self.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
-		self.sizer.Add(self.quit, (0, 0), (1, 1), wx.EXPAND)
+		self.sizer.Add(self.quit, 0, wx.wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		self.sizer.AddGrowableRow(0)
+		self.sizer.AddGrowableCol(0)
+		self.frame.SetSizerAndFit(self.sizer)
+		self.SetTopWindow(self.frame)
+		self.frame.Show(True)
+		return True
 
 	def onQuit(self, evt):
-		targets = self.getTargets('Select Particles')
+		targets = self.panel.getTargets('Select Particles')
 		for target in targets:
 			print '%s\t%s' % (target.x, target.y)
 		wx.Exit()
-
 
 if __name__ == '__main__':
 	try:
@@ -44,28 +72,7 @@ if __name__ == '__main__':
 	except IndexError:
 		filename = None
 
-	class MyApp(wx.App):
-		def OnInit(self):
-			frame = wx.Frame(None, -1, 'Image Viewer')
-			self.sizer = wx.BoxSizer(wx.VERTICAL)
-
-			self.panel = ManualPickerPanel(frame, -1)
-			self.panel.addTypeTool('Select Particles', toolclass=ImageViewer.TargetTypeTool, display=wx.RED, target=True)
-			self.panel.setTargets('Select Particles', [])
-
-			self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)
-			frame.SetSizerAndFit(self.sizer)
-			self.SetTopWindow(frame)
-			frame.Show(True)
-			return True
-
 	app = MyApp(0)
-	if filename is None:
-		app.panel.setImage(None)
-	elif filename[-4:] == '.mrc':
-		image = pyami.mrc.read(filename)
-		app.panel.setImage(image.astype(numpy.float32))
-	else:
-		app.panel.setImage(Image.open(filename))
+	app.panel.openImageFile(filename)
 	app.MainLoop()
 
