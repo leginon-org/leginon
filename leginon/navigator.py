@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
-# $Revision: 1.122 $
+# $Revision: 1.123 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-24 21:37:59 $
+# $Date: 2007-08-28 18:25:13 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -223,7 +223,9 @@ class Navigator(node.Node):
 			if precision:
 				self.logger.info('checking that move error is less than %.3e' % (precision,))
 				while dist > precision:
+					time.sleep(0.2)
 					self._move(r, c, movetype)
+					time.sleep(2.0)
 					if self.settings['cycle each']:
 						self.cycleToPreset(preset)
 					self.reacquireImage()
