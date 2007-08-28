@@ -6,6 +6,7 @@ import re
 import math
 import numpy
 import pyami
+import Image
 from gui.wx import ImageViewer
 import radermacher
 from scipy import optimize
@@ -62,6 +63,8 @@ class MyApp(wx.App):
 		self.theta = 0
 		self.gamma = 0
 		self.phi = 0
+		self.shiftx = 0
+		self.shifty = 0
 
 		self.frame = wx.Frame(None, -1, 'Image Viewer')
 		splitter = wx.SplitterWindow(self.frame)
@@ -152,23 +155,30 @@ class MyApp(wx.App):
 		a1 = self.targetsToArray(targets1)
 		targets2 = self.panel2.getTargets('PickedParticles')
 		a2 = self.targetsToArray(targets2)
+
+		thetarad = self.theta*math.pi/180.0
+		gammarad = self.gamma*math.pi/180.0
+		phirad = self.phi*math.pi/180.0
+
 		#aligned1 = radermacher.transform(a1, a2, self.theta, 0.0, 0.0)
-		x1 = numpy.asarray(a1[:,0] - a1[0,0] + a2[0,0], dtype=numpy.float32)
-		y1 = numpy.asarray(a1[:,1], dtype=numpy.float32)
-		y1 = (y1-y1[0]) * math.cos(self.theta*math.pi/180.0) + float(a2[0,1])
-		a1b = numpy.column_stack((x1,y1))
+		#x1 = numpy.asarray(a1[:,0] - a1[0,0] + a2[0,0], dtype=numpy.float32)
+		#y1 = numpy.asarray(a1[:,1], dtype=numpy.float32)
+		#y1 = (y1-y1[0]) * math.cos(self.theta*math.pi/180.0) + float(a2[0,1])
+		#a1b = numpy.column_stack((x1,y1))
 		#print a1[0:10,:]
 		#print a1b[0:10,:]
+		a1b = tiltDialog.a1Toa2(a1,a2,thetarad,gammarad,phirad,self.shiftx,self.shifty)
 		self.panel2.setTargets('AlignedParticles', a1b)
 		
 		#align second
 		#aligned1 = radermacher.transform(a1, a2, self.theta, 0.0, 0.0)
-		x2 = numpy.asarray(a2[:,0] - a2[0,0] + a1[0,0], dtype=numpy.float32)
-		y2 = numpy.asarray(a2[:,1], dtype=numpy.float32)
-		y2 = (y2-y2[0]) / math.cos(self.theta*math.pi/180.0) + float(a1[0,1])
-		a2b = numpy.column_stack((x2,y2))
+		#x2 = numpy.asarray(a2[:,0] - a2[0,0] + a1[0,0], dtype=numpy.float32)
+		#y2 = numpy.asarray(a2[:,1], dtype=numpy.float32)
+		#y2 = (y2-y2[0]) / math.cos(self.theta*math.pi/180.0) + float(a1[0,1])
+		#a2b = numpy.column_stack((x2,y2))
 		#print a2[0:10,:]
 		#print a2b[0:10,:]
+		a2b = tiltDialog.a2Toa1(a1,a2,thetarad,gammarad,phirad,self.shiftx,self.shifty)
 		self.panel1.setTargets('AlignedParticles', a2b)
 
 	def targetsToArray(self, targets):
@@ -183,7 +193,7 @@ class MyApp(wx.App):
 
 	def onFitTheta(self, evt):
 		if len(self.panel1.getTargets('PickedParticles')) > 3 and len(self.panel2.getTargets('PickedParticles')) > 3:
-			self.theta_dialog.tiltvalue.SetLabel(label=("%3.3f" % self.theta))
+			self.theta_dialog.tiltvalue.SetLabel(label=("       %3.3f       " % self.theta))
 			self.theta_dialog.Show()
 
 	def onFitAll(self, evt):

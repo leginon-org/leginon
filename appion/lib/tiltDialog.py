@@ -2,6 +2,8 @@ import sys
 import wx
 import re
 import math
+import numpy
+from scipy import optimize, ndimage
 from gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
 import radermacher
 
@@ -15,22 +17,22 @@ class FitThetaDialog(wx.Dialog):
 		wx.Dialog.__init__(self, self.parent.frame, -1, "Measure Tilt Angle, Theta")
 
 		inforow = wx.FlexGridSizer(2, 3, 15, 15)
-		thetastr = str(self.theta)
+		thetastr = ("***** %3.3f *****" % self.theta)
 		label = wx.StaticText(self, -1, "Current tilt angle:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.tiltvalue = wx.StaticText(self, -1, thetastr, style=wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
 		#self.tiltvalue = FloatEntry(self, -1, allownone=True, chars=5, value=thetastr)
 		label3 = wx.StaticText(self, -1, "degrees", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.tiltvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
-		inforow.Add(label3, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(label3, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
 		arealimstr = str(int(self.parent.arealim))
 		label = wx.StaticText(self, -1, "Minimum Triangle Area:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.arealimit = IntEntry(self, -1, allownone=False, chars=8, value=arealimstr)
 		label2 = wx.StaticText(self, -1, "square pixels", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		inforow.Add(self.arealimit, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
-		inforow.Add(label2, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.arealimit, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		inforow.Add(label2, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
 		self.canceltiltang = wx.Button(self, wx.ID_CANCEL, '&Cancel')
 		self.applytiltang = wx.Button(self,  wx.ID_APPLY, '&Apply')
@@ -58,7 +60,8 @@ class FitThetaDialog(wx.Dialog):
 		print fittheta
 		if 'wtheta' in fittheta:
 			self.theta = fittheta['wtheta']
-			thetastr = "%3.3f" % fittheta['wtheta']
+			self.thetadev = fittheta['wthetadev']
+			thetastr = ("%3.3f +/- %2.2f" % (self.theta, self.thetadev))
 			self.tiltvalue.SetLabel(label=thetastr)
 
 	def onApplyTiltAng(self, evt):
@@ -70,7 +73,7 @@ class FitAllDialog(wx.Dialog):
 		self.parent = parent
 		wx.Dialog.__init__(self, self.parent.frame, -1, "Least Squares Optimization")
 
-		inforow = wx.FlexGridSizer(4, 3, 15, 15)
+		inforow = wx.FlexGridSizer(5, 3, 15, 15)
 
 		thetastr = "%3.3f" % self.parent.theta
 		label = wx.StaticText(self, -1, "Tilt angle (theta):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
@@ -97,6 +100,17 @@ class FitAllDialog(wx.Dialog):
 		inforow.Add(self.phivalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(label2, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
+
+		shiftxstr = "%3.3f" % self.parent.shiftx
+		shiftystr = "%3.3f" % self.parent.shifty
+		label = wx.StaticText(self, -1, "Shift (x,y):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.shiftxvalue = FloatEntry(self, -1, allownone=False, chars=8, value=shiftxstr)
+		self.shiftyvalue = FloatEntry(self, -1, allownone=False, chars=8, value=shiftystr)
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.shiftxvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.shiftyvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+
+
 		self.cancelfitall = wx.Button(self, wx.ID_CANCEL, '&Cancel')
 		self.applyfitall = wx.Button(self,  wx.ID_APPLY, '&Apply')
 		self.runfitall = wx.Button(self, -1, '&Run')
@@ -117,21 +131,27 @@ class FitAllDialog(wx.Dialog):
 		theta  = self.thetavalue.GetValue()
 		gamma  = self.gammavalue.GetValue()
 		phi    = self.phivalue.GetValue()
+		shiftx = self.shiftxvalue.GetValue()
+		shifty = self.shiftyvalue.GetValue()
 		targets1 = self.parent.panel1.getTargets('PickedParticles')
 		a1 = self.parent.targetsToArray(targets1)
 		targets2 = self.parent.panel2.getTargets('PickedParticles')
 		a2 = self.parent.targetsToArray(targets2)
-		#fit = willsq(a1, a2, theta, gamma, phi)
-		#self.thetavalue.SetValue(round(fit['theta'],4))
-		#self.gammavalue.SetValue(round(fit['theta'],4))
-		#self.phivalue.SetValue(round(fit['theta'],4))
+		fit = willsq(a1, a2, theta, gamma, phi, shiftx, shifty)
+		print fit
+		self.thetavalue.SetValue(round(fit['theta'],5))
+		self.gammavalue.SetValue(round(fit['gamma'],5))
+		self.phivalue.SetValue(round(fit['phi'],5))
+		self.shiftxvalue.SetValue(round(fit['shiftx'],5))
+		self.shiftyvalue.SetValue(round(fit['shifty'],5))
 
 	def onApplyLeastSquares(self, evt):
 		self.Close()
 		self.parent.theta = self.thetavalue.GetValue()
 		self.parent.gamma = self.gammavalue.GetValue()
 		self.parent.phi = self.phivalue.GetValue()
-
+		self.parent.shiftx = self.shiftxvalue.GetValue()
+		self.parent.shifty = self.shiftyvalue.GetValue()
 ##
 ##
 ## Fit All Least Squares Routine
@@ -144,49 +164,83 @@ def willsq(a1, a2, theta0, gamma0=0.0, phi0=0.0, shiftx0=0.0, shifty0=0.0):
 	given two sets of particles; find the tilt, and twist of them
 	"""	
 	#x0 initial values
-	x0 = numpy.array((
+	fit = {}
+	initx = numpy.array((
 		theta0 * math.pi/180.0,
 		gamma0 * math.pi/180.0,
 		phi0   * math.pi/180.0,
 		shiftx0,
 		shifty0,
-	))
+	), dtype=numpy.float32)
+
 	#x1 delta values
-	x1 = numpy.zeros(5, dtype=float32)
+	x0 = numpy.zeros(5, dtype=numpy.float32)
 	#xscale scaling values
-	xscale = numpy.ones(5, dtype=float32)
+	#xscale = numpy.ones(5, dtype=numpy.float32)
+	xscale = numpy.array((1,1,1,1,1), dtype=numpy.float32)
 
 	print "optimizing angles and shift..."
-	x2 = optimize.fmin(_diffParticles, x1, args=(x0, xscale, a1, a2), xtol=0.01, ftol=0.01, maxiter=1000)
-	err = _diffParticles(x2, x0, xscale, a1, a2)
-	print "complete"
+	print "initial error:",_diffParticles(x0, initx, xscale, a1, a2)
+	a1f = numpy.asarray(a1, dtype=numpy.float32)
+	a2f = numpy.asarray(a2, dtype=numpy.float32)
+	x1 = optimize.fmin(_diffParticles, x0, args=(initx, xscale, a1f, a2f), 
+		xtol=1e-4, ftol=1e-4, maxiter=500, maxfun=500)
+	fit['err'] = _diffParticles(x1, initx, xscale, a1, a2)
+	print "final error:",fit['err']
 
 	#x3 final values
-	x3 = scaleParams(x2,xscale)+x0
-	theta  = x3[0]*180.0/math.pi
-	gamma  = x3[1]*180.0/math.pi
-	phi    = x3[2]*180.0/math.pi
-	shiftx = x3[3]
-	shifty = x3[4]
+	x3 = x1 * xscale + initx
+	fit['theta']  = x3[0]*180.0/math.pi
+	fit['gamma']  = x3[1]*180.0/math.pi
+	fit['phi']    = x3[2]*180.0/math.pi
+	fit['shiftx'] = x3[3]
+	fit['shifty'] = x3[4]
+	fit['prob'] = math.exp(-1.0*math.sqrt(abs(fit['err'])))**2
+	return fit
 
-	prob = math.exp(-1.0*math.sqrt(abs(err)))**2
-	return theta,gamma,phi,shiftx,shifty,prob
-
-def scaleParams(x1,xscale):
-	nump = len(x1)
-	x2 = numpy.zeros(nump, dtype=float32)
-	for i in range(nump):
-		x2[i] = x1[i]*xscale[i]
-	return x2
-
-def _diffParticles(x1, x0, xscale, a1, a2):
-	x2 = scaleParams(x1,xscale) + x0
+def _diffParticles(x1, initx, xscale, a1, a2):
+	x2 = x1 * xscale + initx
 	theta  = x2[0]
 	gamma  = x2[1]
 	phi    = x2[2]
 	shiftx = x2[3]
 	shifty = x2[4]
+	a2b = a2Toa1(a1,a2,theta,gamma,phi,0,0)
+	maxpix = 100.0
+	diffmat = (a1 - a2b)/maxpix
+	err = ndimage.mean(diffmat**2)
+	#print (x2*57.29).round(decimals=3),round(err,6)
+	return err
 
-	
+def a1Toa2(a1,a2,theta,gamma,phi,shiftx,shifty):
+	a1b = a2Toa1(a2,a1,-1.0*theta,-1.0*phi,-1.0*gamma,-1.0*shiftx,-1.0*shifty)
+	return a1b
 
-	return
+def a2Toa1(a1,a2,theta,gamma,phi,shiftx,shifty):
+	#gamma rotation
+	cosgamma = math.cos(gamma)
+	singamma = math.sin(gamma)
+	gammamat = numpy.array([[ cosgamma, -singamma ], [ singamma, cosgamma ]], dtype=numpy.float32)
+	#theta compression
+	if theta < 0:
+		thetamat  = numpy.array([[ 1.0, 0.0 ], [ 0.0, math.cos(theta) ]], dtype=numpy.float32)
+	else:
+		thetamat  = numpy.array([[ 1.0, 0.0 ], [ 0.0, 1.0/math.cos(theta) ]], dtype=numpy.float32)
+	#phi rotation
+	cosphi = math.cos(phi)
+	sinphi = math.sin(phi)
+	phimat = numpy.array([[ cosphi, -sinphi ], [ sinphi, cosphi ]], dtype=numpy.float32)
+	#merge together
+	trans = numpy.dot(numpy.dot(phimat,thetamat),gammamat)
+	#origins
+	a10 = numpy.asarray(a1[0,:], dtype=numpy.float32)
+	a20 = numpy.asarray(a2[0,:], dtype=numpy.float32)
+	#convert a2 -> a1
+	a2b = numpy.zeros(a2.shape, dtype=numpy.float32)
+	shift = numpy.array((shiftx,shifty), dtype=numpy.float32)
+	for i in range((a2.shape)[0]):
+		a2c = numpy.dot(trans,a2[i,:]-a20-shift)+a10
+		a2b[i,0] = a2c[0]
+		a2b[i,1] = a2c[1]
+	return a2b
+
