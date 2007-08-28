@@ -1,5 +1,3 @@
-#include <Python.h>
-#include <numpy/arrayobject.h>
 #include "main.h"
 
 static struct PyMethodDef numeric_methods[] = {
