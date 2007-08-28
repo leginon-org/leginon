@@ -8,7 +8,7 @@ numpyinc = numpy.get_include()
 
 module = Extension(
 	 'radermacher', 
-	 sources = ['main.c', 'tiltang.c', 'willsq.c'], 
+	 sources = ['main.c', 'tiltang.c', 'willsq.c', 'transform.c'], 
 	 include_dirs=[numpyinc,]
 	)
 

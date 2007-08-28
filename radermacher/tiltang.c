@@ -132,7 +132,7 @@ PyObject* tiltang(PyObject *self, PyObject *args) {
 					theta = -1.0*acos(ratio);
 				}
 				//printf("theta:  %.3f\n", theta*RAD2DEG);
-				double weight = (area1 + area2) / arealim;
+				double weight = (area1 + area2) * (area1 + area2) / (arealim*arealim);
 				numtri += 1;
 				sum +=    theta;
 				sumsq +=  theta*theta;
@@ -167,18 +167,21 @@ PyObject* tiltang(PyObject *self, PyObject *args) {
 		thetadev = 0;
 	} else
 		thetadev = sqrt( top / (numtri * (numtri - 1.0)) );
-	
+	//printf("%.3f = sqrt %.3f = %.3f / %.3f\n",thetadev,top/(numtri * (numtri - 1.0)),top,(numtri * (numtri - 1.0)));
+
 	/* Weighted stdev, from http://pygsl.sourceforge.net/reference/pygsl/node36.html */
-	double wtop = wtot*(wsumsq + 2*wsum+sum + wtot*sum*sum);
-	double wbot = wtot*wtot - wsqtot;
+	double wtop = wsumsq*wtot - wsum*wsum;
+	double wbot = wtot*wtot - wsqtot; // 1/(N-1) term
+	//double wbot = wtot*wtot; // 1/N term
 	double wthetadev = sqrt(wtop/wbot);
-	printf("tottri=%.1f, sum=%.1f, sumsq=%.1f, wtot=%.1f, wsum=%.1f, wsqtot=%.1f, wsumsq=%.1f\n",
-		tottri, sum, sumsq, wtot, wsum, wsqtot, wsumsq);
-	printf("%.3f = %.3f / %.3f\n",wthetadev,wtop,wbot);
+	//printf("tottri=%.1f, sum=%.1f, sumsq=%.1f, wtot=%.1f, wsum=%.1f, wsqtot=%.1f, wsumsq=%.1f\n",
+	//	tottri, sum, sumsq, wtot, wsum, wsqtot, wsumsq);
+	//printf("%.3f = sqrt %.3f = %.3f / %.3f\n",wthetadev,wtop/wbot,wtop,wbot);
 
 	theta = theta * RAD2DEG;
 	wtheta = wtheta * RAD2DEG;
 	thetadev = thetadev * RAD2DEG;
+	wthetadev = wthetadev * RAD2DEG;
 
 	/* Convert results into python dictionary */
 
