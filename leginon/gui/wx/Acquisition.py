@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.41 $
+# $Revision: 1.42 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-24 20:59:05 $
-# $Author: pulokas $
+# $Date: 2007-08-28 18:29:24 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -154,7 +154,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['save integer'], (7, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sbszsim, (8,0), (3,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szmover, (9,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szmover, (8,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szmoveprec, (9,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_target_type, (10,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(szduplicate, (5, 1), (1, 1),
