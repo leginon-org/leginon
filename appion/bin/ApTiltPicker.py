@@ -30,23 +30,27 @@ EVT_SETTINGS = wx.PyEventBinder(SettingsEventType)
 
 class TiltTargetPanel(ImageViewer.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True, name=None):
-		ImageViewer.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool, imagesize=(520,700))
+		ImageViewer.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool, mode="vertical")
 		#self.button_1.SetValue(1)
 		if name is not None:
 			self.outname = name
 		else:
 			self.outname="unknown"
 
+	#---------------------------------------
 	def setOtherPanel(self, panel):
 		self.other = panel
 
+	#---------------------------------------
 	def addTarget(self, name, x, y):
 		sys.stderr.write("%s: (%4d,%4d),\n" % (self.outname,x,y))
 		return self._getSelectionTool().addTarget(name, x, y)
 
+	#---------------------------------------
 	def deleteTarget(self, target):
 		return self._getSelectionTool().deleteTarget(target)
 
+	#---------------------------------------
 	def openImageFile(self, filename):
 		self.filename = filename
 		if filename is None:
@@ -57,6 +61,7 @@ class TiltTargetPanel(ImageViewer.TargetImagePanel):
 		else:
 			self.setImage(Image.open(filename))
 
+#---------------------------------------
 class MyApp(wx.App):
 	def OnInit(self):
 		self.arealim = 50000.0
@@ -65,6 +70,8 @@ class MyApp(wx.App):
 		self.phi = 0
 		self.shiftx = 0
 		self.shifty = 0
+		self.filename = ""
+		self.dirname = ""
 
 		self.frame = wx.Frame(None, -1, 'Image Viewer')
 		splitter = wx.SplitterWindow(self.frame)
@@ -113,10 +120,10 @@ class MyApp(wx.App):
 		self.bsizer.Add(self.clear, 0, wx.ALL, 1)
 
 		self.save = wx.Button(self.frame, wx.ID_SAVE, '&Save')
-		self.frame.Bind(wx.EVT_BUTTON, self.onSave, self.save)
+		self.frame.Bind(wx.EVT_BUTTON, self.onFileSave, self.save)
 		self.bsizer.Add(self.save, 0, wx.ALL, 1)
 
-		self.load = wx.Button(self.frame, wx.ID_OPEN, '&Load Picks')
+		self.load = wx.Button(self.frame, wx.ID_OPEN, '&Open')
 		self.frame.Bind(wx.EVT_BUTTON, self.onLoad, self.load)
 		self.bsizer.Add(self.load, 0, wx.ALL, 1)
 
@@ -133,11 +140,16 @@ class MyApp(wx.App):
 		self.sizer.AddGrowableCol(0)
 		self.sizer.AddGrowableCol(1)
 
+		self.statbar = self.frame.CreateStatusBar(3)
+		self.statbar.SetStatusWidths([-1, 65, 150])
+		self.statbar.PushStatusText("Ready", 0)
+
 		self.frame.SetSizer(self.sizer)
 		self.SetTopWindow(self.frame)
 		self.frame.Show(True)
 		return True
 
+	#---------------------------------------
 	def onQuit(self, evt):
 		print "First"
 		targets = self.panel1.getTargets('PickedParticles')
@@ -149,6 +161,7 @@ class MyApp(wx.App):
 			print '(%d,%d),' % (target.x, target.y)
 		wx.Exit()
 
+	#---------------------------------------
 	def onUpdate(self, evt):
 		#align first
 		targets1 = self.panel1.getTargets('PickedParticles')
@@ -181,6 +194,7 @@ class MyApp(wx.App):
 		a2b = tiltDialog.a2Toa1(a1,a2,thetarad,gammarad,phirad,self.shiftx,self.shifty)
 		self.panel1.setTargets('AlignedParticles', a2b)
 
+	#---------------------------------------
 	def targetsToArray(self, targets):
 		i = 0
 		count = len(targets)
@@ -191,11 +205,13 @@ class MyApp(wx.App):
 			i += 1
 		return a
 
+	#---------------------------------------
 	def onFitTheta(self, evt):
 		if len(self.panel1.getTargets('PickedParticles')) > 3 and len(self.panel2.getTargets('PickedParticles')) > 3:
 			self.theta_dialog.tiltvalue.SetLabel(label=("       %3.3f       " % self.theta))
 			self.theta_dialog.Show()
 
+	#---------------------------------------
 	def onFitAll(self, evt):
 		if len(self.panel1.getTargets('PickedParticles')) > 3 and len(self.panel2.getTargets('PickedParticles')) > 3:
 			self.fitall_dialog.thetavalue.SetValue(round(self.theta,4))
@@ -203,25 +219,75 @@ class MyApp(wx.App):
 			self.fitall_dialog.phivalue.SetValue(round(self.phi,4))
 			self.fitall_dialog.Show()
 
+	#---------------------------------------
 	def onClear(self, evt):
 		self.panel1.setTargets('PickedParticles', [])
 		self.panel1.setTargets('AlignedParticles', [])
 		self.panel2.setTargets('PickedParticles', [])
 		self.panel2.setTargets('AlignedParticles', [])
 
-	def onSave(self, evt):
+	#---------------------------------------
+	def onFileOpen(self, evt):
+		""" File|Open event - Open dialog box. """
+		dlg = wx.wxFileDialog(self, "Open", self.dirName, self.filename,
+							"Text Files (*.txt)|*.txt|All Files|*.*", wx.wxOPEN)
+		if (dlg.ShowModal() == wx.wxID_OK):
+			self.filename = dlg.GetFilename()
+			self.dirname = dlg.GetDirectory()
+			try:
+				f = file(os.path.join(self.dirname, self.filename), 'r')
+				self.rtb.SetValue(f.read())
+				self.SetTitle(APP_NAME + " - [" + self.filename + "]")
+				self.SetStatusText("Opened file: " + str(self.rtb.GetLastPosition()) +" characters.", 0)
+				self.ShowPos()
+				f.close()
+			except:
+				self.PushStatusText("Error in opening file.", 0)
+		dlg.Destroy()
+ 
+	#---------------------------------------
+	def onFileSave(self, evt):
+		if self.filename == "" or self.dirname == "":
+			#First Save, Run SaveAs...
+			return self.onFileSaveAs(evt)
+		self.savePicksToFile()
+
+	#---------------------------------------
+	def onFileSaveAs(self, evt):
+		""" File|SaveAs event - Prompt for File Name. """
+		dlg = wx.FileDialog(self.frame, "Choose a file to save as", self.dirname, "", \
+			"Text Files (*.txt)|*.txt|All Files|*.*", wx.SAVEASwx.OVERWRITE_PROMPT)
+		#alt1 = "*.[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]"
+		#alt2 = "Text Files (*.txt)|*.txt|All Files|*.*"
+		if dlg.ShowModal() == wx.ID_OK:
+			# Grab the content to be saved
+			itcontains = self.control.GetValue()
+			# Open the file for write, write, close
+			self.filename=dlg.GetFilename()
+			self.dirname=dlg.GetDirectory()
+			self.savePicksToFile()
+		# Get rid of the dialog to keep things tidy
+		dlg.Destroy()
+
+	#---------------------------------------
+	def savePicksToFile(self):
 		targets1 = self.panel1.getTargets('PickedParticles')
 		targets2 = self.panel2.getTargets('PickedParticles')
-		if len(targets1) > 4 and len(targets2) > 4:
-			f = open("savedpicks.txt","w")
-			f.write( "image 1: "+self.panel1.filename+"\n" )
-			for target in targets1:
-				f.write( '%d,%d\n' % (target.x, target.y) )
-			f.write( "image 2: "+self.panel2.filename+"\n" )
-			for target in targets2:
-				f.write( '%d,%d\n' % (target.x, target.y) )
-			f.close()
+		if len(targets1) < 4 or len(targets2) < 4:
+			self.statbar.PushStatusText("ERROR: Cannot save file. Not enough picks", 0)
+			return False
+		f = open(os.path.join(self.dirname, self.filename),"w")
+		f.write( "image 1: "+self.panel1.filename+"\n" )
+		for target in targets1:
+			f.write( '%d,%d\n' % (target.x, target.y) )
+		f.write( "image 2: "+self.panel2.filename+"\n" )
+		for target in targets2:
+			f.write( '%d,%d\n' % (target.x, target.y) )
+		f.close()
+		self.statbar.PushStatusText("File "+self.filename+" saved successfully", 0)
+		return True
 
+	#---------------------------------------
 	def onLoad(self, evt):
 		f = open("savedpicks.txt","r")
 		size = int(len(f.readlines())/2-1)
