@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.60 $
+# $Revision: 1.61 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-24 21:41:02 $
+# $Date: 2007-08-29 22:55:54 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -54,6 +54,9 @@ EVT_MEASUREMENT = wx.PyEventBinder(MeasurementEventType)
 EVT_DISPLAY = wx.PyEventBinder(DisplayEventType)
 EVT_TARGETING = wx.PyEventBinder(TargetingEventType)
 EVT_SETTINGS = wx.PyEventBinder(SettingsEventType)
+
+penwidth = 1
+iconlength = 15
 
 class ImageClickedEvent(wx.PyCommandEvent):
 	def __init__(self, source, xy):
@@ -131,17 +134,17 @@ def targetIcon(color, shape):
 			dc.DrawLine(1, 8, 14, 8)
 			dc.DrawPoint(1, 7)
 		elif shape == 'x':
-			dc.DrawLine(1, 1, 14, 14)
-			dc.DrawLine(1, 14, 14, 1)
+			dc.DrawLine(1, 1, 13, 13)
+			dc.DrawLine(1, 13, 13, 1)
 			dc.DrawPoint(1, 7)
 		elif shape == '*':
-			dc.DrawLine(1, 1, 14, 14)
-			dc.DrawLine(1, 14, 14, 1)
+			dc.DrawLine(1, 1, 13, 13)
+			dc.DrawLine(1, 13, 13, 1)
 			dc.DrawLine(8, 1, 8, 14)
 			dc.DrawLine(1, 8, 14, 8)
 			dc.DrawPoint(1, 7)
 		elif shape == 'o':
-			dc.DrawCircle(8, 8, 7)
+			dc.DrawCircle(7, 7, 7)
 			dc.DrawPoint(1, 7)
 		elif shape == 'polygon':
 			dc.DrawLine(3, 1, 13, 1)
@@ -189,69 +192,61 @@ def targetBitmap_point(color):
 	return bitmap
 
 def targetBitmap_plus(color):
-	penwidth = 1
-	length = 15
-	bitmap = wx.EmptyBitmap(length, length)
+	bitmap = wx.EmptyBitmap(iconlength, iconlength)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
-	dc.DrawLine(length/2, 0, length/2, length)
-	dc.DrawLine(0, length/2, length, length/2)
+	dc.DrawLine(iconlength/2, 0, iconlength/2, iconlength)
+	dc.DrawLine(0, iconlength/2, iconlength, iconlength/2)
 	dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
 
 def targetBitmap_cross(color):
-	penwidth = 2
-	length = 15
-	bitmap = wx.EmptyBitmap(length, length)
+	bitmap = wx.EmptyBitmap(iconlength, iconlength)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
-	dc.DrawLine(0, 0, length, length)
-	dc.DrawLine(0, length, length, 0)
+	dc.DrawLine(0, 0, iconlength, iconlength)
+	dc.DrawLine(0, iconlength, iconlength, 0)
 	dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
 
 def targetBitmap_star(color):
-	penwidth = 2
-	length = 15
-	bitmap = wx.EmptyBitmap(length, length)
+	bitmap = wx.EmptyBitmap(iconlength, iconlength)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
-	dc.DrawLine(0, 0, length, length)
-	dc.DrawLine(0, length, length, 0)
-	dc.DrawLine(length/2, 0, length/2, length)
-	dc.DrawLine(0, length/2, length, length/2)
+	dc.DrawLine(0, 0, iconlength-1, iconlength-1)
+	dc.DrawLine(0, iconlength-1, iconlength-1, 0)
+	dc.DrawLine(iconlength/2, 0, iconlength/2, iconlength)
+	dc.DrawLine(0, iconlength/2, iconlength, iconlength/2)
 	dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
 
 def targetBitmap_circle(color):
-	penwidth = 2
-	length = 15
-	bitmap = wx.EmptyBitmap(length, length)
+	bitmap = wx.EmptyBitmap(iconlength, iconlength)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
-	dc.DrawCircle(length/2, length/2, length/2)
+	dc.DrawCircle(iconlength/2, iconlength/2, iconlength/2-1)
 	dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
@@ -650,14 +645,12 @@ class ZoomTool(ImageTool):
 		self.zoom(selection, viewcenter)
 
 class ImagePanel(wx.Panel):
-	def __init__(self, parent, id, imagesize=(512, 768)):
+	def __init__(self, parent, id, imagesize=(512, 512)):
 		# initialize image variables
 		self.imagedata = None
 		self.bitmap = None
 		self.buffer = None
-
 		self.colormap = None
-
 		self.selectiontool = None
 
 		# get size of image panel (image display dimensions)
@@ -681,22 +674,25 @@ class ImagePanel(wx.Panel):
 		wx.Panel.__init__(self, parent, id)
 
 		# create main sizer, will contain tool sizer and imagepanel
-		self.sizer = wx.GridBagSizer(3, 3)
+		self.sizer = wx.GridBagSizer(5, 5)
 		self.sizer.SetEmptyCellSize((0, 0))
 
 		# create tool size to contain individual tools
 		self.toolsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer.Add(self.toolsizer, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		#self.sizer.Add(self.toolsizer, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL) #NEILMODE
 		self.tools = []
 
 		# create image panel, set cursor
-		self.panel = wx.ScrolledWindow(self, -1, size=self.imagesize,
-																		style=wx.SIMPLE_BORDER)
+		self.panel = wx.ScrolledWindow(self, -1, style=wx.SIMPLE_BORDER|wx.EXPAND)
+		#self.panel.SetBackgroundColour(wx.Colour(216, 191, 216))
+		#self.panel.SetMinSize(self.imagesize)
 		self.panel.SetBackgroundColour(wx.WHITE)
 		self.panel.SetScrollRate(1, 1)
 		self.defaultcursor = wx.CROSS_CURSOR
 		self.panel.SetCursor(self.defaultcursor)
 		self.sizer.Add(self.panel, (1, 1), (3, 1), wx.EXPAND)
+		#self.sizer.Add(self.panel, (1, 0), (3, 2), wx.EXPAND|wx.ALL, 2) #NEILMODE
 		self.sizer.AddGrowableRow(3)
 		self.sizer.AddGrowableCol(1)
 		width, height = self.panel.GetSizeTuple()
@@ -704,6 +700,7 @@ class ImagePanel(wx.Panel):
 
 		self.statspanel = gui.wx.Stats.Stats(self, -1, style=wx.SIMPLE_BORDER)
 		self.sizer.Add(self.statspanel, (1, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
+		#self.sizer.Add(self.statspanel, (4, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3) #NEILMODE
 		#self.pospanel = gui.wx.Stats.Position(self, -1, style=wx.SIMPLE_BORDER)
 		#self.sizer.Add(self.pospanel, (2, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
 
@@ -1209,8 +1206,8 @@ class ImagePanel(wx.Panel):
 	def addTypeTool(self, name, **kwargs):
 		if self.selectiontool is None:
 			self.selectiontool = SelectionTool(self)
-			self.sizer.Add(self.selectiontool, (2, 0), (1, 1),
-											wx.ALIGN_CENTER|wx.ALL, 3)
+			self.sizer.Add(self.selectiontool, (2, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
+			#self.sizer.Add(self.selectiontool, (4, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3) #NEILMODE
 		self.selectiontool.addTypeTool(name, **kwargs)
 		self.sizer.SetItemMinSize(self.selectiontool, self.selectiontool.GetSize())
 		self.sizer.Layout()
@@ -1610,8 +1607,8 @@ class TargetType(object):
 		return map(lambda t: t.position, self.targets)
 
 class TargetImagePanel(ImagePanel):
-	def __init__(self, parent, id, callback=None, tool=True):
-		ImagePanel.__init__(self, parent, id)
+	def __init__(self, parent, id, callback=None, tool=True, imagesize=(512, 512)):
+		ImagePanel.__init__(self, parent, id, imagesize)
 		self.order = []
 		self.reverseorder = []
 		self.targets = {}
