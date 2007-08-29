@@ -100,7 +100,7 @@ def createDefaults():
 	params['normalized']=True
 	params['correlationMin']=None
 	params['correlationMax']=None
-	params['inspectmask']=None
+	params['checkMask']=None
 	params['commit']=False
 	params['outdir']=os.path.abspath(".")
 	params['particleNumber']=0
@@ -152,7 +152,7 @@ def parseInput(args):
 		elif (elements[0]=='selexonmax'):
 			params['correlationMax']=float(elements[1])
 		elif (elements[0]=='maskassess'):
-			params['inspectmask']=elements[1]
+			params['checkMask']=elements[1]
 		elif (elements[0]=='boxsize'):
 			params['boxSize']=int(elements[1])
 		elif (elements[0]=='inspectfile'):
@@ -312,7 +312,7 @@ def batchBox(params, imgdict):
 				particles=eliminateMinMaxCCParticles(particles,params)
 			
 			###apply masks
-			if params['inspectmask']:
+			if params['checkMask']:
 				particles=eliminateMaskedParticles(particles,params,imgdict)
 			
 			###save particles
@@ -356,7 +356,7 @@ def eliminateMaskedParticles(particles,params,imgdata):
 	if params['defocpair']:
 		imgdata = getDefocPair(imgdata,2)
 		print imgdata.dbid
-	maskimg,maskbin = apMask.makeInspectedMask(sessiondata,params['inspectmask'],imgdata)
+	maskimg,maskbin = apMask.makeInspectedMask(sessiondata,params['checkMask'],imgdata)
 	if maskimg is not None:
 		for prtl in particles:
 			binnedcoord = (int(prtl['ycoord']/maskbin),int(prtl['xcoord']/maskbin))
@@ -675,7 +675,7 @@ def getImgsDefocPairFromSelexonIdREFLEGINON(params):
 def insertStackRun(params):
 	stparamq=appionData.ApStackParamsData()
 	paramlist = ('boxSize','bin','phaseFlipped','aceCutoff','correlationMin','correlationMax',
-		'checkCrud','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized')
+		'checkMask','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized')
 
 	for p in paramlist:
 		if p in params:
@@ -742,7 +742,7 @@ def insertStackRun(params):
 def insertStackRunREFLEGINON(params):
 	stparamq=appionData.ApStackParamsData()
 	paramlist = ('boxSize','bin','phaseFlipped','aceCutoff','correlationMin','correlationMax',
-		'checkCrud','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized')
+		'checkMask','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized')
 
 	for p in paramlist:
 		if p in params:
