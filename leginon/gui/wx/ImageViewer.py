@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.61 $
+# $Revision: 1.62 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-29 22:55:54 $
+# $Date: 2007-08-29 23:07:13 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -645,13 +645,14 @@ class ZoomTool(ImageTool):
 		self.zoom(selection, viewcenter)
 
 class ImagePanel(wx.Panel):
-	def __init__(self, parent, id, imagesize=(512, 512)):
+	def __init__(self, parent, id, imagesize=(512, 512), mode="horizontal"):
 		# initialize image variables
 		self.imagedata = None
 		self.bitmap = None
 		self.buffer = None
 		self.colormap = None
 		self.selectiontool = None
+		self.mode = mode
 
 		# get size of image panel (image display dimensions)
 		if type(imagesize) != tuple:
@@ -679,8 +680,11 @@ class ImagePanel(wx.Panel):
 
 		# create tool size to contain individual tools
 		self.toolsizer = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizer.Add(self.toolsizer, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		#self.sizer.Add(self.toolsizer, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL) #NEILMODE
+		if self.mode == "vertical":
+			#NEILMODE
+			self.sizer.Add(self.toolsizer, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		else:
+			self.sizer.Add(self.toolsizer, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.tools = []
 
 		# create image panel, set cursor
@@ -691,16 +695,23 @@ class ImagePanel(wx.Panel):
 		self.panel.SetScrollRate(1, 1)
 		self.defaultcursor = wx.CROSS_CURSOR
 		self.panel.SetCursor(self.defaultcursor)
-		self.sizer.Add(self.panel, (1, 1), (3, 1), wx.EXPAND)
-		#self.sizer.Add(self.panel, (1, 0), (3, 2), wx.EXPAND|wx.ALL, 2) #NEILMODE
+		if self.mode == "vertical":
+			#NEILMODE
+			self.sizer.Add(self.panel, (1, 0), (3, 2), wx.EXPAND) 
+		else:
+			self.sizer.Add(self.panel, (1, 1), (3, 1), wx.EXPAND)
 		self.sizer.AddGrowableRow(3)
 		self.sizer.AddGrowableCol(1)
 		width, height = self.panel.GetSizeTuple()
 		self.sizer.SetItemMinSize(self.panel, width, height)
 
 		self.statspanel = gui.wx.Stats.Stats(self, -1, style=wx.SIMPLE_BORDER)
-		self.sizer.Add(self.statspanel, (1, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
-		#self.sizer.Add(self.statspanel, (4, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3) #NEILMODE
+		if self.mode == "vertical":
+			#NEILMODE
+			self.sizer.Add(self.statspanel, (4, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
+		else:
+			self.sizer.Add(self.statspanel, (1, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
+
 		#self.pospanel = gui.wx.Stats.Position(self, -1, style=wx.SIMPLE_BORDER)
 		#self.sizer.Add(self.pospanel, (2, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
 
@@ -1206,8 +1217,11 @@ class ImagePanel(wx.Panel):
 	def addTypeTool(self, name, **kwargs):
 		if self.selectiontool is None:
 			self.selectiontool = SelectionTool(self)
-			self.sizer.Add(self.selectiontool, (2, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
-			#self.sizer.Add(self.selectiontool, (4, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3) #NEILMODE
+			if self.mode == "vertical":
+				#NEILMODE
+				self.sizer.Add(self.selectiontool, (4, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
+			else:
+				self.sizer.Add(self.selectiontool, (2, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
 		self.selectiontool.addTypeTool(name, **kwargs)
 		self.sizer.SetItemMinSize(self.selectiontool, self.selectiontool.GetSize())
 		self.sizer.Layout()
@@ -1607,8 +1621,8 @@ class TargetType(object):
 		return map(lambda t: t.position, self.targets)
 
 class TargetImagePanel(ImagePanel):
-	def __init__(self, parent, id, callback=None, tool=True, imagesize=(512, 512)):
-		ImagePanel.__init__(self, parent, id, imagesize)
+	def __init__(self, parent, id, callback=None, tool=True, imagesize=(512, 512), mode="horizontal"):
+		ImagePanel.__init__(self, parent, id, imagesize, mode)
 		self.order = []
 		self.reverseorder = []
 		self.targets = {}
