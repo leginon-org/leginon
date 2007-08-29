@@ -240,9 +240,9 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		## loop through tilts
 		imageold = image0
-		arrayold = numpy.asarray(imageold['image'])
-		arrayold = ndimage.gaussian_filter(arrayold, self.settings['lowfilt'])
-		arrayold = ndimage.median_filter(arrayold, size=self.settings['medfilt'])
+		arrayold = numpy.asarray(imageold['image'], dtype=numpy.float32)
+		arrayold = ndimage.median_filter(arrayold, size=int(self.settings['medfilt']))
+		arrayold = ndimage.gaussian_filter(arrayold, float(self.settings['lowfilt']))
 		runningresult = numpy.identity(3, numpy.float64)
 		for tilt in tilts:
 			self.logger.info('Tilt: %s' % (degrees(tilt),))
@@ -252,10 +252,10 @@ class RCTAcquisition(acquisition.Acquisition):
 			print 'acquire intertilt'
 			dataclass = data.CorrectedCameraImageData
 			imagenew = self.instrument.getData(dataclass)
-			arraynew = numpy.asarray(imagenew['image'])
-			arraynew = ndimage.gaussian_filter(arraynew, self.settings['lowfilt'])
-			arraynew = ndimage.median_filter(arraynew, size=self.settings['medfilt'])
-			self.setImage(imagenew['image'], 'Image')
+			arraynew = numpy.asarray(imagenew['image'], dtype=numpy.float32)
+			arraynew = ndimage.median_filter(arraynew, size=int(self.settings['medfilt']))
+			arraynew = ndimage.gaussian_filter(arraynew, float(self.settings['lowfilt']))
+			self.setImage(arraynew, 'Image')
 			self.setTargets([], 'Peak')
 
 			self.logger.info('Craig stuff')
@@ -345,17 +345,16 @@ class RCTAcquisition(acquisition.Acquisition):
 			return
 
 		# filter
-		#sigma = self.settings['sigma']
-		#im = scipy.ndimage.gaussian_filter(im, sigma)
-
+		im = numpy.asarray(im, dtype=numpy.float32)
+		im = ndimage.median_filter(im, size=int(self.settings['medfilt']))
+		im = ndimage.gaussian_filter(im, float(self.settings['lowfilt']))
 		self.setImage(im)
 
 		# find regions
 		minsize = self.settings['minsize']
 		maxsize = self.settings['maxsize']
-		blur = self.settings['blur']
-		sharpen = self.settings['sharpen']
-		regions,image = libCV.FindRegions(im, minsize, maxsize, blur, sharpen, 1, 1)
+		regions, image = libCV.FindRegions(im, minsize, maxsize, 0, 0, 1, 1)
+
 		# this is copied from targetfinder:
 		#regions,image = libCV.FindRegions(self.mosaicimage, minsize, maxsize, 0, 0, 0, 1, 5)
 		n = len(regions)
