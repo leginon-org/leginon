@@ -217,8 +217,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		return tiltedtargetlist
 
 	def trackStage(self, image0, tilt0, tilt, tilt0targets):
-		stepsizedeg = self.settings['stepsize']
-		stepsize = radians(stepsizedeg)
+
 
 		#### copied from drift manager
 		## go to state of image0
@@ -231,7 +230,7 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		## calculate tilts
 		tiltrange = tilt - tilt0
-		nsteps = abs(int(round(float(tiltrange) / stepsize)))
+		nsteps = float(self.settings['nsteps'])
 		tilts = [tilt]
 		if nsteps > 0:
 			tilts = []
@@ -242,9 +241,10 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		## loop through tilts
 		imageold = image0
-		sigma = self.settings['sigma']
-		#arrayold = ndimage.gaussian_filter(imageold['image'], sigma)
-		arrayold = ndimage.median_filter(imageold['image'], size=2)
+		lowfilt = self.settings['lowfilt']
+		arrayold = numpy.asarray(imageold['image'])
+		arrayold = ndimage.gaussian_filter(arrayold, self.settings['lowfilt'])
+		arrayold = ndimage.median_filter(arrayold, size=self.settings['medfilt'])
 		runningresult = numpy.identity(3, numpy.float64)
 		for tilt in tilts:
 			self.logger.info('Tilt: %s' % (degrees(tilt),))
@@ -254,20 +254,21 @@ class RCTAcquisition(acquisition.Acquisition):
 			print 'acquire intertilt'
 			dataclass = data.CorrectedCameraImageData
 			imagenew = self.instrument.getData(dataclass)
-			#arraynew = ndimage.gaussian_filter(imagenew['image'], sigma)
-			arraynew = ndimage.median_filter(imagenew['image'], size=2)
+			arraynew = numpy.asarray(imagenew['image'])
+			arraynew = ndimage.gaussian_filter(arraynew, self.settings['lowfilt'])
+			arraynew = ndimage.median_filter(arraynew, size=self.settings['medfilt'])
 			self.setImage(imagenew['image'], 'Image')
 			self.setTargets([], 'Peak')
 
 			self.logger.info('Craig stuff')
-			print 'Craig stuff'
+			print '============ Craig stuff ============'
 			minsize = self.settings['minsize']
 			maxsize = self.settings['maxsize']
-			blur = self.settings['blur']
-			sharpen = self.settings['sharpen']
+			blur = 0
+			sharpen = 0
 			result = libCV.MatchImages(arrayold, arraynew, minsize, maxsize, blur, sharpen, 1, 1)
 			self.checkLibCVResult(result)
-			print 'Craig stuff done'
+			print '============ Craig stuff done ============'
 			self.logger.info('Matrix: %s' % (result,))
 
 			runningresult = numpy.dot(runningresult, result)
@@ -293,15 +294,13 @@ class RCTAcquisition(acquisition.Acquisition):
 		return (runningresult, imagedata)
 
 	def checkLibCVResult(self, result):
-		if result[0][0] < 0.5:
-			self.logger.error('Bad libCV result in 0,0')
-		if result[0][1] > 0.5:
-			self.logger.error('Bad libCV result in 0,1')
-		if result[1][0] > 0.5:
-			self.logger.error('Bad libCV result in 1,0')
-		if result[1][1] < 0.5:
-			self.logger.error('Bad libCV result in 0,0')
-		return
+		if result[0][0] < 0.5 or result[1][1] < 0.5:
+			self.logger.error("Bad libCV result: bad matrix")
+			return False
+		elif result[0][1] > 0.5 or result[1][0] > 0.5:
+			self.logger.error('Bad libCV result: too much rotation')
+			return False
+		return True
 
 	def alreadyAcquired(self, target, presetname):
 		return False

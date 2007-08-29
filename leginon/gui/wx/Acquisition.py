@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.42 $
+# $Revision: 1.43 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-28 18:29:24 $
+# $Date: 2007-08-29 00:10:06 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -139,7 +139,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz = wx.GridBagSizer(5, 25)
 		sz.Add(szmovetype, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szpausetime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['preset order'], (0, 1), (6, 1), wx.ALIGN_CENTER)
+		sz.Add(self.widgets['preset order'], (0, 1), (7, 1), wx.ALIGN_CENTER)
 #		sz.Add(self.widgets['display image'], (1, 1), (1, 1),
 #						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['save image'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
