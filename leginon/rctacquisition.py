@@ -57,12 +57,11 @@ class RCTAcquisition(acquisition.Acquisition):
 	defaultsettings = acquisition.Acquisition.defaultsettings
 	defaultsettings.update({
 		'tilts': '(-45, 45)',
-		'stepsize': 10,
-		'sigma':0.5,
-		'minsize': 0.0015,
+		'nsteps': 3,
+		'lowfilt': 0,
+		'medfilt': 0,
+		'minsize': 5,
 		'maxsize': 0.9,
-		'blur': 0.0,
-		'sharpen': 0.0,
 		'drift threshold': 0.0,
 		'drift preset': None,
 		})
@@ -241,7 +240,6 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		## loop through tilts
 		imageold = image0
-		lowfilt = self.settings['lowfilt']
 		arrayold = numpy.asarray(imageold['image'])
 		arrayold = ndimage.gaussian_filter(arrayold, self.settings['lowfilt'])
 		arrayold = ndimage.median_filter(arrayold, size=self.settings['medfilt'])
