@@ -1584,12 +1584,12 @@ class RCTAcquisitionSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
 			('tilts', str),
-			('stepsize', float),
-			('sigma', float),
+			('nsteps', int),
+			('pause', float),
 			('minsize', float),
 			('maxsize', float),
-			('blur', float),
-			('sharpen', float),
+			('medfilt', int),
+			('lowfilt', float),
 			('drift threshold', float),
 			('drift preset', str),
 		)
