@@ -211,7 +211,7 @@ class ApStackParamsData(Data):
 			('aceCutoff', float),
 			('correlationMin', float),
 			('correlationMax', float),
-			('checkCrud', bool),
+			('checkMask', str),
 			('checkImage', bool),
 			('minDefocus', float),
 			('maxDefocus', float),
@@ -307,6 +307,7 @@ class ApRefinementRunData(Data):
 			('initialModel', ApInitialModelData),
 			('path', str),
 			('package', str),
+			('description', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApRefinementRunData=ApRefinementRunData

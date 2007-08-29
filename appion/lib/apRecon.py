@@ -30,6 +30,7 @@ def createDefaults():
 	params['contour']=1.5
 	params['oneiteration']=None
 	params['zoom']=1.75
+	params['description']=None
 	return params
 
 def createModelDefaults():
@@ -101,6 +102,8 @@ def parseInput(args,params):
 			params['zoom']=float(elements[1])
 		elif (elements[0]=='oneiteration'):
 			params['oneiteration']=int(elements[1])
+		elif (elements[0]=='description'):
+			params['description']=elements[1]
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
@@ -255,6 +258,7 @@ def insertRefinementRun(params):
 	runq['initialModel']=params['model']
 	runq['package']=params['package']
 	runq['path']=params['path']
+	runq['description']=params['description']
 	result=partdb.query(runq, results=1)
 
 ## 	if result:
@@ -273,6 +277,7 @@ def insertRefinementRun(params):
 		runq['initialModel']=params['model']
 		runq['package']=params['package']
 		runq['path']=params['path']
+		runq['description']=params['description']
 		result=partdb.query(runq, results=1)
 		
 	# save run entry in the parameters

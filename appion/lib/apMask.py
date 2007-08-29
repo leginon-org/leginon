@@ -96,7 +96,6 @@ def getRegionsByAssessment(assessrun):
 
 	maskRq['run']=assessrun
 	results=appiondb.query(maskRq, readimages=False)
-	len(results)
 	return results
 	
 def getAssessedMasks(assessrun,maskrun):
