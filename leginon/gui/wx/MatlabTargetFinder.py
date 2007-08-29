@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MatlabTargetFinder.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-05-23 18:14:37 $
-# $Author: acheng $
+# $Date: 2007-08-29 22:40:55 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -99,7 +99,8 @@ class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 
 		self.widgets['test image'] = filebrowse.FileBrowseButton(self,
 								labelText='Test Image:', fileMask='*.mrc')
-		self.bok.SetLabel('Load')
+		self.widgets['test image'].SetMinSize((500,50))
+		self.bok.SetLabel('&Load')
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['test image'], (0, 0), (1, 1),

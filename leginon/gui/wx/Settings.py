@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Settings.py,v $
-# $Revision: 1.26 $
+# $Revision: 1.27 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-05-10 22:55:26 $
-# $Author: pulokas $
+# $Date: 2007-08-29 22:40:56 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -61,9 +61,9 @@ class Dialog(wx.Dialog):
 		self.widgets = {}
 
 		# buttons
-		self.bok = wx.Button(self, wx.ID_OK, 'OK')
-		self.bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
-		self.bapply = wx.Button(self, wx.ID_APPLY, 'Apply')
+		self.bok = wx.Button(self, wx.ID_OK, '&OK')
+		self.bcancel = wx.Button(self, wx.ID_CANCEL, '&Cancel')
+		self.bapply = wx.Button(self, wx.ID_APPLY, '&Apply')
 		szbuttons = wx.GridBagSizer(5, 5)
 		szbuttons.Add(self.bok, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szbuttons.Add(self.bcancel, (0, 1), (1, 1), wx.ALIGN_CENTER)

@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageAssessor.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-06-16 00:49:54 $
-# $Author: acheng $
+# $Date: 2007-08-29 22:40:54 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -129,6 +129,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz = wx.GridBagSizer(5, 10)
 
 		#self.widgets['image directory'] = filebrowse.FileBrowseButton(self, -1)
+		#self.widgets['image directory'].SetMinSize((500,50))
+
 		label = wx.StaticText(self, -1, 'Image Directory:')
 		self.widgets['image directory'] = Entry(self, -1)
 		sz.Add(label, (0, 0), (1, 1))

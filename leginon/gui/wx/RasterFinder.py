@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.24 $
+# $Revision: 1.25 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-17 23:18:13 $
-# $Author: pulokas $
+# $Date: 2007-08-29 22:40:55 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -80,7 +80,8 @@ class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 		gui.wx.Settings.Dialog.initialize(self)
 
 		self.widgets['image filename'] = filebrowse.FileBrowseButton(self, -1)
-		self.bok.SetLabel('Load')
+		self.widgets['image filename'].SetMinSize((500,50))
+		self.bok.SetLabel('&Load')
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['image filename'], (0, 0), (1, 1),

@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleDepth.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-04-04 21:05:46 $
-# $Author: pulokas $
+# $Date: 2007-08-29 22:40:54 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -108,7 +108,8 @@ class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 		parameter = parent.cparameter.GetStringSelection()
 		imagetype=str(parameter)+' filename'
 		self.widgets[imagetype] = filebrowse.FileBrowseButton(self, -1)
-		self.bok.SetLabel('Load')
+		self.widgets[imagetype].SetMinSize((500,50))
+		self.bok.SetLabel('&Load')
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets[imagetype], (0, 0), (1, 1),
