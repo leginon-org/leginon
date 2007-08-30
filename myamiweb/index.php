@@ -15,6 +15,7 @@ $link->cols = 3;
 $link->addlink('imageviewer.php','Image Viewer','', 'viewer');
 $link->addlink('3wviewer.php','3 Way Viewer','', '3wviewer');
 $link->addlink('loi.php','LOI','', 'loi');
+$link->addlink('rctviewer.php','RCT','', 'rct');
 $link->addlink('admin.php','Administration','', 'admin');
 $link->addlink('tomo/','Tomography','', 'tomo_icon_3');
 
