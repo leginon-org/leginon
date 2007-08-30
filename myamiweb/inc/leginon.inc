@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.65 $
- *	@version $Id: leginon.inc,v 1.65 2007-07-27 00:33:50 vossman Exp $
+ *	@version $Revision: 1.66 $
+ *	@version $Id: leginon.inc,v 1.66 2007-08-30 22:45:01 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -29,6 +29,7 @@ class leginondata {
 	var $ffttypes = array('focpow', 'fft');
 	var $defaulttypes = array('all'=>'all', 'atlas'=>'atlas');
 	var $manualtype = 'manual';
+	var $rcttype = 'rct';
 	var $calibrationtables = array (
 		'CameraSensitivityCalibrationData',
 		'MatrixCalibrationData',
@@ -224,6 +225,13 @@ class leginondata {
 	}
 
 	function getSummary($expId) {
+	/*
+		$q="select if (isnull(p.name), '"
+			.$this->manualtype."', p.name) as name, count(a.`DEF_id`) as nb from AcquisitionImageData a "
+			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
+			." where a.`REF|SessionData|session` = '$expId' "
+			." group by p.name ";
+	*/
 		$q="SELECT p.name, count(a.`DEF_id`) as nb, p.magnification "
 			." FROM AcquisitionImageData a "
 			." LEFT JOIN PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
@@ -251,6 +259,12 @@ class leginondata {
 			."from `viewer_comment` c " 
 			."where `sessionId` = '$sessionId' and `type` = '$type' "
 			." ";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getDatalabels($sessionId) {
+		$q="select distinct label FROM AcquisitionImageData a "
+			." where a.`REF|SessionData|session` = '$sessionId'";
 		return $this->mysql->getSQLResult($q);
 	}
 
@@ -383,7 +397,7 @@ class leginondata {
 		$sqljoinstr=implode(', ',$sqljoin);
 		$q='
 		select '.$sqlselectstr.'
-		from (AcquisitionImageData a , PixelSizeCalibrationData pi) 
+		from (AcquisitionImageData a , PixelSizeCalibrationData pi)
 			left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) 
 			left join CameraEMData c on (a.`REF|CameraEMData|camera`=c.`DEF_id`)
 		'
@@ -402,7 +416,7 @@ class leginondata {
 
 	function getPresetFromImageId($imageId) {
 		$q	="SELECT "
-			."`p`.`DEF_id`, `p`.`DEF_timestamp`, `p`.`REF|SessionData|session`, "
+			."`p`.`DEF_id`, `p`.`DEF_timestamp`, `s`.`DEF_id` as sessionId, `s`.`name` as session, "
 			."`p`.`name`, `p`.`magnification`, `p`.`spot size`, `p`.`intensity`, "
 			."`p`.`SUBD|image shift|x`, `p`.`SUBD|image shift|y`, `p`.`SUBD|beam shift|x`, "
 			."`p`.`SUBD|beam shift|y`, `p`.`defocus`, `p`.`SUBD|dimension|x`, "
@@ -413,6 +427,7 @@ class leginondata {
 			."FROM "
 			."`AcquisitionImageData` AS `a` "
 			."LEFT JOIN `PresetData` AS `p` ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
+			."LEFT JOIN `SessionData` AS `s` ON (`s`.`DEF_id`=`a`.`REF|SessionData|session`) "
 			."WHERE `a`.`DEF_id` = '$imageId' ";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r;
@@ -563,6 +578,105 @@ class leginondata {
 				'REF|AcquisitionImageData|image'
 				);
 		return $r;
+	}
+
+	function getRCTfilename($imageId) {
+		// --- return RCT filename for a given imageId
+		// --- return empty string for no match
+		$q="select "
+			."a2.DEF_id, a2.`MRC|image` as filename "
+			."from AcquisitionImageData a1 "
+			."left join AcquisitionImageData a2 "
+			."on (a1.`REF|TiltSeriesData|tilt series`=a2.`REF|TiltSeriesData|tilt series` "
+			."and a1.`REF|PresetData|preset`=a2.`REF|PresetData|preset` "
+			."and a1.DEF_id<>a2.DEF_id) "
+			."where a1.DEF_id=$imageId";
+
+		list($r)=$this->mysql->getSQLResult($q);
+		if ($r['filename']) {
+			return $r['filename'];
+		}
+		// --- FOR OLDER RCT RUN --- //
+		$info=$this->getImageInfo($imageId);
+		$name = $info['filename'];
+		$p=$info['preset'];
+		$pp=$info['parentpreset'];
+
+		// --- change pattern based on parent's preset
+		$pattern = ($pp) ? '/'.$pp.'_(\d+)_(.*)'.$p.'_(\d+)/' :
+											'/'.$p.'_(\d+)/';
+		if (!preg_match($pattern, $name, $result)) {
+			// ---try new
+			return $this->getRCTfilename_new($imageId);
+		}
+		$split='/'.$result[0].'/';
+		$replacement = ($pp) ? $pp.'_'
+									.sprintf("%02d", $result[1]+1)
+									.'_'.$result[2]
+									.$p.'_'
+									.sprintf("%02d", $result[3]+1) : 
+									$p.'_'.sprintf("%02d", $result[1]+1);
+
+		$rctfilename=preg_replace($split, $replacement, $name);
+		return $rctfilename;
+	}
+
+	function getRCTfilename_new($id) {
+		$info=$this->getImageInfo($id);
+		$name = $info['filename'];
+		$p=$info['preset'];
+		$pp=$info['parentpreset'];
+
+		if ($pp) {
+			$pattern = '/'.$pp.'_v(\d+)_(.*)'.$p.'_v(\d+)_(\d+)/';
+		}else
+			$pattern = '/'.$p.'_v(\d+)_(\d+)/';
+
+		if (!preg_match($pattern, $name, $result)) {
+			// ---try one more
+			return $this->getRCTfilename_onemore($id);
+		}
+		$split='/'.$result[0].'/';
+		if ($pp)
+		$replacement = $pp.'_v00'
+									.'_'.$result[2]
+									.$p.'_v00_'
+									.sprintf("%02d", $result[4]+1);
+		else
+		$replacement = $p.'_v00_'
+									.sprintf("%02d", $result[2]+1);
+
+		$rctfilename=preg_replace($split, $replacement, $name);
+		$rctfilename=preg_replace('/v(\d+)/', 'v__', $rctfilename);
+		return $rctfilename;
+	}
+
+	function getRCTfilename_onemore($id) {
+		$info=$this->getImageInfo($id);
+		$name = $info['filename'];
+		$p=$info['preset'];
+		$pp=$info['parentpreset'];
+
+		if ($pp) {
+			$pattern = '/'.$pp.'_v(\d+)_(.*)'.$p.'_(\d+)/';
+		}else
+			$pattern = '/'.$p.'_v(\d+)_(\d+)/';
+
+		if (!preg_match($pattern, $name, $result))
+			return "";
+		$split='/'.$result[0].'/';
+		if ($pp)
+		$replacement = $pp.'_v00'
+									.'_'.$result[2]
+									.$p.'_'
+									.sprintf("%02d", $result[4]+1);
+		else
+		$replacement = $p.'_'
+									.sprintf("%02d", $result[2]+1);
+
+		$rctfilename=preg_replace($split, $replacement, $name);
+		$rctfilename=preg_replace('/v(\d+)/', 'v__', $rctfilename);
+		return $rctfilename;
 	}
 
 	function getFilename($name) {
@@ -748,8 +862,7 @@ class leginondata {
 			."a.`DEF_id` ='".$imgId."' " 
 			."order by mcal.`DEF_id` desc limit 1";
 
-		$Rparent = $this->mysql->SQLQuery($q);
-		$parent = mysql_fetch_array($Rparent);
+		list($parent) = $this->mysql->getSQLResult($q);
 		return $parent;
 	}
 
@@ -876,7 +989,7 @@ class leginondata {
 			"left join CameraEMData cp "
 			."on (parenttarget.`REF|CameraEMData|camera`=cp.`DEF_id`) " : "";
 		$gridselect = ($gridtable) ?
-			"grid.`grid ID` as gridId, " : "";
+			"grid.`grid ID` as gridId, grid.`insertion`, " : "";
 		$gridjoin = ($gridtable) ?
 			"left join GridData grid "
 			."on (grid.`DEF_id`=a.`REF|GridData|grid`) " : '';
@@ -1049,6 +1162,14 @@ class leginondata {
 			$newimage['preset'] = ($imageinfo['preset']) ? $imageinfo['preset'] : $preset;
 			return $newimage;
 		}
+		if ($preset == $this->rcttype ) {
+			$rctfilename = $this->getRCTfilename($imgId);
+			// --- get most recent fields
+			$filename = end($this->getFilename($rctfilename));
+			$newimage[id] = $filename[id];
+			$newimage[preset] = $imageinfo[preset];
+			return $newimage;
+		}
 
 		// --- search for a parent
 		$parentId = $imgId;
@@ -1105,6 +1226,26 @@ class leginondata {
       ."a.`DEF_id`='".$imgId."' "
       ."order by `tnumber` ";
 
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getTargetStats($sessionId) {
+		$q="SELECT " 
+		."count(t.DEF_id) as nb, "
+		#."lasttarget.DEF_id, `t`.`REF|AcquisitionImageData|image`, "
+		."t.status, t.number "
+		."FROM ( "
+		."SELECT "
+		."max(`t`.DEF_id) as DEF_id "
+		."FROM     `AcquisitionImageTargetData` AS `t` "
+		."WHERE `t`.type IN ('acquisition', 'focus') "
+		."AND `t`.`REF|SessionData|session`=".$sessionId." "
+		#."AND `t`.`REF|AcquisitionImageData|image` = $imageId." "
+		."GROUP BY t.`REF|AcquisitionImageData|image`, t.version, t.number "
+		."  ) lasttarget "
+		."LEFT JOIN AcquisitionImageTargetData as t on (t.`DEF_id`=lasttarget.DEF_id) "
+		."WHERE 1 "
+		."GROUP by t.status ";
 		return $this->mysql->getSQLResult($q);
 	}
 
@@ -1875,45 +2016,6 @@ class leginondata {
 			return $this->mysql->getSQLResult($q);
 	}
 
-	function array_stats($a) {
-		sort($a, SORT_NUMERIC);
-		$min = $a[0];
-		$len = count($a);
-		$max = $a[$len-1];
-		if(($len % 2) == 1) { //$len is odd
-			$median = $a[$len/2];
-		} else { //$len is even
-			$median = ($a[intval($len/2.0-0.5)] + $a[intval($len/2.0+0.5)])/2.0;
-		}
-
-		$sum = 0.0;
-		$sumsq = 0.0;
-		$len = count($a);
-		if($len > 12) {
-			$err = 0.10;
-			$bot = $len*$err;
-			$top = ($len-1.0)*(1.0 - $err);
-		} else {
-			$top = $len-1;
-			$bot = 0;
-		}
-		for ($i = intval($bot); $i < intval($top); $i++) {
-			//echo $a[$i]."<BR>";
-			$sum += $a[$i];
-    		$sumsq += $a[$i]*$a[$i];
-		}
-		$mean = $sum/$len;
-		$var = ($sumsq - $len*$mean*$mean) / ($len-1);
-		$stddev = sqrt($var);
-		//echo "med=$median  max=$max  min=$min  sum=$sum  mean=$mean  len=$len std=$stddev<BR>";
-		$results['median'] = $median;
-		$results['max'] = $max;
-		$results['min'] = $min;
-		$results['mean'] = $mean;
-		$results['stddev'] = $stddev;
-		return $results;
-	}
-
 	function getPresetTiming($sessionId) {
 		$q .= "SELECT ";
 		$q .= "UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `utime`, ";
@@ -1929,7 +2031,6 @@ class leginondata {
 		$q .= "ORDER BY `utime` DESC;";
 		//echo $q."<BR>";
 		$timearray = $this->mysql->getSQLResult($q);
-		//foreach ($timearray as $key) {
 		$len = count($timearray);
 		//echo "len = $len<BR><BR>";
 		for ( $i = 0; $i < $len; $i++) {
@@ -1945,6 +2046,7 @@ class leginondata {
 				$j++;
 			}
 		}
+
 		foreach ($diffarray as $key => $presetarray) {
 			//echo "$key:<BR>";
 			$res1 = $this->array_stats($presetarray);
@@ -2190,16 +2292,15 @@ class leginondata {
 			return False;
 	}
 
-	function getviewerlog($type, $host="",$ip="") {
+	function getviewerlog($type, $ip="") {
 		if (!$this->mysql->SQLTableExists('viewer_log')) 
 			return array();
 		$where = array();
-		if ($host) {
-			$where[] = "`host`='".$host."'";
+		if ($ip) {
 			$where[] = "`ip`='".$ip."'";
 		}
 		$sql_where = ($where) ? "WHERE ".join(' OR ', $where) : "";
-		$sql_select = "`l`.`ip`, `l`.`host`, `l`.`url`, `l`.`sessionId`, `s`.`name`, `s`.`comment`";
+		$sql_select = "`l`.`ip`, `l`.`url`, `l`.`sessionId`, `s`.`name`, `s`.`comment`";
 		$sql_date = "date_format(max(`l`.`timestamp`), '%d %M %Y') as `timestamp`";
 		$sql_order_date = "order by `l`.`timestamp` DESC";
 		$sql_nb = "count(`l`.`sessionId`) as `nb`";
