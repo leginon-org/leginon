@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RCTAcquisition.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-29 00:10:07 $
+# $Date: 2007-08-30 20:15:54 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -61,10 +61,10 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 		self.widgets['tilts'] = Entry(self, -1, chars=15, style=wx.ALIGN_RIGHT)
 		sizer.Add(self.widgets['tilts'], (0,2), (1,2), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
-		label = wx.StaticText(self, -1, 'Number of Steps')
+		label = wx.StaticText(self, -1, 'Maximum Tilt Stepsize (in degrees)')
 		sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.widgets['nsteps'] = IntEntry(self, -1, chars=2, value='2')
-		sizer.Add(self.widgets['nsteps'], (1,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+		self.widgets['stepsize'] = IntEntry(self, -1, chars=2, value='2')
+		sizer.Add(self.widgets['stepsize'], (1,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
 		label = wx.StaticText(self, -1, 'Pause Between Steps')
 		sizer.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)

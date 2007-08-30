@@ -10,6 +10,7 @@ import acquisition
 import gui.wx.RCTAcquisition
 import libCV
 import numpy
+import time
 from scipy import ndimage
 pi = numpy.pi
 
@@ -57,7 +58,7 @@ class RCTAcquisition(acquisition.Acquisition):
 	defaultsettings = acquisition.Acquisition.defaultsettings
 	defaultsettings.update({
 		'tilts': '(-45, 45)',
-		'nsteps': 3,
+		'stepsize': 3,
 		'lowfilt': 0,
 		'medfilt': 0,
 		'minsize': 5,
@@ -216,8 +217,6 @@ class RCTAcquisition(acquisition.Acquisition):
 		return tiltedtargetlist
 
 	def trackStage(self, image0, tilt0, tilt, tilt0targets):
-
-
 		#### copied from drift manager
 		## go to state of image0
 		## go through preset manager to ensure we follow the right
@@ -229,7 +228,9 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		## calculate tilts
 		tiltrange = tilt - tilt0
-		nsteps = float(self.settings['nsteps'])
+		stepsize = radians(float(self.settings['stepsize']))
+		#nsteps = float(self.settings['nsteps'])
+		nsteps = abs(int(round(float(tiltrange) / stepsize)))
 		tilts = [tilt]
 		if nsteps > 0:
 			tilts = []
@@ -244,10 +245,11 @@ class RCTAcquisition(acquisition.Acquisition):
 		arrayold = ndimage.median_filter(arrayold, size=int(self.settings['medfilt']))
 		arrayold = ndimage.gaussian_filter(arrayold, float(self.settings['lowfilt']))
 		runningresult = numpy.identity(3, numpy.float64)
+		pausetime = int(self.settings['pause'])
 		for tilt in tilts:
 			self.logger.info('Tilt: %s' % (degrees(tilt),))
 			self.instrument.tem.StagePosition = {'a': tilt}
-
+			time.sleep(pausetime)
 			self.logger.info('Acquire intermediate tilted parent image')
 			print 'acquire intertilt'
 			dataclass = data.CorrectedCameraImageData

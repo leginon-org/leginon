@@ -1584,7 +1584,7 @@ class RCTAcquisitionSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
 			('tilts', str),
-			('nsteps', int),
+			('stepsize', float),
 			('pause', float),
 			('minsize', float),
 			('maxsize', float),
