@@ -355,8 +355,12 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		# filter
 		im = numpy.asarray(im, dtype=numpy.float32)
-		im = ndimage.median_filter(im, size=int(self.settings['medfilt']))
-		im = ndimage.gaussian_filter(im, float(self.settings['lowfilt']))
+		medfilt = int(self.settings['medfilt'])
+		lowfilt = float(self.settings['lowfilt'])
+		if medfilt > 1:
+			im = ndimage.median_filter(im, size=medfilt)
+		if lowfilt > 0:
+			im = ndimage.gaussian_filter(im, lowfilt)
 		self.setImage(im)
 
 		# find regions
