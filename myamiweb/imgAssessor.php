@@ -129,7 +129,9 @@ if ($imgdir) {
 		  foreach($files as $t) $fileList[] = $t[0];
 		  // display image
 		  $skipcheck=($_POST['skipdone']=='on') ? 'CHECKED' : '';
+		  $skiprejcheck=($_POST['skiprejected']=='on') ? 'CHECKED' : '';
 		  echo "<INPUT TYPE='CHECKBOX' NAME='skipdone' $skipcheck>Skip assessed images<BR>\n"; 
+		  echo "<INPUT TYPE='CHECKBOX' NAME='skiprejected' $skiprejcheck>Skip rejected images<BR>\n"; 
 		  displayImage($_POST,$fileList,$imgdir,$leginondata,$particledata,$assessmentrid);
 		}
 		else echo"<HR><FONT COLOR='RED'>No files found in this directory with extension: $ext</FONT>\n";
@@ -181,6 +183,10 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 				        if ($statdata['status']=='no' || $statdata['status']=='yes') $found='FALSE';
 					else $found='TRUE';
 				}
+				if ($_POST['skiprejected']=='on') {
+				        if ($statdata['status']=='no') $found='FALSE';
+					else $found='TRUE';
+				}
 				else break;
 			}
 		}
@@ -198,6 +204,10 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 				$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
 				if ($_POST['skipdone']=='on') {
 				        if ($statdata['status']=='no' || $statdata['status']=='yes') $found='FALSE';
+					else $found='TRUE';
+				}
+				if ($_POST['skiprejected']=='on') {
+				        if ($statdata['status']=='no') $found='FALSE';
 					else $found='TRUE';
 				}
 				else break;
