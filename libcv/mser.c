@@ -23,11 +23,22 @@ char FindMSERegions( Image image, PStack regions, float minSize, float maxSize, 
 	
 	if ( !ImageIsGood(image) || !PStackGood(regions) ) return FALSE;
 	
-	//fprintf(stderr,"Filtering image\n");
-	
-	EnhanceImage(image,0,255,0.01,0.01);
-	GaussianBlurImage(image,blur);
-	UnsharpMaskImage(image,sharpen);
+	//fprintf(stderr,"Filtering image ");
+	int i, min = 0, max = 0;
+	for (i=0;i<image->rows*image->cols;i++) {
+		int pix = image->pixels[0][i];
+		if ( pix < min ) min = pix;
+		if ( pix > max ) max = pix;
+	}
+	fprintf(stderr,"Image min and max are %d %d\n",min,max);
+	image->minv = min;
+	image->maxv = max;
+	EnhanceImage(image,0,1024,0.01,0.01);
+	//fprintf(stderr,"Enhanced ");
+	//GaussianBlurImage(image,blur);
+	//fprintf(stderr,"Blurred ");
+	//UnsharpMaskImage(image,sharpen);
+	//fprintf(stderr,"Sharpened\n");
 	
 	//fprintf(stderr,"Creating MSERArray\n");
 	MSERArray ma = ImageToMSERArray(image);

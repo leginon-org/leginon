@@ -138,18 +138,18 @@ static PyObject *PyMatchImages(PyObject *self, PyObject *args) {
 	PStack im2desc = NewPStack(100);
 	PStack matches = NewPStack(100);
 	
-	//fprintf(stderr,"Image 1:  ");
+	fprintf(stderr,"Image 1:  ");
 	FindMSERegions(im1,im1keys,minSize,maxSize,blur,sharpen,U,D);
-	//fprintf(stderr,"Keypoints: %d  ",im1keys->stacksize);
+	fprintf(stderr,"Keypoints: %d  ",im1keys->stacksize);
 	RegionsToSIFTDescriptors(im1keys,im1desc,4,8,41);
-	//fprintf(stderr,"Descriptors: %d\n",im1desc->stacksize);
+	fprintf(stderr,"Descriptors: %d\n",im1desc->stacksize);
 	fprintf(stderr,"Image 1: keypoints: %d; descriptors: %d\n",im1keys->stacksize,im1desc->stacksize);
 	
-	//fprintf(stderr,"Image 2:  ");
+	fprintf(stderr,"Image 2:  ");
 	FindMSERegions(im2,im2keys,minSize,maxSize,blur,sharpen,U,D);
-	//fprintf(stderr,"Keypoints: %d  ",im2keys->stacksize);
+	fprintf(stderr,"Keypoints: %d  ",im2keys->stacksize);
 	RegionsToSIFTDescriptors(im2keys,im2desc,4,8,41);
-	//fprintf(stderr,"Descriptors: %d\n",im2desc->stacksize);
+	fprintf(stderr,"Descriptors: %d\n",im2desc->stacksize);
 	fprintf(stderr,"Image 2: keypoints: %d; descriptors: %d\n",im2keys->stacksize,im2desc->stacksize);
 
 	double **transform = AllocDMatrix(3,3,0,0);
@@ -259,7 +259,7 @@ static Image PyArrayToImage( PyObject *image ) {
 	
 	Image newImage = NULL;
 	
-	PyObject * py_array = PyArray_FROM_OTF(image,NPY_INT,NPY_IN_ARRAY|NPY_FORCECAST);
+	PyObject * py_array = PyArray_FROM_OTF(image,NPY_FLOAT,NPY_IN_ARRAY|NPY_FORCECAST);
 	if ( py_array == NULL ) goto fail;
 	
 	if ( PyArray_NDIM(image) != 2 ) goto fail;
@@ -270,12 +270,17 @@ static Image PyArrayToImage( PyObject *image ) {
 	newImage = CreateImage(rows,cols);
 	if ( newImage == NULL ) goto fail;
 	
-	int   *input = (int *)PyArray_DATA(image);
+	float *input = (float *)PyArray_DATA(image);
 	int  *output = newImage->pixels[0];
 	
 	if ( input == NULL || output == NULL ) goto fail;
 	
-	memcpy(output,input,sizeof(int)*rows*cols);
+	int k;
+	for (k=0;k<rows*cols;k++) {
+		float pixel = input[k];
+		if ( isnan(pixel) || isinf(pixel) ) pixel = 0.0;
+		output[k] = pixel;	
+	}
 	
 	Py_DECREF(py_array);
 	

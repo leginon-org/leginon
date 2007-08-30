@@ -109,7 +109,7 @@ void ScreenMatches( PStack matches, double **transform ) {
 	float pgood = 0.95;
 	float pfail = 0.001;
 	int points  = 3;
-	float treshold = 2;
+	float treshold = 1;
 	int largest  = 1;
 	int j, goodpoints;
 	unsigned long i, max, L;
