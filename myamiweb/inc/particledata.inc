@@ -742,12 +742,60 @@ class particledata {
 					return $r['particleNumber'];
 		}
 
-  function getMiscInfoFromReconId ($reconid) {
-    $q = "SELECT * "
-        ."FROM `ApMiscData` "
-        ."WHERE `REF|ApRefinementRunData|refinementRun` = $reconid";
-    $r = $this->mysql->getSQLResult($q);
-    return $r;
-  }    
+	function getMiscInfoFromReconId ($reconid) {
+		$q = "SELECT * "
+		."FROM `ApMiscData` "
+		."WHERE `REF|ApRefinementRunData|refinementRun` = $reconid";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}    
+
+	function getEulerStats($reconId, $iterId1, $iterId2) {
+		$q = "SELECT difference, eulers,  mean from `ApProcEulerData` "
+				." WHERE `reconId`=$reconId AND `iter1`=$iterId1 AND `iter2`=$iterId2";
+		$r=$this->mysql->getSQLResult($q);
+
+		return $r;
+	}
+	function insertEulerStats($stats) {
+		$mean = $stats->myMean;
+		$errors = $stats->myData;
+		$reconId=$stats->myReconId;
+		$iterId1=$stats->myIterId1;
+		$iterId2=$stats->myIterId2;
+		$eulers=$stats->eulers1;
+		$min = $stats->myMin;
+		$max = $stats->myMax;
+		$stdev = $stats->myStandardDeviation;
+
+
+		$euler = array_map('simplify',$eulers);
+	
+		$table="ApProcEulerData";
+		# $this->mysql->SQLInsert($table, $data);
+		$q = "SELECT DEF_id from `ApProcEulerData` "
+				." WHERE `reconId`=$reconId AND `iter1`=$iterId1 AND `iter2`=$iterId2";
+			 //--- print_r($r=$this->mysql->SQLQuery($q));
+		   //--- if (!$r=$this->mysql->getSQLResult($q)) {
+			    $q = "INSERT INTO `ApProcEulerData` "
+					    ."(`reconId`, `iter1`, `iter2`, `difference`, `eulers`, `mean`, `min`, `max`, `stdev`) "
+					    ." VALUES "
+					    ."($reconId, $iterId1, $iterId2, "
+					    ."'".implode(",",$errors)."',"
+					    ."'".implode(",",$euler)."',"
+					    ."$mean, $min, $max, $stdev)";
+			    $r=$this->mysql->SQLQuery($q);
+					if ($e=$this->mysql->getError()) {
+							echo "error -> $e \n";
+							exit;
+					}
+			//--- }
+		return $r;
+		
+	}
+}
+
+function simplify($e) {
+	return $e['a'].','.$e['b'].','.$e['c'];
 }
 ?>

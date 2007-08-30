@@ -52,13 +52,12 @@ if ($stackruns>0){
                 $stackcount=$particle->getNumStackParticles($stackid['stackid']);
 		$reconRuns = $particle->getReconIds($stackid['stackid']);
 		foreach ($reconRuns as $reconrun) {
-		        $stmodel = $particle->getInitModelInfo($reconrun['REF|ApInitialModelData|initialModel']);
+		  $stmodel = $particle->getInitModelInfo($reconrun['REF|ApInitialModelData|initialModel']);
 			$sym = $particle->getSymInfo($stmodel['REF|ApSymmetryData|symmetry']);
-			//$res = $particle->getResolutionInfo($reconrun['REF|ApResolutionData|resolution']);
-		        $res=$particle->getHighestResForRecon($reconrun[DEF_id]);
+			$res=$particle->getHighestResForRecon($reconrun[DEF_id]);
 			$description=$reconrun['description'];
 			$html .= "<TR>\n";
-		        $html .= "<TD><A HREF='reconreport.php?reconId=$reconrun[DEF_id]'>$reconrun[name]</A></TD>\n";
+			$html .= "<TD><A HREF='reconreport.php?reconId=$reconrun[DEF_id]'>$reconrun[name]</A></TD>\n";
 			$html .= "<TD>$stackcount</TD>\n";
 			$html .= "<TD>$sym[symmetry]</TD>\n";
 			$html .= "<TD>$stmodel[pixelsize]</TD>\n";

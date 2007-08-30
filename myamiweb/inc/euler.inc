@@ -122,7 +122,7 @@
 		//formula for average is total/(# of elements)
 		return $total/$count;
 	}
-	function getStats($e1s, $e2s)
+	function getStats($recon,$iter1,$iter2,$e1s,$e2s)
 	{
 		$errors = array();
 		$std = 0;
@@ -145,49 +145,111 @@
 			$count++;
 		}
 		$std = (1.0/$count)*sqrt($count*($termsSquared) - $terms*$terms);
-		$theStats = new Statistics($terms/$count, $std, $min, $max,$errors); 
+		$theStats = new Statistics($recon,$iter1,$iter2,$terms/$count, $std, $min, $max,$errors,$e1s,$e2s); 
 		return $theStats;
 	}
 
 	class Statistics
 	{
+		var $myReconId = 0;
+		var $myIterId1 = 0;
+		var $myIterId2 = 0;
 		var $myMean = 0;
 		var $myStandardDeviation = 0;
 		var $myMin = 0;
 		var $myMax = 0;
 		var $myData = array();
-		function Statistics($mean,$std,$min,$max,$data)
+		var $eulers1 = array();
+		var $eulers2 = array();
+		function Statistics($recon,$iter1,$iter2,$mean,$std,$min,$max,$data,$e1,$e2)
 		{
+			
+			$this->myReconId= $recon;
+			$this->myIterId1= $iter1;
+			$this->myIterId2= $iter2;
 			$this->myMean = $mean;
 			$this->myStandardDeviation = $std;
 			$this->myMin = $min;
 			$this->myMax = $max;
 			$this->myData = $data;
+			$this->eulers1 = $e1;
+			$this->eulers2 = $e2;
 		}
 	}
 
 //writes an image to a file with a trianlge with points $eulers drawn on it
 function createTriangle($eulers)
-{
-	$points = array();
-	for($i = 0; $i<count($eulers); $i++)
-		$points[] = calculatePoint($eulers[$i]);
-	$myImage = drawImage($points);
+{	
+	$max = yMax($eulers);
+	echo "Max: ".$max;
+	$maxArray = array_fill(0,count($eulers),$max);
+	$points = array_map("changePoint", $eulers, $maxArray);
+	$points = array_map("roundForHistogram",$points);
+	$map = calculateFrequency($points);
+	$myImage = drawImage($points,$map);
 	return $myImage;
+}
+function calculateFrequency($points)
+{
+	$map = array();
+	foreach($points as $point)
+	{
+		$index = round($point['x']*500*$point['y'],1);
+		if($map[$index])
+			$map[$index]++;
+		else
+			$map[$index] = 1;
+	}
+	return $map;
+}
+function roundForHistogram($point)
+{
+	$point['x'] = round($point['x'],2);
+	$point['y'] = round($point['y'],2);
+	return $point;
+}
+function yMax($eulers)
+{
+	$max = -999999;
+	foreach($eulers as $e)
+	{
+		$n = $e['b'];
+		if($n>$max)
+			$max = $n;
+	}
+	return $max;
+}
+function changePoint($euler,$max)
+{
+	$euler['b'] -= $max/2;
+	$n = calculatePoint($euler);
+	$r = sqrt($n['x']*$n['x'] + $n['y']*$n['y'] + $n['z']*$n['z']);
+	if($n['x']==0)
+		$theta = pi()/2;
+	else
+		$theta = atan($n['y']/$n['x']);
+	$theta = $n['x'];
+	$phi = acos($n['z']/$r);
+	return array('x' => $theta, 'y' => $phi);
 }
 
 //returns a png
-function drawImage($locations)
-{
+function drawImage($locations,$map) {
+
 	$image = imagecreate(300,300);
 	imagecolorallocate($image,255,255,255);
-	$color = imagecolorallocate($image,0,0,0);
 	for($i = 0; $i<count($locations); $i++)
 	{
+		$index = $locations[$i]['x']*500*$locations[$i]['y'];
+		$maxi = max($map);
+		$freq = $map[$index]*225/($maxi*3);
+		if($freq>=225)
+			$freq = 225;
+		$color = imagecolorresolve($image,$freq,$freq,$freq);
 		$a = $locations[$i];
-		$x = ($a['x']*125)+150;
-		$y = (-$a['z']*125)+200;
-		imageellipse($image,$x,$y,2,2,$color);
+		$x =150+(9*rad2deg($a['x'])); 
+		$y =20+(3*rad2deg($a['y']));
+		imagefilledrectangle($image,$x,$y,$x+3,$y+3,$color);
 	}
 	return $image;
 }

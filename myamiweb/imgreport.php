@@ -331,7 +331,8 @@ if (!empty($ctfdata)) {
 			$display=$graph2name=$v;
 		else
 			$display = $v;
-		echo formatHtmlRow($k,$display);
+		if (!ereg('^graph',$k))
+			echo formatHtmlRow($k,$display);
 	}
 	$graph1=$graphpath."/".$graph1name;
 	$graph2=$graphpath."/".$graph2name;
