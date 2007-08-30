@@ -306,7 +306,6 @@ def createPeakJpeg(imgdata, peaktree, params):
 		imgarray = apImage.preProcessImage(imgarray, bin=bin, planeReg=False, params=params)
 	image = apImage.arrayToImage(imgarray)
 	image = image.convert("RGB")
-
 	image2 = image.copy()
 	draw = ImageDraw.Draw(image2)
 	drawPeaks(peaktree, draw, bin, binpixrad)
