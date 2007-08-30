@@ -244,7 +244,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		lowfilt = float(self.settings['lowfilt'])
 		imageold = image0
 		arrayold = numpy.asarray(imageold['image'], dtype=numpy.float32)
-		if medfilt > 0:
+		if medfilt > 1:
 			arrayold = ndimage.median_filter(arrayold, size=medfilt)
 		if lowfilt > 0:
 			arrayold = ndimage.gaussian_filter(arrayold, lowfilt)
@@ -259,7 +259,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			dataclass = data.CorrectedCameraImageData
 			imagenew = self.instrument.getData(dataclass)
 			arraynew = numpy.asarray(imagenew['image'], dtype=numpy.float32)
-			if medfilt > 0:
+			if medfilt > 1:
 				arraynew = ndimage.median_filter(arraynew, size=medfilt)
 			if lowfilt > 0:
 				arraynew = ndimage.gaussian_filter(arraynew, lowfilt)
