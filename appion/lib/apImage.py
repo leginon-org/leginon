@@ -361,7 +361,7 @@ def msd(x,y,mask=None):
 # PIL to numpy conversions
 #########################################################
 
-def imageToArray(im, convertType='uint8'):
+def imageToArray(im, convertType='uint8', dtype=None):
 	"""
 	Convert PIL image to numpy array
 	copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
@@ -381,6 +381,9 @@ def imageToArray(im, convertType='uint8'):
 
 	if convertType == 'float32':
 		a = a.astype(numpy.float32)
+	if dtype is not None:
+		a = a.astype(dtype)	
+
 	return a
 
 def _arrayToImage(a):
@@ -393,7 +396,6 @@ def _arrayToImage(a):
 	uint32 = numpy.uint32
 	float32 = numpy.float32
 	float64 = numpy.float64
-
 
 	if a.dtype==boolean or a.dtype==int32 or a.dtype==uint32 or a.dtype==float32 or a.dtype==float64:
 		a = a.astype(numpy.uint8) # convert to 8-bit
@@ -703,32 +705,6 @@ def readPNG(filename):
 	i.load()
 	i = imageToArray(i)
 	return i
-
-def imageToArray(im, convertType='uint8'):
-	"""
-	Convert PIL image to numpy array
-	copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
-	"""
-	if im.mode == "L":
-		a = numpy.fromstring(im.tostring(), numpy.uint8)
-		a = numpy.reshape(a, (im.size[1], im.size[0]))
-		#a.shape = (im.size[1], im.size[0], 1)  # alternate way
-	elif (im.mode=='RGB'):
-		a = numpy.fromstring(im.tostring(), numpy.uint8)
-		a.shape = (im.size[1], im.size[0], 3)
-	elif (im.mode=='RGBA'):
-		atmp = numpy.fromstring(im.tostring(), numpy.uint8)
-		atmp.shape = (im.size[1], im.size[0], 4)
-		a = atmp[:,:,3]
-	else:
-		raise ValueError, im.mode+" mode not considered"
-
-	if convertType == 'float32':
-		a = a.astype(numpy.float32)
-	return a
-
-
-
 
 ### flatfield correction functions
 
