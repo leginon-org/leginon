@@ -44,25 +44,27 @@ echo"<P>\n";
 if ($stackruns>0){ 
 	$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-        $display_keys = array ( 'name', 'num prtls', 'symmetry', 'pixel size', 'box size', 'highest res.(iter)');
+        $display_keys = array ( 'name', 'num prtls', 'symmetry', 'pixel size', 'box size', 'highest res.(iter)', 'description');
 	foreach($display_keys as $key) {
 	        $html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
         }
         foreach ($stackIds as $stackid) {
                 $stackcount=$particle->getNumStackParticles($stackid['stackid']);
-		$reconIds = $particle->getReconIds($stackid['stackid']);
-		foreach ($reconIds as $reconid) {
-		        $stmodel = $particle->getInitModelInfo($reconid['REF|ApInitialModelData|initialModel']);
+		$reconRuns = $particle->getReconIds($stackid['stackid']);
+		foreach ($reconRuns as $reconrun) {
+		        $stmodel = $particle->getInitModelInfo($reconrun['REF|ApInitialModelData|initialModel']);
 			$sym = $particle->getSymInfo($stmodel['REF|ApSymmetryData|symmetry']);
-			//$res = $particle->getResolutionInfo($reconid['REF|ApResolutionData|resolution']);
-		        $res=$particle->getHighestResForRecon($reconid[DEF_id]);
+			//$res = $particle->getResolutionInfo($reconrun['REF|ApResolutionData|resolution']);
+		        $res=$particle->getHighestResForRecon($reconrun[DEF_id]);
+			$description=$reconrun['description'];
 			$html .= "<TR>\n";
-		        $html .= "<TD><A HREF='reconreport.php?reconId=$reconid[DEF_id]'>$reconid[name]</A></TD>\n";
+		        $html .= "<TD><A HREF='reconreport.php?reconId=$reconrun[DEF_id]'>$reconrun[name]</A></TD>\n";
 			$html .= "<TD>$stackcount</TD>\n";
 			$html .= "<TD>$sym[symmetry]</TD>\n";
 			$html .= "<TD>$stmodel[pixelsize]</TD>\n";
 			$html .= "<TD>$stmodel[boxsize]</TD>\n";
 			$html .= sprintf("<TD>%.2f (%d)</TD>\n", $res[half],$res[iteration]);
+			$html .= "<TD>".$description."</TD>\n";
 			$html .= "</TR>\n";
 		}
 	}

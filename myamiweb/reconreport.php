@@ -77,7 +77,9 @@ $initmodel=$particle->getInitModelInfo($refinerun['REF|ApInitialModelData|initia
 
 $stackfile=$stackparams['stackPath']."/".$stackparams['name'];
 $initmodelname=$initmodel['name'];
-
+if (gettype($refinerun['description'])!= 'Null') {
+	echo "Run Description: ".$refinerun['description']."<BR>\n";
+}
 echo "Stack: <A TARGET='stackview' HREF='viewstack.php?file=$stackfile'>$stackfile</A><BR>\n";
 echo "Reconstruction path: $refinerun[path]/<BR>\n";
 echo "Particles: $stackparticles<BR>\n";
