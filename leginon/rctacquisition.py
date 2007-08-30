@@ -240,10 +240,14 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.logger.info('Tilts: %s' % ([degrees(t) for t in tilts],))
 
 		## loop through tilts
+		medfilt = int(self.settings['medfilt'])
+		lowfilt = float(self.settings['lowfilt'])
 		imageold = image0
 		arrayold = numpy.asarray(imageold['image'], dtype=numpy.float32)
-		arrayold = ndimage.median_filter(arrayold, size=int(self.settings['medfilt']))
-		arrayold = ndimage.gaussian_filter(arrayold, float(self.settings['lowfilt']))
+		if medfilt > 0:
+			arrayold = ndimage.median_filter(arrayold, size=medfilt)
+		if lowfilt > 0:
+			arrayold = ndimage.gaussian_filter(arrayold, lowfilt)
 		runningresult = numpy.identity(3, numpy.float64)
 		pausetime = int(self.settings['pause'])
 		for tilt in tilts:
@@ -255,8 +259,10 @@ class RCTAcquisition(acquisition.Acquisition):
 			dataclass = data.CorrectedCameraImageData
 			imagenew = self.instrument.getData(dataclass)
 			arraynew = numpy.asarray(imagenew['image'], dtype=numpy.float32)
-			arraynew = ndimage.median_filter(arraynew, size=int(self.settings['medfilt']))
-			arraynew = ndimage.gaussian_filter(arraynew, float(self.settings['lowfilt']))
+			if medfilt > 0:
+				arraynew = ndimage.median_filter(arraynew, size=medfilt)
+			if lowfilt > 0:
+				arraynew = ndimage.gaussian_filter(arraynew, lowfilt)
 			self.setImage(arraynew, 'Image')
 			self.setTargets([], 'Peak')
 
@@ -266,6 +272,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			maxsize = self.settings['maxsize']
 			blur = 0
 			sharpen = 0
+			time.sleep(pausetime)
 			result = libCV.MatchImages(arrayold, arraynew, minsize, maxsize, blur, sharpen, 1, 1)
 			self.checkLibCVResult(result)
 			print '============ Craig stuff done ============'
