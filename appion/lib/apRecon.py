@@ -72,6 +72,7 @@ def printHelp():
 	print "contour=<n>          : sigma level at which snapshot of density will be contoured (1.5 by default)"
 	print "zoom=<n>             : zoom factor for snapshot rendering (1.75 by default)"
 	print "oneiteration=<n>     : only upload one iteration"
+	print "description=\"text\"     : description of the reconstruction - must be in quotes"
 	print "\n"
 
 	sys.exit(1)
