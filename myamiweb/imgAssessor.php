@@ -176,15 +176,12 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 					break;
 				}
 				$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
-				if ($_POST['skipdone']=='on') {
-					if ($statdata['status']=='no' || $statdata['status']=='yes') $found='FALSE';
-					else $found='TRUE';
-				}
-				if ($_POST['skiprejected']=='on') {
-				        if ($statdata['status']=='no') $found='FALSE';
-					else $found='TRUE';
-				}
-				else break;
+				if ($_POST['skipimages']!='none' && $statdata['status']=='no')
+					$found='FALSE';
+				elseif ($_POST['skipimages']=='all' && $statdata['status']=='yes')
+					$found='FALSE';
+				else
+					$found='TRUE';
 			}
 		}
 		elseif ($imlst=='Next' || $imlst=='Keep' || $imlst=='Remove') {
@@ -199,15 +196,12 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 					break;
 				}
 				$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
-				if ($_POST['skipdone']=='on') {
-					if ($statdata['status']=='no' || $statdata['status']=='yes') $found='FALSE';
-					else $found='TRUE';
-				}
-				if ($_POST['skiprejected']=='on') {
-					if ($statdata['status']=='no') $found='FALSE';
-					else $found='TRUE';
-				}
-				else break;
+				if ($_POST['skipimages']!='none' && $statdata['status']=='no')
+					$found='FALSE';
+				elseif ($_POST['skipimages']=='all' && $statdata['status']=='yes')
+					$found='FALSE';
+				else
+					$found='TRUE';
 			}
 		}
 		else {
@@ -245,17 +239,20 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 	echo"<TABLE BORDER='0' CELLPADDING='10' CELLSPACING='0'>\n";
 	echo"<TR><TD ALIGN='LEFT'>\n";
 	echo"<FONT SIZE='+1'>Image $thisnum of $numfiles</FONT>\n";
-	echo"</TD><TD ALIGN='RIGHT' COLSPAN='2'>";
+	echo"</TD><TD ALIGN='RIGHT'>";
 	echo"Jump to image:";
 	echo"<INPUT TYPE='text' NAME='imgjump' SIZE='5'>\n";
 	echo"</TD><TD ALIGN='RIGHT'>\n";
 	echo"Scale Factor:<INPUT TYPE='text' NAME='imgrescale' VALUE='$imgrescl' SIZE='4'>\n";
-	$skipcheck=($_POST['skipdone']=='on') ? 'CHECKED' : '';
-	$skiprejcheck=($_POST['skiprejected']=='on') ? 'CHECKED' : '';
-	echo"</TD></TR><TR><TD ALIGN='CENTER' COLSPAN='2'>\n";
-	echo "<INPUT TYPE='CHECKBOX' NAME='skipdone' $skipcheck>Skip assessed images&nbsp;\n";
-	echo"</TD><TD ALIGN='CENTER' COLSPAN='2'>\n";
-	echo "<INPUT TYPE='CHECKBOX' NAME='skiprejected' $skiprejcheck>Skip rejected images<BR>\n"; 
+	echo"</TD></TR><TR><TD ALIGN='CENTER' COLSPAN='3'>\n";
+	$skipallcheck=($_POST['skipimages']=='all') ? 'CHECKED' : '';
+	$skiprejcheck=($_POST['skipimages']=='rejectonly') ? 'CHECKED' : '';
+	$skipcheck=($_POST['skipimages']!='all' && $_POST['skipimages']!='rejectonly') ? 'CHECKED' : '';
+	echo"<input type='radio' name='skipimages' value='all' $skipallcheck>Skip all assessed images&nbsp;\n";
+	//echo "<INPUT TYPE='CHECKBOX' NAME='skipdone' $skipcheck>Skip assessed images&nbsp;\n";
+	echo"<input type='radio' name='skipimages' value='rejectonly' $skiprejcheck>Skip only rejected images\n";
+	echo"<input type='radio' name='skipimages' value='none' $skipcheck>Show all images<BR>\n";
+	//echo "<INPUT TYPE='CHECKBOX' NAME='skiprejected' $skiprejcheck>Skip rejected images<BR>\n"; 
 	echo"</TD></TR></TABLE>\n</CENTER>\n";
 }
 
