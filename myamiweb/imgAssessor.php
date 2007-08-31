@@ -69,7 +69,53 @@ $sessionpathval=(($_POST['sessionId']==$_POST['lastSessionId'] || $expId) && $_P
 
 echo"<BR><A HREF='processing.php?expId=$sessionId'>[processing page]</A>\n";
 echo"<P>\n";
-echo"<TABLE BORDER=0 CLASS=tableborder WIDTH='600'>\n";
+echo"<TABLE CLASS=tableborder CELLPADING='10' CELLSPACING='10'>\n";
+echo"<TR><TD COLSPAN='3' ALIGN='CENTER'>\n";
+
+$imgdir=$_POST['imgdir'];
+$files = array();
+$presettype = $_POST['presettype'];
+if ($presettype=='all') {
+	$typematch ='';
+} else {
+	$typematch =$presettype;
+}
+if ($imgdir) {
+	// make sure imgdir ends with '/'
+	if (substr($imgdir,-1,1)!='/') $imgdir.='/';
+	if (file_exists($imgdir)) {
+		// open image directory
+		$pathdir=opendir($imgdir);
+		// get all files in directory, ordered by time created
+		$ext=$_POST['imgtype'];
+		$i=0;
+		while ($filename=readdir($pathdir)) {
+			if ($filename == '.' || $filename == '..') continue;
+			if (preg_match('`\.'.$ext.'$`i',$filename)) {
+				if (preg_match('`'.$typematch.'\.`',$filename)) {
+			      $files[$i][0] = $filename;
+			      $files[$i][1] = filemtime($imgdir.$filename);
+			      $i++;
+				}
+			}
+		}
+		closedir($pathdir);
+		if ($files) {
+			// sort the files by time
+			foreach($files as $t) $sortTime[] = $t[1];
+			array_multisort($sortTime, SORT_ASC, $files);
+			// save sorted file list
+			foreach($files as $t) $fileList[] = $t[0];
+			// display image
+			displayImage($_POST,$fileList,$imgdir,$leginondata,$particledata,$assessmentrid);
+		}
+		else echo"<HR><FONT COLOR='RED'>No files found in this directory with extension: $ext</FONT>\n";
+	}
+	else echo "<HR><FONT COLOR='RED'>Specified path: $_POST[imgdir] does not exist</FONT>\n";
+}
+echo"</CENTER>\n";
+echo"</TD></TR>\n";
+// HEADER FORM FOR FILLING IMAGE PATH
 echo"<TR><TD VALIGN='TOP'>\n";
 echo"<B>Image Directory:</B><BR>\n";
 echo"<INPUT TYPE='text' NAME='imgdir' VALUE='$sessionpathval' SIZE='60' onchange='this.form.submit()'></TD>\n";
@@ -91,56 +137,7 @@ foreach ($presets as $type) {
 }
 echo"</SELECT>\n";
 echo"</TD></TR>\n";
-echo"<TR><TD COLSPAN='2' ALIGN='CENTER'>\n";
 
-$imgdir=$_POST['imgdir'];
-$files = array();
-$presettype = $_POST['presettype'];
-if ($presettype=='all') {
-	$typematch ='';
-} else {
-	$typematch =$presettype;
-}
-if ($imgdir) {
-	// make sure imgdir ends with '/'
-	if (substr($imgdir,-1,1)!='/') $imgdir.='/';
-        if (file_exists($imgdir)) {
-                // open image directory
-                $pathdir=opendir($imgdir);
-		// get all files in directory, ordered by time created
-		$ext=$_POST['imgtype'];
-		$i=0;
-		while ($filename=readdir($pathdir)) {
-		  if ($filename == '.' || $filename == '..') continue;
-		  if (preg_match('`\.'.$ext.'$`i',$filename)) {
-                    if (preg_match('`'.$typematch.'\.`',$filename)) {
-		      $files[$i][0] = $filename;
-		      $files[$i][1] = filemtime($imgdir.$filename);
-		      $i++;
-                    }
-		  }
-		}
-		closedir($pathdir);
-		if ($files) {
-		  // sort the files by time
-		  foreach($files as $t) $sortTime[] = $t[1];
-		  array_multisort($sortTime, SORT_ASC, $files);
-		  // save sorted file list
-		  foreach($files as $t) $fileList[] = $t[0];
-		  // display image
-		  $skipcheck=($_POST['skipdone']=='on') ? 'CHECKED' : '';
-		  $skiprejcheck=($_POST['skiprejected']=='on') ? 'CHECKED' : '';
-		  echo "<INPUT TYPE='CHECKBOX' NAME='skipdone' $skipcheck>Skip assessed images<BR>\n"; 
-		  echo "<INPUT TYPE='CHECKBOX' NAME='skiprejected' $skiprejcheck>Skip rejected images<BR>\n"; 
-		  displayImage($_POST,$fileList,$imgdir,$leginondata,$particledata,$assessmentrid);
-		}
-		else echo"<HR><FONT COLOR='RED'>No files found in this directory with extension: $ext</FONT>\n";
-	}
-	else echo "<HR><FONT COLOR='RED'>Specified path: $_POST[imgdir] does not exist</FONT>\n";
-}
-
-echo"</CENTER>\n";
-echo"</TD></TR>\n";
 echo"</TABLE>\n";
 echo"</FORM>\n";
 writeBottom();
@@ -148,11 +145,11 @@ writeBottom();
 
 function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessmentrid){
 
-        $numfiles=count($files);
+	$numfiles=count($files);
 	$imlst=$_POST['imagelist'];
-        $imgindx= ($_POST['imgindex']) ? $_POST['imgindex'] : 0;
+	$imgindx= ($_POST['imgindex']) ? $_POST['imgindex'] : 0;
 	$imgrescl= ($_POST['imgrescale']) ? $_POST['imgrescale'] : 0.5; 
-	echo "<BR>\n";
+	//echo "<BR>\n";
 
 	// go directly to a particular image number
 	if ($_POST['imgjump']) {
@@ -169,18 +166,18 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 	}
 	// otherwise, increment or decrement the displayed image
 	else {
-	        if ($imlst=='Back') {
-		        while ($found!='TRUE') {
-		                $imgindx--;
+		if ($imlst=='Back') {
+			while ($found!='TRUE') {
+				$imgindx--;
 				if ($imgindx < 0) {
-				        echo "<FONT COLOR='RED'> At beginning of image list</FONT><BR>\n";
+					echo "<FONT COLOR='RED'> At beginning of image list</FONT><BR>\n";
 					$imgindx=0;
 					$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
 					break;
 				}
 				$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
 				if ($_POST['skipdone']=='on') {
-				        if ($statdata['status']=='no' || $statdata['status']=='yes') $found='FALSE';
+					if ($statdata['status']=='no' || $statdata['status']=='yes') $found='FALSE';
 					else $found='TRUE';
 				}
 				if ($_POST['skiprejected']=='on') {
@@ -191,9 +188,9 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 			}
 		}
 		elseif ($imlst=='Next' || $imlst=='Keep' || $imlst=='Remove') {
-		        if($imlst=='Keep') $particledata->updateKeepStatus($_POST['imageid'],$assessmentrid,'1');
+			if($imlst=='Keep') $particledata->updateKeepStatus($_POST['imageid'],$assessmentrid,'1');
 			if($imlst=='Remove') $particledata->updateKeepStatus($_POST['imageid'],$assessmentrid,'0');
-		        while ($found!='TRUE') {
+			while ($found!='TRUE') {
 			        $imgindx++;
 				if ($imgindx > $numfiles-1) {
 				        echo "<FONT COLOR='RED'> At end of image list</FONT><BR>\n";
@@ -203,37 +200,29 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 				}
 				$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
 				if ($_POST['skipdone']=='on') {
-				        if ($statdata['status']=='no' || $statdata['status']=='yes') $found='FALSE';
+					if ($statdata['status']=='no' || $statdata['status']=='yes') $found='FALSE';
 					else $found='TRUE';
 				}
 				if ($_POST['skiprejected']=='on') {
-				        if ($statdata['status']=='no') $found='FALSE';
+					if ($statdata['status']=='no') $found='FALSE';
 					else $found='TRUE';
 				}
 				else break;
 			}
 		}
 		else {
-		        if ($imlst=='First') $imgindx=0;
+			if ($imlst=='First') $imgindx=0;
 			elseif ($imlst=='Last') $imgindx=$numfiles-1;
 			$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
 		}
 	}
-
 
 	$imgname=$statdata['name'];
 	$imgid=$statdata['id'];
 	$imgstatus=$statdata['status'];
 
 	$thisnum=$imgindx+1;
-	echo"<TABLE BORDER='0' CELLPADDING='0' CELLSPACING='0' WIDTH='400'>\n";
-	echo"<TR><TD ALIGN='LEFT'>\n";
-	echo"Image $thisnum of $numfiles</TD>\n";
-	echo"<TD ALIGN='RIGHT'>Jump to image:";
-	echo"<INPUT TYPE='text' NAME='imgjump' SIZE='5'>\n";
-        echo"Scale Factor:<INPUT TYPE='text' NAME='imgrescale' VALUE='$imgrescl' SIZE='4'>\n";
-	echo"</TD></TR></TABLE>";
-	echo"<BR>$imgname<HR>\n<B>Current Status: ";
+	echo"$imgname<BR>\n<B>Current Status: ";
 	if ($imgstatus=='no') echo"<FONT COLOR='RED'>REJECT</FONT>";
 	elseif ($imgstatus=='yes') echo "<FONT COLOR='GREEN'>KEEP</FONT>";
 	else echo"none";
@@ -242,20 +231,49 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 	$imgfull=$imgdir.$imgname;
 	echo"<INPUT TYPE='HIDDEN' NAME='imgindex' VALUE='$imgindx'>\n";
 	echo"<INPUT TYPE='HIDDEN' NAME='imageid' VALUE='$imgid'>\n";
-	echo"<TABLE BORDER='0' CELLPADDING='5' CELLSPACING='0'><TR><TD>\n";
-	echo"<INPUT TYPE='IMAGE' WIDTH='30' SRC='img/firstbutton.jpg' ALT='First' NAME='imagelist' VALUE='First'>\n";
+
+	//Image and tool bars on side
+	echo"<CENTER>\n<TABLE BORDER='0' CELLPADDING='5' CELLSPACING='0'><TR><TD>\n";
+	printToolBar();
 	echo"</TD><TD>\n";
-	echo"<INPUT TYPE='IMAGE' SRC='img/backbutton.jpg' ALT='Back' NAME='imagelist' VALUE='Back'>\n";
+	echo"<IMG SRC='loadimg.php?filename=$imgfull&scale=$imgrescl'>\n";
 	echo"</TD><TD>\n";
-	echo"<INPUT TYPE='IMAGE' SRC='img/stopbutton.jpg' ALT='Remove' NAME='imagelist' VALUE='Remove'>\n";
-	echo"</TD><TD>\n";
-	echo"<INPUT TYPE='IMAGE' SRC='img/playbutton.jpg' ALT='Keep' NAME='imagelist' VALUE='Keep'>\n";
-	echo"</TD><TD>\n";
-	echo"<INPUT TYPE='IMAGE' SRC='img/nextbutton.jpg' ALT='Next' NAME='imagelist' VALUE='Next'>\n";
-	echo"</TD><TD>\n";
-	echo"<INPUT TYPE='IMAGE' WIDTH='30' SRC='img/lastbutton.jpg' ALT='Last' NAME='imagelist' VALUE='Last'>\n";
+	printToolBar();
 	echo"</TD></TR></TABLE>\n";
-	echo"<IMG SRC='loadimg.php?filename=$imgfull&scale=$imgrescl'><P>\n";
+
+	//Scale factor, etc.
+	echo"<TABLE BORDER='0' CELLPADDING='10' CELLSPACING='0'>\n";
+	echo"<TR><TD ALIGN='LEFT'>\n";
+	echo"<FONT SIZE='+1'>Image $thisnum of $numfiles</FONT>\n";
+	echo"</TD><TD ALIGN='RIGHT' COLSPAN='2'>";
+	echo"Jump to image:";
+	echo"<INPUT TYPE='text' NAME='imgjump' SIZE='5'>\n";
+	echo"</TD><TD ALIGN='RIGHT'>\n";
+	echo"Scale Factor:<INPUT TYPE='text' NAME='imgrescale' VALUE='$imgrescl' SIZE='4'>\n";
+	$skipcheck=($_POST['skipdone']=='on') ? 'CHECKED' : '';
+	$skiprejcheck=($_POST['skiprejected']=='on') ? 'CHECKED' : '';
+	echo"</TD></TR><TR><TD ALIGN='CENTER' COLSPAN='2'>\n";
+	echo "<INPUT TYPE='CHECKBOX' NAME='skipdone' $skipcheck>Skip assessed images&nbsp;\n";
+	echo"</TD><TD ALIGN='CENTER' COLSPAN='2'>\n";
+	echo "<INPUT TYPE='CHECKBOX' NAME='skiprejected' $skiprejcheck>Skip rejected images<BR>\n"; 
+	echo"</TD></TR></TABLE>\n</CENTER>\n";
+}
+
+function printToolBar() {
+	echo"<TABLE BORDER='0' CELLPADDING='3' CELLSPACING='0'>\n";
+	echo"<TR><TD>\n";
+	echo"<INPUT TYPE='IMAGE' WIDTH='30' SRC='img/firstbutton.jpg' ALT='First' NAME='imagelist' VALUE='First'>\n";
+	echo"</TD></TR><TR><TD>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/backbutton.jpg' ALT='Back' NAME='imagelist' VALUE='Back'>\n";
+	echo"</TD></TR><TR><TD>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/stopbutton.jpg' ALT='Remove' NAME='imagelist' VALUE='Remove'>\n";
+	echo"</TD></TR><TR><TD>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/playbutton.jpg' ALT='Keep' NAME='imagelist' VALUE='Keep'>\n";
+	echo"</TD></TR><TR><TD>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/nextbutton.jpg' ALT='Next' NAME='imagelist' VALUE='Next'>\n";
+	echo"</TD></TR><TR><TD>\n";
+	echo"<INPUT TYPE='IMAGE' WIDTH='30' SRC='img/lastbutton.jpg' ALT='Last' NAME='imagelist' VALUE='Last'>\n";
+	echo"</TD></TR></TABLE>";
 }
 
 function getImageStatus ($imgname,$leginondata,$particledata,$assessmentrid) {
