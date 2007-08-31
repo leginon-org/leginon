@@ -56,15 +56,17 @@ $view1 = new view('Main View', 'v1');
 $view1->setControl();
 $view1->addMenuItems($playbackcontrol);
 $view1->setDataTypes($datatypes);
-$view1->setSize(350);
-$view1->setPresetScript("getpreset.php?tl=1");
+$view1->setSize(400);
+$view1->setPresetScript("getpreset.php?tl=1&vf=0");
+$view1->setPresetScript("getpreset.php?tl=1&vf=0");
+$view1->setPresetScript('getpreset.php?tl=1&vf=0');
 $viewer->add($view1);
 
 
 $view2 = new view('RCT', 'v3');
-$view2->setSize(350);
+$view2->setSize(400);
 $view2->setDataTypes(array('rct'=>'rct'));
-$view2->setPresetScript("getpreset.php?tl=1");
+$view2->setPresetScript("getpreset.php?tl=1&vf=0");
 $viewer->add($view2);
 
 
