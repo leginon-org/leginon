@@ -77,9 +77,9 @@ if ($id) {
 				echo " <b>$k:</b> $v";
 	if ($str_tilt) {
 		echo $str_tilt;
-		echo "<img src='imgangle.php?a=".$angle."'>";
+		echo "&nbsp;<img src='imgangle.php?a=".$angle."'>";
 	}
-	if ($viewfilename)
+	if ($viewfilename && !$str_tilt)
 		echo " <br>".$filename['filename']."</font>";
 }
 ?>
