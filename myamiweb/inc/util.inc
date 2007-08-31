@@ -461,16 +461,21 @@ function sec2time($second) {
 
 function formatHtmlRow($k, $v) {
 	if($k) $k .= ":";
-	return '<tr><td><span class="datafield0">'
-		.$k.'</span></td><td>'
-		.$v.'</td></tr>'."\n";
+	$cell[]="<td>$v</td>";
+  foreach (func_get_args() as $i=>$arg) {
+    if ($i>1) {
+      $cell[]="<td>$arg</td>";
+    }
+  }
+  return '<tr><td><span class="datafield0">'
+    .$k.'</span></td>'
+    .join("",$cell).'</tr>'."\n";
 }
 
-function formatArrayHtmlRow($cols) {
-	$row = "<tr>";
-	$i = 0;
-	foreach ($cols as $col) {
-		$row .= "<td>".$col."</td>";
+function formatArrayHtmlRow() {
+	$row = "<tr>\n";
+  foreach ((array) func_get_args() as $col) {
+		$row .= "<td>".$col."</td>\n";
 	}
 	$row .= "</tr>\n";
 	return $row;

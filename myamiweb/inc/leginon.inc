@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.66 $
- *	@version $Id: leginon.inc,v 1.66 2007-08-30 22:45:01 dfellman Exp $
+ *	@version $Revision: 1.67 $
+ *	@version $Id: leginon.inc,v 1.67 2007-08-31 18:08:34 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -2017,39 +2017,35 @@ class leginondata {
 	}
 
 	function getPresetTiming($sessionId) {
-		$q .= "SELECT ";
-		$q .= "UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `utime`, ";
-		$q .= "`a`.`DEF_timestamp` AS `timestamp`, ";
-		$q .= "`a`.`filename` AS `filename`, ";
-		$q .= "`a`.`version` AS `version`, ";
-		$q .= "`p`.`name`, ";
-		$q .= "`p`.`magnification` ";
-		$q .= "FROM `AcquisitionImageData` AS `a` ";
-		$q .= "LEFT JOIN `PresetData` AS `p` ON (`p`.`DEF_id` = `a`.`REF|PresetData|preset`) ";
-		$q .= "WHERE `a`.`REF|SessionData|session` = $sessionId ";
-		$q .= "AND `a`.`version`=0 ";
-		$q .= "ORDER BY `utime` DESC;";
-		//echo $q."<BR>";
+		$q= "SELECT "
+			."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `utime`, "
+			."`a`.`DEF_timestamp` AS `timestamp`, "
+			."`a`.`filename` AS `filename`, "
+			."`a`.`version` AS `version`, "
+			."`p`.`name`, "
+			."`p`.`magnification` "
+			."FROM `AcquisitionImageData` AS `a` "
+			."LEFT JOIN `PresetData` AS `p` ON (`p`.`DEF_id` = `a`.`REF|PresetData|preset`) "
+			."WHERE `a`.`REF|SessionData|session` = $sessionId "
+			."AND `a`.`version`=0 "
+			."ORDER BY `utime` DESC";
+
 		$timearray = $this->mysql->getSQLResult($q);
-		$len = count($timearray);
-		//echo "len = $len<BR><BR>";
-		for ( $i = 0; $i < $len; $i++) {
-			$j = 1;
-			$preset = $timearray[$i]['name'];
-			while ($i + $j < $len) {
-				if($preset == $timearray[$i+$j]['name']) {
-					$tdiff = $timearray[$i]['utime'] - $timearray[$i+$j]['utime'];
-					$diffarray[$preset][] = $tdiff;
-					//echo "j= $j<BR>";
-					$j = $len;
-				}
-				$j++;
+
+		foreach($timearray as $i=>$time1) {
+			$preset = $time1['name'];
+			foreach($timearray as $j=>$vald) {
+					$j++;
+					if($preset == $timearray[$i+$j]['name']) {
+						$tdiff = $time1['utime'] - $timearray[$i+$j]['utime'];
+						$diffarray[$preset][] = $tdiff;
+						break;
+					}
 			}
 		}
 
-		foreach ($diffarray as $key => $presetarray) {
-			//echo "$key:<BR>";
-			$res1 = $this->array_stats($presetarray);
+		foreach ($diffarray as $key=>$presetarray) {
+			$res1 = array_stats($presetarray);
 			$retarray[$key]['name'] = $key;
 			$retarray[$key]['time'] = round($res1['mean'],3);
 			$retarray[$key]['mean'] = round($res1['mean'],3);

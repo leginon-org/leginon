@@ -101,10 +101,10 @@ if (!empty($summary)) {
 		//$summary_fields[]="time";
 		//$summary_fields[]="min";
 		//$summary_fields[]="max";
-		$summary_fields[]="readout<BR>mean";
-		$summary_fields[]="readout<BR>stdev";
-		$summary_fields[]="between<BR>mean";
-		$summary_fields[]="between<BR>stdev";
+		$summary_fields[]="readout<br />mean";
+		$summary_fields[]="readout<br />stdev";
+		$summary_fields[]="between<br />mean";
+		$summary_fields[]="between<br />stdev";
 	}
 	foreach($summary_fields as $s_f) {
 		$table_head.="<th>$s_f</th>";
@@ -115,7 +115,6 @@ if (!empty($summary)) {
 	echo "<tr >". $table_head."</tr>";
 	foreach($summary as $s) {
 		echo formatArrayHtmlRow(
-			array(
 				$s['name'],
 				$s['magnification'],
 				$s['nb'],
@@ -125,8 +124,7 @@ if (!empty($summary)) {
 				$images_mean[$s['name']],
 				$images_stdev[$s['name']],
 				$timingstats2[$s['name']]['mean'],
-				$timingstats2[$s['name']]['stdev'],
-			)
+				$timingstats2[$s['name']]['stdev']
 		);
 		$tot_imgs += $s['nb'];
 	}
