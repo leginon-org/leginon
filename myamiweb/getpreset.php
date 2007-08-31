@@ -28,11 +28,11 @@ $p[]='pixelsize';
 $p[]='dose';
 $p[]='exposure time';
 $p[]='tilt';
+$str_tilt="";
 $id=$_GET['id'];
 $preset=$_GET['preset'];
 $viewfilename=$_GET['vf'];
-if ($_GET['tl'])
-	echo "<!-- TILT ENABLED -->\n";
+$showtilt=$_GET['tl'];
 if ($id) {
 	echo "<font style='font-size: 12px;'>";
 	$newimage = $leginondata->findImage($id, $preset);
@@ -50,16 +50,19 @@ if ($id) {
 	$presets = $leginondata->getPresets($id, $p);
 	if (is_array($presets))
 		foreach($presets as $k=>$v)
+
 			if ($k=='defocus')
 				echo " <b>$k:</b> ",($leginondata->formatDefocus($v));
 			else if ($k=='pixelsize') {
 				$v *= $imageinfo['binning'];
 				echo " <b>$k:</b> ",($leginondata->formatPixelsize($v));
 			}
-			else if ($k=='tilt' && abs($v) > 1) {
+			else if ($k=='tilt' && (abs($v) > 1 || $showtilt)) {
 				$angle=$v;
 				$str_tilt=" <b>$k:</b> ".(format_angle_degree($v));
 			}
+			else if ($k=='tilt')
+				continue;
 			else if ($k=='dose') {
 				if (!empty($v))
 					if($presets['exposure time'] && !empty($imageinfo['exposure time']))
@@ -72,23 +75,15 @@ if ($id) {
 				continue;
 			else
 				echo " <b>$k:</b> $v";
+	if ($str_tilt) {
+		echo $str_tilt;
+		echo "<img src='imgangle.php?a=".$angle."'>";
+	}
 	if ($viewfilename)
 		echo " <br>".$filename['filename']."</font>";
-
-
 }
 ?>
 </td>
-<?php if ($str_tilt) { ?>
-<td>
-<font style='font-size: 12px;'>
-<?php echo $str_tilt; ?>
-</font>
-</td>
-<td>
-<img src="imgangle.php?a=<?php echo $angle; ?>">
-</td>
-<?php } ?>
 </tr>
 </table>
 </font>
