@@ -20,27 +20,31 @@
 <?php
 require('inc/leginon.inc');
 require('inc/project.inc');
-$p[]='tilt';
+
 $p[]='gridId';
 $p[]='mag';
 $p[]='defocus';
 $p[]='pixelsize';
 $p[]='dose';
 $p[]='exposure time';
+$p[]='tilt';
 $id=$_GET['id'];
 $preset=$_GET['preset'];
 $viewfilename=$_GET['vf'];
+if ($_GET['tl'])
+	echo "<!-- TILT ENABLED -->\n";
 if ($id) {
 	echo "<font style='font-size: 12px;'>";
 	$newimage = $leginondata->findImage($id, $preset);
-	$id = $newimage['id'];
+	$id = $newimage[id];
 	$imageinfo = $leginondata->getImageInfo($id);
 	$gridId	= $leginondata->getGridId($id);
 	$projectdata = new project();
 	if($projectdata->checkDBConnection()) {
 		$gridinfo = $projectdata->getGridInfo($gridId);
 		if ($gridId)
-			echo '<a class="header" target="gridinfo" href="'.$PROJECT_URL.'getgrid.php?gridId='.$gridId.'">grid#'.$gridinfo['number'].' info&raquo;</a>';
+			echo '<a class="header" target="gridinfo" href="'.$PROJECT_URL.'getgrid.php?gridId='
+				.$gridId.'">grid#'.$gridinfo[number].' info&raquo;</a>';
 	}
 	list($filename) = $leginondata->getFilename($id);
 	$presets = $leginondata->getPresets($id, $p);
@@ -52,7 +56,7 @@ if ($id) {
 				$v *= $imageinfo['binning'];
 				echo " <b>$k:</b> ",($leginondata->formatPixelsize($v));
 			}
-			else if ($k=='tilt') {
+			else if ($k=='tilt' && abs($v) > 1) {
 				$angle=$v;
 				$str_tilt=" <b>$k:</b> ".(format_angle_degree($v));
 			}
@@ -71,10 +75,11 @@ if ($id) {
 	if ($viewfilename)
 		echo " <br>".$filename['filename']."</font>";
 
+
 }
 ?>
 </td>
-<?php if ($display_tilt) { ?>
+<?php if ($str_tilt) { ?>
 <td>
 <font style='font-size: 12px;'>
 <?php echo $str_tilt; ?>
