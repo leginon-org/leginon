@@ -45,7 +45,6 @@ function appioninfopopup(infoname){
 
 function createAppionLoopTable ($sessiondata, $defrunid, $outdirname) {
 	echo "<!-- BEGIN Appion Loop Param -->";
-	echo "SUBMIT: $_POST[process]<BR>\n";
 	$norejects = ($_POST[norejects]=="on") ? "CHECKED" : "";
 	$nowait = ($_POST[nowait]=="" && $_POST[runid] != "") ? "" : "CHECKED";
 	$background = ($_POST[background]=="on") ? "CHECKED" : "";
@@ -54,7 +53,6 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname) {
 	$commit = ($_POST[commit]=="on") ? "CHECKED" : "";
 	$apcontinue = $_POST[apcontinue];
 	// continue is checkmarked by default
-	echo "APCONT: $apcontinue<BR>\n";
 	$apcontinuecheck = ($apcontinue || !$_POST['process']) ? "CHECKED" : "";
     	$apreproccheck = (!$apcontinue && $_POST['process']) ? "CHECKED" : "";
 
