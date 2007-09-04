@@ -58,11 +58,11 @@ class RCTAcquisition(acquisition.Acquisition):
 	defaultsettings = acquisition.Acquisition.defaultsettings
 	defaultsettings.update({
 		'tilts': '(-45, 45)',
-		'stepsize': 3,
+		'stepsize': 15.0,
 		'lowfilt': 0,
 		'medfilt': 0,
-		'minsize': 5,
-		'maxsize': 0.9,
+		'minsize': 50,
+		'maxsize': 0.8,
 		'drift threshold': 0.0,
 		'drift preset': None,
 		})
@@ -228,15 +228,16 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		## calculate tilts
 		tiltrange = tilt - tilt0
-		stepsize = radians(float(self.settings['stepsize']))
+		maxstepsize = radians(float(self.settings['stepsize']))
 		#nsteps = float(self.settings['nsteps'])
-		nsteps = abs(int(round(float(tiltrange) / stepsize)))
+		nsteps = abs(int(round(float(tiltrange) / float(maxstepsize))))
+		self.logger.info('Number of tilt steps: %d' % nsteps)
 		tilts = [tilt]
 		if nsteps > 0:
 			tilts = []
-			stepsize = float(tiltrange) / nsteps
+			stepsize = float(tiltrange) / float(nsteps)
 			for i in range(1, nsteps+1):
-				tilts.append(tilt0+i*stepsize)
+				tilts.append(round(tilt0+i*stepsize,2))
 		self.logger.info('Tilts: %s' % ([degrees(t) for t in tilts],))
 
 		## loop through tilts
@@ -272,10 +273,13 @@ class RCTAcquisition(acquisition.Acquisition):
 			maxsize = self.settings['maxsize']
 			blur = 0
 			sharpen = 0
+			self.checkArrayMinMax(arrayold, arraynew)
 			time.sleep(pausetime)
 			result = libCV.MatchImages(arrayold, arraynew, minsize, maxsize, blur, sharpen, 1, 1)
-			self.checkLibCVResult(result)
+			check = self.checkLibCVResult(result)
 			print '============ Craig stuff done ============'
+			if check is False:
+				"ABORT OR SOMETHING"
 			self.logger.info('Matrix: %s' % (result,))
 
 			runningresult = numpy.dot(runningresult, result)
@@ -293,12 +297,28 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.publish(imageold['camera'], database=True)
 
 		## convert CameraImageData to AcquisitionImageData
-		imagedata = data.AcquisitionImageData(initializer=imageold, preset=image0['preset'], label=self.name, target=image0['target'], list=None, emtarget=image0['emtarget'], version=0, tiltnumber=self.tiltnumber)
+		imagedata = data.AcquisitionImageData(initializer=imageold, preset=image0['preset'], label=self.name,\
+		 target=image0['target'], list=None, emtarget=image0['emtarget'], version=0, tiltnumber=self.tiltnumber)
 		self.setTargets([], 'Peak')
 		self.publishDisplayWait(imagedata)
 
 		self.logger.info('Final Matrix: %s' % (runningresult,))
 		return (runningresult, imagedata)
+
+	def checkArrayMinMax(self, a1, a2):
+		a1b = ndimage.median_filter(a1, size=3)
+		min1 = ndimage.minimum(a1b)
+		max1 = ndimage.maximum(a1b)
+		if max1 - min1 < 10:
+			self.logger.error("Old Image Range Error %d" % int(max1 - min1))
+			return False
+		a2b = ndimage.median_filter(a2, size=3)
+		min2 = ndimage.minimum(a2b)
+		max2 = ndimage.maximum(a2b)
+		if max2 - min2 < 10:
+			self.logger.error("New Image Range Error %d" % int(max2 - min2))
+			return False
+		return True
 
 	def checkLibCVResult(self, result):
 		if result[0][0] < 0.5 or result[1][1] < 0.5:

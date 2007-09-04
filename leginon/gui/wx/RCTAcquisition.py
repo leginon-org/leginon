@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RCTAcquisition.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-30 20:15:54 $
+# $Date: 2007-09-04 17:14:49 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -63,12 +63,12 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 
 		label = wx.StaticText(self, -1, 'Maximum Tilt Stepsize (in degrees)')
 		sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.widgets['stepsize'] = IntEntry(self, -1, chars=2, value='2')
+		self.widgets['stepsize'] = IntEntry(self, -1, chars=2, value='15.0')
 		sizer.Add(self.widgets['stepsize'], (1,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
 		label = wx.StaticText(self, -1, 'Pause Between Steps')
 		sizer.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.widgets['pause'] = IntEntry(self, -1, chars=2, value='0')
+		self.widgets['pause'] = IntEntry(self, -1, chars=2, value='1')
 		sizer.Add(self.widgets['pause'], (1,3), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
 		label = wx.StaticText(self, -1, 'Min Feature Size')
