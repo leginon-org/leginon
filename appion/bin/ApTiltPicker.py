@@ -190,18 +190,16 @@ class MyApp(wx.App):
 		#CALCULATE TRANSFORM LIMITS
 		a1b = tiltDialog.a1Toa2(a1,a2,thetarad,gammarad,phirad,self.shiftx,self.shifty)
 		a2b = tiltDialog.a2Toa1(a1,a2,thetarad,gammarad,phirad,self.shiftx,self.shifty)
-		#print "a1b=",numpy.asarray(a1b, dtype=numpy.int32)
-		#print "a2b=",numpy.asarray(a2b, dtype=numpy.int32)
-		#DRAW A POLYGON FROM THE LIMITS
+		#CONVERT NUMPY TO LIST
 		a1blist = []
+		a2blist = []
 		for j in range(4):
 			for i in range(2):
-				#if a1b[j+1,i] < 0: 
-				#	a1b[j+1,i] = 0
-				#if a1b[j+1,i] > image2.shape[i]: 
-				#	a1b[j+1,i] = image2.shape[i]
 				item = int(a1b[j+1,i])
 				a1blist.append(item)
+				item = int(a2b[j+1,i])
+				a2blist.append(item)
+		#DRAW A POLYGON FROM THE LIMITS 1->2
 		#print "a1b=",numpy.asarray(a1b, dtype=numpy.int32)
 		#print "a1blist=",a1blist
 		mask2 = numpy.zeros(shape=image2.shape, dtype=numpy.bool_)
@@ -209,71 +207,27 @@ class MyApp(wx.App):
 		mask2b = mask2b.convert("L")
 		draw2 = ImageDraw.Draw(mask2b)
 		draw2.polygon(a1blist, fill="white")
-		mask2b.save("mask2b.png", "PNG")
 		mask2 = apImage.imageToArray(mask2b, dtype=numpy.float32)
 		immin2 = ndimage.minimum(image2)+1.0
 		image2 = (image2+immin2)*mask2
 		immax2 = ndimage.maximum(image2)
 		image2 = numpy.where(image2==0,immax2,image2)
-		#DRAW A POLYGON FROM THE LIMITS
-		a2blist = []
-		for j in range(4):
-			for i in range(2):
-				#if a2b[j+1,i] < 0: 
-				#	a2b[j+1,i] = 0
-				#if a2b[j+1,i] > image1.shape[i]: 
-				#	a2b[j+1,i] = image1.shape[i]
-				item = int(a2b[j+1,i])
-				a2blist.append(item)
-		#print "a1b=",numpy.asarray(a1b, dtype=numpy.int32)
-		#print "a1blist=",a1blist
+		#DRAW A POLYGON FROM THE LIMITS 2->1
+		#print "a2b=",numpy.asarray(a2b, dtype=numpy.int32)
+		#print "a2blist=",a2blist
 		mask1 = numpy.zeros(shape=image1.shape, dtype=numpy.bool_)
 		mask1b = apImage.arrayToImage(mask1, normalize=False)
 		mask1b = mask1b.convert("L")
 		draw1 = ImageDraw.Draw(mask1b)
 		draw1.polygon(a2blist, fill="white")
-		mask1b.save("mask1b.png", "PNG")
 		mask1 = apImage.imageToArray(mask1b, dtype=numpy.float32)
 		immin1 = ndimage.minimum(image1)+1.0
 		image1 = (image1+immin1)*mask1
 		immax1 = ndimage.maximum(image1)
 		image1 = numpy.where(image1==0,immax1,image1)
-		"""
-		#CONVERT LIMITS TO A RECTANGLE
-		limits2 = numpy.array(
-			[[ndimage.minimum(a1b[:,0]), ndimage.minimum(a1b[:,1])],
-			[ndimage.maximum(a1b[:,0]), ndimage.maximum(a1b[:,1])]],
-			dtype=numpy.int32,
-		)
-		limits1 = numpy.array( 
-			[[ndimage.minimum(a2b[:,0]), ndimage.minimum(a2b[:,1])],
-			[ndimage.maximum(a2b[:,0]), ndimage.maximum(a2b[:,1])]],
-			dtype=numpy.int32,
-		)
-		for i in range(2):
-			if limits1[0,i] < 0: 
-				limits1[0,i] = 0
-			if limits2[0,i] < 0: 
-				limits2[0,i] = 0
-			if limits1[1,i] > image1.shape[i]: 
-				limits1[1,i] = image1.shape[i]
-			if limits2[1,i] > image2.shape[i]: 
-				limits2[1,i] = image2.shape[i]
-		#MASK OUT IMAGES
-		print "lim1=",limits1[0,0],":",limits1[1,0],",",limits1[0,1],":",limits1[1,1]
-		print "lim2=",limits2[0,0],":",limits2[1,0],",",limits2[0,1],":",limits2[1,1]
-		image1[0:limits1[0,0]] = 0
-		self.panel1.setImage(image1)
-		#image2 = image2[limits2[0,0]:limits2[1,0],limits2[0,1]:limits2[1,1]]
-		mean2 = ndimage.mean(image2)
-		image2[0:limits2[0,0]] = mean2
-		image2[0:limits2[0,1]] = mean2
-		image2[limits2[1,0]:image2.shape[0]] = mean2
-		image2[limits2[1,1]:image2.shape[1]] = mean2
-		"""
+		#SET IMAGES AND REFRESH SCREEN
 		self.panel1.setImage(image1)
 		self.panel2.setImage(image2)
-		#REFRESH SCREEN
 		self.panel1.setBitmap()
 		self.panel1.setVirtualSize()
 		self.panel1.setBuffer()
@@ -371,7 +325,7 @@ class MyApp(wx.App):
 	#---------------------------------------
 	def onFileSaveAs(self, evt):
 		dlg = wx.FileDialog(self.frame, "Choose a pick file to save as", self.dirname, "", \
-			"Text Files (*.txt)|*.txt|All Files|*.*", wx.SAVE|wx.OVERWRITE_PROMPT)
+			"Text File (*.txt)|*.txt|Spider File (*.spi)|*.spi", wx.SAVE|wx.OVERWRITE_PROMPT)
 		#alt1 = "*.[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]"
 		#alt2 = "Text Files (*.txt)|*.txt|All Files|*.*"
 		if dlg.ShowModal() == wx.ID_OK:
