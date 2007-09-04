@@ -394,7 +394,7 @@ def printCtfSummary(params):
 	maxconf = ctfhistconf[len(ctfhistconf)-1]
 	maxcount = 0
 	for conf in ctfhistconf:
-		c2 = round(conf*yspan,0)/yspan
+		c2 = round(conf*yspan,0)/float(yspan)
 		if c2 in confhist:
 			confhist[c2] += 1
 			if confhist[c2] > maxcount:
