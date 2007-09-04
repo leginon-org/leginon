@@ -15,22 +15,13 @@ import apDB
 import apImage
 import apXml
 import apParam
-try:
 #leginon
+from pyami import mem
+try:
 	import leginondata
 except:
+	apDisplay.printWarning("sinedon not available, use old data.py")
 	import data as leginondata
-	print "sinedon not available, use old data.py"
-
-try:
-	import pyami.mem as mem
-except:
-	print "pyami not available, use mem.py in old Leginon"
-	try:
-		import mem
-	except:
-		apDisplay.printError("Please load 'usepythoncvs' for CVS leginon code,"
-			+" which includes 'mem.py'")
 
 class AppionLoop(object):
 	appiondb  = apDB.apdb
