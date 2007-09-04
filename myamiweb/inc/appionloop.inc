@@ -43,7 +43,7 @@ function appioninfopopup(infoname){
 
 }
 
-function createAppionLoopTable ($sessiondata, $defrunid, $outdirname) {
+function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0) {
 	echo "<!-- BEGIN Appion Loop Param -->";
 	$norejects = ($_POST[norejects]=="on") ? "CHECKED" : "";
 	$nowait = ($_POST[nowait]=="" && $_POST[runid] != "") ? "" : "CHECKED";
@@ -65,12 +65,21 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname) {
 	$runid = ($_POST[runid]) ? $_POST[runid] : $defrunid;
 	echo "<A HREF=\"javascript:infopopup('runid')\"><B>Run Name:</B></A>
 	    <INPUT TYPE='text' NAME='runid' VALUE='$runid'><BR/><BR/>";
-
+	
+	//check for output directory [appion = 0, leginon = 1]
+	$leg_check = $leginon;
+	
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
-		$sessionpath=ereg_replace("rawdata",$outdirname,$sessionpath);
+		if (!$leg_check) {
+			$sessionpath=ereg_replace("leginon","appion",$sessionpath);
+			$sessionpath=ereg_replace("rawdata",$outdirname,$sessionpath);
+		}
+		
+		if ($leg_check) {
+			$sessionpath=ereg_replace("rawdata","",$sessionpath);		
+		}
 		$sessionname=$sessioninfo['Name'];
 	}
 

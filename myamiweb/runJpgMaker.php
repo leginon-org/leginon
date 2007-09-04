@@ -27,108 +27,7 @@ else {
 }
 
 
-function createMaskMakerTable ($cannyminthresh, $cannymaxthresh) {
-	echo "<!-- BEGIN Mask Maker Param -->";
-//	prettytable2();
-//	<TR><TD BGCOLOR=#660000 ALIGN=CENTER><FONT COLOR=#DDDDDD>Appion Loop Params</FONT></TD></TR>
-	$blur = ($_POST['blur']) ? $_POST['blur'] : '3.5';
-	$minthresh = ($_POST['minthresh']) ? $_POST['minthresh'] : $cannyminthresh;
-	$maxthresh = ($_POST['maxthresh']) ? $_POST['maxthresh'] : $cannymaxthresh;
-	$bin = ($_POST['bin']) ? $_POST['bin'] : '4';
-	$crudstd = ($_POST['crudstd']) ? $_POST['crudstd'] : '';
-	$convolve = ($_POST['convolve']) ? $_POST['convolve'] : '';
-	$masktype = ($_POST['masktype']) ? $_POST['masktype'] : '';
-	$masktypes = array('crud','edge','aggr');
-	$masktypeval = ($_POST['masktype']) ? $_POST['masktype'] : 'crud';
-	$masktype = $masktypeval;
-	echo "
-<B>Mask Type</B>\n<SELECT NAME='masktype'>\n";
-		foreach ($masktypes as $masktype) {
-			echo "<OPTION VALUE='$masktype' ";
-			// make crud selected by default
-			if ($masktype==$masktypeval) echo "SELECTED";
-			echo ">$masktype</OPTION>\n";
-		}
-		echo"</SELECT><BR><BR>\n";
-	echo "
-
-<B>Canny Edge thresholds:</B><BR>
-
-<INPUT TYPE='text' NAME='blur' VALUE='$blur' SIZE='4'>&nbsp;
-<A HREF=\"javascript:mminfopopup('blur')\">
-Gradient bluring</A><BR>
-
-<INPUT TYPE='text' NAME='maxthresh' VALUE='$maxthresh' SIZE='4'>&nbsp;
-<A HREF=\"javascript:mminfopopup('maxthresh')\">
-High threshold for the start of edge detection</A><BR>
-
-<INPUT TYPE='text' NAME='minthresh' VALUE='$minthresh' SIZE='4'>&nbsp;
-<A HREF=\"javascript:mminfopopup('minthresh')\">
-Low threshold to extend the edge down to</A><BR>
-
-<BR>
-
-<B>Image Option:</B><BR>
-
-<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4'>&nbsp;
-<A HREF=\"javascript:mminfopopup('bin')\">
-Binning</A><BR>
-<BR>
-
-<B>Advanced thresholding:</B><BR>
-<INPUT TYPE='text' NAME='crudstd' VALUE='$crudstd' SIZE='4'>&nbsp;
-<A HREF=\"javascript:mminfopopup('crudstd')\">
-Standard deviation threshold</A><BR>
-
-<INPUT TYPE='text' NAME='convolve' VALUE='$convolve' SIZE='4'>&nbsp;
-<A HREF=\"javascript:mminfopopup('crudstd')\">
-Convoluted map threshold for aggregate mask (0.0-1.0)</A><BR>
-
-";
-	echo "<!-- END Mask Maker Param -->";
-};
-
-function parseMaskMakerParams () {
-	$minthresh = $_POST[minthresh];
-	$maxthresh = $_POST[maxthresh];
-	$blur = $_POST[blur];
-	$bin = $_POST[bin];
-	$masktype = ($_POST[masktype]);
-	$crudstd = $_POST[crudstd];
-	$convolve = $_POST[convolve];
-
-	if ($maxthresh && $maxthresh > 0) $command.=" crudhi=$maxthresh";
-	if ($blur && $blur > 0.01) $command.=" crudblur=$blur";
-	if ($minthresh && $minthresh > 0) $command.=" crudlo=$minthresh";
-	if ($crudstd && $crudstd > 0.01 && $crudstd != '') $command.=" crudstd=$crudstd";
-	if ($masktype) $command.=" masktype=$masktype";
-	if ($convolve && $convolve > 0.01 && $convolve != '') $command.=" convolve=$convolve";
-	if ($bin && $bin > 0) $command.=" bin=$bin";
-
-   return $command;
-}
-
-
-function maskMakerSummaryTable () {
-	$minthresh = $_POST[minthresh];
-	$maxthresh = $_POST[maxthresh];
-	$blur = $_POST[blur];
-	$bin = $_POST[bin];
-	$masktype = ($_POST[masktype]);
-	$crudstd = $_POST[crudstd];
-	$convolve = $_POST[convolve];
-
-	echo "<TR><TD>mask type</TD><TD>$masktype</TD></TR>\n";
-	echo "<TR><TD>minthresh</TD><TD>$minthresh</TD></TR>\n";
-	echo "<TR><TD>maxthresh</TD><TD>$maxthresh</TD></TR>\n";
-	echo "<TR><TD>bin</TD><TD>$bin</TD></TR>\n";
-	echo "<TR><TD>blur</TD><TD>$blur</TD></TR>\n";
-	echo "<TR><TD>crudstd</TD><TD>$crudstd</TD></TR>\n";
-	echo "<TR><TD>convolve</TD><TD>$convolve</TD></TR>\n";
-}
-
-
-function createJMForm($extra=false, $title='MaskMaker Launcher', $heading='Automated JPEG convertion with jpgmaker') {
+function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPEG convertion with jpgmaker') {
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
 	if ($expId) {
@@ -205,7 +104,7 @@ function createJMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
 		<TD VALIGN='TOP'>";
-	createAppionLoopTable($sessiondata, 'jpgs', "");
+	createAppionLoopTable($sessiondata, 'jpgs', "", 1);
 	echo"
 		</TD>
 	</TR>
@@ -233,13 +132,14 @@ function createJMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 		</select>
 		<BR>
 		<input type='submit' name='process' value='Just Show Command'>
-		<input type='submit' name='process' value='Run MaskMaker'><BR>
-		<FONT COLOR='RED'>Submission will NOT run MaskMaker, only output a command that you can copy and paste into a unix shell</FONT>
+		<input type='submit' name='process' value='Run JPEG Maker'><BR>
+		<FONT COLOR='RED'>Submission will NOT run JPEG Maker, only output a command that you can copy and paste into a unix shell</FONT>
+		<BR>
 		</TD>
 	</TR>
 	</TABLE>
 	</TD>
-	</TR>
+	</TR> 
 	</TABLE>\n";
 	?>
 
@@ -248,43 +148,43 @@ function createJMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 	<?
 	writeBottom();
 }
-function runMaskMaker() {
+
+function runJpgMaker() {
 	$process = $_POST['process'];
 
-	$diam = $_POST[diam];
-	if (!$diam) {
-		createMMForm("<B>ERROR:</B> Specify a particle diameter");
-		exit;
-	}
-
-	$convolve = $_POST[convolve];
-	if (!$convolve && $_POST[masktype] == "aggr") {
-		createMMForm("<B>ERROR:</B> Specify a convolution map threshold");
-		exit;
-	}
-
-	$cdiam = $_POST[cdiam];
-	if (!cdiam) {
-		createMMForm("<B>ERROR:</B> No minimal mask region diameter");
-		exit;
-	}
-
-	$command="maskmaker.py ";
-	$apcommand = parseAppionLoopParams($_POST);
+	$outdir = $_POST['outdir'];
+	$runid = $_POST['runid'];
+	$dbimages = $_POST[sessionname].",".$_POST[preset];
+	$norejects = ($_POST[norejects]=="on") ? "0" : "1";
+	$nowait = ($_POST[nowait]=="on") ? "0" : "1";
+	$commit = ($_POST[commit]=="on") ? "1" : "0";
+	$apcontinue = $_POST[apcontinue];
+	
+	$command="jpgmaker.py ";
+	
+	if ($runid) $apcommand.=" runid=$runid";
+	if ($outdir) $apcommand.=" outdir=$outdir";
+	if ($testimage) $apcommand.=" $testimage";
+	elseif ($dbimages) $apcommand.=" dbimages=$dbimages";
+	else $apcommand.=" alldbimages=$_POST[sessionname]";
+	//if ($norejects) $apcommand.=" norejects";
+	//if ($nowait) $apcommand.=" nowait";
+	//if ($commit) $apcommand.=" commit";
+	//if (!$apcontinue) $apcommand.=" nocontinue";
+	//else $apcommand.=" continue";
+	
+	//$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
 		createMMForm($apcommand);
 		exit;
 	}
 	$command .= $apcommand;
-	$command .=" diam=$diam";
-	$command .=" cruddiam=$cdiam";
-	$command .= parseMaskMakerParams($_POST);
 	if ($_POST['testimage']=="on") {
 		$command .= " test";
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
 	}
 
-	if ($testimage && $_POST['process']=="Run MaskMaker") {
+	if ($testimage && $_POST['process']=="Run JPEG Maker") {
 		$host = $_POST['host'];
 		$user = $_POST['user'];
 		$password = $_POST['password'];
@@ -298,7 +198,7 @@ function runMaskMaker() {
 		$result=exec_over_ssh($host, $user, $password, $cmd, True);
 	}
 
-	writeTop("Bad Region Detection Results","Bad Region Detection Results",$javascript);
+	writeTop("JPEG Maker Results","JPEG Maker Results",$javascript);
 
 	if ($testimage) {
 		$outdir=$_POST[outdir];
@@ -332,18 +232,25 @@ function runMaskMaker() {
 
 
 	echo"
+  
   <P>
   <TABLE WIDTH='600'>
   <TR><TD COLSPAN='2'>
-  <B>Mask Maker Command:</B><BR>
+  <B>JPEG Maker Command:</B><BR>
   $command<HR>
   </TD></TR>
-  <TR><TD>outdir</TD><TD>$outdir</TD></TR>";
-	echo"<TR><TD>runname</TD><TD>$runid</TD></TR>
+  <TR><TD>outdir</TD><TD>$outdir</TD></TR>
+  <TR><TD>runname</TD><TD>$runid</TD></TR>
   <TR><TD>dbimages</TD><TD>$dbimages</TD></TR>
-  <TR><TD>diameter</TD><TD>$diam</TD></TR>";
-	appionLoopSummaryTable();
-	maskMakerSummaryTable();
+  ";
+  
+  //<TR><TD>norejects</TD><TD>$norejects</TD></TR>
+  //<TR><TD>nowait</TD><TD>$nowait</TD></TR>
+  //<TR><TD>commit</TD><TD>$commit</TD></TR>
+  //<TR><TD>continue</TD><TD>$apcontinue</TD></TR>
+
+  
+	//appionLoopSummaryTable();
 	echo"</TABLE>\n";
 	writeBottom();
 }
