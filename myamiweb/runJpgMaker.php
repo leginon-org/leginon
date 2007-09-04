@@ -18,7 +18,7 @@ require ('inc/appionloop.inc');
  
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
-	runJpgMaker();
+	runjpgmaker();
 }
 
 // CREATE FORM PAGE
@@ -149,7 +149,7 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	writeBottom();
 }
 
-function runJpgMaker() {
+function runjpgmaker() {
 	$process = $_POST['process'];
 
 	$outdir = $_POST['outdir'];
@@ -274,7 +274,7 @@ function displayTestResults($testimage,$imgdir,$files){
 //	$javascript="<script src='js/viewer.js'></script>\n";
 //	writeTop("Mask Maker Test","Mask Maker Test Results",$javascript);
 
-
+//
         $numfiles=count($files);
 	$prefix = '';
 	$n = 0;
