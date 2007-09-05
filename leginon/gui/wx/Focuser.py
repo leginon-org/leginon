@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.54 $
+# $Revision: 1.55 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-24 23:39:05 $
+# $Date: 2007-09-05 01:29:48 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -314,7 +314,6 @@ class AlignRotationCenterDialog(wx.Dialog):
 		self.Close()
 		d1 = self.d1value.GetValue()
 		d2 = self.d2value.GetValue()
-		self.EndModal(wx.ID_OK)
 		threading.Thread(target=self.node.alignRotationCenter, args=(d1,d2,)).start()
 
 class ManualFocusSettingsDialog(gui.wx.Dialog.Dialog):
