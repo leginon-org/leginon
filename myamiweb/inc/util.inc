@@ -582,14 +582,9 @@ function array_stats($a) {
 	$min = $a[0];
 	$len = count($a);
 	$max = $a[$len-1];
-	if(($len % 2) == 1) { //$len is odd
-		$median = $a[$len/2];
-	} else { //$len is even
-		$median = ($a[intval($len/2.0-0.5)] + $a[intval($len/2.0+0.5)])/2.0;
-	}
 	$sum = 0.0;
 	$sumsq = 0.0;
-	$len = count($a);
+
 	if($len > 12) {
 		$err = 0.10;
 		$bot = $len*$err;
@@ -599,14 +594,15 @@ function array_stats($a) {
 		$bot = 0;
 	}
 	for ($i = intval($bot); $i < intval($top); $i++) {
-		//echo $a[$i]."<BR>";
 		$sum += $a[$i];
 		$sumsq += $a[$i]*$a[$i];
 	}
+
+	$median = ($len & 1) ? ($a[$len/2]+$a[$len/2+1])/2 : $a[$len/2];
 	$mean = $sum/$len;
 	$var = ($sumsq - $len*$mean*$mean) / ($len-1);
 	$stddev = sqrt($var);
-	//echo "med=$median  max=$max  min=$min  sum=$sum  mean=$mean  len=$len std=$stddev<BR>";
+
 	$results['median'] = $median;
 	$results['max'] = $max;
 	$results['min'] = $min;
