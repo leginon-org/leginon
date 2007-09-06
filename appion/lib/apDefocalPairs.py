@@ -43,16 +43,13 @@ def getDefocusPair(imgdata):
 	qsibling=leginondata.AcquisitionImageData(target=qtarget)
 	origid=imgdata.dbid
 	allsiblings = leginondb.query(qsibling, readimages=False)	
+	defocpair=None
 	if len(allsiblings) > 1:
 		#could be multiple siblings but we are taking only the most recent
 		for sib in allsiblings:
-			if sib.dbid == origid:
-				pass
-			else:
+			if sib.dbid != origid:
 				defocpair=sib
 				break
-	else:
-		defocpair=None
 	return defocpair
 
 def getShift(imgdata1 ,imgdata2):
