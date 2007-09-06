@@ -13,11 +13,6 @@ require_once('inc/mysql.inc');
 require ('inc/button.inc');
 
 $VIEWNB=0;
-/*
-$display .= '<input class="bt1" type="button" name="action_update_list" '
-        .'value="Remove" onClick=\'update_image_list()\'/>';
-*/
-
 
 /**
  *	Viewer
@@ -970,11 +965,14 @@ class view {
 		$imgstatus = "<div id='".$this->name."imgstat'><img name='".$this->name."imgstatgrad' border='0' src='".$gradient."'> ".$settings_icon."</div>";
 		$htmlframe .= $imgstatus;
 		$htmlframe .='
-			</a></td>';
-		$htmlframe .= '<td> <button style="border: 1px solid #bdcebb;" '
+			</a>';
+		// -- HACK for now -- //
+		if ($this->title=="Main View") {
+		$htmlframe .= '</td><td> <button style="border: 1px solid #bdcebb;" '
         .' onClick=\'update_image_list("'.$name.'")\' ><u><b>r</b></u>emove</button>';
-		$htmlframe .= '<td> <button style="border: 1px solid #bdcebb;" '
+		$htmlframe .= '</td><td> <button style="border: 1px solid #bdcebb;" '
         .' onClick=\'incIndex(); updateviews()\' ><u><b>n</b></u>ext</button>';
+		}
 
 		$htmlframe .= '
 						</td>
