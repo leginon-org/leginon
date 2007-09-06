@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Settings.py,v $
-# $Revision: 1.27 $
+# $Revision: 1.28 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-29 22:40:56 $
+# $Date: 2007-09-06 20:47:12 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -69,12 +69,14 @@ class Dialog(wx.Dialog):
 		szbuttons.Add(self.bcancel, (0, 1), (1, 1), wx.ALIGN_CENTER)
 		szbuttons.Add(self.bapply, (0, 2), (1, 1), wx.ALIGN_CENTER)
 
+		self.growrows = None
 		sz = self.initialize()
 
 		szmain = wx.GridBagSizer(5, 5)
 		for i, s in enumerate(sz):
 			szmain.Add(s, (i, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
-			szmain.AddGrowableRow(i)
+			if self.growrows is not None and self.growrows[i] is True:
+				szmain.AddGrowableRow(i)
 		szmain.Add(szbuttons, (i+1, 0), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
 		szmain.AddGrowableCol(0)

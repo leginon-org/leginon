@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/JAHCFinder.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-29 22:40:55 $
+# $Date: 2007-09-06 20:47:11 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -34,14 +34,10 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTypeTool('Template', display=True, settings=True)
 		self.imagepanel.addTypeTool('Threshold', display=True, settings=True)
-		self.imagepanel.addTargetTool('Blobs', wx.Color(0, 255, 255),
-																settings=True)
-		self.imagepanel.addTargetTool('Lattice', wx.Color(255, 0, 255),
-																	settings=True)
-		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True,
-																	settings=True)
-		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True,
-																	settings=True)
+		self.imagepanel.addTargetTool('Blobs', wx.Color(0, 255, 255), settings=True)
+		self.imagepanel.addTargetTool('Lattice', wx.Color(255, 0, 255), settings=True)
+		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True)
+		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
 		self.imagepanel.addTargetTool('done', wx.RED)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
@@ -302,13 +298,13 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['ice max std'] = FloatEntry(self, -1, chars=6)
 		self.widgets['focus hole'] = Choice(self, -1, choices=self.node.focustypes)
 		self.widgets['target template'] = wx.CheckBox(self, -1,
-																									'Use target template')
+			'Use target template')
 		self.widgets['focus template'] = gui.wx.TargetTemplate.Panel(self,
-																									'Focus Target Template')
+			'Focus Target Template')
 		self.widgets['acquisition template'] = gui.wx.TargetTemplate.Panel(self,
-																									'Acquisition Target Template')
+			'Acquisition Target Template')
 		self.widgets['focus template thickness'] = wx.CheckBox(self, -1,
-																								'Use focus template thickness')
+			'Use focus template thickness')
 		self.widgets['focus stats radius'] = IntEntry(self, -1, chars=6)
 		self.widgets['focus min mean thickness'] = FloatEntry(self, -1, chars=6)
 		self.widgets['focus max mean thickness'] = FloatEntry(self, -1, chars=6)
@@ -363,25 +359,25 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		sbszftt.Add(szftt, 1, wx.EXPAND|wx.ALL, 5)
 
 		sztt = wx.GridBagSizer(5, 5)
-		sztt.Add(self.widgets['target template'], (0, 0), (1, 1),
-							wx.ALIGN_CENTER_VERTICAL)
-		sztt.Add(sbszftt, (1, 0), (2, 1), wx.ALIGN_CENTER)
-		sztt.Add(self.widgets['focus template'], (1, 1), (1, 1),
-							wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		sztt.Add(self.widgets['acquisition template'], (2, 1), (1, 1),
-							wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sztt.Add(self.widgets['target template'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztt.Add(sbszftt, (1, 0), (3, 1), wx.ALIGN_CENTER)
+		sztt.Add(self.widgets['focus template'], (0, 1), (2, 1), wx.ALIGN_CENTER|wx.EXPAND)
+		sztt.Add(self.widgets['acquisition template'], (2, 1), (2, 1), wx.ALIGN_CENTER|wx.EXPAND)
+		sztt.AddGrowableCol(1)
+		sztt.AddGrowableRow(0)
+		sztt.AddGrowableRow(2)
 
 		sb = wx.StaticBox(self, -1, 'Target Template')
 		sbsztt = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsztt.Add(sztt, 1, wx.EXPAND|wx.ALL, 5)
 
-		self.bice = wx.Button(self, -1, 'Test')
+		self.bice = wx.Button(self, -1, '&Test targeting')
 		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.bice, (0, 0), (1, 1),
-									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		szbutton.AddGrowableCol(0)
+		szbutton.Add(self.bice, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
 
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.bice)
+
+		self.growrows = [False, True, False,]
 
 		return [sbszice, sbsztt, szbutton]
 
@@ -393,8 +389,7 @@ class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
 		tfsd = gui.wx.TargetFinder.SettingsDialog.initialize(self)
 
-		self.widgets['skip'] = wx.CheckBox(self, -1,
-																	'Skip automated hole finder')
+		self.widgets['skip'] = wx.CheckBox(self, -1, 'Skip automated hole finder')
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['skip'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
