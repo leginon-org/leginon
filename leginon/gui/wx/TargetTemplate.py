@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetTemplate.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-06 18:27:10 $
+# $Date: 2007-09-06 20:47:46 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -89,19 +89,20 @@ class Panel(wx.Panel):
 		self.targetname = targetname
 
 		self.lbtemplate = wx.ListBox(self, -1, style=wx.LB_SINGLE)
-		self.badd = wx.Button(self, -1, 'Add...')
-		self.bedit = wx.Button(self, -1, 'Edit...')
-		self.bdelete = wx.Button(self, -1, 'Delete')
-		self.bautofill = wx.Button(self, -1, 'Auto Fill...')
+		self.lbtemplate.SetMinSize((100,100))
+		self.badd = wx.Button(self, -1, '&Add...')
+		self.bedit = wx.Button(self, -1, '&Edit...')
+		self.bdelete = wx.Button(self, -1, '&Delete')
+		self.bautofill = wx.Button(self, -1, 'Auto &Fill...')
 
 		sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, title)
-		sz.Add(label, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.lbtemplate, (1, 0), (2, 4), wx.EXPAND)
-		sz.Add(self.badd, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.bedit, (3, 1), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(self.bdelete, (3, 2), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(self.bautofill, (3, 3), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(label, (0, 0), (1, 4), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.lbtemplate, (1, 0), (1, 4), wx.EXPAND)
+		sz.Add(self.badd, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.bedit, (2, 1), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.bdelete, (2, 2), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.bautofill, (2, 3), (1, 1), wx.ALIGN_CENTER)
 		sz.AddGrowableRow(1)
 		sz.AddGrowableCol(0)
 
@@ -115,8 +116,8 @@ class Panel(wx.Panel):
 		self._updated(False)
 
 		self.SetSizerAndFit(sz)
-		minsize = (sz.GetSize().width, self.lbtemplate.GetSize().height)
-		sz.SetItemMinSize(self.lbtemplate, minsize)
+		#minsize = (sz.GetSize().width, self.lbtemplate.GetSize().height)
+		#sz.SetItemMinSize(self.lbtemplate, minsize)
 		self.Fit()
 
 	def _updated(self, evt=False):
@@ -236,6 +237,10 @@ class AutoFillTargets(wx.Dialog):
 
 	def onOK(self, evt):
 		numtargets = float(self.numtargets.GetValue())
+		if numtargets > 7:
+				dialog = wx.MessageDialog(self, "Too many targets:\n'%d' is greater than 7" % numtargets, 'Error', wx.OK|wx.ICON_ERROR)
+				dialog.ShowModal()
+				dialog.Destroy()		
 		radius = float(self.radius.GetValue())
 		degoffset = float(self.angleoffset.GetValue())
 		deg = 0.0
