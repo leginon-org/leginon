@@ -104,14 +104,18 @@ def getSessionDataFromSessionName(sessionname):
 	else:
 		apDisplay.printError("could not find session, "+sessionname)
 
+def getTemplateFromId(templateid):
+	# find templateImage row
+	tmpltinfo = appiondb.direct_query(appionData.ApTemplateImageData, templateid)
+	if not (tmpltinfo):
+		apDisplay.printError("TemplateId "+str(tid)+" not found in database. Use 'uploadTemplate.py'\n")
+	return tmpltinfo
+	
 def getDBTemplates(params):
 	tmptmplt=params['template']
 	i=1
 	for tid in params['templateIds']:
-		# find templateImage row
-		tmpltinfo = appiondb.direct_query(appionData.ApTemplateImageData, tid)
-		if not (tmpltinfo):
-			apDisplay.printError("TemplateId "+str(tid)+" not found in database. Use 'uploadTemplate.py'\n")
+		tmpltinfo = getTemplateFromId(tid)
 		apix = tmpltinfo['apix']
 		# store row data in params dictionary
 		params['ogTmpltInfo'].append(tmpltinfo)

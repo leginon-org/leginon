@@ -58,22 +58,29 @@ def removePreviousTemplates(params):
 			apDisplay.printWarning(filename+" already exists. Removing it")
 			os.remove(filename)
 
-def scaleAndClipTemplate(filename, scalefactor, newfilename):
+def scaleAndClipTemplate(filename, scalefactor, newfilename, boxsize=False):
 	imgdata = apImage.mrcToArray(filename)
 	if(imgdata.shape[0] != imgdata.shape[1]):
 		apDisplay.printWarning("template is NOT square, this may cause errors")
-	scaledimgdata = apImage.scaleImage(imgdata, scalefactor)
+	if scalefactor:
+		scaledimgdata = apImage.scaleImage(imgdata, scalefactor)
+	else:
+		scaledimgdata = imgdata
 	origsize  = scaledimgdata.shape[1]
-	#make sure the box size is divisible by 16
-	if (origsize % 16 != 0):
+	edgeavg = apImage.meanEdgeValue(scaledimgdata)
+	# if boxsize is specified, and not the same as original, scale it
+	if boxsize and boxsize!=origsize:
+		padsize  = int(boxsize)
+		padshape = numpy.array([padsize,padsize])
+		apDisplay.printMsg("changing box size from "+str(origsize)+" to "+str(padsize))
+		scaledimgdata = apImage.frame_constant(scaledimgdata, padshape, cval=edgeavg)
+	#make sure the box size is divisible by 16 if not specified
+	elif (origsize % 16 != 0) and not boxsize:
 		edgeavg = apImage.meanEdgeValue(scaledimgdata)
 		padsize  = int(math.ceil(float(origsize)/16)*16)
 		padshape = numpy.array([padsize,padsize])
 		apDisplay.printMsg("changing box size from "+str(origsize)+" to "+str(padsize))
 		scaledimgdata = apImage.frame_constant(scaledimgdata, padshape, cval=edgeavg)
-		#WHY ARE WE USING EMAN???
-		#os.system("proc2d "+newfilename+" "+newfilename+" clip="+str(padsize)+\
-			#","+str(padsize)+" edgenorm")
 	apImage.arrayToMrc(scaledimgdata, newfilename, msg=False)
 	return scaledimgdata
 

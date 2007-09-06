@@ -16,7 +16,7 @@ x93=40    ; desired # of classes (will get as close to this # as possible)
 x92=10    ; additive constant for hierarchical clustering
 
 FR G ; stack file
-[stack]startswapnorm
+[stack]start
 
 FR G ; aligned stack file
 [aligned]aligned

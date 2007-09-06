@@ -149,11 +149,20 @@ def writeFunctionLog(commandline, params=None, logfile=None):
 	f.write(out+"\n")
 	f.close()
 
-def createDirectory(path, mode=0777, warning=True):
+def createDirectory(path, mode=0777, warning=True, remove=False):
 	if os.path.isdir(path):
 		if warning is True:
 			apDisplay.printWarning("directory \'"+path+"\' already exists.")
-		return False
+		# if necessary, remove the directory
+		if remove is True:
+			if warning is True:
+				apDisplay.printWarning("removing \'"+path+"\'.")
+			try:
+				os.system('rm -rf '+path)
+			except: 
+				apDisplay.printError("Could not remove directory, '"+path+"'\nCheck the folder write permissions")
+		else:
+			return False
 	try:
 		os.makedirs(path, mode=mode)
 		#makedirs(path, mode=mode)
