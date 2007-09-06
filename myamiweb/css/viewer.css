@@ -190,7 +190,7 @@ INPUT.button {
  padding: 1px 0px ;
 }
 
-INPUT.bt1{
+INPUT .bt1{
   border: 1px solid #bdcebb;
 }
 
@@ -203,7 +203,7 @@ INPUT.bt1{
 
 .datafield0
 {
-        color:                  #777777;
+	color: #777777;
 	font-weight: bold;
 }
 

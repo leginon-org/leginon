@@ -971,10 +971,10 @@ class view {
 		$htmlframe .= $imgstatus;
 		$htmlframe .='
 			</a></td>';
-		$htmlframe .= '<td> <input class="bt1" type="button" '
-        .'value="Remove" onClick=\'update_image_list("'.$name.'")\'/>';
-		$htmlframe .= '</td><td> <input class="bt1" type="button" '
-        .'value="Next" onClick=\'incIndex(); updateviews()\'/>';
+		$htmlframe .= '<td> <button style="border: 1px solid #bdcebb;" '
+        .' onClick=\'update_image_list("'.$name.'")\' ><u><b>r</b></u>emove</button>';
+		$htmlframe .= '<td> <button style="border: 1px solid #bdcebb;" '
+        .' onClick=\'incIndex(); updateviews()\' ><u><b>n</b></u>ext</button>';
 
 		$htmlframe .= '
 						</td>
