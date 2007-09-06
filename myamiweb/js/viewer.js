@@ -512,22 +512,26 @@ function popUpMap(URL)
 }
 
 function popUpAdjust(URL, view, param){
-	min = eval("jsmin"+view);
-	max = eval("jsmax"+view);
-	filter = eval("jsfilter"+view);
-	binning = eval("jsbinning"+view);
-	quality = eval("jsquality"+view);
-	colormap = eval("jscolormap"+view);
-	autoscale = eval("jsautoscale"+view);
-	min = (min) ? "&pmin="+min : "";
-	max = (max) ? "&pmax="+max : "";
-	filter = (filter) ? "&filter="+filter : "";
-	binning = (binning) ? "&binning="+binning : "";
-	quality = (quality) ? "&t="+quality : "";
-	colormap= (colormap) ? "&colormap="+colormap : "";
-	autoscale= (autoscale) ? "&autoscale="+autoscale : "";
+	min = eval("jsmin"+view)
+	max = eval("jsmax"+view)
+	filter = eval("jsfilter"+view)
+	binning = eval("jsbinning"+view)
+	quality = eval("jsquality"+view)
+	colormap = eval("jscolormap"+view)
+	autoscale = eval("jsautoscale"+view)
+	displayfilename = eval("jsdisplayfilename"+view)
+	loadjpg= eval("jsloadjpg"+view)
+	min = (min) ? "&pmin="+min : ""
+	max = (max) ? "&pmax="+max : ""
+	filter = (filter) ? "&filter="+filter : ""
+	binning = (binning) ? "&binning="+binning : ""
+	quality = (quality) ? "&t="+quality : ""
+	colormap= (colormap) ? "&colormap="+colormap : ""
+	autoscale= (autoscale) ? "&autoscale="+autoscale : ""
+	displayfilename= (displayfilename) ? "&df="+displayfilename : ""
+	loadjpg= (loadjpg) ? "&lj="+loadjpg : ""
 	param = (param) ? param : "left=0,top=0,height=200,width=370";
-	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+binning+quality+colormap+autoscale+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');");
+	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+binning+quality+colormap+autoscale+displayfilename+loadjpg+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');");
 }
 
 function popUpPtcl(URL, view, param) {

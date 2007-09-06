@@ -35,6 +35,12 @@ if (!$autoscale=$_GET['autoscale'])
 if ($_POST && !$_POST['autoscale']) {
 	$autoscale=0;
 }
+
+if (!$displayfilename=$_REQUEST['df'])
+	$displayfilename=0;
+if (!$loadfromjpg=$_REQUEST['lj'])
+	$loadfromjpg=0;
+
 $currentgradient='grad.php';
 
 $arrayurl = explode("/", $_SERVER['PHP_SELF']);
