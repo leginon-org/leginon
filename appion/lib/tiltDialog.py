@@ -8,8 +8,11 @@ from scipy import optimize, ndimage
 from gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
 import radermacher
 
-FitThetaEventType = wx.NewEventType()
-EVT_FIT_THETA = wx.PyEventBinder(FitThetaEventType)
+##
+##
+## Fit Theta Dialog
+##
+##
 
 class FitThetaDialog(wx.Dialog):
 	def __init__(self, parent):
@@ -53,9 +56,9 @@ class FitThetaDialog(wx.Dialog):
 	def onRunTiltAng(self, evt):
 		arealim  = self.arealimit.GetValue()
 		self.parent.arealim = arealim
-		targets1 = self.parent.panel1.getTargets('PickedParticles')
+		targets1 = self.parent.panel1.getTargets('Picked')
 		a1 = self.parent.targetsToArray(targets1)
-		targets2 = self.parent.panel2.getTargets('PickedParticles')
+		targets2 = self.parent.panel2.getTargets('Picked')
 		a2 = self.parent.targetsToArray(targets2)
 		fittheta = radermacher.tiltang(a1, a2, arealim)
 		pprint.pprint(fittheta)
@@ -68,6 +71,13 @@ class FitThetaDialog(wx.Dialog):
 	def onApplyTiltAng(self, evt):
 		self.Close()
 		self.parent.theta = self.theta
+		self.parent.onUpdate(evt)
+
+##
+##
+## Fit All Least Squares Dialog
+##
+##
 
 class FitAllDialog(wx.Dialog):
 	def __init__(self, parent):
@@ -122,6 +132,12 @@ class FitAllDialog(wx.Dialog):
 		inforow.Add(self.shiftyvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.shifttog, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
+		errrow = wx.GridSizer(1,2)
+		label = wx.StaticText(self, -1, "Average error (in pixels):  ", style=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+		self.errlabel = wx.StaticText(self, -1, " unknown ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		errrow.Add(label, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+		errrow.Add(self.errlabel, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+
 		self.cancelfitall = wx.Button(self, wx.ID_CANCEL, '&Cancel')
 		self.applyfitall = wx.Button(self,  wx.ID_APPLY, '&Apply')
 		self.runfitall = wx.Button(self, -1, '&Run')
@@ -132,8 +148,9 @@ class FitAllDialog(wx.Dialog):
 		buttonrow.Add(self.applyfitall, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
 		buttonrow.Add(self.runfitall, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
 
-		self.sizer = wx.FlexGridSizer(2,1)
+		self.sizer = wx.FlexGridSizer(3,1)
 		self.sizer.Add(inforow, 0, wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(errrow, 0, wx.EXPAND|wx.ALL, 5)
 		self.sizer.Add(buttonrow, 0, wx.EXPAND|wx.ALL, 5)
 		self.SetSizerAndFit(self.sizer)
 
@@ -186,9 +203,9 @@ class FitAllDialog(wx.Dialog):
 		phi    = self.phivalue.GetValue()
 		shiftx = self.shiftxvalue.GetValue()
 		shifty = self.shiftyvalue.GetValue()
-		targets1 = self.parent.panel1.getTargets('PickedParticles')
+		targets1 = self.parent.panel1.getTargets('Picked')
 		a1 = self.parent.targetsToArray(targets1)
-		targets2 = self.parent.panel2.getTargets('PickedParticles')
+		targets2 = self.parent.panel2.getTargets('Picked')
 		a2 = self.parent.targetsToArray(targets2)
 		xscale = numpy.array((
 			not self.thetatog.GetValue(),
@@ -205,6 +222,7 @@ class FitAllDialog(wx.Dialog):
 		self.phivalue.SetValue(round(fit['phi'],5))
 		self.shiftxvalue.SetValue(round(fit['shiftx'],5))
 		self.shiftyvalue.SetValue(round(fit['shifty'],5))
+		self.errlabel.SetLabel(str(round(fit['err'],5)))
 
 	def onApplyLeastSquares(self, evt):
 		self.Close()
@@ -213,6 +231,8 @@ class FitAllDialog(wx.Dialog):
 		self.parent.phi = self.phivalue.GetValue()
 		self.parent.shiftx = self.shiftxvalue.GetValue()
 		self.parent.shifty = self.shiftyvalue.GetValue()
+		self.parent.onUpdate(evt)
+
 ##
 ##
 ## Fit All Least Squares Routine
@@ -269,9 +289,11 @@ def _diffParticles(x1, initx, xscale, a1, a2):
 	shiftx = x2[3]
 	shifty = x2[4]
 	a2b = a2Toa1(a1,a2,theta,gamma,phi,0,0)
-	maxpix = 100.0
-	diffmat = (a1 - a2b)/maxpix
-	err = ndimage.mean(diffmat**2)
+	maxpix = float(len(a2b))
+	diffmat = (a1 - a2b)
+	xerr = ndimage.mean(diffmat[:,0]**2)
+	yerr = ndimage.mean(diffmat[:,1]**2)
+	err = math.sqrt(xerr + yerr)/float(len(a2b))
 	#print (x2*57.29).round(decimals=3),round(err,6)
 	return err
 

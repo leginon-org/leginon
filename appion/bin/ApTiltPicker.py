@@ -10,33 +10,14 @@ import pyami
 import Image
 import ImageDraw
 import apImage
-from gui.wx import ImageViewer
+from gui.wx import TargetPanel
 import radermacher
-from scipy import ndimage,optimize
+from scipy import ndimage, optimize
 import tiltDialog
 
-wx.InitAllImageHandlers()
-
-ImageClickedEventType = wx.NewEventType()
-ImageClickDoneEventType = wx.NewEventType()
-MeasurementEventType = wx.NewEventType()
-DisplayEventType = wx.NewEventType()
-TargetingEventType = wx.NewEventType()
-SettingsEventType = wx.NewEventType()
-
-EVT_IMAGE_CLICKED = wx.PyEventBinder(ImageClickedEventType)
-EVT_IMAGE_CLICK_DONE = wx.PyEventBinder(ImageClickDoneEventType)
-EVT_MEASUREMENT = wx.PyEventBinder(MeasurementEventType)
-EVT_DISPLAY = wx.PyEventBinder(DisplayEventType)
-EVT_TARGETING = wx.PyEventBinder(TargetingEventType)
-EVT_SETTINGS = wx.PyEventBinder(SettingsEventType)
-
-ImageViewer.penwidth=2
-
-class TiltTargetPanel(ImageViewer.TargetImagePanel):
+class TiltTargetPanel(TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True, name=None):
-		ImageViewer.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool, mode="vertical")
-		#self.button_1.SetValue(1)
+		TargetPanel.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool, mode="vertical")
 		if name is not None:
 			self.outname = name
 		else:
@@ -49,6 +30,8 @@ class TiltTargetPanel(ImageViewer.TargetImagePanel):
 	#---------------------------------------
 	def addTarget(self, name, x, y):
 		#sys.stderr.write("%s: (%4d,%4d),\n" % (self.outname,x,y))
+		#numtargets = len(self.getTargets(name))
+		#self.parent.statbar.PushStatusText("Added %d target at location (%d,%d)" % numtargets, x, y)
 		return self._getSelectionTool().addTarget(name, x, y)
 
 	#---------------------------------------
@@ -82,19 +65,31 @@ class MyApp(wx.App):
 		splitter = wx.SplitterWindow(self.frame)
 
 		self.panel1 = TiltTargetPanel(splitter, -1, name="untilt")
-		self.panel1.addTargetTool('PickedParticles', color=wx.RED, shape='x', target=True)
-		self.panel1.setTargets('PickedParticles', [])
-		self.panel1.addTargetTool('AlignedParticles', color=wx.BLUE, shape='o')
-		self.panel1.setTargets('AlignedParticles', [])
-		#self.panel1.SetMinSize((512,700))
+		self.panel1.parent = self.frame
+		self.panel1.addTargetTool('Picked', color=wx.Color(215, 32, 32), shape='x', target=True, numbers=True)
+		self.panel1.setTargets('Picked', [])
+		self.panel1.selectiontool.setTargeting('Picked', True)
+		#self.panel1.addTargetTool('Numbered', color=wx.Color(170, 32, 32), shape='numbers')
+		#self.panel1.setTargets('Numbered', [])
+		#self.panel1.selectiontool.setDisplayed('Numbered', True)
+		self.panel1.addTargetTool('Aligned', color=wx.Color(32, 128, 215), shape='o')
+		self.panel1.setTargets('Aligned', [])
+		self.panel1.selectiontool.setDisplayed('Aligned', True)
+		#self.panel1.SetMinSize((256,256))
 		#self.panel1.SetBackgroundColour("sky blue")
 
 		self.panel2 = TiltTargetPanel(splitter, -1, name="tilt")
-		self.panel2.addTargetTool('PickedParticles', color=wx.BLUE, shape='x', target=True)
-		self.panel2.setTargets('PickedParticles', [])
-		self.panel2.addTargetTool('AlignedParticles', color=wx.RED, shape='o', target=None)
-		self.panel2.setTargets('AlignedParticles', [])
-		#self.panel2.SetMinSize((512,700))
+		self.panel2.parent = self.frame
+		self.panel2.addTargetTool('Picked', color=wx.Color(32, 128, 215), shape='x', target=True)
+		self.panel2.setTargets('Picked', [])
+		self.panel2.selectiontool.setTargeting('Picked', True)
+		#self.panel2.addTargetTool('Numbered', color=wx.Color(32, 100, 170), shape='numbers')
+		#self.panel2.setTargets('Numbered', [])
+		#self.panel2.selectiontool.setDisplayed('Numbered', True)
+		self.panel2.addTargetTool('Aligned', color=wx.Color(215, 32, 32), shape='o')
+		self.panel2.setTargets('Aligned', [])
+		self.panel2.selectiontool.setDisplayed('Aligned', True)
+		#self.panel2.SetMinSize((256,256))
 		#self.panel2.SetBackgroundColour("pink")
 
 		self.panel1.setOtherPanel(self.panel2)
@@ -160,14 +155,15 @@ class MyApp(wx.App):
 		self.statbar.PushStatusText("Ready", 0)
 
 		self.frame.SetSizer(self.sizer)
+		self.frame.SetMinSize((768,384))
 		self.SetTopWindow(self.frame)
 		self.frame.Show(True)
 		return True
 
 	#---------------------------------------
 	def onMaskRegion(self, evt):
-		targets1 = self.panel1.getTargets('PickedParticles')
-		targets2 = self.panel2.getTargets('PickedParticles')
+		targets1 = self.panel1.getTargets('Picked')
+		targets2 = self.panel2.getTargets('Picked')
 		#GET IMAGES
 		self.panel1.openImageFile(self.panel1.filename)
 		self.panel2.openImageFile(self.panel2.filename)
@@ -239,36 +235,24 @@ class MyApp(wx.App):
 
 	#---------------------------------------
 	def onUpdate(self, evt):
-		#align first
-		targets1 = self.panel1.getTargets('PickedParticles')
+		targets1 = self.panel1.getTargets('Picked')
+		#self.panel1.setTargets('Numbered', targets1)
 		a1 = self.targetsToArray(targets1)
-		targets2 = self.panel2.getTargets('PickedParticles')
+		targets2 = self.panel2.getTargets('Picked')
+		#self.panel2.setTargets('Numbered', targets2)
 		a2 = self.targetsToArray(targets2)
 
 		thetarad = self.theta*math.pi/180.0
 		gammarad = self.gamma*math.pi/180.0
 		phirad = self.phi*math.pi/180.0
 
-		#aligned1 = radermacher.transform(a1, a2, self.theta, 0.0, 0.0)
-		#x1 = numpy.asarray(a1[:,0] - a1[0,0] + a2[0,0], dtype=numpy.float32)
-		#y1 = numpy.asarray(a1[:,1], dtype=numpy.float32)
-		#y1 = (y1-y1[0]) * math.cos(self.theta*math.pi/180.0) + float(a2[0,1])
-		#a1b = numpy.column_stack((x1,y1))
-		#print a1[0:10,:]
-		#print a1b[0:10,:]
+		#align first
 		a1b = tiltDialog.a1Toa2(a1,a2,thetarad,gammarad,phirad,self.shiftx,self.shifty)
-		self.panel2.setTargets('AlignedParticles', a1b)
+		self.panel2.setTargets('Aligned', a1b)
 		
 		#align second
-		#aligned1 = radermacher.transform(a1, a2, self.theta, 0.0, 0.0)
-		#x2 = numpy.asarray(a2[:,0] - a2[0,0] + a1[0,0], dtype=numpy.float32)
-		#y2 = numpy.asarray(a2[:,1], dtype=numpy.float32)
-		#y2 = (y2-y2[0]) / math.cos(self.theta*math.pi/180.0) + float(a1[0,1])
-		#a2b = numpy.column_stack((x2,y2))
-		#print a2[0:10,:]
-		#print a2b[0:10,:]
 		a2b = tiltDialog.a2Toa1(a1,a2,thetarad,gammarad,phirad,self.shiftx,self.shifty)
-		self.panel1.setTargets('AlignedParticles', a2b)
+		self.panel1.setTargets('Aligned', a2b)
 
 	#---------------------------------------
 	def targetsToArray(self, targets):
@@ -283,13 +267,13 @@ class MyApp(wx.App):
 
 	#---------------------------------------
 	def onFitTheta(self, evt):
-		if len(self.panel1.getTargets('PickedParticles')) > 3 and len(self.panel2.getTargets('PickedParticles')) > 3:
+		if len(self.panel1.getTargets('Picked')) > 3 and len(self.panel2.getTargets('Picked')) > 3:
 			self.theta_dialog.tiltvalue.SetLabel(label=("       %3.3f       " % self.theta))
 			self.theta_dialog.Show()
 
 	#---------------------------------------
 	def onFitAll(self, evt):
-		if len(self.panel1.getTargets('PickedParticles')) > 3 and len(self.panel2.getTargets('PickedParticles')) > 3:
+		if len(self.panel1.getTargets('Picked')) > 3 and len(self.panel2.getTargets('Picked')) > 3:
 			self.fitall_dialog.thetavalue.SetValue(round(self.theta,4))
 			self.fitall_dialog.gammavalue.SetValue(round(self.gamma,4))
 			self.fitall_dialog.phivalue.SetValue(round(self.phi,4))
@@ -297,10 +281,12 @@ class MyApp(wx.App):
 
 	#---------------------------------------
 	def onClear(self, evt):
-		self.panel1.setTargets('PickedParticles', [])
-		self.panel1.setTargets('AlignedParticles', [])
-		self.panel2.setTargets('PickedParticles', [])
-		self.panel2.setTargets('AlignedParticles', [])
+		self.panel1.setTargets('Picked', [])
+		#self.panel1.setTargets('Numbered', [])
+		self.panel1.setTargets('Aligned', [])
+		self.panel2.setTargets('Picked', [])
+		#self.panel2.setTargets('Numbered', [])
+		self.panel2.setTargets('Aligned', [])
 
 	#---------------------------------------
 	def onFileOpen(self, evt):
@@ -320,7 +306,8 @@ class MyApp(wx.App):
 		if self.filename == "" or self.dirname == "":
 			#First Save, Run SaveAs...
 			return self.onFileSaveAs(evt)
-		self.savePicksToFile()
+		filepath = os.path.join(self.dirname, self.filename)
+		self.savePicksToFile(filepath)
 
 	#---------------------------------------
 	def onFileSaveAs(self, evt):
@@ -332,15 +319,16 @@ class MyApp(wx.App):
 			self.filename = dlg.GetFilename()
 			self.dirname  = dlg.GetDirectory()
 			try:
-				self.savePicksToFile()
+				filepath = os.path.join(self.dirname, self.filename)
+				self.savePicksToFile(filepath)
 			except:
 				self.statbar.PushStatusText("ERROR: Saving to file "+self.filename+" failed", 0)		
 		dlg.Destroy()
 
 	#---------------------------------------
 	def savePicksToFile(self):
-		targets1 = self.panel1.getTargets('PickedParticles')
-		targets2 = self.panel2.getTargets('PickedParticles')
+		targets1 = self.panel1.getTargets('Picked')
+		targets2 = self.panel2.getTargets('Picked')
 		if len(targets1) < 4 or len(targets2) < 4:
 			self.statbar.PushStatusText("ERROR: Cannot save file. Not enough picks", 0)
 			return False
@@ -356,8 +344,9 @@ class MyApp(wx.App):
 		return True
 
 	#---------------------------------------
-	def openPicksFromFile(self):
-		filepath = os.path.join(self.dirname, self.filename)
+	def openPicksFromFile(self, filepath):
+		if filepath is None:
+			return
 		f = open(filepath,"r")
 		size = int(len(f.readlines())/2-1)
 		f.close()
@@ -387,33 +376,36 @@ class MyApp(wx.App):
 		#sys.exit(1)
 		a1 = arrays[1]
 		a2 = arrays[2]
-		self.panel1.setTargets('PickedParticles', a1)
-		self.panel2.setTargets('PickedParticles', a2)
+		self.panel1.setTargets('Picked', a1)
+		self.panel2.setTargets('Picked', a2)
+		#self.panel1.setTargets('Numbered', a1)
+		#self.panel2.setTargets('Numbered', a2)
 		self.statbar.PushStatusText("Read "+str(len(a1))+" particles and parameters from file "+self.filename, 0)
 
 	#---------------------------------------
 	def onQuit(self, evt):
 		print "First"
-		targets = self.panel1.getTargets('PickedParticles')
+		targets = self.panel1.getTargets('Picked')
 		for target in targets:
 			print '(%d,%d),' % (target.x, target.y)
 		print "Second"
-		targets = self.panel2.getTargets('PickedParticles')
+		targets = self.panel2.getTargets('Picked')
 		for target in targets:
 			print '(%d,%d),' % (target.x, target.y)
 		wx.Exit()
 
 if __name__ == '__main__':
-	try:
-		filename1 = sys.argv[1]
-		filename2 = sys.argv[2]
-	except IndexError:
-		filename1 = None
-		filename2 = None
+	files = []
+	for i in range(1, len(sys.argv), 1):
+		try:
+			files.append(sys.argv[i])
+		except IndexError:
+			files.append(None)
 
 	app = MyApp(0)
-	app.panel1.openImageFile(filename1)
-	app.panel2.openImageFile(filename2)
+	app.panel1.openImageFile(files[0])
+	app.panel2.openImageFile(files[1])
+	app.openPicksFromFile(files[2])
 
 	app.MainLoop()
 
