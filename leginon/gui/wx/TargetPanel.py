@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanel.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-05 23:52:15 $
+# $Date: 2007-09-06 00:51:40 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -25,8 +25,8 @@
 import math
 import wx
 import Image
-import ImagePanel
-import TargetPanelTools
+import gui.wx.ImagePanel
+import gui.wx.TargetPanelTools
 
 #ImageClickedEventType = wx.NewEventType()
 #EVT_IMAGE_CLICKED = wx.PyEventBinder(ImageClickedEventType)
@@ -39,9 +39,9 @@ EVT_IMAGE_CLICK_DONE = wx.PyEventBinder(ImageClickDoneEventType)
 ##
 ##################################
 
-class TargetImagePanel(ImagePanel.ImagePanel):
+class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True, imagesize=(384, 384), mode="horizontal"):
-		ImagePanel.ImagePanel.__init__(self, parent, id, imagesize, mode)
+		gui.wx.ImagePanel.ImagePanel.__init__(self, parent, id, imagesize, mode)
 		self.order = []
 		self.reverseorder = []
 		self.targets = {}
@@ -57,7 +57,7 @@ class TargetImagePanel(ImagePanel.ImagePanel):
 	#--------------------
 	def addTargetTool(self, name, color, **kwargs):
 		kwargs['display'] = color
-		kwargs['toolclass'] = TargetPanelTools.TargetTypeTool
+		kwargs['toolclass'] = gui.wx.TargetPanelTools.TargetTypeTool
 		self.addTypeTool(name, **kwargs)
 
 	#--------------------
@@ -93,7 +93,7 @@ class TargetImagePanel(ImagePanel.ImagePanel):
 		else:
 			targets = list(targets)
 			for t in targets:
-				if not isinstance(t, TargetPanelTools.Target):
+				if not isinstance(t, gui.wx.TargetPanelTools.Target):
 					raise TypeError
 			self.targets[type] = targets
 			if type not in self.order:
@@ -194,7 +194,7 @@ class TargetImagePanel(ImagePanel.ImagePanel):
 
 	#--------------------
 	def Draw(self, dc):
-		ImagePanel.ImagePanel.Draw(self, dc)
+		gui.wx.ImagePanel.ImagePanel.Draw(self, dc)
 		dc.BeginDrawing()
 		self.drawTargets(dc)
 		dc.EndDrawing()
@@ -244,7 +244,7 @@ class TargetImagePanel(ImagePanel.ImagePanel):
 
 	#--------------------
 	def _onMotion(self, evt, dc):
-		ImagePanel.ImagePanel._onMotion(self, evt, dc)
+		gui.wx.ImagePanel.ImagePanel._onMotion(self, evt, dc)
 #		if self.selectedtype is not None:
 		viewoffset = self.panel.GetViewStart()
 		x, y = self.view2image((evt.m_x, evt.m_y))
@@ -254,13 +254,13 @@ class TargetImagePanel(ImagePanel.ImagePanel):
 
 	#--------------------
 	def _getToolTipStrings(self, x, y, value):
-		strings = ImagePanel.ImagePanel._getToolTipStrings(self, x, y, value)
+		strings = gui.wx.ImagePanel.ImagePanel._getToolTipStrings(self, x, y, value)
 		selectedtarget = self.selectedtarget
 		if selectedtarget is not None:
 			name = selectedtarget.type.name
 			position = selectedtarget.position
 			strings.append('%s (%g, %g)' % (name, position[0], position[1]))
-			if isinstance(selectedtarget, TargetPanelTools.StatsTarget):
+			if isinstance(selectedtarget, gui.wx.TargetPanelTools.StatsTarget):
 				for key, value in selectedtarget.stats.items():
 					if type(value) is float:
 						strings.append('%s: %g' % (key, value))
@@ -317,8 +317,8 @@ if __name__ == '__main__':
 			frame = wx.Frame(None, -1, 'Image Viewer')
 			self.sizer = wx.BoxSizer(wx.VERTICAL)
 
-			#self.panel = ImagePanel.ImagePanel(frame, -1)
-			#self.panel = ImagePanel.ClickImagePanel(frame, -1)
+			#self.panel = gui.wx.ImagePanel.ImagePanel(frame, -1)
+			#self.panel = gui.wx.ImagePanel.ClickImagePanel(frame, -1)
 			#self.panel.Bind(EVT_IMAGE_CLICKED, lambda e: self.panel.setImage(self.panel.imagedata))
 			#self.panel = TargetImagePanel(frame, -1)
 

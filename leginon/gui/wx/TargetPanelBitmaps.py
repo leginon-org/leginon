@@ -5,16 +5,12 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanelBitmaps.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-06 00:33:33 $
+# $Date: 2007-09-06 00:51:41 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
-
-#!/usr/bin/env python
-
-#
 # COPYRIGHT:
 #       The Leginon software is Copyright 2003
 #       The Scripps Research Institute, La Jolla, CA

@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImagePanelTools.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-06 00:33:33 $
+# $Date: 2007-09-06 00:51:42 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -24,7 +24,7 @@ import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import icons
-import TargetPanelBitmaps
+import gui.wx.TargetPanelBitmaps
 
 DisplayEventType = wx.NewEventType()
 EVT_DISPLAY = wx.PyEventBinder(DisplayEventType)
@@ -316,7 +316,7 @@ class ValueTool(ImageTool):
 
 class CrosshairTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
-		bitmap = TargetPanelBitmaps.getTargetIconBitmap(wx.BLUE, shape='+')
+		bitmap = gui.wx.TargetPanelBitmaps.getTargetIconBitmap(wx.BLUE, shape='+')
 		tooltip = 'Toggle Center Crosshair'
 		cursor = None
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, False)

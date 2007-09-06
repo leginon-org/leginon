@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SelectionTool.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-05 23:52:14 $
+# $Date: 2007-09-06 00:51:41 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -20,9 +20,8 @@
 #
 
 import wx
-import ImagePanel
-import ImagePanelTools
-import TargetPanelTools
+import gui.wx.ImagePanelTools
+import gui.wx.TargetPanelTools
 
 ##################################
 ##
@@ -54,20 +53,20 @@ class SelectionTool(wx.Panel):
 		#self.sz.Add(typetool.count, (n, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
 		if 'display' in typetool.togglebuttons:
 			self.sz.Add(typetool.togglebuttons['display'], (n, 2), (1, 1), wx.ALIGN_CENTER)
-			typetool.togglebuttons['display'].Bind(ImagePanelTools.EVT_DISPLAY, self.onDisplay)
+			typetool.togglebuttons['display'].Bind(gui.wx.ImagePanelTools.EVT_DISPLAY, self.onDisplay)
 		if 'target' in typetool.togglebuttons:
 			self.sz.Add(typetool.togglebuttons['target'], (n, 3), (1, 1), wx.ALIGN_CENTER)
-			typetool.togglebuttons['target'].Bind(TargetPanelTools.EVT_TARGETING, self.onTargeting)
+			typetool.togglebuttons['target'].Bind(gui.wx.TargetPanelTools.EVT_TARGETING, self.onTargeting)
 		if 'settings' in typetool.togglebuttons:
 			self.sz.Add(typetool.togglebuttons['settings'], (n, 4), (1, 1), wx.ALIGN_CENTER)
 
-		if isinstance(typetool, TargetPanelTools.TargetTypeTool):
+		if isinstance(typetool, gui.wx.TargetPanelTools.TargetTypeTool):
 			self.targets[typetool.name] = None
 		else:
 			self.images[typetool.name] = None
 
 	#--------------------
-	def addTypeTool(self, name, toolclass=ImagePanelTools.TypeTool, **kwargs):
+	def addTypeTool(self, name, toolclass=gui.wx.ImagePanelTools.TypeTool, **kwargs):
 		if name in self.tools:
 			raise ValueError('Type \'%s\' already exists' % name)
 		typetool = toolclass(self, name, **kwargs)
@@ -111,7 +110,7 @@ class SelectionTool(wx.Panel):
 	#--------------------
 	def _setDisplayed(self, name, value):
 		tool = self._getTypeTool(name)
-		if isinstance(tool, TargetPanelTools.TargetTypeTool):
+		if isinstance(tool, gui.wx.TargetPanelTools.TargetTypeTool):
 			if value:
 				targets = self.getTargets(name)
 			else:

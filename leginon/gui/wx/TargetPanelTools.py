@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanelTools.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-05 23:52:17 $
+# $Date: 2007-09-06 00:51:41 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -20,8 +20,8 @@
 #
 
 import wx
-import ImagePanelTools
-import TargetPanelBitmaps
+import gui.wx.ImagePanelTools
+import gui.wx.TargetPanelBitmaps
 
 TargetingEventType = wx.NewEventType()
 EVT_TARGETING = wx.PyEventBinder(TargetingEventType)
@@ -41,11 +41,11 @@ class TargetingEvent(wx.PyCommandEvent):
 ##
 ##################################
 
-class TargetTypeTool(ImagePanelTools.TypeTool):
+class TargetTypeTool(gui.wx.ImagePanelTools.TypeTool):
 	def __init__(self, parent, name, display=None, settings=None, target=None, shape='+', unique=False):
 		self.color = display
 		self.shape = shape 
-		ImagePanelTools.TypeTool.__init__(self, parent, name, display=display, settings=settings)
+		gui.wx.ImagePanelTools.TypeTool.__init__(self, parent, name, display=display, settings=settings)
 
 		self.targettype = TargetType(self.name, self.color, self.shape, unique)
 
@@ -58,9 +58,9 @@ class TargetTypeTool(ImagePanelTools.TypeTool):
 
 	#--------------------
 	def getBitmaps(self):
-		bitmaps = ImagePanelTools.TypeTool.getBitmaps(self)
-		bitmaps['display'] = TargetPanelBitmaps.getTargetIconBitmap(self.color, self.shape)
-		bitmaps['target'] = ImagePanelTools.getBitmap('arrow.png')
+		bitmaps = gui.wx.ImagePanelTools.TypeTool.getBitmaps(self)
+		bitmaps['display'] = gui.wx.TargetPanelBitmaps.getTargetIconBitmap(self.color, self.shape)
+		bitmaps['target'] = gui.wx.ImagePanelTools.getBitmap('arrow.png')
 		return bitmaps
 
 	#--------------------
@@ -103,7 +103,7 @@ class TargetType(object):
 		self.color = color
 		if shape != 'polygon' and shape != 'numbers':
 			self.bitmaps = {}
-			self.bitmaps['default'], self.bitmaps['selected'] = TargetPanelBitmaps.getTargetBitmaps(color, shape)
+			self.bitmaps['default'], self.bitmaps['selected'] = gui.wx.TargetPanelBitmaps.getTargetBitmaps(color, shape)
 		self.targets = None
 
 	#--------------------
