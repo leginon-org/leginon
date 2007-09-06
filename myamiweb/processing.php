@@ -123,6 +123,14 @@ if ($sessionId) {
     $norefruns=0;
   };
 
+  // --- Get Ref-based Alignment Data
+  if ($stackruns>0) {
+    $refaliIds = $particle->getRefAliIds($sessionId);
+    $refaliruns=count($refaliIds);
+  } else {
+    $refaliruns=0;
+  };
+
   // --- Get Reconstruction Data
   if ($stackruns>0) {
           foreach ($stackIds as $stackid) {
@@ -258,13 +266,25 @@ if ($sessionId) {
     echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>";
-    if ($stackruns == 0) {
-      echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";
-    } elseif ($norefruns == 0) {
-      echo"<A HREF='classifier.php?expId=$sessionId'>Create New Classification</A>";
-    } else {
-      echo"<A HREF='classifier.php?expId=$sessionId'>Continue Classification</A>";
-    }
+    if ($stackruns == 0) {echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";}
+    else {echo"<A HREF='classifier.php?expId=$sessionId'>Start New Classification</A>";}
+    echo"</TD>
+  </TR>
+  <TR>\n";
+  if ($refaliruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
+  else {$bgcolor=$donecolor;$gifimg=$donepic;}
+  echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
+    <TD BGCOLOR='$bgcolor'>
+    <B>Reference-based Alignment</B>
+    </TD>
+    <TD BGCOLOR='$bgcolor'>\n";
+    if ($refaliruns==0) {echo "none";}
+    else {echo "<A HREF='refalisummary.php?expId=$sessionId'>$refaliruns completed<A>";}
+    echo"
+    </TD>
+    <TD BGCOLOR='$bgcolor'>";
+    if ($stackruns == 0) {echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";}
+    elseif ($refruns == 0) {echo"<A HREF='refbasedali.php?expId=$sessionId'>Start New Alignment</A>";}
     echo"</TD>
   </TR>
   <TR>\n";
@@ -282,10 +302,8 @@ if ($sessionId) {
     <TD BGCOLOR='$bgcolor'>";
     if ($stackruns == 0) {
       echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";
-    } elseif ($reconruns == 0) {
-      echo"<A HREF='emanJobGen.php?expId=$sessionId'>Begin Reconstruction</A>";
     } else {
-      echo"<A HREF='emanJobGen.php?expId=$sessionId'>Continue Reconstruction</A>";
+      echo"<A HREF='emanJobGen.php?expId=$sessionId'>New Reconstruction</A>";
     }
     echo"</TD>
   </TR>
