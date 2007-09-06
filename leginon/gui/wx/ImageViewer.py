@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.62 $
+# $Revision: 1.63 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-29 23:07:13 $
+# $Date: 2007-09-06 00:33:01 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -55,7 +55,7 @@ EVT_DISPLAY = wx.PyEventBinder(DisplayEventType)
 EVT_TARGETING = wx.PyEventBinder(TargetingEventType)
 EVT_SETTINGS = wx.PyEventBinder(SettingsEventType)
 
-penwidth = 1
+penwidth = 2
 iconlength = 15
 
 class ImageClickedEvent(wx.PyCommandEvent):
@@ -133,6 +133,11 @@ def targetIcon(color, shape):
 			dc.DrawLine(8, 1, 8, 14)
 			dc.DrawLine(1, 8, 14, 8)
 			dc.DrawPoint(1, 7)
+		elif shape == '[]':
+			dc.DrawLine(1, 1, 1, 14)
+			dc.DrawLine(1, 14, 14, 14)
+			dc.DrawLine(14, 1, 14, 14)
+			dc.DrawLine(1, 1, 14, 1)
 		elif shape == 'x':
 			dc.DrawLine(1, 1, 13, 13)
 			dc.DrawLine(1, 13, 13, 1)
@@ -145,7 +150,8 @@ def targetIcon(color, shape):
 			dc.DrawPoint(1, 7)
 		elif shape == 'o':
 			dc.DrawCircle(7, 7, 7)
-			dc.DrawPoint(1, 7)
+		elif shape == 'numbers':
+			dc.DrawText("#", 0, 0)
 		elif shape == 'polygon':
 			dc.DrawLine(3, 1, 13, 1)
 			dc.DrawLine(13, 1, 13, 13)
@@ -168,6 +174,8 @@ def getTargetBitmap(color, shape='+'):
 			bitmap = targetBitmap_point(color)
 		elif shape == 'x':
 			bitmap = targetBitmap_cross(color)
+		elif shape == '[]':
+			bitmap = targetBitmap_square(color)
 		elif shape == '*':
 			bitmap = targetBitmap_star(color)
 		elif shape == 'o':
@@ -221,6 +229,23 @@ def targetBitmap_cross(color):
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
 
+def targetBitmap_square(color):
+	bitmap = wx.EmptyBitmap(iconlength, iconlength)
+	dc = wx.MemoryDC()
+	dc.SelectObject(bitmap)
+	dc.BeginDrawing()
+	dc.Clear()
+	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
+	dc.SetPen(wx.Pen(color, penwidth))
+	dc.DrawLine(1, 1, iconlength-2, 1)
+	dc.DrawLine(1, 1, 1, iconlength-2)
+	dc.DrawLine(1, iconlength-2, iconlength-2, iconlength-1)
+	dc.DrawLine(iconlength-2, 1, iconlength-2, iconlength-1)
+	dc.EndDrawing()
+	dc.SelectObject(wx.NullBitmap)
+	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
+	return bitmap
+
 def targetBitmap_star(color):
 	bitmap = wx.EmptyBitmap(iconlength, iconlength)
 	dc = wx.MemoryDC()
@@ -229,8 +254,10 @@ def targetBitmap_star(color):
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
-	dc.DrawLine(0, 0, iconlength-1, iconlength-1)
-	dc.DrawLine(0, iconlength-1, iconlength-1, 0)
+	#diagonal lines
+	dc.DrawLine(2, 2, iconlength-3, iconlength-3)
+	dc.DrawLine(2, iconlength-3, iconlength-3, 2)
+	#horiz/vert lines
 	dc.DrawLine(iconlength/2, 0, iconlength/2, iconlength)
 	dc.DrawLine(0, iconlength/2, iconlength, iconlength/2)
 	dc.EndDrawing()
@@ -442,7 +469,6 @@ class ImageTool(object):
 	def OnToggle(self, value):
 		pass
 
-
 	def OnLeftClick(self, evt):
 		pass
 
@@ -489,7 +515,7 @@ class CrosshairTool(ImageTool):
 	def Draw(self, dc):
 		if not self.button.GetToggle():
 			return
-		dc.SetPen(wx.Pen(wx.BLUE, 1))
+		dc.SetPen(wx.Pen(wx.BLUE, penwidth))
 		width = self.imagepanel.bitmap.GetWidth()
 		height = self.imagepanel.bitmap.GetHeight()
 		if self.imagepanel.scaleImage():
@@ -594,17 +620,19 @@ class ZoomTool(ImageTool):
 		tooltip = 'Toggle Zoom Tool'
 		cursor = wx.StockCursor(wx.CURSOR_MAGNIFIER)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
-		self.zoomlevels = range(5, -6, -1)
-		# wx.Choice seems a bit slow, at least on windows
-		self.zoomchoice = wx.Choice(self.imagepanel, -1,
-																choices=map(self.log2str, self.zoomlevels))
-		self.zoom(self.zoomlevels.index(0), (0, 0))
+		self.zoomlevels = range(2, -6, -1)
+		#self.zoomlevels = [1,1.5,2,3,4,6,8,12,16,32,128,]
+		# wx.Choice seems a bit slow, at least on ms windows
+		self.zoomchoice = wx.Choice(self.imagepanel, -1, choices=map(self.log2str, self.zoomlevels))
+		self.zoom(2, (0, 0))
 		self.zoomchoice.SetSelection(self.zoomlevel)
 		self.sizer.Add(self.zoomchoice, 0, wx.ALIGN_CENTER|wx.ALL, 3)
-
 		self.zoomchoice.Bind(wx.EVT_CHOICE, self.onChoice)
 
 	def log2str(self, value):
+		#if value == 1:
+		#	return "1x"
+		#return '1/' + str(value) + 'x'
 		if value < 0:
 			return '1/' + str(int(1/2**value)) + 'x'
 		else:
@@ -622,6 +650,7 @@ class ZoomTool(ImageTool):
 		self.zoomlevel = level
 		center = self.imagepanel.view2image(viewcenter)
 		scale = 2**self.zoomlevels[self.zoomlevel]
+		#scale = 1.0/float(self.zoomlevels[self.zoomlevel])
 		self.imagepanel.setScale((scale, scale))
 		self.imagepanel.center(center)
 		self.imagepanel.UpdateDrawing()
@@ -645,7 +674,7 @@ class ZoomTool(ImageTool):
 		self.zoom(selection, viewcenter)
 
 class ImagePanel(wx.Panel):
-	def __init__(self, parent, id, imagesize=(512, 512), mode="horizontal"):
+	def __init__(self, parent, id, imagesize=(384, 384), mode="horizontal"):
 		# initialize image variables
 		self.imagedata = None
 		self.bitmap = None
@@ -1271,7 +1300,6 @@ class TypeTool(object):
 		self.bitmap = wx.StaticBitmap(parent, -1, self.bitmaps['red'],
 																	(self.bitmaps['red'].GetWidth(),
 																		self.bitmaps['red'].GetHeight()))
-
 		self.togglebuttons = {}
 
 		if display is not None:
@@ -1371,8 +1399,7 @@ class SelectionTool(wx.Panel):
 	def _addTypeTool(self, typetool):
 		n = len(self.tools)
 		self.sz.Add(typetool.bitmap, (n, 0), (1, 1), wx.ALIGN_CENTER)
-		self.sz.Add(typetool.label, (n, 1), (1, 1),
-							wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
+		self.sz.Add(typetool.label, (n, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
 		if 'display' in typetool.togglebuttons:
 			self.sz.Add(typetool.togglebuttons['display'], (n, 2), (1, 1), wx.ALIGN_CENTER)
 			typetool.togglebuttons['display'].Bind(EVT_DISPLAY, self.onDisplay)
@@ -1573,7 +1600,7 @@ class TargetType(object):
 		self.unique = unique
 		self.shape = shape
 		self.color = color
-		if shape != 'polygon':
+		if shape != 'polygon' and shape != 'numbers':
 			self.bitmaps = {}
 			self.bitmaps['default'], self.bitmaps['selected'] = getTargetBitmaps(color, shape)
 		self.targets = None
@@ -1621,7 +1648,7 @@ class TargetType(object):
 		return map(lambda t: t.position, self.targets)
 
 class TargetImagePanel(ImagePanel):
-	def __init__(self, parent, id, callback=None, tool=True, imagesize=(512, 512), mode="horizontal"):
+	def __init__(self, parent, id, callback=None, tool=True, imagesize=(384, 384), mode="horizontal"):
 		ImagePanel.__init__(self, parent, id, imagesize, mode)
 		self.order = []
 		self.reverseorder = []
@@ -1712,10 +1739,12 @@ class TargetImagePanel(ImagePanel):
 			if targets:
 				if type.shape == 'polygon':
 					self.drawPolygon(dc, type.color, targets)
+				if type.shape == 'numbers':
+					self.drawNumbers(dc, type.color, targets)
 				else:
 					self._drawTargets(dc, type.bitmaps['default'], targets, scale)
 
-		if self.selectedtarget is not None and type.shape != 'polygon':
+		if self.selectedtarget is not None and type.shape != 'polygon' and type.shape != 'numbers':
 			if self.selectedtarget.type in self.targets:
 				try:
 					bitmap = self.selectedtarget.type.bitmaps['selected']
@@ -1724,30 +1753,39 @@ class TargetImagePanel(ImagePanel):
 					pass
 
 	def drawPolygon(self, dc, color, targets):
-			dc.SetPen(wx.Pen(color, 1))
-			#if self.scaleImage():
-			if False:
-				xscale = self.scale[0]
-				yscale = self.scale[1]
-				print 'scaled', xscale, yscale
-				scaledpoints = []
-				for target in targets:
-					point = target.x/xscale, target.y/yscale
-					scaledpoints.append(point)
-			else:
-				scaledpoints = [(target.x,target.y) for target in targets]
-	
-			for i,p1 in enumerate(scaledpoints[:-1]):
-				p2 = scaledpoints[i+1]
-				p1 = self.image2view(p1)
-				p2 = self.image2view(p2)
-				dc.DrawLine(p1[0], p1[1], p2[0], p2[1])
-			# close it with final edge
-			p1 = scaledpoints[-1]
-			p2 = scaledpoints[0]
+		dc.SetPen(wx.Pen(color, 1))
+		#if self.scaleImage():
+		if False:
+			xscale = self.scale[0]
+			yscale = self.scale[1]
+			print 'scaled', xscale, yscale
+			scaledpoints = []
+			for target in targets:
+				point = target.x/xscale, target.y/yscale
+				scaledpoints.append(point)
+		else:
+			scaledpoints = [(target.x,target.y) for target in targets]
+
+		for i,p1 in enumerate(scaledpoints[:-1]):
+			p2 = scaledpoints[i+1]
 			p1 = self.image2view(p1)
 			p2 = self.image2view(p2)
 			dc.DrawLine(p1[0], p1[1], p2[0], p2[1])
+		# close it with final edge
+		p1 = scaledpoints[-1]
+		p2 = scaledpoints[0]
+		p1 = self.image2view(p1)
+		p2 = self.image2view(p2)
+		dc.DrawLine(p1[0], p1[1], p2[0], p2[1])
+
+	def drawNumbers(self, dc, color, targets):
+		dc.SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.BOLD))
+		dc.SetTextForeground(color) 
+		dc.SetPen(wx.Pen(color, 1))
+		scaledpoints = [(target.x,target.y) for target in targets]
+		for i,p1 in enumerate(scaledpoints[:-1]):
+			p1 = self.image2view(p1)
+			dc.DrawText(str(i+1), p1[0], p1[1])
 
 	def Draw(self, dc):
 		ImagePanel.Draw(self, dc)
