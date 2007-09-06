@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.67 $
- *	@version $Id: leginon.inc,v 1.67 2007-08-31 18:08:34 dfellman Exp $
+ *	@version $Revision: 1.68 $
+ *	@version $Id: leginon.inc,v 1.68 2007-09-06 23:04:24 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -27,7 +27,7 @@ class leginondata {
 
 	var $crlf = "\n";
 	var $ffttypes = array('focpow', 'fft');
-	var $defaulttypes = array('all'=>'all', 'atlas'=>'atlas');
+	var $defaulttypes = array('all'=>'all', 'atlas'=>'atlas', 'removed'=>'removed');
 	var $manualtype = 'manual';
 	var $rcttype = 'rct';
 	var $calibrationtables = array (
@@ -268,7 +268,7 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getDatatypes($sessionId) {
+	function getDatatypes($sessionId, $allpresets=true) {
 		$q="select distinct name FROM AcquisitionImageData a "
 			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 			." where a.`REF|SessionData|session` = '$sessionId'";
@@ -277,25 +277,15 @@ class leginondata {
 		while ($row = mysql_fetch_row($Rdatatype)) 
 			if ($row[0])
 				$datatypes[$row[0]]=$row[0]; 
-					else
-				$datatypes[$this->manualtype]=$this->manualtype; 
-		} else {
+		} 
+		if ($allpresets) {
 				$datatypes[$this->manualtype]=$this->manualtype; 
 		}
 		return $datatypes;
 	}
 
 	function getTruePresets($sessionId) {
-		$q="select distinct name FROM AcquisitionImageData a "
-			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
-			." where a.`REF|SessionData|session` = '$sessionId'";
-		$Rdatatype = $this->mysql->SQLQuery($q);
-		if ($Rdatatype && mysql_num_rows($Rdatatype)) {
-		while ($row = mysql_fetch_row($Rdatatype)) 
-			if ($row[0]) $datatypes[$row[0]]=$row[0]; 
-		}
-		return $datatypes;
-		
+		return $this->getDatatypes($sessionId, false); 
 	}
 
 	function getAllDatatypes($sessionId) {
@@ -330,24 +320,38 @@ class leginondata {
 			$sessionwhere = "s.`Name` like '$sessionId' ";
 			$sessionjoin = "left join SessionData s on (s.`DEF_id`=a.`REF|SessionData|session`) ";
 		}
-		$name = (in_array($name, $this->defaulttypes)) ? "" : $name;
+		if (in_array($name, $this->defaulttypes)) {
+			$defaultname=$name;
+			$name="";
+		}
+			$removedjoin = "left join `viewer_pref_image` r on (r.imageId=a.DEF_id) ";
+		if ($defaultname=="removed") {
+			$removedwhere = "and  r.id is not null ";
+		} else {
+			$removedwhere = "and  r.id is null ";
+		}
 		if (in_array($name, $this->ffttypes)) {
 		$q = "select a.`DEF_id` as `id`, f.`MRC|Image` as `name` "
-		    ." from `$table` a "
-		    ." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
-		    ." left join AcquisitionFFTData f on (f.`REF|AcquisitionImageData|source`=a.`DEF_id`) "
-			.$sessionjoin
-		    ." where "
-			.$sessionwhere 
-		    ." and f.`MRC|Image`<>'NULL' "
+				." from `$table` a "
+				." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
+				." left join AcquisitionFFTData f on (f.`REF|AcquisitionImageData|source`=a.`DEF_id`) "
+				.$sessionjoin
+				.$removedjoin
+				." where "
+				.$sessionwhere 
+				." and f.`MRC|Image`<>'NULL' "
+				.$removedwhere
 		    ." order by a.`DEF_id` DESC ";
 		} else {
 		$q = "select a.`DEF_id` as `id`, a.`MRC|Image` as `name` "
-		    ." from `$table` a "
-		    ." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
+			." from `$table` a "
+			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 			.$sessionjoin
-		    ." where "
-			.$sessionwhere ;
+			.$removedjoin
+			." where "
+			.$sessionwhere
+			.$removedwhere;
+
 			if ($name) {
 				if ($name == $this->manualtype)
 					$q .=" and p.name is null ";
@@ -356,10 +360,12 @@ class leginondata {
 			}
 		    $q .=" order by a.`DEF_id` DESC ";
 		}
+
 		$filenames = array();
 		$Rfile=$this->mysql->SQLQuery($q);
 		while ($filename = mysql_fetch_array($Rfile, MYSQL_ASSOC))
 			$filenames[] = $filename;
+
 		return $filenames;
 	}
 

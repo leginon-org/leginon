@@ -13,6 +13,11 @@ require_once('inc/mysql.inc');
 require ('inc/button.inc');
 
 $VIEWNB=0;
+/*
+$display .= '<input class="bt1" type="button" name="action_update_list" '
+        .'value="Remove" onClick=\'update_image_list()\'/>';
+*/
+
 
 /**
  *	Viewer
@@ -299,6 +304,7 @@ class viewer {
 			$init .= $initbuttons.$this->crlf;
 		$init .= 'setevents();'.$this->crlf;
 		$init .= 'updateviews();'.$this->crlf;
+		$init .= 'document.onkeydown = getKey;'.$this->crlf;
 		if ($this->addloijavascript)
 			$init .= '	start();'.$this->crlf;
 		$init .= '}'.$this->crlf;
@@ -483,6 +489,8 @@ class view {
 		$this->binning= "auto";
 		$this->colormap = "0";
 		$this->autoscale = "1";
+		$this->displayfilename = "0";
+		$this->loadjpg= "0";
 		$this->ptclsel = "0";
 		$this->jsacepar= "1";
 		$this->ptclselmemo = $this->name.'psel';
@@ -493,6 +501,8 @@ class view {
 		$this->minpixmemo = $this->name.'minpix';
 		$this->colormapmemo = $this->name.'cm';
 		$this->autoscalememo = $this->name.'autos';
+		$this->displayfilenamememo= $this->name.'df';
+		$this->loadjpgmemo= $this->name.'df';
 		$this->btfftmemo = $this->name.'fft_bt_st';
 		$this->bttargetmemo = $this->name.'target_bt_st';
 		$this->btnptclmemo = $this->name.'nptcl_bt_st';
@@ -513,6 +523,10 @@ class view {
 			$this->colormap= $colormap;
 		if ($autoscale=$_REQUEST[$this->autoscalememo])
 			$this->autoscale= $autoscale;
+		if ($displayfilename=$_REQUEST[$this->displayfilenamememo])
+			$this->displayfilename= $displayfilename;
+		if ($loadjpg=$_REQUEST[$this->loadjpgmemo])
+			$this->loadjpg= $loadjpg;
 		if ($btfftstate=$_REQUEST[$this->btfftmemo])
 			$this->btfftstate = $btfftstate;
 		if ($btacestate=$_REQUEST[$this->btacememo])
@@ -675,6 +689,8 @@ class view {
 			.'var jsquality'.$this->name.'="'.$this->quality.'";'.$this->crlf
 			.'var jscolormap'.$this->name.'="'.$this->colormap.'";'.$this->crlf
 			.'var jsautoscale'.$this->name.'="'.$this->autoscale.'";'.$this->crlf
+			.'var jsdisplayfilename'.$this->name.'="'.$this->displayfilename.'";'.$this->crlf
+			.'var jsloadjpg'.$this->name.'="'.$this->loadjpg.'";'.$this->crlf
 			.'var jsptclsel'.$this->name.'="'.$this->ptclsel.'";'.$this->crlf
 			.'var jsaceparam'.$this->name.'="'.$this->jsacepar.'";'.$this->crlf
 			.'var '.$this->name.'adjw=false;'.$this->crlf
@@ -788,6 +804,8 @@ class view {
 		<input type="hidden" name="'.$this->filtermemo.'" value="'.$this->filter.'">
 		<input type="hidden" name="'.$this->colormapmemo.'" value="'.$this->colormap.'">
 		<input type="hidden" name="'.$this->autoscalememo.'" value="'.$this->autoscale.'">
+		<input type="hidden" name="'.$this->displayfilenamememo.'" value="'.$this->displayfilename.'">
+		<input type="hidden" name="'.$this->loadjpgmemo.'" value="'.$this->loadjpg.'">
 		<input type="hidden" name="'.$this->minpixmemo.'" value="'.$this->minpix.'">
 		<input type="hidden" name="'.$this->maxpixmemo.'" value="'.$this->maxpix.'"> 
 		<input type="hidden" name="'.$this->btfftmemo.'" value="'.$this->btfftstate.'"> 
@@ -916,7 +934,7 @@ class view {
 				<td width="'.$this->size.'">
 		';
 		$htmlframe .='
-				<table class="bgcolor0" border="0" cellspacing="0" cellpadding="0">
+				<table class="bgcolor0" border="0" cellspacing="3" cellpadding="0">
 					<tr valign="center">
 						<td>
 		';
@@ -936,7 +954,7 @@ class view {
 						</td>
 						<td valign="center">
 				';
-		$param = "left=0,top=".($this->viewnb*180).",height=170,width=370";
+		$param = "left=0,top=".($this->viewnb*180).",height=200,width=370";
 		$url = "adjust.php?name=$name&displayname=$this->title";
 		$htmlframe .='
 			<a href="javascript:popUpAdjust(\''.$url.'\',\''.$name.'\',\''.$param.'\');">
@@ -952,7 +970,12 @@ class view {
 		$imgstatus = "<div id='".$this->name."imgstat'><img name='".$this->name."imgstatgrad' border='0' src='".$gradient."'> ".$settings_icon."</div>";
 		$htmlframe .= $imgstatus;
 		$htmlframe .='
-			</a>';
+			</a></td>';
+		$htmlframe .= '<td> <input class="bt1" type="button" '
+        .'value="Remove" onClick=\'update_image_list("'.$name.'")\'/>';
+		$htmlframe .= '</td><td> <input class="bt1" type="button" '
+        .'value="Next" onClick=\'incIndex(); updateviews()\'/>';
+
 		$htmlframe .= '
 						</td>
 					 </tr>

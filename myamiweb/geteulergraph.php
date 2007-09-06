@@ -7,17 +7,20 @@
 
 	require('inc/euler.inc');
 	require('inc/jpgraph.php');
-	require('inc/jpgraph_line.php');
+	require('inc/jpgraph_scatter.php');
 	$begin=getmicrotime();
 	$reconId=$_GET['reconId'];
 	$iter=$_GET['iter'];
 
+	$reconId=159;
+	$reconId=118;
 	$reconId=158;
-	$iter = 3;
+	$iter = 1;
 
 	$particle = new particledata();
 	$info = $particle->getIterationInfo($reconId);
 	$total_iter=count($info);
+	print_r($info);
 
 	if(!$iter)
 	{
@@ -28,13 +31,18 @@
 			$stats = getData($reconId, $i,$i+1);
 			$data[] = rad2deg($stats->myMean); 
 		}
-		createGraph($data, "myGraph.png");
+		createGraph($data, "eulerTests/graph_$reconId.png");
 	}
 	else
 	{
-		$stats = getTriangleData($reconId, $iter,$iter+1);
-		$myImage = createTriangle($stats->eulers1);
-		imagepng($myImage,"eulerTests/image.png");
+		for($i = 1; $i<=$total_iter; $i++)
+		{
+			echo "In";
+			$stats = getTriangleData($reconId, $i,$i+1);
+			$myImage = createTriangle($stats->eulers1);
+			imagepng($myImage,"eulerTests/image_".$reconId."_$i.png");
+			echo "Done iter $i\n";
+		}
 	}
 	$end=getmicrotime();
 	echo "total time:".($end-$begin);
@@ -52,7 +60,8 @@
 		global $particle;
 		$refine1 = $particle->getRefinementData($reconId,$iter1);
 		$refine2 = $particle->getRefinementData($reconId,$iter2);
-		$commonprtls = $particle->getCommonParticles($refine1['DEF_id'], $refine2['DEF_id']);
+		$commonprtls = $particle->getParticlesFromRefinementId($refine1['DEF_id']);
+		//$commonprtls = $particle->getCommonParticles($refine1['DEF_id'], $refine2['DEF_id']);
 		$eulers1 = array();
 		foreach ($commonprtls  as $k) {
 			$eulers1[]=eulerArray(deg2rad($k['euler1_1']), deg2rad($k['euler1_2']), deg2rad($k['rot1']));
@@ -65,6 +74,7 @@
 		global $particle;
 		$r=$particle->getEulerStats($reconId, $iter1, $iter2);
 		$diff = explode(",", $r[0]['difference']);
+
 //		print_r($r[0]['eulers']);
 //		$eulers = explode(",", $r[0]['eulers']);
 //		array_map('toFloat',$diff);
@@ -111,9 +121,13 @@
 	function createGraph($dataset, $outfile="")
 	{
 		$graph = new Graph(400,200);
-		$graph->SetScale("textlin");
-		$line = new LinePlot($dataset);
-		$line->SetBarCenter();
+		$graph->SetScale("textlin",0,100);
+		$graph->title->set('Euler mean jumps');
+		$graph->xaxis->setTitle('Iteration number','middle');
+		$graph->yaxis->setTitle('Mean jump','middle');
+		$line = new ScatterPlot($dataset);
+		$line->linkpoints = true;
+	//	$line->SetBarCenter();
 		$graph->add($line);
 		if (!$outfile)
 			header("Content-type: image/x-png");

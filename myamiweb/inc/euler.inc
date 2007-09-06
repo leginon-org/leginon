@@ -230,6 +230,8 @@ function changePoint($euler,$max)
 		$theta = atan($n['y']/$n['x']);
 	$theta = $n['x'];
 	$phi = acos($n['z']/$r);
+//	$theta = 0;
+//	$theta = 0;
 	return array('x' => $theta, 'y' => $phi);
 }
 
@@ -237,19 +239,20 @@ function changePoint($euler,$max)
 function drawImage($locations,$map) {
 
 	$image = imagecreate(300,300);
-	imagecolorallocate($image,255,255,255);
+	imagecolorallocate($image,0,0,0);
 	for($i = 0; $i<count($locations); $i++)
 	{
 		$index = $locations[$i]['x']*500*$locations[$i]['y'];
 		$maxi = max($map);
-		$freq = $map[$index]*225/($maxi*3);
+		$freq = $map[$index]*225/($maxi/8);
 		if($freq>=225)
 			$freq = 225;
 		$color = imagecolorresolve($image,$freq,$freq,$freq);
 		$a = $locations[$i];
 		$x =150+(9*rad2deg($a['x'])); 
 		$y =20+(3*rad2deg($a['y']));
-		imagefilledrectangle($image,$x,$y,$x+3,$y+3,$color);
+		$squaresize = 4;
+		imagefilledellipse($image,$x,$y,$squaresize,$squaresize,$color);
 	}
 	return $image;
 }

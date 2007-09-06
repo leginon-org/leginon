@@ -15,6 +15,36 @@ if (window.XMLHttpRequest) {
 } else if (window.ActiveXObject) {
         xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
 }
+String.prototype.trim = function() { return this.replace(/^\s+|\s+$/, ''); };
+
+
+function update_image_list(view) {
+	if (list = eval("document.viewerform."+view+"pre"))
+		selpreset=list.options[list.selectedIndex].value
+	displaydebug("a:"+view+" "+selpreset)
+	var jsUsername=null
+	if (obj=document.viewerform.imageId) {
+		jsindex = obj.selectedIndex;
+		jsimgId = obj.options[jsindex].value;
+		var url = 'updateimagelist.php?username='+jsUsername+'&imageId='+jsimgId+'&sessionId='+jsSessionId+'&p='+selpreset
+		xmlhttp.open('GET', url, true)
+		xmlhttp.onreadystatechange = function() {
+			if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+				// --- check
+				dbresult = xmlhttp.responseText
+				displaydebug("c:"+jsindex+" l:"+obj.length+": dbe:"+dbresult.length+"  "+dbresult)
+				// --- set index to next image
+				if (jsindex<obj.length && dbresult=="1") {
+					obj.remove(jsindex)
+					if (obj.length)
+						obj.options[jsindex].selected=true
+					updateviews()
+				}
+			}
+		}
+	xmlhttp.send(null);
+	}
+}
 
 function setproject(id) {
 	if (obj=document.viewerform.projectId) {
@@ -54,6 +84,25 @@ function checkevents(e)
 	} else if (e.type == eventchange && !keydown) {
 			updateviews();
 	}
+}
+
+function getKey(e)
+{
+  var code;
+  if (!e) var e = window.event;
+  if (e.keyCode) code = e.keyCode;
+  else if (e.which) code = e.which;
+  var character = String.fromCharCode(code);
+
+	switch (character) {
+		case 'N':
+			incIndex()
+			updateviews()
+			break;
+		case 'R':
+			update_image_list()
+			break;
+  }
 }
 
 function getImageAutoScale(view) {
@@ -171,6 +220,8 @@ function loadImage(view) {
 
 function setimgId() {
 	if (obj=document.viewerform.imageId) {
+	if (!obj.length)
+		return
 	jsindex = obj.selectedIndex; 
 	if (jsindex < 0) {
 		jsindex=0; 
@@ -243,6 +294,8 @@ function newfile(view){
 		if (list)
 			prem.value = selpreset;
 
+	eval("jspreset"+view+"='"+selpreset+"'")
+
 	setImageStatus(view);
 
 	if (eval(view+"fft_bt_st")) fft="&fft=1"; else fft="";
@@ -264,13 +317,15 @@ function newfile(view){
 	if (cquality = eval("jsquality"+view)) quality="&t="+cquality; else quality="";
 	if (ccolormap= eval("jscolormap"+view)) colormap="&colormap="+ccolormap; else colormap="";
 	if (cautoscale= eval("jsautoscale"+view)) autoscale="&autoscale="+cautoscale; else autoscale="";
+	if (cdisplayfilename= eval("jsdisplayfilename"+view)) displayfilename="&df="+cdisplayfilename; else displayfilename="";
+	if (cloadjpg= eval("jsloadjpg"+view)) loadjpg="&lj="+cloadjpg; else loadjpg="";
 	if (cptclsel = eval("jsptclsel"+view)) ptclsel="&psel="+escape(cptclsel); else ptclsel="";
 
 	options = "imgsc="+jsimagescriptcur+
 		"&preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+autoscale+ptclsel+nptcl+ag;
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+autoscale+displayfilename+loadjpg+ptclsel+nptcl+ag;
 
 	if (options == lastoptions[vid])
 		return;
@@ -437,6 +492,20 @@ function setautoscale(viewname, state) {
 	}
 }
 
+function setloadfromjpg(viewname, state) {
+	eval("jsloadjpg"+viewname+"='"+state+"'");
+	if (b = eval("document.viewerform."+viewname+"loadjpg")) {
+		b.value=state;
+	}
+}
+
+function setdisplayfilename(viewname, state) {
+	eval("jsdisplayfilename"+viewname+"='"+state+"'");
+	if (b = eval("document.viewerform."+viewname+"df")) {
+		b.value=state;
+	}
+}
+
 function popUpMap(URL)
 {
 	window.open(URL, "map", "left=0,top=0,height=512,width=512,toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes");
@@ -457,7 +526,7 @@ function popUpAdjust(URL, view, param){
 	quality = (quality) ? "&t="+quality : "";
 	colormap= (colormap) ? "&colormap="+colormap : "";
 	autoscale= (autoscale) ? "&autoscale="+autoscale : "";
-	param = (param) ? param : "left=0,top=0,height=170,width=370";
+	param = (param) ? param : "left=0,top=0,height=200,width=370";
 	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+binning+quality+colormap+autoscale+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');");
 }
 

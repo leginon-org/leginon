@@ -766,6 +766,35 @@ class particledata {
 		return $r;
 	}
 
+	function getParticlesFromRefinementId($refine1) {
+		# compare 2 iterations, get all the particles that were used in both
+		# reconstructions (ignore those that were thrown out) and return the eulers"
+		$q = "SELECT cls1.`REF|ApStackParticlesData|particle` as prtl, "
+				."spd.particleNumber, "
+				."euler1.euler1 as euler1_1, "
+				."euler1.euler2 as euler1_2, "
+				."euler1.euler3 as euler1_3, "
+				."cls1.`shiftx` as shiftx1, "
+				."cls1.`shifty` as shifty1, "
+				."cls1.`inplane_rotation` as rot1, "
+				."cls1.`quality_factor` as qf1 "
+				."FROM (`ApParticleClassificationData` as cls1) "
+				."LEFT JOIN ( "
+				." `ApStackParticlesData` as spd, "
+				." `ApEulerData` euler1) "
+				."ON ( "
+				."spd.DEF_id=cls1.`REF|ApStackParticlesData|particle` "
+				."AND cls1.`thrown_out` is NULL "
+				."AND euler1.DEF_id=cls1.`REF|ApEulerData|eulers` "
+				.") "
+				."WHERE ( "
+				." cls1.`REF|ApRefinementData|refinement`=$refine1 "
+				.") "
+				."ORDER by prtl";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getStackParticleNum ($particleId) {
 	        $q = "SELECT particleNumber "
 					."FROM `ApStackParticlesData` "

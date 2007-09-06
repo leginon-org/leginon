@@ -1,7 +1,7 @@
 <?php
 /**
- *	@version $Revision: 1.33 $
- *	@version $Id: image.inc,v 1.33 2007-08-16 22:47:18 dfellman Exp $
+ *	@version $Revision: 1.34 $
+ *	@version $Id: image.inc,v 1.34 2007-09-06 23:04:23 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -34,6 +34,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		'newptcl' => false,
 		'autoscale' => false,
 		'targettype' => false,
+		'loadjpg' => false,
 		'mrc' => false
 	);
 
@@ -43,6 +44,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 
 	$size = $p['size'];
 	$binning = $p['binning'];
+	$loadjpg = $p['loadjpg'];
 
 	$leginondata = new leginondata();
 	// --- get image path
@@ -67,8 +69,16 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 	$pic = $path.$filename;
 	if (@is_file($pic)) {
 		$imginfo = $leginondata->getImageInfo($imageId);
-		$dimx = $imginfo['dimx'];
+		if ($p['loadjpg']) {
+			$jpgfilename = ereg_replace('mrc$', 'jpg', $filename);
+			$jpgpath = ereg_replace("rawdata", "jpgs", $path);
+			$jpgpic = $jpgpath.$jpgfilename;
+		}
+		if (@is_file($jpgpic)) {
+			$img = imagecreatefromjpeg($jpgpic);
+		} else {
 		if ($p['autoscale']) {
+			$dimx = $imginfo['dimx'];
 			$densitymax = ($p['colormap']) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL;
 			list($info) = $leginondata->getImageStat($id);
 			if ($info) {
@@ -113,6 +123,8 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 
 		else
 			$img = getdefault($pic, $p['minpix'], $p['maxpix'], $p['colormap'], $binning);
+
+		}
 
 		$scalefactor=1;
 		if ($size) {

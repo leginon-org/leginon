@@ -14,7 +14,7 @@ require ('inc/project.inc');
 require ('inc/viewer.inc');
 require ('inc/processing.inc');
   
-// check if reconstruction is specified
+// --- check if reconstruction is specified
 $reconId = $_GET['reconId'];
 writeTop("Miscellaneous","Miscellaneous Stuff");
 

@@ -48,6 +48,8 @@ if (!$binning=$_GET['binning'])
 	$binning = 'auto';
 
 $displayloadingtime = false;
+$displayfilename = ($_GET['df']==1) ? true : false;
+$loadjpg= ($_GET['lj']==1) ? true : false;
 
 if ($g) {
 
@@ -62,6 +64,7 @@ if ($g) {
 		'scalebar' => $displayscalebar,
 		'displaytargets' => $displaytarget,
 		'loadtime' => $displayloadingtime,
+		'loadjpg' => $loadjpg,
 		'autoscale' => $autoscale,
 		'newptcl' => $displaynptcl,
 		'ptcl' => urldecode($displayparticle)
@@ -106,7 +109,11 @@ if ($g) {
 
 	$nimgId = $leginondata->findImage($id, $preset);
 	list($res) = $leginondata->getFilename($nimgId['id']);
-	$filename = ereg_replace('mrc$', $ext, $res['filename']);
+	$filename = $res['filename'];
+	if ($displayfilename)
+		imagestringshadow($img, 2, 10, 10, $filename, imagecolorallocate($img,255,255,255));
+
+	$filename = ereg_replace('mrc$', $ext, $filename);
 	Header( "Content-type: $type ");
 	Header( "Content-Disposition: inline; filename=".$filename);
         if ($t=='png')

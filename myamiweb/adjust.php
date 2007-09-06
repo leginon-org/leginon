@@ -69,6 +69,8 @@ var jsfilter = '$currentfilter';
 var jsbinning = '$currentbinning';
 var jsquality = '$currentquality';
 var jsautoscale = '$autoscale';
+var jsdisplayfilename = '$displayfilename';
+var jsloadfromjpg = '$loadfromjpg';
 var gradient = '/img/dfe/$currentgradient';
 ";
 require('inc/filter.inc');
@@ -90,6 +92,16 @@ function setautoscale() {
 		jsautoscale = (autoscale.checked==true) ? 1 : 0;
 }
 
+function setloadfromjpg() {
+	if (loadfromjpg = document.adjustform.loadfromjpg)
+		jsloadfromjpg = (loadfromjpg.checked==true) ? 1 : 0;
+}
+
+function setdisplayfilename() {
+	if (displayfilename = document.adjustform.displayfilename)
+		jsdisplayfilename = (displayfilename.checked==true) ? 1 : 0;
+}
+
 function update() {
 	if (binninglist = document.adjustform.binning)
 		jsbinning=binninglist.options[binninglist.selectedIndex].value;
@@ -104,6 +116,8 @@ function update() {
 	parentwindow.setminmax(jsviewname,jsminpix,jsmaxpix);
 	parentwindow.setcolormap(jsviewname,jscolormap);
 	parentwindow.setautoscale(jsviewname,jsautoscale);
+	parentwindow.setdisplayfilename(jsviewname,jsdisplayfilename);
+	parentwindow.setloadfromjpg(jsviewname,jsloadfromjpg);
 	if (qualitylist = document.adjustform.quality)
 		jsquality=qualitylist.options[qualitylist.selectedIndex].value;
 	parentwindow.setquality(jsviewname,jsquality);
@@ -258,6 +272,18 @@ echo $cmapstr;
 		}
 	?>
 	</select>
+	Display Filename
+		<?php $sel = ($displayfilename==1) ? "checked" : ""; ?>
+		<input type="checkbox" name="displayfilename" <?php echo $sel; ?> value="1" onClick="setdisplayfilename()">
+	</td>
+	</tr>
+	<tr>
+	<td colspan="2">
+	Load jpeg
+	</td>
+	<td>
+		<?php $sel = ($loadfromjpg==1) ? "checked" : ""; ?>
+		<input type="checkbox" name="loadfromjpg" <?php echo $sel; ?> value="1" onClick="setloadfromjpg()">
 	<input id="updatebutton" type="button" alt="Update Image" value="Update" onclick="update();">
  </td>
  </tr>
