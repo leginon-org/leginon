@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanelBitmaps.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-05 23:52:16 $
+# $Date: 2007-09-06 00:33:33 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -116,22 +116,6 @@ def targetBitmap_point(color):
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, 1))
 	dc.DrawPoint(0,0)
-	dc.EndDrawing()
-	dc.SelectObject(wx.NullBitmap)
-	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
-	return bitmap
-
-#--------------------
-def targetBitmap_number(color, number):
-	bitmap = wx.EmptyBitmap(iconlength, iconlength)
-	dc = wx.MemoryDC()
-	dc.SelectObject(bitmap)
-	dc.BeginDrawing()
-	dc.Clear()
-	#dc.SetFont(wx.Font(10, wx.DEFAULT, wx.NORMAL, 1))
-	dc.SetTextForeground(color) 
-	#dc.SetPen(wx.Pen(color, penwidth))
-	dc.DrawText(str(number), 0, 0)
 	dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))

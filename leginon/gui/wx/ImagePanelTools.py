@@ -5,15 +5,12 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImagePanelTools.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-05 23:52:13 $
+# $Date: 2007-09-06 00:33:33 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
-
-#!/usr/bin/env python
-
 #
 # COPYRIGHT:
 #       The Leginon software is Copyright 2003
@@ -79,10 +76,8 @@ class ContrastTool(object):
 		self.slidermin = 0
 		self.slidermax = 255
 
-		self.minslider = wx.Slider(self.imagepanel, -1, self.slidermin,
-															self.slidermin, self.slidermax, size=(200, -1))
-		self.maxslider = wx.Slider(self.imagepanel, -1, self.slidermax,
-															self.slidermin, self.slidermax, size=(200, -1))
+		self.minslider = wx.Slider(self.imagepanel, -1, self.slidermin, self.slidermin, self.slidermax, size=(200, -1))
+		self.maxslider = wx.Slider(self.imagepanel, -1, self.slidermax, self.slidermin, self.slidermax, size=(200, -1))
 		self.minslider.Bind(wx.EVT_SCROLL_THUMBRELEASE, self.onMinSlider)
 		self.maxslider.Bind(wx.EVT_SCROLL_THUMBRELEASE, self.onMaxSlider)
 		self.minslider.Bind(wx.EVT_SCROLL_ENDSCROLL, self.onMinSlider)
@@ -90,10 +85,8 @@ class ContrastTool(object):
 		self.minslider.Bind(wx.EVT_SCROLL_THUMBTRACK, self.onMinSlider)
 		self.maxslider.Bind(wx.EVT_SCROLL_THUMBTRACK, self.onMaxSlider)
 
-		self.iemin = FloatEntry(imagepanel, -1, chars=6, allownone=False,
-														value='%g' % self.contrastmin)
-		self.iemax = FloatEntry(imagepanel, -1, chars=6, allownone=False,
-														value='%g' % self.contrastmax)
+		self.iemin = FloatEntry(imagepanel, -1, chars=6, allownone=False, value='%g' % self.contrastmin)
+		self.iemax = FloatEntry(imagepanel, -1, chars=6, allownone=False, value='%g' % self.contrastmax)
 		self.iemin.Enable(False)
 		self.iemax.Enable(False)
 
@@ -101,14 +94,10 @@ class ContrastTool(object):
 		self.iemax.Bind(EVT_ENTRY, self.onMaxEntry)
 
 		self.sizer = wx.GridBagSizer(0, 0)
-		self.sizer.Add(self.minslider, (0, 0), (1, 1),
-										wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_BOTTOM)
-		self.sizer.Add(self.iemin, (0, 1), (1, 1),
-										wx.ALIGN_CENTER|wx.FIXED_MINSIZE|wx.ALL, 2)
-		self.sizer.Add(self.maxslider, (1, 0), (1, 1),
-										wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP)
-		self.sizer.Add(self.iemax, (1, 1), (1, 1),
-										wx.ALIGN_CENTER|wx.FIXED_MINSIZE|wx.ALL, 2)
+		self.sizer.Add(self.minslider, (0, 0), (1, 1), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_BOTTOM)
+		self.sizer.Add(self.iemin, (0, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE|wx.ALL, 2)
+		self.sizer.Add(self.maxslider, (1, 0), (1, 1), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP)
+		self.sizer.Add(self.iemax, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE|wx.ALL, 2)
 		sizer.Add(self.sizer, 0, wx.ALIGN_CENTER)
 
 	#--------------------
@@ -171,6 +160,8 @@ class ContrastTool(object):
 			self.iemax.SetValue(0.0)
 			self.iemin.Enable(False)
 			self.iemax.Enable(False)
+			self.minslider.Enable(False)
+			self.maxslider.Enable(False)
 		else:
 			self.imagemin = range[0]
 			self.imagemax = range[1]
