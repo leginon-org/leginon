@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetTemplate.py,v $
-# $Revision: 1.8 $
+# $Revision: 1.9 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-06 20:47:46 $
+# $Date: 2007-09-07 18:25:14 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -238,9 +238,12 @@ class AutoFillTargets(wx.Dialog):
 	def onOK(self, evt):
 		numtargets = float(self.numtargets.GetValue())
 		if numtargets > 7:
+				self.Close()
 				dialog = wx.MessageDialog(self, "Too many targets:\n'%d' is greater than 7" % numtargets, 'Error', wx.OK|wx.ICON_ERROR)
 				dialog.ShowModal()
-				dialog.Destroy()		
+				dialog.Destroy()
+				evt.Skip()
+				return
 		radius = float(self.radius.GetValue())
 		degoffset = float(self.angleoffset.GetValue())
 		deg = 0.0
@@ -257,7 +260,8 @@ class AutoFillTargets(wx.Dialog):
 			self.targets.append(target)
 			deg += degincr
 		evt.Skip()
-
+		return
+	
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
