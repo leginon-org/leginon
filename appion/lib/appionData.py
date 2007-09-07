@@ -120,8 +120,10 @@ class ApImageTransformationData(Data):
 			('shifty', float),
 			('correlation', float),
 			('scale', float),
-			#('inplane_rotation', float),
 			('tilt', float),
+			#('image1_rotation', float),
+			#('image2_rotation', float),
+			#('rmsd', float),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApImageTransformationData=ApImageTransformationData

@@ -14,6 +14,7 @@ from gui.wx import TargetPanel
 import radermacher
 from scipy import ndimage, optimize
 import tiltDialog
+import apTiltTransform
 
 class TiltTargetPanel(TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True, name=None):
@@ -185,8 +186,8 @@ class MyApp(wx.App):
 		gammarad = self.gamma*math.pi/180.0
 		phirad = self.phi*math.pi/180.0
 		#CALCULATE TRANSFORM LIMITS
-		a1b = tiltDialog.a1Toa2(a1,a2,thetarad,gammarad,phirad,self.scale,self.shiftx,self.shifty)
-		a2b = tiltDialog.a2Toa1(a1,a2,thetarad,gammarad,phirad,self.scale,self.shiftx,self.shifty)
+		a1b = apTiltTransform.a1Toa2(a1,a2,thetarad,gammarad,phirad,self.scale,self.shiftx,self.shifty)
+		a2b = apTiltTransform.a2Toa1(a1,a2,thetarad,gammarad,phirad,self.scale,self.shiftx,self.shifty)
 		#CONVERT NUMPY TO LIST
 		a1blist = []
 		a2blist = []
@@ -248,11 +249,11 @@ class MyApp(wx.App):
 		phirad = self.phi*math.pi/180.0
 
 		#align first
-		a1b = tiltDialog.a1Toa2(a1,a2,thetarad,gammarad,phirad,self.scale,self.shiftx,self.shifty)
+		a1b = apTiltTransform.a1Toa2(a1,a2,thetarad,gammarad,phirad,self.scale,self.shiftx,self.shifty)
 		self.panel2.setTargets('Aligned', a1b)
 		
 		#align second
-		a2b = tiltDialog.a2Toa1(a1,a2,thetarad,gammarad,phirad,self.scale,self.shiftx,self.shifty)
+		a2b = apTiltTransform.a2Toa1(a1,a2,thetarad,gammarad,phirad,self.scale,self.shiftx,self.shifty)
 		self.panel1.setTargets('Aligned', a2b)
 
 	#---------------------------------------
