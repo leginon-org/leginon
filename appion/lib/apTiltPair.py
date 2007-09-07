@@ -67,19 +67,31 @@ def getTiltPair(imgdata):
 	return tiltpair
 
 def tiltPickerToDbNames(**kwargs):
+	#('dbemdata|AcquisitionImageData|image1', int),
+	#('dbemdata|AcquisitionImageData|image2', int),
+	#('shiftx', float),
+	#('shifty', float),
+	#('correlation', float),
+	#('scale', float),
+	#('tilt', float),
+	#('image1_rotation', float),
+	#('image2_rotation', float),
+	#('rmsd', float),
 	newdict = {}
 	if 'theta' in kwargs:
 		newdict['tilt'] = kwargs['theta']
 	if 'gamma' in kwargs:
-		newdict['inplane_rotation'] = kwargs['gamma']
+		newdict['image1_rotation'] = kwargs['gamma']
 	if 'phi' in kwargs:
-		newdict['inplane_rotation'] = kwargs['phi']
+		newdict['image2_rotation'] = kwargs['phi']
 	if 'scale' in kwargs:
 		newdict['scale'] = kwargs['scale']
 	if 'shiftx' in kwargs:
 		newdict['shiftx'] = kwargs['shiftx']
 	if 'shifty' in kwargs:
 		newdict['shifty'] = kwargs['shifty']
+
+
 
 def insertTransform(imgdata1, imgdata2, **kwargs):
 	#First we need to sort imgdata

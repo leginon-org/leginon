@@ -113,7 +113,6 @@ class FitAllDialog(wx.Dialog):
 		self.phivalue = FloatEntry(self, -1, allownone=False, chars=8, value=phistr)
 		label2 = wx.StaticText(self, -1, "degrees", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.phitog = wx.ToggleButton(self, -1, "Refine")
-		print dir(self.phitog)
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onTogglePhi, self.phitog)
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.phivalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
@@ -148,11 +147,15 @@ class FitAllDialog(wx.Dialog):
 		inforow.Add(self.shiftyvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.shifttog, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
-		errrow = wx.GridSizer(1,2)
-		label = wx.StaticText(self, -1, "Average error (in pixels):  ", style=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
-		self.errlabel = wx.StaticText(self, -1, " unknown ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		errrow.Add(label, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
-		errrow.Add(self.errlabel, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		summaryrow = wx.GridSizer(1,4)
+		label = wx.StaticText(self, -1, "RMSD (pixels):  ", style=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+		self.rmsdlabel = wx.StaticText(self, -1, " unknown ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		summaryrow.Add(label, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+		summaryrow.Add(self.rmsdlabel, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, "Iterations: ", style=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+		self.iterlabel = wx.StaticText(self, -1, " none ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		summaryrow.Add(label, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+		summaryrow.Add(self.iterlabel, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
 		self.cancelfitall = wx.Button(self, wx.ID_CANCEL, '&Cancel')
 		self.applyfitall = wx.Button(self,  wx.ID_APPLY, '&Apply')
@@ -166,7 +169,7 @@ class FitAllDialog(wx.Dialog):
 
 		self.sizer = wx.FlexGridSizer(3,1)
 		self.sizer.Add(inforow, 0, wx.EXPAND|wx.ALL, 10)
-		self.sizer.Add(errrow, 0, wx.EXPAND|wx.ALL, 5)
+		self.sizer.Add(summaryrow, 0, wx.EXPAND|wx.ALL, 5)
 		self.sizer.Add(buttonrow, 0, wx.EXPAND|wx.ALL, 5)
 		self.SetSizerAndFit(self.sizer)
 
@@ -250,7 +253,8 @@ class FitAllDialog(wx.Dialog):
 		self.scalevalue.SetValue(round(fit['scale'],5))
 		self.shiftxvalue.SetValue(round(fit['shiftx'],5))
 		self.shiftyvalue.SetValue(round(fit['shifty'],5))
-		self.errlabel.SetLabel(str(round(fit['err'],5)))
+		self.rmsdlabel.SetLabel(str(round(fit['rmsd'],5)))
+		self.iterlabel.SetLabel(str(fit['iter']))
 
 	def onApplyLeastSquares(self, evt):
 		self.Close()

@@ -33,14 +33,16 @@ def willsq(a1, a2, \
 	#xscale = numpy.ones(5, dtype=numpy.float32)
 	#xscale = numpy.array((1,1,1,1,1), dtype=numpy.float32)
 
-	print "optimizing angles and shift..."
-	print "initial error:",_diffParticles(x0, initx, xscale, a1, a2)
+	#print "optimizing angles and shift..."
+	#print "initial rmsd:",_diffParticles(x0, initx, xscale, a1, a2)
 	a1f = numpy.asarray(a1, dtype=numpy.float32)
 	a2f = numpy.asarray(a2, dtype=numpy.float32)
-	x1 = optimize.fmin(_diffParticles, x0, args=(initx, xscale, a1f, a2f), 
-		xtol=1e-4, ftol=1e-4, maxiter=500, maxfun=500)
-	fit['err'] = _diffParticles(x1, initx, xscale, a1, a2)
-	print "final error:",fit['err']
+	solved = optimize.fmin(_diffParticles, x0, args=(initx, xscale, a1f, a2f), 
+		xtol=1e-4, ftol=1e-4, maxiter=500, maxfun=500, disp=0, full_output=1)
+	x1 = solved[0]
+	fit['rmsd'] = solved[1] #_diffParticles(x1, initx, xscale, a1, a2)
+	fit['iter'] = int(solved[3])
+	#print "final rmsd: "+str(fit['rmsd'])+" in "+str(fit['iter'])+" iterations"
 
 	#x3 final values
 	x3 = x1 * xscale + initx
@@ -50,7 +52,7 @@ def willsq(a1, a2, \
 	fit['scale']  = x3[3]
 	fit['shiftx'] = x3[4]
 	fit['shifty'] = x3[5]
-	fit['prob'] = math.exp(-1.0*math.sqrt(abs(fit['err'])))**2
+	fit['prob'] = math.exp(-1.0*math.sqrt(abs(fit['rmsd'])))**2
 	return fit
 
 def _diffParticles(x1, initx, xscale, a1, a2):
@@ -64,11 +66,11 @@ def _diffParticles(x1, initx, xscale, a1, a2):
 	a2b = a2Toa1(a1,a2,theta,gamma,phi,scale,shiftx,shifty)
 	maxpix = float(len(a2b))
 	diffmat = (a1 - a2b)
-	xerr = ndimage.mean(diffmat[:,0]**2)
-	yerr = ndimage.mean(diffmat[:,1]**2)
-	err = math.sqrt(xerr + yerr)/float(len(a2b))
-	#print (x2*57.29).round(decimals=3),round(err,6)
-	return err
+	xrmsd = ndimage.mean(diffmat[:,0]**2)
+	yrmsd = ndimage.mean(diffmat[:,1]**2)
+	rmsd = math.sqrt(xrmsd + yrmsd)/float(len(a2b))
+	#print (x2*57.29).round(decimals=3),round(rmsd,6)
+	return rmsd
 
 def a1Toa2(a1,a2,theta,gamma,phi,scale, shiftx, shifty):
 	a1b = a2Toa1(a2,a1,-1.0*theta,-1.0*phi,-1.0*gamma, 1.0/scale, -1.0*shiftx,-1.0*shifty)
