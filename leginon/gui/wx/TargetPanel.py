@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanel.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-06 00:51:40 $
+# $Date: 2007-09-07 20:25:15 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -22,18 +22,12 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
+import time
 import math
 import wx
 import Image
 import gui.wx.ImagePanel
 import gui.wx.TargetPanelTools
-
-#ImageClickedEventType = wx.NewEventType()
-#EVT_IMAGE_CLICKED = wx.PyEventBinder(ImageClickedEventType)
-
-ImageClickDoneEventType = wx.NewEventType()
-EVT_IMAGE_CLICK_DONE = wx.PyEventBinder(ImageClickDoneEventType)
-
 
 ##################################
 ##
@@ -86,6 +80,24 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 
 	#--------------------
 	def setDisplayedTargets(self, type, targets):
+		if targets is None:
+			if type in self.targets:
+				del self.targets[type]
+				self.order.remove(type)
+		else:
+			targets = list(targets)
+			for t in targets:
+				if not isinstance(t, gui.wx.TargetPanelTools.Target):
+					raise TypeError
+			self.targets[type] = targets
+			if type not in self.order:
+				self.order.append(type)
+		self.reverseorder = list(self.order)
+		self.reverseorder.reverse()
+		self.UpdateDrawing()
+
+	#--------------------
+	def setDisplayedNumbers(self, type, targets):
 		if targets is None:
 			if type in self.targets:
 				del self.targets[type]
@@ -184,20 +196,24 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 
 	#--------------------
 	def drawNumbers(self, dc, color, targets):
-		dc.SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.BOLD))
+		#dc.SetFont(wx.Font(14, wx.DEFAULT, wx.NORMAL, wx.BOLD))
+		#dc.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
 		dc.SetTextForeground(color) 
-		dc.SetPen(wx.Pen(color, 1))
+		#dc.SetPen(wx.Pen(color, 20))
 		scaledpoints = [(target.x,target.y) for target in targets]
-		for i,p1 in enumerate(scaledpoints[:-1]):
+		print "drawing text of "+str(len(scaledpoints))+" targets"
+		for i,p1 in enumerate(scaledpoints):
 			p1 = self.image2view(p1)
 			dc.DrawText(str(i+1), p1[0], p1[1])
 
 	#--------------------
 	def Draw(self, dc):
+		now = time.time()
 		gui.wx.ImagePanel.ImagePanel.Draw(self, dc)
 		dc.BeginDrawing()
 		self.drawTargets(dc)
 		dc.EndDrawing()
+		print 'Drawn', time.time() - now
 
 	#--------------------
 	def _onLeftClick(self, evt):

@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanelTools.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-06 00:51:41 $
+# $Date: 2007-09-07 20:25:16 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -20,11 +20,15 @@
 #
 
 import wx
+import sys
 import gui.wx.ImagePanelTools
 import gui.wx.TargetPanelBitmaps
 
 TargetingEventType = wx.NewEventType()
 EVT_TARGETING = wx.PyEventBinder(TargetingEventType)
+
+ShowNumbersEventType = wx.NewEventType()
+EVT_SHOWNUMBERS = wx.PyEventBinder(ShowNumbersEventType)
 
 ##################################
 ##
@@ -37,21 +41,35 @@ class TargetingEvent(wx.PyCommandEvent):
 		self.name = name
 		self.value = value
 
+class ShowNumbersEvent(wx.PyCommandEvent):
+	def __init__(self, source, name, value):
+		wx.PyCommandEvent.__init__(self, ShowNumbersEventType, source.GetId())
+		self.SetEventObject(source)
+		self.name = name
+		self.value = value
+
 ##################################
 ##
 ##################################
 
 class TargetTypeTool(gui.wx.ImagePanelTools.TypeTool):
-	def __init__(self, parent, name, display=None, settings=None, target=None, shape='+', unique=False):
+	def __init__(self, parent, name, display=None, settings=None, target=None, shape='+', unique=False, numbers=None):
 		self.color = display
 		self.shape = shape 
 		gui.wx.ImagePanelTools.TypeTool.__init__(self, parent, name, display=display, settings=settings)
 
 		self.targettype = TargetType(self.name, self.color, self.shape, unique)
+		self.numberstype = TargetType(self.name, self.color, 'numbers', unique)
 
 		self.togglebuttons['display'].SetBitmapDisabled(self.bitmaps['display'])
 
 		if target is not None:
+			if numbers is not None:
+				togglebutton = self.addToggleButton('numbers', 'Show Numbers')
+				self.enableToggleButton('numbers', True)
+				togglebutton.Bind(wx.EVT_BUTTON, self.onToggleNumbers)
+				self.usenumbers = True
+
 			togglebutton = self.addToggleButton('target', 'Add Targets')
 			self.enableToggleButton('target', False)
 			togglebutton.Bind(wx.EVT_BUTTON, self.onToggleTarget)
@@ -60,6 +78,7 @@ class TargetTypeTool(gui.wx.ImagePanelTools.TypeTool):
 	def getBitmaps(self):
 		bitmaps = gui.wx.ImagePanelTools.TypeTool.getBitmaps(self)
 		bitmaps['display'] = gui.wx.TargetPanelBitmaps.getTargetIconBitmap(self.color, self.shape)
+		bitmaps['numbers'] = gui.wx.TargetPanelBitmaps.getTargetIconBitmap(self.color, 'numbers')
 		bitmaps['target'] = gui.wx.ImagePanelTools.getBitmap('arrow.png')
 		return bitmaps
 
@@ -68,8 +87,27 @@ class TargetTypeTool(gui.wx.ImagePanelTools.TypeTool):
 		if not self.togglebuttons['target'].IsEnabled():
 			self.togglebuttons['target'].SetValue(False)
 			return
+		#if self.togglebuttons['target'].GetValue() is True:
+		#	self.togglebuttons['target'].SetBackgroundColour(wx.Color(160,160,160))
+		#else:
+		#	self.togglebuttons['target'].SetBackgroundColour(wx.WHITE)
 		evt = TargetingEvent(evt.GetEventObject(), self.name, evt.GetIsDown())
 		self.togglebuttons['target'].GetEventHandler().AddPendingEvent(evt)
+
+	#--------------------
+	def onToggleNumbers(self, evt):
+		if not self.togglebuttons['numbers'].IsEnabled():
+			self.togglebuttons['numbers'].SetValue(False)
+			return
+		#if self.togglebuttons['numbers'].GetValue() is True:
+		#	self.togglebuttons['numbers'].SetBackgroundColour(wx.Color(160,160,160))
+		#else:
+		#	self.togglebuttons['numbers'].SetBackgroundColour(wx.WHITE)
+		sys.stderr.write(str(len(self.targettype.getTargets()))+"   ")
+		self.numberstype.setTargets(self.targettype.getTargets())
+		sys.stderr.write(str(len(self.numberstype.getTargets()))+"\n")
+		evt = ShowNumbersEvent(evt.GetEventObject(), self.name, evt.GetIsDown())
+		self.togglebuttons['numbers'].GetEventHandler().AddPendingEvent(evt)
 
 ##################################
 ##

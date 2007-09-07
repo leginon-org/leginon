@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImagePanelTools.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-07 17:22:23 $
+# $Date: 2007-09-07 20:25:17 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -324,7 +324,7 @@ class ValueTool(ImageTool):
 		bitmap = getBitmap('value.png')
 		tooltip = 'Toggle Show Value'
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip)
-		self.button.SetToggle(True)
+		self.button.SetToggle(False)
 
 	#--------------------
 	def valueString(self, x, y, value):
@@ -348,7 +348,8 @@ class ValueTool(ImageTool):
 
 class CrosshairTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
-		bitmap = gui.wx.TargetPanelBitmaps.getTargetIconBitmap(wx.BLUE, shape='+')
+		self.color = wx.Color(0,150,150) #dark teal green
+		bitmap = gui.wx.TargetPanelBitmaps.getTargetIconBitmap(self.color, shape='+')
 		tooltip = 'Toggle Center Crosshair'
 		cursor = None
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, False)
@@ -357,7 +358,7 @@ class CrosshairTool(ImageTool):
 	def Draw(self, dc):
 		if not self.button.GetToggle():
 			return
-		dc.SetPen(wx.Pen(wx.BLUE, penwidth))
+		dc.SetPen(wx.Pen(self.color, 1))
 		width = self.imagepanel.bitmap.GetWidth()
 		height = self.imagepanel.bitmap.GetHeight()
 		if self.imagepanel.scaleImage():

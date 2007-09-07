@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImagePanel.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-07 19:26:45 $
+# $Date: 2007-09-07 20:25:17 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -489,11 +489,6 @@ class ImagePanel(wx.Panel):
 		dc.BeginDrawing()
 
 		for tool in self.tools:
-			if isinstance(tool, gui.wx.ImagePanelTools.ValueTool):
-				if tool.button.GetToggle() is True:
-					self.Draw(dc)
-
-		for tool in self.tools:
 			tool.OnMotion(evt, dc)
 
 		self._onMotion(evt, dc)
@@ -505,6 +500,7 @@ class ImagePanel(wx.Panel):
 			strings += tool.getToolTipStrings(x, y, value)
 		strings += self._getToolTipStrings(x, y, value)
 		if strings:
+			self.Draw(dc)
 			self.drawToolTip(dc, x, y, strings)
 
 		dc.EndDrawing()
