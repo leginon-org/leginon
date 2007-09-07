@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanelBitmaps.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-06 00:51:41 $
+# $Date: 2007-09-07 17:20:47 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -67,7 +67,7 @@ def targetIcon(color, shape):
 		elif shape == 'o':
 			dc.DrawCircle(7, 7, 7)
 		elif shape == 'numbers':
-			dc.DrawText("1", 0, 0)
+			dc.DrawText("#", 0, 0)
 		elif shape == 'polygon':
 			dc.DrawLine(3, 1, 13, 1)
 			dc.DrawLine(13, 1, 13, 13)
