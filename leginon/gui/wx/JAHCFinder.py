@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/JAHCFinder.py,v $
-# $Revision: 1.8 $
+# $Revision: 1.9 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-06 20:47:11 $
+# $Date: 2007-09-07 17:28:11 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -34,7 +34,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTypeTool('Template', display=True, settings=True)
 		self.imagepanel.addTypeTool('Threshold', display=True, settings=True)
-		self.imagepanel.addTargetTool('Blobs', wx.Color(0, 255, 255), settings=True)
+		self.imagepanel.addTargetTool('Blobs', wx.Color(0, 255, 255), settings=True, shape='o')
 		self.imagepanel.addTargetTool('Lattice', wx.Color(255, 0, 255), settings=True)
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
@@ -202,20 +202,30 @@ class BlobsSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['blobs border'] = IntEntry(self, -1, min=0, chars=6)
 		self.widgets['blobs max'] = IntEntry(self, -1, min=0, chars=6)
 		self.widgets['blobs max size'] = IntEntry(self, -1, min=0, chars=6)
+		#self.widgets['blobs min size'] = IntEntry(self, -1, min=0, chars=6)
+		#self.widgets['blobs max moment'] = IntEntry(self, -1, min=1, chars=6)
 
 		szblobs = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Border:')
 		szblobs.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szblobs.Add(self.widgets['blobs border'], (0, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Max. blobs:')
 		szblobs.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szblobs.Add(self.widgets['blobs max'], (1, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Max. blob size:')
 		szblobs.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szblobs.Add(self.widgets['blobs max size'], (2, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		#label = wx.StaticText(self, -1, 'Min. blob size:')
+		#szblobs.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		#szblobs.Add(self.widgets['blobs min size'], (2, 1), (1, 1),
+		#	wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		#label = wx.StaticText(self, -1, 'Max. blob moment (elongation):')
+		#szblobs.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		#szblobs.Add(self.widgets['blobs max moment'], (2, 1), (1, 1),
+		#	wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szblobs.AddGrowableCol(1)
 
 		sb = wx.StaticBox(self, -1, 'Blob finding')
