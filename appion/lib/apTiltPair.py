@@ -51,8 +51,8 @@ def getTiltPair(imgdata):
 	#presetq = leginondata.PresetData()
 	imageq  = leginondata.AcquisitionImageData()
 	#tiltq = imgdata['tilt series']
-	pprint.pprint(imgdata['tilt series'])
-	pprint.pprint(imgdata['preset'])
+	#pprint.pprint(imgdata['tilt series'])
+	#pprint.pprint(imgdata['preset'])
 	imageq['tilt series'] = imgdata['tilt series']
 	imageq['preset'] = imgdata['preset']
 	origid=imgdata.dbid
@@ -66,30 +66,44 @@ def getTiltPair(imgdata):
 				break
 	return tiltpair
 
+def tiltPickerToDbNames(**kwargs):
+	newdict = {}
+	if 'theta' in kwargs:
+		newdict['tilt'] = kwargs['theta']
+	if 'gamma' in kwargs:
+		newdict['inplane_rotation'] = kwargs['gamma']
+	if 'phi' in kwargs:
+		newdict['inplane_rotation'] = kwargs['phi']
+	if 'scale' in kwargs:
+		newdict['scale'] = kwargs['scale']
+	if 'shiftx' in kwargs:
+		newdict['shiftx'] = kwargs['shiftx']
+	if 'shifty' in kwargs:
+		newdict['shifty'] = kwargs['shifty']
 
-def insertTransform(imgdata1, imgdata2, theta, gamma, phi, shiftx=0, shifty=0):
+def insertTransform(imgdata1, imgdata2, **kwargs):
 	#First we need to sort imgdata
 	#'07aug30b_a_00013gr_00010sq_v01_00002sq_v01_00016en_00'
 	#'07aug30b_a_00013gr_00010sq_v01_00002sq_01_00016en_01'
 	#last two digits confer order, but then the transform changes...
 
-	transq1 = appionData.ApImageTransformationData()
-	transq1['dbemdata|AcquisitionImageData|image1'] = imgdata1.dbid
-	transdata1 = appiondb.query(transq1)
-	transq2 = appionData.ApImageTransformationData()
-	transq2['dbemdata|AcquisitionImageData|image2'] = imgdata1.dbid
-	transdata2 = appiondb.query(transq2)
-	if transdata1 or transdata2:
-		apDisplay.printWarning("Transform values already in database")
-		return False
-
+	for imgdata in (imgdata1, imgdata2):
+		for index in ("1","2"):
+			transq = appionData.ApImageTransformationData()
+			transq["dbemdata|AcquisitionImageData|image"+index] = imgdata.dbid
+			transdata = appiondb.query(transq)
+			if transdata:
+				apDisplay.printWarning("Transform values already in database for "+imgdata['filename'])
+				return False
 	transq['dbemdata|AcquisitionImageData|image1'] = imgdata1.dbid
 	transq['dbemdata|AcquisitionImageData|image2'] = imgdata2.dbid
-	shiftq['shiftx']=peak['shift'][1]
-	shiftq['shifty']=peak['shift'][0]
-	shiftq['correlation']=peak['subpixel peak value']
-	print 'Inserting shift beteween', img['filename'], 'and', sibling['filename'], 'into database'
-	appiondb.insert(shiftq)
+	transq = appionData.ApImageTransformationData()
+	for i in kwargs:
+		print i
+		transq[i]=kwargs[i]
+	apDisplay.printMsg("Inserting shift beteween "+apDisplay.short(imgdata1['filename'])+\
+		" and "+apDisplay.short(imgdata2['filename'])+" into database")
+	#appiondb.insert(transq)
 	return
 
 
