@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.65 $
+# $Revision: 1.66 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-07 20:03:42 $
+# $Date: 2007-09-07 20:23:19 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -507,7 +507,8 @@ class ValueTool(ImageTool):
 
 class CrosshairTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
-		bitmap = getTargetIconBitmap(wx.BLUE, shape='+')
+		self.color = wx.Color(0,150,150)
+		bitmap = getTargetIconBitmap(self.color, shape='+')
 		tooltip = 'Toggle Center Crosshair'
 		cursor = None
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, False)
@@ -515,7 +516,8 @@ class CrosshairTool(ImageTool):
 	def Draw(self, dc):
 		if not self.button.GetToggle():
 			return
-		dc.SetPen(wx.Pen(wx.BLUE, penwidth))
+		#dark teal green
+		dc.SetPen(wx.Pen(self.color, 1))
 		width = self.imagepanel.bitmap.GetWidth()
 		height = self.imagepanel.bitmap.GetHeight()
 		if self.imagepanel.scaleImage():
