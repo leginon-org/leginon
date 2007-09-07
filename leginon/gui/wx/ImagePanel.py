@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImagePanel.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-05 23:52:11 $
+# $Date: 2007-09-07 17:22:58 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -35,36 +35,13 @@ import SelectionTool
 
 wx.InitAllImageHandlers()
 
-#MeasurementEventType = wx.NewEventType()
-#EVT_MEASUREMENT = wx.PyEventBinder(MeasurementEventType)
-#SettingsEventType = wx.NewEventType()
-#EVT_SETTINGS = wx.PyEventBinder(SettingsEventType)
-
 ImageClickDoneEventType = wx.NewEventType()
 EVT_IMAGE_CLICK_DONE = wx.PyEventBinder(ImageClickDoneEventType)
-
-class ImageClickedEvent(wx.PyCommandEvent):
-	def __init__(self, source, xy):
-		wx.PyCommandEvent.__init__(self, ImageClickedEventType, source.GetId())
-		self.SetEventObject(source)
-		self.xy = xy
 
 class ImageClickDoneEvent(wx.PyCommandEvent):
 	def __init__(self, source):
 		wx.PyCommandEvent.__init__(self, ImageClickDoneEventType, source.GetId())
 		self.SetEventObject(source)
-
-class MeasurementEvent(wx.PyCommandEvent):
-	def __init__(self, source, measurement):
-		wx.PyCommandEvent.__init__(self, MeasurementEventType, source.GetId())
-		self.SetEventObject(source)
-		self.measurement = measurement
-
-class SettingsEvent(wx.PyCommandEvent):
-	def __init__(self, source, name):
-		wx.PyCommandEvent.__init__(self, SettingsEventType, source.GetId())
-		self.SetEventObject(source)
-		self.name = name
 
 ##################################
 ##
