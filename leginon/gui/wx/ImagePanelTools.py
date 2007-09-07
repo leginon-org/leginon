@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImagePanelTools.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-06 00:51:42 $
+# $Date: 2007-09-07 17:22:23 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -29,6 +29,15 @@ import gui.wx.TargetPanelBitmaps
 DisplayEventType = wx.NewEventType()
 EVT_DISPLAY = wx.PyEventBinder(DisplayEventType)
 
+SettingsEventType = wx.NewEventType()
+EVT_SETTINGS = wx.PyEventBinder(SettingsEventType)
+
+MeasurementEventType = wx.NewEventType()
+EVT_MEASUREMENT = wx.PyEventBinder(MeasurementEventType)
+
+ImageClickedEventType = wx.NewEventType()
+EVT_IMAGE_CLICKED = wx.PyEventBinder(ImageClickedEventType)
+
 ##################################
 ##
 ##################################
@@ -39,6 +48,27 @@ class DisplayEvent(wx.PyCommandEvent):
 		self.SetEventObject(source)
 		self.name = name
 		self.value = value
+
+#--------------------
+class SettingsEvent(wx.PyCommandEvent):
+	def __init__(self, source, name):
+		wx.PyCommandEvent.__init__(self, SettingsEventType, source.GetId())
+		self.SetEventObject(source)
+		self.name = name
+
+#--------------------
+class MeasurementEvent(wx.PyCommandEvent):
+	def __init__(self, source, measurement):
+		wx.PyCommandEvent.__init__(self, MeasurementEventType, source.GetId())
+		self.SetEventObject(source)
+		self.measurement = measurement
+
+#--------------------
+class ImageClickedEvent(wx.PyCommandEvent):
+	def __init__(self, source, xy):
+		wx.PyCommandEvent.__init__(self, ImageClickedEventType, source.GetId())
+		self.SetEventObject(source)
+		self.xy = xy
 
 #--------------------
 def getColorMap():
@@ -172,6 +202,8 @@ class ContrastTool(object):
 				self.setSliders(value)
 			self.iemin.Enable(True)
 			self.iemax.Enable(True)
+			self.minslider.Enable(True)
+			self.maxslider.Enable(True)
 
 	#--------------------
 	def onMinSlider(self, evt):
@@ -552,8 +584,8 @@ class TypeTool(object):
 		self.bitmaps = self.getBitmaps()
 
 		self.bitmap = wx.StaticBitmap(parent, -1, self.bitmaps['red'],
-																	(self.bitmaps['red'].GetWidth(),
-																		self.bitmaps['red'].GetHeight()))
+			(self.bitmaps['red'].GetWidth(), self.bitmaps['red'].GetHeight()) )
+
 		self.togglebuttons = {}
 
 		if display is not None:
@@ -578,8 +610,10 @@ class TypeTool(object):
 		togglebutton = self.togglebuttons[toolname]
 		if enable:
 			togglebutton.SetBezelWidth(1)
+			#togglebutton.SetBackgroundColour(wx.Color(160, 160, 160))
 		else:
 			togglebutton.SetBezelWidth(0)
+			#togglebutton.SetBackgroundColour(wx.WHITE)
 		togglebutton.Enable(enable)
 
 	#--------------------
@@ -602,6 +636,10 @@ class TypeTool(object):
 
 	#--------------------
 	def onToggleDisplay(self, evt):
+		#if self.togglebuttons['display'].GetValue() is True:
+		#	self.togglebuttons['display'].SetBackgroundColour(wx.Color(160,160,160))
+		#else:
+		#	self.togglebuttons['display'].SetBackgroundColour(wx.WHITE)
 		evt = DisplayEvent(evt.GetEventObject(), self.name, evt.GetIsDown())
 		self.togglebuttons['display'].GetEventHandler().AddPendingEvent(evt)
 
