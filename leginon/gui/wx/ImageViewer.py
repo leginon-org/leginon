@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.64 $
+# $Revision: 1.65 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-07 19:27:51 $
+# $Date: 2007-09-07 20:03:42 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -489,7 +489,7 @@ class ValueTool(ImageTool):
 		bitmap = getBitmap('value.png')
 		tooltip = 'Toggle Show Value'
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip)
-		self.button.SetToggle(True)
+		self.button.SetToggle(False)
 
 	def valueString(self, x, y, value):
 		if value is None:
@@ -1090,11 +1090,6 @@ class ImagePanel(wx.Panel):
 		dc.BeginDrawing()
 
 		for tool in self.tools:
-			if isinstance(tool, gui.wx.ImagePanelTools.ValueTool):
-				if tool.button.GetToggle() is True:
-					self.Draw(dc)
-
-		for tool in self.tools:
 			tool.OnMotion(evt, dc)
 
 		self._onMotion(evt, dc)
@@ -1106,6 +1101,7 @@ class ImagePanel(wx.Panel):
 			strings += tool.getToolTipStrings(x, y, value)
 		strings += self._getToolTipStrings(x, y, value)
 		if strings:
+			self.Draw(dc)
 			self.drawToolTip(dc, x, y, strings)
 
 		dc.EndDrawing()
