@@ -96,34 +96,39 @@ def recordShift(params,img,sibling,peak):
 def insertShift(img,sibling,peak):
 	if not sibling or not peak:
 		apDisplay.printWarning("No sibling or peak found. No database insert")
-		return()
+		return False
 	shiftq=appionData.ApImageTransformationData()
 	shiftq['dbemdata|AcquisitionImageData|image1']=img.dbid
 	shiftdata=appiondb.query(shiftq)
 	if shiftdata:
 		apDisplay.printWarning("Shift values already in database")
-	else:
-		shiftq['dbemdata|AcquisitionImageData|image2']=sibling.dbid
-		shiftq['shiftx']=peak['shift'][1]
-		shiftq['shifty']=peak['shift'][0]
-		shiftq['scale']=peak['scalefactor']
-		shiftq['correlation']=peak['subpixel peak value']
-		print 'Inserting shift beteween', img['filename'], 'and', sibling['filename'], 'into database'
-		appiondb.insert(shiftq)
-	return()
+		return False
+	shiftq['dbemdata|AcquisitionImageData|image2']=sibling.dbid
+	shiftq['shiftx']=peak['shift'][1]
+	shiftq['shifty']=peak['shift'][0]
+	shiftq['scale']=peak['scalefactor']
+	shiftq['correlation']=peak['subpixel peak value']
+	apDisplay.printMsg("Inserting shift beteween "+apDisplay.short(img['filename'])+\
+		" and "+apDisplay.short(sibling['filename'])+" into database")
+	appiondb.insert(shiftq)
+	return True
 
 def insertShiftREFLEGINON(imgdata,sibling,peak):
+	if not sibling or not peak:
+		apDisplay.printWarning("No sibling or peak found. No database insert")
+		return False
 	shiftq=appionData.ApImageTransformationData()
 	shiftq['image1']=imgdata
 	shiftdata=appiondb.query(shiftq)
 	if shiftdata:
-		print "Warning: Shift values already in database"
-	else:
-		shiftq['image2']=sibling
-		shiftq['shiftx']=peak['shift'][1]
-		shiftq['shifty']=peak['shift'][0]
-		shiftq['scale']=peak['scalefactor']
-		shiftq['correlation']=peak['subpixel peak value']
-		print 'Inserting shift beteween', img['filename'], 'and', sibling['filename'], 'into database'
-		appiondb.insert(shiftq)
-	return()
+		apDisplay.printWarning("Shift values already in database")
+		return False
+	shiftq['image2']=sibling
+	shiftq['shiftx']=peak['shift'][1]
+	shiftq['shifty']=peak['shift'][0]
+	shiftq['scale']=peak['scalefactor']
+	shiftq['correlation']=peak['subpixel peak value']
+	apDisplay.printMsg("Inserting shift beteween "+apDisplay.short(img['filename'])+\
+		" and "+apDisplay.short(sibling['filename'])+" into database")
+	appiondb.insert(shiftq)
+	return True
