@@ -196,9 +196,8 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 			$incr=$_POST[$tmpltincr];
 
 			$templateList.=$i.":".$templateId.",";
-			$templateInfo=$particle->getTemplatesFromId($templateId);
-			$tmpltrows=$templateInfo[0];
-			$filename=$tmpltrows[templatepath]."/".$tmpltrows[templatename];
+			$templateinfo=$particle->getTemplatesFromId($templateId);
+			$filename=$templateinfo[templatepath]."/".$templateinfo[templatename];
 			$templateTable.="<TD VALIGN='TOP'><IMG SRC='loadimg.php?filename=$filename&rescale=True' WIDTH='200'><BR>\n";
 			if (!$start && !$end && !$incr) $templateTable.="<B>no rotation</B>\n";
 			elseif ($start=='' || !$end || !$incr) {

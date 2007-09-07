@@ -123,8 +123,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
   // connect to particle info
   $particle = new particledata();
   $templateid = $_POST['templateid'];
-  $templatearray = $particle->getTemplatesFromId($templateid);
-  $templateinfo = $templatearray[0];
+  $templateinfo = $particle->getTemplatesFromId($templateid);
   $prtlrunIds = $particle->getParticleRunIds($sessionId);
   $stackIds = $particle->getStackIds($sessionId);
   $refaliIds = $particle->getRefAliIds($sessionId);

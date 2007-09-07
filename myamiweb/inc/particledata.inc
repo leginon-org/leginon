@@ -38,7 +38,7 @@ class particledata {
 		$q = "select * " 
 			."from ApTemplateImageData where `DEF_id` = '$templateId' ";
 		$r = $this->mysql->getSQLResult($q);
-		return $r;
+		return $r[0];
 	}
 
 	function getParticlesFromImageId ($runId, $imageId){
@@ -512,45 +512,53 @@ class particledata {
 
 #--------- REF-FREE ALIGNMENT FUNCTIONS---------------#
 
- function getNoRefIds ($sessionId) {
-	$q = "SELECT norefrun.`DEF_id` "
-		."FROM ApNoRefRunData AS norefrun "
-		."LEFT JOIN ApRunsInStackData AS stackdata ON "
-		."(norefrun.`REF|ApStackData|stack` = stackdata.`REF|ApStackData|stack`) "
-		."LEFT JOIN ApStackRunData AS stackrun ON "
-		."(stackdata.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id`) "
-		."WHERE stackrun.`dbemdata|SessionData|session` = '$sessionId' "
-		."ORDER BY norefrun.`DEF_id` DESC";
-	$r = $this->mysql->getSQLResult($q);
-	return $r;
- }
+  function getNoRefIds ($sessionId) {
+    $q = "SELECT norefrun.`DEF_id` "
+      ."FROM ApNoRefRunData AS norefrun "
+      ."LEFT JOIN ApRunsInStackData AS stackdata ON "
+      ."(norefrun.`REF|ApStackData|stack` = stackdata.`REF|ApStackData|stack`) "
+      ."LEFT JOIN ApStackRunData AS stackrun ON "
+      ."(stackdata.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id`) "
+      ."WHERE stackrun.`dbemdata|SessionData|session` = '$sessionId' "
+      ."ORDER BY norefrun.`DEF_id` DESC";
+    $r = $this->mysql->getSQLResult($q);
+    return $r;
+  }
 
- function getRefAliIds ($sessionId) {
-	$q = "SELECT refalirun.`DEF_id` "
-		."FROM ApRefRunData AS noalirun "
-		."LEFT JOIN ApRunsInStackData AS stackdata ON "
-		."(refalirun.`REF|ApStackData|stack` = stackdata.`REF|ApStackData|stack`) "
-		."LEFT JOIN ApStackRunData AS stackrun ON "
-		."(stackdata.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id`) "
-		."WHERE stackrun.`dbemdata|SessionData|session` = '$sessionId' "
-		."ORDER BY refalirun.`DEF_id` DESC";
-	$r = $this->mysql->getSQLResult($q);
-	return $r;
- }
+   function getRefAliIds ($sessionId) {
+    $q = "SELECT refalirun.* "
+      ."FROM ApRefRunData AS refalirun "
+      ."LEFT JOIN ApRunsInStackData AS stackdata ON "
+      ."(refalirun.`REF|ApStackData|stack` = stackdata.`REF|ApStackData|stack`) "
+      ."LEFT JOIN ApStackRunData AS stackrun ON "
+      ."(stackdata.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id`) "
+      ."WHERE stackrun.`dbemdata|SessionData|session` = '$sessionId' "
+      ."ORDER BY refalirun.`DEF_id` DESC";
+    $r = $this->mysql->getSQLResult($q);
+    return $r;
+  }
 
- function getNoRefParams ($norefId) {
-	$q = "SELECT * "
-		."FROM ApNoRefRunData as r "
-		."LEFT JOIN ApNoRefParamsData as p "
-		."ON (r.`REF|ApNoRefParamsData|norefParams`=p.`DEF_id`) "
-		//."LEFT JOIN ApStackData as sd "
-		//."ON (r.`REF|ApStackData|stack`=sd.`DEF_id`) "
-		//."LEFT JOIN `ApStackParamsData` sp "
-		//."ON (sp.`DEF_id` = s.`REF|ApStackParamsData|stackParams`) "
-		."WHERE r.`DEF_id` = '$norefId'";
-	$r = $this->mysql->getSQLResult($q);
-	return $r[0];
- }
+  function getRefInfoFromId ($refid) {
+    $q = "SELECT * "
+      ."FROM ApRefRunData "
+      ."WHERE ApRefRunData.`DEF_id`='$refid'";
+    $r = $this->mysql->getSQLResult($q);
+    return $r[0];
+  }
+
+  function getNoRefParams ($norefId) {
+    $q = "SELECT * "
+      ."FROM ApNoRefRunData as r "
+      ."LEFT JOIN ApNoRefParamsData as p "
+      ."ON (r.`REF|ApNoRefParamsData|norefParams`=p.`DEF_id`) "
+      //."LEFT JOIN ApStackData as sd "
+      //."ON (r.`REF|ApStackData|stack`=sd.`DEF_id`) "
+      //."LEFT JOIN `ApStackParamsData` sp "
+      //."ON (sp.`DEF_id` = s.`REF|ApStackParamsData|stackParams`) "
+      ."WHERE r.`DEF_id` = '$norefId'";
+    $r = $this->mysql->getSQLResult($q);
+    return $r[0];
+  }
 
  function getRefAliParams ($refaliId) {
 	$q = "SELECT * "
@@ -565,16 +573,16 @@ class particledata {
  function getNoRefClassRuns ($norefId) {
 	$q = "SELECT * "
 		."FROM ApNoRefClassRunData as cr "
-		."WHERE cr.`REF|ApNoRefRunData|norefRun` = '$norefId'"
+		."WHERE cr.`REF|ApNoRefRunData|norefRun` = '$norefId' "
 		."ORDER BY cr.`num_classes`";
 	$r = $this->mysql->getSQLResult($q);
 	return $r;
  }
 
- function getRefAliIterss ($refaliId) {
+ function getRefAliIters ($refaliId) {
 	$q = "SELECT * "
 		."FROM ApRefIterationData as i "
-		."WHERE i.`REF|ApRefRunData|refRun` = '$refaliId'"
+		."WHERE i.`REF|ApRefRunData|refRun` = '$refaliId' "
 		."ORDER BY i.`iteration`";
 	$r = $this->mysql->getSQLResult($q);
 	return $r;
