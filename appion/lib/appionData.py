@@ -120,7 +120,7 @@ class ApImageTransformationData(Data):
 			('shifty', float),
 			('correlation', float),
 			('scale', float),
-			('inplane_rotation', float),
+			#('inplane_rotation', float),
 			('tilt', float),
 		)
 	typemap = classmethod(typemap)
