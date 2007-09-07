@@ -93,6 +93,8 @@ class FitAllDialog(wx.Dialog):
 		label2 = wx.StaticText(self, -1, "degrees", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.thetatog = wx.ToggleButton(self, -1, "Refine")
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleTheta, self.thetatog)
+		self.thetavalue.Enable(False)
+		self.thetatog.SetValue(1)
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.thetavalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 		inforow.Add(label2, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
@@ -114,19 +116,36 @@ class FitAllDialog(wx.Dialog):
 		self.phivalue = FloatEntry(self, -1, allownone=False, chars=8, value=phistr)
 		label2 = wx.StaticText(self, -1, "degrees", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.phitog = wx.ToggleButton(self, -1, "Refine")
+		print dir(self.phitog)
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onTogglePhi, self.phitog)
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.phivalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(label2, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.phitog, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
+		scalestr = "%3.3f" % self.parent.scale
+		label = wx.StaticText(self, -1, "Scaling factor:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.scalevalue = FloatEntry(self, -1, allownone=False, chars=8, value=scalestr)
+		label2 = wx.StaticText(self, -1, " ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.scaletog = wx.ToggleButton(self, -1, "Locked")
+		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleScale, self.scaletog)
+		self.scalevalue.Enable(False)
+		self.scaletog.SetValue(1)
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.scalevalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(label2, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.scaletog, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+
 		shiftxstr = "%3.3f" % self.parent.shiftx
 		shiftystr = "%3.3f" % self.parent.shifty
 		label = wx.StaticText(self, -1, "Shift (x,y) pixels:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.shiftxvalue = FloatEntry(self, -1, allownone=False, chars=8, value=shiftxstr)
 		self.shiftyvalue = FloatEntry(self, -1, allownone=False, chars=8, value=shiftystr)
-		self.shifttog = wx.ToggleButton(self, -1, "Refine")
+		self.shifttog = wx.ToggleButton(self, -1, "Locked")
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleShift, self.shifttog)
+		self.shiftxvalue.Enable(False)
+		self.shiftyvalue.Enable(False)
+		self.shifttog.SetValue(1)
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.shiftxvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.shiftyvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
@@ -153,6 +172,8 @@ class FitAllDialog(wx.Dialog):
 		self.sizer.Add(errrow, 0, wx.EXPAND|wx.ALL, 5)
 		self.sizer.Add(buttonrow, 0, wx.EXPAND|wx.ALL, 5)
 		self.SetSizerAndFit(self.sizer)
+
+		self.onToggleScale(True)
 
 	def onToggleTheta(self, evt):
 		if self.thetatog.GetValue() is True:
@@ -186,6 +207,14 @@ class FitAllDialog(wx.Dialog):
 			self.phivalue.Enable(True)
 			self.phitog.SetLabel("Refine")
 
+	def onToggleScale(self, evt):
+		if self.scaletog.GetValue() is True:
+			self.scalevalue.Enable(False)
+			self.scaletog.SetLabel("Locked")
+		else:
+			self.scalevalue.Enable(True)
+			self.scaletog.SetLabel("Refine")
+
 	def onToggleShift(self, evt):
 		if self.shifttog.GetValue() is True:
 			self.shiftxvalue.Enable(False)
@@ -197,10 +226,10 @@ class FitAllDialog(wx.Dialog):
 			self.shifttog.SetLabel("Refine")
 
 	def onRunLeastSquares(self, evt):
-		#self.Close()
 		theta  = self.thetavalue.GetValue()
 		gamma  = self.gammavalue.GetValue()
 		phi    = self.phivalue.GetValue()
+		scale  = self.scalevalue.GetValue()
 		shiftx = self.shiftxvalue.GetValue()
 		shifty = self.shiftyvalue.GetValue()
 		targets1 = self.parent.panel1.getTargets('Picked')
@@ -211,24 +240,27 @@ class FitAllDialog(wx.Dialog):
 			not self.thetatog.GetValue(),
 			not self.gammatog.GetValue(),
 			not self.phitog.GetValue(),
+			not self.scaletog.GetValue(),
 			not self.shifttog.GetValue(),
 			not self.shifttog.GetValue(),
 			), dtype=numpy.float32)
 		print xscale
-		fit = willsq(a1, a2, theta, gamma, phi, shiftx, shifty, xscale)
+		fit = willsq(a1, a2, theta, gamma, phi, scale, shiftx, shifty, xscale)
 		pprint.pprint(fit)
 		self.thetavalue.SetValue(round(fit['theta'],5))
 		self.gammavalue.SetValue(round(fit['gamma'],5))
 		self.phivalue.SetValue(round(fit['phi'],5))
+		self.scalevalue.SetValue(round(fit['scale'],5))
 		self.shiftxvalue.SetValue(round(fit['shiftx'],5))
 		self.shiftyvalue.SetValue(round(fit['shifty'],5))
 		self.errlabel.SetLabel(str(round(fit['err'],5)))
 
 	def onApplyLeastSquares(self, evt):
 		self.Close()
-		self.parent.theta = self.thetavalue.GetValue()
-		self.parent.gamma = self.gammavalue.GetValue()
-		self.parent.phi = self.phivalue.GetValue()
+		self.parent.theta  = self.thetavalue.GetValue()
+		self.parent.gamma  = self.gammavalue.GetValue()
+		self.parent.phi    = self.phivalue.GetValue()
+		self.parent.scale  = self.scalevalue.GetValue()
 		self.parent.shiftx = self.shiftxvalue.GetValue()
 		self.parent.shifty = self.shiftyvalue.GetValue()
 		self.parent.onUpdate(evt)
@@ -240,9 +272,9 @@ class FitAllDialog(wx.Dialog):
 ##
 
 
-def willsq(a1, a2,\
-		 theta0, gamma0=0.0, phi0=0.0, shiftx0=0.0, shifty0=0.0,\
-		 xscale=numpy.ones((5), dtype=numpy.float32)):
+def willsq(a1, a2, \
+		 theta0, gamma0=0.0, phi0=0.0, scale0=1.0, shiftx0=0.0, shifty0=0.0,\
+		 xscale=numpy.ones((6), dtype=numpy.float32)):
 	"""
 	given two sets of particles; find the tilt, and twist of them
 	"""	
@@ -252,12 +284,13 @@ def willsq(a1, a2,\
 		theta0 * math.pi/180.0,
 		gamma0 * math.pi/180.0,
 		phi0   * math.pi/180.0,
+		scale0,
 		shiftx0,
 		shifty0,
 	), dtype=numpy.float32)
 
 	#x1 delta values
-	x0 = numpy.zeros(5, dtype=numpy.float32)
+	x0 = numpy.zeros(6, dtype=numpy.float32)
 	#xscale scaling values
 	#xscale = numpy.ones(5, dtype=numpy.float32)
 	#xscale = numpy.array((1,1,1,1,1), dtype=numpy.float32)
@@ -276,8 +309,9 @@ def willsq(a1, a2,\
 	fit['theta']  = x3[0]*180.0/math.pi
 	fit['gamma']  = x3[1]*180.0/math.pi
 	fit['phi']    = x3[2]*180.0/math.pi
-	fit['shiftx'] = x3[3]
-	fit['shifty'] = x3[4]
+	fit['scale']  = x3[3]
+	fit['shiftx'] = x3[4]
+	fit['shifty'] = x3[5]
 	fit['prob'] = math.exp(-1.0*math.sqrt(abs(fit['err'])))**2
 	return fit
 
@@ -286,9 +320,10 @@ def _diffParticles(x1, initx, xscale, a1, a2):
 	theta  = x2[0]
 	gamma  = x2[1]
 	phi    = x2[2]
-	shiftx = x2[3]
-	shifty = x2[4]
-	a2b = a2Toa1(a1,a2,theta,gamma,phi,0,0)
+	scale  = x2[3]
+	shiftx = x2[4]
+	shifty = x2[5]
+	a2b = a2Toa1(a1,a2,theta,gamma,phi,scale,shiftx,shifty)
 	maxpix = float(len(a2b))
 	diffmat = (a1 - a2b)
 	xerr = ndimage.mean(diffmat[:,0]**2)
@@ -297,11 +332,11 @@ def _diffParticles(x1, initx, xscale, a1, a2):
 	#print (x2*57.29).round(decimals=3),round(err,6)
 	return err
 
-def a1Toa2(a1,a2,theta,gamma,phi,shiftx,shifty):
-	a1b = a2Toa1(a2,a1,-1.0*theta,-1.0*phi,-1.0*gamma,-1.0*shiftx,-1.0*shifty)
+def a1Toa2(a1,a2,theta,gamma,phi,scale, shiftx, shifty):
+	a1b = a2Toa1(a2,a1,-1.0*theta,-1.0*phi,-1.0*gamma, 1.0/scale, -1.0*shiftx,-1.0*shifty)
 	return a1b
 
-def a2Toa1(a1,a2,theta,gamma,phi,shiftx,shifty):
+def a2Toa1(a1,a2,theta,gamma,phi,scale,shiftx,shifty):
 	#gamma rotation
 	cosgamma = math.cos(gamma)
 	singamma = math.sin(gamma)
@@ -315,8 +350,13 @@ def a2Toa1(a1,a2,theta,gamma,phi,shiftx,shifty):
 	cosphi = math.cos(phi)
 	sinphi = math.sin(phi)
 	phimat = numpy.array([[ cosphi, -sinphi ], [ sinphi, cosphi ]], dtype=numpy.float32)
+	#scale factor
+	scalemat =  numpy.array([[ scale, 0.0 ], [ 0.0, scale ]], dtype=numpy.float32)
 	#merge together
-	trans = numpy.dot(numpy.dot(phimat,thetamat),gammamat)
+	if scale > 1.0:
+		trans = numpy.dot(numpy.dot(numpy.dot(scalemat,phimat),thetamat),gammamat)
+	else:
+		trans = numpy.dot(numpy.dot(numpy.dot(phimat,thetamat),gammamat),scalemat)
 	#origins
 	a10 = numpy.asarray(a1[0,:], dtype=numpy.float32)
 	a20 = numpy.asarray(a2[0,:], dtype=numpy.float32)

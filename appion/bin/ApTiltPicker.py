@@ -53,11 +53,12 @@ class TiltTargetPanel(TargetPanel.TargetImagePanel):
 class MyApp(wx.App):
 	def OnInit(self):
 		self.arealim = 50000.0
-		self.theta = 0
-		self.gamma = 0
-		self.phi = 0
-		self.shiftx = 0
-		self.shifty = 0
+		self.theta = 0.0
+		self.gamma = 0.0
+		self.phi = 0.0
+		self.shiftx = 0.0
+		self.shifty = 0.0
+		self.scale = 1.0
 		self.filename = ""
 		self.dirname = ""
 
@@ -184,8 +185,8 @@ class MyApp(wx.App):
 		gammarad = self.gamma*math.pi/180.0
 		phirad = self.phi*math.pi/180.0
 		#CALCULATE TRANSFORM LIMITS
-		a1b = tiltDialog.a1Toa2(a1,a2,thetarad,gammarad,phirad,self.shiftx,self.shifty)
-		a2b = tiltDialog.a2Toa1(a1,a2,thetarad,gammarad,phirad,self.shiftx,self.shifty)
+		a1b = tiltDialog.a1Toa2(a1,a2,thetarad,gammarad,phirad,self.scale,self.shiftx,self.shifty)
+		a2b = tiltDialog.a2Toa1(a1,a2,thetarad,gammarad,phirad,self.scale,self.shiftx,self.shifty)
 		#CONVERT NUMPY TO LIST
 		a1blist = []
 		a2blist = []
@@ -247,11 +248,11 @@ class MyApp(wx.App):
 		phirad = self.phi*math.pi/180.0
 
 		#align first
-		a1b = tiltDialog.a1Toa2(a1,a2,thetarad,gammarad,phirad,self.shiftx,self.shifty)
+		a1b = tiltDialog.a1Toa2(a1,a2,thetarad,gammarad,phirad,self.scale,self.shiftx,self.shifty)
 		self.panel2.setTargets('Aligned', a1b)
 		
 		#align second
-		a2b = tiltDialog.a2Toa1(a1,a2,thetarad,gammarad,phirad,self.shiftx,self.shifty)
+		a2b = tiltDialog.a2Toa1(a1,a2,thetarad,gammarad,phirad,self.scale,self.shiftx,self.shifty)
 		self.panel1.setTargets('Aligned', a2b)
 
 	#---------------------------------------
@@ -273,11 +274,23 @@ class MyApp(wx.App):
 
 	#---------------------------------------
 	def onFitAll(self, evt):
-		if len(self.panel1.getTargets('Picked')) > 3 and len(self.panel2.getTargets('Picked')) > 3:
-			self.fitall_dialog.thetavalue.SetValue(round(self.theta,4))
-			self.fitall_dialog.gammavalue.SetValue(round(self.gamma,4))
-			self.fitall_dialog.phivalue.SetValue(round(self.phi,4))
-			self.fitall_dialog.Show()
+		if self.theta == 0.0:
+			dialog = wx.MessageDialog(self.frame, "You must run 'Find Theta' first", 'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+		if len(self.panel1.getTargets('Picked')) < 5 or len(self.panel2.getTargets('Picked')) < 5:
+			dialog = wx.MessageDialog(self.frame, "You must pick at least 5 particle pairs first", 'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+		self.fitall_dialog.thetavalue.SetValue(round(self.theta,4))
+		self.fitall_dialog.gammavalue.SetValue(round(self.gamma,4))
+		self.fitall_dialog.phivalue.SetValue(round(self.phi,4))
+		self.fitall_dialog.scalevalue.SetValue(round(self.scale,4))
+		self.fitall_dialog.shiftxvalue.SetValue(round(self.shiftx,4))
+		self.fitall_dialog.shiftyvalue.SetValue(round(self.shifty,4))
+		self.fitall_dialog.Show()
 
 	#---------------------------------------
 	def onClear(self, evt):
@@ -322,17 +335,26 @@ class MyApp(wx.App):
 				filepath = os.path.join(self.dirname, self.filename)
 				self.savePicksToFile(filepath)
 			except:
-				self.statbar.PushStatusText("ERROR: Saving to file "+self.filename+" failed", 0)		
+				self.statbar.PushStatusText("ERROR: Saving to file "+self.filename+" failed", 0)
+				dialog = wx.MessageDialog(self.frame, "Saving to file "+self.filename+" failed", 'Error', wx.OK|wx.ICON_ERROR)
+				dialog.ShowModal()
+				dialog.Destroy()
+				return
 		dlg.Destroy()
 
 	#---------------------------------------
-	def savePicksToFile(self):
+	def savePicksToFile(self, filepath):
 		targets1 = self.panel1.getTargets('Picked')
 		targets2 = self.panel2.getTargets('Picked')
+		filename = os.path.basename(filepath)
 		if len(targets1) < 4 or len(targets2) < 4:
 			self.statbar.PushStatusText("ERROR: Cannot save file. Not enough picks", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot save file.\nNot enough picks\n(less than 4 particle pairs)",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
 			return False
-		f = open(os.path.join(self.dirname, self.filename),"w")
+		f = open(filepath, "w")
 		f.write( "image 1: "+self.panel1.filename+"\n" )
 		for target in targets1:
 			f.write( '%d,%d\n' % (target.x, target.y) )
@@ -340,7 +362,7 @@ class MyApp(wx.App):
 		for target in targets2:
 			f.write( '%d,%d\n' % (target.x, target.y) )
 		f.close()
-		self.statbar.PushStatusText("Saved "+str(len(targets1))+" particles and parameters to "+self.filename, 0)
+		self.statbar.PushStatusText("Saved "+str(len(targets1))+" particles and parameters to "+filename, 0)
 		return True
 
 	#---------------------------------------
