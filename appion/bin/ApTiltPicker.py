@@ -10,7 +10,7 @@ import pyami
 import Image
 import ImageDraw
 import apImage
-from gui.wx import TargetPanel
+from gui.wx import TargetPanel, ImagePanelTools
 import radermacher
 from scipy import ndimage, optimize
 import tiltDialog
@@ -77,6 +77,9 @@ class MyApp(wx.App):
 		self.panel1.addTargetTool('Aligned', color=wx.Color(32, 128, 215), shape='o')
 		self.panel1.setTargets('Aligned', [])
 		self.panel1.selectiontool.setDisplayed('Aligned', True)
+		for tool in self.panel1.tools:
+			if isinstance(tool, ImagePanelTools.ValueTool):
+				tool.button.SetToggle(0)
 		#self.panel1.SetMinSize((256,256))
 		#self.panel1.SetBackgroundColour("sky blue")
 
@@ -91,6 +94,9 @@ class MyApp(wx.App):
 		self.panel2.addTargetTool('Aligned', color=wx.Color(215, 32, 32), shape='o')
 		self.panel2.setTargets('Aligned', [])
 		self.panel2.selectiontool.setDisplayed('Aligned', True)
+		#for tool in self.panel2.tools:
+		#	if isinstance(tool, ImagePanelTools.ValueTool):
+		#		tool.button.SetToggle(0)
 		#self.panel2.SetMinSize((256,256))
 		#self.panel2.SetBackgroundColour("pink")
 
