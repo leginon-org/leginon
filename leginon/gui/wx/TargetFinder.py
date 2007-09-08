@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetFinder.py,v $
-# $Revision: 1.17 $
+# $Revision: 1.18 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-09 05:07:43 $
-# $Author: acheng $
+# $Date: 2007-09-08 01:10:10 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -15,6 +15,7 @@ import wx
 import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ToolBar
+import gui.wx.ImagePanelTools
 
 class Panel(gui.wx.Node.Panel):
 	def __init__(self, parent, name):
@@ -51,7 +52,7 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitQueueTool,
 											id=gui.wx.ToolBar.ID_SUBMIT_QUEUE)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, True)
-		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings)
+		self.Bind(gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 		queue = self.node.settings['queue']
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE, queue)
 

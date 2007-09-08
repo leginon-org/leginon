@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.77 $
+# $Revision: 1.78 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-30 20:15:54 $
+# $Date: 2007-09-08 01:10:08 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -20,7 +20,7 @@ import wx
 from gui.wx.Entry import IntEntry, FloatEntry, EVT_ENTRY
 import gui.wx.Camera
 import gui.wx.Dialog
-import gui.wx.ImageViewer
+import gui.wx.ImagePanel
 import gui.wx.Node
 import gui.wx.Presets
 import gui.wx.Settings
@@ -566,7 +566,7 @@ class DoseDialog(gui.wx.Dialog.Dialog):
 	def onInitialize(self):
 		gui.wx.Dialog.Dialog.onInitialize(self)
 
-		self.image = gui.wx.ImageViewer.ImagePanel(self, -1)
+		self.image = gui.wx.ImagePanel.ImagePanel(self, -1)
 
 		self.doselabel = wx.StaticText(self, -1, '')
 

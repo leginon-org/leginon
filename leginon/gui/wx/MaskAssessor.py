@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MaskAssessor.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-19 19:54:48 $
-# $Author: acheng $
+# $Date: 2007-09-08 01:10:06 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -16,13 +16,14 @@ from gui.wx.Entry import Entry
 import gui.wx.Node
 import gui.wx.ImageAssessor
 import gui.wx.Settings
+import gui.wx.TargetPanel
 import gui.wx.ToolBar
 import wx.lib.filebrowsebutton as filebrowse
 from gui.wx.Choice import Choice
 
 class Panel(gui.wx.ImageAssessor.Panel):
 	icon = 'check'
-	imagepanelclass = gui.wx.ImageViewer.TargetImagePanel
+	imagepanelclass = gui.wx.TargetPanel.TargetImagePanel
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MatlabTargetFinder.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-29 22:40:55 $
+# $Date: 2007-09-08 01:10:06 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -14,7 +14,8 @@
 import threading
 import wx
 import gui.wx.Events
-import gui.wx.ImageViewer
+import gui.wx.TargetPanel
+import gui.wx.ImagePanelTools
 import gui.wx.Settings
 import gui.wx.TargetFinder
 import gui.wx.ToolBar
@@ -34,7 +35,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SIMULATE_TARGET, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_REFRESH, False)
 
-		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
+		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Image', display=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 
@@ -50,7 +51,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.szmain.AddGrowableCol(0)
 
 		self.Bind(gui.wx.Events.EVT_FOUND_TARGETS, self.onFoundTargets)
-		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings)
+		self.Bind(gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 
 	def onImageSettings(self, evt):
 		if evt.name == 'Image':

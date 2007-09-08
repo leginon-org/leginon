@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.56 $
+# $Revision: 1.57 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-07 21:55:37 $
+# $Date: 2007-09-08 01:10:04 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -21,7 +21,8 @@ import gui.wx.Acquisition
 import gui.wx.Dialog
 import gui.wx.Events
 import gui.wx.Icons
-import gui.wx.ImageViewer
+import gui.wx.ImagePanel
+import gui.wx.TargetPanel
 import gui.wx.ToolBar
 import gui.wx.FocusSequence
 
@@ -54,7 +55,7 @@ class ManualCheckDoneEvent(wx.PyCommandEvent):
 
 class Panel(gui.wx.Acquisition.Panel):
 	icon = 'focuser'
-	imagepanelclass = gui.wx.ImageViewer.TargetImagePanel
+	imagepanelclass = gui.wx.TargetPanel.TargetImagePanel
 	def __init__(self, parent, name):
 		gui.wx.Acquisition.Panel.__init__(self, parent, name)
 
@@ -407,7 +408,7 @@ class ManualFocusDialog(wx.MiniFrame):
 		self.toolbar.Realize()
 		self.SetToolBar(self.toolbar)
 
-		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
+		self.imagepanel = gui.wx.ImagePanel.ImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.addTypeTool('Power', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Power', True)

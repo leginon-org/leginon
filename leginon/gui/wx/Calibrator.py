@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Calibrator.py,v $
-# $Revision: 1.32 $
+# $Revision: 1.33 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-11-16 00:06:51 $
-# $Author: suloway $
+# $Date: 2007-09-08 01:10:01 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -16,7 +16,7 @@ import wx
 from gui.wx.Choice import Choice
 import gui.wx.Camera
 import gui.wx.Events
-import gui.wx.ImageViewer
+import gui.wx.TargetPanel
 import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ToolBar
@@ -57,7 +57,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		return [sbsz]
 
 class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
-	imageclass = gui.wx.ImageViewer.TargetImagePanel
+	imageclass = gui.wx.TargetPanel.TargetImagePanel
 	settingsclass = SettingsDialog
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
@@ -95,7 +95,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.imagepanel.addTypeTool('Correlation', display=True)
-		if isinstance(self.imagepanel, gui.wx.ImageViewer.TargetImagePanel):
+		if isinstance(self.imagepanel, gui.wx.TargetPanel.TargetImagePanel):
 			color = wx.Color(255, 128, 0)
 			self.imagepanel.addTargetTool('Peak', color)
 

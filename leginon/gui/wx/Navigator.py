@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Navigator.py,v $
-# $Revision: 1.40 $
+# $Revision: 1.41 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-12-05 22:21:38 $
-# $Author: pulokas $
+# $Date: 2007-09-08 01:10:08 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -16,7 +16,9 @@ import wx
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import gui.wx.Camera
 from gui.wx.Choice import Choice
-import gui.wx.ImageViewer
+import gui.wx.ImagePanelTools
+import gui.wx.TargetPanel
+import gui.wx.ImagePanel
 import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ToolBar
@@ -50,7 +52,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 													'stagelocations',
 													shortHelpString='Stage Locations')
 		# image
-		self.imagepanel = gui.wx.ImageViewer.ClickAndTargetImagePanel(self, -1)
+		self.imagepanel = gui.wx.TargetPanel.ClickAndTargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.imagepanel.addTypeTool('Correlation', display=True)
@@ -87,7 +89,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStageLocationsTool,
 											id=gui.wx.ToolBar.ID_STAGE_LOCATIONS)
 		self.cmovetype.Bind(wx.EVT_CHOICE, self.onMoveTypeChoice)
-		self.Bind(gui.wx.ImageViewer.EVT_IMAGE_CLICKED, self.onImageClicked,
+		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked,
 							self.imagepanel)
 
 	def onMoveTypeChoice(self, evt):
@@ -116,7 +118,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		threading.Thread(target=self.node.navigate, args=(evt.xy,)).start()
 
 	def navigateDone(self):
-		evt = gui.wx.ImageViewer.ImageClickDoneEvent(self.imagepanel)
+		evt = gui.wx.ImagePanel.ImageClickDoneEvent(self.imagepanel)
 		self.imagepanel.GetEventHandler().AddPendingEvent(evt)
 		self.acquisitionDone()
 

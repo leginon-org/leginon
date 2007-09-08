@@ -4,16 +4,17 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleDepth.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-29 22:40:54 $
+# $Date: 2007-09-08 01:10:04 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
 import wx
-import gui.wx.ImageViewer
 import gui.wx.Settings
+import gui.wx.TargetPanel
+import gui.wx.ImagePanelTools
 import gui.wx.TargetFinder
 import wx.lib.filebrowsebutton as filebrowse
 import gui.wx.Rings
@@ -34,7 +35,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.toolbar.InsertControl(1, self.cparameter)
 
 
-		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
+		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
 
 		parameter = self.cparameter.GetStringSelection()		
  		self.imagepanel.addTypeTool('Original', display=True, settings=True)
@@ -67,7 +68,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 											id=gui.wx.ToolBar.ID_SUBMIT_QUEUE)
 #		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, True)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
-		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings)
+		self.Bind(gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 		queue = self.node.settings['queue']
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE, queue)
 

@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ClickTargetTransformer.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-30 20:03:35 $
-# $Author: acheng $
+# $Date: 2007-09-08 01:10:03 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -16,13 +16,14 @@ from gui.wx.Entry import Entry
 import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ToolBar
+import gui.wx.TargetPanel
 import gui.wx.Choice
 import gui.wx.ClickTargetFinder
 from gui.wx.Presets import PresetChoice
 
 class Panel(gui.wx.ClickTargetFinder.Panel):
 	icon = 'check'
-	imagepanelclass = gui.wx.ImageViewer.TargetImagePanel
+	imagepanelclass = gui.wx.TargetPanel.TargetImagePanel
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 

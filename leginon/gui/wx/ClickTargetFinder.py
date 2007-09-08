@@ -4,15 +4,15 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ClickTargetFinder.py,v $
-# $Revision: 1.20 $
+# $Revision: 1.21 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-07-02 19:29:00 $
-# $Author: acheng $
+# $Date: 2007-09-08 01:10:02 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
 import wx
-import gui.wx.ImageViewer
+import gui.wx.TargetPanel
 import gui.wx.Settings
 import gui.wx.TargetFinder
 import gui.wx.ToolBar
@@ -23,7 +23,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 		gui.wx.TargetFinder.Panel.initialize(self)
 		self.SettingsDialog = gui.wx.TargetFinder.SettingsDialog
 
-		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
+		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTargetTool('preview', wx.Color(255, 128, 255), target=True)
 		self.imagepanel.selectiontool.setDisplayed('preview', True)
 

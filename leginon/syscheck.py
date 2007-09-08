@@ -164,15 +164,15 @@ else:
 		print '        *** FAILED (at least %s required)' % (minstr,)
 
 ######################################################################
-## ImageViewer
+## TargetPanel
 ######################################################################
 print '--------------------------------------------------------------'
-print 'ImageViewer module:'
-print '    importing ImageViewer module...'
+print 'TargetPanel module:'
+print '    importing TargetPanel module...'
 try:
-	import ImageViewer
+	import TargetPanel
 except:
-	print '    *** FAILED: Could not import ImageViewer.'
+	print '    *** FAILED: Could not import TargetPanel.'
 else:
 	print '        OK (no version requirement at this time)'
 

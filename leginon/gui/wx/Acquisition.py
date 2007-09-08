@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.43 $
+# $Revision: 1.44 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-29 00:10:06 $
+# $Date: 2007-09-08 01:10:01 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -18,7 +18,7 @@ from gui.wx.Entry import FloatEntry, EVT_ENTRY, IntEntry
 from gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
 import wx
 import gui.wx.Events
-import gui.wx.ImageViewer
+import gui.wx.ImagePanel
 import gui.wx.ToolBar
 import threading
 from gui.wx.ImageBrowser import ImageBrowserPanel
@@ -169,7 +169,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'acquisition'
-	imagepanelclass = gui.wx.ImageViewer.ImagePanel
+	imagepanelclass = gui.wx.ImagePanel.ImagePanel
 	settingsdialogclass = SettingsDialog
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)

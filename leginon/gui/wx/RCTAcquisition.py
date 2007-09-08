@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RCTAcquisition.py,v $
-# $Revision: 1.9 $
+# $Revision: 1.10 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-07 20:44:29 $
+# $Date: 2007-09-08 01:10:09 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -21,13 +21,13 @@ import gui.wx.Acquisition
 import gui.wx.Dialog
 import gui.wx.Events
 import gui.wx.Icons
-import gui.wx.ImageViewer
+import gui.wx.TargetPanel
 import gui.wx.ToolBar
 import gui.wx.FocusSequence
 
 class Panel(gui.wx.Acquisition.Panel):
 	icon = 'focuser'
-	imagepanelclass = gui.wx.ImageViewer.TargetImagePanel
+	imagepanelclass = gui.wx.TargetPanel.TargetImagePanel
 	def __init__(self, parent, name):
 		gui.wx.Acquisition.Panel.__init__(self, parent, name)
 

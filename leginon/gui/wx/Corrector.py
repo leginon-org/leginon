@@ -4,17 +4,17 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.53 $
+# $Revision: 1.54 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-18 02:28:16 $
-# $Author: acheng $
+# $Date: 2007-09-08 01:10:03 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
 import wx
 from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.Node
-import gui.wx.ImageViewer
+import gui.wx.TargetPanel
 import gui.wx.Settings
 import threading
 import gui.wx.Stats
@@ -162,7 +162,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
 
 		# image
-		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
+		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTargetTool('Bad Pixels', wx.Color(255, 0, 0), target=True, shape='.')
 		self.imagepanel.selectiontool.setDisplayed('Bad Pixels', True)
 		self.imagepanel.setTargets('Bad Pixels', [])

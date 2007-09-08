@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PixelSizeCalibrator.py,v $
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-14 19:30:15 $
-# $Author: pulokas $
+# $Date: 2007-09-08 01:10:08 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -15,7 +15,7 @@ import wx
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.Calibrator
-import gui.wx.ImageViewer
+import gui.wx.ImagePanelTools
 import gui.wx.ToolBar
 
 class Panel(gui.wx.Calibrator.Panel):
@@ -29,7 +29,7 @@ class Panel(gui.wx.Calibrator.Panel):
 	def onNodeInitialized(self):
 		gui.wx.Calibrator.Panel.onNodeInitialized(self)
 		self.measurement = None
-		self.Bind(gui.wx.ImageViewer.EVT_MEASUREMENT, self.onMeasurement)
+		self.Bind(gui.wx.ImagePanelTools.EVT_MEASUREMENT, self.onMeasurement)
 
 	def onMeasurement(self, evt):
 		self.measurement = evt.measurement

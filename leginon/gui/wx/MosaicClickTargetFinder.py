@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.34 $
+# $Revision: 1.35 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-07-02 19:36:52 $
-# $Author: acheng $
+# $Date: 2007-09-08 01:10:07 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -16,6 +16,7 @@ from gui.wx.Choice import Choice
 from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.Settings
 import gui.wx.TargetFinder
+import gui.wx.ImagePanelTools
 import gui.wx.ClickTargetFinder
 import gui.wx.ToolBar
 import threading
@@ -64,7 +65,7 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onFindSquaresButton,
 											id=gui.wx.ToolBar.ID_FIND_SQUARES)
 
-		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings)
+		self.Bind(gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, False)
 

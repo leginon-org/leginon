@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MatrixCalibrator.py,v $
-# $Revision: 1.14 $
+# $Revision: 1.15 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-21 23:55:48 $
-# $Author: pulokas $
+# $Date: 2007-09-08 01:10:07 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -18,7 +18,6 @@ from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.Camera
 import gui.wx.Calibrator
 import gui.wx.Dialog
-import gui.wx.ImageViewer
 import gui.wx.Settings
 import gui.wx.ToolBar
 import numpy

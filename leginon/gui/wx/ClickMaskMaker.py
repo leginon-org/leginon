@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ClickMaskMaker.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-27 22:11:42 $
-# $Author: acheng $
+# $Date: 2007-09-08 01:10:02 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -15,6 +15,7 @@ import wx
 from gui.wx.Entry import Entry,IntEntry
 import gui.wx.Node
 import gui.wx.ImageAssessor
+import gui.wx.TargetPanel
 import gui.wx.Settings
 import gui.wx.ToolBar
 import wx.lib.filebrowsebutton as filebrowse
@@ -22,7 +23,7 @@ import gui.wx.Choice
 
 class Panel(gui.wx.ImageAssessor.Panel):
 	icon = 'check'
-	imagepanelclass = gui.wx.ImageViewer.TargetImagePanel
+	imagepanelclass = gui.wx.TargetPanel.TargetImagePanel
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 

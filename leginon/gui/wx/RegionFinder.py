@@ -4,15 +4,16 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RegionFinder.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-29 22:40:56 $
+# $Date: 2007-09-08 01:10:10 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
 import wx
-import gui.wx.ImageViewer
+import gui.wx.TargetPanel
+import gui.wx.ImagePanelTools
 import gui.wx.Settings
 import gui.wx.TargetFinder
 import wx.lib.filebrowsebutton as filebrowse
@@ -26,7 +27,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 		gui.wx.TargetFinder.Panel.initialize(self)
 		self.SettingsDialog = gui.wx.TargetFinder.SettingsDialog
 
-		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
+		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTargetTool('Perimeter', wx.RED,
@@ -49,7 +50,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.szmain.AddGrowableCol(0)
 		self.szmain.AddGrowableRow(1)
 
-		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings)
+		self.Bind(gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 
 	def onImageSettings(self, evt):
 		if evt.name == 'Original':

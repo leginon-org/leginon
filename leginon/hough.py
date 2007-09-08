@@ -180,7 +180,7 @@ def houghCircle(image, threshold, radiusrange=None):
 
 if __name__=='__main__':
 	from wxPython.wx import *
-	import gui.wx.ImageViewer
+	import gui.wx.ImagePanel
 	import timer
 	import holefinderback
 	from pyami import imagefun, mrc
@@ -250,10 +250,10 @@ if __name__=='__main__':
 			self.panel = wxScrolledWindow(frame, -1)
 			self.panel.SetScrollRate(5, 5)
 			self.sizer = wxFlexGridSizer(2, 2, 0, 0)
-			self.iv1 = gui.wx.ImageViewer.ImagePanel(self.panel, -1)
-			self.iv2 = gui.wx.ImageViewer.ImagePanel(self.panel, -1)
-			self.iv3 = gui.wx.ImageViewer.ImagePanel(self.panel, -1)
-			self.iv4 = gui.wx.ImageViewer.ImagePanel(self.panel, -1)
+			self.iv1 = gui.wx.ImagePanel.ImagePanel(self.panel, -1)
+			self.iv2 = gui.wx.ImagePanel.ImagePanel(self.panel, -1)
+			self.iv3 = gui.wx.ImagePanel.ImagePanel(self.panel, -1)
+			self.iv4 = gui.wx.ImagePanel.ImagePanel(self.panel, -1)
 			self.sizer.AddMany([(self.iv1,),
 													(self.iv2,),
 													(self.iv3,),

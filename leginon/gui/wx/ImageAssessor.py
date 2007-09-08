@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageAssessor.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-29 22:40:54 $
+# $Date: 2007-09-08 01:10:05 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -16,12 +16,13 @@ from gui.wx.Entry import Entry
 import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ToolBar
+import gui.wx.TargetPanel
 import wx.lib.filebrowsebutton as filebrowse
 import gui.wx.Choice
 
 class Panel(gui.wx.TargetFinder.Panel):
 	icon = 'check'
-	imagepanelclass = gui.wx.ImageViewer.TargetImagePanel
+	imagepanelclass = gui.wx.TargetPanel.TargetImagePanel
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
