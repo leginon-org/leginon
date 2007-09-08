@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanel.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:11:18 $
+# $Date: 2007-09-08 01:13:37 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -27,6 +27,7 @@ import math
 import wx
 import Image
 import gui.wx.ImagePanel
+import gui.wx.ImagePanelTools
 import gui.wx.TargetPanelTools
 
 ##################################
@@ -291,8 +292,8 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 class ClickAndTargetImagePanel(TargetImagePanel):
 	def __init__(self, parent, id, disable=False):
 		TargetImagePanel.__init__(self, parent, id)
-		self.clicktool = self.addTool(ClickTool(self, self.toolsizer, disable))
-		self.Bind(EVT_IMAGE_CLICK_DONE, self.onImageClickDone)
+		self.clicktool = self.addTool(gui.wx.ImagePanelTools.ClickTool(self, self.toolsizer, disable))
+		self.Bind(gui.wx.ImagePanel.EVT_IMAGE_CLICK_DONE, self.onImageClickDone)
 		self.sizer.Layout()
 		self.Fit()
 
