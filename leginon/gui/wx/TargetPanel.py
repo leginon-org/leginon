@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanel.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-07 20:25:15 $
+# $Date: 2007-09-08 01:11:18 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -208,12 +208,12 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 
 	#--------------------
 	def Draw(self, dc):
-		now = time.time()
+		#now = time.time()
 		gui.wx.ImagePanel.ImagePanel.Draw(self, dc)
 		dc.BeginDrawing()
 		self.drawTargets(dc)
 		dc.EndDrawing()
-		print 'Drawn', time.time() - now
+		#print 'Drawn', time.time() - now
 
 	#--------------------
 	def _onLeftClick(self, evt):
