@@ -51,7 +51,7 @@ class TiltTargetPanel(TargetPanel.TargetImagePanel):
 			self.setImage(Image.open(filename))
 
 #---------------------------------------
-class MyApp(wx.App):
+class PickerApp(wx.App):
 	def OnInit(self):
 		self.arealim = 50000.0
 		self.theta = 0.0
@@ -419,8 +419,9 @@ class MyApp(wx.App):
 			print '(%d,%d),' % (target.x, target.y)
 		print "Second"
 		targets = self.panel2.getTargets('Picked')
-		for target in targets:
-			print '(%d,%d),' % (target.x, target.y)
+		#for target in targets:
+		#	print '(%d,%d),' % (target.x, target.y)
+		#self.Exit()
 		wx.Exit()
 
 if __name__ == '__main__':
@@ -431,7 +432,7 @@ if __name__ == '__main__':
 		except IndexError:
 			files.append(None)
 
-	app = MyApp(0)
+	app = PickerApp(0)
 	app.panel1.openImageFile(files[0])
 	app.panel2.openImageFile(files[1])
 	app.openPicksFromFile(files[2])
