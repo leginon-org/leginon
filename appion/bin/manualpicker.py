@@ -12,7 +12,13 @@ import appionData
 import apParticle
 import apDatabase
 import apDisplay
-from gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
+try:
+	from gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
+except ImportError:
+	import gui.wx.ImageViewer as ImagePanel
+	import gui.wx.ImageViewer as ImagePanelTools
+	import gui.wx.ImageViewer as TargetPanel
+	import gui.wx.ImageViewer as TargetPanelTools
 import pyami
 import numpy
 
