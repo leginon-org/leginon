@@ -2,27 +2,25 @@
 
 import os
 import sys
-import particleLoop
-import apImage
-import subprocess
-import apFindEM
-import appionData
-import apParticle
-import apDatabase
-import apDisplay
 import time
 import wx
-import pyami
-import numpy
+import appionLoop
+import particleLoop
+import apFindEM
+import appionData
+import apDatabase
+import apDisplay
 import ApTiltPicker
+import apTiltTransform
+import apTiltPair
 
 ##################################
 ##
 ##################################
 
-class manualPicker(appionLoop.AppionLoop):
-	def __init__(self):
-		raise NotImplementedError()
+class tiltAligner(appionLoop.AppionLoop):
+	#def __init__(self):
+	#	raise NotImplementedError()
 	
 	def setProcessingDirName(self):
 		self.processdirname = "tiltalign"
@@ -40,11 +38,6 @@ class manualPicker(appionLoop.AppionLoop):
 		apDisplay.printMsg("finished")
 		wx.Exit()
 
-	def processImage(self, imgdata):
-		if not self.params['dbimages']:
-			apFindEM.processAndSaveImage(imgdata, params=self.params)
-		self.runTiltAligner(imgdata)
-
 	def commitToDatabase(self, imgdata):
 		expid = int(imgdata['session'].dbid)
 		#self.insertTiltAlignParams(expid)
@@ -57,12 +50,28 @@ class manualPicker(appionLoop.AppionLoop):
 		for arg in args:
 			elements = arg.split('=')
 			elements[0] = elements[0].lower()
-			apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
+			if (elements[0]=='lp'):
+				self.params['lp']= float(elements[1])
+			elif (elements[0]=='hp'):
+				self.params['hp']= float(elements[1])
+			elif (elements[0]=='invert'):
+				self.params['invert']=True
+			elif (elements[0]=='bin'):
+				self.params['bin']=int(elements[1])
+			elif (elements[0]=='median'):
+				self.params['median']=int(elements[1])
+			else:
+				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
 	def specialDefaultParams(self):
 		"""
 		put in any additional default parameters
 		"""
+		self.params['lp']=0.0
+		self.params['hp']=600.0
+		self.params['invert']=False
+		self.params['median']=0
+		self.params['bin']=4
 		return
 
 	def specialParamConflicts(self):
@@ -77,6 +86,11 @@ class manualPicker(appionLoop.AppionLoop):
 		"""
 		return	
 
+
+	def processImage(self, imgdata):
+		tiltdata = apTiltPair.getTiltPair(imgdata)
+		self.runTiltAligner(imgdata, tiltdata)
+
 	##### END PRE-DEFINED APPION LOOP FUNCTIONS #####
 
 	def processAndSaveAllImages(self):
@@ -87,6 +101,12 @@ class manualPicker(appionLoop.AppionLoop):
 				print "already processed: ",apDisplay.short(imgdata['filename'])
 			else:
 				apFindEM.processAndSaveImage(imgdata, params=self.params)
+			tiltdata = apTiltPair.getTiltPair(imgdata)
+			tiltpath = os.path.join(self.params['rundir'], tiltdata['filename']+'.dwn.mrc')
+			if os.path.isfile(tiltpath):
+				print "already processed: ",apDisplay.short(tiltdata['filename'])
+			else:
+				apFindEM.processAndSaveImage(tiltdata, params=self.params)
 
 	def insertTiltAlignParams(self, expid):
 		tiltparamsq=appionData.ApTiltParamsData()
@@ -110,31 +130,37 @@ class manualPicker(appionLoop.AppionLoop):
 				if tiltparamsq[pkey] != tiltparamsdata[0][pkey]:
 					print "All parameters for a particular manualpicker run must be identical"
 					print pkey,tiltparamsq[pkey],"not equal to",tiltparamsdata[0][pkey]
-					sys.exit()
+					sys.exit(1)
 			for i in tiltparamsq:
 				if tiltparamsdata[0][i] != tiltparamsq[i]:
 					apDisplay.printError("All parameters for a particular manualpicker run must be identical\n"+
 						str(i)+":"+str(tiltparamsq[i])+" not equal to "+str(tiltparamsdata[0][i]))
 		return
 
-	def runTiltAligner(self, imgdata):
+	def runTiltAligner(self, imgdata, tiltdata):
 		#reset targets
-		self.app.panel.setTargets('Select Particles', [])
-		self.targets = []
+		self.app.onClear(None)
+		self.tiltparams = {}
 		#open new file
 		imgname = imgdata['filename']+'.dwn.mrc'
 		imgpath = os.path.join(self.params['rundir'],imgname)
 		self.app.panel1.openImageFile(imgpath)
+		#open tilt file
+		tiltname = tiltdata['filename']+'.dwn.mrc'
+		tiltpath = os.path.join(self.params['rundir'],tiltname)
+		self.app.panel2.openImageFile(tiltpath)
 		#run the picker
 		self.app.MainLoop()
 		self.app.panel1.openImageFile(None)
 		self.app.panel2.openImageFile(None)
-		#targets are copied to self.targets by app
+		#tilt data are copied to self.tiltparams by app
 		#parse and return the targets in peaktree form
+		if self.tiltparams:
+			print self.tiltparams
 
 
 if __name__ == '__main__':
-	imgLoop = manualPicker()
+	imgLoop = tiltAligner()
 	imgLoop.run()
 
 

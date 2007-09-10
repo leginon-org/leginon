@@ -83,9 +83,9 @@ def a2Toa1(a1,a2,theta,gamma,phi,scale,shiftx,shifty):
 	gammamat = numpy.array([[ cosgamma, -singamma ], [ singamma, cosgamma ]], dtype=numpy.float32)
 	#theta compression
 	if theta < 0:
-		thetamat  = numpy.array([[ 1.0, 0.0 ], [ 0.0, math.cos(theta) ]], dtype=numpy.float32)
+		thetamat  = numpy.array([[ math.cos(theta), 0.0 ], [ 0.0,  1.0]], dtype=numpy.float32)
 	else:
-		thetamat  = numpy.array([[ 1.0, 0.0 ], [ 0.0, 1.0/math.cos(theta) ]], dtype=numpy.float32)
+		thetamat  = numpy.array([[ 1.0/math.cos(theta), 0.0 ], [ 0.0, 1.0]], dtype=numpy.float32)
 	#phi rotation
 	cosphi = math.cos(phi)
 	sinphi = math.sin(phi)
