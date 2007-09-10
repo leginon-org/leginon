@@ -10,16 +10,108 @@ import appionData
 import apParticle
 import apDatabase
 import apDisplay
+import time
+from gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
+import wx
+import pyami
+import numpy
+
+NextEventType = wx.NewEventType()
+EVT_NEXT = wx.PyEventBinder(NextEventType)
+
+##################################
+##
+##################################
+
+class NextEvent(wx.PyCommandEvent):
+	def __init__(self, source, name, value):
+		wx.PyCommandEvent.__init__(self, NextEventType, source.GetId())
+		self.SetEventObject(source)
+		self.name = name
+		self.value = value
+
+##################################
+##
+##################################
+
+class ManualPickerPanel(TargetPanel.TargetImagePanel):
+	def __init__(self, parent, id, callback=None, tool=True):
+		TargetPanel.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool)
+
+	def openImageFile(self, filename):
+		self.filename = filename
+		if filename is None:
+			self.setImage(None)
+		elif filename[-4:] == '.mrc':
+			image = pyami.mrc.read(filename)
+			self.setImage(image.astype(numpy.float32))
+		else:
+			self.setImage(Image.open(filename))
+
+##################################
+##
+##################################
+
+class PickerApp(wx.App):
+	def OnInit(self):
+		self.frame = wx.Frame(None, -1, 'Image Viewer')
+		self.sizer = wx.FlexGridSizer(2,1)
+
+		self.panel = ManualPickerPanel(self.frame, -1)
+		self.panel.addTypeTool('Select Particles', toolclass=TargetPanelTools.TargetTypeTool,
+			display=wx.RED, target=True, numbers=True)
+		self.panel.setTargets('Select Particles', [])
+		self.panel.selectiontool.setTargeting('Select Particles', True)
+		self.panel.SetMinSize((300,300))
+		self.sizer.Add(self.panel, 1, wx.EXPAND)
+
+		self.next = wx.Button(self.frame, -1, '&Next')
+		self.next.SetMinSize((200,40))
+		self.Bind(wx.EVT_BUTTON, self.onNext, self.next)
+		self.sizer.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		self.sizer.AddGrowableRow(0)
+		self.sizer.AddGrowableCol(0)
+		self.frame.SetSizerAndFit(self.sizer)
+		self.SetTopWindow(self.frame)
+		self.frame.Show(True)
+		return True
+
+	def onQuit(self, evt):
+		targets = self.panel.getTargets('Select Particles')
+		for target in targets:
+			print '%s\t%s' % (target.x, target.y)
+		self.Exit()
+
+	def onNext(self, evt):
+		#targets = self.panel.getTargets('Select Particles')
+		#for target in targets:
+		#	print '%s\t%s' % (target.x, target.y)
+		self.appion.targets = self.panel.getTargets('Select Particles')
+		self.Exit()
+
+##################################
+##
+##################################
 
 class manualPicker(particleLoop.ParticleLoop):
 	def preLoopFunctions(self):
 		if self.params['dbimages']:
 			self.processAndSaveAllImages()
-	
+		self.app = PickerApp(0)
+		self.app.appion = self
+		self.threadJpeg = True
+
+	def postLoopFunctions(self):
+		print "Done"
+		#self.app.panel.Destroy()
+		self.app.Destroy()
+
 	def particleProcessImage(self, imgdata):
 		if not self.params['dbimages']:
 			apFindEM.processAndSaveImage(imgdata, params=self.params)
-		peaktree  = self.runManualPicker(imgdata['filename']+'.dwn.mrc')
+		peaktree = self.runManualPicker(imgdata)
+		#peaktree = self.runManualPickerOld(imgdata)
 		return peaktree
 
 	def particleCommitToDatabase(self, imgdata):
@@ -90,9 +182,28 @@ class manualPicker(particleLoop.ParticleLoop):
 						str(i)+":"+str(manparamsq[i])+" not equal to "+str(manparamsdata[0][i]))
 		return
 
-	def runManualPicker(self, imgname):
+	def runManualPicker(self, imgdata):
+		#reset targets
+		self.app.panel.setTargets('Select Particles', [])
+		self.targets = []
+		#open new file
+		imgname = imgdata['filename']+'.dwn.mrc'
+		imgpath = os.path.join(self.params['rundir'],imgname)
+		self.app.panel.openImageFile(imgpath)
+		#run the picker
+		self.app.MainLoop()
+		self.app.panel.openImageFile(None)
+		#targets are copied to self.targets by app
+		#parse and return the targets in peaktree form
+		peaktree=[]
+		for target in self.targets:
+			peaktree.append(self.XY2particle(target.x, target.y))
+		return peaktree
+
+	def runManualPickerOld(self, imgdata):
 		#use ImageViewer to pick particles
 		#this is a total hack but an idea that can be expanded on
+		imgname = imgdata['filename']+'.dwn.mrc'
 		imgpath = os.path.join(self.params['rundir'],imgname)
 		commandlst = ['ApImageViewer.py',imgpath]
 		manpicker = subprocess.Popen(commandlst,stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -102,20 +213,27 @@ class manualPicker(particleLoop.ParticleLoop):
 		#print outstring
 		#print words
 		for xy in range(0,len(words)/2):
-			particle={}
-			print xy, words[2*xy], words[2*xy+1]
-			particle['xcoord']=int(words[2*xy])*self.params['bin']
-			particle['ycoord']=int(words[2*xy+1])*self.params['bin']
-			particle['correlation']=None
-			particle['peakmoment']=None
-			particle['peakstddev']=None
-			particle['peakarea']=1
-			particle['tmplnum']=None
-			particle['template']=None
-			peaktree.append(particle)
+			binx = int(words[2*xy])
+			biny = int(words[2*xy+1])
+			peaktree.append(self.XY2particle(binx, biny))
 		#print peaktree
 		return peaktree
+
+	def XY2particle(self, binx, biny):
+		peak={}
+		peak['xcoord'] = binx*self.params['bin']
+		peak['ycoord'] = biny*self.params['bin']
+		peak['correlation'] = None
+		peak['peakmoment'] = None
+		peak['peakstddev'] = None
+		peak['peakarea'] = 1
+		peak['tmplnum'] = None
+		peak['template'] = None
+		return peak
 
 if __name__ == '__main__':
 	imgLoop = manualPicker()
 	imgLoop.run()
+
+
+
