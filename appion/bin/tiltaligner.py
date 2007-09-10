@@ -21,6 +21,9 @@ import ApTiltPicker
 ##################################
 
 class manualPicker(appionLoop.AppionLoop):
+	def __init__(self):
+		raise NotImplementedError()
+	
 	def setProcessingDirName(self):
 		self.processdirname = "tiltalign"
 

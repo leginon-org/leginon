@@ -419,10 +419,35 @@ class PickerApp(wx.App):
 			print '(%d,%d),' % (target.x, target.y)
 		print "Second"
 		targets = self.panel2.getTargets('Picked')
-		#for target in targets:
-		#	print '(%d,%d),' % (target.x, target.y)
-		#self.Exit()
-		wx.Exit()
+		"""
+		self.theta = 0.0
+		self.gamma = 0.0
+		self.phi = 0.0
+		self.shiftx = 0.0
+		self.shifty = 0.0
+		self.scale = 1.0
+		"""
+		if self.appionloop:
+			self.copyDataToAppionLoop()
+			self.Exit()
+		else:
+			wx.Exit()
+
+	#---------------------------------------
+	def copyDataToAppionLoop(self):
+			#Need global shift data not local data
+			targets1 = self.panel1.getTargets('Picked')
+			targets2 = self.panel2.getTargets('Picked')
+			gshiftx = targets1[0].x - targets2[0].x + self.shiftx
+			gshifty = targets1[0].y - targets2[0].y + self.shifty
+			#copy over the data
+			self.appionloop.tiltdata = {}
+			self.appionloop.tiltdata['theta'] = self.theta
+			self.appionloop.tiltdata['gamma'] = self.gamma
+			self.appionloop.tiltdata['phi'] = self.phi
+			self.appionloop.tiltdata['shiftx'] = gshiftx
+			self.appionloop.tiltdata['shifty'] = gshifty
+			self.appionloop.tiltdata['scale'] = self.scale
 
 if __name__ == '__main__':
 	files = []
