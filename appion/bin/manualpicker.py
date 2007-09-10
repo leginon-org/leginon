@@ -16,24 +16,6 @@ import wx
 import pyami
 import numpy
 
-NextEventType = wx.NewEventType()
-EVT_NEXT = wx.PyEventBinder(NextEventType)
-
-##################################
-##
-##################################
-
-class NextEvent(wx.PyCommandEvent):
-	def __init__(self, source, name, value):
-		wx.PyCommandEvent.__init__(self, NextEventType, source.GetId())
-		self.SetEventObject(source)
-		self.name = name
-		self.value = value
-
-##################################
-##
-##################################
-
 class ManualPickerPanel(TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True):
 		TargetPanel.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool)
