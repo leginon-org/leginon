@@ -2,17 +2,17 @@
 
 import os
 import sys
+import wx
+import time
 import particleLoop
 import apImage
-import subprocess
+#import subprocess
 import apFindEM
 import appionData
 import apParticle
 import apDatabase
 import apDisplay
-import time
 from gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
-import wx
 import pyami
 import numpy
 
@@ -36,7 +36,7 @@ class ManualPickerPanel(TargetPanel.TargetImagePanel):
 
 class PickerApp(wx.App):
 	def OnInit(self):
-		self.frame = wx.Frame(None, -1, 'Image Viewer')
+		self.frame = wx.Frame(None, -1, 'Manual Particle Picker')
 		self.sizer = wx.FlexGridSizer(2,1)
 
 		self.panel = ManualPickerPanel(self.frame, -1)
@@ -63,13 +63,13 @@ class PickerApp(wx.App):
 		targets = self.panel.getTargets('Select Particles')
 		for target in targets:
 			print '%s\t%s' % (target.x, target.y)
-		self.Exit()
+		wx.Exit()
 
 	def onNext(self, evt):
 		#targets = self.panel.getTargets('Select Particles')
 		#for target in targets:
 		#	print '%s\t%s' % (target.x, target.y)
-		self.appion.targets = self.panel.getTargets('Select Particles')
+		self.appionloop.targets = self.panel.getTargets('Select Particles')
 		self.Exit()
 
 ##################################
@@ -81,13 +81,15 @@ class manualPicker(particleLoop.ParticleLoop):
 		if self.params['dbimages']:
 			self.processAndSaveAllImages()
 		self.app = PickerApp(0)
-		self.app.appion = self
+		self.app.appionloop = self
 		self.threadJpeg = True
 
 	def postLoopFunctions(self):
-		print "Done"
-		#self.app.panel.Destroy()
-		self.app.Destroy()
+		self.app.frame.Destroy()
+		apDisplay.printMsg("Finishing up")
+		time.sleep(20)
+		apDisplay.printMsg("finished")
+		wx.Exit()
 
 	def particleProcessImage(self, imgdata):
 		if not self.params['dbimages']:
