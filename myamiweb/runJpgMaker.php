@@ -99,6 +99,7 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
 
 	$process = ($_POST['process']) ? $_POST['process'] :'';
+	$_POST['commit']='on';
 	echo"
 	<P>
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
@@ -106,15 +107,6 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 		<TD VALIGN='TOP'>";
 	createAppionLoopTable($sessiondata, 'jpgs', "", 1);
 	echo"
-		</TD>
-	</TR>
-	<TR>
-		<TD COLSPAN='2' ALIGN='CENTER'>
-		<HR>
-		<INPUT TYPE='checkbox' NAME='testimage' onclick='enabledtest(this)' $testcheck>
-		Test these setting on image:
-		<INPUT TYPE='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
-		<HR>
 		</TD>
 	</TR>
 	<TR>
@@ -157,7 +149,7 @@ function runjpgmaker() {
 	$dbimages = $_POST[sessionname].",".$_POST[preset];
 	$norejects = ($_POST[norejects]=="on") ? "0" : "1";
 	$nowait = ($_POST[nowait]=="on") ? "0" : "1";
-	$commit = ($_POST[commit]=="on") ? "1" : "0";
+	$commit = 1;
 	$apcontinue = $_POST[apcontinue];
 	
 	$command="jpgmaker.py ";
@@ -167,15 +159,15 @@ function runjpgmaker() {
 	if ($testimage) $apcommand.=" $testimage";
 	elseif ($dbimages) $apcommand.=" dbimages=$dbimages";
 	else $apcommand.=" alldbimages=$_POST[sessionname]";
-	//if ($norejects) $apcommand.=" norejects";
-	//if ($nowait) $apcommand.=" nowait";
-	//if ($commit) $apcommand.=" commit";
-	//if (!$apcontinue) $apcommand.=" nocontinue";
-	//else $apcommand.=" continue";
+	if ($norejects) $apcommand.=" norejects";
+	if ($nowait) $apcommand.=" nowait";
+	if ($commit) $apcommand.=" commit";
+	if (!$apcontinue) $apcommand.=" nocontinue";
+	else $apcommand.=" continue";
 	
 	//$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
-		createMMForm($apcommand);
+		createJMForm($apcommand);
 		exit;
 	}
 	$command .= $apcommand;
@@ -189,46 +181,16 @@ function runjpgmaker() {
 		$user = $_POST['user'];
 		$password = $_POST['password'];
 		if (!($user && $password)) {
-			createDogPickerForm("<B>ERROR:</B> Enter a user name and password");
+			createJMForm("<B>ERROR:</B> Enter a user name and password");
 			exit;
 		}
 		$command="source /ami/sw/ami.csh;".$command;
 		$command="source /ami/sw/share/python/usepython.csh cvs32;".$command;
-		$cmd = "$command > maskMakerLog.txt";
+		$cmd = "$command > JpgMakerLog.txt";
 		$result=exec_over_ssh($host, $user, $password, $cmd, True);
 	}
 
 	writeTop("JPEG Maker Results","JPEG Maker Results",$javascript);
-
-	if ($testimage) {
-		$outdir=$_POST[outdir];
-		// make sure outdir ends with '/'
-		if (substr($outdir,-1,1)!='/') $outdir.='/';
-		$runid=$_POST[runid];
-		echo  " <B>MaskMaker Command:</B><BR>$command<HR>";
-		$testjpg=ereg_replace(".mrc","",$testimage);
-		$testdir=$outdir.$runid."/tests/";
-        	if (file_exists($testdir)) {
-                	// open image directory
-                	$pathdir=opendir($testdir);
-			// get all files in directory
-			$ext='jpg';
-			while ($filename=readdir($pathdir)) {
-		        	if ($filename == '.' || $filename == '..') continue;
-				if (preg_match('`\.'.$ext.'$`i',$filename)) $files[]=$filename;
-			}
-			closedir($pathdir);
-		}
-//		echo"<form name='viewerform' method='POST' ACTION='$formAction'>\n";
-		if (count($files) > 0) 	{
-			$images=displayTestResults($testimage,$testdir,$files);
-		} else {
-			echo "<FONT COLOR='RED'><B>NO RESULT YET</B><BR>";
-			echo "<FONT COLOR='RED'><B>Refresh this page when ready</B><BR>";
-		}
-		createMMForm($images,'Particle Selection Results','');
-		exit;
-	}
 
 
 	echo"
@@ -242,12 +204,11 @@ function runjpgmaker() {
   <TR><TD>outdir</TD><TD>$outdir</TD></TR>
   <TR><TD>runname</TD><TD>$runid</TD></TR>
   <TR><TD>dbimages</TD><TD>$dbimages</TD></TR>
+  <TR><TD>norejects</TD><TD>$norejects</TD></TR>
+  <TR><TD>nowait</TD><TD>$nowait</TD></TR>
+  <TR><TD>commit</TD><TD>$commit (always)</TD></TR>
+  <TR><TD>continue</TD><TD>$apcontinue</TD></TR>
   ";
-  
-  //<TR><TD>norejects</TD><TD>$norejects</TD></TR>
-  //<TR><TD>nowait</TD><TD>$nowait</TD></TR>
-  //<TR><TD>commit</TD><TD>$commit</TD></TR>
-  //<TR><TD>continue</TD><TD>$apcontinue</TD></TR>
 
   
 	//appionLoopSummaryTable();
