@@ -14,10 +14,13 @@ import apPeaks
 import apParticle
 import apDefocalPairs
 import apXml
+import threading
 #legacy
 #import selexonFunctions  as sf1
 
 class ParticleLoop(appionLoop.AppionLoop):
+	threadJpeg = True
+
 	def setProcessingDirName(self):
 		self.processdirname = "extract"
 
@@ -48,9 +51,14 @@ class ParticleLoop(appionLoop.AppionLoop):
 	def processImage(self, imgdata):
 		#creates self.peaktree
 		self.peaktree = self.particleProcessImage(imgdata)
+		apDisplay.printMsg("Found "+str(len(self.peaktree))+" particles for "+apDisplay.shortenImageName(imgdata['filename']))
 		self.stats['lastpeaks'] = len(self.peaktree)
 
-		apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)
+		if self.threadJpeg is True:
+			print "THREADING"
+			threading.Thread(target=apPeaks.createPeakJpeg, args=(imgdata, self.peaktree, self.params)).start()
+		else:
+			apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)
 		if self.params['defocpair'] is True:
 			self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params)
 
@@ -152,9 +160,9 @@ class ParticleLoop(appionLoop.AppionLoop):
 			self.particleParseParams(newargs)
 
 	def specialParamConflicts(self):
+		if self.params['diam']==0:
+			apDisplay.printError("please input the diameter of your particle")
 		if self.functionname != "manualpicker":
-			if self.params['diam']==0:
-				apDisplay.printError("please input the diameter of your particle")
 			if self.params['autopik'] != 0:
 				apDisplay.printError("autopik is currently not supported")
 			if self.params['thresh']==0 and self.params['autopik']==0:
