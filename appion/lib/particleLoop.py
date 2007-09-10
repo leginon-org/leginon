@@ -21,8 +21,20 @@ import threading
 class ParticleLoop(appionLoop.AppionLoop):
 	threadJpeg = True
 
-	def setProcessingDirName(self):
-		self.processdirname = "extract"
+	#######################################################
+	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####
+	#######################################################
+	# see also appionLoop.py
+
+	def particleProcessImage(self):
+		"""
+		This is the main component of the script
+		where all the processing is done
+		
+		This function must return a list of peaks (as dicts), e.g.
+		return [{'xcoord': 15, 'ycoord: 10}, {'xcoord': 243, 'ycoord: 476}, ]
+		"""
+		return NotImplementedError()
 
 	def particleDefaultParams(self):
 		"""
@@ -34,7 +46,10 @@ class ParticleLoop(appionLoop.AppionLoop):
 		"""
 		put in any additional parameters to parse
 		"""
-		return
+		for arg in args:
+			elements = arg.split('=')
+			elements[0] = elements[0].lower()
+			apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
 	def particleParamConflicts(self):
 		"""
@@ -48,6 +63,42 @@ class ParticleLoop(appionLoop.AppionLoop):
 		"""
 		return
 
+	def particleCommitToDatabase(self):
+		"""
+		put in any additional commit parameters
+		"""
+		return
+
+	########################################################################
+	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM FROM APPION LOOP ####
+	########################################################################
+
+	def reprocessImage(self, imgdata):
+		"""
+		Returns 
+		True, if an image should be reprocessed
+		False, if an image was processed and should NOT be reprocessed
+		None, if image has not yet been processed 
+		e.g. a confidence less than 80%
+		"""
+		return None
+
+	def preLoopFunctions(self):
+		"""
+		do something before starting the loop
+		"""
+		return
+
+	def postLoopFunctions(self):
+		"""
+		do something after finishing the loop
+		"""
+		return
+
+	#################################################
+	#### ITEMS BELOW ARE NOT USUALLY OVERWRITTEN ####
+	#################################################
+
 	def processImage(self, imgdata):
 		#creates self.peaktree
 		self.peaktree = self.particleProcessImage(imgdata)
@@ -55,7 +106,6 @@ class ParticleLoop(appionLoop.AppionLoop):
 		self.stats['lastpeaks'] = len(self.peaktree)
 
 		if self.threadJpeg is True:
-			print "THREADING"
 			threading.Thread(target=apPeaks.createPeakJpeg, args=(imgdata, self.peaktree, self.params)).start()
 		else:
 			apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)

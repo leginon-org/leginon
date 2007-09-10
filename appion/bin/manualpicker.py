@@ -104,18 +104,6 @@ class manualPicker(particleLoop.ParticleLoop):
 		#self.deleteOldPicks(imgdata,self.params)
 		return
 
-	def deleteOldPicks(self, imgdata):
-		particles=apParticle.getParticlesForImageFromRunName(imgdata, self.params['runid'])
-		count=0
-		if particles:
-			print "Deleting old picks"
-			for particle in particles:
-				#print particle
-				count+=1
-				#print count,
-				self.appiondb.remove(particle)
-		return
-
 	def particleDefaultParams(self):
 		self.params['mapdir']="manualmaps"
 
@@ -127,6 +115,8 @@ class manualPicker(particleLoop.ParticleLoop):
 			elements = arg.split('=')
 			elements[0] = elements[0].lower()
 			apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
+
+	##### END PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
 
 	def processAndSaveAllImages(self):
 		print "Pre-processing images before picking"
@@ -214,6 +204,18 @@ class manualPicker(particleLoop.ParticleLoop):
 		peak['tmplnum'] = None
 		peak['template'] = None
 		return peak
+
+	def deleteOldPicks(self, imgdata):
+		particles=apParticle.getParticlesForImageFromRunName(imgdata, self.params['runid'])
+		count=0
+		if particles:
+			print "Deleting old picks"
+			for particle in particles:
+				#print particle
+				count+=1
+				#print count,
+				self.appiondb.remove(particle)
+		return
 
 if __name__ == '__main__':
 	imgLoop = manualPicker()

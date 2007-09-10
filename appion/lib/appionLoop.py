@@ -113,27 +113,15 @@ class AppionLoop(object):
 		self.postLoopFunctions()
 		self._finishLoop()
 
+	#######################################################
+	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####
+	#######################################################
+
 	def commitToDatabase(self, imgdata):
 		return
 
-	def setFunctionName(self, arg=None):
-		"""
-		Sets the name of the function
-		by default takes the first variable in the argument
-		"""
-		if arg == None:
-			arg = sys.argv[0]
-		self.functionname = os.path.basename(arg.strip())
-		#remove all letters after a dot, e.g. "func.py" -> "func"
-		self.functionname = os.path.splitext(self.functionname)[0]
-		#self.functionname = re.sub("\.[a-zA-Z]+$","",self.functionname)
-		apDisplay.printMsg("FUNCTION:\t"+self.functionname)
-
 	def setProcessingDirName(self):
 		self.processdirname = self.functionname
-
-	def setFunctionResultKeys(self):
-		self.resultkeys = {}
 			
 	def reprocessImage(self, imgdata):
 		"""
@@ -174,7 +162,10 @@ class AppionLoop(object):
 		"""
 		put in any additional parameters to parse
 		"""
-		return
+		for arg in args:
+			elements = arg.split('=')
+			elements[0] = elements[0].lower()
+			apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
 	def specialParamConflicts(self):
 		"""
@@ -187,6 +178,9 @@ class AppionLoop(object):
 		put in any additional directories to create
 		"""
 		return	
+
+	def setFunctionResultKeys(self):
+		self.resultkeys = {}
 
 	def insertFunctionRun(self):
 		"""
@@ -205,6 +199,18 @@ class AppionLoop(object):
 	#### ITEMS BELOW ARE NOT USUALLY OVERWRITTEN ####
 	#################################################
 
+	def setFunctionName(self, arg=None):
+		"""
+		Sets the name of the function
+		by default takes the first variable in the argument
+		"""
+		if arg == None:
+			arg = sys.argv[0]
+		self.functionname = os.path.basename(arg.strip())
+		#remove all letters after a dot, e.g. "func.py" -> "func"
+		self.functionname = os.path.splitext(self.functionname)[0]
+		#self.functionname = re.sub("\.[a-zA-Z]+$","",self.functionname)
+		apDisplay.printMsg("FUNCTION:\t"+self.functionname)
 
 	def commitResultsToDatabase(self, imgdata, results):
 		if results is not None and len(results) > 0:
