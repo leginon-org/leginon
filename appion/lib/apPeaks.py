@@ -308,8 +308,9 @@ def createPeakJpeg(imgdata, peaktree, params):
 	image = image.convert("RGB")
 	image2 = image.copy()
 	draw = ImageDraw.Draw(image2)
-	drawPeaks(peaktree, draw, bin, binpixrad)
-	outfile = os.path.join(jpegdir,imgname+".prtl.jpg")
+	if len(peaktree) > 0:
+		drawPeaks(peaktree, draw, bin, binpixrad)
+	outfile = os.path.join(jpegdir, imgname+".prtl.jpg")
 	print " ... writing peak JPEG: ",outfile
 	image = Image.blend(image, image2, 0.9) 
 	image.save(outfile, "JPEG", quality=95)
@@ -347,7 +348,7 @@ def drawPeaks(peaktree, draw, bin, binpixrad, circmult=1.0, numcircs=None, circs
 		elif 'template' in peakdict and peakdict['template'] is not None:
 			#GET templ_dbid
 			num = int(peakdict['template'])%12
-		elif 'peakarea' in peakdict and peakdict['peakarea'] != 0:
+		elif 'peakarea' in peakdict and peakdict['peakarea'] > 1:
 			#GET templ_num
 			num = int(peakdict['peakarea']*255)%12
 		else:
