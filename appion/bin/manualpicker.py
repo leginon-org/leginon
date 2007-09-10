@@ -15,10 +15,11 @@ import apDisplay
 try:
 	from gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
 except ImportError:
-	import gui.wx.ImageViewer as ImagePanel
-	import gui.wx.ImageViewer as ImagePanelTools
-	import gui.wx.ImageViewer as TargetPanel
-	import gui.wx.ImageViewer as TargetPanelTools
+	from  gui.wx import ImageViewer
+	ImagePanel = ImageViewer
+	ImagePanelTools = ImageViewer
+	TargetPanel = ImageViewer
+	TargetPanelTools = ImageViewer
 import pyami
 import numpy
 
