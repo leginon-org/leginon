@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.57 $
+# $Revision: 1.58 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:04 $
-# $Author: vossman $
+# $Date: 2007-09-10 20:30:05 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -346,7 +346,6 @@ class ManualFocusDialog(wx.MiniFrame):
 	def __init__(self, parent, node, title='Manual Focus'):
 		wx.MiniFrame.__init__(self, parent, -1, title, size=(620,600),
 			style=wx.DEFAULT_FRAME_STYLE|wx.RESIZE_BORDER)
-		
 		self.node = node
 
 		self.toolbar = wx.ToolBar(self, -1)
@@ -408,7 +407,8 @@ class ManualFocusDialog(wx.MiniFrame):
 		self.toolbar.Realize()
 		self.SetToolBar(self.toolbar)
 
-		self.imagepanel = gui.wx.ImagePanel.ImagePanel(self, -1)
+		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1,imagesize=(512, 512))
+
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.addTypeTool('Power', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Power', True)
