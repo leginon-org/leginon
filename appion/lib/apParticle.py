@@ -213,7 +213,7 @@ def insertParticlePeaks(peaktree, imgdict, expid, params):
 		apDisplay.printError("could not find runid in database")
 
 	# WRITE PARTICLES TO DATABASE
-	print "Inserting particles into database for",apDisplay.shortenImageName(imgname),"..."
+	apDisplay.printMsg("Inserting "+str(len(peaktree))+" particles into database for "+apDisplay.shortenImageName(imgname))
 
 	### WRITE PARTICLES TO DATABASE
 	count = 0
