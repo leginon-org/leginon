@@ -111,6 +111,10 @@ package: tomography
 module: rctacquisition 
 type: Pipeline
 
+[StigAcquisition]
+module: stigacquisition 
+type: Pipeline
+
 [ImageAssessor]
 module: imageassessor
 type: Utility

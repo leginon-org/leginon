@@ -1313,6 +1313,17 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class StigAcquisitionSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('stig0x', float),
+			('stig0y', float),
+			('stig1x', float),
+			('stig1y', float),
+			('stigcount', int),
+		)
+	typemap = classmethod(typemap)
+
 class FocusSequenceData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
