@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/StigAcquisition.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-12 20:30:43 $
+# $Date: 2007-09-12 20:37:54 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -59,9 +59,9 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 		sizer.Add(self.widgets['stig1y'], (3,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
 		label = wx.StaticText(self, -1, 'Stig Count')
-		sizer.Add(label, (0,0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(label, (4,0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.widgets['stigcount'] = IntEntry(self, -1, chars=6)
-		sizer.Add(self.widgets['stigcount'], (0,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+		sizer.Add(self.widgets['stigcount'], (4,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
 		sb = wx.StaticBox(self, -1, 'Stig Options')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
