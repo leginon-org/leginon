@@ -5,17 +5,17 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-var autoscale=false;
-var pl_interval = false;
-var lastoptions = new Array();
+var autoscale=false
+var pl_interval = false
+var lastoptions = new Array()
 
 if (window.XMLHttpRequest) {
-        xmlhttp = new XMLHttpRequest();
-        xmlhttp.overrideMimeType('text/xml');
+        xmlhttp = new XMLHttpRequest()
+        xmlhttp.overrideMimeType('text/xml')
 } else if (window.ActiveXObject) {
-        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP")
 }
-String.prototype.trim = function() { return this.replace(/^\s+|\s+$/, ''); };
+String.prototype.trim = function() { return this.replace(/^\s+|\s+$/, ''); }
 
 
 function update_image_list(view) {
@@ -24,8 +24,8 @@ function update_image_list(view) {
 	displaydebug("a:"+view+" "+selpreset)
 	var jsUsername=null
 	if (obj=document.viewerform.imageId) {
-		jsindex = obj.selectedIndex;
-		jsimgId = obj.options[jsindex].value;
+		jsindex = obj.selectedIndex
+		jsimgId = obj.options[jsindex].value
 		var url = 'updateimagelist.php?username='+jsUsername+'&imageId='+jsimgId+'&sessionId='+jsSessionId+'&p='+selpreset
 		xmlhttp.open('GET', url, true)
 		xmlhttp.onreadystatechange = function() {
@@ -42,7 +42,7 @@ function update_image_list(view) {
 				}
 			}
 		}
-	xmlhttp.send(null);
+	xmlhttp.send(null)
 	}
 }
 
@@ -50,170 +50,170 @@ function setproject(id) {
 	if (obj=document.viewerform.projectId) {
 		for (var i in obj.options) {
 			if (obj.options[i].value == id) {
-				obj.options[i].selected=true;
-				break;
+				obj.options[i].selected=true
+				break
 			}
 		}
-		newexp();
+		newexp()
 	}
 }
 
 function setevents()
 {
 	if (obj=document.viewerform.imageId) {
-	     obj.onkeyup   = checkevents;
-	     obj.onkeydown = checkevents;
-	     obj.onchange  = checkevents;
+	     obj.onkeyup   = checkevents
+	     obj.onkeydown = checkevents
+	     obj.onchange  = checkevents
 	}
 } 
 
 function checkevents(e)
 {
-	var code;
-	if (!e) var e = window.event;
-	if (e.keyCode) code = e.keyCode;
-	else if (e.which) code = e.which;
+	var code
+	if (!e) var e = window.event
+	if (e.keyCode) code = e.keyCode
+	else if (e.which) code = e.which
 	if (code == key_down_unicode || code == key_up_unicode)  {
 		if (e.type == eventdown) {
-			keydown=true;
-			stopInterval();
+			keydown=true
+			stopInterval()
 		} else if (e.type == eventup) {
-			startInterval();
-			keydown=false;
+			startInterval()
+			keydown=false
 		}
 	} else if (e.type == eventchange && !keydown) {
-			updateviews();
+			updateviews()
 	}
 }
 
 function getKey(e)
 {
-  var code;
-  if (!e) var e = window.event;
-  if (e.keyCode) code = e.keyCode;
-  else if (e.which) code = e.which;
-  var character = String.fromCharCode(code);
+  var code
+  if (!e) var e = window.event
+  if (e.keyCode) code = e.keyCode
+  else if (e.which) code = e.which
+  var character = String.fromCharCode(code)
 
 	switch (character) {
 		case 'N':
 			incIndex()
 			updateviews()
-			break;
+			break
 		case 'R':
 			update_image_list()
-			break;
+			break
   }
 }
 
 function getImageAutoScale(view) {
-	var url = 'getimagestat.php?id='+jsimgId;
-	alert(url);
-	xmlhttp.open('GET', url, true);
+	var url = 'getimagestat.php?id='+jsimgId
+	alert(url)
+	xmlhttp.open('GET', url, true)
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-		var xmlDocument = xmlhttp.responseXML;
-		var minval = parseFloat(xmlDocument.getElementsByTagName('min').item(0).firstChild.data);
-		var maxval = parseFloat(xmlDocument.getElementsByTagName('max').item(0).firstChild.data);
-		var meanval = parseFloat(xmlDocument.getElementsByTagName('mean').item(0).firstChild.data);
-		var stdevval = parseFloat(xmlDocument.getElementsByTagName('stdev').item(0).firstChild.data);
-		var minval = ((meanval - 3*stdevval)-minval)*255/(maxval-minval);
-		var maxval = ((meanval + 3*stdevval)-minval)*255/(maxval-minval);
-		setminmax(view, minval, maxval);
+		var xmlDocument = xmlhttp.responseXML
+		var minval = parseFloat(xmlDocument.getElementsByTagName('min').item(0).firstChild.data)
+		var maxval = parseFloat(xmlDocument.getElementsByTagName('max').item(0).firstChild.data)
+		var meanval = parseFloat(xmlDocument.getElementsByTagName('mean').item(0).firstChild.data)
+		var stdevval = parseFloat(xmlDocument.getElementsByTagName('stdev').item(0).firstChild.data)
+		var minval = ((meanval - 3*stdevval)-minval)*255/(maxval-minval)
+		var maxval = ((meanval + 3*stdevval)-minval)*255/(maxval-minval)
+		setminmax(view, minval, maxval)
 		}
-	};
-	xmlhttp.send(null);
+	}
+	xmlhttp.send(null)
 }
 
 function startInterval()
 {
-	begin = new Date();
-	interval = window.setInterval("trigger()",10);
+	begin = new Date()
+	interval = window.setInterval("trigger()",10)
 }
 
 function stopInterval()
 {
-    window.clearInterval (interval);
-    interval="";
+    window.clearInterval (interval)
+    interval=""
 }
 
 function trigger()
 {
-	end = new Date();
-	diff = end-begin;
+	end = new Date()
+	diff = end-begin
 	// --- if key released at least for 150ms
 	// --- then triggered his action 
 	if (diff > 150) {
-		stopInterval();
+		stopInterval()
 		// --- action
-		updateviews();
+		updateviews()
 	}
 	
 }
 
 function startPlayback(refreshtime) {
 	if (refreshtime) {
-		stopPlayback();
-		pl_interval = window.setInterval("playback()", refreshtime);
+		stopPlayback()
+		pl_interval = window.setInterval("playback()", refreshtime)
 	}
 }
 
 function rstartPlayback(refreshtime) {
 	if (refreshtime) {
-		stopPlayback();
-		pl_interval = window.setInterval("rplayback()", refreshtime);
+		stopPlayback()
+		pl_interval = window.setInterval("rplayback()", refreshtime)
 	}
 }
 
 function stopPlayback() {
-	window.clearInterval (pl_interval);
-	pl_interval = "";
+	window.clearInterval (pl_interval)
+	pl_interval = ""
 }
 
 function playback() {
 	if (isImageLoaded(mainview)) {
-		incIndex();
+		incIndex()
 		if (getIndex()==document.viewerform.imageId.length-1) {
-			stopPlayback();
+			stopPlayback()
 		}
-		updateviews();
+		updateviews()
 	}
 }
 
 function rplayback() {
 	if (isImageLoaded(mainview)) {
-		decIndex();
+		decIndex()
 		if (!getIndex()) {
-			stopPlayback();
+			stopPlayback()
 		}
-		updateviews();
+		updateviews()
 	}
 }
 
 function setprogressbar(view) {
-	loadingdiv = false;
+	loadingdiv = false
 	if (loadingdivstyle = document.getElementById("loadingdiv"+view).style) {
-		loadingdiv = true;
+		loadingdiv = true
 	}
 	if (isImageLoaded(view)) {
-		eval("window.clearInterval(n_img_interval"+view+");");
-		eval("n_img_interval"+view+"='';");
+		eval("window.clearInterval(n_img_interval"+view+");")
+		eval("n_img_interval"+view+"='';")
 		if (loadingdiv) {
-			loadingdivstyle.visibility = 'hidden';
+			loadingdivstyle.visibility = 'hidden'
 		}
 	} else {
 		if (loadingdiv) {
-			loadingdivstyle.visibility = 'visible';
+			loadingdivstyle.visibility = 'visible'
 		}
 	}
 }
 
 function loadImage(view) {
 	if (loadingdivstyle = document.getElementById("loadingdiv"+view).style) {
-		loadingdiv = true;
+		loadingdiv = true
 	}
 	if (img = document.images[eval("\"" +view+ "img\"")]) {
-		n_img = eval("n_img_"+view);
-		eval("n_img_interval"+view+" = window.setInterval(\"setprogressbar('"+view+"')\", 500)");
+		n_img = eval("n_img_"+view)
+		eval("n_img_interval"+view+" = window.setInterval(\"setprogressbar('"+view+"')\", 500)")
 		img.src=n_img.src;	
 	}
 }
@@ -233,72 +233,72 @@ function setimgId() {
 
 function newexp() {
     window.document.viewerform.submit(); 
-    return true;
+    return true
 }
 
 function getMainView() {
-	mainview = 'v1';
+	mainview = 'v1'
 	if (controlview=eval("document.viewerform.controlview")) {
-		mainview=controlview.value;
+		mainview=controlview.value
 	}
-	return mainview;
+	return mainview
 }
 
 function getviewindex(name) {
-	index=0;
+	index=0
 	for (var i in jsviews) {
 		if (jsviews[i] == name) {
-			index=i;
-			break;
+			index=i
+			break
 		}
 	}
-	return index;
+	return index
 }
 
 function addComment() {
-	name = document.viewerform.name.value;
-	comment = document.viewerform.comment.value;
-	url = "addcomment.php?sessionId="+jsSessionId+"&imageId="+jsimgId+"&name="+escape(name)+"&comment="+escape(comment);
+	name = document.viewerform.name.value
+	comment = document.viewerform.comment.value
+	url = "addcomment.php?sessionId="+jsSessionId+"&imageId="+jsimgId+"&name="+escape(name)+"&comment="+escape(comment)
 	if (img = document.images[eval("\"commentimg\"")]) 
-		img.src = url;
+		img.src = url
 
 	if (commentdivstyle = document.getElementById("commentdiv").style) {
-		commentdivstyle.visibility = 'visible';
-		setTimeout("commentdivstyle.visibility = 'hidden'; img.src = 'addcomment.php'", 1500);
+		commentdivstyle.visibility = 'visible'
+		setTimeout("commentdivstyle.visibility = 'hidden'; img.src = 'addcomment.php'", 1500)
 	}
 }
 
 function newdatatype(view) {
 	if (listcontrol = eval("document.viewerform.controlpre.value"))
 		if (listcontrol==view+"pre") {
-			newexp();
-			return;
+			newexp()
+			return
 		}
 	else
-		newfile(view);
+		newfile(view)
 }
 
 function newfile(view){
-	jssize = eval(view+"size");
-	jsvfile = eval("jsvfile"+view);
-	selpreset = eval("jspreset"+view);
-	if (cbinning = eval("jsbinning"+view)) binning="&binning="+cbinning; else binning="";
+	jssize = eval(view+"size")
+	jsvfile = eval("jsvfile"+view)
+	selpreset = eval("jspreset"+view)
+	if (cbinning = eval("jsbinning"+view)) binning="&binning="+cbinning; else binning=""
 	jsimagescriptcur = eval("jsimagescript"+view)
 	jspresetscriptcur = eval("jspresetscript"+view)
-	vid = getviewindex(view);
+	vid = getviewindex(view)
 	
 	if (list = eval("document.viewerform."+view+"pre"))
-		selpreset=list.options[list.selectedIndex].value;
+		selpreset=list.options[list.selectedIndex].value
 
 	if (prem = eval("document.viewerform."+view+"prem"))
 		if (list)
-			prem.value = selpreset;
+			prem.value = selpreset
 
 	eval("jspreset"+view+"='"+selpreset+"'")
 
-	setImageStatus(view);
+	setImageStatus(view)
 
-	if (eval(view+"fft_bt_st")) fft="&fft=1"; else fft="";
+	if (eval(view+"fft_bt_st")) fft="&fft=1"; else fft=""
 	if (eval(view+"ace_bt_st")) {
 		jsimagescriptcur="getaceimg.php"
 		jspresetscriptcur="getacepreset.php"
@@ -306,209 +306,209 @@ function newfile(view){
 		jsimagescriptcur="getimg.php"
 		jspresetscriptcur="getpreset.php"
 	}
-	if (cacepar = eval("jsaceparam"+view)) ag="&g="+cacepar; else ag="";
-	if (eval(view+"scale_bt_st")) sb="&sb=1"; else sb="";
-	if (eval(view+"target_bt_st")) tg="&tg=1"; else tg="";
-	if (eval(view+"nptcl_bt_st")) nptcl="&nptcl=1"; else nptcl="";
-	if (cmin = eval("jsmin"+view)) np="&np="+cmin; else np="";
-	if (cmax = eval("jsmax"+view)) xp="&xp="+cmax; else xp="";
-	if (cfilter = eval("jsfilter"+view)) flt="&flt="+cfilter; else flt="";
-	if (cbinning = eval("jsbinning"+view)) binning="&binning="+cbinning; else binning="";
-	if (cquality = eval("jsquality"+view)) quality="&t="+cquality; else quality="";
-	if (ccolormap= eval("jscolormap"+view)) colormap="&colormap="+ccolormap; else colormap="";
-	if (cautoscale= eval("jsautoscale"+view)) autoscale="&autoscale="+cautoscale; else autoscale="";
-	if (cdisplayfilename= eval("jsdisplayfilename"+view)) displayfilename="&df="+cdisplayfilename; else displayfilename="";
-	if (cloadjpg= eval("jsloadjpg"+view)) loadjpg="&lj="+cloadjpg; else loadjpg="";
-	if (cptclsel = eval("jsptclsel"+view)) ptclsel="&psel="+escape(cptclsel); else ptclsel="";
+	ag = (cacepar = eval("jsaceparam"+view)) ? "&g="+cacepar : ""
+	sb = (eval(view+"scale_bt_st")) ? "&sb=1" : ""
+	tg = (eval(view+"target_bt_st")) ? "&tg=1" : ""
+	displayfilename = (eval(view+"tag_bt_st")) ? "&df=1" : ""
+	nptcl = (eval(view+"nptcl_bt_st")) ? "nptcl=1" : ""
+	np = (cmin = eval("jsmin"+view)) ? "&np="+cmin : ""
+	if (cmax = eval("jsmax"+view)) xp="&xp="+cmax; else xp=""
+	if (cfilter = eval("jsfilter"+view)) flt="&flt="+cfilter; else flt=""
+	if (cbinning = eval("jsbinning"+view)) binning="&binning="+cbinning; else binning=""
+	if (cquality = eval("jsquality"+view)) quality="&t="+cquality; else quality=""
+	if (ccolormap= eval("jscolormap"+view)) colormap="&colormap="+ccolormap; else colormap=""
+	if (cautoscale= eval("jsautoscale"+view)) autoscale="&autoscale="+cautoscale; else autoscale=""
+	if (cloadjpg= eval("jsloadjpg"+view)) loadjpg="&lj="+cloadjpg; else loadjpg=""
+	if (cptclsel = eval("jsptclsel"+view)) ptclsel="&psel="+escape(cptclsel); else ptclsel=""
 
 	options = "imgsc="+jsimagescriptcur+
 		"&preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+autoscale+displayfilename+loadjpg+ptclsel+nptcl+ag;
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+autoscale+displayfilename+loadjpg+ptclsel+nptcl+ag
 
 	if (options == lastoptions[vid])
-		return;
+		return
 
-	ni = jsimagescriptcur+"?"+options;
-	nlink = "javascript:popUpMap('map.php?"+options+"')";
-	ninfolink = "imgreport.php?id="+jsimgId+"&preset="+selpreset;
-	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft;
+	ni = jsimagescriptcur+"?"+options
+	nlink = "javascript:popUpMap('map.php?"+options+"')"
+	ninfolink = "imgreport.php?id="+jsimgId+"&preset="+selpreset
+	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft
 
 	if (img = document.images[eval("\"" +view+ "img\"")]) {
-		n = img.name;
-		n_img = eval("n_img_"+view);
-		n_img.name="n"+n;
-		n_img.src = ni;
-		loadImage(view);
+		n = img.name
+		n_img = eval("n_img_"+view)
+		n_img.name="n"+n
+		n_img.src = ni
+		loadImage(view)
 	}
 	if (link = document.getElementById(view+"href"))
-		link.href = nlink;
+		link.href = nlink
 	if (infolink = document.getElementById("info"+view+"_bthref"))
-		infolink.href = ninfolink;
+		infolink.href = ninfolink
 	if (downloadlink = document.getElementById("download"+view+"_bthref"))
-		downloadlink.href = ndownloadlink;
+		downloadlink.href = ndownloadlink
 
 	if (cif=eval("this."+view+"if")) {
-		iflink = jspresetscriptcur+"?vf="+jsvfile+"&id="+jsimgId+"&preset="+selpreset;
-		cif.document.location.replace(iflink);
+		iflink = jspresetscriptcur+"?vf="+jsvfile+"&id="+jsimgId+"&preset="+selpreset
+		cif.document.location.replace(iflink)
 	}
 
-	lastoptions[vid] = options;
+	lastoptions[vid] = options
 }
 
 function setAceParam(view) {
 	if (param = document.getElementById(view+"aceparam")) {
-		vf = param.options[param.selectedIndex].value;
-		eval("jsaceparam"+view+"="+vf);
+		vf = param.options[param.selectedIndex].value
+		eval("jsaceparam"+view+"="+vf)
 		newfile(view)
 	}
 }
 
 function toggleButton(imagename, name) {
-	state = toggleimage(imagename, name);
+	state = toggleimage(imagename, name)
 	if (m = eval("document.viewerform."+imagename+"_st")) {
-		m.value=state;
+		m.value=state
 	}
-	return state;
+	return state
 }
 
 function setform(input, value) {
 	if (m = eval("document.viewerform."+input)) {
-		m.value=value;
-		return true;
+		m.value=value
+		return true
 	}
-	return false;
+	return false
 }
 
 function isImageLoaded(view) {
 	if (img = document.images[eval("\"" +view+ "img\"")]) {
 		if (n_img.complete){
-			eval("n_img_"+view+"=new Image()");
-			return true;
+			eval("n_img_"+view+"=new Image()")
+			return true
 		}
 	}
-	return false;
+	return false
 }
 
 function setImageStatus(viewname) {
-	if (ccolormap= eval("jscolormap"+viewname)) colormap="&colormap="+ccolormap; else colormap="";
-	if (cmin = eval("jsmin"+viewname)) np="&min="+cmin; else np="";
-	if (cmax = eval("jsmax"+viewname)) xp="&max="+cmax; else xp="";
-	options = np+xp+colormap;
+	if (ccolormap= eval("jscolormap"+viewname)) colormap="&colormap="+ccolormap; else colormap=""
+	if (cmin = eval("jsmin"+viewname)) np="&min="+cmin; else np=""
+	if (cmax = eval("jsmax"+viewname)) xp="&max="+cmax; else xp=""
+	options = np+xp+colormap
 	if (img = document.images[eval("\"" +viewname+ "imgstatgrad\"")]) 
-		img.src = 'img/dfe/grad.php?h=10&w=100&dm=1'+options;
-	filter = eval("jsfilter"+viewname);
-	binning = eval("jsbinning"+viewname);
-	quality = eval("jsquality"+viewname);
-	quality = (isNaN(quality)) ? quality : "jpg"+quality;
-	newstatus = " filter:"+filter+" bin:"+binning+" "+quality;
+		img.src = 'img/dfe/grad.php?h=10&w=100&dm=1'+options
+	filter = eval("jsfilter"+viewname)
+	binning = eval("jsbinning"+viewname)
+	quality = eval("jsquality"+viewname)
+	quality = (isNaN(quality)) ? quality : "jpg"+quality
+	newstatus = " filter:"+filter+" bin:"+binning+" "+quality
 }
 
 function setImageHistogram(viewname) {
 	if (w=eval(viewname+"adjw")) {
-		jssize = eval(viewname+"size");
-		selpreset = eval("jspreset"+viewname);
+		jssize = eval(viewname+"size")
+		selpreset = eval("jspreset"+viewname)
 		if (list = eval("document.viewerform."+viewname+"pre"))
-			selpreset=list.options[list.selectedIndex].value;
-		if (eval(viewname+"fft_bt_st")) fft="&fft=1"; else fft="";
-		if (cfilter = eval("jsfilter"+viewname)) flt="&flt="+cfilter; else flt="";
-		if (ccolormap= eval("jscolormap"+viewname)) colormap="&colormap="+ccolormap; else colormap="";
-		if (cmin = eval("jsmin"+viewname)) np="&np="+cmin; else np="";
-		if (cmax = eval("jsmax"+viewname)) xp="&xp="+cmax; else xp="";
-		if (cbinning = eval("jsbinning"+viewname)) binning="&binning="+cbinning; else binning="";
+			selpreset=list.options[list.selectedIndex].value
+		if (eval(viewname+"fft_bt_st")) fft="&fft=1"; else fft=""
+		if (cfilter = eval("jsfilter"+viewname)) flt="&flt="+cfilter; else flt=""
+		if (ccolormap= eval("jscolormap"+viewname)) colormap="&colormap="+ccolormap; else colormap=""
+		if (cmin = eval("jsmin"+viewname)) np="&np="+cmin; else np=""
+		if (cmax = eval("jsmax"+viewname)) xp="&xp="+cmax; else xp=""
+		if (cbinning = eval("jsbinning"+viewname)) binning="&binning="+cbinning; else binning=""
 
 		options = "preset="+selpreset+
 			"&id="+jsimgId+
-			"&s="+jssize+quality+np+xp+flt+binning+colormap+fft;
+			"&s="+jssize+quality+np+xp+flt+binning+colormap+fft
 
 		if (!w.closed) {
 			if (histo = w.document.imghisto)
-				histo.src="imagehistogram.php?tf=1&"+options;
+				histo.src="imagehistogram.php?tf=1&"+options
 		}
 	}
 }
 
 function setminmax(viewname, min,max) {
-	eval("jsmin"+viewname+"="+min);
-	eval("jsmax"+viewname+"="+max);
+	eval("jsmin"+viewname+"="+min)
+	eval("jsmax"+viewname+"="+max)
 	if (m = eval("document.viewerform."+viewname+"minpix")) {
-		m.value=min;
+		m.value=min
 	}
 	if (x = eval("document.viewerform."+viewname+"maxpix")) {
-		x.value=max;
+		x.value=max
 	}
 }
 
 function getminmax(viewname, min,max) {
 	if (m = eval("document.viewerform."+viewname+"minpix")) {
-		min=m.value;
+		min=m.value
 	}
 	if (x = eval("document.viewerform."+viewname+"maxpix")) {
-		max=x.value;
+		max=x.value
 	}
-	return Array(min,max);
+	return Array(min,max)
 }
 
 function setcolormap(viewname, colormap) {
-	eval("jscolormap"+viewname+"="+colormap);
+	eval("jscolormap"+viewname+"="+colormap)
 	if (cm = eval("document.viewerform."+viewname+"cm")) {
-		cm.value=colormap;
+		cm.value=colormap
 	}
 }
 
 function setquality(viewname, quality) {
-	eval('jsquality'+viewname+'="'+quality+'"');
+	eval('jsquality'+viewname+'="'+quality+'"')
 	if (q = eval("document.viewerform."+viewname+"q")) {
-		q.value=quality;
+		q.value=quality
 	}
 }
 
 function setParticleSelection(viewname, selection) {
-	eval('jsptclsel'+viewname+'="'+selection+'"');
+	eval('jsptclsel'+viewname+'="'+selection+'"')
 	if (q = eval("document.viewerform."+viewname+"psel")) {
-		q.value=selection;
+		q.value=selection
 	}
 }
 
 function setfilter(viewname, filter) {
-	eval("jsfilter"+viewname+"='"+filter+"'");
+	eval("jsfilter"+viewname+"='"+filter+"'")
 	if (f = eval("document.viewerform."+viewname+"f")) {
-		f.value=filter;
+		f.value=filter
 	}
 }
 
 function setbinning(viewname, binning) {
-	eval("jsbinning"+viewname+"='"+binning+"'");
+	eval("jsbinning"+viewname+"='"+binning+"'")
 	if (b = eval("document.viewerform."+viewname+"b")) {
-		b.value=binning;
+		b.value=binning
 	}
 }
 
 function setautoscale(viewname, state) {
-	eval("jsautoscale"+viewname+"='"+state+"'");
+	eval("jsautoscale"+viewname+"='"+state+"'")
 	if (b = eval("document.viewerform."+viewname+"autos")) {
-		b.value=state;
+		b.value=state
 	}
 }
 
 function setloadfromjpg(viewname, state) {
-	eval("jsloadjpg"+viewname+"='"+state+"'");
+	eval("jsloadjpg"+viewname+"='"+state+"'")
 	if (b = eval("document.viewerform."+viewname+"loadjpg")) {
-		b.value=state;
+		b.value=state
 	}
 }
 
 function setdisplayfilename(viewname, state) {
-	eval("jsdisplayfilename"+viewname+"='"+state+"'");
+	eval("jsdisplayfilename"+viewname+"='"+state+"'")
 	if (b = eval("document.viewerform."+viewname+"df")) {
-		b.value=state;
+		b.value=state
 	}
 }
 
 function popUpMap(URL)
 {
-	window.open(URL, "map", "left=0,top=0,height=512,width=512,toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes");
+	window.open(URL, "map", "left=0,top=0,height=512,width=512,toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes")
 }
 
 function popUpAdjust(URL, view, param){
@@ -530,20 +530,20 @@ function popUpAdjust(URL, view, param){
 	autoscale= (autoscale) ? "&autoscale="+autoscale : ""
 	displayfilename= (displayfilename) ? "&df="+displayfilename : ""
 	loadjpg= (loadjpg) ? "&lj="+loadjpg : ""
-	param = (param) ? param : "left=0,top=0,height=200,width=370";
-	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+binning+quality+colormap+autoscale+displayfilename+loadjpg+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');");
+	param = (param) ? param : "left=0,top=0,height=200,width=370"
+	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+binning+quality+colormap+autoscale+displayfilename+loadjpg+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');")
 }
 
 function popUpPtcl(URL, view, param) {
-	psel = eval('jsptclsel'+view);
-	psel = (psel) ? "&psel="+psel : "";
-	s = "&session="+jsSessionId;
-	param = (param) ? param : "left=0,top=0,height=170,width=370";
-	eval (view+"adjw"+" = window.open('"+URL+s+psel+"', '"+view+"ptcl', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');");
+	psel = eval('jsptclsel'+view)
+	psel = (psel) ? "&psel="+psel : ""
+	s = "&session="+jsSessionId
+	param = (param) ? param : "left=0,top=0,height=170,width=370"
+	eval (view+"adjw"+" = window.open('"+URL+s+psel+"', '"+view+"ptcl', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');")
 }
 
 function getIndex() {
-	cindex = 0;
+	cindex = 0
 	if (document.viewerform.imageId.length !=0) {
 		for (var i = 0; i < document.viewerform.imageId.length; i++) {
 			if (document.viewerform.imageId.options[i].selected == true) {
@@ -551,42 +551,42 @@ function getIndex() {
 			} 
     }
 	}
-	return cindex;
+	return cindex
 }
 
 function incIndex(){
 	if (document.viewerform.imageId.length !=0) {
-		index = getIndex();
+		index = getIndex()
 		if (index == document.viewerform.imageId.length - 1) {
 			index = index-1
 		}	
-		document.viewerform.imageId.options[index+1].selected=true;
+		document.viewerform.imageId.options[index+1].selected=true
 	}
 }
 
 function decIndex(){
 	if (document.viewerform.imageId.length !=0) {
-		index = getIndex();
+		index = getIndex()
 		if (index == 0) {
 			index = index+1
 		}	
-		document.viewerform.imageId.options[(index-1)].selected=true;
+		document.viewerform.imageId.options[(index-1)].selected=true
 	}
 }
 
 function displaydebug(string) {
 	if (cur = document.viewerform.debug)
-		document.viewerform.debug.value= cur.value+"\n"+string;
+		document.viewerform.debug.value= cur.value+"\n"+string
 }
 
 function bsSliderChange1(sliderObj, val, newPos){ 
-  jsminpix = val;
-  updateGradient();
+  jsminpix = val
+  updateGradient()
 }
 
 function bsSliderChange2(sliderObj, val, newPos){ 
-  jsmaxpix = val;
-  updateGradient();
+  jsmaxpix = val
+  updateGradient()
 }
 
 function updateGradient() {
@@ -594,5 +594,5 @@ function updateGradient() {
 }
 
 function cle(val) {
-  eval(val);
+  eval(val)
 }

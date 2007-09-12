@@ -444,6 +444,8 @@ class view {
 		$this->btscale->onToggle($name.'btscaleaction');
 		$this->bttarget = new toggleButton($this->name.'target', 'target');
 		$this->bttarget->onToggle($name.'bttargetaction');
+		$this->bttag = new toggleButton($this->name.'tag', 'tag');
+		$this->bttag->onToggle($name.'bttagaction');
 		$this->btfft = new toggleButton($this->name.'fft', 'fft');
 		$this->btfft->onToggle($name.'btfftaction'); 
 		$this->btclose = new toggleButton($this->name.'close', 'open', 'close');
@@ -461,6 +463,7 @@ class view {
 		$this->displayscaleicon = true;
 		$this->displayscaleicon = true;
 		$this->displaytargeticon = true;
+		$this->displaytagicon = true;
 		$this->displaynptclicon = true;
 		$this->displayffticon = true;
 		$this->displayaceicon = true;
@@ -475,9 +478,11 @@ class view {
 		$this->imagescript = 'getimg.php';
 		$this->scale_st = "true";
 		$this->target_st = "false";
+		$this->tag_st = "false";
 		$this->nptcl_st = "false";
 		$this->btscalestate = "true";
 		$this->bttargetstate = "true";
+		$this->bttagstate = "true";
 		$this->btnptclstate = "true";
 		$this->quality = "80";
 		$this->filter= "default";
@@ -500,6 +505,7 @@ class view {
 		$this->loadjpgmemo= $this->name.'df';
 		$this->btfftmemo = $this->name.'fft_bt_st';
 		$this->bttargetmemo = $this->name.'target_bt_st';
+		$this->bttagmemo = $this->name.'tag_bt_st';
 		$this->btnptclmemo = $this->name.'nptcl_bt_st';
 		$this->btscalememo = $this->name.'scale_bt_st';
 		if ($ptcl=$_REQUEST[$this->ptclselmemo])
@@ -528,6 +534,8 @@ class view {
 			$this->btacestate = $btacestate;
 		if ($bttargetstate=$_REQUEST[$this->bttargetmemo])
 			$this->bttargetstate = $bttargetstate;
+		if ($bttagstate=$_REQUEST[$this->bttagmemo])
+			$this->bttagstate = $bttagstate;
 		if ($btnptclstate=$_REQUEST[$this->btnptclmemo])
 			$this->btnptclstate = $btnptclstate;
 		if ($btscalestate=$_REQUEST[$this->btscalememo])
@@ -637,6 +645,16 @@ class view {
 		$this->bttargetstate = $state_str;
 	}
 
+	function displayTagIcon($state) {
+		$this->displaytagicon = $state;
+	}
+
+	function displayTag($state) {
+		$state_str = ($state) ? "true" : "false";
+		$this->tag_st= $state_str;
+		$this->bttagstate = $state_str;
+	}
+
 	function displayPTCLIcon($state) {
 		$this->displaynptclicon = $state;
 	}
@@ -701,6 +719,7 @@ class view {
 			.$this->btdownload->getJavascript()
 			.$this->btscale->getJavascript()
 			.$this->bttarget->getJavascript()
+			.$this->bttag->getJavascript()
 			.$this->btnptcl->getJavascript()
 			.$this->btfft->getJavascript()
 			.$this->btace->getJavascript()
@@ -726,10 +745,14 @@ class view {
 			.'	setImageHistogram("'.$this->name.'");'.$this->crlf
 			.'}'.$this->crlf;
 
+		$javascript .= 'function '.$name.'bttagaction(state) { '.$this->crlf
+			.'	newfile("'.$this->name.'");'.$this->crlf
+			.'	setform("'.$this->bttagmemo.'", state);'.$this->crlf
+			.'}'.$this->crlf;
+
 		$javascript .= 'function '.$name.'btnptclaction(state) { '.$this->crlf
 			.'	newfile("'.$this->name.'");'.$this->crlf
 			.'	setform("'.$this->btnptclmemo.'", state);'.$this->crlf
-			//.'	setImageHistogram("'.$this->name.'");'.$this->crlf
 			.'}'.$this->crlf;
 
 		$javascript .= 'function '.$name.'btcloseaction(state) { '.$this->crlf
@@ -805,6 +828,7 @@ class view {
 		<input type="hidden" name="'.$this->maxpixmemo.'" value="'.$this->maxpix.'"> 
 		<input type="hidden" name="'.$this->btfftmemo.'" value="'.$this->btfftstate.'"> 
 		<input type="hidden" name="'.$this->bttargetmemo.'" value="'.$this->bttargetstate.'"> 
+		<input type="hidden" name="'.$this->bttagmemo.'" value="'.$this->bttagstate.'"> 
 		<input type="hidden" name="'.$this->btnptclmemo.'" value="'.$this->btnptclstate.'"> 
 		<input type="hidden" name="'.$this->btscalememo.'" value="'.$this->btscalestate.'"> 
 		<input type="hidden" name="'.$this->ptclselmemo.'" value="0"> ';
@@ -893,6 +917,14 @@ class view {
 			$htmlframe .= '
 				<td width="15">';
 			$htmlframe .= $this->btnptcl->display();
+			$htmlframe .= '
+			</td>';
+		}
+
+		if ($this->displaytagicon) {
+			$htmlframe .= '
+				<td width="15">';
+			$htmlframe .= $this->bttag->display();
 			$htmlframe .= '
 			</td>';
 		}
