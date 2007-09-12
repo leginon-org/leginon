@@ -978,7 +978,10 @@ class view {
 		';
 		}
 		$htmlframe .= '
-						</td>
+						</td>';
+		$export_icon = '<a href="javascript:void(0)" id="export'.$name.'" ><img class="setting" src="img/export.png" ></a>';
+		$htmlframe .= "<td>$export_icon</td>";
+		$htmlframe .= '
 						<td valign="center">
 				';
 		$param = "left=0,top=".($this->viewnb*180).",height=200,width=370";
@@ -1000,9 +1003,9 @@ class view {
 			</a>';
 		// -- HACK for now -- //
 		if ($this->title=="Main View") {
-		$htmlframe .= '</td><td> <button style="border: 1px solid #bdcebb;" '
-        .' onClick=\'update_image_list("'.$name.'")\' ><u><b>r</b></u>emove</button>';
-		$htmlframe .= '</td><td> <button style="border: 1px solid #bdcebb;" '
+		$htmlframe .= '</td><td> <button type="button" style="border: 1px solid #bdcebb;" '
+        .' onClick=\'update_image_list("'.$name.'")\' ><u><b>h</b></u>ide</button>';
+		$htmlframe .= '</td><td> <button type="button" style="border: 1px solid #bdcebb;" '
         .' onClick=\'incIndex(); updateviews()\' ><u><b>n</b></u>ext</button>';
 		}
 

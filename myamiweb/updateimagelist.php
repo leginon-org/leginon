@@ -7,7 +7,7 @@ $status = "hidden";
 $dbc = $leginondata->mysql;
 $ret_val = "0";
 if ($imageId && $sessionId) {
-	if ($_GET['p']=='removed') {
+	if ($_GET['p']=='hidden') {
 		$q="delete from viewer_pref_image where imageId=$imageId";
 		$dbc->SQLQuery($q);
 		echo "1";

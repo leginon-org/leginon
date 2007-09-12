@@ -99,10 +99,15 @@ function getKey(e)
 			incIndex()
 			updateviews()
 			break
-		case 'R':
+		case 'H':
 			update_image_list()
 			break
   }
+}
+
+function dwdpre(preset) {
+	alert(preset)
+	"http://stratocaster.scripps.edu/dbemd/download.php?id=574467&preset=all"
 }
 
 function getImageAutoScale(view) {
@@ -334,6 +339,7 @@ function newfile(view){
 	nlink = "javascript:popUpMap('map.php?"+options+"')"
 	ninfolink = "imgreport.php?id="+jsimgId+"&preset="+selpreset
 	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft
+	nexportlink = "getfilenames.php?sessionId="+jsSessionId+"&pre="+selpreset
 
 	if (img = document.images[eval("\"" +view+ "img\"")]) {
 		n = img.name
@@ -348,6 +354,8 @@ function newfile(view){
 		infolink.href = ninfolink
 	if (downloadlink = document.getElementById("download"+view+"_bthref"))
 		downloadlink.href = ndownloadlink
+	if (exportlink = document.getElementById("export"+view))
+		exportlink.href = nexportlink
 
 	if (cif=eval("this."+view+"if")) {
 		iflink = jspresetscriptcur+"?vf="+jsvfile+"&id="+jsimgId+"&preset="+selpreset

@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.68 $
- *	@version $Id: leginon.inc,v 1.68 2007-09-06 23:04:24 dfellman Exp $
+ *	@version $Revision: 1.69 $
+ *	@version $Id: leginon.inc,v 1.69 2007-09-12 23:05:06 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -27,7 +27,7 @@ class leginondata {
 
 	var $crlf = "\n";
 	var $ffttypes = array('focpow', 'fft');
-	var $defaulttypes = array('all'=>'all', 'atlas'=>'atlas', 'removed'=>'removed');
+	var $defaulttypes = array('all'=>'all', 'atlas'=>'atlas', 'hidden'=>'hidden');
 	var $manualtype = 'manual';
 	var $rcttype = 'rct';
 	var $calibrationtables = array (
@@ -324,11 +324,11 @@ class leginondata {
 			$defaultname=$name;
 			$name="";
 		}
-			$removedjoin = "left join `viewer_pref_image` r on (r.imageId=a.DEF_id) ";
-		if ($defaultname=="removed") {
-			$removedwhere = "and  r.id is not null ";
+			$hiddenjoin = "left join `viewer_pref_image` r on (r.imageId=a.DEF_id) ";
+		if ($defaultname=="hidden") {
+			$hiddenwhere = "and  r.id is not null ";
 		} else {
-			$removedwhere = "and  r.id is null ";
+			$hiddenwhere = "and  r.id is null ";
 		}
 		if (in_array($name, $this->ffttypes)) {
 		$q = "select a.`DEF_id` as `id`, f.`MRC|Image` as `name` "
@@ -336,21 +336,21 @@ class leginondata {
 				." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 				." left join AcquisitionFFTData f on (f.`REF|AcquisitionImageData|source`=a.`DEF_id`) "
 				.$sessionjoin
-				.$removedjoin
+				.$hiddenjoin
 				." where "
 				.$sessionwhere 
 				." and f.`MRC|Image`<>'NULL' "
-				.$removedwhere
+				.$hiddenwhere
 		    ." order by a.`DEF_id` DESC ";
 		} else {
 		$q = "select a.`DEF_id` as `id`, a.`MRC|Image` as `name` "
 			." from `$table` a "
 			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 			.$sessionjoin
-			.$removedjoin
+			.$hiddenjoin
 			." where "
 			.$sessionwhere
-			.$removedwhere;
+			.$hiddenwhere;
 
 			if ($name) {
 				if ($name == $this->manualtype)

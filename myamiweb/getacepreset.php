@@ -34,7 +34,6 @@ $runId = $ctf->getLastCtfRun($sessionId);
 list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId);
 
 $keys[]='defocus';
-$keys[]='defocusinit';
 $keys[]='defocus1';
 if ($ctfdata['angle_astigmatism']) {
 	$keys[]='defocus2';
