@@ -65,7 +65,7 @@
  </thresh>
  <maxsize>
 	<name>maximum size of a particle</name>
-	<description>Maximum size of a particle, defined as: maxsize * (4 pi radius^2)</description>
+	<description>Maximum size of a particle; defined as: maxsize * (4 pi radius^2)</description>
 	<type>float</type>
 	<default>1.0</default>
  </maxsize>
