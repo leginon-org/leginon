@@ -31,7 +31,7 @@ class StigAcquisition(acquisition.Acquisition):
 			newstig = {'x':self.settings['stig0x'], 'y':self.settings['stig0y']}
 		else:
 			newstig = {'x':self.settings['stig1x'], 'y':self.settings['stig1y']}
-		self.setStig(newstig)
+		self._setStig(newstig)
 
 	def setStigIndex(self):
 		if not hasattr(self, 'stigcounter'):
@@ -47,8 +47,9 @@ class StigAcquisition(acquisition.Acquisition):
 			self.stig_index = 1
 		self.logger.info('switched to stig %s' % (self.stig_index,))
 
-	def acquireCCD(self, *args, **kwargs):
+	def acquire(self, *args, **kwargs):
 		self.setStigIndex()
 		self.setStig(self.stig_index)
-		acquisition.Acquisition.acquireCCD(self, *args, **kwargs)
+		ret = acquisition.Acquisition.acquire(self, *args, **kwargs)
 		self.setStig(0)
+		return ret
