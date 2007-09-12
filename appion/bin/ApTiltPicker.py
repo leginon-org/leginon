@@ -53,15 +53,11 @@ class TiltTargetPanel(TargetPanel.TargetImagePanel):
 #---------------------------------------
 class PickerApp(wx.App):
 	def OnInit(self):
-		self.arealim = 50000.0
-		self.theta = 0.0
-		self.gamma = 0.0
-		self.phi = 0.0
-		self.shiftx = 0.0
-		self.shifty = 0.0
-		self.scale = 1.0
-		self.filename = ""
-		self.dirname = ""
+		self.data = {}
+		self.onResetParams(None)
+		self.data['outfile'] = ""
+		self.data['dirname'] = ""
+		self.appionloop = None
 
 		self.frame = wx.Frame(None, -1, 'Image Viewer')
 		splitter = wx.SplitterWindow(self.frame)
@@ -85,7 +81,7 @@ class PickerApp(wx.App):
 
 		self.panel2 = TiltTargetPanel(splitter, -1, name="tilt")
 		self.panel2.parent = self.frame
-		self.panel2.addTargetTool('Picked', color=wx.Color(32, 128, 215), shape='x', target=True)
+		self.panel2.addTargetTool('Picked', color=wx.Color(32, 128, 215), shape='x', target=True, numbers=True)
 		self.panel2.setTargets('Picked', [])
 		self.panel2.selectiontool.setTargeting('Picked', True)
 		#self.panel2.addTargetTool('Numbered', color=wx.Color(32, 100, 170), shape='numbers')
@@ -126,8 +122,12 @@ class PickerApp(wx.App):
 		self.bsizer.Add((100,10), 0, wx.ALL, 1)
 
 		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear')
-		self.frame.Bind(wx.EVT_BUTTON, self.onClear, self.clear)
+		self.frame.Bind(wx.EVT_BUTTON, self.onClearPicks, self.clear)
 		self.bsizer.Add(self.clear, 0, wx.ALL, 1)
+
+		self.reset = wx.Button(self.frame, wx.ID_RESET, '&Reset')
+		self.frame.Bind(wx.EVT_BUTTON, self.onResetParams, self.reset)
+		self.bsizer.Add(self.reset, 0, wx.ALL, 1)
 
 		self.load = wx.Button(self.frame, wx.ID_OPEN, '&Open')
 		self.frame.Bind(wx.EVT_BUTTON, self.onFileOpen, self.load)
@@ -172,6 +172,13 @@ class PickerApp(wx.App):
 	def onMaskRegion(self, evt):
 		targets1 = self.panel1.getTargets('Picked')
 		targets2 = self.panel2.getTargets('Picked')
+		if len(targets1) == 0 or len(targets2) == 0:
+			self.statbar.PushStatusText("ERROR: Cannot mask images. Not enough picks", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot mask images.\nThere are no picks.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
 		#GET IMAGES
 		self.panel1.openImageFile(self.panel1.filename)
 		self.panel2.openImageFile(self.panel2.filename)
@@ -188,12 +195,14 @@ class PickerApp(wx.App):
 		#print "a1=",numpy.asarray(a1, dtype=numpy.int32)
 		#print "a2=",numpy.asarray(a2, dtype=numpy.int32)
 		#SET PARAMETERS
-		thetarad = self.theta*math.pi/180.0
-		gammarad = self.gamma*math.pi/180.0
-		phirad = self.phi*math.pi/180.0
+		thetarad = self.data['theta']*math.pi/180.0
+		gammarad = self.data['gamma']*math.pi/180.0
+		phirad = self.data['phi']*math.pi/180.0
 		#CALCULATE TRANSFORM LIMITS
-		a1b = apTiltTransform.a1Toa2(a1,a2,thetarad,gammarad,phirad,self.scale,self.shiftx,self.shifty)
-		a2b = apTiltTransform.a2Toa1(a1,a2,thetarad,gammarad,phirad,self.scale,self.shiftx,self.shifty)
+		a1b = apTiltTransform.a1Toa2(a1,a2,thetarad,gammarad,phirad,
+			self.data['scale'],self.data['shiftx'],self.data['shifty'])
+		a2b = apTiltTransform.a2Toa1(a1,a2,thetarad,gammarad,phirad,
+			self.data['scale'],self.data['shiftx'],self.data['shifty'])
 		#CONVERT NUMPY TO LIST
 		a1blist = []
 		a2blist = []
@@ -244,22 +253,32 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def onUpdate(self, evt):
 		targets1 = self.panel1.getTargets('Picked')
-		#self.panel1.setTargets('Numbered', targets1)
-		a1 = self.targetsToArray(targets1)
 		targets2 = self.panel2.getTargets('Picked')
+		if len(targets1) == 0 or len(targets2) == 0:
+			self.statbar.PushStatusText("ERROR: Cannot transfer picks. There are no picks.", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot transfer picks.\nThere are no picks.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+
+		#self.panel1.setTargets('Numbered', targets1)
 		#self.panel2.setTargets('Numbered', targets2)
+		a1 = self.targetsToArray(targets1)
 		a2 = self.targetsToArray(targets2)
 
-		thetarad = self.theta*math.pi/180.0
-		gammarad = self.gamma*math.pi/180.0
-		phirad = self.phi*math.pi/180.0
+		thetarad = self.data['theta']*math.pi/180.0
+		gammarad = self.data['gamma']*math.pi/180.0
+		phirad = self.data['phi']*math.pi/180.0
 
 		#align first
-		a1b = apTiltTransform.a1Toa2(a1,a2,thetarad,gammarad,phirad,self.scale,self.shiftx,self.shifty)
+		a1b = apTiltTransform.a1Toa2(a1,a2,thetarad,gammarad,phirad,
+			self.data['scale'],self.data['shiftx'],self.data['shifty'])
 		self.panel2.setTargets('Aligned', a1b)
 		
 		#align second
-		a2b = apTiltTransform.a2Toa1(a1,a2,thetarad,gammarad,phirad,self.scale,self.shiftx,self.shifty)
+		a2b = apTiltTransform.a2Toa1(a1,a2,thetarad,gammarad,phirad,
+			self.data['scale'],self.data['shiftx'],self.data['shifty'])
 		self.panel1.setTargets('Aligned', a2b)
 
 	#---------------------------------------
@@ -276,12 +295,12 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def onFitTheta(self, evt):
 		if len(self.panel1.getTargets('Picked')) > 3 and len(self.panel2.getTargets('Picked')) > 3:
-			self.theta_dialog.tiltvalue.SetLabel(label=("       %3.3f       " % self.theta))
+			self.theta_dialog.tiltvalue.SetLabel(label=("       %3.3f       " % self.data['theta']))
 			self.theta_dialog.Show()
 
 	#---------------------------------------
 	def onFitAll(self, evt):
-		if self.theta == 0.0:
+		if self.data['theta'] == 0.0:
 			dialog = wx.MessageDialog(self.frame, "You must run 'Find Theta' first", 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
@@ -291,16 +310,16 @@ class PickerApp(wx.App):
 			dialog.ShowModal()
 			dialog.Destroy()
 			return
-		self.fitall_dialog.thetavalue.SetValue(round(self.theta,4))
-		self.fitall_dialog.gammavalue.SetValue(round(self.gamma,4))
-		self.fitall_dialog.phivalue.SetValue(round(self.phi,4))
-		self.fitall_dialog.scalevalue.SetValue(round(self.scale,4))
-		self.fitall_dialog.shiftxvalue.SetValue(round(self.shiftx,4))
-		self.fitall_dialog.shiftyvalue.SetValue(round(self.shifty,4))
+		self.fitall_dialog.thetavalue.SetValue(round(self.data['theta'],4))
+		self.fitall_dialog.gammavalue.SetValue(round(self.data['gamma'],4))
+		self.fitall_dialog.phivalue.SetValue(round(self.data['phi'],4))
+		self.fitall_dialog.scalevalue.SetValue(round(self.data['scale'],4))
+		self.fitall_dialog.shiftxvalue.SetValue(round(self.data['shiftx'],4))
+		self.fitall_dialog.shiftyvalue.SetValue(round(self.data['shifty'],4))
 		self.fitall_dialog.Show()
 
 	#---------------------------------------
-	def onClear(self, evt):
+	def onClearPicks(self, evt):
 		self.panel1.setTargets('Picked', [])
 		#self.panel1.setTargets('Numbered', [])
 		self.panel1.setTargets('Aligned', [])
@@ -309,44 +328,64 @@ class PickerApp(wx.App):
 		self.panel2.setTargets('Aligned', [])
 
 	#---------------------------------------
+	def onResetParams(self, evt):
+		self.data['arealim'] = 50000.0
+		self.data['theta'] = 0.0
+		self.data['gamma'] = 0.0
+		self.data['phi'] = 0.0
+		self.data['shiftx'] = 0.0
+		self.data['shifty'] = 0.0
+		self.data['scale'] = 1.0
+
+	#---------------------------------------
 	def onFileOpen(self, evt):
-		dlg = wx.FileDialog(self.frame, "Choose a pick file to open", self.dirname, "", \
-			"Text Files (*.txt)|*.txt|All Files|*.*", wx.OPEN)
+		dlg = wx.FileDialog(self.frame, "Choose a pick file to open", self.data['dirname'], "", \
+			"Text Files (*.txt)|*.txt"
+			+"|XML Files (*.xml)|*.xml"
+			+"|Spider Files (*.spi)|*.???"
+			, wx.OPEN)
 		if dlg.ShowModal() == wx.ID_OK:
-			self.filename = dlg.GetFilename()
-			self.dirname  = dlg.GetDirectory()
+			self.data['outfile'] = dlg.GetFilename()
+			self.data['dirname']  = dlg.GetDirectory()
 			try:
 				self.openPicksFromFile()
 			except:
-				self.statbar.PushStatusText("ERROR: Opening file "+self.filename+" failed", 0)
+				dlg.Close()
+				self.statbar.PushStatusText("ERROR: Opening file '"+self.data['outfile']+"' failed", 0)
+				dialog = wx.MessageDialog(self.frame, "Opening file '"+self.data['outfile']+"' failed", 'Error', wx.OK|wx.ICON_ERROR)
+				dialog.ShowModal()
+				dialog.Destroy()
 		dlg.Destroy()
  
 	#---------------------------------------
 	def onFileSave(self, evt):
-		if self.filename == "" or self.dirname == "":
+		if self.data['outfile'] == "" or self.data['dirname'] == "":
 			#First Save, Run SaveAs...
 			return self.onFileSaveAs(evt)
-		filepath = os.path.join(self.dirname, self.filename)
+		filepath = os.path.join(self.data['dirname'], self.data['outfile'])
 		self.savePicksToFile(filepath)
 
 	#---------------------------------------
 	def onFileSaveAs(self, evt):
-		dlg = wx.FileDialog(self.frame, "Choose a pick file to save as", self.dirname, "", \
-			"Text File (*.txt)|*.txt|Spider File (*.spi)|*.spi", wx.SAVE|wx.OVERWRITE_PROMPT)
+		dlg = wx.FileDialog(self.frame, "Choose a pick file to save as", self.data['dirname'], "", \
+			"Text Files (*.txt)|*.txt"
+			+"|XML Files (*.xml)|*.xml"
+			+"|Spider Files (*.spi)|*.???"
+			, wx.SAVE|wx.OVERWRITE_PROMPT)
 		#alt1 = "*.[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]"
 		#alt2 = "Text Files (*.txt)|*.txt|All Files|*.*"
 		if dlg.ShowModal() == wx.ID_OK:
-			self.filename = dlg.GetFilename()
-			self.dirname  = dlg.GetDirectory()
+			self.data['outfile'] = dlg.GetFilename()
+			self.data['dirname']  = dlg.GetDirectory()
 			try:
-				filepath = os.path.join(self.dirname, self.filename)
+				filepath = os.path.join(self.data['dirname'], self.data['outfile'])
 				self.savePicksToFile(filepath)
 			except:
-				self.statbar.PushStatusText("ERROR: Saving to file "+self.filename+" failed", 0)
-				dialog = wx.MessageDialog(self.frame, "Saving to file "+self.filename+" failed", 'Error', wx.OK|wx.ICON_ERROR)
+				dlg.Close()
+				self.statbar.PushStatusText("ERROR: Saving to file '"+self.data['outfile']+"' failed", 0)
+				dialog = wx.MessageDialog(self.frame, "Saving to file '"+self.data['outfile']+"' failed", 'Error', wx.OK|wx.ICON_ERROR)
 				dialog.ShowModal()
 				dialog.Destroy()
-				return
 		dlg.Destroy()
 
 	#---------------------------------------
@@ -376,9 +415,12 @@ class PickerApp(wx.App):
 	def openPicksFromFile(self, filepath):
 		if filepath is None:
 			return
+		self.data['outfile'] = os.path.basename(filepath)
 		f = open(filepath,"r")
 		size = int(len(f.readlines())/2-1)
 		f.close()
+		self.data['outfile'] = os.path.basename(filepath)
+		self.data['dirname'] = os.path.dirname(filepath)
 		f = open(filepath,"r")
 		strarrays = ["","",""]
 		arrays = [
@@ -409,17 +451,17 @@ class PickerApp(wx.App):
 		self.panel2.setTargets('Picked', a2)
 		#self.panel1.setTargets('Numbered', a1)
 		#self.panel2.setTargets('Numbered', a2)
-		self.statbar.PushStatusText("Read "+str(len(a1))+" particles and parameters from file "+self.filename, 0)
+		self.statbar.PushStatusText("Read "+str(len(a1))+" particles and parameters from file "+filepath, 0)
 
 	#---------------------------------------
 	def onQuit(self, evt):
 		"""
-		self.theta = 0.0
-		self.gamma = 0.0
-		self.phi = 0.0
-		self.shiftx = 0.0
-		self.shifty = 0.0
-		self.scale = 1.0
+		self.data['theta'] = 0.0
+		self.data['gamma'] = 0.0
+		self.data['phi'] = 0.0
+		self.data['shiftx'] = 0.0
+		self.data['shifty'] = 0.0
+		self.data['scale'] = 1.0
 		"""
 		if self.appionloop:
 			self.copyDataToAppionLoop()
@@ -433,27 +475,46 @@ class PickerApp(wx.App):
 			targets1 = self.panel1.getTargets('Picked')
 			targets2 = self.panel2.getTargets('Picked')
 			if len(targets1) > 0 and len(targets2) > 0:
-				gshiftx = targets1[0].x - targets2[0].x + self.shiftx
-				gshifty = targets1[0].y - targets2[0].y + self.shifty
+				gshiftx = targets1[0].x - targets2[0].x + self.data['shiftx']
+				gshifty = targets1[0].y - targets2[0].y + self.data['shifty']
 				#copy over the data
-				self.appionloop.tiltparams['theta'] = self.theta
-				self.appionloop.tiltparams['gamma'] = self.gamma
-				self.appionloop.tiltparams['phi'] = self.phi
+				for i in 'theta','gamma','phi','scale':
+					self.appionloop.tiltparams[i] = self.data[i]
 				self.appionloop.tiltparams['shiftx'] = gshiftx
 				self.appionloop.tiltparams['shifty'] = gshifty
-				self.appionloop.tiltparams['scale'] = self.scale
+
+	#---------------------------------------
+	def openLeftImage(self,filename):
+		if filename:
+			self.data['image1file'] = os.path.basename(filename)
+			self.data['image1path'] = os.path.dirname(filename)
+			app.panel1.openImageFile(filename)
+
+	#---------------------------------------
+	def openRightImage(self,filename):
+		if filename:
+			self.data['image2file'] = os.path.basename(filename)
+			self.data['image2path'] = os.path.dirname(filename)
+			app.panel2.openImageFile(filename)
 
 if __name__ == '__main__':
+	if len(sys.argv) < 3:
+		mystr = "\nUsage:\n  ApTiltPicker.py image1.mrc image2.mrc [picksfile.txt]\n"
+		print mystr
+		#apDisplay.printColor(mystr,"red")
+		sys.exit(1)
+
+
 	files = []
-	for i in range(1, len(sys.argv), 1):
+	for i in range(1, 4, 1):
 		try:
 			files.append(sys.argv[i])
 		except IndexError:
 			files.append(None)
 
 	app = PickerApp(0)
-	app.panel1.openImageFile(files[0])
-	app.panel2.openImageFile(files[1])
+	app.openLeftImage(files[0])
+	app.openRightImage(files[1])
 	app.openPicksFromFile(files[2])
 
 	app.MainLoop()

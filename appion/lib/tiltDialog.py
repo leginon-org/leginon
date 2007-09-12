@@ -14,7 +14,7 @@ import apTiltTransform
 class FitThetaDialog(wx.Dialog):
 	def __init__(self, parent):
 		self.parent = parent
-		self.theta = self.parent.theta
+		self.theta = self.parent.data['theta']
 		wx.Dialog.__init__(self, self.parent.frame, -1, "Measure Tilt Angle, Theta")
 
 		inforow = wx.FlexGridSizer(2, 3, 15, 15)
@@ -27,7 +27,7 @@ class FitThetaDialog(wx.Dialog):
 		inforow.Add(self.tiltvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 		inforow.Add(label3, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
-		arealimstr = str(int(self.parent.arealim))
+		arealimstr = str(int(self.parent.data['arealim']))
 		label = wx.StaticText(self, -1, "Minimum Triangle Area:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.arealimit = IntEntry(self, -1, allownone=False, chars=8, value=arealimstr)
 		label2 = wx.StaticText(self, -1, "square pixels", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
@@ -52,22 +52,23 @@ class FitThetaDialog(wx.Dialog):
 
 	def onRunTiltAng(self, evt):
 		arealim  = self.arealimit.GetValue()
-		self.parent.arealim = arealim
+		self.parent.data['arealim'] = arealim
 		targets1 = self.parent.panel1.getTargets('Picked')
 		a1 = self.parent.targetsToArray(targets1)
 		targets2 = self.parent.panel2.getTargets('Picked')
 		a2 = self.parent.targetsToArray(targets2)
-		fittheta = radermacher.tiltang(a1, a2, arealim)
-		pprint.pprint(fittheta)
-		if 'wtheta' in fittheta:
-			self.theta = fittheta['wtheta']
-			self.thetadev = fittheta['wthetadev']
+		self.fittheta = radermacher.tiltang(a1, a2, arealim)
+		pprint.pprint(self.fittheta)
+		if 'wtheta' in self.fittheta:
+			self.theta = self.fittheta['wtheta']
+			self.thetadev = self.fittheta['wthetadev']
 			thetastr = ("%3.3f +/- %2.2f" % (self.theta, self.thetadev))
 			self.tiltvalue.SetLabel(label=thetastr)
 
 	def onApplyTiltAng(self, evt):
 		self.Close()
-		self.parent.theta = self.theta
+		self.parent.data['theta'] = self.theta
+		self.parent.data['tiltanglefitdata'] = self.fittheta
 		self.parent.onUpdate(evt)
 
 ##
@@ -80,10 +81,11 @@ class FitAllDialog(wx.Dialog):
 	def __init__(self, parent):
 		self.parent = parent
 		wx.Dialog.__init__(self, self.parent.frame, -1, "Least Squares Optimization")
+		self.lsfit = None
 
 		inforow = wx.FlexGridSizer(5, 4, 15, 15)
 
-		thetastr = "%3.3f" % self.parent.theta
+		thetastr = "%3.3f" % self.parent.data['theta']
 		label = wx.StaticText(self, -1, "Tilt angle (theta):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		#self.tiltvalue = wx.StaticText(self, -1, thetastr, style=wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
 		self.thetavalue = FloatEntry(self, -1, allownone=False, chars=8, value=thetastr)
@@ -97,7 +99,7 @@ class FitAllDialog(wx.Dialog):
 		inforow.Add(label2, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.thetatog, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
-		gammastr = "%3.3f" % self.parent.gamma
+		gammastr = "%3.3f" % self.parent.data['gamma']
 		label = wx.StaticText(self, -1, "Image 1 Rotation (gamma):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.gammavalue = FloatEntry(self, -1, allownone=False, chars=8, value=gammastr)
 		label2 = wx.StaticText(self, -1, "degrees", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
@@ -108,7 +110,7 @@ class FitAllDialog(wx.Dialog):
 		inforow.Add(label2, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.gammatog, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
-		phistr = "%3.3f" % self.parent.phi
+		phistr = "%3.3f" % self.parent.data['phi']
 		label = wx.StaticText(self, -1, "Image 2 Rotation (phi):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.phivalue = FloatEntry(self, -1, allownone=False, chars=8, value=phistr)
 		label2 = wx.StaticText(self, -1, "degrees", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
@@ -119,7 +121,7 @@ class FitAllDialog(wx.Dialog):
 		inforow.Add(label2, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.phitog, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
-		scalestr = "%3.3f" % self.parent.scale
+		scalestr = "%3.3f" % self.parent.data['scale']
 		label = wx.StaticText(self, -1, "Scaling factor:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.scalevalue = FloatEntry(self, -1, allownone=False, chars=8, value=scalestr)
 		label2 = wx.StaticText(self, -1, " ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
@@ -132,8 +134,8 @@ class FitAllDialog(wx.Dialog):
 		inforow.Add(label2, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.scaletog, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
-		shiftxstr = "%3.3f" % self.parent.shiftx
-		shiftystr = "%3.3f" % self.parent.shifty
+		shiftxstr = "%3.3f" % self.parent.data['shiftx']
+		shiftystr = "%3.3f" % self.parent.data['shifty']
 		label = wx.StaticText(self, -1, "Shift (x,y) pixels:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.shiftxvalue = FloatEntry(self, -1, allownone=False, chars=8, value=shiftxstr)
 		self.shiftyvalue = FloatEntry(self, -1, allownone=False, chars=8, value=shiftystr)
@@ -245,25 +247,26 @@ class FitAllDialog(wx.Dialog):
 			not self.shifttog.GetValue(),
 			), dtype=numpy.float32)
 		print xscale
-		fit = apTiltTransform.willsq(a1, a2, theta, gamma, phi, scale, shiftx, shifty, xscale)
-		pprint.pprint(fit)
-		self.thetavalue.SetValue(round(fit['theta'],5))
-		self.gammavalue.SetValue(round(fit['gamma'],5))
-		self.phivalue.SetValue(round(fit['phi'],5))
-		self.scalevalue.SetValue(round(fit['scale'],5))
-		self.shiftxvalue.SetValue(round(fit['shiftx'],5))
-		self.shiftyvalue.SetValue(round(fit['shifty'],5))
-		self.rmsdlabel.SetLabel(str(round(fit['rmsd'],5)))
-		self.iterlabel.SetLabel(str(fit['iter']))
+		self.lsfit = apTiltTransform.willsq(a1, a2, theta, gamma, phi, scale, shiftx, shifty, xscale)
+		pprint.pprint(self.lsfit)
+		self.thetavalue.SetValue(round(self.lsfit['theta'],5))
+		self.gammavalue.SetValue(round(self.lsfit['gamma'],5))
+		self.phivalue.SetValue(round(self.lsfit['phi'],5))
+		self.scalevalue.SetValue(round(self.lsfit['scale'],5))
+		self.shiftxvalue.SetValue(round(self.lsfit['shiftx'],5))
+		self.shiftyvalue.SetValue(round(self.lsfit['shifty'],5))
+		self.rmsdlabel.SetLabel(str(round(self.lsfit['rmsd'],5)))
+		self.iterlabel.SetLabel(str(self.lsfit['iter']))
 
 	def onApplyLeastSquares(self, evt):
 		self.Close()
-		self.parent.theta  = self.thetavalue.GetValue()
-		self.parent.gamma  = self.gammavalue.GetValue()
-		self.parent.phi    = self.phivalue.GetValue()
-		self.parent.scale  = self.scalevalue.GetValue()
-		self.parent.shiftx = self.shiftxvalue.GetValue()
-		self.parent.shifty = self.shiftyvalue.GetValue()
+		self.parent.data['leastsqfitdata'] = self.lsfit
+		self.parent.data['theta']  = self.thetavalue.GetValue()
+		self.parent.data['gamma']  = self.gammavalue.GetValue()
+		self.parent.data['phi']    = self.phivalue.GetValue()
+		self.parent.data['scale']  = self.scalevalue.GetValue()
+		self.parent.data['shiftx'] = self.shiftxvalue.GetValue()
+		self.parent.data['shifty'] = self.shiftyvalue.GetValue()
 		self.parent.onUpdate(evt)
 
 

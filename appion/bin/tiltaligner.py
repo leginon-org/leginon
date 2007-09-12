@@ -139,7 +139,8 @@ class tiltAligner(appionLoop.AppionLoop):
 
 	def runTiltAligner(self, imgdata, tiltdata):
 		#reset targets
-		self.app.onClear(None)
+		self.app.onClearPicks(None)
+		self.app.onResetParams(None)
 		self.tiltparams = {}
 		#open new file
 		imgname = imgdata['filename']+'.dwn.mrc'
