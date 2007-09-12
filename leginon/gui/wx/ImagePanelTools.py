@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImagePanelTools.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-07 20:25:17 $
+# $Date: 2007-09-12 18:03:52 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -263,13 +263,12 @@ class ContrastTool(object):
 
 class ImageTool(object):
 	def __init__(self, imagepanel, sizer, bitmap, tooltip='', cursor=None,
-								untoggle=False, button=None):
+			untoggle=False, button=None):
 		self.sizer = sizer
 		self.imagepanel = imagepanel
 		self.cursor = cursor
 		if button is None:
-			self.button = GenBitmapToggleButton(self.imagepanel, -1, bitmap,
- 	                                         size=(24, 24))
+			self.button = GenBitmapToggleButton(self.imagepanel, -1, bitmap, size=(24, 24))
 		else:
 			self.button = button
 		self.untoggle = untoggle
