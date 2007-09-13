@@ -4,13 +4,11 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
  
-try:
-	import sinedon.data
-	import leginondata
-	Data = sinedon.data.Data
-except:	
-	import data as leginondata
-	Data = data.Data
+
+import sinedon.data
+import leginondata
+Data = sinedon.data.Data
+
 
 ### Particle selection tables ###
 
