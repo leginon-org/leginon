@@ -10,11 +10,14 @@ import pyami
 import Image
 import ImageDraw
 import apImage
+import time
+import cPickle
 from gui.wx import TargetPanel, ImagePanelTools
 import radermacher
 from scipy import ndimage, optimize
 import tiltDialog
 import apTiltTransform
+import apDisplay
 
 class TiltTargetPanel(TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True, name=None):
@@ -58,6 +61,10 @@ class PickerApp(wx.App):
 		self.data['outfile'] = ""
 		self.data['dirname'] = ""
 		self.appionloop = None
+		self.filetypes = ['text', 'xml', 'spider', 'pickle',]
+		self.filetypesel = ("Text Files (*.txt)|*.txt" + "|XML Files (*.xml)|*.xml"
+			+"|Spider Files (*.spi)|*.[a-z][a-z][a-z]" + "|Python Pickle File (*.pik)|*.pik")
+		self.data['filetypeindex'] = None
 
 		self.frame = wx.Frame(None, -1, 'Image Viewer')
 		splitter = wx.SplitterWindow(self.frame)
@@ -285,6 +292,8 @@ class PickerApp(wx.App):
 	def targetsToArray(self, targets):
 		i = 0
 		count = len(targets)
+		if count == 0:
+			return None
 		a = numpy.zeros((count,2), dtype=numpy.int32)
 		for t in targets:
 			a[i,0] = int(t.x)
@@ -338,58 +347,53 @@ class PickerApp(wx.App):
 		self.data['scale'] = 1.0
 
 	#---------------------------------------
-	def onFileOpen(self, evt):
-		dlg = wx.FileDialog(self.frame, "Choose a pick file to open", self.data['dirname'], "", \
-			"Text Files (*.txt)|*.txt"
-			+"|XML Files (*.xml)|*.xml"
-			+"|Spider Files (*.spi)|*.???"
-			, wx.OPEN)
-		if dlg.ShowModal() == wx.ID_OK:
-			self.data['outfile'] = dlg.GetFilename()
-			self.data['dirname']  = dlg.GetDirectory()
-			try:
-				self.openPicksFromFile()
-			except:
-				dlg.Close()
-				self.statbar.PushStatusText("ERROR: Opening file '"+self.data['outfile']+"' failed", 0)
-				dialog = wx.MessageDialog(self.frame, "Opening file '"+self.data['outfile']+"' failed", 'Error', wx.OK|wx.ICON_ERROR)
-				dialog.ShowModal()
-				dialog.Destroy()
-		dlg.Destroy()
- 
-	#---------------------------------------
 	def onFileSave(self, evt):
 		if self.data['outfile'] == "" or self.data['dirname'] == "":
 			#First Save, Run SaveAs...
 			return self.onFileSaveAs(evt)
-		filepath = os.path.join(self.data['dirname'], self.data['outfile'])
-		self.savePicksToFile(filepath)
+		self.savePicks()
 
 	#---------------------------------------
 	def onFileSaveAs(self, evt):
 		dlg = wx.FileDialog(self.frame, "Choose a pick file to save as", self.data['dirname'], "", \
-			"Text Files (*.txt)|*.txt"
-			+"|XML Files (*.xml)|*.xml"
-			+"|Spider Files (*.spi)|*.???"
-			, wx.SAVE|wx.OVERWRITE_PROMPT)
+			self.filetypesel, wx.SAVE|wx.OVERWRITE_PROMPT)
+		if 'filetypeindex' in self.data and self.data['filetypeindex'] is not None:
+			dlg.SetFilterIndex(self.data['filetypeindex'])
 		#alt1 = "*.[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]"
 		#alt2 = "Text Files (*.txt)|*.txt|All Files|*.*"
 		if dlg.ShowModal() == wx.ID_OK:
 			self.data['outfile'] = dlg.GetFilename()
-			self.data['dirname']  = dlg.GetDirectory()
-			try:
-				filepath = os.path.join(self.data['dirname'], self.data['outfile'])
-				self.savePicksToFile(filepath)
-			except:
-				dlg.Close()
-				self.statbar.PushStatusText("ERROR: Saving to file '"+self.data['outfile']+"' failed", 0)
-				dialog = wx.MessageDialog(self.frame, "Saving to file '"+self.data['outfile']+"' failed", 'Error', wx.OK|wx.ICON_ERROR)
-				dialog.ShowModal()
-				dialog.Destroy()
+			self.data['dirname']  = os.path.abspath(dlg.GetDirectory())
+			self.data['filetypeindex'] = dlg.GetFilterIndex()
+			self.data['filetype'] = self.filetypes[self.data['filetypeindex']]
+			self.savePicks()
 		dlg.Destroy()
 
+	#---------------------------------------	
+	def savePicks(self):
+		self.data['savetime'] = time.asctime()+" "+time.tzname[time.daylight]
+		try:
+			if self.data['filetypeindex'] == 0:
+				self.savePicksToTextFile()
+			elif self.data['filetypeindex'] == 1:
+				self.savePicksToXMLFile()
+			elif self.data['filetypeindex'] == 2:
+				self.savePicksToSpiderFile()
+			elif self.data['filetypeindex'] == 3:
+				self.savePicksToPickleFile()
+			else:
+				raise NotImplementedError
+			sys.stderr.write("Saved particles and parameters to '"+self.data['outfile']+\
+				"' of type "+self.data['filetype']+"\n")
+		except:
+			self.statbar.PushStatusText("ERROR: Saving to file '"+self.data['outfile']+"' failed", 0)
+			dialog = wx.MessageDialog(self.frame, "Saving to file '"+self.data['outfile']+"' failed", 'Error', wx.OK|wx.ICON_ERROR)
+			if dialog.ShowModal() == wx.ID_OK:
+				dialog.Destroy()		
+
 	#---------------------------------------
-	def savePicksToFile(self, filepath):
+	def savePicksToTextFile(self):
+		filepath = os.path.join(self.data['dirname'], self.data['outfile'])
 		targets1 = self.panel1.getTargets('Picked')
 		targets2 = self.panel2.getTargets('Picked')
 		filename = os.path.basename(filepath)
@@ -408,14 +412,135 @@ class PickerApp(wx.App):
 		for target in targets2:
 			f.write( '%d,%d\n' % (target.x, target.y) )
 		f.close()
-		self.statbar.PushStatusText("Saved "+str(len(targets1))+" particles and parameters to "+filename, 0)
+		self.statbar.PushStatusText("Saved "+str(len(targets1))+" particles to "+self.data['outfile'], 0)
 		return True
 
 	#---------------------------------------
-	def openPicksFromFile(self, filepath):
-		if filepath is None:
-			return
+	def savePicksToXMLFile(self):
+		filepath = os.path.join(self.data['dirname'], self.data['outfile'])
+		self.data['targets1'] = self.targetsToArray(self.panel1.getTargets('Picked'))
+		self.data['targets2'] = self.targetsToArray(self.panel2.getTargets('Picked'))
+		filename = os.path.basename(filepath)
+		apXml.writeDictToXml(self.data, filepath, title='aptiltpicker')
+		self.statbar.PushStatusText("Saved "+str(len(self.data['targets1']))+" particles and parameters to "+self.data['outfile'], 0)
+		return True
+
+	#---------------------------------------
+	def savePicksToSpiderFile(self):
+		filepath = os.path.join(self.data['dirname'], self.data['outfile'])
+		targets1 = self.panel1.getTargets('Picked')
+		targets2 = self.panel2.getTargets('Picked')
+		filename = os.path.basename(filepath)
+		if len(targets1) < 3 or len(targets2) < 3:
+			self.statbar.PushStatusText("ERROR: Cannot save file. Not enough picks", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot save file.\nNot enough picks\n(less than 4 particle pairs)",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+		f = open(filepath, "w")
+		for k,v in self.data.items():
+			if type(v) in [type(1), type(1.0), type(""),]:
+				f.write( "; "+str(k)+" : "+str(v)+"\n")
+		f.write( "; image 1: "+self.panel1.filename+"\n" )
+		for i,target in enumerate(targets1):
+			prefix = "%04d %1d" % (i, 6)
+			istr = apDisplay.leftPadString("%4.6f" % i, n=12)
+			xstr = apDisplay.leftPadString("%4.6f" % target.x, n=12)
+			ystr = apDisplay.leftPadString("%4.6f" % target.y, n=12)
+			onestr = apDisplay.leftPadString("%4.6f" % 1.0, n=12)
+			f.write(prefix+istr+xstr+ystr+xstr+ystr+onestr+"\n")
+		f.write( "; image 2: "+self.panel2.filename+"\n" )
+		for i,target in enumerate(targets2):
+			prefix = "%04d %1d" % (i, 6)
+			istr = apDisplay.leftPadString("%4.6f" % i, n=12)
+			xstr = apDisplay.leftPadString("%4.6f" % target.x, n=12)
+			ystr = apDisplay.leftPadString("%4.6f" % target.y, n=12)
+			onestr = apDisplay.leftPadString("%4.6f" % 1.0, n=12)
+			f.write(prefix+istr+xstr+ystr+xstr+ystr+onestr+"\n")
+		f.close()
+		self.statbar.PushStatusText("Saved "+str(len(targets1))+" particles and parameters to "+self.data['outfile'], 0)
+		return True
+
+	#---------------------------------------
+	def savePicksToPickleFile(self):
+		sys.stderr.write("p1")
+		filepath = os.path.join(self.data['dirname'], self.data['outfile'])
+		sys.stderr.write("p2")
+		self.data['targets1'] = self.targetsToArray(self.panel1.getTargets('Picked'))
+		self.data['targets2'] = self.targetsToArray(self.panel2.getTargets('Picked'))
+		sys.stderr.write("p3")
+		f = open(filepath, 'w')
+		sys.stderr.write("p4")
+		cPickle.dump(self.data, f)
+		sys.stderr.write("p5")
+		f.close()
+		sys.stderr.write("p6")
+		self.statbar.PushStatusText("Saved "+str(len(self.data['targets1']))+" particles and parameters to "+self.data['outfile'], 0)
+		sys.stderr.write("p7")
+		return True
+
+	#---------------------------------------
+	def onFileOpen(self, evt):
+		dlg = wx.FileDialog(self.frame, "Choose a pick file to open", self.data['dirname'], "", \
+			self.filetypesel, wx.OPEN)
+		if 'filetypeindex' in self.data and self.data['filetypeindex'] is not None:
+			dlg.SetFilterIndex(self.data['filetypeindex'])
+		if dlg.ShowModal() == wx.ID_OK:
+			self.data['outfile'] = dlg.GetFilename()
+			self.data['dirname']  = os.path.abspath(dlg.GetDirectory())
+			self.data['filetypeindex'] = dlg.GetFilterIndex()
+			self.data['filetype'] = self.filetypes[self.data['filetypeindex']]
+			self.openPicks()
+		dlg.Destroy()
+
+	#---------------------------------------
+	def guessFileType(self, filepath):
 		self.data['outfile'] = os.path.basename(filepath)
+		self.data['extension'] = self.data['outfile'][-3:]
+		if self.data['extension'] == "txt":
+			self.data['filetypeindex'] = 0
+		elif self.data['extension'] == "xml":
+			self.data['filetypeindex'] = 1
+		elif self.data['extension'] == "spi":
+			self.data['filetypeindex'] = 2
+		elif self.data['extension'] == "pik":
+			self.data['filetypeindex'] = 3
+		else:
+			raise "Could not determine filetype of picks file (argument 3)"
+		self.data['filetype'] = self.filetypes[self.data['filetypeindex']]
+		return
+
+	#---------------------------------------
+	def openPicks(self, filepath=None):
+		if filepath is None:
+			filepath = os.path.join(self.data['dirname'],self.data['outfile'])
+		if self.data['filetypeindex'] is None:
+			self.guessFileType(filepath)
+		self.data['opentime'] = time.asctime()+" "+time.tzname[time.daylight]
+		try:
+			if self.data['filetypeindex'] == 0:
+				self.openPicksFromTextFile(filepath)
+			elif self.data['filetypeindex'] == 1:
+				raise NotImplementedError
+			elif self.data['filetypeindex'] == 2:
+				raise NotImplementedError
+			elif self.data['filetypeindex'] == 3:
+				self.openPicksFromPickleFile(filepath)
+			else:
+				raise NotImplementedError
+			sys.stderr.write("Opened particles and parameters from '"+self.data['outfile']+\
+				"' of type "+self.data['filetype']+"\n")
+		except:
+			self.statbar.PushStatusText("ERROR: Opening file '"+self.data['outfile']+"' failed", 0)
+			dialog = wx.MessageDialog(self.frame, "Opening file '"+self.data['outfile']+"' failed", 'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()	
+
+	#---------------------------------------
+	def openPicksFromTextFile(self, filepath=None):
+		if filepath is None or filepath == "" or not os.path.isfile(filepath):
+			return
 		f = open(filepath,"r")
 		size = int(len(f.readlines())/2-1)
 		f.close()
@@ -452,6 +577,20 @@ class PickerApp(wx.App):
 		#self.panel1.setTargets('Numbered', a1)
 		#self.panel2.setTargets('Numbered', a2)
 		self.statbar.PushStatusText("Read "+str(len(a1))+" particles and parameters from file "+filepath, 0)
+
+	#---------------------------------------
+	def openPicksFromPickleFile(self, filepath=None):
+		if filepath is None or filepath == "" or not os.path.isfile(filepath):
+			return
+		f = open(filepath,'r')
+		self.data = cPickle.load(f)
+		f.close()
+		a1 = self.data['targets1']
+		a2 = self.data['targets2']
+		self.panel1.setTargets('Picked', a1)
+		self.panel2.setTargets('Picked', a2)
+		self.statbar.PushStatusText("Read "+str(len(a1))+" particles and parameters from file "+filepath, 0)
+		return True
 
 	#---------------------------------------
 	def onQuit(self, evt):
@@ -504,18 +643,17 @@ if __name__ == '__main__':
 		#apDisplay.printColor(mystr,"red")
 		sys.exit(1)
 
-
 	files = []
 	for i in range(1, 4, 1):
 		try:
-			files.append(sys.argv[i])
+			files.append(sys.argv[i].strip())
 		except IndexError:
 			files.append(None)
 
 	app = PickerApp(0)
 	app.openLeftImage(files[0])
 	app.openRightImage(files[1])
-	app.openPicksFromFile(files[2])
+	app.openPicks(files[2])
 
 	app.MainLoop()
 
