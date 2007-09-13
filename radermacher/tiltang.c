@@ -111,8 +111,8 @@ PyObject* tiltang(PyObject *self, PyObject *args) {
 					theta = -1.0*acos(ratio);
 				}
 				//printf("theta:  %.3f\n", theta*RAD2DEG);
-				double wfact = (area1 + area2) / (arealim + 5000.0)
-				double weight = wfact*wfact
+				double wfact = (area1 + area2) / (arealim + 5000.0);
+				double weight = wfact*wfact;
 				numtri += 1;
 				sum +=    theta;
 				sumsq +=  theta*theta;
