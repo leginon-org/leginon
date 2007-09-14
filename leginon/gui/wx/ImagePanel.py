@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImagePanel.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-14 19:02:34 $
+# $Date: 2007-09-14 19:03:13 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -501,7 +501,7 @@ class ImagePanel(wx.Panel):
 
 		self.movecount += 1
 
-		if self.drawlast or self.movecount % 50 == 0:
+		if self.drawlast or self.movecount % 150 == 0:
 			self.drawlast = False
 			self.movecount = 1
 			self.Draw(dc)
