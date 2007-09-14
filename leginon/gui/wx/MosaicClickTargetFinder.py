@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.35 $
+# $Revision: 1.36 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:07 $
+# $Date: 2007-09-14 20:02:52 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -30,22 +30,17 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 		self.toolbar.InsertSeparator(4)
 
 		self.toolbar.InsertTool(5, gui.wx.ToolBar.ID_TILES,
-													'tiles',
-													shortHelpString='Tiles')
+			'tiles',shortHelpString='Tiles')
 		self.toolbar.InsertTool(6, gui.wx.ToolBar.ID_MOSAIC,
-													'atlasmaker',
-													shortHelpString='Mosaic')
+			'atlasmaker',shortHelpString='Mosaic')
 		self.toolbar.InsertSeparator(7)
 		self.toolbar.InsertTool(8, gui.wx.ToolBar.ID_REFRESH,
-													'refresh',
-													shortHelpString='Refresh')
+			'refresh', shortHelpString='Refresh')
 		self.toolbar.InsertTool(9, gui.wx.ToolBar.ID_CURRENT_POSITION,
-													'currentposition',
-													shortHelpString='Show Position')
+			'currentposition', shortHelpString='Show Position')
 		self.toolbar.InsertSeparator(10)
 		self.toolbar.InsertTool(11, gui.wx.ToolBar.ID_FIND_SQUARES,
-													'squarefinder',
-													shortHelpString='Find Squares')
+			'squarefinder',shortHelpString='Find Squares')
 
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
 
