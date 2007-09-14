@@ -54,7 +54,7 @@ class PickerApp(wx.App):
 		self.panel.SetMinSize((300,300))
 		self.sizer.Add(self.panel, 1, wx.EXPAND)
 
-		self.next = wx.Button(self.frame, -1, '&Next')
+		self.next = wx.Button(self.frame, wx.ID_FORWARD, '&Forward')
 		self.next.SetMinSize((200,40))
 		self.Bind(wx.EVT_BUTTON, self.onNext, self.next)
 		self.sizer.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
@@ -78,6 +78,10 @@ class PickerApp(wx.App):
 		#	print '%s\t%s' % (target.x, target.y)
 		self.appionloop.targets = self.panel.getTargets('Select Particles')
 		self.Exit()
+
+	def onClear(self, evt):
+		self.panel.setTargets('Select Particles', [])
+
 
 ##################################
 ##
