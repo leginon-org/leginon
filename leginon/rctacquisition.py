@@ -290,6 +290,8 @@ class RCTAcquisition(acquisition.Acquisition):
 				#redo this tilt; becomes an infinite loop if the image goes black
 				retries += 1
 				if retries < 3:
+					#reduce minsize and try again
+					self.settings['minsize'] *= 0.95
 					i -= 1.0
 				continue
 			print '============ Craig stuff done ============'
