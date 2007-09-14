@@ -113,6 +113,8 @@ class manualPicker(particleLoop.ParticleLoop):
 
 	def particleDefaultParams(self):
 		self.params['mapdir']="manualmaps"
+		self.params['pickrunname'] = None
+		self.params['pickrunid'] = None
 
 	def particleCreateOutputDirs(self):
 		self._createDirectory(os.path.join(self.params['rundir'],"pikfiles"),warning=False)
@@ -121,9 +123,30 @@ class manualPicker(particleLoop.ParticleLoop):
 		for arg in args:
 			elements = arg.split('=')
 			elements[0] = elements[0].lower()
-			apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
+			if (elements[0]=='pickrunid'):
+				self.params['pickrunid']=int(elements[1])
+			elif (elements[0]=='pickrunname'):
+				self.params['pickrunname']=str(elements[1])
+			else:
+				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
 	##### END PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
+
+	def getParticlePicks(self, imgdata):
+		if not self.params['pickrunid']:
+			if not self.params['pickrunname']:
+				return []
+			particles = apParticle.getParticlesForImageFromRunName(imgdata, self.params['pickrunname'])
+		else:
+			particles = apParticle.getParticles(imgdata, self.params['pickrunid'])
+		targets = self.particlesToTargets(particles)
+		return targets
+
+	def particlesToTargets(self, particles):
+		targets = []
+		for p in particles:
+			targets.append( (p['xcoord']/self.params['bin'], p['ycoord']/self.params['bin']) )
+		return targets
 
 	def processAndSaveAllImages(self):
 		print "Pre-processing images before picking"
@@ -140,6 +163,7 @@ class manualPicker(particleLoop.ParticleLoop):
 		manparamsq['lp_filt'] = self.params['lp']
 		manparamsq['hp_filt'] = self.params['hp']
 		manparamsq['bin']     = self.params['bin']
+		manparamsq['pickrun'] = self.params['pickrunid']
 		manparamsdata = self.appiondb.query(manparamsq, results=1)
 		
 		runq=appionData.ApSelectionRunData()
@@ -171,11 +195,18 @@ class manualPicker(particleLoop.ParticleLoop):
 		imgname = imgdata['filename']+'.dwn.mrc'
 		imgpath = os.path.join(self.params['rundir'],imgname)
 		self.app.panel.openImageFile(imgpath)
+
+		targets = self.getParticlePicks(imgdata)
+		if targets:
+			print "inserting ",len(targets)," targets"
+			self.app.panel.setTargets('Select Particles', targets)
+
 		#run the picker
 		self.app.MainLoop()
-		self.app.panel.openImageFile(None)
+
 		#targets are copied to self.targets by app
 		#parse and return the targets in peaktree form
+		self.app.panel.openImageFile(None)
 		peaktree=[]
 		for target in self.targets:
 			peaktree.append(self.XY2particle(target.x, target.y))
