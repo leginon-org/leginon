@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImagePanel.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-07 20:25:17 $
+# $Date: 2007-09-14 19:02:34 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -26,6 +26,7 @@ import cStringIO
 from pyami import mrc, arraystats
 import numpy
 import wx
+import sys
 import Image
 import numextension
 import gui.wx.Stats
@@ -56,6 +57,8 @@ class ImagePanel(wx.Panel):
 		self.colormap = None
 		self.selectiontool = None
 		self.mode = mode
+		self.drawlast = False
+		self.movecount = 0
 
 		# get size of image panel (image display dimensions)
 		if type(imagesize) != tuple:
@@ -484,23 +487,32 @@ class ImagePanel(wx.Panel):
 				self.UpdateDrawing()
 				return
 
-		dc = wx.MemoryDC()
-		dc.SelectObject(self.buffer)
-		dc.BeginDrawing()
-
-		for tool in self.tools:
-			tool.OnMotion(evt, dc)
-
-		self._onMotion(evt, dc)
-
 		x, y = self.view2image((evt.m_x, evt.m_y))
 		value = self.getValue(x, y)
 		strings = []
 		for tool in self.tools:
 			strings += tool.getToolTipStrings(x, y, value)
 		strings += self._getToolTipStrings(x, y, value)
-		if strings:
+
+		#Allow drawing:
+		dc = wx.MemoryDC()
+		dc.SelectObject(self.buffer)
+		dc.BeginDrawing()
+
+		self.movecount += 1
+
+		if self.drawlast or self.movecount % 50 == 0:
+			self.drawlast = False
+			self.movecount = 1
 			self.Draw(dc)
+
+		for tool in self.tools:
+			self.drawlast = tool.OnMotion(evt, dc)
+
+		self._onMotion(evt, dc)
+
+		if strings:
+			self.drawlast = True
 			self.drawToolTip(dc, x, y, strings)
 
 		dc.EndDrawing()

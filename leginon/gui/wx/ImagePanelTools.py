@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImagePanelTools.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-12 18:03:52 $
+# $Date: 2007-09-14 19:02:34 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -304,7 +304,7 @@ class ImageTool(object):
 
 	#--------------------
 	def OnMotion(self, evt, dc):
-		pass
+		return False
 
 	#--------------------
 	def getToolTipStrings(self, x, y, value):
@@ -449,7 +449,7 @@ class RulerTool(ImageTool):
 
 	#--------------------
 	def DrawRuler(self, dc, x, y):
-		dc.SetPen(wx.Pen(wx.RED, 1))
+		dc.SetPen(wx.Pen(wx.RED, 2))
 		x0, y0 = self.imagepanel.image2view(self.start)
 		#x0 -= self.imagepanel.offset[0]
 		#y0 -= self.imagepanel.offset[1]
@@ -461,6 +461,8 @@ class RulerTool(ImageTool):
 			x = evt.m_x #- self.imagepanel.offset[0]
 			y = evt.m_y #- self.imagepanel.offset[1]
 			self.DrawRuler(dc, x, y)
+			return True
+		return False
 
 	#--------------------
 	def getToolTipStrings(self, x, y, value):
@@ -481,10 +483,13 @@ class ZoomTool(ImageTool):
 		tooltip = 'Toggle Zoom Tool'
 		cursor = wx.StockCursor(wx.CURSOR_MAGNIFIER)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
-		self.zoomlevels = [1,1.5,2,3,4,6,8,12,16,32,128,]
+		self.zoomlevels = [1, 1.5, 2, 3, 4, 6, 8, 12, 16, 32, 128,]
+		self.zoomlabels = ['1x', '2/3x', '1/2x', '1/3x', '1/4x', '1/6x', '1/8x',
+			'1/12x', '1/16x', '1/32x', '1/128x']
 		# wx.Choice seems a bit slow, at least on windows
 		self.zoomchoice = wx.Choice(self.imagepanel, -1,
-			choices=map(self.log2str, self.zoomlevels))
+			choices=self.zoomlabels)
+			#map(self.zoomlabels, self.zoomlevels))
 		self.zoom(self.zoomlevels[4], (0, 0))
 		self.zoomchoice.SetSelection(self.zoomlevel)
 		self.sizer.Add(self.zoomchoice, 0, wx.ALIGN_CENTER|wx.ALL, 3)
