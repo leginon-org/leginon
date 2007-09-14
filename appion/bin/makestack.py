@@ -185,14 +185,14 @@ def parseInput(args):
 			mindf=float(elements[1])
 			if mindf > 0:
 				print "mindefocus must be negative and specified in meters"
-				sys.exit()
+				sys.exit(1)
 			else:
 				params['minDefocus']=mindf*1e6
 		elif (elements[0]=='maxdefocus'):
 			maxdf=float(elements[1])
 			if maxdf > 0:
 				print "maxdefocus must be negative and specified in meters" 
-				sys.exit()
+				sys.exit(1)
 			else:
 				params['maxDefocus']=maxdf*1e6
 		elif (elements[0]=='description'):
@@ -301,10 +301,12 @@ def batchBox(params, imgdict):
 	if params['selexonId']:
 		dbbox=os.path.join(params['outdir'], "temporaryParticlesFromDB.box")
 		if params['defocpair']:
-			particles,shift=apParticle.getDefocPairParticles(imgdict,params)
+			particles,shift = apParticle.getDefocPairParticles(imgdict,params)
+
 #			particles,shift=apParticle.getDefocPairParticlesREFLEGINON(imgdict,params)
 		else:
-			particles,shift=apParticle.getParticles(imgdict, params['selexonId'])
+			particles = apParticle.getParticles(imgdict, params['selexonId'])
+			shift = {'shiftx':0, 'shifty':0,'scale':1}
 #			particles,shift=apParticle.getParticlesREFLEGINON(imgdict, params['selexonId'])
 		if len(particles)>0:			
 			###apply limits

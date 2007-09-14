@@ -79,8 +79,8 @@ def getParticles(imgdata, selectionRunId):
 	prtlq['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
 	prtlq['selectionrun'] = selexonrun
 	particles = appiondb.query(prtlq)
-	shift={'shiftx':0, 'shifty':0,'scale':1}
-	return(particles,shift)
+
+	return particles
 
 def getParticlesForImageFromRunName(imgdata,runname):
 	"""
@@ -94,8 +94,8 @@ def getParticlesForImageFromRunName(imgdata,runname):
 	ptclq['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
 	ptclq['selectionrun']=srunq
 	
-	ptcldata = appiondb.query(ptclq)
-	return ptcldata
+	particles = appiondb.query(ptclq)
+	return particles
 	
 	
 def getParticlesREFLEGINON(imgdata, selectionRunId):
