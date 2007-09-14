@@ -11,6 +11,7 @@ import gui.wx.RCTAcquisition
 import libCV
 import numpy
 import time
+import math
 from scipy import ndimage
 pi = numpy.pi
 
@@ -230,13 +231,13 @@ class RCTAcquisition(acquisition.Acquisition):
 		tiltrange = tilt - tilt0
 		maxstepsize = radians(self.settings['stepsize'])
 		#nsteps = float(self.settings['nsteps'])
-		nsteps = math.ceil( abs( tiltrange / maxstepsize ) )
+		nsteps = int(math.ceil( abs( tiltrange / maxstepsize ) ) )
 		#nsteps = abs(int(round(float(tiltrange) / float(maxstepsize))))
 		self.logger.info('Number of tilt steps: %d' % nsteps)
 		tilts = [tilt]
 		if nsteps > 0:
 			tilts = []
-			stepsize = tiltrange / nsteps
+			stepsize = tiltrange / float(nsteps)
 			for i in range(1, nsteps+1):
 				tilts.append(round(tilt0+i*stepsize,2))
 		self.logger.info('Tilts: %s' % ([degrees(t) for t in tilts],))
@@ -253,11 +254,11 @@ class RCTAcquisition(acquisition.Acquisition):
 		runningresult = numpy.identity(3, numpy.float64)
 		pausetime = int(self.settings['pause'])
 		retries = 0
-		i = 0.0
+		i = int(0)
 		#for tilt in tilts:
 		while(i < nsteps):
-			tilt = tilts[i]
-			i += 1.0
+			tilt = tilts[int(i)]
+			i += 1
 			self.logger.info('Tilt: %s' % (degrees(tilt),))
 			self.instrument.tem.StagePosition = {'a': tilt}
 			time.sleep(pausetime)
@@ -292,18 +293,15 @@ class RCTAcquisition(acquisition.Acquisition):
 				if retries < 3:
 					#reduce minsize and try again
 					self.settings['minsize'] *= 0.95
-					i -= 1.0
+					i -= 1
 				continue
 			print '============ Craig stuff done ============'
 
-			prettyres = ( "libCV Matrix: [[ %.3f, %.3f ], [ %.3f, %.3f ], [ %.3f, %.3f ]] " % \
-				results[0,0], results[0,1], results[1,0], results[1,1], results[2,0], results[2,1] )
-			#self.logger.info('Matrix: %s' % (result,))
-			self.logger.info(prettyres)
+			self.logger.info( "Inter Matrix: "+affineToText(result) )
 
 			runningresult = numpy.dot(runningresult, result)
 			self.transformTargets(runningresult, tilt0targets)
-			print 'runningresult', runningresult
+			self.logger.info( "Running Matrix: "+affineToText(runningresult) )
 			imageold = imagenew
 			arrayold = arraynew
 
@@ -318,8 +316,20 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.setTargets([], 'Peak')
 		self.publishDisplayWait(imagedata)
 
-		self.logger.info('Final Matrix: %s' % (runningresult,))
+		self.logger.info( "FINAL Matrix: "+affineToText(runningresult) )
+		#self.logger.info('Final Matrix: %s' % (runningresult,))
 		return (runningresult, imagedata)
+
+	def affineToText(matrix):
+		tiltv = matrix[0,0] * matrix[1,1]
+		rotv = (matrix[0,1] - matrix[1,0]) / 2.0
+		if tiltv > 1:
+			tilt = degrees(math.cos(1.0/tiltv))
+		else:
+			tilt = degrees(math.cos(tiltv))
+		rot = degrees(math.asin(rotv))
+		return "tiltang = %.2f, rotation = %.2f, shift = %.2f,%.2f"
+		
 
 	def checkArrayMinMax(self, a1, a2):
 		a1b = ndimage.median_filter(a1, size=3)
