@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ClickTargetFinder.py,v $
-# $Revision: 1.21 $
+# $Revision: 1.22 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:02 $
+# $Date: 2007-09-14 20:03:53 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -33,9 +33,9 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
 		self.imagepanel.addTargetTool('reference', wx.Color(128, 0, 128), target=True, unique=True)
 		self.imagepanel.selectiontool.setDisplayed('reference', True)
-		self.imagepanel.addTargetTool('done', wx.RED)
+		self.imagepanel.addTargetTool('done', wx.Color(218, 0, 0))
 		self.imagepanel.selectiontool.setDisplayed('done', True)
-		self.imagepanel.addTargetTool('position', wx.Color(255, 128, 0))
+		self.imagepanel.addTargetTool('position', wx.Color(218, 165, 32), shape='x')
 		self.imagepanel.selectiontool.setDisplayed('position', True)
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
