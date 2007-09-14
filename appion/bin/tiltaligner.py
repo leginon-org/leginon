@@ -102,6 +102,8 @@ class tiltAligner(appionLoop.AppionLoop):
 			else:
 				apFindEM.processAndSaveImage(imgdata, params=self.params)
 			tiltdata = apTiltPair.getTiltPair(imgdata)
+			if tiltdata is None:
+				continue
 			tiltpath = os.path.join(self.params['rundir'], tiltdata['filename']+'.dwn.mrc')
 			if os.path.isfile(tiltpath):
 				print "already processed: ",apDisplay.short(tiltdata['filename'])
