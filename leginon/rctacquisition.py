@@ -22,10 +22,10 @@ def setImageFilename(imagedata, tiltnumber=None):
 			imagedata['filename'] = imagedata['filename'] + '_%02d' % (tiltnumber,)
 
 def radians(degrees):
-	return degrees * pi / 180.0
+	return float(degrees) * pi / 180.0
 
 def degrees(radians):
-	return radians * 180.0 / pi
+	return float(radians) * 180.0 / pi
 
 def corner(center, shape):
 	return center[0] + shape[0]/2, center[1] + shape[1]/2
@@ -228,14 +228,15 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		## calculate tilts
 		tiltrange = tilt - tilt0
-		maxstepsize = radians(float(self.settings['stepsize']))
+		maxstepsize = radians(self.settings['stepsize'])
 		#nsteps = float(self.settings['nsteps'])
-		nsteps = abs(int(round(float(tiltrange) / float(maxstepsize))))
+		nsteps = math.ceil( abs( tiltrange / maxstepsize ) )
+		#nsteps = abs(int(round(float(tiltrange) / float(maxstepsize))))
 		self.logger.info('Number of tilt steps: %d' % nsteps)
 		tilts = [tilt]
 		if nsteps > 0:
 			tilts = []
-			stepsize = float(tiltrange) / float(nsteps)
+			stepsize = tiltrange / nsteps
 			for i in range(1, nsteps+1):
 				tilts.append(round(tilt0+i*stepsize,2))
 		self.logger.info('Tilts: %s' % ([degrees(t) for t in tilts],))
