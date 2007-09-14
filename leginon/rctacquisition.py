@@ -252,7 +252,12 @@ class RCTAcquisition(acquisition.Acquisition):
 			arrayold = ndimage.gaussian_filter(arrayold, lowfilt)
 		runningresult = numpy.identity(3, numpy.float64)
 		pausetime = int(self.settings['pause'])
-		for tilt in tilts:
+		retries = 0
+		i = 0.0
+		#for tilt in tilts:
+		while(i < nsteps):
+			tilt = tilts[i]
+			i += 1.0
 			self.logger.info('Tilt: %s' % (degrees(tilt),))
 			self.instrument.tem.StagePosition = {'a': tilt}
 			time.sleep(pausetime)
@@ -268,27 +273,35 @@ class RCTAcquisition(acquisition.Acquisition):
 			self.setImage(arraynew, 'Image')
 			self.setTargets([], 'Peak')
 
-			self.logger.info('Craig stuff')
+
 			print '============ Craig stuff ============'
+
+			self.logger.info('Craig stuff')
 			minsize = self.settings['minsize']
 			maxsize = self.settings['maxsize']
 			blur = 0
 			sharpen = 0
 			self.checkArrayMinMax(arrayold, arraynew)
-			time.sleep(pausetime)
 			result = libCV.MatchImages(arrayold, arraynew, minsize, maxsize, blur, sharpen, 1, 1)
+
 			check = self.checkLibCVResult(result)
-			print '============ Craig stuff done ============'
 			if check is False:
-				"ABORT OR SOMETHING"
-			self.logger.info('Matrix: %s' % (result,))
+				self.logger.error("libCV failed: redoing tilt")
+				#redo this tilt; becomes an infinite loop if the image goes black
+				retries += 1
+				if retries < 3:
+					i -= 1.0
+				continue
+			print '============ Craig stuff done ============'
+
+			prettyres = ( "libCV Matrix: [[ %.3f, %.3f ], [ %.3f, %.3f ], [ %.3f, %.3f ]] " % \
+				results[0,0], results[0,1], results[1,0], results[1,1], results[2,0], results[2,1] )
+			#self.logger.info('Matrix: %s' % (result,))
+			self.logger.info(prettyres)
 
 			runningresult = numpy.dot(runningresult, result)
-
 			self.transformTargets(runningresult, tilt0targets)
-
 			print 'runningresult', runningresult
-
 			imageold = imagenew
 			arrayold = arraynew
 
@@ -397,7 +410,7 @@ class RCTAcquisition(acquisition.Acquisition):
 
 	def displayRegions(self, regions):
 		targets = []
-		limit = 2000
+		limit = 1500
 		for i,region in enumerate(regions):
 			if i > limit:
 				break
