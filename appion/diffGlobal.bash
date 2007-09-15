@@ -1,7 +1,7 @@
 #!/bin/bash
  
 ./clean.sh
-for i in `find . -type f | egrep -v "(CVS|old|pair1)"`
+for i in `find . -type f | egrep -v "(CVS|old|tilting|ctftest)"`
 do
 	if [ -f /ami/sw/packages/pyappion/$i ]
 	then
@@ -12,7 +12,7 @@ do
 	fi
 done
 
-for i in `find /ami/sw/packages/pyappion -type f | egrep -v "(CVS|old|\.pyo|pair1)"`
+for i in `find /ami/sw/packages/pyappion -type f | egrep -v "(\.pyo|\.pyc)"`
 do
 	j=`echo $i | sed 's/^\/ami\/sw\/packages\/pyappion/./'`
         if [ -f $j ]
