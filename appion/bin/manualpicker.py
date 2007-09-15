@@ -59,6 +59,11 @@ class PickerApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onNext, self.next)
 		self.sizer.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
+		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear')
+		self.clear.SetMinSize((200,40))
+		self.Bind(wx.EVT_BUTTON, self.onClear, self.clear)
+		self.sizer.Add(self.clear, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
 		self.sizer.AddGrowableRow(0)
 		self.sizer.AddGrowableCol(0)
 		self.frame.SetSizerAndFit(self.sizer)
