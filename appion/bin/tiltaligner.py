@@ -52,6 +52,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 		put in any additional default parameters
 		"""
 		self.params['usepicks'] = False
+		self.params['outtype'] = 'pickle'
 
 	def particleParseParams(self, args):
 		"""
@@ -62,12 +63,16 @@ class tiltAligner(particleLoop.ParticleLoop):
 			elements[0] = elements[0].lower()
 			if arg == 'usepicks':
 				self.params['usepicks'] = True
+			if elements[0] == 'outtype':
+				self.params['outtype'] = elements[1]
 			apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
 	def particleParamConflicts(self):
 		"""
 		put in any additional conflicting parameters
 		"""
+		if not self.params['outtype'] in ('text','xml','pickle','spider'):
+			apDisplay.printError("outtype must be one of: text, xml, pickle or spider; NOT "+str(self.params['outtype']))
 		return
 
 	def particleCreateOutputDirs(self):

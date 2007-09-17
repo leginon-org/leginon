@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="us-ascii"?>
-<classifier>
+<tiltaligner>
  <usepicks>
 	<name>use particle picks</name>
 	<description>Insert picked particles into DB</description>
 	<type>boolean</type>
 	<default>False</default>
  </usepicks>
-</classifier>
+ <outtype>
+	<name>output file type</name>
+	<description>Output file type, options: text, spider, pickle, and xml</description>
+	<type>string</type>
+	<outtype>Pickle</outtype>
+ </outtype>
+</tiltaligner>
