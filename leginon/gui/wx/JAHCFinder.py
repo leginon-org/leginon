@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/JAHCFinder.py,v $
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:11:39 $
+# $Date: 2007-09-17 21:35:57 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -310,9 +310,9 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['target template'] = wx.CheckBox(self, -1,
 			'Use target template')
 		self.widgets['focus template'] = gui.wx.TargetTemplate.Panel(self,
-			'Focus Target Template')
+			'Focus Target Template', autofill=True)
 		self.widgets['acquisition template'] = gui.wx.TargetTemplate.Panel(self,
-			'Acquisition Target Template')
+			'Acquisition Target Template', autofill=True)
 		self.widgets['focus template thickness'] = wx.CheckBox(self, -1,
 			'Use focus template thickness')
 		self.widgets['focus stats radius'] = IntEntry(self, -1, chars=6)

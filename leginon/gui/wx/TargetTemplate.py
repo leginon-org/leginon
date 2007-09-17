@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetTemplate.py,v $
-# $Revision: 1.9 $
+# $Revision: 1.10 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-07 18:25:14 $
+# $Date: 2007-09-17 21:35:57 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -83,33 +83,40 @@ class Dialog(wx.Dialog):
 			evt.Skip()
 
 class Panel(wx.Panel):
-	def __init__(self, parent, title, targetname='Relative target'):
+	def __init__(self, parent, title, targetname='Relative target', autofill=False):
 		wx.Panel.__init__(self, parent, -1)
 
 		self.targetname = targetname
 
 		self.lbtemplate = wx.ListBox(self, -1, style=wx.LB_SINGLE)
-		self.lbtemplate.SetMinSize((100,100))
+		self.lbtemplate.SetMinSize((80,80))
 		self.badd = wx.Button(self, -1, '&Add...')
+		self.badd.SetMinSize((30,30))
 		self.bedit = wx.Button(self, -1, '&Edit...')
+		self.bedit.SetMinSize((30,30))
 		self.bdelete = wx.Button(self, -1, '&Delete')
-		self.bautofill = wx.Button(self, -1, 'Auto &Fill...')
+		self.bdelete.SetMinSize((30,30))
+		if autofill:
+			self.bautofill = wx.Button(self, -1, 'Auto &Fill...')
+			self.bautofill.SetMinSize((30,30))
 
 		sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, title)
 		sz.Add(label, (0, 0), (1, 4), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.lbtemplate, (1, 0), (1, 4), wx.EXPAND)
-		sz.Add(self.badd, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.bedit, (2, 1), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(self.bdelete, (2, 2), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(self.bautofill, (2, 3), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.badd, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+		sz.Add(self.bedit, (2, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sz.Add(self.bdelete, (2, 2), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		if autofill:
+			sz.Add(self.bautofill, (2, 3), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		sz.AddGrowableRow(1)
 		sz.AddGrowableCol(0)
 
 		self.Bind(wx.EVT_BUTTON, self.onAddButton, self.badd)
 		self.Bind(wx.EVT_BUTTON, self.onEditButton, self.bedit)
 		self.Bind(wx.EVT_BUTTON, self.onDeleteButton, self.bdelete)
-		self.Bind(wx.EVT_BUTTON, self.onAutoFillButton, self.bautofill)
+		if autofill:
+			self.Bind(wx.EVT_BUTTON, self.onAutoFillButton, self.bautofill)
 		self.Bind(wx.EVT_LISTBOX, self.onTemplateListBox, self.lbtemplate)
 
 		self._template = []
