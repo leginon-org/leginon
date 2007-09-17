@@ -97,7 +97,16 @@ def getParticlesForImageFromRunName(imgdata,runname):
 	particles = appiondb.query(ptclq)
 	return particles
 	
-	
+def getSelectionRunDataFromID(selectionRunId):
+	return appiondb.direct_query(appionData.ApSelectionRunData, selectionRunId) 
+
+def getSelectionRunDataFromName(imgdata, runname):
+	srunq=appionData.ApSelectionRunData()
+	srunq['name'] = runname
+	srunq['dbemdata|SessionData|session'] = imgdata['session'].dbid
+	selectionrundata = appiondb.query(srunq)
+	return selectionrundata[0]
+
 def getParticlesREFLEGINON(imgdata, selectionRunId):
 	"""
 	returns paticles (as a list of dicts) for a given image

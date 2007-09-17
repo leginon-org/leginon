@@ -43,9 +43,13 @@ class ManualPickerPanel(TargetPanel.TargetImagePanel):
 
 class PickerApp(wx.App):
 	def OnInit(self):
+		self.selectcolor = wx.Color(200,200,0)
+		self.deselectcolor = wx.Color(240,240,240)
+
 		self.frame = wx.Frame(None, -1, 'Manual Particle Picker')
 		self.sizer = wx.FlexGridSizer(2,1)
 
+		### BEGIN IMAGE PANEL
 		self.panel = ManualPickerPanel(self.frame, -1)
 		self.panel.addTypeTool('Select Particles', toolclass=TargetPanelTools.TargetTypeTool,
 			display=wx.RED, target=True, numbers=True)
@@ -53,17 +57,45 @@ class PickerApp(wx.App):
 		self.panel.selectiontool.setTargeting('Select Particles', True)
 		self.panel.SetMinSize((300,300))
 		self.sizer.Add(self.panel, 1, wx.EXPAND)
+		### END IMAGE PANEL
+
+		### BEGIN BUTTONS ROW
+		self.buttonrow = wx.FlexGridSizer(1,7)
 
 		self.next = wx.Button(self.frame, wx.ID_FORWARD, '&Forward')
 		self.next.SetMinSize((200,40))
 		self.Bind(wx.EVT_BUTTON, self.onNext, self.next)
-		self.sizer.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		self.buttonrow.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear')
-		self.clear.SetMinSize((200,40))
+		self.clear.SetMinSize((100,40))
 		self.Bind(wx.EVT_BUTTON, self.onClear, self.clear)
-		self.sizer.Add(self.clear, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		self.buttonrow.Add(self.clear, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
+		label = wx.StaticText(self.frame, -1, "Image Assessment:  ", style=wx.ALIGN_RIGHT)
+		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		self.assessnone = wx.ToggleButton(self.frame, -1, "&None")
+		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleNone, self.assessnone)
+		self.assessnone.SetValue(1)
+		self.assessnone.SetBackgroundColour(self.selectcolor)
+		self.assessnone.SetMinSize((100,40))
+		self.buttonrow.Add(self.assessnone, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		self.assesskeep = wx.ToggleButton(self.frame, -1, "&Keep")
+		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleKeep, self.assesskeep)
+		self.assesskeep.SetValue(0)
+		self.assesskeep.SetMinSize((100,40))
+		self.buttonrow.Add(self.assesskeep, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		self.assessreject = wx.ToggleButton(self.frame, -1, "&Reject")
+		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleReject, self.assessreject)
+		self.assessreject.SetValue(0)
+		self.assessreject.SetMinSize((100,40))
+		self.buttonrow.Add(self.assessreject, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		### END BUTTONS ROW
+
+		self.sizer.Add(self.buttonrow, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 		self.sizer.AddGrowableRow(0)
 		self.sizer.AddGrowableCol(0)
 		self.frame.SetSizerAndFit(self.sizer)
@@ -82,7 +114,49 @@ class PickerApp(wx.App):
 		#for target in targets:
 		#	print '%s\t%s' % (target.x, target.y)
 		self.appionloop.targets = self.panel.getTargets('Select Particles')
+		self.appionloop.assess = self.finalAssessment()
 		self.Exit()
+
+	def finalAssessment(self):
+		if self.assessnone.GetValue() is True:
+			return None
+		if self.assesskeep.GetValue() is True:
+			return True
+		if self.assessreject.GetValue() is True:
+			return False
+
+	def onToggleNone(self, evt):
+		if self.assessnone.GetValue() is True:
+			self.assessnone.SetValue(1)
+			self.assessnone.SetBackgroundColour(self.selectcolor)
+			self.assesskeep.SetValue(0)
+			self.assesskeep.SetBackgroundColour(self.deselectcolor)
+			self.assessreject.SetValue(0)
+			self.assessreject.SetBackgroundColour(self.deselectcolor)
+		else:
+			self.assessnone.SetValue(1)
+
+	def onToggleKeep(self, evt):
+		if self.assesskeep.GetValue() is True:
+			self.assessnone.SetValue(0)
+			self.assessnone.SetBackgroundColour(self.deselectcolor)
+			self.assesskeep.SetValue(1)
+			self.assesskeep.SetBackgroundColour(self.selectcolor)
+			self.assessreject.SetValue(0)
+			self.assessreject.SetBackgroundColour(self.deselectcolor)
+		else:
+			self.assesskeep.SetValue(1)
+
+	def onToggleReject(self, evt):
+		if self.assessreject.GetValue() is True:
+			self.assessnone.SetValue(0)
+			self.assessnone.SetBackgroundColour(self.deselectcolor)
+			self.assesskeep.SetValue(0)
+			self.assesskeep.SetBackgroundColour(self.deselectcolor)
+			self.assessreject.SetValue(1)
+			self.assessreject.SetBackgroundColour(self.selectcolor)
+		else:
+			self.assessreject.SetValue(1)
 
 	def onClear(self, evt):
 		self.panel.setTargets('Select Particles', [])
@@ -117,6 +191,8 @@ class manualPicker(particleLoop.ParticleLoop):
 	def particleCommitToDatabase(self, imgdata):
 		expid = int(imgdata['session'].dbid)
 		self.insertManualParams(expid)
+		if self.assess is not None:
+			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], self.assess)
 		#self.deleteOldPicks(imgdata,self.params)
 		return
 
@@ -126,7 +202,7 @@ class manualPicker(particleLoop.ParticleLoop):
 		self.params['pickrunid'] = None
 
 	def particleCreateOutputDirs(self):
-		self._createDirectory(os.path.join(self.params['rundir'],"pikfiles"),warning=False)
+		self._createDirectory(os.path.join(self.params['rundir'], "pikfiles"),warning=False)
 
 	def particleParseParams(self, args):
 		for arg in args:
@@ -145,9 +221,9 @@ class manualPicker(particleLoop.ParticleLoop):
 		if not self.params['pickrunid']:
 			if not self.params['pickrunname']:
 				return []
-			particles = apParticle.getParticlesForImageFromRunName(imgdata, self.params['pickrunname'])
-		else:
-			particles = apParticle.getParticles(imgdata, self.params['pickrunid'])
+			self.params['pickrunid'] = apParticle.getSelectionRun(imgdata, self.params['pickrunname'])
+			#particles = apParticle.getParticlesForImageFromRunName(imgdata, self.params['pickrunname'])
+		particles = apParticle.getParticles(imgdata, self.params['pickrunid'])
 		targets = self.particlesToTargets(particles)
 		return targets
 
@@ -172,7 +248,7 @@ class manualPicker(particleLoop.ParticleLoop):
 		manparamsq['lp_filt'] = self.params['lp']
 		manparamsq['hp_filt'] = self.params['hp']
 		manparamsq['bin']     = self.params['bin']
-		manparamsq['pickrun'] = self.params['pickrunid']
+		manparamsq['selectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunid'])
 		manparamsdata = self.appiondb.query(manparamsq, results=1)
 		
 		runq=appionData.ApSelectionRunData()
@@ -200,6 +276,7 @@ class manualPicker(particleLoop.ParticleLoop):
 		#reset targets
 		self.app.panel.setTargets('Select Particles', [])
 		self.targets = []
+		self.assess = None
 		#open new file
 		imgname = imgdata['filename']+'.dwn.mrc'
 		imgpath = os.path.join(self.params['rundir'],imgname)
@@ -214,6 +291,7 @@ class manualPicker(particleLoop.ParticleLoop):
 		self.app.MainLoop()
 
 		#targets are copied to self.targets by app
+		#assessment is copied to self.assess by app
 		#parse and return the targets in peaktree form
 		self.app.panel.openImageFile(None)
 		peaktree=[]

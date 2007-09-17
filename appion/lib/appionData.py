@@ -76,6 +76,7 @@ class ApManualParamsData(Data):
 			('bin', int),
 			('lp_filt', int),
 			('hp_filt', int),
+			('selectionrun', ApSelectionRunData),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApManualParamsData=ApManualParamsData

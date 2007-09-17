@@ -179,7 +179,7 @@ def getSessionName(imgname):
 	else:
 		apDisplay.printError("Image "+imgname+" not found in database\n")
 
-def getTiltAngle(img,params):
+def getTiltAngle(img, params):
 	return img['scope']['stage position']['a']*180.0/math.pi
 
 def getPixelSize(imgdict):
@@ -233,6 +233,29 @@ def getSiblingImgAssessmentStatus(imgdata):
 
 	return status
 	
+def insertImgAssessmentStatus(imgdata, runname="pyapp1", assessment=None):
+	"""
+	Insert the assessment status 
+		keep = True
+		reject = False 
+		unassessed = None
+	"""
+	if assessment is not True or assessment is not False:
+		return False
+
+	assessrun = appionData.ApAssessmentRunData()
+	assessrun['REF|leginondata|SessionData|session'] = imgdata['session']
+	assessrun['name'] = runname
+
+	assessquery = appionData.ApAssessmentData()
+	assessquery['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
+	assessquery['REF|ApAssessmentRunData|assessmentrun'] = assessrun
+	assessquery['selectionkeep'] = assessment
+
+	appiondb.insert(assessquery)
+
+	return None
+
 
 def getImgAssessmentStatus(imgdata):
 	"""
