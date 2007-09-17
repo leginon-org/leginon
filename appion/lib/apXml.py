@@ -209,7 +209,9 @@ def readTwoXmlFiles(file1,file2):
 
 
 def fillMissingInfo(xmldict):
-	xmldict.copy()
+	#xmldict.copy()
+	if xmldict is None:
+		return
 	for p in xmldict:
 		if not 'nargs' in xmldict[p]:
 			xmldict[p]['nargs'] = 1
@@ -219,7 +221,7 @@ def overWriteDict(dict1, dict2):
 	"""
 	merges dict2 into dict1 by inserting and overwriting values
 	"""
-	if len(dict2) > 0:
+	if dict2 is not None and len(dict2) > 0:
 		for p in dict2:
 			if p in dict1:
 				dict1[p].update(dict2[p])
@@ -307,6 +309,8 @@ def updateXmlDict(xmldict):
 	"""
 	converts all xml parameters into their desired type
 	"""
+	if xmldict is None:
+		return None
 	for param in xmldict.keys():
 		if('default' in xmldict[param] and xmldict[param]['default'] != None):
 			xmldict[param]['default'] = _convertParamToType(xmldict[param]['default'], xmldict[param]['type'], xmldict[param]['nargs'])
