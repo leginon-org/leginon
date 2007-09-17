@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImagePanel.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-14 19:03:13 $
+# $Date: 2007-09-17 20:52:18 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -507,7 +507,7 @@ class ImagePanel(wx.Panel):
 			self.Draw(dc)
 
 		for tool in self.tools:
-			self.drawlast = tool.OnMotion(evt, dc)
+			self.drawlast += tool.OnMotion(evt, dc)
 
 		self._onMotion(evt, dc)
 
