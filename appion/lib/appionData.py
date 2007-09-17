@@ -119,13 +119,27 @@ class ApImageTransformationData(Data):
 			('shifty', float),
 			('correlation', float),
 			('scale', float),
-			('tilt', float),
-			#('image1_rotation', float),
-			#('image2_rotation', float),
-			#('rmsd', float),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApImageTransformationData=ApImageTransformationData
+
+class ApImageTiltTransformData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('dbemdata|AcquisitionImageData|image1', int),
+			('image1_x', float),
+			('image1_y', float),
+			('image1_rotation', float),
+			('dbemdata|AcquisitionImageData|image2', int),
+			('image2_x', float),
+			('image2_y', float),
+			('image2_rotation', float),
+			('scale_factor', float),
+			('tilt_angle', float),
+			('rmsd', float),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApImageTiltTransformData=ApImageTiltTransformData
 
 ### Mask tables ###
 
