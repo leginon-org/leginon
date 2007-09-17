@@ -43,7 +43,6 @@ class ManualPickerPanel(TargetPanel.TargetImagePanel):
 
 class PickerApp(wx.App):
 	def OnInit(self):
-		self.selectcolor = wx.Color(200,200,0)
 		self.deselectcolor = wx.Color(240,240,240)
 
 		self.frame = wx.Frame(None, -1, 'Manual Particle Picker')
@@ -77,8 +76,8 @@ class PickerApp(wx.App):
 
 		self.assessnone = wx.ToggleButton(self.frame, -1, "&None")
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleNone, self.assessnone)
-		self.assessnone.SetValue(1)
-		self.assessnone.SetBackgroundColour(self.selectcolor)
+		self.assessnone.SetValue(0)
+		#self.assessnone.SetBackgroundColour(self.selectcolor)
 		self.assessnone.SetMinSize((100,40))
 		self.buttonrow.Add(self.assessnone, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
@@ -120,43 +119,44 @@ class PickerApp(wx.App):
 	def finalAssessment(self):
 		if self.assessnone.GetValue() is True:
 			return None
-		if self.assesskeep.GetValue() is True:
+		elif self.assesskeep.GetValue() is True:
 			return True
-		if self.assessreject.GetValue() is True:
+		elif self.assessreject.GetValue() is True:
 			return False
+		return None
+
+	def setAssessStatus(self):
+		if self.appionloop.assess is True:
+			self.onToggleKeep(None)
+		elif self.appionloop.assess is False:
+			self.onToggleReject(None)
+		else:
+			self.onToggleNone(None)
 
 	def onToggleNone(self, evt):
-		if self.assessnone.GetValue() is True:
-			self.assessnone.SetValue(1)
-			self.assessnone.SetBackgroundColour(self.selectcolor)
-			self.assesskeep.SetValue(0)
-			self.assesskeep.SetBackgroundColour(self.deselectcolor)
-			self.assessreject.SetValue(0)
-			self.assessreject.SetBackgroundColour(self.deselectcolor)
-		else:
-			self.assessnone.SetValue(1)
+		self.assessnone.SetValue(1)
+		self.assessnone.SetBackgroundColour(wx.Color(200,200,0))
+		self.assesskeep.SetValue(0)
+		self.assesskeep.SetBackgroundColour(self.deselectcolor)
+		self.assessreject.SetValue(0)
+		self.assessreject.SetBackgroundColour(self.deselectcolor)
 
 	def onToggleKeep(self, evt):
-		if self.assesskeep.GetValue() is True:
-			self.assessnone.SetValue(0)
-			self.assessnone.SetBackgroundColour(self.deselectcolor)
-			self.assesskeep.SetValue(1)
-			self.assesskeep.SetBackgroundColour(self.selectcolor)
-			self.assessreject.SetValue(0)
-			self.assessreject.SetBackgroundColour(self.deselectcolor)
-		else:
-			self.assesskeep.SetValue(1)
+		self.assessnone.SetValue(0)
+		self.assessnone.SetBackgroundColour(self.deselectcolor)
+		self.assesskeep.SetValue(1)
+		self.assesskeep.SetBackgroundColour(wx.Color(0,200,0))
+		self.assessreject.SetValue(0)
+		self.assessreject.SetBackgroundColour(self.deselectcolor)
+
 
 	def onToggleReject(self, evt):
-		if self.assessreject.GetValue() is True:
-			self.assessnone.SetValue(0)
-			self.assessnone.SetBackgroundColour(self.deselectcolor)
-			self.assesskeep.SetValue(0)
-			self.assesskeep.SetBackgroundColour(self.deselectcolor)
-			self.assessreject.SetValue(1)
-			self.assessreject.SetBackgroundColour(self.selectcolor)
-		else:
-			self.assessreject.SetValue(1)
+		self.assessnone.SetValue(0)
+		self.assessnone.SetBackgroundColour(self.deselectcolor)
+		self.assesskeep.SetValue(0)
+		self.assesskeep.SetBackgroundColour(self.deselectcolor)
+		self.assessreject.SetValue(1)
+		self.assessreject.SetBackgroundColour(wx.Color(200,0,0))
 
 	def onClear(self, evt):
 		self.panel.setTargets('Select Particles', [])
@@ -276,7 +276,11 @@ class manualPicker(particleLoop.ParticleLoop):
 		#reset targets
 		self.app.panel.setTargets('Select Particles', [])
 		self.targets = []
-		self.assess = None
+
+		#set the assessment status
+		self.assess = apDatabase.getImgAssessmentStatus(imgdata)
+		self.app.setAssessStatus()
+
 		#open new file
 		imgname = imgdata['filename']+'.dwn.mrc'
 		imgpath = os.path.join(self.params['rundir'],imgname)
