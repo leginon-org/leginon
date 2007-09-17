@@ -215,7 +215,9 @@ class manualPicker(particleLoop.ParticleLoop):
 			else:
 				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
+	###################################################
 	##### END PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
+	###################################################
 
 	def getParticlePicks(self, imgdata):
 		if not self.params['pickrunid']:
@@ -248,7 +250,8 @@ class manualPicker(particleLoop.ParticleLoop):
 		manparamsq['lp_filt'] = self.params['lp']
 		manparamsq['hp_filt'] = self.params['hp']
 		manparamsq['bin']     = self.params['bin']
-		manparamsq['selectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunid'])
+		if self.params['pickrunid'] is not None:
+			manparamsq['selectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunid'])
 		manparamsdata = self.appiondb.query(manparamsq, results=1)
 		
 		runq=appionData.ApSelectionRunData()
