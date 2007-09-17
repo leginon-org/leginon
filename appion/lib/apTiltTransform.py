@@ -52,6 +52,7 @@ def willsq(a1, a2, \
 	fit['scale']  = x3[3]
 	fit['shiftx'] = x3[4]
 	fit['shifty'] = x3[5]
+	fit['point1'], fit['point2'] = getPointsFromArrays(a1, a2, fit['shiftx'], fit['shifty'])
 	fit['prob'] = math.exp(-1.0*math.sqrt(abs(fit['rmsd'])))**2
 	return fit
 
@@ -63,7 +64,8 @@ def _diffParticles(x1, initx, xscale, a1, a2):
 	scale  = x2[3]
 	shiftx = x2[4]
 	shifty = x2[5]
-	a2b = a2Toa1(a1,a2,theta,gamma,phi,scale,shiftx,shifty)
+	point1, point2 = getPointsFromArrays(a1, a2, shiftx, shifty)
+	a2b = a2Toa1(a2, theta, gamma, phi, scale, point1, point2)
 	maxpix = float(len(a2b))
 	diffmat = (a1 - a2b)
 	xrmsd = ndimage.mean(diffmat[:,0]**2)
@@ -72,11 +74,32 @@ def _diffParticles(x1, initx, xscale, a1, a2):
 	#print (x2*57.29).round(decimals=3),round(rmsd,6)
 	return rmsd
 
-def a1Toa2(a1,a2,theta,gamma,phi,scale, shiftx, shifty):
-	a1b = a2Toa1(a2,a1,-1.0*theta,-1.0*phi,-1.0*gamma, 1.0/scale, -1.0*shiftx,-1.0*shifty)
+def getPointsFromArrays(a1, a2, shiftx, shifty):
+	point1 = numpy.asarray(a1[0,:], dtype=numpy.float32)
+	point2 = numpy.asarray(a2[0,:], dtype=numpy.float32) + numpy.array((shiftx,shifty), dtype=numpy.float32)
+	return (point1, point2)
+
+def a1Toa2(a1, theta, gamma, phi, scale, point1, point2):
+	"""
+	flips the values and runs a2Toa1
+	"""
+
+	a1b = a2Toa1(a1, -1.0*theta, -1.0*phi, -1.0*gamma, 1.0/scale, point2, point1)
 	return a1b
 
-def a2Toa1(a1,a2,theta,gamma,phi,scale,shiftx,shifty):
+def a2Toa1(a2, theta, gamma, phi, scale, point1, point2):
+	"""
+	transforms second list of points one into same affine space as first list
+
+	a1     -> first numpy list
+	a2     -> second numpy list
+	theta  -> tilt angle
+	gamma  -> image 1 rotation
+	phi    -> image 2 rotation
+	point1 -> numpy coordinates for a particle in image 1
+	point2 -> numpy coordinates for a particle in image 2
+	"""
+
 	#gamma rotation
 	cosgamma = math.cos(gamma)
 	singamma = math.sin(gamma)
@@ -97,14 +120,10 @@ def a2Toa1(a1,a2,theta,gamma,phi,scale,shiftx,shifty):
 		trans = numpy.dot(numpy.dot(numpy.dot(scalemat,phimat),thetamat),gammamat)
 	else:
 		trans = numpy.dot(numpy.dot(numpy.dot(phimat,thetamat),gammamat),scalemat)
-	#origins
-	a10 = numpy.asarray(a1[0,:], dtype=numpy.float32)
-	a20 = numpy.asarray(a2[0,:], dtype=numpy.float32)
 	#convert a2 -> a1
 	a2b = numpy.zeros(a2.shape, dtype=numpy.float32)
-	shift = numpy.array((shiftx,shifty), dtype=numpy.float32)
 	for i in range((a2.shape)[0]):
-		a2c = numpy.dot(trans,a2[i,:]-a20-shift)+a10
+		a2c = numpy.dot(trans, a2[i,:] - point2) + point1
 		a2b[i,0] = a2c[0]
 		a2b[i,1] = a2c[1]
 	return a2b

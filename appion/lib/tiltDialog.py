@@ -58,6 +58,8 @@ class FitThetaDialog(wx.Dialog):
 		targets2 = self.parent.panel2.getTargets('Picked')
 		a2 = self.parent.targetsToArray(targets2)
 		self.fittheta = radermacher.tiltang(a1, a2, arealim)
+		self.fittheta['point1'], self.fittheta['point2'] = \
+			apTiltTransform.getPointsFromArrays(a1, a2, self.parent.data['shiftx'], self.parent.data['shifty'])
 		pprint.pprint(self.fittheta)
 		if 'wtheta' in self.fittheta:
 			self.theta = self.fittheta['wtheta']
@@ -69,6 +71,9 @@ class FitThetaDialog(wx.Dialog):
 		self.Close()
 		self.parent.data['theta'] = self.theta
 		self.parent.data['tiltanglefitdata'] = self.fittheta
+		self.parent.data['point1'] = self.fittheta['point1']
+		self.parent.data['point2'] = self.fittheta['point2']
+
 		self.parent.onUpdate(evt)
 
 ##
@@ -267,6 +272,10 @@ class FitAllDialog(wx.Dialog):
 		self.parent.data['scale']  = self.scalevalue.GetValue()
 		self.parent.data['shiftx'] = self.shiftxvalue.GetValue()
 		self.parent.data['shifty'] = self.shiftyvalue.GetValue()
+		self.parent.data['rmsd']   = self.lsfit['rmsd']
+		self.parent.data['point1'] = self.lsfit['point1']
+		self.parent.data['point2'] = self.lsfit['point2']
+
 		self.parent.onUpdate(evt)
 
 

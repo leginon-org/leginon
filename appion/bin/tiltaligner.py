@@ -18,10 +18,14 @@ import apTiltPair
 ##
 ##################################
 
-class tiltAligner(appionLoop.AppionLoop):
+class tiltAligner(particleLoop.ParticleLoop):
 	#def __init__(self):
 	#	raise NotImplementedError()
 	
+	#####################################################
+	##### START PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
+	#####################################################
+
 	def setProcessingDirName(self):
 		self.processdirname = "tiltalign"
 
@@ -43,55 +47,61 @@ class tiltAligner(appionLoop.AppionLoop):
 		#self.insertTiltAlignParams(expid)
 		return
 
-	def specialParseParams(self, args):
+	def particleDefaultParams(self):
+		"""
+		put in any additional default parameters
+		"""
+		self.params['usepicks'] = False
+
+	def particleParseParams(self, args):
 		"""
 		put in any additional parameters to parse
 		"""
 		for arg in args:
 			elements = arg.split('=')
 			elements[0] = elements[0].lower()
-			if (elements[0]=='lp'):
-				self.params['lp']= float(elements[1])
-			elif (elements[0]=='hp'):
-				self.params['hp']= float(elements[1])
-			elif (elements[0]=='invert'):
-				self.params['invert']=True
-			elif (elements[0]=='bin'):
-				self.params['bin']=int(elements[1])
-			elif (elements[0]=='median'):
-				self.params['median']=int(elements[1])
-			else:
-				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
+			if arg == 'usepicks':
+				self.params['usepicks'] = True
+			apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
-	def specialDefaultParams(self):
-		"""
-		put in any additional default parameters
-		"""
-		self.params['lp']=0.0
-		self.params['hp']=600.0
-		self.params['invert']=False
-		self.params['median']=0
-		self.params['bin']=4
-		return
-
-	def specialParamConflicts(self):
+	def particleParamConflicts(self):
 		"""
 		put in any additional conflicting parameters
 		"""
 		return
 
-	def specialCreateOutputDirs(self):
+	def particleCreateOutputDirs(self):
 		"""
 		put in any additional directories to create
 		"""
 		return	
 
-
 	def processImage(self, imgdata):
-		tiltdata = apTiltPair.getTiltPair(imgdata)
-		self.runTiltAligner(imgdata, tiltdata)
+		# run it
+		self.tiltdata = apTiltPair.getTiltPair(imgdata)
+		self.runTiltAligner(imgdata, self.tiltdata)
 
-	##### END PRE-DEFINED APPION LOOP FUNCTIONS #####
+		#parse the data
+		self.parseTiltParams()
+		
+
+	def commitToDatabase(self, imgdata):
+		"""
+		Over-writes the particleLoop commit and uses the appionLoop commit
+		"""
+		expid = int(imgdata['session'].dbid)
+		if self.params['usepicks'] is True:
+			apParticle.insertParticlePeaks(self.peaktree, imgdata, expid, self.params)
+		apTiltPair.insertTiltParams(imgdata, self.tiltdata, self.tiltparams)
+
+	###################################################
+	##### END PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
+	###################################################
+
+	def parseTiltParams(self):
+		theta = self.tiltparams['theta']
+		gamma = self.tiltparams['gamma']
+		phi   = self.tiltparams['phi']
 
 	def processAndSaveAllImages(self):
 		print "Pre-processing images before picking"
@@ -157,7 +167,7 @@ class tiltAligner(appionLoop.AppionLoop):
 		self.app.panel1.openImageFile(None)
 		self.app.panel2.openImageFile(None)
 		#tilt data are copied to self.tiltparams by app
-		#parse and return the targets in peaktree form
+
 		if self.tiltparams:
 			print self.tiltparams
 

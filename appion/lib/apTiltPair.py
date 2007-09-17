@@ -66,7 +66,7 @@ def getTiltPair(imgdata):
 				break
 	return tiltpair
 
-def tiltPickerToDbNames(**kwargs):
+def tiltPickerToDbNames(tiltparams):
 	#('dbemdata|AcquisitionImageData|image1', int),
 	#('dbemdata|AcquisitionImageData|image2', int),
 	#('shiftx', float),
@@ -78,41 +78,47 @@ def tiltPickerToDbNames(**kwargs):
 	#('image2_rotation', float),
 	#('rmsd', float),
 	newdict = {}
-	if 'theta' in kwargs:
-		newdict['tilt'] = kwargs['theta']
-	if 'gamma' in kwargs:
-		newdict['image1_rotation'] = kwargs['gamma']
-	if 'phi' in kwargs:
-		newdict['image2_rotation'] = kwargs['phi']
-	if 'scale' in kwargs:
-		newdict['scale'] = kwargs['scale']
-	if 'shiftx' in kwargs:
-		newdict['shiftx'] = kwargs['shiftx']
-	if 'shifty' in kwargs:
-		newdict['shifty'] = kwargs['shifty']
+	if 'theta' in tiltparams:
+		newdict['tilt_angle'] = tiltparams['theta']
+	if 'gamma' in tiltparams:
+		newdict['image1_rotation'] = tiltparams['gamma']
+	if 'phi' in tiltparams:
+		newdict['image2_rotation'] = tiltparams['phi']
+	if 'rmsd' in tiltparams:
+		newdict['rmsd'] = tiltparams['rmsd']
+	if 'scale' in tiltparams:
+		newdict['scale_factor'] = tiltparams['scale']
+	if 'point1' in tiltparams:
+		newdict['image1_x'] = tiltparams['point1'][0]
+		newdict['image1_y'] = tiltparams['point1'][1]
+	if 'point2' in tiltparams:
+		newdict['image2_x'] = tiltparams['point2'][0]
+		newdict['image2_y'] = tiltparams['point2'][1]
 
-
-
-def insertTransform(imgdata1, imgdata2, **kwargs):
+def insertTiltParams(imgdata1, imgdata2, tiltparams)
 	#First we need to sort imgdata
 	#'07aug30b_a_00013gr_00010sq_v01_00002sq_v01_00016en_00'
 	#'07aug30b_a_00013gr_00010sq_v01_00002sq_01_00016en_01'
 	#last two digits confer order, but then the transform changes...
 
+	#The order is specified by 1,2; so don't change it let makestack figure it out
+
 	for imgdata in (imgdata1, imgdata2):
 		for index in ("1","2"):
-			transq = appionData.ApImageTransformationData()
+			transq = appionData.ApImageTiltTransformData()
 			transq["dbemdata|AcquisitionImageData|image"+index] = imgdata.dbid
 			transdata = appiondb.query(transq)
 			if transdata:
 				apDisplay.printWarning("Transform values already in database for "+imgdata['filename'])
 				return False
-	transq['dbemdata|AcquisitionImageData|image1'] = imgdata1.dbid
-	transq['dbemdata|AcquisitionImageData|image2'] = imgdata2.dbid
-	transq = appionData.ApImageTransformationData()
-	for i in kwargs:
+
+	transq = appionData.ApImageTiltTransformData()
+	transq['dbemdata|AcquisitionImageData|image1'] = imgdata1
+	transq['dbemdata|AcquisitionImageData|image2'] = imgdata2
+	dbdict = tiltPickerToDbNames(tiltparams)
+	transq.update(dbdict)
+	for i in transq:
 		print i
-		transq[i]=kwargs[i]
 	apDisplay.printMsg("Inserting shift beteween "+apDisplay.short(imgdata1['filename'])+\
 		" and "+apDisplay.short(imgdata2['filename'])+" into database")
 	#appiondb.insert(transq)

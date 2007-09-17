@@ -206,10 +206,10 @@ class PickerApp(wx.App):
 		gammarad = self.data['gamma']*math.pi/180.0
 		phirad = self.data['phi']*math.pi/180.0
 		#CALCULATE TRANSFORM LIMITS
-		a1b = apTiltTransform.a1Toa2(a1,a2,thetarad,gammarad,phirad,
-			self.data['scale'],self.data['shiftx'],self.data['shifty'])
-		a2b = apTiltTransform.a2Toa1(a1,a2,thetarad,gammarad,phirad,
-			self.data['scale'],self.data['shiftx'],self.data['shifty'])
+		a1b = apTiltTransform.a1Toa2(a1, thetarad, gammarad, phirad,
+			self.data['scale'], self.data['point1'], self.data['point2'])
+		a2b = apTiltTransform.a2Toa1(a2, thetarad, gammarad, phirad,
+			self.data['scale'], self.data['point1'], self.data['point2'])
 		#CONVERT NUMPY TO LIST
 		a1blist = []
 		a2blist = []
@@ -269,8 +269,13 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return False
 
-		#self.panel1.setTargets('Numbered', targets1)
-		#self.panel2.setTargets('Numbered', targets2)
+		self.panel2.setTargets('Aligned', self.getAlignedArray1() )
+		self.panel1.setTargets('Aligned', self.getAlignedArray2() )
+
+	#---------------------------------------
+	def getAlignedArray1(self):
+		targets1 = self.panel1.getTargets('Picked')
+		targets2 = self.panel2.getTargets('Picked')
 		a1 = self.targetsToArray(targets1)
 		a2 = self.targetsToArray(targets2)
 
@@ -278,15 +283,26 @@ class PickerApp(wx.App):
 		gammarad = self.data['gamma']*math.pi/180.0
 		phirad = self.data['phi']*math.pi/180.0
 
-		#align first
-		a1b = apTiltTransform.a1Toa2(a1,a2,thetarad,gammarad,phirad,
-			self.data['scale'],self.data['shiftx'],self.data['shifty'])
-		self.panel2.setTargets('Aligned', a1b)
+		a1b = apTiltTransform.a1Toa2(a1, thetarad, gammarad, phirad,
+			self.data['scale'], self.data['point1'], self.data['point2'])
+
+		return a1b
+
+	#---------------------------------------
+	def getAlignedArray2(self):
+		targets1 = self.panel1.getTargets('Picked')
+		targets2 = self.panel2.getTargets('Picked')
+		a1 = self.targetsToArray(targets1)
+		a2 = self.targetsToArray(targets2)
+
+		thetarad = self.data['theta']*math.pi/180.0
+		gammarad = self.data['gamma']*math.pi/180.0
+		phirad = self.data['phi']*math.pi/180.0
 		
-		#align second
-		a2b = apTiltTransform.a2Toa1(a1,a2,thetarad,gammarad,phirad,
-			self.data['scale'],self.data['shiftx'],self.data['shifty'])
-		self.panel1.setTargets('Aligned', a2b)
+		a2b = apTiltTransform.a2Toa1(a2, thetarad, gammarad, phirad,
+			self.data['scale'], self.data['point1'], self.data['point2'])
+
+		return a2b
 
 	#---------------------------------------
 	def targetsToArray(self, targets):
@@ -326,6 +342,7 @@ class PickerApp(wx.App):
 		self.fitall_dialog.shiftxvalue.SetValue(round(self.data['shiftx'],4))
 		self.fitall_dialog.shiftyvalue.SetValue(round(self.data['shifty'],4))
 		self.fitall_dialog.Show()
+		#values are then modified, if the user selected apply in tiltDialog
 
 	#---------------------------------------
 	def onClearPicks(self, evt):
@@ -344,6 +361,8 @@ class PickerApp(wx.App):
 		self.data['phi'] = 0.0
 		self.data['shiftx'] = 0.0
 		self.data['shifty'] = 0.0
+		self.data['point1'] = None
+		self.data['point2'] = None
 		self.data['scale'] = 1.0
 
 	#---------------------------------------
@@ -614,13 +633,13 @@ class PickerApp(wx.App):
 			targets1 = self.panel1.getTargets('Picked')
 			targets2 = self.panel2.getTargets('Picked')
 			if len(targets1) > 0 and len(targets2) > 0:
-				gshiftx = targets1[0].x - targets2[0].x + self.data['shiftx']
-				gshifty = targets1[0].y - targets2[0].y + self.data['shifty']
 				#copy over the data
-				for i in 'theta','gamma','phi','scale':
+				for i in 'theta','gamma','phi','scale', 'shiftx', 'shifty':
 					self.appionloop.tiltparams[i] = self.data[i]
-				self.appionloop.tiltparams['shiftx'] = gshiftx
-				self.appionloop.tiltparams['shifty'] = gshifty
+				self.appionloop.tiltparams['x1'] = targets1[0].x
+				self.appionloop.tiltparams['y1'] = targets1[0].y
+				self.appionloop.tiltparams['x2'] = targets2[0].x
+				self.appionloop.tiltparams['y2'] = targets2[0].y
 
 	#---------------------------------------
 	def openLeftImage(self,filename):
