@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImagePanelTools.py,v $
-# $Revision: 1.8 $
+# $Revision: 1.9 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-18 17:15:35 $
+# $Date: 2007-09-18 21:05:23 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -483,14 +483,14 @@ class ZoomTool(ImageTool):
 		tooltip = 'Toggle Zoom Tool'
 		cursor = wx.StockCursor(wx.CURSOR_MAGNIFIER)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
-		self.zoomlevels = [1, 1.5, 2, 3, 4, 6, 8, 12, 16, 32, 128,]
-		self.zoomlabels = ['1x', '2/3x', '1/2x', '1/3x', '1/4x', '1/6x', '1/8x',
+		self.zoomlevels = [4, 2, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 32, 128,]
+		self.zoomlabels = ['4x', '2x', '1x', '2/3x', '1/2x', '1/3x', '1/4x', '1/6x', '1/8x',
 			'1/12x', '1/16x', '1/32x', '1/128x']
 		# wx.Choice seems a bit slow, at least on windows
 		self.zoomchoice = wx.Choice(self.imagepanel, -1,
 			choices=self.zoomlabels)
 			#map(self.zoomlabels, self.zoomlevels))
-		self.zoom(self.zoomlevels[0], (0, 0))
+		self.zoom(self.zoomlevels[2], (0, 0))
 		self.zoomchoice.SetSelection(self.zoomlevel)
 		self.sizer.Add(self.zoomchoice, 0, wx.ALIGN_CENTER|wx.ALL, 3)
 
