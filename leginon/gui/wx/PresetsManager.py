@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.79 $
+# $Revision: 1.80 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-18 17:15:25 $
-# $Author: acheng $
+# $Date: 2007-09-18 17:19:58 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -566,7 +566,7 @@ class DoseDialog(gui.wx.Dialog.Dialog):
 	def onInitialize(self):
 		gui.wx.Dialog.Dialog.onInitialize(self)
 
-		self.image = gui.wx.ImageViewer.ImagePanel(self, -1,imagesize=(512, 512))
+		self.image = gui.wx.ImagePanel.ImagePanel(self, -1,imagesize=(512, 512))
 
 		self.doselabel = wx.StaticText(self, -1, '')
 
