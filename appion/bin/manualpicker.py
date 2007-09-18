@@ -251,7 +251,7 @@ class manualPicker(particleLoop.ParticleLoop):
 		manparamsq['hp_filt'] = self.params['hp']
 		manparamsq['bin']     = self.params['bin']
 		if self.params['pickrunid'] is not None:
-			manparamsq['selectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunid'])
+			manparamsq['oldselectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunid'])
 		manparamsdata = self.appiondb.query(manparamsq, results=1)
 		
 		runq=appionData.ApSelectionRunData()
