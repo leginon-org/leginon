@@ -86,8 +86,19 @@ class TargetHandler(object):
 			keys = [dequeuedlist.special_getitem('list', dereference=False).dbid for dequeuedlist in dequeuedlists]
 			done = ordereddict.OrderedDict(zip(keys,keys))
 			for id in done:
-				del active[id]
+				try:
+					del active[id]
+				except:
+					self.logger.warning('done %s list not in target list' % (id,))
 			return active.values()
+	
+	def inDequeued(self,targetlist):
+		dequeuedquery = leginondata.DequeuedImageTargetListData(list=targetlist)
+		dequeuedlists = self.research(datainstance=dequeuedquery)
+		if len(dequeuedlists) > 0:
+			return True
+		else:
+			return False
 
 	def queueProcessor(self):
 		'''
@@ -106,7 +117,7 @@ class TargetHandler(object):
 			# process all target lists in the queue
 			for targetlist in active:
 				state = self.player.wait()
-				if state == 'stopqueue':
+				if state == 'stopqueue' or self.inDequeued(targetlist):
 					self.logger.info('Queue aborted, skipping target list')
 				else:
 					self.revertTargetListZ(targetlist)
