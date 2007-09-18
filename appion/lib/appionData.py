@@ -34,6 +34,7 @@ class ApSelectionRunData(Data):
 			('params', ApSelectionParamsData),
 			('dogparams', ApDogParamsData),
 			('manparams', ApManualParamsData),
+			('tiltparams', ApTiltAlignParamsData),
 			('dbemdata|SessionData|session', int),
 			('name', str), 
 		)
@@ -76,10 +77,25 @@ class ApManualParamsData(Data):
 			('bin', int),
 			('lp_filt', int),
 			('hp_filt', int),
-			('selectionrun', ApSelectionRunData),
+			('invert', int),
+			('oldselectionrun', ApSelectionRunData),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApManualParamsData=ApManualParamsData
+
+class ApTiltAlignParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('diam', int),
+			('bin', int),
+			('invert', int),
+			('lp_filt', int),
+			('hp_filt', int),
+			('output_type', int),
+			('oldselectionrun', ApSelectionRunData),		
+		)
+	typemap = classmethod(typemap)
+leginondata.ApTiltAlignParamsData=ApTiltAlignParamsData
 
 ### Template tables ###
 
