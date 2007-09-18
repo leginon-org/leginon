@@ -237,12 +237,19 @@ class manualPicker(particleLoop.ParticleLoop):
 
 	def processAndSaveAllImages(self):
 		print "Pre-processing images before picking"
+		print self.params
 		for imgdata in self.imgtree:
 			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
-			if os.path.isfile(imgpath):
-				print "already processed: ",apDisplay.short(imgdata['filename'])
-			else:
+			if self.params['continue']==False:
+				if os.path.isfile(imgpath):
+					os.remove(imgpath)
 				apFindEM.processAndSaveImage(imgdata, params=self.params)
+				
+			else:
+				if os.path.isfile(imgpath):
+					print "already processed: ",apDisplay.short(imgdata['filename'])
+				else:
+					apFindEM.processAndSaveImage(imgdata, params=self.params)
 
 	def insertManualParams(self, expid):
 		manparamsq=appionData.ApManualParamsData()
