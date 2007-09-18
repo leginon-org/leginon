@@ -60,7 +60,7 @@ class FitThetaDialog(wx.Dialog):
 		self.fittheta = radermacher.tiltang(a1, a2, arealim)
 		self.fittheta['point1'], self.fittheta['point2'] = \
 			apTiltTransform.getPointsFromArrays(a1, a2, self.parent.data['shiftx'], self.parent.data['shifty'])
-		pprint.pprint(self.fittheta)
+		#pprint.pprint(self.fittheta)
 		if 'wtheta' in self.fittheta:
 			self.theta = self.fittheta['wtheta']
 			self.thetadev = self.fittheta['wthetadev']
@@ -251,9 +251,9 @@ class FitAllDialog(wx.Dialog):
 			not self.shifttog.GetValue(),
 			not self.shifttog.GetValue(),
 			), dtype=numpy.float32)
-		print xscale
+		#print xscale
 		self.lsfit = apTiltTransform.willsq(a1, a2, theta, gamma, phi, scale, shiftx, shifty, xscale)
-		pprint.pprint(self.lsfit)
+		#pprint.pprint(self.lsfit)
 		self.thetavalue.SetValue(round(self.lsfit['theta'],5))
 		self.gammavalue.SetValue(round(self.lsfit['gamma'],5))
 		self.phivalue.SetValue(round(self.lsfit['phi'],5))
