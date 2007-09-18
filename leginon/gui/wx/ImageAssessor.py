@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageAssessor.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:05 $
-# $Author: vossman $
+# $Date: 2007-09-18 17:15:25 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -59,6 +59,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 		self.addImagePanel()
 
+		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(0)
 		self.SetSizer(self.szmain)
 		self.SetAutoLayout(True)

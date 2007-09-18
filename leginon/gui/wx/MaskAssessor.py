@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MaskAssessor.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:06 $
-# $Author: vossman $
+# $Date: 2007-09-18 17:15:25 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -59,10 +59,12 @@ class Panel(gui.wx.ImageAssessor.Panel):
 													'send_queue_out',
 													shortHelpString='Keep All')
 
-		self.toolbar.Realize()
 
 		self.addImagePanel()
 
+		self.toolbar.Realize()
+
+		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(0)
 		self.SetSizer(self.szmain)
 		self.SetAutoLayout(True)
