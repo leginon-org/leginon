@@ -55,7 +55,7 @@ class TiltTargetPanel(TargetPanel.TargetImagePanel):
 
 #---------------------------------------
 class PickerApp(wx.App):
-	def OnInit(self):
+	def OnInit(self, mode='default'):
 		self.data = {}
 		self.onResetParams(None)
 		self.data['outfile'] = ""
@@ -80,9 +80,6 @@ class PickerApp(wx.App):
 		self.panel1.addTargetTool('Aligned', color=wx.Color(32, 128, 215), shape='o')
 		self.panel1.setTargets('Aligned', [])
 		self.panel1.selectiontool.setDisplayed('Aligned', True)
-		for tool in self.panel1.tools:
-			if isinstance(tool, ImagePanelTools.ValueTool):
-				tool.button.SetToggle(0)
 		#self.panel1.SetMinSize((256,256))
 		#self.panel1.SetBackgroundColour("sky blue")
 
@@ -106,51 +103,30 @@ class PickerApp(wx.App):
 		self.panel1.setOtherPanel(self.panel2)
 		self.panel2.setOtherPanel(self.panel1)
 
-		self.bsizer = wx.FlexGridSizer(1,12)
+		self.buttonrow = wx.FlexGridSizer(1,12)
 
 		self.theta_dialog = tiltDialog.FitThetaDialog(self)
 		self.fittheta = wx.Button(self.frame, -1, 'Find &Theta')
 		self.frame.Bind(wx.EVT_BUTTON, self.onFitTheta, self.fittheta)
-		self.bsizer.Add(self.fittheta, 0, wx.ALL, 1)
+		self.buttonrow.Add(self.fittheta, 0, wx.ALL, 1)
 
 		self.fitall_dialog = tiltDialog.FitAllDialog(self)
 		self.fitall = wx.Button(self.frame, -1, '&Optimize Angles')
 		self.frame.Bind(wx.EVT_BUTTON, self.onFitAll, self.fitall)
-		self.bsizer.Add(self.fitall, 0, wx.ALL, 1)
+		self.buttonrow.Add(self.fitall, 0, wx.ALL, 1)
 
 		self.update = wx.Button(self.frame, wx.ID_APPLY, '&Apply')
 		self.frame.Bind(wx.EVT_BUTTON, self.onUpdate, self.update)
-		self.bsizer.Add(self.update, 0, wx.ALL, 1)
+		self.buttonrow.Add(self.update, 0, wx.ALL, 1)
 
 		self.maskregion = wx.Button(self.frame, -1, '&Mask Region')
 		self.frame.Bind(wx.EVT_BUTTON, self.onMaskRegion, self.maskregion)
-		self.bsizer.Add(self.maskregion, 0, wx.ALL, 1)
+		self.buttonrow.Add(self.maskregion, 0, wx.ALL, 1)
 
-		self.bsizer.Add((100,10), 0, wx.ALL, 1)
-
-		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear')
-		self.frame.Bind(wx.EVT_BUTTON, self.onClearPicks, self.clear)
-		self.bsizer.Add(self.clear, 0, wx.ALL, 1)
-
-		self.reset = wx.Button(self.frame, wx.ID_RESET, '&Reset')
-		self.frame.Bind(wx.EVT_BUTTON, self.onResetParams, self.reset)
-		self.bsizer.Add(self.reset, 0, wx.ALL, 1)
-
-		self.load = wx.Button(self.frame, wx.ID_OPEN, '&Open')
-		self.frame.Bind(wx.EVT_BUTTON, self.onFileOpen, self.load)
-		self.bsizer.Add(self.load, 0, wx.ALL, 1)
-
-		self.save = wx.Button(self.frame, wx.ID_SAVE, '&Save')
-		self.frame.Bind(wx.EVT_BUTTON, self.onFileSave, self.save)
-		self.bsizer.Add(self.save, 0, wx.ALL, 1)
-
-		self.saveas = wx.Button(self.frame, wx.ID_SAVEAS, 'Save &As...')
-		self.frame.Bind(wx.EVT_BUTTON, self.onFileSaveAs, self.saveas)
-		self.bsizer.Add(self.saveas, 0, wx.ALL, 1)
-
-		self.quit = wx.Button(self.frame, wx.ID_EXIT, '&Quit')
-		self.frame.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
-		self.bsizer.Add(self.quit, 0, wx.ALL, 1)
+		if mode == 'default':
+			self.createMenuButtons()
+		else:
+			self.createLoopButtons()
 
 		self.sizer = wx.GridBagSizer(2,2)
 
@@ -160,7 +136,7 @@ class PickerApp(wx.App):
 		self.sizer.Add(splitter, (0,0), (1,2), wx.EXPAND|wx.ALL, 3)
 		#self.sizer.Add(self.panel1, (0,0), (1,1), wx.EXPAND|wx.ALL, 3)
 		#self.sizer.Add(self.panel2, (0,1), (1,1), wx.EXPAND|wx.ALL, 3)
-		self.sizer.Add(self.bsizer, (1,0), (1,2), wx.EXPAND|wx.ALL|wx.CENTER, 3)
+		self.sizer.Add(self.buttonrow, (1,0), (1,2), wx.EXPAND|wx.ALL|wx.CENTER, 3)
 		self.sizer.AddGrowableRow(0)
 		self.sizer.AddGrowableCol(0)
 		self.sizer.AddGrowableCol(1)
@@ -169,11 +145,122 @@ class PickerApp(wx.App):
 		self.statbar.SetStatusWidths([-1, 65, 150])
 		self.statbar.PushStatusText("Ready", 0)
 
+		self.createMenuBar()
+
 		self.frame.SetSizer(self.sizer)
 		self.frame.SetMinSize((768,384))
 		self.SetTopWindow(self.frame)
 		self.frame.Show(True)
 		return True
+
+	#---------------------------------------
+	def createMenuButtons(self):
+		self.buttonrow.Add((100,10), 0, wx.ALL, 1)
+
+		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear')
+		self.frame.Bind(wx.EVT_BUTTON, self.onClearPicks, self.clear)
+		self.buttonrow.Add(self.clear, 0, wx.ALL, 1)
+
+		self.reset = wx.Button(self.frame, wx.ID_RESET, '&Reset')
+		self.frame.Bind(wx.EVT_BUTTON, self.onResetParams, self.reset)
+		self.buttonrow.Add(self.reset, 0, wx.ALL, 1)
+
+		self.load = wx.Button(self.frame, wx.ID_OPEN, '&Open')
+		self.frame.Bind(wx.EVT_BUTTON, self.onFileOpen, self.load)
+		self.buttonrow.Add(self.load, 0, wx.ALL, 1)
+
+		self.save = wx.Button(self.frame, wx.ID_SAVE, '&Save')
+		self.frame.Bind(wx.EVT_BUTTON, self.onFileSave, self.save)
+		self.buttonrow.Add(self.save, 0, wx.ALL, 1)
+
+		self.saveas = wx.Button(self.frame, wx.ID_SAVEAS, 'Save &As...')
+		self.frame.Bind(wx.EVT_BUTTON, self.onFileSaveAs, self.saveas)
+		self.buttonrow.Add(self.saveas, 0, wx.ALL, 1)
+
+		self.quit = wx.Button(self.frame, wx.ID_EXIT, '&Quit')
+		self.frame.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
+		self.buttonrow.Add(self.quit, 0, wx.ALL, 1)
+
+		return
+
+	#---------------------------------------
+	def createLoopButtons(self):
+		self.buttonrow.Add((100,10), 0, wx.ALL, 1)
+
+		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear')
+		self.frame.Bind(wx.EVT_BUTTON, self.onClearPicks, self.clear)
+		self.buttonrow.Add(self.clear, 0, wx.ALL, 1)
+
+		self.reset = wx.Button(self.frame, wx.ID_RESET, '&Reset')
+		self.frame.Bind(wx.EVT_BUTTON, self.onResetParams, self.reset)
+		self.buttonrow.Add(self.reset, 0, wx.ALL, 1)
+
+		self.quit = wx.Button(self.frame, wx.ID_FORWARD, '&Forward')
+		self.frame.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
+		self.buttonrow.Add(self.quit, 0, wx.ALL, 1)
+
+		return
+
+	#---------------------------------------
+	def menuData(self):
+		return [
+			("&File", (
+				( "&Open", "Open picked particles from file", self.onFileOpen, wx.ID_OPEN ),
+				( "&Save", "Save picked particles to file", self.onFileSave, wx.ID_SAVE ),
+				( "Save &As...", "Save picked particles to new file", self.onFileSaveAs, wx.ID_SAVEAS ),
+				( "Save file type", (
+					( "&Text", "Readable text file", self.onSetFileType, -1, wx.ITEM_RADIO),
+					( "&XML", "XML file", self.onSetFileType, -1, wx.ITEM_RADIO),
+					( "&Spider", "Spider format file", self.onSetFileType, -1, wx.ITEM_RADIO),
+					( "&Pickle", "Python pickle file", self.onSetFileType, -1, wx.ITEM_RADIO),
+				)),
+				( 0, 0, 0),
+				( "&Quit", "Exit the program / advance to next image", self.onQuit, wx.ID_EXIT ),
+			)),
+			("&Edit", (
+				( "&Clear", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
+				( "&Reset", "Reset parameters", self.onResetParams, wx.ID_RESET ),		
+			)),
+			("&Refine", (
+				( "Find &Theta", "Calculate theta from picked particles", self.onFitTheta ),
+				( "&Optimize Angles", "Optimize angles with least squares", self.onFitAll ),
+				( "&Apply", "Apply picks", self.onUpdate, wx.ID_APPLY ),
+				( "&Mask Overlapping Region", "Mask overlapping region", self.onMaskRegion ),
+			)),
+		]
+
+	#---------------------------------------
+	def createMenuBar(self):
+		self.menubar = wx.MenuBar()
+		for eachMenuData in self.menuData():
+			menuLabel = eachMenuData[0]
+			menuItems = eachMenuData[1]
+			self.menubar.Append(self.createMenu(menuItems), menuLabel)
+		self.frame.SetMenuBar(self.menubar)
+
+	#---------------------------------------
+	def createMenu(self, menudata):
+		menu = wx.Menu()
+		for eachItem in menudata:
+			if len(eachItem) == 2:
+				label = eachItem[0]
+				subMenu = self.createMenu(eachItem[1])
+				menu.AppendMenu(wx.NewId(), label, subMenu)
+			else:
+				self.createMenuItem(menu, *eachItem)
+		return menu
+
+	#---------------------------------------
+	def createMenuItem(self, menu, label, status, handler, wid=-1, kind=wx.ITEM_NORMAL):
+		if not label:
+			menu.AppendSeparator()
+			return
+		menuItem = menu.Append(wid, label, status, kind)
+		self.Bind(wx.EVT_MENU, handler, menuItem)
+
+	#---------------------------------------
+	def onSetFileType(self, evt):
+		print dir(evt)
 
 	#---------------------------------------
 	def onMaskRegion(self, evt):
@@ -279,6 +366,10 @@ class PickerApp(wx.App):
 		a1 = self.targetsToArray(targets1)
 		a2 = self.targetsToArray(targets2)
 
+		if self.data['point1'] is None or self.data['point2'] is None:
+			self.data['point1'], self.data['point2'] = \
+				apTiltTransform.getPointsFromArrays(a1, a2, self.data['shiftx'], self.data['shifty'])
+
 		thetarad = self.data['theta']*math.pi/180.0
 		gammarad = self.data['gamma']*math.pi/180.0
 		phirad = self.data['phi']*math.pi/180.0
@@ -330,7 +421,7 @@ class PickerApp(wx.App):
 			dialog.ShowModal()
 			dialog.Destroy()
 			return
-		if len(self.panel1.getTargets('Picked')) < 5 or len(self.panel2.getTargets('Picked')) < 5:
+		if False and (len(self.panel1.getTargets('Picked')) < 5 or len(self.panel2.getTargets('Picked')) < 5):
 			dialog = wx.MessageDialog(self.frame, "You must pick at least 5 particle pairs first", 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
@@ -361,8 +452,8 @@ class PickerApp(wx.App):
 		self.data['phi'] = 0.0
 		self.data['shiftx'] = 0.0
 		self.data['shifty'] = 0.0
-		self.data['point1'] = None
-		self.data['point2'] = None
+		self.data['point1'] = (0.0, 0.0)
+		self.data['point2'] = (0.0, 0.0)
 		self.data['scale'] = 1.0
 
 	#---------------------------------------
@@ -391,7 +482,8 @@ class PickerApp(wx.App):
 	#---------------------------------------	
 	def savePicks(self):
 		self.data['savetime'] = time.asctime()+" "+time.tzname[time.daylight]
-		try:
+		self.data['filetype'] = self.filetypes[self.data['filetypeindex']]
+		if True: #try:
 			if self.data['filetypeindex'] == 0:
 				self.savePicksToTextFile()
 			elif self.data['filetypeindex'] == 1:
@@ -404,7 +496,7 @@ class PickerApp(wx.App):
 				raise NotImplementedError
 			sys.stderr.write("Saved particles and parameters to '"+self.data['outfile']+\
 				"' of type "+self.data['filetype']+"\n")
-		except:
+		if False: #except:
 			self.statbar.PushStatusText("ERROR: Saving to file '"+self.data['outfile']+"' failed", 0)
 			dialog = wx.MessageDialog(self.frame, "Saving to file '"+self.data['outfile']+"' failed", 'Error', wx.OK|wx.ICON_ERROR)
 			if dialog.ShowModal() == wx.ID_OK:
@@ -416,9 +508,9 @@ class PickerApp(wx.App):
 		targets1 = self.panel1.getTargets('Picked')
 		targets2 = self.panel2.getTargets('Picked')
 		filename = os.path.basename(filepath)
-		if len(targets1) < 4 or len(targets2) < 4:
+		if len(targets1) < 1 or len(targets2) < 1:
 			self.statbar.PushStatusText("ERROR: Cannot save file. Not enough picks", 0)
-			dialog = wx.MessageDialog(self.frame, "Cannot save file.\nNot enough picks\n(less than 4 particle pairs)",\
+			dialog = wx.MessageDialog(self.frame, "Cannot save file.\nNot enough picks\n(less than 1 particle pair)",\
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
@@ -533,11 +625,11 @@ class PickerApp(wx.App):
 	def getExtension(self):
 		if self.data['filetypeindex'] == 0:
 			self.data['extension'] = "txt"
-		if self.data['filetypeindex'] == 1:
+		elif self.data['filetypeindex'] == 1:
 			self.data['extension'] = "xml"
-		if self.data['filetypeindex'] == 2:
+		elif self.data['filetypeindex'] == 2:
 			self.data['extension'] = "spi"
-		if self.data['filetypeindex'] == 3:
+		elif self.data['filetypeindex'] == 3:
 			self.data['extension'] = "pik"
 		else:
 			return "pik"
@@ -550,7 +642,7 @@ class PickerApp(wx.App):
 		if self.data['filetypeindex'] is None:
 			self.guessFileType(filepath)
 		self.data['opentime'] = time.asctime()+" "+time.tzname[time.daylight]
-		try:
+		if True: #try:
 			if self.data['filetypeindex'] == 0:
 				self.openPicksFromTextFile(filepath)
 			elif self.data['filetypeindex'] == 1:
@@ -563,7 +655,7 @@ class PickerApp(wx.App):
 				raise NotImplementedError
 			sys.stderr.write("Opened particles and parameters from '"+self.data['outfile']+\
 				"' of type "+self.data['filetype']+"\n")
-		except:
+		if False: #except:
 			self.statbar.PushStatusText("ERROR: Opening file '"+self.data['outfile']+"' failed", 0)
 			dialog = wx.MessageDialog(self.frame, "Opening file '"+self.data['outfile']+"' failed", 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
@@ -640,6 +732,10 @@ class PickerApp(wx.App):
 			self.data['outfile'] = os.path.basename(self.panel1.filename)+"."+self.getExtension()
 			self.data['dirname'] = self.appionloop.params['pickdatadir']
 			self.savePicks()
+			targets1 = self.panel1.getTargets('Picked')
+			targets2 = self.panel2.getTargets('Picked')
+			self.appionloop.peaks1 = self.targetsToArray(targets1)
+			self.appionloop.peaks2 = self.targetsToArray(targets2)
 			self.Exit()
 		else:
 			wx.Exit()

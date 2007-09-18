@@ -10,6 +10,8 @@ import apFindEM
 import appionData
 import apDatabase
 import apDisplay
+import apParticle
+import apPeaks
 import ApTiltPicker
 import apTiltTransform
 import apTiltPair
@@ -55,6 +57,8 @@ class tiltAligner(particleLoop.ParticleLoop):
 		self.params['usepicks'] = False
 		self.params['outtype'] = 'pickle'
 		self.params['outtypeindex'] = None
+		self.params['pickrunname'] = None
+		self.params['pickrunid'] = None
 
 	def particleParseParams(self, args):
 		"""
@@ -67,6 +71,10 @@ class tiltAligner(particleLoop.ParticleLoop):
 				self.params['usepicks'] = True
 			elif elements[0] == 'outtype':
 				self.params['outtype'] = elements[1]
+			elif (elements[0]=='pickrunid'):
+				self.params['pickrunid']=int(elements[1])
+			elif (elements[0]=='pickrunname'):
+				self.params['pickrunname']=str(elements[1])
 			else:
 				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
@@ -105,14 +113,44 @@ class tiltAligner(particleLoop.ParticleLoop):
 		"""
 		tiltdata = apTiltPair.getTiltPair(imgdata)
 		if tiltdata is not None:
-			expid = int(imgdata['session'].dbid)
+			self.expid = int(imgdata['session'].dbid)
+			apTiltPair.insertTiltParams(imgdata, tiltdata, self.tiltparams)
 			if self.params['usepicks'] is True:
-				apParticle.insertParticlePeaks(self.peaktree, imgdata, expid, self.params)
-		apTiltPair.insertTiltParams(imgdata, tiltdata, self.tiltparams)
+				apParticle.insertParticlePeaks(self.peaktree1, imgdata, self.expid, self.params)
+				apParticle.insertParticlePeaks(self.peaktree2, tiltdata, self.expid, self.params)
+			if self.assess is not None:
+				apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], self.assess)
 
 	###################################################
 	##### END PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
 	###################################################
+
+	def insertTiltAlignParams():
+		### query for identical params ###
+		tiltparamsq = appionData.ApTiltAlignParamsData()
+	 	tiltparamsq['diam'] = self.params['diam']
+	 	tiltparamsq['bin'] = self.params['bin']
+	 	tiltparamsq['lp_filt'] = self.params['lp']
+	 	tiltparamsq['hp_filt'] = self.params['hp']
+	 	tiltparamsq['invert'] = self.params['invert']
+		tiltparamsq['output_type'] = self.param['outtype']
+		if self.params['pickrunid'] is not None:
+			manparamsq['oldselectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunid'])
+		#tiltparamsdata = appiondb.query(tiltparamsq, results=1)
+
+		### query for identical run name ###
+		runq = appionData.ApSelectionRunData()
+		runq['name'] = self.params['runid']
+		runq['dbemdata|SessionData|session'] = self.expid
+		runids = appiondb.query(runq, results=1)
+
+	 	# if no run entry exists, insert new run entry into dbappiondata
+	 	if not runids:
+			apDisplay.printMsg("Inserting new runId into database")
+			runq['tiltparams'] = tiltparamsq
+			appiondb.insert(runq)
+		return
+
 
 	def parseTiltParams(self):
 		theta = self.tiltparams['theta']
@@ -170,6 +208,11 @@ class tiltAligner(particleLoop.ParticleLoop):
 		self.app.onClearPicks(None)
 		self.app.onResetParams(None)
 		self.tiltparams = {}
+		#set tilt
+		tilt1 = apDatabase.getTiltAngleDeg(imgdata)
+		tilt2 = apDatabase.getTiltAngleDeg(tiltdata)
+		self.app.data['theta'] = tilt1 - tilt2
+		print "theta=",self.app.data['theta']
 		#open new file
 		imgname = imgdata['filename']+".dwn.mrc"
 		imgpath = os.path.join(self.params['rundir'],imgname)
@@ -183,10 +226,9 @@ class tiltAligner(particleLoop.ParticleLoop):
 		self.app.panel1.openImageFile(None)
 		self.app.panel2.openImageFile(None)
 		#tilt data are copied to self.tiltparams by app
-
-		if self.tiltparams:
-			print self.tiltparams
-
+		#particles picks are copied to self.peaktree1 and self.peaktree2 by app
+		self.peaktree1 = apPeaks.convertListToPeaks(self.peaks1, self.params)
+		self.peaktree2 = apPeaks.convertListToPeaks(self.peaks2, self.params)
 
 if __name__ == '__main__':
 	imgLoop = tiltAligner()
