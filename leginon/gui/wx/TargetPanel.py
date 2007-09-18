@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanel.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:13:37 $
+# $Date: 2007-09-18 21:35:48 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -175,7 +175,7 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 		if False:
 			xscale = self.scale[0]
 			yscale = self.scale[1]
-			print 'scaled', xscale, yscale
+			#print 'scaled', xscale, yscale
 			scaledpoints = []
 			for target in targets:
 				point = target.x/xscale, target.y/yscale
@@ -202,7 +202,7 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 		dc.SetTextForeground(color) 
 		#dc.SetPen(wx.Pen(color, 20))
 		scaledpoints = [(target.x,target.y) for target in targets]
-		print "drawing text of "+str(len(scaledpoints))+" targets"
+		#print "drawing text of "+str(len(scaledpoints))+" targets"
 		for i,p1 in enumerate(scaledpoints):
 			p1 = self.image2view(p1)
 			dc.DrawText(str(i+1), p1[0], p1[1])
