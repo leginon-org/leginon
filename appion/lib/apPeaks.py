@@ -212,6 +212,18 @@ def varyThreshold(ccmap, threshold, maxsize):
 			print " ...      varying threshold: "+tstr+" gives "+lbstr+" peaks ("+\
 				pcstr+"% coverage )"
 
+def convertListToPeaks(peaks, params):
+	bin = params['bin']
+	peaktree = []
+	peak = {}
+	for i in range(peaks.shape[0]):
+		row = peaks[i,0] * bin
+		col = peaks[i,1] * bin
+		peak['xcoord'] = col
+		peak['ycoord'] = row
+		peaktree.append(peak.copy())
+	return peaktree
+
 def convertBlobsToPeaks(blobtree, tmpldbid, tmplnum, bin):
 	peaktree = []
 	if tmpldbid is not None:
