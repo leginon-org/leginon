@@ -454,6 +454,7 @@ class view {
 		$this->btnptcl->onToggle($name.'btnptclaction');
 		$this->btace = new toggleButton($this->name.'ace', 'ace');
 		$this->btace->onToggle($name.'btaceaction'); 
+		$this->btdeq = new button('deq'.$this->name, 'deq');
 
 		$param = "left=0,top=".($this->viewnb*180+20).",height=170,width=370";
 		$url = "ptclsel.php?name=$name&displayname=$this->title";
@@ -470,6 +471,7 @@ class view {
 		$this->displayinfoicon = true;
 		$this->displayparticleicon = true;
 		$this->displaydownloadicon = true;
+		$this->displaydeqicon = true;
 		$this->displaycloseicon = true;
 		$this->displayadjustlink = true;
 		$this->framecolor = ' class="bgcolor1" ';
@@ -669,6 +671,10 @@ class view {
 		$this->displayscaleicon = $state;
 	}
 
+	function displayDeqIcon($state) {
+		$this->displaydeqicon = $state;
+	}
+
 	function displayScale($state) {
 		$state_str = ($state) ? "true" : "false";
 		$this->scale_st = $state_str;
@@ -723,6 +729,7 @@ class view {
 			.$this->btnptcl->getJavascript()
 			.$this->btfft->getJavascript()
 			.$this->btace->getJavascript()
+			.$this->btdeq->getJavascript()
 			.$this->btclose->getJavascript()
 			.$this->crlf;
 
@@ -863,6 +870,12 @@ class view {
 			.'
 			</td>
 		';
+		if ($this->displaydeqicon) {
+		$htmlframe .= '
+			<td width="15">'
+			.$this->btdeq->display().$this->crlf
+			.'</td> ';
+		}
 		if ($this->displaydownloadicon)
 		$htmlframe .= '
 			<td width="15">'

@@ -338,6 +338,7 @@ function newfile(view){
 	ni = jsimagescriptcur+"?"+options
 	nlink = "javascript:popUpMap('map.php?"+options+"')"
 	ninfolink = "imgreport.php?id="+jsimgId+"&preset="+selpreset
+	ndeqlink = "javascript:popUpW('removequeue.php?id="+jsimgId+"')"
 	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft
 	nexportlink = "getfilenames.php?sessionId="+jsSessionId+"&pre="+selpreset
 
@@ -352,6 +353,8 @@ function newfile(view){
 		link.href = nlink
 	if (infolink = document.getElementById("info"+view+"_bthref"))
 		infolink.href = ninfolink
+	if (deqlink = document.getElementById("deq"+view+"_bthref"))
+		deqlink.href = ndeqlink
 	if (downloadlink = document.getElementById("download"+view+"_bthref"))
 		downloadlink.href = ndownloadlink
 	if (exportlink = document.getElementById("export"+view))
@@ -514,10 +517,14 @@ function setdisplayfilename(viewname, state) {
 	}
 }
 
-function popUpMap(URL)
-{
+function popUpMap(URL) {
 	window.open(URL, "map", "left=0,top=0,height=512,width=512,toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes")
 }
+
+function popUpW(URL) {
+	window.open(URL, "deq", "left=0,top=0,height=512,width=300,toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes")
+}
+
 
 function popUpAdjust(URL, view, param){
 	min = eval("jsmin"+view)

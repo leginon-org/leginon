@@ -9,6 +9,14 @@
 
 require ("inc/leginon.inc");
 
+function getSessionByImage($imageId) {
+  global $leginondata;
+	$q = 'SELECT '
+	.'a . `REF|SessionData|session` as session FROM `AcquisitionImageData` a'
+        . ' WHERE a . `DEF_id` = '.$imageId.' ';
+	$r = $leginondata->mysql->getSQLResult($q);
+	return $r[0];
+	}
 
 function getTargetListInfo($list) {
   global $leginondata;
@@ -160,19 +168,14 @@ function getDescendants($imgId) {
 function createData() {
   	global $leginondata;
 	$g=true;
-	if (!$sessionId=stripslashes($_GET['session'])) {
-		$sessionId=4861;
-		$g=false;
-	}
 	if (!$parentimageId=stripslashes($_GET['id'])) {
-		$parentimageId="567845";
 		$g=false;
 	}
 	if (!$g) {
-		echo "session and image id not specified";
+		echo "image id not specified";
 		exit;
 	}
-	$_POST['session']=$sessionId;
+	$sessionId = getSessionByImage($parentimageId);
 	$_POST['image']=$parentimageId;
 	$sessioninfo = $leginondata->getSessionInfo($sessionId);
 
@@ -310,15 +313,13 @@ function createForm() {
 }
 
 function runQueueRemover() {
+  global $leginondata;
 	$remove = $_POST['remove'];
 	if ($remove=='Remove Active') {
-		echo "removing test\n";
 		$results=createData();
 		$aborting=$results[2];
 		foreach ($aborting as $data) {
-			print_r($data);
 			$leginondata->mysql->SQLInsert('DequeuedImageTargetListData',$data);
-			echo " working";
 		}
 		createForm();
 	} else {
