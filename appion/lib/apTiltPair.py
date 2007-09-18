@@ -95,7 +95,7 @@ def tiltPickerToDbNames(tiltparams):
 		newdict['image2_x'] = tiltparams['point2'][0]
 		newdict['image2_y'] = tiltparams['point2'][1]
 
-def insertTiltParams(imgdata1, imgdata2, tiltparams)
+def insertTiltParams(imgdata1, imgdata2, tiltparams):
 	#First we need to sort imgdata
 	#'07aug30b_a_00013gr_00010sq_v01_00002sq_v01_00016en_00'
 	#'07aug30b_a_00013gr_00010sq_v01_00002sq_01_00016en_01'

@@ -34,6 +34,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 			self.processAndSaveAllImages()
 		self.app = ApTiltPicker.PickerApp(0)
 		self.app.appionloop = self
+		#self.app.quit = wx.Button(self.app.frame, wx.ID_FORWARD, '&Forward')
 
 	def postLoopFunctions(self):
 		self.app.frame.Destroy()
@@ -53,6 +54,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 		"""
 		self.params['usepicks'] = False
 		self.params['outtype'] = 'pickle'
+		self.params['outtypeindex'] = None
 
 	def particleParseParams(self, args):
 		"""
@@ -63,15 +65,19 @@ class tiltAligner(particleLoop.ParticleLoop):
 			elements[0] = elements[0].lower()
 			if arg == 'usepicks':
 				self.params['usepicks'] = True
-			if elements[0] == 'outtype':
+			elif elements[0] == 'outtype':
 				self.params['outtype'] = elements[1]
-			apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
+			else:
+				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
 	def particleParamConflicts(self):
 		"""
 		put in any additional conflicting parameters
 		"""
-		if not self.params['outtype'] in ('text','xml','pickle','spider'):
+		for i,v in enumerate(('text','xml','spider','pickle')):
+			if self.params['outtype'] == v:
+				self.params['outtypeindex'] = i
+		if self.params['outtypeindex'] is None:
 			apDisplay.printError("outtype must be one of: text, xml, pickle or spider; NOT "+str(self.params['outtype']))
 		return
 
@@ -79,25 +85,30 @@ class tiltAligner(particleLoop.ParticleLoop):
 		"""
 		put in any additional directories to create
 		"""
-		return	
+		self.params['pickdatadir'] = os.path.join(self.params['rundir'],"pickdata")
+		self._createDirectory(self.params['pickdatadir'], warning=False)
+	
+		return
 
 	def processImage(self, imgdata):
 		# run it
-		self.tiltdata = apTiltPair.getTiltPair(imgdata)
-		self.runTiltAligner(imgdata, self.tiltdata)
+		tiltdata = apTiltPair.getTiltPair(imgdata)
+		if tiltdata is not None:
+			self.runTiltAligner(imgdata, tiltdata)
 
 		#parse the data
-		self.parseTiltParams()
-		
+		#self.parseTiltParams()
 
 	def commitToDatabase(self, imgdata):
 		"""
 		Over-writes the particleLoop commit and uses the appionLoop commit
 		"""
-		expid = int(imgdata['session'].dbid)
-		if self.params['usepicks'] is True:
-			apParticle.insertParticlePeaks(self.peaktree, imgdata, expid, self.params)
-		apTiltPair.insertTiltParams(imgdata, self.tiltdata, self.tiltparams)
+		tiltdata = apTiltPair.getTiltPair(imgdata)
+		if tiltdata is not None:
+			expid = int(imgdata['session'].dbid)
+			if self.params['usepicks'] is True:
+				apParticle.insertParticlePeaks(self.peaktree, imgdata, expid, self.params)
+		apTiltPair.insertTiltParams(imgdata, tiltdata, self.tiltparams)
 
 	###################################################
 	##### END PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
@@ -160,11 +171,11 @@ class tiltAligner(particleLoop.ParticleLoop):
 		self.app.onResetParams(None)
 		self.tiltparams = {}
 		#open new file
-		imgname = imgdata['filename']+'.dwn.mrc'
+		imgname = imgdata['filename']+".dwn.mrc"
 		imgpath = os.path.join(self.params['rundir'],imgname)
 		self.app.panel1.openImageFile(imgpath)
 		#open tilt file
-		tiltname = tiltdata['filename']+'.dwn.mrc'
+		tiltname = tiltdata['filename']+".dwn.mrc"
 		tiltpath = os.path.join(self.params['rundir'],tiltname)
 		self.app.panel2.openImageFile(tiltpath)
 		#run the picker

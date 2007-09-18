@@ -530,6 +530,19 @@ class PickerApp(wx.App):
 		self.data['filetype'] = self.filetypes[self.data['filetypeindex']]
 		return
 
+	def getExtension(self):
+		if self.data['filetypeindex'] == 0:
+			self.data['extension'] = "txt"
+		if self.data['filetypeindex'] == 1:
+			self.data['extension'] = "xml"
+		if self.data['filetypeindex'] == 2:
+			self.data['extension'] = "spi"
+		if self.data['filetypeindex'] == 3:
+			self.data['extension'] = "pik"
+		else:
+			return "pik"
+		return self.data['extension']
+
 	#---------------------------------------
 	def openPicks(self, filepath=None):
 		if filepath is None:
@@ -623,23 +636,28 @@ class PickerApp(wx.App):
 		"""
 		if self.appionloop:
 			self.copyDataToAppionLoop()
+			self.data['filetypeindex'] = self.appionloop.params['outtypeindex']
+			self.data['outfile'] = os.path.basename(self.panel1.filename)+"."+self.getExtension()
+			self.data['dirname'] = self.appionloop.params['pickdatadir']
+			self.savePicks()
 			self.Exit()
 		else:
 			wx.Exit()
 
 	#---------------------------------------
 	def copyDataToAppionLoop(self):
-			#Need global shift data not local data
-			targets1 = self.panel1.getTargets('Picked')
-			targets2 = self.panel2.getTargets('Picked')
-			if len(targets1) > 0 and len(targets2) > 0:
-				#copy over the data
-				for i in 'theta','gamma','phi','scale', 'shiftx', 'shifty':
-					self.appionloop.tiltparams[i] = self.data[i]
-				self.appionloop.tiltparams['x1'] = targets1[0].x
-				self.appionloop.tiltparams['y1'] = targets1[0].y
-				self.appionloop.tiltparams['x2'] = targets2[0].x
-				self.appionloop.tiltparams['y2'] = targets2[0].y
+		#Need global shift data not local data
+		targets1 = self.panel1.getTargets('Picked')
+		targets2 = self.panel2.getTargets('Picked')
+		if len(targets1) > 0 and len(targets2) > 0:
+			#copy over the data
+			for i in 'theta','gamma','phi','scale', 'shiftx', 'shifty':
+				self.appionloop.tiltparams[i] = self.data[i]
+			self.appionloop.tiltparams['x1'] = targets1[0].x
+			self.appionloop.tiltparams['y1'] = targets1[0].y
+			self.appionloop.tiltparams['x2'] = targets2[0].x
+			self.appionloop.tiltparams['y2'] = targets2[0].y
+			
 
 	#---------------------------------------
 	def openLeftImage(self,filename):
