@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImagePanelTools.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-14 19:02:34 $
+# $Date: 2007-09-18 17:15:35 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -490,7 +490,7 @@ class ZoomTool(ImageTool):
 		self.zoomchoice = wx.Choice(self.imagepanel, -1,
 			choices=self.zoomlabels)
 			#map(self.zoomlabels, self.zoomlevels))
-		self.zoom(self.zoomlevels[4], (0, 0))
+		self.zoom(self.zoomlevels[0], (0, 0))
 		self.zoomchoice.SetSelection(self.zoomlevel)
 		self.sizer.Add(self.zoomchoice, 0, wx.ALIGN_CENTER|wx.ALL, 3)
 
