@@ -179,8 +179,11 @@ def getSessionName(imgname):
 	else:
 		apDisplay.printError("Image "+imgname+" not found in database\n")
 
-def getTiltAngle(img, params):
-	return img['scope']['stage position']['a']*180.0/math.pi
+def getTiltAngleDeg(imgdata):
+	return imgdata['scope']['stage position']['a']*180.0/math.pi
+
+def getTiltAngleRad(imgdata):
+	return imgdata['scope']['stage position']['a']
 
 def getPixelSize(imgdict):
 	"""
