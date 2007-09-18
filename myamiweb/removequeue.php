@@ -10,6 +10,21 @@
 require ("inc/leginon.inc");
 
 
+function getTargetListInfo($list) {
+  global $leginondata;
+	$q = 'SELECT '
+	.'a . `filename` , count( * ) as count FROM `AcquisitionImageData` as a LEFT JOIN `ImageTargetListData` as l '
+        . ' ON a . DEF_id = l . `REF|AcquisitionImageData|image` '
+        . ' LEFT JOIN `AcquisitionImageTargetData` t '
+        . ' ON l . `DEF_id` = t . `REF|ImageTargetListData|list` '
+        . ' WHERE l . `DEF_id` = '.$list.' '
+	. ' AND t.`status`= "new" '
+        . ' GROUP BY a . `DEF_id`  ';
+	$r = $leginondata->mysql->getSQLResult($q);
+	return $r;
+
+	}
+
 function getDeQueuedTargetListIdsByImage($imageId) {
   global $leginondata;
       $q="SELECT "
@@ -234,7 +249,7 @@ function createForm() {
     </script>
   </head>
   <body onload="init();" >
-    <table border=0 cellpadding=10>
+    <table border=0 cellspacing="0" cellpadding=0>
       <tr>
         <td>
           <table>
@@ -252,27 +267,34 @@ function createForm() {
             </tr>
           </table>
         </td>
-        <TD COLSPAN='2' ALIGN='CENTER'>
-	<FORM name='removeform' method='POST' ACTION='<?$formAction?>' >
-          <input type='submit' name='remove' value='Remove'><BR>
+        <TD ALIGN='RIGHT' VALIGN='BOTTOM'>
+ <FORM name='removeform' method='POST' ACTION='<?$formAction?>' >
+          <input type='submit' name='remove' value='Remove Active'><BR>
 	</FORM>
         </TD>
       </tr>
-    </table>
-    <table>
+      <tr valign="top">
+         <td colspan="4"> 
+	 <?php echo divtitle("Active Target List");?>
+    <table width=100% class='tableborder' cellspacing='1' cellpadding='2'>
       <tr>
         <td>
 	<?
 	if (count($aborting)>0) {
 		foreach ($aborting as $deq) {
-			print_r($deq);
-		$_POST['deqarray']=$aborting;
+			$targetimage = getTargetListInfo($deq['REF|ImageTargetListData|list']);
+			if ($targetimage[0]['count']) {
+			echo $targetimage[0]['count'];
+			?></td><td> targets from 
+			</td><td><?
+			echo $targetimage[0]['filename'].".mrc";
 	?>
         </td>
       </tr>
       <tr>
         <td>
 	<?
+			}
 		}
 	} else {
 		echo "    NO ACTIVE TARGET LIST";
@@ -281,6 +303,7 @@ function createForm() {
        </td>
       </tr>
     </table>
+  </td></tr></table>
   </body>
 </html>
 <?
@@ -288,8 +311,8 @@ function createForm() {
 
 function runQueueRemover() {
 	$remove = $_POST['remove'];
-	if ($remove=='Remove') {
-		echo "removing test";
+	if ($remove=='Remove Active') {
+		echo "removing test\n";
 		$results=createData();
 		$aborting=$results[2];
 		foreach ($aborting as $data) {
@@ -299,17 +322,9 @@ function runQueueRemover() {
 		}
 		createForm();
 	} else {
-		echo "no remove in runQueueRemover";
 		createForm();
 	}
 }
 
-echo print_r($_POST);
-if ($_POST['remove']) {
-	runQueueRemover($deqarray);
-} else {
-	echo "no remove main";
-	createForm();
-}
-echo print_r($_POST);
+runQueueRemover($deqarray);
 ?>
