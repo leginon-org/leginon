@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SelectionTool.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-07 20:25:16 $
+# $Date: 2007-09-18 21:35:30 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -292,8 +292,6 @@ class SelectionTool(wx.Panel):
 				targets = None
 			tool.numberstype.setTargets(tool.targettype.getTargets())
 			self.parent.setDisplayedNumbers(tool.numberstype, targets)
-			if not value and self.isTargeting(name):
-				self.setTargeting(name, False)
 		else:
 			for n in self.images:
 				if n == name:
