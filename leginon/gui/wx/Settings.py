@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Settings.py,v $
-# $Revision: 1.28 $
+# $Revision: 1.29 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-06 20:47:12 $
+# $Date: 2007-09-18 22:46:47 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -26,6 +26,7 @@ class SettingsError(Exception):
 
 attributes = {
 	wx.CheckBox: ('GetValue', 'SetValue', wx.EVT_CHECKBOX),
+	wx.ToggleButton: ('GetValue', 'SetValue', wx.EVT_TOGGLEBUTTON),
 	wx.Choice: ('GetStringSelection', 'SetStringSelection', wx.EVT_CHOICE),
 	Choice: ('GetStringSelection', 'SetStringSelection', wx.EVT_CHOICE),
 	gui.wx.Entry.Entry: ('GetValue', 'SetValue', gui.wx.Entry.EVT_ENTRY),
@@ -130,7 +131,7 @@ class Dialog(wx.Dialog):
 			evt.Skip()
 		except SettingsError:
 			dialog = wx.MessageDialog(self, str(e), 'Settings Error',
-																wx.OK|wx.ICON_ERROR)
+				wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 

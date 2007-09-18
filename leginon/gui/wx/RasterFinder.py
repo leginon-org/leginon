@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.26 $
+# $Revision: 1.27 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:09 $
+# $Date: 2007-09-18 22:46:47 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -30,19 +30,14 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
-		self.imagepanel.addTargetTool('Raster', wx.Color(0, 255, 255),
-																	settings=True)
-		self.imagepanel.addTargetTool('Polygon Vertices', wx.Color(255,255,0),
-																	settings=True, target=True)
+		self.imagepanel.addTargetTool('Raster', wx.Color(0, 255, 255), settings=True)
+		self.imagepanel.addTargetTool('Polygon Vertices', wx.Color(255,255,0), settings=True, target=True)
 		self.imagepanel.selectiontool.setDisplayed('Polygon Vertices', True)
 		self.imagepanel.setTargets('Polygon Vertices', [])
-		self.imagepanel.addTargetTool('Polygon Raster', wx.Color(255,128,0),
-																	settings=False)
-		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True,
-																	settings=True)
+		self.imagepanel.addTargetTool('Polygon Raster', wx.Color(255,128,0), settings=False)
+		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
-		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True,
-																	settings=True)
+		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
 		self.imagepanel.addTargetTool('done', wx.RED)
 		self.imagepanel.selectiontool.setDisplayed('done', True)
@@ -98,32 +93,66 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
 
-		self.widgets['raster spacing'] = IntEntry(self, -1, chars=4)
-		self.widgets['raster limit'] = IntEntry(self, -1, chars=4)
+		self.widgets['raster spacing'] = IntEntry(self, -1, chars=4, min=1)
+		self.widgets['raster spacing asymm'] = IntEntry(self, -1, chars=4)
+		self.widgets['raster limit'] = IntEntry(self, -1, chars=4, min=1)
+		self.widgets['raster limit asymm'] = IntEntry(self, -1, chars=4)
 		self.widgets['raster angle'] = FloatEntry(self, -1, chars=4)
 		self.widgets['raster center on image'] = wx.CheckBox(self, -1, 'Center on image')
-		self.widgets['raster center x'] = FloatEntry(self, -1, chars=4)
-		self.widgets['raster center y'] = FloatEntry(self, -1, chars=4)
+		self.widgets['raster center x'] = IntEntry(self, -1, chars=4)
+		self.widgets['raster center y'] = IntEntry(self, -1, chars=4)
+		self.widgets['raster symmetric'] = wx.CheckBox(self, -1, '&Symmetric')
 
 		szraster = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Spacing:')
-		szraster.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szraster.Add(self.widgets['raster spacing'], (0, 1), (1, 2),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Limit:')
-		szraster.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szraster.Add(self.widgets['raster limit'], (1, 1), (1, 2),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		szraster.AddGrowableCol(1)
-		label = wx.StaticText(self, -1, 'Angle:')
-		szraster.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szraster.Add(self.widgets['raster angle'], (2, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
-		szraster.Add(self.widgets['raster center on image'], (3, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'XY symmetry:')
+		szraster.Add(label, (0,0), (1,1) , wx.ALIGN_CENTER_VERTICAL)
+
+		self.Bind(wx.EVT_CHECKBOX, self.onToggleSymm, self.widgets['raster symmetric'])
+		szraster.Add(self.widgets['raster symmetric'], (0,1), (1,2) , wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.widgets['raster symmetric'].SetMinSize((120,30))
+
+		label = wx.StaticText(self, -1, 'Spacing (x,y):')
+		szraster.Add(label, (1,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		szraster.Add(self.widgets['raster spacing'], (1,1), (1,1), 
+			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szraster.Add(self.widgets['raster spacing asymm'], (1,2), (1,1), 
+			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+
+		label = wx.StaticText(self, -1, 'Num points (x,y):')
+		szraster.Add(label, (2,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		szraster.Add(self.widgets['raster limit'], (2,1), (1,1),
+			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szraster.Add(self.widgets['raster limit asymm'], (2,2), (1,1),
+			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szraster.AddGrowableCol(1)
+
+		label = wx.StaticText(self, -1, 'Angle:')
+		szraster.Add(label, (3,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		szraster.Add(self.widgets['raster angle'], (3,1), (1,2), 
+			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
+
+		szraster.Add(self.widgets['raster center on image'], (4,0), (1,3), 
+			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
+		self.Bind(wx.EVT_CHECKBOX, self.onCheckBox, self.widgets['raster center on image'])
+
 		label = wx.StaticText(self, -1, 'Center on x,y:')
-		szraster.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szraster.Add(self.widgets['raster center x'], (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szraster.Add(self.widgets['raster center y'], (4, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szraster.Add(label, (5,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		szraster.Add(self.widgets['raster center x'], (5,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		szraster.Add(self.widgets['raster center y'], (5,2), (1,1), wx.ALIGN_CENTER_VERTICAL)
+
+		if self.widgets['raster center on image'].GetValue():
+			self.widgets['raster center x'].Enable(False)
+			self.widgets['raster center y'].Enable(False)
+
+		if self.widgets['raster symmetric'].GetValue():
+			self.widgets['raster spacing asymm'].Enable(False)
+			self.widgets['raster limit asymm'].Enable(False)
+			self.widgets['raster spacing asymm'].SetValue(None)
+			self.widgets['raster limit asymm'].SetValue(None)
+		else:
+			self.widgets['raster spacing asymm'].Enable(True)
+			self.widgets['raster limit asymm'].Enable(True)		
 
 		sb = wx.StaticBox(self, -1, 'Raster')
 		sbszraster = wx.StaticBoxSizer(sb, wx.VERTICAL)
@@ -131,13 +160,33 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 
 		self.btest = wx.Button(self, -1, 'Test')
 		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.btest, (0, 0), (1, 1),
-									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbutton.Add(self.btest, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szbutton.AddGrowableCol(0)
 
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
 
 		return [sbszraster, szbutton]
+
+	def onToggleSymm(self, evt):
+		if self.widgets['raster symmetric'].GetValue():
+			self.widgets['raster spacing asymm'].Enable(False)
+			self.widgets['raster limit asymm'].Enable(False)
+			self.widgets['raster spacing asymm'].SetValue(None)
+			self.widgets['raster limit asymm'].SetValue(None)
+		else:
+			self.widgets['raster spacing asymm'].SetValue(self.widgets['raster spacing'].GetValue())
+			self.widgets['raster limit asymm'].SetValue(self.widgets['raster limit'].GetValue())
+			self.widgets['raster spacing asymm'].Enable(True)
+			self.widgets['raster limit asymm'].Enable(True)			
+		return
+
+	def onCheckBox(self, evt):
+		if self.widgets['raster center on image'].GetValue():
+			self.widgets['raster center x'].Enable(False)
+			self.widgets['raster center y'].Enable(False)
+		else:		
+			self.widgets['raster center x'].Enable(True)
+			self.widgets['raster center y'].Enable(True)
 
 	def onTestButton(self, evt):
 		self.setNodeSettings()
@@ -189,38 +238,36 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['ice max std'] = FloatEntry(self, -1, chars=8)
 		self.widgets['focus convolve'] = wx.CheckBox(self, -1, 'Convolve')
 		self.widgets['focus convolve template'] = \
-							gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
+			gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
 		self.widgets['focus constant template'] = \
-							gui.wx.TargetTemplate.Panel(self, 'Constant Template',
-																					targetname='Constant target')
+			gui.wx.TargetTemplate.Panel(self, 'Constant Template', targetname='Constant target')
 		self.widgets['acquisition convolve'] = wx.CheckBox(self, -1, 'Convolve')
 		self.widgets['acquisition convolve template'] = \
-							gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
+			gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
 		self.widgets['acquisition constant template'] = \
-							gui.wx.TargetTemplate.Panel(self, 'Constant Template',
-																					targetname='Constant target')
+			gui.wx.TargetTemplate.Panel(self, 'Constant Template', targetname='Constant target')
 
 		szice = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Box size:')
 		szice.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szice.Add(self.widgets['ice box size'], (0, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Reference Intensity:')
 		szice.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szice.Add(self.widgets['ice thickness'], (1, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Min. mean:')
 		szice.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szice.Add(self.widgets['ice min mean'], (2, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Max. mean:')
 		szice.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szice.Add(self.widgets['ice max mean'], (3, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Max. stdev.:')
 		szice.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szice.Add(self.widgets['ice max std'], (4, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szice.AddGrowableCol(1)
 
 		sb = wx.StaticBox(self, -1, 'Ice Analysis')
@@ -229,11 +276,11 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 
 		szft = wx.GridBagSizer(5, 5)
 		szft.Add(self.widgets['focus convolve'], (0, 0), (1, 2),
-										wx.ALIGN_CENTER_VERTICAL)
+			wx.ALIGN_CENTER_VERTICAL)
 		szft.Add(self.widgets['focus convolve template'], (1, 0), (1, 1),
-							wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		szft.Add(self.widgets['focus constant template'], (2, 0), (1, 1),
-							wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		szft.AddGrowableCol(0)
 
 		sb = wx.StaticBox(self, -1, 'Focus Targets')
@@ -242,21 +289,22 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 
 		szat = wx.GridBagSizer(5, 5)
 		szat.Add(self.widgets['acquisition convolve'], (0, 0), (1, 2),
-										wx.ALIGN_CENTER_VERTICAL)
+			wx.ALIGN_CENTER_VERTICAL)
 		szat.Add(self.widgets['acquisition convolve template'], (1, 0), (1, 1),
-							wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		szat.Add(self.widgets['acquisition constant template'], (2, 0), (1, 1),
-							wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		szat.AddGrowableCol(0)
 
 		sb = wx.StaticBox(self, -1, 'Acquisition Targets')
 		sbszat = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszat.Add(szat, 1, wx.EXPAND|wx.ALL, 5)
 
-		self.bice = wx.Button(self, -1, 'Analyze Ice')
+		self.bice = wx.Button(self, -1, 'Analyze Raster')
+		self.bice.SetMinSize((100,100))
 		szbutton = wx.GridBagSizer(5, 5)
 		szbutton.Add(self.bice, (0, 0), (1, 1),
-									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szbutton.AddGrowableCol(0)
 
 		szt = wx.GridBagSizer(5, 5)

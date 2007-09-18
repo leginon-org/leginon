@@ -13,6 +13,8 @@ import targetfinder
 import threading
 import ice
 import numpy
+import math
+from scipy import ndimage
 from pyami import arraystats
 import gui.wx.RasterFinder
 import polygon
@@ -25,11 +27,14 @@ class RasterFinder(targetfinder.TargetFinder):
 		'publish polygon': False,
 		'image filename': '',
 		'raster spacing': 100,
+		'raster spacing asymm': None,
 		'raster angle': 0,
 		'raster center x': 0,
 		'raster center y': 0,
 		'raster center on image': True,
 		'raster limit': 5,
+		'raster limit asymm': None,
+		'raster symmetric': True,
 		'select polygon': False,
 		'ice box size': 15.0,
 		'ice thickness': 1000.0,
@@ -62,9 +67,61 @@ class RasterFinder(targetfinder.TargetFinder):
 		self.start()
 
 	def createRaster(self):
+		"""
+		from center of image, generate a raster of points
+		"""
+		#print "xy raster"
+		try:
+			imageshape = self.currentimagedata['image'].shape
+		except:
+			imageshape = (512,512)
+		xspacing = float(self.settings['raster spacing'])
+		xpoints = int(self.settings['raster limit'])
+
+		if self.settings['raster symmetric']:
+			yspacing = xspacing
+			ypoints = xpoints
+		else:
+			yspacing = float(self.settings['raster spacing asymm'])
+			ypoints = int(self.settings['raster limit asymm'])
+
+		radians = math.pi * self.settings['raster angle'] / 180.0
+		if self.settings['raster center on image']:
+			x0 = imageshape[0]/2.0
+			y0 = imageshape[1]/2.0
+		else:
+			x0 = float(self.settings['raster center x'])
+			y0 = float(self.settings['raster center y'])
+		points = []
+
+		#new stuff
+		xlist = numpy.asarray(range(xpoints), dtype=numpy.float32)
+		xlist -= ndimage.mean(xlist)
+		ylist = numpy.asarray(range(ypoints), dtype=numpy.float32)
+		ylist -= ndimage.mean(ylist)
+
+		for xt in xlist:
+			xshft = xt * xspacing
+			for yt in ylist:
+				yshft = yt * yspacing
+				xrot = xshft * numpy.cos(radians) - yshft * numpy.sin(radians) 
+				yrot = yshft * numpy.cos(radians) + xshft * numpy.sin(radians)
+				x = int(xrot + x0)
+				y = int(yrot + y0)
+				if x < 0 or x >= imageshape[0]: continue
+				if y < 0 or y >= imageshape[1]: continue
+				points.append( (x,y) )
+
+		#old stuff
+		self.setTargets(self.transpose_points(points), 'Raster')
+		self.rasterpoints = points
+		self.logger.info('Full raster has %s points' % (len(points),))
+
+	def createRasterOld(self):
 		'''
 		from center of image, generate a raster of points
 		'''
+		print "normal raster"
 		imageshape = self.currentimagedata['image'].shape
 		spacing = self.settings['raster spacing']
 		limit = self.settings['raster limit']
@@ -221,3 +278,6 @@ class RasterFinder(targetfinder.TargetFinder):
 		self.publishTargets(imdata, 'acquisition', targetlist)
 		if self.settings['publish polygon']:
 			self.publishTargets(imdata, 'Polygon Vertices', targetlist)
+
+
+
