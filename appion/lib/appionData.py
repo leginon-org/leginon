@@ -91,7 +91,7 @@ class ApTiltAlignParamsData(Data):
 			('invert', int),
 			('lp_filt', int),
 			('hp_filt', int),
-			('output_type', int),
+			('output_type', str),
 			('oldselectionrun', ApSelectionRunData),		
 		)
 	typemap = classmethod(typemap)
