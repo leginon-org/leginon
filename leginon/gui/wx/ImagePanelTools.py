@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImagePanelTools.py,v $
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-18 21:31:11 $
+# $Date: 2007-09-19 22:39:23 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -483,7 +483,7 @@ class ZoomTool(ImageTool):
 		tooltip = 'Toggle Zoom Tool'
 		cursor = wx.StockCursor(wx.CURSOR_MAGNIFIER)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
-		self.zoomlevels = [4, 2, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 32, 128,]
+		self.zoomlevels = [0.25, 0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 32, 128,]
 		self.zoomlabels = ['4x', '2x', '1x', '2/3x', '1/2x', '1/3x', '1/4x', '1/6x', '1/8x',
 			'1/12x', '1/16x', '1/32x', '1/128x']
 		# wx.Choice seems a bit slow, at least on windows
