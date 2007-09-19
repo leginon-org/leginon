@@ -213,14 +213,17 @@ def varyThreshold(ccmap, threshold, maxsize):
 				pcstr+"% coverage )"
 
 def convertListToPeaks(peaks, params):
+	if peaks is None or len(peaks) == 0:
+		return []
 	bin = params['bin']
 	peaktree = []
 	peak = {}
 	for i in range(peaks.shape[0]):
 		row = peaks[i,0] * bin
 		col = peaks[i,1] * bin
-		peak['xcoord'] = col
-		peak['ycoord'] = row
+		peak['xcoord'] = row
+		peak['ycoord'] = col
+		peak['peakarea'] = 1
 		peaktree.append(peak.copy())
 	return peaktree
 
@@ -326,6 +329,57 @@ def createPeakJpeg(imgdata, peaktree, params):
 	print " ... writing peak JPEG: ",outfile
 	image = Image.blend(image, image2, 0.9) 
 	image.save(outfile, "JPEG", quality=95)
+
+	return
+
+def createTiltedPeakJpeg(imgdata1, imgdata2, peaktree1, peaktree2, params):
+	if 'templatelist' in params:
+		count =   len(params['templatelist'])
+	else: count = 1
+	bin =     int(params["bin"])
+	diam =    float(params["diam"])
+	apix =    float(params["apix"])
+	#bin /= 2
+	#if bin < 1: bin = 1
+	binpixrad  = diam/apix/2.0/float(bin)
+	imgname1 = imgdata1['filename']
+	imgname2 = imgdata2['filename']
+
+	jpegdir = os.path.join(params['rundir'],"jpgs")
+	apParam.createDirectory(jpegdir, warning=False)
+
+	imgarray1 = apImage.preProcessImage(imgdata1['image'], bin=bin, planeReg=False, params=params)
+	imgarray2 = apImage.preProcessImage(imgdata2['image'], bin=bin, planeReg=False, params=params)
+	imgarray = numpy.hstack((imgarray1,imgarray2))
+
+	image = apImage.arrayToImage(imgarray)
+	image = image.convert("RGB")
+	image2 = image.copy()
+	draw = ImageDraw.Draw(image2)
+	#import pprint
+	if len(peaktree1) > 0:
+		#pprint.pprint(peaktree1)
+		drawPeaks(peaktree1, draw, bin, binpixrad)
+	if len(peaktree2) > 0:
+		peaktree2adj = []
+		for peakdict in peaktree2:
+			peakdict2adj = {}
+			#pprint.pprint(peakdict)
+			peakdict2adj['xcoord'] = peakdict['xcoord'] + imgdata1['image'].shape[1]
+			peakdict2adj['ycoord'] = peakdict['ycoord']
+			peakdict2adj['peakarea'] = 1
+			peakdict2adj['tmplnum'] = 2
+			peaktree2adj.append(peakdict2adj.copy())
+		#pprint.pprint(peaktree2adj)
+		drawPeaks(peaktree2adj, draw, bin, binpixrad)
+	image = Image.blend(image, image2, 0.9) 
+
+	outfile1 = os.path.join(jpegdir, imgname1+".prtl.jpg")
+	print " ... writing peak JPEG: ",outfile1
+	image.save(outfile1, "JPEG", quality=95)
+	outfile2 = os.path.join(jpegdir, imgname2+".prtl.jpg")
+	print " ... writing peak JPEG: ",outfile2
+	image.save(outfile2, "JPEG", quality=95)
 
 	return
 
