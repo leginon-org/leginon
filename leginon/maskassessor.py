@@ -177,10 +177,7 @@ class MaskAssessor(imageassessor.ImageAssessor):
 				
 			binning = parentimg.shape[0]/imarray.shape[0]
 			parentimg=imagefun.bin(parentimg,binning)
-			if imarray.max() != 0:
-				overlay=parentimg+imarray*alpha*(parentimg.max()-parentimg.min())/imarray.max()
-			else:
-				overlay=parentimg
+			overlay = apMask(overlayMask(parentimg,imarray)
 			self.setImage(overlay, 'Mask')
 			imarray=parentimg
 		self.setImage(imarray, 'Image')
