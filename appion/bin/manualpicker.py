@@ -12,6 +12,7 @@ import appionData
 import apParticle
 import apDatabase
 import apDisplay
+import apMask
 try:
 	from gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
 except ImportError:
@@ -54,6 +55,7 @@ class PickerApp(wx.App):
 			display=wx.RED, target=True, numbers=True)
 		self.panel.setTargets('Select Particles', [])
 		self.panel.selectiontool.setTargeting('Select Particles', True)
+
 		self.panel.SetMinSize((300,300))
 		self.sizer.Add(self.panel, 1, wx.EXPAND)
 		### END IMAGE PANEL
@@ -282,6 +284,16 @@ class manualPicker(particleLoop.ParticleLoop):
 						str(i)+":"+str(manparamsq[i])+" not equal to "+str(manparamsdata[0][i]))
 		return
 
+	def showMask(self,imgfile,imgdata):
+		self.filename = imgfile
+		image = pyami.mrc.read(imgfile)
+		sessiondata = self.params['session']
+		maskassessname = self.params['checkMask']
+		mask,maskbin = apMask.makeInspectedMask(sessiondata,maskassessname,imgdata)
+		overlay = apMask.overlayMask(image,mask)
+		self.app.panel.setImage(overlay.astype(numpy.float32))
+
+	
 	def runManualPicker(self, imgdata):
 		#reset targets
 		self.app.panel.setTargets('Select Particles', [])
@@ -294,7 +306,10 @@ class manualPicker(particleLoop.ParticleLoop):
 		#open new file
 		imgname = imgdata['filename']+'.dwn.mrc'
 		imgpath = os.path.join(self.params['rundir'],imgname)
-		self.app.panel.openImageFile(imgpath)
+		if not self.params['checkMask']:
+			self.app.panel.openImageFile(imgpath)
+		else:
+			self.showMask(imgpath,imgdata)
 
 		targets = self.getParticlePicks(imgdata)
 		if targets:

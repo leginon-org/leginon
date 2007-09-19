@@ -509,7 +509,8 @@ def arrayMaskToPngAlpha(numer,filename, msg=True):
 	return
 	
 def PngAlphaToBinarryArray(filename):
-	alphaarray = readPNG(filename)
+	RGBAarray = readPNG(filename)
+	alphaarray = RGBAarray[:,:,3]
 	masked_alphaarray = ma.masked_greater_equal(alphaarray,50)
 	bmask = masked_alphaarray.filled(1)
 	return alphaarray

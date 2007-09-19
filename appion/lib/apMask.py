@@ -4,6 +4,8 @@ import numpy
 #sinedon
 import sinedon.data as data
 import sinedon.newdict as newdict
+#pyami
+import pyami.imagefun as imagefun
 #leginon
 import leginondata
 #appion
@@ -257,6 +259,7 @@ def makeInspectedMask(sessiondata,maskassessname,imgdata):
 		maskarray = getMaskArray(maskrundata,imgdata)
 		maskarray = apCrud.makeKeepMask(maskarray,keeplist)
 		extrabin = maxbin/maskbins[i]
+		print maskarray.shape
 		if extrabin > 1:
 			maskarray = apImage.binImg(maskarray, extrabin)
 			
@@ -272,8 +275,25 @@ def makeInspectedMask(sessiondata,maskassessname,imgdata):
 	
 	return allmaskarray,maxbin
 	
-				
-
+def overlayMask(image,mask):
+	imageshape=image.shape
+	maskshape=mask.shape
+	alpha = 0.5
+	
+	if not (mask):
+		return image
+	
+	if maskshape != imageshape:
+		binning = maskshape[0]/imageshape[0]
+		maskbinned = imagefun.bin(mask,binning)
+	else:
+		maskbinned = mask
+	if mask.max() !=0:
+		overlay=image+maskbinned*alpha*(image.max()-image.min())/mask.max()
+	else:
+		overlay=image
+					
+	return overlay
 
 if __name__ == '__main__':
 	assessrun = appiondb.direct_query(appionData.ApMaskAssessmentRunData,11)

@@ -155,6 +155,7 @@ class ParticleLoop(appionLoop.AppionLoop):
 		self.params['autopik']=0
 		self.params['box']=0
 		self.params['defocpair']=False
+		self.params['checkMask']=None
 		self.particleDefaultParams()
 
 	def specialCreateOutputDirs(self):
@@ -202,6 +203,8 @@ class ParticleLoop(appionLoop.AppionLoop):
 				self.params['shiftonly']=True
 			elif (elements[0]=='box'):
 				self.params['box']=int(elements[1])
+			elif (elements[0]=='maskassess'):
+				self.params['checkMask']=elements[1]
 			else:
 				newargs.append(arg)
 
