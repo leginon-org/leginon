@@ -126,6 +126,5 @@ def affineToText(matrix):
 		tilt = degrees(math.cos(tiltv))
 	rot = degrees(math.asin(rotv))
 	return "tiltang = %.2f, rotation = %.2f, shift = %.2f,%.2f"
-
-if __name__ == "__main__":
+	
 
