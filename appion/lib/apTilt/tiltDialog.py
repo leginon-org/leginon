@@ -2,7 +2,10 @@ import wx
 import numpy
 import pprint
 from gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
-import radermacher
+try:
+	import radermacher
+except:
+	pass
 from apTilt import apTiltTransform
 
 ##

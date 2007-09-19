@@ -12,8 +12,8 @@ import ImageDraw
 import apImage
 import time
 import cPickle
+import apSpider
 from gui.wx import TargetPanel, ImagePanelTools
-import radermacher
 from scipy import ndimage, optimize
 from apTilt import tiltDialog
 from apTilt import apTiltTransform
@@ -491,6 +491,15 @@ class PickerApp(wx.App):
 	def savePicks(self):
 		self.data['savetime'] = time.asctime()+" "+time.tzname[time.daylight]
 		self.data['filetype'] = self.filetypes[self.data['filetypeindex']]
+		targets1 = self.panel1.getTargets('Picked')
+		targets2 = self.panel2.getTargets('Picked')
+		if len(targets1) < 1 or len(targets2) < 1:
+			self.statbar.PushStatusText("ERROR: Cannot save file. Not enough picks", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot save file.\nNot enough picks\n(less than 4 particle pairs)",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
 		if True: #try:
 			if self.data['filetypeindex'] == 0:
 				self.savePicksToTextFile()
@@ -504,7 +513,7 @@ class PickerApp(wx.App):
 				raise NotImplementedError
 			sys.stderr.write("Saved particles and parameters to '"+self.data['outfile']+\
 				"' of type "+self.data['filetype']+"\n")
-		if False: #except:
+		elif False: #except:
 			self.statbar.PushStatusText("ERROR: Saving to file '"+self.data['outfile']+"' failed", 0)
 			dialog = wx.MessageDialog(self.frame, "Saving to file '"+self.data['outfile']+"' failed", 'Error', wx.OK|wx.ICON_ERROR)
 			if dialog.ShowModal() == wx.ID_OK:
@@ -516,13 +525,6 @@ class PickerApp(wx.App):
 		targets1 = self.panel1.getTargets('Picked')
 		targets2 = self.panel2.getTargets('Picked')
 		filename = os.path.basename(filepath)
-		if len(targets1) < 1 or len(targets2) < 1:
-			self.statbar.PushStatusText("ERROR: Cannot save file. Not enough picks", 0)
-			dialog = wx.MessageDialog(self.frame, "Cannot save file.\nNot enough picks\n(less than 1 particle pair)",\
-				'Error', wx.OK|wx.ICON_ERROR)
-			dialog.ShowModal()
-			dialog.Destroy()
-			return False
 		f = open(filepath, "w")
 		f.write( "image 1: "+self.panel1.filename+"\n" )
 		for target in targets1:
@@ -550,70 +552,54 @@ class PickerApp(wx.App):
 		targets1 = self.panel1.getTargets('Picked')
 		targets2 = self.panel2.getTargets('Picked')
 		filename = os.path.basename(filepath)
-		if len(targets1) < 3 or len(targets2) < 3:
-			self.statbar.PushStatusText("ERROR: Cannot save file. Not enough picks", 0)
-			dialog = wx.MessageDialog(self.frame, "Cannot save file.\nNot enough picks\n(less than 4 particle pairs)",\
-				'Error', wx.OK|wx.ICON_ERROR)
-			dialog.ShowModal()
-			dialog.Destroy()
-			return False
 		f = open(filepath, "w")
+		f.write("; ApTiltPicker complete parameter dump:\n")
+		f.write( ";   parameter : value\n")
 		for k,v in self.data.items():
 			if type(v) in [type(1), type(1.0), type(""),]:
-				f.write( "; "+str(k)+" : "+str(v)+"\n")
-		f.write( "; image 1: "+self.panel1.filename+"\n" )
+				f.write( ";   "+str(k)+" : "+str(v)+"\n")
+		#PARAMETERS
+		f.write("; \n; \n; PARAMETERS\n")
+		f.write(apSpider.spiderOutputLine(1, 6, 0.0, 0.0, 0.0, 0.0, 111.0, 1.0))
+		f.write("; FITTED FLAG\n")
+		f.write(apSpider.spiderOutputLine(2, 6, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0))
+		f.write("; (X0,Y0) FOR LEFT IMAGE1, (X0s,Y0s) FOR RIGHT IMAGE2, REDUCTION FACTOR\n")
+		f.write(apSpider.spiderOutputLine(3, 6, 
+			self.data['point1'][0], self.data['point1'][1], 
+			self.data['point2'][0], self.data['point2'][1], 
+			1.0, 0.0))
+		f.write("; TILT ANGLE (THETA), LEFT IMAGE1 ROTATION (GAMMA), RIGHT IMAGE2 ROTATION (PHI)\n")
+		f.write(apSpider.spiderOutputLine(4, 6, 
+			self.data['theta'], self.data['gamma'], self.data['phi'],
+			0.0, 0.0, 0.0))
+
+		#IMAGE 1
+		f.write( "; left image 1: "+self.panel1.filename+"\n" )
 		for i,target in enumerate(targets1):
-			j = i+1
-			prefix = "%04d %1d" % (j, 6)
-			istr = apDisplay.leftPadString("%4.6f" % j, n=12)
-			xstr = apDisplay.leftPadString("%4.6f" % target.x, n=12)
-			ystr = apDisplay.leftPadString("%4.6f" % target.y, n=12)
-			onestr = apDisplay.leftPadString("%4.6f" % 1.0, n=12)
-			f.write(prefix+istr+xstr+ystr+xstr+ystr+onestr+"\n")
-		f.write( "; image 2: "+self.panel2.filename+"\n" )
+			line = apSpider.spiderOutputLine(i+1, 6, i+1, target.x, target.y, target.x, target.y, 1.0)
+			f.write(line)
+
+		#IMAGE 2
+		f.write( "; right image 2: "+self.panel2.filename+"\n" )
 		for i,target in enumerate(targets2):
-			j = i+1
-			prefix = "%04d %1d" % (j, 6)
-			istr = apDisplay.leftPadString("%4.6f" % j, n=12)
-			xstr = apDisplay.leftPadString("%4.6f" % target.x, n=12)
-			ystr = apDisplay.leftPadString("%4.6f" % target.y, n=12)
-			onestr = apDisplay.leftPadString("%4.6f" % 1.0, n=12)
-			f.write(prefix+istr+xstr+ystr+xstr+ystr+onestr+"\n")
+			line = apSpider.spiderOutputLine(i+1, 6, i+1, target.x, target.y, target.x, target.y, 1.0)
+			f.write(line)
+
 		f.close()
 		self.statbar.PushStatusText("Saved "+str(len(targets1))+" particles and parameters to "+self.data['outfile'], 0)
 		return True
 
-	#---------------------------------------
-	def savePicksToPickleFile(self):
-		sys.stderr.write("p1")
-		filepath = os.path.join(self.data['dirname'], self.data['outfile'])
-		sys.stderr.write("p2")
-		self.data['targets1'] = self.targetsToArray(self.panel1.getTargets('Picked'))
-		self.data['targets2'] = self.targetsToArray(self.panel2.getTargets('Picked'))
-		sys.stderr.write("p3")
-		f = open(filepath, 'w')
-		sys.stderr.write("p4")
-		cPickle.dump(self.data, f)
-		sys.stderr.write("p5")
-		f.close()
-		sys.stderr.write("p6")
-		self.statbar.PushStatusText("Saved "+str(len(self.data['targets1']))+" particles and parameters to "+self.data['outfile'], 0)
-		sys.stderr.write("p7")
-		return True
 
 	#---------------------------------------
-	def onFileOpen(self, evt):
-		dlg = wx.FileDialog(self.frame, "Choose a pick file to open", self.data['dirname'], "", \
-			self.filetypesel, wx.OPEN)
-		if 'filetypeindex' in self.data and self.data['filetypeindex'] is not None:
-			dlg.SetFilterIndex(self.data['filetypeindex'])
-		if dlg.ShowModal() == wx.ID_OK:
-			self.data['outfile'] = dlg.GetFilename()
-			self.data['dirname']  = os.path.abspath(dlg.GetDirectory())
-			self.data['filetypeindex'] = dlg.GetFilterIndex()
-			self.data['filetype'] = self.filetypes[self.data['filetypeindex']]
-			self.openPicks()
-		dlg.Destroy()
+	def savePicksToPickleFile(self):
+		filepath = os.path.join(self.data['dirname'], self.data['outfile'])
+		self.data['targets1'] = self.targetsToArray(self.panel1.getTargets('Picked'))
+		self.data['targets2'] = self.targetsToArray(self.panel2.getTargets('Picked'))
+		f = open(filepath, 'w')
+		cPickle.dump(self.data, f)
+		f.close()
+		self.statbar.PushStatusText("Saved "+str(len(self.data['targets1']))+" particles and parameters to "+self.data['outfile'], 0)
+		return True
 
 	#---------------------------------------
 	def guessFileType(self, filepath):
@@ -632,6 +618,7 @@ class PickerApp(wx.App):
 		self.data['filetype'] = self.filetypes[self.data['filetypeindex']]
 		return
 
+	#---------------------------------------
 	def getExtension(self):
 		if self.data['filetypeindex'] == 0:
 			self.data['extension'] = "txt"
@@ -646,12 +633,25 @@ class PickerApp(wx.App):
 		return self.data['extension']
 
 	#---------------------------------------
+	def onFileOpen(self, evt):
+		dlg = wx.FileDialog(self.frame, "Choose a pick file to open", self.data['dirname'], "", \
+			self.filetypesel, wx.OPEN)
+		if 'filetypeindex' in self.data and self.data['filetypeindex'] is not None:
+			dlg.SetFilterIndex(self.data['filetypeindex'])
+		if dlg.ShowModal() == wx.ID_OK:
+			self.data['outfile'] = dlg.GetFilename()
+			self.data['dirname']  = os.path.abspath(dlg.GetDirectory())
+			self.data['filetypeindex'] = dlg.GetFilterIndex()
+			self.data['filetype'] = self.filetypes[self.data['filetypeindex']]
+			self.openPicks()
+		dlg.Destroy()
+
+	#---------------------------------------
 	def openPicks(self, filepath=None):
 		if filepath is None:
 			filepath = os.path.join(self.data['dirname'],self.data['outfile'])
 		if self.data['filetypeindex'] is None:
 			self.guessFileType(filepath)
-		self.data['opentime'] = time.asctime()+" "+time.tzname[time.daylight]
 		if True: #try:
 			if self.data['filetypeindex'] == 0:
 				self.openPicksFromTextFile(filepath)
@@ -670,6 +670,7 @@ class PickerApp(wx.App):
 			dialog = wx.MessageDialog(self.frame, "Opening file '"+self.data['outfile']+"' failed", 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()	
+		self.data['opentime'] = time.asctime()+" "+time.tzname[time.daylight]
 
 	#---------------------------------------
 	def openPicksFromTextFile(self, filepath=None):
@@ -772,14 +773,14 @@ class PickerApp(wx.App):
 	def openLeftImage(self,filename):
 		if filename:
 			self.data['image1file'] = os.path.basename(filename)
-			self.data['image1path'] = os.path.dirname(filename)
+			self.data['image1path'] = os.path.abspath(os.path.dirname(filename))
 			app.panel1.openImageFile(filename)
 
 	#---------------------------------------
 	def openRightImage(self,filename):
 		if filename:
 			self.data['image2file'] = os.path.basename(filename)
-			self.data['image2path'] = os.path.dirname(filename)
+			self.data['image2path'] = os.path.abspath(os.path.dirname(filename))
 			app.panel2.openImageFile(filename)
 
 if __name__ == '__main__':
