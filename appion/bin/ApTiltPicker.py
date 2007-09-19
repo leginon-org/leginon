@@ -199,6 +199,10 @@ class PickerApp(wx.App):
 		self.frame.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
 		self.buttonrow.Add(self.quit, 0, wx.ALL, 1)
 
+		self.importpicks = wx.Button(self.frame, -1, '&Import Picks from DB')
+		self.frame.Bind(wx.EVT_BUTTON, self.onImportPicks, self.importpicks)
+		self.buttonrow.Add(self.importpicks, 0, wx.ALL, 1)
+
 		return
 
 	#---------------------------------------
@@ -797,6 +801,7 @@ if __name__ == '__main__':
 		except IndexError:
 			files.append(None)
 
+	print dir(PickerApp)
 	app = PickerApp(0)
 	app.openLeftImage(files[0])
 	app.openRightImage(files[1])
