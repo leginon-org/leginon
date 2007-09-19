@@ -25,13 +25,17 @@ def FindRegions(image, minsize=3, maxsize=0.8, blur=0, sharpen=0, WoB=True, BoW=
 		Scan for black regions on white background (True/False)
 
 	Output:
-		Numpy 2xN List of Coordinates
+		List of Dictionaries with Region Coordinates
 		Numpy Image Array
 	"""
 	try:
 		return libCV.FindRegions(image1, minsize, maxsize, blur, sharpen, WoB, BoW)
 	except:
-		return numpy.zeros([4,2], dtype=numpy.float32), numpy.zeros([4,4], dtype=numpy.float32)
+		regions = [
+			{'regionEllipse': numpy.zeros([3], dtype=numpy.float32) },
+			{'regionEllipse': numpy.ones([3], dtype=numpy.float32) },
+		]
+		return regions, dtype=numpy.float32)
 	#return threading.Thread(target=libCV.FindRegions, args=(image1, image2, minsize, maxsize, blur, sharpen, WoB, BoW)).start()
 
 	print ""
