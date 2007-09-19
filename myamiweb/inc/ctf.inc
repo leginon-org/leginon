@@ -269,7 +269,7 @@ class ctfdata {
 				."	) ctfdata ";
 				// if $limit is specified, report only values with confidences > $limit
 				if ($limit){
-					$q .= " where ctfdata.confidence > $limit || ctfdata.confidence_d > $limit ";
+					$q .= " where sqrt(ctfdata.confidence * ctfdata.confidence_d) > $limit ";
 				}
 				$q .= " group by ctfdata.name ";
 			$r = $this->mysql->getSQLResult($q);
