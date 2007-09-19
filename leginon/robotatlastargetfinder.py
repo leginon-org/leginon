@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotatlastargetfinder.py,v $
-# $Revision: 1.25 $
+# $Revision: 1.26 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-07-04 01:07:58 $
-# $Author: acheng $
+# $Date: 2007-09-19 18:27:42 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -25,7 +25,7 @@ import project
 import calibrationclient
 import targethandler
 import gui.wx.RobotAtlasTargetFinder
-import libCV
+import libCVwrapper
 
 class TargetError(Exception):
 	pass
@@ -565,7 +565,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			image2 = centerimagedata2['image']
 			self.logger.info('Calculating main transform...')
 			resultold = align.findRotationScaleTranslation(image1, image2)
-			resultmatrix = libCV.MatchImages(image1, image2,0.00015,0.9,0.0,0.0,1,1)
+			resultmatrix = libCVwrapper.MatchImages(image1, image2)
 			# The following conversion may be incorrect
 			rotation = math.atan2(resultmatrix[(0,1)],resultmatrix[(1,1)])
 			scale = 1

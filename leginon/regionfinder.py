@@ -12,7 +12,7 @@ import data
 import targetfinder
 import threading
 import gui.wx.RegionFinder
-import libCV
+import libCVwrapper
 import raster
 import polygon
 import math
@@ -43,14 +43,14 @@ class RegionFinder(targetfinder.TargetFinder):
 		minsize = self.settings['min region area']
 		maxsize = self.settings['max region area']
 		velimit = self.settings['ve limit']
-		regions,image = libCV.FindRegions(self.currentimagedata['image'], minsize, maxsize, 0, 0, 0, 1, 5)
+		regions,image = libCVwrapper.FindRegions(self.currentimagedata['image'], minsize, maxsize)
 		self.regionarrays = []
 		displaypoints = []
 		for i,region in enumerate(regions):
 			regionarray = region['regionBorder']
 			self.logger.info('Region %d has %d points' % (i, regionarray.shape[1]))
 			## reduce to 20 points
-			regionarray = libCV.PolygonVE(regionarray, velimit)
+			regionarray = libCVwrapper.PolygonVE(regionarray, velimit)
 			regionarray.transpose()
 			self.regionarrays.append(regionarray)
 

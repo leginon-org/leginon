@@ -22,7 +22,7 @@ import scipy.ndimage as nd
 import mosaictargetfinder
 import gui.wx.MosaicSectionFinder
 import os
-import libCV
+import libCVwrapper
 import math
 import polygon
 import raster
@@ -117,7 +117,7 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 						regionarray = region['regionBorder']
 #						self.logger.info('Region %d has %d points' % (i, regionarray.shape[1]))
 						## reduce to 20 points
-						regionarray = libCV.PolygonVE(regionarray, velimit)
+						regionarray = libCVwrapper.PolygonVE(regionarray, velimit)
 						rregionarray = regionarray.transpose()
 						regionarrays.append(rregionarray)
 						regionellipses.append(regionellipse)
@@ -302,7 +302,7 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 				minsize1 = onesectionmin
 				maxsize1 = multisections
 				m = numpy.clip(self.mosaicimage, mint, maxt1)
-				regions,image = libCV.FindRegions(m, minsize1, maxsize1, 0, 0, False,True)
+				regions,image = libCVwrapper.FindRegions(m, minsize1, maxsize1, WoB=False)
 				sectionarrays,sectionellipses,sectiondisplaypoints = self.reduceRegions(regions,axisratiolimits,velimit,None)
 				minsize1 = stepscale*onesectionmin
 				maxt1 += stepmaxt
@@ -385,7 +385,7 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 				mint2a = avgt-(maxt2-mint)*tissuecontrast/2
 				maxt2a = avgt+(maxt2-mint)*tissuecontrast/2
 				m = numpy.clip(self.mosaicimage, mint2a, maxt2a)
-				regions,image = libCV.FindRegions(m, minsize, maxsize, 0, 0, white_on_black,black_on_white)
+				regions,image = libCVwrapper.FindRegions(m, minsize, maxsize, WoB=white_on_black, BoW=black_on_white)
 				regionarrays,regionellipses,displaypoints = self.reduceRegions(regions,[1.0,self.settings['axis ratio']],velimit,sectionimage)
 				minsize = stepscale*minsize
 				maxt2 = maxt2-stepscale*bkgrndstddev*tissuecontrast

@@ -22,7 +22,6 @@ import gui.wx.TargetFinder
 import gui.wx.ClickTargetFinder
 import gui.wx.MosaicClickTargetFinder
 import os
-import libCV
 import math
 import polygon
 import raster

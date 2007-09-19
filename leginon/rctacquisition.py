@@ -8,7 +8,7 @@
 import data
 import acquisition
 import gui.wx.RCTAcquisition
-import libCV
+import libCVwrapper
 import numpy
 import time
 import math
@@ -280,12 +280,10 @@ class RCTAcquisition(acquisition.Acquisition):
 			self.logger.info('Craig stuff')
 			minsize = self.settings['minsize']
 			maxsize = self.settings['maxsize']
-			blur = 0
-			sharpen = 0
-			self.checkArrayMinMax(arrayold, arraynew)
-			result = libCV.MatchImages(arrayold, arraynew, minsize, maxsize, blur, sharpen, 1, 1)
+			libCVwrapper.checkArrayMinMax(arrayold, arraynew)
+			result = libCVwrapper.MatchImages(arrayold, arraynew, minsize, maxsize)
 
-			check = self.checkLibCVResult(result)
+			check = libCVwrapper.checkLibCVResult(result)
 			if check is False:
 				self.logger.error("libCV failed: redoing tilt")
 				#redo this tilt; becomes an infinite loop if the image goes black
@@ -297,11 +295,11 @@ class RCTAcquisition(acquisition.Acquisition):
 				continue
 			print '============ Craig stuff done ============'
 
-			self.logger.info( "Inter Matrix: "+affineToText(result) )
+			self.logger.info( "Inter Matrix: "+libCVwrapper.affineToText(result) )
 
 			runningresult = numpy.dot(runningresult, result)
 			self.transformTargets(runningresult, tilt0targets)
-			self.logger.info( "Running Matrix: "+affineToText(runningresult) )
+			self.logger.info( "Running Matrix: "+libCVwrapper.affineToText(runningresult) )
 			imageold = imagenew
 			arrayold = arraynew
 
@@ -316,44 +314,9 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.setTargets([], 'Peak')
 		self.publishDisplayWait(imagedata)
 
-		self.logger.info( "FINAL Matrix: "+affineToText(runningresult) )
+		self.logger.info( "FINAL Matrix: "+libCVwrapper.affineToText(runningresult) )
 		#self.logger.info('Final Matrix: %s' % (runningresult,))
 		return (runningresult, imagedata)
-
-	def affineToText(matrix):
-		tiltv = matrix[0,0] * matrix[1,1]
-		rotv = (matrix[0,1] - matrix[1,0]) / 2.0
-		if tiltv > 1:
-			tilt = degrees(math.cos(1.0/tiltv))
-		else:
-			tilt = degrees(math.cos(tiltv))
-		rot = degrees(math.asin(rotv))
-		return "tiltang = %.2f, rotation = %.2f, shift = %.2f,%.2f"
-		
-
-	def checkArrayMinMax(self, a1, a2):
-		a1b = ndimage.median_filter(a1, size=3)
-		min1 = ndimage.minimum(a1b)
-		max1 = ndimage.maximum(a1b)
-		if max1 - min1 < 10:
-			self.logger.error("Old Image Range Error %d" % int(max1 - min1))
-			return False
-		a2b = ndimage.median_filter(a2, size=3)
-		min2 = ndimage.minimum(a2b)
-		max2 = ndimage.maximum(a2b)
-		if max2 - min2 < 10:
-			self.logger.error("New Image Range Error %d" % int(max2 - min2))
-			return False
-		return True
-
-	def checkLibCVResult(self, result):
-		if result[0][0] < 0.5 or result[1][1] < 0.5:
-			self.logger.error("Bad libCV result: bad matrix")
-			return False
-		elif result[0][1] > 0.5 or result[1][0] > 0.5:
-			self.logger.error('Bad libCV result: too much rotation')
-			return False
-		return True
 
 	def alreadyAcquired(self, target, presetname):
 		return False
@@ -412,10 +375,10 @@ class RCTAcquisition(acquisition.Acquisition):
 		# find regions
 		minsize = self.settings['minsize']
 		maxsize = self.settings['maxsize']
-		regions, image = libCV.FindRegions(im, minsize, maxsize, 0, 0, 1, 1)
+		regions, image = libCVwrapper.FindRegions(im, minsize, maxsize)
 
 		# this is copied from targetfinder:
-		#regions,image = libCV.FindRegions(self.mosaicimage, minsize, maxsize, 0, 0, 0, 1, 5)
+		#regions,image = libCVwrapper.FindRegions(self.mosaicimage, minsize, maxsize)
 		n = len(regions)
 		self.logger.info('Regions found: %s' % (n,))
 		self.displayRegions(regions)
