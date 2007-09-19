@@ -10,7 +10,7 @@
 	<name>particle pick run id</name>
 	<description>Runid DEF_id of previous particle picker run</description>
 	<type>integer</type>
-	<default>None</default>
+	<default>0</default>
  </pickrunid>
  <overlapmult>
 	<modify>False</modify>
