@@ -35,7 +35,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 	def preLoopFunctions(self):
 		if self.params['dbimages']:
 			self.processAndSaveAllImages()
-		self.app = ApTiltPicker.PickerApp(0)
+		self.app = ApTiltPicker.PickerApp(mode='loop')
 		self.app.appionloop = self
 		#self.app.quit = wx.Button(self.app.frame, wx.ID_FORWARD, '&Forward')
 

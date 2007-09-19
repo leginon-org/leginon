@@ -129,3 +129,73 @@ def a2Toa1(a2, theta, gamma, phi, scale, point1, point2):
 	return a2b
 
 
+def maskOverlapRegion(image1, image2, ):
+		targets1 = self.panel1.getTargets('Picked')
+		targets2 = self.panel2.getTargets('Picked')
+		if len(targets1) == 0 or len(targets2) == 0:
+			self.statbar.PushStatusText("ERROR: Cannot mask images. Not enough picks", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot mask images.\nThere are no picks.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+		#GET IMAGES
+		self.panel1.openImageFile(self.panel1.filename)
+		self.panel2.openImageFile(self.panel2.filename)
+		image1 = numpy.asarray(self.panel1.imagedata, dtype=numpy.float32)
+		image2 = numpy.asarray(self.panel2.imagedata, dtype=numpy.float32)
+		#SET IMAGE LIMITS
+		gap = 16
+		xm = image1.shape[0]+gap
+		ym = image1.shape[1]+gap
+		a1 = numpy.array([ [targets1[0].x, targets1[0].y], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
+		xm = image2.shape[0]+gap
+		ym = image2.shape[1]+gap
+		a2 = numpy.array([ [targets2[0].x, targets2[0].y], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
+		#print "a1=",numpy.asarray(a1, dtype=numpy.int32)
+		#print "a2=",numpy.asarray(a2, dtype=numpy.int32)
+		#SET PARAMETERS
+		thetarad = self.data['theta']*math.pi/180.0
+		gammarad = self.data['gamma']*math.pi/180.0
+		phirad = self.data['phi']*math.pi/180.0
+		#CALCULATE TRANSFORM LIMITS
+		a1b = apTiltTransform.a1Toa2(a1, thetarad, gammarad, phirad,
+			self.data['scale'], self.data['point1'], self.data['point2'])
+		a2b = apTiltTransform.a2Toa1(a2, thetarad, gammarad, phirad,
+			self.data['scale'], self.data['point1'], self.data['point2'])
+		#CONVERT NUMPY TO LIST
+		a1blist = []
+		a2blist = []
+		for j in range(4):
+			for i in range(2):
+				item = int(a1b[j+1,i])
+				a1blist.append(item)
+				item = int(a2b[j+1,i])
+				a2blist.append(item)
+		#DRAW A POLYGON FROM THE LIMITS 1->2
+		#print "a1b=",numpy.asarray(a1b, dtype=numpy.int32)
+		#print "a1blist=",a1blist
+		mask2 = numpy.zeros(shape=image2.shape, dtype=numpy.bool_)
+		mask2b = apImage.arrayToImage(mask2, normalize=False)
+		mask2b = mask2b.convert("L")
+		draw2 = ImageDraw.Draw(mask2b)
+		draw2.polygon(a1blist, fill="white")
+		mask2 = apImage.imageToArray(mask2b, dtype=numpy.float32)
+		immin2 = ndimage.minimum(image2)+1.0
+		image2 = (image2+immin2)*mask2
+		immax2 = ndimage.maximum(image2)
+		image2 = numpy.where(image2==0,immax2,image2)
+		#DRAW A POLYGON FROM THE LIMITS 2->1
+		#print "a2b=",numpy.asarray(a2b, dtype=numpy.int32)
+		#print "a2blist=",a2blist
+		mask1 = numpy.zeros(shape=image1.shape, dtype=numpy.bool_)
+		mask1b = apImage.arrayToImage(mask1, normalize=False)
+		mask1b = mask1b.convert("L")
+		draw1 = ImageDraw.Draw(mask1b)
+		draw1.polygon(a2blist, fill="white")
+		mask1 = apImage.imageToArray(mask1b, dtype=numpy.float32)
+		immin1 = ndimage.minimum(image1)+1.0
+		image1 = (image1+immin1)*mask1
+		immax1 = ndimage.maximum(image1)
+		image1 = numpy.where(image1==0,immax1,image1)
+

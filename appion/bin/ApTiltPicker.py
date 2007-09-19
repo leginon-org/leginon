@@ -55,7 +55,11 @@ class TiltTargetPanel(TargetPanel.TargetImagePanel):
 
 #---------------------------------------
 class PickerApp(wx.App):
-	def OnInit(self, mode='default'):
+	def __init__(self, mode='default'):
+		self.mode = mode
+		wx.App.__init__(self)
+
+	def OnInit(self):
 		self.data = {}
 		self.onResetParams(None)
 		self.data['outfile'] = ""
@@ -74,9 +78,6 @@ class PickerApp(wx.App):
 		self.panel1.addTargetTool('Picked', color=wx.Color(215, 32, 32), shape='x', target=True, numbers=True)
 		self.panel1.setTargets('Picked', [])
 		self.panel1.selectiontool.setTargeting('Picked', True)
-		#self.panel1.addTargetTool('Numbered', color=wx.Color(170, 32, 32), shape='numbers')
-		#self.panel1.setTargets('Numbered', [])
-		#self.panel1.selectiontool.setDisplayed('Numbered', True)
 		self.panel1.addTargetTool('Aligned', color=wx.Color(32, 128, 215), shape='o')
 		self.panel1.setTargets('Aligned', [])
 		self.panel1.selectiontool.setDisplayed('Aligned', True)
@@ -88,15 +89,9 @@ class PickerApp(wx.App):
 		self.panel2.addTargetTool('Picked', color=wx.Color(32, 128, 215), shape='x', target=True, numbers=True)
 		self.panel2.setTargets('Picked', [])
 		self.panel2.selectiontool.setTargeting('Picked', True)
-		#self.panel2.addTargetTool('Numbered', color=wx.Color(32, 100, 170), shape='numbers')
-		#self.panel2.setTargets('Numbered', [])
-		#self.panel2.selectiontool.setDisplayed('Numbered', True)
 		self.panel2.addTargetTool('Aligned', color=wx.Color(215, 32, 32), shape='o')
 		self.panel2.setTargets('Aligned', [])
 		self.panel2.selectiontool.setDisplayed('Aligned', True)
-		#for tool in self.panel2.tools:
-		#	if isinstance(tool, ImagePanelTools.ValueTool):
-		#		tool.button.SetToggle(0)
 		#self.panel2.SetMinSize((256,256))
 		#self.panel2.SetBackgroundColour("pink")
 
@@ -123,7 +118,7 @@ class PickerApp(wx.App):
 		self.frame.Bind(wx.EVT_BUTTON, self.onMaskRegion, self.maskregion)
 		self.buttonrow.Add(self.maskregion, 0, wx.ALL, 1)
 
-		if mode == 'default':
+		if self.mode == 'default':
 			self.createMenuButtons()
 		else:
 			self.createLoopButtons()
@@ -207,35 +202,49 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def menuData(self):
-		return [
-			("&File", (
-				( "&Open", "Open picked particles from file", self.onFileOpen, wx.ID_OPEN ),
-				( "&Save", "Save picked particles to file", self.onFileSave, wx.ID_SAVE ),
-				( "Save &As...", "Save picked particles to new file", self.onFileSaveAs, wx.ID_SAVEAS ),
-				( "Save file type", (
-					( "&Text", "Readable text file", self.onSetFileType, -1, wx.ITEM_RADIO),
-					( "&XML", "XML file", self.onSetFileType, -1, wx.ITEM_RADIO),
-					( "&Spider", "Spider format file", self.onSetFileType, -1, wx.ITEM_RADIO),
-					( "&Pickle", "Python pickle file", self.onSetFileType, -1, wx.ITEM_RADIO),
+		if self.mode == 'default':
+			return [
+				("&File", (
+					( "&Open", "Open picked particles from file", self.onFileOpen, wx.ID_OPEN ),
+					( "&Save", "Save picked particles to file", self.onFileSave, wx.ID_SAVE ),
+					( "Save &As...", "Save picked particles to new file", self.onFileSaveAs, wx.ID_SAVEAS ),
+					( "Save file type", (
+						( "&Text", "Readable text file", self.onSetFileType, -1, wx.ITEM_RADIO),
+						( "&XML", "XML file", self.onSetFileType, -1, wx.ITEM_RADIO),
+						( "&Spider", "Spider format file", self.onSetFileType, -1, wx.ITEM_RADIO),
+						( "&Pickle", "Python pickle file", self.onSetFileType, -1, wx.ITEM_RADIO),
+					)),
+					( 0, 0, 0),
+					( "&Quit", "Exit the program / advance to next image", self.onQuit, wx.ID_EXIT ),
 				)),
-				( 0, 0, 0),
-				( "&Quit", "Exit the program / advance to next image", self.onQuit, wx.ID_EXIT ),
-			)),
-			("&Edit", (
-				( "&Clear", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
-				( "&Reset", "Reset parameters", self.onResetParams, wx.ID_RESET ),		
-			)),
-			("&Refine", (
-				( "Find &Theta", "Calculate theta from picked particles", self.onFitTheta ),
-				( "&Optimize Angles", "Optimize angles with least squares", self.onFitAll ),
-				( "&Apply", "Apply picks", self.onUpdate, wx.ID_APPLY ),
-				( "&Mask Overlapping Region", "Mask overlapping region", self.onMaskRegion ),
-			)),
-			("&Appion pipeline", (
-				( "&Import picks", "Import picked particles from previous run", self.onImportPicks ),
-				( "&Forward", "Advance to next image", self.onQuit, wx.ID_FORWARD ),
-			)),
-		]
+				("&Edit", (
+					( "&Clear", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
+					( "&Reset", "Reset parameters", self.onResetParams, wx.ID_RESET ),		
+				)),
+				("&Refine", (
+					( "Find &Theta", "Calculate theta from picked particles", self.onFitTheta ),
+					( "&Optimize Angles", "Optimize angles with least squares", self.onFitAll ),
+					( "&Apply", "Apply picks", self.onUpdate, wx.ID_APPLY ),
+					( "&Mask Overlapping Region", "Mask overlapping region", self.onMaskRegion ),
+				)),
+			]
+		else:
+			return [
+				("&Pipeline", (
+					( "&Import picks", "Import picked particles from previous run", self.onImportPicks ),
+					( "&Forward", "Advance to next image", self.onQuit, wx.ID_FORWARD ),
+				)),
+				("&Edit", (
+					( "&Clear", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
+					( "&Reset", "Reset parameters", self.onResetParams, wx.ID_RESET ),		
+				)),
+				("&Refine", (
+					( "Find &Theta", "Calculate theta from picked particles", self.onFitTheta ),
+					( "&Optimize Angles", "Optimize angles with least squares", self.onFitAll ),
+					( "&Apply", "Apply picks", self.onUpdate, wx.ID_APPLY ),
+					( "&Mask Overlapping Region", "Mask overlapping region", self.onMaskRegion ),
+				)),
+			]			
 
 	#---------------------------------------
 	def createMenuBar(self):
@@ -801,8 +810,7 @@ if __name__ == '__main__':
 		except IndexError:
 			files.append(None)
 
-	print dir(PickerApp)
-	app = PickerApp(0)
+	app = PickerApp()
 	app.openLeftImage(files[0])
 	app.openRightImage(files[1])
 	app.openPicks(files[2])
