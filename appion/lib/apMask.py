@@ -1,6 +1,7 @@
 #pythonlib
 import os
 import numpy
+import scipy.ndimage as nd
 #sinedon
 import sinedon.data as data
 import sinedon.newdict as newdict
@@ -278,14 +279,19 @@ def makeInspectedMask(sessiondata,maskassessname,imgdata):
 def overlayMask(image,mask):
 	imageshape=image.shape
 	maskshape=mask.shape
-	alpha = 0.5
+	alpha = 0.25
 	
-	if not (mask):
+	if mask is None:
 		return image
-	
+	print maskshape
+	print imageshape
 	if maskshape != imageshape:
-		binning = maskshape[0]/imageshape[0]
-		maskbinned = imagefun.bin(mask,binning)
+		binning = float(maskshape[0])/imageshape[0]
+		if binning > 1:
+			maskbinned = imagefun.bin(mask,binning)
+		else:
+			print binning
+			maskbinned = nd.zoom(mask,1/binning)
 	else:
 		maskbinned = mask
 	if mask.max() !=0:
