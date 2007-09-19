@@ -35,7 +35,7 @@ def FindRegions(image, minsize=3, maxsize=0.8, blur=0, sharpen=0, WoB=True, BoW=
 			{'regionEllipse': numpy.zeros([3], dtype=numpy.float32) },
 			{'regionEllipse': numpy.ones([3], dtype=numpy.float32) },
 		]
-		return regions, dtype=numpy.float32)
+		return regions, numpy.zeros([4,4], dtype=numpy.float32)
 	#return threading.Thread(target=libCV.FindRegions, args=(image1, image2, minsize, maxsize, blur, sharpen, WoB, BoW)).start()
 
 	print ""
