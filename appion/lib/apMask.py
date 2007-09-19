@@ -260,7 +260,6 @@ def makeInspectedMask(sessiondata,maskassessname,imgdata):
 		maskarray = getMaskArray(maskrundata,imgdata)
 		maskarray = apCrud.makeKeepMask(maskarray,keeplist)
 		extrabin = maxbin/maskbins[i]
-		print maskarray.shape
 		if extrabin > 1:
 			maskarray = apImage.binImg(maskarray, extrabin)
 			
@@ -283,8 +282,6 @@ def overlayMask(image,mask):
 	
 	if mask is None:
 		return image
-	print maskshape
-	print imageshape
 	if maskshape != imageshape:
 		binning = float(maskshape[0])/imageshape[0]
 		if binning > 1:
