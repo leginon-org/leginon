@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="us-ascii"?>
 <manualpicker>
+ <pickrunname>
+	<name>particle pick run name</name>
+	<description>Runid name of previous particle picker</description>
+	<type>string</type>
+	<default>None</default>
+ </pickrunname>
+ <pickrunid>
+	<name>particle pick run id</name>
+	<description>Runid DEF_id of previous particle picker run</description>
+	<type>integer</type>
+	<default>None</default>
+ </pickrunid>
  <overlapmult>
 	<modify>False</modify>
  </overlapmult>
