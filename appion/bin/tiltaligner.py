@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import wx
+import threading
 import appionLoop
 import particleLoop
 import apFindEM
@@ -54,11 +55,13 @@ class tiltAligner(particleLoop.ParticleLoop):
 		"""
 		put in any additional default parameters
 		"""
+		self.params['mapdir']="tiltalignmaps"
 		self.params['usepicks'] = False
 		self.params['outtype'] = 'pickle'
 		self.params['outtypeindex'] = None
 		self.params['pickrunname'] = None
 		self.params['pickrunid'] = None
+		self.assess = None
 
 	def particleParseParams(self, args):
 		"""
@@ -101,11 +104,18 @@ class tiltAligner(particleLoop.ParticleLoop):
 	def processImage(self, imgdata):
 		# run it
 		tiltdata = apTiltPair.getTiltPair(imgdata)
-		if tiltdata is not None:
-			self.runTiltAligner(imgdata, tiltdata)
+		if tiltdata is None:
+			return
 
-		#parse the data
-		#self.parseTiltParams()
+		self.runTiltAligner(imgdata, tiltdata)
+		numpeaks = len(self.peaktree1)
+		apDisplay.printMsg("Found "+str(numpeaks)+" particles for "+apDisplay.shortenImageName(imgdata['filename']))
+		self.stats['lastpeaks'] = numpeaks
+
+		if self.threadJpeg is True:
+			threading.Thread(target=apPeaks.createTiltedPeakJpeg, args=(imgdata, tiltdata, self.peaktree1, self.peaktree2, self.params)).start()
+		else:
+			apPeaks.createTiltedPeakJpeg(imgdata, tiltdata, self.peaktree1, self.peaktree2, self.params)
 
 	def commitToDatabase(self, imgdata):
 		"""
@@ -114,18 +124,22 @@ class tiltAligner(particleLoop.ParticleLoop):
 		tiltdata = apTiltPair.getTiltPair(imgdata)
 		if tiltdata is not None:
 			self.expid = int(imgdata['session'].dbid)
-			apTiltPair.insertTiltParams(imgdata, tiltdata, self.tiltparams)
+			import pprint
+			pprint.pprint(self.tiltparams)
+			apTiltPair.insertTiltTransform(imgdata, tiltdata, self.tiltparams)
+			self.insertTiltAlignParams()
 			if self.params['usepicks'] is True:
 				apParticle.insertParticlePeaks(self.peaktree1, imgdata, self.expid, self.params)
 				apParticle.insertParticlePeaks(self.peaktree2, tiltdata, self.expid, self.params)
 			if self.assess is not None:
 				apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], self.assess)
+				apDatabase.insertImgAssessmentStatus(tiltdata, self.params['runid'], self.assess)
 
 	###################################################
 	##### END PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
 	###################################################
 
-	def insertTiltAlignParams():
+	def insertTiltAlignParams(self):
 		### query for identical params ###
 		tiltparamsq = appionData.ApTiltAlignParamsData()
 	 	tiltparamsq['diam'] = self.params['diam']
@@ -133,24 +147,34 @@ class tiltAligner(particleLoop.ParticleLoop):
 	 	tiltparamsq['lp_filt'] = self.params['lp']
 	 	tiltparamsq['hp_filt'] = self.params['hp']
 	 	tiltparamsq['invert'] = self.params['invert']
-		tiltparamsq['output_type'] = self.param['outtype']
+		tiltparamsq['output_type'] = self.params['outtype']
 		if self.params['pickrunid'] is not None:
 			manparamsq['oldselectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunid'])
-		#tiltparamsdata = appiondb.query(tiltparamsq, results=1)
+		tiltparamsdata = self.appiondb.query(tiltparamsq, results=1)
 
 		### query for identical run name ###
 		runq = appionData.ApSelectionRunData()
 		runq['name'] = self.params['runid']
 		runq['dbemdata|SessionData|session'] = self.expid
-		runids = appiondb.query(runq, results=1)
+		runids = self.appiondb.query(runq, results=1)
 
 	 	# if no run entry exists, insert new run entry into dbappiondata
 	 	if not runids:
 			apDisplay.printMsg("Inserting new runId into database")
 			runq['tiltparams'] = tiltparamsq
-			appiondb.insert(runq)
+			self.appiondb.insert(runq)
+		else:
+			#make sure all params are the same as previous session
+			for pkey in tiltparamsq:
+				if tiltparamsq[pkey] != tiltparamsdata[0][pkey]:
+					print "All parameters for a particular manualpicker run must be identical"
+					print pkey,tiltparamsq[pkey],"not equal to",tiltparamsdata[0][pkey]
+					sys.exit(1)
+			for i in tiltparamsq:
+				if tiltparamsdata[0][i] != tiltparamsq[i]:
+					apDisplay.printError("All parameters for a particular manualpicker run must be identical\n"+
+						str(i)+":"+str(tiltparamsq[i])+" not equal to "+str(tiltparamsdata[0][i]))
 		return
-
 
 	def parseTiltParams(self):
 		theta = self.tiltparams['theta']
@@ -173,36 +197,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 				print "already processed: ",apDisplay.short(tiltdata['filename'])
 			else:
 				apFindEM.processAndSaveImage(tiltdata, params=self.params)
-
-	def insertTiltAlignParams(self, expid):
-		tiltparamsq=appionData.ApTiltParamsData()
-		tiltparamsq['diam']    = self.params['diam']
-		tiltparamsq['lp_filt'] = self.params['lp']
-		tiltparamsq['hp_filt'] = self.params['hp']
-		tiltparamsq['bin']     = self.params['bin']
-		tiltparamsdata = self.appiondb.query(tiltparamsq, results=1)
 		
-		runq=appionData.ApSelectionRunData()
-		runq['name'] = self.params['runid']
-		runq['dbemdata|SessionData|session'] = expid
-		runids = self.appiondb.query(runq, results=1)
-		
-		if not runids:
-			runq['tiltparams']=tiltparamsq
-			self.appiondb.insert(runq)
-		else:
-			#make sure all params are the same as previous session
-			for pkey in tiltparamsq:
-				if tiltparamsq[pkey] != tiltparamsdata[0][pkey]:
-					print "All parameters for a particular manualpicker run must be identical"
-					print pkey,tiltparamsq[pkey],"not equal to",tiltparamsdata[0][pkey]
-					sys.exit(1)
-			for i in tiltparamsq:
-				if tiltparamsdata[0][i] != tiltparamsq[i]:
-					apDisplay.printError("All parameters for a particular manualpicker run must be identical\n"+
-						str(i)+":"+str(tiltparamsq[i])+" not equal to "+str(tiltparamsdata[0][i]))
-		return
-
 	def runTiltAligner(self, imgdata, tiltdata):
 		#reset targets
 		self.app.onClearPicks(None)
@@ -212,7 +207,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 		tilt1 = apDatabase.getTiltAngleDeg(imgdata)
 		tilt2 = apDatabase.getTiltAngleDeg(tiltdata)
 		self.app.data['theta'] = tilt1 - tilt2
-		print "theta=",self.app.data['theta']
+		#print "theta=",self.app.data['theta']
 		#open new file
 		imgname = imgdata['filename']+".dwn.mrc"
 		imgpath = os.path.join(self.params['rundir'],imgname)

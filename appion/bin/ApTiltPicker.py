@@ -227,6 +227,10 @@ class PickerApp(wx.App):
 				( "&Apply", "Apply picks", self.onUpdate, wx.ID_APPLY ),
 				( "&Mask Overlapping Region", "Mask overlapping region", self.onMaskRegion ),
 			)),
+			("&Appion pipeline", (
+				( "&Import picks", "Import picked particles from previous run", self.onImportPicks ),
+				( "&Forward", "Advance to next image", self.onQuit, wx.ID_FORWARD ),
+			)),
 		]
 
 	#---------------------------------------
@@ -409,6 +413,10 @@ class PickerApp(wx.App):
 		return a
 
 	#---------------------------------------
+	def onImportPicks(self, evt):
+		return
+
+	#---------------------------------------
 	def onFitTheta(self, evt):
 		if len(self.panel1.getTargets('Picked')) > 3 and len(self.panel2.getTargets('Picked')) > 3:
 			self.theta_dialog.tiltvalue.SetLabel(label=("       %3.3f       " % self.data['theta']))
@@ -555,16 +563,18 @@ class PickerApp(wx.App):
 				f.write( "; "+str(k)+" : "+str(v)+"\n")
 		f.write( "; image 1: "+self.panel1.filename+"\n" )
 		for i,target in enumerate(targets1):
-			prefix = "%04d %1d" % (i, 6)
-			istr = apDisplay.leftPadString("%4.6f" % i, n=12)
+			j = i+1
+			prefix = "%04d %1d" % (j, 6)
+			istr = apDisplay.leftPadString("%4.6f" % j, n=12)
 			xstr = apDisplay.leftPadString("%4.6f" % target.x, n=12)
 			ystr = apDisplay.leftPadString("%4.6f" % target.y, n=12)
 			onestr = apDisplay.leftPadString("%4.6f" % 1.0, n=12)
 			f.write(prefix+istr+xstr+ystr+xstr+ystr+onestr+"\n")
 		f.write( "; image 2: "+self.panel2.filename+"\n" )
 		for i,target in enumerate(targets2):
-			prefix = "%04d %1d" % (i, 6)
-			istr = apDisplay.leftPadString("%4.6f" % i, n=12)
+			j = i+1
+			prefix = "%04d %1d" % (j, 6)
+			istr = apDisplay.leftPadString("%4.6f" % j, n=12)
 			xstr = apDisplay.leftPadString("%4.6f" % target.x, n=12)
 			ystr = apDisplay.leftPadString("%4.6f" % target.y, n=12)
 			onestr = apDisplay.leftPadString("%4.6f" % 1.0, n=12)
@@ -747,8 +757,11 @@ class PickerApp(wx.App):
 		targets2 = self.panel2.getTargets('Picked')
 		if len(targets1) > 0 and len(targets2) > 0:
 			#copy over the data
-			for i in 'theta','gamma','phi','scale', 'shiftx', 'shifty':
-				self.appionloop.tiltparams[i] = self.data[i]
+			for i,v in self.data.items():
+				if type(v) in [type(1), type(1.0), type(""), ]:
+					self.appionloop.tiltparams[i] = v
+				if 'point' in i:
+					self.appionloop.tiltparams[i] = v
 			self.appionloop.tiltparams['x1'] = targets1[0].x
 			self.appionloop.tiltparams['y1'] = targets1[0].y
 			self.appionloop.tiltparams['x2'] = targets2[0].x

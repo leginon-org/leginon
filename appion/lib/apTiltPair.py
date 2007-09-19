@@ -94,8 +94,9 @@ def tiltPickerToDbNames(tiltparams):
 	if 'point2' in tiltparams:
 		newdict['image2_x'] = tiltparams['point2'][0]
 		newdict['image2_y'] = tiltparams['point2'][1]
+	return newdict
 
-def insertTiltParams(imgdata1, imgdata2, tiltparams):
+def insertTiltTransform(imgdata1, imgdata2, tiltparams):
 	#First we need to sort imgdata
 	#'07aug30b_a_00013gr_00010sq_v01_00002sq_v01_00016en_00'
 	#'07aug30b_a_00013gr_00010sq_v01_00002sq_01_00016en_01'
@@ -113,15 +114,16 @@ def insertTiltParams(imgdata1, imgdata2, tiltparams):
 				return False
 
 	transq = appionData.ApImageTiltTransformData()
-	transq['dbemdata|AcquisitionImageData|image1'] = imgdata1
-	transq['dbemdata|AcquisitionImageData|image2'] = imgdata2
+	transq['dbemdata|AcquisitionImageData|image1'] = imgdata1.dbid
+	transq['dbemdata|AcquisitionImageData|image2'] = imgdata2.dbid
 	dbdict = tiltPickerToDbNames(tiltparams)
-	transq.update(dbdict)
-	for i in transq:
-		print i
-	apDisplay.printMsg("Inserting shift beteween "+apDisplay.short(imgdata1['filename'])+\
-		" and "+apDisplay.short(imgdata2['filename'])+" into database")
-	#appiondb.insert(transq)
+	if dbdict is not None:
+		for i,v in dbdict.items():
+			transq[i] = v
+			print i,v
+		apDisplay.printMsg("Inserting transform beteween "+apDisplay.short(imgdata1['filename'])+\
+			" and "+apDisplay.short(imgdata2['filename'])+" into database")
+		appiondb.insert(transq)
 	return
 
 

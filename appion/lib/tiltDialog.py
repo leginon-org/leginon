@@ -252,6 +252,10 @@ class FitAllDialog(wx.Dialog):
 			not self.shifttog.GetValue(),
 			), dtype=numpy.float32)
 		#print xscale
+		if len(a1) > len(a2):
+			a1 = a1[len(a2),:]
+		elif len(a2) > len(a1):
+			a2 = a2[len(a1),:]
 		self.lsfit = apTiltTransform.willsq(a1, a2, theta, gamma, phi, scale, shiftx, shifty, xscale)
 		#pprint.pprint(self.lsfit)
 		self.thetavalue.SetValue(round(self.lsfit['theta'],5))
