@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import threading
+import numpy
 try:
 	import libCV
 except:
@@ -23,7 +24,11 @@ def FindRegions(image, minsize=0.01, maxsize=0.9, blur=0, sharpen=0, WoB=True, B
 		Scan for white regions on black background (T/F)
 		Scan for black regions on white background (T/F)
 	"""
-	threading.Thread(target=libCV.FindRegions, args=(image1, image2, minsize, maxsize, blur, sharpen, WoB, BoW)).start()
+	try:
+		return libCV.FindRegions(image1, minsize, maxsize, blur, sharpen, WoB, BoW)
+	except:
+		return numpy.array([[0,0],[0,0]], dtype=numpy.float32)
+	#return threading.Thread(target=libCV.FindRegions, args=(image1, image2, minsize, maxsize, blur, sharpen, WoB, BoW)).start()
 
 	print ""
 
@@ -48,7 +53,11 @@ def MatchImages(image1, image2, minsize=0.01, maxsize=0.9, blur=0, sharpen=0, Wo
 		Scan for white regions on black background (T/F)
 		Scan for black regions on white background (T/F)		
 	"""
-	threading.Thread(target=libCV.MatchImages, args=(image1, image2, minsize, maxsize, blur, sharpen, WoB, BoW)).start()
+	try:
+		return libCV.MatchImages(image1, image2, minsize, maxsize, blur, sharpen, WoB, BoW)
+	except:
+		return numpy.array([0,0,0],[0,0,0],[0,0,0], dtype=numpy.float32)
+	#return threading.Thread(target=libCV.MatchImages, args=(image1, image2, minsize, maxsize, blur, sharpen, WoB, BoW)).start()
 
 	print ""
 
@@ -59,8 +68,11 @@ def PolygonVE(polygon, thresh):
 		numpy list of polygon vertices
 		threshold
 	"""
-
-	threading.Thread(target=libCV.PolygonVE, args=(polygon, thresh)).start()
+	try:
+		return libCV.PolygonVE(polygon, thresh)
+	except:
+		return None
+	#return threading.Thread(target=libCV.PolygonVE, args=(polygon, thresh)).start()
 	print ""
 
 if __name__ == "__main__":
