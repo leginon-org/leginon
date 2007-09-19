@@ -286,14 +286,12 @@ def batchBox(params, imgdict):
 	print "processing:",apDisplay.short(imgname)
 	if params['uncorrected']:
 		tmpname='temporaryCorrectedImage.mrc'
-		camera = imgdict['camera']
-		dark,norm = apImage.getDarkNorm(params['sessionname'], camera)
-		imgarray=apImage.old_correct(imgdict['image'],dark,norm)
-		input= os.path.join(params['outdir'],tmpname)
-		apImage.arrayToMrc(imgarray,input)
-		print "processing", input		
+		imgarray = apImage.correctImage(imgdict, params)
+		imgpath = os.path.join(params['outdir'],tmpname)
+		apImage.arrayToMrc(imgarray,imgpath)
+		print "processing", imgpath		
 	else:
-		input  = os.path.join(params['filepath'], imgname+".mrc")
+		imgpath = os.path.join(params['filepath'], imgname+".mrc")
 	output = os.path.join(params['outdir'], imgname+".hed")
 
 	# if getting particles from database, a temporary
@@ -337,11 +335,11 @@ def batchBox(params, imgdict):
 		nptcls=len(lines)
 		# write batchboxer command
 		if params['selexonId']:
-			cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(input, dbbox, output, params['boxSize'])
+			cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, dbbox, output, params['boxSize'])
 		elif params['boxSize']:
-			cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i insideonly" %(input, dbbox, output, params['boxSize'])
+			cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i insideonly" %(imgpath, dbbox, output, params['boxSize'])
 		else: 
-	 		cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(input, dbbox, output)
+	 		cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(imgpath, dbbox, output)
 	
 		apDisplay.printMsg("boxing "+str(nptcls)+" particles")
 		f=os.popen(cmd)
@@ -441,15 +439,15 @@ def phaseFlip(imgdata, params):
 def singleStack(params,imgdict):
 	imgname = imgdict['filename']
  	if params['phaseFlipped'] is True:
-		input = os.path.join(params['outdir'], imgname+'.ctf.hed')
+		imgpath = os.path.join(params['outdir'], imgname+'.ctf.hed')
 	else:
-		input = os.path.join(params['outdir'], imgname+'.hed')
+		imgpath = os.path.join(params['outdir'], imgname+'.hed')
 	output = os.path.join(params['outdir'], params['single'])
 
 	if params['normalized'] is False:
-		cmd="proc2d %s %s" %(input, output)
+		cmd="proc2d %s %s" %(imgpath, output)
 	else:
-		cmd="proc2d %s %s norm=0.0,1.0" %(input, output)
+		cmd="proc2d %s %s norm=0.0,1.0" %(imgpath, output)
 
 	# bin images is specified
 	if params['bin']:

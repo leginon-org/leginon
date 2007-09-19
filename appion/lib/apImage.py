@@ -22,10 +22,6 @@ except:
 	apDisplay.printError("pymai is required, type 'usepythoncvs'")
 #appion
 
-import apDB
-
-db=apDB.db
-
 def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, planeReg=True, median=0, invert=False):
 	"""
 	standard processing for an image
@@ -707,58 +703,16 @@ def readPNG(filename):
 	i = imageToArray(i)
 	return i
 
-### flatfield correction functions
-
-cache = {}
-def camkey(camstate):
-	return camstate['dimension']['x'], camstate['binning']['x'], camstate['offset']['x']
-
-def getDarkNorm(sessionname, cameraconfig):
-	'''
-	return the most recent dark and norm image from the given session
-	'''
-	camquery = leginondata.CorrectorCamstateData()
-	try:
-		camquery['dimension'] = cameraconfig['dimension']
-	except:
-		pass
-	try:
-		camquery['binning'] = cameraconfig['binning']
-	except:
-		pass
-	try:
-		camquery['offset'] = cameraconfig['offset']
-	except:
-		pass
-	#print 'CAMQUERY', camquery
-	key = camkey(camquery) 
-	if key in cache:
-		print 'using cache'
-		return cache[key]
-	
-	print 'querying dark,norm'
-	sessionquery = leginondata.SessionData(name=sessionname)
-	darkquery = leginondata.DarkImageData(session=sessionquery, camstate=camquery)
-	#print 'DARKQUERY', darkquery
-	normquery = leginondata.NormImageData(session=sessionquery, camstate=camquery)
-	darkdata = db.query(darkquery, results=1)
-	dark = darkdata[0]['image']
-	#print darkdata[0]
-	normdata = db.query(normquery, results=1)
-	norm = normdata[0]['image']
-	result = dark,norm
-	cache[key] = result
-
-	return result
-
-def old_correct(input, dark, norm):
-	'''
+def correctImage(rawimgdata, params):
+	"""
 	Correct an image using the old method:
 	- no bias correction
 	- dark correction is not time dependent
-	'''
-	corrected = norm * (input - dark)
-	return corrected
+	"""
+	rawimgarray = rawimgdata['image']
+	darkarray, normarray = apDatabase.getDarkNorm(params['sessionname'], imgdata['camera'])
+	correctedimgarray = normarray * (rawimgarray - darkarray)
+	return correctedimgarray
 
 def frame_constant(a, shape, cval=0):
 	"""
@@ -768,7 +722,8 @@ def frame_constant(a, shape, cval=0):
 
 	>>> a = num.arange(16, shape=(4,4))
 	>>> frame_constant(a, (8,8), cval=42)
-	array([[42, 42, 42, 42, 42, 42, 42, 42],
+	array(
+			[[42, 42, 42, 42, 42, 42, 42, 42],
 		   [42, 42, 42, 42, 42, 42, 42, 42],
 		   [42, 42,  0,  1,  2,  3, 42, 42],
 		   [42, 42,  4,  5,  6,  7, 42, 42],

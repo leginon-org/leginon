@@ -299,3 +299,40 @@ def getImgAssessmentStatusREFLEGINON(imgdata):
 		elif assessdata[0]['selectionkeep'] == 0:
 			return False
 	return None
+
+### flatfield correction functions
+
+cache = {}
+def camkey(camstate):
+	return camstate['dimension']['x'], camstate['binning']['x'], camstate['offset']['x']
+
+def getDarkNorm(sessionname, cameraconfig):
+	"""
+	return the most recent dark and norm image from the given session
+	"""
+	camquery = leginondata.CorrectorCamstateData()
+	for i in ('dimension', 'binning', 'offset'):
+		try:
+			camquery[i] = cameraconfig[i]
+		except:
+			pass
+	#print 'CAMQUERY', camquery
+	key = camkey(camquery) 
+	if key in cache:
+		print 'using cache'
+		return cache[key]
+	
+	print 'querying dark,norm'
+	sessionquery = leginondata.SessionData(name=sessionname)
+	darkquery = leginondata.DarkImageData(session=sessionquery, camstate=camquery)
+	#print 'DARKQUERY', darkquery
+	normquery = leginondata.NormImageData(session=sessionquery, camstate=camquery)
+	darkdata = db.query(darkquery, results=1)
+	dark = darkdata[0]['image']
+	#print darkdata[0]
+	normdata = db.query(normquery, results=1)
+	norm = normdata[0]['image']
+	result = dark,norm
+	cache[key] = result
+
+	return result

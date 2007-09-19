@@ -25,13 +25,10 @@ def runAce(matlab, imgdata, params):
 	
 	if params['uncorrected']:
 		tmpname='temporaryCorrectedImage.mrc'
-		camera = imgdata['camera']
-		dark,norm = apImage.getDarkNorm(params['sessionname'], camera)
-		imgarray=apImage.old_correct(imgdata['image'],dark,norm)
-		imgpath= os.path.join(params['rundir'],tmpname)
-		apImage.arrayToMrc(imgarray,imgpath)
+		imgarray = apImage.correctImage(imgdata, params)
+		imgpath = os.path.join(params['rundir'],tmpname)
+		apImage.arrayToMrc(imgarray, imgpath)
 		print "processing", imgpath
-		
 	else:	
 		imgpath = os.path.join(imgdata['session']['image path'], imgname+'.mrc')
 

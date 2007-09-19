@@ -137,12 +137,10 @@ def findEMString(classavg, imgname, ccmapfile, params):
 def processAndSaveImage(imgdata, params):
 	#downsize and filter leginon image
 	if params['uncorrected']:
-		camera = imgdata['camera']
-		dark,norm = apImage.getDarkNorm(params['sessionname'], camera)
-		imgarray=apImage.old_correct(imgdata['image'],dark,norm)
-		imgarray=apImage.preProcessImage(imgarray,params=params)
+		imgarray = apImage.correctImage(imgdata, params)
 	else:
-		imgarray = apImage.preProcessImage(imgdata['image'], params=params)
+		imgarray = imgdata['image']
+	imgarray = apImage.preProcessImage(imgarray, params=params)
 	imgpath = os.path.join(params['rundir'], imgdata['filename']+".dwn.mrc")
 	apImage.arrayToMrc(imgarray, imgpath)
 	return
