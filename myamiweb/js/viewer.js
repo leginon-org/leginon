@@ -315,7 +315,7 @@ function newfile(view){
 	sb = (eval(view+"scale_bt_st")) ? "&sb=1" : ""
 	tg = (eval(view+"target_bt_st")) ? "&tg=1" : ""
 	displayfilename = (eval(view+"tag_bt_st")) ? "&df=1" : ""
-	nptcl = (eval(view+"nptcl_bt_st")) ? "nptcl=1" : ""
+	nptcl = (eval(view+"nptcl_bt_st")) ? "&nptcl=1" : ""
 	np = (cmin = eval("jsmin"+view)) ? "&np="+cmin : ""
 	if (cmax = eval("jsmax"+view)) xp="&xp="+cmax; else xp=""
 	if (cfilter = eval("jsfilter"+view)) flt="&flt="+cfilter; else flt=""
