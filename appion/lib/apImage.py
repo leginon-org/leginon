@@ -710,6 +710,7 @@ def correctImage(rawimgdata, params):
 	- dark correction is not time dependent
 	"""
 	rawimgarray = rawimgdata['image']
+	import apDatabase
 	darkarray, normarray = apDatabase.getDarkNorm(params['sessionname'], imgdata['camera'])
 	correctedimgarray = normarray * (rawimgarray - darkarray)
 	return correctedimgarray
