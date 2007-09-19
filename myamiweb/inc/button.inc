@@ -51,9 +51,8 @@ class button {
 				.$onclick
 				.'><img name="'.$imgname
 				.'" src="'.$this->path.$this->type.'_off.gif"'.$this->crlf
-				.'" alt="'.$this->type.'"'
-				.'border="0" height="15" vspace="0"></a>'.$this->crlf
-				.'';	
+				.'alt="'.$this->type.'"'
+				.'border="0" height="15" vspace="0"></a>'.$this->crlf;
 		return $htmlbutton;
 	}
 }
@@ -124,9 +123,8 @@ class togglebutton {
 				.$this->toggle.' '.$laction.'"'.$this->crlf 
 				.'><img name="'.$imgname
 				.'" src="'.$this->path.$imgdefault.'"'.$this->crlf
-				.'" alt="'.$this->imgoff.'"'
-				.'border="0" height="15" vspace="0"></a>'.$this->crlf
-				.'';	
+				.'alt="'.$this->imgoff.'"'
+				.'border="0" height="15" vspace="0"></a>'.$this->crlf;
 		return $htmlbutton;
 	}
 }
