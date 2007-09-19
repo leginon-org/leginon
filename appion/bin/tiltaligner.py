@@ -14,8 +14,8 @@ import apDisplay
 import apParticle
 import apPeaks
 import ApTiltPicker
-import apTiltTransform
-import apTiltPair
+from apTilt import apTiltTransform
+from apTilt import apTiltPair
 
 ##################################
 ##

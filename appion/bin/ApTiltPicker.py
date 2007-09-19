@@ -15,8 +15,8 @@ import cPickle
 from gui.wx import TargetPanel, ImagePanelTools
 import radermacher
 from scipy import ndimage, optimize
-import tiltDialog
-import apTiltTransform
+from apTilt import tiltDialog
+from apTilt import apTiltTransform
 import apDisplay
 
 class TiltTargetPanel(TargetPanel.TargetImagePanel):

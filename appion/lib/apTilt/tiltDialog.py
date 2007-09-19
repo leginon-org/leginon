@@ -3,7 +3,7 @@ import numpy
 import pprint
 from gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
 import radermacher
-import apTiltTransform
+from apTilt import apTiltTransform
 
 ##
 ##
