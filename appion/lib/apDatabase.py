@@ -6,15 +6,10 @@ import os
 import time
 import math
 import shutil
-try:
 #sinedon
-	import sinedon.data as data
+import sinedon.data as data
 #leginon
-	import leginondata
-except:
-	import data
-	import data as leginondata
-	print "sinedon not available, use old data.py"
+import leginondata
 #appion
 import apDB
 import apLoop
@@ -327,10 +322,10 @@ def getDarkNorm(sessionname, cameraconfig):
 	darkquery = leginondata.DarkImageData(session=sessionquery, camstate=camquery)
 	#print 'DARKQUERY', darkquery
 	normquery = leginondata.NormImageData(session=sessionquery, camstate=camquery)
-	darkdata = db.query(darkquery, results=1)
+	darkdata = leginondb.query(darkquery, results=1)
 	dark = darkdata[0]['image']
 	#print darkdata[0]
-	normdata = db.query(normquery, results=1)
+	normdata = leginondb.query(normquery, results=1)
 	norm = normdata[0]['image']
 	result = dark,norm
 	cache[key] = result

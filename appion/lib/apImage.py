@@ -11,16 +11,16 @@ import numpy
 from scipy import ndimage
 from numpy import linalg
 from numpy import ma
-#pyami
+#appion
 import apDisplay
+#pyami
 try:
 	from pyami import mrc
 	from pyami import imagefun
 	from pyami import convolver
-	import leginondata
 except:
 	apDisplay.printError("pymai is required, type 'usepythoncvs'")
-#appion
+
 
 def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, planeReg=True, median=0, invert=False):
 	"""
