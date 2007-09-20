@@ -99,7 +99,8 @@ def runAceDrift(matlab,imgdict,params):
 		
 	pymat.eval(matlab,acecommand)
 
-def runAceCorrect(matlab,imgdict,params):
+def runAceCorrect(imgdict,params):
+#def runAceCorrect(matlab,imgdict,params):
 	imgname = imgdict['filename']
 	imgpath = os.path.join(imgdict['session']['image path'], imgname+'.mrc')
 	
@@ -107,13 +108,13 @@ def runAceCorrect(matlab,imgdict,params):
 	matfile=os.path.join(params['matdir'],matname)
 	print "Ctf params obtained from " + matfile
 	
-	ctdimname = imgname+'.mrc.ctf_ph'
-	ctdimpath = os.path.join(params['correctedimdir'],ctdimname)
+	ctdimname = imgname
+	ctdimpath = os.path.join(params['outdir'],ctdimname)
+	print "Corrected Image written to " + ctdimpath
 
-	acecorrectcommand=("ctfcorrect('%s','%s','%s','%s','%s', '%s');" % (imgpath,\
-		matfile, params['tempdir']+"/", ctdimpath, params['ctdIntmdImDir'], imgname))
+	acecorrectcommand=("ctfcorrect('%s','%s','%s', '%s');" % (imgpath, matfile, ctdimpath, imgname))
 
-	pymat.eval(matlab,acecorrectcommand)
+	pymat.eval(params['matlab'],acecorrectcommand)
 
 	return
 
