@@ -244,10 +244,7 @@ class FitAllDialog(wx.Dialog):
 		scale  = self.scalevalue.GetValue()
 		shiftx = self.shiftxvalue.GetValue()
 		shifty = self.shiftyvalue.GetValue()
-		targets1 = self.parent.panel1.getTargets('Picked')
-		a1 = self.parent.targetsToArray(targets1)
-		targets2 = self.parent.panel2.getTargets('Picked')
-		a2 = self.parent.targetsToArray(targets2)
+		#SET XSCALE
 		xscale = numpy.array((
 			not self.thetatog.GetValue(),
 			not self.gammatog.GetValue(),
@@ -256,11 +253,17 @@ class FitAllDialog(wx.Dialog):
 			not self.shifttog.GetValue(),
 			not self.shifttog.GetValue(),
 			), dtype=numpy.float32)
-		#print xscale
+		#GET TARGETS
+		targets1 = self.parent.panel1.getTargets('Picked')
+		a1 = self.parent.targetsToArray(targets1)
+		targets2 = self.parent.panel2.getTargets('Picked')
+		a2 = self.parent.targetsToArray(targets2)
 		if len(a1) > len(a2):
-			a1 = a1[len(a2),:]
+			print "shorten a1"
+			a1 = a1[0:len(a2),:]
 		elif len(a2) > len(a1):
-			a2 = a2[len(a1),:]
+			print "shorten a2"
+			a2 = a2[0:len(a1),:]
 		self.lsfit = apTiltTransform.willsq(a1, a2, theta, gamma, phi, scale, shiftx, shifty, xscale)
 		#pprint.pprint(self.lsfit)
 		self.thetavalue.SetValue(round(self.lsfit['theta'],5))
