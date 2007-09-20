@@ -28,7 +28,14 @@ import apDatabase
 import apCtf
 import apMask
 import apImage
-
+import apMatlab
+try:
+	import pymat
+except:
+	apDisplay.matlabError()
+	
+	
+	
 db   = apDB.db
 apdb = apDB.apdb
 
@@ -108,6 +115,9 @@ def createDefaults():
 	params['limit']=None
 	params['defocpair']=False
 	params['uncorrected']=False
+	params['stig']=False
+	params['matdir']=None
+	params['matlab']=None
 	params['fileType']='imagic'
 	return params
 
@@ -205,6 +215,17 @@ def parseInput(args):
 			params['defocpair']=True
 		elif arg=='uncorrected':
 			params['uncorrected']=True
+		elif arg=='stig':
+			params['stig']=True
+			params['phaseFlipped']=False			
+			print "Connecting to matlab ... "
+			try:
+				params['matlab'] = pymat.open()
+			except:
+				apDisplay.matlabError()
+
+		elif (elements[0]=='aceRunName'):
+			params['matdir'] = params['outdir']+'/../pyAce/'+elements[1]+'/matfiles'			
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
@@ -292,6 +313,10 @@ def batchBox(params, imgdict):
 		imgpath = os.path.join(params['outdir'],tmpname)
 		apImage.arrayToMrc(imgarray,imgpath)
 		print "processing", imgpath		
+	elif params['stig']:
+		apMatlab.runAceCorrect(imgdict,params)	
+		tmpname = imgdict['filename']
+		imgpath = os.path.join(params['outdir'],tmpname)
 	else:
 		imgpath = os.path.join(params['filepath'], imgname+".mrc")
 	output = os.path.join(params['outdir'], imgname+".hed")
@@ -346,9 +371,14 @@ def batchBox(params, imgdict):
 		apDisplay.printMsg("boxing "+str(nptcls)+" particles")
 		f=os.popen(cmd)
 		f.close()
+		if params['stig']:
+			os.remove(os.path.join(params['outdir'],tmpname))
 		return(nptcls)
 	else:
+		if params['stig']:
+			os.remove(os.path.join(params['outdir'],tmpname))
 		return(0)
+		
 
 	
 def eliminateMaskedParticles(particles,params,imgdata):
@@ -938,6 +968,7 @@ if __name__ == '__main__':
 		params['session']=images[0]['session']['name']
 		params['sessionname']=images[0]['session']['name']
 			
+
 	# box particles
 	# if any restrictions are set, check the image
 	totptcls=0
@@ -992,4 +1023,7 @@ if __name__ == '__main__':
 			os.remove(tmpboxfile)
 
 	getStackId(params)
+	if params['stig']:
+		pymat.close(params['matlab'])
+	
 	print "Done!"
