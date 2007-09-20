@@ -55,7 +55,7 @@ def willsq(a1, a2, \
 	fit['shiftx'] = x3[4]
 	fit['shifty'] = x3[5]
 	fit['point1'], fit['point2'] = getPointsFromArrays(a1, a2, fit['shiftx'], fit['shifty'])
-	print "Final=",fit['point1'],"\t", fit['point2']
+	#print "Final=",fit['point1'],"\t", fit['point2']
 	fit['prob'] = math.exp(-1.0*math.sqrt(abs(fit['rmsd'])))**2
 	return fit
 
@@ -68,7 +68,7 @@ def _diffParticles(x1, initx, xscale, a1, a2):
 	shiftx = x2[4]
 	shifty = x2[5]
 	point1, point2 = getPointsFromArrays(a1, a2, shiftx, shifty)
-	print point1,"\t",point2
+	#print point1,"\t",point2
 	a2b = a2Toa1(a2, theta, gamma, phi, scale, point1, point2)
 	#maxpix = float(len(a2b))
 	diffmat = (a1 - a2b)
@@ -83,10 +83,10 @@ def getPointsFromArrays(a1, a2, shiftx, shifty):
 	point2 = numpy.asarray(a2[0,:], dtype=numpy.float32) + numpy.array([shiftx,shifty], dtype=numpy.float32)
 	return (point1, point2)
 
-def setPointsFromArrays(a1, a2, datadict):
-	datadict['point1'] = numpy.asarray(a1[0,:], dtype=numpy.float32)
-	datadict['point2'] = numpy.asarray(a2[0,:], dtype=numpy.float32) + numpy.array([datadict['shiftx'], datadict['shifty']], dtype=numpy.float32)
-	datadict['point2b'] = numpy.asarray(a2[0,:], dtype=numpy.float32) - numpy.array([datadict['shiftx'], datadict['shifty']], dtype=numpy.float32)
+def setPointsFromArrays(a1, a2, data):
+	data['point1'] = numpy.asarray(a1[0,:], dtype=numpy.float32)
+	data['point2'] = numpy.asarray(a2[0,:], dtype=numpy.float32) + numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32)
+	data['point2b'] = numpy.asarray(a2[0,:], dtype=numpy.float32) - numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32)
 	return
 
 def a1Toa2Data(a1, data):
@@ -156,20 +156,20 @@ def a2Toa1(a2, theta, gamma, phi, scale, point1, point2):
 		a2b[i,1] = a2c[1]
 	return a2b
 
-def maskOverlapRegion(image1, image2, datadict):
+def maskOverlapRegion(image1, image2, data):
 		image1 = ndimage.median_filter(image1, size=2)
 		image2 = ndimage.median_filter(image2, size=2)
 		#SET IMAGE LIMITS
 		gap = int(image1.shape[0]/256.0)
 		xm = image1.shape[0]+gap
 		ym = image1.shape[1]+gap
-		a1 = numpy.array([ datadict['point1'], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
+		a1 = numpy.array([ data['point1'], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
 		xm = image2.shape[0]+gap
 		ym = image2.shape[1]+gap
-		a2 = numpy.array([ datadict['point2'], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
+		a2 = numpy.array([ data['point2'], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
 		#CALCULATE TRANSFORM LIMITS
-		a2mask = a1Toa2Data(a1, datadict)
-		a1mask = a2Toa1Data(a2, datadict)
+		a2mask = a1Toa2Data(a1, data)
+		a1mask = a2Toa1Data(a2, data)
 		#print "a1=",a1
 		#print "a1mask=",a1mask
 		#print "a2=",a2
@@ -213,11 +213,11 @@ def maskOverlapRegion(image1, image2, datadict):
 
 		return (image1, image2)
 
-def alignPicks(picks1, picks2, datadict, limit=10):
+def alignPicks(picks1, picks2, data, limit=10):
 	list1 = []
 	alignlist2 = []
 	#transform picks2
-	alignpicks2 = a2Toa1Data(picks2, datadict)
+	alignpicks2 = a2Toa1Data(picks2, data)
 	#find closest pick and insert into lists
 	filled = {}
 	for pick in picks1:
@@ -241,7 +241,7 @@ def alignPicks(picks1, picks2, datadict, limit=10):
 	nlist1 = numpy.array(list1, dtype=numpy.int32)
 	nalignlist2 = numpy.array(alignlist2, dtype=numpy.int32)
 	#transform back
-	nlist2 = a1Toa2Data(nalignlist2, datadict)
+	nlist2 = a1Toa2Data(nalignlist2, data)
 	apDisplay.printMsg("Aligned "+str(len(nlist1))+" particles to "+str(len(nlist2)))
 	return nlist1, nlist2
 
