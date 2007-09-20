@@ -144,7 +144,7 @@ def writeFunctionLog(commandline, params=None, logfile=None):
 	out=""
 	for arg in commandline:
 		out += arg+" "
-	f=open(logfile,'aw')
+	f=open(logfile,'a')
 	f.write(timestamp)
 	f.write(out+"\n")
 	f.close()
@@ -220,7 +220,6 @@ def removefiles(path,patterns):
 		except:
 			apDisplay.printError('%s can not be removed' % fullpath)
 
-		
 
 def checkParamConflicts(params):
 	#if not params['templateIds'] and not params['apix']:
