@@ -47,6 +47,11 @@ def rescaleTemplates(params):
 			imgdata = scaleAndClipTemplate(ogtmpltname, scalefactor, newtmpltname)
 			params['scaledapix'][i] = params['apix']
 			downSizeTemplate(imgdata, newtmpltname, params)
+		else:
+			shutil.copy(ogtmpltname, newtmpltname)
+			newtmpltname = "scaledTemporaryTemplate"+str(i)+".dwn.mrc"
+			newtmpltname = os.path.join(params['rundir'], newtmpltname)
+			shutil.copy(ogtmpltname, newtmpltname)
 		i+=1
 	return
 
