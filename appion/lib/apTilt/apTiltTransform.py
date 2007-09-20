@@ -1,6 +1,7 @@
 import math
 import numpy
 import apImage
+import apDisplay
 import ImageDraw
 from scipy import optimize, ndimage
 
@@ -53,7 +54,8 @@ def willsq(a1, a2, \
 	fit['scale']  = x3[3]
 	fit['shiftx'] = x3[4]
 	fit['shifty'] = x3[5]
-	setPointsFromArrays(a1, a2, fit)
+	fit['point1'], fit['point2'] = getPointsFromArrays(a1, a2, fit['shiftx'], fit['shifty'])
+	print "Final=",fit['point1'],"\t", fit['point2']
 	fit['prob'] = math.exp(-1.0*math.sqrt(abs(fit['rmsd'])))**2
 	return fit
 
@@ -66,8 +68,9 @@ def _diffParticles(x1, initx, xscale, a1, a2):
 	shiftx = x2[4]
 	shifty = x2[5]
 	point1, point2 = getPointsFromArrays(a1, a2, shiftx, shifty)
+	print point1,"\t",point2
 	a2b = a2Toa1(a2, theta, gamma, phi, scale, point1, point2)
-	maxpix = float(len(a2b))
+	#maxpix = float(len(a2b))
 	diffmat = (a1 - a2b)
 	xrmsd = ndimage.mean(diffmat[:,0]**2)
 	yrmsd = ndimage.mean(diffmat[:,1]**2)
@@ -77,13 +80,13 @@ def _diffParticles(x1, initx, xscale, a1, a2):
 
 def getPointsFromArrays(a1, a2, shiftx, shifty):
 	point1 = numpy.asarray(a1[0,:], dtype=numpy.float32)
-	point2 = numpy.asarray(a2[0,:], dtype=numpy.float32) + numpy.array((shiftx,shifty), dtype=numpy.float32)
+	point2 = numpy.asarray(a2[0,:], dtype=numpy.float32) + numpy.array([shiftx,shifty], dtype=numpy.float32)
 	return (point1, point2)
 
 def setPointsFromArrays(a1, a2, datadict):
 	datadict['point1'] = numpy.asarray(a1[0,:], dtype=numpy.float32)
-	datadict['point2'] = numpy.asarray(a2[0,:], dtype=numpy.float32) + numpy.array((datadict['shiftx'], datadict['shifty']), dtype=numpy.float32)
-	datadict['point2b'] = numpy.asarray(a2[0,:], dtype=numpy.float32) - numpy.array((datadict['shiftx'], datadict['shifty']), dtype=numpy.float32)
+	datadict['point2'] = numpy.asarray(a2[0,:], dtype=numpy.float32) + numpy.array([datadict['shiftx'], datadict['shifty']], dtype=numpy.float32)
+	datadict['point2b'] = numpy.asarray(a2[0,:], dtype=numpy.float32) - numpy.array([datadict['shiftx'], datadict['shifty']], dtype=numpy.float32)
 	return
 
 def a1Toa2Data(a1, data):
@@ -91,7 +94,7 @@ def a1Toa2Data(a1, data):
 	gammarad = data['gamma']*math.pi/180.0
 	phirad   = data['phi']*math.pi/180.0
 	if not 'point2b' in data:
-		data['point2b'] = data['point2'] - 2*numpy.array((data['shiftx'], data['shifty']), dtype=numpy.float32)
+		data['point2b'] = data['point2'] - 2*numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32)
 	return a2Toa1(a1, -1.0*thetarad, -1.0*phirad, -1.0*gammarad, 
 		1.0/data['scale'], data['point2b'], data['point1'])
 
@@ -216,19 +219,33 @@ def alignPicks(picks1, picks2, datadict, limit=10):
 	#transform picks2
 	alignpicks2 = a2Toa1Data(picks2, datadict)
 	#find closest pick and insert into lists
+	filled = {}
 	for pick in picks1:
 		closepick = findClosestPick(pick, alignpicks2, limit)
-		if closepick is not None:
-			list1.append(pick)
-			alignlist2.append(closepick)
+		if closepick is not None: 
+			key = str(closepick)
+			if not key in filled:
+				list1.append(pick)
+				alignlist2.append(closepick)
+				filled[key] = True
+	limit *= 2
+	for pick in picks1:
+		closepick = findClosestPick(pick, alignpicks2, limit)
+		if closepick is not None: 
+			key = str(closepick)
+			if not key in filled:
+				list1.append(pick)
+				alignlist2.append(closepick)
+				filled[key] = True
 	#convert lists
-	nlist1 = numpy.array(list1, dtype=numpy.int16)
-	nalignlist2 = numpy.array(alignlist2, dtype=numpy.int16)
+	nlist1 = numpy.array(list1, dtype=numpy.int32)
+	nalignlist2 = numpy.array(alignlist2, dtype=numpy.int32)
 	#transform back
 	nlist2 = a1Toa2Data(nalignlist2, datadict)
+	apDisplay.printMsg("Aligned "+str(len(nlist1))+" particles to "+str(len(nlist2)))
 	return nlist1, nlist2
 
-def findClosestPick(origpick, picks, limit=10):
+def findClosestPick(origpick, picks, limit):
 	picked = None
 	bestdist = limit
 	for newpick in picks:
