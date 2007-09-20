@@ -387,7 +387,7 @@ def eliminateMaskedParticles(particles,params,imgdata):
 	sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
 	if params['defocpair']:
 		imgdata = getDefocPair(imgdata,2)
-		print imgdata.dbid
+#		print imgdata.dbid
 	maskimg,maskbin = apMask.makeInspectedMask(sessiondata,params['checkMask'],imgdata)
 	if maskimg is not None:
 		for prtl in particles:
@@ -712,8 +712,17 @@ def insertStackRun(params):
 	for p in paramlist:
 		if p in params:
 			stparamq[p] = params[p]
-			
-	paramslist=apdb.query(stparamq,results=1)
+	paramslist=apdb.query(stparamq)
+
+	# make sure that NULL values were not filled in during query
+	for plist in paramslist:
+		notgood=None
+		for p in paramlist:
+			if plist[p] != params[p]:
+				notgood=True
+		if notgood is None:
+			goodplist=plist
+			continue
 
 	# create a stack object
 	stackq = appionData.ApStackData()
@@ -731,8 +740,8 @@ def insertStackRun(params):
 	stackq['description'] = params['description']
 	
 	runids = apdb.query(runq, results=1)
-	if paramslist:
-		runq['stackParams'] = paramslist[0]
+	if goodplist:
+		runq['stackParams'] = goodplist
 	else:
 		runq['stackParams'] = stparamq
 	# create runinstack object
