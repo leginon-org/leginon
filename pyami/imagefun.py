@@ -84,7 +84,7 @@ def power(a, mask_radius=1.0, thresh=3):
 	except OverflowError:
 		pow = numpy.log(pow+1e-20)
 
-	pow = shuffle(pow)
+	pow = swap_quadrants(pow)
 
 	mask_radius = int(mask_radius / 100.0 * pow.shape[0])
 	if mask_radius:
@@ -118,29 +118,6 @@ def center_mask(a, mask_radius):
 	cs_center = cs_shape[0]/2, cs_shape[1]/2
 	circ = filled_circle(cs_shape,mask_radius)
 	center_square[:] = center_square * circ.astype(center_square.dtype)
-
-def shuffle(a):
-	'''
-	take a half fft/power spectrum centered at 0,0
-	and convert to full fft/power centered at center of image
-	'''
-	oldr,oldc = a.shape
-	r,c = newshape = oldr, (oldc-1)*2
-
-	## create new full size array 
-	new = numpy.zeros(newshape, a.dtype)
-
-	## fill in right half
-	new[r/2:,c/2:] = a[:r/2,1:]
-	new[:r/2,c/2:] = a[r/2:,1:]
-
-	## fill in left half
-	reverserows = -numpy.arange(r) - 1
-	reversecols = -numpy.arange(c/2) - 1
-	new[:,:c/2] = numpy.take(new[:,c/2:], reverserows, 0)
-	new[:,:c/2] = numpy.take(new[:,:c/2], reversecols, 1)
-
-	return new
 
 def swap(a):
 	rows,cols = a.shape
