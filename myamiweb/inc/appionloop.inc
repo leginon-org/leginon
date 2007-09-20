@@ -320,8 +320,8 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	$overlapmultv = ($_POST['overlapmult']) ? $_POST['overlapmult'] : '1.5';
 	$invertv = ($_POST['invert']=="on") ? "CHECKED" : "";
 	$defocpairv = ($_POST['defocpair']=="on") ? "CHECKED" : "";
-
-	echo "
+	if ($defthresh != -1) {
+		echo "
 <B>Peak thresholds:</B><br/>
 
 <INPUT TYPE='text' NAME='thresh' VALUE='$threshv' SIZE='4'>&nbsp;
@@ -336,7 +336,9 @@ Maximum threshold</A><br/>
 <A HREF=\"javascript:particleinfopopup('maxpeaks')\">
 Max number of particles allowed per image</A><br/>
 <br/>
-
+";
+	}
+	echo"
 <B>Filter Values:</B><br/>
 
 <INPUT TYPE='text' NAME='lp' VALUE='$lpv' SIZE='4'>&nbsp;
@@ -361,16 +363,19 @@ Binning</A> <FONT SIZE=-2><I>(power of 2)</I></FONT><br/>
 <A HREF=\"javascript:particleinfopopup('defocpair')\">
 Calculate shifts for defocal pairs</A><br/>
 <br/>
+<B>Advanced peak characteristics:</B><br/>";
+	if ($defthresh != -1) {
+		echo "
 
-<B>Advanced peak characteristics:</B><br/>
 <INPUT TYPE='text' NAME='maxsize' VALUE='$maxsizev' SIZE='4'>&nbsp;
 <A HREF=\"javascript:particleinfopopup('maxsize')\">
 Maximum peak area multiple</A><br/>
 
 <INPUT TYPE='text' NAME='overlapmult' VALUE='$overlapmultv' SIZE='4'>&nbsp;
 <A HREF=\"javascript:particleinfopopup('overlapmult')\">
-Minimum peak overlap distance multiple</A><br/>
-
+Minimum peak overlap distance multiple</A><br/>";
+	}
+	echo "
 <INPUT TYPE='checkbox' NAME='invert' $invertv>&nbsp;
 <A HREF=\"javascript:particleinfopopup('invert')\">
 Invert image density</A><br/>
@@ -379,9 +384,9 @@ Invert image density</A><br/>
 	echo "<!-- END Particle Loop Param -->";
 };
 
-function parseParticleLoopParams () {
+function parseParticleLoopParams ($type) {
 	// CHECK FOR ERRORS
-	$error = checkParticleErrors();
+	$error = checkParticleErrors($type);
 	if ($error[0] != false) {
 		return $error;
 		exit;
@@ -402,28 +407,30 @@ function parseParticleLoopParams () {
 	$invert = ($_POST[invert]=="on") ? "1" : "0";
 
 	// CREATE COMMAND
-	if ($maxsize && $maxsize > 0 && $maxsize != 1.0) $command.=" maxsize=$maxsize";
-	if ($overlapmult && $overlapmult > 0 && $overlapmult != 1.5) $command.=" overlapmult=$overlapmult";
+	if ($type != "manual") {
+		if ($maxsize && $maxsize > 0 && $maxsize != 1.0) $command.=" maxsize=$maxsize";
+		if ($overlapmult && $overlapmult > 0 && $overlapmult != 1.5) $command.=" overlapmult=$overlapmult";
+		if ($maxthresh && $maxthresh > 0) $command.=" maxthresh=$maxthresh";
+		if ($maxpeaks && $maxpeaks > 0 && $maxpeaks != 1500) $command.=" maxpeaks=$maxpeaks";
+		if ($thresh) $command.=" thresh=$thresh";
+	}
 	if ($defocpair) $command.=" defocpair";
-	if ($maxthresh && $maxthresh > 0) $command.=" maxthresh=$maxthresh";
-	if ($maxpeaks && $maxpeaks > 0 && $maxpeaks != 1500) $command.=" maxpeaks=$maxpeaks";
 	if ($invert) $command.=" invert";
 	if ($median) $command.=" median=$median";
 	if ($lp) $command.=" lp=$lp";
 	if ($hp) $command.=" hp=$hp";
 	if ($bin) $command.=" bin=$bin";
-	if ($thresh) $command.=" thresh=$thresh";
 	if ($diam) $command.=" diam=$diam";
 
 	return $command;
 }
 
-function checkParticleErrors () {
+function checkParticleErrors ($type) {
 	if (!$_POST[diam]) {
 		return "<B>ERROR:</B> Specify a particle diameter";
 		exit;
 	}
-	if (!$_POST[thresh]) {
+	if ($type != "manual" and !$_POST[thresh]) {
 		return "<B>ERROR:</B> No thresholding value was entered";
 		exit;
 	}
