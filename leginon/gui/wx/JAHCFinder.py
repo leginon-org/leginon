@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/JAHCFinder.py,v $
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-17 21:35:57 $
-# $Author: vossman $
+# $Date: 2007-09-20 00:55:40 $
+# $Author: laupw $
 # $State: Exp $
 # $Locker:  $
 
@@ -382,10 +382,13 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		sbsztt.Add(sztt, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.bice = wx.Button(self, -1, '&Test targeting')
+		self.cice = wx.Button(self, -1, '&Clear targets')
 		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.bice, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
-
+		szbutton.Add(self.bice, (0, 2), (1, 35), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbutton.Add(self.cice, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+		
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.bice)
+		self.Bind(wx.EVT_BUTTON, self.onClearButton, self.cice)
 
 		self.growrows = [False, True, False,]
 
@@ -394,6 +397,11 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 	def onTestButton(self, evt):
 		self.setNodeSettings()
 		threading.Thread(target=self.node.ice).start()
+
+	def onClearButton(self, evt):
+		self.setNodeSettings()
+		self.node.clearTargets('acquisition')
+		self.node.clearTargets('focus')
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
