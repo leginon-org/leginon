@@ -89,6 +89,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
 
   if (!$prtlrunIds) {
     echo"<FONT COLOR='RED'><B>No Particles for this Session</B></FONT>\n";
+		echo"<INPUT TYPE='HIDDEN' NAME='pickrunid' VALUE='None'>\n";
   }
   else {
     echo "<BR/>Edit Particle Picks:

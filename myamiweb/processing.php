@@ -164,6 +164,10 @@ if ($sessionId) {
     <A HREF='runDogPicker.php?expId=$sessionId'>";
     if ($prtlruns==0) {echo "Begin DoG Picking";}
     else {echo "Continue DoG Picking";}
+    echo"</A><BR>
+    <A HREF='runManualPicker.php?expId=$sessionId'>";
+    if ($prtlruns==0) {echo "Begin Manually Picking";}
+    else {echo "Edit Picking with Manual Picker";}
     echo"</A>
     </TD>
   </TR>
