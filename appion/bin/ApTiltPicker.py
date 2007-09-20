@@ -8,8 +8,6 @@ import math
 import numpy
 import pyami
 import Image
-import ImageDraw
-import apImage
 import time
 import cPickle
 import apSpider
@@ -66,9 +64,16 @@ class PickerApp(wx.App):
 		self.data['dirname'] = ""
 		self.appionloop = None
 		self.filetypes = ['text', 'xml', 'spider', 'pickle',]
-		self.filetypesel = ("Text Files (*.txt)|*.txt" + "|XML Files (*.xml)|*.xml"
-			+"|Spider Files (*.spi)|*.[a-z][a-z][a-z]" + "|Python Pickle File (*.pik)|*.pik")
+		self.filetypesel = (
+			"Text Files (*.txt)|*.txt" 
+			+ "|XML Files (*.xml)|*.xml"
+			+ "|Spider Files (*.spi)|*.[a-z][a-z][a-z]" 
+			+ "|Python Pickle File (*.pik)|*.pik" )
 		self.data['filetypeindex'] = None
+		self.picks1 = []
+		self.picks2 = []
+		self.buttonheight = 15
+		self.deselectcolor = wx.Color(240,240,240)
 
 		self.frame = wx.Frame(None, -1, 'Image Viewer')
 		splitter = wx.SplitterWindow(self.frame)
@@ -98,7 +103,7 @@ class PickerApp(wx.App):
 		self.panel1.setOtherPanel(self.panel2)
 		self.panel2.setOtherPanel(self.panel1)
 
-		self.buttonrow = wx.FlexGridSizer(1,12)
+		self.buttonrow = wx.FlexGridSizer(1,20)
 
 		self.theta_dialog = tiltDialog.FitThetaDialog(self)
 		self.fittheta = wx.Button(self.frame, -1, 'Find &Theta')
@@ -150,7 +155,7 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def createMenuButtons(self):
-		self.buttonrow.Add((100,10), 0, wx.ALL, 1)
+		self.buttonrow.Add((40,10), 0, wx.ALL, 1)
 
 		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear')
 		self.frame.Bind(wx.EVT_BUTTON, self.onClearPicks, self.clear)
@@ -159,6 +164,8 @@ class PickerApp(wx.App):
 		self.reset = wx.Button(self.frame, wx.ID_RESET, '&Reset')
 		self.frame.Bind(wx.EVT_BUTTON, self.onResetParams, self.reset)
 		self.buttonrow.Add(self.reset, 0, wx.ALL, 1)
+
+		self.buttonrow.Add((40,10), 0, wx.ALL, 1)
 
 		self.load = wx.Button(self.frame, wx.ID_OPEN, '&Open')
 		self.frame.Bind(wx.EVT_BUTTON, self.onFileOpen, self.load)
@@ -180,7 +187,7 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def createLoopButtons(self):
-		self.buttonrow.Add((100,10), 0, wx.ALL, 1)
+		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
 
 		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear')
 		self.frame.Bind(wx.EVT_BUTTON, self.onClearPicks, self.clear)
@@ -194,9 +201,32 @@ class PickerApp(wx.App):
 		self.frame.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
 		self.buttonrow.Add(self.quit, 0, wx.ALL, 1)
 
-		self.importpicks = wx.Button(self.frame, -1, '&Import Picks from DB')
+		self.importpicks = wx.Button(self.frame, -1, '&Import Picks')
 		self.frame.Bind(wx.EVT_BUTTON, self.onImportPicks, self.importpicks)
 		self.buttonrow.Add(self.importpicks, 0, wx.ALL, 1)
+
+		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
+
+		label = wx.StaticText(self.frame, -1, "Assessment:  ", style=wx.ALIGN_RIGHT)
+		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		self.assessnone = wx.ToggleButton(self.frame, -1, "&None")
+		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleNone, self.assessnone)
+		self.assessnone.SetValue(0)
+		#self.assessnone.SetMinSize((70,self.buttonheight))
+		self.buttonrow.Add(self.assessnone, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		self.assesskeep = wx.ToggleButton(self.frame, -1, "&Keep")
+		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleKeep, self.assesskeep)
+		self.assesskeep.SetValue(0)
+		#self.assesskeep.SetMinSize((70,self.buttonheight))
+		self.buttonrow.Add(self.assesskeep, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		self.assessreject = wx.ToggleButton(self.frame, -1, "Re&ject")
+		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleReject, self.assessreject)
+		self.assessreject.SetValue(0)
+		#self.assessreject.SetMinSize((70,self.buttonheight))
+		self.buttonrow.Add(self.assessreject, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		return
 
@@ -244,6 +274,11 @@ class PickerApp(wx.App):
 					( "&Apply", "Apply picks", self.onUpdate, wx.ID_APPLY ),
 					( "&Mask Overlapping Region", "Mask overlapping region", self.onMaskRegion ),
 				)),
+				("&Assess", (
+					( "&None", "Don't assess image pair", self.onToggleNone, -1, wx.ITEM_RADIO),
+					( "&Keep", "Keep this image pair", self.onToggleKeep, -1, wx.ITEM_RADIO),
+					( "&Reject", "Reject this image pair", self.onToggleReject, -1, wx.ITEM_RADIO),
+				)),
 			]			
 
 	#---------------------------------------
@@ -276,6 +311,45 @@ class PickerApp(wx.App):
 		self.Bind(wx.EVT_MENU, handler, menuItem)
 
 	#---------------------------------------
+	def setAssessStatus(self):
+		if self.appionloop.assess is True:
+			self.onToggleKeep(None)
+		elif self.appionloop.assess is False:
+			self.onToggleReject(None)
+		else:
+			self.onToggleNone(None)
+
+	#---------------------------------------
+	def onToggleNone(self, evt):
+		self.assessnone.SetValue(1)
+		self.assessnone.SetBackgroundColour(wx.Color(200,200,0))
+		self.assesskeep.SetValue(0)
+		self.assesskeep.SetBackgroundColour(self.deselectcolor)
+		self.assessreject.SetValue(0)
+		self.assessreject.SetBackgroundColour(self.deselectcolor)
+		self.assess = None
+
+	#---------------------------------------
+	def onToggleKeep(self, evt):
+		self.assessnone.SetValue(0)
+		self.assessnone.SetBackgroundColour(self.deselectcolor)
+		self.assesskeep.SetValue(1)
+		self.assesskeep.SetBackgroundColour(wx.Color(0,200,0))
+		self.assessreject.SetValue(0)
+		self.assessreject.SetBackgroundColour(self.deselectcolor)
+		self.assess = True
+
+	#---------------------------------------
+	def onToggleReject(self, evt):
+		self.assessnone.SetValue(0)
+		self.assessnone.SetBackgroundColour(self.deselectcolor)
+		self.assesskeep.SetValue(0)
+		self.assesskeep.SetBackgroundColour(self.deselectcolor)
+		self.assessreject.SetValue(1)
+		self.assessreject.SetBackgroundColour(wx.Color(200,0,0))
+		self.assess = False
+
+	#---------------------------------------
 	def onSetFileType(self, evt):
 		print dir(evt)
 
@@ -290,65 +364,16 @@ class PickerApp(wx.App):
 			dialog.ShowModal()
 			dialog.Destroy()
 			return False
+
 		#GET IMAGES
 		self.panel1.openImageFile(self.panel1.filename)
 		self.panel2.openImageFile(self.panel2.filename)
 		image1 = numpy.asarray(self.panel1.imagedata, dtype=numpy.float32)
 		image2 = numpy.asarray(self.panel2.imagedata, dtype=numpy.float32)
-		#SET IMAGE LIMITS
-		gap = 16
-		xm = image1.shape[0]+gap
-		ym = image1.shape[1]+gap
-		a1 = numpy.array([ [targets1[0].x, targets1[0].y], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
-		xm = image2.shape[0]+gap
-		ym = image2.shape[1]+gap
-		a2 = numpy.array([ [targets2[0].x, targets2[0].y], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
-		#print "a1=",numpy.asarray(a1, dtype=numpy.int32)
-		#print "a2=",numpy.asarray(a2, dtype=numpy.int32)
-		#SET PARAMETERS
-		thetarad = self.data['theta']*math.pi/180.0
-		gammarad = self.data['gamma']*math.pi/180.0
-		phirad = self.data['phi']*math.pi/180.0
-		#CALCULATE TRANSFORM LIMITS
-		a1b = apTiltTransform.a1Toa2(a1, thetarad, gammarad, phirad,
-			self.data['scale'], self.data['point1'], self.data['point2'])
-		a2b = apTiltTransform.a2Toa1(a2, thetarad, gammarad, phirad,
-			self.data['scale'], self.data['point1'], self.data['point2'])
-		#CONVERT NUMPY TO LIST
-		a1blist = []
-		a2blist = []
-		for j in range(4):
-			for i in range(2):
-				item = int(a1b[j+1,i])
-				a1blist.append(item)
-				item = int(a2b[j+1,i])
-				a2blist.append(item)
-		#DRAW A POLYGON FROM THE LIMITS 1->2
-		#print "a1b=",numpy.asarray(a1b, dtype=numpy.int32)
-		#print "a1blist=",a1blist
-		mask2 = numpy.zeros(shape=image2.shape, dtype=numpy.bool_)
-		mask2b = apImage.arrayToImage(mask2, normalize=False)
-		mask2b = mask2b.convert("L")
-		draw2 = ImageDraw.Draw(mask2b)
-		draw2.polygon(a1blist, fill="white")
-		mask2 = apImage.imageToArray(mask2b, dtype=numpy.float32)
-		immin2 = ndimage.minimum(image2)+1.0
-		image2 = (image2+immin2)*mask2
-		immax2 = ndimage.maximum(image2)
-		image2 = numpy.where(image2==0,immax2,image2)
-		#DRAW A POLYGON FROM THE LIMITS 2->1
-		#print "a2b=",numpy.asarray(a2b, dtype=numpy.int32)
-		#print "a2blist=",a2blist
-		mask1 = numpy.zeros(shape=image1.shape, dtype=numpy.bool_)
-		mask1b = apImage.arrayToImage(mask1, normalize=False)
-		mask1b = mask1b.convert("L")
-		draw1 = ImageDraw.Draw(mask1b)
-		draw1.polygon(a2blist, fill="white")
-		mask1 = apImage.imageToArray(mask1b, dtype=numpy.float32)
-		immin1 = ndimage.minimum(image1)+1.0
-		image1 = (image1+immin1)*mask1
-		immax1 = ndimage.maximum(image1)
-		image1 = numpy.where(image1==0,immax1,image1)
+
+		#DO THE MASKING
+		image1, image2 = apTiltTransform.maskOverlapRegion(image1, image2, targets1, targets2, self.data)
+
 		#SET IMAGES AND REFRESH SCREEN
 		self.panel1.setImage(image1)
 		self.panel2.setImage(image2)
@@ -414,19 +439,34 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def targetsToArray(self, targets):
-		i = 0
-		count = len(targets)
-		if count == 0:
-			return None
-		a = numpy.zeros((count,2), dtype=numpy.int32)
+		a = []
 		for t in targets:
-			a[i,0] = int(t.x)
-			a[i,1] = int(t.y)
-			i += 1
-		return a
+			a.append([int(t.x), int(t.y)])
+		na = numpy.array(a, dtype=numpy.int16)
+		return na
 
 	#---------------------------------------
 	def onImportPicks(self, evt):
+		len1 = len(self.picks1)
+		len2 = len(self.picks2)
+		if len1 < 1 or len2 < 1:
+			print "there are no picks",len1,len2
+			return
+		list1, list2 = apTiltTransform.alignPicks(self.picks1, self.picks2, self.data)
+		targets1 = self.panel1.getTargets('Picked')
+		targets2 = self.panel2.getTargets('Picked')
+		a1 = self.targetsToArray(targets1)
+		a2 = self.targetsToArray(targets2)
+		if a1.shape[0] > 0:
+			newa1 = numpy.vstack((a1, list1))
+		else:
+			newa1 = list1
+		if a2.shape[0] > 0:
+			newa2 = numpy.vstack((a2, list2))
+		else:
+			newa2 = list2
+		self.panel1.setTargets('Picked', newa1)
+		self.panel2.setTargets('Picked', newa2)
 		return
 
 	#---------------------------------------

@@ -1,7 +1,8 @@
 import math
 import numpy
+import apImage
+import ImageDraw
 from scipy import optimize, ndimage
-
 
 ##
 ##
@@ -79,6 +80,21 @@ def getPointsFromArrays(a1, a2, shiftx, shifty):
 	point2 = numpy.asarray(a2[0,:], dtype=numpy.float32) + numpy.array((shiftx,shifty), dtype=numpy.float32)
 	return (point1, point2)
 
+def a1Toa2Data(a1, data):
+	thetarad = data['theta']*math.pi/180.0
+	gammarad = data['gamma']*math.pi/180.0
+	phirad = data['phi']*math.pi/180.0
+	return a1Toa2(a1, thetarad, gammarad, phirad, 
+		data['scale'], data['point1'], data['point2'])
+
+def a2Toa1Data(a1, data):
+	thetarad = data['theta']*math.pi/180.0
+	gammarad = data['gamma']*math.pi/180.0
+	phirad = data['phi']*math.pi/180.0
+	return a2Toa1(a1, thetarad, gammarad, phirad, 
+		data['scale'], data['point1'], data['point2'])
+
+
 def a1Toa2(a1, theta, gamma, phi, scale, point1, point2):
 	"""
 	flips the values and runs a2Toa1
@@ -128,22 +144,9 @@ def a2Toa1(a2, theta, gamma, phi, scale, point1, point2):
 		a2b[i,1] = a2c[1]
 	return a2b
 
-
-def maskOverlapRegion(image1, image2, ):
-		targets1 = self.panel1.getTargets('Picked')
-		targets2 = self.panel2.getTargets('Picked')
-		if len(targets1) == 0 or len(targets2) == 0:
-			self.statbar.PushStatusText("ERROR: Cannot mask images. Not enough picks", 0)
-			dialog = wx.MessageDialog(self.frame, "Cannot mask images.\nThere are no picks.",\
-				'Error', wx.OK|wx.ICON_ERROR)
-			dialog.ShowModal()
-			dialog.Destroy()
-			return False
-		#GET IMAGES
-		self.panel1.openImageFile(self.panel1.filename)
-		self.panel2.openImageFile(self.panel2.filename)
-		image1 = numpy.asarray(self.panel1.imagedata, dtype=numpy.float32)
-		image2 = numpy.asarray(self.panel2.imagedata, dtype=numpy.float32)
+def maskOverlapRegion(image1, image2, targets1, targets2, datadict, params=None):
+		image1 = ndimage.median_filter(image1, size=2)
+		image2 = ndimage.median_filter(image2, size=2)
 		#SET IMAGE LIMITS
 		gap = 16
 		xm = image1.shape[0]+gap
@@ -152,17 +155,10 @@ def maskOverlapRegion(image1, image2, ):
 		xm = image2.shape[0]+gap
 		ym = image2.shape[1]+gap
 		a2 = numpy.array([ [targets2[0].x, targets2[0].y], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
-		#print "a1=",numpy.asarray(a1, dtype=numpy.int32)
-		#print "a2=",numpy.asarray(a2, dtype=numpy.int32)
-		#SET PARAMETERS
-		thetarad = self.data['theta']*math.pi/180.0
-		gammarad = self.data['gamma']*math.pi/180.0
-		phirad = self.data['phi']*math.pi/180.0
+
 		#CALCULATE TRANSFORM LIMITS
-		a1b = apTiltTransform.a1Toa2(a1, thetarad, gammarad, phirad,
-			self.data['scale'], self.data['point1'], self.data['point2'])
-		a2b = apTiltTransform.a2Toa1(a2, thetarad, gammarad, phirad,
-			self.data['scale'], self.data['point1'], self.data['point2'])
+		a1b = a1Toa2Data(a1, datadict)
+		a2b = a2Toa1Data(a2, datadict)
 		#CONVERT NUMPY TO LIST
 		a1blist = []
 		a2blist = []
@@ -198,4 +194,48 @@ def maskOverlapRegion(image1, image2, ):
 		image1 = (image1+immin1)*mask1
 		immax1 = ndimage.maximum(image1)
 		image1 = numpy.where(image1==0,immax1,image1)
+
+		return (image1, image2)
+
+def alignPicks(picks1, picks2, datadict, limit=10):
+	list1 = []
+	alignlist2 = []
+	#transform picks2
+	alignpicks2 = a2Toa1Data(picks2, datadict)
+	#find closest pick and insert into lists
+	for pick in picks1:
+		closepick = findClosestPick(pick, alignpicks2, limit)
+		if closepick is not None:
+			list1.append(pick)
+			alignlist2.append(closepick)
+	#convert lists
+	nlist1 = numpy.array(list1, dtype=numpy.int16)
+	nalignlist2 = numpy.array(alignlist2, dtype=numpy.int16)
+	#transform back
+	nlist2 = a1Toa2Data(nalignlist2, datadict)
+	return nlist1, nlist2
+
+def findClosestPick(origpick, picks, limit=10):
+	picked = None
+	bestdist = limit
+	for newpick in picks:
+		dist = pickDist(origpick, newpick)
+		if dist < bestdist:
+			picked = newpick
+			bestdist = dist
+	if bestdist == limit:
+		return None
+	return picked
+
+def pickDist(pick1, pick2):
+	dist = math.hypot(pick1[0]-pick2[0], pick1[1]-pick2[1])
+	return dist
+
+
+
+
+
+
+
+
 

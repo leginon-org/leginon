@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import wx
+import numpy
 import threading
 import appionLoop
 import particleLoop
@@ -22,9 +23,6 @@ from apTilt import apTiltPair
 ##################################
 
 class tiltAligner(particleLoop.ParticleLoop):
-	#def __init__(self):
-	#	raise NotImplementedError()
-	
 	#####################################################
 	##### START PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
 	#####################################################
@@ -46,11 +44,6 @@ class tiltAligner(particleLoop.ParticleLoop):
 		apDisplay.printMsg("finished")
 		wx.Exit()
 
-	def commitToDatabase(self, imgdata):
-		expid = int(imgdata['session'].dbid)
-		#self.insertTiltAlignParams(expid)
-		return
-
 	def particleDefaultParams(self):
 		"""
 		put in any additional default parameters
@@ -61,6 +54,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 		self.params['outtypeindex'] = None
 		self.params['pickrunname'] = None
 		self.params['pickrunid'] = None
+		self.params['bin'] = 2
 		self.assess = None
 
 	def particleParseParams(self, args):
@@ -131,13 +125,30 @@ class tiltAligner(particleLoop.ParticleLoop):
 			if self.params['usepicks'] is True:
 				apParticle.insertParticlePeaks(self.peaktree1, imgdata, self.expid, self.params)
 				apParticle.insertParticlePeaks(self.peaktree2, tiltdata, self.expid, self.params)
-			if self.assess is not None:
+			if self.assess != self.assessold and self.assess is not None:
 				apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], self.assess)
 				apDatabase.insertImgAssessmentStatus(tiltdata, self.params['runid'], self.assess)
 
 	###################################################
 	##### END PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
 	###################################################
+
+	def getParticlePicks(self, imgdata):
+		if not self.params['pickrunid']:
+			if not self.params['pickrunname']:
+				return []
+			self.params['pickrunid'] = apParticle.getSelectionRun(imgdata, self.params['pickrunname'])
+			#particles = apParticle.getParticlesForImageFromRunName(imgdata, self.params['pickrunname'])
+		particles = apParticle.getParticles(imgdata, self.params['pickrunid'])
+		targets = self.particlesToTargets(particles)
+		return targets
+
+	def particlesToTargets(self, particles):
+		targets = []
+		for p in particles:
+			targets.append( (p['xcoord']/self.params['bin'], p['ycoord']/self.params['bin']) )
+		ntargets = numpy.array(targets, dtype=numpy.int16)
+		return ntargets
 
 	def insertTiltAlignParams(self):
 		### query for identical params ###
@@ -197,25 +208,46 @@ class tiltAligner(particleLoop.ParticleLoop):
 				print "already processed: ",apDisplay.short(tiltdata['filename'])
 			else:
 				apFindEM.processAndSaveImage(tiltdata, params=self.params)
-		
+
+	def getTiltAssess(self, imgdata, tiltdata):
+		ass1 = apDatabase.getImgAssessmentStatus(imgdata)
+		ass2 = apDatabase.getImgAssessmentStatus(tiltdata)
+		if ass1 is False or ass2 is False:
+			return False
+		if ass1 is True and ass2 is True:
+			return True
+		return None
+
 	def runTiltAligner(self, imgdata, tiltdata):
 		#reset targets
 		self.app.onClearPicks(None)
 		self.app.onResetParams(None)
 		self.tiltparams = {}
+
 		#set tilt
 		tilt1 = apDatabase.getTiltAngleDeg(imgdata)
 		tilt2 = apDatabase.getTiltAngleDeg(tiltdata)
 		self.app.data['theta'] = tilt1 - tilt2
 		#print "theta=",self.app.data['theta']
+
+		#pre-load particle picks
+		self.app.picks1 = self.getParticlePicks(imgdata)
+		self.app.picks2 = self.getParticlePicks(tiltdata)
+
+		#get image assessment
+		self.assess = self.getTiltAssess(imgdata, tiltdata)
+		self.app.setAssessStatus()
+
 		#open new file
 		imgname = imgdata['filename']+".dwn.mrc"
 		imgpath = os.path.join(self.params['rundir'],imgname)
 		self.app.panel1.openImageFile(imgpath)
+
 		#open tilt file
 		tiltname = tiltdata['filename']+".dwn.mrc"
 		tiltpath = os.path.join(self.params['rundir'],tiltname)
 		self.app.panel2.openImageFile(tiltpath)
+
 		#run the picker
 		self.app.MainLoop()
 		self.app.panel1.openImageFile(None)
