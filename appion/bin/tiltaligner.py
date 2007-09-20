@@ -218,12 +218,14 @@ class tiltAligner(particleLoop.ParticleLoop):
 			if os.path.isfile(imgpath):
 				print "already processed: ",apDisplay.short(imgdata['filename'])
 			else:
-				apFindEM.processAndSaveImage(imgdata, params=self.params)
+				print "processing: ",apDisplay.short(imgdata['filename'])
+				"apFindEM.processAndSaveImage(imgdata, params=self.params)"
 			tiltpath = os.path.join(self.params['rundir'], tiltdata['filename']+'.dwn.mrc')
 			if os.path.isfile(tiltpath):
 				print "already processed: ",apDisplay.short(tiltdata['filename'])
 			else:
-				apFindEM.processAndSaveImage(tiltdata, params=self.params)
+				print "processing: ",apDisplay.short(tiltdata['filename'])
+				"apFindEM.processAndSaveImage(tiltdata, params=self.params)"
 
 	def getTiltAssess(self, imgdata, tiltdata):
 		ass1 = apDatabase.getImgAssessmentStatus(imgdata)

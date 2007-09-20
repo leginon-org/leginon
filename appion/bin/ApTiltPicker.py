@@ -355,9 +355,17 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onMaskRegion(self, evt):
+		#GET THE ARRAYS
 		targets1 = self.panel1.getTargets('Picked')
 		targets2 = self.panel2.getTargets('Picked')
-		if len(targets1) == 0 or len(targets2) == 0:
+		a1 = self.targetsToArray(targets1)
+		a2 = self.targetsToArray(targets2)
+
+		#GET THE POINT VALUES
+		apTiltTransform.setPointsFromArrays(a1, a2, self.data)
+
+		#CHECK IF WE HAVE POINTS
+		if len(a1) == 0 or len(a2) == 0:
 			self.statbar.PushStatusText("ERROR: Cannot mask images. Not enough picks", 0)
 			dialog = wx.MessageDialog(self.frame, "Cannot mask images.\nThere are no picks.",\
 				'Error', wx.OK|wx.ICON_ERROR)
@@ -372,7 +380,7 @@ class PickerApp(wx.App):
 		image2 = numpy.asarray(self.panel2.imagedata, dtype=numpy.float32)
 
 		#DO THE MASKING
-		image1, image2 = apTiltTransform.maskOverlapRegion(image1, image2, targets1, targets2, self.data)
+		image1, image2 = apTiltTransform.maskOverlapRegion(image1, image2, self.data)
 
 		#SET IMAGES AND REFRESH SCREEN
 		self.panel1.setImage(image1)
@@ -397,9 +405,14 @@ class PickerApp(wx.App):
 			dialog.ShowModal()
 			dialog.Destroy()
 			return False
-
-		self.panel2.setTargets('Aligned', self.getAlignedArray1() )
-		self.panel1.setTargets('Aligned', self.getAlignedArray2() )
+		#GET ARRAYS
+		a1 = self.getAlignedArray1()
+		a2 = self.getAlignedArray2()
+		#GET THE POINT VALUES
+		apTiltTransform.setPointsFromArrays(a1, a2, self.data)
+		#SET THE ALIGNED ARRAYS
+		self.panel2.setTargets('Aligned', a1 )
+		self.panel1.setTargets('Aligned', a2 )
 
 	#---------------------------------------
 	def getAlignedArray1(self):
@@ -408,16 +421,8 @@ class PickerApp(wx.App):
 		a1 = self.targetsToArray(targets1)
 		a2 = self.targetsToArray(targets2)
 
-		if self.data['point1'] is None or self.data['point2'] is None:
-			self.data['point1'], self.data['point2'] = \
-				apTiltTransform.getPointsFromArrays(a1, a2, self.data['shiftx'], self.data['shifty'])
-
-		thetarad = self.data['theta']*math.pi/180.0
-		gammarad = self.data['gamma']*math.pi/180.0
-		phirad = self.data['phi']*math.pi/180.0
-
-		a1b = apTiltTransform.a1Toa2(a1, thetarad, gammarad, phirad,
-			self.data['scale'], self.data['point1'], self.data['point2'])
+		apTiltTransform.setPointsFromArrays(a1, a2, self.data)
+		a1b = apTiltTransform.a1Toa2Data(a1, self.data)
 
 		return a1b
 
@@ -428,12 +433,8 @@ class PickerApp(wx.App):
 		a1 = self.targetsToArray(targets1)
 		a2 = self.targetsToArray(targets2)
 
-		thetarad = self.data['theta']*math.pi/180.0
-		gammarad = self.data['gamma']*math.pi/180.0
-		phirad = self.data['phi']*math.pi/180.0
-		
-		a2b = apTiltTransform.a2Toa1(a2, thetarad, gammarad, phirad,
-			self.data['scale'], self.data['point1'], self.data['point2'])
+		apTiltTransform.setPointsFromArrays(a1, a2, self.data)
+		a2b = apTiltTransform.a2Toa1Data(a2, self.data)
 
 		return a2b
 

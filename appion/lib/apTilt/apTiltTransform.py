@@ -53,7 +53,7 @@ def willsq(a1, a2, \
 	fit['scale']  = x3[3]
 	fit['shiftx'] = x3[4]
 	fit['shifty'] = x3[5]
-	fit['point1'], fit['point2'] = getPointsFromArrays(a1, a2, fit['shiftx'], fit['shifty'])
+	setPointsFromArrays(a1, a2, fit)
 	fit['prob'] = math.exp(-1.0*math.sqrt(abs(fit['rmsd'])))**2
 	return fit
 
@@ -80,27 +80,37 @@ def getPointsFromArrays(a1, a2, shiftx, shifty):
 	point2 = numpy.asarray(a2[0,:], dtype=numpy.float32) + numpy.array((shiftx,shifty), dtype=numpy.float32)
 	return (point1, point2)
 
+def setPointsFromArrays(a1, a2, datadict):
+	datadict['point1'] = numpy.asarray(a1[0,:], dtype=numpy.float32)
+	datadict['point2'] = numpy.asarray(a2[0,:], dtype=numpy.float32) + numpy.array((datadict['shiftx'], datadict['shifty']), dtype=numpy.float32)
+	datadict['point2b'] = numpy.asarray(a2[0,:], dtype=numpy.float32) - numpy.array((datadict['shiftx'], datadict['shifty']), dtype=numpy.float32)
+	return
+
 def a1Toa2Data(a1, data):
 	thetarad = data['theta']*math.pi/180.0
 	gammarad = data['gamma']*math.pi/180.0
-	phirad = data['phi']*math.pi/180.0
-	return a1Toa2(a1, thetarad, gammarad, phirad, 
-		data['scale'], data['point1'], data['point2'])
+	phirad   = data['phi']*math.pi/180.0
+	if not 'point2b' in data:
+		data['point2b'] = data['point2'] - 2*numpy.array((data['shiftx'], data['shifty']), dtype=numpy.float32)
+	return a2Toa1(a1, -1.0*thetarad, -1.0*phirad, -1.0*gammarad, 
+		1.0/data['scale'], data['point2b'], data['point1'])
 
 def a2Toa1Data(a1, data):
+	"""
+	flips the values and runs a2Toa1
+	"""
 	thetarad = data['theta']*math.pi/180.0
 	gammarad = data['gamma']*math.pi/180.0
-	phirad = data['phi']*math.pi/180.0
+	phirad   = data['phi']*math.pi/180.0
 	return a2Toa1(a1, thetarad, gammarad, phirad, 
 		data['scale'], data['point1'], data['point2'])
-
 
 def a1Toa2(a1, theta, gamma, phi, scale, point1, point2):
 	"""
 	flips the values and runs a2Toa1
 	"""
-
-	a1b = a2Toa1(a1, -1.0*theta, -1.0*phi, -1.0*gamma, 1.0/scale, point2, point1)
+	raise NotImplementedError
+	a1b = a2Toa1(a1, -1.0*theta, -1.0*phi, -1.0*gamma, 1.0/scale, point1, point2)
 	return a1b
 
 def a2Toa1(a2, theta, gamma, phi, scale, point1, point2):
@@ -115,7 +125,6 @@ def a2Toa1(a2, theta, gamma, phi, scale, point1, point2):
 	point1 -> numpy coordinates for a particle in image 1
 	point2 -> numpy coordinates for a particle in image 2
 	"""
-
 	#gamma rotation
 	cosgamma = math.cos(gamma)
 	singamma = math.sin(gamma)
@@ -144,51 +153,55 @@ def a2Toa1(a2, theta, gamma, phi, scale, point1, point2):
 		a2b[i,1] = a2c[1]
 	return a2b
 
-def maskOverlapRegion(image1, image2, targets1, targets2, datadict, params=None):
+def maskOverlapRegion(image1, image2, datadict):
 		image1 = ndimage.median_filter(image1, size=2)
 		image2 = ndimage.median_filter(image2, size=2)
 		#SET IMAGE LIMITS
-		gap = 16
+		gap = int(image1.shape[0]/256.0)
 		xm = image1.shape[0]+gap
 		ym = image1.shape[1]+gap
-		a1 = numpy.array([ [targets1[0].x, targets1[0].y], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
+		a1 = numpy.array([ datadict['point1'], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
 		xm = image2.shape[0]+gap
 		ym = image2.shape[1]+gap
-		a2 = numpy.array([ [targets2[0].x, targets2[0].y], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
-
+		a2 = numpy.array([ datadict['point2'], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
 		#CALCULATE TRANSFORM LIMITS
-		a1b = a1Toa2Data(a1, datadict)
-		a2b = a2Toa1Data(a2, datadict)
+		a2mask = a1Toa2Data(a1, datadict)
+		a1mask = a2Toa1Data(a2, datadict)
+		#print "a1=",a1
+		#print "a1mask=",a1mask
+		#print "a2=",a2
+		#print "a2mask=",a2mask
+
 		#CONVERT NUMPY TO LIST
-		a1blist = []
-		a2blist = []
+		a1masklist = []
+		a2masklist = []
 		for j in range(4):
 			for i in range(2):
-				item = int(a1b[j+1,i])
-				a1blist.append(item)
-				item = int(a2b[j+1,i])
-				a2blist.append(item)
+				item = int(a1mask[j+1,i])
+				a1masklist.append(item)
+				item = int(a2mask[j+1,i])
+				a2masklist.append(item)
 		#DRAW A POLYGON FROM THE LIMITS 1->2
-		#print "a1b=",numpy.asarray(a1b, dtype=numpy.int32)
-		#print "a1blist=",a1blist
+		#print "a2mask=",numpy.asarray(a2mask, dtype=numpy.int32)
+		#print "a2masklist=",a2masklist
 		mask2 = numpy.zeros(shape=image2.shape, dtype=numpy.bool_)
 		mask2b = apImage.arrayToImage(mask2, normalize=False)
 		mask2b = mask2b.convert("L")
 		draw2 = ImageDraw.Draw(mask2b)
-		draw2.polygon(a1blist, fill="white")
+		draw2.polygon(a2masklist, fill="white")
 		mask2 = apImage.imageToArray(mask2b, dtype=numpy.float32)
 		immin2 = ndimage.minimum(image2)+1.0
 		image2 = (image2+immin2)*mask2
 		immax2 = ndimage.maximum(image2)
 		image2 = numpy.where(image2==0,immax2,image2)
 		#DRAW A POLYGON FROM THE LIMITS 2->1
-		#print "a2b=",numpy.asarray(a2b, dtype=numpy.int32)
-		#print "a2blist=",a2blist
+		#print "a1mask=",numpy.asarray(a1mask, dtype=numpy.int32)
+		#print "a1masklist=",a1masklist
 		mask1 = numpy.zeros(shape=image1.shape, dtype=numpy.bool_)
 		mask1b = apImage.arrayToImage(mask1, normalize=False)
 		mask1b = mask1b.convert("L")
 		draw1 = ImageDraw.Draw(mask1b)
-		draw1.polygon(a2blist, fill="white")
+		draw1.polygon(a1masklist, fill="white")
 		mask1 = apImage.imageToArray(mask1b, dtype=numpy.float32)
 		immin1 = ndimage.minimum(image1)+1.0
 		image1 = (image1+immin1)*mask1
