@@ -41,7 +41,7 @@ def rescaleTemplates(params):
 		newtmpltname = "scaledTemporaryTemplate"+str(i)+".mrc"
 		newtmpltname = os.path.join(params['rundir'], newtmpltname)
 
-		if params['apix'] != params['scaledapix'][i]:
+		if abs(params['apix'] - params['scaledapix'][i]) < 0.1:
 			print "rescaling template",str(i),":",tmplt['apix'],"->",params['apix']
 			scalefactor = tmplt['apix'] / params['apix']
 			imgdata = scaleAndClipTemplate(ogtmpltname, scalefactor, newtmpltname)
