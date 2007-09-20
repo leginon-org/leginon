@@ -95,21 +95,30 @@ class tiltAligner(particleLoop.ParticleLoop):
 	
 		return
 
+	#####################################################
+	##### START PRE-DEFINED APPION LOOP FUNCTIONS #####
+	#####################################################
+
 	def processImage(self, imgdata):
-		# run it
+		#GET THE TILT PAIR
 		tiltdata = apTiltPair.getTiltPair(imgdata)
 		if tiltdata is None:
 			return
 
+		#RUN THE ALIGNER GUI
 		self.runTiltAligner(imgdata, tiltdata)
 		numpeaks = len(self.peaktree1)
 		apDisplay.printMsg("Found "+str(numpeaks)+" particles for "+apDisplay.shortenImageName(imgdata['filename']))
 		self.stats['lastpeaks'] = numpeaks
 
+		#CREATE PEAK JPEG
 		if self.threadJpeg is True:
 			threading.Thread(target=apPeaks.createTiltedPeakJpeg, args=(imgdata, tiltdata, self.peaktree1, self.peaktree2, self.params)).start()
 		else:
 			apPeaks.createTiltedPeakJpeg(imgdata, tiltdata, self.peaktree1, self.peaktree2, self.params)
+
+		#EXTRA DONE DICT CALL
+	 	self._writeDoneDict(tiltdata['filename'])
 
 	def commitToDatabase(self, imgdata):
 		"""
@@ -129,9 +138,9 @@ class tiltAligner(particleLoop.ParticleLoop):
 				apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], self.assess)
 				apDatabase.insertImgAssessmentStatus(tiltdata, self.params['runid'], self.assess)
 
-	###################################################
-	##### END PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
-	###################################################
+	##########################################
+	##### END PRE-DEFINED LOOP FUNCTIONS #####
+	##########################################
 
 	def getParticlePicks(self, imgdata):
 		if not self.params['pickrunid']:
