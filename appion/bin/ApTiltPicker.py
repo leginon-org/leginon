@@ -207,8 +207,8 @@ class PickerApp(wx.App):
 
 		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
 
-		label = wx.StaticText(self.frame, -1, "Assessment:  ", style=wx.ALIGN_RIGHT)
-		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		#label = wx.StaticText(self.frame, -1, "Assessment:  ", style=wx.ALIGN_RIGHT)
+		#self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
 		self.assessnone = wx.ToggleButton(self.frame, -1, "&None")
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleNone, self.assessnone)
@@ -442,7 +442,7 @@ class PickerApp(wx.App):
 		a = []
 		for t in targets:
 			a.append([int(t.x), int(t.y)])
-		na = numpy.array(a, dtype=numpy.int16)
+		na = numpy.array(a, dtype=numpy.int32)
 		return na
 
 	#---------------------------------------

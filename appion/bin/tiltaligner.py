@@ -160,7 +160,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 		targets = []
 		for p in particles:
 			targets.append( (p['xcoord']/self.params['bin'], p['ycoord']/self.params['bin']) )
-		ntargets = numpy.array(targets, dtype=numpy.int16)
+		ntargets = numpy.array(targets, dtype=numpy.int32)
 		return ntargets
 
 	def insertTiltAlignParams(self):
@@ -208,14 +208,17 @@ class tiltAligner(particleLoop.ParticleLoop):
 	def processAndSaveAllImages(self):
 		print "Pre-processing images before picking"
 		for imgdata in self.imgtree:
+			tiltdata = apTiltPair.getTiltPair(imgdata)
+			if tiltdata is None:
+				#reject it
+				apDatabase.insertImgAssessmentStatus(imgdata, "notiltpair", False)
+				continue
+
 			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
 			if os.path.isfile(imgpath):
 				print "already processed: ",apDisplay.short(imgdata['filename'])
 			else:
 				apFindEM.processAndSaveImage(imgdata, params=self.params)
-			tiltdata = apTiltPair.getTiltPair(imgdata)
-			if tiltdata is None:
-				continue
 			tiltpath = os.path.join(self.params['rundir'], tiltdata['filename']+'.dwn.mrc')
 			if os.path.isfile(tiltpath):
 				print "already processed: ",apDisplay.short(tiltdata['filename'])
