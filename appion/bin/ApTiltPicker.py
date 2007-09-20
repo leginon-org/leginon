@@ -656,6 +656,9 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def guessFileType(self, filepath):
+		if filepath is None or filepath == "":
+			return None
+		print filepath
 		self.data['outfile'] = os.path.basename(filepath)
 		self.data['extension'] = self.data['outfile'][-3:]
 		if self.data['extension'] == "txt":
@@ -701,8 +704,10 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def openPicks(self, filepath=None):
-		if filepath is None:
+		if filepath is None or filepath is "":
 			filepath = os.path.join(self.data['dirname'],self.data['outfile'])
+		if filepath is None or filepath is "":
+			return None
 		if self.data['filetypeindex'] is None:
 			self.guessFileType(filepath)
 		if True: #try:
