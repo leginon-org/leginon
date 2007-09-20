@@ -142,6 +142,7 @@ class PickerApp(wx.App):
 		self.assesskeep.SetBackgroundColour(self.deselectcolor)
 		self.assessreject.SetValue(0)
 		self.assessreject.SetBackgroundColour(self.deselectcolor)
+		self.assess = None
 
 	def onToggleKeep(self, evt):
 		self.assessnone.SetValue(0)
@@ -150,6 +151,7 @@ class PickerApp(wx.App):
 		self.assesskeep.SetBackgroundColour(wx.Color(0,200,0))
 		self.assessreject.SetValue(0)
 		self.assessreject.SetBackgroundColour(self.deselectcolor)
+		self.assess = True
 
 
 	def onToggleReject(self, evt):
@@ -159,6 +161,7 @@ class PickerApp(wx.App):
 		self.assesskeep.SetBackgroundColour(self.deselectcolor)
 		self.assessreject.SetValue(1)
 		self.assessreject.SetBackgroundColour(wx.Color(200,0,0))
+		self.assess = False
 
 	def onClear(self, evt):
 		self.panel.setTargets('Select Particles', [])
@@ -193,7 +196,7 @@ class manualPicker(particleLoop.ParticleLoop):
 	def particleCommitToDatabase(self, imgdata):
 		expid = int(imgdata['session'].dbid)
 		self.insertManualParams(expid)
-		if self.assess is not None:
+		if self.assess != self.assessold and self.assess is not None:
 			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], self.assess)
 		#self.deleteOldPicks(imgdata,self.params)
 		return
@@ -300,7 +303,8 @@ class manualPicker(particleLoop.ParticleLoop):
 		self.targets = []
 
 		#set the assessment status
-		self.assess = apDatabase.getImgAssessmentStatus(imgdata)
+		self.assessold = apDatabase.getImgAssessmentStatus(imgdata)
+		self.assess = self.assessold
 		self.app.setAssessStatus()
 
 		#open new file
