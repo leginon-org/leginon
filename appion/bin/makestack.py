@@ -266,6 +266,8 @@ def checkPairInspectDB(imgdict,params):
 		#check results of only most recent run
 		if adata[0]['selectionkeep']==True:
 			keep=True
+		else:
+			keep=False
 	return(keep)
 
 def checkPairInspectDBREFLEGINON(imgdict,params):
