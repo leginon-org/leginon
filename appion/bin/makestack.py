@@ -715,6 +715,7 @@ def insertStackRun(params):
 	paramslist=apdb.query(stparamq)
 
 	# make sure that NULL values were not filled in during query
+	goodplist=None
 	for plist in paramslist:
 		notgood=None
 		for p in paramlist:
