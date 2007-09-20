@@ -1,4 +1,5 @@
-function ctfcorrect(impath, matfile, tempdir, ctdimpath, outimagedir, imgname); 
+function ctfcorrect(impath, matfile, ctdimpath, imgname); 
+%function ctfcorrect(impath, matfile, tempdir, ctdimpath, outimagedir, imgname); 
 % DESCRIPTION: 
 %     CTF correction based on parameters estimated by ACE. 
 %
