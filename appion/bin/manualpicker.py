@@ -173,7 +173,7 @@ class PickerApp(wx.App):
 
 class manualPicker(particleLoop.ParticleLoop):
 	def preLoopFunctions(self):
-		if self.params['dbimages']:
+		if self.params['dbimages'] or self.params['alldbimages']:
 			self.processAndSaveAllImages()
 		self.app = PickerApp(0)
 		self.app.appionloop = self
@@ -187,7 +187,7 @@ class manualPicker(particleLoop.ParticleLoop):
 		wx.Exit()
 
 	def particleProcessImage(self, imgdata):
-		if not self.params['dbimages']:
+		if not self.params['dbimages'] and not self.params['alldbimages']:
 			apFindEM.processAndSaveImage(imgdata, params=self.params)
 		peaktree = self.runManualPicker(imgdata)
 		#peaktree = self.runManualPickerOld(imgdata)

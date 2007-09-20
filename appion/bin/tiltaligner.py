@@ -31,7 +31,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 		self.processdirname = "tiltalign"
 
 	def preLoopFunctions(self):
-		if self.params['dbimages']:
+		if self.params['dbimages'] or self.params['alldbimages']:
 			self.processAndSaveAllImages()
 		self.app = ApTiltPicker.PickerApp(mode='loop')
 		self.app.appionloop = self
@@ -104,6 +104,10 @@ class tiltAligner(particleLoop.ParticleLoop):
 		tiltdata = apTiltPair.getTiltPair(imgdata)
 		if tiltdata is None:
 			return
+
+		if not self.params['dbimages'] and not self.params['alldbimages']:
+			apFindEM.processAndSaveImage(imgdata, params=self.params)
+			apFindEM.processAndSaveImage(tiltdata, params=self.params)
 
 		#RUN THE ALIGNER GUI
 		self.runTiltAligner(imgdata, tiltdata)
