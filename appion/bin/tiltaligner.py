@@ -154,6 +154,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 			#particles = apParticle.getParticlesForImageFromRunName(imgdata, self.params['pickrunname'])
 		particles = apParticle.getParticles(imgdata, self.params['pickrunid'])
 		targets = self.particlesToTargets(particles)
+		apDisplay.printMsg("Found "+str(len(targets))+" particles for image "+apDisplay.short(imgdata['filename']))
 		return targets
 
 	def particlesToTargets(self, particles):

@@ -406,13 +406,23 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return False
 		#GET ARRAYS
-		a1 = self.getAlignedArray1()
-		a2 = self.getAlignedArray2()
-		#GET THE POINT VALUES
-		apTiltTransform.setPointsFromArrays(a1, a2, self.data)
+		a1b = self.getAlignedArray1()
+		a2b = self.getAlignedArray2()
 		#SET THE ALIGNED ARRAYS
-		self.panel2.setTargets('Aligned', a1 )
-		self.panel1.setTargets('Aligned', a2 )
+		self.panel2.setTargets('Aligned', a1b )
+		self.panel1.setTargets('Aligned', a2b )
+
+	#---------------------------------------
+	def getArray1(self):
+		targets1 = self.panel1.getTargets('Picked')
+		a1 = self.targetsToArray(targets1)
+		return a1b
+
+	#---------------------------------------
+	def getArray2(self):
+		targets2 = self.panel2.getTargets('Picked')
+		a2 = self.targetsToArray(targets2)
+		return a2
 
 	#---------------------------------------
 	def getAlignedArray1(self):
@@ -442,22 +452,28 @@ class PickerApp(wx.App):
 	def targetsToArray(self, targets):
 		a = []
 		for t in targets:
-			a.append([int(t.x), int(t.y)])
+			if t.x and t.y:
+				a.append([ int(t.x), int(t.y) ])
 		na = numpy.array(a, dtype=numpy.int32)
 		return na
 
 	#---------------------------------------
 	def onImportPicks(self, evt):
+		#a1 = numpy.array([[512,512]], dtype=numpy.float32)
+		#a2 = apTiltTransform.a1Toa2Data(a1, self.data)
+		#a1b = apTiltTransform.a2Toa1Data(a2, self.data)
+		#print a1,a2,a1b
 		len1 = len(self.picks1)
 		len2 = len(self.picks2)
 		if len1 < 1 or len2 < 1:
 			print "there are no picks",len1,len2
 			return
-		list1, list2 = apTiltTransform.alignPicks(self.picks1, self.picks2, self.data)
 		targets1 = self.panel1.getTargets('Picked')
 		targets2 = self.panel2.getTargets('Picked')
 		a1 = self.targetsToArray(targets1)
 		a2 = self.targetsToArray(targets2)
+		apTiltTransform.setPointsFromArrays(a1, a2, self.data)
+		list1, list2 = apTiltTransform.alignPicks(self.picks1, self.picks2, self.data)
 		if a1.shape[0] > 0:
 			newa1 = numpy.vstack((a1, list1))
 		else:
@@ -499,11 +515,19 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onClearPicks(self, evt):
-		self.panel1.setTargets('Picked', [])
-		#self.panel1.setTargets('Numbered', [])
+		targets1 = self.panel1.getTargets('Picked')
+		if len(targets1) > 0:
+			self.panel1.setTargets('Picked', [targets1[0]])
+		else:
+			self.panel1.setTargets('Picked', [])
 		self.panel1.setTargets('Aligned', [])
-		self.panel2.setTargets('Picked', [])
-		#self.panel2.setTargets('Numbered', [])
+
+		targets2 = self.panel2.getTargets('Picked')
+		if len(targets2) > 0:
+			self.panel2.setTargets('Picked', [targets2[0]])
+		else:
+			self.panel2.setTargets('Picked', [])
+
 		self.panel2.setTargets('Aligned', [])
 
 	#---------------------------------------
