@@ -213,7 +213,7 @@ def maskOverlapRegion(image1, image2, data):
 
 		return (image1, image2)
 
-def alignPicks(picks1, picks2, data, limit=10):
+def alignPicks(picks1, picks2, data, limit=5.0):
 	list1 = []
 	alignlist2 = []
 	#transform picks2
@@ -228,7 +228,16 @@ def alignPicks(picks1, picks2, data, limit=10):
 				list1.append(pick)
 				alignlist2.append(closepick)
 				filled[key] = True
-	limit *= 2
+	limit *= 2.0
+	for pick in picks1:
+		closepick = findClosestPick(pick, alignpicks2, limit)
+		if closepick is not None: 
+			key = str(closepick)
+			if not key in filled:
+				list1.append(pick)
+				alignlist2.append(closepick)
+				filled[key] = True
+	limit *= 2.0
 	for pick in picks1:
 		closepick = findClosestPick(pick, alignpicks2, limit)
 		if closepick is not None: 

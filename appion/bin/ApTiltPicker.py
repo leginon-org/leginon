@@ -516,14 +516,14 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def onClearPicks(self, evt):
 		targets1 = self.panel1.getTargets('Picked')
-		if len(targets1) > 0:
+		if len(targets1) > 1000:
 			self.panel1.setTargets('Picked', [targets1[0]])
 		else:
 			self.panel1.setTargets('Picked', [])
 		self.panel1.setTargets('Aligned', [])
 
 		targets2 = self.panel2.getTargets('Picked')
-		if len(targets2) > 0:
+		if len(targets2) > 1000:
 			self.panel2.setTargets('Picked', [targets2[0]])
 		else:
 			self.panel2.setTargets('Picked', [])
