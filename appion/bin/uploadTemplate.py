@@ -3,11 +3,11 @@
 
 import os
 import sys
+import shutil
 import apUpload
 import apParam
 import apTemplate
 import apDisplay
-#import selexonFunctions as sf1
 
 if __name__ == '__main__':
 	# create params dictionary & set defaults
@@ -31,6 +31,11 @@ if __name__ == '__main__':
 
 	# find the number of template files
 	apTemplate.checkTemplates(params, "upload")
+
+	#we should copy the templates to, etc:
+	#/ami/data00/appion/session/templates/groEl1.mrc
+	#/ami/data00/appion/session/templates/groEl2.mrc
+	#and only allow user read access just so they don't get deleted
 
 	# insert templates to database
 	apUpload.getProjectId(params)
