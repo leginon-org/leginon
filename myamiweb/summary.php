@@ -232,6 +232,33 @@ $icethicknesspresets = $leginondata->getIceThicknessPresets($expId);
 	
 ?>
 </tr>
+<?
+$defocusresults = $leginondata->getFocusResultData($expId, 'both','all','ok');
+	echo "<tr>";
+	echo "<td colspan='2'>";
+	echo divtitle("Autofocus Results");
+	if (!empty($defocusresults)) {
+	echo "<table border='0'>\n";
+/*	echo "<tr>";
+		echo "<td>";
+		echo "<a href='autofocusreport.php?Id=$expId'>report &raquo;</a>";
+		echo "</td>";
+	echo "</tr>";
+*/
+	echo "<tr>";
+		echo "<a href='autofocusgraph.php?Id=$expId&vd=1'>[data]</a>";
+		echo "<a href='autofocusgraph.php?Id=$expId&vs=1'>[sql]</a><br>";
+		echo "<a href='autofocusgraph.php?Id=$expId'>";
+		echo "<img border='0' src='autofocusgraph.php?Id=$expId&w=256'>";
+		echo "</a>\n";
+		echo "</td>\n";
+	echo "</tr>\n";
+	echo "</table>\n";
+} else echo "no Autofocus information available";
+	echo "</td>";
+	
+?>
+</tr>
 <tr>
 <td colspan="2">
 <?php

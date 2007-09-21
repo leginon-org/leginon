@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.69 $
- *	@version $Id: leginon.inc,v 1.69 2007-09-12 23:05:06 dfellman Exp $
+ *	@version $Revision: 1.70 $
+ *	@version $Id: leginon.inc,v 1.70 2007-09-21 22:04:02 acheng Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -1850,6 +1850,69 @@ class leginondata {
 		." 1 "
 //		."t.`type`='focus' "
 		.$sqlgroup;
+		return $this->mysql->getSQLResult($q);
+	}
+	function getFocusResultData($id, $correction_type, $method, $status='ok') {
+		switch ($correction_type) {
+			case 'both':
+				$condition1 = "  ";
+				break;
+			case 'Stage Z':
+				$condition1 = "`f`.`defocus correction` = '".$correction_type."' and ";
+				break;
+			case 'defocus':
+				$condition1 = "`f`.`defocus correction` = '".$correction_type."' and ";
+				break;
+		} 
+
+		switch ($method) {
+			case 'Stage Tilt':
+				$condition2 = " `f`.`method` = '".$method."' and ";
+				break;
+			case 'bad':
+				$condition2 = " `f`.`method` = '".$method."' and ";
+				break;
+			case 'all':
+				$condition2 = " ";
+				break;
+		} 
+
+		switch ($status) {
+			case 'ok':
+				$condition3 = " `f`.`status` = '".$status."' and ";
+				break;
+			case 'bad':
+				$condition3 = " `f`.`status` like '%fit untrusted%' and ";
+				break;
+			case 'all':
+				$condition3 = " ";
+				break;
+		} 
+
+		$select =  "UNIX_TIMESTAMP(f.`DEF_timestamp`) as `unix_timestamp`, "
+		."date_format(f.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`, "
+		."a.`MRC|image` as filename, "
+		."t.`REF|AcquisitionImageData|image` as imageId, "
+		."t.`DEF_id` as targetId, "
+		."f.defocus, "
+		."f.`stigx`, "
+		."f.`stigy`, "
+		."f.`min` as fit_residual, "
+		."f.status, "
+		."f.method ";
+
+		$q="select  "
+		.$select
+		."from FocuserResultData as f "
+		."left join AcquisitionImageTargetData as t  "
+		."on (t.`DEF_id` = f.`REF|AcquisitionImageTargetData|target`)  "
+		."left join AcquisitionImageData as a on (a.`DEF_id` = t.`REF|AcquisitionImageData|image`) "
+		."where "
+		.$condition1
+		.$condition2
+		.$condition3
+		." f.`REF|SessionData|session`=".$id." "
+		." ";
 		return $this->mysql->getSQLResult($q);
 	}
 
