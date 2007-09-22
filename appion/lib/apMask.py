@@ -276,12 +276,12 @@ def makeInspectedMask(sessiondata,maskassessname,imgdata):
 	return allmaskarray,maxbin
 	
 def overlayMask(image,mask):
+	if mask is None:
+		return image
 	imageshape=image.shape
 	maskshape=mask.shape
 	alpha = 0.25
-	
-	if mask is None:
-		return image
+
 	if maskshape != imageshape:
 		binning = float(maskshape[0])/imageshape[0]
 		if binning > 1:
