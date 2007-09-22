@@ -447,6 +447,8 @@ class ApRefinementParamsData(Data):
 			('EMAN_median', bool),
 			('EMAN_phasecls', bool),
 			('EMAN_refine', bool),
+			('MsgP_cckeep', float),
+			('MsgP_minptls', int),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApRefinementParamsData=ApRefinementParamsData
@@ -472,6 +474,7 @@ class ApParticleClassificationData(Data):
 			('quality_factor', float),
 			('mirror', bool),
 			('thrown_out',bool),
+			('msgp_keep',bool),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApParticleClassificationData=ApParticleClassificationData

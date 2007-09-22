@@ -56,6 +56,8 @@ def defineIteration():
 	iteration['median']=None
 	iteration['phasecls']=None
 	iteration['refine']=None
+	iteration['msgpasskeep']=None
+	iteration['msgpassminp']=None
 	return iteration
 	
 def printHelp():
@@ -92,7 +94,7 @@ def parseInput(args,params):
 		elif (elements[0]=='modelid'):
 			params['modelid']=int(elements[1])
 		elif (elements[0]=='package'):
-			params['package']=int(elements[1])
+			params['package']=elements[1]
 		elif (elements[0]=='dir'):
 			params['path']=elements[1]
 			if (params['path'][-1]=='/'):
@@ -138,6 +140,24 @@ def listFiles(params):
 		if re.match("fsc.eotest.\d+",f):
 			params['fscs'].append(f)
 			
+def parseMsgPassingLogFile(params):
+	logfile=os.path.join(params['path'],'.msgPassinglog')
+	print "parsing massage passing log file:",logfile
+	lines=open(logfile,'r')
+	for i,line in enumerate(lines):
+		line=string.rstrip(line)
+		if re.search("msgPassing", line):
+			msgpassparams=line.split(' ')
+			iteration = params['iterations'][i]
+			for p in msgpassparams:
+				elements=p.split('=')
+				if elements[0]=='corCutOff':
+					iteration['msgpasskeep']=float(elements[1])
+				elif elements[0]=='minNumOfPtcls':
+					iteration['msgpassminp']=int(elements[1])
+	lines.close()
+
+
 def parseLogFile(params):
 	# parse out the refine command from the .emanlog to get the parameters for each iteration
 	logfile=os.path.join(params['path'],'.emanlog')
@@ -320,6 +340,8 @@ def insertIteration(iteration,params):
 	refineparamsq['EMAN_median']=iteration['median']
 	refineparamsq['EMAN_phasecls']=iteration['phasecls']
 	refineparamsq['EMAN_refine']=iteration['refine']
+	refineparamsq['MsgP_cckeep']=iteration['msgpasskeep']
+	refineparamsq['MsgP_minptls']=iteration['msgpassminp']
 
 	# insert resolution data
 	resData=insertResolutionData(params,iteration)
@@ -428,6 +450,12 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 			shy=float(other[2])
 			if (other[3]=='1') :
 				prtlaliq['mirror']=True
+				
+			# message passing kept particle
+			if params['package']== 'EMAN/MsgP':
+				msgk=bool(int(ali[4]))
+			else:
+				msgk=None
 
 			# find particle in stack database
 			stackpq=appionData.ApStackParticlesData()
@@ -446,6 +474,7 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 			prtlaliq['shifty']=shy
 			prtlaliq['inplane_rotation']=rot
 			prtlaliq['quality_factor']=qualf
+			prtlaliq['msgp_keep']=msgk
 			partdb.insert(prtlaliq)
 	f.close()
 	return
