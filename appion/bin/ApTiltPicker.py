@@ -11,6 +11,7 @@ import Image
 import time
 import cPickle
 import apSpider
+import apXml
 from gui.wx import TargetPanel, ImagePanelTools
 from scipy import ndimage, optimize
 from apTilt import tiltDialog
