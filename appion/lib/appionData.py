@@ -153,6 +153,18 @@ class ApImageTiltTransformData(Data):
 			('scale_factor', float),
 			('tilt_angle', float),
 			('rmsd', float),
+			('tiltrun', ApSelectionRunData)
+		)
+	typemap = classmethod(typemap)
+leginondata.ApImageTiltTransformData=ApImageTiltTransformData
+
+class ApTiltParticlePairData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('particle1', ApParticleData),
+			('particle2', ApParticleData),
+			('transform', ApImageTiltTransformData)
+			('error', float),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApImageTiltTransformData=ApImageTiltTransformData
@@ -260,7 +272,7 @@ class ApStackParticlesData(Data):
 			('stack', ApStackData),
 			('stackRun', ApStackRunData),
 			('particle', ApParticleData),
-	        )
+		)
 	typemap = classmethod(typemap)
 leginondata.ApStackParticlesData = ApStackParticlesData
 
@@ -485,7 +497,7 @@ class ApEulerData(Data):
 			('euler1', float),
 			('euler2', float),
 			('euler3', float),
-	        )
+		)
 	typemap = classmethod(typemap)
 leginondata.ApEulerData=ApEulerData
 	
