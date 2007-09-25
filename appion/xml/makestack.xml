@@ -50,7 +50,7 @@
  </nonorm>
  <sessionname>
 	<name>session name</name>
-	<description> name of the session</description>
+	<description>Name of the session</description>
 	<type>string</type>
 	<example>07jul01c</example>
  </sessionname>
@@ -149,4 +149,10 @@
 	<description>Single output stack will be in SPIDER format</description>
 	<type>string</type>
  </spider>
+ <tiltangle>
+	<name>tilt angle</name>
+	<description>Only box particles from images within 1 degree of this tilt angle</description>
+	<type>float</type>
+	<example>15</example>
+ </tiltangle>
 </makestack>
