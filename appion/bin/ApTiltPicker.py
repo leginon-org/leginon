@@ -827,10 +827,6 @@ class PickerApp(wx.App):
 			self.data['outfile'] = os.path.basename(self.panel1.filename)+"."+self.getExtension()
 			self.data['dirname'] = self.appionloop.params['pickdatadir']
 			self.savePicks()
-			targets1 = self.panel1.getTargets('Picked')
-			targets2 = self.panel2.getTargets('Picked')
-			self.appionloop.peaks1 = self.targetsToArray(targets1)
-			self.appionloop.peaks2 = self.targetsToArray(targets2)
 			self.Exit()
 		else:
 			wx.Exit()
@@ -838,20 +834,30 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def copyDataToAppionLoop(self):
 		#Need global shift data not local data
-		targets1 = self.panel1.getTargets('Picked')
-		targets2 = self.panel2.getTargets('Picked')
-		if len(targets1) > 0 and len(targets2) > 0:
-			#copy over the data
-			for i,v in self.data.items():
-				if type(v) in [type(1), type(1.0), type(""), ]:
-					self.appionloop.tiltparams[i] = v
-				if 'point' in i:
-					self.appionloop.tiltparams[i] = v
-			self.appionloop.tiltparams['x1'] = targets1[0].x
-			self.appionloop.tiltparams['y1'] = targets1[0].y
-			self.appionloop.tiltparams['x2'] = targets2[0].x
-			self.appionloop.tiltparams['y2'] = targets2[0].y
+		a1 = self.getArray1()
+		a2 = self.getArray2()
+		if len(a1) == 0 or len(a2) == 0:
+			return False
+		#copy over the peaks
+		self.appionloop.peaks1 = a1
+		self.appionloop.peaks2 = a2
+		a2b = self.getAlignedArray2()
+		self.appionloop.peakerrors = abs(a1 - a2b)
+		#copy over the data
+		for i,v in self.data.items():
+			if type(v) in [type(1), type(1.0), type(""), ]:
+				self.appionloop.tiltparams[i] = v
+			else:
+				print "skipping key: "+str(i)+" of type "+str(type(v))
+			if 'point' in i:
+				self.appionloop.tiltparams[i] = v
+		self.appionloop.tiltparams['x1'] = targets1[0].x
+		self.appionloop.tiltparams['y1'] = targets1[0].y
+		self.appionloop.tiltparams['x2'] = targets2[0].x
+		self.appionloop.tiltparams['y2'] = targets2[0].y
 			
+	def getParticleErrors(self):
+
 
 	#---------------------------------------
 	def openLeftImage(self,filename):

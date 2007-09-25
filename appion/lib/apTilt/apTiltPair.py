@@ -96,35 +96,51 @@ def tiltPickerToDbNames(tiltparams):
 		newdict['image2_y'] = tiltparams['point2'][1]
 	return newdict
 
-def insertTiltTransform(imgdata1, imgdata2, tiltparams):
+def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 	#First we need to sort imgdata
 	#'07aug30b_a_00013gr_00010sq_v01_00002sq_v01_00016en_00'
 	#'07aug30b_a_00013gr_00010sq_v01_00002sq_01_00016en_01'
 	#last two digits confer order, but then the transform changes...
 
-	#The order is specified by 1,2; so don't change it let makestack figure it out
+	### first find the runid
+	runq = appionData.ApSelectionRunData()
+	runq['name'] = params['runid']
+	runq['dbemdata|SessionData|session'] = imgdata1['session'].dbid
+	runids=appiondb.query(runq, results=1)
+	if not runids:
+		apDisplay.printError("could not find runid in database")
 
+	### the order is specified by 1,2; so don't change it let makestack figure it out
 	for imgdata in (imgdata1, imgdata2):
 		for index in ("1","2"):
 			transq = appionData.ApImageTiltTransformData()
 			transq["dbemdata|AcquisitionImageData|image"+index] = imgdata.dbid
+			transq['tiltrun'] = runids[0]
 			transdata = appiondb.query(transq)
 			if transdata:
 				apDisplay.printWarning("Transform values already in database for "+imgdata['filename'])
 				return False
 
+	### prepare the insertion
 	transq = appionData.ApImageTiltTransformData()
 	transq['dbemdata|AcquisitionImageData|image1'] = imgdata1.dbid
 	transq['dbemdata|AcquisitionImageData|image2'] = imgdata2.dbid
 	dbdict = tiltPickerToDbNames(tiltparams)
-	if dbdict is not None:
-		for i,v in dbdict.items():
-			transq[i] = v
-			print i,v
-		apDisplay.printMsg("Inserting transform beteween "+apDisplay.short(imgdata1['filename'])+\
-			" and "+apDisplay.short(imgdata2['filename'])+" into database")
-		appiondb.insert(transq)
-	return
+	if dbdict is None:
+		return False
+	#Can I do for key in appionData.ApImageTiltTransformData() ro transq???
+	for key in ('image1_x','image1_y','image1_rotation','image2_x','image2_y','image2_rotation','scale_factor','tilt_angle','rmsd'):
+		if key not in dbdict:
+			apDisplay.printError("Key: "+key+" was not found in transformation data")
+
+	for i,v in dbdict.items():
+		transq[i] = v
+		#print i,v
+
+	apDisplay.printMsg("Inserting transform beteween "+apDisplay.short(imgdata1['filename'])+\
+		" and "+apDisplay.short(imgdata2['filename'])+" into database")
+	appiondb.insert(transq)
+	return True
 
 
 

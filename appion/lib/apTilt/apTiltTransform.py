@@ -42,7 +42,7 @@ def willsq(a1, a2, \
 	solved = optimize.fmin(_diffParticles, x0, args=(initx, xscale, a1f, a2f), 
 		xtol=1e-4, ftol=1e-4, maxiter=500, maxfun=500, disp=0, full_output=1)
 	x1 = solved[0]
-	fit['rmsd'] = solved[1] #_diffParticles(x1, initx, xscale, a1, a2)
+	fit['rmsd'] = float(solved[1]) #_diffParticles(x1, initx, xscale, a1, a2)
 	fit['iter'] = int(solved[3])
 	#print "final rmsd: "+str(fit['rmsd'])+" in "+str(fit['iter'])+" iterations"
 
