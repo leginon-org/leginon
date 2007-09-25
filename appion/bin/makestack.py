@@ -27,6 +27,7 @@ import apDB
 import apDatabase
 import apCtf
 import apMask
+import apXml
 import apImage
 try:
 	import apMatlab
@@ -37,46 +38,15 @@ db   = apDB.db
 apdb = apDB.apdb
 
 def printHelp():
-	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected or inspectfile=<file>] [bin=<n>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n> [limit=<n>] [defocpair=<preset>]\n"
+	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected or inspectfile=<file>] [bin=<n>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n> [partlimit=<n>] [defocpair=<preset>]\n"
 	print "Examples:\nmakestack.py extract/001ma.box single=stacks/start.hed ace=0.8 boxsize=180 inspected"
 	print "makestack.py extract/*.box outdir=stacks/noctf/ ace=0.8 boxsize=180\n"
 	print "* Supports wildcards - By default a stack file of the same name as the box file"
 	print "  will be created in the current directory *\n"
-	print "<boxfile>            : EMAN box file(s) containing picked particle coordinates"
-	print "runid=<runid>        : subdirectory for output (default=stack1)"
-	print "                       do not use this option if you are specifying particular images"
-	print "outdir=<path>        : Directory in which to create the stack"
-	print "single=<file>        : Create a single stack containing all the boxed particles"
-	print "                       (density will be inverted)"
-	print "ace=<n>              : Only use micrographs with this ACE confidence value and higher"
-	print "selexonmin=<n>       : Only use particles of this correlation value and higher"
-	print "selexonmax=<n>       : Only use particles of this correlation value and lower"
-	print "boxsize=<n>          : Make stacks with this box size (unbinned)"
-	print "inspected            : Use only manually inspected images from database"
-	print "inspectfile=<file>   : Text file containing results of manually checked images"
-	print "maskassess=<name>    : If specified, masks accepted by the MaskAssessment run name is used to exclude area"
-	print "phaseflip            : Stack will be phase flipped using best ACE value in database"
-	print "bin=<n>              : final images will be binned by this amount"
-	print "noinvert             : If writing to a single stack, images will NOT be inverted"
-	print "                       (stack images are inverted by default)"
-	print "spider               : Single output stack will be in SPIDER format"
-	print "mindefocus=<n>       : Limit the defocus to values above what is specified (no limits by default)"
-	print "                       Example <mindefocus = -1.0e-6>"
-	print "maxdefocus=<n>       : Limit the defocus to values below what is specified (no limits by default)"
-	print "                       Example <maxdefocus = -3.0e-6>"
-	print "description=\"text\" : description of the stack being created- surround text with double quotes"
-	print "prtlrunId=<n>        : use particles from database corresponding to selexon run id"
-	print "limit=<n>            : stop boxing particles after total particles gets above limit (no limits by default)"
-	print "                     : Example <limit=10000>"
-	print "commit               : store particles to database"
-	print "sessionname          : name of the session (example: 07jul01c)"
-	print "nonorm               : do not normalize images"
-	print "medium               : medium of images, carbon or ice (sets noinvert)"
-	print "defocpair            : Get particle coords for the focal pair of the image that was picked in runid"
-	print "                       For example if your selexon run picked ef images and you specify 'defocpair'"
-	print "                       makestack will get the particles from the en images"
-	print "uncorrected          : "
-	print "\n"
+	appiondir = apParam.getAppionDirectory()
+	funcxml = os.path.join(appiondir,"xml","makestack.xml")
+	xmldict = apXml.readOneXmlFile(funcxml)
+	apXml.printHelp(xmldict)
 	sys.exit(1)
 
 def createDefaults():
@@ -110,7 +80,7 @@ def createDefaults():
 	params['outdir']=os.path.abspath(".")
 	params['particleNumber']=0
 	params['bin']=None
-	params['limit']=None
+	params['partlimit']=None
 	params['defocpair']=False
 	params['uncorrected']=False
 	params['stig']=False
@@ -209,8 +179,8 @@ def parseInput(args):
 			params['description']=elements[1]
 		elif (elements[0]=='prtlrunId'):
 			params['selexonId']=int(elements[1])
-		elif elements[0]=='limit':
-			params['limit']=int(elements[1])
+		elif elements[0]=='partlimit':
+			params['partlimit']=int(elements[1])
 		elif arg=='defocpair':
 			params['defocpair']=True
 		elif arg=='uncorrected':
@@ -1024,8 +994,8 @@ if __name__ == '__main__':
 		expectedptcles = str(int(float(totptcls)/float(count)*len(images)))
 		print str(totptcls)+" total particles so far ("+str(len(images)-count)+" images remain; expect "+\
 			expectedptcles+" particles)\n"
-		if params['limit']:
-			if totptcls > params['limit']:
+		if params['partlimit']:
+			if totptcls > params['partlimit']:
 				break
 
 		tmpboxfile = os.path.join(params['outdir'], "temporaryParticlesFromDB.box")
