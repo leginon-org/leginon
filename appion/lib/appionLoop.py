@@ -265,34 +265,12 @@ class AppionLoop(object):
 		apDisplay.printMsg("checking special param conflicts")
 		self.specialParamConflicts()
 
-	def _getAppionDir(self):
-		self.params['appiondir'] = None
-
-		trypath = os.environ.get('APPIONDIR')
-		if os.path.isdir(trypath):
-			self.params['appiondir'] = trypath
-			return self.params['appiondir']
-
-		user = os.environ.get('USER')
-		trypath = "/home/"+user+"/pyappion"
-	 	if os.path.isdir(trypath):
-			self.params['appiondir'] = trypath
-			return self.params['appiondir']
-
-		trypath = "/ami/sw/packages/pyappion"
-	 	if os.path.isdir(trypath):
-			self.params['appiondir'] = trypath
-			return self.params['appiondir']
-
-		apDisplay.printError("environmental variable, APPIONDIR, is not defined.\n"+
-			"Did you source useappion.sh?")
-
 	def _createDefaultParams(self):
 		### new system, global params
 		self.params = {}
 		self.params['functionname'] = self.functionname
 		self.params['rundir'] = "."
-		self._getAppionDir()
+		self.params['appiondir'] = apParam.getAppionDirectory()
 		self.params['method'] = "updated"
 		"""
 		### XML parameters

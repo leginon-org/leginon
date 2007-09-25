@@ -18,6 +18,28 @@ except:
 db=apDB.db
 data.holdImages(False)
 
+def getAppionDirectory():
+		appiondir = None
+
+		trypath = os.environ.get('APPIONDIR')
+		if os.path.isdir(trypath):
+			appiondir = trypath
+			return appiondir
+
+		user = os.environ.get('USER')
+		trypath = "/home/"+user+"/pyappion"
+	 	if os.path.isdir(trypath):
+			appiondir = trypath
+			return appiondir
+
+		trypath = "/ami/sw/packages/pyappion"
+	 	if os.path.isdir(trypath):
+			appiondir = trypath
+			return appiondir
+
+		apDisplay.printError("environmental variable, APPIONDIR, is not defined.\n"+
+			"Did you source useappion.sh?")
+
 def createDefaultParams(function=None):
 	# create default values for parameters
 	params={}
