@@ -204,12 +204,12 @@ def getDBparticledataImage(imgdict,expid):
 def getTemplateDBInfo(tmpldbid):
 	return appiondb.direct_query(appionData.ApTemplateImageData, tmpldbid)
 
-def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2, params):
+def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2, transdata, params):
 	"""
 	takes both image dicts (imgdict) and inserts particle pairs into DB from peaktrees
 	"""
 	#INFO
-	expid = int(imgdata['session'].dbid)
+	expid = int(imgdata1['session'].dbid)
 	legimgid1=int(imgdata1.dbid)
 	legimgid2=int(imgdata2.dbid)
 	imgname1=imgdata1['filename']
@@ -267,11 +267,11 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 		partpairq['particle1'] = partq1
 		partpairq['particle2'] = partq2
 		#NEED TO LOOK UP TRANSFORM DATA
-		partpairq['transform'] = appionData.ApImageTiltTransformData()
+		partpairq['transform'] = transdata
 		#NEED TO CALCULATE ERROR, ALWAYS POSITIVE
 		partpairq['error'] = error
 
-		presult = appiondb.query(particlesq)
+		presult = appiondb.query(partpairq)
 		if not presult:
 			count+=1
 			appiondb.insert(partpairq)
