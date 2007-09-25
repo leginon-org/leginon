@@ -23,6 +23,7 @@ def createDefaults():
 	params['volumes']=[]
 	params['classavgs']=[]
 	params['classvars']=[]
+	params['msgpassavgs']=[]
 	params['iterations']=[]
 	params['fscs']=[]
 	params['package']='EMAN'
@@ -139,6 +140,8 @@ def listFiles(params):
 			params['classavgs'].append(f)
 		if re.match("fsc.eotest.\d+",f):
 			params['fscs'].append(f)
+		if re.match("goodavgs\.\d+\.img",f):
+			params['msgpassavgs'].append(f)
 			
 def parseMsgPassingLogFile(params):
 	logfile=os.path.join(params['path'],'.msgPassinglog')
@@ -348,6 +351,12 @@ def insertIteration(iteration,params):
 
 	classavg='classes.'+iteration['num']+'.img'
 	
+	if params['package']== 'EMAN/MsgP':
+		msgpassclassavg='goodavgs.'+iteration['num']+'.img'
+	else:
+		msgpassclassavg=None
+	
+	
 	# insert refinement results
 	refineq=appionData.ApRefinementData()
 	refineq['refinementRun']=params['refinementRun']
@@ -362,6 +371,8 @@ def insertIteration(iteration,params):
 		refineq['classVariance']=classvar
 	if volumeDensity in params['volumes']:
 		refineq['volumeDensity']=volumeDensity
+	if msgpassclassavg in params['msgpassavgs']:
+		refineq['MsgPGoodClassAvg']=msgpassclassavg
 	partdb.insert(refineq)
 
 	insertFSC(iteration['fscfile'],refineq)

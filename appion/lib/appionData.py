@@ -440,6 +440,7 @@ class ApRefinementData(Data):
 			('classAverage', str),
 			('classVariance', str),
 			('volumeDensity',str),
+			('MsgPGoodClassAvg', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApRefinementData=ApRefinementData
