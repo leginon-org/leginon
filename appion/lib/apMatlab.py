@@ -113,8 +113,12 @@ def runAceCorrect(imgdict,params):
 	print "Corrected Image written to " + ctdimpath
 
 	acecorrectcommand=("ctfcorrect('%s','%s','%s', '%s');" % (imgpath, matfile, ctdimpath, imgname))
-
-	pymat.eval(params['matlab'],acecorrectcommand)
+	try:
+		matlab = pymat.open()
+	except:
+		apDisplay.matlabError()
+	pymat.eval(matlab, acecorrectcommand)
+	pymat.close(matlab)
 
 	return
 

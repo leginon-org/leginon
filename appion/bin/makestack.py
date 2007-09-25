@@ -28,14 +28,9 @@ import apDatabase
 import apCtf
 import apMask
 import apImage
-import apMatlab
 try:
-	import pymat
-except:
-	apDisplay.matlabError()
-	
-	
-	
+	import apMatlab
+
 db   = apDB.db
 apdb = apDB.apdb
 
@@ -220,13 +215,7 @@ def parseInput(args):
 			params['uncorrected']=True
 		elif arg=='stig':
 			params['stig']=True
-			params['phaseFlipped']=False			
-			print "Connecting to matlab ... "
-			try:
-				params['matlab'] = pymat.open()
-			except:
-				apDisplay.matlabError()
-
+			params['phaseFlipped']=False
 		elif (elements[0]=='aceRunName'):
 			params['matdir'] = params['outdir']+'/../pyAce/'+elements[1]+'/matfiles'			
 		else:
@@ -1042,7 +1031,5 @@ if __name__ == '__main__':
 			os.remove(tmpboxfile)
 
 	getStackId(params)
-	if params['stig']:
-		pymat.close(params['matlab'])
 	
 	print "Done!"
