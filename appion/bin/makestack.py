@@ -95,6 +95,7 @@ def createDefaults():
 	params['phaseFlipped']=False
 	params['apix']=0
 	params['kv']=0
+	params['tiltangle']=None
 	params['inverted']=True
 	params['spider']=False
 	params['df']=0.0
@@ -161,6 +162,8 @@ def parseInput(args):
 			params['correlationMin']=float(elements[1])
 		elif (elements[0]=='selexonmax'):
 			params['correlationMax']=float(elements[1])
+		elif (elements[0]=='tiltangle'):
+			params['tiltangle']=float(elements[1])
 		elif (elements[0]=='maskassess'):
 			params['checkMask']=elements[1]
 		elif (elements[0]=='boxsize'):
@@ -855,6 +858,11 @@ def rejectImage(imgdata, params):
 			apDisplay.printColor(shortname+".mrc has been rejected by manual inspection\n","cyan")
 			return False
 
+	if params['tiltangle'] is not None:
+		tiltangle = apDatabase.getTiltAngleDeg(imgdata)
+		if (params['tiltangle'] - tiltangle) > 1.0:
+			return False
+
 	### Get CTF values
 	ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
 	
@@ -864,23 +872,24 @@ def rejectImage(imgdata, params):
 			return False
 		else:
 			apDisplay.printWarning(shortname+".mrc has no ACE values")
-			return True
-	apCtf.ctfValuesToParams(ctfvalue, params)
 
-	### check that ACE estimation is above confidence threshold
-	if params['aceCutoff'] and conf < params['aceCutoff']:
-			apDisplay.printColor(shortname+".mrc is below ACE threshold (conf="+str(round(conf,3))+")\n","cyan")
+ 	if ctfvalue is not None:
+		apCtf.ctfValuesToParams(ctfvalue, params)
+
+		### check that ACE estimation is above confidence threshold
+		if params['aceCutoff'] and conf < params['aceCutoff']:
+				apDisplay.printColor(shortname+".mrc is below ACE threshold (conf="+str(round(conf,3))+")\n","cyan")
+				return False
+
+		### skip micrograph that have defocus above or below min & max defocus levels
+		if params['minDefocus'] and params['df'] > params['minDefocus']:
+			apDisplay.printColor(shortname+".mrc defocus ("+str(round(params['df'],3))+\
+				") is less than mindefocus ("+str(params['minDefocus'])+")\n","cyan")
 			return False
-
-	### skip micrograph that have defocus above or below min & max defocus levels
-	if params['minDefocus'] and params['df'] > params['minDefocus']:
-		apDisplay.printColor(shortname+".mrc defocus ("+str(round(params['df'],3))+\
-			") is less than mindefocus ("+str(params['minDefocus'])+")\n","cyan")
-		return False
-	if params['maxDefocus'] and params['df'] < params['maxDefocus']:
-		apDisplay.printColor(shortname+".mrc defocus ("+str(round(params['df'],3))+\
-			") is greater than maxdefocus ("+str(params['maxDefocus'])+")\n","cyan")
-		return False
+		if params['maxDefocus'] and params['df'] < params['maxDefocus']:
+			apDisplay.printColor(shortname+".mrc defocus ("+str(round(params['df'],3))+\
+				") is greater than maxdefocus ("+str(params['maxDefocus'])+")\n","cyan")
+			return False
 
 	return True
 
