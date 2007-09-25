@@ -30,6 +30,8 @@ import apMask
 import apImage
 try:
 	import apMatlab
+except:
+	pass
 
 db   = apDB.db
 apdb = apDB.apdb
