@@ -295,7 +295,7 @@ def getBestCtfValueForImage(imgdata, ctfavg=False):
 		conf2 = ctfvalue['confidence_d']
 		if conf1 > 0 and conf2 > 0:
 			conf = max(conf1,conf2)
-			if ctfavg=True:
+			if ctfavg is True:
 				conf = math.sqrt(conf1*conf2)
 			if conf > bestconf:
 				bestconf = conf
@@ -324,7 +324,7 @@ def getBestCtfValueForImageREFLEGINON(imgdata, ctfavg=False):
 		conf2 = ctfvalue['confidence_d']
 		if conf1 > 0 and conf2 > 0:
 			conf = max(conf1,conf2)
-			if ctfavg=True:
+			if ctfavg is True:
 				conf = math.sqrt(conf1*conf2)
 			if conf > bestconf:
 				bestconf = conf
