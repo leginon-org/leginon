@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
-# $Revision: 1.123 $
+# $Revision: 1.124 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-08-28 18:25:13 $
-# $Author: vossman $
+# $Date: 2007-09-25 21:24:42 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -213,7 +213,13 @@ class Navigator(node.Node):
 			self.setStatus('idle')
 			return
 
+		shape = self.origimagedata['image'].shape
+		target = shape[0]/2.0-0.5+self.origmove[0], shape[1]/2.0-0.5+self.origmove[1]
 		if check:
+			if self.outofbounds(target, shape):
+				self.logger.info('target out of bounds, so cannot check error')
+				self.setStatus('idle')
+				return
 			if self.settings['cycle each']:
 				self.cycleToPreset(preset)
 			self.reacquireImage()
@@ -242,12 +248,20 @@ class Navigator(node.Node):
 
 		self.setStatus('idle')
 
+	def outofbounds(self, coord, shape):
+		if coord[0] < 0 or coord[0] > shape[0]-1:
+			return True
+		if coord[1] < 0 or coord[1] > shape[1]-1:
+			return True
+		return False
+
 	def checkMoveError(self):
 		maxerror = self.settings['max error']
 		limit = (int(maxerror*2), int(maxerror*2))
 
 		oldshape = self.oldimagedata['image'].shape
 		location = oldshape[0]/2.0-0.5+self.origmove[0], oldshape[1]/2.0-0.5+self.origmove[1]
+
 		im1 = imagefun.crop_at(self.origimagedata['image'], location, limit, mode='constant', cval=0.0)
 		im2 = imagefun.crop_at(self.newimagedata['image'], 'center', limit)
 		pc = correlator.phase_correlate(im2,im1,zero=False)
