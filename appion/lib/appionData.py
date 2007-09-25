@@ -153,7 +153,8 @@ class ApImageTiltTransformData(Data):
 			('scale_factor', float),
 			('tilt_angle', float),
 			('rmsd', float),
-			('tiltrun', ApSelectionRunData)
+			('overlap', float),
+			('tiltrun', ApSelectionRunData),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApImageTiltTransformData=ApImageTiltTransformData
@@ -163,7 +164,7 @@ class ApTiltParticlePairData(Data):
 		return Data.typemap() + (
 			('particle1', ApParticleData),
 			('particle2', ApParticleData),
-			('transform', ApImageTiltTransformData)
+			('transform', ApImageTiltTransformData),
 			('error', float),
 		)
 	typemap = classmethod(typemap)
