@@ -238,16 +238,17 @@ def insertImgAssessmentStatus(imgdata, runname="pyapp1", assessment=None):
 		reject = False 
 		unassessed = None
 	"""
-	if assessment is not True or assessment is not False:
+	if assessment is not True and assessment is not False:
 		return False
 
 	assessrun = appionData.ApAssessmentRunData()
-	assessrun['REF|leginondata|SessionData|session'] = imgdata['session']
+	assessrun['dbemdata|SessionData|session'] = imgdata['session'].dbid
 	assessrun['name'] = runname
+	assessrundata = appiondb.query(assessrun)
 
 	assessquery = appionData.ApAssessmentData()
 	assessquery['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
-	assessquery['REF|ApAssessmentRunData|assessmentrun'] = assessrun
+	assessquery['assessmentrun'] = assessrundata[0]
 	assessquery['selectionkeep'] = assessment
 
 	appiondb.insert(assessquery)

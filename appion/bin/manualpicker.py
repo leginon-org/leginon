@@ -52,7 +52,7 @@ class PickerApp(wx.App):
 		### BEGIN IMAGE PANEL
 		self.panel = ManualPickerPanel(self.frame, -1)
 		self.panel.addTypeTool('Select Particles', toolclass=TargetPanelTools.TargetTypeTool,
-			display=wx.RED, target=True, numbers=True)
+			display=wx.RED, target=True, numbers=True, shape='x')
 		self.panel.setTargets('Select Particles', [])
 		self.panel.selectiontool.setTargeting('Select Particles', True)
 
@@ -197,7 +197,8 @@ class manualPicker(particleLoop.ParticleLoop):
 		expid = int(imgdata['session'].dbid)
 		self.insertManualParams(expid)
 		if self.assess != self.assessold and self.assess is not None:
-			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], self.assess)
+			#imageaccessor run is always named run1
+			apDatabase.insertImgAssessmentStatus(imgdata, 'run1', self.assess)
 		#self.deleteOldPicks(imgdata,self.params)
 		return
 
@@ -306,7 +307,7 @@ class manualPicker(particleLoop.ParticleLoop):
 		self.assessold = apDatabase.getImgAssessmentStatus(imgdata)
 		self.assess = self.assessold
 		self.app.setAssessStatus()
-
+					
 		#open new file
 		imgname = imgdata['filename']+'.dwn.mrc'
 		imgpath = os.path.join(self.params['rundir'],imgname)
