@@ -119,17 +119,18 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 			transdata = appiondb.query(transq)
 			if transdata:
 				apDisplay.printWarning("Transform values already in database for "+imgdata['filename'])
-				return False
+				return transdata[0]
 
 	### prepare the insertion
 	transq = appionData.ApImageTiltTransformData()
 	transq['dbemdata|AcquisitionImageData|image1'] = imgdata1.dbid
 	transq['dbemdata|AcquisitionImageData|image2'] = imgdata2.dbid
+	transq['tiltrun'] = runids[0]
 	dbdict = tiltPickerToDbNames(tiltparams)
 	if dbdict is None:
-		return False
+		return None
 	#Can I do for key in appionData.ApImageTiltTransformData() ro transq???
-	for key in ('image1_x','image1_y','image1_rotation','image2_x','image2_y','image2_rotation','scale_factor','tilt_angle','rmsd'):
+	for key in ('image1_x','image1_y','image1_rotation','image2_x','image2_y','image2_rotation','scale_factor','tilt_angle'):
 		if key not in dbdict:
 			apDisplay.printError("Key: "+key+" was not found in transformation data")
 
@@ -140,7 +141,7 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 	apDisplay.printMsg("Inserting transform beteween "+apDisplay.short(imgdata1['filename'])+\
 		" and "+apDisplay.short(imgdata2['filename'])+" into database")
 	appiondb.insert(transq)
-	return True
+	return transq
 
 
 

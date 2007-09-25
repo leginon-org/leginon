@@ -35,7 +35,6 @@ class tiltAligner(particleLoop.ParticleLoop):
 			self.processAndSaveAllImages()
 		self.app = ApTiltPicker.PickerApp(mode='loop')
 		self.app.appionloop = self
-		#self.app.quit = wx.Button(self.app.frame, wx.ID_FORWARD, '&Forward')
 
 	def postLoopFunctions(self):
 		self.app.frame.Destroy()
@@ -126,16 +125,16 @@ class tiltAligner(particleLoop.ParticleLoop):
 		Over-writes the particleLoop commit and uses the appionLoop commit
 		"""
 		tiltdata = apTiltPair.getTiltPair(imgdata)
-		if tiltdata is not None:
+		if tiltdata is not None and len(self.peaktree1) > 0:
 			self.expid = int(imgdata['session'].dbid)
 			#import pprint
 			#pprint.pprint(self.tiltparams)
 			### insert the runid
 			self.insertTiltAlignParams()
 			### insert the transform
-			apTiltPair.insertTiltTransform(imgdata, tiltdata, self.tiltparams, self.params)
+			transdata = apTiltPair.insertTiltTransform(imgdata, tiltdata, self.tiltparams, self.params)
 			### insert the particles
-			self.insertParticlePeakPairs(imgdata, tiltdata)
+			self.insertParticlePeakPairs(imgdata, tiltdata, transdata)
 			if self.assess != self.assessold and self.assess is not None:
 				#note runid is overrided to be 'run1'
 				apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], self.assess)
@@ -145,9 +144,9 @@ class tiltAligner(particleLoop.ParticleLoop):
 	##### END PRE-DEFINED LOOP FUNCTIONS #####
 	##########################################
 
-	def insertParticlePeakPairs(self, imgdata, tiltdata):
-		apParticle.insertParticlePeakPairs(self.peaktree1, self.peaktree2, self.peakerrors, imgdata, tiltdata, self.params)
-
+	def insertParticlePeakPairs(self, imgdata, tiltdata, transdata):
+		if transdata is not None:
+			apParticle.insertParticlePeakPairs(self.peaktree1, self.peaktree2, self.peakerrors, imgdata, tiltdata, transdata, self.params)
 
 	def getParticlePicks(self, imgdata):
 		if not self.params['pickrunid']:
@@ -258,6 +257,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 
 		#get image assessment
 		self.assess = self.getTiltAssess(imgdata, tiltdata)
+		self.assessold = self.assess
 		self.app.setAssessStatus()
 
 		#open new file
@@ -274,9 +274,9 @@ class tiltAligner(particleLoop.ParticleLoop):
 		self.app.MainLoop()
 		self.app.panel1.openImageFile(None)
 		self.app.panel2.openImageFile(None)
-		#1. tilt data are copied to self.tiltparams by app
-		#2. particles picks are copied to self.peaktree1 and self.peaktree2 by app
-		#3. particle errors are copied to self.peakerrors by app
+		# 1. tilt data are copied to self.tiltparams by app
+		# 2. particles picks are copied to self.peaks1 and self.peaks2 by app
+		# 3. particle errors are copied to self.peakerrors by app
 		self.peaktree1 = apPeaks.convertListToPeaks(self.peaks1, self.params)
 		self.peaktree2 = apPeaks.convertListToPeaks(self.peaks2, self.params)
 

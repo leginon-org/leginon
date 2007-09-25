@@ -417,7 +417,7 @@ class PickerApp(wx.App):
 	def getArray1(self):
 		targets1 = self.panel1.getTargets('Picked')
 		a1 = self.targetsToArray(targets1)
-		return a1b
+		return a1
 
 	#---------------------------------------
 	def getArray2(self):
@@ -842,22 +842,19 @@ class PickerApp(wx.App):
 		self.appionloop.peaks1 = a1
 		self.appionloop.peaks2 = a2
 		a2b = self.getAlignedArray2()
-		self.appionloop.peakerrors = abs(a1 - a2b)
+		self.appionloop.peakerrors = numpy.sqrt( numpy.sum( (a1 - a2b)**2, axis=1) )
 		#copy over the data
 		for i,v in self.data.items():
 			if type(v) in [type(1), type(1.0), type(""), ]:
 				self.appionloop.tiltparams[i] = v
+			elif 'point' in i:
+				self.appionloop.tiltparams[i] = v
 			else:
 				print "skipping key: "+str(i)+" of type "+str(type(v))
-			if 'point' in i:
-				self.appionloop.tiltparams[i] = v
-		self.appionloop.tiltparams['x1'] = targets1[0].x
-		self.appionloop.tiltparams['y1'] = targets1[0].y
-		self.appionloop.tiltparams['x2'] = targets2[0].x
-		self.appionloop.tiltparams['y2'] = targets2[0].y
-			
-	def getParticleErrors(self):
-
+		self.appionloop.tiltparams['x1'] = self.data['point1'][0]
+		self.appionloop.tiltparams['y1'] = self.data['point1'][1]
+		self.appionloop.tiltparams['x2'] = self.data['point2'][0]
+		self.appionloop.tiltparams['y2'] = self.data['point2'][1]
 
 	#---------------------------------------
 	def openLeftImage(self,filename):
