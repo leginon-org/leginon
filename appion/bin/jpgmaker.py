@@ -14,7 +14,7 @@ class MrcToJpgLoop(appionLoop.AppionLoop):
 		image = imgdata['image']
 		shape = image.shape
 		self.params['bin'] = shape[0]/512
-		binnedimage = apImage.binImg(image,bin=self.params['bin'])
+		binnedimage = apImage.binImg(image, bin=self.params['bin'])
 		outfile = os.path.join(self.params['rundir'],imgdata['filename']+".jpg")
 		num_img = NumericImage.NumericImage(binnedimage)
 
