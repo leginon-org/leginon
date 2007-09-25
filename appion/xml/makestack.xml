@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<makestack>
+ <bin>
+	<name>binning</name>
+	<default>4</default>
+	<description>Bin size for images (must be power of 2)</description>
+	<type>integer</type>
+	<list>1,2,4,8,16,32,64</list>
+ </bin>
+ <ace>
+	<name>ace</name>
+	<description>Only use micrographs with this ACE confidence value and higher</description>
+	<example>0.8</example>
+	<type>float</type>
+ </ace>
+ <selexonmin>
+	<name>selexonmin</name>
+	<description>Only use particles of this correlation value and higher</description>
+	<example>0.4</example>
+	<type>float</type>
+ </selexonmin>
+ <selexonmax>
+	<name>selexonmax</name>
+	<description>Only use particles of this correlation value and lower</description>
+	<example>0.8</example>
+	<type>float</type>
+ </selexonmax>
+ <uncorrected>
+	<name>uncorrected</name>
+	<default>False</default>
+	<description>Correct uncorrected images</description>
+	<type>boolean</type>
+ </uncorrected>
+ <defocpair>
+	<name>defocpair</name>
+	<default>False</default>
+	<description>Get particle coords for the focal pair of the image that was picked in runid</description>
+	<type>boolean</type>
+ </defocpair>
+ <medium>
+	<name>medium</name>
+	<description>Medium of images, carbon or ice</description>
+	<type>string</type>
+ </medium>
+ <nonorm>
+	<name>no normalization</name>
+	<default>False</default>
+	<description>do not normalize images</description>
+	<type>boolean</type>
+ </nonorm>
+ <sessionname>
+	<name>session name</name>
+	<description> name of the session</description>
+	<type>string</type>
+	<example>07jul01c</example>
+ </sessionname>
+ <commit>
+	<name>commit</name>
+	<default>False</default>
+	<description>Commit results to database</description>
+	<type>boolean</type>
+ </commit>
+ <outdir>
+	<name>output directory</name>
+	<default></default>
+	<description>Output directory for storing output files</description>
+	<type>path</type>
+	<default>/ami/data##/appion/session/function</default>
+	<database>True</database>
+ </outdir>
+ <single>
+	<name>single file</name>
+	<description>Create a single stack containing all the boxed particles</description>
+	<type>string</type>
+ </single>
+ <boxsize>
+	<name>box size</name>
+	<description>Make stacks with this box size (unbinned)</description>
+	<type>integer</type>
+ </boxsize>
+ <inspected>
+	<name>inspected</name>
+	<description>Use only manually inspected images from database</description>
+	<type>boolean</type>
+ </inspected>
+ <mindefocus>
+	<name>mindefocus</name>
+	<description>Limit the defocus to values above what is specified</description>
+	<example>-1.0e-6</example>
+	<type>float</type>
+ </mindefocus>
+ <maxdefocus>
+	<name>maxdefocus</name>
+	<description>Limit the defocus to values below what is specified</description>
+	<example>-3.0e-6</example>
+	<type>float</type>
+ </maxdefocus>
+ <description>
+	<name>description</name>
+	<default></default>
+	<description>Description of the stack being created</description>
+	<type>string</type>
+	<required>True</required>
+ </description>
+ <prtlrunId>
+	<name>particle pick run id</name>
+	<description>Runid DEF_id of previous particle picker run from database</description>
+	<type>integer</type>
+	<required>True</required>
+	<default>0</default>
+ </prtlrunId>
+ <partlimit>
+	<name>particle processing limit</name>
+	<default></default>
+	<description>Stop boxing particles after total particles gets above limit</description>
+	<type>integer</type>
+	<example>10000</example>
+ </partlimit>
+ <runid>
+	<name>run id</name>
+	<default>run1</default>
+	<description>Name of run id</description>
+	<type>string</type>
+	<required>True</required>
+ </runid>
+ <maskassess>
+	<name>mask assess run name</name>
+	<description>If specified, masks accepted by the MaskAssessment run name is used to exclude area</description>
+	<type>string</type>
+ </maskassess>
+ <phaseflip>
+	<name>phaseflip</name>
+	<description>Stack will be phase flipped using best ACE value in database</description>
+	<type>boolean</type>
+ </phaseflip>
+ <noinvert>
+	<name>noinvert</name>
+	<description>If writing to a single stack, images will NOT be inverted</description>
+	<default>False</default>
+	<type>boolean</type>
+ </noinvert>
+ <inspectfile>
+	<name>inspectfile</name>
+	<description>Text file containing results of manually checked images</description>
+	<type>string</type>
+ </inspectfile>
+ <spider>
+	<name>spider</name>
+	<description>Single output stack will be in SPIDER format</description>
+	<type>string</type>
+ </spider>
+</makestack>
