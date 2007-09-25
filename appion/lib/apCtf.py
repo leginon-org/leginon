@@ -294,7 +294,35 @@ def getBestCtfValueForImage(imgdata):
 		conf1 = ctfvalue['confidence']
 		conf2 = ctfvalue['confidence_d']
 		if conf1 > 0 and conf2 > 0:
-			#conf = max(conf1,conf2)
+			conf = max(conf1,conf2)
+#			conf = math.sqrt(conf1*conf2)
+			if conf > bestconf:
+				bestconf = conf
+				bestctfvalue = ctfvalue
+
+	return bestctfvalue, bestconf
+
+def getBestAvgCtfValueForImage(imgdata):
+	"""
+	takes an image and get the best ctfvalues for that image
+	"""
+	### get all ctf values
+	ctfq = appionData.ApCtfData()
+	ctfq['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
+	ctfvalues = appiondb.query(ctfq)
+
+	### check if it has values
+	if ctfvalues is None:
+		return None, None
+
+	### find the best values
+	bestconf = 0.0
+	bestctfvalue = None
+	for ctfvalue in ctfvalues:
+		conf1 = ctfvalue['confidence']
+		conf2 = ctfvalue['confidence_d']
+		if conf1 > 0 and conf2 > 0:
+#			conf = max(conf1,conf2)
 			conf = math.sqrt(conf1*conf2)
 			if conf > bestconf:
 				bestconf = conf
@@ -322,8 +350,8 @@ def getBestCtfValueForImageREFLEGINON(imgdata):
 		conf1 = ctfvalue['confidence']
 		conf2 = ctfvalue['confidence_d']
 		if conf1 > 0 and conf2 > 0:
-			#conf = max(conf1,conf2)
-			conf = math.sqrt(conf1*conf2)
+			conf = max(conf1,conf2)
+			#conf = math.sqrt(conf1*conf2)
 			if conf > bestconf:
 				bestconf = conf
 				bestctfvalue = ctfvalue
