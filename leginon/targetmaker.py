@@ -248,7 +248,7 @@ class MosaicTargetMaker(TargetMaker):
 
 		pixelradius = radius/(pixelsize*binning)
 		if pixelradius > maxsize/2:
-			raise AtlasSizeError('image will exceed maximum size')
+			raise AtlasSizeError('final image will be huge, try using more binning')
 
 		lines = [imagesize/2]
 		while lines[-1] < pixelradius - imagesize:
