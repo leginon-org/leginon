@@ -5,52 +5,58 @@ import re
 import sys
 import types
 
+writeOut = False
+
 def printWarning(text):
 	"""
 	standardized warning message
 	"""
-	try:
-		f = open("function.out","a")
-		f.write(" !!! WARNING: "+text+"\n")
-		f.close()
-	except:
-		print "write error"
+	if writeOut is True:
+		try:
+			f = open("function.out","a")
+			f.write(" !!! WARNING: "+text+"\n")
+			f.close()
+		except:
+			print "write error"
 	print colorString("!!! WARNING: "+text,"brown")
 
 def printMsg(text):
 	"""
 	standardized log message
 	"""
-	try:
-		f = open("function.out","a")
-		f.write(" ... "+text+"\n")
-		f.close()
-	except:
-		print "write error"
+	if writeOut is True:
+		try:
+			f = open("function.out","a")
+			f.write(" ... "+text+"\n")
+			f.close()
+		except:
+			print "write error"
 	print " ... "+text
 
 def printError(text):
 	"""
 	standardized error message
 	"""
-	try:
-		f = open("function.out","a")
-		f.write(" *** ERROR: "+text+"\n")
-		f.close()
-	except:
-		print "write error"
+	if writeOut is True:
+		try:
+			f = open("function.out","a")
+			f.write(" *** ERROR: "+text+"\n")
+			f.close()
+		except:
+			print "write error"
 	raise colorString("\n *** FATAL ERROR ***\n"+text+"\n\a","red")
 
 def printColor(text, colorstr):
 	"""
 	standardized log message
 	"""
-	try:
-		f = open("function.out","a")
-		f.write(" ... "+text+"\n")
-		f.close()
-	except:
-		print "write error"
+	if writeOut is True:
+		try:
+			f = open("function.out","a")
+			f.write(" ... "+text+"\n")
+			f.close()
+		except:
+			print "write error"
 	print colorString(text, colorstr)
 	
 
