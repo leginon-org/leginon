@@ -60,7 +60,7 @@ class PickerApp(wx.App):
 
 	def OnInit(self):
 		self.data = {}
-		self.onResetParams(None)
+		self.onInitParams(None)
 		self.data['outfile'] = ""
 		self.data['dirname'] = ""
 		self.appionloop = None
@@ -532,7 +532,7 @@ class PickerApp(wx.App):
 		self.panel2.setTargets('Aligned', [])
 
 	#---------------------------------------
-	def onResetParams(self, evt):
+	def onInitParams(self, evt):
 		self.data['arealim'] = 50000.0
 		self.data['theta'] = 0.0
 		self.data['gamma'] = 0.0
@@ -542,6 +542,32 @@ class PickerApp(wx.App):
 		self.data['point1'] = (0.0, 0.0)
 		self.data['point2'] = (0.0, 0.0)
 		self.data['scale'] = 1.0
+
+	#---------------------------------------
+	def onResetParams(self, evt):
+		self.onInitParams(evt)
+		self.fitall_dialog.thetavalue.SetValue(round(self.data['theta'],4))
+		self.fitall_dialog.gammavalue.SetValue(round(self.data['gamma'],4))
+		self.fitall_dialog.phivalue.SetValue(round(self.data['phi'],4))
+		self.fitall_dialog.scalevalue.SetValue(round(self.data['scale'],4))
+		self.fitall_dialog.shiftxvalue.SetValue(round(self.data['shiftx'],4))
+		self.fitall_dialog.shiftyvalue.SetValue(round(self.data['shifty'],4))
+		if self.fitall_dialog.thetatog.GetValue() is True:
+			self.fitall_dialog.thetavalue.Enable(False)
+			self.fitall_dialog.thetatog.SetLabel("Locked")
+		if self.fitall_dialog.gammatog.GetValue() is False:
+			self.fitall_dialog.gammavalue.Enable(True)
+			self.fitall_dialog.gammatog.SetLabel("Refine")
+		if self.fitall_dialog.phitog.GetValue() is False:
+			self.fitall_dialog.phivalue.Enable(True)
+			self.fitall_dialog.phitog.SetLabel("Refine")
+		if self.fitall_dialog.scaletog.GetValue() is True:
+			self.fitall_dialog.scalevalue.Enable(False)
+			self.fitall_dialog.scaletog.SetLabel("Locked")
+		if self.fitall_dialog.shifttog.GetValue() is True:
+			self.fitall_dialog.shiftxvalue.Enable(False)
+			self.fitall_dialog.shiftyvalue.Enable(False)
+			self.fitall_dialog.shifttog.SetLabel("Locked")
 
 	#---------------------------------------
 	def onFileSave(self, evt):
@@ -842,7 +868,10 @@ class PickerApp(wx.App):
 		self.appionloop.peaks1 = a1
 		self.appionloop.peaks2 = a2
 		a2b = self.getAlignedArray2()
-		self.appionloop.peakerrors = numpy.sqrt( numpy.sum( (a1 - a2b)**2, axis=1) )
+		sqdev = numpy.sum( (a1 - a2b)**2, axis=1 )
+		self.appionloop.peakerrors = numpy.sqrt( sqdev )
+		self.data['rmsd'] = math.sqrt(float(ndimage.mean(sqdev)))
+		#self.data['overlap'] = ...
 		#copy over the data
 		for i,v in self.data.items():
 			if type(v) in [type(1), type(1.0), type(""), ]:
