@@ -204,9 +204,84 @@ def getDBparticledataImage(imgdict,expid):
 def getTemplateDBInfo(tmpldbid):
 	return appiondb.direct_query(appionData.ApTemplateImageData, tmpldbid)
 
+def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2, params):
+	"""
+	takes both image dicts (imgdict) and inserts particle pairs into DB from peaktrees
+	"""
+	#INFO
+	expid = int(imgdata['session'].dbid)
+	legimgid1=int(imgdata1.dbid)
+	legimgid2=int(imgdata2.dbid)
+	imgname1=imgdata1['filename']
+	imgname2=imgdata2['filename'] 
+
+	#CHECK ARRAY LENGTHS
+	len1 = len(peaktree1)
+	len2 = len(peaktree2)
+	len3 = len(peakerrors)
+	if len1 != len2 or len2 != len3:
+		apDisplay.printError("insertParticlePeakPairs particle arrays must have the same length "+\
+			str(len1)+" "+str(len2)+" "+str(len3))
+
+	#GET RUN DATA
+	runq=appionData.ApSelectionRunData()
+	runq['name'] = params['runid']
+	runq['dbemdata|SessionData|session'] = expid
+	runids=appiondb.query(runq, results=1)
+	if not runids:
+		apDisplay.printError("could not find runid in database")
+
+	#GET TRANSFORM DATA
+	transq = appionData.ApImageTiltTransformData()
+	transq['dbemdata|AcquisitionImageData|image1'] = legimgid1
+	transq['dbemdata|AcquisitionImageData|image2'] = legimgid2
+	transq['tiltrun'] = runids[0]
+	transids = appiondb.query(transq, results=1)
+	if not transids:
+		apDisplay.printError("could not find transform id in database")
+
+	### WRITE PARTICLES TO DATABASE
+	count = 0
+	for i in range(len(peaktree1)):
+		peakdict1 = peaktree1[i]
+		peakdict2 = peaktree2[i]
+		error = peakerrors[i]
+
+		partq1 = appionData.ApParticleData()
+		partq1['selectionrun'] = runids[0]
+		partq1['dbemdata|AcquisitionImageData|image'] = legimgid1
+		partq1['xcoord'] = peakdict1['xcoord']
+		partq1['ycoord'] = peakdict1['ycoord']
+		partq1['peakarea'] = 1
+
+		partq2 = appionData.ApParticleData()
+		partq2['selectionrun'] = runids[0]
+		partq2['dbemdata|AcquisitionImageData|image'] = legimgid2
+		partq2['xcoord'] = peakdict2['xcoord']
+		partq2['ycoord'] = peakdict2['ycoord']
+		partq2['peakarea'] = 1
+
+		# I do NOT have to check if particles already exist, because this is a NEW selectionrun
+
+		partpairq = appionData.ApTiltParticlePairData()
+		partpairq['particle1'] = partq1
+		partpairq['particle2'] = partq2
+		#NEED TO LOOK UP TRANSFORM DATA
+		partpairq['transform'] = appionData.ApImageTiltTransformData()
+		#NEED TO CALCULATE ERROR, ALWAYS POSITIVE
+		partpairq['error'] = error
+
+		presult = appiondb.query(particlesq)
+		if not presult:
+			count+=1
+			appiondb.insert(partpairq)
+
+	apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree1))+" peaks into database")
+	return
+
 def insertParticlePeaks(peaktree, imgdict, expid, params):
 	"""
-	takes an image dict (imgdict) and inserts particles into DB from pik file
+	takes an image dict (imgdict) and inserts particles into DB from peaktree
 	"""
 	#INFO
 	legimgid=int(imgdict.dbid)
@@ -230,57 +305,6 @@ def insertParticlePeaks(peaktree, imgdict, expid, params):
 		particlesq = appionData.ApParticleData()
 		particlesq['selectionrun'] = runids[0]
 		particlesq['dbemdata|AcquisitionImageData|image'] = legimgid
-
-		if 'template' in peakdict and peakdict['template'] is not None:
-			particlesq['template'] = getTemplateDBInfo(peakdict['template'])
-
-		for key in 'xcoord','ycoord','correlation','peakmoment','peakstddev','peakarea':
-			if key in peakdict and peakdict[key] is not None:
-				particlesq[key] = peakdict[key]
-
-		if 'peakarea' in peakdict and peakdict['peakarea'] is not None and peakdict['peakarea'] > 0:
-			peakhasarea = True
-		else:
-			apDisplay.printWarning("peak has no area")
-			peakhasarea = False
-
-		if 'correlation' in peakdict and peakdict['correlation'] is not None and peakdict['correlation'] > 2:
-			apDisplay.printWarning("peak has correlation greater than 2.0")
-
-		### INSERT VALUES
-		if peakhasarea is True:
-			presult = appiondb.query(particlesq)
-			if not presult:
-				count+=1
-				appiondb.insert(particlesq)
-	apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree))+" peaks into database")
-	return
-
-def insertParticlePeaksREFLEGINON(peaktree, imgdict, params):
-	"""
-	takes an image dict (imgdict) and inserts particles into DB from pik file
-	"""
-	#INFO
-	imgname=imgdict['filename'] 
-
-	#GET RUNID
-	runq=appionData.ApSelectionRunData()
-	runq['name'] = params['runid']
-	runq['session'] = imgdict['session']
-	runids=appiondb.query(runq, results=1)
-
-	if not runids:
-		apDisplay.printError("could not find runid in database")
-
-	# WRITE PARTICLES TO DATABASE
-	print "Inserting particles into database for",apDisplay.shortenImageName(imgname),"..."
-
-	### WRITE PARTICLES TO DATABASE
-	count = 0
-	for peakdict in peaktree:
-		particlesq = appionData.ApParticleData()
-		particlesq['selectionrun'] = runids[0]
-		particlesq['image'] = imagdict
 
 		if 'template' in peakdict and peakdict['template'] is not None:
 			particlesq['template'] = getTemplateDBInfo(peakdict['template'])
@@ -342,52 +366,6 @@ def insertParticlePicks(params,imgdict,expid,manual=False):
 			particlesq=appionData.ApParticleData()
 			particlesq['selectionrun']=runids[0]
 			particlesq['dbemdata|AcquisitionImageData|image']=legimgid
-			particlesq['xcoord']=xcenter
-			particlesq['ycoord']=ycenter
-			particlesq['correlation']=corr
-
-			presult=appiondb.query(particlesq)
-			if not (presult):
-				appiondb.insert(particlesq)
-	pfile.close()
-	
-	return 
-
-def insertParticlePicksREFLEGINON(params,imgdict,manual=False):
-	sys.exit(1)
-	#INFO
-	imgname=imgdict['filename'] 
-
-	#GET RUNID
-	runq=appionData.ApSelectionRunData()
-	runq['name'] = params['runid']
-	runq['session'] = imgdict['session']
-	runids=appiondb.query(runq, results=1)
-
-	# WRITE PARTICLES TO DATABASE
-	print "Inserting particles into database for",apDisplay.shortenImageName(imgname),"..."
-
-	# first open pik file, or create a temporary one if uploading a box file
-	if manual is True and params['prtltype']=='box':
-		pikfilename = convertBoxToPikFile(imgname, params)
-	elif manual is True and params['prtltype']=='pik':
-		pikfilename = imgname+"."+params['extension']
-	else:
-		pikfilename = "pikfiles/"+imgname+".a.pik"
-
-	# read through the pik file
-	pfile=open(pikfilename, "r")
-	piklist=[]
-	for line in pfile:
-		if(line[0] != "#"):
-			elements=line.split(' ')
-			xcenter=int(elements[1])
-			ycenter=int(elements[2])
-			corr=float(elements[3])
-
-			particlesq=appionData.ApParticleData()
-			particlesq['selectionrun']=runids[0]
-			particlesq['image']=imgdict
 			particlesq['xcoord']=xcenter
 			particlesq['ycoord']=ycenter
 			particlesq['correlation']=corr
@@ -490,47 +468,6 @@ def insertSelexonParams(params,expid):
 			print runids[0]['params']
 			print selexonparamsq
 			print selexonparamsdata[0]
-			if selexonparamsdata:
-				for i in selexonparamsdata[0]:
-					if selexonparamsdata[0][i] != runids[0]['params'][i]:
-						apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
-			apDisplay.printError("All parameters for a single selexon run must be identical! \n"+\
-					     "please check your parameter settings.")
-		apTemplate.checkTemplateParams(params,runq)
-	return
-
-def insertSelexonParamsREFLEGINON(params,sessiondata):
-	### query for identical params ###
-	selexonparamsq=appionData.ApSelectionParamsData()
- 	selexonparamsq['diam']=params['diam']
- 	selexonparamsq['bin']=params['bin']
- 	selexonparamsq['manual_thresh']=params['thresh']
- 	selexonparamsq['auto_thresh']=params['autopik']
- 	selexonparamsq['lp_filt']=params['lp']
- 	selexonparamsq['hp_filt']=params['hp']
-	selexonparamsdata = appiondb.query(selexonparamsq, results=1)
-
-	### query for identical run name ###
-	runq = appionData.ApSelectionRunData()
-	runq['name']=params['runid']
-	runq['session']=sessiondata
-
-	runids = appiondb.query(runq, results=1)
-
- 	# if no run entry exists, insert new run entry into dbappiondata
- 	if not(runids):
-		runq['params']=selexonparamsq
-		if not selexonparamsdata:
-			appiondb.insert(selexonparamsq)
-		appiondb.insert(runq)
-		#insert template params
- 		for n in range(0, len(params['templateIds'])):
-			apTemplate.insertTemplateRun(params,runq,n)
-
-	# if continuing a previous run, make sure that all the current
- 	# parameters are the same as the previous
- 	else:
-		if not selexonparamsdata or runids[0]['params'] != selexonparamsdata[0]:
 			if selexonparamsdata:
 				for i in selexonparamsdata[0]:
 					if selexonparamsdata[0][i] != runids[0]['params'][i]:
