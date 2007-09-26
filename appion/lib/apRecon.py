@@ -146,7 +146,6 @@ def listFiles(params):
 			params['msgpassavgs'].append(f)
 			
 def parseMsgPassingLogFile(params):
-	print params['iterations']
 	logfile=os.path.join(params['path'],'.msgPassinglog')
 	print "parsing massage passing log file:",logfile
 	lines=open(logfile,'r')
@@ -155,7 +154,6 @@ def parseMsgPassingLogFile(params):
 		line=string.rstrip(line)
 		if re.search("msgPassing_after_coran", line):
 			msgpassparams=line.split(' ')
-			print j
 			iteration = params['iterations'][j]
 			for p in msgpassparams:
 				elements=p.split('=')
@@ -339,7 +337,6 @@ def insertResolutionData(params,iteration):
 def insertRMeasureData(params,iteration):
 	volumeDensity='threed.'+iteration['num']+'a.mrc'
 	if os.path.exists(os.path.join(params['path'],volumeDensity)):
-		print params
 		resolution = runRMeasure(params['model']['pixelsize'],volumeDensity)
 	
 		if resolution is None:
