@@ -12,7 +12,6 @@ import sinedon.data as data
 import leginondata
 #appion
 import apDB
-import apLoop
 import apDisplay
 import appionData
 import apDefocalPairs

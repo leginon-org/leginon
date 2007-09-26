@@ -12,8 +12,6 @@ import apImage
 import apDisplay
 import apDatabase
 import apCtf
-#import apParam
-#import apLoop
 try:
 	import pymat
 except:

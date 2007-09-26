@@ -14,8 +14,6 @@ import apDisplay
 import apDatabase
 import apCtf
 import apMatlab
-#import apParam
-#import apLoop
 try:
 	import pymat
 except:
