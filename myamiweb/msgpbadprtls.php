@@ -12,7 +12,7 @@ $filename=$_GET['refinement'];
 
 $particle = new particledata();
 // get all bad particles in stack
-$badprtls=$particle->getMsgRejectParticlesInStack($refinement);
+$badprtls=$particle->getMsgPRejectParticlesInStack($refinement);
 $numbad = count($badprtls);
 $stack=$particle->getStackFromRefinement($refinement);
 $filename=$stack['stackPath'].'/'.$stack['name'];
