@@ -16,7 +16,7 @@ require ('inc/processing.inc');
   
 // check if reconstruction is specified
 $reconId = $_GET['reconId'];
-$refine_params_fields = array('refinerun', 'ang', 'mask', 'imask', 'pad', 'hard', 'classkeep', 'classiter', 'median', 'phasecls', 'refine');
+$refine_params_fields = array('refinerun', 'ang', 'mask', 'imask', 'pad', 'hard', 'classkeep', 'classiter', 'median', 'phasecls', 'refine','cckeep','minptls');
 $javascript="<script src='js/viewer.js'></script>\n";
 
 // javascript to display the refinement parameters
@@ -130,29 +130,58 @@ foreach ($iterations as $iteration){
   $refinementData=$particle->getRefinementData($refinerun['DEF_id'], $iteration['iteration']);
 	$numclasses=$particle->getNumClasses($refinementData['DEF_id']);
   $res = $particle->getResolutionInfo($iteration['REF|ApResolutionData|resolution']);
+  $RMeasure = $particle->getRMeasureInfo($iteration['REF|ApRMeasureData|rMeasure']);
 	$fscfile = ($res) ? $refinerun['path'].'/'.$res['fscfile'] : "None" ;
 	$halfres = ($res) ? sprintf("%.2f",$res['half']) : "None" ;
+	$rmeasureres = ($RMeasure) ? sprintf("%.2f",$RMeasure['rMeasure']) : "None" ;
 	$badprtls=$particle->getNumBadParticles($refinementData['DEF_id']);
+	$msgpbadprtls=$particle->getNumMsgPRejectParticles($refinementData['DEF_id']);
 	$prtlsused=$stackparticles-$badprtls;
+	$goodprtlsused=$stackparticles-$msgpbadprtls;
 	$html .= "<TR>\n";
 	$html .= "<TD><A HREF=\"javascript:infopopup(";
 	$refinestr2='';
 	foreach ($refine_params_fields as $param) {
-	        if (!eregi('^ang|mask$|^pad',$param)){$param="EMAN_$param";}
+	        if (eregi('hard|class|median|phasecls|refine',$param)){$param="EMAN_$param";}
+	        if (eregi('cckeep|minptls',$param)){$param="MsgP_$param";}
 		$refinestr2.="'$iteration[$param]',";
 	}
 	$refinestr2=rtrim($refinestr2,',');
 	$html .=$refinestr2;
 	$html .=")\">$iteration[iteration]</A></TD>\n";
 	$html .= "<TD>$iteration[ang]</TD>\n";
-	$html .= "<TD>$halfres</TD>\n";
+
+	$html .="<TD><table>";
+	$html .= "<TR><TD>$halfres</TD></TR>\n";
+	
+	if ($rmeasureres!='None')
+		$html .= "<TR><TD>Rmeasure-<br>$rmeasureres</TD></TR>\n";
+	$html .= "</table></TD>";
+
 	if ($halfres!='None')
 	        $html .= "<TD><A HREF='fscplot.php?fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz'><IMG SRC='fscplot.php?fscfile=$fscfile&width=100&height=80&nomargin=TRUE'>\n";
 	else $html .= "<TD>-</TD>\n";
+	$html .="<TD><table>";
 	$clsavg = $refinerun['path'].'/'.$iteration['classAverage'];
-	$html .= "<TD><A TARGET='stackview' HREF='viewstack.php?file=$clsavg'>$iteration[classAverage]</A></TD>\n";
-	$html .= "<TD><A TARGET='blank' HREF='classinfo.php?refinement=$refinementData[DEF_id]&w=800&h=600'>$numclasses</A></TD>\n";
-	$html .= "<TD>$prtlsused<BR><A TARGET='stackview' HREF='badprtls.php?refinement=$refinementData[DEF_id]'>[$badprtls bad]</A></TD>\n";
+	$html .= "<TR><TD><A TARGET='stackview' HREF='viewstack.php?file=$clsavg'>$iteration[classAverage]</A></TD></TR>\n";
+
+	if ($refinerun['package']=='EMAN/MsgP') {
+	$goodavg = $refinerun['path'].'/'.$iteration['MsgPGoodClassAvg'];
+	$html .= "<TR><TD><A TARGET='stackview' 
+HREF='viewstack.php?file=$goodavg'>$iteration[MsgPGoodClassAvg]</A></TD></TR>\n";
+	}
+	$html .= "</table></TD>";
+
+	$html .= "<TD><A TARGET='blank' 
+HREF='classinfo.php?refinement=$refinementData[DEF_id]&w=800&h=600'>$numclasses</A></TD>\n";
+
+	$html .="<TD><table>";
+	$html .= "<TR><TD>$prtlsused<BR><A TARGET='stackview' HREF='badprtls.php?refinement=$refinementData[DEF_id]'>[$badprtls bad]</A></TD></TR>\n";
+	if ($refinerun['package']=='EMAN/MsgP') 
+	$html .= "<TR><TD>$goodprtlsused MsgP<BR><A TARGET='stackview' HREF='msgpbadprtls.php?refinement=$refinementData[DEF_id]'>[$msgpbadprtls bad]</A></TD></TR>\n";
+	$html .= "</table></TD>";
+
+	$html .= "</TD>\n";
 	$html .= "<TD>$iteration[volumeDensity]</TD>\n";
 	$html .= "<TD>\n";
 	foreach ($pngfiles as $snapshot) {

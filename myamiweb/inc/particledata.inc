@@ -632,6 +632,13 @@ class particledata {
 	  return $r;
 	}
 	
+	function getRMeasureInfo ($resId) {
+	  $q = "SELECT * "
+	      ."FROM `ApRMeasureData` WHERE `DEF_id` = '$resId'";
+	  list($r) = $this->mysql->getSQLResult($q);
+	  return $r;
+	}
+	
 	function getHighestResForRecon ($reconid) {
 	  $q = "SELECT * " 
 	      ."FROM `ApRefinementData` r "
@@ -690,6 +697,26 @@ class particledata {
 				."FROM `ApParticleClassificationData` "
 				."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
 		    ."AND `thrown_out` = 1";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0]['num'];
+	}
+
+	function getMsgPRejectParticlesInStack ($refinementDataId) {
+		$q = "SELECT particleNumber as p "
+		    ."FROM `ApParticleClassificationData` apcd "
+		    ."LEFT JOIN `ApStackParticlesData` aspd "
+		    ."ON (apcd.`REF|ApStackParticlesData|particle` = aspd.`DEF_id`) "
+		    ."WHERE apcd.`REF|ApRefinementData|refinement` = '$refinementDataId' "
+		    ."AND `msgp_keep` = 0";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getNumMsgPRejectParticles ($refinementDataId) {
+		$q = "SELECT count(*) as num "
+				."FROM `ApParticleClassificationData` "
+				."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
+		    ."AND `msgp_keep` = 0";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0]['num'];
 	}
