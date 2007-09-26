@@ -2,6 +2,8 @@
 $file_hed=$_GET['hed'];
 $file_img=$_GET['img'];
 $img_num=$_GET['n'];
+$updateheader=($_GET['uh']==1) ? true : false;
+
 if (!$t = $_GET['t'])
 	$t=80;
 if (!$binning = $_GET['b'])
@@ -19,6 +21,8 @@ if ($t=='png') {
 $mrcimg = imagicread($file_hed, $file_img, $img_num);
 $maxval=255;
 list($pmin, $pmax) = array(0, $maxval);
+if ($updateheader)
+	mrcupdateheader($mrcimg);
 list($pmin, $pmax) = mrcstdevscale($mrcimg, $maxval, 3);
 mrcbinning($mrcimg,$binning);
 $img = mrctoimage($mrcimg,$pmin,$pmax);

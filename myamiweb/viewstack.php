@@ -3,6 +3,7 @@
 // --- change with query --- //
 
 $filename=$_GET['file'];
+$updateheader=($_GET['uh']==1) ? 1 : 0;
 #$filenames[]="/ami/data13/appion/07may16c/stacks/stack1/start.hed";
 #for ($num=1; $num<=16; $num++) {
 #	$filenames[]="/ami/data13/appion/07may16c/refine/garibaldi/classes.$num.hed";
@@ -50,6 +51,7 @@ $n_images=$info['count']+1;
 var file_hed="<?=$file_hed?>"
 var file_img="<?=$file_img?>"
 var n_images="<?=$n_images?>"
+var updateheader="<?=$updateheader?>"
 
 function displaystack(startImg, endImg, force) {
 	var wholemap = $('wholemap')
@@ -69,6 +71,7 @@ function addTile(wholemap, i, force) {
 				+'&n='+i
 				+'&t='+t
 				+'&b='+binning
+				+'&uh='+updateheader
 
    var img = $(tileId)
    if(!img || force){
