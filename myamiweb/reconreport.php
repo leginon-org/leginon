@@ -168,7 +168,7 @@ foreach ($iterations as $iteration){
 	if ($refinerun['package']=='EMAN/MsgP') {
 	$goodavg = $refinerun['path'].'/'.$iteration['MsgPGoodClassAvg'];
 	$html .= "<TR><TD><A TARGET='stackview' 
-HREF='viewstack.php?file=$goodavg'>$iteration[MsgPGoodClassAvg]</A></TD></TR>\n";
+HREF='viewstack.php?uh=1&file=$goodavg'>$iteration[MsgPGoodClassAvg]</A></TD></TR>\n";
 	}
 	$html .= "</table></TD>";
 
