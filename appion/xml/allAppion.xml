@@ -86,4 +86,10 @@
 	<description>Overrides 'continue'; removes donedict and starts from beginning</description>
 	<type>boolean</type>
  </nocontinue>
+ <tiltangle>
+	<name>tilt angle</name>
+	<description>Only box particles from images within 1 degree of this tilt angle</description>
+	<type>float</type>
+	<example>15</example>
+ </tiltangle>
 </allappion>

@@ -303,6 +303,7 @@ class AppionLoop(object):
 		self.params['norejects']=None
 		self.params['limit']=None
 		self.params['shuffle']=False
+		self.params['tiltangle']=None
 		self.params['abspath']=os.path.abspath('.')
 		### get custom default params
 		apDisplay.printMsg("creating special parameter defaults")
@@ -390,6 +391,8 @@ class AppionLoop(object):
 				self.params['shuffle']=True
 			elif arg=='nowait':
 				self.params['nowait']=True
+			elif arg=='tiltangle':
+				self.params['tiltangle']=float(elements[1])
 			elif arg=='norejects':
 				self.params['norejects']=True
 			elif (elements[0]=='limit'):
@@ -762,6 +765,13 @@ class AppionLoop(object):
 				self._writeDoneDict(imgname)
 				rejectcount += 1
 				skip = True
+
+			elif self.params['tiltangle'] is not None:
+				tiltangle = apDatabase.getTiltAngleDeg(imgdata)
+				if (self.params['tiltangle'] - tiltangle) > 1.0:
+					self._writeDoneDict(imgname)
+					rejectcount += 1
+					skip = True
 
 			if skip is True:
 				if self.stats['skipcount'] == 0:
