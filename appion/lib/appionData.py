@@ -438,6 +438,7 @@ class ApRefinementData(Data):
 			('refinementParams', ApRefinementParamsData),
 			('iteration', int),
 			('resolution', ApResolutionData),
+			('rMeasure', ApRMeasureData),
 			('classAverage', str),
 			('classVariance', str),
 			('volumeDensity',str),
@@ -475,6 +476,15 @@ class ApResolutionData(Data):
 		)
 	typemap = classmethod(typemap)
 leginondata.ApResolutionData=ApResolutionData
+
+class ApRMeasureData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('volume', str),
+			('rMeasure', float),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApRMeasureData=ApRMeasureData
 
 class ApParticleClassificationData(Data):
 	def typemap(cls):

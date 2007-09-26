@@ -10,6 +10,8 @@ import apDB
 import EMAN
 import tarfile
 
+import subprocess
+
 db = apDB.db
 partdb = apDB.apdb
 
@@ -144,20 +146,24 @@ def listFiles(params):
 			params['msgpassavgs'].append(f)
 			
 def parseMsgPassingLogFile(params):
+	print params['iterations']
 	logfile=os.path.join(params['path'],'.msgPassinglog')
 	print "parsing massage passing log file:",logfile
 	lines=open(logfile,'r')
+	j=0
 	for i,line in enumerate(lines):
 		line=string.rstrip(line)
-		if re.search("msgPassing", line):
+		if re.search("msgPassing_after_coran", line):
 			msgpassparams=line.split(' ')
-			iteration = params['iterations'][i]
+			print j
+			iteration = params['iterations'][j]
 			for p in msgpassparams:
 				elements=p.split('=')
 				if elements[0]=='corCutOff':
 					iteration['msgpasskeep']=float(elements[1])
 				elif elements[0]=='minNumOfPtcls':
 					iteration['msgpassminp']=int(elements[1])
+			j +=1
 	lines.close()
 
 
@@ -233,6 +239,7 @@ def getClassInfo(classes):
 		if i%2==0:
 			projeulers.append(eulers)
 	return projeulers
+
 
 def renderSnapshots(density,res,initmodel,contour,zoom):
 	# if eotest failed, filter to 30 
@@ -329,6 +336,22 @@ def insertResolutionData(params,iteration):
 
 		return resq
 
+def insertRMeasureData(params,iteration):
+	volumeDensity='threed.'+iteration['num']+'a.mrc'
+	if os.path.exists(os.path.join(params['path'],volumeDensity)):
+		print params
+		resolution = runRMeasure(params['model']['pixelsize'],volumeDensity)
+	
+		if resolution is None:
+			return None
+		else:
+			resq=appionData.ApRMeasureData()
+			resq['volume']=volumeDensity
+			resq['rMeasure']=resolution
+
+			partdb.insert(resq)
+			return resq
+
 def insertIteration(iteration,params):
 	refineparamsq=appionData.ApRefinementParamsData()
 	refineparamsq['ang']=iteration['ang']
@@ -348,6 +371,7 @@ def insertIteration(iteration,params):
 
 	# insert resolution data
 	resData=insertResolutionData(params,iteration)
+	RmeasureData=insertRMeasureData(params,iteration)
 
 	classavg='classes.'+iteration['num']+'.img'
 	
@@ -363,6 +387,7 @@ def insertIteration(iteration,params):
 	refineq['refinementParams']=refineparamsq
 	refineq['iteration']=iteration['num']
 	refineq['resolution']=resData
+	refineq['rMeasure']=RmeasureData
 	classvar='classes.'+iteration['num']+'.var.img'
 	volumeDensity='threed.'+iteration['num']+'a.mrc'
 	if classavg in params['classavgs']:
@@ -541,3 +566,29 @@ def writeReconLog(commandline):
         f.write(out)
         f.write("\n")
         f.close()
+
+def runRMeasure(apix,vol):
+	
+	print 'Processing', vol
+	try:
+		rmeasure=subprocess.Popen(['rmeasure'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+	except:
+		print "Failed to run rmeasure"
+		return None
+	rmeasure.stdin.write(vol+'\n')
+	rmeasure.stdin.write(str(apix)+'\n')
+	output=rmeasure.stdout.read()
+	
+	words=output.split()
+	for n in range(0,len(words)):
+		#print words[n],words[n+4]
+		if words[n]=='Resolution' and words[n+4]=='0.5:':
+			resolution=words[n+5]
+			break
+	print vol, resolution
+	return resolution
+
+if __name__ == '__main__':
+	r = runRMeasure(6.52,'threed.1a.mrc')
+	print r
+
