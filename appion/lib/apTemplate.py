@@ -107,47 +107,47 @@ def downSizeTemplate(imgdata, filename, params):
 	apImage.arrayToMrc(imgdata, filename, msg=False)
 	return
 
-def checkTemplates(params, upload=None):
+def checkTemplates(params):
 	# determine number of template files
 	# if using 'preptemplate' option, will count number of '.mrc' files
 	# otherwise, will count the number of '.dwn.mrc' files
-	if (params['rundir']):
-		name = os.path.join(params['rundir'], params['template'])
-	else:
-		name = params['template']
-		
-	### this is sort of bad coding, should change later
-	if upload:
-		name = params['template']
-	###
-		
+
+	name = params['template']
+	
+	if (os.path.isfile(name+'.mrc') and os.path.isfile(name+str(n+1)+'.mrc')):
+		# templates not following naming scheme
+		apDisplay.printError("Both "+name+".mrc and "+name+str(n+1)+".mrc exist\n")
+
 	params['templatelist'] = []
 	stop = False
 	# count number of template images.
 	# if a template image exists with no number after it
 	# counter will assume that there is only one template
-	n=0
-	while not stop:
-		if (os.path.isfile(name+'.mrc') and os.path.isfile(name+str(n+1)+'.mrc')):
-			# templates not following naming scheme
-			apDisplay.printError("Both "+name+".mrc and "+name+str(n+1)+".mrc exist\n")
-		if (os.path.isfile(name+'.mrc')):
-			params['templatelist'].append(name+'.mrc')
+
+	if os.path.isfile(name+'.mrc'):
+			params['templatelist'].append(name+".mrc")
+	else:
+		n=0
+		while os.path.isfile( name+str(n+1)+".mrc" ):
+			params['templatelist'].append( name+str(n+1)+'.mrc' )
 			n+=1
-			stop=True
-		elif (os.path.isfile(name+str(n+1)+'.mrc')):
-			params['templatelist'].append(name+str(n+1)+'.mrc')
-			n+=1
-		else:
-			stop=True
 
 	if not params['templatelist']:
 		apDisplay.printError("There are no template images found with basename \'"+name+"\'\n")
 
 	return(params)
 
+def copyTemplatesToOutdir(params):
+	for tmpl in params['templatelist']:
+		old = os.path.join(params['rundir'], tmpl)
+		new = os.path.join(params['outdir'], tmpl)
+		if os.path.isfile(new):
+			apDisplay.printError("template \'"+new+"\' already exists!\n")
+		shutil.copy(old, new)
+		#and only allow user read access just so they don't get deleted
+		os.chmod(new, 0444)
+		
 def insertTemplateRun(params,runq,templatenum):
-
 	tid=params['templateIds'][templatenum]
 	templateimagedata=apDB.apdb.direct_query(appionData.ApTemplateImageData,tid)
 	# if no templates in the database, exit
@@ -190,12 +190,14 @@ def insertTemplateImage(params):
 			apDisplay.printWarning("template already in database.\nNot reinserting")
 	return
 
-def checkTemplateParams(params, runq):
-	templaterunq=appionData.ApTemplateRunData(selectionrun=runq)
-	templaterundata=apDB.apdb.query(templaterunq)
+def checkTemplateParams(runq, params):
+	templaterunq = appionData.ApTemplateRunData(selectionrun=runq)
+	templaterundata = apDB.apdb.query(templaterunq)
+	if not templaterundata:
+		return True
 	#make sure of using same number of templates
-	if len(params['templateIds'])!=len(templaterundata):
-		apDisplay.printError("All parameters for a selexon run must be identical!"+\
+	if len(params['templateIds']) != len(templaterundata):
+		apDisplay.printError("All parameters for a selexon run must be identical!\n"+\
 			"You do not have the same number of templates as your last run")
 	# check all templates
 
