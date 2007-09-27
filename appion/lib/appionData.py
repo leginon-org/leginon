@@ -3,11 +3,19 @@
 # The Scripps Research Institute, La Jolla, CA
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
- 
+
 
 import sinedon.data
 import leginondata
 Data = sinedon.data.Data
+
+class ApPathData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('path', str),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApPathData=ApPathData
 
 
 ### Particle selection tables ###
@@ -36,7 +44,8 @@ class ApSelectionRunData(Data):
 			('manparams', ApManualParamsData),
 			('tiltparams', ApTiltAlignParamsData),
 			('dbemdata|SessionData|session', int),
-			('name', str), 
+			('extractPath', ApPathData),
+			('name', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApSelectionRunData=ApSelectionRunData
@@ -47,13 +56,20 @@ class ApSelectionParamsData(Data):
 			('diam', int),
 			('bin', int),
 			('manual_thresh', float),
-			('auto_thresh', int),
+			#('auto_thresh', int),
 			('lp_filt', int),
 			('hp_filt', int),
+			('invert', int),
 			('max_peaks', int),
+			('max_threshold', float),
+			('median', int),
+			('maxsize', int),
+			('defocal_pairs', bool),
+			('overlapmult', float),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApSelectionParamsData=ApSelectionParamsData
+
 
 class ApDogParamsData(Data):
 	def typemap(cls):
@@ -65,7 +81,12 @@ class ApDogParamsData(Data):
 			('invert', int),
 			('lp_filt', int),
 			('hp_filt', int),
-			('max_peaks', int),			
+			('max_peaks', int),
+			('median', int),
+			('maxsize', int),
+			('kfactor', float),
+			('defocal_pairs', bool),
+			('overlapmult', float),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApDogParamsData=ApDogParamsData
@@ -78,6 +99,7 @@ class ApManualParamsData(Data):
 			('lp_filt', int),
 			('hp_filt', int),
 			('invert', int),
+			('median', int),
 			('oldselectionrun', ApSelectionRunData),
 		)
 	typemap = classmethod(typemap)
@@ -91,8 +113,9 @@ class ApTiltAlignParamsData(Data):
 			('invert', int),
 			('lp_filt', int),
 			('hp_filt', int),
+			('median', int),
 			('output_type', str),
-			('oldselectionrun', ApSelectionRunData),		
+			('oldselectionrun', ApSelectionRunData),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApTiltAlignParamsData=ApTiltAlignParamsData
@@ -104,6 +127,7 @@ class ApTemplateImageData(Data):
 		return Data.typemap() + (
 			('project|projects|project', int),
 			('templatepath', str),
+			#('templatepath', ApPathData),
 			('templatename', str),
 			('apix', float),
 			('diam', int),
@@ -177,8 +201,9 @@ class ApMaskMakerRunData(Data):
 		return Data.typemap() + (
 			('params', ApMaskMakerParamsData),
 			('session', leginondata.SessionData),
-			('name', str), 
+			('name', str),
 			('path', str),
+			#('path', ApPathData),
 		)
 	typemap = classmethod(typemap)
 
@@ -194,7 +219,7 @@ class ApMaskRegionData(Data):
 			('mean', float),
 			('stdev', float),
 			('label', int),
-			
+
 		)
 	typemap = classmethod(typemap)
 
@@ -221,6 +246,7 @@ class ApStackData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('stackPath', str),
+			#('stackPath', ApPathData),
 			('name' , str),
 			('description', str),
 		)
@@ -286,6 +312,7 @@ class ApNoRefRunData(Data):
 			('stack', ApStackData), #Redundant
 			('norefParams', ApNoRefParamsData),
 			('norefPath', str),
+			#('norefPath', ApPathData),
 			('description', str),
 		)
 	typemap = classmethod(typemap)
@@ -351,6 +378,7 @@ class ApRefRunData(Data):
 			('refParams', ApRefParamsData),
 			('refTemplate', ApTemplateImageData),
 			('refPath', str),
+			#('refPath', ApPathData),
 			('description', str),
 		)
 	typemap = classmethod(typemap)
@@ -402,6 +430,7 @@ class ApRefinementRunData(Data):
 			('stack', ApStackData),
 			('initialModel', ApInitialModelData),
 			('path', str),
+			#('path', ApPathData),
 			('package', str),
 			('description', str),
 		)
@@ -413,6 +442,7 @@ class ApInitialModelData(Data):
 		return Data.typemap() + (
 			('project|projects|project', int),
 			('path', str),
+			#('path', ApPathData),
 			('name', str),
 			('symmetry', ApSymmetryData),
 			('pixelsize', float),
@@ -512,7 +542,7 @@ class ApEulerData(Data):
 		)
 	typemap = classmethod(typemap)
 leginondata.ApEulerData=ApEulerData
-	
+
 class ApFSCData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -528,6 +558,7 @@ class ApMiscData(Data):
 		return Data.typemap() + (
 			('refinementRun', ApRefinementRunData),
 			('path', str),
+			#('path', ApPathData),
 			('name', str),
 			('description', str),
 		)
@@ -541,7 +572,8 @@ class ApAceRunData(Data):
 		return Data.typemap() + (
 			('aceparams', ApAceParamsData),
 			('dbemdata|SessionData|session', int),
-			('name', str), 
+			('acePath', ApPathData),
+			('name', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApAceRunData=ApAceRunData
@@ -549,7 +581,7 @@ leginondata.ApAceRunData=ApAceRunData
 class ApAceParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('display', int), 
+			('display', int),
 			('stig', int),
 			('medium', str),
 			('df_override', float),
@@ -572,31 +604,32 @@ class ApCtfData(Data):
 			('acerun', ApAceRunData),
 			('dbemdata|AcquisitionImageData|image', int),
 			('defocus1', float),
-			('defocus2', float), 
-			('defocusinit', float), 
-			('amplitude_contrast', float), 
-			('angle_astigmatism', float), 
-			('noise1', float), 
-			('noise2', float), 
-			('noise3', float), 
-			('noise4', float), 
-			('envelope1', float), 
-			('envelope2', float), 
-			('envelope3', float), 
-			('envelope4', float), 
-			('lowercutoff', float), 
-			('uppercutoff', float), 
-			('snr', float), 
-			('confidence', float), 
-			('confidence_d', float), 
-			('graphpath', str),
+			('defocus2', float),
+			('defocusinit', float),
+			('amplitude_contrast', float),
+			('angle_astigmatism', float),
+			('noise1', float),
+			('noise2', float),
+			('noise3', float),
+			('noise4', float),
+			('envelope1', float),
+			('envelope2', float),
+			('envelope3', float),
+			('envelope4', float),
+			('lowercutoff', float),
+			('uppercutoff', float),
+			('snr', float),
+			('graphpath', str), #remove in future
+			('matpath', str), #remove in future
+			('confidence', float),
+			('confidence_d', float),
 			('graph1', str),
 			('graph2', str),
-			('matpath', str),
 			('mat_file', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApCtfData=ApCtfData
+
 
 ### Testing tables ###
 
@@ -613,8 +646,9 @@ class ApTestRunData(Data):
 		return Data.typemap() + (
 			('params', ApTestParamsData),
 			('dbemdata|SessionData|session', int),
-			('name', str), 
+			('name', str),
 			('path', str),
+			#('path', ApPathData),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApTestRunData=ApTestRunData
@@ -624,7 +658,7 @@ class ApTestResultData(Data):
 		return Data.typemap() + (
 			('testrun', ApTestRunData),
 			('dbemdata|AcquisitionImageData|image', int),
-			('x', float), 
+			('x', float),
 			('y', float),
 		)
 	typemap = classmethod(typemap)
