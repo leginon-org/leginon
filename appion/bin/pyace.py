@@ -84,10 +84,8 @@ class aceLoop(appionLoop.AppionLoop):
 
 	def commitToDatabase(self, imgdata):
 		expid = int(imgdata['session'].dbid)
-		apCtf.insertAceParams(self.params, expid)
-#		apCtf.insertAceParamsREFLEGINON(self.params, imgdata['session'])
+		apCtf.insertAceParams(imgdata, self.params)
 		apCtf.commitCtfValueToDatabase(imgdata, self.matlab, self.ctfvalue, self.params)
-#		apCtf.commitCtfValueToDatabaseREGLEGINON(imgdata, self.matlab, self.ctfvalue, self.params)
 
 	def specialDefaultParams(self):
 		self.params['edgethcarbon']=0.8
