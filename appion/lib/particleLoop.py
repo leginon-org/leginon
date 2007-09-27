@@ -187,9 +187,7 @@ class ParticleLoop(appionLoop.AppionLoop):
 			apDisplay.printError("self.getParticleParamsData() did not return valid parameter data\n")
 
 		#create path
-		pathq = appionData.ApPathData()
-		pathq['path'] = self.params['rundir']
-		runq['extractPath'] = pathq
+		runq['path'] = appionData.ApPathData(path=os.path.normpath(params['rundir']))
 
 		if insert is True:
 			runq.insert()
