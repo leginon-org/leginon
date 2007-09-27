@@ -53,7 +53,7 @@ def printHelp():
 	sys.exit()
 
 def appendToStack(stackdata,params):
-	origstackdir=stackdata['stackPath']
+	origstackdir=stackdata['path']['path']
 	origstackname=stackdata['name']
 	newstackdir=params['outdir']
 	newstackname=params['stackname']
@@ -67,7 +67,7 @@ def commitStack(stackid,params):
 	
 	newstackq=appionData.ApStackData()
 	newstackq['name']=params['stackname']
-	newstackq['stackPath']=params['outdir']
+	newstackq['path'] = appionData.ApPathData(path=os.path.normpath(params['outdir']))
 	newstackq['description']=params['description']
 	
 	rinstackdata=apStack.getRunsInStack(stackid)

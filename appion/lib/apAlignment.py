@@ -125,7 +125,7 @@ def overridecmd(params):
 	### create a norefRun object
 	runq = appionData.ApNoRefRunData()
 	runq['name'] = params['runid']
-	runq['norefPath'] = params['outdir']
+	runq['path'] = appionData.ApPathData(path=os.path.normpath(params['outdir']))
 	runq['stack'] = appiondb.direct_query(appionData.ApStackData, params['stackid'])
 	# ... stackId, runId and norefPath make the norefRun unique:
 	uniquerun = appiondb.query(runq, results=1)[0]
@@ -210,7 +210,7 @@ def getStackInfo(params):
 	if stackparamdata['bin'] is not None:
 		params['bin']    = stackparamdata['bin']
 	params['apix']      = apDatabase.getPixelSize(imgdata)*params['bin']
-	params['stackpath'] = os.path.abspath(stackdata['stackPath'])
+	params['stackpath'] = os.path.abspath(stackdata['path']['path'])
 	if params['outdir'] is None:
 		params['outdir'] = params['stackpath']
 	params['stackfile'] = os.path.join(params['stackpath'],stackdata['name'])
@@ -269,7 +269,7 @@ def createSpiderRefFile(params):
 	takes the reference template file and creates a spider file with same pixel size and box size
 	"""
 	tmpltinfo = apDatabase.getTemplateFromId(params['refid'])
-	reffile = os.path.join(tmpltinfo['templatepath'],tmpltinfo['templatename'])
+	reffile = os.path.join(tmpltinfo['path']['path'],tmpltinfo['templatename'])
 	tmpreffile = os.path.join(params['rundir'],'tmpreferencefile.mrc')
 	scalefactor = round(tmpltinfo['apix'],5)/round(params['apix'],5)
 	apTemplate.scaleAndClipTemplate(reffile,scalefactor,tmpreffile,params['boxsize'])
@@ -540,7 +540,7 @@ def insertNoRefRun(params, insert=False):
 	### create a norefRun object
 	runq = appionData.ApNoRefRunData()
 	runq['name'] = params['runid']
-	runq['norefPath'] = params['outdir']
+	runq['path'] = appionData.ApPathData(path=os.path.normpath(params['outdir']))
 	runq['stack'] = appiondb.direct_query(appionData.ApStackData, params['stackid'])
 	# ... stackId, runId and norefPath make the norefRun unique:
 	uniquerun = appiondb.query(runq, results=1)
@@ -610,7 +610,7 @@ def insertRefRun(params, insert=False):
 	runq = appionData.ApRefRunData()
 	runq['name'] = params['runid']
 	runq['stack'] = appiondb.direct_query(appionData.ApStackData, params['stackid'])
-	runq['refPath'] = params['outdir']
+	runq['path'] = appionData.ApPathData(path=os.path.normpath(params['outdir']))
 	# ... stackId, runId and refPath make the refRun unique:
 	uniquerun = appiondb.query(runq, results=1)
 	# ... continue filling non-unique variables:

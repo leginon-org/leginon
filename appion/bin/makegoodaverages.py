@@ -323,7 +323,7 @@ def sortEulers(a, b):
 		return -1
 
 def removePtclsByQualityFactor(particles,rejectlst,cutoff,params):
-	stack=os.path.join(particles[0]['particle']['stack']['stackPath'],particles[0]['particle']['stack']['name'])
+	stack=os.path.join(particles[0]['particle']['stack']['path']['path'],particles[0]['particle']['stack']['name'])
 	
 	for ptcl in particles:
 		if ptcl['quality_factor'] < cutoff:
@@ -335,7 +335,7 @@ def removePtclsByJumps(particles,rejectlst,params):
 	#errdict={}
 	print "Finding Euler jumps"
 	nptcls=len(particles)
-	stack=os.path.join(particles[0]['particle']['stack']['stackPath'],particles[0]['particle']['stack']['name'])
+	stack=os.path.join(particles[0]['particle']['stack']['path']['path'],particles[0]['particle']['stack']['name'])
 	f=open('jumps.txt','w')
 	for ptcl in range(1,nptcls+1):
 		eulers=getEulersForParticle(ptcl,params['reconid'])
@@ -473,7 +473,7 @@ if __name__=='__main__':
 	
 	apParam.writeFunctionLog(sys.argv,params=params)
 	particles=getParticleInfo(params['reconid'],params['iter'])
-	stack=os.path.join(particles[0]['particle']['stack']['stackPath'],particles[0]['particle']['stack']['name'])
+	stack=os.path.join(particles[0]['particle']['stack']['path']['path'],particles[0]['particle']['stack']['name'])
 	classes,cstats=determineClasses(particles)
 	
 	rejectlst=[]

@@ -115,7 +115,7 @@ def getDBTemplates(params):
 		params['ogTmpltInfo'].append(tmpltinfo)
 
 		# copy file to current directory
-		origtmplpath = os.path.join(tmpltinfo['templatepath'], tmpltinfo['templatename'])
+		origtmplpath = os.path.join(tmpltinfo['path']['path'], tmpltinfo['templatename'])
 		if os.path.isfile(origtmplpath):
 			print "getting image:", origtmplpath
 			newtmplpath = os.path.join(params['rundir'],tmptmplt+str(i)+".mrc")
@@ -133,7 +133,7 @@ def getDBTemplates(params):
 		tmpltinfo=appiondb.direct_query(appionData.ApTemplateImageData, tid)
 		if not (tmpltinfo):
 			apDisplay.printError("TemplateId "+str(tid)+" not found in database.  Use 'uploadTemplate.py'\n")
-		fname=os.path.join(tmpltinfo['templatepath'],tmpltinfo['templatename'])
+		fname=os.path.join(tmpltinfo['path']['path'],tmpltinfo['templatename'])
 		apix=tmpltinfo['apix']
 		# store row data in params dictionary
 		params['ogTmpltInfo'].append(tmpltinfo)

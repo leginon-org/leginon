@@ -54,7 +54,7 @@ def insertManualMaskRun(sessiondata,path,name,bin):
 def createMaskMakerRun(sessiondata,path,name,paramdata):
 	maskRdata=appionData.ApMaskMakerRunData()
 	maskRdata['session'] = sessiondata
-	maskRdata['path']=path
+	maskRdata['path']= appionData.ApPathData(path=os.path.normpath(path))
 	maskRdata['name']=name
 	maskRdata['params']=paramdata
 
@@ -158,7 +158,7 @@ def getMaskAssessRunData(sessiondata,maskassessname):
 
 
 def getMaskPath(maskrundata):
-	maskpath = os.path.join(maskrundata['path'],"masks")
+	maskpath = os.path.join(maskrundata['path']['path'],"masks")
 	return maskpath
 
 def getMaskFilename(maskrundata,imagedata):

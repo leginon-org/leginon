@@ -103,9 +103,7 @@ def insertAceParams(imgdata, params):
 		return False
 
 	#create path
-	pathq = appionData.ApPathData()
-	pathq['path'] = params['rundir']
-	runq['acePath'] = pathq
+	runq['path'] = appionData.ApPathData(path=os.path.normpath(params['rundir']))
 
 	# if no run entry exists, insert new run entry into db
 	runq['aceparams']=aceparamq
@@ -130,16 +128,16 @@ def insertCtfValue(imgdict, params, matfile, expid, ctfvalue, opimfile1, opimfil
 	print "Committing ctf parameters for",apDisplay.short(imgdict['filename']), "to database."
 
 	# make sure the directory paths have '/' at end
-	graphpath = os.path.normpath(params['opimagedir'])+"/"
-	matpath   = os.path.normpath(params['matdir'])+"/"
+	#graphpath = os.path.normpath(params['opimagedir'])+"/"
+	#matpath   = os.path.normpath(params['matdir'])+"/"
 
 	ctfq = appionData.ApCtfData()
 	ctfq['acerun']=acerun[0]
 	ctfq['dbemdata|AcquisitionImageData|image']=legimgid
-	ctfq['graphpath']=graphpath
+	#ctfq['graphpath']=graphpath
 	ctfq['graph1']=opimfile1
 	ctfq['graph2']=opimfile2
-	ctfq['matpath']=matpath
+	#ctfq['matpath']=matpath
 	ctfq['mat_file']=matfile
 	ctfvaluelist = ('defocus1','defocus2','defocusinit','amplitude_contrast','angle_astigmatism',\
 		'noise1','noise2','noise3','noise4','envelope1','envelope2','envelope3','envelope4',\

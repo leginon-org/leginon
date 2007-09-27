@@ -8,7 +8,7 @@ import apDB
 apdb=apDB.apdb
 
 def scaleStack(stackdata,params):
-	origpath=os.path.join(stackdata[0]['stack']['stackPath'],stackdata[0]['stack']['name'])
+	origpath=os.path.join(stackdata[0]['stack']['path']['path'],stackdata[0]['stack']['name'])
 	newstackpath=os.path.join(params['newstackpath'],params['newstackname'])
 	
 	if os.path.exists(newstackpath):
@@ -31,7 +31,7 @@ def commitScaledStack(stackdata,params):
 
 	#make new stack query
 	newstackq=appionData.ApStackData()
-	newstackq['stackPath']=params['newstackpath']
+	newstackq['path'] = appionData.ApPathData(path=os.path.normpath(params['newstackpath']))
 	newstackq['name']=params['newstackname']
 	newstackq['description']=params['description']
 	newstackdata=apdb.query(newstackq)
