@@ -193,13 +193,16 @@ class manualPicker(particleLoop.ParticleLoop):
 		#peaktree = self.runManualPickerOld(imgdata)
 		return peaktree
 
+	def getParticleParamsData(self):
+		manparamsq=appionData.ApManualParamsData()
+		if self.params['pickrunid'] is not None:
+			manparamsq['oldselectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunid'])
+		return manparamsq
+
 	def particleCommitToDatabase(self, imgdata):
-		expid = int(imgdata['session'].dbid)
-		self.insertManualParams(expid)
 		if self.assess != self.assessold and self.assess is not None:
 			#imageaccessor run is always named run1
 			apDatabase.insertImgAssessmentStatus(imgdata, 'run1', self.assess)
-		#self.deleteOldPicks(imgdata,self.params)
 		return
 
 	def particleDefaultParams(self):
@@ -256,37 +259,6 @@ class manualPicker(particleLoop.ParticleLoop):
 					print "already processed: ",apDisplay.short(imgdata['filename'])
 				else:
 					apFindEM.processAndSaveImage(imgdata, params=self.params)
-
-	def insertManualParams(self, expid):
-		manparamsq=appionData.ApManualParamsData()
-		manparamsq['diam']    = self.params['diam']
-		manparamsq['lp_filt'] = self.params['lp']
-		manparamsq['hp_filt'] = self.params['hp']
-		manparamsq['bin']     = self.params['bin']
-		if self.params['pickrunid'] is not None:
-			manparamsq['oldselectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunid'])
-		manparamsdata = self.appiondb.query(manparamsq, results=1)
-		
-		runq=appionData.ApSelectionRunData()
-		runq['name'] = self.params['runid']
-		runq['dbemdata|SessionData|session'] = expid
-		runids = self.appiondb.query(runq, results=1)
-		
-		if not runids:
-			runq['manparams']=manparamsq
-			self.appiondb.insert(runq)
-		else:
-			#make sure all params are the same as previous session
-			for pkey in manparamsq:
-				if manparamsq[pkey] != manparamsdata[0][pkey]:
-					print "All parameters for a particular manualpicker run must be identical"
-					print pkey,manparamsq[pkey],"not equal to",manparamsdata[0][pkey]
-					sys.exit()
-			for i in manparamsq:
-				if manparamsdata[0][i] != manparamsq[i]:
-					apDisplay.printError("All parameters for a particular manualpicker run must be identical\n"+
-						str(i)+":"+str(manparamsq[i])+" not equal to "+str(manparamsdata[0][i]))
-		return
 
 	def showMask(self,imgfile,imgdata):
 		self.filename = imgfile

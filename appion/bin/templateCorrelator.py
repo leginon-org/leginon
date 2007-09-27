@@ -11,6 +11,7 @@ import apImage
 import apDisplay
 import apTemplate
 import apDatabase
+import appionData
 import apPeaks
 import apParticle
 import apParam
@@ -36,10 +37,21 @@ class TemplateCorrelationLoop(particleLoop.ParticleLoop):
 			peaktree  = apPeaks.findPeaks(imgdata, ccmaplist, self.params)
 		return peaktree
 
+	def getParticleParamsData(self):
+		selectparamsq = appionData.ApSelectionParamsData()
+		return selectparamsq
+
 	def particleCommitToDatabase(self, imgdata):
-		expid = int(imgdata['session'].dbid)
-		apParticle.insertSelexonParams(self.params, expid)
-#		apParticle.insertSelexonParamsREFLEGINON(self.params, imgdata['session'])
+		runq=appionData.ApSelectionRunData()
+		runq['name'] = self.params['runid']
+		runq['dbemdata|SessionData|session'] = imgdata['session'].dbid
+		runids = runq.query(results=1)
+
+		if apTemplate.checkTemplateParams(runids[0], self.params) is True:
+			#insert template params
+			for n in range(len(self.params['templateIds'])):
+				apTemplate.insertTemplateRun(self.params, runids[0], n)
+		return
 
 	def particleDefaultParams(self):
 		self.params['template']=''

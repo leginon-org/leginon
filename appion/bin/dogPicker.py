@@ -10,6 +10,7 @@ import apImage
 import apDisplay
 import apTemplate
 import apDatabase
+import appionData
 import apPeaks
 import apParticle
 import apDog
@@ -25,20 +26,23 @@ class dogPicker(particleLoop.ParticleLoop):
 	def particleProcessImage(self, imgdata):
 		imgarray = imgdata['image']
 		imgarray = apImage.preProcessImage(imgarray, params=self.params, lowpass=0)
-		imgarray = apImage.diffOfGaussParam(imgarray, self.params)
-		imgarray = apImage.normStdev(imgarray)/4.0
-		peaktree  = apPeaks.findPeaks(imgdata, [imgarray,], self.params, maptype="dogmap")
+		dogarray = apImage.diffOfGaussParam(imgarray, self.params)
+		dogarray = apImage.normStdev(dogarray)/4.0
+		peaktree  = apPeaks.findPeaks(imgdata, [dogarray,], self.params, maptype="dogmap")
 		return peaktree
 
-	def particleCommitToDatabase(self, imgdata):
-		expid = int(imgdata['session'].dbid)
-		apDog.insertDogParams(self.params, expid)
-#		apDog.insertDogParamsREFLEGINON(self.params, imgdata['session'])
-		return
+	def getParticleParamsData(self):
+		dogparamq = appionData.ApDogParamsData()
+		dogparamq['kfactor'] = self.params['kfactor']
+		#dogparamq['size_range'] = self.params['sizerange']
+		#dogparamq['num_slices'] = self.params['numslices']
+		return dogparamq
 
 	def particleDefaultParams(self):
 		self.params['mapdir']="dogmaps"
 		self.params['kfactor']=1.2
+		self.params['numslices'] = None
+		self.params['sizerange'] = None
 
 	def particleParseParams(self, args):
 		for arg in args:
@@ -46,6 +50,10 @@ class dogPicker(particleLoop.ParticleLoop):
 			elements[0] = elements[0].lower()
 			if (elements[0]=='kfactor'):
 				self.params['kfactor']=float(elements[1])
+			elif (elements[0]=='numslices'):
+				self.params['numslices']=int(elements[1])
+			elif (elements[0]=='sizerange'):
+				self.params['sizerange']=int(elements[1])
 			else:
 				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 

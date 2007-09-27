@@ -11,6 +11,7 @@ import apDisplay
 import apTemplate
 import apDatabase
 import apPeaks
+import appionData
 import apParticle
 import apDefocalPairs
 import apXml
@@ -63,9 +64,15 @@ class ParticleLoop(appionLoop.AppionLoop):
 		"""
 		return
 
-	def particleCommitToDatabase(self):
+	def particleCommitToDatabase(self, imgdata):
 		"""
 		put in any additional commit parameters
+		"""
+		return
+
+	def getParticleParamsData(self):
+		"""
+		this function MUST return the parameters to insert into the DB
 		"""
 		return
 
@@ -113,15 +120,81 @@ class ParticleLoop(appionLoop.AppionLoop):
 			self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params)
 
 	def commitToDatabase(self, imgdata):
+		#commit the run
+		expid = int(imgdata['session'].dbid)
+		self.commitRunToDatabase(expid, True)
 		#commit picker specific params
 		self.particleCommitToDatabase(imgdata)
-
-		expid = int(imgdata['session'].dbid)
+		#commit the particles
 		apParticle.insertParticlePeaks(self.peaktree, imgdata, expid, self.params)
-#		apParticle.insertParticlePeaksREFLEGINON(self.peaktree, imgdata, self.params)
+		#commit defocal pairs
 		if self.params['defocpair'] is True:
 			apDefocalPairs.insertShift(imgdata, self.sibling, self.shiftpeak)
-#			apDefocalPairs.insertShiftREFLEGINON(imgdata, self.sibling, self.shiftpeak)
+
+	def commitRunToDatabase(self, expid, insert=True):
+		dbmap = {
+			'diam': 'diam',
+			'bin': 'bin',
+			'lp': 'lp_filt',
+			'hp': 'hp_filt',
+			'invert': 'invert',
+			'thresh': 'threshold',
+			'thresh': 'manual_thresh',
+			'maxthresh': 'max_threshold',
+			'maxpeaks': 'max_peaks',
+			'maxsize': 'maxsize',
+			'median': 'median',
+			'defocpair': 'defocal_pairs',
+			'overlapmult': 'overlapmult',
+		}
+		paramQuery = self.getParticleParamsData()
+
+		#insert common parameters
+		for pkey,dbkey in dbmap.items():
+			if (dbkey in paramQuery 
+			 and pkey in self.params 
+			 and self.params[pkey] is not None):
+				paramQuery[dbkey] = self.params[pkey]
+
+		runq=appionData.ApSelectionRunData()
+		runq['name'] = self.params['runid']
+		runq['dbemdata|SessionData|session'] = expid
+		runids = runq.query(results=1)
+		
+		if runids:
+			paramData = paramQuery.query(results=1)
+			#make sure all params are the same as previous session	
+			if not paramData:
+				apDisplay.printError("All parameters for a picker run name must be identical\n")
+			else:
+				for key in paramQuery:
+					if paramData[0][key] != paramQuery[key]:
+						apDisplay.printWarning(str(key)+":"+str(paramQuery[key])+" not equal to "+str(paramData[0][key]))
+						apDisplay.printError("All parameters for a picker run name must be identical\n")
+			#if I made it here all parameters are the same, so it isn't necessary to commit
+			return False
+
+		#set params for run
+		if isinstance(paramQuery, appionData.ApSelectionParamsData):
+			runq['params']=paramQuery
+		elif isinstance(paramQuery, appionData.ApDogParamsData):
+			runq['dogparams']=paramQuery
+		elif isinstance(paramQuery, appionData.ApManualParamsData):
+			runq['manparams']=paramQuery
+		elif isinstance(paramQuery, appionData.ApTiltAlignParamsData):
+			runq['tiltparams']=paramQuery
+		else:
+			apDisplay.printError("self.getParticleParamsData() did not return valid parameter data\n")
+
+		#create path
+		pathq = appionData.ApPathData()
+		pathq['path'] = self.params['rundir']
+		runq['extractPath'] = pathq
+
+		if insert is True:
+			runq.insert()
+
+		return True
 
 	def _runHelp(self):
 		#OVERRIDE appionLoop help()
@@ -182,7 +255,7 @@ class ParticleLoop(appionLoop.AppionLoop):
 			elif (elements[0]=='hp'):
 				self.params['hp']= float(elements[1])
 			elif (elements[0]=='maxsize'):
-				self.params['maxsize']= float(elements[1])
+				self.params['maxsize']= int(elements[1])
 			elif (elements[0]=='maxthresh'):
 				self.params['maxthresh']= float(elements[1])
 			elif (elements[0]=='overlapmult'):

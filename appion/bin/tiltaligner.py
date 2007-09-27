@@ -91,6 +91,13 @@ class tiltAligner(particleLoop.ParticleLoop):
 	
 		return
 
+	def getParticleParamsData(self):
+		tiltparamsq = appionData.ApTiltAlignParamsData()
+		tiltparamsq['output_type'] = self.params['outtype']
+		if self.params['pickrunid'] is not None:
+			tiltparamsq['oldselectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunid'])
+		return tiltparamsq
+
 	#####################################################
 	##### START PRE-DEFINED APPION LOOP FUNCTIONS #####
 	#####################################################
@@ -124,21 +131,25 @@ class tiltAligner(particleLoop.ParticleLoop):
 		"""
 		Over-writes the particleLoop commit and uses the appionLoop commit
 		"""
+		if len(self.peaktree1) == 0:
+			apDisplay.printWarning("No particle picks; not commiting data")
+			return False
 		tiltdata = apTiltPair.getTiltPair(imgdata)
-		if tiltdata is not None and len(self.peaktree1) > 0:
-			self.expid = int(imgdata['session'].dbid)
-			#import pprint
-			#pprint.pprint(self.tiltparams)
-			### insert the runid
-			self.insertTiltAlignParams()
-			### insert the transform
-			transdata = apTiltPair.insertTiltTransform(imgdata, tiltdata, self.tiltparams, self.params)
-			### insert the particles
-			self.insertParticlePeakPairs(imgdata, tiltdata, transdata)
-			if self.assess != self.assessold and self.assess is not None:
-				#note runid is overrided to be 'run1'
-				apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], self.assess)
-				apDatabase.insertImgAssessmentStatus(tiltdata, self.params['runid'], self.assess)
+		if tiltdata is None:
+			apDisplay.printWarning("Tilt data not found; not commiting data")
+			return False
+		### insert the runid
+		expid = int(imgdata['session'].dbid)
+		self.commitRunToDatabase(expid, True)
+		### insert the transform
+		transdata = apTiltPair.insertTiltTransform(imgdata, tiltdata, self.tiltparams, self.params)
+		### insert the particles
+		self.insertParticlePeakPairs(imgdata, tiltdata, transdata)
+		### insert image assessment
+		if self.assess != self.assessold and self.assess is not None:
+			#note runid is overrided to be 'run1'
+			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], self.assess)
+			apDatabase.insertImgAssessmentStatus(tiltdata, self.params['runid'], self.assess)
 
 	##########################################
 	##### END PRE-DEFINED LOOP FUNCTIONS #####
@@ -165,43 +176,6 @@ class tiltAligner(particleLoop.ParticleLoop):
 			targets.append( (p['xcoord']/self.params['bin'], p['ycoord']/self.params['bin']) )
 		ntargets = numpy.array(targets, dtype=numpy.int32)
 		return ntargets
-
-	def insertTiltAlignParams(self):
-		### query for identical params ###
-		tiltparamsq = appionData.ApTiltAlignParamsData()
-	 	tiltparamsq['diam'] = self.params['diam']
-	 	tiltparamsq['bin'] = self.params['bin']
-	 	tiltparamsq['lp_filt'] = self.params['lp']
-	 	tiltparamsq['hp_filt'] = self.params['hp']
-	 	tiltparamsq['invert'] = self.params['invert']
-		tiltparamsq['output_type'] = self.params['outtype']
-		if self.params['pickrunid'] is not None:
-			tiltparamsq['oldselectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunid'])
-		tiltparamsdata = self.appiondb.query(tiltparamsq, results=1)
-
-		### query for identical run name ###
-		runq = appionData.ApSelectionRunData()
-		runq['name'] = self.params['runid']
-		runq['dbemdata|SessionData|session'] = self.expid
-		runids = self.appiondb.query(runq, results=1)
-
-	 	# if no run entry exists, insert new run entry into dbappiondata
-	 	if not runids:
-			apDisplay.printMsg("Inserting new runId into database")
-			runq['tiltparams'] = tiltparamsq
-			self.appiondb.insert(runq)
-		else:
-			#make sure all params are the same as previous session
-			for pkey in tiltparamsq:
-				if tiltparamsq[pkey] != tiltparamsdata[0][pkey]:
-					print "All parameters for a particular manualpicker run must be identical"
-					print pkey,tiltparamsq[pkey],"not equal to",tiltparamsdata[0][pkey]
-					sys.exit(1)
-			for i in tiltparamsq:
-				if tiltparamsdata[0][i] != tiltparamsq[i]:
-					apDisplay.printError("All parameters for a particular manualpicker run must be identical\n"+
-						str(i)+":"+str(tiltparamsq[i])+" not equal to "+str(tiltparamsdata[0][i]))
-		return
 
 	def parseTiltParams(self):
 		theta = self.tiltparams['theta']
