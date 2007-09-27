@@ -104,10 +104,17 @@ def runAceCorrect(imgdict,params):
 	imgname = imgdict['filename']
 	imgpath = os.path.join(imgdict['session']['image path'], imgname+'.mrc')
 	
-	matname=imgname+'.mrc.mat'
-	matfile=os.path.join(params['matdir'],matname)
-	print "Ctf params obtained from " + matfile
-	
+	#matname=imgname+'.mrc.mat'
+	#matfile=os.path.join(params['matdir'],matname)
+	#print "Ctf params obtained from " + matfile
+
+	print "Sunita you need to use the function: apCtf.getBestCtfValueForImage"
+	ctfvalues, conf = apCtf.getBestCtfValueForImage(imgdict)
+
+	print "heres what the data looks like"
+	import pprint
+	pprint.pprint(ctfvalues)
+
 	ctdimname = imgname
 	ctdimpath = os.path.join(params['outdir'],ctdimname)
 	print "Corrected Image written to " + ctdimpath
