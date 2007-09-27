@@ -433,50 +433,6 @@ def pik2Box(params,file):
 	print "results written to \'"+file+".box\'"
 	return
 
-def insertSelexonParams(params,expid):
-	### query for identical params ###
-	selexonparamsq=appionData.ApSelectionParamsData()
- 	selexonparamsq['diam']=params['diam']
- 	selexonparamsq['bin']=params['bin']
- 	selexonparamsq['manual_thresh']=params['thresh']
- 	selexonparamsq['auto_thresh']=params['autopik']
- 	selexonparamsq['lp_filt']=params['lp']
- 	selexonparamsq['hp_filt']=params['hp']
-	selexonparamsdata = appiondb.query(selexonparamsq, results=1)
-
-	### query for identical run name ###
-	runq = appionData.ApSelectionRunData()
-	runq['name']=params['runid']
-	runq['dbemdata|SessionData|session']=expid
-
-	runids = appiondb.query(runq, results=1)
-
- 	# if no run entry exists, insert new run entry into dbappiondata
- 	if not(runids):
-		runq['params']=selexonparamsq
-		if not selexonparamsdata:
-			appiondb.insert(selexonparamsq)
-		appiondb.insert(runq)
-		#insert template params
- 		for n in range(0, len(params['templateIds'])):
-			apTemplate.insertTemplateRun(params,runq,n)
-
-	# if continuing a previous run, make sure that all the current
- 	# parameters are the same as the previous
- 	else:
-		if not selexonparamsdata or runids[0]['params'] != selexonparamsdata[0]:
-			print runids[0]['params']
-			print selexonparamsq
-			print selexonparamsdata[0]
-			if selexonparamsdata:
-				for i in selexonparamsdata[0]:
-					if selexonparamsdata[0][i] != runids[0]['params'][i]:
-						apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
-			apDisplay.printError("All parameters for a single selexon run must be identical! \n"+\
-					     "please check your parameter settings.")
-		apTemplate.checkTemplateParams(params,runq)
-	return
-
 if __name__ == '__main__':
 	name = 'test2'
 	sessionname = '07jan05b'
