@@ -28,15 +28,21 @@ class particledata {
 	}
 	
 	function getTemplatesFromProject ($projectId) {
-		$q="select * "
-			."from `ApTemplateImageData` where `project|projects|project`='$projectId'";
+		$q="SELECT * "
+			."FROM `ApTemplateImageData` "
+			."LEFT JOIN ApPathData AS p ON "
+			."(t.`REF|ApPathData|path`=p.`DEF_id`) "
+			."WHERE `project|projects|project`='$projectId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
 	
 	function getTemplatesFromId ($templateId) {
-		$q = "select * " 
-			."from ApTemplateImageData where `DEF_id` = '$templateId' ";
+		$q = "SELECT * " 
+			."FROM ApTemplateImageData AS t"
+			."LEFT JOIN ApPathData AS p ON "
+			."(t.`REF|ApPathData|path`=p.`DEF_id`) "
+			."WHERE t.`DEF_id` = '$templateId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
@@ -144,10 +150,12 @@ class particledata {
 	}
 	
 	function getTemplateRunParams ($runId) {
-		$q = "select i.DEF_id as id, i.templatepath as path, i.templatename as tname, i.apix, i.description, "
+		$q = "SELECT i.DEF_id as id, p.path as path, i.templatename as tname, i.apix, i.description, "
 			."t.range_start, t.range_end, t.range_incr, "
 			."r.name "
 			."from ApTemplateRunData t "
+			."LEFT JOIN ApPathData AS p ON "
+			."(t.`REF|ApPathData|path`=p.`DEF_id`) "
 			."left join ApTemplateImageData i on (t.`REF|ApTemplateImageData|template`=i.`DEF_id`) "
 			."left join ApSelectionRunData r on (t.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
 			."where t.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
@@ -242,6 +250,8 @@ class particledata {
 		."FROM ApRunsInStackData as r "
 		."LEFT JOIN ApStackRunData as s ON "
 		."(r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
+		."LEFT JOIN ApPathData as p ON "
+		."(r.`REF|ApPathData|path`=p.`DEF_id`) "
 		."WHERE s.`dbemdata|SessionData|session` = '$sessionId'"
 		."ORDER BY stackid DESC";
     $r = $this->mysql->getSQLResult($q);
@@ -262,14 +272,16 @@ class particledata {
 
 	function getStackParams ($stackId) {
 		$q = "SELECT * "
-		    ."FROM ApRunsInStackData as r "
-		    ."LEFT JOIN ApStackRunData as s "
-		    ."ON (r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
-		    ."LEFT JOIN ApStackData as sd "
-		    ."ON (r.`REF|ApStackData|stack`=sd.`DEF_id`) "
-		    ."LEFT JOIN `ApStackParamsData` p "
-		    ."ON (p.`DEF_id` = s.`REF|ApStackParamsData|stackParams`) "
-		    ."WHERE r.`REF|ApStackData|stack` = '$stackId'";
+	    ."FROM ApRunsInStackData as r "
+	    ."LEFT JOIN ApStackRunData as s "
+	    ."ON (r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
+	    ."LEFT JOIN ApStackData as sd "
+	    ."ON (r.`REF|ApStackData|stack`=sd.`DEF_id`) "
+			."LEFT JOIN ApPathData AS pd ON "
+			."(sd.`REF|ApPathData|path` = pd.`DEF_id`) "
+	    ."LEFT JOIN `ApStackParamsData` p "
+	    ."ON (p.`DEF_id` = s.`REF|ApStackParamsData|stackParams`) "
+	    ."WHERE r.`REF|ApStackData|stack` = '$stackId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
@@ -394,10 +406,12 @@ class particledata {
 		if ($r['REF|ApMaskMakerParamsData|params']) {
 			$maskparamid=$r['REF|ApSelectionParamsData|params'];
 			$q .= "from ApMaskMakerParamsData s "
-			 	."left join ApMaskMakerRunData r on (s.`DEF_id` = r.`REF|ApMaskMakerParamsData|params`) ";
+			 	."left join ApMaskMakerRunData r on (s.`DEF_id` = r.`REF|ApMaskMakerParamsData|params`) "
+				."LEFT JOIN ApPathData AS p ON "
+				."(r.`REF|ApPathData|path`= p.`DEF_id`) ";
 		}
 		
-			$q .= "where r.`DEF_id` = '$runId' ";
+		$q .= "where r.`DEF_id` = '$runId' ";
 		//echo $q;
 		$r=$this->mysql->getSQLResult($q);
 		//print_r ($r);
@@ -473,7 +487,10 @@ class particledata {
 
 	function getMaskAssessRunByName ($sessionId,$name){
 		$q = "select * "
-			."from `ApMaskAssessmentRunData` where "
+			."from `ApMaskAssessmentRunData` AS r "
+			."LEFT JOIN ApPathData AS p ON "
+			."(r.`REF|ApPathData|path`=p.`DEF_id`) "
+			."where "
 			."`REF|leginondata|SessionData|session` = '$sessionId' AND "
 			." `name` = '$name' ";
 		$r = $this->mysql->getSQLResult($q);
@@ -482,7 +499,9 @@ class particledata {
 
 	function getMaskAssessNames ($sessionId){
 		$q = "select `name` "
-			."from `ApMaskAssessmentRunData` where `REF|leginondata|SessionData|session` = '$sessionId' "			." group by `name` ";
+			."from `ApMaskAssessmentRunData` "
+			."where `REF|leginondata|SessionData|session` = '$sessionId' "	
+			." group by `name` ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
@@ -599,21 +618,28 @@ class particledata {
 	
 	function getReconIds ($stackId) {
 		$q = "select * "
-			."from `ApRefinementRunData` where `REF|ApStackData|stack` = '$stackId'";
+			."from `ApRefinementRunData` AS r"
+			."WHERE r.`REF|ApStackData|stack` = '$stackId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	} 
 
 	function getRefinementRunInfo($refinementRun) {
 		$q = "select * "
-				."FROM `ApRefinementRunData` WHERE `DEF_id` = '$refinementRun' ";
+				."FROM `ApRefinementRunData` AS r"
+				."LEFT JOIN ApPathData AS p ON "
+				."(r.`REF|ApPathData|path` = p.`DEF_id`) "
+				."WHERE r.`DEF_id` = '$refinementRun' ";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r;
 	}
 
 	function getInitModelInfo ($modelId) {
 		$q = "SELECT * "
-				."FROM `ApInitialModelData` WHERE `DEF_id` = '$modelId'";
+				."FROM `ApInitialModelData` AS d"
+				."LEFT JOIN ApPathData AS p ON "
+				."(d.`REF|ApPathData|path` = p.`DEF_id`) "
+				."WHERE d.`DEF_id` = '$modelId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r;
 	}
@@ -840,8 +866,10 @@ class particledata {
 
 	function getMiscInfoFromReconId ($reconid) {
 		$q = "SELECT * "
-		."FROM `ApMiscData` "
-		."WHERE `REF|ApRefinementRunData|refinementRun` = $reconid";
+		."FROM `ApMiscData` AS m "
+		."LEFT JOIN ApPathData AS p ON "
+		."(m.`REF|ApPathData|path` = p.`DEF_id`) "
+		."WHERE m.`REF|ApRefinementRunData|refinementRun` = $reconid";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}    
