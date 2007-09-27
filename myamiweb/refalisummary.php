@@ -62,7 +62,7 @@ foreach ($refaliIds as $refid) {
   $display_keys['description'] = $r['description'];
   $display_keys['time']=$r['DEF_timestamp'];
   $display_keys['path']=$refid['path'];
-  $display_keys['template']=$t['templatepath'].'/'.$t['templatename'];
+  $display_keys['template']=$t['path'].'/'.$t['templatename'];
   $display_keys['# particles']=$r['num_particles'];
   $display_keys['lp filt']=$r['lp'];
   $display_keys['mask diam']=$r['mask_diam'];

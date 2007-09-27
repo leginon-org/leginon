@@ -59,7 +59,7 @@ function createTemplateForm() {
 
     foreach($templateData as $templateinfo) { 
       if (is_array($templateinfo)) {
-	$filename=$templateinfo[templatepath] ."/".$templateinfo[templatename];
+	$filename=$templateinfo[path] ."/".$templateinfo[templatename];
 	// create the image template table
 	$templatetable.="<TR><TD>\n";
 	$templatetable.="<IMG SRC='loadimg.php?filename=$filename&rescale=True' WIDTH='200'></TD>\n";

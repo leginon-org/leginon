@@ -29,7 +29,7 @@ class particledata {
 
 	function getTemplatesFromProject ($projectId) {
 		$q="SELECT * "
-			."FROM `ApTemplateImageData` "
+			."FROM `ApTemplateImageData` AS t "
 			."LEFT JOIN ApPathData AS p ON "
 			."(t.`REF|ApPathData|path`=p.`DEF_id`) "
 			."WHERE `project|projects|project`='$projectId'";

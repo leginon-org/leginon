@@ -70,7 +70,7 @@ function createTemplateForm() {
 
 		foreach($templateData as $templateinfo) { 
 			if (is_array($templateinfo)) {
-				$filename=$templateinfo[templatepath] ."/".$templateinfo[templatename];
+				$filename=$templateinfo[path] ."/".$templateinfo[templatename];
 				$checkboxname='template'.$i;
 				// create the javascript functions to enable the templates
 				$javafunctions.="function enable".$checkboxname."() {
@@ -197,7 +197,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 
 			$templateList.=$i.":".$templateId.",";
 			$templateinfo=$particle->getTemplatesFromId($templateId);
-			$filename=$templateinfo[templatepath]."/".$templateinfo[templatename];
+			$filename=$templateinfo[path]."/".$templateinfo[templatename];
 			$templateTable.="<TD VALIGN='TOP'><IMG SRC='loadimg.php?filename=$filename&rescale=True' WIDTH='200'><BR>\n";
 			if (!$start && !$end && !$incr) $templateTable.="<B>no rotation</B>\n";
 			elseif ($start=='' || !$end || !$incr) {
