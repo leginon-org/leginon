@@ -75,7 +75,7 @@ $html .= "</TR>\n";
 $refinerun=$particle->getRefinementRunInfo($reconId);
 $initmodel=$particle->getInitModelInfo($refinerun['REF|ApInitialModelData|initialModel']);
 
-$stackfile=$stackparams['stackPath']."/".$stackparams['name'];
+$stackfile=$stackparams['path']."/".$stackparams['name'];
 $initmodelname=$initmodel['name'];
 if (gettype($refinerun['description'])!= 'Null') {
 	echo "Run Description: ".$refinerun['description']."<BR>\n";

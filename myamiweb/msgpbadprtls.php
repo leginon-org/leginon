@@ -15,7 +15,7 @@ $particle = new particledata();
 $badprtls=$particle->getMsgPRejectParticlesInStack($refinement);
 $numbad = count($badprtls);
 $stack=$particle->getStackFromRefinement($refinement);
-$filename=$stack['stackPath'].'/'.$stack['name'];
+$filename=$stack['path'].'/'.$stack['name'];
 
 function getimagicfilenames($file) {
 	$file = substr($file, 0, -3);
