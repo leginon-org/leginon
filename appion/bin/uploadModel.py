@@ -29,7 +29,7 @@ if __name__ == '__main__':
 		apDisplay.printError("enter a symmetry ID")
 	if params['description'] is None:
 		apDisplay.printError("enter a description of the initial model")
-	modelname = params['path']+'/'+params['name']
+	modelname = os.path.join(params['path'], params['name'])
 	# get dimensions of model, set box size
 	params['box']=apUpload.getModelDimensions(modelname)
 	
