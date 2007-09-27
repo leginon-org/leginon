@@ -39,12 +39,12 @@ leginondata.ApParticleData=ApParticleData
 class ApSelectionRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
+			('path', ApPathData),
+			('dbemdata|SessionData|session', int),
 			('params', ApSelectionParamsData),
 			('dogparams', ApDogParamsData),
 			('manparams', ApManualParamsData),
 			('tiltparams', ApTiltAlignParamsData),
-			('dbemdata|SessionData|session', int),
-			('extractPath', ApPathData),
 			('name', str),
 		)
 	typemap = classmethod(typemap)
@@ -126,8 +126,8 @@ class ApTemplateImageData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('project|projects|project', int),
-			('templatepath', str),
-			#('templatepath', ApPathData),
+			#('templatepath', str),
+			('path', ApPathData),
 			('templatename', str),
 			('apix', float),
 			('diam', int),
@@ -202,8 +202,8 @@ class ApMaskMakerRunData(Data):
 			('params', ApMaskMakerParamsData),
 			('session', leginondata.SessionData),
 			('name', str),
-			('path', str),
-			#('path', ApPathData),
+			#('path', str),
+			('path', ApPathData),
 		)
 	typemap = classmethod(typemap)
 
@@ -245,8 +245,8 @@ class ApMaskMakerParamsData(Data):
 class ApStackData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('stackPath', str),
-			#('stackPath', ApPathData),
+			#('stackPath', str),
+			('path', ApPathData),
 			('name' , str),
 			('description', str),
 		)
@@ -311,8 +311,8 @@ class ApNoRefRunData(Data):
 			('name', str),
 			('stack', ApStackData), #Redundant
 			('norefParams', ApNoRefParamsData),
-			('norefPath', str),
-			#('norefPath', ApPathData),
+			#('norefPath', str),
+			('path', ApPathData),
 			('description', str),
 		)
 	typemap = classmethod(typemap)
@@ -377,8 +377,8 @@ class ApRefRunData(Data):
 			('stack', ApStackData),
 			('refParams', ApRefParamsData),
 			('refTemplate', ApTemplateImageData),
-			('refPath', str),
-			#('refPath', ApPathData),
+			#('refPath', str),
+			('path', ApPathData),
 			('description', str),
 		)
 	typemap = classmethod(typemap)
@@ -429,8 +429,8 @@ class ApRefinementRunData(Data):
 			('name', str),
 			('stack', ApStackData),
 			('initialModel', ApInitialModelData),
-			('path', str),
-			#('path', ApPathData),
+			#('path', str),
+			('path', ApPathData),
 			('package', str),
 			('description', str),
 		)
@@ -441,8 +441,8 @@ class ApInitialModelData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('project|projects|project', int),
-			('path', str),
-			#('path', ApPathData),
+			#('path', str),
+			('path', ApPathData),
 			('name', str),
 			('symmetry', ApSymmetryData),
 			('pixelsize', float),
@@ -557,8 +557,8 @@ class ApMiscData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('refinementRun', ApRefinementRunData),
-			('path', str),
-			#('path', ApPathData),
+			#('path', str),
+			('path', ApPathData),
 			('name', str),
 			('description', str),
 		)
@@ -572,7 +572,7 @@ class ApAceRunData(Data):
 		return Data.typemap() + (
 			('aceparams', ApAceParamsData),
 			('dbemdata|SessionData|session', int),
-			('acePath', ApPathData),
+			('path', ApPathData),
 			('name', str),
 		)
 	typemap = classmethod(typemap)
@@ -619,8 +619,8 @@ class ApCtfData(Data):
 			('lowercutoff', float),
 			('uppercutoff', float),
 			('snr', float),
-			('graphpath', str), #remove in future
-			('matpath', str), #remove in future
+			#('graphpath', str), #remove in future
+			#('matpath', str), #remove in future
 			('confidence', float),
 			('confidence_d', float),
 			('graph1', str),
@@ -647,8 +647,8 @@ class ApTestRunData(Data):
 			('params', ApTestParamsData),
 			('dbemdata|SessionData|session', int),
 			('name', str),
-			('path', str),
-			#('path', ApPathData),
+			#('path', str),
+			('path', ApPathData),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApTestRunData=ApTestRunData
