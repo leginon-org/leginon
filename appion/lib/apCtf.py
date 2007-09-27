@@ -38,30 +38,6 @@ def commitCtfValueToDatabase(imgdict, matlab, ctfvalue, params):
 
 	insertCtfValue(imgdict, params, matfile, expid, ctfvalue, opimfile1, opimfile2)
 
-def commitCtfValueToDatabaseREFLEGINON(imgdata, matlab, ctfvalue, params):
-	imgname = imgdata['filename']
-	matfile = imgname+".mrc.mat"
-	#matfilepath = os.path.join(params['matdir'], matfile)
-
-	imfile1 = os.path.join(params['tempdir'], "im1.png")
-	imfile2 = os.path.join(params['tempdir'], "im2.png")
-	#MATLAB NEEDS PATH BUT DATABASE NEEDS FILENAME
-	opimfile1 = imgname+".mrc1.png"
-	opimfile2 = imgname+".mrc2.png"
-	opimfilepath1 = os.path.join(params['opimagedir'],opimfile1)
-	opimfilepath2 = os.path.join(params['opimagedir'],opimfile2)
-
-	#shutil.copy(imfile1, opimfilepath1)
-	#shutil.copy(imfile2, opimfilepath2)
-	#These commands may help to remove extra whitespace
-	pymat.eval(matlab,"im1 = imread('"+imfile1+"');")
-	pymat.eval(matlab,"im2 = imread('"+imfile2+"');")
-	pymat.eval(matlab,"imwrite(im1,'"+opimfilepath1+"');")
-	pymat.eval(matlab,"imwrite(im2,'"+opimfilepath2+"');")
-
-	insertCtfValueREFLEGINON(imgdata, params, matfile, ctfvalue, opimfile1, opimfile2)
-
-
 def printResults(params, nominal, ctfvalue):
 	nom1 = float(-nominal*1e6)
 	defoc1 = float(ctfvalue[0]*1e6)
@@ -94,7 +70,7 @@ def printResults(params, nominal, ctfvalue):
 	return
 
 
-def insertAceParams(params,expid):
+def insertAceParams(imgdata, params):
 	# first create an aceparam object
 	aceparamq = appionData.ApAceParamsData()
 	copyparamlist = ('display','stig','medium','edgethcarbon','edgethice',\
@@ -103,7 +79,7 @@ def insertAceParams(params,expid):
 	for p in copyparamlist:
 		if p in params:
 			aceparamq[p] = params[p]
-			
+	
 	# if nominal df is set, save override df to database, else don't set
 	if params['nominal']:
 		dfnom=-params['nominal']
@@ -117,60 +93,25 @@ def insertAceParams(params,expid):
 	# see if acerun already exists in the database
 	runids = appiondb.query(runq, results=1)
 
-	# if no run entry exists, insert new run entry into run.dbctfdata
-	if not(runids):
-		runq['aceparams']=aceparamq
-		appiondb.insert(runq)
-
-	# if continuing a previous run, make sure that all the current
-	# parameters are the same as the previous
-	else:
+	if (runids):
 		if not (runids[0]['aceparams'] == aceparamq):
 			for i in runids[0]['aceparams']:
 				if runids[0]['aceparams'][i] != aceparamq[i]:
 					apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
 			apDisplay.printError("All parameters for a single ACE run must be identical! \n"+\
 					     "please check your parameter settings.")
-	return
+		return False
 
-def insertAceParamsREFLEGINON(params,sessiondata):
-	# first create an aceparam object
-	aceparamq = appionData.ApAceParamsData()
-	copyparamlist = ('display','stig','medium','edgethcarbon','edgethice',\
-			 'pfcarbon','pfice','overlap','fieldsize','resamplefr','drange',\
-			 'reprocess')
-	for p in copyparamlist:
-		if p in params:
-			aceparamq[p] = params[p]
-			
-	# if nominal df is set, save override df to database, else don't set
-	if params['nominal']:
-		dfnom=-params['nominal']
-		aceparamq['df_override']=dfnom
-	
-	# create an acerun object
-	runq=appionData.ApAceRunData()
-	runq['name']=params['runid']
-	runq['session']=sessiondata
+	#create path
+	pathq = appionData.ApPathData()
+	pathq['path'] = params['rundir']
+	runq['acePath'] = pathq
 
-	# see if acerun already exists in the database
-	runids = appiondb.query(runq, results=1)
+	# if no run entry exists, insert new run entry into db
+	runq['aceparams']=aceparamq
+	appiondb.insert(runq)
 
-	# if no run entry exists, insert new run entry into run.dbctfdata
-	if not(runids):
-		runq['aceparams']=aceparamq
-		appiondb.insert(runq)
-
-	# if continuing a previous run, make sure that all the current
-	# parameters are the same as the previous
-	else:
-		if not (runids[0]['aceparams'] == aceparamq):
-			for i in runids[0]['aceparams']:
-				if runids[0]['aceparams'][i] != aceparamq[i]:
-					apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
-			apDisplay.printError("All parameters for a single ACE run must be identical! \n"+\
-					     "please check your parameter settings.")
-	return
+	return True
 
 def insertCtfValue(imgdict, params, matfile, expid, ctfvalue, opimfile1, opimfile2):
 	runq=appionData.ApAceRunData()
@@ -192,46 +133,9 @@ def insertCtfValue(imgdict, params, matfile, expid, ctfvalue, opimfile1, opimfil
 	graphpath = os.path.normpath(params['opimagedir'])+"/"
 	matpath   = os.path.normpath(params['matdir'])+"/"
 
-	ctfq=appionData.ApCtfData()
+	ctfq = appionData.ApCtfData()
 	ctfq['acerun']=acerun[0]
 	ctfq['dbemdata|AcquisitionImageData|image']=legimgid
-	ctfq['graphpath']=graphpath
-	ctfq['graph1']=opimfile1
-	ctfq['graph2']=opimfile2
-	ctfq['matpath']=matpath
-	ctfq['mat_file']=matfile
-	ctfvaluelist = ('defocus1','defocus2','defocusinit','amplitude_contrast','angle_astigmatism',\
-		'noise1','noise2','noise3','noise4','envelope1','envelope2','envelope3','envelope4',\
-		'lowercutoff','uppercutoff','snr','confidence','confidence_d')
-	
-	# test for failed ACE estimation
-	# only set params if ACE was successfull
-	if ctfvalue[0] != -1 :
-		for i in range(len(ctfvaluelist)):
-			ctfq[ ctfvaluelist[i] ] = ctfvalue[i]
-
-	appiondb.insert(ctfq)
-	
-	return
-
-def insertCtfValueREFLEGINON(imgdata, params, matfile, ctfvalue, opimfile1, opimfile2):
-	runq=appionData.ApAceRunData()
-	runq['name']=params['runid']
-	runq['session']=imgdata['session']
-
-	acerun=appiondb.query(runq,results=1)
-	
-	dforig=imgdata['scope']['defocus']
-
-	print "Committing ctf parameters for",apDisplay.short(imgdict['filename']), "to database."
-
-	# make sure the directory paths have '/' at end
-	graphpath = os.path.normpath(params['opimagedir'])+"/"
-	matpath   = os.path.normpath(params['matdir'])+"/"
-
-	ctfq=appionData.ApCtfData()
-	ctfq['acerun']=acerun[0]
-	ctfq['image']=imgdata
 	ctfq['graphpath']=graphpath
 	ctfq['graph1']=opimfile1
 	ctfq['graph2']=opimfile2
@@ -259,7 +163,6 @@ def getBestDefocusForImage(imgdata, display=False):
 	takes an image and get the best defocus for that image
 	"""
 	ctfvalue, conf = getBestCtfValueForImage(imgdata)
-#	ctfvalue, conf = getBestCtfValueForImageREFLEGINON(imgdata)
 	if ctfvalue['acerun']['aceparams']['stig'] == 1:
 		apDisplay.printWarning("astigmatism was estimated for "+apDisplay.short(imgdata['filename'])+\
 		 " and average defocus estimate may be incorrect")
@@ -281,35 +184,6 @@ def getBestCtfValueForImage(imgdata, ctfavg=False):
 	### get all ctf values
 	ctfq = appionData.ApCtfData()
 	ctfq['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
-	ctfvalues = appiondb.query(ctfq)
-
-	### check if it has values
-	if ctfvalues is None:
-		return None, None
-
-	### find the best values
-	bestconf = 0.0
-	bestctfvalue = None
-	for ctfvalue in ctfvalues:
-		conf1 = ctfvalue['confidence']
-		conf2 = ctfvalue['confidence_d']
-		if conf1 > 0 and conf2 > 0:
-			conf = max(conf1,conf2)
-			if ctfavg is True:
-				conf = math.sqrt(conf1*conf2)
-			if conf > bestconf:
-				bestconf = conf
-				bestctfvalue = ctfvalue
-
-	return bestctfvalue, bestconf
-
-def getBestCtfValueForImageREFLEGINON(imgdata, ctfavg=False):
-	"""
-	takes an image and get the best ctfvalues for that image
-	"""
-	### get all ctf values
-	ctfq = appionData.ApCtfData()
-	ctfq['image'] = imgdata
 	ctfvalues = appiondb.query(ctfq)
 
 	### check if it has values
