@@ -26,7 +26,7 @@ class particledata {
 					PARTICLE_DB_PASS,
 					PARTICLE_DB);
 	}
-	
+
 	function getTemplatesFromProject ($projectId) {
 		$q="SELECT * "
 			."FROM `ApTemplateImageData` "
@@ -36,7 +36,7 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
-	
+
 	function getTemplatesFromId ($templateId) {
 		$q = "SELECT * " 
 			."FROM ApTemplateImageData AS t"
@@ -56,14 +56,14 @@ class particledata {
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
-	
+
 	function getLastAssessmentRun ($sessionId){
 		$q = "select max(DEF_id) as runId "
 			." from ApAssessmentRunData where `dbemdata|SessionData|session` = '$sessionId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r[runId]; 
 	}
-	
+
 	function getAssessmentRunIds ($sessionId) {
 		$q = "select * "
 			."from ApAssessmentRun where `dbemdata|SessionData|session` = '$sessionId'";
@@ -105,7 +105,7 @@ class particledata {
 			$this->mysql->SQLInsert('ApAssessmentData',$data);
 		}
 	}
-	
+
 	function getAssessmentDataForRun ($runId){
 		$q = "select i.filename, a.selectionkeep as keep "
 			."from ApAssessmentData a "
@@ -125,7 +125,7 @@ class particledata {
 		//print_r ($r);
 		//echo $r['REF|ApSelectionParamsData|params'];
 		$q = "select s.*, r.name, r.`dbemdata|SessionData|session` ";
-	
+
 		if ($r['REF|ApSelectionParamsData|params']) {
 			$selectionparamid=$r['REF|ApSelectionParamsData|params'];
 			$q .= "from ApSelectionParamsData s "
@@ -148,7 +148,7 @@ class particledata {
 		//print_r ($r);
 		return $r;
 	}
-	
+
 	function getTemplateRunParams ($runId) {
 		$q = "SELECT i.DEF_id as id, p.path as path, i.templatename as tname, i.apix, i.description, "
 			."t.range_start, t.range_end, t.range_incr, "
@@ -175,7 +175,7 @@ class particledata {
 		$r= ($this->getLastParticleRun($sessionId)) ? true : false;
 		return $r;
 	}
-	
+
 	function getStats ($runId, $inspect=False, $selexval=False){
 		$q="select count(p.`DEF_id`) as `totparticles`, "
 			."count(distinct p.`dbemdata|AcquisitionImageData|image`) as num, "
@@ -200,7 +200,7 @@ class particledata {
 		return $r[0];
 			
 	}
-	
+
 	function getNumImgs ($runId){
 		$q="SELECT count(distinct `dbemdata|AcquisitionImageData|image`) as num "
 			. "FROM `ApParticleData` "
@@ -223,11 +223,11 @@ class particledata {
 		$q = "select count(DEF_id) as num "
 			."from `ApAssessmentData` where "
 		        ."`selectionkeep` IS NOT NULL "
- 			."and `REF|ApAssessmentRunData|assessmentrun` = '$rid'";
+				."and `REF|ApAssessmentRunData|assessmentrun` = '$rid'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r['num'];
 	}
-	
+
 	function getLastParticleRun ($sessionId) {
 		$q = "select max(DEF_id) as runId "
 			."from `ApSelectionRunData` where `dbemdata|SessionData|session` = '$sessionId'";
@@ -235,7 +235,7 @@ class particledata {
 		echo $this->mysql->getError();
 		return $r[runId];
 	}
-	
+
 	function getParticleRunIds ($sessionId) {
 		$q = "select * "
 			."from `ApSelectionRunData` where `dbemdata|SessionData|session` = '$sessionId'";
@@ -243,20 +243,18 @@ class particledata {
 		return $r;
 	}
 
-#--------- MAKE STACK FUNCTIONS---------------#
+	#--------- MAKE STACK FUNCTIONS---------------#
 
-  function getStackIds ($sessionId) {
+	function getStackIds ($sessionId) {
 	$q = "SELECT r.`REF|ApStackData|stack` as stackid "
 		."FROM ApRunsInStackData as r "
 		."LEFT JOIN ApStackRunData as s ON "
 		."(r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
-		."LEFT JOIN ApPathData as p ON "
-		."(r.`REF|ApPathData|path`=p.`DEF_id`) "
 		."WHERE s.`dbemdata|SessionData|session` = '$sessionId'"
 		."ORDER BY stackid DESC";
-    $r = $this->mysql->getSQLResult($q);
-    return $r;
-  }
+	  $r = $this->mysql->getSQLResult($q);
+	  return $r;
+	}
 
 	function getStackIdsOld ($sessionId) {
 	        $q = "select spar.stackid "
@@ -295,7 +293,7 @@ class particledata {
 	}    
 
 	//////// fix me ////////
-  function getStackIdFromReconId ($reconId) {
+	function getStackIdFromReconId ($reconId) {
 		$q= "SELECT * "
 			."FROM `ApRefinementRunData` "
 			."WHERE `DEF_id` = '$reconId'";
@@ -303,14 +301,14 @@ class particledata {
 		return $r['REF|ApStackData|stack'];
 	}    
 
-  function getPixelSizeFromStackId ($stackId) {
+	function getPixelSizeFromStackId ($stackId) {
 	        $q= "SELECT `REF|InstrumentData|tem` t, magnification m, `REF|InstrumentData|ccdcamera` c, a.`DEF_timestamp` time "
-                   ."FROM ApStackParticlesData sp "
-                   ."left join ApParticleData p on (p.`DEF_id`=sp.`REF|ApParticleData|particle`) "
-                   ."left join dbemdata.AcquisitionImageData a on (a.`DEF_id`=p.`dbemdata|AcquisitionImageData|image`) "
-                   ."left join dbemdata.PresetData pd on (a.`REF|PresetData|preset`=pd.`DEF_id`) "
-                   ."WHERE sp.`REF|ApStackData|stack`='$stackId' "
-                   ."GROUP BY `REF|InstrumentData|tem`";
+	                  ."FROM ApStackParticlesData sp "
+	                  ."left join ApParticleData p on (p.`DEF_id`=sp.`REF|ApParticleData|particle`) "
+	                  ."left join dbemdata.AcquisitionImageData a on (a.`DEF_id`=p.`dbemdata|AcquisitionImageData|image`) "
+	                  ."left join dbemdata.PresetData pd on (a.`REF|PresetData|preset`=pd.`DEF_id`) "
+	                  ."WHERE sp.`REF|ApStackData|stack`='$stackId' "
+	                  ."GROUP BY `REF|InstrumentData|tem`";
 		$r = $this->mysql->getSQLResult($q);
 		if (is_array($r[0])) {
 		        $tem=$r[0]['t'];
@@ -365,7 +363,7 @@ class particledata {
 		return $html;
 	}
 
-#--------- MAKE MASK FUNCTIONS---------------#
+	#--------- MAKE MASK FUNCTIONS---------------#
 
 	function getMaskMakerRunIds ($sessionId) {
 		$q = "select * "
@@ -385,7 +383,7 @@ class particledata {
 		$r= ($this->getLastMaskMakerRun($sessionId)) ? true : false;
 		return $r;
 	}
-	
+
 	function getLastMaskMakerRun ($sessionId) {
 		$q = "select max(DEF_id) as runId "
 			."from `ApMaskMakerRunData` where `REF|leginondata|SessionData|session` = '$sessionId'";
@@ -393,7 +391,7 @@ class particledata {
 		echo $this->mysql->getError();
 		return $r[runId];
 	}
-	
+
 	function getMaskMakerParams ($runId) {
 		$q = "select * from ApMaskMakerRunData "
 			." where `DEF_id` = '$runId' ";
@@ -402,7 +400,7 @@ class particledata {
 		//print_r ($r);
 		//echo $r['REF|ApMaskMakerParamsData|params'];
 		$q = "select s.*, r.name, r.`REF|leginondata|SessionData|session` ";
-	
+
 		if ($r['REF|ApMaskMakerParamsData|params']) {
 			$maskparamid=$r['REF|ApSelectionParamsData|params'];
 			$q .= "from ApMaskMakerParamsData s "
@@ -417,7 +415,7 @@ class particledata {
 		//print_r ($r);
 		return $r;
 	}
-	
+
 	function getMaskRegions ($runId) {
 		$q="select r.DEF_id, r.x, r.y, r.area, r.mean, r.stdev "
 			."from ApMaskRegionData r "
@@ -447,7 +445,7 @@ class particledata {
 		return $r[0];
 			
 	}
-	
+
 	function displayMaskRegionStats ($particleruns, $display_keys, $inspect=False, $selexval=False) {
 		if (!is_array($particleruns))
 			return ;
@@ -529,93 +527,97 @@ class particledata {
 			
 	}
 
-#--------- REF-FREE ALIGNMENT FUNCTIONS---------------#
+	#--------- REF-FREE ALIGNMENT FUNCTIONS---------------#
 
-  function getNoRefIds ($sessionId) {
-    $q = "SELECT norefrun.`DEF_id` "
-      ."FROM ApNoRefRunData AS norefrun "
-      ."LEFT JOIN ApRunsInStackData AS stackdata ON "
-      ."(norefrun.`REF|ApStackData|stack` = stackdata.`REF|ApStackData|stack`) "
-      ."LEFT JOIN ApStackRunData AS stackrun ON "
-      ."(stackdata.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id`) "
-      ."WHERE stackrun.`dbemdata|SessionData|session` = '$sessionId' "
-      ."ORDER BY norefrun.`DEF_id` DESC";
-    $r = $this->mysql->getSQLResult($q);
-    return $r;
-  }
+	function getNoRefIds ($sessionId) {
+	  $q = "SELECT norefrun.`DEF_id` "
+	    ."FROM ApNoRefRunData AS norefrun "
+	    ."LEFT JOIN ApRunsInStackData AS stackdata ON "
+	    ."(norefrun.`REF|ApStackData|stack` = stackdata.`REF|ApStackData|stack`) "
+	    ."LEFT JOIN ApStackRunData AS stackrun ON "
+	    ."(stackdata.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id`) "
+	    ."WHERE stackrun.`dbemdata|SessionData|session` = '$sessionId' "
+	    ."ORDER BY norefrun.`DEF_id` DESC";
+	  $r = $this->mysql->getSQLResult($q);
+	  return $r;
+	}
 
-   function getRefAliIds ($sessionId) {
-    $q = "SELECT refalirun.* "
-      ."FROM ApRefRunData AS refalirun "
-      ."LEFT JOIN ApRunsInStackData AS stackdata ON "
-      ."(refalirun.`REF|ApStackData|stack` = stackdata.`REF|ApStackData|stack`) "
-      ."LEFT JOIN ApStackRunData AS stackrun ON "
-      ."(stackdata.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id`) "
-      ."WHERE stackrun.`dbemdata|SessionData|session` = '$sessionId' "
-      ."ORDER BY refalirun.`DEF_id` DESC";
-    $r = $this->mysql->getSQLResult($q);
-    return $r;
-  }
+	  function getRefAliIds ($sessionId) {
+	  $q = "SELECT refalirun.* "
+	    ."FROM ApRefRunData AS refalirun "
+	    ."LEFT JOIN ApRunsInStackData AS stackdata ON "
+	    ."(refalirun.`REF|ApStackData|stack` = stackdata.`REF|ApStackData|stack`) "
+	    ."LEFT JOIN ApStackRunData AS stackrun ON "
+	    ."(stackdata.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id`) "
+	    ."WHERE stackrun.`dbemdata|SessionData|session` = '$sessionId' "
+	    ."ORDER BY refalirun.`DEF_id` DESC";
+	  $r = $this->mysql->getSQLResult($q);
+	  return $r;
+	}
 
-  function getRefInfoFromId ($refid) {
-    $q = "SELECT * "
-      ."FROM ApRefRunData "
-      ."WHERE ApRefRunData.`DEF_id`='$refid'";
-    $r = $this->mysql->getSQLResult($q);
-    return $r[0];
-  }
+	function getRefInfoFromId ($refid) {
+	  $q = "SELECT * "
+	    ."FROM ApRefRunData "
+	    ."WHERE ApRefRunData.`DEF_id`='$refid'";
+	  $r = $this->mysql->getSQLResult($q);
+	  return $r[0];
+	}
 
-  function getNoRefParams ($norefId) {
-    $q = "SELECT * "
-      ."FROM ApNoRefRunData as r "
-      ."LEFT JOIN ApNoRefParamsData as p "
-      ."ON (r.`REF|ApNoRefParamsData|norefParams`=p.`DEF_id`) "
-      //."LEFT JOIN ApStackData as sd "
-      //."ON (r.`REF|ApStackData|stack`=sd.`DEF_id`) "
-      //."LEFT JOIN `ApStackParamsData` sp "
-      //."ON (sp.`DEF_id` = s.`REF|ApStackParamsData|stackParams`) "
-      ."WHERE r.`DEF_id` = '$norefId'";
-    $r = $this->mysql->getSQLResult($q);
-    return $r[0];
-  }
+	function getNoRefParams ($norefId) {
+		$q = "SELECT * "
+	    ."FROM ApNoRefRunData as r "
+	    ."LEFT JOIN ApNoRefParamsData as p "
+	    ."ON (r.`REF|ApNoRefParamsData|norefParams`=p.`DEF_id`) "
+			."LEFT JOIN ApPathData AS pd ON "
+			."(r.`REF|ApPathData|path`=pd.`DEF_id`) "
+	    //."LEFT JOIN ApStackData as sd "
+	    //."ON (r.`REF|ApStackData|stack`=sd.`DEF_id`) "
+	    //."LEFT JOIN `ApStackParamsData` sp "
+	    //."ON (sp.`DEF_id` = s.`REF|ApStackParamsData|stackParams`) "
+	    ."WHERE r.`DEF_id` = '$norefId'";
+	  $r = $this->mysql->getSQLResult($q);
+	  return $r[0];
+	}
 
- function getRefAliParams ($refaliId) {
-	$q = "SELECT * "
-		."FROM ApRefRunData as r "
-		."LEFT JOIN ApRefParamsData as p "
-		."ON (r.`REF|ApRefParamsData|refParams`=p.`DEF_id`) "
-		."WHERE r.`DEF_id` = '$refaliId'";
-	$r = $this->mysql->getSQLResult($q);
-	return $r[0];
- }
+	function getRefAliParams ($refaliId) {
+		$q = "SELECT * "
+			."FROM ApRefRunData as r "
+			."LEFT JOIN ApRefParamsData as p "
+			."ON (r.`REF|ApRefParamsData|refParams`=p.`DEF_id`) "
+			."LEFT JOIN ApPathData AS pd ON "
+			."(r.`REF|ApPathData|path`=pd.`DEF_id`) "
+			."WHERE r.`DEF_id` = '$refaliId'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
 
- function getNoRefClassRuns ($norefId) {
+	function getNoRefClassRuns ($norefId) {
 	$q = "SELECT * "
 		."FROM ApNoRefClassRunData as cr "
 		."WHERE cr.`REF|ApNoRefRunData|norefRun` = '$norefId' "
 		."ORDER BY cr.`num_classes`";
 	$r = $this->mysql->getSQLResult($q);
 	return $r;
- }
+	}
 
- function getRefAliIters ($refaliId) {
+	function getRefAliIters ($refaliId) {
 	$q = "SELECT * "
 		."FROM ApRefIterationData as i "
 		."WHERE i.`REF|ApRefRunData|refRun` = '$refaliId' "
 		."ORDER BY i.`iteration`";
 	$r = $this->mysql->getSQLResult($q);
 	return $r;
- }
+	}
 
-#---------RECONSTRUCTION FUNCTIONS---------------#
-  
-  function getModelsFromProject ($projectId) {
-    $q="select * "
-      ."from `ApInitialModelData` where `project|projects|project`='$projectId'";
-    $r = $this->mysql->getSQLResult($q);
-    return $r;
-  }
-	
+	#---------RECONSTRUCTION FUNCTIONS---------------#
+
+	function getModelsFromProject ($projectId) {
+	  $q="select * "
+	    ."from `ApInitialModelData` where `project|projects|project`='$projectId'";
+	  $r = $this->mysql->getSQLResult($q);
+	  return $r;
+	}
+
 	function getReconIds ($stackId) {
 		$q = "select * "
 			."from `ApRefinementRunData` AS r"
@@ -657,14 +659,14 @@ class particledata {
 	  list($r) = $this->mysql->getSQLResult($q);
 	  return $r;
 	}
-	
+
 	function getRMeasureInfo ($resId) {
 	  $q = "SELECT * "
 	      ."FROM `ApRMeasureData` WHERE `DEF_id` = '$resId'";
 	  list($r) = $this->mysql->getSQLResult($q);
 	  return $r;
 	}
-	
+
 	function getHighestResForRecon ($reconid) {
 	  $q = "SELECT * " 
 	      ."FROM `ApRefinementData` r "
@@ -695,17 +697,17 @@ class particledata {
 	  return $r[0];
 	}
 
-  function getStackFromRefinement ($refinementDataId) {
-    $q = "SELECT * "
-        ."FROM `ApRefinementData` r "
-        ."LEFT JOIN `ApRefinementRunData` rr "
-        ."ON (r.`REF|ApRefinementRunData|refinementRun` = rr.`DEF_id`) "
-        ."LEFT JOIN `ApStackData` s "
-        ."ON (rr.`REF|ApStackData|stack` = s.`DEF_id`) "
-        ."WHERE r.`DEF_id` = $refinementDataId";
-    $r = $this->mysql->getSQLResult($q);
-    return $r[0];
-  }
+	function getStackFromRefinement ($refinementDataId) {
+	  $q = "SELECT * "
+	      ."FROM `ApRefinementData` r "
+	      ."LEFT JOIN `ApRefinementRunData` rr "
+	      ."ON (r.`REF|ApRefinementRunData|refinementRun` = rr.`DEF_id`) "
+	      ."LEFT JOIN `ApStackData` s "
+	      ."ON (rr.`REF|ApStackData|stack` = s.`DEF_id`) "
+	      ."WHERE r.`DEF_id` = $refinementDataId";
+	  $r = $this->mysql->getSQLResult($q);
+	  return $r[0];
+	}
 
 	function getBadParticlesInStack ($refinementDataId) {
 		$q = "SELECT particleNumber as p "
@@ -780,7 +782,7 @@ class particledata {
 		return $r[0]['num'];
 	}
 
-  function getEulerAngles ($eulerId) {
+	function getEulerAngles ($eulerId) {
 		$q = "SELECT * "
 			."FROM `ApEulerData` "
 			."WHERE `DEF_id` = $eulerId";
@@ -894,7 +896,7 @@ class particledata {
 
 
 		$euler = array_map('simplify',$eulers);
-	
+
 		$table="ApProcEulerData";
 		# $this->mysql->SQLInsert($table, $data);
 		$q = "SELECT DEF_id from `ApProcEulerData` "
