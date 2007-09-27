@@ -65,7 +65,7 @@ function createClassifierSummary() {
 		$display_keys['name']=$r['name'];
 		$display_keys['description']=$r['description'];
 		$display_keys['time']=$r['DEF_timestamp'];
-		$display_keys['path']=$r['norefPath'];
+		$display_keys['path']=$r['path'];
 		$display_keys['# particles']=$r['num_particles'];
 		$display_keys['lp filt']=$r['lp_filt'];
 		$display_keys['particle & mask diam']=$r['particle_diam']." / ".$r['mask_diam'];
@@ -74,7 +74,7 @@ function createClassifierSummary() {
 		foreach($display_keys as $k=>$v) {
 			echo formatHtmlRow($k,$v);
 		}
-		$norefpath = $r[norefPath].$r[name]."/";
+		$norefpath = $r[path]."/".$r[name]."/";
 
 		$classIds = $particle->getNoRefClassRuns($norefid['DEF_id']);
 		$classnum = count($classIds);
@@ -116,7 +116,7 @@ function reRunClassifier() {
 	$particle = new particledata();
 	$r = $particle->getNoRefParams($norefnum);
 	$runid = $r['name'];	
-	$outdir = $r['norefPath'];
+	$outdir = $r['path'];
 	$stackid = $r['REF|ApStackData|stack'];
 
 	$command.="classifier.py ";
