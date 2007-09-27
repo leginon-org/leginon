@@ -84,7 +84,6 @@ def createDefaults():
 	params['defocpair']=False
 	params['uncorrected']=False
 	params['stig']=False
-	params['matdir']=None
 	params['matlab']=None
 	params['fileType']='imagic'
 	return params
@@ -187,9 +186,7 @@ def parseInput(args):
 			params['uncorrected']=True
 		elif arg=='stig':
 			params['stig']=True
-			params['phaseFlipped']=False
-		elif (elements[0]=='aceRunName'):
-			params['matdir'] = params['outdir']+'/../pyAce/'+elements[1]+'/matfiles'			
+			params['phaseFlipped']=False	
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
