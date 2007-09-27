@@ -16,12 +16,14 @@ appiondb = apDB.apdb
 def printTmpltUploadHelp():
 	print "\nUsage:\nuploadTemplate.py template=<name> apix=<pixel> session=<session> diam=<n> description=<'text'>\n"
 	print "uploadTemplate.py template=groEL apix=1.63 session=06nov10a diam=140 description='groel templates'\n"
-	print "template=<name>      : name should not have the extension, or number."
-	print "                       groEL1.mrc, groEL2.mrc would be simply \"template=groEL\""
-	print "apix=<pixel>         : angstroms per pixel of the template images"
-	print "diam=<n>             : approximate diameter of particle (in Angstroms)"
-	print "session=<sessionId>  : session name associated with template (i.e. 06mar12a)"
-	print "description=\"text\"   : description of the template - must be in quotes"
+	print "template=<name>       : name should not have the extension, or number."
+	print "                        groEL1.mrc, groEL2.mrc would be simply \"template=groEL\""
+	print "apix=<pixel>          : angstroms per pixel of the template images"
+	print "diam=<n>              : approximate diameter of particle (in Angstroms)"
+	print "session=<sessionId>   : session name associated with template (i.e. 06mar12a)"
+	print "description=\"text\"    : description of the template - must be in quotes"
+	#print "outdir=<path>         : location to copy the templates to"
+	#print "                        default: /ami/data##/appion/<sessionId>/templates/"
 	print "\n"
 	sys.exit(1)
 
@@ -61,6 +63,12 @@ def parseTmpltUploadInput(args,params):
 			params['session']=elements[1]
 		elif (elements[0]=='description'):
 			params['description']=elements[1]
+		elif (elements[0]=='outdir'):
+			params['outdir']=elements[1]
+		elif (elements[0]=='commit'):
+			params['commit']=True
+		elif (elements[0]=='nocommit'):
+			params['commit']=False
 		else:
 			apDisplay.printError("undefined parameter \'"+arg+"\'\n")
 
@@ -166,7 +174,9 @@ def createDefaults():
 	params['imgs']=None
 	params['rundir']=os.path.abspath('.')
 	params['abspath']=os.path.abspath('.')
+	params['outdir']=None
 	params['scale']=None
+	params['commit']=True
 	params['sym']=None
 	params['res']=None
 	params['contour']=1.5
