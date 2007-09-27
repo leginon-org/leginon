@@ -12,8 +12,8 @@ import tarfile
 
 import subprocess
 
-db = apDB.db
-partdb = apDB.apdb
+#leginondb = apDB.db
+appiondb = apDB.apdb
 
 def createDefaults():
 	# create default values for parameters
@@ -115,23 +115,23 @@ def parseInput(args,params):
 			sys.exit(1)
         
 def checkStackId(params):
-	stackinfo=partdb.direct_query(appionData.ApStackData, params['stackid'])
+	stackinfo=appiondb.direct_query(appionData.ApStackData, params['stackid'])
 	if not stackinfo:
 		print "\nERROR: Stack ID",params['stackid'],"does not exist in the database"
 		sys.exit()
 	else:
 		params['stack']=stackinfo
-		print "Stack:",stackinfo['stackPath']+stackinfo['name']
+		print "Stack:",stackinfo['path']['path']+stackinfo['name']
 	return
 	
 def checkModelId(params):
-	modelinfo=partdb.direct_query(appionData.ApInitialModelData, params['modelid'])
+	modelinfo=appiondb.direct_query(appionData.ApInitialModelData, params['modelid'])
 	if not modelinfo:
 		print "\nERROR: Initial model ID",params['modelid'],"does not exist in the database"
 		sys.exit()
 	else:
 		params['model']=modelinfo
-		print "Initial Model:",os.path.join(modelinfo['path'],modelinfo['name'])
+		print "Initial Model:",os.path.join(modelinfo['path']['path'],modelinfo['name'])
 	return
 
 def listFiles(params):
@@ -161,7 +161,7 @@ def parseMsgPassingLogFile(params):
 					iteration['msgpasskeep']=float(elements[1])
 				elif elements[0]=='minNumOfPtcls':
 					iteration['msgpassminp']=int(elements[1])
-			j +=1
+			j+=1
 	lines.close()
 
 
@@ -280,39 +280,40 @@ def renderSnapshots(density,res,initmodel,contour,zoom):
 	os.remove(tmpimg)
 	return
 	
-def insertRefinementRun(params):
+def insertRefinementRun(params, insert=True):
+	runq=appionData.ApRefinementRunData()
+	runq['name']=params['runid']
+	runq['stack']=params['stack']
+	#ONLY NAME AND STACK MUST BE UNIQUE???
+
+	result=appiondb.query(runq, results=1)
+
+	if result:
+		apDisplay.printError("\nERROR: run already exists in the database\n")
+		sys.exit(1)
+    
+	runq['path'] = appionData.ApPathData(path=os.path.normpath(params['path']))
+	runq['description']=params['description']
+	runq['package']=params['package']
+	runq['initialModel']=params['model']
+
+	if insert is True:
+		print "inserting reconstruction run into database"
+		appiondb.insert(runq)
+
 	runq=appionData.ApRefinementRunData()
 	runq['name']=params['runid']
 	runq['stack']=params['stack']
 	runq['initialModel']=params['model']
 	runq['package']=params['package']
-	runq['path']=params['path']
+	runq['path'] = appionData.ApPathData(path=os.path.normpath(params['path']))
 	runq['description']=params['description']
-	result=partdb.query(runq, results=1)
-
-## 	if result:
-## 		print "\nERROR: run already exists in the database\n"
-## 		sys.exit()	        
-
-## 	else:
-
-	if not result:
-		print "inserting reconstruction run into database"
-		partdb.insert(runq)
-
-		runq=appionData.ApRefinementRunData()
-		runq['name']=params['runid']
-		runq['stack']=params['stack']
-		runq['initialModel']=params['model']
-		runq['package']=params['package']
-		runq['path']=params['path']
-		runq['description']=params['description']
-		result=partdb.query(runq, results=1)
+	result=appiondb.query(runq, results=1)
 		
 	# save run entry in the parameters
 	params['refinementRun']=result[0]
 
-	return
+	return True
 
 def insertResolutionData(params,iteration):
 	fsc='fsc.eotest.'+iteration['num']
@@ -330,7 +331,7 @@ def insertResolutionData(params,iteration):
 		resq['half']=halfres
 		resq['fscfile']=fsc
 
-		partdb.insert(resq)
+		appiondb.insert(resq)
 
 		return resq
 
@@ -346,7 +347,7 @@ def insertRMeasureData(params,iteration):
 			resq['volume']=volumeDensity
 			resq['rMeasure']=resolution
 
-			partdb.insert(resq)
+			appiondb.insert(resq)
 			return resq
 
 def insertIteration(iteration,params):
@@ -395,7 +396,7 @@ def insertIteration(iteration,params):
 		refineq['volumeDensity']=volumeDensity
 	if msgpassclassavg in params['msgpassavgs']:
 		refineq['MsgPGoodClassAvg']=msgpassclassavg
-	partdb.insert(refineq)
+	appiondb.insert(refineq)
 
 	insertFSC(iteration['fscfile'],refineq)
 	
@@ -494,7 +495,7 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 			stackpq=appionData.ApStackParticlesData()
 			stackpq['stack']=params['stack']
 			stackpq['particleNumber']=prtlnum
-			stackp=partdb.query(stackpq, results=1)[0]
+			stackp=appiondb.query(stackpq, results=1)[0]
 
 			if not stackp:
 				apDisplay.printError("particle "+prtlnum+" not in stack")
@@ -508,7 +509,7 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 			prtlaliq['inplane_rotation']=rot
 			prtlaliq['quality_factor']=qualf
 			prtlaliq['msgp_keep']=msgk
-			partdb.insert(prtlaliq)
+			appiondb.insert(prtlaliq)
 	f.close()
 	return
 
@@ -553,7 +554,7 @@ def insertFSC(fscfile,refine):
 		bits = line.split('\t')
 		fscq['pix']=int(bits[0])
 		fscq['value']=float(bits[1])
-		partdb.insert(fscq)
+		appiondb.insert(fscq)
 	
 def writeReconLog(commandline):
         f=open('.reconlog','a')

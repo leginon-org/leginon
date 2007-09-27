@@ -78,7 +78,7 @@ def makeRandomLst(nptcls,stackdata,params):
 	random.shuffle(allparticles)
 	particles=allparticles[0:nptcls]
 	particles.sort()
-	origpath=os.path.join(stackdata[0]['stack']['stackPath'],stackdata[0]['stack']['name'])
+	origpath=os.path.join(stackdata[0]['stack']['path']['path'],stackdata[0]['stack']['name'])
 	for particle in particles:
 		f.write('%d\t%s\n' % (particle, origpath))
 	f.close()
@@ -98,7 +98,7 @@ def makeNewStack(lstfile,newstackname):
 	
 def checkForPreviousStack(stackpath, stackname):
 	stackq=appionData.ApStackData()
-	stackq['stackPath']=stackpath
+	stackq['path'] = appionData.ApPathData(path=os.path.normpath(stackpath))
 	stackq['name']=stackname
 	stackdata=apdb.query(stackq)
 	if stackdata:
@@ -115,7 +115,7 @@ def commitSplitStack(params, stackdata, lstfile):
 	
 	#create new stack data
 	stackq=appionData.ApStackData()
-	stackq['stackPath']=os.getcwd()
+	stackq['path'] = appionData.ApPathData(path=os.path.normpath(os.getcwd()))
 	stackq['name']=params['stackname']
 	stackq['description']=params['description']
 	stackdata=apdb.query(stackq, results=1)

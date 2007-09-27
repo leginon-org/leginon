@@ -194,42 +194,6 @@ def getProjectId(params):
 		apDisplay.printError("no project associated with this session\n")
 	return
 
-def insertManualParams(params,expid):
-	runq=appionData.ApSelectionRunData()
-	runq['name']=params['runid']
-	runq['dbemdata|SessionData|session']=expid
-
-	manparams=appionData.ApSelectionParamsData()
-	manparams['diam']=params['diam']
-
-	runids=appiondb.query(runq, results=1)
-
- 	# if no run entry exists, insert new run entry into run.dbparticledata
- 	# then create a new selexonParam entry
- 	if not runids:
-		print "inserting manual runId into database"
-		runq['params']=manparams
- 		appiondb.insert(runq)
-	elif runids[0]['params'] != manparams:
-		apDisplay.printError("upload parameters not the same as last run - check diameter")
-		
-def insertManualParamsREFLEGINON(params,sessiondata):
-	runq=appionData.ApSelectionRunData()
-	runq['name']=params['runid']
-	runq['session']=sessiondata
-
-	runids=appiondb.query(runq, results=1)
-
- 	# if no run entry exists, insert new run entry into run.dbparticledata
- 	# then create a new selexonParam entry
- 	if not(runids):
-		print "inserting manual runId into database"
- 		manparams=appionData.ApSelectionParamsData()
- 		manparams['ApSelectionRunData']=runq
- 		manparams['diam']=params['diam']
- 		appiondb.insert(runq)
- 	       	appiondb.insert(manparams)
-
 def getModelDimensions(mrcfile):
 	print "calculating dimensions..."
 	vol=mrc.read(mrcfile)
@@ -246,7 +210,7 @@ def insertModel(params):
 	params['syminfo']=symid
 	modq=appionData.ApInitialModelData()
 	modq['project|projects|project']=params['projectId']
-	modq['path']=params['path']
+	modq['path']= appionData.ApPathData(path=os.path.normpath(params['path']))
 	modq['name']=params['name']
 	modq['symmetry']=symid
 	modq['pixelsize']=params['apix']
@@ -266,9 +230,32 @@ def checkReconId(params):
 
 def insertMisc(params):
 	print "inserting into database"
-	miscq=appionData.ApMiscData()
+	miscq = appionData.ApMiscData()
 	miscq['refinementRun']=params['recon']
-	miscq['path']=params['path']
+	miscq['path'] = appionData.ApPathData(path=os.path.normpath(params['path']))
 	miscq['name']=params['name']
 	miscq['description']=params['description']
 	appiondb.insert(miscq)
+
+def insertManualParams(params, expid):
+	runq=appionData.ApSelectionRunData()
+	runq['name']=params['runid']
+	runq['dbemdata|SessionData|session']=expid
+	#runq['path'] = appionData.ApPathData(path=os.path.normpath(????????))
+
+	manparams=appionData.ApSelectionParamsData()
+	manparams['diam']=params['diam']
+
+	runids=appiondb.query(runq, results=1)
+
+	# if no run entry exists, insert new run entry into run.dbparticledata
+	# then create a new selexonParam entry
+	if not runids:
+		print "inserting manual runId into database"
+		runq['params']=manparams
+		appiondb.insert(runq)
+	elif runids[0]['params'] != manparams:
+		apDisplay.printError("upload parameters not the same as last run - check diameter")
+
+
+
