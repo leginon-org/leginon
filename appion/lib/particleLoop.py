@@ -161,15 +161,27 @@ class ParticleLoop(appionLoop.AppionLoop):
 		runq['dbemdata|SessionData|session'] = expid
 		runids = runq.query(results=1)
 		
+
 		if runids:
-			paramData = paramQuery.query(results=1)
-			#make sure all params are the same as previous session	
+			#get previous params
+			if isinstance(paramQuery, appionData.ApSelectionParamsData):
+				paramData = runids[0]['params']
+			elif isinstance(paramQuery, appionData.ApDogParamsData):
+				paramData = runids[0]['dogparams']
+			elif isinstance(paramQuery, appionData.ApManualParamsData):
+				paramData = runids[0]['manparams']
+			elif isinstance(paramQuery, appionData.ApTiltAlignParamsData):
+				paramData = runids[0]['tiltparams']
+			else:
+				apDisplay.printError("selection run does not have valid parameter data\n")
+
+			#make sure all params are the same as previous session
 			if not paramData:
-				apDisplay.printError("All parameters for a picker run name must be identical\n")
+				apDisplay.printError("No parameters\n")
 			else:
 				for key in paramQuery:
-					if paramData[0][key] != paramQuery[key]:
-						apDisplay.printWarning(str(key)+":"+str(paramQuery[key])+" not equal to "+str(paramData[0][key]))
+					if paramData[key] != paramQuery[key] and paramData[key] is not None:
+						apDisplay.printWarning(str(key)+":"+str(paramQuery[key])+" not equal to "+str(paramData[key]))
 						apDisplay.printError("All parameters for a picker run name must be identical\n")
 			#if I made it here all parameters are the same, so it isn't necessary to commit
 			return False
