@@ -3,11 +3,13 @@
 
 import os
 import sys
+import re
 import shutil
 import apUpload
 import apParam
 import apTemplate
 import apDisplay
+import apDatabase
 
 if __name__ == '__main__':
 	# create params dictionary & set defaults
@@ -29,17 +31,27 @@ if __name__ == '__main__':
 	if params['description'] is None:
 		apDisplay.printError("enter a template description")
 
-	# find the number of template files
-	apTemplate.checkTemplates(params, "upload")
+	if params['outdir'] is None:
+		#auto set the output directory
+		sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
+		path = os.path.abspath(sessiondata['image path'])
+		path = re.sub("leginon","appion",path)
+		path = re.sub("/rawdata","",path)
+		params['outdir'] = os.path.join(path,"templates")
 
-	#we should copy the templates to, etc:
-	#/ami/data00/appion/session/templates/groEl1.mrc
-	#/ami/data00/appion/session/templates/groEl2.mrc
-	#and only allow user read access just so they don't get deleted
+	#create the output directory, if needed
+	apParam.createDirectory(params['outdir'])			
+
+	# find the number of template files
+	apTemplate.checkTemplates(params)
+
+	# copy templates to final location
+	apTemplate.copyTemplatesToOutdir(params)
 
 	# insert templates to database
-	apUpload.getProjectId(params)
-	apTemplate.insertTemplateImage(params)
+	if params['commit'] is True:
+		apUpload.getProjectId(params)
+		apTemplate.insertTemplateImage(params)
 
 	
 	
