@@ -70,7 +70,7 @@ def printResults(params, nominal, ctfvalue):
 	return
 
 
-def insertAceParams(imgdata, params):
+def insertAceParams(imgdata, params, expid):
 	# first create an aceparam object
 	aceparamq = appionData.ApAceParamsData()
 	copyparamlist = ('display','stig','medium','edgethcarbon','edgethice',\
