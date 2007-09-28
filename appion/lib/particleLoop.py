@@ -180,9 +180,19 @@ class ParticleLoop(appionLoop.AppionLoop):
 				apDisplay.printError("No parameters\n")
 			else:
 				for key in paramQuery:
+	
 					if paramData[key] != paramQuery[key] and paramData[key] is not None:
-						apDisplay.printWarning(str(key)+":"+str(paramQuery[key])+" not equal to "+str(paramData[key]))
-						apDisplay.printError("All parameters for a picker run name must be identical\n")
+						try:
+							data_dbid=paramData[key].dbid
+							query_dbid=paramQuery[key].dbid
+							if data_dbid != query_dbid:
+								apDisplay.printWarning(str(key)+":"+str(paramQuery[key].dbid)+" not equal to "+str(paramData[key].dbid))
+								apDisplay.printError("All parameters for a picker run name must be identical\n")
+								return False
+						except:
+							apDisplay.printWarning(str(key)+":"+str(paramQuery[key])+" not equal to "+str(paramData[key]))
+							apDisplay.printError("All parameters for a picker run name must be identical\n")
+							return False
 			#if I made it here all parameters are the same, so it isn't necessary to commit
 			return False
 
