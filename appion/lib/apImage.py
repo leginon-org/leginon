@@ -584,7 +584,7 @@ def _normalizeImage(img,stdevLimit=3.0,minlevel=0.0,maxlevel=255.0,trim=0.0):
 	img = (img - min1)/(max1 - min1)*imrange + minlevel
 	img = numpy.where(img > maxlevel,255.0,img)
 	img = numpy.where(img < minlevel,0.0,  img)
-
+	
 	return img
 
 
