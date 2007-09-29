@@ -96,12 +96,11 @@ class MosaicTargetMaker(TargetMaker):
 		targetlist = self.newTargetList(mosaic=True, label=label)
 		targets = self.researchTargets(session=self.session, list=targetlist)
 		if targets:
-			raise AtlasError('label "%s" is already used' % (label,))
+			raise AtlasError('label "%s" is already used, choose another' % (label,))
 
 	def validateSettings(self):
 		label = self.settings['label']
-		if label:
-			self.checkLabel(label)
+		self.checkLabel(label)
 		radius = self.settings['radius']
 		if radius <= 0.0:
 			raise AtlasError('invalid radius specified')
