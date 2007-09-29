@@ -161,9 +161,13 @@ def getBestDefocusForImage(imgdata, display=False):
 	takes an image and get the best defocus for that image
 	"""
 	ctfvalue, conf = getBestCtfValueForImage(imgdata)
+	### if previous confidences are both zero, return nominal defocus
+	if ctfvalue is None:
+		apDisplay.printWarning("both confidence values for previous run were 0, using nominal defocus")
+		return imgdata['scope']['defocus']
 	if ctfvalue['acerun']['aceparams']['stig'] == 1:
 		apDisplay.printWarning("astigmatism was estimated for "+apDisplay.short(imgdata['filename'])+\
-		 " and average defocus estimate may be incorrect")
+				       " and average defocus estimate may be incorrect")
 		avgdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
 		return -avgdf
 
@@ -201,7 +205,6 @@ def getBestCtfValueForImage(imgdata, ctfavg=False):
 			if conf > bestconf:
 				bestconf = conf
 				bestctfvalue = ctfvalue
-
 	return bestctfvalue, bestconf
 
 def ctfValuesToParams(ctfvalue, params):
