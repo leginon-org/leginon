@@ -55,7 +55,7 @@ class MaskAssessor(imageassessor.ImageAssessor):
 		
 	def getImageList(self):
 		self.maskrundata,self.maskparamsdata = apMask.getMaskParamsByRunName(self.settings['mask run'],self.session)
-		self.maskdir=os.path.join(self.maskrundata['path'],"masks")
+		self.maskdir=os.path.join(self.maskrundata['path']['path'],"masks")
 		files = os.listdir(self.maskdir)
 		format = 'png'
 		assessrunname = self.settings['run']
@@ -81,7 +81,6 @@ class MaskAssessor(imageassessor.ImageAssessor):
 						del goodfiles[aindex]
 					except ValueError:
 						pass
-		
 		if goodfiles:
 			goodfiles.sort()
 			self.images=[]
@@ -90,7 +89,8 @@ class MaskAssessor(imageassessor.ImageAssessor):
 				imgdata = self.readParent(filename)
 				self.images.append(imgdata)
 				self.files.append(filename)
-				if self.noreject and not apDatabase.getImgAssessmentStatus(imgdata):
+
+				if self.noreject and apDatabase.getImgAssessmentStatus(imgdata)==False:
 					self.files.pop()
 					self.images.pop()
 		else:

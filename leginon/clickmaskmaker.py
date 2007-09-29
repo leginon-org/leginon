@@ -135,7 +135,7 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 			if self.bin !=savedbin:
 				self.logger.warning('Change binning to that of the saved %s',(savedbin,))
 				self.bin = savedbin
-			savedrundir = self.maskrundata['path']
+			savedrundir = self.maskrundata['path']['path']
 			if rundir !=savedrundir:
 				self.logger.warning('Change mask run path to that of the saved %s',(savedrundir,))
 				rundir = savedrundir
@@ -152,7 +152,7 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 						if len(regions)==0:
 							images.append(imgdata)
 			
-		self.maskdir=os.path.join(self.maskrundata['path'],"masks")	
+		self.maskdir=os.path.join(self.maskrundata['path']['path'],"masks")	
 		
 		if images:
 			goodfiles = map((lambda x: x['filename']),images)
@@ -166,10 +166,10 @@ class ClickMaskMaker(imageassessor.ImageAssessor):
 					imgdata = imgdatalist[0]
 					self.images.append(imgdata)
 					self.files.append(filename)
-				status = apDatabase.getImgAssessmentStatus(imgdata)
-				if self.noreject and not status:
-					self.files.pop()
-					self.images.pop()
+				
+				if self.noreject and  apDatabase.getImgAssessmentStatus(imgdata)==False:
+						self.files.pop()
+						self.images.pop()
 		else:
 			self.logger.error('No %s files in session' % (preset,))
 			return
