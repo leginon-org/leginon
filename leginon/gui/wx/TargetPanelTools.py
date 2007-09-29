@@ -5,10 +5,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanelTools.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-07 20:25:16 $
-# $Author: vossman $
+# $Date: 2007-09-29 00:25:42 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 #
@@ -53,13 +53,14 @@ class ShowNumbersEvent(wx.PyCommandEvent):
 ##################################
 
 class TargetTypeTool(gui.wx.ImagePanelTools.TypeTool):
-	def __init__(self, parent, name, display=None, settings=None, target=None, shape='+', unique=False, numbers=None):
+	def __init__(self, parent, name, display=None, settings=None, target=None, shape='+', unique=False, numbers=None, size=16):
 		self.color = display
 		self.shape = shape 
+		self.size = size 
 		gui.wx.ImagePanelTools.TypeTool.__init__(self, parent, name, display=display, settings=settings)
 
-		self.targettype = TargetType(self.name, self.color, self.shape, unique)
-		self.numberstype = TargetType(self.name, self.color, 'numbers', unique)
+		self.targettype = TargetType(self.name, self.color, self.shape, self.size, unique)
+		self.numberstype = TargetType(self.name, self.color, 'numbers', self.size, unique)
 
 		self.togglebuttons['display'].SetBitmapDisabled(self.bitmaps['display'])
 
@@ -134,14 +135,15 @@ class StatsTarget(Target):
 ##################################
 
 class TargetType(object):
-	def __init__(self, name, color, shape='+', unique=False):
+	def __init__(self, name, color, shape='+', size=16, unique=False):
 		self.name = name
 		self.unique = unique
 		self.shape = shape
 		self.color = color
+		self.size = size
 		if shape != 'polygon' and shape != 'numbers':
 			self.bitmaps = {}
-			self.bitmaps['default'], self.bitmaps['selected'] = gui.wx.TargetPanelBitmaps.getTargetBitmaps(color, shape)
+			self.bitmaps['default'], self.bitmaps['selected'] = gui.wx.TargetPanelBitmaps.getTargetBitmaps(color, shape,size)
 		self.targets = None
 
 	#--------------------

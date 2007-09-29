@@ -5,10 +5,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanelBitmaps.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-07 17:20:47 $
-# $Author: vossman $
+# $Date: 2007-09-29 00:25:42 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 # COPYRIGHT:
@@ -81,7 +81,7 @@ def targetIcon(color, shape):
 targetbitmaps = {}
 
 #--------------------
-def getTargetBitmap(color, shape='+'):
+def getTargetBitmap(color, shape='+',size=iconlength):
 	try:
 		return targetbitmaps[color,shape]
 	except KeyError:
@@ -96,7 +96,7 @@ def getTargetBitmap(color, shape='+'):
 		elif shape == '*':
 			bitmap = targetBitmap_star(color)
 		elif shape == 'o':
-			bitmap = targetBitmap_circle(color)
+			bitmap = targetBitmap_circle(color,diam=size)
 		else:
 			raise RuntimeError('invalid target shape: '+shape)
 		targetbitmaps[color,shape] = bitmap
@@ -188,23 +188,23 @@ def targetBitmap_star(color):
 	return bitmap
 
 #--------------------
-def targetBitmap_circle(color):
-	bitmap = wx.EmptyBitmap(iconlength, iconlength)
+def targetBitmap_circle(color,diam=iconlength):
+	bitmap = wx.EmptyBitmap(diam, diam)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
-	dc.DrawCircle(iconlength/2, iconlength/2, iconlength/2-1)
+	dc.DrawCircle(diam/2, diam/2, diam/2-1)
 	dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
 
 #--------------------
-def getTargetBitmaps(color, shape='+'):
+def getTargetBitmaps(color, shape='+',size=iconlength):
 	selectedcolor = wx.Color(color.Red()/2, color.Green()/2, color.Blue()/2)
-	return getTargetBitmap(color, shape), getTargetBitmap(selectedcolor, shape)
+	return getTargetBitmap(color, shape,size), getTargetBitmap(selectedcolor, shape,size)
 
 
