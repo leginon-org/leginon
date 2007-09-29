@@ -5,10 +5,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.66 $
+# $Revision: 1.67 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-07 20:23:19 $
-# $Author: vossman $
+# $Date: 2007-09-29 02:40:14 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -1739,10 +1739,11 @@ class TargetImagePanel(ImagePanel):
 			if targets:
 				if type.shape == 'polygon':
 					self.drawPolygon(dc, type.color, targets)
-				if type.shape == 'numbers':
-					self.drawNumbers(dc, type.color, targets)
 				else:
-					self._drawTargets(dc, type.bitmaps['default'], targets, scale)
+					if type.shape == 'numbers':
+						self.drawNumbers(dc, type.color, targets)
+					else:
+						self._drawTargets(dc, type.bitmaps['default'], targets, scale)
 
 		if self.selectedtarget is not None and type.shape != 'polygon' and type.shape != 'numbers':
 			if self.selectedtarget.type in self.targets:
