@@ -102,7 +102,7 @@ def getTemplateFromId(templateid):
 	# find templateImage row
 	tmpltinfo = appiondb.direct_query(appionData.ApTemplateImageData, templateid)
 	if not (tmpltinfo):
-		apDisplay.printError("TemplateId "+str(tid)+" not found in database. Use 'uploadTemplate.py'\n")
+		apDisplay.printError("TemplateId "+str(templateid)+" not found in database. Use 'uploadTemplate.py'\n")
 	return tmpltinfo
 	
 def getDBTemplates(params):
