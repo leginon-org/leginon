@@ -180,11 +180,13 @@ class PeakFinder(object):
 		self.results['coeffs'] = roipeak['coeffs']
 
 		#NEIL's SNR calculation
-		#self.results['signal'] = self.results['subpixel peak value'] - self.results['mean']
-		#if self.results['noise'] != self.results['noise'] and self.results['noise'] != 0.0:
-		#	self.results['snr'] = self.results['signal'] / self.results['noise']
-		#else:
-		#	self.results['snr'] = self.results['subpixel peak value']
+		self.results['noise']  = nd_image.standard_deviation(self.image)
+		self.results['mean']   = nd_image.mean(self.image)
+		self.results['signal'] = self.results['pixel peak value'] - self.results['mean']
+		if self.results['noise'] == self.results['noise'] and self.results['noise'] != 0.0:
+			self.results['snr'] = self.results['signal'] / self.results['noise']
+		else:
+			self.results['snr'] = self.results['pixel peak value']
 
 		return subpixelpeak
 	
