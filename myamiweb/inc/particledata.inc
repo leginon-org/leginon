@@ -616,15 +616,16 @@ class particledata {
 	#---------RECONSTRUCTION FUNCTIONS---------------#
 
 	function getModelsFromProject ($projectId) {
-	  $q="select * "
-	    ."from `ApInitialModelData` where `project|projects|project`='$projectId'";
+	  $q="SELECT * "
+	    ."FROM `ApInitialModelData` "
+			."WHERE `project|projects|project`='$projectId'";
 	  $r = $this->mysql->getSQLResult($q);
 	  return $r;
 	}
 
 	function getReconIds ($stackId) {
-		$q = "select * "
-			."from `ApRefinementRunData` AS r"
+		$q = "SELECT * "
+			."FROM `ApRefinementRunData` AS r "
 			."WHERE r.`REF|ApStackData|stack` = '$stackId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
@@ -632,7 +633,7 @@ class particledata {
 
 	function getRefinementRunInfo($refinementRun) {
 		$q = "select * "
-				."FROM `ApRefinementRunData` AS r"
+				."FROM `ApRefinementRunData` AS r "
 				."LEFT JOIN ApPathData AS p ON "
 				."(r.`REF|ApPathData|path` = p.`DEF_id`) "
 				."WHERE r.`DEF_id` = '$refinementRun' ";
@@ -642,10 +643,10 @@ class particledata {
 
 	function getInitModelInfo ($modelId) {
 		$q = "SELECT * "
-				."FROM `ApInitialModelData` AS d"
+				."FROM `ApInitialModelData` AS d "
 				."LEFT JOIN ApPathData AS p ON "
 				."(d.`REF|ApPathData|path` = p.`DEF_id`) "
-				."WHERE d.`DEF_id` = '$modelId'";
+				."WHERE d.`DEF_id` = '$modelId' ";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r;
 	}
