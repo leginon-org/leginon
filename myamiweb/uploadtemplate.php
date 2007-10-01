@@ -62,53 +62,48 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 
 	echo"
 	<P>
-	<TABLE BORDER=0 CLASS=tableborder>";
+	<TABLE BORDER=3 CLASS=tableborder>";
 	echo"
 	<TR>
 		<TD VALIGN='TOP'>
-			<TABLE CELLPADDING='5' BORDER='0'>
+			<TABLE>
 			<TR>
 				<TD VALIGN='TOP'>
+					<BR/>
 					<B>Template Root Name (wild cards are valid):</B><BR/>
-					<INPUT TYPE='file' NAME='template' VALUE='$template' SIZE='40'/><BR/>
-					Example: /home/user/groEL-template*.mrc
-				</TD>
-			</TR>
-			<TR>
-				<TD VALIGN='TOP'>
+					<INPUT TYPE='file' NAME='template' VALUE='$template' SIZE='50'/><BR/>
+					<FONT SIZE='-2'>Example: <I>/home/user/groEL-template*.mrc</I></FONT>
+					<BR/>
+					<BR/>
 					<B>Template Description:</B><BR/>
-					<TEXTAREA NAME='description' ROWS='3' COLS='50'>$description</TEXTAREA>
+					<TEXTAREA NAME='description' ROWS='3' COLS='65'>$description</TEXTAREA>
+					<BR/>
+					<BR/>
 				</TD>
 			</TR>
-			</TABLE>
-		</TD>
-		<TD CLASS='tablebg'>
-			<TABLE CELLPADDING='5' BORDER='0'>
-
 			<TR>
-				<TD VALIGN='TOP'>
+				<TD VALIGN='TOP' CLASS='tablebg'>
+					<BR/>
 					Particle Diameter:<BR/>
 					<INPUT TYPE='text' NAME='diam' SIZE='5' VALUE='$diam'>
 					<FONT SIZE='-2'>(in &Aring;ngstroms)</FONT><BR>
-				</TD>
-			</TR>
-			<TR>
-				<TD VALIGN='TOP'>
+					<BR/>
 					Pixel Size:<BR/>
 					<INPUT TYPE='text' NAME='apix' SIZE='5' VALUE='$apix'>
-					<FONT SIZE='-2'>(in &Aring;ngstroms per pixel)</FONT><BR/>
+					<FONT SIZE='-2'>(in &Aring;ngstroms per pixel)</FONT>
+					<BR/>
+					<BR/>
 				</TD>
-			</TR>
-			</TABLE>
-    </TD>
-  </TR>";
-	echo"
+		  </TR>
+		  </TABLE>
+		</TD>
+  </TR>
   <TR>
-    <TD COLSPAN='2' ALIGN='CENTER'>
+    <TD ALIGN='CENTER'>
       <HR>
       <BR/>
       <INPUT type='submit' name='process' value='Upload Template'><BR/>
-      <FONT COLOR='RED'>Submission will NOT upload the template, 
+      <FONT COLOR='RED'>Submission will NOT upload the template,<BR/>
 			only output a command that you can copy and paste into a unix shell</FONT>
     </TD>
 	</TR>
