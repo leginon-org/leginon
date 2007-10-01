@@ -27,25 +27,28 @@ class particledata {
 					PARTICLE_DB);
 	}
 
-	function getTemplatesFromProject ($projectId) {
-		$q="SELECT * "
-			."FROM `ApTemplateImageData` AS t "
-			//."LEFT JOIN ApPathData AS p ON "
-			//."(t.`REF|ApPathData|path`=p.`DEF_id`) "
-			."WHERE `project|projects|project`='$projectId'";
-		$r = $this->mysql->getSQLResult($q);
-		return $r;
-	}
+  function getTemplatesFromProject ($projectId) {
+    $q="SELECT t.DEF_id, path, `project|projects|project`, templatename, apix, diam, description "
+      ."FROM `ApTemplateImageData` AS t "
+      ."LEFT JOIN ApPathData AS p ON "
+      ."(t.`REF|ApPathData|path`=p.`DEF_id`) "
+      ."WHERE `project|projects|project`='$projectId'";
+    $r = $this->mysql->getSQLResult($q);
+    return $r;
+  }
 
-	function getTemplatesFromId ($templateId) {
-		$q = "SELECT * " 
-			."FROM ApTemplateImageData AS t"
-			//."LEFT JOIN ApPathData AS p ON "
-			//."(t.`REF|ApPathData|path`=p.`DEF_id`) "
-			."WHERE t.`DEF_id` = '$templateId' ";
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0];
-	}
+  function getTemplatesFromId ($templateId) {
+    $q = "SELECT t.DEF_id, "
+        ."path, `project|projects|project`, "
+        ."templatename, apix, diam, description "
+        ."FROM `ApTemplateImageData` AS t "
+        ."LEFT JOIN ApPathData AS p ON "
+        ."(t.`REF|ApPathData|path`=p.`DEF_id`) "
+        ."WHERE t.`DEF_id` = '$templateId' ";
+    echo $q;
+    $r = $this->mysql->getSQLResult($q);
+    return $r[0];
+  }
 
 	function getParticlesFromImageId ($runId, $imageId){
 		$q = "select p.DEF_id as id, "
@@ -159,6 +162,7 @@ class particledata {
 			."left join ApTemplateImageData i on (t.`REF|ApTemplateImageData|template`=i.`DEF_id`) "
 			."left join ApSelectionRunData r on (t.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
 			."where t.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
+		echo $q;
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
@@ -220,12 +224,12 @@ class particledata {
 
 	function getNumAssessedImages ($sessionId) {
 		$rid = $this->getLastAssessmentRun($sessionId);
-		$q = "select count(DEF_id) as num "
+		$q = "select count(DEF_id) "
 			."from `ApAssessmentData` where "
 		        ."`selectionkeep` IS NOT NULL "
 				."and `REF|ApAssessmentRunData|assessmentrun` = '$rid'";
 		list($r) = $this->mysql->getSQLResult($q);
-		return $r['num'];
+		return $r['count(DEF_id)'];
 	}
 
 	function getLastParticleRun ($sessionId) {
@@ -285,11 +289,11 @@ class particledata {
 	}
 
 	function getNumStackParticles ($stackId) {
-		$q= "SELECT count(DEF_id) as num "
+		$q= "SELECT count(DEF_id) "
 			."FROM `ApStackParticlesData` "
 			."WHERE `REF|ApStackData|stack` = '$stackId'";
 		list($r) = $this->mysql->getSQLResult($q);
-		return $r['num'];
+		return $r['count(DEF_id)'];
 	}    
 
 	//////// fix me ////////
@@ -721,12 +725,12 @@ class particledata {
 	}
 
 	function getNumBadParticles ($refinementDataId) {
-		$q = "SELECT count(DEF_id) as num "
+		$q = "SELECT count(DEF_id) "
 				."FROM `ApParticleClassificationData` "
 				."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
 		    ."AND `thrown_out` = 1";
 		$r = $this->mysql->getSQLResult($q);
-		return $r[0]['num'];
+		return $r[0]['count(DEF_id)'];
 	}
 
 	function getMsgPRejectParticlesInStack ($refinementDataId) {
@@ -741,12 +745,12 @@ class particledata {
 	}
 
 	function getNumMsgPRejectParticles ($refinementDataId) {
-		$q = "SELECT count(DEF_id) as num "
+		$q = "SELECT count(DEF_id) "
 				."FROM `ApParticleClassificationData` "
 				."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
 		    ."AND `msgp_keep` = 0";
 		$r = $this->mysql->getSQLResult($q);
-		return $r[0]['num'];
+		return $r[0]['count(DEF_id)'];
 	}
 
 	function getNumClasses ($refinementDataId) {
@@ -774,12 +778,12 @@ class particledata {
 	}
 
 	function getNumInClass ($refinementDataId,$eulerId) {
-		$q = "SELECT count(DEF_id) as num "
+		$q = "SELECT count(DEF_id) "
 		  ."FROM `ApParticleClassificationData` "
 		  ."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
 		  ."AND `REF|ApEulerData|eulers` = $eulerId";
 		$r = $this->mysql->getSQLResult($q);
-		return $r[0]['num'];
+		return $r[0]['count(DEF_id)'];
 	}
 
 	function getEulerAngles ($eulerId) {
