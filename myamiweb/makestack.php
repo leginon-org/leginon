@@ -393,9 +393,6 @@ function runMakestack() {
         $outdir=$_POST['outdir'];
         if (!$outdir) createMakestackForm("<B>ERROR:</B> Select an experiment session");
 
-        // make sure outdir ends with '/'
-        if (substr($outdir,-1,1)!='/') $outdir.='/';
-
         // get selexon runId
         $prtlrunId=$_POST['prtlrunId'];
         if (!$prtlrunId) createMakestackForm("<B>ERROR:</B> No particle coordinates in the database");
@@ -471,7 +468,7 @@ function runMakestack() {
         if ($dfmin) $command.="mindefocus=$dfmin ";
         if ($dfmax) $command.="maxdefocus=$dfmax ";
         if ($fileformat) $command.="spider ";
-	if ($limit) $command.="limit=$limit ";
+	if ($limit) $command.="partlimit=$limit ";
         $command.="description=\"$description\"";
 
         $cmd = "exec ssh $user@$host '$command > makestacklog.txt &'";
