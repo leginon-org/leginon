@@ -484,7 +484,7 @@ def singleStack(params,imgdict):
 # images that contain particles
 def getImgsFromSelexonId(params):
 	startt = time.time()
-	print "Finding images that have particles for selection run: id="+str(params['selexonId'])
+	apDisplay.printMsg("Finding images that have particles for selection run: id="+str(params['selexonId']))
 
 	# get selection run id
 	selexonrun=apdb.direct_query(appionData.ApSelectionRunData, params['selexonId'])
@@ -495,6 +495,7 @@ def getImgsFromSelexonId(params):
 	params['sessionid']=db.direct_query(leginondata.SessionData, selexonrun['dbemdata|SessionData|session'])
 
 	# get all images from session
+	apDisplay.printMsg("Getting images")
 	dbimgq=leginondata.AcquisitionImageData(session=params['sessionid'])
 	dbimginfo=db.query(dbimgq, readimages=False)
 
@@ -502,41 +503,11 @@ def getImgsFromSelexonId(params):
 		apDisplay.printError("no images associated with this runId")
 
 	# for every image, find corresponding image entry in the particle database
+	apDisplay.printMsg("Finding corresponding image entry in the particle database")
 	dbimglist=[]
 	for img in dbimginfo:
 		pimgq = appionData.ApParticleData()
 		pimgq['dbemdata|AcquisitionImageData|image'] = img.dbid
-		pimgq['selectionrun'] = selexonrun
-		pimg = apdb.query(pimgq, results=1)
-		if pimg:
-			dbimglist.append(img)
-	apDisplay.printMsg("completed in "+apDisplay.timeString(time.time()-startt))
-	return (dbimglist)
-
-def getImgsFromSelexonIdREFLEGINON(params):
-	startt = time.time()
-	print "Finding images that have particles for selection run: id="+str(params['selexonId'])
-
-	# get selection run id
-	selexonrun=apdb.direct_query(appionData.ApSelectionRunData, params['selexonId'])
-	if not (selexonrun):
-		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' is not in database")
-	
-	# from id get the session
-	params['sessionid']=selexonrun['session'].dbid
-
-	# get all images from session
-	dbimgq=leginondata.AcquisitionImageData(session=params['sessionid'])
-	dbimginfo=db.query(dbimgq, readimages=False)
-
-	if not (dbimginfo):
-		apDisplay.printError("no images associated with this runId")
-
-	# for every image, find corresponding image entry in the particle database
-	dbimglist=[]
-	for img in dbimginfo:
-		pimgq = appionData.ApParticleData()
-		pimgq['image'] = img
 		pimgq['selectionrun'] = selexonrun
 		pimg = apdb.query(pimgq, results=1)
 		if pimg:
@@ -579,7 +550,7 @@ def getDefocPairRELEGINON(imgdata,direction):
 
 def getImgsDefocPairFromSelexonId(params):
 	startt = time.time()
-	print "Finding images that have particles for selexon run:", params['selexonId']
+	apDisplay.printMsg("Finding defoc pair images that have particles for selection run: id="+str(params['selexonId']))
 
 	# get selection run id
 	selexonrun=apdb.direct_query(appionData.ApSelectionRunData,params['selexonId'])
@@ -598,6 +569,7 @@ def getImgsDefocPairFromSelexonId(params):
 	if not (dbimginfo):
 		apDisplay.printError("no images associated with this runId")
 
+	apDisplay.printMsg("Find corresponding image entry in the particle database")
 	# for every image, find corresponding image entry in the particle database
 	dbimglist=[]
 	params['sibpairs']={}
@@ -605,59 +577,16 @@ def getImgsDefocPairFromSelexonId(params):
 		pimgq=appionData.ApParticleData()
 		pimgq['dbemdata|AcquisitionImageData|image']=img.dbid
 		pimgq['selectionrun']=selexonrun
-		pimg=apdb.query(pimgq)
+		pimg=apdb.query(pimgq, results=1)
 		if pimg:
 			simgq=appionData.ApImageTransformationData()
 			simgq['dbemdata|AcquisitionImageData|image1']=img.dbid
-			simgdata=apdb.query(simgq,readimages=False)
+			simgdata=apdb.query(simgq, readimages=False, results=1)
 			if simgdata:
 				simg=simgdata[0]
-				siblingimage=db.direct_query(leginondata.AcquisitionImageData,simg['dbemdata|AcquisitionImageData|image2'], readimages=False)
+				siblingimage=db.direct_query(leginondata.AcquisitionImageData, simg['dbemdata|AcquisitionImageData|image2'], readimages=False)
 				#create a dictionary for keeping the dbids of image pairs so we don't have to query later
 				params['sibpairs'][simg['dbemdata|AcquisitionImageData|image2']] = simg['dbemdata|AcquisitionImageData|image1']
-				dbimglist.append(siblingimage)
-			else:
-				apDisplay.printWarning("no shift data for "+apDisplay.short(img['filename']))
-	apDisplay.printMsg("completed in "+apDisplay.timeString(time.time()-startt))
-	return (dbimglist)
-
-def getImgsDefocPairFromSelexonIdREFLEGINON(params):
-	startt = time.time()
-	print "Finding images that have particles for selexon run:", params['selexonId']
-
-	# get selection run id
-	selexonrun=apdb.direct_query(appionData.ApSelectionRunData,params['selexonId'])
-	if not (selexonrun):
-		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' not in database")
-	
-	# from id get the session
-	sessiondata = selexonrun['session']
-	params['sessionid']=sessiondata
-
-	# get all images from session
-	dbimgq=leginondata.AcquisitionImageData(session=sessiondata)
-	dbimginfo=db.query(dbimgq,readimages=False)
-
-	if not (dbimginfo):
-		apDisplay.printError("no images associated with this runId")
-
-	# for every image, find corresponding image entry in the particle database
-	dbimglist=[]
-	params['sibpairs']={}
-	for img in dbimginfo:
-		pimgq=appionData.ApParticleData()
-		pimgq['image']=img
-		pimgq['selectionrun']=selexonrun
-		pimg=apdb.query(pimgq)
-		if pimg:
-			simgq=appionData.ApImageTransformationData()
-			simgq['image1']=img
-			simgdata=apdb.query(simgq,readimages=False)
-			if simgdata:
-				simg=simgdata[0]
-				siblingimage=db.direct_query(leginondata.AcquisitionImageData,simg['dbemdata|AcquisitionImageData|image2'], readimages=False)
-				#create a dictionary for keeping the dbids of image pairs so we don't have to query later
-				params['sibpairs'][simg['image2']] = simg['image1']
 				dbimglist.append(siblingimage)
 			else:
 				apDisplay.printWarning("no shift data for "+apDisplay.short(img['filename']))
