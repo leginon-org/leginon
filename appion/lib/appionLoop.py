@@ -259,6 +259,8 @@ class AppionLoop(object):
 			apDisplay.printError("dbimages can not be specified if particular images have been specified")
 		if self.params['alldbimages'] and self.params['dbimages']==True:
 			apDisplay.printError("dbimages and alldbimages can not be specified at the same time")
+		if self.params['runid'] == 'templates':
+			apDisplay.printError("templates is a reserved runid, please use another runid")
 		if len(self.params['mrcfileroot']) > 0 and self.params['alldbimages']:
 			apDisplay.printError("alldbimages can not be specified if particular images have been specified")
 
