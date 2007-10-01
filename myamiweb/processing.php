@@ -102,8 +102,16 @@ if ($sessionId) {
   $prtlrunIds = $particle->getParticleRunIds($sessionId);
   $prtlruns=count($prtlrunIds);
 
+	// retrieve template info from database for this project
+	if ($expId){
+		$projectId=getProjectFromExpId($expId);
+	}
+	if (is_numeric($projectId)) {
+		$templatesData=$particle->getTemplatesFromProject($projectId);
+		$templates = count($templatesData);
+	}
+
   // --- Get Mask Maker Data
-  $particle = new particledata();
   $maskrunIds = $particle->getMaskMakerRunIds($sessionId);
   $maskruns=count($maskrunIds);
 
@@ -311,8 +319,32 @@ if ($sessionId) {
     }
     echo"</TD>
   </TR>
-  </TABLE>
-  </TD>\n";
+	<TR>
+		<TD COLSPAN='4'>
+			<BR/>
+			<B>Pipeline tools:</B>
+		</TD>
+	</TR>
+	";
+	echo"
+  <TR>\n";
+  if ($templates==0) {$bgcolor=$nonecolor; $gifimg=$nonepic;}
+  else {$bgcolor=$donecolor; $gifimg=$donepic;}
+  echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
+    <TD BGCOLOR='$bgcolor'>
+    <B>Templates</B>
+    </TD>
+    <TD BGCOLOR='$bgcolor'>\n";
+    if ($templates==0) {echo "none";}
+    else {echo "$templates available";}
+    echo"
+    </TD>
+    <TD BGCOLOR='$bgcolor'>";
+    if ($templates==0) { echo"<A HREF='uploadtemplate.php?expId=$sessionId'>Upload a template</A>"; }
+    else { echo"<A HREF='uploadtemplate.php?expId=$sessionId'>Upload more templates</A>"; }
+    echo"</TD>
+  </TR>
+  </TABLE></TD>\n";
 }
 echo"
 </TR>
