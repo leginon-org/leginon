@@ -34,6 +34,10 @@ type: Utility
 module: pixelsizecalibrator
 type: Calibrations
 
+[MagCalibrator]
+module: magcalibrator
+type: Calibrations
+
 [DoseCalibrator]
 module: dosecalibrator
 type: Calibrations

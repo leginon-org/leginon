@@ -252,6 +252,19 @@ class LogPolarGridTransformData(LogPolarTransformData):
 		)
 	typemap = classmethod(typemap)
 
+class MagnificationComparisonData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('tem', InstrumentData),
+			('maghigh', float),
+			('maglow', float),
+			('rotation', float),
+			('scale', float),
+			('shiftrow', float),
+			('shiftcol', float),
+		)
+	typemap = classmethod(typemap)
+
 class CalibrationData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -1379,6 +1392,15 @@ class CalibratorSettingsData(SettingsData):
 
 class PixelSizeCalibratorSettingsData(CalibratorSettingsData):
 	pass
+
+class MagCalibratorSettingsData(CalibratorSettingsData):
+	def typemap(cls):
+		return CalibratorSettingsData.typemap() + (
+			('minsize', float),
+			('maxsize', float),
+			('pause', float),
+		)
+	typemap = classmethod(typemap)
 
 class DoseCalibratorSettingsData(CalibratorSettingsData):
 	def typemap(cls):
