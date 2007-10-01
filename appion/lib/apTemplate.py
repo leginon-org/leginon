@@ -7,6 +7,9 @@ import math
 import re
 import time
 import numpy
+import sys
+import glob
+import pprint
 #import numarray.convolve as convolve
 #appion
 import apImage
@@ -114,9 +117,9 @@ def checkTemplates(params):
 
 	name = params['template']
 	
-	if (os.path.isfile(name+'.mrc') and os.path.isfile(name+str(n+1)+'.mrc')):
-		# templates not following naming scheme
-		apDisplay.printError("Both "+name+".mrc and "+name+str(n+1)+".mrc exist\n")
+	#if (os.path.isfile(name+'.mrc') and os.path.isfile(name+str(n+1)+'.mrc')):
+	#	templates not following naming scheme
+	#	apDisplay.printError("Both "+name+".mrc and "+name+str(n+1)+".mrc exist\n")
 
 	params['templatelist'] = []
 	stop = False
@@ -124,16 +127,19 @@ def checkTemplates(params):
 	# if a template image exists with no number after it
 	# counter will assume that there is only one template
 
-	if os.path.isfile(name+'.mrc'):
-			params['templatelist'].append(name+".mrc")
-	else:
-		n=0
-		while os.path.isfile( name+str(n+1)+".mrc" ):
-			params['templatelist'].append( name+str(n+1)+'.mrc' )
-			n+=1
+	globlist = glob.glob(name+"*")
+
+	for f in globlist:
+		if os.path.isfile(f) and f[-4:] == ".mrc":
+			params['templatelist'].append(f)
 
 	if not params['templatelist']:
-		apDisplay.printError("There are no template images found with basename \'"+name+"\'\n")
+		apDisplay.printError("There are no template images found with basename \'"+os.path.basename(name)+"\'\n")
+
+	apDisplay.printColor("Template List:","green")
+	pprint.pprint(params['templatelist'])
+
+	time.sleep(1)
 
 	return(params)
 

@@ -10,6 +10,7 @@ import apParam
 import apTemplate
 import apDisplay
 import apDatabase
+import glob
 
 if __name__ == '__main__':
 	# create params dictionary & set defaults
@@ -25,7 +26,7 @@ if __name__ == '__main__':
 	if params['diam'] is None:
 		apDisplay.printError("enter the particle diameter in Angstroms")
 	if params['template'] is None:
-		apDisplay.printError("enter a template root name")
+		apDisplay.printError("enter a template root name (wild cards are valid)")
 	if params['session'] is None:
 		apDisplay.printError("enter a session ID")
 	if params['description'] is None:
