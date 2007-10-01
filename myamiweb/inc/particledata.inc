@@ -30,8 +30,8 @@ class particledata {
 	function getTemplatesFromProject ($projectId) {
 		$q="SELECT * "
 			."FROM `ApTemplateImageData` AS t "
-			."LEFT JOIN ApPathData AS p ON "
-			."(t.`REF|ApPathData|path`=p.`DEF_id`) "
+			//."LEFT JOIN ApPathData AS p ON "
+			//."(t.`REF|ApPathData|path`=p.`DEF_id`) "
 			."WHERE `project|projects|project`='$projectId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
@@ -40,8 +40,8 @@ class particledata {
 	function getTemplatesFromId ($templateId) {
 		$q = "SELECT * " 
 			."FROM ApTemplateImageData AS t"
-			."LEFT JOIN ApPathData AS p ON "
-			."(t.`REF|ApPathData|path`=p.`DEF_id`) "
+			//."LEFT JOIN ApPathData AS p ON "
+			//."(t.`REF|ApPathData|path`=p.`DEF_id`) "
 			."WHERE t.`DEF_id` = '$templateId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
@@ -285,7 +285,7 @@ class particledata {
 	}
 
 	function getNumStackParticles ($stackId) {
-		$q= "SELECT count(*) as num "
+		$q= "SELECT count(DEF_id) as num "
 			."FROM `ApStackParticlesData` "
 			."WHERE `REF|ApStackData|stack` = '$stackId'";
 		list($r) = $this->mysql->getSQLResult($q);
@@ -721,7 +721,7 @@ class particledata {
 	}
 
 	function getNumBadParticles ($refinementDataId) {
-		$q = "SELECT count(*) as num "
+		$q = "SELECT count(DEF_id) as num "
 				."FROM `ApParticleClassificationData` "
 				."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
 		    ."AND `thrown_out` = 1";
@@ -741,7 +741,7 @@ class particledata {
 	}
 
 	function getNumMsgPRejectParticles ($refinementDataId) {
-		$q = "SELECT count(*) as num "
+		$q = "SELECT count(DEF_id) as num "
 				."FROM `ApParticleClassificationData` "
 				."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
 		    ."AND `msgp_keep` = 0";
@@ -774,7 +774,7 @@ class particledata {
 	}
 
 	function getNumInClass ($refinementDataId,$eulerId) {
-		$q = "SELECT count(*) as num "
+		$q = "SELECT count(DEF_id) as num "
 		  ."FROM `ApParticleClassificationData` "
 		  ."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
 		  ."AND `REF|ApEulerData|eulers` = $eulerId";
