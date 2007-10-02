@@ -288,6 +288,7 @@ class ApStackParamsData(Data):
 			('fileType', str),
 			('inverted', bool),
 			('normalized', bool),
+			('defocpair', bool),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApStackParamsData=ApStackParamsData
@@ -429,7 +430,6 @@ class ApRefinementRunData(Data):
 			('name', str),
 			('stack', ApStackData),
 			('initialModel', ApInitialModelData),
-			#('path', str),
 			('path', ApPathData),
 			('package', str),
 			('description', str),
@@ -444,6 +444,7 @@ class ApInitialModelData(Data):
 			#('path', str),
 			('path', ApPathData),
 			('name', str),
+			('resolution', float),
 			('symmetry', ApSymmetryData),
 			('pixelsize', float),
 			('boxsize', int),
