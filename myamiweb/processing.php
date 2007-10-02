@@ -109,6 +109,8 @@ if ($sessionId) {
 	if (is_numeric($projectId)) {
 		$templatesData=$particle->getTemplatesFromProject($projectId);
 		$templates = count($templatesData);
+		$modelData=$particle->getModelsFromProject($projectId);
+		$models = count($modelData);
 	}
 
   // --- Get Mask Maker Data
@@ -307,26 +309,26 @@ if ($sessionId) {
     <B>Reconstructions</B>
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
-    if ($reconruns==0) {echo "none";}
-    else {echo "<A HREF='reconsummary.php?expId=$sessionId'>$reconruns completed</A>";}
-    echo"
+  if ($reconruns==0) {echo "none";}
+  else {echo "<A HREF='reconsummary.php?expId=$sessionId'>$reconruns completed</A>";}
+  echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>";
-    if ($stackruns == 0) {
-      echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";
-    } else {
-      echo"<A HREF='emanJobGen.php?expId=$sessionId'>New Reconstruction</A>";
-    }
-    echo"</TD>
+  if ($stackruns == 0) {
+    echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";
+  } else {
+    echo"<A HREF='emanJobGen.php?expId=$sessionId'>New Reconstruction</A>";
+  }
+  echo"</TD>
   </TR>
-	<TR>
-		<TD COLSPAN='4'>
-			<BR/>
-			<B>Pipeline tools:</B>
-		</TD>
-	</TR>
-	";
-	echo"
+  <TR>
+    <TD COLSPAN='4'>
+    <BR/>
+    <B>Pipeline tools:</B>
+    </TD>
+  </TR>
+  ";
+  echo"
   <TR>\n";
   if ($templates==0) {$bgcolor=$nonecolor; $gifimg=$nonepic;}
   else {$bgcolor=$donecolor; $gifimg=$donepic;}
@@ -335,16 +337,34 @@ if ($sessionId) {
     <B>Templates</B>
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
-    if ($templates==0) {echo "none";}
-    else {echo "$templates available";}
-    echo"
+  if ($templates==0) {echo "none";}
+  else {echo "$templates available";}
+  echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>";
-    if ($templates==0) { echo"<A HREF='uploadtemplate.php?expId=$sessionId'>Upload a template</A>"; }
-    else { echo"<A HREF='uploadtemplate.php?expId=$sessionId'>Upload more templates</A>"; }
-    echo"</TD>
+  if ($templates==0) { echo"<A HREF='uploadtemplate.php?expId=$sessionId'>Upload a template</A>"; }
+  else { echo"<A HREF='uploadtemplate.php?expId=$sessionId'>Upload more templates</A>"; }
+  echo"</TD>
   </TR>
-  </TABLE></TD>\n";
+  <TR>\n";
+  if ($models==0) {$bgcolor=$nonecolor; $gifimg=$nonepic;}
+  else {$bgcolor=$donecolor; $gifimg=$donepic;}
+  echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
+    <TD BGCOLOR='$bgcolor'>
+    <B>Initial Models</B>
+    </TD>
+    <TD BGCOLOR='$bgcolor'>\n";
+  if ($templates==0) {echo "none";}
+  else {echo "$models available";}
+  echo"
+    </TD>
+    <TD BGCOLOR='$bgcolor'>";
+  if ($templates==0) { echo"<A HREF='uploadmodel.php?expId=$sessionId'>Upload a model</A>"; }
+  else { echo"<A HREF='uploadmodel.php?expId=$sessionId'>Upload more models</A>"; }
+  echo"</TD>
+  </TR>
+  </TABLE>
+  </TD>\n";
 }
 echo"
 </TR>

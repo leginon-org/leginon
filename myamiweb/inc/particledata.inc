@@ -614,6 +614,12 @@ class particledata {
 
 	#---------RECONSTRUCTION FUNCTIONS---------------#
 
+  function getSymmetries() {
+    $q="SELECT * "
+      ."FROM `ApSymmetryData`";
+    $r=$this->mysql->getSQLResult($q);
+    return $r;
+  }
 	function getModelsFromProject ($projectId) {
 	  $q="SELECT * "
 	    ."FROM `ApInitialModelData` "
