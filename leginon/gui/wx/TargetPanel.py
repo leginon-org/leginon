@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanel.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-29 02:40:14 $
+# $Date: 2007-10-02 20:30:19 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -172,6 +172,7 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 	#--------------------
 	def drawPolygon(self, dc, color, targets):
 		dc.SetPen(wx.Pen(color, 1))
+		dc.SetBrush(wx.Brush(color, 1))
 		#if self.scaleImage():
 		if False:
 			xscale = self.scale[0]
@@ -184,10 +185,15 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 		else:
 			scaledpoints = [(target.x,target.y) for target in targets]
 
+		if len(scaledpoints)>=1:
+			p1 = self.image2view(scaledpoints[0])
+			dc.DrawCircle(p1[0],p1[1],1)
+			
 		for i,p1 in enumerate(scaledpoints[:-1]):
 			p2 = scaledpoints[i+1]
 			p1 = self.image2view(p1)
 			p2 = self.image2view(p2)
+			dc.DrawCircle(p2[0],p2[1],1)
 			dc.DrawLine(p1[0], p1[1], p2[0], p2[1])
 		# close it with final edge
 		p1 = scaledpoints[-1]
