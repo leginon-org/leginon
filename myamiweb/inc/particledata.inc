@@ -45,7 +45,6 @@ class particledata {
         ."LEFT JOIN ApPathData AS p ON "
         ."(t.`REF|ApPathData|path`=p.`DEF_id`) "
         ."WHERE t.`DEF_id` = '$templateId' ";
-    echo $q;
     $r = $this->mysql->getSQLResult($q);
     return $r[0];
   }
@@ -152,20 +151,18 @@ class particledata {
 		return $r;
 	}
 
-	function getTemplateRunParams ($runId) {
-		$q = "SELECT i.DEF_id as id, p.path as path, i.templatename as tname, i.apix, i.description, "
-			."t.range_start, t.range_end, t.range_incr, "
-			."r.name "
-			."from ApTemplateRunData t "
-			."LEFT JOIN ApPathData AS p ON "
-			."(t.`REF|ApPathData|path`=p.`DEF_id`) "
-			."left join ApTemplateImageData i on (t.`REF|ApTemplateImageData|template`=i.`DEF_id`) "
-			."left join ApSelectionRunData r on (t.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
-			."where t.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
-		echo $q;
-		$r=$this->mysql->getSQLResult($q);
-		return $r;
-	}
+  function getTemplateRunParams ($runId) {
+    $q="SELECT i.DEF_id as id, p.path as path, i.templatename as tname, i.apix, i.description, "
+      ."t.range_start, t.range_end, t.range_incr, "
+      ."r.name "
+      ."from ApTemplateRunData AS t "
+      ."left join ApTemplateImageData i on (t.`REF|ApTemplateImageData|template`=i.`DEF_id`) "
+      ."LEFT JOIN ApPathData AS p ON (i.`REF|ApPathData|path`=p.`DEF_id`) "
+      ."left join ApSelectionRunData r on (t.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
+      ."where t.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
+    $r=$this->mysql->getSQLResult($q);
+    return $r;
+  }
 		
 	function getParticles ($runId) {
 		$q="select p.DEF_id, p.xcoord, p.ycoord, p.correlation "

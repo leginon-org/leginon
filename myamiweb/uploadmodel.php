@@ -91,7 +91,9 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
       <SELECT NAME='sym'>
       <OPTION VALUE=''>Select One</OPTION>\n";
   foreach ($syms as $sym) {
-    echo "<OPTION VALUE='$sym[DEF_id]'>$sym[symmetry]";
+    echo "<OPTION VALUE='$sym[DEF_id]'";
+    if ($sym['DEF_id']==$_POST['sym']) echo " SELECTED";
+    echo ">$sym[symmetry]";
     if ($sym['symmetry']=='C1') echo " (no symmetry)";
     echo "</OPTION>\n";
   }
