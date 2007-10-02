@@ -115,7 +115,6 @@ class ParticleLoop(appionLoop.AppionLoop):
 			threading.Thread(target=apPeaks.createPeakJpeg, args=(imgdata, self.peaktree, self.params)).start()
 		else:
 			apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)
-			print "saved Jpeg"
 		if self.params['defocpair'] is True:
 			self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params)
 
@@ -163,7 +162,6 @@ class ParticleLoop(appionLoop.AppionLoop):
 		
 
 		if runids:
-			print "Checking consistency with previous run"
 			#get previous params
 			if isinstance(paramQuery, appionData.ApSelectionParamsData):
 				paramData = runids[0]['params']
@@ -195,7 +193,6 @@ class ParticleLoop(appionLoop.AppionLoop):
 							apDisplay.printError("All parameters for a picker run name must be identical\n")
 							return False
 			#if I made it here all parameters are the same, so it isn't necessary to commit
-			print "Same as Previous, not committed"
 			return False
 
 		#set params for run
