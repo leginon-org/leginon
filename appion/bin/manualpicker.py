@@ -13,6 +13,9 @@ import apParticle
 import apDatabase
 import apDisplay
 import apMask
+
+#Leginon
+import polygon
 try:
 	from gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
 except ImportError:
@@ -51,10 +54,21 @@ class PickerApp(wx.App):
 
 		### BEGIN IMAGE PANEL
 		self.panel = ManualPickerPanel(self.frame, -1)
-		self.panel.addTypeTool('Select Particles', toolclass=TargetPanelTools.TargetTypeTool,
-			display=wx.RED, target=True, numbers=True, shape='x')
+		self.target = 'x'
+		if self.target =='o':
+			#	circle target for seeing particle in the middle
+			self.panel.addTypeTool('Select Particles', toolclass=TargetPanelTools.TargetTypeTool,
+				display=wx.RED, target=True, shape='o', size=25)
+		else:
+			self.panel.addTypeTool('Select Particles', toolclass=TargetPanelTools.TargetTypeTool,
+				display=wx.RED, target=True, numbers=True, shape='x')
 		self.panel.setTargets('Select Particles', [])
 		self.panel.selectiontool.setTargeting('Select Particles', True)
+
+		self.panel.addTypeTool('Particle Mask', toolclass=TargetPanelTools.TargetTypeTool,
+			display=wx.GREEN, target=True, shape='polygon')
+		self.panel.setTargets('Particle Mask', [])
+		self.panel.selectiontool.setTargeting('Particle Mask', True)
 
 		self.panel.SetMinSize((300,300))
 		self.sizer.Add(self.panel, 1, wx.EXPAND)
@@ -67,6 +81,11 @@ class PickerApp(wx.App):
 		self.next.SetMinSize((200,40))
 		self.Bind(wx.EVT_BUTTON, self.onNext, self.next)
 		self.buttonrow.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		self.add = wx.Button(self.frame, wx.ID_REMOVE, '&Remove Region')
+		self.add.SetMinSize((100,40))
+		self.Bind(wx.EVT_BUTTON, self.onAdd, self.add)
+		self.buttonrow.Add(self.add, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear')
 		self.clear.SetMinSize((100,40))
@@ -110,6 +129,29 @@ class PickerApp(wx.App):
 			print '%s\t%s' % (target.x, target.y)
 		wx.Exit()
 
+	def onAdd(self, evt):
+		vertices = []
+		vertices = self.panel.getTargetPositions('Particle Mask')
+		def reversexy(coord):
+			clist=list(coord)
+			clist.reverse()
+			return tuple(clist)
+		vertices = map(reversexy,vertices)
+		maskimg = polygon.filledPolygon(self.shape,vertices)
+		type(maskimg)
+		targets = self.panel.getTargets('Select Particles')
+		eliminated = 0
+		newparticles = []
+		for target in targets:
+			coord = (target.y,target.x)
+			if maskimg[coord] != 0:
+				eliminated += 1
+			else:
+				newparticles.append(target)
+		print eliminated,"particle(s) eliminated due to masking"
+		self.panel.setTargets('Select Particles',newparticles)
+		self.panel.setTargets('Particle Mask', [])
+		
 	def onNext(self, evt):
 		#targets = self.panel.getTargets('Select Particles')
 		#for target in targets:
@@ -175,7 +217,7 @@ class manualPicker(particleLoop.ParticleLoop):
 	def preLoopFunctions(self):
 		if self.params['dbimages'] or self.params['alldbimages']:
 			self.processAndSaveAllImages()
-		self.app = PickerApp(0)
+		self.app = PickerApp()
 		self.app.appionloop = self
 		self.threadJpeg = True
 
@@ -275,6 +317,7 @@ class manualPicker(particleLoop.ParticleLoop):
 		mask,maskbin = apMask.makeInspectedMask(sessiondata,maskassessname,imgdata)
 		overlay = apMask.overlayMask(image,mask)
 		self.app.panel.setImage(overlay.astype(numpy.float32))
+		self.app.shape = overlay.shape
 
 	
 	def runManualPicker(self, imgdata):
