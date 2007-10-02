@@ -39,7 +39,7 @@ def runFindEM(imgdict, params, thread=False):
 	if len(params['templatelist']) < 1:
 		apDisplay.printError("templatelist == 0; there are no templates")
 
-	for i in range(len(params['templatelist'])):
+	for i,templatename in enumerate(params['templatelist']):
 		classavg = i + 1
 
 		#DETERMINE OUTPUT FILE NAME
@@ -47,11 +47,11 @@ def runFindEM(imgdict, params, thread=False):
 		#numstr = "%03d" % classavg
 		numstr = str(classavg%10)+"00"
 		ccmapfile="cccmaxmap"+numstr+".mrc"
-		if (os.path.exists(ccmapfile)):
+		if (os.path.isfile(ccmapfile)):
 			os.remove(ccmapfile)
 
 		#GET FINDEM RUN COMMANDS
-		feed = findEMString(classavg, imgname, ccmapfile, params)
+		feed = findEMString(classavg, templatename, imgname, ccmapfile, params)
 
 		#RUN THE PROGRAM
 		apDisplay.printMsg("running findem.exe")
@@ -80,28 +80,21 @@ def runFindEM(imgdict, params, thread=False):
 	return ccmaplist
 
 
-def findEMString(classavg, imgname, ccmapfile, params):
+def findEMString(classavg, templatename, imgname, ccmapfile, params):
 
 	#IMAGE INFO
 	dwnimgname = os.path.splitext(imgname)[0]+".dwn.mrc"
 	if not os.path.isfile(dwnimgname):
 		apDisplay.printError("image file, "+dwnimgname+" was not found")
-	else:
-		print "image file, "+apDisplay.short(dwnimgname)
+	apDisplay.printMsg("image file, "+apDisplay.short(dwnimgname))
 	feed = dwnimgname+"\n"
 
 	#TEMPLATE INFO
-	tmpltroot = params["template"]
-	if (len(params['templatelist'])==1 and not params['templateIds']):
-		tmplname = tmpltroot+".dwn.mrc"
-	else:
-		tmplname = tmpltroot+str(classavg)+".dwn.mrc"
+	if not os.path.isfile(templatename):
+		apDisplay.printError("template file, "+templatename+" was not found")
 
-	if not os.path.exists(tmplname.strip()):
-		apDisplay.printError("template file, "+tmplname+" was not found")
-	else:
-		print "template file, "+tmplname
-	feed += tmplname + "\n"
+	apDisplay.printMsg("template file, "+templatename)
+	feed += templatename + "\n"
 
 	#DUMMY VARIABLE; DOES NOTHING
 	feed += "-200.0\n"
