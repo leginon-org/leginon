@@ -79,6 +79,7 @@ PyObject* tiltang(PyObject *self, PyObject *args) {
 				int y2i = *((int *)PyArray_GETPTR2(a2,i,1));
 				int y2j = *((int *)PyArray_GETPTR2(a2,j,1));
 				int y2k = *((int *)PyArray_GETPTR2(a2,k,1));
+				//printf("%d %d\n", x2i, y2i);
 
 				int x2a	= x2j - x2i;
 				int y2a	= y2j - y2i;
