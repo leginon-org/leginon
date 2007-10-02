@@ -46,6 +46,7 @@ foreach ($models as $model) {
   echo"<TR><TD>pixel size:</TD><TD>$model[pixelsize]</TD></TR>\n";
   echo"<TR><TD>box size:</TD><TD>$model[boxsize]</TD></TR>\n";
   echo"<TR><TD>symmetry:</TD><TD>$sym[symmetry]</TD></TR>\n";
+  echo"<TR><TD>resolution:</TD><TD>$model[resolution]</TD></TR>\n";
   echo "</TABLE>\n";
   echo "<P>\n";
 }

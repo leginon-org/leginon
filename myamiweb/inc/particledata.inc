@@ -620,7 +620,7 @@ class particledata {
 	function getModelsFromProject ($projectId) {
 	  $q="SELECT i.DEF_id, p.path, `project|projects|project`, "
 	    ."i.name, i.`REF|ApSymmetryData|symmetry`, i.pixelsize, "
-	    ."i.boxsize, i.description "
+	    ."i.boxsize, i.description, i.resolution "
 	    ."FROM `ApInitialModelData` i "
 	    ."LEFT JOIN `ApPathData` p ON (p.`DEF_id` = i.`REF|ApPathData|path`) "
 	    ."WHERE i.`project|projects|project`='$projectId'";
