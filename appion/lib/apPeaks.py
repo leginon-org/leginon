@@ -39,8 +39,8 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params, maptype):
 	imgname =   imgdict['filename']
 	pixrad =    diam/apix/2.0
 	binpixrad = diam/apix/2.0/float(bin)
-	if 'ogTmpltInfo' in params:
-		tmpldbid =  params['ogTmpltInfo'][tmplnum-1].dbid
+	if 'templateIds' in params:
+		tmpldbid =  params['templateIds'][tmplnum-1]
 	else:
 		#dogpicker
 		tmpldbid = None
