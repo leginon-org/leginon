@@ -269,7 +269,7 @@ def alignPicks(picks1, picks2, data, limit=5.0):
 	#transform back
 	nlist2 = a1Toa2Data(nalignlist2, data)
 	apDisplay.printMsg("Aligned "+str(len(nlist1))+" of "+str(len(picks1))+\
-		" particles to "+str(len(nlist2)))+" of "+str(len(picks2))
+		" particles to "+str(len(nlist2))+" of "+str(len(picks2)))
 	return nlist1, nlist2
 
 def findClosestPick(origpick, picks):
