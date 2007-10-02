@@ -44,7 +44,7 @@ if __name__ == '__main__':
 	apParam.createDirectory(params['outdir'])			
 
 	# find the number of template files
-	apTemplate.checkTemplates(params)
+	apTemplate.findTemplates(params)
 
 	# copy templates to final location
 	apTemplate.copyTemplatesToOutdir(params)
