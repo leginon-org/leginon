@@ -54,7 +54,7 @@ class PickerApp(wx.App):
 
 		### BEGIN IMAGE PANEL
 		self.panel = ManualPickerPanel(self.frame, -1)
-		self.target = 'x'
+		self.target = 'o'
 		if self.target =='o':
 			#	circle target for seeing particle in the middle
 			self.panel.addTypeTool('Select Particles', toolclass=TargetPanelTools.TargetTypeTool,
@@ -137,7 +137,8 @@ class PickerApp(wx.App):
 			clist.reverse()
 			return tuple(clist)
 		vertices = map(reversexy,vertices)
-		maskimg = polygon.filledPolygon(self.shape,vertices)
+		
+		maskimg = polygon.filledPolygon(self.panel.imagedata.shape,vertices)
 		type(maskimg)
 		targets = self.panel.getTargets('Select Particles')
 		eliminated = 0
@@ -317,7 +318,6 @@ class manualPicker(particleLoop.ParticleLoop):
 		mask,maskbin = apMask.makeInspectedMask(sessiondata,maskassessname,imgdata)
 		overlay = apMask.overlayMask(image,mask)
 		self.app.panel.setImage(overlay.astype(numpy.float32))
-		self.app.shape = overlay.shape
 
 	
 	def runManualPicker(self, imgdata):
