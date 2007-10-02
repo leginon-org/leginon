@@ -129,7 +129,7 @@ def parseInput(args):
 		elif (elements[0]=='selexonmax'):
 			params['correlationMax']=float(elements[1])
 		elif (elements[0]=='tiltangle'):
-			params['tiltangle']=float(elements[1])
+			params['tiltangle']=abs(float(elements[1]))
 		elif (elements[0]=='maskassess'):
 			params['checkMask']=elements[1]
 		elif (elements[0]=='boxsize'):
@@ -746,8 +746,10 @@ def rejectImage(imgdata, params):
 			return False
 
 	if params['tiltangle'] is not None:
-		tiltangle = apDatabase.getTiltAngleDeg(imgdata)
+		tiltangle = abs(apDatabase.getTiltAngleDeg(imgdata))
 		if (params['tiltangle'] - tiltangle) > 1.0:
+			apDisplay.printColor(shortname+".mrc has been rejected tiltangle: "+str(int(tiltangle))+\
+				" != "+str(int(params['tiltangle']))+"\n","cyan")
 			return False
 
 	### Get CTF values
