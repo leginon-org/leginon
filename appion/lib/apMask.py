@@ -52,9 +52,13 @@ def insertManualMaskRun(sessiondata,path,name,bin):
 	return maskRdata
 		
 def createMaskMakerRun(sessiondata,path,name,paramdata):
+	if path is None:
+		savepath = None
+	else:
+		savepath = os.path.normpath(path)
 	maskRdata=appionData.ApMaskMakerRunData()
 	maskRdata['session'] = sessiondata
-	maskRdata['path']= appionData.ApPathData(path=os.path.normpath(path))
+	maskRdata['path']= appionData.ApPathData(path=savepath)
 	maskRdata['name']=name
 	maskRdata['params']=paramdata
 
@@ -287,7 +291,6 @@ def overlayMask(image,mask):
 		if binning > 1:
 			maskbinned = imagefun.bin(mask,binning)
 		else:
-			print binning
 			maskbinned = nd.zoom(mask,1/binning)
 	else:
 		maskbinned = mask
@@ -302,6 +305,5 @@ if __name__ == '__main__':
 	assessrun = appiondb.direct_query(appionData.ApMaskAssessmentRunData,11)
 	sessiondata = assessrun['session']
 	imgdata = leginondb.direct_query(leginondata.AcquisitionImageData,500598)
-	print imgdata['filename']
 	maskarray,maskbin = makeInspectedMask(sessiondata,'run1',imgdata)
 #	maskrun = appiondb.direct_query(appionData.ApMaskMakerRunData,44)
