@@ -54,7 +54,7 @@ class PickerApp(wx.App):
 
 		### BEGIN IMAGE PANEL
 		self.panel = ManualPickerPanel(self.frame, -1)
-		self.target = 'o'
+		self.target = 'x'
 		if self.target =='o':
 			#	circle target for seeing particle in the middle
 			self.panel.addTypeTool('Select Particles', toolclass=TargetPanelTools.TargetTypeTool,
