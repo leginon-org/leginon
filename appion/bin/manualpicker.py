@@ -245,20 +245,27 @@ class manualPicker(particleLoop.ParticleLoop):
 		return targets
 
 	def processAndSaveAllImages(self):
-		print "Pre-processing images before picking"
+		sys.stderr.write("Pre-processing images before picking\n")
 		#print self.params
+		count = 0
+		total = len(self.imgtree)
 		for imgdata in self.imgtree:
+			count += 1
 			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
-			if self.params['continue']==False:
+			if self.params['continue'] == False:
 				if os.path.isfile(imgpath):
 					os.remove(imgpath)
 				apFindEM.processAndSaveImage(imgdata, params=self.params)
-				
 			else:
 				if os.path.isfile(imgpath):
-					print "already processed: ",apDisplay.short(imgdata['filename'])
+					sys.stderr.write(".")
+					#print "already processed: ",apDisplay.short(imgdata['filename'])
 				else:
+					sys.stderr.write("#")
 					apFindEM.processAndSaveImage(imgdata, params=self.params)
+
+			if count % 60 == 0:
+				sys.stderr.write(" %d left\n" % (total-count))
 
 	def showMask(self,imgfile,imgdata):
 		self.filename = imgfile

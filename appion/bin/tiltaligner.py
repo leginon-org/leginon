@@ -194,6 +194,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 				apDatabase.insertImgAssessmentStatus(imgdata, "notiltpair", False)
 				continue
 
+			#First the image
 			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
 			if os.path.isfile(imgpath):
 				sys.stderr.write(".")
@@ -202,6 +203,8 @@ class tiltAligner(particleLoop.ParticleLoop):
 				sys.stderr.write("#")
 				#print "processing: ",apDisplay.short(imgdata['filename'])
 				apFindEM.processAndSaveImage(imgdata, params=self.params)
+
+			#Now for its tilt pair
 			tiltpath = os.path.join(self.params['rundir'], tiltdata['filename']+'.dwn.mrc')
 			if os.path.isfile(tiltpath):
 				sys.stderr.write(".")
@@ -211,8 +214,8 @@ class tiltAligner(particleLoop.ParticleLoop):
 				#print "processing: ",apDisplay.short(tiltdata['filename'])
 				apFindEM.processAndSaveImage(tiltdata, params=self.params)
 
-			if count % 40 == 0:
-				sys.stderr.write(" %04d left\n" % total-count)
+			if count % 30 == 0:
+				sys.stderr.write(" %d left\n" % (total-count))
 
 	def getTiltAssess(self, imgdata, tiltdata):
 		ass1 = apDatabase.getImgAssessmentStatus(imgdata)

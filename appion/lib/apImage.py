@@ -144,7 +144,7 @@ def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8):
 	"""
 	high pass filter image to radius resolution
 	"""
-	if radius == 0 or imgarray.shape[0] < 512:
+	if radius == 0 or imgarray.shape[0] < 256:
 		print " ... skipping high pass filter"
 		return(imgarray)
 	bimgarray = binImg(imgarray, localbin)
