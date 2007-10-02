@@ -8,7 +8,6 @@ import re
 import particleLoop
 import apImage
 import apDisplay
-import apTemplate
 import apDatabase
 import appionData
 import apPeaks

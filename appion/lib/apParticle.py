@@ -16,7 +16,6 @@ import appionData
 import apImage
 import apDatabase
 import apDisplay
-import apTemplate
 
 appiondb = apDB.apdb
 leginondb = apDB.db
@@ -201,9 +200,6 @@ def getDBparticledataImage(imgdict,expid):
 	"""
 	return imgdict
 
-def getTemplateDBInfo(tmpldbid):
-	return appiondb.direct_query(appionData.ApTemplateImageData, tmpldbid)
-
 def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2, transdata, params):
 	"""
 	takes both image dicts (imgdict) and inserts particle pairs into DB from peaktrees
@@ -307,7 +303,7 @@ def insertParticlePeaks(peaktree, imgdict, expid, params):
 		particlesq['dbemdata|AcquisitionImageData|image'] = legimgid
 
 		if 'template' in peakdict and peakdict['template'] is not None:
-			particlesq['template'] = getTemplateDBInfo(peakdict['template'])
+			particlesq['template'] = appiondb.direct_query(appionData.ApTemplateImageData, peakdict['template'])
 
 		for key in 'xcoord','ycoord','correlation','peakmoment','peakstddev','peakarea':
 			if key in peakdict and peakdict[key] is not None:

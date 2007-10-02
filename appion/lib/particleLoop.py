@@ -8,7 +8,6 @@ import re
 import appionLoop
 import apImage
 import apDisplay
-import apTemplate
 import apDatabase
 import apPeaks
 import appionData
