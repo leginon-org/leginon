@@ -597,7 +597,7 @@ def getImgsDefocPairFromSelexonId(params):
 def insertStackRun(params):
 	stparamq=appionData.ApStackParamsData()
 	paramlist = ('boxSize','bin','phaseFlipped','aceCutoff','correlationMin','correlationMax',
-		'checkMask','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized')
+		'checkMask','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized', 'defocpair')
 
 	for p in paramlist:
 		if p in params:
@@ -656,6 +656,8 @@ def insertStackRun(params):
 			apDisplay.printError("Stack description is not the same!")
 		# make sure the the run is the same:
 		rinstack = apdb.query(rinstackq, results=1)
+		print rinstack
+		
 		if rinstack:
 			if rinstack[0]['stackRun']['stackParams'] != stparamq:
 				for i in rinstack[0]['stackRun']['stackParams']:
@@ -674,7 +676,7 @@ def insertStackRun(params):
 def insertStackRunREFLEGINON(params):
 	stparamq=appionData.ApStackParamsData()
 	paramlist = ('boxSize','bin','phaseFlipped','aceCutoff','correlationMin','correlationMax',
-		'checkMask','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized')
+		'checkMask','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized', 'defocpair')
 
 	for p in paramlist:
 		if p in params:
