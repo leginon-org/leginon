@@ -355,7 +355,7 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
   if ($templates==0) {echo "none";}
-  else {echo "$models available";}
+  else {echo "<A HREF='viewmodels.php?expId=$sessionId'>$models available</A>";}
   echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>";
