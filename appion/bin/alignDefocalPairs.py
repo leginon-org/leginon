@@ -9,7 +9,6 @@ import appionLoop
 import apFindEM
 import apImage
 import apDisplay
-import apTemplate
 import apDatabase
 import apPeaks
 import apParticle
@@ -18,7 +17,7 @@ import apDefocalPairs
 #import apViewIt
 #import selexonFunctions  as sf1
 
-class TemplateCorrelationLoop(appionLoop.AppionLoop):
+class AlignDefocLoop(appionLoop.AppionLoop):
 	def processImage(self, imgdata):
 		self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params)
 
@@ -27,7 +26,6 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 
 	def commitToDatabase(self, imgdata):
 		apDefocalPairs.insertShift(imgdata, self.sibling, self.shiftpeak)
-#		apDefocalPairs.insertShiftREFLEGINON(imgdata, self.sibling, self.shiftpeak)
 
 	def specialDefaultParams(self):
 		self.params['lp']=30
@@ -41,6 +39,6 @@ class TemplateCorrelationLoop(appionLoop.AppionLoop):
 				self.params['lp']=float(elements[1])
 
 if __name__ == '__main__':
-	imgLoop = TemplateCorrelationLoop()
+	imgLoop = AlignDefocLoop()
 	imgLoop.run()
 
