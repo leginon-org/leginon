@@ -268,11 +268,14 @@ def createSpiderRefFile(params):
 	"""
 	takes the reference template file and creates a spider file with same pixel size and box size
 	"""
-	tmpltinfo = apDatabase.getTemplateFromId(params['refid'])
-	reffile = os.path.join(tmpltinfo['path']['path'],tmpltinfo['templatename'])
+	templatedata = apTemplate.getTemplateFromId(params['refid'])
+	reffile = os.path.join(templatedata['path']['path'],templatedata['templatename'])
+
+	scalefactor = round(templatedata['apix'],5)/round(params['apix'],5)
+	refarray = apImage.mrcToArray(reffile)
+	scaleRefArray = apTemplate.scaleTemplate(refarray, scalefactor, params['boxsize'])
 	tmpreffile = os.path.join(params['rundir'],'tmpreferencefile.mrc')
-	scalefactor = round(tmpltinfo['apix'],5)/round(params['apix'],5)
-	apTemplate.scaleAndClipTemplate(reffile,scalefactor,tmpreffile,params['boxsize'])
+	apImage.arrayToMrc(scaleRefArray, tmpreffile)
 
 	emancmd  = "proc2d "
 	emancmd += tmpreffile+" "
