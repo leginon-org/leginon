@@ -57,10 +57,13 @@ def writeFunctionLog(commandline, params=None, logfile=None):
 	#WRITE INFO
 	timestamp = "["+time.asctime()+"]\n"
 	out=""
-	for arg in commandline:
-		out += arg+" "
 	f=open(logfile,'a')
 	f.write(timestamp)
+	for arg in commandline:
+		if len(out) > 60 or len(out)+len(arg) > 90:
+			f.write(out+"\\\n")
+			out = "  "
+		out += arg+" "
 	f.write(out+"\n")
 	f.close()
 
