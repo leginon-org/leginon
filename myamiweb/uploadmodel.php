@@ -165,7 +165,7 @@ function runUploadModel() {
   $command.="$model ";
   $command.="session=$session ";
   $command.="apix=$apix ";
-  $command.="resolution=$res ";
+  $command.="res=$res ";
   $command.="symmetry=$sym ";
   if ($contour) $command.="contour=$contour ";
   if ($zoom) $command.="zoom=$zoom ";
