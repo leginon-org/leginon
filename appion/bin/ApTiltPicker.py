@@ -464,28 +464,33 @@ class PickerApp(wx.App):
 		#a2 = apTiltTransform.a1Toa2Data(a1, self.data)
 		#a1b = apTiltTransform.a2Toa1Data(a2, self.data)
 		#print a1,a2,a1b
+
+		#Picks are imported from tiltaligner
 		len1 = len(self.picks1)
 		len2 = len(self.picks2)
 		if len1 < 1 or len2 < 1:
-			print "there are no picks",len1,len2
-			return
+			apDisplay.printMsg("there are no picks to import: "+str(len1)+", "+str(len2))
+			return False
 		targets1 = self.panel1.getTargets('Picked')
 		targets2 = self.panel2.getTargets('Picked')
 		a1 = self.targetsToArray(targets1)
 		a2 = self.targetsToArray(targets2)
 		apTiltTransform.setPointsFromArrays(a1, a2, self.data)
 		list1, list2 = apTiltTransform.alignPicks(self.picks1, self.picks2, self.data)
+		if list1.shape[0] == 0 or list2.shape[0] == 0:
+			apDisplay.printMsg("no new picks found")
+			return False
 		if a1.shape[0] > 0:
-			newa1 = numpy.vstack((a1, list1))
+			newa1 = apTiltTransform.mergePicks(a1, list1)
 		else:
 			newa1 = list1
 		if a2.shape[0] > 0:
-			newa2 = numpy.vstack((a2, list2))
+			newa2 = apTiltTransform.mergePicks(a2, list2)
 		else:
 			newa2 = list2
 		self.panel1.setTargets('Picked', newa1)
 		self.panel2.setTargets('Picked', newa2)
-		return
+		return True
 
 	#---------------------------------------
 	def onFitTheta(self, evt):
@@ -516,19 +521,9 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onClearPicks(self, evt):
-		targets1 = self.panel1.getTargets('Picked')
-		if len(targets1) > 1000:
-			self.panel1.setTargets('Picked', [targets1[0]])
-		else:
-			self.panel1.setTargets('Picked', [])
+		self.panel1.setTargets('Picked', [])
 		self.panel1.setTargets('Aligned', [])
-
-		targets2 = self.panel2.getTargets('Picked')
-		if len(targets2) > 1000:
-			self.panel2.setTargets('Picked', [targets2[0]])
-		else:
-			self.panel2.setTargets('Picked', [])
-
+		self.panel2.setTargets('Picked', [])
 		self.panel2.setTargets('Aligned', [])
 
 	#---------------------------------------
@@ -863,14 +858,16 @@ class PickerApp(wx.App):
 		a1 = self.getArray1()
 		a2 = self.getArray2()
 		if len(a1) == 0 or len(a2) == 0:
-			return False
-		#copy over the peaks
-		self.appionloop.peaks1 = a1
-		self.appionloop.peaks2 = a2
-		a2b = self.getAlignedArray2()
-		sqdev = numpy.sum( (a1 - a2b)**2, axis=1 )
-		self.appionloop.peakerrors = numpy.sqrt( sqdev )
-		self.data['rmsd'] = math.sqrt(float(ndimage.mean(sqdev)))
+			self.appionloop.peaks1 = []
+			self.appionloop.peaks2 = []
+		else:
+			#copy over the peaks
+			self.appionloop.peaks1 = a1
+			self.appionloop.peaks2 = a2
+			a2b = self.getAlignedArray2()
+			sqdev = numpy.sum( (a1 - a2b)**2, axis=1 )
+			self.appionloop.peakerrors = numpy.sqrt( sqdev )
+			self.data['rmsd'] = math.sqrt(float(ndimage.mean(sqdev)))
 		#self.data['overlap'] = ...
 		#copy over the data
 		for i,v in self.data.items():

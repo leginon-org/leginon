@@ -79,14 +79,17 @@ def _diffParticles(x1, initx, xscale, a1, a2):
 	return rmsd
 
 def getPointsFromArrays(a1, a2, shiftx, shifty):
+	if len(a1) == 0 or len(a2) == 0:
+		return None,None
 	point1 = numpy.asarray(a1[0,:], dtype=numpy.float32)
 	point2 = numpy.asarray(a2[0,:], dtype=numpy.float32) + numpy.array([shiftx,shifty], dtype=numpy.float32)
 	return (point1, point2)
 
 def setPointsFromArrays(a1, a2, data):
-	data['point1'] = numpy.asarray(a1[0,:], dtype=numpy.float32)
-	data['point2'] = numpy.asarray(a2[0,:], dtype=numpy.float32) + numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32)
-	data['point2b'] = numpy.asarray(a2[0,:], dtype=numpy.float32) - numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32)
+	if len(a1) > 0 and len(a2) > 0:
+		data['point1'] = numpy.asarray(a1[0,:], dtype=numpy.float32)
+		data['point2'] = numpy.asarray(a2[0,:], dtype=numpy.float32) + numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32)
+		data['point2b'] = numpy.asarray(a2[0,:], dtype=numpy.float32) - numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32)
 	return
 
 def a1Toa2Data(a1, data):
@@ -213,6 +216,20 @@ def maskOverlapRegion(image1, image2, data):
 
 		return (image1, image2)
 
+def mergePicks(picks1, picks2, limit=15.0):
+	good = []
+	#newa1 = numpy.vstack((a1, list1))
+	for p2 in picks2:
+		p1, dist = findClosestPick(p2,picks1)
+		if dist > limit:
+			good.append(p2)
+	apDisplay.printMsg("Kept "+str(len(good))+" of "+str(len(picks2))+" overlapping peaks")
+	if len(good) == 0:
+		return picks1
+	goodarray = numpy.asarray(good)
+	newarray = numpy.vstack((picks1, goodarray))
+	return newarray
+
 def alignPicks(picks1, picks2, data, limit=5.0):
 	list1 = []
 	alignlist2 = []
@@ -221,8 +238,8 @@ def alignPicks(picks1, picks2, data, limit=5.0):
 	#find closest pick and insert into lists
 	filled = {}
 	for pick in picks1:
-		closepick = findClosestPick(pick, alignpicks2, limit)
-		if closepick is not None: 
+		closepick,dist = findClosestPick(pick, alignpicks2)
+		if dist < limit: 
 			key = str(closepick)
 			if not key in filled:
 				list1.append(pick)
@@ -230,8 +247,8 @@ def alignPicks(picks1, picks2, data, limit=5.0):
 				filled[key] = True
 	limit *= 2.0
 	for pick in picks1:
-		closepick = findClosestPick(pick, alignpicks2, limit)
-		if closepick is not None: 
+		closepick,dist = findClosestPick(pick, alignpicks2)
+		if dist < limit: 
 			key = str(closepick)
 			if not key in filled:
 				list1.append(pick)
@@ -239,8 +256,8 @@ def alignPicks(picks1, picks2, data, limit=5.0):
 				filled[key] = True
 	limit *= 2.0
 	for pick in picks1:
-		closepick = findClosestPick(pick, alignpicks2, limit)
-		if closepick is not None: 
+		closepick,dist = findClosestPick(pick, alignpicks2)
+		if dist < limit: 
 			key = str(closepick)
 			if not key in filled:
 				list1.append(pick)
@@ -251,20 +268,19 @@ def alignPicks(picks1, picks2, data, limit=5.0):
 	nalignlist2 = numpy.array(alignlist2, dtype=numpy.int32)
 	#transform back
 	nlist2 = a1Toa2Data(nalignlist2, data)
-	apDisplay.printMsg("Aligned "+str(len(nlist1))+" particles to "+str(len(nlist2)))
+	apDisplay.printMsg("Aligned "+str(len(nlist1))+" of "+str(len(picks1))+\
+		" particles to "+str(len(nlist2)))+" of "+str(len(picks2))
 	return nlist1, nlist2
 
-def findClosestPick(origpick, picks, limit):
+def findClosestPick(origpick, picks):
 	picked = None
-	bestdist = limit
+	bestdist = 512.0
 	for newpick in picks:
 		dist = pickDist(origpick, newpick)
 		if dist < bestdist:
 			picked = newpick
 			bestdist = dist
-	if bestdist == limit:
-		return None
-	return picked
+	return picked,bestdist
 
 def pickDist(pick1, pick2):
 	dist = math.hypot(pick1[0]-pick2[0], pick1[1]-pick2[1])
