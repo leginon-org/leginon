@@ -489,9 +489,7 @@ class particledata {
 
 	function getMaskAssessRunByName ($sessionId,$name){
 		$q = "select * "
-			."from `ApMaskAssessmentRunData` AS r "
-			."LEFT JOIN ApPathData AS p ON "
-			."(r.`REF|ApPathData|path`=p.`DEF_id`) "
+			."from `ApMaskAssessmentRunData` "
 			."where "
 			."`REF|leginondata|SessionData|session` = '$sessionId' AND "
 			." `name` = '$name' ";
@@ -526,6 +524,7 @@ class particledata {
 		}
 		$q.="m.`REF|ApMaskAssessmentRunData|run` = '$runId' AND "
 			."m.`keep` = 1 ";
+		echo $q;
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 			
