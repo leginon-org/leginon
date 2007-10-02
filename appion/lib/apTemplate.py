@@ -18,117 +18,97 @@ import apDatabase
 import apDB
 import appionData
 
+appiondb = apDB.apdb
+
 def getTemplates(params):
-	print " ... getting templates"
-	if params['templateIds']:
-		params['template'] = 'originalTemporaryTemplate'
-		# get the templates from the database
-		apDatabase.getDBTemplates(params)
-		# scale them to the appropriate pixel size
-		rescaleTemplates(params)
-		# set the template name to the copied file names
-		params['template'] = 'scaledTemporaryTemplate'
-	checkTemplates(params)
-	# go through the template mrc files and downsize & filter them
-	#for tmplt in params['templatelist']:
-	#	downSizeTemplate(tmplt, params)
-	apDisplay.printMsg("downsize & filtered "+str(len(params['templatelist']))+ \
-		" file(s) with root \""+params["template"]+"\"")
+	"""
+	Reads params['templateIds'], a list of template ids
+	Copies and scales templates
+	Returns params['templatelist'], a list of template file basenames
+	"""
 
-def rescaleTemplates(params):
-	i=1
-	#removePreviousTemplates(params)
-	for tmplt in params['ogTmpltInfo']:
-		ogtmpltname  = "originalTemporaryTemplate"+str(i)+".mrc"
-		ogtmpltname  = os.path.join(params['rundir'], ogtmpltname)
-		newtmpltname = "scaledTemporaryTemplate"+str(i)+".mrc"
-		newtmpltname = os.path.join(params['rundir'], newtmpltname)
+	apDisplay.printMsg("getting templates")
 
-		if params['apix'] != params['scaledapix'][i]:
-			print "rescaling template",str(i),":",tmplt['apix'],"->",params['apix']
-			scalefactor = tmplt['apix'] / params['apix']
-			if abs(scalefactor - 1.0) < 0.01:
-				scalefactor = 1.0
-			imgdata = scaleAndClipTemplate(ogtmpltname, scalefactor, newtmpltname)
-			params['scaledapix'][i] = params['apix']
-			downSizeTemplate(imgdata, newtmpltname, params)
-		i+=1
-	return
+	if not params['templateIds']:
+		apDisplay.printError("No template ids were specified")
 
-def removePreviousTemplates(params):
-	for i in range(15):
-		filename = "scaledTemporaryTemplate"+str(i)+".dwn.mrc"
-		filename = os.path.join(params['rundir'],filename)
-		if os.path.isfile(filename):
-			apDisplay.printWarning(filename+" already exists. Removing it")
-			os.remove(filename)
+	params['templatelist'] = [] #list of scaled files 
+	for i,templateid in enumerate(params['templateIds']):
+		index = i+1
+		#QUERY DB FOR TEMPLATE INFO
+		templatedata = appiondb.direct_query(appionData.ApTemplateImageData, templateid)
+		if not (templatedata):
+			apDisplay.printError("Template Id "+str(templateid)+" was not found in database.")
 
-def scaleAndClipTemplate(filename, scalefactor, newfilename, boxsize=False):
-	imgdata = apImage.mrcToArray(filename)
-	if(imgdata.shape[0] != imgdata.shape[1]):
-		apDisplay.printWarning("template is NOT square, this may cause errors")
-	if scalefactor:
-		scaledimgdata = apImage.scaleImage(imgdata, scalefactor)
-	else:
-		scaledimgdata = imgdata
-	origsize  = scaledimgdata.shape[1]
-	edgeavg = apImage.meanEdgeValue(scaledimgdata)
-	# if boxsize is specified, and not the same as original, scale it
-	if boxsize and boxsize!=origsize:
-		padsize  = int(boxsize)
+		#COPY THE FILE OVER
+		origtemplatepath = os.path.join(templatedata['path']['path'], templatedata['templatename'])
+		if not os.path.isfile(origtemplatepath):
+			apDisplay.printError("Template file not found: "+origtemplatepath)
+		apDisplay.printMsg("getting template: "+origtemplatepath)
+		copytemplatepath = os.path.join(params['rundir'], "origTemplate"+str(index)+".mrc")
+		scaletemplatepath = os.path.join(params['rundir'], "scaledTemplate"+str(index)+".mrc")
+		filtertemplatepath = os.path.join(params['rundir'], "filterTemplate"+str(index)+".mrc")
+		shutil.copy(origtemplatepath, copytemplatepath)
+
+		#RESCALE THE TEMPLATE
+		templatearray = apImage.mrcToArray(copytemplatepath)
+		#scale to correct apix
+		scalefactor = templatedata['apix'] / params['apix']
+		if abs(scalefactor - 1.0) > 0.01:
+			apDisplay.printMsg("rescaling template "+str(index)+": "+str(templatedata['apix'])+"->"+str(params['apix']))
+		templatearray = scaleTemplate(templatearray, scalefactor)
+		apImage.arrayToMrc(templatearray, scaletemplatepath, msg=False)
+		#bin and filter
+		templatearray = apImage.preProcessImage(templatearray, params=params, highpass=0, planeReg=False, invert=False)
+		#write to file
+		apImage.arrayToMrc(templatearray, filtertemplatepath, msg=False)
+
+		#ADD TO TEMPLATE LIST
+		params['templatelist'].append(os.path.basename(filtertemplatepath))
+
+	#FINISH LOOP OVER template ids
+	#Set the apix
+	params['templateapix'] = params['apix']
+	apDisplay.printMsg("scaled & filtered "+str(len(params['templatelist']))+" file(s)")
+
+	return params['templatelist']
+
+
+def getTemplateFromId(templateid):
+	return appiondb.direct_query(appionData.ApTemplateImageData, templateid)
+
+def scaleTemplate(templatearray, scalefactor=1.0, boxsize=None):
+
+	if(templatearray.shape[0] != templatearray.shape[1]):
+		apDisplay.printWarning("template shape is NOT square, this may cause errors")
+
+	if abs(scalefactor - 1.0) > 0.01:
+		templatearray = apImage.scaleImage(templatearray, scalefactor)
+
+	#make sure the box size is divisible by 16
+	if boxsize is not None or (templatearray.shape[0] % 16 != 0):
+		edgeavg = apImage.meanEdgeValue(templatearray)
+		origsize = templatearray.shape[0]
+		if boxsize is None:
+			padsize  = int(math.ceil(float(origsize)/16)*16)
+		else:
+			padsize = boxsize
 		padshape = numpy.array([padsize,padsize])
 		apDisplay.printMsg("changing box size from "+str(origsize)+" to "+str(padsize))
-		scaledimgdata = apImage.frame_constant(scaledimgdata, padshape, cval=edgeavg)
-	#make sure the box size is divisible by 16 if not specified
-	elif (origsize % 16 != 0) and not boxsize:
-		edgeavg = apImage.meanEdgeValue(scaledimgdata)
-		padsize  = int(math.ceil(float(origsize)/16)*16)
-		padshape = numpy.array([padsize,padsize])
-		apDisplay.printMsg("changing box size from "+str(origsize)+" to "+str(padsize))
-		scaledimgdata = apImage.frame_constant(scaledimgdata, padshape, cval=edgeavg)
-	apImage.arrayToMrc(scaledimgdata, newfilename, msg=False)
-	return scaledimgdata
+		templatearray = apImage.frame_constant(templatearray, padshape, cval=edgeavg)
 
-def downSizeTemplate(imgdata, filename, params):
-	#downsize and filter arbitary MRC template image
-	bin = params['bin']
-	#imgdata = apImage.mrcToArray(filename)
-	boxsize = imgdata.shape
-	
-	if (boxsize[0]/bin) % 2 !=0:
-		apDisplay.printError("binned image must be divisible by 2")
-	if boxsize[0] % bin != 0:
-		apDisplay.printError("box size not divisible by binning factor")
-	imgdata = apImage.preProcessImage(imgdata, params=params, highpass=0, planeReg=False, invert=False)
-	#replace extension with .dwn.mrc
-	ext=re.compile('\.mrc$')
-	filename=ext.sub('.dwn.mrc', filename)
-	if imgdata.shape[0] < 20:
+	if templatearray.shape[0] < 20 or templatearray.shape[1] < 20:
 		apDisplay.printWarning("template is only "+str(imgdata.shape[0])+" pixels wide\n"+\
 		  " and may only correlation noise in the image")
-	time.sleep(5)
-	apImage.arrayToMrc(imgdata, filename, msg=False)
-	return
 
-def checkTemplates(params):
-	# determine number of template files
-	# if using 'preptemplate' option, will count number of '.mrc' files
-	# otherwise, will count the number of '.dwn.mrc' files
+	return templatearray
 
+def findTemplates(params):
 	name = params['template']
-	
-	#if (os.path.isfile(name+'.mrc') and os.path.isfile(name+str(n+1)+'.mrc')):
-	#	templates not following naming scheme
-	#	apDisplay.printError("Both "+name+".mrc and "+name+str(n+1)+".mrc exist\n")
-
-	params['templatelist'] = []
-	stop = False
-	# count number of template images.
-	# if a template image exists with no number after it
-	# counter will assume that there is only one template
 
 	globlist = glob.glob(name+"*")
 
+	params['templatelist'] = []
 	for f in globlist:
 		if os.path.isfile(f) and f[-4:] == ".mrc":
 			params['templatelist'].append(f)
@@ -155,7 +135,7 @@ def copyTemplatesToOutdir(params):
 		
 def insertTemplateRun(params,runq,templatenum):
 	tid=params['templateIds'][templatenum]
-	templateimagedata=apDB.apdb.direct_query(appionData.ApTemplateImageData,tid)
+	templateimagedata=appiondb.direct_query(appionData.ApTemplateImageData,tid)
 	# if no templates in the database, exit
 	if not (templateimagedata):
 		apDisplay.printError("Template '"+tid+"' not found in database. Use uploadTemplates.py")
@@ -175,7 +155,7 @@ def insertTemplateRun(params,runq,templatenum):
 	templaterunq['range_start']=float(strt)
 	templaterunq['range_end']=float(end)
 	templaterunq['range_incr']=float(incr)
-	apDB.apdb.insert(templaterunq)
+	appiondb.insert(templaterunq)
 	return
 
 def insertTemplateImage(params):
@@ -183,7 +163,7 @@ def insertTemplateImage(params):
 		templateq=appionData.ApTemplateImageData()
 		templateq['path'] = appionData.ApPathData(path=os.path.normpath(params['outdir']))
 		templateq['templatename']=name
-		templateId=apDB.apdb.query(templateq, results=1)
+		templateId=appiondb.query(templateq, results=1)
 	        #insert template to database if doesn't exist
 		if not (templateId):
 			print "Inserting",name,"into the template database"
@@ -191,14 +171,14 @@ def insertTemplateImage(params):
 			templateq['diam']=params['diam']
 			templateq['description']=params['description']
 			templateq['project|projects|project']=params['projectId']
-			apDB.apdb.insert(templateq)
+			appiondb.insert(templateq)
 		else:
 			apDisplay.printWarning("template already in database.\nNot reinserting")
 	return
 
 def checkTemplateParams(runq, params):
 	templaterunq = appionData.ApTemplateRunData(selectionrun=runq)
-	templaterundata = apDB.apdb.query(templaterunq)
+	templaterundata = appiondb.query(templaterunq)
 	if not templaterundata:
 		return True
 	#make sure of using same number of templates
@@ -212,11 +192,11 @@ def checkTemplateParams(runq, params):
 			strt=params["startang"+str(n+1)]
 			end=params["endang"+str(n+1)]
 			incr=params["incrang"+str(n+1)]
-			tmpltimagedata=apDB.apdb.direct_query(appionData.ApTemplateImageData,params['templateIds'][n])
+			tmpltimagedata=appiondb.direct_query(appionData.ApTemplateImageData,params['templateIds'][n])
 			tmpltrunq=appionData.ApTemplateRunData()
 			tmpltrunq['selectionrun']=runq
 			tmpltrunq['template']=tmpltimagedata
-			tmpltrundata=apDB.apdb.query(tmpltrunq,results=1)
+			tmpltrundata=appiondb.query(tmpltrunq,results=1)
 			if (tmpltrundata[0]['range_start']!=strt or
 				tmpltrundata[0]['range_end']!=end or
 				tmpltrundata[0]['range_incr']!=incr):
