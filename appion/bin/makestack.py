@@ -798,7 +798,7 @@ def getStackId(params):
 
 if __name__ == '__main__':
 	# record command line
-	apParam.writeFunctionLog(sys.argv, logfile=".makestacklog")
+	#apParam.writeFunctionLog(sys.argv, logfile=".makestacklog")
 
 	# create params dictionary & set defaults
 	params = createDefaults()
@@ -839,6 +839,7 @@ if __name__ == '__main__':
 		#params['rundir'] = os.path.join(params['outdir'], params['runid'])
 	apParam.createDirectory(params['outdir'])
 	logfile = os.path.join(params['outdir'], "makestack.log")
+	os.chdir(params['outdir'])
 	apParam.writeFunctionLog(sys.argv, logfile=logfile)
 
 	# if making a single stack, remove existing stack if exists
