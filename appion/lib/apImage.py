@@ -41,7 +41,7 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, planeReg
 
 
 def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=False, 
-		median=None, highpass=None, correct=False, invert=None, params={}):
+		median=None, highpass=None, correct=False, invert=None, msg=True, params={}):
 	"""
 	standard processing for an image
 	"""
@@ -93,7 +93,8 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=False,
 			apDisplay.printWarning("'highpass' is not defined in preProcessImage()")
 	#HIGH PASS FILTER => PLANE REGRESSION
 	result = _processImage(imgarray, bin, apix, lowpass, highpass, planeReg, median, invert)
-	apDisplay.printMsg("filtered image in "+apDisplay.timeString(time.time()-startt))
+	if msg is True:
+		apDisplay.printMsg("filtered image in "+apDisplay.timeString(time.time()-startt))
 	return result
 
 def binImg(imgarray,bin=1):

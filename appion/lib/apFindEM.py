@@ -133,9 +133,9 @@ def processAndSaveImage(imgdata, params):
 		imgarray = apImage.correctImage(imgdata, params)
 	else:
 		imgarray = imgdata['image']
-	imgarray = apImage.preProcessImage(imgarray, params=params)
+	imgarray = apImage.preProcessImage(imgarray, params=params, msg=False)
 	imgpath = os.path.join(params['rundir'], imgdata['filename']+".dwn.mrc")
-	apImage.arrayToMrc(imgarray, imgpath)
+	apImage.arrayToMrc(imgarray, imgpath, msg=False)
 	return
 
 def getFindEMPath():
