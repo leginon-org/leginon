@@ -26,7 +26,9 @@ class TemplateCorrelationLoop(particleLoop.ParticleLoop):
 
 	def particleProcessImage(self, imgdata):
 		imgname = imgdata['filename']
-		apTemplate.rescaleTemplates(self.params)
+		if abs(self.params['apix'] - self.params['templateapix']) > 0.01:
+			#rescale templates, apix has changed
+			apTemplate.getTemplates(self.params)
 		### RUN FindEM
 		if 'method' in self.params and self.params['method'] == "experimental":
 			#ccmaplist = sf2.runCrossCorr(params,imgname)
@@ -54,16 +56,14 @@ class TemplateCorrelationLoop(particleLoop.ParticleLoop):
 		return
 
 	def particleDefaultParams(self):
-		self.params['template']=''
 		self.params['templatelist']=[]
 		self.params['startang']=0
 		self.params['endang']=10
 		self.params['incrang']=20
-		self.params['templateIds']=''
+		self.params['templateIds']=None
 		self.params['multiple_range']=False
-		self.params["ogTmpltInfo"]=[]
 		self.params['mapdir']="ccmaxmaps"
-		self.params["scaledapix"]={}
+		self.params["templateapix"]=None
 		self.params["keepall"]=False
 
 	def particleParseParams(self,args):
@@ -71,9 +71,7 @@ class TemplateCorrelationLoop(particleLoop.ParticleLoop):
 			elements=arg.split('=')
 			elements[0] = elements[0].lower()
 			#print elements
-			if (elements[0]=='template'):
-				self.params['template']=elements[1]
-			elif (elements[0]=='range'):
+			if (elements[0]=='range'):
 				angs=elements[1].split(',')
 				if (len(angs)==3):
 					self.params['startang']=int(angs[0])
@@ -106,10 +104,8 @@ class TemplateCorrelationLoop(particleLoop.ParticleLoop):
 				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
 	def particleParamConflicts(self):
-		if not self.params['templateIds'] and not self.params['apix']:
-			apDisplay.printError("if not using templateIds, you must enter a template pixel size")
-		if self.params['templateIds'] and self.params['template']:
-			apDisplay.printError("Both template database IDs and mrc file templates are specified,\nChoose only one")
+		if not self.params['templateIds']:
+			apDisplay.printError("templateIds not specified, please run uploadTemplate.py")
 
 	def postLoopFunctions(self):
 		if not self.params['keepall']:
