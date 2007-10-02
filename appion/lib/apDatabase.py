@@ -98,52 +98,6 @@ def getSessionDataFromSessionName(sessionname):
 	else:
 		apDisplay.printError("could not find session, "+sessionname)
 
-def getTemplateFromId(templateid):
-	# find templateImage row
-	tmpltinfo = appiondb.direct_query(appionData.ApTemplateImageData, templateid)
-	if not (tmpltinfo):
-		apDisplay.printError("TemplateId "+str(templateid)+" not found in database. Use 'uploadTemplate.py'\n")
-	return tmpltinfo
-	
-def getDBTemplates(params):
-	tmptmplt=params['template']
-	i=1
-	for tid in params['templateIds']:
-		tmpltinfo = getTemplateFromId(tid)
-		apix = tmpltinfo['apix']
-		# store row data in params dictionary
-		params['ogTmpltInfo'].append(tmpltinfo)
-
-		# copy file to current directory
-		origtmplpath = os.path.join(tmpltinfo['path']['path'], tmpltinfo['templatename'])
-		if os.path.isfile(origtmplpath):
-			print "getting image:", origtmplpath
-			newtmplpath = os.path.join(params['rundir'],tmptmplt+str(i)+".mrc")
-			shutil.copy(origtmplpath, newtmplpath)
-		else:
-			apDisplay.printError("Template file not found: "+origtmplpath)
-		params['scaledapix'][i] = 0
-		i+=1
-	return
-
-	tmptmplt=params['template']
-	i=1
-	for tid in params['templateIds']:
-		# find templateImage row
-		tmpltinfo=appiondb.direct_query(appionData.ApTemplateImageData, tid)
-		if not (tmpltinfo):
-			apDisplay.printError("TemplateId "+str(tid)+" not found in database.  Use 'uploadTemplate.py'\n")
-		fname=os.path.join(tmpltinfo['path']['path'],tmpltinfo['templatename'])
-		apix=tmpltinfo['apix']
-		# store row data in params dictionary
-		params['ogTmpltInfo'].append(tmpltinfo)
-		# copy file to current directory
-		print "getting image:",fname
-		os.system("cp "+fname+" "+tmptmplt+str(i)+".mrc")
-		params['scaledapix'][i]=0
-		i+=1
-	return
-
 def getImageData(imgname):
 	"""
 	get image data object from database
