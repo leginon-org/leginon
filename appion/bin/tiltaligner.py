@@ -184,7 +184,10 @@ class tiltAligner(particleLoop.ParticleLoop):
 
 	def processAndSaveAllImages(self):
 		print "Pre-processing images before picking"
+		count = 0
+		total = len(self.imgtree)
 		for imgdata in self.imgtree:
+			count += 1
 			tiltdata = apTiltPair.getTiltPair(imgdata)
 			if tiltdata is None:
 				#reject it
@@ -193,16 +196,23 @@ class tiltAligner(particleLoop.ParticleLoop):
 
 			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
 			if os.path.isfile(imgpath):
-				print "already processed: ",apDisplay.short(imgdata['filename'])
+				sys.stderr.write(".")
+				#print "already processed: ",apDisplay.short(imgdata['filename'])
 			else:
-				print "processing: ",apDisplay.short(imgdata['filename'])
+				sys.stderr.write("#")
+				#print "processing: ",apDisplay.short(imgdata['filename'])
 				apFindEM.processAndSaveImage(imgdata, params=self.params)
 			tiltpath = os.path.join(self.params['rundir'], tiltdata['filename']+'.dwn.mrc')
 			if os.path.isfile(tiltpath):
-				print "already processed: ",apDisplay.short(tiltdata['filename'])
+				sys.stderr.write(".")
+				#print "already processed: ",apDisplay.short(tiltdata['filename'])
 			else:
-				print "processing: ",apDisplay.short(tiltdata['filename'])
+				sys.stderr.write("#")
+				#print "processing: ",apDisplay.short(tiltdata['filename'])
 				apFindEM.processAndSaveImage(tiltdata, params=self.params)
+
+			if count % 40 == 0:
+				sys.stderr.write(" %04d left\n" % total-count)
 
 	def getTiltAssess(self, imgdata, tiltdata):
 		ass1 = apDatabase.getImgAssessmentStatus(imgdata)
