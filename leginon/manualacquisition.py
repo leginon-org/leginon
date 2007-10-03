@@ -12,12 +12,14 @@ import project
 import threading
 import time
 import gui.wx.ManualAcquisition
+import player
 import instrument
 import os
 import re
 import calibrationclient
 import copy
 from pyami import arraystats, imagefun
+import numpy
 
 class AcquireError(Exception):
 	pass
@@ -40,6 +42,7 @@ class ManualAcquisition(node.Node):
 		'defocus2switch': False,
 		'defocus2': 0.0,
 		'dark': False,
+		'manual focus exposure time': 100.0,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.loopstop = threading.Event()
@@ -62,6 +65,13 @@ class ManualAcquisition(node.Node):
 																				self.panel)
 
 		self.dosecal = calibrationclient.DoseCalibrationClient(self)
+
+		self.manualchecklock = threading.Lock()
+		self.maskradius = 1.0
+		self.focexptime = 100.0
+		self.man_power = None
+		self.man_image = None
+		self.manualplayer = player.Player(callback=self.onManualPlayer)
 
 		self.start()
 
@@ -351,3 +361,100 @@ class ManualAcquisition(node.Node):
 		self.publish(dosedata, database=True, dbforce=True)
 		self.instrument.ccdcamera.Settings = origcam
 		self.logger.info('measured dose: %.3e e/A^2' % (dose/1e20,))
+		
+
+	def onManualPlayer(self, state):
+		self.panel.playerEvent(state, self.panel.manualdialog)
+
+	def manualNow(self):
+		istr = 'Using current tem condition for manual focus check'
+		self.logger.info(istr)
+		### Warning:  no target is being used, you are exposing
+		### whatever happens to be under the beam
+		t = threading.Thread(target=self.manualCheckLoop, args=())
+		t.setDaemon(1)
+		t.start()
+
+	def onManualCheck(self):
+		evt = gui.wx.ManualAcquisition.ManualCheckEvent(self.panel)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
+
+	def onManualCheckDone(self):
+		try:
+			self.instrument.ccdcamera.Settings = self.settings['camera settings']
+		except:
+			self.logger.error('unable to set camera parameters')
+		evt = gui.wx.ManualAcquisition.ManualCheckDoneEvent(self.panel)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
+
+	def manualCheckLoop(self, presetname=None, emtarget=None):
+		## copied and simplified from focuser.py
+		## go to preset and target
+		if presetname is not None:
+			self.presetsclient.toScope(presetname, emtarget)
+		self.logger.info('Starting manual focus loop, please confirm defocus...')
+		self.beep()
+		self.setManualCheckCamera()
+		self.manualplayer.play()
+		self.onManualCheck()
+		while True:
+			state = self.manualplayer.state()
+			if state == 'stop':
+				break
+			elif state == 'pause':
+				if self.manualplayer.wait() == 'stop':
+					break
+				if presetname is not None:
+					self.logger.info('Reseting preset and target after pause')
+					self.logger.debug('preset %s' % (presetname,))
+					self.presetsclient.toScope(presetname, emtarget)
+			# acquire image, show image and power spectrum
+			# allow user to adjust defocus and stig
+			correction = self.settings['correct image']
+			self.manualchecklock.acquire()
+			try:
+				if correction:
+					imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+				else:
+					imagedata = self.instrument.getData(data.CameraImageData)
+				imarray = imagedata['image']
+			except:
+				raise
+				self.manualchecklock.release()
+				self.manualplayer.pause()
+				self.logger.error('Failed to acquire image, pausing...')
+				continue
+			self.manualchecklock.release()
+			pow = imagefun.power(imarray, self.maskradius)
+			self.man_power = pow.astype(numpy.float32)
+			self.man_image = imarray.astype(numpy.float32)
+			self.panel.setManualImage(self.man_image, 'Image')
+			self.panel.setManualImage(self.man_power, 'Power')
+		self.onManualCheckDone()
+		self.logger.info('Manual focus check completed')
+
+
+	def setManualCheckCamera(self):
+		errstr = 'Acquire live image failed: %s'
+		self.logger.info('Acquiring live image at 512x512 binned by 1')
+		camdata0 = self.settings['camera settings']
+		print camdata0
+
+		camdata1 = copy.copy(camdata0)
+		
+		camdata1['exposure time']=self.focexptime
+
+		## figure out if we want to cut down to 512x512
+		for axis in ('x','y'):
+			binning = camdata0['binning'][axis]
+			change = camdata0['dimension'][axis]*binning - 512
+			unbinnedoffset = camdata1['offset'][axis]*binning
+			if change > 0 and binning > 1:
+				camdata1['dimension'][axis] = 512
+				camdata1['offset'][axis] = unbinnedoffset + (change / 2)
+		print camdata1
+		try:
+			self.instrument.ccdcamera.Settings = camdata1
+		except:
+			self.logger.error(errstr % 'unable to set camera parameters')
+			return

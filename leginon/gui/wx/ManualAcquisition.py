@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.26 $
+# $Revision: 1.27 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:05 $
-# $Author: vossman $
+# $Date: 2007-10-03 21:34:23 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -21,6 +21,7 @@ import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.Stats
 import gui.wx.ToolBar
+import gui.wx.Dialog
 import wx
 
 LoopStartedEventType = wx.NewEventType()
@@ -35,6 +36,20 @@ EVT_LOOP_STOPPED = wx.PyEventBinder(LoopStoppedEventType)
 class LoopStoppedEvent(wx.PyCommandEvent):
 	def __init__(self, source):
 		wx.PyCommandEvent.__init__(self, LoopStoppedEventType, source.GetId())
+		self.SetEventObject(source)
+
+ManualCheckEventType = wx.NewEventType()
+EVT_MANUAL_CHECK = wx.PyEventBinder(ManualCheckEventType)
+class ManualCheckEvent(wx.PyCommandEvent):
+	def __init__(self, source):
+		wx.PyCommandEvent.__init__(self, ManualCheckEventType, source.GetId())
+		self.SetEventObject(source)
+
+ManualCheckDoneEventType = wx.NewEventType()
+EVT_MANUAL_CHECK_DONE = wx.PyEventBinder(ManualCheckDoneEventType)
+class ManualCheckDoneEvent(wx.PyCommandEvent):
+	def __init__(self, source):
+		wx.PyCommandEvent.__init__(self, ManualCheckDoneEventType, source.GetId())
 		self.SetEventObject(source)
 
 class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
@@ -68,6 +83,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 													shortHelpString='Stop')
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
 
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_MANUAL_FOCUS, 'manualfocus',
+							 shortHelpString='Manual Focus')
 		self.initialize()
 
 		self.SetSizer(self.szmain)
@@ -88,6 +105,11 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	def onNodeInitialized(self):
 		gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
 		self.settingsdialog = SettingsDialog(self)
+		self.manualdialog = ManualFocusDialog(self, self.node)
+		self.Bind(EVT_MANUAL_CHECK, self.onManualCheck, self)
+		self.Bind(EVT_MANUAL_CHECK_DONE, self.onManualCheckDone, self)
+		
+		
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureDoseTool,
@@ -98,6 +120,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 											id=gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
 											id=gui.wx.ToolBar.ID_STOP)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onManualFocusTool,
+						  id=gui.wx.ToolBar.ID_MANUAL_FOCUS)
 		if self.node.projectdata is not None:
 			self.toolbar.Bind(wx.EVT_TOOL, self.onGridTool,
 												id=gui.wx.ToolBar.ID_GRID)
@@ -131,6 +155,25 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	def onMeasureDoseTool(self, evt):
 		self._acquisitionEnable(False)
 		threading.Thread(target=self.node.acquireImage, kwargs={'dose':True}).start()
+
+	def onManualFocusTool(self, evt):
+		self.node.manualNow()
+
+	def onManualCheck(self, evt):
+		#self.manualdialog.MakeModal(True)
+		self.manualdialog.Raise()
+		self.manualdialog.Show()
+
+	def onManualCheckDone(self, evt):
+		self.manualdialog.Show(False)
+		#self.manualdialog.MakeModal(False)
+
+	def setManualImage(self, image, typename, stats={}):
+		evt = gui.wx.Events.SetImageEvent(image, typename, stats)
+		self.manualdialog.GetEventHandler().AddPendingEvent(evt)
+
+	def manualUpdated(self):
+		self.manualdialog.manualUpdated()
 
 	def onLoopStopped(self, evt):
 		self._acquisitionEnable(True)
@@ -320,14 +363,151 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		return [sbsz, sbszscreen, sbszlowdose, sbszdefocus, ]
 
+class ManualFocusSettingsDialog(gui.wx.Dialog.Dialog):
+	def onInitialize(self):
+		self.maskradius = FloatEntry(self, -1, allownone=False,
+			chars=6,value='0.01')
+
+		label = wx.StaticText(self, -1, 'Mask radius:')
+		self.sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.maskradius, (0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, '% of image')
+		self.sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+
+		label = wx.StaticText(self, -1, 'Exposure Time:')
+		self.sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		self.focexptime = FloatEntry(self, -1, min=0,value='100', chars=7)
+		self.sz.Add(self.focexptime, (1, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'ms')
+		self.sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+
+		self.addButton('OK', wx.ID_OK)
+		self.addButton('Cancel', wx.ID_CANCEL)
+
+
+class ManualFocusDialog(wx.MiniFrame):
+	def __init__(self, parent, node, title='Manual Focus'):
+		wx.MiniFrame.__init__(self, parent, -1, title, size=(620,600),
+			style=wx.DEFAULT_FRAME_STYLE|wx.RESIZE_BORDER)
+		self.node = node
+
+		self.toolbar = wx.ToolBar(self, -1)
+
+		bitmap = gui.wx.Icons.icon('settings')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS, bitmap,
+													shortHelpString='Settings')
+
+		self.toolbar.AddSeparator()
+
+		bitmap = gui.wx.Icons.icon('play')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY, bitmap,
+													shortHelpString='Play')
+		bitmap = gui.wx.Icons.icon('pause')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PAUSE, bitmap,
+													shortHelpString='Pause')
+		bitmap = gui.wx.Icons.icon('stop')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_STOP, bitmap,
+													shortHelpString='Stop')
+
+		self.toolbar.Realize()
+		self.SetToolBar(self.toolbar)
+
+		self.imagepanel = gui.wx.ImagePanel.ImagePanel(self, -1,imagesize=(512, 512))
+
+		self.imagepanel.addTypeTool('Image', display=True)
+		self.imagepanel.addTypeTool('Power', display=True)
+		self.imagepanel.selectiontool.setDisplayed('Power', True)
+
+		self.statusbar = wx.StatusBar(self, -1)
+		self.SetStatusBar(self.statusbar)
+
+		self.Fit()
+	
+		self.SetAutoLayout(True)
+
+		self.settingsdialog = ManualFocusSettingsDialog(self,'Manual Focus Settings','Settings')
+
+		self.Bind(gui.wx.Events.EVT_PLAYER, self.onPlayer)
+		self.Bind(wx.EVT_TOOL, self.onSettingsTool, id=gui.wx.ToolBar.ID_SETTINGS)
+		self.Bind(wx.EVT_TOOL, self.onPlayTool, id=gui.wx.ToolBar.ID_PLAY)
+		self.Bind(wx.EVT_TOOL, self.onPauseTool, id=gui.wx.ToolBar.ID_PAUSE)
+		self.Bind(wx.EVT_TOOL, self.onStopTool, id=gui.wx.ToolBar.ID_STOP)
+		self.Bind(wx.EVT_CLOSE, self.onClose)
+		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
+		self.Bind(gui.wx.Events.EVT_MANUAL_UPDATED, self.onManualUpdated)
+
+	def onSettingsTool(self, evt):
+		self.settingsdialog.maskradius.SetValue(self.node.maskradius)
+		#self.MakeModal(False)
+		if self.settingsdialog.ShowModal() == wx.ID_OK:
+			self.node.maskradius = self.settingsdialog.maskradius.GetValue()
+
+		#self.MakeModal(True)
+
+	def onPlayTool(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
+		self.node.manualplayer.play()
+
+	def onPauseTool(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
+		self.node.manualplayer.pause()
+
+	def onStopTool(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
+		self.node.manualplayer.stop()
+
+	def onPlayer(self, evt):
+		if evt.state == 'play':
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, True)
+		elif evt.state == 'pause':
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False) 
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, True)
+		elif evt.state == 'stop':
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True) 
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
+
+	def _manualEnable(self, enable):
+		self.toolbar.Enable(enable)
+
+	def onManualUpdated(self, evt):
+		self._manualEnable(True)
+
+	def manualUpdated(self):
+		evt = gui.wx.Events.ManualUpdatedEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def onClose(self, evt):
+		self.node.manualplayer.stop()
+
+	def onSetImage(self, evt):
+		self.imagepanel.setImageType(evt.typename, evt.image)
+
+
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Manual Acquisition Test')
-			panel = Panel(frame, 'Test')
-			frame.Fit()
-			self.SetTopWindow(frame)
-			frame.Show()
+			dialog = ManualFocusDialog(frame,None)
+			dialog.Show()
+#			panel = Panel(frame, 'Test')
+#			frame.Fit()
+#			self.SetTopWindow(frame)
+#			frame.Show()
 			return True
 
 	app = App(0)
