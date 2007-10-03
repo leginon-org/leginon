@@ -329,8 +329,8 @@ function createPyAceForm($extra=false) {
 	  </TD>
 	</TR>
 	<TR>
-	  <TD COLSPAN='2' ALIGN='CENTER'>
-	  <HR>
+	  <TD COLSPAN='2' ALIGN='CENTER'>\n<HR>\n";
+/*
 	  Host: <select name='host'>\n";
 	foreach($hosts as $host) {
 		$s = ($_POST['host']==$host) ? 'selected' : '';
@@ -341,10 +341,11 @@ function createPyAceForm($extra=false) {
 		$s = ($_POST['user']==$user) ? 'selected' : '';
 		echo "<option $s >$user</option>\n";
 	}
-	echo"</select>
-	  <br/>
-	  <input type='submit' name='process' value='Run ACE'><br/>
-	  <FONT COLOR='RED'>Submission will NOT run ACE, only output a command that you can copy and paste into a unix shell</FONT>
+	echo"</select>";*/
+	echo"<br/>
+	  <input type='submit' name='process' value='Generate ACE Command'><br/>
+	  <FONT COLOR='RED' SIZE='-1'>Submission will NOT run ACE,<BR/>
+		only output a command that you can copy and paste into a unix shell</FONT>
 	  </TD>
 	</TR>
 	</TABLE>

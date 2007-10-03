@@ -352,8 +352,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
         </TR>
         <TR>
                 <TD COLSPAN='2' ALIGN='CENTER'>
-                <HR>
-                Host: <select name='host'>\n";
+                <HR>";
+/*                Host: <select name='host'>\n";
         foreach($hosts as $host) {
                 $s = ($_POST['host']==$host) ? 'selected' : '';
                 echo "<option $s >$host</option>\n";
@@ -365,10 +365,11 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
                 echo "<option $s >$user</option>\n";
         }
 	echo"
-          </select>
-          <BR>
-          <input type='submit' name='process' value='Create Stack'><BR>
-          <FONT COLOR='RED'>Submission will NOT create a stack, only output a command that you can copy and paste into a unix shell</FONT>
+          </select>";*/
+  echo"   <BR/>
+          <input type='submit' name='process' value='Generate Make Stack Command'><BR>
+          <FONT COLOR='RED' SIZE='-1'>Submission will NOT create a stack,<BR/>
+					only output a command that you can copy and paste into a unix shell</FONT>
           </TD>
         </TR>
         </TABLE>
