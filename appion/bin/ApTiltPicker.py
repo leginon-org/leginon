@@ -469,7 +469,7 @@ class PickerApp(wx.App):
 		len1 = len(self.picks1)
 		len2 = len(self.picks2)
 		if len1 < 1 or len2 < 1:
-			dialog = wx.MessageDialog(self.frame, "There are no picks to import: "+str(len1)+", "+str(len2)), 'Error', wx.OK|wx.ICON_ERROR)
+			dialog = wx.MessageDialog(self.frame, "There are no picks to import: "+str(len1)+", "+str(len2), 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 			return False
