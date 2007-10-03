@@ -411,6 +411,7 @@ class ManualAcquisition(node.Node):
 			# acquire image, show image and power spectrum
 			# allow user to adjust defocus and stig
 			correction = self.settings['correct image']
+			print self.focexptime
 			self.manualchecklock.acquire()
 			try:
 				if correction:
@@ -437,8 +438,6 @@ class ManualAcquisition(node.Node):
 	def setManualCheckCamera(self):
 		errstr = 'Acquire live image failed: %s'
 		self.logger.info('Acquiring live image at 512x512 binned by 1')
-		camdata0 = self.settings['camera settings']
-		print camdata0
 
 		camdata1 = {}
 		camdata1['exposure time']=self.focexptime
