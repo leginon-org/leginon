@@ -135,7 +135,7 @@ function displayDMF() {
   if (stackinfo[5]) {
     newwindow.document.write('dmf put '+stackinfo[3]+'/'+stackinfo[5]+' '+dpath+stackinfo[5]+'<BR>')
   }
-  newwindow.document.write('</BODY></HTML>');
+  newwindow.document.write('&nbsp;<BR></BODY></HTML>');
   newwindow.document.close();
   document.emanjob.dmfpath.value=dpath;
   document.emanjob.dmfstack.value=stackinfo[4];
