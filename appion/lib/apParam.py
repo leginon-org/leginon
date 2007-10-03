@@ -67,6 +67,28 @@ def writeFunctionLog(commandline, params=None, logfile=None):
 	f.write(out+"\n")
 	f.close()
 
+def closeFunctionLog(params=None, logfile=None):
+	"""
+	Used by appionLoop
+	"""
+	if logfile is not None:
+		pass
+	elif params is not None and params['functionLog'] is not None:
+		logfile = params['functionLog']
+	else:
+		logfile = "function.log"
+	apDisplay.printMsg("closing out function log: "+logfile)
+	#WRITE INFO
+	timestamp = "["+time.asctime()+"]\n"
+	out="finished run"
+	if 'functionname' in params:
+		out += " of "+param['functionname']
+	out += "\n"
+	f=open(logfile,'a')
+	f.write(timestamp)
+	f.write(out)
+	f.close()
+
 def createDirectory(path, mode=0777, warning=True, remove=False):
 	"""
 	Used by appionLoop
