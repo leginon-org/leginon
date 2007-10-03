@@ -221,12 +221,12 @@ class particledata {
 
 	function getNumAssessedImages ($sessionId) {
 		$rid = $this->getLastAssessmentRun($sessionId);
-		$q = "select count(DEF_id) "
+		$q = "select count(DEF_id) as num "
 			."from `ApAssessmentData` where "
-		        ."`selectionkeep` IS NOT NULL "
-				."and `REF|ApAssessmentRunData|assessmentrun` = '$rid'";
+			."`selectionkeep` IS NOT NULL "
+			."and `REF|ApAssessmentRunData|assessmentrun` = '$rid'";
 		list($r) = $this->mysql->getSQLResult($q);
-		return $r['count(DEF_id)'];
+		return $r['num'];
 	}
 
 	function getLastParticleRun ($sessionId) {
@@ -281,16 +281,16 @@ class particledata {
 	    ."LEFT JOIN `ApStackParamsData` p "
 	    ."ON (p.`DEF_id` = s.`REF|ApStackParamsData|stackParams`) "
 	    ."WHERE r.`REF|ApStackData|stack` = '$stackId'";
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0];
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
 	}
 
 	function getNumStackParticles ($stackId) {
-		$q= "SELECT count(DEF_id) "
+		$q= "SELECT count(DEF_id) as num "
 			."FROM `ApStackParticlesData` "
 			."WHERE `REF|ApStackData|stack` = '$stackId'";
 		list($r) = $this->mysql->getSQLResult($q);
-		return $r['count(DEF_id)'];
+		return $r['num'];
 	}    
 
 	//////// fix me ////////
@@ -303,13 +303,13 @@ class particledata {
 	}    
 
 	function getPixelSizeFromStackId ($stackId) {
-	        $q= "SELECT `REF|InstrumentData|tem` t, magnification m, `REF|InstrumentData|ccdcamera` c, a.`DEF_timestamp` time "
-	                  ."FROM ApStackParticlesData sp "
-	                  ."left join ApParticleData p on (p.`DEF_id`=sp.`REF|ApParticleData|particle`) "
-	                  ."left join dbemdata.AcquisitionImageData a on (a.`DEF_id`=p.`dbemdata|AcquisitionImageData|image`) "
-	                  ."left join dbemdata.PresetData pd on (a.`REF|PresetData|preset`=pd.`DEF_id`) "
-	                  ."WHERE sp.`REF|ApStackData|stack`='$stackId' "
-	                  ."GROUP BY `REF|InstrumentData|tem`";
+		$q= "SELECT `REF|InstrumentData|tem` t, magnification m, `REF|InstrumentData|ccdcamera` c, a.`DEF_timestamp` time "
+		."FROM ApStackParticlesData sp "
+		."left join ApParticleData p on (p.`DEF_id`=sp.`REF|ApParticleData|particle`) "
+		."left join dbemdata.AcquisitionImageData a on (a.`DEF_id`=p.`dbemdata|AcquisitionImageData|image`) "
+		."left join dbemdata.PresetData pd on (a.`REF|PresetData|preset`=pd.`DEF_id`) "
+		."WHERE sp.`REF|ApStackData|stack`='$stackId' "
+		."GROUP BY `REF|InstrumentData|tem`";
 		$r = $this->mysql->getSQLResult($q);
 		if (is_array($r[0])) {
 		        $tem=$r[0]['t'];
@@ -751,12 +751,12 @@ class particledata {
 	}
 
 	function getNumMsgPRejectParticles ($refinementDataId) {
-		$q = "SELECT count(DEF_id) "
+		$q = "SELECT count(DEF_id) as num "
 				."FROM `ApParticleClassificationData` "
 				."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
 		    ."AND `msgp_keep` = 0";
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0]['count(DEF_id)'];
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['num'];
 	}
 
 	function getNumClasses ($refinementDataId) {
@@ -784,12 +784,12 @@ class particledata {
 	}
 
 	function getNumInClass ($refinementDataId,$eulerId) {
-		$q = "SELECT count(DEF_id) "
+		$q = "SELECT count(DEF_id) as num "
 		  ."FROM `ApParticleClassificationData` "
 		  ."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
 		  ."AND `REF|ApEulerData|eulers` = $eulerId";
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0]['count(DEF_id)'];
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['num'];
 	}
 
 	function getEulerAngles ($eulerId) {

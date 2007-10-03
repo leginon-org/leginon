@@ -3,13 +3,15 @@ require('inc/leginon.inc');
 $username = $_GET['username'];
 $imageId = $_GET['imageId'];
 $sessionId = $_GET['sessionId'];
-$status = "hidden";
+$action = $_GET['ac'];
+$status = ($_GET['s']=="ex") ? "examplar" : "hidden";
+$prefpreset = (in_array($_GET['p'], array('hidden', 'examplar'))) ? true : false;
 $dbc = $leginondata->mysql;
 $ret_val = "0";
 if ($imageId && $sessionId) {
-	if ($_GET['p']=='hidden') {
-		$q="delete from viewer_pref_image where imageId=$imageId";
-		$dbc->SQLQuery($q);
+	$q="delete from viewer_pref_image where imageId=$imageId";
+	$dbc->SQLQuery($q);
+	if ($prefpreset) {
 		echo "1";
 		exit;
 	}

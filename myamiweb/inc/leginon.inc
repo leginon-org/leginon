@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.71 $
- *	@version $Id: leginon.inc,v 1.71 2007-10-03 17:32:13 vossman Exp $
+ *	@version $Revision: 1.72 $
+ *	@version $Id: leginon.inc,v 1.72 2007-10-03 17:52:09 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -27,7 +27,10 @@ class leginondata {
 
 	var $crlf = "\n";
 	var $ffttypes = array('focpow', 'fft');
-	var $defaulttypes = array('all'=>'all', 'atlas'=>'atlas', 'hidden'=>'hidden');
+	var $defaulttypes = array('all'=>'all',
+											'atlas'=>'atlas',
+											'examplar'=>'examplar',
+											'hidden'=>'hidden');
 	var $manualtype = 'manual';
 	var $rcttype = 'rct';
 	var $calibrationtables = array (
@@ -325,10 +328,10 @@ class leginondata {
 			$name="";
 		}
 			$hiddenjoin = "left join `viewer_pref_image` r on (r.imageId=a.DEF_id) ";
-		if ($defaultname=="hidden") {
-			$hiddenwhere = "and  r.id is not null ";
+		if ($defaultname=="hidden" || $defaultname=="examplar") {
+			$hiddenwhere = "and  r.id is not null and r.status='$defaultname'";
 		} else {
-			$hiddenwhere = "and  r.id is null ";
+			$hiddenwhere = "and (r.id is NULL or r.status <>'hidden') ";
 		}
 		if (in_array($name, $this->ffttypes)) {
 		$q = "select a.`DEF_id` as `id`, f.`MRC|Image` as `name` "
@@ -2113,7 +2116,7 @@ class leginondata {
 			}
 		}
 
-		foreach ($diffarray as $key=>$presetarray) {
+		foreach ((array)$diffarray as $key=>$presetarray) {
 			$res1 = array_stats($presetarray);
 			$retarray[$key]['name'] = $key;
 			$retarray[$key]['time'] = round($res1['mean'],3);

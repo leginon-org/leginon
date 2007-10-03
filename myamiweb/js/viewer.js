@@ -17,6 +17,26 @@ if (window.XMLHttpRequest) {
 }
 String.prototype.trim = function() { return this.replace(/^\s+|\s+$/, ''); }
 
+function image_is_examplar(view) {
+	if (list = eval("document.viewerform."+view+"pre"))
+		selpreset=list.options[list.selectedIndex].value
+	displaydebug("a:"+view+" "+selpreset)
+	var jsUsername=null
+	if (obj=document.viewerform.imageId) {
+		jsindex = obj.selectedIndex
+		jsimgId = obj.options[jsindex].value
+		var url = 'updateimagelist.php?username='+jsUsername+'&imageId='+jsimgId+'&sessionId='+jsSessionId+'&p='+selpreset+'&s=ex'
+		xmlhttp.open('GET', url, true)
+		xmlhttp.onreadystatechange = function() {
+			if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+				// --- check
+				dbresult = xmlhttp.responseText
+				displaydebug("c:"+jsindex+" l:"+obj.length+": dbe:"+dbresult.length+"  "+dbresult)
+			}
+		}
+	xmlhttp.send(null)
+	}
+}
 
 function update_image_list(view) {
 	if (list = eval("document.viewerform."+view+"pre"))
@@ -26,7 +46,7 @@ function update_image_list(view) {
 	if (obj=document.viewerform.imageId) {
 		jsindex = obj.selectedIndex
 		jsimgId = obj.options[jsindex].value
-		var url = 'updateimagelist.php?username='+jsUsername+'&imageId='+jsimgId+'&sessionId='+jsSessionId+'&p='+selpreset
+		var url = 'updateimagelist.php?username='+jsUsername+'&imageId='+jsimgId+'&sessionId='+jsSessionId+'&p='+selpreset+'&ac=h'
 		xmlhttp.open('GET', url, true)
 		xmlhttp.onreadystatechange = function() {
 			if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
@@ -36,8 +56,10 @@ function update_image_list(view) {
 				// --- set index to next image
 				if (jsindex<obj.length && dbresult=="1") {
 					obj.remove(jsindex)
-					if (obj.length)
+					if (jsindex<obj.length)
 						obj.options[jsindex].selected=true
+					else if (obj.length-1>0)
+						obj.options[obj.length-1].selected=true
 					updateviews()
 				}
 			}
@@ -101,6 +123,11 @@ function getKey(e)
 			break
 		case 'H':
 			update_image_list()
+			break
+		case 'E':
+			image_is_examplar()
+			incIndex()
+			updateviews()
 			break
   }
 }

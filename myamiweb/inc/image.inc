@@ -1,7 +1,7 @@
 <?php
 /**
- *	@version $Revision: 1.34 $
- *	@version $Id: image.inc,v 1.34 2007-09-06 23:04:23 dfellman Exp $
+ *	@version $Revision: 1.35 $
+ *	@version $Id: image.inc,v 1.35 2007-10-03 17:52:09 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -71,7 +71,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		$imginfo = $leginondata->getImageInfo($imageId);
 		if ($p['loadjpg']) {
 			$jpgfilename = ereg_replace('mrc$', 'jpg', $filename);
-			$jpgpath = ereg_replace("rawdata", "jpgs", $path);
+			$jpgpath = ereg_replace("rawdata", "jpegs", $path);
 			$jpgpic = $jpgpath.$jpgfilename;
 		}
 		if (@is_file($jpgpic)) {
@@ -144,7 +144,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		    foreach ($targets as $target) {
 			$tId=$target['childId'];
 			$targetinfo = $leginondata->getImageInfo($tId);
-			// --- use "stage possition" or "image shift" based on magnification
+			// --- use "stage position" or "image shift" based on magnification
 			$type = "image shift" ;
 			$type = "stage position";
 			$type = ($targetinfo['magnification']>2500 && $imginfo['magnification']>2500) ? "image shift" : "stage position";
