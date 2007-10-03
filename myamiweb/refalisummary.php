@@ -47,18 +47,20 @@ $stackruns=count($stackIds);
 // --- list out the alignment runs
 echo"<P>\n";
 foreach ($refaliIds as $refid) {
-  echo divtitle("Refali Run Id: $refid[DEF_id]");
+
   # get list of alignment parameters from database
   $r = $particle->getRefAliParams($refid['DEF_id']);
   $s = $particle->getStackParams($r['REF|ApStackData|stack']);
   $t = $particle->getTemplatesFromId($refid['REF|ApTemplateImageData|refTemplate']);
-
+	echo divtitle("REF ALIGN: <FONT COLOR='#993333'>".$r['name']
+		."</FONT> (ID: <FONT COLOR='#993333'>".$refid[DEF_id]."</FONT>)");
+  //echo divtitle("Refali Run Id: $refid[DEF_id]");
   // --- get iteration info
   $iters = $particle->getRefAliIters($refid['DEF_id']);
   $numiters = count($iters);
   
   echo "<TABLE BORDER='0'>\n";
-  $display_keys['name']=$r['name'];
+  //$display_keys['name']=$r['name'];
   $display_keys['description'] = $r['description'];
   $display_keys['time']=$r['DEF_timestamp'];
   $display_keys['path']=$refid['path'];

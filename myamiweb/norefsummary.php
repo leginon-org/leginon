@@ -52,17 +52,17 @@ function createClassifierSummary() {
 	$norefruns=count($norefIds);
 
 	foreach ($norefIds as $norefid) {
-
 		//print_r ($norefid);
-		echo divtitle("NoRef Id: $norefid[DEF_id]");
-		echo"<FORM NAME='numclass' METHOD='POST' ACTION='$formAction'>\n";
 		# get list of noref parameters from database
 		$r = $particle->getNoRefParams($norefid['DEF_id']);
 		$s = $particle->getStackParams($r['REF|ApStackData|stack']);
-		
+		echo divtitle("NOREF ALIGN: <FONT COLOR='#993333'>".$r['name']
+		."</FONT> (ID: <FONT COLOR='#993333'>".$norefid[DEF_id]."</FONT>)");
+		//echo divtitle("NoRef Id: $norefid[DEF_id]");
+		echo"<FORM NAME='numclass' METHOD='POST' ACTION='$formAction'>\n";
 		echo "<table border='0' >\n";
 
-		$display_keys['name']=$r['name'];
+		//$display_keys['name']=$r['name'];
 		$display_keys['description']=$r['description'];
 		$display_keys['time']=$r['DEF_timestamp'];
 		$display_keys['path']=$r['path'];

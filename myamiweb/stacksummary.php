@@ -42,10 +42,11 @@ $particle = new particledata();
 # find each stack entry in database
 $stackIds = $particle->getStackIds($sessionId);
 foreach ($stackIds as $stackid) {
-        echo divtitle("Stack Id: $stackid[stackid]");
+	$s=$particle->getStackParams($stackid[stackid]);
+	echo divtitle("STACK: <FONT COLOR='#993333'>".$s['stackRunName']
+		."</FONT> (ID: <FONT COLOR='#993333'>".$stackid[stackid]."</FONT>)");
 	echo "<table border='0'>\n";
 	# get list of stack parameters from database
-        $s=$particle->getStackParams($stackid[stackid]);
 	$nump=commafy($particle->getNumStackParticles($stackid[stackid]));
 	# get pixel size of stack
 	$apix=($particle->getPixelSizeFromStackId($stackid[stackid]))*1e10;
