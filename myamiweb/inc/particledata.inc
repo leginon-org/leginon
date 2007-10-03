@@ -237,9 +237,20 @@ class particledata {
 		return $r[runId];
 	}
 
+	function getParticleRunData ($partRunId) {
+		$q = "SELECT r.*, p.path AS path "
+			."FROM `ApSelectionRunData` AS r "
+      ."LEFT JOIN ApPathData AS p ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
+			."WHERE r.`DEF_id` = '$partRunId'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
 	function getParticleRunIds ($sessionId) {
-		$q = "select * "
-			."from `ApSelectionRunData` where `dbemdata|SessionData|session` = '$sessionId'";
+		$q = "SELECT r.*, p.path AS path "
+			."FROM `ApSelectionRunData` AS r "
+      ."LEFT JOIN ApPathData AS p ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
+			."WHERE r.`dbemdata|SessionData|session` = '$sessionId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
