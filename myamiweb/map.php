@@ -134,7 +134,7 @@ function setScalebar() {
 }
 
 function textshadow(text) {
-	return '<span style="display: block; line-height: 1em; color: #000; background-color: transparent; white-space: nowrap;" >'+text+'<span style="display: block; margin-top: -1.05em; margin-left: -0.2ex; color: #fff; background-color: transparent;">'+text+'</span></span>'
+	return '<span style="display: block; line-height: 1em; color: #000; background-color: transparent; white-space: nowrap;" >'+text+'<span style="display: block; margin-top: -1.05em; margin-left: -0.1ex; color: #fff; background-color: transparent;">'+text+'</span></span>'
 
 }
 
