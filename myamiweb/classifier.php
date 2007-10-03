@@ -171,7 +171,7 @@ function createClassifierForm($extra=false, $title='Classifier.py Launcher', $he
 		Number of Classes to Make<BR>
 		<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>
 		Number of Particles to Use<BR>
-		<FONT COLOR=#DD0000>WARNING: more than 3000 particles can forever to process<BR>
+		<FONT COLOR=#DD0000>WARNING: more than 3000 particles can take forever to process<BR>
 	</TR>\n";
 	echo"
 		</SELECT>
