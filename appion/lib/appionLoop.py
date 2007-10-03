@@ -465,8 +465,8 @@ class AppionLoop(object):
 		return newtree
 
 	def _writeFunctionLog(self, args):
-		logfile = os.path.join(self.params['rundir'], self.functionname+".log")
-		apParam.writeFunctionLog(args, logfile=logfile)
+		self.params['functionLog'] = os.path.join(self.params['rundir'], self.functionname+".log")
+		apParam.writeFunctionLog(args, logfile=self.params['functionLog'])
 
 	def _setRunAndParameters(self,params):
 		if params['commit']:
@@ -638,7 +638,7 @@ class AppionLoop(object):
 			self.params['binpixdiam'] = self.params['diam']/self.params['apix']/float(self.params['bin'])
 
 		# skip if image doesn't exist:
-		imgpath = os.path.join(self.params['imgdir'],imgdata['filename']+'.mrc')
+		imgpath = os.path.join(self.params['imgdir'], imgdata['filename']+'.mrc')
 		if not os.path.isfile(imgpath):
 			apDisplay.printWarning(imgpath+" not found, skipping")
 			return False
@@ -646,6 +646,8 @@ class AppionLoop(object):
 		# check to see if image has already been processed
 		#if self._alreadyProcessed(imgdata):
 		#	return False
+		if imgdata['filename'] in self.donedict:
+			return False
 
 		self.stats['startloop'] = time.time()
 		self.stats['waittime'] = 0
@@ -834,6 +836,7 @@ class AppionLoop(object):
 		program has finished print final stats
 		"""
 		ttotal= time.time()-self.stats["startTime"]
+		apParam.closeFunctionLog(params=self.params)
 		print apDisplay.color("COMPLETE LOOP:\t"+apDisplay.timeString(ttotal)+\
 			" for "+str(self.stats["count"]-1)+" images","green")
 		#for i in range(5):
