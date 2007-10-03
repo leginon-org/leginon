@@ -82,7 +82,7 @@ def closeFunctionLog(params=None, logfile=None):
 	timestamp = "["+time.asctime()+"]\n"
 	out="finished run"
 	if 'functionname' in params:
-		out += " of "+param['functionname']
+		out += " of "+params['functionname']
 	out += "\n"
 	f=open(logfile,'a')
 	f.write(timestamp)
