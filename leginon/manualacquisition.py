@@ -440,18 +440,13 @@ class ManualAcquisition(node.Node):
 		camdata0 = self.settings['camera settings']
 		print camdata0
 
-		camdata1 = copy.copy(camdata0)
-		
+		camdata1 = {}
 		camdata1['exposure time']=self.focexptime
+		camdata1['dimension'] = {'x':512, 'y':512}
+		camdata1['binning'] = {'x':1, 'y':1}
+		camsize = self.instrument.ccdcamera.getCameraSize()
+		camdata1['offset'] = {'x': (camsize['x']-512)/2, 'y':(camsize['y']-512)/2}
 
-		## figure out if we want to cut down to 512x512
-		for axis in ('x','y'):
-			binning = camdata0['binning'][axis]
-			change = camdata0['dimension'][axis]*binning - 512
-			unbinnedoffset = camdata1['offset'][axis]*binning
-			if change > 0 and binning > 1:
-				camdata1['dimension'][axis] = 512
-				camdata1['offset'][axis] = unbinnedoffset + (change / 2)
 		print camdata1
 		try:
 			self.instrument.ccdcamera.Settings = camdata1
