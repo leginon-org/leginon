@@ -532,7 +532,6 @@ class particledata {
 		}
 		$q.="m.`REF|ApMaskAssessmentRunData|run` = '$runId' AND "
 			."m.`keep` = 1 ";
-		echo $q;
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 			
@@ -647,15 +646,16 @@ class particledata {
 		return $r;
 	} 
 
-	function getRefinementRunInfo($refinementRun) {
-		$q = "select * "
-				."FROM `ApRefinementRunData` AS r "
-				."LEFT JOIN ApPathData AS p ON "
-				."(r.`REF|ApPathData|path` = p.`DEF_id`) "
-				."WHERE r.`DEF_id` = '$refinementRun' ";
-		list($r) = $this->mysql->getSQLResult($q);
-		return $r;
-	}
+  function getRefinementRunInfo($refinementRun) {
+    $q="select r.DEF_id, p.path, r.name, r.`REF|ApStackData|stack`, "
+      ."r.`REF|ApInitialModelData|initialModel`, r.package, r.description "
+      ."FROM `ApRefinementRunData` AS r "
+      ."LEFT JOIN ApPathData AS p ON "
+      ."(r.`REF|ApPathData|path` = p.`DEF_id`) "
+      ."WHERE r.`DEF_id` = '$refinementRun' ";
+    list($r) = $this->mysql->getSQLResult($q);
+    return $r;
+  }
 
 	function getInitModelInfo ($modelId) {
 		$q = "SELECT * "
@@ -741,14 +741,14 @@ class particledata {
 		return $r;
 	}
 
-	function getNumBadParticles ($refinementDataId) {
-		$q = "SELECT count(DEF_id) "
-				."FROM `ApParticleClassificationData` "
-				."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
-		    ."AND `thrown_out` = 1";
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0]['count(DEF_id)'];
-	}
+  function getNumBadParticles ($refinementDataId) {
+    $q="SELECT count(DEF_id) "
+      ."FROM `ApParticleClassificationData` "
+      ."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
+      ."AND `thrown_out` = 1";
+    $r = $this->mysql->getSQLResult($q);
+    return $r[0]['count(DEF_id)'];
+  }
 
 	function getMsgPRejectParticlesInStack ($refinementDataId) {
 		$q = "SELECT particleNumber as p "
