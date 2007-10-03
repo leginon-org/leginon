@@ -19,14 +19,15 @@ $particledata=new particledata();
 // check if coming directly from a session
 $expId=$_GET['expId'];
 if ($expId) {
-        $sessionId=$expId;
+	$sessionId=$expId;
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 }
 else {
-        $sessionId=$_POST['sessionId'];
+	$sessionId=$_POST['sessionId'];
 	$formAction=$_SERVER['PHP_SELF'];	
 }
 $projectId=$_POST['projectId'];
+
 
 /////////// temporary fix for new database //////////////
 
@@ -48,7 +49,6 @@ $imgtypes=array('jpg','png','mrc','dwn.mrc');
 $javascript="<script src='js/viewer.js'></script>\n";
 writeTop("Leginon Image Assessor","Image Assessor",$javascript);
 echo"<form name='viewerform' method='POST' ACTION='$formAction'>\n";
-echo"<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
 
 $sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 $sessioninfo=$sessiondata['info'];
@@ -59,20 +59,35 @@ array_push($presets, 'all');
 asort($presets);
 
 if (!empty($sessioninfo)) {
-        $sessionpath=$sessioninfo['Image path'];
+	$sessionpath=$sessioninfo['Image path'];
 	$sessionpath=ereg_replace("leginon","appion",$sessionpath);
 	$sessionpath=ereg_replace("rawdata","extract/",$sessionpath);
 	$sessionname=$sessioninfo['Name'];
 }
+
 // if session is changed, change the output directory
-$sessionpathval=(($_POST['sessionId']==$_POST['lastSessionId'] || $expId) && $_POST['lastSessionId']) ? $_POST['imgdir'] : $sessionpath;
+if (strlen($_POST['partpath']) > 10) {
+	$imgdir = $_POST['partpath'];
+} elseif (strlen($_POST['imgdir']) > 10) {
+	$imgdir = $_POST['imgdir'];
+} else {
+	$partrunid = $particledata->getLastParticleRun($sessionId);	
+	$partrundata = $particledata->getParticleRunData($partrunid);
+	if (strlen($partrundata['path']) > 10) {
+		$imgdir = $partrundata['path']."/jpgs/";
+	} else {
+		// HACK for Particle Runs with out Path Data
+		$imgdir = $sessionpath."/".$partrundata['name']."/jpgs/";
+	}
+}
 
 echo"<BR><A HREF='processing.php?expId=$sessionId'>[processing page]</A>\n";
 echo"<P>\n";
 echo"<TABLE CLASS=tableborder CELLPADING='10' CELLSPACING='10'>\n";
 echo"<TR><TD COLSPAN='3' ALIGN='CENTER'>\n";
 
-$imgdir=$_POST['imgdir'];
+
+//$imgdir=$_POST['imgdir'];
 $files = array();
 $presettype = $_POST['presettype'];
 if ($presettype=='all') {
@@ -80,14 +95,17 @@ if ($presettype=='all') {
 } else {
 	$typematch =$presettype;
 }
-if ($imgdir) {
+
+if ($imgdir && strlen($imgdir) > 10) {
 	// make sure imgdir ends with '/'
 	if (substr($imgdir,-1,1)!='/') $imgdir.='/';
-	if (file_exists($imgdir)) {
+	if (!file_exists($imgdir))
+		echo "<FONT COLOR='#993333'>Specified path: $imgdir does not exist</FONT><HR>\n";
+	else {
 		// open image directory
 		$pathdir=opendir($imgdir);
 		// get all files in directory, ordered by time created
-		$ext=$_POST['imgtype'];
+		$ext= $_POST['imgtype'] ? $_POST['imgtype'] : "jpg";
 		$i=0;
 		while ($filename=readdir($pathdir)) {
 			if ($filename == '.' || $filename == '..') continue;
@@ -109,21 +127,57 @@ if ($imgdir) {
 			// display image
 			displayImage($_POST,$fileList,$imgdir,$leginondata,$particledata,$assessmentrid);
 		}
-		else echo"<HR><FONT COLOR='RED'>No files found in this directory with extension: $ext</FONT>\n";
+		else echo"<FONT COLOR='#993333'>No files found in this directory with extension: $ext</FONT><HR>\n";
 	}
-	else echo "<HR><FONT COLOR='RED'>Specified path: $_POST[imgdir] does not exist</FONT>\n";
+
 }
 echo"</CENTER>\n";
 echo"</TD></TR>\n";
+
+//SELECT A PARTICLE RUN (EVENTUALLY AN ACE RUN?)
+echo"<TR><TD VALIGN='TOP' COLSPAN='3'>\n";
+$particle = new particledata();
+$prtlrunIds = $particle->getParticleRunIds($sessionId);
+if (!$prtlrunIds) {
+	echo"<FONT COLOR='#993333' SIZE='-1'><B>No Particles for this Session</B></FONT>\n";
+} else {
+	echo "Select a particle run:
+	<SELECT NAME='partpath'>\n";
+	foreach ($prtlrunIds as $prtlrun){
+		$runname=$prtlrun['name'];
+		$prtlstats=$particle->getStats($prtlrun['DEF_id']);
+		$totprtls=commafy($prtlstats['totparticles']);
+		$partpath = $prtlrun['path']."/jpgs/";
+		if (strlen($partpath) > 10) { 
+			echo "<OPTION VALUE='$partpath'";
+			if ($imgdir == $partpath) echo " SELECTED";
+			echo">$runname ($totprtls particles)</OPTION>\n";
+		} else {
+			// HACK for Particle Runs with out Path Data
+			$trypath = $sessionpath."/".$runname."/jpgs/";
+			if (file_exists($trypath)) {
+				echo "<OPTION VALUE='$trypath'";
+				if ($imgdir == $partpath) echo " SELECTED";
+				echo">$runname ($totprtls particles)</OPTION>\n";
+			}
+		}			
+	}
+	echo "</SELECT>\n";
+	echo"<INPUT TYPE='BUTTON' onClick='this.form.submit()' VALUE='Select Particle Run'>\n";
+
+}
+
+echo"<BR/><HR/></TD></TR>\n";
+
 // HEADER FORM FOR FILLING IMAGE PATH
 echo"<TR><TD VALIGN='TOP'>\n";
 echo"<B>Image Directory:</B><BR>\n";
-echo"<INPUT TYPE='text' NAME='imgdir' VALUE='$sessionpathval' SIZE='60' onchange='this.form.submit()'></TD>\n";
+echo"<INPUT TYPE='text' NAME='imgdir' VALUE='$imgdir' SIZE='60' onchange='this.form.submit()'></TD>\n";
 echo"<TD VALIGN='TOP'>\n";
 echo"<B>Image Type:</B><BR>\n";
 echo"<SELECT NAME='imgtype' onchange='this.form.submit()'>\n";
 foreach ($imgtypes as $type) {
-        $s = ($_POST['imgtype']==$type) ? 'SELECTED' : '';
+	$s = ($_POST['imgtype']==$type) ? 'SELECTED' : '';
 	echo "<OPTION $s>$type</OPTION>\n";
 }
 echo"</SELECT>\n";
@@ -132,10 +186,11 @@ echo"<TD VALIGN='TOP'>\n";
 echo"<B>Preset:</B><BR>\n";
 echo"<SELECT NAME='presettype' onchange='this.form.submit()'>\n";
 foreach ($presets as $type) {
-        $s = ($_POST['presettype']==$type) ? 'SELECTED' : '';
+	$s = ($_POST['presettype']==$type) ? 'SELECTED' : '';
 	echo "<OPTION $s>$type</OPTION>\n";
 }
 echo"</SELECT>\n";
+//echo"<INPUT TYPE='HIDDEN' NAME='binning' VALUE='$binning'>\n";
 echo"</TD></TR>\n";
 
 echo"</TABLE>\n";
@@ -157,7 +212,7 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 		if ($key) {
 			$imgindx=$key;
 		} else {
-	        	$imgindx=$_POST['imgjump']-1;
+			$imgindx=$_POST['imgjump']-1;
 		}
 		// make sure it's within range
 		if ($imgindx < 0) $imgindx=0;
@@ -188,9 +243,9 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 			if($imlst=='Keep') $particledata->updateKeepStatus($_POST['imageid'],$assessmentrid,'1');
 			if($imlst=='Remove') $particledata->updateKeepStatus($_POST['imageid'],$assessmentrid,'0');
 			while ($found!='TRUE') {
-			        $imgindx++;
+				$imgindx++;
 				if ($imgindx > $numfiles-1) {
-				        echo "<FONT COLOR='RED'> At end of image list</FONT><BR>\n";
+					echo "<FONT COLOR='RED'> At end of image list</FONT><BR>\n";
 					$imgindx=$numfiles-1;
 					$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
 					break;
