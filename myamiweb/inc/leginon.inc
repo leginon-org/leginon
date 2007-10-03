@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.70 $
- *	@version $Id: leginon.inc,v 1.70 2007-09-21 22:04:02 acheng Exp $
+ *	@version $Revision: 1.71 $
+ *	@version $Id: leginon.inc,v 1.71 2007-10-03 17:32:13 vossman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -2284,7 +2284,7 @@ class leginondata {
 	}
 
 	function formatDose(&$dose) {
-		$dose = ($dose) ? number_format(($dose/1e20), 4,'.','').' e<SUP>&#150;</SUP>/&Aring;<SUP>2</SUP>' : 'none' ;
+		$dose = ($dose) ? number_format(($dose/1e20), 1,'.','').' e<SUP>&ndash;</SUP>/&Aring;<SUP>2</SUP>' : 'none' ;
 		return $dose;
 	}
 

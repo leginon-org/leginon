@@ -442,11 +442,11 @@ function format_angle_degree($data) {
 }
 
 function format_micro_number($data) {
-	return number_format(($data/1e-6), 4,'.','').' µm';
+	return number_format(($data/1e-6), 3,'.','').' &mu;m';
 }
 
 function format_nano_number($data) {
-	return number_format(($data/1e-9), 4,'.','').' nm';
+	return number_format(($data/1e-9), 3,'.','').' nm';
 }
 
 function sec2time($second) {
