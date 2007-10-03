@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.27 $
+# $Revision: 1.28 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-10-03 21:34:23 $
-# $Author: acheng $
+# $Date: 2007-10-03 23:17:13 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -446,6 +446,7 @@ class ManualFocusDialog(wx.MiniFrame):
 		#self.MakeModal(False)
 		if self.settingsdialog.ShowModal() == wx.ID_OK:
 			self.node.maskradius = self.settingsdialog.maskradius.GetValue()
+			self.node.focexptime = self.settingsdialog.focexptime.GetValue()
 
 		#self.MakeModal(True)
 
