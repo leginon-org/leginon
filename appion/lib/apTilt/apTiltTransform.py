@@ -216,7 +216,7 @@ def maskOverlapRegion(image1, image2, data):
 
 		return (image1, image2)
 
-def mergePicks(picks1, picks2, limit=15.0):
+def mergePicks(picks1, picks2, limit=25.0):
 	good = []
 	#newa1 = numpy.vstack((a1, list1))
 	for p2 in picks2:

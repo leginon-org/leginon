@@ -469,12 +469,19 @@ class PickerApp(wx.App):
 		len1 = len(self.picks1)
 		len2 = len(self.picks2)
 		if len1 < 1 or len2 < 1:
-			apDisplay.printMsg("there are no picks to import: "+str(len1)+", "+str(len2))
+			dialog = wx.MessageDialog(self.frame, "There are no picks to import: "+str(len1)+", "+str(len2)), 'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
 			return False
 		targets1 = self.panel1.getTargets('Picked')
 		targets2 = self.panel2.getTargets('Picked')
 		a1 = self.targetsToArray(targets1)
 		a2 = self.targetsToArray(targets2)
+		if len(a1) < 1 or len(a2) < 1:
+			dialog = wx.MessageDialog(self.frame, "You must pick a particle pair first", 'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
 		apTiltTransform.setPointsFromArrays(a1, a2, self.data)
 		list1, list2 = apTiltTransform.alignPicks(self.picks1, self.picks2, self.data)
 		if list1.shape[0] == 0 or list2.shape[0] == 0:
