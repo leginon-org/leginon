@@ -278,21 +278,21 @@ class particledata {
 		return $r;
 	}
 
-	function getStackParams ($stackId) {
-		$q = "SELECT * "
-	    ."FROM ApRunsInStackData as r "
-	    ."LEFT JOIN ApStackRunData as s "
-	    ."ON (r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
-	    ."LEFT JOIN ApStackData as sd "
-	    ."ON (r.`REF|ApStackData|stack`=sd.`DEF_id`) "
-			."LEFT JOIN ApPathData AS pd ON "
-			."(sd.`REF|ApPathData|path` = pd.`DEF_id`) "
-	    ."LEFT JOIN `ApStackParamsData` p "
-	    ."ON (p.`DEF_id` = s.`REF|ApStackParamsData|stackParams`) "
-	    ."WHERE r.`REF|ApStackData|stack` = '$stackId'";
-		list($r) = $this->mysql->getSQLResult($q);
-		return $r;
-	}
+  function getStackParams ($stackId) {
+    $q = "SELECT * "
+      ."FROM ApRunsInStackData as r "
+      ."LEFT JOIN ApStackRunData as s "
+      ."ON (r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
+      ."LEFT JOIN ApStackData as sd "
+      ."ON (r.`REF|ApStackData|stack`=sd.`DEF_id`) "
+      ."LEFT JOIN ApPathData AS pd ON "
+      ."(sd.`REF|ApPathData|path` = pd.`DEF_id`) "
+      ."LEFT JOIN `ApStackParamsData` p "
+      ."ON (p.`DEF_id` = s.`REF|ApStackParamsData|stackParams`) "
+      ."WHERE r.`REF|ApStackData|stack` = '$stackId'";
+    list($r) = $this->mysql->getSQLResult($q);
+    return $r;
+  }
 
 	function getNumStackParticles ($stackId) {
 		$q= "SELECT count(DEF_id) as num "
