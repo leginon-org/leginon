@@ -50,7 +50,7 @@ $javascript="<script src='js/viewer.js'></script>\n";
 writeTop("Leginon Image Assessor","Image Assessor",$javascript);
 echo"<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 
-$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+$sessiondata=displayExperimentForm($projectId, $sessionId, $expId);
 $sessioninfo=$sessiondata['info'];
 $presets=$sessiondata['presets'];
 
@@ -83,7 +83,7 @@ if (strlen($_POST['partpath']) > 10) {
 
 echo"<BR><A HREF='processing.php?expId=$sessionId'>[processing page]</A>\n";
 echo"<P>\n";
-echo"<TABLE CLASS=tableborder CELLPADING='10' CELLSPACING='10'>\n";
+echo"<TABLE CLASS='tableborder' CELLPADING='10' CELLSPACING='5'>\n";
 echo"<TR><TD COLSPAN='3' ALIGN='CENTER'>\n";
 
 
@@ -132,14 +132,14 @@ if ($imgdir && strlen($imgdir) > 10) {
 
 }
 echo"</CENTER>\n";
-echo"</TD></TR>\n";
+echo"<HR/></TD></TR>\n";
 
 //SELECT A PARTICLE RUN (EVENTUALLY AN ACE RUN?)
-echo"<TR><TD VALIGN='TOP' COLSPAN='3'>\n";
+echo"<TR ALIGN='CENTER'><TD VALIGN='TOP' COLSPAN='3'>\n";
 $particle = new particledata();
 $prtlrunIds = $particle->getParticleRunIds($sessionId);
 if (!$prtlrunIds) {
-	echo"<FONT COLOR='#993333' SIZE='-1'><B>No Particles for this Session</B></FONT>\n";
+	echo"<FONT COLOR='#993333' SIZE='-1'><B>No Particles picked for this Session</B></FONT>\n";
 } else {
 	echo "Select a particle run:
 	<SELECT NAME='partpath'>\n";
@@ -167,11 +167,11 @@ if (!$prtlrunIds) {
 
 }
 
-echo"<BR/><HR/></TD></TR>\n";
+echo"<BR/><BR/><HR/></TD></TR>\n";
 
 // HEADER FORM FOR FILLING IMAGE PATH
-echo"<TR><TD VALIGN='TOP'>\n";
-echo"<B>Image Directory:</B><BR>\n";
+echo"<TR ALIGN='CENTER'><TD VALIGN='TOP'>\n";
+echo"&nbsp;<B>Image Directory:</B><BR>\n";
 echo"<INPUT TYPE='text' NAME='imgdir' VALUE='$imgdir' SIZE='60' onchange='this.form.submit()'></TD>\n";
 echo"<TD VALIGN='TOP'>\n";
 echo"<B>Image Type:</B><BR>\n";
@@ -191,7 +191,7 @@ foreach ($presets as $type) {
 }
 echo"</SELECT>\n";
 //echo"<INPUT TYPE='HIDDEN' NAME='binning' VALUE='$binning'>\n";
-echo"</TD></TR>\n";
+echo"<BR/><BR/></TD></TR>\n";
 
 echo"</TABLE>\n";
 echo"</FORM>\n";
@@ -282,7 +282,7 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 	echo"<INPUT TYPE='HIDDEN' NAME='imageid' VALUE='$imgid'>\n";
 
 	//Image and tool bars on side
-	echo"<CENTER>\n<TABLE BORDER='0' CELLPADDING='5' CELLSPACING='0'><TR><TD>\n";
+	echo"<CENTER>\n<TABLE BORDER='0' CELLPADDING='5' CELLSPACING='5'><TR><TD>\n";
 	printToolBar();
 	echo"</TD><TD>\n";
 	echo"<IMG SRC='loadimg.php?filename=$imgfull&scale=$imgrescl'>\n";
@@ -291,7 +291,7 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 	echo"</TD></TR></TABLE>\n";
 
 	//Scale factor, etc.
-	echo"<TABLE BORDER='0' CELLPADDING='10' CELLSPACING='0'>\n";
+	echo"<TABLE BORDER='0' CELLPADDING='10' CELLSPACING='5'>\n";
 	echo"<TR><TD ALIGN='LEFT'>\n";
 	echo"<FONT SIZE='+1'>Image $thisnum of $numfiles</FONT>\n";
 	echo"</TD><TD ALIGN='RIGHT'>";
@@ -312,7 +312,7 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 }
 
 function printToolBar() {
-	echo"<TABLE BORDER='0' CELLPADDING='3' CELLSPACING='0'>\n";
+	echo"<TABLE BORDER='0' CELLPADDING='3' CELLSPACING='5'>\n";
 	echo"<TR><TD ALIGN='CENTER'>\n";
 	echo"<INPUT TYPE='IMAGE' WIDTH='48' SRC='img/button-first.png' ALT='First' NAME='imagelist' VALUE='First'>\n";
 	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
