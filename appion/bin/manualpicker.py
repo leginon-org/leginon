@@ -46,6 +46,12 @@ class ManualPickerPanel(TargetPanel.TargetImagePanel):
 ##################################
 
 class PickerApp(wx.App):
+	def __init__(self, shape='+', size=16, mask=False):
+		self.shape = shape
+		self.size = size
+		self.mask = mask
+		wx.App.__init__(self)
+
 	def OnInit(self):
 		self.deselectcolor = wx.Color(240,240,240)
 
@@ -54,21 +60,16 @@ class PickerApp(wx.App):
 
 		### BEGIN IMAGE PANEL
 		self.panel = ManualPickerPanel(self.frame, -1)
-		self.target = 'x'
-		if self.target =='o':
-			#	circle target for seeing particle in the middle
-			self.panel.addTypeTool('Select Particles', toolclass=TargetPanelTools.TargetTypeTool,
-				display=wx.RED, target=True, shape='o', size=25)
-		else:
-			self.panel.addTypeTool('Select Particles', toolclass=TargetPanelTools.TargetTypeTool,
-				display=wx.RED, target=True, numbers=True, shape='x')
+		self.panel.addTypeTool('Select Particles', toolclass=TargetPanelTools.TargetTypeTool,
+			display=wx.RED, target=True, shape=self.shape, size=self.size)
 		self.panel.setTargets('Select Particles', [])
 		self.panel.selectiontool.setTargeting('Select Particles', True)
 
-		self.panel.addTypeTool('Particle Mask', toolclass=TargetPanelTools.TargetTypeTool,
-			display=wx.GREEN, target=True, shape='polygon')
-		self.panel.setTargets('Particle Mask', [])
-		self.panel.selectiontool.setTargeting('Particle Mask', True)
+		if self.mask:
+			self.panel.addTypeTool('Particle Mask', toolclass=TargetPanelTools.TargetTypeTool,
+				display=wx.GREEN, target=True, shape='polygon')
+			self.panel.setTargets('Particle Mask', [])
+			self.panel.selectiontool.setTargeting('Particle Mask', True)
 
 		self.panel.SetMinSize((300,300))
 		self.sizer.Add(self.panel, 1, wx.EXPAND)
@@ -82,10 +83,11 @@ class PickerApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onNext, self.next)
 		self.buttonrow.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		self.add = wx.Button(self.frame, wx.ID_REMOVE, '&Remove Region')
-		self.add.SetMinSize((100,40))
-		self.Bind(wx.EVT_BUTTON, self.onAdd, self.add)
-		self.buttonrow.Add(self.add, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		if self.mask:
+			self.add = wx.Button(self.frame, wx.ID_REMOVE, '&Remove Region')
+			self.add.SetMinSize((150,40))
+			self.Bind(wx.EVT_BUTTON, self.onAdd, self.add)
+			self.buttonrow.Add(self.add, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear')
 		self.clear.SetMinSize((100,40))
@@ -211,14 +213,21 @@ class PickerApp(wx.App):
 
 
 ##################################
-##
+##################################
+##################################
+## APPION LOOP
+##################################
+##################################
 ##################################
 
 class manualPicker(particleLoop.ParticleLoop):
 	def preLoopFunctions(self):
 		if self.params['dbimages'] or self.params['alldbimages']:
 			self.processAndSaveAllImages()
-		self.app = PickerApp()
+		self.app = PickerApp(
+			shape = self.params['shape'], 
+			size =  self.params['shapesize'], 
+			mask =  self.params['checkMask'], )
 		self.app.appionloop = self
 		self.threadJpeg = True
 
@@ -252,6 +261,8 @@ class manualPicker(particleLoop.ParticleLoop):
 		self.params['mapdir']="manualmaps"
 		self.params['pickrunname'] = None
 		self.params['pickrunid'] = None
+		self.params['shape'] = '+'
+		self.params['shapesize'] = 16
 
 	def particleCreateOutputDirs(self):
 		self._createDirectory(os.path.join(self.params['rundir'], "pikfiles"),warning=False)
@@ -264,12 +275,34 @@ class manualPicker(particleLoop.ParticleLoop):
 				self.params['pickrunid']=int(elements[1])
 			elif (elements[0]=='pickrunname'):
 				self.params['pickrunname']=str(elements[1])
+			elif (elements[0]=='shape'):
+				self.params['shape']=self.canonicalShape(elements[1])
+			elif (elements[0]=='shapesize'):
+				self.params['shapesize']=int(elements[1])
 			else:
 				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
 	###################################################
 	##### END PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
 	###################################################
+
+	def canonicalShape(self, shape):
+		if shape == '.'    or shape == 'point':
+			return '.'
+		elif shape == '+'  or shape == 'plus':
+			return '+'
+		elif shape == '[]' or shape == 'square' or shape == 'box':
+			return '[]'
+		elif shape == '<>' or shape == 'diamond':
+			return '<>'
+		elif shape == 'x'  or shape == 'cross':
+			return 'x'
+		elif shape == '*'  or shape == 'star':
+			return '*'
+		elif shape == 'o'  or shape == 'circle':
+			return 'o'
+		else:
+			apDisplay.printError("Unknown pointer shape: "+shape)
 
 	def getParticlePicks(self, imgdata):
 		if not self.params['pickrunid']:
@@ -295,17 +328,14 @@ class manualPicker(particleLoop.ParticleLoop):
 		for imgdata in self.imgtree:
 			count += 1
 			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
-			if self.params['continue'] == False:
-				if os.path.isfile(imgpath):
-					os.remove(imgpath)
-				apFindEM.processAndSaveImage(imgdata, params=self.params)
+			if self.params['continue'] is True and os.path.isfile(imgpath):
+				sys.stderr.write(".")
+				#print "already processed: ",apDisplay.short(imgdata['filename'])
 			else:
 				if os.path.isfile(imgpath):
-					sys.stderr.write(".")
-					#print "already processed: ",apDisplay.short(imgdata['filename'])
-				else:
-					sys.stderr.write("#")
-					apFindEM.processAndSaveImage(imgdata, params=self.params)
+					os.remove(imgpath)
+				sys.stderr.write("#")
+				apFindEM.processAndSaveImage(imgdata, params=self.params)
 
 			if count % 60 == 0:
 				sys.stderr.write(" %d left\n" % (total-count))
