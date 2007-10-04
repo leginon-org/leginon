@@ -13,6 +13,7 @@ import apDisplay
 import apDB
 import apDatabase
 import apStack
+import apImage
 import appionData
 import apTemplate
 leginondb = apDB.db
