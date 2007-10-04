@@ -221,7 +221,7 @@ function jobForm($extra=false) {
 <TABLE CLASS='tableborder' CELLPADDING=4 CELLSPACING=4>
 <TR>
   <TD COLSPAN='4' ALIGN='CENTER'>
-  <FONT SIZE='+1'><B>Cluster Parameters</B></FONT>
+  <H4>Cluster Parameters</H4>
   </TD>
 </TR>
 <TR>
@@ -251,7 +251,7 @@ function jobForm($extra=false) {
 <TABLE CLASS='tableborder' CELLPADDING=4 CELLSPACING=4>
 <TR>
   <TD COLSPAN='4' ALIGN='CENTER'>
-  <FONT SIZE='+1'><B>DMF Parameters</B></FONT>
+  <H4>DMF Parameters</H4>
   </TD>
 </TR>
 <TR>
@@ -301,7 +301,8 @@ function jobForm($extra=false) {
     $filt3d=($i>$j) ? $_POST["filt3d".($i-1)] : $_POST[$filt3dn];
     $shrink=($i>$j) ? $_POST["shrink".($i-1)] : $_POST[$shrinkn];
 
-	if ($i=1) $sym=$modsym;
+    ## use symmetry of model by default, but you can change it
+    if ($i==1 && !$_POST['duplicate']) $sym=$modsym;
 
     if ($i>$j) {
            $median=($_POST["median".($i-1)]=='on') ? 'CHECKED' : '';
@@ -376,12 +377,17 @@ function writeJobFile () {
   $stackidval=$stackinfo[0];
   $apix=$stackinfo[1];
   $box=$stackinfo[2];
+
+  // get the model id
+  $modelinfo=explode('|--|',$_POST['model']);
+  $modelid=$modelinfo[0];
   echo "<PRE>\n";
   $dmfpath=$_POST['dmfpath'];
   // make sure dmf store dir ends with '/'
   if (substr($dmfpath,-1,1)!='/') $dmfpath.='/';
   if ($_POST['jobname']) echo "# ".$_POST['jobname']."\n";
   echo "# stackId: $stackidval\n";
+  echo "# modelId: $modelid\n";
   echo "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
   echo "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
   echo "#PBS -l cput=".$_POST['cput'].":00:00\n";
