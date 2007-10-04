@@ -750,8 +750,8 @@ def rejectImage(imgdata, params):
 	if params['tiltangle'] is not None:
 		tiltangle = abs(apDatabase.getTiltAngleDeg(imgdata))
 		if abs(params['tiltangle'] - tiltangle) > 2.0:
-			apDisplay.printColor(shortname+".mrc has been rejected tiltangle: "+str(int(round(tiltangle)))+\
-				" != "+str(int(round(params['tiltangle'])))+"\n","cyan")
+			apDisplay.printColor(shortname+".mrc has been rejected tiltangle: "+str(round(tiltangle,1))+\
+				" != "+str(round(params['tiltangle'],1))+"\n","cyan")
 			return False
 
 	### Get CTF values
