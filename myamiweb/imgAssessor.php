@@ -313,18 +313,18 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 
 function printToolBar() {
 	echo"<TABLE BORDER='0' CELLPADDING='3' CELLSPACING='0'>\n";
-	echo"<TR><TD>\n";
-	echo"<INPUT TYPE='IMAGE' WIDTH='30' SRC='img/firstbutton.jpg' ALT='First' NAME='imagelist' VALUE='First'>\n";
-	echo"</TD></TR><TR><TD>\n";
-	echo"<INPUT TYPE='IMAGE' SRC='img/backbutton.jpg' ALT='Back' NAME='imagelist' VALUE='Back'>\n";
-	echo"</TD></TR><TR><TD>\n";
-	echo"<INPUT TYPE='IMAGE' SRC='img/stopbutton.jpg' ALT='Remove' NAME='imagelist' VALUE='Remove'>\n";
-	echo"</TD></TR><TR><TD>\n";
-	echo"<INPUT TYPE='IMAGE' SRC='img/playbutton.jpg' ALT='Keep' NAME='imagelist' VALUE='Keep'>\n";
-	echo"</TD></TR><TR><TD>\n";
-	echo"<INPUT TYPE='IMAGE' SRC='img/nextbutton.jpg' ALT='Next' NAME='imagelist' VALUE='Next'>\n";
-	echo"</TD></TR><TR><TD>\n";
-	echo"<INPUT TYPE='IMAGE' WIDTH='30' SRC='img/lastbutton.jpg' ALT='Last' NAME='imagelist' VALUE='Last'>\n";
+	echo"<TR><TD ALIGN='CENTER'>\n";
+	echo"<INPUT TYPE='IMAGE' WIDTH='48' SRC='img/button-first.png' ALT='First' NAME='imagelist' VALUE='First'>\n";
+	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/button-back.png' ALT='Back' NAME='imagelist' VALUE='Back'>\n";
+	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/button-reject.png' ALT='Reject' NAME='imagelist' VALUE='Remove'>\n";
+	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/button-keep.png' ALT='Keep' NAME='imagelist' VALUE='Keep'>\n";
+	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/button-next.png' ALT='Next' NAME='imagelist' VALUE='Next'>\n";
+	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"<INPUT TYPE='IMAGE' WIDTH='48' SRC='img/button-last.png' ALT='Last' NAME='imagelist' VALUE='Last'>\n";
 	echo"</TD></TR></TABLE>";
 }
 
