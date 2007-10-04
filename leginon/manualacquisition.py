@@ -394,7 +394,15 @@ class ManualAcquisition(node.Node):
 			self.presetsclient.toScope(presetname, emtarget)
 		self.logger.info('Starting manual focus loop, please confirm defocus...')
 		self.beep()
-		self.setManualCheckCamera()
+		camdata1 = {}
+
+		camdata1['exposure time']=self.focexptime
+		camdata1['dimension'] = {'x':512, 'y':512}
+		camdata1['binning'] = {'x':1, 'y':1}
+		camsize = self.instrument.ccdcamera.getCameraSize()
+		camdata1['offset'] = {'x': (camsize['x']-512)/2, 'y':(camsize['y']-512)/2}
+		self.instrument.ccdcamera.Settings = camdata1
+		
 		self.manualplayer.play()
 		self.onManualCheck()
 		while True:
@@ -411,8 +419,11 @@ class ManualAcquisition(node.Node):
 			# acquire image, show image and power spectrum
 			# allow user to adjust defocus and stig
 			correction = self.settings['correct image']
-			print self.focexptime
+			camdata1['exposure time'] = self.focexptime
+			
 			self.manualchecklock.acquire()
+			self.instrument.ccdcamera.Settings = camdata1
+
 			try:
 				if correction:
 					imagedata = self.instrument.getData(data.CorrectedCameraImageData)
@@ -433,22 +444,3 @@ class ManualAcquisition(node.Node):
 			self.panel.setManualImage(self.man_power, 'Power')
 		self.onManualCheckDone()
 		self.logger.info('Manual focus check completed')
-
-
-	def setManualCheckCamera(self):
-		errstr = 'Acquire live image failed: %s'
-		self.logger.info('Acquiring live image at 512x512 binned by 1')
-
-		camdata1 = {}
-		camdata1['exposure time']=self.focexptime
-		camdata1['dimension'] = {'x':512, 'y':512}
-		camdata1['binning'] = {'x':1, 'y':1}
-		camsize = self.instrument.ccdcamera.getCameraSize()
-		camdata1['offset'] = {'x': (camsize['x']-512)/2, 'y':(camsize['y']-512)/2}
-
-		print camdata1
-		try:
-			self.instrument.ccdcamera.Settings = camdata1
-		except:
-			self.logger.error(errstr % 'unable to set camera parameters')
-			return
