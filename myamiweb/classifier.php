@@ -182,8 +182,8 @@ function createClassifierForm($extra=false, $title='Classifier.py Launcher', $he
 	</TR>
 	<TR>
 		<TD COLSPAN='2' ALIGN='CENTER'>
-		<HR>
-		Host: <select name='host'>\n";
+		<HR>";
+/*		Host: <select name='host'>\n";
 	foreach($hosts as $host) {
 		$s = ($_POST['host']==$host) ? 'selected' : '';
 		echo "<option $s >$host</option>\n";
@@ -195,8 +195,8 @@ function createClassifierForm($extra=false, $title='Classifier.py Launcher', $he
 		echo "<option $s >$user</option>\n";
 	}
 	echo"
-	  </select>
-	  <BR>
+	  </select><BR/>*/
+		echo"
 	  <input type='submit' name='process' value='Create Class'><BR>
 	  <FONT COLOR='RED'>Submission will NOT start classification, only output a command that you can copy and paste into a unix shell</FONT>
 	  </TD>

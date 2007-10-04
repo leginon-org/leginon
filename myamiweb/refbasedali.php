@@ -263,8 +263,8 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	</TR>
 	<TR>
 		<TD COLSPAN='2' ALIGN='CENTER'>
-		<HR>
-		Host: <select name='host'>\n";
+		<HR>";
+		/*Host: <select name='host'>\n";
 	foreach($hosts as $host) {
 		$s = ($_POST['host']==$host) ? 'selected' : '';
 		echo "<option $s >$host</option>\n";
@@ -276,8 +276,8 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 		echo "<option $s >$user</option>\n";
 	}
 	echo"
-	  </select>
-	  <BR>
+	  </select><BR>*/
+	  echo"
           <INPUT TYPE='hidden' NAME='refid' VALUE='$templateid'>
 	  <input type='submit' name='process' value='Align'><BR>
 	  <FONT COLOR='RED'>Submission will NOT start alignment, only output a command that you can copy and paste into a unix shell</FONT>
