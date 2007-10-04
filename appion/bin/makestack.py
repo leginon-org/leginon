@@ -520,7 +520,7 @@ def getImgsFromSelexonId(params):
 
 	totalimgs = str(len(dbimginfo))
 	partimgs = str(len(dbimglist))
-	apDisplay.printMsg("selected "+partimgs+" of "+totalimgs+" all images that have particles")
+	apDisplay.printMsg("selected "+partimgs+" of all "+totalimgs+" images that have particles")
 
 	return (dbimglist)
 
