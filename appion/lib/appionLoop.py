@@ -49,6 +49,7 @@ class AppionLoop(object):
 		self._parsePythonPath()
 
 		### parse command line options: diam, apix, etc.
+		self._checkForDuplicateCommandLineInputs(sys.argv[1:])
 		self._parseCommandLineInput(sys.argv[1:])
 
 		### check for conflicts
@@ -348,6 +349,16 @@ class AppionLoop(object):
 		xmldict = apXml.readTwoXmlFiles(allxml, funcxml)
 		apXml.printHelp(xmldict)
 		sys.exit(1)
+
+	def _checkForDuplicateCommandLineInputs(self, args):
+		argdict = {}
+		for arg in args:
+			elements=arg.split('=')
+			opt = elements[0].lower()
+			if opt in argdict:
+				apDisplay.printError("Multiple arguments were supplied for argument: "+str(opt))
+			else:
+				argdict[opt] = True
 
 	def _parseCommandLineInput(self, args):
 		mrcfileroot = []
