@@ -94,8 +94,6 @@ function displayDMF() {
 	}
 	newwindow.document.write('&nbsp;<BR></BODY></HTML>');
 	newwindow.document.close();
-	document.emanjob.dmfpath.value=dpath;
-	document.emanjob.dmfstack.value=stackinfo[4];
 }
 </SCRIPT>\n";
 
@@ -130,7 +128,7 @@ Stack:
   }
   echo "</SELECT>\n";
   echo"<INPUT TYPE='button' NAME='dmfput' VALUE='Put stack in DMF' onclick='displayDMF()'><P>\n";
-  
+  echo"<INPUT TYPE='hidden' NAME='dmfpath' VALUE=''>\n";
   # show initial models
   echo "Model:<BR>\n";
   if (count($models)>0) {
@@ -174,8 +172,12 @@ Stack:
 function jobForm($extra=false) {
   ## get stack data
   $stackinfo = explode('|--|',$_POST['stackval']);
-  $dmfpath = $stackinfo[3];
   $dmfstack = $stackinfo[4];
+  $dmfpathdata = explode('/', $stackinfo[3]);
+  $dmfpath = '';
+  for ($i=3 ; $i<count($dmfpathdata); $i++) {
+    $dmfpath .= "$dmfpathdata[$i]/";
+  }
 
   ## get model data
   $modelinfo = explode('|--|',$_POST['model']);
