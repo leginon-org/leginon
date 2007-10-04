@@ -74,7 +74,7 @@ def _diffParticles(x1, initx, xscale, a1, a2):
 	diffmat = (a1 - a2b)
 	xrmsd = ndimage.mean(diffmat[:,0]**2)
 	yrmsd = ndimage.mean(diffmat[:,1]**2)
-	rmsd = math.sqrt(xrmsd + yrmsd)/float(len(a2b))
+	rmsd = math.sqrt((xrmsd + yrmsd)/float(len(a2b)))
 	#print (x2*57.29).round(decimals=3),round(rmsd,6)
 	return rmsd
 
@@ -196,10 +196,15 @@ def maskOverlapRegion(image1, image2, data):
 		draw2 = ImageDraw.Draw(mask2b)
 		draw2.polygon(a2masklist, fill="white")
 		mask2 = apImage.imageToArray(mask2b, dtype=numpy.float32)
-		immin2 = ndimage.minimum(image2)+1.0
+
+		mean2 = ndimage.mean(image2)
+		std2 = ndimage.standard_deviation(image2)
+		immin2 = mean2 - 3.0 * std2
+		#immin2 = ndimage.minimum(image2)+1.0
 		image2 = (image2+immin2)*mask2
 		immax2 = ndimage.maximum(image2)
-		image2 = numpy.where(image2==0,immax2,image2)
+		#immax2 = mean2 + 3.0 * std2
+		image2 = numpy.where(image2==0, immax2, image2)
 		#DRAW A POLYGON FROM THE LIMITS 2->1
 		#print "a1mask=",numpy.asarray(a1mask, dtype=numpy.int32)
 		#print "a1masklist=",a1masklist
@@ -209,10 +214,15 @@ def maskOverlapRegion(image1, image2, data):
 		draw1 = ImageDraw.Draw(mask1b)
 		draw1.polygon(a1masklist, fill="white")
 		mask1 = apImage.imageToArray(mask1b, dtype=numpy.float32)
-		immin1 = ndimage.minimum(image1)+1.0
+
+		mean1 = ndimage.mean(image1)
+		std1 = ndimage.standard_deviation(image1)
+		immin1 = mean1 - 3.0 * std1
+		#immin1 = ndimage.minimum(image1)+1.0
 		image1 = (image1+immin1)*mask1
 		immax1 = ndimage.maximum(image1)
-		image1 = numpy.where(image1==0,immax1,image1)
+		#immax1 = mean1 + 3.0 * std1
+		image1 = numpy.where(image1==0, immax1, image1)
 
 		return (image1, image2)
 
