@@ -54,7 +54,6 @@ elseif ($_POST['submitstackmodel'] || $_POST['duplicate']) {
 else stackModelForm();
 
 function stackModelForm($extra=False) {
-  $particle = new particledata();
   // check if session provided
   $expId = $_GET['expId'];
   if ($expId) {
@@ -67,18 +66,28 @@ function stackModelForm($extra=False) {
   }
   $projectId=getProjectFromExpId($expId);
 
-  // get initial models associated with project
-  $models=$particle->getModelsFromProject($projectId);
+  // if user wants to use templates from another project
+  if($_POST['projectId']) $projectId =$_POST[projectId];
+  
+  $projects=getProjectList();
+  
+  if (is_numeric($projectId)) {
+    $particle = new particledata();
+    // get initial models associated with project
+    $models=$particle->getModelsFromProject($projectId);
 
+  }
   // find each stack entry in database
   $stackIds = $particle->getStackIds($sessionId);
   $stackinfo=explode('|--|',$_POST['stackval']);
   $stackidval=$stackinfo[0];
   $apix=$stackinfo[1];
   $box=$stackinfo[2];
-  $javafunc="<SCRIPT LANGUAGE='JavaScript'>
+  $javafunc="
+<script src='js/viewer.js'></script>
+<SCRIPT LANGUAGE='JavaScript'>
 function displayDMF() {
-	stack = document.emanjob.stackval.value;
+	stack = document.viewerform.stackval.value;
 	stackinfo = stack.split('|--|');
 	pathinfo = stackinfo[3].split('/');
 	dpath='';
@@ -103,9 +112,20 @@ function displayDMF() {
   if ($extra) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
   }
-  echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formaction'>
-Stack:
-<SELECT NAME='stackval'>\n";
+  echo "<FORM NAME='viewerform' METHOD='POST' ACTION='$formaction'>
+  <B>Select Project:</B><BR>
+  <SELECT NAME='projectId' onchange='newexp()'>\n";
+  
+  foreach ($projects as $k=>$project) {
+    $sel = ($project['id']==$projectId) ? "selected" : '';
+    echo "<option value='".$project['id']."' ".$sel.">".$project['name']."</option>\n";
+  }
+  echo"
+  </select>
+  <P>
+  Stack:
+  <SELECT NAME='stackval'>\n";
+
   foreach ($stackIds as $stackid){
     // get stack parameters from database
     $s=$particle->getStackParams($stackid['stackid']);
@@ -162,9 +182,9 @@ Stack:
       echo "</TABLE>\n";
       echo "<P>\n";
     }
+    echo"<P><INPUT TYPE='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack & model'></FORM>\n";
   }
   else {echo "No models.  <A HREF='uploadmodel.php?expId=$expId'>Upload one now</A>\n";}
-  echo"<P><INPUT TYPE='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack & model'></FORM>\n";
   writeBottom();
   exit;
 }
