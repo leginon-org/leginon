@@ -28,7 +28,7 @@ class particledata {
 	}
 
   function getTemplatesFromProject ($projectId) {
-    $q="SELECT t.DEF_id, path, `project|projects|project`, templatename, apix, diam, description "
+    $q="SELECT t.*, p.path "
       ."FROM `ApTemplateImageData` AS t "
       ."LEFT JOIN ApPathData AS p ON "
       ."(t.`REF|ApPathData|path`=p.`DEF_id`) "
@@ -38,9 +38,7 @@ class particledata {
   }
 
   function getTemplatesFromId ($templateId) {
-    $q = "SELECT t.DEF_id, "
-        ."path, `project|projects|project`, "
-        ."templatename, apix, diam, description "
+    $q = "SELECT t.*, p.path "
         ."FROM `ApTemplateImageData` AS t "
         ."LEFT JOIN ApPathData AS p ON "
         ."(t.`REF|ApPathData|path`=p.`DEF_id`) "
@@ -152,7 +150,7 @@ class particledata {
 	}
 
   function getTemplateRunParams ($runId) {
-    $q="SELECT i.DEF_id as id, p.path as path, i.templatename as tname, i.apix, i.description, "
+    $q="SELECT i.DEF_id as id, p.path, i.templatename as tname, i.apix, i.description, "
       ."t.range_start, t.range_end, t.range_incr, "
       ."r.name "
       ."from ApTemplateRunData AS t "
@@ -238,7 +236,7 @@ class particledata {
 	}
 
 	function getParticleRunData ($partRunId) {
-		$q = "SELECT r.*, p.path AS path "
+		$q = "SELECT r.*, p.path "
 			."FROM `ApSelectionRunData` AS r "
       ."LEFT JOIN ApPathData AS p ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
 			."WHERE r.`DEF_id` = '$partRunId'";
@@ -247,7 +245,7 @@ class particledata {
 	}
 
 	function getParticleRunIds ($sessionId) {
-		$q = "SELECT r.*, p.path AS path "
+		$q = "SELECT r.*, p.path "
 			."FROM `ApSelectionRunData` AS r "
       ."LEFT JOIN ApPathData AS p ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
 			."WHERE r.`dbemdata|SessionData|session` = '$sessionId'";
@@ -574,7 +572,7 @@ class particledata {
 	}
 
 	function getNoRefParams ($norefId) {
-		$q = "SELECT * "
+		$q = "SELECT p.*, r.*, p.path "
 	    ."FROM ApNoRefRunData as r "
 	    ."LEFT JOIN ApNoRefParamsData as p "
 	    ."ON (r.`REF|ApNoRefParamsData|norefParams`=p.`DEF_id`) "
@@ -590,7 +588,7 @@ class particledata {
 	}
 
 	function getRefAliParams ($refaliId) {
-		$q = "SELECT * "
+		$q = "SELECT p.*, r.*, p.path "
 			."FROM ApRefRunData as r "
 			."LEFT JOIN ApRefParamsData as p "
 			."ON (r.`REF|ApRefParamsData|refParams`=p.`DEF_id`) "
@@ -628,9 +626,7 @@ class particledata {
     return $r;
   }
 	function getModelsFromProject ($projectId) {
-	  $q="SELECT i.DEF_id, p.path, `project|projects|project`, "
-	    ."i.name, i.`REF|ApSymmetryData|symmetry`, i.pixelsize, "
-	    ."i.boxsize, i.description, i.resolution "
+	  $q="SELECT i.*, p.path "
 	    ."FROM `ApInitialModelData` i "
 	    ."LEFT JOIN `ApPathData` p ON (p.`DEF_id` = i.`REF|ApPathData|path`) "
 	    ."WHERE i.`project|projects|project`='$projectId'";
@@ -647,8 +643,7 @@ class particledata {
 	} 
 
   function getRefinementRunInfo($refinementRun) {
-    $q="select r.DEF_id, p.path, r.name, r.`REF|ApStackData|stack`, "
-      ."r.`REF|ApInitialModelData|initialModel`, r.package, r.description "
+    $q="select r.*, p.path "
       ."FROM `ApRefinementRunData` AS r "
       ."LEFT JOIN ApPathData AS p ON "
       ."(r.`REF|ApPathData|path` = p.`DEF_id`) "
@@ -658,7 +653,7 @@ class particledata {
   }
 
 	function getInitModelInfo ($modelId) {
-		$q = "SELECT * "
+		$q = "SELECT d.*,p.path "
 				."FROM `ApInitialModelData` AS d "
 				."LEFT JOIN ApPathData AS p ON "
 				."(d.`REF|ApPathData|path` = p.`DEF_id`) "
@@ -888,7 +883,7 @@ class particledata {
 		}
 
 	function getMiscInfoFromReconId ($reconid) {
-		$q = "SELECT * "
+		$q = "SELECT m.*, p.path "
 		."FROM `ApMiscData` AS m "
 		."LEFT JOIN ApPathData AS p ON "
 		."(m.`REF|ApPathData|path` = p.`DEF_id`) "
