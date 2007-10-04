@@ -35,92 +35,49 @@ if ($_POST['write']) {
 	writeJobFile();
 }
 
-else jobForm();
+elseif ($_POST['submitstackmodel']) {
+  if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
+  if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
+  ## make sure that box sizes are the same
+  ## get stack data
+  $stackinfo = explode('|--|',$_POST['stackval']);
+  $stackbox = $stackinfo[2];
 
-function jobForm($extra=false) {
-	$particle = new particledata();
-
-	// check if session provided
-	$expId = $_GET['expId'];
-	if ($expId) {
-		$sessionId=$expId;
-		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-	}
-	else {
-		$sessionId=$_POST['sessionId'];
-		$formAction=$_SERVER['PHP_SELF'];
-	}
-	$projectId=getProjectFromExpId($expId);
-
-	// get initial models associated with project
-	$modeldata=$particle->getModelsFromProject($projectId);
-
-	// find each stack entry in database
-	$stackIds = $particle->getStackIds($sessionId);
-	$stackinfo=explode('|--|',$_POST['stackval']);
-	$stackidval=$stackinfo[0];
-	$apix=$stackinfo[1];
-	$box=$stackinfo[2];
-	$jobname = ($_POST['jobname']) ? $_POST['jobname'] : '';
-	$nodes = ($_POST['nodes']) ? $_POST['nodes'] : 4;
-	$ppn = ($_POST['ppn']) ? $_POST['ppn'] : 4;
-	$rprocs = ($_POST['rprocs']) ? $_POST['rprocs'] : 4;
-	$walltime = ($_POST['walltime']) ? $_POST['walltime'] : 240;
-	$cput = ($_POST['cput']) ? $_POST['cput'] : 240;
-	$dmfstack = ($_POST['dmfstack']) ? $_POST['dmfstack'] : '';
-	$dmfpath = ($_POST['dmfpath']) ? $_POST['dmfpath'] : '';
-	$dmfmod = ($_POST['dmfmod']) ? $_POST['dmfmod'] : '';
-	$dmfstorech = ($_POST['dmfstore']=='on') ? 'CHECKED' : '';
-	$numiters= ($_POST['numiters']) ? $_POST['numiters'] : 1;
-	
-	if ($_POST['duplicate']) {
-		$numiters+=1;
-		$newiter=explode(" ",$_POST['duplicate']);
-		$j=$newiter[2];
-	}
-	
-	else $j=$numiters;
-
-	$javafunc="<SCRIPT LANGUAGE='JavaScript'>
-function displayModelSelector(emanObj){
-	newwindow=window.open('','name','resizable=1,scrollbars=1,height=400,width=600');
-	newwindow.document.write(\"<HTML><HEAD>\");
-	newwindow.document.write(\"<link rel='stylesheet' type='text/css' href='css/viewer.css'>\");
-	newwindow.document.write(\"</HEAD>\");
-	newwindow.document.write(\"<BODY>\");
-	newwindow.document.write(\"<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='2'>\")\n";
-	foreach ($modeldata as $model) {
-		# get list of png files in directory
-		$pngfiles=array();
-		$modeldir= opendir($model['path']);
-		while ($f = readdir($modeldir)) {
-			if (eregi($model['name'].'.*\.png$',$f)) $pngfiles[] = $f;
-		}
-		sort($pngfiles);
-
-		# display starting model
-		$javafunc .= "newwindow.document.write(\"<TR><TD COLSPAN=2>\");\n";
-		foreach ($pngfiles as $snapshot) {
-			$snapfile = $model['path'].'/'.$snapshot;
-			$javafunc .= "newwindow.document.write(\"<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\");\n";
-		}
-		$javafunc .= "newwindow.document.write(\"</TD>\");\n";
-		$javafunc .= "newwindow.document.write(\"</TR>\")\n";
-		$sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
-		$javafunc.="newwindow.document.write(\"<TR><TD COLSPAN=2>$model[description]</TD></TR>\");\n";
-		$javafunc.="newwindow.document.write(\"<TR><TD COLSPAN=2>$model[path]/$model[name]</TD></TR>\");\n";
-		$javafunc.="newwindow.document.write(\"<TR><TD>pixel size:</TD><TD>$model[pixelsize]</TD></TR>\");\n";
-		$javafunc.="newwindow.document.write(\"<TR><TD>box size:</TD><TD>$model[boxsize]</TD></TR>\");\n";
-		$javafunc.="newwindow.document.write(\"<TR><TD>symmetry:</TD><TD>$sym[symmetry]</TD></TR>\");\n";
-		$javafunc.="newwindow.document.write(\"<TR><TD COLSPAN=2 ALIGN=CENTER>\");\n";
-		$javafunc.="newwindow.document.write(\"<INPUT TYPE='button' NAME='modelselect' VALUE='Select Initial Model' onclick='emanObj.document.emanjob.dmfmod.value=3'>\")\n";
-		$javafunc.="newwindow.document.write(\"</TD></TR>\");\n";
-
-	}
-	$javafunc.="newwindow.document.write(\"</TABLE>\")
-	newwindow.document.write(\"</BODY></HTML>\")
-	newwindow.document.close();
+  ## get model data
+  $modelinfo = explode('|--|',$_POST['model']);
+  $modbox = $modelinfo[2];
+  if ($stackbox != $modbox) stackModelForm("ERROR: model and stack must have same box size");
+  jobForm();
 }
+
+#elseif ($_POST['duplicate']) jobForm();
+
+else stackModelForm();
+
+function stackModelForm($extra=False) {
+  $particle = new particledata();
+  // check if session provided
+  $expId = $_GET['expId'];
+  if ($expId) {
+    $sessionId=$expId;
+    $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+  }
+  else {
+    $sessionId=$_POST['sessionId'];
+    $formAction=$_SERVER['PHP_SELF'];
+  }
+  $projectId=getProjectFromExpId($expId);
+
+  // get initial models associated with project
+  $models=$particle->getModelsFromProject($projectId);
+
+  // find each stack entry in database
+  $stackIds = $particle->getStackIds($sessionId);
+  $stackinfo=explode('|--|',$_POST['stackval']);
+  $stackidval=$stackinfo[0];
+  $apix=$stackinfo[1];
+  $box=$stackinfo[2];
+  $javafunc="<SCRIPT LANGUAGE='JavaScript'>
 function displayDMF() {
 	stack = document.emanjob.stackval.value;
 	stackinfo = stack.split('|--|');
@@ -142,39 +99,121 @@ function displayDMF() {
 	document.emanjob.dmfstack.value=stackinfo[4];
 }
 </SCRIPT>\n";
-	writeTop("Eman Job Generator","EMAN Job Generator",$javafunc);
-	// write out errors, if any came up:
-	if ($extra) {
-		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
-	}
-	echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formaction'>
-Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50><BR>
+
+  writeTop("Eman Job Generator","EMAN Job Generator",$javafunc);
+  
+  // write out errors, if any came up:
+  if ($extra) {
+    echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+  }
+  echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formaction'>
 Stack:
 <SELECT NAME='stackval'>\n";
-	foreach ($stackIds as $stackid){
-		// get stack parameters from database
-		$s=$particle->getStackParams($stackid['stackid']);
-		// get number of particles in each stack
-		$nump=commafy($particle->getNumStackParticles($stackid['stackid']));
-		// get pixel size of stack
-		$apix=($particle->getPixelSizeFromStackId($stackid['stackid']))*1e10;
-		$apix=($s['bin']) ? $apix*$s['bin'] : $apix;
-		// get box size
-		$box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
-		// get stack path with name
-		$opvals = "$stackid[stackid]|--|$apix|--|$box|--|$s[path]|--|$s[name]";
-		// if imagic stack, send both hed & img files for dmf
-		if (ereg('\.hed', $s['name'])) $opvals.='|--|'.ereg_replace('hed','img',$s['name']);
-		if (ereg('\.img', $s['name'])) $opvals.='|--|'.ereg_replace('img','hed',$s['name']);
-		echo "<OPTION VALUE='$opvals'";
-		// select previously set stack on resubmit
-		if ($stackid['stackid']==$stackidval) echo " SELECTED";
-		echo">$stackid[stackid] ($nump particles, $apix A/pix, $box x $box)</OPTION>\n";
-	}
-	echo "</SELECT>
-<P>
-<INPUT TYPE='button' NAME='modelselect' VALUE='Select Initial Model' onclick='displayModelSelector(this)'>
-<INPUT TYPE='button' NAME='dmfput' VALUE='Put stack in DMF' onclick='displayDMF()'>
+  foreach ($stackIds as $stackid){
+    // get stack parameters from database
+    $s=$particle->getStackParams($stackid['stackid']);
+    // get number of particles in each stack
+    $nump=commafy($particle->getNumStackParticles($stackid['stackid']));
+    // get pixel size of stack
+    $apix=($particle->getPixelSizeFromStackId($stackid['stackid']))*1e10;
+    $apix=($s['bin']) ? $apix*$s['bin'] : $apix;
+    // get box size
+    $box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
+    // get stack path with name
+    $opvals = "$stackid[stackid]|--|$apix|--|$box|--|$s[path]|--|$s[name]";
+    // if imagic stack, send both hed & img files for dmf
+    if (ereg('\.hed', $s['name'])) $opvals.='|--|'.ereg_replace('hed','img',$s['name']);
+    if (ereg('\.img', $s['name'])) $opvals.='|--|'.ereg_replace('img','hed',$s['name']);
+    echo "<OPTION VALUE='$opvals'";
+    // select previously set stack on resubmit
+    if ($stackid['stackid']==$stackidval) echo " SELECTED";
+    echo">$stackid[stackid] ($nump particles, $apix A/pix, $box x $box)</OPTION>\n";
+  }
+  echo "</SELECT>\n";
+  echo"<INPUT TYPE='button' NAME='dmfput' VALUE='Put stack in DMF' onclick='displayDMF()'><P>\n";
+  
+  # show initial models
+  echo "Model:<BR>\n";
+  if (count($models)>0) {
+    foreach ($models as $model) {
+      echo "<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='2'>\n";
+# get list of png files in directory	
+      $pngfiles=array();
+      $modeldir= opendir($model['path']);
+      while ($f = readdir($modeldir)) {
+	if (eregi($model['name'].'.*\.png$',$f)) $pngfiles[] = $f;
+      }
+      sort($pngfiles);
+  
+# display starting models
+      $sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
+      echo "<TR><TD COLSPAN=2>\n";
+      $modelvals="$model[DEF_id]|--|$model[name]|--|$model[boxsize]|--|$sym[symmetry]";
+      echo "<INPUT TYPE='RADIO' NAME='model' VALUE='$modelvals'><B>Use Model ID: $model[DEF_id]</B><BR>\n";
+      foreach ($pngfiles as $snapshot) {
+	$snapfile = $model['path'].'/'.$snapshot;
+	echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+      }
+      echo "</TD>\n";
+      echo "</TR>\n";
+      echo"<TR><TD COLSPAN=2>$model[description]</TD></TR>\n";
+      echo"<TR><TD COLSPAN=2>$model[path]/$model[name]</TD></TR>\n";
+      echo"<TR><TD>pixel size:</TD><TD>$model[pixelsize]</TD></TR>\n";
+      echo"<TR><TD>box size:</TD><TD>$model[boxsize]</TD></TR>\n";
+      echo"<TR><TD>symmetry:</TD><TD>$sym[symmetry]</TD></TR>\n";
+      echo"<TR><TD>resolution:</TD><TD>$model[resolution]</TD></TR>\n";
+      echo "</TABLE>\n";
+      echo "<P>\n";
+    }
+  }
+  else {echo "No models.  <A HREF='uploadmodel.php?expId=$expId'>Upload one now</A>\n";}
+  echo"<P><INPUT TYPE='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack & model'></FORM>\n";
+  writeBottom();
+  exit;
+}
+
+function jobForm($extra=false) {
+  $particle = new particledata();
+
+  ## get stack data
+  $stackinfo = explode('|--|',$_POST['stackval']);
+  $dmfpath = $stackinfo[3];
+  $dmfstack = $stackinfo[4];
+
+  ## get model data
+  $modelinfo = explode('|--|',$_POST['model']);
+  $dmfmod = $modelinfo[1];
+  $syminfo = explode(' ',$modelinfo[3]);
+  $modsym=$syminfo[0];
+  if ($modsym == 'Icosahedral') $modsym='icos';
+  
+  $jobname = ($_POST['jobname']) ? $_POST['jobname'] : '';
+  $nodes = ($_POST['nodes']) ? $_POST['nodes'] : 4;
+  $ppn = ($_POST['ppn']) ? $_POST['ppn'] : 4;
+  $rprocs = ($_POST['rprocs']) ? $_POST['rprocs'] : 4;
+  $walltime = ($_POST['walltime']) ? $_POST['walltime'] : 240;
+  $cput = ($_POST['cput']) ? $_POST['cput'] : 240;
+  $dmfstack = ($_POST['dmfstack']) ? $_POST['dmfstack'] : $dmfstack;
+  $dmfpath = ($_POST['dmfpath']) ? $_POST['dmfpath'] : $dmfpath;
+  $dmfmod = ($_POST['dmfmod']) ? $_POST['dmfmod'] : $dmfmod;
+  $dmfstorech = ($_POST['dmfstore']=='on') ? 'CHECKED' : '';
+  $numiters= ($_POST['numiters']) ? $_POST['numiters'] : 1;
+  
+  if ($_POST['duplicate']) {
+    $numiters+=1;
+    $newiter=explode(" ",$_POST['duplicate']);
+    $j=$newiter[2];
+  }
+	
+  else $j=$numiters;
+
+  writeTop("Eman Job Generator","EMAN Job Generator",$javafunc);
+  // write out errors, if any came up:
+  if ($extra) {
+    echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+  }
+  echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formaction'>
+Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50><BR>
 <P>
 <TABLE CLASS='tableborder'>
 	<TR>
@@ -241,6 +280,8 @@ Stack:
 		$classiter=($i>$j) ? $_POST["classiter".($i-1)] : $_POST[$classitern];
 		$filt3d=($i>$j) ? $_POST["filt3d".($i-1)] : $_POST[$filt3dn];
 		$shrink=($i>$j) ? $_POST["shrink".($i-1)] : $_POST[$shrinkn];
+
+		if ($i=1) $sym=$modsym;
 
 		if ($i>$j) {
 					 $median=($_POST["median".($i-1)]=='on') ? 'CHECKED' : '';
