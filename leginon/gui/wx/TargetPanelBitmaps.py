@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanelBitmaps.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-10-04 22:14:34 $
+# $Date: 2007-10-04 22:27:40 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -21,7 +21,7 @@
 import wx
 
 penwidth = 2
-iconlength = 15
+global_width = 16
 
 targeticonbitmaps = {}
 
@@ -86,31 +86,31 @@ def targetIcon(color, shape):
 targetbitmaps = {}
 
 #--------------------
-def getTargetBitmap(color, shape='+', size=iconlength):
+def getTargetBitmap(color, shape='+', size=global_width):
 	try:
 		return targetbitmaps[color,shape]
 	except KeyError:
 		if shape == '+':
-			bitmap = targetBitmap_plus(color)
+			bitmap = targetBitmap_plus(color, width=size)
 		elif shape == '.':
-			bitmap = targetBitmap_point(color)
+			bitmap = targetBitmap_point(color, width=size)
 		elif shape == 'x':
-			bitmap = targetBitmap_cross(color)
+			bitmap = targetBitmap_cross(color, width=size)
 		elif shape == '[]':
-			bitmap = targetBitmap_square(color)
+			bitmap = targetBitmap_square(color, width=size)
 		elif shape == '<>':
-			bitmap = targetBitmap_diamond(color)
+			bitmap = targetBitmap_diamond(color, width=size)
 		elif shape == '*':
-			bitmap = targetBitmap_star(color)
+			bitmap = targetBitmap_star(color, width=size)
 		elif shape == 'o':
-			bitmap = targetBitmap_circle(color,diam=size)
+			bitmap = targetBitmap_circle(color, width=size)
 		else:
 			raise RuntimeError('invalid target shape: '+shape)
 		targetbitmaps[color,shape] = bitmap
 	return bitmap
 
 #--------------------
-def targetBitmap_point(color):
+def targetBitmap_point(color, width=global_width):
 	bitmap = wx.EmptyBitmap(1, 1)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
@@ -125,69 +125,69 @@ def targetBitmap_point(color):
 	return bitmap
 
 #--------------------
-def targetBitmap_plus(color):
-	bitmap = wx.EmptyBitmap(iconlength, iconlength)
+def targetBitmap_plus(color, width=global_width):
+	bitmap = wx.EmptyBitmap(width, width)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
-	dc.DrawLine(iconlength/2, 0, iconlength/2, iconlength)
-	dc.DrawLine(0, iconlength/2, iconlength, iconlength/2)
+	dc.DrawLine(width/2, 0, width/2, width)
+	dc.DrawLine(0, width/2, width, width/2)
 	dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
 
 #--------------------
-def targetBitmap_cross(color):
-	bitmap = wx.EmptyBitmap(iconlength, iconlength)
+def targetBitmap_cross(color, width=global_width):
+	bitmap = wx.EmptyBitmap(width, width)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
-	dc.DrawLine(0, 0, iconlength, iconlength)
-	dc.DrawLine(0, iconlength, iconlength, 0)
+	dc.DrawLine(0, 0, width, width)
+	dc.DrawLine(0, width, width, 0)
 	dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
 
 #--------------------
-def targetBitmap_square(color):
-	bitmap = wx.EmptyBitmap(iconlength, iconlength)
+def targetBitmap_square(color, width=global_width):
+	bitmap = wx.EmptyBitmap(width, width)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
-	dc.DrawLine(1, 1, iconlength-2, 1)
-	dc.DrawLine(1, 1, 1, iconlength-2)
-	dc.DrawLine(1, iconlength-2, iconlength-2, iconlength-1)
-	dc.DrawLine(iconlength-2, 1, iconlength-2, iconlength-1)
+	dc.DrawLine(1, 1, width-2, 1)
+	dc.DrawLine(1, 1, 1, width-2)
+	dc.DrawLine(1, width-2, width-2, width-1)
+	dc.DrawLine(width-2, 1, width-2, width-1)
 	dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
 
 #--------------------
-def targetBitmap_diamond(color):
-	bitmap = wx.EmptyBitmap(iconlength, iconlength)
+def targetBitmap_diamond(color, width=global_width):
+	bitmap = wx.EmptyBitmap(width, width)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
-	half = int((iconlength-1)/2)
-	full = iconlength-1
+	half = int((width-1)/2)
+	full = width-1
 	dc.DrawLine(1, half, half, full)
-	dc.DrawLine(half, full, full, half)
-	dc.DrawLine(full, half, half, 1)
+	dc.DrawLine(half, full, full, half-1)
+	dc.DrawLine(full, half-1, half, 1)
 	dc.DrawLine(half, 1, 1, half)
 	dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
@@ -195,8 +195,8 @@ def targetBitmap_diamond(color):
 	return bitmap
 
 #--------------------
-def targetBitmap_star(color):
-	bitmap = wx.EmptyBitmap(iconlength, iconlength)
+def targetBitmap_star(color, width=global_width):
+	bitmap = wx.EmptyBitmap(width, width)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
@@ -204,34 +204,34 @@ def targetBitmap_star(color):
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
 	#diagonal lines
-	dc.DrawLine(2, 2, iconlength-3, iconlength-3)
-	dc.DrawLine(2, iconlength-3, iconlength-3, 2)
+	dc.DrawLine(2, 2, width-3, width-3)
+	dc.DrawLine(2, width-3, width-3, 2)
 	#horiz/vert lines
-	dc.DrawLine(iconlength/2, 0, iconlength/2, iconlength)
-	dc.DrawLine(0, iconlength/2, iconlength, iconlength/2)
+	dc.DrawLine(width/2, 0, width/2, width)
+	dc.DrawLine(0, width/2, width, width/2)
 	dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
 
 #--------------------
-def targetBitmap_circle(color,diam=iconlength):
-	bitmap = wx.EmptyBitmap(diam, diam)
+def targetBitmap_circle(color, width=global_width):
+	bitmap = wx.EmptyBitmap(width, width)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
-	dc.DrawCircle(diam/2, diam/2, diam/2-1)
+	dc.DrawCircle(width/2, width/2, width/2-1)
 	dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
 
 #--------------------
-def getTargetBitmaps(color, shape='+',size=iconlength):
+def getTargetBitmaps(color, shape='+', size=global_width):
 	selectedcolor = wx.Color(color.Red()/2, color.Green()/2, color.Blue()/2)
-	return getTargetBitmap(color, shape,size), getTargetBitmap(selectedcolor, shape,size)
+	return getTargetBitmap(color, shape, size), getTargetBitmap(selectedcolor, shape, size)
 
 
