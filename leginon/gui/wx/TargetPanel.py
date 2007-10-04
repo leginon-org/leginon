@@ -5,10 +5,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanel.py,v $
-# $Revision: 1.8 $
+# $Revision: 1.9 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-10-02 20:30:19 $
-# $Author: acheng $
+# $Date: 2007-10-04 21:58:49 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -161,8 +161,8 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 					else:
 						self._drawTargets(dc, type.bitmaps['default'], targets, scale)
 
-		if self.selectedtarget is not None and type.shape != 'polygon' and type.shape != 'numbers':
-			if self.selectedtarget.type in self.targets:
+		if self.selectedtarget is not None:
+			if self.selectedtarget.type in self.targets and type.shape != 'polygon' and type.shape != 'numbers':
 				try:
 					bitmap = self.selectedtarget.type.bitmaps['selected']
 					self._drawTargets(dc, bitmap, [self.selectedtarget], scale)
