@@ -5,10 +5,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanelBitmaps.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-29 00:25:42 $
-# $Author: acheng $
+# $Date: 2007-10-04 22:14:34 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 # COPYRIGHT:
@@ -54,6 +54,11 @@ def targetIcon(color, shape):
 			dc.DrawLine(1, 14, 14, 14)
 			dc.DrawLine(14, 1, 14, 14)
 			dc.DrawLine(1, 1, 14, 1)
+		elif shape == '<>':
+			dc.DrawLine(1, 7, 7, 14)
+			dc.DrawLine(7, 14, 14, 7)
+			dc.DrawLine(14, 7, 7, 1)
+			dc.DrawLine(7, 1, 1, 7)
 		elif shape == 'x':
 			dc.DrawLine(1, 1, 13, 13)
 			dc.DrawLine(1, 13, 13, 1)
@@ -81,7 +86,7 @@ def targetIcon(color, shape):
 targetbitmaps = {}
 
 #--------------------
-def getTargetBitmap(color, shape='+',size=iconlength):
+def getTargetBitmap(color, shape='+', size=iconlength):
 	try:
 		return targetbitmaps[color,shape]
 	except KeyError:
@@ -93,6 +98,8 @@ def getTargetBitmap(color, shape='+',size=iconlength):
 			bitmap = targetBitmap_cross(color)
 		elif shape == '[]':
 			bitmap = targetBitmap_square(color)
+		elif shape == '<>':
+			bitmap = targetBitmap_diamond(color)
 		elif shape == '*':
 			bitmap = targetBitmap_star(color)
 		elif shape == 'o':
@@ -162,6 +169,26 @@ def targetBitmap_square(color):
 	dc.DrawLine(1, 1, 1, iconlength-2)
 	dc.DrawLine(1, iconlength-2, iconlength-2, iconlength-1)
 	dc.DrawLine(iconlength-2, 1, iconlength-2, iconlength-1)
+	dc.EndDrawing()
+	dc.SelectObject(wx.NullBitmap)
+	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
+	return bitmap
+
+#--------------------
+def targetBitmap_diamond(color):
+	bitmap = wx.EmptyBitmap(iconlength, iconlength)
+	dc = wx.MemoryDC()
+	dc.SelectObject(bitmap)
+	dc.BeginDrawing()
+	dc.Clear()
+	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
+	dc.SetPen(wx.Pen(color, penwidth))
+	half = int((iconlength-1)/2)
+	full = iconlength-1
+	dc.DrawLine(1, half, half, full)
+	dc.DrawLine(half, full, full, half)
+	dc.DrawLine(full, half, half, 1)
+	dc.DrawLine(half, 1, 1, half)
 	dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
