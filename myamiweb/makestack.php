@@ -206,7 +206,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$massessnames= $particle->getMaskAssessNames($sessionId);
 
 	if (!$massessnames) {
-		echo"<FONT COLOR='RED'><B>No Mask Assessed for this Session</B></FONT>\n";
+		echo"<FONT COLOR='#993333'><B>No Mask Assessed for this Session</B></FONT>\n";
 	}
 	else {
 		echo "Mask Assessment:
