@@ -63,6 +63,7 @@ class ApSelectionParamsData(Data):
 			('max_peaks', int),
 			('max_threshold', float),
 			('median', int),
+			('pixel_value_limit', float),
 			('maxsize', int),
 			('defocal_pairs', bool),
 			('overlapmult', float),
@@ -83,6 +84,7 @@ class ApDogParamsData(Data):
 			('hp_filt', int),
 			('max_peaks', int),
 			('median', int),
+			('pixel_value_limit', float),
 			('maxsize', int),
 			('kfactor', float),
 			('defocal_pairs', bool),
@@ -100,6 +102,7 @@ class ApManualParamsData(Data):
 			('hp_filt', int),
 			('invert', int),
 			('median', int),
+			('pixel_value_limit', float),
 			('oldselectionrun', ApSelectionRunData),
 		)
 	typemap = classmethod(typemap)
@@ -114,6 +117,7 @@ class ApTiltAlignParamsData(Data):
 			('lp_filt', int),
 			('hp_filt', int),
 			('median', int),
+			('pixel_value_limit', float),
 			('output_type', str),
 			('oldselectionrun', ApSelectionRunData),
 		)

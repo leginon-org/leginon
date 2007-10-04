@@ -136,6 +136,7 @@ class ParticleLoop(appionLoop.AppionLoop):
 			'bin': 'bin',
 			'lp': 'lp_filt',
 			'hp': 'hp_filt',
+			'pixlimit': 'pixel_value_limit',
 			'invert': 'invert',
 			'thresh': 'threshold',
 			'thresh': 'manual_thresh',
@@ -240,6 +241,7 @@ class ParticleLoop(appionLoop.AppionLoop):
 		self.params['invert']=False
 		self.params['mapdir']="maps"
 		self.params['diam']=0
+		self.params['pixlimit']=0
 		self.params['median']=0
 		self.params['bin']=4
 		self.params['pixdiam']=None
@@ -268,33 +270,35 @@ class ParticleLoop(appionLoop.AppionLoop):
 				or elements[0]=='-h' or elements[0]=='-help'):
 				sys.exit(1)
 			elif (elements[0]=='thresh'):
-				self.params['thresh']= float(elements[1])
+				self.params['thresh']= abs(float(elements[1]))
 			elif (elements[0]=='lp'):
-				self.params['lp']= float(elements[1])
+				self.params['lp']= abs(float(elements[1]))
 			elif (elements[0]=='hp'):
-				self.params['hp']= float(elements[1])
+				self.params['hp']= abs(float(elements[1]))
 			elif (elements[0]=='maxsize'):
-				self.params['maxsize']= int(elements[1])
+				self.params['maxsize']= abs(int(elements[1]))
 			elif (elements[0]=='maxthresh'):
-				self.params['maxthresh']= float(elements[1])
+				self.params['maxthresh']= abs(float(elements[1]))
 			elif (elements[0]=='overlapmult'):
-				self.params['overlapmult']= float(elements[1])
+				self.params['overlapmult']= abs(float(elements[1]))
 			elif (elements[0]=='maxpeaks'):
-				self.params['maxpeaks']= int(elements[1])
+				self.params['maxpeaks']= abs(int(elements[1]))
 			elif (elements[0]=='invert'):
 				self.params['invert']=True
 			elif (elements[0]=='diam'):
-				self.params['diam']=float(elements[1])
+				self.params['diam']=abs(float(elements[1]))
 			elif (elements[0]=='bin'):
-				self.params['bin']=int(elements[1])
+				self.params['bin']=abs(int(elements[1]))
 			elif (elements[0]=='median'):
-				self.params['median']=int(elements[1])
+				self.params['median']=abs(int(elements[1]))
+			elif (elements[0]=='pixlimit'):
+				self.params['pixlimit']=abs(float(elements[1]))
 			elif arg=='defocpair':
 				self.params['defocpair']=True
 			elif arg=='shiftonly':
 				self.params['shiftonly']=True
 			elif (elements[0]=='box'):
-				self.params['box']=int(elements[1])
+				self.params['box']=abs(int(elements[1]))
 			elif (elements[0]=='maskassess'):
 				self.params['checkMask']=elements[1]
 			else:

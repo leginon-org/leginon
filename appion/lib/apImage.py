@@ -22,12 +22,20 @@ except:
 	apDisplay.printError("pymai is required, type 'usepythoncvs'")
 
 
-def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, planeReg=True, median=0, invert=False):
+def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, 
+		planeReg=True, median=0, invert=False, pixlimit=0):
 	"""
 	standard processing for an image
 	"""
 	simgarray = imgarray.copy()
 	simgarray = binImg(simgarray,bin)
+	if pixlimit > 0:
+		mean1 = ndimage.mean(simgarray)
+		std1 = ndimage.standard_deviation(simgarray)
+		upperbound = mean1 + pixlimit * std1
+		lowerbound = mean1 - pixlimit * std1
+		simgarray = numpy.where(simgarray > upperbound, upperbound, simgarray)
+		simgarray = numpy.where(simgarray < lowerbound, lowerbound, simgarray)
 	if median > 0:
 		simgarray = ndimage.median_filter(simgarray, size=median)
 	simgarray = lowPassFilter(simgarray,apix,bin,lowpass)
@@ -41,7 +49,8 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, planeReg
 
 
 def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=False, 
-		median=None, highpass=None, correct=False, invert=None, msg=True, params={}):
+		median=None, highpass=None, correct=False, invert=None, pixlimit=None, msg=True, 
+		params={}):
 	"""
 	standard processing for an image
 	"""
@@ -91,8 +100,15 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=False,
 		else:
 			highpass = 0
 			apDisplay.printWarning("'highpass' is not defined in preProcessImage()")
+	#PIXEL LIMITATION FILTER
+	if pixlimit is None:
+		if 'pixlimit' in params:
+			pixlimit = params['pixlimit']
+		else:
+			pixlimit = 0
+			apDisplay.printWarning("'pixlimit' is not defined in preProcessImage()")
 	#HIGH PASS FILTER => PLANE REGRESSION
-	result = _processImage(imgarray, bin, apix, lowpass, highpass, planeReg, median, invert)
+	result = _processImage(imgarray, bin, apix, lowpass, highpass, planeReg, median, invert, pixlimit)
 	if msg is True:
 		apDisplay.printMsg("filtered image in "+apDisplay.timeString(time.time()-startt))
 	return result
