@@ -318,7 +318,7 @@ class particledata {
 		."left join dbemdata.AcquisitionImageData a on (a.`DEF_id`=p.`dbemdata|AcquisitionImageData|image`) "
 		."left join dbemdata.PresetData pd on (a.`REF|PresetData|preset`=pd.`DEF_id`) "
 		."WHERE sp.`REF|ApStackData|stack`='$stackId' "
-		."GROUP BY `REF|InstrumentData|tem`";
+		."GROUP BY `REF|InstrumentData|tem` ";
 		$r = $this->mysql->getSQLResult($q);
 		if (is_array($r[0])) {
 		        $tem=$r[0]['t'];
@@ -329,7 +329,8 @@ class particledata {
 			  ."WHERE `REF|InstrumentData|tem`='$tem' "
 			  ."AND `magnification`= '$mag' "
 			  ."AND `REF|InstrumentData|ccdcamera`='$ccd' "
-			  ."AND `DEF_timestamp`<'$time'";
+			  ."AND `DEF_timestamp`<'$time' "
+			  ."ORDER BY `DEF_timestamp` DESC";
 			$r = $this->mysql->getSQLResult($q);
 			return $r[0]['pixelsize'];
 		}
