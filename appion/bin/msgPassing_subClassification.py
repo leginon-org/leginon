@@ -206,7 +206,7 @@ if __name__== '__main__':
 			f1.write('%.10f\n' % (med))
 		f1.close()
 
-		a=call(["apcluster.out","similarities.txt","preferences.txt","clusterOutput.txt"]) 		
+		a=call(["apcluster.exe","similarities.txt","preferences.txt","clusterOutput.txt"]) 		
 		#if a:
 		#	print "Error: Clustering code broke !!!"
 		#	sys.exit()
