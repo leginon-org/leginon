@@ -267,6 +267,7 @@ def checkPairInspectDBREFLEGINON(imgdict,params):
 
 def batchBox(params, imgdict):
 	imgname = imgdict['filename']
+	shortname = apDisplay.short(imgname)
 	print "processing:",apDisplay.short(imgname)
 	if params['uncorrected']:
 		tmpname='temporaryCorrectedImage.mrc'
@@ -294,23 +295,25 @@ def batchBox(params, imgdict):
 			particles = apParticle.getParticles(imgdict, params['selexonId'])
 			shift = {'shiftx':0, 'shifty':0,'scale':1}
 #			particles,shift=apParticle.getParticlesREFLEGINON(imgdict, params['selexonId'])
-		if len(particles)>0:			
+		if len(particles) > 0:			
 			###apply limits
 			if params['correlationMin'] or params['correlationMax']:
 				particles=eliminateMinMaxCCParticles(particles,params)
 			
 			###apply masks
 			if params['checkMask']:
-				particles=eliminateMaskedParticles(particles,params,imgdict)
+				particles = eliminateMaskedParticles(particles,params,imgdict)
 			
 			###save particles
-			if len(particles)>0:
+			if len(particles) > 0:
 				hasparticles=True
 				saveParticles(particles,shift,dbbox,params,imgdict)
 			else:
 				hasparticles=False
+				apDisplay.printColor(shortname+".mrc had no unmasked particles and has been rejected\n","cyan")
 		else:
 			hasparticles=False
+			apDisplay.printColor(shortname+".mrc had no particles and has been rejected\n","cyan")
 	else:
 		dbbox=imgname+".box"
 		hasparticles=True
@@ -734,17 +737,18 @@ def insertStackRunREFLEGINON(params):
 
 def rejectImage(imgdata, params):
 	shortname = apDisplay.short(imgdata['filename'])
+
 	### check if the image has inspected, in file or in database
 	if params['inspectfile'] and checkInspectFile(imgdata) is False:
-		apDisplay.printColor(shortname+".mrc has been rejected in manual inspection file\n","cyan")
+		apDisplay.printColor(shortname+".mrc has been rejected in inspection file\n","cyan")
 		return False
+
 	if params['checkImage']:
-#		if params['defocpair'] and checkPairInspectDBREFLEGINON(imgdict, params) is False:
+		if checkInspectDB(imgdata) is False:
+			apDisplay.printColor(shortname+".mrc has been rejected by manual inspection\n","cyan")
+			return False
 		if params['defocpair'] and checkPairInspectDB(imgdata, params) is False:
 			apDisplay.printColor(shortname+".mrc has been rejected by manual defocpair inspection\n","cyan")
-			return False
-		elif not params['defocpair'] and checkInspectDB(imgdata) is False:
-			apDisplay.printColor(shortname+".mrc has been rejected by manual inspection\n","cyan")
 			return False
 
 	if params['tiltangle'] is not None:
