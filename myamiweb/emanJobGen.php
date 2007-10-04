@@ -35,7 +35,7 @@ if ($_POST['write']) {
 	writeJobFile();
 }
 
-elseif ($_POST['submitstackmodel']) {
+elseif ($_POST['submitstackmodel'] || $_POST['duplicate']) {
   if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
   if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
   ## make sure that box sizes are the same
@@ -49,8 +49,6 @@ elseif ($_POST['submitstackmodel']) {
   if ($stackbox != $modbox) stackModelForm("ERROR: model and stack must have same box size");
   jobForm();
 }
-
-#elseif ($_POST['duplicate']) jobForm();
 
 else stackModelForm();
 
@@ -173,8 +171,6 @@ Stack:
 }
 
 function jobForm($extra=false) {
-  $particle = new particledata();
-
   ## get stack data
   $stackinfo = explode('|--|',$_POST['stackval']);
   $dmfpath = $stackinfo[3];
@@ -213,6 +209,8 @@ function jobForm($extra=false) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
   }
   echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formaction'>
+<INPUT TYPE='hidden' NAME='model' VALUE='".$_POST['model']."'>
+<INPUT TYPE='hidden' NAME='stackval' VALUE='".$_POST['stackval']."'>
 Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50><BR>
 <P>
 <TABLE CLASS='tableborder'>
@@ -281,7 +279,7 @@ Job Name: <INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=50><BR>
 		$filt3d=($i>$j) ? $_POST["filt3d".($i-1)] : $_POST[$filt3dn];
 		$shrink=($i>$j) ? $_POST["shrink".($i-1)] : $_POST[$shrinkn];
 
-		if ($i=1) $sym=$modsym;
+		if ($i==1) $sym=$modsym;
 
 		if ($i>$j) {
 					 $median=($_POST["median".($i-1)]=='on') ? 'CHECKED' : '';
