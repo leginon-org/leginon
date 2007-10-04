@@ -772,7 +772,7 @@ class AppionLoop(object):
 
 			elif self.params['tiltangle'] is not None:
 				tiltangle = apDatabase.getTiltAngleDeg(imgdata)
-				if (self.params['tiltangle'] - tiltangle) > 1.0:
+				if abs(self.params['tiltangle'] - tiltangle) > 2.0:
 					self._writeDoneDict(imgname)
 					rejectcount += 1
 					skip = True

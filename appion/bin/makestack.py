@@ -749,7 +749,7 @@ def rejectImage(imgdata, params):
 
 	if params['tiltangle'] is not None:
 		tiltangle = abs(apDatabase.getTiltAngleDeg(imgdata))
-		if (params['tiltangle'] - tiltangle) > 1.0:
+		if abs(params['tiltangle'] - tiltangle) > 2.0:
 			apDisplay.printColor(shortname+".mrc has been rejected tiltangle: "+str(int(tiltangle))+\
 				" != "+str(int(params['tiltangle']))+"\n","cyan")
 			return False
@@ -899,11 +899,7 @@ if __name__ == '__main__':
 			if os.path.isfile(stackfile+"."+ext):
 				os.remove(stackfile+"."+ext)
 
-		keepimage = rejectImage(imgdict, params)
-
-
-
-		if keepimage is False:
+		if rejectImage(imgdict, params) is False:
 			continue
 
 		# box the particles
