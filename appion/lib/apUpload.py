@@ -116,6 +116,7 @@ def parseModelUploadInput(args,params):
 	mrcfile=args[1]
 	if (os.path.isfile(mrcfile)):
 		(params['path'], params['name']) = os.path.split(mrcfile)
+		params['path'] = os.path.abspath(params['path'])
 		if not params['path']:
 			params['path']=params['abspath']
 	else:
@@ -127,6 +128,8 @@ def parseModelUploadInput(args,params):
 			params['apix']=float(elements[1])
 		elif (elements[0]=='session'):
 			params['session']=elements[1]
+		elif (elements[0]=='outdir'):
+			params['outdir']=elements[1]
 		elif (elements[0]=='symmetry'):
 			params['sym']=int(elements[1])
 		elif (elements[0]=='res'):
@@ -196,7 +199,7 @@ def getProjectId(params):
 
 def getModelDimensions(mrcfile):
 	print "calculating dimensions..."
-	vol=mrc.read(mrcfile)
+	vol = mrc.read(mrcfile)
 	(x,y,z)=vol.shape
 	if x!=y!=z:
 		apDisplay.printError("starting model is not a cube")
