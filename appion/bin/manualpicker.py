@@ -60,16 +60,20 @@ class PickerApp(wx.App):
 
 		### BEGIN IMAGE PANEL
 		self.panel = ManualPickerPanel(self.frame, -1)
+
 		self.panel.addTypeTool('Select Particles', toolclass=TargetPanelTools.TargetTypeTool,
 			display=wx.RED, target=True, shape=self.shape, size=self.size)
+
 		self.panel.setTargets('Select Particles', [])
 		self.panel.selectiontool.setTargeting('Select Particles', True)
 
-		if self.mask:
-			self.panel.addTypeTool('Particle Mask', toolclass=TargetPanelTools.TargetTypeTool,
-				display=wx.GREEN, target=True, shape='polygon')
-			self.panel.setTargets('Particle Mask', [])
-			self.panel.selectiontool.setTargeting('Particle Mask', True)
+		self.panel.addTypeTool('Region to Remove', toolclass=TargetPanelTools.TargetTypeTool,
+			display=wx.GREEN, target=True, shape='polygon')
+		self.panel.setTargets('Region to Remove', [])
+		self.panel.selectiontool.setTargeting('Region to Remove', True)
+
+		#make 'Select Particles' the initial targeting selection
+		self.panel.selectiontool.setTargeting('Select Particles', True)
 
 		self.panel.SetMinSize((300,300))
 		self.sizer.Add(self.panel, 1, wx.EXPAND)
@@ -83,11 +87,10 @@ class PickerApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onNext, self.next)
 		self.buttonrow.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		if self.mask:
-			self.add = wx.Button(self.frame, wx.ID_REMOVE, '&Remove Region')
-			self.add.SetMinSize((150,40))
-			self.Bind(wx.EVT_BUTTON, self.onAdd, self.add)
-			self.buttonrow.Add(self.add, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		self.add = wx.Button(self.frame, wx.ID_REMOVE, '&Remove Region')
+		self.add.SetMinSize((150,40))
+		self.Bind(wx.EVT_BUTTON, self.onAdd, self.add)
+		self.buttonrow.Add(self.add, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear')
 		self.clear.SetMinSize((100,40))
@@ -133,7 +136,7 @@ class PickerApp(wx.App):
 
 	def onAdd(self, evt):
 		vertices = []
-		vertices = self.panel.getTargetPositions('Particle Mask')
+		vertices = self.panel.getTargetPositions('Region to Remove')
 		def reversexy(coord):
 			clist=list(coord)
 			clist.reverse()
@@ -153,7 +156,7 @@ class PickerApp(wx.App):
 				newparticles.append(target)
 		print eliminated,"particle(s) eliminated due to masking"
 		self.panel.setTargets('Select Particles',newparticles)
-		self.panel.setTargets('Particle Mask', [])
+		self.panel.setTargets('Region to Remove', [])
 		
 	def onNext(self, evt):
 		#targets = self.panel.getTargets('Select Particles')
@@ -226,8 +229,7 @@ class manualPicker(particleLoop.ParticleLoop):
 			self.processAndSaveAllImages()
 		self.app = PickerApp(
 			shape = self.params['shape'], 
-			size =  self.params['shapesize'], 
-			mask =  self.params['checkMask'], )
+			size =  self.params['shapesize'], )
 		self.app.appionloop = self
 		self.threadJpeg = True
 
@@ -340,7 +342,7 @@ class manualPicker(particleLoop.ParticleLoop):
 			if count % 60 == 0:
 				sys.stderr.write(" %d left\n" % (total-count))
 
-	def showMask(self,imgfile,imgdata):
+	def showAssessedMask(self,imgfile,imgdata):
 		self.filename = imgfile
 		image = pyami.mrc.read(imgfile)
 		sessiondata = self.params['session']
@@ -366,7 +368,7 @@ class manualPicker(particleLoop.ParticleLoop):
 		if not self.params['checkMask']:
 			self.app.panel.openImageFile(imgpath)
 		else:
-			self.showMask(imgpath,imgdata)
+			self.showAssessedMask(imgpath,imgdata)
 
 		targets = self.getParticlePicks(imgdata)
 		if targets:
