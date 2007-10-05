@@ -65,7 +65,50 @@ def createDefaults():
 	return(params)
 	
 	
+def writeNewClsfile(clsfile,pretext,Ptext,Ptcls):
+	goodp=[]
+	for l,t in enumerate(Ptcls):
+		if l >0:
+			goodp.append(int(t.split(' ')[0]))
+	print goodp
+	print len(Ptext)
+	for i, t in enumerate(Ptext):
+		if i in goodp:
+			keep='1'
+		else:
+			keep='0'
+		NewPtext = Ptext[i].split('\n')[0]+'\t'+keep+'\n'
+		pretext.append(NewPtext)
+		
+	f1 = open(clsfile+'.new', 'w')
+	for l in pretext:
+		f1.write(l)
+	f1.close()
+	
+	
+def readClassPtcltext(clsfile):
+	f1 = open(clsfile, 'r')
+	Ptcldict={}
+	Ptext=f1.readlines()
+	pretext=[Ptext[0],Ptext[1]]
+	del Ptext[0]
+	del Ptext[0]
+	return pretext,Ptext
+	
+def writeFunctionLog(argvs):
+	functionpy = argvs[0].split("/")
+	function = functionpy[-1].split('.py')
+	
+	logfile = function[0]+".log"
+	f=open(logfile,'a')
+	timestamp = "["+time.asctime()+"]\n"
+	f.write(timestamp)
+	f.write(' '.join(argvs)+"\n")
+
 if __name__== '__main__':
+	#WriteLog
+	writeFunctionLog(sys.argv)
+	
 	#Parse inputs
 	args=sys.argv[1:]
 	params=createDefaults()
@@ -98,6 +141,7 @@ if __name__== '__main__':
 	else:
 		os.mkdir(params['corandir'])
 	classfile='cls.'+str(params['iter'])+'.tar'
+	newclassfile='cls.'+str(params['iter'])+'.new.tar'
 	shutil.copy(classfile,os.path.join(params['corandir'],classfile))
 	shutil.copy('proj.hed',os.path.join(params['corandir'],'proj.hed'))
 	shutil.copy('proj.img',os.path.join(params['corandir'],'proj.img'))
@@ -120,8 +164,14 @@ if __name__== '__main__':
 		clsNum = clsNum+1
 		fw=open(cls,'r')
 		Ptcls = fw.readlines()
-		fw.close()
+		
+		Ptext=Ptcls[:]
+		pretext=[Ptext[0],Ptext[1]]
+		del Ptext[0]
+		del Ptext[0]
 
+		fw.close()
+		
 		e=projections[clsNum].getEuler()
 		projections[clsNum].setNImg(-1)
 		projections[clsNum].writeImage('goodavgs.hed',-1)
@@ -306,6 +356,8 @@ if __name__== '__main__':
 		else:
 			pass
 
+		writeNewClsfile(cls,pretext,Ptext,Ptcls)
+
 	#Create list of cc values	
 	for cls in range(0,len(clslist)):
 		clsdir=clslist[cls].split('.')[0]+'.dir'
@@ -333,5 +385,8 @@ if __name__== '__main__':
 	elif params['findResolution']=='even':
 		os.system('cp threed.%da.mrc ../threed.%da.e.mrc' %(params['iter'], params['iter']))
 		os.system('proc3d threed.%da.mrc ../threed.%da.o.mrc fsc=../corEO%d.fsc.dat' %(params['iter'], params['iter'], params['iter']))
+
+	os.system('tar cvzf %s %s' % (newclassfile,"cls*.lst.new"))
+	os.system('cp %s ../%s' %(newclassfile,classfile))
 
 	print "Done!"
