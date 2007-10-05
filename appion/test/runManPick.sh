@@ -10,5 +10,5 @@ reset
   outdir=. runid=${runid} \
   limit=3 shape=square shapesize=48 \
   nocontinue \
-  median=2 lp=20 hp=400 bin=4 \
+  median=2 lp=20 hp=400 bin=4 pixlimit=2.0 \
   pickrunid=21

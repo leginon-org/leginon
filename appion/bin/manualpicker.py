@@ -56,7 +56,12 @@ class PickerApp(wx.App):
 		self.deselectcolor = wx.Color(240,240,240)
 
 		self.frame = wx.Frame(None, -1, 'Manual Particle Picker')
-		self.sizer = wx.FlexGridSizer(2,1)
+		self.sizer = wx.FlexGridSizer(3,1)
+
+		### VITAL STATS
+		self.vitalstats = wx.StaticText(self.frame, -1, "Vital Stats:  ", style=wx.ALIGN_LEFT)
+		#self.vitalstats.SetMinSize((100,40))
+		self.sizer.Add(self.vitalstats, 1, wx.EXPAND|wx.ALL, 3)
 
 		### BEGIN IMAGE PANEL
 		self.panel = ManualPickerPanel(self.frame, -1)
@@ -121,7 +126,7 @@ class PickerApp(wx.App):
 		### END BUTTONS ROW
 
 		self.sizer.Add(self.buttonrow, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-		self.sizer.AddGrowableRow(0)
+		self.sizer.AddGrowableRow(1)
 		self.sizer.AddGrowableCol(0)
 		self.frame.SetSizerAndFit(self.sizer)
 		self.SetTopWindow(self.frame)
@@ -375,6 +380,10 @@ class manualPicker(particleLoop.ParticleLoop):
 			print "inserting ",len(targets)," targets"
 			self.app.panel.setTargets('Select Particles', targets)
 
+		#print dir(self.app.vitalstats)
+		self.app.vitalstats.SetLabel("Vital Stats: Image "+str(self.stats['count'])
+			+" of "+str(self.stats['imagecount'])+", inserted "+str(len(targets))+" picks, "
+			+" image name: "+imgdata['filename'])
 		#run the picker
 		self.app.MainLoop()
 
