@@ -163,6 +163,30 @@ def getImgSize(imgdict):
 		apDisplay.printError("Image "+fname+" not found in database\n")
 	return(size)
 
+def getApixFromStackData(stackdata):
+	stkptclq=appionData.ApStackParticlesData()
+	stkptclq['stack'] = stackdata
+	stkptclresults=appiondb.query(stkptclq, results=1)
+	stackbin = stkptclresults[0]['stackRun']['stackParams']['bin']
+	imageid = stkptclresults[0]['particle']['dbemdata|AcquisitionImageData|image']
+	try:
+		defocpair = stkptclresults[0]['stackRun']['stackParams']['defocpair']
+	except:
+		defocpair = None
+	if defocpair != 0:
+		transformq=appionData.ApImageTransformationData()
+		transformq['dbemdata|AcquisitionImageData|image1']=imageid
+		transformdata=appiondb.query(transformq, readimages=False)
+		if len(transformdata) >0:
+			imageid=transformdata[0]['dbemdata|AcquisitionImageData|image2']
+	
+	imagedata=leginondb.direct_query(leginondata.AcquisitionImageData,imageid)
+		
+	apix = getPixelSize(imagedata)
+	stackapix = apix*stackbin
+
+	return stackapix	
+
 def getImgSizeFromName(imgname):
 	# get image size (in pixels) of the given mrc file
 	imageq=leginondata.AcquisitionImageData(filename=imgname)
@@ -287,3 +311,9 @@ def getDarkNorm(sessionname, cameraconfig):
 	cache[key] = result
 
 	return result
+
+if __name__ == '__main__':
+	id = 442
+	stackdata = appiondb.direct_query(appionData.ApStackData,id)
+	stackapix = getApixFromStackData(stackdata)
+	print stackapix

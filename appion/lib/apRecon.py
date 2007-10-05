@@ -7,8 +7,10 @@ import math
 import string
 import appionData
 import apDB
+import apDatabase
 import EMAN
 import tarfile
+
 
 import subprocess
 
@@ -146,13 +148,13 @@ def listFiles(params):
 			params['msgpassavgs'].append(f)
 			
 def parseMsgPassingLogFile(params):
-	logfile=os.path.join(params['path'],'.msgPassinglog')
+	logfile=os.path.join(params['path'],'msgPassing_subClassification.log')
 	print "parsing massage passing log file:",logfile
 	lines=open(logfile,'r')
 	j=0
 	for i,line in enumerate(lines):
 		line=string.rstrip(line)
-		if re.search("msgPassing_after_coran", line):
+		if re.search("msgPassing_subClassification", line):
 			msgpassparams=line.split(' ')
 			iteration = params['iterations'][j]
 			for p in msgpassparams:
@@ -239,7 +241,7 @@ def getClassInfo(classes):
 	return projeulers
 
 
-def renderSnapshots(density,res,initmodel,contour,zoom):
+def renderSnapshots(density,res,initmodel,contour,zoom,stackapix=None):
 	# if eotest failed, filter to 30 
 	if not res:
 		res=30
@@ -250,7 +252,12 @@ def renderSnapshots(density,res,initmodel,contour,zoom):
 	sym=replace.sub('',sym)
 			
 	tmpf = density+'.tmp.mrc'
-	apix = initmodel['pixelsize']
+	
+	if stackapix is None:
+		apix = initmodel['pixelsize']
+		print "Can't find stack pixel size, use initial model pixelsize"
+	else:
+		apix = stackapix
 	box = initmodel['boxsize']
 	halfbox = int(initmodel['boxsize']/2)
 
@@ -297,6 +304,9 @@ def insertRefinementRun(params, insert=True):
 	runq['package']=params['package']
 	runq['initialModel']=params['model']
 
+	# get stack apix
+	params['apix']=apDatabase.getApixFromStackData(params['stack'])
+
 	if insert is True:
 		print "inserting reconstruction run into database"
 		appiondb.insert(runq)
@@ -312,7 +322,7 @@ def insertRefinementRun(params, insert=True):
 		
 	# save run entry in the parameters
 	params['refinementRun']=result[0]
-
+	
 	return True
 
 def insertResolutionData(params,iteration):
@@ -325,7 +335,7 @@ def insertResolutionData(params,iteration):
 		fscfile=os.path.join(params['path'],fsc)
 
 		# calculate the resolution:
-		halfres=calcRes(fscfile, params['model'])
+		halfres=calcRes(fscfile, params['model']['boxsize'],params['apix'])
 
 		# save to database
 		resq['half']=halfres
@@ -338,7 +348,7 @@ def insertResolutionData(params,iteration):
 def insertRMeasureData(params,iteration):
 	volumeDensity='threed.'+iteration['num']+'a.mrc'
 	if os.path.exists(os.path.join(params['path'],volumeDensity)):
-		resolution = runRMeasure(params['model']['pixelsize'],volumeDensity)
+		resolution = runRMeasure(params['apix'],volumeDensity)
 	
 		if resolution is None:
 			return None
@@ -400,7 +410,7 @@ def insertIteration(iteration,params):
 
 	insertFSC(iteration['fscfile'],refineq)
 	
-	renderSnapshots(volumeDensity,resData['half'],params['model'],params['contour'],params['zoom'])
+	renderSnapshots(volumeDensity,resData['half'],params['model'],params['contour'],params['zoom'],params['apix'])
 		
 	# get projections eulers for iteration:
 	eulers=getEulersFromProj(params,iteration['num'])	
@@ -513,13 +523,9 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 	f.close()
 	return
 
-def calcRes(fscfile, model):
+def calcRes(fscfile, boxsize,apix):
 	# calculate the resolution at 0.5
 
-	# get box size and pixel size from model
-	boxsize=int(model['boxsize'])
-	apix=float(model['pixelsize'])
-	
 	lastx = 0
 	lasty = 0
 	f=open(fscfile,'r')
