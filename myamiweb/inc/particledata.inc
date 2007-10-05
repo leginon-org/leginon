@@ -32,7 +32,8 @@ class particledata {
       ."FROM `ApTemplateImageData` AS t "
       ."LEFT JOIN ApPathData AS p ON "
       ."(t.`REF|ApPathData|path`=p.`DEF_id`) "
-      ."WHERE `project|projects|project`='$projectId'";
+      ."WHERE `project|projects|project`='$projectId' "
+		."ORDER BY t.`DEF_id` DESC";
     $r = $this->mysql->getSQLResult($q);
     return $r;
   }
@@ -247,7 +248,7 @@ class particledata {
 	function getParticleRunIds ($sessionId) {
 		$q = "SELECT r.*, p.path "
 			."FROM `ApSelectionRunData` AS r "
-      ."LEFT JOIN ApPathData AS p ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
+      	."LEFT JOIN ApPathData AS p ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
 			."WHERE r.`dbemdata|SessionData|session` = '$sessionId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
@@ -256,7 +257,8 @@ class particledata {
 	#--------- MAKE STACK FUNCTIONS---------------#
 
 	function getStackIds ($sessionId) {
-	$q = "SELECT r.`REF|ApStackData|stack` as stackid "
+		// this function is really slow
+		$q = "SELECT r.`REF|ApStackData|stack` as stackid "
 		."FROM ApRunsInStackData as r "
 		."LEFT JOIN ApStackRunData as s ON "
 		."(r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
@@ -279,6 +281,7 @@ class particledata {
 	}
 
   function getStackParams ($stackId) {
+		// We should probably not use * here
     $q = "SELECT * "
       ."FROM ApRunsInStackData as r "
       ."LEFT JOIN ApStackRunData as s "
