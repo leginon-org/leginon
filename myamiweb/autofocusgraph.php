@@ -104,7 +104,7 @@ if (!$data1x && !$data1y) {
 		$graph->xaxis->SetTitlemargin(30);
 		$graph->xaxis->SetPos("min");
 		$graph->xaxis->title->Set("time");
-		$graph->yaxis->title->Set("defocus (micrometer)");
+		$graph->yaxis->title->Set("defocus (um)");
 
 		$sp1 = new ScatterPlot($data1y,$data1x);
 		$sp1->mark->SetType(MARK_CIRCLE);

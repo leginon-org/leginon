@@ -10,8 +10,8 @@
 require "inc/leginon.inc";
 require "inc/graph.inc";
 
-$defaultId=1445;
-$defaultpreset='hl';
+$defaultId=4963;
+$defaultpreset='en';
 $histogram=($_GET['hg']==1) ? true : false;
 $sessionId=($_GET['Id']) ? $_GET['Id'] : $defaultId;
 $preset=($_GET['preset']) ? $_GET['preset'] : $defaultpreset;
@@ -19,10 +19,9 @@ $viewdata=($_GET['vdata']==1) ? true : false;
 $viewsql=$_GET['vs'];
 $width=$_GET['w'];
 $height=$_GET['h'];
-$stdev=($_GET['stdev']==1) ? true : false;
-$data_name=($stdev) ? 'stdev': 'mean';
 
-$thicknessdata = $leginondata->getImageStats($sessionId, $preset);
+$stats=false;
+$defocusdata=$leginondata->getDefocus($sessionId, $preset, $stats);
 
 if ($viewsql) {
 	$sql = $leginondata->mysql->getSQLQuery();
@@ -30,16 +29,18 @@ if ($viewsql) {
 	exit;
 }
 
-$dbemgraph=&new dbemgraph($thicknessdata, 'unix_timestamp', $data_name);
-$dbemgraph->lineplot=false;
-$dbemgraph->title="Pixel $data_name for preset $preset";
-$dbemgraph->yaxistitle="pixel $data_name";
+$dbemgraph=&new dbemgraph($defocusdata, 'unix_timestamp', 'defocus');
+$dbemgraph->title="defocus for preset $preset";
+$dbemgraph->yaxistitle="defocus (um)";
+
 if ($viewdata) {
 	$dbemgraph->dumpData(array('timestamp', 'defocus'));
 }
 if ($histogram) {
 	$dbemgraph->histogram=true;
 }
-$dbemgraph->dim($width,$height);
+
+$dbemgraph->scaley(1e-6);
 $dbemgraph->graph();
+
 ?>

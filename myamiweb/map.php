@@ -44,10 +44,10 @@ $ratio = $imgwidth/$imgbinning/$imgmapsize;
 $areacolor = ($_GET['colormap']==1) ? "#000000" : "#00FF00";
 
 // --- set scale
-$size = ($imgbinning) ? $imgwidth/$imgbinning : $imgwidth;
-if (!$size)
-	$size=1;
-$imgratio = $imgwidth/$size ;
+$imgsize = ($imgbinning) ? $imgwidth/$imgbinning : $imgwidth;
+if (!$imgsize)
+	$imgsize=1;
+$imgratio = $imgwidth/$imgsize ;
 $pixelsize = $imginfo['pixelsize']*$imginfo['binning']*$imgratio;
 $filename = $imginfo['filename'];
 
@@ -68,7 +68,7 @@ var filename="<?=$filename; ?>"
 var pixsize ="<?=$pixelsize; ?>"
 var jsimgwidth=<?=$imgwidth; ?>
 
-var jssize=<?=$size; ?>
+var jssize=<?=$imgsize; ?>
 
 var jsimgheight=<?=$imgheight; ?>
 
@@ -140,7 +140,6 @@ function textshadow(text) {
 
 function setruler() {
 	bg = (bt_ruler_state) ? "#C8D0D4" : "#00BABB"
-	img.style.cursor= (bt_ruler_state) ? "default" : "crosshair"
 	btruler.style.backgroundColor=bg
 	if (bt_ruler_state) {
 		bt_ruler_state=false
@@ -273,6 +272,8 @@ function setArea(e) {
 function updateArea() {
   ww = ie ? window.document.body.clientWidth : window.innerWidth
   wh = ie ? window.document.body.clientHeight : window.innerHeight
+	ww-=25
+	wh-=25
 
 	scale.style.top=wh-50
 
@@ -309,10 +310,11 @@ function formatpixsize(val) {
 }
 
 function newLocation() {
-  mapmx = parseInt(getAreaLeft()*ratio);
-  mapmy = parseInt(getAreaTop()*ratio);
-	img.scrollLeft=mapmx;
-	img.scrollTop=mapmy;
+  mapmx = parseInt(getAreaLeft()*ratio)
+  mapmy = parseInt(getAreaTop()*ratio)
+	img.scrollLeft=mapmx
+	img.scrollTop=mapmy
+	displayCoord(img.scrollLeft+' '+img.scrollTop)
 }
 
 
@@ -372,10 +374,9 @@ function getDistance() {
 		onmousemove = "areamousemove(event)"
 		onmouseout	= "areamouseup(event)"
 	></div>
-	<img id="imgmap" height="<?=$imgmapsize?>" src="<?=$imgmapsrc?>"
+	<div id="imgmap" style="position:relative; height:<?=$imgmapsize?>px; width:<?=$imgmapsize?>px; background:url('<?=$imgmapsrc?>')"
 		onmousemove = "areamousemove(event)"
-		onmousedown	= "imgmapmousedown(event)"
-	><br>
+		onmousedown	= "imgmapmousedown(event)" ></div>
 	<div	id="divcoord"
 				style="position:relative;padding:0px; margin:0px; width:128px; height:15px; background-color:rgb(255,255,200); font-family:Arial; font-size:12px;"></div>
 <div style="position:relative; border:1px solid #000000; padding:0px; margin:0px; left: -1px; height: 19px; width: 15px;">
@@ -389,12 +390,12 @@ function getDistance() {
 	><div style="position:relative; padding:0px; margin;0px; top:2px; left:3px; width:15px; height:15px; background:url(img/imgmove.gif) no-repeat"></div></div>
 </div>
 </div>
-<div id="divimg" style="z-index:1; position:absolute; width:100%; height:100%; overflow:auto; ">
-<img id="img" hspace="0" vspace="0" border="0" src="<?php echo $imgsrc; ?>"
+<div id="divimg" style="z-index:1; position:absolute; width:100%; height:100%; overflow:auto;cursor:crosshair; ">
+<div id="img" style="position:absolute; top:0px; left:0px; width:<?=$imgsize;?>px; height:<?=$imgsize;?>; background:url('<?php echo $imgsrc; ?>')"
 	onmousemove	=	"imgmousemove(event)";
 	onmousedown	=	"imgmousedown(event)";
 	onmouseup		=	"imgmouseup(event)";
->
+></div>
 <div id="targets" style="z-index:2;border:0px;" ></div>
 </div>
 </body>

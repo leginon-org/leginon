@@ -303,11 +303,13 @@ if ($ctf->hasCtfData($sessionId)) {
 	$bestctf = $ctf->getBestStats($fields, $sessionId, $minconf);
 	
 	if ($bestctf) {
-	        foreach($bestctf as $field=>$data) {
-		        foreach($data as $k=>$v) {
-			        $preset = $bestctf[$field][$k]['name'];
-				$cdf = '<a href="ctfgraph.php?&hg=1&Id='.$sessionId.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'">'
-				  .'<img border="0" src="ctfgraph.php?w=150&hg=1&Id='.$sessionId.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'"></a>';
+		foreach($bestctf as $field=>$data) {
+			foreach($data as $k=>$v) {
+				$preset = $bestctf[$field][$k]['name'];
+				$cdf='<a href="ctfgraph.php?&hg=1&Id='.$sessionId
+						.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'">'
+						.'<img border="0" src="ctfgraph.php?w=150&hg=1&Id='.$sessionId
+						.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'"></a>';
 				$bestctf[$field][$k]['img'] = $cdf;
 			}
 		}

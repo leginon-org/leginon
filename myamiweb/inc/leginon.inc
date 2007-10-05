@@ -5,18 +5,18 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.72 $
- *	@version $Id: leginon.inc,v 1.72 2007-10-03 17:52:09 dfellman Exp $
+ *	@version $Revision: 1.73 $
+ *	@version $Id: leginon.inc,v 1.73 2007-10-05 21:39:54 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
  *	
  */
 
-require_once("config.php");
-require_once("inc/util.inc");
-require_once('inc/xmlapplicationimport.inc');
-require_once('inc/mysql.inc');
+require_once "config.php";
+require_once "inc/util.inc";
+require_once "inc/xmlapplicationimport.inc";
+require_once "inc/mysql.inc";
 
 define('DB_HOST', $DB_HOST);
 define('DB_USER', $DB_USER);
@@ -1855,7 +1855,9 @@ class leginondata {
 		.$sqlgroup;
 		return $this->mysql->getSQLResult($q);
 	}
+
 	function getFocusResultData($id, $correction_type, $method, $status='ok') {
+
 		switch ($correction_type) {
 			case 'both':
 				$condition1 = "  ";
@@ -2071,6 +2073,39 @@ class leginondata {
 		."ON (`s_p`.`DEF_id`=`sibling`.`REF|PresetData|preset`) "
 		.$sqlwhere ;
 		return $this->mysql->getSQLResult($q);
+	}
+
+	function getDefocus($sessionId, $preset="", $stats=false) {
+		$wherepreset=($preset) ? "AND `p`.name='$preset'" : "";
+		$q="SELECT "
+		."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `unix_timestamp`, "
+		."`a`.`DEF_timestamp` AS `timestamp`, "
+		."`p`.`name`, "
+		."`s`.`defocus` "
+		."FROM "
+		."`AcquisitionImageData` AS `a` "
+		."LEFT JOIN `PresetData` AS `p` "
+		."ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
+		."LEFT JOIN `ScopeEMData` AS `s` "
+		."ON (`s`.`DEF_id`=`a`.`REF|ScopeEMData|scope`) "
+		."WHERE "
+		."`a`.`REF|SessionData|session`=$sessionId "
+		.$wherepreset;
+		if ($stats) {
+			return $this->getStats("defocus", $q);
+		}
+		return $this->mysql->getSQLResult($q);
+	}
+	
+	function getStats($field, $sub_q) {
+			$q="select "
+				."count(c.`$field`) as `nb`, "
+				."min(c.`$field`) as `min`, "
+				."max(c.`$field`) as `max`, "
+				."avg(c.`$field`) as `avg`, "
+				."stddev(c.`$field`) as `stddev` "
+				."from ($sub_q) c ";
+			return $this->mysql->getSQLResult($q);
 	}
 
 	function getTimingStats($sessionId, $preset="") {
