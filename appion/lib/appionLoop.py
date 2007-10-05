@@ -103,6 +103,11 @@ class AppionLoop(object):
 				### FINISH with custom functions
 
 	 			self._writeDoneDict(imgdata['filename'])
+
+				if os.getloadavg()[0] > 2.0:
+					apDisplay.printMsg("load average is high "+str(round(os.getloadavg()[0],2)))
+					time.sleep(10)
+
 				self._printSummary()
 
 				if self.params['limit'] is not None and self.stats['count'] > self.params['limit']:
