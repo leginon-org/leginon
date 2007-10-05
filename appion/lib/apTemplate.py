@@ -131,7 +131,7 @@ def copyTemplatesToOutdir(params):
 			apDisplay.printError("template \'"+new+"\' already exists!\n")
 		shutil.copy(old, new)
 		#and only allow user read access just so they don't get deleted
-		os.chmod(new, 0444)
+		os.chmod(new, 0666)
 		
 def insertTemplateRun(params,runq,templatenum):
 	tid=params['templateIds'][templatenum]
