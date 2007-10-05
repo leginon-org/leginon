@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanelBitmaps.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-10-04 22:27:40 $
+# $Date: 2007-10-05 21:00:48 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -19,6 +19,7 @@
 #
 
 import wx
+import sys
 
 penwidth = 2
 global_width = 16
@@ -50,15 +51,17 @@ def targetIcon(color, shape):
 			dc.DrawLine(1, 8, 14, 8)
 			dc.DrawPoint(1, 7)
 		elif shape == '[]':
-			dc.DrawLine(1, 1, 1, 14)
-			dc.DrawLine(1, 14, 14, 14)
-			dc.DrawLine(14, 1, 14, 14)
-			dc.DrawLine(1, 1, 14, 1)
+			dc.DrawRectangle(1, 1, 14, 14)
+			#dc.DrawLine(1, 1, 1, 14)
+			#dc.DrawLine(1, 14, 14, 14)
+			#dc.DrawLine(14, 1, 14, 14)
+			#dc.DrawLine(1, 1, 14, 1)
 		elif shape == '<>':
-			dc.DrawLine(1, 7, 7, 14)
-			dc.DrawLine(7, 14, 14, 7)
-			dc.DrawLine(14, 7, 7, 1)
-			dc.DrawLine(7, 1, 1, 7)
+			dc.DrawLines(((1, 7), (7, 14), (14, 7), (7, 1), (1, 7)))
+			#dc.DrawLine(1, 7, 7, 14)
+			#dc.DrawLine(7, 14, 14, 7)
+			#dc.DrawLine(14, 7, 7, 1)
+			#dc.DrawLine(7, 1, 1, 7)
 		elif shape == 'x':
 			dc.DrawLine(1, 1, 13, 13)
 			dc.DrawLine(1, 13, 13, 1)
@@ -111,14 +114,17 @@ def getTargetBitmap(color, shape='+', size=global_width):
 
 #--------------------
 def targetBitmap_point(color, width=global_width):
-	bitmap = wx.EmptyBitmap(1, 1)
+	actual_width = int(width/8)+1
+	bitmap = wx.EmptyBitmap(actual_width, actual_width)
 	dc = wx.MemoryDC()
 	dc.SelectObject(bitmap)
 	dc.BeginDrawing()
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, 1))
-	dc.DrawPoint(0,0)
+	for i in range(actual_width):
+		for j in range(actual_width):
+			dc.DrawPoint(i,j)
 	dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
@@ -165,10 +171,11 @@ def targetBitmap_square(color, width=global_width):
 	dc.Clear()
 	dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 	dc.SetPen(wx.Pen(color, penwidth))
-	dc.DrawLine(1, 1, width-2, 1)
-	dc.DrawLine(1, 1, 1, width-2)
-	dc.DrawLine(1, width-2, width-2, width-1)
-	dc.DrawLine(width-2, 1, width-2, width-1)
+	dc.DrawRectangle(1, 1, width-2, width-2)
+	#dc.DrawLine(1, 1, width-2, 1)
+	#dc.DrawLine(1, 1, 1, width-2)
+	#dc.DrawLine(1, width-2, width-2, width-1)
+	#dc.DrawLine(width-2, 1, width-2, width-1)
 	dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
@@ -185,10 +192,11 @@ def targetBitmap_diamond(color, width=global_width):
 	dc.SetPen(wx.Pen(color, penwidth))
 	half = int((width-1)/2)
 	full = width-1
-	dc.DrawLine(1, half, half, full)
-	dc.DrawLine(half, full, full, half-1)
-	dc.DrawLine(full, half-1, half, 1)
-	dc.DrawLine(half, 1, 1, half)
+	dc.DrawLines(((1, half), (half, full), (full-1, half), (half, 1), (1, half)))
+	#dc.DrawLine(1, half, half, full)
+	#dc.DrawLine(half, full, full, half-1)
+	#dc.DrawLine(full, half-1, half, 1)
+	#dc.DrawLine(half, 1, 1, half)
 	dc.EndDrawing()
 	dc.SelectObject(wx.NullBitmap)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
@@ -231,7 +239,7 @@ def targetBitmap_circle(color, width=global_width):
 
 #--------------------
 def getTargetBitmaps(color, shape='+', size=global_width):
-	selectedcolor = wx.Color(color.Red()/2, color.Green()/2, color.Blue()/2)
+	selectedcolor = wx.Color(color.Red()/2, color.Green()/2, color.Blue()/2,)
 	return getTargetBitmap(color, shape, size), getTargetBitmap(selectedcolor, shape, size)
 
 
