@@ -8,7 +8,7 @@ reset
 ../bin/manualpicker.py \
   dbimages=06nov29b,en diam=225 \
   outdir=. runid=${runid} \
-  limit=10 shape=diamond shapesize=48 \
-  norejects nocontinue \
+  limit=3 shape=square shapesize=48 \
+  nocontinue \
   median=2 lp=20 hp=400 bin=4 \
   pickrunid=21
