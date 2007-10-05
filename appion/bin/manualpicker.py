@@ -380,7 +380,7 @@ class manualPicker(particleLoop.ParticleLoop):
 			print "inserting ",len(targets)," targets"
 			self.app.panel.setTargets('Select Particles', targets)
 
-		#print dir(self.app.vitalstats)
+		#set vital stats
 		self.app.vitalstats.SetLabel("Vital Stats: Image "+str(self.stats['count'])
 			+" of "+str(self.stats['imagecount'])+", inserted "+str(len(targets))+" picks, "
 			+" image name: "+imgdata['filename'])
