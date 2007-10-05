@@ -260,20 +260,20 @@ class particledata {
 		."FROM ApRunsInStackData as r "
 		."LEFT JOIN ApStackRunData as s ON "
 		."(r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
-		."WHERE s.`dbemdata|SessionData|session` = '$sessionId'"
+		."WHERE s.`dbemdata|SessionData|session` = '$sessionId' "
 		."ORDER BY stackid DESC";
 	  $r = $this->mysql->getSQLResult($q);
 	  return $r;
 	}
 
 	function getStackIdsOld ($sessionId) {
-	        $q = "select spar.stackid "
-				."from ("
-				."select `REF|ApParticleData|particle` as pid, `REF|ApStackRunData|stackRun` as stackid "
-				."from ApStackParticlesData group by `REF|ApStackRunData|stackRun`) spar "
-				."left join ApParticleData p on (p.`DEF_id` = spar.pid) "
-				."left join ApSelectionRunData r on  (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id` ) "
-				."where r.`dbemdata|SessionData|session` = '$sessionId'";
+		$q = "select spar.stackid "
+		."from ("
+		."select `REF|ApParticleData|particle` as pid, `REF|ApStackRunData|stackRun` as stackid "
+		."from ApStackParticlesData group by `REF|ApStackRunData|stackRun`) spar "
+		."left join ApParticleData p on (p.`DEF_id` = spar.pid) "
+		."left join ApSelectionRunData r on  (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id` ) "
+		."where r.`dbemdata|SessionData|session` = '$sessionId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
