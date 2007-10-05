@@ -43,6 +43,17 @@ def getAppionDirectory():
 	apDisplay.printError("environmental variable, APPIONDIR, is not defined.\n"+
 		"Did you source useappion.sh?")
 
+def getFunctionName(arg=None):
+	"""
+	Sets the name of the function
+	by default takes the first variable in the argument
+	"""
+	if arg == None:
+		arg = sys.argv[0]
+	functionname = os.path.basename(arg.strip())
+	functionname = os.path.splitext(functionname)[0]
+	return functionname
+
 def writeFunctionLog(commandline, params=None, logfile=None):
 	"""
 	Used by appionLoop
@@ -52,7 +63,7 @@ def writeFunctionLog(commandline, params=None, logfile=None):
 	elif params is not None and params['functionLog'] is not None:
 		logfile = params['functionLog']
 	else:
-		logfile = "function.log"
+		logfile = getFunctionName(sys.argv[0])+".log"
 	apDisplay.printMsg("writing function log to: "+logfile)
 	#WRITE INFO
 	timestamp = "["+time.asctime()+"]\n"

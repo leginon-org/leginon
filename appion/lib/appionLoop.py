@@ -207,10 +207,7 @@ class AppionLoop(object):
 		"""
 		if arg == None:
 			arg = sys.argv[0]
-		self.functionname = os.path.basename(arg.strip())
-		#remove all letters after a dot, e.g. "func.py" -> "func"
-		self.functionname = os.path.splitext(self.functionname)[0]
-		#self.functionname = re.sub("\.[a-zA-Z]+$","",self.functionname)
+		self.functionname = apParam.getFunctionName(arg)
 		apDisplay.printMsg("FUNCTION:\t"+self.functionname)
 
 	def commitResultsToDatabase(self, imgdata, results):

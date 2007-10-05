@@ -5,6 +5,7 @@ import EMAN
 import shutil
 import math
 import string
+import apParam
 from Numeric import *
 from subprocess import call
 
@@ -96,8 +97,7 @@ def readClassPtcltext(clsfile):
 	return pretext,Ptext
 	
 def writeFunctionLog(argvs):
-	functionpy = argvs[0].split("/")
-	function = functionpy[-1].split('.py')
+
 	
 	logfile = function[0]+".log"
 	f=open(logfile,'a')
@@ -107,7 +107,7 @@ def writeFunctionLog(argvs):
 
 if __name__== '__main__':
 	#WriteLog
-	writeFunctionLog(sys.argv)
+	apParam.writeFunctionLog(sys.argv)
 	
 	#Parse inputs
 	args=sys.argv[1:]
