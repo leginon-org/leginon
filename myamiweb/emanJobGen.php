@@ -517,7 +517,7 @@ function defaultReconValues () {
       obj.hard1.value = '25';
       obj.classkeep1.value = '0.8';
       obj.classiter1.value = '8';
-      obj.filt3d1.value = '15';
+      obj.filt3d1.value = '15.0';
       obj.shrink1.value = '1';
       obj.median1.checked = true;
       obj.phasecls1.checked = true;
