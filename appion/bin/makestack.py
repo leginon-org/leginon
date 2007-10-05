@@ -927,6 +927,11 @@ if __name__ == '__main__':
 		if params['single']:
 			singleStack(params, imgdict)
 		
+		# warn if not committing
+		if not params['commit']:
+			apDisplay.printWarning("not committing results to database, all data will be lost")
+			apDisplay.printMsg("to preserve data start script over and add 'commit' flag"
+
 		# limit total particles if limit is specified
 		expectedptcles = str(int(float(totptcls)/float(count)*len(images)))
 		print str(totptcls)+" total particles so far ("+str(len(images)-count)+" images remain; expect "+\
