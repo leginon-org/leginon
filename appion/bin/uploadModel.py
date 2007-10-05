@@ -4,6 +4,8 @@
 import os
 import sys
 import time
+import re
+import shutil
 import apUpload
 import apParam
 import apDisplay
@@ -18,7 +20,7 @@ if __name__ == '__main__':
 	params = apUpload.createDefaults()
 
 	# parse command line input
-	apUpload.parseModelUploadInput(sys.argv,params)
+	apUpload.parseModelUploadInput(sys.argv, params)
 
 	# check to make sure that incompatible parameters are not set
 	if params['apix'] is None:
@@ -29,13 +31,38 @@ if __name__ == '__main__':
 		apDisplay.printError("enter a symmetry ID")
 	if params['description'] is None:
 		apDisplay.printError("enter a description of the initial model")
-	modelname = os.path.join(params['path'], params['name'])
+	if params['outdir'] is None:
+		#auto set the output directory
+		sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
+		path = os.path.abspath(sessiondata['image path'])
+		path = re.sub("leginon","appion",path)
+		path = re.sub("/rawdata","",path)
+		params['outdir'] = os.path.join(path,"models")
+
+	apUpload.checkSymInfo(params)
+
+	#create the output directory, if needed
+	apParam.createDirectory(params['outdir'])		
+
+	# copy templates to final location
+	old = os.path.join(params['path'], params['name'])
+	new = os.path.join(params['outdir'], params['name'])
+	if os.path.isfile(new):
+		apDisplay.printError("model \'"+new+"\' already exists!\n")
+	shutil.copy(old, new)
+	#and only allow user read access just so they don't get deleted
+	os.chmod(new, 0666)
+
+
+
+	modelname = os.path.join(params['outdir'], params['name'])
 	# get dimensions of model, set box size
-	params['box']=apUpload.getModelDimensions(modelname)
+	params['box'] = apUpload.getModelDimensions(modelname)
 	
 	# upload Initial Model
 	apUpload.getProjectId(params)
-	apUpload.insertModel(params)
+	if params['commit'] is True:
+		apUpload.insertModel(params)
 
 	# render images of initial model
 	initmodel={}
@@ -43,3 +70,6 @@ if __name__ == '__main__':
 	initmodel['boxsize']=params['box']
 	initmodel['symmetry']=params['syminfo']
 	apRecon.renderSnapshots(modelname,params['res'],initmodel,params['contour'],params['zoom'])
+
+
+

@@ -1,6 +1,6 @@
 # Python functions for selexon.py
 
-import os, re, sys
+import os, re, sys, time
 import tempfile
 import cPickle
 import math
@@ -241,6 +241,17 @@ def getClassInfo(classes):
 	return projeulers
 
 
+def resetVirtualFrameBuffer():
+	user = os.environ["USER"]
+	os.system("kill `ps -U "+user+" | grep Xvfb | sed \'s\/pts.*$\/\/\'`");
+	time.sleep(1);
+	os.system("Xvfb :1 -screen 0 800x800x8 &");
+	os.environ["DISPLAY"] = ":1"
+	#if 'bash' in os.environ.get("SHELL"):
+	#	system("export DISPLAY=':1'");	
+	#else
+	#	system("setenv DISPLAY :1");
+
 def renderSnapshots(density,res,initmodel,contour,zoom,stackapix=None):
 	# if eotest failed, filter to 30 
 	if not res:
@@ -266,6 +277,7 @@ def renderSnapshots(density,res,initmodel,contour,zoom,stackapix=None):
 	cmd = ('proc3d %s %s apix=%.3f lp=%.2f origin=0,0,0' % (density, tmpf, apix, filtres))
 	print cmd
 	os.system(cmd)
+	resetVirtualFrameBuffer()
 	rendercmd = ('chimera ~/pyappion/lib/apChimSnapshot.py %s %s %s %.3f %.3f' % (tmpf, density, sym, contour, zoom))
 	print rendercmd
 	os.system(rendercmd)

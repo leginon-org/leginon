@@ -130,6 +130,8 @@ def parseModelUploadInput(args,params):
 			params['session']=elements[1]
 		elif (elements[0]=='outdir'):
 			params['outdir']=elements[1]
+		elif (elements[0]=='nocommit'):
+			params['commit']=False
 		elif (elements[0]=='symmetry'):
 			params['sym']=int(elements[1])
 		elif (elements[0]=='res'):
@@ -187,6 +189,13 @@ def createDefaults():
 	params['reconid']=None
 	return params
 
+def checkSymInfo(params):
+	symid = appiondb.direct_query(appionData.ApSymmetryData, params['sym'])
+	if not symid:
+		apDisplay.printError("no symmetry associated with this id\n")
+	apDisplay.printMsg("Selected symmetry group: "+str(symid['symmetry']))
+	params['syminfo'] = symid
+
 def getProjectId(params):
 	projectdata = project.ProjectData()
 	projects = projectdata.getProjectExperiments()
@@ -207,7 +216,7 @@ def getModelDimensions(mrcfile):
 	
 def insertModel(params):
 	print "inserting into database"
-	symid=apDB.apdb.direct_query(appionData.ApSymmetryData,params['sym'])
+	symid=appiondb.direct_query(appionData.ApSymmetryData,params['sym'])
 	if not symid:
 		apDisplay.printError("no symmetry associated with this id\n")		
 	params['syminfo']=symid
@@ -222,7 +231,7 @@ def insertModel(params):
 	appiondb.insert(modq)
 
 def checkReconId(params):
-	reconinfo=apDB.apdb.direct_query(appionData.ApRefinementRunData, params['reconid'])
+	reconinfo=appiondb.direct_query(appionData.ApRefinementRunData, params['reconid'])
 	if not reconinfo:
 		print "\nERROR: Recon ID",params['reconid'],"does not exist in the database"
 		sys.exit()
