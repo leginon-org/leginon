@@ -35,6 +35,8 @@ echo"<form name='viewerform' method='POST' ACTION='$formAction'>
 
 $sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 
+$leginon = new leginondata();
+
 // --- Get Stack Data
 $particle = new particledata();
 $stackIds = $particle->getStackIds($sessionId);
@@ -49,18 +51,28 @@ if ($stackruns>0){
 	        $html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
         }
         foreach ($stackIds as $stackid) {
-                $stackcount=$particle->getNumStackParticles($stackid['stackid']);
+		$stackcount=$particle->getNumStackParticles($stackid['stackid']);
 		$reconRuns = $particle->getReconIds($stackid['stackid']);
+
+		//get stackapix from first image
+                $stackparam=$particle->getStackParams($stackid['stackid']);
+		$firstimage = $particle->getFirstImageFromStackId($stackid['stackid'],$stackparam['defpair']);
+		$imginfo = $leginon->getImageInfo($firstimage);
+		$apix = $imginfo['pixelsize']*$imginfo['binning']*1e10;
+		$stackbin = $stackparam['bin'];
+		$stackapix = $apix*$stackbin;
+
 		foreach ($reconRuns as $reconrun) {
-		  $stmodel = $particle->getInitModelInfo($reconrun['REF|ApInitialModelData|initialModel']);
+			$stmodel = $particle->getInitModelInfo($reconrun['REF|ApInitialModelData|initialModel']);
 			$sym = $particle->getSymInfo($stmodel['REF|ApSymmetryData|symmetry']);
 			$res=$particle->getHighestResForRecon($reconrun[DEF_id]);
 			$description=$reconrun['description'];
 			$html .= "<TR>\n";
 			$html .= "<TD><A HREF='reconreport.php?reconId=$reconrun[DEF_id]'>$reconrun[name]</A></TD>\n";
 			$html .= "<TD>$stackcount</TD>\n";
-			$html .= "<TD>$sym[symmetry]</TD>\n";
-			$html .= "<TD>$stmodel[pixelsize]</TD>\n";
+			$html .= "<TD>";
+			$html .= "$sym[symmetry]</TD>\n";
+			$html .= "<TD>".$stackapix."</TD>\n";
 			$html .= "<TD>$stmodel[boxsize]</TD>\n";
 			$html .= sprintf("<TD>%.2f (%d)</TD>\n", $res[half],$res[iteration]);
 			$html .= "<TD>".$description."</TD>\n";

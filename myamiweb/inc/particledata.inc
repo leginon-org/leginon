@@ -337,6 +337,38 @@ class particledata {
 		else return;
 	}
 
+	function getFirstImageFromStackId ($stackId,$defpair) {
+		if ($defpair!==NULL) {
+			pass;
+		} else {
+			$defpair=1;
+		}
+		if ($defpair ==1) {
+			$q = "SELECT sb.`dbemdata|AcquisitionImageData|image2` as image "
+			."FROM `ApStackParticlesData` sp "
+			."LEFT JOIN `ApParticleData` p ON "
+			."sp.`REF|ApParticleData|particle`=p.`DEF_id` "
+			."LEFT JOIN `ApImageTransformationData` sb ON "
+			."sb.`dbemdata|AcquisitionImageData|image1` "
+			."=p.`dbemdata|AcquisitionImageData|image` "
+			."WHERE sp.`REF|ApStackData|stack`=".$stackId." limit 1 "
+			." ";
+		$r = $this->mysql->getSQLResult($q);
+		}
+		if ($r!=NULL) {
+			return $r[0]['image'];
+		} else {
+			$q = "SELECT p.`dbemdata|AcquisitionImageData|image` as image "
+			."FROM `ApStackParticlesData` sp "
+			."LEFT JOIN `ApParticleData` p ON "
+			."sp.`REF|ApParticleData|particle`=p.`DEF_id`"
+			."WHERE sp.`REF|ApStackData|stack`=".$stackId." limit 1 "
+			." ";
+		}
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0]['image']; 
+	}
+
 	function displayParticleStats ($particleruns, $display_keys, $inspect=False, $selexval=False) {
 		if (!is_array($particleruns))
 			return ;
