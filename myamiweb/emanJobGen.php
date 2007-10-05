@@ -127,8 +127,8 @@ function stackModelForm($extra=False) {
   echo"
   </select>
   <P>
-  Stack:
-  <SELECT NAME='stackval'>\n";
+  Stack:";
+  echo "<SELECT NAME='stackval'>\n";
 
   foreach ($stackIds as $stackid){
     // get stack parameters from database
@@ -136,8 +136,7 @@ function stackModelForm($extra=False) {
     // get number of particles in each stack
     $nump=commafy($particle->getNumStackParticles($stackid['stackid']));
     // get pixel size of stack
-    $apix=($particle->getPixelSizeFromStackId($stackid['stackid']))*1e10;
-    $apix=($s['bin']) ? $apix*$s['bin'] : $apix;
+    $apix=($particle->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
     // get box size
     $box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
     // get stack path with name

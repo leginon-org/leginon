@@ -5,7 +5,6 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  *
- *	Simple viewer to view a image using mrcmodule
  */
 
 require ('inc/leginon.inc');
@@ -35,7 +34,6 @@ echo"<form name='viewerform' method='POST' ACTION='$formAction'>
 
 $sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 
-$leginon = new leginondata();
 
 // --- Get Stack Data
 $particle = new particledata();
@@ -53,14 +51,11 @@ if ($stackruns>0){
         foreach ($stackIds as $stackid) {
 		$stackcount=$particle->getNumStackParticles($stackid['stackid']);
 		$reconRuns = $particle->getReconIds($stackid['stackid']);
+                $stackparam=$particle->getStackParams($stackid['stackid']);
 
 		//get stackapix from first image
-                $stackparam=$particle->getStackParams($stackid['stackid']);
-		$firstimage = $particle->getFirstImageFromStackId($stackid['stackid'],$stackparam['defocpair']);
-		$imginfo = $leginon->getImageInfo($firstimage);
-		$apix = $imginfo['pixelsize']*$imginfo['binning']*1e10;
-		$stackbin = $stackparam['bin'];
-		$stackapix = $apix*$stackbin;
+		$stackpix = $particle->getStackPixelSizeFromStackId($stackid['stackid']);
+		$stackapix = format_angstrom_number($stackpix);
 
 		foreach ($reconRuns as $reconrun) {
 			$stmodel = $particle->getInitModelInfo($reconrun['REF|ApInitialModelData|initialModel']);

@@ -449,6 +449,9 @@ function format_nano_number($data) {
 	return number_format(($data/1e-9), 3,'.','').' nm';
 }
 
+function format_angstrom_number($data) {
+	return number_format(($data/1e-10), 2,'.','').' &Aring;';
+}
 function sec2time($second) {
 	$h=floor($second/3600);
 	$m=floor(($second-$h*3600)/60);
