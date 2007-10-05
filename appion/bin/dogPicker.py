@@ -21,10 +21,13 @@ class dogPicker(particleLoop.ParticleLoop):
 	def preLoopFunctions(self):
 		if self.params['lp'] > 0:
 			apDisplay.printWarning("lowpass filter value greater than zero; not a good thing for dogpicker")
+		if self.params['hp'] > 0:
+			apDisplay.printWarning("highpass filter value greater than zero; not a good thing for dogpicker")
 
 	def particleProcessImage(self, imgdata):
 		imgarray = imgdata['image']
-		imgarray = apImage.preProcessImage(imgarray, params=self.params, lowpass=0)
+		#you are not allowed to have highpass and lowpass values
+		imgarray = apImage.preProcessImage(imgarray, params=self.params, lowpass=0, highpass=0)
 		dogarray = apImage.diffOfGaussParam(imgarray, self.params)
 		dogarray = apImage.normStdev(dogarray)/4.0
 		peaktree  = apPeaks.findPeaks(imgdata, [dogarray,], self.params, maptype="dogmap")
