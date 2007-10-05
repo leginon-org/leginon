@@ -62,7 +62,7 @@ class PickerApp(wx.App):
 		self.panel = ManualPickerPanel(self.frame, -1)
 
 		self.panel.addTypeTool('Select Particles', toolclass=TargetPanelTools.TargetTypeTool,
-			display=wx.RED, target=True, shape=self.shape, size=self.size)
+			display=wx.Color(220,20,20), target=True, shape=self.shape, size=self.size)
 
 		self.panel.setTargets('Select Particles', [])
 		self.panel.selectiontool.setTargeting('Select Particles', True)
