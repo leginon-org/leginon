@@ -56,7 +56,7 @@ if ($stackruns>0){
 
 		//get stackapix from first image
                 $stackparam=$particle->getStackParams($stackid['stackid']);
-		$firstimage = $particle->getFirstImageFromStackId($stackid['stackid'],$stackparam['defpair']);
+		$firstimage = $particle->getFirstImageFromStackId($stackid['stackid'],$stackparam['defocpair']);
 		$imginfo = $leginon->getImageInfo($firstimage);
 		$apix = $imginfo['pixelsize']*$imginfo['binning']*1e10;
 		$stackbin = $stackparam['bin'];
