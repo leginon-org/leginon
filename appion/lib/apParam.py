@@ -78,6 +78,26 @@ def writeFunctionLog(commandline, params=None, logfile=None):
 	f.write(out+"\n")
 	f.close()
 
+def parseWrappedLines(lines):
+	goodlines=[]
+	add=False
+	for i, line in enumerate(lines):
+		if line.count('\\') >0:
+			newline = newline+line.strip('\\\n')+' '
+			add=True
+			continue
+		if add==True:
+			newline = newline+line
+		else:
+			newline = line
+		
+		if line.count('\\') ==0:
+			add=False
+		goodlines.append(newline)
+		newline=''
+		
+	return goodlines		
+			
 def closeFunctionLog(params=None, logfile=None):
 	"""
 	Used by appionLoop

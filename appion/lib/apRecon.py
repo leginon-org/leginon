@@ -8,6 +8,7 @@ import string
 import appionData
 import apDB
 import apDatabase
+import apParam
 import EMAN
 import tarfile
 
@@ -146,13 +147,14 @@ def listFiles(params):
 			params['fscs'].append(f)
 		if re.match("goodavgs\.\d+\.img",f):
 			params['msgpassavgs'].append(f)
-			
+
 def parseMsgPassingLogFile(params):
 	logfile=os.path.join(params['path'],'msgPassing_subClassification.log')
 	print "parsing massage passing log file:",logfile
 	lines=open(logfile,'r')
+	goodlines=apParam.parseWrappedLines(lines)
 	j=0
-	for i,line in enumerate(lines):
+	for i,line in enumerate(goodlines):
 		line=string.rstrip(line)
 		if re.search("msgPassing_subClassification", line):
 			msgpassparams=line.split(' ')
