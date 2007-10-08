@@ -48,9 +48,9 @@ function displayIterations($refaliId) {
 		echo divtitle("Iteration $i[iteration]");
 		echo "<TABLE BORDER='0'>\n";
 		if ($csym) {
-			echo "<A HREF='loadimg.php?filename=$p[path]/$r[name]/$i[name]/refali001_nosym.mrc.mrc'>\n";
+			echo "<A HREF='loadimg.php?filename=$p[path]/$r[name]/$i[name]/refali001_nosym.mrc'>\n";
 			echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$p[path]/$r[name]/$i[name]/refali001_nosym.mrc'></A>\n";
-			echo "<A HREF='loadimg.php?filename=$p[path]/$r[name]/$i[name]/varali001_nosym.mrc.mrc'>\n";
+			echo "<A HREF='loadimg.php?filename=$p[path]/$r[name]/$i[name]/varali001_nosym.mrc'>\n";
 			echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$p[path]/$r[name]/$i[name]/varali001_nosym.mrc'></A><BR>\n";
 			echo "with $csym-fold symmetry:<BR>\n";
 		}
