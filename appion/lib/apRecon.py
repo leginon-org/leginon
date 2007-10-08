@@ -284,8 +284,8 @@ def renderSnapshots(density,res,initmodel,contour,zoom,stackapix=None):
 	cmd = ('proc3d %s %s apix=%.3f lp=%.2f origin=0,0,0' % (density, tmpf, apix, filtres))
 	print cmd
 	os.system(cmd)
-	resetVirtualFrameBuffer()
-	rendercmd = ('chimera ~/pyappion/lib/apChimSnapshot.py %s %s %s %.3f %.3f' % (tmpf, density, sym, contour, zoom))
+	#resetVirtualFrameBuffer()
+	rendercmd = ('chimera apChimSnapshot.py %s %s %s %.3f %.3f' % (tmpf, density, sym, contour, zoom))
 	print rendercmd
 	os.system(rendercmd)
 	os.remove(tmpf)
