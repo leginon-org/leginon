@@ -930,7 +930,7 @@ if __name__ == '__main__':
 		# warn if not committing
 		if not params['commit']:
 			apDisplay.printWarning("not committing results to database, all data will be lost")
-			apDisplay.printMsg("to preserve data start script over and add 'commit' flag"
+			apDisplay.printMsg("to preserve data start script over and add 'commit' flag")
 
 		# limit total particles if limit is specified
 		expectedptcles = str(int(float(totptcls)/float(count)*len(images)))
