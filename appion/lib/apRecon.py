@@ -249,6 +249,7 @@ def resetVirtualFrameBuffer():
 	#os.system("kill `ps -U "+user+" | grep Xvfb | sed \'s\/pts.*$\/\/\'`");
 	time.sleep(1);
 	os.system("Xvfb :1 -screen 0 800x800x8 &");
+	time.sleep(1);
 	os.environ["DISPLAY"] = ":1"
 	#if 'bash' in os.environ.get("SHELL"):
 	#	system("export DISPLAY=':1'");	
