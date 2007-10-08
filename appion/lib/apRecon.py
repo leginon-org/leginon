@@ -245,7 +245,8 @@ def getClassInfo(classes):
 
 def resetVirtualFrameBuffer():
 	user = os.environ["USER"]
-	os.system("kill `ps -U "+user+" | grep Xvfb | sed \'s\/pts.*$\/\/\'`");
+	os.system("killall Xvfb");
+	#os.system("kill `ps -U "+user+" | grep Xvfb | sed \'s\/pts.*$\/\/\'`");
 	time.sleep(1);
 	os.system("Xvfb :1 -screen 0 800x800x8 &");
 	os.environ["DISPLAY"] = ":1"
