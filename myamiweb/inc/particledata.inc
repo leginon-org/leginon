@@ -28,12 +28,12 @@ class particledata {
   }
 
   function getTemplatesFromProject ($projectId) {
-    $q="SELECT t.*, p.path "
-      ."FROM `ApTemplateImageData` AS t "
-      ."LEFT JOIN ApPathData AS p ON "
-      ."(t.`REF|ApPathData|path`=p.`DEF_id`) "
+    $q="SELECT temp.*, path.path "
+      ."FROM `ApTemplateImageData` AS temp "
+      ."LEFT JOIN ApPathData AS path ON "
+      ."(temp.`REF|ApPathData|path`=path.`DEF_id`) "
       ."WHERE `project|projects|project`='$projectId' "
-    ."ORDER BY t.`DEF_id` DESC";
+      ."ORDER BY temp.`DEF_id` DESC";
     $r = $this->mysql->getSQLResult($q);
     return $r;
   }
@@ -297,88 +297,88 @@ class particledata {
     return $r;
   }
 
-	function getNumStackParticles ($stackId) {
-		$q= "SELECT count(DEF_id) as num "
-			."FROM `ApStackParticlesData` "
-			."WHERE `REF|ApStackData|stack` = '$stackId'";
-		list($r) = $this->mysql->getSQLResult($q);
-		return $r['num'];
-	}    
+  function getNumStackParticles ($stackId) {
+    $q= "SELECT count(DEF_id) as num "
+      ."FROM `ApStackParticlesData` "
+      ."WHERE `REF|ApStackData|stack` = '$stackId'";
+    list($r) = $this->mysql->getSQLResult($q);
+    return $r['num'];
+  }    
 
-	//////// fix me ////////
-	function getStackIdFromReconId ($reconId) {
-		$q= "SELECT * "
-			."FROM `ApRefinementRunData` "
-			."WHERE `DEF_id` = '$reconId'";
-		list($r) = $this->mysql->getSQLResult($q);
-		return $r['REF|ApStackData|stack'];
-	}    
+  //////// fix me ////////
+  function getStackIdFromReconId ($reconId) {
+    $q= "SELECT * "
+      ."FROM `ApRefinementRunData` "
+      ."WHERE `DEF_id` = '$reconId'";
+    list($r) = $this->mysql->getSQLResult($q);
+    return $r['REF|ApStackData|stack'];
+  }    
 
-	function getStackPixelSizeFromStackId ($stackId) {
-		//get the first image of the stack assume using defocpair if not specified
-		$q = "SELECT "
-		. " IF( ( pimage . `defocpair` IS NULL OR pimage . `defocpair` = 1 ) , "
-        	. " sbimage . image , pimage . image ) as image , "
-		. " pimage.image as pimage, "
-		. " pimage.`stackbin` "
-		. " FROM "
-        	. " ( SELECT "
-        	. " p . `dbemdata|AcquisitionImageData|image` as image , pa . `defocpair` ,"
-		. " pa.`bin` as stackbin "
-		. " FROM `ApStackParticlesData` sp "
-		. " LEFT JOIN `ApStackRunData` r ON "
-        	. " ( sp . `REF|ApStackRunData|stackRun` = r . `DEF_id` ) "
-        	. " LEFT JOIN `ApStackParamsData` pa ON "
-        	. " ( pa . `DEF_id` = r . `REF|ApStackParamsData|stackParams` ) "
-        	. " LEFT JOIN `ApParticleData` p ON "
-        	. " sp . `REF|ApParticleData|particle` = p . `DEF_id` "
-        	. " WHERE sp . `REF|ApStackData|stack` = ".$stackId." "
-        	. " limit 1 ) pimage , "
-        	. " ( SELECT "
-        	. " sb . `dbemdata|AcquisitionImageData|image2` as image "
-        	. " FROM `ApStackParticlesData` sp "
-        	. " LEFT JOIN `ApStackRunData` r ON "
-        	. " ( sp . `REF|ApStackRunData|stackRun` = r . `DEF_id` ) "
-        	. " LEFT JOIN `ApStackParamsData` pa ON "
-        	. " ( pa . `DEF_id` = r . `REF|ApStackParamsData|stackParams` ) "
-        	. " LEFT JOIN `ApParticleData` p ON "
-        	. " sp . `REF|ApParticleData|particle` = p . `DEF_id` "
-        	. " LEFT JOIN `ApImageTransformationData` sb ON "
-		. " (sb . `dbemdata|AcquisitionImageData|image1` "
-		. " = p . `dbemdata|AcquisitionImageData|image`) "
-        	. " WHERE sp . `REF|ApStackData|stack`= ".$stackId." "
-        	. " limit 1 ) sbimage "
-		. " ";
-		$r1 = $this->mysql->getSQLResult($q);
+  function getStackPixelSizeFromStackId ($stackId) {
+    //get the first image of the stack assume using defocpair if not specified
+    $q = "SELECT "
+    . " IF( ( pimage . `defocpair` IS NULL OR pimage . `defocpair` = 1 ) , "
+          . " sbimage . image , pimage . image ) as image , "
+    . " pimage.image as pimage, "
+    . " pimage.`stackbin` "
+    . " FROM "
+          . " ( SELECT "
+          . " p . `dbemdata|AcquisitionImageData|image` as image , pa . `defocpair` ,"
+    . " pa.`bin` as stackbin "
+    . " FROM `ApStackParticlesData` sp "
+    . " LEFT JOIN `ApStackRunData` r ON "
+          . " ( sp . `REF|ApStackRunData|stackRun` = r . `DEF_id` ) "
+          . " LEFT JOIN `ApStackParamsData` pa ON "
+          . " ( pa . `DEF_id` = r . `REF|ApStackParamsData|stackParams` ) "
+          . " LEFT JOIN `ApParticleData` p ON "
+          . " sp . `REF|ApParticleData|particle` = p . `DEF_id` "
+          . " WHERE sp . `REF|ApStackData|stack` = ".$stackId." "
+          . " limit 1 ) pimage , "
+          . " ( SELECT "
+          . " sb . `dbemdata|AcquisitionImageData|image2` as image "
+          . " FROM `ApStackParticlesData` sp "
+          . " LEFT JOIN `ApStackRunData` r ON "
+          . " ( sp . `REF|ApStackRunData|stackRun` = r . `DEF_id` ) "
+          . " LEFT JOIN `ApStackParamsData` pa ON "
+          . " ( pa . `DEF_id` = r . `REF|ApStackParamsData|stackParams` ) "
+          . " LEFT JOIN `ApParticleData` p ON "
+          . " sp . `REF|ApParticleData|particle` = p . `DEF_id` "
+          . " LEFT JOIN `ApImageTransformationData` sb ON "
+    . " (sb . `dbemdata|AcquisitionImageData|image1` "
+    . " = p . `dbemdata|AcquisitionImageData|image`) "
+          . " WHERE sp . `REF|ApStackData|stack`= ".$stackId." "
+          . " limit 1 ) sbimage "
+    . " ";
+    $r1 = $this->mysql->getSQLResult($q);
 
-		//if no sibling image when defocpair param is not specified, use the original image
-		if ($r1[0]['image']) {
-			$imgId = $r1[0]['image'];
-		} else {
-			$imgId = $r1[0]['pimage'];
-		}
+    //if no sibling image when defocpair param is not specified, use the original image
+    if ($r1[0]['image']) {
+      $imgId = $r1[0]['image'];
+    } else {
+      $imgId = $r1[0]['pimage'];
+    }
 
-		// get image bin and the most recent pixel calibration
-		$q= "SELECT pd.`SUBD|binning|x` as imgbin, "
-		."pc.`pixelsize` as ccdpixelsize "
-		."FROM dbemdata.`AcquisitionImageData` a "
-		."left join dbemdata.`PresetData` pd "
-		."on (a.`REF|PresetData|preset`=pd.`DEF_id`) "
-		.", dbemdata.PixelSizeCalibrationData pc "
-		."WHERE a.`DEF_id`='$imgId' "
-		."AND pc.`REF|InstrumentData|tem`= pd.`REF|InstrumentData|tem` "
-		."AND pc.`magnification`= pd.`magnification` "
-		."AND "
-		."pc.`REF|InstrumentData|ccdcamera`= pd.`REF|InstrumentData|ccdcamera` "
-		."AND "
-		."pc.`DEF_timestamp`<  a.`DEF_timestamp` "
-		."ORDER BY pc.`DEF_timestamp` DESC ";
+    // get image bin and the most recent pixel calibration
+    $q= "SELECT pd.`SUBD|binning|x` as imgbin, "
+    ."pc.`pixelsize` as ccdpixelsize "
+    ."FROM dbemdata.`AcquisitionImageData` a "
+    ."left join dbemdata.`PresetData` pd "
+    ."on (a.`REF|PresetData|preset`=pd.`DEF_id`) "
+    .", dbemdata.PixelSizeCalibrationData pc "
+    ."WHERE a.`DEF_id`='$imgId' "
+    ."AND pc.`REF|InstrumentData|tem`= pd.`REF|InstrumentData|tem` "
+    ."AND pc.`magnification`= pd.`magnification` "
+    ."AND "
+    ."pc.`REF|InstrumentData|ccdcamera`= pd.`REF|InstrumentData|ccdcamera` "
+    ."AND "
+    ."pc.`DEF_timestamp`<  a.`DEF_timestamp` "
+    ."ORDER BY pc.`DEF_timestamp` DESC ";
 
-		$r2 = $this->mysql->getSQLResult($q);
+    $r2 = $this->mysql->getSQLResult($q);
 
-		$stackpixelsize = $r2[0]['ccdpixelsize']*$r2[0]['imgbin']*$r1[0]['stackbin'];
-		return $stackpixelsize;
-	}
+    $stackpixelsize = $r2[0]['ccdpixelsize']*$r2[0]['imgbin']*$r1[0]['stackbin'];
+    return $stackpixelsize;
+  }
 
   function displayParticleStats ($particleruns, $display_keys, $inspect=False, $selexval=False) {
     if (!is_array($particleruns))
