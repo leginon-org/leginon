@@ -11,6 +11,8 @@ import apDatabase
 import apParam
 try:
 	import EMAN
+except:
+	pass
 import tarfile
 
 
