@@ -96,15 +96,6 @@ def readClassPtcltext(clsfile):
 	del Ptext[0]
 	return pretext,Ptext
 	
-def writeFunctionLog(argvs):
-
-	
-	logfile = function[0]+".log"
-	f=open(logfile,'a')
-	timestamp = "["+time.asctime()+"]\n"
-	f.write(timestamp)
-	f.write(' '.join(argvs)+"\n")
-
 if __name__== '__main__':
 	#WriteLog
 	apParam.writeFunctionLog(sys.argv)
