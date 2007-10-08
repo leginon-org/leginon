@@ -9,7 +9,8 @@ import appionData
 import apDB
 import apDatabase
 import apParam
-import EMAN
+try:
+	import EMAN
 import tarfile
 
 
