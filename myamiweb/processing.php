@@ -1,11 +1,11 @@
 <?php
 /**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
- *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *  The Leginon software is Copyright 2003 
+ *  The Scripps Research Institute, La Jolla, CA
+ *  For terms of the license agreement
+ *  see  http://ami.scripps.edu/software/leginon-license
  *
- *	Simple viewer to view a image using mrcmodule
+ *  Simple viewer to view a image using mrcmodule
  */
 
 require ('inc/leginon.inc');
@@ -24,7 +24,7 @@ if ($expId){
 }
 else {
   $sessionId=$_POST['sessionId'];
-  $formAction=$_SERVER['PHP_SELF'];	
+  $formAction=$_SERVER['PHP_SELF'];  
 }
 $projectId=$_POST['projectId'];
 
@@ -102,16 +102,16 @@ if ($sessionId) {
   $prtlrunIds = $particle->getParticleRunIds($sessionId);
   $prtlruns=count($prtlrunIds);
 
-	// retrieve template info from database for this project
-	if ($expId){
-		$projectId=getProjectFromExpId($expId);
-	}
-	if (is_numeric($projectId)) {
-		$templatesData=$particle->getTemplatesFromProject($projectId);
-		$templates = count($templatesData);
-		$modelData=$particle->getModelsFromProject($projectId);
-		$models = count($modelData);
-	}
+  // retrieve template info from database for this project
+  if ($expId){
+    $projectId=getProjectFromExpId($expId);
+  }
+  if (is_numeric($projectId)) {
+    $templatesData=$particle->getTemplatesFromProject($projectId);
+    $templates = count($templatesData);
+    $modelData=$particle->getModelsFromProject($projectId);
+    $models = count($modelData);
+  }
 
   // --- Get Mask Maker Data
   $maskrunIds = $particle->getMaskMakerRunIds($sessionId);
@@ -143,18 +143,24 @@ if ($sessionId) {
 
   // --- Get Reconstruction Data
   if ($stackruns>0) {
-		foreach ($stackIds as $stackid) {
-			$reconIds = $particle->getReconIds($stackid['stackid']);
-			if ($reconIds) {
-				$reconruns+=count($reconIds);
-		  }
-	  }
+    foreach ($stackIds as $stackid) {
+      $reconIds = $particle->getReconIds($stackid['stackid']);
+      if ($reconIds) {
+        $reconruns+=count($reconIds);
+      }
+    }
   }
 
   echo"
   </FORM>
   <TABLE BORDER='1' CLASS='tableborder' CELLPADDING='5'>
   <TR>\n";
+  //header
+  echo"
+	 <TD ALIGN='LEFT' COLSPAN='2'><FONT SIZE='+1'><B>Action</B></FONT></TD>
+	 <TD ALIGN='LEFT'><FONT SIZE='+1'><B>Results</B></FONT></TD>
+	 <TD ALIGN='LEFT'><FONT SIZE='+1'><B>New run</B></FONT></TD>
+  </TR><TR>\n";
   if ($prtlruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
   else {$bgcolor=$donecolor;$gifimg=$donepic;}
   echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
@@ -166,18 +172,23 @@ if ($sessionId) {
     else {echo "<A HREF='prtlreport.php?expId=$sessionId'>$prtlruns completed</A>\n";}
     echo"
     </TD>
-    <TD BGCOLOR='$bgcolor'>
-    <A HREF='runPySelexon.php?expId=$sessionId'>";
-    if ($prtlruns==0) {echo "Begin Template Picking";}
-    else {echo "Continue Template Picking";}
+    <TD BGCOLOR='$bgcolor'>";
+    if ($templates==0) {
+    	echo"<A HREF='uploadtemplate.php?expId=$sessionId'>";
+      echo "Upload template for picking";
+    } else {
+    	echo"<A HREF='runPySelexon.php?expId=$sessionId'>";
+    	if ($prtlruns==0) {echo "Template Picking";}
+    	else {echo "Template Picking";}
+    }
     echo"</A><BR>
     <A HREF='runDogPicker.php?expId=$sessionId'>";
-    if ($prtlruns==0) {echo "Begin DoG Picking";}
-    else {echo "Continue DoG Picking";}
+    if ($prtlruns==0) {echo "DoG Picking";}
+    else {echo "DoG Picking";}
     echo"</A><BR>
     <A HREF='runManualPicker.php?expId=$sessionId'>";
-    if ($prtlruns==0) {echo "Begin Manually Picking";}
-    else {echo "Edit Picking with Manual Picker";}
+    if ($prtlruns==0) {echo "Manual Picking";}
+    else {echo "Edit Picks with Manual Picker";}
     echo"</A>
     </TD>
   </TR>
@@ -195,30 +206,32 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>
     <A HREF='runPyAce.php?expId=$sessionId'>";
-    if ($ctfruns==0) {echo "Begin Estimation";}
-    else {echo "Continue Estimation";}
+    if ($ctfruns==0) {echo "ACE Estimation";}
+    else {echo "ACE Estimation";}
     echo"</A>
     </TD>
   </TR>
   <TR>\n";
   if ($assessedimgs==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
   else {
-    if ($assessedimgs < $totimgs) {$bgcolor=$progcolor;$gifimg=$donepic;}
-    else {$bgcolor=$donecolor;$gifimg=$donepic;}
+    if ($assessedimgs < $totimgs) {$bgcolor=$progcolor; $gifimg=$donepic;}
+    else {$bgcolor=$donecolor; $gifimg=$donepic;}
   }
   echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
     <TD BGCOLOR='$bgcolor'>
     <B>Micrograph Assessment</B>
     </TD>
-    <TD BGCOLOR='$bgcolor'>
-    $assessedimgs assessed
+    <TD BGCOLOR='$bgcolor'>";
+    if ($assessedimgs < $totimgs) echo "$assessedimgs of $totimgs completed";
+    else echo "All $assessedimgs completed";
+    echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>
     <A HREF='imgAssessor.php?expId=$sessionId'>";
-    if ($assessedimgs==0) {echo "Begin Assessment";}
+    if ($assessedimgs==0) {echo "Start Manual Assessment";}
     else {
-      if ($assessedimgs < $totimgs) echo "Continue Assessment";
-      else echo "Redo Assessment";
+      if ($assessedimgs < $totimgs) echo "Finish Manual Assessment";
+      else echo "Re-Assess Images";
     }
     echo"</A>
     </TD>
@@ -262,9 +275,9 @@ if ($sessionId) {
     if ($prtlruns == 0) {
       echo "<FONT SIZE=-1><I>Pick some particles first</I></FONT>";
     } elseif ($stackruns == 0) {
-      echo"<A HREF='makestack.php?expId=$sessionId'>Create New Stack</A>";
+      echo"<A HREF='makestack.php?expId=$sessionId'>Stack creation</A>";
     } else {
-      echo"<A HREF='makestack.php?expId=$sessionId'>Create Another Stack</A>";
+      echo"<A HREF='makestack.php?expId=$sessionId'>Stack creation</A>";
     }
     echo"</TD></TR>
   <TR>\n";
@@ -281,7 +294,7 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>";
     if ($stackruns == 0) {echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";}
-    else {echo"<A HREF='classifier.php?expId=$sessionId'>Start New Classification</A>";}
+    else {echo"<A HREF='classifier.php?expId=$sessionId'>Ref-free Classification</A>";}
     echo"</TD>
   </TR>
   <TR>\n";
@@ -298,7 +311,7 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>";
     if ($stackruns == 0) {echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";}
-    elseif ($refruns == 0) {echo"<A HREF='refbasedali.php?expId=$sessionId'>Start New Alignment</A>";}
+    elseif ($refruns == 0) {echo"<A HREF='refbasedali.php?expId=$sessionId'>Ref-based Alignment</A>";}
     echo"</TD>
   </TR>
   <TR>\n";
@@ -317,7 +330,7 @@ if ($sessionId) {
   if ($stackruns == 0) {
     echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";
   } else {
-    echo"<A HREF='emanJobGen.php?expId=$sessionId'>New Reconstruction</A>";
+    echo"<A HREF='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</A>";
   }
   echo"</TD>
   </TR>
@@ -342,8 +355,8 @@ if ($sessionId) {
   echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>";
-  if ($templates==0) { echo"<A HREF='uploadtemplate.php?expId=$sessionId'>Upload a template</A>"; }
-  else { echo"<A HREF='uploadtemplate.php?expId=$sessionId'>Upload more templates</A>"; }
+  if ($templates==0) { echo"<A HREF='uploadtemplate.php?expId=$sessionId'>Upload template</A>"; }
+  else { echo"<A HREF='uploadtemplate.php?expId=$sessionId'>Upload template</A>"; }
   echo"</TD>
   </TR>
   <TR>\n";
@@ -359,8 +372,8 @@ if ($sessionId) {
   echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>";
-  if ($templates==0) { echo"<A HREF='uploadmodel.php?expId=$sessionId'>Upload a model</A>"; }
-  else { echo"<A HREF='uploadmodel.php?expId=$sessionId'>Upload more models</A>"; }
+  if ($templates==0) { echo"<A HREF='uploadmodel.php?expId=$sessionId'>Upload model</A>"; }
+  else { echo"<A HREF='uploadmodel.php?expId=$sessionId'>Upload model</A>"; }
   echo"</TD>
   </TR>
   </TABLE>
