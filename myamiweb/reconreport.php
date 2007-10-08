@@ -59,7 +59,7 @@ $stackId = $particle->getStackIdFromReconId($reconId);
 $stackparticles = $particle->getNumStackParticles($stackId);
 $stackparams = $particle->getStackParams($stackId);
 // get pixel size
-$apix=($particle->getPixelSizeFromStackId($stackId))*1e10;
+$apix=($particle->getStackPixelSizeFromStackId($stackId))*1e10;
 $apix=($stackparams['bin']) ? $apix*$stackparams['bin'] : $apix;
 
 $boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
