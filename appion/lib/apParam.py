@@ -2,6 +2,7 @@
 import os
 import sys
 import re
+import socket
 import time
 import sinedon.data as data
 import apDB
@@ -66,10 +67,12 @@ def writeFunctionLog(commandline, params=None, logfile=None):
 		logfile = getFunctionName(sys.argv[0])+".log"
 	apDisplay.printMsg("writing function log to: "+logfile)
 	#WRITE INFO
-	timestamp = "["+time.asctime()+"]\n"
+	timestamp = "[ timestamp: "+time.asctime()+" ]\n"
+	hoststamp = "[ hostname:  "+socket.gethostname()+" ]\n"
 	out=""
 	f=open(logfile,'a')
 	f.write(timestamp)
+	f.write(hoststamp)
 	for arg in commandline:
 		if len(out) > 60 or len(out)+len(arg) > 90:
 			f.write(out+"\\\n")
