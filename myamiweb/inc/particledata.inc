@@ -595,14 +595,14 @@ class particledata {
   }
 
     function getRefAliIds ($sessionId) {
-    $q = "SELECT refalirun.* "
-      ."FROM ApRefRunData AS refalirun "
-      ."LEFT JOIN ApRunsInStackData AS stackdata ON "
-      ."(refalirun.`REF|ApStackData|stack` = stackdata.`REF|ApStackData|stack`) "
-      ."LEFT JOIN ApStackRunData AS stackrun ON "
-      ."(stackdata.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id`) "
-      ."WHERE stackrun.`dbemdata|SessionData|session` = '$sessionId' "
-      ."ORDER BY refalirun.`DEF_id` DESC";
+    $q = "SELECT rr.`DEF_id` "
+      ."FROM ApRefRunData AS rr "
+      ."LEFT JOIN ApRunsInStackData AS sd ON "
+      ."(rr.`REF|ApStackData|stack` = sd.`REF|ApStackData|stack`) "
+      ."LEFT JOIN ApStackRunData AS sr ON "
+      ."(sd.`REF|ApStackRunData|stackRun` = sr.`DEF_id`) "
+      ."WHERE sr.`dbemdata|SessionData|session` = '$sessionId' "
+      ."ORDER BY rr.`DEF_id` DESC";
     $r = $this->mysql->getSQLResult($q);
     return $r;
   }
@@ -632,13 +632,13 @@ class particledata {
   }
 
   function getRefAliParams ($refaliId) {
-    $q = "SELECT p.*, r.*, p.path "
-      ."FROM ApRefRunData as r "
-      ."LEFT JOIN ApRefParamsData as p "
-      ."ON (r.`REF|ApRefParamsData|refParams`=p.`DEF_id`) "
-      ."LEFT JOIN ApPathData AS pd ON "
-      ."(r.`REF|ApPathData|path`=pd.`DEF_id`) "
-      ."WHERE r.`DEF_id` = '$refaliId'";
+    $q = "SELECT  par.*, run.*, path.path "
+      ."FROM ApRefRunData as run "
+      ."LEFT JOIN ApRefParamsData as par "
+      ."ON (run.`REF|ApRefParamsData|refParams`=par.`DEF_id`) "
+      ."LEFT JOIN ApPathData AS path ON "
+      ."(run.`REF|ApPathData|path` = path.`DEF_id`) "
+      ."WHERE run.`DEF_id` = '$refaliId'";
     $r = $this->mysql->getSQLResult($q);
     return $r[0];
   }

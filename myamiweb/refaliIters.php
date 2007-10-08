@@ -40,7 +40,7 @@ function displayIterations($refaliId) {
 
 	echo divtitle("Iteration 0");
 	echo "<TABLE BORDER='0'>\n";
-	echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$r[path]/$r[name]/reference.mrc'><BR>\n";
+	echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$p[path]/$p[name]/reference.mrc'><BR>\n";
 	echo"</TABLE>\n";
 	echo"<P>\n";
 
@@ -48,16 +48,16 @@ function displayIterations($refaliId) {
 		echo divtitle("Iteration $i[iteration]");
 		echo "<TABLE BORDER='0'>\n";
 		if ($csym) {
-			echo "<A HREF='loadimg.php?filename=$r[path]/$r[name]/$i[name]/refali001_nosym.mrc.mrc'>\n";
-			echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$r[path]/$r[name]/$i[name]/refali001_nosym.mrc'></A>\n";
-			echo "<A HREF='loadimg.php?filename=$r[path]/$r[name]/$i[name]/varali001_nosym.mrc.mrc'>\n";
-			echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$r[path]/$r[name]/$i[name]/varali001_nosym.mrc'></A><BR>\n";
+			echo "<A HREF='loadimg.php?filename=$p[path]/$r[name]/$i[name]/refali001_nosym.mrc.mrc'>\n";
+			echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$p[path]/$r[name]/$i[name]/refali001_nosym.mrc'></A>\n";
+			echo "<A HREF='loadimg.php?filename=$p[path]/$r[name]/$i[name]/varali001_nosym.mrc.mrc'>\n";
+			echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$p[path]/$r[name]/$i[name]/varali001_nosym.mrc'></A><BR>\n";
 			echo "with $csym-fold symmetry:<BR>\n";
 		}
-		echo "<A HREF='loadimg.php?filename=$r[path]/$r[name]/$i[name]/refali001.mrc'>\n";
-		echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$r[path]/$r[name]/$i[name]/refali001.mrc'></A>\n";
-		echo "<A HREF='loadimg.php?filename=$r[path]/$r[name]/$i[name]/varali001.mrc'>\n";
-		echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$r[path]/$r[name]/$i[name]/varali001.mrc'></A><BR>\n";
+		echo "<A HREF='loadimg.php?filename=$p[path]/$r[name]/$i[name]/refali001.mrc'>\n";
+		echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$p[path]/$r[name]/$i[name]/refali001.mrc'></A>\n";
+		echo "<A HREF='loadimg.php?filename=$p[path]/$r[name]/$i[name]/varali001.mrc'>\n";
+		echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$p[path]/$r[name]/$i[name]/varali001.mrc'></A><BR>\n";
 		echo"</TABLE>\n";
 		echo"<P>\n";
 
