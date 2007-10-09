@@ -220,7 +220,6 @@ function jobForm($extra=false) {
   $dmfmod = ($_POST['dmfmod']) ? $_POST['dmfmod'] : $dmfmod;
   $dmfstorech = ($_POST['dmfstore']=='on') ? 'CHECKED' : '';
   $numiters= ($_POST['numiters']) ? $_POST['numiters'] : 1;
-
   if ($_POST['duplicate']) {
     $numiters+=1;
     $newiter=explode(" ",$_POST['duplicate']);
@@ -322,6 +321,9 @@ function jobForm($extra=false) {
     $goodbadn="goodbad".$i;
     $eotestn="eotest".$i;
     $corann="coran".$i;
+    $msgpn="msgp".$i;
+    $msgp_corcutoffn="msgp_corcutoff".$i;
+    $msgp_minptclsn="msgp_minptcls".$i;
 
     $ang=($i>$j) ? $_POST["ang".($i-1)] : $_POST[$angn];
     $mask=($i>$j) ? $_POST["mask".($i-1)] : $_POST[$maskn];
@@ -332,7 +334,8 @@ function jobForm($extra=false) {
     $classiter=($i>$j) ? $_POST["classiter".($i-1)] : $_POST[$classitern];
     $filt3d=($i>$j) ? $_POST["filt3d".($i-1)] : $_POST[$filt3dn];
     $shrink=($i>$j) ? $_POST["shrink".($i-1)] : $_POST[$shrinkn];
-
+    $msgp_corcutoff=($i>$j) ? $_POST["msgp_corcutoff".($i-1)] : $_POST[$msgp_corcutoffn];
+    $msgp_minptcls=($i>$j) ? $_POST["msgp_minptcls".($i-1)] : $_POST[$msgp_minptclsn];
     ## use symmetry of model by default, but you can change it
     if ($i==1 && !$_POST['duplicate']) $sym=$modsym;
 
@@ -343,6 +346,7 @@ function jobForm($extra=false) {
            $goodbad=($_POST["goodbad".($i-1)]=='on') ? 'CHECKED' : '';
            $eotest=($_POST["eotest".($i-1)]=='on') ? 'CHECKED' : '';
            $coran=($_POST["coran".($i-1)]=='on') ? 'CHECKED' : '';
+           $msgp=($_POST[$mspg.($i-1)]=='on') ? 'CHECKED' : '';
     }
     else {
            $median=($_POST[$mediann]=='on') ? 'CHECKED' : '';
@@ -351,6 +355,7 @@ function jobForm($extra=false) {
            $goodbad=($_POST[$goodbadn]=='on') ? 'CHECKED' : '';
            $eotest=($_POST[$eotestn]=='on') ? 'CHECKED' : '';
            $coran=($_POST[$corann]=='on') ? 'CHECKED' : '';
+           $msgp=($_POST[$mspgn]=='on') ? 'CHECKED' : '';
     }
     $bgcolor="#E8E8E8";
     echo"
@@ -390,8 +395,21 @@ function jobForm($extra=false) {
           <INPUT TYPE='checkbox' NAME='$eotestn' $eotest><A HREF=\"javascript:refinfopopup('eotest')\">eotest</A></TD>
         <TD BGCOLOR='$bgcolor'>
           <INPUT TYPE='checkbox' NAME='$corann' $coran><A HREF=\"javascript:refinfopopup('coran')\">coran</A></TD>
-        <TD BGCOLOR='$bgcolor' ALIGN='CENTER'>
-          <INPUT TYPE='SUBMIT' NAME='duplicate' VALUE='Duplicate Row $i'></TD>
+        <TD BGCOLOR='$bgcolor'></TD>
+      </TR>
+      <TR>
+	<TD colspan=6 BGCOLOR='$bgcolor' CELLPADDING=0 CELLSPACING=0>
+	  <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4 WIDTH=100%>
+            <TR>
+        <TD BGCOLOR='$bgcolor'><INPUT TYPE='checkbox' NAME='$msgpn'><A HREF=\"javascript:refinfopopup('msgp')\">Subclassification by message passing:</A></TD>
+        <TD BGCOLOR='$bgcolor'><A HREF=\"javascript:refinfopopup('msgp_corcutoff')\">CorCutoff:</A>
+          <INPUT TYPE='text' NAME='$msgp_corcutoffn' SIZE='4' VALUE='$msgp_corcutoff'></TD>
+        <TD BGCOLOR='$bgcolor'><A HREF=\"javascript:refinfopopup('msgp_minptcls')\">MinPtcls:</A>
+          <INPUT TYPE='text' NAME='$msgp_minptclsn' SIZE='4' VALUE='$msgp_minptcls'></TD>
+            </TR>
+          </TABLE>
+        <TD colspan=2 BGCOLOR='$bgcolor' ALIGN='CENTER'>
+          <INPUT TYPE='SUBMIT' NAME='duplicate' VALUE='Duplicate Iteration $i'></TD>
       </TR>
       </TABLE>\n";
   }
@@ -456,6 +474,9 @@ function writeJobFile () {
     $goodbad=$_POST["goodbad".$i];
     $eotest=$_POST["eotest".$i];
     $coran=$_POST["coran".$i];
+    $msgp=$_POST["msgp".$i];
+    $msgp_corcutoff=$_POST["msgp_corcutoff".$i];
+    $msgp_minptcls=$_POST["msgp_minptcls".$i];
     $line="\nrefine $i proc=$procs ang=$ang pad=$pad";
     if ($mask) $line.=" mask=$mask";
     if ($imask) $line.=" imask=$imask";
@@ -491,13 +512,28 @@ function writeJobFile () {
       if ($hard) $line .= " hard=$hard";
       $line .= "\n";
     }
+    if ($msgp=='on') {
+      $line .="msgPassing_subClassification.py mask=$mask iter=$i";
+      if ($sym) $line .= " sym=$sym";
+      if ($hard) $line .= " hard=$hard";
+      if ($msgp_corcutoff) $line .= " corCutOff=$msgp_corcutoff";
+      if ($msgp_minptcls) $line .= " minNumOfPtcls=$msgp_minptcls";
+      $line .= "\n";
+    }
     $line.="rm cls*.lst\n";
     echo $line;
   }
   if ($_POST['dmfstore']=='on') {
     echo "\ntar -cvzf model.tar.gz threed.*a.mrc\n";
     echo "dmf put model.tar.gz $dmfpath\n";
-    echo "\ntar -cvzf results.tar.gz fsc* tcls* refine.* particle.* classes.* proj.* sym.* .emanlog *txt\n";
+    $line = "\ntar -cvzf results.tar.gz fsc* tcls* refine.* particle.* classes.* proj.* sym.* .emanlog *txt ";
+    if ($msgp=='on') {
+	$line .= "goodavgs.* ";
+	$line .= "msgPassing_subClassification.log ";
+	echo "dmf put msgPassing.tar $dmfpath\n";
+    }
+    $line .= "\n";
+    echo $line;
     echo "dmf put results.tar.gz $dmfpath\n";
   }
   echo "\nexit\n\n";
@@ -524,6 +560,9 @@ function defaultReconValues () {
       obj.goodbad1.checked = true;
       obj.eotest1.checked = true;
       obj.coran1.checked = false;
+      obj.msgp1.checked = false;
+      obj.msgp_corcutoff1.value = '0.8';
+      obj.msgp_minptcls1.value = '500';
       return;
     }
   </SCRIPT>\n";
