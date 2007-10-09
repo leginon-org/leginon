@@ -398,8 +398,8 @@ function jobForm($extra=false) {
         <TD BGCOLOR='$bgcolor'></TD>
       </TR>
       <TR>
-	<TD colspan=6 BGCOLOR='$bgcolor' CELLPADDING=0 CELLSPACING=0>
-	  <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4 WIDTH=100%>
+  <TD colspan=6 BGCOLOR='$bgcolor' CELLPADDING=0 CELLSPACING=0>
+    <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4 WIDTH=100%>
             <TR>
         <TD BGCOLOR='$bgcolor'><INPUT TYPE='checkbox' NAME='$msgpn'><A HREF=\"javascript:refinfopopup('msgp')\">Subclassification by message passing:</A></TD>
         <TD BGCOLOR='$bgcolor'><A HREF=\"javascript:refinfopopup('msgp_corcutoff')\">CorCutoff:</A>
@@ -443,7 +443,10 @@ function writeJobFile () {
   echo "#PBS -l cput=".$_POST['cput'].":00:00\n";
   echo "#PBS -m e\n";
   echo "#PBS -r n\n";
-  echo "\ncd \$PBSREMOTEDIR\n";
+  echo "\n";
+  echo "cd \$PBSREMOTEDIR\n";
+  echo "mkdir recon\n";
+  echo "cd recon\n";
   // get file name, strip extension
   $ext=strrchr($_POST['dmfstack'],'.');
   $stackname=substr($_POST['dmfstack'],0,-strlen($ext));
@@ -524,17 +527,23 @@ function writeJobFile () {
     echo $line;
   }
   if ($_POST['dmfstore']=='on') {
-    echo "\ntar -cvzf model.tar.gz threed.*a.mrc\n";
+    echo "\n"
+    echo "cp .emanlog eman.log\n"
+    echo "cd ..\n"
+    echo "tar -czvf recondata.tgz recon\n"
+    echo "dmf put recondata.tgz $dmfpath\n";
+    /*echo "tar -cvzf model.tar.gz threed.*a.mrc\n";
     echo "dmf put model.tar.gz $dmfpath\n";
-    $line = "\ntar -cvzf results.tar.gz fsc* tcls* refine.* particle.* classes.* proj.* sym.* .emanlog *txt ";
+    echo "tar -cvzf results.tar.gz fsc* tcls* refine.* particle.* classes.* proj.* sym.* .emanlog *txt\n";
+    echo "dmf put results.tar.gz $dmfpath\n";
+    echo "dmf put cls.*.tar $dmfpath\n";
     if ($msgp=='on') {
-	$line .= "goodavgs.* ";
-	$line .= "msgPassing_subClassification.log ";
-	echo "dmf put msgPassing.tar $dmfpath\n";
+      $line .= "goodavgs.* ";
+      $line .= "msgPassing_subClassification.log ";
+      echo "dmf put recon/msgPassing.tar $dmfpath\n";
     }
     $line .= "\n";
-    echo $line;
-    echo "dmf put results.tar.gz $dmfpath\n";
+    echo $line;*/
   }
   echo "\nexit\n\n";
   echo "</PRE>\n";
