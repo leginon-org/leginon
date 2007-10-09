@@ -339,7 +339,7 @@ def insertRefinementRun(params):
 		apDisplay.printError("\nERROR: run already exists in the database\n")
 		sys.exit(1)
     
-	runq['path'] = appionData.ApPathData(path=os.path.normpath(params['path']))
+	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['path']))
 	runq['description']=params['description']
 	runq['package']=params['package']
 	runq['initialModel']=params['model']
@@ -356,7 +356,7 @@ def insertRefinementRun(params):
 	runq['stack']=params['stack']
 	runq['initialModel']=params['model']
 	runq['package']=params['package']
-	runq['path'] = appionData.ApPathData(path=os.path.normpath(params['path']))
+	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['path']))
 	runq['description']=params['description']
 	result=appiondb.query(runq, results=1)
 		
