@@ -10,9 +10,10 @@
 #
 import sys
 import os
-#import chimera
 
-def open_volume_data(path, file_type, contour_level = 1.5, color = None):
+chimlog=None
+
+def open_volume_data(path, file_type="mrc", contour_level=1.5, color=None):
 
 	from VolumeData import open_file_type
 	g = open_file_type(path, file_type)
@@ -74,7 +75,8 @@ def save_image(path, format):
 
 # -----------------------------------------------------------------------------
 #
-def radial_color_volume(tmp_path, vol_path, contour, vol_file_type, zoom_factor, image_size, image_format, sym):
+def radial_color_volume(tmp_path, vol_path, contour=1.5, vol_file_type="mrc", 
+	zoom_factor=1.0, image_size=(512, 512), imgFormat="PNG", sym="C"):
 
 	import chimera
 	from chimera import viewer
@@ -86,12 +88,14 @@ def radial_color_volume(tmp_path, vol_path, contour, vol_file_type, zoom_factor,
 	center = map(lambda s: .5*(s-1), dr.data.size) # Center for radial coloring
 	m = dr.surface_model()
 
-	from chimera import runCommand
-	runCommand('scale %.3f' % zoom_factor)   # Zoom
+	#from chimera import runCommand
+	runChimCommand('scale %.3f' % zoom_factor)   # Zoom
 
 	image1 = vol_path+'.1.png'
 	image2 = vol_path+'.2.png'
 	image3 = vol_path+'.3.png'
+	image4 = vol_path+'.4.png'
+	image5 = vol_path+'.5.png'
 
 	if sym=='Icosahedral':
 		color_surface_radially(m, center)
@@ -99,44 +103,42 @@ def radial_color_volume(tmp_path, vol_path, contour, vol_file_type, zoom_factor,
 		# move clipping planes to obscure back half
 #		xsize,ysize,zsize=dr.data.size
 #		hither=float(zsize)/5
-#		runCommand('clip yon %.3f' % yon)
-#		runCommand('clip hither -%.3f' % hither)
+#		runChimCommand('clip yon %.3f' % yon)
+#		runChimCommand('clip hither -%.3f' % hither)
 		
-		save_image(image1, format=image_format)
+		save_image(image1, format=imgFormat)
 
-		runCommand('turn y 37.377') # down 3-fold axis
-		save_image(image2, format=image_format)
+		runChimCommand('turn y 37.377') # down 3-fold axis
+		save_image(image2, format=imgFormat)
 		
-		runCommand('turn y 20.906') # viper orientation (2 fold)
-		save_image(image3, format=image_format) 
+		runChimCommand('turn y 20.906') # viper orientation (2 fold)
+		save_image(image3, format=imgFormat) 
 
 	else:
-		runCommand('turn x 180') # flip image 180
-		save_image(image1, format=image_format)
+		runChimCommand('turn x 180') # flip image 180
+		save_image(image1, format=imgFormat)
 
-		runCommand('turn x -45') # get tilt view
-		save_image(image2, format=image_format)
+		runChimCommand('turn x -45') # get tilt view
+		save_image(image2, format=imgFormat)
 
-		runCommand('turn x -45') # get side view
-		save_image(image3, format=image_format)
+		runChimCommand('turn x -45') # get side view
+		save_image(image3, format=imgFormat)
 
 		if sym is not 'D':
 			image4 = vol_path+'.4.png'
 			image5 = vol_path+'.5.png'
-			runCommand('turn x -45') # get tilt 2
-			save_image(image4, format=image_format)
+			runChimCommand('turn x -45') # get tilt 2
+			save_image(image4, format=imgFormat)
 
-			runCommand('turn x -45') # bottom view
-			save_image(image5, format=image_format)
-			
-	#sys.exit(1)	
+			runChimCommand('turn x -45') # bottom view
+			save_image(image5, format=imgFormat)
 
 # -----------------------------------------------------------------------------
 #
 
 def runChimCommand(cmd):
 	from chimera import runCommand
-	f = open("logfile.log", "a")
+	f = open(chimlog, "a")
 	f.write(cmd+"\n")
 	f.close()
 	#nogui_message(cmd.strip()+"\n")
@@ -145,28 +147,37 @@ def runChimCommand(cmd):
 # -----------------------------------------------------------------------------
 #
 
-if __name__ == '__main__':
+def writeMessageToLog(msg):
+	f = open(chimlog, "a")
+	f.write(msg+"\n")
+	f.close()
+
+# -----------------------------------------------------------------------------
+#
+
+if True:
 	env = os.environ.get('CHIMENV')
 	if env is None:
-		import tkMessageBox
-		tkMessageBox.showwarning( "no environmental data", "none")
+		writeMessageToLog("no environmental data")
 		sys.exit(1)
 	params = env.split(',')
+	writeMessageToLog("Environmental data: "+str(params))
 
 	tmpfile_path = params[0] #sys.argv[2]
 	volume_path = params[1] #sys.argv[3]
+	rundir = os.path.dirname(volume_path)
 	sym = params[2] #sys.argv[4]
 	contour = float(params[3]) #sys.argv[5])
 	zoom_factor = float(params[4]) #sys.argv[6])
 
-	volume_file_type = 'mrc'
-	image_format = 'PNG'
-	image_size = (512, 512)
+	rundir = os.path.dirname(volume_path)
+	chimlog = os.path.join(rundir, "chimera.log")
 
-	radial_color_volume(tmpfile_path, volume_path, contour, volume_file_type, zoom_factor, image_size, image_format, sym)
+	radial_color_volume(tmpfile_path, volume_path, contour, zoom_factor=zoom_factor, sym=sym)
 
+	chimera.ChimeraExit()
 	chimera.ChimeraSystemExit()
-	#sys.exit(1)
+	sys.exit(1)
 
 
 

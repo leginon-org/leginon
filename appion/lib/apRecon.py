@@ -9,6 +9,7 @@ import appionData
 import apDB
 import apDatabase
 import apParam
+import apDisplay
 try:
 	import EMAN
 except:
