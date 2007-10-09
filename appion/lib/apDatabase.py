@@ -167,11 +167,15 @@ def getApixFromStackData(stackdata):
 	stkptclq=appionData.ApStackParticlesData()
 	stkptclq['stack'] = stackdata
 	stkptclresults=appiondb.query(stkptclq, results=1)
+	if not stkptclresults:
+		apDisplay.printError("Stack not found")
 	stackbin = stkptclresults[0]['stackRun']['stackParams']['bin']
+	if stackbin is None:
+		stackbin = 1
 	imageid = stkptclresults[0]['particle']['dbemdata|AcquisitionImageData|image']
-	try:
+	if 'defocpair' in stkptclresults[0]['stackRun']['stackParams']:
 		defocpair = stkptclresults[0]['stackRun']['stackParams']['defocpair']
-	except:
+	else:
 		defocpair = None
 	if defocpair != 0:
 		transformq=appionData.ApImageTransformationData()

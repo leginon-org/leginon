@@ -37,6 +37,7 @@ def createDefaults():
 	params['fscs']=[]
 	params['package']='EMAN'
 	params['tmpdir']='./temp'
+	params['commit']=True
 	params['contour']=1.5
 	params['oneiteration']=None
 	params['zoom']=1.75
@@ -83,6 +84,7 @@ def printHelp():
 	print "                       (./temp is default)"
 	print "contour=<n>          : sigma level at which snapshot of density will be contoured (1.5 by default)"
 	print "zoom=<n>             : zoom factor for snapshot rendering (1.75 by default)"
+	print "nocommit             : don't commit to database, for testing only"
 	print "oneiteration=<n>     : only upload one iteration"
 	print "description=\"text\"     : description of the reconstruction - must be in quotes"
 	print "\n"
@@ -101,6 +103,8 @@ def parseInput(args,params):
 			params['runid']=elements[1]
 		elif (elements[0]=='stackid'):
 			params['stackid']=int(elements[1])
+		elif (arg=='nocommit'):
+			params['commit']=False
 		elif (elements[0]=='modelid'):
 			params['modelid']=int(elements[1])
 		elif (elements[0]=='package'):
@@ -186,21 +190,21 @@ def parseLogFile(params):
 			iteration=defineIteration()
 			iteration['num']=emanparams[1]
 			for p in emanparams:
-				elements=p.split('=')
+				elements=p.strip().split('=')
 				if elements[0]=='ang':
 					iteration['ang']=float(elements[1])
 				elif elements[0]=='mask':
-					iteration['mask']=int(elements[1])
+					iteration['mask']=int(float(elements[1]))
 				elif elements[0]=='imask':
-					iteration['imask']=int(elements[1])
+					iteration['imask']=int(float(elements[1]))
 				elif elements[0]=='pad':
-					iteration['pad']=int(elements[1])
+					iteration['pad']=int(float(elements[1]))
 				elif elements[0]=='hard':
-					iteration['hard']=int(elements[1])
+					iteration['hard']=int(float(elements[1]))
 				elif elements[0]=='classkeep':
-					iteration['classkeep']=float(elements[1])
+					iteration['classkeep']=float(elements[1].strip())
 				elif elements[0]=='classiter':
-					iteration['classiter']=int(elements[1])
+					iteration['classiter']=int(float(elements[1]))
 				elif elements[0]=='median':
 					iteration['median']=True
 				elif elements[0]=='phasecls':
@@ -260,7 +264,7 @@ def resetVirtualFrameBuffer():
 	#else
 	#	system("setenv DISPLAY :1");
 
-def renderSnapshots(density,res,initmodel,contour,zoom,stackapix=None):
+def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stackapix=None):
 	# if eotest failed, filter to 30 
 	if not res:
 		res=30
@@ -286,7 +290,7 @@ def renderSnapshots(density,res,initmodel,contour,zoom,stackapix=None):
 	print cmd
 	apDisplay.printMsg("Low pass filtering model for images")
 	os.popen(cmd)
-	chimsnapenv="%s,%s,%s,%.3f,%.3f" % (tmpf, density, sym, contour, zoom)
+	chimsnapenv = "%s,%s,%s,%.3f,%.3f" % (tmpf, density, sym, contour, zoom)
 	os.environ["CHIMENV"] = chimsnapenv
 	appiondir = apParam.getAppionDirectory()
 	chimsnappath = os.path.join(appiondir, "bin", "apChimSnapshot.py")
@@ -317,7 +321,7 @@ def renderSnapshots(density,res,initmodel,contour,zoom,stackapix=None):
 	os.remove(tmpimg)
 	return
 	
-def insertRefinementRun(params, insert=True):
+def insertRefinementRun(params):
 	runq=appionData.ApRefinementRunData()
 	runq['name']=params['runid']
 	runq['stack']=params['stack']
@@ -337,8 +341,8 @@ def insertRefinementRun(params, insert=True):
 	# get stack apix
 	params['apix']=apDatabase.getApixFromStackData(params['stack'])
 
-	if insert is True:
-		print "inserting reconstruction run into database"
+	apDisplay.printMsg("inserting Refinement Run into database")
+	if params['commit'] is True:
 		appiondb.insert(runq)
 
 	runq=appionData.ApRefinementRunData()
@@ -351,13 +355,16 @@ def insertRefinementRun(params, insert=True):
 	result=appiondb.query(runq, results=1)
 		
 	# save run entry in the parameters
-	params['refinementRun']=result[0]
-	
+	if result:
+		params['refinementRun'] = result[0]
+	else:
+		params['refinementRun'] = None
+
 	return True
 
 def insertResolutionData(params,iteration):
-	fsc='fsc.eotest.'+iteration['num']
-	iteration['fscfile']=fsc
+	fsc = os.path.join(params['path'], 'fsc.eotest.'+iteration['num'])
+	iteration['fscfile'] = fsc
 	if fsc in params['fscs']:
 		resq=appionData.ApResolutionData()
 
@@ -365,20 +372,22 @@ def insertResolutionData(params,iteration):
 		fscfile=os.path.join(params['path'],fsc)
 
 		# calculate the resolution:
-		halfres=calcRes(fscfile, params['model']['boxsize'],params['apix'])
+		halfres=calcRes(fscfile, params['model']['boxsize'], params['apix'])
 
 		# save to database
-		resq['half']=halfres
-		resq['fscfile']=fsc
+		resq['half'] = halfres
+		resq['fscfile'] = fsc
 
-		appiondb.insert(resq)
+		apDisplay.printMsg("inserting Resolution Data into database")
+		if params['commit'] is True:
+			appiondb.insert(resq)
 
 		return resq
 
 def insertRMeasureData(params,iteration):
 	volumeDensity='threed.'+iteration['num']+'a.mrc'
-	if os.path.exists(os.path.join(params['path'],volumeDensity)):
-		resolution = runRMeasure(params['apix'],volumeDensity)
+	if os.path.exists(os.path.join(params['path'], volumeDensity)):
+		resolution = runRMeasure(params['apix'], volumeDensity)
 	
 		if resolution is None:
 			return None
@@ -387,7 +396,10 @@ def insertRMeasureData(params,iteration):
 			resq['volume']=volumeDensity
 			resq['rMeasure']=resolution
 
-			appiondb.insert(resq)
+			apDisplay.printMsg("inserting R Measure Data into database")
+			if params['commit'] is True:
+				appiondb.insert(resq)
+
 			return resq
 
 def insertIteration(iteration,params):
@@ -408,8 +420,8 @@ def insertIteration(iteration,params):
 	refineparamsq['MsgP_minptls']=iteration['msgpassminp']
 
 	# insert resolution data
-	resData=insertResolutionData(params,iteration)
-	RmeasureData=insertRMeasureData(params,iteration)
+	resData = insertResolutionData(params, iteration)
+	RmeasureData = insertRMeasureData(params, iteration)
 
 	classavg='classes.'+iteration['num']+'.img'
 	
@@ -418,32 +430,37 @@ def insertIteration(iteration,params):
 	else:
 		msgpassclassavg=None
 	
-	
 	# insert refinement results
-	refineq=appionData.ApRefinementData()
+	refineq = appionData.ApRefinementData()
 	refineq['refinementRun']=params['refinementRun']
 	refineq['refinementParams']=refineparamsq
 	refineq['iteration']=iteration['num']
 	refineq['resolution']=resData
 	refineq['rMeasure']=RmeasureData
-	classvar='classes.'+iteration['num']+'.var.img'
-	volumeDensity='threed.'+iteration['num']+'a.mrc'
+	classvar = 'classes.'+iteration['num']+'.var.img'
+	volumeDensity = 'threed.'+iteration['num']+'a.mrc'
 	if classavg in params['classavgs']:
 		refineq['classAverage']=classavg
 	if classvar in params['classvars']:
 		refineq['classVariance']=classvar
 	if volumeDensity in params['volumes']:
-		refineq['volumeDensity']=volumeDensity
+		refineq['volumeDensity'] = volumeDensity
 	if msgpassclassavg in params['msgpassavgs']:
 		refineq['MsgPGoodClassAvg']=msgpassclassavg
-	appiondb.insert(refineq)
 
-	insertFSC(iteration['fscfile'],refineq)
+	apDisplay.printMsg("inserting Refinement Data into database")
+	if params['commit'] is True:
+		appiondb.insert(refineq)
+
+	insertFSC(iteration['fscfile'], refineq, params['commit'])
 	
-	renderSnapshots(volumeDensity,resData['half'],params['model'],params['contour'],params['zoom'],params['apix'])
+	halfres = calcRes(iteration['fscfile'], params['model']['boxsize'], params['apix'])
+	volDensPath = os.path.join(params['path'], volumeDensity)
+	renderSnapshots(volDensPath, halfres, params['model'], 
+		params['contour'], params['zoom'], params['apix'])
 		
 	# get projections eulers for iteration:
-	eulers=getEulersFromProj(params,iteration['num'])	
+	eulers = getEulersFromProj(params,iteration['num'])	
 	
 	# get # of class averages and # kept
 #      	params['eulers']=getClassInfo(os.path.join(params['path'],classavg))
@@ -549,7 +566,10 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 			prtlaliq['inplane_rotation']=rot
 			prtlaliq['quality_factor']=qualf
 			prtlaliq['msgp_keep']=msgk
-			appiondb.insert(prtlaliq)
+
+			#apDisplay.printMsg("inserting Particle Classification Data into database")
+			if params['commit'] is True:
+				appiondb.insert(prtlaliq)
 	f.close()
 	return
 
@@ -581,16 +601,20 @@ def calcRes(fscfile, boxsize,apix):
 	f.close()
 	return
 
-def insertFSC(fscfile,refine):
+def insertFSC(fscfile, refine, commit=True):
 	f = open(fscfile,'r')
+
+	apDisplay.printMsg("inserting FSC Data into database")
 	for line in f:
-		fscq=appionData.ApFSCData()
-		fscq['refinementData']=refine
-		line=string.rstrip(line)
+		fscq = appionData.ApFSCData()
+		fscq['refinementData'] = refine
+		line = string.rstrip(line)
 		bits = line.split('\t')
-		fscq['pix']=int(bits[0])
-		fscq['value']=float(bits[1])
-		appiondb.insert(fscq)
+		fscq['pix'] = int(bits[0])
+		fscq['value'] = float(bits[1])
+
+		if commit is True:
+			appiondb.insert(fscq)
 	
 def writeReconLog(commandline):
         f=open('.reconlog','a')
@@ -605,14 +629,20 @@ def runRMeasure(apix,vol):
 	
 	print 'Processing', vol
 	try:
-		rmeasure=subprocess.Popen(['rmeasure'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+		rmeasure = subprocess.Popen(['rmeasure'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 	except:
-		print "Failed to run rmeasure"
+		apDisplay.printWarning("Failed to run rmeasure")
 		return None
+
+	if rmeasure is None:
+		apDisplay.printWarning("Failed to run rmeasure")
+		return None
+
 	rmeasure.stdin.write(vol+'\n')
 	rmeasure.stdin.write(str(apix)+'\n')
 	output=rmeasure.stdout.read()
 	
+	resolution = None
 	words=output.split()
 	for n in range(0,len(words)):
 		#print words[n],words[n+4]
