@@ -110,9 +110,7 @@ def parseInput(args,params):
 		elif (elements[0]=='package'):
 			params['package']=elements[1]
 		elif (elements[0]=='dir'):
-			params['path']=elements[1]
-			if (params['path'][-1]=='/'):
-				params['path']=params['path'][:-1]
+			params['path']=os.path.abspath(elements[1])
 		elif (elements[0]=='contour'):
 			params['contour']=float(elements[1])
 		elif (elements[0]=='zoom'):
@@ -176,11 +174,19 @@ def parseMsgPassingLogFile(params):
 			j+=1
 	lines.close()
 
+def findEmanLogFile(params):
+	logfile = os.path.join(params['path'], '.emanlog')
+	if os.path.isfile(logfile):
+		return logfile
+	logfile = os.path.join(params['path'], 'eman.log')
+	if os.path.isfile(logfile):
+		return logfile
+	apDisplay.printError("Could not find eman log file")
 
 def parseLogFile(params):
 	# parse out the refine command from the .emanlog to get the parameters for each iteration
-	logfile=os.path.join(params['path'],'.emanlog')
-	print "parsing eman log file:",logfile
+	logfile = findEmanLogFile
+	apDisplay.printMsg("parsing eman log file: "+logfile)
 	lines=open(logfile,'r')
 	for line in lines:
 		# if read a refine line, get the parameters
@@ -333,7 +339,7 @@ def insertRefinementRun(params):
 		apDisplay.printError("\nERROR: run already exists in the database\n")
 		sys.exit(1)
     
-	runq['path'] = appionData.ApPathData(path=os.path.normpath(params['path']))
+	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['path']))
 	runq['description']=params['description']
 	runq['package']=params['package']
 	runq['initialModel']=params['model']
@@ -350,7 +356,7 @@ def insertRefinementRun(params):
 	runq['stack']=params['stack']
 	runq['initialModel']=params['model']
 	runq['package']=params['package']
-	runq['path'] = appionData.ApPathData(path=os.path.normpath(params['path']))
+	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['path']))
 	runq['description']=params['description']
 	result=appiondb.query(runq, results=1)
 		

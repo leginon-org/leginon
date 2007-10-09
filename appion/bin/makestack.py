@@ -640,7 +640,7 @@ def insertStackRun(params):
 
 	# create a stack object
 	stackq = appionData.ApStackData()
-	stackq['path'] = appionData.ApPathData(path=os.path.normpath(params['outdir']))
+	stackq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 	stackq['name'] = params['single']
 
 	# create a stackRun object
@@ -707,7 +707,7 @@ def insertStackRunREFLEGINON(params):
 			
 	# create a stack object
 	stackq = appionData.ApStackData()
-	stackq['path'] = appionData.ApPathData(path=os.path.normpath(params['outdir']))
+	stackq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 	stackq['name'] = params['single']
 
 	# create a stackRun object
@@ -811,7 +811,7 @@ def rejectImage(imgdata, params):
 def getStackId(params):
 	# create a stackRun object
 	stackq = appionData.ApStackData()
-	stackq['path'] = appionData.ApPathData(path=os.path.normpath(params['outdir']))
+	stackq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 	stackq['name'] = params['single']
 
 	try:

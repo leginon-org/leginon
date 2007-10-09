@@ -161,7 +161,7 @@ def insertTemplateRun(params,runq,templatenum):
 def insertTemplateImage(params):
 	for name in params['templatelist']:
 		templateq=appionData.ApTemplateImageData()
-		templateq['path'] = appionData.ApPathData(path=os.path.normpath(params['outdir']))
+		templateq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 		templateq['templatename']=name
 		templateId=appiondb.query(templateq, results=1)
 	        #insert template to database if doesn't exist

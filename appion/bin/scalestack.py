@@ -31,7 +31,7 @@ def commitScaledStack(stackdata,params):
 
 	#make new stack query
 	newstackq=appionData.ApStackData()
-	newstackq['path'] = appionData.ApPathData(path=os.path.normpath(params['newstackpath']))
+	newstackq['path'] = appionData.ApPathData(path=os.path.abspath(params['newstackpath']))
 	newstackq['name']=params['newstackname']
 	newstackq['description']=params['description']
 	newstackdata=apdb.query(newstackq)

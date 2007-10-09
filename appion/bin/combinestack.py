@@ -67,7 +67,7 @@ def commitStack(stackid,params):
 	
 	newstackq=appionData.ApStackData()
 	newstackq['name']=params['stackname']
-	newstackq['path'] = appionData.ApPathData(path=os.path.normpath(params['outdir']))
+	newstackq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 	newstackq['description']=params['description']
 	
 	rinstackdata=apStack.getRunsInStack(stackid)

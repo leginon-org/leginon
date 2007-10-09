@@ -222,7 +222,7 @@ def insertModel(params):
 	params['syminfo']=symid
 	modq=appionData.ApInitialModelData()
 	modq['project|projects|project']=params['projectId']
-	modq['path']= appionData.ApPathData(path=os.path.normpath(params['path']))
+	modq['path']= appionData.ApPathData(path=os.path.abspath(params['path']))
 	modq['name']=params['name']
 	modq['symmetry']=symid
 	modq['pixelsize']=params['apix']
@@ -244,7 +244,7 @@ def insertMisc(params):
 	print "inserting into database"
 	miscq = appionData.ApMiscData()
 	miscq['refinementRun']=params['recon']
-	miscq['path'] = appionData.ApPathData(path=os.path.normpath(params['path']))
+	miscq['path'] = appionData.ApPathData(path=os.path.abspath(params['path']))
 	miscq['name']=params['name']
 	miscq['description']=params['description']
 	appiondb.insert(miscq)
@@ -253,7 +253,7 @@ def insertManualParams(params, expid):
 	runq=appionData.ApSelectionRunData()
 	runq['name']=params['runid']
 	runq['dbemdata|SessionData|session']=expid
-	#runq['path'] = appionData.ApPathData(path=os.path.normpath(????????))
+	#runq['path'] = appionData.ApPathData(path=os.path.abspath(????????))
 
 	manparams=appionData.ApSelectionParamsData()
 	manparams['diam']=params['diam']

@@ -58,7 +58,7 @@ def createMaskMakerRun(sessiondata,path,name,paramdata):
 		savepath = os.path.normpath(path)
 	maskRdata=appionData.ApMaskMakerRunData()
 	maskRdata['session'] = sessiondata
-	maskRdata['path']= appionData.ApPathData(path=savepath)
+	maskRdata['path']= appionData.ApPathData(path=os.path.abspath(savepath))
 	maskRdata['name']=name
 	maskRdata['params']=paramdata
 

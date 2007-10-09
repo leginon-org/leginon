@@ -103,7 +103,7 @@ def insertAceParams(imgdata, params, expid):
 		return False
 
 	#create path
-	runq['path'] = appionData.ApPathData(path=os.path.normpath(params['rundir']))
+	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
 
 	# if no run entry exists, insert new run entry into db
 	runq['aceparams']=aceparamq

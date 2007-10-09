@@ -126,7 +126,7 @@ def overridecmd(params):
 	### create a norefRun object
 	runq = appionData.ApNoRefRunData()
 	runq['name'] = params['runid']
-	runq['path'] = appionData.ApPathData(path=os.path.normpath(params['outdir']))
+	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 	runq['stack'] = appiondb.direct_query(appionData.ApStackData, params['stackid'])
 	# ... stackId, runId and norefPath make the norefRun unique:
 	uniquerun = appiondb.query(runq, results=1)[0]
@@ -544,7 +544,7 @@ def insertNoRefRun(params, insert=False):
 	### create a norefRun object
 	runq = appionData.ApNoRefRunData()
 	runq['name'] = params['runid']
-	runq['path'] = appionData.ApPathData(path=os.path.normpath(params['outdir']))
+	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 	runq['stack'] = appiondb.direct_query(appionData.ApStackData, params['stackid'])
 	# ... stackId, runId and norefPath make the norefRun unique:
 	uniquerun = appiondb.query(runq, results=1)
@@ -614,7 +614,7 @@ def insertRefRun(params, insert=False):
 	runq = appionData.ApRefRunData()
 	runq['name'] = params['runid']
 	runq['stack'] = appiondb.direct_query(appionData.ApStackData, params['stackid'])
-	runq['path'] = appionData.ApPathData(path=os.path.normpath(params['outdir']))
+	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 	# ... stackId, runId and refPath make the refRun unique:
 	uniquerun = appiondb.query(runq, results=1)
 	# ... continue filling non-unique variables:

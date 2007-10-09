@@ -98,7 +98,7 @@ def makeNewStack(lstfile,newstackname):
 	
 def checkForPreviousStack(stackpath, stackname):
 	stackq=appionData.ApStackData()
-	stackq['path'] = appionData.ApPathData(path=os.path.normpath(stackpath))
+	stackq['path'] = appionData.ApPathData(path=os.path.abspath(stackpath))
 	stackq['name']=stackname
 	stackdata=apdb.query(stackq)
 	if stackdata:
@@ -115,7 +115,7 @@ def commitSplitStack(params, stackdata, lstfile):
 	
 	#create new stack data
 	stackq=appionData.ApStackData()
-	stackq['path'] = appionData.ApPathData(path=os.path.normpath(os.getcwd()))
+	stackq['path'] = appionData.ApPathData(path=os.path.abspath(os.getcwd()))
 	stackq['name']=params['stackname']
 	stackq['description']=params['description']
 	stackdata=apdb.query(stackq, results=1)
