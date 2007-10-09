@@ -289,7 +289,7 @@ def renderSnapshots(density,res,initmodel,contour,zoom,stackapix=None):
 	chimsnapenv="%s,%s,%s,%.3f,%.3f" % (tmpf, density, sym, contour, zoom)
 	os.environ["CHIMENV"] = chimsnapenv
 	appiondir = apParam.getAppionDirectory()
-	chimsnappath = os.path.join(appiondir, "lib", "apChimSnapshot.py")
+	chimsnappath = os.path.join(appiondir, "bin", "apChimSnapshot.py")
 	rendercmd = ("chimera python:"+chimsnappath)
 	print rendercmd
 	apDisplay.printMsg("Trying to use chimera for model imaging")
