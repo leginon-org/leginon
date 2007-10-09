@@ -79,7 +79,7 @@ def createDefaults():
 	params['commit']=False
 	params['outdir']=os.path.abspath(".")
 	params['particleNumber']=0
-	params['bin']=None
+	params['bin']=1
 	params['partlimit']=None
 	params['defocpair']=False
 	params['uncorrected']=False
@@ -380,6 +380,20 @@ def eliminateMinMaxCCParticles(particles,params):
 		apDisplay.printMsg(str(eliminated)+" particle(s) eliminated due to min or max correlation cutoff")
 	return newparticles
 
+def eliminateMsgPNoKeepParticles(particles,params):
+	newparticles = []
+	eliminated = 0
+	keepmin = 1
+	#### Very slow this way ####
+	for prtl in particles:
+		if apParticle.getMsgPKeepStatus(p,refinetree,1) >=keepmin:
+			newparticles.append(prtl)
+		else:
+			eliminated += 1
+	if eliminated > 0:
+		apDisplay.printMsg(str(eliminated)+" particle(s) eliminated due to min or max correlation cutoff")
+	return newparticles
+
 def saveParticles(particles,shift,dbbox,params,imgdict):
 	imgname = imgdict['filename']
 	plist=[]
@@ -446,7 +460,7 @@ def singleStack(params,imgdict):
 		cmd="proc2d %s %s norm=0.0,1.0" %(imgpath, output)
 
 	# bin images is specified
-	if params['bin']:
+	if params['bin'] != 1:
 		cmd += " shrink="+str(params['bin'])
 		
 	# unless specified, invert the images
