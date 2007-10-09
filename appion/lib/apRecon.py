@@ -249,10 +249,10 @@ def getClassInfo(classes):
 
 def resetVirtualFrameBuffer():
 	user = os.getlogin() #os.environ["USER"]
-	os.system("killall Xvfb");
+	os.popen("killall Xvfb");
 	#os.system("kill `ps -U "+user+" | grep Xvfb | sed \'s\/pts.*$\/\/\'`");
 	time.sleep(1);
-	os.system("Xvfb :1 -screen 0 800x800x8 &");
+	os.popen("Xvfb :1 -screen 0 800x800x8 &");
 	time.sleep(1);
 	os.environ["DISPLAY"] = ":1"
 	#if 'bash' in os.environ.get("SHELL"):
@@ -285,7 +285,7 @@ def renderSnapshots(density,res,initmodel,contour,zoom,stackapix=None):
 	cmd = ('proc3d %s %s apix=%.3f lp=%.2f origin=0,0,0' % (density, tmpf, apix, filtres))
 	print cmd
 	apDisplay.printMsg("Low pass filtering model for images")
-	os.system(cmd)
+	os.popen(cmd)
 	chimsnapenv="%s,%s,%s,%.3f,%.3f" % (tmpf, density, sym, contour, zoom)
 	os.environ["CHIMENV"] = chimsnapenv
 	appiondir = apParam.getAppionDirectory()
@@ -293,9 +293,13 @@ def renderSnapshots(density,res,initmodel,contour,zoom,stackapix=None):
 	rendercmd = ("chimera python:"+chimsnappath)
 	print rendercmd
 	apDisplay.printMsg("Trying to use chimera for model imaging")
-	#resetVirtualFrameBuffer()
-	os.system(rendercmd)
+	resetVirtualFrameBuffer()
+	os.popen(rendercmd)
 	os.remove(tmpf)
+
+	image1 = density+".1.png"
+	if not os.path.isfile(image1):
+		apDisplay.printError("Chimera failed to generate images")
 
 	# create mrc of central slice for viruses
 	tmphed = density + '.hed'

@@ -10,10 +10,11 @@
 #
 import sys
 import os
+import chimera
 
 chimlog=None
 
-def open_volume_data(path, file_type="mrc", contour_level=1.5, color=None):
+def openVolumeData(path, file_type="mrc", contour_level=1.5, color=None):
 
 	from VolumeData import open_file_type
 	g = open_file_type(path, file_type)
@@ -21,7 +22,7 @@ def open_volume_data(path, file_type="mrc", contour_level=1.5, color=None):
 	from VolumeViewer import full_region, Rendering_Options, Data_Region
 	region = full_region(g.size)
 	
-	region_name = ''
+	region_name = 'none'
 	ro = Rendering_Options()
 	ro.show_outline_box = False
 	ro.surface_smoothing = True
@@ -65,25 +66,21 @@ def color_surface_radially(surf, center):
 #
 def save_image(path, format):
 
-	from chimera import update, printer
 	# propagate changes from C++ layer back to Python
 	# can also be done via Midas module: Midas.wait(1)
-	update.checkForChanges()
+	chimera.update.checkForChanges()
 
 	# save an image
-	printer.saveImage(path, format = format)
+	chimera.printer.saveImage(path, format = format)
 
 # -----------------------------------------------------------------------------
 #
 def radial_color_volume(tmp_path, vol_path, contour=1.5, vol_file_type="mrc", 
 	zoom_factor=1.0, image_size=(512, 512), imgFormat="PNG", sym="C"):
 
-	import chimera
-	from chimera import viewer
+	chimera.viewer.windowSize = image_size
 
-	viewer.windowSize = image_size
-
-	dr = open_volume_data(tmp_path, vol_file_type, contour)
+	dr = openVolumeData(tmp_path, vol_file_type, contour)
 
 	center = map(lambda s: .5*(s-1), dr.data.size) # Center for radial coloring
 	m = dr.surface_model()
@@ -94,8 +91,6 @@ def radial_color_volume(tmp_path, vol_path, contour=1.5, vol_file_type="mrc",
 	image1 = vol_path+'.1.png'
 	image2 = vol_path+'.2.png'
 	image3 = vol_path+'.3.png'
-	image4 = vol_path+'.4.png'
-	image5 = vol_path+'.5.png'
 
 	if sym=='Icosahedral':
 		color_surface_radially(m, center)
@@ -108,48 +103,58 @@ def radial_color_volume(tmp_path, vol_path, contour=1.5, vol_file_type="mrc",
 		
 		save_image(image1, format=imgFormat)
 
-		runChimCommand('turn y 37.377') # down 3-fold axis
+		writeMessageToLog("turn: down 3-fold axis")
+		runChimCommand('turn y 37.377')
 		save_image(image2, format=imgFormat)
 		
-		runChimCommand('turn y 20.906') # viper orientation (2 fold)
+		writeMessageToLog("turn: viper orientation (2 fold)")
+		runChimCommand('turn y 20.906')
 		save_image(image3, format=imgFormat) 
 
 	else:
-		runChimCommand('turn x 180') # flip image 180
+		writeMessageToLog("turn: flip image 180")
+		runChimCommand('turn x 180')
 		save_image(image1, format=imgFormat)
 
-		runChimCommand('turn x -45') # get tilt view
+		writeMessageToLog("turn: get tilt view")
+		runChimCommand('turn x -45')
 		save_image(image2, format=imgFormat)
 
-		runChimCommand('turn x -45') # get side view
+		writeMessageToLog("turn: get side view")
+		runChimCommand('turn x -45')
 		save_image(image3, format=imgFormat)
 
 		if sym is not 'D':
 			image4 = vol_path+'.4.png'
 			image5 = vol_path+'.5.png'
-			runChimCommand('turn x -45') # get tilt 2
+
+			writeMessageToLog("turn: get tilt 2")
+			runChimCommand('turn x -45')
 			save_image(image4, format=imgFormat)
 
-			runChimCommand('turn x -45') # bottom view
+			writeMessageToLog("turn: bottom view")
+			runChimCommand('turn x -45')
 			save_image(image5, format=imgFormat)
 
 # -----------------------------------------------------------------------------
 #
 
 def runChimCommand(cmd):
-	from chimera import runCommand
-	f = open(chimlog, "a")
-	f.write(cmd+"\n")
-	f.close()
-	#nogui_message(cmd.strip()+"\n")
-	runCommand(cmd)
+	if chimlog is not None:
+		f = open(chimlog, "a")
+		f.write(str(cmd)+"\n")
+		f.close()
+		#nogui_message(cmd.strip()+"\n")
+	chimera.runCommand(cmd)
 
 # -----------------------------------------------------------------------------
 #
 
 def writeMessageToLog(msg):
+	if chimlog is None:
+		return
 	f = open(chimlog, "a")
-	f.write(msg+"\n")
+	f.write(str(msg)+"\n")
 	f.close()
 
 # -----------------------------------------------------------------------------
@@ -158,10 +163,10 @@ def writeMessageToLog(msg):
 if True:
 	env = os.environ.get('CHIMENV')
 	if env is None:
-		writeMessageToLog("no environmental data")
+		#writeMessageToLog("no environmental data")
 		sys.exit(1)
 	params = env.split(',')
-	writeMessageToLog("Environmental data: "+str(params))
+
 
 	tmpfile_path = params[0] #sys.argv[2]
 	volume_path = params[1] #sys.argv[3]
@@ -172,6 +177,8 @@ if True:
 
 	rundir = os.path.dirname(volume_path)
 	chimlog = os.path.join(rundir, "chimera.log")
+
+	writeMessageToLog("Environmental data: "+str(params))
 
 	radial_color_volume(tmpfile_path, volume_path, contour, zoom_factor=zoom_factor, sym=sym)
 

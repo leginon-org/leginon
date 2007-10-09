@@ -61,7 +61,7 @@ def writeFunctionLog(commandline, params=None, logfile=None):
 	"""
 	if logfile is not None:
 		pass
-	elif params is not None and params['functionLog'] is not None:
+	elif params is not None and 'functionLog' in params and params['functionLog'] is not None:
 		logfile = params['functionLog']
 	else:
 		logfile = getFunctionName(sys.argv[0])+".log"

@@ -14,7 +14,7 @@ import apRecon
 
 if __name__ == '__main__':
 	# record command line
-	apParam.writeFunctionLog(sys.argv)
+	#apParam.writeFunctionLog(sys.argv)
 
 	# create params dictionary & set defaults
 	params = apUpload.createDefaults()
@@ -38,6 +38,9 @@ if __name__ == '__main__':
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","",path)
 		params['outdir'] = os.path.join(path,"models")
+
+	os.chdir(params['outdir'])
+	apParam.writeFunctionLog(sys.argv)
 
 	apUpload.checkSymInfo(params)
 
