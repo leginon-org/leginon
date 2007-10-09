@@ -48,6 +48,18 @@ class particledata {
     return $r[0];
   }
 
+  function getRecentTemplateRunFromId ($templateId) {
+    $q = "SELECT trun.* "
+        ."FROM `ApTemplateRunData` AS trun "
+        ."LEFT JOIN ApTemplateImageData AS timg ON "
+        ."(trun.`REF|ApTemplateImageData|template` = timg.`DEF_id`) "
+        ."WHERE timg.`DEF_id` = '$templateId' "
+        ."ORDER BY trun.`DEF_id` DESC "
+        ."LIMIT 1 ";
+    $r = $this->mysql->getSQLResult($q);
+    return $r[0];
+  }
+
   function getParticlesFromImageId ($runId, $imageId){
     $q = "select p.DEF_id as id, "
       ."p.xcoord, p.ycoord, p.correlation "

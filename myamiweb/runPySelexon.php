@@ -70,25 +70,31 @@ function createTemplateForm() {
 
 		foreach($templateData as $templateinfo) { 
 			if (is_array($templateinfo)) {
-				$filename=$templateinfo[path] ."/".$templateinfo[templatename];
+				$filename = $templateinfo[path] ."/".$templateinfo[templatename];
 				$checkboxname='template'.$i;
+				$templaterundata = $particle->getRecentTemplateRunFromId($templateinfo[DEF_id]);
+				//print_r($templaterundata);
+				$startval = (int) $templaterundata[range_start];
+				$endval = (int) $templaterundata[range_end];
+				$incrval = (int) $templaterundata[range_incr];
+				echo "<BR/>\n";
 				// create the javascript functions to enable the templates
 				$javafunctions.="function enable".$checkboxname."() {
 						 if (document.viewerform.$checkboxname.checked){
 						 document.viewerform.".$checkboxname."strt.disabled=false;
-						 document.viewerform.".$checkboxname."strt.value='';
+						 //document.viewerform.".$checkboxname."strt.value='';
 						 document.viewerform.".$checkboxname."end.disabled=false;
-						 document.viewerform.".$checkboxname."end.value='';
+						 //document.viewerform.".$checkboxname."end.value='';
 						 document.viewerform.".$checkboxname."incr.disabled=false;
-						 document.viewerform.".$checkboxname."incr.value='';
+						 //document.viewerform.".$checkboxname."incr.value='';
 					 }
 					 else {
 						 document.viewerform.".$checkboxname."strt.disabled=true;
-						 document.viewerform.".$checkboxname."strt.value='0';
+						 //document.viewerform.".$checkboxname."strt.value='0';
 						 document.viewerform.".$checkboxname."end.disabled=true;
-						 document.viewerform.".$checkboxname."end.value='90';
+						 //document.viewerform.".$checkboxname."end.value='90';
 						 document.viewerform.".$checkboxname."incr.disabled=true;
-						 document.viewerform.".$checkboxname."incr.value='10';
+						 //document.viewerform.".$checkboxname."incr.value='10';
 					 }
 				 }\n";
 
@@ -101,9 +107,12 @@ function createTemplateForm() {
 				$templatetable.="<INPUT TYPE='checkbox' NAME='$checkboxname' onclick='enable".$checkboxname."()'>\n";
 				$templatetable.="<B>Use This Template</B><BR>\n";
 				$templatetable.="Enter rotation values (leave blank for no rotation):<BR>\n";
-				$templatetable.="<INPUT TYPE='text' NAME='".$checkboxname."strt' DISABLED VALUE='0' SIZE='3'> Starting Angle<BR>\n";
-				$templatetable.="<INPUT TYPE='text' NAME='".$checkboxname."end' DISABLED VALUE='90' SIZE='3'> Ending Angle<BR>\n";
-				$templatetable.="<INPUT TYPE='text' NAME='".$checkboxname."incr' DISABLED VALUE='10' SIZE='3'> Angular Increment<BR>\n";
+				$templatetable.="<INPUT TYPE='text' NAME='".$checkboxname
+					."strt' DISABLED VALUE='$startval' SIZE='3'> Starting Angle<BR>\n";
+				$templatetable.="<INPUT TYPE='text' NAME='".$checkboxname
+					."end' DISABLED VALUE='$endval' SIZE='3'> Ending Angle<BR>\n";
+				$templatetable.="<INPUT TYPE='text' NAME='".$checkboxname
+					."incr' DISABLED VALUE='$incrval' SIZE='3'> Angular Increment<BR>\n";
 				$templatetable.="<P>\n";
 				$templatetable.="<TABLE BORDER='0'>\n";
 				$templatetable.="<TR><TD><B>Template ID:</B></TD><TD>$templateinfo[DEF_id]</TD></TR>\n";
@@ -191,9 +200,10 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 			$tmpltend=$templateimg."end";
 			$tmpltincr=$templateimg."incr";
 			$templateId=$_POST[$templateIdName];
-			$start=$_POST[$tmpltstrt];
-			$end=$_POST[$tmpltend];
-			$incr=$_POST[$tmpltincr];
+			$templaterundata = $particle->getRecentTemplateRunFromId($templateId);
+			$start=$_POST[$tmpltstrt] ? $_POST[$tmpltstrt] : $templaterundata[range_start];
+			$end=$_POST[$tmpltend] ? $_POST[$tmpltend] : $templaterundata[range_end];
+			$incr=$_POST[$tmpltincr] ? $_POST[$tmpltincr] : $templaterundata[range_incr];
 
 			$templateList.=$i.":".$templateId.",";
 			$templateinfo=$particle->getTemplatesFromId($templateId);
