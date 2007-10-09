@@ -77,7 +77,11 @@ def writeFunctionLog(commandline, params=None, logfile=None):
 		if len(out) > 60 or len(out)+len(arg) > 90:
 			f.write(out+"\\\n")
 			out = "  "
-		out += arg+" "
+		if ' ' in arg and '=' in arg:
+			elems = arg.split('=')
+			out += elems[0]+"='"+elems[1]+"' "
+		else:
+			out += arg+" "
 	f.write(out+"\n")
 	f.close()
 
