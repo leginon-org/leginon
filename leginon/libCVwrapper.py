@@ -2,10 +2,24 @@
 
 import threading
 import numpy
+import math
+from scipy import ndimage
+pi = numpy.pi
+
 try:
 	import libCV
+	print "libCV found"
 except:
-	print "WARNING: libCV failed to import"
+	pass
+	print "libCV not found"
+
+
+
+def radians(degrees):
+	return float(degrees) * pi / 180.0
+
+def degrees(radians):
+	return float(radians) * 180.0 / pi
 
 def FindRegions(image, minsize=3, maxsize=0.8, blur=0, sharpen=0, WoB=True, BoW=True, depricated=0):
 	"""
@@ -28,15 +42,7 @@ def FindRegions(image, minsize=3, maxsize=0.8, blur=0, sharpen=0, WoB=True, BoW=
 		List of Dictionaries with Region Coordinates
 		Numpy Image Array
 	"""
-	try:
-		return libCV.FindRegions(image1, minsize, maxsize, blur, sharpen, WoB, BoW)
-	except:
-		regions = [
-			{'regionEllipse': numpy.zeros([3], dtype=numpy.float32) },
-			{'regionEllipse': numpy.ones([3], dtype=numpy.float32) },
-		]
-		return regions, numpy.zeros([4,4], dtype=numpy.float32)
-	#return threading.Thread(target=libCV.FindRegions, args=(image1, image2, minsize, maxsize, blur, sharpen, WoB, BoW)).start()
+	return  libCV.FindRegions(image, minsize, maxsize, blur, sharpen, WoB, BoW)
 
 	print ""
 

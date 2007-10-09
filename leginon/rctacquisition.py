@@ -280,10 +280,10 @@ class RCTAcquisition(acquisition.Acquisition):
 			self.logger.info('Craig stuff')
 			minsize = self.settings['minsize']
 			maxsize = self.settings['maxsize']
-			libCVwrapper.checkArrayMinMax(arrayold, arraynew)
+			libCVwrapper.checkArrayMinMax(self, arrayold, arraynew)
 			result = libCVwrapper.MatchImages(arrayold, arraynew, minsize, maxsize)
 
-			check = libCVwrapper.checkLibCVResult(result)
+			check = libCVwrapper.checkLibCVResult(self,result)
 			if check is False:
 				self.logger.error("libCV failed: redoing tilt")
 				#redo this tilt; becomes an infinite loop if the image goes black
@@ -375,7 +375,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		# find regions
 		minsize = self.settings['minsize']
 		maxsize = self.settings['maxsize']
-		regions, image = libCVwrapper.FindRegions(im, minsize, maxsize)
+		regions, image  = libCVwrapper.FindRegions(im, minsize, maxsize)
 
 		# this is copied from targetfinder:
 		#regions,image = libCVwrapper.FindRegions(self.mosaicimage, minsize, maxsize)
