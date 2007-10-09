@@ -387,6 +387,7 @@ function getDistance() {
 		onmousedown	= "imgmovemousedown(event)"
 		onmouseup		= "imgmovemouseup(event)"
 		onmousemove = "imgmovemousemove(event)"
+		onmouseout= "imgmovemousemove(event)"
 	><div style="position:relative; padding:0px; margin;0px; top:2px; left:3px; width:15px; height:15px; background:url(img/imgmove.gif) no-repeat"></div></div>
 </div>
 </div>

@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.73 $
- *	@version $Id: leginon.inc,v 1.73 2007-10-05 21:39:54 dfellman Exp $
+ *	@version $Revision: 1.74 $
+ *	@version $Id: leginon.inc,v 1.74 2007-10-09 23:45:15 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -372,8 +372,24 @@ class leginondata {
 		return $filenames;
 	}
 
+	function getPresetFromSessionId($sessionId, $preset) {
+		$q="SELECT "
+		."`p`.`DEF_id`, `p`.`DEF_timestamp`, "
+		."`p`.`name`, `p`.`magnification`, `p`.`spot size`, `p`.`intensity`, "
+		."`p`.`SUBD|image shift|x`, `p`.`SUBD|image shift|y`, "
+		."`p`.`SUBD|beam shift|x`, `p`.`SUBD|beam shift|y`, "
+		."`p`.`defocus`, "
+		."`p`.`defocus range min`, `p`.`defocus range max` "
+		."FROM `PresetData` p "
+		."WHERE "
+		."`p`.`REF|SessionData|session`=".$sessionId 
+		." and `p`.`name`='".$preset."' ";
+
+		return $this->mysql->getSQLResult($q);
+	}
+
 	function getPresets($fileId, $presets=array('mag','defocus','pixelsize','dose')) {
-		$sqljoin=array();
+				$sqljoin=array();
 		if (!$presetfields = $this->mysql->getFields('PresetData'))
 			return array();
 		if (!is_array($presets) || !$fileId)
@@ -2105,7 +2121,8 @@ class leginondata {
 				."avg(c.`$field`) as `avg`, "
 				."stddev(c.`$field`) as `stddev` "
 				."from ($sub_q) c ";
-			return $this->mysql->getSQLResult($q);
+			list($r)=$this->mysql->getSQLResult($q);
+			return $r;
 	}
 
 	function getTimingStats($sessionId, $preset="") {

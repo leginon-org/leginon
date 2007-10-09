@@ -7,14 +7,16 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require('inc/leginon.inc');
-require('inc/project.inc');
+require "inc/leginon.inc";
+require "inc/project.inc";
+require "inc/particledata.inc";
+require "inc/ctf.inc";
 
 // --- Set  experimentId
 $lastId = $leginondata->getLastSessionId();
-$expId = (empty($_GET[expId])) ? $lastId : $_GET[expId];
+$expId = (empty($_GET['expId'])) ? $lastId : $_GET['expId'];
 $sessioninfo = $leginondata->getSessionInfo($expId);
-$title = $sessioninfo[Name];
+$title = $sessioninfo['Name'];
 
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
@@ -238,26 +240,48 @@ $defocusresults = $leginondata->getFocusResultData($expId, 'both','all','ok');
 	echo "<td colspan='2'>";
 	echo divtitle("Autofocus Results");
 	if (!empty($defocusresults)) {
-	echo "<table border='0'>\n";
-/*	echo "<tr>";
+		echo "<table border='0'>\n";
+		echo "<tr>";
 		echo "<td>";
-		echo "<a href='autofocusreport.php?Id=$expId'>report &raquo;</a>";
-		echo "</td>";
-	echo "</tr>";
-*/
-	echo "<tr>";
 		echo "<a href='autofocusgraph.php?Id=$expId&vd=1'>[data]</a>";
 		echo "<a href='autofocusgraph.php?Id=$expId&vs=1'>[sql]</a><br>";
 		echo "<a href='autofocusgraph.php?Id=$expId'>";
 		echo "<img border='0' src='autofocusgraph.php?Id=$expId&w=256'>";
 		echo "</a>\n";
 		echo "</td>\n";
-	echo "</tr>\n";
-	echo "</table>\n";
+		echo "</tr>\n";
+		echo "</table>\n";
 } else echo "no Autofocus information available";
 	echo "</td>";
-	
+	echo "</tr>";
+	echo "<tr>";
+	echo '<td colspan="2">';
+	foreach ($presets as $preset) {
+		$presetinfo=$leginondata->getPresetFromSessionId($sessionId, $preset);
+		$displaystat=false;
+		foreach ($presetinfo as $row) {
+			$displaystat=($row['defocus range min'] && $row['defocus range max']) ? true:false;
+			if ($displaystat)
+			break;
+		}
+		if (!$displaystat)
+				continue;
+		$cstats=$leginondata->getDefocus($sessionId, $preset, true);
+		$cstats['preset']=$preset;
+		$img='<a href="imagestatsgraph.php?hg=1&vdata=1&Id='.$sessionId
+				.'&preset='.$preset.'">[data]</a> '
+				.'<a href="imagestatsgraph.php?hg=1&vs=1&Id='.$sessionId
+				.'&preset='.$preset.'">[sql]</a><br />'
+				.'<a href="imagestatsgraph.php?hg=1&Id='.$sessionId
+				.'&preset='.$preset.'"><img border="0"  src="imagestatsgraph.php?hg=1&w=210'
+				.'&Id='.$sessionId.'&preset='.$preset.'"></a>';
+		$cstats['img']=$img;
+		$ds['defocus'][]=$cstats;
+	}
+	$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
+	echo display_stats($ds, $display_keys);
 ?>
+</td>
 </tr>
 <tr>
 <td colspan="2">
@@ -285,7 +309,6 @@ $minconf = (is_numeric($_POST['mconf'])) ? $_POST['mconf']
 		: (is_numeric($_GET['mconf']) ? $_GET['mconf'] : false);
 
 echo divtitle("CTF");
-require('inc/ctf.inc');
 $sessionId=$expId;
 $ctf = new ctfdata();
 if ($ctf->hasCtfData($sessionId)) {
@@ -331,7 +354,6 @@ else {
 <td colspan="2">
 <?php
 echo divtitle("Particles");
-require('inc/particledata.inc');
 $sessionId=$expId;
 $particle = new particledata();
 if ($particle->hasParticleData($sessionId)) {
