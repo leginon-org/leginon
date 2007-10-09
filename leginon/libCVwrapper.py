@@ -5,7 +5,7 @@ import numpy
 try:
 	import libCV
 except:
-	pass
+	print "WARNING: libCV failed to import"
 
 def FindRegions(image, minsize=3, maxsize=0.8, blur=0, sharpen=0, WoB=True, BoW=True, depricated=0):
 	"""
