@@ -222,7 +222,7 @@ def insertModel(params):
 	params['syminfo']=symid
 	modq=appionData.ApInitialModelData()
 	modq['project|projects|project']=params['projectId']
-	modq['path']= appionData.ApPathData(path=os.path.abspath(params['path']))
+	modq['path']= appionData.ApPathData(path=os.path.abspath(params['outdir']))
 	modq['name']=params['name']
 	modq['symmetry']=symid
 	modq['pixelsize']=params['apix']

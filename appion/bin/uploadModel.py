@@ -39,13 +39,13 @@ if __name__ == '__main__':
 		path = re.sub("/rawdata","",path)
 		params['outdir'] = os.path.join(path,"models")
 
+	#create the output directory, if needed
+	apParam.createDirectory(params['outdir'])
+
 	os.chdir(params['outdir'])
 	apParam.writeFunctionLog(sys.argv)
 
 	apUpload.checkSymInfo(params)
-
-	#create the output directory, if needed
-	apParam.createDirectory(params['outdir'])		
 
 	# copy templates to final location
 	old = os.path.join(params['path'], params['name'])
