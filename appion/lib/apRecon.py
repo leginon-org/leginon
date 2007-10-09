@@ -300,11 +300,7 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stac
 	os.environ["CHIMENV"] = chimsnapenv
 	appiondir = apParam.getAppionDirectory()
 	chimsnappath = os.path.join(appiondir, "bin", "apChimSnapshot.py")
-	rendercmd = ("chimera python:"+chimsnappath)
-	print rendercmd
-	apDisplay.printMsg("Trying to use chimera for model imaging")
-	resetVirtualFrameBuffer()
-	os.popen(rendercmd)
+	runChimeraScript(chimsnappath)
 	os.remove(tmpf)
 
 	image1 = density+".1.png"
@@ -327,6 +323,17 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stac
 	os.remove(tmpimg)
 	return
 	
+
+def runChimeraScript(script):
+	apDisplay.printMsg("Trying to use chimera for model imaging")
+	resetVirtualFrameBuffer()
+	os.environ['CHIMERA'] = "/ami/sw/packages/chimera-snap"
+	os.environ['CHIMERAPATH'] = "/ami/sw/packages/chimera-snap/share"
+	os.environ['LD_LIBRARY_PATH'] = "/ami/sw/packages/chimera-snap/lib:"+os.environ['LD_LIBRARY_PATH']
+	rendercmd = ("/ami/sw/packages/chimera-snap/bin/chimera python:"+chimsnappath)
+	os.popen(rendercmd)
+	return
+
 def insertRefinementRun(params):
 	runq=appionData.ApRefinementRunData()
 	runq['name']=params['runid']
