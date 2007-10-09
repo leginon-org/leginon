@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 # -----------------------------------------------------------------------------
 # Script to radially color a contour surface of a density map and save an
 # image without starting the Chimera graphical user interface.  This uses
@@ -8,17 +10,9 @@
 #
 import sys
 import os
+#import chimera
 
-tmpfile_path = sys.argv[2]
-volume_path = sys.argv[3]
-sym = sys.argv[4]
-contour = float(sys.argv[5])
-zoom_factor = float(sys.argv[6])
-volume_file_type = 'mrc'
-image_format = 'PNG'
-image_size = (512, 512)
-
-def open_volume_data(path, file_type, contour_level = contour, color = None):
+def open_volume_data(path, file_type, contour_level = 1.5, color = None):
 
 	from VolumeData import open_file_type
 	g = open_file_type(path, file_type)
@@ -44,6 +38,7 @@ def open_volume_data(path, file_type, contour_level = contour, color = None):
 # -----------------------------------------------------------------------------
 # Print status message.
 #
+
 def message(m):
 
 	from chimera.replyobj import nogui_message
@@ -91,8 +86,8 @@ def radial_color_volume(tmp_path, vol_path, contour, vol_file_type, zoom_factor,
 	center = map(lambda s: .5*(s-1), dr.data.size) # Center for radial coloring
 	m = dr.surface_model()
 
-	#from chimera import runChimCommand
-	runChimCommand('scale %.3f' % zoom_factor)   # Zoom
+	from chimera import runCommand
+	runCommand('scale %.3f' % zoom_factor)   # Zoom
 
 	image1 = vol_path+'.1.png'
 	image2 = vol_path+'.2.png'
@@ -104,44 +99,77 @@ def radial_color_volume(tmp_path, vol_path, contour, vol_file_type, zoom_factor,
 		# move clipping planes to obscure back half
 #		xsize,ysize,zsize=dr.data.size
 #		hither=float(zsize)/5
-#		runChimCommand('clip yon %.3f' % yon)
-#		runChimCommand('clip hither -%.3f' % hither)
+#		runCommand('clip yon %.3f' % yon)
+#		runCommand('clip hither -%.3f' % hither)
 		
 		save_image(image1, format=image_format)
 
-		runChimCommand('turn y 37.377') # down 3-fold axis
+		runCommand('turn y 37.377') # down 3-fold axis
 		save_image(image2, format=image_format)
 		
-		runChimCommand('turn y 20.906') # viper orientation (2 fold)
+		runCommand('turn y 20.906') # viper orientation (2 fold)
 		save_image(image3, format=image_format) 
 
 	else:
-		runChimCommand('turn x 180') # flip image 180
+		runCommand('turn x 180') # flip image 180
 		save_image(image1, format=image_format)
 
-		runChimCommand('turn x -45') # get tilt view
+		runCommand('turn x -45') # get tilt view
 		save_image(image2, format=image_format)
 
-		runChimCommand('turn x -45') # get side view
+		runCommand('turn x -45') # get side view
 		save_image(image3, format=image_format)
 
 		if sym is not 'D':
 			image4 = vol_path+'.4.png'
 			image5 = vol_path+'.5.png'
-			runChimCommand('turn x -45') # get tilt 2
+			runCommand('turn x -45') # get tilt 2
 			save_image(image4, format=image_format)
 
-			runChimCommand('turn x -45') # bottom view
+			runCommand('turn x -45') # bottom view
 			save_image(image5, format=image_format)
 			
-	sys.exit(1)	
+	#sys.exit(1)	
 
 # -----------------------------------------------------------------------------
 #
 
 def runChimCommand(cmd):
 	from chimera import runCommand
-	sys.stderr.write(cmd.strip()+"\n")
-	runCommand(cmd) # flip image 180
+	f = open("logfile.log", "a")
+	f.write(cmd+"\n")
+	f.close()
+	#nogui_message(cmd.strip()+"\n")
+	runCommand(cmd)
 
-radial_color_volume(tmpfile_path, volume_path, contour, volume_file_type, zoom_factor, image_size, image_format, sym)
+# -----------------------------------------------------------------------------
+#
+
+if __name__ == '__main__':
+	env = os.environ.get('CHIMENV')
+	if env is None:
+		import tkMessageBox
+		tkMessageBox.showwarning( "no environmental data", "none")
+		sys.exit(1)
+	params = env.split(',')
+
+	tmpfile_path = params[0] #sys.argv[2]
+	volume_path = params[1] #sys.argv[3]
+	sym = params[2] #sys.argv[4]
+	contour = float(params[3]) #sys.argv[5])
+	zoom_factor = float(params[4]) #sys.argv[6])
+
+	volume_file_type = 'mrc'
+	image_format = 'PNG'
+	image_size = (512, 512)
+
+	radial_color_volume(tmpfile_path, volume_path, contour, volume_file_type, zoom_factor, image_size, image_format, sym)
+
+	chimera.ChimeraSystemExit()
+	#sys.exit(1)
+
+
+
+
+
+
