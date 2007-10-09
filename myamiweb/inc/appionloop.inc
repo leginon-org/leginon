@@ -293,6 +293,9 @@ function particleinfopopup(infoname){
 	if (infoname=='overlapmult'){
 		newwindow.document.write('The overlap multiple specifies the minimum distance allowed between two peaks. If two peaks are closer than overlapmult*particle diameter the only the larger of the two peaks is retained.');
 	}
+	if (infoname=='kfactor'){
+		newwindow.document.write('The k-factor for dogpicker defines the slopiness in diameter of the picked particles. A k-factor of 1.00001 gives only the exact diameter (1.0 is not allowed), but a k-factor of 5.0 will pick a wide range of sizes.');
+	}
 	if (infoname=='invert'){
 		newwindow.document.write('Sometimes the template is inverted to the images or dogPicker needs inverted images in this case use the invert flag.');
 	}

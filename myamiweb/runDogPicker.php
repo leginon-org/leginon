@@ -43,19 +43,19 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	// --- find hosts to run Dog Picker
 
 	$javafunctions="
-        <script src='js/viewer.js'></script>
-        <script LANGUAGE='JavaScript'>
-                 function enabledtest(){
-                         if (document.viewerform.testimage.checked){
-                                 document.viewerform.testfilename.disabled=false;
-                                 document.viewerform.testfilename.value='';
-                         }	
-                         else {
-                                 document.viewerform.testfilename.disabled=true;
-                                 document.viewerform.testfilename.value='mrc file name';
-                         }
-                 }
-        </SCRIPT>\n";
+	<script src='js/viewer.js'></script>
+	<script LANGUAGE='JavaScript'>
+	   function enabledtest(){
+         if (document.viewerform.testimage.checked){
+            document.viewerform.testfilename.disabled=false;
+            document.viewerform.testfilename.value='';
+         }	
+         else {
+	         document.viewerform.testfilename.disabled=true;
+	         document.viewerform.testfilename.value='mrc file name';
+         }
+	   }
+	</SCRIPT>\n";
 	$javafunctions .= appionLoopJavaCommands();
 	$javafunctions .= particleLoopJavaCommands();
 	writeTop("DoG Picker Launcher","Automated Particle Selection with DoG Picker",$javafunctions);
@@ -92,7 +92,14 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		Particle diameter for filtering <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
 		<BR><BR>";
 	createParticleLoopTable(0.7, 1.5);
+	$kfactor = ($_POST['kfactor']) ? $_POST['kfactor'] : "1.2";
 	echo "
+		<A HREF=\"javascript:particleinfopopup('kfactor')\">
+		<B>K-factor:</A></B><BR>
+		<INPUT TYPE='text' NAME='kfactor' VALUE='$kfactor' SIZE='10'>&nbsp;
+		<FONT SIZE=-2><I>(slopiness)</I></FONT>
+		<BR/><BR/>
+		<HR>
 		</TD>
 	</TR>
 	<TR>
@@ -101,7 +108,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		<INPUT TYPE='checkbox' NAME='testimage' onclick='enabledtest(this)' $testcheck>
 		Test these settings on image:
 		<INPUT TYPE='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
-		<HR>
+
 		</TD>
 	</TR>
 	<TR>
@@ -150,6 +157,13 @@ function runDogPicker() {
 		exit;
 	}
 	$command .= $partcommand;
+
+
+	$kfactor = $_POST[kfactor];
+	if ($kfactor < 1.00001 || $kfactor > 5.0) {
+		createDogPickerForm("<B>ERROR:</B> K-factor must between 1.00001 and 5.0");
+	}
+	$command .= " kfactor=".$kfactor;
 
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
