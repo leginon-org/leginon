@@ -110,7 +110,7 @@ class DriftManager(watcher.Watcher):
 		newcamim = self.acquireImage(channel=newchan, correct=correct)
 
 		## store new version of image to database
-		newim = self.newImageVersion(im, newcamim)
+		newim = self.newImageVersion(im, newcamim, correct)
 
 		## do correlation
 		self.correlator.insertImage(im['image'])
@@ -137,7 +137,7 @@ class DriftManager(watcher.Watcher):
 		self.confirmEvent(ev)
 
 	## much of the following method was stolen from acquisition.py
-	def newImageVersion(self, oldimagedata, newimagedata):
+	def newImageVersion(self, oldimagedata, newimagedata, correct):
 		## store EMData to DB to prevent referencing errors
 		self.publish(newimagedata['scope'], database=True)
 		self.publish(newimagedata['camera'], database=True)
@@ -151,6 +151,7 @@ class DriftManager(watcher.Watcher):
 		newimagedata['list'] = oldimagedata['list']
 		newimagedata['emtarget'] = oldimagedata['emtarget']
 		newimagedata['version'] = oldimagedata['version'] + 1
+		newimagedata['corrected'] = correct
 		target = newimagedata['target']
 		if target is not None and 'grid' in target and target['grid'] is not None:
 			newimagedata['grid'] = target['grid']
