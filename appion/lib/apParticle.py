@@ -369,6 +369,7 @@ def insertParticlePicks(params,imgdict,expid,manual=False):
 			presult=appiondb.query(particlesq)
 			if not (presult):
 				appiondb.insert(particlesq)
+				print "success"
 	pfile.close()
 	
 	return 
