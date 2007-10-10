@@ -383,7 +383,13 @@ class particledata {
 
 		list($r2)=$this->mysql->getSQLResult($q);
 
-		$stackpixelsize = $r2['ccdpixelsize']*$r2['imgbin']*$r1['stackbin'];
+		if ($r1['stackbin'] != "" && is_int($r1['stackbin'])) {
+			$stackbin = $r1['stackbin'];
+		} else {
+			$stackbin = 1;
+		}
+
+		$stackpixelsize = $r2['ccdpixelsize']*$r2['imgbin']*$stackbin;
 		return $stackpixelsize;
 	}
 
@@ -688,7 +694,8 @@ class particledata {
 	function getReconIds ($stackId) {
 		$q = "SELECT * "
 			."FROM `ApRefinementRunData` AS r "
-			."WHERE r.`REF|ApStackData|stack` = '$stackId'";
+			."WHERE r.`REF|ApStackData|stack` = '$stackId'"
+			."ORDER BY r.`DEF_id` DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	} 
