@@ -185,7 +185,7 @@ def findEmanLogFile(params):
 
 def parseLogFile(params):
 	# parse out the refine command from the .emanlog to get the parameters for each iteration
-	logfile = findEmanLogFile
+	logfile = findEmanLogFile(params)
 	apDisplay.printMsg("parsing eman log file: "+logfile)
 	lines=open(logfile,'r')
 	for line in lines:
