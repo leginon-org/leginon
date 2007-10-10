@@ -304,7 +304,6 @@ function jobForm($extra=false) {
    <H4>Refine Run Parameters</H4>
    </CENTER><HR/>
   <INPUT TYPE='BUTTON' onClick='sefDefaults(this.form)' VALUE='Set Defaults for Iteration 1'>\n";
-
   for ($i=1; $i<=$numiters; $i++) {
     $angn="ang".$i;
     $maskn="mask".$i;
@@ -346,7 +345,7 @@ function jobForm($extra=false) {
            $goodbad=($_POST["goodbad".($i-1)]=='on') ? 'CHECKED' : '';
            $eotest=($_POST["eotest".($i-1)]=='on') ? 'CHECKED' : '';
            $coran=($_POST["coran".($i-1)]=='on') ? 'CHECKED' : '';
-           $msgp=($_POST[$mspg.($i-1)]=='on') ? 'CHECKED' : '';
+           $msgp=($_POST["msgp".($i-1)]=='on') ? 'CHECKED' : '';
     }
     else {
            $median=($_POST[$mediann]=='on') ? 'CHECKED' : '';
@@ -355,7 +354,7 @@ function jobForm($extra=false) {
            $goodbad=($_POST[$goodbadn]=='on') ? 'CHECKED' : '';
            $eotest=($_POST[$eotestn]=='on') ? 'CHECKED' : '';
            $coran=($_POST[$corann]=='on') ? 'CHECKED' : '';
-           $msgp=($_POST[$mspgn]=='on') ? 'CHECKED' : '';
+           $msgp=($_POST[$msgpn]=='on') ? 'CHECKED' : '';
     }
     $bgcolor="#E8E8E8";
     echo"
@@ -401,7 +400,7 @@ function jobForm($extra=false) {
 	<TD colspan=6 BGCOLOR='$bgcolor' CELLPADDING=0 CELLSPACING=0>
 	  <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4 WIDTH=100%>
             <TR>
-        <TD BGCOLOR='$bgcolor'><INPUT TYPE='checkbox' NAME='$msgpn'><A HREF=\"javascript:refinfopopup('msgp')\">Subclassification by message passing:</A></TD>
+        <TD BGCOLOR='$bgcolor'><INPUT TYPE='checkbox' NAME='$msgpn' $msgp><A HREF=\"javascript:refinfopopup('msgp')\">Subclassification by message passing:</A></TD>
         <TD BGCOLOR='$bgcolor'><A HREF=\"javascript:refinfopopup('msgp_corcutoff')\">CorCutoff:</A>
           <INPUT TYPE='text' NAME='$msgp_corcutoffn' SIZE='4' VALUE='$msgp_corcutoff'></TD>
         <TD BGCOLOR='$bgcolor'><A HREF=\"javascript:refinfopopup('msgp_minptcls')\">MinPtcls:</A>

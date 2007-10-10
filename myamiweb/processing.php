@@ -332,6 +332,10 @@ if ($sessionId) {
   } else {
     echo"<A HREF='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</A>";
   }
+  if ($stackruns == 0) {
+  } else {
+    echo"<BR><A HREF='uploadrecon.php?expId=$sessionId'>Upload Reconstruction</A>";
+  }
   echo"</TD>
   </TR>
   <TR>
