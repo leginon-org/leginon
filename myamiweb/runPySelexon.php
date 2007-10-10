@@ -200,10 +200,9 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 			$tmpltend=$templateimg."end";
 			$tmpltincr=$templateimg."incr";
 			$templateId=$_POST[$templateIdName];
-			$templaterundata = $particle->getRecentTemplateRunFromId($templateId);
-			$start=$_POST[$tmpltstrt] ? $_POST[$tmpltstrt] : $templaterundata[range_start];
-			$end=$_POST[$tmpltend] ? $_POST[$tmpltend] : $templaterundata[range_end];
-			$incr=$_POST[$tmpltincr] ? $_POST[$tmpltincr] : $templaterundata[range_incr];
+			$start = $_POST[$tmpltstrt];
+			$end   = $_POST[$tmpltend];
+			$incr  = $_POST[$tmpltincr];
 
 			$templateList.=$i.":".$templateId.",";
 			$templateinfo=$particle->getTemplatesFromId($templateId);
