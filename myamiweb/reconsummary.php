@@ -44,14 +44,18 @@ echo"<P>\n";
 if ($stackruns>0){ 
 	$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-        $display_keys = array ( 'name', 'num prtls', 'symmetry', 'pixel size', 'box size', 'highest res.(iter)', 'description');
+	$display_keys = array ( 'name', 'num prtls', 'symmetry', 'pixel size', 'box size', 'highest res.(iter)', 'description');
 	foreach($display_keys as $key) {
-	        $html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
-        }
-        foreach ($stackIds as $stackid) {
-		$stackcount=$particle->getNumStackParticles($stackid['stackid']);
+		$html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
+	}
+	foreach ($stackIds as $stackid) {
 		$reconRuns = $particle->getReconIds($stackid['stackid']);
-                $stackparam=$particle->getStackParams($stackid['stackid']);
+		if (!$reconRuns) {
+			//No recons go to next stack
+			continue;
+		}
+		$stackcount=$particle->getNumStackParticles($stackid['stackid']);
+		$stackparam=$particle->getStackParams($stackid['stackid']);
 
 		//get stackapix from first image
 		$stackpix = $particle->getStackPixelSizeFromStackId($stackid['stackid']);
