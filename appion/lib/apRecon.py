@@ -537,7 +537,8 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 	eulq['euler2']=eulers[projnum][1]
 	eulq['euler3']=eulers[projnum][2]
 
-	print "\tinserting",(len(f.readlines())-2),"particles from class",(projnum+1),"/",numcls
+	apDisplay.printMsg("Class "+str(projnum+1)+" of "+str(numcls)+": inserting "
+		+str(len(f.readlines())-2)+" particles")
 	f.close()
 			
 	# for each cls file get alignments for particles
