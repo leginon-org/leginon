@@ -324,13 +324,22 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stac
 	return
 	
 
-def runChimeraScript(script):
+def runChimeraScript(chimscript):
 	apDisplay.printMsg("Trying to use chimera for model imaging")
 	resetVirtualFrameBuffer()
-	os.environ['CHIMERA'] = "/ami/sw/packages/chimera-snap"
-	os.environ['CHIMERAPATH'] = "/ami/sw/packages/chimera-snap/share"
-	os.environ['LD_LIBRARY_PATH'] = "/ami/sw/packages/chimera-snap/lib:"+os.environ['LD_LIBRARY_PATH']
-	rendercmd = ("/ami/sw/packages/chimera-snap/bin/chimera python:"+chimsnappath)
+	if 'CHIMERA' in os.environ and os.path.isdir(os.environ['CHIMERA']):
+		chimpath = os.environ['CHIMERA']
+	else:
+		chimpath = "/ami/sw/packages/chimera-snap"
+	if not os.path.isdir(chimpath):
+		apDisplay.printError("Could not find chimera at: "+chimpath)
+	os.environ['CHIMERA'] = chimpath
+	os.environ['CHIMERAPATH'] = os.path.join(chimpath,"share")
+	os.environ['LD_LIBRARY_PATH'] = os.path.join(chimpath,"lib")+":"+os.environ['LD_LIBRARY_PATH']
+	chimexe = os.path.join(chimpath,"bin/chimera")
+	if not os.path.isfile(chimexe):
+		apDisplay.printError("Could not find chimera at: "+chimexe)
+	rendercmd = (chimexe+" python:"+chimscript)
 	os.popen(rendercmd)
 	return
 
