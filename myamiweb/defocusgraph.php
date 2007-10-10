@@ -41,6 +41,7 @@ if ($histogram) {
 }
 
 $dbemgraph->scaley(1e-6);
+$dbemgraph->dim($width,$height);
 $dbemgraph->graph();
 
 ?>
