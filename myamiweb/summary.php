@@ -268,12 +268,12 @@ $defocusresults = $leginondata->getFocusResultData($expId, 'both','all','ok');
 				continue;
 		$cstats=$leginondata->getDefocus($sessionId, $preset, true);
 		$cstats['preset']=$preset;
-		$img='<a href="imagestatsgraph.php?hg=1&vdata=1&Id='.$sessionId
+		$img='<a href="defocusgraph.php?hg=1&vdata=1&Id='.$sessionId
 				.'&preset='.$preset.'">[data]</a> '
-				.'<a href="imagestatsgraph.php?hg=1&vs=1&Id='.$sessionId
+				.'<a href="defocusgraph.php?hg=1&vs=1&Id='.$sessionId
 				.'&preset='.$preset.'">[sql]</a><br />'
-				.'<a href="imagestatsgraph.php?hg=1&Id='.$sessionId
-				.'&preset='.$preset.'"><img border="0"  src="imagestatsgraph.php?hg=1&w=210'
+				.'<a href="defocusgraph.php?hg=1&Id='.$sessionId
+				.'&preset='.$preset.'"><img border="0"  src="defocusgraph.php?hg=1&w=210'
 				.'&Id='.$sessionId.'&preset='.$preset.'"></a>';
 		$cstats['img']=$img;
 		$ds['defocus'][]=$cstats;
