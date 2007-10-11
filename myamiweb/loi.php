@@ -48,7 +48,7 @@ $javascript .= $viewer->getJavascriptInit();
 viewer_header('Leginon Observer Interface', $javascript, 'initviewer()');
 ?>
 <a class="header" target="summary" href="summary.php?expId=<?php echo $sessionId; ?>">[summary]</A>
-<a class="header" target="processing" href="processing.php?expId=<?php echo $sessionId; ?>">[processing]</A>
+<a class="header" target="processing" href="processing/processing.php?expId=<?php echo $sessionId; ?>">[processing]</A>
 <?php
 $viewer->display();
 viewer_footer();
