@@ -45,26 +45,8 @@ def defaults():
 	return params
 
 def getAppionDir(params):
-	params['appiondir'] = None
-
-	trypath = os.environ.get('APPIONDIR')
-	if os.path.isdir(trypath):
-		params['appiondir'] = trypath
-		return params['appiondir']
-
-	user = os.environ.get('USER')
-	trypath = "/home/"+user+"/pyappion"
- 	if os.path.isdir(trypath):
-		params['appiondir'] = trypath
-		return params['appiondir']
-
-	trypath = "/ami/sw/packages/pyappion"
- 	if os.path.isdir(trypath):
-		params['appiondir'] = trypath
-		return params['appiondir']
-
-	apDisplay.printError("environmental variable, APPIONDIR, is not defined.\n"+
-		"Did you source useappion.sh?")
+	params['appiondir'] = apParams.getAppionDir()
+	return params['appiondir']
 
 def runHelp(params):
 	funcxml = os.path.join(params['appiondir'],"xml",functionname+".xml")

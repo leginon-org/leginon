@@ -264,6 +264,8 @@ class AppionLoop(object):
 			apDisplay.printError("dbimages and alldbimages can not be specified at the same time")
 		if self.params['runid'] == 'templates':
 			apDisplay.printError("templates is a reserved runid, please use another runid")
+		if self.params['runid'] == 'models':
+			apDisplay.printError("models is a reserved runid, please use another runid")
 		if len(self.params['mrcfileroot']) > 0 and self.params['alldbimages']:
 			apDisplay.printError("alldbimages can not be specified if particular images have been specified")
 
@@ -880,8 +882,9 @@ class AppionLoop(object):
 
 class BinLoop(AppionLoop):
 	def processImage(self, imgdict):
-		import pyami.imagefun as imagefun
-		imagefun.bin(imgdict['image'], 2)
+		from pyami import imagefun,mrc
+		outimg = imagefun.bin(imgdict['image'], 2)
+		mrc.write(outimg, imgdict['filename']+"_sm.mrc")
 
 if __name__ == '__main__':
 	print "__init__"

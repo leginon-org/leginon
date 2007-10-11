@@ -3,11 +3,12 @@
 import sys
 import os
 import apDisplay
+import apParam
 import apAlignment
 
 if __name__ == "__main__":
 	params = apAlignment.defaults()
-	apAlignment.getAppionDir(params)
+	params['appiondir'] = apParam.getAppionDir()
 	apAlignment.cmdline(sys.argv[1:], params)
 	if params['classonly'] is True:
 		apAlignment.overridecmd(params)
