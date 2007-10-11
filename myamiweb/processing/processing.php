@@ -371,12 +371,12 @@ if ($sessionId) {
     <B>Initial Models</B>
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
-  if ($templates==0) {echo "none";}
+  if ($models==0) {echo "none";}
   else {echo "<A HREF='viewmodels.php?expId=$sessionId'>$models available</A>";}
   echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>";
-  if ($templates==0) { echo"<A HREF='uploadmodel.php?expId=$sessionId'>Upload model</A>"; }
+  if ($models==0) { echo"<A HREF='uploadmodel.php?expId=$sessionId'>Upload model</A>"; }
   else { echo"<A HREF='uploadmodel.php?expId=$sessionId'>Upload model</A>"; }
   echo"</TD>
   </TR>
