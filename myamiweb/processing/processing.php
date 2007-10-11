@@ -45,8 +45,8 @@ $currentproject=$sessiondata['currentproject'];
 $nonecolor='#FFFFCC';
 $progcolor='#CCFFFF';
 $donecolor='#CCFFCC';
-$donepic='img/greengo.gif';
-$nonepic='/phpMyAdmin/themes/original/img/b_drop.png';
+$donepic='img/icon-check.png';
+$nonepic='img/icon-cross.png';
 
 // If expId specified, don't show pulldowns, only session info
 if (!$expId){
