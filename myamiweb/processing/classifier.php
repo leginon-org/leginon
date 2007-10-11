@@ -8,12 +8,12 @@
  *      Simple viewer to view a image using mrcmodule
  */
 
-require ('inc/particledata.inc');
-require ('inc/leginon.inc');
-require ('inc/project.inc');
-require ('inc/viewer.inc');
-require ('inc/processing.inc');
-require ('inc/ctf.inc');
+require "inc/particledata.inc";
+require "inc/leginon.inc";
+require "inc/project.inc";
+require "inc/viewer.inc";
+require "inc/processing.inc";
+require "inc/ctf.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
