@@ -982,9 +982,9 @@ class view {
 		$htmlframe .='
 				<select name="'.$prename.'" onchange="newdatatype(\''.$name.'\')" > 
 		';
-		foreach ($datatypes as $k=>$v) {
-			if ($k==$selpre) $s='selected'; else $s=''; 	
-			$htmlframe .= "<option value=\"$v\" $s>$k \n"; 
+		foreach ($datatypes as $v) {
+			if ($v==$selpre) $s='selected'; else $s=''; 	
+			$htmlframe .= "<option value=\"$v\" $s>$v \n"; 
 		}
 		$htmlframe .='
 					</select>

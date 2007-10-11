@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.74 $
- *	@version $Id: leginon.inc,v 1.74 2007-10-09 23:45:15 dfellman Exp $
+ *	@version $Revision: 1.75 $
+ *	@version $Id: leginon.inc,v 1.75 2007-10-11 20:57:12 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -27,10 +27,7 @@ class leginondata {
 
 	var $crlf = "\n";
 	var $ffttypes = array('focpow', 'fft');
-	var $defaulttypes = array('all'=>'all',
-											'atlas'=>'atlas',
-											'examplar'=>'examplar',
-											'hidden'=>'hidden');
+	var $defaulttypes = array('all', 'atlas', 'examplar', 'hidden');
 	var $manualtype = 'manual';
 	var $rcttype = 'rct';
 	var $calibrationtables = array (
@@ -275,15 +272,12 @@ class leginondata {
 		$q="select distinct name FROM AcquisitionImageData a "
 			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 			." where a.`REF|SessionData|session` = '$sessionId'";
-		$Rdatatype = $this->mysql->SQLQuery($q);
-		if ($Rdatatype && mysql_num_rows($Rdatatype)) {
-		while ($row = mysql_fetch_row($Rdatatype)) 
-			if ($row[0])
-				$datatypes[$row[0]]=$row[0]; 
-		} 
-		if ($allpresets) {
-				$datatypes[$this->manualtype]=$this->manualtype; 
+		$Rdatatypes = $this->mysql->getSQLResult($q);
+		foreach ($Rdatatypes as $d) {
+			if ($d['name'])
+				$datatypes[]=$d['name'];
 		}
+		$datatypes[]=$this->manualtype; 
 		return $datatypes;
 	}
 

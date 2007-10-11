@@ -1,8 +1,8 @@
 <?php
-
-ini_set("include_path", ".:../");
-require_once('config.php');
-require_once('inc/image.inc');
+$paths = array('.', '..', get_include_path());
+set_include_path(implode(PATH_SEPARATOR, $paths));
+require_once "config.php";
+require_once "inc/image.inc";
 
 $binning = 16;
 $sigma = 3;

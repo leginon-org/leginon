@@ -7,8 +7,8 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require_once('config.php');
-require_once('inc/mysql.inc');
+require_once "config_processing.php";
+require_once "inc/mysql.inc";
 
 define(PROCESSING_DB_HOST, $PROCESSING_DB_HOST);
 define(PROCESSING_DB_USER, $PROCESSING_DB_USER);

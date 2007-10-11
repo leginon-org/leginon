@@ -1,9 +1,9 @@
 <?php
 
-require_once('../config.php');
-require_once('tomography.php');
-require_once('../inc/jpgraph.php');
-require_once('../inc/jpgraph_line.php');
+require_once "../config.php";
+require_once "tomography.php";
+require_once "../inc/jpgraph.php";
+require_once "../inc/jpgraph_line.php";
 
 $session_id = $_GET['sessionId'];
 if(!$session_id)

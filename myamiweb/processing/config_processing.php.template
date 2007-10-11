@@ -1,0 +1,32 @@
+<?php
+
+/**
+ *	The Leginon software is Copyright 2003 
+ *	The Scripps Research Institute, La Jolla, CA
+ *	For terms of the license agreement
+ *	see  http://ami.scripps.edu/software/leginon-license
+ *
+ */
+
+
+// --- Particle database
+$PARTICLE_DB_HOST = "";
+$PARTICLE_DB_USER = "";
+$PARTICLE_DB_PASS = "";
+$PARTICLE_DB = "";
+
+// --- CTF database --- //
+$PROCESSING_DB_HOST = "";
+$PROCESSING_DB_USER = "";
+$PROCESSING_DB_PASS = "";
+$PROCESSING_DB = "";
+
+// --- Reconstruction Database --- //
+$RECON_DB_HOST = "";
+$RECON_DB_USER = "";
+$RECON_DB_PASS = "";
+$RECON_DB = "";
+
+// --- path to dbem main --- //
+set_include_path(get_include_path().PATH_SEPARATOR."..");
+?>

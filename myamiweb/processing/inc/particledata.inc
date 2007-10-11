@@ -7,7 +7,7 @@
  *	see	http://ami.scripps.edu/software/leginon-license
  */
 
-require_once "config.php";
+require_once "config_processing.php";
 require_once "inc/mysql.inc";
 
 define(PARTICLE_DB_HOST, $PARTICLE_DB_HOST);

@@ -8,12 +8,12 @@
  *  Simple viewer to view a image using mrcmodule
  */
 
-require ('inc/leginon.inc');
-require ('inc/project.inc');
-require ('inc/particledata.inc');
-require ('inc/viewer.inc');
-require ('inc/processing.inc');
-require ('inc/ctf.inc');
+require "inc/particledata.inc";
+require "inc/viewer.inc";
+require "inc/processing.inc";
+require "inc/ctf.inc";
+require "inc/leginon.inc";
+require "inc/project.inc";
 
 // check if coming directly from a session
 $expId=$_GET['expId'];
