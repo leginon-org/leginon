@@ -64,6 +64,9 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
     $sessionpath=$sessioninfo['Image path'];
     $sessionpath=ereg_replace("leginon","appion",$sessionpath);
     $sessionpath=ereg_replace("rawdata","models/",$sessionpath);
+    $sessionpath.="rescale.mrc";
+    $sessionname=$sessioninfo['Name'];
+    echo "<INPUT TYPE='HIDDEN' NAME='sessionname' VALUE='$sessionname'>\n";
   }
   
   // Set any existing parameters in form
@@ -112,13 +115,15 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
     $symid=$modelinfo['REF|ApSymmetryData|symmetry'];
     $symmetry=$particle->getSymInfo($symid);
     $res = $modelinfo['resolution'];
-    $apix = $modelinfo['pixelsize'];
+    $apix = ($_POST['apix']) ? $_POST['apix'] : $modelinfo['pixelsize'];
+    $boxsize = ($_POST['boxsize']) ? $_POST['boxsize'] : $modelinfo['boxsize'];
     echo "$symmetry[symmetry]<BR>
     <INPUT TYPE='hidden' NAME='sym' VALUE='$symid'>
     <B>Model Resolution:</B> $res<BR>
     <INPUT TYPE='hidden' NAME='res' VALUE='$res' SIZE='5'>
-    <B>Pixel Size:</B> $apix<BR>
-    <INPUT TYPE='hidden' NAME='apix' SIZE='5' VALUE='$apix'>\n";
+    <INPUT TYPE='text' NAME='apix' SIZE='5' VALUE='$apix'><B>New Pixel Size</B> (originally $modelinfo[pixelsize])<BR>
+    <INPUT TYPE='hidden' NAME='origapix' VALUE='$modelinfo[pixelsize]'>
+    <INPUT TYPE='text' NAME='boxsize' SIZE='5' VALUE='$boxsize'><B>New Box Size</B> (originally $modelinfo[boxsize])<BR>\n";
   }
   else {
     echo"
@@ -171,14 +176,30 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 function runUploadModel() {
   $contour=$_POST['contour'];
   $zoom=$_POST['zoom'];
+  $session=$_POST['sessionname'];
 
   //make sure a model root was entered
   $model=$_POST['model'];
   if ($_POST['modelname']) $model=$_POST['modelname'];
-  if ($_POST['newmodel']) $model=$_POST['newmodel'];
+
+  //make sure a apix was provided
+  $apix=$_POST['apix'];
+  if (!$apix) createUploadModelForm("<B>ERROR:</B> Enter the pixel size");
+  
+  // if rescaling, make sure there is a boxsize
+  if ($_POST['newmodel']) {
+    $model=$_POST['newmodel'];
+    $boxsize=$_POST['boxsize'];
+    $origapix=$_POST['origapix'];
+    echo $apix;
+    echo $origapix;
+    if (!$boxsize) createUploadModelForm("<B>ERROR:</B> Enter the final box size of the model");
+    $scalefactor=$origapix/$apix;
+  }
+
   if (!$model) createUploadModelForm("<B>ERROR:</B> Enter a root name of the model");
   
-  //make sure a session was selected
+  //make sure a description was provided
   $description=$_POST['description'];
   if (!$description) createUploadModelForm("<B>ERROR:</B> Enter a brief description of the model");
 
@@ -186,10 +207,6 @@ function runUploadModel() {
   $res=$_POST['res'];
   if (!$res) createUploadModelForm("<B>ERROR:</B> Enter the model resolution");
 
-  //make sure a apix was provided
-  $apix=$_POST['apix'];
-  if (!$apix) createUploadModelForm("<B>ERROR:</B> Enter the pixel size");
-  
   // make sure a symmetry was selected
   $sym = $_POST['sym'];
   if (!$sym) createUploadModelForm("<B>ERROR:</B> Select a symmetry");
@@ -200,8 +217,10 @@ function runUploadModel() {
   $command.="apix=$apix ";
   $command.="res=$res ";
   $command.="symmetry=$sym ";
+  if ($boxsize) $command.="boxsize=$boxsize ";
   if ($contour) $command.="contour=$contour ";
   if ($zoom) $command.="zoom=$zoom ";
+  if ($_POST['newmodel']) $command.="rescale=$_GET[modelid],$scalefactor ";
   $command.="description=\"$description\"";
   
   writeTop("UploadModel Run","UploadModel Params");
