@@ -157,9 +157,9 @@ if ($sessionId) {
   <TR>\n";
   //header
   echo"
-	 <TD ALIGN='LEFT' COLSPAN='2'><FONT SIZE='+1'><B>Action</B></FONT></TD>
-	 <TD ALIGN='LEFT'><FONT SIZE='+1'><B>Results</B></FONT></TD>
-	 <TD ALIGN='LEFT'><FONT SIZE='+1'><B>New run</B></FONT></TD>
+	 <TD ALIGN='LEFT' COLSPAN='2'><H4>Action</H4></TD>
+	 <TD ALIGN='LEFT'><H4>Results</H4></TD>
+	 <TD ALIGN='LEFT'><H4>New run</H4></TD>
   </TR><TR>\n";
   if ($prtlruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
   else {$bgcolor=$donecolor;$gifimg=$donepic;}
