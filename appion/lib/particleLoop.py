@@ -111,10 +111,11 @@ class ParticleLoop(appionLoop.AppionLoop):
 		apDisplay.printMsg("Found "+str(len(self.peaktree))+" particles for "+apDisplay.shortenImageName(imgdata['filename']))
 		self.stats['lastpeaks'] = len(self.peaktree)
 
-		if self.threadJpeg is True:
-			threading.Thread(target=apPeaks.createPeakJpeg, args=(imgdata, self.peaktree, self.params)).start()
-		else:
-			apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)
+		if self.params['nojpegs'] is True:
+			if self.threadJpeg is True:
+				threading.Thread(target=apPeaks.createPeakJpeg, args=(imgdata, self.peaktree, self.params)).start()
+			else:
+				apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)
 		if self.params['defocpair'] is True:
 			self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params)
 
@@ -241,6 +242,7 @@ class ParticleLoop(appionLoop.AppionLoop):
 		self.params['invert']=False
 		self.params['mapdir']="maps"
 		self.params['diam']=0
+		self.params['nojpegs']=False
 		self.params['pixlimit']=0
 		self.params['median']=0
 		self.params['bin']=4
@@ -285,6 +287,8 @@ class ParticleLoop(appionLoop.AppionLoop):
 				self.params['maxpeaks']= abs(int(elements[1]))
 			elif (elements[0]=='invert'):
 				self.params['invert']=True
+			elif (elements[0]=='nojpegs'):
+				self.params['nojpegs']=True
 			elif (elements[0]=='diam'):
 				self.params['diam']=abs(float(elements[1]))
 			elif (elements[0]=='bin'):
