@@ -1,9 +1,9 @@
 <?php
 	require ('inc/leginon.inc');
-	require ('inc/particledata.inc');
+	require ('processing/inc/particledata.inc');
 	require ('inc/project.inc');
 	require ('inc/viewer.inc');
-	require ('inc/processing.inc');
+	require ('processing/inc/processing.inc');
 
 	require('inc/euler.inc');
 	require('inc/jpgraph.php');
@@ -116,7 +116,8 @@
 		if (!$outfile)
 			header("Content-type: image/x-png");
 		$myImage = createTriangle($stats->eulers1);
-		imagepng($myImage,$outfile);
+		echo "Writing to file... ".$outfile;
+		imagepng($myImage, $outfile);
 	}
 	function createGraph($dataset, $outfile="")
 	{
@@ -132,5 +133,6 @@
 		if (!$outfile)
 			header("Content-type: image/x-png");
 		$graph->Stroke($outfile);
+		echo "Writing to file... ".$outfile;
 	}
 ?>
