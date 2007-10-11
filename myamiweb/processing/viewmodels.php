@@ -33,7 +33,7 @@ foreach ($models as $model) {
   
   # display starting model
   echo "<TR><TD COLSPAN=2>\n";
-  echo "<B>Model ID: >".$model['DEF_id']."</B><BR>\n";
+  echo "<B>Model ID: ".$model['DEF_id']."</B><BR>\n";
   foreach ($pngfiles as $snapshot) {
     $snapfile = $model['path'].'/'.$snapshot;
     echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";

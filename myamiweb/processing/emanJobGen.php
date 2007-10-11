@@ -127,7 +127,7 @@ function stackModelForm($extra=False) {
   echo"
   </select>
   <P>
-  Stack:";
+  <B>Stack:</B><BR>";
   echo "<SELECT NAME='stackval'>\n";
 
   foreach ($stackIds as $stackid){
@@ -153,7 +153,8 @@ function stackModelForm($extra=False) {
   echo"<INPUT TYPE='button' NAME='dmfput' VALUE='Put stack in DMF' onclick='displayDMF()'><P>\n";
   echo"<INPUT TYPE='hidden' NAME='dmfpath' VALUE=''>\n";
   # show initial models
-  echo "Model:<BR>\n";
+  echo "<B>Model:</B><BR><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A>\n";
+  echo "<P>\n";
   if (count($models)>0) {
     foreach ($models as $model) {
       echo "<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='2'>\n";
@@ -187,7 +188,7 @@ function stackModelForm($extra=False) {
     }
     echo"<P><INPUT TYPE='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack & model'></FORM>\n";
   }
-  else {echo "No models.  <A HREF='uploadmodel.php?expId=$expId'>Upload one now</A>\n";}
+  else {echo "No initial models in database";}
   writeBottom();
   exit;
 }
