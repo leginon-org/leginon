@@ -244,7 +244,6 @@ class particledata {
 		$q = "select max(DEF_id) as runId "
 			."from `ApSelectionRunData` where `dbemdata|SessionData|session` = '$sessionId'";
 		list($r) = $this->mysql->getSQLResult($q);
-		echo $this->mysql->getError();
 		return $r[runId];
 	}
 
@@ -455,7 +454,6 @@ class particledata {
 		$q = "select max(DEF_id) as runId "
 			."from `ApMaskMakerRunData` where `REF|leginondata|SessionData|session` = '$sessionId'";
 		list($r) = $this->mysql->getSQLResult($q);
-		echo $this->mysql->getError();
 		return $r[runId];
 	}
 
