@@ -76,4 +76,16 @@
 	<default>5.0</default>
 	<limits>0,5</limits>
  </maxthresh>
+ <pixlimit>
+	<name>pixel limit filter</name>
+	<default>5.0</default>
+	<description>Limit pixels values to within pixlimit standard deviations of the mean</description>
+	<type>float</type>
+ </pixlimit>
+ <nojpegs>
+	<name>do not create peak jpegs</name>
+	<default>False</default>
+	<description>Force particle loop to not make peak summary jpegs</description>
+	<type>boolean</type>
+ </nojpegs>
 </allparticle>
