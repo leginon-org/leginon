@@ -1,13 +1,13 @@
 <?php
-	require ('inc/leginon.inc');
-	require ('processing/inc/particledata.inc');
-	require ('inc/project.inc');
-	require ('inc/viewer.inc');
-	require ('processing/inc/processing.inc');
+	require ('../inc/leginon.inc');
+	require ('inc/particledata.inc');
+	require ('../inc/project.inc');
+	require ('../inc/viewer.inc');
+	require ('inc/processing.inc');
 
 	require('inc/euler.inc');
-	require('inc/jpgraph.php');
-	require('inc/jpgraph_scatter.php');
+	require('../inc/jpgraph.php');
+	require('../inc/jpgraph_scatter.php');
 	$begin=getmicrotime();
 	$reconId=$_GET['reconId'];
 	$iter=$_GET['iter'];
