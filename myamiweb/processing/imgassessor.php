@@ -116,7 +116,6 @@ if ($imgdir && strlen($imgdir) > 10) {
 			      $i++;
 				}
 			}
-		}
 		closedir($pathdir);
 		if ($files) {
 			// sort the files by time
@@ -314,7 +313,7 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 function printToolBar() {
 	echo"<TABLE BORDER='0' CELLPADDING='3' CELLSPACING='5'>\n";
 	echo"<TR><TD ALIGN='CENTER'>\n";
-	echo"<INPUT TYPE='IMAGE' WIDTH='48' SRC='img/button-first.png' ALT='First' NAME='imagelist' VALUE='First'>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/button-first.png' ALT='First' NAME='imagelist' VALUE='First'>\n";
 	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
 	echo"<INPUT TYPE='IMAGE' SRC='img/button-back.png' ALT='Back' NAME='imagelist' VALUE='Back'>\n";
 	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
@@ -323,8 +322,9 @@ function printToolBar() {
 	echo"<INPUT TYPE='IMAGE' SRC='img/button-keep.png' ALT='Keep' NAME='imagelist' VALUE='Keep'>\n";
 	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
 	echo"<INPUT TYPE='IMAGE' SRC='img/button-next.png' ALT='Next' NAME='imagelist' VALUE='Next'>\n";
+		}
 	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
-	echo"<INPUT TYPE='IMAGE' WIDTH='48' SRC='img/button-last.png' ALT='Last' NAME='imagelist' VALUE='Last'>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/button-last.png' ALT='Last' NAME='imagelist' VALUE='Last'>\n";
 	echo"</TD></TR></TABLE>";
 }
 
