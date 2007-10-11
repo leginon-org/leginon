@@ -23,7 +23,7 @@
 		$commonprtls = $particle->getCommonParticles($refine1['DEF_id'], $refine2['DEF_id']);
 		$eulers1 = array();
 		$eulers2 = array();
-		foreach ($commonprtls  as $k) {
+		foreach ($commonprtls as $k) {
 			$eulers1[]=eulerArray(deg2rad($k['euler1_1']), deg2rad($k['euler1_2']), deg2rad($k['rot1']));
 			$eulers2[]=eulerArray(deg2rad($k['euler2_1']), deg2rad($k['euler2_2']), deg2rad($k['rot2']));
 		}

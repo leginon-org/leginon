@@ -3,7 +3,7 @@
  *	The Leginon software is Copyright 2007 
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see http://ami.scripps.edu/software/leginon-license
  *
  *	compare particle alignment for 2 iterations
  */
@@ -53,7 +53,7 @@ foreach ($commonprtls as $prtl) {
 		$data .= $prtl['qf1'].$sep.$prtl['qf2'].$nl;
 	} 
 }
-        
+
 header("Content-type: text/plain");
 if ($download) {
 	$filename="compare_".$comp_param."_iter".$iter1."_iter".$iter2.".txt";

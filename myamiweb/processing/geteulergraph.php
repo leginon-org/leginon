@@ -20,10 +20,9 @@
 	$particle = new particledata();
 	$info = $particle->getIterationInfo($reconId);
 	$total_iter=count($info);
-	print_r($info);
+	//print_r($info);
 
-	if(!$iter)
-	{
+	if(!$iter) {
 		echo "Total Iter: $total_iter";
 		$data = array();
 		for($i = 1; $i<$total_iter; $i++)
@@ -32,30 +31,40 @@
 			$data[] = rad2deg($stats->myMean); 
 		}
 		createGraph($data, "eulerTests/graph_$reconId.png");
-	}
-	else
-	{
-		for($i = 1; $i<=$total_iter; $i++)
-		{
-			echo "In";
+	} else {
+		for($i = 1; $i<=$total_iter; $i++) {
+
+			echo "getTriangleData...\n";
 			$stats = getTriangleData($reconId, $i,$i+1);
+
+			echo "createTriangle...\n";
 			$myImage = createTriangle($stats->eulers1);
-			imagepng($myImage,"eulerTests/image_".$reconId."_$i.png");
-			echo "Done iter $i\n";
+
+			$outfile = "eulerTests/image_".$reconId."_$i.png";
+			echo "Writing to file... ".$outfile."\n";
+			imagepng($myImage, $outfile);
+
+			echo "Done iter $i of $total_iter\n";
 		}
 	}
 	$end=getmicrotime();
-	echo "total time:".($end-$begin);
+	echo "total time:".($end-$begin)."\n";
+
+//********************************************
+//********************************************
+// END PROGRAM
+//********************************************
+//********************************************
 
 	function eulerArray($a, $b, $c) {
 		return array('a'=>$a, 'b'=>$b, 'c'=>$c);
 	}
-	function toFloat($s)
-	{
+
+	function toFloat($s) {
 		return floatval($s);
 	}
-	function getTriangleData($reconId, $iter1,$iter2)
-	{
+
+	function getTriangleData($reconId, $iter1,$iter2) {
 		//query	
 		global $particle;
 		$refine1 = $particle->getRefinementData($reconId,$iter1);
@@ -63,13 +72,13 @@
 		$commonprtls = $particle->getParticlesFromRefinementId($refine1['DEF_id']);
 		//$commonprtls = $particle->getCommonParticles($refine1['DEF_id'], $refine2['DEF_id']);
 		$eulers1 = array();
-		foreach ($commonprtls  as $k) {
+		foreach ($commonprtls as $k) {
 			$eulers1[]=eulerArray(deg2rad($k['euler1_1']), deg2rad($k['euler1_2']), deg2rad($k['rot1']));
 		}
 		return new Statistics(0,0,0,$r[0]['mean'],0,0,0,$diff,$eulers1,0);
 	}
-	function getData($reconId, $iter1,$iter2)
-	{
+
+	function getData($reconId, $iter1,$iter2) {
 		//query	
 		global $particle;
 		$r=$particle->getEulerStats($reconId, $iter1, $iter2);
@@ -84,7 +93,7 @@
 		$commonprtls = $particle->getCommonParticles($refine1['DEF_id'], $refine2['DEF_id']);
 		$eulers1 = array();
 		$eulers2 = array();
-		foreach ($commonprtls  as $k) {
+		foreach ($commonprtls as $k) {
 			$eulers1[]=eulerArray(deg2rad($k['euler1_1']), deg2rad($k['euler1_2']), deg2rad($k['rot1']));
 			$eulers2[]=eulerArray(deg2rad($k['euler2_1']), deg2rad($k['euler2_2']), deg2rad($k['rot2']));
 		}
@@ -111,16 +120,16 @@
 		return new Statistics(0,0,0,$r[0]['mean'],0,0,0,$diff,$eulers,0);
 	//	return $stats;
 	}
-	function makeTriangle($stats, $outfile="")
-	{
+
+	function makeTriangle($stats, $outfile="") {
 		if (!$outfile)
 			header("Content-type: image/x-png");
 		$myImage = createTriangle($stats->eulers1);
-		echo "Writing to file... ".$outfile;
+		echo "Writing to file... ".$outfile."\n";
 		imagepng($myImage, $outfile);
 	}
-	function createGraph($dataset, $outfile="")
-	{
+
+	function createGraph($dataset, $outfile="") {
 		$graph = new Graph(400,200);
 		$graph->SetScale("textlin",0,100);
 		$graph->title->set('Euler mean jumps');
@@ -133,6 +142,8 @@
 		if (!$outfile)
 			header("Content-type: image/x-png");
 		$graph->Stroke($outfile);
-		echo "Writing to file... ".$outfile;
+		echo "Writing to file... ".$outfile."\n";
 	}
+
+	echo "\n\n";
 ?>
