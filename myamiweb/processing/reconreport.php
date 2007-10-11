@@ -8,16 +8,16 @@
  *	Display results for each iteration of a refinement
  */
 
-require ('inc/leginon.inc');
-require ('inc/particledata.inc');
-require ('inc/project.inc');
-require ('inc/viewer.inc');
-require ('inc/processing.inc');
+require "inc/leginon.inc";
+require "inc/particledata.inc";
+require "inc/project.inc";
+require "inc/viewer.inc";
+require "inc/processing.inc";
   
 // check if reconstruction is specified
 $reconId = $_GET['reconId'];
 $refine_params_fields = array('refinerun', 'ang', 'mask', 'imask', 'pad', 'hard', 'classkeep', 'classiter', 'median', 'phasecls', 'refine','cckeep','minptls');
-$javascript="<script src='js/viewer.js'></script>\n";
+$javascript="<script src='../js/viewer.js'></script>\n";
 
 // javascript to display the refinement parameters
 $javascript="<script LANGUAGE='JavaScript'>

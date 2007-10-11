@@ -8,13 +8,13 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require ('inc/leginon.inc');
-require ('inc/particledata.inc');
-require ('inc/project.inc');
-require ('inc/viewer.inc');
-require ('inc/processing.inc');
-require ('inc/ssh.inc');
-require ('inc/appionloop.inc');
+require "inc/leginon.inc";
+require "inc/particledata.inc";
+require "inc/project.inc";
+require "inc/viewer.inc";
+require "inc/processing.inc";
+require "inc/ssh.inc";
+require "inc/appionloop.inc";
  
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -183,7 +183,7 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 
 	$particle=new particleData;
 	$javascript="
-	<script src='js/viewer.js'></script>
+	<script src='../js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
 		 function enabledtest(){
 			 if (document.viewerform.testimage.checked){
@@ -418,9 +418,6 @@ function writeTestResults($testdir,$filelist){
 function displayTestResults($testimage,$imgdir,$files){
 	echo "<CENTER>\n";
 	echo"<form name='viewerform' method='POST' ACTION='$formAction'>\n";
-//	$formAction=$_SERVER['PHP_SELF'];	
-//	$javascript="<script src='js/viewer.js'></script>\n";
-//	writeTop("Mask Maker Test","Mask Maker Test Results",$javascript);
 
 
         $numfiles=count($files);

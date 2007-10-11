@@ -56,7 +56,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	// --- make list of file formats
 	$fileformats=array('imagic','spider');
 	
-	$javascript="<script src='js/viewer.js'></script>
+	$javascript="<script src='../js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
 	function enableice(){
 	  if (document.viewerform.icecheck.checked){

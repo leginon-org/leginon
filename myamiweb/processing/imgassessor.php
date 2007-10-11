@@ -8,11 +8,11 @@
  *      Simple viewer to view a image using mrcmodule
  */
 
-require ('inc/particledata.inc');
-require ('inc/project.inc');
-require ('inc/viewer.inc');
-require ('inc/processing.inc');
-require ('inc/leginon.inc');
+require "inc/particledata.inc";
+require "inc/project.inc";
+require "inc/viewer.inc";
+require "inc/processing.inc";
+require "inc/leginon.inc";
 
 $particledata=new particledata();
 
@@ -46,7 +46,7 @@ else {
 
 $imgtypes=array('jpg','png','mrc','dwn.mrc');
 
-$javascript="<script src='js/viewer.js'></script>\n";
+$javascript="<script src='../js/viewer.js'></script>\n";
 writeTop("Leginon Image Assessor","Image Assessor",$javascript);
 echo"<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 

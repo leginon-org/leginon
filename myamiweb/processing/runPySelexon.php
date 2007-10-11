@@ -128,7 +128,7 @@ function createTemplateForm() {
 		$javafunctions.="</SCRIPT>\n";
 		$templatetable.="</TABLE>\n";
 	}
-	$javafunctions.="<script src='js/viewer.js'></script>\n";
+	$javafunctions.="<script src='../js/viewer.js'></script>\n";
 
 	writeTop("Template Correlator Launcher","Automated Particle Selection with Template Correlator",$javafunctions);
 	echo"
@@ -235,7 +235,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 		exit;
 	}
 	$javafunctions="
-	<script src='js/viewer.js'></script>
+	<script src='../js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
 		 function enabledtest(){
 			 if (document.viewerform.testimage.checked){

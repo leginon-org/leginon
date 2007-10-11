@@ -86,7 +86,7 @@ function stackModelForm($extra=False) {
   $apix=$stackinfo[1];
   $box=$stackinfo[2];
   $javafunc="
-  <script src='js/viewer.js'></script>
+  <script src='../js/viewer.js'></script>
   <SCRIPT LANGUAGE='JavaScript'>
   function displayDMF() {
     stack = document.viewerform.stackval.value;

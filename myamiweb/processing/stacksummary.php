@@ -26,7 +26,7 @@ else {
 }
 $projectId=$_POST['projectId'];
 
-$javascript="<script src='js/viewer.js'></script>\n";
+$javascript="<script src='../js/viewer.js'></script>\n";
 
 writeTop("Stack Report","Stack Summary Page", $javascript);
 

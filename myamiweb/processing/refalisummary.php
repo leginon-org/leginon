@@ -8,11 +8,11 @@
  *	List of the reference-based alignment runs
  */
 
-require ('inc/leginon.inc');
-require ('inc/particledata.inc');
-require ('inc/project.inc');
-require ('inc/viewer.inc');
-require ('inc/processing.inc');
+require "inc/leginon.inc";
+require "inc/particledata.inc";
+require "inc/project.inc";
+require "inc/viewer.inc";
+require "inc/processing.inc";
   
 // check if coming directly from a session
 $expId = $_GET['expId'];
@@ -26,7 +26,7 @@ else {
 }
 $projectId=$_POST['projectId'];
 
-$javascript="<script src='js/viewer.js'></script>\n";
+$javascript="<script src='../js/viewer.js'></script>\n";
 
 writeTop("Reference-Based Alignment Summary","Reference-Based Alignment Summary", $javascript);
 

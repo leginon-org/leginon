@@ -8,13 +8,13 @@
  *  Simple viewer to view a image using mrcmodule
  */
 
-require ('inc/leginon.inc');
-require ('inc/particledata.inc');
-require ('inc/project.inc');
-require ('inc/viewer.inc');
-require ('inc/processing.inc');
-require ('inc/ssh.inc');
-require ('inc/appionloop.inc');
+require "inc/leginon.inc";
+require "inc/particledata.inc";
+require "inc/project.inc";
+require "inc/viewer.inc";
+require "inc/processing.inc";
+require "inc/ssh.inc";
+require "inc/appionloop.inc";
   
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -43,7 +43,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   // --- find hosts to run Manual Picker
 
   $javafunctions="
-        <script src='js/viewer.js'></script>
+        <script src='../js/viewer.js'></script>
         <script LANGUAGE='JavaScript'>
                  function enabledtest(){
                          if (document.viewerform.testimage.checked){

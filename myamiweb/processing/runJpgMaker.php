@@ -8,13 +8,13 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require ('inc/leginon.inc');
-require ('inc/particledata.inc');
-require ('inc/project.inc');
-require ('inc/viewer.inc');
-require ('inc/processing.inc');
-require ('inc/ssh.inc');
-require ('inc/appionloop.inc');
+require "inc/leginon.inc";
+require "inc/particledata.inc";
+require "inc/project.inc";
+require "inc/viewer.inc";
+require "inc/processing.inc";
+require "inc/ssh.inc";
+require "inc/appionloop.inc";
  
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -46,7 +46,7 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 
 	$particle=new particleData;
 	$javascript="
-	<script src='js/viewer.js'></script>
+	<script src='../js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
 		 function enabledtest(){
 			 if (document.viewerform.testimage.checked){
@@ -77,10 +77,10 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 			 newwindow.document.write('<HTML><BODY>');
 			 if (infoname=='runid'){
 				 newwindow.document.write('Specifies the name associated with the Template Correlator results unique to the specified session and parameters.	An attempt to use the same run name for a session using different Template Correlator parameters will result in an error.');
-			 }
-			 newwindow.document.write('</BODY></HTML>');
-			 newwindow.document.close();
-		 }
+			}
+			newwindow.document.write('</BODY></HTML>');
+			newwindow.document.close();
+		}
 	</SCRIPT>\n";
 	$javascript.=appionLoopJavaCommands();
 	writeTop($title,$heading,$javascript);
@@ -231,12 +231,7 @@ function writeTestResults($testdir,$filelist){
 function displayTestResults($testimage,$imgdir,$files){
 	echo "<CENTER>\n";
 	echo"<form name='viewerform' method='POST' ACTION='$formAction'>\n";
-//	$formAction=$_SERVER['PHP_SELF'];	
-//	$javascript="<script src='js/viewer.js'></script>\n";
-//	writeTop("Mask Maker Test","Mask Maker Test Results",$javascript);
-
-//
-        $numfiles=count($files);
+	$numfiles=count($files);
 	$prefix = '';
 	$n = 0;
 
@@ -248,7 +243,7 @@ function displayTestResults($testimage,$imgdir,$files){
 	$process= ($_POST['process']) ? $_POST['process'] : '';
 	// go directly to a particular image number
 	if ($_POST['imgjump']) {
-	        $imgindx=$_POST['imgjump']-1;
+		$imgindx=$_POST['imgjump']-1;
 		// make sure it's within range
 		if ($imgindx < 0) $imgindx=0;
 		elseif ($imgindx > $numfiles-1) $imgindx=$numfiles-1;
@@ -259,14 +254,14 @@ function displayTestResults($testimage,$imgdir,$files){
 	        if ($imlst=='Back') {
 				$imgindx--;
 				if ($imgindx < 0) {
-				        echo "<FONT COLOR='RED'> At beginning of image list</FONT><BR>\n";
+					echo "<FONT COLOR='RED'> At beginning of image list</FONT><BR>\n";
 					$imgindx=0;
 					$imgname=$files[$imgindx];
 				}
 				$imgname=$files[$imgindx];
 		}
 		elseif ($imlst=='Next') {
-			        $imgindx++;
+				$imgindx++;
 				if ($imgindx > $numfiles-1) {
 					$imgindx=$numfiles-1;
 					$imgname=$files[$imgindx];

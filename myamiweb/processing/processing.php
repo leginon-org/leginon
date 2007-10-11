@@ -28,7 +28,7 @@ else {
 }
 $projectId=$_POST['projectId'];
 
-writeTop("Appion Data Processing","Appion Data Processing", "<script src='js/viewer.js'></script>");
+writeTop("Appion Data Processing","Appion Data Processing", "<script src='../js/viewer.js'></script>");
 
 echo"
 <TABLE>

@@ -8,13 +8,13 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require ('inc/leginon.inc');
-require ('inc/particledata.inc');
-require ('inc/project.inc');
-require ('inc/viewer.inc');
-require ('inc/processing.inc');
-require ('inc/ssh.inc');
-require ('inc/appionloop.inc');
+require "inc/leginon.inc";
+require "inc/particledata.inc";
+require "inc/project.inc";
+require "inc/viewer.inc";
+require "inc/processing.inc";
+require "inc/ssh.inc";
+require "inc/appionloop.inc";
   
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -43,7 +43,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	// --- find hosts to run Dog Picker
 
 	$javafunctions="
-	<script src='js/viewer.js'></script>
+	<script src='../js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
 	   function enabledtest(){
          if (document.viewerform.testimage.checked){

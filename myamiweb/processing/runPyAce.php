@@ -8,13 +8,13 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require ('inc/leginon.inc');
-require ('inc/project.inc');
-require ('inc/viewer.inc');
-require ('inc/processing.inc');
-require ('inc/appionloop.inc');
-require ('inc/ctf.inc');
-//require ('inc/ssh.inc');
+require "inc/leginon.inc";
+require "inc/project.inc";
+require "inc/viewer.inc";
+require "inc/processing.inc";
+require "inc/appionloop.inc";
+require "inc/ctf.inc";
+//require "inc/ssh.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -178,7 +178,7 @@ function createPyAceForm($extra=false) {
 
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$javafunctions="
-	<script src='js/viewer.js'></script>
+	<script src='../js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
 		function enabledf(){
 			 if (document.viewerform.nominalcheck.checked){

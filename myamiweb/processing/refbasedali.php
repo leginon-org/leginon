@@ -8,11 +8,11 @@
  *      Form for starting a reference-based alignment of a stack
  */
 
-require ('inc/leginon.inc');
-require ('inc/project.inc');
-require ('inc/particledata.inc');
-require ('inc/viewer.inc');
-require ('inc/processing.inc');
+require "inc/leginon.inc";
+require "inc/project.inc";
+require "inc/particledata.inc";
+require "inc/viewer.inc";
+require "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -79,7 +79,7 @@ function createTemplateForm() {
     }
     $templatetable.="</TABLE>\n";
   }
-  $javafunctions="<script src='js/viewer.js'></script>\n";
+  $javafunctions="<script src='../js/viewer.js'></script>\n";
   writeTop("Template Correlator Launcher","Automated Particle Selection with Template Correlator",$javafunctions);
   echo"
   <FORM NAME='viewerform' method='POST' ACTION='$formAction'>
@@ -135,7 +135,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
   // --- get list of users
   $users[]=glander;
   
-  $javascript="<script src='js/viewer.js'></script>";
+  $javascript="<script src='../js/viewer.js'></script>";
 
   writeTop($title,$heading,$javascript);
   // write out errors, if any came up:

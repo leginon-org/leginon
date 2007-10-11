@@ -34,7 +34,7 @@ function createClassifierSummary() {
 	}
 	$projectId=$_POST['projectId'];
 
-	$javascript="<script src='js/viewer.js'></script>\n";
+	$javascript="<script src='../js/viewer.js'></script>\n";
 
 	writeTop("NoRef Class Report","Reference-free Classification Summary Page", $javascript);
 

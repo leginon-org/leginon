@@ -50,7 +50,7 @@ function createClassifierForm($extra=false, $title='Classifier.py Launcher', $he
 	// --- get list of users
 	$users[]=glander;
 	
-	$javascript="<script src='js/viewer.js'></script>";
+	$javascript="<script src='../js/viewer.js'></script>";
 
 	writeTop($title,$heading,$javascript);
 	// write out errors, if any came up:
