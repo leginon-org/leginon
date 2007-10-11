@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.45.1"
+   sodipodi:docbase="/home/vossman/raid"
+   sodipodi:docname="web-buttons.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   inkscape:export-filename="/home/vossman/raid/web-buttons.png"
+   inkscape:export-xdpi="31.18"
+   inkscape:export-ydpi="31.18">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1"
+     inkscape:cx="375"
+     inkscape:cy="416.05641"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:window-width="1280"
+     inkscape:window-height="950"
+     inkscape:window-x="0"
+     inkscape:window-y="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g13895"
+       transform="translate(0,4.7999954)"
+       inkscape:export-filename="/home/vossman/raid/button-keep.png"
+       inkscape:export-xdpi="49.889999"
+       inkscape:export-ydpi="49.889999">
+      <path
+         transform="translate(69.5,166.99999)"
+         d="M 232.52272,451.8849 C 226.91987,457.48776 139.08013,457.48776 133.47728,451.88491 C 127.87442,446.28205 127.87442,358.44232 133.47728,352.83946 C 139.08013,347.2366 226.91987,347.2366 232.52272,352.83946 C 238.12558,358.44232 238.12558,446.28205 232.52272,451.8849 z "
+         inkscape:randomized="0"
+         inkscape:rounded="0.08"
+         inkscape:flatsided="true"
+         sodipodi:arg2="1.5707963"
+         sodipodi:arg1="0.78539816"
+         sodipodi:r2="49.52272"
+         sodipodi:r1="70.035706"
+         sodipodi:cy="402.36218"
+         sodipodi:cx="183"
+         sodipodi:sides="4"
+         id="path3136"
+         style="opacity:1;fill:#5bc140;fill-opacity:1;stroke:#000000;stroke-width:8;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.15686275"
+         sodipodi:type="star" />
+      <path
+         id="path8966"
+         d="M 212.73253,558.39763 L 236.48255,552.52377 L 243.11046,574.84444 L 286.74421,530.5947 L 292.26747,530.98629 L 242.00581,608.12964 L 212.73253,558.39763 z "
+         style="fill:#eeeeee;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.15686275" />
+    </g>
+    <g
+       id="g13899"
+       transform="translate(0,7.1999969)"
+       inkscape:export-filename="/home/vossman/raid/button-reject.png"
+       inkscape:export-xdpi="49.889999"
+       inkscape:export-ydpi="49.889999">
+      <path
+         transform="translate(69.5,288.00001)"
+         d="M 232.52272,451.8849 C 226.91987,457.48776 139.08013,457.48776 133.47728,451.88491 C 127.87442,446.28205 127.87442,358.44232 133.47728,352.83946 C 139.08013,347.2366 226.91987,347.2366 232.52272,352.83946 C 238.12558,358.44232 238.12558,446.28205 232.52272,451.8849 z "
+         inkscape:randomized="0"
+         inkscape:rounded="0.08"
+         inkscape:flatsided="true"
+         sodipodi:arg2="1.5707963"
+         sodipodi:arg1="0.78539816"
+         sodipodi:r2="49.52272"
+         sodipodi:r1="70.035706"
+         sodipodi:cy="402.36218"
+         sodipodi:cx="183"
+         sodipodi:sides="4"
+         id="path3138"
+         style="opacity:1;fill:#c13f3f;fill-opacity:1;stroke:#000000;stroke-width:8;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.15686275"
+         sodipodi:type="star" />
+      <path
+         sodipodi:nodetypes="ccczcczcczccz"
+         d="M 260.10356,690.4274 C 260.10357,686.27644 290.07372,672.54688 290.69779,669.7039 C 282.28474,667.79726 274.96871,652.76107 273.15829,652.1644 C 270.31531,652.78847 256.05157,683.72774 252.43479,682.75862 C 248.495,681.70296 234.55427,652.65805 231.71128,652.03398 C 229.81234,660.41793 214.75506,667.79676 214.17179,669.57348 C 214.79585,672.41646 244.89643,686.03824 244.89643,690.29698 C 244.89643,694.60201 214.92628,708.17749 214.30221,711.02048 C 222.68617,712.91943 230.06496,727.9767 231.84171,728.55998 C 234.68469,727.9359 249.15159,697.96575 252.56521,697.96575 C 255.98964,697.96576 270.44572,728.06633 273.28871,728.6904 C 275.19537,720.27731 290.23152,712.96137 290.82821,711.1509 C 290.20413,708.30792 260.10356,694.83476 260.10356,690.4274 z "
+         style="fill:#eeeeee;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.15686275"
+         id="path9941" />
+    </g>
+    <g
+       id="g13891"
+       transform="translate(0,2.3999939)"
+       inkscape:export-filename="/home/vossman/raid/button-back.png"
+       inkscape:export-xdpi="49.889999"
+       inkscape:export-ydpi="49.889999">
+      <path
+         transform="translate(69.5,46.00003)"
+         d="M 232.52272,451.8849 C 226.91987,457.48776 139.08013,457.48776 133.47728,451.88491 C 127.87442,446.28205 127.87442,358.44232 133.47728,352.83946 C 139.08013,347.2366 226.91987,347.2366 232.52272,352.83946 C 238.12558,358.44232 238.12558,446.28205 232.52272,451.8849 z "
+         inkscape:randomized="0"
+         inkscape:rounded="0.08"
+         inkscape:flatsided="true"
+         sodipodi:arg2="1.5707963"
+         sodipodi:arg1="0.78539816"
+         sodipodi:r2="49.52272"
+         sodipodi:r1="70.035706"
+         sodipodi:cy="402.36218"
+         sodipodi:cx="183"
+         sodipodi:sides="4"
+         id="path3134"
+         style="opacity:1;fill:#407cc0;fill-opacity:1;stroke:#000000;stroke-width:8;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.15686275"
+         sodipodi:type="star" />
+      <path
+         transform="matrix(-0.8523794,0,0,0.6506489,637.60459,154.03326)"
+         d="M 417.83753,492.48076 C 415.75291,491.2772 415.75291,413.44717 417.83753,412.24361 C 419.92215,411.04005 487.32494,449.95507 487.32494,452.36218 C 487.32494,454.7693 419.92215,493.68431 417.83753,492.48076 z "
+         inkscape:randomized="0"
+         inkscape:rounded="0.03"
+         inkscape:flatsided="true"
+         sodipodi:arg2="3.1415927"
+         sodipodi:arg1="2.0943951"
+         sodipodi:r2="23.16247"
+         sodipodi:r1="46.32494"
+         sodipodi:cy="452.36218"
+         sodipodi:cx="441"
+         sodipodi:sides="3"
+         id="path10961"
+         style="opacity:1;fill:#eeeeee;fill-opacity:1;stroke:#000000;stroke-width:5.37118578;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.15343915"
+         sodipodi:type="star" />
+    </g>
+    <g
+       id="g13903"
+       transform="translate(0,9.5999832)"
+       inkscape:export-filename="/home/vossman/raid/button-next.png"
+       inkscape:export-xdpi="49.889999"
+       inkscape:export-ydpi="49.889999">
+      <path
+         transform="translate(69.5,409.00001)"
+         d="M 232.52272,451.8849 C 226.91987,457.48776 139.08013,457.48776 133.47728,451.88491 C 127.87442,446.28205 127.87442,358.44232 133.47728,352.83946 C 139.08013,347.2366 226.91987,347.2366 232.52272,352.83946 C 238.12558,358.44232 238.12558,446.28205 232.52272,451.8849 z "
+         inkscape:randomized="0"
+         inkscape:rounded="0.08"
+         inkscape:flatsided="true"
+         sodipodi:arg2="1.5707963"
+         sodipodi:arg1="0.78539816"
+         sodipodi:r2="49.52272"
+         sodipodi:r1="70.035706"
+         sodipodi:cy="402.36218"
+         sodipodi:cx="183"
+         sodipodi:sides="4"
+         id="path3140"
+         style="opacity:1;fill:#407cc0;fill-opacity:1;stroke:#000000;stroke-width:8;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.15686275"
+         sodipodi:type="star" />
+      <path
+         transform="matrix(0.8523794,0,0,0.6506489,-132.60459,517.03324)"
+         d="M 417.83753,492.48076 C 415.75291,491.2772 415.75291,413.44717 417.83753,412.24361 C 419.92215,411.04005 487.32494,449.95507 487.32494,452.36218 C 487.32494,454.7693 419.92215,493.68431 417.83753,492.48076 z "
+         inkscape:randomized="0"
+         inkscape:rounded="0.03"
+         inkscape:flatsided="true"
+         sodipodi:arg2="3.1415927"
+         sodipodi:arg1="2.0943951"
+         sodipodi:r2="23.16247"
+         sodipodi:r1="46.32494"
+         sodipodi:cy="452.36218"
+         sodipodi:cx="441"
+         sodipodi:sides="3"
+         id="path12905"
+         style="opacity:1;fill:#eeeeee;fill-opacity:1;stroke:#000000;stroke-width:5.37118578;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.15343915"
+         sodipodi:type="star" />
+    </g>
+    <g
+       id="g13887"
+       transform="translate(0,-7.6293945e-6)"
+       inkscape:export-filename="/home/vossman/raid/button-first.png"
+       inkscape:export-xdpi="37.419998"
+       inkscape:export-ydpi="37.419998">
+      <path
+         transform="translate(69.5,-74.999992)"
+         d="M 232.52272,451.8849 C 226.91987,457.48776 139.08013,457.48776 133.47728,451.88491 C 127.87442,446.28205 127.87442,358.44232 133.47728,352.83946 C 139.08013,347.2366 226.91987,347.2366 232.52272,352.83946 C 238.12558,358.44232 238.12558,446.28205 232.52272,451.8849 z "
+         inkscape:randomized="0"
+         inkscape:rounded="0.08"
+         inkscape:flatsided="true"
+         sodipodi:arg2="1.5707963"
+         sodipodi:arg1="0.78539816"
+         sodipodi:r2="49.52272"
+         sodipodi:r1="70.035706"
+         sodipodi:cy="402.36218"
+         sodipodi:cx="183"
+         sodipodi:sides="4"
+         id="path2162"
+         style="opacity:1;fill:#407cc0;fill-opacity:1;stroke:#000000;stroke-width:8;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.15686275"
+         sodipodi:type="star" />
+      <path
+         id="path12907"
+         d="M 220.00713,300.18702 C 218.64933,300.18702 217.28529,300.48088 217.22643,301.03943 C 217.10873,302.15656 217.10871,352.58239 217.22643,353.6995 C 217.34414,354.81663 222.67013,354.81665 222.78783,353.6995 C 222.84522,353.15482 222.87833,340.8118 222.87976,328.25345 C 228.66655,332.97566 264.35456,354.45815 265.55546,353.73107 C 265.93965,353.49846 266.2245,348.87218 266.38278,342.49187 C 276.49763,348.57415 286.26488,354.10459 286.88183,353.73107 C 288.18854,352.93991 288.18854,301.79899 286.88183,301.00786 C 286.26488,300.63434 276.49763,306.16478 266.38278,312.24706 C 266.2245,305.86676 265.93965,301.24046 265.55546,301.00786 C 264.35456,300.28078 228.66654,321.76328 222.87976,326.48548 C 222.87833,313.92653 222.84523,301.58415 222.78783,301.03943 C 222.72898,300.48087 221.36494,300.18702 220.00713,300.18702 z "
+         style="opacity:1;fill:#eeeeee;fill-opacity:1;stroke:#000000;stroke-width:3.44776011;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.15343915" />
+    </g>
+    <g
+       id="g13907"
+       transform="translate(0,12)"
+       inkscape:export-filename="/home/vossman/raid/button-last.png"
+       inkscape:export-xdpi="37.419998"
+       inkscape:export-ydpi="37.419998">
+      <path
+         transform="translate(69.5,530)"
+         d="M 232.52272,451.8849 C 226.91987,457.48776 139.08013,457.48776 133.47728,451.88491 C 127.87442,446.28205 127.87442,358.44232 133.47728,352.83946 C 139.08013,347.2366 226.91987,347.2366 232.52272,352.83946 C 238.12558,358.44232 238.12558,446.28205 232.52272,451.8849 z "
+         inkscape:randomized="0"
+         inkscape:rounded="0.08"
+         inkscape:flatsided="true"
+         sodipodi:arg2="1.5707963"
+         sodipodi:arg1="0.78539816"
+         sodipodi:r2="49.52272"
+         sodipodi:r1="70.035706"
+         sodipodi:cy="402.36218"
+         sodipodi:cx="183"
+         sodipodi:sides="4"
+         id="path3142"
+         style="opacity:1;fill:#407cc0;fill-opacity:1;stroke:#000000;stroke-width:8;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.15686275"
+         sodipodi:type="star" />
+      <path
+         id="path13885"
+         d="M 284.99288,905.18702 C 286.35068,905.18702 287.71472,905.48088 287.77358,906.03943 C 287.89128,907.15656 287.8913,957.58239 287.77358,958.6995 C 287.65587,959.81663 282.32988,959.81665 282.21218,958.6995 C 282.15479,958.15482 282.12168,945.8118 282.12025,933.25345 C 276.33346,937.97566 240.64545,959.45815 239.44455,958.73107 C 239.06036,958.49846 238.77551,953.87218 238.61723,947.49187 C 228.50238,953.57415 218.73513,959.10459 218.11818,958.73107 C 216.81147,957.93991 216.81147,906.79899 218.11818,906.00786 C 218.73513,905.63434 228.50238,911.16478 238.61723,917.24706 C 238.77551,910.86676 239.06036,906.24046 239.44455,906.00786 C 240.64545,905.28078 276.33347,926.76328 282.12025,931.48548 C 282.12168,918.92653 282.15478,906.58415 282.21218,906.03943 C 282.27103,905.48087 283.63507,905.18702 284.99288,905.18702 z "
+         style="opacity:1;fill:#eeeeee;fill-opacity:1;stroke:#000000;stroke-width:3.44776011;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.15343915" />
+    </g>
+    <path
+       style="fill:#5bc140;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.15686275"
+       d="M 349.23253,567.69763 L 372.98255,561.82377 L 379.61046,584.14444 L 423.24421,539.8947 L 428.76747,540.28629 L 378.50581,617.42964 L 349.23253,567.69763 z "
+       id="path2179"
+       inkscape:export-filename="/home/vossman/raid/icon-check.png"
+       inkscape:export-xdpi="26.780262"
+       inkscape:export-ydpi="26.780262" />
+    <path
+       id="path2185"
+       style="fill:#c13f3f;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.15686275"
+       d="M 392.60356,697.1274 C 392.60357,692.97644 422.57372,679.24688 423.19779,676.4039 C 414.78474,674.49726 407.46871,659.46107 405.65829,658.8644 C 402.81531,659.48847 388.55157,690.42774 384.93479,689.45862 C 380.995,688.40296 367.05427,659.35805 364.21128,658.73398 C 362.31234,667.11793 347.25506,674.49676 346.67179,676.27348 C 347.29585,679.11646 377.39643,692.73824 377.39643,696.99698 C 377.39643,701.30201 347.42628,714.87749 346.80221,717.72048 C 355.18617,719.61943 362.56496,734.6767 364.34171,735.25998 C 367.18469,734.6359 381.65159,704.66575 385.06521,704.66575 C 388.48964,704.66576 402.94572,734.76633 405.78871,735.3904 C 407.69537,726.97731 422.73152,719.66137 423.32821,717.8509 C 422.70413,715.00792 392.60356,701.53476 392.60356,697.1274 z "
+       sodipodi:nodetypes="ccczcczcczccz"
+       inkscape:export-filename="/home/vossman/raid/icon-cross.png"
+       inkscape:export-xdpi="26.780262"
+       inkscape:export-ydpi="26.780262" />
+  </g>
+</svg>
