@@ -77,7 +77,6 @@ function createTemplateForm() {
 				$startval = (int) $templaterundata[range_start];
 				$endval = (int) $templaterundata[range_end];
 				$incrval = (int) $templaterundata[range_incr];
-				echo "<BR/>\n";
 				// create the javascript functions to enable the templates
 				$javafunctions.="function enable".$checkboxname."() {
 						 if (document.viewerform.$checkboxname.checked){
