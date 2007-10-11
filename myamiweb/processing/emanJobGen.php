@@ -170,7 +170,8 @@ function stackModelForm($extra=False) {
       $sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
       echo "<TR><TD COLSPAN=2>\n";
       $modelvals="$model[DEF_id]|--|$model[name]|--|$model[boxsize]|--|$sym[symmetry]";
-      echo "<INPUT TYPE='RADIO' NAME='model' VALUE='$modelvals'><B>Use Model ID: $model[DEF_id]</B><BR>\n";
+      echo "<INPUT TYPE='RADIO' NAME='model' VALUE='$modelvals'><B>Use Model ID: $model[DEF_id]</B>\n";
+      echo "<INPUT TYPE='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><BR>\n";
       foreach ($pngfiles as $snapshot) {
   $snapfile = $model['path'].'/'.$snapshot;
   echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";

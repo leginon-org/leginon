@@ -8,9 +8,9 @@
  *      Form for starting a reference-based alignment of a stack
  */
 
+require "inc/particledata.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
-require "inc/particledata.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
 

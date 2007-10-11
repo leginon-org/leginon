@@ -8,9 +8,9 @@
  *      Simple viewer to view a image using mrcmodule
  */
 
-require ('inc/leginon.inc');
+require 'inc/particledata.inc';
+require 'inc/leginon.inc';
 require ('inc/project.inc');
-require ('inc/particledata.inc');
 require ('inc/viewer.inc');
 require ('inc/processing.inc');
 require ('inc/ctf.inc');
@@ -28,10 +28,21 @@ else {
 function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $heading='Upload an Initial Model') {
   // check if coming directly from a session
   $expId=$_GET['expId'];
+  $rescale=$_GET['rescale'];
+
+  $particle = new particledata();
+
+  // find out if rescaling an existing initial model
+  if ($rescale) {
+    $modelid=$_GET['modelid'];
+    $modelinfo = $particle->getInitModelInfo($modelid);
+  }
+
   if ($expId){
     $sessionId=$expId;
     $projectId=getProjectFromExpId($expId);
     $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+    if ($rescale) $formAction .="&rescale=TRUE&modelid=$modelid";
   }
   else {
     $sessionId=$_POST['sessionId'];
@@ -39,8 +50,6 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
   }
   $projectId=$_POST['projectId'];
   
-  $particle = new particledata();
-
   writeTop($title,$heading,$javascript);
   // write out errors, if any came up:
   if ($extra) {
@@ -52,8 +61,9 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
   $sessioninfo=$sessiondata['info'];
   
   if (!empty($sessioninfo)) {
-    $sessionname=$sessioninfo['Name'];
-    echo"<INPUT TYPE='hidden' NAME='sessionname' VALUE='$sessionname'>\n";
+    $sessionpath=$sessioninfo['Image path'];
+    $sessionpath=ereg_replace("leginon","appion",$sessionpath);
+    $sessionpath=ereg_replace("rawdata","models/",$sessionpath);
   }
   
   // Set any existing parameters in form
@@ -64,6 +74,7 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
   $model = ($_POST['model']) ? $_POST['model'] : '';
   $modelname = ($_POST['modelname']) ? $_POST['modelname'] : '';
   $description = $_POST['description'];
+  $newmodel = ($_POST['newmodel']) ? $_POST['newmodel'] : $sessionpath;
   
   $syms = $particle->getSymmetries();
   echo"
@@ -74,36 +85,61 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
     <TABLE>
     <TR>
       <TD VALIGN='TOP'>
-      <BR/>
+      <BR/>\n";
+  if ($rescale) {
+    echo "
+      <B>New Model Name:</B><BR>
+      <INPUT TYPE='text' NAME='newmodel' VALUE='$newmodel' SIZE='50'><BR>
+    ";
+  }
+  else {
+    echo"
       <B>Model Root Name:</B><BR/>
       <INPUT TYPE='text' NAME='modelname' VALUE='$modelname' SIZE='50'><BR>
-      <INPUT TYPE='file' NAME='model' VALUE='$model' SIZE='50'/><BR/>
+      <INPUT TYPE='file' NAME='model' VALUE='$model' SIZE='50'/><BR/>\n";
+  }
+  echo"
       <P>
       <B>Model Description:</B><BR/>
       <TEXTAREA NAME='description' ROWS='3' COLS='65'>$description</TEXTAREA>
-      <P>
       </TD>
     </TR>
     <TR>
       <TD VALIGN='TOP' CLASS='tablebg'>
       <P>
-      Model Symmetry:
+      <B>Model Symmetry:</B>\n";
+  if ($rescale) {
+    $symid=$modelinfo['REF|ApSymmetryData|symmetry'];
+    $symmetry=$particle->getSymInfo($symid);
+    $res = $modelinfo['resolution'];
+    $apix = $modelinfo['pixelsize'];
+    echo "$symmetry[symmetry]<BR>
+    <INPUT TYPE='hidden' NAME='sym' VALUE='$symid'>
+    <B>Model Resolution:</B> $res<BR>
+    <INPUT TYPE='hidden' NAME='res' VALUE='$res' SIZE='5'>
+    <B>Pixel Size:</B> $apix<BR>
+    <INPUT TYPE='hidden' NAME='apix' SIZE='5' VALUE='$apix'>\n";
+  }
+  else {
+    echo"
       <SELECT NAME='sym'>
       <OPTION VALUE=''>Select One</OPTION>\n";
-  foreach ($syms as $sym) {
-    echo "<OPTION VALUE='$sym[DEF_id]'";
-    if ($sym['DEF_id']==$_POST['sym']) echo " SELECTED";
-    echo ">$sym[symmetry]";
-    if ($sym['symmetry']=='C1') echo " (no symmetry)";
-    echo "</OPTION>\n";
-  }
-      echo"
+    foreach ($syms as $sym) {
+      echo "<OPTION VALUE='$sym[DEF_id]'";
+      if ($sym['DEF_id']==$_POST['sym']) echo " SELECTED";
+      echo ">$sym[symmetry]";
+      if ($sym['symmetry']=='C1') echo " (no symmetry)";
+      echo "</OPTION>\n";
+    }
+    echo"
       </SELECT>
       <P>
       <INPUT TYPE='text' NAME='res' VALUE='$res' SIZE='5'> Model Resolution
       <BR>
       <INPUT TYPE='text' NAME='apix' SIZE='5' VALUE='$apix'>
-      Pixel Size <FONT SIZE='-2'>(in &Aring;ngstroms per pixel)</FONT>
+      Pixel Size <FONT SIZE='-2'>(in &Aring;ngstroms per pixel)</FONT>\n";
+  }
+  echo "
       <P>
       <B>Snapshot Options:</B>
       <BR>
@@ -139,16 +175,13 @@ function runUploadModel() {
   //make sure a model root was entered
   $model=$_POST['model'];
   if ($_POST['modelname']) $model=$_POST['modelname'];
+  if ($_POST['newmodel']) $model=$_POST['newmodel'];
   if (!$model) createUploadModelForm("<B>ERROR:</B> Enter a root name of the model");
   
   //make sure a session was selected
   $description=$_POST['description'];
   if (!$description) createUploadModelForm("<B>ERROR:</B> Enter a brief description of the model");
 
-  //make sure a session was selected
-  $session=$_POST['sessionname'];
-  if (!$session) createUploadModelForm("<B>ERROR:</B> Select an experiment session");
-  
   //make sure a resolution was provided
   $res=$_POST['res'];
   if (!$res) createUploadModelForm("<B>ERROR:</B> Enter the model resolution");

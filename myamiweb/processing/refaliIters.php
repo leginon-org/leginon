@@ -8,8 +8,8 @@
  *	List of the reference-based alignment runs
  */
 
-require ('inc/leginon.inc');
 require ('inc/particledata.inc');
+require ('inc/leginon.inc');
 require ('inc/project.inc');
 require ('inc/viewer.inc');
 require ('inc/processing.inc');

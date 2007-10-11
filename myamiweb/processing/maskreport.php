@@ -7,9 +7,9 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
+require('inc/particledata.inc');
 require('inc/leginon.inc');
 require('inc/project.inc');
-require('inc/particledata.inc');
 
 // --- Set  experimentId
 $lastId = $leginondata->getLastSessionId();
