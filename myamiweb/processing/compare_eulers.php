@@ -8,11 +8,11 @@
  *	compare particle alignment for 2 iterations
  */
 
-require ('../inc/leginon.inc');
-require ('inc/particledata.inc');
-require ('../inc/project.inc');
-require ('../inc/viewer.inc');
-require ('inc/processing.inc');
+require "inc/particledata.inc";
+require "inc/processing.inc";
+require "inc/leginon.inc";
+require "inc/viewer.inc";
+require "inc/project.inc";
 
 $reconId = $_REQUEST['reconId'];
 $iter1 = $_REQUEST['iter1'];

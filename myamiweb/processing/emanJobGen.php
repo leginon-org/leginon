@@ -8,11 +8,11 @@
  *      Create an Eman Job for submission to a cluster
  */
 
-require ('inc/processing.inc');
-require ('inc/viewer.inc');
-require ('inc/leginon.inc');
-require ('inc/particledata.inc');
-require ('inc/project.inc');
+require  "inc/particledata.inc";
+require  "inc/processing.inc";
+require  "inc/leginon.inc";
+require  "inc/viewer.inc";
+require  "inc/project.inc";
 
 if ($_POST['write']) {
   if (!$_POST['nodes']) jobForm("ERROR: No nodes specified, setting default=4");

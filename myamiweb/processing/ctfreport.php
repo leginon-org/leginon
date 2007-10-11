@@ -1,11 +1,12 @@
 <?php
-require('inc/ctf.inc');
-require('inc/util.inc');
-require('inc/leginon.inc');
+require "inc/ctf.inc";
+require "inc/util.inc";
+require "inc/leginon.inc";
+
 $ctf = new ctfdata();
 
 $defaultId= 1766;
-$sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
+$sessionId= ($_GET['Id']) ? $_GET['Id'] : $defaultId;
 $ace_params_fields = array ('acerun', 'display', 'stig', 'medium', 'df_override', 'edgethcarbon', 'edgethice', 'pfcarbon', 'pfice', 'overlap', 'fieldsize', 'resamplefr', 'drange', 'reprocess' );
 
 

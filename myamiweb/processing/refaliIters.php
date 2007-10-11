@@ -8,11 +8,11 @@
  *	List of the reference-based alignment runs
  */
 
-require ('inc/particledata.inc');
-require ('inc/leginon.inc');
-require ('inc/project.inc');
-require ('inc/viewer.inc');
-require ('inc/processing.inc');
+require "inc/particledata.inc";
+require "inc/processing.inc";
+require "inc/viewer.inc";
+require "inc/leginon.inc";
+require "inc/project.inc";
 	
 // check if refinement run is specified
 $refaliId = $_GET['refaliId'];

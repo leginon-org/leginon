@@ -8,13 +8,13 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
-require ('inc/particledata.inc');
-require ('inc/leginon.inc');
-require ('inc/project.inc');
-require ('inc/viewer.inc');
-require ('inc/processing.inc');
-require ('inc/ssh.inc');
-require ('inc/appionloop.inc');
+require "inc/particledata.inc";
+require "inc/viewer.inc";
+require "inc/processing.inc";
+require "inc/appionloop.inc";
+require "inc/leginon.inc";
+require "inc/project.inc";
+require "inc/ssh.inc";
  
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {

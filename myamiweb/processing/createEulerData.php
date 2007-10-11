@@ -1,6 +1,7 @@
 <?php
-	require('inc/particledata.inc');
-	require('inc/euler.inc');
+require "inc/particledata.inc";
+require "inc/euler.inc";
+
 	if (!$reconId=$_REQUEST['reconId']) {
 		if ($reconId || !$reconId=$argv[1])	{
 			echo "no reconId \n";

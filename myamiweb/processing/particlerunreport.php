@@ -1,14 +1,13 @@
 <?php
-require('inc/particledata.inc');
-require('inc/util.inc');
-require('inc/leginon.inc');
+require "inc/particledata.inc";
+require "inc/util.inc";
+require "inc/leginon.inc";
 
-$sessionId= $_GET[Id];
-$runId = $_GET[rId];
-//$runId = 76;
+$sessionId= $_GET['Id'];
+$runId = $_GET['rId'];
+
 $particle = new particledata();
 
-//$tempruns=array( $runId );
 ?>
 
 <html>
