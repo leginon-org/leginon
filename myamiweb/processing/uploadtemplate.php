@@ -58,6 +58,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
   $apix = ($_POST['apix']) ? $_POST['apix'] : '';
   $diam = ($_POST['diam']) ? $_POST['diam'] : '';
   $template = ($_POST['template']) ? $_POST['template'] : '';
+  $templatename = ($_POST['templatename']) ? $_POST['templatename'] : '';
   $description = $_POST['description'];
   
   echo"
@@ -71,6 +72,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
       <TD VALIGN='TOP'>
       <BR/>
       <B>Template Root Name (wild cards are valid):</B><BR/>
+      <INPUT TYPE='text' NAME='templatename' VALUE='$templatename' SIZE='50'/><BR/>
       <INPUT TYPE='file' NAME='template' VALUE='$template' SIZE='50'/><BR/>
       <FONT SIZE='-2'>Example: <I>/home/user/groEL-template*.mrc</I></FONT>
       <BR/>
@@ -117,6 +119,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 function runUploadTemplate() {
   //make sure a template root was entered
   $template=$_POST['template'];
+  if ($_POST['templatename']) $template=$_POST['templatename'];
   if (!$template) createUploadTemplateForm("<B>ERROR:</B> Enter a the root name of the template");
   
   //make sure a session was selected
