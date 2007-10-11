@@ -803,6 +803,19 @@ class particledata {
 		return $r[0]['count(DEF_id)'];
 	}
 
+  function listAllStackParticles ($stackId) {
+    $q="SELECT sp.`particleNumber`, db.`MRC|image`, "
+      ."p.`xcoord` , p.`ycoord` "
+      ."FROM  `ApStackParticlesData` sp "
+      ."LEFT JOIN ApParticleData p ON "
+      ."( sp.`REF|ApParticleData|particle` = p.`DEF_id` ) " 
+      ."LEFT JOIN dbemdata.AcquisitionImageData db ON "
+      ."( p.`dbemdata|AcquisitionImageData|image` = db.`DEF_id` ) " 
+      ."WHERE sp.`REF|ApStackData|stack`=$stackId";
+    $r = $this->mysql->getSQLResult($q);
+    return $r;
+  }
+
 	function getMsgPRejectParticlesInStack ($refinementDataId) {
 		$q = "SELECT particleNumber as p "
 				."FROM `ApParticleClassificationData` apcd "
