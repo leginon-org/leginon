@@ -29,7 +29,7 @@ if($projectdb) {
 <html>
 <head>
 <title><?php echo $title; ?> Mask Creation Results</title>
-<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
+<link rel="stylesheet" type="text/css" href="../css/viewer.css"> 
 <STYLE type="text/css">
 DIV.comment_section { text-align: justify; 
 		margin-top: 5px;

@@ -7,14 +7,14 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-include ("inc/jpgraph.php");
-include ("inc/jpgraph_line.php");
-include ("inc/jpgraph_scatter.php");
-include ("inc/jpgraph_bar.php");
-include ("inc/histogram.inc");
-require ("inc/ctf.inc");
-require ("inc/image.inc");
-require_once ("inc/leginon.inc");
+require "inc/particledata.inc";
+require "inc/jpgraph.php";
+require "inc/jpgraph_line.php";
+require "inc/jpgraph_scatter.php";
+require "inc/jpgraph_bar.php";
+require "inc/histogram.inc";
+require "inc/ctf.inc";
+require "inc/image.inc";
 
 $defaultId= 1766;
 $sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;

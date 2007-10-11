@@ -13,7 +13,7 @@ $particle = new particledata();
 <html>
 <head>
 <title>Mask Maker Run Report</title>
-<link rel="stylesheet" type="text/css" href="css/viewer.css">
+<link rel="stylesheet" type="text/css" href="../css/viewer.css">
 </head>
 <body>
 
