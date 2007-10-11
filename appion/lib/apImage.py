@@ -14,13 +14,9 @@ from numpy import ma
 #appion
 import apDisplay
 #pyami
-try:
-	from pyami import mrc
-	from pyami import imagefun
-	from pyami import convolver
-except:
-	apDisplay.printError("pymai is required, type 'usepythoncvs'")
-
+from pyami import mrc
+from pyami import imagefun
+from pyami import convolver
 
 def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, 
 		planeReg=True, median=0, invert=False, pixlimit=0):
@@ -29,17 +25,11 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0,
 	"""
 	simgarray = imgarray.copy()
 	simgarray = binImg(simgarray,bin)
-	if pixlimit > 0:
-		mean1 = ndimage.mean(simgarray)
-		std1 = ndimage.standard_deviation(simgarray)
-		upperbound = mean1 + pixlimit * std1
-		lowerbound = mean1 - pixlimit * std1
-		simgarray = numpy.where(simgarray > upperbound, upperbound, simgarray)
-		simgarray = numpy.where(simgarray < lowerbound, lowerbound, simgarray)
 	if median > 0:
 		simgarray = ndimage.median_filter(simgarray, size=median)
-	simgarray = lowPassFilter(simgarray,apix,bin,lowpass)
 	simgarray = highPassFilter(simgarray,apix,bin,highpass)
+	simgarray = pixelLimitFilter(simgarray, pixlimit)
+	simgarray = lowPassFilter(simgarray,apix,bin,lowpass)
 	if planeReg is True:
 		simgarray = planeRegression(simgarray)
 	if invert is True:
@@ -136,6 +126,22 @@ def invertImage(imgarray):
 def filterImg(imgarray,apix=1.0,rad=0.0,bin=1):
 	#TEMPORARY ALIAS FOR lowPassFilter
 	return lowPassFilter(imgarray,apix=apix,bin=1,radius=rad)
+
+
+def pixelLimitFilter(imgarray, pixlimit=0):
+	if pixlimit < 0.1:
+		return imgarray
+	mean1 = ndimage.mean(imgarray)
+	std1 = ndimage.standard_deviation(imgarray)
+	upperbound = mean1 + pixlimit * std1
+	lowerbound = mean1 - pixlimit * std1
+	print mean1,std1
+	imgarray2 = numpy.asarray(imgarray)
+	print imgarray2
+	imgarray2 = numpy.where(imgarray2 > upperbound, upperbound, imgarray2)
+	imgarray2 = numpy.where(imgarray2 < lowerbound, lowerbound, imgarray2)
+	print imgarray2
+	return imgarray2
 
 def lowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0):
 	"""
