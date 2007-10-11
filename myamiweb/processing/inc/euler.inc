@@ -239,7 +239,7 @@ function drawImage($locations,$map) {
 		$a = $locations[$i];
 		$x = 150+(9*rad2deg($a['x'])); 
 		$y = 20+(3*rad2deg($a['y']));
-		$squaresize = 15;
+		$squaresize = 25;
 		imagefilledellipse($image, $x, $y, $squaresize, $squaresize, $color);
 	}
 	return $image;

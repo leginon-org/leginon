@@ -23,10 +23,9 @@
 	//print_r($info);
 
 	if(!$iter) {
-		echo "Total Iter: $total_iter";
+		//echo "Total Iter: $total_iter";
 		$data = array();
-		for($i = 1; $i<$total_iter; $i++)
-		{
+		for($i = 1; $i<$total_iter; $i++) {
 			$stats = getData($reconId, $i,$i+1);
 			$data[] = rad2deg($stats->myMean); 
 		}
@@ -48,7 +47,7 @@
 		}
 	}
 	$end=getmicrotime();
-	echo "total time:".($end-$begin)."\n";
+	echo "total time: ".($end-$begin)." sec\n";
 
 //********************************************
 //********************************************
@@ -81,7 +80,7 @@
 	function getData($reconId, $iter1,$iter2) {
 		//query	
 		global $particle;
-		$r=$particle->getEulerStats($reconId, $iter1, $iter2);
+		$r = $particle->getEulerStats($reconId, $iter1, $iter2);
 		$diff = explode(",", $r[0]['difference']);
 
 //		print_r($r[0]['eulers']);
