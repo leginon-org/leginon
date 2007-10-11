@@ -188,7 +188,7 @@ if ($sessionId) {
     echo"</A><BR>
     <A HREF='runManualPicker.php?expId=$sessionId'>";
     if ($prtlruns==0) {echo "Manual Picking";}
-    else {echo "Edit Picks with Manual Picker";}
+    else {echo "Manually Edit Picking";}
     echo"</A>
     </TD>
   </TR>

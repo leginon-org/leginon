@@ -94,10 +94,9 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	createParticleLoopTable(0.7, 1.5);
 	$kfactor = ($_POST['kfactor']) ? $_POST['kfactor'] : "1.2";
 	echo "
+		<INPUT TYPE='text' NAME='kfactor' VALUE='$kfactor' SIZE='6'>&nbsp;
 		<A HREF=\"javascript:particleinfopopup('kfactor')\">
-		<B>K-factor:</A></B><BR>
-		<INPUT TYPE='text' NAME='kfactor' VALUE='$kfactor' SIZE='10'>&nbsp;
-		<FONT SIZE=-2><I>(slopiness)</I></FONT>
+		K-factor</A>&nbsp;<FONT SIZE=-2><I>(slopiness)</I></FONT>
 		<BR/><BR/>
 		<HR>
 		</TD>

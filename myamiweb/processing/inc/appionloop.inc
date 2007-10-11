@@ -293,11 +293,17 @@ function particleinfopopup(infoname){
 	if (infoname=='overlapmult'){
 		newwindow.document.write('The overlap multiple specifies the minimum distance allowed between two peaks. If two peaks are closer than overlapmult*particle diameter the only the larger of the two peaks is retained.');
 	}
+	if (infoname=='pixlimit'){
+		newwindow.document.write('Limit the values of the pixels to within this number of standard deviations from the mean. 0.0 turns this feature off.');
+	}
 	if (infoname=='kfactor'){
 		newwindow.document.write('The k-factor for dogpicker defines the slopiness in diameter of the picked particles. A k-factor of 1.00001 gives only the exact diameter (1.0 is not allowed), but a k-factor of 5.0 will pick a wide range of sizes.');
 	}
 	if (infoname=='invert'){
 		newwindow.document.write('Sometimes the template is inverted to the images or dogPicker needs inverted images in this case use the invert flag.');
+	}
+	if (infoname=='nojpegs'){
+		newwindow.document.write('Do NOT write out the summary jpegs for image assessor.');
 	}
 	newwindow.document.write('</BODY></HTML>');
 	newwindow.document.close();
@@ -316,12 +322,14 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	$maxthreshv = ($_POST['maxthresh']) ? $_POST['maxthresh'] : $defmaxthresh;
 	$lpv = ($_POST['lp'] || $_POST['process']) ? $_POST['lp'] : '5';
 	$hpv = ($_POST['hp'] || $_POST['process']) ? $_POST['hp'] : '600';
-	$binv = ($_POST['bin']) ? $_POST['bin'] : '4';
-	$medianv = ($_POST['median'] || $_POST['process']) ? $_POST['median'] : '2';
-	$maxpeaksv = ($_POST['maxpeaks']) ? $_POST['maxpeaks'] : '1500';
+	$binv = (int) ($_POST['bin']) ? $_POST['bin'] : '4';
+	$medianv = (int) ($_POST['median'] || $_POST['process']) ? $_POST['median'] : '2';
+	$pixlimitv = ($_POST['pixlimit'] || $_POST['process']) ? $_POST['pixlimit'] : '4.0';
+	$maxpeaksv = (int) ($_POST['maxpeaks']) ? $_POST['maxpeaks'] : '1500';
 	$maxsizev = ($_POST['maxsize']) ? $_POST['maxsize'] : '1.0';
 	$overlapmultv = ($_POST['overlapmult']) ? $_POST['overlapmult'] : '1.5';
 	$invertv = ($_POST['invert']=="on") ? "CHECKED" : "";
+	$nojpegsv = ($_POST['nojpegs']=="on") ? "CHECKED" : "";
 	$defocpairv = ($_POST['defocpair']=="on") ? "CHECKED" : "";
 	if ($defthresh != -1) {
 		echo "
@@ -356,6 +364,10 @@ High Pass</A> <FONT SIZE=-2><I>(in &Aring;ngstroms; 0 = off)</I></FONT><br/>
 <A HREF=\"javascript:particleinfopopup('median')\">
 Median</A> <FONT SIZE=-2><I>(in Pixels; 0 = off)</I></FONT><br/>
 
+<INPUT TYPE='text' NAME='pixlimit' VALUE='$pixlimitv' SIZE='4'>&nbsp;
+<A HREF=\"javascript:particleinfopopup('pixlimit')\">
+Pixel Limit</A> <FONT SIZE=-2><I>(in Standard Deviations; 0 = off)</I></FONT><br/>
+
 <INPUT TYPE='text' NAME='bin' VALUE='$binv' SIZE='4'>&nbsp;
 <A HREF=\"javascript:particleinfopopup('bin')\">
 Binning</A> <FONT SIZE=-2><I>(power of 2)</I></FONT><br/>
@@ -366,7 +378,7 @@ Binning</A> <FONT SIZE=-2><I>(power of 2)</I></FONT><br/>
 <A HREF=\"javascript:particleinfopopup('defocpair')\">
 Calculate shifts for defocal pairs</A><br/>
 <br/>
-<B>Advanced peak characteristics:</B><br/>";
+<B>Advanced options:</B><br/>";
 	if ($defthresh != -1) {
 		echo "
 
@@ -376,13 +388,19 @@ Maximum peak area multiple</A><br/>
 
 <INPUT TYPE='text' NAME='overlapmult' VALUE='$overlapmultv' SIZE='4'>&nbsp;
 <A HREF=\"javascript:particleinfopopup('overlapmult')\">
-Minimum peak overlap distance multiple</A><br/>";
+Minimum peak overlap distance multiple</A><br/>
+		";
+	} else {
+		echo "
+<INPUT TYPE='checkbox' NAME='nojpegs' $nojpegsv>&nbsp;
+<A HREF=\"javascript:particleinfopopup('nojpegs')\">
+Do NOT create summary peak jpegs</A><br/>
+		";
 	}
 	echo "
 <INPUT TYPE='checkbox' NAME='invert' $invertv>&nbsp;
 <A HREF=\"javascript:particleinfopopup('invert')\">
 Invert image density</A><br/>
-<br/>
 ";
 	echo "<!-- END Particle Loop Param -->";
 };
@@ -402,9 +420,11 @@ function parseParticleLoopParams ($type) {
 	$lp = $_POST[lp];
 	$hp = $_POST[hp];
 	$median = $_POST[median];
+	$pixlimit = $_POST[pixlimit];
 	$bin = $_POST[bin];
 	$diam = $_POST[diam];
 	$defocpair = ($_POST[defocpair]=="on") ? "1" : "0";
+	$nojpegs = ($_POST[nojpegs]=="on") ? "1" : "0";
 	$maxsize = $_POST[maxsize];
 	$overlapmult = $_POST[overlapmult];
 	$invert = ($_POST[invert]=="on") ? "1" : "0";
@@ -424,6 +444,8 @@ function parseParticleLoopParams ($type) {
 	if ($hp) $command.=" hp=$hp";
 	if ($bin) $command.=" bin=$bin";
 	if ($diam) $command.=" diam=$diam";
+	if ($pixlimit) $command.=" pixlimit=$pixlimit";
+	if ($nojpegs) $command.=" nojpegs";
 
 	return $command;
 }
