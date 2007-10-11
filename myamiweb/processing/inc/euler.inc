@@ -37,7 +37,11 @@ function calculatePoint($eulers) {
 	
 	
 	//mutliplication of the 3*3 matrix by the 1*3 vector
-	$loc = array('x'=>($p[0]*$v[0][0] + $p[1]*$v[0][1] + $p[2]*$v[0][2]),'y'=> ($p[0]*$v[1][0] + $p[1]*$v[1][1] + $p[2]*$v[1][2]), 'z'=>($p[0]*$v[2][0] + $p[1]*$v[2][1] + $p[2]*$v[2][2]));
+	$loc = array(
+		'x'=> ($p[0]*$v[0][0] + $p[1]*$v[0][1] + $p[2]*$v[0][2]),
+		'y'=> ($p[0]*$v[1][0] + $p[1]*$v[1][1] + $p[2]*$v[1][2]), 
+		'z'=> ($p[0]*$v[2][0] + $p[1]*$v[2][1] + $p[2]*$v[2][2]),
+	);
 	return $loc;//return the point
 }
 
@@ -224,19 +228,19 @@ function changePoint($euler,$max) {
 //returns a png
 function drawImage($locations,$map) {
 	$image = imagecreate(600, 600);
-	imagecolorallocate($image,0,0,0);
+	imagecolorallocate($image, 0, 0, 0);
 	for($i = 0; $i<count($locations); $i++) {
 		$index = $locations[$i]['x']*500*$locations[$i]['y'];
 		$maxi = max($map);
 		$freq = $map[$index]*225/($maxi/8);
 		if($freq>=225)
 			$freq = 225;
-		$color = imagecolorresolve($image,$freq,$freq,$freq);
+		$color = imagecolorresolve($image, $freq, $freq, $freq);
 		$a = $locations[$i];
-		$x =150+(9*rad2deg($a['x'])); 
-		$y =20+(3*rad2deg($a['y']));
-		$squaresize = 4;
-		imagefilledellipse($image,$x,$y,$squaresize,$squaresize,$color);
+		$x = 150+(9*rad2deg($a['x'])); 
+		$y = 20+(3*rad2deg($a['y']));
+		$squaresize = 15;
+		imagefilledellipse($image, $x, $y, $squaresize, $squaresize, $color);
 	}
 	return $image;
 }
