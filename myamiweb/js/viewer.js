@@ -545,7 +545,7 @@ function setdisplayfilename(viewname, state) {
 }
 
 function popUpMap(URL) {
-	window.open(URL, "map", "left=0,top=0,height=512,width=512,toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes")
+	window.open(URL, "map"+window.name, "left=0,top=0,height=512,width=512,toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes")
 }
 
 function popUpW(URL) {
