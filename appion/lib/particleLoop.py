@@ -116,6 +116,8 @@ class ParticleLoop(appionLoop.AppionLoop):
 				threading.Thread(target=apPeaks.createPeakJpeg, args=(imgdata, self.peaktree, self.params)).start()
 			else:
 				apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)
+		else:
+			apDisplay.printWarning("Skipping JPEG creation")
 		if self.params['defocpair'] is True:
 			self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params)
 
