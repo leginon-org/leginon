@@ -213,17 +213,16 @@ if ($sessionId) {
   </TR>
   <TR>\n";
   if ($assessedimgs==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
-  else {
-    if ($assessedimgs < $totimgs) {$bgcolor=$progcolor; $gifimg=$donepic;}
-    else {$bgcolor=$donecolor; $gifimg=$donepic;}
-  }
+  elseif ($assessedimgs < $totimgs) {$bgcolor=$progcolor; $gifimg=$donepic;}
+  else {$bgcolor=$donecolor; $gifimg=$donepic;}
   echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
     <TD BGCOLOR='$bgcolor'>
     <B>Micrograph Assessment</B>
     </TD>
     <TD BGCOLOR='$bgcolor'>";
-    if ($assessedimgs < $totimgs) echo "$assessedimgs of $totimgs completed";
-    else echo "All $assessedimgs completed";
+    if ($assessedimgs==0) { echo "none"; }
+    elseif ($assessedimgs < $totimgs) { echo "$assessedimgs of $totimgs completed"; }
+    else { echo "All $assessedimgs completed"; }
     echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>
