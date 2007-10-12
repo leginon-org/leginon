@@ -228,9 +228,9 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>
     <A HREF='imgassessor.php?expId=$sessionId'>";
-    if ($assessedimgs==0) {echo "Start Manual Assessment";}
+    if ($assessedimgs==0) {echo "Manual Image Assessment";}
     else {
-      if ($assessedimgs < $totimgs) echo "Finish Manual Assessment";
+      if ($assessedimgs < $totimgs) echo "Continue Manual Assessment";
       else echo "Re-Assess Images";
     }
     echo"</A>
