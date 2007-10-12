@@ -3,6 +3,10 @@
 // --- change with query --- //
 
 $filename=$_GET['file'];
+$expId =$_GET['expId'];
+$norefId=$_GET['norefId'];
+$stackId=$_GET['stackId'];
+
 $updateheader=($_GET['uh']==1) ? 1 : 0;
 #$filenames[]="/ami/data13/appion/07may16c/stacks/stack1/start.hed";
 #for ($num=1; $num<=16; $num++) {
@@ -52,6 +56,10 @@ var file_hed="<?=$file_hed?>"
 var file_img="<?=$file_img?>"
 var n_images="<?=$n_images?>"
 var updateheader="<?=$updateheader?>"
+var expId="<?=$expId?>"
+var filename="<?=$filename?>"
+var norefId="<?=$norefId?>"
+var stackId="<?=$stackId?>"
 
 function displaystack(startImg, endImg, force) {
 	var wholemap = $('wholemap')
@@ -110,6 +118,17 @@ function setImage() {
 	window.document.myf.submit(); 
 }
 
+function upload() {
+	var templateId=$('templateId').value
+	if (templateId!=""&& templateId <= n_images-1 && templateId >=0 ) { 
+		if (stackId!="") {
+			window.open("uploadtemplate.php?expId="+expId+"&templateId="+templateId+"&stackId="+stackId+"&file="+filename+"","width=400,height=200")
+		}
+		if (norefId!="") {
+			window.open("uploadtemplate.php?expId="+expId+"&templateId="+templateId+"&norefId="+norefId+"&file="+filename+"","width=400,height=200") 
+		}
+	}
+}
 	
 </script>
 </head>
@@ -136,7 +155,11 @@ quality: <select id="quality">
 		<option value="90">jpeg 90</option>
 		<option value="png">png</option>
 	</select>
-<input id="loadbutton" type="button" alt="Load" value="Load" onclick="load();">
+<input id="loadbutton" type="button" alt="Load" value="Load" onclick="load();"> <br />
+
+Upload as Template:<input id="templateId" type="text" alt="Start" value="" size="5">
+<input id="uploadbutton" type="button" alt="upload" value="upload" onclick="upload();">
+
 <br />
 <br />
 <div class="scrollpane">

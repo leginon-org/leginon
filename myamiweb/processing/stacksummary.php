@@ -62,7 +62,7 @@ foreach ($stackIds as $stackid) {
 	$display_keys['# prtls']=$nump;
 	$stackfile = $s['path']."/".$s['name'];
 	$display_keys['path']=$s['path'];
-	$display_keys['name']="<A TARGET='stackview' HREF='viewstack.php?file=$stackfile'>".$s['name']."</A>";
+	$display_keys['name']="<A TARGET='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid[stackid]'>".$s['name']."</A>";
 	$display_keys['box size']=$boxsz;
 	$display_keys['pixel size']=$apix;
 	$display_keys['phase flipped']=$pflip;

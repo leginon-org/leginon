@@ -85,7 +85,7 @@ function createClassifierSummary() {
 			echo "
 			<tr><td bgcolor='#ffcccc' colspan=2>
 				Averaged into $totimg classes: &nbsp;&nbsp;&nbsp;
-				<a href='viewstack.php?file=$classfile&endimg=$endimg'>View Class Averages</a>
+				<a href='viewstack.php?file=$classfile&endimg=$endimg&expId=$sessionId&norefId=$norefid[DEF_id]'>View Class Averages</a>
 			</td></tr>";
 		
 			//echo "<tr><td bgcolor='#ff4444'>"; print_r ($classid); echo "</td></tr>";
