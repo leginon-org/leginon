@@ -111,7 +111,7 @@ class ParticleLoop(appionLoop.AppionLoop):
 		apDisplay.printMsg("Found "+str(len(self.peaktree))+" particles for "+apDisplay.shortenImageName(imgdata['filename']))
 		self.stats['lastpeaks'] = len(self.peaktree)
 
-		if self.params['nojpegs'] is True:
+		if self.params['nojpegs'] is False:
 			if self.threadJpeg is True:
 				threading.Thread(target=apPeaks.createPeakJpeg, args=(imgdata, self.peaktree, self.params)).start()
 			else:
@@ -289,7 +289,7 @@ class ParticleLoop(appionLoop.AppionLoop):
 				self.params['maxpeaks']= abs(int(elements[1]))
 			elif (elements[0]=='invert'):
 				self.params['invert']=True
-			elif (elements[0]=='nojpegs'):
+			elif arg=='nojpegs':
 				self.params['nojpegs']=True
 			elif (elements[0]=='diam'):
 				self.params['diam']=abs(float(elements[1]))
