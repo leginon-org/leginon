@@ -8,6 +8,7 @@
  *	Simple viewer to view a image using mrcmodule
  */
 
+require "inc/particledata.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
