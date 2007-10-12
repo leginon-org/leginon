@@ -661,9 +661,13 @@ def runRMeasure(apix,vol):
 		apDisplay.printWarning("Failed to run rmeasure")
 		return None
 
-	rmeasure.stdin.write(vol+'\n')
-	rmeasure.stdin.write(str(apix)+'\n')
-	output=rmeasure.stdout.read()
+	try:
+		rmeasure.stdin.write(vol+'\n')
+		rmeasure.stdin.write(str(apix)+'\n')
+		output=rmeasure.stdout.read()
+	except:
+		apDisplay.printWarning("Failed to run rmeasure during input/output")
+		return None
 	
 	resolution = None
 	words=output.split()
@@ -674,6 +678,14 @@ def runRMeasure(apix,vol):
 			break
 	print vol, resolution
 	return resolution
+
+def getRefineRunDataFromID(refinerunid):
+	return appiondb.direct_query(appionData.ApRefinementRunData, refinerunid) 
+	
+def getRefinementsFromRun(refinerundata):
+	refineitq=appionData.ApRefinementData()
+	refineitq['refinementRun'] = refinerundata
+	return appiondb.query(refineitq)
 
 if __name__ == '__main__':
 	r = runRMeasure(6.52,'threed.1a.mrc')
