@@ -210,6 +210,7 @@ function jobForm($extra=false) {
   ## get stack data
   $stackinfo = explode('|--|',$_POST['stackval']);
   $dmfstack = $stackinfo[4];
+  $box=$stackinfo[2];
   $dmfpathdata = explode('/', $stackinfo[3]);
   $dmfpath = '';
   for ($i=3 ; $i<count($dmfpathdata); $i++) {
@@ -241,7 +242,7 @@ function jobForm($extra=false) {
   }
 
   else $j=$numiters;
-  $javafunc .= defaultReconValues();
+  $javafunc .= defaultReconValues($box);
   $javafunc .= writeJavaPopupFunctions();
   writeTop("Eman Job Generator","EMAN Job Generator",$javafunc);
   // write out errors, if any came up:
@@ -317,7 +318,7 @@ function jobForm($extra=false) {
    <BR/><CENTER>
    <H4>Refine Run Parameters</H4>
    </CENTER><HR/>
-  <INPUT TYPE='BUTTON' onClick='sefDefaults(this.form)' VALUE='Set Defaults for Iteration 1'>\n";
+  <INPUT TYPE='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults for Iteration 1'>\n";
   for ($i=1; $i<=$numiters; $i++) {
     $angn="ang".$i;
     $maskn="mask".$i;
@@ -554,23 +555,24 @@ function writeJobFile () {
   exit;
 };
 
-function defaultReconValues () {
+function defaultReconValues ($box) {
+  $rad = ($box/2)-2;
   $javafunc = "
   <SCRIPT LANGUAGE='JavaScript'>
-    function sefDefaults(obj) {
-      obj.ang1.value = '4.0';
-      obj.mask1.value = '180.0';
-      obj.imask1.value = '0.0';
-      //obj.sym1.value = '3.4';
+    function setDefaults(obj) {
+      obj.ang1.value = '5.0';
+      obj.mask1.value = '$rad';
+      //obj.imask1.value = '';
+      //obj.sym1.value = '';
       obj.hard1.value = '25';
       obj.classkeep1.value = '0.8';
       obj.classiter1.value = '8';
-      obj.filt3d1.value = '15.0';
-      obj.shrink1.value = '1';
+      //obj.filt3d1.value = '15.0';
+      //obj.shrink1.value = '1';
       obj.median1.checked = true;
       obj.phasecls1.checked = true;
-      obj.refine1.checked = true;
-      obj.goodbad1.checked = true;
+      obj.refine1.checked = false;
+      obj.goodbad1.checked = false;
       obj.eotest1.checked = true;
       obj.coran1.checked = false;
       obj.msgp1.checked = false;
