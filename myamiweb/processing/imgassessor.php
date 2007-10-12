@@ -23,10 +23,11 @@ if ($expId) {
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 }
 else {
-        $sessionId=$_POST['sessionId'];
+	$sessionId=$_POST['sessionId'];
 	$formAction=$_SERVER['PHP_SELF'];	
 }
 $projectId=$_POST['projectId'];
+
 
 /////////// temporary fix for new database //////////////
 
@@ -48,9 +49,8 @@ $imgtypes=array('jpg','png','mrc','dwn.mrc');
 $javascript="<script src='../js/viewer.js'></script>\n";
 writeTop("Leginon Image Assessor","Image Assessor",$javascript);
 echo"<form name='viewerform' method='POST' ACTION='$formAction'>\n";
-echo"<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
 
-$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+$sessiondata=displayExperimentForm($projectId, $sessionId, $expId);
 $sessioninfo=$sessiondata['info'];
 $presets=$sessiondata['presets'];
 
@@ -64,15 +64,30 @@ if (!empty($sessioninfo)) {
 	$sessionpath=ereg_replace("rawdata","extract/",$sessionpath);
 	$sessionname=$sessioninfo['Name'];
 }
+
 // if session is changed, change the output directory
-$sessionpathval=(($_POST['sessionId']==$_POST['lastSessionId'] || $expId) && $_POST['lastSessionId']) ? $_POST['imgdir'] : $sessionpath;
+if (strlen($_POST['partpath']) > 10) {
+	$imgdir = $_POST['partpath'];
+} elseif (strlen($_POST['imgdir']) > 10) {
+	$imgdir = $_POST['imgdir'];
+} else {
+	$partrunid = $particledata->getLastParticleRun($sessionId);	
+	$partrundata = $particledata->getParticleRunData($partrunid);
+	if (strlen($partrundata['path']) > 10) {
+		$imgdir = $partrundata['path']."/jpgs/";
+	} else {
+		// HACK for Particle Runs with out Path Data
+		$imgdir = $sessionpath."/".$partrundata['name']."/jpgs/";
+	}
+}
 
 echo"<BR><A HREF='processing.php?expId=$sessionId'>[processing page]</A>\n";
 echo"<P>\n";
-echo"<TABLE CLASS=tableborder CELLPADING='10' CELLSPACING='10'>\n";
+echo"<TABLE CLASS='tableborder' CELLPADING='10' CELLSPACING='5'>\n";
 echo"<TR><TD COLSPAN='3' ALIGN='CENTER'>\n";
 
-$imgdir=$_POST['imgdir'];
+
+//$imgdir=$_POST['imgdir'];
 $files = array();
 $presettype = $_POST['presettype'];
 if ($presettype=='all') {
@@ -80,22 +95,25 @@ if ($presettype=='all') {
 } else {
 	$typematch =$presettype;
 }
-if ($imgdir) {
+
+if ($imgdir && strlen($imgdir) > 10) {
 	// make sure imgdir ends with '/'
 	if (substr($imgdir,-1,1)!='/') $imgdir.='/';
-	if (file_exists($imgdir)) {
+	if (!file_exists($imgdir))
+		echo "<FONT COLOR='#993333'>Specified path: $imgdir does not exist</FONT><HR>\n";
+	else {
 		// open image directory
 		$pathdir=opendir($imgdir);
 		// get all files in directory, ordered by time created
-		$ext=$_POST['imgtype'];
+		$ext= $_POST['imgtype'] ? $_POST['imgtype'] : "jpg";
 		$i=0;
 		while ($filename=readdir($pathdir)) {
 			if ($filename == '.' || $filename == '..') continue;
 			if (preg_match('`\.'.$ext.'$`i',$filename)) {
 				if (preg_match('`'.$typematch.'\.`',$filename)) {
-					$files[$i][0] = $filename;
-					$files[$i][1] = filemtime($imgdir.$filename);
-					$i++;
+			      $files[$i][0] = $filename;
+			      $files[$i][1] = filemtime($imgdir.$filename);
+			      $i++;
 				}
 			}
 		}
@@ -109,16 +127,52 @@ if ($imgdir) {
 			// display image
 			displayImage($_POST,$fileList,$imgdir,$leginondata,$particledata,$assessmentrid);
 		}
-		else echo"<HR><FONT COLOR='RED'>No files found in this directory with extension: $ext</FONT>\n";
+		else echo"<FONT COLOR='#993333'>No files found in this directory with extension: $ext</FONT><HR>\n";
 	}
-	else echo "<HR><FONT COLOR='RED'>Specified path: $_POST[imgdir] does not exist</FONT>\n";
+
 }
 echo"</CENTER>\n";
-echo"</TD></TR>\n";
+echo"<HR/></TD></TR>\n";
+
+//SELECT A PARTICLE RUN (EVENTUALLY AN ACE RUN?)
+echo"<TR ALIGN='CENTER'><TD VALIGN='TOP' COLSPAN='3'>\n";
+$particle = new particledata();
+$prtlrunIds = $particle->getParticleRunIds($sessionId);
+if (!$prtlrunIds) {
+	echo"<FONT COLOR='#993333' SIZE='-1'><B>No Particles picked for this Session</B></FONT>\n";
+} else {
+	echo "Select a particle run:
+	<SELECT NAME='partpath'>\n";
+	foreach ($prtlrunIds as $prtlrun){
+		$runname=$prtlrun['name'];
+		$prtlstats=$particle->getStats($prtlrun['DEF_id']);
+		$totprtls=commafy($prtlstats['totparticles']);
+		$partpath = $prtlrun['path']."/jpgs/";
+		if (strlen($partpath) > 10) { 
+			echo "<OPTION VALUE='$partpath'";
+			if ($imgdir == $partpath) echo " SELECTED";
+			echo">$runname ($totprtls particles)</OPTION>\n";
+		} else {
+			// HACK for Particle Runs with out Path Data
+			$trypath = $sessionpath."/".$runname."/jpgs/";
+			if (file_exists($trypath)) {
+				echo "<OPTION VALUE='$trypath'";
+				if ($imgdir == $partpath) echo " SELECTED";
+				echo">$runname ($totprtls particles)</OPTION>\n";
+			}
+		}			
+	}
+	echo "</SELECT>\n";
+	echo"<INPUT TYPE='BUTTON' onClick='this.form.submit()' VALUE='Select Particle Run'>\n";
+
+}
+
+echo"<BR/><BR/><HR/></TD></TR>\n";
+
 // HEADER FORM FOR FILLING IMAGE PATH
-echo"<TR><TD VALIGN='TOP'>\n";
-echo"<B>Image Directory:</B><BR>\n";
-echo"<INPUT TYPE='text' NAME='imgdir' VALUE='$sessionpathval' SIZE='60' onchange='this.form.submit()'></TD>\n";
+echo"<TR ALIGN='CENTER'><TD VALIGN='TOP'>\n";
+echo"&nbsp;<B>Image Directory:</B><BR>\n";
+echo"<INPUT TYPE='text' NAME='imgdir' VALUE='$imgdir' SIZE='60' onchange='this.form.submit()'></TD>\n";
 echo"<TD VALIGN='TOP'>\n";
 echo"<B>Image Type:</B><BR>\n";
 echo"<SELECT NAME='imgtype' onchange='this.form.submit()'>\n";
@@ -136,14 +190,15 @@ foreach ($presets as $type) {
 	echo "<OPTION $s>$type</OPTION>\n";
 }
 echo"</SELECT>\n";
-echo"</TD></TR>\n";
+//echo"<INPUT TYPE='HIDDEN' NAME='binning' VALUE='$binning'>\n";
+echo"<BR/><BR/></TD></TR>\n";
 
 echo"</TABLE>\n";
 echo"</FORM>\n";
 writeBottom();
 
 
-function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessmentrid){
+function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessmentrid) {
 
 	$numfiles=count($files);
 	$imlst=$_POST['imagelist'];
@@ -227,7 +282,7 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 	echo"<INPUT TYPE='HIDDEN' NAME='imageid' VALUE='$imgid'>\n";
 
 	//Image and tool bars on side
-	echo"<CENTER>\n<TABLE BORDER='0' CELLPADDING='5' CELLSPACING='0'><TR><TD>\n";
+	echo"<CENTER>\n<TABLE BORDER='0' CELLPADDING='5' CELLSPACING='5'><TR><TD>\n";
 	printToolBar();
 	echo"</TD><TD>\n";
 	echo"<IMG SRC='loadimg.php?filename=$imgfull&scale=$imgrescl'>\n";
@@ -236,7 +291,7 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 	echo"</TD></TR></TABLE>\n";
 
 	//Scale factor, etc.
-	echo"<TABLE BORDER='0' CELLPADDING='10' CELLSPACING='0'>\n";
+	echo"<TABLE BORDER='0' CELLPADDING='10' CELLSPACING='5'>\n";
 	echo"<TR><TD ALIGN='LEFT'>\n";
 	echo"<FONT SIZE='+1'>Image $thisnum of $numfiles</FONT>\n";
 	echo"</TD><TD ALIGN='RIGHT'>";
@@ -257,19 +312,19 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 }
 
 function printToolBar() {
-	echo"<TABLE BORDER='0' CELLPADDING='3' CELLSPACING='0'>\n";
-	echo"<TR><TD>\n";
-	echo"<INPUT TYPE='IMAGE' WIDTH='30' SRC='img/firstbutton.jpg' ALT='First' NAME='imagelist' VALUE='First'>\n";
-	echo"</TD></TR><TR><TD>\n";
-	echo"<INPUT TYPE='IMAGE' SRC='img/backbutton.jpg' ALT='Back' NAME='imagelist' VALUE='Back'>\n";
-	echo"</TD></TR><TR><TD>\n";
-	echo"<INPUT TYPE='IMAGE' SRC='img/stopbutton.jpg' ALT='Remove' NAME='imagelist' VALUE='Remove'>\n";
-	echo"</TD></TR><TR><TD>\n";
-	echo"<INPUT TYPE='IMAGE' SRC='img/playbutton.jpg' ALT='Keep' NAME='imagelist' VALUE='Keep'>\n";
-	echo"</TD></TR><TR><TD>\n";
-	echo"<INPUT TYPE='IMAGE' SRC='img/nextbutton.jpg' ALT='Next' NAME='imagelist' VALUE='Next'>\n";
-	echo"</TD></TR><TR><TD>\n";
-	echo"<INPUT TYPE='IMAGE' WIDTH='30' SRC='img/lastbutton.jpg' ALT='Last' NAME='imagelist' VALUE='Last'>\n";
+	echo"<TABLE BORDER='0' CELLPADDING='3' CELLSPACING='5'>\n";
+	echo"<TR><TD ALIGN='CENTER'>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/button-first.png' ALT='First' NAME='imagelist' VALUE='First'>\n";
+	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/button-back.png' ALT='Back' NAME='imagelist' VALUE='Back'>\n";
+	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/button-reject.png' ALT='Reject' NAME='imagelist' VALUE='Remove'>\n";
+	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/button-keep.png' ALT='Keep' NAME='imagelist' VALUE='Keep'>\n";
+	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/button-next.png' ALT='Next' NAME='imagelist' VALUE='Next'>\n";
+	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"<INPUT TYPE='IMAGE' SRC='img/button-last.png' ALT='Last' NAME='imagelist' VALUE='Last'>\n";
 	echo"</TD></TR></TABLE>";
 }
 
