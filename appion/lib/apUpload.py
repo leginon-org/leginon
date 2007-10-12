@@ -37,7 +37,7 @@ def printPrtlUploadHelp():
 	sys.exit(1)
 
 def printModelUploadHelp():
-	print "\nUsage:\nuploadModel.py <filename> session=<session> symmetry=<sym id> apix=<pixel> [res=<resolution>] [contour=<n>] [zoom=<n>] description=<\"text\">\n"
+	print "\nUsage:\nuploadModel.py <filename> session=<session> symmetry=<sym id> apix=<pixel> res=<resolution> [contour=<n>] [zoom=<n>] description=<\"text\"> [rescale=<model ID,scale factor>] [boxsize=<n>]\n"
 	print "uploadModel.py /ami/data99/lambda.mrc symmetry=1 apix=2.02 res=25 description=\"CCMV in EMAN orientation\"\n"
 	sys.exit(1)
 
@@ -114,13 +114,6 @@ def parseModelUploadInput(args,params):
 		printModelUploadHelp()
 	# get MRC file
 	mrcfile=args[1]
-	if (os.path.isfile(mrcfile)):
-		(params['path'], params['name']) = os.path.split(mrcfile)
-		params['path'] = os.path.abspath(params['path'])
-		if not params['path']:
-			params['path']=params['abspath']
-	else:
-		apDisplay.printError("file '"+mrcfile+"' does not exist\n")
 	# save the input parameters into the "params" dictionary
 	for arg in args[2:]:
 		elements=arg.split('=')
@@ -142,8 +135,26 @@ def parseModelUploadInput(args,params):
 			params['zoom']=float(elements[1])
 		elif (elements[0]=='description'):
 			params['description']=elements[1]
+		elif (elements[0]=='boxsize'):
+			params['newbox']=int(elements[1])
+		elif (elements[0]=='rescale'):
+			modinfo=elements[1].split(',')
+			if len(modinfo) == 2:
+				params['origmodel']=modinfo[0]
+				params['newapix']=float(modinfo[1])
+				params['rescale']=True
+			else:
+				apDisplay.printError("rescale must include both the original model id and a scale factor")
 		else:
 			apDisplay.printError("undefined parameter \'"+arg+"\'\n")
+	# if not rescaling, make sure that the input model exists
+	if (os.path.isfile(mrcfile) or params['rescale'] is True):
+		(params['path'], params['name']) = os.path.split(mrcfile)
+		params['path'] = os.path.abspath(params['path'])
+		if not params['path']:
+			params['path']=params['abspath']
+	else:
+		apDisplay.printError("file '"+mrcfile+"' does not exist\n")
 	
 def parseMiscUploadInput(args,params):
 	# check that there are enough input parameters
@@ -187,6 +198,8 @@ def createDefaults():
 	params['contour']=1.5
 	params['zoom']=1.5
 	params['reconid']=None
+	params['rescale']=False
+	params['newbox']=None
 	return params
 
 def checkSymInfo(params):
@@ -206,14 +219,6 @@ def getProjectId(params):
 		apDisplay.printError("no project associated with this session\n")
 	return
 
-def getModelDimensions(mrcfile):
-	print "calculating dimensions..."
-	vol = mrc.read(mrcfile)
-	(x,y,z)=vol.shape
-	if x!=y!=z:
-		apDisplay.printError("starting model is not a cube")
-	return x
-	
 def insertModel(params):
 	print "inserting into database"
 	symid=appiondb.direct_query(appionData.ApSymmetryData,params['sym'])
@@ -227,6 +232,7 @@ def insertModel(params):
 	modq['symmetry']=symid
 	modq['pixelsize']=params['apix']
 	modq['boxsize']=params['box']
+	modq['resolution']=params['res']
 	modq['description']=params['description']
 	appiondb.insert(modq)
 

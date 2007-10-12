@@ -445,7 +445,6 @@ class ApInitialModelData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('project|projects|project', int),
-			#('path', str),
 			('path', ApPathData),
 			('name', str),
 			('resolution', float),
