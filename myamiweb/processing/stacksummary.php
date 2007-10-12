@@ -49,9 +49,8 @@ foreach ($stackIds as $stackid) {
 	# get list of stack parameters from database
 	$nump=commafy($particle->getNumStackParticles($stackid[stackid]));
 	# get pixel size of stack
-	$apix=($particle->getStackPixelSizeFromStackId($stackid[stackid]))*1e10;
-	$apix.=" &Aring;/pixel";
-	$apix=format_angstrom_number($apix)."/pixel";
+	$mpix=($particle->getStackPixelSizeFromStackId($stackid[stackid]));
+	$apix=format_angstrom_number($mpix)."/pixel";
 
 	# get box size
 	$boxsz=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];

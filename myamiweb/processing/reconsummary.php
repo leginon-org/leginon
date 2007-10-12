@@ -58,8 +58,8 @@ if ($stackruns>0){
 		$stackparam=$particle->getStackParams($stackid['stackid']);
 
 		//get stackapix from first image
-		$stackpix = $particle->getStackPixelSizeFromStackId($stackid['stackid']);
-		$stackapix = format_angstrom_number($stackpix);
+		$stackmpix = $particle->getStackPixelSizeFromStackId($stackid['stackid']);
+		$stackapix = format_angstrom_number($stackmpix);
 
 		foreach ($reconRuns as $reconrun) {
 			$stmodel = $particle->getInitModelInfo($reconrun['REF|ApInitialModelData|initialModel']);
