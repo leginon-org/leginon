@@ -82,6 +82,8 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
   $syms = $particle->getSymmetries();
   echo"
   <P>
+  <A HREF='emanJobGen.php?expId=$expId&modelonly=True'>[rescale an existing model]
+  <P>
   <TABLE BORDER=3 CLASS=tableborder>
   <TR>
     <TD VALIGN='TOP'>

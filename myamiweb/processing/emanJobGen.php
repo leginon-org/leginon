@@ -54,6 +54,7 @@ else stackModelForm();
 function stackModelForm($extra=False) {
   // check if session provided
   $expId = $_GET['expId'];
+  $modelonly = $_GET['modelonly'];
   if ($expId) {
     $sessionId=$expId;
     $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
@@ -64,7 +65,7 @@ function stackModelForm($extra=False) {
   }
 
 
-  // if user wants to use templates from another project
+  // if user wants to use models from another project
 
   if($_POST['projectId'])
     $projectId = $_POST[projectId];
@@ -78,15 +79,18 @@ function stackModelForm($extra=False) {
     // get initial models associated with project
     $models=$particle->getModelsFromProject($projectId);
   }
-  // find each stack entry in database
-  // THIS IS REALLY, REALLY SLOW
-  $stackIds = $particle->getStackIds($sessionId);
-  $stackinfo=explode('|--|',$_POST['stackval']);
-  $stackidval=$stackinfo[0];
-  $apix=$stackinfo[1];
-  $box=$stackinfo[2];
-  $javafunc="
-  <script src='../js/viewer.js'></script>
+  if (!$modelonly) {
+    // find each stack entry in database
+    // THIS IS REALLY, REALLY SLOW
+    $stackIds = $particle->getStackIds($sessionId);
+    $stackinfo=explode('|--|',$_POST['stackval']);
+    $stackidval=$stackinfo[0];
+    $apix=$stackinfo[1];
+    $box=$stackinfo[2];
+  }
+  $javafunc="<script src='../js/viewer.js'></script>\n";
+  if (!$modelonly) {
+    $javafunc.="
   <SCRIPT LANGUAGE='JavaScript'>
   function displayDMF() {
     stack = document.viewerform.stackval.value;
@@ -109,9 +113,13 @@ function stackModelForm($extra=False) {
     newwindow.document.close();
   }
   </SCRIPT>\n";
-  //newwindow.document.write('dmf mkdir '+dpath+'<BR>');
-  writeTop("Eman Job Generator","EMAN Job Generator",$javafunc);
+    //newwindow.document.write('dmf mkdir '+dpath+'<BR>');
+    writeTop("Eman Job Generator","EMAN Job Generator",$javafunc);
+  }
 
+  else {
+    writeTop("Rescale/Resize Model","Rescale/Resize Model",$javafunc);
+  }
   // write out errors, if any came up:
   if ($extra) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -126,32 +134,35 @@ function stackModelForm($extra=False) {
   }
   echo"
   </select>
-  <P>
-  <B>Stack:</B><BR>";
-  echo "<SELECT NAME='stackval'>\n";
+  <P>\n";
+  if (!$modelonly) {
+    echo"
+    <B>Stack:</B><BR>";
+    echo "<SELECT NAME='stackval'>\n";
 
-  foreach ($stackIds as $stackid){
-    // get stack parameters from database
-    $s=$particle->getStackParams($stackid['stackid']);
-    // get number of particles in each stack
-    $nump=commafy($particle->getNumStackParticles($stackid['stackid']));
-    // get pixel size of stack
-    $apix=($particle->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
-    // get box size
-    $box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
-    // get stack path with name
-    $opvals = "$stackid[stackid]|--|$apix|--|$box|--|$s[path]|--|$s[name]";
-    // if imagic stack, send both hed & img files for dmf
-    if (ereg('\.hed', $s['name'])) $opvals.='|--|'.ereg_replace('hed','img',$s['name']);
-    if (ereg('\.img', $s['name'])) $opvals.='|--|'.ereg_replace('img','hed',$s['name']);
-    echo "<OPTION VALUE='$opvals'";
-    // select previously set stack on resubmit
-    if ($stackid['stackid']==$stackidval) echo " SELECTED";
-    echo">$stackid[stackid] ($nump particles, $apix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
+    foreach ($stackIds as $stackid){
+      // get stack parameters from database
+      $s=$particle->getStackParams($stackid['stackid']);
+      // get number of particles in each stack
+      $nump=commafy($particle->getNumStackParticles($stackid['stackid']));
+      // get pixel size of stack
+      $apix=($particle->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
+      // get box size
+      $box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
+      // get stack path with name
+      $opvals = "$stackid[stackid]|--|$apix|--|$box|--|$s[path]|--|$s[name]";
+      // if imagic stack, send both hed & img files for dmf
+      if (ereg('\.hed', $s['name'])) $opvals.='|--|'.ereg_replace('hed','img',$s['name']);
+      if (ereg('\.img', $s['name'])) $opvals.='|--|'.ereg_replace('img','hed',$s['name']);
+      echo "<OPTION VALUE='$opvals'";
+      // select previously set stack on resubmit
+      if ($stackid['stackid']==$stackidval) echo " SELECTED";
+      echo">$stackid[stackid] ($nump particles, $apix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
+    }
+    echo "</SELECT>\n";
+    echo"<INPUT TYPE='button' NAME='dmfput' VALUE='Put stack in DMF' onclick='displayDMF()'><P>\n";
+    echo"<INPUT TYPE='hidden' NAME='dmfpath' VALUE=''>\n";
   }
-  echo "</SELECT>\n";
-  echo"<INPUT TYPE='button' NAME='dmfput' VALUE='Put stack in DMF' onclick='displayDMF()'><P>\n";
-  echo"<INPUT TYPE='hidden' NAME='dmfpath' VALUE=''>\n";
   # show initial models
   echo "<B>Model:</B><BR><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A>\n";
   echo "<P>\n";
@@ -170,7 +181,8 @@ function stackModelForm($extra=False) {
       $sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
       echo "<TR><TD COLSPAN=2>\n";
       $modelvals="$model[DEF_id]|--|$model[name]|--|$model[boxsize]|--|$sym[symmetry]";
-      echo "<INPUT TYPE='RADIO' NAME='model' VALUE='$modelvals'><B>Use Model ID: $model[DEF_id]</B>\n";
+      if (!$modelonly) echo "<INPUT TYPE='RADIO' NAME='model' VALUE='$modelvals'>Use ";
+      echo"Model ID: $model[DEF_id]\n";
       echo "<INPUT TYPE='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><BR>\n";
       foreach ($pngfiles as $snapshot) {
   $snapfile = $model['path'].'/'.$snapshot;
@@ -187,7 +199,7 @@ function stackModelForm($extra=False) {
       echo "</TABLE>\n";
       echo "<P>\n";
     }
-    echo"<P><INPUT TYPE='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack & model'></FORM>\n";
+    if (!$modelonly) echo"<P><INPUT TYPE='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack & model'></FORM>\n";
   }
   else {echo "No initial models in database";}
   writeBottom();
