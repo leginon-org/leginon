@@ -11,6 +11,7 @@ import apParam
 import apDisplay
 import apDatabase
 import apRecon
+import apVolume
 
 if __name__ == '__main__':
 	# record command line
@@ -31,6 +32,10 @@ if __name__ == '__main__':
 		apDisplay.printError("enter a symmetry ID")
 	if params['description'] is None:
 		apDisplay.printError("enter a description of the initial model")
+	if params['res'] is None:
+		apDisplay.printError("enter the resolution of the initial model")
+	if params['newbox'] and params['rescale'] is not True:
+		apDisplay.printError("you must provide a reference model to resize the box")
 	if params['outdir'] is None:
 		#auto set the output directory
 		sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
@@ -38,6 +43,8 @@ if __name__ == '__main__':
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","",path)
 		params['outdir'] = os.path.join(path,"models")
+		# set new ang/pix of the rescaled model
+		params['apix']=params['newapix']
 
 	#create the output directory, if needed
 	apParam.createDirectory(params['outdir'])
@@ -47,20 +54,30 @@ if __name__ == '__main__':
 
 	apUpload.checkSymInfo(params)
 
-	# copy templates to final location
-	old = os.path.join(params['path'], params['name'])
 	new = os.path.join(params['outdir'], params['name'])
+
 	if os.path.isfile(new):
 		apDisplay.printError("model \'"+new+"\' already exists!\n")
-	shutil.copy(old, new)
-	#and only allow user read access just so they don't get deleted
+
+	# if rescaling an old template:
+	if params['rescale'] is True:
+		# get model to be rescaled
+		oldmod = apVolume.getModelFromId(params['origmodel'])
+		old = os.path.join(oldmod['path']['path'],oldmod['name'])
+		print old
+		apVolume.rescaleModel(old,new,float(oldmod['pixelsize']),params['newapix'],params['newbox'])
+		
+	# otherwise, copy templates to final location
+	else:
+		old = os.path.join(params['path'], params['name'])
+		shutil.copy(old, new)
+
+	# only allow user read access just so they don't get deleted
 	os.chmod(new, 0666)
 
-
-
 	modelname = os.path.join(params['outdir'], params['name'])
-	# get dimensions of model, set box size
-	params['box'] = apUpload.getModelDimensions(modelname)
+
+	params['box'] = apVolume.getModelDimensions(modelname)
 	
 	# upload Initial Model
 	apUpload.getProjectId(params)

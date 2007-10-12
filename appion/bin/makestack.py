@@ -38,7 +38,7 @@ db   = apDB.db
 apdb = apDB.apdb
 
 def printHelp():
-	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected or inspectfile=<file>] [bin=<n>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n> [partlimit=<n>] [defocpair=<preset>]\n"
+	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected or inspectfile=<file>] [bin=<n>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n> [partlimit=<n>] [defocpair=<preset>] [lp=<n>] [hp=<n>]\n"
 	print "Examples:\nmakestack.py extract/001ma.box single=stacks/start.hed ace=0.8 boxsize=180 inspected"
 	print "makestack.py extract/*.box outdir=stacks/noctf/ ace=0.8 boxsize=180\n"
 	print "* Supports wildcards - By default a stack file of the same name as the box file"
@@ -86,6 +86,8 @@ def createDefaults():
 	params['stig']=False
 	params['matlab']=None
 	params['fileType']='imagic'
+	params['lowpass']=None
+	params['highpass']=None
 	return params
 
 def parseInput(args):
@@ -142,6 +144,10 @@ def parseInput(args):
 			params['bin']=int(elements[1])
 		elif (elements[0]=='sessionname'):
 			params['sessionname']=elements[1]
+		elif (elements[0]=='lp'):
+			params['lowpass']=float(elements[1])
+		elif (elements[0]=='hp'):
+			params['highpass']=float(elements[1])
 		elif (arg=='inspected'):
 			params['checkImage']=True
 		elif (arg=='nonorm'):
@@ -429,7 +435,6 @@ def phaseFlip(imgdata, params):
 	infile  = os.path.join(params['outdir'], imgname+".hed")
 	outfile = os.path.join(params['outdir'], imgname+".ctf.hed")
 	voltage = (imgdata['scope']['high tension'])/1000
-	apix    = apDatabase.getPixelSize(imgdata)
 	defocus = 1.0e6 * apCtf.getBestDefocusForImage(imgdata)
 
 	if defocus > 0:
@@ -440,7 +445,7 @@ def phaseFlip(imgdata, params):
 		apDisplay.printError("defocus is very small "+str(defocus)+" for image "+shortname)
 
 	cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" % ( infile,\
-	  outfile, defocus, voltage, apix)
+	  outfile, defocus, voltage, params['apix'])
 	apDisplay.printMsg("phaseflipping particles with defocus "+str(round(defocus,3))+" microns")
 
 	f=os.popen(cmd)
@@ -454,12 +459,18 @@ def singleStack(params,imgdict):
 		imgpath = os.path.join(params['outdir'], imgname+'.hed')
 	output = os.path.join(params['outdir'], params['single'])
 
-	if params['normalized'] is False:
-		cmd="proc2d %s %s" %(imgpath, output)
-	else:
-		cmd="proc2d %s %s norm=0.0,1.0" %(imgpath, output)
+	cmd="proc2d %s %s" %(imgpath, output)
+	if params['normalized'] is True:
+		cmd += " norm=0.0,1.0"
 
-	# bin images is specified
+	if params['highpass'] or params['lowpass']:
+		cmd += " apix=%s" % params['apix']
+		if params['highpass']:
+			cmd += " hp=%s" % params['highpass']
+		if params['lowpass']:
+			cmd += " lp=%s" % params['lowpass']
+			
+	# bin images if specified
 	if params['bin'] != 1:
 		cmd += " shrink="+str(params['bin'])
 		
@@ -620,7 +631,7 @@ def getImgsDefocPairFromSelexonId(params):
 def insertStackRun(params):
 	stparamq=appionData.ApStackParamsData()
 	paramlist = ('boxSize','bin','phaseFlipped','aceCutoff','correlationMin','correlationMax',
-		'checkMask','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized', 'defocpair')
+		'checkMask','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized', 'defocpair','lowpass','highpass')
 
 	for p in paramlist:
 		if p in params:
@@ -926,6 +937,9 @@ if __name__ == '__main__':
 		if rejectImage(imgdict, params) is False:
 			continue
 
+		# get pixel size
+		params['apix'] = apDatabase.getPixelSize(imgdict)
+		
 		# box the particles
 		totptcls += batchBox(params,imgdict)
 		
