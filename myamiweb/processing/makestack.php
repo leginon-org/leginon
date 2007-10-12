@@ -71,7 +71,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	  function enableace(){
 	    if (document.viewerform.acecheck.checked){
 	      document.viewerform.ace.disabled=false;
-	      document.viewerform.ace.value='';
+	      document.viewerform.ace.value='0.8';
 	    }
 	    else {
 	      document.viewerform.ace.disabled=true;
@@ -81,9 +81,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	  function enableselex(){
 	    if (document.viewerform.selexcheck.checked){
 	      document.viewerform.selexonmin.disabled=false;
-	      document.viewerform.selexonmin.value='';
+	      document.viewerform.selexonmin.value='0.5';
 	      document.viewerform.selexonmax.disabled=false;
-	      document.viewerform.selexonmax.value='';
+	      document.viewerform.selexonmax.value='1.0';
 	    }
 	    else {
 	      document.viewerform.selexonmin.disabled=true;
@@ -124,6 +124,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$boxszval = $_POST['boxsize'];
 	$binval=$_POST['bin'];
 	$plimit = $_POST['plimit'];
+	$lpval = $_POST['lp'];
+	$hpval = $_POST['hp'];
 	// ice check params
 	$iceval = ($_POST['icecheck']=='on') ? $_POST['ice'] : '0.8';
 	$icecheck = ($_POST['icecheck']=='on') ? 'CHECKED' : '';
@@ -276,21 +278,23 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	<TR>
 		<TD VALIGN='TOP'>
 		<B>Filter Values:</B></A><BR>
-		<INPUT TYPE='text' NAME='lp' VALUE='$lpval' DISABLED SIZE='4'>
-		<FONT COLOR='grey'>Low Pass</FONT><BR>
-		<INPUT TYPE='text' NAME='hp' VALUE='$hpval' DISABLED SIZE='4'>
-		<FONT COLOR='grey'>High Pass</FONT><BR>
+		<INPUT TYPE='text' NAME='lp' VALUE='$lpval' SIZE='4'>
+	        Low Pass<BR>
+		<INPUT TYPE='text' NAME='hp' VALUE='$hpval' SIZE='4'>
+		High Pass<BR>
 		<INPUT TYPE='text' NAME='bin' VALUE='$binval' SIZE='4'>
 		Binning<BR>
-	</TR>
-	<TR>
-		<TD>
-		<INPUT TYPE='checkbox' NAME='icecheck' onclick='enableice(this)' $icecheck>
-		Ice Thickness Cutoff<BR>
-		Use Ice Thinner Than:<INPUT TYPE='text' NAME='ice' $icedisable VALUE='$iceval' SIZE='4'>
-		(between 0.0 - 1.0)
-		</TD>
 	</TR>\n";
+
+	// commented out for now, since not implemented
+//	<TR>
+//		<TD>
+//		<INPUT TYPE='checkbox' NAME='icecheck' onclick='enableice(this)' $icecheck>
+//		Ice Thickness Cutoff<BR>
+//		Use Ice Thinner Than:<INPUT TYPE='text' NAME='ice' $icedisable VALUE='$iceval' SIZE='4'>
+//		(between 0.0 - 1.0)
+//		</TD>
+//	</TR>\n";
 	if ($ctfdata) {
 		echo"
 	<TR>
@@ -403,7 +407,7 @@ function runMakestack() {
 	$phaseflip = ($_POST['phaseflip']=='on') ? 'phaseflip' : '';
 	$inspected = ($_POST['inspected']=='on') ? 'inspected' : '';
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
-	$defocpair = ($_POST[defocpair]=="on") ? "1" : "0";
+	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
 
 	// binning amount
 	$bin=$_POST['bin'];
@@ -415,6 +419,14 @@ function runMakestack() {
 	$boxsize = $_POST['boxsize'];
 	if (!$boxsize) createMakestackForm("<B>ERROR:</B> Specify a box size");
 	if (!is_numeric($boxsize)) createMakestackForm("<B>ERROR:</B> Box size must be an integer");
+
+	// lp filter
+	$lp = $_POST['lp'];
+	  if ($lp && !is_numeric($lp)) createMakestackForm("<B>ERROR:</B> low pass filter must be a number");
+
+	// hp filter
+	$hp = $_POST['hp'];
+	if ($hp && !is_numeric($hp)) createMakestackForm("<B>ERROR:</B> high pass filter must be a number");
 
 	// ace cutoff
 	if ($_POST['acecheck']=='on') {
@@ -454,6 +466,8 @@ function runMakestack() {
 	$command.="runid=$runid ";
 	$command.="outdir=$outdir ";
 	$command.="prtlrunId=$prtlrunId ";
+	if ($lp) $command.="lp=$lp ";
+	if ($hp) $command.="hp=$hp ";
 	if ($invert) $command.="noinvert ";
 	if ($normalize) $command.="nonorm ";
 	if ($phaseflip) $command.="phaseflip ";
