@@ -360,10 +360,9 @@ class particledata {
 			." WHERE sp . `REF|ApStackData|stack`= ".$stackId." "
 			." limit 1 ) sbimage ";
 			list($r1)= $this->mysql->getSQLResult($q);
-
 		//if no sibling image when defocpair param is not specified, use the original image
 		$imgId = ($r1['image']) ? $r1['image'] : $r1['pimage'];
-
+		
 		// get image bin and the most recent pixel calibration
 		$q="SELECT pd.`SUBD|binning|x` as imgbin, "
 			."pc.`pixelsize` as ccdpixelsize "
@@ -381,13 +380,12 @@ class particledata {
 			."ORDER BY pc.`DEF_timestamp` DESC ";
 
 		list($r2)=$this->mysql->getSQLResult($q);
-
-		if ($r1['stackbin'] != "" && is_int($r1['stackbin'])) {
+		if (!is_null($r1['stackbin']) ) {
+			settype($r1['stackbin'],"integer");
 			$stackbin = $r1['stackbin'];
 		} else {
 			$stackbin = 1;
 		}
-
 		$stackpixelsize = $r2['ccdpixelsize']*$r2['imgbin']*$stackbin;
 		return $stackpixelsize;
 	}
