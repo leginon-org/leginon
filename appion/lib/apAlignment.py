@@ -45,7 +45,7 @@ def defaults():
 	return params
 
 def getAppionDir(params):
-	params['appiondir'] = apParams.getAppionDir()
+	params['appiondir'] = apParam.getAppionDirectory()
 	return params['appiondir']
 
 def runHelp(params):
@@ -348,6 +348,8 @@ def createNoRefSpiderBatchFile(params):
 				outf.write(spiderline(97,pixdiam,"expected diameter of particle (in pixels)"))		
 			elif thr == "x96":
 				firstring = int(float(params['imask'])/params['apix'])
+				if firstring == 0: 
+					firstring=1
 				outf.write(spiderline(96,firstring,"first ring radii"))
 			elif thr == "x95":
 				#lastring = params['boxsize']/2 - 2
