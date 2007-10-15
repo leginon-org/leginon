@@ -8,7 +8,7 @@ import apAlignment
 
 if __name__ == "__main__":
 	params = apAlignment.defaults()
-	params['appiondir'] = apParam.getAppionDir()
+	params['appiondir'] = apParam.getAppionDirectory()
 	apAlignment.cmdline(sys.argv[1:], params)
 	if params['classonly'] is True:
 		apAlignment.overridecmd(params)
