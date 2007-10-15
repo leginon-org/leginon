@@ -660,34 +660,34 @@ class PickerApp(wx.App):
 		targets2 = self.panel2.getTargets('Picked')
 		filename = os.path.basename(filepath)
 		f = open(filepath, "w")
-		f.write("; ApTiltPicker complete parameter dump:\n")
-		f.write( ";   parameter : value\n")
+		f.write(" ; ApTiltPicker complete parameter dump:\n")
+		f.write( " ;   parameter : value\n")
 		for k,v in self.data.items():
 			if type(v) in [type(1), type(1.0), type(""),]:
-				f.write( ";   "+str(k)+" : "+str(v)+"\n")
+				f.write( " ;   "+str(k)+" : "+str(v)+"\n")
 		#PARAMETERS
-		f.write("; \n; \n; PARAMETERS\n")
+		f.write(" ; \n; \n; PARAMETERS\n")
 		f.write(apSpider.spiderOutputLine(1, 6, 0.0, 0.0, 0.0, 0.0, 111.0, 1.0))
-		f.write("; FITTED FLAG\n")
+		f.write(" ; FITTED FLAG\n")
 		f.write(apSpider.spiderOutputLine(2, 6, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0))
-		f.write("; (X0,Y0) FOR LEFT IMAGE1, (X0s,Y0s) FOR RIGHT IMAGE2, REDUCTION FACTOR\n")
+		f.write(" ; (X0,Y0) FOR LEFT IMAGE1, (X0s,Y0s) FOR RIGHT IMAGE2, REDUCTION FACTOR\n")
 		f.write(apSpider.spiderOutputLine(3, 6, 
 			self.data['point1'][0], self.data['point1'][1], 
 			self.data['point2'][0], self.data['point2'][1], 
 			1.0, 0.0))
-		f.write("; TILT ANGLE (THETA), LEFT IMAGE1 ROTATION (GAMMA), RIGHT IMAGE2 ROTATION (PHI)\n")
+		f.write(" ; TILT ANGLE (THETA), LEFT IMAGE1 ROTATION (GAMMA), RIGHT IMAGE2 ROTATION (PHI)\n")
 		f.write(apSpider.spiderOutputLine(4, 6, 
 			self.data['theta'], self.data['gamma'], self.data['phi'],
 			0.0, 0.0, 0.0))
 
 		#IMAGE 1
-		f.write( "; left image 1: "+self.panel1.filename+"\n" )
+		f.write( " ; left image 1: "+self.panel1.filename+"\n" )
 		for i,target in enumerate(targets1):
 			line = apSpider.spiderOutputLine(i+1, 6, i+1, target.x, target.y, target.x, target.y, 1.0)
 			f.write(line)
 
 		#IMAGE 2
-		f.write( "; right image 2: "+self.panel2.filename+"\n" )
+		f.write( " ; right image 2: "+self.panel2.filename+"\n" )
 		for i,target in enumerate(targets2):
 			line = apSpider.spiderOutputLine(i+1, 6, i+1, target.x, target.y, target.x, target.y, 1.0)
 			f.write(line)
