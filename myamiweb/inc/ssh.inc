@@ -29,4 +29,17 @@ function exec_over_ssh($host, $username, $password, $command, $result=false, $po
 	return $result;
 }
 
+function scp($host, $username, $password, $localfile, $remotefile, $mode=0644, $port=22) {
+	$connection = ssh2_connect($host, $port);
+
+	if (!@ssh2_auth_password($connection, $username, $password)) {
+		die('Authentication Failed...');
+	}
+
+	if (ssh2_scp_send($connection, $localfile, $remotefile, $mode))
+		return true;
+
+	return false;
+}
+
 ?>
