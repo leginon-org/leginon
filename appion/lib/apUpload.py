@@ -233,6 +233,7 @@ def insertModel(params):
 	modq['pixelsize']=params['apix']
 	modq['boxsize']=params['box']
 	modq['resolution']=params['res']
+	modq['hidden']=False
 	modq['description']=params['description']
 	appiondb.insert(modq)
 

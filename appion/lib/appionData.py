@@ -454,6 +454,7 @@ class ApInitialModelData(Data):
 			('pixelsize', float),
 			('boxsize', int),
 			('description', str),
+			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApInitialModelData=ApInitialModelData
