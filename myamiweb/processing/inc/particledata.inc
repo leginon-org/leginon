@@ -681,9 +681,14 @@ class particledata {
 	function getModelsFromProject ($projectId) {
 		$q="SELECT i.*, p.path "
 			."FROM `ApInitialModelData` i "
-			."LEFT JOIN `ApPathData` p ON (p.`DEF_id` = i.`REF|ApPathData|path`) "
-			."WHERE i.`project|projects|project`='$projectId'";
+			."LEFT JOIN `ApPathData` p "
+			." ON (p.`DEF_id` = i.`REF|ApPathData|path`) "
+			."WHERE i.`project|projects|project`='$projectId' "
+			." AND (i.`hidden` IS NULL OR i.`hidden` = 0) "
+			."ORDER BY i.`DEF_id` DESC";
+		echo $q."\n<BR/>";
 		$r = $this->mysql->getSQLResult($q);
+		echo print_r($r)."\n<BR/>";
 		return $r;
 	}
 
