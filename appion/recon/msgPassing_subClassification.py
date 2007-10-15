@@ -34,8 +34,8 @@ def parseInput(args,params):
 			params['iter']=int(elements[1])
 		elif elements[0]=='mask':
 			params['mask']=int(elements[1])
-		elif elements[0]=='proc':
-			params['proc']=int(elements[1])
+#		elif elements[0]=='proc':
+#			params['proc']=int(elements[1])
 		elif elements[0]=='sym':
 			params['sym']=elements[1]
 		elif elements[0]=='hard':
@@ -56,7 +56,7 @@ def createDefaults():
 	params={}
 	params['mask']=None
 	params['iter']=None
-	params['proc']=1
+#	params['proc']=1
 	params['sym']=None
 	params['hard']=None
 	params['corandir']='msgPassing'

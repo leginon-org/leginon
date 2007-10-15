@@ -429,6 +429,32 @@ def pik2Box(params,file):
 	print "results written to \'"+file+".box\'"
 	return
 
+def getMsgPKeepStatus(particledata,refinetree,keep=1):
+	
+	stackPtree = []
+	for refinedata in refinetree:
+		stackPq=appionData.ApStackParticlesData()
+		stackPq['stack'] = refinedata['refinementRun']['stack']
+		stackPq['particle'] = particledata
+		stackPresults=appiondb.query(stackPq,results=1)
+		if stackPresults:
+			stackPtree.append(stackPresults[0])
+		else:
+			print "Particle not in refinement"
+			return 0
+	
+	count=0
+	if stackPresults:
+		print "found stack",stackPresults[0].dbid
+		for i,refinedata in enumerate(refinetree):
+			pclassq = appionData.ApParticleClassificationData()
+			pclassq['refinement'] = refinedata
+			pclassq['particle'] = stackPtree[i]
+			results=appiondb.query(pclassq,results=1)
+			if results[0]['msgp_keep'] == keep:
+				count += 1
+	print count
+	
 if __name__ == '__main__':
 	name = 'test2'
 	sessionname = '07jan05b'
