@@ -686,9 +686,7 @@ class particledata {
 			."WHERE i.`project|projects|project`='$projectId' "
 			." AND (i.`hidden` IS NULL OR i.`hidden` = 0) "
 			."ORDER BY i.`DEF_id` DESC";
-		echo $q."\n<BR/>";
 		$r = $this->mysql->getSQLResult($q);
-		echo print_r($r)."\n<BR/>";
 		return $r;
 	}
 
