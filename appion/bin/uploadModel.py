@@ -43,8 +43,6 @@ if __name__ == '__main__':
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","",path)
 		params['outdir'] = os.path.join(path,"models")
-		# set new ang/pix of the rescaled model
-		params['apix']=params['newapix']
 
 	#create the output directory, if needed
 	apParam.createDirectory(params['outdir'])
@@ -64,9 +62,10 @@ if __name__ == '__main__':
 		# get model to be rescaled
 		oldmod = apVolume.getModelFromId(params['origmodel'])
 		old = os.path.join(oldmod['path']['path'],oldmod['name'])
-		print old
 		apVolume.rescaleModel(old,new,float(oldmod['pixelsize']),params['newapix'],params['newbox'])
-		
+		# set new ang/pix of the rescaled model
+		params['apix']=params['newapix']
+
 	# otherwise, copy templates to final location
 	else:
 		old = os.path.join(params['path'], params['name'])
