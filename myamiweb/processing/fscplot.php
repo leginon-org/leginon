@@ -7,6 +7,7 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
+include ("inc/particledata.inc");
 include ("inc/jpgraph.php");
 include ("inc/jpgraph_utils.inc");
 include ("inc/jpgraph_line.php");
