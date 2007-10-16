@@ -702,6 +702,7 @@ function writeJobFile ($extra=False) {
   echo "Password for <B>$_POST[user]: <INPUT TYPE='password' name='password' value='$_POST[password]'>\n";
   echo "</TD></TR>\n";
   echo "</TABLE>\n";
+  echo "<P>\n";
   echo "<INPUT TYPE='HIDDEN' NAME='clusterpath' VALUE='$_POST[clusterpath]'>\n";
   echo "<INPUT TYPE='HIDDEN' NAME='dmfpath' VALUE='$_POST[dmfpath]'>\n";
   echo "<INPUT TYPE='HIDDEN' NAME='jobname' VALUE='$_POST[jobname]'>\n";
