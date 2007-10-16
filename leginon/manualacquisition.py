@@ -71,6 +71,8 @@ class ManualAcquisition(node.Node):
 		self.focexptime = 100.0
 		self.man_power = None
 		self.man_image = None
+		self.powmin = 0
+		self.powmax = 1e10
 		self.manualplayer = player.Player(callback=self.onManualPlayer)
 
 		self.start()
@@ -390,8 +392,6 @@ class ManualAcquisition(node.Node):
 	def manualCheckLoop(self, presetname=None, emtarget=None):
 		## copied and simplified from focuser.py
 		## go to preset and target
-		if presetname is not None:
-			self.presetsclient.toScope(presetname, emtarget)
 		self.logger.info('Starting manual focus loop, please confirm defocus...')
 		self.beep()
 		camdata1 = {}
@@ -402,20 +402,16 @@ class ManualAcquisition(node.Node):
 		camsize = self.instrument.ccdcamera.getCameraSize()
 		camdata1['offset'] = {'x': (camsize['x']-512)/2, 'y':(camsize['y']-512)/2}
 		self.instrument.ccdcamera.Settings = camdata1
-		
 		self.manualplayer.play()
 		self.onManualCheck()
 		while True:
+			t0 = time.time()
 			state = self.manualplayer.state()
 			if state == 'stop':
 				break
 			elif state == 'pause':
 				if self.manualplayer.wait() == 'stop':
 					break
-				if presetname is not None:
-					self.logger.info('Reseting preset and target after pause')
-					self.logger.debug('preset %s' % (presetname,))
-					self.presetsclient.toScope(presetname, emtarget)
 			# acquire image, show image and power spectrum
 			# allow user to adjust defocus and stig
 			correction = self.settings['correct image']
@@ -423,7 +419,6 @@ class ManualAcquisition(node.Node):
 			
 			self.manualchecklock.acquire()
 			self.instrument.ccdcamera.Settings = camdata1
-
 			try:
 				if correction:
 					imagedata = self.instrument.getData(data.CorrectedCameraImageData)
@@ -436,11 +431,19 @@ class ManualAcquisition(node.Node):
 				self.manualplayer.pause()
 				self.logger.error('Failed to acquire image, pausing...')
 				continue
+			
 			self.manualchecklock.release()
 			pow = imagefun.power(imarray, self.maskradius)
-			self.man_power = pow.astype(numpy.float32)
+			man_power = pow.astype(numpy.float32)
+			self.man_power = numpy.clip(man_power,self.powmin,self.powmax)
 			self.man_image = imarray.astype(numpy.float32)
 			self.panel.setManualImage(self.man_image, 'Image')
 			self.panel.setManualImage(self.man_power, 'Power')
+
+			#sleep if too fast in simulation
+			t1 = time.time()
+			if t1-t0 < 0.5:
+				time.sleep(0.5-(t1-t0))
+				
 		self.onManualCheckDone()
 		self.logger.info('Manual focus check completed')

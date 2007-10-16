@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.29 $
+# $Revision: 1.30 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-10-03 23:40:43 $
+# $Date: 2007-10-16 00:01:35 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -385,6 +385,22 @@ class ManualFocusSettingsDialog(gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, 'ms')
 		self.sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+		label = wx.StaticText(self, -1, 'Power Spectrum Value:')
+		self.sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, 'min:')
+		self.sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		self.powmin = FloatEntry(self, -1, value='0', chars=7)
+		self.sz.Add(self.powmin, (3, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'max:')
+		self.sz.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		self.powmax = FloatEntry(self, -1, value='1e10', chars=7)
+		self.sz.Add(self.powmax, (3, 3), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+
 
 		self.addButton('OK', wx.ID_OK)
 		self.addButton('Cancel', wx.ID_CANCEL)
@@ -447,6 +463,8 @@ class ManualFocusDialog(wx.MiniFrame):
 		if self.settingsdialog.ShowModal() == wx.ID_OK:
 			self.node.maskradius = self.settingsdialog.maskradius.GetValue()
 			self.node.focexptime = self.settingsdialog.focexptime.GetValue()
+			self.node.powmin = self.settingsdialog.powmin.GetValue()
+			self.node.powmax = self.settingsdialog.powmax.GetValue()
 
 		#self.MakeModal(True)
 
