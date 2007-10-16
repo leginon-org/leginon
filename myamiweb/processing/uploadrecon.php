@@ -216,7 +216,7 @@ function runUploadRecon() {
     $reconpath = $_POST['reconpath'];
     if (substr($reconpath,-1,1)!='/') $reconpath.='/';
     $runpath = $reconpath.$reconname;
-    if (!file_exists($runpath)) createUploadReconForm("<B>ERROR:</B> No files in the recon run directory");
+    if (!file_exists($runpath)) createUploadReconForm("<B>ERROR:</B> Could not find recon run directory: ".$runpath);
   } else {
     $runpath = "./";
   }
