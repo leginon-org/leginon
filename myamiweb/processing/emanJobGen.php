@@ -67,6 +67,8 @@ elseif ($_POST['submitjob']) {
   $pass = $_POST['password'];
   if (!($user && $pass)) writeJobFile("<B>ERROR:</B> Enter a user name and password");
 
+  writeTop("Eman Job Submitted","EMAN Job Submitted",$javafunc);
+  echo "<TABLE WIDTH='600'>\n";
   $jobname=$_POST['jobname'];
   $jobfile="/tmp/$jobname.job";
 
@@ -75,31 +77,35 @@ elseif ($_POST['submitjob']) {
   $apdir.= $jobname;
   $cmd = 'mkdir -p ';
   $cmd .= $apdir;
-  echo $cmd;
   exec_over_ssh('cronus3', $user, $pass, $cmd, False);
-  echo "<P>\n";
-  
+  echo "<TR><TD>Appion Directory</TD><TD>$apdir</TD></TR>\n";
+
   // copy job file to appion dir
   $apfile .= $apdir."/";
   $apfile .= $jobname.".job";
-  echo "scp $jobfile $apfile\n";
   scp('cronus3',$user,$pass,$jobfile,$apfile);
-  echo "<P>\n";
+  echo "<TR><TD>Job File Name</TD><TD>$jobname.job</TD></TR>\n";
   
   // create directory on garibaldi and copy job file over
   $clusterpath = $_POST['clusterpath'].$jobname;
   $cmd = 'mkdir -p ';
   $cmd .= $clusterpath.";\n";
   $cmd .= "cp $apfile $clusterpath/$jobname.job;\n";
+
   // submit job on garibaldi
-  $cmd = "qsub $clusterpath/$jobname.job\n";
-  echo $cmd;
-  exec_over_ssh('garibaldi', $user, $pass, $cmd, False);
-  
-  //  scp($host,$user,$pass,$jobfile,$clusterfile);
+  $cmd .= "qsub $clusterpath/$jobname.job\n";
+  $jobnum = exec_over_ssh('garibaldi', $user, $pass, $cmd, False);
+  echo "<TR><TD>Cluster Directory</TD><TD>$clusterpath</TD></TR>\n";
+  echo "</TABLE>\n";
 
-  //exec_over_ssh($host, $user, $pass, $cmd, False);
+  // check jobs that are running on garibaldi
+  echo "<P>Jobs currently running on the cluster:\n";
+  $cmd = 'qstat -a | grep $user';
+  $subjobs = exec_over_ssh('garibaldi',$user,$pass,$cmd,True);
+  if ($subjobs) {echo "<PRE>$subjobs</PRE>\n";}
+  else {echo "<FONT COLOR='RED'>No Jobs on the cluster, check your settings</FONT>\n";}
 
+  writeBottom();
   exit;
 }
 
