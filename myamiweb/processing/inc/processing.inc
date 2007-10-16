@@ -102,7 +102,8 @@ function displayExperimentForm($projectId,$sessionId,$expId){
 	$currentproject=$sessiondata['currentproject'];
 
 	if ($expId){
-		$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
+		$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL
+			."getproject.php?pId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
 		$sessionDescr=$sessiondata['info']['Purpose'];
 		$session_link="<a class='header' target='project' href='3wviewer.php?expId=$expId'>$sessionDescr</a>";
 		echo "Project: $proj_link<BR>\nSession: $session_link\n";
