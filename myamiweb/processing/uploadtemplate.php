@@ -43,7 +43,33 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	$norefId=$_GET['norefId'];
 	$stackId=$_GET['stackId'];
 	
-	writeTop($title,$heading,$javascript);
+	$javafunctions="
+	<script src='../js/viewer.js'></script>
+	<script LANGUAGE='JavaScript'>
+		function enableconf(){
+			 if (document.viewerform.confcheck.checked){
+			    document.viewerform.reprocess.disabled=false;
+			    document.viewerform.reprocess.value='';
+			 }
+			 else {
+			    document.viewerform.reprocess.disabled=true;
+			    document.viewerform.reprocess.value='0.8';
+			 }
+		}
+		function infopopup(infoname){
+			var newwindow=window.open('','name','height=250,width=400');
+			newwindow.document.write('<HTML><BODY>');
+			
+			if (infoname=='classpath'){
+				newwindow.document.write('This is the path of the class average or stack used for extracting the MRC file. Leave this blank if the template file specified by template path above already exist');
+			}
+			newwindow.document.write('</BODY></HTML>');
+			newwindow.document.close();
+		}
+
+	</SCRIPT>\n";
+
+	writeTop($title,$heading,$javafunctions);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -90,17 +116,21 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	if (!$stackId) {
 		$stackId=$norefparams["REF|ApStackData|stack"];
 	}
-
+	
+	//get apix from stack 
 	if (!$apix) {
 		$apix=($particle->getStackPixelSizeFromStackId($stackId))*1e10;
 	}
 	
 	//get the class average file
 	if (!$file_hed) {
-		$file_hed = substr($file, 0, -3);
-		$file_hed = $file_hed."hed";
+		if (!$file) {
+		} else {
+			$file_hed = substr($file, 0, -3);
+			$file_hed = $file_hed."hed";
+		}
 	}
-	
+
 	echo"
 	<P>
 	<TABLE BORDER=3 CLASS=tableborder>";
@@ -140,7 +170,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 				<TD VALIGN='TOP' CLASS='tablebg'>
 					<BR/>
 					<B>Class average information:</B><BR/>
-					Class path:
+					<A HREF=\"javascript:infopopup('classpath')\">Class path</A>:
 					<INPUT TYPE='text' NAME='hed' SIZE='55' VALUE='$file_hed'> <BR/>	
 				</TD>
 			</TR>
@@ -186,7 +216,10 @@ function runUploadTemplate() {
 
 	$hed=$_POST['hed'];
 	if (!$hed) {
-		$template_command="Class average file is not given. Please make sure that the MRC file already exist!";
+		if (!file_exists($template)) {
+			createUploadTemplateForm("<B>ERROR:</B> Could not find file: ".$template);  
+		}
+		$template_command="File ".$template." exist. But make sure that this is the file that you want!";
 	} else {
 		$template_Id=ereg("template([0-9]*)",$template,$Id);
 		$template_command.="proc2d ";
