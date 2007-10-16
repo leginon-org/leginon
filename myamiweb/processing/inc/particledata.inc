@@ -884,7 +884,8 @@ class particledata {
 		  ."LEFT JOIN `ApStackParticlesData` aspd "
 		  ."ON (apcd.`REF|ApStackParticlesData|particle` = aspd.`DEF_id`) "
 		  ."WHERE apcd.`REF|ApRefinementData|refinement` = '$refinementDataId' "
-		  ."AND `thrown_out` = 1";
+		  ."AND `thrown_out` = 1 "
+			."ORDER BY aspd.`DEF_id` ASC ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
