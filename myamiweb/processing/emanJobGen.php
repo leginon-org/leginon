@@ -50,6 +50,7 @@ if ($_POST['write']) {
 elseif ($_POST['submitstackmodel'] || $_POST['duplicate']) {
   if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
   if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
+  if (!$_POST['user']) stackModelForm("ERROR: enter your user name");
   ## make sure that box sizes are the same
   ## get stack data
   $stackinfo = explode('|--|',$_POST['stackval']);
@@ -160,7 +161,14 @@ function stackModelForm($extra=False) {
   if ($extra) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
   }
-  echo "<FORM NAME='viewerform' METHOD='POST' ACTION='$formaction'>
+  echo "<FORM NAME='viewerform' METHOD='POST' ACTION='$formaction'>\n";
+  echo "<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='5'>\n";
+  echo "<TR><TD>\n";
+  echo "Username: <INPUT TYPE='text' name='user' value='$_POST[user]'>\n";
+  echo "<BR><I>(password needed upon job submission)</I>\n";
+  echo "</TD></TR>\n";
+  echo "</TABLE>
+  <P>
   <B>Select Project:</B><BR>
   <SELECT NAME='projectId' onchange='newexp()'>\n";
 
@@ -200,6 +208,7 @@ function stackModelForm($extra=False) {
   # show initial models
   echo "<B>Model:</B><BR><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A>\n";
   echo "<P>\n";
+  $minf = explode('|--|',$_POST['model']);
   if (count($models)>0) {
     foreach ($models as $model) {
       echo "<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='2'>\n";
@@ -215,7 +224,12 @@ function stackModelForm($extra=False) {
       $sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
       echo "<TR><TD COLSPAN=2>\n";
       $modelvals="$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$sym[symmetry]";
-      if (!$modelonly) echo "<INPUT TYPE='RADIO' NAME='model' VALUE='$modelvals'>Use ";
+      if (!$modelonly) {
+	echo "<INPUT TYPE='RADIO' NAME='model' VALUE='$modelvals' ";
+	# check if model was selected
+	if ($model['DEF_id']==$minf[0]) echo " CHECKED";
+      }
+      echo">Use ";
       echo"Model ID: $model[DEF_id]\n";
       echo "<INPUT TYPE='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><BR>\n";
       foreach ($pngfiles as $snapshot) {
@@ -259,8 +273,8 @@ function jobForm($extra=false) {
   $dmfstack = $stackinfo[4];
   $box=$stackinfo[2];
   $rootpathdata = explode('/', $sessionpath);
-  $dmfpath = '/home/';
-  $clusterpath = '/garibaldi/people-a/';
+  $dmfpath = '/home/'.$_POST['user'].'/';
+  $clusterpath = '/garibaldi/people-a/'.$_POST['user'].'/';
   for ($i=3 ; $i<count($rootpathdata); $i++) {
     $rootpath .= "$rootpathdata[$i]";
     if ($i+1<count($rootpathdata)) $rootpath.='/';
@@ -305,6 +319,7 @@ function jobForm($extra=false) {
   }
   echo "
   <FORM NAME='emanjob' METHOD='POST' ACTION='$formaction'><BR/>
+  <INPUT TYPE='HIDDEN' NAME='user' VALUE='$_POST[user]'>
   <TABLE CLASS='tableborder' CELLPADDING=4 CELLSPACING=4>
   <TR>
     <TD><B>Job Run Name:</B></TD>
@@ -574,6 +589,7 @@ function writeJobFile ($extra=False) {
   $clusterjob.= "\ncd $clusterpath\n";
   $clusterjob.= "\nrm -rf recon\n";
   $clusterjob.= "ln -s \$PBSREMOTEDIR recon\n";
+  $clusterjob.= "chmod 755 recon\n"; 
   $clusterjob.= "cd recon\n";
   // get file name, strip extension
   $ext=strrchr($_POST['dmfstack'],'.');
@@ -680,8 +696,12 @@ function writeJobFile ($extra=False) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
   }
   echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formaction'><BR>\n";
-  echo "User: <INPUT TYPE='text' name='user' value=".$_POST['user'].">\n";
-  echo "Password: <INPUT TYPE='password' name='password' value=".$_POST['password']."><BR>\n";
+  echo "<INPUT TYPE='HIDDEN' NAME='user' VALUE='$_POST[user]'>\n";
+  echo "<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='5'>\n";
+  echo "<TR><TD>\n";
+  echo "Password for <B>$_POST[user]: <INPUT TYPE='password' name='password' value='$_POST[password]'>\n";
+  echo "</TD></TR>\n";
+  echo "</TABLE>\n";
   echo "<INPUT TYPE='HIDDEN' NAME='clusterpath' VALUE='$_POST[clusterpath]'>\n";
   echo "<INPUT TYPE='HIDDEN' NAME='dmfpath' VALUE='$_POST[dmfpath]'>\n";
   echo "<INPUT TYPE='HIDDEN' NAME='jobname' VALUE='$_POST[jobname]'>\n";
