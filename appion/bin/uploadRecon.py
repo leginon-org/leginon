@@ -23,7 +23,8 @@ if __name__ == '__main__':
 	if params['modelid'] is None:
 		apDisplay.printError("enter a starting model id")
 	if not os.path.exists(params['path']):
-		apDisplay.printError("directory does not exist")
+		apDisplay.printError("upload directory does not exist: "+params['path'])
+	os.chdir(params['path'])
 
 	# make sure that the stack & model IDs exist in database
 	apRecon.findEmanLogFile(params)
