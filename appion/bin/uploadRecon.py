@@ -24,14 +24,15 @@ if __name__ == '__main__':
 		apDisplay.printError("enter a starting model id")
 	if not os.path.exists(params['path']):
 		apDisplay.printError("directory does not exist")
-	if not os.path.exists(os.path.join(params['path'],'.emanlog')):
-		apDisplay.printError("directory does not contain EMAN log file")
 
 	# make sure that the stack & model IDs exist in database
+	apRecon.findEmanLogFile(params)
 	apRecon.checkStackId(params)
 	apRecon.checkModelId(params)
 
 	# create directory for extracting data
+	if params['tmpdir'] is None:
+		params['tmpdir'] = os.path.join(params['path'],"temp")
 	apParam.createDirectory(params['tmpdir'], warning=True)
 	
 	# parse out the refinement parameters from the log file
