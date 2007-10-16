@@ -14,7 +14,6 @@ require "inc/processing.inc";
 require "inc/appionloop.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
-require "inc/ssh.inc";
  
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {

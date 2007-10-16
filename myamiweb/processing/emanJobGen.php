@@ -13,7 +13,6 @@ require "inc/processing.inc";
 require "inc/leginon.inc";
 require "inc/viewer.inc";
 require "inc/project.inc";
-require "inc/ssh.inc";
 
 if ($_POST['write']) {
   $particle = new particledata();

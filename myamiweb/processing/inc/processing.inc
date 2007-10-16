@@ -11,7 +11,7 @@
  *	
  */
 
-include "inc/ssh.inc";
+require_once "inc/ssh.inc";
 
 // add commas to an int
 function commafy($input) {
