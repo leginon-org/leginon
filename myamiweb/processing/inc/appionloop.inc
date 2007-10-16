@@ -89,7 +89,7 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$presets=$sessiondata['presets'];
-	if ($presets) {
+	if ($presets && count($presets) > 1) {
 		echo"<B>Preset</B>\n<SELECT NAME='preset'>\n";
 		foreach ($presets as $preset) {
 			echo "<OPTION VALUE='$preset' ";
@@ -98,8 +98,12 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 			echo ">$preset</OPTION>\n";
 		}
 		echo"</SELECT><br/><br/>\n";
-	}
-	else {
+	} elseif ($presets) {
+		echo"<B>Preset:</B>&nbsp;&nbsp;".$presets[0]."\n\n";
+		echo"<INPUT TYPE='hidden' NAME='preset' VALUE=".$presets[0].">\n";
+		echo"<br/>\n";
+	} else {
+		//no presets
 		echo"<INPUT TYPE='hidden' NAME='alldbimages' VALUE=1>\n";
 		echo"<I>No Presets for this Session<br/>\n"
 			."Will Process ALL Images</I><BR/>\n";
