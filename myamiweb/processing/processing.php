@@ -46,6 +46,7 @@ $nonecolor='#FFFFCC';
 $progcolor='#CCFFFF';
 $donecolor='#CCFFCC';
 $donepic='img/green_circle.gif';
+$progpic='img/blue_circle.gif';
 $nonepic='img/red_circle.gif';
 
 // If expId specified, don't show pulldowns, only session info
@@ -149,6 +150,8 @@ if ($sessionId) {
         $reconruns+=count($reconIds);
       }
     }
+    $subjobs = $particle->getSubmittedJobs($sessionId);
+    $numsubjobs = count($subjobs);
   }
 
   echo"
@@ -314,25 +317,34 @@ if ($sessionId) {
     echo"</TD>
   </TR>
   <TR>\n";
-  if ($reconruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
+  // if no submitted jobs, display none
+  // for every uploaded job, subtract a submitted job
+  // if all submitted jobs are uploaded, it should be 0
+  $waitingjobs = $numsubjobs-$reconruns;
+  if ($numsubjobs==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
+  elseif ($waitingjobs > 0) {$bgcolor=$progcolor;$gifimg=$progpic;}
   else {$bgcolor=$donecolor;$gifimg=$donepic;}
   echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
     <TD BGCOLOR='$bgcolor'>
     <B>Reconstructions</B>
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
-  if ($reconruns==0) {echo "none";}
-  else {echo "<A HREF='reconsummary.php?expId=$sessionId'>$reconruns completed</A>";}
+  if ($numsubjobs==0) {echo "no jobs submitted";}
+  else {
+    if ($waitingjobs>0) echo "$numsubjobs queued\n";
+    if ($waitingjobs>0 && $reconruns>0) echo "<BR>\n";
+    if ($reconruns>0) echo "<A HREF='reconsummary.php?expId=$sessionId'>$reconruns uploaded</A>";
+  }
   echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>";
   if ($stackruns == 0) {
     echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";
-  } else {
+  } 
+  else {
     echo"<A HREF='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</A>";
   }
-  if ($stackruns == 0) {
-  } else {
+  if ($stackruns>0) {
     echo"<BR><A HREF='uploadrecon.php?expId=$sessionId'>Upload Reconstruction</A>";
   }
   echo"</TD>

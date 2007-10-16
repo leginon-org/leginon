@@ -761,6 +761,13 @@ class particledata {
     return $jid;
   }
 
+  function getSubmittedJobs($expId) {
+    $q="SELECT DEF_id "
+      ."FROM `ApClusterJobData` "
+      ."WHERE `dbemdata|SessionData|session`=$expId";
+    $r = $this->mysql->getSQLResult($q);
+    return $r;
+  }
 	function getReconIds ($stackId) {
 		$q = "SELECT * "
 			."FROM `ApRefinementRunData` AS r "
