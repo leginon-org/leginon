@@ -674,6 +674,11 @@ def runRMeasure(apix, volpath):
 	output = fout.readlines()
 	fout.close()
 
+	flog = open("rmeasure.log", "a")
+	for line in output:
+		flog.write(line.rstrip()+"\n")
+	flog.close()
+
 	if output is None:
 		apDisplay.printWarning("R Measure, FAILED: no output found")
 		return None		
