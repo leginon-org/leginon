@@ -430,10 +430,22 @@ leginondata.ApRefIterationData=ApRefIterationData
 
 ### Reconstruction tables ###
 
+class ApClusterJobData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('path', ApPathData),
+			('name', str),
+			('dbemdata|SessionData|session', int),
+			('dmfpath', ApPathData),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApClusterJobData=ApClusterJobData
+
 class ApRefinementRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('name', str),
+			('jobfile', ApClusterJobData),
 			('stack', ApStackData),
 			('initialModel', ApInitialModelData),
 			('path', ApPathData),
