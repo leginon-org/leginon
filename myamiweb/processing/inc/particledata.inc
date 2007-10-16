@@ -252,8 +252,8 @@ class particledata {
 			."FROM `ApSelectionRunData` AS r "
 			."LEFT JOIN ApPathData AS p ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
 			."WHERE r.`DEF_id` = '$partRunId'";
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0];
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
 	}
 
 	function getParticleRunIds ($sessionId) {

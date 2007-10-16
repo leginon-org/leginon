@@ -18,7 +18,7 @@ $filename = $leginondata->getFilenameFromId($imgId);
 $ctf = new ctfdata();
 $runId = $ctf->getLastCtfRun($sessionId);
 list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId);
-$filename=$ctfdata['graphpath'].$ctfdata[$graph];
+$filename=$ctfdata['path']."/opimages/".$ctfdata[$graph];
 if ($img=@imagecreatefrompng($filename)) {
 		resample($img, $imgsize);
 } else {

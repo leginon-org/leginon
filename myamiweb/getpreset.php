@@ -50,13 +50,12 @@ if ($id) {
 	$presets = $leginondata->getPresets($id, $p);
 	if (is_array($presets))
 		foreach($presets as $k=>$v)
-			if ($k=='mag')
-				echo " <b>mag:</b> ".round($v/1000)."k";
-			else if ($k=='defocus')
-				echo " <b>def:</b> ",($leginondata->formatDefocus($v));
+
+			if ($k=='defocus')
+				echo " <b>$k:</b> ",($leginondata->formatDefocus($v));
 			else if ($k=='pixelsize') {
 				$v *= $imageinfo['binning'];
-				echo " <b>apix:</b> ",($leginondata->formatPixelsize($v));
+				echo " <b>$k:</b> ",($leginondata->formatPixelsize($v));
 			}
 			else if ($k=='tilt' && (abs($v) > 1 || $showtilt)) {
 				$angle=$v;
@@ -81,7 +80,7 @@ if ($id) {
 		echo "&nbsp;<img src='imgangle.php?a=".$angle."'>";
 	}
 	if ($viewfilename && !$str_tilt)
-		echo " <br></font><font style='font-size: 10px;'>".$filename['filename']."</font>";
+		echo " <br />".$filename['filename']."</font>";
 }
 ?>
 </td>

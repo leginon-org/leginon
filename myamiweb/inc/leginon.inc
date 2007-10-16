@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.75 $
- *	@version $Id: leginon.inc,v 1.75 2007-10-11 20:57:12 dfellman Exp $
+ *	@version $Revision: 1.76 $
+ *	@version $Id: leginon.inc,v 1.76 2007-10-16 23:03:30 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -277,7 +277,8 @@ class leginondata {
 			if ($d['name'])
 				$datatypes[]=$d['name'];
 		}
-		$datatypes[]=$this->manualtype; 
+		if ($allpresets)
+			$datatypes[]=$this->manualtype; 
 		return $datatypes;
 	}
 
