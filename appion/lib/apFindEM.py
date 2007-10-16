@@ -19,7 +19,7 @@ class findemjob(threading.Thread):
 		fin=os.popen( getFindEMPath(), 'w')
 		fin.write(self.feed)
 		print "running findem.exe"
-		fin.flush
+		fin.flush()
 		fin.close()
 
 #########################################################
