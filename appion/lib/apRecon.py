@@ -36,7 +36,7 @@ def createDefaults():
 	params['iterations']=[]
 	params['fscs']=[]
 	params['package']='EMAN'
-	params['tmpdir']='./temp'
+	params['tmpdir']=None
 	params['commit']=True
 	params['contour']=1.5
 	params['oneiteration']=None
@@ -130,7 +130,7 @@ def checkStackId(params):
 		sys.exit()
 	else:
 		params['stack']=stackinfo
-		print "Stack:",stackinfo['path']['path']+stackinfo['name']
+		print "Stack:",os.path.join(stackinfo['path']['path']+stackinfo['name'])
 	return
 	
 def checkModelId(params):
@@ -175,10 +175,10 @@ def parseMsgPassingLogFile(params):
 	lines.close()
 
 def findEmanLogFile(params):
-	logfile = os.path.join(params['path'], '.emanlog')
+	logfile = os.path.join(params['path'], 'eman.log')
 	if os.path.isfile(logfile):
 		return logfile
-	logfile = os.path.join(params['path'], 'eman.log')
+	logfile = os.path.join(params['path'], '.emanlog')
 	if os.path.isfile(logfile):
 		return logfile
 	apDisplay.printError("Could not find eman log file")
@@ -325,7 +325,7 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stac
 	
 
 def runChimeraScript(chimscript):
-	apDisplay.printMsg("Trying to use chimera for model imaging")
+	apDisplay.printColor("Trying to use chimera for model imaging","cyan")
 	resetVirtualFrameBuffer()
 	if 'CHIMERA' in os.environ and os.path.isdir(os.environ['CHIMERA']):
 		chimpath = os.environ['CHIMERA']
@@ -385,22 +385,24 @@ def insertRefinementRun(params):
 	return True
 
 def insertResolutionData(params,iteration):
-	fsc = os.path.join(params['path'], 'fsc.eotest.'+iteration['num'])
-	iteration['fscfile'] = fsc
+	fsc = 'fsc.eotest.'+iteration['num']
+	fscfile = os.path.join(params['path'],fsc)
+
+	if not os.path.isfile(fscfile):
+		apDisplay.printWarning("Could not find FSC file: "+fscfile)
+ 
+	iteration['fscfile'] = fscfile
 	if fsc in params['fscs']:
 		resq=appionData.ApResolutionData()
 
-		#fsc file with path:
-		fscfile=os.path.join(params['path'],fsc)
-
 		# calculate the resolution:
-		halfres=calcRes(fscfile, params['model']['boxsize'], params['apix'])
+		halfres = calcRes(fscfile, params['model']['boxsize'], params['apix'])
 
 		# save to database
 		resq['half'] = halfres
 		resq['fscfile'] = fsc
 
-		apDisplay.printMsg("inserting Resolution Data into database")
+		apDisplay.printMsg("inserting FSC resolution data into database")
 		if params['commit'] is True:
 			appiondb.insert(resq)
 
@@ -408,23 +410,28 @@ def insertResolutionData(params,iteration):
 
 def insertRMeasureData(params,iteration):
 	volumeDensity='threed.'+iteration['num']+'a.mrc'
-	if os.path.exists(os.path.join(params['path'], volumeDensity)):
-		resolution = runRMeasure(params['apix'], volumeDensity)
-	
-		if resolution is None:
-			return None
-		else:
-			resq=appionData.ApRMeasureData()
-			resq['volume']=volumeDensity
-			resq['rMeasure']=resolution
 
-			apDisplay.printMsg("inserting R Measure Data into database")
-			if params['commit'] is True:
-				appiondb.insert(resq)
+	volPath = os.path.join(params['path'], volumeDensity)
+	if not os.path.exists(volPath):
+		apDisplay.printWarning("R Measure failed, volume density not found: "+volPath)
+		return None
 
-			return resq
+	resolution = runRMeasure(params['apix'], volPath)
 
-def insertIteration(iteration,params):
+	if resolution is None:
+		return None
+
+	resq=appionData.ApRMeasureData()
+	resq['volume']=volumeDensity
+	resq['rMeasure']=resolution
+
+	apDisplay.printMsg("inserting R Measure Data into database")
+	if params['commit'] is True:
+		appiondb.insert(resq)
+
+	return resq
+
+def insertIteration(iteration, params):
 	refineparamsq=appionData.ApRefinementParamsData()
 	refineparamsq['ang']=iteration['ang']
 	refineparamsq['mask']=iteration['mask']
@@ -454,29 +461,32 @@ def insertIteration(iteration,params):
 	
 	# insert refinement results
 	refineq = appionData.ApRefinementData()
-	refineq['refinementRun']=params['refinementRun']
-	refineq['refinementParams']=refineparamsq
-	refineq['iteration']=iteration['num']
-	refineq['resolution']=resData
-	refineq['rMeasure']=RmeasureData
+	refineq['refinementRun'] = params['refinementRun']
+	refineq['refinementParams'] = refineparamsq
+	refineq['iteration'] = iteration['num']
+	refineq['resolution'] = resData
+	refineq['rMeasure'] = RmeasureData
 	classvar = 'classes.'+iteration['num']+'.var.img'
 	volumeDensity = 'threed.'+iteration['num']+'a.mrc'
 	if classavg in params['classavgs']:
-		refineq['classAverage']=classavg
+		refineq['classAverage'] = classavg
 	if classvar in params['classvars']:
-		refineq['classVariance']=classvar
+		refineq['classVariance'] = classvar
 	if volumeDensity in params['volumes']:
 		refineq['volumeDensity'] = volumeDensity
 	if msgpassclassavg in params['msgpassavgs']:
-		refineq['MsgPGoodClassAvg']=msgpassclassavg
+		refineq['MsgPGoodClassAvg'] = msgpassclassavg
 
 	apDisplay.printMsg("inserting Refinement Data into database")
 	if params['commit'] is True:
 		appiondb.insert(refineq)
 
-	insertFSC(iteration['fscfile'], refineq, params['commit'])
-	
-	halfres = calcRes(iteration['fscfile'], params['model']['boxsize'], params['apix'])
+	#insert FSC data
+	fscfile = os.path.join(params['path'], "fsc.eotest."+iteration['num'])
+	insertFSC(fscfile, refineq, params['commit'])
+	halfres = calcRes(fscfile, params['model']['boxsize'], params['apix'])
+
+	#create Chimera snapshots
 	volDensPath = os.path.join(params['path'], volumeDensity)
 	renderSnapshots(volDensPath, halfres, params['model'], 
 		params['contour'], params['zoom'], params['apix'])
@@ -485,24 +495,11 @@ def insertIteration(iteration,params):
 	eulers = getEulersFromProj(params,iteration['num'])	
 	
 	# get # of class averages and # kept
-#      	params['eulers']=getClassInfo(os.path.join(params['path'],classavg))
+	#params['eulers']=getClassInfo(os.path.join(params['path'],classavg))
 
-        # get list of bad particles for this iteration
-	plogf=os.path.join(params['path'],"particle.log")
-	if not os.path.exists(plogf):
-		apDisplay.printError("no particle.log file found")
-	f=open(plogf,'r')
-	badprtls=[]
-	n=str(int(iteration['num'])+1)
-	for line in f:
-		line=string.rstrip(line)
-		if re.search("X\t\d+\t"+iteration['num']+"$",line):
-			bits=line.split()
-			badprtls.append(bits[1])
-		# break out of into the next iteration
-	        elif re.search("X\t\d+\t"+n+"$",line):
-			break
-       	f.close()
+	# get list of bad particles for this iteration
+	badprtls = readParticleLog(params['path'], iteration['num'])
+
 	# expand cls.*.tar into temp file
 	clsf=os.path.join(params['path'],"cls."+iteration['num']+".tar")
 	print "reading",clsf
@@ -523,6 +520,26 @@ def insertIteration(iteration,params):
 		os.remove(os.path.join(params['tmpdir'],file))
 	os.rmdir(params['tmpdir'])
 	return
+
+
+def readParticleLog(path, iternum):
+	plogf = os.path.join(path,"particle.log")
+	if not os.path.isfile(plogf):
+		apDisplay.printError("no particle.log file found")
+
+	f=open(plogf,'r')
+	badprtls=[]
+	n=str(int(iternum)+1)
+	for line in f:
+		line=string.rstrip(line)
+		if re.search("X\t\d+\t"+str(iternum)+"$",line):
+			bits=line.split()
+			badprtls.append(bits[1])
+		# break out of into the next iteration
+		elif re.search("X\t\d+\t"+n+"$",line):
+			break
+	f.close()
+	return badprtls
 
 def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refineq,numcls):
 	clsfilename=os.path.join(params['tmpdir'],cls)
@@ -596,7 +613,7 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 	f.close()
 	return
 
-def calcRes(fscfile, boxsize,apix):
+def calcRes(fscfile, boxsize, apix):
 	# calculate the resolution at 0.5
 
 	lastx = 0
@@ -624,59 +641,57 @@ def calcRes(fscfile, boxsize,apix):
 	f.close()
 	return
 
-def insertFSC(fscfile, refine, commit=True):
-	f = open(fscfile,'r')
+def insertFSC(fscfile, refineData, commit=True):
+	if not os.path.isfile(fscfile):
+		apDisplay.printWarning("Could not open FSC file: "+fscfile)
 
+	f = open(fscfile,'r')
 	apDisplay.printMsg("inserting FSC Data into database")
+	numinserts = 0
 	for line in f:
 		fscq = appionData.ApFSCData()
-		fscq['refinementData'] = refine
+		fscq['refinementData'] = refineData
 		line = string.rstrip(line)
 		bits = line.split('\t')
 		fscq['pix'] = int(bits[0])
 		fscq['value'] = float(bits[1])
 
+		numinserts+=1
 		if commit is True:
 			appiondb.insert(fscq)
-	
-def writeReconLog(commandline):
-        f=open('.reconlog','a')
-        out=""
-        for n in commandline:
-                out=out+n+" "
-        f.write(out)
-        f.write("\n")
-        f.close()
+	apDisplay.printMsg("inserted "+str(numinserts)+" rows of FSC data into database")
+	f.close()
 
-def runRMeasure(apix,vol):
-	
-	print 'Processing', vol
-	try:
-		rmeasure = subprocess.Popen(['rmeasure'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-	except:
-		apDisplay.printWarning("Failed to run rmeasure")
-		return None
 
-	if rmeasure is None:
-		apDisplay.printWarning("Failed to run rmeasure")
-		return None
+def runRMeasure(apix, volpath):
+	t0 = time.time()
 
-	try:
-		rmeasure.stdin.write(vol+'\n')
-		rmeasure.stdin.write(str(apix)+'\n')
-		output=rmeasure.stdout.read()
-	except:
-		apDisplay.printWarning("Failed to run rmeasure during input/output")
-		return None
-	
+	apDisplay.printMsg("R Measure, processing volume: "+volpath)
+	fin,fout = os.popen2("rmeasure")
+	fin.write(volpath+"\n"+str(apix)+"\n")
+	fin.flush()
+	fin.close()
+	output = fout.readlines()
+	fout.close()
+
+	if output is None:
+		apDisplay.printWarning("R Measure, FAILED: no output found")
+		return None		
+
 	resolution = None
-	words=output.split()
-	for n in range(0,len(words)):
-		#print words[n],words[n+4]
-		if words[n]=='Resolution' and words[n+4]=='0.5:':
-			resolution=words[n+5]
+	key = "Resolution at FSC = 0.5:"
+	keylen = len(key)
+	for line in output:
+		sline = line.strip()
+		if sline[0:keylen] == key:
+			#print sline
+			blocks = sline.split(key)
+			resolution = float(blocks[1])
 			break
-	print vol, resolution
+
+	apDisplay.printColor("R Measure, resolution: "+str(resolution)+" Angstroms", "cyan")
+	apDisplay.printMsg("R Measure, completed in: "+apDisplay.timeString(time.time()-t0))
+
 	return resolution
 
 def getRefineRunDataFromID(refinerunid):
