@@ -700,6 +700,22 @@ class particledata {
     return $r;
   }
 
+  function getJobInfoFromId($jobid) {
+    $q="SELECT j.*, "
+      ."p.path as appath, "
+      ."d.path as dmfpath, "
+      ."c.path as clusterpath "
+      ."FROM `ApClusterJobData` AS j "
+      ."LEFT JOIN ApPathData AS p ON "
+      ."(j.`REF|ApPathData|path` = p.`DEF_id`) "
+      ."LEFT JOIN ApPathData AS d ON "
+      ."(j.`REF|ApPathData|dmfpath` = d.`DEF_id`) "
+      ."LEFT JOIN ApPathData AS c ON "
+      ."(j.`REF|ApPathData|clusterpath` = c.`DEF_id`) "
+      ."WHERE j.`DEF_id` = $jobid";
+    $r = $this->mysql->getSQLResult($q);
+    return $r[0];
+  }
   function getJobFileFromPath($path,$name) {
     $q="SELECT j.*, p.path "
       ."FROM `ApClusterJobData` AS j "

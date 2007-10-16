@@ -101,8 +101,7 @@ elseif ($_POST['submitjob']) {
 
   // check jobs that are running on garibaldi
   echo "<P>Jobs currently running on the cluster:\n";
-  $cmd = 'qstat -a | grep $user';
-  $subjobs = exec_over_ssh('garibaldi',$user,$pass,$cmd,True);
+  $subjobs = checkClusterJobs($user,$pass);
   if ($subjobs) {echo "<PRE>$subjobs</PRE>\n";}
   else {echo "<FONT COLOR='RED'>No Jobs on the cluster, check your settings</FONT>\n";}
 

@@ -11,6 +11,8 @@
  *	
  */
 
+include "inc/ssh.inc";
+
 // add commas to an int
 function commafy($input) {
    if(strlen($input)<=3) { 
@@ -131,4 +133,10 @@ function displayExperimentForm($projectId,$sessionId,$expId){
 		echo"</select>\n";
 	}
 	return $sessiondata;
+}
+
+function checkClusterJobs($user,$pass) {
+  $cmd = 'qstat -a | grep $user';
+  $subjobs = exec_over_ssh('garibaldi',$user,$pass,$cmd,True);
+  return $subjobs;
 }

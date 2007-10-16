@@ -331,7 +331,7 @@ if ($sessionId) {
     <TD BGCOLOR='$bgcolor'>\n";
   if ($numsubjobs==0) {echo "no jobs submitted";}
   else {
-    if ($waitingjobs>0) echo "$numsubjobs queued\n";
+    if ($waitingjobs>0) echo "<A HREF='checkjobs.php?expId=$sessionId'>$numsubjobs queued</A>\n";
     if ($waitingjobs>0 && $reconruns>0) echo "<BR>\n";
     if ($reconruns>0) echo "<A HREF='reconsummary.php?expId=$sessionId'>$reconruns uploaded</A>";
   }
