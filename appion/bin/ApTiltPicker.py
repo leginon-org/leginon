@@ -17,6 +17,8 @@ from scipy import ndimage, optimize
 from apTilt import tiltDialog
 from apTilt import apTiltTransform
 import apDisplay
+from optparse import OptionParser
+
 
 class TiltTargetPanel(TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True, name=None):
@@ -54,8 +56,12 @@ class TiltTargetPanel(TargetPanel.TargetImagePanel):
 
 #---------------------------------------
 class PickerApp(wx.App):
-	def __init__(self, mode='default'):
+	def __init__(self, mode='default', pickshape="cross", pshapesize=16, alignshape="circle", ashapesize=16):
 		self.mode = mode
+		self.pshape = self.canonicalShape(pickshape)
+		self.pshapesize = int(pshapesize)
+		self.ashape = self.canonicalShape(alignshape)
+		self.ashapesize = int(ashapesize)
 		wx.App.__init__(self)
 
 	def OnInit(self):
@@ -81,10 +87,12 @@ class PickerApp(wx.App):
 
 		self.panel1 = TiltTargetPanel(splitter, -1, name="untilt")
 		self.panel1.parent = self.frame
-		self.panel1.addTargetTool('Picked', color=wx.Color(215, 32, 32), shape='x', target=True, numbers=True)
+		self.panel1.addTargetTool('Picked', color=wx.Color(215, 32, 32), 
+			shape=self.pshape, size=self.pshapesize, target=True, numbers=True)
 		self.panel1.setTargets('Picked', [])
 		self.panel1.selectiontool.setTargeting('Picked', True)
-		self.panel1.addTargetTool('Aligned', color=wx.Color(32, 128, 215), shape='o')
+		self.panel1.addTargetTool('Aligned', color=wx.Color(32, 128, 215), 
+			shape=self.ashape, size=self.ashapesize)
 		self.panel1.setTargets('Aligned', [])
 		self.panel1.selectiontool.setDisplayed('Aligned', True)
 		#self.panel1.SetMinSize((256,256))
@@ -92,10 +100,12 @@ class PickerApp(wx.App):
 
 		self.panel2 = TiltTargetPanel(splitter, -1, name="tilt")
 		self.panel2.parent = self.frame
-		self.panel2.addTargetTool('Picked', color=wx.Color(32, 128, 215), shape='x', target=True, numbers=True)
+		self.panel2.addTargetTool('Picked', color=wx.Color(32, 128, 215), 
+			shape=self.pshape, size=self.pshapesize, target=True, numbers=True)
 		self.panel2.setTargets('Picked', [])
 		self.panel2.selectiontool.setTargeting('Picked', True)
-		self.panel2.addTargetTool('Aligned', color=wx.Color(215, 32, 32), shape='o')
+		self.panel2.addTargetTool('Aligned', color=wx.Color(215, 32, 32), 
+			shape=self.ashape, size=self.ashapesize)
 		self.panel2.setTargets('Aligned', [])
 		self.panel2.selectiontool.setDisplayed('Aligned', True)
 		#self.panel2.SetMinSize((256,256))
@@ -903,24 +913,64 @@ class PickerApp(wx.App):
 			self.data['image2path'] = os.path.abspath(os.path.dirname(filename))
 			app.panel2.openImageFile(filename)
 
+	#---------------------------------------
+	def canonicalShape(self, shape):
+		if shape == '.'    or shape == 'point':
+			return '.'
+		elif shape == '+'  or shape == 'plus':
+			return '+'
+		elif shape == '[]' or shape == 'square' or shape == 'box':
+			return '[]'
+		elif shape == '<>' or shape == 'diamond':
+			return '<>'
+		elif shape == 'x'  or shape == 'cross':
+			return 'x'
+		elif shape == '*'  or shape == 'star':
+			return '*'
+		elif shape == 'o'  or shape == 'circle':
+			return 'o'
+		else:
+			apDisplay.printError("Unknown pointer shape: "+shape)
+
 if __name__ == '__main__':
+	usage = "Usage: %prog --left-image=image1.mrc --right-image=image2.mrc [--pick-file=picksfile.txt] [options]"
+	shapes = ("circle","square","diamond","plus","cross")
+	parser = OptionParser(usage=usage)
+	parser.add_option("-1", "-l", "--left-image", dest="img1file",
+		help="First input image (left)", metavar="FILE")
+	parser.add_option("-2", "-r", "--right-image", dest="img2file",
+		help="Second input image (right)", metavar="FILE")
+	parser.add_option("-p", "--pick-file", dest="pickfile",
+		help="Particle pick file", metavar="FILE")
+	parser.add_option("-s", "--pick-shape", dest="pickshape",
+		help="Particle picking shape", metavar="SHAPE", 
+		type="choice", choices=shapes, default="cross" )
+	parser.add_option("-S", "--pick-shape-size", dest="pshapesize",
+		help="Particle picking shape size", metavar="INT", 
+		type="int", default=16 )
+	parser.add_option("-a", "--align-shape", dest="alignshape",
+		help="Algined particles shape", metavar="SHAPE", 
+		type="choice", choices=shapes, default="circle" )
+	parser.add_option("-A", "--align-shape-size", dest="ashapesize",
+		help="Algined particles shape size", metavar="INT", 
+		type="int", default=16 )
+	parser.disable_interspersed_args()
+	(options, args) = parser.parse_args()
+
+	print options
 	if len(sys.argv) < 3:
 		mystr = "\nUsage:\n  ApTiltPicker.py image1.mrc image2.mrc [picksfile.txt]\n"
 		print mystr
 		#apDisplay.printColor(mystr,"red")
 		sys.exit(1)
 
-	files = []
-	for i in range(1, 4, 1):
-		try:
-			files.append(sys.argv[i].strip())
-		except IndexError:
-			files.append(None)
-
-	app = PickerApp()
-	app.openLeftImage(files[0])
-	app.openRightImage(files[1])
-	app.openPicks(files[2])
+	app = PickerApp(
+		pickshape=options.pickshape, alignshape=options.alignshape,
+		pshapesize=options.pshapesize, ashapesize=options.ashapesize,
+	)
+	app.openLeftImage(options.img1file)
+	app.openRightImage(options.img2file)
+	app.openPicks(options.pickfile)
 
 	app.MainLoop()
 

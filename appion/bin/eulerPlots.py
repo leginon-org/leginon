@@ -58,11 +58,11 @@ def getEulersForIteration(reconid, iteration=1):
 	ylist = [ y*30.0 for y in range(-3, 3+1)]
 
 	#freqmap = calcFreqEqualArea(result)
-	indres = 10.0
+	indres = 1.0
 	indmult = int(90.0/indres)
 	indrange = len(range(-indmult, indmult+1))
-	freqmap = calcFreqGrid(result, indres)
-	#freqmap = calcFreqNative(result)
+	#freqmap = calcFreqGrid(result, indres)
+	freqmap = calcFreqNative(result)
 	#pprint.pprint(freqmap)
 	#radlist = numpy.zeros((len(freqmap)), dtype=numpy.float32)
 	#anglelist = numpy.zeros((len(freqmap)), dtype=numpy.float32)
@@ -80,7 +80,7 @@ def getEulersForIteration(reconid, iteration=1):
 		anglelist.append(val[1]/180.0*math.pi)
 		#anglelist[val[4]] = val[1]/180.0*math.pi
 		freqlist.append(val[2])
-		freqgrid[val[3],val[4]] = val[2]
+		#freqgrid[val[3],val[4]] = val[2]
 		#freqlist.append(math.log10(val[2]))
 	xlist = [x*indres for x in range(-indmult, indmult+1) ]
 	ylist = [y*indres for y in range(-indmult, indmult+1) ]
@@ -94,7 +94,7 @@ def getEulersForIteration(reconid, iteration=1):
 	print "stdev=",ndimage.standard_deviation(freqnumpy)
 	#print "median=",ndimage.median(freqnumpy)
 
-	return xlist,ylist,freqlist,freqgrid
+	return radlist,anglelist,freqlist,freqgrid
 
 	for i in range(1000):
 		index = int( float(len(result)) * random.random() )
@@ -310,7 +310,7 @@ def makePlot(radlist,anglelist,freqlist,freqgrid):
 
 	# square figure and square axes looks better for polar plots
 	pylab.figure(figsize=(4,4))
-	#ax = pylab.axes([0.1, 0.1, 0.8, 0.8], polar=True, axisbg='#d5de9c')
+	ax = pylab.axes([0.1, 0.1, 0.8, 0.8], polar=True, axisbg='#d5de9c')
 
 	#SPIRAL
 	# r = pylab.arange(0,1,0.001)
@@ -327,8 +327,8 @@ def makePlot(radlist,anglelist,freqlist,freqgrid):
 	print numpy.around(radlist,3)
 	print numpy.around(anglelist,3)
 	print numpy.around(freqgrid,3)
-	c = pylab.contourf(anglelist, radlist, freqgrid, cmap=cm.RdYlGn)
-	#c = pylab.scatter(anglelist, radlist, c=freqlist, s=500, marker='o', cmap=cm.RdYlGn)
+	#c = pylab.contourf(anglelist, radlist, freqgrid, cmap=cm.RdYlGn)
+	c = pylab.scatter(anglelist, radlist, c=freqlist, s=100, marker='o', cmap=cm.RdYlGn)
 	#c.set_alpha(0.5)
 	#pylab.setp(ax.thetagridlabels, y=1.075) # the radius of the grid labels
 	#pylab.RdYlGn()
@@ -339,9 +339,10 @@ def makePlot(radlist,anglelist,freqlist,freqgrid):
 
 
 if __name__ == "__main__":
+	radlist, anglelist, freqlist, freqgrid = getEulersForIteration(181, 4)
 	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(173, 12)
 	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(158, 4)
-	radlist, anglelist, freqlist, freqgrid = getEulersForIteration(158, 2)
+	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(158, 2)
 	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(118, 1)
 	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(159, 1)
 	#freqmap = getEulersForIteration(158, 4)
