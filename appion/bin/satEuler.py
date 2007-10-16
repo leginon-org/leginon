@@ -91,7 +91,7 @@ def getEulersForIteration(reconid, tiltrunid, iteration=1):
 		#print "dist=",dist
 	f.close()
 
-	freqnumpy = numpy.asarray(distlist, dtype=numpy.int32)
+	freqnumpy = numpy.asarray(distlist, dtype=numpy.float32)
 	#print(freqlist)
 	print "EULER DATA:"
 	print "min=",ndimage.minimum(freqnumpy)
@@ -110,7 +110,7 @@ def getEulersForIteration(reconid, tiltrunid, iteration=1):
 		#print "dist=",dist
 	f.close()
 
-	freqnumpy = numpy.asarray(distlist, dtype=numpy.int32)
+	freqnumpy = numpy.asarray(distlist, dtype=numpy.float32)
 	#print(freqlist)
 	print "ROTATION DATA:"
 	print "min=",ndimage.minimum(freqnumpy)
