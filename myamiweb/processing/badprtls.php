@@ -1,7 +1,7 @@
 <?php
 
-require ('inc/leginon.inc');
 require ('inc/particledata.inc');
+require ('inc/leginon.inc');
 require ('inc/project.inc');
 require ('inc/processing.inc');
 
@@ -15,14 +15,14 @@ $particle = new particledata();
 $badprtls=$particle->getBadParticlesInStack($refinement);
 $numbad = count($badprtls);
 $stack=$particle->getStackFromRefinement($refinement);
+//echo print_r($stack);
 $filename=$stack['path'].'/'.$stack['name'];
 
 function getimagicfilenames($file) {
 	$file = substr($file, 0, -3);
 	$file_hed = $file."hed";
 	$file_img = $file."img";
-	return array($file_hed, $file_img);
-	
+	return array($file_hed, $file_img);	
 }
 
 list($file_hed, $file_img)=getimagicfilenames($filename);

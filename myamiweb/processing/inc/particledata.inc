@@ -865,12 +865,14 @@ class particledata {
 	}
 
 	function getStackFromRefinement ($refinementDataId) {
-		$q = "SELECT * "
+		$q = "SELECT r.*, rr.*, s.*, path.path "
 				."FROM `ApRefinementData` r "
 				."LEFT JOIN `ApRefinementRunData` rr "
 				."ON (r.`REF|ApRefinementRunData|refinementRun` = rr.`DEF_id`) "
 				."LEFT JOIN `ApStackData` s "
 				."ON (rr.`REF|ApStackData|stack` = s.`DEF_id`) "
+				."LEFT JOIN `ApPathData` path "
+				."ON (s.`REF|ApPathData|path` = path.`DEF_id`) "
 				."WHERE r.`DEF_id` = $refinementDataId";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
