@@ -259,8 +259,10 @@ class particledata {
 	function getParticleRunIds ($sessionId) {
 		$q = "SELECT r.*, p.path "
 			."FROM `ApSelectionRunData` AS r "
-				."LEFT JOIN ApPathData AS p ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
-			."WHERE r.`dbemdata|SessionData|session` = '$sessionId'";
+			."LEFT JOIN ApPathData AS p "
+			."ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
+			."WHERE r.`dbemdata|SessionData|session` = '$sessionId' "
+			."ORDER BY r.`DEF_id` DESC ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}

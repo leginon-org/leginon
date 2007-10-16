@@ -40,8 +40,10 @@ class ctfdata {
 	}
 
 	function getCtfRunIds($sessionId) {
-		$q = "select * "
-			."from `ApAceRunData` where `dbemdata|SessionData|session`='$sessionId'";
+		$q = "SELECT * "
+			."FROM `ApAceRunData` AS a "
+			."WHERE `dbemdata|SessionData|session` = '$sessionId' "
+			."ORDER BY a.`DEF_id` DESC ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
@@ -77,8 +79,8 @@ class ctfdata {
 			."c.`confidence` , "
 			."c.`confidence_d` , "
 			."c.`snr` , "
-		        ."c.`graph1` , "
-		        ."c.`graph2` "
+			."c.`graph1` , "
+			."c.`graph2` "
 			."from ApCtfData c left join ApAceRunData r on (c.`REF|ApAceRunData|acerun` = r.`DEF_id`) "
 			."left join dbemdata.AcquisitionImageData i on (c.`dbemdata|AcquisitionImageData|image` = i.`DEF_id`) "
 			."left join dbemdata.ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
@@ -111,8 +113,8 @@ class ctfdata {
 			."c.`confidence` , "
 			."c.`confidence_d` , "
 			."c.`snr` , "
-		        ."c.`graph1` , "
-		        ."c.`graph2` "
+			."c.`graph1` , "
+			."c.`graph2` "
 			."from ApCtfData c where c.`REF|ApAceRunData|acerun`='$runId'";
 		return $this->mysql->getSQLResult($q);
 	}
@@ -140,9 +142,9 @@ class ctfdata {
 			."c.`confidence` , "
 			."c.`confidence_d` , "
 			."c.`snr` , "
-			."c.`graphpath` , "
-		        ."c.`graph1` , "
-		        ."c.`graph2` "
+			//."c.`graphpath` , "
+			."c.`graph1` , "
+			."c.`graph2` "
 			."from ApCtfData c left join dbemdata.AcquisitionImageData i "
 			."on (c.`dbemdata|AcquisitionImageData|image` = i.`DEF_id`) "
 			."left join dbemdata.ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
