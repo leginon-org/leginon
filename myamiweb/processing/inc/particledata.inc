@@ -690,6 +690,75 @@ class particledata {
 		return $r;
 	}
 
+  function getJobIdsFromSession($expId) {
+    $q="SELECT `DEF_id` "
+      ."FROM `ApClusterJobData` "
+      ."WHERE `dbemdata|SessionData|session` = $expId";
+    $r = $this->mysql->getSQLResult($q);
+    return $r;
+  }
+
+  function getJobFileFromPath($path,$name) {
+    $q="SELECT j.*, p.path "
+      ."FROM `ApClusterJobData` AS j "
+      ."LEFT JOIN ApPathData AS p ON "
+      ."(j.`REF|ApPathData|path` = p.`DEF_id`) "
+      ."WHERE p.`path` = '$path' AND j.`name` = '$name'";
+    $r = $this->mysql->getSQLResult($q);
+    return $r;
+  }
+
+  function insertClusterJobData($pathdir,$dmfpathdir,$clusterdir,$name,$expId) {
+    // put appion path in db
+    $q = "SELECT DEF_id "
+      ."FROM `ApPathData` "
+      ."WHERE `path`='$pathdir'";
+    $r = $this->mysql->getSQLResult($q);
+    $pathid=$r[0]['DEF_id'];
+    if (!$pathid) {
+      $pdata['path']=$pathdir;
+      $pathid=$this->mysql->SQLInsert('ApPathData',$pdata);
+    }
+    // put dmf path in db
+    $q = "SELECT DEF_id "
+      ."FROM `ApPathData` "
+      ."WHERE `path`='$dmfpathdir'";
+    $r = $this->mysql->getSQLResult($q);
+    $dmfpathid=$r[0]['DEF_id'];
+    if (!$dmfpathid) {
+      $pdata['path']=$dmfpathdir;
+      $dmfpathid=$this->mysql->SQLInsert('ApPathData',$pdata);
+    }
+    // put cluster path in db
+    $q = "SELECT DEF_id "
+      ."FROM `ApPathData` "
+      ."WHERE `path`='$clusterdir'";
+    $r = $this->mysql->getSQLResult($q);
+    $clusterpathid=$r[0]['DEF_id'];
+    if (!$clusterpathid) {
+      $pdata['path']=$clusterdir;
+      $clusterpathid=$this->mysql->SQLInsert('ApPathData',$pdata);
+    }
+    // find if job is in database
+    $q = "SELECT DEF_id "
+      ."FROM `ApClusterJobData` "
+      ."WHERE `REF|ApPathData|path` = $pathid AND "
+      ."`name` = '$name' AND "
+      ."`dbemdata|SessionData|session` = $expId";
+    $r = $this->mysql->getSQLResult($q);
+    $jid=$r[0]['DEF_id'];
+    // if not in database, insert
+    if (!$jid) {
+      $jdata['REF|ApPathData|path'] = $pathid;
+      $jdata['name'] = $name;
+      $jdata['dbemdata|SessionData|session'] = $expId;
+      $jdata['REF|ApPathData|dmfpath'] = $dmfpathid;
+      $jdata['REF|ApPathData|clusterpath'] = $clusterpathid;
+      $jid=$this->mysql->SQLInsert('ApClusterJobData',$jdata);
+    }
+    return $jid;
+  }
+
 	function getReconIds ($stackId) {
 		$q = "SELECT * "
 			."FROM `ApRefinementRunData` AS r "
@@ -784,11 +853,11 @@ class particledata {
 
 	function getBadParticlesInStack ($refinementDataId) {
 		$q = "SELECT particleNumber as p "
-				."FROM `ApParticleClassificationData` apcd "
-				."LEFT JOIN `ApStackParticlesData` aspd "
-				."ON (apcd.`REF|ApStackParticlesData|particle` = aspd.`DEF_id`) "
-				."WHERE apcd.`REF|ApRefinementData|refinement` = '$refinementDataId' "
-				."AND `thrown_out` = 1";
+		  ."FROM `ApParticleClassificationData` apcd "
+		  ."LEFT JOIN `ApStackParticlesData` aspd "
+		  ."ON (apcd.`REF|ApStackParticlesData|particle` = aspd.`DEF_id`) "
+		  ."WHERE apcd.`REF|ApRefinementData|refinement` = '$refinementDataId' "
+		  ."AND `thrown_out` = 1";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
@@ -969,6 +1038,7 @@ class particledata {
 
 		return $r;
 	}
+
 	function insertEulerStats($stats) {
 		$mean = $stats->myMean;
 		$errors = $stats->myData;

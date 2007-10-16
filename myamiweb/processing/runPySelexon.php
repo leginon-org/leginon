@@ -382,8 +382,8 @@ function runTemplateCorrelator() {
 	writeTop("Particle Selection Results","Particle Selection Results");
 
 	if ($testimage) {
-		$runid = $_POST[runid];
-		$outdir = $_POST[outdir];
+		$runid = $_POST['runid'];
+		$outdir = $_POST['outdir'];
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		echo  " <B>Template Correlator Command:</B><BR/>$command";
 		$testjpg=ereg_replace(".mrc","",$testimage);
