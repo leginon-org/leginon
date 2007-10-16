@@ -485,6 +485,7 @@ def insertIteration(iteration, params):
 	fscfile = os.path.join(params['path'], "fsc.eotest."+iteration['num'])
 	insertFSC(fscfile, refineq, params['commit'])
 	halfres = calcRes(fscfile, params['model']['boxsize'], params['apix'])
+	apDisplay.printColor("FSC 0.5 Resolution: "+str(halfres), "cyan")
 
 	#create Chimera snapshots
 	volDensPath = os.path.join(params['path'], volumeDensity)
