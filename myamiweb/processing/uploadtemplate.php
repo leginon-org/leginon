@@ -46,16 +46,6 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	$javafunctions="
 	<script src='../js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
-		function enableconf(){
-			 if (document.viewerform.confcheck.checked){
-			    document.viewerform.reprocess.disabled=false;
-			    document.viewerform.reprocess.value='';
-			 }
-			 else {
-			    document.viewerform.reprocess.disabled=true;
-			    document.viewerform.reprocess.value='0.8';
-			 }
-		}
 		function infopopup(infoname){
 			var newwindow=window.open('','name','height=250,width=400');
 			newwindow.document.write('<HTML><BODY>');
