@@ -2,6 +2,7 @@
 
 import os, sys
 import apDB
+import apDisplay
 import appionData
 
 apdb=apDB.apdb
@@ -26,8 +27,7 @@ def getStackParticle(stackid, particlenumber):
 	stackparticleq['particleNumber']=particlenumber
 	stackparticledata=apdb.query(stackparticleq)
 	if len(stackparticledata) > 1:
-		print "There's a problem with this stack. More than one particle with the same number."
-		sys.exit()
+		apDisplay.printWarning("There's a problem with this stack. More than one particle with the same number.")
 	return(stackparticledata[0])
 
 def getRunsInStack(stackid):
