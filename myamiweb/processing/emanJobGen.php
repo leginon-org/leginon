@@ -178,7 +178,7 @@ function stackModelForm($extra=False) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
   }
   echo "<FORM NAME='viewerform' METHOD='POST' ACTION='$formaction'>\n";
-  if ($display_login) {
+  if ($display_login && !$modelonly) {
     echo "<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='5'>\n";
     echo "<TR><TD>\n";
     echo "Username: <INPUT TYPE='text' name='username' value='$_POST[username]'>\n";
@@ -246,8 +246,9 @@ function stackModelForm($extra=False) {
 	echo "<INPUT TYPE='RADIO' NAME='model' VALUE='$modelvals' ";
 	# check if model was selected
 	if ($model['DEF_id']==$minf[0]) echo " CHECKED";
+	echo ">\n";
       }
-      echo">Use ";
+      echo"Use ";
       echo"Model ID: $model[DEF_id]\n";
       echo "<INPUT TYPE='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><BR>\n";
       foreach ($pngfiles as $snapshot) {
