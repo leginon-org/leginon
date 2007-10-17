@@ -46,7 +46,7 @@ function displayIterations($refaliId) {
 
 	foreach ($iters as $i) {
 		echo divtitle("Iteration $i[iteration]");
-		echo "<TABLE BORDER='0'>\n";
+		echo "<TABLE CLASS='tableborder' BORDER='0'>\n";
 		if ($csym) {
 			echo "<A HREF='loadimg.php?filename=$p[path]/$r[name]/$i[name]/refali001_nosym.mrc'>\n";
 			echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$p[path]/$r[name]/$i[name]/refali001_nosym.mrc'></A>\n";
