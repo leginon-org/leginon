@@ -86,8 +86,6 @@ def runAceDrift(matlab,imgdict,params):
 	else:
 		nominal=imgdict['scope']['defocus']
 	
-	expid=int(imgdict['session'].dbid)
-
 	#pdb.set_trace()
 	acecommand=("measureAnisotropy('%s','%s',%d,'%s',%e,'%s','%s','%s', '%s');" % \
 		( imgpath, params['outtextfile'], params['display'],\

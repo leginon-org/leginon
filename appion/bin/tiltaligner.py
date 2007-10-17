@@ -138,9 +138,9 @@ class tiltAligner(particleLoop.ParticleLoop):
 		if tiltdata is None:
 			apDisplay.printWarning("Tilt data not found; not commiting data")
 			return False
+
 		### insert the runid
-		expid = int(imgdata['session'].dbid)
-		self.commitRunToDatabase(expid, True)
+		self.commitRunToDatabase(imgdata['session'], True)
 		### insert the transform
 		transdata = apTiltPair.insertTiltTransform(imgdata, tiltdata, self.tiltparams, self.params)
 		### insert the particles

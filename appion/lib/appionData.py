@@ -24,7 +24,7 @@ class ApParticleData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('selectionrun', ApSelectionRunData),
-			('dbemdata|AcquisitionImageData|image', int),
+			('image', leginondata.AcquisitionImageData),
 			('xcoord', int),
 			('ycoord', int),
 			('correlation', float),
@@ -40,7 +40,7 @@ class ApSelectionRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('path', ApPathData),
-			('dbemdata|SessionData|session', int),
+			('session', leginondata.SessionData),
 			('params', ApSelectionParamsData),
 			('dogparams', ApDogParamsData),
 			('manparams', ApManualParamsData),
@@ -157,8 +157,8 @@ leginondata.ApTemplateRunData=ApTemplateRunData
 class ApImageTransformationData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('dbemdata|AcquisitionImageData|image1', int),
-			('dbemdata|AcquisitionImageData|image2', int),
+			('image1',leginondata.AcquisitionImageData),
+			('image2',leginondata.AcquisitionImageData),
 			('shiftx', float),
 			('shifty', float),
 			('correlation', float),
@@ -170,11 +170,11 @@ leginondata.ApImageTransformationData=ApImageTransformationData
 class ApImageTiltTransformData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('dbemdata|AcquisitionImageData|image1', int),
+			('image1',leginondata.AcquisitionImageData),
 			('image1_x', float),
 			('image1_y', float),
 			('image1_rotation', float),
-			('dbemdata|AcquisitionImageData|image2', int),
+			('image2',leginondata.AcquisitionImageData),
 			('image2_x', float),
 			('image2_y', float),
 			('image2_rotation', float),
@@ -271,7 +271,7 @@ class ApStackRunData(Data):
 		return Data.typemap() + (
 			('stackRunName', str),
 			('stackParams', ApStackParamsData),
-			('dbemdata|SessionData|session', int),
+			('session', leginondata.SessionData),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApStackRunData=ApStackRunData
@@ -435,7 +435,7 @@ class ApClusterJobData(Data):
 		return Data.typemap() + (
 			('path', ApPathData),
 			('name', str),
-			('dbemdata|SessionData|session', int),
+			('session', leginondata.SessionData),
 			('dmfpath', ApPathData),
 		)
 	typemap = classmethod(typemap)
@@ -590,7 +590,7 @@ class ApAceRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('aceparams', ApAceParamsData),
-			('dbemdata|SessionData|session', int),
+			('session', leginondata.SessionData),
 			('path', ApPathData),
 			('name', str),
 		)
@@ -621,7 +621,7 @@ class ApCtfData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('acerun', ApAceRunData),
-			('dbemdata|AcquisitionImageData|image', int),
+			('image', leginondata.AcquisitionImageData),
 			('defocus1', float),
 			('defocus2', float),
 			('defocusinit', float),
@@ -664,7 +664,7 @@ class ApTestRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('params', ApTestParamsData),
-			('dbemdata|SessionData|session', int),
+			('session', leginondata.SessionData),
 			('name', str),
 			#('path', str),
 			('path', ApPathData),
@@ -676,7 +676,7 @@ class ApTestResultData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('testrun', ApTestRunData),
-			('dbemdata|AcquisitionImageData|image', int),
+			('image', leginondata.AcquisitionImageData),
 			('x', float),
 			('y', float),
 		)
@@ -688,7 +688,7 @@ leginondata.ApTestResultData=ApTestResultData
 class ApAssessmentRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('dbemdata|SessionData|session',int),
+			('session', leginondata.SessionData),
 			('name',str),
 		)
 	typemap = classmethod(typemap)
@@ -698,7 +698,7 @@ class ApAssessmentData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('assessmentrun', ApAssessmentRunData),
-			('dbemdata|AcquisitionImageData|image', int),
+			('image', leginondata.AcquisitionImageData),
 			('selectionkeep', int),
 		)
 	typemap = classmethod(typemap)

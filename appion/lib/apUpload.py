@@ -257,9 +257,10 @@ def insertMisc(params):
 	appiondb.insert(miscq)
 
 def insertManualParams(params, expid):
+	sessiondata = apDB.direct_query(leginondata.SessionData, expid)
 	runq=appionData.ApSelectionRunData()
 	runq['name']=params['runid']
-	runq['dbemdata|SessionData|session']=expid
+	runq['session']=sessiondata
 	#runq['path'] = appionData.ApPathData(path=os.path.abspath(????????))
 
 	manparams=appionData.ApSelectionParamsData()

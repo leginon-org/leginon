@@ -176,9 +176,9 @@ def getStackInfo(params):
 		apDisplay.printWarning("Failed to get particle selection params")
 		selectdata = {}
 
-	#get image params of the particle
-	imgdata = leginondb.direct_query(leginondata.AcquisitionImageData,
-		partdata['dbemdata|AcquisitionImageData|image'], readimages=False)
+	#get image params of the particle (dereference keep image from loading as would partdata['image'])
+	imageref = partdata.special_getitem('image',dereference = False)
+	imagedata = leginondb.direct_query(leginondata.AcquisitionImageData,imageref.dbid, readimages = False)
 
 	#apXml.fancyPrintDict(stackrundata)
 	#apXml.fancyPrintDict(stackparamdata)

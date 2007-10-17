@@ -164,6 +164,7 @@ def getImgSize(imgdict):
 	return(size)
 
 def getApixFromStackData(stackdata):
+	# pixel size is obtained from the first image in the stack
 	stkptclq=appionData.ApStackParticlesData()
 	stkptclq['stack'] = stackdata
 	stkptclresults=appiondb.query(stkptclq, results=1)
@@ -172,19 +173,18 @@ def getApixFromStackData(stackdata):
 	stackbin = stkptclresults[0]['stackRun']['stackParams']['bin']
 	if stackbin is None:
 		stackbin = 1
-	imageid = stkptclresults[0]['particle']['dbemdata|AcquisitionImageData|image']
+
+	imageref = stkptclresults[0]['particle'].special_getitem('image',dereference = False)
+	imagedata = leginondb.direct_query(leginondata.AcquisitionImageData,imageref.dbid, readimages = False)
+
 	if 'defocpair' in stkptclresults[0]['stackRun']['stackParams']:
 		defocpair = stkptclresults[0]['stackRun']['stackParams']['defocpair']
 	else:
 		defocpair = None
 	if defocpair != 0:
-		transformq=appionData.ApImageTransformationData()
-		transformq['dbemdata|AcquisitionImageData|image1']=imageid
-		transformdata=appiondb.query(transformq, readimages=False)
-		if len(transformdata) >0:
-			imageid=transformdata[0]['dbemdata|AcquisitionImageData|image2']
+		imagedata = apDefocalPairs.getTransformedDefocPair(imagedata,1)
 	
-	imagedata=leginondb.direct_query(leginondata.AcquisitionImageData,imageid)
+#	imagedata=leginondb.direct_query(leginondata.AcquisitionImageData,imageid)
 		
 	apix = getPixelSize(imagedata)
 	stackapix = apix*stackbin
@@ -223,14 +223,14 @@ def insertImgAssessmentStatus(imgdata, runname="pyapp1", assessment=None):
 		return False
 
 	assessrun = appionData.ApAssessmentRunData()
-	assessrun['dbemdata|SessionData|session'] = imgdata['session'].dbid
+	assessrun['session'] = imgdata['session']
 	#override to ALWAYS be 'run1'
 	#assessrun['name'] = runname
 	assessrun['name'] = "run1"
 	assessrundata = appiondb.query(assessrun)
 
 	assessquery = appionData.ApAssessmentData()
-	assessquery['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
+	assessquery['image'] = imgdata
 	assessquery['assessmentrun'] = assessrundata[0]
 	assessquery['selectionkeep'] = assessment
 
@@ -240,26 +240,6 @@ def insertImgAssessmentStatus(imgdata, runname="pyapp1", assessment=None):
 
 
 def getImgAssessmentStatus(imgdata):
-	"""
-	gets the assessment status (keep/reject) from the last assessment run
-		keep = True
-		reject = False 
-		unassessed = None
-	"""
-	### this function should be modified in the future to allow for a particular assessment run
-	assessquery = appionData.ApAssessmentData()
-	assessquery['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
-	assessdata = appiondb.query(assessquery)
-
-	if assessdata:
-		#check results of only most recent run
-		if assessdata[0]['selectionkeep'] == 1:
-			return True
-		elif assessdata[0]['selectionkeep'] == 0:
-			return False
-	return None
-
-def getImgAssessmentStatusREFLEGINON(imgdata):
 	"""
 	gets the assessment status (keep/reject) from the last assessment run
 		keep = True
@@ -278,6 +258,7 @@ def getImgAssessmentStatusREFLEGINON(imgdata):
 		elif assessdata[0]['selectionkeep'] == 0:
 			return False
 	return None
+
 
 ### flatfield correction functions
 

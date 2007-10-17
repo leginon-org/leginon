@@ -93,27 +93,7 @@ def recordShift(params,img,sibling,peak):
 	f.close()
 	return()
 
-def insertShift(img,sibling,peak):
-	if not sibling or not peak:
-		apDisplay.printWarning("No sibling or peak found. No database insert")
-		return False
-	shiftq=appionData.ApImageTransformationData()
-	shiftq['dbemdata|AcquisitionImageData|image1']=img.dbid
-	shiftdata=appiondb.query(shiftq)
-	if shiftdata:
-		apDisplay.printWarning("Shift values already in database")
-		return False
-	shiftq['dbemdata|AcquisitionImageData|image2']=sibling.dbid
-	shiftq['shiftx']=peak['shift'][1]
-	shiftq['shifty']=peak['shift'][0]
-	shiftq['scale']=peak['scalefactor']
-	shiftq['correlation']=peak['subpixel peak value']
-	apDisplay.printMsg("Inserting shift beteween "+apDisplay.short(img['filename'])+\
-		" and "+apDisplay.short(sibling['filename'])+" into database")
-	appiondb.insert(shiftq)
-	return True
-
-def insertShiftREFLEGINON(imgdata,sibling,peak):
+def insertShift(imgdata,siblingdata,peak):
 	if not sibling or not peak:
 		apDisplay.printWarning("No sibling or peak found. No database insert")
 		return False
@@ -123,12 +103,32 @@ def insertShiftREFLEGINON(imgdata,sibling,peak):
 	if shiftdata:
 		apDisplay.printWarning("Shift values already in database")
 		return False
-	shiftq['image2']=sibling
+	shiftq['image2']=siblingdata
 	shiftq['shiftx']=peak['shift'][1]
 	shiftq['shifty']=peak['shift'][0]
 	shiftq['scale']=peak['scalefactor']
 	shiftq['correlation']=peak['subpixel peak value']
-	apDisplay.printMsg("Inserting shift beteween "+apDisplay.short(img['filename'])+\
-		" and "+apDisplay.short(sibling['filename'])+" into database")
+	apDisplay.printMsg("Inserting shift beteween "+apDisplay.short(imgdata['filename'])+\
+		" and "+apDisplay.short(siblingdata['filename'])+" into database")
 	appiondb.insert(shiftq)
 	return True
+
+def getTransformedDefocPair(imgdata,direction):
+	simgq=appionData.ApImageTransformationData()
+	base = 'image'
+	direction = str(direction)
+	if direction =='2':
+		sfrom = base + '2'
+		sto = base+ '1'
+	if direction == '1':
+		sfrom = base+ '1'
+		sto = base+ '2'
+	simgq[sfrom]=imgdata
+	simgdata=apdb.query(simgq,readimages=False)
+	if simgdata:
+		sbimgref = simgdata.special_getitem(sto,dereference = False)
+		sbimgdata = leginondb.direct_query(leginondata.AcquisitionImageData,sbimgref.dbid, readimages = False)
+	else:
+		return None
+	return sbimgdata
+

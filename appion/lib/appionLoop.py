@@ -234,7 +234,7 @@ class AppionLoop(object):
 					except:
 						resultkeystmp = results[resulttype][0].keys()
 					resultkeystmp.sort()
-					resultkeys = [resultkeystmp.pop(resultkeys.index('dbemdata|AcquisitionImageData|image'))]
+					resultkeys = [resultkeystmp.pop(resultkeys.index('image'))]
 					resultkeys.extend(resultkeystmp)
 				path = self.result_dirs[resulttype]
 				imgname = imgdata['filename']
@@ -521,7 +521,7 @@ class AppionLoop(object):
 					result = info[infokey]
 
 				# For image, save in file as its filename
-				if infokey == 'dbemdata|AcquisitionImageData|image':
+				if infokey == 'image':
 					result=imgname
 
 				# Separate the results by tabs

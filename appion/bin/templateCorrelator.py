@@ -55,6 +55,18 @@ class TemplateCorrelationLoop(particleLoop.ParticleLoop):
 				apTemplate.insertTemplateRun(self.params, runids[0], n)
 		return
 
+	def particleCommitToDatabaseRealRef(self, imgdata):
+		runq=appionData.ApSelectionRunData()
+		runq['name'] = self.params['runid']
+		runq['session'] = imgdata['session']
+		runids = runq.query(results=1)
+
+		if apTemplate.checkTemplateParams(runids[0], self.params) is True:
+			#insert template params
+			for n in range(len(self.params['templateIds'])):
+				apTemplate.insertTemplateRun(self.params, runids[0], n)
+		return
+
 	def particleDefaultParams(self):
 		self.params['templatelist']=[]
 		self.params['startang']=0

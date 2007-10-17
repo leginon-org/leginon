@@ -67,8 +67,8 @@ def getTiltPair(imgdata):
 	return tiltpair
 
 def tiltPickerToDbNames(tiltparams):
-	#('dbemdata|AcquisitionImageData|image1', int),
-	#('dbemdata|AcquisitionImageData|image2', int),
+	#('image1', leginondata.AcquisitionImageData),
+	#('image2', leginondata.AcquisitionImageData),
 	#('shiftx', float),
 	#('shifty', float),
 	#('correlation', float),
@@ -105,7 +105,7 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 	### first find the runid
 	runq = appionData.ApSelectionRunData()
 	runq['name'] = params['runid']
-	runq['dbemdata|SessionData|session'] = imgdata1['session'].dbid
+	runq['session'] = imgdata1['session']
 	runids=appiondb.query(runq, results=1)
 	if not runids:
 		apDisplay.printError("could not find runid in database")
@@ -114,7 +114,7 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 	for imgdata in (imgdata1, imgdata2):
 		for index in ("1","2"):
 			transq = appionData.ApImageTiltTransformData()
-			transq["dbemdata|AcquisitionImageData|image"+index] = imgdata.dbid
+			transq["image"+index] = imgdata
 			transq['tiltrun'] = runids[0]
 			transdata = appiondb.query(transq)
 			if transdata:
@@ -123,8 +123,8 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 
 	### prepare the insertion
 	transq = appionData.ApImageTiltTransformData()
-	transq['dbemdata|AcquisitionImageData|image1'] = imgdata1.dbid
-	transq['dbemdata|AcquisitionImageData|image2'] = imgdata2.dbid
+	transq['image1'] = imgdata1
+	transq['image2'] = imgdata2
 	transq['tiltrun'] = runids[0]
 	dbdict = tiltPickerToDbNames(tiltparams)
 	if dbdict is None:

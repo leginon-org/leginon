@@ -83,8 +83,7 @@ class aceLoop(appionLoop.AppionLoop):
 
 
 	def commitToDatabase(self, imgdata):
-		expid = int(imgdata['session'].dbid)
-		apCtf.insertAceParams(imgdata, self.params, expid)
+		apCtf.insertAceParams(imgdata, self.params)
 		apCtf.commitCtfValueToDatabase(imgdata, self.matlab, self.ctfvalue, self.params)
 
 	def specialDefaultParams(self):

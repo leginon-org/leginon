@@ -46,5 +46,5 @@ if __name__ == '__main__':
 		# insert selexon params into dbappiondata.selectionParams table
 		expid = int(imgdata['session'].dbid)
 		apUpload.insertManualParams(params,expid)
-		apParticle.insertParticlePicks(params, imgdata, expid, manual=True)
+		apParticle.insertParticlePicks(params, imgdata, manual=True)
 

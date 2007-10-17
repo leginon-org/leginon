@@ -14,9 +14,9 @@ import apDB
 import apDatabase
 
 appiondb = apDB.apdb
+leginondb = apDB.db
 
 def commitCtfValueToDatabase(imgdict, matlab, ctfvalue, params):
-	expid = int(imgdict['session'].dbid)
 	imgname = imgdict['filename']
 	matfile = imgname+".mrc.mat"
 	#matfilepath = os.path.join(params['matdir'], matfile)
@@ -36,7 +36,7 @@ def commitCtfValueToDatabase(imgdict, matlab, ctfvalue, params):
 	#pymat.eval(matlab,"imwrite(im1,'"+opimfilepath1+"');")
 	#pymat.eval(matlab,"imwrite(im2,'"+opimfilepath2+"');")
 
-	insertCtfValue(imgdict, params, matfile, expid, ctfvalue, opimfile1, opimfile2)
+	insertCtfValue(imgdict, params, matfile, ctfvalue, opimfile1, opimfile2)
 
 def printResults(params, nominal, ctfvalue):
 	nom1 = float(-nominal*1e6)
@@ -70,7 +70,7 @@ def printResults(params, nominal, ctfvalue):
 	return
 
 
-def insertAceParams(imgdata, params, expid):
+def insertAceParams(imgdata, params):
 	# first create an aceparam object
 	aceparamq = appionData.ApAceParamsData()
 	copyparamlist = ('display','stig','medium','edgethcarbon','edgethice',\
@@ -88,7 +88,8 @@ def insertAceParams(imgdata, params, expid):
 	# create an acerun object
 	runq=appionData.ApAceRunData()
 	runq['name']=params['runid']
-	runq['dbemdata|SessionData|session']=expid
+	
+	runq['session']=imgdata['session'];
 
 	# see if acerun already exists in the database
 	runids = appiondb.query(runq, results=1)
@@ -111,33 +112,21 @@ def insertAceParams(imgdata, params, expid):
 
 	return True
 
-def insertCtfValue(imgdict, params, matfile, expid, ctfvalue, opimfile1, opimfile2):
+def insertCtfValue(imgdata, params, matfile, ctfvalue, opimfile1, opimfile2):
 	runq=appionData.ApAceRunData()
 	runq['name']=params['runid']
-	runq['dbemdata|SessionData|session']=expid
+	runq['session']=imgdata['session']
 
 	acerun=appiondb.query(runq,results=1)
-	
-	legimgid=int(imgdict.dbid)
-	legpresetid=None
-	if imgdict['preset']:		
-		legpresetid =int(imgdict['preset'].dbid)
-		
-	dforig=imgdict['scope']['defocus']
 
-	print "Committing ctf parameters for",apDisplay.short(imgdict['filename']), "to database."
 
-	# make sure the directory paths have '/' at end
-	#graphpath = os.path.normpath(params['opimagedir'])+"/"
-	#matpath   = os.path.normpath(params['matdir'])+"/"
+	print "Committing ctf parameters for",apDisplay.short(imgdata['filename']), "to database."
 
 	ctfq = appionData.ApCtfData()
 	ctfq['acerun']=acerun[0]
-	ctfq['dbemdata|AcquisitionImageData|image']=legimgid
-	#ctfq['graphpath']=graphpath
+	ctfq['image']=imgdata
 	ctfq['graph1']=opimfile1
 	ctfq['graph2']=opimfile2
-	#ctfq['matpath']=matpath
 	ctfq['mat_file']=matfile
 	ctfvaluelist = ('defocus1','defocus2','defocusinit','amplitude_contrast','angle_astigmatism',\
 		'noise1','noise2','noise3','noise4','envelope1','envelope2','envelope3','envelope4',\
@@ -185,7 +174,7 @@ def getBestCtfValueForImage(imgdata, ctfavg=False):
 	"""
 	### get all ctf values
 	ctfq = appionData.ApCtfData()
-	ctfq['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
+	ctfq['image'] = imgdata
 	ctfvalues = appiondb.query(ctfq)
 
 	### check if it has values
@@ -242,7 +231,7 @@ def printCtfSummary(params):
 			continue
 
 		ctfq = appionData.ApCtfData()
-		ctfq['dbemdata|AcquisitionImageData|image'] = imgdata.dbid
+		ctfq['image'] = imgdata
 		ctfvalues = appiondb.query(ctfq)
 
 		### check if it has values

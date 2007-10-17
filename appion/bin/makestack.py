@@ -29,6 +29,7 @@ import apCtf
 import apMask
 import apXml
 import apImage
+import apDefocalPairs
 try:
 	import apMatlab
 except:
@@ -258,17 +259,20 @@ def checkPairInspectDB(imgdict,params):
 			keep=False
 	return(keep)
 
-def checkPairInspectDBREFLEGINON(imgdict,params):
+def checkPairInspectDBRealRef(imgdata,params):
 	aq=appionData.ApAssessmentData()
-	sibimagedata = db.direct_query(leginondata.AcquisitionImageData,params['sibpairs'][imgdict.dbid])
+	sibimagedata = db.direct_query(leginondata.AcquisitionImageData,params['sibpairs'][imgdata.dbid])
 	aq['image']=sibimagedata
 	adata=apdb.query(aq)	
 
-	keep=False
+
+	keep=None
 	if adata:
 		#check results of only most recent run
 		if adata[0]['selectionkeep']==True:
 			keep=True
+		else:
+			keep=False
 	return(keep)
 
 def batchBox(params, imgdict):
@@ -356,7 +360,7 @@ def eliminateMaskedParticles(particles,params,imgdata):
 	eliminated = 0
 	sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
 	if params['defocpair']:
-		imgdata = getDefocPair(imgdata,2)
+		imgdata = apDefocalPair.getTransformedDefocPair(imgdata,2)
 #		print imgdata.dbid
 	maskimg,maskbin = apMask.makeInspectedMask(sessiondata,params['checkMask'],imgdata)
 	if maskimg is not None:
@@ -549,38 +553,44 @@ def getImgsFromSelexonId(params):
 
 	return (dbimglist)
 
-def getDefocPair(imgdata,direction):
-	simgq=appionData.ApImageTransformationData()
-	base = 'dbemdata|AcquisitionImageData|image'
-	direction = str(direction)
-	if direction =='2':
-		sfrom = base + '2'
-		sto = base+ '1'
-	if direction == '1':
-		sfrom = base+ '1'
-		sto = base+ '2'
-	simgq[sfrom]=imgdata.dbid
-	transdata=apdb.query(simgq,readimages=False)
-	simgid = transdata[0][sto]
-	simgdata=db.direct_query(leginondata.AcquisitionImageData,simgid, readimages = False)
-	
-	return simgdata
+def getImgsFromSelexonIdRealRef(params):
+	startt = time.time()
+	apDisplay.printMsg("Finding images that have particles for selection run: id="+str(params['selexonId']))
 
-def getDefocPairRELEGINON(imgdata,direction):
-	simgq=appionData.ApImageTransformationData()
-	base = 'image'
-	direction = str(direction)
-	if direction =='2':
-		sfrom = base + '2'
-		sto = base+ '1'
-	if direction == '1':
-		sfrom = base+ '1'
-		sto = base+ '2'
-	simgq[sfrom]=imgdata.dbid
-	simgdata=apdb.query(simgq,readimages=False)
-	imageref = regiondata.special_getitem('image',dereference = False)
-	imagedata = leginondb.direct_query(leginondata.AcquisitionImageData,imageref.dbid, readimages = False)
-	return simgdata[0][sto]
+	# get selection run id
+	selexonrun = apdb.direct_query(appionData.ApSelectionRunData, params['selexonId'])
+	if not (selexonrun):
+		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' is not in database")
+	
+	# from id get the session
+	params['sessionid'] = selexonrun['session'])
+
+	# get all images from session
+	apDisplay.printMsg("Getting images")
+	dbimgq = leginondata.AcquisitionImageData(session=params['sessionid'])
+	allimgtree = db.query(dbimgq, readimages=False)
+
+	if not (allimgtree):
+		apDisplay.printError("no images associated with this runId")
+
+	# for every image, find corresponding image entry in the particle database
+	apDisplay.printMsg("Finding corresponding image entry in the particle database")
+	partimgtree=[]
+
+	for imgdata in allimgtree:
+		pimgq = appionData.ApParticleData()
+		pimgq['image'] = imgdata
+		pimgq['selectionrun'] = selexonrun
+		pimg = apdb.query(pimgq, results=1)
+		if pimg:
+			partimgtree.append(imgdata)
+	apDisplay.printMsg("completed in "+apDisplay.timeString(time.time()-startt))
+
+	totalimgs = str(len(allimgtree))
+	partimgs = str(len(partimgtree))
+	apDisplay.printMsg("selected "+partimgs+" of all "+totalimgs+" images that have particles")
+
+	return (partimgtree)
 
 def getImgsDefocPairFromSelexonId(params):
 	startt = time.time()
@@ -624,6 +634,48 @@ def getImgsDefocPairFromSelexonId(params):
 				dbimglist.append(siblingimage)
 			else:
 				apDisplay.printWarning("no shift data for "+apDisplay.short(img['filename']))
+	apDisplay.printMsg("completed in "+apDisplay.timeString(time.time()-startt))
+	return (dbimglist)
+
+
+def getImgsDefocPairFromSelexonIdRealRef(params):
+	startt = time.time()
+	apDisplay.printMsg("Finding defoc pair images that have particles for selection run: id="+str(params['selexonId']))
+
+	# get selection run id
+	selexonrun=apdb.direct_query(appionData.ApSelectionRunData,params['selexonId'])
+	if not (selexonrun):
+		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' not in database")
+	
+	# from id get the session
+	params['sessionid']=selexonrun['session']
+
+	# get all images from session
+	dbimgq=leginondata.AcquisitionImageData(session=params['sessionid'])
+	dbimginfo=db.query(dbimgq,readimages=False)
+
+#	dbimginfo=[db.direct_query(leginondata.AcquisitionImageData,537916)]
+
+	if not (dbimginfo):
+		apDisplay.printError("no images associated with this runId")
+
+	apDisplay.printMsg("Find corresponding image entry in the particle database")
+	# for every image, find corresponding image entry in the particle database
+	dbimglist=[]
+	params['sibpairs']={}
+	for imgdata in dbimginfo:
+		pimgq=appionData.ApParticleData()
+		pimgq['image']=imgdata
+		pimgq['selectionrun']=selexonrun
+		pimg=apdb.query(pimgq, results=1)
+		if pimg:
+			siblingimage = apDefocPairs.getTransformedDefocPair(imgdata,1)
+			if siblingimage:
+				#create a dictionary for keeping the dbids of image pairs so we don't have to query later
+				params['sibpairs'][siblingimage.dbid] = imgdata.dbid
+				dbimglist.append(siblingimage)
+			else:
+				apDisplay.printWarning("no shift data for "+apDisplay.short(imgdata['filename']))
 	apDisplay.printMsg("completed in "+apDisplay.timeString(time.time()-startt))
 	return (dbimglist)
 
@@ -707,15 +759,27 @@ def insertStackRun(params):
 	params['stackId']=stackq
 	params['stackRun']=runq
 
-def insertStackRunREFLEGINON(params):
+def insertStackRunRealRef(params):
 	stparamq=appionData.ApStackParamsData()
 	paramlist = ('boxSize','bin','phaseFlipped','aceCutoff','correlationMin','correlationMax',
-		'checkMask','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized', 'defocpair')
+		'checkMask','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized', 'defocpair','lowpass','highpass')
 
 	for p in paramlist:
 		if p in params:
 			stparamq[p] = params[p]
-			
+	paramslist=apdb.query(stparamq)
+
+	# make sure that NULL values were not filled in during query
+	goodplist=None
+	for plist in paramslist:
+		notgood=None
+		for p in paramlist:
+			if plist[p] != params[p]:
+				notgood=True
+		if notgood is None:
+			goodplist=plist
+			continue
+
 	# create a stack object
 	stackq = appionData.ApStackData()
 	stackq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
@@ -731,13 +795,15 @@ def insertStackRunREFLEGINON(params):
 
 	stackq['description'] = params['description']
 	
+	runids = apdb.query(runq, results=1)
+	if goodplist:
+		runq['stackParams'] = goodplist
+	else:
+		runq['stackParams'] = stparamq
 	# create runinstack object
 	rinstackq = appionData.ApRunsInStackData()
 	rinstackq['stack']=stackq
 	rinstackq['stackRun']=runq
-
-	runids = apdb.query(runq, results=1)
-	runq['stackParams'] = stparamq
 
 	# if not in the database, make sure run doesn't already exist
 	if not stacks:
@@ -755,16 +821,23 @@ def insertStackRunREFLEGINON(params):
 			apDisplay.printError("Stack description is not the same!")
 		# make sure the the run is the same:
 		rinstack = apdb.query(rinstackq, results=1)
-		if rinstack[0]['stackRun']['stackParams'] != stparamq:
-			for i in rinstack[0]['stackRun']['stackParams']:
-				if rinstack[0]['stackRun']['stackParams'][i] != stparamq[i]:
-					apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
+		print rinstack
+		
+		if rinstack:
+			if rinstack[0]['stackRun']['stackParams'] != stparamq:
+				for i in rinstack[0]['stackRun']['stackParams']:
+					if rinstack[0]['stackRun']['stackParams'][i] != stparamq[i]:
+						apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
+				apDisplay.printError("All parameters for a particular stack must be identical! \n"+\
+						     "please check your parameter settings.")
+		else:
 			apDisplay.printError("All parameters for a particular stack must be identical! \n"+\
 					     "please check your parameter settings.")
-
+			
 	# get the stack Id
 	params['stackId']=stackq
 	params['stackRun']=runq
+
 
 def rejectImage(imgdata, params):
 	shortname = apDisplay.short(imgdata['filename'])

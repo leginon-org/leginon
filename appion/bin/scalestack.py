@@ -73,6 +73,59 @@ def commitScaledStack(stackdata,params):
 		apdb.insert(stackparticleq)
 	return
 	
+def commitScaledStackRealRef(stackdata,params):
+
+	#make new params query
+	newstackparamsq=appionData.ApStackParamsData()
+	for key in newstackparamsq.keys():
+		if key != 'bin':
+			newstackparamsq[key]=stackdata[0]['stackRun']['stackParams'][key]
+	newstackparamsq['bin']=params['bin']
+
+	#make new stack query
+	newstackq=appionData.ApStackData()
+	newstackq['path'] = appionData.ApPathData(path=os.path.abspath(params['newstackpath']))
+	newstackq['name']=params['newstackname']
+	newstackq['description']=params['description']
+	newstackdata=apdb.query(newstackq)
+	
+	if newstackdata:
+		print "A stack with these parameters already exists"
+		return
+	
+	#make new run query
+
+	#first check that run name doesn't already exist
+	newstackrunq=appionData.ApStackRunData()
+	newstackrunq['stackRunName'] = os.path.basename(os.getcwd()) #use cwd for run name
+	newstackrundata=apdb.query(newstackrunq)
+	if newstackrundata:
+		print "A stack run with this name (the current directory name) already exists. Exiting"
+		sys.exit()
+	
+	newstackrunq=appionData.ApStackRunData()
+	newstackrunq['stackRunName'] = os.path.basename(os.getcwd()) #use cwd for run name
+	newstackrunq['stackParams']=newstackparamsq
+	newstackrunq['session']=stackdata[0]['stackRun']['session']
+	
+	
+	#make new runs in stack query and insert also inserts stack and stack run
+	newrisq=appionData.ApRunsInStackData()
+	newrisq['stack']=newstackq
+	newrisq['stackRun']=newstackrunq
+	apdb.insert(newrisq)
+	
+	#loop in reverse order so that order of ptcls in db is like that of orig
+	for particle in range(len(stackdata)-1,-1,-1):
+		stackparticleq=appionData.ApStackParticlesData()
+		stackparticleq['particleNumber']=stackdata[particle]['particleNumber']
+		stackparticleq['stack']=newstackq
+		stackparticleq['stackRun']=newstackrunq
+		stackparticleq['particle']=stackdata[particle]['particle']
+		#print stackparticleq
+		apdb.insert(stackparticleq)
+	return
+	
 
 if __name__=='__main__':
 

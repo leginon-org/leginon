@@ -123,17 +123,17 @@ class ParticleLoop(appionLoop.AppionLoop):
 
 	def commitToDatabase(self, imgdata):
 		#commit the run
-		expid = int(imgdata['session'].dbid)
-		self.commitRunToDatabase(expid, True)
+		sessiondata = imgdata['session']
+		self.commitRunToDatabase(sessiondata, True)
 		#commit picker specific params
 		self.particleCommitToDatabase(imgdata)
 		#commit the particles
-		apParticle.insertParticlePeaks(self.peaktree, imgdata, expid, self.params)
+		apParticle.insertParticlePeaks(self.peaktree, imgdata, self.params)
 		#commit defocal pairs
 		if self.params['defocpair'] is True:
 			apDefocalPairs.insertShift(imgdata, self.sibling, self.shiftpeak)
 
-	def commitRunToDatabase(self, expid, insert=True):
+	def commitRunToDatabase(self, sessiondata, insert=True):
 		dbmap = {
 			'diam': 'diam',
 			'bin': 'bin',
@@ -161,7 +161,7 @@ class ParticleLoop(appionLoop.AppionLoop):
 
 		runq=appionData.ApSelectionRunData()
 		runq['name'] = self.params['runid']
-		runq['dbemdata|SessionData|session'] = expid
+		runq['session'] = sessiondata
 		runids = runq.query(results=1)
 		
 
