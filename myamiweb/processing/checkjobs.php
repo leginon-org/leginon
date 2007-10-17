@@ -13,7 +13,6 @@ if ($_POST['checkjobs']) {
     if (!$_POST['username'] || !$_POST['password']) checkJobs($showjobs=False,$extra="ERROR: enter your user name and password");
     // authenticate username & password
     if (!check_ssh('cronus3',$_POST['username'],$_POST['password'])) checkJobs($shojobs=False,$extra="ERROR: authentication failed");
-    echo "in here now!\n";
     ## save username and password to the session
     $_SESSION['username']=$_POST['username'];
     $_SESSION['password']=$_POST['password'];

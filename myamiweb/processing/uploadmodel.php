@@ -193,8 +193,6 @@ function runUploadModel() {
     $model=$_POST['newmodel'];
     $boxsize=$_POST['boxsize'];
     $origapix=$_POST['origapix'];
-    echo $apix;
-    echo $origapix;
     if (!$boxsize) createUploadModelForm("<B>ERROR:</B> Enter the final box size of the model");
     $scalefactor=$origapix/$apix;
   }
