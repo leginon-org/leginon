@@ -11,6 +11,8 @@ $ret_val = "0";
 if ($imageId && $sessionId) {
 	$q="delete from viewer_pref_image where imageId=$imageId";
 	$dbc->SQLQuery($q);
+	$q="delete from `ImageStatusData` where `REF|AcquisitionImageData|image`=$imageId";
+	$dbc->SQLQuery($q);
 	if ($prefpreset) {
 		echo "1";
 		exit;
