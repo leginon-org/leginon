@@ -510,7 +510,7 @@ def getImgsFromSelexonId(params):
 		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' is not in database")
 	
 	# from id get the session
-	params['sessionid'] = selexonrun['session'])
+	params['sessionid'] = selexonrun['session']
 
 	# get all images from session
 	apDisplay.printMsg("Getting images")
