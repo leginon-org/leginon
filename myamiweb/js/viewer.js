@@ -17,16 +17,6 @@ if (window.XMLHttpRequest) {
 }
 String.prototype.trim = function() { return this.replace(/^\s+|\s+$/, ''); }
 
-function jsendsession() {
-		var url = 'endsession.php'
-		xmlhttp.open('GET', url, true)
-		xmlhttp.onreadystatechange = function() {
-			if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-			}
-		}
-		xmlhttp.send(null)
-}
-
 function image_is_examplar(view) {
 	if (list = eval("document.viewerform."+view+"pre"))
 		selpreset=list.options[list.selectedIndex].value
