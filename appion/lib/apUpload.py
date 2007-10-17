@@ -13,20 +13,6 @@ except:
 
 appiondb = apDB.apdb
 
-def printTmpltUploadHelp():
-	print "\nUsage:\nuploadTemplate.py template=<name> apix=<pixel> session=<session> diam=<n> description=<'text'>\n"
-	print "uploadTemplate.py template=groEL apix=1.63 session=06nov10a diam=140 description='groel templates'\n"
-	print "template=<name>       : name should not have the extension, or number."
-	print "                        groEL1.mrc, groEL2.mrc would be simply \"template=groEL\""
-	print "apix=<pixel>          : angstroms per pixel of the template images"
-	print "diam=<n>              : approximate diameter of particle (in Angstroms)"
-	print "session=<sessionId>   : session name associated with template (i.e. 06mar12a)"
-	print "description=\"text\"    : description of the template - must be in quotes"
-	#print "outdir=<path>         : location to copy the templates to"
-	#print "                        default: /ami/data##/appion/<sessionId>/templates/"
-	print "\n"
-	sys.exit(1)
-
 def printPrtlUploadHelp():
 	print "\nUsage:\nuploadParticles.py <boxfiles> scale=<n>\n"
 	print "selexon *.box scale=2\n"
@@ -45,32 +31,6 @@ def printMiscUploadHelp():
 	print "\nUsage:\nuploadMisc.py <filename> reconid=<n> description=<\"text\">\n"
 	print "uploadModel.py cpmv_cross_section.png reconid=311 description=\"cpmv cross section with pdb docked in\"\n"
 	sys.exit(1)
-
-def parseTmpltUploadInput(args,params):
-	# check that there are enough input parameters
-	if (len(args)<2 or args[1]=='help') :
-		printTmpltUploadHelp()
-	# save the input parameters into the "params" dictionary
-	for arg in args[1:]:
-		elements=arg.split('=')
-		if (elements[0]=='template'):
-			params['template']=elements[1]
-		elif (elements[0]=='apix'):
-			params['apix']=float(elements[1])
-		elif (elements[0]=='diam'):
-			params['diam']=int(elements[1])
-		elif (elements[0]=='session'):
-			params['session']=elements[1]
-		elif (elements[0]=='description'):
-			params['description']=elements[1]
-		elif (elements[0]=='outdir'):
-			params['outdir']=elements[1]
-		elif (elements[0]=='commit'):
-			params['commit']=True
-		elif (elements[0]=='nocommit'):
-			params['commit']=False
-		else:
-			apDisplay.printError("undefined parameter \'"+arg+"\'\n")
 
 def parsePrtlUploadInput(args,params):
 	# check that there are enough input parameters
