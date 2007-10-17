@@ -65,21 +65,21 @@ class particledata {
 			."p.xcoord, p.ycoord, p.correlation "
 			."from ApParticleData p "
 			."where p.`REF|ApSelectionRunData|selectionrun` = '$runId' "
-			."and p.`dbemdata|AcquisitionImageData|image` = '$imageId' ";
+			."and p.`REF|leginondata|AcquisitionImageData|image` = '$imageId' ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
 
 	function getLastAssessmentRun ($sessionId){
 		$q = "select max(DEF_id) as runId "
-			." from ApAssessmentRunData where `dbemdata|SessionData|session` = '$sessionId'";
+			." from ApAssessmentRunData where `REF|leginondata|SessionData|session` = '$sessionId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r[runId]; 
 	}
 
 	function getAssessmentRunIds ($sessionId) {
 		$q = "select * "
-			."from ApAssessmentRun where `dbemdata|SessionData|session` = '$sessionId'";
+			."from ApAssessmentRun where `REF|leginondata|SessionData|session` = '$sessionId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		print_r($r);
 		return $r;
@@ -90,7 +90,7 @@ class particledata {
 		// null if no status in database
 		$q = "select * "
 			."from dbappiondata.ApAssessmentData "
-			."where `dbemdata|AcquisitionImageData|image` = '$imageId' "
+			."where `REF|leginondata|AcquisitionImageData|image` = '$imageId' "
 			."and `REF|ApAssessmentRunData|assessmentrun` = '$runId' ";
 		list($r)=$this->mysql->getSQLResult($q);
 		if ($r) {
@@ -107,13 +107,13 @@ class particledata {
 		$exists=($this->getKeepStatus($imageId,$runId)) ? true : false;
 		if ($exists) {
 			$data = array('selectionkeep'=>$value);
-			$where = array('dbemdata|AcquisitionImageData|image'=>$imageId);
+			$where = array('REF|leginondata|AcquisitionImageData|image'=>$imageId);
 			$where['REF|ApAssessmentRunData|assessmentrun']=$runId;
 			$this->mysql->SQLUpdate('ApAssessmentData',$data,$where);			 
 		}
 		else {
 			$data['selectionkeep']=$value;
-			$data['dbemdata|AcquisitionImageData|image']=$imageId;
+			$data['REF|leginondata|AcquisitionImageData|image']=$imageId;
 			$data['REF|ApAssessmentRunData|assessmentrun']=$runId;
 			$this->mysql->SQLInsert('ApAssessmentData',$data);
 		}
@@ -123,7 +123,7 @@ class particledata {
 		$q = "select i.filename, a.selectionkeep as keep "
 			."from ApAssessmentData a "
 			."left join dbemdata.AcquisitionImageData i "
-			."on (a.`dbemdata|AcquisitionImageData|image` = i.`DEF_id`) "
+			."on (a.`REF|leginondata|AcquisitionImageData|image` = i.`DEF_id`) "
 			."where a.`REF|ApAssessmentRunData|assessmentrun` = '$runId' ";
 		//echo "$q";
 		$r=$this->mysql->getSQLResult($q);
@@ -137,7 +137,7 @@ class particledata {
 		
 		//print_r ($r);
 		//echo $r['REF|ApSelectionParamsData|params'];
-		$q = "select s.*, r.name, r.`dbemdata|SessionData|session` ";
+		$q = "select s.*, r.name, r.`REF|leginondata|SessionData|session` ";
 
 		if ($r['REF|ApSelectionParamsData|params']) {
 			$selectionparamid=$r['REF|ApSelectionParamsData|params'];
@@ -190,7 +190,7 @@ class particledata {
 
 	function getStats ($runId, $inspect=False, $selexval=False){
 		$q="select count(p.`DEF_id`) as `totparticles`, "
-			."count(distinct p.`dbemdata|AcquisitionImageData|image`) as num, "
+			."count(distinct p.`REF|leginondata|AcquisitionImageData|image`) as num, "
 			."min(p.correlation) as `min`, "
 			."max(p.correlation) as `max`, "
 			."avg(p.correlation) as `avg`, "
@@ -199,11 +199,11 @@ class particledata {
 		// use the latest inspection value. This should be changed later 
 		if ($inspect) {
 						$q.= "left join ApAssessmentData ad "
-				."on (ad.`dbemdata|AcquisitionImageData|image` = p.`dbemdata|AcquisitionImageData|image`) ";
+				."on (ad.`REF|leginondata|AcquisitionImageData|image` = p.`REF|leginondata|AcquisitionImageData|image`) ";
 		}
 		$q.="WHERE ";
 		if ($inspect) {
-			$q.= "ad.`DEF_id`=(select max(ad2.`DEF_id`) from ApAssessmentData ad2 where ad2.`dbemdata|AcquisitionImageData|image` = ad.`dbemdata|AcquisitionImageData|image`) "
+			$q.= "ad.`DEF_id`=(select max(ad2.`DEF_id`) from ApAssessmentData ad2 where ad2.`REF|leginondata|AcquisitionImageData|image` = ad.`REF|leginondata|AcquisitionImageData|image`) "
 				."and ad.selectionkeep=1 AND ";
 		}
 		if ($selexval) $q.="p.`correlation`>='$selexval' AND ";
@@ -214,7 +214,7 @@ class particledata {
 	}
 
 	function getNumImgs ($runId){
-		$q="SELECT count(distinct `dbemdata|AcquisitionImageData|image`) as num "
+		$q="SELECT count(distinct `REF|leginondata|AcquisitionImageData|image`) as num "
 			. "FROM `ApParticleData` "
 			. "WHERE `REF|ApSelectionRunData|selectionrun`='$runId' ";
 		$r = $this->mysql->getSQLResult($q);
@@ -222,10 +222,10 @@ class particledata {
 	}
 
 	function getNumImgsFromSessionId ($sessionId){
-		$q="SELECT count(distinct `dbemdata|AcquisitionImageData|image`) as num "
+		$q="SELECT count(distinct `REF|leginondata|AcquisitionImageData|image`) as num "
 			. "FROM `ApParticleData` p "
 			. "left join `ApSelectionRunData` r on (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
-			. "WHERE r.`dbemdata|SessionData|session`='$sessionId' ";
+			. "WHERE r.`REF|leginondata|SessionData|session`='$sessionId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0]['num'];
 	}
@@ -242,7 +242,7 @@ class particledata {
 
 	function getLastParticleRun ($sessionId) {
 		$q = "select max(DEF_id) as runId "
-			."from `ApSelectionRunData` where `dbemdata|SessionData|session` = '$sessionId'";
+			."from `ApSelectionRunData` where `REF|leginondata|SessionData|session` = '$sessionId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r[runId];
 	}
@@ -261,7 +261,7 @@ class particledata {
 			."FROM `ApSelectionRunData` AS r "
 			."LEFT JOIN ApPathData AS p "
 			."ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
-			."WHERE r.`dbemdata|SessionData|session` = '$sessionId' "
+			."WHERE r.`REF|leginondata|SessionData|session` = '$sessionId' "
 			."ORDER BY r.`DEF_id` DESC ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
@@ -275,7 +275,7 @@ class particledata {
 		."FROM ApRunsInStackData as r "
 		."LEFT JOIN ApStackRunData as s ON "
 		."(r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
-		."WHERE s.`dbemdata|SessionData|session` = '$sessionId' "
+		."WHERE s.`REF|leginondata|SessionData|session` = '$sessionId' "
 		."ORDER BY stackid DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
@@ -288,7 +288,7 @@ class particledata {
 		."from ApStackParticlesData group by `REF|ApStackRunData|stackRun`) spar "
 		."left join ApParticleData p on (p.`DEF_id` = spar.pid) "
 		."left join ApSelectionRunData r on	(p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id` ) "
-		."where r.`dbemdata|SessionData|session` = '$sessionId'";
+		."where r.`REF|leginondata|SessionData|session` = '$sessionId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
@@ -336,7 +336,7 @@ class particledata {
 			." pimage.`stackbin` "
 			." FROM "
 			." ( SELECT "
-			." p . `dbemdata|AcquisitionImageData|image` as image , pa . `defocpair` ,"
+			." p . `REF|leginondata|AcquisitionImageData|image` as image , pa . `defocpair` ,"
 			." pa.`bin` as stackbin "
 			." FROM `ApStackParticlesData` sp "
 			." LEFT JOIN `ApStackRunData` r ON "
@@ -348,7 +348,7 @@ class particledata {
 			." WHERE sp . `REF|ApStackData|stack` = ".$stackId." "
 			." limit 1 ) pimage , "
 			." ( SELECT "
-			." sb . `dbemdata|AcquisitionImageData|image2` as image "
+			." sb . `REF|leginondata|AcquisitionImageData|image2` as image "
 			." FROM `ApStackParticlesData` sp "
 			." LEFT JOIN `ApStackRunData` r ON "
 			." ( sp . `REF|ApStackRunData|stackRun` = r . `DEF_id` ) "
@@ -357,8 +357,8 @@ class particledata {
 			." LEFT JOIN `ApParticleData` p ON "
 			." sp . `REF|ApParticleData|particle` = p . `DEF_id` "
 			." LEFT JOIN `ApImageTransformationData` sb ON "
-			." (sb . `dbemdata|AcquisitionImageData|image1` "
-			." = p . `dbemdata|AcquisitionImageData|image`) "
+			." (sb . `REF|leginondata|AcquisitionImageData|image1` "
+			." = p . `REF|leginondata|AcquisitionImageData|image`) "
 			." WHERE sp . `REF|ApStackData|stack`= ".$stackId." "
 			." limit 1 ) sbimage ";
 			list($r1)= $this->mysql->getSQLResult($q);
@@ -498,11 +498,11 @@ class particledata {
 		// use the latest inspection value. This should be changed later 
 		if ($inspect) {
 						$q.= "left join ApAssessmentData ad "
-				."on (ad.`dbemdata|AcquisitionImageData|image` = r.`REF|leginondata|AcquisitionImageData|image`) ";
+				."on (ad.`REF|leginondata|AcquisitionImageData|image` = r.`REF|leginondata|AcquisitionImageData|image`) ";
 		}
 		$q.="WHERE ";
 		if ($inspect) {
-			$q.= "ad.`DEF_id`=(select max(ad2.`DEF_id`) from ApAssessmentData ad2 where ad2.`dbemdata|AcquisitionImageData|image` = ad.`dbemdata|AcquisitionImageData|image`) "
+			$q.= "ad.`DEF_id`=(select max(ad2.`DEF_id`) from ApAssessmentData ad2 where ad2.`REF|leginondata|AcquisitionImageData|image` = ad.`REF|leginondata|AcquisitionImageData|image`) "
 				."and ad.selectionkeep=1 AND ";
 		}
 		$q.="r.`REF|ApMaskMakerRunData|maskrun` = '$runId' ";
@@ -576,11 +576,11 @@ class particledata {
 		// use the latest inspection value. This should be changed later 
 		if ($inspect) {
 						$q.= "left join ApAssessmentData ad "
-				."on (ad.`dbemdata|AcquisitionImageData|image` = r.`REF|leginondata|AcquisitionImageData|image`) ";
+				."on (ad.`REF|leginondata|AcquisitionImageData|image` = r.`REF|leginondata|AcquisitionImageData|image`) ";
 		}
 		$q.="WHERE ";
 		if ($inspect) {
-			$q.= "ad.`DEF_id`=(select max(ad2.`DEF_id`) from ApAssessmentData ad2 where ad2.`dbemdata|AcquisitionImageData|image` = ad.`dbemdata|AcquisitionImageData|image`) "
+			$q.= "ad.`DEF_id`=(select max(ad2.`DEF_id`) from ApAssessmentData ad2 where ad2.`REF|leginondata|AcquisitionImageData|image` = ad.`REF|leginondata|AcquisitionImageData|image`) "
 				."and ad.selectionkeep=1 AND ";
 		}
 		$q.="m.`REF|ApMaskAssessmentRunData|run` = '$runId' AND "
@@ -599,7 +599,7 @@ class particledata {
 			."(nr.`REF|ApStackData|stack` = sd.`REF|ApStackData|stack`) "
 			."LEFT JOIN ApStackRunData AS sr ON "
 			."(sd.`REF|ApStackRunData|stackRun` = sr.`DEF_id`) "
-			."WHERE sr.`dbemdata|SessionData|session` = '$sessionId' "
+			."WHERE sr.`REF|leginondata|SessionData|session` = '$sessionId' "
 			."ORDER BY nr.`DEF_id` DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
@@ -612,7 +612,7 @@ class particledata {
 			."(rr.`REF|ApStackData|stack` = sd.`REF|ApStackData|stack`) "
 			."LEFT JOIN ApStackRunData AS sr ON "
 			."(sd.`REF|ApStackRunData|stackRun` = sr.`DEF_id`) "
-			."WHERE sr.`dbemdata|SessionData|session` = '$sessionId' "
+			."WHERE sr.`REF|leginondata|SessionData|session` = '$sessionId' "
 			."ORDER BY rr.`DEF_id` DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
@@ -695,7 +695,7 @@ class particledata {
   function getJobIdsFromSession($expId) {
     $q="SELECT `DEF_id` "
       ."FROM `ApClusterJobData` "
-      ."WHERE `dbemdata|SessionData|session` = $expId";
+      ."WHERE `REF|leginondata|SessionData|session` = $expId";
     $r = $this->mysql->getSQLResult($q);
     return $r;
   }
@@ -762,14 +762,14 @@ class particledata {
       ."FROM `ApClusterJobData` "
       ."WHERE `REF|ApPathData|path` = $pathid AND "
       ."`name` = '$name' AND "
-      ."`dbemdata|SessionData|session` = $expId";
+      ."`REF|leginondata|SessionData|session` = $expId";
     $r = $this->mysql->getSQLResult($q);
     $jid=$r[0]['DEF_id'];
     // if not in database, insert
     if (!$jid) {
       $jdata['REF|ApPathData|path'] = $pathid;
       $jdata['name'] = $name;
-      $jdata['dbemdata|SessionData|session'] = $expId;
+      $jdata['REF|leginondata|SessionData|session'] = $expId;
       $jdata['REF|ApPathData|dmfpath'] = $dmfpathid;
       $jdata['REF|ApPathData|clusterpath'] = $clusterpathid;
       $jid=$this->mysql->SQLInsert('ApClusterJobData',$jdata);
@@ -780,7 +780,7 @@ class particledata {
   function getSubmittedJobs($expId) {
     $q="SELECT DEF_id "
       ."FROM `ApClusterJobData` "
-      ."WHERE `dbemdata|SessionData|session`=$expId";
+      ."WHERE `REF|leginondata|SessionData|session`=$expId";
     $r = $this->mysql->getSQLResult($q);
     return $r;
   }
@@ -906,7 +906,7 @@ class particledata {
       ."LEFT JOIN ApParticleData p ON "
       ."( sp.`REF|ApParticleData|particle` = p.`DEF_id` ) " 
       ."LEFT JOIN dbemdata.AcquisitionImageData db ON "
-      ."( p.`dbemdata|AcquisitionImageData|image` = db.`DEF_id` ) " 
+      ."( p.`REF|leginondata|AcquisitionImageData|image` = db.`DEF_id` ) " 
       ."WHERE sp.`REF|ApStackData|stack`=$stackId";
     $r = $this->mysql->getSQLResult($q);
     return $r;

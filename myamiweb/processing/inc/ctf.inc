@@ -34,7 +34,7 @@ class ctfdata {
 
 	function getLastCtfRun($sessionId) {
 		$q = "select max(DEF_id) as runId "
-			."from `ApAceRunData` where `dbemdata|SessionData|session`='$sessionId'";
+			."from `ApAceRunData` where `REF|leginondata|SessionData|session`='$sessionId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r[runId];
 	}
@@ -42,7 +42,7 @@ class ctfdata {
 	function getCtfRunIds($sessionId) {
 		$q = "SELECT * "
 			."FROM `ApAceRunData` AS a "
-			."WHERE `dbemdata|SessionData|session` = '$sessionId' "
+			."WHERE `REF|leginondata|SessionData|session` = '$sessionId' "
 			."ORDER BY a.`DEF_id` DESC ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
@@ -59,7 +59,7 @@ class ctfdata {
 	
 	function getCtfInfoWithNominal($sessionId, $runId=false) {
 		$q =	"select "
-			."c.`dbemdata|AcquisitionImageData|image`, "
+			."c.`REF|leginondata|AcquisitionImageData|image`, "
 			."s.`defocus`, "
 			."c.`defocus1`, "
 			."c.`defocus2`, "
@@ -82,19 +82,19 @@ class ctfdata {
 			."c.`graph1` , "
 			."c.`graph2` "
 			."from ApCtfData c left join ApAceRunData r on (c.`REF|ApAceRunData|acerun` = r.`DEF_id`) "
-			."left join dbemdata.AcquisitionImageData i on (c.`dbemdata|AcquisitionImageData|image` = i.`DEF_id`) "
+			."left join dbemdata.AcquisitionImageData i on (c.`REF|leginondata|AcquisitionImageData|image` = i.`DEF_id`) "
 			."left join dbemdata.ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 			."where i.`REF|SessionData|session`='$sessionId' ";
 			if ($runId)
 				$q .= "and r.`DEF_id`='$runId' ";
 			else
-				$q .= "and c.`DEF_id`=(select max(c2.`DEF_id`) from ApCtfData c2 where c2.`dbemdata|AcquisitionImageData|image` = c.`dbemdata|AcquisitionImageData|image`)";
+				$q .= "and c.`DEF_id`=(select max(c2.`DEF_id`) from ApCtfData c2 where c2.`REF|leginondata|AcquisitionImageData|image` = c.`REF|leginondata|AcquisitionImageData|image`)";
 		return $this->mysql->getSQLResult($q);
 	}
 
 	function getCtfInfo($runId) {
 		$q =	"select "
-			."c.`dbemdata|AcquisitionImageData|image`, "
+			."c.`REF|leginondata|AcquisitionImageData|image`, "
 			."c.`defocus1`, "
 			."c.`defocus2`, "
 			."c.`defocusinit`, "
@@ -122,7 +122,7 @@ class ctfdata {
 	function getCtfInfoFromImageId($imageId, $order=false) {
 		$q =	"select "
 			."c.`DEF_id`, "
-			."c.`dbemdata|AcquisitionImageData|image`, "
+			."c.`REF|leginondata|AcquisitionImageData|image`, "
 			."s.`defocus`, "
 			."c.`defocus1`, "
 			."c.`defocus2`, "
@@ -149,9 +149,9 @@ class ctfdata {
 			."left join(ApAceRunData r, ApPathData p) "
 			."on ( r.DEF_id=c.`REF|ApAceRunData|acerun` and p.DEF_id=r.`REF|ApPathData|path`) "
 			."left join dbemdata.AcquisitionImageData i "
-			."on (c.`dbemdata|AcquisitionImageData|image` = i.`DEF_id`) "
+			."on (c.`REF|leginondata|AcquisitionImageData|image` = i.`DEF_id`) "
 			."left join dbemdata.ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
-			."where c.`dbemdata|AcquisitionImageData|image`='$imageId' ";
+			."where c.`REF|leginondata|AcquisitionImageData|image`='$imageId' ";
 		if ($order) {
 			$fields = $order['fields'];
 			$q .= " order by ".join(", ",$fields);
@@ -165,7 +165,7 @@ class ctfdata {
 			."	( "
 			."	select  "
 			."		i.`filename`, "
-			."		c.`dbemdata|AcquisitionImageData|image`, "
+			."		c.`REF|leginondata|AcquisitionImageData|image`, "
 			."		i.`DEF_id`, "
 			."		p.`name`, "
 			."		s.`defocus`, "
@@ -174,11 +174,11 @@ class ctfdata {
 			."		c.`envelope1`, c.`envelope2`, c.`envelope3`, c.`envelope4`, c.`lowercutoff`, c.`uppercutoff`, c.`snr`, "
 			."		c.`confidence`,c.`confidence_d`  "
 			."	from dbappiondata.`ApCtfData` c "
-			."	left join dbemdata.`AcquisitionImageData` i on (i.`DEF_id` = c.`dbemdata|AcquisitionImageData|image`) "
+			."	left join dbemdata.`AcquisitionImageData` i on (i.`DEF_id` = c.`REF|leginondata|AcquisitionImageData|image`) "
 			."	left join dbemdata.`PresetData` p on (p.DEF_id = i.`REF|PresetData|preset`) "
 			."	left join dbemdata.`ScopeEMData` s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 			."	where "
-			."	c.`dbemdata|AcquisitionImageData|image` in  "
+			."	c.`REF|leginondata|AcquisitionImageData|image` in  "
 			."	( "
 			."		select a.`DEF_id` from dbemdata.`AcquisitionImageData` a  "
 			."		where a.`REF|SessionData|session`='$sessionId'  "
@@ -197,7 +197,7 @@ class ctfdata {
 		if (!is_array($fields))
 			return False;
 		foreach ($fields as $field) {
-			$selects[$field] = "c.`dbemdata|AcquisitionImageData|image` as id, s.defocus, "
+			$selects[$field] = "c.`REF|leginondata|AcquisitionImageData|image` as id, s.defocus, "
 					. "count(c.DEF_id) as `nb`, "
 					. "min(c.`$field`) as `min`, "
 					. "max(c.`$field`) as `max`, "
@@ -210,7 +210,7 @@ class ctfdata {
 		foreach ($selects as $k=>$select) {
 			$q =	"select ".$select." "
 			."from ApCtfData c left join dbemdata.AcquisitionImageData i "
-			."on (c.`dbemdata|AcquisitionImageData|image`=i.`DEF_id`) "
+			."on (c.`REF|leginondata|AcquisitionImageData|image`=i.`DEF_id`) "
 			."left join dbemdata.`ScopeEMData` s "
 			."on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 			."left join dbemdata.`PresetData` p "
@@ -219,7 +219,7 @@ class ctfdata {
 			if ($runId)
 				$q .= "and c.`REF|ApAceRunData|acerun`='$runId' ";
 			else
-				$q .= "and c.`DEF_id`=(select max(c2.`DEF_id`) from ApCtfData c2 where c2.`dbemdata|AcquisitionImageData|image` = c.`dbemdata|AcquisitionImageData|image`)";
+				$q .= "and c.`DEF_id`=(select max(c2.`DEF_id`) from ApCtfData c2 where c2.`REF|leginondata|AcquisitionImageData|image` = c.`REF|leginondata|AcquisitionImageData|image`)";
 			$q .= "group by p.`name`";
 			$r = $this->mysql->getSQLResult($q);
 			$stats[$k] = $r;
@@ -250,7 +250,7 @@ class ctfdata {
 				."	from "
 				."		( "
 				."		select  "
-				."			c.`dbemdata|AcquisitionImageData|image`, "
+				."			c.`REF|leginondata|AcquisitionImageData|image`, "
 				."			c.`DEF_id`, "
 				."			p.`name`, "
 				."			s.`defocus`, "
@@ -259,18 +259,18 @@ class ctfdata {
 				."			c.`envelope1`, c.`envelope2`, c.`envelope3`, c.`envelope4`, c.`lowercutoff`, c.`uppercutoff`, c.`snr`, "
 				."			c.`confidence`,c.`confidence_d`  "
 				."		from dbappiondata.`ApCtfData` c "
-				."		left join dbemdata.`AcquisitionImageData` i on (i.DEF_id=c.`dbemdata|AcquisitionImageData|image`) "
+				."		left join dbemdata.`AcquisitionImageData` i on (i.DEF_id=c.`REF|leginondata|AcquisitionImageData|image`) "
 				."		left join dbemdata.`PresetData` p on (p.DEF_id=i.`REF|PresetData|preset`) "
 				."		left join dbemdata.ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 				."		where "
-				."		c.`dbemdata|AcquisitionImageData|image` in  "
+				."		c.`REF|leginondata|AcquisitionImageData|image` in  "
 				."		( "
 				."			select a.`DEF_id` from dbemdata.`AcquisitionImageData` a  "
 				."			where a.`REF|SessionData|session`='$sessionId'  "
 				."			)  "
 				."			order by (if(confidence_d>confidence, confidence_d, confidence)) desc  "
 				."		) allctfdata "
-				."	group by allctfdata.`dbemdata|AcquisitionImageData|image` "
+				."	group by allctfdata.`REF|leginondata|AcquisitionImageData|image` "
 				."	) ctfdata ";
 				// if $limit is specified, report only values with confidences > $limit
 				if ($limit){
@@ -287,7 +287,7 @@ class ctfdata {
 		if (!is_array($fields))
 			return False;
 		foreach ($fields as $field) {
-			$selects[$field] = "c.`dbemdata|AcquisitionImageData|image` as id, s.`defocus`, "
+			$selects[$field] = "c.`REF|leginondata|AcquisitionImageData|image` as id, s.`defocus`, "
 					. "`$field`";
 		}
 		if (!is_array($selects))
@@ -296,13 +296,13 @@ class ctfdata {
 		foreach ($selects as $k=>$select) {
 			$q =	"select ".$select." "
 			."from ctf c left join dbemdata.AcquisitionImageData i"
-			."on (c.`dbemdata|AcquisitionImageData|image`=i.`DEF_id`) "
+			."on (c.`REF|leginondata|AcquisitionImageData|image`=i.`DEF_id`) "
 			."left join dbemdata.ScopeEMData s on (s.`DEF_id` = i.`REF|ScopeEMData|scope`) " 
 			."where i.`REF|SessionData|session`='$sessionId' ";
 			if ($runId)
 				$q .= "and c.`REF|ApAceRunData|acerun`='$runId' ";
 			else
-				$q .= "and c.`DEF_id`=(select max(c2.`DEF_id`) from ApCtfData c2 where c2.`dbemdata|AcquisitionImageData|image` = c.`dbemdata|AcquisitionImageData|image`)";
+				$q .= "and c.`DEF_id`=(select max(c2.`DEF_id`) from ApCtfData c2 where c2.`REF|leginondata|AcquisitionImageData|image` = c.`REF|leginondata|AcquisitionImageData|image`)";
 			$r = $this->mysql->getSQLResult($q);
 			$stats[$k] = $r;
 		}
