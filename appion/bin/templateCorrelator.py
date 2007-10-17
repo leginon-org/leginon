@@ -46,7 +46,7 @@ class TemplateCorrelationLoop(particleLoop.ParticleLoop):
 	def particleCommitToDatabase(self, imgdata):
 		runq=appionData.ApSelectionRunData()
 		runq['name'] = self.params['runid']
-		runq['dbemdata|SessionData|session'] = imgdata['session'].dbid
+		runq['session'] = imgdata['session']
 		runids = runq.query(results=1)
 
 		if apTemplate.checkTemplateParams(runids[0], self.params) is True:
