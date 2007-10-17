@@ -127,6 +127,13 @@ def copyTemplatesToOutdir(params):
 	for tmpl in params['templatelist']:
 		base = os.path.basename(tmpl)
 		old = os.path.abspath(tmpl)
+		
+		#append the name of the directory to the filename
+		run = os.path.split(old)
+		run = os.path.split(run[0])
+		orig_run = run[1]
+		base = orig_run+"_"+base
+		
 		new = os.path.join(params['outdir'], base)
 		if os.path.isfile(new):
 			apDisplay.printError("template \'"+new+"\' already exists!\n")
