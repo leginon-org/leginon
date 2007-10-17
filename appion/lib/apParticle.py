@@ -24,8 +24,9 @@ leginondb = apDB.db
 def guessParticlesForSession(expid=None, sessionname=None):
 	if expid is None and sessionname is not None:
 		sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
-	else if expid:
-		seesiondata = leginondb.direct_query(leginondata.SessionData,expid)
+	else: 
+		if expid:
+			seesiondata = leginondb.direct_query(leginondata.SessionData,expid)
 	if sessiondata is None:
 		apDisplay.printError("Unknown expId in guessParticlesForSession")
 	apDisplay.printMsg("getting most complete particle picking run from DB for session "+sessionname)
@@ -83,7 +84,7 @@ def getSelectionRunDataFromName(imgdata, runname):
 	return selectionrundata[0]
 
 def getDefocPairParticles(imgdata, params):
-	print "finding pair for", apDisplay.short(imgdict['filename'])
+	print "finding pair for", apDisplay.short(imgdata['filename'])
 	selexonrun=appiondb.direct_query(appionData.ApSelectionRunData,params['selexonId'])
 	prtlq=appionData.ApParticleData()
 	prtlq['image'] = leginondb.direct_query(
@@ -107,7 +108,7 @@ def getDefocPairParticles(imgdata, params):
 
 def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2, transdata, params):
 	"""
-	takes both image dicts (imgdict) and inserts particle pairs into DB from peaktrees
+	takes both image data (imgdata) and inserts particle pairs into DB from peaktrees
 	"""
 	#INFO
 	sessiondata = imgdata1['session']
@@ -185,7 +186,7 @@ def insertParticlePeaks(peaktree, imgdata, params):
 	takes an image data object (imgdata) and inserts particles into DB from peaktree
 	"""
 	#INFO
-	sessiondata = imgdict['session']
+	sessiondata = imgdata['session']
 	imgname=imgdata['filename']
 
 	#GET RUNID
