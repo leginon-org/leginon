@@ -207,9 +207,11 @@ function runUploadTemplate() {
 	$hed=$_POST['hed'];
 	if (!$hed) {
 		if (!file_exists($template)) {
-			createUploadTemplateForm("<B>ERROR:</B> Could not find file: ".$template);  
+			$template_command="File ".$template." does not exist. This is fine you are uploading more than one template";
+			//createUploadTemplateForm("<B>ERROR:</B> Could not find file: ".$template);  
+		} else {
+			$template_command="File ".$template." exist. But make sure that this is the file that you want!";
 		}
-		$template_command="File ".$template." exist. But make sure that this is the file that you want!";
 	} else {
 		$template_Id=ereg("template([0-9]*)",$template,$Id);
 		$template_command.="proc2d ";
