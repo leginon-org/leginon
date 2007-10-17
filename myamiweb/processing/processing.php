@@ -45,9 +45,15 @@ $currentproject=$sessiondata['currentproject'];
 $nonecolor='#FFFFCC';
 $progcolor='#CCFFFF';
 $donecolor='#CCFFCC';
-$donepic='img/green_circle.gif';
+$mode = "default";
+if($mode == "neil") {
+	$donepic='img/icon-check.png';
+	$nonepic='img/icon-cross.png';
+} else {
+	$donepic='img/green_circle.gif';
+	$nonepic='img/red_circle.gif';
+}
 $progpic='img/blue_circle.gif';
-$nonepic='img/red_circle.gif';
 
 // If expId specified, don't show pulldowns, only session info
 if (!$expId){
@@ -366,7 +372,8 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
   if ($templates==0) {echo "none";}
-  else {echo "$templates available";}
+  else {echo "<A HREF='viewtemplates.php?expId=$sessionId'>$templates available</A>";}
+  //else {echo "$templates available";}
   echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>";
