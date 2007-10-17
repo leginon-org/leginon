@@ -41,6 +41,9 @@ def parseCommandLine():
 	(options, args) = parser.parse_args()
 	if len(args) > 0:
 		apDisplay.printError("Unknown commandline options: "+str(args))
+	if len(sys.argv) < 2:
+		parser.print_help()
+		parser.error("no options defined")
 
 	params = {}
 	for i in parser.option_list:
