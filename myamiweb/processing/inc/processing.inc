@@ -37,11 +37,14 @@ function getHosts(){
 }
 
 function writeTop($title,$heading,$headerstuff=false){
+  global $_GET;
   echo"<HTML>
   <HEAD>
   <title>$title</title>
   <link rel='stylesheet' type='text/css' href='../css/viewer.css'> 
   <link rel='stylesheet' type='text/css' href='../css/view.css'>
+  <SCRIPT SRC='../js/viewer.js'>
+  </SCRIPT>
   $headerstuff
   </HEAD>
   <BODY>
@@ -50,7 +53,10 @@ function writeTop($title,$heading,$headerstuff=false){
   <TR>
   <TD ALIGN='LEFT'>\n";
   if ($heading) echo"<H3 ALIGN='CENTER'>$heading</H3>\n";
-  if ($_SESSION['username']) echo "<FONT CLASS='sf'><I>logged in as <B>$_SESSION[username]</B></I></FONT>\n";
+  if ($_SESSION['username']) {
+    echo "<FONT CLASS='sf'><I>logged in as <B>$_SESSION[username]</B></I></FONT>\n";
+    echo "<A CLASS='header' HREF='endsession.php?expId=$_GET[expId]'>[Log Out]</A>\n";
+  }
   echo"<HR>\n";
 }
 
