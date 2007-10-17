@@ -37,7 +37,7 @@ if ($hasassrun){
 }
 else {
 	$assrundata['name']='run1';
-	$assrundata['dbemdata|SessionData|session']=$expId;
+	$assrundata['REF|leginondata|SessionData|session']=$expId;
 	$particledata->mysql->SQLInsert('ApAssessmentRunData',$assrundata);
 	$assessmentrid=$particledata->getLastAssessmentRun($sessionId);
 }

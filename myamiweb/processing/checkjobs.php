@@ -34,8 +34,21 @@ echo "</FORM>\n";
 if ($_POST['checkjobs']) {
   $queue = checkClusterJobs($_POST['user'], $_POST['password']);
   if ($queue) {
-    echo "<P>Jobs currently running on the cluster:\n";
-    echo "<PRE>$queue</PRE>\n";
+    echo "<P>Jobs currently running on the cluster:<P>\n";
+    $list = streamToArray($queue);
+    $dispkeys = array('Job ID','User','Queue','Jobname','SessId','NDS','TSK','ReqMem','ReqTime','S','ElapTime');
+    echo "<TABLE CLASS='tableborder' border=1 cellspacing=0, cellpadding=5>\n";
+    echo "<TR>\n";
+    foreach ($dispkeys as $key) {
+      echo "<TD><SPAN CLASS='datafield0'>$key</SPAN></TD>";
+    }
+    echo "</TR>\n";
+    foreach ($list as $line) {
+      echo "<TR>\n";
+      foreach ($line as $i) {echo "<TD>$i</TD>\n";}
+      echo "</TR>\n";
+    }
+    echo "</TABLE>\n";
   }
   else {
     echo "no jobs on cluster\n";
@@ -53,9 +66,36 @@ foreach ($jobs as $job) {
     echo formatHtmlRow($k,$v);
   }
   echo "</TABLE>\n";
+  if ($_POST['checkjobs']) {
+    echo "<B>Current Status:</B>\n";
+    $stat = checkJobStatus($jobinfo['clusterpath'],$jobinfo['name'],$_POST['user'],$_POST['password']);
+    $numtot=count($stat['allref']);
+    $current=count($stat['curref']);
+    echo "Currently processing iteration $current of $numtot\n";
+    //    print_r($stat['current']);
+    if ($stat['errors']) echo "<P><FONT COLOR='RED'>There are errors in this job, you should resubmit</FONT><P>";
+  }
   echo "<P>\n";
 }
+writeBottom();
+exit;
 
-?>
-</body>
-</html>
+function checkJobStatus($jobpath,$jobfile,$user,$pass) {
+  $cmd = "grep refine $jobpath/$jobfile ";
+  $r = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
+  $allref = streamToArray($r);
+  foreach ($allref as $i){
+    if ($i[0]=='refine' && preg_match('/\d+/',$i[1])) $stat['allref'][]=$i;
+  }
+  $cmd = "grep refine $jobpath/recon/refine.log";
+  $r = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
+  $curref = streamToArray($r);
+  foreach ($curref as $i){
+    if ($i[0]=='refine' && preg_match('/\d+/',$i[1])) $stat['curref'][]=$i;
+  }
+  $cmd = "grep Alarm $jobpath/recon/refine.* ";
+  $stat['errors'] = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
+
+  return $stat;
+}
+

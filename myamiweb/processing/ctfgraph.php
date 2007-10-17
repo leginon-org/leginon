@@ -44,7 +44,7 @@ function TimeCallback($aVal) {
 }
 
 foreach($ctfinfo as $t) {
-	$id = $t['dbemdata|AcquisitionImageData|image'];
+	$id = $t['REF|leginondata|AcquisitionImageData|image'];
 	$p = $leginondata->getPresetFromImageId($id);
 	if ($p['name']!=$preset) {
 		continue;

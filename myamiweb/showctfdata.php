@@ -20,7 +20,7 @@ $ctfinfo = $ctf->getBestCtfInfoForSessionId($sessionId, $minimum);
 
 if ($viewdata) {
 	//Could use keys for a cleaner output
-	$keys=array('filename','dbemdata|ScopeEMData|defocus','defocus1','defocus2','confidence','confidence_d');
+	$keys=array('filename','REF|leginondata|ScopeEMData|defocus','defocus1','defocus2','confidence','confidence_d');
 	echo dumpData($ctfinfo,$keys);
 	//echo dumpData($ctfinfo);
 }
