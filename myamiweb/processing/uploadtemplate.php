@@ -217,13 +217,13 @@ function runUploadTemplate() {
 	}
 
 	$command.="uploadTemplate.py ";
-	$command.="template=$template ";
-	$command.="session=$session ";
-	$command.="apix=$apix ";
-	$command.="diam=$diam ";
-	$command.="description=\"$description\"";
+	$command.="--template=$template ";
+	$command.="--session=$session ";
+	$command.="--apix=$apix ";
+	$command.="--diam=$diam ";
+	$command.="--description=\"$description\"";
 
-	writeTop("UploadTemplate Run","UploadTemplate Params");
+	writeTop("UploadTemplate Run", "UploadTemplate Params");
 
 	echo"
 	<P>
