@@ -13,6 +13,11 @@ require "inc/processing.inc";
 require "inc/leginon.inc";
 require "inc/viewer.inc";
 require "inc/project.inc";
+require "inc/session.inc";
+
+// start a php session
+$startsession = (session_id()) ? false:true;
+if ($startsession) setsession();
 
 if ($_POST['write']) {
   $particle = new particledata();
@@ -47,9 +52,21 @@ if ($_POST['write']) {
 }
 
 elseif ($_POST['submitstackmodel'] || $_POST['duplicate']) {
+  if (!$_SESSION['username']) {
+    if (!$_POST['username'] || !$_POST['password']) stackModelForm("ERROR: enter your user name and password");
+    ## authenticate username and password
+    if (!check_ssh('cronus3',$_POST['username'],$_POST['password'])) stackModelForm("ERROR: authentication failed");
+    ## save username and password to the session
+    $_SESSION['username']=$_POST['username'];
+    $_SESSION['password']=$_POST['password'];
+    unset($_POST['username']);
+    unset($_POST['password']);
+  }
+  
+  ## make sure a stack and model were selected
   if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
   if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
-  if (!$_POST['user']) stackModelForm("ERROR: enter your user name");
+
   ## make sure that box sizes are the same
   ## get stack data
   $stackinfo = explode('|--|',$_POST['stackval']);
@@ -63,8 +80,8 @@ elseif ($_POST['submitstackmodel'] || $_POST['duplicate']) {
 
 elseif ($_POST['submitjob']) {
   $host = 'garibaldi';
-  $user = $_POST['user'];
-  $pass = $_POST['password'];
+  $user = $_SESSION['username'];
+  $pass = $_SESSION['password'];
   if (!($user && $pass)) writeJobFile("<B>ERROR:</B> Enter a user name and password");
 
   writeTop("Eman Job Submitted","EMAN Job Submitted",$javafunc);
@@ -111,6 +128,8 @@ elseif ($_POST['submitjob']) {
 else stackModelForm();
 
 function stackModelForm($extra=False) {
+  $display_login = ($_SESSION['username'] && $_SESSION['password']) ? false:true;
+
   // check if session provided
   $expId = $_GET['expId'];
   $modelonly = $_GET['modelonly'];
@@ -160,13 +179,15 @@ function stackModelForm($extra=False) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
   }
   echo "<FORM NAME='viewerform' METHOD='POST' ACTION='$formaction'>\n";
-  echo "<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='5'>\n";
-  echo "<TR><TD>\n";
-  echo "Username: <INPUT TYPE='text' name='user' value='$_POST[user]'>\n";
-  echo "<BR><I>(password needed upon job submission)</I>\n";
-  echo "</TD></TR>\n";
-  echo "</TABLE>
-  <P>
+  if ($display_login) {
+    echo "<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='5'>\n";
+    echo "<TR><TD>\n";
+    echo "Username: <INPUT TYPE='text' name='username' value='$_POST[username]'>\n";
+    echo "Password: <INPUT TYPE='password' name='password'>\n";
+    echo "</TD></TR>\n";
+    echo "</TABLE><P>\n";
+  }
+  echo "
   <B>Select Project:</B><BR>
   <SELECT NAME='projectId' onchange='newexp()'>\n";
 
@@ -204,7 +225,7 @@ function stackModelForm($extra=False) {
     echo "</SELECT>\n";
   }
   # show initial models
-  echo "<B>Model:</B><BR><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A>\n";
+  echo "<P><B>Model:</B><BR><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A>\n";
   echo "<P>\n";
   $minf = explode('|--|',$_POST['model']);
   if (count($models)>0) {
@@ -271,8 +292,8 @@ function jobForm($extra=false) {
   $dmfstack = $stackinfo[4];
   $box=$stackinfo[2];
   $rootpathdata = explode('/', $sessionpath);
-  $dmfpath = '/home/'.$_POST['user'].'/';
-  $clusterpath = '/garibaldi/people-a/'.$_POST['user'].'/';
+  $dmfpath = '/home/'.$_SESSION['username'].'/';
+  $clusterpath = '/garibaldi/people-a/'.$_SESSION['username'].'/';
   for ($i=3 ; $i<count($rootpathdata); $i++) {
     $rootpath .= "$rootpathdata[$i]";
     if ($i+1<count($rootpathdata)) $rootpath.='/';
@@ -317,7 +338,6 @@ function jobForm($extra=false) {
   }
   echo "
   <FORM NAME='emanjob' METHOD='POST' ACTION='$formaction'><BR/>
-  <INPUT TYPE='HIDDEN' NAME='user' VALUE='$_POST[user]'>
   <TABLE CLASS='tableborder' CELLPADDING=4 CELLSPACING=4>
   <TR>
     <TD><B>Job Run Name:</B></TD>
@@ -694,13 +714,6 @@ function writeJobFile ($extra=False) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
   }
   echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formaction'><BR>\n";
-  echo "<INPUT TYPE='HIDDEN' NAME='user' VALUE='$_POST[user]'>\n";
-  echo "<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='5'>\n";
-  echo "<TR><TD>\n";
-  echo "Password for <B>$_POST[user]: <INPUT TYPE='password' name='password' value='$_POST[password]'>\n";
-  echo "</TD></TR>\n";
-  echo "</TABLE>\n";
-  echo "<P>\n";
   echo "<INPUT TYPE='HIDDEN' NAME='clusterpath' VALUE='$_POST[clusterpath]'>\n";
   echo "<INPUT TYPE='HIDDEN' NAME='dmfpath' VALUE='$_POST[dmfpath]'>\n";
   echo "<INPUT TYPE='HIDDEN' NAME='jobname' VALUE='$_POST[jobname]'>\n";

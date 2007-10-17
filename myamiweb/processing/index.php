@@ -95,36 +95,36 @@ echo "<P>\n";
 if ($sessionId) {
 // ---  Get CTF Data
   $ctf = new ctfdata();
-  $ctfrunIds = $ctf->getCtfRunIds($sessionId);
-  $ctfruns=count($ctfrunIds);
+  if ($ctfrunIds = $ctf->getCtfRunIds($sessionId))
+		$ctfruns=count($ctfrunIds);
 
   // --- Get Particle Selection Data
   $particle = new particledata();
-  $prtlrunIds = $particle->getParticleRunIds($sessionId);
-  $prtlruns=count($prtlrunIds);
+  if ($prtlrunIds = $particle->getParticleRunIds($sessionId))
+		$prtlruns=count($prtlrunIds);
 
   // retrieve template info from database for this project
   if ($expId){
     $projectId=getProjectFromExpId($expId);
   }
   if (is_numeric($projectId)) {
-    $templatesData=$particle->getTemplatesFromProject($projectId);
-    $templates = count($templatesData);
-    $modelData=$particle->getModelsFromProject($projectId);
-    $models = count($modelData);
+    if ($templatesData=$particle->getTemplatesFromProject($projectId))
+			$templates = count($templatesData);
+    if ($modelData=$particle->getModelsFromProject($projectId))
+			$models = count($modelData);
   }
 
   // --- Get Mask Maker Data
-  $maskrunIds = $particle->getMaskMakerRunIds($sessionId);
-  $maskruns=count($maskrunIds);
+  if ($maskrunIds = $particle->getMaskMakerRunIds($sessionId))
+		$maskruns=count($maskrunIds);
 
   // --- Get Micrograph Assessment Data
   //$totimgs = $particle->getNumImgsFromSessionId($sessionId);
   $assessedimgs = $particle->getNumAssessedImages($sessionId);
   
   // --- Get Stack Data
-  $stackIds = $particle->getStackIds($sessionId);
-  $stackruns=count($stackIds);
+  if ($stackIds = $particle->getStackIds($sessionId))
+		$stackruns=count($stackIds);
 
   // --- Get Class Data
   if ($stackruns>0) {
@@ -137,7 +137,7 @@ if ($sessionId) {
   // --- Get Ref-based Alignment Data
   if ($stackruns>0) {
     $refaliIds = $particle->getRefAliIds($sessionId);
-    $refaliruns=count($refaliIds);
+		$refaliruns=count($refaliIds);
   } else {
     $refaliruns=0;
   };

@@ -50,6 +50,7 @@ function writeTop($title,$heading,$headerstuff=false){
   <TR>
   <TD ALIGN='LEFT'>\n";
   if ($heading) echo"<H3 ALIGN='CENTER'>$heading</H3>\n";
+  if ($_SESSION['username']) echo "<FONT CLASS='sf'><I>logged in as <B>$_SESSION[username]</B></I></FONT>\n";
   echo"<HR>\n";
 }
 
@@ -139,4 +140,22 @@ function checkClusterJobs($user,$pass) {
   $cmd = 'qstat -a | grep $user';
   $subjobs = exec_over_ssh('garibaldi',$user,$pass,$cmd,True);
   return $subjobs;
+}
+
+function streamToArray($stream) {
+  // turns a stream into an array of arrays
+  $lines=explode("\n", $stream);
+  foreach($lines as $line) {
+    if (!$line=trim($line))
+      continue;
+    $fields=explode(" ",$line);
+    $row=array();
+    foreach($fields as $f) {
+      if (!trim($f))
+	continue;
+      $row[]=$f;
+    }
+    $rows[]=$row;
+  }
+  return $rows;
 }
