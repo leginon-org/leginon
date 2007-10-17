@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.31 $
+# $Revision: 1.32 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-10-17 18:36:54 $
-# $Author: acheng $
+# $Date: 2007-10-17 19:01:49 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -142,6 +142,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 	def onAcquisitionDone(self, evt):
 		self._acquisitionEnable(True)
+		if self.widgets['asdf']:
+			self.onCommentTool(None)
 
 	def onSettingsTool(self, evt):
 		self.settingsdialog.ShowModal()
