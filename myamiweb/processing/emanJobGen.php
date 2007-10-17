@@ -16,8 +16,7 @@ require "inc/project.inc";
 require "inc/session.inc";
 
 // start a php session
-$startsession = (session_id()) ? false:true;
-if ($startsession) setsession();
+setsession();
 
 if ($_POST['write']) {
   $particle = new particledata();
