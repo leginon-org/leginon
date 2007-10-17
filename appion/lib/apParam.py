@@ -134,7 +134,7 @@ def createDirectory(path, mode=0777, warning=True):
 	if os.path.isdir(path):
 		if warning is True:
 			apDisplay.printWarning("directory \'"+path+"\' already exists.")
-		"""
+			"""
 		# if necessary, remove the directory
 		if remove is True:
 			if warning is True:
@@ -144,8 +144,8 @@ def createDirectory(path, mode=0777, warning=True):
 			except: 
 				apDisplay.printError("Could not remove directory, '"+path+"'\nCheck the folder write permissions")
 		else:
+			"""
 			return False
-		"""
 	try:
 		os.makedirs(path, mode=mode)
 		#makedirs(path, mode=mode)
