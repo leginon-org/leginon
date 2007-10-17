@@ -124,9 +124,9 @@ def getTransformedDefocPair(imgdata,direction):
 		sfrom = base+ '1'
 		sto = base+ '2'
 	simgq[sfrom]=imgdata
-	simgdata=apdb.query(simgq,readimages=False)
-	if simgdata:
-		sbimgref = simgdata.special_getitem(sto,dereference = False)
+	simgresults=appiondb.query(simgq,readimages=False)
+	if simgresults:
+		sbimgref = simgresults[0].special_getitem(sto,dereference = False)
 		sbimgdata = leginondb.direct_query(leginondata.AcquisitionImageData,sbimgref.dbid, readimages = False)
 	else:
 		return None

@@ -346,7 +346,7 @@ def eliminateMaskedParticles(particles,params,imgdata):
 	eliminated = 0
 	sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
 	if params['defocpair']:
-		imgdata = apDefocalPair.getTransformedDefocPair(imgdata,2)
+		imgdata = apDefocalPairs.getTransformedDefocPair(imgdata,2)
 #		print imgdata.dbid
 	maskimg,maskbin = apMask.makeInspectedMask(sessiondata,params['checkMask'],imgdata)
 	if maskimg is not None:
@@ -570,7 +570,7 @@ def getImgsDefocPairFromSelexonId(params):
 		pimgq['selectionrun']=selexonrun
 		pimg=apdb.query(pimgq, results=1)
 		if pimg:
-			siblingimage = apDefocPairs.getTransformedDefocPair(imgdata,1)
+			siblingimage = apDefocalPairs.getTransformedDefocPair(imgdata,1)
 			if siblingimage:
 				#create a dictionary for keeping the dbids of image pairs so we don't have to query later
 				params['sibpairs'][siblingimage.dbid] = imgdata.dbid
