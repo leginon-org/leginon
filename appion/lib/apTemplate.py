@@ -115,7 +115,7 @@ def findTemplates(params):
 			params['templatelist'].append(f)
 
 	if not params['templatelist']:
-		apDisplay.printError("There are no template images found with basename \'"+os.path.basename(name)+"\'\n")
+		apDisplay.printError("There are no MRC images found with basename \'"+os.path.basename(name)+"\'\n")
 
 	apDisplay.printColor("Template List:","green")
 	pprint.pprint(params['templatelist'])
