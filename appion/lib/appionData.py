@@ -136,6 +136,10 @@ class ApTemplateImageData(Data):
 			('apix', float),
 			('diam', int),
 			('description', str),
+			('stack', ApStackData),
+			('noref', ApNoRefClassRunData),
+			#('ref', ApRefRunData),
+			('stack_image_number', int),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApTemplateImageData=ApTemplateImageData
