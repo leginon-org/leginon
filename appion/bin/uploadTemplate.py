@@ -5,6 +5,7 @@ import os
 import sys
 import re
 import shutil
+from optparse import OptionParser
 import apUpload
 import apParam
 import apTemplate
@@ -12,12 +13,62 @@ import apDisplay
 import apDatabase
 import glob
 
+
+def printTmpltUploadHelp():
+	print "\nUsage:\nuploadTemplate.py template=<name> apix=<pixel> session=<session> diam=<n> description=<'text'>\n"
+	print "uploadTemplate.py template=groEL apix=1.63 session=06nov10a diam=140 description='groel templates'\n"
+	print "template=<name>       : name should not have the extension, or number."
+	print "                        groEL1.mrc, groEL2.mrc would be simply \"template=groEL\""
+	print "apix=<pixel>          : angstroms per pixel of the template images"
+	print "diam=<n>              : "
+	print "session=<sessionId>   : session name associated with template (i.e. 06mar12a)"
+	print "description=\"text\"    : description of the template - must be in quotes"
+	#print "outdir=<path>         : location to copy the templates to"
+	#print "                        default: /ami/data##/appion/<sessionId>/templates/"
+	print "\n"
+	sys.exit(1)
+
+def parseCommandLine():
+	usage = "Usage: %prog template=<name> apix=<pixel> session=<session> diam=<n> description='<text>' [options]"
+	parser = OptionParser(usage=usage)
+	parser.add_option("--apix", dest="apix", type="float",
+		help="Template pixel size in Angstroms per pixel", metavar="FLOAT")
+	parser.add_option("-d", "--diam", dest="diam", type="int",
+		help="Approximate diameter of particle (in Angstroms)", metavar="INT")
+	parser.add_option("-t", "--template", dest="template",
+		help="Filename of the template (wild cards accepted)", metavar="FILE")
+	parser.add_option("--description", dest="description",
+		help="Description of the template (must be in quotes)", metavar="TEXT")
+	parser.add_option("-s", "--session", dest="session", type="int",
+		help="Session name associated with template (e.g. 06mar12a)", metavar="INT")
+	parser.add_option("-o", "--outdir", dest="outdir",
+		help="Location to copy the templates to", metavar="PATH")
+	parser.add_option("--commit", dest="commit", default=True,
+		action="store_true", help="Commit template to database")
+	parser.add_option("--no-commit", dest="commit", default=True,
+		action="store_false", help="Do not commit template to database")
+	parser.add_option("--norefid", dest="norefid", type="int",
+		help="ID for reference-free alignment (optional)", metavar="INT")
+	parser.add_option("--stackid", dest="stackid", type="int",
+		help="ID for particle stack (optional)", metavar="INT")
+	parser.disable_interspersed_args()
+	(options, args) = parser.parse_args()
+	if len(args) > 0:
+		apDisplay.printError("Unknown commandline options: "+str(args))
+
+	params = {}
+	for i in parser.option_list:
+		if isinstance(i.dest, str):
+			params[i.dest] = getattr(options, i.dest)
+	return params
+
 if __name__ == '__main__':
 	# create params dictionary & set defaults
-	params = apUpload.createDefaults()
+	#params = apUpload.createDefaults()
 
 	# parse command line input
-	apUpload.parseTmpltUploadInput(sys.argv, params)
+	#apUpload.parseTmpltUploadInput(sys.argv, params)
+	params = parseCommandLine()
 	apParam.writeFunctionLog(sys.argv)
 
 	# make sure the necessary parameters are set
@@ -49,10 +100,10 @@ if __name__ == '__main__':
 	# copy templates to final location
 	apTemplate.copyTemplatesToOutdir(params)
 
+	apUpload.getProjectId(params)
+
 	# insert templates to database
-	if params['commit'] is True:
-		apUpload.getProjectId(params)
-		apTemplate.insertTemplateImage(params)
+	apTemplate.insertTemplateImage(params)
 
 	
 	
