@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.76 $
- *	@version $Id: leginon.inc,v 1.76 2007-10-16 23:03:30 dfellman Exp $
+ *	@version $Revision: 1.77 $
+ *	@version $Id: leginon.inc,v 1.77 2007-10-17 02:21:53 acheng Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -262,6 +262,15 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function getImageComment($imageId, $type='rt') {
+		$q="select "
+			."comment "
+			."from `ImageCommentData` " 
+			."where `REF|AcquisitionImageData|image` = '$imageId' "
+			." ";
+		return $this->mysql->getSQLResult($q);
+	}
+
 	function getDatalabels($sessionId) {
 		$q="select distinct label FROM AcquisitionImageData a "
 			." where a.`REF|SessionData|session` = '$sessionId'";
@@ -323,10 +332,13 @@ class leginondata {
 			$name="";
 		}
 			$hiddenjoin = "left join `viewer_pref_image` r on (r.imageId=a.DEF_id) ";
+			$hiddenjoin .= "left join `ImageStatusData` ir on (ir.`REF|AcquisitionImageData|image`=a.DEF_id) ";
 		if ($defaultname=="hidden" || $defaultname=="examplar") {
-			$hiddenwhere = "and  r.id is not null and r.status='$defaultname'";
+			$hiddenwhere = "and  ((r.id is not null and r.status='$defaultname') ";
+			$hiddenwhere .= "or  (ir.`DEF_id` is not null and ir.status='$defaultname'))";
 		} else {
-			$hiddenwhere = "and (r.id is NULL or r.status <>'hidden') ";
+			$hiddenwhere = "and ((r.id is NULL or r.status <>'hidden') ";
+			$hiddenwhere .= "and (ir.`DEF_id` is NULL or ir.status <>'hidden')) ";
 		}
 		if (in_array($name, $this->ffttypes)) {
 		$q = "select a.`DEF_id` as `id`, f.`MRC|Image` as `name` "
