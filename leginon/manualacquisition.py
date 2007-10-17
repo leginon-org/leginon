@@ -74,7 +74,9 @@ class ManualAcquisition(node.Node):
 		self.powmin = 0
 		self.powmax = 1e10
 		self.manualplayer = player.Player(callback=self.onManualPlayer)
-
+		self.comment = ''
+		self.published_images = []
+		
 		self.start()
 
 	def getImageStats(self, image):
@@ -124,6 +126,7 @@ class ManualAcquisition(node.Node):
 			self.logger.info('Saving image to database...')
 			try:
 				self.publishImageData(imagedata)
+				self.published_images.append(self.getMostRecentImageData(self.session))
 			except node.PublishError, e:
 				message = 'Error saving image to database'
 				self.logger.info(message)
@@ -202,6 +205,7 @@ class ManualAcquisition(node.Node):
 			raise node.PublishError
 
 	def acquireImage(self, dose=False):
+		self.published_images = []
 		try:
 			try:
 				self.preExposure()
@@ -263,6 +267,7 @@ class ManualAcquisition(node.Node):
 		while True:
 			if self.loopstop.isSet():
 				break
+			self.published_images = []
 			try:
 				self.acquire()
 			except AcquireError:
@@ -447,3 +452,70 @@ class ManualAcquisition(node.Node):
 				
 		self.onManualCheckDone()
 		self.logger.info('Manual focus check completed')
+
+	def saveComment(self):
+		images = self.published_images
+		viewstatus = self.viewstatus
+		if not viewstatus:
+			return
+
+		if len(images) == 0:
+			self.logger.error('No image to be annotated')
+			return
+
+		for image in images:
+			filename = image['filename']
+			namelist = filename.split('_')
+			shortname = '_'.join(namelist[1:])
+			
+			if not self.comment:
+				pass
+			else:
+				comment = data.ImageCommentData()
+				comment['session'] = self.session
+				comment['image'] = image
+				comment['comment']=self.comment
+				self.publish(comment, database=True, dbforce=False)
+				self.logger.info('Annotated %s' % shortname)
+			if not viewstatus or viewstatus == 'normal':
+				pass
+			else:
+				status = data.ImageStatusData()
+				status['session'] = self.session
+				status['image'] = image
+				status['status'] = viewstatus
+				self.publish(status, database=True, dbforce=True)
+				self.logger.info('Viewing status of %s set to %s' % (shortname, viewstatus))
+				
+	def checkExistingCommentStatus(self):
+		images = self.published_images
+		if not images:
+			self.logger.warning('No saved image for annotation')
+			return True
+		
+		for imagedata in images:
+			commentq = data.ImageCommentData()
+			commentq['image'] = imagedata
+			commentresults = self.research(commentq, readimages=False)
+			
+			statusq = data.ImageStatusData()
+			statusq['image'] = imagedata
+			statusresults = self.research(statusq, readimages=False)
+			
+			if commentresults or statusresults:
+				self.logger.warning('Image already annotated')
+				return True
+		return False
+				
+				
+	def getMostRecentImageData(self,sessiondata):
+		imageq = data.AcquisitionImageData()
+		imageq['session'] = sessiondata
+		images = self.research(imageq, readimages=False, results=1)
+		return images[0]
+	
+				
+
+			
+			
+		

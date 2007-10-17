@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.30 $
+# $Revision: 1.31 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-10-16 00:01:35 $
+# $Date: 2007-10-17 18:36:54 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -85,6 +85,9 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_MANUAL_FOCUS, 'manualfocus',
 							 shortHelpString='Manual Focus')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_CALCULATE,
+													'calculate',
+													shortHelpString='Attach Notes')
 		self.initialize()
 
 		self.SetSizer(self.szmain)
@@ -122,6 +125,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 											id=gui.wx.ToolBar.ID_STOP)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onManualFocusTool,
 						  id=gui.wx.ToolBar.ID_MANUAL_FOCUS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onCommentTool,
+											id=gui.wx.ToolBar.ID_CALCULATE)
 		if self.node.projectdata is not None:
 			self.toolbar.Bind(wx.EVT_TOOL, self.onGridTool,
 												id=gui.wx.ToolBar.ID_GRID)
@@ -174,6 +179,19 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 	def manualUpdated(self):
 		self.manualdialog.manualUpdated()
+
+	def onCommentTool(self, evt):
+		exist = self.node.checkExistingCommentStatus()
+		if exist:
+			return
+		mainpos = self.GetPositionTuple()
+		dialogpos = (mainpos[0],mainpos[1]+400)
+		dialog = CommentDialog(self,'Annotate',pos=wx.Point(dialogpos[0],dialogpos[1]))
+		dialog.comment.SetValue(self.node.comment)
+		status = dialog.ShowModal()
+		self.node.viewstatus = dialog.viewstatus
+		self.node.comment = dialog.comment.GetValue()
+		self.node.saveComment()
 
 	def onLoopStopped(self, evt):
 		self._acquisitionEnable(True)
@@ -516,12 +534,42 @@ class ManualFocusDialog(wx.MiniFrame):
 	def onSetImage(self, evt):
 		self.imagepanel.setImageType(evt.typename, evt.image)
 
+class CommentDialog(gui.wx.Dialog.Dialog):
+	def onInitialize(self):
+
+		self.sz.AddGrowableCol(1)
+		self.viewstatus=None
+		self.comment = wx.TextCtrl(self, -1, '', style=wx.TE_MULTILINE)
+
+		self.sz.Add(self.comment, (0, 0), (2, 2),
+			wx.EXPAND|wx.ALL)
+			
+		self.addButton('Normal', wx.ID_OK)
+		self.addButton('Hidden', wx.ID_REMOVE)
+		self.addButton('Examplar', wx.ID_SAVE)
+
+		self.Bind(wx.EVT_BUTTON, self.onNormalButton, id=wx.ID_OK)
+		self.Bind(wx.EVT_BUTTON, self.onHiddenButton, id=wx.ID_REMOVE)
+		self.Bind(wx.EVT_BUTTON, self.onExamplarButton, id=wx.ID_SAVE)
+
+	def onNormalButton(self, evt):
+		self.viewstatus='normal'
+		self.Destroy()
+
+	def onHiddenButton(self, evt):
+		self.viewstatus='hidden'
+		self.Destroy()
+
+	def onExamplarButton(self, evt):
+		self.viewstatus='examplar'
+		self.Destroy()
+
 
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
-			frame = wx.Frame(None, -1, 'Manual Acquisition Test')
-			dialog = ManualFocusDialog(frame,None)
+			frame = wx.Dialog(None, -1, 'Manual Acquisition Test')
+			dialog = CommentDialog(frame,'test')
 			dialog.Show()
 #			panel = Panel(frame, 'Test')
 #			frame.Fit()

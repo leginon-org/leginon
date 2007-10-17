@@ -1713,3 +1713,19 @@ class ManualImageLoaderSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class ImageCommentData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('image', AcquisitionImageData),
+			('comment', str),
+		)
+	typemap = classmethod(typemap)
+
+class ImageStatusData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('image', AcquisitionImageData),
+			('status', str),
+		)
+	typemap = classmethod(typemap)
+
