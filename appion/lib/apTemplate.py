@@ -20,6 +20,7 @@ import appionData
 
 appiondb = apDB.apdb
 
+
 def getTemplates(params):
 	"""
 	Reads params['templateIds'], a list of template ids
@@ -163,7 +164,8 @@ def insertTemplateRun(params,runq,templatenum):
 	templaterunq['range_start']=float(strt)
 	templaterunq['range_end']=float(end)
 	templaterunq['range_incr']=float(incr)
-	appiondb.insert(templaterunq)
+	if params['commit'] is True:
+		appiondb.insert(templaterunq)
 	return
 
 def insertTemplateImage(params):
@@ -172,16 +174,26 @@ def insertTemplateImage(params):
 		templateq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 		templateq['templatename']=name
 		templateId=appiondb.query(templateq, results=1)
-	        #insert template to database if doesn't exist
+
 		if not (templateId):
-			print "Inserting",name,"into the template database"
-			templateq['apix']=params['apix']
-			templateq['diam']=params['diam']
-			templateq['description']=params['description']
-			templateq['project|projects|project']=params['projectId']
-			appiondb.insert(templateq)
-		else:
 			apDisplay.printWarning("template already in database.\nNot reinserting")
+			continue
+
+		#insert template to database if doesn't exist
+		print "Inserting",name,"into the template database"
+		templateq['apix']=params['apix']
+		templateq['diam']=params['diam']
+		if params['norefid'] is not None:
+			templateq['noref']=params['norefid']
+		if params['stackid'] is not None:
+			templateq['stack']=params['stackid']
+		if params['stackimgnum'] is not None:
+			templateq['stack_image_num']=params['stackimgnum']
+		templateq['description']=params['description']
+		templateq['project|projects|project']=params['projectId']
+		if params['commit'] is True:
+			appiondb.insert(templateq)
+
 	return
 
 def checkTemplateParams(runq, params):
