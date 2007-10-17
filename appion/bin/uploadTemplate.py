@@ -14,20 +14,6 @@ import apDatabase
 import glob
 
 
-def printTmpltUploadHelp():
-	print "\nUsage:\nuploadTemplate.py template=<name> apix=<pixel> session=<session> diam=<n> description=<'text'>\n"
-	print "uploadTemplate.py template=groEL apix=1.63 session=06nov10a diam=140 description='groel templates'\n"
-	print "template=<name>       : name should not have the extension, or number."
-	print "                        groEL1.mrc, groEL2.mrc would be simply \"template=groEL\""
-	print "apix=<pixel>          : angstroms per pixel of the template images"
-	print "diam=<n>              : "
-	print "session=<sessionId>   : session name associated with template (i.e. 06mar12a)"
-	print "description=\"text\"    : description of the template - must be in quotes"
-	#print "outdir=<path>         : location to copy the templates to"
-	#print "                        default: /ami/data##/appion/<sessionId>/templates/"
-	print "\n"
-	sys.exit(1)
-
 def parseCommandLine():
 	usage = "Usage: %prog template=<name> apix=<pixel> session=<session> diam=<n> description='<text>' [options]"
 	parser = OptionParser(usage=usage)
@@ -39,7 +25,7 @@ def parseCommandLine():
 		help="Filename of the template (wild cards accepted)", metavar="FILE")
 	parser.add_option("--description", dest="description",
 		help="Description of the template (must be in quotes)", metavar="TEXT")
-	parser.add_option("-s", "--session", dest="session", type="int",
+	parser.add_option("-s", "--session", dest="session",
 		help="Session name associated with template (e.g. 06mar12a)", metavar="INT")
 	parser.add_option("-o", "--outdir", dest="outdir",
 		help="Location to copy the templates to", metavar="PATH")
