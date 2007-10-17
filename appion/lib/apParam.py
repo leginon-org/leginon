@@ -127,13 +127,14 @@ def closeFunctionLog(params=None, logfile=None):
 	f.write(out)
 	f.close()
 
-def createDirectory(path, mode=0777, warning=True, remove=False):
+def createDirectory(path, mode=0777, warning=True):
 	"""
 	Used by appionLoop
 	"""
 	if os.path.isdir(path):
 		if warning is True:
 			apDisplay.printWarning("directory \'"+path+"\' already exists.")
+		"""
 		# if necessary, remove the directory
 		if remove is True:
 			if warning is True:
@@ -144,6 +145,7 @@ def createDirectory(path, mode=0777, warning=True, remove=False):
 				apDisplay.printError("Could not remove directory, '"+path+"'\nCheck the folder write permissions")
 		else:
 			return False
+		"""
 	try:
 		os.makedirs(path, mode=mode)
 		#makedirs(path, mode=mode)

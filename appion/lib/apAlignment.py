@@ -177,8 +177,8 @@ def getStackInfo(params):
 		selectdata = {}
 
 	#get image params of the particle (dereference keep image from loading as would partdata['image'])
-	imageref = partdata.special_getitem('image',dereference = False)
-	imagedata = leginondb.direct_query(leginondata.AcquisitionImageData,imageref.dbid, readimages = False)
+	imageref = partdata.special_getitem('image', dereference = False)
+	imgdata = leginondb.direct_query(leginondata.AcquisitionImageData,imageref.dbid, readimages = False)
 
 	#apXml.fancyPrintDict(stackrundata)
 	#apXml.fancyPrintDict(stackparamdata)
@@ -275,7 +275,10 @@ def createSpiderRefFile(params):
 	emancmd += "spiderswap "
 	apDisplay.printColor("converting reference to spider format","cyan")
 	executeEmanCmd(emancmd, verbose=True)
-	os.remove(tmpreffile)
+	if os.path.isfile(tmpreffile):
+		apDisplay.printWarning(tmpreffile+" already exists; removing it")
+		time.sleep(2)
+		os.remove(tmpreffile)
 	
 	return
 
@@ -315,7 +318,7 @@ def executeEmanCmd(emancmd, verbose=False):
 def createOutDir(params):
 	params['rundir'] = os.path.join(params['outdir'], params['runid'])
 	apDisplay.printMsg("creating run directory: "+params['rundir'])
-	apParam.createDirectory(params['rundir'],remove=True)
+	apParam.createDirectory(params['rundir'])
 	apParam.writeFunctionLog(sys.argv, logfile=os.path.join(params['rundir'],"classifier.log"))
 	os.chdir(params['rundir'])
 

@@ -24,7 +24,7 @@ if __name__ == "__main__":
 		itn=i+1
 		itername='refine%d' % itn
 		params['iterdir'] = os.path.join(params['rundir'],itername)
-		apParam.createDirectory(params['iterdir'],remove=True)
+		apParam.createDirectory(params['iterdir'])
 		os.chdir(params['iterdir'])
 		apAlignment.createRefSpiderBatchFile(params,itn)
 		apAlignment.runSpiderRefAli(params)
