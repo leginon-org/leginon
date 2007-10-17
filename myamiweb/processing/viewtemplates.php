@@ -15,11 +15,13 @@ require "inc/appionloop.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
 
-$expId = $_GET[expId];
+$expId = (int) $_GET[expId];
+
+writeTop("Template Summary", "Template Summary", "");
 
 if ($expId && is_int($expId)){
-	$projectId=getProjectFromExpId($expId);
-	echo "project id = p$projectId<BR>";
+	$projectId = (int) getProjectFromExpId($expId);
+	//echo "project id = $projectId<BR/>";
 }
 
 // if user wants to use templates from another project
@@ -27,12 +29,12 @@ if($_POST['projectId']) $projectId=$_POST['projectId'];
 
 //$projects=getProjectList();
 
-if (is_numeric($projectId)) {
+if (is_int($projectId)) {
 	$particle=new particleData;
 	$templateData=$particle->getTemplatesFromProject($projectId);
 }
 
-writeTop("Template Summary", "Template Summary", "");
+
 echo"<BR/><INPUT TYPE='hidden' NAME='projectId' value='$projectId'>\n";
 
 // extract template info
