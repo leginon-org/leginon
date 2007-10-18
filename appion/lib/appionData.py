@@ -136,6 +136,7 @@ class ApTemplateImageData(Data):
 			('apix', float),
 			('diam', int),
 			('description', str),
+			('md5sum', str),
 			('stack', ApStackData),
 			('noref', ApNoRefClassRunData),
 			#('ref', ApRefRunData),

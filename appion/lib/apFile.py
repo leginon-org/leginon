@@ -8,7 +8,7 @@ def md5sumfile(fname):
 	Returns an md5 hash for file fname
 	"""
 	if not os.path.isfile(fname):
-		apDisplay.printError("MD5SUM: file not found")
+		apDisplay.printError("MD5SUM, file not found: "+fname)
 	f = file(fname, 'rb')
 	m = md5.new()
 	while True:

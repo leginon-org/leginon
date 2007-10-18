@@ -15,7 +15,8 @@ import glob
 
 
 def parseCommandLine():
-	usage = "Usage: %prog template=<name> apix=<pixel> session=<session> diam=<n> description='<text>' [options]"
+	usage = ( "Usage: %prog --template=<name> --apix=<pixel> --session=<session> --diam=<int> "
+		+"--description='<text>' [options]")
 	parser = OptionParser(usage=usage)
 	parser.add_option("--apix", dest="apix", type="float",
 		help="Template pixel size in Angstroms per pixel", metavar="FLOAT")
@@ -37,6 +38,8 @@ def parseCommandLine():
 		help="ID for reference-free alignment (optional)", metavar="INT")
 	parser.add_option("--stackid", dest="stackid", type="int",
 		help="ID for particle stack (optional)", metavar="INT")
+	parser.add_option("--stackimgnum", dest="stackimgnum", type="int",
+		help="Particle number in stack", metavar="INT")
 	parser.disable_interspersed_args()
 	(options, args) = parser.parse_args()
 	if len(args) > 0:
@@ -81,6 +84,7 @@ if __name__ == '__main__':
 		params['outdir'] = os.path.join(path,"templates")
 
 	#create the output directory, if needed
+	apDisplay.printMsg("Out directory: "+params['outdir'])
 	apParam.createDirectory(params['outdir'])			
 
 	# find the number of template files

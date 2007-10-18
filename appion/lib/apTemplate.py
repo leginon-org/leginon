@@ -13,6 +13,7 @@ import pprint
 #import numarray.convolve as convolve
 #appion
 import apImage
+import apFile
 import apDisplay
 import apDatabase
 import apDB
@@ -125,22 +126,27 @@ def findTemplates(params):
 	return(params)
 
 def copyTemplatesToOutdir(params):
+	newlist = []
 	for tmpl in params['templatelist']:
 		base = os.path.basename(tmpl)
 		old = os.path.abspath(tmpl)
 		
 		#append the name of the directory to the filename
-		run = os.path.split(old)
-		run = os.path.split(run[0])
-		orig_run = run[1]
-		base = orig_run+"_"+base
-		
+		basedir = os.path.split(os.path.dirname(old))[1]
+		base = basedir+"_"+base
+		newlist.append(base)
+
 		new = os.path.join(params['outdir'], base)
 		if os.path.isfile(new):
 			apDisplay.printError("template \'"+new+"\' already exists!\n")
+		apDisplay.printMsg("copying file "+old+" to "+new)
 		shutil.copy(old, new)
 		#and only allow user read access just so they don't get deleted
 		os.chmod(new, 0666)
+	params['templatelist'] = newlist
+	apDisplay.printColor("New template List:","green")
+	pprint.pprint(params['templatelist'])
+	return
 		
 def insertTemplateRun(params,runq,templatenum):
 	tid=params['templateIds'][templatenum]
@@ -173,9 +179,9 @@ def insertTemplateImage(params):
 		templateq=appionData.ApTemplateImageData()
 		templateq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 		templateq['templatename']=name
-		templateId=appiondb.query(templateq, results=1)
+		templateId = appiondb.query(templateq, results=1)
 
-		if not (templateId):
+		if templateId:
 			apDisplay.printWarning("template already in database.\nNot reinserting")
 			continue
 
@@ -183,6 +189,8 @@ def insertTemplateImage(params):
 		print "Inserting",name,"into the template database"
 		templateq['apix']=params['apix']
 		templateq['diam']=params['diam']
+		temppath = os.path.join(params['outdir'],name)
+		templateq['md5sum']=apFile.md5sumfile(temppath)
 		if params['norefid'] is not None:
 			templateq['noref']=params['norefid']
 		if params['stackid'] is not None:
@@ -192,6 +200,7 @@ def insertTemplateImage(params):
 		templateq['description']=params['description']
 		templateq['project|projects|project']=params['projectId']
 		if params['commit'] is True:
+			time.sleep(2)
 			appiondb.insert(templateq)
 
 	return
