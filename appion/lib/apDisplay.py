@@ -280,26 +280,19 @@ def colorString(text, fg, bg=None):
 			pass
 	return "%s%s%s%s" % (b, f, text, clear)
 
-def matlabError():
-	env = {}
-	env['PATH'] = "/ami/sw/packages/matlab73/bin:/home/$USER/pyappion/ace:/bin:/usr/bin"
-	env['MATLAB'] = "/ami/sw/packages/matlab73"
-	if os.environ.get("APPIONDIR") is not None:
-		env['MATLABPATH'] = os.path.join(os.environ.get("APPIONDIR"),"ace")
-	else:
-		env['MATLABPATH'] = "/home/$USER/pyappion/ace"
-	env['PYTHONPATH'] = "/home/$USER/pyleginon:/home/$USER/pyappion/lib:/ami/sw/32-pythonhome/lib/python2.4/site-packages"
-	if os.path.isdir("/usr/lib/python2.4/site-packages"):
-		env['PYTHONPATH'] = "/usr/lib/python2.4/site-packages:" + env['PYTHONPATH']
-	env['LD_LIBRARY_PATH'] = "/ami/sw/packages/matlab73/bin/glnx86:/lib:/usr/lib"
-	env['LM_LICENSE_FILE'] = "/ami/sw/packages/matlab/etc/license.dat"
-	print colorString("MATLAB failed to open.\nCheck your environmental variables:","red")
-	if os.path.basename(os.environ.get("SHELL")) == "bash":
-		for var in env.keys():
-			print colorString(" export "+var+"="+env[var],"red")
-	else:
-		for var in env.keys():
-			print colorString(" setenv "+var+" "+env[var],"red")
-	print "sometimes the PATH is the problem move matlab73/bin to the end"
-	sys.exit(1)
-
+def environmentError():
+	env = []
+	env.append("APPIONDIR")
+	env.append('PATH')
+	env.append('MATLAB')
+	env.append('MATLABPATH')
+	env.append('PYTHONPATH')
+	env.append('LD_LIBRARY_PATH')
+	env.append('LM_LICENSE_FILE')
+	print colorString("Check your environmental variables and the Appion documentation.\nThese are your current environment values:","red")
+	for name in env:
+		if name in os.environ:
+			value = os.environ[name]
+		else:
+			value = '*** NOT SET ***'
+		print colorString("%-20s -> %s" % (name, value), "red")

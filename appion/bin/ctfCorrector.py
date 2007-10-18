@@ -15,7 +15,8 @@ import apCtf
 try:
 	import pymat
 except:
-	apDisplay.matlabError()
+	apDisplay.environmentError()
+	raise
 
 class aceLoop(appionLoop.AppionLoop):
 	def setProcessingDirName(self):
@@ -31,7 +32,8 @@ class aceLoop(appionLoop.AppionLoop):
 		try:
 			self.matlab = pymat.open()
 		except:
-			apDisplay.matlabError()
+			apDisplay.environmentError()
+			raise
 		apCtf.mkTempDir(self.params['tempdir'])
 		apCtf.setAceConfig(self.matlab, self.params)
 

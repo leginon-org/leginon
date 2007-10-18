@@ -16,7 +16,8 @@ import apImage
 try:
 	import pymat
 except:
-	apDisplay.matlabError()
+	apDisplay.environmentError()
+	raise
 
 appiondb = apDB.apdb
 
@@ -121,7 +122,8 @@ def runAceCorrect(imgdict,params):
 	try:
 		matlab = pymat.open()
 	except:
-		apDisplay.matlabError()
+		apDisplay.environmentError()
+		raise
 	pymat.eval(matlab, acecorrectcommand)
 	pymat.close(matlab)
 
@@ -163,6 +165,10 @@ def setAceConfig(matlab,params):
 	return
 
 def checkMatlabPath(params=None):
+	'''
+	Return immediately if MATLABPATH environment variable is already set.
+	Searches for ace.m and adds its directory to matlab path.
+	'''
 	if os.environ.get("MATLABPATH") is None:
 		#TRY LOCAL DIRECTORY FIRST
 		matlabpath = os.path.abspath(".")
@@ -175,12 +181,16 @@ def checkMatlabPath(params=None):
 			if os.path.isdir(matlabpath) and os.path.isfile(os.path.join(matlabpath,"ace.m")):
 				updateMatlabPath(matlabpath)
 				return
-		#TRY global install
-		matlabpath = "/ami/sw/packages/pyappion/ace"
-		if os.path.isdir(matlabpath) and os.path.isfile(os.path.join(matlabpath,"ace.m")):
-			updateMatlabPath(matlabpath)
+		#TRY sibling dir of this script
+		libdir = dirname(module.__file__)
+		libdir = os.path.abspath(libdir)
+		appiondir = os.path.dirname(libdir)
+		acedir = os.path.join(appiondir, 'ace')
+		if os.path.isdir(acedir) and os.path.isfile(os.path.join(acedir,"ace.m")):
+			updateMatlabPath(acedir)
 			return
-		apDisplay.matlabError()
+		apDisplay.environmentError()
+		raise RuntimeError('Could not find ace.m.  Check MATLABPATH environment variable.')
 
 def updateMatlabPath(matlabpath):
 	data1 = os.environ.copy()
