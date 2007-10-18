@@ -55,7 +55,7 @@ class dogPicker(particleLoop.ParticleLoop):
 			elif (elements[0]=='numslices'):
 				self.params['numslices']=int(elements[1])
 			elif (elements[0]=='sizerange'):
-				self.params['sizerange']=int(elements[1])
+				self.params['sizerange']=float(elements[1])
 			else:
 				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
