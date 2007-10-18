@@ -16,9 +16,9 @@ import apStack
 import apImage
 import appionData
 import apTemplate
+import apEMAN
 leginondb = apDB.db
 appiondb = apDB.apdb
-functionname = "classifier"
 
 def defaults():
 	params = {}
@@ -37,7 +37,7 @@ def defaults():
 	params['description']=None
 	params['commit']=False
 	params['classonly']=False
-	params['refid']=None
+	params['refids']=None
 	params['xysearch']=None
 	params['iter']=2
 	params['csym']=1
@@ -97,8 +97,11 @@ def cmdline(args, params):
 			params['iter'] = int(elem[1])
 		elif elem[0] == "csym":
 			params['csym'] = int(elem[1])
-		elif elem[0] == "refid":
-			params['refid'] = int(elem[1])
+		elif elem[0] == "refids":
+			if not ',' in elem[1]:
+				params['refids'] = [ int(elem[1]) ]
+			else:
+				params['refids'] = elem[1].split(',')
 		elif elem[0] == "xysearch":
 			params['xysearch'] = int(elem[1])
 		else:
@@ -136,8 +139,8 @@ def conflicts(params):
 	return
 
 def refconflicts(params):
-	if params['refid'] is None:
-		apDisplay.printError("Please provide a reference id, example: refid=28")
+	if params['refids'] is None:
+		apDisplay.printError("Please provide a template reference id, example: refids=28")
 	if params['description'] is None:
 		apDisplay.printError("Please provide a description")
 		
@@ -243,7 +246,7 @@ def createSpiderFile(params):
 	emancmd += "spiderswap "
 	starttime = time.time()
 	apDisplay.printColor("Running stack conversion this can take a while","cyan")
-	executeEmanCmd(emancmd, verbose=True)
+	apEMAN.executeEmanCmd(emancmd, verbose=True)
 	apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime),"cyan")
 	return
 
@@ -251,35 +254,39 @@ def createSpiderRefFile(params):
 	"""
 	takes the reference template file and creates a spider file with same pixel size and box size
 	"""
-	templatedata = apTemplate.getTemplateFromId(params['refid'])
-	reffile = os.path.join(templatedata['path']['path'],templatedata['templatename'])
+	for i,refid in enumerate(params['refids']):
+		templatedata= apTemplate.getTemplateFromId(int(refid))
+		#convert template data
+		reffile = os.path.join(templatedata['path']['path'],templatedata['templatename'])
+		scalefactor round(templatedata['apix'],5)/round(params['apix'],5)
+		refarray = apImage.mrcToArray(reffile)
+		scaleRefArray = apTemplate.scaleTemplate(refarray, scalefactor, params['boxsize'])
 
-	scalefactor = round(templatedata['apix'],5)/round(params['apix'],5)
-	refarray = apImage.mrcToArray(reffile)
-	scaleRefArray = apTemplate.scaleTemplate(refarray, scalefactor, params['boxsize'])
-	tmpreffile = os.path.join(params['rundir'],'tmpreferencefile.mrc')
-	apImage.arrayToMrc(scaleRefArray, tmpreffile)
+		#write to file
+		tmpreffile = os.path.join(params['rundir'], "tempref00"+str(i)+".mrc")
+		if os.path.isfile(tmpreffile):
+			apDisplay.printWarning(tmpreffile+" already exists; removing it")
+			time.sleep(2)
+			os.remove(tmpreffile)
+		apImage.arrayToMrc(scaleRefArray, tmpreffile)
 
-	emancmd  = "proc2d "
-	emancmd += tmpreffile+" "
+		#set outfile name
+		outfile = "reference00"+str(i)+".spi"
+		if os.path.isfile(outfile):
+			apDisplay.printWarning(outfile+" already exists; removing it")
+			time.sleep(2)
+			os.remove(outfile)
 
-	outfile = "reference.spi"
-	if os.path.isfile(outfile):
-		apDisplay.printWarning(outfile+" already exists; removing it")
-		time.sleep(2)
-		os.remove(outfile)
-	emancmd += outfile+" "
-	emancmd += "apix="+str(params['apix'])+" "
-	if params['lp'] > 0:
-		emancmd += "lp="+str(params['lp'])+" "
-	emancmd += "spiderswap "
-	apDisplay.printColor("converting reference to spider format","cyan")
-	executeEmanCmd(emancmd, verbose=True)
-	if os.path.isfile(tmpreffile):
-		apDisplay.printWarning(tmpreffile+" already exists; removing it")
-		time.sleep(2)
-		os.remove(tmpreffile)
-	
+		#low pass filter
+		emancmd  = "proc2d "
+		emancmd += tmpreffile+" "
+		emancmd += outfile+" "
+		emancmd += "apix="+str(params['apix'])+" "
+		if params['lp'] > 0:
+			emancmd += "lp="+str(params['lp'])+" "
+		emancmd += "spiderswap "
+		apDisplay.printColor("Converting reference "+str(i)+" to spider format for template="+str(refid),"cyan")
+		apEMAN.executeEmanCmd(emancmd, verbose=True)
 	return
 
 def averageTemplate(params):
@@ -287,33 +294,23 @@ def averageTemplate(params):
 	takes the spider file and creates an average template of all particles and masks it
 	"""
 	emancmd  = "proc2d start.spi template.mrc average"
-	executeEmanCmd(emancmd)
+	apEMAN.executeEmanCmd(emancmd)
 	emancmd  = "proc2d template.mrc template.mrc center"
-	executeEmanCmd(emancmd)
+	apEMAN.executeEmanCmd(emancmd)
 	pixrad = int(float(params['mask'])/params['apix']/2.0)
 	apDisplay.printMsg("using mask radius of "+str(pixrad)+" pixels ("+str(params['mask'])+" angstroms)")
 	emancmd  = "proc2d template.mrc template.mrc mask="+str(pixrad)
-	executeEmanCmd(emancmd)
+	apEMAN.executeEmanCmd(emancmd)
 	outfile = "template.spi"
 	if os.path.isfile(outfile):
 		apDisplay.printWarning(outfile+" already exists; removing it")
 		time.sleep(2)
 		os.remove(outfile)
 	emancmd  = "proc2d template.mrc template.spi spiderswap"
-	executeEmanCmd(emancmd)
+	apEMAN.executeEmanCmd(emancmd)
 
 	time.sleep(2)
 	return
-
-def executeEmanCmd(emancmd, verbose=False):
-	sys.stderr.write("EMAN: "+emancmd+"\n")
-	try:
-		if verbose is False:
-			os.popen(emancmd)
-		else:
-			os.system(emancmd)
-	except:
-		apDisplay.printError("could not run eman command: "+emancmd)
 
 def createOutDir(params):
 	params['rundir'] = os.path.join(params['outdir'], params['runid'])
@@ -352,7 +349,7 @@ def createNoRefSpiderBatchFile(params):
 			elif thr == "x96":
 				firstring = int(float(params['imask'])/params['apix'])
 				if firstring == 0: 
-					firstring=1
+					firstring = 2
 				outf.write(spiderline(96,firstring,"first ring radii"))
 			elif thr == "x95":
 				#lastring = params['boxsize']/2 - 2
@@ -388,10 +385,11 @@ def createRefSpiderBatchFile(params,iteration):
 		if notdone is False:
 			outf.write(line)
 		else:
+			thr = line[:3]
 			if re.search("^x99",line):
 				outf.write(spiderline(99,params['numparticles'],"number of particles in stack"))
  			elif re.search("^x98",line):
-				outf.write(spiderline(98,1,"number of reference images"))
+				outf.write(spiderline(98,len(params['refids']),"number of reference images"))
 			elif re.search("^x97",line):
 				outf.write(spiderline(97,imaskpixrad,"first ring radii"))
 			elif re.search("^x96",line):
@@ -509,7 +507,7 @@ def convertFileToMRC(path,filename):
 	fileroot=os.path.splitext(filename)[0]
 	mrcfile=fileroot+".mrc"
 	emancmd = "proc2d "+os.path.join(path,filename)+" "+mrcfile
-	executeEmanCmd(emancmd)
+	apEMAN.executeEmanCmd(emancmd)
 	
 def convertClassfileToImagic(params):
 	"""
@@ -517,7 +515,7 @@ def convertClassfileToImagic(params):
 	"""
 	classroot = os.path.join(params['rundir'],params['classfile'])
 	emancmd  = "proc2d "+classroot+".spi "+classroot+".hed"
-	executeEmanCmd(emancmd)
+	apEMAN.executeEmanCmd(emancmd)
 
 def insertNoRefRun(params, insert=False):
 	# create a norefParam object
@@ -606,7 +604,7 @@ def insertRefRun(params, insert=False):
 	uniquerun = appiondb.query(runq, results=1)
 	# ... continue filling non-unique variables:
 	runq['refParams'] = paramq
-	runq['refTemplate'] = appiondb.direct_query(appionData.ApTemplateImageData, params['refid'])
+
 	runq['description'] = params['description']
 
 	# ... check if params associated with unique refRun are consistent:
@@ -624,11 +622,18 @@ def insertRefRun(params, insert=False):
 		params['runq']=runq
 		appiondb.insert(runq)
 
-def insertIterRun(params, iter, itername, insert=False):
+	for refid in params['refids']
+		reftempq = appionData.ApRefTemplateRunData()
+		reftempq['refTemplate'] = appiondb.direct_query(appionData.ApTemplateImageData, refid)
+		reftempq['refRun'] = runq
+		if insert is True:
+			reftempq.insert()
+
+def insertIterRun(params, iternum, itername, insert=False):
 	### create the RefIteration objects
 	iterq = appionData.ApRefIterationData()
 	iterq['refRun'] = params['runq']
-	iterq['iteration'] = iter
+	iterq['iteration'] = iternum
 	iterq['name'] = itername
 
 	##############################################
