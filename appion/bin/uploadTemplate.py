@@ -54,7 +54,7 @@ def parseCommandLine():
 			params[i.dest] = getattr(options, i.dest)
 	return params
 
-def checkConflict(params):
+def checkConflicts(params):
 	# make sure the necessary parameters are set
 	if params['apix'] is None:
 		apDisplay.printError("enter a pixel size")
