@@ -55,7 +55,7 @@ function writeTop($title,$heading,$headerstuff=false){
   if ($heading) echo"<H3 ALIGN='CENTER'>$heading</H3>\n";
   if ($_SESSION['username']) {
     echo "<FONT CLASS='sf'><I>logged in as <B>$_SESSION[username]</B></I></FONT>\n";
-    echo "<A CLASS='header' HREF='endsession.php?expId=$_GET[expId]'>[Log Out]</A>\n";
+    echo "<A CLASS='header' HREF='endsession.php?expId=$_GET[expId]'><FONT CLASS='sf'>[Log Out]</FONT></A>\n";
   }
   echo"<HR>\n";
 }
