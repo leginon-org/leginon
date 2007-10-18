@@ -152,5 +152,7 @@ def commitSubStack(params):
 		newrunsq['stackRun'] = run['stackRun']
 		if params['commit'] is True:
 			appiondb.insert(newrunsq)
+		else:
+			apDisplay.printWarning("Not commiting to the database")	
 
 

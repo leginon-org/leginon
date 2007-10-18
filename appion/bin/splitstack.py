@@ -9,6 +9,7 @@ import shutil
 import apDB
 import apStack
 import apParam
+import apDisplay
 
 apdb=apDB.apdb
 
@@ -156,7 +157,7 @@ def oldLogSplit(start,end,divisions):
 	apDisplay.printColor("Making stacks of the following sizes: "+str(stacklist), "cyan")
 	return(stacklist)
 
-def betterLogSplit(start, end, power=1.5):
+def evenLogSplit(start, end, power=1.7):
 	endlog = int(round(math.log(end)/math.log(power),0))
 	startlog = int(round(math.log(start)/math.log(power),0))
 	stacklist = []
@@ -175,24 +176,24 @@ if __name__=='__main__':
 	params=parseParams(sys.argv[1:],params)
 	#check for conflicts
 	checkParams(params)
-	apParam.writeFunctionLog()
+	apParam.writeFunctionLog(sys.argv)
 	
 	#find stack
 	stackparticles = apStack.getStackParticlesFromId(params['stackid'])
 
 	if params['logsplit']:
-		stacklist = oldLogSplit(params['logstart'], len(stackparticles), params['logdivisions'])
-		#stacklist = betterLogSplit(params['logstart'], len(stackparticles))
+		#stacklist = oldLogSplit(params['logstart'], len(stackparticles), params['logdivisions'])
+		stacklist = evenLogSplit(params['logstart'], len(stackparticles))
 	elif params['nptcls']:
 		stacklist = [params['nptcls']]
 	else:
 		apDisplay.printError("Please specify nptlcs or logsplit")
 
 	oldstackdata = apStack.getOnlyStackData(params['stackid'])
-	oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
+	oldstack = os.path.join(oldstackdata['path']['path'], oldstackdata['name'])
 	#create run directory
 	if params['outdir'] is None:
-		path = stackdata['path']['path']
+		path = oldstackdata['path']['path']
 		path = os.path.split(os.path.abspath(path))[0]
 		params['outdir'] = path
 	apDisplay.printMsg("Out directory: "+params['outdir'])
@@ -219,11 +220,11 @@ if __name__=='__main__':
 
 		#make new stack
 		newstack = os.path.join(workingdir ,params['stackname'])
-		apStack.makeNewStack(oldstack, newstack, lstfile):
+		apStack.makeNewStack(oldstack, newstack, lstfile)
 		#apStack.makeNewStack(lstfile, params['stackname'])
 		
 		#commit new stack
-		params['keeplist'] = os.path.abspath(lstfile)
+		params['keepfile'] = os.path.abspath(lstfile)
 		params['rundir'] = os.path.abspath(workingdir)
 		apStack.commitSubStack(params)
 		#commitSplitStack(params, lstfile)
