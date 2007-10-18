@@ -56,7 +56,7 @@ def diffOfGaussParam(imgarray, params):
 	k = params['kfactor']
 	numslices = params['numslices']
 	sizerange = params['sizerange']
-	if numslices < 2:
+	if numslice is None and numslices < 2:
 		dogarray = diffOfGauss(imgarray, apix, bin, diam, k=k)
 		dogarray = apImage.normStdev(dogarray)/4.0
 		return [dogarray]
@@ -97,7 +97,7 @@ def diffOfGaussLevels(imgarray, apix, bin, diam, numslices, sizerange):
 		pixradlist.append(pixrad)
 
 	dogarrays = []
-	for pixrad in pixradlist
+	for pixrad in pixradlist:
 		dogarray = apImage.normStdev(dogarray)/4.0
 		dogarrays.append(dogarray)
 
