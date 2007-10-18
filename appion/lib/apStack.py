@@ -8,15 +8,17 @@ import appionData
 
 appiondb=apDB.apdb
 
-def makeNewStack(lstfile,newstackname):
-	#first remove old imagic stack
-	if os.path.exists(newstackname):
-		apDisplay.printWarning("removing old stack: "+newstackname)
-		time.sleep(2)
-		prefix=newstackname.split('.')[0]
-		os.remove(prefix+'.hed')
-		os.remove(prefix+'.img')
-	command=('proc2d %s %s' % (lstfile, newstackname))
+def makeNewStack(oldstack, newstack, listfile):
+	if not os.path.isfile(oldstack):
+		apDisplay.printWarning("could not find old stack: "+oldstack)
+	if os.path.isfile(newstack):
+		apDisplay.printError("new stack already exists: "+newstack)
+		#apDisplay.printWarning("removing old stack: "+newstack)
+		#time.sleep(2)
+		#prefix=newstack.split('.')[0]
+		#os.remove(prefix+'.hed')
+		#os.remove(prefix+'.img')
+	command=("proc2d "+oldstack+" "+newstack+" list="+listfile)
 	os.system(command)
 	return
 
@@ -37,9 +39,14 @@ def getOneParticleFromStackId(stackid):
 	return stackparticledata[0]
 
 def getOnlyStackData(stackid):
-	print "Getting stack data for stack", stackid
+	apDisplay.printMsg("Getting stack data for stackid="+str(stackid))
 	stackdata=appiondb.direct_query(appionData.ApStackData,stackid)
-	return(stackdata)
+	stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
+	if not os.path.isfile(stackpath):
+		apDisplay.printError("Could not find stack file: "+stackpath)
+	sys.stderr.write("Old stack info: ")
+	apDisplay.printColor("'"+stackdata['description']+"'","cyan")
+	return stackdata
 
 def getStackParticle(stackid, particlenumber):
 	stackdata=appiondb.direct_query(appionData.ApStackData, stackid)
