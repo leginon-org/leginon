@@ -106,7 +106,6 @@ def evenLogSplit(start, end, power=1.7):
 	apDisplay.printColor("Making stacks of the following sizes: "+str(stacklist), "cyan")
 	return(stacklist)
 
-
 if __name__=='__main__':
 	params=createDefaults()
 	if len(sys.argv) < 2:
