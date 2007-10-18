@@ -1,5 +1,7 @@
 
 import apDisplay
+import os
+import sys
 import EMAN
 
 def executeEmanCmd(emancmd, verbose=False):
