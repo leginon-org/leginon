@@ -6,8 +6,14 @@ import sys
 from optparse import OptionParser
 #appion
 import apStack
+import shutil
 import apDisplay
 import apParam
+import apUpload
+import apDB
+import appionData
+
+appiondb=apDB.apdb
 
 
 def parseCommandLine():
@@ -24,6 +30,8 @@ def parseCommandLine():
 		action="store_false", help="Do not commit stack to database")
 	parser.add_option("-o", "--outdir", dest="outdir",
 		help="Output directory", metavar="PATH")
+	parser.add_option("-d", "--description", dest="description", default="",
+		help="Stack description", metavar="TEXT")
 	parser.add_option("-n", "--new-stack-name", dest="runname",
 		help="Run id name", metavar="STR")
 
@@ -34,13 +42,16 @@ def parseCommandLine():
 def checkConflicts(params):
 	if params['stackid'] is None:
 		apDisplay.printError("stackid was not defined")
+	if params['description'] is None:
+		apDisplay.printError("stack description was not defined")
+	if params['runname'] is None:
+		apDisplay.printError("new stack name was not defined")
 	if params['keepfile'] is None:
 		apDisplay.printError("keep file was not defined")
-	if params['keepfile'] is None:
-		apDisplay.printError("run id name was not defined")
 	params['keepfile'] = os.path.abspath(params['keepfile'])
 	if not os.path.isfile(params['keepfile']):
 		apDisplay.printError("Could not find keep file: "+params['keepfile'])
+
 
 #-----------------------------------------------------------------------
 
@@ -51,25 +62,33 @@ if __name__ == '__main__':
 
 	#get stack data
 	stackdata = apStack.getOnlyStackData(params['stackid'])
-	stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
+	oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
+
+	#create run directory
+	if params['outdir'] is None:
+		path = stackdata['path']['path']
+		path = os.path.split(os.path.abspath(path))[0]
+		params['outdir'] = path
+	params['rundir'] = os.path.join(params['outdir'], params['runname'])
+	apParam.createDirectory(params['rundir'])
+	apDisplay.printMsg("Run directory: "+params['rundir'])
+	os.chdir(params['rundir'])
+
+	#new stack path
+	newstack = os.path.join(params['rundir'], stackdata['name'])
 
 	#get number of particles
-	f.open(params['keepfile'], "r")
+	f = open(params['keepfile'], "r")
 	numparticles = len(f.readlines())
 	f.close()
-	params['description'] = (
-		origdescription+
+	params['description'] += (
 		(" ... substack of %d particles from original stackid=%d" 
 		% (numparticles, params['stackid']))
 	)
+	
+	#create the new sub stack
+	apStack.makeNewStack(oldstack, newstack, params['keepfile'])
 
-	#do something
-	print stackpath
-	for i in stackdata:
-		print i
-		break
-
-	apStack.makeNewStack()
-
+	apStack.commitSubStack(params)
 
 
