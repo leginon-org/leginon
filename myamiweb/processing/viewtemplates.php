@@ -47,12 +47,6 @@ if ($templateData) {
 	foreach($templateData as $templateinfo) { 
 		if (is_array($templateinfo)) {
 			$filename = $templateinfo['path'] ."/".$templateinfo['templatename'];
-			$checkboxname='template'.$i;
-			$templaterundata = $particle->getRecentTemplateRunFromId($templateinfo[DEF_id]);
-			//print_r($templaterundata);
-			$startval = (int) $templaterundata[range_start];
-			$endval = (int) $templaterundata[range_end];
-			$incrval = (int) $templaterundata[range_incr];
 			// create the image template table
 			$templatetable.="<TR><TD>\n";
 			$templatetable.="<IMG SRC='loadimg.php?filename=$filename&rescale=True' WIDTH='200'></TD>\n";
