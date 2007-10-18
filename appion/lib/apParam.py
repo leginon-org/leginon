@@ -184,3 +184,5 @@ def removefiles(path,patterns):
 			os.remove(fullpath)
 		except:
 			apDisplay.printError('%s can not be removed' % fullpath)
+
+

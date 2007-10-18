@@ -558,7 +558,7 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 	apDisplay.printMsg("Class "+str(projnum+1)+" of "+str(numcls)+": inserting "
 		+str(len(f.readlines())-2)+" particles")
 	f.close()
-			
+
 	# for each cls file get alignments for particles
 	f=open(clsfilename)
 	for line in f:
