@@ -175,3 +175,25 @@ def removefiles(path,patterns):
 			apDisplay.printError('%s can not be removed' % fullpath)
 
 
+def convertParserToParams(parser):
+	parser.disable_interspersed_args()
+	(options, args) = parser.parse_args()
+	if len(args) > 0:
+		apDisplay.printError("Unknown commandline options: "+str(args))
+	if len(sys.argv) < 2:
+		parser.print_help()
+		parser.error("no options defined")
+
+	params = {}
+	for i in parser.option_list:
+		if isinstance(i.dest, str):
+			params[i.dest] = getattr(options, i.dest)
+	return params
+
+
+
+
+
+
+
+
