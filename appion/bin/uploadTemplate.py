@@ -18,6 +18,7 @@ def parseCommandLine():
 	usage = ( "Usage: %prog --template=<name> --apix=<pixel> --session=<session> --diam=<int> "
 		+"--description='<text>' [options]")
 	parser = OptionParser(usage=usage)
+
 	parser.add_option("--apix", dest="apix", type="float",
 		help="Template pixel size in Angstroms per pixel", metavar="FLOAT")
 	parser.add_option("-d", "--diam", dest="diam", type="int",
@@ -40,18 +41,8 @@ def parseCommandLine():
 		help="ID for particle stack (optional)", metavar="INT")
 	parser.add_option("--stackimgnum", dest="stackimgnum", type="int",
 		help="Particle number in stack", metavar="INT")
-	parser.disable_interspersed_args()
-	(options, args) = parser.parse_args()
-	if len(args) > 0:
-		apDisplay.printError("Unknown commandline options: "+str(args))
-	if len(sys.argv) < 2:
-		parser.print_help()
-		parser.error("no options defined")
 
-	params = {}
-	for i in parser.option_list:
-		if isinstance(i.dest, str):
-			params[i.dest] = getattr(options, i.dest)
+	params = apParam.convertParserToParams(parser)
 	return params
 
 def checkConflicts(params):
@@ -71,10 +62,6 @@ def checkConflicts(params):
 
 if __name__ == '__main__':
 	# create params dictionary & set defaults
-	#params = apUpload.createDefaults()
-
-	# parse command line input
-	#apUpload.parseTmpltUploadInput(sys.argv, params)
 	params = parseCommandLine()
 	apParam.writeFunctionLog(sys.argv)
 
