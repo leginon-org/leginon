@@ -56,7 +56,7 @@ def diffOfGaussParam(imgarray, params):
 	k = params['kfactor']
 	numslices = params['numslices']
 	sizerange = params['sizerange']
-	if numslice is None and numslices < 2:
+	if numslices is None and numslices < 2:
 		dogarray = diffOfGauss(imgarray, apix, bin, diam, k=k)
 		dogarray = apImage.normStdev(dogarray)/4.0
 		return [dogarray]
