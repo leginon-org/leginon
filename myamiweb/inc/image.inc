@@ -1,19 +1,18 @@
 <?php
 /**
- *	@version $Revision: 1.35 $
- *	@version $Id: image.inc,v 1.35 2007-10-03 17:52:09 dfellman Exp $
+ *	@version $Revision: 1.36 $
+ *	@version $Id: image.inc,v 1.36 2007-10-18 21:11:16 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
  *	
  */
 
-require_once("config.php");
-require_once("inc/util.inc");
-require_once('inc/filter.inc');
-require_once('inc/graphutil.inc');
-require_once('inc/scalebar.inc');
-require_once('inc/ptcl.inc');
+require_once "config.php";
+require_once "inc/util.inc";
+require_once "inc/filter.inc";
+require_once "inc/graphutil.inc";
+require_once "inc/scalebar.inc";
 
 
 
@@ -329,7 +328,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		
 		}
 		if ($p['newptcl']) {
-				require ('inc/particledata.inc');
+				require "inc/particledata.inc";
 				$particle = new particledata();
 				$particlerun=$particle->getLastParticleRun($sessionId);
 				$particledata=$particle->getParticlesFromImageId($particlerun, $imageId);

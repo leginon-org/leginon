@@ -241,10 +241,12 @@ class particledata {
 	}
 
 	function getLastParticleRun ($sessionId) {
-		$q = "select max(DEF_id) as runId "
-			."from `ApSelectionRunData` where `REF|leginondata|SessionData|session` = '$sessionId'";
+		$q = "select DEF_id as runId "
+			."from `ApSelectionRunData` "
+			."where `REF|leginondata|SessionData|session` = '$sessionId' "
+			."order by DEF_id desc limit 1";
 		list($r) = $this->mysql->getSQLResult($q);
-		return $r[runId];
+		return $r['runId'];
 	}
 
 	function getParticleRunData ($partRunId) {
