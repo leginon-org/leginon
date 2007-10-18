@@ -165,8 +165,6 @@ function createTemplateForm() {
 */
 
 function createTCForm($extra=false, $title='Template Correlator Launcher' , $heading='Automated Particle Selection with Template Correlator' ) {
-
-
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
 	if ($expId) {
