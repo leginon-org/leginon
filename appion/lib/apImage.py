@@ -135,12 +135,12 @@ def pixelLimitFilter(imgarray, pixlimit=0):
 	std1 = ndimage.standard_deviation(imgarray)
 	upperbound = mean1 + pixlimit * std1
 	lowerbound = mean1 - pixlimit * std1
-	print mean1,std1
+#	print mean1,std1
 	imgarray2 = numpy.asarray(imgarray)
-	print imgarray2
+#	print imgarray2
 	imgarray2 = numpy.where(imgarray2 > upperbound, upperbound, imgarray2)
 	imgarray2 = numpy.where(imgarray2 < lowerbound, lowerbound, imgarray2)
-	print imgarray2
+#	print imgarray2
 	return imgarray2
 
 def lowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0):

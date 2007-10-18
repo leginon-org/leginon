@@ -11,10 +11,10 @@ import apImage
 #########################################################
 
 class findemjob(threading.Thread):
-   def __init__ (self, feed):
-      threading.Thread.__init__(self)
-      self.feed = feed
-   def run(self):
+	def __init__ (self, feed):
+		threading.Thread.__init__(self)
+		self.feed = feed
+   	def run(self):
 		fin=''
 		fin=os.popen( getFindEMPath(), 'w')
 		fin.write(self.feed)
