@@ -176,21 +176,33 @@ def insertTemplateRun(params,runq,templatenum):
 
 def insertTemplateImage(params):
 	for name in params['templatelist']:
+		if os.path.basename(name) != name:
+			apDisplay.printError("please contact an appion developer, because the database insert is wrong")
+
+		#check if template exists
 		templateq=appionData.ApTemplateImageData()
 		templateq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 		templateq['templatename']=name
 		templateId = appiondb.query(templateq, results=1)
-
 		if templateId:
 			apDisplay.printWarning("template already in database.\nNot reinserting")
+			continue
+
+		#check if duplicate template exists
+		temppath = os.path.join(params['outdir'], name)
+		md5sum = apFile.md5sumfile(temppath)
+		templateq2=appionData.ApTemplateImageData()
+		templateq2['md5sum']=md5sum
+		templateId = appiondb.query(templateq2, results=1)
+		if templateId:
+			apDisplay.printWarning("template with the same check sum already exists in database.\nNot reinserting")
 			continue
 
 		#insert template to database if doesn't exist
 		print "Inserting",name,"into the template database"
 		templateq['apix']=params['apix']
 		templateq['diam']=params['diam']
-		temppath = os.path.join(params['outdir'],name)
-		templateq['md5sum']=apFile.md5sumfile(temppath)
+		templateq['md5sum']=md5sum 
 		if params['norefid'] is not None:
 			templateq['noref']=params['norefid']
 		if params['stackid'] is not None:
