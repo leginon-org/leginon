@@ -6,7 +6,7 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  */
-require ("processing/inc/ctf.inc");
+require ("inc/ctf.inc");
 require_once ("inc/leginon.inc");
 
 $sessionId= $_GET[Id];

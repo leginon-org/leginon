@@ -313,7 +313,7 @@ $sessionId=$expId;
 $ctf = new ctfdata();
 if ($ctf->hasCtfData($sessionId)) {
 
-	echo "<a href='ctfreport.php?Id=$sessionId'>report &raquo;</a>\n";
+	echo "<a href='processing/ctfreport.php?Id=$sessionId'>report &raquo;</a>\n";
 	?>
 	<form method="POST" action="<?php echo $_SERVER['REQUEST_URI']; ?>">
 		minimum allowed confidence:<input class="field" name="mconf" type="text" size="5" value="<?php echo $minconf; ?>">
@@ -336,8 +336,8 @@ if ($ctf->hasCtfData($sessionId)) {
 				$bestctf[$field][$k]['img'] = $cdf;
 			}
 		}
-		echo '<a href="showctfdata.php?Id='.$sessionId.''.$urlmconf.'&vd=1">[data]</a>';
-		echo '<a href="showctfdata.php?Id='.$sessionId.''.$urlmconf.'&vs=1">[sql]</a>';
+		echo '<a href="processing/showctfdata.php?Id='.$sessionId.''.$urlmconf.'&vd=1">[data]</a>';
+		echo '<a href="processing/showctfdata.php?Id='.$sessionId.''.$urlmconf.'&vs=1">[sql]</a>';
 		$display_keys = array ( 'name', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
 		echo display_stats($bestctf, $display_keys);
 	}
