@@ -347,13 +347,8 @@ def insertRefinementRun(params):
 	runq=appionData.ApRefinementRunData()
 	runq['name']=params['runid']
 	runq['stack']=params['stack']
-	#ONLY NAME AND STACK MUST BE UNIQUE???
-
-	result=appiondb.query(runq, results=1)
-
-	if result:
-		apDisplay.printError("\nERROR: run already exists in the database\n")
-		sys.exit(1)
+	runq['initialModel']=params['model']
+	runq['package']=params['package']
     
 	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['path']))
 	runq['description']=params['description']
@@ -363,17 +358,15 @@ def insertRefinementRun(params):
 	# get stack apix
 	params['apix']=apDatabase.getApixFromStackData(params['stack'])
 
+	#Recon upload can be continued
+	result=appiondb.query(runq, results=1)
+	if result:
+		apDisplay.printWarning("Run already exists in the database.\n Identical data will not be reinserted\n")
+
 	apDisplay.printMsg("inserting Refinement Run into database")
 	if params['commit'] is True:
 		appiondb.insert(runq)
 
-	runq=appionData.ApRefinementRunData()
-	runq['name']=params['runid']
-	runq['stack']=params['stack']
-	runq['initialModel']=params['model']
-	runq['package']=params['package']
-	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['path']))
-	runq['description']=params['description']
 	result=appiondb.query(runq, results=1)
 		
 	# save run entry in the parameters
