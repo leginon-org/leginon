@@ -15,11 +15,12 @@ if __name__ == "__main__":
 	apAlignment.getStackInfo(params)
 	apAlignment.createOutDir(params)
 	
-	if params['commit']is True:
+	if params['commit'] is True:
+		#check to see if run exist already
 		apAlignment.insertRefRun(params, insert=True)
-
-        apAlignment.createSpiderFile(params)
+	apAlignment.createSpiderFile(params)
 	apAlignment.createSpiderRefFile(params)
+
 	for i in range(params['iter']):
 		itn=i+1
 		itername='refine%d' % itn
@@ -29,6 +30,6 @@ if __name__ == "__main__":
 		apAlignment.createRefSpiderBatchFile(params,itn)
 		apAlignment.runSpiderRefAli(params)
 		apAlignment.makeRefMrc(params)
-		if params['commit']is True:
-			apAlignment.insertIterRun(params,itn,itername, insert=True)
+		if params['commit'] is True:
+			apAlignment.insertIterRun(params, itn, itername, insert=True)
 
