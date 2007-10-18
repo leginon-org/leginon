@@ -89,6 +89,7 @@ def diffOfGauss(imgarray, apix, bin, diam, k=1.2):
 	return imgarray2-imgarray1
 
 def diffOfGaussLevels(imgarray, apix, bin, diam, numslices, sizerange):
+	apDisplay.printError("This is unfinished, remove the numslices and sizerange options")
 	pixradlist = []
 	for i in range(numslices):
 		diamstep = sizerange/float(numslices)
