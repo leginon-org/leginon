@@ -83,9 +83,11 @@ if __name__ == '__main__':
 		apDisplay.printMsg("Using stack to make template")
 		#get stack data (path, file)
 		stackdata = apStack.getOnlyStackData(params['stackid'])
+		stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
+		if not os.path.isfile(stackpath):
+			apDisplay.printError("Could not find stack file: "+stackpath)
 		sys.stderr.write("Old stack info: ")
 		apDisplay.printColor("'"+stackdata['description']+"'","cyan")
-		stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
 		#run proc2d with params['stackimgnum']
 		#Add file names to params['templatelist']
 	elif params['norefid'] is not None:
