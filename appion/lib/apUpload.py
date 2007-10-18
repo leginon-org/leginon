@@ -1,10 +1,12 @@
 import project
 import sys
 import os
+import re
 import apDisplay
 import appionData
 import apDB
 import string
+import apFile
 try:
 	import pyami.mrc as mrc
 except:
@@ -165,6 +167,7 @@ def createDefaults():
 def checkSymInfo(params):
 	symid = appiondb.direct_query(appionData.ApSymmetryData, params['sym'])
 	if not symid:
+		printSymmetries()
 		apDisplay.printError("no symmetry associated with this id\n")
 	apDisplay.printMsg("Selected symmetry group: "+str(symid['symmetry']))
 	params['syminfo'] = symid
@@ -178,6 +181,27 @@ def getProjectId(params):
 	if not params['projectId']:
 		apDisplay.printError("no project associated with this session\n")
 	return
+
+def compSymm(a, b):
+	if a.dbid > b.dbid:
+		return 1
+	else:
+		return -1
+
+def printSymmetries():
+	symq = appionData.ApSymmetryData()
+	syms = appiondb.query(symq)
+	sys.stderr.write("ID   NAME         DESCRIPTION\n")
+	sys.stderr.write("--   ----         -----------\n")
+	syms.sort(compSymm)
+	for s in syms:
+		name = s['symmetry']
+		name = re.sub('Icosahedral', 'Icos', name)
+		sys.stderr.write( 
+			apDisplay.colorString(apDisplay.rightPadString(s.dbid,3),"green")+" "
+			+apDisplay.rightPadString(name,13)+" "
+			+apDisplay.rightPadString(s['description'],60)+"\n"
+		)
 
 def insertModel(params):
 	print "inserting into database"
@@ -194,8 +218,11 @@ def insertModel(params):
 	modq['boxsize']=params['box']
 	modq['resolution']=params['res']
 	modq['hidden']=False
+	filepath = os.path.join(params['outdir'], params['name'])
+	modq['md5sum']=apFile.md5sumfile(filepath)
 	modq['description']=params['description']
-	appiondb.insert(modq)
+	if params['commit'] is True:
+		appiondb.insert(modq)
 
 def checkReconId(params):
 	reconinfo=appiondb.direct_query(appionData.ApRefinementRunData, params['reconid'])
