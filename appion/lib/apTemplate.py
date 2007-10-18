@@ -204,9 +204,9 @@ def insertTemplateImage(params):
 		templateq['diam']=params['diam']
 		templateq['md5sum']=md5sum 
 		if params['norefid'] is not None:
-			templateq['noref']=params['norefid']
+			templateq['noref'] = appiondb.direct_query(appionData.ApNoRefClassData, params['norefid'])
 		if params['stackid'] is not None:
-			templateq['stack']=params['stackid']
+			templateq['stack'] = appiondb.direct_query(appionData.ApStackData, params['stackid'])
 		if params['stackimgnum'] is not None:
 			templateq['stack_image_num']=params['stackimgnum']
 		templateq['description']=params['description']

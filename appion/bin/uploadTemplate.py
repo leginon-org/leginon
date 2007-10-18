@@ -54,15 +54,7 @@ def parseCommandLine():
 			params[i.dest] = getattr(options, i.dest)
 	return params
 
-if __name__ == '__main__':
-	# create params dictionary & set defaults
-	#params = apUpload.createDefaults()
-
-	# parse command line input
-	#apUpload.parseTmpltUploadInput(sys.argv, params)
-	params = parseCommandLine()
-	apParam.writeFunctionLog(sys.argv)
-
+def checkConflict(params):
 	# make sure the necessary parameters are set
 	if params['apix'] is None:
 		apDisplay.printError("enter a pixel size")
@@ -74,6 +66,19 @@ if __name__ == '__main__':
 		apDisplay.printError("enter a session ID")
 	if params['description'] is None:
 		apDisplay.printError("enter a template description")
+	if params['stackid'] is not None and params['norefid'] is not None:
+		apDisplay.printError("only one of either stackid or norefid can be used, NOT both")
+
+if __name__ == '__main__':
+	# create params dictionary & set defaults
+	#params = apUpload.createDefaults()
+
+	# parse command line input
+	#apUpload.parseTmpltUploadInput(sys.argv, params)
+	params = parseCommandLine()
+	apParam.writeFunctionLog(sys.argv)
+
+	checkConflicts(params)
 
 	if params['outdir'] is None:
 		#auto set the output directory
@@ -87,11 +92,23 @@ if __name__ == '__main__':
 	apDisplay.printMsg("Out directory: "+params['outdir'])
 	apParam.createDirectory(params['outdir'])			
 
-	# find the number of template files
-	apTemplate.findTemplates(params)
-
-	# copy templates to final location
-	apTemplate.copyTemplatesToOutdir(params)
+	if params['stackid'] is not None:
+		apDisplay.printMsg("Using stack to make template")
+		#get stack data (path, file)
+		stackdata = apStack.getOnlyStackData(params['stackid'])
+		#run proc2d with params['stackimgnum']
+		#Add file names to params['templatelist']
+	elif params['norefid'] is not None:
+		apDisplay.printMsg("Using reference-free class to make template")
+		#get noref class data (path, file)
+		#run proc2d with params['stackimgnum']
+		#Add file names to params['templatelist']
+	else:
+		apDisplay.printMsg("Using file to upload template")
+		#find the number of template files
+		apTemplate.findTemplates(params)
+		# copy templates to final location
+		apTemplate.copyTemplatesToOutdir(params)
 
 	apUpload.getProjectId(params)
 
