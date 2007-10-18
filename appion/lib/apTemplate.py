@@ -134,15 +134,22 @@ def copyTemplatesToOutdir(params):
 		#append the name of the directory to the filename
 		basedir = os.path.split(os.path.dirname(old))[1]
 		base = basedir+"_"+base
-		newlist.append(base)
-
 		new = os.path.join(params['outdir'], base)
 		if os.path.isfile(new):
-			apDisplay.printError("template \'"+new+"\' already exists!\n")
-		apDisplay.printMsg("copying file "+old+" to "+new)
-		shutil.copy(old, new)
-		#and only allow user read access just so they don't get deleted
-		os.chmod(new, 0666)
+			mdnew = apFile.md5sumfile(new)
+			mdold = apFile.md5sumfile(old)
+			if mdnew != mdold:
+				apDisplay.printError("a different template with name \'"+new+"\' already exists!")
+			else:
+				apDisplay.printWarning("the same template with name \'"+new+"\' already exists!")
+				apDisplay.printMsg("skipping template \'"+old+"\'")
+		else:
+			#template is okay to copy and insert
+			apDisplay.printMsg("copying file "+old+" to "+new)
+			shutil.copy(old, new)
+			newlist.append(base)
+			#and only allow user read access just so they don't get deleted
+			os.chmod(new, 0666)
 	params['templatelist'] = newlist
 	apDisplay.printColor("New template List:","green")
 	pprint.pprint(params['templatelist'])
