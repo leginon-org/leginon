@@ -388,10 +388,17 @@ class ApRefRunData(Data):
 			('name', str),
 			('stack', ApStackData),
 			('refParams', ApRefParamsData),
-			('refTemplate', ApTemplateImageData),
-			#('refPath', str),
 			('path', ApPathData),
 			('description', str),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApRefRunData=ApRefRunData
+
+class ApRefTemplateRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('refRun', ApRefRunData),
+			('refTemplate', ApTemplateImageData),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApRefRunData=ApRefRunData
@@ -472,6 +479,7 @@ class ApInitialModelData(Data):
 			('boxsize', int),
 			('description', str),
 			('hidden', bool),
+			('md5sum', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApInitialModelData=ApInitialModelData
