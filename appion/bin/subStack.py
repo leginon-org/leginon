@@ -76,6 +76,7 @@ if __name__ == '__main__':
 
 	#new stack path
 	newstack = os.path.join(params['rundir'], stackdata['name'])
+	apStack.checkForPreviousStack(newstack)
 
 	#get number of particles
 	f = open(params['keepfile'], "r")

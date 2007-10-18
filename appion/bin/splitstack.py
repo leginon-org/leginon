@@ -6,12 +6,9 @@ import random
 import math
 import appionData
 import shutil
-import apDB
 import apStack
 import apParam
 import apDisplay
-
-apdb=apDB.apdb
 
 def createDefaults():
 	params={}
@@ -60,7 +57,6 @@ def checkParams(params):
 		if params['logdivisions'] < 3:
 			print "Error: divisions for logsplit must be greater than two"
 			sys.exit()
-	
 
 def printHelp():
 	print "Usage:"
@@ -86,63 +82,6 @@ def makeRandomLst(nptcls,stackdata,params):
 		f.write('%d\t%s\n' % (particle, origpath))
 	f.close()
 	return(lstfile)
-	
-def checkForPreviousStack(stackpath, stackname):
-	stackq=appionData.ApStackData()
-	stackq['path'] = appionData.ApPathData(path=os.path.abspath(stackpath))
-	stackq['name'] = stackname
-	stackdata=apdb.query(stackq)
-	if stackdata:
-		apDisplay.printError("A stack with name "+stackname+" and path "+stackpath+" already exists.")
-	return
-	
-def commitSplitStack(params, lstfile):
-	f=open(lstfile,'r')
-	f.readline()
-	lines=f.readlines()
-	f.close()
-	
-	#create new stack data
-	stackq = appionData.ApStackData()
-	stackq['path'] = appionData.ApPathData(path=os.path.abspath(os.getcwd()))
-	stackq['name']=params['stackname']
-	stackq['description']=params['description']
-	stackdata=apdb.query(stackq, results=1)
-	
-	if stackdata:
-		apDisplay.printWarning("A stack with these parameters already exists")
-		return
-	else:
-		apdb.insert(stackq)
-		runs_in_stack=apStack.getRunsInStack(params['stackid'])
-		for run in runs_in_stack:
-			newrunsq=appionData.ApRunsInStackData()
-			newrunsq['stack']=stackq
-			newrunsq['stackRun']=run['stackRun']
-			apdb.insert(newrunsq)
-			
-	newparticlenumber=1
-	for n in lines:
-		words=n.split()
-		newparticle=int(words[0])
-		
-		#### Adding 1 to new particle because EMAN stacks start at 0 but appion starts at 1 ###
-		newparticle+=1
-		
-		# Find corresponding particle in old stack
-		origstackparticledata=apStack.getStackParticle(params['stackid'],newparticle)
-
-		#print stackparticledata
-		# Insert particles
-		
-		newstackq=appionData.ApStackParticlesData()
-		newstackq['particleNumber']=newparticlenumber
-		newstackq['stack']=stackq
-		newstackq['stackRun']=origstackparticledata['stackRun']
-		newstackq['particle']=origstackparticledata['particle']
-		#print newstackq
-		apdb.insert(newstackq)
-		newparticlenumber+=1
 
 def oldLogSplit(start,end,divisions):
 	end=math.log(end)
@@ -208,18 +147,19 @@ if __name__=='__main__':
 		workingdir = os.path.join(params['outdir'], str(stack))
 
 		#check for previously commited stacks
-		checkForPreviousStack(workingdir, params['stackname'])
+		newstack = os.path.join(workingdir ,params['stackname'])
+		apStack.checkForPreviousStack(newstack)
 		
 		#create outdir and change to that directory
 		apDisplay.printMsg("Run directory: "+workingdir)
 		apParam.createDirectory(workingdir)
+		os.chdir(workingdir)
 
 		#create random list 
 		lstfile = makeRandomLst(stack, stackparticles, params)
-		shutil.copy(lstfile, workingdir)
+		#shutil.copy(lstfile, workingdir)
 
 		#make new stack
-		newstack = os.path.join(workingdir ,params['stackname'])
 		apStack.makeNewStack(oldstack, newstack, lstfile)
 		#apStack.makeNewStack(lstfile, params['stackname'])
 		
@@ -227,7 +167,6 @@ if __name__=='__main__':
 		params['keepfile'] = os.path.abspath(lstfile)
 		params['rundir'] = os.path.abspath(workingdir)
 		apStack.commitSubStack(params)
-		#commitSplitStack(params, lstfile)
 	
 	apParam.closeFunctionLog()
 

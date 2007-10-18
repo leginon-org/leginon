@@ -73,6 +73,20 @@ def getRunsInStack(stackid):
 	return runsinstackdata
 
 #--------
+def checkForPreviousStack(stackname, stackpath=None):
+	if stackpath is None:
+		spath = os.path.dirname(stackname)
+	else:
+		spath = os.path.abspath(stackpath)
+	stackq = appionData.ApStackData()
+	stackq['path'] = appionData.ApPathData(path=spath)
+	stackq['name'] = os.path.basename(stackname)
+	stackdata = appiondb.query(stackq, results=1)
+	if stackdata:
+		apDisplay.printError("A stack with name "+stackname+" and path "+stackpath+" already exists!")
+	return
+
+#--------
 def getListFileParticle(line, linenum):
 	sline = line.strip()
 	if sline == "":
