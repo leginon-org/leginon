@@ -87,8 +87,8 @@ class ApDogParamsData(Data):
 			('pixel_value_limit', float),
 			('maxsize', int),
 			('kfactor', float),
-			('sizerange', float),
-			('numslices', int),
+			('size_range', float),
+			('num_slices', int),
 			('defocal_pairs', bool),
 			('overlapmult', float),
 		)
