@@ -5,6 +5,7 @@ import apDatabase
 import apDisplay
 import apDB
 import appionData
+import math
 from scipy import ndimage
 
 appiondb = apDB.apdb
