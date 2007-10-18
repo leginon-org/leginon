@@ -188,7 +188,7 @@ if __name__=='__main__':
 	checkParams(params)
 	
 	#find stack
-	stackdata=apStack.getStackFromId(params['stackid'])
+	stackdata=apStack.getStackParticlesFromId(params['stackid'])
 
 	if params['logsplit']:
 		stacklist=logSplit(params['logstart'],len(stackdata),params['logdivisions'])

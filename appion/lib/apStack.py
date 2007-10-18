@@ -7,7 +7,7 @@ import appionData
 
 apdb=apDB.apdb
 
-def getStackFromId(stackid):
+def getStackParticlesFromId(stackid):
 	print "Getting particles for stack", stackid
 	stackdata=apdb.direct_query(appionData.ApStackData, stackid)
 	stackq=appionData.ApStackParticlesData()

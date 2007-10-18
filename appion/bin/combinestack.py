@@ -63,7 +63,7 @@ def appendToStack(stackdata,params):
 	return
 
 def commitStack(stackid,params):
-	stackparticlesdata=apStack.getStackFromId(stackid)
+	stackparticlesdata=apStack.getStackParticlesFromId(stackid)
 	
 	newstackq=appionData.ApStackData()
 	newstackq['name']=params['stackname']

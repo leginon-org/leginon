@@ -102,7 +102,7 @@ directory. The new stack will be commited to the database
 		sys.exit()
 		
 	#get stackdata
-	stackdata=apStack.getStackFromId(params['stackid'])
+	stackdata=apStack.getStackParticlesFromId(params['stackid'])
 	
 	#do operations on stack
 	print "Scaling stack"
