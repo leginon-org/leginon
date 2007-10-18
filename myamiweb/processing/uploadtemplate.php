@@ -80,7 +80,14 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	$template = ($_POST['template']) ? $_POST['template'] : '';
 	$file_hed = ($_POST['hed']) ? $_POST['hed'] : '';
 	$description = $_POST['description'];
+	if (!$templateId) $templateId = $_POST['templateId'];
+	if (!$stackId) $stackId = $_POST['stackId'];
+	if (!$norefId) $norefId = $_POST['norefId'];
 	
+	echo"<INPUT TYPE='hidden' NAME='templateId' VALUE='$templateId'>\n";
+	echo"<INPUT TYPE='hidden' NAME='stackId' VALUE='$stackId'>\n";
+	echo"<INPUT TYPE='hidden' NAME='norefId' VALUE='$norefId'>\n";
+
 	// Set template path
 	if  ($file) {
 		if ( preg_match("/\.img/", $file) ) {
@@ -204,6 +211,10 @@ function runUploadTemplate() {
 	$apix=$_POST['apix'];
 	if (!$apix) createUploadTemplateForm("<B>ERROR:</B> Enter the pixel size");
 
+	$templateId=$_POST['templateId'];
+	$stackId=$_POST['stackId'];
+	$norefId=$_POST['norefId'];
+
 	$hed=$_POST['hed'];
 	if (!$hed) {
 		if (!file_exists($template)) {
@@ -223,7 +234,10 @@ function runUploadTemplate() {
 	$command.="--session=$session ";
 	$command.="--apix=$apix ";
 	$command.="--diam=$diam ";
-	$command.="--description=\"$description\"";
+	$command.="--description=\"$description\" ";
+	if ($templateId) $command.="--stackimgnum=$templateId ";
+	if ($stackId) $command.="--stackid=$stackId ";
+	if ($norefId) $command.="--norefid=$norefId ";
 
 	writeTop("UploadTemplate Run", "UploadTemplate Params");
 
@@ -242,7 +256,11 @@ function runUploadTemplate() {
 	<TR><TD>apix</TD><TD>$apix</TD></TR>
 	<TR><TD>diam</TD><TD>$diam</TD></TR>
 	<TR><TD>session</TD><TD>$session</TD></TR>
-	<TR><TD>description</TD><TD>$description</TD></TR>
+	<TR><TD>description</TD><TD>$description</TD></TR>";
+	if ($templateId) echo"<TR><TD>stack image number</TD><TD>$templateId</TD></TR>";
+	if ($stackId) echo"<TR><TD>stack id</TD><TD>$stackId</TD></TR>";
+	if ($norefId) echo"<TR><TD>noref id</TD><TD>$norefId</TD></TR>";
+	echo"
 	</TABLE>\n";
 	writeBottom();
 }
