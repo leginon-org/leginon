@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.32 $
+# $Revision: 1.33 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-10-17 19:01:49 $
-# $Author: pulokas $
+# $Date: 2007-10-18 01:16:52 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -142,7 +142,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 	def onAcquisitionDone(self, evt):
 		self._acquisitionEnable(True)
-		if self.widgets['asdf']:
+		if self.settingsdialog.widgets['force annotate'].GetValue():
 			self.onCommentTool(None)
 
 	def onSettingsTool(self, evt):
@@ -362,6 +362,10 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.AddGrowableCol(1)
 		self.widgets['dark'] = wx.CheckBox(self, -1, 'Dark Exposure')
 		sz.Add(self.widgets['dark'], (6,0), (1,1))
+
+		sz.AddGrowableCol(1)
+		self.widgets['force annotate'] = wx.CheckBox(self, -1, 'Always Annotate Saved Images')
+		sz.Add(self.widgets['force annotate'], (7,0), (1,1))
 
 		szdefocus= wx.GridBagSizer(5, 5)
 		self.widgets['defocus1switch'] = wx.CheckBox(self, -1, 'Defocus 1')

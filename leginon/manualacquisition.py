@@ -43,6 +43,7 @@ class ManualAcquisition(node.Node):
 		'defocus2': 0.0,
 		'dark': False,
 		'manual focus exposure time': 100.0,
+		'force annotate': False,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.loopstop = threading.Event()
