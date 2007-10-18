@@ -1,6 +1,11 @@
 <?php
 
-// --- change with query --- //
+/**
+ *	The Leginon software is Copyright 2003 
+ *	The Scripps Research Institute, La Jolla, CA
+ *	For terms of the license agreement
+ *	see  http://ami.scripps.edu/software/leginon-license
+ */
 
 $filename=$_GET['file'];
 $expId =$_GET['expId'];
@@ -8,13 +13,6 @@ $norefId=$_GET['norefId'];
 $stackId=$_GET['stackId'];
 
 $updateheader=($_GET['uh']==1) ? 1 : 0;
-#$filenames[]="/ami/data13/appion/07may16c/stacks/stack1/start.hed";
-#for ($num=1; $num<=16; $num++) {
-#	$filenames[]="/ami/data13/appion/07may16c/refine/garibaldi/classes.$num.hed";
-#}
-
-#if (!$filename=$_POST['file'])
-#	$filename = $filenames[0];
 
 function getimagicfilenames($file) {
 	$file = substr($file, 0, -3);
@@ -95,8 +93,8 @@ function addTile(wholemap, i, force) {
 
 function load() {
 	clean()
-	startImg=$('startimg').value
-	endImg=$('endimg').value
+	startImg=parseInt($('startimg').value)
+	endImg=parseInt($('endimg').value)
 	if (endImg > n_images-1) {
 	  endImg=n_images-1
 	}
