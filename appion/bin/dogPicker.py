@@ -27,10 +27,9 @@ class dogPicker(particleLoop.ParticleLoop):
 	def particleProcessImage(self, imgdata):
 		imgarray = imgdata['image']
 		#you are not allowed to have highpass and lowpass values
-		imgarray = apImage.preProcessImage(imgarray, params=self.params, lowpass=0, highpass=0)
-		dogarray = apDog.diffOfGaussParam(imgarray, self.params)
-		dogarray = apImage.normStdev(dogarray)/4.0
-		peaktree  = apPeaks.findPeaks(imgdata, [dogarray,], self.params, maptype="dogmap")
+		imgarray  = apImage.preProcessImage(imgarray, params=self.params, lowpass=0, highpass=0)
+		dogarrays = apDog.diffOfGaussParam(imgarray, self.params)
+		peaktree  = apPeaks.findPeaks(imgdata, dogarrays, self.params, maptype="dogmap")
 		return peaktree
 
 	def getParticleParamsData(self):
