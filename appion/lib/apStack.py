@@ -44,14 +44,15 @@ def getOneParticleFromStackId(stackid):
 	return stackparticledata[0]
 
 #--------
-def getOnlyStackData(stackid):
+def getOnlyStackData(stackid, msg=True):
 	apDisplay.printMsg("Getting stack data for stackid="+str(stackid))
 	stackdata=appiondb.direct_query(appionData.ApStackData,stackid)
 	stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
 	if not os.path.isfile(stackpath):
 		apDisplay.printError("Could not find stack file: "+stackpath)
-	sys.stderr.write("Old stack info: ")
-	apDisplay.printColor("'"+stackdata['description']+"'","cyan")
+	if msg is True:
+		sys.stderr.write("Old stack info: ")
+		apDisplay.printColor("'"+stackdata['description']+"'","cyan")
 	return stackdata
 
 #--------
@@ -118,7 +119,7 @@ def commitSubStack(params):
 		keepfile
 	"""
 
-	oldstackdata = getOnlyStackData(params['stackid'])
+	oldstackdata = getOnlyStackData(params['stackid'], msg=False)
 
 	#create new stack data
 	stackq = appionData.ApStackData()
@@ -135,6 +136,7 @@ def commitSubStack(params):
 	listfile = params['keepfile']
 	newparticlenum = 1
 	f=open(listfile,'r')
+	apDisplay.printMsg("Inserting stack particles")
 	for line in f:
 		particlenum = getListFileParticle(line, newparticlenum)
 		if particlenum is None:
@@ -158,7 +160,8 @@ def commitSubStack(params):
 		apDisplay.printError("No particles were inserted for the stack")
 
 	apDisplay.printMsg("Inserted "+str(newparticlenum-1)+" stack particles into the database")
-	
+
+	apDisplay.printMsg("Inserting Runs in Stack")
 	runsinstack = getRunsInStack(params['stackid'])
 	for run in runsinstack:
 		newrunsq = appionData.ApRunsInStackData()
@@ -167,6 +170,10 @@ def commitSubStack(params):
 		if params['commit'] is True:
 			appiondb.insert(newrunsq)
 		else:
-			apDisplay.printWarning("Not commiting to the database")	
+			apDisplay.printWarning("Not commiting to the database")
+
+	apDisplay.printMsg("finished")
+	return
+
 
 
