@@ -7,6 +7,7 @@ import sys
 #appion
 import apDisplay
 import apImage
+import apParam
 
 #########################################################
 
@@ -143,6 +144,11 @@ def getFindEMPath():
 	trypath = os.environ.get('FINDEM_EXE')
  	if trypath is not None and os.path.isfile(trypath):
 		findempath = trypath
+	if findempath is None:
+		user = os.environ.get('USER')
+		trypath = os.path.join(apParam.getAppionDirectory(), 'bin', 'findem.exe')
+	 	if os.path.isfile(trypath):
+			findempath = trypath
 	if findempath is None and os.environ.get('APPIONDIR') is not None:
 		appiondir = os.environ.get('APPIONDIR')
 		trypath = os.path.join(appiondir,"/bin/findem.exe")
