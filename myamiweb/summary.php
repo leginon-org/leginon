@@ -329,9 +329,9 @@ if ($ctf->hasCtfData($sessionId)) {
 		foreach($bestctf as $field=>$data) {
 			foreach($data as $k=>$v) {
 				$preset = $bestctf[$field][$k]['name'];
-				$cdf='<a href="ctfgraph.php?&hg=1&Id='.$sessionId
+				$cdf='<a href="processing/ctfgraph.php?&hg=1&Id='.$sessionId
 						.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'">'
-						.'<img border="0" src="ctfgraph.php?w=150&hg=1&Id='.$sessionId
+						.'<img border="0" src="processing/ctfgraph.php?w=150&hg=1&Id='.$sessionId
 						.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'"></a>';
 				$bestctf[$field][$k]['img'] = $cdf;
 			}

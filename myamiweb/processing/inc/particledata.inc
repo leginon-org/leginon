@@ -410,14 +410,14 @@ class particledata {
 			$numimg=$particlestats['num'];
 			$ppimg = ($numimg > 0) ? (sprintf("%.1f", $numptl/$numimg)) : 0;
 			$particlestats['numimgs']=$numimg.'<BR>('.$ppimg.' prtl/img)';
-			$particlestats['img'] = '<a href="particlegraph.php?hg=1&run='.$runId.'">'
+			$particlestats['img'] = '<a href="processing/particlegraph.php?hg=1&run='.$runId.'">'
 							.'<img border="0" '
-							.'src="particlegraph.php?w=150&hg=1&run='
+							.'src="processing/particlegraph.php?w=150&hg=1&run='
 				.$runId.'"></a>';
 			$q = "select name from `ApSelectionRunData` where `DEF_id` = $runId";
 			$r = $this->mysql->getSQLResult($q);
 			$r0 = $r[0];
-			$html .= '<td><a href="particlerunreport.php?rId='.$runId.'">'.$r0[name].'</a></td>';
+			$html .= '<td><a href="processing/particlerunreport.php?rId='.$runId.'">'.$r0[name].'</a></td>';
 			foreach($display_keys as $field) {
 							$data=$particlestats[$field];
 				if (eregi('^min|^max|^avg|^stddev', $field)) $data=format_sci_number($data,4);
