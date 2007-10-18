@@ -154,11 +154,14 @@ def getFindEMPath():
 	 	if os.path.isfile(trypath):
 			findempath = trypath
 	if findempath is None:
-		trypath = "/ami/sw/packages/pyappion/bin/findem.exe"
+		libdir = os.path.dirname(__file__)
+		libdir = os.path.abspath(libdir)
+		appiondir = os.path.dirname(libdir)
+		trypath = os.path.join(appiondir, 'bin', 'findem.exe')
 	 	if os.path.isfile(trypath):
 			findempath = trypath
 	if findempath is None:
-		trypath = "/ami/sw/packages/pyappion/particle_manager/findem.exe"
+		trypath = os.path.join(appiondir, 'particle_manager', 'findem.exe')
 	 	if os.path.isfile(trypath):
 			findempath = trypath
 	if findempath is None:

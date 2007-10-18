@@ -330,7 +330,7 @@ def runChimeraScript(chimscript):
 	if 'CHIMERA' in os.environ and os.path.isdir(os.environ['CHIMERA']):
 		chimpath = os.environ['CHIMERA']
 	else:
-		chimpath = "/ami/sw/packages/chimera-snap"
+		chimpath = None
 	if not os.path.isdir(chimpath):
 		apDisplay.printError("Could not find chimera at: "+chimpath)
 	os.environ['CHIMERA'] = chimpath

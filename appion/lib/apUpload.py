@@ -26,7 +26,7 @@ def printPrtlUploadHelp():
 
 def printModelUploadHelp():
 	print "\nUsage:\nuploadModel.py <filename> session=<session> symmetry=<sym id> apix=<pixel> res=<resolution> [contour=<n>] [zoom=<n>] description=<\"text\"> [rescale=<model ID,scale factor>] [boxsize=<n>]\n"
-	print "uploadModel.py /ami/data99/lambda.mrc symmetry=1 apix=2.02 res=25 description=\"CCMV in EMAN orientation\"\n"
+	print "uploadModel.py lambda.mrc symmetry=1 apix=2.02 res=25 description=\"CCMV in EMAN orientation\"\n"
 	sys.exit(1)
 
 def printMiscUploadHelp():

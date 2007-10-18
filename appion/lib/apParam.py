@@ -26,17 +26,19 @@ def getAppionDirectory():
 	appiondir = None
 
 	trypath = os.environ.get('APPIONDIR')
-	if os.path.isdir(trypath):
+	if trypath and os.path.isdir(trypath):
+		appiondir = trypath
+		return appiondir
+
+	libdir = os.path.dirname(__file__)
+	libdir = os.path.abspath(libdir)
+	trypath = os.path.dirname(libdir)
+ 	if os.path.isdir(trypath):
 		appiondir = trypath
 		return appiondir
 
 	user = os.environ.get('USER')
 	trypath = "/home/"+user+"/pyappion"
- 	if os.path.isdir(trypath):
-		appiondir = trypath
-		return appiondir
-
-	trypath = "/ami/sw/packages/pyappion"
  	if os.path.isdir(trypath):
 		appiondir = trypath
 		return appiondir

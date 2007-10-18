@@ -182,7 +182,7 @@ def checkMatlabPath(params=None):
 				updateMatlabPath(matlabpath)
 				return
 		#TRY sibling dir of this script
-		libdir = dirname(module.__file__)
+		libdir = os.path.dirname(__file__)
 		libdir = os.path.abspath(libdir)
 		appiondir = os.path.dirname(libdir)
 		acedir = os.path.join(appiondir, 'ace')
