@@ -5,6 +5,7 @@ import sys
 import random
 import math
 import appionData
+import shutil
 import apDB
 import apStack
 import apParam
@@ -15,9 +16,10 @@ def createDefaults():
 	params={}
 	params['nptcls']=None
 	params['logsplit']=False
+	params['commit']=True
 	params['stackname']='start.hed'
 	params['description']=''
-	params['outdir']=os.getcwd()
+	params['outdir'] = None
 	return params
 
 def parseParams(args,params):
@@ -39,12 +41,15 @@ def parseParams(args,params):
 			params['logdivisions']=int(subelements[1])
 		elif elements[0]=='outdir':
 			params['outdir']=elements[1]
+		elif arg=='nocommit':
+			params['commit']=False
+		elif arg=='commit':
+			params['commit']=True
 		elif elements[0]=='description':
 			params['description']=elements[1]
 		else:
-			print elements[0], 'is not recognized as a valid parameter'
-			sys.exit()
-	return(params)
+			apDisplay.printError(arg+" is not recognized as a valid parameter")
+	return params
 
 def checkParams(params):
 	if params['nptcls'] and params['logsplit']:
@@ -90,7 +95,7 @@ def checkForPreviousStack(stackpath, stackname):
 		apDisplay.printError("A stack with name "+stackname+" and path "+stackpath+" already exists.")
 	return
 	
-def commitSplitStack(params, stackdata, lstfile):
+def commitSplitStack(params, lstfile):
 	f=open(lstfile,'r')
 	f.readline()
 	lines=f.readlines()
@@ -185,6 +190,12 @@ if __name__=='__main__':
 
 	oldstackdata = apStack.getOnlyStackData(params['stackid'])
 	oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
+	#create run directory
+	if params['outdir'] is None:
+		path = stackdata['path']['path']
+		path = os.path.split(os.path.abspath(path))[0]
+		params['outdir'] = path
+	apDisplay.printMsg("Out directory: "+params['outdir'])
 
 	origdescription=params['description']	
 	for stack in stacklist:
@@ -193,26 +204,29 @@ if __name__=='__main__':
 			(" ... split %d particles from original stackid=%d" 
 			% (stack, params['stackid']))
 		)
-		workingdir=os.path.join(params['outdir'], str(stack))
+		workingdir = os.path.join(params['outdir'], str(stack))
 
 		#check for previously commited stacks
 		checkForPreviousStack(workingdir, params['stackname'])
 		
 		#create outdir and change to that directory
+		apDisplay.printMsg("Run directory: "+workingdir)
 		apParam.createDirectory(workingdir)
 
 		#create random list 
-		lstfile=makeRandomLst(stack, stackparticles, params)
-		
+		lstfile = makeRandomLst(stack, stackparticles, params)
+		shutil.copy(lstfile, workingdir)
+
 		#make new stack
 		newstack = os.path.join(workingdir ,params['stackname'])
 		apStack.makeNewStack(oldstack, newstack, lstfile):
 		#apStack.makeNewStack(lstfile, params['stackname'])
 		
 		#commit new stack
-		if params['commit']:
-			print "Inserting new stack"
-			commitSplitStack(params, stackparticles, lstfile)
+		params['keeplist'] = os.path.abspath(lstfile)
+		params['rundir'] = os.path.abspath(workingdir)
+		apStack.commitSubStack(params)
+		#commitSplitStack(params, lstfile)
 	
 	apParam.closeFunctionLog()
 
