@@ -38,12 +38,16 @@ def unmapPath(path):
 
 # Here is a replacement for os.mkdirs that won't complain if dir
 # already exists (from Python Cookbook, Recipe 4.17)
-def mkdirs(newdir, mode=0777):
+def mkdirs(newdir):
+	originalumask = os.umask(02)
 	try:
-		os.makedirs(newdir, mode)
+		os.makedirs(newdir)
 	except OSError, err:
+		os.umask(originalumask)
 		if err.errno != errno.EEXIST or not os.path.isdir(newdir) and os.path.splitdrive(newdir)[1]:
 			raise
+	os.umask(originalumask)
+
 ### raise this if something is wrong in this config file
 class LeginonConfigError(Exception):
 	pass
