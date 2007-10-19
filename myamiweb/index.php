@@ -18,7 +18,6 @@ $link->addlink('loi.php','LOI','', 'loi');
 $link->addlink('rctviewer.php','RCT','', 'rct');
 $link->addlink('admin.php','Administration','', 'admin');
 $link->addlink('tomo/','Tomography','', 'tomo_icon_3');
-$link->addlink('rctviewer.php','RCT','', 'rct');
 
 
 $ip = $_SERVER['REMOTE_ADDR'];
