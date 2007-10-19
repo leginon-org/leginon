@@ -604,6 +604,7 @@ function writeJobFile ($extra=False) {
   $clusterjob.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
   $clusterjob.= "#PBS -m e\n";
   $clusterjob.= "#PBS -r n\n";
+  $clusterjob.= "\nmkdir -p $clusterpath\n";
   $clusterjob.= "\ncd $clusterpath\n";
   $clusterjob.= "\nrm -rf recon\n";
   $clusterjob.= "ln -s \$PBSREMOTEDIR recon\n";
