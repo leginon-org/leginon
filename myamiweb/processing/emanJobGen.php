@@ -227,9 +227,9 @@ function stackModelForm($extra=False) {
   echo "<P><B>Model:</B><BR><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A>\n";
   echo "<P>\n";
   $minf = explode('|--|',$_POST['model']);
-  if (count($models)>0) {
+  if (is_array($models) && count($models)>0) {
     foreach ($models as $model) {
-      echo "<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='2'>\n";
+      echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
 # get list of png files in directory
       $pngfiles=array();
       $modeldir= opendir($model['path']);
