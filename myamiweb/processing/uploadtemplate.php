@@ -139,7 +139,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 				<TD VALIGN='TOP'>
 					<BR/>
 					
-					<B>Default template path:</B> <BR/> 
+					<B>Template Name with path:</B> <BR/> 
 					<INPUT TYPE='text' NAME='template' VALUE='$template' SIZE='63'/>
 					<BR/>
 					<BR/>
@@ -166,9 +166,9 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 			<TR>
 				<TD VALIGN='TOP' CLASS='tablebg'>
 					<BR/>
-					<B>Class average information:</B><BR/>
-					<A HREF=\"javascript:infopopup('classpath')\">Class path</A>:
-					<INPUT TYPE='text' NAME='hed' SIZE='55' VALUE='$file_hed'> <BR/>	
+					<B>Stack/Class information:</B><BR/>
+					<A HREF=\"javascript:infopopup('classpath')\">Stack/Class name & path</A>:
+					<INPUT TYPE='text' NAME='hed' SIZE='52' VALUE='$file_hed'> <BR/>	
 				</TD>
 			</TR>
 		  </TABLE>
