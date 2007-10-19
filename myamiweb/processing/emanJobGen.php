@@ -54,7 +54,7 @@ elseif ($_POST['submitstackmodel'] || $_POST['duplicate']) {
   if (!$_SESSION['username']) {
     if (!$_POST['username'] || !$_POST['password']) stackModelForm("ERROR: enter your user name and password");
     ## authenticate username and password
-    if (!check_ssh('cronus3',$_POST['username'],$_POST['password'])) stackModelForm("ERROR: authentication failed");
+    if (!check_ssh($_SERVER['HOSTNAME'],$_POST['username'],$_POST['password'])) stackModelForm("ERROR: authentication failed");
     ## save username and password to the session
     $_SESSION['username']=$_POST['username'];
     $_SESSION['password']=$_POST['password'];
@@ -93,16 +93,16 @@ elseif ($_POST['submitjob']) {
   $apdir.= $jobname;
   $cmd = 'mkdir -p ';
   $cmd .= $apdir;
-  exec_over_ssh('cronus3', $user, $pass, $cmd, False);
+  exec_over_ssh($_SERVER['HOSTNAME'], $user, $pass, $cmd, False);
   echo "<TR><TD>Appion Directory</TD><TD>$apdir</TD></TR>\n";
 
   // copy job file to appion dir
   $apfile .= $apdir."/";
   $apfile .= $jobname.".job";
-  scp('cronus3',$user,$pass,$jobfile,$apfile);
+  scp($_SERVER['HOSTNAME'],$user,$pass,$jobfile,$apfile);
   echo "<TR><TD>Job File Name</TD><TD>$jobname.job</TD></TR>\n";
   
-  // create directory on garibaldi and copy job file over
+  // create directory on cluster and copy job file over
   $clusterpath = $_POST['clusterpath'].$jobname;
   $cmd = 'mkdir -p ';
   $cmd .= $clusterpath.";\n";
