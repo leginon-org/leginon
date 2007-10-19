@@ -39,7 +39,7 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	}
 	$projectId=$_POST['projectId'];
 
-	// --- find hosts to run maskmaker 
+	// --- find hosts to run jpgmaker 
 	$hosts=getHosts();
  
 
@@ -57,30 +57,29 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 				 document.viewerform.testfilename.value='mrc file name';
 			 }
 		 }
-		 function enable(thresh){
-			 if (thresh=='auto') {
-				 document.viewerform.autopik.disabled=false;
-				 document.viewerform.autopik.value='';
-				 document.viewerform.thresh.disabled=true;
-				 document.viewerform.thresh.value='0.4';
-			 }
-			 if (thresh=='manual') {
-				 document.viewerform.thresh.disabled=false;
-				 document.viewerform.thresh.value='';
-				 document.viewerform.autopik.disabled=true;
-				 document.viewerform.autopik.value='100';
-			 }
-		 }
+
 		 function infopopup(infoname){
-			 var newwindow=window.open('','name','height=150,width=300');
-			 newwindow.document.write('<HTML><BODY>');
-			 if (infoname=='runid'){
-				 newwindow.document.write('Specifies the name associated with the Template Correlator results unique to the specified session and parameters.	An attempt to use the same run name for a session using different Template Correlator parameters will result in an error.');
+			var newwindow=window.open('','name','height=150,width=300');
+			newwindow.document.write('<HTML><BODY>');
+			if (infoname=='runid'){
+				 newwindow.document.write('The files will be saved under a subdirectory of Output Directory named after Run Name.  Best not to change this.');
 			}
+			if (infoname=='scale'){
+				 newwindow.document.write('Scale these thresholds to 0 and 255 for the 8-bit gray-scale output');
+			} 
+			if (infoname=='quality'){
+				 newwindow.document.write('100 is the highest and original quality.');
+			}
+			if (infoname=='size'){
+				 newwindow.document.write('The output jpg image will not be larger than this value in either dimension');
+			}
+
 			newwindow.document.write('</BODY></HTML>');
 			newwindow.document.close();
 		}
+
 	</SCRIPT>\n";
+	echo $javascript;
 	$javascript.=appionLoopJavaCommands();
 	writeTop($title,$heading,$javascript);
 	// write out errors, if any came up:
@@ -97,15 +96,57 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
 	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
 
+	$quality = ($_POST['quality']) ? $_POST['quality'] : '80';
+	$imgsize = ($_POST['imgsize']) ? $_POST['imgsize'] : '512';
+	$min = ($_POST['min']) ? $_POST['min'] : '0';
+	$max = ($_POST['max']) ? $_POST['max'] : '100000';
+	$scale = ($_POST['scale']) ? $_POST['scale'] : 'meanstdv';
+	if ($scale == 'meanstdv') $scalechecks = array( 'CHECKED','','');
+	else if ($scale == 'autominmax') $scalechecks = array('','CHECKED','');
+	else $scalechecks = array('','','CHECKED');
+
 	$process = ($_POST['process']) ? $_POST['process'] :'';
 	$_POST['commit']='on';
 	echo"
 	<P>
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
-		<TD VALIGN='TOP'>";
-	createAppionLoopTable($sessiondata, 'jpgs', "", 1);
+	  <TD VALIGN='TOP'>";
+	    createAppionLoopTable($sessiondata, 'jpgs', "", 1);
 	echo"
+	  </TD>
+	  <TD CLASS='tablebg'>
+
+	    <A HREF=\"javascript:infopopup('scale')\">
+	      <B>Instensity Scale:</B></A><br/>
+	    <INPUT TYPE='radio' NAME='scale' VALUE='meanstdv' $scalechecks[0]>&nbsp;mean +/- 3 * stdv&nbsp;&nbsp;<br/>
+	    <INPUT TYPE='radio' NAME='scale' VALUE='autominmax' $scalechecks[1]>&nbsp;min and max of the image<br/>
+	    <INPUT TYPE='radio' NAME='scale' VALUE='fixed' $scalechecks[2]>&nbsp;Fixed min and max<br/>
+
+	    <TABLE CELLSPACING=0 CELLPADDING=2><TR>
+	      <TD VALIGN='TOP' WIDTH = 20></TD>
+	      <TD VALIGN='TOP'>
+	        <INPUT TYPE='text' NAME='min' VALUE=$min SIZE='8'>Min<br/>
+	        <INPUT TYPE='text' NAME='max' VALUE=$max SIZE='8'>Max
+	      </TD></TR>
+	    </TABLE><br/>
+	    <A HREF=\"javascript:infopopup('quality')\">
+	      <B>JPEG Quality: </B></A><br/>
+	        <INPUT TYPE='text' NAME='quality' VALUE=$quality SIZE='4'> (1-100)<br/><br/>
+	    <A HREF=\"javascript:infopopup('size')\">
+	      <B>Maximal Image Size: </B></A><br/>
+	        <INPUT TYPE='text' NAME='imgsize' VALUE=$imgsize SIZE='4'> pixels<br/>
+
+	  </TD>";
+	echo"
+	</TR>
+	<TR>
+		<TD COLSPAN='2' ALIGN='CENTER'>
+		<HR>
+		<INPUT TYPE='checkbox' NAME='testimage' onclick='enabledtest(this)' $testcheck>
+		Test these settings on image:
+		<INPUT TYPE='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
+
 		</TD>
 	</TR>
 	<TR>
@@ -145,35 +186,56 @@ function runjpgmaker() {
 
 	$outdir = $_POST['outdir'];
 	$runid = $_POST['runid'];
+	$alldbimages = $_POST['alldbimages'];
 	$dbimages = $_POST[sessionname].",".$_POST[preset];
 	$norejects = ($_POST[norejects]=="on") ? "0" : "1";
 	$nowait = ($_POST[nowait]=="on") ? "0" : "1";
 	$commit = 1;
 	$apcontinue = $_POST[apcontinue];
+	$scale = $_POST[scale];
+	if ($scale == "fixed") {
+		$max = $_POST[max];
+		$min = $_POST[min];
+	}
+	$quality = $_POST[quality];
+	$imgsize = $_POST[imgsize];
 	
+	if ($_POST['testimage']=="on") {
+		if ($_POST['testfilename']) {
+			$testimage=$_POST['testfilename'];
+			$_POST['apcontinue']=0;
+			$apcontinue=0;
+		}
+	}
+
 	$command="jpgmaker.py ";
-	
+
 	if ($runid) $apcommand.=" runid=$runid";
 	if ($outdir) $apcommand.=" outdir=$outdir";
 	if ($testimage) $apcommand.=" $testimage";
-	elseif ($dbimages) $apcommand.=" dbimages=$dbimages";
-	else $apcommand.=" alldbimages=$_POST[sessionname]";
+	else {
+		if ($alldbimages) {
+			$apcommand.=" alldbimages=$_POST[sessionname]";
+		} else {
+			if ($dbimages) $apcommand.=" dbimages=$dbimages";
+		}
+	}
 	if ($norejects) $apcommand.=" norejects";
 	if ($nowait) $apcommand.=" nowait";
 	if ($commit) $apcommand.=" commit";
 	if (!$apcontinue) $apcommand.=" nocontinue";
 	else $apcommand.=" continue";
-	
 	//$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
 		createJMForm($apcommand);
 		exit;
 	}
 	$command .= $apcommand;
-	if ($_POST['testimage']=="on") {
-		$command .= " test";
-		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
-	}
+
+	if ($scale == "autominmax") $command.=" min=100 max=50";
+	if ($scale == "fixed") $command.=" min=".$min." max=".$max;
+	if ($quality != 80) $command.=" quality=".$quality;
+	if ($imgsize != 512) $command.=" imgsize=".$imgsize;
 
 	if ($testimage && $_POST['process']=="Run JPEG Maker") {
 		$host = $_POST['host'];
@@ -190,6 +252,24 @@ function runjpgmaker() {
 	}
 
 	writeTop("JPEG Maker Results","JPEG Maker Results",$javascript);
+
+	if ($testimage) {
+		$runid = $_POST[runid];
+		$outdir = $_POST[outdir];
+		if (substr($outdir,-1,1)!='/') $outdir.='/';
+		echo "<CENTER><TABLE WIDTH='650'>
+  		<TR><TD COLSPAN='2'>";
+		echo "<B>JPEG Maker Command:</B><BR>$command<HR>";
+		$testjpg=ereg_replace(".mrc","",$testimage);
+		$jpgdir=$outdir.$runid."/";
+		$jpgimg=$testjpg.".jpg";
+		$images=writeTestResults($jpgdir,array($jpgimg));
+  		echo "</TD></TR>
+		</TABLE></CENTER>";
+		
+		createJMForm($images,'JPG File Maker Test Results','');
+		exit;
+	}
 
 
 	echo"
@@ -217,88 +297,12 @@ function runjpgmaker() {
 
 
 function writeTestResults($testdir,$filelist){
-	echo"<CENTER>\n";
+	echo"	<CENTER>\n";
 	if (count($filelist)>1) echo "<BR>\n";
 	foreach ($filelist as $file){
-		echo $testdir.$file;
-		echo"<A HREF='loadimg.php?filename=$testdir.$file&scale=0.25'>\n";
-		echo"<IMG SRC='loadimg.php?filename=$testdir$file&scale=0.25'></A>\n";
+		echo"<A HREF='loadimg.php?filename=$testdir$file&scale=1'>\n";
+		echo"<IMG SRC='loadimg.php?filename=$testdir$file&scale=0.25'></A><br/>";
 	}
-	echo"</CENTER>\n";
+	echo $testdir.$file;
+	echo"</CENTER>";
 }
-
-function displayTestResults($testimage,$imgdir,$files){
-	echo "<CENTER>\n";
-	echo"<form name='viewerform' method='POST' ACTION='$formAction'>\n";
-	$numfiles=count($files);
-	$prefix = '';
-	$n = 0;
-
-	sort($files);
-
-	$imlst=($_POST['imagelist']) ? $_POST['imagelist'] : 'First';
-        $imgindx= ($_POST['imgindex']) ? $_POST['imgindex'] : 0;
-	$imgrescl= ($_POST['imgrescale']) ? $_POST['imgrescale'] : 0.25; 
-	$process= ($_POST['process']) ? $_POST['process'] : '';
-	// go directly to a particular image number
-	if ($_POST['imgjump']) {
-		$imgindx=$_POST['imgjump']-1;
-		// make sure it's within range
-		if ($imgindx < 0) $imgindx=0;
-		elseif ($imgindx > $numfiles-1) $imgindx=$numfiles-1;
-		$imgname=$files[$imgindx];
-	}
-	// otherwise, increment or decrement the displayed image
-	else {
-	        if ($imlst=='Back') {
-				$imgindx--;
-				if ($imgindx < 0) {
-					echo "<FONT COLOR='RED'> At beginning of image list</FONT><BR>\n";
-					$imgindx=0;
-					$imgname=$files[$imgindx];
-				}
-				$imgname=$files[$imgindx];
-		}
-		elseif ($imlst=='Next') {
-				$imgindx++;
-				if ($imgindx > $numfiles-1) {
-					$imgindx=$numfiles-1;
-					$imgname=$files[$imgindx];
-				        echo "<FONT COLOR='RED'> At end of image list</FONT><BR>\n";
-				}
-				$imgname=$files[$imgindx];
-		}
-		else {
-		        if ($imlst=='First') $imgindx=0;
-			elseif ($imlst=='Last') $imgindx=$numfiles-1;
-			$imgname=$files[$imgindx];
-		}
-	}
-
-	$thisnum=$imgindx+1;
-
-	echo"<TABLE BORDER='0' CELLPADDING='0' CELLSPACING='0' WIDTH='400'>\n";
-	echo"<TR><TD ALIGN='LEFT'>\n";
-        echo"<B>$testimage</B>\n";
-	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
-        echo"Scale Factor:<INPUT TYPE='text' NAME='imgrescale' VALUE='$imgrescl' SIZE='4'>\n";
-	echo"</TD></TR></TABLE>";
-
-	$imgfull=$imgdir.$imgname;
-	echo"<INPUT TYPE='HIDDEN' NAME='imgindex' VALUE='$imgindx'>\n";
-	echo"<HR>\n";
-	echo"<TABLE BORDER='0' CELLPADDING='5' CELLSPACING='0'><TR><TD>\n";
-	echo"<INPUT TYPE='IMAGE' WIDTH='30' SRC='img/firstbutton.jpg' ALT='First' NAME='imagelist' VALUE='First'>\n";
-	echo"</TD><TD>\n";
-	echo"<INPUT TYPE='IMAGE' SRC='img/backbutton.jpg' ALT='Back' NAME='imagelist' VALUE='Back'>\n";
-	echo"</TD><TD>\n";
-	echo"<INPUT TYPE='IMAGE' SRC='img/nextbutton.jpg' ALT='Next' NAME='imagelist' VALUE='Next'>\n";
-	echo"</TD><TD>\n";
-	echo"<INPUT TYPE='IMAGE' WIDTH='30' SRC='img/lastbutton.jpg' ALT='Last' NAME='imagelist' VALUE='Last'>\n";
-	echo"</TD></TR></TR></TABLE>\n";
-	echo"<B>$imgname</B>\n<P>";
-	echo"<IMG SRC='loadimg.php?filename=$imgfull&scale=$imgrescl'><P>\n";
-	echo "</CENTER>\n";
-	echo"<INPUT TYPE='HIDDEN' NAME='process' VALUE=$process>\n";
-}
-?>
