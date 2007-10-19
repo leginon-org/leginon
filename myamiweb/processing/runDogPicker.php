@@ -82,6 +82,8 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
 		<TD VALIGN='TOP'>";
+	echo"
+		<CENTER><IMG SRC='img/dogpicker.jpg' WIDTH='300'></CENTER><BR/>\n";
 	createAppionLoopTable($sessiondata, $defrunid, "extract");
 	$diam = ($_POST['diam']) ? $_POST['diam'] : "";
 	echo"
