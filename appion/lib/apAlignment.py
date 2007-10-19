@@ -622,7 +622,7 @@ def insertRefRun(params, insert=False):
 		params['runq']=runq
 		appiondb.insert(runq)
 
-	for refid in params['refids']
+	for refid in params['refids']:
 		reftempq = appionData.ApRefTemplateRunData()
 		reftempq['refTemplate'] = appiondb.direct_query(appionData.ApTemplateImageData, refid)
 		reftempq['refRun'] = runq
