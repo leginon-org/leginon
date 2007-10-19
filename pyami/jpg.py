@@ -4,7 +4,7 @@ import Image
 import numpy
 import arraystats
 
-def write(a, filename, min=None, max=None, quality=80):
+def write(a, filename, min=None, max=None, quality=80, newsize=None):
 	'''
 Write a 2-D numpy array to a JPEG file.
 Usage:
@@ -18,16 +18,19 @@ is to use the following calculation:
 
 Optional argument 'quality' is used for jpeg quality, a number between
 1 and 100.   The default is 80.
+
+Optional argument 'newsize' is used for scaling the image.
 	'''
+	
 	## auto determination of range for scaling to 8 bit.
 	if min is None:
 		mean = arraystats.mean(a)
 		std = arraystats.std(a)
-		min = mean - 3 * std
+		min = mean - 5 * std
 	if max is None:
 		mean = arraystats.mean(a)
 		std = arraystats.std(a)
-		max = mean + 3 * std
+		max = mean + 5 * std
 
 	## scale to 8 bit
 	a = numpy.clip(a, min, max)
@@ -40,6 +43,10 @@ Optional argument 'quality' is used for jpeg quality, a number between
 	nstr = a.tostring()
 	image = Image.fromstring('L', imsize, nstr, 'raw', 'L', 0, 1)
 	image.convert('L').save(filename, "JPEG", quality=quality)
+	if newsize is None:
+		image.convert('L').save(filename, "JPEG", quality=quality)
+	else:
+		image.convert('L').resize(newsize).save(filename, "JPEG", quality=quality)
 
 def test():
 	size = 256
