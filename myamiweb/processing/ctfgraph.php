@@ -8,6 +8,7 @@
  */
 
 require "inc/particledata.inc";
+require "inc/leginon.inc";
 require "inc/jpgraph.php";
 require "inc/jpgraph_line.php";
 require "inc/jpgraph_scatter.php";
