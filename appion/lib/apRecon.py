@@ -443,7 +443,8 @@ def insertIteration(iteration, params):
 
 	#create Chimera snapshots
 	fscfile = os.path.join(params['path'], "fsc.eotest."+iteration['num'])
-	halfres = calcRes(fscfile, params['model']['boxsize'], params['apix']
+	halfres = calcRes(fscfile, params['model']['boxsize'], params['apix'])
+	volumeDensity = 'threed.'+iteration['num']+'a.mrc'
 	volDensPath = os.path.join(params['path'], volumeDensity)
 	renderSnapshots(volDensPath, halfres, params['model'], 
 		params['contour'], params['zoom'], params['apix'])
@@ -467,7 +468,6 @@ def insertIteration(iteration, params):
 	refineq['resolution'] = resData
 	refineq['rMeasure'] = RmeasureData
 	classvar = 'classes.'+iteration['num']+'.var.img'
-	volumeDensity = 'threed.'+iteration['num']+'a.mrc'
 	if classavg in params['classavgs']:
 		refineq['classAverage'] = classavg
 	if classvar in params['classvars']:
@@ -487,8 +487,6 @@ def insertIteration(iteration, params):
 	halfres = calcRes(fscfile, params['model']['boxsize'], params['apix'])
 	apDisplay.printColor("FSC 0.5 Resolution: "+str(halfres), "cyan")
 
-
-		
 	# get projections eulers for iteration:
 	eulers = getEulersFromProj(params,iteration['num'])	
 	
