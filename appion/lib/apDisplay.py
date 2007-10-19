@@ -241,6 +241,7 @@ def colorString(text, fg, bg=None):
 		"brown" :"33",
 		"blue"  :"34",
 		"purple":"35",
+		"magenta":"35",
 		"cyan"  :"36",
 		"lgray" :"37",
 		"gray"  :"1;30",

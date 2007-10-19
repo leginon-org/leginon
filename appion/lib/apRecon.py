@@ -345,35 +345,41 @@ def runChimeraScript(chimscript):
 
 def insertRefinementRun(params):
 	runq=appionData.ApRefinementRunData()
+	#first two must be unique
 	runq['name']=params['runid']
 	runq['stack']=params['stack']
+
+	#Recon upload can be continued
+	earlyresult=appiondb.query(runq, results=1)
+	if earlyresult:
+		apDisplay.printWarning("Run already exists in the database.\nIdentical data will not be reinserted")
+
 	runq['initialModel']=params['model']
 	runq['package']=params['package']
-    
 	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['path']))
 	runq['description']=params['description']
 	runq['package']=params['package']
 	runq['initialModel']=params['model']
 
+	result=appiondb.query(runq, results=1)
+
+	if earlyresult and not result:
+		apDisplay.printError("Refinement Run parameters have changed")	
+
 	# get stack apix
 	params['apix']=apDatabase.getApixFromStackData(params['stack'])
-
-	#Recon upload can be continued
-	result=appiondb.query(runq, results=1)
-	if result:
-		apDisplay.printWarning("Run already exists in the database.\n Identical data will not be reinserted\n")
 
 	apDisplay.printMsg("inserting Refinement Run into database")
 	if params['commit'] is True:
 		appiondb.insert(runq)
 
-	result=appiondb.query(runq, results=1)
+	result = appiondb.query(runq, results=1)
 		
 	# save run entry in the parameters
 	if result:
 		params['refinementRun'] = result[0]
 	else:
-		params['refinementRun'] = None
+		apDisplay.printError("Refinement Run was not found")
 
 	return True
 
@@ -508,8 +514,12 @@ def insertIteration(iteration, params):
 	clstar.close()
 
 	# for each class, insert particle alignment info into database
+	apDisplay.printColor("Inserting Particle Classification Data for "
+		+str(len(clsnames))+" classes", "magenta")
+	t0 = time.time()
 	for cls in clsnames:
 		insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refineq,len(clsnames))
+	apDisplay.printColor("Finished in "+apDisplay.timeString(time.time()-t0), "magenta")
 
 	# remove temp directory
 	for file in os.listdir(params['tmpdir']):
@@ -538,9 +548,6 @@ def readParticleLog(path, iternum):
 	return badprtls
 
 def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refineq,numcls):
-	clsfilename=os.path.join(params['tmpdir'],cls)
-	f=open(clsfilename)
-
 	# get the corresponding proj number & eulers from filename
 	replace=re.compile('\D')
 	projnum=int(replace.sub('',cls))
@@ -550,9 +557,12 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 	eulq['euler2']=eulers[projnum][1]
 	eulq['euler3']=eulers[projnum][2]
 
-	apDisplay.printMsg("Class "+str(projnum+1)+" of "+str(numcls)+": inserting "
-		+str(len(f.readlines())-2)+" particles")
-	f.close()
+	clsfilename=os.path.join(params['tmpdir'],cls)
+	sys.stderr.write(".")
+	#f=open(clsfilename)
+	#apDisplay.printMsg("Class "+str(projnum+1)+" of "+str(numcls)+": inserting "
+	#	+str(len(f.readlines())-2)+" particles")
+	#f.close()
 
 	# for each cls file get alignments for particles
 	f=open(clsfilename)
