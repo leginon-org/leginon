@@ -674,8 +674,6 @@ def insertFSC(fscfile, refineData, commit=True):
 		numinserts+=1
 		if commit is True:
 			appiondb.insert(fscq)
-		else:
-			apDisplay.printWarning("not committing results to database")
 	apDisplay.printMsg("inserted "+str(numinserts)+" rows of FSC data into database")
 	f.close()
 
