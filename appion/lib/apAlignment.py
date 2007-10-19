@@ -258,7 +258,7 @@ def createSpiderRefFile(params):
 		templatedata= apTemplate.getTemplateFromId(int(refid))
 		#convert template data
 		reffile = os.path.join(templatedata['path']['path'],templatedata['templatename'])
-		scalefactor round(templatedata['apix'],5)/round(params['apix'],5)
+		scalefactor = round(templatedata['apix'],5)/round(params['apix'],5)
 		refarray = apImage.mrcToArray(reffile)
 		scaleRefArray = apTemplate.scaleTemplate(refarray, scalefactor, params['boxsize'])
 
