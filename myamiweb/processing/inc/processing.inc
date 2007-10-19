@@ -24,16 +24,9 @@ function commafy($input) {
 }
 
 function getHosts(){
-  $path = "/var/lib/wwwrun/.ssh/";
-  $known_hosts = $path."known_hosts";
-  $hosts = file($known_hosts);
-  $result=array();
-  foreach($hosts as $host) {
-    list($str) = split(" ", $host);
-    list($str) = split(",", $str);
-    $hosts_select[]=$str;
-  }	
-  return $hosts_select;
+  if (is_array($PROCESSING_HOSTS))
+		return $PROCESSING_HOSTS;
+	return array();
 }
 
 function writeTop($title,$heading,$headerstuff=false){
