@@ -28,7 +28,7 @@ if __name__ == '__main__':
 		apDisplay.printError("enter the pixel size of the model")
 	if params['session'] is None:
 		apDisplay.printError("enter a session ID")
-	if params['sym'] is None or not re.match("[0-9]+", params['sym']):
+	if params['sym'] is None:
 		apUpload.printSymmetries()
 		apDisplay.printError("enter a symmetry ID")
 	if params['description'] is None:
