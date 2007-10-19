@@ -331,6 +331,7 @@ def runChimeraScript(chimscript):
 		chimpath = os.environ['CHIMERA']
 	else:
 		chimpath = None
+		apDisplay.printError("Could not find Chimera, CHIMERA environmental variable is unset")
 	if not os.path.isdir(chimpath):
 		apDisplay.printError("Could not find chimera at: "+chimpath)
 	os.environ['CHIMERA'] = chimpath
