@@ -14,14 +14,14 @@ require "inc/processing.inc";
 require "inc/appionloop.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
- 
+
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
 	runTemplateCorrelator();
 }
 
 // CREATE FORM PAGE
-elseif ($_POST['templates']) {
+elseif ($_POST['templates']) { 
 	createTCForm();
 }
 
@@ -38,9 +38,9 @@ else {
 **
 */
 
-function createTemplateForm() {
+function createTemplateForm($extra=False) {
 	// check if coming directly from a session
-	$expId = $_GET[expId];
+	$expId = $_GET['expId'];
 	$formAction=$_SERVER['PHP_SELF'];	
 
 	// retrieve template info from database for this project
@@ -129,6 +129,7 @@ function createTemplateForm() {
 	$javafunctions.="<script src='../js/viewer.js'></script>\n";
 
 	writeTop("Template Correlator Launcher","Automated Particle Selection with Template Correlator",$javafunctions);
+	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
 	echo"
   <FORM NAME='viewerform' method='POST' ACTION='$formAction'>
   <B>Select Project:</B><BR>
@@ -154,6 +155,7 @@ function createTemplateForm() {
 	}
 	else echo "<B>Project does not contain any templates.</B>\n";
 	echo"</FORM>\n";
+	exit;
 }
 
 /*
@@ -180,7 +182,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	// --- find hosts to run Template Correlator
 	$hosts=getHosts();
 
-	$numtemplates=$_POST[numtemplates];
+	$numtemplates=$_POST['numtemplates'];
 	$templateForm='';
 	$templateTable="<TABLE CLASS='tableborder'><TR><TD>\n";
 	$templateCheck='';
@@ -225,11 +227,8 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	$templateTable.="</TD></TR></TABLE>\n";
 	
 	// check that there are templates, remove last comma
-	if ($templateList) { $templateList=substr($templateList,0,-1);}
-	else {
-		echo "<B>no templates chosen, go back and choose templates</B>\n";
-		exit;
-	}
+	if (!$templateList) createTemplateForm("ERROR: Choose a template");
+	$templateList=substr($templateList,0,-1);
 	$javafunctions="
 	<script src='../js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
@@ -287,25 +286,18 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 		<INPUT TYPE='checkbox' NAME='testimage' onclick='enabledtest(this)' $testcheck>
 		Test these setting on image:
 		<INPUT TYPE='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
-		<HR>
-		</TD>
-	</TR>
-	<TR>
-		<TD COLSPAN='2' ALIGN='CENTER'>
+                <HR>
 		Host: <select name='host'>\n";
 	foreach($hosts as $host) {
 		$s = ($_POST['host']==$host) ? 'selected' : '';
 		echo "<option $s >$host</option>\n";
 	}
+
 	echo "</select>
-	<BR>
-	User: <INPUT TYPE='text' name='user' value=".$_POST['user'].">
-	Password: <INPUT TYPE='password' name='password' value=".$_POST['password'].">\n";
-	echo"
-		</select>
 		<BR>
-		<input type='submit' name='process' value='Just Show Command'>
-		<input type='submit' name='process' value='Run Correlator'><BR>
+		<input type='submit' name='process' value='Just Show Command'>\n";
+	if ($_SESSION['loggedin']) echo "<input type='submit' name='process' value='Run Correlator'>\n";
+	echo"<BR>
 		<FONT COLOR='RED'>Submission will NOT run Template Correlator, only output a command that you can copy and paste into a unix shell</FONT>
 		</TD>
 	</TR>
@@ -387,7 +379,7 @@ function runTemplateCorrelator() {
 		$jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
 		$ccclist=array();
 		$i=1;
-		$templateList=$_POST[templateList];
+		$templateList=$_POST['templateList'];
 		$templates=split(",", $templateList);
 		foreach ($templates as $tmplt) {
    			$cccimg=$outdir.$runid."/ccmaxmaps/".$testjpg.".ccmaxmap".$i.".jpg";
@@ -435,7 +427,7 @@ function templateCommand () {
 	$command = "";
 	// get the list of templates
 	$i=1;
-	$templateList=$_POST[templateList];
+	$templateList=$_POST['templateList'];
 	$templates=split(",", $templateList);
 	foreach ($templates as $tmplt) {
 		list($tmpltNum,$tmpltId)=split(":",$tmplt);

@@ -12,6 +12,10 @@
  */
 
 require_once "inc/ssh.inc";
+require_once "inc/session.inc";
+
+// start a php session
+setsession();
 
 // add commas to an int
 function commafy($input) {
@@ -29,7 +33,7 @@ function getHosts(){
 	return array();
 }
 
-function writeTop($title,$heading,$headerstuff=false){
+function writeTop($title,$heading,$headerstuff=false,$showloginerror=True){
   global $_GET;
   echo"<HTML>
   <HEAD>
@@ -49,6 +53,10 @@ function writeTop($title,$heading,$headerstuff=false){
   if ($_SESSION['username']) {
     echo "<FONT CLASS='sf'><I>logged in as <B>$_SESSION[username]</B></I></FONT>\n";
     echo "<A CLASS='header' HREF='endsession.php?expId=$_GET[expId]'><FONT CLASS='sf'>[Log Out]</FONT></A>\n";
+    $_SESSION['loggedin']=True;
+  }
+  elseif ($showloginerror==True) {
+    echo "<FONT COLOR='red'><B>WARNING:</B> You cannot submit jobs without logging in</FONT>\n";
   }
   echo"<HR>\n";
 }

@@ -4,21 +4,8 @@ require "inc/util.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/processing.inc";
-require "inc/session.inc";
-
-setsession();
 
 if ($_POST['checkjobs']) {
-  if (!$_SESSION['username']) {
-    if (!$_POST['username'] || !$_POST['password']) checkJobs($showjobs=False,$extra="ERROR: enter your user name and password");
-    // authenticate username & password
-    if (!check_ssh($_SERVER['HOSTNAME'],$_POST['username'],$_POST['password'])) checkJobs($shojobs=False,$extra="ERROR: authentication failed");
-    ## save username and password to the session
-    $_SESSION['username']=$_POST['username'];
-    $_SESSION['password']=$_POST['password'];
-    unset($_POST['username']);
-    unset($_POST['password']);
-  }
   checkJobs($showjobs=True);
 }
 
@@ -37,21 +24,11 @@ function checkJobs($showjobs=False,$extra=False) {
 
   $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
   $jobs = $particle->getJobIdsFromSession($expId);
-  echo "<FORM NAME='jobform' method='POST' ACTION='$formaction'>\n";
-
-  $display_login = ($_SESSION['username'] && $_SESSION['password']) ? false:true;
-
-  if ($display_login) {
-    echo "<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='5'>\n";
-    echo "<TR><TD>\n";
-    echo "Username: <INPUT TYPE='text' name='username' value='$_POST[username]'>\n";
-    echo "Password: <INPUT TYPE='password' name='password'>\n";
-    echo "</TD></TR>\n";
-    echo "</TABLE><P>\n";
+  if ($_SESSION['loggedin']==True) {
+    echo "<FORM NAME='jobform' method='POST' ACTION='$formAction'>\n";
+    echo "<INPUT TYPE='SUBMIT' NAME='checkjobs' VALUE='Check Jobs in Queue'>\n";
+    echo "</FORM>\n";
   }
-
-  echo "<INPUT TYPE='SUBMIT' NAME='checkjobs' VALUE='Check Jobs in Queue'>\n";
-  echo "</FORM>\n";
   // if clicked button, list jobs in queue
   if ($showjobs) {
     $queue = checkClusterJobs($_SESSION['username'], $_SESSION['password']);

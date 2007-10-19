@@ -13,10 +13,6 @@ require "inc/processing.inc";
 require "inc/leginon.inc";
 require "inc/viewer.inc";
 require "inc/project.inc";
-require "inc/session.inc";
-
-// start a php session
-setsession();
 
 if ($_POST['write']) {
   $particle = new particledata();
@@ -51,17 +47,6 @@ if ($_POST['write']) {
 }
 
 elseif ($_POST['submitstackmodel'] || $_POST['duplicate']) {
-  if (!$_SESSION['username']) {
-    if (!$_POST['username'] || !$_POST['password']) stackModelForm("ERROR: enter your user name and password");
-    ## authenticate username and password
-    if (!check_ssh($_SERVER['HOSTNAME'],$_POST['username'],$_POST['password'])) stackModelForm("ERROR: authentication failed");
-    ## save username and password to the session
-    $_SESSION['username']=$_POST['username'];
-    $_SESSION['password']=$_POST['password'];
-    unset($_POST['username']);
-    unset($_POST['password']);
-  }
-  
   ## make sure a stack and model were selected
   if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
   if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
@@ -93,13 +78,13 @@ elseif ($_POST['submitjob']) {
   $apdir.= $jobname;
   $cmd = 'mkdir -p ';
   $cmd .= $apdir;
-  exec_over_ssh($_SERVER['HOSTNAME'], $user, $pass, $cmd, False);
+  exec_over_ssh($_SERVER['HTTP_HOST'], $user, $pass, $cmd, False);
   echo "<TR><TD>Appion Directory</TD><TD>$apdir</TD></TR>\n";
 
   // copy job file to appion dir
   $apfile .= $apdir."/";
   $apfile .= $jobname.".job";
-  scp($_SERVER['HOSTNAME'],$user,$pass,$jobfile,$apfile);
+  scp($_SERVER['HTTP_HOST'],$user,$pass,$jobfile,$apfile);
   echo "<TR><TD>Job File Name</TD><TD>$jobname.job</TD></TR>\n";
   
   // create directory on cluster and copy job file over
@@ -127,8 +112,6 @@ elseif ($_POST['submitjob']) {
 else stackModelForm();
 
 function stackModelForm($extra=False) {
-  $display_login = ($_SESSION['username'] && $_SESSION['password']) ? false:true;
-
   // check if session provided
   $expId = $_GET['expId'];
   $modelonly = $_GET['modelonly'];
@@ -178,14 +161,6 @@ function stackModelForm($extra=False) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
   }
   echo "<FORM NAME='viewerform' METHOD='POST' ACTION='$formaction'>\n";
-  if ($display_login && !$modelonly) {
-    echo "<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='5'>\n";
-    echo "<TR><TD>\n";
-    echo "Username: <INPUT TYPE='text' name='username' value='$_POST[username]'>\n";
-    echo "Password: <INPUT TYPE='password' name='password'>\n";
-    echo "</TD></TR>\n";
-    echo "</TABLE><P>\n";
-  }
   echo "
   <B>Select Project:</B><BR>
   <SELECT NAME='projectId' onchange='newexp()'>\n";

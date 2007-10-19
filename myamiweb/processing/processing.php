@@ -15,6 +15,27 @@ require "inc/ctf.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
 
+if ($_POST['login']) {
+  if (!$_SESSION['username']) {
+    if (!$_POST['username'] || !$_POST['password']) processTable($extra="ERROR: enter your user name and password");
+    // authenticate username & password
+    if (!check_ssh($_SERVER['HTTP_HOST'],$_POST['username'],$_POST['password'])) processTable($extra="ERROR: authentication failed");
+    ## save username and password to the session
+    $_SESSION['username']=$_POST['username'];
+    $_SESSION['password']=$_POST['password'];
+    unset($_POST['username']);
+    unset($_POST['password']);
+  }
+  processTable();
+}
+
+else {
+  processTable();
+}
+
+function processTable($extra=False) {
+$leginondata = new leginondata();
+
 // check if coming directly from a session
 $expId=$_GET['expId'];
 if ($expId){
@@ -28,7 +49,29 @@ else {
 }
 $projectId=$_POST['projectId'];
 
-writeTop("Appion Data Processing","Appion Data Processing", "<script src='../js/viewer.js'></script>");
+writeTop("Appion Data Processing","Appion Data Processing", "<script src='../js/viewer.js'></script>",False);
+
+// write out errors, if any came up:
+if ($extra) {
+  echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+}
+
+// create login form
+$display_login = ($_SESSION['username'] && $_SESSION['password']) ? false:true;
+echo $_SESSION['username'];
+
+if ($display_login) {
+  $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+  echo "<FORM NAME='jobform' method='POST' ACTION='$formaction'>\n";
+  echo "<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='5'>\n";
+  echo "<TR><TD>\n";
+  echo "Username: <INPUT TYPE='text' name='username' value='$_POST[username]'>\n";
+  echo "Password: <INPUT TYPE='password' name='password'><BR>\n";
+  echo "<CENTER><INPUT TYPE='submit' NAME='login' VALUE='Log In'></CENTER>\n";
+  echo "</FORM>\n";
+  echo "</TD></TR>\n";
+  echo "</TABLE><P>\n";
+}
 
 echo"
 <TABLE>
@@ -407,4 +450,7 @@ echo"
 </TABLE>
 </CENTER>\n";
 writeBottom();
+exit;
+}
+
 ?>
