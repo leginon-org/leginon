@@ -42,7 +42,38 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	$templateId=$_GET['templateId'];
 	$norefId=$_GET['norefId'];
 	$stackId=$_GET['stackId'];
-	
+
+	// Set any existing parameters in form
+	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
+	$diam = ($_POST['diam']) ? $_POST['diam'] : '';
+	$template = ($_POST['template']) ? $_POST['template'] : '';
+	$hed = ($_POST['hed']) ? $_POST['hed'] : '';
+	$description = $_POST['description'];
+	if (!$templateId) $templateId = $_POST['templateId'];
+	if (!$stackId) $stackId = $_POST['stackId'];
+	if (!$norefId) $norefId = $_POST['norefId'];
+
+	// Set template path
+	if  ($file) {
+		if ( preg_match("/\.img/", $file) ) {
+			$template=ereg_replace("\/classes_avg[0-9]*.img","",$file);
+			$template=$template."/template$templateId.mrc";
+		} elseif ( preg_match("/\.hed/", $file) ) {
+			$template=ereg_replace("\/start.hed","",$file);
+			$template=$template."/template$templateId.mrc";
+		}
+	}
+
+	//get the class average file
+	if (!$hed) {
+		if (!$file) {
+		} else {
+			$hed = substr($file, 0, -3);
+			$hed = $hed."hed";
+		}
+	}
+
+
 	$javafunctions="
 	<script src='../js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
@@ -73,32 +104,9 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 		$sessionname=$sessioninfo['Name'];
 		echo"<INPUT TYPE='hidden' NAME='sessionname' VALUE='$sessionname'>\n";
 	}
-
-	// Set any existing parameters in form
-	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
-	$diam = ($_POST['diam']) ? $_POST['diam'] : '';
-	$template = ($_POST['template']) ? $_POST['template'] : '';
-	$file_hed = ($_POST['hed']) ? $_POST['hed'] : '';
-	$description = $_POST['description'];
-	if (!$templateId) $templateId = $_POST['templateId'];
-	if (!$stackId) $stackId = $_POST['stackId'];
-	if (!$norefId) $norefId = $_POST['norefId'];
 	
-	echo"<INPUT TYPE='hidden' NAME='templateId' VALUE='$templateId'>\n";
-	echo"<INPUT TYPE='hidden' NAME='stackId' VALUE='$stackId'>\n";
-	echo"<INPUT TYPE='hidden' NAME='norefId' VALUE='$norefId'>\n";
-
-	// Set template path
-	if  ($file) {
-		if ( preg_match("/\.img/", $file) ) {
-			$template=ereg_replace("\/classes_avg[0-9]*.img","",$file);
-			$template=$template."/template$templateId.mrc";
-		} elseif ( preg_match("/\.hed/", $file) ) {
-			$template=ereg_replace("\/start.hed","",$file);
-			$template=$template."/template$templateId.mrc";
-		}
-	}
-
+	
+	echo"<INPUT TYPE='hidden' NAME='hed' VALUE='$hed'>\n";
 	
 	//query the database for parameters
 	$particle = new particledata();
@@ -119,29 +127,49 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 		$apix=($particle->getStackPixelSizeFromStackId($stackId))*1e10;
 	}
 	
-	//get the class average file
-	if (!$file_hed) {
-		if (!$file) {
-		} else {
-			$file_hed = substr($file, 0, -3);
-			$file_hed = $file_hed."hed";
-		}
-	}
-
 	echo"
 	<P>
 	<TABLE BORDER=3 CLASS=tableborder>";
 	echo"
 	<TR>
 		<TD VALIGN='TOP'>
-			<TABLE>
+			<TABLE> \n";
+	
+	//if neither a refId or stackId exist
+	if (!$norefId && !$stackId) {
+	echo "
 			<TR>
 				<TD VALIGN='TOP'>
 					<BR/>
-					
 					<B>Template Name with path:</B> <BR/> 
 					<INPUT TYPE='text' NAME='template' VALUE='$template' SIZE='63'/>
+					<BR/>\n";
+					
+	} 
+
+	//if either a refId or stackId exist
+	if ($norefId || $stackId) {
+	echo"<INPUT TYPE='hidden' NAME='template' VALUE='$template'>\n";
+	echo"
+			<TR>
+				<TD VALIGN='TOP'>
 					<BR/>
+					<B>Stack/NoRef Class information:</B> <BR/>
+					<A HREF=\"javascript:infopopup('classpath')\">Stack/Class name & path</A>: $hed <BR/>	
+					Stack/NoRef Class ID: "; 
+	if ($norefId) {
+		echo "$norefId<BR/> <INPUT TYPE='hidden' NAME='norefId' VALUE='$norefId'>\n"; 
+	} elseif ($stackId){
+		 echo "$stackId<BR/> <INPUT TYPE='hidden' NAME='stackId' VALUE='$stackId'>\n";
+	}
+
+	//rest of the page
+	echo"
+					Stack/NoRef Class Image Number: $templateId<BR/> <INPUT TYPE='hidden' NAME='templateId' VALUE='$templateId'>\n";
+	}
+
+	
+	echo "
 					<BR/>
 					<B>Template Description:</B><BR/>
 					<TEXTAREA NAME='description' ROWS='3' COLS='70'>$description</TEXTAREA>
@@ -163,14 +191,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 					<BR/>
 				</TD>
 		  	</TR>
-			<TR>
-				<TD VALIGN='TOP' CLASS='tablebg'>
-					<BR/>
-					<B>Stack/Class information:</B><BR/>
-					<A HREF=\"javascript:infopopup('classpath')\">Stack/Class name & path</A>:
-					<INPUT TYPE='text' NAME='hed' SIZE='52' VALUE='$file_hed'> <BR/>	
-				</TD>
-			</TR>
+			
 		  </TABLE>
 		</TD>
   </TR>
@@ -186,14 +207,16 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
   </TABLE>
   </FORM>
   </CENTER>\n";
+
 	writeBottom();
 	exit;
 }
 
 function runUploadTemplate() {
-	//make sure a template root was entered
+	//make sure a template root or a class/stack root was entered
 	$template=$_POST['template'];
-	if (!$template) createUploadTemplateForm("<B>ERROR:</B> Enter a the root name of the template");
+	$hed=$_POST['hed'];
+	if (!$template && !$hed) createUploadTemplateForm("<B>ERROR:</B> Enter a the root name of the template or stack/noref class");
 
 	//make sure a session was selected
 	$description=$_POST['description'];
@@ -215,20 +238,14 @@ function runUploadTemplate() {
 	$stackId=$_POST['stackId'];
 	$norefId=$_POST['norefId'];
 
-	$hed=$_POST['hed'];
-	if (!$hed) {
-		if (!file_exists($template)) {
-			$template_command="File ".$template." does not exist. This is fine you are uploading more than one template";
-			//createUploadTemplateForm("<B>ERROR:</B> Could not find file: ".$template);  
-		} else {
-			$template_command="File ".$template." exist. But make sure that this is the file that you want!";
-		}
+	//check if the template is an existing file (wild type is not searched)
+	if (!file_exists($template)) {
+		$template_warning="File ".$template." does not exist. This is fine you are uploading more than one template"; 
 	} else {
-		$template_Id=ereg("template([0-9]*)",$template,$Id);
-		$template_command.="proc2d ";
-		$template_command.="$hed $template first=$Id[1] last=$Id[1]";
+		$template_warning="File ".$template." exist. Make sure that this is the file that you want!";
 	}
 
+	//putting together command
 	$command.="uploadTemplate.py ";
 	$command.="--template=$template ";
 	$command.="--session=$session ";
@@ -244,11 +261,18 @@ function runUploadTemplate() {
 	echo"
 	<P>
 	<TABLE WIDTH='600' BORDER='1'>
-	<TR><TD COLSPAN='2'>
-	<B>Create MRC as Template Command:</B><BR>
-	$template_command
-	</TD>
-	<TR><TD COLSPAN='2'>
+	<TR><TD COLSPAN='2'>";
+	//display this line if there's a norefId or stackId
+	if ($norefId || $stackId) {
+	echo"
+	<B>This command will create a new MRC file called</B> $template<BR><BR>";
+	} else {
+	echo"$template_warning<BR>";
+	}
+
+	//rest of the page
+	echo"
+	$template_command 
 	<B>UploadTemplate Command:</B><BR>
 	$command
 	</TD></TR>
