@@ -8,9 +8,6 @@ import apDisplay
 import apRecon
 
 if __name__ == '__main__':
-	# record command line
-	apParam.writeFunctionLog(sys.argv)
-
 	# create params dictionary & set defaults
 	params = apRecon.createDefaults()
 
@@ -25,6 +22,9 @@ if __name__ == '__main__':
 	if not os.path.exists(params['path']):
 		apDisplay.printError("upload directory does not exist: "+params['path'])
 	os.chdir(params['path'])
+
+	# record command line
+	apParam.writeFunctionLog(sys.argv)
 
 	# make sure that the stack & model IDs exist in database
 	apRecon.findEmanLogFile(params)

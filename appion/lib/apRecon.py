@@ -380,9 +380,11 @@ def insertRefinementRun(params):
 	# save run entry in the parameters
 	if result:
 		params['refinementRun'] = result[0]
-	else:
+	elif params['commit'] is True:
 		apDisplay.printError("Refinement Run was not found")
-
+	else:
+		apDisplay.printWarning("Refinement Run was not found")
+		params['refinementRun'] = None
 	return True
 
 def insertResolutionData(params,iteration):
