@@ -403,7 +403,7 @@ function runTemplateCorrelator() {
 		<P>
 		<TABLE WIDTH='600'>
 		<TR><TD COLSPAN='2'>
-		<B>Dog Picker Command:</B><BR>
+		<B>Template Correlation Picker Command:</B><BR>
 		$command<HR>
 		</TD></TR>";
 	echo"
