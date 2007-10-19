@@ -372,6 +372,8 @@ def insertRefinementRun(params):
 	apDisplay.printMsg("inserting Refinement Run into database")
 	if params['commit'] is True:
 		appiondb.insert(runq)
+	else:
+		apDisplay.printWarning("not committing results to database")
 
 	result = appiondb.query(runq, results=1)
 		
@@ -404,6 +406,8 @@ def insertResolutionData(params,iteration):
 		apDisplay.printMsg("inserting FSC resolution data into database")
 		if params['commit'] is True:
 			appiondb.insert(resq)
+		else:
+			apDisplay.printWarning("not committing results to database")
 
 		return resq
 
@@ -427,6 +431,8 @@ def insertRMeasureData(params,iteration):
 	apDisplay.printMsg("inserting R Measure Data into database")
 	if params['commit'] is True:
 		appiondb.insert(resq)
+	else:
+		apDisplay.printWarning("not committing results to database")
 
 	return resq
 
@@ -486,6 +492,8 @@ def insertIteration(iteration, params):
 	apDisplay.printMsg("inserting Refinement Data into database")
 	if params['commit'] is True:
 		appiondb.insert(refineq)
+	else:
+		apDisplay.printWarning("not committing results to database")
 
 	#insert FSC data
 	fscfile = os.path.join(params['path'], "fsc.eotest."+iteration['num'])
@@ -616,6 +624,7 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 			#apDisplay.printMsg("inserting Particle Classification Data into database")
 			if params['commit'] is True:
 				appiondb.insert(prtlaliq)
+
 	f.close()
 	return
 
@@ -665,6 +674,8 @@ def insertFSC(fscfile, refineData, commit=True):
 		numinserts+=1
 		if commit is True:
 			appiondb.insert(fscq)
+		else:
+			apDisplay.printWarning("not committing results to database")
 	apDisplay.printMsg("inserted "+str(numinserts)+" rows of FSC data into database")
 	f.close()
 
