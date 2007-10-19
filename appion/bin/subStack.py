@@ -73,6 +73,8 @@ if __name__ == '__main__':
 	apParam.createDirectory(params['rundir'])
 	apDisplay.printMsg("Run directory: "+params['rundir'])
 	os.chdir(params['rundir'])
+	if not os.path.isfile(os.path.basename(params['keepfile'])):
+		shutil.copy(params['keepfile'], os.path.basename(params['keepfile']))
 
 	#new stack path
 	newstack = os.path.join(params['rundir'], stackdata['name'])
