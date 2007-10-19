@@ -28,7 +28,7 @@ $projectId=$_POST['projectId'];
 
 $javascript="<script src='../js/viewer.js'></script>\n";
 
-writeTop("Stack Report","Stack Summary Page", $javascript);
+writeTop("Stack Report","Stack Summary Page", $javascript,False);
 
 echo"<form name='viewerform' method='POST' ACTION='$formAction'>
 <INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
