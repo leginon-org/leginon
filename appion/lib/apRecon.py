@@ -519,7 +519,7 @@ def insertIteration(iteration, params):
 	t0 = time.time()
 	for cls in clsnames:
 		insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refineq,len(clsnames))
-	apDisplay.printColor("Finished in "+apDisplay.timeString(time.time()-t0), "magenta")
+	apDisplay.printColor("\nFinished in "+apDisplay.timeString(time.time()-t0), "magenta")
 
 	# remove temp directory
 	for file in os.listdir(params['tmpdir']):
