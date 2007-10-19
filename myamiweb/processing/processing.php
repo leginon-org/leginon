@@ -45,15 +45,16 @@ $currentproject=$sessiondata['currentproject'];
 $nonecolor='#FFFFCC';
 $progcolor='#CCFFFF';
 $donecolor='#CCFFCC';
-$mode = "default";
+$mode = "dneil";
 if($mode == "neil") {
 	$donepic='img/icon-check.png';
 	$nonepic='img/icon-cross.png';
+	$progpic='img/icon-bluestar.png';
 } else {
 	$donepic='img/green_circle.gif';
 	$nonepic='img/red_circle.gif';
+	$progpic='img/blue_circle.gif';
 }
-$progpic='img/blue_circle.gif';
 
 // If expId specified, don't show pulldowns, only session info
 if (!$expId){
