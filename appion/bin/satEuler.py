@@ -23,37 +23,39 @@ def getEulersForIteration(reconid, tiltrunid, iteration=1):
 	t0 = time.time()
 	query = (
 		"SELECT \n"
-			#+"	tiltd.`REF|ApParticleData|particle1` AS p1, \n"
-			#+"	tiltd.`REF|ApParticleData|particle2` AS p2, \n"
-			#+"	refd1.`iteration`, refd1.`REF|ApRefinementRunData|refinementRun` AS refRun1, \n"
-			#+"	refd2.`iteration`, refd2.`REF|ApRefinementRunData|refinementRun` AS refRun2, \n"
-			+"	e1.euler1 AS alt1, e1.euler2 AS az1, partclass1.`inplane_rotation` AS phi1, \n"
-			+"	e2.euler1 AS alt2, e2.euler2 AS az2, partclass2.`inplane_rotation` AS phi2 \n"
+			#+"  tiltd.`REF|ApParticleData|particle1` AS p1, \n"
+			#+"  tiltd.`REF|ApParticleData|particle2` AS p2, \n"
+			#+"  refd1.`iteration`, refd1.`REF|ApRefinementRunData|refinementRun` AS refRun1, \n"
+			#+"  refd2.`iteration`, refd2.`REF|ApRefinementRunData|refinementRun` AS refRun2, \n"
+			+"  e1.euler1 AS alt1, e1.euler2 AS az1, partclass1.`inplane_rotation` AS phi1, \n"
+			+"  e2.euler1 AS alt2, e2.euler2 AS az2, partclass2.`inplane_rotation` AS phi2, \n"
+			+"  stpart1.particleNumber AS partnum1, stpart2.particleNumber AS partnum2 \n"
 			+"FROM `ApTiltParticlePairData` AS tiltd \n"
 			+"LEFT JOIN `ApImageTiltTransformData` as transform \n"
-			+"	ON tiltd.`REF|ApImageTiltTransformData|transform`=transform.`DEF_id` \n"
+			+"  ON tiltd.`REF|ApImageTiltTransformData|transform`=transform.`DEF_id` \n"
 			+"LEFT JOIN `ApStackParticlesData` AS stpart1 \n"
-			+"	ON stpart1.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle1` \n"
+			+"  ON stpart1.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle1` \n"
 			+"LEFT JOIN `ApStackParticlesData` AS stpart2 \n"
-			+"	ON stpart2.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle2` \n"
+			+"  ON stpart2.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle2` \n"
 			+"LEFT JOIN `ApParticleClassificationData` AS partclass1 \n"
-			+"	ON partclass1.`REF|ApStackParticlesData|particle` = stpart1.`DEF_id` \n"
+			+"  ON partclass1.`REF|ApStackParticlesData|particle` = stpart1.`DEF_id` \n"
 			+"LEFT JOIN `ApParticleClassificationData` AS partclass2 \n"
-			+"	ON partclass2.`REF|ApStackParticlesData|particle` = stpart2.`DEF_id` \n"
+			+"  ON partclass2.`REF|ApStackParticlesData|particle` = stpart2.`DEF_id` \n"
 			+"LEFT JOIN `ApEulerData` AS e1 \n"
-			+"	ON partclass1.`REF|ApEulerData|eulers` = e1.`DEF_id` \n"
+			+"  ON partclass1.`REF|ApEulerData|eulers` = e1.`DEF_id` \n"
 			+"LEFT JOIN `ApEulerData` AS e2 \n"
-			+"	ON partclass2.`REF|ApEulerData|eulers` = e2.`DEF_id` \n"
+			+"  ON partclass2.`REF|ApEulerData|eulers` = e2.`DEF_id` \n"
 			+"LEFT JOIN `ApRefinementData` AS refd1 \n"
-			+"	ON partclass1.`REF|ApRefinementData|refinement` = refd1.`DEF_id` \n"
+			+"  ON partclass1.`REF|ApRefinementData|refinement` = refd1.`DEF_id` \n"
 			+"LEFT JOIN `ApRefinementData` AS refd2 \n"
-			+"	ON partclass2.`REF|ApRefinementData|refinement` = refd2.`DEF_id` \n"
+			+"  ON partclass2.`REF|ApRefinementData|refinement` = refd2.`DEF_id` \n"
 			+"WHERE transform.`REF|ApSelectionRunData|tiltrun` = "+str(tiltrunid)+" \n"
-			+"	AND refd1.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
-			+"	AND refd1.`iteration` = "+str(iteration)+" \n"
-			+"	AND refd2.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
-			+"	AND refd2.`iteration` = "+str(iteration)+" \n"
-			#+"	AND tiltd.`REF|ApParticleData|particle1` = 14234108 \n"
+			+"  AND refd1.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
+			+"  AND refd1.`iteration` = "+str(iteration)+" \n"
+			+"  AND refd2.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
+			+"  AND refd2.`iteration` = "+str(iteration)+" \n"
+			#+"  AND tiltd.`REF|ApParticleData|particle1` = 14234108 \n"
+			+"ORDER BY stpart1.particleNumber ASC \n"
 			#+"LIMIT 300 \n"
 		)
 
@@ -76,7 +78,9 @@ def getEulersForIteration(reconid, tiltrunid, iteration=1):
 	"""
 
 	f = open("eulerdata"+str(iteration)+".txt", "w")
+	k = open("keepfile"+str(iteration)+".lst", "w")
 	distlist = []
+	keepcount=0
 	for i in result:
 		r0,r1 = resToEuler(i)
 		#print r0
@@ -88,8 +92,16 @@ def getEulersForIteration(reconid, tiltrunid, iteration=1):
 		#print mat1
 		f.write(str(dist)+"\n")
 		distlist.append(dist)
+		if abs(dist - 15.0) < 5.0:
+			#print "o",str(int(i[6]))
+			keepcount+=1
+			k.write(str(int(i[6]-1))+"\n")
+			k.write(str(int(i[7]-1))+"\n")
+		#else:
+		#	print "x",str(int(i[6]))
 		#print "dist=",dist
 	f.close()
+	k.close()
 
 	freqnumpy = numpy.asarray(distlist, dtype=numpy.float32)
 	#print(freqlist)
@@ -173,10 +185,10 @@ def calculateDistance(m1,m2):
 		#print 'd',d
 		return d*180.0/math.pi
 
-
 if __name__ == "__main__":
 	#getEulersForIteration(reconid, tiltrunid, iteration=1):
-	for i in (8,5,7):
+	#for i in (8,5,7):
+	for i in (8,):
 		getEulersForIteration(186, 557, i)
 
 
