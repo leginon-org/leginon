@@ -41,6 +41,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	$file=$_GET['file'];
 	$templateId=$_GET['templateId'];
 	$norefId=$_GET['norefId'];
+	$norefClassId=$_GET['norefClassId'];
 	$stackId=$_GET['stackId'];
 
 	// Set any existing parameters in form
@@ -52,6 +53,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	if (!$templateId) $templateId = $_POST['templateId'];
 	if (!$stackId) $stackId = $_POST['stackId'];
 	if (!$norefId) $norefId = $_POST['norefId'];
+	if (!$norefClassId) $norefClassId = $_POST['norefClassId'];
 
 	// Set template path
 	if  ($file) {
@@ -158,7 +160,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 					<A HREF=\"javascript:infopopup('classpath')\">Stack/Class name & path</A>: $hed <BR/>	
 					Stack/NoRef Class ID: "; 
 	if ($norefId) {
-		echo "$norefId<BR/> <INPUT TYPE='hidden' NAME='norefId' VALUE='$norefId'>\n"; 
+		echo "$norefClassId<BR/> <INPUT TYPE='hidden' NAME='norefClassId' VALUE='$norefClassId'> <INPUT TYPE='hidden' NAME='norefId' VALUE='$norefId'>\n";
 	} elseif ($stackId){
 		 echo "$stackId<BR/> <INPUT TYPE='hidden' NAME='stackId' VALUE='$stackId'>\n";
 	}
@@ -237,6 +239,7 @@ function runUploadTemplate() {
 	$templateId=$_POST['templateId'];
 	$stackId=$_POST['stackId'];
 	$norefId=$_POST['norefId'];
+	$norefClassId=$_POST['norefClassId'];
 
 	//check if the template is an existing file (wild type is not searched)
 	if (!file_exists($template)) {
@@ -254,7 +257,7 @@ function runUploadTemplate() {
 	$command.="--description=\"$description\" ";
 	if ($templateId) $command.="--stackimgnum=$templateId ";
 	if ($stackId) $command.="--stackid=$stackId ";
-	if ($norefId) $command.="--norefid=$norefId ";
+	if ($norefClassId) $command.="--norefid=$norefClassId ";
 
 	writeTop("UploadTemplate Run", "UploadTemplate Params");
 
