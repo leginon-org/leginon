@@ -14,7 +14,7 @@ require "inc/viewer.inc";
 require "inc/processing.inc";
 require "inc/leginon.inc";
 
-$particledata=new particledata();
+$particle=new particledata();
 
 // check if coming directly from a session
 $expId=$_GET['expId'];
@@ -31,15 +31,15 @@ $projectId=$_POST['projectId'];
 
 /////////// temporary fix for new database //////////////
 
-$hasassrun=($particledata->getLastAssessmentRun($expId)) ? true : false;
+$hasassrun=($particle->getLastAssessmentRun($expId)) ? true : false;
 if ($hasassrun){
-	$assessmentrid=$particledata->getLastAssessmentRun($sessionId);
+	$assessmentrid=$particle->getLastAssessmentRun($sessionId);
 }
 else {
 	$assrundata['name']='run1';
 	$assrundata['REF|leginondata|SessionData|session']=$expId;
-	$particledata->mysql->SQLInsert('ApAssessmentRunData',$assrundata);
-	$assessmentrid=$particledata->getLastAssessmentRun($sessionId);
+	$particle->mysql->SQLInsert('ApAssessmentRunData',$assrundata);
+	$assessmentrid=$particle->getLastAssessmentRun($sessionId);
 }
 
 ////////////////////////////////////////////////////////
@@ -55,39 +55,107 @@ $sessioninfo=$sessiondata['info'];
 $presets=$sessiondata['presets'];
 
 // add preset choice of all presets
-array_push($presets, 'all');
-asort($presets);
-
+if ($presets) {
+	array_push($presets, 'all');
+	asort($presets);
+} else {
+	$presets=array('all');
+}
 if (!empty($sessioninfo)) {
 	$sessionpath=$sessioninfo['Image path'];
-	$sessionpath=ereg_replace("leginon","appion",$sessionpath);
-	$sessionpath=ereg_replace("rawdata","extract/",$sessionpath);
+	$extractpath=ereg_replace("leginon","appion",$sessionpath);
+	$extractpath=ereg_replace("rawdata","extract/",$extractpath);
+	$origjpgpath=ereg_replace("rawdata","jpgs/",$sessionpath);
 	$sessionname=$sessioninfo['Name'];
 }
 
-// if session is changed, change the output directory
-if (strlen($_POST['partpath']) > 10) {
-	$imgdir = $_POST['partpath'];
-} elseif (strlen($_POST['imgdir']) > 10) {
-	$imgdir = $_POST['imgdir'];
-} else {
-	$partrunid = $particledata->getLastParticleRun($sessionId);	
-	$partrundata = $particledata->getParticleRunData($partrunid);
-	if (strlen($partrundata['path']) > 10) {
-		$imgdir = $partrundata['path']."/jpgs/";
+// Collect all Possible in an array
+$run = array("label"=>"not selected","name"=>"as_input","imgtype"=>$_POST['imgtype'],"path"=>$_POST['imgdir']);
+$allruns = array($run);
+
+$run = array("label"=>"original mrcs","name"=>"rawdata","imgtype"=>"mrc","path"=>$sessionpath."/");
+$allruns[] = $run;
+
+if (file_exists($origjpgpath)) {
+	$run = array("label"=>"original jpg files","name"=>"jpg","imgtype"=>"jpg","path"=>$origjpgpath);
+	$allruns[] = $run;
+}
+
+$prtlrunInfos = $particle->getParticleRunIds($sessionId);
+$count = count($prtlrunInfos);
+$i = 0;
+while ($i < $count) {
+	$rindex = $count - 1 -$i;
+	$prtlrun = $prtlrunInfos[$rindex];
+	$runname=$prtlrun['name'];
+	$prtlstats=$particle->getStats($prtlrun['DEF_id']);
+	$totprtls=commafy($prtlstats['totparticles']);
+	if (strlen($prtlrun['path']) > 10) {
+		$partpath = $prtlrun['path']."/jpgs/";
 	} else {
-		// HACK for Particle Runs with out Path Data
-		$imgdir = $sessionpath."/".$partrundata['name']."/jpgs/";
+		// HACK for Particle Runs without Path Data
+		$partpath = $extractpath."/".$prtlrun['name']."/jpgs/";
+	}
+	$run = array("label"=>"particle picking: ".$runname." (".$totprtls." prtls)",
+		"name"=>"prtl_".$prtlrun['DEF_id'],"imgtype"=>"jpg","path"=>$partpath);
+	$allruns[] = $run;
+	$i++;
+}
+
+
+// Choose best combination of settings
+$lastimgrun = count($allruns)-1;
+
+if ($_POST['oldimgtype'] != $_POST['imgtype']) {
+	// Do not change $imgrun nor $imgdir if the change is $imgtype
+	$imgrun = $_POST['imgrun'];
+	$imgdir = $_POST['imgdir'];
+	$imgtype = $_POST['imgtype'];
+} else {
+	if ($_POST['imgrun'] or count($_POST)) {
+		// if selected run is changed, change the output directory etc.
+		$imgrun = $_POST['imgrun'];
+		if ($_POST['oldimgrun'] != $_POST['imgrun']) {
+			$imgdir = $allruns[$imgrun]['path'];
+			$imgtype = $allruns[$imgrun]['imgtype'];
+		
+		} else {
+
+			$imgdir = $_POST[imgdir];
+			$imgtype = $_POST[imgtype];
+		}
+	} else {
+		// default at first loading.
+		$imgrun = $lastimgrun;
+		$imgdir = $allruns[$lastimgrun]['path'];
+		$imgtype = $allruns[$lastimgrun]['imgtype'];
+	}
+
+	// if the output directory is specified so that is not in the available runs, change the run to "not selected"
+	for ($i = 1; $i <=$lastimgrun; $i++) {
+		$inselections += ($imgdir === $allruns[$i][path]) ? 1 : 0;
+	}
+
+	if ($inselections) {
+		$imgdir = $allruns[$imgrun][path];
+		$imgtype = $allruns[$imgrun][imgtype];
+	} else {
+		$imgrun = 0;
 	}
 }
 
+// save for future comparison
+echo "<INPUT TYPE='hidden' NAME='oldimgrun' VALUE='$imgrun'>";
+echo "<INPUT TYPE='hidden' NAME='oldimgtype' VALUE='$imgtype'>";
+
+// Display experiment info
 echo"<BR><A HREF='processing.php?expId=$sessionId'>[processing page]</A>\n";
 echo"<P>\n";
+
+// Read and Display images
 echo"<TABLE CLASS='tableborder' CELLPADING='10' CELLSPACING='5'>\n";
 echo"<TR><TD COLSPAN='3' ALIGN='CENTER'>\n";
 
-
-//$imgdir=$_POST['imgdir'];
 $files = array();
 $presettype = $_POST['presettype'];
 if ($presettype=='all') {
@@ -96,7 +164,8 @@ if ($presettype=='all') {
 	$typematch =$presettype;
 }
 
-if ($imgdir && strlen($imgdir) > 10) {
+
+if ($imgdir) {
 	// make sure imgdir ends with '/'
 	if (substr($imgdir,-1,1)!='/') $imgdir.='/';
 	if (!file_exists($imgdir))
@@ -105,7 +174,7 @@ if ($imgdir && strlen($imgdir) > 10) {
 		// open image directory
 		$pathdir=opendir($imgdir);
 		// get all files in directory, ordered by time created
-		$ext= $_POST['imgtype'] ? $_POST['imgtype'] : "jpg";
+		$ext= $imgtype ? $imgtype : "jpg";
 		$i=0;
 		while ($filename=readdir($pathdir)) {
 			if ($filename == '.' || $filename == '..') continue;
@@ -125,63 +194,48 @@ if ($imgdir && strlen($imgdir) > 10) {
 			// save sorted file list
 			foreach($files as $t) $fileList[] = $t[0];
 			// display image
-			displayImage($_POST,$fileList,$imgdir,$leginondata,$particledata,$assessmentrid);
+			displayImage($_POST,$fileList,$imgdir,$leginondata,$particle,$assessmentrid);
 		}
-		else echo"<FONT COLOR='#993333'>No files found in this directory with extension: $ext</FONT><HR>\n";
+		else echo"<FONT COLOR='#993333'>No file found in this directory with extension: $ext or preset: $presettype </FONT><HR>\n";
 	}
 
 }
 echo"</CENTER>\n";
 echo"<HR/></TD></TR>\n";
 
-//SELECT A PARTICLE RUN (EVENTUALLY AN ACE RUN?)
+//SELECT A RUN CONTAINING IMAGES
 echo"<TR ALIGN='CENTER'><TD VALIGN='TOP' COLSPAN='3'>\n";
-$particle = new particledata();
-$prtlrunIds = $particle->getParticleRunIds($sessionId);
-if (!$prtlrunIds) {
-	echo"<FONT COLOR='#993333' SIZE='-1'><B>No Particles picked for this Session</B></FONT>\n";
-} else {
-	echo "Select a particle run:
-	<SELECT NAME='partpath'>\n";
-	foreach ($prtlrunIds as $prtlrun){
-		$runname=$prtlrun['name'];
-		$prtlstats=$particle->getStats($prtlrun['DEF_id']);
-		$totprtls=commafy($prtlstats['totparticles']);
-		$partpath = $prtlrun['path']."/jpgs/";
-		if (strlen($partpath) > 10) { 
-			echo "<OPTION VALUE='$partpath'";
-			if ($imgdir == $partpath) echo " SELECTED";
-			echo">$runname ($totprtls particles)</OPTION>\n";
-		} else {
-			// HACK for Particle Runs with out Path Data
-			$trypath = $sessionpath."/".$runname."/jpgs/";
-			if (file_exists($trypath)) {
-				echo "<OPTION VALUE='$trypath'";
-				if ($imgdir == $partpath) echo " SELECTED";
-				echo">$runname ($totprtls particles)</OPTION>\n";
-			}
-		}			
-	}
-	echo "</SELECT>\n";
-	echo"<INPUT TYPE='BUTTON' onClick='this.form.submit()' VALUE='Select Particle Run'>\n";
-
+echo "Select a run with images:
+<SELECT NAME='imgrun' onchange='this.form.submit()'>\n";
+$i = 0;
+foreach ($allruns as $run){
+		echo "<OPTION VALUE=".$i." ";
+		$runname=$run['name'];
+		$s = ($imgrun==$i) ? " SELECTED": '';
+		echo " $s>".$run['label']."</OPTION>\n";
+		$i++;
 }
+echo "</SELECT>\n";
 
-echo"<BR/><BR/><HR/></TD></TR>\n";
+echo"<BR/><HR/></TD></TR>\n";
 
 // HEADER FORM FOR FILLING IMAGE PATH
 echo"<TR ALIGN='CENTER'><TD VALIGN='TOP'>\n";
 echo"&nbsp;<B>Image Directory:</B><BR>\n";
 echo"<INPUT TYPE='text' NAME='imgdir' VALUE='$imgdir' SIZE='60' onchange='this.form.submit()'></TD>\n";
+
+// IMAGE TYPE
 echo"<TD VALIGN='TOP'>\n";
 echo"<B>Image Type:</B><BR>\n";
 echo"<SELECT NAME='imgtype' onchange='this.form.submit()'>\n";
 foreach ($imgtypes as $type) {
-	$s = ($_POST['imgtype']==$type) ? 'SELECTED' : '';
+	$s = ($imgtype==$type) ? 'SELECTED' : '';
 	echo "<OPTION $s>$type</OPTION>\n";
 }
 echo"</SELECT>\n";
 echo"</TD>";
+
+// PRESET
 echo"<TD VALIGN='TOP'>\n";
 echo"<B>Preset:</B><BR>\n";
 echo"<SELECT NAME='presettype' onchange='this.form.submit()'>\n";
@@ -190,15 +244,14 @@ foreach ($presets as $type) {
 	echo "<OPTION $s>$type</OPTION>\n";
 }
 echo"</SELECT>\n";
-//echo"<INPUT TYPE='HIDDEN' NAME='binning' VALUE='$binning'>\n";
-echo"<BR/><BR/></TD></TR>\n";
+echo"<BR/></TD></TR>\n";
 
 echo"</TABLE>\n";
 echo"</FORM>\n";
 writeBottom();
 
 
-function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessmentrid) {
+function displayImage ($_POST,$files,$imgdir,$leginondata,$particle,$assessmentrid) {
 
 	$numfiles=count($files);
 	$imlst=$_POST['imagelist'];
@@ -206,9 +259,25 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 	$imgrescl= ($_POST['imgrescale']) ? $_POST['imgrescale'] : 0.5; 
 	//echo "<BR>\n";
 
-	// go directly to a particular image number
+	// go directly to a particular image by number or filename
 	if ($_POST['imgjump']) {
-		$key = array_search($_POST['imgjump'],$files);
+		// change the name to the same tail as the files
+		$pieces = explode(".", $files[0]);
+		if (count($pieces) > 1) {
+			$tailpieces = array_slice($pieces,1);
+			$tail = implode(".",$tailpieces);
+			$jpieces = explode(".", $_POST['imgjump']);
+			if (count($jpieces) > 1) {
+				$jhead = $jpieces[0];
+				$jumpimg = $jhead.'.'.$tail;
+			} else {
+				$jumpimg = $_POST['imgjump'];
+			}
+		} else {
+			$jumpimg = $_POST['imgjump'];
+		}
+
+		$key = array_search($jumpimg,$files);
 		if ($key) {
 			$imgindx=$key;
 		} else {
@@ -217,7 +286,8 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 		// make sure it's within range
 		if ($imgindx < 0) $imgindx=0;
 		elseif ($imgindx > $numfiles-1) $imgindx=$numfiles-1;
-		$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
+
+		$statdata=getImageStatus($files[$imgindx],$leginondata,$particle,$assessmentrid);
 	}
 	// otherwise, increment or decrement the displayed image
 	else {
@@ -227,10 +297,10 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 				if ($imgindx < 0) {
 					echo "<FONT COLOR='RED'> At beginning of image list</FONT><BR>\n";
 					$imgindx=0;
-					$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
+					$statdata=getImageStatus($files[$imgindx],$leginondata,$particle,$assessmentrid);
 					break;
 				}
-				$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
+				$statdata=getImageStatus($files[$imgindx],$leginondata,$particle,$assessmentrid);
 				if ($_POST['skipimages']!='none' && $statdata['status']=='no')
 					$found='FALSE';
 				elseif ($_POST['skipimages']=='all' && $statdata['status']=='yes')
@@ -240,17 +310,17 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 			}
 		}
 		elseif ($imlst=='Next' || $imlst=='Keep' || $imlst=='Remove') {
-			if($imlst=='Keep') $particledata->updateKeepStatus($_POST['imageid'],$assessmentrid,'1');
-			if($imlst=='Remove') $particledata->updateKeepStatus($_POST['imageid'],$assessmentrid,'0');
+			if($imlst=='Keep') $particle->updateKeepStatus($_POST['imageid'],$assessmentrid,'1');
+			if($imlst=='Remove') $particle->updateKeepStatus($_POST['imageid'],$assessmentrid,'0');
 			while ($found!='TRUE') {
 				$imgindx++;
 				if ($imgindx > $numfiles-1) {
 					echo "<FONT COLOR='RED'> At end of image list</FONT><BR>\n";
 					$imgindx=$numfiles-1;
-					$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
+					$statdata=getImageStatus($files[$imgindx],$leginondata,$particle,$assessmentrid);
 					break;
 				}
-				$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
+				$statdata=getImageStatus($files[$imgindx],$leginondata,$particle,$assessmentrid);
 				if ($_POST['skipimages']!='none' && $statdata['status']=='no')
 					$found='FALSE';
 				elseif ($_POST['skipimages']=='all' && $statdata['status']=='yes')
@@ -262,7 +332,7 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 		else {
 			if ($imlst=='First') $imgindx=0;
 			elseif ($imlst=='Last') $imgindx=$numfiles-1;
-			$statdata=getImageStatus($files[$imgindx],$leginondata,$particledata,$assessmentrid);
+			$statdata=getImageStatus($files[$imgindx],$leginondata,$particle,$assessmentrid);
 		}
 	}
 
@@ -291,23 +361,28 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particledata,$assessm
 	echo"</TD></TR></TABLE>\n";
 
 	//Scale factor, etc.
-	echo"<TABLE BORDER='0' CELLPADDING='10' CELLSPACING='5'>\n";
+	echo"<TABLE BORDER='0' CELLPADDING='0' CELLSPACING='5'>\n";
 	echo"<TR><TD ALIGN='LEFT'>\n";
 	echo"<FONT SIZE='+1'>Image $thisnum of $numfiles</FONT>\n";
 	echo"</TD><TD ALIGN='RIGHT'>";
-	echo"Jump to image:";
-	echo"<INPUT TYPE='text' NAME='imgjump' SIZE='5'>\n";
+	echo"<TABLE BORDER='0' CELLPADDING='0' CELLSPACING='2'>\n";
+	echo"<TR><TD ALIGN='RIGHT'>\n";
+	echo"Jump to image:<br>";
+	echo"(name or number)\n";
+	echo"</TD><TD ALIGN='LEFT'>\n";
+	echo"<INPUT TYPE='text' NAME='imgjump' SIZE='5'>";
+	echo"</TD></TR></TABLE>";
 	echo"</TD><TD ALIGN='RIGHT'>\n";
-	echo"Scale Factor:<INPUT TYPE='text' NAME='imgrescale' VALUE='$imgrescl' SIZE='4'>\n";
+	echo"Scale Factor: <INPUT TYPE='text' NAME='imgrescale' VALUE='$imgrescl' SIZE='4'>\n";
 	echo"</TD></TR><TR><TD ALIGN='CENTER' COLSPAN='3'>\n";
 	$skipallcheck=($_POST['skipimages']=='all') ? 'CHECKED' : '';
 	$skiprejcheck=($_POST['skipimages']=='rejectonly') ? 'CHECKED' : '';
 	$skipcheck=($_POST['skipimages']!='all' && $_POST['skipimages']!='rejectonly') ? 'CHECKED' : '';
 	echo"<input type='radio' name='skipimages' value='all' $skipallcheck>Skip all assessed images&nbsp;\n";
-	//echo "<INPUT TYPE='CHECKBOX' NAME='skipdone' $skipcheck>Skip assessed images&nbsp;\n";
+	//echo "<INPUT TYPE='CHECKBOX' NAME='skipdone' $skipcheck>Skip assessed images\n";
 	echo"<input type='radio' name='skipimages' value='rejectonly' $skiprejcheck>Skip only rejected images\n";
-	echo"<input type='radio' name='skipimages' value='none' $skipcheck>Show all images<BR>\n";
-	//echo "<INPUT TYPE='CHECKBOX' NAME='skiprejected' $skiprejcheck>Skip rejected images<BR>\n"; 
+	echo"<input type='radio' name='skipimages' value='none' $skipcheck>Show all images\n";
+	//echo "<INPUT TYPE='CHECKBOX' NAME='skiprejected' $skiprejcheck>Skip rejected images\n"; 
 	echo"</TD></TR></TABLE>\n</CENTER>\n";
 }
 
@@ -328,14 +403,13 @@ function printToolBar() {
 	echo"</TD></TR></TABLE>";
 }
 
-function getImageStatus ($imgname,$leginondata,$particledata,$assessmentrid) {
+function getImageStatus ($imgname,$leginondata,$particle,$assessmentrid) {
 	// get the status of the image index
-	//$particledata2=new particledata();
 	
 	$imgbase=split("\.",$imgname);
 	$imgbase=$imgbase[0].".mrc";
 	$statdata['id']=$leginondata->getId(array('MRC|image'=>$imgbase),'AcquisitionImageData','DEF_id');
-	$statdata['status']=$particledata->getKeepStatus($statdata['id'],$assessmentrid);
+	$statdata['status']=$particle->getKeepStatus($statdata['id'],$assessmentrid);
 	$statdata['name']=$imgname;
 	return $statdata;
 }
