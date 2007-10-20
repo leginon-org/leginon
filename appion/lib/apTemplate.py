@@ -215,13 +215,12 @@ def insertTemplateImage(params):
 		if params['stackid'] is not None:
 			templateq['stack'] = appiondb.direct_query(appionData.ApStackData, params['stackid'])
 		if params['stackimgnum'] is not None:
-			templateq['stack_image_num']=params['stackimgnum']
+			#templateq['stack_image_num']=int(params['stackimgnum'])
 		templateq['description']=params['description']
 		templateq['project|projects|project']=params['projectId']
 		if params['commit'] is True:
 			time.sleep(2)
 			appiondb.insert(templateq)
-
 	return
 
 def checkTemplateParams(runq, params):
