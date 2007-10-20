@@ -10,6 +10,7 @@
 $filename=$_GET['file'];
 $expId =$_GET['expId'];
 $norefId=$_GET['norefId'];
+$norefClassId=$_GET['norefClassId'];
 $stackId=$_GET['stackId'];
 
 $updateheader=($_GET['uh']==1) ? 1 : 0;
@@ -57,6 +58,7 @@ var updateheader="<?=$updateheader?>"
 var expId="<?=$expId?>"
 var filename="<?=$filename?>"
 var norefId="<?=$norefId?>"
+var norefClassId="<?=$norefClassId?>"
 var stackId="<?=$stackId?>"
 
 function displaystack(startImg, endImg, force) {
@@ -123,7 +125,7 @@ function upload() {
 			window.open("uploadtemplate.php?expId="+expId+"&templateId="+templateId+"&stackId="+stackId+"&file="+filename+"","width=400,height=200")
 		}
 		if (norefId!="") {
-			window.open("uploadtemplate.php?expId="+expId+"&templateId="+templateId+"&norefId="+norefId+"&file="+filename+"","width=400,height=200") 
+			window.open("uploadtemplate.php?expId="+expId+"&templateId="+templateId+"&norefId="+norefId+"&norefClassId="+norefClassId+"&file="+filename+"","width=400,height=200") 
 		}
 	}
 }
