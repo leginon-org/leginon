@@ -33,7 +33,7 @@ function getHosts(){
 	return array();
 }
 
-function writeTop($title,$heading,$headerstuff=false,$showloginerror=True){
+function writeTop($title,$heading=false,$headerstuff=false,$showloginerror=True){
   global $_GET;
   echo"<HTML>
   <HEAD>
@@ -56,7 +56,7 @@ function writeTop($title,$heading,$headerstuff=false,$showloginerror=True){
     $_SESSION['loggedin']=True;
   }
   elseif ($showloginerror==True) {
-    echo "<FONT COLOR='red'><B>WARNING:</B> You cannot submit jobs without logging in</FONT>\n";
+    echo "<FONT COLOR='red'><B>WARNING:</B> You cannot submit jobs without logging in</FONT> <A CLASS='header' HREF='login.php?expId=$_GET[expId]&prev=$_SERVER[PHP_SELF]'>[Log In]</A>\n";
   }
   echo"<HR>\n";
 }
@@ -69,6 +69,33 @@ function writeBottom(){
   </CENTER>
   </BODY>
   </HTML>\n";
+}
+
+function displayLogin($formAction) {
+  echo "<FORM NAME='jobform' method='POST' ACTION='$formAction'>\n";
+  echo "<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='5'>\n";
+  echo "<TR><TD>\n";
+  echo "Username: <INPUT TYPE='text' name='username' value='$_POST[username]'>\n";
+  echo "Password: <INPUT TYPE='password' name='password'><BR>\n";
+  echo "<CENTER><INPUT TYPE='submit' NAME='login' VALUE='Log In'></CENTER>\n";
+  echo "</TD></TR>\n";
+  echo "</TABLE>\n";
+  echo "</FORM>\n";  
+}
+
+function checkLogin() {
+  // if everything is cool, then return nothing
+  if (!$_SESSION['username']) {
+    if (!$_POST['username'] || !$_POST['password']) return("ERROR: enter your user name and password");
+    // authenticate username & password
+    if (!check_ssh($_SERVER['HTTP_HOST'],$_POST['username'],$_POST['password'])) return("ERROR: authentication failed");
+    ## save username and password to the session
+    $_SESSION['username']=$_POST['username'];
+    $_SESSION['password']=$_POST['password'];
+    unset($_POST['username']);
+    unset($_POST['password']);
+  }
+  return;
 }
 
 function getProjectList() {
