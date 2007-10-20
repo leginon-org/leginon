@@ -2,6 +2,7 @@
 # Python script to upload a template to the database, and prepare images for import
 
 import os
+import apDB
 import sys
 import re
 import shutil
@@ -9,10 +10,13 @@ from optparse import OptionParser
 import apUpload
 import apParam
 import apTemplate
+import apStack
 import apDisplay
 import apDatabase
+import appionData
 import glob
 
+appiondb = apDB.apdb
 
 def parseCommandLine():
 	usage = ( "Usage: %prog --template=<name> --apix=<pixel> --session=<session> --diam=<int> "
@@ -83,20 +87,72 @@ if __name__ == '__main__':
 		apDisplay.printMsg("Using stack to make template")
 		#get stack data (path, file)
 		stackdata = apStack.getOnlyStackData(params['stackid'])
-		stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
-		#run proc2d with params['stackimgnum']
-		#Add file names to params['templatelist']
+		stackpath = (stackdata['path'])['path']
+		stackname = stackdata['name']
+		absstackpath = os.path.join(stackpath,stackname)
+
+		#check to see if stackimagenum is within the boundary of the stack
+		stacksize = len(apStack.getStackParticlesFromId(params['stackid']))
+
+		#make sure that params['stackimgnum'] is less than the num of particles in the stack
+		if params['stackimgnum'] < stacksize and params['stackimgnum'] >= 0:
+			templatename = "template"+str(params['stackimgnum'])+".mrc"
+			abstemplatepath= os.path.join(stackpath,templatename)
+			
+			#run proc2d with params['stackimgnum']
+			print "creating "+templatename+" in "+stackpath+"...\n"
+			cmd = "proc2d %s %s first=%i last=%i" %(absstackpath, abstemplatepath, params['stackimgnum'], params['stackimgnum'])
+			f=os.popen(cmd)
+			f.close()
+			#Add file names to params['templatelist']
+			params['templatelist'] = []
+			params['templatelist'].append(abstemplatepath)
+
 	elif params['norefid'] is not None:
 		apDisplay.printMsg("Using reference-free class to make template")
-		#get noref class data (path, file)
-		#run proc2d with params['stackimgnum']
+		norefClassdata=appiondb.direct_query(appionData.ApNoRefClassRunData, params['norefid'])
+		
+		#Get class average file path through ApNoRefRunData
+		norefRun=norefClassdata['norefRun']
+		norefpath = (norefRun['path'])['path']
+		norefname = norefRun['name']
+		norefpath = os.path.join(norefpath,norefname)
+				
+		#Get class average file name
+		norefClassFile = norefClassdata['classFile']
+		norefClassFile+=".img"
+
+		#complete path of the class average file
+		absnorefpath = os.path.join(norefpath,norefClassFile)
+		print absnorefpath
+
+		#get the num of classes
+		classnum = norefClassdata['num_classes']
+		
+		#make sure that params['stackimgnum'] is less than the num of classes
+		if params['stackimgnum'] < classnum and params['stackimgnum'] >= 0:
+			templatename = "template"+str(params['stackimgnum'])+".mrc"
+			abstemplatepath= os.path.join(norefpath,templatename)
+
+			#run proc2d with params['stackimgnum']
+			print "creating "+templatename+" in "+norefpath+"...\n"
+			cmd = "proc2d %s %s first=%i last=%i" %(absnorefpath, abstemplatepath, params['stackimgnum'], params['stackimgnum'])
+			print cmd
+			f=os.popen(cmd)
+			f.close() 
+		
 		#Add file names to params['templatelist']
+		params['templatelist'] = []
+		params['templatelist'].append(abstemplatepath)
 	else:
 		apDisplay.printMsg("Using file to upload template")
 		#find the number of template files
 		apTemplate.findTemplates(params)
-		# copy templates to final location
-		apTemplate.copyTemplatesToOutdir(params)
+		
+
+	print params['templatelist']
+	# copy templates to final location
+	apTemplate.copyTemplatesToOutdir(params)
 
 	apUpload.getProjectId(params)
 
