@@ -262,9 +262,9 @@ def resetVirtualFrameBuffer():
 	os.popen("killall Xvfb");
 	#os.system("kill `ps -U "+user+" | grep Xvfb | sed \'s\/pts.*$\/\/\'`");
 	time.sleep(1);
-	os.popen("Xvfb :1 -screen 0 800x800x8 &");
+	os.popen("Xvfb :2 -screen 0 800x800x8 &");
 	time.sleep(1);
-	os.environ["DISPLAY"] = ":1"
+	os.environ["DISPLAY"] = ":2"
 	#if 'bash' in os.environ.get("SHELL"):
 	#	system("export DISPLAY=':1'");	
 	#else
@@ -326,7 +326,7 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stac
 
 def runChimeraScript(chimscript):
 	apDisplay.printColor("Trying to use chimera for model imaging","cyan")
-	#resetVirtualFrameBuffer()
+	resetVirtualFrameBuffer()
 	if 'CHIMERA' in os.environ and os.path.isdir(os.environ['CHIMERA']):
 		chimpath = os.environ['CHIMERA']
 	else:
