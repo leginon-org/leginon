@@ -326,7 +326,7 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stac
 
 def runChimeraScript(chimscript):
 	apDisplay.printColor("Trying to use chimera for model imaging","cyan")
-	resetVirtualFrameBuffer()
+	#resetVirtualFrameBuffer()
 	if 'CHIMERA' in os.environ and os.path.isdir(os.environ['CHIMERA']):
 		chimpath = os.environ['CHIMERA']
 	else:
@@ -372,19 +372,23 @@ def insertRefinementRun(params):
 
 	apDisplay.printMsg("inserting Refinement Run into database")
 	if params['commit'] is True:
-		appiondb.insert(runq)
+		runq.insert()
+		#appiondb.insert(runq)
 	else:
 		apDisplay.printWarning("not committing results to database")
 
+	#if we insert runq then this returns no results !!!
 	result = appiondb.query(runq, results=1)
-		
+
 	# save run entry in the parameters
 	if result:
 		params['refinementRun'] = result[0]
 	elif params['commit'] is True:
-		apDisplay.printError("Refinement Run was not found")
+		#apDisplay.printError("Refinement Run was not found")
+		apDisplay.printWarning("Refinement Run was not found, setting to inserted values")
+		params['refinementRun'] = runq		
 	else:
-		apDisplay.printWarning("Refinement Run was not found")
+		apDisplay.printWarning("Refinement Run was not found, setting to 'None'")
 		params['refinementRun'] = None
 	return True
 
