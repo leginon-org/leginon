@@ -140,36 +140,8 @@ def processAndSaveImage(imgdata, params):
 	return
 
 def getFindEMPath():
-	findempath = None
-	trypath = os.environ.get('FINDEM_EXE')
- 	if trypath is not None and os.path.isfile(trypath):
-		findempath = trypath
-	if findempath is None:
-		trypath = os.path.join(apParam.getAppionDirectory(), 'bin', 'findem.exe')
-	 	if os.path.isfile(trypath):
-			findempath = trypath
-	if findempath is None and os.environ.get('APPIONDIR') is not None:
-		appiondir = os.environ.get('APPIONDIR')
-		trypath = os.path.join(appiondir,"/bin/findem.exe")
-	 	if os.path.isfile(trypath):
-			findempath = trypath
-	if findempath is None:
-		user = os.getlogin() #os.environ.get('USER')
-		trypath = "/home/"+user+"/pyappion/bin/findem.exe"
-	 	if os.path.isfile(trypath):
-			findempath = trypath
-	if findempath is None:
-		libdir = os.path.dirname(__file__)
-		libdir = os.path.abspath(libdir)
-		appiondir = os.path.dirname(libdir)
-		trypath = os.path.join(appiondir, 'bin', 'findem.exe')
-	 	if os.path.isfile(trypath):
-			findempath = trypath
-	if findempath is None:
-		trypath = os.path.join(appiondir, 'particle_manager', 'findem.exe')
-	 	if os.path.isfile(trypath):
-			findempath = trypath
-	if findempath is None:
-		apDisplay.printError("findem.exe was not found.\n"+
-			"Did you source useappion.sh?")
+	findempath = os.path.join(apParam.getAppionDirectory(), 'bin', 'findem.exe')
+ 	if not os.path.isfile(findempath):
+		apDisplay.printError("findem.exe was not found at: "+findempath)
 	return findempath
+
