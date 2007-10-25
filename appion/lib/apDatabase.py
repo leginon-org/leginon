@@ -297,8 +297,28 @@ def getDarkNorm(sessionname, cameraconfig):
 
 	return result
 
+
+def isModelInDB(md5sum):
+	modelq = appionData.ApInitialModelData()
+	modelq['md5sum'] = md5sum
+	modeld = modelq.query(results=1)
+	if modeld:
+		return True
+	return False
+	
+def isTemplateInDB(md5sum):
+	templq = appionData.ApTemplateImageData()
+	templq['md5sum'] = md5sum
+	templd = templq.query(results=1)
+	if templd:
+		return True
+	return False
+
+
 if __name__ == '__main__':
 	id = 442
 	stackdata = appiondb.direct_query(appionData.ApStackData,id)
 	stackapix = getApixFromStackData(stackdata)
 	print stackapix
+
+
