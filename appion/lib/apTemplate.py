@@ -211,11 +211,11 @@ def insertTemplateImage(params):
 		templateq['diam']=params['diam']
 		templateq['md5sum']=md5sum 
 		if params['norefid'] is not None:
-			templateq['noref'] = appiondb.direct_query(appionData.ApNoRefClassData, params['norefid'])
+			templateq['noref'] = appiondb.direct_query(appionData.ApNoRefClassRunData, params['norefid'])
 		if params['stackid'] is not None:
 			templateq['stack'] = appiondb.direct_query(appionData.ApStackData, params['stackid'])
 		if params['stackimgnum'] is not None:
-			#templateq['stack_image_num']=int(params['stackimgnum'])
+			templateq['stack_image_number']=int(params['stackimgnum'])
 		templateq['description']=params['description']
 		templateq['project|projects|project']=params['projectId']
 		if params['commit'] is True:
