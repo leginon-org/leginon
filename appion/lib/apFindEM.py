@@ -145,7 +145,6 @@ def getFindEMPath():
  	if trypath is not None and os.path.isfile(trypath):
 		findempath = trypath
 	if findempath is None:
-		user = os.environ.get('USER')
 		trypath = os.path.join(apParam.getAppionDirectory(), 'bin', 'findem.exe')
 	 	if os.path.isfile(trypath):
 			findempath = trypath
@@ -155,7 +154,7 @@ def getFindEMPath():
 	 	if os.path.isfile(trypath):
 			findempath = trypath
 	if findempath is None:
-		user = os.environ.get('USER')
+		user = os.getlogin() #os.environ.get('USER')
 		trypath = "/home/"+user+"/pyappion/bin/findem.exe"
 	 	if os.path.isfile(trypath):
 			findempath = trypath

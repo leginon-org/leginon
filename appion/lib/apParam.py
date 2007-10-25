@@ -37,7 +37,7 @@ def getAppionDirectory():
 		appiondir = trypath
 		return appiondir
 
-	user = os.environ.get('USER')
+	user = os.getlogin() #os.environ.get('USER')
 	trypath = "/home/"+user+"/pyappion"
  	if os.path.isdir(trypath):
 		appiondir = trypath
@@ -69,7 +69,7 @@ def writeFunctionLog(commandline, params=None, logfile=None):
 		logfile = getFunctionName(sys.argv[0])+".log"
 	apDisplay.printMsg("writing function log to: "+logfile)
 	#WRITE INFO
-	user = os.environ.get('USER')
+	user = os.getlogin() #os.environ.get('USER')
 	host = socket.gethostname()
 	timestamp = "[ "+user+"@"+host+": "+time.asctime()+" ]\n"
 	out=""
