@@ -368,7 +368,7 @@ function runAlignment() {
 //	$command.="source /ami/sw/share/python/usepython.csh common32;";
 //	$command.="source /home/$user/pyappion/useappion.csh;";
 	$command.="refBasedAlignment.py ";
-	$command .= templateCommand();
+	$command.="refids=".templateCommand()." ";
 	$command.="runid=$runid ";
 	$command.="stackid=$stackid ";
 	//$command.="refid=$refid ";
@@ -398,7 +398,7 @@ function runAlignment() {
 	</TD></TR>
 	<TR><TD>runid</TD><TD>$runid</TD></TR>
 	<TR><TD>stackid</TD><TD>$stackid</TD></TR>
-	<TR><TD>refid</TD><TD>$refid</TD></TR>
+	<TR><TD>refids</TD><TD>".templateCommand()."</TD></TR>
 	<TR><TD>iter</TD><TD>$iters</TD></TR>
 	<TR><TD>numpart</TD><TD>$numpart</TD></TR>
 	<TR><TD>maskdiam</TD><TD>$maskdiam</TD></TR>
@@ -429,7 +429,7 @@ function templateCommand () {
 		$templateIds.="$tmpltId,";
 	}
 	$templateIds=substr($templateIds,0,-1);
-
+	return $templateIds;
 	$command.="refids=$templateIds ";
 	return $command;
 }
