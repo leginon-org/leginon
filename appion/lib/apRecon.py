@@ -259,11 +259,15 @@ def getClassInfo(classes):
 
 
 def resetVirtualFrameBuffer():
-	user = os.getlogin() #os.environ["USER"]
+	#user = os.getlogin() #os.environ["USER"]
 	os.popen("killall Xvfb");
 	#os.system("kill `ps -U "+user+" | grep Xvfb | sed \'s\/pts.*$\/\/\'`");
 	time.sleep(1);
-	port = str(int(random.random()*20+2))
+	port = 1
+	while (port%10 == 0 or port%10 == 1):
+		port = int(random.random()*30+2)
+	port = str(port)
+	apDisplay.printMsg("opening Xvfb port "+port)
 	os.popen("Xvfb :"+port+" -screen 0 800x800x8 &");
 	time.sleep(1);
 	os.environ["DISPLAY"] = ":"+port
