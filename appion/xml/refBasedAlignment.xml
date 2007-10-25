@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<classifier>
+ <outdir>
+	<name>output directory</name>
+	<default></default>
+	<description>Output directory for storing output files</description>
+	<type>path</type>
+	<default>stack directory</default>
+	<database>True</database>
+ </outdir>
+ <runid>
+	<name>run id</name>
+	<default>class1</default>
+	<description>Name of run id</description>
+	<type>string</type>
+	<required>True</required>
+ </runid>
+ <diam>
+	<name>diam</name>
+	<default></default>
+	<description>Particle diameter in angstroms</description>
+	<type>float</type>
+	<range>1,1500</range>
+ </diam>
+ <lp>
+	<name>original lowpass radius</name>
+	<default></default>
+	<description>Original lowpass radius in angstroms used for first ring</description>
+	<type>float</type>
+	<range>1,1500</range>
+ </lp>
+ <bin>
+	<name>binning</name>
+	<default>1</default>
+	<description>Bin size for images (must be power of 2)</description>
+	<type>integer</type>
+	<list>1,2,4,8,16,32,64</list>
+	<modify>Flase</modify>
+ </bin>
+ <commit>
+	<name>commit</name>
+	<default>False</default>
+	<description>Commit results to database</description>
+	<type>boolean</type>
+ </commit>
+ <description>
+	<name>description</name>
+	<default></default>
+	<description>Description of processing run</description>
+	<type>string</type>
+ </description>
+ <maskdiam>
+	<name>mask</name>
+	<default></default>
+	<description>Mask diameter in angstroms</description>
+	<type>float</type>
+	<range>1,1500</range>
+ </maskdiam>
+ <stackid>
+	<name>stack primary key</name>
+	<default></default>
+	<description>ID of the Stack to use</description>
+	<type>int</type>
+	<required>True</required>
+	<range>1,1500</range>
+ </stackid>
+ <numclass>
+	<name>number of classes</name>
+	<default>40</default>
+	<description>Number of classes to create (can be modified after finishing)</description>
+	<type>int</type>
+	<range>1,1500</range>
+ </numclass>
+ <numpart>
+	<name>number of particles</name>
+	<default>3000</default>
+	<description>Number of particles to use (WARNING: speed goes like n^2)</description>
+	<type>int</type>
+	<range>1,15000</range>
+ </numpart>
+</classifier>

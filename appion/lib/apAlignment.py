@@ -49,6 +49,7 @@ def getAppionDir(params):
 	return params['appiondir']
 
 def runHelp(params):
+	functionname = os.path.basename(sys.argv[0]).split(".")[0]
 	funcxml = os.path.join(params['appiondir'],"xml",functionname+".xml")
 	xmldict = apXml.readOneXmlFile(funcxml)
 	apXml.printHelp(xmldict)

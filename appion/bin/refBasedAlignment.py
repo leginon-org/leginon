@@ -8,7 +8,7 @@ import apParam
 
 if __name__ == "__main__":
 	params = apAlignment.defaults()
-	params['appiondir'] = apParam.getAppionDir()
+	params['appiondir'] = apParam.getAppionDirectory()
 	apAlignment.cmdline(sys.argv[1:], params)
 	apAlignment.conflicts(params)
 	apAlignment.refconflicts(params)
