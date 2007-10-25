@@ -4,6 +4,7 @@ import os, re, sys, time
 import tempfile
 import cPickle
 import math
+import random
 import string
 import appionData
 import apDB
@@ -262,9 +263,10 @@ def resetVirtualFrameBuffer():
 	os.popen("killall Xvfb");
 	#os.system("kill `ps -U "+user+" | grep Xvfb | sed \'s\/pts.*$\/\/\'`");
 	time.sleep(1);
-	os.popen("Xvfb :2 -screen 0 800x800x8 &");
+	port = str(int(random.random()*20+2))
+	os.popen("Xvfb :"+port+" -screen 0 800x800x8 &");
 	time.sleep(1);
-	os.environ["DISPLAY"] = ":2"
+	os.environ["DISPLAY"] = ":"+port
 	#if 'bash' in os.environ.get("SHELL"):
 	#	system("export DISPLAY=':1'");	
 	#else
