@@ -140,9 +140,12 @@ def copyTemplatesToOutdir(params):
 			mdold = apFile.md5sumfile(old)
 			if mdnew != mdold:
 				apDisplay.printError("a different template with name \'"+new+"\' already exists!")
+			elif apDatabase.isTemplateInDB(mdnew):
+				apDisplay.printWarning("same template with md5sum \'"+mdnew+"\' already exists in the DB!")
+				apDisplay.printMsg("skipping template \'"+old+"\'")
 			else:
 				apDisplay.printWarning("the same template with name \'"+new+"\' already exists!")
-				apDisplay.printMsg("skipping template \'"+old+"\'")
+				newlist.append(base)
 		else:
 			#template is okay to copy and insert
 			apDisplay.printMsg("copying file "+old+" to "+new)
@@ -221,6 +224,8 @@ def insertTemplateImage(params):
 		if params['commit'] is True:
 			time.sleep(2)
 			appiondb.insert(templateq)
+		else:
+			apDisplay.printWarning("Not commiting template to DB")
 	return
 
 def checkTemplateParams(runq, params):

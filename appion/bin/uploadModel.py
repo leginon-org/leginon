@@ -8,6 +8,7 @@ import re
 import shutil
 import apUpload
 import apParam
+import apFile
 import apDisplay
 import apDatabase
 import apRecon
@@ -54,23 +55,34 @@ if __name__ == '__main__':
 	apUpload.checkSymInfo(params)
 
 	new = os.path.join(params['outdir'], params['name'])
-
+	old = os.path.join(params['path'], params['name'])
 	if os.path.isfile(new):
-		apDisplay.printError("model \'"+new+"\' already exists!\n")
-
-	# if rescaling an old template:
-	if params['rescale'] is True:
-		# get model to be rescaled
-		oldmod = apVolume.getModelFromId(params['origmodel'])
-		old = os.path.join(oldmod['path']['path'],oldmod['name'])
-		apVolume.rescaleModel(old,new,float(oldmod['pixelsize']),params['newapix'],params['newbox'])
-		# set new ang/pix of the rescaled model
-		params['apix']=params['newapix']
-
-	# otherwise, copy templates to final location
+		mdnew = apFile.md5sumfile(new)
+		mdold = apFile.md5sumfile(old)
+		if mdnew != mdold:
+			apDisplay.printError("a different model with name \'"+new+"\' already exists!")
+		elif apDatabase.isModelInDB(mdnew):
+			apDisplay.printWarning("same model with md5sum \'"+mdnew+"\' already exists in the DB!")
+			apDisplay.printMsg("skipping model \'"+old+"\'")
+			params['commit'] = False
+		else:
+			apDisplay.printWarning("the same model with name \'"+new+"\' already exists!")
+			apDisplay.printMsg("skipping model \'"+old+"\'")
 	else:
-		old = os.path.join(params['path'], params['name'])
-		shutil.copy(old, new)
+		# if rescaling an old template:
+		if params['rescale'] is True:
+			# get model to be rescaled
+			oldmod = apVolume.getModelFromId(params['origmodel'])
+			old = os.path.join(oldmod['path']['path'], oldmod['name'])
+			apDisplay.printMsg("rescaling model "+old+" to "+new)
+			apVolume.rescaleModel(old, new, float(oldmod['pixelsize']), params['newapix'], params['newbox'])
+			# set new ang/pix of the rescaled model
+			params['apix'] = params['newapix']
+		# otherwise, copy templates to final location
+		else:
+			old = os.path.join(params['path'], params['name'])
+			apDisplay.printMsg("copying file "+old+" to "+new)
+			shutil.copy(old, new)
 
 	# only allow user read access just so they don't get deleted
 	os.chmod(new, 0666)
@@ -81,15 +93,19 @@ if __name__ == '__main__':
 	
 	# upload Initial Model
 	apUpload.getProjectId(params)
-	if params['commit'] is True:
-		apUpload.insertModel(params)
 
 	# render images of initial model
 	initmodel={}
-	initmodel['pixelsize']=params['apix']
-	initmodel['boxsize']=params['box']
-	initmodel['symmetry']=params['syminfo']
-	apRecon.renderSnapshots(modelname,params['res'],initmodel,params['contour'],params['zoom'])
+	initmodel['pixelsize'] = params['apix']
+	initmodel['boxsize']   = params['box']
+	initmodel['symmetry']  = params['syminfo']
+	apRecon.renderSnapshots(modelname, params['res'], initmodel, params['contour'], params['zoom'])
+
+	apDisplay.printMsg("commiting model to database")
+	if params['commit'] is True:
+		apUpload.insertModel(params)
+	else:
+		apDisplay.printWarning("not commiting model to database")
 
 
 
