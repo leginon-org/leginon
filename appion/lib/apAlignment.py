@@ -272,7 +272,7 @@ def createSpiderRefFile(params):
 		apImage.arrayToMrc(scaleRefArray, tmpreffile)
 
 		#set outfile name
-		outfile = "reference00"+str(i)+".spi"
+		outfile = os.path.join(params['rundir'], "reference00"+str(i)+".spi")
 		if os.path.isfile(outfile):
 			apDisplay.printWarning(outfile+" already exists; removing it")
 			time.sleep(2)
@@ -287,7 +287,12 @@ def createSpiderRefFile(params):
 			emancmd += "lp="+str(params['lp'])+" "
 		emancmd += "spiderswap "
 		apDisplay.printColor("Converting reference "+str(i)+" to spider format for template="+str(refid),"cyan")
-		apEMAN.executeEmanCmd(emancmd, verbose=True)
+		apEMAN.executeEmanCmd(emancmd, verbose=False)
+
+		if len(params['refids']) == 1:
+			#don't break for single template case
+			oldreffile = os.path.join(params['rundir'], "reference.spi")
+			shutil.copy(outfile, oldreffile)
 	return
 
 def averageTemplate(params):
