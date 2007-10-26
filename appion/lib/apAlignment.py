@@ -405,6 +405,8 @@ def createRefSpiderBatchFile(params,iteration):
 				outf.write(spiderline(95,params['xysearch'],"translational search range (in pixels)"))
 			elif re.search("^x93",line):
 				outf.write(spiderline(93,params['csym'],"c-symmetry (rotational symmetry to be applied, 1 if none)"))
+			elif re.search("^x92",line):
+				outf.write(spiderline(92,iteration,"iteration number"))
 			elif re.search("^\[stack\]",line):
 				outf.write(spiderline("stack",os.path.join(params['rundir'],'start')))
 			elif re.search("^\[aligned\]",line):
