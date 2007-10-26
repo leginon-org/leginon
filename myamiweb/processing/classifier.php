@@ -22,7 +22,7 @@ if ($_POST['process']) {
 	createClassifierForm();
 }
 
-function createClassifierForm($extra=false, $title='Classifier.py Launcher', $heading='Create an 2D Classification') {
+function createClassifierForm($extra=false, $title='classifier.py Launcher', $heading='Reference Free Classification') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 	if ($expId){
