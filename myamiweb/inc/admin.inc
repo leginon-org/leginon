@@ -8,7 +8,7 @@
  */
 
 require('inc/leginon.inc');
-if ($leginondata->checkdb)
+if ($leginondata->mysql->checkDBConnection())
 	$leginondata->importTables($DEF_TABLES_FILE);
 
 function admin_header($javascriptinit="") {
