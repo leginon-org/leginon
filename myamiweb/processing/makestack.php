@@ -414,6 +414,8 @@ function runMakestack() {
 	if ($bin) {
 		if (!is_numeric($bin)) createMakestackForm("<B>ERROR:</B> Binning amount must be 2, 4, 8, 16, 32...");
 	}
+	// don't bother with bin if it's just 1
+	if ($bin == 1) $bin='';
 
 	// box size
 	$boxsize = $_POST['boxsize'];
