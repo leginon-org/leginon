@@ -272,7 +272,7 @@ def createSpiderRefFile(params):
 		apImage.arrayToMrc(scaleRefArray, tmpreffile)
 
 		#set outfile name
-		outfile = os.path.join(params['rundir'], "reference00"+str(i)+".spi")
+		outfile = os.path.join(params['rundir'], "reference00"+str(i+1)+".spi")
 		if os.path.isfile(outfile):
 			apDisplay.printWarning(outfile+" already exists; removing it")
 			time.sleep(2)
@@ -286,7 +286,7 @@ def createSpiderRefFile(params):
 		if params['lp'] > 0:
 			emancmd += "lp="+str(params['lp'])+" "
 		emancmd += "spiderswap "
-		apDisplay.printColor("Converting reference "+str(i)+" to spider format for template="+str(refid),"cyan")
+		apDisplay.printColor("Converting reference "+str(i+1)+" to spider format for template="+str(refid),"cyan")
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
 
 		if len(params['refids']) == 1:
@@ -407,6 +407,8 @@ def createRefSpiderBatchFile(params,iteration):
 				outf.write(spiderline(93,params['csym'],"c-symmetry (rotational symmetry to be applied, 1 if none)"))
 			elif re.search("^x92",line):
 				outf.write(spiderline(92,iteration,"iteration number"))
+			elif re.search("^\[reference\]",line):
+				outf.write(spiderline("stack",os.path.join(params['rundir'],'reference')))
 			elif re.search("^\[stack\]",line):
 				outf.write(spiderline("stack",os.path.join(params['rundir'],'start')))
 			elif re.search("^\[aligned\]",line):
@@ -419,7 +421,7 @@ def createRefSpiderBatchFile(params,iteration):
 					previter = iteration - 1
 					previtername = 'refine%d' % previter
 					previterdir = os.path.join(params['rundir'],previtername)
-					outf.write(spiderline("ref",os.path.join(previterdir,'refali001.spi')))
+					outf.write(spiderline("ref",os.path.join(previterdir,'refali001')))
 				notdone = False
 			else:
 				outf.write(line)

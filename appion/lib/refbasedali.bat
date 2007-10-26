@@ -12,7 +12,7 @@ x91=x92-1
 ; last ring + translational search range MUST be < (box size/2)-1
 
 FR G ; stack file
-[rawparticles]start
+[stack]start
 
 FR G
 [reference]reference
@@ -20,7 +20,7 @@ FR G
 ;if you mess with file defs below this batch file won't run!!!;;;;;;
 
 FR G
-[alinew]aligned{**x92}
+[aligned]aligned{**x92}
 
 FR G
 [refselect]refselect/{**x92}refselect
@@ -34,7 +34,7 @@ FR G
 GOTO LB69
 ELSE
 FR G
-[aliold][rawparticles]
+[aliold][stack]
 ENDIF
 
 ; create the selection document file.
@@ -55,11 +55,7 @@ mkdir -p rff/
 VM
 mkdir -p refselect/
 
-do lb34, x11=1,x98
-CP
-[reference]@{**x11}
-[ref]@{***x11}
-lb34
+[reference]@{***x11}
 
 LB69
 
@@ -69,7 +65,7 @@ VM
 echo "aligning particles to reference"
 ; do the alignment
 AP MQ
-[ref]@***    ; template for reference image
+[reference]@***    ; template for reference image
 selref                  ; file containing list of reference files
 (x95,1)                 ; translational search range, step size
 x97,x96                 ; first & last ring
@@ -112,19 +108,19 @@ DO LB11 x11=1,x99
     lb26
   IF (x41.gt.0) THEN
     RT SQ
-    [rawparticles]@{****x46}
-    [alinew]@{****x46}
+    [stack]@{****x46}
+    [aligned]@{****x46}
     x73
     x74,x75
   ELSE
     RT SQ
-    [rawparticles]@{****x46}
+    [stack]@{****x46}
     _1
     x73
     x74,x75
     MR
     _1
-    [alinew]@{****x46}
+    [aligned]@{****x46}
     y
   ENDIF
   DE
@@ -148,19 +144,19 @@ DO LB18, x11=1,x99
   lb28
   IF (x41.gt.0) THEN
     RT SQ
-    [rawparticles]@{****x46}
-    [alinew]@{****x46}
+    [stack]@{****x46}
+    [aligned]@{****x46}
     x73
     x74,x75
   ELSE
     RT SQ
-    [rawparticles]@{****x46}
+    [stack]@{****x46}
     _1
     x73
     x74,x75
     MR
     _1
-    [alinew]@{****x46}
+    [aligned]@{****x46}
     y
   ENDIF
   DE
@@ -175,19 +171,19 @@ DO LB19, x11=1,x99
 
   IF (x41.gt.0) THEN
     RT SQ
-    [rawparticles]@{****x46}
-    [alinew]@{****x46}
+    [stack]@{****x46}
+    [aligned]@{****x46}
     x43
     x44,x45
   ELSE
     RT SQ
-    [rawparticles]@{****x46}
+    [stack]@{****x46}
     _1
     x43
     x44,x45
     MR
     _1
-    [alinew]@{****x46}
+    [aligned]@{****x46}
     y
   ENDIF
 DE
@@ -229,7 +225,7 @@ x94=x92+1
 
 do lb35, x33=1,x98
 AS R
-[alinew]@******        ; input file name
+[aligned]@******        ; input file name
 [refselect]{***x33}                 ; list of particles to use
 A                       ; all images will be added
 {**x92}avgali@{***x33}    ; new refined reference
@@ -290,7 +286,7 @@ VM
 echo "computing the resolution for class{%F5.0%x33}"
 ; get the resolution
 AS R
-[alinew]@******        ; input file name
+[aligned]@******        ; input file name
 [refselect]{***x33}                 ; list of particles to use
 O                       ; 2 sub-averages will be calculated, one for odd, one for even
 rff/{**x92}avgodd@{***x33}    ; file receiving odd average
