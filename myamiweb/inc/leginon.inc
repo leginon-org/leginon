@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.77 $
- *	@version $Id: leginon.inc,v 1.77 2007-10-17 02:21:53 acheng Exp $
+ *	@version $Revision: 1.78 $
+ *	@version $Id: leginon.inc,v 1.78 2007-10-26 19:56:06 acheng Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -268,7 +268,8 @@ class leginondata {
 			."from `ImageCommentData` " 
 			."where `REF|AcquisitionImageData|image` = '$imageId' "
 			." ";
-		return $this->mysql->getSQLResult($q);
+		$result = $this->mysql->getSQLResult($q);
+		if ($result) return $result[0][comment];
 	}
 
 	function getDatalabels($sessionId) {
