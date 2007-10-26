@@ -122,10 +122,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$inspectcheck = ($_POST['inspected']=='off') ? '' : 'CHECKED';
 	$commitcheck = ($_POST['commit']=='on') ? 'CHECKED' : '';
 	$boxszval = $_POST['boxsize'];
-	$binval=$_POST['bin'];
+	$binval = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$plimit = $_POST['plimit'];
-	$lpval = $_POST['lp'];
-	$hpval = $_POST['hp'];
+	$lpval = ($_POST['lp']) ? $_POST['lp'] : '5';
+	$hpval = ($_POST['hp']) ? $_POST['hp'] : '600';
 	// ice check params
 	$iceval = ($_POST['icecheck']=='on') ? $_POST['ice'] : '0.8';
 	$icecheck = ($_POST['icecheck']=='on') ? 'CHECKED' : '';
