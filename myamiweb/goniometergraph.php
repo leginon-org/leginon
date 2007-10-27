@@ -33,11 +33,15 @@ while(list($k, $v) = each($goniometer)) {
 }
 $sx = array();
 $sy = array();
-if ($measurements = $leginondata->getMeasurements($label, $axis))
+if ($measurements = $leginondata->getMeasurements($label, $axis, $Id))
 	foreach($measurements as $m) {
 		$sx[]=$m[$axis];
 		$sy[]=$m[norm];
 	}
+$sxvalues = array_values($sx);
+sort($sxvalues);
+$sxmin = $sxvalues[0];
+$sxmax = $sxvalues[count($sxvalues)-1];
 
 $K = 2*M_PI/$T;
 $x = '$x';
@@ -48,7 +52,7 @@ for ($n=0; $n<count($A); $n++)
 $serie_str = implode(" + ",$serie);
 
 $f = new FuncGenerator($serie_str);
-list($xdata,$ydata) = $f->E(-0.00001,0.0004,1000);
+list($xdata,$ydata) = $f->E($sxmin,$sxmax,1000);
 
 
 
@@ -72,8 +76,13 @@ $graph->xgrid->Show();
 $graph->xgrid->SetColor('darkgreen');
 $graph->ygrid->SetColor('darkgreen');
 
-$graph->yaxis->SetPos(0);
-$graph->yaxis->SetWeight(2);
+if ( $sxmin <=0 && $sxmax >=0) {
+	$graph->yaxis->SetPos(0);
+	$graph->yaxis->SetWeight(2);
+} else {
+	$graph->yaxis->SetPos($sxmin+0.05*($sxmax-$sxmin));
+	$graph->yaxis->HideLine();
+}
 $graph->yaxis->HideZeroLabel();
 $graph->yaxis->SetFont(FF_FONT1,FS_BOLD);
 $graph->yaxis->SetColor('lightgreen','lightgreen');

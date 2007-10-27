@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.78 $
- *	@version $Id: leginon.inc,v 1.78 2007-10-26 19:56:06 acheng Exp $
+ *	@version $Revision: 1.79 $
+ *	@version $Id: leginon.inc,v 1.79 2007-10-27 00:30:00 acheng Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -1783,6 +1783,21 @@ class leginondata {
 		return $models;
 	}
 
+	function getGoniometerModelsByHost($hostname) {
+		$models=array();
+
+		$q="SELECT s.`DEF_id`, concat(s.label,' ',s.axis) as label "
+		." from StageModelCalibrationData s "
+		." left join InstrumentData t on s.`REF|InstrumentData|tem` = t.`DEF_id` "
+		." left join InstrumentData c on s.`REF|InstrumentData|ccdcamera` = c.`DEF_id` "
+		." where t.`hostname` = '$hostname' and c.`hostname` = '$hostname'"
+		." order by s.`DEF_timestamp` DESC";
+		$result = $this->mysql->SQLQuery($q);
+		while ($row= mysql_fetch_array($result, MYSQL_ASSOC))
+			$models[] = $row;
+		return $models;
+	}
+
 	function getGoniometerModelId($label, $axis) {
 		$q="SELECT `DEF_id` from StageModelCalibrationData where label=\"$label\" and axis=\"$axis\" order by `DEF_timestamp` DESC limit 1";
 		$result = $this->mysql->SQLQuery($q);
@@ -1945,13 +1960,16 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getMeasurements($label, $axis) {
+	function getMeasurements($label, $axis, $ModelId) {
 		$q = " select m.$axis, 
-			 s.mean/(delta/SQRT(m.imagex*m.imagex +  m.imagey*m.imagey)) as norm 
+			 sm.mean/(delta/SQRT(m.imagex*m.imagex +  m.imagey*m.imagey)) as norm 
 			from StageMeasurementData m 
-			left join StageModelMagCalibrationData s 
-			on (s.axis=m.axis and s.label = m.label and s.magnification = m.magnification)  
-			where m.label='$label' and m.axis='$axis'";
+			left join StageModelMagCalibrationData sm 
+			on (sm.axis=m.axis and sm.label = m.label and sm.magnification = m.magnification)  
+			left join StageModelCalibrationData s 
+			on (s.axis=sm.axis and s.label = sm.label)  
+			where m.label='$label' and m.axis='$axis' and s.`DEF_id`='$ModelId'
+			and (s.`DEF_timestamp`<= sm.`DEF_timestamp`+30 and s.`DEF_timestamp`>= sm.`DEF_timestamp`-30)";
 		return $this->mysql->getSQLResult($q);
 	}
 	
