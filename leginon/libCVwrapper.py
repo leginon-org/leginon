@@ -135,6 +135,8 @@ def affineToText(matrix):
 	else:
 		tilt = degrees(math.cos(tiltv))
 	rot = degrees(math.asin(rotv))
-	return "tiltang = %.2f, rotation = %.2f, shift = %.2f,%.2f"
+	mystr = ( "tiltang = %.2f, rotation = %.2f, shift = %.2f,%.2f" %
+		tilt, rot, matrix[2,0], matrix[2,1] )
+	return mystr
 	
 
