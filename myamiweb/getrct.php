@@ -42,12 +42,12 @@ function getRTCfilename2($id) {
 	$split='/'.$result[0].'/';
 	if ($pp)
 	$replacement = $pp.'_v00'
-								.'_'.$result[2]
-								.$p.'_'
-								.sprintf("%02d", $result[4]+1);
+		.'_'.$result[2]
+		.$p.'_'
+		.sprintf("%02d", $result[4]+1);
 	else
 	$replacement = $p.'_v0_'
-								.sprintf("%02d", $result[1]+1);
+		.sprintf("%02d", $result[1]+1);
 
 	$rctfilename=preg_replace($split, $replacement, $name);
 	$rctfilename=preg_replace('/v(\d+)/', 'v__', $rctfilename);
