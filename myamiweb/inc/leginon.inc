@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.80 $
- *	@version $Id: leginon.inc,v 1.80 2007-10-27 00:54:39 vossman Exp $
+ *	@version $Revision: 1.81 $
+ *	@version $Id: leginon.inc,v 1.81 2007-10-27 05:07:50 vossman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -616,14 +616,18 @@ class leginondata {
 	function getRCTfilename($imageId) {
 		// --- return RCT filename for a given imageId
 		// --- return empty string for no match
-		$q="select "
-			."a2.DEF_id, a2.`MRC|image` as filename "
-			."from AcquisitionImageData a1 "
-			."left join AcquisitionImageData a2 "
-			."on (a1.`REF|TiltSeriesData|tilt series`=a2.`REF|TiltSeriesData|tilt series` "
-			//."and a1.`REF|PresetData|preset`=a2.`REF|PresetData|preset` "
-			."and a1.DEF_id<>a2.DEF_id) "
-			."where a1.DEF_id=$imageId";
+		$q="SELECT "
+			."a2.DEF_id, a2.`MRC|image` AS filename "
+			."FROM AcquisitionImageData AS a1 "
+			."LEFT JOIN AcquisitionImageData AS a2 "
+			."ON (a1.`REF|TiltSeriesData|tilt series`=a2.`REF|TiltSeriesData|tilt series` "
+			."AND a1.DEF_id<>a2.DEF_id) "
+			."LEFT JOIN  PresetData AS p1 "
+			."ON (a1.`REF|PresetData|preset`=p1.`DEF_id` "
+			."LEFT JOIN  PresetData AS p2 "
+			."ON (a2.`REF|PresetData|preset`=p2.`DEF_id` "
+			."WHERE a1.DEF_id=$imageId "
+			."AND p1.`name`=p2.`name` ";
 		//echo "<FONT SIZE=-5>".$q."</FONT>";
 		list($r)=$this->mysql->getSQLResult($q);
 		if ($r['filename']) {
