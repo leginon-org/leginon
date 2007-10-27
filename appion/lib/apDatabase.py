@@ -297,6 +297,15 @@ def getDarkNorm(sessionname, cameraconfig):
 
 	return result
 
+def getImageViewerPreferenceStatus(imgdata):
+	"""
+	Function that returns whether or not the image was hidden in the viewer
+	False: Image was hidden
+	True: Image is an exemplar
+	None: Image is visible
+	"""
+	return None
+
 
 def isModelInDB(md5sum):
 	modelq = appionData.ApInitialModelData()
