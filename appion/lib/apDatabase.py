@@ -303,6 +303,8 @@ def getImageViewerPreferenceStatus(imgdata):
 	False: Image was hidden
 	True: Image is an exemplar
 	None: Image is visible
+
+	see 'viewer_pref_image' table in dbemdata
 	"""
 	return None
 
