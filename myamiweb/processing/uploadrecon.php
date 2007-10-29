@@ -107,7 +107,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
   echo "
       <BR/>
       <B>Recon Base Directory:</B>\n";
-  if ($jobId) echo "$sessionpath<INPUT TYPE='HIDDEN' NAME='reconpath' VALUE='$sessionpath'>";
+  if ($jobId) echo "$sessionpath\n";
   else echo "<BR/><INPUT TYPE='text' NAME='reconpath' VALUE='$sessionpath' SIZE='50'/>";
   echo "
       <BR/>
@@ -261,7 +261,7 @@ function runUploadRecon() {
   $command.="stackid=$stack ";
   $command.="modelid=$model ";
   $command.="package=$package ";
-  $command.="dir=$runpath ";
+  if (!$jobId) $command.="dir=$runpath ";
   if ($jobId) $command.="jobid=$jobId ";
   if ($contour) $command.="contour=$contour ";
   if ($zoom) $command.="zoom=$zoom ";

@@ -73,15 +73,19 @@ function checkJobs($showjobs=False,$extra=False) {
   }
   foreach ($jobs as $job) {
     $jobinfo = $particle->getJobInfoFromId($job['DEF_id']);
+
+    // find if job has been uploaded
+    $recon = $particle->getReconIdFromClusterJobId($job['DEF_id']);
     $display_keys['appion path'] = $jobinfo['appath'];
     $display_keys['dmf path'] = $jobinfo['dmfpath'];
     $display_keys['cluster path'] = $jobinfo['clusterpath'];
-    if ($jobinfo['status']=='Q') $status='Queued';
+    if ($recon) $status="<A HREF='reconreport.php?reconId=$recon[DEF_id]'>Uploaded</A>\n";
+    elseif ($jobinfo['status']=='Q') $status='Queued';
     elseif ($jobinfo['status']=='R') $status='Running';
     elseif ($jobinfo['status']=='D') {
       $dlbuttons = "<INPUT TYPE='BUTTON' onclick=\"displayDMF('$jobinfo[appath]','$jobinfo[dmfpath]')\" VALUE='get from DMF'> \n";
       $dlbuttons.= "<INPUT TYPE='BUTTON' onclick=\"parent.location=('uploadrecon.php?expId=$expId&jobId=$job[DEF_id]')\" VALUE='upload results'>\n";
-      $status='Done';
+      $status='Awaiting Upload';
     }
     if ($status) $display_keys['status'] = $status;
 

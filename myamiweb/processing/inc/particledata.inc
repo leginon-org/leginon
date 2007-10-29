@@ -694,13 +694,13 @@ class particledata {
 		return $r;
 	}
 
-  function getJobIdsFromSession($expId) {
-    $q="SELECT `DEF_id` "
-      ."FROM `ApClusterJobData` "
-      ."WHERE `REF|leginondata|SessionData|session` = $expId";
-    $r = $this->mysql->getSQLResult($q);
-    return $r;
-  }
+	function getJobIdsFromSession($expId) {
+		$q="SELECT `DEF_id` "
+		  ."FROM `ApClusterJobData` "
+		  ."WHERE `REF|leginondata|SessionData|session` = $expId";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
 
   function getJobInfoFromId($jobid) {
     $q="SELECT j.*, "
@@ -718,6 +718,7 @@ class particledata {
     $r = $this->mysql->getSQLResult($q);
     return $r[0];
   }
+
   function getJobFileFromPath($path,$name) {
     $q="SELECT j.*, p.path "
       ."FROM `ApClusterJobData` AS j "
@@ -793,6 +794,15 @@ class particledata {
     $r = $this->mysql->getSQLResult($q);
     return $r;
   }
+
+	function getReconIdFromClusterJobId ($jobid) {
+		$q="SELECT * "
+		  ."FROM `ApRefinementRunData` "
+		  ."WHERE `REF|ApClusterJobData|jobfile` = $jobid";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+	
 	function getReconIds ($stackId) {
 		$q = "SELECT * "
 			."FROM `ApRefinementRunData` AS r "
