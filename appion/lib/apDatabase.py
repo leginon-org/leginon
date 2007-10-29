@@ -297,15 +297,20 @@ def getDarkNorm(sessionname, cameraconfig):
 
 	return result
 
-def getImageViewerPreferenceStatus(imgdata):
+def getImageStatus(imgdata):
 	"""
 	Function that returns whether or not the image was hidden in the viewer
 	False: Image was hidden
 	True: Image is an exemplar
 	None: Image is visible
 
-	see 'viewer_pref_image' table in dbemdata
+	see 'ImageStatusData' table in dbemdata
+	or 'viewer_pref_image' table in dbemdata
 	"""
+	statusq = leginondata.ImageStatusData()
+	statusq['image'] = imgdata
+	statusdata = statusq.query(results=1)
+	print statusdata
 	return None
 
 
