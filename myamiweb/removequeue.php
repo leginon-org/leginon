@@ -168,13 +168,19 @@ function getDescendants($imgId) {
 function createData() {
   	global $leginondata;
 	$g=true;
-	if (!$parentimageId=stripslashes($_GET['id'])) {
+	if (!$imgId=stripslashes($_GET['id'])) {
 		$g=false;
 	}
 	if (!$g) {
 		echo "image id not specified";
 		exit;
 	}
+
+	$preset=$_GET[preset];
+	// --- find image
+	$newimage = $leginondata->findImage($imgId, $preset);
+	$parentimageId = $newimage[id];
+	
 	$sessionId = getSessionByImage($parentimageId);
 	$_POST['image']=$parentimageId;
 	$sessioninfo = $leginondata->getSessionInfo($sessionId);
@@ -184,7 +190,6 @@ function createData() {
 	$queues = array();
 
 	$parentimage_all = getTwins($parentimageId);
-
 	$descimages = $parentimage_all;
 	foreach ($parentimage_all as $p) {
 		$descendants = getDescendants($p);

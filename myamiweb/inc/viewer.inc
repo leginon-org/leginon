@@ -435,6 +435,7 @@ class view {
 		$this->name = $name;
 		$this->displayname = $this->name.'view';
 		$this->displayPresets(true);
+		$this->displayComment(false);
 		$this->btdownload = new button('download'.$this->name, 'dwd');
 		$this->btdownload->setLink('download.php','');
 		$this->displayscaleicon = true;
@@ -478,6 +479,7 @@ class view {
 		$this->menucolor = ' class="bgimg1" ';
 		$this->presetscript = 'getpreset.php';
 		$this->imagescript = 'getimg.php';
+		$this->commentscript = 'getcomment.php';
 		$this->scale_st = "true";
 		$this->target_st = "false";
 		$this->tag_st = "false";
@@ -578,6 +580,10 @@ class view {
 		$this->size = $size;
 	}
 
+	function setComment($comment) {
+		$this->comment = $comment;
+	}
+
 	function getSize() {
 		return $this->size;
 	}
@@ -611,6 +617,10 @@ class view {
 
 	function displayPresets($state) {
 		$this->displaypreset= $state;
+	}
+
+	function displayComment($state) {
+		$this->displaycomment= $state;
 	}
 
 	function displayCloseIcon($state) {
@@ -699,6 +709,7 @@ class view {
 			.'var n_img_'.$this->name.'= new Image();'.$this->crlf
 			.'var jsimagescript'.$this->name.'="'.$this->imagescript.'";'.$this->crlf
 			.'var jspresetscript'.$this->name.'="'.$this->presetscript.'";'.$this->crlf
+			.'var jscommentscript'.$this->name.'="'.$this->commentscript.'";'.$this->crlf
 			.'var jsvfile'.$this->name.'=1;'.$this->crlf
 			.'var jsmin'.$this->name.'="'.$this->minpix.'";'.$this->crlf
 			.'var jsmax'.$this->name.'="'.$this->maxpix.'";'.$this->crlf
@@ -807,6 +818,10 @@ class view {
 
 	function setImageScript($scriptname) {
                 $this->imagescript= $scriptname;
+	}
+
+	function setCommentScript($scriptname) {
+                $this->commentscript= $scriptname;
 	}
 
 	function display() {
@@ -1032,24 +1047,34 @@ class view {
 				</td>
 			 </tr>';
 		if ($this->displaypreset) {
-		$htmlframe .= '
-			 <tr>
-				<td>
-		<iframe name="'.$this->name.'if" 
-                        src="'.$this->presetscript.'"
-			frameborder="0" width="'.$this->size.'" height="50"
-			marginheight="1" marginwidth="5"
-			scrolling="no" ></iframe>
-		';
-		$htmlframe .= '</td>
-			 </tr>
-		';
+			$htmlframe .= '
+				 <tr>
+					<td>
+			<iframe name="'.$this->name.'if" 
+	      src="'.$this->presetscript.'"
+				frameborder="0" width="'.$this->size.'" height="50"
+				marginheight="1" marginwidth="5"
+				scrolling="no" ></iframe>
+			';
+			$htmlframe .= '</td>
+				 </tr>
+			';
 		}
-		} // --- end option row
+		if ($this->displaycomment) {
+			$htmlframe .='<tr>'
+			.'<td>'
+			.'<iframe name="'.$this->name.'cmt" '
+			.'frameborder="0" width="'.$this->size.'" height="25"'
+			.'marginheight="0" marginwidth="5"'
+			.'scrolling="auto" ></iframe>';
+			$htmlframe .= '</td>'
+			.'</tr>';
+		}
+	} // --- end option row
 
-		$htmlframe .= '<tr>
-				<td  width="'.$this->size.'">';
-		$htmlframe .= '
+	$htmlframe .= '<tr>
+			<td  width="'.$this->size.'">';
+	$htmlframe .= '
 <div><div id="loadingdiv'.$this->name.'" style="position:absolute; z-index:69; visibility: hidden"><h4> Loading <img src="img/progress_1.gif"></h4></div></div>
 		';
 		$htmlframe .= '

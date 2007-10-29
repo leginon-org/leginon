@@ -317,6 +317,7 @@ function newfile(view){
 	if (cbinning = eval("jsbinning"+view)) binning="&binning="+cbinning; else binning=""
 	jsimagescriptcur = eval("jsimagescript"+view)
 	jspresetscriptcur = eval("jspresetscript"+view)
+	jscommentscriptcur = eval("jscommentscript"+view)
 	vid = getviewindex(view)
 	
 	if (list = eval("document.viewerform."+view+"pre"))
@@ -338,6 +339,7 @@ function newfile(view){
 		jsimagescriptcur="getimg.php"
 		jspresetscriptcur="getpreset.php"
 	}
+	jscommentscriptcur = "getcomment.php"
 	ag = (cacepar = eval("jsaceparam"+view)) ? "&g="+cacepar : ""
 	sb = (eval(view+"scale_bt_st")) ? "&sb=1" : ""
 	tg = (eval(view+"target_bt_st")) ? "&tg=1" : ""
@@ -365,7 +367,7 @@ function newfile(view){
 	ni = jsimagescriptcur+"?"+options
 	nlink = "javascript:popUpMap('map.php?"+options+"')"
 	ninfolink = "imgreport.php?id="+jsimgId+"&preset="+selpreset
-	ndeqlink = "javascript:popUpW('removequeue.php?id="+jsimgId+"')"
+	ndeqlink = "javascript:popUpW('removequeue.php?id="+jsimgId+"&preset="+selpreset+"')"
 	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft
 	nexportlink = "getfilenames.php?sessionId="+jsSessionId+"&pre="+selpreset
 
@@ -390,6 +392,10 @@ function newfile(view){
 	if (cif=eval("this."+view+"if")) {
 		iflink = jspresetscriptcur+"?vf="+jsvfile+"&id="+jsimgId+"&preset="+selpreset
 		cif.document.location.replace(iflink)
+	}
+	if (cmt=eval("this."+view+"cmt")) {
+		cmtlink = jscommentscriptcur+"?id="+jsimgId+"&preset="+selpreset
+		cmt.document.location.replace(cmtlink)
 	}
 
 	lastoptions[vid] = options

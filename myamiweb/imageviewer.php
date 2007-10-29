@@ -8,7 +8,7 @@ $sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];
 $projectId = ($_POST['projectId']) ? $_POST['projectId'] : $_GET['projectId'];
 $imageId = ($_POST['imageId']) ? $_POST['imageId'] : $_GET['imageId'];
 $preset = $_POST[$_POST['controlpre']];
-
+$imagecomment = $leginondata->getImageComment(621090);
 // --- Set sessionId
 $lastId = $leginondata->getLastSessionId();
 $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
@@ -56,6 +56,7 @@ $javascript = $viewer->getJavascript();
 $view1 = new view('Main View', 'v1');
 $view1->setControl();
 $view1->displayParticleIcon(false); 
+$view1->displayComment(true); 
 $view1->addMenuItems($playbackcontrol);
 $view1->setDataTypes($datatypes);
 $view1->displayPTCL(false);
