@@ -63,40 +63,66 @@ elseif ($_POST['submitstackmodel'] || $_POST['duplicate']) {
 }
 
 elseif ($_POST['submitjob']) {
+  $particle = new particledata();
+
+  $expId = $_GET['expId'];
+
   $host = 'garibaldi';
   $user = $_SESSION['username'];
   $pass = $_SESSION['password'];
   if (!($user && $pass)) writeJobFile("<B>ERROR:</B> Enter a user name and password");
 
+  $jobname=$_POST['jobname'];
+  $outdir=$_POST['outdir'].$jobname;
+  $dmfpath=$_POST['dmfpath'].$jobname;
+  $clusterpath=$_POST['clusterpath'].$jobname;
+
+  $jobfile="$jobname.job";
+  $tmpjobfile = "/tmp/$jobfile";
+
+  $jobid=$particle->insertClusterJobData($outdir,$dmfpath,$clusterpath,$jobfile,$expId);
+
+  // add job id to the beginning of the script
+  $clusterjob = "# $jobname\n";
+  $clusterjob.= "# jobId: $jobid\n";
+  $clusterjob.= "updateAppionDB.py $jobid R\n";
+  $clusterlastline.= "updateAppionDB.py $jobid D\nexit\n\n";
+  $f = file_get_contents($tmpjobfile);
+  file_put_contents($tmpjobfile, $clusterjob . $f . $clusterlastline);
+
   writeTop("Eman Job Submitted","EMAN Job Submitted",$javafunc);
   echo "<TABLE WIDTH='600'>\n";
-  $jobname=$_POST['jobname'];
-  $jobfile="/tmp/$jobname.job";
 
-  // create appion directory
-  $apdir = $_POST['outdir'];
-  $apdir.= $jobname;
-  $cmd = 'mkdir -p ';
-  $cmd .= $apdir;
-  exec_over_ssh($_SERVER['HTTP_HOST'], $user, $pass, $cmd, False);
-  echo "<TR><TD>Appion Directory</TD><TD>$apdir</TD></TR>\n";
-
-  // copy job file to appion dir
-  $apfile .= $apdir."/";
-  $apfile .= $jobname.".job";
-  scp($_SERVER['HTTP_HOST'],$user,$pass,$jobfile,$apfile);
+  // create appion directory & copy job file
+  $cmd = "mkdir -p $outdir;\n";
+  $cmd.= "cp $tmpjobfile $outdir/$jobfile;\n";
+  exec_over_ssh($_SERVER['HTTP_HOST'], $user, $pass, $cmd, True);
+  echo "<TR><TD>Appion Directory</TD><TD>$outdir</TD></TR>\n";
   echo "<TR><TD>Job File Name</TD><TD>$jobname.job</TD></TR>\n";
   
   // create directory on cluster and copy job file over
-  $clusterpath = $_POST['clusterpath'].$jobname;
-  $cmd = 'mkdir -p ';
-  $cmd .= $clusterpath.";\n";
-  $cmd .= "cp $apfile $clusterpath/$jobname.job;\n";
+  $cmd = "mkdir -p $clusterpath;\n";
+  $cmd .= "cp $outdir/$jobfile $clusterpath/$jobfile;\n";
+  $jobnum = exec_over_ssh('garibaldi', $user, $pass, $cmd, True);
 
   // submit job on garibaldi
-  $cmd .= "qsub $clusterpath/$jobname.job\n";
-  $jobnum = exec_over_ssh('garibaldi', $user, $pass, $cmd, False);
+  $cmd = "qsub $clusterpath/$jobname.job\n";
+  $jobnum = exec_over_ssh('garibaldi', $user, $pass, $cmd, True);
+  
+  $jobnum=trim($jobnum);
+  $jobnum = ereg_replace('\.garibaldi','',$jobnum);
+  if (!is_numeric($jobnum)) {
+    echo "</TABLE><P>\n";
+    echo "ERROR in job submission.  Check the cluster\n";
+    writeBottom();
+    exit;
+  }
+
+  // insert cluster job id into row that was just created
+  $particle->updateClusterQueue($jobid,$jobnum);
+
   echo "<TR><TD>Cluster Directory</TD><TD>$clusterpath</TD></TR>\n";
+  echo "<TR><TD>Job number</TD><TD>$jobnum</TD></TR>\n";
   echo "</TABLE>\n";
 
   // check jobs that are running on garibaldi
@@ -511,28 +537,24 @@ function jobForm($extra=false) {
 }
 
 function writeJobFile ($extra=False) {
-  $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
   $expId = $_GET['expId'];
-
-  $particle = new particledata();
+  $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
   $jobname = $_POST['jobname'];
-  $jobname .=".job";
+  $jobfile ="$jobname.job";
 
-  // outdir contains jobname
   $outdir = $_POST['outdir'];
   if (substr($outdir,-1,1)!='/') $outdir.='/';
-  $outdir .= $_POST['jobname'];
 
   // clusterpath contains jobname
   $clusterpath = $_POST['clusterpath'];
   if (substr($clusterpath,-1,1)!='/') $clusterpath.='/';
-  $clusterpath .= $_POST['jobname'];
+  $clusterfullpath = $clusterpath.$jobname;
 
   // make sure dmf store dir ends with '/'
   $dmfpath=$_POST['dmfpath'];
   if (substr($dmfpath,-1,1)!='/') $dmfpath.='/';
-  $dmfpath .= $_POST['jobname'];
+  $dmffullpath = $dmfpath.$jobname;
 
   // get the stack info (pixel size, box size)
   $stackinfo=explode('|--|',$_POST['stackval']);
@@ -551,18 +573,17 @@ function writeJobFile ($extra=False) {
 
   // insert the job file into the database
   if (!$extra) {
-    $jobid=$particle->insertClusterJobData($outdir,$dmfpath,$clusterpath,$jobname,$expId);
     // create dmf put javascript
     $javafunc.="
   <SCRIPT LANGUAGE='JavaScript'>
   function displayDMF() {
     newwindow=window.open('','name','height=150, width=900')
     newwindow.document.write('<HTML><BODY>')
-    newwindow.document.write('dmf mkdir -p $dmfpath');
-    newwindow.document.write('<P>dmf put $stackpath/$stackname1 $dmfpath/$stackname1')\n";
-    if ($stackname2) $javafunc.="    newwindow.document.write('<P>dmf put $stackpath/$stackname2 $dmfpath/$stackname2')\n";
+    newwindow.document.write('dmf mkdir -p $dmffullpath');
+    newwindow.document.write('<P>dmf put $stackpath/$stackname1 $dmffullpath/$stackname1')\n";
+    if ($stackname2) $javafunc.="    newwindow.document.write('<P>dmf put $stackpath/$stackname2 $dmffullpath/$stackname2')\n";
     $javafunc.="
-    newwindow.document.write('<P>dmf put $modelpath/$modelname $dmfpath/$modelname');
+    newwindow.document.write('<P>dmf put $modelpath/$modelname $dmffullpath/$modelname');
     newwindow.document.write('<P>&nbsp;<BR></BODY></HTML>');
     newwindow.document.close();
   }
@@ -570,17 +591,15 @@ function writeJobFile ($extra=False) {
   }
   writeTop("Eman Job Generator","EMAN Job Generator", $javafunc);
 
-  $clusterjob = "# ".$jobname."\n";
-  $clusterjob.= "# jobId: $jobid\n";
-  $clusterjob.= "# stackId: $stackidval\n";
+  $clusterjob = "# stackId: $stackidval\n";
   $clusterjob.= "# modelId: $modelid\n";
   $clusterjob.= "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
   $clusterjob.= "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
   $clusterjob.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
   $clusterjob.= "#PBS -m e\n";
   $clusterjob.= "#PBS -r n\n";
-  $clusterjob.= "\nmkdir -p $clusterpath\n";
-  $clusterjob.= "\ncd $clusterpath\n";
+  $clusterjob.= "\nmkdir -p $clusterfullpath\n";
+  $clusterjob.= "\ncd $clusterfullpath\n";
   $clusterjob.= "\nrm -f recon\n";
   $clusterjob.= "ln -s \$PBSREMOTEDIR recon\n";
   $clusterjob.= "chmod 755 recon\n"; 
@@ -588,9 +607,9 @@ function writeJobFile ($extra=False) {
   // get file name, strip extension
   $ext=strrchr($_POST['dmfstack'],'.');
   $stackname=substr($_POST['dmfstack'],0,-strlen($ext));
-  $clusterjob.= "\ndmf get $dmfpath/".$_POST['dmfmod']." threed.0a.mrc\n";
-  $clusterjob.= "dmf get $dmfpath/$stackname.hed start.hed\n";
-  $clusterjob.= "dmf get $dmfpath/$stackname.img start.img\n";
+  $clusterjob.= "\ndmf get $dmffullpath/".$_POST['dmfmod']." threed.0a.mrc\n";
+  $clusterjob.= "dmf get $dmffullpath/$stackname.hed start.hed\n";
+  $clusterjob.= "dmf get $dmffullpath/$stackname.img start.img\n";
   $clusterjob.= "\nforeach i (`sort -u \$PBS_NODEFILE`)\n";
   $clusterjob.= "  echo 'rsh 1 ".$_POST['rprocs']."' \$i \$PBSREMOTEDIR >> .mparm\n";
   $clusterjob.= "end\n";
@@ -666,18 +685,17 @@ function writeJobFile ($extra=False) {
   }
   if ($_POST['dmfstore']=='on') {
     $clusterjob.= "\ntar -cvzf model.tar.gz threed.*a.mrc\n";
-    $clusterjob.= "dmf put model.tar.gz $dmfpath\n";
+    $clusterjob.= "dmf put model.tar.gz $dmffullpath\n";
     $line = "\ntar -cvzf results.tar.gz fsc* tcls* refine.* particle.* classes.* proj.* sym.* .emanlog *txt ";
     if ($msgp=='on') {
 	$line .= "goodavgs.* ";
 	$line .= "msgPassing_subClassification.log ";
-	$clusterjob.= "dmf put msgPassing.tar $dmfpath\n";
+	$clusterjob.= "dmf put msgPassing.tar $dmffullpath\n";
     }
     $line .= "\n";
     $clusterjob.= $line;
-    $clusterjob.= "dmf put results.tar.gz $dmfpath\n";
+    $clusterjob.= "dmf put results.tar.gz $dmffullpath\n";
   }
-  $clusterjob.= "\nexit\n\n";
   if (!$extra) {
     echo "Please review your job below.<BR>";
     echo "If you are satisfied:<BR>\n";
@@ -690,17 +708,17 @@ function writeJobFile ($extra=False) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
   }
   echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formaction'><BR>\n";
-  echo "<INPUT TYPE='HIDDEN' NAME='clusterpath' VALUE='$_POST[clusterpath]'>\n";
-  echo "<INPUT TYPE='HIDDEN' NAME='dmfpath' VALUE='$_POST[dmfpath]'>\n";
-  echo "<INPUT TYPE='HIDDEN' NAME='jobname' VALUE='$_POST[jobname]'>\n";
-  echo "<INPUT TYPE='HIDDEN' NAME='outdir' VALUE='$_POST[outdir]'>\n";
+  echo "<INPUT TYPE='HIDDEN' NAME='clusterpath' VALUE='$clusterpath'>\n";
+  echo "<INPUT TYPE='HIDDEN' NAME='dmfpath' VALUE='$dmfpath'>\n";
+  echo "<INPUT TYPE='HIDDEN' NAME='jobname' VALUE='$jobname'>\n";
+  echo "<INPUT TYPE='HIDDEN' NAME='outdir' VALUE='$outdir'>\n";
   echo "<INPUT TYPE='SUBMIT' NAME='submitjob' VALUE='Submit Job to Cluster'>\n";
   if (!$extra) {
     echo "<HR>\n";
     echo "<PRE>\n";
     echo $clusterjob;
     echo "</PRE>\n";
-    $tmpfile = "/tmp/$jobname";
+    $tmpfile = "/tmp/$jobfile";
     // write file to tmp directory
     $f = fopen($tmpfile,'w');
     fwrite($f,$clusterjob);
