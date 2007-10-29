@@ -97,7 +97,14 @@ def scaleTemplate(templatearray, scalefactor=1.0, boxsize=None):
 			padsize = boxsize
 		padshape = numpy.array([padsize,padsize])
 		apDisplay.printMsg("changing box size from "+str(origsize)+" to "+str(padsize))
-		templatearray = apImage.frame_constant(templatearray, padshape, cval=edgeavg)
+		if origsize > padsize:
+			#shrink image
+			mindim = origsize-padsize
+			maxdim = padsize + mindim
+			templatearray = templatearray[mindim:maxdim, mindim:maxdim]
+		else:
+			#grow image
+			templatearray = apImage.frame_constant(templatearray, padshape, cval=edgeavg)
 
 	if templatearray.shape[0] < 20 or templatearray.shape[1] < 20:
 		apDisplay.printWarning("template is only "+str(imgdata.shape[0])+" pixels wide\n"+\
