@@ -1062,9 +1062,9 @@ class view {
 		}
 		if ($this->displaycomment) {
 			$htmlframe .='<tr>'
-			.'<td>'
+			.'<td style="vertical-align: bottom;">'
 			.'<iframe name="'.$this->name.'cmt" '
-			.'frameborder="0" width="'.$this->size.'" height="25"'
+			.'frameborder="0" width="'.$this->size.'" height="30"'
 			.'marginheight="0" marginwidth="5"'
 			.'scrolling="auto" ></iframe>';
 			$htmlframe .= '</td>'

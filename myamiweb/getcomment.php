@@ -22,13 +22,13 @@ $imageId = $newimage['id'];
 </head>
 <body leftmargin="0" topmargin="0" bottommargin="0" marginwidth="5" marginheight="0" >
 <font face="Arial, Helvetica, sans-serif" size="2">
-<table width=100% cellpadding="2" cellspacing="0" border: 1px #696969 solid>
+<table width=100% cellpadding="2" cellspacing="0" style="position:relative; border: 1px #696969 solid">
 <tr valign="top">
 <td >
 <?php
 
 if ($id) {
-	echo "<font style='font-size: 11px;'>";
+	echo "<font style='font-size: 10px;'>";
 	$imagecomment = $leginondata->getImageComment($imageId);
 	echo $imagecomment."</font>";
 }
