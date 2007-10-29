@@ -29,6 +29,8 @@ def createDefaults():
 	params['runid']='recon1'
 	params['stackid']=None
 	params['modelid']=None
+	params['jobid']=None
+	params['jobinfo']=None
 	params['path']=os.path.abspath('.')
 	params['volumes']=[]
 	params['classavgs']=[]
@@ -73,7 +75,7 @@ def defineIteration():
 	return iteration
 	
 def printHelp():
-	print "\nUsage:\nuploadRecon.py stackid=<n> modelid=<n> [package=<packagename>] [dir=/path/to/directory] [tmpdir=/path/to/dir] [contour=<n>] [zoom=<n>]\n"
+	print "\nUsage:\nuploadRecon.py stackid=<n> modelid=<n> [jobid=<cluster job id>] [package=<packagename>] [dir=/path/to/directory] [tmpdir=/path/to/dir] [contour=<n>] [zoom=<n>]\n"
 	print "Example: uploadRecon.py stackid=23 modelid=20 package=EMAN\n"
 	print "runid=<name>         : name assigned to this reconstruction"
 	print "stackid=<n>          : stack Id in the database"
@@ -83,6 +85,7 @@ def printHelp():
 	print "                       (current dir is default)"
 	print "tmpdir=<path>        : directory to which tmp data is extracted"
 	print "                       (./temp is default)"
+	print "jobid=<jobid>        : DEF_id of jobfile that was created & run"
 	print "contour=<n>          : sigma level at which snapshot of density will be contoured (1.5 by default)"
 	print "zoom=<n>             : zoom factor for snapshot rendering (1.75 by default)"
 	print "nocommit             : don't commit to database, for testing only"
@@ -112,6 +115,8 @@ def parseInput(args,params):
 			params['package']=elements[1]
 		elif (elements[0]=='dir'):
 			params['path']=os.path.abspath(elements[1])
+		elif (elements[0]=='jobid'):
+			params['jobid']=int(elements[1])
 		elif (elements[0]=='contour'):
 			params['contour']=float(elements[1])
 		elif (elements[0]=='zoom'):
@@ -175,18 +180,22 @@ def parseMsgPassingLogFile(params):
 			j+=1
 	lines.close()
 
-def findEmanLogFile(params):
+def findEmanJobFile(params):
+	# first find the job file, if it doesn't exist, use the .eman log file
+	logfile = os.path.join(params['path'], params['jobinfo']['name'])
+	if os.path.isfile(logfile):
+		return logfile
 	logfile = os.path.join(params['path'], 'eman.log')
 	if os.path.isfile(logfile):
 		return logfile
 	logfile = os.path.join(params['path'], '.emanlog')
 	if os.path.isfile(logfile):
 		return logfile
-	apDisplay.printError("Could not find eman log file")
+	apDisplay.printError("Could not find eman job or log file")
 
 def parseLogFile(params):
 	# parse out the refine command from the .emanlog to get the parameters for each iteration
-	logfile = findEmanLogFile(params)
+	logfile = findEmanJobFile(params)
 	apDisplay.printMsg("parsing eman log file: "+logfile)
 	lines=open(logfile,'r')
 	for line in lines:
@@ -361,6 +370,8 @@ def insertRefinementRun(params):
 	if earlyresult:
 		apDisplay.printWarning("Run already exists in the database.\nIdentical data will not be reinserted")
 
+	getClusterJobDataFromID(params['jobid'])
+	runq['jobfile']=params['jobinfo']
 	runq['initialModel']=params['model']
 	runq['package']=params['package']
 	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['path']))
@@ -730,6 +741,9 @@ def runRMeasure(apix, volpath):
 def getRefineRunDataFromID(refinerunid):
 	return appiondb.direct_query(appionData.ApRefinementRunData, refinerunid) 
 	
+def getClusterJobDataFromID(jobid):
+	return appiondb.direct_query(appionData.ApClusterJobData, jobid)
+
 def getRefinementsFromRun(refinerundata):
 	refineitq=appionData.ApRefinementData()
 	refineitq['refinementRun'] = refinerundata

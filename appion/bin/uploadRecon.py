@@ -14,6 +14,13 @@ if __name__ == '__main__':
 	# parse command line input
 	apRecon.parseInput(sys.argv, params)
 
+	# if jobid is supplied, get the job info from the database
+	if params['jobid']:
+		params['jobinfo']=apRecon.getClusterJobDataFromID(params['jobid'])
+		if params['jobinfo'] is None:
+			apDisplay.printError("jobid supplied does not exist: "+str(params['jobid']))
+		params['path'] = params['jobinfo']['path']['path']
+			
 	# check to make sure that necessary parameters are set
 	if params['stackid'] is None:
 		apDisplay.printError("enter a stack id")
@@ -27,7 +34,7 @@ if __name__ == '__main__':
 	apParam.writeFunctionLog(sys.argv)
 
 	# make sure that the stack & model IDs exist in database
-	apRecon.findEmanLogFile(params)
+	apRecon.findEmanJobFile(params)
 	apRecon.checkStackId(params)
 	apRecon.checkModelId(params)
 
