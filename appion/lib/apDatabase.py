@@ -247,6 +247,8 @@ def getImgAssessmentStatus(imgdata):
 		unassessed = None
 	"""
 	### this function should be modified in the future to allow for a particular assessment run
+	if imgdata is None:
+		return None
 	assessquery = appionData.ApAssessmentData()
 	assessquery['image'] = imgdata
 	assessdata = appiondb.query(assessquery)
