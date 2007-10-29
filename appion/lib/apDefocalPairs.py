@@ -94,7 +94,7 @@ def recordShift(params,img,sibling,peak):
 	return()
 
 def insertShift(imgdata,siblingdata,peak):
-	if not sibling or not peak:
+	if not siblingdata or not peak:
 		apDisplay.printWarning("No sibling or peak found. No database insert")
 		return False
 	shiftq=appionData.ApImageTransformationData()
