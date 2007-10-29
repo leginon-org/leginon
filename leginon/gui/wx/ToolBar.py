@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ToolBar.py,v $
-# $Revision: 1.37 $
+# $Revision: 1.38 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-13 03:00:35 $
+# $Date: 2007-10-29 23:47:24 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -70,6 +70,7 @@ ID_CALC_PIXEL = 10053
 ID_MEASURE_COMAFREE = 10054
 ID_BEGIN = 10055
 ID_END = 10056
+ID_COMMENT = 10057
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.33 $
+# $Revision: 1.34 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-10-18 01:16:52 $
+# $Date: 2007-10-29 23:47:24 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -85,8 +85,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_MANUAL_FOCUS, 'manualfocus',
 							 shortHelpString='Manual Focus')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_CALCULATE,
-													'calculate',
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_COMMENT,
+													'notes',
 													shortHelpString='Attach Notes')
 		self.initialize()
 
