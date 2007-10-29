@@ -12,6 +12,7 @@ from numpy import ma
 import apDisplay
 import appionData
 import apAlignment
+import apEMAN
 import apDB
 #pyami
 from pyami import mrc
@@ -46,4 +47,4 @@ def rescaleModel(infile,outfile,inapix,outapix,newbox=None):
 	emancmd = "proc3d %s %s " % (infile, outfile)
 	emancmd += "scale=%s " % scalefactor
 	emancmd += "clip=%i,%i,%i edgenorm" % (newbox, newbox, newbox)
-	apAlignment.executeEmanCmd(emancmd, verbose=True)
+	apEMAN.executeEmanCmd(emancmd, verbose=True)
