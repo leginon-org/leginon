@@ -188,8 +188,9 @@ def calculateDistance(m1,m2):
 if __name__ == "__main__":
 	#getEulersForIteration(reconid, tiltrunid, iteration=1):
 	#for i in (8,5,7):
-	for i in (8,):
-		getEulersForIteration(186, 557, i)
+	#for i in (8,):
+	#	getEulersForIteration(186, 557, i)
+	getEulersForIteration(194, 557, 4)
 
 
 
