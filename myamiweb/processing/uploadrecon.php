@@ -211,6 +211,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 }
 
 function runUploadRecon() {
+  $jobId=$_GET['jobId'];
   $description=$_POST['description'];
   $contour=$_POST['contour'];
   $zoom=$_POST['zoom'];
@@ -261,6 +262,7 @@ function runUploadRecon() {
   $command.="modelid=$model ";
   $command.="package=$package ";
   $command.="dir=$runpath ";
+  if ($jobId) $command.="jobid=$jobId ";
   if ($contour) $command.="contour=$contour ";
   if ($zoom) $command.="zoom=$zoom ";
   if ($oneiteration=='on' && $iteration) $command.="oneiteration=$iteration ";
@@ -279,6 +281,7 @@ function runUploadRecon() {
 	<TR><TD>stack ID</TD><TD>$stack</TD></TR>
 	<TR><TD>model</TD><TD>$model</TD></TR>
 	<TR><TD>path</TD><TD>$reconpath</TD></TR>
+        <TR><TD>jobid</TD><TD>$jobid</TD></TR>
 	<TR><TD>contour</TD><TD>$contour</TD></TR>
 	<TR><TD>zoom</TD><TD>$zoom</TD></TR>
 	<TR><TD>description</TD><TD>$description</TD></TR>

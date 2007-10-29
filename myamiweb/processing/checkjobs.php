@@ -21,8 +21,13 @@ function checkJobs($showjobs=False,$extra=False) {
   $javafunc.="  newwindow=window.open('','name','height=150, width=900')\n";
   $javafunc.="  newwindow.document.write('<HTML><BODY>')\n";
   $javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/model.tar.gz '+outdir+'/.<BR>')\n";
-  $javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/results.tar.gz '+outdir+'/.<BR>')\n";
-  $javafunc.="    newwindow.document.write('uploadRecon.py runid='+runid+' dir='+outdir+' tmpdir='+outdir+'/tmp/<BR>')\n";
+  $javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/results.tar.gz '+outdir+'/.<BR>')\n";  
+  $javafunc.="    newwindow.document.write('gunzip '+outdir+'/model.tar.gz<BR>')\n";
+  $javafunc.="    newwindow.document.write('gunzip '+outdir+'/results.tar.gz<BR>')\n";  
+  $javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/model.tar<BR>')\n";
+  $javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/results.tar<BR>')\n";  
+  $javafunc.="    newwindow.document.write('rm -f '+outdir+'/model.tar<BR>')\n";
+  $javafunc.="    newwindow.document.write('rm -f '+outdir+'/results.tar<BR>')\n";  
   $javafunc.="    newwindow.document.write('<P>&nbsp;<BR></BODY></HTML>')\n";
   $javafunc.="    newwindow.document.close()\n";
   $javafunc.="  }\n";
@@ -74,26 +79,29 @@ function checkJobs($showjobs=False,$extra=False) {
     if ($jobinfo['status']=='Q') $status='Queued';
     elseif ($jobinfo['status']=='R') $status='Running';
     elseif ($jobinfo['status']=='D') {
-      $dlbuttons = "<INPUT TYPE='BUTTON' onclick=\"parent.location=('uploadrecon.php?expId=$expId&jobId=$job[DEF_id]')\" VALUE='upload results'>\n";
+      $dlbuttons = "<INPUT TYPE='BUTTON' onclick=\"displayDMF('$jobinfo[appath]','$jobinfo[dmfpath]')\" VALUE='get from DMF'> \n";
+      $dlbuttons.= "<INPUT TYPE='BUTTON' onclick=\"parent.location=('uploadrecon.php?expId=$expId&jobId=$job[DEF_id]')\" VALUE='upload results'>\n";
       $status='Done';
     }
-    $display_keys['status'] = $status;
+    if ($status) $display_keys['status'] = $status;
 
     echo divtitle("Job: $jobinfo[name] (ID: $job[DEF_id])");
     echo "<TABLE BORDER='0' >\n";
+    if ($dlbuttons) echo "<TR><TD COLSPAN='2'>$dlbuttons</TD></TR>\n";
     foreach($display_keys as $k=>$v) {
       echo formatHtmlRow($k,$v);
     }
-    if ($dlbuttons) echo "<TR><TD>$dlbuttons</TD></TR>\n";
     echo "</TABLE>\n";
 
-    if ($showjobs) {
-      echo "<B>Current Status:</B>\n";
+    if ($showjobs && $status=='Running') {
       $stat = checkJobStatus($jobinfo['clusterpath'],$jobinfo['name'],$_SESSION['username'],$_SESSION['password']);
-      $numtot=count($stat['allref']);
-      $current=count($stat['curref']);
-      echo "Currently processing iteration $current of $numtot\n";
-      if ($stat['errors']) echo "<P><FONT COLOR='RED'>There are errors in this job, you should resubmit</FONT><P>";
+      if (!empty($stat)) {
+	echo "<B>Current Status:</B>\n";
+	$numtot=count($stat['allref']);
+	$current=count($stat['curref']);
+	echo "Currently processing iteration $current of $numtot\n";
+	if ($stat['errors']) echo "<P><FONT COLOR='RED'>There are errors in this job, you should resubmit</FONT><P>";
+      }
     }
     echo "<P>\n";
   }
@@ -105,6 +113,7 @@ function checkJobStatus($jobpath,$jobfile,$user,$pass) {
   $cmd = "grep refine $jobpath/$jobfile ";
   $r = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
   $allref = streamToArray($r);
+  if (empty($allref)) return;
   foreach ($allref as $i){
     if ($i[0]=='refine' && preg_match('/\d+/',$i[1])) $stat['allref'][]=$i;
   }
