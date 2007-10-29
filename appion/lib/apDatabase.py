@@ -227,11 +227,11 @@ def insertImgAssessmentStatus(imgdata, runname="pyapp1", assessment=None):
 	#override to ALWAYS be 'run1'
 	#assessrun['name'] = runname
 	assessrun['name'] = "run1"
-	assessrundata = appiondb.query(assessrun)
+	#assessrundata = appiondb.query(assessrun)
 
 	assessquery = appionData.ApAssessmentData()
 	assessquery['image'] = imgdata
-	assessquery['assessmentrun'] = assessrundata[0]
+	assessquery['assessmentrun'] = assessrun
 	assessquery['selectionkeep'] = assessment
 
 	appiondb.insert(assessquery)
