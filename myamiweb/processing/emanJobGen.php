@@ -23,9 +23,9 @@ if ($_POST['write']) {
   if ($_POST['walltime'] > 240) jobForm("ERROR: Max walltime is 240");
   if (!$_POST['cput']) jobForm("ERROR: No CPU time specified, setting default=240");
   if ($_POST['cput'] > 240) jobForm("ERROR: Max CPU time is 240");
-  if (!$_POST['rprocs']) jobForm("ERROR: No refinement ppn specified, setting default=4");
+  if (!$_POST['rprocs']) jobForm("ERROR: No reconstruction ppn specified, setting default=4");
   if ($_POST['rprocs'] > $_POST['ppn'])
-    jobForm("ERROR: Asking to refine on more processors than available");
+    jobForm("ERROR: Asking to reconstruct on more processors than available");
   if (!$_POST['dmfpath']) jobForm("ERROR: No DMF path specified");
   if (!$_POST['dmfmod']) jobForm("ERROR: No starting model");
   if (!$_POST['dmfstack']) jobForm("ERROR: No stack file");
@@ -282,11 +282,11 @@ function jobForm($extra=false) {
   $sessiondata = $leginondata->getSessionInfo($expId);
   $sessionpath = $sessiondata['Image path'];
   $sessionpath = ereg_replace("leginon","appion",$sessionpath);
-  $sessionpath = ereg_replace("rawdata","refine/",$sessionpath);
+  $sessionpath = ereg_replace("rawdata","recon/",$sessionpath);
 
   $particle = new particledata();
-  $refineruns = count($particle->getJobIdsFromSession($expId));
-  $defrunid = 'refine'.($refineruns+1);
+  $reconruns = count($particle->getJobIdsFromSession($expId));
+  $defrunid = 'recon'.($reconruns+1);
 
   ## get stack data
   $stackinfo = explode('|--|',$_POST['stackval']);
@@ -381,7 +381,7 @@ function jobForm($extra=false) {
     </TR>
     <TR>
       <TD COLSPAN='4'>
-      Refinement procs per node:<INPUT TYPE='text' NAME='rprocs' VALUE='$rprocs' SIZE='3'>
+      Reconstruction procs per node:<INPUT TYPE='text' NAME='rprocs' VALUE='$rprocs' SIZE='3'>
       </TD>
     </TR>
     </TABLE>
@@ -417,7 +417,7 @@ function jobForm($extra=false) {
   echo"</TD></TR></TABLE>"; //overall table
   echo"
    <BR/><CENTER>
-   <H4>EMAN Refinement Parameters</H4>
+   <H4>EMAN Reconstruction Parameters</H4>
    </CENTER><HR/>
   <INPUT TYPE='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults for Iteration 1'>\n";
   for ($i=1; $i<=$numiters; $i++) {
