@@ -78,6 +78,7 @@ class AppionLoop(object):
 		"""
 		### get images from database
 		self._getAllImages()
+		os.chdir(self.params['rundir'])
 		self.preLoopFunctions()
 		### start the loop
 		notdone=True
