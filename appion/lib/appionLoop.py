@@ -683,7 +683,7 @@ class AppionLoop(object):
 
 		### THIS NEEDS TO BECOME MUCH MORE GENERAL, e.g. Peaks
 		tdiff = time.time()-self.stats['startloop']
-		if not self.params['continue'] or tdiff > 0.3:
+		if not self.params['continue'] or tdiff > 0.05:
 			count = self.stats['count']
 			#if(count != self.stats['lastcount']):
 			if(self.params['method'] != None):
