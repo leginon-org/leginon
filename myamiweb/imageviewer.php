@@ -1,14 +1,15 @@
 <?php
-require ('inc/leginon.inc');
-require ('inc/project.inc');
-require ('inc/viewer.inc');
-require ('inc/auth.inc');
+require "inc/leginon.inc";
+require "inc/project.inc";
+require "inc/viewer.inc";
+require "inc/auth.inc";
+$ptcl = (@require "inc/particledata.inc") ? true : false;
 
 $sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];
 $projectId = ($_POST['projectId']) ? $_POST['projectId'] : $_GET['projectId'];
 $imageId = ($_POST['imageId']) ? $_POST['imageId'] : $_GET['imageId'];
 $preset = $_POST[$_POST['controlpre']];
-$imagecomment = $leginondata->getImageComment(621090);
+
 // --- Set sessionId
 $lastId = $leginondata->getLastSessionId();
 $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
@@ -21,6 +22,11 @@ if($projectdb)
 
 if(!$sessions)
 	$sessions = $leginondata->getSessions('description', $projectId);
+
+if ($ptcl) {
+	$particle = new particledata();
+	$particleruns=$particle->getParticleRunIds($sessionId);
+}
 
 // --- update SessionId while a project is selected
 $sessionId_exists = $leginondata->sessionIdExists($sessions, $sessionId);
@@ -55,6 +61,7 @@ $javascript = $viewer->getJavascript();
 
 $view1 = new view('Main View', 'v1');
 $view1->setControl();
+$view1->setParam('ptclparams',$particleruns);
 $view1->displayParticleIcon(false); 
 $view1->displayComment(true); 
 $view1->addMenuItems($playbackcontrol);

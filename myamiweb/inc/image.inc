@@ -1,7 +1,7 @@
 <?php
 /**
- *	@version $Revision: 1.36 $
- *	@version $Id: image.inc,v 1.36 2007-10-18 21:11:16 dfellman Exp $
+ *	@version $Revision: 1.37 $
+ *	@version $Id: image.inc,v 1.37 2007-10-30 03:28:40 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -331,6 +331,14 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				require "inc/particledata.inc";
 				$particle = new particledata();
 				$particlerun=$particle->getLastParticleRun($sessionId);
+				if ($p['ptclsel']) {
+					$particleruns=$particle->getParticleRunIds($sessionId);
+					foreach ($particleruns as $prun) {
+							$particlerun=$prun['DEF_id'];
+							if($p['ptclsel']==$particlerun)
+								break;
+					}
+				}
 				$particledata=$particle->getParticlesFromImageId($particlerun, $imageId);
 				list($selectionparams)=$particle->getSelectionParams($particlerun);
 				$diam = $selectionparams['diam'];

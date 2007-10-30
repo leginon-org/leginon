@@ -409,6 +409,14 @@ function setAceParam(view) {
 	}
 }
 
+function setPtclParam(view) {
+	if (param = document.getElementById(view+"ptclparam")) {
+		vf = param.options[param.selectedIndex].value
+		eval("jsptclpick"+view+"="+vf)
+		newfile(view)
+	}
+}
+
 function toggleButton(imagename, name) {
 	state = toggleimage(imagename, name)
 	if (m = eval("document.viewerform."+imagename+"_st")) {

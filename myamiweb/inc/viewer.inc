@@ -27,6 +27,8 @@ class viewer {
 	var $crlf="\n";
 	var $nbview=0;
 
+	var $jsparams;
+
 	function viewer() {
 	}
 
@@ -242,6 +244,28 @@ class viewer {
 		$str .= '<script src="js/button.js"></script>'.$this->crlf;
 		$str .= '<script src="js/dropdiv.js"></script>'.$this->crlf;
 		$str .= '<script>'.$this->crlf;
+		if ($params=$this->jsparams) {
+			$str.="var jsparams={".$this->crlf;
+			foreach($params as $key=>$values) {
+				$str.='"'.$key.'": ['.$this->crlf;
+				if (is_array($values)) {
+					$arr=array();
+					foreach($values as $value) {
+						$arrsub=array();
+						foreach($value as $k=>$v) {
+							$arrsub[]='"'.$k.'": "'.$v.'"';
+						}
+						$arr[]='{'.$this->crlf
+									.join(",".$this->crlf,$arrsub).$this->crlf
+									.'}'.$this->crlf;
+					}
+					$str.=join(",".$this->crlf,$arr).$this->crlf;
+					
+				}
+				$str.=']'.$this->crlf;
+			}
+			$str.="}".$this->crlf;
+		}
 		if ($this->sessionId)
 			$str .= 'var jsSessionId = '.$this->sessionId.";".$this->crlf;
 		$jsimgId = ($this->imageId) ? ' = '.$this->imageId.';' : ';';
@@ -279,6 +303,10 @@ class viewer {
 			$init .= $v->getJavascriptButton();
 			$init .= 'jsviews['.$nv.']="'.$v->getName().'";'.$this->crlf;
 			$nv++;
+echo '
+			if (obj=document.viewerform.imageId) { }
+';
+
 		}
 		$init .= 'function updateviews() { '.$this->crlf;
 		$init .= 'setimgId();'.$this->crlf;
@@ -427,6 +455,7 @@ class view {
 	var $crlf="\n";
 	var $size=256;
 	var $displayview='true';
+	var $params;
 
 	function view($title, $name) {
 		global $VIEWNB;
@@ -497,6 +526,7 @@ class view {
 		$this->loadjpg= "0";
 		$this->ptclsel = "0";
 		$this->jsacepar= "1";
+		$this->jsprtlpick= "1";
 		$this->ptclselmemo = $this->name.'psel';
 		$this->qualitymemo = $this->name.'q';
 		$this->binningmemo = $this->name.'b';
@@ -545,6 +575,10 @@ class view {
 		if ($btscalestate=$_REQUEST[$this->btscalememo])
 			$this->btscalestate = $btscalestate;
 		
+	}
+
+	function setParam($key, $value) {
+		$this->params[$key]=$value;
 	}
 
 	function addMenuItems($newitems) {
@@ -723,6 +757,7 @@ class view {
 			.'var jsloadjpg'.$this->name.'="'.$this->loadjpg.'";'.$this->crlf
 			.'var jsptclsel'.$this->name.'="'.$this->ptclsel.'";'.$this->crlf
 			.'var jsaceparam'.$this->name.'="'.$this->jsacepar.'";'.$this->crlf
+			.'var jsptclpick'.$this->name.'="'.$this->jsptclpick.'";'.$this->crlf
 			.'var '.$this->name.'adjw=false;'.$this->crlf
 			.$this->crlf;
 		return $javascript;
@@ -945,8 +980,23 @@ class view {
 			$htmlframe .= '
 				<td width="15">';
 			$htmlframe .= $this->btnptcl->display();
-			$htmlframe .= '
-			</td>';
+			$htmlframe .= '</td><td width="9">';
+			$downimg='<img src="img/menudown1.gif" border="0">';
+			$closedownimg='<img src="img/close_bt_off.gif" border="0">';
+			$ptclmenu = new dropdown($downimg, $name."ptcl");
+			$ptclmenu->closeval=$closedownimg;
+			$ptclmenu->height="";
+			$ptclmenu->width="";
+			$ptclform='Picks:<br /><select id="'.$name.'ptclparam">';
+			if (is_array($this->params['ptclparams'])) {
+				foreach ($this->params['ptclparams'] as $v) {
+					$ptclform.= "<option value=\"".$v['id']."\" >".$v['name']." \n"; 
+				}
+			}
+			$ptclform.="</select>";
+			$ptclform.='<input type="button" value="update" onClick=setPtclParam(\''.$name.'\') />';
+			$ptclmenu->setContent($ptclform);
+			$htmlframe.=$ptclmenu->display();
 		}
 
 		if ($this->displaytagicon) {
