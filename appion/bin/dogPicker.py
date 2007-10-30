@@ -18,11 +18,13 @@ import apDog
 
 class dogPicker(particleLoop.ParticleLoop):
 
-	def preLoopFunctions(self):
+	def particleParamConflicts(self):
 		if self.params['lp'] > 0:
-			apDisplay.printWarning("lowpass filter value greater than zero; not a good thing for dogpicker")
+			apDisplay.printWarning("lowpass filter value greater than zero; will ignore for maps and only use it for summary images")
 		if self.params['hp'] > 0:
-			apDisplay.printWarning("highpass filter value greater than zero; not a good thing for dogpicker")
+			apDisplay.printWarning("highpass filter value greater than zero; will ignore for maps and only use it for summary images")
+		if self.params['kfactor'] is not None and self.params['numslices'] is not None:
+			apDisplay.printError("only one of 'kfactor' or 'numslices' can be defined")
 
 	def particleProcessImage(self, imgdata):
 		imgarray = imgdata['image']
@@ -40,8 +42,8 @@ class dogPicker(particleLoop.ParticleLoop):
 		return dogparamq
 
 	def particleDefaultParams(self):
-		self.params['mapdir']="dogmaps"
-		self.params['kfactor']=1.2
+		self.params['mapdir'] = "dogmaps"
+		self.params['kfactor'] = None
 		self.params['numslices'] = None
 		self.params['sizerange'] = None
 
