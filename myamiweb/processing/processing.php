@@ -255,15 +255,15 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>";
     if ($assessedimgs==0) { echo "none"; }
-    elseif ($assessedimgs < $totimgs) { echo "$assessedimgs of $totimgs completed"; }
-    else { echo "All $assessedimgs completed"; }
+    elseif ($assessedimgs < $totimgs || $totimgs==0) { echo "$assessedimgs assessed"; }
+    elseif ($totimgs!=0) { echo "All $assessedimgs completed"; }
     echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>
     <A HREF='imgassessor.php?expId=$sessionId'>";
     if ($assessedimgs==0) {echo "Manual Image Assessment";}
     else {
-      if ($assessedimgs < $totimgs) echo "Continue Manual Assessment";
+      if ($assessedimgs < $totimgs || $totimgs==0) echo "Continue Manual Assessment";
       else echo "Re-Assess Images";
     }
     echo"</A>
