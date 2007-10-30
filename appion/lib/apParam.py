@@ -4,6 +4,7 @@ import sys
 import re
 import socket
 import time
+import random
 import sinedon.data as data
 import apDB
 import apVersion
@@ -176,7 +177,6 @@ def removefiles(path,patterns):
 		except:
 			apDisplay.printError('%s can not be removed' % fullpath)
 
-
 def convertParserToParams(parser):
 	parser.disable_interspersed_args()
 	(options, args) = parser.parse_args()
@@ -192,7 +192,23 @@ def convertParserToParams(parser):
 			params[i.dest] = getattr(options, i.dest)
 	return params
 
-
+def resetVirtualFrameBuffer():
+	#user = os.getlogin() #os.environ["USER"]
+	os.popen("killall Xvfb");
+	#os.system("kill `ps -U "+user+" | grep Xvfb | sed \'s\/pts.*$\/\/\'`");
+	time.sleep(1);
+	port = 1
+	while (port%10 == 0 or port%10 == 1):
+		port = int(random.random()*30+2)
+	port = str(port)
+	apDisplay.printMsg("opening Xvfb port "+port)
+	os.popen("Xvfb :"+port+" -screen 0 800x800x8 &");
+	time.sleep(1);
+	os.environ["DISPLAY"] = ":"+port
+	#if 'bash' in os.environ.get("SHELL"):
+	#	system("export DISPLAY=':1'");	
+	#else
+	#	system("setenv DISPLAY :1");
 
 
 
