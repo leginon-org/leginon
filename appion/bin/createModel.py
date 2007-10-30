@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
 		if os.path.isfile(norefpath+"/exclude.list"): 
 			print "\nThe file exclude.list exist in "+norefpath+"..."
-			print "\nRemprint "\nCreating 3D model using class averages with EMAN function of startAny..."oving the file exclude.list exist in "+norefpath+"...\n"
+			print "\nRemoving the file exclude.list exist in "+norefpath+"...\n"
 			remove = "rm "+norefpath+"/exclude.list"
 			f=os.popen(remove)
 			f.close()
@@ -200,6 +200,6 @@ if __name__ == '__main__':
 	print "\n############################################"
 	print "\nReady to upload model "+modelpath+" into the database...\n"
 	print upload
-	#apEMAN.executeEmanCmd(upload, verbose=True)
+	apEMAN.executeEmanCmd(upload, verbose=True)
 
 
