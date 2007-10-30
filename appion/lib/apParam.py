@@ -193,6 +193,10 @@ def convertParserToParams(parser):
 	return params
 
 def resetVirtualFrameBuffer():
+	blue = "\033[34m"
+	clear = "\033[0m"
+	sys.stderr.write(blue)
+	apDisplay.printMsg("ignore following errors in blue")
 	#user = os.getlogin() #os.environ["USER"]
 	os.popen("killall Xvfb");
 	#os.system("kill `ps -U "+user+" | grep Xvfb | sed \'s\/pts.*$\/\/\'`");
@@ -205,6 +209,8 @@ def resetVirtualFrameBuffer():
 	os.popen("Xvfb :"+port+" -screen 0 800x800x8 &");
 	time.sleep(1);
 	os.environ["DISPLAY"] = ":"+port
+	time.sleep(2)
+	sys.stderr.write(clear)
 	#if 'bash' in os.environ.get("SHELL"):
 	#	system("export DISPLAY=':1'");	
 	#else
