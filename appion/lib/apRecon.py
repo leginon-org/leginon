@@ -4,7 +4,6 @@ import os, re, sys, time
 import tempfile
 import cPickle
 import math
-import random
 import string
 import appionData
 import apDB
@@ -267,25 +266,6 @@ def getClassInfo(classes):
 			projeulers.append(eulers)
 	return projeulers
 
-
-def resetVirtualFrameBuffer():
-	#user = os.getlogin() #os.environ["USER"]
-	os.popen("killall Xvfb");
-	#os.system("kill `ps -U "+user+" | grep Xvfb | sed \'s\/pts.*$\/\/\'`");
-	time.sleep(1);
-	port = 1
-	while (port%10 == 0 or port%10 == 1):
-		port = int(random.random()*30+2)
-	port = str(port)
-	apDisplay.printMsg("opening Xvfb port "+port)
-	os.popen("Xvfb :"+port+" -screen 0 800x800x8 &");
-	time.sleep(1);
-	os.environ["DISPLAY"] = ":"+port
-	#if 'bash' in os.environ.get("SHELL"):
-	#	system("export DISPLAY=':1'");	
-	#else
-	#	system("setenv DISPLAY :1");
-
 def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stackapix=None):
 	# if eotest failed, filter to 30 
 	if not res:
@@ -299,8 +279,8 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stac
 	tmpf = density+'.tmp.mrc'
 	
 	if stackapix is None:
+		apDisplay.printMsg("undefined stack pixelsize, using initial model pixelsize")
 		apix = initmodel['pixelsize']
-		print "Can't find stack pixel size, use initial model pixelsize"
 	else:
 		apix = stackapix
 	box = initmodel['boxsize']
@@ -329,12 +309,10 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stac
 	hedcmd = ('proc3d %s %s' % (density,tmphed))
 	if sym != 'Icosahedral':
 		hedcmd = hedcmd + " rot=90"
-	print hedcmd
-	os.system(hedcmd)
+	apEMAN.executeEmanCmd(hedcmd)
 	pngslice = density + '.slice.png'
 	slicecmd = ('proc2d %s %s first=%i last=%i' % (tmphed, pngslice, halfbox, halfbox))
-	print slicecmd
-	os.system(slicecmd)
+	apEMAN.executeEmanCmd(slicecmd)
 	os.remove(tmphed)
 	os.remove(tmpimg)
 	return
@@ -342,12 +320,12 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stac
 
 def runChimeraScript(chimscript):
 	apDisplay.printColor("Trying to use chimera for model imaging","cyan")
-	resetVirtualFrameBuffer()
+	apParam.resetVirtualFrameBuffer()
 	if 'CHIMERA' in os.environ and os.path.isdir(os.environ['CHIMERA']):
 		chimpath = os.environ['CHIMERA']
 	else:
 		chimpath = None
-		apDisplay.printError("Could not find Chimera, CHIMERA environmental variable is unset")
+		apDisplay.printError("Could not find Chimera, 'CHIMERA' environmental variable is unset")
 	if not os.path.isdir(chimpath):
 		apDisplay.printError("Could not find chimera at: "+chimpath)
 	os.environ['CHIMERA'] = chimpath
