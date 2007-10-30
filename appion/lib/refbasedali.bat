@@ -1,11 +1,11 @@
 ; reference-based alignment with the reference refinement
 
-x99=500   ; number of particles
+x99=500 ; number of particles
 x98=3     ; number of reference images
-x97=25    ; first ring for rotational alignment
+x97=25     ; first ring for rotational alignment
 x96=55    ; last ring for rotational alignment
 x95=6     ; translational search range (in pixels)
-x93=13    ; c-symmetry (rotational symmetry to be applied, 1 if none)
+x93=13     ; c-symmetry (rotational symmetry to be applied, 1 if none)
 x92=4     ; iteration number
 x91=x92-1
 
@@ -13,29 +13,10 @@ x91=x92-1
 
 FR G ; stack file
 [stack]start
-
 FR G
-[reference]reference
-
-;if you mess with file defs below this batch file won't run!!!;;;;;;
-
+[aligned]aligned
 FR G
-[aligned]aligned{**x92}
-
-FR G
-[refselect]refselect/{**x92}refselect
-
-FR G
-[ref]{**x91}avgali
-
-IF(x92.gt.1) THEN
-FR G
-[aliold]aligned{**x91}
-GOTO LB69
-ELSE
-FR G
-[aliold][stack]
-ENDIF
+[ref]reference
 
 ; create the selection document file.
 ; The image series is consecutive
@@ -49,62 +30,89 @@ selref
 1
 1-x98
 
+;copy templates into spider stack
+IF (x92.eq.1) THEN
+  DO LB34, x11=1,x98
+    CP
+    [ref]{***x11}
+    [ref]@{***x11}
+  LB34
+ENDIF
+	
 VM
 mkdir -p rff/
 
 VM
 mkdir -p refselect/
 
-[reference]@{***x11}
-
-LB69
-
-
 
 VM
 echo "aligning particles to reference"
 ; do the alignment
 AP MQ
-[reference]@***    ; template for reference image
+[ref]@***    		; template for reference image
 selref                  ; file containing list of reference files
 (x95,1)                 ; translational search range, step size
 x97,x96                 ; first & last ring
-[aliold]@******          ; stack containing images to be aligned
+[stack]@******          ; stack containing images to be aligned
 select                  ; list of particles for alignment
-apmq{**x92}   ; output angles
+apmq			   ; output angles
 
 VM
 echo "creating new aligned stack"
 ;rotate and shift images according to the parameters from AP MQ alignment
-LB68
 
-IQ FI,x20
-  apmqSUM{**x91}
-  IF (x20.eq.1) GOTO LB25
+;if it is the first iteration proceed to RT SQ function
+if(x92.eq.1) GOTO LB27
 
-IQ FI,x19
-  apmq{**x91}
+;if it is the 2nd iteration, get paramaters from previous iteration
+if(x92.eq.2) GOTO LB24
 
-  IF (x19.eq.1) GOTO LB24
+GOTO LB25
 
-GOTO LB27
+LB27
+DO LB19, x11=1,x99
+  UD IC,x11,x41,x42,x43,x44,x45,x46
+   apmq
+  
+  IF (x41.gt.0) THEN
+    RT SQ
+    [stack]@{****x46}
+    [aligned]@{****x46}
+    x43
+    x44,x45
+  ELSE
+    RT SQ
+    [stack]@{****x46}
+    _1
+    x43
+    x44,x45  
+    MR
+    _1
+    [aligned]@{****x46}
+    y 
+  ENDIF
+DE  
+_1  
+LB19
+GOTO LB88
 
 LB24
-
 DO LB11 x11=1,x99
   ; Format of the transformation parameters doc file is:
   ;       angle, Sx, Sy, 0-1 flag for Y-mirror (0-no mirror; 1-mirror)
   UD IC,x11,x41,x42,x43,x44,x45,x46
-  apmq{**x92}
+  apmq
+
   do lb26,x12=1,x99     
      UD IC x12,x61,x62,x63,x64,x65,x66
-      apmq{**x91}
+      ../refine{*x91}/apmq
       IF(x66.ne.x46)goto lb26
      SA P x73,x74,x75
      x63,x64,x65
      x43,x44,x45
      SD x11,x73,x74,x75,x46
-     apmqSUM{**x92}
+     apmqSUM
     lb26
   IF (x41.gt.0) THEN
     RT SQ
@@ -131,16 +139,16 @@ GOTO LB88
 LB25
 DO LB18, x11=1,x99
   UD IC,x11,x41,x42,x43,x44,x45,x46
-  apmq{**x92}
+  apmq
   do lb28, x12=1,x99
       UD IC x12,x63,x64,x65,x66
-      apmqSUM{**x91}
+      ../refine{*x91}/apmqSUM
       IF (x66.ne.x46)goto lb28
       SA P x73,x74,x75
       x63,x64,x65
       x43,x44,x45
       SD x11,x73,x74,x75,x46,x41
-      apmqSUM{**x92}
+      apmqSUM
   lb28
   IF (x41.gt.0) THEN
     RT SQ
@@ -162,74 +170,46 @@ DO LB18, x11=1,x99
   DE
   _1
 LB18
-GOTO LB88
-
-LB27
-DO LB19, x11=1,x99
-  UD IC,x11,x41,x42,x43,x44,x45,x46
-   apmq{**x92}
-
-  IF (x41.gt.0) THEN
-    RT SQ
-    [stack]@{****x46}
-    [aligned]@{****x46}
-    x43
-    x44,x45
-  ELSE
-    RT SQ
-    [stack]@{****x46}
-    _1
-    x43
-    x44,x45
-    MR
-    _1
-    [aligned]@{****x46}
-    y
-  ENDIF
-DE
-_1
-LB19
 
 LB88
-
 do LB12,x11=1,x98
   x17=0
   do lb13, x15=1,x99
   ud ic,x15,x41,x42,x43,x44,x45,x46
-  apmq{**x92}
+  apmq
   x16=abs(x41)
   IF (x16.eq.x11) THEN
     x17=x17+1
     sd x17,x46,x41
-    [refselect]{***x11}
+    refselect/refselect{***x11}
   ENDIF
   lb13
 LB12
 
 
 UD ICE
-apmq{**x92}
+apmq
 UD ICE
-apmq{**x91}
+../refine{*x91}/apmq
 UD ICE
-apmqSUM{**x91}
+apmqSUM
 UD ICE
-apmqSUM{**X92}
+../refine{*x91}/apmqSUM
 
 
 
 VM
 echo "creating resulting template(s)"
 
-x94=x92+1
+
 
 do lb35, x33=1,x98
 AS R
 [aligned]@******        ; input file name
-[refselect]{***x33}                 ; list of particles to use
+refselect/refselect{***x33}                 ; list of particles to use
 A                       ; all images will be added
-{**x92}avgali@{***x33}    ; new refined reference
-{**x92}varali@{***x33}    ; new refined variance
+refali@{***x33}    ; new refined reference
+varali@{***x33}    ; new refined variance
 
 
 
@@ -238,12 +218,12 @@ IF (x93.gt.1) THEN
   echo "applying c{**x93} symmetry"
 
   CP
-  {**x92}avgali@{***x33}
-  {**x92}avgali_nosym@{***x33}
+  refali@{***x33}
+  refali_nosym@{***x33}
 
   CP
-  {**x92}varali@{***x33}
-  {**x92}varali_nosym@{***x33}
+  varali@{***x33}
+  varali_nosym@{***x33}
   
   SY DOC
   sym
@@ -256,17 +236,17 @@ IF (x93.gt.1) THEN
       
     ; create a stack containing all rotated orientations
     RT
-    {**x92}avgali@{***x33}
-    {**x92}symmetrize@{***x33}@{**x11}
+    refali@{***x33}
+    symmetrize@{***x33}@{**x11}
     x13
 
     ; average them together
     AS
-    {**x92}symmetrize@{***x33}@**
+    symmetrize@{***x33}@**
     (1-x93)
     A
-    {**x92}avgali@{***x33}
-    {**x92}varali@{***x33}
+    refali@{***x33}
+    varali@{***x33}
   LB3
     
   UD ICE
@@ -287,61 +267,23 @@ echo "computing the resolution for class{%F5.0%x33}"
 ; get the resolution
 AS R
 [aligned]@******        ; input file name
-[refselect]{***x33}                 ; list of particles to use
+refselect/refselect{***x33}                 ; list of particles to use
 O                       ; 2 sub-averages will be calculated, one for odd, one for even
-rff/{**x92}avgodd@{***x33}    ; file receiving odd average
-rff/{**x92}varodd@{***x33}    ; file receiving odd variance
-rff/{**x92}avgeven@{***x33}   ; file receiving even average
-rff/{**x92}vareven@{***x33}   ; file receiving even variance
+rff/avgodd@{***x33}    ; file receiving odd average
+rff/varodd@{***x33}    ; file receiving odd variance
+rff/avgeven@{***x33}   ; file receiving even average
+rff/vareven@{***x33}   ; file receiving even variance
 
 ; computes fourier shell coefficient
 RF
-rff/{**x92}avgodd@{***x33}    ; first file
-rff/{**x92}avgeven@{***x33}   ; second file
+rff/avgodd@{***x33}    ; first file
+rff/avgeven@{***x33}   ; second file
 (0.5)     ; ring width
 (0.2,2)   ; scale factor (lower, upper)
-rff/{**x92}rff{***x33}       ; output file
+rff/rff{***x33}       ; output file
 
 LB35
 
-DE A
-refselect/{**x91}refselect001
-
-DE A
-rff/{**x91}avgodd
-
-DE A
-rff/{**x91}avgeven
-
-DE A
-rff/{**x91}varodd
-
-DE A
-rff/{**x91}vareven
-
-DE A
-rff/{**x91}rff001
-
-DE A
-{**x91}varali
-
-DE 
-aligned{**x91}
-
-DE
-apmqSUM{**x91}
- 
-IF(x91.eq.0) THEN
-DE 
-{**x91}[ref]
-ENDIF
-
-IF(x93.gt.1) THEN
-DE 
-{**x91}varali_nosym
-DE
-{**x91}symmetrize
-ENDIF
 
 EN D
 

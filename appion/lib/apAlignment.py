@@ -264,7 +264,7 @@ def createSpiderRefFile(params):
 		scaleRefArray = apTemplate.scaleTemplate(refarray, scalefactor, params['boxsize'])
 
 		#write to file
-		tmpreffile = os.path.join(params['rundir'], "tempref00"+str(i)+".mrc")
+	 	tmpreffile = os.path.join(params['rundir'], "tempref00"+str(i)+".mrc")		
 		if os.path.isfile(tmpreffile):
 			apDisplay.printWarning(tmpreffile+" already exists; removing it")
 			time.sleep(2)
@@ -272,7 +272,7 @@ def createSpiderRefFile(params):
 		apImage.arrayToMrc(scaleRefArray, tmpreffile)
 
 		#set outfile name
-		outfile = os.path.join(params['rundir'], "reference00"+str(i+1)+".spi")
+		outfile = os.path.join(params['rundir'], "reference00"+str(i+1)+".spi")		
 		if os.path.isfile(outfile):
 			apDisplay.printWarning(outfile+" already exists; removing it")
 			time.sleep(2)
@@ -285,7 +285,7 @@ def createSpiderRefFile(params):
 		emancmd += "apix="+str(params['apix'])+" "
 		if params['lp'] > 0:
 			emancmd += "lp="+str(params['lp'])+" "
-		emancmd += "spiderswap "
+		emancmd += "spider-single "
 		apDisplay.printColor("Converting reference "+str(i+1)+" to spider format for template="+str(refid),"cyan")
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
 
@@ -406,9 +406,7 @@ def createRefSpiderBatchFile(params,iteration):
 			elif re.search("^x93",line):
 				outf.write(spiderline(93,params['csym'],"c-symmetry (rotational symmetry to be applied, 1 if none)"))
 			elif re.search("^x92",line):
-				outf.write(spiderline(92,iteration,"iteration number"))
-			elif re.search("^\[reference\]",line):
-				outf.write(spiderline("stack",os.path.join(params['rundir'],'reference')))
+				outf.write(spiderline(92,iteration,"refinement iteration"))
 			elif re.search("^\[stack\]",line):
 				outf.write(spiderline("stack",os.path.join(params['rundir'],'start')))
 			elif re.search("^\[aligned\]",line):
@@ -421,7 +419,7 @@ def createRefSpiderBatchFile(params,iteration):
 					previter = iteration - 1
 					previtername = 'refine%d' % previter
 					previterdir = os.path.join(params['rundir'],previtername)
-					outf.write(spiderline("ref",os.path.join(previterdir,'refali001')))
+					outf.write(spiderline("ref",os.path.join(previterdir,'refali')))
 				notdone = False
 			else:
 				outf.write(line)
@@ -434,7 +432,7 @@ def spiderline(var, value, comment=None):
 			line += " "
 		line += "; "+comment+"\n"
 	else:
-	      	line = "["+var+"]"+value+"\n"
+		line = "["+var+"]"+value+"\n"
 	sys.stderr.write(line)
 	return line
 
@@ -474,6 +472,15 @@ def makeRefMrc(params):
 	if params['csym']>1:
 		convertFileToMRC(params['iterdir'],'refali001_nosym.spi')
 		convertFileToMRC(params['iterdir'],'varali001_nosym.spi')
+
+def makeRefImagic(params):
+	apDisplay.printColor("converting spider stacks to imagic","cyan")
+	convertStackToIMAGIC(params['iterdir'],'ref.spi')
+	convertStackToIMAGIC(params['iterdir'],'refali.spi')
+	convertStackToIMAGIC(params['iterdir'],'varali.spi')
+	if params['csym']>1:
+		convertStackToIMAGIC(params['iterdir'],'refali_nosym.spi')
+		convertStackToIMAGIC(params['iterdir'],'varali_nosym.spi')
 	
 	
 def classHistogram(params):
@@ -518,7 +525,16 @@ def convertFileToMRC(path,filename):
 	mrcfile=fileroot+".mrc"
 	emancmd = "proc2d "+os.path.join(path,filename)+" "+mrcfile
 	apEMAN.executeEmanCmd(emancmd)
-	
+
+def convertStackToIMAGIC(path,filename):
+	"""
+	takes spider stack file and converts to imagic stack
+	"""
+	stackroot = os.path.splitext(filename)[0]
+	refstackname = stackroot+".hed"
+	emancmd = "proc2d "+os.path.join(path,filename)+" "+refstackname
+	apEMAN.executeEmanCmd(emancmd)
+
 def convertClassfileToImagic(params):
 	"""
 	takes the final spider file and converts it to imagic

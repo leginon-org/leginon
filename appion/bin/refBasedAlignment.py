@@ -29,7 +29,7 @@ if __name__ == "__main__":
 		os.chdir(params['iterdir'])
 		apAlignment.createRefSpiderBatchFile(params,itn)
 		apAlignment.runSpiderRefAli(params)
-		apAlignment.makeRefMrc(params)
+		apAlignment.makeRefImagic(params)
 		if params['commit'] is True:
 			apAlignment.insertIterRun(params, itn, itername, insert=True)
 
