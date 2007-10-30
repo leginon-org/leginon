@@ -182,9 +182,10 @@ def parseMsgPassingLogFile(params):
 
 def findEmanJobFile(params):
 	# first find the job file, if it doesn't exist, use the .eman log file
-	logfile = os.path.join(params['path'], params['jobinfo']['name'])
-	if os.path.isfile(logfile):
-		return logfile
+	if params['jobinfo'] is not None:
+		logfile = os.path.join(params['path'], params['jobinfo']['name'])
+		if os.path.isfile(logfile):
+			return logfile
 	logfile = os.path.join(params['path'], 'eman.log')
 	if os.path.isfile(logfile):
 		return logfile
