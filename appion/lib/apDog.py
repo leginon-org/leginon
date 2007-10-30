@@ -6,12 +6,16 @@ import apDisplay
 import apDB
 import appionData
 import math
+import numpy
 import apImage
 from scipy import ndimage
 
 appiondb = apDB.apdb
 
 def runDogDetector(imagename, params):
+	"""
+	This is an old libcv2 function that is no longer used
+	"""
 	#imgpath = img['session']['image path'] + '/' + imagename + '.mrc'
 	#image = mrc.read(imgpath)
 	image = apDatabase.getImageData(imagename)['image']
@@ -36,7 +40,10 @@ def runDogDetector(imagename, params):
 
 	return peaks
 
-def convertDogPeaks(peaks,params):
+def convertDogPeaks(peaks, params):
+	"""
+	This is an old libcv2 function that is no longer used
+	"""
 	bin = params['bin']
 	dictpeaks = []
 	peak = {}
@@ -57,53 +64,94 @@ def diffOfGaussParam(imgarray, params):
 	k = params['kfactor']
 	numslices = params['numslices']
 	sizerange = params['sizerange']
+	if diam == 0:
+		apDisplay.printError("difference of Gaussian; radius = 0")
+	pixrad = float(diam/apix/float(bin)/2.0)
 	if numslices is None and numslices < 2:
-		dogarray = diffOfGauss(imgarray, apix, bin, diam, k=k)
+		dogarray = diffOfGauss(imgarray, pixrad, k=k)
 		dogarray = apImage.normStdev(dogarray)/4.0
 		return [dogarray]
 	else:
-		"CRAIG?"
-		dogarrays = diffOfGaussLevels(imgarray, apix, bin, diam, numslices, sizerange)
+		pixrange = float(sizerange/apix/float(bin)/2.0)
+		dogarrays, sigmavals = diffOfGaussLevels(imgarray, pixrad, numslices, pixrange)
+		diamarray = numpy.asarray(sigmavals, dtype=numpy.float32) * apix * float(bin) * 2.0
+		apDisplay.printColor("diameter list= "+str(numpy.around(diamarray,3)), "cyan")
+		params['diamarray'] = diamarray
 		return dogarrays
 
-def diffOfGauss(imgarray, apix, bin, diam, k=1.2):
+def diffOfGauss(imgarray, pixrad, k=1.2):
 	"""
 	given bin, apix and diam of particle perform a difference of Gaussian
 	about the size of that particle
 	k := sloppiness coefficient
 	"""
-	if diam == 0:
-		apDisplay.printError("difference of Gaussian; radius = 0")
-	pixrad = float(diam/apix/float(bin)/2.0)
+	#find k-factor
 	kfact = math.sqrt( (k**2 - 1.0) / (2.0 * k**2 * math.log(k)) )
+	# divide by sqrt(k) to span desired area 
 	sigma1 = kfact * pixrad
-	#sigma2 = k * sigma1
-	sigmaD = math.sqrt(k*k-1.0)
+	# divide by sqrt(k) to span desired area 
+	sigma1 = sigma1 / math.sqrt(k)
+	#sigma2 = k * sigma1 ==> sigmaDiff = 
+	sigmaDiff = sigma1*math.sqrt(k*k-1.0)
 	imgarray1 = ndimage.gaussian_filter(imgarray, sigma=sigma1)
-	imgarray2 = ndimage.gaussian_filter(imgarray1, sigma=sigmaD)
-	#kernel1 = convolver.gaussian_kernel(sigma1)
-	#kernel2 = convolver.gaussian_kernel(sigmaD)
-	#c=convolver.Convolver()
-	#imgarray1 = c.convolve(image=imgarray,kernel=kernel1)
-	#imgarray2 = c.convolve(image=imgarray1,kernel=kernelD)
+	imgarray2 = ndimage.gaussian_filter(imgarray1, sigma=sigmaDiff)
+
 	return imgarray2-imgarray1
 
-def diffOfGaussLevels(imgarray, apix, bin, diam, numslices, sizerange):
-	apDisplay.printError("This is unfinished, remove the numslices and sizerange options")
-	pixradlist = []
-	for i in range(numslices):
-		diamstep = sizerange/float(numslices)
-		diammin = diam - sizerange/2.0
-		diammax = diam + sizerange/2.0
-		pixrad = float(diam/apix/float(bin)/2.0)
-		pixradlist.append(pixrad)
+def diffOfGaussLevels(imgarray, pixrad, numslices, pixrange):
+	#apDisplay.printError("This is method unfinished, remove the numslices and sizerange options")
+
+	#get initial parameters
+	kmult = estimateKfactorIncrement(pixrad, pixrange, numslices)
+	kfact = math.sqrt( (kmult**2 - 1.0) / (2.0 * kmult**2 * math.log(kmult)) )
+	sigma0 = kfact * pixrad
+
+	#get two more slices than requested, since we are subtracting
+	spower = -1.0 * float(numslices+1) / 2.0
+	apDisplay.printMsg("s power: "+str(round(spower,3)))
+	sigma1 = sigma0 * kmult**(spower)
+	apDisplay.printMsg("sigma1: "+str(round(sigma1,3)))
+
+	sigma = sigma1
+	gaussmap = ndimage.gaussian_filter(imgarray, sigma=sigma)
+	gaussmaps = [gaussmap,]
+	sigmavals = [sigma,]
+	for i in range(numslices+1):
+		lastmap = gaussmaps[len(gaussmaps)-1]
+		sigmaDiff = sigma*math.sqrt(kmult*kmult - 1.0)
+		apDisplay.printMsg("sigmaDiff: "+str(round(sigmaDiff,3)))
+		if sigmaDiff < 0.8:
+			apDisplay.printWarning("sigma difference less than 0.8, reduce bin factor")
+		sigma *= kmult
+		sigmavals.append(sigma)
+		gaussmap = ndimage.gaussian_filter(lastmap, sigma=sigmaDiff)
+		gaussmaps.append(gaussmap)
+
+	#for i,gaussmap in enumerate(gaussmaps):
+	#	apImage.arrayToJpeg(gaussmap, "gaussmap"+str(i)+".jpg")
 
 	dogarrays = []
-	for pixrad in pixradlist:
+	pixradlist = []
+	for i in range(numslices):
+		dogarray = gaussmaps[i+1] - gaussmaps[i]
+		pixradlist.append((sigmavals[i+1] + sigmavals[i])/2.0)
 		dogarray = apImage.normStdev(dogarray)/4.0
 		dogarrays.append(dogarray)
+		#apImage.arrayToJpeg(dogarray, "dogmap"+str(i)+".jpg")
 
-	return dogarrays
+	#sys.exit(1)
 
+
+	return dogarrays, pixradlist
+
+def estimateKfactorIncrement(pixrad, pixrange, numslices):
+	#lower bound estimate
+	k1 = (1.0 - float(pixrange)/(2.0*float(pixrad)))**(-2.0/float(numslices))
+	#upper bound estimate
+	k2 = (1.0 + float(pixrange)/(2.0*float(pixrad)))**(2.0/float(numslices))
+	#average both
+	kavg = (k1 + k2)/2.0
+	apDisplay.printMsg("mean k: "+str(round(kavg,3))+"; lower k: "+str(round(k1,3))+"; upper k: "+str(round(k2,3)))
+	return kavg
 
 
