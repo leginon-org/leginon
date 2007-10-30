@@ -689,7 +689,7 @@ function writeJobFile ($extra=False) {
   if ($_POST['dmfstore']=='on') {
     $clusterjob.= "\ntar -cvzf model.tar.gz threed.*a.mrc\n";
     $clusterjob.= "dmf put model.tar.gz $dmffullpath\n";
-    $line = "\ntar -cvzf results.tar.gz fsc* tcls* refine.* particle.* classes.* proj.* sym.* .emanlog *txt ";
+    $line = "\ntar -cvzf results.tar.gz fsc* cls* refine.* particle.* classes.* proj.* sym.* .emanlog *txt ";
     if ($msgp=='on') {
 	$line .= "goodavgs.* ";
 	$line .= "msgPassing_subClassification.log ";

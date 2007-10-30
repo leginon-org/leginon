@@ -22,10 +22,8 @@ function checkJobs($showjobs=False,$extra=False) {
   $javafunc.="  newwindow.document.write('<HTML><BODY>')\n";
   $javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/model.tar.gz '+outdir+'/.<BR>')\n";
   $javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/results.tar.gz '+outdir+'/.<BR>')\n";  
-  $javafunc.="    newwindow.document.write('gunzip '+outdir+'/model.tar.gz<BR>')\n";
-  $javafunc.="    newwindow.document.write('gunzip '+outdir+'/results.tar.gz<BR>')\n";  
-  $javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/model.tar<BR>')\n";
-  $javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/results.tar<BR>')\n";  
+  $javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/model.tar.gz -C '+outdir+'<BR>')\n";
+  $javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/results.tar.gz -C '+outdir+'<BR>')\n";  
   $javafunc.="    newwindow.document.write('rm -f '+outdir+'/model.tar<BR>')\n";
   $javafunc.="    newwindow.document.write('rm -f '+outdir+'/results.tar<BR>')\n";  
   $javafunc.="    newwindow.document.write('<P>&nbsp;<BR></BODY></HTML>')\n";
@@ -83,7 +81,7 @@ function checkJobs($showjobs=False,$extra=False) {
     elseif ($jobinfo['status']=='Q') $status='Queued';
     elseif ($jobinfo['status']=='R') $status='Running';
     elseif ($jobinfo['status']=='D') {
-      $dlbuttons = "<INPUT TYPE='BUTTON' onclick=\"displayDMF('$jobinfo[appath]','$jobinfo[dmfpath]')\" VALUE='get from DMF'> \n";
+      $dlbuttons = "<INPUT TYPE='BUTTON' onclick=\"displayDMF('$jobinfo[dmfpath]','$jobinfo[appath]')\" VALUE='get from DMF'> \n";
       $dlbuttons.= "<INPUT TYPE='BUTTON' onclick=\"parent.location=('uploadrecon.php?expId=$expId&jobId=$job[DEF_id]')\" VALUE='upload results'>\n";
       $status='Awaiting Upload';
     }
