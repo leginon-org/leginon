@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.34 $
+# $Revision: 1.35 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-10-29 23:47:24 $
+# $Date: 2007-10-30 22:25:45 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -126,7 +126,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onManualFocusTool,
 						  id=gui.wx.ToolBar.ID_MANUAL_FOCUS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onCommentTool,
-											id=gui.wx.ToolBar.ID_CALCULATE)
+											id=gui.wx.ToolBar.ID_COMMENT)
 		if self.node.projectdata is not None:
 			self.toolbar.Bind(wx.EVT_TOOL, self.onGridTool,
 												id=gui.wx.ToolBar.ID_GRID)
