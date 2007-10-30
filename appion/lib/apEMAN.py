@@ -8,7 +8,7 @@ except ImportError:
 	pass
 
 def executeEmanCmd(emancmd, verbose=False):
-	sys.stderr.write(colorString("EMAN: ","magenta")+emancmd+"\n")
+	sys.stderr.write(apDisplay.colorString("EMAN: ","magenta")+emancmd+"\n")
 	try:
 		if verbose is False:
 			os.popen(emancmd)
