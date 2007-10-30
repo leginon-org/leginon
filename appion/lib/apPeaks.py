@@ -28,7 +28,7 @@ def findPeaks(imgdict, ccmaplist, params, maptype="ccmaxmap"):
 
 	return peaktree
 
-def findPeaksInMap(ccmap, imgdict, tmplnum, params, maptype):
+def findPeaksInMap(ccmap, imgdict, count, params, maptype):
 	threshold = float(params["thresh"])
 	bin =       int(params["bin"])
 	diam =      float(params["diam"])
@@ -39,11 +39,14 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params, maptype):
 	imgname =   imgdict['filename']
 	pixrad =    diam/apix/2.0
 	binpixrad = diam/apix/2.0/float(bin)
+	tmpldbid = None
+	mapdiam = None
 	if 'templateIds' in params:
-		tmpldbid =  params['templateIds'][tmplnum-1]
-	else:
+		#template correlator
+		tmpldbid =  params['templateIds'][count-1]
+	elif 'diamarray' in params:
 		#dogpicker
-		tmpldbid = None
+		mapdiam = params['diamarray'][count-1]
 	mapdir = os.path.join(params['rundir'],maptype+"s")
 
 	#MAXPEAKSIZE ==> 1x AREA OF PARTICLE
@@ -55,16 +58,17 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params, maptype):
 		varyThreshold(ccmap, threshold, maxsize)
 	#GET FINAL PEAKS
 	blobtree, percentcov = findBlobs(ccmap, threshold, maxsize=maxsize, maxpeaks=maxpeaks, summary=True)
-	peaktree = convertBlobsToPeaks(blobtree, tmpldbid, tmplnum, bin)
-	print "Template "+str(tmplnum)+": Found",len(peaktree),"peaks ("+\
+	peaktree = convertBlobsToPeaks(blobtree, bin, tmpldbid, count, mapdiam)
+	print "Map "+str(count)+": Found",len(peaktree),"peaks ("+\
 		str(percentcov)+"% coverage)"
 	if(percentcov > 25):
 		apDisplay.printWarning("thresholding covers more than 25% of image; you should increase the threshold")
 
 	cutoff = olapmult*pixrad #1.5x particle radius in pixels
+	removeOverlappingPeaks(peaktree, cutoff)
 	if params["maxthresh"] is not None:
 		peaktree = maxThreshPeaks(peaktree, float(params["maxthresh"]))
-	removeOverlappingPeaks(peaktree, cutoff)
+
 	
 	if maptype=='dogmap':
 		#remove peaks from areas near the border of the image
@@ -97,11 +101,11 @@ def findPeaksInMap(ccmap, imgdict, tmplnum, params, maptype):
 	drawPeaks(peaktree, draw, bin, binpixrad, fill=True)
 	image = Image.blend(image, image2, 0.3) 
 
-	outfile = os.path.join(mapdir, imgname+"."+maptype+str(tmplnum)+".jpg")
+	outfile = os.path.join(mapdir, imgname+"."+maptype+str(count)+".jpg")
 	print " ... writing JPEG: ",outfile
 	image.save(outfile, "JPEG", quality=90)
 
-	peakTreeToPikFile(peaktree, imgname, tmplnum, params['rundir'])
+	peakTreeToPikFile(peaktree, imgname, count, params['rundir'])
 
 	return peaktree
 
@@ -227,7 +231,7 @@ def convertListToPeaks(peaks, params):
 		peaktree.append(peak.copy())
 	return peaktree
 
-def convertBlobsToPeaks(blobtree, tmpldbid, tmplnum, bin):
+def convertBlobsToPeaks(blobtree, bin=1, tmpldbid=None, tmplnum=None, diam=None):
 	peaktree = []
 	if tmpldbid is not None:
 		print "TEMPLATE DBID:",tmpldbid
@@ -241,6 +245,7 @@ def convertBlobsToPeaks(blobtree, tmpldbid, tmplnum, bin):
 		peakdict['peakarea']    = blobclass.stats['n']
 		peakdict['tmplnum']     = tmplnum
 		peakdict['template']    = tmpldbid
+		peakdict['diameter']    = diam
 		peaktree.append(peakdict)
 	return peaktree
 
@@ -273,7 +278,7 @@ def peakTreeToPikFile(peaktree, imgname, tmpl, rundir="."):
 		print " ... removed existing file:", outfile
 	#WRITE PIK FILE
 	f=open(outfile, 'w')
-	f.write("#filename x y mean stdev corr_coeff peak_size templ_num angle moment\n")
+	f.write("#filename x y mean stdev corr_coeff peak_size templ_num angle moment diam\n")
 	for peakdict in peaktree:
 		row = peakdict['ycoord']
 		col = peakdict['xcoord']
@@ -285,6 +290,10 @@ def peakTreeToPikFile(peaktree, imgname, tmpl, rundir="."):
 		mean_str = "%.4f" % peakdict['correlation']
 		std_str = "%.4f" % peakdict['peakstddev']
 		mom_str = "%.4f" % peakdict['peakmoment']
+		if peakdict['diameter'] is not None:
+			diam_str = "%.2f" % peakdict['diameter']
+		else:
+			diam_str = "0"
 		if 'template' in peakdict:
 			tmplnum = peakdict['template']
 		else:
@@ -292,7 +301,7 @@ def peakTreeToPikFile(peaktree, imgname, tmpl, rundir="."):
 		#filename x y mean stdev corr_coeff peak_size templ_num angle moment
 		out = imgname+".mrc "+str(int(col))+" "+str(int(row))+ \
 			" "+mean_str+" "+std_str+" "+str(rho)+" "+str(int(size))+ \
-			" "+str(tmplnum)+" 0 "+mom_str
+			" "+str(tmplnum)+" 0 "+mom_str+" "+diam_str
 		f.write(str(out)+"\n")
 	f.close()
 
