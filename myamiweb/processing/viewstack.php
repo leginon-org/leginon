@@ -7,6 +7,12 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
+require "inc/particledata.inc";
+require "inc/leginon.inc";
+require "inc/project.inc";
+require "inc/viewer.inc";
+require "inc/processing.inc";
+
 $filename=$_GET['file'];
 $expId =$_GET['expId'];
 $norefId=$_GET['norefId'];
@@ -25,9 +31,19 @@ function getimagicfilenames($file) {
 
 list($file_hed, $file_img)=getimagicfilenames($filename);
 
+//get session name
+if ($expId){
+	$sessionId=$expId;
+	$projectId=getProjectFromExpId($expId);
+}
+
+$sessiondata=getSessionList($projectId,$sessionId);
+$sessioninfo=$sessiondata['info'];
+$sessionname=$sessioninfo['Name'];
+
+
 $info=imagicinfo($file_hed);
 $n_images=$info['count']+1;
-
 
 ?>
 <html>
@@ -56,6 +72,7 @@ var file_img="<?=$file_img?>"
 var n_images="<?=$n_images?>"
 var updateheader="<?=$updateheader?>"
 var expId="<?=$expId?>"
+var sessionname="<?=$sessionname?>"
 var filename="<?=$filename?>"
 var norefId="<?=$norefId?>"
 var norefClassId="<?=$norefClassId?>"
@@ -120,7 +137,7 @@ function setImage() {
 
 function upload() {
 	var templateId=$('templateId').value
-	if (templateId!=""&& templateId <= n_images-1 && templateId >=0 ) { 
+	if (templateId!=""&& templateId <= getNoRefClassRunsn_images-1 && templateId >=0 ) { 
 		if (stackId!="") {
 			window.open("uploadtemplate.php?expId="+expId+"&templateId="+templateId+"&stackId="+stackId+"&file="+filename+"","width=400,height=200")
 		}
@@ -129,7 +146,13 @@ function upload() {
 		}
 	}
 }
+
+function goTo() {
+	var index = $('excludedIndex').value
+	window.open("createmodel.php?expId="+expId+"&file="+filename+"&exclude="+index+"&noref="+norefId+"&norefClass="+norefClassId+"",'height=250,width=400');
 	
+	
+}
 </script>
 </head>
 <body onload='load()'>
@@ -159,8 +182,17 @@ quality: <select id="quality">
 
 Upload as Template:<input id="templateId" type="text" alt="Start" value="" size="5">
 <input id="uploadbutton" type="button" alt="upload" value="upload" onclick="upload();">
-
 <br />
+<br />
+<?
+	if ($norefId) {
+		echo "Create initial model using this class averages <BR/> exclude these classes (e.g. 0,1,5): <INPUT TYPE='text' INPUT ID='excludedIndex' VALUE=''> <INPUT TYPE='button' value='Create Model' onClick=goTo()>\n";
+		
+	}
+
+?>
+
+
 <br />
 <div class="scrollpane">
    <div id="wholemap">
