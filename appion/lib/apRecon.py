@@ -371,7 +371,6 @@ def insertRefinementRun(params):
 	if earlyresult:
 		apDisplay.printWarning("Run already exists in the database.\nIdentical data will not be reinserted")
 
-	getClusterJobDataFromID(params['jobid'])
 	runq['jobfile']=params['jobinfo']
 	runq['initialModel']=params['model']
 	runq['package']=params['package']
