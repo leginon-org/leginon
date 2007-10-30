@@ -32,6 +32,7 @@ class ApParticleData(Data):
 			('peakmoment', float),
 			('peakstddev', float),
 			('peakarea', int),
+			('diameter', float),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApParticleData=ApParticleData
