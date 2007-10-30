@@ -66,8 +66,6 @@ def checkConflicts(params):
 		apDisplay.printError("enter the apix for the images of the class average file")
 	if params['lp'] is None:
 		apDisplay.printError("enter the low pass filter value for the model")
-	if params['mask'] is None:
-		params['mask']=170
 
 	# split params['symm'] into its id and name
 	p= re.compile(r'\W+')
@@ -134,7 +132,7 @@ if __name__ == '__main__':
 
 		if os.path.isfile(norefpath+"/exclude.list"): 
 			print "\nThe file exclude.list exist in "+norefpath+"..."
-			print "\nRemoving the file exclude.list exist in "+norefpath+"...\n"
+			print "\nRemprint "\nCreating 3D model using class averages with EMAN function of startAny..."oving the file exclude.list exist in "+norefpath+"...\n"
 			remove = "rm "+norefpath+"/exclude.list"
 			f=os.popen(remove)
 			f.close()
@@ -158,13 +156,13 @@ if __name__ == '__main__':
 			startAny+=" sym="+params['symm_name']
 
 		if params['mask'] is not None: 
-			startAny+=" mask="+params['mask']
+			startAny+=" mask="+str(params['mask'])
 
 		if params['lp'] is not None: 
-			startAny+=" lp="+params['lp']
+			startAny+=" lp="+str(params['lp'])
 		
 		if params['rounds'] is not None: 
-			startAny+=" rounds="+params['rounds']
+			startAny+=" rounds="+str(params['rounds'])
 		
 		print "\nCreating 3D model using class averages with EMAN function of startAny..."
 		apEMAN.executeEmanCmd(startAny, verbose=True)
@@ -177,14 +175,15 @@ if __name__ == '__main__':
 			startAny+=" sym="+params['symm_name']
 
 		if params['mask'] is not None: 
-			startAny+=" mask="+params['mask']
+			startAny+=" mask="+str(params['mask'])
 
 		if params['lp'] is not None: 
-			startAny+=" lp="+params['lp']
+			startAny+=" lp="+str(params['lp'])
 		
 		if params['rounds'] is not None: 
-			startAny+=" rounds="+params['rounds']
+			startAny+=" rounds="+str(params['rounds'])
 
+		print "\nCreating 3D model using class averages with EMAN function of startAny..."
 		apEMAN.executeEmanCmd(startAny, verbose=True)
 		print startAny
 
@@ -201,6 +200,6 @@ if __name__ == '__main__':
 	print "\n############################################"
 	print "\nReady to upload model "+modelpath+" into the database...\n"
 	print upload
-	apEMAN.executeEmanCmd(upload, verbose=True)
+	#apEMAN.executeEmanCmd(upload, verbose=True)
 
 
