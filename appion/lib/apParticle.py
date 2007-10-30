@@ -211,7 +211,7 @@ def insertParticlePeaks(peaktree, imgdata, params):
 		if 'template' in peakdict and peakdict['template'] is not None:
 			particlesq['template'] = appiondb.direct_query(appionData.ApTemplateImageData, peakdict['template'])
 
-		for key in 'xcoord','ycoord','correlation','peakmoment','peakstddev','peakarea':
+		for key in 'xcoord','ycoord','correlation','peakmoment','peakstddev','peakarea', 'diameter':
 			if key in peakdict and peakdict[key] is not None:
 				particlesq[key] = peakdict[key]
 
@@ -244,7 +244,7 @@ def insertParticlePicks(params,imgdata,manual=False):
 	runids=appiondb.query(runq, results=1)
 
 	# WRITE PARTICLES TO DATABASE
-	print "Inserting particles into database for",apDisplay.shortenImageName(imgname),"..."
+	apDisplay.printMsg("Inserting particles from pik file into database for "+apDisplay.shortenImageName(imgname))
 
 	# first open pik file, or create a temporary one if uploading a box file
 	if manual is True and params['prtltype']=='box':
