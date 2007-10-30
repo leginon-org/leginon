@@ -82,10 +82,13 @@ elseif ($_POST['submitjob']) {
 
   $jobid=$particle->insertClusterJobData($outdir,$dmfpath,$clusterpath,$jobfile,$expId);
 
-  // add job id to the beginning of the script
-  $clusterjob = "# $jobname\n";
+  // add header & job id to the beginning of the script
+  // convert /\n's back to \n for the script
+  $header = explode('|--|',$_POST['header']);
+  $clusterjob = "## $jobname\n";
+  foreach ($header as $l) $clusterjob.="$l\n";
+  $clusterjob.= "\nupdateAppionDB.py $jobid R\n\n";
   $clusterjob.= "# jobId: $jobid\n";
-  $clusterjob.= "updateAppionDB.py $jobid R\n";
   $clusterlastline.= "updateAppionDB.py $jobid D\nexit\n\n";
   $f = file_get_contents($tmpjobfile);
   file_put_contents($tmpjobfile, $clusterjob . $f . $clusterlastline);
@@ -591,13 +594,13 @@ function writeJobFile ($extra=False) {
   }
   writeTop("Eman Job Generator","EMAN Job Generator", $javafunc);
 
+  $header.= "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
+  $header.= "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
+  $header.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
+  $header.= "#PBS -m e\n";
+  $header.= "#PBS -r n\n\n";
   $clusterjob = "# stackId: $stackidval\n";
   $clusterjob.= "# modelId: $modelid\n";
-  $clusterjob.= "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
-  $clusterjob.= "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
-  $clusterjob.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
-  $clusterjob.= "#PBS -m e\n";
-  $clusterjob.= "#PBS -r n\n";
   $clusterjob.= "\nmkdir -p $clusterfullpath\n";
   $clusterjob.= "\ncd $clusterfullpath\n";
   $clusterjob.= "\nrm -f recon\n";
@@ -712,10 +715,14 @@ function writeJobFile ($extra=False) {
   echo "<INPUT TYPE='HIDDEN' NAME='dmfpath' VALUE='$dmfpath'>\n";
   echo "<INPUT TYPE='HIDDEN' NAME='jobname' VALUE='$jobname'>\n";
   echo "<INPUT TYPE='HIDDEN' NAME='outdir' VALUE='$outdir'>\n";
+  // convert \n to /\n's for script
+  $header_conv=preg_replace('/\n/','|--|',$header);
+  echo "<INPUT TYPE='HIDDEN' NAME='header' VALUE='$header_conv'>\n";
   echo "<INPUT TYPE='SUBMIT' NAME='submitjob' VALUE='Submit Job to Cluster'>\n";
   if (!$extra) {
     echo "<HR>\n";
     echo "<PRE>\n";
+    echo $header;
     echo $clusterjob;
     echo "</PRE>\n";
     $tmpfile = "/tmp/$jobfile";
