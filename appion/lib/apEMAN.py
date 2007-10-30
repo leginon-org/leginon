@@ -2,10 +2,13 @@
 import apDisplay
 import os
 import sys
-import EMAN
+try:
+	import EMAN
+except ImportError:
+	pass
 
 def executeEmanCmd(emancmd, verbose=False):
-	sys.stderr.write("EMAN: "+emancmd+"\n")
+	sys.stderr.write(colorString("EMAN: ","magenta")+emancmd+"\n")
 	try:
 		if verbose is False:
 			os.popen(emancmd)
