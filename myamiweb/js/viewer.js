@@ -340,6 +340,7 @@ function newfile(view){
 		jspresetscriptcur="getpreset.php"
 	}
 	jscommentscriptcur = "getcomment.php"
+	pselp = (cpselpar = eval("jsptclpick"+view)) ? "&psel="+cpselpar : ""
 	ag = (cacepar = eval("jsaceparam"+view)) ? "&g="+cacepar : ""
 	sb = (eval(view+"scale_bt_st")) ? "&sb=1" : ""
 	tg = (eval(view+"target_bt_st")) ? "&tg=1" : ""
@@ -359,7 +360,7 @@ function newfile(view){
 		"&preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+autoscale+displayfilename+loadjpg+ptclsel+nptcl+ag
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+autoscale+displayfilename+loadjpg+pselp+nptcl+ag
 
 	if (options == lastoptions[vid])
 		return

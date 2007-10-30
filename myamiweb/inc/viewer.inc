@@ -303,10 +303,6 @@ class viewer {
 			$init .= $v->getJavascriptButton();
 			$init .= 'jsviews['.$nv.']="'.$v->getName().'";'.$this->crlf;
 			$nv++;
-echo '
-			if (obj=document.viewerform.imageId) { }
-';
-
 		}
 		$init .= 'function updateviews() { '.$this->crlf;
 		$init .= 'setimgId();'.$this->crlf;
@@ -990,7 +986,7 @@ class view {
 			$ptclform='Picks:<br /><select id="'.$name.'ptclparam">';
 			if (is_array($this->params['ptclparams'])) {
 				foreach ($this->params['ptclparams'] as $v) {
-					$ptclform.= "<option value=\"".$v['id']."\" >".$v['name']." \n"; 
+					$ptclform.= "<option value=\"".$v['DEF_id']."\" >".$v['name']."</option>\n"; 
 				}
 			}
 			$ptclform.="</select>";
