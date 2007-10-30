@@ -14,6 +14,7 @@ import apDisplay
 import apDatabase
 import apCtf
 import apMatlab
+import apParam
 try:
 	import pymat
 except:
@@ -31,6 +32,8 @@ class aceLoop(appionLoop.AppionLoop):
 		#	apDisplay.printWarning("'"+self.functionname+".py' usually needs to be run in the "+\
 		#		"same directory as all of its matlab files")
 		print "Connecting to matlab ... "
+		if self.params['xvfb'] is True:
+			apParam.resetVirtualFrameBuffer()
 		try:
 			self.matlab = pymat.open()
 			#self.matlab = pymat.open('matlab -nodisplay')
@@ -108,6 +111,7 @@ class aceLoop(appionLoop.AppionLoop):
 		self.params['opimagedir']=None
 		self.params['newnominal']=False
 		self.params['uncorrected']=False
+		self.params['xvfb']=False
 
 	def specialCreateOutputDirs(self):
 		self.params['matdir']         = os.path.join(self.params['rundir'],"matfiles")
@@ -175,6 +179,8 @@ class aceLoop(appionLoop.AppionLoop):
 				self.params['newnominal']=True
 			elif arg == 'uncorrected':
 				self.params['uncorrected']=True
+			elif arg == 'xvfb':
+				self.params['xvfb']=True
 			else:
 				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
