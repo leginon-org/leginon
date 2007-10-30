@@ -263,6 +263,8 @@ class AppionLoop(object):
 			apDisplay.printError("dbimages can not be specified if particular images have been specified")
 		if self.params['alldbimages'] and self.params['dbimages']==True:
 			apDisplay.printError("dbimages and alldbimages can not be specified at the same time")
+		if self.params['runid'] is None:
+			apDisplay.printError("please enter a runid, example: 'runid=run1'")
 		if self.params['runid'] == 'templates':
 			apDisplay.printError("templates is a reserved runid, please use another runid")
 		if self.params['runid'] == 'models':
@@ -293,7 +295,7 @@ class AppionLoop(object):
 		self.params['sessionname']=None
 		self.params['session']=leginondata.SessionData(name='dummy'),
 		self.params['preset']=None
-		self.params['runid']="dummy"
+		self.params['runid']=None
 		self.params['dbimages']=False
 		self.params['alldbimages']=False
 		self.params['apix']=None
@@ -318,9 +320,6 @@ class AppionLoop(object):
 		self.specialDefaultParams()
 		### save default params separately for file saving
 		self.defaultparams = self.params.copy()
-
-		### revert default runid params to run1 as in previous
-		self.params['runid']="run1"
 
 	def _createDefaultStats(self):
 		self.stats = {}
