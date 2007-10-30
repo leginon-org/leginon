@@ -301,7 +301,13 @@ function particleinfopopup(infoname){
 		newwindow.document.write('Limit the values of the pixels to within this number of standard deviations from the mean. 0.0 turns this feature off.');
 	}
 	if (infoname=='kfactor'){
-		newwindow.document.write('The k-factor for dogpicker defines the slopiness in diameter of the picked particles. A k-factor of 1.00001 gives only the exact diameter (1.0 is not allowed), but a k-factor of 5.0 will pick a wide range of sizes.');
+		newwindow.document.write('The k-factor for dogpicker defines the slopiness in diameter of the picked particles. A k-factor of 1.00001 gives only the exact diameter (1.0 is not allowed), but a k-factor of 5.0 will pick a wide range of sizes. Cannot be used with multi-scale dogpicker: numslices or sizerange');
+	}
+	if (infoname=='numslices'){
+		newwindow.document.write('Defines the number of different sizes (or slices) to break up the size range into for separating particles of different size.');
+	}
+	if (infoname=='sizerange'){
+		newwindow.document.write('Defines the range of sizes for separating particles of different size.');
 	}
 	if (infoname=='invert'){
 		newwindow.document.write('Sometimes the template is inverted to the images or dogPicker needs inverted images in this case use the invert flag.');

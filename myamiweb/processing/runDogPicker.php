@@ -96,12 +96,23 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		Particle diameter for filtering <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
 		<BR><BR>";
 	createParticleLoopTable(0.7, 1.5);
-	$kfactor = ($_POST['kfactor']) ? $_POST['kfactor'] : "1.2";
+	$kfactor = ($_POST['kfactor']) ? $_POST['kfactor'] : "";
+	$numslices = ($_POST['numslices']) ? $_POST['numslices'] : "";
+	$sizerange = ($_POST['sizerange']) ? $_POST['sizerange'] : "";
 	echo "
 		<INPUT TYPE='text' NAME='kfactor' VALUE='$kfactor' SIZE='6'>&nbsp;
 		<A HREF=\"javascript:particleinfopopup('kfactor')\">
 		K-factor</A>&nbsp;<FONT SIZE=-2><I>(slopiness)</I></FONT>
 		<BR/><BR/>
+		<B>Multi-scale dogpicker:</B><BR/>
+		<INPUT TYPE='text' NAME='numslices' VALUE='$numslices' SIZE='3'>&nbsp;
+		<A HREF=\"javascript:particleinfopopup('numslices')\">
+		Number of Slices</A>&nbsp;<FONT SIZE=-2><I>(number of sizes)</I></FONT>
+		<BR/>
+		<INPUT TYPE='text' NAME='sizerange' VALUE='$sizerange' SIZE='3'>&nbsp;
+		<A HREF=\"javascript:particleinfopopup('sizerange')\">
+		Size Range</A>&nbsp;<FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
+		<BR/>
 		<HR>
 		</TD>
 	</TR>
@@ -162,11 +173,31 @@ function runDogPicker() {
 	$command .= $partcommand;
 
 
+	$numslices = (int) $_POST[numslices];
+	$sizerange = $_POST[sizerange];
 	$kfactor = $_POST[kfactor];
-	if ($kfactor < 1.00001 || $kfactor > 5.0) {
-		createDogPickerForm("<B>ERROR:</B> K-factor must between 1.00001 and 5.0");
+	if ($numslices) {
+		if($numslices < 2) {
+			createDogPickerForm("<B>ERROR:</B> numslices must be more than 1");
+			exit;
+		}
+		if(!$sizerange) {
+			createDogPickerForm("<B>ERROR:</B> sizerange was not defined");
+			exit;
+		}
+		if($sizerange < 2.0) {
+			createDogPickerForm("<B>ERROR:</B> sizerange must be more than 2.0");
+			exit;
+		}
+		$command .= " numslices=".$numslices;
+		$command .= " sizerange=".$sizerange;
+	} elseif($kfactor) {
+		if ($kfactor < 1.00001 || $kfactor > 5.0) {
+			createDogPickerForm("<B>ERROR:</B> K-factor must between 1.00001 and 5.0");
+			exit;
+		}
+		$command .= " kfactor=".$kfactor;
 	}
-	$command .= " kfactor=".$kfactor;
 
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
