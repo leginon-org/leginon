@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.80 $
+# $Revision: 1.81 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-18 17:19:58 $
-# $Author: vossman $
+# $Date: 2007-10-31 20:03:16 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -941,24 +941,25 @@ class ImportDialog(wx.Dialog):
 		self.lbpresets = wx.ListBox(self, -1, style=wx.LB_EXTENDED,size=(80,60))
 		self.lbpresets.SetMinSize((40, 100))
 
-		sz = wx.GridBagSizer(5, 0)
-		sz.Add(self.instrumentselection, (0, 0), (1, 4), wx.EXPAND)
+		sz0 = wx.GridBagSizer(5, 0)
+		sz0.Add(self.instrumentselection, (0, 0), (1, 4), wx.EXPAND)
 
-		sz.Add(self.session, (1, 0), (1, 4), wx.EXPAND)
+		sz0.Add(self.session, (1, 0), (1, 4), wx.EXPAND)
 
-		sz.Add(agelab1, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.ageentry, (2, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		sz.Add(agelab2, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
-		sz.Add(self.findpresets, (2, 3), (1, 1),
+		sz0.Add(agelab1, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz0.Add(self.ageentry, (2, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sz0.Add(agelab2, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+		sz0.Add(self.findpresets, (2, 3), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.parameters, (3, 0), (1, 4), wx.EXPAND)
+		sz1 = wx.GridBagSizer(5, 0)
+		sz1.Add(self.parameters, (0, 0), (1, 4), wx.EXPAND)
 		label = wx.StaticText(self, -1, 'Presets')
-		sz.Add(label, (4, 0), (1, 4), wx.ALIGN_CENTER)
+		sz1.Add(label, (1, 0), (1, 4), wx.ALIGN_CENTER)
 		#sz.Add(self.lbpresets, (5, 0), (1, 4), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		sz.Add(self.lbpresets, (5, 0), (1, 4), wx.EXPAND)
+		sz1.Add(self.lbpresets, (2, 0), (1, 4), wx.EXPAND)
 
-		sz.AddGrowableCol(3)
-		sz.AddGrowableRow(1)
+		#sz1.AddGrowableCol(3)
+		#sz1.AddGrowableRow(1)
 		#sz.AddGrowableRow(5)
 
 		self.bimport = wx.Button(self, -1, 'Import')
@@ -971,8 +972,9 @@ class ImportDialog(wx.Dialog):
 		szbutton.Add(bdone, (0, 1), (1, 1), wx.ALIGN_CENTER)
 
 		self.szmain = wx.GridBagSizer(5, 5)
-		self.szmain.Add(sz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
-		self.szmain.Add(szbutton, (1, 0), (1, 1),
+		self.szmain.Add(sz0, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		self.szmain.Add(sz1, (0, 1), (1, 1), wx.EXPAND|wx.ALL, 10)
+		self.szmain.Add(szbutton, (1, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
 
 		self.szmain.AddGrowableRow(0)

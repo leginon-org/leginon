@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.35 $
+# $Revision: 1.36 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-10-30 22:25:45 $
+# $Date: 2007-10-31 20:03:16 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -368,15 +368,17 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['force annotate'], (7,0), (1,1))
 
 		szdefocus= wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1,'(leave both unchecked to use current defocus)')
+		szdefocus.Add(label, (0,0), (1,2))
 		self.widgets['defocus1switch'] = wx.CheckBox(self, -1, 'Defocus 1')
-		szdefocus.Add(self.widgets['defocus1switch'], (0,0), (1,1))
+		szdefocus.Add(self.widgets['defocus1switch'], (1,0), (1,1))
 		self.widgets['defocus1'] = FloatEntry(self, -1, chars=6)
-		szdefocus.Add(self.widgets['defocus1'], (0,1), (1,1))
+		szdefocus.Add(self.widgets['defocus1'], (1,1), (1,1))
 		self.widgets['defocus2switch'] = wx.CheckBox(self, -1, 'Defocus 2')
-		szdefocus.Add(self.widgets['defocus2switch'], (1,0), (1,1))
+		szdefocus.Add(self.widgets['defocus2switch'], (2,0), (1,1))
 		self.widgets['defocus2'] = FloatEntry(self, -1, chars=6)
-		szdefocus.Add(self.widgets['defocus2'], (1,1), (1,1))
-		sb = wx.StaticBox(self, -1, 'Defocus Pair (leave both unchecked to use current defocus)')
+		szdefocus.Add(self.widgets['defocus2'], (2,1), (1,1))
+		sb = wx.StaticBox(self, -1, 'Defocus Pair')
 		sbszdefocus = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszdefocus.Add(szdefocus, 1, wx.EXPAND|wx.ALL, 5)
 
@@ -384,8 +386,17 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sb = wx.StaticBox(self, -1, 'Acquisition')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
+		
+		sb2 = wx.GridBagSizer(5,5)
+		sb2.Add(sbszscreen,(0,0),(1,1), wx.EXPAND)
+		sb2.Add(sbszlowdose,(1,0),(1,1), wx.EXPAND)
+		sb2.Add(sbszdefocus,(2,0),(1,1), wx.EXPAND)
 
-		return [sbsz, sbszscreen, sbszlowdose, sbszdefocus, ]
+		sba = wx.GridBagSizer(5,5)
+		sba.Add(sbsz,(0,0),(1,1))
+		sba.Add(sb2,(0,1),(1,1))
+
+		return [sba, ]
 
 class ManualFocusSettingsDialog(gui.wx.Dialog.Dialog):
 	def onInitialize(self):
