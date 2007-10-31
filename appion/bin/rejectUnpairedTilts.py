@@ -22,6 +22,7 @@ class rejectUnpairedTilts(appionLoop.AppionLoop):
 		"""
 		put in any additional default parameters
 		"""
+		self.params['nowait'] = True
 		self.params['background'] = True
 		return
 
