@@ -294,7 +294,7 @@ def createSpiderRefFile(params):
 		if len(params['refids']) == 1:
 			#don't break for single template case
 			oldreffile = os.path.join(params['rundir'], "reference.spi")
-			shutil.copy(outfile, oldreffile)
+			shutil.copyfile(outfile, oldreffile)
 	return
 
 def averageTemplate(params):
@@ -447,7 +447,7 @@ def runSpiderClass(params, reclass=False):
 	starttime = time.time()
 	executeSpiderCmd(spidercmd)
 	apDisplay.printColor("finished spider in "+apDisplay.timeString(time.time()-starttime),"cyan")
-	shutil.copy(os.path.join(params['rundir'],"classes_avg.spi"),
+	shutil.copyfile(os.path.join(params['rundir'],"classes_avg.spi"),
 		os.path.join(params['rundir'],params['classfile']+".spi") )
 
 def runSpiderRefAli(params):

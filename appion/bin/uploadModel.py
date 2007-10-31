@@ -82,7 +82,7 @@ if __name__ == '__main__':
 		else:
 			old = os.path.join(params['path'], params['name'])
 			apDisplay.printMsg("copying file "+old+" to "+new)
-			shutil.copy(old, new)
+			shutil.copyfile(old, new)
 
 	# only allow user read access just so they don't get deleted
 	os.chmod(new, 0666)

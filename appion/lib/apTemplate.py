@@ -50,7 +50,7 @@ def getTemplates(params):
 		copytemplatepath = os.path.join(params['rundir'], "origTemplate"+str(index)+".mrc")
 		scaletemplatepath = os.path.join(params['rundir'], "scaledTemplate"+str(index)+".mrc")
 		filtertemplatepath = os.path.join(params['rundir'], "filterTemplate"+str(index)+".mrc")
-		shutil.copy(origtemplatepath, copytemplatepath)
+		shutil.copyfile(origtemplatepath, copytemplatepath)
 
 		#RESCALE THE TEMPLATE
 		templatearray = apImage.mrcToArray(copytemplatepath)
@@ -156,7 +156,7 @@ def copyTemplatesToOutdir(params):
 		else:
 			#template is okay to copy and insert
 			apDisplay.printMsg("copying file "+old+" to "+new)
-			shutil.copy(old, new)
+			shutil.copyfile(old, new)
 			newlist.append(base)
 			#and only allow user read access just so they don't get deleted
 			os.chmod(new, 0666)

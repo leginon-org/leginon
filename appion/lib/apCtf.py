@@ -29,8 +29,8 @@ def commitCtfValueToDatabase(imgdict, matlab, ctfvalue, params):
 	opimfilepath1 = os.path.join(params['opimagedir'],opimfile1)
 	opimfilepath2 = os.path.join(params['opimagedir'],opimfile2)
 
-	shutil.copy(imfile1, opimfilepath1)
-	shutil.copy(imfile2, opimfilepath2)
+	shutil.copyfile(imfile1, opimfilepath1)
+	shutil.copyfile(imfile2, opimfilepath2)
 	#pymat.eval(matlab,"im1 = imread('"+imfile1+"');")
 	#pymat.eval(matlab,"im2 = imread('"+imfile2+"');")
 	#pymat.eval(matlab,"imwrite(im1,'"+opimfilepath1+"');")
