@@ -125,25 +125,42 @@ function checkJobs($showjobs=False,$extra=False) {
 	echo "<font class='aptitle'>Processing iteration $current of $numtot</font>\n";
 	echo "</td></tr>\n";
 	echo "<tr><td>\n";
+	echo "<table border='0' cellpadding='5' cellspacing='0'>\n";
+	echo "<tr><td><span class='datafield0'>step</span></td>\n";
+	echo "<td><span class='datafield0'>started</span></td>\n";
+	echo "<td><span class='datafield0'>status</span></td></tr>\n";
+	echo "<tr><td>\n";
 	// get key corresponding to where the last refinement run starts
 	$lastkey = array_search($lastindx, $stat['refinelog']);
 	for ($i=$lastkey; $i<count($stat['refinelog']); $i++) {
-	  if ($stat['refinelog'][$i][0] == 'project3d') $progress[] = "creating projections...";
+	  if ($stat['refinelog'][$i][0] == 'project3d') {
+	    $d = getlogdate($stat['refinelog'][$i]);
+	    $progress[] = "creating projections</td><td>$d";
+	  }
 	  elseif ($stat['refinelog'][$i][0] == 'classesbymra') {
 	    // get the number of particles that have been classified
+	    $d = getlogdate($stat['refinelog'][$i]);
 	    $cmd = "grep ' -> ' $jobinfo[clusterpath]/recon/refine$current.txt | wc -l";
 	    $r = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
 	    $r = trim($r);
-	    $progress[] = "classifying particles: $r/$numinstack...\n";
+	    $progress[] = "classifying particles ($r/$numinstack)</td><td>$d\n";
 	  }
-	  elseif ($stat['refinelog'][$i][0] == 'classalignall') $progress[] = "iterative class averaging...\n";
-	  elseif ($stat['refinelog'][$i][0] == 'make3d') $progress[] = "creating 3d model...\n";
+	  elseif ($stat['refinelog'][$i][0] == 'classalignall') {
+	    $d = getlogdate($stat['refinelog'][$i]);
+	    $progress[] = "iterative class averaging</td><td>$d\n";
+	  }
+	  elseif ($stat['refinelog'][$i][0] == 'make3d') {
+	    $d = getlogdate($stat['refinelog'][$i]);
+	    $progress[] = "creating 3d model</td><td>$d\n";
+	  }
 	  elseif ($stat['refinelog'][$i][0] == 'eotest') {
-	    $progress[] = "performing even/odd test...\n"; 
+	    $d = getlogdate($stat['refinelog'][$i]);
+	    $progress[] = "performing even/odd test</td><td>$d\n"; 
 	    break;
 	  }
 	}
-	echo implode("<font class='green'> Done</font></TD></TR>\n<TR><TD>",$progress);
+	echo implode("</td><td><font class='green'> Done</font></td></tr>\n<tr><td>",$progress);
+	echo "</td><td>running</td></tr></table>\n";
 	echo "</TD></TR></TABLE>\n";
 	if ($stat['errors']) echo "<P><FONT COLOR='RED'>There are errors in this job, you should resubmit</FONT><P>";
       }
@@ -170,4 +187,13 @@ function checkJobStatus($jobpath,$jobfile,$user,$pass) {
   $stat['errors'] = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
 
   return $stat;
+}
+
+function getlogdate($emanline) {
+  for ($i=4; $i>0; $i--) {
+    $emantime[] = $emanline[count($emanline)-$i];
+  }
+  $time = implode(' ',$emantime);
+  $tmstmp = strtotime($time);
+  return date('M d,Y H:i:s',$tmstmp);
 }
