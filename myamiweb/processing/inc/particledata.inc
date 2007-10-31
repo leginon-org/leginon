@@ -673,6 +673,18 @@ class particledata {
 		return $r[0];
 	}
 
+	function getRefTemplatesFromId ($refid) {
+		$q = "SELECT t.*, pd.`path` "
+			."FROM ApRefTemplateRunData AS rt "
+			."LEFT JOIN ApTemplateImageData AS t ON "
+			."(rt.`REF|ApTemplateImageData|refTemplate` = t.`DEF_id`) "
+			."LEFT JOIN ApPathData AS pd ON "
+			."(t.`REF|ApPathData|path` = pd.`DEF_id`) "
+			."WHERE rt.`REF|ApRefRunData|refRun`='$refid'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getNoRefParams ($norefId) {
 		$q = "SELECT p.*, r.*, pd.path "
 			."FROM ApNoRefRunData as r "
