@@ -152,6 +152,7 @@ class ctfdata {
 			."on (c.`REF|leginondata|AcquisitionImageData|image` = i.`DEF_id`) "
 			."left join dbemdata.ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 			."where c.`REF|leginondata|AcquisitionImageData|image`='$imageId' ";
+		$q .= "ORDER BY (c.`confidence`*c.`confidence_d`) DESC";
 		if ($order) {
 			$fields = $order['fields'];
 			$q .= " order by ".join(", ",$fields);
