@@ -27,6 +27,36 @@ class particledata {
 					PARTICLE_DB);
 	}
 
+	function displayParameters ($title,$params,$exclude_fields) {
+		//standard parameter table display
+		echo "<h4>".$title."</h4>";
+		echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
+		$selection_fields = array_keys($params);
+		foreach($selection_fields as $key) {
+			$exclude = false;
+			foreach($exclude_fields as $bad) {
+				if ($key == $bad) {
+					$exclude = true;
+					break;
+				}
+			}
+			if (!$exclude) {
+				$displaykeyarray = explode('Data|',$key);
+				$displaykey = array_pop($displaykeyarray);
+				$displaykeyarray = explode('DEF_',$displaykey);
+				$displaykey = array_pop($displaykeyarray);
+				if (gettype($params[$key])!='NULL') {
+					echo "<tr>\n";
+					echo "<td><span class='datafield0'>$displaykey</span></td>";
+					echo "<td>$params[$key]</td>";
+					echo "</tr>\n";
+				}
+			}
+
+		}
+		echo "</table>\n";
+	}
+		
 	function getTemplatesFromProject ($projectId) {
 		$q="SELECT temp.*, path.path "
 			."FROM `ApTemplateImageData` AS temp "
@@ -308,6 +338,21 @@ class particledata {
 			."LEFT JOIN `ApStackParamsData` p "
 			."ON (p.`DEF_id` = s.`REF|ApStackParamsData|stackParams`) "
 			."WHERE r.`REF|ApStackData|stack` = '$stackId'";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getStackSelectionRun ($stackId) {
+		$q = "SELECT pr . `DEF_id` selectionid , "
+		." pr . `name` "
+		." FROM ( SELECT * FROM `ApStackParticlesData` "
+		." WHERE `REF|ApStackData|stack` = ".$stackId." "
+		." group by `REF|ApStackRunData|stackRun` ) sp1 "
+		." LEFT JOIN `ApParticleData` p "
+		." ON p . `DEF_id` = sp1 . `REF|ApParticleData|particle` "
+		." LEFT JOIN `ApSelectionRunData` pr "
+		." ON pr . `DEF_id` = p . `REF|ApSelectionRunData|selectionrun` "
+		." ";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r;
 	}
