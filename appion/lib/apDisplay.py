@@ -167,22 +167,22 @@ def _headerStr(labellist):
 	headstr += "+"
 	return headstr
 
-def rightPadString(s,n=10):
+def rightPadString(s,n=10,fill=" "):
 	n = int(n)
 	s = str(s)
 	if(len(s) > n):
 		return s[:n]
 	while(len(s) < n):
-		s += " "
+		s += fill
 	return s
 
-def leftPadString(s,n=10):
+def leftPadString(s,n=10,fill=" "):
 	n = int(n)
 	s = str(s)
 	if(len(s) > n):
 		return s[:n]
 	while(len(s) < n):
-		s = " "+s
+		s = fill+s
 	return s
 
 def colorType(val):
