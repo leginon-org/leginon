@@ -4,7 +4,8 @@ import MySQLdb
 import math
 import numpy
 from scipy import ndimage
-
+import Image
+import ImageDraw
 import random
 import time
 import pprint
@@ -15,10 +16,13 @@ db = MySQLdb.connect(host="cronus4.scripps.edu", user="usr_object", passwd="", d
 # create a cursor
 cursor = db.cursor()
 
-
 def getEulersForIteration(reconid, iteration=1):
 	"""
 	returns all classdata for a particular refinement iteration
+
+	this does NOT use sinedon because it goes
+	from taking < 1 min for this method
+	to taking several hours with sinedon
 	"""
 	t0 = time.time()
 	query = (
@@ -31,23 +35,22 @@ def getEulersForIteration(reconid, iteration=1):
 			+"WHERE rd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" "
 			+"AND rd.`iteration` = "+str(iteration)+" "
 		)
-	print query
+	#print query
 	cursor.execute(query)
 	numrows = int(cursor.rowcount)
-	print "Found ",numrows," rows"
-
+	apDisplay.printColor("Found "+str(numrows)+" euler values", "cyan")
 	result = cursor.fetchall()
 	apDisplay.printMsg("Fetched data in "+apDisplay.timeString(time.time()-t0))
 	r0 = resToEuler(result[int( float(len(result)) * random.random() )])
 	r1 = resToEuler(result[int( float(len(result)) * random.random() )])
-	print r0
-	print r1
+	#print r0
+	#print r1
 	mat0 = getMatrix3(r0)
 	mat1 = getMatrix3(r1)
 	dist = calculateDistance(mat0, mat1)
-	print mat0
-	print mat1
-	print "dist=",dist
+	#print mat0
+	#print mat1
+	#print "dist=",dist
 	radlist = []
 	anglelist = []
 	freqlist = []
@@ -83,7 +86,6 @@ def getEulersForIteration(reconid, iteration=1):
 		#freqlist.append(math.log10(val[2]))
 	xlist = [x*indres for x in range(-indmult, indmult+1) ]
 	ylist = [y*indres for y in range(-indmult, indmult+1) ]
-
 
 	freqnumpy = numpy.asarray(freqlist, dtype=numpy.int32)
 	#print(freqlist)
@@ -301,21 +303,21 @@ def calcFreqEqualArea(points, rstep=9.0):
 	return indexmap
 
 
-def makeImage(radlist,anglelist,freqlist,freqgrid):
-	import Image
-	import ImageDraw
+def makeImage(radlist, anglelist, freqlist, 
+		imgname="temp.png", imgdim=1024, crad=10, frame=50):
 
-	dim = 1024
-	imgname = "temp.png"
 	#'L' -> grayscale
 	#'RGB' -> color
-	img = Image.new("RGB", (dim, dim), color="#ffffff")
+	img = Image.new("RGB", (imgdim, imgdim), color="#ffffff")
 	draw = ImageDraw.Draw(img)
 
 	freqnumpy = numpy.asarray(freqlist, dtype=numpy.int32)
 	minf = float(ndimage.minimum(freqnumpy))
 	maxf = float(ndimage.maximum(freqnumpy))
-	rangef = maxf-minf
+	if ndimage.sum(freqnumpy) < 10:
+		apDisplay.printWarning("not enough eulers to draw a map")
+		return
+	rangef = maxf-minf+1
 
 	angnumpy = numpy.asarray(anglelist, dtype=numpy.float32)
 	mina = float(ndimage.minimum(angnumpy))
@@ -337,36 +339,35 @@ def makeImage(radlist,anglelist,freqlist,freqgrid):
 	rangex = maxx-minx
 	rangey = maxy-miny
 
-	tps = 10
-	frame = 50
-	#for i,rad in enumerate(radlist):
-	#	for j,ang in enumerate(anglelist):
-	#		freq = float(freqgrid[i,j])
 	for i in range(len(radlist)):
 		#frequency
 		freq = freqlist[i]
 		fgray = 255.0*((maxf-freq)/rangef)**2
 		fcolor = grayToColor(fgray)
 
-		#polar
+		#direct polar
 		rad = radlist[i]			
 		ang = anglelist[i]
-		#ax = float(dim-2*frame)*(ang-mina)/rangea+frame
-		#ry = float(dim-2*frame)*(rad-minr)/ranger+frame
-		#polarcoord = (ax-tps, ry-tps, ax+tps, ry+tps)
+		#ax = float(imgdim-2*frame)*(ang-mina)/rangea+frame
+		#ry = float(imgdim-2*frame)*(rad-minr)/ranger+frame
+		#polarcoord = (ax-crad, ry-crad, ax+crad, ry+crad)
 
-		#cartesian
+		#polar -> cartesian
 		x, y = polarToCart(rad, ang-mina)
-		ys = float(dim-2*frame)*(x-minx)/rangex+frame
-		xs = float(dim-2*frame)*(y-miny)/rangey+frame
-		cartcoord = (xs-tps, ys-tps, xs+tps, ys+tps)
+		ys = float(imgdim-2*frame)*(x-minx)/rangex+frame
+		xs = float(imgdim-2*frame)*(y-miny)/rangey+frame
+		cartcoord = (xs-crad, ys-crad, xs+crad, ys+crad)
 
-		#print ang,rad,freq
-		#print ax,ry,fcolor
-		#print freq, fcolor
 		draw.ellipse(cartcoord, fill=fcolor)
+	try:
+		img.save(imgname, "PNG")
+	except:
+		apDisplay.printWarning("could not save file: "+imgname)
+	try:
+		os.chmod(imgname, 0666)
+	except:
+		apDisplay.printWarning("could not modify file: "+imgname)
 
-	img.save(imgname, "PNG")
 	return
 
 def grayToColor(gray):
@@ -379,7 +380,7 @@ def grayToColor(gray):
 		#yellow (128) ffff00 -> red (255) ff0000
 		r = 255
 		g = 2*(255 - gray)
-	return colorTupleToHex(r, g, b, scale=0.6)
+	return colorTupleToHex(r, g, b, scale=0.8)
 
 def colorTupleToHex(r, g, b, scale=1):
 	#print r,g,b
@@ -389,7 +390,6 @@ def colorTupleToHex(r, g, b, scale=1):
 	hexcode = str(hex(ir*256**2 + ig*256 + ib))[2:]
 	hexstr = "#"+apDisplay.leftPadString(hexcode, n=6, fill='0')
 	return hexstr
-
 
 def makePlot(radlist,anglelist,freqlist,freqgrid):
 	import pylab
@@ -439,7 +439,7 @@ if __name__ == "__main__":
 	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(159, 1)
 	#freqmap = getEulersForIteration(158, 4)
 	#makePlot(radlist,anglelist,freqlist,freqgrid)
-	makeImage(radlist,anglelist,freqlist,freqgrid)
+	makeImage(radlist,anglelist,freqlist)
 	#makePlot(freqmap)
 	apDisplay.printColor("Finished in "+apDisplay.timeString(time.time()-t0), "cyan")
 
