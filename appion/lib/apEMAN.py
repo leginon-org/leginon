@@ -5,6 +5,7 @@ import sys
 try:
 	import EMAN
 except ImportError:
+	apDisplay.printWarning("EMAN module did not get imported")
 	pass
 
 def executeEmanCmd(emancmd, verbose=False):
