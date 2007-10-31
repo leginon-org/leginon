@@ -11,6 +11,7 @@ import apDatabase
 import apParam
 import apDisplay
 import apEMAN
+import apEuler
 try:
 	import EMAN
 except:
@@ -414,7 +415,7 @@ def insertResolutionData(params,iteration):
 
 		return resq
 
-def insertRMeasureData(params,iteration):
+def insertRMeasureData(params, iteration):
 	volumeDensity='threed.'+iteration['num']+'a.mrc'
 
 	volPath = os.path.join(params['path'], volumeDensity)
@@ -529,13 +530,22 @@ def insertIteration(iteration, params):
 		+str(len(clsnames))+" classes", "magenta")
 	t0 = time.time()
 	for cls in clsnames:
-		insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refineq,len(clsnames))
+		insertParticleClassificationData(params, cls, iteration, eulers, badprtls, refineq, len(clsnames))
 	apDisplay.printColor("\nFinished in "+apDisplay.timeString(time.time()-t0), "magenta")
 
 	# remove temp directory
 	for file in os.listdir(params['tmpdir']):
 		os.remove(os.path.join(params['tmpdir'],file))
 	os.rmdir(params['tmpdir'])
+
+	#create euler freq map
+	apDisplay.printMsg("creating euler frequency map")
+	refrunid = int(params['refinementRun'].dbid)
+	iternum = int(iteration['num'])
+	radlist, anglelist, freqlist, freqgrid = apEuler.getEulersForIteration(refrunid, iternum)
+	eulerimgpath = os.path.join(params['path'], "eulermap"+str(iternum)+".png")
+	apEuler.makeImage(radlist, anglelist, freqlist, imgname=eulerimgpath)
+
 	return
 
 
@@ -719,7 +729,13 @@ def runRMeasure(apix, volpath):
 
 def getRefineRunDataFromID(refinerunid):
 	return appiondb.direct_query(appionData.ApRefinementRunData, refinerunid) 
-	
+
+def getNumIterationsFromRefineRunID(refinerunid):
+	refrundata = appiondb.direct_query(appionData.ApRefinementRunData, refinerunid) 
+	refq = appionData.ApRefinementData()
+	refq['refinementRun'] = refrundata
+	return len(refq.query())
+
 def getClusterJobDataFromID(jobid):
 	return appiondb.direct_query(appionData.ApClusterJobData, jobid)
 
