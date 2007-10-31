@@ -176,6 +176,8 @@ def getStackInfo(params):
 		selectdata = partdata['selectionrun']['dogparams']
 	elif partdata['selectionrun']['manparams'] is not None:
 		selectdata = partdata['selectionrun']['manparams']
+	elif partdata['selectionrun']['tiltparams'] is not None:
+		selectdata = partdata['selectionrun']['tiltparams']
 	else:
 		apDisplay.printWarning("Failed to get particle selection params")
 		selectdata = {}
