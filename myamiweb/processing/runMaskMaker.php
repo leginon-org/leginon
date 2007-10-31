@@ -288,7 +288,7 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 		<BR>
 		<input type='submit' name='process' value='Just Show Command'>
 		<input type='submit' name='process' value='Run MaskMaker'><BR>
-		<FONT COLOR='RED'>Submission will NOT run MaskMaker, only output a command that you can copy and paste into a unix shell</FONT>
+		<FONT class='apcomment'>Submission will NOT run MaskMaker, only output a command that you can copy and paste into a unix shell</FONT>
 		</TD>
 	</TR>
 	</TABLE>

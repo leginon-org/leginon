@@ -143,7 +143,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		<BR>
 		<input type='submit' name='process' value='Just Show Command'>
 		<input type='submit' name='process' value='Run DogPicker'><BR>
-		<FONT COLOR='RED'>Submission will NOT run Dog Picker, only output a command that you can copy and paste into a unix shell</FONT>
+		<FONT class='apcomment'>Submission will NOT run Dog Picker, only output a command that you can copy and paste into a unix shell</FONT>
 		</TD>
 	</TR>
 	</TABLE>";

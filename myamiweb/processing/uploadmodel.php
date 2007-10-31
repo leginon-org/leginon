@@ -164,7 +164,7 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
       <HR>
       <BR/>
       <INPUT type='submit' name='process' value='Upload Model'><BR/>
-      <FONT COLOR='RED'>Submission will NOT upload the model,<BR/>
+      <FONT class='apcomment'>Submission will NOT upload the model,<BR/>
 			only output a command that you can copy and paste into a unix shell</FONT>
     </TD>
 	</TR>

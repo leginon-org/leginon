@@ -298,7 +298,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 		<input type='submit' name='process' value='Just Show Command'>\n";
 	if ($_SESSION['loggedin']) echo "<input type='submit' name='process' value='Run Correlator'>\n";
 	echo"<BR>
-		<FONT COLOR='RED'>Submission will NOT run Template Correlator, only output a command that you can copy and paste into a unix shell</FONT>
+		<FONT class='apcomment'>Submission will NOT run Template Correlator, only output a command that you can copy and paste into a unix shell</FONT>
 		</TD>
 	</TR>
 	</TABLE>

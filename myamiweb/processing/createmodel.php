@@ -196,7 +196,7 @@ function createCreateModelForm($extra=false, $title='CreateModel.py Launcher', $
       <HR>
       <BR/>
       <INPUT type='submit' name='process' value='Create Model'><BR/>
-      <FONT COLOR='RED'>Submission will NOT create the model,<BR/>
+      <FONT class='apcomment'>Submission will NOT create the model,<BR/>
 			only output a command that you can copy and paste into a unix shell</FONT>
     </TD>
 	</TR>

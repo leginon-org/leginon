@@ -345,7 +345,7 @@ function createPyAceForm($extra=false) {
 	echo"</select>";*/
 	echo"<br/>
 	  <input type='submit' name='process' value='Generate ACE Command'><br/>
-	  <FONT COLOR='RED' SIZE='-1'>Submission will NOT run ACE,<BR/>
+	  <FONT class='apcomment'>Submission will NOT run ACE,<BR/>
 		only output a command that you can copy and paste into a unix shell</FONT>
 	  </TD>
 	</TR>

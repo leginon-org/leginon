@@ -312,7 +312,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	  echo"
           <INPUT TYPE='hidden' NAME='refid' VALUE='$templateid'>
 	  <input type='submit' name='process' value='Show multi-reference alignment command'><BR>
-	  <FONT COLOR='RED'>Submission will NOT start alignment<BR/>
+	  <FONT class='apcomment'>Submission will NOT start alignment<BR/>
 		only output a command that you can copy and paste into a unix shell</FONT>
 	  </TD>
 	</TR>

@@ -165,7 +165,7 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 		<BR>
 		<input type='submit' name='process' value='Just Show Command'>
 		<input type='submit' name='process' value='Run JPEG Maker'><BR>
-		<FONT COLOR='RED'>Submission will NOT run JPEG Maker, only output a command that you can copy and paste into a unix shell</FONT>
+		<FONT class='apcomment'>Submission will NOT run JPEG Maker, only output a command that you can copy and paste into a unix shell</FONT>
 		<BR>
 		</TD>
 	</TR>

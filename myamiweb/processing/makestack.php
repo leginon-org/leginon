@@ -372,7 +372,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	  </select>";*/
   echo"   <BR/>
 	  <input type='submit' name='process' value='Generate Make Stack Command'><BR>
-	  <FONT COLOR='RED' SIZE='-1'>Submission will NOT create a stack,<BR/>
+	  <FONT class='apcomment'>Submission will NOT create a stack,<BR/>
 					only output a command that you can copy and paste into a unix shell</FONT>
 	  </TD>
 	</TR>

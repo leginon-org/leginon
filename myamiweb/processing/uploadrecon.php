@@ -199,7 +199,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
       <HR>
       <BR/>
       <INPUT type='submit' name='process' value='Upload Recon'><BR/>
-      <FONT COLOR='RED'>Submission will NOT upload the reconstruction,<BR/>
+      <FONT class='apcomment'>Submission will NOT upload the reconstruction,<BR/>
 			only output a command that you can copy and paste into a unix shell</FONT>
     </TD>
 	</TR>
