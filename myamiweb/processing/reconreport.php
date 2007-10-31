@@ -166,7 +166,7 @@ foreach ($iterations as $iteration){
 	$html .= "<TR><TD>";
 	$html .= "<A TARGET='stackview' HREF='viewstack.php?file=$clsavg'>$iteration[classAverage]</A><BR/><BR/>";
 	$eulerfile = $refinerun['path']."/eulermap".$iteration['iteration'].".png";
-	echo $eulerfile;
+	//echo $eulerfile;
 	if (file_exists($eulerfile)) {
 		$html .= "<A TARGET='eulermap' HREF='loadimg.php?filename=".$eulerfile."'>"
 			."<FONT SIZE='-1'>view euler map</FONT><BR/>"
