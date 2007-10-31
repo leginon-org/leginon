@@ -4,12 +4,11 @@ import MySQLdb
 import math
 import numpy
 from scipy import ndimage
-import pylab
+
 import random
 import time
 import pprint
 import apDisplay
-from matplotlib import cm
 
 # connect
 db = MySQLdb.connect(host="cronus4.scripps.edu", user="usr_object", passwd="", db="dbappiondata")
@@ -302,7 +301,99 @@ def calcFreqEqualArea(points, rstep=9.0):
 	return indexmap
 
 
+def makeImage(radlist,anglelist,freqlist,freqgrid):
+	import Image
+	import ImageDraw
+
+	dim = 1024
+	imgname = "temp.png"
+	#'L' -> grayscale
+	#'RGB' -> color
+	img = Image.new("RGB", (dim, dim), color="#ffffff")
+	draw = ImageDraw.Draw(img)
+
+	freqnumpy = numpy.asarray(freqlist, dtype=numpy.int32)
+	minf = float(ndimage.minimum(freqnumpy))
+	maxf = float(ndimage.maximum(freqnumpy))
+	rangef = maxf-minf
+
+	angnumpy = numpy.asarray(anglelist, dtype=numpy.float32)
+	mina = float(ndimage.minimum(angnumpy))
+	maxa = float(ndimage.maximum(angnumpy))
+	rangea = maxa-mina
+
+	radnumpy = numpy.asarray(radlist, dtype=numpy.float32)
+	minr = float(ndimage.minimum(radnumpy))
+	maxr = float(ndimage.maximum(radnumpy))
+	ranger = maxr-minr
+
+	x1, y1 = polarToCart(maxr, rangea)
+	x2, y2 = polarToCart(minr, 0)
+	x3, y3 = polarToCart(maxr, 0)
+	minx = min(x1,x2,x3)
+	maxx = max(x1,x2,x3)
+	miny = min(y1,y2,y3)
+	maxy = max(y1,y2,y3)
+	rangex = maxx-minx
+	rangey = maxy-miny
+
+	tps = 10
+	frame = 50
+	#for i,rad in enumerate(radlist):
+	#	for j,ang in enumerate(anglelist):
+	#		freq = float(freqgrid[i,j])
+	for i in range(len(radlist)):
+		#frequency
+		freq = freqlist[i]
+		fgray = 255.0*((maxf-freq)/rangef)**2
+		fcolor = grayToColor(fgray)
+
+		#polar
+		rad = radlist[i]			
+		ang = anglelist[i]
+		#ax = float(dim-2*frame)*(ang-mina)/rangea+frame
+		#ry = float(dim-2*frame)*(rad-minr)/ranger+frame
+		#polarcoord = (ax-tps, ry-tps, ax+tps, ry+tps)
+
+		#cartesian
+		x, y = polarToCart(rad, ang-mina)
+		ys = float(dim-2*frame)*(x-minx)/rangex+frame
+		xs = float(dim-2*frame)*(y-miny)/rangey+frame
+		cartcoord = (xs-tps, ys-tps, xs+tps, ys+tps)
+
+		#print ang,rad,freq
+		#print ax,ry,fcolor
+		#print freq, fcolor
+		draw.ellipse(cartcoord, fill=fcolor)
+
+	img.save(imgname, "PNG")
+	return
+
+def grayToColor(gray):
+	b = 32
+	if gray < 128:
+		#green (0) 00ff00 -> yellow (128) ffff00
+		r = gray*2
+		g = 255
+	else:
+		#yellow (128) ffff00 -> red (255) ff0000
+		r = 255
+		g = 2*(255 - gray)
+	return colorTupleToHex(r, g, b, scale=0.6)
+
+def colorTupleToHex(r, g, b, scale=1):
+	#print r,g,b
+	ir = int(r*scale)
+	ig = int(g*scale)
+	ib = int(b*scale)
+	hexcode = str(hex(ir*256**2 + ig*256 + ib))[2:]
+	hexstr = "#"+apDisplay.leftPadString(hexcode, n=6, fill='0')
+	return hexstr
+
+
 def makePlot(radlist,anglelist,freqlist,freqgrid):
+	import pylab
+	from matplotlib import cm
 	# radar green, solid grid lines
 	pylab.rc('grid', color='#316931', linewidth=2, linestyle='-')
 	pylab.rc('xtick', labelsize=16)
@@ -339,16 +430,18 @@ def makePlot(radlist,anglelist,freqlist,freqgrid):
 
 
 if __name__ == "__main__":
-	radlist, anglelist, freqlist, freqgrid = getEulersForIteration(181, 4)
+	t0 = time.time()
+	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(181, 4)
 	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(173, 12)
 	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(158, 4)
 	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(158, 2)
-	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(118, 1)
+	radlist, anglelist, freqlist, freqgrid = getEulersForIteration(118, 1)
 	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(159, 1)
 	#freqmap = getEulersForIteration(158, 4)
-	makePlot(radlist,anglelist,freqlist,freqgrid)
+	#makePlot(radlist,anglelist,freqlist,freqgrid)
+	makeImage(radlist,anglelist,freqlist,freqgrid)
 	#makePlot(freqmap)
-
+	apDisplay.printColor("Finished in "+apDisplay.timeString(time.time()-t0), "cyan")
 
 
 
