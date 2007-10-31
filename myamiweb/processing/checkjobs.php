@@ -46,7 +46,9 @@ function checkJobs($showjobs=False,$extra=False) {
   }
   // if clicked button, list jobs in queue
   if ($showjobs) {
-    $queue = checkClusterJobs($_SESSION['username'], $_SESSION['password']);
+    $user = $_SESSION['username'];
+    $pass = $_SESSION['password'];
+    $queue = checkClusterJobs($user, $pass);
     if ($queue) {
       echo "<P>Jobs currently running on the cluster:<P>\n";
       $list = streamToArray($queue);
@@ -74,9 +76,20 @@ function checkJobs($showjobs=False,$extra=False) {
 
     // find if job has been uploaded
     $recon = $particle->getReconIdFromClusterJobId($job['DEF_id']);
+    $display_keys['name'] = $jobinfo['name'];
     $display_keys['appion path'] = $jobinfo['appath'];
     $display_keys['dmf path'] = $jobinfo['dmfpath'];
     $display_keys['cluster path'] = $jobinfo['clusterpath'];
+
+    // get stack id for job from job file
+    $jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
+    $f = file($jobfile);
+    foreach ($f as $line) {
+      if (preg_match('/^\#\sstackId:\s/',$line)) $stackid=ereg_replace('# stackId: ','',trim($line));
+    }
+    // get num of particles in stack
+    $numinstack = $particle->getNumStackParticles($stackid);
+
     if ($recon) $status="<A HREF='reconreport.php?reconId=$recon[DEF_id]'>Uploaded</A>\n";
     elseif ($jobinfo['status']=='Q') $status='Queued';
     elseif ($jobinfo['status']=='R') $status='Running';
@@ -87,7 +100,7 @@ function checkJobs($showjobs=False,$extra=False) {
     }
     if ($status) $display_keys['status'] = $status;
 
-    echo divtitle("Job: <font class='aptitle'>$jobinfo[name]</font> (ID: <font class='aptitle'>$job[DEF_id])</font>");
+    echo divtitle("Job: <font class='aptitle'>$jobinfo[name]</font> (ID: <font class='aptitle'>$job[DEF_id]</font>)");
     echo "<TABLE BORDER='0' >\n";
     if ($dlbuttons) echo "<TR><TD COLSPAN='2'>$dlbuttons</TD></TR>\n";
     foreach($display_keys as $k=>$v) {
@@ -96,12 +109,42 @@ function checkJobs($showjobs=False,$extra=False) {
     echo "</TABLE>\n";
 
     if ($showjobs && $status=='Running') {
-      $stat = checkJobStatus($jobinfo['clusterpath'],$jobinfo['name'],$_SESSION['username'],$_SESSION['password']);
+      $stat = checkJobStatus($jobinfo['clusterpath'],$jobinfo['name'],$user,$pass);
       if (!empty($stat)) {
 	echo "<B>Current Status:</B>\n";
+	$current=0;
+	foreach ($stat['refinelog'] as $i){
+	  // get last refine line
+	  if ($i[0]=='refine' && preg_match('/\d+/',$i[1])) {
+	    $current++;
+	    $lastindx = $i;
+	  }
+	}
 	$numtot=count($stat['allref']);
-	$current=count($stat['curref']);
-	echo "Currently processing iteration $current of $numtot\n";
+	echo "<table class='tableborder' cellpadding=5 ><tr><td>\n";
+	echo "<font class='aptitle'>Processing iteration $current of $numtot</font>\n";
+	echo "</td></tr>\n";
+	echo "<tr><td>\n";
+	// get key corresponding to where the last refinement run starts
+	$lastkey = array_search($lastindx, $stat['refinelog']);
+	for ($i=$lastkey; $i<count($stat['refinelog']); $i++) {
+	  if ($stat['refinelog'][$i][0] == 'project3d') $progress[] = "creating projections...";
+	  elseif ($stat['refinelog'][$i][0] == 'classesbymra') {
+	    // get the number of particles that have been classified
+	    $cmd = "grep ' -> ' $jobinfo[clusterpath]/recon/refine$current.txt | wc -l";
+	    $r = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
+	    $r = trim($r);
+	    $progress[] = "classifying particles: $r/$numinstack...\n";
+	  }
+	  elseif ($stat['refinelog'][$i][0] == 'classalignall') $progress[] = "iterative class averaging...\n";
+	  elseif ($stat['refinelog'][$i][0] == 'make3d') $progress[] = "creating 3d model...\n";
+	  elseif ($stat['refinelog'][$i][0] == 'eotest') {
+	    $progress[] = "performing even/odd test...\n"; 
+	    break;
+	  }
+	}
+	echo implode("<font class='green'> Done</font></TD></TR>\n<TR><TD>",$progress);
+	echo "</TD></TR></TABLE>\n";
 	if ($stat['errors']) echo "<P><FONT COLOR='RED'>There are errors in this job, you should resubmit</FONT><P>";
       }
     }
@@ -119,12 +162,10 @@ function checkJobStatus($jobpath,$jobfile,$user,$pass) {
   foreach ($allref as $i){
     if ($i[0]=='refine' && preg_match('/\d+/',$i[1])) $stat['allref'][]=$i;
   }
-  $cmd = "grep refine $jobpath/recon/refine.log";
+  $cmd = "cat $jobpath/recon/refine.log";
   $r = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
   $curref = streamToArray($r);
-  foreach ($curref as $i){
-    if ($i[0]=='refine' && preg_match('/\d+/',$i[1])) $stat['curref'][]=$i;
-  }
+  $stat['refinelog']=$curref;
   $cmd = "grep Alarm $jobpath/recon/refine.* ";
   $stat['errors'] = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
 
