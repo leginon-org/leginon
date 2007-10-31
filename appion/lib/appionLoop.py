@@ -309,7 +309,7 @@ class AppionLoop(object):
 		self.params['doneDictName']=None
 		self.params['functionLog']=None
 		self.params['uncorrected']=False
-		self.params['reprocess']=False
+		self.params['reprocess']=None
 		self.params['nowait']=False
 		self.params['norejects']=None
 		self.params['limit']=None
