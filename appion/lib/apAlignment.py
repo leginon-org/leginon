@@ -41,6 +41,7 @@ def defaults():
 	params['xysearch']=None
 	params['iter']=2
 	params['csym']=1
+	params['staticref']=False
 	
 	return params
 
@@ -90,6 +91,8 @@ def cmdline(args, params):
 			params['outdir'] = elem[1]
 		elif arg == "commit":
 			params['commit'] = True
+		elif arg == "staticref":
+			params['staticref'] = True
 		elif arg == "classonly":
 			params['classonly'] = True
 		elif elem[0] == "description":
