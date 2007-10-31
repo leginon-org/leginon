@@ -925,7 +925,8 @@ class particledata {
 				."FROM `ApRefinementData` r "
 				."LEFT JOIN `ApRefinementParamsData` p "
 				."ON (r.`REF|ApRefinementParamsData|refinementParams` = p.`DEF_id`) "
-				."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconId' ";
+				."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconId' "
+				."ORDER BY r.`iteration` ASC ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
