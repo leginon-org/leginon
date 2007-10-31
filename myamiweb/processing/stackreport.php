@@ -40,8 +40,8 @@ $particle = new particledata();
 	$s['pixelsize']=$apix;
 	$s['particleSelection']=$selectionruninfo['name']."(id ".$selectionruninfo['selectionid'].")";
 
-	echo divtitle("Stack report for STACK: <FONT COLOR='#993333'>".$s['stackRunName']
-		."</FONT> (ID: <FONT COLOR='#993333'>".$stackid."</FONT>)");
+	echo divtitle("Stack report for STACK: <FONT class='aptitle'>".$s['stackRunName']
+		."</FONT> (ID: <FONT class='aptitle'>".$stackid."</FONT>)");
 
 echo "<br><table cellspacing='1' cellpadding='2'><tr><td><span class='datafield0'>Total particles for $runparams[stackRunName]: </span></td><td>$nump</td></tr></table>\n";
 

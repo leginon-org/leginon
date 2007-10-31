@@ -56,8 +56,8 @@ function createClassifierSummary() {
 		# get list of noref parameters from database
 		$r = $particle->getNoRefParams($norefid['DEF_id']);
 		$s = $particle->getStackParams($r['REF|ApStackData|stack']);
-		echo divtitle("NOREF ALIGN: <FONT COLOR='#993333'>".$r['name']
-		."</FONT> (ID: <FONT COLOR='#993333'>".$norefid[DEF_id]."</FONT>)");
+		echo divtitle("NOREF ALIGN: <FONT class='aptitle'>".$r['name']
+		."</FONT> (ID: <FONT class='aptitle'>".$norefid[DEF_id]."</FONT>)");
 		//echo divtitle("NoRef Id: $norefid[DEF_id]");
 		echo"<FORM NAME='numclass' METHOD='POST' ACTION='$formAction'>\n";
 		echo "<table border='0' >\n";

@@ -43,10 +43,11 @@ $particle = new particledata();
 $stackIds = $particle->getStackIds($sessionId);
 foreach ($stackIds as $stackid) {
 	$s=$particle->getStackParams($stackid[stackid]);
-	echo divtitle("STACK: <FONT COLOR='#993333'>".$s['stackRunName']
-		."</FONT> (ID: <FONT >"
-		.'<a href="stackreport.php?sId='.$stackid[stackid].'">'.$stackid[stackid]."</a>"
-		."</FONT>)");
+	echo divtitle("STACK: <font class='aptitle'>".$s['stackRunName']
+		."</font> (ID: <font>"
+		."<a class='aptitle' href='stackreport.php?sId="
+		.$stackid[stackid]."'>".$stackid[stackid]."</a>"
+		."</font>)");
 	echo "<table border='0'>\n";
 	# get list of stack parameters from database
 	$nump=commafy($particle->getNumStackParticles($stackid[stackid]));

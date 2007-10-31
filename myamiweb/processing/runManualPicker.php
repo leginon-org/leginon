@@ -157,7 +157,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   echo"<BR/>";
   //echo"<input type='submit' name='process' value='Just Show Command'>";
   echo"<input type='submit' name='process' value='Run ManualPicker'><BR>";
-  echo"<FONT COLOR='#993333'>Submission will NOT run Manual Picker,<BR/>
+  echo"<FONT class='apcomment'>Submission will NOT run Manual Picker,<BR/>
     only output a command that you can copy and paste into a unix shell</FONT>
     </TD>
   </TR>

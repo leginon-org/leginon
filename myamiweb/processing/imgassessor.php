@@ -169,7 +169,7 @@ if ($imgdir) {
 	// make sure imgdir ends with '/'
 	if (substr($imgdir,-1,1)!='/') $imgdir.='/';
 	if (!file_exists($imgdir))
-		echo "<FONT COLOR='#993333'>Specified path: $imgdir does not exist</FONT><HR>\n";
+		echo "<FONT class='apcomment'>Specified path: $imgdir does not exist</FONT><HR>\n";
 	else {
 		// open image directory
 		$pathdir=opendir($imgdir);
@@ -196,7 +196,7 @@ if ($imgdir) {
 			// display image
 			displayImage($_POST,$fileList,$imgdir,$leginondata,$particle,$assessmentrid);
 		}
-		else echo"<FONT COLOR='#993333'>No file found in this directory with extension: $ext or preset: $presettype </FONT><HR>\n";
+		else echo"<FONT class='apcomment'>No file found in this directory with extension: $ext or preset: $presettype </FONT><HR>\n";
 	}
 
 }
