@@ -495,7 +495,7 @@ class view {
 		$this->displayffticon = true;
 		$this->displayaceicon = true;
 		$this->displayinfoicon = true;
-		$this->displayparticleicon = true;
+		$this->displayparticleicon = false;
 		$this->displaydownloadicon = true;
 		$this->displaydeqicon = true;
 		$this->displaycloseicon = true;

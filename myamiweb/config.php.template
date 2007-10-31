@@ -10,6 +10,9 @@
 
 require('inc/config.inc');
 
+// --- define dbem web tools nase --- //
+define(BASE_URL, "/dbemd/");
+
 // --- Leginon Viewer Configuration --- //
 
 // --- Set your leginon MySQL database server parameters

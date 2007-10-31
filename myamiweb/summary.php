@@ -12,6 +12,7 @@ require "inc/project.inc";
 require "inc/particledata.inc";
 require "inc/ctf.inc";
 
+
 // --- Set  experimentId
 $lastId = $leginondata->getLastSessionId();
 $expId = (empty($_GET['expId'])) ? $lastId : $_GET['expId'];
@@ -360,7 +361,7 @@ if ($particle->hasParticleData($sessionId)) {
 	$inspectcheck=($_POST['onlyinspected']=='on') ? 'CHECKED' : '';
 	$mselexval=(is_numeric($_POST['mselex'])) ? $_POST['mselex'] 
 			: (is_numeric($_GET['mselex']) ? $_GET['mselex'] : false);
-	echo"<FORM NAME='prtl' method='POST' action='$_SERVER[REQUEST_URI]'>
+	echo"<FORM NAME='prtl' method='POST' action='".$_SERVER['REQUEST_URI']."'>
 	     <INPUT TYPE='CHECKBOX' name='onlyinspected' $inspectcheck onclick='javascript:document.prtl.submit()'>Don't use particles from discarded images<BR>
 	     <INPUT CLASS='field' NAME='mselex' TYPE='text' size='5' VALUE='$mselexval'>Minimum correlation value
 	     </form>\n";
@@ -371,7 +372,14 @@ if ($particle->hasParticleData($sessionId)) {
 	$display_keys = array ( 'totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev', 'img');
 	$particleruns=$particle->getParticleRunIds($sessionId);
 	echo $particle->displayParticleStats($particleruns, $display_keys, $inspectcheck, $mselexval);
+
+} else {
+        echo "no Particle information available";
 }
+
+
+?>
+</td>
 else {
         echo "no particle information available";
 }

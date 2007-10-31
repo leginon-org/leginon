@@ -1,6 +1,7 @@
 <?php
 function addplugin($path) {
 	addincludepath($path);
+	define(strtoupper($path)."_BASE_URL", BASE_URL.$path."/");
 }
 
 function addincludepath($path) {

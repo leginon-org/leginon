@@ -17,7 +17,8 @@ define(PARTICLE_DB, $PARTICLE_DB);
 
 class particledata {
 
-	var $crlf = "\n";
+	var $crlf="\n";
+	var $baseurl=PROCESSING_BASE_URL;
 
 	function particledata () {
 		$this->mysql = new mysql(
@@ -111,7 +112,6 @@ class particledata {
 		$q = "select * "
 			."from ApAssessmentRun where `REF|leginondata|SessionData|session` = '$sessionId'";
 		list($r) = $this->mysql->getSQLResult($q);
-		print_r($r);
 		return $r;
 	}
 
@@ -457,14 +457,13 @@ class particledata {
 			$numimg=$particlestats['num'];
 			$ppimg = ($numimg > 0) ? (sprintf("%.1f", $numptl/$numimg)) : 0;
 			$particlestats['numimgs']=$numimg.'<br />('.$ppimg.' prtl/img)';
-			$particlestats['img'] = '<a href="particlegraph.php?hg=1&run='.$runId.'">'
+			$particlestats['img'] = '<a href="'.$this->baseurl.'particlegraph.php?hg=1&run='.$runId.'">'
 				.'<img border="0" '
-				.'src="particlegraph.php?w=150&hg=1&run='
+				.'src="'.$this->baseurl.'particlegraph.php?w=150&hg=1&run='
 				.$runId.'"></a>';
 			$q = "select name from `ApSelectionRunData` where `DEF_id` = $runId";
-			$r = $this->mysql->getSQLResult($q);
-			$r0 = $r[0];
-			$html .= '<td><a href="particlerunreport.php?rId='.$runId.'">'.$r0['name'].'</a></td>';
+			list($r0) = $this->mysql->getSQLResult($q);
+			$html .= '<td><a href="'.$this->baseurl.'particlerunreport.php?rId='.$runId.'">'.$r0['name'].'</a></td>';
 			foreach($display_keys as $field) {
 							$data=$particlestats[$field];
 				if (eregi('^min|^max|^avg|^stddev', $field)) $data=format_sci_number($data,4);

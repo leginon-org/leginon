@@ -6,12 +6,12 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  */
-require ("inc/particledata.inc");
-require_once ("inc/leginon.inc");
+require "inc/leginon.inc";
+require "inc/particledata.inc";
 
-$sessionId= $_GET[Id];
-$viewdata = ($_GET[vd]==1) ? true : false;
-$viewsql = ($_GET[vs]==1) ? true : false;
+$sessionId= $_GET['Id'];
+$viewdata = ($_GET['vd']==1) ? true : false;
+$viewsql = ($_GET['vs']==1) ? true : false;
 
 $particle = new particledata();
 

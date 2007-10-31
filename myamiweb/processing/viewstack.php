@@ -26,7 +26,6 @@ function getimagicfilenames($file) {
 	$file_hed = $file."hed";
 	$file_img = $file."img";
 	return array($file_hed, $file_img);
-	
 }
 
 list($file_hed, $file_img)=getimagicfilenames($filename);
@@ -40,7 +39,6 @@ if ($expId){
 $sessiondata=getSessionList($projectId,$sessionId);
 $sessioninfo=$sessiondata['info'];
 $sessionname=$sessioninfo['Name'];
-
 
 $info=imagicinfo($file_hed);
 $n_images=$info['count']+1;
