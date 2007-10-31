@@ -87,7 +87,7 @@ function checkJobs($showjobs=False,$extra=False) {
     }
     if ($status) $display_keys['status'] = $status;
 
-    echo divtitle("Job: $jobinfo[name] (ID: $job[DEF_id])");
+    echo divtitle("Job: <font class='aptitle'>$jobinfo[name]</font> (ID: <font class='aptitle'>$job[DEF_id])</font>");
     echo "<TABLE BORDER='0' >\n";
     if ($dlbuttons) echo "<TR><TD COLSPAN='2'>$dlbuttons</TD></TR>\n";
     foreach($display_keys as $k=>$v) {
