@@ -532,7 +532,7 @@ def convertFileToMRC(path,filename):
 	emancmd = "proc2d "+os.path.join(path,filename)+" "+mrcfile
 	apEMAN.executeEmanCmd(emancmd)
 
-def convertSpiderStackToMrcs(path, filename, numimg=10):
+def convertStackToMrcs(path, filename, numimg=10):
 	"""
 	takes spider stack file and converts to single mrc files
 	"""
