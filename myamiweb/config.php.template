@@ -11,7 +11,7 @@
 require('inc/config.inc');
 
 // --- define dbem web tools nase --- //
-define(BASE_URL, "/dbemd/");
+define(BASE_URL, "/dbem/");
 
 // --- Leginon Viewer Configuration --- //
 
