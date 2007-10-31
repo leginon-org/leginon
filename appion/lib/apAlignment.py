@@ -480,10 +480,14 @@ def makeRefImagic(params):
 	convertStackToIMAGIC(params['iterdir'],'ref.spi')
 	convertStackToIMAGIC(params['iterdir'],'refali.spi')
 	convertStackToIMAGIC(params['iterdir'],'varali.spi')
+	#MRCs are for the web viewer
+	convertStackToMrcs(params['iterdir'],'refali.spi', len(params['refids']))
+	convertStackToMrcs(params['iterdir'],'varali.spi', len(params['refids']))
 	if params['csym']>1:
 		convertStackToIMAGIC(params['iterdir'],'refali_nosym.spi')
 		convertStackToIMAGIC(params['iterdir'],'varali_nosym.spi')
-	
+		convertStackToMrcs(params['iterdir'],'refali_nosym.spi', len(params['refids']))
+		convertStackToMrcs(params['iterdir'],'varali_nosym.spi', len(params['refids']))
 	
 def classHistogram(params):
 	search = os.path.join(params['rundir'], "classes/clhc*.spi")
@@ -527,6 +531,20 @@ def convertFileToMRC(path,filename):
 	mrcfile=fileroot+".mrc"
 	emancmd = "proc2d "+os.path.join(path,filename)+" "+mrcfile
 	apEMAN.executeEmanCmd(emancmd)
+
+def convertSpiderStackToMrcs(path, filename, numimg=10):
+	"""
+	takes spider stack file and converts to single mrc files
+	"""
+	stackroot = os.path.splitext(filename)[0]
+	filepath = os.path.join(path, filename)
+	#numimg = apEMAN.getNumParticlesInStack(filepath)
+	for i in range(numimg):
+		num = ("%03d" % (i+1) )
+		refstackname = stackroot+num+".mrc"
+		emancmd = ("proc2d "+filepath+" "+refstackname
+			+" first="+str(i)+" last="+str(i))
+		apEMAN.executeEmanCmd(emancmd)
 
 def convertStackToIMAGIC(path,filename):
 	"""
