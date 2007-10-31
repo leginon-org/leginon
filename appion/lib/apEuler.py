@@ -432,10 +432,10 @@ def makePlot(radlist,anglelist,freqlist,freqgrid):
 if __name__ == "__main__":
 	t0 = time.time()
 	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(181, 4)
-	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(173, 12)
+	radlist, anglelist, freqlist, freqgrid = getEulersForIteration(173, 12)
 	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(158, 4)
 	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(158, 2)
-	radlist, anglelist, freqlist, freqgrid = getEulersForIteration(118, 1)
+	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(118, 1)
 	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(159, 1)
 	#freqmap = getEulersForIteration(158, 4)
 	#makePlot(radlist,anglelist,freqlist,freqgrid)
