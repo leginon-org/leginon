@@ -106,11 +106,9 @@ class aceLoop(appionLoop.AppionLoop):
 		self.params['display']=1
 		self.params['stig']=0
 		self.params['nominal']=None
-		self.params['reprocess']=None
 		self.params['matdir']=None
 		self.params['opimagedir']=None
 		self.params['newnominal']=False
-		self.params['uncorrected']=False
 		self.params['xvfb']=False
 
 	def specialCreateOutputDirs(self):
@@ -173,12 +171,8 @@ class aceLoop(appionLoop.AppionLoop):
 					apDisplay.printError("stig must be 0 or 1")
 			elif (elements[0]=='nominal'):
 				self.params['nominal']=float(elements[1])
-			elif (elements[0]=='reprocess'):
-				self.params['reprocess']=float(elements[1])
 			elif (elements[0]=='newnominal'):
 				self.params['newnominal']=True
-			elif arg == 'uncorrected':
-				self.params['uncorrected']=True
 			elif arg == 'xvfb':
 				self.params['xvfb']=True
 			else:
