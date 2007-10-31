@@ -34,33 +34,57 @@ function displayIterations($refaliId) {
 	// --- Get Refali Data
 	$r = $particle->getRefInfoFromId($refaliId);
 	$p = $particle->getRefAliParams($refaliId);
+	$ts = $particle->getRefTemplatesFromId($refaliId);
+	//echo print_r($ts);
 	$s = $particle->getStackParams($p['REF|ApStackData|stack']);
-	$t = $particle->getTemplatesFromId($refaliId['REF|ApTemplateImageData|refTemplate']);
+	//$t = $particle->getTemplatesFromId($refaliId['REF|ApTemplateImageData|refTemplate']);
 	if ($p['csym']>1) $csym=$p['csym'];
 
-	echo divtitle("Iteration 0");
-	echo "<TABLE BORDER='0'>\n";
-	echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$p[path]/$p[name]/reference.mrc'><BR>\n";
-	echo"</TABLE>\n";
+	echo divtitle("Original templates");
+	echo "<TABLE BORDER='0'><TR>\n";
+	foreach ($ts as $t) {
+		echo "<TD>\n";
+		echo "<IMG WIDTH='200' SRC='loadimg.php?filename="
+			.$t['path']."/".$t['templatename']."'><BR/>\n";
+			//$p[path]/$p[name]/reference001.mrc'><BR>\n";
+		echo "</TD>\n";
+	}
+	echo"</TR></TABLE>\n";
 	echo"<P>\n";
 
 	foreach ($iters as $i) {
 		echo divtitle("Iteration $i[iteration]");
-		echo "<TABLE CLASS='tableborder' BORDER='0'>\n";
-		if ($csym) {
-			echo "<A HREF='loadimg.php?filename=$p[path]/$r[name]/$i[name]/refali001_nosym.mrc'>\n";
-			echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$p[path]/$r[name]/$i[name]/refali001_nosym.mrc'></A>\n";
-			echo "<A HREF='loadimg.php?filename=$p[path]/$r[name]/$i[name]/varali001_nosym.mrc'>\n";
-			echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$p[path]/$r[name]/$i[name]/varali001_nosym.mrc'></A><BR>\n";
-			echo "with $csym-fold symmetry:<BR>\n";
+		echo "<TABLE CLASS='tableborder' BORDER='0'><TR>\n";
+		$count = 0;
+		foreach ($ts as $t) {
+			$count ++;
+			$numstr = (string) $count;
+			echo "<TD>\n";
+			if ($csym) {
+				echo "<A HREF='loadimg.php?filename=$p[path]/$r[name]/$i[name]/refali00".$numstr."_nosym.mrc'>\n";
+				echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$p[path]/$r[name]/$i[name]/refali00".$numstr."_nosym.mrc'></A>\n";
+				echo "with $csym-fold symmetry:<BR>\n";
+			}
+			echo "<A HREF='loadimg.php?filename=$p[path]/$r[name]/$i[name]/refali00".$numstr.".mrc'>\n";
+			echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$p[path]/$r[name]/$i[name]/refali00".$numstr.".mrc'></A>\n";
+			echo "</TD>\n";
 		}
-		echo "<A HREF='loadimg.php?filename=$p[path]/$r[name]/$i[name]/refali001.mrc'>\n";
-		echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$p[path]/$r[name]/$i[name]/refali001.mrc'></A>\n";
-		echo "<A HREF='loadimg.php?filename=$p[path]/$r[name]/$i[name]/varali001.mrc'>\n";
-		echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$p[path]/$r[name]/$i[name]/varali001.mrc'></A><BR>\n";
-		echo"</TABLE>\n";
+		echo "</TR><TR>\n";
+		$count = 0;
+		foreach ($ts as $t) {
+			$count ++;
+			echo "<TD>\n";
+			if ($csym) {
+				echo "<A HREF='loadimg.php?filename=$p[path]/$r[name]/$i[name]/varali00".$numstr."_nosym.mrc'>\n";
+				echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$p[path]/$r[name]/$i[name]/varali00".$numstr."_nosym.mrc'></A><BR>\n";
+				echo "with $csym-fold symmetry:<BR>\n";
+			}
+			echo "<A HREF='loadimg.php?filename=$p[path]/$r[name]/$i[name]/varali00".$numstr.".mrc'>\n";
+			echo "<IMG WIDTH='200' SRC='loadimg.php?filename=$p[path]/$r[name]/$i[name]/varali00".$numstr.".mrc'></A><BR>\n";
+			echo "</TD>\n";
+		}
+		echo"</TR></TABLE>\n";
 		echo"<P>\n";
-
 	}
 }
 writeBottom();
