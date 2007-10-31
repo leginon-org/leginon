@@ -41,13 +41,13 @@ def getEulersForIteration(reconid, iteration=1):
 	apDisplay.printColor("Found "+str(numrows)+" euler values", "cyan")
 	result = cursor.fetchall()
 	apDisplay.printMsg("Fetched data in "+apDisplay.timeString(time.time()-t0))
-	r0 = resToEuler(result[int( float(len(result)) * random.random() )])
-	r1 = resToEuler(result[int( float(len(result)) * random.random() )])
+	#r0 = resToEuler(result[int( float(len(result)) * random.random() )])
+	#r1 = resToEuler(result[int( float(len(result)) * random.random() )])
 	#print r0
 	#print r1
-	mat0 = getMatrix3(r0)
-	mat1 = getMatrix3(r1)
-	dist = calculateDistance(mat0, mat1)
+	#mat0 = getMatrix3(r0)
+	#mat1 = getMatrix3(r1)
+	#dist = calculateDistance(mat0, mat1)
 	#print mat0
 	#print mat1
 	#print "dist=",dist
