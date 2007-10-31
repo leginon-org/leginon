@@ -125,7 +125,7 @@ foreach ($display_keys as $p) {
 $html .= "</TR>\n";
 
 # show info for each iteration
-sort($iterations);
+//sort($iterations);
 foreach ($iterations as $iteration){
   $refinementData=$particle->getRefinementData($refinerun['DEF_id'], $iteration['iteration']);
   $numclasses=$particle->getNumClasses($refinementData['DEF_id']);
@@ -163,7 +163,17 @@ foreach ($iterations as $iteration){
   else $html .= "<TD>-</TD>\n";
   $html .="<TD><table>";
   $clsavg = $refinerun['path'].'/'.$iteration['classAverage'];
-  $html .= "<TR><TD><A TARGET='stackview' HREF='viewstack.php?file=$clsavg'>$iteration[classAverage]</A></TD></TR>\n";
+	$html .= "<TR><TD>";
+	$html .= "<A TARGET='stackview' HREF='viewstack.php?file=$clsavg'>$iteration[classAverage]</A><BR/><BR/>";
+	$eulerfile = $refinerun['path']."/eulermap".$iteration['iteration'].".png";
+	echo $eulerfile;
+	if (file_exists($eulerfile)) {
+		$html .= "<A TARGET='eulermap' HREF='loadimg.php?filename=".$eulerfile."'>"
+			."<FONT SIZE='-1'>view euler map</FONT><BR/>"
+			//."<IMG WIDTH='20' HEIGHT='20' SRC='loadimg.php?filename=".$eulerfile."'>"
+			."</A>";
+	}
+	$html .= "</TD></TR>\n";
   
   if ($refinerun['package']=='EMAN/MsgP') {
     $goodavg = $refinerun['path'].'/'.$iteration['MsgPGoodClassAvg'];
@@ -176,7 +186,10 @@ HREF	='viewstack.php?uh=1&file=$goodavg'>$iteration[MsgPGoodClassAvg]</A></TD></
 HR	EF='classinfo.php?refinement=$refinementData[DEF_id]&w=800&h=600'>$numclasses</A></TD>\n";
   
   $html .="<TD><table>";
-  $html .= "<TR><TD>$prtlsused<BR><A TARGET='stackview' HREF='badprtls.php?refinement=$refinementData[DEF_id]'>[$badprtls bad]</A></TD></TR>\n";
+  $html .= "<TR><TD ALIGN='CENTER'>$prtlsused<BR/>"
+		."<A TARGET='stackview' HREF='badprtls.php?refinement=$refinementData[DEF_id]'>"
+		."<FONT SIZE='-1'>[$badprtls bad]</FONT>"
+		."</A></TD></TR>\n";
   if ($refinerun['package']=='EMAN/MsgP') 
     $html .= "<TR><TD>$goodprtlsused MsgP<BR><A TARGET='stackview' HREF='msgpbadprtls.php?refinement=$refinementData[DEF_id]'>[$msgpbadprtls bad]</A></TD></TR>\n";
   $html .= "</table></TD>";
