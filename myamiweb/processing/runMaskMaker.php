@@ -280,11 +280,6 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 		echo "<option $s >$host</option>\n";
 	}
 	echo "</select>
-	<BR>
-	User: <INPUT TYPE='text' name='user' value=".$_POST['user'].">
-	Password: <INPUT TYPE='password' name='password' value=".$_POST['password'].">\n";
-	echo"
-		</select>
 		<BR>
 		<input type='submit' name='process' value='Just Show Command'>
 		<input type='submit' name='process' value='Run MaskMaker'><BR>
@@ -340,15 +335,15 @@ function runMaskMaker() {
 
 	if ($testimage && $_POST['process']=="Run MaskMaker") {
 		$host = $_POST['host'];
-		$user = $_POST['user'];
-		$password = $_POST['password'];
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
 		if (!($user && $password)) {
 			createDogPickerForm("<B>ERROR:</B> Enter a user name and password");
 			exit;
 		}
-		$command="source /ami/sw/ami.csh;".$command;
-		$command="source /ami/sw/share/python/usepython.csh cvs32;".$command;
-		$cmd = "$command > maskMakerLog.txt";
+		$prefix = "source /ami/sw/ami.csh;";
+		$prefix.= "source /ami/sw/share/python/usepython.csh cvs32;"
+		$cmd = "$prefix webcaller.py '$command' maskMakerLog.txt";
 		$result=exec_over_ssh($host, $user, $password, $cmd, True);
 	}
 
