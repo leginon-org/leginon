@@ -70,8 +70,14 @@ def writeFunctionLog(commandline, params=None, logfile=None):
 		logfile = getFunctionName(sys.argv[0])+".log"
 	apDisplay.printMsg("writing function log to: "+logfile)
 	#WRITE INFO
-	user = os.getlogin() #os.environ.get('USER')
-	host = socket.gethostname()
+	try:
+		user = os.getlogin() #os.environ.get('USER')
+	except:
+		user = "user"
+	try:
+		host = socket.gethostname()
+	except:
+		host = "host"
 	timestamp = "[ "+user+"@"+host+": "+time.asctime()+" ]\n"
 	out=""
 	f=open(logfile,'a')
