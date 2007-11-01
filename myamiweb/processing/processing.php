@@ -150,7 +150,7 @@ if ($sessionId) {
 		$maskruns=count($maskrunIds);
 
   // --- Get Micrograph Assessment Data
-  //$totimgs = $particle->getNumImgsFromSessionId($sessionId);
+  $totimgs = $particle->getNumImgsFromSessionId($sessionId);
   $assessedimgs = $particle->getNumAssessedImages($sessionId);
   
   // --- Get Stack Data
