@@ -305,7 +305,7 @@ def calcFreqEqualArea(points, rstep=9.0):
 
 
 def makeImage(radlist, anglelist, freqlist, 
-		imgname="temp.png", imgdim=1024, crad=12, frame=50):
+		imgname="temp.png", imgdim=650, crad=8, frame=30):
 
 	#'L' -> grayscale
 	#'RGB' -> color
@@ -378,7 +378,7 @@ def freqToColor(freq, maxf, rangef):
 	fgray = 255.0*((maxf-freq)/rangef)**2
 	return fgray
 
-def drawLegend(draw, imgdim, crad=10, minf=0, maxf=100, gap=4, numsc=15):
+def drawLegend(draw, imgdim, crad=10, minf=0, maxf=100, gap=4, numsc=10):
 	rangef = maxf - minf
 	xs = imgdim-crad*numsc*gap-crad*2
 	ys = crad*(gap+1)
