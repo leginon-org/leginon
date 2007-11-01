@@ -6,6 +6,7 @@ import numpy
 from scipy import ndimage
 import Image
 import ImageDraw
+import ImageFont
 import random
 import time
 import pprint
@@ -304,7 +305,7 @@ def calcFreqEqualArea(points, rstep=9.0):
 
 
 def makeImage(radlist, anglelist, freqlist, 
-		imgname="temp.png", imgdim=1024, crad=10, frame=50):
+		imgname="temp.png", imgdim=1024, crad=12, frame=50):
 
 	#'L' -> grayscale
 	#'RGB' -> color
@@ -339,10 +340,12 @@ def makeImage(radlist, anglelist, freqlist,
 	rangex = maxx-minx
 	rangey = maxy-miny
 
+
+	drawLegend(draw, imgdim, crad, minf, maxf)
 	for i in range(len(radlist)):
 		#frequency
 		freq = freqlist[i]
-		fgray = 255.0*((maxf-freq)/rangef)**2
+		fgray = freqToColor(freq, maxf, rangef)
 		fcolor = grayToColor(fgray)
 
 		#direct polar
@@ -364,10 +367,39 @@ def makeImage(radlist, anglelist, freqlist,
 	except:
 		apDisplay.printWarning("could not save file: "+imgname)
 	try:
-		os.chmod(imgname, 0666)
+		#os.chmod(imgname, 0666)
+		os.system("chmod 666 "+imgname)
 	except:
 		apDisplay.printWarning("could not modify file: "+imgname)
 
+	return
+
+def freqToColor(freq, maxf, rangef):
+	fgray = 255.0*((maxf-freq)/rangef)**2
+	return fgray
+
+def drawLegend(draw, imgdim, crad=10, minf=0, maxf=100, gap=4, numsc=15):
+	rangef = maxf - minf
+	xs = imgdim-crad*numsc*gap-crad*2
+	ys = crad*(gap+1)
+	mult = 1.0/(numsc-1.0)
+	for i in range(numsc):
+		xt = crad*gap*i
+		cartcoord = (xs-crad+xt, ys-crad, xs+crad+xt, ys+crad)
+		freq = maxf - math.sqrt(1.0-mult*float(i))*rangef
+		fgray = freqToColor(freq, maxf, rangef)
+		fcolor = grayToColor(fgray)
+		draw.ellipse(cartcoord, fill=fcolor)
+		mystr = str(int(freq))
+		xv = draw.textsize(mystr)[0]/2.0
+		cartcoord2 = (xs+xt-xv, ys+2*crad)
+		draw.text(cartcoord2, mystr, fill="black")
+	cartcoord = (xs-crad*(gap/2.0), ys-crad*(gap/2.0), xs+crad*gap*(numsc-1)+crad*(gap/2.0), ys+crad*6, )
+	draw.rectangle(cartcoord, outline="black")
+	mystr = "number of particles"
+	xv = draw.textsize(mystr)[0]/2.0
+	cartcoord2 = ((cartcoord[0]+cartcoord[2])/2.0-xv, ys+crad*4 )
+	draw.text(cartcoord2, "number of particles", fill="black")
 	return
 
 def grayToColor(gray):
