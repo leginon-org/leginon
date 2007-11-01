@@ -5,7 +5,11 @@ import re
 import sys
 import types
 
-writeOut = False
+writeOut = True
+try:
+	outFile = os.basename(sys.argv[0]).split(".")[0]
+except:
+	outFile = "function.out"
 
 def printWarning(text):
 	"""
@@ -13,7 +17,7 @@ def printWarning(text):
 	"""
 	if writeOut is True:
 		try:
-			f = open("function.out","a")
+			f = open(outFile, "a")
 			f.write(" !!! WARNING: "+text+"\n")
 			f.close()
 		except:
@@ -26,7 +30,7 @@ def printMsg(text):
 	"""
 	if writeOut is True:
 		try:
-			f = open("function.out","a")
+			f = open(outFile, "a")
 			f.write(" ... "+text+"\n")
 			f.close()
 		except:
@@ -39,7 +43,7 @@ def printError(text):
 	"""
 	if writeOut is True:
 		try:
-			f = open("function.out","a")
+			f = open(outFile, "a")
 			f.write(" *** ERROR: "+text+"\n")
 			f.close()
 		except:
@@ -52,7 +56,7 @@ def printColor(text, colorstr):
 	"""
 	if writeOut is True:
 		try:
-			f = open("function.out","a")
+			f = open(outFile, "a")
 			f.write(" ... "+text+"\n")
 			f.close()
 		except:
