@@ -9,8 +9,10 @@
 
 require_once("config.php");
 require_once("inc/util.inc");
-require_once('inc/mysql.inc');
-require ('inc/button.inc');
+require_once("inc/mysql.inc");
+require_once("inc/button.inc");
+require_once("inc/dbemauth.php");
+require_once("inc/pref.inc");
 
 $VIEWNB=0;
 
@@ -26,10 +28,15 @@ class viewer {
 
 	var $crlf="\n";
 	var $nbview=0;
+	var $debug=false;
 
 	var $jsparams;
 
 	function viewer() {
+	}
+
+	function displayDebug() {
+		$this->debug=true;
 	}
 
 	function setSessionId($sessionId) {
@@ -42,6 +49,19 @@ class viewer {
 
 	function setImageId($imageId) {
 		$this->imageId=$imageId;
+	}
+
+	function setUsername($username) {
+		$this->username=$username;
+	}
+
+	function setCommentBox($array) {
+		if (is_array($array) && !empty($array))
+			$this->comment_box_val=$array;
+	}
+
+	function setCommentId($id) {
+		$this->commentId=$id;
 	}
 
 	function addProjectSelector($projects=array(), $currentproject=false) {
@@ -62,6 +82,17 @@ class viewer {
 
 		}
 		$this->addprojectsel = $projectselector;
+	}
+
+	function addFilterSelector($filters=array()) {
+		$filterselector = '<select name="filterId" onchange="get_image_list()">'.$this->crlf;
+		foreach ($filters as $filter) {
+			if ($filter[id]==$this->filterId) $s='selected'; else $s='';
+			$filterselector .= '<option value='.$filter[id].' '.$s.' >'
+						.$filter[name].'</option>'.$this->crlf; 
+		}
+		$filterselector .= '</select>'.$this->crlf;
+		$this->addfiltersel = $filterselector;
 	}
 
 	function addSessionSelector($sessions=array()) {
@@ -227,7 +258,7 @@ class viewer {
 
 	function addFileSelector($filenames=array(), $size=40) {
 		if ($size) $htmlsize = "size=$size";
-		$selector = '<select name="imageId" '.$htmlsize .' >'.$this->crlf;
+		$selector = '<select style="width: 250px" name="imageId" '.$htmlsize .' >'.$this->crlf;
 		$default = ($this->imageId) ? $this->imageId : $filenames[0][id];
 		foreach ($filenames as $filename) {
 			$filestr = ereg_replace('[[:alnum:]]+_(.*)', '\1', $filename[name]);
@@ -268,6 +299,10 @@ class viewer {
 		}
 		if ($this->sessionId)
 			$str .= 'var jsSessionId = '.$this->sessionId.";".$this->crlf;
+		if ($this->commentId)
+			$str .= 'var jsCommentId = '.$this->commentId.";".$this->crlf;
+		if ($this->username)
+			$str .= 'var jsUsername = "'.$this->username.'";'.$this->crlf;
 		$jsimgId = ($this->imageId) ? ' = '.$this->imageId.';' : ';';
 		$str .= 'var jsimgId'.$jsimgId.$this->crlf;
 		$str .= 'var key_up_unicode = 38;'.$this->crlf;
@@ -296,6 +331,7 @@ class viewer {
 		$nv=0;
 		$init = '<script>'.$this->crlf;
 		$init .= 'var jsviews = new Array();'.$this->crlf;
+		$init .= 'var jscomments = new Array();'.$this->crlf;
 		foreach ($this->views as $v) 
 			$init .= $v->getJavascriptvar();
 
@@ -326,6 +362,13 @@ class viewer {
 		$init .= 'document.onkeydown = getKey;'.$this->crlf;
 		if ($this->addloijavascript)
 			$init .= '	start();'.$this->crlf;
+		if ($this->comment_box_val) {
+			$cb=0;
+			foreach($this->comment_box_val as $box_name) {
+				$init .= 'jscomments['.$cb.']="'.$box_name.'";'.$this->crlf;
+				$cb++;
+			}
+		}
 		$init .= '}'.$this->crlf;
 		$init .= ''.$this->crlf;
 		$init .= '</script>'.$this->crlf;
@@ -342,14 +385,14 @@ class viewer {
 		$n=1;
 		$display = '<form method="post" name="viewerform"  '.
 				'action="'.$_SERVER['PHP_SELF'].'">'.$this->crlf;
-    if ($this->debug) {
-    $display .= '<textarea class="textarea" name=debug rows=10 cols=50></textarea>';
-    $display .= '<input class="bt1" type="button" value="clear" onclick="javascript:document.viewerform.debug.value=\'\'">';
-    $fct = "cle(document.viewerform.fctval.value)";
-    $display .= '<input class="bt1" type="button" value="eval" onclick="'.$fct.'">';
-    $display .= '<input class="bt1" name="fctval" type="text" size="50">';
-    }
-		if ($this->addloicontrol || $this->addcommentbox )
+		if ($this->debug) {
+		$display .= '<textarea class="textarea" name=debug rows=10 cols=50></textarea>';
+		$display .= '<input class="bt1" type="button" value="clear" onclick="javascript:document.viewerform.debug.value=\'\'">';
+		$fct = "cle(document.viewerform.fctval.value)";
+		$display .= '<input class="bt1" type="button" value="eval" onclick="'.$fct.'">';
+		$display .= '<input class="bt1" name="fctval" type="text" size="50">';
+		}
+		if ($this->addloicontrol || $this->addcommentbox || $this->addplaybackcontrol) 
 			$display .= '<table border="0"><tr valign="top">';
 		if ($this->addloicontrol ) {
 			$display .= '<td>';
@@ -374,7 +417,7 @@ class viewer {
   </tr>
   <tr>
    <td>
-    <input type="button" name="action" value="Save" onClick=\'addComment()\'/>
+    <input class="bt1" type="button" name="action" value="Save" onClick=\'addComment()\'/>
    </td>
   </tr>
  </table>
@@ -392,9 +435,13 @@ class viewer {
 		$display .= '<table border="0">';
 		if ($this->addsessionsel) {
 			$display .= '<tr valign="top">';
-			if ($this->addprojectsel) {
+			if ($this->addprojectsel || $this->addfiltersel) {
 				$display .= '<td>';
 				$display .= $this->addprojectsel;
+				if ($this->addfiltersel) {
+				$display .= "<br>";
+					$display .= $this->addfiltersel;
+				}
 				$display .= '</td>';
 			}
 			$display .= '<td colspan=2>';
@@ -407,6 +454,21 @@ class viewer {
 			$display .= '<td valign="top">';
 			$display .= $this->addfilesel;
 			$display .= '</td>';
+		}
+		if ($this->comment_box_val) {
+		$display .= '<td valign="top">';
+		foreach($this->comment_box_val as $box_name) {
+			$display .= add_comment_box($box_name);
+			$display .= '<br>';
+		}
+		$display .= '<input class="bt1" type="button" name="action_comment_box " '
+				.'value="Save" onClick=\'addCommentBox()\'/>';
+		$display .= '<input class="bt1" type="button" name="action_comment_box " '
+				.'value="Clear" onClick=\'clearCommentBox()\'/>';
+		$display .= '<input class="bt1" type="button" name="action_update_list" '
+				.'value="Remove" onClick=\'update_image_list()\'/>';
+		$display .= '<div><div id="commentboxdiv" style="position:absolute; z-index:99; visibility: hidden"><img src="addcommentbox.php" name="commentboximg" ></div></div>';
+		$display .= '</td>';
 		}
 		$display .= '<td valign="top">';
 		$display .= '<table border="0"><tr>';
@@ -503,6 +565,9 @@ class view {
 		$this->framecolor = ' class="bgcolor1" ';
 		$this->menucolor = ' class="bgimg1" ';
 		$this->presetscript = 'getpreset.php';
+		$this->reportscript = 'imgreport.php';
+		$this->dwdscript = 'download.php';
+		$this->histoscript = 'imagehistogram.php';
 		$this->imagescript = 'getimg.php';
 		$this->commentscript = 'getcomment.php';
 		$this->scale_st = "true";
@@ -718,6 +783,7 @@ class view {
 	function displayScale($state) {
 		$state_str = ($state) ? "true" : "false";
 		$this->scale_st = $state_str;
+		$this->btscalestate= $state_str;
 	}
 
 	function displayAdjustLink($state) {
@@ -739,6 +805,9 @@ class view {
 			.'var n_img_'.$this->name.'= new Image();'.$this->crlf
 			.'var jsimagescript'.$this->name.'="'.$this->imagescript.'";'.$this->crlf
 			.'var jspresetscript'.$this->name.'="'.$this->presetscript.'";'.$this->crlf
+			.'var jsreportscript'.$this->name.'="'.$this->reportscript.'";'.$this->crlf
+			.'var jsdwdscript'.$this->name.'="'.$this->dwdscript.'";'.$this->crlf
+			.'var jshistoscript'.$this->name.'="'.$this->histoscript.'";'.$this->crlf
 			.'var jscommentscript'.$this->name.'="'.$this->commentscript.'";'.$this->crlf
 			.'var jsvfile'.$this->name.'=1;'.$this->crlf
 			.'var jsmin'.$this->name.'="'.$this->minpix.'";'.$this->crlf
@@ -783,15 +852,15 @@ class view {
 			.'	setImageHistogram("'.$this->name.'");'.$this->crlf
 			.'}'.$this->crlf;
 		$javascript .= 'function '.$name.'btscaleaction(state) { '.$this->crlf
+		//	.'	setform("'.$this->btscalememo.'", state);'.$this->crlf
 			.'	newfile("'.$this->name.'");'.$this->crlf
-			.'	setform("'.$this->btscalememo.'", state);'.$this->crlf
 			//.'	setImageHistogram("'.$this->name.'");'.$this->crlf
 			.'}'.$this->crlf;
 
 		$javascript .= 'function '.$name.'bttargetaction(state) { '.$this->crlf
-			.'	newfile("'.$this->name.'");'.$this->crlf
 			.'	setform("'.$this->bttargetmemo.'", state);'.$this->crlf
 			.'	setImageHistogram("'.$this->name.'");'.$this->crlf
+			.'	updateviews();'.$this->crlf
 			.'}'.$this->crlf;
 
 		$javascript .= 'function '.$name.'bttagaction(state) { '.$this->crlf
@@ -845,6 +914,18 @@ class view {
 
 	function setPresetScript($scriptname) {
 		$this->presetscript = $scriptname;
+	}
+
+	function setHistogramScript($scriptname) {
+		$this->histoscript = $scriptname;
+	}
+
+	function setDownloadScript($scriptname) {
+		$this->dwdscript = $scriptname;
+	}
+
+	function setImageReportScript($scriptname) {
+		$this->reportscript = $scriptname;
 	}
 
 	function setImageScript($scriptname) {
@@ -1141,16 +1222,31 @@ class view {
 	}
 }
 
-function viewer_header($title="", $javascript="", $onload="") {
-	global $_SERVER;
+function add_comment_box($name) {
+	$score=10;
+	$cols=12;
+	$rows=4;
+	
+	$comment_box = '<b>'.$name.'</b> score <select name="'.$name.'_score">';
+	for ($i=0; $i<$score; $i++) {
+		$comment_box .= "<option>".($i+1)."</option>\n";
+	}
+	$comment_box .= "</select>";
+	$comment_box .= "<br>";
+	$comment_box .= '<textarea class="textarea" name="'.$name.'_comment" '
+			.'rows="'.$rows.'" cols="'.$cols.'" wrap="virtual"></textarea>';
+	$comment_box .= "\n";
+	return $comment_box;
+}
 
-/*
-	$authlib = new authlib;
-	$login_check = $authlib->is_logged();
+function viewer_header($title="", $javascript="", $onload="") {
+	global $_SERVER, $dbemauth;
+
+	$login_check = $dbemauth->is_logged();
 	$username = $login_check[0];
 	$privilege = $login_check[2];
 	$url = "ln=".urlencode($_SERVER['REQUEST_URI']);
-*/
+	$path = getPathFromString($_SERVER['SCRIPT_NAME']);
 
 	$onload = (empty($onload)) ? '' : 'onload="'.$onload.'"';
 	$path = getPathFromString($_SERVER['SCRIPT_NAME']);
@@ -1160,7 +1256,6 @@ function viewer_header($title="", $javascript="", $onload="") {
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 		<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
-		<link rel="stylesheet" type="text/css" href="css/view.css">
 		<style>
 		.bgimg1 {
 			background-image:url('.$path.'/img/banner2.gif);
@@ -1175,14 +1270,14 @@ function viewer_header($title="", $javascript="", $onload="") {
 	</head>
 	<body '.$onload.' >
 ';
-/*
 	if ($username) {
 		echo '<a class="header" href="logout.php">[Logout '.$username.']</a>';
+		echo '<a class="header" href="prefs.php">['.$username.' Prefs]</a>';
 	} else {
 		if (!ereg('login.php', $_SERVER['PHP_SELF']))
 			echo '<a class="header" href="login.php?'.$url.'">[Login]</a>';
+		echo '<a class="header" href="register.php?'.$url.'">[register]</a>';
 	}
-*/
 }
 
 function viewer_footer() {
