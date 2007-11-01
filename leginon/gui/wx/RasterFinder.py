@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.27 $
+# $Revision: 1.28 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-18 22:46:47 $
-# $Author: vossman $
+# $Date: 2007-11-01 00:30:56 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -31,9 +31,13 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTargetTool('Raster', wx.Color(0, 255, 255), settings=True)
-		self.imagepanel.addTargetTool('Polygon Vertices', wx.Color(255,255,0), settings=True, target=True)
+		
+		self.imagepanel.addTargetTool('Polygon Vertices', wx.Color(255,255,0), settings=True, target=True, shape='polygon')
 		self.imagepanel.selectiontool.setDisplayed('Polygon Vertices', True)
 		self.imagepanel.setTargets('Polygon Vertices', [])
+	
+
+	
 		self.imagepanel.addTargetTool('Polygon Raster', wx.Color(255,128,0), settings=False)
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
@@ -300,8 +304,8 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		sbszat = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszat.Add(szat, 1, wx.EXPAND|wx.ALL, 5)
 
-		self.bice = wx.Button(self, -1, 'Analyze Raster')
-		self.bice.SetMinSize((100,100))
+		self.bice = wx.Button(self, -1, 'Test')
+#		self.bice.SetMinSize((100,100))
 		szbutton = wx.GridBagSizer(5, 5)
 		szbutton.Add(self.bice, (0, 0), (1, 1),
 			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
