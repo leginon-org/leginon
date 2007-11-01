@@ -246,7 +246,7 @@ if ($sessionId) {
     </TD>
   </TR>
   <TR>\n";
-  if ($assessedimgs==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
+  if ($assessedimgs==0 || $totimgs == 0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
   elseif ($assessedimgs < $totimgs) {$bgcolor=$progcolor; $gifimg=$donepic;}
   else {$bgcolor=$donecolor; $gifimg=$donepic;}
   echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
@@ -254,9 +254,10 @@ if ($sessionId) {
     <B>Micrograph Assessment</B>
     </TD>
     <TD BGCOLOR='$bgcolor'>";
-    if ($assessedimgs==0) { echo "none"; }
-    elseif ($assessedimgs < $totimgs || $totimgs==0) { echo "$assessedimgs assessed"; }
+    if ($assessedimgs==0 || $totimgs==0) { echo "none"; }
+    elseif ($assessedimgs < $totimgs) { echo "$assessedimgs of $totimgs completed"; }
     elseif ($totimgs!=0) { echo "All $assessedimgs completed"; }
+    else { echo "none"; }
     echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>
