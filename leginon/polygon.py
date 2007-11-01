@@ -24,7 +24,7 @@ def pointsInPolygon(inputpoints, vertices):
 	for i in inside:
 		inside2.append(i)
 		inside2.append(i)
-	outputpoints = numpy.compress(inside, inputpoints)
+	outputpoints = numpy.compress(inside2, inputpoints)
 	outputpoints2=[]
 	for i in range(0,len(outputpoints)/2):
 		outputpoints2.append((outputpoints[2*i],outputpoints[2*i+1]))
