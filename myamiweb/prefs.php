@@ -3,7 +3,7 @@ require("inc/leginon.inc");
 require("inc/viewer.inc");
 
 if (!$login_check = $dbemauth->is_logged()) {
-	header('Location: login.php');
+	header('Location: '.BASE_URL);
 }
 
 $username = $login_check[0];
@@ -39,7 +39,7 @@ $checkpass=true;
 		<label for="username">username: </label>
 	</td>
 	<td>
-		<?=$username?>
+		<b><?=$username?></b>
 	</td>
 	<td>
 		<?=($checkpass) ? "<br />" : "" ?>

@@ -19,8 +19,8 @@ if ($login!=2) {
 <tr> 
 	<td>
 		<label for="password">Password : </label>
-		<input class="field" type="password" name="password"><font size="1">
-		<a href="lostpass.php" target="_blank">Lost Password</a>
+		<input class="field" type="password" name="password"><font size="2">
+		<a class="header" href="lostpass.php" target="_blank">[Lost Password]</a>
 	</td>
 </tr>
 <tr> 

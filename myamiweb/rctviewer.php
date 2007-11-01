@@ -1,8 +1,7 @@
 <?php
-require ('inc/leginon.inc');
-require ('inc/project.inc');
-require ('inc/viewer.inc');
-require ('inc/auth.inc');
+require "inc/leginon.inc";
+require "inc/project.inc";
+require "inc/viewer.inc";
 
 $sessionId = ($_POST[sessionId]) ? $_POST[sessionId] : $_GET[expId];
 $projectId = ($_POST[projectId]) ? $_POST[projectId] : 'all';

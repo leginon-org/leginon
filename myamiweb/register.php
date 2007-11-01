@@ -1,6 +1,10 @@
 <?
 require "inc/viewer.inc";
 
+if ($login_check = $dbemauth->is_logged()) {
+	header('Location: '.BASE_URL);
+}
+
 $register=$error=false;
 $displayform=true;
 

@@ -1,6 +1,6 @@
 <?php
-require_once('../config.php');
-require_once('../inc/mysql.inc');
+require_once "../config.php";
+require_once "inc/mysql.inc";
 
 class Tomography {
     function Tomography($mysql) {
