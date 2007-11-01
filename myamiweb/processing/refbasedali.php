@@ -164,6 +164,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
   $csym = $_POST['csym'];
   $sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
   $commitcheck = ($_POST['commit']=='on') ? 'CHECKED' : '';
+  $staticref = ($_POST['staticref']=='on') ? 'CHECKED' : '';
   // alignment params
   $numpart = ($_POST['numpart']) ? $_POST['numpart'] : 3000;
   $iters = ($_POST['iters']) ? $_POST['iters'] : 5;
@@ -286,7 +287,9 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 		<INPUT TYPE='text' NAME='csym' VALUE='$csym' SIZE='4'>
 		C-symmetry to apply<BR>
 		<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>
-		Number of Particles to Use
+		Number of Particles to Use<BR>
+		<INPUT TYPE='checkbox' NAME='staticref' $staticref>
+		Use original references for each iteration<BR>
 		</TD>
 	</TR>
 	</TR>
@@ -354,6 +357,7 @@ function runAlignment() {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
+	$staticref = ($_POST['staticref']=="on") ? 'staticref' : '';
 
 	// alignment
 	$numpart=$_POST['numpart'];
@@ -382,6 +386,7 @@ function runAlignment() {
 	//if ($fileformat) $command.="spider ";
 	$command.="xysearch=$xysearch ";
 	$command.="numpart=$numpart ";
+	if ($staticref) $command.="staticref ";
 	if ($commit) $command.="commit ";
 
 	$cmd = "exec ssh $user@$host '$command > refBasedAlignmentlog.txt &'";
