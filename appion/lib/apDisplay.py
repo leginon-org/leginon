@@ -7,7 +7,7 @@ import types
 
 writeOut = True
 try:
-	outFile = os.path.basename(sys.argv[0]).split(".")[0]
+	outFile = os.path.basename(sys.argv[0]).split(".")[0]+".out"
 except:
 	outFile = "function.out"
 
