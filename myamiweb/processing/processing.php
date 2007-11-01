@@ -69,7 +69,7 @@ $currentproject=$sessiondata['currentproject'];
 $nonecolor='#FFFFCC';
 $progcolor='#CCFFFF';
 $donecolor='#CCFFCC';
-$mode = "dneil";
+$mode = "neild";
 if($mode == "neil") {
 	$donepic='img/icon-check.png';
 	$nonepic='img/icon-cross.png';
@@ -283,12 +283,12 @@ if ($sessionId) {
     </TD>
     <TD BGCOLOR='$bgcolor'>
     <A HREF='runMaskMaker.php?expId=$sessionId'>";
-    if ($maskruns==0) {echo "Begin Crud Finding";}
-    else {echo "Continue Crud Finding";}
+    if ($maskruns==0) {echo "Crud Finding";}
+    else {echo "Crud Finding";}
     echo"</A><BR>
     <A HREF='manualMaskMaker.php?expId=$sessionId'>";
-    if ($maskruns==0) {echo "Begin Manual Masking";}
-    else {echo "Continue Manual Masking";}
+    if ($maskruns==0) {echo "Manual Masking";}
+    else {echo "Manual Masking";}
     echo"</A>
     </TD>
   </TR>
@@ -360,10 +360,10 @@ if ($sessionId) {
     <B>Reconstructions</B>
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
-  if ($numsubjobs==0) {echo "no jobs submitted";}
+  if ($numsubjobs==0) {echo "none";}
   else {
     if ($waitingjobs>0) echo "<A HREF='checkjobs.php?expId=$sessionId'>$waitingjobs queued</A>\n";
-    if ($waitingjobs>0 && $reconruns>0) echo "<BR>\n";
+    if ($waitingjobs>0 && $reconruns>0) echo "<BR/>\n";
     if ($reconruns>0) echo "<A HREF='reconsummary.php?expId=$sessionId'>$reconruns uploaded</A>";
   }
   echo"
