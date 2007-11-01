@@ -30,6 +30,7 @@ import apMask
 import apXml
 import apImage
 import apDefocalPairs
+import apEMAN
 try:
 	import apMatlab
 except:
@@ -318,7 +319,7 @@ def batchBox(params, imgdict):
 		#count number of particles in box file
 		f=open(dbbox,'r')
 		lines=f.readlines()
-		f.close
+		f.close()
 		nptcls=len(lines)
 		# write batchboxer command
 		if params['selexonId']:
@@ -329,8 +330,9 @@ def batchBox(params, imgdict):
 	 		cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(imgpath, dbbox, output)
 	
 		apDisplay.printMsg("boxing "+str(nptcls)+" particles")
-		f=os.popen(cmd)
-		f.close()
+		apEMAN.executeEmanCmd(cmd)
+		#f=os.popen(cmd)
+		#f.close()
 		if params['stig']:
 			os.remove(os.path.join(params['outdir'],tmpname))
 		return(nptcls)
