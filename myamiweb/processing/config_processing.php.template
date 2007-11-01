@@ -28,7 +28,10 @@ $RECON_DB_PASS = "";
 $RECON_DB = "";
 
 // --- Processing hosts --- //
-$PROCESSING_HOSTS[]="";
+$PROCESSING_HOSTS[]="amibox01";
+$PROCESSING_HOSTS[]="amibox02";
+$PROCESSING_HOSTS[]="amibox03";
+$PROCESSING_HOSTS[]="amibox04";
 
 // --- path to dbem main --- //
 set_include_path(get_include_path().PATH_SEPARATOR."..");

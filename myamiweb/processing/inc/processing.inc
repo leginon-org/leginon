@@ -29,8 +29,7 @@ function commafy($input) {
 
 function getHosts(){
 	global $PROCESSING_HOSTS;
-  if (is_array($PROCESSING_HOSTS))
-		return $PROCESSING_HOSTS;
+        if (is_array($PROCESSING_HOSTS)) return $PROCESSING_HOSTS;
 	return array();
 }
 
