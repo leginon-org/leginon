@@ -10,10 +10,6 @@
 require_once('inc/leginon.inc');
 require_once('inc/mysql.inc');
 
-define('PARTICLE_DB_HOST', $PARTICLE_DB_HOST);
-define('PARTICLE_DB_USER', $PARTICLE_DB_USER);
-define('PARTICLE_DB_PASS', $PARTICLE_DB_PASS);
-define('PARTICLE_DB', $PARTICLE_DB);
 
 class particledata_a {
 
