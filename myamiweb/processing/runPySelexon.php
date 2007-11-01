@@ -76,6 +76,11 @@ function createTemplateForm($extra=False) {
 				$startval = (int) $templaterundata[range_start];
 				$endval = (int) $templaterundata[range_end];
 				$incrval = (int) $templaterundata[range_incr];
+				if ($startval==0 && $endval==10 && $incrval==20) {
+				  $startval='';
+				  $endval='';
+				  $incrval='';
+				}
 				// create the javascript functions to enable the templates
 				$javafunctions.="function enable".$checkboxname."() {
 						 if (document.viewerform.$checkboxname.checked){
@@ -356,15 +361,15 @@ function runTemplateCorrelator() {
 
 	if ($testimage && $_POST['process']=="Run Correlator") {
 		$host = $_POST['host'];
-		$user = $_POST['user'];
-		$password = $_POST['password'];
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
 		if (!($user && $password)) {
 			createTCForm("<B>ERROR:</B> Enter a user name and password");
 			exit;
 		}
 		$prefix =  "source /ami/sw/ami.csh;";
 		$prefix .= "source /ami/sw/share/python/usepython.csh cvs32;";
-		$cmd = "$prefix $command > templateCorrelatorLog.txt";
+		$cmd = "$prefix webcaller.py '$command' templateCorrelatorLog.txt";
 		$result=exec_over_ssh($host, $user, $password, $cmd, True);
 	}
 
