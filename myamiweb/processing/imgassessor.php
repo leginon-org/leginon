@@ -63,8 +63,8 @@ if ($presets) {
 }
 if (!empty($sessioninfo)) {
 	$sessionpath=$sessioninfo['Image path'];
-	$extractpath=ereg_replace("leginon","appion",$sessionpath);
-	$extractpath=ereg_replace("rawdata","extract/",$extractpath);
+	$extractpath=ereg_replace("rawdata","extract/",$sessionpath);
+	$appionpath=ereg_replace("leginon","appion",$extractpath);
 	$origjpgpath=ereg_replace("rawdata","jpgs/",$sessionpath);
 	$sessionname=$sessioninfo['Name'];
 }
@@ -90,11 +90,11 @@ while ($i < $count) {
 	$runname=$prtlrun['name'];
 	$prtlstats=$particle->getStats($prtlrun['DEF_id']);
 	$totprtls=commafy($prtlstats['totparticles']);
-	if (strlen($prtlrun['path']) > 10) {
-		$partpath = $prtlrun['path']."/jpgs/";
-	} else {
+	if (strlen($prtlrun['path']) > 10) $partpath = $prtlrun['path']."/jpgs/";
+	else {
 		// HACK for Particle Runs without Path Data
-		$partpath = $extractpath."/".$prtlrun['name']."/jpgs/";
+	        $partpath = $extractpath.$prtlrun['name']."/jpgs/";
+	        if (!file_exists($partpath)) $partpath = $appionpath.$prtlrun['name']."/jpgs/";
 	}
 	$run = array("label"=>"particle picking: ".$runname." (".$totprtls." prtls)",
 		"name"=>"prtl_".$prtlrun['DEF_id'],"imgtype"=>"jpg","path"=>$partpath);
@@ -105,7 +105,6 @@ while ($i < $count) {
 
 // Choose best combination of settings
 $lastimgrun = count($allruns)-1;
-
 if ($_POST['oldimgtype'] != $_POST['imgtype']) {
 	// Do not change $imgrun nor $imgdir if the change is $imgtype
 	$imgrun = $_POST['imgrun'];
