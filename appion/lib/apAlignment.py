@@ -420,6 +420,8 @@ def createRefSpiderBatchFile(params,iteration):
 				# get reference template - if first iteration, get original, else get from previous iteration
 				if iteration == 1:
 					outf.write(spiderline("ref",os.path.join(params['rundir'],'reference')))
+				elif params['staticref'] is True:
+					outf.write(spiderline("ref",os.path.join(params['rundir'],'reference')))
 				else:
 					previter = iteration - 1
 					previtername = 'refine%d' % previter
