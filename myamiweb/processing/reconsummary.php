@@ -78,6 +78,7 @@ if ($stackruns>0){
 			$html .= "</TR>\n";
 		}
 	}
+	$html .= "</table>\n";
 	echo $html;
 }
 

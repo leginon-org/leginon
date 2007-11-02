@@ -121,56 +121,98 @@ function checkJobs($showjobs=False,$extra=False) {
 	}
 	$numtot=count($stat['allref']);
 	echo "<font class='aptitle'>Processing iteration $current of $numtot</font>\n";
-	echo "<table class='tableborder' border='1' cellpadding='5' cellspacing='0'>\n";
-	echo "<tr><td><span class='datafield0'>reconstruction step</span></td>\n";
-	echo "<td><span class='datafield0'>started</span></td>\n";
-	echo "<td><span class='datafield0'>status</span></td></tr>\n";
-	echo "<tr><td>\n";
+	echo "<table class='tableborder' border='1' cellpadding='5' cellspacing='0'><tr>\n";
+	$keys = array('reconstruction step', 'started', 'duration', 'status');
+	$steps = array();
+	foreach ($keys as $key) echo "<td><span class='datafield0'>$key</span></td>\n";
+	echo "</tr>\n";
 	// get key corresponding to where the last refinement run starts
 	if (is_array($stat['refinelog'])) {
 	  $lastkey = array_search($lastindx, $stat['refinelog']);
 	  for ($i=$lastkey; $i<count($stat['refinelog']); $i++) {
+
 	    if ($stat['refinelog'][$i][0] == 'project3d') {
-	      $d = getlogdate($stat['refinelog'][$i]);
-	      $t = date('M d, Y H:i:s',$d);
-	      $progress[] = "creating projections</td><td>$t\n";
+	      $t = getlogdate($stat['refinelog'][$i]);
+	      $steps['proj']['reconstruction step'] = "creating projections";
+	      $steps['proj']['started'] = "$t[date]";
+	      $steps['proj']['duration'] = "-";
+	      $steps['proj']['status'] = "<FONT CLASS='apcomment'>running</FONT>";
+	      $lasttime=$t['timestamp'];
 	    }
+
 	    elseif ($stat['refinelog'][$i][0] == 'classesbymra') {
+	      $steps['proj']['status'] = "<font class='green'> Done</font>";
+	      $t = getlogdate($stat['refinelog'][$i]);
+	      // set duration of previous run based on time stamp
+	      $steps['proj']['duration'] = getduration($lasttime,$t['timestamp']);
+
 	      // get the number of particles that have been classified
-	      $d = getlogdate($stat['refinelog'][$i]);
-	      $t = date('M d, Y H:i:s',$d);
 	      $cmd = "grep ' -> ' $jobinfo[clusterpath]/recon/refine$current.txt | wc -l";
 	      $r = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
 	      $r = trim($r);
 	      // find out how much time is left for rest of particles
-	      if ($r < $numinstack-10) {
-		$left = gettimeleft($r,$numinstack,$d);
-		if (is_array($left)) $left = implode(' ',$left);
+	      if ($r < $numinstack) {
+		$left = gettimeleft($r,$numinstack,$t['timestamp']);
 	      }
-	      $ln = "classifying particles ($r/$numinstack)";
-	      if ($left) $ln.=", <B>$left</B> remain";
-	      $ln.="</td><td>$t\n";
-	      $progress[]=$ln;
+	      $p = "classifying particles ($r/$numinstack)";
+	      $steps['clsbymra']['reconstruction step'] = $p;
+	      $steps['clsbymra']['started'] = "$t[date]";
+	      $steps['clsbymra']['duration'] = ($left) ? "<B>$left</B> remain" : "-";
+	      $steps['clsbymra']['status'] = "<FONT CLASS='apcomment'>running</FONT>";
+	      $lasttime=$t['timestamp'];
 	    }
+
 	    elseif ($stat['refinelog'][$i][0] == 'classalignall') {
-	      $d = getlogdate($stat['refinelog'][$i]);
-	      $t = date('M d, Y H:i:s',$d);
-	      $progress[] = "iterative class averaging</td><td>$t\n";
+	      $steps['clsbymra']['status'] = "<font class='green'> Done</font>";
+	      $steps['clsbymra']['reconstruction step'][1]='';
+	      $t = getlogdate($stat['refinelog'][$i]);
+	      // set duration of previous run based on time stamp
+	      $steps['clsbymra']['duration'] = getduration($lasttime,$t['timestamp']);
+
+	      $steps['clsalign']['reconstruction step'] = "iterative class averaging";
+	      $steps['clsalign']['started'] = "$t[date]";
+	      $steps['clsalign']['duration'] = "-";
+	      $steps['clsalign']['status'] = "<FONT CLASS='apcomment'>running</FONT>";
+	      $lasttime=$t['timestamp'];
 	    }
+
 	    elseif ($stat['refinelog'][$i][0] == 'make3d') {
-	      $d = getlogdate($stat['refinelog'][$i]);
-	      $t = date('M d, Y H:i:s',$d);
-	      $progress[] = "creating 3d model</td><td>$t\n";
+	      $steps['clsalign']['status'] = "<font class='green'> Done</font>";
+	      $t = getlogdate($stat['refinelog'][$i]);
+	      $t = getlogdate($stat['refinelog'][$i]);
+	      // set duration of previous run based on time stamp
+	      $steps['clsalign']['duration'] = getduration($lasttime,$t['timestamp']);
+
+	      $steps['make3d']['reconstruction step'] = "creating 3d model";
+	      $steps['make3d']['started'] = "$t[date]";
+	      $steps['make3d']['duration'] = "-";
+	      $steps['make3d']['status'] = "<FONT CLASS='apcomment'>running</FONT>";
+	      $lasttime=$t['timestamp'];
 	    }
+
 	    elseif ($stat['refinelog'][$i][1] == 'T-test') {
-	      $d = getlogdate($stat['refinelog'][$i]);
-	      $t = date('M d, Y H:i:s',$d);
-	    $progress[] = "performing even/odd test</td><td>$t\n"; 
+	      $steps['make3d']['status'] = "<font class='green'> Done</font>";
+	      $t = getlogdate($stat['refinelog'][$i]);
+	      $t = getlogdate($stat['refinelog'][$i]);
+	      // set duration of previous run based on time stamp
+	      $steps['make3d']['duration'] = getduration($lasttime,$t['timestamp']);
+
+	      $steps['eotest']['reconstruction step'] = "performing even/odd test";
+	      $steps['eotest']['started'] = "$t[date]";
+	      $steps['eotest']['duration'] = "-";
+	      $steps['eotest']['status'] = "<FONT CLASS='apcomment'>running</FONT>";
 	    break;
 	    }
 	  }
-	  echo implode("</td><td><font class='green'> Done</font></td></tr>\n<tr><td>",$progress);
-	  echo "</td><td>running</td></tr></table>\n";
+	  foreach ($steps as $step) {
+	    echo "<tr>\n";
+	    foreach ($keys as $key) {
+	      if (is_array($step[$key])) $step[$key]=implode($step[$key]);
+	      echo "<td>$step[$key]</td>\n";
+	    }
+	    echo "</tr>\n";
+	  }
+	  echo "</table>\n";
 	}
 	if ($stat['errors']) echo "<P><FONT COLOR='RED'>There are errors in this job, you should resubmit</FONT><P>";
       }
@@ -202,8 +244,14 @@ function checkJobStatus($jobpath,$jobfile,$user,$pass) {
 function getlogdate($emanline) {
   for ($i=4; $i>0; $i--) $emantime[] = $emanline[count($emanline)-$i];
   $time = implode(' ',$emantime);
-  $tmstmp = strtotime($time);
+  $tmstmp['timestamp'] = strtotime($time);
+  $tmstmp['date'] = date('M d, Y H:i:s',$tmstmp['timestamp']);
   return $tmstmp;
+}
+
+function getduration($start, $stop) {
+  $len = $stop - $start;
+  return formatTime($len);
 }
 
 function gettimeleft($p, $tot, $start) {
@@ -212,24 +260,28 @@ function gettimeleft($p, $tot, $start) {
   $perparticle = $len/$p;
   $all = $perparticle*$tot;
   $rem = $all - $len;
-  if ($rem > 24*3600) {
-    $days=floor($rem/(24*3600));
-    $rem=$rem-($days*24*3600);
-    $left[] = ($days > 1) ? $days." days" : $days." day";
-    
-  }
-  if ($rem > 3600) {
-    $hours=floor($rem/3600);
-    $rem=$rem-($hours*3600);
-    $left[] = ($hours > 1) ? $hours." hrs" : $hours." hr";
-  }
-  if ($rem > 60) {
-    $min=floor($rem/60);
-    $left[] = $min." min";
-  }
-  // if only seconds left, just display seconds
-  if (!$days && !$hours && !$min) $left[] = floor($rem)." sec";
-  return $left;
+  return formatTime($rem);
 }
 
+function formatTime($t) {
+  if ($t > 24*3600) {
+    $days=floor($t/(24*3600));
+    $t=$t-($days*24*3600);
+    $ft[] = ($days > 1) ? $days." days" : $days." day";
+    
+  }
+  if ($t > 3600) {
+    $hours=floor($t/3600);
+    $t=$t-($hours*3600);
+    $ft[] = ($hours > 1) ? $hours." hrs" : $hours." hr";
+  }
+  if ($t > 60) {
+    $min=floor($t/60);
+    $ft[] = $min." min";
+  }
+  // if only seconds, just display seconds
+  if (!$days && !$hours && !$min) $ft = floor($t)." sec";
+  if (is_array($ft)) $ft = implode(' ',$ft);
+  return $ft;  
+}
 ?>
