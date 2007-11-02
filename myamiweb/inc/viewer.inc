@@ -7,12 +7,12 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require_once("config.php");
-require_once("inc/util.inc");
-require_once("inc/mysql.inc");
-require_once("inc/button.inc");
-require_once("inc/dbemauth.php");
-require_once("inc/pref.inc");
+require_once "config.php";
+require_once "inc/util.inc";
+require_once "inc/mysql.inc";
+require_once "inc/button.inc";
+require_once "inc/dbemauth.php";
+require_once "inc/pref.inc";
 
 $VIEWNB=0;
 

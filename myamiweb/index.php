@@ -7,8 +7,9 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require('inc/viewer.inc');
-require ('inc/leginon.inc');
+require "inc/leginon.inc";
+require "inc/viewer.inc";
+
 $link = new iconlink();
 $link->setImagePath('img/');
 $link->cols = 3;
