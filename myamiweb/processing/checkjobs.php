@@ -131,36 +131,51 @@ function checkJobs($showjobs=False,$extra=False) {
 	echo "<td><span class='datafield0'>status</span></td></tr>\n";
 	echo "<tr><td>\n";
 	// get key corresponding to where the last refinement run starts
-	$lastkey = array_search($lastindx, $stat['refinelog']);
-	for ($i=$lastkey; $i<count($stat['refinelog']); $i++) {
-	  if ($stat['refinelog'][$i][0] == 'project3d') {
-	    $d = getlogdate($stat['refinelog'][$i]);
-	    $progress[] = "creating projections</td><td>$d";
-	  }
-	  elseif ($stat['refinelog'][$i][0] == 'classesbymra') {
-	    // get the number of particles that have been classified
-	    $d = getlogdate($stat['refinelog'][$i]);
-	    $cmd = "grep ' -> ' $jobinfo[clusterpath]/recon/refine$current.txt | wc -l";
-	    $r = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
-	    $r = trim($r);
-	    $progress[] = "classifying particles ($r/$numinstack)</td><td>$d\n";
-	  }
-	  elseif ($stat['refinelog'][$i][0] == 'classalignall') {
-	    $d = getlogdate($stat['refinelog'][$i]);
-	    $progress[] = "iterative class averaging</td><td>$d\n";
-	  }
-	  elseif ($stat['refinelog'][$i][0] == 'make3d') {
-	    $d = getlogdate($stat['refinelog'][$i]);
-	    $progress[] = "creating 3d model</td><td>$d\n";
-	  }
-	  elseif ($stat['refinelog'][$i][0] == 'eotest') {
-	    $d = getlogdate($stat['refinelog'][$i]);
-	    $progress[] = "performing even/odd test</td><td>$d\n"; 
+	if (is_array($stat['refinelog'])) {
+	  $lastkey = array_search($lastindx, $stat['refinelog']);
+	  for ($i=$lastkey; $i<count($stat['refinelog']); $i++) {
+	    if ($stat['refinelog'][$i][0] == 'project3d') {
+	      $d = getlogdate($stat['refinelog'][$i]);
+	      $t = date('M d,Y H:i:s',$d);
+	      $progress[] = "creating projections</td><td>$t\n";
+	    }
+	    elseif ($stat['refinelog'][$i][0] == 'classesbymra') {
+	      // get the number of particles that have been classified
+	      $d = getlogdate($stat['refinelog'][$i]);
+	      $t = date('M d,Y H:i:s',$d);
+	      $cmd = "grep ' -> ' $jobinfo[clusterpath]/recon/refine$current.txt | wc -l";
+	      $r = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
+	      $r = trim($r);
+	      // find out how much time is left for rest of particles
+	      if ($r < $numinstack-5) {
+		$left = gettimeleft($r,$numinstack,$d);
+		$left = implode(' ',$left);
+	      }
+	      $ln = "classifying particles ($r/$numinstack)";
+	      if ($left) $ln.=", <B>$left</B> left";
+	      $ln.="</td><td>$t\n";
+	      $progress[]=$ln;
+	    }
+	    elseif ($stat['refinelog'][$i][0] == 'classalignall') {
+	      $d = getlogdate($stat['refinelog'][$i]);
+	      $t = date('M d, Y H:i:s',$d);
+	      $progress[] = "iterative class averaging</td><td>$t\n";
+	    }
+	    elseif ($stat['refinelog'][$i][0] == 'make3d') {
+	      $d = getlogdate($stat['refinelog'][$i]);
+	      $t = date('M d,Y H:i:s',$d);
+	      $progress[] = "creating 3d model</td><td>$t\n";
+	    }
+	    elseif ($stat['refinelog'][$i][0] == 'eotest') {
+	      $d = getlogdate($stat['refinelog'][$i]);
+	      $t = date('M d,Y H:i:s',$d);
+	    $progress[] = "performing even/odd test</td><td>$t\n"; 
 	    break;
+	    }
 	  }
+	  echo implode("</td><td><font class='green'> Done</font></td></tr>\n<tr><td>",$progress);
+	  echo "</td><td>running</td></tr></table>\n";
 	}
-	echo implode("</td><td><font class='green'> Done</font></td></tr>\n<tr><td>",$progress);
-	echo "</td><td>running</td></tr></table>\n";
 	echo "</TD></TR></TABLE>\n";
 	if ($stat['errors']) echo "<P><FONT COLOR='RED'>There are errors in this job, you should resubmit</FONT><P>";
       }
@@ -190,10 +205,34 @@ function checkJobStatus($jobpath,$jobfile,$user,$pass) {
 }
 
 function getlogdate($emanline) {
-  for ($i=4; $i>0; $i--) {
-    $emantime[] = $emanline[count($emanline)-$i];
-  }
+  for ($i=4; $i>0; $i--) $emantime[] = $emanline[count($emanline)-$i];
   $time = implode(' ',$emantime);
   $tmstmp = strtotime($time);
-  return date('M d,Y H:i:s',$tmstmp);
+  return $tmstmp;
 }
+
+function gettimeleft($p, $tot, $start) {
+  $now = time();
+  $len = $now - $start;
+  $perparticle = $len/$p;
+  $all = $perparticle*$tot;
+  $rem = $all - $len;
+  if ($rem > 24*3600) {
+    $days=floor($rem/(24*3600));
+    $rem=$rem-($days*24*3600);
+    $left[] = ($days > 1) ? $days." days" : $days." day";
+    
+  }
+  if ($rem > 3600) {
+    $hours=floor($rem/3600);
+    $rem=$rem-($hours*3600);
+    $left[] = ($hours > 1) ? $hours." hrs" : $hours." hr";
+  }
+  if ($rem > 60) {
+    $min=floor($rem/60);
+    $left[] = $min." min";
+  }
+  return $left;
+}
+
+?>
