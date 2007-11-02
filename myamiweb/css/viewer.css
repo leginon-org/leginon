@@ -70,6 +70,13 @@ H4 {
 	margin: .3em 0;
 }
 
+HR {
+	height: 2px;
+	border: none;
+	color: #D4D0C8;
+	background-color: #D4D0C8;
+}
+
 BODY {
 	background-color: white;
         font-family: Arial,Helvetica,sans-serif;
