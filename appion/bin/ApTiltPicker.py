@@ -186,7 +186,7 @@ class PickerApp(wx.App):
 		self.frame.Bind(wx.EVT_BUTTON, self.onFileSave, self.save)
 		self.buttonrow.Add(self.save, 0, wx.ALL, 1)
 
-		self.saveas = wx.Button(self.frame, wx.ID_SAVEAS, 'Save &As...')
+		self.saveas = wx.Button(self.frame, wx.ID_SAVEAS, 'Sa&ve As...')
 		self.frame.Bind(wx.EVT_BUTTON, self.onFileSaveAs, self.saveas)
 		self.buttonrow.Add(self.saveas, 0, wx.ALL, 1)
 
