@@ -310,7 +310,12 @@ echo '
 echo 'Add Sessions to comment type <b>"'.$commentinfo['name'].'"</b><br>';
 echo '<select style="width: 500" name="sessionId" size="5" >';
 foreach ($sessions as $session) {
-	echo "<option value='".$session['id']."' >".$session['name']."</option>\n";
+	$maxlength=50;
+	$sessionname=$session['name'];
+	if (strlen($sessionname)>$maxlength) {
+		$sessionname=substr($sessionname,0,$maxlength)."... ";
+	}
+	echo "<option value='".$session['id']."' >".$sessionname."</option>\n";
 }
 echo '</select>';
 echo '</td><td>';
@@ -321,8 +326,9 @@ echo '</td><td>';
 echo 'selected Sessions<br>';
 echo '<select name="commentsessionId" size="5" >';
 foreach ($commentsessions as $commentsession) {
-	$info = $leginondata->getSessionInfo($commentsession['sessionId']);
-	echo "<option value='".$commentsession['id']."' >".$info['Name']."</option>\n";
+	$info=$leginondata->getSessionInfo($commentsession['sessionId']);
+	$sessionname=$info['Name'];
+	echo "<option value='".$commentsession['id']."' >".$sessionname."</option>\n";
 }
 echo '</select>';
 ?>
