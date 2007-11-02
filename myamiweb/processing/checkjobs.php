@@ -149,7 +149,7 @@ function checkJobs($showjobs=False,$extra=False) {
 	      // find out how much time is left for rest of particles
 	      if ($r < $numinstack-5) {
 		$left = gettimeleft($r,$numinstack,$d);
-		$left = implode(' ',$left);
+		if (is_array($left)) $left = implode(' ',$left);
 	      }
 	      $ln = "classifying particles ($r/$numinstack)";
 	      if ($left) $ln.=", <B>$left</B> left";
