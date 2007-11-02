@@ -184,6 +184,11 @@ class particledata {
 			$q .= "from ApManualParamsData s "
 				."left join ApSelectionRunData r on (s.`DEF_id` = r.`REF|ApManualParamsData|manparams`) ";
 		}
+		elseif ($r['REF|ApTiltAlignParamsData|tiltparams']) {
+			$manparamid=$r['REF|ApTiltAlignParamsData|tiltparams'];
+			$q .= "from ApTiltAlignParamsData s "
+				."left join ApSelectionRunData r on (s.`DEF_id` = r.`REF|ApTiltAlignParamsData|tiltparams`) ";
+		}
 		
 			$q .= "where r.`DEF_id` = '$runId' ";
 		//echo $q;
