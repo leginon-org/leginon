@@ -24,15 +24,15 @@ if ($_POST) {
 <table border="0" cellspacing="0" cellpadding="5">
 <tr>
 	<td>
-		<label for="email">Email: </label>
+		<label for="email">Email <b>or</b> Username: </label>
 	</td>
 	<td>
-		<input class="textfield" type="text" value="" name="email" id="email" >
+		<input class="field" type="text" value="" name="email" id="email" >
 	</td>
 </tr>
 <tr>
 	<td>
-          <input type="submit" value="Find Password" name="submit">
+          <input class="button" type="submit" value="Find Password" name="submit">
 	</td>
 </tr>
 </table>
