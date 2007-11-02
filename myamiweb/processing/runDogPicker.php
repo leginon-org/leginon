@@ -102,7 +102,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	echo "
 		<INPUT TYPE='text' NAME='kfactor' VALUE='$kfactor' SIZE='6'>&nbsp;
 		<A HREF=\"javascript:particleinfopopup('kfactor')\">
-		K-factor</A>&nbsp;<FONT SIZE=-2><I>(slopiness)</I></FONT>
+		K-factor</A>&nbsp;<FONT SIZE=-2><I>(sloppiness)</I></FONT>
 		<BR/><BR/>
 		<B>Multi-scale dogpicker:</B><BR/>
 		<INPUT TYPE='text' NAME='numslices' VALUE='$numslices' SIZE='3'>&nbsp;
@@ -135,11 +135,6 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		echo "<option $s >$host</option>\n";
 	}
 	echo "</select>
-	<BR>
-	User: <INPUT TYPE='text' name='user' value=".$_POST['user'].">
-	Password: <INPUT TYPE='password' name='password' value=".$_POST['password'].">\n";
-	echo"
-		</select>
 		<BR>
 		<input type='submit' name='process' value='Just Show Command'>
 		<input type='submit' name='process' value='Run DogPicker'><BR>
@@ -205,15 +200,16 @@ function runDogPicker() {
 
 	if ($testimage && $_POST['process']=="Run DogPicker") {
 		$host = $_POST['host'];
-		$user = $_POST['user'];
-		$password = $_POST['password'];
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
 		if (!($user && $password)) {
 			createDogPickerForm("<B>ERROR:</B> Enter a user name and password");
 			exit;
 		}
 		$prefix =  "source /ami/sw/ami.csh;";
 		$prefix .= "source /ami/sw/share/python/usepython.csh cvs32;";
-		$cmd = "$prefix $command > dogPickerLog.txt";
+		$cmd = "$prefix webcaller.py '$command' dogPickerLog.txt";
+		echo $cmd;
 		$result=exec_over_ssh($host, $user, $password, $cmd, True);
 	}
 
