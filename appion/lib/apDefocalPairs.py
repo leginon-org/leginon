@@ -37,6 +37,8 @@ def getShiftFromImage(imgdata, params):
 
 def getDefocusPair(imgdata):
 	target=imgdata['target']
+	if target is None:
+		return None
 	qtarget=leginondata.AcquisitionImageTargetData()
 	qtarget['image'] = target['image']
 	qtarget['number'] = target['number']
