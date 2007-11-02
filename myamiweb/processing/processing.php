@@ -431,7 +431,7 @@ echo"
 </TR>
 </TABLE>
 </CENTER>\n";
-writeBottom();
+writeBottom($showproclink=False);
 exit;
 }
 

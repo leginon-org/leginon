@@ -160,6 +160,7 @@ function createTemplateForm($extra=False) {
 	}
 	else echo "<B>Project does not contain any templates.</B>\n";
 	echo"</FORM>\n";
+	writeBottom();
 	exit;
 }
 

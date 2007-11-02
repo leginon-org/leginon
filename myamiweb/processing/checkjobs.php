@@ -111,7 +111,6 @@ function checkJobs($showjobs=False,$extra=False) {
     if ($showjobs && $status=='Running') {
       $stat = checkJobStatus($jobinfo['clusterpath'],$jobinfo['name'],$user,$pass);
       if (!empty($stat)) {
-	echo "<B>Current Status:</B>\n";
 	$current=0;
 	foreach ($stat['refinelog'] as $i){
 	  // get last refine line
@@ -121,12 +120,9 @@ function checkJobs($showjobs=False,$extra=False) {
 	  }
 	}
 	$numtot=count($stat['allref']);
-	echo "<table class='tableborder' cellpadding=5 ><tr><td>\n";
 	echo "<font class='aptitle'>Processing iteration $current of $numtot</font>\n";
-	echo "</td></tr>\n";
-	echo "<tr><td>\n";
-	echo "<table border='0' cellpadding='5' cellspacing='0'>\n";
-	echo "<tr><td><span class='datafield0'>step</span></td>\n";
+	echo "<table class='tableborder' border='1' cellpadding='5' cellspacing='0'>\n";
+	echo "<tr><td><span class='datafield0'>reconstruction step</span></td>\n";
 	echo "<td><span class='datafield0'>started</span></td>\n";
 	echo "<td><span class='datafield0'>status</span></td></tr>\n";
 	echo "<tr><td>\n";
@@ -136,18 +132,18 @@ function checkJobs($showjobs=False,$extra=False) {
 	  for ($i=$lastkey; $i<count($stat['refinelog']); $i++) {
 	    if ($stat['refinelog'][$i][0] == 'project3d') {
 	      $d = getlogdate($stat['refinelog'][$i]);
-	      $t = date('M d,Y H:i:s',$d);
+	      $t = date('M d, Y H:i:s',$d);
 	      $progress[] = "creating projections</td><td>$t\n";
 	    }
 	    elseif ($stat['refinelog'][$i][0] == 'classesbymra') {
 	      // get the number of particles that have been classified
 	      $d = getlogdate($stat['refinelog'][$i]);
-	      $t = date('M d,Y H:i:s',$d);
+	      $t = date('M d, Y H:i:s',$d);
 	      $cmd = "grep ' -> ' $jobinfo[clusterpath]/recon/refine$current.txt | wc -l";
 	      $r = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
 	      $r = trim($r);
 	      // find out how much time is left for rest of particles
-	      if ($r < $numinstack-2) {
+	      if ($r < $numinstack-10) {
 		$left = gettimeleft($r,$numinstack,$d);
 		if (is_array($left)) $left = implode(' ',$left);
 	      }
@@ -163,12 +159,12 @@ function checkJobs($showjobs=False,$extra=False) {
 	    }
 	    elseif ($stat['refinelog'][$i][0] == 'make3d') {
 	      $d = getlogdate($stat['refinelog'][$i]);
-	      $t = date('M d,Y H:i:s',$d);
+	      $t = date('M d, Y H:i:s',$d);
 	      $progress[] = "creating 3d model</td><td>$t\n";
 	    }
-	    elseif ($stat['refinelog'][$i][0] == 'eotest') {
+	    elseif ($stat['refinelog'][$i][1] == 'T-test') {
 	      $d = getlogdate($stat['refinelog'][$i]);
-	      $t = date('M d,Y H:i:s',$d);
+	      $t = date('M d, Y H:i:s',$d);
 	    $progress[] = "performing even/odd test</td><td>$t\n"; 
 	    break;
 	    }
@@ -176,7 +172,6 @@ function checkJobs($showjobs=False,$extra=False) {
 	  echo implode("</td><td><font class='green'> Done</font></td></tr>\n<tr><td>",$progress);
 	  echo "</td><td>running</td></tr></table>\n";
 	}
-	echo "</TD></TR></TABLE>\n";
 	if ($stat['errors']) echo "<P><FONT COLOR='RED'>There are errors in this job, you should resubmit</FONT><P>";
       }
     }
@@ -233,7 +228,7 @@ function gettimeleft($p, $tot, $start) {
     $left[] = $min." min";
   }
   // if only seconds left, just display seconds
-  if (!$days && !$hours && !$min) $left[] = $rem." sec";
+  if (!$days && !$hours && !$min) $left[] = floor($rem)." sec";
   return $left;
 }
 

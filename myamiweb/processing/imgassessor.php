@@ -146,9 +146,6 @@ if ($_POST['oldimgtype'] != $_POST['imgtype']) {
 // save for future comparison
 echo "<INPUT TYPE='hidden' NAME='oldimgrun' VALUE='$imgrun'>";
 echo "<INPUT TYPE='hidden' NAME='oldimgtype' VALUE='$imgtype'>";
-
-// Display experiment info
-echo"<BR><A HREF='processing.php?expId=$sessionId'>[processing page]</A>\n";
 echo"<P>\n";
 
 // Read and Display images

@@ -51,7 +51,7 @@ function writeTop($title,$heading=false,$headerstuff=false,$showloginerror=True)
   <TD ALIGN='LEFT'>\n";
   if ($heading) echo"<H3 ALIGN='CENTER'>$heading</H3>\n";
   if ($_SESSION['username']) {
-    echo "<FONT CLASS='sf'><I>logged in as <B>$_SESSION[username]</B></I></FONT>\n";
+    echo "<FONT CLASS='sf' ALIGN='right'><I>logged in as <B>$_SESSION[username]</B></I></FONT>\n";
     echo "<A CLASS='header' HREF='endsession.php?expId=$_GET[expId]'><FONT CLASS='sf'>[Log Out]</FONT></A>\n";
     $_SESSION['loggedin']=True;
   }
@@ -61,11 +61,14 @@ function writeTop($title,$heading=false,$headerstuff=false,$showloginerror=True)
   echo"<HR>\n";
 }
 
-function writeBottom(){
+function writeBottom($showproclink=True){
+  global $_GET;
   echo"
   </TD>
   </TR>
-  </TABLE>
+  </TABLE>\n";
+  if ($showproclink && $_GET['expId']) echo "<A HREF='processing.php?expId=$_GET[expId]' CLASS='header'>[Processing Page]</A>\n";
+  echo "
   </CENTER>
   </BODY>
   </HTML>\n";
