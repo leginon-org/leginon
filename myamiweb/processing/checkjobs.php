@@ -147,12 +147,12 @@ function checkJobs($showjobs=False,$extra=False) {
 	      $r = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
 	      $r = trim($r);
 	      // find out how much time is left for rest of particles
-	      if ($r < $numinstack-5) {
+	      if ($r < $numinstack-2) {
 		$left = gettimeleft($r,$numinstack,$d);
 		if (is_array($left)) $left = implode(' ',$left);
 	      }
 	      $ln = "classifying particles ($r/$numinstack)";
-	      if ($left) $ln.=", <B>$left</B> left";
+	      if ($left) $ln.=", <B>$left</B> remain";
 	      $ln.="</td><td>$t\n";
 	      $progress[]=$ln;
 	    }
@@ -232,6 +232,8 @@ function gettimeleft($p, $tot, $start) {
     $min=floor($rem/60);
     $left[] = $min." min";
   }
+  // if only seconds left, just display seconds
+  if (!$days && !$hours && !$min) $left[] = $rem." sec";
   return $left;
 }
 
