@@ -247,7 +247,7 @@ if ($sessionId) {
   </TR>
   <TR>\n";
   if ($assessedimgs==0 || $totimgs == 0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
-  elseif ($assessedimgs < $totimgs) {$bgcolor=$progcolor; $gifimg=$donepic;}
+  elseif ($assessedimgs < $totimgs) {$bgcolor=$progcolor; $gifimg=$progpic;}
   else {$bgcolor=$donecolor; $gifimg=$donepic;}
   echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
     <TD BGCOLOR='$bgcolor'>
