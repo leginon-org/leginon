@@ -373,17 +373,10 @@ if ($particle->hasParticleData($sessionId)) {
 	$particleruns=$particle->getParticleRunIds($sessionId);
 	echo $particle->displayParticleStats($particleruns, $display_keys, $inspectcheck, $mselexval);
 
-} else {
+} 
+else {
         echo "no Particle information available";
 }
-
-
-?>
-</td>
-else {
-        echo "no particle information available";
-}
-
 
 ?>
 </td>
