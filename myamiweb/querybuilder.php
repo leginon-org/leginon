@@ -1,6 +1,16 @@
 <?php
-require('inc/leginon.inc');
-$tables = $leginondata->mysql->getTables();
+require "config.php";
+$proc=(@require "config_processing.php") ? true : false;
+require "inc/mysql.inc";
+$databases[]=$DB;
+if ($proc)
+	$databases[]=$PROCESSING_DB;
+
+$s_db=($_POST['s_db']) ? $_POST['s_db'] : $DB;
+$dbchanged=($s_db==$_POST['db_memo']) ? false : true;
+
+$dbc=new mysql($DB_HOST, $DB_USER, $DB_PASS, $s_db);
+$tables = $dbc->getTables();
 
 $table = (!empty($_POST['table'])) ? $_POST['table'] : $tables[0];
 $tablealias = (!empty($_POST[$table.'alias'])) ? $_POST[$table.'alias'] : $table;
@@ -18,7 +28,7 @@ if ($_POST['clearselectedfield']) {
 	$condition = "";
 }
 
-if ($_POST['reset']) {
+if ($_POST['reset'] || $dbchanged) {
 	$table = $tables[0];
 	$tablealias = $table;
 	$formatedfields = array();
@@ -28,9 +38,9 @@ if ($_POST['reset']) {
 }
 
 
-$fields = $leginondata->mysql->getFields($table);
+$fields = $dbc->getFields($table);
 
-$crlf = "<BR>";
+$crlf = "<br />";
 ?>
 <html>
 <head>
@@ -45,6 +55,20 @@ $crlf = "<BR>";
 
 
 <form name="data" method="POST" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']; ?>">
+<input type="hidden" name="db_memo" value="<?=$s_db?>" />
+<select name="s_db" onChange="document.data.submit()">
+<?
+foreach($databases as $db) {
+	$s = ($db==$_POST['s_db']) ? 'selected' : '';
+	echo '<option '.$s.'>'.$db.'</option>'."\n";
+}
+?>
+</select>
+<?
+if ($dbchanged) {
+	echo "<font color='red'>DB changed &raquo; $s_db </font><br />";
+}
+?>	
 <table border="0">
 <tr>
 <td>
