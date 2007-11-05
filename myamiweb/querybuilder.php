@@ -28,13 +28,18 @@ if ($_POST['clearselectedfield']) {
 	$condition = "";
 }
 
-if ($_POST['reset'] || $dbchanged) {
+if ($_POST['reset']) {
 	$table = $tables[0];
 	$tablealias = $table;
 	$formatedfields = array();
 	$formatedtables = array();
 	$formatedjoins = array();
 	$condition = "";
+}
+
+if ($dbchanged) {
+	$table = $tables[0];
+  $tablealias = $table;
 }
 
 
@@ -112,7 +117,7 @@ Alias: <input class="field" type="text" name="<?php echo $table."alias"; ?>" val
 <td>
 <select multiple name="fields[]" size="10" >
 	<?php foreach ($fields as $field) {
-		if (in_array($field, $_POST['fields'])) {
+		if (in_array($field, (array)$_POST['fields'])) {
 			$selectedfields[] = $field;
 			$s = 'selected';
 		} else {
@@ -139,7 +144,7 @@ Alias: <input class="field" type="text" name="<?php echo $table."alias"; ?>" val
 		if (!ereg('^REF', $field))
 			continue;
 		$currentjoins[] = $field;
-		if (in_array($field, $_POST['joins'])) {
+		if (in_array($field, (array)$_POST['joins'])) {
 			$selectedjoins[] = $field;
 			$s = 'selected';
 		} else {
@@ -209,8 +214,9 @@ function formatTable($table, $alias) {
 
 
 function formatJoin($reftable, $refalias, $reffield, $tablealias, $field) {
-	return "LEFT JOIN ".formatTable($reftable, $refalias)
-		." ON (".formatField($refalias, $reffield)."=".formatField($tablealias, $field).") ";
+	global $crlf;
+	return "LEFT JOIN ".formatTable($reftable, $refalias).$crlf
+		."ON (".formatField($refalias, $reffield)."=".formatField($tablealias, $field).") ";
 }
 ?>
 <hr>
