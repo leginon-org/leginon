@@ -135,7 +135,7 @@ function setImage() {
 
 function upload() {
 	var templateId=$('templateId').value
-	if (templateId!=""&& templateId <= getNoRefClassRunsn_images-1 && templateId >=0 ) { 
+	if (templateId!=""&& templateId <= n_images-1 && templateId >=0 ) {
 		if (stackId!="") {
 			window.open("uploadtemplate.php?expId="+expId+"&templateId="+templateId+"&stackId="+stackId+"&file="+filename+"","width=400,height=200")
 		}
@@ -178,7 +178,7 @@ quality: <select id="quality">
 	</select>
 <input id="loadbutton" type="button" alt="Load" value="Load" onclick="load();"> <br />
 
-Upload as Template:<input id="templateId" type="text" alt="Start" value="" size="5">
+Upload as Template:<input id="templateId" type="text" alt="Upload" value="" size="5">
 <input id="uploadbutton" type="button" alt="upload" value="upload" onclick="upload();">
 <br />
 <br />
