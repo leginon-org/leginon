@@ -340,11 +340,11 @@ if (!empty($ctfdata)) {
 	$graph2=$graphpath."/".$graph2name;
 	echo "<tr>";
 	echo "<td align='left'>\n";
-	echo "<a href='loadimg.php?filename=$graph1'>\n";
-	echo "<img src='loadimg.php?filename=$graph1&scale=0.5'></a></td>\n";
+	echo "<a href='processing/loadimg.php?filename=$graph1'>\n";
+	echo "<img src='processing/loadimg.php?filename=$graph1&scale=0.5'></a></td>\n";
   echo "<td align='left'>\n";
-	echo "<a href='loadimg.php?filename=$graph2'>\n";
-	echo "<img src='loadimg.php?filename=$graph2&scale=0.4'></a></td>\n";
+	echo "<a href='processing/loadimg.php?filename=$graph2'>\n";
+	echo "<img src='processing/loadimg.php?filename=$graph2&scale=0.4'></a></td>\n";
 	echo "</tr>\n";
 	echo "<tr><td colspan=2><hr></td></tr>";	
 	}
