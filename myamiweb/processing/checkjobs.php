@@ -72,14 +72,15 @@ function checkJobs($showjobs=False,$extra=False) {
     echo "<P>\n";	
   }
   foreach ($jobs as $job) {
+    // get cluster job information
     $jobinfo = $particle->getJobInfoFromId($job['DEF_id']);
-
-    // find if job has been uploaded
-    $recon = $particle->getReconIdFromClusterJobId($job['DEF_id']);
     $display_keys['name'] = $jobinfo['name'];
     $display_keys['appion path'] = $jobinfo['appath'];
     $display_keys['dmf path'] = $jobinfo['dmfpath'];
     $display_keys['cluster path'] = $jobinfo['clusterpath'];
+
+    // find if job has been uploaded
+    $recon = $particle->getReconIdFromClusterJobId($job['DEF_id']);
 
     // get stack id for job from job file
     $jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
@@ -90,6 +91,7 @@ function checkJobs($showjobs=False,$extra=False) {
     // get num of particles in stack
     $numinstack = $particle->getNumStackParticles($stackid);
 
+    $dlbuttons = '';
     if ($recon) $status="<A HREF='reconreport.php?reconId=$recon[DEF_id]'>Uploaded</A>\n";
     elseif ($jobinfo['status']=='Q') $status='Queued';
     elseif ($jobinfo['status']=='R') $status='Running';
@@ -135,7 +137,7 @@ function checkJobs($showjobs=False,$extra=False) {
 	      $t = getlogdate($stat['refinelog'][$i]);
 	      $steps['proj']['reconstruction step'] = "creating projections";
 	      $steps['proj']['started'] = "$t[date]";
-	      $steps['proj']['duration'] = "-";
+	      $steps['proj']['duration'] = getduration($t['timestamp'],time());
 	      $steps['proj']['status'] = "<FONT CLASS='apcomment'>running</FONT>";
 	      $lasttime=$t['timestamp'];
 	    }
@@ -157,8 +159,8 @@ function checkJobs($showjobs=False,$extra=False) {
 	      $p = "classifying particles ($r/$numinstack)";
 	      $steps['clsbymra']['reconstruction step'] = $p;
 	      $steps['clsbymra']['started'] = "$t[date]";
-	      $steps['clsbymra']['duration'] = ($left) ? "<B>$left</B> remain" : "-";
-	      $steps['clsbymra']['status'] = "<FONT CLASS='apcomment'>running</FONT>";
+	      $steps['clsbymra']['duration'] = getduration($t['timestamp'],time());
+	      $steps['clsbymra']['status'] = "<FONT CLASS='apcomment'><B>$left</B> remain</FONT>";
 	      $lasttime=$t['timestamp'];
 	    }
 
@@ -171,7 +173,7 @@ function checkJobs($showjobs=False,$extra=False) {
 
 	      $steps['clsalign']['reconstruction step'] = "iterative class averaging";
 	      $steps['clsalign']['started'] = "$t[date]";
-	      $steps['clsalign']['duration'] = "-";
+	      $steps['clsalign']['duration'] = getduration($t['timestamp'],time());
 	      $steps['clsalign']['status'] = "<FONT CLASS='apcomment'>running</FONT>";
 	      $lasttime=$t['timestamp'];
 	    }
@@ -185,10 +187,10 @@ function checkJobs($showjobs=False,$extra=False) {
 
 	      $steps['make3d']['reconstruction step'] = "creating 3d model";
 	      $steps['make3d']['started'] = "$t[date]";
-	      $steps['make3d']['duration'] = "-";
+	      $steps['make3d']['duration'] = getduration($t['timestamp'],time());
 	      $steps['make3d']['status'] = "<FONT CLASS='apcomment'>running</FONT>";
 	      $lasttime=$t['timestamp'];
-	    }
+	    } 
 
 	    elseif ($stat['refinelog'][$i][1] == 'T-test') {
 	      $steps['make3d']['status'] = "<font class='green'> Done</font>";
@@ -199,7 +201,7 @@ function checkJobs($showjobs=False,$extra=False) {
 
 	      $steps['eotest']['reconstruction step'] = "performing even/odd test";
 	      $steps['eotest']['started'] = "$t[date]";
-	      $steps['eotest']['duration'] = "-";
+	      $steps['eotest']['duration'] = getduration($t['timestamp'],time());
 	      $steps['eotest']['status'] = "<FONT CLASS='apcomment'>running</FONT>";
 	    break;
 	    }

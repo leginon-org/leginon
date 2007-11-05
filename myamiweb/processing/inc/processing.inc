@@ -67,7 +67,7 @@ function writeBottom($showproclink=True){
   </TD>
   </TR>
   </TABLE>\n";
-  if ($showproclink && $_GET['expId']) echo "<A HREF='processing.php?expId=$_GET[expId]' CLASS='header'>[Processing Page]</A>\n";
+  if ($showproclink && $_GET['expId']) echo "<A HREF='processing.php?expId=$_GET[expId]' CLASS='header'>[Back to Processing Page]</A>\n";
   echo "
   </CENTER>
   </BODY>
