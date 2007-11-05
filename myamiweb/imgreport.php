@@ -90,7 +90,7 @@ $ctf_display_fields = array (
 	'confidence_d',
 	'graph1',
 	'graph2',
-	'graphpath',
+	'path',
 );
 
 ?>
@@ -323,8 +323,10 @@ if (!empty($ctfdata)) {
 			$display = format_micro_number($v);
 		elseif ($v-floor($v)) 
 			$display = format_sci_number($v,4,2);
-		elseif ($k=='graphpath')
-			$display=$graphpath=$v;
+		elseif ($k=='path') {
+			$graphpath=$v.'/opimages';
+			$display=$graphpath;
+		}
 		elseif ($k=='graph1')
 			$display=$graph1name=$v;
 		elseif ($k=='graph2')
