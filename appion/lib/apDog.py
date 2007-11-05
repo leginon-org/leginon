@@ -73,8 +73,8 @@ def diffOfGaussParam(imgarray, params):
 		return [dogarray]
 	else:
 		pixrange = float(sizerange/apix/float(bin)/2.0)
-		dogarrays, sigmavals = diffOfGaussLevels(imgarray, pixrad, numslices, pixrange)
-		diamarray = numpy.asarray(sigmavals, dtype=numpy.float32) * apix * float(bin) * 2.0
+		dogarrays, pixradlist = diffOfGaussLevels(imgarray, pixrad, numslices, pixrange)
+		diamarray = numpy.asarray(pixradlist, dtype=numpy.float32) * apix * float(bin) * 2.0
 		apDisplay.printColor("diameter list= "+str(numpy.around(diamarray,3)), "cyan")
 		params['diamarray'] = diamarray
 		return dogarrays
@@ -99,6 +99,9 @@ def diffOfGauss(imgarray, pixrad, k=1.2):
 	return imgarray2-imgarray1
 
 def diffOfGaussLevels(imgarray, pixrad, numslices, pixrange):
+	if pixrange >= 1.95*pixrad:
+		apDisplay.printError("size range has be less than twice the diameter")
+
 	#apDisplay.printError("This is method unfinished, remove the numslices and sizerange options")
 
 	#get initial parameters
@@ -107,7 +110,7 @@ def diffOfGaussLevels(imgarray, pixrad, numslices, pixrange):
 	sigma0 = kfact * pixrad
 
 	#get two more slices than requested, since we are subtracting
-	spower = -1.0 * float(numslices+1) / 2.0
+	spower = -1.0 * float(numslices-1) / 2.0
 	apDisplay.printMsg("s power: "+str(round(spower,3)))
 	sigma1 = sigma0 * kmult**(spower)
 	apDisplay.printMsg("sigma1: "+str(round(sigma1,3)))
@@ -116,7 +119,7 @@ def diffOfGaussLevels(imgarray, pixrad, numslices, pixrange):
 	gaussmap = ndimage.gaussian_filter(imgarray, sigma=sigma)
 	gaussmaps = [gaussmap,]
 	sigmavals = [sigma,]
-	for i in range(numslices+1):
+	for i in range(numslices):
 		lastmap = gaussmaps[len(gaussmaps)-1]
 		sigmaDiff = sigma*math.sqrt(kmult*kmult - 1.0)
 		apDisplay.printMsg("sigmaDiff: "+str(round(sigmaDiff,3)))
@@ -127,6 +130,7 @@ def diffOfGaussLevels(imgarray, pixrad, numslices, pixrange):
 		gaussmap = ndimage.gaussian_filter(lastmap, sigma=sigmaDiff)
 		gaussmaps.append(gaussmap)
 
+	#print sigmavals
 	#for i,gaussmap in enumerate(gaussmaps):
 	#	apImage.arrayToJpeg(gaussmap, "gaussmap"+str(i)+".jpg")
 
@@ -140,18 +144,19 @@ def diffOfGaussLevels(imgarray, pixrad, numslices, pixrange):
 		#apImage.arrayToJpeg(dogarray, "dogmap"+str(i)+".jpg")
 
 	#sys.exit(1)
-
-
 	return dogarrays, pixradlist
 
 def estimateKfactorIncrement(pixrad, pixrange, numslices):
 	#lower bound estimate
-	k1 = (1.0 - float(pixrange)/(2.0*float(pixrad)))**(-2.0/float(numslices))
+	k1 = (1.0 - float(pixrange)/(2.0*float(pixrad)))**(-2.0/float(numslices-1))
 	#upper bound estimate
-	k2 = (1.0 + float(pixrange)/(2.0*float(pixrad)))**(2.0/float(numslices))
+	k2 = (1.0 + float(pixrange)/(2.0*float(pixrad)))**(2.0/float(numslices-1))
 	#average both
 	kavg = (k1 + k2)/2.0
 	apDisplay.printMsg("mean k: "+str(round(kavg,3))+"; lower k: "+str(round(k1,3))+"; upper k: "+str(round(k2,3)))
+	kerr = abs(k1 - k2)/(kavg - 1.0)
+	#print kerr
+	if kerr > 0.3:
+		apDisplay.printWarning("large difference between upper and lower k values; selected range will not be inaccurate")
+
 	return kavg
-
-
