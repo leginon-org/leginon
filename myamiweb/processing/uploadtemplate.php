@@ -50,7 +50,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	$template = ($_POST['template']) ? $_POST['template'] : '';
 	$hed = ($_POST['hed']) ? $_POST['hed'] : '';
 	$description = $_POST['description'];
-	if (!$templateId) $templateId = $_POST['templateId'];
+	if (!$templateId && $templateId != "0") $templateId = $_POST['templateId'];
 	if (!$stackId) $stackId = $_POST['stackId'];
 	if (!$norefId) $norefId = $_POST['norefId'];
 	if (!$norefClassId) $norefClassId = $_POST['norefClassId'];
@@ -255,7 +255,7 @@ function runUploadTemplate() {
 	$command.="--apix=$apix ";
 	$command.="--diam=$diam ";
 	$command.="--description=\"$description\" ";
-	if ($templateId) $command.="--stackimgnum=$templateId ";
+	if ($templateId || $templateId == "0") $command.="--stackimgnum=$templateId ";
 	if ($stackId) $command.="--stackid=$stackId ";
 	if ($norefClassId) $command.="--norefid=$norefClassId ";
 
@@ -284,7 +284,7 @@ function runUploadTemplate() {
 	<TR><TD>diam</TD><TD>$diam</TD></TR>
 	<TR><TD>session</TD><TD>$session</TD></TR>
 	<TR><TD>description</TD><TD>$description</TD></TR>";
-	if ($templateId) echo"<TR><TD>stack image number</TD><TD>$templateId</TD></TR>";
+	if ($templateId || $templateId == 0) echo"<TR><TD>stack image number</TD><TD>$templateId</TD></TR>";
 	if ($stackId) echo"<TR><TD>stack id</TD><TD>$stackId</TD></TR>";
 	if ($norefId) echo"<TR><TD>noref id</TD><TD>$norefId</TD></TR>";
 	echo"
