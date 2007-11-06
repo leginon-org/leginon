@@ -258,18 +258,19 @@ def createSpiderFile(params):
 
 def createSpiderRefFile(params):
 	"""
-	takes the reference template file and creates a spider file with same pixel size and box size
+	takes the reference template file and 
+	creates a spider file with same pixel size and box size
 	"""
 	for i,refid in enumerate(params['refids']):
 		templatedata= apTemplate.getTemplateFromId(int(refid))
 		#convert template data
-		reffile = os.path.join(templatedata['path']['path'],templatedata['templatename'])
+		reffile = os.path.join(templatedata['path']['path'], templatedata['templatename'])
 		scalefactor = round(templatedata['apix'],5)/round(params['apix'],5)
 		refarray = apImage.mrcToArray(reffile)
 		scaleRefArray = apTemplate.scaleTemplate(refarray, scalefactor, params['boxsize'])
 
 		#write to file
-	 	tmpreffile = os.path.join(params['rundir'], "tempref00"+str(i)+".mrc")		
+	 	tmpreffile = os.path.join(params['rundir'], "tempref%03d.spi" % (i+1))		
 		if os.path.isfile(tmpreffile):
 			apDisplay.printWarning(tmpreffile+" already exists; removing it")
 			time.sleep(2)
@@ -277,7 +278,7 @@ def createSpiderRefFile(params):
 		apImage.arrayToMrc(scaleRefArray, tmpreffile)
 
 		#set outfile name
-		outfile = os.path.join(params['rundir'], "reference00"+str(i+1)+".spi")		
+		outfile = os.path.join(params['rundir'], "reference%03d.spi" % (i+1))		
 		if os.path.isfile(outfile):
 			apDisplay.printWarning(outfile+" already exists; removing it")
 			time.sleep(2)
