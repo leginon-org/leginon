@@ -85,6 +85,7 @@ def scaleTemplate(templatearray, scalefactor=1.0, boxsize=None):
 		apDisplay.printWarning("template shape is NOT square, this may cause errors")
 
 	if abs(scalefactor - 1.0) > 0.01:
+		apDisplay.printMsg("scaling template by a factor of "+str(scalefactor))
 		templatearray = apImage.scaleImage(templatearray, scalefactor)
 
 	#make sure the box size is divisible by 16
