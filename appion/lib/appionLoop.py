@@ -823,7 +823,7 @@ class AppionLoop(object):
 		if(self.stats['skipcount'] > 0):
 			apDisplay.printWarning("Images already processed and were therefore skipped (total "+\
 				str(self.stats['skipcount'])+" skipped).")
-			apDisplay.printMsg("to them process again, remove \'continue\' option and run "+self.functionname+" again.")
+			apDisplay.printMsg("to process them again, remove \'continue\' option and run "+self.functionname+" again.")
 			self.stats['skipcount'] = 0
 
 		#SHOULD IT WAIT?
