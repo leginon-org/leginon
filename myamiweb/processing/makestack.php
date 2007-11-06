@@ -214,7 +214,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "Mask Assessment:
 		<SELECT NAME='massessname'>\n";
 		foreach ($massessnames as $name) {
-			$massessname = $name['name'];
+			$massessname = $name;
 			$massessruns = $particle->getMaskAssessRunByName($sessionId,$massessname);
 			$totkeeps = 0;
 			foreach ($massessruns as $massessrun){

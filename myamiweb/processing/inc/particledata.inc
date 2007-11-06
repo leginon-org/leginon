@@ -615,7 +615,11 @@ class particledata {
 			."where `REF|leginondata|SessionData|session` = '$sessionId' "	
 			." group by `name` ";
 		$r = $this->mysql->getSQLResult($q);
-		return $r;
+		if ($r) {
+			$names=array();
+			foreach ($r as $ra) $names[]=$ra[name];
+		}
+		return $names;
 	}
 
 	function getMaskAssessStats ($runId, $inspect=False){
