@@ -255,6 +255,41 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particle,$assessmentr
 	$imgrescl= ($_POST['imgrescale']) ? $_POST['imgrescale'] : 0.5; 
 	//echo "<BR>\n";
 
+	//find first and last good images
+	$imgstart=array('first','last');
+	foreach ($imgstart as $start) {
+			if ($start == 'first') {
+				$timgindx=-1;
+			} else {
+				$timgindx=$numfiles;
+			}
+			while ($tfound!='TRUE') {
+				if ($start == 'last')
+					$timgindx--;
+				else $timgindx++;
+
+				if ($timgindx < 0) {
+					$timgindx=0;
+					$statdata=getImageStatus($files[$timgindx],$leginondata,$particle,$assessmentrid);
+					break;
+				}
+				if ($imgindx > $numfiles-1 ) {
+					$timgindx=$numfiles;
+					$statdata=getImageStatus($files[$timgindx],$leginondata,$particle,$assessmentrid);
+					break;
+				}
+				$statdata=getImageStatus($files[$timgindx],$leginondata,$particle,$assessmentrid);
+				if ($_POST['skipimages']!='none' && $statdata['status']=='no')
+					$tfound='FALSE';
+				elseif ($_POST['skipimages']=='all' && $statdata['status']=='yes')
+					$tfound='FALSE';
+				else
+					$tfound='TRUE';
+			}
+			if ($start =='first') $firstindx = $timgindx;
+			else $lastindx = $timgindx;
+	}
+		
 	// go directly to a particular image by number or filename
 	if ($_POST['imgjump']) {
 		// change the name to the same tail as the files
@@ -280,8 +315,8 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particle,$assessmentr
 			$imgindx=$_POST['imgjump']-1;
 		}
 		// make sure it's within range
-		if ($imgindx < 0) $imgindx=0;
-		elseif ($imgindx > $numfiles-1) $imgindx=$numfiles-1;
+		if ($imgindx < $firstindx) $imgindx = $firstindx;
+		elseif ($imgindx > $lastindx) $imgindx= $lastindx;
 
 		$statdata=getImageStatus($files[$imgindx],$leginondata,$particle,$assessmentrid);
 	}
@@ -290,9 +325,9 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particle,$assessmentr
 		if ($imlst=='Back') {
 			while ($found!='TRUE') {
 				$imgindx--;
-				if ($imgindx < 0) {
+				if ($imgindx < $firstindx) {
 					echo "<FONT COLOR='RED'> At beginning of image list</FONT><BR>\n";
-					$imgindx=0;
+					$imgindx=$firstindx;
 					$statdata=getImageStatus($files[$imgindx],$leginondata,$particle,$assessmentrid);
 					break;
 				}
@@ -310,9 +345,9 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particle,$assessmentr
 			if($imlst=='Remove') $particle->updateKeepStatus($_POST['imageid'],$assessmentrid,'0');
 			while ($found!='TRUE') {
 				$imgindx++;
-				if ($imgindx > $numfiles-1) {
+				if ($imgindx > $lastindx) {
 					echo "<FONT COLOR='RED'> At end of image list</FONT><BR>\n";
-					$imgindx=$numfiles-1;
+					$imgindx= $lastindx;
 					$statdata=getImageStatus($files[$imgindx],$leginondata,$particle,$assessmentrid);
 					break;
 				}
@@ -326,18 +361,18 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particle,$assessmentr
 			}
 		}
 		else {
-			if ($imlst=='First') $imgindx=0;
-			elseif ($imlst=='Last') $imgindx=$numfiles-1;
+			if ($imlst=='First') $imgindx=$firstindx;
+			elseif ($imlst=='Last') $imgindx=$lastindx;
 			$statdata=getImageStatus($files[$imgindx],$leginondata,$particle,$assessmentrid);
 		}
 	}
-
+	
 	$imgname=$statdata['name'];
 	$imgid=$statdata['id'];
 	$imgstatus=$statdata['status'];
 
 	$thisnum=$imgindx+1;
-	echo"$imgname<BR>\n<B>Current Status: ";
+	echo"<br\>$imgname<BR>\n<B>Current Status: ";
 	if ($imgstatus=='no') echo"<FONT COLOR='RED'>REJECT</FONT>";
 	elseif ($imgstatus=='yes') echo "<FONT COLOR='GREEN'>KEEP</FONT>";
 	else echo"none";
