@@ -349,10 +349,10 @@ def mark_image(image, coord, value, size=15):
 	'''
 	row,col = int(coord[0]), int(coord[1])
 	for r in range(row-size,row+size):
-		if 0 <= r < image.shape[0]:
+		if 0 <= r < image.shape[0] and 0 <= col < image.shape[1]:
 			image[r,col] = value
 	for c in range(col-size,col+size):
-		if 0 <= c < image.shape[1]:
+		if 0 <= c < image.shape[1] and 0 <= row < image.shape[0]:
 			image[row,c] = value
 
 def bin(image, binning):
