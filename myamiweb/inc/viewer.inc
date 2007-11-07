@@ -1241,7 +1241,7 @@ function add_comment_box($name) {
 
 function viewer_header($title="", $javascript="", $onload="") {
 	global $_SERVER, $dbemauth;
-	$authorized_files=array('login.php', 'index.php', 'lostpass.php', 'register.php');
+	$authorized_files=array('login.php', 'index.php', 'lostpass.php', 'register.php', 'confirm.php');
 
 	if (!ereg(implode("|", $authorized_files), $_SERVER['PHP_SELF'])) {
     if (!$login_check = $dbemauth->is_logged()) {

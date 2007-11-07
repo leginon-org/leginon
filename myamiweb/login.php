@@ -43,8 +43,8 @@ exit;
 } else {
 	if ($usern)
     insertlog($usern, $_SERVER['REMOTE_ADDR'], implode(", ",$_SERVER));
-  if (empty($redirect))
-    $redirect="index.php";
+
+  $redirect="index.php";
 	redirect($redirect);
 }
 ?>
