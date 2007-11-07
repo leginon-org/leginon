@@ -1295,6 +1295,7 @@ echo '
 }
 
 function insertlog($username, $ip, $info) {
+  global $DB_HOST, $DB_USER, $DB_PASS, $DB;
   $data['username']=$username;
   $data['ip']=$ip;
   $data['info']=$info;
