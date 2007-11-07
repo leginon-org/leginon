@@ -1241,15 +1241,22 @@ function add_comment_box($name) {
 
 function viewer_header($title="", $javascript="", $onload="") {
 	global $_SERVER, $dbemauth;
+	$authorized_files=array('login.php', 'index.php', 'lostpass.php', 'register.php');
+
+	if (!ereg(implode("|", $authorized_files), $_SERVER['PHP_SELF'])) {
+    if (!$login_check = $dbemauth->is_logged()) {
+      redirect('login.php');
+      exit;     
+		}
+  }
 
 	$login_check = $dbemauth->is_logged();
 	$username = $login_check[0];
 	$privilege = $login_check[2];
 	$url = "ln=".urlencode($_SERVER['REQUEST_URI']);
 	$path = getPathFromString($_SERVER['SCRIPT_NAME']);
-
 	$onload = (empty($onload)) ? '' : 'onload="'.$onload.'"';
-	$path = getPathFromString($_SERVER['SCRIPT_NAME']);
+
 	echo '
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"  "http://www.w3.org/TR/html4/strict.dtd">
 <html>
@@ -1286,4 +1293,14 @@ echo '
 </html>
 ';
 }
+
+function insertlog($username, $ip, $info) {
+  $data['username']=$username;
+  $data['ip']=$ip;
+  $data['info']=$info;
+  $dbc=new mysql($DB_HOST, $DB_USER, $DB_PASS, $DB);
+  $dbc->SQLInsert('viewer_log', $data);
+  return true;
+}
+
 ?>

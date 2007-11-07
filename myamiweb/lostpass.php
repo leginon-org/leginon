@@ -18,7 +18,8 @@ if ($_POST) {
 	}
 } else {
 ?>
-
+<center><h1>Leginon II Database Tools</h1></center>
+<hr/>
 <form name='register' method='POST' action='<?=$_SERVER['PHP_SELF']?>'>
 <fieldset>
 <table border="0" cellspacing="0" cellpadding="5">
@@ -32,7 +33,7 @@ if ($_POST) {
 </tr>
 <tr>
 	<td>
-          <input class="button" type="submit" value="Find Password" name="submit">
+          <input class="bt1" type="submit" value="Find Password" name="submit">
 	</td>
 </tr>
 </table>

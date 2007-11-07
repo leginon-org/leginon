@@ -9,6 +9,10 @@ $register=$error=false;
 $displayform=true;
 
 viewer_header("DBEM Register");
+?>
+<center><h1>Leginon II Database Tools</h1></center>
+<hr/>
+<?
 
 if ($_POST) {
 	$username=$_POST['username'];
@@ -112,7 +116,7 @@ if ($displayform) {
 </tr>
 <tr>
 <td colspan=2>
-	<input type='submit' name='bt_apply' value='Apply'>
+	<input class="bt1" type='submit' name='bt_apply' value='Apply'>
 </td>
 </tr>
 </table>

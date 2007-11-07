@@ -2,38 +2,49 @@
 require "inc/viewer.inc";
 
 $redirect = $_REQUEST['ln'];
-$login = $dbemauth->login($_POST['username'], $_POST['password']);
+$usern=trim($_POST['username']);
+$passwd=trim($_POST['password']);
+
+$login = $dbemauth->login($usern, $passwd);
 if ($login!=2) {
 	viewer_header("Login");
-	if ($_POST)
-		echo "<br>Incorrect Login";
+	$displayerror=($_POST) ? "Incorrect Login" : false;
 ?>
+<style>
+li {
+   list-style: none; padding:2px;
+}
+</style>
+<center><h1>Leginon II Database Tools</h1></center>
+<hr/>
 <form method="post" action="<?=$_SERVER['REQUEST_URI']?>" name="">
-<table border="0" cellspacing="0" cellpadding="5">
-<tr>
-	<td>
+	<div>
+		<ul>
+		<li>
 		<label for="username">Username : </label>
 		<input class="field" type="text" value="" name="username" id="username" size="15" >
-	</td>
-</tr>
-<tr> 
-	<td>
 		<label for="password">Password : </label>
-		<input class="field" type="password" name="password"><font size="2">
+		<input class="field" type="password" name="password" size="15">
 		<a class="header" href="lostpass.php" target="_blank">[Lost Password]</a>
-	</td>
-</tr>
-<tr> 
-        <td width="50%" bgcolor="#FFFFFF"> 
-		<input type="submit" value="Login" name="submit">
-        </td>
-</tr>
-</table>
+		</li>
+		<li>
+		<input class="bt1" type="submit" value="Login" name="submit">
+		<font size="2">
+		</li>
+		</ul>
+	</div>
+
 </form>
 <?
+if ($displayerror)
+	echo '<center><font size="3" color="red">[ '.$displayerror.' ]</font></center>';
 viewer_footer();
 exit;
 } else {
+	if ($usern)
+    insertlog($usern, $_SERVER['REMOTE_ADDR'], implode(", ",$_SERVER));
+  if (empty($redirect))
+    $redirect="index.php";
 	redirect($redirect);
 }
 ?>
