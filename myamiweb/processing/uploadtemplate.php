@@ -43,6 +43,15 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	$norefId=$_GET['norefId'];
 	$norefClassId=$_GET['norefClassId'];
 	$stackId=$_GET['stackId'];
+	$avg=$_GET['avg'];
+
+	// save other params to url formaction
+	$formAction.=($stackId) ? "&stackId=$stackId" : "";
+	$formAction.=($file) ? "&file=$file" : "";
+	$formAction.=($norefId) ? "&norefId=$norefId" : "";
+	$formAction.=($norefClassId) ? "&norefClassId=$norefClassId" : "";
+	$formAction.=($avg) ? "&avg=True" : "";
+	$formAction.=($templateId) ? "&templateId=$templateId" : "";
 
 	// Set any existing parameters in form
 	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
@@ -57,12 +66,9 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 
 	// Set template path
 	if  ($file) {
-		if ( preg_match("/\.img/", $file) ) {
-			$template=ereg_replace("\/classes_avg[0-9]*.img","",$file);
-			$template=$template."/template$templateId.mrc";
-		} elseif ( preg_match("/\.hed/", $file) ) {
-			$template=ereg_replace("\/start.hed","",$file);
-			$template=$template."/template$templateId.mrc";
+		if ( preg_match("/\.(img|hed)/", $file) ) {
+			$template=preg_replace("/\/\w+\.(hed|img)/","",$file);
+			$template=($avg) ? $template."/template".$stackId."avg.mrc" : $template."/template$templateId.mrc";
 		}
 	}
 
@@ -151,25 +157,33 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 
 	//if either a refId or stackId exist
 	if ($norefId || $stackId) {
-	echo"<INPUT TYPE='hidden' NAME='template' VALUE='$template'>\n";
-	echo"
+	  $label=($norefId) ? "NoRef Class" : "Stack";
+	  echo"<INPUT TYPE='hidden' NAME='template' VALUE='$template'>\n";
+	  echo"
 			<TR>
 				<TD VALIGN='TOP'>
 					<BR/>
-					<B>Stack/NoRef Class information:</B> <BR/>
-					<A HREF=\"javascript:infopopup('classpath')\">Stack/Class name & path</A>: $hed <BR/>	
-					Stack/NoRef Class ID: "; 
-	if ($norefId) {
-		echo "$norefClassId<BR/> <INPUT TYPE='hidden' NAME='norefClassId' VALUE='$norefClassId'> <INPUT TYPE='hidden' NAME='norefId' VALUE='$norefId'>\n";
-	} elseif ($stackId){
-		 echo "$stackId<BR/> <INPUT TYPE='hidden' NAME='stackId' VALUE='$stackId'>\n";
-	}
+					<B>$label information:</B> <BR/>
+					<A HREF=\"javascript:infopopup('classpath')\">name & path</A>: $hed <BR/>	
+					ID: "; 
+	  if ($norefId) {
+	    echo "$norefClassId<BR/>
+                  <INPUT TYPE='hidden' NAME='norefClassId' VALUE='$norefClassId'>
+                  <INPUT TYPE='hidden' NAME='norefId' VALUE='$norefId'>\n";
+	  } 
+	
+	  elseif ($stackId){
+	    echo "$stackId<BR/> <INPUT TYPE='hidden' NAME='stackId' VALUE='$stackId'>\n";
+	    if ($avg) {
+	      echo "<input type='hidden' name='avgstack' value='avg'>\n";
+	    }
+	  }
 
 	//rest of the page
-	echo"
-					Stack/NoRef Class Image Number: $templateId<BR/> <INPUT TYPE='hidden' NAME='templateId' VALUE='$templateId'>\n";
+	  if ($norefId) echo"Image Number: $templateId<BR/>
+                             <INPUT TYPE='hidden' NAME='templateId' VALUE='$templateId'>\n";
+	  elseif ($avg) echo"Stack images will be averaged to create a template<br />\n";
 	}
-
 	
 	echo "
 					<BR/>
@@ -239,6 +253,7 @@ function runUploadTemplate() {
 	$templateId=$_POST['templateId'];
 	$stackId=$_POST['stackId'];
 	$norefId=$_POST['norefId'];
+	$avgstack=$_POST['avgstack'];
 	$norefClassId=$_POST['norefClassId'];
 
 	//check if the template is an existing file (wild type is not searched)
@@ -258,6 +273,7 @@ function runUploadTemplate() {
 	if ($templateId || $templateId == "0") $command.="--stackimgnum=$templateId ";
 	if ($stackId) $command.="--stackid=$stackId ";
 	if ($norefClassId) $command.="--norefid=$norefClassId ";
+	if ($avgstack) $command.="--avgstack ";
 
 	writeTop("UploadTemplate Run", "UploadTemplate Params");
 

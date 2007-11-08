@@ -145,6 +145,12 @@ function upload() {
 	}
 }
 
+function uploadavg() {
+  if (stackId!="") {
+    window.open("uploadtemplate.php?expId="+expId+"&stackId="+stackId+"&file="+filename+"&avg=True","width=400,height=200")
+  }
+}
+
 function goTo() {
 	var index = $('excludedIndex').value
 	window.open("createmodel.php?expId="+expId+"&file="+filename+"&exclude="+index+"&noref="+norefId+"&norefClass="+norefClassId+"",'height=250,width=400');
@@ -181,10 +187,11 @@ quality: <select id="quality">
 Upload as Template:<input id="templateId" type="text" alt="Upload" value="" size="5">
 <input id="uploadbutton" type="button" alt="upload" value="upload" onclick="upload();">
 <br />
-<br />
 <?
+if (!$norefId) echo "<input id='uploadavg' type='button' alt='upload average' value='Average images as template' onclick='uploadavg();'>\n";
+echo "<br />\n";
 	if ($norefId) {
-		echo "Create initial model using this class averages <BR/> exclude these classes (e.g. 0,1,5): <INPUT TYPE='text' INPUT ID='excludedIndex' VALUE=''> <INPUT TYPE='button' value='Create Model' onClick=goTo()>\n";
+		echo "Create initial model using these class averages <BR/> exclude these classes (e.g. 0,1,5): <INPUT TYPE='text' INPUT ID='excludedIndex' VALUE=''> <INPUT TYPE='button' value='Create Model' onClick=goTo()>\n";
 		
 	}
 
