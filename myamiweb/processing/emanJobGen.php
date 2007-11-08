@@ -109,7 +109,7 @@ elseif ($_POST['submitjob']) {
   $jobnum = exec_over_ssh('garibaldi', $user, $pass, $cmd, True);
 
   // submit job on garibaldi
-  $cmd = "qsub $clusterpath/$jobname.job\n";
+  $cmd = "cd $clusterpath; qsub $jobname.job;\n";
   $jobnum = exec_over_ssh('garibaldi', $user, $pass, $cmd, True);
   
   $jobnum=trim($jobnum);
