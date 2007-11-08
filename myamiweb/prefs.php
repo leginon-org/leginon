@@ -9,7 +9,7 @@ if (!$login_check = $dbemauth->is_logged()) {
 $username = $login_check[0];
 viewer_header("My Preferences");
 ?>
-<h3>My Profil</h3>
+<h3>My Profile</h3>
 <?
 if ($_POST) {
 	if ($_POST['submit']=='update') {
