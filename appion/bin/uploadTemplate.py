@@ -45,6 +45,8 @@ def parseCommandLine():
 		help="ID for particle stack (optional)", metavar="INT")
 	parser.add_option("--stackimgnum", dest="stackimgnum", type="int",
 		help="Particle number in stack", metavar="INT")
+	parser.add_option("--avgstack", dest="avgstack", default=False,
+		action="store_true", help="Average all particles in stack for template")
 
 	params = apParam.convertParserToParams(parser)
 	return params
@@ -90,21 +92,33 @@ if __name__ == '__main__':
 		stackpath = (stackdata['path'])['path']
 		stackname = stackdata['name']
 		absstackpath = os.path.join(stackpath,stackname)
+		abstemplatepath = None
 
 		#check to see if stackimagenum is within the boundary of the stack
 		stacksize = len(apStack.getStackParticlesFromId(params['stackid']))
 
-		#make sure that params['stackimgnum'] is less than the num of particles in the stack
+		#make sure that params['stackimgnum'] is less than the num of particles in the stack,
+		# or averaging all files together
 		if params['stackimgnum'] < stacksize and params['stackimgnum'] >= 0:
+			apDisplay.printMsg("Extracting image %i from stack" %params['stackimgnum'])
 			templatename = "template"+str(params['stackimgnum'])+".mrc"
 			abstemplatepath= os.path.join(stackpath,templatename)
 			
 			#run proc2d with params['stackimgnum']
-			print "creating "+templatename+" in "+stackpath+"...\n"
 			cmd = "proc2d %s %s first=%i last=%i" %(absstackpath, abstemplatepath, params['stackimgnum'], params['stackimgnum'])
+		elif params['avgstack'] is True:
+			apDisplay.printMsg("Averaging all images in stack")
+			templatename = "template"+str(params['stackid'])+"avg.mrc"
+			abstemplatepath = os.path.join(stackpath,templatename)
+			#average all images using proc2d
+			cmd = "proc2d %s %s average" %(absstackpath, abstemplatepath)
+			
+		# create template
+		if abstemplatepath is not None:
+			print "creating "+templatename+" in "+stackpath+"...\n"
 			f=os.popen(cmd)
 			f.close()
-			#Add file names to params['templatelist']
+		        #Add file names to params['templatelist']
 			params['templatelist'] = []
 			params['templatelist'].append(abstemplatepath)
 
