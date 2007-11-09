@@ -80,7 +80,7 @@ $initmodelname=$initmodel['name'];
 if (gettype($refinerun['description'])!= 'Null') {
 	echo "Run Description: ".$refinerun['description']."<BR>\n";
 }
-echo "Stack: <A TARGET='stackview' HREF='viewstack.php?file=$stackfile'>$stackfile</A><BR>\n";
+echo "Stack: <A TARGET='stackview' HREF='viewstack.php?stackId=$stackId&file=$stackfile'>$stackfile</A><BR>\n";
 echo "Reconstruction path: $refinerun[path]/<BR>\n";
 echo "Particles: $stackparticles<BR>\n";
 echo "Initial Model: $initmodel[path]/$initmodelname<BR>\n";

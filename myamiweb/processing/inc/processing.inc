@@ -196,3 +196,110 @@ function streamToArray($stream) {
   }
   return $rows;
 }
+
+function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
+  $javascript = "
+<style>
+	input, select {
+		border: 1px solid #AABDCC;
+	}
+	img.imgtile {
+		border: 1px solid #000000;
+	}
+
+	div.scrollpane {
+		height: 600px;
+		overflow: auto;
+		border: 1px solid #666;
+		background-color: #ccc;
+		padding: 8px;
+	}
+</style>
+<script src=\"../js/prototype.js\"></script>
+<script>
+
+var file_hed=\"$file_hed\"
+var file_img=\"$file_img\"
+var n_images=\"$n_images\"
+var updateheader=\"$updateheader\"\n";
+  if (is_array($plist)) {
+    $javascript.="imgArray = new Array()\n";
+    foreach ($plist as $p) {
+      $javascript.="imgArray.push(\"$p[p]\");";
+    }
+    $javascript.="
+function displaystack(imgArray, startImg, endImg, force) {
+	var wholemap = $('wholemap')
+	var i=0
+	for(i = startImg; i <= endImg; i++) {
+		 var tileId = addTile(wholemap, imgArray[i], force)
+	}
+}\n";
+  }
+
+  else {
+    $javascript.="
+function displaystack(startImg, endImg, force) {
+	var wholemap = $('wholemap')
+	var i=0
+	for(i = startImg; i <= endImg; i++) {
+		 var tileId = addTile(wholemap, i, force)
+	}
+}\n";
+  }
+
+  $javascript.= "
+function addTile(wholemap, i, force) {
+	binning = $('binning').value
+	t = $('quality').value
+	var tileId = \"img\"+i
+	var filename = 'getstackimg.php?'
+				+'hed='+file_hed
+				+'&img='+file_img
+				+'&n='+i
+				+'&t='+t
+				+'&b='+binning
+				+'&uh='+updateheader
+
+   var img = $(tileId)
+   if(!img || force){
+      img = document.createElement(\"img\")
+      img.src = filename
+      img.setAttribute(\"id\", tileId)
+      img.setAttribute(\"class\", \"imgtile\")
+      wholemap.appendChild(img)
+   }
+
+	return tileId
+}
+
+function load() {
+	clean()
+	startImg=parseInt($('startimg').value)
+	endImg=parseInt($('endimg').value)
+	if (endImg > n_images-1) {
+	  endImg=n_images-1
+	}
+	force=1
+	displaystack(\n";
+  if (is_array($plist)) $javascript.="imgArray, ";
+  $javascript.="startImg, endImg, force) 
+}
+
+function clean() {
+	var wholemap = $('wholemap')
+  var allTiles = wholemap.getElementsByTagName('img')
+	for(i = 0; i < allTiles.length; i++) {
+		var id = allTiles[i].getAttribute('id')
+		wholemap.removeChild(allTiles[i])
+		i-- 
+	}
+}
+
+function setImage() {
+	window.document.myf.submit(); 
+}
+
+</script>\n";
+  return $javascript; 
+}

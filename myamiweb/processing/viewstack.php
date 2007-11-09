@@ -46,92 +46,14 @@ $n_images=$info['count']+1;
 ?>
 <html>
 <head>
-<style>
-	input, select {
-		border: 1px solid #AABDCC;
-	}
-	img.imgtile {
-		border: 1px solid #000000;
-	}
-
-	div.scrollpane {
-		height: 600px;
-		overflow: auto;
-		border: 1px solid #666;
-		background-color: #ccc;
-		padding: 8px;
-	}
-</style>
-<script src="../js/prototype.js"></script>
+<? echo stackViewer($file_hed,$file_img,$n_images,$updateheader);?>
 <script>
-
-var file_hed="<?=$file_hed?>"
-var file_img="<?=$file_img?>"
-var n_images="<?=$n_images?>"
-var updateheader="<?=$updateheader?>"
 var expId="<?=$expId?>"
 var sessionname="<?=$sessionname?>"
 var filename="<?=$filename?>"
 var norefId="<?=$norefId?>"
 var norefClassId="<?=$norefClassId?>"
 var stackId="<?=$stackId?>"
-
-function displaystack(startImg, endImg, force) {
-	var wholemap = $('wholemap')
-	var i=0
-	for(i = startImg; i <= endImg; i++) {
-		 var tileId = addTile(wholemap, i, force)
-	}
-}
-
-function addTile(wholemap, i, force) {
-	binning = $('binning').value
-	t = $('quality').value
-	var tileId = "img"+i
-	var filename = 'getstackimg.php?'
-				+'hed='+file_hed
-				+'&img='+file_img
-				+'&n='+i
-				+'&t='+t
-				+'&b='+binning
-				+'&uh='+updateheader
-
-   var img = $(tileId)
-   if(!img || force){
-      img = document.createElement("img")
-      img.src = filename
-      img.setAttribute("id", tileId)
-      img.setAttribute("class", "imgtile")
-      wholemap.appendChild(img)
-   }
-
-	return tileId
-}
-
-function load() {
-	clean()
-	startImg=parseInt($('startimg').value)
-	endImg=parseInt($('endimg').value)
-	if (endImg > n_images-1) {
-	  endImg=n_images-1
-	}
-	force=1
-	displaystack(startImg, endImg, force) 
-}
-
-function clean() {
-	var wholemap = $('wholemap')
-  var allTiles = wholemap.getElementsByTagName('img')
-	for(i = 0; i < allTiles.length; i++) {
-		var id = allTiles[i].getAttribute('id')
-		wholemap.removeChild(allTiles[i])
-		i-- 
-	}
-}
-
-function setImage() {
-	window.document.myf.submit(); 
-}
 
 function upload() {
 	var templateId=$('templateId').value
