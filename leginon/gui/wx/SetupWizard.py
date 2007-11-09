@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SetupWizard.py,v $
-# $Revision: 1.26 $
+# $Revision: 1.27 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-04-16 18:56:49 $
+# $Date: 2007-11-09 19:44:54 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -107,7 +107,8 @@ class UserPage(WizardPage):
 
 		# update database values
 		session = parent.sessionselectpage.getSelectedSession()
-		parent.sessionselectpage.updateText(session['name'])
+		if session:
+			parent.sessionselectpage.updateText(session['name'])
 
 	def GetNext(self):
 		parent = self.GetParent()
@@ -322,7 +323,10 @@ class SessionSelectPage(WizardPage):
 
 	def getSelectedSession(self):
 		name = self.sessionchoice.GetStringSelection()
-		return self.GetParent().userpage.sessions[name]
+		if name:
+			return self.GetParent().userpage.sessions[name]
+		else:
+			return None
 
 class SessionNamePage(WizardPage):
 	def __init__(self, parent):
