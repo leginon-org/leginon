@@ -16,6 +16,8 @@ require "inc/processing.inc";
   
 // check if reconstruction is specified
 $reconId = $_GET['reconId'];
+$expId = $_GET['expId'];
+
 $refine_params_fields = array('refinerun', 'ang', 'mask', 'imask', 'pad', 'hard', 'classkeep', 'classiter', 'median', 'phasecls', 'refine','cckeep','minptls');
 $javascript="<script src='../js/viewer.js'></script>\n";
 
@@ -80,7 +82,7 @@ $initmodelname=$initmodel['name'];
 if (gettype($refinerun['description'])!= 'Null') {
 	echo "Run Description: ".$refinerun['description']."<BR>\n";
 }
-echo "Stack: <A TARGET='stackview' HREF='viewstack.php?stackId=$stackId&file=$stackfile'>$stackfile</A><BR>\n";
+echo "Stack: <A TARGET='stackview' HREF='viewstack.php?expId=$expId&stackId=$stackId&file=$stackfile'>$stackfile</A><BR>\n";
 echo "Reconstruction path: $refinerun[path]/<BR>\n";
 echo "Particles: $stackparticles<BR>\n";
 echo "Initial Model: $initmodel[path]/$initmodelname<BR>\n";
@@ -186,10 +188,10 @@ HREF	='viewstack.php?uh=1&file=$goodavg'>$iteration[MsgPGoodClassAvg]</A></TD></
 HR	EF='classinfo.php?refinement=$refinementData[DEF_id]&w=800&h=600'>$numclasses</A></TD>\n";
   
   $html .="<TD><table>";
-  $html .= "<TR><TD ALIGN='CENTER'>$prtlsused<BR/>"
-		."<A TARGET='stackview' HREF='badprtls.php?refinement=$refinementData[DEF_id]'>"
-		."<FONT SIZE='-1'>[$badprtls bad]</FONT>"
-		."</A></TD></TR>\n";
+  $html .= "<TR><TD ALIGN='CENTER'>"
+                ."<A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&subset=good'>[$prtlsused good]</A><BR/>"
+		."<A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&subset=bad'>[$badprtls bad]</A>"
+		."</TD></TR>\n";
   if ($refinerun['package']=='EMAN/MsgP') 
     $html .= "<TR><TD>$goodprtlsused MsgP<BR><A TARGET='stackview' HREF='msgpbadprtls.php?refinement=$refinementData[DEF_id]'>[$msgpbadprtls bad]</A></TD></TR>\n";
   $html .= "</table></TD>";

@@ -18,8 +18,23 @@ $expId =$_GET['expId'];
 $norefId=$_GET['norefId'];
 $norefClassId=$_GET['norefClassId'];
 $stackId=$_GET['stackId'];
+$substack=$_GET['substack'];
+$refinement=$_GET['refinement'];
+$subprtls=False;
 
 $updateheader=($_GET['uh']==1) ? 1 : 0;
+
+if ($refinement) {
+  $particle = new particledata();
+  $stack=$particle->getStackFromRefinement($refinement);
+  //echo print_r($stack);
+  $filename=$stack['path'].'/'.$stack['name'];
+  if ($substack) {
+    // get all bad particles in stack
+    $subprtls=$particle->getSubsetParticlesInStack($refinement,$substack);
+    $numbad = count($subprtls);
+  }
+}
 
 function getimagicfilenames($file) {
 	$file = substr($file, 0, -3);
@@ -41,12 +56,11 @@ $sessioninfo=$sessiondata['info'];
 $sessionname=$sessioninfo['Name'];
 
 $info=imagicinfo($file_hed);
-$n_images=$info['count']+1;
-
+$n_images = ($substack) ? $numbad : $info['count']+1;
 ?>
 <html>
 <head>
-<? echo stackViewer($file_hed,$file_img,$n_images,$updateheader);?>
+<? echo stackViewer($file_hed,$file_img,$n_images,$updateheader, $subprtls);?>
 <script>
 var expId="<?=$expId?>"
 var sessionname="<?=$sessionname?>"
@@ -105,17 +119,18 @@ quality: <select id="quality">
 		<option value="png">png</option>
 	</select>
 <input id="loadbutton" type="button" alt="Load" value="Load" onclick="load();"> <br />
-
-Upload as Template:<input id="templateId" type="text" alt="Upload" value="" size="5">
-<input id="uploadbutton" type="button" alt="upload" value="upload" onclick="upload();">
-<br />
 <?
-if (!$norefId) echo "<input id='uploadavg' type='button' alt='upload average' value='Average images as template' onclick='uploadavg();'>\n";
-echo "<br />\n";
-	if ($norefId) {
-		echo "Create initial model using these class averages <BR/> exclude these classes (e.g. 0,1,5): <INPUT TYPE='text' INPUT ID='excludedIndex' VALUE=''> <INPUT TYPE='button' value='Create Model' onClick=goTo()>\n";
-		
-	}
+if ($stackId) echo "Upload as Template:<input id='templateId' type='text' alt='Upload' value='' size='5'>
+        <input id='uploadbutton' type='button' alt='upload' value='upload' onclick='upload();'>
+        <br />\n";
+
+if ($norefId) {
+  echo "Create initial model using these class averages <BR/> exclude these classes (e.g. 0,1,5): <INPUT TYPE='text' INPUT ID='excludedIndex' VALUE=''> <INPUT TYPE='button' value='Create Model' onClick=goTo()>\n";
+}
+elseif ($stackId) {
+  echo "<input id='uploadavg' type='button' alt='upload average' value='Average images as template' onclick='uploadavg();'>\n";
+  echo "<br />\n";
+}
 
 ?>
 

@@ -963,14 +963,15 @@ class particledata {
 		return $r[0];
 	}
 
-	function getBadParticlesInStack ($refinementDataId) {
+	function getSubsetParticlesInStack ($refinementDataId, $subset) {
 		$q = "SELECT particleNumber as p "
 		  ."FROM `ApParticleClassificationData` apcd "
 		  ."LEFT JOIN `ApStackParticlesData` aspd "
 		  ."ON (apcd.`REF|ApStackParticlesData|particle` = aspd.`DEF_id`) "
-		  ."WHERE apcd.`REF|ApRefinementData|refinement` = '$refinementDataId' "
-		  ."AND `thrown_out` = 1 "
-			."ORDER BY aspd.`DEF_id` ASC ";
+		  ."WHERE apcd.`REF|ApRefinementData|refinement` = '$refinementDataId' ";
+		if ($subset=='bad') $q.="AND `thrown_out` = 1 ";
+		elseif ($subset=='good') $q.="AND `thrown_out` is NULL ";
+		$q.= "ORDER BY aspd.`DEF_id` ASC ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}

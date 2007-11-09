@@ -31,7 +31,6 @@ list($file_hed, $file_img)=getimagicfilenames($filename);
 $info=imagicinfo($file_hed);
 $n_images=$numbad;
 
-
 ?>
 <html>
 <head>

@@ -67,7 +67,7 @@ if ($stackruns>0){
 			$res=$particle->getHighestResForRecon($reconrun[DEF_id]);
 			$description=$reconrun['description'];
 			$html .= "<TR>\n";
-			$html .= "<TD><A HREF='reconreport.php?reconId=$reconrun[DEF_id]'>$reconrun[name]</A></TD>\n";
+			$html .= "<TD><A HREF='reconreport.php?expId=$expId&reconId=$reconrun[DEF_id]'>$reconrun[name]</A></TD>\n";
 			$html .= "<TD>$stackcount</TD>\n";
 			$html .= "<TD>";
 			$html .= "$sym[symmetry]</TD>\n";
