@@ -13,7 +13,7 @@ if ($_POST) {
 	echo "</p>";
 	} else {
 		echo "<p>";
-		echo $_POST['email']." not found in database";
+		echo $lostpass."  [<b>".$_POST['email']."</b>]";
 		echo "</p>";
 	}
 } else {
