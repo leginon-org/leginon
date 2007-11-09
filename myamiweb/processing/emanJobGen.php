@@ -188,7 +188,7 @@ function stackModelForm($extra=False) {
   if ($extra) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
   }
-  echo "<FORM NAME='viewerform' METHOD='POST' ACTION='$formaction'>\n";
+  echo "<FORM NAME='viewerform' METHOD='POST' ACTION='$formAction'>\n";
   echo "
   <B>Select Project:</B><BR>
   <SELECT NAME='projectId' onchange='newexp()'>\n";
@@ -340,7 +340,7 @@ function jobForm($extra=false) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
   }
   echo "
-  <FORM NAME='emanjob' METHOD='POST' ACTION='$formaction'><BR/>
+  <FORM NAME='emanjob' METHOD='POST' ACTION='$formAction'><BR/>
   <TABLE CLASS='tableborder' CELLPADDING=4 CELLSPACING=4>
   <TR>
     <TD><B>Job Run Name:</B></TD>
@@ -709,7 +709,7 @@ function writeJobFile ($extra=False) {
   else {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
   }
-  echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formaction'><BR>\n";
+  echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formAction'><BR>\n";
   echo "<INPUT TYPE='HIDDEN' NAME='clusterpath' VALUE='$clusterpath'>\n";
   echo "<INPUT TYPE='HIDDEN' NAME='dmfpath' VALUE='$dmfpath'>\n";
   echo "<INPUT TYPE='HIDDEN' NAME='jobname' VALUE='$jobname'>\n";
