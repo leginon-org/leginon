@@ -4,6 +4,7 @@ import os
 import re
 import apDisplay
 import appionData
+import leginondata
 import apDB
 import string
 import apFile
@@ -11,7 +12,6 @@ try:
 	import pyami.mrc as mrc
 except:
 	import Mrc as mrc
-
 
 appiondb = apDB.apdb
 
@@ -244,7 +244,7 @@ def insertMisc(params):
 	appiondb.insert(miscq)
 
 def insertManualParams(params, expid):
-	sessiondata = apDB.direct_query(leginondata.SessionData, expid)
+	sessiondata = appiondb.direct_query(leginondata.SessionData, expid)
 	runq=appionData.ApSelectionRunData()
 	runq['name']=params['runid']
 	runq['session']=sessiondata
