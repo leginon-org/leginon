@@ -8,7 +8,6 @@ require ('inc/processing.inc');
 // --- change with query --- //
 
 $refinement=$_GET['refinement'];
-$filename=$_GET['refinement'];
 
 $particle = new particledata();
 // get all bad particles in stack
@@ -17,6 +16,8 @@ $numbad = count($badprtls);
 $stack=$particle->getStackFromRefinement($refinement);
 //echo print_r($stack);
 $filename=$stack['path'].'/'.$stack['name'];
+
+$updateheader=($_GET['uh']==1) ? 1 : 0;
 
 function getimagicfilenames($file) {
 	$file = substr($file, 0, -3);
@@ -50,18 +51,19 @@ $n_images=$numbad;
 		padding: 8px;
 	}
 </style>
-<script src="js/prototype.js"></script>
+<script src="../js/prototype.js"></script>
 <script>
 
 var file_hed="<?=$file_hed?>"
 var file_img="<?=$file_img?>"
 var n_images="<?=$n_images?>"
+var updateheader="<?=$updateheader?>"
 imgArray = new Array()
 
 <?
 // store the list of images in a javascript array
 foreach ($badprtls as $p) {
-  echo "imgArray.push(\"$p[p]\")\n";
+  echo "imgArray.push(\"$p[p]\");";
 }
 ?>
 
@@ -83,6 +85,8 @@ function addTile(wholemap, i, force) {
 				+'&n='+i
 				+'&t='+t
 				+'&b='+binning
+				+'&uh='+updateheader
+
 
    var img = $(tileId)
    if(!img || force){
@@ -98,8 +102,8 @@ function addTile(wholemap, i, force) {
 
 function load() {
 	clean()
-	startImg=$('startimg').value
-	endImg=$('endimg').value
+	startImg=parseInt($('startimg').value)
+	endImg=parseInt($('endimg').value)
 	if (endImg > n_images-1) {
 	  endImg=n_images-1
 	}
