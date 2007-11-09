@@ -304,61 +304,68 @@ def calcFreqEqualArea(points, rstep=9.0):
 	return indexmap
 
 
+def fillDataDict(radlist, anglelist, freqlist):
+	d = {}
+
+	freqnumpy = numpy.asarray(freqlist, dtype=numpy.int32)
+	d['minf'] = float(ndimage.minimum(freqnumpy))
+	d['maxf'] = float(ndimage.maximum(freqnumpy))
+	if ndimage.sum(freqnumpy) < 10:
+		apDisplay.printWarning("not enough eulers to draw a map")
+		return
+	d['rangef'] = d['maxf']-d['minf']+1
+
+	angnumpy = numpy.asarray(anglelist, dtype=numpy.float32)
+	d['mina'] = float(ndimage.minimum(angnumpy))
+	d['maxa'] = float(ndimage.maximum(angnumpy))
+	d['rangea'] = d['maxa']-d['mina']
+
+	radnumpy = numpy.asarray(radlist, dtype=numpy.float32)
+	d['minr'] = float(ndimage.minimum(radnumpy))
+	d['maxr'] = float(ndimage.maximum(radnumpy))
+	d['ranger'] = d['maxr']-d['minr']
+
+	x1, y1 = polarToCart(d['maxr'], d['rangea'])
+	x2, y2 = polarToCart(d['minr'], 0)
+	x3, y3 = polarToCart(d['maxr'], 0)
+	d['minx'] = min(x1,x2,x3)
+	d['maxx'] = max(x1,x2,x3)
+	d['miny'] = min(y1,y2,y3)
+	d['maxy'] = max(y1,y2,y3)
+	d['rangex'] = d['maxx']-d['minx']
+	d['rangey'] = d['maxy']-d['miny']
+
+	return d
+
 def makeImage(radlist, anglelist, freqlist, 
 		imgname="temp.png", imgdim=650, crad=8, frame=30):
-
+	d = {}
 	#'L' -> grayscale
 	#'RGB' -> color
 	img = Image.new("RGB", (imgdim, imgdim), color="#ffffff")
 	draw = ImageDraw.Draw(img)
 
-	freqnumpy = numpy.asarray(freqlist, dtype=numpy.int32)
-	minf = float(ndimage.minimum(freqnumpy))
-	maxf = float(ndimage.maximum(freqnumpy))
-	if ndimage.sum(freqnumpy) < 10:
-		apDisplay.printWarning("not enough eulers to draw a map")
-		return
-	rangef = maxf-minf+1
+	d = fillDataDict(radlist, anglelist, freqlist)
 
-	angnumpy = numpy.asarray(anglelist, dtype=numpy.float32)
-	mina = float(ndimage.minimum(angnumpy))
-	maxa = float(ndimage.maximum(angnumpy))
-	rangea = maxa-mina
-
-	radnumpy = numpy.asarray(radlist, dtype=numpy.float32)
-	minr = float(ndimage.minimum(radnumpy))
-	maxr = float(ndimage.maximum(radnumpy))
-	ranger = maxr-minr
-
-	x1, y1 = polarToCart(maxr, rangea)
-	x2, y2 = polarToCart(minr, 0)
-	x3, y3 = polarToCart(maxr, 0)
-	minx = min(x1,x2,x3)
-	maxx = max(x1,x2,x3)
-	miny = min(y1,y2,y3)
-	maxy = max(y1,y2,y3)
-	rangex = maxx-minx
-	rangey = maxy-miny
-
-
-	drawLegend(draw, imgdim, crad, minf, maxf)
+	drawAxes(draw, imgdim, crad, img, d)
+	drawLegend(draw, imgdim, crad, d['minf'], d['maxf'])
 	for i in range(len(radlist)):
 		#frequency
 		freq = freqlist[i]
-		fgray = freqToColor(freq, maxf, rangef)
+		fgray = freqToColor(freq, d['maxf'], d['rangef'])
 		fcolor = grayToColor(fgray)
 
 		#direct polar
 		rad = radlist[i]			
 		ang = anglelist[i]
-		#ax = float(imgdim-2*frame)*(ang-mina)/rangea+frame
-		#ry = float(imgdim-2*frame)*(rad-minr)/ranger+frame
+		#ax = float(imgdim-2*frame)*(ang-d['mina'])/d['rangea']+frame
+		#ry = float(imgdim-2*frame)*(rad-d['minr'])/d['ranger']+frame
 		#polarcoord = (ax-crad, ry-crad, ax+crad, ry+crad)
 
 		#polar -> cartesian
-		x, y = polarToCart(rad, ang-mina)
-		ys = float(imgdim-2*frame)*(x-minx)/rangex+frame
-		xs = float(imgdim-2*frame)*(y-miny)/rangey+frame
+		x, y = polarToCart(rad, ang-d['mina'])
+		ys = float(imgdim-2*frame)*(x-d['minx'])/d['rangex']+frame
+		xs = float(imgdim-2*frame)*(y-d['miny'])/d['rangey']+frame
 		cartcoord = (xs-crad, ys-crad, xs+crad, ys+crad)
 
 		draw.ellipse(cartcoord, fill=fcolor)
@@ -366,17 +373,55 @@ def makeImage(radlist, anglelist, freqlist,
 		img.save(imgname, "PNG")
 	except:
 		apDisplay.printWarning("could not save file: "+imgname)
-	try:
-		#os.chmod(imgname, 0666)
-		os.system("chmod 666 "+imgname)
-	except:
-		apDisplay.printWarning("could not modify file: "+imgname)
 
 	return
 
 def freqToColor(freq, maxf, rangef):
 	fgray = 255.0*((maxf-freq)/rangef)**2
 	return fgray
+
+def drawAxes(draw, imgdim, crad, img, d):
+	#Coords
+	start = 2*crad
+	mid = imgdim/2
+	end = imgdim - 2*crad
+	#Axes
+	coord = (start, start, start, end)
+	draw.line(coord, fill="black", width=2)
+	coord = (start, end, end, end)
+	draw.line(coord, fill="black", width=2)
+	#Axis Labels
+	txt = "Latitude / Altitude"
+	shifty = draw.textsize(txt)[0]/2.0
+	shiftx = draw.textsize(txt)[1]
+	coord = (start-shiftx, mid-shifty)
+	addRotatedText(img, txt, coord, 90, color="black")
+	txt = "Longitude / Azimuthal"
+	shiftx = draw.textsize(txt)[0]/2.0
+	shifty = draw.textsize(txt)[1]/2.0
+	coord = (mid-shiftx, end)
+	draw.text(coord, txt, fill="black")
+	#Min/Max Numbers
+	txt = str(round(d['minr']*90.0,1))
+	shifty = draw.textsize(txt)[0]
+	shiftx = draw.textsize(txt)[1]
+	coord = (start-shiftx, start)
+	addRotatedText(img, txt, coord, 90, color="black")
+	txt = str(round(d['maxr']*90.0,1))
+	shifty = draw.textsize(txt)[0]
+	shiftx = draw.textsize(txt)[1]
+	coord = (start-shiftx, end-shifty)
+	addRotatedText(img, txt, coord, 90, color="black")
+	txt = str(round(d['mina']*180.0/math.pi,1))
+	shiftx = draw.textsize(txt)[0]/2.0
+	shifty = draw.textsize(txt)[1]/2.0
+	coord = (start, end)
+	draw.text(coord, txt, fill="black")
+	txt = str(round(d['maxa']*180.0/math.pi,1))
+	shiftx = draw.textsize(txt)[0]
+	shifty = draw.textsize(txt)[1]/2.0
+	coord = (end-shiftx, end)
+	draw.text(coord, txt, fill="black")
 
 def drawLegend(draw, imgdim, crad=10, minf=0, maxf=100, gap=4, numsc=10):
 	rangef = maxf - minf
@@ -460,18 +505,69 @@ def makePlot(radlist,anglelist,freqlist,freqgrid):
 	#pylab.savefig('polar_test2')
 	pylab.show()
 
+def addRotatedText(im, text, where, rotation, color = "black", maxSize = None):
+	"""
+	stolen from http://mail.python.org/pipermail/image-sig/2000-July/001141.html
+	"""
+	anchor = (0.0,0.0)
+	draw = ImageDraw.Draw(im)
+	textsize = draw.textsize(text)
+	del(draw)
+	# do the math to figure out how big the text box will be after rotation
+	rotationRadians = (math.pi/180.0) * rotation
+	rotatedWidth = int(float(textsize[0]) * abs(math.cos(rotationRadians)) + float(textsize[1]) * abs(math.sin(rotationRadians)) + 0.5)
+	rotatedHeight = int(float(textsize[0]) * abs(math.sin(rotationRadians)) + float(textsize[1]) * abs(math.cos(rotationRadians)) + 0.5)
+	rotatedtextsize = (rotatedWidth, rotatedHeight)
+	# make the text box big enough for the original text in any rotation
+	if textsize[0] > textsize[1]:
+		largetextsize = (textsize[0], textsize[0])
+	else:
+		largetextsize = (textsize[1], textsize[1])
+	xOffset = int((float(largetextsize[0] - textsize[0])/2.0)+0.5)
+	textIm = Image.new("L", largetextsize, (0))
+	# draw a mask of the text unrotated
+	draw = ImageDraw.Draw(textIm)
+	draw.text((xOffset, (textIm.size[1]/2) - (textsize[1]/2)), text, fill="white")
+	# rotate the text mask
+	textIm = textIm.rotate(rotation)
+	# crop it down to the real used area
+	xOffset = int((float(textIm.size[0] - rotatedtextsize[0])/2.0) + 0.5)
+	yOffset = int((float(textIm.size[1] - rotatedtextsize[1])/2.0) + 0.5)
+	textIm = textIm.crop((xOffset, yOffset, xOffset + rotatedtextsize[0], yOffset + rotatedtextsize[1]))
+	# fit it in MaxSize if specified and valid
+	if maxSize != None and type(maxSize) == type(("tuple", "tuple")) and len(maxSize) == 2:
+		if textIm.size[0] > maxSize[0] or textIm.size[1] > maxSize[1]:
+			textIm.thumbnail(maxSize)
+	# create an image mask the size of the whole image that you're putting the text on
+	mask = Image.new("L", im.size, (0))
+	# place the text mask in the proper place
+	where = (where[0] - int(float(textIm.size[0])*anchor[0] + 0.5), where[1] - int(float(textIm.size[1])*anchor[1] + 0.5))
+	mask.paste(textIm, where)
+	del(textIm)
+	# create an image the full size of the supplied image, in the color of the text you want to apply
+	colorIm = Image.new(im.mode, im.size, color)
+	# paste the color onto the image, using the text mask as a mask
+	im.paste(colorIm, (0,0), mask)
+	del(colorIm)
+	del(mask)
+
+	return im
+
 
 if __name__ == "__main__":
 	t0 = time.time()
 	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(181, 4)
 	radlist, anglelist, freqlist, freqgrid = getEulersForIteration(173, 12)
-	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(158, 4)
+	makeImage(radlist,anglelist,freqlist,imgname="recon173.png")
+	radlist, anglelist, freqlist, freqgrid = getEulersForIteration(158, 4)
+	makeImage(radlist,anglelist,freqlist,imgname="recon158.png")
 	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(158, 2)
-	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(118, 1)
-	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(159, 1)
+	radlist, anglelist, freqlist, freqgrid = getEulersForIteration(118, 2)
+	makeImage(radlist,anglelist,freqlist,imgname="recon118.png")
+	radlist, anglelist, freqlist, freqgrid = getEulersForIteration(159, 1)
+	makeImage(radlist,anglelist,freqlist,imgname="recon159.png")
 	#freqmap = getEulersForIteration(158, 4)
 	#makePlot(radlist,anglelist,freqlist,freqgrid)
-	makeImage(radlist,anglelist,freqlist)
 	#makePlot(freqmap)
 	apDisplay.printColor("Finished in "+apDisplay.timeString(time.time()-t0), "cyan")
 
