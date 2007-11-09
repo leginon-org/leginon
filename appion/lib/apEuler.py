@@ -401,7 +401,7 @@ def drawAxes(draw, imgdim, crad, img, d):
 	shifty = draw.textsize(txt)[1]/2.0
 	coord = (mid-shiftx, end)
 	draw.text(coord, txt, fill="black")
-	#Min/Max Numbers
+	#Min/Max Numbers for Latitude / Altitude
 	txt = str(round(d['minr']*90.0,1))
 	shifty = draw.textsize(txt)[0]
 	shiftx = draw.textsize(txt)[1]
@@ -412,6 +412,7 @@ def drawAxes(draw, imgdim, crad, img, d):
 	shiftx = draw.textsize(txt)[1]
 	coord = (start-shiftx, end-shifty)
 	addRotatedText(img, txt, coord, 90, color="black")
+	#Min/Max Numbers for Longitude / Azimuthal
 	txt = str(round(d['mina']*180.0/math.pi,1))
 	shiftx = draw.textsize(txt)[0]/2.0
 	shifty = draw.textsize(txt)[1]/2.0
