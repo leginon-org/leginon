@@ -50,15 +50,10 @@ if __name__ == '__main__':
 	# parse out the refinement parameters from the log file
 	apRecon.parseLogFile(params)
 
-	# parse out the massage passing subclassification parameters from the log file
+	# parse out the massage passing subclassification parameters from the job/log file
 	if params['package'] == 'EMAN/MsgP':
 		apRecon.parseMsgPassingParams(params)
 		#apRecon.parseMsgPassingLogFile(params)
-
-	for i in params['iterations']:
-		print i
-
-	sys.exit(1)
 
 	# get a list of the files in the directory
 	apRecon.listFiles(params)
