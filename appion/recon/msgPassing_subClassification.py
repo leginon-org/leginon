@@ -5,7 +5,6 @@ import EMAN
 import shutil
 import math
 import string
-import apParam
 from Numeric import *
 from subprocess import call
 
@@ -97,9 +96,6 @@ def readClassPtcltext(clsfile):
 	return pretext,Ptext
 	
 if __name__== '__main__':
-	#WriteLog
-	apParam.writeFunctionLog(sys.argv)
-	
 	#Parse inputs
 	args=sys.argv[1:]
 	params=createDefaults()
