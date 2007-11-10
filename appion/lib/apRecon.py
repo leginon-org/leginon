@@ -137,7 +137,7 @@ def checkStackId(params):
 		sys.exit()
 	else:
 		params['stack']=stackinfo
-		print "Stack:",os.path.join(stackinfo['path']['path']+stackinfo['name'])
+		print "Stack:",os.path.join(stackinfo['path']['path']+"/"+stackinfo['name'])
 	return
 	
 def checkModelId(params):
@@ -161,6 +161,29 @@ def listFiles(params):
 		if re.match("goodavgs\.\d+\.img",f):
 			params['msgpassavgs'].append(f)
 
+# Parse MsgPassing params through EMAN jobfile
+def parseMsgPassingParams(params):
+	emanJobFile = os.path.join(params['path'], params['jobinfo']['name']) 
+	if os.path.isfile(emanJobFile):
+		lines=open(emanJobFile,'r')
+		j=0
+		for i,line in enumerate(lines):
+			line=string.rstrip(line)
+			if re.search("^msgPassing_subClassification.py", line):
+				msgpassparams=line.split()
+				iteration = params['iterations'][j]
+				for p in msgpassparams:
+					elements=p.split('=')
+					if elements[0]=='corCutOff':
+						iteration['msgpasskeep']=float(elements[1])
+					elif elements[0]=='minNumOfPtcls':
+						iteration['msgpassminp']=int(elements[1])
+				j+=1
+		lines.close()
+	else:
+		apDisplay.printError("EMAN Job file: "+emanJobFile+" does not exist!")
+
+# Parse MsgPassing params through msgPassing_subClassification.log
 def parseMsgPassingLogFile(params):
 	logfile=os.path.join(params['path'],'msgPassing_subClassification.log')
 	print "parsing massage passing log file:",logfile
