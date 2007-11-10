@@ -14,6 +14,10 @@ if __name__ == '__main__':
 	# parse command line input
 	apRecon.parseInput(sys.argv, params)
 
+	# msgPassing requires a jobId in order to get the jobfile & the paramters
+	if params['package'] == 'EMAN/MsgP' and params['jobid'] is None:
+		apDisplay.printError("EMAN/MsgP package requires a jobId to be processed. Please enter a jobId.")
+
 	# if jobid is supplied, get the job info from the database
 	if params['jobid']:
 		params['jobinfo']=apRecon.getClusterJobDataFromID(params['jobid'])
@@ -34,7 +38,7 @@ if __name__ == '__main__':
 	apParam.writeFunctionLog(sys.argv)
 
 	# make sure that the stack & model IDs exist in database
-	apRecon.findEmanJobFile(params)
+	emanJobFile = apRecon.findEmanJobFile(params)
 	apRecon.checkStackId(params)
 	apRecon.checkModelId(params)
 
@@ -48,7 +52,13 @@ if __name__ == '__main__':
 
 	# parse out the massage passing subclassification parameters from the log file
 	if params['package'] == 'EMAN/MsgP':
-		apRecon.parseMsgPassingLogFile(params)
+		apRecon.parseMsgPassingParams(params)
+		#apRecon.parseMsgPassingLogFile(params)
+
+	for i in params['iterations']:
+		print i
+
+	sys.exit(1)
 
 	# get a list of the files in the directory
 	apRecon.listFiles(params)
