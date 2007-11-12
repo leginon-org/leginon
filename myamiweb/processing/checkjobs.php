@@ -166,7 +166,7 @@ function checkJobs($showjobs=False,$extra=False) {
 
 	    elseif ($stat['refinelog'][$i][0] == 'classalignall') {
 	      $steps['clsbymra']['status'] = "<font class='green'> Done</font>";
-	      $steps['clsbymra']['reconstruction step'][1]='';
+	      $steps['clsbymra']['reconstruction step']='classifying particles';
 	      $t = getlogdate($stat['refinelog'][$i]);
 	      // set duration of previous run based on time stamp
 	      $steps['clsbymra']['duration'] = getduration($lasttime,$t['timestamp']);
