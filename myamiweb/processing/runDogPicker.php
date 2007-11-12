@@ -240,7 +240,7 @@ function runDogPicker() {
 	appionLoopSummaryTable();
 	particleLoopSummaryTable();
 	echo"</TABLE>\n";
-	writeBottom();
+	writeBottom(True, True);
 }
 
 function writeTestResults($jpg,$ccclist){

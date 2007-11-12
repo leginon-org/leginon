@@ -68,7 +68,7 @@ $boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $st
 
 $html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 $html .= "<TR>\n";
-$display_keys = array ( 'iteration', 'ang incr', 'resolution', 'fsc', 'classes', 'distr', '# particles', 'density','snapshot');
+$display_keys = array ( 'iter', 'ang', 'res', 'fsc', 'classes', '# particles', 'density','snapshot');
 foreach($display_keys as $key) {
         $html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
 }
@@ -151,14 +151,12 @@ foreach ($iterations as $iteration){
   $refinestr2=rtrim($refinestr2,',');
   $html .=$refinestr2;
   $html .=")\">$iteration[iteration]</A></TD>\n";
-  $html .= "<TD>$iteration[ang]</TD>\n";
-  
-  $html .="<TD><table>";
-  $html .= "<TR><TD>$halfres</TD></TR>\n";
+  $html .= "<TD>$iteration[ang]&deg;</TD>\n";
+  $html .= "<TD><I>FSC 0.5:</I><br />$halfres<br />\n";
   
   if ($rmeasureres!='None')
-    $html .= "<TR><TD>Rmeasure-<br>$rmeasureres</TD></TR>\n";
-  $html .= "</table></TD>";
+    $html .= "<I>Rmeas:</I><br>$rmeasureres\n";
+  $html .= "</TD>";
   
   if ($halfres!='None')
     $html .= "<TD><A HREF='fscplot.php?fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz'><IMG SRC='fscplot.php?fscfile=$fscfile&width=100&height=80&nomargin=TRUE'>\n";
@@ -166,12 +164,13 @@ foreach ($iterations as $iteration){
   $html .="<TD><table>";
   $clsavg = $refinerun['path'].'/'.$iteration['classAverage'];
 	$html .= "<TR><TD>";
+	$html .= "$numclasses classes<br />\n";
 	$html .= "<A TARGET='stackview' HREF='viewstack.php?file=$clsavg'>$iteration[classAverage]</A><BR/><BR/>";
 	$eulerfile = $refinerun['path']."/eulermap".$iteration['iteration'].".png";
 	//echo $eulerfile;
 	if (file_exists($eulerfile)) {
 		$html .= "<A TARGET='eulermap' HREF='loadimg.php?filename=".$eulerfile."'>"
-			."<FONT SIZE='-1'>view euler map</FONT><BR/>"
+			."<FONT CLASS='sf'>view euler map</FONT>"
 			//."<IMG WIDTH='20' HEIGHT='20' SRC='loadimg.php?filename=".$eulerfile."'>"
 			."</A>";
 	}
@@ -179,13 +178,10 @@ foreach ($iterations as $iteration){
   
   if ($refinerun['package']=='EMAN/MsgP') {
     $goodavg = $refinerun['path'].'/'.$iteration['MsgPGoodClassAvg'];
-    $html .= "<TR><TD><A TARGET='stackview' 
-HREF	='viewstack.php?uh=1&file=$goodavg'>$iteration[MsgPGoodClassAvg]</A></TD></TR>\n";
+    $html .= "<TR><TD><A TARGET='stackview' HREF='viewstack.php?uh=1&file=$goodavg'>$iteration[MsgPGoodClassAvg]</A></TD></TR>\n";
   }
   $html .= "</table></TD>";
   
-  $html .= "<TD><A TARGET='blank' 
-HR	EF='classinfo.php?refinement=$refinementData[DEF_id]&w=800&h=600'>$numclasses</A></TD>\n";
   
   $html .="<TD><table>";
   $html .= "<TR><TD ALIGN='CENTER'>"
@@ -197,7 +193,8 @@ HR	EF='classinfo.php?refinement=$refinementData[DEF_id]&w=800&h=600'>$numclasses
   $html .= "</table></TD>";
   
   $html .= "</TD>\n";
-  $html .= "<TD>$iteration[volumeDensity]</TD>\n";
+  $html .= "<TD>$iteration[volumeDensity]<br />\n";
+  $html .= "<A HREF='ampcor.php?expId=$expId&refinement=$refinementData[DEF_id]'><FONT CLASS='sf'>[post processing]</FONT></a></td>\n";
   $html .= "<TD>\n";
   foreach ($pngfiles as $snapshot) {
     if (eregi($iteration['volumeDensity'],$snapshot)) {

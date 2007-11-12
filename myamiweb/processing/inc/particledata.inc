@@ -1153,6 +1153,19 @@ class particledata {
 		return $r;
 	}
 
+	function getReconInfoFromRefinementId($refineid) {
+		$q="SELECT *"
+		."FROM "
+		."`ApRefinementData` AS `ApRefinementData` "
+		."LEFT JOIN `ApRefinementRunData` AS `ApRefinementRunData` "
+		."ON (`ApRefinementRunData`.`DEF_id`=`ApRefinementData`.`REF|ApRefinementRunData|refinementRun`) "
+		."LEFT JOIN `ApPathData` AS `ApPathData` "
+		."ON (`ApPathData`.`DEF_id`=`ApRefinementRunData`.`REF|ApPathData|path`) "
+		."WHERE `ApRefinementData`.`DEF_id`=$refineid ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+	
 	function insertEulerStats($stats) {
 		$mean = $stats->myMean;
 		$errors = $stats->myData;

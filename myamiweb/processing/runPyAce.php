@@ -148,7 +148,7 @@ function runPyAce() {
 	else echo "<TR><TD>reprocess</TD><TD><I>NULL</I></TD></TR>\n";
 	echo "<TR><TD>newnominal</TD><TD>$newnominal</TD></TR>\n";
 	echo "</TABLE>\n";
-	writeBottom();
+	writeBottom(True, True);
 }
 
 /*

@@ -308,9 +308,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 		</TD>
 	</TR>
 	</TABLE>
-	</TD>
-	</TR>
-	</TABLE>
+	<CENTER>
 	<B>Using Templates:</B>
 	<TABLE><TR>
 		<TD>\n";
@@ -320,13 +318,11 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	echo "<INPUT TYPE='hidden' NAME='numtemplates' VALUE='$numtemplates'>\n";
 	echo "$templateForm\n";
 	echo "$templateTable\n";
-	?>
+	echo "
 		</TD>
 	</TR></TABLE>
-
 	</CENTER>
-	</FORM>
-	<?
+	</FORM>\n";
 	writeBottom();
 }
 
@@ -418,7 +414,7 @@ function runTemplateCorrelator() {
 	appionLoopSummaryTable($_POST);
 	particleLoopSummaryTable($_POST);
 	echo"</TABLE>\n";
-	writeBottom();
+	writeBottom(True, True);
 }
 
 /*
