@@ -401,7 +401,7 @@ class viewer {
 		}
 		if ($this->addcommentbox) {
 			$display .= '<td>';
-			$display .='<div id="commentboxdiv" style="position:relative; border: 1px #696969 solid" >';
+			$display .='<div id="commentboxdiv" style="position:relative; border: 0px #696969 solid" >';
 			$display .= '
  <table border="0" cellpadding="3" >
   <tr valign="top" width=50>
