@@ -388,7 +388,7 @@ function runTemplateCorrelator() {
 			$ccclist[]=$cccimg;
 			$i++;
 		}
-		$images=writeTestResults($jpgimg,$ccclist);
+		$images=writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin']);
 		createTCForm($images,'Particle Selection Results','');
 		exit;
 	}
@@ -439,13 +439,10 @@ function templateCommand () {
 		$tmpltincr="template".$tmpltNum."incr";
 		// set the ranges specified
 		$rangenum="range".$i;
-		if ($_POST[$tmpltstrt]!=''){
+		if ($_POST[$tmpltstrt]!='' && $_POST[$tmpltstrt]!='0' && $_POST[$tmpltend]!='0' && $_POST[$tmpltincr]!='0')
 			$range=$_POST[$tmpltstrt].",".$_POST[$tmpltend].",".$_POST[$tmpltincr];
-		}
 		// if no rotation
-		else {
-			$range="0,10,20";
-		}
+		else $range="0,10,20";
 		$ranges[$rangenum]=$range;
 		$i++;
 	}
@@ -467,14 +464,15 @@ function templateCommand () {
 **
 */
 
-function writeTestResults($jpg,$ccclist){
+function writeTestResults($jpg,$ccclist,$bin){
 	echo"<CENTER>\n";
-	echo"<A HREF='loadimg.php?filename=$jpg&scale=0.8'>\n";
-	echo"<IMG SRC='loadimg.php?filename=$jpg&scale=0.35'></A>\n";
+	$sc = $bin*.09375;
+	echo"<A HREF='loadimg.php?filename=$jpg'>\n";
+	echo"<IMG SRC='loadimg.php?filename=$jpg&scale=$sc'></A>\n";
 	if (count($ccclist)>1) echo "<BR>\n";
 	foreach ($ccclist as $ccc){
-		echo"<A HREF='loadimg.php?filename=$ccc&scale=0.8'>\n";
-		echo"<IMG SRC='loadimg.php?filename=$ccc&scale=0.35'></A>\n";
+		echo"<A HREF='loadimg.php?filename=$ccc'>\n";
+		echo"<IMG SRC='loadimg.php?filename=$ccc&scale=$sc'></A>\n";
 	}
 	echo"</CENTER>\n";
 }
