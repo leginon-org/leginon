@@ -559,7 +559,7 @@ class view {
 		$this->displayinfoicon = true;
 		$this->displayparticleicon = false;
 		$this->displaydownloadicon = true;
-		$this->displaydeqicon = true;
+		$this->displaydeqicon = false;
 		$this->displaycloseicon = true;
 		$this->displayadjustlink = true;
 		$this->framecolor = ' class="bgcolor1" ';

@@ -38,6 +38,7 @@ foreach ($datatypes as $datatype) {
 	$name = "v$v";
 	$title= "View $v";
 	$view = new view($title, $name);
+	$view->displayDeqIcon(true);
 	$view->setDataTypes($datatypes);
 	$view->selectDataType($datatype);
 	$viewer->add($view);
