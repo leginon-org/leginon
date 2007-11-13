@@ -524,6 +524,6 @@ function runMakestack() {
 	<TR><TD>particle limit</TD><TD>$limit</TD></TR>
 	<TR><TD>spider</TD><TD>$fileformat</TD></TR>
 	</TABLE>\n";
-	writeBottom();
+	writeBottom(True,True);
 }
 ?>
