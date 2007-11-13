@@ -287,7 +287,7 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particle,$assessmentr
 					$tfound='TRUE';
 			}
 			if ($start =='first') $firstindx = $timgindx;
-			else $lastindx = $timgindx;
+			else $lastindx = $timgindx-1;
 	}
 		
 	// go directly to a particular image by number or filename
