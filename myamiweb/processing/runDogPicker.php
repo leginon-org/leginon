@@ -209,7 +209,6 @@ function runDogPicker() {
 		$prefix =  "source /ami/sw/ami.csh;";
 		$prefix .= "source /ami/sw/share/python/usepython.csh cvs32;";
 		$cmd = "$prefix webcaller.py '$command' dogPickerLog.txt";
-		echo $cmd;
 		$result=exec_over_ssh($host, $user, $password, $cmd, True);
 	}
 
