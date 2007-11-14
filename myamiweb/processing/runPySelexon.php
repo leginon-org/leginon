@@ -466,7 +466,8 @@ function templateCommand () {
 
 function writeTestResults($jpg,$ccclist,$bin){
 	echo"<CENTER>\n";
-	$sc = $bin*.09375;
+//	$sc = $bin*.09375;
+	$sc = $bin*.25;
 	echo"<A HREF='loadimg.php?filename=$jpg'>\n";
 	echo"<IMG SRC='loadimg.php?filename=$jpg&scale=$sc'></A>\n";
 	if (count($ccclist)>1) echo "<BR>\n";
