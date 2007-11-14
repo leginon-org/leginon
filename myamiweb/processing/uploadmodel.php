@@ -194,7 +194,6 @@ function runUploadModel() {
     $boxsize=$_POST['boxsize'];
     $origapix=$_POST['origapix'];
     if (!$boxsize) createUploadModelForm("<B>ERROR:</B> Enter the final box size of the model");
-    $scalefactor=$origapix/$apix;
   }
 
   if (!$model) createUploadModelForm("<B>ERROR:</B> Enter a root name of the model");
@@ -220,7 +219,7 @@ function runUploadModel() {
   if ($boxsize) $command.="boxsize=$boxsize ";
   if ($contour) $command.="contour=$contour ";
   if ($zoom) $command.="zoom=$zoom ";
-  if ($_POST['newmodel']) $command.="rescale=$_GET[modelid],$scalefactor ";
+  if ($_POST['newmodel']) $command.="rescale=$_GET[modelid],$apix ";
   $command.="description=\"$description\"";
   
   writeTop("UploadModel Run","UploadModel Params");
