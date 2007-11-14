@@ -64,6 +64,7 @@ class particledata {
 			."LEFT JOIN ApPathData AS path ON "
 			."(temp.`REF|ApPathData|path`=path.`DEF_id`) "
 			."WHERE `project|projects|project`='$projectId' "
+		        ."AND (temp.`hidden` IS NULL OR temp.`hidden` = 0) "
 			."ORDER BY temp.`DEF_id` DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;

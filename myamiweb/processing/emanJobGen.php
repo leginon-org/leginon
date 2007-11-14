@@ -133,7 +133,7 @@ elseif ($_POST['submitjob']) {
   $subjobs = checkClusterJobs($user,$pass);
   if ($subjobs) {echo "<PRE>$subjobs</PRE>\n";}
   else {echo "<FONT COLOR='RED'>No Jobs on the cluster, check your settings</FONT>\n";}
-  writeBottom();
+  writeBottom(True, True);
   exit;
 }
 

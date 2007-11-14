@@ -43,14 +43,15 @@ $particle = new particledata();
 $stackIds = $particle->getStackIds($sessionId);
 foreach ($stackIds as $stackid) {
 	$s=$particle->getStackParams($stackid[stackid]);
+	# get list of stack parameters from database
+	$nump=commafy($particle->getNumStackParticles($stackid[stackid]));
+	if ($nump == 0) continue;
 	echo divtitle("STACK: <font class='aptitle'>".$s['stackRunName']
 		."</font> (ID: <font>"
 		."<a class='aptitle' href='stackreport.php?sId="
 		.$stackid[stackid]."'>".$stackid[stackid]."</a>"
 		."</font>)");
 	echo "<table border='0'>\n";
-	# get list of stack parameters from database
-	$nump=commafy($particle->getNumStackParticles($stackid[stackid]));
 	# get pixel size of stack
 	$mpix=($particle->getStackPixelSizeFromStackId($stackid[stackid]));
 	$apix=format_angstrom_number($mpix)."/pixel";

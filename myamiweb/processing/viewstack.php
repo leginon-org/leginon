@@ -120,7 +120,7 @@ quality: <select id="quality">
 	</select>
 <input id="loadbutton" type="button" alt="Load" value="Load" onclick="load();"> <br />
 <?
-if ($stackId) echo "Upload as Template:<input id='templateId' type='text' alt='Upload' value='' size='5'>
+if ($stackId || $norefId) echo "Upload as Template:<input id='templateId' type='text' alt='Upload' value='' size='5'>
         <input id='uploadbutton' type='button' alt='upload' value='upload' onclick='upload();'>
         <br />\n";
 
