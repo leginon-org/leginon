@@ -342,7 +342,7 @@ function runMaskMaker() {
 			exit;
 		}
 		$prefix = "source /ami/sw/ami.csh;";
-		$prefix.= "source /ami/sw/share/python/usepython.csh cvs32;"
+		$prefix.= "source /ami/sw/share/python/usepython.csh cvs32;";
 		$cmd = "$prefix webcaller.py '$command' maskMakerLog.txt";
 		$result=exec_over_ssh($host, $user, $password, $cmd, True);
 	}
