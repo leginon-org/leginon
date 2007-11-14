@@ -185,8 +185,8 @@ foreach ($iterations as $iteration){
   
   $html .="<TD><table>";
   $html .= "<TR><TD ALIGN='CENTER'>"
-                ."<A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&subset=good'>[$prtlsused good]</A><BR/>"
-		."<A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&subset=bad'>[$badprtls bad]</A>"
+                ."<A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=good'>[$prtlsused good]</A><BR/>"
+		."<A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=bad'>[$badprtls bad]</A>"
 		."</TD></TR>\n";
   if ($refinerun['package']=='EMAN/MsgP') 
     $html .= "<TR><TD>$goodprtlsused MsgP<BR><A TARGET='stackview' HREF='msgpbadprtls.php?refinement=$refinementData[DEF_id]'>[$msgpbadprtls bad]</A></TD></TR>\n";
