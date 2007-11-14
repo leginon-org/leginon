@@ -74,6 +74,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   $prtlruns = count($prtlrunIds);
   $defrunid = ($_POST['runid']) ? $_POST['runid'] : 'manrun'.($prtlruns+1);
   $presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
+  $prtlrunval = ($_POST['pickrunid']) ? $_POST['pickrunid'] : '';
   $testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
   $testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
   $testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
