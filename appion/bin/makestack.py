@@ -248,7 +248,8 @@ def checkInspectDB(imgdata):
 
 def checkPairInspectDB(imgdata,params):
 	aq=appionData.ApAssessmentData()
-	sibimagedata = db.direct_query(leginondata.AcquisitionImageData,params['sibpairs'][imgdata.dbid])
+	#sibimagedata = db.direct_query(leginondata.AcquisitionImageData,params['sibpairs'][imgdata.dbid])
+	sibimagedata = apDefocalPairs.getDefocusPair(imgdata)
 	aq['image']=sibimagedata
 	adata=apdb.query(aq)	
 
@@ -835,7 +836,7 @@ if __name__ == '__main__':
 
 		# get pixel size
 		params['apix'] = apDatabase.getPixelSize(imgdict)
-		
+
 		# box the particles
 		totptcls += batchBox(params,imgdict)
 		
@@ -867,7 +868,6 @@ if __name__ == '__main__':
 		tmpboxfile = os.path.join(params['outdir'], "temporaryParticlesFromDB.box")
 		if os.path.isfile(tmpboxfile):
 			os.remove(tmpboxfile)
-
 	getStackId(params)
 	
 	print "Done!"
