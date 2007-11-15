@@ -1,7 +1,7 @@
 #Part of the new pyappion
 
 #pythonlib
-import os
+import os, pdb
 import re
 import sys
 import math
@@ -13,6 +13,8 @@ import apDisplay
 import apDB
 import apCtf
 import apImage
+import apDatabase
+
 try:
 	import pymat
 except:
@@ -99,26 +101,21 @@ def runAceDrift(matlab,imgdict,params):
 	pymat.eval(matlab,acecommand)
 
 def runAceCorrect(imgdict,params):
-#def runAceCorrect(matlab,imgdict,params):
 	imgname = imgdict['filename']
 	imgpath = os.path.join(imgdict['session']['image path'], imgname+'.mrc')
 	
-	#matname=imgname+'.mrc.mat'
-	#matfile=os.path.join(params['matdir'],matname)
-	#print "Ctf params obtained from " + matfile
-
-	print "Sunita you need to use the function: apCtf.getBestCtfValueForImage"
+	voltage = (imgdict['scope']['high tension'])
+	apix    = apDatabase.getPixelSize(imgdict)
+	
 	ctfvalues, conf = apCtf.getBestCtfValueForImage(imgdict)
-
-	print "heres what the data looks like"
-	import pprint
-	pprint.pprint(ctfvalues)
 
 	ctdimname = imgname
 	ctdimpath = os.path.join(params['outdir'],ctdimname)
 	print "Corrected Image written to " + ctdimpath
-
-	acecorrectcommand=("ctfcorrect('%s','%s','%s', '%s');" % (imgpath, matfile, ctdimpath, imgname))
+	
+	acecorrectcommand=("ctfcorrect('%s', '%s', '%f', '%f', '%f', '%f', '%f');" % \
+		(imgpath, ctdimpath, ctfvalues['defocus1'], ctfvalues['defocus2'], ctfvalues['angle_astigmatism'], voltage, apix))
+	print acecorrectcommand
 	try:
 		matlab = pymat.open()
 	except:
