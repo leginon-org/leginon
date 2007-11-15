@@ -78,6 +78,12 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	      document.viewerform.ace.value='0.8';
 	    }
 	  }
+          function uncheckstig(){
+            document.viewerform.stig.checked=false;
+          }
+          function uncheckflip(){
+            document.viewerform.phaseflip.checked=false;
+          }
 	  function enableselex(){
 	    if (document.viewerform.selexcheck.checked){
 	      document.viewerform.selexonmin.disabled=false;
@@ -118,14 +124,16 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	$prtlrunval = $_POST['prtlrunId'];
 	$massessval = $_POST['massessname'];
-	$phasecheck = ($_POST['phaseflip']=='off') ? '' : 'CHECKED'; 		 
+	// set phaseflip on by default
+	$phasecheck = ($_POST['phaseflip']=='on' || !$_POST['process']) ? 'CHECKED' : ''; 		 
+	$stigcheck = ($_POST['stig']=='on') ? 'CHECKED' : ''; 		 
 	$inspectcheck = ($_POST['inspected']=='off') ? '' : 'CHECKED';
 	$commitcheck = ($_POST['commit']=='on') ? 'CHECKED' : '';
 	$boxszval = $_POST['boxsize'];
 	$binval = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$plimit = $_POST['plimit'];
-	$lpval = ($_POST['lp']) ? $_POST['lp'] : '5';
-	$hpval = ($_POST['hp']) ? $_POST['hp'] : '600';
+	$lpval = ($_POST['lp']) ? $_POST['lp'] : '';
+	$hpval = ($_POST['hp']) ? $_POST['hp'] : '';
 	// ice check params
 	$iceval = ($_POST['icecheck']=='on') ? $_POST['ice'] : '0.8';
 	$icecheck = ($_POST['icecheck']=='on') ? 'CHECKED' : '';
@@ -245,7 +253,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		<TD>
 		<INPUT TYPE='checkbox' NAME='normalize' $normcheck>
 		Normalize Stack Particles<BR>\n";
-	if ($ctfdata) echo"<INPUT TYPE='checkbox' NAME='phaseflip' $phasecheck>\nPhaseflip Images<BR>";
+	if ($ctfdata) {
+	  echo"<INPUT TYPE='checkbox' NAME='phaseflip' onclick='uncheckstig(this)' $phasecheck>\nPhaseflip Particle Images<BR>";
+	  echo"<INPUT TYPE='checkbox' NAME='stig' onclick='uncheckflip(this)' $stigcheck>\nPhaseflip Micrograph Images<BR>";
+	}
 	echo"
 		<INPUT TYPE='checkbox' NAME='inspected' $inspectcheck>
 		Use Inspected Images<BR>
@@ -405,6 +416,7 @@ function runMakestack() {
 	$invert = ($_POST['density']=='invert') ? '' : 'noinvert';
 	$normalize = ($_POST['normalize']=='on') ? '' : 'nonorm';
 	$phaseflip = ($_POST['phaseflip']=='on') ? 'phaseflip' : '';
+	$stig = ($_POST['stig']=='on') ? 'stig' : '';
 	$inspected = ($_POST['inspected']=='on') ? 'inspected' : '';
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
@@ -473,6 +485,7 @@ function runMakestack() {
 	if ($invert) $command.="noinvert ";
 	if ($normalize) $command.="nonorm ";
 	if ($phaseflip) $command.="phaseflip ";
+	if ($stig) $command.="stig ";
 	if ($inspected) $command.="inspected ";
 	if ($massessname) $command.="maskassess=$massessname ";
 	if ($commit) $command.="commit ";
@@ -511,6 +524,7 @@ function runMakestack() {
 	<TR><TD>invert</TD><TD>$invert</TD></TR>
 	<TR><TD>nonorm</TD><TD>$nonorm</TD></TR>
 	<TR><TD>phaseflip</TD><TD>$phaseflip</TD></TR>
+	<TR><TD>stig</TD><TD>$stig</TD></TR>
 	<TR><TD>inspected</TD><TD>$inspected</TD></TR>
 	<TR><TD>mask assessment</TD><TD>$massessname</TD></TR>
 	<TR><TD>commit</TD><TD>$commit</TD></TR>
