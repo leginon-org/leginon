@@ -112,12 +112,13 @@ def runAceCorrect(imgdict,params):
 	ctdimname = imgname
 	ctdimpath = os.path.join(params['outdir'],ctdimname)
 	print "Corrected Image written to " + ctdimpath
-	
-	acecorrectcommand=("ctfcorrect('%s', '%s', '%f', '%f', '%f', '%f', '%f');" % \
+
+	#pdb.set_trace()	
+	acecorrectcommand=("ctfcorrect1('%s', '%s', '%.32f', '%.32f', '%f', '%f', '%f');" % \
 		(imgpath, ctdimpath, ctfvalues['defocus1'], ctfvalues['defocus2'], ctfvalues['angle_astigmatism'], voltage, apix))
 	print acecorrectcommand
 	try:
-		matlab = pymat.open()
+		matlab = pymat.open("matlab -nosplash")
 	except:
 		apDisplay.environmentError()
 		raise
