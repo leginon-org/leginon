@@ -80,7 +80,7 @@ function checkJobs($showjobs=False,$extra=False) {
     $display_keys['cluster path'] = $jobinfo['clusterpath'];
 
     // find if job has been uploaded
-    $recon = $particle->getReconIdFromClusterJobId($job['DEF_id']);
+    if ($particle->getReconIdFromClusterJobId($job['DEF_id'])) continue;
 
     // get stack id for job from job file
     $jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
@@ -92,8 +92,7 @@ function checkJobs($showjobs=False,$extra=False) {
     $numinstack = $particle->getNumStackParticles($stackid);
 
     $dlbuttons = '';
-    if ($recon) $status="<A HREF='reconreport.php?reconId=$recon[DEF_id]'>Uploaded</A>\n";
-    elseif ($jobinfo['status']=='Q') $status='Queued';
+    if ($jobinfo['status']=='Q') $status='Queued';
     elseif ($jobinfo['status']=='R') $status='Running';
     elseif ($jobinfo['status']=='D') {
       $dlbuttons = "<INPUT TYPE='BUTTON' onclick=\"displayDMF('$jobinfo[dmfpath]','$jobinfo[appath]')\" VALUE='get from DMF'> \n";
