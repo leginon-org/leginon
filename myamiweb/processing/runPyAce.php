@@ -163,6 +163,7 @@ function runPyAce() {
 
 // CREATE FORM PAGE
 function createPyAceForm($extra=false) {
+	global $defaultcs;
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
 	if ($expId) {
