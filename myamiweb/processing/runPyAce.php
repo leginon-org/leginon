@@ -17,6 +17,8 @@ require "inc/appionloop.inc";
 require "inc/ctf.inc";
 //require "inc/ssh.inc";
 
+$defaultcs="2.0";
+
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
 	runPyAce();
@@ -303,7 +305,7 @@ function createPyAceForm($extra=false) {
 	    <INPUT TYPE='text' NAME='fieldsize' VALUE='512' size='4'>
 	    <A HREF=\"javascript:infopopup('field')\">Field Size</A><br/>
 
-	    <INPUT TYPE='text' NAME='cs' VALUE='2.0' SIZE='4'>
+	    <INPUT TYPE='text' NAME='cs' VALUE='".$defaultcs."' SIZE='4'>
 	    Spherical Aberration<br/>
 
 	    <INPUT TYPE='checkbox' NAME='drange'>
