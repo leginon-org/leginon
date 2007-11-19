@@ -113,12 +113,19 @@ function checkJobs($showjobs=False,$extra=False) {
       $stat = checkJobStatus($jobinfo['clusterpath'],$jobinfo['name'],$user,$pass);
       if (!empty($stat)) {
 	$current=0;
-	foreach ($stat['refinelog'] as $i){
+	for ($i=0; $i<count($stat['refinelog']); $i++) {
 	  // get last refine line
-	  if ($i[0]=='refine' && preg_match('/\d+/',$i[1])) {
+	  if ($stat['refinelog'][$i][0]=='refine' && preg_match('/\d+/',$stat['refinelog'][$i][1])) {
 	    $current++;
 	    $lastindx = $i;
-	  }
+	    $start=getlogdate($stat['refinelog'][$i-1]);
+	    // find out how long last iteration took:
+	    if ($laststart) {
+	      $len=getduration($laststart['timestamp'],$start['timestamp']);
+	      echo "<B>Iteration ".($current-1)." finished in $len</B><BR>\n";
+	    }
+	    $laststart = $start;
+	  }	  
 	}
 	$numtot=count($stat['allref']);
 	echo "<font class='aptitle'>Processing iteration $current of $numtot</font>\n";
@@ -129,8 +136,7 @@ function checkJobs($showjobs=False,$extra=False) {
 	echo "</tr>\n";
 	// get key corresponding to where the last refinement run starts
 	if (is_array($stat['refinelog'])) {
-	  $lastkey = array_search($lastindx, $stat['refinelog']);
-	  for ($i=$lastkey; $i<count($stat['refinelog']); $i++) {
+	  for ($i=$lastindx; $i<count($stat['refinelog']); $i++) {
 
 	    if ($stat['refinelog'][$i][0] == 'project3d') {
 	      $t = getlogdate($stat['refinelog'][$i]);
