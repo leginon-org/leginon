@@ -110,6 +110,7 @@ function checkJobs($showjobs=False,$extra=False) {
     echo "</TABLE>\n";
 
     if ($showjobs && $status=='Running') {
+      $previters=array();
       $stat = checkJobStatus($jobinfo['clusterpath'],$jobinfo['name'],$user,$pass);
       if (!empty($stat)) {
 	$current=0;
@@ -122,11 +123,20 @@ function checkJobs($showjobs=False,$extra=False) {
 	    // find out how long last iteration took:
 	    if ($laststart) {
 	      $len=getduration($laststart['timestamp'],$start['timestamp']);
-	      echo "<B>Iteration ".($current-1)." finished in $len</B><BR>\n";
+	      $previters[$current-1]="<B>Iteration ".($current-1)." finished in $len</B>";
 	    }
 	    $laststart = $start;
 	  }	  
+	  // get final resolutions of previous iterations
+	  elseif($stat['refinelog'][$i][0]=='RESOLUTIONS') {
+	    for ($j=$i+1;$j<count($stat['refinelog']);$j++) {
+	      $iternum = ereg_replace(':','', $stat['refinelog'][$j][1]);
+	      $iterres = $stat['refinelog'][$j][2];
+	      $previters[$iternum].=", resolution: $iterres";
+	    }
+	  }
 	}
+	foreach ($previters as $previter) echo "$previter <br />\n";
 	$numtot=count($stat['allref']);
 	echo "<font class='aptitle'>Processing iteration $current of $numtot</font>\n";
 	echo "<table class='tableborder' border='1' cellpadding='5' cellspacing='0'><tr>\n";
@@ -238,7 +248,7 @@ function checkJobStatus($jobpath,$jobfile,$user,$pass) {
   foreach ($allref as $i){
     if ($i[0]=='refine' && preg_match('/\d+/',$i[1])) $stat['allref'][]=$i;
   }
-  $cmd = "cat $jobpath/recon/refine.log";
+  $cmd = "cat $jobpath/recon/refine.log;echo 'RESOLUTIONS';cat $jobpath/recon/resolution.txt";
   $r = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
   $curref = streamToArray($r);
   $stat['refinelog']=$curref;
