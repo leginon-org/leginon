@@ -1,24 +1,30 @@
 #!/usr/bin/python -O
 
+#system
 import sys
-import wx
 import re
 import os
-import math
-import numpy
-import pyami
-import Image
 import time
+import math
 import cPickle
+from optparse import OptionParser
+#wxPython
+import wx
+#numpy/scipy
+import numpy
+from scipy import ndimage, optimize
+#PIL
+import Image
+#local install
+import pyami
 import apSpider
 import apXml
 from gui.wx import TargetPanel, ImagePanelTools
-from scipy import ndimage, optimize
 from apTilt import tiltDialog
 from apTilt import apTiltTransform
+import apImage
 import apDisplay
-from optparse import OptionParser
-
+import apParam
 
 class TiltTargetPanel(TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True, name=None):
@@ -52,7 +58,10 @@ class TiltTargetPanel(TargetPanel.TargetImagePanel):
 			image = pyami.mrc.read(filename)
 			self.setImage(image.astype(numpy.float32))
 		else:
-			self.setImage(Image.open(filename))
+			image = Image.open(filename)
+			array = apImage.imageToArray(image)
+			array = array.astype(numpy.float32)
+			self.setImage(array)
 
 #---------------------------------------
 class PickerApp(wx.App):
@@ -954,23 +963,15 @@ if __name__ == '__main__':
 	parser.add_option("-A", "--align-shape-size", dest="ashapesize",
 		help="Algined particles shape size", metavar="INT", 
 		type="int", default=16 )
-	parser.disable_interspersed_args()
-	(options, args) = parser.parse_args()
-
-	print options
-	if len(sys.argv) < 3:
-		mystr = "\nUsage:\n  ApTiltPicker.py image1.mrc image2.mrc [picksfile.txt]\n"
-		print mystr
-		#apDisplay.printColor(mystr,"red")
-		sys.exit(1)
+	params = apParam.convertParserToParams(parser)
 
 	app = PickerApp(
-		pickshape=options.pickshape, alignshape=options.alignshape,
-		pshapesize=options.pshapesize, ashapesize=options.ashapesize,
+		pickshape=params['pickshape'], alignshape=params['alignshape'],
+		pshapesize=params['pshapesize'], ashapesize=params['ashapesize'],
 	)
-	app.openLeftImage(options.img1file)
-	app.openRightImage(options.img2file)
-	app.openPicks(options.pickfile)
+	app.openLeftImage(params['img1file'])
+	app.openRightImage(params['img2file'])
+	app.openPicks(params['pickfile'])
 
 	app.MainLoop()
 
