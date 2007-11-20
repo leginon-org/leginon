@@ -16,6 +16,12 @@ import apCtf
 import apParam
 
 class ctfTiltLoop(appionLoop.AppionLoop):
+	"""
+	appion Loop function that 
+	runs Nico's CTFTILT program
+	to estimate the CTF in tilted images
+	"""
+
 	def setProcessingDirName(self):
 		self.processdirname = "ctftilt"
 
