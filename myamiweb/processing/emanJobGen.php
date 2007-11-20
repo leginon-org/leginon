@@ -803,7 +803,7 @@ function writeJavaPopupFunctions () {
     } else if (infoname=='shrink') {
       newwindow.document.write('<I>Experimental</I>, shrinks images at several points for faster runs');
     } else if (infoname=='median') {
-      newwindow.document.write('Specify this when CTF correction is NOT being performed');
+      newwindow.document.write('When creating class averages, use the median value for each pixel instead of the average.  If your dataset is noisy, this is recommended');
     } else if (infoname=='phasecls') {
       newwindow.document.write('Uses weighted mean phase error for classification (<I>experimental</I>)');
     } else if (infoname=='refine') {
