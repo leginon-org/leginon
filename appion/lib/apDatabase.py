@@ -140,8 +140,8 @@ def getPixelSize(imgdict):
 	shouldn't have to lookup db already should exist in imgdict
 	"""
 	pixelsizeq=leginondata.PixelSizeCalibrationData()
-	pixelsizeq['magnification']=imgdict['scope']['magnification']
-	pixelsizeq['tem']=imgdict['scope']['tem']
+	pixelsizeq['magnification'] = imgdict['scope']['magnification']
+	pixelsizeq['tem'] = imgdict['scope']['tem']
 	pixelsizeq['ccdcamera'] = imgdict['camera']['ccdcamera']
 	pixelsizedata=leginondb.query(pixelsizeq, results=1)
 	binning=imgdict['camera']['binning']['x']
