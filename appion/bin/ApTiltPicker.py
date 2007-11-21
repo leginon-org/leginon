@@ -187,6 +187,7 @@ class PickerApp(wx.App):
 
 		self.buttonrow.Add((40,10), 0, wx.ALL, 1)
 
+		"""
 		self.load = wx.Button(self.frame, wx.ID_OPEN, '&Open')
 		self.frame.Bind(wx.EVT_BUTTON, self.onFileOpen, self.load)
 		self.buttonrow.Add(self.load, 0, wx.ALL, 1)
@@ -198,11 +199,12 @@ class PickerApp(wx.App):
 		self.saveas = wx.Button(self.frame, wx.ID_SAVEAS, 'Sa&ve As...')
 		self.frame.Bind(wx.EVT_BUTTON, self.onFileSaveAs, self.saveas)
 		self.buttonrow.Add(self.saveas, 0, wx.ALL, 1)
+		"""
 
 		self.quit = wx.Button(self.frame, wx.ID_EXIT, '&Quit')
 		self.frame.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
 		self.buttonrow.Add(self.quit, 0, wx.ALL, 1)
-
+		
 		return
 
 	#---------------------------------------
