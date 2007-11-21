@@ -620,6 +620,10 @@ def insertStackRun(params):
 	params['stackId']=stackq
 
 	runids = apdb.query(runq, results=1)
+	# recreate a stackRun object
+	runq = appionData.ApStackRunData()
+	runq['stackRunName'] = params['runid']
+	runq['session'] = params['sessionid']
 	if goodplist:
 		runq['stackParams'] = goodplist
 	else:
@@ -649,7 +653,6 @@ def insertStackRun(params):
 			apDisplay.printError("Stack description is not the same!")
 		# make sure the the run is the same:
 		rinstack = apdb.query(rinstackq, results=1)
-		print rinstack
 		
 		## if no runinstack found, find out which parameters are wrong:
 		if not rinstack:
