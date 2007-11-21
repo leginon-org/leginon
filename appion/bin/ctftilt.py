@@ -96,8 +96,8 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 			+os.path.join(self.params['rundir'], "powerspectra", inputparams['output'])+"\n")
 
 		apDisplay.printColor(cmd, "purple")
-		#sys.exit(1)
-		time.sleep(2.0)
+		time.sleep(1.0)
+		sys.exit(1)
 		"""
 		time ./ctffind3.exe << eof
 		micrograph.mrc
