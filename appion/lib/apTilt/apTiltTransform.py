@@ -164,11 +164,11 @@ def maskOverlapRegion(image1, image2, data):
 		image2 = ndimage.median_filter(image2, size=2)
 		#SET IMAGE LIMITS
 		gap = int(image1.shape[0]/256.0)
-		xm = image1.shape[0]+gap
-		ym = image1.shape[1]+gap
+		xm = image1.shape[1]+gap
+		ym = image1.shape[0]+gap
 		a1 = numpy.array([ data['point1'], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
-		xm = image2.shape[0]+gap
-		ym = image2.shape[1]+gap
+		xm = image2.shape[1]+gap
+		ym = image2.shape[0]+gap
 		a2 = numpy.array([ data['point2'], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
 		#CALCULATE TRANSFORM LIMITS
 		a2mask = a1Toa2Data(a1, data)
