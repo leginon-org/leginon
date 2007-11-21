@@ -25,6 +25,9 @@ if ($_POST['run']) {
 	$file=$_POST['file'];
 	$path=$_POST['path'];
 	$apix=$_POST['apix'];
+	$norm=$_POST['norm'];
+	$mask=$_POST['mask'];
+	$imask=$_POST['imask'];
 	$densitypath=$path."/".$file;
 	// make sure that an amplitude curve was selected
 	if (!$ampcor) createform('<B>ERROR:</B> Select an amplitude adjustment curve');
@@ -32,11 +35,14 @@ if ($_POST['run']) {
 
 	$command = "postProc.py ";
 	$command.= "-f $densitypath ";
-	$command.= "--amp=$ampfile ";
-	$command.= "--maxres=$res ";
+	$command.= "--amp=/ami/sw/packages/pyappion/lib/$ampfile ";
+	$command.= "--maxfilt=$res ";
 	$command.= "--apix=$apix ";
 	$command.= "--outdir=$path ";
+	if ($mask) $command.="--mask=$mask ";
+	if ($imask) $command.="--imask=$imask ";
 	if ($lp) $command.="--lp=$lp ";
+	if ($norm=='on') $command.="--norm ";
 	if ($yflip=='on') $command.="--yflip ";
 	if ($invert=='on') $command.="--invert ";
 	if ($viper=='on') $command.="--viper ";
@@ -51,7 +57,10 @@ if ($_POST['run']) {
 	</td></tr>
         <tr><td>file</td><td>$densitypath</td></tr>
         <tr><td>ampcor curve</td><td>$ampfile</td></tr>
-        <tr><td>max res</td><td>$res</td></tr>
+        <tr><td>max filt</td><td>$res</td></tr>
+        <tr><td>mask</td><td>$mask</td></tr>
+        <tr><td>imask</td><td>$imask</td></tr>
+        <tr><td>norm</td><td>$norm</td></tr>
         <tr><td>apix</td><td>$apix</td></tr>
         <tr><td>outdir</td><td>$path</td></tr>
         <tr><td>lp</td><td>$lp</td></tr>
@@ -91,9 +100,12 @@ function createform($extra=False) {
 	$amplist = array();
 
 	$lpval=($_POST['lp']) ? $_POST['lp'] : '';
+	$maskval=($_POST['mask']) ? $_POST['mask'] : '';
+	$imaskval=($_POST['imask']) ? $_POST['imask'] : '';
 	$yflipcheck=($_POST['yflip']=='on') ? 'checked' : '';
 	$invertcheck=($_POST['invert']=='on') ? 'checked' : '';
 	$vipercheck=($_POST['viper']=='on') ? 'checked' : '';
+	$normcheck=($_POST['norm']=='on' || !$_POST['run']) ? 'checked' : '';
 
 	// manually create list of the amplitude adjustment files
 	$amplist[0]['name']="ampcor5.spi";
@@ -117,15 +129,21 @@ function createform($extra=False) {
 	echo "<HR>\n";
 	echo "<FORM NAME='postproc' METHOD='POST' ACTION='$formAction'>\n";
 	echo "<center><INPUT type='submit' name='run' value='Perform amplitude adjustment'></center>\n";
-	echo "<table class='1' border='1' cellpadding='5'>\n";
+	echo "<P>\n";
+	echo "<table class='tableborder' border='1' cellpadding='5'>\n";
 	echo "<tr><td>\n";
 	echo "Low-pass filter results to: \n";
 	echo "<input type='text' name='lp' size='3' value='$lpval'> &Aring;/pixel<br />\n";
+	echo "Radius of outer mask: \n";
+	echo "<input type='text' name='mask' size='4' value='$maskval'> &Aring;ngstroms<br />\n";
+	echo "Radius of inner mask: \n";
+	echo "<input type='text' name='imask' size='4' value='$imaskval'> &Aring;ngstroms<br />\n";
 	echo "<input type='checkbox' name='yflip' $yflipcheck>Flip handedness of density<br />\n";
 	echo "<input type='checkbox' name='invert' $invertcheck>Invert the magnitude of the density<br />\n";
 	if ($init['REF|ApSymmetryData|symmetry']< 3) {
 	  echo "<input type='checkbox' name='viper' $vipercheck>Rotate density from EMAN to Viper orientation<br />\n";
 	}
+	echo "<input type='checkbox' name='norm' $normcheck>Normalize the resulting density<br />\n";
 	echo "</td></tr>\n";
 	echo "</table>\n";
 	echo "<P>\n";
