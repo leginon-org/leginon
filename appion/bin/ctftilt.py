@@ -68,9 +68,9 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 			'box':     self.params['fieldsize'],
 			'resmin':  200.0,
 			'resmax':  8.0,		
-			'defmin':  round(defocus*0.5, 1),
-			'defmax':  round(defocus*2.0, 1),
-			'defstep': round(defocus*1.5/64.0, 1),
+			'defmin':  round(defocus*0.9, 1),
+			'defmax':  round(defocus*1.1, 1),
+			'defstep': round(defocus*0.2/32.0, 1),
 		}
 		t0 = time.time()
 		cmd = "ln -s "+inputparams['orig']+" "+inputparams['input']+"\n"
@@ -96,7 +96,8 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 			+os.path.join(self.params['rundir'], "powerspectra", inputparams['output'])+"\n")
 
 		apDisplay.printColor(cmd, "purple")
-		sys.exit(1)
+		#sys.exit(1)
+		time.sleep(2.0)
 		"""
 		time ./ctffind3.exe << eof
 		micrograph.mrc
