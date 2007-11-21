@@ -28,6 +28,10 @@ def parseCommandLine():
 		help="Density pixel size in Angstroms per pixel", metavar="FLOAT")
 	parser.add_option("--lp", dest="lp", type="float",
 		help="Low pass filter value (in Angstroms)", metavar="FLOAT")
+	parser.add_option("--mask", dest="mask", type="float",
+		help="Radius of outer mask (in Angstroms)", metavar="FLOAT")
+	parser.add_option("--imask", dest="imask", type="float",
+		help="Radius of inner mask (in Angstroms)", metavar="FLOAT")
 	parser.add_option("--maxfilt", dest="maxfilt", type="float",
 		help="filter limit to which data will adjusted (in Angstroms)", metavar="FLOAT")
 	parser.add_option("-o", "--outdir", dest="outdir",
@@ -38,6 +42,8 @@ def parseCommandLine():
 		action="store_true", help="Invert the density values")
 	parser.add_option("--viper", dest="viper", default=False,
 		action="store_true", help="Rotate icosahedral densities from Eman orientation to Viper orientation")
+	parser.add_option("--norm", dest="norm", default=False,
+		action="store_true", help="Normalize the final density such that mean=0, sigma=1")
 	# no commit params yet
 #	parser.add_option("--commit", dest="commit", default=True,
 #		action="store_true", help="Commit template to database")
@@ -83,7 +89,7 @@ if __name__ == '__main__':
 	#run amplitude correction
 	if params['ampfile'] is not None:
 		params['box'] = apVolume.getModelDimensions(params['file'])
-		spifile = apVolume.MRCtoSPI(params['file'])
+		spifile = apVolume.MRCtoSPI(params['file'],params['outdir'])
 		tmpfile = apVolume.createAmpcorBatchFile(spifile,params)
 		apVolume.runAmpcor()
 
@@ -110,6 +116,22 @@ if __name__ == '__main__':
 	if params['viper'] is True:
 		outfile+=".vip"
 		emancmd +="icos5fTo2f "
+		
+	if params['mask'] is not None:
+		# convert ang to pixels
+		maskpix=int(params['mask']/params['apix'])
+		outfile+=".mask"
+		emancmd +="mask=%s " %maskpix
+
+	if params['imask'] is not None:
+		# convert ang to pixels
+		maskpix=int(params['imask']/params['apix'])
+		outfile+=".imask"
+		emancmd +="imask=%s " %maskpix
+		
+	if params['norm'] is True:
+		outfile+=".norm"
+		emancmd +="norm "
 		
 	#add output filename to emancmd string
 	outfile+=".mrc"

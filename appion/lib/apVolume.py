@@ -53,9 +53,10 @@ def rescaleModel(infile,outfile,inapix,outapix,newbox=None):
 	emancmd += "clip=%i,%i,%i edgenorm" % (newbox, newbox, newbox)
 	apEMAN.executeEmanCmd(emancmd, verbose=True)
 
-def MRCtoSPI(infile):
+def MRCtoSPI(infile,outdir):
 	# convert file to spider file
 	tmpspifile = randomfilename(8)+".spi"
+	tmpspifile=os.path.join(outdir,tmpspifile)
 	emancmd = "proc3d %s %s spidersingle" %(infile,tmpspifile)
 	apEMAN.executeEmanCmd(emancmd, verbose=True)
 	return tmpspifile
@@ -67,7 +68,8 @@ def createAmpcorBatchFile(infile,params):
 	inf = open(scriptfile, "r")
 
 	tmpfile="out"+randomfilename(8)+".spi"
-
+	tmpfile=os.path.join(params['outdir'],tmpfile)
+	
 	outfile = "enhance_edit.bat"
 	if os.path.isfile(outfile):
 		apDisplay.printWarning(outfile+" already exists; removing it")
