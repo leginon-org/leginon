@@ -194,7 +194,7 @@ foreach ($iterations as $iteration){
   
   $html .= "</TD>\n";
   $html .= "<TD>$iteration[volumeDensity]<br />\n";
-  $html .= "<A HREF='ampcor.php?expId=$expId&refinement=$refinementData[DEF_id]'><FONT CLASS='sf'>[post processing]</FONT></a></td>\n";
+  $html .= "<A HREF='postproc.php?expId=$expId&refinement=$refinementData[DEF_id]'><FONT CLASS='sf'>[post processing]</FONT></a></td>\n";
   $html .= "<TD>\n";
   foreach ($pngfiles as $snapshot) {
     if (eregi($iteration['volumeDensity'],$snapshot)) {
