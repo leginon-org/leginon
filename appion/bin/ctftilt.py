@@ -26,9 +26,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 		self.processdirname = "ctftilt"
 
 	def preLoopFunctions(self):
-		if self.params['tempdir'] is None:
-			self.params['tempdir'] = os.path.join(self.params['rundir'],"temp")
-		apCtf.mkTempDir(self.params['tempdir'])
+		return
 
 	def postLoopFunctions(self):
 		apCtf.printCtfSummary(self.params)
@@ -52,11 +50,101 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 			return True
 
 	def processImage(self, imgdata):
-		scopeparams = {
-			'kv':      imgdata['scope']['high tension']/1000,
-			'apix':    apDatabase.getPixelSize(imgdata),
+		#get Defocus in Angstroms
+		defocus = imgdata['scope']['defocus']*-1.0e10
+
+		inputparams = {
+			'orig':    os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc"),
+			'input':   apDisplay.short(imgdata['filename'])+".mrc",
+			'output':  apDisplay.short(imgdata['filename'])+"-pow.mrc",
+
 			'cs':      self.params['cs'],
+			'kv':      imgdata['scope']['high tension']/1000.0,
+			'ampcnst': self.params['ampcnst '+self.params['medium']],
+			'mag':     imgdata['scope']['magnification'],
+			'dstep':   apDatabase.getPixelSize(imgdata)*imgdata['scope']['magnification']/10000.0,
+			'pixavg':  self.params['pixavg'],
+
+			'box':     self.params['fieldsize'],
+			'resmin':  200.0,
+			'resmax':  8.0,		
+			'defmin':  round(defocus*0.5, 1),
+			'defmax':  round(defocus*2.0, 1),
+			'defstep': round(defocus*1.5/64.0, 1),
 		}
+		t0 = time.time()
+		cmd = "ln -s "+inputparams['orig']+" "+inputparams['input']+"\n"
+		cmd += "/home/vossman/devel/ctftilt/ctftilt.exe << eof\n"
+		cmd += inputparams['input']+"\n"
+		cmd += inputparams['output']+"\n"
+		cmd += (
+			str(inputparams['cs'])+","
+			+ str(inputparams['kv'])+","
+			+ str(inputparams['ampcnst'])+","
+			+ str(inputparams['mag'])+","
+			+ str(inputparams['dstep'])+","
+			+ str(inputparams['pixavg'])+"\n")
+		cmd += (
+			str(inputparams['box'])+","
+			+ str(inputparams['resmin'])+","
+			+ str(inputparams['resmax'])+","
+			+ str(inputparams['defmin'])+","
+			+ str(inputparams['defmax'])+","
+			+ str(inputparams['defstep'])+"\n")
+		cmd += "eof\n"
+		cmd += ("mv "+inputparams['output']+" "
+			+os.path.join(self.params['rundir'], "powerspectra", inputparams['output'])+"\n")
+
+		apDisplay.printColor(cmd, "purple")
+		sys.exit(1)
+		"""
+		time ./ctffind3.exe << eof
+		micrograph.mrc
+		montage.pow
+		2.0, 200.0, 0.07, 60000, 7.0, 2						! CS[mm], HT[kV], AmpCnst, XMAG, DStep[um], PAve
+		128, 200.0, 8.0, 5000.0, 30000.0, 1000.0	! Box, ResMin[A], ResMax[A], dFMin[A], dFMax[A], FStep
+		eof
+
+		CTFTILT - determines defocus, astigmatism tilt axis and tilt angle
+		for images of arbitrary size (MRC format). Astigmatic angle is measured
+		from x axis (same conventions as in the MRC 2D image processing 
+		programs).
+
+		CARD 1: Input file name for image
+		CARD 2: Output file name to check result
+		CARD 3: CS[mm], HT[kV], AmpCnst, XMAG, DStep[um],PAve
+		CARD 4: Box, ResMin[A], ResMax[A], dFMin[A], dFMax[A], FStep
+
+		The output image file to check the result of the fitting
+		shows the filtered average power spectrum of the input
+		image in one half, and the fitted CTF (squared) in the
+		other half. The two halves should agree very well for a
+		successful fit.
+
+		CS: Spherical aberration coefficient of the objective in mm
+		HT: Electron beam voltage in kV
+		AmpCnst: Amount of amplitude contrast (fraction). For ice
+			images 0.07, for negative stain about 0.15.
+		XMAG: Magnification of original image
+		DStep: Pixel size on scanner in microns, or apix*mag/10000
+		PAve: Pixel averaging (PAve x PAve) for input image
+
+		Box: Tile size. The program divides the image into square
+			tiles and calculates the average power spectrum. Tiles
+			with a significantly higher or lower variance are 
+			excluded; these are parts of the image which are unlikely
+			to contain useful information (beam edge, film number 
+			etc). IMPORTANT: Box must have a even pixel dimensions.
+		ResMin: Low resolution end of data to be fitted.
+		ResMaX: High resolution end of data to be fitted.
+		dFMin: Starting defocus value for grid search in Angstrom. 
+			Positive values represent an underfocus. The program
+			performs a systematic grid search of defocus values 
+			and astigmatism before fitting a CTF to machine 
+			precision.
+		dFMax: End defocus value for grid search in Angstrom.
+		FStep: Step width for grid search in Angstrom.
+		"""
 		self.ctfvalue = None
 		return
 
@@ -65,27 +153,17 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 		apCtf.commitCtfValueToDatabase(imgdata, self.matlab, self.ctfvalue, self.params)
 
 	def specialDefaultParams(self):
-		self.params['edgethcarbon']=0.8
-		self.params['edgethice']=0.6
-		self.params['pfcarbon']=0.9
-		self.params['pfice']=0.3
-		self.params['overlap']=2
+		self.params['ampcnst carbon']=0.07
+		self.params['ampcnst ice']=0.15
+		self.params['pixavg']=2
 		self.params['fieldsize']=512
-		self.params['resamplefr']=1
-		self.params['drange']=0
-		self.params['tempdir']=None
 		self.params['medium']="carbon"
 		self.params['cs']=2.0
-		self.params['display']=1
-		self.params['stig']=0
 		self.params['nominal']=None
-		self.params['matdir']=None
-		self.params['opimagedir']=None
 		self.params['newnominal']=False
 
 	def specialCreateOutputDirs(self):
-		if self.params['sessionname'] is not None:
-			self.params['outtextfile'] = os.path.join(self.params['rundir'], self.params['sessionname']+".txt")
+		apParam.createDirectory(os.path.join(self.params['rundir'], "powerspectra"), warning=False)
 
 	def specialParseParams(self,args):
 		for arg in args:
@@ -95,54 +173,28 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 			if (elements[0]=='help' or elements[0]=='--help' \
 				or elements[0]=='-h' or elements[0]=='-help'):
 				sys.exit(1)
-			elif (elements[0]=='edgethcarbon'):
-				self.params['edgethcarbon']=float(elements[1])
-			elif (elements[0]=='edgethice'):
-				self.params['edgethice']=float(elements[1])
-			elif (elements[0]=='pfcarbon'):
-				self.params['pfcarbon']=float(elements[1])
-			elif (elements[0]=='pfice'):
-				self.params['pfice']=float(elements[1])
+			elif (elements[0]=='ampcnst-carbon'):
+				self.params['ampcnst carbon']=float(elements[1])
+			elif (elements[0]=='ampcnst-ice'):
+				self.params['ampcnst ice']=float(elements[1])
 			elif (elements[0]=='overlap'):
 				self.params['overlap']=int(elements[1])
 			elif (elements[0]=='fieldsize'):
 				self.params['fieldsize']=int(elements[1])
-			elif (elements[0]=='resamplefr'):
-				self.params['resamplefr']=float(elements[1])
-			elif (elements[0]=='drange'):
-				drange=int(elements[1])
-				if drange == 1 or drange== 0:
-					self.params['drange']=drange
-				else:
-					apDisplay.printError("drange should only be 0 or 1")
-			elif (elements[0]=='tempdir'):
-				self.params['tempdir']=os.path.abspath(elements[1]+"/")
+			elif (elements[0]=='pixavg'):
+				self.params['pixavg']=int(elements[1])
 			elif (elements[0]=='medium'):
 				medium=elements[1]
-				if medium=='carbon' or medium=='ice':
+				if medium is 'carbon' or medium is 'ice':
 					self.params['medium']=medium
 				else:
 					apDisplay.printError("medium can only be 'carbon' or 'ice'")
 			elif (elements[0]=='cs'):
 				self.params['cs']=float(elements[1])
-			elif (elements[0]=='display'):
-				display=int(elements[1])
-				if display==0 or display==1:
-					self.params['display']=display
-				else:
-					apDisplay.printError("display must be 0 or 1")	
-			elif (elements[0]=='stig'):
-				stig=int(elements[1])
-				if stig==0 or stig==1:
-					self.params['stig']=stig
-				else:
-					apDisplay.printError("stig must be 0 or 1")
 			elif (elements[0]=='nominal'):
 				self.params['nominal']=float(elements[1])
 			elif (elements[0]=='newnominal'):
 				self.params['newnominal']=True
-			elif arg == 'xvfb':
-				self.params['xvfb']=True
 			else:
 				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
