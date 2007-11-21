@@ -243,7 +243,6 @@ def checkInspectFile(imgdict):
 
 def checkInspectDB(imgdata):
 	keep = apDatabase.getImgAssessmentStatus(imgdata)
-#	keep = apDatabase.getImgAssessmentStatusREFLEGINON(imgdata)
 	return keep
 
 def checkPairInspectDB(imgdata,params):
@@ -287,12 +286,9 @@ def batchBox(params, imgdict):
 		dbbox=os.path.join(params['outdir'], "temporaryParticlesFromDB.box")
 		if params['defocpair']:
 			particles,shift = apParticle.getDefocPairParticles(imgdict,params)
-
-#			particles,shift=apParticle.getDefocPairParticlesREFLEGINON(imgdict,params)
 		else:
 			particles = apParticle.getParticles(imgdict, params['selexonId'])
 			shift = {'shiftx':0, 'shifty':0,'scale':1}
-#			particles,shift=apParticle.getParticlesREFLEGINON(imgdict, params['selexonId'])
 		if len(particles) > 0:			
 			###apply limits
 			if params['correlationMin'] or params['correlationMax']:
@@ -558,8 +554,6 @@ def getImgsDefocPairFromSelexonId(params):
 	dbimgq=leginondata.AcquisitionImageData(session=params['sessionid'])
 	dbimginfo=db.query(dbimgq,readimages=False)
 
-#	dbimginfo=[db.direct_query(leginondata.AcquisitionImageData,537916)]
-
 	if not (dbimginfo):
 		apDisplay.printError("no images associated with this runId")
 
@@ -617,17 +611,27 @@ def insertStackRun(params):
         # see if stack already exists in the database (just checking path)
 	stacks = apdb.query(stackq, results=1)
 
+	# recreate stack object
+	stackq = appionData.ApStackData()
+	stackq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
+	stackq['name'] = params['single']
 	stackq['description'] = params['description']
 	
+	params['stackId']=stackq
+
 	runids = apdb.query(runq, results=1)
 	if goodplist:
 		runq['stackParams'] = goodplist
 	else:
 		runq['stackParams'] = stparamq
+
+	params['stackRun']=runq
+
 	# create runinstack object
 	rinstackq = appionData.ApRunsInStackData()
-	rinstackq['stack']=stackq
-	rinstackq['stackRun']=runq
+
+	rinstackq['stackRun']=params['stackRun']
+	rinstackq['stack']=params['stackId']
 
 	# if not in the database, make sure run doesn't already exist
 	if not stacks:
@@ -647,21 +651,17 @@ def insertStackRun(params):
 		rinstack = apdb.query(rinstackq, results=1)
 		print rinstack
 		
-		if rinstack:
-			if rinstack[0]['stackRun']['stackParams'] != stparamq:
-				for i in rinstack[0]['stackRun']['stackParams']:
-					if rinstack[0]['stackRun']['stackParams'][i] != stparamq[i]:
-						apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
-				apDisplay.printError("All parameters for a particular stack must be identical! \n"+\
-						     "please check your parameter settings.")
-		else:
+		## if no runinstack found, find out which parameters are wrong:
+		if not rinstack:
+			rinstackq = appionData.ApRunsInStackData()
+			rinstackq['stack'] = apdb.query(params['stackId'])[0]
+			correct_rinstack=apdb.query(rinstackq)
+			for i in correct_rinstack[0]['stackRun']['stackParams']:
+				if correct_rinstack[0]['stackRun']['stackParams'][i] != stparamq[i]:
+					apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
 			apDisplay.printError("All parameters for a particular stack must be identical! \n"+\
-					     "please check your parameter settings.")
-			
-	# get the stack Id
-	params['stackId']=stackq
-	params['stackRun']=runq
-
+						     "please check your parameter settings.")
+		apDisplay.printWarning("Recreating an existing stack! Previous stack will be overwritten!")
 
 def rejectImage(imgdata, params):
 	shortname = apDisplay.short(imgdata['filename'])
@@ -748,16 +748,13 @@ if __name__ == '__main__':
 		
 	if params['selexonId'] is None and params['sessionname'] is not None:
 		params['selexonId'] = apParticle.guessParticlesForSession(sessionname=params['sessionname'])
-#		params['selexonId'] = apParticle.guessParticlesForSessionREFLEGINON(sessionname=params['sessionname'])
 
 	# get images from database if using a selexon runId
 	if params['selexonId']:
 		if params['defocpair']:
 			images = getImgsDefocPairFromSelexonId(params)
-#			images = getImgsDefocPairFromSelexonIdREFLEGINON(params)
 		else:
 			images = getImgsFromSelexonId(params)
-#			images = getImgsFromSelexonIdREFLEGINON(params)
 
 	# if a runId is specified, outdir will have a subdirectory named runId
 	if params['runid']:
@@ -782,7 +779,6 @@ if __name__ == '__main__':
 		# if saving to the database, store the stack parameters
 		if params['commit']is True:
 			insertStackRun(params)
-#			insertStackRunREFLEGINON(params)
 		if params['spider'] is True and os.path.isfile(stackfile+".spi"):
 			os.remove(stackfile+".spi")
 		if (os.path.isfile(stackfile+".hed")):
