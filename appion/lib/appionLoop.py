@@ -468,6 +468,8 @@ class AppionLoop(object):
 			else:
 				self.params['outdir'] = os.path.join(outdir, self.functionname)
 
+		if self.params['runid'] is None:
+			apDisplay.printError("please enter a runid, example: 'runid=run1'")
 		self.params['rundir'] = os.path.join(self.params['outdir'], self.params['runid'])
 		apDisplay.printMsg("RUNDIR:\t "+self.params['rundir'])
 
