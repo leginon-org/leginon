@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.82 $
- *	@version $Id: leginon.inc,v 1.82 2007-11-20 00:11:27 vossman Exp $
+ *	@version $Revision: 1.83 $
+ *	@version $Id: leginon.inc,v 1.83 2007-11-21 19:35:04 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -1675,8 +1675,10 @@ class leginondata {
 	}
 
 	function importCalibrations($xmldata, $scopeId, $cameraId) {
-		if (!$instrumentId)
+		if (!$scopeId && !$cameraId) {
+			echo "no instrument found";
 			return false;
+		}
 		$app = new XMLCalibrationImport($xmldata);
 		$sqldef = $app->getSQLDefinitionQueries();
 		$sqldata = $app->getSQLDataQueries();
@@ -1691,8 +1693,10 @@ class leginondata {
 			. " ( concat('importcal', DATE_FORMAT(now(), '%Y%m%d%H%i%s')) ) ";
 
 		$sessionId = $this->mysql->SQLQuery($q, True);
-		if (!$sessionId)
+		if (!$sessionId) {
+			echo "no session table";
 			return false;
+		}
 
 		//--- insert new Calibrations data;
 		if (is_array($sqldata))
