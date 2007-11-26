@@ -7,22 +7,22 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-include ("inc/jpgraph.php");
-include ("inc/jpgraph_line.php");
-include ("inc/jpgraph_scatter.php");
-include ("inc/jpgraph_bar.php");
-include ("inc/histogram.inc");
-require ("inc/leginon.inc");
-include ("inc/image.inc");
+require "inc/jpgraph.php";
+require "inc/jpgraph_line.php";
+require "inc/jpgraph_scatter.php";
+require "inc/jpgraph_bar.php";
+require "inc/histogram.inc";
+require "inc/leginon.inc";
+require "inc/image.inc";
 
-if(!$imgId=$_GET[id]) {
+if(!$imgId=$_GET['id']) {
 	$img = blankimage(200,60);
 	header("Content-type: image/x-png");
 	imagepng($img);
 	imagedestroy($img);
 	exit;
 }
-$preset=$_GET[preset];
+$preset=$_GET['preset'];
 $colormap = ($_GET['colormap']==1) ? "1" : "0";
 $minpix = ($_GET['np']) ? $_GET['np'] : 0;
 $maxpix = ($_GET['xp']) ? $_GET['xp'] : (($colormap) ? 1274 : 255);
@@ -45,7 +45,7 @@ $params = array (
 
 // --- find image
 $newimage = $leginondata->findImage($imgId, $preset);
-$imgId = $newimage[id];
+$imgId = $newimage['id'];
 
 $imageinfo = $leginondata->getImageInfo($imgId);
 $sessionId = $imageinfo[sessionId];

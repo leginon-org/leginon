@@ -7,25 +7,25 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require('inc/leginon.inc');
-require('inc/viewer.inc');
-require('inc/ctf.inc');
+require "inc/leginon.inc";
+require "inc/viewer.inc";
+require "inc/ctf.inc";
 
 // display data tree ?
-$displaytreevalue  = ($_POST) ? (($_POST[datatree]=='on') ? "off" : "on") : "off";
+$displaytreevalue  = ($_POST) ? (($_POST['datatree']=='on') ? "off" : "on") : "off";
 $displaytree = ($displaytreevalue == 'on') ? true : false;
 
-if(!$imgId=$_GET[id]) {
+if(!$imgId=$_GET['id']) {
 	// --- if Id is not set, get the last acquired image from db
 	$sessionId = $leginondata->getLastSessionId();
 	$imgId = $leginondata->getLastFilenameId($sessionId);
 }
 
-$preset=$_GET[preset];
+$preset=$_GET['preset'];
 
 // --- find image
 $newimage = $leginondata->findImage($imgId, $preset);
-$imgId = $newimage[id];
+$imgId = $newimage['id'];
 
 $imageinfo = $leginondata->getImageInfo($imgId);
 $sessionId = $imageinfo[sessionId];

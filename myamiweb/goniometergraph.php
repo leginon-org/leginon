@@ -7,13 +7,13 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-include ("inc/jpgraph.php");
-include ("inc/jpgraph_utils.inc");
-include ("inc/jpgraph_line.php");
-include ("inc/jpgraph_scatter.php");
-require ("inc/leginon.inc");
+require "inc/jpgraph.php";
+require "inc/jpgraph_utils.inc";
+require "inc/jpgraph_line.php";
+require "inc/jpgraph_scatter.php";
+require "inc/leginon.inc";
 
-$Id=$_GET[Id];
+$Id=$_GET['Id'];
 
 $goniometer = $leginondata->getGoniometerModel($Id);
 while(list($k, $v) = each($goniometer)) {
@@ -36,7 +36,7 @@ $sy = array();
 if ($measurements = $leginondata->getMeasurements($label, $axis, $Id))
 	foreach($measurements as $m) {
 		$sx[]=$m[$axis];
-		$sy[]=$m[norm];
+		$sy[]=$m['norm'];
 	}
 $sxvalues = array_values($sx);
 sort($sxvalues);

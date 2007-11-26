@@ -7,18 +7,19 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require('inc/leginon.inc');
+require "inc/leginon.inc";
+
 $g=true;
-if (!$session=stripslashes($_GET[session])) {
+if (!$session=stripslashes($_GET['session'])) {
 	$g=false;
 }
-if (!$table=stripslashes($_GET[table])) {
+if (!$table=stripslashes($_GET['table'])) {
 	$table="AcquisitionImageData";
 }
-if (!$id=stripslashes($_GET[id])) {
+if (!$id=stripslashes($_GET['id'])) {
 	$g=false;
 }
-if (!$preset=stripslashes($_GET[preset])) {
+if (!$preset=stripslashes($_GET['preset'])) {
 	// $g=false;
 }
 $t = $_GET['t'];
@@ -41,7 +42,7 @@ if ($size) {
 }
 
 if ($g) {
-	require_once('inc/mrc.inc');
+	require_once "inc/mrc.inc";
 	// --- get image path
 	$path = $leginondata->getImagePath($session);
 	// --- get parent image info

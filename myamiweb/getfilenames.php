@@ -1,5 +1,5 @@
 <?php
-require ('inc/leginon.inc');
+require "inc/leginon.inc";
 
 $sessionId = $_GET['sessionId'];
 $preset = $_GET['pre'];

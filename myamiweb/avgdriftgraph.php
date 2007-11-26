@@ -1,19 +1,20 @@
 <?php
-include ("inc/jpgraph.php");
-include ("inc/jpgraph_line.php");
-include ("inc/jpgraph_scatter.php");
-include ("inc/jpgraph_bar.php");
-include ("inc/histogram.inc");
-require ("inc/leginon.inc");
-include ("inc/image.inc");
+
+require "inc/jpgraph.php";
+require "inc/jpgraph_line.php";
+require "inc/jpgraph_scatter.php";
+require "inc/jpgraph_bar.php";
+require "inc/histogram.inc";
+require "inc/leginon.inc";
+require "inc/image.inc";
 
 $defaultId= 1445;
-$sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
-$histogram = ($_GET[hg]==1) ? true : false;
-$maxrate = $_GET[maxr];
-$minrate = $_GET[minr];
-$viewdata = $_GET[vd];
-$viewsql = $_GET[vs];
+$sessionId= ($_GET['Id']) ? $_GET['Id'] : $defaultId;
+$histogram = ($_GET['hg']==1) ? true : false;
+$maxrate = $_GET['maxr'];
+$minrate = $_GET['minr'];
+$viewdata = $_GET['vd'];
+$viewsql = $_GET['vs'];
 
 $driftdata = $leginondata->getDriftDataFromSessionId($sessionId);
 if ($viewsql) {

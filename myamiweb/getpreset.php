@@ -18,8 +18,8 @@
 <tr valign="top">
 <td>
 <?php
-require('inc/leginon.inc');
-require('inc/project.inc');
+require "inc/leginon.inc";
+require "inc/project.inc";
 
 $p[]='gridId';
 $p[]='mag';

@@ -1,5 +1,5 @@
 <?php
-require('inc/ctf.inc');
+require "inc/ctf.inc";
 $field = $_GET['f'];
 $id = $_GET['id'];
 $n_width = $_GET['w'];

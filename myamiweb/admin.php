@@ -8,7 +8,7 @@
  */
 
 
-require('inc/admin.inc');
+require "inc/admin.inc";
 admin_header();
 admin_footer();
 ?>

@@ -1,6 +1,6 @@
 <?php
-require('inc/leginon.inc');
-$id=$_GET[id];
+require "inc/leginon.inc";
+$id=$_GET['id'];
 list($info) = $leginondata->getImageStat($id);
 if ($info) {
 	$min = $info['min'];
@@ -31,3 +31,4 @@ echo "<stdev>";
 echo $stdev;
 echo "</stdev>";
 echo "</data>";
+?>

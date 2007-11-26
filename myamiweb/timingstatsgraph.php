@@ -7,21 +7,21 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-include ("inc/jpgraph.php");
-include ("inc/jpgraph_line.php");
-include ("inc/jpgraph_scatter.php");
-include ("inc/jpgraph_bar.php");
-include ("inc/histogram.inc");
-include ("inc/image.inc");
-require_once ("inc/leginon.inc");
+require "inc/jpgraph.php";
+require "inc/jpgraph_line.php";
+require "inc/jpgraph_scatter.php";
+require "inc/jpgraph_bar.php";
+require "inc/histogram.inc";
+require "inc/image.inc";
+require_once "inc/leginon.inc";
 
 $defaultId= 1445;
 $defaultpreset='hl';
-$histogram = ($_GET[hg]==1) ? true : false;
-$sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
-$preset = ($_GET[preset]) ? $_GET[preset] : $defaultpreset;
+$histogram = ($_GET['hg']==1) ? true : false;
+$sessionId= ($_GET['Id']) ? $_GET['Id'] : $defaultId;
+$preset = ($_GET['preset']) ? $_GET['preset'] : $defaultpreset;
 $viewdata = ($_GET['vdata']==1) ? true : false;
-$viewsql = $_GET[vs];
+$viewsql = $_GET['vs'];
 $data_name='acquisitiontime';
 
 $timingdata = $leginondata->getTiming($sessionId, $preset);

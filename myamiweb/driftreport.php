@@ -7,10 +7,10 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require ("inc/leginon.inc");
+require "inc/leginon.inc";
 
 $defaultId= 1445;
-$sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
+$sessionId= ($_GET['Id']) ? $_GET['Id'] : $defaultId;
 $maxrate = (is_numeric($_POST['maxr'])) ? $_POST['maxr'] 
 		: (is_numeric($_GET['maxr']) ? $_GET['maxr'] : false);
 
@@ -29,7 +29,7 @@ foreach ($data as $drift) {
 // $lastId = $leginondata->getLastSessionId();
 // $sessionId = (empty($_GET[Id])) ? $lastId : $_GET[sessionId];
 $sessioninfo = $leginondata->getSessionInfo($sessionId);
-$title = $sessioninfo[Name];
+$title = $sessioninfo['Name'];
 
 ?>
 <html>

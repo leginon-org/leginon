@@ -8,7 +8,7 @@
  */
 
 
-require('inc/ptcl.inc');
+require "inc/ptcl.inc";
 ptcl_header();
 ptcl_footer();
 ?>

@@ -1,5 +1,7 @@
 <?php
-require('inc/leginon.inc');
+
+require "inc/leginon.inc";
+
 // --- get image parameters from URL
 $id=$_GET['id'];
 if (!$imgscript=$_GET['imgsc'])

@@ -1,7 +1,7 @@
 <?php
-require('inc/leginon.inc');
-require('inc/image.inc');
-require('inc/ctf.inc');
+require "inc/leginon.inc";
+require "inc/image.inc";
+require "inc/ctf.inc";
 
 $imgId=$_GET['id'];
 $preset=$_GET['preset'];

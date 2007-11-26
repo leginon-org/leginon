@@ -1,17 +1,14 @@
 <?php
-require('inc/leginon.inc');
+
+require "inc/leginon.inc";
+
 $f="06oct10rct_00028sq_00_00276en_00.mrc";
 $f="06oct10rct_00028sq_00.mrc";
 
 $f="06oct26a_00022gr_00021sr_v00_00002sr_v04_00007ex_v00_00.mrc";
 $f="06oct31rct_00049sr_v06_00002ex_00.mrc";
 
-
-
 // --- Iwould like this:
-
-
-
 
 function getRTC($f) {
 	global $leginondata;

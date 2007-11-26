@@ -8,8 +8,8 @@
  */
 
 
-require('inc/leginon.inc');
-require('inc/image.inc');
+require "inc/leginon.inc";
+require "inc/image.inc";
 
 $g=true;
 if (!$sessionId=stripslashes($_GET['session'])) {

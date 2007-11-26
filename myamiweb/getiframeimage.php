@@ -7,7 +7,7 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require('inc/leginon.inc');
+require "inc/leginon.inc";
 ?>
 <html>
 <head>

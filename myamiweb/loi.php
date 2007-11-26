@@ -6,10 +6,10 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require ('inc/leginon.inc');
-require ('inc/viewer.inc');
+require "inc/leginon.inc";
+require "inc/viewer.inc";
 
-$refreshtime = ($_POST[refreshtime]) ? $_POST[refreshtime] : 10;
+$refreshtime = ($_POST['refreshtime']) ? $_POST['refreshtime'] : 10;
 
 // --- Set sessionId
 $sessionId=$_POST[sessionId];

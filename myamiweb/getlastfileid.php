@@ -5,13 +5,13 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  */
-require ('inc/leginon.inc');
+require "inc/leginon.inc";
 $lastfileid = false;
-$session = ($_GET[session]) ? $_GET[session] : $_POST[session];
+$session = ($_GET['session']) ? $_GET['session'] : $_POST['session'];
 $lastfileid = $leginondata->getLastFilenameId($session);
 $strfileid = ($lastfileid) ? "=$lastfileid" : "";
-$refresh = ($_POST[refreshstate]) ? $_POST[refreshstate] : "false";
-$refreshtime = ($_POST[refreshtime]) ? $_POST[refreshtime] : "10000";
+$refresh = ($_POST['refreshstate']) ? $_POST['refreshstate'] : "false";
+$refreshtime = ($_POST['refreshtime']) ? $_POST['refreshtime'] : "10000";
 ?>
 <html>
 <head>

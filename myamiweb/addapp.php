@@ -7,7 +7,7 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require('inc/admin.inc');
+require "inc/admin.inc";
 
 $sqlhosts = $SQL_HOSTS;
 $hostkeys = array_keys($sqlhosts);

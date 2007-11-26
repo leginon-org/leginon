@@ -1,5 +1,7 @@
 <?php
-require('inc/graphutil.inc');
+
+require "inc/graphutil.inc";
+
 $angle=$_GET['a'];
 $w=16;
 $h=16;

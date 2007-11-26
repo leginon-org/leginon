@@ -1,6 +1,6 @@
 <?php
-require("inc/leginon.inc");
-require("inc/viewer.inc");
+require "inc/leginon.inc";
+require "inc/viewer.inc";
 
 if (!$login_check = $dbemauth->is_logged()) {
 	header('Location: '.BASE_URL);

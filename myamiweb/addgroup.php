@@ -1,5 +1,6 @@
 <?php
-require('inc/admin.inc');
+
+require "inc/admin.inc";
 
 $f_sel_name=$_POST['f_sel_name'];
 $f_name=$_POST['f_name'];

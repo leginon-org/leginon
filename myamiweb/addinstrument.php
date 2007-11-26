@@ -1,5 +1,6 @@
 <?php
-require('inc/admin.inc');
+
+require "inc/admin.inc";
 
 $hostkeys = array_keys($SQL_HOSTS);
 $hostId = ($_POST[hostId]) ? $_POST[hostId] : current($hostkeys);

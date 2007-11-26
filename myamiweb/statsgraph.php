@@ -1,8 +1,8 @@
 <?php
-require ("inc/jpgraph.php");
-require ("inc/jpgraph_scatter.php");
-require ("inc/image.inc");
-require_once ("inc/leginon.inc");
+require "inc/jpgraph.php";
+require "inc/jpgraph_scatter.php";
+require "inc/image.inc";
+require_once "inc/leginon.inc";
 
 function getColorMap($v) {
         $c = floor($v%255);

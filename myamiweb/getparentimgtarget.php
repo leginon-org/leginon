@@ -8,21 +8,21 @@
  */
 
 
-require('inc/leginon.inc');
-require('inc/image.inc');
+require "inc/leginon.inc";
+require "inc/image.inc";
 
 $g=true;
-if (!$sessionId=stripslashes($_GET[session])) {
+if (!$sessionId=stripslashes($_GET['session'])) {
 	$g=false;
 }
-if (!$table=stripslashes($_GET[table])) {
+if (!$table=stripslashes($_GET['table'])) {
 	$table="AcquisitionImageData";
 }
-if (!$id=stripslashes($_GET[id])) {
+if (!$id=stripslashes($_GET['id'])) {
 	$g=false;
 }
 
-$preset = stripslashes($_GET[preset]);
+$preset = stripslashes($_GET['preset']);
 $t = $_GET['t'];
 if ($t=='png') {
         $type = "image/x-png";
@@ -35,7 +35,7 @@ if ($t=='png') {
 
 if ($cache) {
 	$begin=getmicrotime();
-	$uri = "http://".$_SERVER[SERVER_NAME].$REQUEST_URI;
+	$uri = "http://".$_SERVER['SERVER_NAME'].$REQUEST_URI;
 	$cachedb = new cachedb($cachehost, 'usr_object', '', 'cache');
 	if ($image = $cachedb->get($uri)) {
 		Header( "Content-type: $type ");

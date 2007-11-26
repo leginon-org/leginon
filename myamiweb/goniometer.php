@@ -7,7 +7,7 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require('inc/admin.inc');
+require "inc/admin.inc";
 
 $instrumenthosts = $leginondata->getInstrumentHosts();
 $validhosts = array();

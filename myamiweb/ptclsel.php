@@ -7,9 +7,8 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-// print_r($_POST);
-require_once('inc/ptcl.inc');
-require_once('inc/picker.inc');
+require_once "inc/ptcl.inc";
+require_once "inc/picker.inc";
 
 $title = "Particle Selection Adjust";
 if (!$name=$_REQUEST['name'])

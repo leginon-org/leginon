@@ -1,22 +1,23 @@
 <?php
-include ("inc/jpgraph.php");
-include ("inc/jpgraph_line.php");
-include ("inc/jpgraph_scatter.php");
-include ("inc/jpgraph_bar.php");
-require ("inc/leginon.inc");
-require ("inc/image.inc");
-require ("inc/histogram.inc");
+
+require "inc/jpgraph.php";
+require "inc/jpgraph_line.php";
+require "inc/jpgraph_scatter.php";
+require "inc/jpgraph_bar.php";
+require "inc/leginon.inc";
+require "inc/image.inc";
+require "inc/histogram.inc";
 
 $defaultId= 1445;
-$sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
+$sessionId= ($_GET['Id']) ? $_GET['Id'] : $defaultId;
 
 $width = $_GET['w'];
 $height = $_GET['h'];
 $viewdata = $_GET['vd'];
 $viewsql = $_GET['vs'];
-$histogram = ($_GET[hg]==1) ? true : false;
-$maxrate = $_GET[maxr];
-$minrate = $_GET[minr];
+$histogram = ($_GET['hg']==1) ? true : false;
+$maxrate = $_GET['maxr'];
+$minrate = $_GET['minr'];
 $optimizedpoint = ($_GET['opt']==1) ? true : false;
 
 if($ch0 = $_GET['ch0'])
@@ -41,7 +42,7 @@ $TEMPERATURE_DB_USER = 'usr_inst';
 $TEMPERATURE_DB_PASS = '';
 $TEMPERATURE_DB = 'instrumentation';
 
-$db =  new mysql ($TEMPERATURE_DB_HOST, $TEMPERATURE_DB_USER, $TEMPERATURE_DB_PASS, $TEMPERATURE_DB);
+$db = new mysql ($TEMPERATURE_DB_HOST, $TEMPERATURE_DB_USER, $TEMPERATURE_DB_PASS, $TEMPERATURE_DB);
 
 $sessionInfo = $leginondata->getSessionInfo($sessionId);
 $instrumentId = $sessionInfo['InstrumentId'];

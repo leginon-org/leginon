@@ -8,14 +8,14 @@
  *	Display classification info for an iteration
  */
 
-include ("inc/jpgraph.php");
-include ("inc/jpgraph_line.php");
-include ("inc/jpgraph_scatter.php");
-include ("inc/jpgraph_bar.php");
-include ("inc/histogram.inc");
-require ("inc/particledata.inc");
-require ("inc/image.inc");
-require_once ("inc/leginon.inc");
+require "inc/jpgraph.php";
+require "inc/jpgraph_line.php";
+require "inc/jpgraph_scatter.php";
+require "inc/jpgraph_bar.php";
+require "inc/histogram.inc";
+require "inc/particledata.inc";
+require "inc/image.inc";
+require_once "inc/leginon.inc";
 
 $refinement=$_GET['refinement'];
 $width = $_GET['w'];

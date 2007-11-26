@@ -76,7 +76,7 @@ var jsautoscale = '$autoscale';
 var jsloadfromjpg = '$loadfromjpg';
 var gradient = '/img/dfe/$currentgradient';
 ";
-require('inc/filter.inc');
+require "inc/filter.inc";
 $filterdata = new filter();
 $filtertypes = $filterdata->getFilterTypes();
 $binningtypes = $filterdata->getBinningTypes();

@@ -7,16 +7,17 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require('inc/leginon.inc');
+require "inc/leginon.inc";
+
 $g=true;
-if (!$session=stripslashes($_GET[session])) {
+if (!$session=stripslashes($_GET['session'])) {
 	$g=false;
 }
-if (!$table=stripslashes($_GET[table])) {
+if (!$table=stripslashes($_GET['table'])) {
 	$table="AcquisitionImageData";
 	// $g=false;
 }
-if (!$id=stripslashes($_GET[id])) {
+if (!$id=stripslashes($_GET['id'])) {
 	$g=false;
 }
 $t = $_GET['t'];
@@ -45,7 +46,7 @@ if ($g) {
 	$filename = $leginondata->getFilenameFromId($id);
 	$pic = $path.$filename;
 	if (file_exists($pic)) {
-		require_once('inc/mrc.inc');
+		require_once "inc/mrc.inc";
 		$img = $mrc->imagecreatefromMRC2($pic,$new_w,$new_h,$minpix, $maxpix, $quality);
 		$white = imagecolorallocate($img, 255, 255, 255);
 		$black = imagecolorallocate($img, 0, 0, 0);

@@ -18,8 +18,8 @@
 <tr valign="top">
 <td>
 <?php
-require('inc/leginon.inc');
-require('inc/ctf.inc');
+require "inc/leginon.inc";
+require "inc/ctf.inc";
 
 $imgId=$_GET['id'];
 $preset=$_GET['preset'];

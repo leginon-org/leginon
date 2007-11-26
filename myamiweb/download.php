@@ -1,7 +1,8 @@
 <?php
-require('inc/leginon.inc');
-$imgId  = $_GET[id];
-$preset = $_GET[preset];
+require "inc/leginon.inc";
+
+$imgId  = $_GET['id'];
+$preset = $_GET['preset'];
 $fft = ($_GET['fft']==1) ? true : false;
 
 $newimage = $leginondata->findImage($imgId, $preset);

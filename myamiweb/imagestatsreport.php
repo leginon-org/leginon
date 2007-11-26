@@ -7,16 +7,16 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require ("inc/leginon.inc");
+require "inc/leginon.inc";
 
 $defaultId= 1445;
-$sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
+$sessionId= ($_GET['Id']) ? $_GET['Id'] : $defaultId;
 
 // --- Set  experimentId
 // $lastId = $leginondata->getLastSessionId();
 // $sessionId = (empty($_GET[Id])) ? $lastId : $_GET[sessionId];
 $sessioninfo = $leginondata->getSessionInfo($sessionId);
-$title = $sessioninfo[Name];
+$title = $sessioninfo['Name'];
 $presets = $leginondata->getDatatypes($sessionId);
 
 

@@ -8,7 +8,7 @@
  *
  */
 
-require('inc/config.inc');
+require "inc/config.inc";
 
 // --- define dbem web tools nase --- //
 define(BASE_URL, "/dbem/");

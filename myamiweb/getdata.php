@@ -7,11 +7,11 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require ('inc/leginon.inc');
+require "inc/leginon.inc";
 
 $g=true;
 $opennodes = $_GET['r'];
-if (!$id=$_GET[id]) {
+if (!$id=$_GET['id']) {
 	$g=false;
 }
 

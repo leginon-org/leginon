@@ -1,5 +1,6 @@
 <?php
-require('inc/ptcl.inc');
+
+require "inc/ptcl.inc";
 
 $sessions = $leginondata->getSessions();
 $f_sel_name=$_POST['f_sel_name'];
