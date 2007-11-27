@@ -286,7 +286,11 @@ def _moment(subimage):
 	twopi = 2*math.pi
 	r0 = scipy.ndimage.center_of_mass(subimage)
 	sqmat = _distsqmat(r0,subimage.shape)
-	moi = scipy.ndimage.sum(subimage*sqmat)/(scipy.ndimage.sum(subimage)**2)*twopi
+	## could be zero division in the following
+	try:
+		moi = scipy.ndimage.sum(subimage*sqmat)/(scipy.ndimage.sum(subimage)**2)*twopi
+	except:
+		moi = 0.0
 	return moi
 
 def _distsqmat(r0,shape):
