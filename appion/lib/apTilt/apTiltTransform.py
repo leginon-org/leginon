@@ -3,6 +3,7 @@ import numpy
 import apImage
 import apDisplay
 import ImageDraw
+import pprint
 from scipy import optimize, ndimage
 
 ##
@@ -88,27 +89,32 @@ def getPointsFromArrays(a1, a2, shiftx, shifty):
 def setPointsFromArrays(a1, a2, data):
 	if len(a1) > 0 and len(a2) > 0:
 		data['point1'] = numpy.asarray(a1[0,:], dtype=numpy.float32)
-		data['point2'] = numpy.asarray(a2[0,:], dtype=numpy.float32) + numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32)
-		data['point2b'] = numpy.asarray(a2[0,:], dtype=numpy.float32) - numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32)
+		data['point2'] = ( numpy.asarray(a2[0,:], dtype=numpy.float32) 
+			+ numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32) )
+		data['point2b'] = ( numpy.asarray(a2[0,:], dtype=numpy.float32) 
+			- numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32) )
+	#pprint.pprint(data)
 	return
 
 def a1Toa2Data(a1, data):
 	thetarad = data['theta']*math.pi/180.0
 	gammarad = data['gamma']*math.pi/180.0
 	phirad   = data['phi']*math.pi/180.0
+
 	if not 'point2b' in data:
-		data['point2b'] = data['point2'] - 2*numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32)
-	return a2Toa1(a1, -1.0*thetarad, -1.0*phirad, -1.0*gammarad, 
+		data['point2b'] = data['point2'] - 2 * numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32)
+
+	return a2Toa1(a1, -1.0*thetarad, 1.0*phirad, 1.0*gammarad, 
 		1.0/data['scale'], data['point2b'], data['point1'])
 
-def a2Toa1Data(a1, data):
+def a2Toa1Data(a2, data):
 	"""
 	flips the values and runs a2Toa1
 	"""
 	thetarad = data['theta']*math.pi/180.0
 	gammarad = data['gamma']*math.pi/180.0
 	phirad   = data['phi']*math.pi/180.0
-	return a2Toa1(a1, thetarad, gammarad, phirad, 
+	return a2Toa1(a2, thetarad, gammarad, phirad, 
 		data['scale'], data['point1'], data['point2'])
 
 def a1Toa2(a1, theta, gamma, phi, scale, point1, point2):
@@ -123,17 +129,17 @@ def a2Toa1(a2, theta, gamma, phi, scale, point1, point2):
 	"""
 	transforms second list of points one into same affine space as first list
 
-	a1     -> first numpy list
-	a2     -> second numpy list
+	a1     -> first numpy list of x,y coordinates 
+	a2     -> second numpy list of x,y coordinates
 	theta  -> tilt angle
 	gamma  -> image 1 rotation
 	phi    -> image 2 rotation
 	point1 -> numpy coordinates for a particle in image 1
 	point2 -> numpy coordinates for a particle in image 2
 	"""
-	#gamma rotation
-	cosgamma = math.cos(gamma)
-	singamma = math.sin(gamma)
+	#gamma rotation, negative for inverse rotation
+	cosgamma = math.cos(1.0*gamma)
+	singamma = math.sin(1.0*gamma)
 	gammamat = numpy.array([[ cosgamma, -singamma ], [ singamma, cosgamma ]], dtype=numpy.float32)
 	#theta compression
 	if theta < 0:
@@ -141,8 +147,8 @@ def a2Toa1(a2, theta, gamma, phi, scale, point1, point2):
 	else:
 		thetamat  = numpy.array([[ 1.0/math.cos(theta), 0.0 ], [ 0.0, 1.0]], dtype=numpy.float32)
 	#phi rotation
-	cosphi = math.cos(phi)
-	sinphi = math.sin(phi)
+	cosphi = math.cos(-1.0*phi)
+	sinphi = math.sin(-1.0*phi)
 	phimat = numpy.array([[ cosphi, -sinphi ], [ sinphi, cosphi ]], dtype=numpy.float32)
 	#scale factor
 	scalemat =  numpy.array([[ scale, 0.0 ], [ 0.0, scale ]], dtype=numpy.float32)
