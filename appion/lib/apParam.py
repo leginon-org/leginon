@@ -1,24 +1,17 @@
-#Part of the new pyappion
+## python
 import os
 import sys
 import re
 import socket
 import time
 import random
-import sinedon.data as data
-import apDB
+## sinedon
+#import sinedon.data as data
+## pyami
+#from pyami import mem
+## pyappion
 import apVersion
 import apDisplay
-import apDatabase
-try:
-	import pyami.mem as mem
-except:
-	apDisplay.printError("Please load 'usepythoncvs' for CVS leginon code, which includes 'mem.py'")
-#import selexonFunctions  as sf1
-
-#db=dbdatakeeper.DBDataKeeper()
-db=apDB.db
-data.holdImages(False)
 
 def getAppionDirectory():
 	"""
