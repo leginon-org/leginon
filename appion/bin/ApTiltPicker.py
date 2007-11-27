@@ -1,6 +1,6 @@
 #!/usr/bin/python -O
 
-#system
+## pythonlib
 import sys
 import re
 import os
@@ -8,23 +8,21 @@ import time
 import math
 import cPickle
 from optparse import OptionParser
-#wxPython
+## wxPython
 import wx
-#numpy/scipy
+## numpy/scipy
 import numpy
 from scipy import ndimage, optimize
-#PIL
+## PIL
 import Image
-#local install
-import pyami
+## local install
 import apSpider
 import apXml
-from gui.wx import TargetPanel, ImagePanelTools
-from apTilt import tiltDialog
-from apTilt import apTiltTransform
 import apImage
 import apDisplay
 import apParam
+from gui.wx import TargetPanel, ImagePanelTools
+from apTilt import tiltDialog, apTiltTransform
 
 class TiltTargetPanel(TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True, name=None):
@@ -55,7 +53,7 @@ class TiltTargetPanel(TargetPanel.TargetImagePanel):
 		if filename is None:
 			self.setImage(None)
 		elif filename[-4:] == '.mrc':
-			image = pyami.mrc.read(filename)
+			image = apImage.mrcToArray(filename)
 			self.setImage(image.astype(numpy.float32))
 		else:
 			image = Image.open(filename)
