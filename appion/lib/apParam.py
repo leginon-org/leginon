@@ -10,7 +10,7 @@ import random
 ## pyami
 #from pyami import mem
 ## pyappion
-import apVersion
+#import apVersion
 import apDisplay
 
 def getAppionDirectory():
