@@ -161,15 +161,15 @@ function createCreateModelForm($extra=false, $title='CreateModel.py Launcher', $
 						
 						<SELECT NAME='symm'>
       						<OPTION VALUE=''>Select One</OPTION>\n";
-    						foreach ($syms as $sym) {
-      							if (preg_match("/^C/", $sym[symmetry])) {
-								echo "<OPTION VALUE='$sym[DEF_id]'";
-      								if ($sym['DEF_id']==$_POST['symm']) echo " SELECTED";
-								echo ">$sym[symmetry]";
-							}
-      								if ($sym['symmetry']=='C1') echo " (no symmetry)";					
-							echo "</OPTION>\n";
+							foreach ($syms as $sym) {
+								if (preg_match("/^C|o/", $sym['symmetry'])) {
+									echo "<OPTION VALUE='".$sym['DEF_id']."'";
+									if ($sym['DEF_id']==$_POST['symm']) echo " SELECTED";
+									echo ">".$sym['symmetry'];
+									if ($sym['symmetry']=='C1') echo " (no symmetry)";					
+									echo "</OPTION>\n";
     						}
+							}
     						echo"
       						</SELECT>					
 						<TR><TD><A HREF=\"javascript:infopopup('lowpass')\">Low Pass Filter</A>:</TD><TD>
