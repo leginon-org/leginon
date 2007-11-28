@@ -11,9 +11,11 @@ import random
 import time
 import pprint
 import apDisplay
+import sinedon
 
 # connect
-db = MySQLdb.connect(host="cronus4.scripps.edu", user="usr_object", passwd="", db="dbappiondata")
+dbconf=sinedon.getConfig('appionData')
+db=MySQLdb.connect(**dbconf)
 # create a cursor
 cursor = db.cursor()
 
