@@ -84,6 +84,7 @@ class PickerApp(wx.App):
 			+ "|Spider Files (*.spi)|*.[a-z][a-z][a-z]" 
 			+ "|Python Pickle File (*.pik)|*.pik" )
 		self.data['filetypeindex'] = None
+		self.data['thetarun'] = False
 		self.picks1 = []
 		self.picks2 = []
 		self.buttonheight = 15
@@ -469,6 +470,24 @@ class PickerApp(wx.App):
 		return a2b
 
 	#---------------------------------------
+	def getRmsdArray1(self):
+		targets1 = self.getArray1()
+		aligned1 = self.getAlignedArray2()
+		diffmat1 = (targets1 - aligned1)
+		sqsum1 = diffmat1[:,0]**2 + diffmat1[:,1]**2
+		rmsd1 = numpy.sqrt(sqsum1)
+		return rmsd1
+
+	#---------------------------------------
+	def getRmsdArray2(self):
+		targets2 = self.getArray2()
+		aligned2 = self.getAlignedArray1()
+		diffmat2 = (targets2 - aligned2)
+		sqsum2 = diffmat2[:,0]**2 + diffmat2[:,1]**2
+		rmsd2 = numpy.sqrt(sqsum2)
+		return rmsd2
+
+	#---------------------------------------
 	def targetsToArray(self, targets):
 		a = []
 		for t in targets:
@@ -521,12 +540,13 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def onFitTheta(self, evt):
 		if len(self.panel1.getTargets('Picked')) > 3 and len(self.panel2.getTargets('Picked')) > 3:
+			self.data['thetarun'] = True
 			self.theta_dialog.tiltvalue.SetLabel(label=("       %3.3f       " % self.data['theta']))
 			self.theta_dialog.Show()
 
 	#---------------------------------------
 	def onFitAll(self, evt):
-		if self.data['theta'] == 0.0:
+		if self.data['theta'] == 0.0 and self.data['thetarun'] is False:
 			dialog = wx.MessageDialog(self.frame, "You must run 'Find Theta' first", 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
@@ -567,6 +587,7 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def onResetParams(self, evt):
 		self.onInitParams(evt)
+		self.data['thetarun'] = False
 		self.fitall_dialog.thetavalue.SetValue(round(self.data['theta'],4))
 		self.fitall_dialog.gammavalue.SetValue(round(self.data['gamma'],4))
 		self.fitall_dialog.phivalue.SetValue(round(self.data['phi'],4))
@@ -648,16 +669,18 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def savePicksToTextFile(self):
 		filepath = os.path.join(self.data['dirname'], self.data['outfile'])
-		targets1 = self.panel1.getTargets('Picked')
-		targets2 = self.panel2.getTargets('Picked')
+		targets1 = self.getArray1()
+		targets2 = self.getArray2()
+		rmsd1 = self.getRmsdArray1()
+		rmsd2 = self.getRmsdArray2()
 		filename = os.path.basename(filepath)
 		f = open(filepath, "w")
-		f.write( "image 1: "+self.panel1.filename+"\n" )
-		for target in targets1:
-			f.write( '%d,%d\n' % (target.x, target.y) )
-		f.write( "image 2: "+self.panel2.filename+"\n" )
-		for target in targets2:
-			f.write( '%d,%d\n' % (target.x, target.y) )
+		f.write( "image 1: "+self.panel1.filename+" (x,y,err)\n" )
+		for i, target in enumerate(targets1):
+			f.write( '%d,%d,%.3f\n' % (target[0], target[1], rmsd1[i]) )
+		f.write( "image 2: "+self.panel2.filename+" (x,y,err)\n" )
+		for i, target in enumerate(targets2):
+			f.write( '%d,%d,%.3f\n' % (target[0], target[1], rmsd1[i]) )
 		f.close()
 		self.statbar.PushStatusText("Saved "+str(len(targets1))+" particles to "+self.data['outfile'], 0)
 		return True
@@ -828,7 +851,7 @@ class PickerApp(wx.App):
 			else:
 				line = line.strip()
 				seps = line.split(",")
-				for k in range(len(seps)):
+				for k in range(2):
 					#print "'"+seps[k]+"'"
 					if seps[k]:
 						arrays[i][j,k] = int(seps[k])
