@@ -105,7 +105,7 @@ def a1Toa2Data(a1, data):
 		data['point2b'] = data['point2'] - 2 * numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32)
 
 	return a2Toa1(a1, -1.0*thetarad, 1.0*phirad, 1.0*gammarad, 
-		1.0/data['scale'], data['point2b'], data['point1'])
+		1.0/data['scale'], data['point2'], data['point1'])
 
 def a2Toa1Data(a2, data):
 	"""
