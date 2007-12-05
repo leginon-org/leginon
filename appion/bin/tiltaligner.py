@@ -48,7 +48,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 		put in any additional default parameters
 		"""
 		self.params['mapdir']="tiltalignmaps"
-		self.params['outtype'] = 'pickle'
+		self.params['outtype'] = 'spider'
 		self.params['outtypeindex'] = None
 		self.params['pickrunname'] = None
 		self.params['pickrunid'] = None
