@@ -39,8 +39,10 @@ class TiltTargetPanel(TargetPanel.TargetImagePanel):
 	#---------------------------------------
 	def addTarget(self, name, x, y):
 		#sys.stderr.write("%s: (%4d,%4d),\n" % (self.outname,x,y))
-		#numtargets = len(self.getTargets(name))
+		numtargets = len(self.getTargets(name))
 		#self.parent.statbar.PushStatusText("Added %d target at location (%d,%d)" % numtargets, x, y)
+		if numtargets > 3:
+			self.app.onFileSave(None)
 		return self._getSelectionTool().addTarget(name, x, y)
 
 	#---------------------------------------
@@ -100,6 +102,7 @@ class PickerApp(wx.App):
 
 		self.panel1 = TiltTargetPanel(splitter, -1, name="untilt")
 		self.panel1.parent = self.frame
+		self.panel1.app = self
 		self.panel1.addTargetTool('Picked', color=wx.Color(215, 32, 32), 
 			shape=self.pshape, size=self.pshapesize, target=True, numbers=True)
 		self.panel1.setTargets('Picked', [])
@@ -117,6 +120,7 @@ class PickerApp(wx.App):
 
 		self.panel2 = TiltTargetPanel(splitter, -1, name="tilt")
 		self.panel2.parent = self.frame
+		self.panel2.app = self
 		self.panel2.addTargetTool('Picked', color=wx.Color(32, 128, 215), 
 			shape=self.pshape, size=self.pshapesize, target=True, numbers=True)
 		self.panel2.setTargets('Picked', [])
@@ -447,23 +451,23 @@ class PickerApp(wx.App):
 		#SET THE ALIGNED ARRAYS
 		self.panel2.setTargets('Aligned', a1b )
 		self.panel1.setTargets('Aligned', a2b )
-		err = self.getRmsdArray1()
-		mean = ndimage.mean(err)
-		stdev = ndimage.standard_deviation(err)
-		cut = mean + 3*stdev
-		errb = numpy.transpose(numpy.vstack([err,err]))
-		a1c = []
-		a2c = []
-		for i,e in enumerate(err):
-			if e > cut:
-				a1c.append(a1[i,:])
-				a2c.append(a2[i,:])
-		#a1c = numpy.where(errb > cut, a1, 0)
-		#a2c = numpy.where(errb > cut, a2, 0)
-		self.statbar.PushStatusText(str(len(a1c))+" particles had an RMSD greater than "
-			+str(int(cut))+ " pixels", 0)
-		self.panel1.setTargets('Errors', a1c )
-		self.panel2.setTargets('Errors', a2c )
+		#FIND PARTICLES WITH LARGE ERROR
+		if len(a1) == len(a2):
+			err = self.getRmsdArray()
+			mean = ndimage.mean(err)
+			stdev = ndimage.standard_deviation(err)
+			cut = mean + 3*stdev
+			errb = numpy.transpose(numpy.vstack([err,err]))
+			a1c = []
+			a2c = []
+			for i,e in enumerate(err):
+				if e > cut:
+					a1c.append(a1[i,:])
+					a2c.append(a2[i,:])
+			self.statbar.PushStatusText(str(len(a1c))+" particles had an RMSD greater than "
+				+str(int(cut))+ " pixels", 0)
+			self.panel1.setTargets('Errors', a1c )
+			self.panel2.setTargets('Errors', a2c )
 
 	#---------------------------------------
 	def getArray1(self):
@@ -502,22 +506,16 @@ class PickerApp(wx.App):
 		return a2b
 
 	#---------------------------------------
-	def getRmsdArray1(self):
+	def getRmsdArray(self):
 		targets1 = self.getArray1()
 		aligned1 = self.getAlignedArray2()
+		if len(targets1) != len(aligned1):
+			targets1 = numpy.vstack((targets1, aligned1[len(targets1):]))
+			aligned1 = numpy.vstack((aligned1, targets1[len(aligned1):]))
 		diffmat1 = (targets1 - aligned1)
 		sqsum1 = diffmat1[:,0]**2 + diffmat1[:,1]**2
 		rmsd1 = numpy.sqrt(sqsum1)
 		return rmsd1
-
-	#---------------------------------------
-	def getRmsdArray2(self):
-		targets2 = self.getArray2()
-		aligned2 = self.getAlignedArray1()
-		diffmat2 = (targets2 - aligned2)
-		sqsum2 = diffmat2[:,0]**2 + diffmat2[:,1]**2
-		rmsd2 = numpy.sqrt(sqsum2)
-		return rmsd2
 
 	#---------------------------------------
 	def targetsToArray(self, targets):
@@ -690,8 +688,8 @@ class PickerApp(wx.App):
 				self.savePicksToPickleFile()
 			else:
 				raise NotImplementedError
-			sys.stderr.write("Saved particles and parameters to '"+self.data['outfile']+\
-				"' of type "+self.data['filetype']+"\n")
+			#sys.stderr.write("Saved particles and parameters to '"+self.data['outfile']+\
+			#	"' of type "+self.data['filetype']+"\n")
 		elif False: #except:
 			self.statbar.PushStatusText("ERROR: Saving to file '"+self.data['outfile']+"' failed", 0)
 			dialog = wx.MessageDialog(self.frame, "Saving to file '"+self.data['outfile']+"' failed", 'Error', wx.OK|wx.ICON_ERROR)
@@ -703,16 +701,15 @@ class PickerApp(wx.App):
 		filepath = os.path.join(self.data['dirname'], self.data['outfile'])
 		targets1 = self.getArray1()
 		targets2 = self.getArray2()
-		rmsd1 = self.getRmsdArray1()
-		rmsd2 = self.getRmsdArray2()
+		rmsd = self.getRmsdArray()
 		filename = os.path.basename(filepath)
 		f = open(filepath, "w")
 		f.write( "image 1: "+self.panel1.filename+" (x,y,err)\n" )
 		for i, target in enumerate(targets1):
-			f.write( '%d,%d,%.3f\n' % (target[0], target[1], rmsd1[i]) )
+			f.write( '%d,%d,%.3f\n' % (target[0], target[1], rmsd[i]) )
 		f.write( "image 2: "+self.panel2.filename+" (x,y,err)\n" )
 		for i, target in enumerate(targets2):
-			f.write( '%d,%d,%.3f\n' % (target[0], target[1], rmsd1[i]) )
+			f.write( '%d,%d,%.3f\n' % (target[0], target[1], rmsd[i]) )
 		f.close()
 		self.statbar.PushStatusText("Saved "+str(len(targets1))+" particles to "+self.data['outfile'], 0)
 		return True
