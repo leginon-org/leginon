@@ -235,7 +235,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 		#set tilt
 		tilt1 = apDatabase.getTiltAngleDeg(imgdata)
 		tilt2 = apDatabase.getTiltAngleDeg(tiltdata)
-		self.app.data['theta'] = tilt1 - tilt2
+		self.app.data['theta'] = abs(tilt1) - abs(tilt2)
 		#print "theta=",self.app.data['theta']
 
 		#pre-load particle picks
