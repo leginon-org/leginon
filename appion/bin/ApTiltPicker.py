@@ -63,12 +63,17 @@ class TiltTargetPanel(TargetPanel.TargetImagePanel):
 
 #---------------------------------------
 class PickerApp(wx.App):
-	def __init__(self, mode='default', pickshape="cross", pshapesize=16, alignshape="circle", ashapesize=16):
+	def __init__(self, mode='default', 
+	 pickshape="cross", pshapesize=16, 
+	 alignshape="circle", ashapesize=16,
+	 errorshape="plus", eshapesize=16):
 		self.mode = mode
 		self.pshape = self.canonicalShape(pickshape)
 		self.pshapesize = int(pshapesize)
 		self.ashape = self.canonicalShape(alignshape)
 		self.ashapesize = int(ashapesize)
+		self.eshape = self.canonicalShape(errorshape)
+		self.eshapesize = int(eshapesize)
 		wx.App.__init__(self)
 
 	def OnInit(self):
@@ -103,6 +108,10 @@ class PickerApp(wx.App):
 			shape=self.ashape, size=self.ashapesize)
 		self.panel1.setTargets('Aligned', [])
 		self.panel1.selectiontool.setDisplayed('Aligned', True)
+		self.panel1.addTargetTool('Errors', color=wx.Color(215, 215, 32), 
+			shape=self.eshape, size=self.eshapesize)
+		self.panel1.setTargets('Errors', [])
+		self.panel1.selectiontool.setDisplayed('Errors', True)
 		#self.panel1.SetMinSize((256,256))
 		#self.panel1.SetBackgroundColour("sky blue")
 
@@ -116,6 +125,10 @@ class PickerApp(wx.App):
 			shape=self.ashape, size=self.ashapesize)
 		self.panel2.setTargets('Aligned', [])
 		self.panel2.selectiontool.setDisplayed('Aligned', True)
+		self.panel2.addTargetTool('Errors', color=wx.Color(215, 215, 32), 
+			shape=self.eshape, size=self.eshapesize)
+		self.panel2.setTargets('Errors', [])
+		self.panel2.selectiontool.setDisplayed('Errors', True)
 		#self.panel2.SetMinSize((256,256))
 		#self.panel2.SetBackgroundColour("pink")
 
@@ -427,11 +440,30 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return False
 		#GET ARRAYS
+		a1 = self.getArray1()
+		a2 = self.getArray2()
 		a1b = self.getAlignedArray1()
 		a2b = self.getAlignedArray2()
 		#SET THE ALIGNED ARRAYS
 		self.panel2.setTargets('Aligned', a1b )
 		self.panel1.setTargets('Aligned', a2b )
+		err = self.getRmsdArray1()
+		mean = ndimage.mean(err)
+		stdev = ndimage.standard_deviation(err)
+		cut = mean + 3*stdev
+		errb = numpy.transpose(numpy.vstack([err,err]))
+		a1c = []
+		a2c = []
+		for i,e in enumerate(err):
+			if e > cut:
+				a1c.append(a1[i,:])
+				a2c.append(a2[i,:])
+		#a1c = numpy.where(errb > cut, a1, 0)
+		#a2c = numpy.where(errb > cut, a2, 0)
+		self.statbar.PushStatusText(str(len(a1c))+" particles had an RMSD greater than "
+			+str(int(cut))+ " pixels", 0)
+		self.panel1.setTargets('Errors', a1c )
+		self.panel2.setTargets('Errors', a2c )
 
 	#---------------------------------------
 	def getArray1(self):
