@@ -3,6 +3,7 @@
 
 import MySQLdb
 import sinedon
+import sys
 
 # connect
 dbconf=sinedon.getConfig('appionData')
