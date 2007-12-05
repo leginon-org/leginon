@@ -242,6 +242,9 @@ def checkInspectFile(imgdict):
 
 
 def checkInspectDB(imgdata):
+	status = apDatabase.getImageStatus(imgdata)
+	if status is False:
+		return False
 	keep = apDatabase.getImgAssessmentStatus(imgdata)
 	return keep
 
