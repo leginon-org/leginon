@@ -320,16 +320,16 @@ def getImageStatus(imgdata):
 	q="select `status` from dbemdata.`viewer_pref_image` where imageId=%i" % (imageId,)
 	### to add: something like if statusdata has a higher priority than
 	### viewer hidden status
-	### if statusdata is not None: return statusdata ...  
+	### if statusdata is not None: return statusdata ...
 
-  result=db.selectone(q)
-  if result is None:
-    return None
-  if result['status']=='hidden':
-    return False
-  if result['status']=='examplar':
-    return True
-  return None
+	result=db.selectone(q)
+	if result is None:
+		return None
+	if result['status']=='hidden':
+		return False
+	if result['status']=='examplar':
+		return True
+	return None
 
 
 def isModelInDB(md5sum):
