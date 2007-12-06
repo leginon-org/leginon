@@ -198,6 +198,16 @@ class particledata {
 		return $r;
 	}
 
+	function getMaxTiltAngle ($sessionId) {
+		$q = "SELECT MAX(ABS(s.`SUBD|stage position|a`)) "
+			."FROM AcquisitionImageData AS im "
+			."LEFT JOIN ScopeEMData AS s "
+			."ON s.`DEF_id` = im.`REF|ScopeEMData|scope` "
+			."WHERE im.`REF|SessionData|session` = '$sessionId' ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getTemplateRunParams ($runId) {
 		$q="SELECT i.DEF_id as id, p.path, i.templatename as tname, i.apix, i.description, "
 			."t.range_start, t.range_end, t.range_incr, "
