@@ -7,6 +7,7 @@ import time
 import math
 import shutil
 #sinedon
+import sinedon
 import sinedon.data as data
 #leginon
 import leginondata
@@ -299,7 +300,7 @@ def getDarkNorm(sessionname, cameraconfig):
 
 	return result
 
-def getImageStatus(imgdata):
+def getImageViewerStatus(imgdata):
 	"""
 	Function that returns whether or not the image was hidden in the viewer
 	False: Image was hidden
@@ -331,6 +332,13 @@ def getImageStatus(imgdata):
 		return True
 	return None
 
+
+def checkInspectDB(imgdata):
+	status = getImageViewerStatus(imgdata)
+	if status is False:
+		return False
+	keep = getImgAssessmentStatus(imgdata)
+	return keep or status
 
 def isModelInDB(md5sum):
 	modelq = appionData.ApInitialModelData()

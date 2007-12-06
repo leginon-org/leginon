@@ -295,6 +295,7 @@ class ApStackParamsData(Data):
 			('correlationMax', float),
 			('checkMask', str),
 			('checkImage', bool),
+			('norejects', bool),
 			('minDefocus', float),
 			('maxDefocus', float),
 			('fileType', str),

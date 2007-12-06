@@ -312,6 +312,7 @@ class AppionLoop(object):
 		self.params['reprocess']=None
 		self.params['nowait']=False
 		self.params['norejects']=None
+		self.params['bestimages']=None
 		self.params['limit']=None
 		self.params['shuffle']=False
 		self.params['tiltangle']=None
@@ -412,6 +413,9 @@ class AppionLoop(object):
 			elif arg=='tiltangle':
 				self.params['tiltangle']=float(elements[1])
 			elif arg=='norejects':
+				self.params['norejects']=True
+			elif arg=='bestimages':
+				self.params['bestimages']=True
 				self.params['norejects']=True
 			elif (elements[0]=='limit'):
 				self.params['limit']=int(elements[1])
@@ -785,7 +789,12 @@ class AppionLoop(object):
 				reproccount += 1
 				skip = True
 
-			elif self.params['norejects'] is True and apDatabase.getImgAssessmentStatus(imgdata) is False:
+			elif self.params['norejects'] is True and apDatabase.checkInspectDB(imgdata) is False:
+				self._writeDoneDict(imgname)
+				rejectcount += 1
+				skip = True
+
+			elif self.params['bestimages'] is True and apDatabase.checkInspectDB(imgdata) is None:
 				self._writeDoneDict(imgname)
 				rejectcount += 1
 				skip = True

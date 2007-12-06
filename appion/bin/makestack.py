@@ -60,6 +60,8 @@ def createDefaults():
 	params['aceCutoff']=None
 	params['boxSize']=None
 	params['checkImage']=None
+	params['norejects']=None
+	params['bestimages']=None
 	params['inspectfile']=None
 	params['phaseFlipped']=False
 	params['apix']=0
@@ -150,8 +152,13 @@ def parseInput(args):
 			params['lowpass']=float(elements[1])
 		elif (elements[0]=='hp'):
 			params['highpass']=float(elements[1])
+		elif (arg=='norejects'):
+			params['checkImage']=True
+			params['norejects']=True
 		elif (arg=='inspected'):
 			params['checkImage']=True
+			params['norejects']=True
+			params['bestimages']=True
 		elif (arg=='nonorm'):
 			params['normalized']=False
 		elif (arg=='phaseflip'):
@@ -241,29 +248,10 @@ def checkInspectFile(imgdict):
 	return (False)
 
 
-def checkInspectDB(imgdata):
-	status = apDatabase.getImageStatus(imgdata)
-	if status is False:
-		return False
-	keep = apDatabase.getImgAssessmentStatus(imgdata)
-	return keep
-
 def checkPairInspectDB(imgdata,params):
-	aq=appionData.ApAssessmentData()
 	#sibimagedata = db.direct_query(leginondata.AcquisitionImageData,params['sibpairs'][imgdata.dbid])
 	sibimagedata = apDefocalPairs.getDefocusPair(imgdata)
-	aq['image']=sibimagedata
-	adata=apdb.query(aq)	
-
-
-	keep=None
-	if adata:
-		#check results of only most recent run
-		if adata[0]['selectionkeep']==True:
-			keep=True
-		else:
-			keep=False
-	return(keep)
+	return apDatabase.checkInspectDB(sibimagedata)
 
 def batchBox(params, imgdict):
 	imgname = imgdict['filename']
@@ -583,7 +571,7 @@ def getImgsDefocPairFromSelexonId(params):
 def insertStackRun(params):
 	stparamq=appionData.ApStackParamsData()
 	paramlist = ('boxSize','bin','phaseFlipped','aceCutoff','correlationMin','correlationMax',
-		'checkMask','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized', 'defocpair','lowpass','highpass')
+		'checkMask','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized', 'defocpair','lowpass','highpass','norejects')
 
 	for p in paramlist:
 		if p in params:
@@ -677,12 +665,20 @@ def rejectImage(imgdata, params):
 		apDisplay.printColor(shortname+".mrc has been rejected in inspection file\n","cyan")
 		return False
 
-	if params['checkImage']:
-		if checkInspectDB(imgdata) is False:
+	if params['norejects']:
+		if apDatabase.checkInspectDB(imgdata) is False:
 			apDisplay.printColor(shortname+".mrc has been rejected by manual inspection\n","cyan")
 			return False
 		if params['defocpair'] and checkPairInspectDB(imgdata, params) is False:
 			apDisplay.printColor(shortname+".mrc has been rejected by manual defocpair inspection\n","cyan")
+			return False
+
+	if params['bestimages']:
+		if apDatabase.checkInspectDB(imgdata) is None:
+			apDisplay.printColor(shortname+".mrc was not in KEEP list nor an Examplor","cyan")
+			return False
+		if params['defocpair'] and checkPairInspectDB(imgdata, params) is None:
+			apDisplay.printColor(shortname+".mrc was not in KEEP list nor an Examplor","cyan")
 			return False
 
 	if params['tiltangle'] is not None:
