@@ -5,6 +5,12 @@
 import os
 import sys
 import time
+#sinedon
+import sinedon
+try:
+	import sinedon.directq as directq
+except:
+	pass
 #leginon
 try:
 	import leginondata
@@ -333,33 +339,54 @@ def pik2Box(params,file):
 
 	print "results written to \'"+file+".box\'"
 	return
+	
+def getImageMsgPKeepCount(imgdata,refinerundata):
+	runid = str(refinerundata.dbid)
+	imgid = str(imgdata.dbid)
 
-def getMsgPKeepStatus(particledata,refinetree,keep=1):
-	
-	stackPtree = []
-	for refinedata in refinetree:
-		stackPq=appionData.ApStackParticlesData()
-		stackPq['stack'] = refinedata['refinementRun']['stack']
-		stackPq['particle'] = particledata
-		stackPresults=appiondb.query(stackPq,results=1)
-		if stackPresults:
-			stackPtree.append(stackPresults[0])
-		else:
-			print "Particle not in refinement"
-			return 0
-	
-	count=0
-	if stackPresults:
-		print "found stack",stackPresults[0].dbid
-		for i,refinedata in enumerate(refinetree):
-			pclassq = appionData.ApParticleClassificationData()
-			pclassq['refinement'] = refinedata
-			pclassq['particle'] = stackPtree[i]
-			results=appiondb.query(pclassq,results=1)
-			if results[0]['msgp_keep'] == keep:
-				count += 1
-	print count
-	
+	q = """
+	SELECT stackp2.`REF|ApParticleData|particle` particle, result.* FROM
+	(SELECT pcls.`REF|ApStackParticlesData|particle` as stackp,count(*) as count FROM
+	`ApParticleClassificationData` pcls
+	LEFT JOIN
+	`ApRefinementData` rf
+	ON pcls.`REF|ApRefinementData|refinement` = rf.`DEF_id`
+	LEFT JOIN
+	`ApRefinementRunData` rfr
+	ON rf.`REF|ApRefinementRunData|refinementRun`=rfr.`DEF_id`
+	"""
+	q = q+"WHERE rfr.`DEF_id`="+runid
+	q = q+"""
+	AND pcls.`msgp_keep`=1
+	AND pcls.`REF|ApStackParticlesData|particle`
+	in
+	(SELECT stackp.`DEF_id` as stackp FROM
+	`ApStackParticlesData` stackp
+	LEFT JOIN `ApStackData` stack
+	ON stackp.`REF|ApStackData|stack` = stack.`DEF_id`
+	LEFT JOIN `ApRefinementRunData` rfr
+	ON rfr.`REF|ApStackData|stack` = stack.`DEF_id`
+	"""
+	q = q+ "where rfr.`DEF_id`="+runid
+	q = q + """
+	AND
+	stackp.`REF|ApParticleData|particle`
+	in 
+	(SELECT p.`DEF_id` FROM
+	`ApParticleData` p
+	"""
+	q = q + "WHERE p.`REF|leginondata|AcquisitionImageData|image` = " + imgid + ")"
+	q = q + """
+	)
+	group by pcls.`REF|ApStackParticlesData|particle`) result
+	LEFT JOIN
+	`ApStackParticlesData` stackp2
+	ON result.`stackp`=stackp2.`DEF_id` 
+	"""
+	results = directq.complexMysqlQuery('appionData',q)
+
+	return results
+
 if __name__ == '__main__':
 	name = 'test2'
 	sessionname = '07jan05b'
