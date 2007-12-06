@@ -69,7 +69,7 @@ $currentproject=$sessiondata['currentproject'];
 $nonecolor='#FFFFCC';
 $progcolor='#CCFFFF';
 $donecolor='#CCFFCC';
-$mode = "neild";
+$mode = "neils";
 if($mode == "neil") {
 	$donepic='img/icon-check.png';
 	$nonepic='img/icon-cross.png';
@@ -223,6 +223,13 @@ if ($sessionId) {
     <A HREF='runManualPicker.php?expId=$sessionId'>";
     if ($prtlruns==0) {echo "Manual Picking";}
     else {echo "Manually Edit Picking";}
+		$maxangle = $particle->getMaxTiltAngle($sessionId);
+		if ($maxangle > 5) {
+    	echo"</A><BR>
+    	<A HREF='tiltAligner.php?expId=$sessionId'>";
+    	if ($prtlruns==0) {echo "Align Tilt Pairs";}
+    	else {echo "Align Tilt Particle Pairs";}
+		}
     echo"</A>
     </TD>
   </TR>
