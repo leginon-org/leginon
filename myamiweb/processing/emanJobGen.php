@@ -67,7 +67,7 @@ elseif ($_POST['submitjob']) {
 
   $expId = $_GET['expId'];
 
-  $host = 'garibaldi';
+  $host = PROCESSING_HOST;
   $user = $_SESSION['username'];
   $pass = $_SESSION['password'];
   if (!($user && $pass)) writeJobFile("<B>ERROR:</B> Enter a user name and password");
@@ -106,11 +106,11 @@ elseif ($_POST['submitjob']) {
   // create directory on cluster and copy job file over
   $cmd = "mkdir -p $clusterpath;\n";
   $cmd .= "cp $outdir/$jobfile $clusterpath/$jobfile;\n";
-  $jobnum = exec_over_ssh('garibaldi', $user, $pass, $cmd, True);
+  $jobnum = exec_over_ssh(PROCESSING_HOST, $user, $pass, $cmd, True);
 
   // submit job on garibaldi
   $cmd = "cd $clusterpath; qsub $jobname.job;\n";
-  $jobnum = exec_over_ssh('garibaldi', $user, $pass, $cmd, True);
+  $jobnum = exec_over_ssh(PROCESSING_HOST, $user, $pass, $cmd, True);
   
   $jobnum=trim($jobnum);
   $jobnum = ereg_replace('\.garibaldi','',$jobnum);

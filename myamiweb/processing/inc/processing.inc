@@ -14,8 +14,11 @@
 require_once "inc/ssh.inc";
 require_once "inc/session.inc";
 
+// --- add to config file later --- //
+define(PROCESSING_HOST, 'garibali');
+
 // start a php session
-setsession();
+//setsession();
 
 // add commas to an int
 function commafy($input) {
@@ -174,9 +177,8 @@ function displayExperimentForm($projectId,$sessionId,$expId){
 	return $sessiondata;
 }
 
-function checkClusterJobs($user,$pass) {
-  $cmd = 'qstat -a | grep $user';
-  $subjobs = exec_over_ssh('garibaldi',$user,$pass,$cmd,True);
+function checkClusterJobs($user, $pass, $cmd='qstat -a | grep $user') {
+  $subjobs = exec_over_ssh(PROCESSING_HOST,$user,$pass,$cmd,True);
   return $subjobs;
 }
 

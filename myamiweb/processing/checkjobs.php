@@ -165,7 +165,7 @@ function checkJobs($showjobs=False,$extra=False) {
 
 	      // get the number of particles that have been classified
 	      $cmd = "grep ' -> ' $jobinfo[clusterpath]/recon/refine$current.txt | wc -l";
-	      $r = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
+	      $r = exec_over_ssh(PROCESSING_HOST,$user,$pass,$cmd, True);
 	      $r = trim($r);
 	      // find out how much time is left for rest of particles
 	      if ($r < $numinstack) {
@@ -242,18 +242,18 @@ function checkJobs($showjobs=False,$extra=False) {
 
 function checkJobStatus($jobpath,$jobfile,$user,$pass) {
   $cmd = "grep refine $jobpath/$jobfile ";
-  $r = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
+  $r = exec_over_ssh(PROCESSING_HOST,$user,$pass,$cmd, True);
   $allref = streamToArray($r);
   if (empty($allref)) return;
   foreach ($allref as $i){
     if ($i[0]=='refine' && preg_match('/\d+/',$i[1])) $stat['allref'][]=$i;
   }
   $cmd = "cat $jobpath/recon/refine.log;echo 'RESOLUTIONS';cat $jobpath/recon/resolution.txt";
-  $r = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
+  $r = exec_over_ssh(PROCESSING_HOST,$user,$pass,$cmd, True);
   $curref = streamToArray($r);
   $stat['refinelog']=$curref;
   $cmd = "grep Alarm $jobpath/recon/refine.* ";
-  $stat['errors'] = exec_over_ssh('garibaldi',$user,$pass,$cmd, True);
+  $stat['errors'] = exec_over_ssh(PROCESSING_HOST,$user,$pass,$cmd, True);
 
   return $stat;
 }
