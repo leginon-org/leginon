@@ -257,9 +257,21 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	  echo"<INPUT TYPE='checkbox' NAME='phaseflip' onclick='uncheckstig(this)' $phasecheck>\nPhaseflip Particle Images<BR>";
 	  echo"<INPUT TYPE='checkbox' NAME='stig' onclick='uncheckflip(this)' $stigcheck>\nPhaseflip Micrograph Images<BR>";
 	}
+
+	$checkimageval= ($_POST['checkimage']) ? $_POST['checkimage'] : 'best';
+	$checkimages=array('best','non-rejected','all');
 	echo"
-		<INPUT TYPE='checkbox' NAME='inspected' $inspectcheck>
-		Use Inspected Images<BR>
+	<A HREF=\"javascript:appioninfopopup('checkimages')\">
+	<B>Use</B></A>\n<SELECT NAME='checkimage'>\n";
+	foreach ($checkimages as $checkimage) {
+		echo "<OPTION VALUE='$checkimage' ";
+		// make norejects selected by default
+		if ($checkimage==$checkimageval) echo "SELECTED";
+		echo ">$checkimage</OPTION>\n";
+	}
+	echo"</SELECT>images<br/>\n";
+
+	echo"
 		<INPUT TYPE='checkbox' NAME='commit' $commitcheck>
 		Commit to Database<BR>
 		</TD>
@@ -417,10 +429,15 @@ function runMakestack() {
 	$normalize = ($_POST['normalize']=='on') ? '' : 'nonorm';
 	$phaseflip = ($_POST['phaseflip']=='on') ? 'phaseflip' : '';
 	$stig = ($_POST['stig']=='on') ? 'stig' : '';
-	$inspected = ($_POST['inspected']=='on') ? 'inspected' : '';
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
-
+	// set image inspection selection
+	if ($_POST[checkimage]=="non-rejected") {
+		$norejects = 1;
+	} elseif ($_POST[checkimage]=="best") {
+		$norejects = 1;
+		$inspected = 1;
+	}
 	// binning amount
 	$bin=$_POST['bin'];
 	if ($bin) {
@@ -487,6 +504,7 @@ function runMakestack() {
 	if ($phaseflip) $command.="phaseflip ";
 	if ($stig) $command.="stig ";
 	if ($inspected) $command.="inspected ";
+	if ($norejects) $command.="norejects ";
 	if ($massessname) $command.="maskassess=$massessname ";
 	if ($commit) $command.="commit ";
 	$command.="boxsize=$boxsize ";
@@ -526,6 +544,7 @@ function runMakestack() {
 	<TR><TD>phaseflip</TD><TD>$phaseflip</TD></TR>
 	<TR><TD>stig</TD><TD>$stig</TD></TR>
 	<TR><TD>inspected</TD><TD>$inspected</TD></TR>
+	<TR><TD>norejects</TD><TD>$norejects</TD></TR>
 	<TR><TD>mask assessment</TD><TD>$massessname</TD></TR>
 	<TR><TD>commit</TD><TD>$commit</TD></TR>
 	<TR><TD>box size</TD><TD>$boxsize</TD></TR>

@@ -11,8 +11,8 @@ function appionLoopJavaCommands () {
 function appioninfopopup(infoname){
 	var newwindow=window.open('','name','height=250, width=400');
 	newwindow.document.write('<HTML><BODY>');
-	if (infoname=='norejects'){
-		newwindow.document.write('If images have been assessed checking this will included REJECTED images from the assessment when unchecked only unassessed and GOOD images will be processed. Unchecking this saves computer time.');
+	if (infoname=='checkimages'){
+		newwindow.document.write('Choose what images to process here.  Images can be inspected by Viewer or ImageAssessor.  BEST images include ones inspected as KEEP or as EXAMPLOR in the viewer.  NON-REJECTED images include the BEST images above-mentioned and the uninspected ones and therefore exclude only the REJECTED or HIDDEN images.');
 	}
 	if (infoname=='runid'){
 		newwindow.document.write('Specifies the name associated with the processing results unique to the specified session and parameters. An attempt to use the same run name for a session using different processing parameters will result in an error.');
@@ -111,12 +111,23 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 
 	echo "
 <HR style='margin: 1em 1em 1em 0; border: 1px #333333 solid; border-collapse: collapse;'>
-<INPUT TYPE='hidden' name='sessionname' value='$sessionname'>
+<INPUT TYPE='hidden' name='sessionname' value='$sessionname'>";
 
-<INPUT TYPE='checkbox' NAME='norejects' $norejects>
-<A HREF=\"javascript:appioninfopopup('norejects')\">
-Process rejected images</A><br/>
 
+	$checkimageval= ($_POST['checkimage']) ? $_POST['checkimage'] : 'non-rejected';
+	$checkimages=array('non-rejected','all','best');
+	echo"
+	<A HREF=\"javascript:appioninfopopup('checkimages')\">
+	<B>Process</B></A>\n<SELECT NAME='checkimage'>\n";
+	foreach ($checkimages as $checkimage) {
+		echo "<OPTION VALUE='$checkimage' ";
+		// make norejects selected by default
+		if ($checkimage==$checkimageval) echo "SELECTED";
+		echo ">$checkimage</OPTION>\n";
+	}
+	echo"</SELECT>images<br/><br/>\n";
+
+echo "
 <INPUT TYPE='checkbox' NAME='nowait' $nowait>
 <A HREF=\"javascript:appioninfopopup('nowait')\">
 Wait for more images after finishing</A><br/>
@@ -152,7 +163,15 @@ Reprocess all images<br/><br/>
 };
 
 function appionLoopSummaryTable () {
-	$norejects = ($_POST[norejects]=="on") ? "0" : "1";
+	if ($_POST[checkimage]=="non-rejected") {
+		$norejects = 1;
+	} elseif ($_POST[checkimage]=="best") {
+		$norejects = 1;
+		$bestimages = 1;
+	} else {
+		$norejects = 0;
+		$bestimages = 0;
+	}
 	$nowait = ($_POST[nowait]=="on") ? "0" : "1";
 	$background = ($_POST[background]=="on") ? "1" : "0";
 	$shuffle = ($_POST[shuffle]=="on") ? "1" : "0";
@@ -170,6 +189,7 @@ function appionLoopSummaryTable () {
 	echo "<TR><TD>runid</TD><TD>$runid</TD></TR>\n";
 	echo "<TR><TD>outdir</TD><TD>$outdir</TD></TR>\n";
 	echo "<TR><TD>norejects</TD><TD>$norejects</TD></TR>\n";
+	echo "<TR><TD>bestimages</TD><TD>$bestimages</TD></TR>\n";
 	echo "<TR><TD>nowait</TD><TD>$nowait</TD></TR>\n";
 	echo "<TR><TD>commit</TD><TD>$commit</TD></TR>\n";
 	echo "<TR><TD>background</TD><TD>$background</TD></TR>\n";
@@ -187,7 +207,15 @@ function parseAppionLoopParams () {
 	}
 
 	// CONVERT DATA
-	$norejects = ($_POST[norejects]=="on") ? "0" : "1";
+	if ($_POST[checkimage]=="non-rejected") {
+		$norejects = 1;
+	} elseif ($_POST[checkimage]=="best") {
+		$norejects = 1;
+		$bestimages = 1;
+	} else {
+		$norejects = 0;
+		$bestimages = 0;
+	}
 	$nowait = ($_POST[nowait]=="on") ? "0" : "1";
 	$background = ($_POST[background]=="on") ? "1" : "0";
 	$shuffle = ($_POST[shuffle]=="on") ? "1" : "0";
@@ -210,6 +238,7 @@ function parseAppionLoopParams () {
 	elseif ($dbimages) $command.=" dbimages=$dbimages";
 	else $command.=" alldbimages=$_POST[sessionname]";
 	if ($norejects) $command.=" norejects";
+	if ($bestimages) $command.=" bestimages";
 	if ($nowait) $command.=" nowait";
 	if ($commit) $command.=" commit";
 	if ($background) $command.=" background";
