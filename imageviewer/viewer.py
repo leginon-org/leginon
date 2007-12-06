@@ -1,9 +1,10 @@
+#!/usr/bin/env python
 import wx
-from ImageViewer import events
-from ImageViewer import icons
-from ImageViewer import plugins
-from ImageViewer import tools
-from ImageViewer import window
+import events
+import icons
+import plugins
+import tools
+import window
 
 class Viewer(wx.Panel):
     def __init__(self, *args, **kwargs):
@@ -188,7 +189,7 @@ class Tools(wx.Panel):
 
 if __name__ == '__main__':
     import sys
-    import Mrc
+    from pyami import mrc
 
     filename = sys.argv[1]
 
@@ -203,7 +204,7 @@ if __name__ == '__main__':
 
     app = MyApp(0)
 
-    array = Mrc.mrcstr_to_numeric(open(filename, 'rb').read())
+    array = mrc.read(filename)
     app.panel.setNumarray(array)
     import random
     random.seed()

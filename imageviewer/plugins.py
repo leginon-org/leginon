@@ -1,6 +1,6 @@
 import wx
 import icons
-from ImageViewer import numarrayimage
+import numpyimage
 
 class Plugin(wx.EvtHandler):
     def __init__(self, imagewindow):
@@ -118,7 +118,7 @@ class NumarrayPlugin(Plugin):
         regioniterator = wx.RegionIterator(region)
         while(regioniterator):
             r = regioniterator.GetRect()
-            bitmap = numarrayimage.numarray2wxBitmap(
+            bitmap = numpyimage.numpy2wxBitmap(
                                       self.array,
                                       r.x - self.rect.x, r.y - self.rect.y,
                                       r.width, r.height,
@@ -357,7 +357,7 @@ class MagnifierPlugin(Plugin):
         scale = self.scale*self.imageplugin.scale
         x, y = self.imageplugin.getXY(*self.rect.position)
         try:
-            b = numarrayimage.numarray2wxBitmap(self.imageplugin.array,
+            b = numpyimage.numpy2wxBitmap(self.imageplugin.array,
                   int(round(x*scale - self.rect.width/2.0)) + self.border,
                   int(round(y*scale - self.rect.width/2.0)) + self.border,
                   self.rect.width - 2*self.border,

@@ -1,8 +1,9 @@
-import numarray
+import numpy
 import wx
-from ImageViewer import events
-from ImageViewer import icons
-from ImageViewer import numarrayimage
+import events
+import icons
+import numpyimage
+from pyami import arraystats
 
 class Display(wx.Panel):
     def __init__(self, *args, **kwargs):
@@ -102,28 +103,28 @@ class Statistics(wx.Panel):
             if array is None:
                 mean = None
             else:
-                mean = array.mean()
+                mean = arraystats.mean(array)
         try:
             min = statistics['min']
         except KeyError:
             if array is None:
                 min = None
             else:
-                min = array.min()
+                min = arraystats.min(array)
         try:
             max = statistics['max']
         except KeyError:
             if array is None:
                 max = None
             else:
-                max = array.max()
+                max = arraystats.max(array)
         try:
             sd = statistics['stdev']
         except KeyError:
             if array is None:
                 sd = None
             else:
-                sd = array.stddev()
+                sd = arraystats.std(array)
 
         if mean is None:
             meanstr = ''
@@ -192,20 +193,28 @@ class ValueScaleBitmap(wx.StaticBitmap):
     def updateBitmap(self):
         width, height = self.GetSize()
         types = [type(i) for i in self.fromrange]
-        if float in types:
-            arraytype = numarray.Float
-        elif int in types:
-            arraytype = numarray.Int
-        else:
-            raise TypeError
 
-        array = numarray.arange(width, type=numarray.Float, shape=(1, width))
+        arraytype = None
+        for t in types:
+          if issubclass(t, float) or issubclass(t, numpy.floating):
+            arraytype = numpy.float
+            break
+        if arraytype is None:
+          for t in types:
+            if t is int or t is long or issubclass(t, numpy.integer):
+              arraytype = numpy.int
+              break
+        if arraytype is None:
+            raise TypeError
+        array = numpy.arange(width, dtype=numpy.float)
+        array.shape=(1, width)
         array *= float(self.extrema[1] - self.extrema[0])/(width - 1)
         array += self.extrema[0]
         array = array.astype(arraytype)
         array = array.repeat(height)
+        array.shape = height,-1
 
-        bitmap = numarrayimage.numarray2wxBitmap(array,
+        bitmap = numpyimage.numpy2wxBitmap(array,
                                                   fromrange=self.fromrange)
         self.SetBitmap(bitmap)
 
@@ -278,12 +287,20 @@ class ValueScaler(wx.Panel):
             self.maxslider.SetValue(self.maxslider.GetMax())
         else:
             types = [type(value) for value in self.valuerange + self.extrema]
-            if float in types:
-                self.type = float
-            elif int in types:
-                self.type = int
-            else:
+
+            self.type = None
+            for t in types:
+              if issubclass(t, float) or issubclass(t, numpy.floating):
+                self.type = numpy.float
+                break
+            if self.type is None:
+              for t in types:
+                if t is int or t is long or issubclass(t, numpy.integer):
+                  self.type = numpy.int
+                  break
+            if self.type is None:
                 raise TypeError
+
             self.minlabel.SetLabel('%g' % extrema[0])
             self.maxlabel.SetLabel('%g' % extrema[1])
             self.minentry.SetValue('%g' % valuerange[0])
