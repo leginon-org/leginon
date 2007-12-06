@@ -6,12 +6,14 @@ debug = True
 
 HOME = os.path.expanduser('~')
 CURRENT = os.getcwd()
+modulepath = os.path.dirname(__file__)
 
 configfilename = 'sinedon.cfg'
 
 config_locations = [
 	configfilename,
 	os.path.join(HOME, configfilename),
+	os.path.join(modulepath, configfilename),
 ]
 
 configparser = ConfigParser.SafeConfigParser()
