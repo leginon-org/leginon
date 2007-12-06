@@ -48,7 +48,7 @@ class ClearPlugin(Plugin):
         Plugin.onUpdateClientRegion(self, clientregion)
         return True
 
-class NumarrayPlugin(Plugin):
+class NumpyPlugin(Plugin):
     def __init__(self, imagewindow):
         Plugin.__init__(self, imagewindow)
         self.region = wx.Region()
@@ -82,10 +82,10 @@ class NumarrayPlugin(Plugin):
 
         return rect
 
-    def getNumarray(self):
+    def getNumpy(self):
         return self.array
 
-    def setNumarray(self, array):
+    def setNumpy(self, array):
         if array is None:
             self.extrema = None
             self.valuerange = None

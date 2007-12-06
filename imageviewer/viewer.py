@@ -15,7 +15,7 @@ class Viewer(wx.Panel):
         clearplugin = plugins.ClearPlugin(self.imagewindow)
         self.imagewindow.addPlugin(clearplugin)
 
-        self.numarrayplugin = plugins.NumarrayPlugin(self.imagewindow)
+        self.numarrayplugin = plugins.NumpyPlugin(self.imagewindow)
         self.imagewindow.addPlugin(self.numarrayplugin)
 
         self.crosshairsplugin = plugins.CrosshairsPlugin(self.imagewindow,
@@ -73,17 +73,17 @@ class Viewer(wx.Panel):
         if self.tools.displaytool.magnifier:
             self.magnifierplugin.setXY(wx.Point(evt.m_x, evt.m_y))
 
-    def getNumarray(self):
-        return self.numarrayplugin.getNumarray()
+    def getNumpy(self):
+        return self.numarrayplugin.getNumpy()
 
-    def setNumarray(self, array):
+    def setNumpy(self, array):
         if array is None:
             extrema = None
         else:
             min = array.min()
             max = array.max()
             extrema = (min, max)
-        self.numarrayplugin.setNumarray(array)
+        self.numarrayplugin.setNumpy(array)
         self.tools.infotool.setStatistics(array)
         self.tools.valuescalebitmap.updateParameters(extrema=extrema,
                                                       fromrange=extrema)
@@ -205,7 +205,7 @@ if __name__ == '__main__':
     app = MyApp(0)
 
     array = mrc.read(filename)
-    app.panel.setNumarray(array)
+    app.panel.setNumpy(array)
     import random
     random.seed()
     targets = []
