@@ -17,15 +17,15 @@ require "inc/appionloop.inc";
   
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
-  runManualPicker();
+  runTiltAligner();
 }
 // CREATE FORM PAGE
 else {
-  createManualPickerForm();
+  createTiltAlignerForm();
 }
 
 
-function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $heading='Manual Particle Selection and Editing') {
+function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $heading='Tilt Aligner Particle Selection and Editing') {
 
   // check if coming directly from a session
    $expId = $_GET['expId'];
@@ -39,7 +39,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   }
   $projectId=$_POST['projectId'];
 
-  // --- find hosts to run Manual Picker
+  // --- find hosts to run Tilt Aligner
 
   $javafunctions="
         <script src='../js/viewer.js'></script>
@@ -57,7 +57,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
         </SCRIPT>\n";
   $javafunctions .= appionLoopJavaCommands();
   $javafunctions .= particleLoopJavaCommands();
-  writeTop("Manual Picker Launcher","Manual Particle Selection and Editing",$javafunctions);
+  writeTop("Tilt Aligner Launcher","Tilt Aligner Particle Selection and Editing",$javafunctions);
 
   if ($extra) {
     echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
@@ -72,7 +72,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   $particle=new particleData;
   $prtlrunIds = $particle->getParticleRunIds($sessionId);
   $prtlruns = count($prtlrunIds);
-  $defrunid = ($_POST['runid']) ? $_POST['runid'] : 'manrun'.($prtlruns+1);
+  $defrunid = ($_POST['runid']) ? $_POST['runid'] : 'tiltrun'.($prtlruns+1);
   $presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
   $prtlrunval = ($_POST['pickrunid']) ? $_POST['pickrunid'] : '';
   $testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
@@ -157,8 +157,8 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
     </select>*/
   echo"<BR/>";
   //echo"<input type='submit' name='process' value='Just Show Command'>";
-  echo"<input type='submit' name='process' value='Run ManualPicker'><BR>";
-  echo"<FONT class='apcomment'>Submission will NOT run Manual Picker,<BR/>
+  echo"<input type='submit' name='process' value='Run Tilt Aligner'><BR>";
+  echo"<FONT class='apcomment'>Submission will NOT run Tilt Aligner,<BR/>
     only output a command that you can copy and paste into a unix shell</FONT>
     </TD>
   </TR>
@@ -171,19 +171,19 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   <?
 }
 
-function runManualPicker() {
+function runTiltAligner() {
 
-  $command.="manualpicker.py ";
+  $command.="tiltaligner.py ";
   $apcommand = parseAppionLoopParams($_POST);
   if ($apcommand[0] == "<") {
-    createManualPickerForm($apcommand);
+    createTiltAlignerForm($apcommand);
     exit;
   }
   $command .= $apcommand;
 
   $partcommand = parseParticleLoopParams("manual", $_POST);
   if ($partcommand[0] == "<") {
-    createManualPickerForm($partcommand);
+    createTiltAlignerForm($partcommand);
     exit;
   }
   $command .= $partcommand;
@@ -206,17 +206,17 @@ function runManualPicker() {
     if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
   }
 
-  if ($testimage && $_POST['process']=="Run ManualPicker") {
+  if ($testimage && $_POST['process']=="Run Tilt Aligner") {
     $host = $_POST['host'];
     $user = $_POST['user'];
     $password = $_POST['password'];
     if (!($user && $password)) {
-      createManualPickerForm("<B>ERROR:</B> Enter a user name and password");
+      createTiltAlignerForm("<B>ERROR:</B> Enter a user name and password");
       exit;
     }
     $prefix =  "source /ami/sw/ami.csh;";
     $prefix .= "source /ami/sw/share/python/usepython.csh cvs32;";
-    $cmd = "$prefix $command > manualpickerlog.txt";
+    $cmd = "$prefix $command > tiltalignerlog.txt";
     $result=exec_over_ssh($host, $user, $password, $cmd, True);
   }
 
@@ -226,14 +226,14 @@ function runManualPicker() {
     $runid = $_POST[runid];
     $outdir = $_POST[outdir];
     if (substr($outdir,-1,1)!='/') $outdir.='/';
-    echo "<B>ManualPicker Command:</B><BR>$command";
+    echo "<B>TiltAligner Command:</B><BR>$command";
     $testjpg=ereg_replace(".mrc","",$testimage);
     $jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
     $ccclist=array();
     //$cccimg=$outdir.$runid."/manualmaps/".$testjpg.".manualmap1.jpg";
     //$ccclist[]=$cccimg;
     $images=writeTestResults($jpgimg,$ccclist);
-    createManualPickerForm($images,'Particle Selection Test Results','');
+    createTiltAlignerForm($images,'Particle Selection Test Results','');
     exit;
   }
 
@@ -241,7 +241,7 @@ function runManualPicker() {
     <P>
     <TABLE WIDTH='600'>
     <TR><TD COLSPAN='2'>
-    <B>Manual Picker Command:</B><BR>
+    <B>Tilt Aligner Command:</B><BR>
     $command<HR>
     </TD></TR>";
 
