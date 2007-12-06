@@ -199,13 +199,13 @@ class particledata {
 	}
 
 	function getMaxTiltAngle ($sessionId) {
-		$q = "SELECT MAX(ABS(s.`SUBD|stage position|a`)) "
-			."FROM AcquisitionImageData AS im "
-			."LEFT JOIN ScopeEMData AS s "
+		$q = "SELECT MAX(ABS(s.`SUBD|stage position|a`))*180.0/PI() AS angle "
+			."FROM dbemdata.`AcquisitionImageData` AS im "
+			."LEFT JOIN dbemdata.`ScopeEMData` AS s "
 			."ON s.`DEF_id` = im.`REF|ScopeEMData|scope` "
 			."WHERE im.`REF|SessionData|session` = '$sessionId' ";
 		$r = $this->mysql->getSQLResult($q);
-		return $r;
+		return $r[0]['angle'];
 	}
 
 	function getTemplateRunParams ($runId) {
