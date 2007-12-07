@@ -2,12 +2,13 @@
 # update the status of the reconstruction in the appion database 
 
 import MySQLdb
-import sinedon
+import dbconfig
 import sys
 
 # connect
-dbconf=sinedon.getConfig('appionData')
-dbc=MySQLdb.connect(**dbconf)
+c=dbconfig.getConfig('appionData')
+dbc=MySQLdb.Connect(**c)
+
 # create a cursor
 cursor = dbc.cursor()
 
