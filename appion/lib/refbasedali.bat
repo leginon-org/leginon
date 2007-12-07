@@ -5,11 +5,14 @@ x98=3     ; number of reference images
 x97=25     ; first ring for rotational alignment
 x96=55    ; last ring for rotational alignment
 x95=6     ; translational search range (in pixels)
-x93=13     ; c-symmetry (rotational symmetry to be applied, 1 if none)
+x93=1     ; c-symmetry (rotational symmetry to be applied, 1 if none)
 x92=4     ; iteration number
 x91=x92-1
 
 ; last ring + translational search range MUST be < (box size/2)-1
+
+VM
+echo "running iteration {**x92}"
 
 FR G ; stack file
 [stack]start
@@ -20,6 +23,7 @@ FR G
 
 ; create the selection document file.
 ; The image series is consecutive
+
 DOC CREATE
 select
 1
@@ -31,6 +35,7 @@ selref
 1-x98
 
 ;copy templates into spider stack
+
 IF (x92.eq.1) THEN
   DO LB34, x11=1,x98
     CP
@@ -47,19 +52,23 @@ mkdir -p refselect/
 
 
 VM
-echo "aligning particles to reference"
+echo "  aligning particles to reference"
+
+VM
+echo "  ** may crash if no particles align to a template"
+
 ; do the alignment
 AP MQ
 [ref]@***    		; template for reference image
-selref                  ; file containing list of reference files
-(x95,1)                 ; translational search range, step size
-x97,x96                 ; first & last ring
-[stack]@******          ; stack containing images to be aligned
-select                  ; list of particles for alignment
-apmq			   ; output angles
+selref            ; file containing list of reference files
+(x95,1)           ; translational search range, step size
+x97,x96           ; first & last ring
+[stack]@******    ; stack containing images to be aligned
+select            ; list of particles for alignment
+apmq			      ; output angles
 
 VM
-echo "creating new aligned stack"
+echo "  creating new aligned stack"
 ;rotate and shift images according to the parameters from AP MQ alignment
 
 ;if it is the first iteration proceed to RT SQ function
@@ -199,7 +208,7 @@ UD ICE
 
 
 VM
-echo "creating resulting template(s)"
+echo "  creating resulting template(s)"
 
 
 
@@ -215,7 +224,7 @@ varali@{***x33}    ; new refined variance
 
 IF (x93.gt.1) THEN
   VM
-  echo "applying c{**x93} symmetry"
+  echo "  applying c{**x93} symmetry"
 
   CP
   refali@{***x33}
@@ -263,24 +272,24 @@ IF (x93.gt.1) THEN
 ENDIF
   
 VM
-echo "computing the resolution for class{%F5.0%x33}"
+echo "  computing the resolution for class {***x33}"
 ; get the resolution
 AS R
-[aligned]@******        ; input file name
-refselect/refselect{***x33}                 ; list of particles to use
-O                       ; 2 sub-averages will be calculated, one for odd, one for even
-rff/avgodd@{***x33}    ; file receiving odd average
-rff/varodd@{***x33}    ; file receiving odd variance
-rff/avgeven@{***x33}   ; file receiving even average
-rff/vareven@{***x33}   ; file receiving even variance
+[aligned]@******             ; input file name
+refselect/refselect{***x33}  ; list of particles to use
+O                            ; 2 sub-averages will be calculated, one for odd, one for even
+rff/avgodd@{***x33}          ; file receiving odd average
+rff/varodd@{***x33}          ; file receiving odd variance
+rff/avgeven@{***x33}         ; file receiving even average
+rff/vareven@{***x33}         ; file receiving even variance
 
 ; computes fourier shell coefficient
 RF
-rff/avgodd@{***x33}    ; first file
-rff/avgeven@{***x33}   ; second file
-(0.5)     ; ring width
-(0.2,2)   ; scale factor (lower, upper)
-rff/rff{***x33}       ; output file
+rff/avgodd@{***x33}  ; first file
+rff/avgeven@{***x33} ; second file
+(0.5)                ; ring width
+(0.2,2)              ; scale factor (lower, upper)
+rff/rff{***x33}      ; output file
 
 LB35
 
