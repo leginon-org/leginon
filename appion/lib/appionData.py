@@ -330,6 +330,7 @@ class ApNoRefRunData(Data):
 			#('norefPath', str),
 			('path', ApPathData),
 			('description', str),
+			('run_seconds', int),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApNoRefRunData=ApNoRefRunData
