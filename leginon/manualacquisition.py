@@ -138,14 +138,14 @@ class ManualAcquisition(node.Node):
 		self.logger.info('Image acquisition complete')
 
 	def preExposure(self):
-		if self.settings['screen up']:
-			self.instrument.tem.MainScreenPosition = 'up'
-
 		if self.settings['low dose']:
 			self.lowdosemode = self.instrument.tem.LowDoseMode
 			if self.lowdosemode is None:
 				self.logger.warning('Failed to save previous low dose state')
 			self.instrument.tem.LowDoseMode = 'exposure'
+		if self.settings['screen up']:
+			self.instrument.tem.MainScreenPosition = 'up'
+
 			time.sleep(self.settings['low dose pause time'])
 
 	def postExposure(self):
