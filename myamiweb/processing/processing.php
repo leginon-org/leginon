@@ -202,35 +202,27 @@ if ($sessionId) {
     <B>Particle Selection</B>
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
-    if ($prtlruns==0) {echo "none";}
-    else {echo "<A HREF='prtlreport.php?expId=$sessionId'>$prtlruns completed</A>\n";}
-    echo"
+  if ($prtlruns==0) {echo "none";}
+  else {echo "<A HREF='prtlreport.php?expId=$sessionId'>$prtlruns completed</A>\n";}
+  echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>";
-    if ($templates==0) {
-    	echo"<A HREF='uploadtemplate.php?expId=$sessionId'>";
-      echo "Upload template for picking";
-    } else {
-    	echo"<A HREF='runPySelexon.php?expId=$sessionId'>";
-    	if ($prtlruns==0) {echo "Template Picking";}
-    	else {echo "Template Picking";}
-    }
-    echo"</A><BR>
+  echo"<A HREF='runPySelexon.php?expId=$sessionId'>Template Picking</A><BR>
     <A HREF='runDogPicker.php?expId=$sessionId'>";
-    if ($prtlruns==0) {echo "DoG Picking";}
-    else {echo "DoG Picking";}
-    echo"</A><BR>
+  if ($prtlruns==0) {echo "DoG Picking";}
+  else {echo "DoG Picking";}
+  echo"</A><BR>
     <A HREF='runManualPicker.php?expId=$sessionId'>";
-    if ($prtlruns==0) {echo "Manual Picking";}
-    else {echo "Manually Edit Picking";}
-		$maxangle = $particle->getMaxTiltAngle($sessionId);
-		if ($maxangle > 5) {
-    	echo"</A><BR>
+  if ($prtlruns==0) {echo "Manual Picking";}
+  else {echo "Manually Edit Picking";}
+  $maxangle = $particle->getMaxTiltAngle($sessionId);
+  if ($maxangle > 5) {
+    echo"</A><BR>
     	<A HREF='tiltAligner.php?expId=$sessionId'>";
-    	if ($prtlruns==0) {echo "Align Tilt Pairs";}
-    	else {echo "Align Tilt Particle Pairs";}
+    if ($prtlruns==0) {echo "Align Tilt Pairs";}
+    else {echo "Align Tilt Particle Pairs";}
 		}
-    echo"</A>
+  echo"</A>
     </TD>
   </TR>
   <TR>\n";
