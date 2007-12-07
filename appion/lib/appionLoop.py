@@ -374,7 +374,7 @@ class AppionLoop(object):
 			arg = args[i]
 			if '.mrc' in arg and not '=' in arg:
 				# add file to mrc file list minus the '.mrc' part
-				mrcfile = os.path.splitext(arg)[0]
+				mrcfile = os.path.splitext(os.path.basename(arg))[0]
 				mrcfileroot.append(mrcfile)
 				# remove file from list of args and backup in loop
 				del args[i]
