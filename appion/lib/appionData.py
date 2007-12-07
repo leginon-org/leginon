@@ -370,6 +370,7 @@ class ApNoRefClassRunData(Data):
 #			('cluster_method', str),
 #			('classParams', ApNoRefClassParamData),
 			('classFile', str),
+			('varFile', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApNoRefClassRunData=ApNoRefClassRunData

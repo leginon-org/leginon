@@ -209,6 +209,7 @@ def getStackInfo(params):
 	params['stacktype'] = stackparamdata['fileType']
 	params['boxsize']   = int(stackparamdata['boxSize']/params['bin'])
 	params['classfile'] = "classes_avg%03d" % params['numclasses']
+	params['varfile'] = "classes_var%03d" % params['numclasses']
 
 	if 'diam' in selectdata and not params['classonly']:
 		if params['diam'] is None:
@@ -455,6 +456,8 @@ def runSpiderClass(params, reclass=False):
 	apDisplay.printColor("finished spider in "+apDisplay.timeString(time.time()-starttime),"cyan")
 	shutil.copyfile(os.path.join(params['rundir'],"classes_avg.spi"),
 		os.path.join(params['rundir'],params['classfile']+".spi") )
+	shutil.copyfile(os.path.join(params['rundir'],"classes_var.spi"),
+		os.path.join(params['rundir'],params['varfile']+".spi") )
 
 def runSpiderRefAli(params):
 	spidercmd = "spider bat/spi @refalign_edit"
@@ -565,9 +568,13 @@ def convertClassfileToImagic(params):
 	"""
 	takes the final spider file and converts it to imagic
 	"""
-	classroot = os.path.join(params['rundir'],params['classfile'])
+	classroot = os.path.join(params['rundir'], params['classfile'])
 	emancmd  = "proc2d "+classroot+".spi "+classroot+".hed"
 	apEMAN.executeEmanCmd(emancmd)
+	varroot = os.path.join(params['rundir'], params['varfile'])
+	emancmd  = "proc2d "+varroot+".spi "+varroot+".hed"
+	apEMAN.executeEmanCmd(emancmd)
+
 
 def insertNoRefRun(params, insert=False):
 	# create a norefParam object
@@ -618,6 +625,7 @@ def insertNoRefRun(params, insert=False):
 	uniqueclass = appiondb.query(classq, results=1)
 	# ... continue filling non-unique variables:
 	classq['classFile'] = params['classfile']
+	classq['varFile'] = params['varfile']
 	# ... check if params associated with unique classRun are consistent:
 	if uniqueclass:
 		for i in classq:

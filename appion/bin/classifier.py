@@ -21,6 +21,7 @@ if __name__ == "__main__":
 		apAlignment.insertNoRefRun(params, insert=False)
 
 	classfile = os.path.join(params['rundir'], "classes_avg.spi")
+	varfile = os.path.join(params['rundir'], "classes_var.spi")
 	if not os.path.isfile(classfile):
 		apAlignment.createSpiderFile(params)
 		apAlignment.averageTemplate(params)
