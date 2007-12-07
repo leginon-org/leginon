@@ -367,6 +367,7 @@ function runTemplateCorrelator() {
 		$prefix =  "source /ami/sw/ami.csh;";
 		$prefix .= "source /ami/sw/share/python/usepython.csh cvs32;";
 		$cmd = "$prefix webcaller.py '$command' templateCorrelatorLog.txt";
+		echo "$cmd<BR>\n";
 		$result=exec_over_ssh($host, $user, $password, $cmd, True);
 	}
 
@@ -466,8 +467,8 @@ function templateCommand () {
 
 function writeTestResults($jpg,$ccclist,$bin){
 	echo"<CENTER>\n";
-//	$sc = $bin*.09375;
-	$sc = $bin*.25;
+	$sc = $bin*.09375;
+#	$sc = $bin*.25;
 	echo"<A HREF='loadimg.php?filename=$jpg'>\n";
 	echo"<IMG SRC='loadimg.php?filename=$jpg&scale=$sc'></A>\n";
 	if (count($ccclist)>1) echo "<BR>\n";
