@@ -15,7 +15,7 @@ require_once "inc/ssh.inc";
 require_once "inc/session.inc";
 
 // --- add to config file later --- //
-define(PROCESSING_HOST, 'garibali');
+define(PROCESSING_HOST, 'garibaldi');
 
 // start a php session
 setsession();
