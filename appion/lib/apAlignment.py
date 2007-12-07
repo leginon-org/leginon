@@ -42,6 +42,7 @@ def defaults():
 	params['iter']=2
 	params['csym']=1
 	params['staticref']=False
+	params['runtime']=None
 	
 	return params
 
@@ -453,11 +454,13 @@ def runSpiderClass(params, reclass=False):
 			apDisplay.timeString(esttime),"cyan")
 	starttime = time.time()
 	executeSpiderCmd(spidercmd)
-	apDisplay.printColor("finished spider in "+apDisplay.timeString(time.time()-starttime),"cyan")
+	runtime = time.time()-starttime
+	apDisplay.printColor("finished spider in "+apDisplay.timeString(runtime),"cyan")
 	shutil.copyfile(os.path.join(params['rundir'],"classes_avg.spi"),
 		os.path.join(params['rundir'],params['classfile']+".spi") )
 	shutil.copyfile(os.path.join(params['rundir'],"classes_var.spi"),
 		os.path.join(params['rundir'],params['varfile']+".spi") )
+	params['runtime'] = runtime
 
 def runSpiderRefAli(params):
 	spidercmd = "spider bat/spi @refalign_edit"
@@ -607,6 +610,7 @@ def insertNoRefRun(params, insert=False):
 					str(params['stackid'])+"\nis already in the database with different parameter: "+str(i))
 	#else:
 	#	apDisplay.printWarning("Run name '"+params['runid']+"' already exists in database")
+	runq['run_seconds'] = params['runtime']
 
 	### create a classRun object
 	classq = appionData.ApNoRefClassRunData()
@@ -664,7 +668,6 @@ def insertRefRun(params, insert=False):
 	uniquerun = appiondb.query(runq, results=1)
 	# ... continue filling non-unique variables:
 	runq['refParams'] = paramq
-
 	runq['description'] = params['description']
 
 	# ... check if params associated with unique refRun are consistent:
