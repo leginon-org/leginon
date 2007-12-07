@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Launcher.py,v $
-# $Revision: 1.33 $
+# $Revision: 1.34 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-01-20 00:37:21 $
-# $Author: suloway $
+# $Date: 2007-12-07 00:40:50 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -357,7 +357,10 @@ class Panel(ListCtrlPanel):
 		parent.Freeze()
 		toolbar = gui.wx.ToolBar.ToolBar(parent)
 		toolbar.Show(False)
-		parent.Thaw()
+		try:
+			parent.Thaw()
+		except:
+			pass
 		return toolbar
 
 def getStatusIcon(image, color):
