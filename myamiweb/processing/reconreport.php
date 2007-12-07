@@ -15,7 +15,8 @@ require "inc/viewer.inc";
 require "inc/processing.inc";
   
 // check if reconstruction is specified
-$reconId = $_GET['reconId'];
+if (!$reconId = $_GET['reconId'])
+	$reconId=false;
 $expId = $_GET['expId'];
 
 $refine_params_fields = array('refinerun', 'ang', 'mask', 'imask', 'pad', 'hard', 'classkeep', 'classiter', 'median', 'phasecls', 'refine','cckeep','minptls');
@@ -54,6 +55,10 @@ $javascript.="        }\n";
 $javascript.="</script>\n";
  
 writeTop("Reconstruction Report","Reconstruction Report Page", $javascript);
+if (!$reconId) {
+	writeBottom();
+	exit;
+}
 
 // --- Get Reconstruction Data
 $particle = new particledata();
@@ -165,16 +170,14 @@ foreach ($iterations as $iteration){
   $clsavg = $refinerun['path'].'/'.$iteration['classAverage'];
 	$html .= "<TR><TD>";
 	$html .= "$numclasses classes<br />\n";
-	$html .= "<A TARGET='stackview' HREF='viewstack.php?file=$clsavg'>$iteration[classAverage]</A><BR/><BR/>";
+	$html .= "<a target='stackview' href='viewstack.php?file=$clsavg'>".$iteration['classAverage']."</a><br />";
 	$eulerfile = $refinerun['path']."/eulermap".$iteration['iteration'].".png";
-	//echo $eulerfile;
 	if (file_exists($eulerfile)) {
-		$html .= "<A TARGET='eulermap' HREF='loadimg.php?filename=".$eulerfile."'>"
-			."<FONT CLASS='sf'>view euler map</FONT>"
-			//."<IMG WIDTH='20' HEIGHT='20' SRC='loadimg.php?filename=".$eulerfile."'>"
-			."</A>";
+		$html .= "<a target='eulermap' href='loadimg.php?filename=".$eulerfile."'>"
+		."<img src='loadimg.php?scale=.2&filename=".$eulerfile."'>"
+		."</a>";
 	}
-	$html .= "</TD></TR>\n";
+	$html .= "</td></tr>\n";
   
   if ($refinerun['package']=='EMAN/MsgP') {
     $goodavg = $refinerun['path'].'/'.$iteration['MsgPGoodClassAvg'];
