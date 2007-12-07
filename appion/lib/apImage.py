@@ -1,19 +1,19 @@
 #Part of the new pyappion
 
-#pythonlib
+## pythonlib
 import math
 import time
-#PIL
+## PIL
 import Image
 import ImageDraw
-#numpy
+## numpy
 import numpy
 from scipy import ndimage
 from numpy import linalg
 from numpy import ma
-#appion
+## appion
 import apDisplay
-#pyami
+## pyami
 from pyami import mrc
 from pyami import imagefun
 from pyami import convolver
@@ -108,7 +108,8 @@ def binImg(imgarray,bin=1):
 	returns a binned image
 	"""
 	if bin > 1:
-		newarray = imagefun.bin(imgarray, bin)
+		#newarray = imagefun.bin(imgarray, bin)
+		newarray = imagefun.bin2(imgarray, bin)
 		newarray = numpy.asarray(newarray)
 		mindim = min(newarray.shape)
 		if mindim < 1:
