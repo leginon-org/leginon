@@ -18,7 +18,7 @@ require_once "inc/session.inc";
 define(PROCESSING_HOST, 'garibali');
 
 // start a php session
-//setsession();
+setsession();
 
 // add commas to an int
 function commafy($input) {
