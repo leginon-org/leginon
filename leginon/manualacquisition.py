@@ -31,6 +31,7 @@ class ManualAcquisition(node.Node):
 		'camera settings': None,
 		'screen up': False,
 		'screen down': False,
+		'beam blank': False,
 		'correct image': False,
 		'save image': False,
 		'image label': '',
@@ -144,14 +145,16 @@ class ManualAcquisition(node.Node):
 				self.logger.warning('Failed to save previous low dose state')
 			self.instrument.tem.BeamBlank = 'on'
 			self.instrument.tem.LowDoseMode = 'exposure'
+			time.sleep(self.settings['low dose pause time'])
 		if self.settings['screen up']:
 			self.instrument.tem.MainScreenPosition = 'up'
-
 			time.sleep(self.settings['low dose pause time'])
 		self.instrument.tem.BeamBlank = 'off'
 
 	def postExposure(self):
 		if self.lowdosemode is not None:
+			if self.settings['beam blank']:
+				self.instrument.tem.BeamBlank = 'on'
 			self.instrument.tem.LowDoseMode = self.lowdosemode
 			self.lowdosemode = None
 			time.sleep(self.settings['low dose pause time'])
