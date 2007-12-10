@@ -261,15 +261,16 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$checkimageval= ($_POST['checkimage']) ? $_POST['checkimage'] : 'best';
 	$checkimages=array('best','non-rejected','all');
 	echo"
-	<A HREF=\"javascript:appioninfopopup('checkimages')\">
-	<B>Use</B></A>\n<SELECT NAME='checkimage'>\n";
+	<a href=\"javascript:appioninfopopup('checkimages')\">
+	<b>Use</b></a>
+	<select name='checkimage'>\n";
 	foreach ($checkimages as $checkimage) {
-		echo "<OPTION VALUE='$checkimage' ";
+		echo "<option value='$checkimage' ";
 		// make norejects selected by default
-		if ($checkimage==$checkimageval) echo "SELECTED";
-		echo ">$checkimage</OPTION>\n";
+		echo ($checkimage==$checkimageval) ? "selected" : "";
+		echo ">$checkimage</option>\n";
 	}
-	echo"</SELECT>images<br/>\n";
+	echo"</select>images<br />\n";
 
 	echo"
 		<INPUT TYPE='checkbox' NAME='commit' $commitcheck>
@@ -432,11 +433,12 @@ function runMakestack() {
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
 	// set image inspection selection
-	if ($_POST[checkimage]=="non-rejected") {
-		$norejects = 1;
-	} elseif ($_POST[checkimage]=="best") {
-		$norejects = 1;
-		$inspected = 1;
+	$norejects=$inspected=0;
+	if ($_POST['checkimage']=="non-rejected") {
+		$norejects=1;
+	} elseif ($_POST['checkimage']=="best") {
+		$norejects=1;
+		$inspected=1;
 	}
 	// binning amount
 	$bin=$_POST['bin'];
