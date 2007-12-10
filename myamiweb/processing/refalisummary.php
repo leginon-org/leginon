@@ -60,14 +60,13 @@ foreach ($refaliIds as $refid) {
   
   echo "<TABLE BORDER='0'>\n";
   //$display_keys['name']=$r['name'];
-  $display_keys['description'] = $r['description'];
+  $display_keys['description'] = "<B>".$r['description']."</B>";
   $display_keys['time']=$r['DEF_timestamp'];
   $display_keys['path']=$r['path'];
-  $display_keys['template']=$t['path'].'/'.$t['templatename'];
+  //$display_keys['template']=$t['path'].'/'.$t['templatename'];
   $display_keys['# particles']=$r['num_particles'];
-  $display_keys['lp filt']=$r['lp'];
-  $display_keys['mask diam']=$r['mask_diam'];
-  $display_keys['imask diam']=$r['imask_diam'];
+  $display_keys['lp filt']=$r['lp']." &Aring;";
+  $display_keys['mask diams']=$r['imask_diam']." <I>(in)</I> / ".$r['mask_diam']." <I>(out)</I>";
   $display_keys['xy search range']=$r['xysearch'];
   $display_keys['c-symmetry']=$r['csym'];
   $display_keys['stack run name']=$s['stackRunName'];
