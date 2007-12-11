@@ -117,10 +117,10 @@ def checkLibCVResult(self, result):
 	"""
 
 	if result[0][0] < 0.5 or result[1][1] < 0.5:
-		self.logger.error("Bad libCV result: bad matrix")
+		self.logger.warning("Bad libCV result: bad matrix")
 		return False
 	elif result[0][1] > 0.5 or result[1][0] > 0.5:
-		self.logger.error('Bad libCV result: too much rotation')
+		self.logger.warning('Bad libCV result: too much rotation')
 		return False
 	return True
 

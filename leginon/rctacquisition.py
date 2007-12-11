@@ -60,8 +60,9 @@ class RCTAcquisition(acquisition.Acquisition):
 	defaultsettings.update({
 		'tilts': '(-45, 45)',
 		'stepsize': 15.0,
-		'lowfilt': 0,
-		'medfilt': 0,
+		'pause': 1.0,
+		'lowfilt': 1.0,
+		'medfilt': 2,
 		'minsize': 50,
 		'maxsize': 0.8,
 		'drift threshold': 0.0,
@@ -218,6 +219,9 @@ class RCTAcquisition(acquisition.Acquisition):
 		return tiltedtargetlist
 
 	def trackStage(self, image0, tilt0, tilt, tilt0targets):
+		#import pprint
+		#print "SETTINGS:"
+		#pprint.pprint(self.settings)
 		#### copied from drift manager
 		## go to state of image0
 		## go through preset manager to ensure we follow the right
@@ -239,7 +243,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			tilts = []
 			stepsize = tiltrange / float(nsteps)
 			for i in range(1, nsteps+1):
-				tilts.append(round(tilt0+i*stepsize,2))
+				tilts.append(round(tilt0+i*stepsize, 2))
 		self.logger.info('Tilts: %s' % ([degrees(t) for t in tilts],))
 
 		## loop through tilts
@@ -252,7 +256,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		if lowfilt > 0:
 			arrayold = ndimage.gaussian_filter(arrayold, lowfilt)
 		runningresult = numpy.identity(3, numpy.float64)
-		pausetime = int(self.settings['pause'])
+		pausetime = self.settings['pause']
 		retries = 0
 		i = int(0)
 		#for tilt in tilts:
@@ -285,13 +289,16 @@ class RCTAcquisition(acquisition.Acquisition):
 
 			check = libCVwrapper.checkLibCVResult(self,result)
 			if check is False:
-				self.logger.error("libCV failed: redoing tilt")
+				self.logger.warning("libCV failed: redoing tilt")
 				#redo this tilt; becomes an infinite loop if the image goes black
 				retries += 1
 				if retries < 3:
 					#reduce minsize and try again
 					self.settings['minsize'] *= 0.95
 					i -= 1
+				else:
+					print 'Tilt libCV failed'
+					self.logger.error("libCV failed: giving up")
 				continue
 			print '============ Craig stuff done ============'
 

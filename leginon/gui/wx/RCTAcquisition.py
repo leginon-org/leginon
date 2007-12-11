@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RCTAcquisition.py,v $
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:09 $
+# $Date: 2007-12-11 20:41:36 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -68,7 +68,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 
 		label = wx.StaticText(self, -1, 'Pause Between Steps')
 		sizer.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.widgets['pause'] = IntEntry(self, -1, chars=2, value='1')
+		self.widgets['pause'] = FloatEntry(self, -1, chars=2, value='1')
 		sizer.Add(self.widgets['pause'], (1,3), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
 		label = wx.StaticText(self, -1, 'Min Feature Size')
