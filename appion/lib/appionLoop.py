@@ -410,7 +410,7 @@ class AppionLoop(object):
 				self.params['shuffle']=True
 			elif arg=='nowait':
 				self.params['nowait']=True
-			elif arg=='tiltangle':
+			elif elements[0]=='tiltangle':
 				self.params['tiltangle']=float(elements[1])
 			elif arg=='norejects':
 				self.params['norejects']=True
