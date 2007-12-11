@@ -1461,6 +1461,7 @@ class ManualAcquisitionSettingsData(SettingsData):
 			('camera settings', CameraSettingsData),
 			('screen up', bool),
 			('screen down', bool),
+			('beam blank', bool),
 			('correct image', bool),
 			('save image', bool),
 			('loop pause time', float),
