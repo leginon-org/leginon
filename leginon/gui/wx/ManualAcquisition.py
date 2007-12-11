@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.36 $
+# $Revision: 1.37 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-10-31 20:03:16 $
+# $Date: 2007-12-11 21:52:58 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -309,6 +309,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 		self.widgets['screen up'] = wx.CheckBox(self, -1, 'Up before acquire')
 		self.widgets['screen down'] = wx.CheckBox(self, -1, 'Down after acquired')
+		self.widgets['beam blank'] = wx.CheckBox(self, -1, 'Force beam blank after acquired')
 		self.widgets['correct image'] = wx.CheckBox(self, -1, 'Correct image')
 		self.widgets['save image'] = wx.CheckBox(self, -1,
 																							'Save image to the database')
@@ -330,12 +331,14 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		szlowdose = wx.GridBagSizer(5, 5)
 		szlowdose.Add(self.widgets['low dose'], (0, 0), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL)
+		szlowdose.Add(self.widgets['beam blank'], (1, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Low dose pause')
-		szlowdose.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szlowdose.Add(self.widgets['low dose pause time'], (1, 1), (1, 1),
+		szlowdose.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlowdose.Add(self.widgets['low dose pause time'], (2, 1), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'seconds')
-		szlowdose.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlowdose.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szlowdose.AddGrowableCol(1)
 
 		sb = wx.StaticBox(self, -1, 'Low Dose')
