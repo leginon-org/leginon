@@ -229,7 +229,7 @@ class Tomography(acquisition.Acquisition):
             scope_data[move_type] = {'x': 0.0, 'y': 0.0}
         client = self.calclients[move_type]
         # invert y and position
-        position = {'row': position['y'], 'col': -position['x']}
+        position = {'row': -position['y'], 'col': position['x']}
         try:
             scope_data = client.transform(position, scope_data, camera_data)
         except calibrationclient.NoMatrixCalibrationError, e:
