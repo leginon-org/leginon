@@ -320,20 +320,28 @@ if ($ctf->hasCtfData($sessionId)) {
 		minimum allowed confidence:<input class="field" name="mconf" type="text" size="5" value="<?php echo $minconf; ?>">
 	</form>
 	<?php
+
 	$urlmconf = ($minconf) ? "&mconf=$minconf" : "";
 
 	$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
-	$fields = array('defocus1', 'confidence', 'confidence_d');
+	$fields = array('defocus1', 'confidence', 'confidence_d','difference');
 	$bestctf = $ctf->getBestStats($fields, $sessionId, $minconf);
 	
 	if ($bestctf) {
 		foreach($bestctf as $field=>$data) {
 			foreach($data as $k=>$v) {
 				$preset = $bestctf[$field][$k]['name'];
-				$cdf='<a href="processing/ctfgraph.php?&hg=1&Id='.$sessionId
-						.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'">'
-						.'<img border="0" src="processing/ctfgraph.php?w=150&hg=1&Id='.$sessionId
-						.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'"></a>';
+				if ($field !='difference') {
+					$cdf='<a href="processing/ctfgraph.php?&hg=1&Id='.$sessionId
+							.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'">'
+							.'<img border="0" src="processing/ctfgraph.php?w=150&hg=1&Id='.$sessionId
+							.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'"></a>';
+				} else {	
+					$cdf='<a href="processing/autofocacegraph.php?&hg=0&Id='.$sessionId
+							.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'">'
+							.'<img border="0" src="processing/autofocacegraph.php?w=150&hg=0&Id='.$sessionId
+							.'&s=1&f='.$field.'&preset='.$preset.''.$urlmconf.'"></a>';
+				}
 				$bestctf[$field][$k]['img'] = $cdf;
 			}
 		}
