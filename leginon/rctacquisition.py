@@ -243,8 +243,8 @@ class RCTAcquisition(acquisition.Acquisition):
 			tilts = []
 			stepsize = tiltrange / float(nsteps)
 			for i in range(1, nsteps+1):
-				tilts.append(round(tilt0+i*stepsize, 2))
-		self.logger.info('Tilts: %s' % ([degrees(t) for t in tilts],))
+				tilts.append( tilt0+i*stepsize )
+		self.logger.info('Tilts: %s' % ([round(degrees(t),2) for t in tilts],))
 
 		## loop through tilts
 		medfilt = int(self.settings['medfilt'])
@@ -267,7 +267,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			self.instrument.tem.StagePosition = {'a': tilt}
 			time.sleep(pausetime)
 			self.logger.info('Acquire intermediate tilted parent image')
-			print 'acquire intertilt'
+			#print 'acquire intertilt'
 			dataclass = data.CorrectedCameraImageData
 			imagenew = self.instrument.getData(dataclass)
 			arraynew = numpy.asarray(imagenew['image'], dtype=numpy.float32)
@@ -287,7 +287,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			libCVwrapper.checkArrayMinMax(self, arrayold, arraynew)
 			result = libCVwrapper.MatchImages(arrayold, arraynew, minsize, maxsize)
 
-			check = libCVwrapper.checkLibCVResult(self,result)
+			check = libCVwrapper.checkLibCVResult(self, result)
 			if check is False:
 				self.logger.warning("libCV failed: redoing tilt")
 				#redo this tilt; becomes an infinite loop if the image goes black
@@ -297,9 +297,12 @@ class RCTAcquisition(acquisition.Acquisition):
 					self.settings['minsize'] *= 0.95
 					i -= 1
 				else:
-					print 'Tilt libCV failed'
+					retries = 0
+					print 'Tilt libCV FAILED'
 					self.logger.error("libCV failed: giving up")
 				continue
+			else:
+				retries = 0			
 			print '============ Craig stuff done ============'
 
 			self.logger.info( "Inter Matrix: "+libCVwrapper.affineToText(result) )
