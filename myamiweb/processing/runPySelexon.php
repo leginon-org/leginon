@@ -427,7 +427,6 @@ function runTemplateCorrelator() {
 */
 
 function templateCommand () {
-print_r($_POST);
 	$command = "";
 	// get the list of templates
 	$i=1;
