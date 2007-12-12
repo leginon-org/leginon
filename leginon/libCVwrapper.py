@@ -115,12 +115,17 @@ def checkLibCVResult(self, result):
 	"""
 	Tests whether the libCV resulting affine matrix is reasonable for tilting
 	"""
-
 	if result[0][0] < 0.5 or result[1][1] < 0.5:
-		self.logger.warning("Bad libCV result: bad matrix")
+		#max tilt angle of 60 degrees
+		self.logger.warning("Bad libCV result: bad tilt in matrix: "+affineToText(result))
 		return False
-	elif result[0][1] > 0.5 or result[1][0] > 0.5:
-		self.logger.warning('Bad libCV result: too much rotation')
+	elif result[0][0] > 1.1 or result[1][1] > 1.1:
+		#only allow 25 degrees of expansion
+		self.logger.warning("Bad libCV result: image expansion: "+affineToText(result))
+		return False
+	elif abs(result[0][1]) > 0.4 or abs(result[1][0]) > 0.4:
+		#max rotation angle of 25 degrees
+		self.logger.warning("Bad libCV result: too much rotation: "+affineToText(result))
 		return False
 	return True
 
