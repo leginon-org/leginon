@@ -84,7 +84,10 @@ function checkJobs($showjobs=False,$extra=False) {
 
     // get stack id for job from job file
     $jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
-    $f = file($jobfile);
+    if (!file_exists($jobfile)) {
+			continue;
+		}
+		$f = file($jobfile);
     foreach ($f as $line) {
       if (preg_match('/^\#\sstackId:\s/',$line)) $stackid=ereg_replace('# stackId: ','',trim($line));
     }
