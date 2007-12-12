@@ -427,6 +427,7 @@ function runTemplateCorrelator() {
 */
 
 function templateCommand () {
+print_r($_POST);
 	$command = "";
 	// get the list of templates
 	$i=1;
@@ -440,7 +441,7 @@ function templateCommand () {
 		$tmpltincr="template".$tmpltNum."incr";
 		// set the ranges specified
 		$rangenum="range".$i;
-		if ($_POST[$tmpltstrt]!='' && $_POST[$tmpltstrt]!='0' && $_POST[$tmpltend]!='0' && $_POST[$tmpltincr]!='0')
+		if ($_POST[$tmpltstrt]!='' && ($_POST[$tmpltstrt]!='0' || $_POST[$tmpltend]!='0' || $_POST[$tmpltincr]!='0'))
 			$range=$_POST[$tmpltstrt].",".$_POST[$tmpltend].",".$_POST[$tmpltincr];
 		// if no rotation
 		else $range="0,10,20";
