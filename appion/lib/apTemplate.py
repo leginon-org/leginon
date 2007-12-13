@@ -100,9 +100,7 @@ def scaleTemplate(templatearray, scalefactor=1.0, boxsize=None):
 		apDisplay.printMsg("changing box size from "+str(origsize)+" to "+str(padsize))
 		if origsize > padsize:
 			#shrink image
-			mindim = (origsize / 2) - (padsize / 2)
-			maxdim = (origsize / 2) + (padsize / 2)
-			templatearray = templatearray[mindim:maxdim, mindim:maxdim]
+			templatearray = apImage.frame_cut(templatearray, padshape)
 		else:
 			#grow image
 			templatearray = apImage.frame_constant(templatearray, padshape, cval=edgeavg)
