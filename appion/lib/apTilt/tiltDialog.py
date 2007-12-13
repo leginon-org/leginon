@@ -1,6 +1,7 @@
 import wx
 import numpy
 import pprint
+import apDisplay
 from gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
 try:
 	import radermacher
@@ -20,8 +21,8 @@ class FitThetaDialog(wx.Dialog):
 		self.theta = self.parent.data['theta']
 		wx.Dialog.__init__(self, self.parent.frame, -1, "Measure Tilt Angle, Theta")
 
-		inforow = wx.FlexGridSizer(2, 3, 15, 15)
-		thetastr = ("***** %3.3f *****" % self.theta)
+		inforow = wx.FlexGridSizer(3, 3, 15, 15)
+		thetastr = ("****** %3.3f ******" % self.theta)
 		label = wx.StaticText(self, -1, "Current tilt angle:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.tiltvalue = wx.StaticText(self, -1, thetastr, style=wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
 		#self.tiltvalue = FloatEntry(self, -1, allownone=True, chars=5, value=thetastr)
@@ -37,6 +38,13 @@ class FitThetaDialog(wx.Dialog):
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.arealimit, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 		inforow.Add(label2, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		label = wx.StaticText(self, -1, "Triangles Used:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.trilabel1 = wx.StaticText(self, -1, "  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.trilabel2 = wx.StaticText(self, -1, "  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		inforow.Add(self.trilabel1, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		inforow.Add(self.trilabel2, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
 		self.canceltiltang = wx.Button(self, wx.ID_CANCEL, '&Cancel')
 		self.applytiltang = wx.Button(self,  wx.ID_APPLY, '&Apply')
@@ -71,6 +79,11 @@ class FitThetaDialog(wx.Dialog):
 			self.thetadev = self.fittheta['wthetadev']
 			thetastr = ("%3.3f +/- %2.2f" % (self.theta, self.thetadev))
 			self.tiltvalue.SetLabel(label=thetastr)
+			tristr = apDisplay.orderOfMag(self.fittheta['numtri'])+" of "+apDisplay.orderOfMag(self.fittheta['tottri'])
+			self.trilabel1.SetLabel(label=tristr)
+			percent = str("%")
+			tristr = (" (%3.1f " % (100.0 * self.fittheta['numtri'] / float(self.fittheta['tottri'])))+"%) "
+			self.trilabel2.SetLabel(label=tristr)
 
 	def onApplyTiltAng(self, evt):
 		self.Close()
@@ -291,4 +304,72 @@ class FitAllDialog(wx.Dialog):
 		self.parent.onUpdate(evt)
 
 
+##
+##
+## Dog Picker Dialog
+##
+##
+
+class DogPickerDialog(wx.Dialog):
+	def __init__(self, parent):
+		self.parent = parent
+		wx.Dialog.__init__(self, self.parent.frame, -1, "DoG Auto Particle Picker")
+
+		inforow = wx.FlexGridSizer(3, 2, 15, 15)
+		label = wx.StaticText(self, -1, "Pixel Size (A):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.apix = FloatEntry(self, -1, allownone=False, chars=5, value="1.0")
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.apix, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		label = wx.StaticText(self, -1, "Particle diameter (A):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.diam = FloatEntry(self, -1, allownone=False, chars=5, value="100.0")
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.diam, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		label = wx.StaticText(self, -1, "Diameter range (A):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.srange = FloatEntry(self, -1, allownone=False, chars=5, value="20.0")
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.srange, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		label = wx.StaticText(self, -1, "Threshold:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.thresh = FloatEntry(self, -1, allownone=False, chars=5, value="0.7")
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.thresh, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		self.canceldog = wx.Button(self, wx.ID_CANCEL, '&Cancel')
+		self.rundog = wx.Button(self, wx.ID_OK, '&Run')
+		self.Bind(wx.EVT_BUTTON, self.onRunDogPicker, self.rundog)
+		buttonrow = wx.GridSizer(1,2)
+		buttonrow.Add(self.canceldog, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+		buttonrow.Add(self.rundog, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+
+		self.sizer = wx.FlexGridSizer(2,1)
+		self.sizer.Add(inforow, 0, wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(buttonrow, 0, wx.EXPAND|wx.ALL, 5)
+		self.SetSizerAndFit(self.sizer)
+
+	def onRunDogPicker(self, evt):
+		apix  = self.apix.GetValue()
+		diam  = self.diam.GetValue()
+		srange  = self.srange.GetValue()
+		thresh  = self.thresh.GetValue()
+
+		#1: get image 1
+		#2: DoG image 1
+		#3: threshold image 1
+		#4: find peaks in image 1
+		#5: get image 2
+		#6: DoG image 2
+		#7: threshold image 2
+		#8: find peaks in image 2
+		#9: match peaks
+		#10: insert into picks
+
+		self.parent.statbar.PushStatusText("ERROR: Dog Picker has not been implemented yet", 0)
+		dialog = wx.MessageDialog(self.parent.frame, "Dog Picker has not been implemented yet", 'Error', wx.OK|wx.ICON_ERROR)
+		if dialog.ShowModal() == wx.ID_OK:
+			dialog.Destroy()	
+
+		self.Close()
+		self.parent.onUpdate(evt)
 
