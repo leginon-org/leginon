@@ -15,8 +15,6 @@ from numpy import ma
 import apDisplay
 ## pyami
 from pyami import mrc
-from pyami import imagefun
-from pyami import convolver
 
 def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, 
 		planeReg=True, median=0, invert=False, pixlimit=0):
@@ -127,6 +125,7 @@ def oldBinImg(imgarray,bin=1):
 	"""
 	returns a binned image
 	"""
+	from pyami import imagefun
 	if bin > 1:
 		#newarray = imagefun.bin(imgarray, bin)
 		newarray = imagefun.bin2(imgarray, bin)
@@ -172,16 +171,7 @@ def lowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0):
 		print " ... skipping low pass filter"
 		return(imgarray)
 	sigma=float(radius/apix/float(bin))
-	try:
-		return ndimage.gaussian_filter(imgarray, sigma=sigma/3.0)
-	except:
-		if(sigma > 10):
-			print " ... performing BIG and SLOW low pass filter"
-		else:
-			print " ... performing leginon low pass filter"
-		kernel=convolver.gaussian_kernel(sigma/3.0)
-		c=convolver.Convolver()
-		return c.convolve(image=imgarray, kernel=kernel)
+	return ndimage.gaussian_filter(imgarray, sigma=sigma/3.0)
 
 def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8):
 	"""
