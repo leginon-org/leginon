@@ -6,6 +6,7 @@ import re
 import time
 import glob
 import shutil
+import math
 import leginondata
 import apXml
 import apParam
@@ -454,6 +455,8 @@ def runSpiderClass(params, reclass=False):
 			apDisplay.timeString(esttime),"cyan")
 	starttime = time.time()
 	executeSpiderCmd(spidercmd)
+	convertClasslistToEMANlist(params)
+
 	runtime = time.time()-starttime
 	apDisplay.printColor("finished spider in "+apDisplay.timeString(runtime),"cyan")
 	shutil.copyfile(os.path.join(params['rundir'],"classes_avg.spi"),
@@ -578,6 +581,30 @@ def convertClassfileToImagic(params):
 	emancmd  = "proc2d "+varroot+".spi "+varroot+".hed"
 	apEMAN.executeEmanCmd(emancmd)
 
+def convertClasslistToEMANlist(params):
+	"""
+	takes list files for each class and convert to eman list reference to the imagic stack
+	"""
+	classroot = 'clhc_cls'
+	search = os.path.join(params['rundir'], "classes/"+classroot+"*.spi")
+	files = glob.glob(search)
+	for infile in files:
+		filename = os.path.basename(infile)
+		fileroot = filename.split(".")
+		splitn = fileroot[0].split(classroot)
+		n = int(splitn[1])
+		num = ("%04d" % (n-1) )
+		outfile = os.path.join(params['rundir'], "classes/"+classroot+num+".lst")
+		inlines = open(infile, "r")
+		out = open(outfile, "w")
+		out.write('#LST\n')
+		for line in inlines:
+			if line.strip()[0]!=';':
+				words = line.split()
+				ptcl = math.floor(float(words[2]))
+				out.write('%d\t%s\n' % (ptcl-1, params['stackfile']))
+		out.close()
+		inlines.close()
 
 def insertNoRefRun(params, insert=False):
 	# create a norefParam object
