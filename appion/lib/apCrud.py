@@ -19,7 +19,7 @@ import Image
 import ImageDraw
 import numextension
 import polygon
-import libCV
+import libCVwrapper
 
 
 
@@ -483,7 +483,7 @@ def reduceRegions(regions,velimit):
 			regionellipse = region['regionEllipse']
 			regionarray = region['regionBorder']
 			## reduce to 20 points
-			regionarray = libCV.PolygonVE(regionarray, velimit)
+			regionarray = libCVwrapper.PolygonVE(regionarray, velimit)
 			regionarray = regionarray.transpose()
 			regionarrays.append(regionarray)
 			regionellipses.append(regionellipse)
@@ -623,7 +623,7 @@ def makeMask(params,image):
 			sys.exit()
 			testlog=outputTestImage(mask,'cvin','cvin',testlog)
 			mm = mask.astype(numpy.uint8)
-			polygonregions,dummyimage=libCV.FindRegions(mm,area_t,0.2,1,0,1,0)
+			polygonregions,dummyimage=libCVwrapper.FindRegions(mm,area_t,0.2,1,0,1,0)
 			gpolygons = reduceRegions(polygonregions,100)
 			# libCV.findregion sometimes produces regions of negative area and cause problems in later labeling
 			# Therefore, it is converted into equal intensity region image (mask).
