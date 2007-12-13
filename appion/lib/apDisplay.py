@@ -86,6 +86,20 @@ def shortenImageName(imgname):
 	shortimgname = re.sub("_+$","",shortimgname)
 	return shortimgname
 
+def orderOfMag(num):
+	if num > 1:
+		num = int(num)
+		if num < 1e3:
+			return str(num)
+		elif num < 1e6:
+			return str(int(num/1e3))+"k"
+		elif num < 1e9:
+			return str(int(num/1e6))+"M"
+		elif num < 1e12:
+			return str(int(num/1e9))+"G"
+	else:
+		return num
+
 def short(imgname):
 	# ALIAS to shortenImageName
 	return shortenImageName(imgname)
