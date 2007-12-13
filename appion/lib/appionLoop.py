@@ -896,8 +896,8 @@ class AppionLoop(object):
 
 class BinLoop(AppionLoop):
 	def processImage(self, imgdict):
-		from pyami import imagefun,mrc
-		outimg = imagefun.bin(imgdict['image'], 2)
+		from pyami import mrc
+		outimg = apImage.binImg(imgdict['image'], 2)
 		mrc.write(outimg, imgdict['filename']+"_sm.mrc")
 
 if __name__ == '__main__':
