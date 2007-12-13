@@ -103,7 +103,28 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=False,
 		apDisplay.printMsg("filtered image in "+apDisplay.timeString(time.time()-startt))
 	return result
 
-def binImg(imgarray,bin=1):
+def binImg(imgarray, bin=1):
+	"""
+	returns a binned image
+	"""
+	if bin <= 1:
+		return imgarray
+	oldshape = numpy.asarray(imgarray.shape)
+	remain = oldshape % bin
+	if remain.any():
+		maxx = int(oldshape[0]/bin)*bin
+		maxy = int(oldshape[1]/bin)*bin
+		cutshape = numpy.asarray((maxx, maxy))
+		apDisplay.printWarning("rescaling array to fit bin dimensions: "+str(oldshape)+" -> "+str(cutshape))
+		imgarray = frame_cut(imgarray, cutshape)
+		print imgarray
+	newshape = numpy.asarray(oldshape)/bin
+	tmpshape = (newshape[0], bin, newshape[1], bin)
+	f = bin * bin
+	binned = numpy.sum(numpy.sum(numpy.reshape(imgarray, tmpshape), 1), 2) / f
+	return binned
+
+def oldBinImg(imgarray,bin=1):
 	"""
 	returns a binned image
 	"""
@@ -710,6 +731,14 @@ def correctImage(rawimgdata, params):
 	correctedimgarray = normarray * (rawimgarray - darkarray)
 	return correctedimgarray
 
+def frame_cut(a, newshape):
+	mindimx = int( (a.shape[0] / 2.0) - (newshape[0] / 2.0) )
+	maxdimx = int( (a.shape[0] / 2.0) + (newshape[0] / 2.0) )
+	mindimy = int( (a.shape[1] / 2.0) - (newshape[1] / 2.0) )
+	maxdimy = int( (a.shape[1] / 2.0) + (newshape[1] / 2.0) )
+	print mindimx,maxdimx,":",mindimy,maxdimy
+	return a[mindimx:maxdimx, mindimy:maxdimy]
+
 def frame_constant(a, shape, cval=0):
 	"""
 	frame_nearest creates an oversized copy of 'a' with new 'shape'
@@ -747,3 +776,4 @@ def frame_constant(a, shape, cval=0):
 	b[my:, :dx]   = cval			 # bottomleft
 	b[my:, mx:]   = cval			 # bottomright
 	return b
+
