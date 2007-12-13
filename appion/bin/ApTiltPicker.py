@@ -21,12 +21,12 @@ import apXml
 import apImage
 import apDisplay
 import apParam
-from gui.wx import TargetPanel, ImagePanelTools
+import gui.wx.TargetPanel
 from apTilt import tiltDialog, apTiltTransform
 
-class TiltTargetPanel(TargetPanel.TargetImagePanel):
+class TiltTargetPanel(gui.wx.TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True, name=None):
-		TargetPanel.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool, mode="vertical")
+		gui.wx.TargetPanel.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool, mode="vertical")
 		if name is not None:
 			self.outname = name
 		else:
