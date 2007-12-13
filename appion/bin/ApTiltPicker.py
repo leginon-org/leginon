@@ -111,10 +111,10 @@ class PickerApp(wx.App):
 			shape=self.ashape, size=self.ashapesize)
 		self.panel1.setTargets('Aligned', [])
 		self.panel1.selectiontool.setDisplayed('Aligned', True)
-		self.panel1.addTargetTool('Errors', color=wx.Color(215, 215, 32), 
+		self.panel1.addTargetTool('Bad', color=wx.Color(215, 215, 32), 
 			shape=self.eshape, size=self.eshapesize)
-		self.panel1.setTargets('Errors', [])
-		self.panel1.selectiontool.setDisplayed('Errors', True)
+		self.panel1.setTargets('Bad', [])
+		self.panel1.selectiontool.setDisplayed('Bad', True)
 		#self.panel1.SetMinSize((256,256))
 		#self.panel1.SetBackgroundColour("sky blue")
 
@@ -129,10 +129,10 @@ class PickerApp(wx.App):
 			shape=self.ashape, size=self.ashapesize)
 		self.panel2.setTargets('Aligned', [])
 		self.panel2.selectiontool.setDisplayed('Aligned', True)
-		self.panel2.addTargetTool('Errors', color=wx.Color(215, 215, 32), 
+		self.panel2.addTargetTool('Bad', color=wx.Color(215, 215, 32), 
 			shape=self.eshape, size=self.eshapesize)
-		self.panel2.setTargets('Errors', [])
-		self.panel2.selectiontool.setDisplayed('Errors', True)
+		self.panel2.setTargets('Bad', [])
+		self.panel2.selectiontool.setDisplayed('Bad', True)
 		#self.panel2.SetMinSize((256,256))
 		#self.panel2.SetBackgroundColour("pink")
 
@@ -193,8 +193,8 @@ class PickerApp(wx.App):
 	def createMenuButtons(self):
 		self.buttonrow.Add((40,10), 0, wx.ALL, 1)
 
-		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear')
-		self.frame.Bind(wx.EVT_BUTTON, self.onClearPicks, self.clear)
+		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear Bad Picks')
+		self.frame.Bind(wx.EVT_BUTTON, self.onClearBadPicks, self.clear)
 		self.buttonrow.Add(self.clear, 0, wx.ALL, 1)
 
 		self.reset = wx.Button(self.frame, wx.ID_RESET, '&Reset')
@@ -203,11 +203,12 @@ class PickerApp(wx.App):
 
 		self.buttonrow.Add((40,10), 0, wx.ALL, 1)
 
-		"""
-		self.load = wx.Button(self.frame, wx.ID_OPEN, '&Open')
-		self.frame.Bind(wx.EVT_BUTTON, self.onFileOpen, self.load)
-		self.buttonrow.Add(self.load, 0, wx.ALL, 1)
+		self.dogpick_dialog = tiltDialog.DogPickerDialog(self)
+		self.dogpick = wx.Button(self.frame, wx.ID_OPEN, 'Auto &DoG Pick...')
+		self.frame.Bind(wx.EVT_BUTTON, self.onAutoDogPick, self.dogpick)
+		self.buttonrow.Add(self.dogpick, 0, wx.ALL, 1)
 
+		"""
 		self.save = wx.Button(self.frame, wx.ID_SAVE, '&Save')
 		self.frame.Bind(wx.EVT_BUTTON, self.onFileSave, self.save)
 		self.buttonrow.Add(self.save, 0, wx.ALL, 1)
@@ -227,8 +228,8 @@ class PickerApp(wx.App):
 	def createLoopButtons(self):
 		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
 
-		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear')
-		self.frame.Bind(wx.EVT_BUTTON, self.onClearPicks, self.clear)
+		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear Bad Picks')
+		self.frame.Bind(wx.EVT_BUTTON, self.onClearBadPicks, self.clear)
 		self.buttonrow.Add(self.clear, 0, wx.ALL, 1)
 
 		self.reset = wx.Button(self.frame, wx.ID_RESET, '&Reset')
@@ -287,7 +288,8 @@ class PickerApp(wx.App):
 				)),
 				("&Edit", (
 					( "&Clear", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
-					( "&Reset", "Reset parameters", self.onResetParams, wx.ID_RESET ),		
+					( "&Reset", "Reset parameters", self.onResetParams, wx.ID_RESET ),
+					( "Clear &Bad Picks", "Remove bad picked particles", self.onClearBadPicks, wx.ID_CLEAR ),
 				)),
 				("&Refine", (
 					( "Find &Theta", "Calculate theta from picked particles", self.onFitTheta ),
@@ -304,7 +306,8 @@ class PickerApp(wx.App):
 				)),
 				("&Edit", (
 					( "&Clear", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
-					( "&Reset", "Reset parameters", self.onResetParams, wx.ID_RESET ),		
+					( "&Reset", "Reset parameters", self.onResetParams, wx.ID_RESET ),
+					( "Clear &Bad Picks", "Remove bad picked particles", self.onClearBadPicks, wx.ID_CLEAR ),	
 				)),
 				("&Refine", (
 					( "Find &Theta", "Calculate theta from picked particles", self.onFitTheta ),
@@ -452,22 +455,62 @@ class PickerApp(wx.App):
 		self.panel2.setTargets('Aligned', a1b )
 		self.panel1.setTargets('Aligned', a2b )
 		#FIND PARTICLES WITH LARGE ERROR
-		if len(a1) == len(a2):
-			err = self.getRmsdArray()
-			mean = ndimage.mean(err)
-			stdev = ndimage.standard_deviation(err)
-			cut = mean + 3*stdev
-			errb = numpy.transpose(numpy.vstack([err,err]))
-			a1c = []
-			a2c = []
-			for i,e in enumerate(err):
-				if e > cut:
+		(a1c, a2c) = self.getBadPicks()	
+		self.panel1.setTargets('Bad', a1c )
+		self.panel2.setTargets('Bad', a2c )
+
+	#---------------------------------------
+	def getCutoffCriteria(self, errorArray):
+		#do a small minimum filter to  get rid of outliers
+		errorArray2 = ndimage.minimum_filter(errorArray, size=2, mode='wrap')
+		mean = ndimage.mean(errorArray2)
+		stdev = ndimage.standard_deviation(errorArray2)
+		cut = mean + 4 * stdev
+		return cut
+
+	#---------------------------------------
+	def getBadPicks(self):
+		a1 = self.getArray1()
+		a2 = self.getArray2()
+		err = self.getRmsdArray()
+		cut = self.getCutoffCriteria(err)
+		a1c = []
+		a2c = []
+		for i,e in enumerate(err):
+			if e > cut:
+				#bad picks
+				a1c.append(a1[i,:])
+				a2c.append(a2[i,:])
+			elif i > 0 and e == 0:
+				#unmatched picks
+				if i < len(a1):
 					a1c.append(a1[i,:])
-					a2c.append(a2[i,:])
-			self.statbar.PushStatusText(str(len(a1c))+" particles had an RMSD greater than "
-				+str(int(cut))+ " pixels", 0)
-			self.panel1.setTargets('Errors', a1c )
-			self.panel2.setTargets('Errors', a2c )
+				if i < len(a2):
+					a2c.append(a2[i,:])				
+		self.statbar.PushStatusText(str(len(a1c))+" particles had an RMSD greater than "
+			+str(int(cut))+ " pixels", 0)
+		a1d = numpy.asarray(a1c)
+		a2d = numpy.asarray(a2c)
+		return (a1d, a2d)
+
+	#---------------------------------------
+	def getGoodPicks(self):
+		a1 = self.getArray1()
+		a2 = self.getArray2()
+		err = self.getRmsdArray()
+		cut = self.getCutoffCriteria(err)
+		a1c = []
+		a2c = []
+		for i,e in enumerate(err):
+			if e < cut and (i ==0 or e > 0):
+				#good picks
+				a1c.append(a1[i,:])
+				a2c.append(a2[i,:])			
+		self.statbar.PushStatusText(str(len(a1c))+" particles had an RMSD less than "
+			+str(int(cut))+ " pixels", 0)
+		a1d = numpy.asarray(a1c)
+		a2d = numpy.asarray(a2c)
+		return (a1d, a2d)
 
 	#---------------------------------------
 	def getArray1(self):
@@ -586,6 +629,7 @@ class PickerApp(wx.App):
 			dialog.ShowModal()
 			dialog.Destroy()
 			return
+		self.data['optimrun'] = True
 		self.fitall_dialog.thetavalue.SetValue(round(self.data['theta'],4))
 		self.fitall_dialog.gammavalue.SetValue(round(self.data['gamma'],4))
 		self.fitall_dialog.phivalue.SetValue(round(self.data['phi'],4))
@@ -597,13 +641,52 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onClearPicks(self, evt):
+		print "clear is not working?"
 		self.panel1.setTargets('Picked', [])
 		self.panel1.setTargets('Aligned', [])
+		self.panel1.setTargets('Bad', [] )
 		self.panel2.setTargets('Picked', [])
 		self.panel2.setTargets('Aligned', [])
+		self.panel2.setTargets('Bad', [] )
+
+	#---------------------------------------
+	def onClearBadPicks(self, evt):
+		"""
+		Remove picks with RMSD > mean + 3 * stdev
+		"""
+		a1c, a2c = self.getGoodPicks()
+		self.panel1.setTargets('Bad', [] )
+		self.panel2.setTargets('Bad', [] )
+		self.panel1.setTargets('Picked', a1c )
+		self.panel2.setTargets('Picked', a2c )
+		self.onUpdate(None)
+
+	#---------------------------------------
+	def onAutoDogPick(self, evt):
+		"""
+		Automatically picks image pairs using dog picker
+		"""
+		if self.data['theta'] == 0.0 and self.data['thetarun'] is False:
+			dialog = wx.MessageDialog(self.frame, "You must run 'Find Theta' first", 'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+		if False and (len(self.panel1.getTargets('Picked')) < 5 or len(self.panel2.getTargets('Picked')) < 5):
+			dialog = wx.MessageDialog(self.frame, "You must pick at least 5 particle pairs first", 'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+		if self.data['gamma'] == 0.0 and self.data['optimrun'] is False:
+			dialog = wx.MessageDialog(self.frame, "You must run 'Optimize Angles' first", 'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+		self.dogpick_dialog.Show()
 
 	#---------------------------------------
 	def onInitParams(self, evt):
+		self.data['thetarun'] = False
+		self.data['optimrun'] = False
 		self.data['arealim'] = 50000.0
 		self.data['theta'] = 0.0
 		self.data['gamma'] = 0.0
@@ -617,13 +700,14 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def onResetParams(self, evt):
 		self.onInitParams(evt)
-		self.data['thetarun'] = False
+		#reset fit values
 		self.fitall_dialog.thetavalue.SetValue(round(self.data['theta'],4))
 		self.fitall_dialog.gammavalue.SetValue(round(self.data['gamma'],4))
 		self.fitall_dialog.phivalue.SetValue(round(self.data['phi'],4))
 		self.fitall_dialog.scalevalue.SetValue(round(self.data['scale'],4))
 		self.fitall_dialog.shiftxvalue.SetValue(round(self.data['shiftx'],4))
 		self.fitall_dialog.shiftyvalue.SetValue(round(self.data['shifty'],4))
+		#reset toggle buttons
 		if self.fitall_dialog.thetatog.GetValue() is True:
 			self.fitall_dialog.thetavalue.Enable(False)
 			self.fitall_dialog.thetatog.SetLabel("Locked")
@@ -640,6 +724,18 @@ class PickerApp(wx.App):
 			self.fitall_dialog.shiftxvalue.Enable(False)
 			self.fitall_dialog.shiftyvalue.Enable(False)
 			self.fitall_dialog.shifttog.SetLabel("Locked")
+		#reset images
+		self.panel1.openImageFile(self.panel1.filename)
+		self.panel2.openImageFile(self.panel2.filename)
+		self.panel1.setBitmap()
+		self.panel1.setVirtualSize()
+		self.panel1.setBuffer()
+		self.panel1.UpdateDrawing()
+		self.panel2.setBitmap()
+		self.panel2.setVirtualSize()
+		self.panel2.setBuffer()
+		self.panel2.UpdateDrawing()
+
 
 	#---------------------------------------
 	def onFileSave(self, evt):
