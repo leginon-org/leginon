@@ -17,7 +17,7 @@ if (preg_match('`\.mrc$`i',$filename)) {
 	
 }
 
-elseif (preg_match('`\.jpg$`i',$filename)) {
+elseif (preg_match('`\.jpg$`i',$filename) || preg_match('`\.jpeg$`i',$filename)) {
 	$image = imagecreatefromjpeg($filename);
 }
 
