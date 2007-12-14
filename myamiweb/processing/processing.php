@@ -80,6 +80,7 @@ if($mode == "neil") {
 	$progpic='img/blue_circle.gif';
 }
 
+$particle = new particledata();
 // If expId specified, don't show pulldowns, only session info
 if (!$expId){
   echo"
@@ -106,10 +107,14 @@ if (!$expId){
 }
 // Show project & session pulldowns
 else {
-  $proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
+	$projectId = $currentproject['projectId'];
+  $proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$projectId.'">'.$currentproject['name'].'</a>';
   $sessionDescr=$sessioninfo['Purpose'];
+	$misc = $particle->getMiscInfoFromProject ($projectId);
   echo "<TABLE>";
-  echo "<TR><TD><B>Project:</B></TD><TD>$proj_link</TD></TR>\n";
+  echo "<TR><TD><B>Project:</B></TD><TD>$proj_link</TD>";
+	if ($misc) echo "<TD><A HREF='viewmisc.php?projId=$projectId'>[Related Images, Movies, etc]</A></TD>\n"; 
+	echo "</TR>\n";
   echo "<TR><TD><B>Session:</B></TD><TD>$sessionDescr</TD></TR>\n";
 
   // get experiment information
@@ -130,7 +135,6 @@ if ($sessionId) {
 		$ctfruns=count($ctfrunIds);
 
   // --- Get Particle Selection Data
-  $particle = new particledata();
   if ($prtlrunIds = $particle->getParticleRunIds($sessionId))
 		$prtlruns=count($prtlrunIds);
 

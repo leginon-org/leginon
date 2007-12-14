@@ -770,6 +770,17 @@ class particledata {
 		return $r;
 	}
 
+	function getMiscInfoFromProject ($projectId) {
+		$q="SELECT i.*, p.path "
+			."FROM `ApMiscData` i "
+			."LEFT JOIN `ApPathData` p "
+			." ON (p.`DEF_id` = i.`REF|ApPathData|path`) "
+			."WHERE i.`project|projects|project`='$projectId' "
+			."ORDER BY i.`DEF_id` DESC";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getJobIdsFromSession($expId) {
 		$q="SELECT `DEF_id` "
 		  ."FROM `ApClusterJobData` "
