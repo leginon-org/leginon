@@ -310,7 +310,7 @@ def averageTemplate(params):
 	"""
 	emancmd  = "proc2d start.spi template.mrc average"
 	apEMAN.executeEmanCmd(emancmd)
-	emancmd  = "proc2d template.mrc template.mrc center"
+	emancmd  = "proc2d template.mrc template.mrc"
 	apEMAN.executeEmanCmd(emancmd)
 	pixrad = int(float(params['mask'])/params['apix']/2.0)
 	apDisplay.printMsg("using mask radius of "+str(pixrad)+" pixels ("+str(params['mask'])+" angstroms)")
