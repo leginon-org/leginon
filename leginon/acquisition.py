@@ -480,11 +480,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.logger.warning('Navigator cannot be used for image shift, using Presets Manager instead')
 				movefunction = 'presets manager'
 			self.setStatus('waiting')
-			if movefunction == 'navigator' and not self.onTarget:
-				if targetdata['type'] != 'simulated':
+			if movefunction == 'navigator':
+				emtarget = None
+				if not self.onTarget and targetdata['type'] != 'simulated':
 					precision = self.settings['move precision']
 					self.navclient.moveToTarget(targetdata, movetype, precision)
-					emtarget = None
 			self.presetsclient.toScope(presetname, emtarget)
 			self.onTarget = True
 			self.setStatus('processing')
