@@ -230,6 +230,7 @@ class DriftManager(watcher.Watcher):
 		self.setStatus('idle')
 
 	def acquireImage(self, channel=0, correct=True):
+		time.sleep(self.settings['pause time'])	
 		self.startTimer('drift acquire')
 		self.instrument.setCorrectionChannel(channel)
 		if correct:
