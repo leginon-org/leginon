@@ -13,20 +13,21 @@ except:
 	pass
 	print "libCV not found"
 
-
-
+#-----------------------
 def radians(degrees):
 	return float(degrees) * pi / 180.0
 
+#-----------------------
 def degrees(radians):
 	return float(radians) * 180.0 / pi
 
+#-----------------------
 def FindRegions(image, minsize=3, maxsize=0.8, blur=0, sharpen=0, WoB=True, BoW=True, depricated=0):
 	"""
 	Given an image find regions
 
 	Inputs:
-		numpy image array
+		numpy image array, dtype=float32
 		minsize of regions (default: 3 pixels)
 			< 1: percentage of image size
 			> 1: number of pixels
@@ -39,13 +40,24 @@ def FindRegions(image, minsize=3, maxsize=0.8, blur=0, sharpen=0, WoB=True, BoW=
 		Scan for black regions on white background (True/False)
 
 	Output:
-		List of Dictionaries with Region Coordinates
-		Numpy Image Array
+		Tuple of a List of Dictionaries with 
+			'regionBorder' a 2d numpy array with dimension 2 x N and 
+			'regionEllipse' a tuple of 11 floats
 	"""
-	return  libCV.FindRegions(image, minsize, maxsize, blur, sharpen, WoB, BoW)
 
+	try:
+		imfloat = numpy.asarray(image, dtype=numpy.float32)
+		return  libCV.FindRegions(imfloat, minsize, maxsize, blur, sharpen, WoB, BoW)
+	except:
+		mydict = { 
+			'regionBorder': numpy.array([[0,0,0,0]],[[0,0,0,0]]),
+			'regionEllipse': (1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0),
+		}
+		mytuple = ( [mydict,], None)
+		return numpy.zeros([3,3], dtype=numpy.float32)
 	print ""
 
+#-----------------------
 def MatchImages(image1, image2, minsize=0.01, maxsize=0.9, blur=0, sharpen=0, WoB=True, BoW=True):
 	"""
 	Given two images:
@@ -54,8 +66,8 @@ def MatchImages(image1, image2, minsize=0.01, maxsize=0.9, blur=0, sharpen=0, Wo
 	(3) Find the affine matrix relating the two images
 	
 	Inputs:
-		numpy image1 array
-		numpy image2 array
+		numpy image1 array, dtype=float32
+		numpy image2 array, dtype=float32
 		minsize of regions (default: 3 pixels)
 			< 1: percentage of image size
 			> 1: number of pixels
@@ -70,14 +82,17 @@ def MatchImages(image1, image2, minsize=0.01, maxsize=0.9, blur=0, sharpen=0, Wo
 	Output:
 		3x3 Affine Matrix
 	"""
+
 	try:
+		imfloat1 = numpy.asarray(image1, dtype=numpy.float32)
+		imfloat2 = numpy.asarray(image2, dtype=numpy.float32)
 		return libCV.MatchImages(image1, image2, minsize, maxsize, blur, sharpen, WoB, BoW)
 	except:
 		return numpy.zeros([3,3], dtype=numpy.float32)
-	#return threading.Thread(target=libCV.MatchImages, args=(image1, image2, minsize, maxsize, blur, sharpen, WoB, BoW)).start()
 
 	print ""
 
+#-----------------------
 def PolygonVE(polygon, thresh):
 	"""
 
@@ -85,14 +100,14 @@ def PolygonVE(polygon, thresh):
 		numpy list of polygon vertices
 		threshold
 	"""
+
 	try:
 		return libCV.PolygonVE(polygon, thresh)
 	except:
 		return None
-	#return threading.Thread(target=libCV.PolygonVE, args=(polygon, thresh)).start()
 	print ""
 
-
+#-----------------------
 def checkArrayMinMax(self, a1, a2):
 	"""
 	Tests whether an image has a valid range for libCV
@@ -111,6 +126,7 @@ def checkArrayMinMax(self, a1, a2):
 		return False
 	return True
 
+#-----------------------
 def checkLibCVResult(self, result):
 	"""
 	Tests whether the libCV resulting affine matrix is reasonable for tilting
@@ -129,6 +145,7 @@ def checkLibCVResult(self, result):
 		return False
 	return True
 
+#-----------------------
 def affineToText(matrix):
 	"""
 	Converts a libCV matrix into human readable text
@@ -136,9 +153,9 @@ def affineToText(matrix):
 	tiltv = matrix[0,0] * matrix[1,1]
 	rotv = (matrix[0,1] - matrix[1,0]) / 2.0
 	if tiltv > 1:
-		tilt = degrees(math.cos(1.0/tiltv))
+		tilt = degrees(math.acos(1.0/tiltv))
 	else:
-		tilt = degrees(math.cos(tiltv))
+		tilt = degrees(math.acos(tiltv))
 	if rotv < 1:
 		rot = degrees(math.asin(rotv))
 	else:
