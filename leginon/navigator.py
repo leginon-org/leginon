@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
-# $Revision: 1.124 $
+# $Revision: 1.125 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-25 21:24:42 $
-# $Author: pulokas $
+# $Date: 2007-12-17 18:43:43 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -47,7 +47,7 @@ class Navigator(node.Node):
 		'precision': 0.0,
 		'complete state': True,
 		'override preset': False,
-		'max error': 200,
+		'max error': 256,
 		'cycle after': False,
 		'cycle each': False,
 		'camera settings':
@@ -257,14 +257,15 @@ class Navigator(node.Node):
 
 	def checkMoveError(self):
 		maxerror = self.settings['max error']
-		limit = (int(maxerror*2), int(maxerror*2))
+		#limit = (int(maxerror*2), int(maxerror*2))
+		limit = oldshape
 
 		oldshape = self.oldimagedata['image'].shape
 		location = oldshape[0]/2.0-0.5+self.origmove[0], oldshape[1]/2.0-0.5+self.origmove[1]
 
 		im1 = imagefun.crop_at(self.origimagedata['image'], location, limit, mode='constant', cval=0.0)
 		im2 = imagefun.crop_at(self.newimagedata['image'], 'center', limit)
-		pc = correlator.phase_correlate(im2,im1,zero=False)
+		pc = correlator.phase_correlate(im2, im1, zero=False)
 		subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0.5,0.5), limit=limit)
 		res = self.peakfinder.getResults()
 		pixelpeak = res['pixel peak']
