@@ -20,6 +20,7 @@ import math
 import gui.wx.JAHCFinder
 import version
 
+invsqrt2 = math.sqrt(2.0)/2.0
 default_template = os.path.join(version.getInstalledLocation(),'holetemplate.mrc')
 
 class JAHCFinder(targetfinder.TargetFinder):
@@ -99,7 +100,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		# ...
 
 		self.cortypes = ['cross', 'phase']
-		self.focustypes = ['Off', 'Any Hole', 'Good Hole']
+		self.focustypes = ['Off', 'Any Hole', 'Good Hole', 'Center']
 		self.userpause = threading.Event()
 
 		self.start()
@@ -228,6 +229,8 @@ class JAHCFinder(targetfinder.TargetFinder):
 			if len(allcenters) < 2:
 				self.logger.info('need more than one hole if you want to focus on one of them')
 				centers = []
+			elif onehole == 'Center':
+				focus_points.append(self.centerCarbon(allcenters))
 			elif onehole == 'Any Hole':
 				fochole = self.focus_on_hole(centers, allcenters)
 				focus_points.append(fochole)
@@ -239,6 +242,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 					## use only good centers
 					fochole = self.focus_on_hole(centers, centers)
 					focus_points.append(fochole)
+
 
 		self.logger.info('Holes with good ice: %s' % (len(centers),))
 		# takes x,y instead of row,col
@@ -255,6 +259,28 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.logger.info('Focus Targets: %s' % (len(focus_points),))
 		hfprefs = self.storeHoleFinderPrefsData(self.currentimagedata)
 		self.storeHoleStatsData(hfprefs)
+
+	def centerCarbon(self, points):
+		temppoints = points
+		centerhole = self.focus_on_hole(temppoints, temppoints)
+		closexdist = 1.0e10
+		closeydist = 1.0e10
+		for point in points:
+			dist = math.hypot(point[0]-centerhole[0], point[1]-centerhole[1])
+			#find nearest lattice points and get the components
+			if dist > 1.8*self.settings['lattice spacing']:
+				continue
+			xdist = abs(point[0]-centerhole[0])
+			if xdist < closexdist:
+				closexdist = xdist
+			ydist = abs(point[1]-centerhole[1])
+			if ydist < closeydist:
+				closeydist = ydist
+		centercarbon = tuple(
+			(int(centerhole[0] + xdist/2.0),
+			int(centerhole[1] + ydist/2.0),)
+		)
+		return centercarbon
 
 	def centroid(self, points):
 		## find centroid
@@ -279,10 +305,10 @@ class JAHCFinder(targetfinder.TargetFinder):
 		## if there are bad holes, use one
 		if bad:
 			point = bad[0]
-			closest_dist = math.hypot(point[0]-cx,point[1]-cy)
+			closest_dist = math.hypot(point[0]-cx, point[1]-cy)
 			closest_point = point
 			for point in bad:
-				dist = math.hypot(point[0]-cx,point[1]-cy)
+				dist = math.hypot(point[0]-cx, point[1]-cy)
 				if dist < closest_dist:
 					closest_dist = dist
 					closest_point = point
