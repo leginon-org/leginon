@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
-# $Revision: 1.125 $
+# $Revision: 1.126 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-12-17 18:43:43 $
+# $Date: 2007-12-17 18:50:56 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -258,9 +258,9 @@ class Navigator(node.Node):
 	def checkMoveError(self):
 		maxerror = self.settings['max error']
 		#limit = (int(maxerror*2), int(maxerror*2))
-		limit = oldshape
 
 		oldshape = self.oldimagedata['image'].shape
+		limit = oldshape
 		location = oldshape[0]/2.0-0.5+self.origmove[0], oldshape[1]/2.0-0.5+self.origmove[1]
 
 		im1 = imagefun.crop_at(self.origimagedata['image'], location, limit, mode='constant', cval=0.0)
