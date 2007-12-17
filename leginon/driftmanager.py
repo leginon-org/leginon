@@ -206,6 +206,7 @@ class DriftManager(watcher.Watcher):
 
 		## acquire images, measure drift
 		self.abortevent.clear()
+		time.sleep(self.settings['pause time']/2.0)	
 		status,final,im = self.acquireLoop(target, threshold=threshold)
 		if status == 'drifted':
 			## declare drift above threshold
@@ -230,7 +231,6 @@ class DriftManager(watcher.Watcher):
 		self.setStatus('idle')
 
 	def acquireImage(self, channel=0, correct=True):
-		time.sleep(self.settings['pause time'])	
 		self.startTimer('drift acquire')
 		self.instrument.setCorrectionChannel(channel)
 		if correct:
