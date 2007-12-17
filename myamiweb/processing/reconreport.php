@@ -196,9 +196,11 @@ foreach ($iterations as $iteration){
   $html .= "</table></TD>";
   
   $html .= "</TD>\n";
-  $html .= "<TD>$iteration[volumeDensity]<br />\n";
-  $html .= "<A HREF='postproc.php?expId=$expId&refinement=$refinementData[DEF_id]'><FONT CLASS='sf'>[post processing]</FONT></a></td>\n";
-  $html .= "<TD>\n";
+  $html .= "<td>$iteration[volumeDensity]<br />\n";
+  $html .= "<A HREF='postproc.php?expId=$expId&refinement=$refinementData[DEF_id]'><FONT CLASS='sf'>[post processing]</FONT></a><br />\n";
+  $html .= "<A HREF='makegoodavg.php?expId=$expId&refId=$refinementData[DEF_id]&reconId=$reconId&iter=$iteration[iteration]'><FONT CLASS='sf'>[new averages]</FONT></a>\n";
+  $html .= "</td>\n";
+  $html .= "<td>\n";
   foreach ($pngfiles as $snapshot) {
     if (eregi($iteration['volumeDensity'],$snapshot)) {
       $snapfile = $refinerun['path'].'/'.$snapshot;

@@ -963,10 +963,20 @@ class particledata {
 	}
 
 	function getRefinementData ($refinementRun,$iteration) {
-		$q = "SELECT DEF_id "
+		$q = "SELECT * "
 				."FROM `ApRefinementData` "
 				."WHERE `REF|ApRefinementRunData|refinementRun` = $refinementRun "
 				."AND `iteration` = $iteration";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+	function getParamsFromRefinementDataId ($refinementId) {
+		$q = "SELECT * "
+				."FROM `ApRefinementData` r "
+				."LEFT JOIN `ApRefinementParamsData` p "
+				."ON (r.`REF|ApRefinementParamsData|refinementParams` = p.`DEF_id`) "
+				."WHERE r.`DEF_id` = $refinementId";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
