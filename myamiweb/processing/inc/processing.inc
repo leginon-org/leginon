@@ -70,7 +70,7 @@ function writeBottom($showproclink=True, $nytimes=False){
   </TD>
   </TR>
   </TABLE>\n";
-  if ($nytimes) echo "<table cellpadding='5' class='tableborder' border='1'><tr><td align='center'><a href='http://www.nytimes.com'>While waiting, enjoy <br /><img border='0' src='img/nytimes.gif' alt='New York Times'></A></td></tr></table><br />\n";
+#  if ($nytimes) echo "<table cellpadding='5' class='tableborder' border='1'><tr><td align='center'><a href='http://www.nytimes.com'>While waiting, enjoy <br /><img border='0' src='img/nytimes.gif' alt='New York Times'></A></td></tr></table><br />\n";
   if ($showproclink && $_GET['expId']) echo "<A HREF='processing.php?expId=$_GET[expId]' CLASS='header'>[Back to Processing Page]</A>\n";
   echo "
   </CENTER>
