@@ -16,6 +16,35 @@ require "inc/processing.inc";
   
 // --- check if reconstruction is specified
 
+function javaCommands () {
+	$javafunc = "
+<SCRIPT LANGUAGE='JavaScript'>
+function infopopup(infoname){
+	var newwindow=window.open('','name','height=250, width=400');
+	newwindow.document.write('<HTML><BODY>');
+	if (infoname=='eulers'){
+		newwindow.document.write('Eulers assigned to the particles for this iteration will be used when creating class averages.');
+	}
+	if (infoname=='sigma'){
+		newwindow.document.write('Standard deviation multiplier to determine the quality of particle to be used.  If no value is specified, only particles that have a quality factor equal to or greater than the mean quality factor will be used in making the class averages.  A larger sigma will result in fewer particles, but of higher \"quality\"');
+	}
+	if (infoname=='avg'){
+		newwindow.document.write('Any particles that have a median euler jump greater than this value will not be used in the class averages');
+	}
+	if (infoname=='mask'){
+		newwindow.document.write('Mask radius of the class averages (in pixels)');
+	}
+	if (infoname=='eotest'){
+		newwindow.document.write('even and odd class averages will be created in addition to the new class averages, to be used for an even/odd test');
+	}
+	newwindow.document.write('</BODY></HTML>');
+	newwindow.document.close();
+}
+</SCRIPT>\n";
+	return $javafunc;
+
+}
+
 if ($_POST['run']) {
 	$reconId=$_GET['reconId'];
 	$refId=$_GET['refId'];
@@ -68,7 +97,10 @@ function createform($extra=False) {
 	$reconId = $_GET['reconId'];
 	$refId = $_GET['refId'];
 	$iter = $_GET['iter'];
-	writeTop("Create New Class Averages", "Create New Class Averages");
+
+	$javascript=javaCommands();
+
+	writeTop("Create New Class Averages", "Create New Class Averages",$javascript);
 
 	// write out errors, if any came up:
 	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -100,15 +132,15 @@ function createform($extra=False) {
 	echo "</tr>\n";
 	echo "<tr>\n";
 	echo "	<td class='tablebg'>\n";
-	echo "	Use final Eulers from iteration: <input type='text' name='iter' size='3' value='$iter'>\n";
+	echo "	<a href=\"javascript:infopopup('eulers')\">Use final Eulers from iteration:</A> <input type='text' name='iter' size='3' value='$iter'>\n";
 	echo "  <br />\n";
-	echo "  <input type='text' name='sigma' size='4' value='$sigma'> keep sigma level\n";
+	echo "  <input type='text' name='sigma' size='4' value='$sigma'> <a href=\"javascript:infopopup('sigma')\">keep sigma level</a>\n";
 	echo " 	<br />\n";
-	echo " 	<input type='text' name='avgjump' size='4' value='$avgjump'> average jump\n";
+	echo " 	<input type='text' name='avgjump' size='4' value='$avgjump'> <a href=\"javascript:infopopup('avg')\">average jump</a>\n";
 	echo " 	<br />\n";
-	echo " 	<input type='text' name='mask' size='4' value='$mask'> mask radius (in pixels)\n";
+	echo " 	<input type='text' name='mask' size='4' value='$mask'> <a href=\"javascript:infopopup('mask')\">mask radius (in pixels)</a>\n";
 	echo " 	<br />\n";
-	echo " 	<input type='checkbox' name='eotest' $eocheck> create averages for eotest\n";
+	echo " 	<input type='checkbox' name='eotest' $eocheck> <a href=\"javascript:infopopup('eotest')\">create averages for eotest</a>\n";
 	echo " 	</td>\n";
 	echo "</tr>\n";
 	echo "<tr>\n";
