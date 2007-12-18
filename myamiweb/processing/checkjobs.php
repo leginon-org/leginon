@@ -171,14 +171,15 @@ function checkJobs($showjobs=False,$extra=False) {
 	      $r = exec_over_ssh(PROCESSING_HOST,$user,$pass,$cmd, True);
 	      $r = trim($r);
 	      // find out how much time is left for rest of particles
-	      if ($r < $numinstack) {
+	      if ($r < $numinstack && $r > 0) {
 		$left = gettimeleft($r,$numinstack,$t['timestamp']);
 	      }
 	      $p = "classifying particles ($r/$numinstack)";
 	      $steps['clsbymra']['reconstruction step'] = $p;
 	      $steps['clsbymra']['started'] = "$t[date]";
 	      $steps['clsbymra']['duration'] = getduration($t['timestamp'],time());
-	      $steps['clsbymra']['status'] = "<FONT CLASS='apcomment'><B>$left</B> remain</FONT>";
+	      $steps['clsbymra']['status'] = "<FONT CLASS='apcomment'>running</FONT>";
+	      if ($left) $steps['clsbymra']['status'] = "<FONT CLASS='apcomment'><B>$left</B> remain</FONT>";
 	      $lasttime=$t['timestamp'];
 	    }
 
