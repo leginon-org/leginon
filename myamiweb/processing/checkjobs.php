@@ -117,6 +117,7 @@ function checkJobs($showjobs=False,$extra=False) {
       $stat = checkJobStatus($jobinfo['clusterpath'],$jobinfo['name'],$user,$pass);
       if (!empty($stat)) {
 	$current=0;
+	$laststart=0;
 	for ($i=0; $i<count($stat['refinelog']); $i++) {
 	  // get last refine line
 	  if ($stat['refinelog'][$i][0]=='refine' && preg_match('/\d+/',$stat['refinelog'][$i][1])) {
