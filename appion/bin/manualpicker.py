@@ -85,7 +85,7 @@ class PickerApp(wx.App):
 		### END IMAGE PANEL
 
 		### BEGIN BUTTONS ROW
-		self.buttonrow = wx.FlexGridSizer(1,7)
+		self.buttonrow = wx.FlexGridSizer(1,8)
 
 		self.next = wx.Button(self.frame, wx.ID_FORWARD, '&Forward')
 		self.next.SetMinSize((200,40))
@@ -101,6 +101,11 @@ class PickerApp(wx.App):
 		self.clear.SetMinSize((100,40))
 		self.Bind(wx.EVT_BUTTON, self.onClear, self.clear)
 		self.buttonrow.Add(self.clear, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
+		self.revert= wx.Button(self.frame, wx.ID_REVERT_TO_SAVED, 'Revert to Saved')
+		self.revert.SetMinSize((80,40))
+		self.Bind(wx.EVT_BUTTON, self.onRevert, self.revert)
+		self.buttonrow.Add(self.revert, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		label = wx.StaticText(self.frame, -1, "Image Assessment:  ", style=wx.ALIGN_RIGHT)
 		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
@@ -218,6 +223,9 @@ class PickerApp(wx.App):
 
 	def onClear(self, evt):
 		self.panel.setTargets('Select Particles', [])
+
+	def onRevert(self, evt):
+		self.panel.setTargets('Select Particles', self.panel.originaltargets)
 
 
 ##################################
@@ -379,6 +387,7 @@ class manualPicker(particleLoop.ParticleLoop):
 		if targets:
 			print "inserting ",len(targets)," targets"
 			self.app.panel.setTargets('Select Particles', targets)
+			self.app.panel.originaltargets = targets
 
 		#set vital stats
 		self.app.vitalstats.SetLabel("Vital Stats: Image "+str(self.stats['count'])
