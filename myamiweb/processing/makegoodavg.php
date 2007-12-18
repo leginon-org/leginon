@@ -37,7 +37,7 @@ if ($_POST['run']) {
 	$command.= "-m $mask ";
 	$command.= "-n $stackname ";
 	$command.= "-o $outdir ";
-	if ($avgjump) $command.= "-j $avgjump ";
+	if ($avgjump != '') $command.= "-j $avgjump ";
 	if ($sigma) $command.= "-s $sigma ";
 	if ($eotest=='on') $command.="--eotest ";
 
