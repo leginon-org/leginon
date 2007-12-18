@@ -26,7 +26,7 @@ function infopopup(infoname){
 		newwindow.document.write('Eulers assigned to the particles for this iteration will be used when creating class averages.');
 	}
 	if (infoname=='sigma'){
-		newwindow.document.write('Standard deviation multiplier to determine the quality of particle to be used.  If no value is specified, only particles that have a quality factor equal to or greater than the mean quality factor will be used in making the class averages.  A larger sigma will result in fewer particles, but of higher \"quality\"');
+		newwindow.document.write('Standard deviation multiplier to determine the quality of particle to be used.  Setting this to 0, only particles that have a quality factor equal to or greater than the mean quality factor will be used in making the class averages.  A larger sigma will result in fewer particles, but of higher \"quality\".  If no value is specified, all particles will be used.');
 	}
 	if (infoname=='avg'){
 		newwindow.document.write('Any particles that have a median euler jump greater than this value will not be used in the class averages');
