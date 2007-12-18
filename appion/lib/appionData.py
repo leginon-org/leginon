@@ -594,6 +594,7 @@ leginondata.ApFSCData=ApFSCData
 class ApMiscData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
+			('project|projects|project', int),
 			('refinementRun', ApRefinementRunData),
 			#('path', str),
 			('path', ApPathData),

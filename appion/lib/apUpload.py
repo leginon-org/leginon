@@ -4,6 +4,7 @@ import os
 import re
 import apDisplay
 import appionData
+import apDatabase
 import leginondata
 import apDB
 import string
@@ -30,8 +31,8 @@ def printModelUploadHelp():
 	sys.exit(1)
 
 def printMiscUploadHelp():
-	print "\nUsage:\nuploadMisc.py <filename> reconid=<n> description=<\"text\">\n"
-	print "uploadModel.py cpmv_cross_section.png reconid=311 description=\"cpmv cross section with pdb docked in\"\n"
+	print "\nUsage:\nuploadMisc.py <filename> reconid=<n> session=<session> description=<\"text\">\n"
+	print "uploadMisc.py cpmv_cross_section.png reconid=311 description=\"cpmv cross section with pdb docked in\"\n"
 	sys.exit(1)
 
 def parsePrtlUploadInput(args,params):
@@ -135,6 +136,8 @@ def parseMiscUploadInput(args,params):
 		elements=arg.split('=')
 		if (elements[0]=='reconid'):
 			params['reconid']=int(elements[1])
+		elif (elements[0]=='session'):
+			params['session']=elements[1]
 		elif (elements[0]=='description'):
 			params['description']=elements[1]
 		else:
@@ -178,6 +181,7 @@ def getProjectId(params):
 	for i in projects.getall():
 		if i['name'] == params['session']:
 			params['projectId'] = i['projectId']
+	print params['session'],params['projectId']
 	if not params['projectId']:
 		apDisplay.printError("no project associated with this session\n")
 	return
@@ -237,9 +241,12 @@ def checkReconId(params):
 def insertMisc(params):
 	print "inserting into database"
 	miscq = appionData.ApMiscData()
-	miscq['refinementRun']=params['recon']
+	if params['reconid'] is not None:
+		miscq['refinementRun']= params['recon']
+	if params['projectId'] is not None:
+		miscq['project|projects|project']= params['projectId']
 	miscq['path'] = appionData.ApPathData(path=os.path.abspath(params['path']))
-	miscq['name']=params['name']
+	miscq['name']= params['name']
 	miscq['description']=params['description']
 	appiondb.insert(miscq)
 
