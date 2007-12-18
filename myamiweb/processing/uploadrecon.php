@@ -86,7 +86,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
   // Set any existing parameters in form
   $package = ($_POST['package']) ? $_POST['package'] : 'EMAN';
   $contour = ($_POST['contour']) ? $_POST['contour'] : '1.5';
-  $zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.75';
+  $zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.5';
   $model = ($_POST['model']) ? $_POST['model'] : '';
   $reconname = ($_POST['reconname']) ? $_POST['reconname'] : '';
   $description = $_POST['description'];
