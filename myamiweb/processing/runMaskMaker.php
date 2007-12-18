@@ -338,7 +338,7 @@ function runMaskMaker() {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 		if (!($user && $password)) {
-			createDogPickerForm("<B>ERROR:</B> Enter a user name and password");
+			createMMForm("<B>ERROR:</B> Enter a user name and password");
 			exit;
 		}
 		$prefix = "source /ami/sw/ami.csh;";
