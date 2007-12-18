@@ -166,18 +166,6 @@ class MaskMaker(appionLoop.AppionLoop):
 		self._createDirectory(regionpath,warning=False)
 		self.result_dirs = {'region':regionpath}
 
-	def postLoopFunctions(self):
-		if self.params['test']:
-			testsavepath=os.path.join(self.params['rundir'],"tests")
-			shutil.rmtree(testsavepath,ignore_errors=True)
-			shutil.copytree("./tests",testsavepath)
-			apParam.removefiles('./tests',('.jpg',))
-			try:
-				os.removedirs('./tests')
-			except:
-				apDisplay.printError('local test directory can not be removed')
-		return
-
 	def processImage(self,imgdata):
 		image = self.getImage(imgdata,self.params['bin'])
 		results=self.function(self.rundata, imgdata, image)

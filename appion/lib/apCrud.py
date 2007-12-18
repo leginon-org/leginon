@@ -26,7 +26,9 @@ import libCVwrapper
 def outputTestImage(array,name,description,testlog):
 	width=25
 	if testlog[0]:
-		jpgname="tests/%02d%s.jpg" %(testlog[1],name)
+		# appionLoop current directory is params['rundir']
+		testpath = os.path.abspath("./tests")
+		jpgname=os.path.join(testpath,"%02d%s.jpg" %(testlog[1],name))
 		space=(width-len(jpgname))*' '
 		testlog[2]+= "%s:%s%s\n" % (jpgname,space,description)
 		testlog[1] += 1
@@ -529,13 +531,14 @@ def makeMask(params,image):
 	testlog=[test,lognumber,filelog]
 	# create "tests" directory if doesn't exist
 	if (test):
-		if (os.path.exists("tests")):
-			testfiles=os.listdir("tests")
+		testpath = os.path.join(params['rundir'],'tests')
+		if (os.path.exists(testpath)):
+			testfiles=os.listdir(testpath)
 			for testfilename in testfiles:
-				os.remove("tests/"+testfilename)
+				os.remove(os.path.join(testpath,testfilename))
 		else:
-			os.mkdir("tests")
-
+			os.mkdir(testpath)
+		print "test directory",testpath
 	#factors to optimize the threshold
 	pm = 0.667
 	am = 1.0
