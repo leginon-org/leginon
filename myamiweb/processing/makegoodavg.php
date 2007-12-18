@@ -21,9 +21,10 @@ if ($_POST['run']) {
 	$refId=$_GET['refId'];
 	$iter=$_GET['iter'];
 	$mask=$_POST['mask'];
-	$nsig=$_POST['nsig'];
+	$sigma=$_POST['sigma'];
 	$avgjump=$_POST['avgjump'];
 	$stackname=$_POST['avgname'];
+	$outdir=$_POST['outdir'];
 	$eotest=$_POST['eotest'];
 
 	if (!$stackname) createform('<B>ERROR:</B> Enter a name for new class average stack file');
@@ -31,13 +32,14 @@ if ($_POST['run']) {
 	if ($avgjump=='') createform('<B>ERROR:</B> Enter a median euler jump');
 
 	$command = "makegoodaverages.py ";
-	$command.= "reconid=$reconId ";
-	$command.= "iter=$iter ";
-	$command.= "mask=$mask ";
-	$command.= "avgjump=$avgjump ";
-	$command.= "stackname=$stackname ";
-	if ($nsig) $command.= "nsig=$nsig ";
-	if ($eotest=='on') $command.="eotest ";
+	$command.= "-r $reconId ";
+	$command.= "-i $iter ";
+	$command.= "-m $mask ";
+	$command.= "-n $stackname ";
+	$command.= "-o $outdir ";
+	if ($avgjump) $command.= "-j $avgjump ";
+	if ($sigma) $command.= "-s $sigma ";
+	if ($eotest=='on') $command.="--eotest ";
 
 	writeTop("Create New Class Averages","Create New Class Averages");
 	echo"
@@ -52,7 +54,7 @@ if ($_POST['run']) {
         <tr><td>avgjump</td><td>$avgjump</td></tr>
         <tr><td>iter</td><td>$iter</td></tr>
         <tr><td>reconId</td><td>$reconId</td></tr>
-        <tr><td>nsig</td><td>$nsig</td></tr>
+        <tr><td>sigma</td><td>$sigma</td></tr>
         <tr><td>eotest</td><td>$eotest</td></tr>
         </table>\n";
 	writeBottom();
@@ -78,9 +80,10 @@ function createform($extra=False) {
 
 	$iter=($_POST['iter']) ? $_POST['iter'] : $iter;
 	$mask=($_POST['mask']) ? $_POST['mask'] : $paraminfo['mask'];
-	$nsig=($_POST['nsig']) ? $_POST['nsig'] : $paraminfo['EMAN_classkeep'];
+	$sigma=($_POST['sigma']) ? $_POST['sigma'] : '';
 	$avgjump=($_POST['avgjump']) ? $_POST['avgjump'] : '0';
-	$avgname=($_POST['avgname']) ? $_POST['avgname'] : $refinfo['path'].'/eulers/classes.new.hed';
+	$avgname=($_POST['avgname']) ? $_POST['avgname'] : 'goodavgs.hed';
+	$outdir=($_POST['outdir']) ? $_POST['outdir'] : $refinfo['path'].'/eulers';
 	$eocheck=($_POST['eotest']=='on' || !$_POST['run']) ? 'checked' : '';
 
         echo "<P>\n";
@@ -89,20 +92,30 @@ function createform($extra=False) {
 	echo "<TR>\n";
 	echo "  <TD VALIGN='TOP'>\n";
 	echo "	New classes stack file name:<br />\n";
-	echo "  <input type='text' name='avgname' size='63' value='$avgname'>\n";
-	echo " 	<p>\n";
+	echo "  <input type='text' name='avgname' size='25' value='$avgname'>\n";
+	echo "	<br />\n";
+	echo "	Output directory:<br />\n";
+	echo "  <input type='text' name='outdir' size='63' value='$outdir'>\n";
+	echo " 	</td>\n";
+	echo "</tr>\n";
+	echo "<tr>\n";
+	echo "	<td class='tablebg'>\n";
 	echo "	Use final Eulers from iteration: <input type='text' name='iter' size='3' value='$iter'>\n";
 	echo "  <br />\n";
-	echo "  <input type='text' name='nsig' size='4' value='$nsig'> keep sigma\n";
+	echo "  <input type='text' name='sigma' size='4' value='$sigma'> keep sigma level\n";
 	echo " 	<br />\n";
 	echo " 	<input type='text' name='avgjump' size='4' value='$avgjump'> average jump\n";
 	echo " 	<br />\n";
 	echo " 	<input type='text' name='mask' size='4' value='$mask'> mask radius (in pixels)\n";
 	echo " 	<br />\n";
 	echo " 	<input type='checkbox' name='eotest' $eocheck> create averages for eotest\n";
+	echo " 	</td>\n";
+	echo "</tr>\n";
+	echo "<tr>\n";
+	echo "	<td>\n";
 	echo "  <center><INPUT type='submit' name='run' value='Create new class averages'></center>\n";
-	echo "</TD>\n";
-	echo "</TR>\n";
+	echo "	</td>\n";
+	echo "</tr>\n";
 	echo "</table>\n";
 	echo "</FORM>\n";
 	writeBottom();
