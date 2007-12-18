@@ -8,64 +8,53 @@ import math
 import numpy
 import sys
 import apParam
+import apDisplay
+from optparse import OptionParser
 
 apdb=apDB.apdb
 
-def createDefaults():
-	params={}
-	params['sigcheck']=False
-	params['jumpcheck']=False
-	params['stackname']='goodavgs.hed'
-	params['eotest'] = False
-	params['rejectlst'] = False
-	params['functionLog']='makegoodaverages.log'
+def parseCommandLine():
+	usage = ("Usage: %prog --reconid=<DEF_id> --stackname=<name> --outdir=<path> --mask=<radius> "
+		 +"--iter=<iter> --avgjump=<avg> --sigma=<sigma> <--eotest>")
+	parser = OptionParser(usage=usage)
+
+	parser.add_option("-r", "--reconid", dest="reconid", type="int",
+			  help="primary key of reconstruction from db", metavar="INT")
+	parser.add_option("-m", "--mask", dest="mask", type="int",
+			  help="mask radius in pixels", metavar="INT")
+	parser.add_option("-i", "--iter", dest="iter", type="int",
+			  help="Final eulers applied to particles will come from this iteration", metavar="INT")
+	parser.add_option("-s", "--sigma", dest="sigma", type="float",
+			  help="num of std devs greater than the mean quality factor to include", metavar="FLOAT")
+	parser.add_option("-j", "--avgjump", dest="avgjump", type="float",
+			  help="throw away ptcls with median euler jumps greater than this", metavar="FLOAT")
+	parser.add_option("--rejectlst", dest="rejectlst",
+			  help="throw away ptcls in the specified text file. One particle per line with particle # from db", metavar="TEXT")
+	parser.add_option("-n", "--stackname", dest="stackname", default="goodavgs.hed",
+			  help="name of the stack to which the averages will be written", metavar="TEXT")
+	parser.add_option("-o", "--outdir", dest="outdir",
+			  help="Location of new class files", metavar="PATH")
+	parser.add_option("--eotest", dest="eotest", default=False,
+			  action="store_true", help="make even and odd averages")
+
+	params = apParam.convertParserToParams(parser)
 	return params
+			  
+def checkConflicts(params):
+	if params['reconid'] is None:
+		apDisplay.printError("enter a reconstruction ID from the database")
+	if params['mask'] is None:
+		apDisplay.printError("enter a mask radius")
+	if params['iter'] is None:
+		apDisplay.printError("enter an iteration for the final Eulers")
 
-def parseParams(args,params):
-	for arg in args:
-		elements=arg.split('=')
-		if elements[0]=='reconid':
-			params['reconid'] = int(elements[1])
-		elif elements[0]=='mask':
-			params['mask'] = int(elements[1])
-		elif elements[0]=='iter':
-			params['iter'] = int(elements[1])
-		elif elements[0]=='nsig':
-			params['sigcheck']=True
-			params['nsig'] = float(elements[1])
-		elif elements[0]=='stackname':
-			params['stackname'] = elements[1]
-		elif elements[0]=='eotest':
-			params['eotest'] = True
-		elif elements[0]=='avgjump':
-			params['jumpcheck']=True
-			params['avgjump'] = float(elements[1])
-		elif elements[0]=='rejectlst':
-			params['rejectlst'] = elements[1]
-		else:
-			print elements[0], 'is not recognized as a valid parameter'
-			sys.exit()
-	return params
-
-def checkParams(params):
-	pass
-
-def printHelp():
-	print "Usage:"
-	print "makegoodaverages.py reconid=<DEF_id> iter=<n> mask=<n> nsig=<n> avgjump=<n> stackname=<stackfile> <eotest>"
-	print "---------------------------------------------------------------------------------------------------------"
-	print "reconid         : primary key from db"
-	print "iter            : iteration to process. Eulers to be applied to particles will come from this"
-	print "                  iteration"
-	print "mask            : mask radius in pixels"
-	print "nsig            : number of standard deviations greater than the mean quality factor"
-	print "                  to include"
-	print "avgjump          : throw away ptcls with median euler jumps greater than this"
-	print "rejectlst       : throw away ptcls in the specified text file. One particle per line with particle # from db"
-	print "stackname       : name of the stack to which the averages will be written"
-	print "eotest          : make even and odd averages"
-	sys.exit()
-
+def getReconPath(reconid):
+	"""Get the path of a given reconstruction"""
+	refinerundata=apdb.direct_query(appionData.ApRefinementRunData, reconid)
+	if not refinerundata:
+		apDisplay.printError("reconid "+str(reconid)+" does not exist in the database")
+	return refinerundata['path']['path']
+	
 def getParticleInfo(reconid,iteration):
 	"""Get all particle data for given recon and iteration"""
 	refinerundata=apdb.direct_query(appionData.ApRefinementRunData, reconid)
@@ -106,7 +95,7 @@ def determineClasses(particles):
 	print "min =",class_stats['min']
 	return classes,class_stats
 
-def makeClassAverages(lst, stackname, classdata, params):
+def makeClassAverages(lst, outputstack, classdata, params):
 	#align images in class
 	images=EMAN.readImages(lst,-1,-1,0)
 	for image in images:
@@ -127,7 +116,7 @@ def makeClassAverages(lst, stackname, classdata, params):
 	avg.setRAlign(e)
 	avg.setNImg(len(images))
 	avg.applyMask(params['mask'],0)
-	avg.writeImage(stackname,-1)
+	avg.writeImage(outputstack,-1)
 	
 def makeEvenOddClasses(lst,classdata,params):
 	f=open(lst,'r')
@@ -149,8 +138,8 @@ def makeEvenOddClasses(lst,classdata,params):
 			even.write(lines[line])
 	even.close()
 	odd.close()
-	evenstack=os.path.splitext(params['stackname'])[0]+'.even.hed'
-	oddstack=os.path.splitext(params['stackname'])[0]+'.odd.hed'
+	evenstack=os.path.splitext(params['outputstack'])[0]+'.even.hed'
+	oddstack=os.path.splitext(params['outputstack'])[0]+'.odd.hed'
 	
 	if neven>0:
 		makeClassAverages('even.lst',evenstack,classdata,params)
@@ -462,27 +451,31 @@ def calculateEquivSym(eulers,symout=False):
 	return eqEulers
 
 if __name__=='__main__':
+	params=parseCommandLine()
+	checkConflicts(params)
 	
-	params=createDefaults()
-	if len(sys.argv) < 2:
-		printHelp()
+	if params['outdir'] is None:
+		# auto set the output directory
+		params['outdir'] = getReconPath(params['reconid'])+'/eulers'
+		
+	#create the output directory, if needed
+	apDisplay.printMsg("Out directory: "+params['outdir'])
+	apParam.createDirectory(params['outdir'])			
+
+	os.chdir(params['outdir'])
+	apParam.writeFunctionLog(sys.argv)
 	
-	params=parseParams(sys.argv[1:],params)
-	
-	checkParams(params)
-	
-	apParam.writeFunctionLog(sys.argv,params=params)
+	params['outputstack']=os.path.join(params['outdir'],params['stackname'])
 	particles=getParticleInfo(params['reconid'],params['iter'])
 	stack=os.path.join(particles[0]['particle']['stack']['path']['path'],particles[0]['particle']['stack']['name'])
 	classes,cstats=determineClasses(particles)
 	
 	rejectlst=[]
-	if params['sigcheck']:
-		cutoff=cstats['meanquality']+params['nsig']*cstats['stdquality']
-		#cutoff=0
+	if params['sigma'] is not None:
+		cutoff=cstats['meanquality']+params['sigma']*cstats['stdquality']
 		print "Cutoff =",cutoff
 		rejectlst=removePtclsByQualityFactor(particles,rejectlst,cutoff,params)
-	if params['jumpcheck']:
+	if params['avgjump'] is not None:
 		rejectlst=removePtclsByJumps(particles,rejectlst,params)
 	if params['rejectlst']:
 		rejectlst=removePtclsByLst(rejectlst,params)
@@ -525,11 +518,10 @@ if __name__=='__main__':
 		if nptcls<1:
 			continue
 		
-		makeClassAverages('tmp.lst',params['stackname'], classes[key], params)
+		makeClassAverages('tmp.lst',params['outputstack'], classes[key], params)
 		
 		if params['eotest']:
 			makeEvenOddClasses('tmp.lst',classes[key],params)
-		#break
 	reject.close()
 	
 	print
