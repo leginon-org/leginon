@@ -324,7 +324,7 @@ function jobForm($extra=false) {
   $dmfstack = ($_POST['dmfstack']) ? $_POST['dmfstack'] : $dmfstack;
   $dmfpath = ($_POST['dmfpath']) ? $_POST['dmfpath'] : $dmfpath;
   $dmfmod = ($_POST['dmfmod']) ? $_POST['dmfmod'] : $dmfmod;
-  $dmfstorech = ($_POST['dmfstore']=='on') ? 'CHECKED' : '';
+  $dmfstorech = ($_POST['dmfstore']=='on' || $_POST['model']) ? 'CHECKED' : '';
   $numiters= ($_POST['numiters']) ? $_POST['numiters'] : 1;
   if ($_POST['duplicate']) {
     $numiters+=1;
