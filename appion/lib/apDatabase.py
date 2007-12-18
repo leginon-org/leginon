@@ -337,8 +337,12 @@ def checkInspectDB(imgdata):
 	status = getImageViewerStatus(imgdata)
 	if status is False:
 		return False
-	keep = getImgAssessmentStatus(imgdata)
-	return keep or status
+	else:
+		if status is True:
+			return True
+		else:
+			keep = getImgAssessmentStatus(imgdata)
+			return keep
 
 def isModelInDB(md5sum):
 	modelq = appionData.ApInitialModelData()
