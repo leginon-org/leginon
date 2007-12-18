@@ -145,6 +145,8 @@ def makeEvenOddClasses(lst,classdata,params):
 		makeClassAverages('even.lst',evenstack,classdata,params)
 	if nodd>0:
 		makeClassAverages('odd.lst',oddstack,classdata,params)
+	os.remove('even.lst')
+	os.remove('odd.lst')
 
 def getEMANPcmp(ref,img):
 	"""returns EMAN quality factor for pcmp properly scaled"""
@@ -522,6 +524,7 @@ if __name__=='__main__':
 		
 		if params['eotest']:
 			makeEvenOddClasses('tmp.lst',classes[key],params)
+		os.remove('tmp.lst')
 	reject.close()
 	
 	print
