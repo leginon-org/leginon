@@ -458,6 +458,8 @@ class PickerApp(wx.App):
 		(a1c, a2c) = self.getBadPicks()	
 		self.panel1.setTargets('Bad', a1c )
 		self.panel2.setTargets('Bad', a2c )
+		#for target in targets1:
+		#	target['stats']['RMSD'] = rmsd
 
 	#---------------------------------------
 	def getCutoffCriteria(self, errorArray):
@@ -725,16 +727,19 @@ class PickerApp(wx.App):
 			self.fitall_dialog.shiftyvalue.Enable(False)
 			self.fitall_dialog.shifttog.SetLabel("Locked")
 		#reset images
-		self.panel1.openImageFile(self.panel1.filename)
-		self.panel2.openImageFile(self.panel2.filename)
-		self.panel1.setBitmap()
-		self.panel1.setVirtualSize()
-		self.panel1.setBuffer()
-		self.panel1.UpdateDrawing()
-		self.panel2.setBitmap()
-		self.panel2.setVirtualSize()
-		self.panel2.setBuffer()
-		self.panel2.UpdateDrawing()
+		try:
+			self.panel1.openImageFile(self.panel1.filename)
+			self.panel2.openImageFile(self.panel2.filename)
+			self.panel1.setBitmap()
+			self.panel1.setVirtualSize()
+			self.panel1.setBuffer()
+			self.panel1.UpdateDrawing()
+			self.panel2.setBitmap()
+			self.panel2.setVirtualSize()
+			self.panel2.setBuffer()
+			self.panel2.UpdateDrawing()
+		except:
+			pass
 
 
 	#---------------------------------------
