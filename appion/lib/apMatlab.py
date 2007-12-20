@@ -23,9 +23,16 @@ except:
 
 appiondb = apDB.apdb
 
-def runAce(matlab, imgdata, params):
+def runAce(matlab, imgdata, params, showprev=True):
 	imgname = imgdata['filename']
 	
+	if showprev is True:
+		bestctfvalue, bestconf = apCtf.getBestCtfValueForImage(imgdata)
+		if bestctfvalue:
+			print ( "Prev best: '"+bestctfvalue['acerun']['name']+"', conf="+
+				apDisplay.colorProb(bestconf)+", defocus="+str(round(-1.0*abs(bestctfvalue['defocus1']*1.0e6),2))+
+				" microns, resamplefr="+str(bestctfvalue['acerun']['aceparams']['resamplefr']) )
+
 	if params['uncorrected']:
 		tmpname='temporaryCorrectedImage.mrc'
 		imgarray = apImage.correctImage(imgdata, params)
@@ -75,6 +82,7 @@ def runAce(matlab, imgdata, params):
 		pymat.eval(matlab,savematcmd)
 
 	ctfvalue = pymat.get(matlab, 'ctfparams')
+
 	apCtf.printResults(params, nominal, ctfvalue)
 
 	return ctfvalue
