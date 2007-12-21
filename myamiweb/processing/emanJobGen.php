@@ -656,7 +656,17 @@ function writeJobFile ($extra=False) {
     if ($goodbad=='on') $line.=" goodbad";
     $line.=" > refine".$i.".txt\n";
     $line.="getProjEulers.py proj.img proj.$i.txt\n";
-    if ($eotest=='on') {
+    # if ref-free correllation analysis
+    if ($coran=='on') {
+      $line .="coran_for_cls2.py mask=$mask proc=$procs iter=$i";
+      if ($sym) $line .= " sym=$sym";
+      if ($hard) $line .= " hard=$hard";
+      if ($eotest=='on') $line .= " eotest";
+      $line .= " > coran".$i.".txt\n";
+      $line.="getRes.pl >> resolution.txt $i $box $apix\n";
+    }
+    # if eotest specified with coran, don't do eotest here:
+    elseif ($eotest=='on') {
       $line.="eotest proc=$procs pad=$pad";
       if ($mask) $line.=" mask=$mask";
       if ($imask) $line.=" imask=$imask";
@@ -669,12 +679,6 @@ function writeJobFile ($extra=False) {
       $line.=" > eotest".$i.".txt\n";
       $line.="mv fsc.eotest fsc.eotest.".$i."\n";
       $line.="getRes.pl >> resolution.txt $i $box $apix\n";
-    }
-    if ($coran=='on') {
-      $line .="coran_for_cls2.py mask=$mask proc=$procs iter=$i";
-      if ($sym) $line .= " sym=$sym";
-      if ($hard) $line .= " hard=$hard";
-      $line .= "\n";
     }
     if ($msgp=='on') {
       $line .="msgPassing_subClassification.py mask=$mask iter=$i";
