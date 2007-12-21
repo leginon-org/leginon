@@ -246,7 +246,6 @@ def makeClassAverages(lst, outputstack,e,mask):
 
 if __name__== '__main__':
 	#Parse inputs
-	print "starting this now"
 	args=sys.argv[1:]
 	params=createDefaults()
 	parseInput(args,params)
