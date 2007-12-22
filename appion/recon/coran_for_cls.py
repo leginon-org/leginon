@@ -175,7 +175,7 @@ def parseInput(args,params):
 			params['sym']=elements[1]
 		elif elements[0]=='hard':
 			params['hard']=int(elements[1])
-		elif elements=='eotest':
+		elif arg=='eotest':
 			params['eotest']=True
 		else:
 			print "\nERROR: undefined parameter \'"+arg+"\'\n"
@@ -271,6 +271,8 @@ if __name__== '__main__':
 	
 	#Loop through classes and prepare for spider
 	clslist=glob.glob('cls*.lst')
+	# sort the list numerically
+	clslist.sort()
 
 	projections=EMAN.readImages('proj.hed',-1,-1,0)
 	if len(projections)!=len(clslist):
