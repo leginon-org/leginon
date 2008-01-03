@@ -1,7 +1,7 @@
 <?php
 /**
- *	@version $Revision: 1.37 $
- *	@version $Id: image.inc,v 1.37 2007-10-30 03:28:40 dfellman Exp $
+ *	@version $Revision: 1.38 $
+ *	@version $Id: image.inc,v 1.38 2008-01-03 23:33:49 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -68,6 +68,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 	$pic = $path.$filename;
 	if (@is_file($pic)) {
 		$imginfo = $leginondata->getImageInfo($imageId);
+		$dimx = $imginfo['dimx'];
 		if ($p['loadjpg']) {
 			$jpgfilename = ereg_replace('mrc$', 'jpg', $filename);
 			$jpgpath = ereg_replace("rawdata", "jpegs", $path);
@@ -77,7 +78,6 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			$img = imagecreatefromjpeg($jpgpic);
 		} else {
 		if ($p['autoscale']) {
-			$dimx = $imginfo['dimx'];
 			$densitymax = ($p['colormap']) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL;
 			list($info) = $leginondata->getImageStat($id);
 			if ($info) {
@@ -105,7 +105,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		if ($p['loadtime'])
 			$begin=getmicrotime();
 
-		if ($binning=='auto')
+		if ($binning=='auto') 
 			$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
 
 		if ($p['mrc']) {
