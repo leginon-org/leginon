@@ -103,7 +103,7 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=False,
 
 def binImg(imgarray, bin=1):
 	"""
-	returns a binned image
+	returns a binned image of a 2D image
 	"""
 	if bin <= 1:
 		return imgarray
