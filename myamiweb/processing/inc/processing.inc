@@ -182,6 +182,20 @@ function checkClusterJobs($user, $pass, $cmd='qstat -a | grep $user') {
   return $subjobs;
 }
 
+function checkRequiredFileError($path,$filename) {
+	if (substr($path,-1,1)!='/') $path.='/';
+	$file = $path.$filename;
+	if (file_exists($file)) {
+		if (filesize($file) > 0) {
+			return false;
+		} else {
+			return '<B>ERROR:</B> empty '.$filename;
+		}
+	} else {
+		return '<B>ERROR:</B> '.$filename.' not exist';
+	}
+}
+
 function streamToArray($stream) {
   // turns a stream into an array of arrays
   $lines=explode("\n", $stream);
