@@ -270,7 +270,7 @@ def alignPicks(picks1, picks2, data, limit=5.0):
 				list1.append(pick)
 				alignlist2.append(closepick)
 				filled[key] = True
-	limit *= 2.0
+	limit *= 4.0
 	for pick in picks1:
 		closepick,dist = findClosestPick(pick, alignpicks2)
 		if dist < limit: 

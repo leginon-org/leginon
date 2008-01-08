@@ -221,7 +221,7 @@ class PickerApp(wx.App):
 		self.quit = wx.Button(self.frame, wx.ID_EXIT, '&Quit')
 		self.frame.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
 		self.buttonrow.Add(self.quit, 0, wx.ALL, 1)
-		
+
 		return
 
 	#---------------------------------------
@@ -307,7 +307,7 @@ class PickerApp(wx.App):
 				("&Edit", (
 					( "&Clear", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
 					( "&Reset", "Reset parameters", self.onResetParams, wx.ID_RESET ),
-					( "Clear &Bad Picks", "Remove bad picked particles", self.onClearBadPicks, wx.ID_CLEAR ),	
+					( "Clear &Bad Picks", "Remove bad picked particles", self.onClearBadPicks, wx.ID_CLEAR ),
 				)),
 				("&Refine", (
 					( "Find &Theta", "Calculate theta from picked particles", self.onFitTheta ),
@@ -320,7 +320,7 @@ class PickerApp(wx.App):
 					( "&Keep", "Keep this image pair", self.onToggleKeep, -1, wx.ITEM_RADIO),
 					( "&Reject", "Reject this image pair", self.onToggleReject, -1, wx.ITEM_RADIO),
 				)),
-			]			
+			]
 
 	#---------------------------------------
 	def createMenuBar(self):
@@ -455,7 +455,7 @@ class PickerApp(wx.App):
 		self.panel2.setTargets('Aligned', a1b )
 		self.panel1.setTargets('Aligned', a2b )
 		#FIND PARTICLES WITH LARGE ERROR
-		(a1c, a2c) = self.getBadPicks()	
+		(a1c, a2c) = self.getBadPicks()
 		self.panel1.setTargets('Bad', a1c )
 		self.panel2.setTargets('Bad', a2c )
 		#for target in targets1:
@@ -464,10 +464,11 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def getCutoffCriteria(self, errorArray):
 		#do a small minimum filter to  get rid of outliers
-		errorArray2 = ndimage.minimum_filter(errorArray, size=2, mode='wrap')
+		size = int(len(errorArray)**0.3)+1
+		errorArray2 = ndimage.minimum_filter(errorArray, size=size, mode='wrap')
 		mean = ndimage.mean(errorArray2)
 		stdev = ndimage.standard_deviation(errorArray2)
-		cut = mean + 4 * stdev
+		cut = mean + 5.0 * stdev + 2
 		return cut
 
 	#---------------------------------------
@@ -478,7 +479,14 @@ class PickerApp(wx.App):
 		cut = self.getCutoffCriteria(err)
 		a1c = []
 		a2c = []
+		maxerr = 1.0
+		worst1 = []
+		worst2 = []
 		for i,e in enumerate(err):
+			if e > maxerr:
+				maxerr = e
+				worst1 = a1[i,:]
+				worst2 = a2[i,:]
 			if e > cut:
 				#bad picks
 				a1c.append(a1[i,:])
@@ -488,11 +496,17 @@ class PickerApp(wx.App):
 				if i < len(a1):
 					a1c.append(a1[i,:])
 				if i < len(a2):
-					a2c.append(a2[i,:])				
-		self.statbar.PushStatusText(str(len(a1c))+" particles had an RMSD greater than "
-			+str(int(cut))+ " pixels", 0)
-		a1d = numpy.asarray(a1c)
-		a2d = numpy.asarray(a2c)
+					a2c.append(a2[i,:])
+		if len(a1c) > 0:
+			self.statbar.PushStatusText(str(len(a1c))+" particles had an RMSD greater than "
+				+str(int(cut))+ " pixels", 0)
+			a1d = numpy.asarray(a1c)
+			a2d = numpy.asarray(a2c)
+		else:
+			self.statbar.PushStatusText("no particles had an RMSD greater than "
+				+str(int(cut))+ " pixels; selected worst one with RMSD = "+str(round(maxerr,2)), 0)
+			a1d = numpy.asarray([worst1])
+			a2d = numpy.asarray([worst2])
 		return (a1d, a2d)
 
 	#---------------------------------------
@@ -503,11 +517,21 @@ class PickerApp(wx.App):
 		cut = self.getCutoffCriteria(err)
 		a1c = []
 		a2c = []
+		maxerr = 2.0
+		worst1 = []
+		worst2 = []
 		for i,e in enumerate(err):
-			if e < cut and (i ==0 or e > 0):
+			if i != 0 and e > maxerr:
+				if len(worst1) > 0 and maxerr < cut:
+					a1c.append(worst1)
+					a2c.append(worst2)
+				maxerr = e
+				worst1 = a1[i,:]
+				worst2 = a2[i,:]
+			elif e < cut and (i == 0 or e > 0):
 				#good picks
 				a1c.append(a1[i,:])
-				a2c.append(a2[i,:])			
+				a2c.append(a2[i,:])
 		self.statbar.PushStatusText(str(len(a1c))+" particles had an RMSD less than "
 			+str(int(cut))+ " pixels", 0)
 		a1d = numpy.asarray(a1c)
@@ -765,18 +789,19 @@ class PickerApp(wx.App):
 			self.savePicks()
 		dlg.Destroy()
 
-	#---------------------------------------	
+	#---------------------------------------
 	def savePicks(self):
 		self.data['savetime'] = time.asctime()+" "+time.tzname[time.daylight]
 		self.data['filetype'] = self.filetypes[self.data['filetypeindex']]
 		targets1 = self.panel1.getTargets('Picked')
 		targets2 = self.panel2.getTargets('Picked')
 		if len(targets1) < 1 or len(targets2) < 1:
-			self.statbar.PushStatusText("ERROR: Cannot save file. Not enough picks", 0)
-			dialog = wx.MessageDialog(self.frame, "Cannot save file.\nNot enough picks\n(less than 4 particle pairs)",\
-				'Error', wx.OK|wx.ICON_ERROR)
-			dialog.ShowModal()
-			dialog.Destroy()
+			if not self.appionloop:
+				self.statbar.PushStatusText("ERROR: Cannot save file. Not enough picks", 0)
+				dialog = wx.MessageDialog(self.frame, "Cannot save file.\nNot enough picks\n(less than 4 particle pairs)",\
+					'Error', wx.OK|wx.ICON_ERROR)
+				dialog.ShowModal()
+				dialog.Destroy()
 			return False
 		if True: #try:
 			if self.data['filetypeindex'] == 0:
@@ -795,7 +820,7 @@ class PickerApp(wx.App):
 			self.statbar.PushStatusText("ERROR: Saving to file '"+self.data['outfile']+"' failed", 0)
 			dialog = wx.MessageDialog(self.frame, "Saving to file '"+self.data['outfile']+"' failed", 'Error', wx.OK|wx.ICON_ERROR)
 			if dialog.ShowModal() == wx.ID_OK:
-				dialog.Destroy()		
+				dialog.Destroy()
 
 	#---------------------------------------
 	def savePicksToTextFile(self):
@@ -953,7 +978,7 @@ class PickerApp(wx.App):
 			self.statbar.PushStatusText("ERROR: Opening file '"+self.data['outfile']+"' failed", 0)
 			dialog = wx.MessageDialog(self.frame, "Opening file '"+self.data['outfile']+"' failed", 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
-			dialog.Destroy()	
+			dialog.Destroy()
 		self.data['opentime'] = time.asctime()+" "+time.tzname[time.daylight]
 
 	#---------------------------------------
