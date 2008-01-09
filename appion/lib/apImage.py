@@ -540,7 +540,7 @@ def _whiteNormalizeImage(a, stdevLimit=3.0):
 	"""
 	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel=55.0,maxlevel=255.0,trim=0.0)	
 
-def cutEdges(img,trim=0.1):
+def cutEdges(img, trim=0.1):
 	"""
 	cut the edges of an image off by trim percent
 	0.0 < trim < 1.0
@@ -631,7 +631,7 @@ def printImageInfo(im):
 
 	return avg1,stdev1,min1,max1
 
-def arrayToJpegPlusPeak(numer,outfile,peak=None,normalize=True):
+def arrayToJpegPlusPeak(numer, outfile, peak=None, normalize=True):
 	"""
 	takes a numpy and writes a JPEG
 	best for micrographs and photographs
@@ -645,7 +645,7 @@ def arrayToJpegPlusPeak(numer,outfile,peak=None,normalize=True):
 
 	if peak != None:
 		draw = ImageDraw.Draw(image)
-		peak2 = peak.copy()
+		peak2 = numpy.asarray(peak)
 		for i in range(2):
 			if peak[i] < 0:
 				peak2[i] = (numer.shape)[i] + peak[i]
