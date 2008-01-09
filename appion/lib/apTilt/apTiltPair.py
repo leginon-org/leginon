@@ -1,25 +1,10 @@
-import numpy
-try:
-#sinedon
-	import sinedon.data as data
-#pyami
-	import pyami.peakfinder as peakfinder
-	import pyami.correlator as correlator
 #leginon
-	import leginondata
-except:
-	import data
-	import data as leginondata
-	import peakfinder
-	import correlator
-	print "sinedon/pyami not available"
-
+import leginondata
 #appion
 import appionData
 import apDB
 import apImage
 import apDisplay
-import pprint
 
 leginondb = apDB.db
 appiondb  = apDB.apdb
@@ -46,13 +31,7 @@ $q="select "
 """
 
 def getTiltPair(imgdata):
-	#queries
-	#tiltq   = leginondata.TiltSeriesData()
-	#presetq = leginondata.PresetData()
 	imageq  = leginondata.AcquisitionImageData()
-	#tiltq = imgdata['tilt series']
-	#pprint.pprint(imgdata['tilt series'])
-	#pprint.pprint(imgdata['preset'])
 	imageq['tilt series'] = imgdata['tilt series']
 	imageq['preset'] = imgdata['preset']
 	origid=imgdata.dbid
