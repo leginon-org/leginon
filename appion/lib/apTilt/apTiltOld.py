@@ -53,7 +53,7 @@ def process(img1,img2,params):
 	halodoG2 = 0.75*apImage.normStdev(doG2) + apImage.normStdev(halos2)
 	#apImage.arrayToJpeg(doG2,name+"-doG2.jpg")
 
-	shift0, prob1 = _getTiltedShift(doG1,tilt1,doG2,tilt2,name,params)
+	shift0, prob1 = getTiltedShift(doG1,tilt1,doG2,tilt2,name,params)
 	print "*** corrct shift prob(1)=",apDisplay.colorProb(prob1)
 
 	trans = _rotMatrixDeg(dtilt)
@@ -109,7 +109,7 @@ def process(img1,img2,params):
 # Get shift
 #####################################################
 
-def _getTiltedShift(img1,tilt1,img2,tilt2,name,params):
+def getTiltedShift(img1,tilt1,img2,tilt2,name,params):
 	apix = params['apix']
 	diam = params['diam']
 	bin = params['bin']
