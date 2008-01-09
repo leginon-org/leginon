@@ -114,7 +114,7 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
     <INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>&nbsp;
     Particle diameter for result images <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
     <BR><BR>";
-  echo"
+  /*echo"
     <B>Picking Icon:</B><BR/>
     <SELECT NAME='shape'>\n";
   $shapes = array('plus', 'circle', 'cross', 'point', 'square', 'diamond', );
@@ -127,7 +127,17 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
   echo"
     <INPUT TYPE='text' NAME='shapesize' VALUE='$shapesize' SIZE='3'>&nbsp;
     Picking icon diameter <FONT SIZE=-2><I>(in pixels)</I></FONT>
-    <BR><BR>";    
+    <BR><BR>";
+	*/
+  echo"
+    <B>Output file type:</B><BR/>
+    <SELECT NAME='ftype'>\n";
+  $ftypes = array('spider', 'text', 'xml', 'pickle', );
+  foreach($ftypes as $ftype) {
+    $s = ($_POST['ftype']==$ftype) ? 'SELECTED' : '';
+    echo "<OPTION $s>$ftype</OPTION>\n";
+  }
+  echo "</SELECT><BR/>";
   createParticleLoopTable(-1, -1);
   echo "
     </TD>
@@ -192,7 +202,7 @@ function runTiltAligner() {
     $command .= " pickrunid=$pickrunid";
   }
 
-  $shape=$_POST['shape'];
+  /*$shape=$_POST['shape'];
   if($shape) {
     $command .= " shape=$shape";
   }
@@ -200,7 +210,12 @@ function runTiltAligner() {
   $shapesize = (int) $_POST['shapesize'];
   if($shapesize && is_int($shapesize)) {
     $command .= " shapesize=$shapesize";
-  } 
+  }*/
+
+  $ftype=$_POST['ftype'];
+  if($ftype) {
+    $command .= " outtype=$ftype";
+  }
 
   if ($_POST['testimage']=="on") {
     if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
