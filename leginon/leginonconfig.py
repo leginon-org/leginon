@@ -76,37 +76,11 @@ configfiles = configparser.read(config_locations)
 	#sys.stderr.write(str(configfile)+" ")
 #sys.stderr.write("\n")
 
-# Database sections
-dbsections = []
-allsections = configparser.sections()
-for section in allsections:
-	if 'Database' in section:
-		dbsections.append(section)
-databases = {}
-for section in dbsections:
-	dbconfig = {}
-	options = configparser.options(section)
-	for key in options:
-		dbconfig[key] = configparser.get(section, key)
-	databases[section] = dbconfig
-
-# Main leginon database
-DB_HOST = databases['Database']['hostname']
-DB_NAME = databases['Database']['name']
-DB_USER = databases['Database']['username']
-DB_PASS = databases['Database']['password']
-
-# This is a check to see if DB is configured above (DB_PASS can be '')
-if '' in (DB_HOST, DB_NAME, DB_USER):
-	print DB_HOST, DB_NAME, DB_USER
-	raise LeginonConfigError('need database info in leginonconfig.py')
-
-# This is optional.  If not using a project database, leave these
-# set to None
-DB_PROJECT_HOST = databases['Project Database']['hostname']
-DB_PROJECT_NAME = databases['Project Database']['name']
-DB_PROJECT_USER = databases['Project Database']['username']
-DB_PROJECT_PASS = databases['Project Database']['password']
+## Project Database
+projectdb = {}
+options = configparser.options('Project Database')
+for key in options:
+	projectdb[key] = configparser.get('Project Database', key)
 
 # drive mapping
 drives = configparser.options('Drive Mapping')

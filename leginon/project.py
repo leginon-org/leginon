@@ -7,10 +7,10 @@ class NotConnectedError(Exception):
 
 # connection to the project database
 dbparams = {
-	'host': leginonconfig.DB_PROJECT_HOST,
-	'user': leginonconfig.DB_PROJECT_USER,
-	'db': leginonconfig.DB_PROJECT_NAME,
-	'passwd': leginonconfig.DB_PROJECT_PASS, 	 
+	'host': leginonconfig.projectdb['hostname'],
+	'user': leginonconfig.projectdb['username'],
+	'db': leginonconfig.projectdb['name'],
+	'passwd': leginonconfig.projectdb['password'], 	 
 	} 	 
  	 
 
