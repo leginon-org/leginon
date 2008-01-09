@@ -1,10 +1,102 @@
 import math
+import sys
+#PIL
+import ImageDraw
+#scipy
 import numpy
+from scipy import optimize, ndimage
+#appion
 import apImage
 import apDisplay
-import ImageDraw
-import pprint
-from scipy import optimize, ndimage
+import apDog
+#pyami
+from pyami import peakfinder
+from pyami import correlator
+
+def getTiltedShift(img1, img2, tiltdiff):
+	"""
+	takes two images tilted 
+	with respect to one another 
+	and tries to find overlap
+	
+	img1 (as numpy array)
+	tilt1 (in degrees)
+	img2 (as numpy array)
+	tilt2 (in degrees)
+	"""
+
+	### untilt images
+	#dtilt = (tilt1 - tilt2)/2.0
+	halftilt = tiltdiff/2.0
+	if tiltdiff > 0:
+		untilt1 = compressImage(img1, halftilt)
+		untilt2 = stretchImage(img2, halftilt)
+	else:
+		untilt1 = stretchImage(img1, halftilt)
+		untilt2 = compressImage(img2, halftilt)
+	
+	#shrink images
+	bin = 2
+	binned1 = apImage.binImg(untilt1, bin)
+	binned2 = apImage.binImg(untilt2, bin)
+
+	### cross-correlate
+	cc = correlator.cross_correlate(binned1, binned2, pad=True)
+	rad = min(cc.shape)/15.0
+	cc = apImage.highPassFilter(cc, radius=rad)
+	cc = apImage.normRange(cc)
+	cc = blackEdges(cc)
+	cc = apImage.normRange(cc)
+	cc = blackEdges(cc)
+	cc = apImage.normRange(cc)
+	cc = apImage.lowPassFilter(cc, radius=10.0)
+
+	#find peak
+	peak = peakfinder.findSubpixelPeak(cc, lpf=0)
+	import pprint
+	pprint.pprint(peak)
+	pixpeak = peak['subpixel peak']
+	shift = correlator.wrap_coord(pixpeak, cc.shape)
+	shift = numpy.array([shift[1]*bin, shift[0]*bin])
+	apImage.arrayToJpegPlusPeak(cc, "guess-cross.jpg", pixpeak)
+
+	return shift
+
+def blackEdges(img, rad=None, black=None):
+	shape = img.shape
+	if rad is None:
+		rad = min(shape)/64.0
+	if black is None:
+		black = ndimage.minimum(img[int(rad/2.0):int(shape[0]-rad/2.0), int(rad/2.0):int(shape[1]-rad/2.0)])
+	img2 = img
+	#left edge
+	img2[0:int(rad/2.0), 0:shape[1]] = black
+	#right edge
+	img2[int(shape[0]-rad/2.0):shape[0], 0:shape[1]] = black
+	#top edge
+	img2[0:shape[0], 0:int(rad/2.0)] = black
+	#bottom edge
+	img2[0:shape[0], int(shape[1]-rad/2.0):shape[1]] = black
+	#vertical bar
+	img2[int(shape[0]/2.0-rad):int(shape[0]/2.0+rad),0:shape[1]] = black
+	#horizontal bar
+	img2[0:shape[0],int(shape[1]/2.0-rad):int(shape[1]/2.0+rad)] = black
+	return img2
+
+
+def compressImage(img, tilt):
+	#compress image along x-axis
+	coord = 1.0/math.cos(abs(tilt)/180.0*math.pi)
+	tiltmat = numpy.array([[ 1.0, 0.0 ], [ 0.0, coord ]])
+	newimg  = ndimage.affine_transform(img, tiltmat, mode='constant', cval=0.0)
+	return newimg
+
+def stretchImage(img, tilt):
+	#expand image along x-axis
+	coord = math.cos(abs(tilt)/180.0*math.pi)
+	tiltmat = numpy.array([[ 1.0, 0.0 ], [ 0.0, coord ]])
+	newimg  = ndimage.affine_transform(img, tiltmat, mode='constant', cval=0.0)
+	return newimg
 
 ##
 ##
@@ -93,7 +185,6 @@ def setPointsFromArrays(a1, a2, data):
 			+ numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32) )
 		data['point2b'] = ( numpy.asarray(a2[0,:], dtype=numpy.float32) 
 			- numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32) )
-	#pprint.pprint(data)
 	return
 
 def a1Toa2Data(a1, data):
