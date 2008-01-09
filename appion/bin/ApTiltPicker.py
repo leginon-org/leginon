@@ -111,10 +111,10 @@ class PickerApp(wx.App):
 			shape=self.ashape, size=self.ashapesize)
 		self.panel1.setTargets('Aligned', [])
 		self.panel1.selectiontool.setDisplayed('Aligned', True)
-		self.panel1.addTargetTool('Bad', color=wx.Color(215, 215, 32), 
+		self.panel1.addTargetTool('Worst', color=wx.Color(215, 215, 32), 
 			shape=self.eshape, size=self.eshapesize)
-		self.panel1.setTargets('Bad', [])
-		self.panel1.selectiontool.setDisplayed('Bad', True)
+		self.panel1.setTargets('Worst', [])
+		self.panel1.selectiontool.setDisplayed('Worst', True)
 		#self.panel1.SetMinSize((256,256))
 		#self.panel1.SetBackgroundColour("sky blue")
 
@@ -129,10 +129,10 @@ class PickerApp(wx.App):
 			shape=self.ashape, size=self.ashapesize)
 		self.panel2.setTargets('Aligned', [])
 		self.panel2.selectiontool.setDisplayed('Aligned', True)
-		self.panel2.addTargetTool('Bad', color=wx.Color(215, 215, 32), 
+		self.panel2.addTargetTool('Worst', color=wx.Color(215, 215, 32), 
 			shape=self.eshape, size=self.eshapesize)
-		self.panel2.setTargets('Bad', [])
-		self.panel2.selectiontool.setDisplayed('Bad', True)
+		self.panel2.setTargets('Worst', [])
+		self.panel2.selectiontool.setDisplayed('Worst', True)
 		#self.panel2.SetMinSize((256,256))
 		#self.panel2.SetBackgroundColour("pink")
 
@@ -193,7 +193,7 @@ class PickerApp(wx.App):
 	def createMenuButtons(self):
 		self.buttonrow.Add((40,10), 0, wx.ALL, 1)
 
-		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear Bad Picks')
+		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear Worst Picks')
 		self.frame.Bind(wx.EVT_BUTTON, self.onClearBadPicks, self.clear)
 		self.buttonrow.Add(self.clear, 0, wx.ALL, 1)
 
@@ -228,9 +228,13 @@ class PickerApp(wx.App):
 	def createLoopButtons(self):
 		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
 
-		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear Bad Picks')
+		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear Worst Picks')
 		self.frame.Bind(wx.EVT_BUTTON, self.onClearBadPicks, self.clear)
 		self.buttonrow.Add(self.clear, 0, wx.ALL, 1)
+
+		self.shift = wx.Button(self.frame,-1, '&Guess Shift')
+		self.frame.Bind(wx.EVT_BUTTON, self.onGuessShift, self.shift)
+		self.buttonrow.Add(self.shift, 0, wx.ALL, 1)
 
 		self.reset = wx.Button(self.frame, wx.ID_RESET, '&Reset')
 		self.frame.Bind(wx.EVT_BUTTON, self.onResetParams, self.reset)
@@ -289,7 +293,7 @@ class PickerApp(wx.App):
 				("&Edit", (
 					( "&Clear", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
 					( "&Reset", "Reset parameters", self.onResetParams, wx.ID_RESET ),
-					( "Clear &Bad Picks", "Remove bad picked particles", self.onClearBadPicks, wx.ID_CLEAR ),
+					( "Clear &Worst Picks", "Remove worst picked particles", self.onClearBadPicks, wx.ID_CLEAR ),
 				)),
 				("&Refine", (
 					( "Find &Theta", "Calculate theta from picked particles", self.onFitTheta ),
@@ -307,7 +311,7 @@ class PickerApp(wx.App):
 				("&Edit", (
 					( "&Clear", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
 					( "&Reset", "Reset parameters", self.onResetParams, wx.ID_RESET ),
-					( "Clear &Bad Picks", "Remove bad picked particles", self.onClearBadPicks, wx.ID_CLEAR ),
+					( "Clear &Worst Picks", "Remove worst picked particles", self.onClearBadPicks, wx.ID_CLEAR ),
 				)),
 				("&Refine", (
 					( "Find &Theta", "Calculate theta from picked particles", self.onFitTheta ),
@@ -456,10 +460,45 @@ class PickerApp(wx.App):
 		self.panel1.setTargets('Aligned', a2b )
 		#FIND PARTICLES WITH LARGE ERROR
 		(a1c, a2c) = self.getBadPicks()
-		self.panel1.setTargets('Bad', a1c )
-		self.panel2.setTargets('Bad', a2c )
+		self.panel1.setTargets('Worst', a1c )
+		self.panel2.setTargets('Worst', a2c )
 		#for target in targets1:
 		#	target['stats']['RMSD'] = rmsd
+
+	#---------------------------------------
+	def onGuessShift(self, evt):
+		#cross-corrlate to get shift
+		img1 = numpy.asarray(self.panel1.imagedata, dtype=numpy.float32)
+		tiltdiff = self.data['theta']
+		img2 = numpy.asarray(self.panel2.imagedata, dtype=numpy.float32)
+		shift = apTiltTransform.getTiltedShift(img1, img2, tiltdiff)
+		#print "shift=",shift
+
+		if min(abs(shift)) < min(img1.shape)/16.0:
+			self.statbar.PushStatusText("Warning: Overlap was close to edge and possibly wrong.", 0)
+
+		if len(self.picks1) > 1:
+			origin = self.picks1[0]
+		newpart = origin - shift
+		#print "origin=",origin
+		#print "newpart=",newpart
+		while newpart[0] < 10:
+			newpart += numpy.asarray((20,0))
+			origin += numpy.asarray((20,0))
+		while newpart[1] < 10:
+			newpart += numpy.asarray((0,20))
+			origin += numpy.asarray((0,20))
+		while newpart[0] > img1.shape[0]-10:
+			newpart -= numpy.asarray((20,0))
+			origin -= numpy.asarray((20,0))
+		while newpart[1] > img1.shape[1]-10:
+			newpart -= numpy.asarray((0,20))
+			origin -= numpy.asarray((0,20))
+		#print "origin=",origin
+		#print "newpart=",newpart
+		self.panel1.setTargets('Picked', [origin])
+		self.panel2.setTargets('Picked', [newpart])
+		return
 
 	#---------------------------------------
 	def getCutoffCriteria(self, errorArray):
@@ -468,7 +507,7 @@ class PickerApp(wx.App):
 		errorArray2 = ndimage.minimum_filter(errorArray, size=size, mode='wrap')
 		mean = ndimage.mean(errorArray2)
 		stdev = ndimage.standard_deviation(errorArray2)
-		cut = mean + 5.0 * stdev + 2
+		cut = mean + 5.0 * stdev + 3.0
 		return cut
 
 	#---------------------------------------
@@ -479,7 +518,7 @@ class PickerApp(wx.App):
 		cut = self.getCutoffCriteria(err)
 		a1c = []
 		a2c = []
-		maxerr = 1.0
+		maxerr = 4.0
 		worst1 = []
 		worst2 = []
 		for i,e in enumerate(err):
@@ -517,7 +556,7 @@ class PickerApp(wx.App):
 		cut = self.getCutoffCriteria(err)
 		a1c = []
 		a2c = []
-		maxerr = 2.0
+		maxerr = 4.0
 		worst1 = []
 		worst2 = []
 		for i,e in enumerate(err):
@@ -634,6 +673,7 @@ class PickerApp(wx.App):
 			newa2 = list2
 		self.panel1.setTargets('Picked', newa1)
 		self.panel2.setTargets('Picked', newa2)
+		self.onUpdate(None)
 		return True
 
 	#---------------------------------------
@@ -670,10 +710,10 @@ class PickerApp(wx.App):
 		print "clear is not working?"
 		self.panel1.setTargets('Picked', [])
 		self.panel1.setTargets('Aligned', [])
-		self.panel1.setTargets('Bad', [] )
+		self.panel1.setTargets('Worst', [] )
 		self.panel2.setTargets('Picked', [])
 		self.panel2.setTargets('Aligned', [])
-		self.panel2.setTargets('Bad', [] )
+		self.panel2.setTargets('Worst', [] )
 
 	#---------------------------------------
 	def onClearBadPicks(self, evt):
@@ -681,8 +721,8 @@ class PickerApp(wx.App):
 		Remove picks with RMSD > mean + 3 * stdev
 		"""
 		a1c, a2c = self.getGoodPicks()
-		self.panel1.setTargets('Bad', [] )
-		self.panel2.setTargets('Bad', [] )
+		self.panel1.setTargets('Worst', [] )
+		self.panel2.setTargets('Worst', [] )
 		self.panel1.setTargets('Picked', a1c )
 		self.panel2.setTargets('Picked', a2c )
 		self.onUpdate(None)
