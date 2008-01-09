@@ -7,8 +7,6 @@
 import leginonconfig
 import sinedon.newdict
 import sinedon.data
-import sinedon.dbdatakeeper
-import sinedon.dbconfig
 import os
 
 Data = sinedon.data.Data
