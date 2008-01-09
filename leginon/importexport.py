@@ -290,12 +290,6 @@ class ImportExport:
 		self.information = ""
 
 	def setDBparam(self, **kwargs):
-		"""
-		'host':leginonconfig.DB_HOST,
-		'user':leginonconfig.DB_USER,
-		'db':leginonconfig.DB_NAME,
-		'passwd':leginonconfig.DB_PASS
-		"""
 		self.db = sqldb.sqlDB(**kwargs)
 
 	def getMessageLog(self):
