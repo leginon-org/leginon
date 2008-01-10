@@ -554,10 +554,13 @@ class AppionLoop(object):
 			f = open(doneDictName,'r')
 			self.donedict = cPickle.load(f)
 			f.close()
-			if 'commit' in self.donedict  and self.donedict['commit'] != self.params['commit']:
-				apDisplay.printWarning("'commit' flag was changed, creating new done dictionary")
-				self.donedict = {}
-				self.donedict['commit'] = self.params['commit']
+			if 'commit' in self.donedict:
+				if self.donedict['commit'] is True and self.params['commit'] is not True:
+					apDisplay.printError("Commit flag was enabled and is now disabled, create a new runid")
+ 				elif self.donedict['commit'] != self.params['commit']:
+					apDisplay.printWarning("'commit' flag was changed, creating new done dictionary")
+					self.donedict = {}
+					self.donedict['commit'] = self.params['commit']
 			else:
 				apDisplay.printMsg("found "+str(len(self.donedict))+" dictionary entries")
 		else:
