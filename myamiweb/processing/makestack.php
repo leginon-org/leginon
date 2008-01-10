@@ -254,8 +254,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		<INPUT TYPE='checkbox' NAME='normalize' $normcheck>
 		Normalize Stack Particles<BR>\n";
 	if ($ctfdata) {
-	  echo"<INPUT TYPE='checkbox' NAME='phaseflip' onclick='uncheckstig(this)' $phasecheck>\nPhaseflip Particle Images<BR>";
-	  echo"<INPUT TYPE='checkbox' NAME='stig' onclick='uncheckflip(this)' $stigcheck>\nPhaseflip Micrograph Images<BR>";
+	  echo"<INPUT TYPE='checkbox' NAME='phaseflip' onclick='uncheckstig(this)' $phasecheck>"
+		."\nPhaseflip Particle Images<BR>";
+	  echo"<INPUT TYPE='checkbox' NAME='stig' onclick='uncheckflip(this)' $stigcheck>"
+		."\nPhaseflip Micrograph Images <I>(experimental)</I><BR>";
 	}
 
 	$checkimageval= ($_POST['checkimage']) ? $_POST['checkimage'] : 'best';
