@@ -1,3 +1,5 @@
+#python
+import re
 #leginon
 import leginondata
 #appion
@@ -5,6 +7,7 @@ import appionData
 import apDB
 import apImage
 import apDisplay
+import apTiltTransform
 
 leginondb = apDB.db
 appiondb  = apDB.apdb
@@ -80,6 +83,7 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 	#'07aug30b_a_00013gr_00010sq_v01_00002sq_v01_00016en_00'
 	#'07aug30b_a_00013gr_00010sq_v01_00002sq_01_00016en_01'
 	#last two digits confer order, but then the transform changes...
+	bin = params['bin']
 
 	### first find the runid
 	runq = appionData.ApSelectionRunData()
@@ -113,9 +117,15 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 		if key not in dbdict:
 			apDisplay.printError("Key: "+key+" was not found in transformation data")
 
-	for i,v in dbdict.items():
-		transq[i] = v
+	for key,val in dbdict.items():
+		if re.match("image[12]_[xy]", key):
+			transq[key] = round(val*bin,2)
+		else:
+			transq[key] = val
 		#print i,v
+
+	bestOverlap, tiltOverlap = apTiltTransform.getOverlapPercent(imgdata1['image'], imgdata2['image'], tiltparams)
+	transq['overlap'] = round(bestOverlap,5)
 
 	apDisplay.printMsg("Inserting transform beteween "+apDisplay.short(imgdata1['filename'])+\
 		" and "+apDisplay.short(imgdata2['filename'])+" into database")
