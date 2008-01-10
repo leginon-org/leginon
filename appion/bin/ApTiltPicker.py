@@ -479,6 +479,8 @@ class PickerApp(wx.App):
 
 		if len(self.picks1) > 1:
 			origin = self.picks1[0]
+		else:
+			origin = numpy.asarray(img1.shape)/2.0
 		newpart = origin - shift
 		#print "origin=",origin
 		#print "newpart=",newpart
@@ -1125,6 +1127,7 @@ class PickerApp(wx.App):
 		self.appionloop.tiltparams['y1'] = self.data['point1'][1]
 		self.appionloop.tiltparams['x2'] = self.data['point2'][0]
 		self.appionloop.tiltparams['y2'] = self.data['point2'][1]
+		self.appionloop.assess = self.assess
 
 	#---------------------------------------
 	def openLeftImage(self,filename):
