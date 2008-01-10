@@ -398,6 +398,18 @@ def insertRefinementRun(params):
 		apDisplay.printWarning("not committing results to database")
 
 	#if we insert runq then this returns no results !!!
+	# this is a workaround (annoying & bad)
+	runq=appionData.ApRefinementRunData()
+	runq['name']=params['runid']
+	runq['stack']=params['stack']
+	runq['jobfile']=params['jobinfo']
+	runq['initialModel']=params['model']
+	runq['package']=params['package']
+	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['path']))
+	runq['description']=params['description']
+	runq['package']=params['package']
+	runq['initialModel']=params['model']
+
 	result = appiondb.query(runq, results=1)
 
 	# save run entry in the parameters
