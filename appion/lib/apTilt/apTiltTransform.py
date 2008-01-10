@@ -41,13 +41,13 @@ def getTiltedShift(img1, img2, tiltdiff):
 	bin = 2
 	binned1 = apImage.binImg(untilt1, bin)
 	binned2 = apImage.binImg(untilt2, bin)
-	#apImage.arrayToJpeg(binned1, "binned1.jpg")
-	#apImage.arrayToJpeg(binned2, "binned2.jpg")
+	apImage.arrayToJpeg(binned1, "binned1.jpg")
+	apImage.arrayToJpeg(binned2, "binned2.jpg")
 
 
 	### cross-correlate
 	cc = correlator.cross_correlate(binned1, binned2, pad=True)
-	rad = min(cc.shape)/15.0
+	rad = min(cc.shape)/10.0
 	cc = apImage.highPassFilter(cc, radius=rad)
 	cc = apImage.normRange(cc)
 	cc = blackEdges(cc)
@@ -75,13 +75,13 @@ def blackEdges(img, rad=None, black=None):
 		black = ndimage.minimum(img[int(rad/2.0):int(shape[0]-rad/2.0), int(rad/2.0):int(shape[1]-rad/2.0)])
 	img2 = img
 	#left edge
-	img2[0:int(rad/2.0), 0:shape[1]] = black
+	#img2[0:int(rad/2.0), 0:shape[1]] = black
 	#right edge
-	img2[int(shape[0]-rad/2.0):shape[0], 0:shape[1]] = black
+	#img2[int(shape[0]-rad/2.0):shape[0], 0:shape[1]] = black
 	#top edge
-	img2[0:shape[0], 0:int(rad/2.0)] = black
+	#img2[0:shape[0], 0:int(rad/2.0)] = black
 	#bottom edge
-	img2[0:shape[0], int(shape[1]-rad/2.0):shape[1]] = black
+	#img2[0:shape[0], int(shape[1]-rad/2.0):shape[1]] = black
 	#vertical bar
 	img2[int(shape[0]/2.0-rad):int(shape[0]/2.0+rad),0:shape[1]] = black
 	#horizontal bar
@@ -93,14 +93,14 @@ def compressImage(img, tilt):
 	#compress image along x-axis
 	coord = 1.0/math.cos(abs(tilt)/180.0*math.pi)
 	tiltmat = numpy.array([[ 1.0, 0.0 ], [ 0.0, coord ]])
-	newimg  = ndimage.affine_transform(img, tiltmat, mode='wrap')
+	newimg  = ndimage.affine_transform(img, tiltmat, mode='reflect')
 	return newimg
 
 def stretchImage(img, tilt):
 	#expand image along x-axis
 	coord = math.cos(abs(tilt)/180.0*math.pi)
 	tiltmat = numpy.array([[ 1.0, 0.0 ], [ 0.0, coord ]])
-	newimg  = ndimage.affine_transform(img, tiltmat, mode='wrap')
+	newimg  = ndimage.affine_transform(img, tiltmat, mode='reflect')
 	return newimg
 
 ##
@@ -266,71 +266,129 @@ def a2Toa1(a2, theta, gamma, phi, scale, point1, point2):
 	return a2b
 
 def maskOverlapRegion(image1, image2, data):
-		image1 = ndimage.median_filter(image1, size=2)
-		image2 = ndimage.median_filter(image2, size=2)
-		#SET IMAGE LIMITS
-		gap = int(image1.shape[0]/256.0)
-		xm = image1.shape[1]+gap
-		ym = image1.shape[0]+gap
-		a1 = numpy.array([ data['point1'], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
-		xm = image2.shape[1]+gap
-		ym = image2.shape[0]+gap
-		a2 = numpy.array([ data['point2'], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
-		#CALCULATE TRANSFORM LIMITS
-		a2mask = a1Toa2Data(a1, data)
-		a1mask = a2Toa1Data(a2, data)
-		#print "a1=",a1
-		#print "a1mask=",a1mask
-		#print "a2=",a2
-		#print "a2mask=",a2mask
+	image1 = ndimage.median_filter(image1, size=2)
+	image2 = ndimage.median_filter(image2, size=2)
 
-		#CONVERT NUMPY TO LIST
-		a1masklist = []
-		a2masklist = []
-		for j in range(4):
-			for i in range(2):
-				item = int(a1mask[j+1,i])
-				a1masklist.append(item)
-				item = int(a2mask[j+1,i])
-				a2masklist.append(item)
-		#DRAW A POLYGON FROM THE LIMITS 1->2
-		#print "a2mask=",numpy.asarray(a2mask, dtype=numpy.int32)
-		#print "a2masklist=",a2masklist
-		mask2 = numpy.zeros(shape=image2.shape, dtype=numpy.bool_)
-		mask2b = apImage.arrayToImage(mask2, normalize=False)
-		mask2b = mask2b.convert("L")
-		draw2 = ImageDraw.Draw(mask2b)
-		draw2.polygon(a2masklist, fill="white")
-		mask2 = apImage.imageToArray(mask2b, dtype=numpy.float32)
+	#SET IMAGE LIMITS
+	####################################
+	gap = int(image1.shape[0]/256.0)
+	xm = image1.shape[1]+gap
+	ym = image1.shape[0]+gap
+	a1 = numpy.array([ data['point1'], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
+	xm = image2.shape[1]+gap
+	ym = image2.shape[0]+gap
+	a2 = numpy.array([ data['point2'], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
 
-		mean2 = ndimage.mean(image2)
-		std2 = ndimage.standard_deviation(image2)
-		immin2 = mean2 - 3.0 * std2
-		#immin2 = ndimage.minimum(image2)+1.0
-		image2 = (image2+immin2)*mask2
-		immax2 = ndimage.maximum(image2)
-		#immax2 = mean2 + 3.0 * std2
-		image2 = numpy.where(image2==0, immax2, image2)
-		#DRAW A POLYGON FROM THE LIMITS 2->1
-		#print "a1mask=",numpy.asarray(a1mask, dtype=numpy.int32)
-		#print "a1masklist=",a1masklist
-		mask1 = numpy.zeros(shape=image1.shape, dtype=numpy.bool_)
-		mask1b = apImage.arrayToImage(mask1, normalize=False)
-		mask1b = mask1b.convert("L")
-		draw1 = ImageDraw.Draw(mask1b)
-		draw1.polygon(a1masklist, fill="white")
-		mask1 = apImage.imageToArray(mask1b, dtype=numpy.float32)
+	#CALCULATE TRANSFORM LIMITS
+	####################################
+	a2mask = a1Toa2Data(a1, data)
+	a1mask = a2Toa1Data(a2, data)
+	#print "a1=",a1
+	#print "a1mask=",a1mask
+	#print "a2=",a2
+	#print "a2mask=",a2mask
 
-		mean1 = ndimage.mean(image1)
-		std1 = ndimage.standard_deviation(image1)
-		immin1 = mean1 - 3.0 * std1
-		#immin1 = ndimage.minimum(image1)+1.0
-		image1 = (image1+immin1)*mask1
-		immax1 = ndimage.maximum(image1)
-		#immax1 = mean1 + 3.0 * std1
-		image1 = numpy.where(image1==0, immax1, image1)
+	#CONVERT NUMPY TO POLYGON LIST
+	####################################
+	a1masklist = []
+	a2masklist = []
+	for j in range(4):
+		for i in range(2):
+			item = int(a1mask[j+1,i])
+			a1masklist.append(item)
+			item = int(a2mask[j+1,i])
+			a2masklist.append(item)
 
-		return (image1, image2)
+	#CREATE POLYGON MASK FROM THE LIMITS 1 -> IMAGE 2
+	####################################
+	#print "a2mask=",numpy.asarray(a2mask, dtype=numpy.int32)
+	#print "a2masklist=",a2masklist
+	mask2 = numpy.zeros(shape=image2.shape, dtype=numpy.bool_)
+	mask2b = apImage.arrayToImage(mask2, normalize=False)
+	mask2b = mask2b.convert("L")
+	draw2 = ImageDraw.Draw(mask2b)
+	draw2.polygon(a2masklist, fill="white")
+	mask2 = apImage.imageToArray(mask2b, dtype=numpy.float32)
+
+	#DRAW POLYGON ONTO IMAGE 2
+	####################################
+	mean2 = ndimage.mean(image2)
+	std2 = ndimage.standard_deviation(image2)
+	immin2 = mean2 - 3.0 * std2
+	#immin2 = ndimage.minimum(image2)+1.0
+	image2 = (image2+immin2)*mask2
+	immax2 = ndimage.maximum(image2)
+	#immax2 = mean2 + 3.0 * std2
+	image2 = numpy.where(image2==0, immax2, image2)
+
+	#CREATE POLYGON MASK FROM THE LIMITS 2 -> IMAGE 1
+	####################################
+	#print "a1mask=",numpy.asarray(a1mask, dtype=numpy.int32)
+	#print "a1masklist=",a1masklist
+	mask1 = numpy.zeros(shape=image1.shape, dtype=numpy.bool_)
+	mask1b = apImage.arrayToImage(mask1, normalize=False)
+	mask1b = mask1b.convert("L")
+	draw1 = ImageDraw.Draw(mask1b)
+	draw1.polygon(a1masklist, fill="white")
+	mask1 = apImage.imageToArray(mask1b, dtype=numpy.float32)
+
+	#DRAW POLYGON ONTO IMAGE 1
+	####################################
+	mean1 = ndimage.mean(image1)
+	std1 = ndimage.standard_deviation(image1)
+	immin1 = mean1 - 3.0 * std1
+	#immin1 = ndimage.minimum(image1)+1.0
+	image1 = (image1+immin1)*mask1
+	immax1 = ndimage.maximum(image1)
+	#immax1 = mean1 + 3.0 * std1
+	image1 = numpy.where(image1==0, immax1, image1)
+
+	return (image1, image2)
+
+def getOverlapPercent(image1, image2, data):
+	#SET IMAGE LIMITS
+	gap = int(image1.shape[0]/256.0)
+	xm = image1.shape[1]+gap
+	ym = image1.shape[0]+gap
+	a1 = numpy.array([ data['point1'], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
+	xm = image2.shape[1]+gap
+	ym = image2.shape[0]+gap
+	a2 = numpy.array([ data['point2'], [-gap,-gap], [-gap,ym], [xm,ym], [xm,-gap], ])
+
+	#CALCULATE TRANSFORM LIMITS
+	a2mask = a1Toa2Data(a1, data)
+	a1mask = a2Toa1Data(a2, data)
+
+	#CONVERT NUMPY TO POLYGON LIST
+	a1masklist = []
+	a2masklist = []
+	for j in range(4):
+		for i in range(2):
+			item = int(a1mask[j+1,i])
+			a1masklist.append(item)
+			item = int(a2mask[j+1,i])
+			a2masklist.append(item)
+
+	#CREATE POLYGON MASK FROM THE LIMITS 1 -> IMAGE 2
+	mask2 = numpy.zeros(shape=image2.shape, dtype=numpy.bool_)
+	mask2b = apImage.arrayToImage(mask2, normalize=False)
+	mask2b = mask2b.convert("L")
+	draw2 = ImageDraw.Draw(mask2b)
+	draw2.polygon(a2masklist, fill="white")
+	mask2 = apImage.imageToArray(mask2b, dtype=numpy.float32)
+
+	#CREATE POLYGON MASK FROM THE LIMITS 2 -> IMAGE 1
+	mask1 = numpy.zeros(shape=image1.shape, dtype=numpy.bool_)
+	mask1b = apImage.arrayToImage(mask1, normalize=False)
+	mask1b = mask1b.convert("L")
+	draw1 = ImageDraw.Draw(mask1b)
+	draw1.polygon(a1masklist, fill="white")
+	mask1 = apImage.imageToArray(mask1b, dtype=numpy.float32)
+
+	percent1 = ndimage.sum(mask1) / (mask1.shape[0]*mask1.shape[1]) / ndimage.maximum(mask1)
+	percent2 = ndimage.sum(mask2) / (mask2.shape[0]*mask2.shape[1]) / ndimage.maximum(mask2)
+
+	return max(percent1,percent2), min(percent1,percent2)
 
 def mergePicks(picks1, picks2, limit=25.0):
 	good = []
