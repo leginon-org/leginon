@@ -21,7 +21,7 @@ import apDB
 from pyami import mrc
 from pyami import imagefun
 from pyami import convolver
-from whrandom import choice
+from random import choice
 
 appiondb = apDB.apdb
 
