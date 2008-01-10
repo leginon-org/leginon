@@ -16,33 +16,33 @@ function checkJobs($showjobs=False,$extra=False) {
   $particle = new particledata();
   $projectId=getProjectFromExpId($expId);
 
-  $javafunc="  <SCRIPT LANGUAGE='JavaScript'>\n";
+  $javafunc="  <script language='JavaScript'>\n";
   $javafunc.="  function displayDMF(dmfdir,outdir,runid) {\n";
   $javafunc.="  newwindow=window.open('','name','height=150, width=900')\n";
-  $javafunc.="  newwindow.document.write('<HTML><BODY>')\n";
-  $javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/model.tar.gz '+outdir+'/.<BR>')\n";
-  $javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/results.tar.gz '+outdir+'/.<BR>')\n";  
-  $javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/model.tar.gz -C '+outdir+'<BR>')\n";
-  $javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/results.tar.gz -C '+outdir+'<BR>')\n";  
-  $javafunc.="    newwindow.document.write('rm -f '+outdir+'/model.tar<BR>')\n";
-  $javafunc.="    newwindow.document.write('rm -f '+outdir+'/results.tar<BR>')\n";  
-  $javafunc.="    newwindow.document.write('<P>&nbsp;<BR></BODY></HTML>')\n";
+  $javafunc.="  newwindow.document.write('<html><body>')\n";
+  $javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/model.tar.gz '+outdir+'/.</ br>')\n";
+  $javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/results.tar.gz '+outdir+'/.</ br>')\n";  
+  $javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/model.tar.gz -C '+outdir+'</ br>')\n";
+  $javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/results.tar.gz -C '+outdir+'</ br>')\n";  
+  $javafunc.="    newwindow.document.write('rm -f '+outdir+'/model.tar</ br>')\n";
+  $javafunc.="    newwindow.document.write('rm -f '+outdir+'/results.tar</ br>')\n";  
+  $javafunc.="    newwindow.document.write('<p>&nbsp;</ br></body></html>')\n";
   $javafunc.="    newwindow.document.close()\n";
   $javafunc.="  }\n";
-  $javafunc.="  </SCRIPT>\n";
+  $javafunc.="  </script>\n";
 
   writeTop("Cluster Jobs","Cluster Jobs Awaiting Upload",$javafunc);
   // write out errors, if any came up:
   if ($extra) {
-    echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+    echo "<font color='RED'>$extra</font>\n<HR>\n";
   }
 
   $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
   $jobs = $particle->getJobIdsFromSession($expId);
   if ($_SESSION['loggedin']==True) {
-    echo "<FORM NAME='jobform' method='POST' ACTION='$formAction'>\n";
-    echo "<INPUT TYPE='SUBMIT' NAME='checkjobs' VALUE='Check Jobs in Queue'>\n";
-    echo "</FORM>\n";
+    echo "<form name='jobform' method='post' action='$formAction'>\n";
+    echo "<input type='submit' name='checkjobs' value='Check Jobs in Queue'>\n";
+    echo "</form>\n";
   }
   // if clicked button, list jobs in queue
   if ($showjobs) {
@@ -50,26 +50,26 @@ function checkJobs($showjobs=False,$extra=False) {
     $pass = $_SESSION['password'];
     $queue = checkClusterJobs($user, $pass);
     if ($queue) {
-      echo "<P>Jobs currently running on the cluster:<P>\n";
+      echo "<p>Jobs currently running on the cluster:<p>\n";
       $list = streamToArray($queue);
       $dispkeys = array('Job ID','User','Queue','Jobname','SessId','NDS','TSK','ReqMem','ReqTime','S','ElapTime');
-      echo "<TABLE CLASS='tableborder' border=1 cellspacing=0, cellpadding=5>\n";
-      echo "<TR>\n";
+      echo "<table class='tableborder' border=1 cellspacing=0, cellpadding=5>\n";
+      echo "<tr>\n";
       foreach ($dispkeys as $key) {
-	echo "<TD><SPAN CLASS='datafield0'>$key</SPAN></TD>";
+	echo "<td><span class='datafield0'>$key</span></td>";
       }
-      echo "</TR>\n";
+      echo "</tr>\n";
       foreach ($list as $line) {
-	echo "<TR>\n";
-	foreach ($line as $i) {echo "<TD>$i</TD>\n";}
-	echo "</TR>\n";
+	echo "<tr>\n";
+	foreach ($line as $i) {echo "<td>$i</td>\n";}
+	echo "</tr>\n";
       }
-      echo "</TABLE>\n";
+      echo "</table>\n";
     }
     else {
       echo "no jobs on cluster\n";
     }	
-    echo "<P>\n";	
+    echo "<p>\n";	
   }
   foreach ($jobs as $job) {
     // get cluster job information
@@ -98,19 +98,19 @@ function checkJobs($showjobs=False,$extra=False) {
     if ($jobinfo['status']=='Q') $status='Queued';
     elseif ($jobinfo['status']=='R') $status='Running';
     elseif ($jobinfo['status']=='D') {
-      $dlbuttons = "<INPUT TYPE='BUTTON' onclick=\"displayDMF('$jobinfo[dmfpath]','$jobinfo[appath]')\" VALUE='get from DMF'> \n";
-      $dlbuttons.= "<INPUT TYPE='BUTTON' onclick=\"parent.location=('uploadrecon.php?expId=$expId&jobId=$job[DEF_id]')\" VALUE='upload results'>\n";
+      $dlbuttons = "<input type='BUTTON' onclick=\"displayDMF('$jobinfo[dmfpath]','$jobinfo[appath]')\" value='get from DMF'> \n";
+      $dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('uploadrecon.php?expId=$expId&jobId=$job[DEF_id]')\" value='upload results'>\n";
       $status='Awaiting Upload';
     }
     if ($status) $display_keys['status'] = $status;
 
     echo divtitle("Job: <font class='aptitle'>$jobinfo[name]</font> (ID: <font class='aptitle'>$job[DEF_id]</font>)");
-    echo "<TABLE BORDER='0' >\n";
-    if ($dlbuttons) echo "<TR><TD COLSPAN='2'>$dlbuttons</TD></TR>\n";
+    echo "<table BORDER='0' >\n";
+    if ($dlbuttons) echo "<tr><td colspan='2'>$dlbuttons</td></tr>\n";
     foreach($display_keys as $k=>$v) {
       echo formatHtmlRow($k,$v);
     }
-    echo "</TABLE>\n";
+    echo "</table>\n";
 
     if ($showjobs && $status=='Running') {
       $previters=array();
@@ -143,13 +143,13 @@ function checkJobs($showjobs=False,$extra=False) {
 	foreach ($previters as $previter) echo "$previter <br />\n";
 	$numtot=count($stat['allref']);
 	echo "<font class='aptitle'>Processing iteration $current of $numtot</font>\n";
-	echo "<table class='tableborder' border='1' cellpadding='5' cellspacing='0'><tr>\n";
-	$keys = array('reconstruction step', 'started', 'duration', 'status');
-	$steps = array();
-	foreach ($keys as $key) echo "<td><span class='datafield0'>$key</span></td>\n";
-	echo "</tr>\n";
 	// get key corresponding to where the last refinement run starts
 	if (is_array($stat['refinelog'])) {
+	  echo "<table class='tableborder' border='1' cellpadding='5' cellspacing='0'><tr>\n";
+	  $keys = array('reconstruction step', 'started', 'duration', 'status');
+	  $steps = array();
+	  foreach ($keys as $key) echo "<td><span class='datafield0'>$key</span></td>\n";
+	  echo "</tr>\n";
 	  for ($i=$lastindx; $i<count($stat['refinelog']); $i++) {
 
 	    if ($stat['refinelog'][$i][0] == 'project3d') {
@@ -157,7 +157,7 @@ function checkJobs($showjobs=False,$extra=False) {
 	      $steps['proj']['reconstruction step'] = "creating projections";
 	      $steps['proj']['started'] = "$t[date]";
 	      $steps['proj']['duration'] = getduration($t['timestamp'],time());
-	      $steps['proj']['status'] = "<FONT CLASS='apcomment'>running</FONT>";
+	      $steps['proj']['status'] = "<font class='apcomment'>running</font>";
 	      $lasttime=$t['timestamp'];
 	    }
 
@@ -179,8 +179,8 @@ function checkJobs($showjobs=False,$extra=False) {
 	      $steps['clsbymra']['reconstruction step'] = $p;
 	      $steps['clsbymra']['started'] = "$t[date]";
 	      $steps['clsbymra']['duration'] = getduration($t['timestamp'],time());
-	      $steps['clsbymra']['status'] = "<FONT CLASS='apcomment'>running</FONT>";
-	      if ($left) $steps['clsbymra']['status'] = "<FONT CLASS='apcomment'><B>$left</B> remain</FONT>";
+	      $steps['clsbymra']['status'] = "<font class='apcomment'>running</font>";
+	      if ($left) $steps['clsbymra']['status'] = "<font class='apcomment'><B>$left</B> remain</font>";
 	      $lasttime=$t['timestamp'];
 	    }
 
@@ -194,7 +194,7 @@ function checkJobs($showjobs=False,$extra=False) {
 	      $steps['clsalign']['reconstruction step'] = "iterative class averaging";
 	      $steps['clsalign']['started'] = "$t[date]";
 	      $steps['clsalign']['duration'] = getduration($t['timestamp'],time());
-	      $steps['clsalign']['status'] = "<FONT CLASS='apcomment'>running</FONT>";
+	      $steps['clsalign']['status'] = "<font class='apcomment'>running</font>";
 	      $lasttime=$t['timestamp'];
 	    }
 
@@ -208,7 +208,7 @@ function checkJobs($showjobs=False,$extra=False) {
 	      $steps['make3d']['reconstruction step'] = "creating 3d model";
 	      $steps['make3d']['started'] = "$t[date]";
 	      $steps['make3d']['duration'] = getduration($t['timestamp'],time());
-	      $steps['make3d']['status'] = "<FONT CLASS='apcomment'>running</FONT>";
+	      $steps['make3d']['status'] = "<font class='apcomment'>running</font>";
 	      $lasttime=$t['timestamp'];
 	    } 
 
@@ -222,7 +222,7 @@ function checkJobs($showjobs=False,$extra=False) {
 	      $steps['eotest']['reconstruction step'] = "performing even/odd test";
 	      $steps['eotest']['started'] = "$t[date]";
 	      $steps['eotest']['duration'] = getduration($t['timestamp'],time());
-	      $steps['eotest']['status'] = "<FONT CLASS='apcomment'>running</FONT>";
+	      $steps['eotest']['status'] = "<font class='apcomment'>running</font>";
 	    break;
 	    }
 	  }
@@ -236,10 +236,11 @@ function checkJobs($showjobs=False,$extra=False) {
 	  }
 	  echo "</table>\n";
 	}
-	if ($stat['errors']) echo "<P><FONT COLOR='RED'>There are errors in this job, you should resubmit</FONT><P>";
+	else echo "<p>getting files from DMF...</p>\n";
+	if ($stat['errors']) echo "<p><font color='red'>There are errors in this job, you should resubmit</font><p>";
       }
     }
-    echo "<P>\n";
+    echo "<p>\n";
   }
   writeBottom();
   exit;
