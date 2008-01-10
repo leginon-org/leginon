@@ -28,17 +28,22 @@ def getTiltedShift(img1, img2, tiltdiff):
 	### untilt images
 	#dtilt = (tilt1 - tilt2)/2.0
 	halftilt = tiltdiff/2.0
-	if tiltdiff > 0:
+	#this is correct
+	if tiltdiff > 0: 
 		untilt1 = compressImage(img1, halftilt)
 		untilt2 = stretchImage(img2, halftilt)
 	else:
 		untilt1 = stretchImage(img1, halftilt)
 		untilt2 = compressImage(img2, halftilt)
-	
+	#need to do something with empty space!!!
+
 	#shrink images
 	bin = 2
 	binned1 = apImage.binImg(untilt1, bin)
 	binned2 = apImage.binImg(untilt2, bin)
+	#apImage.arrayToJpeg(binned1, "binned1.jpg")
+	#apImage.arrayToJpeg(binned2, "binned2.jpg")
+
 
 	### cross-correlate
 	cc = correlator.cross_correlate(binned1, binned2, pad=True)
@@ -88,14 +93,14 @@ def compressImage(img, tilt):
 	#compress image along x-axis
 	coord = 1.0/math.cos(abs(tilt)/180.0*math.pi)
 	tiltmat = numpy.array([[ 1.0, 0.0 ], [ 0.0, coord ]])
-	newimg  = ndimage.affine_transform(img, tiltmat, mode='constant', cval=0.0)
+	newimg  = ndimage.affine_transform(img, tiltmat, mode='wrap')
 	return newimg
 
 def stretchImage(img, tilt):
 	#expand image along x-axis
 	coord = math.cos(abs(tilt)/180.0*math.pi)
 	tiltmat = numpy.array([[ 1.0, 0.0 ], [ 0.0, coord ]])
-	newimg  = ndimage.affine_transform(img, tiltmat, mode='constant', cval=0.0)
+	newimg  = ndimage.affine_transform(img, tiltmat, mode='wrap')
 	return newimg
 
 ##
@@ -142,8 +147,12 @@ def willsq(a1, a2, \
 	#x3 final values
 	x3 = x1 * xscale + initx
 	fit['theta']  = x3[0]*180.0/math.pi
-	fit['gamma']  = x3[1]*180.0/math.pi
-	fit['phi']    = x3[2]*180.0/math.pi
+	fit['gamma']  = x3[1]*180.0/math.pi % 180.0
+	fit['phi']    = x3[2]*180.0/math.pi % 180.0
+	if fit['gamma'] > 90:
+		fit['gamma'] -= 180.0
+	if fit['phi'] > 90:
+		fit['phi'] -= 180.0
 	fit['scale']  = x3[3]
 	fit['shiftx'] = x3[4]
 	fit['shifty'] = x3[5]
