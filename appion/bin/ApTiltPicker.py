@@ -318,8 +318,9 @@ class PickerApp(wx.App):
 					( "&Optimize Angles", "Optimize angles with least squares", self.onFitAll ),
 					( "&Apply", "Apply picks", self.onUpdate, wx.ID_APPLY ),
 					( "&Mask Overlapping Region", "Mask overlapping region", self.onMaskRegion ),
+					( "&Calculate Percent Overlap", "Calculate percent overlap", self.onGetOverlap ),
 				)),
-				("&Assess", (
+				("Assess", (
 					( "&None", "Don't assess image pair", self.onToggleNone, -1, wx.ITEM_RADIO),
 					( "&Keep", "Keep this image pair", self.onToggleKeep, -1, wx.ITEM_RADIO),
 					( "&Reject", "Reject this image pair", self.onToggleReject, -1, wx.ITEM_RADIO),
@@ -438,6 +439,42 @@ class PickerApp(wx.App):
 		self.panel2.setVirtualSize()
 		self.panel2.setBuffer()
 		self.panel2.UpdateDrawing()
+
+		#GET THE VALUE
+		bestOverlap, tiltOverlap = apTiltTransform.getOverlapPercent(image1, image2, self.data)
+		overlapStr = str(round(100*bestOverlap,2))+"% and "+str(round(100*tiltOverlap,2))+"%"
+		self.statbar.PushStatusText("Overlap percentage of "+overlapStr, 0)
+		self.data['overlap'] = round(bestOverlap,5)
+
+	#---------------------------------------
+	def onGetOverlap(self, evt):
+		#GET THE ARRAYS
+		targets1 = self.panel1.getTargets('Picked')
+		targets2 = self.panel2.getTargets('Picked')
+		a1 = self.targetsToArray(targets1)
+		a2 = self.targetsToArray(targets2)
+
+		#GET THE POINT VALUES
+		apTiltTransform.setPointsFromArrays(a1, a2, self.data)
+
+		#CHECK IF WE HAVE POINTS
+		if len(a1) == 0 or len(a2) == 0:
+			self.statbar.PushStatusText("ERROR: Cannot mask images. Not enough picks", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot mask images.\nThere are no picks.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+
+		#GET IMAGES
+		image1 = numpy.asarray(self.panel1.imagedata, dtype=numpy.float32)
+		image2 = numpy.asarray(self.panel2.imagedata, dtype=numpy.float32)
+
+		#GET THE VALUE
+		bestOverlap, tiltOverlap = apTiltTransform.getOverlapPercent(image1, image2, self.data)
+		overlapStr = str(round(100*bestOverlap,2))+"% and "+str(round(100*tiltOverlap,2))+"%"
+		self.statbar.PushStatusText("Overlap percentage of "+overlapStr, 0)
+		self.data['overlap'] = round(bestOverlap,5)
 
 	#---------------------------------------
 	def onUpdate(self, evt):
