@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import os
+
 def meminfo2dict():
 	f = open('/proc/meminfo', 'r')
 	lines = f.readlines()
@@ -68,5 +70,38 @@ def swaptotal():
 	total = meminfo['SwapTotal']
 	return total
 
+multdict = {
+	'b': 1,
+	'kb': 1024,
+	'mb': 1024*1024,
+	'gb': 1024*1024*1024,
+}
+
+def procStatus(pid=None):
+	if pid is None:
+		pid = os.getpid()
+	f = open('/proc/%d/status' % (pid,))
+	statuslines = f.readlines()
+	f.close()
+	vm = {}
+	for statusline in statuslines:
+		fields = statusline.split()
+		if fields[0][:2] == 'Vm':
+			name = fields[0][:-1]
+			value = int(fields[1])
+			mult = multdict[fields[2].lower()]
+			vm[name] = mult*value
+	return vm
+
+def mySize():
+	status = procStatus()
+	return status['VmSize']
+
+def test():
+	mypid = os.getpid()
+	print 'mypid', mypid
+	print mySize()
+
 if __name__ == '__main__':
-	print used()
+	#print used()
+	test()
