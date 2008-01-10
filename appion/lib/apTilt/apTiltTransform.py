@@ -41,9 +41,8 @@ def getTiltedShift(img1, img2, tiltdiff):
 	bin = 2
 	binned1 = apImage.binImg(untilt1, bin)
 	binned2 = apImage.binImg(untilt2, bin)
-	apImage.arrayToJpeg(binned1, "binned1.jpg")
-	apImage.arrayToJpeg(binned2, "binned2.jpg")
-
+	#apImage.arrayToJpeg(binned1, "binned1.jpg")
+	#apImage.arrayToJpeg(binned2, "binned2.jpg")
 
 	### cross-correlate
 	cc = correlator.cross_correlate(binned1, binned2, pad=True)
