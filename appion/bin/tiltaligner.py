@@ -245,28 +245,39 @@ class tiltAligner(particleLoop.ParticleLoop):
 		self.app.picks1 = self.getParticlePicks(imgdata)
 		self.app.picks2 = self.getParticlePicks(tiltdata)
 
-		#get image assessment
+		#set image assessment
 		self.assess = self.getTiltAssess(imgdata, tiltdata)
 		self.assessold = self.assess
 		self.app.setAssessStatus()
 
-		#open new file
+		#open image file 1
 		imgname = imgdata['filename']+".dwn.mrc"
 		imgpath = os.path.join(self.params['rundir'],imgname)
 		self.app.panel1.openImageFile(imgpath)
 
-		#open tilt file
+		#open tilt file 2
 		tiltname = tiltdata['filename']+".dwn.mrc"
 		tiltpath = os.path.join(self.params['rundir'],tiltname)
 		self.app.panel2.openImageFile(tiltpath)
 
+		#guess the shift
+		self.app.onGuessShift(None)
+		time.sleep(1)
+
 		#run the picker
 		self.app.MainLoop()
+
+		#########################################
+		# RESULTS
+		#########################################
+
 		self.app.panel1.openImageFile(None)
 		self.app.panel2.openImageFile(None)
+		
 		# 1. tilt data are copied to self.tiltparams by app
 		# 2. particles picks are copied to self.peaks1 and self.peaks2 by app
 		# 3. particle errors are copied to self.peakerrors by app
+		# 4. assessment status is  copied to self.assess
 		self.peaktree1 = apPeaks.convertListToPeaks(self.peaks1, self.params)
 		self.peaktree2 = apPeaks.convertListToPeaks(self.peaks2, self.params)
 
