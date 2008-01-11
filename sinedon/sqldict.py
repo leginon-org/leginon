@@ -1432,7 +1432,7 @@ def dataSQLColumns(data_instance):
 
 	type_dict = dict(data_instance.typemap())
 
-	for key, value in data_instance.items():
+	for key, value in data_instance.items(dereference=False):
 		try:
 			value_type = type_dict[key]
 		except KeyError:
@@ -1464,7 +1464,7 @@ def type2column(key, value, value_type, parentdata):
 		row[key] = value
 	else:
 		try:
-			if issubclass(value_type, data.Data):
+			if issubclass(value_type, (data.Data, data.DataReference)):
 				# data.Data reference
 				tableclass = parentdata.__class__
 				field = refFieldName(tableclass, value_type, key)
