@@ -136,13 +136,13 @@ function checkJobs($showjobs=False,$extra=False) {
 	    for ($j=$i+1;$j<count($stat['refinelog']);$j++) {
 	      $iternum = ereg_replace(':','', $stat['refinelog'][$j][1]);
 	      $iterres = $stat['refinelog'][$j][2];
-	      $previters[$iternum].=", resolution: $iterres";
+	      $previters[$iternum].=", resolution: ".round($iterres,2)." &Aring;";
 	    }
 	  }
 	}
 	foreach ($previters as $previter) echo "$previter <br />\n";
 	$numtot=count($stat['allref']);
-	echo "<font class='aptitle'>Processing iteration $current of $numtot</font>\n";
+	echo "<br/>\n<font class='aptitle'>Processing iteration $current of $numtot</font>\n";
 	// get key corresponding to where the last refinement run starts
 	if (is_array($stat['refinelog'])) {
 	  echo "<table class='tableborder' border='1' cellpadding='5' cellspacing='0'><tr>\n";
