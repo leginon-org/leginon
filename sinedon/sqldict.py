@@ -1380,13 +1380,6 @@ def saveMRC(object, name, path, filename, thumb=False):
 	else:
 		#print 'saving MRC', fullname
 		pyami.mrc.write(object, fullname)
-		fileref = newdict.FileReference(filename, pyami.mrc.read)
-		fileref.setPath(path)
-		try:
-			object.fileref = fileref
-		except:
-			# numpy does not allow setattr
-			weakattr.set(object, 'fileref', fileref)
 
 	d[k] = filename
 	return d

@@ -27,11 +27,6 @@ class FileReference(object):
 		#print 'reading image', self.filename
 		fullname = os.path.join(self.path, self.filename)
 		self.data = self.loader(fullname)
-		try:
-			self.data.fileref = self
-		except:
-			# numpy does not allow setattr...
-			weakattr.set(self.data, 'fileref', self)
 		return self.data
 
 	def setPath(self, path):

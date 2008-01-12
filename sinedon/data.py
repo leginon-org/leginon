@@ -586,23 +586,6 @@ class Data(newdict.TypedDict):
 				fileref.data = None
 		return value
 
-	def dumpArray(self, key):
-		'''
-		If the value for this item is an image array,
-		replace it with the file reference to save memory.
-		'''
-		raise NotImplementedError('disabled until figure out numpy get/set attr')
-		value = self.special_getitem(key, dereference=False)
-		if type(value) is numpy.ndarray:
-			try:
-				fileref = value.fileref
-			except:
-				try:
-					fileref = weakattr.get(value, 'fileref')
-				except:
-					fileref = None
-			self.__setitem__(key, fileref, force=True)
-
 	def __getitem__(self, key):
 		return self.special_getitem(key, dereference=True)
 
