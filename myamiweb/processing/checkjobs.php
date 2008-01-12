@@ -237,7 +237,7 @@ function checkJobs($showjobs=False,$extra=False) {
 	  echo "</table>\n";
 	}
 	else echo "<p>getting files from DMF...</p>\n";
-	if ($stat['errors']) echo "<p><font color='red'>There are errors in this job, you should resubmit</font><p>";
+	if ($stat['errors']) echo "<p><font color='red'><b>There are errors in this job, you should resubmit</b></font><p>";
       }
     }
     echo "<p>\n";
@@ -258,9 +258,14 @@ function checkJobStatus($jobpath,$jobfile,$user,$pass) {
   $r = exec_over_ssh(PROCESSING_HOST,$user,$pass,$cmd, True);
   $curref = streamToArray($r);
   $stat['refinelog']=$curref;
-  $cmd = "grep Alarm $jobpath/recon/refine.* ";
-  $stat['errors'] = exec_over_ssh(PROCESSING_HOST,$user,$pass,$cmd, True);
 
+  // check for errors:
+  $cmd = "grep Alarm $jobpath/recon/refine*.txt ";
+  $stat['errors'] = exec_over_ssh(PROCESSING_HOST,$user,$pass,$cmd, True);
+  if (!$stat['errors']) {
+    $cmd = "grep Error $jobpath/recon/refine*.txt ";
+    $stat['errors'] = exec_over_ssh(PROCESSING_HOST,$user,$pass,$cmd, True);
+  }
   return $stat;
 }
 
