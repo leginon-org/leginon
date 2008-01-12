@@ -7,10 +7,10 @@
 
 function appionLoopJavaCommands () {
 	$javafunc = "
-<SCRIPT LANGUAGE='JavaScript'>
+<script LANGUAGE='JavaScript'>
 function appioninfopopup(infoname){
 	var newwindow=window.open('','name','height=250, width=400');
-	newwindow.document.write('<HTML><BODY>');
+	newwindow.document.write('<html><BODY>');
 	if (infoname=='checkimages'){
 		newwindow.document.write('Choose what images to process here.  Images can be inspected by Viewer or ImageAssessor.  BEST images include ones inspected as KEEP or as EXAMPLOR in the viewer.  NON-REJECTED images include the BEST images above-mentioned and the uninspected ones and therefore exclude only the REJECTED or HIDDEN images.');
 	}
@@ -35,10 +35,10 @@ function appioninfopopup(infoname){
 	if (infoname=='commit'){
 		newwindow.document.write('This is the main checkbox of the program. When testing do NOT commit, but once you are happy with the results. Start commiting the data otherwise all information will be lost.');
 	}
-	newwindow.document.write('</BODY></HTML>');
+	newwindow.document.write('</BODY></html>');
 	newwindow.document.close();
 }
-</SCRIPT>\n";
+</script>\n";
 	return $javafunc;
 
 }
@@ -63,8 +63,8 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 	}
 
 	$runid = ($_POST[runid]) ? $_POST[runid] : $defrunid;
-	echo "<A HREF=\"javascript:infopopup('runid')\"><B>Run Name:</B></A>
-	    <INPUT TYPE='text' NAME='runid' VALUE='$runid'><BR/><BR/>";
+	echo "<a href=\"javascript:infopopup('runid')\"><B>Run Name:</B></A>
+	    <input type='text' name='runid' VALUE='$runid'><BR/><BR/>";
 	
 	//check for output directory [appion = 0, leginon = 1]
 	$leg_check = $leginon;
@@ -85,12 +85,12 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 
 	$outdir = ($_POST[outdir]) ? $_POST[outdir] : $sessionpath;
 	echo"&nbsp;&nbsp;&nbsp;Output Directory<BR/>
-	    <INPUT TYPE='text' NAME='outdir' VALUE='$outdir' SIZE='45'><BR/><BR/>";
+	    <input type='text' name='outdir' VALUE='$outdir' size='45'><BR/><BR/>";
 
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$presets=$sessiondata['presets'];
 	if ($presets && count($presets) > 1) {
-		echo"<B>Preset</B>\n<SELECT NAME='preset'>\n";
+		echo"<B>Preset</B>\n<SELECT name='preset'>\n";
 		foreach ($presets as $preset) {
 			echo "<OPTION VALUE='$preset' ";
 			// make en selected by default
@@ -100,25 +100,25 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 		echo"</SELECT><br/><br/>\n";
 	} elseif ($presets) {
 		echo"<B>Preset:</B>&nbsp;&nbsp;".$presets[0]."\n\n";
-		echo"<INPUT TYPE='hidden' NAME='preset' VALUE=".$presets[0].">\n";
+		echo"<input type='hidden' name='preset' VALUE=".$presets[0].">\n";
 		echo"<br/>\n";
 	} else {
 		//no presets
-		echo"<INPUT TYPE='hidden' NAME='alldbimages' VALUE=1>\n";
+		echo"<input type='hidden' name='alldbimages' VALUE=1>\n";
 		echo"<I>No Presets for this Session<br/>\n"
 			."Will Process ALL Images</I><BR/>\n";
 	}
 
 	echo "
 <HR style='margin: 1em 1em 1em 0; border: 1px #333333 solid; border-collapse: collapse;'>
-<INPUT TYPE='hidden' name='sessionname' value='$sessionname'>";
+<input type='hidden' name='sessionname' value='$sessionname'>";
 
 
 	$checkimageval= ($_POST['checkimage']) ? $_POST['checkimage'] : 'non-rejected';
 	$checkimages=array('non-rejected','all','best');
 	echo"
-	<A HREF=\"javascript:appioninfopopup('checkimages')\">
-	<B>Process</B></A>\n<SELECT NAME='checkimage'>\n";
+	<a href=\"javascript:appioninfopopup('checkimages')\">
+	<B>Process</B></A>\n<SELECT name='checkimage'>\n";
 	foreach ($checkimages as $checkimage) {
 		echo "<OPTION VALUE='$checkimage' ";
 		// make norejects selected by default
@@ -128,35 +128,35 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 	echo"</SELECT>images<br/><br/>\n";
 
 echo "
-<INPUT TYPE='checkbox' NAME='nowait' $nowait>
-<A HREF=\"javascript:appioninfopopup('nowait')\">
+<input type='checkbox' name='nowait' $nowait>
+<a href=\"javascript:appioninfopopup('nowait')\">
 Wait for more images after finishing</A><br/>
 
-<INPUT TYPE='checkbox' NAME='background' $background>
-<A HREF=\"javascript:appioninfopopup('background')\">
+<input type='checkbox' name='background' $background>
+<a href=\"javascript:appioninfopopup('background')\">
 Run in background mode</A><br/>
 
-<INPUT TYPE='checkbox' NAME='shuffle' $shuffle>
-<A HREF=\"javascript:appioninfopopup('shuffle')\">
+<input type='checkbox' name='shuffle' $shuffle>
+<a href=\"javascript:appioninfopopup('shuffle')\">
 Shuffle the images</A><br/>
 
-<A HREF=\"javascript:appioninfopopup('limit')\">
+<a href=\"javascript:appioninfopopup('limit')\">
 Limit</A>: only process&nbsp;
-<INPUT TYPE='text' NAME='limit' VALUE='$limit' SIZE='4'>&nbsp;
+<input type='text' name='limit' VALUE='$limit' size='4'>&nbsp;
 images<br/>
 
-<A HREF=\"javascript:appioninfopopup('continue')\">
+<a href=\"javascript:appioninfopopup('continue')\">
 <I>Continuation:</I></A><br/>
-<INPUT TYPE='radio' NAME='apcontinue' VALUE='1' $apcontinuecheck>
-Continue unfinished run <FONT SIZE=-2><I>(default)</I></FONT><br/>
-<INPUT TYPE='radio' NAME='apcontinue' VALUE='0' $apreproccheck>
+<input type='radio' name='apcontinue' VALUE='1' $apcontinuecheck>
+Continue unfinished run <font size=-2><I>(default)</I></font><br/>
+<input type='radio' name='apcontinue' VALUE='0' $apreproccheck>
 Reprocess all images<br/><br/>
 
 <HR style='margin: 1em 1em 1em 0; border: 1px #333333 solid;
  border-collapse: collapse;'>
 
-<INPUT TYPE='checkbox' NAME='commit' $commit>
-<A HREF=\"javascript:appioninfopopup('commit')\">
+<input type='checkbox' name='commit' $commit>
+<a href=\"javascript:appioninfopopup('commit')\">
 <B>Commit results to database</B></A><br/>
 ";
 	echo "<!-- END Appion Loop Param -->";
@@ -292,10 +292,10 @@ function prettytable2 () {
 
 function particleLoopJavaCommands () {
 	$javafunc = "
-<SCRIPT LANGUAGE='JavaScript'>
+<script LANGUAGE='JavaScript'>
 function particleinfopopup(infoname){
 	var newwindow=window.open('','name','height=250, width=400');
-	newwindow.document.write('<HTML><BODY>');
+	newwindow.document.write('<html><BODY>');
 	if (infoname=='thresh'){
 		newwindow.document.write('Threshold for particle picking from the cross-correlation or dogpicker map. Any values above this threshold are considered particles.<br/>For template correlation, this should be between 0.0 and 1.0, typically 0.4 to 0.6 is used.<br/>For dogPicker, the values is in terms of standard deviations from the mean divided by four. Reasonable range from 0.4 to 3.0 with typical values falling between 0.7 and 1.0');
 	}
@@ -344,10 +344,10 @@ function particleinfopopup(infoname){
 	if (infoname=='nojpegs'){
 		newwindow.document.write('Do NOT write out the summary jpegs for image assessor.');
 	}
-	newwindow.document.write('</BODY></HTML>');
+	newwindow.document.write('</BODY></html>');
 	newwindow.document.close();
 }
-</SCRIPT>\n";
+</script>\n";
 
 	return $javafunc;
 }
@@ -356,7 +356,7 @@ function particleinfopopup(infoname){
 function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	echo "<!-- BEGIN Particle Loop Param -->";
 //	prettytable2();
-//	<TR><TD BGCOLOR=#660000 ALIGN=CENTER><FONT COLOR=#DDDDDD>Appion Loop Params</FONT></TD></TR>
+//	<TR><TD BGCOLOR=#660000 ALIGN=CENTER><font COLOR=#DDDDDD>Appion Loop Params</font></TD></TR>
 	$threshv = ($_POST['thresh']) ? $_POST['thresh'] : $defthresh;
 	$maxthreshv = ($_POST['maxthresh']) ? $_POST['maxthresh'] : $defmaxthresh;
 	$lpv = ($_POST['lp'] || $_POST['process']) ? $_POST['lp'] : '5';
@@ -374,16 +374,16 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 		echo "
 <B>Peak thresholds:</B><br/>
 
-<INPUT TYPE='text' NAME='thresh' VALUE='$threshv' SIZE='4'>&nbsp;
-<A HREF=\"javascript:particleinfopopup('thresh')\">
+<input type='text' name='thresh' VALUE='$threshv' size='4'>&nbsp;
+<a href=\"javascript:particleinfopopup('thresh')\">
 Minimum threshold</A><br/>
 
-<INPUT TYPE='text' NAME='maxthresh' VALUE='$maxthreshv' SIZE='4'>&nbsp;
-<A HREF=\"javascript:particleinfopopup('maxthresh')\">
+<input type='text' name='maxthresh' VALUE='$maxthreshv' size='4'>&nbsp;
+<a href=\"javascript:particleinfopopup('maxthresh')\">
 Maximum threshold</A><br/>
 
-<INPUT TYPE='text' NAME='maxpeaks' VALUE='$maxpeaksv' SIZE='4'>&nbsp;
-<A HREF=\"javascript:particleinfopopup('maxpeaks')\">
+<input type='text' name='maxpeaks' VALUE='$maxpeaksv' size='4'>&nbsp;
+<a href=\"javascript:particleinfopopup('maxpeaks')\">
 Max number of particles allowed per image</A><br/>
 <br/>
 ";
@@ -391,54 +391,54 @@ Max number of particles allowed per image</A><br/>
 	echo"
 <B>Filter Values:</B><br/>
 
-<INPUT TYPE='text' NAME='lp' VALUE='$lpv' SIZE='4'>&nbsp;
-<A HREF=\"javascript:particleinfopopup('lp')\">
-Low Pass</A> <FONT SIZE=-2><I>(in &Aring;ngstroms; 0 = off)</I></FONT><br/>
+<input type='text' name='lp' VALUE='$lpv' size='4'>&nbsp;
+<a href=\"javascript:particleinfopopup('lp')\">
+Low Pass</A> <font size=-2><I>(in &Aring;ngstroms; 0 = off)</I></font><br/>
 
-<INPUT TYPE='text' NAME='hp' VALUE='$hpv' SIZE='4'>&nbsp;
-<A HREF=\"javascript:particleinfopopup('hp')\">
-High Pass</A> <FONT SIZE=-2><I>(in &Aring;ngstroms; 0 = off)</I></FONT><br/>
+<input type='text' name='hp' VALUE='$hpv' size='4'>&nbsp;
+<a href=\"javascript:particleinfopopup('hp')\">
+High Pass</A> <font size=-2><I>(in &Aring;ngstroms; 0 = off)</I></font><br/>
 
-<INPUT TYPE='text' NAME='median' VALUE='$medianv' SIZE='4'>&nbsp;
-<A HREF=\"javascript:particleinfopopup('median')\">
-Median</A> <FONT SIZE=-2><I>(in Pixels; 0 = off)</I></FONT><br/>
+<input type='text' name='median' VALUE='$medianv' size='4'>&nbsp;
+<a href=\"javascript:particleinfopopup('median')\">
+Median</A> <font size=-2><I>(in Pixels; 0 = off)</I></font><br/>
 
-<INPUT TYPE='text' NAME='pixlimit' VALUE='$pixlimitv' SIZE='4'>&nbsp;
-<A HREF=\"javascript:particleinfopopup('pixlimit')\">
-Pixel Limit</A> <FONT SIZE=-2><I>(in Standard Deviations; 0 = off)</I></FONT><br/>
+<input type='text' name='pixlimit' VALUE='$pixlimitv' size='4'>&nbsp;
+<a href=\"javascript:particleinfopopup('pixlimit')\">
+Pixel Limit</A> <font size=-2><I>(in Standard Deviations; 0 = off)</I></font><br/>
 
-<INPUT TYPE='text' NAME='bin' VALUE='$binv' SIZE='4'>&nbsp;
-<A HREF=\"javascript:particleinfopopup('bin')\">
-Binning</A> <FONT SIZE=-2><I>(power of 2)</I></FONT><br/>
+<input type='text' name='bin' VALUE='$binv' size='4'>&nbsp;
+<a href=\"javascript:particleinfopopup('bin')\">
+Binning</A> <font size=-2><I>(power of 2)</I></font><br/>
 <br/>
 
 <B>Defocal pairs:</B><br/>
-<INPUT TYPE='checkbox' NAME='defocpair' $defocpairv>&nbsp;
-<A HREF=\"javascript:particleinfopopup('defocpair')\">
+<input type='checkbox' name='defocpair' $defocpairv>&nbsp;
+<a href=\"javascript:particleinfopopup('defocpair')\">
 Calculate shifts for defocal pairs</A><br/>
 <br/>
 <B>Advanced options:</B><br/>";
 	if ($defthresh != -1) {
 		echo "
 
-<INPUT TYPE='text' NAME='maxsize' VALUE='$maxsizev' SIZE='4'>&nbsp;
-<A HREF=\"javascript:particleinfopopup('maxsize')\">
+<input type='text' name='maxsize' VALUE='$maxsizev' size='4'>&nbsp;
+<a href=\"javascript:particleinfopopup('maxsize')\">
 Maximum peak area multiple</A><br/>
 
-<INPUT TYPE='text' NAME='overlapmult' VALUE='$overlapmultv' SIZE='4'>&nbsp;
-<A HREF=\"javascript:particleinfopopup('overlapmult')\">
+<input type='text' name='overlapmult' VALUE='$overlapmultv' size='4'>&nbsp;
+<a href=\"javascript:particleinfopopup('overlapmult')\">
 Minimum peak overlap distance multiple</A><br/>
 		";
 	} else {
 		echo "
-<INPUT TYPE='checkbox' NAME='nojpegs' $nojpegsv>&nbsp;
-<A HREF=\"javascript:particleinfopopup('nojpegs')\">
+<input type='checkbox' name='nojpegs' $nojpegsv>&nbsp;
+<a href=\"javascript:particleinfopopup('nojpegs')\">
 Do NOT create summary peak jpegs</A><br/>
 		";
 	}
 	echo "
-<INPUT TYPE='checkbox' NAME='invert' $invertv>&nbsp;
-<A HREF=\"javascript:particleinfopopup('invert')\">
+<input type='checkbox' name='invert' $invertv>&nbsp;
+<a href=\"javascript:particleinfopopup('invert')\">
 Invert image density</A><br/>
 ";
 	echo "<!-- END Particle Loop Param -->";
