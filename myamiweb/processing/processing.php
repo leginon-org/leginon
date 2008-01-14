@@ -185,7 +185,18 @@ if ($sessionId) {
         $reconruns+=count($reconIds);
       }
     }
+    // get number of jobs submitted
     $subjobs = $particle->getSubmittedJobs($sessionId);
+
+    // get num of jubs queued, submitted or done
+    $jq=0;
+    $jr=0;
+    $jd=0;
+    foreach ($subjobs as $j) {
+      if ($j['status']=='Q') $jq++;
+      elseif ($j['status']=='R') $jr++;
+      elseif ($j['status']=='D') $jd++;
+    }
     $numsubjobs = count($subjobs);
   }
 
@@ -355,9 +366,9 @@ if ($sessionId) {
   // if no submitted jobs, display none
   // for every uploaded job, subtract a submitted job
   // if all submitted jobs are uploaded, it should be 0
-  $waitingjobs = $numsubjobs-$reconruns;
-  if ($numsubjobs==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
-  elseif ($waitingjobs > 0) {$bgcolor=$progcolor;$gifimg=$progpic;}
+  $jd = $jd-$reconruns;
+  if ($jd>0 || $jr>0 || $jq>0) {$bgcolor=$progcolor;$gifimg=$progpic;}
+  elseif ($jd==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
   else {$bgcolor=$donecolor;$gifimg=$donepic;}
   echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
     <TD BGCOLOR='$bgcolor'>
@@ -366,11 +377,14 @@ if ($sessionId) {
     <TD BGCOLOR='$bgcolor'>\n";
   if ($numsubjobs==0) {echo "none";}
   else {
-    if ($waitingjobs>0) echo "<A HREF='checkjobs.php?expId=$sessionId'>$waitingjobs queued</A>\n";
-    if ($waitingjobs>0 && $reconruns>0) echo "<BR/>\n";
-    if ($reconruns>0) echo "<A HREF='reconsummary.php?expId=$sessionId'>$reconruns uploaded</A>";
+    $jlist=array();
+    if ($jq>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jq queued</A>\n";
+    if ($jr>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jr running</A>\n";
+    if ($jd>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jd ready for upload</A>\n";
+    if ($reconruns>0) $jlist[]="<A HREF='reconsummary.php?expId=$sessionId'>$reconruns uploaded</A>";
   }
-  echo"
+  $jout=implode('<br />\n',$jlist);
+  echo"$jout
     </TD>
     <TD BGCOLOR='$bgcolor'>";
   if ($stackruns == 0) {

@@ -875,7 +875,7 @@ class particledata {
   }
 
   function getSubmittedJobs($expId) {
-    $q="SELECT DEF_id "
+    $q="SELECT * "
       ."FROM `ApClusterJobData` "
       ."WHERE `REF|leginondata|SessionData|session`=$expId";
     $r = $this->mysql->getSQLResult($q);
