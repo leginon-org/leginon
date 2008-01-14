@@ -580,10 +580,6 @@ class Data(newdict.TypedDict):
 			if datamanager.holdimages:
 				# Replace FileReference with the actual array
 				self.__setitem__(key, value, force=True)
-			else:
-				# Keep FileReference.
-				# Make sure FileReference does not hold image array:
-				fileref.data = None
 		return value
 
 	def __getitem__(self, key):
