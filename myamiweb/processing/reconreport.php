@@ -174,7 +174,7 @@ foreach ($iterations as $iteration){
 	$eulerfile = $refinerun['path']."/eulermap".$iteration['iteration'].".png";
 	if (file_exists($eulerfile)) {
 		$html .= "<a target='eulermap' href='loadimg.php?filename=".$eulerfile."'>"
-		."<img src='loadimg.php?scale=.2&filename=".$eulerfile."'>"
+		."<img src='loadimg.php?scale=.125&filename=".$eulerfile."'>"
 		."</a>";
 	}
 	$html .= "</td></tr>\n";
@@ -188,7 +188,7 @@ foreach ($iterations as $iteration){
   
   $html .="<TD><table>";
   $html .= "<TR><TD ALIGN='CENTER'>"
-                ."<A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=good'>[$prtlsused good]</A><BR/>"
+		."<A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=good'>[$prtlsused good]</A><BR/>"
 		."<A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=bad'>[$badprtls bad]</A>"
 		."</TD></TR>\n";
   if ($refinerun['package']=='EMAN/MsgP') 
