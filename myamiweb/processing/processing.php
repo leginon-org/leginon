@@ -378,13 +378,14 @@ if ($sessionId) {
   if ($numsubjobs==0) {echo "none";}
   else {
     $jlist=array();
-    if ($jq>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jq queued</A><br/>";
-    if ($jr>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jr running</A><br/>";
-    if ($jd>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jd ready for upload</A><br/>";
-    if ($reconruns>0) $jlist[]="<A HREF='reconsummary.php?expId=$sessionId'>$reconruns uploaded</A>";
+    if ($jq>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jq queued</A>\n";
+    if ($jr>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jr running</A>\n";
+    if ($jd>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jd ready for upload</A>\n";
+    if ($reconruns>0) $jlist[]="<A HREF='reconsummary.php?expId=$sessionId'>$reconruns uploaded</A>\n";
+	  $jout=implode('<br />',$jlist);
+	  echo"$jout";
   }
-  $jout=implode('<br />\n',$jlist);
-  echo"$jout
+	echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>";
   if ($stackruns == 0) {
