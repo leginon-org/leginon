@@ -51,7 +51,18 @@ foreach ($stackIds as $stackid) {
 		."<a class='aptitle' href='stackreport.php?sId="
 		.$stackid[stackid]."'>".$stackid[stackid]."</a>"
 		."</font>)");
+
+
 	echo "<table border='0'>\n";
+
+	$stackavg = $s['path']."/average.mrc";
+	if (file_exists($stackavg)) {
+		echo "<tr><td rowspan='15' align='center'>";
+		echo "<img src='loadimg.php?filename=$stackavg' height='150'><br/>\n";
+		echo "<i>averaged stack image</i><br/>\n";
+		echo "</td></tr>";
+	} #endif
+
 	# get pixel size of stack
 	$mpix=($particle->getStackPixelSizeFromStackId($stackid[stackid]));
 	$apix=format_angstrom_number($mpix)."/pixel";
@@ -80,7 +91,7 @@ foreach ($stackIds as $stackid) {
 	foreach($display_keys as $k=>$v) {
 	        echo formatHtmlRow($k,$v);
 	}
-	echo"</TABLE>\n";
+	echo"</table>\n";
 	echo"<P>\n";
 }
 writeBottom();
