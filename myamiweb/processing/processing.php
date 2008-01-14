@@ -197,7 +197,6 @@ if ($sessionId) {
       elseif ($j['status']=='R') $jr++;
       elseif ($j['status']=='D') $jd++;
     }
-    $numsubjobs = count($subjobs);
   }
 
   echo"
@@ -375,17 +374,17 @@ if ($sessionId) {
     <B>Reconstructions</B>
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
-  if ($numsubjobs==0) {echo "none";}
+  if ($jd==0) {echo "none";}
   else {
     $jlist=array();
     if ($jq>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jq queued</A>\n";
     if ($jr>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jr running</A>\n";
     if ($jd>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jd ready for upload</A>\n";
     if ($reconruns>0) $jlist[]="<A HREF='reconsummary.php?expId=$sessionId'>$reconruns uploaded</A>\n";
-	  $jout=implode('<br />',$jlist);
-	  echo"$jout";
+    $jout=implode('<br />',$jlist);
+    echo"$jout";
   }
-	echo"
+  echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>";
   if ($stackruns == 0) {
