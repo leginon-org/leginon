@@ -37,54 +37,49 @@ $sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 
 // --- Get Stack Data
 $particle = new particledata();
-$stackIds = $particle->getStackIds($sessionId);
-$stackruns=count($stackIds);
+#$stackIds = $particle->getStackIds($sessionId);
 // --- Get Reconstruction Data
 echo"<P>\n";
-if ($stackruns>0){ 
+$reconRuns = $particle->getReconIdsFromSession($sessionId);
+if ($reconRuns) {
+
 	$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'name', 'num prtls', 'symmetry', 'pixel size', 'box size', 'best: fsc / rMeas (iter)', 'description');
+	$display_keys = array ( 'defid', 'name', 'num prtls', 'symmetry', 'pixel size', 'box size', 'best: fsc / rMeas (iter)', 'description');
 	foreach($display_keys as $key) {
 		$html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
 	}
-	foreach ($stackIds as $stackid) {
-		$reconRuns = $particle->getReconIds($stackid['stackid']);
-		if (!$reconRuns) {
-			//No recons go to next stack
-			continue;
-		}
-		$stackcount=$particle->getNumStackParticles($stackid['stackid']);
-		$stackparam=$particle->getStackParams($stackid['stackid']);
 
-		//get stackapix from first image
-		$stackmpix = $particle->getStackPixelSizeFromStackId($stackid['stackid']);
+	//$stackparam=$particle->getStackParams($stackid['stackid']);
+
+	foreach ($reconRuns as $reconrun) {
+		// GET INFO
+		$stackcount=$particle->getNumStackParticles($reconrun['REF|ApStackData|stack']);
+		$stackmpix = $particle->getStackPixelSizeFromStackId($reconrun['REF|ApStackData|stack']);
 		$stackapix = format_angstrom_number($stackmpix);
+		$stmodel = $particle->getInitModelInfo($reconrun['REF|ApInitialModelData|initialModel']);
+		$sym = $particle->getSymInfo($stmodel['REF|ApSymmetryData|symmetry']);
+		$res = $particle->getHighestResForRecon($reconrun['DEF_id']);
 
-		foreach ($reconRuns as $reconrun) {
-			$stmodel = $particle->getInitModelInfo($reconrun['REF|ApInitialModelData|initialModel']);
-			$sym = $particle->getSymInfo($stmodel['REF|ApSymmetryData|symmetry']);
-			$res=$particle->getHighestResForRecon($reconrun[DEF_id]);
-			$description=$reconrun['description'];
-			$html .= "<TR>\n";
-			$html .= "<TD><A HREF='reconreport.php?expId=$expId&reconId=$reconrun[DEF_id]'>$reconrun[name]</A></TD>\n";
-			$html .= "<TD>$stackcount</TD>\n";
-			$html .= "<TD>";
-			$html .= "$sym[symmetry]</TD>\n";
-			$html .= "<TD>".$stackapix."</TD>\n";
-			$html .= "<TD>$stmodel[boxsize]</TD>\n";
-			$html .= sprintf("<TD>%.2f / %.2f &Aring; (%d)</TD>\n", $res[half],$res[rmeas],$res[iter]);
-			$html .= "<TD>".$description."</TD>\n";
-			$html .= "</TR>\n";
-		}
+		// PRINT INFO
+		$html .= "<TR>\n";
+		$html .= "<TD>$reconrun[DEF_id]</TD>\n";
+		$html .= "<TD><A HREF='reconreport.php?expId=$expId&reconId=$reconrun[DEF_id]'>$reconrun[name]</A></TD>\n";
+		$html .= "<TD>$stackcount</TD>\n";
+		$html .= "<TD>";
+		$html .= "$sym[symmetry]</TD>\n";
+		$html .= "<TD>".$stackapix."</TD>\n";
+		$html .= "<TD>$stmodel[boxsize]</TD>\n";
+		$html .= sprintf("<TD>% 2.2f / % 2.2f &Aring; (%d)</TD>\n", $res[half],$res[rmeas],$res[iter]);
+		$html .= "<TD>".$reconrun['description']."</TD>\n";
+		$html .= "</TR>\n";
 	}
+
 	$html .= "</table>\n";
 	echo $html;
-}
-
-//        echo $particle->displayParticleStats($particleruns, $display_keys, $inspectcheck, $mselexval);
-else {
-        echo "no reconstruction information available";
+//	echo $particle->displayParticleStats($particleruns, $display_keys, $inspectcheck, $mselexval);
+} else {
+	echo "no reconstruction information available";
 }
 
 

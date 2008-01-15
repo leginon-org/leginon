@@ -889,7 +889,22 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
-	
+
+	function getReconIdsFromSession ($sessionId) {
+		$q = "SELECT refrun.*  "
+			." FROM `ApRefinementRunData` AS refrun "
+			."LEFT JOIN ApRunsInStackData AS runs "
+			." ON refrun.`REF|ApStackData|stack` = runs.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackRunData AS stackrun "
+			." ON runs.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id` "
+			."WHERE stackrun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			." ORDER BY refrun.`DEF_id` DESC";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r;
+	} 
+
 	function getReconIds ($stackId) {
 		$q = "SELECT * "
 			."FROM `ApRefinementRunData` AS r "
