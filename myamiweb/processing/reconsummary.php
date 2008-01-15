@@ -44,7 +44,7 @@ echo"<P>\n";
 if ($stackruns>0){ 
 	$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'name', 'num prtls', 'symmetry', 'pixel size', 'box size', 'highest res.(iter)', 'description');
+	$display_keys = array ( 'name', 'num prtls', 'symmetry', 'pixel size', 'box size', 'best: fsc / rMeas (iter)', 'description');
 	foreach($display_keys as $key) {
 		$html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
 	}
@@ -73,7 +73,7 @@ if ($stackruns>0){
 			$html .= "$sym[symmetry]</TD>\n";
 			$html .= "<TD>".$stackapix."</TD>\n";
 			$html .= "<TD>$stmodel[boxsize]</TD>\n";
-			$html .= sprintf("<TD>%.2f (%d)</TD>\n", $res[half],$res[iteration]);
+			$html .= sprintf("<TD>%.2f / %.2f &Aring; (%d)</TD>\n", $res[half],$res[rmeas],$res[iter]);
 			$html .= "<TD>".$description."</TD>\n";
 			$html .= "</TR>\n";
 		}

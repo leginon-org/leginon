@@ -941,11 +941,13 @@ class particledata {
 	}
 
 	function getHighestResForRecon ($reconid) {
-		$q = "SELECT * " 
-				."FROM `ApRefinementData` r "
-				."LEFT JOIN `ApResolutionData` res "
-				."ON (r.`REF|ApResolutionData|resolution` = res.`DEF_id`) "
-				."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconid' "
+		$q = "SELECT ref.iteration AS iter, res.half AS half, rmeas.rMeasure AS rmeas " 
+				."FROM `ApRefinementData` AS ref "
+				."LEFT JOIN `ApResolutionData` AS res "
+				." ON (ref.`REF|ApResolutionData|resolution` = res.`DEF_id`) "
+				."LEFT JOIN `ApRMeasureData` AS rmeas "
+				." ON (ref.`REF|ApRMeasureData|rMeasure` = rmeas.`DEF_id`) "
+				."WHERE ref.`REF|ApRefinementRunData|refinementRun` = '$reconid' "
 				."ORDER by res.half ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
