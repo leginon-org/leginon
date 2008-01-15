@@ -374,8 +374,7 @@ if ($sessionId) {
     <B>Reconstructions</B>
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
-  if ($jd==0) {echo "none";}
-  else {
+  if ($jq >0 || $jr >0 || $jd >0 || $reconruns >0) {
     $jlist=array();
     if ($jq>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jq queued</A>\n";
     if ($jr>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jr running</A>\n";
@@ -384,6 +383,7 @@ if ($sessionId) {
     $jout=implode('<br />',$jlist);
     echo"$jout";
   }
+  else echo "none";
   echo"
     </TD>
     <TD BGCOLOR='$bgcolor'>";
