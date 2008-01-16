@@ -67,8 +67,8 @@ $stackparticles = $particle->getNumStackParticles($stackId);
 $stackparams = $particle->getStackParams($stackId);
 // get pixel size
 $apix=($particle->getStackPixelSizeFromStackId($stackId))*1e10;
-$apix=($stackparams['bin']) ? $apix*$stackparams['bin'] : $apix;
-
+// don't think we need to calculate the binned pixel size
+//$apix=($stackparams['bin']) ? $apix*$stackparams['bin'] : $apix;
 $boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
 
 $html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
