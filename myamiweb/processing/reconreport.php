@@ -171,12 +171,26 @@ foreach ($iterations as $iteration){
 	$html .= "<TR><TD>";
 	$html .= "$numclasses classes<br />\n";
 	$html .= "<a target='stackview' href='viewstack.php?file=$clsavg'>".$iteration['classAverage']."</a><br />";
-	$eulerfile = $refinerun['path']."/eulermap".$iteration['iteration'].".png";
-	if (file_exists($eulerfile)) {
-		$html .= "<a target='eulermap' href='loadimg.php?filename=".$eulerfile."'>"
-		."<img src='loadimg.php?scale=.125&filename=".$eulerfile."'>"
+	// Euler Plots
+	$oldeulerfile = $refinerun['path']."/eulermap".$iteration['iteration'].".png";
+	if (file_exists($oldeulerfile)) {
+		$html .= "<a target='eulermap' href='loadimg.php?filename=".$oldeulerfile."'>"
+		."<img src='loadimg.php?scale=.125&filename=".$oldeulerfile."'>"
 		."</a>";
 	}
+	$eulertrifile = $refinerun['path']."/eulerTriangle-".$refinerun['DEF_id']."_".$iteration['iteration'].".png";
+	if (file_exists($eulertrifile)) {
+		$html .= "<a target='eulertriangle' href='loadimg.php?filename=".$eulertrifile."'>"
+		."<img src='loadimg.php?scale=.125&filename=".$eulertrifile."'>"
+		."</a>";
+	}
+	$eulerpolarfile = $refinerun['path']."/eulerPolar-".$refinerun['DEF_id']."_".$iteration['iteration'].".png";
+	if (file_exists($eulerpolarfile)) {
+		$html .= "<a target='eulerpolar' href='loadimg.php?filename=".$eulerpolarfile."'>"
+		."<img src='loadimg.php?scale=.125&filename=".$eulerpolarfile."'>"
+		."</a>";
+	}
+
 	$html .= "</td></tr>\n";
   
   if ($refinerun['package']=='EMAN/MsgP') {
