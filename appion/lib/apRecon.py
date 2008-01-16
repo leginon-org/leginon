@@ -500,6 +500,9 @@ def insertIteration(iteration, params):
 	renderSnapshots(volDensPath, halfres, params['model'], 
 		params['contour'], params['zoom'], params['apix'])
 
+	## uncommment this for chimera image only runs...
+	#return
+
 	# insert resolution data
 	resData = insertResolutionData(params, iteration)
 	RmeasureData = insertRMeasureData(params, iteration)
@@ -577,9 +580,7 @@ def insertIteration(iteration, params):
 	apDisplay.printMsg("creating euler frequency map")
 	refrunid = int(params['refinementRun'].dbid)
 	iternum = int(iteration['num'])
-	radlist, anglelist, freqlist, freqgrid = apEuler.getEulersForIteration(refrunid, iternum)
-	eulerimgpath = os.path.join(params['path'], "eulermap"+str(iternum)+".png")
-	apEuler.makeImage(radlist, anglelist, freqlist, imgname=eulerimgpath)
+	apEuler.createEulerImages(refrunid, iternum, path=params['path'])
 
 	return
 

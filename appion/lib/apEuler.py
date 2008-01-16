@@ -2,6 +2,7 @@
 
 import MySQLdb
 import math
+import os
 import numpy
 from scipy import ndimage
 import Image
@@ -92,10 +93,10 @@ def getEulersForIteration(reconid, iteration=1):
 
 	freqnumpy = numpy.asarray(freqlist, dtype=numpy.int32)
 	#print(freqlist)
-	print "min=",ndimage.minimum(freqnumpy)
-	print "max=",ndimage.maximum(freqnumpy)
-	print "mean=",ndimage.mean(freqnumpy)
-	print "stdev=",ndimage.standard_deviation(freqnumpy)
+	#print "min=",ndimage.minimum(freqnumpy)
+	#print "max=",ndimage.maximum(freqnumpy)
+	#print "mean=",ndimage.mean(freqnumpy)
+	#print "stdev=",ndimage.standard_deviation(freqnumpy)
 	#print "median=",ndimage.median(freqnumpy)
 
 	return radlist,anglelist,freqlist,freqgrid
@@ -208,8 +209,8 @@ def calcFreqGrid(points, indres=30.0):
 		indexmap[index] = [xbox*indres, ybox*indres, oldcounts+1, xbox, ybox]
 	return indexmap
 
-def polarToCart(rad, thdeg):
-	thrad = thdeg*math.pi/180.0
+def polarToCart(rad, thrad):
+	#thrad = thdeg*math.pi/180.0
 	x = rad*math.cos(thrad)
 	y = rad*math.sin(thrad)
 	return x,y
@@ -320,6 +321,8 @@ def fillDataDict(radlist, anglelist, freqlist):
 	angnumpy = numpy.asarray(anglelist, dtype=numpy.float32)
 	d['mina'] = float(ndimage.minimum(angnumpy))
 	d['maxa'] = float(ndimage.maximum(angnumpy))
+	if d['maxa'] > 330.0*math.pi/180.0:
+		d['maxa'] = 2.0*math.pi
 	d['rangea'] = d['maxa']-d['mina']
 
 	radnumpy = numpy.asarray(radlist, dtype=numpy.float32)
@@ -327,27 +330,27 @@ def fillDataDict(radlist, anglelist, freqlist):
 	d['maxr'] = float(ndimage.maximum(radnumpy))
 	d['ranger'] = d['maxr']-d['minr']
 
-	x1, y1 = polarToCart(d['maxr'], d['rangea'])
-	x2, y2 = polarToCart(d['minr'], 0)
-	x3, y3 = polarToCart(d['maxr'], 0)
-	d['minx'] = min(x1,x2,x3)
-	d['maxx'] = max(x1,x2,x3)
-	d['miny'] = min(y1,y2,y3)
-	d['maxy'] = max(y1,y2,y3)
+	xnumpy = radnumpy * numpy.cos(angnumpy - d['mina'])
+	ynumpy = radnumpy * numpy.sin(angnumpy - d['mina'])
+	d['minx'] = float(ndimage.minimum(xnumpy))
+	d['maxx'] = float(ndimage.maximum(xnumpy))
+	d['miny'] = float(ndimage.minimum(ynumpy))
+	d['maxy'] = float(ndimage.maximum(ynumpy))
 	d['rangex'] = d['maxx']-d['minx']
 	d['rangey'] = d['maxy']-d['miny']
 
 	return d
 
-def makeImage(radlist, anglelist, freqlist, 
-		imgname="temp.png", imgdim=650, crad=8, frame=30):
+def makeTriangleImage(radlist, anglelist, freqlist, 
+		imgname="temp.png", imgdim=640, crad=8, frame=30):
 	d = {}
 	#'L' -> grayscale
 	#'RGB' -> color
 	img = Image.new("RGB", (imgdim, imgdim), color="#ffffff")
 	draw = ImageDraw.Draw(img)
-
+	anglelist = numpy.asarray(anglelist)/60.0
 	d = fillDataDict(radlist, anglelist, freqlist)
+	#pprint.pprint(d)
 
 	drawAxes(draw, imgdim, crad, img, d)
 	drawLegend(draw, imgdim, crad, d['minf'], d['maxf'])
@@ -373,16 +376,74 @@ def makeImage(radlist, anglelist, freqlist,
 		draw.ellipse(cartcoord, fill=fcolor)
 	try:
 		img.save(imgname, "PNG")
+		apDisplay.printMsg("save euler image to file: "+imgname)
 	except:
 		apDisplay.printWarning("could not save file: "+imgname)
 
 	return
+
+
+def makePolarImage(radlist, anglelist, freqlist, 
+		imgname="temp.png", imgdim=640, crad=8, frame=60):
+	"""
+	make a round polar plot of euler angles
+	"""
+
+	d = {}
+	#'L' -> grayscale
+	#'RGB' -> color
+	img = Image.new("RGB", (imgdim, imgdim), color="#ffffff")
+	draw = ImageDraw.Draw(img)
+
+	d = fillDataDict(radlist, anglelist, freqlist)
+	#pprint.pprint(d)
+
+	drawLegend(draw, imgdim, crad, d['minf'], d['maxf'])
+	for i in range(len(radlist)):
+		#frequency
+		freq = freqlist[i]
+		fgray = freqToColor(freq, d['maxf'], d['rangef'])
+		fcolor = grayToColor(fgray)
+
+		#direct polar
+		rad = radlist[i]			
+		ang = anglelist[i]
+
+		#ax = float(imgdim-2*frame)*(ang-d['mina'])/d['rangea']+frame
+		#ry = float(imgdim-2*frame)*(rad-d['minr'])/d['ranger']+frame
+		#polarcoord = (ax-crad, ry-crad, ax+crad, ry+crad)
+
+		#polar -> cartesian
+		x, y = polarToCart(rad, ang-d['mina'])
+		xn = (x - d['minx'])/float(d['rangex'])
+		yn = (y - d['miny'])/float(d['rangey'])
+		xs = float(imgdim-2*frame)*xn+frame
+		ys = float(imgdim-3*frame)*yn+2*frame
+		if rad > 10.98:
+			print round(rad,2), round(ang*180.0/math.pi,1), "\t-->", round(x,2), round(y,2), "\t-->", round(xn,2), round(yn,2)
+		#print xs, ys
+		cartcoord = (xs-crad, ys-crad, xs+crad, ys+crad)
+
+		draw.ellipse(cartcoord, fill=fcolor)
+	## end loop
+
+	drawPolarAxes(draw, imgdim, frame, img, d)
+	try:
+		img.save(imgname, "PNG")
+		apDisplay.printMsg("save euler image to file: "+imgname)
+	except:
+		apDisplay.printWarning("could not save file: "+imgname)
+
+	return
+
 
 def freqToColor(freq, maxf, rangef):
 	fgray = 255.0*((maxf-freq)/rangef)**2
 	return fgray
 
 def drawAxes(draw, imgdim, crad, img, d):
+
+	#pprint.pprint(d)
 	#Coords
 	start = 2*crad
 	mid = imgdim/2
@@ -415,16 +476,132 @@ def drawAxes(draw, imgdim, crad, img, d):
 	coord = (start-shiftx, end-shifty)
 	addRotatedText(img, txt, coord, 90, color="black")
 	#Min/Max Numbers for Longitude / Azimuthal
-	txt = str(round(d['mina']*180.0/math.pi,1))
+	txt = str(round(d['mina']*60.0*180.0/math.pi,1))
 	shiftx = draw.textsize(txt)[0]/2.0
 	shifty = draw.textsize(txt)[1]/2.0
 	coord = (start, end)
 	draw.text(coord, txt, fill="black")
-	txt = str(round(d['maxa']*180.0/math.pi,1))
+	txt = str(round(d['maxa']*60.0*180.0/math.pi,1))
 	shiftx = draw.textsize(txt)[0]
 	shifty = draw.textsize(txt)[1]/2.0
 	coord = (end-shiftx, end)
 	draw.text(coord, txt, fill="black")
+
+
+def drawPolarAxes(draw, imgdim, frame, img, d, overmult=1.02):
+	#Axes 1
+	x, y = polarToCart(d['minr'], 0.0)
+	xn = (x - d['minx'])/float(d['rangex'])
+	yn = (y - d['miny'])/float(d['rangey'])
+	xs = float(imgdim-2*frame)*xn+frame
+	ys = float(imgdim-3*frame)*yn+2*frame
+
+	x, y = polarToCart(overmult*d['maxr'], 0.0)
+	xn = (x - d['minx'])/float(d['rangex'])
+	yn = (y - d['miny'])/float(d['rangey'])
+	xf = float(imgdim-2*frame)*xn+frame
+	yf = float(imgdim-3*frame)*yn+2*frame
+
+	coord = (xs, ys, xf, yf)
+	draw.line(coord, fill="black", width=2)
+	#Axes 2
+	#required integer degrees
+	maxang = math.ceil(d['rangea']*180.0/math.pi)*math.pi/180.0
+	x, y = polarToCart(d['minr'], maxang)
+	xn = (x - d['minx'])/float(d['rangex'])
+	yn = (y - d['miny'])/float(d['rangey'])
+	xs = float(imgdim-2*frame)*xn+frame
+	ys = float(imgdim-3*frame)*yn+2*frame
+
+	x, y = polarToCart(overmult*d['maxr'], maxang)
+	xn = (x - d['minx'])/float(d['rangex'])
+	yn = (y - d['miny'])/float(d['rangey'])
+	xf = float(imgdim-2*frame)*xn+frame
+	yf = float(imgdim-3*frame)*yn+2*frame
+
+	coord = (xs, ys, xf, yf)
+	#print coord
+	draw.line(coord, fill="black", width=2)
+
+	#Outer arc circle
+	x = -1.0*overmult*d['maxr']
+	y = -1.0*overmult*d['maxr']
+	xn = (x - d['minx'])/float(d['rangex'])
+	yn = (y - d['miny'])/float(d['rangey'])
+	xs = float(imgdim-2*frame)*xn+frame
+	ys = float(imgdim-3*frame)*yn+2*frame
+
+	x = overmult*d['maxr']
+	y = overmult*d['maxr']
+	xn = (x - d['minx'])/float(d['rangex'])
+	yn = (y - d['miny'])/float(d['rangey'])
+	xf = float(imgdim-2*frame)*xn+frame
+	yf = float(imgdim-3*frame)*yn+2*frame
+
+	#coord = (frame, frame, float(imgdim-frame), float(imgdim-frame))
+	coord = (int(xs), int(ys), int(xf), int(yf))
+	#coord = float(imgdim-2*frame)*numpy.array([0.0, 0.0, 1.0, 1.0])+frame
+	arcmin = 0
+	arcmax = int(math.ceil(180.0*d['rangea']/math.pi))
+	#print coord, arcmin, arcmax
+	#pprint.pprint(d)
+	draw.arc(coord, arcmin, arcmax, "black")
+	#draw.ellipse(coord, outline="black")
+
+	#return
+
+	#Min/Max Numbers for Longitude / Azimuthal
+	txt = str(round(d['mina']*180.0/math.pi,1))
+	shiftx = draw.textsize(txt)[0]/2.0
+	shifty = draw.textsize(txt)[1]/2.0
+	x, y = polarToCart(overmult*d['maxr'], 0.0)
+	xn = (x - d['minx'])/float(d['rangex'])
+	yn = (y - d['miny'])/float(d['rangey'])
+	xf = float(imgdim-2*frame)*xn+frame
+	yf = float(imgdim-3*frame)*yn+2*frame
+	coord = (xf+5, yf-shifty)
+	draw.text(coord, txt, fill="black")
+	
+	if(d['rangea'] < 2*math.pi):
+		txt = str(round(d['maxa']*180.0/math.pi,1))
+		shiftx = draw.textsize(txt)[0]
+		shifty = draw.textsize(txt)[1]/2.0
+
+		maxang = math.ceil(d['rangea']*180.0/math.pi)*math.pi/180.0
+		x, y = polarToCart(overmult*d['maxr'], maxang)
+		xn = (x - d['minx'])/float(d['rangex'])
+		yn = (y - d['miny'])/float(d['rangey'])
+		xf = float(imgdim-2*frame)*xn+frame
+		yf = float(imgdim-3*frame)*yn+2*frame
+		coord = (xf+5, yf+shifty)
+		#addRotatedText(img, txt, coord, 90.0-maxang*180.0/math.pi, color="black")
+		draw.text(coord, txt, fill="black")
+
+	return
+	#Axis Labels
+	txt = "Latitude / Altitude"
+	shifty = draw.textsize(txt)[0]/2.0
+	shiftx = draw.textsize(txt)[1]
+	coord = (start-shiftx, mid-shifty)
+	addRotatedText(img, txt, coord, 90, color="black")
+	txt = "Longitude / Azimuthal"
+	shiftx = draw.textsize(txt)[0]/2.0
+	shifty = draw.textsize(txt)[1]/2.0
+	coord = (mid-shiftx, end)
+	draw.text(coord, txt, fill="black")
+	#Min/Max Numbers for Latitude / Altitude
+	txt = str(round(d['minr']*90.0,1))
+	shifty = draw.textsize(txt)[0]
+	shiftx = draw.textsize(txt)[1]
+	coord = (start-shiftx, start)
+	addRotatedText(img, txt, coord, 90, color="black")
+	txt = str(round(d['maxr']*90.0,1))
+	shifty = draw.textsize(txt)[0]
+	shiftx = draw.textsize(txt)[1]
+	coord = (start-shiftx, end-shifty)
+	addRotatedText(img, txt, coord, 90, color="black")
+
+	return
 
 def drawLegend(draw, imgdim, crad=10, minf=0, maxf=100, gap=4, numsc=10):
 	rangef = maxf - minf
@@ -544,7 +721,7 @@ def addRotatedText(im, text, where, rotation, color = "black", maxSize = None):
 	# create an image mask the size of the whole image that you're putting the text on
 	mask = Image.new("L", im.size, (0))
 	# place the text mask in the proper place
-	where = (where[0] - int(float(textIm.size[0])*anchor[0] + 0.5), where[1] - int(float(textIm.size[1])*anchor[1] + 0.5))
+	where = (int(where[0] - float(textIm.size[0])*anchor[0] + 0.5), int(where[1] - float(textIm.size[1])*anchor[1] + 0.5))
 	mask.paste(textIm, where)
 	del(textIm)
 	# create an image the full size of the supplied image, in the color of the text you want to apply
@@ -556,22 +733,31 @@ def addRotatedText(im, text, where, rotation, color = "black", maxSize = None):
 
 	return im
 
+def createEulerImages(recon=239, iternum=1, path="."):
+	radlist, anglelist, freqlist, freqgrid = getEulersForIteration(recon, iternum)
+	file1 = os.path.join(path, "eulerTriangle-"+str(recon)+"_"+str(iternum)+".png")
+	makeTriangleImage(radlist, anglelist, freqlist, imgname=file1)	
+	file2 = os.path.join(path, "eulerPolar-"+str(recon)+"_"+str(iternum)+".png")
+	makePolarImage(radlist, anglelist, freqlist, imgname=file2)	
 
 if __name__ == "__main__":
 	t0 = time.time()
-	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(181, 4)
-	radlist, anglelist, freqlist, freqgrid = getEulersForIteration(173, 12)
-	makeImage(radlist,anglelist,freqlist,imgname="recon173.png")
-	radlist, anglelist, freqlist, freqgrid = getEulersForIteration(158, 4)
-	makeImage(radlist,anglelist,freqlist,imgname="recon158.png")
-	#radlist, anglelist, freqlist, freqgrid = getEulersForIteration(158, 2)
-	radlist, anglelist, freqlist, freqgrid = getEulersForIteration(118, 2)
-	makeImage(radlist,anglelist,freqlist,imgname="recon118.png")
-	radlist, anglelist, freqlist, freqgrid = getEulersForIteration(159, 1)
-	makeImage(radlist,anglelist,freqlist,imgname="recon159.png")
-	#freqmap = getEulersForIteration(158, 4)
-	#makePlot(radlist,anglelist,freqlist,freqgrid)
-	#makePlot(freqmap)
+	#createEulerImages(239, 4)  ## small groEL
+	#createEulerImages(212, 4)  ## icos virus
+	createEulerImages(212, 8)  ## icos virus
+	#createEulerImages(231, 3)  ## c6 virus tail
+	createEulerImages(231, 9)  ## c6 virus tail
+	#createEulerImages(239, 8)  ## med groEL
+	#createEulerImages(217, 1)  ## small assymmetric
+	createEulerImages(217, 12)  ## big assymmetric
+	createEulerImages(239, 20)  ## large groEL
+	#createEulerImages(181, 4)
+	createEulerImages(173, 12) ## huge groEL, broken
+	#createEulerImages(158, 1)  ## small assymmetric
+	#createEulerImages(118, 2)
+	#createEulerImages(159, 1)  ## small assymmetric
+	#createEulerImages(158, 4)
+
 	apDisplay.printColor("Finished in "+apDisplay.timeString(time.time()-t0), "cyan")
 
 
