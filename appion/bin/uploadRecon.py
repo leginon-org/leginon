@@ -66,5 +66,10 @@ if __name__ == '__main__':
 		# if only uploading one iteration, skip to that one
 		if params['oneiteration'] and int(iteration['num'])!=params['oneiteration']:
 			continue
+
+		apDisplay.printColor("\nUploading iteration "+str(iteration['num'])+" of "+str(len(params['iterations']))+"\n", "green")
+		for i in range(75): 
+			sys.stderr.write("#")
+		sys.stderr.write("\n")
 		apRecon.insertIteration(iteration,params)
 
