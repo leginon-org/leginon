@@ -250,7 +250,7 @@ def convertBlobsToPeaks(blobtree, bin=1, tmpldbid=None, tmplnum=None, diam=None)
 	return peaktree
 
 def findBlobs(ccmap, thresh, maxsize=500, minsize=1, maxpeaks=1500, border=10, 
-	  maxmoment=4.0, elim= "highest", summary=False):
+	  maxmoment=6.0, elim= "highest", summary=False):
 	"""
 	calls leginon's find_blobs
 	"""
