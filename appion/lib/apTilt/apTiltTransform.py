@@ -403,13 +403,23 @@ def mergePicks(picks1, picks2, limit=25.0):
 	newarray = numpy.vstack((picks1, goodarray))
 	return newarray
 
-def alignPicks(picks1, picks2, data, limit=5.0):
+def alignPicks(picks1, picks2, data, limit=15.0):
 	list1 = []
 	alignlist2 = []
 	#transform picks2
 	alignpicks2 = a2Toa1Data(picks2, data)
 	#find closest pick and insert into lists
 	filled = {}
+	for pick in picks1:
+		closepick,dist = findClosestPick(pick, alignpicks2)
+		if dist < limit: 
+			key = str(closepick)
+			if not key in filled:
+				list1.append(pick)
+				alignlist2.append(closepick)
+				filled[key] = True
+	"""
+	limit *= 2.0
 	for pick in picks1:
 		closepick,dist = findClosestPick(pick, alignpicks2)
 		if dist < limit: 
@@ -427,15 +437,7 @@ def alignPicks(picks1, picks2, data, limit=5.0):
 				list1.append(pick)
 				alignlist2.append(closepick)
 				filled[key] = True
-	limit *= 4.0
-	for pick in picks1:
-		closepick,dist = findClosestPick(pick, alignpicks2)
-		if dist < limit: 
-			key = str(closepick)
-			if not key in filled:
-				list1.append(pick)
-				alignlist2.append(closepick)
-				filled[key] = True
+	"""
 	#convert lists
 	nlist1 = numpy.array(list1, dtype=numpy.int32)
 	nalignlist2 = numpy.array(alignlist2, dtype=numpy.int32)
