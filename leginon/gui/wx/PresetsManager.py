@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.81 $
+# $Revision: 1.82 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-10-31 20:03:16 $
-# $Author: acheng $
+# $Date: 2008-01-17 00:36:21 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -473,6 +473,8 @@ class EditPresets(gui.wx.Presets.PresetOrder):
 		self.bnewfromscope.Enable(True)
 		self.bimport = self._bitmapButton('import', 'Import presets from another session')
 		self.bimport.Enable(True)
+		self.balign = self._bitmapButton('alignpresets', 'Align presets to each other')
+		self.balign.Enable(True)
 
 	def _sizer(self):
 		sizer = wx.GridBagSizer(3, 3)
@@ -487,7 +489,7 @@ class EditPresets(gui.wx.Presets.PresetOrder):
 		sizer.Add(self.bacquire, (7, 1), (1, 1), wx.ALIGN_CENTER)
 		sizer.Add(self.bfromscope, (8, 1), (1, 1), wx.ALIGN_CENTER)
 		sizer.Add(self.bremove, (9, 1), (1, 1), wx.ALIGN_CENTER)
-
+		sizer.Add(self.balign, (10, 1), (1, 1), wx.ALIGN_CENTER)
 		sizer.Add(self.bnewfromscope, (11, 1), (1, 1), wx.ALIGN_CENTER)
 		sizer.Add(self.bimport, (12, 1), (1, 1), wx.ALIGN_CENTER)
 		self.SetSizerAndFit(sizer)
@@ -642,6 +644,9 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.importdialog = ImportDialog(self, self.node)
 		self.Bind(wx.EVT_BUTTON, self.onImport, self.presets.bimport)
 
+		self.aligndialog = AlignDialog(self, self.node)
+		self.Bind(wx.EVT_BUTTON, self.onAlign, self.presets.balign)
+
 		self.dosedialog = DoseDialog(self)
 		self.Bind(wx.EVT_BUTTON, self.onAcquireDoseImage, self.presets.bacquire)
 
@@ -699,6 +704,9 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 	def onImport(self, evt):
 		self.importdialog.ShowModal()
+
+	def onAlign(self, evt):
+		self.aligndialog.ShowModal()
 
 	def onFromScope(self, evt):
 		name = self.presets.getSelectedPreset()
@@ -915,6 +923,56 @@ class SessionListCtrl(wx.ListCtrl, ColumnSorterMixin):
 		self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
 		self.SetColumnWidth(1, wx.LIST_AUTOSIZE)
 		self.SetColumnWidth(2, wx.LIST_AUTOSIZE)
+
+class AlignDialog(wx.Dialog):
+	def __init__(self, parent, node):
+		wx.Dialog.__init__(self, parent, -1, 'Align Presets', style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+		imsize = 256
+		self.node = node
+
+		lableft = wx.StaticText(self, -1, 'Reference Preset')
+		self.choiceleft = gui.wx.Presets.PresetChoice(self, -1)
+		self.imleft = gui.wx.ImagePanel.ImagePanel(self, -1,imagesize=(imsize,imsize))
+		szleft = wx.GridBagSizer(5, 0)
+		szleft.Add(lableft, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szleft.Add(self.choiceleft, (1, 0), (1, 1))
+		szleft.Add(self.imleft, (2, 0), (1, 1), wx.EXPAND)
+
+		labright = wx.StaticText(self, -1, 'Preset To Adjust')
+		self.choiceright = gui.wx.Presets.PresetChoice(self, -1)
+		self.imright = gui.wx.ImagePanel.ImagePanel(self, -1,imagesize=(imsize,imsize))
+		szright = wx.GridBagSizer(5, 0)
+		szright.Add(labright, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szright.Add(self.choiceright, (1, 0), (1, 1))
+		szright.Add(self.imright, (2, 0), (1, 1), wx.EXPAND)
+
+		self.balign = wx.Button(self, -1, 'Align')
+		self.balign.Enable(True)
+		bdone = wx.Button(self, wx.ID_OK, 'Done')
+		bdone.SetDefault()
+
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.balign, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		szbutton.Add(bdone, (0, 1), (1, 1), wx.ALIGN_CENTER)
+
+		szimages = wx.BoxSizer(wx.HORIZONTAL)
+		szimages.Add(szleft, 1)
+		szimages.Add(szright, 1)
+		szmain = wx.GridBagSizer(5,5)
+		szmain.Add(szimages, (0, 1), (1, 1))
+		szmain.Add(szbutton, (1, 1), (1, 1))
+
+		#szmain.AddGrowableRow(0)
+		#szmain.AddGrowableCol(0)
+
+		self.SetSizerAndFit(szmain)
+		self.SetAutoLayout(True)
+
+		#self.Bind(wx.EVT_CHOICE, self.onSessionChoice, self.csession)
+		self.Bind(wx.EVT_BUTTON, self.onAlign, self.balign)
+
+	def onAlign(self, evt):
+		print 'Test'
 
 class ImportDialog(wx.Dialog):
 	def __init__(self, parent, node):
