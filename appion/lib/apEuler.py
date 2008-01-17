@@ -47,11 +47,7 @@ def getEulersForIteration(reconid, iteration=1):
 	apDisplay.printMsg("Fetched data in "+apDisplay.timeString(time.time()-t0))
 	#r0 = resToEuler(result[int( float(len(result)) * random.random() )])
 	#r1 = resToEuler(result[int( float(len(result)) * random.random() )])
-	#print r0
-	#print r1
-	#mat0 = getMatrix3(r0)
-	#mat1 = getMatrix3(r1)
-	#dist = calculateDistance(mat0, mat1)
+	#dist = eulerCalculateDistance(r0, r1)
 	#print mat0
 	#print mat1
 	#print "dist=",dist
@@ -143,14 +139,30 @@ def resToEuler(res):
 	euler['euler3'] = float(res[2])
 	return euler
 
+def eulerCalculateDistance(e1, e2):
+	"""
+	given two euler as dicts
+	calculate distance between euler values
+	value in degrees
+	"""
+	mat0 = getMatrix3(e1)
+	mat1 = getMatrix3(e2)
+	dist = calculateDistance(mat0, mat1)
+	#convert to degrees
+	dist *= 180.0/math.pi
+	return dist
+
 def getMatrix3(eulerdata):
-	#math from http://mathworld.wolfram.com/EulerAngles.html
-	#appears to conform to EMAN conventions - could use more testing
-	#tested by independently rotating object with EMAN eulers and with the
-	#matrix that results from this function
+	"""
+	math from http://mathworld.wolfram.com/EulerAngles.html
+	appears to conform to EMAN conventions - could use more testing
+	tested by independently rotating object with EMAN eulers and with the
+	matrix that results from this function
+	"""
 	phi = round(eulerdata['euler2']*math.pi/180,2) #eman az,  azimuthal
 	the = round(eulerdata['euler1']*math.pi/180,2) #eman alt, altitude
-	psi = round(eulerdata['euler3']*math.pi/180,2) #eman phi, inplane_rotation
+	#psi = round(eulerdata['euler3']*math.pi/180,2) #eman phi, inplane_rotation
+	psi = 0.0  #psi component is not working!!!
 
 	m=numpy.zeros((3,3), dtype=numpy.float32)
 	m[0,0] =  math.cos(psi)*math.cos(phi) - math.cos(the)*math.sin(phi)*math.sin(psi)
