@@ -116,6 +116,17 @@ def getStackIdFromRecon(reconrunid):
 	apDisplay.printMsg("Found Stack id="+str(stackid)+" for Recon Run id="+str(reconrunid))
 	return stackid
 
+#--------
+def averageStack(params):
+	if 'single' in params:
+		stackfile = params['single']
+	else:
+		stackfile = "start.hed"
+	apDisplay.printMsg("averaging stack for summary web page")
+	stack = os.path.join(params['outdir'], stackfile)
+	avgmrc = os.path.join(params['outdir'], "average.mrc")
+	emancmd = ( "proc2d "+stack+" "+avgmrc+" average" )
+	apEMAN.executeEmanCmd(emancmd)
 
 #--------
 def commitSubStack(params):
@@ -156,6 +167,8 @@ def commitSubStack(params):
 		# Find corresponding particle in old stack
 		oldstackpartdata = getStackParticle(params['stackid'], particlenum)
 
+		#is this going to work???
+		#oldstackpartdata['stackRun']['stackRunName'] = params['runname']
 		# Insert particle
 		newstackq = appionData.ApStackParticlesData()
 		newstackq['particleNumber'] = newparticlenum
