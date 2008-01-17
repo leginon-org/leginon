@@ -189,13 +189,13 @@ if ($sessionId) {
     $subjobs = $particle->getSubmittedJobs($sessionId);
 
     // get num of jubs queued, submitted or done
-    $jq=0;
-    $jr=0;
-    $jd=0;
+    $jobqueue=0;
+    $jobrun=0;
+    $jobdone=0;
     foreach ($subjobs as $j) {
-      if ($j['status']=='Q') $jq++;
-      elseif ($j['status']=='R') $jr++;
-      elseif ($j['status']=='D') $jd++;
+      if ($j['status']=='Q') $jobqueue++;
+      elseif ($j['status']=='R') $jobrun++;
+      elseif ($j['status']=='D') $jobdone++;
     }
   }
 
@@ -362,23 +362,25 @@ if ($sessionId) {
     echo"</TD>
   </TR>
   <TR>\n";
+
   // if no submitted jobs, display none
   // for every uploaded job, subtract a submitted job
   // if all submitted jobs are uploaded, it should be 0
-  $jd = $jd-$reconruns;
-  if ($jd>0 || $jr>0 || $jq>0) {$bgcolor=$progcolor;$gifimg=$progpic;}
-  elseif ($jd==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
-  else {$bgcolor=$donecolor;$gifimg=$donepic;}
+  $jobincomp = $jobdone-$reconruns; //incomplete
+	echo "  D=".$jobdone."  R=".$jobrun."  Q=".$jobqueue."  T=".$reconruns."  I=".$jobincomp;
+  if ($jobincomp>0 || $jobrun>0 || $jobqueue>0) { $bgcolor=$progcolor; $gifimg=$progpic; }
+  elseif ($reconruns>0) { $bgcolor=$donecolor; $gifimg=$donepic;  }
+  else { $bgcolor=$nonecolor; $gifimg=$nonepic; }
   echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
     <TD BGCOLOR='$bgcolor'>
     <B>Reconstructions</B>
     </TD>
     <TD BGCOLOR='$bgcolor'>\n";
-  if ($jq >0 || $jr >0 || $jd >0 || $reconruns >0) {
+  if ($jobdone>0 || $jobrun>0 || $jobqueue>0 || $reconruns >0) {
     $jlist=array();
-    if ($jq>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jq queued</A>\n";
-    if ($jr>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jr running</A>\n";
-    if ($jd>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jd ready for upload</A>\n";
+    if ($jq>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jobqueue queued</A>\n";
+    if ($jr>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jobrun running</A>\n";
+    if ($ji>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jobincomp ready for upload</A>\n";
     if ($reconruns>0) $jlist[]="<A HREF='reconsummary.php?expId=$sessionId'>$reconruns uploaded</A>\n";
     $jout=implode('<br />',$jlist);
     echo"$jout";
