@@ -51,7 +51,7 @@ def getFunctionName(arg=None):
 	functionname = os.path.splitext(functionname)[0]
 	return functionname
 
-def writeFunctionLog(commandline, params=None, logfile=None):
+def writeFunctionLog(cmdlist, params=None, logfile=None):
 	"""
 	Used by appionLoop
 	"""
@@ -66,16 +66,17 @@ def writeFunctionLog(commandline, params=None, logfile=None):
 	try:
 		user = os.getlogin() #os.environ.get('USER')
 	except:
-		user = "user"
+		user = "user.unknown"
 	try:
 		host = socket.gethostname()
 	except:
-		host = "host"
+		host = "host.unknown"
 	timestamp = "[ "+user+"@"+host+": "+time.asctime()+" ]\n"
 	out=""
 	f=open(logfile,'a')
 	f.write(timestamp)
-	for arg in commandline:
+	f.write(os.path.abspath(cmdlist[0])+" \\\n  ")
+	for arg in cmdlist[1:]:
 		if len(out) > 60 or len(out)+len(arg) > 90:
 			f.write(out+"\\\n")
 			out = "  "
@@ -204,6 +205,7 @@ def resetVirtualFrameBuffer():
 	while (port%10 == 0 or port%10 == 1):
 		port = int(random.random()*30+2)
 	port = str(port)
+	port = str("5")
 	apDisplay.printMsg("opening Xvfb port "+port)
 	os.popen("Xvfb :"+port+" -screen 0 800x800x8 &");
 	time.sleep(1);
