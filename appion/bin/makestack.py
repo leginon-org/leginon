@@ -730,12 +730,7 @@ def getStackId(params):
 	except:
 		apDisplay.printMsg("created stack has no stackdbid")
 
-def averageStack(params):
-	apDisplay.printMsg("averaging stack for summary web page")
-	stack = os.path.join(params['outdir'], params['single'])
-	avgmrc = os.path.join(params['outdir'], "average.mrc")
-	emancmd = ( "proc2d "+stack+" "+avgmrc+" average" )
-	apEMAN.executeEmanCmd(emancmd)
+
 
 #-----------------------------------------------------------------------
 
@@ -873,7 +868,7 @@ if __name__ == '__main__':
 		tmpboxfile = os.path.join(params['outdir'], "temporaryParticlesFromDB.box")
 		if os.path.isfile(tmpboxfile):
 			os.remove(tmpboxfile)
-	averageStack(params)
+	apStack.averageStack(params)
 	getStackId(params)
 	
 	print "Done!"
