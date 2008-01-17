@@ -2,7 +2,7 @@
 
 import sys, os
 import apDisplay
-import apEuler
+import apEulerDraw
 import apRecon
 import appionData
 
@@ -34,4 +34,4 @@ if __name__ == '__main__':
 	for j in range(numiters):
 		iternum = int(j+1)
 		apDisplay.printMsg("creating euler frequency map for iteration="+str(iternum))
-		apEuler.createEulerImages(refrunid, iternum, path=path)
+		apEulerDraw.createEulerImages(refrunid, iternum, path=path)

@@ -132,69 +132,6 @@ def sortFreqMapPolar(a, b):
 	else:
 		return 0
 
-def resToEuler(res):
-	euler = {}
-	euler['euler1'] = float(res[0])
-	euler['euler2'] = float(res[1])
-	euler['euler3'] = float(res[2])
-	return euler
-
-def eulerCalculateDistance(e1, e2):
-	"""
-	given two euler as dicts
-	calculate distance between euler values
-	value in degrees
-	"""
-	mat0 = getMatrix3(e1)
-	mat1 = getMatrix3(e2)
-	dist = calculateDistance(mat0, mat1)
-	#convert to degrees
-	dist *= 180.0/math.pi
-	return dist
-
-def getMatrix3(eulerdata):
-	"""
-	math from http://mathworld.wolfram.com/EulerAngles.html
-	appears to conform to EMAN conventions - could use more testing
-	tested by independently rotating object with EMAN eulers and with the
-	matrix that results from this function
-	"""
-	phi = round(eulerdata['euler2']*math.pi/180,2) #eman az,  azimuthal
-	the = round(eulerdata['euler1']*math.pi/180,2) #eman alt, altitude
-	#psi = round(eulerdata['euler3']*math.pi/180,2) #eman phi, inplane_rotation
-	psi = 0.0  #psi component is not working!!!
-
-	m=numpy.zeros((3,3), dtype=numpy.float32)
-	m[0,0] =  math.cos(psi)*math.cos(phi) - math.cos(the)*math.sin(phi)*math.sin(psi)
-	m[0,1] =  math.cos(psi)*math.sin(phi) + math.cos(the)*math.cos(phi)*math.sin(psi)
-	m[0,2] =  math.sin(psi)*math.sin(the)
-	m[1,0] = -math.sin(psi)*math.cos(phi) - math.cos(the)*math.sin(phi)*math.cos(psi)
-	m[1,1] = -math.sin(psi)*math.sin(phi) + math.cos(the)*math.cos(phi)*math.cos(psi)
-	m[1,2] =  math.cos(psi)*math.sin(the)
-	m[2,0] =  math.sin(the)*math.sin(phi)
-	m[2,1] = -math.sin(the)*math.cos(phi)
-	m[2,2] =  math.cos(the)
-	return m
-
-def calculateDistance(m1,m2):
-	r=numpy.dot(m1.transpose(),m2)
-	#print r
-	trace=r.trace()
-	s=(trace-1)/2.0
-	if int(round(abs(s),7)) == 1:
-		#print "here"
-		return 0
-	else:
-		#print "calculating"
-		theta=math.acos(s)
-		#print 'theta',theta
-		t1=abs(theta/(2*math.sin(theta)))
-		#print 't1',t1 
-		t2 = math.sqrt(pow(r[0,1]-r[1,0],2)+pow(r[0,2]-r[2,0],2)+pow(r[1,2]-r[2,1],2))
-		#print 't2',t2, t2*180/math.pi
-		d = t1 * t2
-		#print 'd',d
-		return d
 
 def calcFreqGrid(points, indres=30.0):
 	indmult = int(90.0/indres)

@@ -11,7 +11,7 @@ import apDatabase
 import apParam
 import apDisplay
 import apEMAN
-import apEuler
+import apEulerDraw
 try:
 	import EMAN
 except:
@@ -580,7 +580,7 @@ def insertIteration(iteration, params):
 	apDisplay.printMsg("creating euler frequency map")
 	refrunid = int(params['refinementRun'].dbid)
 	iternum = int(iteration['num'])
-	apEuler.createEulerImages(refrunid, iternum, path=params['path'])
+	apEulerDraw.createEulerImages(refrunid, iternum, path=params['path'])
 
 	return
 

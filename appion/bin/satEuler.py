@@ -15,7 +15,7 @@ import MySQLdb
 import appionScript
 import apDisplay
 import apStack
-import apEuler
+import apEulerCalc
 import apParam
 #sinedon
 import sinedon
@@ -152,7 +152,7 @@ class satEulerScript(appionScript.AppionScript):
 		angdistlist = []
 		rotdistlist = []
 		for eulerpair in eulertree:
-			eulerpair['angdist'] = apEuler.eulerCalculateDistance(eulerpair['part1'], eulerpair['part2'])
+			eulerpair['angdist'] = apEulerCalc.eulerCalculateDistance(eulerpair['part1'], eulerpair['part2'])
 			angdistlist.append(eulerpair['angdist'])
 			eulerpair['rotdist'] = self.calcRotationalDifference(eulerpair)
 			rotdistlist.append(eulerpair['rotdist'])
@@ -217,12 +217,12 @@ class satEulerScript(appionScript.AppionScript):
 				# first get all equivalent Eulers given symmetry
 				eqEulers=calculateEquivSym(eulers[n]['eulers'])
 				# calculate the distances between the original Euler and all the equivalents
-				mat0=apEuler.getMatrix3(e0)
-				mat1=apEuler.getMatrix3(eulers[n]['eulers'])
+				mat0=apEulerCalc.getMatrix3(e0)
+				mat1=apEulerCalc.getMatrix3(eulers[n]['eulers'])
 
 				d=[]
 				for e1 in eqEulers:
-					d.append(apEuler.calculateDistance(mat0,mat1))
+					d.append(apEulerCalc.calculateDistance(mat0,mat1))
 				mind=min(d)
 				distances[n-1]=mind*180/math.pi
 				f.write('%f\t' % distances[n-1])
