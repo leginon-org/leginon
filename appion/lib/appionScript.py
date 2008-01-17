@@ -23,23 +23,23 @@ class AppionScript(object):
 		self.setProcessingDirName()
 
 		### setup default parser: output directory, etc.
-		self.parser = OptionParser(usage=self.usage)
+		self.parser = OptionParser()
 		self.setupParserOptions()
 		self.params = apParam.convertParserToParams(self.parser)
 
 		### check if user wants to print help message
 		self.checkConflicts()
 
+		### setup output directory
+		self.setupOutputDirectory()
+
 		### write function log
 		apParam.writeFunctionLog(sys.argv)
-
-		### setup output directory
-		self._setupOutputDirectory()
 
 		### any custom init functions go here
 		self.onInit()
 
-	def _setupOutputDirectory(self):
+	def setupOutputDirectory(self):
 		if self.params['outdir'] is None and 'session' in self.params:
 			#auto set the output directory
 			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
@@ -50,25 +50,25 @@ class AppionScript(object):
 
 		#create the output directory, if needed
 		apDisplay.printMsg("Output directory: "+self.params['outdir'])
-		apParam.createDirectory(self.params['outdir'])		
+		apParam.createDirectory(self.params['outdir'])
+		os.chdir(self.params['outdir'])
 
 	#######################################################
 	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####
 	#######################################################
 
-	usage = ( "Usage: %prog --session=<session> --description='<text>' [options]" )
-
 	def setupParserOptions(self):
 		"""
 		set the input parameters
 		"""
+		self.parser.set_usage("Usage: %prog --session=<session> --commit --description='<text>' [options]")
 		self.parser.add_option("-d", "--description", dest="description",
 			help="Description of the template (must be in quotes)", metavar="TEXT")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name associated with template (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("-o", "--outdir", dest="outdir",
 			help="Location to copy the templates to", metavar="PATH")
-		self.parser.add_option("--commit", dest="commit", default=True,
+		self.parser.add_option("-C", "--commit", dest="commit", default=True,
 			action="store_true", help="Commit template to database")
 		self.parser.add_option("--no-commit", dest="commit", default=True,
 			action="store_false", help="Do not commit template to database")
