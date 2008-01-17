@@ -107,6 +107,17 @@ def getListFileParticle(line, linenum):
 	return particlenum
 
 #--------
+def getStackIdFromRecon(reconrunid):
+	reconrundata = appiondb.direct_query(appionData.ApRefinementRunData, reconrunid)
+	if not reconrundata:
+		apDisplay.printWarning("Could not find stack id for Recon Run="+str(reconrunid))
+		return None
+	stackid = reconrundata['stack'].dbid
+	apDisplay.printMsg("Found Stack id="+str(stackid)+" for Recon Run id="+str(reconrunid))
+	return stackid
+
+
+#--------
 def commitSubStack(params):
 	"""
 	commit a substack to database
