@@ -17,6 +17,59 @@ db=MySQLdb.connect(**dbconf)
 # create a cursor
 cursor = db.cursor()
 
+
+#=====================
+def getTiltRunIDFromReconID(reconid):
+	t0 = time.time()
+	query = (
+		"SELECT \n"
+		+"  part.`REF|ApSelectionRunData|selectionrun` AS tiltrunid \n"
+		+"FROM `ApRefinementRunData` as refrun \n"
+		+"LEFT JOIN `ApStackParticlesData` AS stackpart \n"
+		+"  ON refrun.`REF|ApStackData|stack` = stackpart.`REF|ApStackData|stack` \n"
+		+"LEFT JOIN `ApParticleData` AS part \n"
+		+"  ON stackpart.`REF|ApParticleData|particle` = part.`DEF_id` \n"
+		+"WHERE refrun.`DEF_id` = "+str(reconid)+" \n" 
+		+"  LIMIT 1 \n"
+	)
+	cursor.execute(query)
+	numrows = int(cursor.rowcount)
+	result = cursor.fetchall()
+	apDisplay.printMsg("Fetched data in "+apDisplay.timeString(time.time()-t0))
+	if not result:
+		apDisplay.printError("Failed to find tilt run")
+	tiltrunid = result[0][0]
+	apDisplay.printMsg("selected tilt run: "+str(tiltrunid))
+	return tiltrunid
+
+#=====================
+def getLastIterationFromReconID(reconid):
+	t0 = time.time()
+	query = (
+		"SELECT \n"
+		+"  refdata.`iteration` \n"
+		+"FROM `ApRefinementData` as refdata \n"
+		+"WHERE refdata.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
+		+"ORDER BY refdata.`iteration` DESC \n"
+		+"LIMIT 1 \n"
+	)
+	cursor.execute(query)
+	numrows = int(cursor.rowcount)
+	result = cursor.fetchall()
+	apDisplay.printMsg("Fetched data in "+apDisplay.timeString(time.time()-t0))
+	if not result:
+		apDisplay.printError("Failed to find any iterations")
+	tiltrunid = result[0][0]
+	apDisplay.printMsg("selected last iteration: "+str(tiltrunid))
+	return tiltrunid
+
+#=====================
+def analyzeData(reconid, tiltrunid, iteration=1):
+	results = getEulersForIteration(reconid, tiltrunid, iteration)
+	datastr = "_r"+str(reconid)+"_i"+str(iteration)
+	processEulers(results, datastr)
+
+#=====================
 def getEulersForIteration(reconid, tiltrunid, iteration=1):
 	"""
 	returns all classdata for a particular refinement iteration
@@ -24,10 +77,6 @@ def getEulersForIteration(reconid, tiltrunid, iteration=1):
 	t0 = time.time()
 	query = (
 		"SELECT \n"
-			#+"  tiltd.`REF|ApParticleData|particle1` AS p1, \n"
-			#+"  tiltd.`REF|ApParticleData|particle2` AS p2, \n"
-			#+"  refd1.`iteration`, refd1.`REF|ApRefinementRunData|refinementRun` AS refRun1, \n"
-			#+"  refd2.`iteration`, refd2.`REF|ApRefinementRunData|refinementRun` AS refRun2, \n"
 			+"  e1.euler1 AS alt1, e1.euler2 AS az1, partclass1.`inplane_rotation` AS phi1, \n"
 			+"  e2.euler1 AS alt2, e2.euler2 AS az2, partclass2.`inplane_rotation` AS phi2, \n"
 			+"  stpart1.particleNumber AS partnum1, stpart2.particleNumber AS partnum2 \n"
@@ -55,76 +104,54 @@ def getEulersForIteration(reconid, tiltrunid, iteration=1):
 			+"  AND refd1.`iteration` = "+str(iteration)+" \n"
 			+"  AND refd2.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
 			+"  AND refd2.`iteration` = "+str(iteration)+" \n"
-			#+"  AND tiltd.`REF|ApParticleData|particle1` = 14234108 \n"
 			+"ORDER BY stpart1.particleNumber ASC \n"
 			#+"LIMIT 300 \n"
 		)
-
 	print query
-
 	cursor.execute(query)
 	numrows = int(cursor.rowcount)
-	print "Found ",numrows," rows"
-	apDisplay.printMsg("Found data in "+apDisplay.timeString(time.time()-t0))
-
 	result = cursor.fetchall()
-	apDisplay.printMsg("Fetched data in "+apDisplay.timeString(time.time()-t0))
+	apDisplay.printMsg("Fetched "+str(numrows)+" rows in "+apDisplay.timeString(time.time()-t0))
+	return result
 
-	#pprint.pprint(result)
-	"""
-	for i in result:
-		for j in i:
-			sys.stderr.write(str(round(j,2))+", ")
-		sys.stderr.write("\n")
-	"""
-
-	f = open("eulerdata"+str(iteration)+".txt", "w")
-	k = open("keepfile"+str(iteration)+".lst", "w")
+#=====================
+def processEulers(results, datastr):
+	f = open("eulerdata"+datastr+".txt", "w")
+	k = open("keepfile"+datastr+".lst", "w")
 	distlist = []
 	keepcount=0
-	for i in result:
+	for i in results:
 		r0,r1 = resToEuler(i)
-		#print r0
-		#print r1
 		mat0 = getMatrix3(r0)
 		mat1 = getMatrix3(r1)
 		dist = calculateDistance(mat0, mat1)
-		#print mat0
-		#print mat1
 		f.write(str(dist)+"\n")
 		distlist.append(dist)
 		if abs(dist - 15.0) < 5.0:
-			#print "o",str(int(i[6]))
 			keepcount+=1
 			k.write(str(int(i[6]-1))+"\n")
 			k.write(str(int(i[7]-1))+"\n")
-		#else:
-		#	print "x",str(int(i[6]))
-		#print "dist=",dist
 	f.close()
 	k.close()
 
 	freqnumpy = numpy.asarray(distlist, dtype=numpy.float32)
-	#print(freqlist)
 	print "EULER DATA:"
 	print "min=",ndimage.minimum(freqnumpy)
 	print "max=",ndimage.maximum(freqnumpy)
 	print "mean=",ndimage.mean(freqnumpy)
 	print "stdev=",ndimage.standard_deviation(freqnumpy)
 
-	f = open("rotdata"+str(iteration)+".txt", "w")
+	f = open("rotdata"+datastr+".txt", "w")
 	distlist = []
-	for i in result:
+	for i in results:
 		diff = abs(i[2] - i[5])
 		if diff > 180.0:
 			diff -= 180.0
 		f.write(str(diff)+"\n")
 		distlist.append(dist)
-		#print "dist=",dist
 	f.close()
 
 	freqnumpy = numpy.asarray(distlist, dtype=numpy.float32)
-	#print(freqlist)
 	print "ROTATION DATA:"
 	print "min=",ndimage.minimum(freqnumpy)
 	print "max=",ndimage.maximum(freqnumpy)
@@ -133,6 +160,7 @@ def getEulersForIteration(reconid, tiltrunid, iteration=1):
 
 	#return radlist,anglelist,[],[]
 
+#=====================
 def resToEuler(res):
 	first = {}
 	first['euler1'] = float(res[0])
@@ -144,6 +172,7 @@ def resToEuler(res):
 	second['euler3'] = float(res[5])
 	return first,second
 
+#=====================
 def getMatrix3(eulerdata):
 	#math from http://mathworld.wolfram.com/EulerAngles.html
 	#appears to conform to EMAN conventions - could use more testing
@@ -166,11 +195,12 @@ def getMatrix3(eulerdata):
 	m[2,2] =  math.cos(the)
 	return m
 
+#=====================
 def calculateDistance(m1,m2):
 	r=numpy.dot(m1.transpose(),m2)
 	#print r
 	trace=r.trace()
-	s=(trace-1)/2.0
+	s=(trace-1.0)/2.0
 	if int(round(abs(s),7)) == 1:
 		#print "here"
 		return 0
@@ -186,12 +216,19 @@ def calculateDistance(m1,m2):
 		#print 'd',d
 		return d*180.0/math.pi
 
+#=====================
 if __name__ == "__main__":
-	#getEulersForIteration(reconid, tiltrunid, iteration=1):
-	#for i in (8,5,7):
-	#for i in (8,):
-	#	getEulersForIteration(186, 557, i)
-	getEulersForIteration(194, 557, 4)
+	reconid = 186 #186, 194, 239, 243
+	tiltrunid = None #557, 655
+	iternum = None #20
+
+	if not tiltrunid:
+		tiltrunid = getTiltRunIDFromReconID(reconid)
+	if not iternum:
+		iternum = getLastIterationFromReconID(reconid)
+
+	#analyzeData(reconid, tiltrunid, iternum)
+
 
 
 
