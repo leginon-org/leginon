@@ -12,7 +12,7 @@ import leginondata
 import node
 import gui.wx.MagCalibrator
 import time
-import libCV
+import libCVwrapper
 import numpy
 from pyami import arraystats, mrc, affine, msc
 from scipy import ndimage
@@ -187,13 +187,13 @@ class MagCalibrator(calibrator.Calibrator):
 		print 'OTHER', othercenter
 
 	def matchImages(self, im1, im2, minsize, maxsize):
-		result = libCV.MatchImages(im1, im2, minsize, maxsize, 0, 0, 1, 1)
+		result = libCVwrapper.MatchImages(im1, im2, minsize, maxsize, 0, 0, 1, 1)
 		return result
 
 	def findRegions(self, im):
 		minsize = self.settings['minsize']
 		maxsize = self.settings['maxsize']
-		regions, image = libCV.FindRegions(im, minsize, maxsize, 0, 0, 1, 1)
+		regions, image = libCVwrapper.FindRegions(im, minsize, maxsize, 0, 0, 1, 1)
 		coords = map(self.regionCenter, regions)
 		self.setTargets(coords, 'Peak')
 		return regions
