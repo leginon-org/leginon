@@ -2,31 +2,35 @@
 
 #python
 import sys
+import os
 import random
 import math
 import time
 import pprint
 #site-packages
 import numpy
-from scipy import ndimage
+from scipy import ndimage, stats
 import MySQLdb
 #appion
 import appionScript
 import apDisplay
 import apStack
+import apEuler
+import apParam
 #sinedon
 import sinedon
 
 class satEulerScript(appionScript.AppionScript):
-	def onInit(self):
+	def __init__(self):
 		# connect
-		dbconf=sinedon.getConfig('appionData')
-		db=MySQLdb.connect(**dbconf)
+		self.dbconf = sinedon.getConfig('appionData')
+		self.db     = MySQLdb.connect(**self.dbconf)
 		# create a cursor
-		cursor = db.cursor()
+		self.cursor = self.db.cursor()
+		appionScript.AppionScript.__init__(self)
 
 	#=====================
-	def getTiltRunIDFromReconID(reconid):
+	def getTiltRunIDFromReconID(self, reconid):
 		t0 = time.time()
 		query = (
 			"SELECT \n"
@@ -39,10 +43,9 @@ class satEulerScript(appionScript.AppionScript):
 			+"WHERE refrun.`DEF_id` = "+str(reconid)+" \n" 
 			+"  LIMIT 1 \n"
 		)
-		cursor.execute(query)
-		numrows = int(cursor.rowcount)
-		result = cursor.fetchall()
-		apDisplay.printMsg("Fetched data in "+apDisplay.timeString(time.time()-t0))
+		self.cursor.execute(query)
+		result = self.cursor.fetchall()
+		#apDisplay.printMsg("Fetched data in "+apDisplay.timeString(time.time()-t0))
 		if not result:
 			apDisplay.printError("Failed to find tilt run")
 		tiltrunid = result[0][0]
@@ -50,7 +53,7 @@ class satEulerScript(appionScript.AppionScript):
 		return tiltrunid
 
 	#=====================
-	def getLastIterationFromReconID(reconid):
+	def getLastIterationFromReconID(self, reconid):
 		t0 = time.time()
 		query = (
 			"SELECT \n"
@@ -60,10 +63,9 @@ class satEulerScript(appionScript.AppionScript):
 			+"ORDER BY refdata.`iteration` DESC \n"
 			+"LIMIT 1 \n"
 		)
-		cursor.execute(query)
-		numrows = int(cursor.rowcount)
-		result = cursor.fetchall()
-		apDisplay.printMsg("Fetched data in "+apDisplay.timeString(time.time()-t0))
+		self.cursor.execute(query)
+		result = self.cursor.fetchall()
+		#apDisplay.printMsg("Fetched data in "+apDisplay.timeString(time.time()-t0))
 		if not result:
 			apDisplay.printError("Failed to find any iterations")
 		tiltrunid = result[0][0]
@@ -71,22 +73,17 @@ class satEulerScript(appionScript.AppionScript):
 		return tiltrunid
 
 	#=====================
-	def analyzeData(reconid, tiltrunid, iteration=1):
-		results = getEulersForIteration(reconid, tiltrunid, iteration)
-		datastr = "_r"+str(reconid)+"_i"+str(iteration)
-		processEulers(results, datastr)
-
-	#=====================
-	def getEulersForIteration(reconid, tiltrunid, iteration=1):
+	def getEulersForIteration(self, reconid, tiltrunid, iteration=1):
 		"""
 		returns all classdata for a particular refinement iteration
 		"""
 		t0 = time.time()
 		query = (
 			"SELECT \n"
+				+"  stpart1.particleNumber AS partnum1, \n"
 				+"  e1.euler1 AS alt1, e1.euler2 AS az1, partclass1.`inplane_rotation` AS phi1, \n"
-				+"  e2.euler1 AS alt2, e2.euler2 AS az2, partclass2.`inplane_rotation` AS phi2, \n"
-				+"  stpart1.particleNumber AS partnum1, stpart2.particleNumber AS partnum2 \n"
+				+"  stpart2.particleNumber AS partnum2, \n"
+				+"  e2.euler1 AS alt2, e2.euler2 AS az2, partclass2.`inplane_rotation` AS phi2 \n"
 				+"FROM `ApTiltParticlePairData` AS tiltd \n"
 				+"LEFT JOIN `ApImageTiltTransformData` as transform \n"
 				+"  ON tiltd.`REF|ApImageTiltTransformData|transform`=transform.`DEF_id` \n"
@@ -111,133 +108,226 @@ class satEulerScript(appionScript.AppionScript):
 				+"  AND refd1.`iteration` = "+str(iteration)+" \n"
 				+"  AND refd2.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
 				+"  AND refd2.`iteration` = "+str(iteration)+" \n"
-				+"ORDER BY stpart1.particleNumber ASC \n"
-				#+"LIMIT 300 \n"
+				#+"ORDER BY stpart1.particleNumber ASC \n"
+				#+"LIMIT 3000 \n"
 			)
-		print query
-		cursor.execute(query)
-		numrows = int(cursor.rowcount)
-		result = cursor.fetchall()
+		apDisplay.printMsg("Running MySQL query")
+		#print query
+		self.cursor.execute(query)
+		numrows = int(self.cursor.rowcount)
+		results = self.cursor.fetchall()
 		apDisplay.printMsg("Fetched "+str(numrows)+" rows in "+apDisplay.timeString(time.time()-t0))
-		return result
+		return results
 
 	#=====================
-	def processEulers(results, datastr):
-		f = open("eulerdata"+datastr+".txt", "w")
-		k = open("keepfile"+datastr+".lst", "w")
-		distlist = []
-		keepcount=0
-		for i in results:
-			r0,r1 = resToEuler(i)
-			mat0 = getMatrix3(r0)
-			mat1 = getMatrix3(r1)
-			dist = calculateDistance(mat0, mat1)
-			f.write(str(dist)+"\n")
-			distlist.append(dist)
-			if abs(dist - 15.0) < 5.0:
-				keepcount+=1
-				k.write(str(int(i[6]-1))+"\n")
-				k.write(str(int(i[7]-1))+"\n")
-		f.close()
+	def convertSQLtoEulerTree(self, results):
+		t0 = time.time()
+		eulertree = []
+		for row in results:
+			eulerpair = { 'part1': {}, 'part2': {} }
+			eulerpair['part1']['partid'] = int(row[0])
+			eulerpair['part1']['euler1'] = float(row[1])
+			eulerpair['part1']['euler2'] = float(row[2])
+			eulerpair['part1']['euler3'] = float(row[3])
+
+			eulerpair['part2']['partid'] = int(row[4])
+			eulerpair['part2']['euler1'] = float(row[5])
+			eulerpair['part2']['euler2'] = float(row[6])
+			eulerpair['part2']['euler3'] = float(row[7])
+			eulertree.append(eulerpair)
+
+		apDisplay.printMsg("Converted "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
+		return eulertree
+
+	#=====================
+	def calcRotationalDifference(self, eulerpair):
+		rotdist = abs(eulerpair['part1']['euler3'] - eulerpair['part2']['euler3']) % 360.0
+		#if rotdist > 180.0:
+		#	rotdist -= 360.0
+		return rotdist
+
+	#=====================
+	def processEulers(self, eulertree):
+		t0 = time.time()
+		angdistlist = []
+		rotdistlist = []
+		for eulerpair in eulertree:
+			eulerpair['angdist'] = apEuler.eulerCalculateDistance(eulerpair['part1'], eulerpair['part2'])
+			angdistlist.append(eulerpair['angdist'])
+			eulerpair['rotdist'] = self.calcRotationalDifference(eulerpair)
+			rotdistlist.append(eulerpair['rotdist'])
+
+		self.writeKeepFile(eulertree)
+		self.writeScatterFile(eulertree)
+
+		print "EULER ANGLE DATA:"
+		myrange = tuple((0,90,5))
+		self.analyzeList(angdistlist, myrange, "eulerdata"+self.datastr+".dat")
+
+		print "PLANE ROTATION DATA:"
+		myrange = tuple((-180,180,10))
+		self.analyzeList(rotdistlist, myrange, "rotdata"+self.datastr+".dat")
+
+		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
+
+	#=====================
+	def writeScatterFile(self, eulertree):
+		s = open("scatter"+self.datastr+".dat", "w")
+		for eulerpair in eulertree:
+			mystr = ( "%3.4f %3.4f\n" % (eulerpair['angdist'], eulerpair['rotdist']) )
+			s.write(mystr)
+		s.write("&\n")
+		s.close()
+		return
+
+	#=====================
+	def writeKeepFile(self, eulertree):
+		#find good particles
+		keeplist = []
+		for eulerpair in eulertree:
+			if abs(eulerpair['angdist'] - 15.0) < 10.0:
+				keeplist.append(eulerpair['part1']['partid']-1)
+				keeplist.append(eulerpair['part2']['partid']-1)
+		#sort
+		keeplist.sort()
+
+		#write to file
+		k = open("keepfile"+self.datastr+".lst", "w")
+		for kid in keeplist:
+			k.write(str(kid)+"\n")
 		k.close()
 
-		freqnumpy = numpy.asarray(distlist, dtype=numpy.float32)
-		print "EULER DATA:"
-		print "min=",ndimage.minimum(freqnumpy)
-		print "max=",ndimage.maximum(freqnumpy)
-		print "mean=",ndimage.mean(freqnumpy)
-		print "stdev=",ndimage.standard_deviation(freqnumpy)
+		percent = "%3.1f" % (50.0*len(keeplist) / float(len(eulertree)))
+		apDisplay.printMsg("Keeping "+str(len(keeplist))+" of "+str(2*len(eulertree))+" ("+percent+"%) eulers")
+		return
+	#=====================
+	def removePtclsByJumps(particles,rejectlst,params):
+		#errdict={}
+		print "Finding Euler jumps"
+		nptcls=len(particles)
+		stack=os.path.join(particles[0]['particle']['stack']['path']['path'],particles[0]['particle']['stack']['name'])
+		f=open('jumps.txt','w')
+		for ptcl in range(1,nptcls+1):
+			eulers=getEulersForParticle(ptcl,params['reconid'])
+			eulers.sort(sortEulers)
+			e0=eulers[0]['eulers']
+			distances=numpy.zeros((len(eulers)-1))
+			f.write('%d\t' % ptcl)
+			for n in range(1,len(eulers)):
+				# first get all equivalent Eulers given symmetry
+				eqEulers=calculateEquivSym(eulers[n]['eulers'])
+				# calculate the distances between the original Euler and all the equivalents
+				mat0=apEuler.getMatrix3(e0)
+				mat1=apEuler.getMatrix3(eulers[n]['eulers'])
 
-		f = open("rotdata"+datastr+".txt", "w")
-		distlist = []
-		for i in results:
-			diff = abs(i[2] - i[5])
-			if diff > 180.0:
-				diff -= 180.0
-			f.write(str(diff)+"\n")
-			distlist.append(dist)
-		f.close()
-
-		freqnumpy = numpy.asarray(distlist, dtype=numpy.float32)
-		print "ROTATION DATA:"
-		print "min=",ndimage.minimum(freqnumpy)
-		print "max=",ndimage.maximum(freqnumpy)
-		print "mean=",ndimage.mean(freqnumpy)
-		print "stdev=",ndimage.standard_deviation(freqnumpy)
-
-		#return radlist,anglelist,[],[]
+				d=[]
+				for e1 in eqEulers:
+					d.append(apEuler.calculateDistance(mat0,mat1))
+				mind=min(d)
+				distances[n-1]=mind*180/math.pi
+				f.write('%f\t' % distances[n-1])
+				e0=eulers[n]['eulers']
+			if numpy.median(distances) > params['avgjump']:
+				rejectlst.append(ptcl)
+			if not ptcl%100:
+				print "particle",ptcl
+			f.write('%f\t%f\t%f\n' % (distances.mean(),numpy.median(distances),distances.std()))
+			#print distances
+			#print distances.mean()
+		return rejectlst
 
 	#=====================
-	def resToEuler(res):
-		first = {}
-		first['euler1'] = float(res[0])
-		first['euler2'] = float(res[1])
-		first['euler3'] = float(res[2])
-		second = {}
-		second['euler1'] = float(res[3])
-		second['euler2'] = float(res[4])
-		second['euler3'] = float(res[5])
-		return first,second
+	def analyzeList(self, mylist, myrange=(0,1,1), filename=None):
+		"""
+		histogram2(a, bins) -- Compute histogram of a using divisions in bins
 
-	#=====================
-	def getMatrix3(eulerdata):
-		#math from http://mathworld.wolfram.com/EulerAngles.html
-		#appears to conform to EMAN conventions - could use more testing
-		#tested by independently rotating object with EMAN eulers and with the
-		#matrix that results from this function
-		phi = round(eulerdata['euler2']*math.pi/180,2) #eman az,  azimuthal
-		the = round(eulerdata['euler1']*math.pi/180,2) #eman alt, altitude
-		psi = 0.0
-		#psi = round(eulerdata['euler3']*math.pi/180,2) #eman phi, inplane_rotation
+		Description:
+		   Count the number of times values from array a fall into
+		   numerical ranges defined by bins.  Range x is given by
+		   bins[x] <= range_x < bins[x+1] where x =0,N and N is the
+		   length of the bins array.  The last range is given by
+		   bins[N] <= range_N < infinity.  Values less than bins[0] are
+		   not included in the histogram.
+		Arguments:
+		   a -- 1D array.  The array of values to be divied into bins
+		   bins -- 1D array.  Defines the ranges of values to use during
+		         histogramming.
+		Returns:
+		   1D array.  Each value represents the occurences for a given
+		   bin (range) of values.
+		"""
+		#hist,bmin,minw,err = stats.histogram(mynumpy, numbins=36)
+		#print hist,bmin,minw,err,"\n"
+		mymin = float(myrange[0])
+		mymax = float(myrange[1])
+		mystep = float(myrange[2])
 
-		m=numpy.zeros((3,3), dtype=numpy.float32)
-		m[0,0] =  math.cos(psi)*math.cos(phi) - math.cos(the)*math.sin(phi)*math.sin(psi)
-		m[0,1] =  math.cos(psi)*math.sin(phi) + math.cos(the)*math.cos(phi)*math.sin(psi)
-		m[0,2] =  math.sin(psi)*math.sin(the)
-		m[1,0] = -math.sin(psi)*math.cos(phi) - math.cos(the)*math.sin(phi)*math.cos(psi)
-		m[1,1] = -math.sin(psi)*math.sin(phi) + math.cos(the)*math.cos(phi)*math.cos(psi)
-		m[1,2] =  math.cos(psi)*math.sin(the)
-		m[2,0] =  math.sin(the)*math.sin(phi)
-		m[2,1] = -math.sin(the)*math.cos(phi)
-		m[2,2] =  math.cos(the)
-		return m
+		mynumpy = numpy.asarray(mylist, dtype=numpy.float32)
+		print "range=",round(ndimage.minimum(mynumpy),2)," <> ",round(ndimage.maximum(mynumpy),2)
+		print " mean=",round(ndimage.mean(mynumpy),2)," +- ",round(ndimage.standard_deviation(mynumpy),2)
+		
+		#histogram
+		bins = []
+		mybin = mymin
+		while mybin < mymax:
+			bins.append(mybin)
+			mybin += mystep
+		bins = numpy.asarray(bins, dtype=numpy.float32)
+		apDisplay.printMsg("Creating histogram with "+str(len(bins))+" bins")
+		hist = stats.histogram2(mynumpy, bins=bins)
+		#print bins
+		#print hist
+		if filename is not None:
+			f = open(filename, "w")
+			for i in range(len(bins)):
+				out = ("%3.4f %d\n" % (bins[i] + 2.5, hist[i]) )
+				f.write(out)
+			f.write("&\n")
 
-	#=====================
-	def calculateDistance(m1,m2):
-		r=numpy.dot(m1.transpose(),m2)
-		#print r
-		trace=r.trace()
-		s=(trace-1.0)/2.0
-		if int(round(abs(s),7)) == 1:
-			#print "here"
-			return 0
-		else:
-			#print "calculating"
-			theta=math.acos(s)
-			#print 'theta',theta
-			t1=abs(theta/(2*math.sin(theta)))
-			#print 't1',t1 
-			t2 = math.sqrt(pow(r[0,1]-r[1,0],2)+pow(r[0,2]-r[2,0],2)+pow(r[1,2]-r[2,1],2))
-			#print 't2',t2, t2*180/math.pi
-			d = t1 * t2
-			#print 'd',d
-			return d*180.0/math.pi
+	def subStackCmd(self):
+		keepfile = os.path.join(self.params['outdir'], "keepfile"+self.datastr+".lst")
+		stackdata = apStack.getRunsInStack(self.params['stackid'])
+
+		cmd = ( "subStack.py "
+			+" --old-stack-id="+str(self.params['stackid'])
+			+" \\\n"+" --keep-file="+keepfile
+			+" \\\n"+" --new-stack-name=sub-"+stackdata[0]['stackRun']['stackRunName']
+			+" --commit"
+			+" --description='xxx xx' \n" )
+		print "New subStack.py Command:"
+		apDisplay.printColor(cmd, "purple")
 
 	######################################################
 	####  ITEMS BELOW WERE SPECIFIED BY AppionScript  ####
 	######################################################
 
 	#=====================
+	def setupOutputDirectory(self):
+		"""
+		Overriding appionScript version, this not a kosher thing to do
+		"""
+		self.datastr = "_r"+str(self.params['reconid'])+"_i"+str(self.params['iternum'])
+		self.params['outdir'] = os.path.join(os.path.abspath("."), "sat"+self.datastr)
+		apDisplay.printMsg("Output directory: "+self.params['outdir'])
+		apParam.createDirectory(self.params['outdir'])
+		os.chdir(self.params['outdir'])
+
+	#=====================
 	def setupParserOptions(self):
+		self.parser.set_usage("Usage: %prog --reconid=<##> --commit [options]")
 		self.parser.add_option("-r", "--reconid", dest="reconid", type='int',
 			help="Reconstruction Run ID", metavar="INT")
 		self.parser.add_option("-i", "--iternum", dest="iternum", type='int',
 			help="Reconstruction Iteration Number, defaults to last iteration", metavar="INT")
 		self.parser.add_option("-o", "--outdir", dest="outdir",
 			help="Location to copy the templates to", metavar="PATH")
-		self.parser.add_option("--commit", dest="commit", default=True,
+		self.parser.add_option("--tiltrunid", dest="tiltrunid", type='int',
+			help="Automatically set", metavar="INT")
+		self.parser.add_option("--stackid", dest="stackid", type='int',
+			help="Automatically set", metavar="INT")
+		self.parser.add_option("-C", "--commit", dest="commit", default=False,
 			action="store_true", help="Commit template to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
+		self.parser.add_option("--no-commit", dest="commit", default=False,
 			action="store_false", help="Do not commit template to database")
 
 	#=====================
@@ -245,12 +335,12 @@ class satEulerScript(appionScript.AppionScript):
 		"""
 		make sure the necessary parameters are set correctly
 		"""
-		if self.params['reconid'] is reconid:
+		if not self.params['reconid']:
 			apDisplay.printError("Enter a Reconstruction Run ID, e.g. --reconid=243")
 		if not self.params['tiltrunid']:
-			self.params['tiltrunid'] = getTiltRunIDFromReconID(self.params['reconid'])
+			self.params['tiltrunid'] = self.getTiltRunIDFromReconID(self.params['reconid'])
 		if not self.params['iternum']:
-			self.params['iternum'] = getLastIterationFromReconID(self.params['reconid'])
+			self.params['iternum'] = self.getLastIterationFromReconID(self.params['reconid'])
 		if not self.params['stackid']:
 			self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'])
 
@@ -258,17 +348,14 @@ class satEulerScript(appionScript.AppionScript):
 	def start(self):
 		#reconid = 186, 194, 239, 243
 		#tiltrunid = 557, 655
-
-		if not self.params['tiltrunid']:
-			self.params['tiltrunid'] = getTiltRunIDFromReconID(self.params['reconid'])
-		if not self.params['iternum']:
-			self.params['iternum'] = getLastIterationFromReconID(self.params['reconid'])
-		if not self.params['stackid']:
-			self.params['iternum'] = apStack.getStackIdFromRecon(self.params['reconid'])
-
 		### Big slow process
 		if self.params['commit'] is True:
-			analyzeData(reconid, tiltrunid, iternum)
+			t0 = time.time()
+			results = self.getEulersForIteration(self.params['reconid'], self.params['tiltrunid'], self.params['iternum'])
+			eulertree = self.convertSQLtoEulerTree(results)
+			self.processEulers(eulertree)
+			apDisplay.printMsg("Total time for "+str(len(eulertree))+" eulers: "+apDisplay.timeString(time.time()-t0))
+		self.subStackCmd()
 
 #=====================
 if __name__ == "__main__":
