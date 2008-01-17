@@ -67,7 +67,7 @@ class Calibrator(node.Node):
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			except Exception, e:
-				self.logger.error(errstr % e)
+				self.logger.error(e)
 				return 1
 		else:
 			if self.presetsclient.getCurrentPreset() is None:
