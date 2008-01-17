@@ -2,6 +2,7 @@ import math
 import numpy
 import scipy.ndimage
 import numextension
+from pyami import mrc
 
 def swapQuadrants(image):
 	rows, columns = image.shape
@@ -69,8 +70,8 @@ def findRotationScale(image1, image2, window=None, highpass=None):
 					-math.pi/2.0, math.pi/2.0)
 	image1, base, phiscale = numextension.logpolar(image1, *args)
 	image2, base, phiscale = numextension.logpolar(image2, *args)
-	#Mrc.numeric_to_mrc(image1, 'lp1.mrc')
-	#Mrc.numeric_to_mrc(image2, 'lp2.mrc')
+	#mrc.write(image1, 'lp1.mrc')
+	#mrc.write(image2, 'lp2.mrc')
 
 	pc = phaseCorrelate(image1, image2)
 	peak, value = findPeak(pc)
