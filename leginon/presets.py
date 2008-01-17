@@ -4,10 +4,10 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.250 $
+# $Revision: 1.251 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-05-21 23:33:08 $
-# $Author: pulokas $
+# $Date: 2008-01-17 21:34:14 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -925,43 +925,11 @@ class PresetsManager(node.Node):
 		self.outputEvent(event.DoseMeasuredEvent(name=presetname, preset=self.currentpreset))
 
 	def _acquireDoseImage(self, display=True):
-		errstr = 'Acquire dose image failed: %s'
-		self.logger.info('Acquiring dose image at 512x512')
-		camdata0 = data.CameraEMData()
-		camdata0.friendly_update(self.currentpreset)
-
-		camdata1 = copy.copy(camdata0)
-
-		## figure out if we want to cut down to 512x512
-		for axis in ('x','y'):
-			change = camdata0['dimension'][axis] - 512
-			if change > 0:
-				camdata1['dimension'][axis] = 512
-				camdata1['offset'][axis] += (change / 2)
-
-		try:
-			self.instrument.setData(camdata1)
-		except:
-			self.logger.error(errstr % 'unable to set camera parameters')
-			return
-		try:
-			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
-		except:
-			self.logger.error(errstr % 'unable to acquire corrected image data')
-			return
-		try:
-			self.instrument.setData(camdata0)
-		except:
-			estr = 'Return to orginial preset camera dimemsion failed: %s'
-			self.logger.error(estr % 'unable to set camera parameters')
-			return
-
-		self.logger.info('Returned to original preset camera dimensions')
-
+		acquirestr = 'dose'
+		imagedata =  self._acquireSpecialImage(preset, acquirestr, mode='center', imagelength=512)
+		
 		if imagedata is None:
-			self.logger.error(errstr % 'unable to get corrected image')
 			return
-
 		## display
 		try:
 			dose = self.dosecal.dose_from_imagedata(imagedata)
@@ -1052,6 +1020,89 @@ class PresetsManager(node.Node):
 					self.logger.info('Copying and scaling dose from preset "%s" to similar preset "%s"' % (newpreset['name'], sim['name']))
 					simdose = scale * newpreset['dose']
 					self.updatePreset(sim['name'], {'dose': simdose}, updatedose=False)
+
+	def acquireAlignImages(self):
+
+		errstr = 'Acquire align image failed: %s'
+		presetnames = ['fa','hl']
+		for i,presetname in enumerate(presetnames):
+			if not presetname:
+				e = 'invalid preset \'%s\'' % presetname
+				self.logger.error(errstr % e)
+				self.panel.presetsEvent()
+				return
+
+			if self.currentpreset is None or self.currentpreset['name'] != presetname:
+				self._cycleToScope(presetname)
+
+			if self.currentpreset is None or self.currentpreset['name'] != presetname:
+				e	= 'cannot go to preset \'%s\'' % presetname
+				self.logger.error(errstr % e)
+				self.panel.presetsEvent()
+				return
+			imagedata = self._acquireAlignImage(self.currentpreset)
+			if imagedata is not None:
+				if i==0:
+					self.panel.setAlignImage(imagedata['image'],'left')
+				else:
+					self.panel.setAlignImage(imagedata['image'],'right')
+			self.panel.presetsEvent()
+
+#		self.outputEvent(event.AlignImagesAcquiredEvent())
+
+	def _acquireAlignImage(self, preset):
+		acquirestr = 'align'
+		return self._acquireSpecialImage(preset, acquirestr, mode='bin', imagelength=512)
+
+	def _acquireSpecialImage(self, preset, acquirestr='', mode='', imagelength=None):
+		errstr = 'Acquire %s image failed: ' %(acquirestr) +'%s'
+		self.logger.info('Acquiring %s image' %(acquirestr))
+		camdata0 = data.CameraEMData()
+		camdata0.friendly_update(preset)
+
+		camdata1 = copy.copy(camdata0)
+	
+		if mode == 'center':
+			## figure out if we want to cut down to imagelength x imagelength
+			for axis in ('x','y'):
+				change = camdata0['dimension'][axis] - imagelength
+				if change > 0:
+					camdata1['dimension'][axis] = imagelength
+					camdata1['offset'][axis] += (change / 2)
+		if mode == 'bin':
+			## bin the full camera to at most imagelength x imagelength
+			for axis in ('x','y'):
+				camdim = camdata0['dimension'][axis]
+				while camdim > imagelength:
+					camdim = camdim / 2
+				extrabin = camdata0['dimension'][axis]/camdim
+				camdata1['dimension'][axis] = camdim
+				camdata1['binning'][axis] = camdata0['binning'][axis] * extrabin
+				camdata1['exposure time'] = camdata1['exposure time'] / extrabin
+		try:
+			self.instrument.setData(camdata1)
+		except:
+			self.logger.error(errstr % 'unable to set camera parameters')
+			return
+		try:
+			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+		except:
+			self.logger.error(errstr % 'unable to acquire corrected image data')
+			return
+		try:
+			self.instrument.setData(camdata0)
+		except:
+			estr = 'Return to orginial preset camera dimemsion failed: %s'
+			self.logger.error(estr % 'unable to set camera parameters')
+			return
+
+		self.logger.info('Returned to original preset camera dimensions')
+
+		if imagedata is None:
+			self.logger.error(errstr % 'unable to get corrected image')
+			return
+
+		return imagedata
 
 	def targetToScope(self, newpresetname, emtargetdata):
 		'''

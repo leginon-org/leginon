@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
-# $Revision: 1.127 $
+# $Revision: 1.128 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-09 22:59:45 $
+# $Date: 2008-01-17 21:34:14 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -253,7 +253,7 @@ class Navigator(node.Node):
 		self.setStatus('idle')
 
 	def setImageShiftForPreset(self,presetname=None):
-		presetdata = self.presetsclient.getCurrentPreset()
+		presetdata = data.PresetData(initializer=self.presetsclient.getCurrentPreset())
 		scope = self.newimagedata['scope']
 		mag = scope['magnification']
 		if presetdata['magnification'] == mag:
