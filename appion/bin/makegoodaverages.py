@@ -9,6 +9,7 @@ import numpy
 import sys
 import apParam
 import apDisplay
+import apEuler
 from optparse import OptionParser
 
 apdb=apDB.apdb
@@ -170,7 +171,6 @@ def getCC(ref,img):
 	cc=cc/math.sqrt(var1*var2)
 	return(cc)
 
-
 def getMatrix(eulerdata):
 	a=eulerdata['euler3']*math.pi/180
 	b=eulerdata['euler1']*math.pi/180
@@ -185,27 +185,6 @@ def getMatrix(eulerdata):
 	m[2,0]=math.sin(b)*math.sin(a)
 	m[2,1]=-math.sin(b)*math.cos(a)
 	m[2,2]=math.cos(b)
-	return m
-
-def getMatrix3(eulerdata):
-	#math from http://mathworld.wolfram.com/EulerAngles.html
-	#appears to conform to EMAN conventions - could use more testing
-	#tested by independently rotating object with EMAN eulers and with the
-	#matrix that results from this function
-	phi=eulerdata['euler2']*math.pi/180 #eman az
-	theta=eulerdata['euler1']*math.pi/180 #eman alt
-	psi=eulerdata['euler3']*math.pi/180 #eman phi
-
-	m=numpy.zeros((3,3))
-	m[0,0]=math.cos(psi)*math.cos(phi)-math.cos(theta)*math.sin(phi)*math.sin(psi)
-	m[0,1]=math.cos(psi)*math.sin(phi)+math.cos(theta)*math.cos(phi)*math.sin(psi)
-	m[0,2]=math.sin(psi)*math.sin(theta)
-	m[1,0]=-math.sin(psi)*math.cos(phi)-math.cos(theta)*math.sin(phi)*math.cos(psi)
-	m[1,1]=-math.sin(psi)*math.sin(phi)+math.cos(theta)*math.cos(phi)*math.cos(psi)
-	m[1,2]=math.cos(psi)*math.sin(theta)
-	m[2,0]=math.sin(theta)*math.sin(phi)
-	m[2,1]=-math.sin(theta)*math.cos(phi)
-	m[2,2]=math.cos(theta)
 	return m
 
 def getMatrix2(eulerdata):
@@ -262,18 +241,6 @@ def calculateDistance(m1,m2):
 		#print 'd',d
 		return d
 
-def calculateDistanceOld(eulerdata1,eulerdata2):
-	m1=getMatrix3(eulerdata1)
-	m2=getMatrix3(eulerdata2)
-	#print m1
-	#print m2
-	tot=0
-	for i in range(0,m1.shape[0]):
-		for j in range(0,m1.shape[1]):	
-			tot+=(m1[i,j]-m2[i,j])**2
-	#print 'd',tot
-	return tot
-	
 def henryMult(m1,m2):
 	c=numpy.zeros((m1.shape[0],m2.shape[1]))
 	for i in range(0,c.shape[0]):
@@ -338,12 +305,12 @@ def removePtclsByJumps(particles,rejectlst,params):
 			# first get all equivalent Eulers given symmetry
 			eqEulers=calculateEquivSym(eulers[n]['eulers'])
 			# calculate the distances between the original Euler and all the equivalents
-			mat0=getMatrix3(e0)
-			mat1=getMatrix3(eulers[n]['eulers'])
+			mat0=apEuler.getMatrix3(e0)
+			mat1=apEuler.getMatrix3(eulers[n]['eulers'])
 
 			d=[]
 			for e1 in eqEulers:
-				d.append(calculateDistance(mat0,mat1))
+				d.append(apEuler.calculateDistance(mat0,mat1))
 			mind=min(d)
 			distances[n-1]=mind*180/math.pi
 			f.write('%f\t' % distances[n-1])
@@ -409,7 +376,7 @@ def calcZRot(a):
 
 def calculateEquivSym(eulers,symout=False):
 	eqEulers=[]
-	m=getMatrix3(eulers)
+	m=apEuler.getMatrix3(eulers)
 	eqEulers.append(m)
 	# 180 degree rotation around x axis
 	x1 = calcXRot(math.pi)
