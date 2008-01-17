@@ -1397,6 +1397,13 @@ class MagCalibratorSettingsData(CalibratorSettingsData):
 			('minsize', float),
 			('maxsize', float),
 			('pause', float),
+			('label', str),
+			('threshold', float),
+			('maxcount', int),
+			('cutoffpercent', float),
+			('minbright', float),
+			('maxbright', float),
+			('magsteps', int),
 		)
 	typemap = classmethod(typemap)
 
