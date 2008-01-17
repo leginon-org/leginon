@@ -5,7 +5,7 @@ import re
 import sys
 import types
 
-writeOut = True
+writeOut = False
 try:
 	outFile = os.path.basename(sys.argv[0]).split(".")[0]+".out"
 except:
