@@ -367,7 +367,7 @@ if ($sessionId) {
   // for every uploaded job, subtract a submitted job
   // if all submitted jobs are uploaded, it should be 0
   $jobincomp = $jobdone-$reconruns; //incomplete
-	echo "  D=".$jobdone."  R=".$jobrun."  Q=".$jobqueue."  T=".$reconruns."  I=".$jobincomp;
+	//echo "  D=".$jobdone."  R=".$jobrun."  Q=".$jobqueue."  T=".$reconruns."  I=".$jobincomp;
   if ($jobincomp>0 || $jobrun>0 || $jobqueue>0) { $bgcolor=$progcolor; $gifimg=$progpic; }
   elseif ($reconruns>0) { $bgcolor=$donecolor; $gifimg=$donepic;  }
   else { $bgcolor=$nonecolor; $gifimg=$nonepic; }
