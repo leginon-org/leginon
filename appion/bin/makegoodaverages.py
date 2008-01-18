@@ -172,56 +172,6 @@ def getCC(ref,img):
 	cc=cc/math.sqrt(var1*var2)
 	return(cc)
 
-def getMatrix(eulerdata):
-	a=eulerdata['euler3']*math.pi/180
-	b=eulerdata['euler1']*math.pi/180
-	c=eulerdata['euler2']*math.pi/180
-	m=numpy.zeros((3,3))
-	m[0,0]=math.cos(c)*math.cos(a)-math.cos(b)*math.sin(a)*math.sin(c)
-	m[0,1]=math.cos(c)*math.sin(a)+math.cos(b)*math.cos(a)*math.sin(c)
-	m[0,2]=math.sin(c)*math.sin(b)
-	m[1,0]=-math.sin(c)*math.cos(a)-math.cos(b)*math.sin(a)*math.cos(c)
-	m[1,1]=-math.sin(c)*math.sin(a)+math.cos(b)*math.cos(a)*math.cos(c)
-	m[1,2]=math.cos(c)*math.sin(b)
-	m[2,0]=math.sin(b)*math.sin(a)
-	m[2,1]=-math.sin(b)*math.cos(a)
-	m[2,2]=math.cos(b)
-	return m
-
-def getMatrix2(eulerdata):
-	alpha=eulerdata['euler1']*math.pi/180
-	beta=eulerdata['euler2']*math.pi/180
-	gamma=eulerdata['euler3']*math.pi/180
-
-	alpham=numpy.zeros((3,3))
-	betam=numpy.zeros((3,3))
-	gammam=numpy.zeros((3,3))
-	
-	gammam[0,0]=math.cos(gamma)
-	gammam[0,1]=math.sin(gamma)
-	gammam[1,0]=-math.sin(gamma)
-	gammam[1,1]=math.cos(gamma)
-	gammam[2,2]=1.0
-	
-	betam[0,0]=1.0
-	betam[1,1]=math.cos(beta)
-	betam[1,2]=math.sin(beta)
-	betam[2,1]=-math.sin(beta)
-	betam[2,2]=math.cos(beta)
-	
-	alpham[0,0]=math.cos(alpha)
-	alpham[0,1]=math.sin(alpha)
-	alpham[1,0]=-math.sin(alpha)
-	alpham[1,1]=math.cos(alpha)
-	alpham[2,2]=1.0
-	
-	m=numpy.dot(gammam,betam)
-	m=numpy.dot(m,alpham)
-	m2=numpy.dot(alpham,betam)
-	m2=numpy.dot(m2,gammam)
-	
-	return(m)
-
 def henryMult(m1,m2):
 	c=numpy.zeros((m1.shape[0],m2.shape[1]))
 	for i in range(0,c.shape[0]):
@@ -282,7 +232,7 @@ def removePtclsByJumps(particles,rejectlst,params):
 		distances = numpy.zeros((len(eulers)-1), dtype=numpy.float32)
 		for i range(len(eulers)-1):
 			#calculate distance (in degrees) for D7 symmetry
-			dist = eulerCalculateDistanceforD7Sym(eulers[i]['eulers'], eulers[i+1]['eulers'])
+			dist = eulerCalculateDistanceSym(eulers[i]['eulers'], eulers[i+1]['eulers'], sym='d7')
 			distances[i] = dist
 			f.write('%3.5f\t' % dist*math.pi/180.0)
 		median = numpy.median(distances)

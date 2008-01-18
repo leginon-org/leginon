@@ -1,8 +1,10 @@
 import math
 import os
+import sys
 import numpy
 import random
 import time
+import pprint
 import apDisplay
 
 def eulerCalculateDistance(e1, e2):
@@ -11,32 +13,128 @@ def eulerCalculateDistance(e1, e2):
 	calculate distance between euler values
 	value in degrees
 	"""
-	mat0 = getMatrix3(e1)
-	mat1 = getMatrix3(e2)
+	mat0 = getEmanEulerMatrix(e1)
+	mat1 = getEmanEulerMatrix(e2)
 	dist = computeDistance(mat0, mat1)
 	#convert to degrees
-	dist *= 180.0/math.pi
 	return dist
 
-def eulerCalculateDistanceforD7Sym(e1, e2):
+def eulerCalculateDistanceSym(e1, e2, sym='d7'):
 	"""
-	given two euler as dicts
+	given two euler as dicts in degrees
 	calculate distance between euler values
 	value in degrees
 	"""
-	e1mat = getMatrix3(e1)
+	e1mat = getEmanEulerMatrix(e1)
 	#get list of equivalent euler matrices
-	e2equivMats = calculateEquivD7Sym(e2)
+	e2equivMats = calculateEquivSym(e2, sym=sym)
 
 	# calculate the distances between the original Euler and all the equivalents
-	mindist = 180.0
+	mindist = 360.0
+	#distlist = []
 	for e2mat in e2equivMats:
-		dist = computeDistance(e1mat,e2mat)
+		dist = computeDistance(e1mat, e2mat)
+		#distlist.append(dist)
 		if dist < mindist:
 			mindist = dist
+
+	#print round(mindist,4),"<--",numpy.around(distlist,2)
+	#pprint.pprint(e1)
+	#pprint.pprint(e2)
+	#print ""
+
 	#convert to degrees
-	dist *= 180.0/math.pi
-	return dist
+	return mindist
+
+def calculateEquivSym(euler, sym='d7', symout=False):
+	"""
+	rotates eulers about any c and d symmetry group
+
+	input:
+		individual euler dict
+	output:
+		list of equiv. euler matrices
+	"""
+	symMats = []
+
+	# calculate each of the rotations around z axis
+	numrot = int(sym[1:])
+	for i in range(numrot):
+		symMats.append( calcZRot(2.0*math.pi*float(i)/float(numrot)) )
+
+	# if D symmetry, combine each rotations with x axis rotation
+	if sym[0] == 'd':
+		x1 = calcXRot(math.pi)
+		for i in range(numrot):	
+			symMats.append( numpy.dot(x1, symMats[i]) )
+
+	#calculate new euler matices
+	eulerMat = getEmanEulerMatrix(euler)
+	equivMats=[]
+	for symMat in symMats:	
+		equivMats.append(numpy.dot(eulerMat, symMat))
+
+	if symout is True:
+		f=open('matrices.txt','w')
+ 		for n,e in enumerate(equivMats):
+ 			f.write('REMARK 290    SMTRY1  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[0,0], e[0,1], e[0,2]))
+ 			f.write('REMARK 290    SMTRY2  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[1,0], e[1,1], e[1,2]))
+ 			f.write('REMARK 290    SMTRY3  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[2,0], e[2,1], e[2,2]))
+ 		f.close()
+	return equivMats
+
+def getEmanEulerMatrix(eulerdata):
+	return getMatrix3(eulerdata)
+
+def getMatrix(eulerdata):
+	a=eulerdata['euler3']*math.pi/180
+	b=eulerdata['euler1']*math.pi/180
+	c=eulerdata['euler2']*math.pi/180
+	m=numpy.zeros((3,3))
+	m[0,0]=math.cos(c)*math.cos(a)-math.cos(b)*math.sin(a)*math.sin(c)
+	m[0,1]=math.cos(c)*math.sin(a)+math.cos(b)*math.cos(a)*math.sin(c)
+	m[0,2]=math.sin(c)*math.sin(b)
+	m[1,0]=-math.sin(c)*math.cos(a)-math.cos(b)*math.sin(a)*math.cos(c)
+	m[1,1]=-math.sin(c)*math.sin(a)+math.cos(b)*math.cos(a)*math.cos(c)
+	m[1,2]=math.cos(c)*math.sin(b)
+	m[2,0]=math.sin(b)*math.sin(a)
+	m[2,1]=-math.sin(b)*math.cos(a)
+	m[2,2]=math.cos(b)
+	return m
+
+def getMatrix2(eulerdata):
+	alpha=eulerdata['euler1']*math.pi/180
+	beta=eulerdata['euler2']*math.pi/180
+	gamma=eulerdata['euler3']*math.pi/180
+
+	alpham=numpy.zeros((3,3))
+	betam=numpy.zeros((3,3))
+	gammam=numpy.zeros((3,3))
+	
+	gammam[0,0]=math.cos(gamma)
+	gammam[0,1]=math.sin(gamma)
+	gammam[1,0]=-math.sin(gamma)
+	gammam[1,1]=math.cos(gamma)
+	gammam[2,2]=1.0
+	
+	betam[0,0]=1.0
+	betam[1,1]=math.cos(beta)
+	betam[1,2]=math.sin(beta)
+	betam[2,1]=-math.sin(beta)
+	betam[2,2]=math.cos(beta)
+	
+	alpham[0,0]=math.cos(alpha)
+	alpham[0,1]=math.sin(alpha)
+	alpham[1,0]=-math.sin(alpha)
+	alpham[1,1]=math.cos(alpha)
+	alpham[2,2]=1.0
+	
+	m=numpy.dot(gammam,betam)
+	m=numpy.dot(m,alpham)
+	m2=numpy.dot(alpham,betam)
+	m2=numpy.dot(m2,gammam)
+	
+	return(m)
 
 def getMatrix3(eulerdata):
 	"""
@@ -45,12 +143,18 @@ def getMatrix3(eulerdata):
 	tested by independently rotating object with EMAN eulers and with the
 	matrix that results from this function
 	"""
-	phi = round(eulerdata['euler2']*math.pi/180,2) #eman az,  azimuthal
-	the = round(eulerdata['euler1']*math.pi/180,2) #eman alt, altitude
+	#theta is a rotation about the x-axis, i.e. latitude
+	# 0 <= theta <= 180 degrees
+	the = eulerdata['euler1']*math.pi/180.0 #eman alt, altitude
+
+	#phi is a rotation in the xy-plane, i.e. longitude
+	# 0 <= phi <= 360 degrees
+	phi = eulerdata['euler2']*math.pi/180.0 #eman az, azimuthal
+
 	#psi = round(eulerdata['euler3']*math.pi/180,2) #eman phi, inplane_rotation
 	psi = 0.0  #psi component is not working!!!
 
-	m=numpy.zeros((3,3), dtype=numpy.float32)
+	m = numpy.zeros((3,3), dtype=numpy.float32)
 	m[0,0] =  math.cos(psi)*math.cos(phi) - math.cos(the)*math.sin(phi)*math.sin(psi)
 	m[0,1] =  math.cos(psi)*math.sin(phi) + math.cos(the)*math.cos(phi)*math.sin(psi)
 	m[0,2] =  math.sin(psi)*math.sin(the)
@@ -68,8 +172,8 @@ def computeDistance(m1,m2):
 	trace=r.trace()
 	s=(trace-1)/2.0
 	if int(round(abs(s),7)) == 1:
-		#print "here"
-		return 0
+		#apDisplay.printWarning("overflow return")
+		return 190.0
 	else:
 		#print "calculating"
 		theta=math.acos(s)
@@ -78,9 +182,10 @@ def computeDistance(m1,m2):
 		#print 't1',t1 
 		t2 = math.sqrt(pow(r[0,1]-r[1,0],2)+pow(r[0,2]-r[2,0],2)+pow(r[1,2]-r[2,1],2))
 		#print 't2',t2, t2*180/math.pi
-		d = t1 * t2
-		#print 'd',d
-		return d
+		dist = t1 * t2
+		dist *= 180.0/math.pi
+		#print 'dist=',dist
+		return dist
 
 def calcXRot(a):
 	m=numpy.zeros((3,3))
@@ -121,59 +226,7 @@ def calcZRot(a):
 	m[2,2]=1
 	return m
 
-def calculateEquivD7Sym(eulers, symout=False):
-	"""
-	rotates eulers about d7 symmetry
 
-	input:
-		individual euler dict
-	output:
-		list of equiv. euler matrices
-	"""
-
-	eqEulers=[]
-	m=getMatrix3(eulers)
-	eqEulers.append(m)
-	# 180 degree rotation around x axis
-	x1 = calcXRot(math.pi)
-	# calculate each of 7 rotations around z axis
-	z1 = calcZRot(2*math.pi/7)
-	z2 = calcZRot(4*math.pi/7)
-	z3 = calcZRot(6*math.pi/7)
-	z4 = calcZRot(8*math.pi/7)
-	z5 = calcZRot(10*math.pi/7)
-	z6 = calcZRot(12*math.pi/7)
-	# combine each of 7 rotations with x axis rotation
-	xz1 = numpy.dot(x1,z1)
-	xz2 = numpy.dot(x1,z2)
-	xz3 = numpy.dot(x1,z3)
-	xz4 = numpy.dot(x1,z4)
-	xz5 = numpy.dot(x1,z5)
-	xz6 = numpy.dot(x1,z6)
-
-	eqEulers.append(numpy.dot(m,x1))
-	eqEulers.append(numpy.dot(m,z1))
-	eqEulers.append(numpy.dot(m,z2))
-	eqEulers.append(numpy.dot(m,z3))
-	eqEulers.append(numpy.dot(m,z4))
-	eqEulers.append(numpy.dot(m,z5))
-	eqEulers.append(numpy.dot(m,z6))
-	eqEulers.append(numpy.dot(m,xz1))
-	eqEulers.append(numpy.dot(m,xz2))
-	eqEulers.append(numpy.dot(m,xz3))
-	eqEulers.append(numpy.dot(m,xz4))
-	eqEulers.append(numpy.dot(m,xz5))
-	eqEulers.append(numpy.dot(m,xz6))
-	n=1
-	if symout:
-		f=open('matrices.txt','w')
- 		for e in eqEulers:
- 			f.write('REMARK 290    SMTRY1  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n, e[0,0], e[0,1], e[0,2]))
- 			f.write('REMARK 290    SMTRY2  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n, e[1,0], e[1,1], e[1,2]))
- 			f.write('REMARK 290    SMTRY3  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n, e[2,0], e[2,1], e[2,2]))
- 			n+=1
- 		f.close()
-	return eqEulers
 
 
 

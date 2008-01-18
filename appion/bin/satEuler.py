@@ -108,13 +108,14 @@ class satEulerScript(appionScript.AppionScript):
 				+"  AND refd1.`iteration` = "+str(iteration)+" \n"
 				+"  AND refd2.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
 				+"  AND refd2.`iteration` = "+str(iteration)+" \n"
-				#+"ORDER BY stpart1.particleNumber ASC \n"
-				#+"LIMIT 3000 \n"
+				+"ORDER BY stpart1.particleNumber ASC \n"
+				#+"LIMIT 10 \n"
 			)
 		apDisplay.printMsg("Running MySQL query")
 		#print query
 		self.cursor.execute(query)
 		numrows = int(self.cursor.rowcount)
+		apDisplay.printMsg("Found "+str(numrows)+" rows in "+apDisplay.timeString(time.time()-t0))
 		results = self.cursor.fetchall()
 		apDisplay.printMsg("Fetched "+str(numrows)+" rows in "+apDisplay.timeString(time.time()-t0))
 		return results
@@ -152,7 +153,7 @@ class satEulerScript(appionScript.AppionScript):
 		angdistlist = []
 		rotdistlist = []
 		for eulerpair in eulertree:
-			eulerpair['angdist'] = apEulerCalc.eulerCalculateDistanceforD7Sym(eulerpair['part1'], eulerpair['part2'])
+			eulerpair['angdist'] = apEulerCalc.eulerCalculateDistanceSym(eulerpair['part1'], eulerpair['part2'], sym='d7')
 			angdistlist.append(eulerpair['angdist'])
 			eulerpair['rotdist'] = self.calcRotationalDifference(eulerpair)
 			rotdistlist.append(eulerpair['rotdist'])
