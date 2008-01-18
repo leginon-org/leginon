@@ -30,6 +30,7 @@ import apMask
 import apXml
 import apImage
 import apDefocalPairs
+import apStack
 import apEMAN
 try:
 	import apMatlab
