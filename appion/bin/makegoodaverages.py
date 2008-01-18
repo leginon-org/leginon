@@ -6,6 +6,7 @@ import apDB
 import os
 import math
 import numpy
+from scipy import ndimage
 import sys
 import apParam
 import apDisplay
@@ -221,26 +222,6 @@ def getMatrix2(eulerdata):
 	
 	return(m)
 
-def calculateDistance(m1,m2):
-	r=numpy.dot(m1.transpose(),m2)
-	#print r
-	trace=r.trace()
-	s=(trace-1)/2.0
-	if int(round(abs(s),7)) == 1:
-		#print "here"
-		return 0
-	else:
-		#print "calculating"
-		theta=math.acos(s)
-		#print 'theta',theta
-		t1=abs(theta/(2*math.sin(theta)))
-		#print 't1',t1 
-		t2 = math.sqrt(pow(r[0,1]-r[1,0],2)+pow(r[0,2]-r[2,0],2)+pow(r[1,2]-r[2,1],2))
-		#print 't2',t2, t2*180/math.pi
-		d = t1 * t2
-		#print 'd',d
-		return d
-
 def henryMult(m1,m2):
 	c=numpy.zeros((m1.shape[0],m2.shape[1]))
 	for i in range(0,c.shape[0]):
@@ -268,13 +249,13 @@ def getEulersForParticle(particlenum,reconid):
 	ptclclassq=appionData.ApParticleClassificationData()
 	ptclclassq['particle']=particledata
 	ptclclassq['refinement']=refinementq
-	ptclclassdata=apdb.query(ptclclassq)
+	ptclclassdata = apdb.query(ptclclassq)
 	
 	#for cls in ptclclassdata:
 		#print cls['refinement']['iteration'], cls['eulers']
 	return ptclclassdata
 
-def sortEulers(a, b):
+def sortEulersByIteration(a, b):
 	if a['refinement']['iteration'] > b['refinement']['iteration']:
 		return 1
 	else:
@@ -289,36 +270,27 @@ def removePtclsByQualityFactor(particles,rejectlst,cutoff,params):
 	return rejectlst
 
 def removePtclsByJumps(particles,rejectlst,params):
-	#errdict={}
-	print "Finding Euler jumps"
 	nptcls=len(particles)
-	stack=os.path.join(particles[0]['particle']['stack']['path']['path'],particles[0]['particle']['stack']['name'])
+	apDisplay.printMsg("Finding Euler jumps for "+str(nptcls)+" particles")
+	stackdata = particles[0]['particle']['stack']
+	stack = os.path.join(stackdata['path']['path'], stackdata['name'])
 	f=open('jumps.txt','w')
 	for ptcl in range(1,nptcls+1):
-		eulers=getEulersForParticle(ptcl,params['reconid'])
-		eulers.sort(sortEulers)
-		e0=eulers[0]['eulers']
-		distances=numpy.zeros((len(eulers)-1))
 		f.write('%d\t' % ptcl)
-		for n in range(1,len(eulers)):
-			# first get all equivalent Eulers given symmetry
-			eqEulers=apEulerCalc.calculateEquivD7Sym(eulers[n]['eulers'])
-			# calculate the distances between the original Euler and all the equivalents
-			mat0=apEulerCalc.getMatrix3(e0)
-			mat1=apEulerCalc.getMatrix3(eulers[n]['eulers'])
-
-			d=[]
-			for e1 in eqEulers:
-				d.append(apEulerCalc.calculateDistance(mat0,mat1))
-			mind=min(d)
-			distances[n-1]=mind*180/math.pi
-			f.write('%f\t' % distances[n-1])
-			e0=eulers[n]['eulers']
-		if numpy.median(distances) > params['avgjump']:
+		eulers=getEulersForParticle(ptcl, params['reconid'])
+		eulers.sort(sortEulersByIteration)
+		distances = numpy.zeros((len(eulers)-1), dtype=numpy.float32)
+		for i range(len(eulers)-1):
+			#calculate distance (in degrees) for D7 symmetry
+			dist = eulerCalculateDistanceforD7Sym(eulers[i]['eulers'], eulers[i+1]['eulers'])
+			distances[i] = dist
+			f.write('%3.5f\t' % dist*math.pi/180.0)
+		median = numpy.median(distances)
+		if median > params['avgjump']:
 			rejectlst.append(ptcl)
-		if not ptcl%100:
-			print "particle",ptcl
-		f.write('%f\t%f\t%f\n' % (distances.mean(),numpy.median(distances),distances.std()))
+		f.write('%f\t%f\t%f\n' % (distances.mean(), median, distances.std()))
+		if ptcl%100 == 0:
+			print "particle=",ptcl,"; median jump=",median
 		#print distances
 		#print distances.mean()
 	return rejectlst
