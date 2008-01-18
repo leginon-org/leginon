@@ -4,16 +4,16 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.251 $
+# $Revision: 1.252 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-17 21:34:14 $
-# $Author: acheng $
+# $Date: 2008-01-18 00:01:48 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
 import node
 import calibrationclient
-import data
+import leginondata
 import datatransport
 import event
 import copy
@@ -28,10 +28,10 @@ import random
 class PresetChangeError(Exception):
 	pass
 
-class CurrentPresetData(data.Data):
+class CurrentPresetData(leginondata.Data):
 	def typemap(cls):
-		t = data.Data.typemap()
-		t += [('preset', data.PresetData)]
+		t = leginondata.Data.typemap()
+		t += [('preset', leginondata.PresetData)]
 		return t
 	typemap = classmethod(typemap)
 
@@ -56,7 +56,7 @@ class PresetsClient(object):
 
 	def getPresetFromDB(self, name):
 		session = self.node.session
-		query = data.PresetData(session=session, name=name)
+		query = leginondata.PresetData(session=session, name=name)
 		try:
 			return self.node.research(datainstance=query, results=1)[0]
 		except IndexError:
@@ -70,7 +70,7 @@ class PresetsClient(object):
 			session = self.node.session
 
 		## find presets that belong to this session
-		pquery = data.PresetData(session=session)
+		pquery = leginondata.PresetData(session=session)
 		plist = self.node.research(datainstance=pquery)
 		if not plist:
 			return {}
@@ -195,7 +195,7 @@ class PresetsClient(object):
 
 class PresetsManager(node.Node):
 	panelclass = gui.wx.PresetsManager.Panel
-	settingsclass = data.PresetsManagerSettingsData
+	settingsclass = leginondata.PresetsManagerSettingsData
 	defaultsettings = {
 		'pause time': 1.0,
 		'xy only': True,
@@ -206,7 +206,7 @@ class PresetsManager(node.Node):
 		'apply offset': False,
 	}
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.MeasureDoseEvent]
-	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent]
+	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent]
 
 	def __init__(self, name, session, managerlocation, **kwargs):
 		node.Node.__init__(self, name, session, managerlocation, **kwargs)
@@ -222,6 +222,8 @@ class PresetsManager(node.Node):
 			'modeled stage':calibrationclient.ModeledStageCalibrationClient(self),
 		}
 		self.dosecal = calibrationclient.DoseCalibrationClient(self)
+		import navigator
+		self.navclient = navigator.NavigatorClient(self)
 
 		self.presetsclient = PresetsClient(self)
 		self.locknode = None
@@ -339,7 +341,7 @@ class PresetsManager(node.Node):
 		for name, preset in pdict.items():
 			if not name:
 				continue
-			newp = data.PresetData(initializer=preset, session=self.session)
+			newp = leginondata.PresetData(initializer=preset, session=self.session)
 			## for safety, disable random defocus range
 			newp['defocus range min'] = newp['defocus range max'] = None
 			self.presetToDB(newp)
@@ -373,7 +375,7 @@ class PresetsManager(node.Node):
 		for name in names:
 			p = self.presets[name]
 			if p['number'] != number:
-				newp = data.PresetData(initializer=p, number=number)
+				newp = leginondata.PresetData(initializer=p, number=number)
 				self.presetToDB(newp)
 			else:
 				newp = p
@@ -419,7 +421,7 @@ class PresetsManager(node.Node):
 			return
 
 		del self.presets[pname]
-		pnew = data.PresetData(initializer=premove, removed=1)
+		pnew = leginondata.PresetData(initializer=premove, removed=1)
 		self.presetToDB(pnew)
 
 		## update order, selector list, etc.
@@ -427,7 +429,7 @@ class PresetsManager(node.Node):
 		self.panel.presetsEvent()
 
 	def getOffsetImageShift(self, presetdata):
-		q = data.StageTiltAxisOffsetData(tem=presetdata['tem'],ccdcamera=presetdata['ccdcamera'])
+		q = leginondata.StageTiltAxisOffsetData(tem=presetdata['tem'],ccdcamera=presetdata['ccdcamera'])
 		offsets = self.research(q, results=1)
 
 		if not offsets:
@@ -437,9 +439,9 @@ class PresetsManager(node.Node):
 		## convert stage offset to pixel offset
 		stagey = offsets[0]['offset']
 
-		fakescope = data.ScopeEMData()
+		fakescope = leginondata.ScopeEMData()
 		fakescope.friendly_update(presetdata)
-		fakecam = data.CameraEMData()
+		fakecam = leginondata.CameraEMData()
 		fakecam.friendly_update(presetdata)
 
 		fakescope['stage position'] = {'x':0, 'y':0}
@@ -472,8 +474,8 @@ class PresetsManager(node.Node):
 			mydefocus = random.uniform(mymin, mymax)
 			self.logger.info('Random defocus for preset %s:  %s' % (presetdata['name'], mydefocus))
 
-		scopedata = data.ScopeEMData()
-		cameradata = data.CameraEMData()
+		scopedata = leginondata.ScopeEMData()
+		cameradata = leginondata.CameraEMData()
 
 		name = presetdata['name']
 		beginmessage = 'Changing preset to "%s"' % (name,)
@@ -603,13 +605,13 @@ class PresetsManager(node.Node):
 
 		self.logger.info('Preset from %s, %s' % (temname, camname))
 		try:
-			scopedata = self.instrument.getData(data.ScopeEMData)
+			scopedata = self.instrument.getData(leginondata.ScopeEMData)
 		except Exception, e:
 			self.logger.error('Preset from instrument failed, unable to get TEM parameters: %s' % e)
 			return
 
 		try:
-			cameradata = self.instrument.getData(data.CameraEMData, image=False)
+			cameradata = self.instrument.getData(leginondata.CameraEMData, image=False)
 		except Exception, e:
 			self.logger.error('Preset from instrument failed, unable to get CCD camera parameters: %s' % e)
 			return
@@ -844,7 +846,7 @@ class PresetsManager(node.Node):
 		### edit the values
 		if p.dbid is None:
 			return p
-		newpreset = data.PresetData(initializer=p)
+		newpreset = leginondata.PresetData(initializer=p)
 		self.presets[newpreset['name']] = newpreset
 		if self.currentpreset is p:
 			self.currentpreset = newpreset
@@ -853,7 +855,7 @@ class PresetsManager(node.Node):
 		return newpreset
 
 	def newPreset(self, presetname, newparams):
-			newpreset = data.PresetData()
+			newpreset = leginondata.PresetData()
 			newpreset['session'] = self.session
 			newpreset['name'] = presetname
 			newpreset['number'] = len(self.presets)
@@ -1021,11 +1023,14 @@ class PresetsManager(node.Node):
 					simdose = scale * newpreset['dose']
 					self.updatePreset(sim['name'], {'dose': simdose}, updatedose=False)
 
-	def acquireAlignImages(self):
-
+	def acquireAlignImages(self, leftpreset=None, rightpreset=None):
+		if leftpreset is None or rightpreset is None:
+			leftpreset = self.alignpresets[0]
+			rightpreset = self.alignpresets[1]
 		errstr = 'Acquire align image failed: %s'
-		presetnames = ['fa','hl']
-		for i,presetname in enumerate(presetnames):
+		self.alignpresets = [leftpreset, rightpreset]
+		self.alignimages = {}
+		for i,presetname in enumerate(self.alignpresets):
 			if not presetname:
 				e = 'invalid preset \'%s\'' % presetname
 				self.logger.error(errstr % e)
@@ -1041,6 +1046,7 @@ class PresetsManager(node.Node):
 				self.panel.presetsEvent()
 				return
 			imagedata = self._acquireAlignImage(self.currentpreset)
+			self.alignimages[i] = imagedata
 			if imagedata is not None:
 				if i==0:
 					self.panel.setAlignImage(imagedata['image'],'left')
@@ -1057,7 +1063,7 @@ class PresetsManager(node.Node):
 	def _acquireSpecialImage(self, preset, acquirestr='', mode='', imagelength=None):
 		errstr = 'Acquire %s image failed: ' %(acquirestr) +'%s'
 		self.logger.info('Acquiring %s image' %(acquirestr))
-		camdata0 = data.CameraEMData()
+		camdata0 = leginondata.CameraEMData()
 		camdata0.friendly_update(preset)
 
 		camdata1 = copy.copy(camdata0)
@@ -1085,7 +1091,7 @@ class PresetsManager(node.Node):
 			self.logger.error(errstr % 'unable to set camera parameters')
 			return
 		try:
-			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+			imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
 		except:
 			self.logger.error(errstr % 'unable to acquire corrected image data')
 			return
@@ -1101,6 +1107,8 @@ class PresetsManager(node.Node):
 		if imagedata is None:
 			self.logger.error(errstr % 'unable to get corrected image')
 			return
+
+
 
 		return imagedata
 
@@ -1184,7 +1192,7 @@ class PresetsManager(node.Node):
 
 
 		### create ScopeEMData with preset and target shift
-		scopedata = data.ScopeEMData()
+		scopedata = leginondata.ScopeEMData()
 		scopedata.friendly_update(newpreset)
 		scopedata['image shift'] = myimage
 		scopedata['beam shift'] = mybeam
@@ -1198,7 +1206,7 @@ class PresetsManager(node.Node):
 			scopedata['defocus'] += deltaz
 
 		### createCameraEMData with preset
-		cameradata = data.CameraEMData()
+		cameradata = leginondata.CameraEMData()
 		cameradata.friendly_update(newpreset)
 
 		## set up instruments for this preset
@@ -1243,7 +1251,7 @@ class PresetsManager(node.Node):
 				return self.instrument.getTEMParameter(instrument_name, parameter)
 			elif instrument_type == 'ccdcamera':
 				if parameter == 'camera parameters':
-					return self.instrument.getData(data.CameraEMData, image=False, ccdcameraname=instrument_name).toDict()
+					return self.instrument.getData(leginondata.CameraEMData, image=False, ccdcameraname=instrument_name).toDict()
 				else:
 					return self.instrument.getCCDCameraParameter(instrument_name, parameter)
 			else:
@@ -1252,3 +1260,22 @@ class PresetsManager(node.Node):
 			self.logger.error('Get value failed: %s' % (e,))
 			raise e
 
+	def onAlignImageClicked(self, index, xy):
+		row = xy[1]
+		col = xy[0]
+		imagedata = self.alignimages[index]
+		acqimagedata = leginondata.AcquisitionImageData(initializer=imagedata)
+		acqimagedata['preset'] = self.presets[self.alignpresets[index]]
+		target = leginondata.AcquisitionImageTargetData(image=acqimagedata)
+
+		dr = row - imagedata['image'].shape[0]/2 - 0.5
+		dc = col - imagedata['image'].shape[1]/2 - 0.5
+
+		target['delta row'] = dr
+		target['delta column'] = dc
+		if index == 0:
+			movetype = 'stage position'
+		else:
+			movetype = 'image shift'
+		self.navclient.moveToTarget(target, movetype)
+		self.acquireAlignImages()

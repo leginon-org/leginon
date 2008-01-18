@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.83 $
+# $Revision: 1.84 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-17 21:34:14 $
-# $Author: acheng $
+# $Date: 2008-01-18 00:01:48 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -21,6 +21,7 @@ from gui.wx.Entry import IntEntry, FloatEntry, EVT_ENTRY
 import gui.wx.Camera
 import gui.wx.Dialog
 import gui.wx.ImagePanel
+import gui.wx.ImagePanelTools
 import gui.wx.Node
 import gui.wx.Presets
 import gui.wx.Settings
@@ -706,6 +707,10 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.importdialog.ShowModal()
 
 	def onAlign(self, evt):
+		# update presets choice
+		preset_names = self.node.presets.keys()
+		self.aligndialog.choiceleft.setChoices(preset_names)
+		self.aligndialog.choiceright.setChoices(preset_names)
 		self.aligndialog.ShowModal()
 	
 	def setAlignImage(self, image, typename, stats={}):
@@ -932,7 +937,7 @@ class SessionListCtrl(wx.ListCtrl, ColumnSorterMixin):
 class AlignDialog(wx.Dialog):
 	def __init__(self, parent, node):
 		wx.Dialog.__init__(self, parent, -1, 'Align Presets', style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
-		imsize = 256
+		imsize = 512
 		self.node = node
 
 		preset_names = self.node.presets.keys()
@@ -940,23 +945,31 @@ class AlignDialog(wx.Dialog):
 		self.choiceleft = gui.wx.Presets.PresetChoice(self, -1)
 		self.choiceleft.setChoices(preset_names)
 		self.imleft = gui.wx.ImagePanel.ClickImagePanel(self, -1,mode='compact',imagesize=(imsize,imsize))
-		szleft = wx.GridBagSizer(5, 0)
+		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onLeftImageClicked, self.imleft)
+		#szleft = wx.GridBagSizer(5, 0)
+		szleft = wx.BoxSizer(wx.VERTICAL)
 		szpreset = wx.GridBagSizer(2, 2)
 		szpreset.Add(lableft, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szpreset.Add(self.choiceleft, (0, 1), (1, 1))
-		szleft.Add(szpreset, (0, 0), (1, 1), wx.EXPAND)
-		szleft.Add(self.imleft, (1, 0), (1, 1), wx.EXPAND)
+		#szleft.Add(szpreset, (0, 0), (1, 1), wx.EXPAND)
+		#szleft.Add(self.imleft, (1, 0), (1, 1), wx.EXPAND)
+		szleft.Add(szpreset, 0, wx.EXPAND)
+		szleft.Add(self.imleft, 1, wx.EXPAND)
 
 		labright = wx.StaticText(self, -1, 'Preset To Adjust ')
 		self.choiceright = gui.wx.Presets.PresetChoice(self, -1)
 		self.choiceright.setChoices(preset_names)
 		self.imright = gui.wx.ImagePanel.ClickImagePanel(self, -1,mode='compact',imagesize=(imsize,imsize))
-		szright = wx.GridBagSizer(5, 0)
+		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onRightImageClicked, self.imright)
+		#szright = wx.GridBagSizer(5, 0)
+		szright = wx.BoxSizer(wx.VERTICAL)
 		szpreset = wx.GridBagSizer(2, 2)
 		szpreset.Add(labright, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szpreset.Add(self.choiceright, (0, 1), (1, 1))
-		szright.Add(szpreset, (0, 0), (1, 1), wx.EXPAND)
-		szright.Add(self.imright, (1, 0), (1, 1), wx.EXPAND)
+		#szright.Add(szpreset, (0, 0), (1, 1), wx.EXPAND)
+		#szright.Add(self.imright, (1, 0), (1, 1), wx.EXPAND)
+		szright.Add(szpreset, 0, wx.EXPAND)
+		szright.Add(self.imright, 1, wx.EXPAND)
 
 		self.bacquire = wx.Button(self, -1, 'Acquire')
 		self.bacquire.Enable(True)
@@ -988,8 +1001,16 @@ class AlignDialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onAlign, self.balign)
 		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
 
+	def onLeftImageClicked(self, evt):
+		self.node.onAlignImageClicked(0, evt.xy)
+
+	def onRightImageClicked(self, evt):
+		self.node.onAlignImageClicked(1, evt.xy)
+
 	def onAcquire(self, evt):
-		self.node.acquireAlignImages()
+		leftpreset = self.choiceleft.GetStringSelection()
+		rightpreset = self.choiceright.GetStringSelection()
+		self.node.acquireAlignImages(leftpreset, rightpreset)
 
 	def onAlign(self, evt):
 		print 'Test'
