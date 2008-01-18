@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImagePanel.py,v $
-# $Revision: 1.8 $
+# $Revision: 1.9 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-17 21:34:14 $
+# $Date: 2008-01-18 04:58:49 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -49,7 +49,7 @@ class ImageClickDoneEvent(wx.PyCommandEvent):
 ##################################
 
 class ImagePanel(wx.Panel):
-	def __init__(self, parent, id, imagesize=(384, 384), mode="horizontal"):
+	def __init__(self, parent, id, imagesize=(520, 520), mode="horizontal"):
 		# initialize image variables
 		self.imagedata = None
 		self.bitmap = None
@@ -87,14 +87,25 @@ class ImagePanel(wx.Panel):
 		# create tool size to contain individual tools
 		self.toolsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.toolsizer2 = wx.BoxSizer(wx.HORIZONTAL)
-		if self.mode == "vertical":
-			#NEILMODE
-			self.sizer.Add(self.toolsizer, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		elif self.mode == "compact":
-			self.sizer.Add(self.toolsizer, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			self.sizer.Add(self.toolsizer2, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.alltoolsizer =wx.GridBagSizer(5,5)
+		
+		# use compact mode if imagesize is too small
+		if imagesize[0] < 520:
+			toolmode = "compact"
 		else:
-			self.sizer.Add(self.toolsizer, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			toolmode = "expand"
+		
+		if toolmode == "compact":
+			self.alltoolsizer.Add(self.toolsizer, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			self.alltoolsizer.Add(self.toolsizer2, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		else:
+			self.alltoolsizer.Add(self.toolsizer, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			self.alltoolsizer.Add(self.toolsizer2, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+				
+		if self.mode == "vertical":
+			self.sizer.Add(self.alltoolsizer, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		else:
+			self.sizer.Add(self.alltoolsizer, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.tools = []
 
 		# create image panel, set cursor
@@ -106,26 +117,26 @@ class ImagePanel(wx.Panel):
 		self.defaultcursor = wx.CROSS_CURSOR
 		self.panel.SetCursor(self.defaultcursor)
 		if self.mode == "vertical":
-			#NEILMODE
-			self.sizer.Add(self.panel, (1, 0), (3, 2), wx.EXPAND) 
-		elif self.mode == "compact":
-			self.sizer.Add(self.panel, (2, 0), (1, 1), wx.EXPAND) 
+			self.sizer.Add(self.panel, (1, 0), (1, 1), wx.EXPAND) 
+			self.sizer.AddGrowableRow(1)
+			self.sizer.AddGrowableCol(0)
 		else:
-			self.sizer.Add(self.panel, (1, 1), (3, 1), wx.EXPAND)
-		self.sizer.AddGrowableRow(3)
-		self.sizer.AddGrowableCol(1)
+			self.sizer.Add(self.panel, (1, 1), (1, 1), wx.EXPAND)
+			self.sizer.AddGrowableRow(1)
+			self.sizer.AddGrowableCol(1)
 		width, height = self.panel.GetSizeTuple()
 		width,height = imagesize
 		self.sizer.SetItemMinSize(self.panel, width, height)
-
+		
+		self.statstypesizer =wx.GridBagSizer(2,2)
+		self.statstypesizer.SetEmptyCellSize((50, 50))
 		self.statspanel = gui.wx.Stats.Stats(self, -1, style=wx.SIMPLE_BORDER)
 		if self.mode == "vertical":
-			#NEILMODE
-			self.sizer.Add(self.statspanel, (4, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
-		elif self.mode == "compact":
-			self.sizer.Add(self.statspanel, (3, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3) 
+			self.statstypesizer.Add(self.statspanel, (0, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
+			self.sizer.Add(self.statstypesizer, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		else:
-			self.sizer.Add(self.statspanel, (1, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
+			self.statstypesizer.Add(self.statspanel, (0, 0), (1, 1), wx.ALIGN_TOP|wx.ALL, 3)
+			self.sizer.Add(self.statstypesizer, (1, 0), (1, 1), wx.ALIGN_TOP)
 
 		#self.pospanel = gui.wx.Stats.Position(self, -1, style=wx.SIMPLE_BORDER)
 		#self.sizer.Add(self.pospanel, (2, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
@@ -144,10 +155,7 @@ class ImagePanel(wx.Panel):
 		self.addTool(ImagePanelTools.ZoomTool(self, self.toolsizer))
 		self.addTool(ImagePanelTools.CrosshairTool(self, self.toolsizer))
 		self.addTool(ImagePanelTools.ColormapTool(self, self.toolsizer))
-		if mode == "compact":
-			self.contrasttool = ImagePanelTools.ContrastTool(self, self.toolsizer2)
-		else:
-			self.contrasttool = ImagePanelTools.ContrastTool(self, self.toolsizer)
+		self.contrasttool = ImagePanelTools.ContrastTool(self, self.toolsizer2)
 
 		self.SetSizerAndFit(self.sizer)
 
@@ -681,9 +689,9 @@ class ImagePanel(wx.Panel):
 			self.selectiontool = SelectionTool.SelectionTool(self)
 			if self.mode == "vertical":
 				#NEILMODE
-				self.sizer.Add(self.selectiontool, (4, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
+				self.statstypesizer.Add(self.selectiontool, (0, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
 			else:
-				self.sizer.Add(self.selectiontool, (2, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
+				self.statstypesizer.Add(self.selectiontool, (2, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
 		self.selectiontool.addTypeTool(name, **kwargs)
 		self.sizer.SetItemMinSize(self.selectiontool, self.selectiontool.GetSize())
 		self.sizer.Layout()
@@ -693,9 +701,13 @@ class ImagePanel(wx.Panel):
 ##################################
 
 class ClickImagePanel(ImagePanel):
-	def __init__(self, parent, id, disable=False,**kwargs):
-		ImagePanel.__init__(self, parent, id, **kwargs)
-		self.clicktool = self.addTool(ImagePanelTools.ClickTool(self, self.toolsizer, disable))
+	def __init__(self, parent, id, disable=False, imagesize = (520,520), mode = "horizontal"):
+		ImagePanel.__init__(self, parent, id, imagesize, mode)
+		if mode == "vertical":
+			self.clicktool = self.addTool(ImagePanelTools.ClickTool(self, self.toolsizer, disable))
+		else:
+			print "here"
+			self.clicktool = self.addTool(ImagePanelTools.ClickTool(self, self.toolsizer2, disable))
 		self.Bind(EVT_IMAGE_CLICK_DONE, self.onImageClickDone)
 		self.sizer.Layout()
 		self.Fit()

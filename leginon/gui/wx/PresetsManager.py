@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.84 $
+# $Revision: 1.85 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-18 00:01:48 $
-# $Author: pulokas $
+# $Date: 2008-01-18 04:58:49 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -569,7 +569,7 @@ class DoseDialog(gui.wx.Dialog.Dialog):
 	def onInitialize(self):
 		gui.wx.Dialog.Dialog.onInitialize(self)
 
-		self.image = gui.wx.ImagePanel.ImagePanel(self, -1,imagesize=(512, 512))
+		self.image = gui.wx.ImagePanel.ImagePanel(self, -1)
 
 		self.doselabel = wx.StaticText(self, -1, '')
 
@@ -944,7 +944,7 @@ class AlignDialog(wx.Dialog):
 		lableft = wx.StaticText(self, -1, 'Reference Preset ')
 		self.choiceleft = gui.wx.Presets.PresetChoice(self, -1)
 		self.choiceleft.setChoices(preset_names)
-		self.imleft = gui.wx.ImagePanel.ClickImagePanel(self, -1,mode='compact',imagesize=(imsize,imsize))
+		self.imleft = gui.wx.ImagePanel.ClickImagePanel(self, -1,mode='vertical',imagesize=(imsize,imsize))
 		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onLeftImageClicked, self.imleft)
 		#szleft = wx.GridBagSizer(5, 0)
 		szleft = wx.BoxSizer(wx.VERTICAL)
@@ -959,7 +959,7 @@ class AlignDialog(wx.Dialog):
 		labright = wx.StaticText(self, -1, 'Preset To Adjust ')
 		self.choiceright = gui.wx.Presets.PresetChoice(self, -1)
 		self.choiceright.setChoices(preset_names)
-		self.imright = gui.wx.ImagePanel.ClickImagePanel(self, -1,mode='compact',imagesize=(imsize,imsize))
+		self.imright = gui.wx.ImagePanel.ClickImagePanel(self, -1,mode='vertical',imagesize=(imsize,imsize))
 		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onRightImageClicked, self.imright)
 		#szright = wx.GridBagSizer(5, 0)
 		szright = wx.BoxSizer(wx.VERTICAL)
@@ -990,8 +990,9 @@ class AlignDialog(wx.Dialog):
 		szmain.Add(szimages, (0, 1), (1, 1))
 		szmain.Add(szbutton, (1, 1), (1, 1))
 
-		#szmain.AddGrowableRow(0)
-		#szmain.AddGrowableCol(0)
+		szmain.AddGrowableRow(0)
+		szmain.AddGrowableCol(0)
+		szmain.AddGrowableCol(1)
 
 		self.SetSizerAndFit(szmain)
 		self.SetAutoLayout(True)

@@ -5,10 +5,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanel.py,v $
-# $Revision: 1.9 $
+# $Revision: 1.10 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-10-04 21:58:49 $
-# $Author: vossman $
+# $Date: 2008-01-18 04:58:49 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -35,7 +35,7 @@ import gui.wx.TargetPanelTools
 ##################################
 
 class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
-	def __init__(self, parent, id, callback=None, tool=True, imagesize=(384, 384), mode="horizontal"):
+	def __init__(self, parent, id, callback=None, tool=True, imagesize=(520, 520), mode="horizontal"):
 		gui.wx.ImagePanel.ImagePanel.__init__(self, parent, id, imagesize, mode)
 		self.order = []
 		self.reverseorder = []
@@ -296,10 +296,14 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 ##
 ##################################
 
+
 class ClickAndTargetImagePanel(TargetImagePanel):
-	def __init__(self, parent, id, disable=False):
-		TargetImagePanel.__init__(self, parent, id)
-		self.clicktool = self.addTool(gui.wx.ImagePanelTools.ClickTool(self, self.toolsizer, disable))
+	def __init__(self, parent, id, disable=False, mode="horizontal"):
+		TargetImagePanel.__init__(self, parent, id, mode)
+		if mode == "vertical":
+			self.clicktool = self.addTool(gui.wx.ImagePanelTools.ClickTool(self, self.toolsizer, disable))
+		else:
+			self.clicktool = self.addTool(gui.wx.ImagePanelTools.ClickTool(self, self.toolsizer2, disable))
 		self.Bind(gui.wx.ImagePanel.EVT_IMAGE_CLICK_DONE, self.onImageClickDone)
 		self.sizer.Layout()
 		self.Fit()
