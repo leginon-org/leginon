@@ -18,7 +18,6 @@ def eulerCalculateDistance(e1, e2):
 	dist *= 180.0/math.pi
 	return dist
 
-
 def eulerCalculateDistanceforD7Sym(e1, e2):
 	"""
 	given two euler as dicts
@@ -28,10 +27,8 @@ def eulerCalculateDistanceforD7Sym(e1, e2):
 	e1mat = getMatrix3(e1)
 	#get list of equivalent euler matrices
 	e2equivMats = calculateEquivD7Sym(e2)
-	# calculate the distances between the original Euler and all the equivalents
-	mat0=apEulerCalc.getMatrix3(e0)
-	mat1=apEulerCalc.getMatrix3(eulers[n]['eulers'])
 
+	# calculate the distances between the original Euler and all the equivalents
 	mindist = 180.0
 	for e2mat in e2equivMats:
 		dist = computeDistance(e1mat,e2mat)
@@ -40,38 +37,6 @@ def eulerCalculateDistanceforD7Sym(e1, e2):
 	#convert to degrees
 	dist *= 180.0/math.pi
 	return dist
-
-
-def removePtclsByJumps(particles,rejectlst,params):
-	for ptcl in range(1,nptcls+1):
-		eulers = getEulersForParticle(ptcl,params['reconid'])
-		eulers.sort(sortEulers)
-		e0=eulers[0]['eulers'] #this an euler dict
-		distances=numpy.zeros((len(eulers)-1))
-		f.write('%d\t' % ptcl)
-		for n in range(1,len(eulers)):
-			# first get all equivalent Eulers given symmetry
-			eqEulers=apEulerCalc.calculateEquivD7Sym(eulers[n]['eulers'])
-			# calculate the distances between the original Euler and all the equivalents
-			mat0=apEulerCalc.getMatrix3(e0)
-			mat1=apEulerCalc.getMatrix3(eulers[n]['eulers'])
-
-			d=[]
-			for e1 in eqEulers:
-				d.append(apEulerCalc.calculateDistance(mat0,mat1))
-			mind=min(d)
-			distances[n-1]=mind*180/math.pi
-			f.write('%f\t' % distances[n-1])
-			e0=eulers[n]['eulers']
-		if numpy.median(distances) > params['avgjump']:
-			rejectlst.append(ptcl)
-		if not ptcl%100:
-			print "particle",ptcl
-		f.write('%f\t%f\t%f\n' % (distances.mean(),numpy.median(distances),distances.std()))
-		#print distances
-		#print distances.mean()
-	return rejectlst
-
 
 def getMatrix3(eulerdata):
 	"""

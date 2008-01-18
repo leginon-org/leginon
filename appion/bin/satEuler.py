@@ -152,7 +152,7 @@ class satEulerScript(appionScript.AppionScript):
 		angdistlist = []
 		rotdistlist = []
 		for eulerpair in eulertree:
-			eulerpair['angdist'] = apEulerCalc.eulerCalculateDistance(eulerpair['part1'], eulerpair['part2'])
+			eulerpair['angdist'] = apEulerCalc.eulerCalculateDistanceforD7Sym(eulerpair['part1'], eulerpair['part2'])
 			angdistlist.append(eulerpair['angdist'])
 			eulerpair['rotdist'] = self.calcRotationalDifference(eulerpair)
 			rotdistlist.append(eulerpair['rotdist'])
@@ -200,41 +200,6 @@ class satEulerScript(appionScript.AppionScript):
 		percent = "%3.1f" % (50.0*len(keeplist) / float(len(eulertree)))
 		apDisplay.printMsg("Keeping "+str(len(keeplist))+" of "+str(2*len(eulertree))+" ("+percent+"%) eulers")
 		return
-	#=====================
-	def removePtclsByJumps(particles,rejectlst,params):
-		#errdict={}
-		print "Finding Euler jumps"
-		nptcls=len(particles)
-		stack=os.path.join(particles[0]['particle']['stack']['path']['path'],particles[0]['particle']['stack']['name'])
-		f=open('jumps.txt','w')
-		for ptcl in range(1,nptcls+1):
-			eulers=getEulersForParticle(ptcl,params['reconid'])
-			eulers.sort(sortEulers)
-			e0=eulers[0]['eulers']
-			distances=numpy.zeros((len(eulers)-1))
-			f.write('%d\t' % ptcl)
-			for n in range(1,len(eulers)):
-				# first get all equivalent Eulers given symmetry
-				eqEulers=calculateEquivSym(eulers[n]['eulers'])
-				# calculate the distances between the original Euler and all the equivalents
-				mat0=apEulerCalc.getMatrix3(e0)
-				mat1=apEulerCalc.getMatrix3(eulers[n]['eulers'])
-
-				d=[]
-				for e1 in eqEulers:
-					d.append(apEulerCalc.calculateDistance(mat0,mat1))
-				mind=min(d)
-				distances[n-1]=mind*180/math.pi
-				f.write('%f\t' % distances[n-1])
-				e0=eulers[n]['eulers']
-			if numpy.median(distances) > params['avgjump']:
-				rejectlst.append(ptcl)
-			if not ptcl%100:
-				print "particle",ptcl
-			f.write('%f\t%f\t%f\n' % (distances.mean(),numpy.median(distances),distances.std()))
-			#print distances
-			#print distances.mean()
-		return rejectlst
 
 	#=====================
 	def analyzeList(self, mylist, myrange=(0,1,1), filename=None):
@@ -307,7 +272,7 @@ class satEulerScript(appionScript.AppionScript):
 		Overriding appionScript version, this not a kosher thing to do
 		"""
 		self.datastr = "_r"+str(self.params['reconid'])+"_i"+str(self.params['iternum'])
-		self.params['outdir'] = os.path.join(os.path.abspath("."), "sat"+self.datastr)
+		self.params['outdir'] = os.path.join(os.path.abspath("."), "sat-recon"+str(self.params['reconid']))
 		apDisplay.printMsg("Output directory: "+self.params['outdir'])
 		apParam.createDirectory(self.params['outdir'])
 		os.chdir(self.params['outdir'])
