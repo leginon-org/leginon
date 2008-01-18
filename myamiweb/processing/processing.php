@@ -378,9 +378,9 @@ if ($sessionId) {
     <TD BGCOLOR='$bgcolor'>\n";
   if ($jobdone>0 || $jobrun>0 || $jobqueue>0 || $reconruns >0) {
     $jlist=array();
-    if ($jq>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jobqueue queued</A>\n";
-    if ($jr>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jobrun running</A>\n";
-    if ($ji>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jobincomp ready for upload</A>\n";
+    if ($jobqueue>0)  $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jobqueue queued</A>\n";
+    if ($jobrun>0)    $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jobrun running</A>\n";
+    if ($jobincomp>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jobincomp ready for upload</A>\n";
     if ($reconruns>0) $jlist[]="<A HREF='reconsummary.php?expId=$sessionId'>$reconruns uploaded</A>\n";
     $jout=implode('<br />',$jlist);
     echo"$jout";
