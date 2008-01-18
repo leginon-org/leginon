@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.54 $
+# $Revision: 1.55 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:03 $
-# $Author: vossman $
+# $Date: 2008-01-18 21:55:06 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -166,7 +166,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.imagepanel.addTargetTool('Bad Pixels', wx.Color(255, 0, 0), target=True, shape='.')
 		self.imagepanel.selectiontool.setDisplayed('Bad Pixels', True)
 		self.imagepanel.setTargets('Bad Pixels', [])
-		self.imagepanel.addTargetTool('Regions', wx.Color(0, 255, 255), target=True, display=True)
+		self.imagepanel.addTargetTool('Regions', wx.Color(0, 255, 255), target=True, shape='polygon', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Regions', True)
 		self.imagepanel.setTargets('Regions', [])
 
