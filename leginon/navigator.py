@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
-# $Revision: 1.128 $
+# $Revision: 1.129 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-17 21:34:14 $
+# $Date: 2008-01-18 04:59:17 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -246,24 +246,7 @@ class Navigator(node.Node):
 				if self.settings['cycle after']:
 					self.cycleToPreset(preset)
 
-		alignpreset = False
-		if alignpreset:
-			currentpreset = self.presetsclient.getCurrentPreset()
-			self.setImageShiftForPreset(currentpreset['name'])
 		self.setStatus('idle')
-
-	def setImageShiftForPreset(self,presetname=None):
-		presetdata = data.PresetData(initializer=self.presetsclient.getCurrentPreset())
-		scope = self.newimagedata['scope']
-		mag = scope['magnification']
-		if presetdata['magnification'] == mag:
-			newimageshiftx = scope['image shift']['x']
-			newimageshifty = scope['image shift']['y']
-			self.logger.info('modifying image shift of preset %s to %.1e, %.1e' %(presetname,newimageshiftx,newimageshifty))
-
-			presetdata['image shift']['x'] = newimageshiftx
-			presetdata['image shift']['y'] = newimageshifty
-			self.publish(presetdata, database=True, dbforce=True, pubevent=True)
 
 	def outofbounds(self, coord, shape):
 		if coord[0] < 0 or coord[0] > shape[0]-1:

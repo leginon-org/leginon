@@ -4,10 +4,10 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.252 $
+# $Revision: 1.253 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-18 00:01:48 $
-# $Author: pulokas $
+# $Date: 2008-01-18 04:59:17 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -1278,4 +1278,7 @@ class PresetsManager(node.Node):
 		else:
 			movetype = 'image shift'
 		self.navclient.moveToTarget(target, movetype)
+		if index == 1:
+		#	save preset from the current microscope state if the right image is clicked
+			self.fromScope(self.alignpresets[index])
 		self.acquireAlignImages()
