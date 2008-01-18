@@ -4,10 +4,10 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.253 $
+# $Revision: 1.254 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-18 04:59:17 $
-# $Author: acheng $
+# $Date: 2008-01-18 07:57:58 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -920,13 +920,13 @@ class PresetsManager(node.Node):
 			self.panel.presetsEvent()
 			return
 
-		self._acquireDoseImage(display=display)
+		self._acquireDoseImage(preset=self.currentpreset, display=display)
 
 		self.panel.presetsEvent()
 
 		self.outputEvent(event.DoseMeasuredEvent(name=presetname, preset=self.currentpreset))
 
-	def _acquireDoseImage(self, display=True):
+	def _acquireDoseImage(self, preset, display=True):
 		acquirestr = 'dose'
 		imagedata =  self._acquireSpecialImage(preset, acquirestr, mode='center', imagelength=512)
 		
