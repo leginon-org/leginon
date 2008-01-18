@@ -111,11 +111,12 @@ class satEulerScript(appionScript.AppionScript):
 				+"ORDER BY stpart1.particleNumber ASC \n"
 				#+"LIMIT 10 \n"
 			)
-		apDisplay.printMsg("Running MySQL query")
+		apDisplay.printMsg("Running MySQL query at "+time.asctime())
 		#print query
 		self.cursor.execute(query)
 		numrows = int(self.cursor.rowcount)
 		apDisplay.printMsg("Found "+str(numrows)+" rows in "+apDisplay.timeString(time.time()-t0))
+		apDisplay.printMsg("Fetching data at "+time.asctime())
 		results = self.cursor.fetchall()
 		apDisplay.printMsg("Fetched "+str(numrows)+" rows in "+apDisplay.timeString(time.time()-t0))
 		return results
