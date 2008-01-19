@@ -4,10 +4,10 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.254 $
+# $Revision: 1.255 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-18 07:57:58 $
-# $Author: vossman $
+# $Date: 2008-01-19 00:35:25 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -228,6 +228,7 @@ class PresetsManager(node.Node):
 		self.presetsclient = PresetsClient(self)
 		self.locknode = None
 		self._lock = threading.Lock()
+		self.alignnext = threading.Event()
 
 		self.currentselection = None
 		self.currentpreset = None
@@ -1282,3 +1283,58 @@ class PresetsManager(node.Node):
 		#	save preset from the current microscope state if the right image is clicked
 			self.fromScope(self.alignpresets[index])
 		self.acquireAlignImages()
+
+	def alignPresetsToRef(self, refname):
+		if refname not in self.presets:
+			self.logger.error('Select a reference preset first.')
+			return
+		## order mags from highest to lowest
+		self.logger.info('Aligning presets to reference: %s' % (refname,))
+		magpresets = {}
+		for p in self.presets.values():
+			mag = p['magnification']
+			if mag in magpresets:
+				magpresets[mag].append(p['name'])
+			else:
+				magpresets[mag] = [p['name']]
+		mags = magpresets.keys()
+		mags.sort()
+		refmag = self.presets[refname]['magnification']
+		refindex = mags.index(refmag)
+		highmags = mags[refindex+1:]
+		highmags.reverse()
+		lowmags = mags[:refindex]
+		self.logger.info('highmags: %s' % (highmags,))
+		self.logger.info('lowmags: %s' % (lowmags,))
+
+		refishift = {'image shift': self.presets[refname]['image shift']}
+		for otherpreset in magpresets[refmag]:
+			if otherpreset == refname:
+				continue
+			self.logger.info('Updating image shift of %s to image shift of %s' % (otherpreset,refname))
+			self.updatePreset(otherpreset, refishift)
+
+		for maglist in [highmags, lowmags]:
+			presetleft = refname
+
+			while maglist:
+				magright = maglist[-1]
+				presetsright = magpresets[magright]
+				presetright = presetsright[0]
+
+				self.acquireAlignImages(presetleft, presetright)
+
+				self.alignnext.wait()
+				self.alignnext.clear()
+
+				magleft = maglist.pop()
+				presetsleft = magpresets[magleft]
+				presetleft = presetsleft[0]
+				newishift = {'image shift': self.presets[presetleft]['image shift']}
+				for otherpreset in presetsleft[1:]:
+					self.logger.info('Updating image shift of %s to image shift of %s' % (otherpreset,presetleft))
+					self.updatePreset(otherpreset, newishift)
+
+	def onAlignNext(self):
+		self.alignnext.set()
+

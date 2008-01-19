@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.85 $
+# $Revision: 1.86 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-18 04:58:49 $
-# $Author: acheng $
+# $Date: 2008-01-19 00:35:25 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -712,7 +712,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.aligndialog.choiceleft.setChoices(preset_names)
 		self.aligndialog.choiceright.setChoices(preset_names)
 		self.aligndialog.ShowModal()
-	
+
 	def setAlignImage(self, image, typename, stats={}):
 		evt = gui.wx.Events.SetImageEvent(image, typename, stats)
 		self.aligndialog.GetEventHandler().AddPendingEvent(evt)
@@ -939,6 +939,7 @@ class AlignDialog(wx.Dialog):
 		wx.Dialog.__init__(self, parent, -1, 'Align Presets', style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 		imsize = 512
 		self.node = node
+		self.parent = parent
 
 		preset_names = self.node.presets.keys()
 		lableft = wx.StaticText(self, -1, 'Reference Preset ')
@@ -971,15 +972,15 @@ class AlignDialog(wx.Dialog):
 		szright.Add(szpreset, 0, wx.EXPAND)
 		szright.Add(self.imright, 1, wx.EXPAND)
 
-		self.bacquire = wx.Button(self, -1, 'Acquire')
-		self.bacquire.Enable(True)
+		self.bnext = wx.Button(self, -1, 'Next')
+		self.bnext.Enable(True)
 		self.balign = wx.Button(self, -1, 'Align')
 		self.balign.Enable(True)
 		bdone = wx.Button(self, wx.ID_OK, 'Done')
 		bdone.SetDefault()
 
 		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.bacquire, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		szbutton.Add(self.bnext, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(self.balign, (0, 1), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(bdone, (0, 2), (1, 1), wx.ALIGN_CENTER)
 
@@ -998,8 +999,9 @@ class AlignDialog(wx.Dialog):
 		self.SetAutoLayout(True)
 
 		#self.Bind(wx.EVT_CHOICE, self.onSessionChoice, self.csession)
-		self.Bind(wx.EVT_BUTTON, self.onAcquire, self.bacquire)
+		self.Bind(wx.EVT_BUTTON, self.onNext, self.bnext)
 		self.Bind(wx.EVT_BUTTON, self.onAlign, self.balign)
+		self.Bind(wx.EVT_BUTTON, self.onNext, bdone)
 		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
 
 	def onLeftImageClicked(self, evt):
@@ -1013,8 +1015,13 @@ class AlignDialog(wx.Dialog):
 		rightpreset = self.choiceright.GetStringSelection()
 		self.node.acquireAlignImages(leftpreset, rightpreset)
 
+	def onNext(self, evt):
+		self.node.onAlignNext()
+
 	def onAlign(self, evt):
-		print 'Test'
+		refname = self.parent.presets.getSelectedPreset()
+		#self.node.alignPresetsToRef(refname)
+		threading.Thread(target=self.node.alignPresetsToRef, args=(refname,)).start()
 	
 	def onSetImage(self, evt):
 		if evt.typename == 'left':
