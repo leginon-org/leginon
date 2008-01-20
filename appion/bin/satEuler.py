@@ -152,10 +152,15 @@ class satEulerScript(appionScript.AppionScript):
 	def processEulers(self, eulertree):
 		t0 = time.time()
 		angdistlist = []
+		totdistlist = []
 		rotdistlist = []
 		for eulerpair in eulertree:
-			eulerpair['angdist'] = apEulerCalc.eulerCalculateDistanceSym(eulerpair['part1'], eulerpair['part2'], sym='d7')
+			eulerpair['angdist'] = apEulerCalc.eulerCalculateDistanceSym(eulerpair['part1'],
+				eulerpair['part2'], sym='d7', inplane=False)
+			eulerpair['totdist'] = apEulerCalc.eulerCalculateDistanceSym(eulerpair['part1'],
+				eulerpair['part2'], sym='d7', inplane=True)
 			angdistlist.append(eulerpair['angdist'])
+			totdistlist.append(eulerpair['totdist'])
 			eulerpair['rotdist'] = self.calcRotationalDifference(eulerpair)
 			rotdistlist.append(eulerpair['rotdist'])
 
@@ -169,6 +174,10 @@ class satEulerScript(appionScript.AppionScript):
 		print "PLANE ROTATION DATA:"
 		myrange = tuple((-180,180,10))
 		self.analyzeList(rotdistlist, myrange, "rotdata"+self.datastr+".dat")
+
+		print "TOTAL EULER DATA:"
+		myrange = tuple((-180,180,10))
+		self.analyzeList(totdistlist, myrange, "totaldata"+self.datastr+".dat")
 
 		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
 
