@@ -93,7 +93,7 @@ class AppionLoop(object):
 				results = self.processImage(imgdata)
 
 				### WRITE db data
- 				if self.params['commit'] == True:
+ 				if self.params['commit'] is True:
 					self.commitToDatabase(imgdata)
 					self.commitResultsToDatabase(imgdata, results)
 				else:
@@ -493,7 +493,7 @@ class AppionLoop(object):
 		apParam.writeFunctionLog(args, logfile=self.params['functionLog'])
 
 	def _setRunAndParameters(self,params):
-		if params['commit']:
+		if params['commit'] is True:
 			rundata = self.insertFunctionRun()
 			self.insertPreLoopFunctionRun(rundata,params)
 		
