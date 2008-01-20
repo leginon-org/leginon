@@ -7,25 +7,25 @@ import time
 import pprint
 import apDisplay
 
-def eulerCalculateDistance(e1, e2):
+def eulerCalculateDistance(e1, e2, inplane=False):
 	"""
 	given two euler as dicts
 	calculate distance between euler values
 	value in degrees
 	"""
-	mat0 = getEmanEulerMatrix(e1)
-	mat1 = getEmanEulerMatrix(e2)
+	mat0 = getEmanEulerMatrix(e1, inplane=inplane)
+	mat1 = getEmanEulerMatrix(e2, inplane=inplane)
 	dist = computeDistance(mat0, mat1)
 	#convert to degrees
 	return dist
 
-def eulerCalculateDistanceSym(e1, e2, sym='d7'):
+def eulerCalculateDistanceSym(e1, e2, sym='d7', inplane=False):
 	"""
 	given two euler as dicts in degrees
 	calculate distance between euler values
 	value in degrees
 	"""
-	e1mat = getEmanEulerMatrix(e1)
+	e1mat = getEmanEulerMatrix(e1, inplane=inplane)
 	#get list of equivalent euler matrices
 	e2equivMats = calculateEquivSym(e2, sym=sym)
 
@@ -46,7 +46,7 @@ def eulerCalculateDistanceSym(e1, e2, sym='d7'):
 	#convert to degrees
 	return mindist
 
-def calculateEquivSym(euler, sym='d7', symout=False):
+def calculateEquivSym(euler, sym='d7', symout=False, inplane=False):
 	"""
 	rotates eulers about any c and d symmetry group
 
@@ -69,7 +69,7 @@ def calculateEquivSym(euler, sym='d7', symout=False):
 			symMats.append( numpy.dot(x1, symMats[i]) )
 
 	#calculate new euler matices
-	eulerMat = getEmanEulerMatrix(euler)
+	eulerMat = getEmanEulerMatrix(euler, inplane=inplane)
 	equivMats=[]
 	for symMat in symMats:	
 		equivMats.append(numpy.dot(eulerMat, symMat))
@@ -83,8 +83,8 @@ def calculateEquivSym(euler, sym='d7', symout=False):
  		f.close()
 	return equivMats
 
-def getEmanEulerMatrix(eulerdata):
-	return getMatrix3(eulerdata)
+def getEmanEulerMatrix(eulerdata, inplane=True):
+	return getMatrix3(eulerdata, inplane=inplane)
 
 def getMatrix(eulerdata):
 	a=eulerdata['euler3']*math.pi/180
@@ -136,7 +136,7 @@ def getMatrix2(eulerdata):
 	
 	return(m)
 
-def getMatrix3(eulerdata):
+def getMatrix3(eulerdata, inplane=False):
 	"""
 	math from http://mathworld.wolfram.com/EulerAngles.html
 	appears to conform to EMAN conventions - could use more testing
@@ -151,8 +151,10 @@ def getMatrix3(eulerdata):
 	# 0 <= phi <= 360 degrees
 	phi = eulerdata['euler2']*math.pi/180.0 #eman az, azimuthal
 
-	#psi = round(eulerdata['euler3']*math.pi/180,2) #eman phi, inplane_rotation
-	psi = 0.0  #psi component is not working!!!
+	if inplane is True:
+		psi = round(eulerdata['euler3']*math.pi/180,2) #eman phi, inplane_rotation
+	else:
+		psi = 0.0
 
 	m = numpy.zeros((3,3), dtype=numpy.float32)
 	m[0,0] =  math.cos(psi)*math.cos(phi) - math.cos(the)*math.sin(phi)*math.sin(psi)
