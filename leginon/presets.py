@@ -4,10 +4,10 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.255 $
+# $Revision: 1.256 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-19 00:35:25 $
-# $Author: pulokas $
+# $Date: 2008-01-22 22:02:05 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -1028,8 +1028,9 @@ class PresetsManager(node.Node):
 		if leftpreset is None or rightpreset is None:
 			leftpreset = self.alignpresets[0]
 			rightpreset = self.alignpresets[1]
+		refpreset = self.refpreset
 		errstr = 'Acquire align image failed: %s'
-		self.alignpresets = [leftpreset, rightpreset]
+		self.alignpresets = [leftpreset, rightpreset, refpreset]
 		self.alignimages = {}
 		for i,presetname in enumerate(self.alignpresets):
 			if not presetname:
@@ -1046,14 +1047,20 @@ class PresetsManager(node.Node):
 				self.logger.error(errstr % e)
 				self.panel.presetsEvent()
 				return
-			imagedata = self._acquireAlignImage(self.currentpreset)
-			self.alignimages[i] = imagedata
+			if i < 2:
+				imagedata = self._acquireAlignImage(self.currentpreset)
+				self.alignimages[i] = imagedata
+			else:
+				self.logger.info('Parked at preset "%s"' % (refpreset))
+				imagedata = None
+ 
 			if imagedata is not None:
 				if i==0:
 					self.panel.setAlignImage(imagedata['image'],'left')
 				else:
 					self.panel.setAlignImage(imagedata['image'],'right')
 			self.panel.presetsEvent()
+			
 
 #		self.outputEvent(event.AlignImagesAcquiredEvent())
 
@@ -1288,6 +1295,7 @@ class PresetsManager(node.Node):
 		if refname not in self.presets:
 			self.logger.error('Select a reference preset first.')
 			return
+		self.refpreset = refname
 		## order mags from highest to lowest
 		self.logger.info('Aligning presets to reference: %s' % (refname,))
 		magpresets = {}
