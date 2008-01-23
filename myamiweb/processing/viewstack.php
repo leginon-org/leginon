@@ -30,8 +30,13 @@ if ($refinement) {
   //echo print_r($stack);
   $filename=$stack['path'].'/'.$stack['name'];
   if ($substack) {
-    // get all bad particles in stack
-    $subprtls=$particle->getSubsetParticlesInStack($refinement,$substack);
+		if ($substack=='msgpbad') {
+			// get all message passing bad particles in stack
+			$subprtls=$particle->getMsgPRejectParticlesInStack($refinement);
+		} else {
+			// get all bad particles in stack
+			$subprtls=$particle->getSubsetParticlesInStack($refinement,$substack);
+		}
     $numbad = count($subprtls);
   }
 }

@@ -206,7 +206,7 @@ foreach ($iterations as $iteration){
 		."<A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=bad'>[$badprtls bad]</A>"
 		."</TD></TR>\n";
   if ($refinerun['package']=='EMAN/MsgP') 
-    $html .= "<TR><TD>$goodprtlsused MsgP<BR><A TARGET='stackview' HREF='msgpbadprtls.php?refinement=$refinementData[DEF_id]'>[$msgpbadprtls bad]</A></TD></TR>\n";
+    $html .= "<TR><TD>$goodprtlsused MsgP<BR><A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack='msgpbad''>[$msgpbadprtls bad]</A></TD></TR>\n";
   $html .= "</table></TD>";
   
   $html .= "</TD>\n";
