@@ -16,7 +16,6 @@ import libCVwrapper
 import raster
 import polygon
 import math
-import libcvcaller
 
 class RegionFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.RegionFinder.Panel
@@ -93,7 +92,7 @@ class RegionFinder(targetfinder.TargetFinder):
 	def splitRegions(self):
 		regionpieces = []
 		for regionarray in self.regionarrays:
-			pieces = libcvcaller.PolygonACD(regionarray, 0.05)
+			pieces = libCVwrapper.PolygonACD(regionarray, 0.05)
 			if pieces is None:
 				print 'PolygonACD FAIL'
 				self.logger.warning('PolygonACD failed')

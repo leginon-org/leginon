@@ -108,6 +108,24 @@ def PolygonVE(polygon, thresh):
 	print ""
 
 #-----------------------
+def PolygonACD(array, value):
+	"""
+	used by libcvcaller.py
+	inputs:
+		array
+		value
+	outputs:
+		array?
+	"""
+
+	try:
+		return libCV.PolygonACD(array, value)
+	except:
+		print "libCV failed in PolygonACD"
+		return []
+
+
+#-----------------------
 def checkArrayMinMax(self, a1, a2):
 	"""
 	Tests whether an image has a valid range for libCV
