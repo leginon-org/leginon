@@ -178,17 +178,19 @@ def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8):
 	high pass filter image to radius resolution
 	"""
 	if radius == 0 or imgarray.shape[0] < 256:
-		print " ... skipping high pass filter"
+		apDisplay.printMsg("skipping high pass filter")
 		return(imgarray)
-	bimgarray = binImg(imgarray, localbin)
-	sigma=float(radius/apix/float(bin*localbin))
 	try:
+		bimgarray = binImg(imgarray, localbin)
+		sigma=float(radius/apix/float(bin*localbin))
 		filtimg = ndimage.gaussian_filter(bimgarray, sigma=sigma)
+		expandimg = scaleImage(filtimg, localbin)
+		expandimg = frame_constant(expandimg, imgarray.shape)
+		filtimg = imgarray - expandimg
 	except:
 		apDisplay.printWarning("High Pass Filter failed")
 		return imgarray
-	expandimg = scaleImage(filtimg,localbin)
-	return imgarray - expandimg
+	return filtimg
 
 def planeRegression(imgarray):
 	"""
